@@ -1,0 +1,49 @@
+from dataclasses import dataclass
+
+import gym
+import matplotlib.pyplot as plt
+import numpy as np
+from IPython.display import clear_output
+
+
+@dataclass
+class Trajectory:
+    rreturn: float
+    states: np.ndarray
+    actions: np.ndarray
+
+
+def collect_trajectory(env_conf, policy, show_frames=None, seed=None):
+    render_mode = "rgb_array" if show_frames else None
+    env = gym.make(env_conf.env_name, render_mode=render_mode, **env_conf.kwargs)
+    done = False
+    return_trajectory = 0
+    traj_states, traj_actions = [], []
+    lb = env.observation_space.low
+    width = env.observation_space.high - lb
+
+    def draw():
+        clear_output(wait=True)
+        plt.imshow(env.render())
+        plt.title(f"i_iter = {i_iter} return = {return_trajectory:.2f}")
+        plt.show()
+
+    state, _ = env.reset(seed=seed)
+    for i_iter in range(env_conf.max_steps):
+        state_p = (state - lb) / width
+        action_p = policy(state_p)  # in [-1,1]
+        action = env.action_space.low + (env.action_space.high - env.action_space.low) * (1 + action_p) / 2
+
+        traj_states.append(state_p)
+        traj_actions.append(action_p)
+
+        state, reward, done = env.step(action)[:3]
+        return_trajectory += reward
+        if show_frames and i_iter % max(1, (env_conf.max_steps // show_frames)) == 0:
+            draw()
+        if done:
+            break
+    if show_frames:
+        draw()
+    env.close()
+    return Trajectory(return_trajectory, np.array(traj_states).T, np.array(traj_actions).T)

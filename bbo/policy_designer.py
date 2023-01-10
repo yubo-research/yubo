@@ -1,0 +1,63 @@
+import time
+
+import numpy as np
+
+
+# actions are always in -1,1; collect_trajectory() rescales them.
+# parameters are in [-1,1]
+class PolicyDesigner:
+    def __init__(self, trust_distance_fn, acq_fn, data, delta_tr, i_trusted=-1):
+        self._trust_distance_fn = trust_distance_fn
+        self._acq_fn = acq_fn
+        self._data = data
+        self._delta_tr = delta_tr
+        self._datum_trusted = data[i_trusted]
+
+        self._policy_best = self._datum_trusted.policy.clone()
+        self._dist_to_trusted = self._calc_trust(self._policy_best)
+        assert self._dist_to_trusted < 1e-9, self._dist_to_trusted
+        self._md_best = self._acq(self._policy_best)
+
+    def _acq(self, policy):
+        return self._acq_fn(policy)
+
+    def _calc_trust(self, policy):
+        return self._trust_distance_fn(self._datum_trusted, policy)
+
+    def _clamp_params(self, params):
+        return np.clip(params, -1, 1)
+
+    def design_dumb(self, eps):
+        p = self._policy_best.get_params()
+        p = self._clamp_params(p + eps * np.random.normal(size=p.shape))
+        self._policy_best.set_params(p)
+        return np.array([0, 0])
+
+    def design(self, num_iterations, eps):
+        policy_test = self._policy_best.clone()
+        times = []
+        for _ in range(num_iterations):
+            p = policy_test.get_params()
+            p = self._clamp_params(p + eps * np.random.normal(size=p.shape))
+            policy_test.set_params(p)
+            t0 = time.time_ns()
+            md_test = self._acq(policy_test)
+            tf = time.time_ns()
+            times.append(tf - t0)
+            dist_to_trusted = self._calc_trust(policy_test)
+            # print ("CHECK:", eps, md_test, self._md_best, dist_to_trusted, self._delta_tr)
+            if md_test > self._md_best and dist_to_trusted <= self._delta_tr:
+                self._md_best = md_test
+                self._dist_to_trusted = dist_to_trusted
+                self._policy_best = policy_test.clone()
+                # print (f"BEST: md = {self._md_best:.4f} tr = {self._dist_to_trusted:.4f}")
+        return np.array(times)
+
+    def min_dist(self):
+        return self._md_best
+
+    def trust(self):
+        return self._dist_to_trusted
+
+    def get_policy(self):
+        return self._policy_best
