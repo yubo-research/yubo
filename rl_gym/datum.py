@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Any
 
-from bbo.trajectories import Trajectory
+from rl_gym.trajectories import Trajectory
 
 
 @dataclass

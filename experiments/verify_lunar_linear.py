@@ -1,8 +1,8 @@
 import cma
 import numpy as np
 
-from bbo.linear_policy import LinearPolicy
-from bbo.trajectories import collect_trajectory
+from rl_gym.linear_policy import LinearPolicy
+from rl_gym.trajectories import collect_trajectory
 
 
 def optimize(env_conf, num_iterations):
@@ -27,7 +27,7 @@ def optimize(env_conf, num_iterations):
 
 
 if __name__ == "__main__":
-    from bbo.env_conf import EnvConf
+    from rl_gym.env_conf import EnvConf
 
     num_iterations = 10000
 

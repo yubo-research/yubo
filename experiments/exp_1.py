@@ -12,9 +12,9 @@ if __name__ == "__main__":
     import sys
     import time
 
-    from bbo.env_conf import EnvConf
-    from bbo.linear_policy import LinearPolicy
-    from bbo.optimizer import Optimizer
+    from rl_gym.env_conf import EnvConf
+    from rl_gym.linear_policy import LinearPolicy
+    from rl_gym.optimizer import Optimizer
 
     env_tag = sys.argv[1]
     ttype = sys.argv[2]

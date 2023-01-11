@@ -35,8 +35,7 @@ class GP(nn.Module):
         return self._bound(self._amplitude_scale)
 
     def forward(self, x):
-        """compute prediction. fit() must have been called.
-        x: test input data point. N x D tensor for the data dimensionality D."""
+        """compute prediction. fit() must have been called."""
         L = self.L
         alpha = self.alpha
         k = self.kernel_mat(self.X, x)
@@ -46,10 +45,7 @@ class GP(nn.Module):
         return mu, var
 
     def fit(self, X, y):
-        """should be called before forward() call.
-        X: training input data point. N x D tensor for the data dimensionality D.
-        y: training target data point. N x 1 tensor."""
-
+        """should be called before forward() call."""
         y_mu = y.mean()
         if len(y) > 1:
             y_std = 1e-9 + y.std()
@@ -57,11 +53,10 @@ class GP(nn.Module):
             y_std = 1
         y_use = (y - y_mu) / y_std
 
-        D = X.shape[1]
         K = self.kernel_mat(X, X) + self.noise_scale * torch.eye(len(X))
         L = torch.linalg.cholesky(K)
         alpha = torch.linalg.solve(L.T, torch.linalg.solve(L, y_use))
-        marginal_likelihood = -0.5 * y_use.T.mm(alpha) - torch.log(torch.diag(L)).sum() - D * 0.5 * np.log(2 * np.pi)
+        marginal_likelihood = -0.5 * y_use.T.mm(alpha) - torch.log(torch.diag(L)).sum()  # just a constant - D * 0.5 * np.log(2 * np.pi)
         self.X = X
         self._y_mu = y_mu
         self._y_std = y_std

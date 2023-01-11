@@ -1,9 +1,9 @@
-from bbo.datum import Datum
-from bbo.distance import distance_actions, distance_parameters
-from bbo.min_distance_actions_fast import MinDistanceActionsFast
-from bbo.min_distance_parameters import MinDistanceParameters
-from bbo.policy_designer import PolicyDesigner
-from bbo.trajectories import collect_trajectory
+from rl_gym.datum import Datum
+from rl_gym.distance import distance_actions, distance_parameters
+from rl_gym.min_distance_actions_fast import MinDistanceActionsFast
+from rl_gym.min_distance_parameters import MinDistanceParameters
+from rl_gym.policy_designer import PolicyDesigner
+from rl_gym.trajectories import collect_trajectory
 
 
 class Optimizer:
