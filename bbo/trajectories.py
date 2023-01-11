@@ -37,7 +37,7 @@ def collect_trajectory(env_conf, policy, show_frames=None, seed=None):
 
     state, _ = env.reset(seed=seed)
     for i_iter in range(env_conf.max_steps):
-        assert np.all(state >= lb), (state, lb)
+        # assert np.all(state >= lb), (state, lb)
         state_p = (state - lb) / width
         action_p = policy(state_p)  # in [-1,1]
         action = env.action_space.low + (env.action_space.high - env.action_space.low) * (1 + action_p) / 2

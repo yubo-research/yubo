@@ -13,6 +13,7 @@ class EnvConf:
     seed: int
     num_opt_0: int
     kwargs: dict = None
+    k_action: float = 1.0
     state_space: Any = None
     action_space: Any = None
 
