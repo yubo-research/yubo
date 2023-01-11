@@ -7,9 +7,10 @@ from bbo.trajectories import collect_trajectory
 
 
 class Optimizer:
-    def __init__(self, env_conf, policy):
+    def __init__(self, env_conf, policy, num_opt_0=1000):
         self._env_conf = env_conf
-        # self._policy = policy
+        self._num_opt_0 = num_opt_0
+
         traj = collect_trajectory(self._env_conf, policy, seed=env_conf.seed)
         self._datum_best = Datum(policy, traj)
         self._data = []
@@ -21,7 +22,7 @@ class Optimizer:
             pd.design_dumb(0.1)
         else:
             eps = 1
-            num = 1000
+            num = self._num_opt_0
             for n in range(3):
                 times = pd.design(num, eps)
                 self._times_trace.append(times.mean() / 1e3)
@@ -33,7 +34,7 @@ class Optimizer:
         traj = collect_trajectory(self._env_conf, policy, seed=self._env_conf.seed)
         return Datum(policy, traj)
 
-    def collect_trace(self, ttype, num_iterations):
+    def collect_trace(self, ttype, num_iterations, num_init):
         assert ttype in ["actions", "params", "dumb"]
 
         trace = []
@@ -49,7 +50,7 @@ class Optimizer:
             i_iter = len(trace)
 
             # p_explore = max(.1, 5 / (1. + i_iter))
-            if i_iter < 15:
+            if i_iter < num_init:
                 delta_tr = 1e9
             else:
                 delta_tr = 0.1
