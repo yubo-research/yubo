@@ -361,3 +361,129 @@ TRACE: name = LunarLander-v2 ttype = params i_sample = 3 i_iter = 29 return = -1
 MD: md = 1.4509 tr = 1.4509
 ITER: i_iter = 0 ret = -385.49 ret_best = -120.22 delta_tr = 1000000000.00 n_data = 1
 MD: md = 1.2075 tr = 1.2075
+ITER: i_iter = 1 ret = -717.03 ret_best = -120.22 delta_tr = 1000000000.00 n_data = 2
+MD: md = 1.2510 tr = 1.2510
+ITER: i_iter = 2 ret = -578.84 ret_best = -120.22 delta_tr = 1000000000.00 n_data = 3
+MD: md = 1.2021 tr = 1.2179
+ITER: i_iter = 3 ret = -406.66 ret_best = -120.22 delta_tr = 1000000000.00 n_data = 4
+MD: md = 1.1840 tr = 1.1840
+ITER: i_iter = 4 ret = -901.85 ret_best = -120.22 delta_tr = 1000000000.00 n_data = 5
+MD: md = 1.1601 tr = 1.1601
+ITER: i_iter = 5 ret = -306.58 ret_best = -120.22 delta_tr = 1000000000.00 n_data = 6
+MD: md = 1.1506 tr = 1.1925
+ITER: i_iter = 6 ret = -430.60 ret_best = -120.22 delta_tr = 1000000000.00 n_data = 7
+MD: md = 1.1630 tr = 1.1973
+ITER: i_iter = 7 ret = -358.93 ret_best = -120.22 delta_tr = 1000000000.00 n_data = 8
+MD: md = 1.1402 tr = 1.1402
+ITER: i_iter = 8 ret = -120.22 ret_best = -120.22 delta_tr = 1000000000.00 n_data = 9
+MD: md = 1.1670 tr = 1.1776
+ITER: i_iter = 9 ret = -1147.27 ret_best = -120.22 delta_tr = 1000000000.00 n_data = 10
+MD: md = 1.1658 tr = 1.1658
+ITER: i_iter = 10 ret = -309.94 ret_best = -120.22 delta_tr = 1000000000.00 n_data = 11
+MD: md = 1.1453 tr = 1.1482
+ITER: i_iter = 11 ret = -339.65 ret_best = -120.22 delta_tr = 1000000000.00 n_data = 12
+MD: md = 1.1558 tr = 1.1558
+ITER: i_iter = 12 ret = -120.22 ret_best = -120.22 delta_tr = 1000000000.00 n_data = 13
+MD: md = 1.1074 tr = 1.1074
+ITER: i_iter = 13 ret = -268.40 ret_best = -120.22 delta_tr = 1000000000.00 n_data = 14
+MD: md = 1.1174 tr = 1.1174
+ITER: i_iter = 14 ret = -120.22 ret_best = -120.22 delta_tr = 1000000000.00 n_data = 15
+MD: md = 1.1005 tr = 1.1005
+ITER: i_iter = 15 ret = -376.54 ret_best = -120.22 delta_tr = 1000000000.00 n_data = 16
+MD: md = 1.1057 tr = 1.1057
+ITER: i_iter = 16 ret = -600.23 ret_best = -120.22 delta_tr = 1000000000.00 n_data = 17
+MD: md = 1.0939 tr = 1.0939
+ITER: i_iter = 17 ret = -706.26 ret_best = -120.22 delta_tr = 1000000000.00 n_data = 18
+MD: md = 1.1003 tr = 1.1003
+ITER: i_iter = 18 ret = -574.23 ret_best = -120.22 delta_tr = 1000000000.00 n_data = 19
+MD: md = 1.0790 tr = 1.1674
+ITER: i_iter = 19 ret = -821.70 ret_best = -120.22 delta_tr = 1000000000.00 n_data = 20
+MD: md = 1.0865 tr = 1.1722
+ITER: i_iter = 20 ret = -428.52 ret_best = -120.22 delta_tr = 1000000000.00 n_data = 21
+MD: md = 1.0974 tr = 1.2464
+ITER: i_iter = 21 ret = -1130.19 ret_best = -120.22 delta_tr = 1000000000.00 n_data = 22
+MD: md = 1.1098 tr = 1.1098
+ITER: i_iter = 22 ret = -434.81 ret_best = -120.22 delta_tr = 1000000000.00 n_data = 23
+MD: md = 1.0677 tr = 1.0744
+ITER: i_iter = 23 ret = -963.29 ret_best = -120.22 delta_tr = 1000000000.00 n_data = 24
+MD: md = 1.0712 tr = 1.0712
+ITER: i_iter = 24 ret = -432.96 ret_best = -120.22 delta_tr = 1000000000.00 n_data = 25
+MD: md = 1.0685 tr = 1.0685
+ITER: i_iter = 25 ret = -283.83 ret_best = -120.22 delta_tr = 1000000000.00 n_data = 26
+MD: md = 1.0589 tr = 1.1791
+ITER: i_iter = 26 ret = -119.91 ret_best = -119.91 delta_tr = 1000000000.00 n_data = 27
+MD: md = 1.0828 tr = 1.0989
+ITER: i_iter = 27 ret = -491.76 ret_best = -119.91 delta_tr = 1000000000.00 n_data = 28
+MD: md = 1.0454 tr = 1.1570
+ITER: i_iter = 28 ret = -330.27 ret_best = -119.91 delta_tr = 1000000000.00 n_data = 29
+MD: md = 1.0536 tr = 1.2671
+ITER: i_iter = 29 ret = -1246.44 ret_best = -119.91 delta_tr = 1000000000.00 n_data = 30
+TRACE: name = LunarLander-v2 ttype = params i_sample = 4 i_iter = 0 return = -120.223
+TRACE: name = LunarLander-v2 ttype = params i_sample = 4 i_iter = 1 return = -120.223
+TRACE: name = LunarLander-v2 ttype = params i_sample = 4 i_iter = 2 return = -120.223
+TRACE: name = LunarLander-v2 ttype = params i_sample = 4 i_iter = 3 return = -120.223
+TRACE: name = LunarLander-v2 ttype = params i_sample = 4 i_iter = 4 return = -120.223
+TRACE: name = LunarLander-v2 ttype = params i_sample = 4 i_iter = 5 return = -120.223
+TRACE: name = LunarLander-v2 ttype = params i_sample = 4 i_iter = 6 return = -120.223
+TRACE: name = LunarLander-v2 ttype = params i_sample = 4 i_iter = 7 return = -120.223
+TRACE: name = LunarLander-v2 ttype = params i_sample = 4 i_iter = 8 return = -120.223
+TRACE: name = LunarLander-v2 ttype = params i_sample = 4 i_iter = 9 return = -120.223
+TRACE: name = LunarLander-v2 ttype = params i_sample = 4 i_iter = 10 return = -120.223
+TRACE: name = LunarLander-v2 ttype = params i_sample = 4 i_iter = 11 return = -120.223
+TRACE: name = LunarLander-v2 ttype = params i_sample = 4 i_iter = 12 return = -120.223
+TRACE: name = LunarLander-v2 ttype = params i_sample = 4 i_iter = 13 return = -120.223
+TRACE: name = LunarLander-v2 ttype = params i_sample = 4 i_iter = 14 return = -120.223
+TRACE: name = LunarLander-v2 ttype = params i_sample = 4 i_iter = 15 return = -120.223
+TRACE: name = LunarLander-v2 ttype = params i_sample = 4 i_iter = 16 return = -120.223
+TRACE: name = LunarLander-v2 ttype = params i_sample = 4 i_iter = 17 return = -120.223
+TRACE: name = LunarLander-v2 ttype = params i_sample = 4 i_iter = 18 return = -120.223
+TRACE: name = LunarLander-v2 ttype = params i_sample = 4 i_iter = 19 return = -120.223
+TRACE: name = LunarLander-v2 ttype = params i_sample = 4 i_iter = 20 return = -120.223
+TRACE: name = LunarLander-v2 ttype = params i_sample = 4 i_iter = 21 return = -120.223
+TRACE: name = LunarLander-v2 ttype = params i_sample = 4 i_iter = 22 return = -120.223
+TRACE: name = LunarLander-v2 ttype = params i_sample = 4 i_iter = 23 return = -120.223
+TRACE: name = LunarLander-v2 ttype = params i_sample = 4 i_iter = 24 return = -120.223
+TRACE: name = LunarLander-v2 ttype = params i_sample = 4 i_iter = 25 return = -120.223
+TRACE: name = LunarLander-v2 ttype = params i_sample = 4 i_iter = 26 return = -119.907
+TRACE: name = LunarLander-v2 ttype = params i_sample = 4 i_iter = 27 return = -119.907
+TRACE: name = LunarLander-v2 ttype = params i_sample = 4 i_iter = 28 return = -119.907
+TRACE: name = LunarLander-v2 ttype = params i_sample = 4 i_iter = 29 return = -119.907
+MD: md = 1.3646 tr = 1.3646
+ITER: i_iter = 0 ret = -810.84 ret_best = -207.38 delta_tr = 1000000000.00 n_data = 1
+MD: md = 1.1933 tr = 1.1933
+ITER: i_iter = 1 ret = -1119.04 ret_best = -207.38 delta_tr = 1000000000.00 n_data = 2
+MD: md = 1.1976 tr = 1.2058
+ITER: i_iter = 2 ret = -817.97 ret_best = -207.38 delta_tr = 1000000000.00 n_data = 3
+MD: md = 1.1404 tr = 1.1408
+ITER: i_iter = 3 ret = -811.99 ret_best = -207.38 delta_tr = 1000000000.00 n_data = 4
+MD: md = 1.1468 tr = 1.1468
+ITER: i_iter = 4 ret = -849.67 ret_best = -207.38 delta_tr = 1000000000.00 n_data = 5
+MD: md = 1.1663 tr = 1.1663
+ITER: i_iter = 5 ret = -917.31 ret_best = -207.38 delta_tr = 1000000000.00 n_data = 6
+MD: md = 1.1670 tr = 1.1902
+ITER: i_iter = 6 ret = -892.94 ret_best = -207.38 delta_tr = 1000000000.00 n_data = 7
+MD: md = 1.1406 tr = 1.1406
+ITER: i_iter = 7 ret = -879.78 ret_best = -207.38 delta_tr = 1000000000.00 n_data = 8
+MD: md = 1.1424 tr = 1.1424
+ITER: i_iter = 8 ret = -289.26 ret_best = -207.38 delta_tr = 1000000000.00 n_data = 9
+MD: md = 1.1356 tr = 1.1726
+ITER: i_iter = 9 ret = -1086.62 ret_best = -207.38 delta_tr = 1000000000.00 n_data = 10
+MD: md = 1.1575 tr = 1.1613
+ITER: i_iter = 10 ret = -107.02 ret_best = -107.02 delta_tr = 1000000000.00 n_data = 11
+MD: md = 1.1214 tr = 1.1214
+ITER: i_iter = 11 ret = -107.02 ret_best = -107.02 delta_tr = 1000000000.00 n_data = 12
+MD: md = 1.1216 tr = 1.2404
+ITER: i_iter = 12 ret = -935.91 ret_best = -107.02 delta_tr = 1000000000.00 n_data = 13
+MD: md = 1.1313 tr = 1.2500
+ITER: i_iter = 13 ret = -482.82 ret_best = -107.02 delta_tr = 1000000000.00 n_data = 14
+MD: md = 1.0935 tr = 1.2257
+ITER: i_iter = 14 ret = -818.15 ret_best = -107.02 delta_tr = 1000000000.00 n_data = 15
+MD: md = 1.1311 tr = 1.3738
+ITER: i_iter = 15 ret = -464.53 ret_best = -107.02 delta_tr = 1000000000.00 n_data = 16
+MD: md = 1.1072 tr = 1.2545
+ITER: i_iter = 16 ret = -475.57 ret_best = -107.02 delta_tr = 1000000000.00 n_data = 17
+MD: md = 1.1105 tr = 1.3756
+ITER: i_iter = 17 ret = -862.08 ret_best = -107.02 delta_tr = 1000000000.00 n_data = 18
+MD: md = 1.0839 tr = 1.2854
+ITER: i_iter = 18 ret = -497.80 ret_best = -107.02 delta_tr = 1000000000.00 n_data = 19
+MD: md = 1.0545 tr = 1.5592

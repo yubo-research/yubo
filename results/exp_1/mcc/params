@@ -1186,3 +1186,356 @@ MD: md = 0.4831 tr = 0.4831
 ITER: i_iter = 7 ret = -3.74 ret_best = 97.40 delta_tr = 1000000000.00 n_data = 8
 MD: md = 0.4456 tr = 0.8597
 ITER: i_iter = 8 ret = -1.02 ret_best = 97.40 delta_tr = 1000000000.00 n_data = 9
+MD: md = 0.4271 tr = 1.1278
+ITER: i_iter = 9 ret = 83.87 ret_best = 97.40 delta_tr = 1000000000.00 n_data = 10
+MD: md = 0.4379 tr = 1.5668
+ITER: i_iter = 10 ret = -1.59 ret_best = 97.40 delta_tr = 1000000000.00 n_data = 11
+MD: md = 0.4046 tr = 0.4131
+ITER: i_iter = 11 ret = 98.04 ret_best = 98.04 delta_tr = 1000000000.00 n_data = 12
+MD: md = 0.4003 tr = 0.7910
+ITER: i_iter = 12 ret = -2.29 ret_best = 98.04 delta_tr = 1000000000.00 n_data = 13
+MD: md = 0.3994 tr = 0.9870
+ITER: i_iter = 13 ret = -23.51 ret_best = 98.04 delta_tr = 1000000000.00 n_data = 14
+MD: md = 0.3962 tr = 1.2938
+ITER: i_iter = 14 ret = -4.93 ret_best = 98.04 delta_tr = 1000000000.00 n_data = 15
+MD: md = 0.3880 tr = 0.8454
+ITER: i_iter = 15 ret = -24.68 ret_best = 98.04 delta_tr = 1000000000.00 n_data = 16
+MD: md = 0.3816 tr = 1.1102
+ITER: i_iter = 16 ret = -29.48 ret_best = 98.04 delta_tr = 1000000000.00 n_data = 17
+MD: md = 0.2992 tr = 0.7077
+ITER: i_iter = 17 ret = 85.84 ret_best = 98.04 delta_tr = 1000000000.00 n_data = 18
+MD: md = 0.2920 tr = 0.2938
+ITER: i_iter = 18 ret = -0.94 ret_best = 98.04 delta_tr = 1000000000.00 n_data = 19
+MD: md = 0.2759 tr = 1.3440
+ITER: i_iter = 19 ret = -11.97 ret_best = 98.04 delta_tr = 1000000000.00 n_data = 20
+MD: md = 0.2741 tr = 0.2741
+ITER: i_iter = 20 ret = 94.40 ret_best = 98.04 delta_tr = 1000000000.00 n_data = 21
+MD: md = 0.2777 tr = 0.5708
+ITER: i_iter = 21 ret = -10.78 ret_best = 98.04 delta_tr = 1000000000.00 n_data = 22
+MD: md = 0.2567 tr = 0.5165
+ITER: i_iter = 22 ret = 91.07 ret_best = 98.04 delta_tr = 1000000000.00 n_data = 23
+MD: md = 0.2602 tr = 0.9684
+ITER: i_iter = 23 ret = -12.60 ret_best = 98.04 delta_tr = 1000000000.00 n_data = 24
+MD: md = 0.2533 tr = 1.0121
+ITER: i_iter = 24 ret = 76.47 ret_best = 98.04 delta_tr = 1000000000.00 n_data = 25
+MD: md = 0.2465 tr = 0.2503
+ITER: i_iter = 25 ret = -1.96 ret_best = 98.04 delta_tr = 1000000000.00 n_data = 26
+MD: md = 0.2493 tr = 1.3581
+ITER: i_iter = 26 ret = -0.03 ret_best = 98.04 delta_tr = 1000000000.00 n_data = 27
+MD: md = 0.2520 tr = 0.6985
+ITER: i_iter = 27 ret = -0.53 ret_best = 98.04 delta_tr = 1000000000.00 n_data = 28
+MD: md = 0.2416 tr = 0.9299
+ITER: i_iter = 28 ret = -0.03 ret_best = 98.04 delta_tr = 1000000000.00 n_data = 29
+MD: md = 0.2506 tr = 0.2508
+ITER: i_iter = 29 ret = 96.00 ret_best = 98.04 delta_tr = 1000000000.00 n_data = 30
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 13 i_iter = 0 return = 76.133
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 13 i_iter = 1 return = 76.133
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 13 i_iter = 2 return = 97.399
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 13 i_iter = 3 return = 97.399
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 13 i_iter = 4 return = 97.399
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 13 i_iter = 5 return = 97.399
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 13 i_iter = 6 return = 97.399
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 13 i_iter = 7 return = 97.399
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 13 i_iter = 8 return = 97.399
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 13 i_iter = 9 return = 97.399
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 13 i_iter = 10 return = 97.399
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 13 i_iter = 11 return = 98.035
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 13 i_iter = 12 return = 98.035
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 13 i_iter = 13 return = 98.035
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 13 i_iter = 14 return = 98.035
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 13 i_iter = 15 return = 98.035
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 13 i_iter = 16 return = 98.035
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 13 i_iter = 17 return = 98.035
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 13 i_iter = 18 return = 98.035
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 13 i_iter = 19 return = 98.035
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 13 i_iter = 20 return = 98.035
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 13 i_iter = 21 return = 98.035
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 13 i_iter = 22 return = 98.035
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 13 i_iter = 23 return = 98.035
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 13 i_iter = 24 return = 98.035
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 13 i_iter = 25 return = 98.035
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 13 i_iter = 26 return = 98.035
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 13 i_iter = 27 return = 98.035
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 13 i_iter = 28 return = 98.035
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 13 i_iter = 29 return = 98.035
+MD: md = 1.3653 tr = 1.3653
+ITER: i_iter = 0 ret = -1.95 ret_best = 95.42 delta_tr = 1000000000.00 n_data = 1
+MD: md = 1.2438 tr = 1.2438
+ITER: i_iter = 1 ret = -43.78 ret_best = 95.42 delta_tr = 1000000000.00 n_data = 2
+MD: md = 0.8802 tr = 0.8802
+ITER: i_iter = 2 ret = 45.24 ret_best = 95.42 delta_tr = 1000000000.00 n_data = 3
+MD: md = 0.7746 tr = 0.7746
+ITER: i_iter = 3 ret = -6.89 ret_best = 95.42 delta_tr = 1000000000.00 n_data = 4
+MD: md = 0.7079 tr = 0.7083
+ITER: i_iter = 4 ret = -10.84 ret_best = 95.42 delta_tr = 1000000000.00 n_data = 5
+MD: md = 0.7139 tr = 0.8167
+ITER: i_iter = 5 ret = -11.69 ret_best = 95.42 delta_tr = 1000000000.00 n_data = 6
+MD: md = 0.6765 tr = 0.6765
+ITER: i_iter = 6 ret = 97.77 ret_best = 97.77 delta_tr = 1000000000.00 n_data = 7
+MD: md = 0.4694 tr = 0.9448
+ITER: i_iter = 7 ret = -32.64 ret_best = 97.77 delta_tr = 1000000000.00 n_data = 8
+MD: md = 0.4414 tr = 0.8587
+ITER: i_iter = 8 ret = -2.40 ret_best = 97.77 delta_tr = 1000000000.00 n_data = 9
+MD: md = 0.4395 tr = 1.1047
+ITER: i_iter = 9 ret = -1.38 ret_best = 97.77 delta_tr = 1000000000.00 n_data = 10
+MD: md = 0.4252 tr = 1.7258
+ITER: i_iter = 10 ret = -12.24 ret_best = 97.77 delta_tr = 1000000000.00 n_data = 11
+MD: md = 0.4279 tr = 1.4784
+ITER: i_iter = 11 ret = -30.42 ret_best = 97.77 delta_tr = 1000000000.00 n_data = 12
+MD: md = 0.4053 tr = 1.0784
+ITER: i_iter = 12 ret = -20.14 ret_best = 97.77 delta_tr = 1000000000.00 n_data = 13
+MD: md = 0.4018 tr = 1.2202
+ITER: i_iter = 13 ret = -25.21 ret_best = 97.77 delta_tr = 1000000000.00 n_data = 14
+MD: md = 0.3916 tr = 1.5128
+ITER: i_iter = 14 ret = -0.08 ret_best = 97.77 delta_tr = 1000000000.00 n_data = 15
+MD: md = 0.3968 tr = 0.4114
+ITER: i_iter = 15 ret = -2.82 ret_best = 97.77 delta_tr = 1000000000.00 n_data = 16
+MD: md = 0.3838 tr = 0.3862
+ITER: i_iter = 16 ret = 93.41 ret_best = 97.77 delta_tr = 1000000000.00 n_data = 17
+MD: md = 0.3175 tr = 1.7893
+ITER: i_iter = 17 ret = -1.30 ret_best = 97.77 delta_tr = 1000000000.00 n_data = 18
+MD: md = 0.2924 tr = 0.9621
+ITER: i_iter = 18 ret = -10.56 ret_best = 97.77 delta_tr = 1000000000.00 n_data = 19
+MD: md = 0.2826 tr = 0.6666
+ITER: i_iter = 19 ret = 84.80 ret_best = 97.77 delta_tr = 1000000000.00 n_data = 20
+MD: md = 0.2788 tr = 1.5471
+ITER: i_iter = 20 ret = -18.98 ret_best = 97.77 delta_tr = 1000000000.00 n_data = 21
+MD: md = 0.2685 tr = 1.4864
+ITER: i_iter = 21 ret = -29.94 ret_best = 97.77 delta_tr = 1000000000.00 n_data = 22
+MD: md = 0.2647 tr = 1.2285
+ITER: i_iter = 22 ret = -16.32 ret_best = 97.77 delta_tr = 1000000000.00 n_data = 23
+MD: md = 0.2459 tr = 0.6346
+ITER: i_iter = 23 ret = -0.40 ret_best = 97.77 delta_tr = 1000000000.00 n_data = 24
+MD: md = 0.2555 tr = 1.0753
+ITER: i_iter = 24 ret = -1.10 ret_best = 97.77 delta_tr = 1000000000.00 n_data = 25
+MD: md = 0.2528 tr = 1.7500
+ITER: i_iter = 25 ret = -1.92 ret_best = 97.77 delta_tr = 1000000000.00 n_data = 26
+MD: md = 0.2495 tr = 0.8607
+ITER: i_iter = 26 ret = -0.48 ret_best = 97.77 delta_tr = 1000000000.00 n_data = 27
+MD: md = 0.2419 tr = 1.1823
+ITER: i_iter = 27 ret = -41.40 ret_best = 97.77 delta_tr = 1000000000.00 n_data = 28
+MD: md = 0.2427 tr = 1.3456
+ITER: i_iter = 28 ret = -2.24 ret_best = 97.77 delta_tr = 1000000000.00 n_data = 29
+MD: md = 0.2385 tr = 1.2145
+ITER: i_iter = 29 ret = -10.08 ret_best = 97.77 delta_tr = 1000000000.00 n_data = 30
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 14 i_iter = 0 return = 95.425
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 14 i_iter = 1 return = 95.425
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 14 i_iter = 2 return = 95.425
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 14 i_iter = 3 return = 95.425
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 14 i_iter = 4 return = 95.425
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 14 i_iter = 5 return = 95.425
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 14 i_iter = 6 return = 97.770
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 14 i_iter = 7 return = 97.770
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 14 i_iter = 8 return = 97.770
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 14 i_iter = 9 return = 97.770
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 14 i_iter = 10 return = 97.770
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 14 i_iter = 11 return = 97.770
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 14 i_iter = 12 return = 97.770
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 14 i_iter = 13 return = 97.770
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 14 i_iter = 14 return = 97.770
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 14 i_iter = 15 return = 97.770
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 14 i_iter = 16 return = 97.770
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 14 i_iter = 17 return = 97.770
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 14 i_iter = 18 return = 97.770
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 14 i_iter = 19 return = 97.770
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 14 i_iter = 20 return = 97.770
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 14 i_iter = 21 return = 97.770
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 14 i_iter = 22 return = 97.770
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 14 i_iter = 23 return = 97.770
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 14 i_iter = 24 return = 97.770
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 14 i_iter = 25 return = 97.770
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 14 i_iter = 26 return = 97.770
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 14 i_iter = 27 return = 97.770
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 14 i_iter = 28 return = 97.770
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 14 i_iter = 29 return = 97.770
+MD: md = 1.5971 tr = 1.5971
+ITER: i_iter = 0 ret = -1.93 ret_best = 97.20 delta_tr = 1000000000.00 n_data = 1
+MD: md = 1.2896 tr = 1.2896
+ITER: i_iter = 1 ret = -44.01 ret_best = 97.20 delta_tr = 1000000000.00 n_data = 2
+MD: md = 1.0377 tr = 1.0377
+ITER: i_iter = 2 ret = 76.06 ret_best = 97.20 delta_tr = 1000000000.00 n_data = 3
+MD: md = 0.8365 tr = 0.8417
+ITER: i_iter = 3 ret = -3.31 ret_best = 97.20 delta_tr = 1000000000.00 n_data = 4
+MD: md = 0.7064 tr = 1.1250
+ITER: i_iter = 4 ret = -14.91 ret_best = 97.20 delta_tr = 1000000000.00 n_data = 5
+MD: md = 0.6753 tr = 0.6753
+ITER: i_iter = 5 ret = -11.75 ret_best = 97.20 delta_tr = 1000000000.00 n_data = 6
+MD: md = 0.5740 tr = 0.5740
+ITER: i_iter = 6 ret = 89.16 ret_best = 97.20 delta_tr = 1000000000.00 n_data = 7
+MD: md = 0.4949 tr = 1.2324
+ITER: i_iter = 7 ret = -28.40 ret_best = 97.20 delta_tr = 1000000000.00 n_data = 8
+MD: md = 0.4618 tr = 1.3042
+ITER: i_iter = 8 ret = -11.00 ret_best = 97.20 delta_tr = 1000000000.00 n_data = 9
+MD: md = 0.4360 tr = 0.4389
+ITER: i_iter = 9 ret = -0.62 ret_best = 97.20 delta_tr = 1000000000.00 n_data = 10
+MD: md = 0.4351 tr = 0.4351
+ITER: i_iter = 10 ret = 97.73 ret_best = 97.73 delta_tr = 1000000000.00 n_data = 11
+MD: md = 0.4194 tr = 1.0792
+ITER: i_iter = 11 ret = -16.26 ret_best = 97.73 delta_tr = 1000000000.00 n_data = 12
+MD: md = 0.3964 tr = 0.7450
+ITER: i_iter = 12 ret = 90.82 ret_best = 97.73 delta_tr = 1000000000.00 n_data = 13
+MD: md = 0.3957 tr = 1.6121
+ITER: i_iter = 13 ret = -0.04 ret_best = 97.73 delta_tr = 1000000000.00 n_data = 14
+MD: md = 0.3727 tr = 0.3738
+ITER: i_iter = 14 ret = -1.14 ret_best = 97.73 delta_tr = 1000000000.00 n_data = 15
+MD: md = 0.3849 tr = 1.2372
+ITER: i_iter = 15 ret = -2.37 ret_best = 97.73 delta_tr = 1000000000.00 n_data = 16
+MD: md = 0.3629 tr = 1.3569
+ITER: i_iter = 16 ret = 77.96 ret_best = 97.73 delta_tr = 1000000000.00 n_data = 17
+MD: md = 0.3357 tr = 1.0797
+ITER: i_iter = 17 ret = 84.52 ret_best = 97.73 delta_tr = 1000000000.00 n_data = 18
+MD: md = 0.3023 tr = 1.1101
+ITER: i_iter = 18 ret = -28.81 ret_best = 97.73 delta_tr = 1000000000.00 n_data = 19
+MD: md = 0.3072 tr = 0.7368
+ITER: i_iter = 19 ret = 96.54 ret_best = 97.73 delta_tr = 1000000000.00 n_data = 20
+MD: md = 0.2870 tr = 0.9791
+ITER: i_iter = 20 ret = -0.19 ret_best = 97.73 delta_tr = 1000000000.00 n_data = 21
+MD: md = 0.2711 tr = 1.4280
+ITER: i_iter = 21 ret = -12.73 ret_best = 97.73 delta_tr = 1000000000.00 n_data = 22
+MD: md = 0.2662 tr = 1.4435
+ITER: i_iter = 22 ret = -2.40 ret_best = 97.73 delta_tr = 1000000000.00 n_data = 23
+MD: md = 0.2688 tr = 1.3309
+ITER: i_iter = 23 ret = -30.92 ret_best = 97.73 delta_tr = 1000000000.00 n_data = 24
+MD: md = 0.2467 tr = 0.9893
+ITER: i_iter = 24 ret = -5.13 ret_best = 97.73 delta_tr = 1000000000.00 n_data = 25
+MD: md = 0.2451 tr = 1.3178
+ITER: i_iter = 25 ret = -14.22 ret_best = 97.73 delta_tr = 1000000000.00 n_data = 26
+MD: md = 0.2470 tr = 0.8146
+ITER: i_iter = 26 ret = -7.26 ret_best = 97.73 delta_tr = 1000000000.00 n_data = 27
+MD: md = 0.2398 tr = 0.2398
+ITER: i_iter = 27 ret = 96.76 ret_best = 97.73 delta_tr = 1000000000.00 n_data = 28
+MD: md = 0.2429 tr = 1.7704
+ITER: i_iter = 28 ret = -3.02 ret_best = 97.73 delta_tr = 1000000000.00 n_data = 29
+MD: md = 0.2438 tr = 0.5186
+ITER: i_iter = 29 ret = -0.25 ret_best = 97.73 delta_tr = 1000000000.00 n_data = 30
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 15 i_iter = 0 return = 97.197
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 15 i_iter = 1 return = 97.197
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 15 i_iter = 2 return = 97.197
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 15 i_iter = 3 return = 97.197
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 15 i_iter = 4 return = 97.197
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 15 i_iter = 5 return = 97.197
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 15 i_iter = 6 return = 97.197
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 15 i_iter = 7 return = 97.197
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 15 i_iter = 8 return = 97.197
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 15 i_iter = 9 return = 97.197
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 15 i_iter = 10 return = 97.729
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 15 i_iter = 11 return = 97.729
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 15 i_iter = 12 return = 97.729
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 15 i_iter = 13 return = 97.729
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 15 i_iter = 14 return = 97.729
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 15 i_iter = 15 return = 97.729
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 15 i_iter = 16 return = 97.729
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 15 i_iter = 17 return = 97.729
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 15 i_iter = 18 return = 97.729
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 15 i_iter = 19 return = 97.729
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 15 i_iter = 20 return = 97.729
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 15 i_iter = 21 return = 97.729
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 15 i_iter = 22 return = 97.729
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 15 i_iter = 23 return = 97.729
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 15 i_iter = 24 return = 97.729
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 15 i_iter = 25 return = 97.729
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 15 i_iter = 26 return = 97.729
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 15 i_iter = 27 return = 97.729
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 15 i_iter = 28 return = 97.729
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 15 i_iter = 29 return = 97.729
+MD: md = 1.4240 tr = 1.4240
+ITER: i_iter = 0 ret = -43.94 ret_best = -13.67 delta_tr = 1000000000.00 n_data = 1
+MD: md = 1.1241 tr = 1.1241
+ITER: i_iter = 1 ret = 97.48 ret_best = 97.48 delta_tr = 1000000000.00 n_data = 2
+MD: md = 1.0481 tr = 2.0000
+ITER: i_iter = 2 ret = -1.92 ret_best = 97.48 delta_tr = 1000000000.00 n_data = 3
+MD: md = 0.7720 tr = 0.7728
+ITER: i_iter = 3 ret = -3.81 ret_best = 97.48 delta_tr = 1000000000.00 n_data = 4
+MD: md = 0.7106 tr = 1.5030
+ITER: i_iter = 4 ret = -16.80 ret_best = 97.48 delta_tr = 1000000000.00 n_data = 5
+MD: md = 0.6093 tr = 0.6110
+ITER: i_iter = 5 ret = 90.50 ret_best = 97.48 delta_tr = 1000000000.00 n_data = 6
+MD: md = 0.5781 tr = 1.4142
+ITER: i_iter = 6 ret = 66.14 ret_best = 97.48 delta_tr = 1000000000.00 n_data = 7
+MD: md = 0.5614 tr = 1.6507
+ITER: i_iter = 7 ret = -8.88 ret_best = 97.48 delta_tr = 1000000000.00 n_data = 8
+MD: md = 0.4836 tr = 1.1480
+ITER: i_iter = 8 ret = -0.39 ret_best = 97.48 delta_tr = 1000000000.00 n_data = 9
+MD: md = 0.4265 tr = 1.1804
+ITER: i_iter = 9 ret = -19.87 ret_best = 97.48 delta_tr = 1000000000.00 n_data = 10
+MD: md = 0.4224 tr = 0.4226
+ITER: i_iter = 10 ret = -2.97 ret_best = 97.48 delta_tr = 1000000000.00 n_data = 11
+MD: md = 0.4184 tr = 1.5658
+ITER: i_iter = 11 ret = -0.85 ret_best = 97.48 delta_tr = 1000000000.00 n_data = 12
+MD: md = 0.4182 tr = 0.7473
+ITER: i_iter = 12 ret = -2.32 ret_best = 97.48 delta_tr = 1000000000.00 n_data = 13
+MD: md = 0.4019 tr = 1.0129
+ITER: i_iter = 13 ret = 80.48 ret_best = 97.48 delta_tr = 1000000000.00 n_data = 14
+MD: md = 0.3824 tr = 1.4650
+ITER: i_iter = 14 ret = 63.98 ret_best = 97.48 delta_tr = 1000000000.00 n_data = 15
+MD: md = 0.3831 tr = 0.9286
+ITER: i_iter = 15 ret = -20.05 ret_best = 97.48 delta_tr = 1000000000.00 n_data = 16
+MD: md = 0.3607 tr = 0.3874
+ITER: i_iter = 16 ret = -1.57 ret_best = 97.48 delta_tr = 1000000000.00 n_data = 17
+MD: md = 0.3300 tr = 1.3340
+ITER: i_iter = 17 ret = -3.13 ret_best = 97.48 delta_tr = 1000000000.00 n_data = 18
+MD: md = 0.3060 tr = 1.7368
+ITER: i_iter = 18 ret = -11.66 ret_best = 97.48 delta_tr = 1000000000.00 n_data = 19
+MD: md = 0.2968 tr = 1.4770
+ITER: i_iter = 19 ret = -30.64 ret_best = 97.48 delta_tr = 1000000000.00 n_data = 20
+MD: md = 0.2835 tr = 1.7846
+ITER: i_iter = 20 ret = -0.39 ret_best = 97.48 delta_tr = 1000000000.00 n_data = 21
+MD: md = 0.2787 tr = 1.0593
+ITER: i_iter = 21 ret = -6.17 ret_best = 97.48 delta_tr = 1000000000.00 n_data = 22
+MD: md = 0.2756 tr = 0.8571
+ITER: i_iter = 22 ret = 88.43 ret_best = 97.48 delta_tr = 1000000000.00 n_data = 23
+MD: md = 0.2655 tr = 1.2259
+ITER: i_iter = 23 ret = 74.16 ret_best = 97.48 delta_tr = 1000000000.00 n_data = 24
+MD: md = 0.2615 tr = 1.0094
+ITER: i_iter = 24 ret = -2.18 ret_best = 97.48 delta_tr = 1000000000.00 n_data = 25
+MD: md = 0.2574 tr = 0.8923
+ITER: i_iter = 25 ret = -0.21 ret_best = 97.48 delta_tr = 1000000000.00 n_data = 26
+MD: md = 0.2573 tr = 0.6769
+ITER: i_iter = 26 ret = -8.19 ret_best = 97.48 delta_tr = 1000000000.00 n_data = 27
+MD: md = 0.2571 tr = 1.3831
+ITER: i_iter = 27 ret = -4.41 ret_best = 97.48 delta_tr = 1000000000.00 n_data = 28
+MD: md = 0.2474 tr = 1.4119
+ITER: i_iter = 28 ret = -15.77 ret_best = 97.48 delta_tr = 1000000000.00 n_data = 29
+MD: md = 0.2519 tr = 1.1756
+ITER: i_iter = 29 ret = -29.63 ret_best = 97.48 delta_tr = 1000000000.00 n_data = 30
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 16 i_iter = 0 return = -13.666
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 16 i_iter = 1 return = 97.484
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 16 i_iter = 2 return = 97.484
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 16 i_iter = 3 return = 97.484
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 16 i_iter = 4 return = 97.484
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 16 i_iter = 5 return = 97.484
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 16 i_iter = 6 return = 97.484
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 16 i_iter = 7 return = 97.484
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 16 i_iter = 8 return = 97.484
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 16 i_iter = 9 return = 97.484
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 16 i_iter = 10 return = 97.484
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 16 i_iter = 11 return = 97.484
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 16 i_iter = 12 return = 97.484
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 16 i_iter = 13 return = 97.484
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 16 i_iter = 14 return = 97.484
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 16 i_iter = 15 return = 97.484
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 16 i_iter = 16 return = 97.484
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 16 i_iter = 17 return = 97.484
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 16 i_iter = 18 return = 97.484
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 16 i_iter = 19 return = 97.484
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 16 i_iter = 20 return = 97.484
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 16 i_iter = 21 return = 97.484
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 16 i_iter = 22 return = 97.484
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 16 i_iter = 23 return = 97.484
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 16 i_iter = 24 return = 97.484
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 16 i_iter = 25 return = 97.484
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 16 i_iter = 26 return = 97.484
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 16 i_iter = 27 return = 97.484
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 16 i_iter = 28 return = 97.484
+TRACE: name = MountainCarContinuous-v0 ttype = params i_sample = 16 i_iter = 29 return = 97.484
+MD: md = 1.5005 tr = 1.5005
+ITER: i_iter = 0 ret = -1.94 ret_best = -1.60 delta_tr = 1000000000.00 n_data = 1
+MD: md = 1.1335 tr = 1.1335
+ITER: i_iter = 1 ret = 80.86 ret_best = 80.86 delta_tr = 1000000000.00 n_data = 2
+MD: md = 1.1030 tr = 2.0000
+ITER: i_iter = 2 ret = -44.04 ret_best = 80.86 delta_tr = 1000000000.00 n_data = 3
+MD: md = 0.7898 tr = 0.7990
+ITER: i_iter = 3 ret = -3.56 ret_best = 80.86 delta_tr = 1000000000.00 n_data = 4
+MD: md = 0.7081 tr = 1.5324
+ITER: i_iter = 4 ret = -18.58 ret_best = 80.86 delta_tr = 1000000000.00 n_data = 5
+MD: md = 0.5944 tr = 0.6040
