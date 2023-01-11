@@ -25,7 +25,7 @@ if __name__ == "__main__":
         seed = 17 + i_sample
         np.random.seed(seed)  # cma in PolicyDesigner needs this
         if env_tag == "mcc":
-            env_conf = EnvConf("MountainCarContinuous-v0", seed=seed, max_steps=1000, solved=9999, show_frames=100, num_opt_0=100)
+            env_conf = EnvConf("MountainCarContinuous-v0", seed=seed, max_steps=1000, solved=9999, show_frames=100, num_opt_0=100, k_action=10)
         elif env_tag == "lunar":
             env_conf = EnvConf("LunarLander-v2", seed=seed, max_steps=500, kwargs={"continuous": True}, solved=999, show_frames=30, num_opt_0=100)
         elif env_tag == "ant":
