@@ -1,5 +1,6 @@
 import torch
 
+
 class MOBOModel:
     def __init__(self, kernel, measurements: torch.Tensor, obs_obs_distances: torch.Tensor):
         ds = obs_obs_distances.shape

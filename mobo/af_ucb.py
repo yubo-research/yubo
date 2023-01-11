@@ -1,5 +1,6 @@
 import torch
 
+
 class AFUCB:
     def __init__(self, llambda):
         self._llambda = llambda

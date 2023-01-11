@@ -10,6 +10,7 @@ def sample(env_conf, ttype, tag, num_iterations):
 
 if __name__ == "__main__":
     import sys
+    import time
 
     from bbo.env_conf import EnvConf
     from bbo.linear_policy import LinearPolicy
@@ -19,9 +20,8 @@ if __name__ == "__main__":
     ttype = sys.argv[2]
     num_iterations = 30
 
-    import time
-    t0 = time.time()
-    for i_sample in range(1):
+    for i_sample in range(100):
+        t0 = time.time()
         seed = 17 + i_sample
         np.random.seed(seed)  # cma in PolicyDesigner needs this
         if env_tag == "mcc":
@@ -33,5 +33,4 @@ if __name__ == "__main__":
         else:
             assert False, env_tag
         sample(env_conf, ttype, tag=f"i_sample = {i_sample}", num_iterations=30)
-    print (time.time() - t0)
-    
+        print(f"TIME_SAMPLE: {time.time() - t0:.2f}")
