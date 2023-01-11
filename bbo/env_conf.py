@@ -11,6 +11,7 @@ class EnvConf:
     solved: int
     show_frames: int
     seed: int
+    num_opt_0: int
     kwargs: dict = None
     state_space: Any = None
     action_space: Any = None
