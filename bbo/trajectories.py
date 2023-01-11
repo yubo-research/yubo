@@ -20,8 +20,15 @@ def collect_trajectory(env_conf, policy, show_frames=None, seed=None):
     return_trajectory = 0
     traj_states, traj_actions = [], []
     lb = env.observation_space.low
+    if np.all(np.isinf(lb)):
+        lb = -1*np.ones(shape=lb.shape)
+    assert not np.any(np.isinf(lb)), lb
+    
     width = env.observation_space.high - lb
-
+    if np.all(np.isinf(width)):
+        width = 2*np.ones(shape=width.shape)
+    assert not np.any(np.isinf(width)), width
+    
     def draw():
         clear_output(wait=True)
         plt.imshow(env.render())
@@ -30,6 +37,7 @@ def collect_trajectory(env_conf, policy, show_frames=None, seed=None):
 
     state, _ = env.reset(seed=seed)
     for i_iter in range(env_conf.max_steps):
+        assert np.all(state >= lb), (state, lb)
         state_p = (state - lb) / width
         action_p = policy(state_p)  # in [-1,1]
         action = env.action_space.low + (env.action_space.high - env.action_space.low) * (1 + action_p) / 2
