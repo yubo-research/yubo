@@ -21,14 +21,14 @@ def collect_trajectory(env_conf, policy, show_frames=None, seed=None):
     traj_states, traj_actions = [], []
     lb = env.observation_space.low
     if np.all(np.isinf(lb)):
-        lb = -1*np.ones(shape=lb.shape)
+        lb = -1 * np.ones(shape=lb.shape)
     assert not np.any(np.isinf(lb)), lb
-    
+
     width = env.observation_space.high - lb
     if np.all(np.isinf(width)):
-        width = 2*np.ones(shape=width.shape)
+        width = 2 * np.ones(shape=width.shape)
     assert not np.any(np.isinf(width)), width
-    
+
     def draw():
         clear_output(wait=True)
         plt.imshow(env.render())
