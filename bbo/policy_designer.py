@@ -1,5 +1,6 @@
 import time
 
+import cma
 import numpy as np
 
 
@@ -33,24 +34,34 @@ class PolicyDesigner:
         self._policy_best.set_params(p)
         return np.array([0, 0])
 
-    def design(self, num_iterations, eps):
+    def design(self, num_iterations):
+        import warnings
+
+        warnings.simplefilter("ignore")
         policy_test = self._policy_best.clone()
         times = []
+        es = cma.CMAEvolutionStrategy([0] * policy_test.num_params(), sigma0=0.1, inopts={"verbose": -1})
         for _ in range(num_iterations):
-            p = policy_test.get_params()
-            p = self._clamp_params(p + eps * np.random.normal(size=p.shape))
-            policy_test.set_params(p)
-            t0 = time.time_ns()
-            md_test = self._acq(policy_test)
-            tf = time.time_ns()
-            times.append(tf - t0)
-            dist_to_trusted = self._calc_trust(policy_test)
-            # print ("CHECK:", eps, md_test, self._md_best, dist_to_trusted, self._delta_tr)
-            if md_test > self._md_best and dist_to_trusted <= self._delta_tr:
-                self._md_best = md_test
-                self._dist_to_trusted = dist_to_trusted
-                self._policy_best = policy_test.clone()
-                # print (f"BEST: md = {self._md_best:.4f} tr = {self._dist_to_trusted:.4f}")
+            ws = es.ask()
+            phis = []
+            for w in ws:  # TODO: Could we do parallel evaluation and save some calls to NumPy?
+                policy_test.set_params(self._clamp_params(w))
+                t0 = time.time_ns()
+                md_test = self._acq(policy_test)
+                tf = time.time_ns()
+                times.append(tf - t0)
+                dist_to_trusted = self._calc_trust(policy_test)
+                # print ("CHECK:", eps, md_test, self._md_best, dist_to_trusted, self._delta_tr)
+                if md_test > self._md_best and dist_to_trusted <= self._delta_tr:
+                    self._md_best = md_test
+                    self._dist_to_trusted = dist_to_trusted
+                    self._policy_best = policy_test.clone()
+                    # print (f"BEST: md = {self._md_best:.4f} tr = {self._dist_to_trusted:.4f} {np.abs(self._policy_best.get_params()).max()}")
+                phi = md_test - 1000 * max(0, (dist_to_trusted - self._delta_tr) / self._delta_tr)
+                phis.append(phi)
+            phis = np.array(phis)
+            with warnings.catch_warnings():
+                es.tell(ws, -phis)
         return np.array(times)
 
     def min_dist(self):
