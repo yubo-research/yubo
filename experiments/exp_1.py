@@ -15,8 +15,8 @@ if __name__ == "__main__":
     ttype = sys.argv[1]
 
     seed = None
-    env_conf = EnvConf("MountainCarContinuous-v0", seed=seed, max_steps=1000, solved=9999, show_frames=100)
-    # env_conf = EnvConf('LunarLander-v2', seed=seed, max_steps=500, kwargs={'continuous':True}, solved=250, show_frames=30)
+    # env_conf = EnvConf("MountainCarContinuous-v0", seed=seed, max_steps=1000, solved=9999, show_frames=100)
+    env_conf = EnvConf('LunarLander-v2', seed=seed, max_steps=500, kwargs={'continuous':True}, solved=999, show_frames=30)
 
     for i_sample in range(100):
         sample(env_conf, ttype, tag=f"i_sample = {i_sample}")
