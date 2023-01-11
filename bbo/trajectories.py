@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-import gym
+import gymnasium as gym
 import matplotlib.pyplot as plt
 import numpy as np
 from IPython.display import clear_output

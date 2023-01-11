@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Any
 
-import gym
+import gymnasium as gym
 
 
 @dataclass

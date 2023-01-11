@@ -12,14 +12,18 @@ if __name__ == "__main__":
     from bbo.linear_policy import LinearPolicy
     from bbo.optimizer import Optimizer
 
-    ttype = sys.argv[1]
+    env_tag = sys.argv[1]
+    ttype = sys.argv[2]
     num_iterations = 30
 
-    seed = None
-    # env_conf = EnvConf("MountainCarContinuous-v0", seed=seed, max_steps=1000, solved=9999, show_frames=100, num_opt_0=1000, k_action=10.)
-    # env_conf = EnvConf("LunarLander-v2", seed=seed, max_steps=500, kwargs={"continuous": True}, solved=999, show_frames=30, num_opt_0=3000)
-    # env_conf = EnvConf("Ant-v4", seed=seed, max_steps=1000, solved=999, show_frames=30, num_opt_0=3000)
-    env_conf = EnvConf("Ant-v4", seed=seed, max_steps=1000, solved=999, show_frames=30, num_opt_0=3000)
-    
     for i_sample in range(100):
+        seed = 17 + i_sample
+        if env_tag == "mcc":
+            env_conf = EnvConf("MountainCarContinuous-v0", seed=seed, max_steps=1000, solved=9999, show_frames=100, num_opt_0=1000)
+        elif env_tag == "lunar":
+            env_conf = EnvConf("LunarLander-v2", seed=seed, max_steps=500, kwargs={"continuous": True}, solved=999, show_frames=30, num_opt_0=3000)
+        elif env_tag == "ant":
+            env_conf = EnvConf("Ant-v4", seed=seed, max_steps=1000, solved=999, show_frames=30, num_opt_0=3000)
+        else:
+            assert False, env_name
         sample(env_conf, ttype, tag=f"i_sample = {i_sample}", num_iterations=30)
