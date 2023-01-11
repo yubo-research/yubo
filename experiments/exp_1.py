@@ -19,7 +19,9 @@ if __name__ == "__main__":
     ttype = sys.argv[2]
     num_iterations = 30
 
-    for i_sample in range(100):
+    import time
+    t0 = time.time()
+    for i_sample in range(1):
         seed = 17 + i_sample
         np.random.seed(seed)  # cma in PolicyDesigner needs this
         if env_tag == "mcc":
@@ -31,3 +33,5 @@ if __name__ == "__main__":
         else:
             assert False, env_tag
         sample(env_conf, ttype, tag=f"i_sample = {i_sample}", num_iterations=30)
+    print (time.time() - t0)
+    
