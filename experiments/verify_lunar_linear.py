@@ -17,7 +17,10 @@ def optimize(env_conf, num_iterations):
         ws = es.ask()
         for w in ws:
             policy.set_params(w)
-            phis.append(collect_trajectory(env_conf, policy, seed=env_conf.seed).rreturn)
+            phi = collect_trajectory(env_conf, policy, seed=env_conf.seed).rreturn
+            phis.append(phi)
+            w = np.array(w)
+            print("POP:", phi, w.mean(), w.std())
         phis = np.array(phis)
 
         es.tell(ws, -phis)
@@ -27,13 +30,12 @@ def optimize(env_conf, num_iterations):
 
 
 if __name__ == "__main__":
-    from rl_gym.env_conf import EnvConf
+    from rl_gym.env_conf import get_env_conf
 
+    env_tag = "lunar"
     num_iterations = 10000
 
-    seed = 17
-    # env_conf = EnvConf("MountainCarContinuous-v0", seed=seed, max_steps=1000, solved=9999, show_frames=100, num_opt_0=1000, k_action=10)
-    # env_conf = EnvConf("LunarLander-v2", seed=seed, max_steps=500, kwargs={"continuous": True}, solved=999, show_frames=30, num_opt_0=3000)
-    env_conf = EnvConf("Ant-v4", seed=seed, max_steps=1000, solved=999, show_frames=30, num_opt_0=3000)
+    seed = 19
+    env_conf = get_env_conf(env_tag, seed)
 
     optimize(env_conf, num_iterations)

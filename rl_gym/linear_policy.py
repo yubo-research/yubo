@@ -28,7 +28,8 @@ class LinearPolicy:
         return lp
 
     def __call__(self, state):
-        return np.tanh(self._env_conf.k_action * self._beta @ state)
+        state = self._env_conf.k_state * state
+        return np.tanh(self._beta @ state)
 
 
 # lp = LinearPolicy(env_conf)

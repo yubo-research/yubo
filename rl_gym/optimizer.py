@@ -1,5 +1,5 @@
 from rl_gym.datum import Datum
-from rl_gym.distance import distance_actions, distance_parameters
+from rl_gym.distance import distance_actions, distance_actions_corr, distance_parameters
 from rl_gym.min_distance_actions_fast import MinDistanceActionsFast
 from rl_gym.min_distance_parameters import MinDistanceParameters
 from rl_gym.policy_designer import PolicyDesigner
@@ -10,9 +10,15 @@ class Optimizer:
     def __init__(self, env_conf, policy):
         self._env_conf = env_conf
 
-        traj = collect_trajectory(self._env_conf, policy, seed=env_conf.seed)
+        traj = self._collect_trajectory(policy)
         self._datum_best = Datum(policy, traj)
         self._data = []
+
+    def _collect_trajectory(self, policy):
+        traj = collect_trajectory(self._env_conf, policy, seed=self._env_conf.seed)
+        # w = np.array(policy.get_params()).flatten()
+        # print ("CT:", traj.rreturn, w.mean(), w.std())
+        return traj
 
     def _iterate(self, trust_distance_fn, acq_fn, data_opt, delta_tr, dumb):
         pd = PolicyDesigner(trust_distance_fn, acq_fn, data_opt, delta_tr)
@@ -25,16 +31,18 @@ class Optimizer:
             print(f"MD: md = {pd.min_dist():.4f} tr = {pd.trust():.4f}")
 
         policy = pd.get_policy()
-        traj = collect_trajectory(self._env_conf, policy, seed=self._env_conf.seed)
+        traj = self._collect_trajectory(policy)
         return Datum(policy, traj)
 
     def collect_trace(self, ttype, num_iterations, num_init):
-        assert ttype in ["actions", "params", "dumb"]
+        assert ttype in ["actions_corr", "actions", "params", "dumb"]
 
         trace = []
         self._times_trace = []
         max_trajs = 99999
 
+        if ttype == "actions_corr":
+            trust_distance_fn = distance_actions_corr
         if ttype == "actions":
             trust_distance_fn = distance_actions
         else:
@@ -50,7 +58,9 @@ class Optimizer:
                 delta_tr = 0.1
             self._data = self._data[-max_trajs:]
             data_opt = self._data + [self._datum_best]
-            if ttype == "actions":
+            if ttype == "actions_corr":
+                acq_fn = MinDistanceActionsFast(data_opt, ttype="corr")
+            elif ttype == "actions":
                 acq_fn = MinDistanceActionsFast(data_opt)
             else:
                 acq_fn = MinDistanceParameters(data_opt)

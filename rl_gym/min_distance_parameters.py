@@ -1,6 +1,6 @@
 import numpy as np
 
-from bbo.distance import distance_parameters
+from rl_gym.distance import distance_parameters
 
 
 class MinDistanceParameters:

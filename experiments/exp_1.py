@@ -12,25 +12,18 @@ if __name__ == "__main__":
     import sys
     import time
 
-    from rl_gym.env_conf import EnvConf
+    from rl_gym.env_conf import get_env_conf
     from rl_gym.linear_policy import LinearPolicy
     from rl_gym.optimizer import Optimizer
 
     env_tag = sys.argv[1]
     ttype = sys.argv[2]
-    num_iterations = 30
 
+    num_iterations = 30
     for i_sample in range(100):
         t0 = time.time()
-        seed = 17 + i_sample
+        seed = 1234 + 17 + i_sample
         np.random.seed(seed)  # cma in PolicyDesigner needs this
-        if env_tag == "mcc":
-            env_conf = EnvConf("MountainCarContinuous-v0", seed=seed, max_steps=1000, solved=9999, show_frames=100, num_opt_0=100, k_action=10)
-        elif env_tag == "lunar":
-            env_conf = EnvConf("LunarLander-v2", seed=seed, max_steps=500, kwargs={"continuous": True}, solved=999, show_frames=30, num_opt_0=100)
-        elif env_tag == "ant":
-            env_conf = EnvConf("Ant-v4", seed=seed, max_steps=1000, solved=999, show_frames=30, num_opt_0=100)
-        else:
-            assert False, env_tag
+        env_conf = get_env_conf(env_tag, seed)
         sample(env_conf, ttype, tag=f"i_sample = {i_sample}", num_iterations=30)
         print(f"TIME_SAMPLE: {time.time() - t0:.2f}")
