@@ -1,5 +1,8 @@
 import numpy as np
 
+from rl_gym.linear_policy import LinearPolicy
+from rl_gym.optimizer import Optimizer
+
 
 def sample(env_conf, ttype, tag, num_iterations):
     policy = LinearPolicy(env_conf)
@@ -13,8 +16,6 @@ if __name__ == "__main__":
     import time
 
     from rl_gym.env_conf import get_env_conf
-    from rl_gym.linear_policy import LinearPolicy
-    from rl_gym.optimizer import Optimizer
 
     env_tag = sys.argv[1]
     ttype = sys.argv[2]

@@ -20,7 +20,7 @@ def optimize(env_conf, num_iterations):
             phi = collect_trajectory(env_conf, policy, seed=env_conf.seed).rreturn
             phis.append(phi)
             w = np.array(w)
-            print("POP:", phi, w.mean(), w.std())
+            # print("POP:", phi, w.mean(), w.std())
         phis = np.array(phis)
 
         es.tell(ws, -phis)
