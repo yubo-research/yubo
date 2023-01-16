@@ -28,7 +28,7 @@ class Surrogate:
                 if i == j:
                     distance_matrix_train[i, j] = 0
                 else:
-                    assert dist > 0, dist
+                    assert dist >= 0, dist
                     distance_matrix_train[i, j] = dist
         distance_matrix_train = (distance_matrix_train + distance_matrix_train.T) / 2
         self._gp = GP()
