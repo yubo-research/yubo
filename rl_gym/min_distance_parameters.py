@@ -8,5 +8,8 @@ class MinDistanceParameters:
         self._data = data
 
     def __call__(self, policy):
+        return self.distances(policy).min()
+
+    def distances(self, policy):
         dists = np.array([distance_parameters(datum, policy) for datum in self._data])
-        return dists.min()
+        return dists

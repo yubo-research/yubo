@@ -3,6 +3,7 @@ from rl_gym.distance import distance_actions, distance_actions_corr, distance_pa
 from rl_gym.min_distance_actions_fast import MinDistanceActionsFast
 from rl_gym.min_distance_parameters import MinDistanceParameters
 from rl_gym.policy_designer import PolicyDesigner
+from rl_gym.surrogate import Surrogate
 from rl_gym.trajectories import collect_trajectory
 
 
@@ -35,13 +36,13 @@ class Optimizer:
         return Datum(policy, traj)
 
     def collect_trace(self, ttype, num_iterations, num_init):
-        assert ttype in ["actions_corr", "actions", "params", "dumb"]
+        assert ttype in ["bayes-actions", "bayes-params", "actions-corr", "actions", "params", "dumb"]
 
         trace = []
         self._times_trace = []
         max_trajs = 99999
 
-        if ttype == "actions_corr":
+        if ttype in ["bayes-actions", "actions-corr"]:
             trust_distance_fn = distance_actions_corr
         if ttype == "actions":
             trust_distance_fn = distance_actions
@@ -58,7 +59,11 @@ class Optimizer:
                 delta_tr = 0.1
             self._data = self._data[-max_trajs:]
             data_opt = self._data + [self._datum_best]
-            if ttype == "actions_corr":
+            if ttype == "bayes-actions":
+                acq_fn = Surrogate(data_opt, MinDistanceActionsFast(data_opt, ttype="corr"))
+            elif ttype == "bayes-params":
+                acq_fn = Surrogate(data_opt, MinDistanceParameters(data_opt))
+            elif ttype == "actions-corr":
                 acq_fn = MinDistanceActionsFast(data_opt, ttype="corr")
             elif ttype == "actions":
                 acq_fn = MinDistanceActionsFast(data_opt)

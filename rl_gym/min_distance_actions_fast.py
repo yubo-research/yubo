@@ -1,8 +1,12 @@
+from typing import List
+
 import numpy as np
+
+from rl_gym.datum import Datum
 
 
 class MinDistanceActionsFast:
-    def __init__(self, data, k_slim=10, ttype="eu"):
+    def __init__(self, data: List[Datum], k_slim=10, ttype="eu"):
         self._states = []
         self._actions = []
         self._idx = []
@@ -21,35 +25,39 @@ class MinDistanceActionsFast:
         self._idx = np.array(self._idx)
         self._n = np.array(self._n)
         if ttype == "eu":
-            self._dist = self._eu_dist
+            self._dists = self._eu_dists
         elif ttype == "corr":
-            self._dist = self._corr_dist
+            self._dists = self._corr_dists
 
     def _slim(self, k_slim, d):
-        return d.trajectory.states, d.trajectory.actions
-        states = d.trajectory.states
-        n = states.shape[1]
-        k = min(n, max(100, n // k_slim))
-        i = np.random.choice(list(range(n)), size=(k,), replace=False)
-        return states[:, i], d.trajectory.actions[:, i]
+        if True:
+            return d.trajectory.states, d.trajectory.actions
+        else:
+            states = d.trajectory.states
+            n = states.shape[1]
+            k = min(n, max(100, n // k_slim))
+            i = np.random.choice(list(range(n)), size=(k,), replace=False)
+            return states[:, i], d.trajectory.actions[:, i]
 
     def __call__(self, policy):
-        return self._dist(policy)
+        return self.distances(policy).min()
 
-    def _eu_dist(self, policy):
+    def distances(self, policy):
+        return self._dists(policy)
+
+    def _eu_dists(self, policy):
         dist_2_cs = np.cumsum((self._actions - policy(self._states)) ** 2)
         dist_2 = np.diff(dist_2_cs[self._idx], prepend=0)
-        return np.sqrt(dist_2 / self._n).min()
+        return np.sqrt(dist_2 / self._n)
 
     def _means(self, x):
         return np.diff(np.cumsum(x)[self._idx], prepend=0) / self._n
 
-    def _corr_dist(self, policy):
+    def _corr_dists(self, policy):
         a = policy(self._states)
         xy = self._means(self._actions * a)
         x2 = self._means(self._actions**2)
         y2 = self._means(a**2)
 
         rho = xy / np.sqrt(1e-9 + x2 * y2)
-        dist = 0.5 * (1 - rho)
-        return dist.min()
+        return 0.5 * (1 - rho)
