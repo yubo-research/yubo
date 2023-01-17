@@ -19,9 +19,10 @@ class GP(nn.Module):
         self._min_noise = 1e-6
 
         self._train(dist_obs_obs, y)
-        
+
     def _bound(self, scale):
-        return (1 + torch.tanh(scale)) / 2
+        # return (1 + torch.tanh(scale)) / 2
+        return torch.exp(scale)
 
     @property
     def length_scale(self):
