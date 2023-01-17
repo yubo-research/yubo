@@ -31,11 +31,10 @@ class Surrogate:
                     assert dist >= 0, dist
                     distance_matrix_train[i, j] = dist
         distance_matrix_train = (distance_matrix_train + distance_matrix_train.T) / 2
-        self._gp = GP()
-        self._gp.train(distance_matrix_train, np.array(y_train)[:, None])
+        self._gp = GP(distance_matrix_train, np.array(y_train)[:, None])
 
     def __call__(self, policy):
         distances = np.atleast_2d(self._behavioral_distance.distances(policy)).T
         y, y_var = self._gp(distances)
         y_std = np.sqrt(y_var)
-        return y + y_std
+        return y_std

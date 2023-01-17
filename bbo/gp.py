@@ -11,13 +11,15 @@ import torch.optim as optim
 
 # from https://github.com/swyoon/pytorch-minimal-gaussian-process
 class GP(nn.Module):
-    def __init__(self, length_scale=1.0, noise_scale=1.0, amplitude_scale=1.0):
+    def __init__(self, dist_obs_obs, y, length_scale=1.0, noise_scale=1.0, amplitude_scale=1.0):
         super().__init__()
         self._length_scale = nn.Parameter(torch.tensor(np.log(length_scale)))
         self._noise_scale = nn.Parameter(torch.tensor(np.log(noise_scale)))
         self._amplitude_scale = nn.Parameter(torch.tensor(np.log(amplitude_scale)))
         self._min_noise = 1e-6
 
+        self._train(dist_obs_obs, y)
+        
     def _bound(self, scale):
         return (1 + torch.tanh(scale)) / 2
 
@@ -80,7 +82,7 @@ class GP(nn.Module):
     def _kernel(self, dist):
         return self.amplitude_scale * torch.exp(-0.5 * (dist**2) / self.length_scale)
 
-    def train(self, dist_obs_obs, y):
+    def _train(self, dist_obs_obs, y):
         dist_obs_obs = torch.as_tensor(dist_obs_obs)
         y = torch.as_tensor(y)
         opt = optim.Adam(self.parameters(), lr=0.1)
