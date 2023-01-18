@@ -8860,3 +8860,241 @@ ITER: i_iter = 15 ret = 988.61 ret_best = 991.61 delta_tr = 1000000000.00 n_data
 MD: md = 0.3164 tr = 0.3624
 ITER: i_iter = 16 ret = 983.51 ret_best = 991.61 delta_tr = 1000000000.00 n_data = 17
 MD: md = 0.3035 tr = 0.3591
+ITER: i_iter = 17 ret = 948.51 ret_best = 991.61 delta_tr = 1000000000.00 n_data = 18
+MD: md = 0.2933 tr = 0.3593
+ITER: i_iter = 18 ret = 978.12 ret_best = 991.61 delta_tr = 1000000000.00 n_data = 19
+MD: md = 0.2799 tr = 0.3612
+ITER: i_iter = 19 ret = 969.34 ret_best = 991.61 delta_tr = 1000000000.00 n_data = 20
+MD: md = 0.2692 tr = 0.4048
+ITER: i_iter = 20 ret = 979.67 ret_best = 991.61 delta_tr = 1000000000.00 n_data = 21
+MD: md = 0.2585 tr = 0.3386
+ITER: i_iter = 21 ret = 970.31 ret_best = 991.61 delta_tr = 1000000000.00 n_data = 22
+MD: md = 0.2509 tr = 0.3606
+ITER: i_iter = 22 ret = 969.28 ret_best = 991.61 delta_tr = 1000000000.00 n_data = 23
+MD: md = 0.2425 tr = 0.4088
+ITER: i_iter = 23 ret = 954.93 ret_best = 991.61 delta_tr = 1000000000.00 n_data = 24
+MD: md = 0.2421 tr = 0.2987
+ITER: i_iter = 24 ret = 986.11 ret_best = 991.61 delta_tr = 1000000000.00 n_data = 25
+MD: md = 0.2313 tr = 0.3609
+ITER: i_iter = 25 ret = 978.08 ret_best = 991.61 delta_tr = 1000000000.00 n_data = 26
+MD: md = 0.2292 tr = 0.3517
+ITER: i_iter = 26 ret = 960.42 ret_best = 991.61 delta_tr = 1000000000.00 n_data = 27
+MD: md = 0.2212 tr = 0.3311
+ITER: i_iter = 27 ret = 969.59 ret_best = 991.61 delta_tr = 1000000000.00 n_data = 28
+MD: md = 0.2155 tr = 0.3193
+ITER: i_iter = 28 ret = 978.01 ret_best = 991.61 delta_tr = 1000000000.00 n_data = 29
+MD: md = 0.2081 tr = 0.3576
+ITER: i_iter = 29 ret = 920.53 ret_best = 991.61 delta_tr = 1000000000.00 n_data = 30
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 97 i_iter = 0 return = 947.334
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 97 i_iter = 1 return = 990.565
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 97 i_iter = 2 return = 990.565
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 97 i_iter = 3 return = 991.611
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 97 i_iter = 4 return = 991.611
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 97 i_iter = 5 return = 991.611
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 97 i_iter = 6 return = 991.611
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 97 i_iter = 7 return = 991.611
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 97 i_iter = 8 return = 991.611
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 97 i_iter = 9 return = 991.611
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 97 i_iter = 10 return = 991.611
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 97 i_iter = 11 return = 991.611
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 97 i_iter = 12 return = 991.611
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 97 i_iter = 13 return = 991.611
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 97 i_iter = 14 return = 991.611
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 97 i_iter = 15 return = 991.611
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 97 i_iter = 16 return = 991.611
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 97 i_iter = 17 return = 991.611
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 97 i_iter = 18 return = 991.611
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 97 i_iter = 19 return = 991.611
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 97 i_iter = 20 return = 991.611
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 97 i_iter = 21 return = 991.611
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 97 i_iter = 22 return = 991.611
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 97 i_iter = 23 return = 991.611
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 97 i_iter = 24 return = 991.611
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 97 i_iter = 25 return = 991.611
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 97 i_iter = 26 return = 991.611
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 97 i_iter = 27 return = 991.611
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 97 i_iter = 28 return = 991.611
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 97 i_iter = 29 return = 991.611
+TIME_SAMPLE: 434.05
+MD: md = 0.0001 tr = 0.7179
+ITER: i_iter = 0 ret = 987.93 ret_best = 987.93 delta_tr = 1000000000.00 n_data = 1
+MD: md = 20.2026 tr = 0.4721
+ITER: i_iter = 1 ret = 962.73 ret_best = 987.93 delta_tr = 1000000000.00 n_data = 2
+MD: md = 15.2132 tr = 0.4794
+ITER: i_iter = 2 ret = 970.75 ret_best = 987.93 delta_tr = 1000000000.00 n_data = 3
+MD: md = nan tr = 0.0000
+ITER: i_iter = 3 ret = 987.93 ret_best = 987.93 delta_tr = 1000000000.00 n_data = 4
+MD: md = nan tr = 0.0000
+ITER: i_iter = 4 ret = 987.93 ret_best = 987.93 delta_tr = 1000000000.00 n_data = 5
+MD: md = nan tr = 0.0000
+ITER: i_iter = 5 ret = 987.93 ret_best = 987.93 delta_tr = 1000000000.00 n_data = 6
+MD: md = nan tr = 0.0000
+ITER: i_iter = 6 ret = 987.93 ret_best = 987.93 delta_tr = 1000000000.00 n_data = 7
+MD: md = nan tr = 0.0000
+ITER: i_iter = 7 ret = 987.93 ret_best = 987.93 delta_tr = 1000000000.00 n_data = 8
+MD: md = nan tr = 0.0000
+ITER: i_iter = 8 ret = 987.93 ret_best = 987.93 delta_tr = 1000000000.00 n_data = 9
+MD: md = nan tr = 0.0000
+ITER: i_iter = 9 ret = 987.93 ret_best = 987.93 delta_tr = 1000000000.00 n_data = 10
+MD: md = nan tr = 0.0000
+ITER: i_iter = 10 ret = 987.93 ret_best = 987.93 delta_tr = 1000000000.00 n_data = 11
+MD: md = nan tr = 0.0000
+ITER: i_iter = 11 ret = 987.93 ret_best = 987.93 delta_tr = 1000000000.00 n_data = 12
+MD: md = nan tr = 0.0000
+ITER: i_iter = 12 ret = 987.93 ret_best = 987.93 delta_tr = 1000000000.00 n_data = 13
+MD: md = nan tr = 0.0000
+ITER: i_iter = 13 ret = 987.93 ret_best = 987.93 delta_tr = 1000000000.00 n_data = 14
+MD: md = nan tr = 0.0000
+ITER: i_iter = 14 ret = 987.93 ret_best = 987.93 delta_tr = 1000000000.00 n_data = 15
+MD: md = nan tr = 0.0000
+ITER: i_iter = 15 ret = 987.93 ret_best = 987.93 delta_tr = 1000000000.00 n_data = 16
+MD: md = nan tr = 0.0000
+ITER: i_iter = 16 ret = 987.93 ret_best = 987.93 delta_tr = 1000000000.00 n_data = 17
+MD: md = nan tr = 0.0000
+ITER: i_iter = 17 ret = 987.93 ret_best = 987.93 delta_tr = 1000000000.00 n_data = 18
+MD: md = nan tr = 0.0000
+ITER: i_iter = 18 ret = 987.93 ret_best = 987.93 delta_tr = 1000000000.00 n_data = 19
+MD: md = nan tr = 0.0000
+ITER: i_iter = 19 ret = 987.93 ret_best = 987.93 delta_tr = 1000000000.00 n_data = 20
+MD: md = nan tr = 0.0000
+ITER: i_iter = 20 ret = 987.93 ret_best = 987.93 delta_tr = 1000000000.00 n_data = 21
+MD: md = nan tr = 0.0000
+ITER: i_iter = 21 ret = 987.93 ret_best = 987.93 delta_tr = 1000000000.00 n_data = 22
+MD: md = nan tr = 0.0000
+ITER: i_iter = 22 ret = 987.93 ret_best = 987.93 delta_tr = 1000000000.00 n_data = 23
+MD: md = nan tr = 0.0000
+ITER: i_iter = 23 ret = 987.93 ret_best = 987.93 delta_tr = 1000000000.00 n_data = 24
+MD: md = nan tr = 0.0000
+ITER: i_iter = 24 ret = 987.93 ret_best = 987.93 delta_tr = 1000000000.00 n_data = 25
+MD: md = nan tr = 0.0000
+ITER: i_iter = 25 ret = 987.93 ret_best = 987.93 delta_tr = 1000000000.00 n_data = 26
+MD: md = nan tr = 0.0000
+ITER: i_iter = 26 ret = 987.93 ret_best = 987.93 delta_tr = 1000000000.00 n_data = 27
+MD: md = nan tr = 0.0000
+ITER: i_iter = 27 ret = 987.93 ret_best = 987.93 delta_tr = 1000000000.00 n_data = 28
+MD: md = nan tr = 0.0000
+ITER: i_iter = 28 ret = 987.93 ret_best = 987.93 delta_tr = 1000000000.00 n_data = 29
+MD: md = nan tr = 0.0000
+ITER: i_iter = 29 ret = 987.93 ret_best = 987.93 delta_tr = 1000000000.00 n_data = 30
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 98 i_iter = 0 return = 987.934
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 98 i_iter = 1 return = 987.934
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 98 i_iter = 2 return = 987.934
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 98 i_iter = 3 return = 987.934
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 98 i_iter = 4 return = 987.934
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 98 i_iter = 5 return = 987.934
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 98 i_iter = 6 return = 987.934
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 98 i_iter = 7 return = 987.934
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 98 i_iter = 8 return = 987.934
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 98 i_iter = 9 return = 987.934
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 98 i_iter = 10 return = 987.934
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 98 i_iter = 11 return = 987.934
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 98 i_iter = 12 return = 987.934
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 98 i_iter = 13 return = 987.934
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 98 i_iter = 14 return = 987.934
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 98 i_iter = 15 return = 987.934
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 98 i_iter = 16 return = 987.934
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 98 i_iter = 17 return = 987.934
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 98 i_iter = 18 return = 987.934
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 98 i_iter = 19 return = 987.934
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 98 i_iter = 20 return = 987.934
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 98 i_iter = 21 return = 987.934
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 98 i_iter = 22 return = 987.934
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 98 i_iter = 23 return = 987.934
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 98 i_iter = 24 return = 987.934
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 98 i_iter = 25 return = 987.934
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 98 i_iter = 26 return = 987.934
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 98 i_iter = 27 return = 987.934
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 98 i_iter = 28 return = 987.934
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 98 i_iter = 29 return = 987.934
+TIME_SAMPLE: 431.97
+MD: md = 0.0001 tr = 0.6905
+ITER: i_iter = 0 ret = 969.36 ret_best = 969.36 delta_tr = 1000000000.00 n_data = 1
+MD: md = 9.6593 tr = 0.4355
+ITER: i_iter = 1 ret = 970.18 ret_best = 970.18 delta_tr = 1000000000.00 n_data = 2
+MD: md = nan tr = 0.0000
+ITER: i_iter = 2 ret = 970.18 ret_best = 970.18 delta_tr = 1000000000.00 n_data = 3
+MD: md = nan tr = 0.0000
+ITER: i_iter = 3 ret = 970.18 ret_best = 970.18 delta_tr = 1000000000.00 n_data = 4
+MD: md = nan tr = 0.0000
+ITER: i_iter = 4 ret = 970.18 ret_best = 970.18 delta_tr = 1000000000.00 n_data = 5
+MD: md = nan tr = 0.0000
+ITER: i_iter = 5 ret = 970.18 ret_best = 970.18 delta_tr = 1000000000.00 n_data = 6
+MD: md = nan tr = 0.0000
+ITER: i_iter = 6 ret = 970.18 ret_best = 970.18 delta_tr = 1000000000.00 n_data = 7
+MD: md = nan tr = 0.0000
+ITER: i_iter = 7 ret = 970.18 ret_best = 970.18 delta_tr = 1000000000.00 n_data = 8
+MD: md = nan tr = 0.0000
+ITER: i_iter = 8 ret = 970.18 ret_best = 970.18 delta_tr = 1000000000.00 n_data = 9
+MD: md = nan tr = 0.0000
+ITER: i_iter = 9 ret = 970.18 ret_best = 970.18 delta_tr = 1000000000.00 n_data = 10
+MD: md = nan tr = 0.0000
+ITER: i_iter = 10 ret = 970.18 ret_best = 970.18 delta_tr = 1000000000.00 n_data = 11
+MD: md = nan tr = 0.0000
+ITER: i_iter = 11 ret = 970.18 ret_best = 970.18 delta_tr = 1000000000.00 n_data = 12
+MD: md = nan tr = 0.0000
+ITER: i_iter = 12 ret = 970.18 ret_best = 970.18 delta_tr = 1000000000.00 n_data = 13
+MD: md = nan tr = 0.0000
+ITER: i_iter = 13 ret = 970.18 ret_best = 970.18 delta_tr = 1000000000.00 n_data = 14
+MD: md = nan tr = 0.0000
+ITER: i_iter = 14 ret = 970.18 ret_best = 970.18 delta_tr = 1000000000.00 n_data = 15
+MD: md = nan tr = 0.0000
+ITER: i_iter = 15 ret = 970.18 ret_best = 970.18 delta_tr = 1000000000.00 n_data = 16
+MD: md = nan tr = 0.0000
+ITER: i_iter = 16 ret = 970.18 ret_best = 970.18 delta_tr = 1000000000.00 n_data = 17
+MD: md = nan tr = 0.0000
+ITER: i_iter = 17 ret = 970.18 ret_best = 970.18 delta_tr = 1000000000.00 n_data = 18
+MD: md = nan tr = 0.0000
+ITER: i_iter = 18 ret = 970.18 ret_best = 970.18 delta_tr = 1000000000.00 n_data = 19
+MD: md = nan tr = 0.0000
+ITER: i_iter = 19 ret = 970.18 ret_best = 970.18 delta_tr = 1000000000.00 n_data = 20
+MD: md = nan tr = 0.0000
+ITER: i_iter = 20 ret = 970.18 ret_best = 970.18 delta_tr = 1000000000.00 n_data = 21
+MD: md = nan tr = 0.0000
+ITER: i_iter = 21 ret = 970.18 ret_best = 970.18 delta_tr = 1000000000.00 n_data = 22
+MD: md = nan tr = 0.0000
+ITER: i_iter = 22 ret = 970.18 ret_best = 970.18 delta_tr = 1000000000.00 n_data = 23
+MD: md = nan tr = 0.0000
+ITER: i_iter = 23 ret = 970.18 ret_best = 970.18 delta_tr = 1000000000.00 n_data = 24
+MD: md = nan tr = 0.0000
+ITER: i_iter = 24 ret = 970.18 ret_best = 970.18 delta_tr = 1000000000.00 n_data = 25
+MD: md = nan tr = 0.0000
+ITER: i_iter = 25 ret = 970.18 ret_best = 970.18 delta_tr = 1000000000.00 n_data = 26
+MD: md = nan tr = 0.0000
+ITER: i_iter = 26 ret = 970.18 ret_best = 970.18 delta_tr = 1000000000.00 n_data = 27
+MD: md = nan tr = 0.0000
+ITER: i_iter = 27 ret = 970.18 ret_best = 970.18 delta_tr = 1000000000.00 n_data = 28
+MD: md = nan tr = 0.0000
+ITER: i_iter = 28 ret = 970.18 ret_best = 970.18 delta_tr = 1000000000.00 n_data = 29
+MD: md = nan tr = 0.0000
+ITER: i_iter = 29 ret = 970.18 ret_best = 970.18 delta_tr = 1000000000.00 n_data = 30
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 99 i_iter = 0 return = 969.355
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 99 i_iter = 1 return = 970.177
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 99 i_iter = 2 return = 970.177
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 99 i_iter = 3 return = 970.177
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 99 i_iter = 4 return = 970.177
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 99 i_iter = 5 return = 970.177
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 99 i_iter = 6 return = 970.177
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 99 i_iter = 7 return = 970.177
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 99 i_iter = 8 return = 970.177
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 99 i_iter = 9 return = 970.177
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 99 i_iter = 10 return = 970.177
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 99 i_iter = 11 return = 970.177
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 99 i_iter = 12 return = 970.177
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 99 i_iter = 13 return = 970.177
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 99 i_iter = 14 return = 970.177
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 99 i_iter = 15 return = 970.177
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 99 i_iter = 16 return = 970.177
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 99 i_iter = 17 return = 970.177
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 99 i_iter = 18 return = 970.177
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 99 i_iter = 19 return = 970.177
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 99 i_iter = 20 return = 970.177
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 99 i_iter = 21 return = 970.177
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 99 i_iter = 22 return = 970.177
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 99 i_iter = 23 return = 970.177
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 99 i_iter = 24 return = 970.177
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 99 i_iter = 25 return = 970.177
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 99 i_iter = 26 return = 970.177
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 99 i_iter = 27 return = 970.177
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 99 i_iter = 28 return = 970.177
+TRACE: name = Ant-v4 ttype = bayes-actions i_sample = 99 i_iter = 29 return = 970.177
+TIME_SAMPLE: 433.07
