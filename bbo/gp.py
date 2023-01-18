@@ -3,19 +3,16 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-# TODO
-# After the full optimizer works, replace this with GPyTorch (or BoTorch).
-# Then you can switch to a Matern kernel and qNEI acquisition function.
-# DON'T develop this any further.
+# from IPython.core.debugger import set_trace
 
 
 # from https://github.com/swyoon/pytorch-minimal-gaussian-process
 class GP(nn.Module):
-    def __init__(self, dist_obs_obs, y, length_scale=1.0, noise_scale=1.0, amplitude_scale=1.0):
+    def __init__(self, dist_obs_obs, y, length_scale=1.0, noise_scale=1.0):  # , amplitude_scale=1.0):
         super().__init__()
         self._length_scale = nn.Parameter(torch.tensor(np.log(length_scale)))
         self._noise_scale = nn.Parameter(torch.tensor(np.log(noise_scale)))
-        self._amplitude_scale = nn.Parameter(torch.tensor(np.log(amplitude_scale)))
+        # self._amplitude_scale = nn.Parameter(torch.tensor(np.log(amplitude_scale)))
         self._min_noise = 1e-6
 
         self._train(dist_obs_obs, y)
@@ -33,12 +30,11 @@ class GP(nn.Module):
         return self._min_noise + self._bound(self._noise_scale)
 
     @property
-    def amplitude_scale(self):
+    def _x_amplitude_scale(self):
         return self._bound(self._amplitude_scale)
 
     def forward(self, dist_obs_pred, dist_pred_pred=None):
         """compute prediction. fit() must have been called."""
-        # from IPython.core.debugger import set_trace
         dist_obs_pred = torch.as_tensor(dist_obs_pred)
         if dist_pred_pred is None:
             simple = True
@@ -74,6 +70,7 @@ class GP(nn.Module):
             return None
         alpha = torch.linalg.solve(L.T, torch.linalg.solve(L, y_use))
         marginal_likelihood = -0.5 * y_use.T.mm(alpha) - torch.log(torch.diag(L)).sum()  # just a constant - D * 0.5 * np.log(2 * np.pi)
+        # print ("ML:", -0.5 * y_use.T.mm(alpha), - torch.log(torch.diag(L)).sum())
         self._y_mu = y_mu
         self._y_std = y_std
         self._L = L
@@ -81,7 +78,8 @@ class GP(nn.Module):
         return marginal_likelihood
 
     def _kernel(self, dist):
-        return self.amplitude_scale * torch.exp(-0.5 * (dist**2) / self.length_scale)
+        # return self.amplitude_scale * torch.exp(-0.5 * (dist**2) / self.length_scale)
+        return torch.exp(-0.5 * (dist**2) / self.length_scale)
 
     def _train(self, dist_obs_obs, y):
         dist_obs_obs = torch.as_tensor(dist_obs_obs)
