@@ -10,7 +10,7 @@ from rl_gym.pure_function_policy import PureFunctionPolicy
 
 def get_env_conf(tag, seed=None):
     if tag[:2] == "f:":
-        ec = EnvConf(tag, seed=None, max_steps=1000, solved=-0.01)
+        ec = EnvConf(tag, seed=None, max_steps=1000, solved=-0.01, num_opt_0=100)
     else:
         ec = _env_confs[tag]
     ec.seed = seed

@@ -25,7 +25,7 @@ class PureFunctionEnv:
 
         self.observation_space = Box(low=0.0, high=1.0, dtype=np.float32)
 
-        self.action_space = Box(low=-np.one(num_dim), high=np.ones(num_dim), dtype=np.float32)
+        self.action_space = Box(low=-np.ones(num_dim), high=np.ones(num_dim), dtype=np.float32)
 
     def step(self, action):
         # state, reward, done = env.step(action)[:3]
