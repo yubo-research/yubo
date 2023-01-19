@@ -2,7 +2,7 @@ from typing import List
 
 import numpy as np
 
-from bbo.gp import GP
+from bbo.gpr import GPR
 from rl_gym.datum import Datum
 
 
@@ -31,10 +31,10 @@ class Surrogate:
                     assert dist >= 0, dist
                     distance_matrix_train[i, j] = dist
         distance_matrix_train = (distance_matrix_train + distance_matrix_train.T) / 2
-        self._gp = GP(distance_matrix_train, np.array(y_train)[:, None])
+        self._gpr = GPR(distance_matrix_train, np.array(y_train)[:, None])
 
     def __call__(self, policy):
         distances = np.atleast_2d(self._behavioral_distance.distances(policy)).T
-        y, y_var = self._gp(distances)
+        y, y_var = self._gpr(distances)
         y_std = np.sqrt(y_var)
         return y_std
