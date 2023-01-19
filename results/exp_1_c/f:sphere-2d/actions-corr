@@ -1,0 +1,26 @@
+/home/dsweet/env/lib/python3.9/site-packages/gymnasium/spaces/box.py:129: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  gym.logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+MD: md = 1.0000 tr = 0.8623
+ITER: i_iter = 0 ret = -0.50 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 1
+Traceback (most recent call last):
+  File "/home/dsweet/Projects/bbo/experiments/exp_1.py", line 29, in <module>
+    sample(env_conf, ttype, tag=f"i_sample = {i_sample}", num_iterations=30)
+  File "/home/dsweet/Projects/bbo/experiments/exp_1.py", line 10, in sample
+    for i_iter, rreturn in enumerate(opt.collect_trace(ttype=ttype, num_iterations=num_iterations, num_init=num_iterations)):
+  File "/home/dsweet/Projects/bbo/rl_gym/optimizer.py", line 75, in collect_trace
+    datum = self._iterate(trust_distance_fn, acq_fn, data_opt, delta_tr)
+  File "/home/dsweet/Projects/bbo/rl_gym/optimizer.py", line 25, in _iterate
+    pd = PolicyDesigner(trust_distance_fn, acq_fn, data_opt, delta_tr)
+  File "/home/dsweet/Projects/bbo/rl_gym/policy_designer.py", line 23, in __init__
+    self._md_best = self._acq(self._policy_best)
+  File "/home/dsweet/Projects/bbo/rl_gym/policy_designer.py", line 30, in _acq
+    return self._acq_fn(policy)
+  File "/home/dsweet/Projects/bbo/rl_gym/min_distance_actions_fast.py", line 43, in __call__
+    return self.distances(policy).min()
+  File "/home/dsweet/Projects/bbo/rl_gym/min_distance_actions_fast.py", line 46, in distances
+    return self._dists(policy)
+  File "/home/dsweet/Projects/bbo/rl_gym/min_distance_actions_fast.py", line 57, in _corr_dists
+    a = policy(self._states)
+  File "/home/dsweet/Projects/bbo/rl_gym/pure_function_policy.py", line 24, in __call__
+    assert state == 0, state
+ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()
