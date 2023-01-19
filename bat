@@ -7,7 +7,7 @@ export OMP_NUM_THREADS=3
 DDIR=exp_1_b
 for TAG in mcc lunar ant
 do
- for TTYPE in random # bayes-actions bayes-params # dumb params actions actions-corr
+ for TTYPE in sobol random # bayes-actions bayes-params # dumb params actions actions-corr
  do
      echo $TAG $TTYPE
      mkdir -p results/${DDIR}/${TAG}
