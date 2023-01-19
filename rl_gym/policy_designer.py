@@ -48,7 +48,7 @@ class PolicyDesigner:
 
     def design_random(self):
         p = self._policy_best.get_params()
-        p = np.random.uniform(size=p.shape)
+        p = np.random.uniform(-1, 1, size=p.shape)
         self._policy_best.set_params(p)
         return np.array([0, 0])
 

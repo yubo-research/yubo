@@ -4,7 +4,7 @@ import numpy as np
 class PureFunctionPolicy:
     def __init__(self, env_conf):
         self._env_conf = env_conf
-        self._params = np.random.uniform(size=(len(env_conf.action_space.low),))
+        self._params = np.random.uniform(-1, 1, size=(len(env_conf.action_space.low),))
 
     def num_params(self):
         return len(self._params)
@@ -22,4 +22,4 @@ class PureFunctionPolicy:
 
     def __call__(self, state):
         assert state == 0, state
-        return 2 * self._params - 1
+        return self._params

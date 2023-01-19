@@ -8,4 +8,4 @@ class SobolDesigner:
     def get(self):
         x = self._xs[0, :]
         self._xs = self._xs[1:, :]
-        return x
+        return 2 * x - 1
