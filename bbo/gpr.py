@@ -7,12 +7,11 @@ import torch.optim as optim
 
 
 # from https://github.com/swyoon/pytorch-minimal-gaussian-process
-class GP(nn.Module):
-    def __init__(self, dist_obs_obs, y, length_scale=1.0, noise_scale=1.0):  # , amplitude_scale=1.0):
+class GPR(nn.Module):
+    def __init__(self, dist_obs_obs, y, length_scale=1.0, noise_scale=1.0):
         super().__init__()
         self._length_scale = nn.Parameter(torch.tensor(np.log(length_scale)))
         self._noise_scale = nn.Parameter(torch.tensor(np.log(noise_scale)))
-        # self._amplitude_scale = nn.Parameter(torch.tensor(np.log(amplitude_scale)))
         self._min_noise = 1e-6
 
         self._train(dist_obs_obs, y)
@@ -29,10 +28,6 @@ class GP(nn.Module):
     def noise_scale(self):
         return self._min_noise + self._bound(self._noise_scale)
 
-    @property
-    def _x_amplitude_scale(self):
-        return self._bound(self._amplitude_scale)
-
     def forward(self, dist_obs_pred, dist_pred_pred=None):
         """compute prediction. fit() must have been called."""
         dist_obs_pred = torch.as_tensor(dist_obs_pred)
@@ -47,11 +42,9 @@ class GP(nn.Module):
         k_pred_pred = self._kernel(dist_pred_pred)
         v = torch.linalg.solve(self._L, k_obs_pred)
         mu = self._y_mu + self._y_std * k_obs_pred.T.mm(self._alpha)
-        # var = self._y_std**2 * (self.amplitude_scale + self.noise_scale - torch.diag(v.T.mm(v)))
         cov = self._y_std**2 * (k_pred_pred - v.T.mm(v))
         if simple:
-            mu = mu.item()
-            cov = cov.item()
+            cov = cov.diag()
         return mu, cov
 
     def fit(self, dist_obs_obs, y):
@@ -78,7 +71,6 @@ class GP(nn.Module):
         return marginal_likelihood
 
     def _kernel(self, dist):
-        # return self.amplitude_scale * torch.exp(-0.5 * (dist**2) / self.length_scale)
         return torch.exp(-0.5 * (dist**2) / self.length_scale)
 
     def _train(self, dist_obs_obs, y):
@@ -103,10 +95,3 @@ class GP(nn.Module):
         nll = -fit.sum()
         nll.backward()
         opt.step()
-
-        # return {
-        #    "loss": nll.item(),
-        #    "length": self.length_scale.detach().cpu(),
-        #    "noise": self.noise_scale.detach().cpu(),
-        #    "amplitude": self.amplitude_scale.detach().cpu(),
-        # }
