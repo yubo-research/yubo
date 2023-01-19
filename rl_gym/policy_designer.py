@@ -3,6 +3,8 @@ import time
 import cma
 import numpy as np
 
+from rl_gym.sobol_designer import SobolDesigner
+
 
 # actions are always in -1,1; collect_trajectory() rescales them.
 # parameters are in [-1,1]
@@ -17,7 +19,12 @@ class PolicyDesigner:
         self._policy_best = self._datum_trusted.policy.clone()
         self._dist_to_trusted = self._calc_trust(self._policy_best)
         assert self._dist_to_trusted < 1e-9, self._dist_to_trusted
-        self._md_best = self._acq(self._policy_best)
+        if not isinstance(self._acq_fn, str):
+            self._md_best = self._acq(self._policy_best)
+        else:
+            self._md_best = None
+            if self._acq_fn == "sobol":
+                self._sobol = SobolDesigner(self._policy_best.num_params())
 
     def _acq(self, policy):
         return self._acq_fn(policy)
@@ -28,6 +35,11 @@ class PolicyDesigner:
     def _clamp_params(self, params):
         return np.clip(params, -1, 1)
 
+    def design_sobol(self):
+        p = self._sobol.get()
+        self._policy_best.set_params(p)
+        return np.array([0, 0])
+
     def design_dumb(self, eps):
         p = self._policy_best.get_params()
         p = self._clamp_params(p + eps * np.random.normal(size=p.shape))
@@ -35,6 +47,11 @@ class PolicyDesigner:
         return np.array([0, 0])
 
     def design(self, num_iterations):
+        if self._acq_fn == "dumb":
+            return self.design_dumb(0.1)
+        elif self._acq_fn == "sobol":
+            return self.design_sobol()
+
         import warnings
 
         warnings.simplefilter("ignore")

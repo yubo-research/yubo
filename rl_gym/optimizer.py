@@ -21,14 +21,12 @@ class Optimizer:
         # print ("CT:", traj.rreturn, w.mean(), w.std())
         return traj
 
-    def _iterate(self, trust_distance_fn, acq_fn, data_opt, delta_tr, dumb):
+    def _iterate(self, trust_distance_fn, acq_fn, data_opt, delta_tr):
         pd = PolicyDesigner(trust_distance_fn, acq_fn, data_opt, delta_tr)
 
-        if dumb:
-            pd.design_dumb(0.1)
-        else:
-            times = pd.design(self._env_conf.num_opt_0)
-            self._times_trace.append(times.mean() / 1e3)
+        times = pd.design(self._env_conf.num_opt_0)
+        self._times_trace.append(times.mean() / 1e3)
+        if pd.min_dist() is not None:
             print(f"MD: md = {pd.min_dist():.4f} tr = {pd.trust():.4f}")
 
         policy = pd.get_policy()
@@ -36,7 +34,7 @@ class Optimizer:
         return Datum(policy, traj)
 
     def collect_trace(self, ttype, num_iterations, num_init):
-        assert ttype in ["bayes-actions", "bayes-params", "actions-corr", "actions", "params", "dumb"]
+        assert ttype in ["sobol", "bayes-actions", "bayes-params", "actions-corr", "actions", "params", "dumb"]
 
         trace = []
         self._times_trace = []
@@ -67,9 +65,13 @@ class Optimizer:
                 acq_fn = MinDistanceActionsFast(data_opt, ttype="corr")
             elif ttype == "actions":
                 acq_fn = MinDistanceActionsFast(data_opt)
+            elif ttype == "sobol":
+                acq_fn = "sobol"
+            elif ttype == "dumb":
+                acq_fn = "dumb"
             else:
                 acq_fn = MinDistanceParameters(data_opt)
-            datum = self._iterate(trust_distance_fn, acq_fn, data_opt, delta_tr, dumb=ttype == "dumb")
+            datum = self._iterate(trust_distance_fn, acq_fn, data_opt, delta_tr)
             if datum.trajectory.rreturn > self._datum_best.trajectory.rreturn:
                 self._data.append(self._datum_best)
                 self._datum_best = datum
