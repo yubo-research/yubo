@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 
-import gymnasium as gym
 import matplotlib.pyplot as plt
 import numpy as np
 from IPython.display import clear_output
@@ -15,7 +14,7 @@ class Trajectory:
 
 def collect_trajectory(env_conf, policy, show_frames=None, seed=None):
     render_mode = "rgb_array" if show_frames else None
-    env = gym.make(env_conf.env_name, render_mode=render_mode, **env_conf.kwargs)
+    env = env_conf.make(render_mode=render_mode)
     done = False
     return_trajectory = 0
     traj_states, traj_actions = [], []

@@ -1,11 +1,11 @@
 import numpy as np
 
-from rl_gym.linear_policy import LinearPolicy
+from rl_gym.env_conf import default_policy
 from rl_gym.optimizer import Optimizer
 
 
 def sample(env_conf, ttype, tag, num_iterations):
-    policy = LinearPolicy(env_conf)
+    policy = default_policy(env_conf)
     opt = Optimizer(env_conf, policy)
     for i_iter, rreturn in enumerate(opt.collect_trace(ttype=ttype, num_iterations=num_iterations, num_init=num_iterations)):
         print(f"TRACE: name = {env_conf.env_name} ttype = {ttype} {tag} i_iter = {i_iter} return = {rreturn:.3f}")

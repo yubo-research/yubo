@@ -46,11 +46,19 @@ class PolicyDesigner:
         self._policy_best.set_params(p)
         return np.array([0, 0])
 
+    def design_random(self):
+        p = self._policy_best.get_params()
+        p = np.random.uniform(size=p.shape)
+        self._policy_best.set_params(p)
+        return np.array([0, 0])
+
     def design(self, num_iterations):
         if self._acq_fn == "dumb":
             return self.design_dumb(0.1)
         elif self._acq_fn == "sobol":
             return self.design_sobol()
+        elif self._acq_fn == "random":
+            return self.design_random()
 
         import warnings
 

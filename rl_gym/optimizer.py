@@ -34,7 +34,7 @@ class Optimizer:
         return Datum(policy, traj)
 
     def collect_trace(self, ttype, num_iterations, num_init):
-        assert ttype in ["sobol", "bayes-actions", "bayes-params", "actions-corr", "actions", "params", "dumb"]
+        assert ttype in ["random", "sobol", "bayes-actions", "bayes-params", "actions-corr", "actions", "params", "dumb"]
 
         trace = []
         self._times_trace = []
@@ -65,12 +65,13 @@ class Optimizer:
                 acq_fn = MinDistanceActionsFast(data_opt, ttype="corr")
             elif ttype == "actions":
                 acq_fn = MinDistanceActionsFast(data_opt)
-            elif ttype == "sobol":
-                acq_fn = "sobol"
-            elif ttype == "dumb":
-                acq_fn = "dumb"
-            else:
+            elif ttype == "params":
                 acq_fn = MinDistanceParameters(data_opt)
+            elif ttype in ["random", "sobol", "dumb"]:
+                acq_fn = ttype
+            else:
+                assert False
+
             datum = self._iterate(trust_distance_fn, acq_fn, data_opt, delta_tr)
             if datum.trajectory.rreturn > self._datum_best.trajectory.rreturn:
                 self._data.append(self._datum_best)
