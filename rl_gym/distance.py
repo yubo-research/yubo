@@ -23,7 +23,7 @@ def distance_actions(datum_0, policy):
 
 def distance_actions_corr(datum_0, policy):
     actions = policy(datum_0.trajectory.states)
-    return 0.5 * (1 - np.corrcoef(datum_0.trajectory.actions, actions)[0, 1])
+    return 0.5 * (1 - np.corrcoef(datum_0.trajectory.actions.flatten(), actions.flatten())[0, 1])
 
 
 def min_weighted_dist(distance_fn, data, policy):
