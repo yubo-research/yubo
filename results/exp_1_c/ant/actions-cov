@@ -1994,3 +1994,131 @@ TRACE: name = Ant-v4 ttype = actions-cov i_sample = 21 i_iter = 21 return = 995.
 TRACE: name = Ant-v4 ttype = actions-cov i_sample = 21 i_iter = 22 return = 995.277
 TRACE: name = Ant-v4 ttype = actions-cov i_sample = 21 i_iter = 23 return = 995.277
 TRACE: name = Ant-v4 ttype = actions-cov i_sample = 21 i_iter = 24 return = 995.277
+TRACE: name = Ant-v4 ttype = actions-cov i_sample = 21 i_iter = 25 return = 995.277
+TRACE: name = Ant-v4 ttype = actions-cov i_sample = 21 i_iter = 26 return = 995.277
+TRACE: name = Ant-v4 ttype = actions-cov i_sample = 21 i_iter = 27 return = 995.277
+TRACE: name = Ant-v4 ttype = actions-cov i_sample = 21 i_iter = 28 return = 995.277
+TRACE: name = Ant-v4 ttype = actions-cov i_sample = 21 i_iter = 29 return = 995.277
+TIME_SAMPLE: 401.35
+MD: md = 0.0008 tr = 0.6371
+ITER: i_iter = 0 ret = 851.52 ret_best = 903.78 delta_tr = 1000000000.00 n_data = 1
+MD: md = 0.0005 tr = 0.4355
+ITER: i_iter = 1 ret = 960.92 ret_best = 960.92 delta_tr = 1000000000.00 n_data = 2
+MD: md = 0.0004 tr = 0.3804
+ITER: i_iter = 2 ret = 951.07 ret_best = 960.92 delta_tr = 1000000000.00 n_data = 3
+MD: md = 0.0002 tr = 0.7594
+ITER: i_iter = 3 ret = 963.21 ret_best = 963.21 delta_tr = 1000000000.00 n_data = 4
+MD: md = 0.0001 tr = 0.5103
+ITER: i_iter = 4 ret = 961.52 ret_best = 963.21 delta_tr = 1000000000.00 n_data = 5
+MD: md = 0.0000 tr = 0.6011
+ITER: i_iter = 5 ret = 968.23 ret_best = 968.23 delta_tr = 1000000000.00 n_data = 6
+MD: md = 0.0000 tr = 0.4129
+ITER: i_iter = 6 ret = 986.13 ret_best = 986.13 delta_tr = 1000000000.00 n_data = 7
+MD: md = 0.0000 tr = 0.4451
+ITER: i_iter = 7 ret = 930.79 ret_best = 986.13 delta_tr = 1000000000.00 n_data = 8
+MD: md = 0.0000 tr = 0.3568
+ITER: i_iter = 8 ret = 986.46 ret_best = 986.46 delta_tr = 1000000000.00 n_data = 9
+MD: md = -0.0000 tr = 0.4927
+ITER: i_iter = 9 ret = 1037.10 ret_best = 1037.10 delta_tr = 1000000000.00 n_data = 10
+MD: md = -0.0000 tr = 0.5551
+ITER: i_iter = 10 ret = 989.83 ret_best = 1037.10 delta_tr = 1000000000.00 n_data = 11
+MD: md = -0.0000 tr = 0.5053
+ITER: i_iter = 11 ret = 970.04 ret_best = 1037.10 delta_tr = 1000000000.00 n_data = 12
+MD: md = -0.0000 tr = 0.3730
+ITER: i_iter = 12 ret = 996.94 ret_best = 1037.10 delta_tr = 1000000000.00 n_data = 13
+MD: md = -0.0000 tr = 0.5649
+ITER: i_iter = 13 ret = 966.56 ret_best = 1037.10 delta_tr = 1000000000.00 n_data = 14
+MD: md = -0.0000 tr = 0.6901
+ITER: i_iter = 14 ret = 971.31 ret_best = 1037.10 delta_tr = 1000000000.00 n_data = 15
+MD: md = -0.0000 tr = 0.2105
+ITER: i_iter = 15 ret = 920.44 ret_best = 1037.10 delta_tr = 1000000000.00 n_data = 16
+MD: md = -0.0000 tr = 0.2830
+ITER: i_iter = 16 ret = 968.13 ret_best = 1037.10 delta_tr = 1000000000.00 n_data = 17
+MD: md = -0.0000 tr = 0.5308
+ITER: i_iter = 17 ret = 971.48 ret_best = 1037.10 delta_tr = 1000000000.00 n_data = 18
+MD: md = -0.0000 tr = 0.4224
+ITER: i_iter = 18 ret = 981.93 ret_best = 1037.10 delta_tr = 1000000000.00 n_data = 19
+MD: md = -0.0000 tr = 0.3801
+ITER: i_iter = 19 ret = 997.38 ret_best = 1037.10 delta_tr = 1000000000.00 n_data = 20
+MD: md = -0.0000 tr = 0.3232
+ITER: i_iter = 20 ret = 986.13 ret_best = 1037.10 delta_tr = 1000000000.00 n_data = 21
+MD: md = -0.0000 tr = 0.5370
+ITER: i_iter = 21 ret = 979.06 ret_best = 1037.10 delta_tr = 1000000000.00 n_data = 22
+MD: md = -0.0000 tr = 0.3915
+ITER: i_iter = 22 ret = 981.17 ret_best = 1037.10 delta_tr = 1000000000.00 n_data = 23
+MD: md = -0.0000 tr = 0.5074
+ITER: i_iter = 23 ret = 964.41 ret_best = 1037.10 delta_tr = 1000000000.00 n_data = 24
+MD: md = -0.0000 tr = 0.3232
+ITER: i_iter = 24 ret = 974.76 ret_best = 1037.10 delta_tr = 1000000000.00 n_data = 25
+MD: md = -0.0000 tr = 0.7900
+ITER: i_iter = 25 ret = 974.50 ret_best = 1037.10 delta_tr = 1000000000.00 n_data = 26
+MD: md = -0.0000 tr = 0.6487
+ITER: i_iter = 26 ret = 976.66 ret_best = 1037.10 delta_tr = 1000000000.00 n_data = 27
+MD: md = -0.0000 tr = 0.7241
+ITER: i_iter = 27 ret = 986.00 ret_best = 1037.10 delta_tr = 1000000000.00 n_data = 28
+MD: md = -0.0000 tr = 0.3308
+ITER: i_iter = 28 ret = 980.78 ret_best = 1037.10 delta_tr = 1000000000.00 n_data = 29
+MD: md = -0.0000 tr = 0.4547
+ITER: i_iter = 29 ret = 959.54 ret_best = 1037.10 delta_tr = 1000000000.00 n_data = 30
+TRACE: name = Ant-v4 ttype = actions-cov i_sample = 22 i_iter = 0 return = 903.781
+TRACE: name = Ant-v4 ttype = actions-cov i_sample = 22 i_iter = 1 return = 960.921
+TRACE: name = Ant-v4 ttype = actions-cov i_sample = 22 i_iter = 2 return = 960.921
+TRACE: name = Ant-v4 ttype = actions-cov i_sample = 22 i_iter = 3 return = 963.211
+TRACE: name = Ant-v4 ttype = actions-cov i_sample = 22 i_iter = 4 return = 963.211
+TRACE: name = Ant-v4 ttype = actions-cov i_sample = 22 i_iter = 5 return = 968.226
+TRACE: name = Ant-v4 ttype = actions-cov i_sample = 22 i_iter = 6 return = 986.132
+TRACE: name = Ant-v4 ttype = actions-cov i_sample = 22 i_iter = 7 return = 986.132
+TRACE: name = Ant-v4 ttype = actions-cov i_sample = 22 i_iter = 8 return = 986.458
+TRACE: name = Ant-v4 ttype = actions-cov i_sample = 22 i_iter = 9 return = 1037.097
+TRACE: name = Ant-v4 ttype = actions-cov i_sample = 22 i_iter = 10 return = 1037.097
+TRACE: name = Ant-v4 ttype = actions-cov i_sample = 22 i_iter = 11 return = 1037.097
+TRACE: name = Ant-v4 ttype = actions-cov i_sample = 22 i_iter = 12 return = 1037.097
+TRACE: name = Ant-v4 ttype = actions-cov i_sample = 22 i_iter = 13 return = 1037.097
+TRACE: name = Ant-v4 ttype = actions-cov i_sample = 22 i_iter = 14 return = 1037.097
+TRACE: name = Ant-v4 ttype = actions-cov i_sample = 22 i_iter = 15 return = 1037.097
+TRACE: name = Ant-v4 ttype = actions-cov i_sample = 22 i_iter = 16 return = 1037.097
+TRACE: name = Ant-v4 ttype = actions-cov i_sample = 22 i_iter = 17 return = 1037.097
+TRACE: name = Ant-v4 ttype = actions-cov i_sample = 22 i_iter = 18 return = 1037.097
+TRACE: name = Ant-v4 ttype = actions-cov i_sample = 22 i_iter = 19 return = 1037.097
+TRACE: name = Ant-v4 ttype = actions-cov i_sample = 22 i_iter = 20 return = 1037.097
+TRACE: name = Ant-v4 ttype = actions-cov i_sample = 22 i_iter = 21 return = 1037.097
+TRACE: name = Ant-v4 ttype = actions-cov i_sample = 22 i_iter = 22 return = 1037.097
+TRACE: name = Ant-v4 ttype = actions-cov i_sample = 22 i_iter = 23 return = 1037.097
+TRACE: name = Ant-v4 ttype = actions-cov i_sample = 22 i_iter = 24 return = 1037.097
+TRACE: name = Ant-v4 ttype = actions-cov i_sample = 22 i_iter = 25 return = 1037.097
+TRACE: name = Ant-v4 ttype = actions-cov i_sample = 22 i_iter = 26 return = 1037.097
+TRACE: name = Ant-v4 ttype = actions-cov i_sample = 22 i_iter = 27 return = 1037.097
+TRACE: name = Ant-v4 ttype = actions-cov i_sample = 22 i_iter = 28 return = 1037.097
+TRACE: name = Ant-v4 ttype = actions-cov i_sample = 22 i_iter = 29 return = 1037.097
+TIME_SAMPLE: 400.07
+MD: md = 0.0015 tr = 0.1614
+ITER: i_iter = 0 ret = 746.25 ret_best = 768.25 delta_tr = 1000000000.00 n_data = 1
+MD: md = 0.0008 tr = 0.3043
+ITER: i_iter = 1 ret = 910.42 ret_best = 910.42 delta_tr = 1000000000.00 n_data = 2
+MD: md = 0.0004 tr = 0.7055
+ITER: i_iter = 2 ret = 962.28 ret_best = 962.28 delta_tr = 1000000000.00 n_data = 3
+MD: md = 0.0002 tr = 0.5155
+ITER: i_iter = 3 ret = 962.38 ret_best = 962.38 delta_tr = 1000000000.00 n_data = 4
+MD: md = 0.0000 tr = 0.5242
+ITER: i_iter = 4 ret = 983.32 ret_best = 983.32 delta_tr = 1000000000.00 n_data = 5
+MD: md = 0.0000 tr = 0.6272
+ITER: i_iter = 5 ret = 972.66 ret_best = 983.32 delta_tr = 1000000000.00 n_data = 6
+MD: md = 0.0000 tr = 0.5673
+ITER: i_iter = 6 ret = 969.43 ret_best = 983.32 delta_tr = 1000000000.00 n_data = 7
+MD: md = -0.0000 tr = 0.4807
+ITER: i_iter = 7 ret = 976.00 ret_best = 983.32 delta_tr = 1000000000.00 n_data = 8
+MD: md = -0.0000 tr = 0.3229
+ITER: i_iter = 8 ret = 975.71 ret_best = 983.32 delta_tr = 1000000000.00 n_data = 9
+MD: md = -0.0000 tr = 0.3334
+ITER: i_iter = 9 ret = 964.98 ret_best = 983.32 delta_tr = 1000000000.00 n_data = 10
+MD: md = -0.0000 tr = 0.2797
+ITER: i_iter = 10 ret = 967.12 ret_best = 983.32 delta_tr = 1000000000.00 n_data = 11
+MD: md = -0.0000 tr = 0.2977
+ITER: i_iter = 11 ret = 965.22 ret_best = 983.32 delta_tr = 1000000000.00 n_data = 12
+MD: md = -0.0000 tr = 0.5982
+ITER: i_iter = 12 ret = 958.33 ret_best = 983.32 delta_tr = 1000000000.00 n_data = 13
+MD: md = -0.0000 tr = 0.4087
+ITER: i_iter = 13 ret = 946.37 ret_best = 983.32 delta_tr = 1000000000.00 n_data = 14
+MD: md = -0.0000 tr = 0.5072
+ITER: i_iter = 14 ret = 933.54 ret_best = 983.32 delta_tr = 1000000000.00 n_data = 15
+MD: md = -0.0000 tr = 0.4588
