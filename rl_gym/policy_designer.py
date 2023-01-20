@@ -76,7 +76,7 @@ class PolicyDesigner:
                 tf = time.time_ns()
                 times.append(tf - t0)
                 dist_to_trusted = self._calc_trust(policy_test)
-                # print ("CHECK:", eps, md_test, self._md_best, dist_to_trusted, self._delta_tr)
+                # print ("CHECK:", md_test, self._md_best, dist_to_trusted, self._delta_tr)
                 if md_test > self._md_best and dist_to_trusted <= self._delta_tr:
                     self._md_best = md_test
                     self._dist_to_trusted = dist_to_trusted
