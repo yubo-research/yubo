@@ -32,7 +32,7 @@ def optimize(env_conf, num_iterations):
 if __name__ == "__main__":
     from rl_gym.env_conf import get_env_conf
 
-    env_tag = "lunar"
+    env_tag = "bw"
     num_iterations = 10000
 
     seed = 19

@@ -26,5 +26,5 @@ if __name__ == "__main__":
         seed = 1234 + 17 + i_sample
         np.random.seed(seed)  # cma in PolicyDesigner needs this
         env_conf = get_env_conf(env_tag, seed)
-        sample(env_conf, ttype, tag=f"i_sample = {i_sample}", num_iterations=30)
+        sample(env_conf, ttype, tag=f"i_sample = {i_sample}", num_iterations=num_iterations)
         print(f"TIME_SAMPLE: {time.time() - t0:.2f}")
