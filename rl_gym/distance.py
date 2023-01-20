@@ -1,8 +1,19 @@
 import numpy as np
 
 
+def _toroidal_distance_squared(x, y):
+    d = np.abs(x - y)
+    flip = d > 0.5
+    d[flip] = 1 - d[flip]
+    return d**2
+
+
 def distance_parameters(datum_0, policy):
     return np.sqrt(((datum_0.policy.get_params() - policy.get_params()) ** 2).mean())
+
+
+def distance_parameters_toroidal(datum_0, policy):
+    return np.sqrt(_toroidal_distance_squared(datum_0.policy.get_params(), policy.get_params()))
 
 
 def distance_actions(datum_0, policy):
