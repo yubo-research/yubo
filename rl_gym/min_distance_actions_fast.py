@@ -28,6 +28,10 @@ class MinDistanceActionsFast:
             self._dists = self._eu_dists
         elif ttype == "corr":
             self._dists = self._corr_dists
+        elif ttype == "cov":
+            self._dists = self._cov_dists
+        else:
+            assert False
 
     def _slim(self, k_slim, d):
         if True:
@@ -61,3 +65,14 @@ class MinDistanceActionsFast:
 
         rho = xy / np.sqrt(1e-9 + x2 * y2)
         return 0.5 * (1 - rho)
+
+    def _cov_dists(self, policy):
+        a = policy(self._states)
+        x = self._means(self._actions)
+        y = self._means(a)
+        xy = self._means(self._actions * a)
+
+        # Don't normalize b/c
+        #  we want the scale of the actions to matter
+        cov = xy - x * y
+        return -cov

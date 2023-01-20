@@ -35,15 +35,27 @@ class Optimizer:
         return Datum(policy, traj)
 
     def collect_trace(self, ttype, num_iterations, num_init):
-        assert ttype in ["disc", "random", "sobol", "bayes-actions", "bayes-params", "actions-corr", "actions", "params", "params-toroidal", "dumb"]
+        assert ttype in [
+            "disc",
+            "random",
+            "sobol",
+            "bayes-actions",
+            "bayes-params",
+            "actions-cov",
+            "actions-corr",
+            "actions",
+            "params",
+            "params-toroidal",
+            "dumb",
+        ]
 
         trace = []
         self._times_trace = []
         max_trajs = 99999
 
-        if ttype in ["bayes-actions", "actions-corr"]:
+        if ttype in ["bayes-actions", "actions-corr", "actions-cov"]:
             trust_distance_fn = distance_actions_corr
-        if ttype == "actions":
+        elif ttype == "actions":
             trust_distance_fn = distance_actions
         else:
             trust_distance_fn = distance_parameters
@@ -51,7 +63,6 @@ class Optimizer:
         for _ in range(num_iterations):
             i_iter = len(trace)
 
-            # p_explore = max(.1, 5 / (1. + i_iter))
             if i_iter < num_init:
                 delta_tr = 1e9
             else:
@@ -64,6 +75,8 @@ class Optimizer:
                 acq_fn = Surrogate(data_opt, MinDistanceParameters(data_opt, True))
             elif ttype == "actions-corr":
                 acq_fn = MinDistanceActionsFast(data_opt, ttype="corr")
+            elif ttype == "actions-cov":
+                acq_fn = MinDistanceActionsFast(data_opt, ttype="cov")
             elif ttype == "actions":
                 acq_fn = MinDistanceActionsFast(data_opt)
             elif ttype == "params":
