@@ -20,7 +20,7 @@ if __name__ == "__main__":
     env_tag = sys.argv[1]
     ttype = sys.argv[2]
 
-    num_iterations = 30
+    num_iterations = 100
     for i_sample in range(100):
         t0 = time.time()
         seed = 1234 + 17 + i_sample
