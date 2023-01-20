@@ -40,7 +40,7 @@ class EnvConf:
 
     def make(self, **kwargs):
         if self.env_name[:2] == "f:":
-            return pure_functions.make(self.env_name)
+            return pure_functions.make(self.env_name, seed=self.seed)
         return gym.make(self.env_name, **(kwargs | self.kwargs))
 
     def __post_init__(self):

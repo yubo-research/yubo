@@ -87,6 +87,8 @@ class PolicyDesigner:
             phis = np.array(phis)
             with warnings.catch_warnings():
                 es.tell(ws, -phis)
+            if es.sigma < 1e-9:
+                break
         return np.array(times)
 
     def min_dist(self):

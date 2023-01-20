@@ -2,21 +2,26 @@ import numpy as np
 from gymnasium.spaces import Box
 
 
-def make(name):
+def make(name, seed):
     # TODO: noise
     _, name = name.split(":")
     name, num_dim = name.split("-")
     assert num_dim[-1] == "d"
     num_dim = int(num_dim[:-1])
     if name == "sphere":
-        return PureFunctionEnv(sphere, num_dim)
+        return PureFunctionEnv(Sphere(seed, num_dim), num_dim)
     assert False, name
 
 
 # all maxes are 0
 # all domains are [-1,1]**D
-def sphere(x):
-    return -((x**2)).mean()
+class Sphere:
+    def __init__(self, seed, num_dim):
+        rng = np.random.default_rng(seed)
+        self._x_0 = rng.uniform(size=(num_dim,))
+
+    def __call__(self, x):
+        return -(((x - self._x_0) ** 2)).mean()
 
 
 class PureFunctionEnv:
