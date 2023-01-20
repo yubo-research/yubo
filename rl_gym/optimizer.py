@@ -12,6 +12,7 @@ class Optimizer:
     def __init__(self, env_conf, policy):
         self._env_conf = env_conf
 
+        self._num_opt = 300
         traj = self._collect_trajectory(policy)
         self._datum_best = Datum(policy, traj)
         self._data = []
@@ -25,7 +26,7 @@ class Optimizer:
     def _iterate(self, trust_distance_fn, acq_fn, data_opt, delta_tr):
         pd = PolicyDesigner(trust_distance_fn, acq_fn, data_opt, delta_tr)
 
-        times = pd.design(self._env_conf.num_opt_0)
+        times = pd.design(self._num_opt)
         self._times_trace.append(times.mean() / 1e3)
         if pd.min_dist() is not None:
             print(f"MD: md = {pd.min_dist():.4f} tr = {pd.trust():.4f}")
