@@ -12,7 +12,7 @@ class Optimizer:
     def __init__(self, env_conf, policy):
         self._env_conf = env_conf
 
-        self._num_opt = 100
+        self._num_opt = 300
         traj = self._collect_trajectory(policy)
         self._datum_best = Datum(policy, traj)
         self._data = []
