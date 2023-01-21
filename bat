@@ -6,9 +6,9 @@ export OMP_NUM_THREADS=3
 
 DDIR=exp_1_e
 #for TAG in f:sphere-2d f:sphere-3d f:sphere-10d f:sphere-30d f:sphere-100d # mcc lunar ant f:sphere-2d
-for TAG in mcc lunar ant
+for TAG in mcc # lunar ant
 do
- for TTYPE in actions-corr params-toroidal sobol random # params
+ for TTYPE in actions # actions-corr params-toroidal sobol random # params
  # for TTYPE in params actions-corr # actions bayes-actions bayes-params
  do
      echo $TAG $TTYPE
