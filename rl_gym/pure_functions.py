@@ -1,6 +1,8 @@
 import numpy as np
 from gymnasium.spaces import Box
 
+from rl_gym.functions.sphere import Sphere
+
 
 def make(name, seed):
     # TODO: noise
@@ -13,15 +15,8 @@ def make(name, seed):
     assert False, name
 
 
-# all maxes are 0
+# all function maxes are 0
 # all domains are [-1,1]**D
-class Sphere:
-    def __init__(self, seed, num_dim):
-        rng = np.random.default_rng(seed)
-        self._x_0 = rng.uniform(size=(num_dim,))
-
-    def __call__(self, x):
-        return -(((x - self._x_0) ** 2)).mean()
 
 
 class PureFunctionEnv:
