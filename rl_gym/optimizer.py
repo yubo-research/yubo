@@ -2,6 +2,7 @@ from rl_gym.datum import Datum
 from rl_gym.distance import distance_actions, distance_actions_corr, distance_parameters
 from rl_gym.min_distance_actions_fast import MinDistanceActionsFast
 from rl_gym.min_distance_parameters import MinDistanceParameters
+from rl_gym.acq_iopt import ACQIOpt
 from rl_gym.neg_discrepancy import NegDiscrepancy
 from rl_gym.policy_designer import PolicyDesigner
 from rl_gym.surrogate import Surrogate
@@ -40,6 +41,7 @@ class Optimizer:
             "disc",
             "random",
             "sobol",
+            "iopt",
             "bayes-actions",
             "bayes-params",
             "actions-cov",
@@ -86,6 +88,8 @@ class Optimizer:
                 acq_fn = MinDistanceParameters(data_opt, True)
             elif ttype == "disc":
                 acq_fn = NegDiscrepancy(data_opt)
+            elif ttype == "iopt":
+                acq_fn = ACQIOpt(data_opt)
             elif ttype in ["random", "sobol", "dumb"]:
                 acq_fn = ttype
             else:
