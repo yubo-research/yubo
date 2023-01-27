@@ -1,4 +1,5 @@
-from rl_gym.acq_iopt import ACQIOpt
+from rl_gym.acq_bt import AcqBT
+from rl_gym.acq_iopt import AcqIOpt
 from rl_gym.datum import Datum
 from rl_gym.distance import distance_actions, distance_actions_corr, distance_parameters
 from rl_gym.min_distance_actions_fast import MinDistanceActionsFast
@@ -89,7 +90,7 @@ class Optimizer:
             elif ttype == "disc":
                 acq_fn = NegDiscrepancy(data_opt)
             elif ttype == "iopt":
-                acq_fn = ACQIOpt(data_opt)
+                acq_fn = AcqBT(AcqIOpt, data_opt)
             elif ttype in ["random", "sobol", "dumb"]:
                 acq_fn = ttype
             else:
