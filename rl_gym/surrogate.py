@@ -1,8 +1,8 @@
 from typing import List
 
 import numpy as np
-
 from bbo.gpr import GPR
+
 from rl_gym.datum import Datum
 
 
