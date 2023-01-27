@@ -16,8 +16,6 @@ class AcqIOpt(AnalyticAcquisitionFunction):
         num_samples: int = 256,
         seed: int = None,
     ) -> None:
-        # we use the AcquisitionFunction constructor, since that of
-        # MCAcquisitionFunction performs some validity checks that we don't want here
         super(AnalyticAcquisitionFunction, self).__init__(model=model)
         self.q = q
 
@@ -52,7 +50,4 @@ class AcqIOpt(AnalyticAcquisitionFunction):
 
             af.append(-integrated_variance_next)
 
-        af = torch.stack(af)
-
-        # minimize this
-        return af
+        return torch.stack(af)
