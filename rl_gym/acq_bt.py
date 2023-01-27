@@ -29,7 +29,10 @@ class AcqBT:
         gp = SingleTaskGP(X, Y)
         mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
         fit_gpytorch_mll(mll)
-        self._acq = acq_factory(gp)
+
+        num_dim = X[0].shape[-1]
+        self.acq_function = acq_factory(gp)
+        self.bounds = torch.tensor([[0.0] * num_dim, [1.0] * num_dim], device=X.device, dtype=X.dtype)
 
     def _mk_yx(self, datum):
         return datum.trajectory.rreturn, self._mk_x(datum.policy)
@@ -40,4 +43,4 @@ class AcqBT:
     def __call__(self, policy):
         X = torch.atleast_2d(self._mk_x(policy))
         X = X.unsqueeze(0)
-        return self._acq(X).squeeze().item()
+        return self.acq_function(X).squeeze().item()
