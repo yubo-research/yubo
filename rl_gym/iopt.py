@@ -45,7 +45,6 @@ class qIOPT(AnalyticAcquisitionFunction):
         af = []
         for i_batch in range(num_batches):
             Y = posterior.mean[i_batch, :]  # q
-            S = posterior.stddev[i_batch, :]  # q
             model_next = self.model.condition_on_observations(X=X[i_batch, ::], Y=Y)  # q x d
 
             samples_y_next = model_next.posterior(self.X_samples)

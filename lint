@@ -14,7 +14,4 @@ black --line-length=160 -q $FILES
 
 echo
 echo Lint:
-ruff --config config/ruff_config --exclude trash/ --force-exclude --fix --fixable I001 *
-
-
-
+ruff --config config/ruff.toml --force-exclude --fix --fixable I001 $FILES

@@ -1,6 +1,5 @@
-[tool.ruff]
 ignore = ['E501']
-line-length = 160
+# line-length = 160
 select = [
     'E',
     'F',
@@ -8,3 +7,6 @@ select = [
     'I001',
 ]
 
+exclude = [
+    "trash",
+]
