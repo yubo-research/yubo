@@ -1,0 +1,2435 @@
+/home/dsweet/env/lib/python3.9/site-packages/gymnasium/spaces/box.py:129: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  gym.logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+[KeOps] Warning : Cuda libraries were not detected on the system ; using cpu only mode
+SHAPES: torch.Size([1, 10]) torch.Size([1, 1])
+MD: md = -3.7806 tr = 0.7980
+ITER: i_iter = 0 ret = -0.04 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 1
+SHAPES: torch.Size([2, 10]) torch.Size([2, 1])
+MD: md = -2.0210 tr = 0.2039
+ITER: i_iter = 1 ret = -0.06 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 2
+SHAPES: torch.Size([3, 10]) torch.Size([3, 1])
+MD: md = -1.3794 tr = 0.2007
+ITER: i_iter = 2 ret = -0.04 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 3
+SHAPES: torch.Size([4, 10]) torch.Size([4, 1])
+MD: md = -1.1684 tr = 0.1977
+ITER: i_iter = 3 ret = -0.04 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 4
+SHAPES: torch.Size([5, 10]) torch.Size([5, 1])
+MD: md = -1.0586 tr = 0.2569
+ITER: i_iter = 4 ret = -0.08 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 5
+SHAPES: torch.Size([6, 10]) torch.Size([6, 1])
+MD: md = -1.0082 tr = 0.2752
+ITER: i_iter = 5 ret = -0.04 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 6
+SHAPES: torch.Size([7, 10]) torch.Size([7, 1])
+MD: md = -0.9772 tr = 0.2066
+ITER: i_iter = 6 ret = -0.07 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 7
+SHAPES: torch.Size([8, 10]) torch.Size([8, 1])
+MD: md = -0.9496 tr = 0.2903
+ITER: i_iter = 7 ret = -0.09 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 8
+SHAPES: torch.Size([9, 10]) torch.Size([9, 1])
+MD: md = -0.9331 tr = 0.2966
+ITER: i_iter = 8 ret = -0.04 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 9
+SHAPES: torch.Size([10, 10]) torch.Size([10, 1])
+MD: md = -0.9276 tr = 0.2388
+ITER: i_iter = 9 ret = -0.05 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 10
+SHAPES: torch.Size([11, 10]) torch.Size([11, 1])
+MD: md = -0.9170 tr = 0.2839
+ITER: i_iter = 10 ret = -0.07 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 11
+SHAPES: torch.Size([12, 10]) torch.Size([12, 1])
+MD: md = -0.9007 tr = 0.2434
+ITER: i_iter = 11 ret = -0.08 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 12
+SHAPES: torch.Size([13, 10]) torch.Size([13, 1])
+MD: md = -0.8854 tr = 0.2111
+ITER: i_iter = 12 ret = -0.03 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 13
+SHAPES: torch.Size([14, 10]) torch.Size([14, 1])
+MD: md = -0.8701 tr = 0.3057
+ITER: i_iter = 13 ret = -0.06 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 14
+SHAPES: torch.Size([15, 10]) torch.Size([15, 1])
+MD: md = -0.8544 tr = 0.3253
+ITER: i_iter = 14 ret = -0.10 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 15
+SHAPES: torch.Size([16, 10]) torch.Size([16, 1])
+MD: md = -0.8369 tr = 0.3233
+ITER: i_iter = 15 ret = -0.09 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 16
+SHAPES: torch.Size([17, 10]) torch.Size([17, 1])
+MD: md = -0.8138 tr = 0.3211
+ITER: i_iter = 16 ret = -0.08 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 17
+SHAPES: torch.Size([18, 10]) torch.Size([18, 1])
+MD: md = -0.7933 tr = 0.3278
+ITER: i_iter = 17 ret = -0.11 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 18
+SHAPES: torch.Size([19, 10]) torch.Size([19, 1])
+MD: md = -0.7745 tr = 0.2266
+ITER: i_iter = 18 ret = -0.09 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 19
+SHAPES: torch.Size([20, 10]) torch.Size([20, 1])
+MD: md = -0.7448 tr = 0.3293
+ITER: i_iter = 19 ret = -0.12 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 20
+SHAPES: torch.Size([21, 10]) torch.Size([21, 1])
+MD: md = -0.7172 tr = 0.2992
+ITER: i_iter = 20 ret = -0.11 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 21
+SHAPES: torch.Size([22, 10]) torch.Size([22, 1])
+MD: md = -0.6918 tr = 0.2398
+ITER: i_iter = 21 ret = -0.08 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 22
+SHAPES: torch.Size([23, 10]) torch.Size([23, 1])
+MD: md = -0.6552 tr = 0.2329
+ITER: i_iter = 22 ret = -0.05 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 23
+SHAPES: torch.Size([24, 10]) torch.Size([24, 1])
+MD: md = -0.6252 tr = 0.2572
+ITER: i_iter = 23 ret = -0.04 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 24
+SHAPES: torch.Size([25, 10]) torch.Size([25, 1])
+MD: md = -0.5830 tr = 0.3348
+ITER: i_iter = 24 ret = -0.06 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 25
+SHAPES: torch.Size([26, 10]) torch.Size([26, 1])
+MD: md = -0.5506 tr = 0.3384
+ITER: i_iter = 25 ret = -0.11 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 26
+SHAPES: torch.Size([27, 10]) torch.Size([27, 1])
+MD: md = -0.5136 tr = 0.2993
+ITER: i_iter = 26 ret = -0.13 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 27
+SHAPES: torch.Size([28, 10]) torch.Size([28, 1])
+MD: md = -0.4803 tr = 0.2915
+ITER: i_iter = 27 ret = -0.08 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 28
+SHAPES: torch.Size([29, 10]) torch.Size([29, 1])
+MD: md = -0.4538 tr = 0.3244
+ITER: i_iter = 28 ret = -0.13 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 29
+SHAPES: torch.Size([30, 10]) torch.Size([30, 1])
+MD: md = -0.4295 tr = 0.2571
+ITER: i_iter = 29 ret = -0.10 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 30
+SHAPES: torch.Size([31, 10]) torch.Size([31, 1])
+MD: md = -0.4051 tr = 0.3491
+ITER: i_iter = 30 ret = -0.12 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 31
+SHAPES: torch.Size([32, 10]) torch.Size([32, 1])
+MD: md = -0.3782 tr = 0.2796
+ITER: i_iter = 31 ret = -0.07 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 32
+SHAPES: torch.Size([33, 10]) torch.Size([33, 1])
+MD: md = -0.3583 tr = 0.2820
+ITER: i_iter = 32 ret = -0.05 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 33
+SHAPES: torch.Size([34, 10]) torch.Size([34, 1])
+MD: md = -0.3402 tr = 0.4169
+ITER: i_iter = 33 ret = -0.16 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 34
+SHAPES: torch.Size([35, 10]) torch.Size([35, 1])
+MD: md = -0.3198 tr = 0.3006
+ITER: i_iter = 34 ret = -0.09 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 35
+SHAPES: torch.Size([36, 10]) torch.Size([36, 1])
+MD: md = -0.3021 tr = 0.3459
+ITER: i_iter = 35 ret = -0.10 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 36
+SHAPES: torch.Size([37, 10]) torch.Size([37, 1])
+MD: md = -0.2867 tr = 0.3015
+ITER: i_iter = 36 ret = -0.06 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 37
+SHAPES: torch.Size([38, 10]) torch.Size([38, 1])
+MD: md = -0.2671 tr = 0.2602
+ITER: i_iter = 37 ret = -0.10 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 38
+SHAPES: torch.Size([39, 10]) torch.Size([39, 1])
+MD: md = -0.2541 tr = 0.3551
+ITER: i_iter = 38 ret = -0.07 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 39
+SHAPES: torch.Size([40, 10]) torch.Size([40, 1])
+MD: md = -0.2385 tr = 0.3286
+ITER: i_iter = 39 ret = -0.07 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 40
+SHAPES: torch.Size([41, 10]) torch.Size([41, 1])
+MD: md = -0.2281 tr = 0.3885
+ITER: i_iter = 40 ret = -0.16 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 41
+SHAPES: torch.Size([42, 10]) torch.Size([42, 1])
+MD: md = -0.2159 tr = 0.2713
+ITER: i_iter = 41 ret = -0.11 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 42
+SHAPES: torch.Size([43, 10]) torch.Size([43, 1])
+MD: md = -0.2039 tr = 0.3817
+ITER: i_iter = 42 ret = -0.15 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 43
+SHAPES: torch.Size([44, 10]) torch.Size([44, 1])
+MD: md = -0.1943 tr = 0.3565
+ITER: i_iter = 43 ret = -0.16 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 44
+SHAPES: torch.Size([45, 10]) torch.Size([45, 1])
+MD: md = -0.1840 tr = 0.2780
+ITER: i_iter = 44 ret = -0.07 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 45
+SHAPES: torch.Size([46, 10]) torch.Size([46, 1])
+MD: md = -0.2026 tr = 0.2613
+ITER: i_iter = 45 ret = -0.06 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 46
+SHAPES: torch.Size([47, 10]) torch.Size([47, 1])
+MD: md = -0.1722 tr = 0.3641
+ITER: i_iter = 46 ret = -0.12 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 47
+SHAPES: torch.Size([48, 10]) torch.Size([48, 1])
+MD: md = -0.1649 tr = 0.4292
+ITER: i_iter = 47 ret = -0.13 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 48
+SHAPES: torch.Size([49, 10]) torch.Size([49, 1])
+MD: md = -0.1560 tr = 0.4120
+ITER: i_iter = 48 ret = -0.12 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 49
+SHAPES: torch.Size([50, 10]) torch.Size([50, 1])
+MD: md = -0.1518 tr = 0.3963
+ITER: i_iter = 49 ret = -0.10 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 50
+SHAPES: torch.Size([51, 10]) torch.Size([51, 1])
+MD: md = -0.1440 tr = 0.3483
+ITER: i_iter = 50 ret = -0.13 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 51
+SHAPES: torch.Size([52, 10]) torch.Size([52, 1])
+MD: md = -0.1395 tr = 0.3508
+ITER: i_iter = 51 ret = -0.10 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 52
+SHAPES: torch.Size([53, 10]) torch.Size([53, 1])
+MD: md = -0.1339 tr = 0.3662
+ITER: i_iter = 52 ret = -0.12 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 53
+SHAPES: torch.Size([54, 10]) torch.Size([54, 1])
+MD: md = -0.1299 tr = 0.2844
+ITER: i_iter = 53 ret = -0.09 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 54
+SHAPES: torch.Size([55, 10]) torch.Size([55, 1])
+MD: md = -0.1248 tr = 0.3731
+ITER: i_iter = 54 ret = -0.17 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 55
+SHAPES: torch.Size([56, 10]) torch.Size([56, 1])
+MD: md = -0.1186 tr = 0.3543
+ITER: i_iter = 55 ret = -0.12 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 56
+SHAPES: torch.Size([57, 10]) torch.Size([57, 1])
+MD: md = -0.1151 tr = 0.2687
+ITER: i_iter = 56 ret = -0.11 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 57
+SHAPES: torch.Size([58, 10]) torch.Size([58, 1])
+MD: md = -0.1112 tr = 0.2867
+ITER: i_iter = 57 ret = -0.11 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 58
+SHAPES: torch.Size([59, 10]) torch.Size([59, 1])
+MD: md = -0.1071 tr = 0.4123
+ITER: i_iter = 58 ret = -0.11 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 59
+SHAPES: torch.Size([60, 10]) torch.Size([60, 1])
+MD: md = -0.1044 tr = 0.4176
+ITER: i_iter = 59 ret = -0.17 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 60
+SHAPES: torch.Size([61, 10]) torch.Size([61, 1])
+MD: md = -0.1009 tr = 0.2892
+ITER: i_iter = 60 ret = -0.11 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 61
+SHAPES: torch.Size([62, 10]) torch.Size([62, 1])
+MD: md = -0.0976 tr = 0.3260
+ITER: i_iter = 61 ret = -0.09 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 62
+SHAPES: torch.Size([63, 10]) torch.Size([63, 1])
+MD: md = -0.0969 tr = 0.3355
+ITER: i_iter = 62 ret = -0.12 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 63
+SHAPES: torch.Size([64, 10]) torch.Size([64, 1])
+MD: md = -0.0948 tr = 0.3197
+ITER: i_iter = 63 ret = -0.05 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 64
+SHAPES: torch.Size([65, 10]) torch.Size([65, 1])
+MD: md = -0.0902 tr = 0.3927
+ITER: i_iter = 64 ret = -0.12 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 65
+SHAPES: torch.Size([66, 10]) torch.Size([66, 1])
+MD: md = -0.0871 tr = 0.2926
+ITER: i_iter = 65 ret = -0.10 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 66
+SHAPES: torch.Size([67, 10]) torch.Size([67, 1])
+MD: md = -0.0835 tr = 0.3985
+ITER: i_iter = 66 ret = -0.18 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 67
+SHAPES: torch.Size([68, 10]) torch.Size([68, 1])
+MD: md = -0.0812 tr = 0.2622
+ITER: i_iter = 67 ret = -0.10 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 68
+SHAPES: torch.Size([69, 10]) torch.Size([69, 1])
+MD: md = -0.0788 tr = 0.4009
+ITER: i_iter = 68 ret = -0.14 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 69
+SHAPES: torch.Size([70, 10]) torch.Size([70, 1])
+MD: md = -0.0779 tr = 0.3881
+ITER: i_iter = 69 ret = -0.09 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 70
+SHAPES: torch.Size([71, 10]) torch.Size([71, 1])
+MD: md = -0.0747 tr = 0.3818
+ITER: i_iter = 70 ret = -0.10 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 71
+SHAPES: torch.Size([72, 10]) torch.Size([72, 1])
+MD: md = -0.0730 tr = 0.3117
+ITER: i_iter = 71 ret = -0.11 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 72
+SHAPES: torch.Size([73, 10]) torch.Size([73, 1])
+MD: md = -0.0698 tr = 0.3675
+ITER: i_iter = 72 ret = -0.14 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 73
+SHAPES: torch.Size([74, 10]) torch.Size([74, 1])
+MD: md = -0.0696 tr = 0.4094
+ITER: i_iter = 73 ret = -0.12 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 74
+SHAPES: torch.Size([75, 10]) torch.Size([75, 1])
+MD: md = -0.0682 tr = 0.3988
+ITER: i_iter = 74 ret = -0.11 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 75
+SHAPES: torch.Size([76, 10]) torch.Size([76, 1])
+MD: md = -0.0651 tr = 0.3891
+ITER: i_iter = 75 ret = -0.14 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 76
+SHAPES: torch.Size([77, 10]) torch.Size([77, 1])
+MD: md = -0.0650 tr = 0.2491
+ITER: i_iter = 76 ret = -0.07 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 77
+SHAPES: torch.Size([78, 10]) torch.Size([78, 1])
+MD: md = -0.0628 tr = 0.3232
+ITER: i_iter = 77 ret = -0.04 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 78
+SHAPES: torch.Size([79, 10]) torch.Size([79, 1])
+MD: md = -0.0596 tr = 0.3836
+ITER: i_iter = 78 ret = -0.17 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 79
+SHAPES: torch.Size([80, 10]) torch.Size([80, 1])
+MD: md = -0.0592 tr = 0.3259
+ITER: i_iter = 79 ret = -0.13 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 80
+SHAPES: torch.Size([81, 10]) torch.Size([81, 1])
+MD: md = -0.0571 tr = 0.4378
+ITER: i_iter = 80 ret = -0.14 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 81
+SHAPES: torch.Size([82, 10]) torch.Size([82, 1])
+MD: md = -0.0555 tr = 0.3254
+ITER: i_iter = 81 ret = -0.13 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 82
+SHAPES: torch.Size([83, 10]) torch.Size([83, 1])
+MD: md = -0.0540 tr = 0.2875
+ITER: i_iter = 82 ret = -0.15 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 83
+SHAPES: torch.Size([84, 10]) torch.Size([84, 1])
+MD: md = -0.0532 tr = 0.3921
+ITER: i_iter = 83 ret = -0.09 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 84
+SHAPES: torch.Size([85, 10]) torch.Size([85, 1])
+MD: md = -0.0526 tr = 0.3660
+ITER: i_iter = 84 ret = -0.13 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 85
+SHAPES: torch.Size([86, 10]) torch.Size([86, 1])
+MD: md = -0.0507 tr = 0.3158
+ITER: i_iter = 85 ret = -0.07 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 86
+SHAPES: torch.Size([87, 10]) torch.Size([87, 1])
+MD: md = -0.0484 tr = 0.2578
+ITER: i_iter = 86 ret = -0.11 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 87
+SHAPES: torch.Size([88, 10]) torch.Size([88, 1])
+MD: md = -0.0477 tr = 0.4205
+ITER: i_iter = 87 ret = -0.13 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 88
+SHAPES: torch.Size([89, 10]) torch.Size([89, 1])
+MD: md = -0.0476 tr = 0.4002
+ITER: i_iter = 88 ret = -0.16 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 89
+SHAPES: torch.Size([90, 10]) torch.Size([90, 1])
+MD: md = -0.0467 tr = 0.4241
+ITER: i_iter = 89 ret = -0.10 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 90
+SHAPES: torch.Size([91, 10]) torch.Size([91, 1])
+MD: md = -0.0453 tr = 0.4691
+ITER: i_iter = 90 ret = -0.20 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 91
+SHAPES: torch.Size([92, 10]) torch.Size([92, 1])
+MD: md = -0.0441 tr = 0.3309
+ITER: i_iter = 91 ret = -0.10 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 92
+SHAPES: torch.Size([93, 10]) torch.Size([93, 1])
+MD: md = -0.0425 tr = 0.2971
+ITER: i_iter = 92 ret = -0.11 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 93
+SHAPES: torch.Size([94, 10]) torch.Size([94, 1])
+MD: md = -0.0417 tr = 0.3135
+ITER: i_iter = 93 ret = -0.15 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 94
+SHAPES: torch.Size([95, 10]) torch.Size([95, 1])
+MD: md = -0.0412 tr = 0.4117
+ITER: i_iter = 94 ret = -0.15 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 95
+SHAPES: torch.Size([96, 10]) torch.Size([96, 1])
+MD: md = -0.0402 tr = 0.4421
+ITER: i_iter = 95 ret = -0.20 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 96
+SHAPES: torch.Size([97, 10]) torch.Size([97, 1])
+MD: md = -0.0388 tr = 0.3060
+ITER: i_iter = 96 ret = -0.13 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 97
+SHAPES: torch.Size([98, 10]) torch.Size([98, 1])
+MD: md = -0.0380 tr = 0.3406
+ITER: i_iter = 97 ret = -0.14 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 98
+SHAPES: torch.Size([99, 10]) torch.Size([99, 1])
+MD: md = -0.0374 tr = 0.3749
+ITER: i_iter = 98 ret = -0.11 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 99
+SHAPES: torch.Size([100, 10]) torch.Size([100, 1])
+MD: md = -0.0371 tr = 0.3871
+ITER: i_iter = 99 ret = -0.15 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 100
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 0 return = -0.044
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 1 return = -0.044
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 2 return = -0.043
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 3 return = -0.038
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 4 return = -0.038
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 5 return = -0.038
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 6 return = -0.038
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 7 return = -0.038
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 8 return = -0.035
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 9 return = -0.035
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 10 return = -0.035
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 11 return = -0.035
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 12 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 13 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 14 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 15 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 16 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 17 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 18 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 19 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 20 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 21 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 22 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 23 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 24 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 25 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 26 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 27 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 28 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 29 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 30 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 31 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 32 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 33 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 34 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 35 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 36 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 37 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 38 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 39 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 40 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 41 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 42 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 43 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 44 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 45 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 46 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 47 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 48 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 49 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 50 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 51 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 52 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 53 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 54 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 55 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 56 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 57 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 58 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 59 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 60 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 61 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 62 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 63 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 64 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 65 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 66 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 67 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 68 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 69 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 70 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 71 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 72 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 73 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 74 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 75 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 76 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 77 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 78 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 79 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 80 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 81 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 82 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 83 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 84 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 85 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 86 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 87 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 88 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 89 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 90 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 91 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 92 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 93 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 94 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 95 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 96 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 97 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 98 return = -0.031
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 0 i_iter = 99 return = -0.031
+TIME_SAMPLE: 5825.94
+SHAPES: torch.Size([1, 10]) torch.Size([1, 1])
+MD: md = -3.7775 tr = 0.9334
+ITER: i_iter = 0 ret = -0.06 ret_best = -0.06 delta_tr = 1000000000.00 n_data = 1
+SHAPES: torch.Size([2, 10]) torch.Size([2, 1])
+MD: md = -2.0219 tr = 0.1728
+ITER: i_iter = 1 ret = -0.10 ret_best = -0.06 delta_tr = 1000000000.00 n_data = 2
+SHAPES: torch.Size([3, 10]) torch.Size([3, 1])
+MD: md = -1.3626 tr = 0.2392
+ITER: i_iter = 2 ret = -0.16 ret_best = -0.06 delta_tr = 1000000000.00 n_data = 3
+SHAPES: torch.Size([4, 10]) torch.Size([4, 1])
+MD: md = -1.1666 tr = 0.1918
+ITER: i_iter = 3 ret = -0.08 ret_best = -0.06 delta_tr = 1000000000.00 n_data = 4
+SHAPES: torch.Size([5, 10]) torch.Size([5, 1])
+MD: md = -1.0687 tr = 0.3870
+ITER: i_iter = 4 ret = -0.10 ret_best = -0.06 delta_tr = 1000000000.00 n_data = 5
+SHAPES: torch.Size([6, 10]) torch.Size([6, 1])
+MD: md = -1.0385 tr = 0.1728
+ITER: i_iter = 5 ret = -0.13 ret_best = -0.06 delta_tr = 1000000000.00 n_data = 6
+SHAPES: torch.Size([7, 10]) torch.Size([7, 1])
+MD: md = -1.0031 tr = 0.2349
+ITER: i_iter = 6 ret = -0.10 ret_best = -0.06 delta_tr = 1000000000.00 n_data = 7
+SHAPES: torch.Size([8, 10]) torch.Size([8, 1])
+MD: md = -0.9785 tr = 0.2691
+ITER: i_iter = 7 ret = -0.14 ret_best = -0.06 delta_tr = 1000000000.00 n_data = 8
+SHAPES: torch.Size([9, 10]) torch.Size([9, 1])
+MD: md = -0.9637 tr = 0.1850
+ITER: i_iter = 8 ret = -0.11 ret_best = -0.06 delta_tr = 1000000000.00 n_data = 9
+SHAPES: torch.Size([10, 10]) torch.Size([10, 1])
+MD: md = -0.9491 tr = 0.2255
+ITER: i_iter = 9 ret = -0.17 ret_best = -0.06 delta_tr = 1000000000.00 n_data = 10
+SHAPES: torch.Size([11, 10]) torch.Size([11, 1])
+MD: md = -0.9378 tr = 0.2372
+ITER: i_iter = 10 ret = -0.08 ret_best = -0.06 delta_tr = 1000000000.00 n_data = 11
+SHAPES: torch.Size([12, 10]) torch.Size([12, 1])
+MD: md = -0.9318 tr = 0.2253
+ITER: i_iter = 11 ret = -0.19 ret_best = -0.06 delta_tr = 1000000000.00 n_data = 12
+SHAPES: torch.Size([13, 10]) torch.Size([13, 1])
+MD: md = -0.9217 tr = 0.2167
+ITER: i_iter = 12 ret = -0.05 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 13
+SHAPES: torch.Size([14, 10]) torch.Size([14, 1])
+MD: md = -0.9121 tr = 0.3083
+ITER: i_iter = 13 ret = -0.16 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 14
+SHAPES: torch.Size([15, 10]) torch.Size([15, 1])
+MD: md = -0.9040 tr = 0.3949
+ITER: i_iter = 14 ret = -0.12 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 15
+SHAPES: torch.Size([16, 10]) torch.Size([16, 1])
+MD: md = -0.8982 tr = 0.2720
+ITER: i_iter = 15 ret = -0.08 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 16
+SHAPES: torch.Size([17, 10]) torch.Size([17, 1])
+MD: md = -0.8833 tr = 0.3522
+ITER: i_iter = 16 ret = -0.17 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 17
+SHAPES: torch.Size([18, 10]) torch.Size([18, 1])
+MD: md = -0.8706 tr = 0.3005
+ITER: i_iter = 17 ret = -0.11 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 18
+SHAPES: torch.Size([19, 10]) torch.Size([19, 1])
+MD: md = -0.8581 tr = 0.3479
+ITER: i_iter = 18 ret = -0.08 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 19
+SHAPES: torch.Size([20, 10]) torch.Size([20, 1])
+MD: md = -0.8376 tr = 0.3238
+ITER: i_iter = 19 ret = -0.07 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 20
+SHAPES: torch.Size([21, 10]) torch.Size([21, 1])
+MD: md = -0.8149 tr = 0.2435
+ITER: i_iter = 20 ret = -0.13 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 21
+SHAPES: torch.Size([22, 10]) torch.Size([22, 1])
+MD: md = -0.7876 tr = 0.2638
+ITER: i_iter = 21 ret = -0.11 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 22
+SHAPES: torch.Size([23, 10]) torch.Size([23, 1])
+MD: md = -0.7550 tr = 0.3611
+ITER: i_iter = 22 ret = -0.14 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 23
+SHAPES: torch.Size([24, 10]) torch.Size([24, 1])
+MD: md = -0.7257 tr = 0.2555
+ITER: i_iter = 23 ret = -0.06 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 24
+SHAPES: torch.Size([25, 10]) torch.Size([25, 1])
+MD: md = -0.6705 tr = 0.2615
+ITER: i_iter = 24 ret = -0.11 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 25
+SHAPES: torch.Size([26, 10]) torch.Size([26, 1])
+MD: md = -0.6344 tr = 0.3144
+ITER: i_iter = 25 ret = -0.13 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 26
+SHAPES: torch.Size([27, 10]) torch.Size([27, 1])
+MD: md = -0.5945 tr = 0.2760
+ITER: i_iter = 26 ret = -0.11 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 27
+SHAPES: torch.Size([28, 10]) torch.Size([28, 1])
+MD: md = -0.5581 tr = 0.2724
+ITER: i_iter = 27 ret = -0.12 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 28
+SHAPES: torch.Size([29, 10]) torch.Size([29, 1])
+MD: md = -0.5239 tr = 0.2888
+ITER: i_iter = 28 ret = -0.13 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 29
+SHAPES: torch.Size([30, 10]) torch.Size([30, 1])
+MD: md = -0.4882 tr = 0.3326
+ITER: i_iter = 29 ret = -0.16 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 30
+SHAPES: torch.Size([31, 10]) torch.Size([31, 1])
+MD: md = -0.4566 tr = 0.3104
+ITER: i_iter = 30 ret = -0.16 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 31
+SHAPES: torch.Size([32, 10]) torch.Size([32, 1])
+MD: md = -0.4259 tr = 0.3024
+ITER: i_iter = 31 ret = -0.13 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 32
+SHAPES: torch.Size([33, 10]) torch.Size([33, 1])
+MD: md = -0.3994 tr = 0.3069
+ITER: i_iter = 32 ret = -0.10 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 33
+SHAPES: torch.Size([34, 10]) torch.Size([34, 1])
+MD: md = -0.3731 tr = 0.3086
+ITER: i_iter = 33 ret = -0.08 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 34
+SHAPES: torch.Size([35, 10]) torch.Size([35, 1])
+MD: md = -0.3489 tr = 0.3741
+ITER: i_iter = 34 ret = -0.16 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 35
+SHAPES: torch.Size([36, 10]) torch.Size([36, 1])
+MD: md = -0.3221 tr = 0.2895
+ITER: i_iter = 35 ret = -0.14 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 36
+SHAPES: torch.Size([37, 10]) torch.Size([37, 1])
+MD: md = -0.3065 tr = 0.2907
+ITER: i_iter = 36 ret = -0.04 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 37
+SHAPES: torch.Size([38, 10]) torch.Size([38, 1])
+MD: md = -0.2812 tr = 0.4552
+ITER: i_iter = 37 ret = -0.22 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 38
+SHAPES: torch.Size([39, 10]) torch.Size([39, 1])
+MD: md = -0.2637 tr = 0.3893
+ITER: i_iter = 38 ret = -0.17 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 39
+SHAPES: torch.Size([40, 10]) torch.Size([40, 1])
+MD: md = -0.2479 tr = 0.4251
+ITER: i_iter = 39 ret = -0.12 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 40
+SHAPES: torch.Size([41, 10]) torch.Size([41, 1])
+MD: md = -0.2321 tr = 0.3503
+ITER: i_iter = 40 ret = -0.12 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 41
+SHAPES: torch.Size([42, 10]) torch.Size([42, 1])
+MD: md = -0.2191 tr = 0.4170
+ITER: i_iter = 41 ret = -0.16 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 42
+SHAPES: torch.Size([43, 10]) torch.Size([43, 1])
+MD: md = -0.2060 tr = 0.4378
+ITER: i_iter = 42 ret = -0.12 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 43
+SHAPES: torch.Size([44, 10]) torch.Size([44, 1])
+MD: md = -0.1989 tr = 0.4140
+ITER: i_iter = 43 ret = -0.17 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 44
+SHAPES: torch.Size([45, 10]) torch.Size([45, 1])
+MD: md = -0.1874 tr = 0.2908
+ITER: i_iter = 44 ret = -0.08 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 45
+SHAPES: torch.Size([46, 10]) torch.Size([46, 1])
+MD: md = -0.1779 tr = 0.2639
+ITER: i_iter = 45 ret = -0.04 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 46
+SHAPES: torch.Size([47, 10]) torch.Size([47, 1])
+MD: md = -0.1647 tr = 0.3814
+ITER: i_iter = 46 ret = -0.18 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 47
+SHAPES: torch.Size([48, 10]) torch.Size([48, 1])
+MD: md = -0.1565 tr = 0.5118
+ITER: i_iter = 47 ret = -0.21 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 48
+SHAPES: torch.Size([49, 10]) torch.Size([49, 1])
+MD: md = -0.1510 tr = 0.4400
+ITER: i_iter = 48 ret = -0.25 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 49
+SHAPES: torch.Size([50, 10]) torch.Size([50, 1])
+MD: md = -0.3037 tr = 0.3725
+ITER: i_iter = 49 ret = -0.13 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 50
+SHAPES: torch.Size([51, 10]) torch.Size([51, 1])
+MD: md = -0.1374 tr = 0.4307
+ITER: i_iter = 50 ret = -0.09 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 51
+SHAPES: torch.Size([52, 10]) torch.Size([52, 1])
+MD: md = -0.1291 tr = 0.3953
+ITER: i_iter = 51 ret = -0.12 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 52
+SHAPES: torch.Size([53, 10]) torch.Size([53, 1])
+MD: md = -0.1238 tr = 0.3671
+ITER: i_iter = 52 ret = -0.22 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 53
+SHAPES: torch.Size([54, 10]) torch.Size([54, 1])
+MD: md = -0.1216 tr = 0.5051
+ITER: i_iter = 53 ret = -0.24 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 54
+SHAPES: torch.Size([55, 10]) torch.Size([55, 1])
+MD: md = -0.1160 tr = 0.4353
+ITER: i_iter = 54 ret = -0.24 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 55
+SHAPES: torch.Size([56, 10]) torch.Size([56, 1])
+MD: md = -0.1106 tr = 0.4865
+ITER: i_iter = 55 ret = -0.24 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 56
+SHAPES: torch.Size([57, 10]) torch.Size([57, 1])
+MD: md = -0.1059 tr = 0.4496
+ITER: i_iter = 56 ret = -0.19 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 57
+SHAPES: torch.Size([58, 10]) torch.Size([58, 1])
+MD: md = -0.1029 tr = 0.4476
+ITER: i_iter = 57 ret = -0.15 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 58
+SHAPES: torch.Size([59, 10]) torch.Size([59, 1])
+MD: md = -0.0994 tr = 0.2429
+ITER: i_iter = 58 ret = -0.03 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 59
+SHAPES: torch.Size([60, 10]) torch.Size([60, 1])
+MD: md = -0.0936 tr = 0.3567
+ITER: i_iter = 59 ret = -0.15 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 60
+SHAPES: torch.Size([61, 10]) torch.Size([61, 1])
+MD: md = -0.0897 tr = 0.4152
+ITER: i_iter = 60 ret = -0.11 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 61
+SHAPES: torch.Size([62, 10]) torch.Size([62, 1])
+MD: md = -0.0870 tr = 0.4148
+ITER: i_iter = 61 ret = -0.15 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 62
+SHAPES: torch.Size([63, 10]) torch.Size([63, 1])
+MD: md = -0.0840 tr = 0.3874
+ITER: i_iter = 62 ret = -0.17 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 63
+SHAPES: torch.Size([64, 10]) torch.Size([64, 1])
+MD: md = -0.0812 tr = 0.4139
+ITER: i_iter = 63 ret = -0.16 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 64
+SHAPES: torch.Size([65, 10]) torch.Size([65, 1])
+MD: md = -0.0781 tr = 0.3377
+ITER: i_iter = 64 ret = -0.10 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 65
+SHAPES: torch.Size([66, 10]) torch.Size([66, 1])
+MD: md = -0.0759 tr = 0.4106
+ITER: i_iter = 65 ret = -0.16 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 66
+SHAPES: torch.Size([67, 10]) torch.Size([67, 1])
+MD: md = -0.0732 tr = 0.3803
+ITER: i_iter = 66 ret = -0.14 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 67
+SHAPES: torch.Size([68, 10]) torch.Size([68, 1])
+MD: md = -0.0707 tr = 0.4352
+ITER: i_iter = 67 ret = -0.16 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 68
+SHAPES: torch.Size([69, 10]) torch.Size([69, 1])
+MD: md = -0.0689 tr = 0.5119
+ITER: i_iter = 68 ret = -0.28 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 69
+SHAPES: torch.Size([70, 10]) torch.Size([70, 1])
+MD: md = -0.0648 tr = 0.2879
+ITER: i_iter = 69 ret = -0.10 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 70
+SHAPES: torch.Size([71, 10]) torch.Size([71, 1])
+MD: md = -0.0623 tr = 0.3331
+ITER: i_iter = 70 ret = -0.17 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 71
+SHAPES: torch.Size([72, 10]) torch.Size([72, 1])
+MD: md = -0.0600 tr = 0.4467
+ITER: i_iter = 71 ret = -0.17 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 72
+SHAPES: torch.Size([73, 10]) torch.Size([73, 1])
+MD: md = -0.0587 tr = 0.4707
+ITER: i_iter = 72 ret = -0.17 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 73
+SHAPES: torch.Size([74, 10]) torch.Size([74, 1])
+MD: md = -0.0571 tr = 0.3401
+ITER: i_iter = 73 ret = -0.18 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 74
+SHAPES: torch.Size([75, 10]) torch.Size([75, 1])
+MD: md = -0.0565 tr = 0.4429
+ITER: i_iter = 74 ret = -0.20 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 75
+SHAPES: torch.Size([76, 10]) torch.Size([76, 1])
+MD: md = -0.0544 tr = 0.3601
+ITER: i_iter = 75 ret = -0.19 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 76
+SHAPES: torch.Size([77, 10]) torch.Size([77, 1])
+MD: md = -0.0528 tr = 0.5245
+ITER: i_iter = 76 ret = -0.33 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 77
+SHAPES: torch.Size([78, 10]) torch.Size([78, 1])
+MD: md = -0.0502 tr = 0.4989
+ITER: i_iter = 77 ret = -0.25 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 78
+SHAPES: torch.Size([79, 10]) torch.Size([79, 1])
+MD: md = -0.0491 tr = 0.4862
+ITER: i_iter = 78 ret = -0.20 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 79
+SHAPES: torch.Size([80, 10]) torch.Size([80, 1])
+MD: md = -0.0475 tr = 0.3329
+ITER: i_iter = 79 ret = -0.13 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 80
+SHAPES: torch.Size([81, 10]) torch.Size([81, 1])
+MD: md = -0.0461 tr = 0.3934
+ITER: i_iter = 80 ret = -0.10 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 81
+SHAPES: torch.Size([82, 10]) torch.Size([82, 1])
+MD: md = -0.0446 tr = 0.3792
+ITER: i_iter = 81 ret = -0.13 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 82
+SHAPES: torch.Size([83, 10]) torch.Size([83, 1])
+MD: md = -0.0435 tr = 0.3715
+ITER: i_iter = 82 ret = -0.12 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 83
+SHAPES: torch.Size([84, 10]) torch.Size([84, 1])
+MD: md = -0.0424 tr = 0.4562
+ITER: i_iter = 83 ret = -0.15 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 84
+SHAPES: torch.Size([85, 10]) torch.Size([85, 1])
+MD: md = -0.0405 tr = 0.4357
+ITER: i_iter = 84 ret = -0.16 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 85
+SHAPES: torch.Size([86, 10]) torch.Size([86, 1])
+MD: md = -0.0397 tr = 0.3182
+ITER: i_iter = 85 ret = -0.10 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 86
+SHAPES: torch.Size([87, 10]) torch.Size([87, 1])
+MD: md = -0.0399 tr = 0.3790
+ITER: i_iter = 86 ret = -0.14 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 87
+SHAPES: torch.Size([88, 10]) torch.Size([88, 1])
+MD: md = -0.0391 tr = 0.6092
+ITER: i_iter = 87 ret = -0.36 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 88
+SHAPES: torch.Size([89, 10]) torch.Size([89, 1])
+MD: md = -0.0373 tr = 0.4372
+ITER: i_iter = 88 ret = -0.20 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 89
+SHAPES: torch.Size([90, 10]) torch.Size([90, 1])
+MD: md = -0.0364 tr = 0.2710
+ITER: i_iter = 89 ret = -0.08 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 90
+SHAPES: torch.Size([91, 10]) torch.Size([91, 1])
+MD: md = -0.0352 tr = 0.4302
+ITER: i_iter = 90 ret = -0.16 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 91
+SHAPES: torch.Size([92, 10]) torch.Size([92, 1])
+MD: md = -0.0347 tr = 0.5070
+ITER: i_iter = 91 ret = -0.21 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 92
+SHAPES: torch.Size([93, 10]) torch.Size([93, 1])
+MD: md = -0.0337 tr = 0.3842
+ITER: i_iter = 92 ret = -0.09 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 93
+SHAPES: torch.Size([94, 10]) torch.Size([94, 1])
+MD: md = -0.0329 tr = 0.4209
+ITER: i_iter = 93 ret = -0.18 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 94
+SHAPES: torch.Size([95, 10]) torch.Size([95, 1])
+MD: md = -0.0324 tr = 0.5309
+ITER: i_iter = 94 ret = -0.24 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 95
+SHAPES: torch.Size([96, 10]) torch.Size([96, 1])
+MD: md = -0.0316 tr = 0.3089
+ITER: i_iter = 95 ret = -0.10 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 96
+SHAPES: torch.Size([97, 10]) torch.Size([97, 1])
+MD: md = -0.0307 tr = 0.4904
+ITER: i_iter = 96 ret = -0.28 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 97
+SHAPES: torch.Size([98, 10]) torch.Size([98, 1])
+MD: md = -0.0300 tr = 0.3440
+ITER: i_iter = 97 ret = -0.07 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 98
+SHAPES: torch.Size([99, 10]) torch.Size([99, 1])
+MD: md = -0.0291 tr = 0.2939
+ITER: i_iter = 98 ret = -0.07 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 99
+SHAPES: torch.Size([100, 10]) torch.Size([100, 1])
+MD: md = -0.0281 tr = 0.4662
+ITER: i_iter = 99 ret = -0.18 ret_best = -0.03 delta_tr = 1000000000.00 n_data = 100
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 0 return = -0.062
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 1 return = -0.062
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 2 return = -0.062
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 3 return = -0.062
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 4 return = -0.062
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 5 return = -0.062
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 6 return = -0.062
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 7 return = -0.062
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 8 return = -0.062
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 9 return = -0.062
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 10 return = -0.062
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 11 return = -0.062
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 12 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 13 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 14 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 15 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 16 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 17 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 18 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 19 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 20 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 21 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 22 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 23 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 24 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 25 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 26 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 27 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 28 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 29 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 30 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 31 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 32 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 33 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 34 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 35 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 36 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 37 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 38 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 39 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 40 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 41 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 42 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 43 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 44 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 45 return = -0.044
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 46 return = -0.044
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 47 return = -0.044
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 48 return = -0.044
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 49 return = -0.044
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 50 return = -0.044
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 51 return = -0.044
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 52 return = -0.044
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 53 return = -0.044
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 54 return = -0.044
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 55 return = -0.044
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 56 return = -0.044
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 57 return = -0.044
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 58 return = -0.032
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 59 return = -0.032
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 60 return = -0.032
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 61 return = -0.032
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 62 return = -0.032
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 63 return = -0.032
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 64 return = -0.032
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 65 return = -0.032
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 66 return = -0.032
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 67 return = -0.032
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 68 return = -0.032
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 69 return = -0.032
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 70 return = -0.032
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 71 return = -0.032
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 72 return = -0.032
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 73 return = -0.032
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 74 return = -0.032
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 75 return = -0.032
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 76 return = -0.032
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 77 return = -0.032
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 78 return = -0.032
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 79 return = -0.032
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 80 return = -0.032
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 81 return = -0.032
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 82 return = -0.032
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 83 return = -0.032
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 84 return = -0.032
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 85 return = -0.032
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 86 return = -0.032
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 87 return = -0.032
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 88 return = -0.032
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 89 return = -0.032
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 90 return = -0.032
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 91 return = -0.032
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 92 return = -0.032
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 93 return = -0.032
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 94 return = -0.032
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 95 return = -0.032
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 96 return = -0.032
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 97 return = -0.032
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 98 return = -0.032
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 1 i_iter = 99 return = -0.032
+TIME_SAMPLE: 5844.49
+SHAPES: torch.Size([1, 10]) torch.Size([1, 1])
+MD: md = -3.7798 tr = 0.7165
+ITER: i_iter = 0 ret = -0.10 ret_best = -0.10 delta_tr = 1000000000.00 n_data = 1
+SHAPES: torch.Size([2, 10]) torch.Size([2, 1])
+MD: md = -2.0220 tr = 0.2421
+ITER: i_iter = 1 ret = -0.09 ret_best = -0.09 delta_tr = 1000000000.00 n_data = 2
+SHAPES: torch.Size([3, 10]) torch.Size([3, 1])
+MD: md = -1.3982 tr = 0.2424
+ITER: i_iter = 2 ret = -0.16 ret_best = -0.09 delta_tr = 1000000000.00 n_data = 3
+SHAPES: torch.Size([4, 10]) torch.Size([4, 1])
+MD: md = -1.1862 tr = 0.1640
+ITER: i_iter = 3 ret = -0.12 ret_best = -0.09 delta_tr = 1000000000.00 n_data = 4
+SHAPES: torch.Size([5, 10]) torch.Size([5, 1])
+MD: md = -1.0704 tr = 0.2356
+ITER: i_iter = 4 ret = -0.17 ret_best = -0.09 delta_tr = 1000000000.00 n_data = 5
+SHAPES: torch.Size([6, 10]) torch.Size([6, 1])
+MD: md = -1.0187 tr = 0.2383
+ITER: i_iter = 5 ret = -0.08 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 6
+SHAPES: torch.Size([7, 10]) torch.Size([7, 1])
+MD: md = -0.9816 tr = 0.2782
+ITER: i_iter = 6 ret = -0.16 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 7
+SHAPES: torch.Size([8, 10]) torch.Size([8, 1])
+MD: md = -0.9572 tr = 0.2760
+ITER: i_iter = 7 ret = -0.09 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 8
+SHAPES: torch.Size([9, 10]) torch.Size([9, 1])
+MD: md = -0.9393 tr = 0.2550
+ITER: i_iter = 8 ret = -0.19 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 9
+SHAPES: torch.Size([10, 10]) torch.Size([10, 1])
+MD: md = -0.9236 tr = 0.2497
+ITER: i_iter = 9 ret = -0.09 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 10
+SHAPES: torch.Size([11, 10]) torch.Size([11, 1])
+MD: md = -0.9048 tr = 0.2257
+ITER: i_iter = 10 ret = -0.09 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 11
+SHAPES: torch.Size([12, 10]) torch.Size([12, 1])
+MD: md = -0.8926 tr = 0.3149
+ITER: i_iter = 11 ret = -0.19 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 12
+SHAPES: torch.Size([13, 10]) torch.Size([13, 1])
+MD: md = -0.8776 tr = 0.2719
+ITER: i_iter = 12 ret = -0.08 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 13
+SHAPES: torch.Size([14, 10]) torch.Size([14, 1])
+MD: md = -0.8670 tr = 0.4018
+ITER: i_iter = 13 ret = -0.20 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 14
+SHAPES: torch.Size([15, 10]) torch.Size([15, 1])
+MD: md = -0.8492 tr = 0.3245
+ITER: i_iter = 14 ret = -0.24 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 15
+SHAPES: torch.Size([16, 10]) torch.Size([16, 1])
+MD: md = -0.8192 tr = 0.2834
+ITER: i_iter = 15 ret = -0.14 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 16
+SHAPES: torch.Size([17, 10]) torch.Size([17, 1])
+MD: md = -0.8034 tr = 0.3354
+ITER: i_iter = 16 ret = -0.18 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 17
+SHAPES: torch.Size([18, 10]) torch.Size([18, 1])
+MD: md = -0.7836 tr = 0.2551
+ITER: i_iter = 17 ret = -0.12 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 18
+SHAPES: torch.Size([19, 10]) torch.Size([19, 1])
+MD: md = -0.7653 tr = 0.2967
+ITER: i_iter = 18 ret = -0.15 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 19
+SHAPES: torch.Size([20, 10]) torch.Size([20, 1])
+MD: md = -0.7450 tr = 0.3870
+ITER: i_iter = 19 ret = -0.22 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 20
+SHAPES: torch.Size([21, 10]) torch.Size([21, 1])
+MD: md = -0.7144 tr = 0.3123
+ITER: i_iter = 20 ret = -0.13 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 21
+SHAPES: torch.Size([22, 10]) torch.Size([22, 1])
+MD: md = -0.6899 tr = 0.2380
+ITER: i_iter = 21 ret = -0.10 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 22
+SHAPES: torch.Size([23, 10]) torch.Size([23, 1])
+MD: md = -0.6595 tr = 0.3768
+ITER: i_iter = 22 ret = -0.20 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 23
+SHAPES: torch.Size([24, 10]) torch.Size([24, 1])
+MD: md = -0.6321 tr = 0.2939
+ITER: i_iter = 23 ret = -0.16 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 24
+SHAPES: torch.Size([25, 10]) torch.Size([25, 1])
+MD: md = -0.6028 tr = 0.3466
+ITER: i_iter = 24 ret = -0.17 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 25
+SHAPES: torch.Size([26, 10]) torch.Size([26, 1])
+MD: md = -0.5810 tr = 0.3100
+ITER: i_iter = 25 ret = -0.14 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 26
+SHAPES: torch.Size([27, 10]) torch.Size([27, 1])
+MD: md = -0.5531 tr = 0.2783
+ITER: i_iter = 26 ret = -0.16 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 27
+SHAPES: torch.Size([28, 10]) torch.Size([28, 1])
+MD: md = -0.5287 tr = 0.3605
+ITER: i_iter = 27 ret = -0.17 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 28
+SHAPES: torch.Size([29, 10]) torch.Size([29, 1])
+MD: md = -0.5054 tr = 0.3100
+ITER: i_iter = 28 ret = -0.18 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 29
+SHAPES: torch.Size([30, 10]) torch.Size([30, 1])
+MD: md = -0.4815 tr = 0.3088
+ITER: i_iter = 29 ret = -0.20 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 30
+SHAPES: torch.Size([31, 10]) torch.Size([31, 1])
+MD: md = -0.4577 tr = 0.3659
+ITER: i_iter = 30 ret = -0.10 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 31
+SHAPES: torch.Size([32, 10]) torch.Size([32, 1])
+MD: md = -0.4348 tr = 0.2553
+ITER: i_iter = 31 ret = -0.13 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 32
+SHAPES: torch.Size([33, 10]) torch.Size([33, 1])
+MD: md = -0.4143 tr = 0.3187
+ITER: i_iter = 32 ret = -0.11 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 33
+SHAPES: torch.Size([34, 10]) torch.Size([34, 1])
+MD: md = -0.3959 tr = 0.2801
+ITER: i_iter = 33 ret = -0.14 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 34
+SHAPES: torch.Size([35, 10]) torch.Size([35, 1])
+MD: md = -0.3823 tr = 0.3970
+ITER: i_iter = 34 ret = -0.13 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 35
+SHAPES: torch.Size([36, 10]) torch.Size([36, 1])
+MD: md = -0.3623 tr = 0.3354
+ITER: i_iter = 35 ret = -0.18 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 36
+SHAPES: torch.Size([37, 10]) torch.Size([37, 1])
+MD: md = -0.3425 tr = 0.3556
+ITER: i_iter = 36 ret = -0.24 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 37
+SHAPES: torch.Size([38, 10]) torch.Size([38, 1])
+MD: md = -0.3256 tr = 0.2837
+ITER: i_iter = 37 ret = -0.10 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 38
+SHAPES: torch.Size([39, 10]) torch.Size([39, 1])
+MD: md = -0.3106 tr = 0.4019
+ITER: i_iter = 38 ret = -0.12 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 39
+SHAPES: torch.Size([40, 10]) torch.Size([40, 1])
+MD: md = -0.2966 tr = 0.2926
+ITER: i_iter = 39 ret = -0.14 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 40
+SHAPES: torch.Size([41, 10]) torch.Size([41, 1])
+MD: md = -0.2839 tr = 0.3040
+ITER: i_iter = 40 ret = -0.15 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 41
+SHAPES: torch.Size([42, 10]) torch.Size([42, 1])
+MD: md = -0.2717 tr = 0.3080
+ITER: i_iter = 41 ret = -0.15 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 42
+SHAPES: torch.Size([43, 10]) torch.Size([43, 1])
+MD: md = -0.2599 tr = 0.3233
+ITER: i_iter = 42 ret = -0.25 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 43
+SHAPES: torch.Size([44, 10]) torch.Size([44, 1])
+MD: md = -0.2418 tr = 0.3899
+ITER: i_iter = 43 ret = -0.15 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 44
+SHAPES: torch.Size([45, 10]) torch.Size([45, 1])
+MD: md = -0.2315 tr = 0.3176
+ITER: i_iter = 44 ret = -0.10 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 45
+SHAPES: torch.Size([46, 10]) torch.Size([46, 1])
+MD: md = -0.2175 tr = 0.3309
+ITER: i_iter = 45 ret = -0.19 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 46
+SHAPES: torch.Size([47, 10]) torch.Size([47, 1])
+MD: md = -0.2091 tr = 0.4099
+ITER: i_iter = 46 ret = -0.21 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 47
+SHAPES: torch.Size([48, 10]) torch.Size([48, 1])
+MD: md = -0.2010 tr = 0.4098
+ITER: i_iter = 47 ret = -0.27 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 48
+SHAPES: torch.Size([49, 10]) torch.Size([49, 1])
+MD: md = -0.1851 tr = 0.2877
+ITER: i_iter = 48 ret = -0.16 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 49
+SHAPES: torch.Size([50, 10]) torch.Size([50, 1])
+MD: md = -0.1796 tr = 0.4318
+ITER: i_iter = 49 ret = -0.22 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 50
+SHAPES: torch.Size([51, 10]) torch.Size([51, 1])
+MD: md = -0.1714 tr = 0.3661
+ITER: i_iter = 50 ret = -0.22 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 51
+SHAPES: torch.Size([52, 10]) torch.Size([52, 1])
+MD: md = -0.1631 tr = 0.3913
+ITER: i_iter = 51 ret = -0.18 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 52
+SHAPES: torch.Size([53, 10]) torch.Size([53, 1])
+MD: md = -0.1560 tr = 0.3674
+ITER: i_iter = 52 ret = -0.13 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 53
+SHAPES: torch.Size([54, 10]) torch.Size([54, 1])
+MD: md = -0.1508 tr = 0.3327
+ITER: i_iter = 53 ret = -0.22 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 54
+SHAPES: torch.Size([55, 10]) torch.Size([55, 1])
+MD: md = -0.1472 tr = 0.4148
+ITER: i_iter = 54 ret = -0.20 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 55
+SHAPES: torch.Size([56, 10]) torch.Size([56, 1])
+MD: md = -0.1423 tr = 0.2560
+ITER: i_iter = 55 ret = -0.05 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 56
+SHAPES: torch.Size([57, 10]) torch.Size([57, 1])
+MD: md = -0.1349 tr = 0.5042
+ITER: i_iter = 56 ret = -0.20 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 57
+SHAPES: torch.Size([58, 10]) torch.Size([58, 1])
+MD: md = -0.1309 tr = 0.3508
+ITER: i_iter = 57 ret = -0.14 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 58
+SHAPES: torch.Size([59, 10]) torch.Size([59, 1])
+MD: md = -0.1255 tr = 0.3423
+ITER: i_iter = 58 ret = -0.12 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 59
+SHAPES: torch.Size([60, 10]) torch.Size([60, 1])
+MD: md = -0.1211 tr = 0.3763
+ITER: i_iter = 59 ret = -0.15 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 60
+SHAPES: torch.Size([61, 10]) torch.Size([61, 1])
+MD: md = -0.1179 tr = 0.4898
+ITER: i_iter = 60 ret = -0.25 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 61
+SHAPES: torch.Size([62, 10]) torch.Size([62, 1])
+MD: md = -0.1117 tr = 0.3721
+ITER: i_iter = 61 ret = -0.07 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 62
+SHAPES: torch.Size([63, 10]) torch.Size([63, 1])
+MD: md = -0.1063 tr = 0.4431
+ITER: i_iter = 62 ret = -0.14 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 63
+SHAPES: torch.Size([64, 10]) torch.Size([64, 1])
+MD: md = -0.1038 tr = 0.4183
+ITER: i_iter = 63 ret = -0.20 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 64
+SHAPES: torch.Size([65, 10]) torch.Size([65, 1])
+MD: md = -0.1000 tr = 0.4453
+ITER: i_iter = 64 ret = -0.27 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 65
+SHAPES: torch.Size([66, 10]) torch.Size([66, 1])
+MD: md = -0.0951 tr = 0.4189
+ITER: i_iter = 65 ret = -0.27 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 66
+SHAPES: torch.Size([67, 10]) torch.Size([67, 1])
+MD: md = -0.0910 tr = 0.4239
+ITER: i_iter = 66 ret = -0.25 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 67
+SHAPES: torch.Size([68, 10]) torch.Size([68, 1])
+MD: md = -0.0869 tr = 0.3047
+ITER: i_iter = 67 ret = -0.06 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 68
+SHAPES: torch.Size([69, 10]) torch.Size([69, 1])
+MD: md = -0.0820 tr = 0.3038
+ITER: i_iter = 68 ret = -0.07 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 69
+SHAPES: torch.Size([70, 10]) torch.Size([70, 1])
+MD: md = -0.0784 tr = 0.4414
+ITER: i_iter = 69 ret = -0.17 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 70
+SHAPES: torch.Size([71, 10]) torch.Size([71, 1])
+MD: md = -0.0763 tr = 0.3958
+ITER: i_iter = 70 ret = -0.17 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 71
+SHAPES: torch.Size([72, 10]) torch.Size([72, 1])
+MD: md = -0.0744 tr = 0.4186
+ITER: i_iter = 71 ret = -0.18 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 72
+SHAPES: torch.Size([73, 10]) torch.Size([73, 1])
+MD: md = -0.0722 tr = 0.5008
+ITER: i_iter = 72 ret = -0.23 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 73
+SHAPES: torch.Size([74, 10]) torch.Size([74, 1])
+MD: md = -0.0705 tr = 0.3783
+ITER: i_iter = 73 ret = -0.17 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 74
+SHAPES: torch.Size([75, 10]) torch.Size([75, 1])
+MD: md = -0.0688 tr = 0.4936
+ITER: i_iter = 74 ret = -0.24 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 75
+SHAPES: torch.Size([76, 10]) torch.Size([76, 1])
+MD: md = -0.0671 tr = 0.4887
+ITER: i_iter = 75 ret = -0.23 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 76
+SHAPES: torch.Size([77, 10]) torch.Size([77, 1])
+MD: md = -0.0657 tr = 0.3328
+ITER: i_iter = 76 ret = -0.15 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 77
+SHAPES: torch.Size([78, 10]) torch.Size([78, 1])
+MD: md = -0.0645 tr = 0.4634
+ITER: i_iter = 77 ret = -0.25 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 78
+SHAPES: torch.Size([79, 10]) torch.Size([79, 1])
+MD: md = -0.0625 tr = 0.3639
+ITER: i_iter = 78 ret = -0.10 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 79
+SHAPES: torch.Size([80, 10]) torch.Size([80, 1])
+MD: md = -0.0602 tr = 0.3813
+ITER: i_iter = 79 ret = -0.18 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 80
+SHAPES: torch.Size([81, 10]) torch.Size([81, 1])
+MD: md = -0.0592 tr = 0.3955
+ITER: i_iter = 80 ret = -0.15 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 81
+SHAPES: torch.Size([82, 10]) torch.Size([82, 1])
+MD: md = -0.0575 tr = 0.3450
+ITER: i_iter = 81 ret = -0.16 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 82
+SHAPES: torch.Size([83, 10]) torch.Size([83, 1])
+MD: md = -0.0562 tr = 0.4324
+ITER: i_iter = 82 ret = -0.15 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 83
+SHAPES: torch.Size([84, 10]) torch.Size([84, 1])
+MD: md = -0.0548 tr = 0.5047
+ITER: i_iter = 83 ret = -0.26 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 84
+SHAPES: torch.Size([85, 10]) torch.Size([85, 1])
+MD: md = -0.0534 tr = 0.4949
+ITER: i_iter = 84 ret = -0.18 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 85
+SHAPES: torch.Size([86, 10]) torch.Size([86, 1])
+MD: md = -0.0521 tr = 0.4780
+ITER: i_iter = 85 ret = -0.24 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 86
+SHAPES: torch.Size([87, 10]) torch.Size([87, 1])
+MD: md = -0.0508 tr = 0.4344
+ITER: i_iter = 86 ret = -0.22 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 87
+SHAPES: torch.Size([88, 10]) torch.Size([88, 1])
+MD: md = -0.0494 tr = 0.4081
+ITER: i_iter = 87 ret = -0.22 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 88
+SHAPES: torch.Size([89, 10]) torch.Size([89, 1])
+MD: md = -0.0485 tr = 0.4695
+ITER: i_iter = 88 ret = -0.34 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 89
+SHAPES: torch.Size([90, 10]) torch.Size([90, 1])
+MD: md = -0.0458 tr = 0.3258
+ITER: i_iter = 89 ret = -0.09 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 90
+SHAPES: torch.Size([91, 10]) torch.Size([91, 1])
+MD: md = -0.0444 tr = 0.3883
+ITER: i_iter = 90 ret = -0.19 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 91
+SHAPES: torch.Size([92, 10]) torch.Size([92, 1])
+MD: md = -0.0437 tr = 0.3890
+ITER: i_iter = 91 ret = -0.18 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 92
+SHAPES: torch.Size([93, 10]) torch.Size([93, 1])
+MD: md = -0.0426 tr = 0.3974
+ITER: i_iter = 92 ret = -0.21 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 93
+SHAPES: torch.Size([94, 10]) torch.Size([94, 1])
+MD: md = -0.0418 tr = 0.5704
+ITER: i_iter = 93 ret = -0.22 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 94
+SHAPES: torch.Size([95, 10]) torch.Size([95, 1])
+MD: md = -0.0411 tr = 0.4915
+ITER: i_iter = 94 ret = -0.21 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 95
+SHAPES: torch.Size([96, 10]) torch.Size([96, 1])
+MD: md = -0.0400 tr = 0.4077
+ITER: i_iter = 95 ret = -0.17 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 96
+SHAPES: torch.Size([97, 10]) torch.Size([97, 1])
+MD: md = -0.0395 tr = 0.4639
+ITER: i_iter = 96 ret = -0.29 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 97
+SHAPES: torch.Size([98, 10]) torch.Size([98, 1])
+MD: md = -0.0375 tr = 0.3979
+ITER: i_iter = 97 ret = -0.13 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 98
+SHAPES: torch.Size([99, 10]) torch.Size([99, 1])
+MD: md = -0.0368 tr = 0.5599
+ITER: i_iter = 98 ret = -0.28 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 99
+SHAPES: torch.Size([100, 10]) torch.Size([100, 1])
+MD: md = -0.0353 tr = 0.3514
+ITER: i_iter = 99 ret = -0.13 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 100
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 0 return = -0.098
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 1 return = -0.092
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 2 return = -0.092
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 3 return = -0.092
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 4 return = -0.092
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 5 return = -0.083
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 6 return = -0.083
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 7 return = -0.083
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 8 return = -0.083
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 9 return = -0.083
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 10 return = -0.083
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 11 return = -0.083
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 12 return = -0.079
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 13 return = -0.079
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 14 return = -0.079
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 15 return = -0.079
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 16 return = -0.079
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 17 return = -0.079
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 18 return = -0.079
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 19 return = -0.079
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 20 return = -0.079
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 21 return = -0.079
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 22 return = -0.079
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 23 return = -0.079
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 24 return = -0.079
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 25 return = -0.079
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 26 return = -0.079
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 27 return = -0.079
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 28 return = -0.079
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 29 return = -0.079
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 30 return = -0.079
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 31 return = -0.079
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 32 return = -0.079
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 33 return = -0.079
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 34 return = -0.079
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 35 return = -0.079
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 36 return = -0.079
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 37 return = -0.079
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 38 return = -0.079
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 39 return = -0.079
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 40 return = -0.079
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 41 return = -0.079
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 42 return = -0.079
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 43 return = -0.079
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 44 return = -0.079
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 45 return = -0.079
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 46 return = -0.079
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 47 return = -0.079
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 48 return = -0.079
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 49 return = -0.079
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 50 return = -0.079
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 51 return = -0.079
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 52 return = -0.079
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 53 return = -0.079
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 54 return = -0.079
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 55 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 56 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 57 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 58 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 59 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 60 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 61 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 62 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 63 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 64 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 65 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 66 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 67 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 68 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 69 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 70 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 71 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 72 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 73 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 74 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 75 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 76 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 77 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 78 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 79 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 80 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 81 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 82 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 83 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 84 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 85 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 86 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 87 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 88 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 89 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 90 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 91 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 92 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 93 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 94 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 95 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 96 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 97 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 98 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 2 i_iter = 99 return = -0.045
+TIME_SAMPLE: 5727.81
+SHAPES: torch.Size([1, 10]) torch.Size([1, 1])
+MD: md = -3.7760 tr = 0.3897
+ITER: i_iter = 0 ret = -0.16 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 1
+SHAPES: torch.Size([2, 10]) torch.Size([2, 1])
+MD: md = -2.0261 tr = 0.3057
+ITER: i_iter = 1 ret = -0.10 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 2
+SHAPES: torch.Size([3, 10]) torch.Size([3, 1])
+MD: md = -1.5056 tr = 0.3634
+ITER: i_iter = 2 ret = -0.14 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 3
+SHAPES: torch.Size([4, 10]) torch.Size([4, 1])
+MD: md = -1.2570 tr = 0.3994
+ITER: i_iter = 3 ret = -0.10 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 4
+SHAPES: torch.Size([5, 10]) torch.Size([5, 1])
+MD: md = -1.1512 tr = 0.4327
+ITER: i_iter = 4 ret = -0.18 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 5
+SHAPES: torch.Size([6, 10]) torch.Size([6, 1])
+MD: md = -1.0964 tr = 0.3111
+ITER: i_iter = 5 ret = -0.08 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 6
+SHAPES: torch.Size([7, 10]) torch.Size([7, 1])
+MD: md = -1.0570 tr = 0.3453
+ITER: i_iter = 6 ret = -0.21 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 7
+SHAPES: torch.Size([8, 10]) torch.Size([8, 1])
+MD: md = -1.0363 tr = 0.3541
+ITER: i_iter = 7 ret = -0.24 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 8
+SHAPES: torch.Size([9, 10]) torch.Size([9, 1])
+MD: md = -0.9667 tr = 0.3126
+ITER: i_iter = 8 ret = -0.11 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 9
+SHAPES: torch.Size([10, 10]) torch.Size([10, 1])
+MD: md = -0.9611 tr = 0.3425
+ITER: i_iter = 9 ret = -0.18 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 10
+SHAPES: torch.Size([11, 10]) torch.Size([11, 1])
+MD: md = -0.9364 tr = 0.2687
+ITER: i_iter = 10 ret = -0.16 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 11
+SHAPES: torch.Size([12, 10]) torch.Size([12, 1])
+MD: md = -0.9255 tr = 0.2563
+ITER: i_iter = 11 ret = -0.10 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 12
+SHAPES: torch.Size([13, 10]) torch.Size([13, 1])
+MD: md = -0.8862 tr = 0.3705
+ITER: i_iter = 12 ret = -0.23 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 13
+SHAPES: torch.Size([14, 10]) torch.Size([14, 1])
+MD: md = -0.8444 tr = 0.3111
+ITER: i_iter = 13 ret = -0.19 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 14
+SHAPES: torch.Size([15, 10]) torch.Size([15, 1])
+MD: md = -0.8150 tr = 0.2928
+ITER: i_iter = 14 ret = -0.15 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 15
+SHAPES: torch.Size([16, 10]) torch.Size([16, 1])
+MD: md = -0.7995 tr = 0.2700
+ITER: i_iter = 15 ret = -0.17 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 16
+SHAPES: torch.Size([17, 10]) torch.Size([17, 1])
+MD: md = -0.8226 tr = 0.3024
+ITER: i_iter = 16 ret = -0.26 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 17
+SHAPES: torch.Size([18, 10]) torch.Size([18, 1])
+MD: md = -0.8060 tr = 0.2997
+ITER: i_iter = 17 ret = -0.18 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 18
+SHAPES: torch.Size([19, 10]) torch.Size([19, 1])
+MD: md = -0.7875 tr = 0.2818
+ITER: i_iter = 18 ret = -0.16 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 19
+SHAPES: torch.Size([20, 10]) torch.Size([20, 1])
+MD: md = -0.7798 tr = 0.3290
+ITER: i_iter = 19 ret = -0.17 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 20
+SHAPES: torch.Size([21, 10]) torch.Size([21, 1])
+MD: md = -0.7821 tr = 0.2657
+ITER: i_iter = 20 ret = -0.15 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 21
+SHAPES: torch.Size([22, 10]) torch.Size([22, 1])
+MD: md = -0.7689 tr = 0.3259
+ITER: i_iter = 21 ret = -0.19 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 22
+SHAPES: torch.Size([23, 10]) torch.Size([23, 1])
+MD: md = -0.7767 tr = 0.3113
+ITER: i_iter = 22 ret = -0.19 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 23
+SHAPES: torch.Size([24, 10]) torch.Size([24, 1])
+MD: md = -0.7670 tr = 0.2389
+ITER: i_iter = 23 ret = -0.18 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 24
+SHAPES: torch.Size([25, 10]) torch.Size([25, 1])
+MD: md = -0.7718 tr = 0.2673
+ITER: i_iter = 24 ret = -0.11 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 25
+SHAPES: torch.Size([26, 10]) torch.Size([26, 1])
+MD: md = -0.7304 tr = 0.3012
+ITER: i_iter = 25 ret = -0.15 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 26
+SHAPES: torch.Size([27, 10]) torch.Size([27, 1])
+MD: md = -0.7207 tr = 0.2026
+ITER: i_iter = 26 ret = -0.20 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 27
+SHAPES: torch.Size([28, 10]) torch.Size([28, 1])
+MD: md = -0.6939 tr = 0.2896
+ITER: i_iter = 27 ret = -0.12 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 28
+SHAPES: torch.Size([29, 10]) torch.Size([29, 1])
+MD: md = -0.6671 tr = 0.3938
+ITER: i_iter = 28 ret = -0.22 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 29
+SHAPES: torch.Size([30, 10]) torch.Size([30, 1])
+MD: md = -0.6366 tr = 0.2958
+ITER: i_iter = 29 ret = -0.13 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 30
+SHAPES: torch.Size([31, 10]) torch.Size([31, 1])
+MD: md = -0.6179 tr = 0.3084
+ITER: i_iter = 30 ret = -0.12 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 31
+SHAPES: torch.Size([32, 10]) torch.Size([32, 1])
+MD: md = -0.5880 tr = 0.2971
+ITER: i_iter = 31 ret = -0.10 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 32
+SHAPES: torch.Size([33, 10]) torch.Size([33, 1])
+MD: md = -0.5596 tr = 0.2419
+ITER: i_iter = 32 ret = -0.16 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 33
+SHAPES: torch.Size([34, 10]) torch.Size([34, 1])
+MD: md = -0.5477 tr = 0.2656
+ITER: i_iter = 33 ret = -0.10 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 34
+SHAPES: torch.Size([35, 10]) torch.Size([35, 1])
+MD: md = -0.5243 tr = 0.3236
+ITER: i_iter = 34 ret = -0.24 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 35
+SHAPES: torch.Size([36, 10]) torch.Size([36, 1])
+MD: md = -0.5052 tr = 0.3648
+ITER: i_iter = 35 ret = -0.23 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 36
+SHAPES: torch.Size([37, 10]) torch.Size([37, 1])
+MD: md = -0.4849 tr = 0.3468
+ITER: i_iter = 36 ret = -0.26 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 37
+SHAPES: torch.Size([38, 10]) torch.Size([38, 1])
+MD: md = -0.4293 tr = 0.2916
+ITER: i_iter = 37 ret = -0.17 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 38
+SHAPES: torch.Size([39, 10]) torch.Size([39, 1])
+MD: md = -0.4217 tr = 0.3316
+ITER: i_iter = 38 ret = -0.23 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 39
+SHAPES: torch.Size([40, 10]) torch.Size([40, 1])
+MD: md = -0.4038 tr = 0.2371
+ITER: i_iter = 39 ret = -0.15 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 40
+SHAPES: torch.Size([41, 10]) torch.Size([41, 1])
+MD: md = -0.3930 tr = 0.3649
+ITER: i_iter = 40 ret = -0.18 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 41
+SHAPES: torch.Size([42, 10]) torch.Size([42, 1])
+MD: md = -0.3872 tr = 0.4112
+ITER: i_iter = 41 ret = -0.27 ret_best = -0.08 delta_tr = 1000000000.00 n_data = 42
+SHAPES: torch.Size([43, 10]) torch.Size([43, 1])
+MD: md = -0.3646 tr = 0.2655
+ITER: i_iter = 42 ret = -0.05 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 43
+SHAPES: torch.Size([44, 10]) torch.Size([44, 1])
+MD: md = -0.3147 tr = 0.3055
+ITER: i_iter = 43 ret = -0.13 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 44
+SHAPES: torch.Size([45, 10]) torch.Size([45, 1])
+MD: md = -0.3056 tr = 0.3186
+ITER: i_iter = 44 ret = -0.18 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 45
+SHAPES: torch.Size([46, 10]) torch.Size([46, 1])
+MD: md = -0.2980 tr = 0.3906
+ITER: i_iter = 45 ret = -0.22 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 46
+SHAPES: torch.Size([47, 10]) torch.Size([47, 1])
+MD: md = -0.2858 tr = 0.3201
+ITER: i_iter = 46 ret = -0.11 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 47
+SHAPES: torch.Size([48, 10]) torch.Size([48, 1])
+MD: md = -0.2744 tr = 0.2946
+ITER: i_iter = 47 ret = -0.16 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 48
+SHAPES: torch.Size([49, 10]) torch.Size([49, 1])
+MD: md = -0.2682 tr = 0.3741
+ITER: i_iter = 48 ret = -0.21 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 49
+SHAPES: torch.Size([50, 10]) torch.Size([50, 1])
+MD: md = -0.2601 tr = 0.3868
+ITER: i_iter = 49 ret = -0.21 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 50
+SHAPES: torch.Size([51, 10]) torch.Size([51, 1])
+MD: md = -0.2520 tr = 0.3942
+ITER: i_iter = 50 ret = -0.22 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 51
+SHAPES: torch.Size([52, 10]) torch.Size([52, 1])
+MD: md = -0.2434 tr = 0.3958
+ITER: i_iter = 51 ret = -0.12 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 52
+SHAPES: torch.Size([53, 10]) torch.Size([53, 1])
+MD: md = -0.2328 tr = 0.4296
+ITER: i_iter = 52 ret = -0.24 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 53
+SHAPES: torch.Size([54, 10]) torch.Size([54, 1])
+MD: md = -0.2255 tr = 0.3850
+ITER: i_iter = 53 ret = -0.12 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 54
+SHAPES: torch.Size([55, 10]) torch.Size([55, 1])
+MD: md = -0.2191 tr = 0.3175
+ITER: i_iter = 54 ret = -0.16 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 55
+SHAPES: torch.Size([56, 10]) torch.Size([56, 1])
+MD: md = -0.2124 tr = 0.4389
+ITER: i_iter = 55 ret = -0.23 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 56
+SHAPES: torch.Size([57, 10]) torch.Size([57, 1])
+MD: md = -0.2045 tr = 0.3405
+ITER: i_iter = 56 ret = -0.19 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 57
+SHAPES: torch.Size([58, 10]) torch.Size([58, 1])
+MD: md = -0.1993 tr = 0.3581
+ITER: i_iter = 57 ret = -0.17 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 58
+SHAPES: torch.Size([59, 10]) torch.Size([59, 1])
+MD: md = -0.1947 tr = 0.3279
+ITER: i_iter = 58 ret = -0.16 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 59
+SHAPES: torch.Size([60, 10]) torch.Size([60, 1])
+MD: md = -0.1925 tr = 0.3887
+ITER: i_iter = 59 ret = -0.23 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 60
+SHAPES: torch.Size([61, 10]) torch.Size([61, 1])
+MD: md = -0.1849 tr = 0.4496
+ITER: i_iter = 60 ret = -0.20 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 61
+SHAPES: torch.Size([62, 10]) torch.Size([62, 1])
+MD: md = -0.1808 tr = 0.3743
+ITER: i_iter = 61 ret = -0.29 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 62
+SHAPES: torch.Size([63, 10]) torch.Size([63, 1])
+MD: md = -0.1713 tr = 0.3161
+ITER: i_iter = 62 ret = -0.17 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 63
+SHAPES: torch.Size([64, 10]) torch.Size([64, 1])
+MD: md = -0.1692 tr = 0.3964
+ITER: i_iter = 63 ret = -0.25 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 64
+SHAPES: torch.Size([65, 10]) torch.Size([65, 1])
+MD: md = -0.1619 tr = 0.4691
+ITER: i_iter = 64 ret = -0.23 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 65
+SHAPES: torch.Size([66, 10]) torch.Size([66, 1])
+MD: md = -0.1555 tr = 0.4282
+ITER: i_iter = 65 ret = -0.24 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 66
+SHAPES: torch.Size([67, 10]) torch.Size([67, 1])
+MD: md = -0.1500 tr = 0.4434
+ITER: i_iter = 66 ret = -0.22 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 67
+SHAPES: torch.Size([68, 10]) torch.Size([68, 1])
+MD: md = -0.1473 tr = 0.4928
+ITER: i_iter = 67 ret = -0.32 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 68
+SHAPES: torch.Size([69, 10]) torch.Size([69, 1])
+MD: md = -0.1339 tr = 0.3528
+ITER: i_iter = 68 ret = -0.20 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 69
+SHAPES: torch.Size([70, 10]) torch.Size([70, 1])
+MD: md = -0.1311 tr = 0.4725
+ITER: i_iter = 69 ret = -0.19 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 70
+SHAPES: torch.Size([71, 10]) torch.Size([71, 1])
+MD: md = -0.1297 tr = 0.4194
+ITER: i_iter = 70 ret = -0.22 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 71
+SHAPES: torch.Size([72, 10]) torch.Size([72, 1])
+MD: md = -0.1280 tr = 0.3351
+ITER: i_iter = 71 ret = -0.11 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 72
+SHAPES: torch.Size([73, 10]) torch.Size([73, 1])
+MD: md = -0.1203 tr = 0.4018
+ITER: i_iter = 72 ret = -0.22 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 73
+SHAPES: torch.Size([74, 10]) torch.Size([74, 1])
+MD: md = -0.1170 tr = 0.2937
+ITER: i_iter = 73 ret = -0.17 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 74
+SHAPES: torch.Size([75, 10]) torch.Size([75, 1])
+MD: md = -0.1145 tr = 0.3242
+ITER: i_iter = 74 ret = -0.10 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 75
+SHAPES: torch.Size([76, 10]) torch.Size([76, 1])
+MD: md = -0.1109 tr = 0.5287
+ITER: i_iter = 75 ret = -0.34 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 76
+SHAPES: torch.Size([77, 10]) torch.Size([77, 1])
+MD: md = -0.1003 tr = 0.5039
+ITER: i_iter = 76 ret = -0.36 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 77
+SHAPES: torch.Size([78, 10]) torch.Size([78, 1])
+MD: md = -0.0904 tr = 0.2519
+ITER: i_iter = 77 ret = -0.14 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 78
+SHAPES: torch.Size([79, 10]) torch.Size([79, 1])
+MD: md = -0.0886 tr = 0.4409
+ITER: i_iter = 78 ret = -0.31 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 79
+SHAPES: torch.Size([80, 10]) torch.Size([80, 1])
+MD: md = -0.0813 tr = 0.3287
+ITER: i_iter = 79 ret = -0.15 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 80
+SHAPES: torch.Size([81, 10]) torch.Size([81, 1])
+MD: md = -0.0800 tr = 0.3018
+ITER: i_iter = 80 ret = -0.10 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 81
+SHAPES: torch.Size([82, 10]) torch.Size([82, 1])
+MD: md = -0.0765 tr = 0.4361
+ITER: i_iter = 81 ret = -0.15 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 82
+SHAPES: torch.Size([83, 10]) torch.Size([83, 1])
+MD: md = -0.0746 tr = 0.3713
+ITER: i_iter = 82 ret = -0.10 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 83
+SHAPES: torch.Size([84, 10]) torch.Size([84, 1])
+MD: md = -0.0722 tr = 0.3001
+ITER: i_iter = 83 ret = -0.18 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 84
+SHAPES: torch.Size([85, 10]) torch.Size([85, 1])
+MD: md = -0.0705 tr = 0.3996
+ITER: i_iter = 84 ret = -0.15 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 85
+SHAPES: torch.Size([86, 10]) torch.Size([86, 1])
+MD: md = -0.0688 tr = 0.4389
+ITER: i_iter = 85 ret = -0.25 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 86
+SHAPES: torch.Size([87, 10]) torch.Size([87, 1])
+MD: md = -0.0669 tr = 0.3834
+ITER: i_iter = 86 ret = -0.24 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 87
+SHAPES: torch.Size([88, 10]) torch.Size([88, 1])
+MD: md = -0.0649 tr = 0.5511
+ITER: i_iter = 87 ret = -0.34 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 88
+SHAPES: torch.Size([89, 10]) torch.Size([89, 1])
+MD: md = -0.0590 tr = 0.3743
+ITER: i_iter = 88 ret = -0.19 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 89
+SHAPES: torch.Size([90, 10]) torch.Size([90, 1])
+MD: md = -0.0593 tr = 0.3457
+ITER: i_iter = 89 ret = -0.19 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 90
+SHAPES: torch.Size([91, 10]) torch.Size([91, 1])
+MD: md = -0.0576 tr = 0.4798
+ITER: i_iter = 90 ret = -0.24 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 91
+SHAPES: torch.Size([92, 10]) torch.Size([92, 1])
+MD: md = -0.0557 tr = 0.4628
+ITER: i_iter = 91 ret = -0.37 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 92
+SHAPES: torch.Size([93, 10]) torch.Size([93, 1])
+MD: md = -0.0517 tr = 0.3685
+ITER: i_iter = 92 ret = -0.11 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 93
+SHAPES: torch.Size([94, 10]) torch.Size([94, 1])
+MD: md = -0.0496 tr = 0.5004
+ITER: i_iter = 93 ret = -0.30 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 94
+SHAPES: torch.Size([95, 10]) torch.Size([95, 1])
+MD: md = -0.0477 tr = 0.3790
+ITER: i_iter = 94 ret = -0.20 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 95
+SHAPES: torch.Size([96, 10]) torch.Size([96, 1])
+MD: md = -0.0474 tr = 0.4076
+ITER: i_iter = 95 ret = -0.27 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 96
+SHAPES: torch.Size([97, 10]) torch.Size([97, 1])
+MD: md = -0.0455 tr = 0.3189
+ITER: i_iter = 96 ret = -0.18 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 97
+SHAPES: torch.Size([98, 10]) torch.Size([98, 1])
+MD: md = -0.0447 tr = 0.4545
+ITER: i_iter = 97 ret = -0.33 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 98
+SHAPES: torch.Size([99, 10]) torch.Size([99, 1])
+MD: md = -0.0421 tr = 0.4697
+ITER: i_iter = 98 ret = -0.29 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 99
+SHAPES: torch.Size([100, 10]) torch.Size([100, 1])
+MD: md = -0.0405 tr = 0.2809
+ITER: i_iter = 99 ret = -0.09 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 100
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 0 return = -0.082
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 1 return = -0.082
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 2 return = -0.082
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 3 return = -0.082
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 4 return = -0.082
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 5 return = -0.077
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 6 return = -0.077
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 7 return = -0.077
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 8 return = -0.077
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 9 return = -0.077
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 10 return = -0.077
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 11 return = -0.077
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 12 return = -0.077
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 13 return = -0.077
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 14 return = -0.077
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 15 return = -0.077
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 16 return = -0.077
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 17 return = -0.077
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 18 return = -0.077
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 19 return = -0.077
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 20 return = -0.077
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 21 return = -0.077
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 22 return = -0.077
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 23 return = -0.077
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 24 return = -0.077
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 25 return = -0.077
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 26 return = -0.077
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 27 return = -0.077
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 28 return = -0.077
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 29 return = -0.077
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 30 return = -0.077
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 31 return = -0.077
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 32 return = -0.077
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 33 return = -0.077
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 34 return = -0.077
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 35 return = -0.077
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 36 return = -0.077
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 37 return = -0.077
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 38 return = -0.077
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 39 return = -0.077
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 40 return = -0.077
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 41 return = -0.077
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 42 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 43 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 44 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 45 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 46 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 47 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 48 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 49 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 50 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 51 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 52 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 53 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 54 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 55 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 56 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 57 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 58 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 59 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 60 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 61 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 62 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 63 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 64 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 65 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 66 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 67 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 68 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 69 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 70 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 71 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 72 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 73 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 74 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 75 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 76 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 77 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 78 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 79 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 80 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 81 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 82 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 83 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 84 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 85 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 86 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 87 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 88 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 89 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 90 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 91 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 92 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 93 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 94 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 95 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 96 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 97 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 98 return = -0.053
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 3 i_iter = 99 return = -0.053
+TIME_SAMPLE: 5765.19
+SHAPES: torch.Size([1, 10]) torch.Size([1, 1])
+MD: md = -3.7798 tr = 0.8721
+ITER: i_iter = 0 ret = -0.10 ret_best = -0.10 delta_tr = 1000000000.00 n_data = 1
+SHAPES: torch.Size([2, 10]) torch.Size([2, 1])
+MD: md = -2.0222 tr = 0.2473
+ITER: i_iter = 1 ret = -0.15 ret_best = -0.10 delta_tr = 1000000000.00 n_data = 2
+SHAPES: torch.Size([3, 10]) torch.Size([3, 1])
+MD: md = -1.4013 tr = 0.2078
+ITER: i_iter = 2 ret = -0.06 ret_best = -0.06 delta_tr = 1000000000.00 n_data = 3
+SHAPES: torch.Size([4, 10]) torch.Size([4, 1])
+MD: md = -1.1829 tr = 0.2798
+ITER: i_iter = 3 ret = -0.16 ret_best = -0.06 delta_tr = 1000000000.00 n_data = 4
+SHAPES: torch.Size([5, 10]) torch.Size([5, 1])
+MD: md = -1.0826 tr = 0.2298
+ITER: i_iter = 4 ret = -0.13 ret_best = -0.06 delta_tr = 1000000000.00 n_data = 5
+SHAPES: torch.Size([6, 10]) torch.Size([6, 1])
+MD: md = -1.0302 tr = 0.2305
+ITER: i_iter = 5 ret = -0.11 ret_best = -0.06 delta_tr = 1000000000.00 n_data = 6
+SHAPES: torch.Size([7, 10]) torch.Size([7, 1])
+MD: md = -0.9942 tr = 0.2496
+ITER: i_iter = 6 ret = -0.09 ret_best = -0.06 delta_tr = 1000000000.00 n_data = 7
+SHAPES: torch.Size([8, 10]) torch.Size([8, 1])
+MD: md = -0.9717 tr = 0.2535
+ITER: i_iter = 7 ret = -0.05 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 8
+SHAPES: torch.Size([9, 10]) torch.Size([9, 1])
+MD: md = -0.9592 tr = 0.2744
+ITER: i_iter = 8 ret = -0.13 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 9
+SHAPES: torch.Size([10, 10]) torch.Size([10, 1])
+MD: md = -0.9436 tr = 0.2600
+ITER: i_iter = 9 ret = -0.07 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 10
+SHAPES: torch.Size([11, 10]) torch.Size([11, 1])
+MD: md = -0.9267 tr = 0.2986
+ITER: i_iter = 10 ret = -0.12 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 11
+SHAPES: torch.Size([12, 10]) torch.Size([12, 1])
+MD: md = -0.9185 tr = 0.2933
+ITER: i_iter = 11 ret = -0.15 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 12
+SHAPES: torch.Size([13, 10]) torch.Size([13, 1])
+MD: md = -0.9048 tr = 0.2935
+ITER: i_iter = 12 ret = -0.10 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 13
+SHAPES: torch.Size([14, 10]) torch.Size([14, 1])
+MD: md = -0.8902 tr = 0.3416
+ITER: i_iter = 13 ret = -0.21 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 14
+SHAPES: torch.Size([15, 10]) torch.Size([15, 1])
+MD: md = -0.8698 tr = 0.3650
+ITER: i_iter = 14 ret = -0.20 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 15
+SHAPES: torch.Size([16, 10]) torch.Size([16, 1])
+MD: md = -0.8515 tr = 0.3460
+ITER: i_iter = 15 ret = -0.18 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 16
+SHAPES: torch.Size([17, 10]) torch.Size([17, 1])
+MD: md = -0.8313 tr = 0.2809
+ITER: i_iter = 16 ret = -0.15 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 17
+SHAPES: torch.Size([18, 10]) torch.Size([18, 1])
+MD: md = -0.8072 tr = 0.2660
+ITER: i_iter = 17 ret = -0.09 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 18
+SHAPES: torch.Size([19, 10]) torch.Size([19, 1])
+MD: md = -0.7871 tr = 0.2567
+ITER: i_iter = 18 ret = -0.10 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 19
+SHAPES: torch.Size([20, 10]) torch.Size([20, 1])
+MD: md = -0.7525 tr = 0.2897
+ITER: i_iter = 19 ret = -0.17 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 20
+SHAPES: torch.Size([21, 10]) torch.Size([21, 1])
+MD: md = -0.7228 tr = 0.3767
+ITER: i_iter = 20 ret = -0.20 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 21
+SHAPES: torch.Size([22, 10]) torch.Size([22, 1])
+MD: md = -0.6932 tr = 0.3003
+ITER: i_iter = 21 ret = -0.15 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 22
+SHAPES: torch.Size([23, 10]) torch.Size([23, 1])
+MD: md = -0.6658 tr = 0.2963
+ITER: i_iter = 22 ret = -0.17 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 23
+SHAPES: torch.Size([24, 10]) torch.Size([24, 1])
+MD: md = -0.6337 tr = 0.3338
+ITER: i_iter = 23 ret = -0.15 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 24
+SHAPES: torch.Size([25, 10]) torch.Size([25, 1])
+MD: md = -0.5982 tr = 0.2681
+ITER: i_iter = 24 ret = -0.16 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 25
+SHAPES: torch.Size([26, 10]) torch.Size([26, 1])
+MD: md = -0.5629 tr = 0.2896
+ITER: i_iter = 25 ret = -0.15 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 26
+SHAPES: torch.Size([27, 10]) torch.Size([27, 1])
+MD: md = -0.5266 tr = 0.4516
+ITER: i_iter = 26 ret = -0.20 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 27
+SHAPES: torch.Size([28, 10]) torch.Size([28, 1])
+MD: md = -0.4994 tr = 0.3086
+ITER: i_iter = 27 ret = -0.19 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 28
+SHAPES: torch.Size([29, 10]) torch.Size([29, 1])
+MD: md = -0.4700 tr = 0.3464
+ITER: i_iter = 28 ret = -0.16 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 29
+SHAPES: torch.Size([30, 10]) torch.Size([30, 1])
+MD: md = -0.4408 tr = 0.2874
+ITER: i_iter = 29 ret = -0.07 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 30
+SHAPES: torch.Size([31, 10]) torch.Size([31, 1])
+MD: md = -0.4059 tr = 0.4158
+ITER: i_iter = 30 ret = -0.21 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 31
+SHAPES: torch.Size([32, 10]) torch.Size([32, 1])
+MD: md = -0.3789 tr = 0.3357
+ITER: i_iter = 31 ret = -0.16 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 32
+SHAPES: torch.Size([33, 10]) torch.Size([33, 1])
+MD: md = -0.3530 tr = 0.3298
+ITER: i_iter = 32 ret = -0.12 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 33
+SHAPES: torch.Size([34, 10]) torch.Size([34, 1])
+MD: md = -0.3334 tr = 0.2903
+ITER: i_iter = 33 ret = -0.10 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 34
+SHAPES: torch.Size([35, 10]) torch.Size([35, 1])
+MD: md = -0.3078 tr = 0.3100
+ITER: i_iter = 34 ret = -0.12 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 35
+SHAPES: torch.Size([36, 10]) torch.Size([36, 1])
+MD: md = -0.2937 tr = 0.2850
+ITER: i_iter = 35 ret = -0.21 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 36
+SHAPES: torch.Size([37, 10]) torch.Size([37, 1])
+MD: md = -0.2737 tr = 0.4300
+ITER: i_iter = 36 ret = -0.20 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 37
+SHAPES: torch.Size([38, 10]) torch.Size([38, 1])
+MD: md = -0.2588 tr = 0.4119
+ITER: i_iter = 37 ret = -0.16 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 38
+SHAPES: torch.Size([39, 10]) torch.Size([39, 1])
+MD: md = -0.2441 tr = 0.2700
+ITER: i_iter = 38 ret = -0.09 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 39
+SHAPES: torch.Size([40, 10]) torch.Size([40, 1])
+MD: md = -0.2307 tr = 0.3158
+ITER: i_iter = 39 ret = -0.12 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 40
+SHAPES: torch.Size([41, 10]) torch.Size([41, 1])
+MD: md = -0.2173 tr = 0.2834
+ITER: i_iter = 40 ret = -0.14 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 41
+SHAPES: torch.Size([42, 10]) torch.Size([42, 1])
+MD: md = -0.2072 tr = 0.4801
+ITER: i_iter = 41 ret = -0.29 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 42
+SHAPES: torch.Size([43, 10]) torch.Size([43, 1])
+MD: md = -0.1950 tr = 0.4164
+ITER: i_iter = 42 ret = -0.26 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 43
+SHAPES: torch.Size([44, 10]) torch.Size([44, 1])
+MD: md = -0.1859 tr = 0.3234
+ITER: i_iter = 43 ret = -0.12 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 44
+SHAPES: torch.Size([45, 10]) torch.Size([45, 1])
+MD: md = -0.1742 tr = 0.2954
+ITER: i_iter = 44 ret = -0.12 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 45
+SHAPES: torch.Size([46, 10]) torch.Size([46, 1])
+MD: md = -0.1660 tr = 0.3865
+ITER: i_iter = 45 ret = -0.19 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 46
+SHAPES: torch.Size([47, 10]) torch.Size([47, 1])
+MD: md = -0.1570 tr = 0.3243
+ITER: i_iter = 46 ret = -0.19 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 47
+SHAPES: torch.Size([48, 10]) torch.Size([48, 1])
+MD: md = -0.1500 tr = 0.3556
+ITER: i_iter = 47 ret = -0.15 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 48
+SHAPES: torch.Size([49, 10]) torch.Size([49, 1])
+MD: md = -0.1433 tr = 0.3683
+ITER: i_iter = 48 ret = -0.21 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 49
+SHAPES: torch.Size([50, 10]) torch.Size([50, 1])
+MD: md = -0.1345 tr = 0.2251
+ITER: i_iter = 49 ret = -0.05 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 50
+SHAPES: torch.Size([51, 10]) torch.Size([51, 1])
+MD: md = -0.1281 tr = 0.3075
+ITER: i_iter = 50 ret = -0.10 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 51
+SHAPES: torch.Size([52, 10]) torch.Size([52, 1])
+MD: md = -0.1254 tr = 0.2796
+ITER: i_iter = 51 ret = -0.13 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 52
+SHAPES: torch.Size([53, 10]) torch.Size([53, 1])
+MD: md = -0.1197 tr = 0.2774
+ITER: i_iter = 52 ret = -0.10 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 53
+SHAPES: torch.Size([54, 10]) torch.Size([54, 1])
+MD: md = -0.1139 tr = 0.4354
+ITER: i_iter = 53 ret = -0.30 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 54
+SHAPES: torch.Size([55, 10]) torch.Size([55, 1])
+MD: md = -0.1079 tr = 0.4413
+ITER: i_iter = 54 ret = -0.22 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 55
+SHAPES: torch.Size([56, 10]) torch.Size([56, 1])
+MD: md = -0.1030 tr = 0.3886
+ITER: i_iter = 55 ret = -0.15 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 56
+SHAPES: torch.Size([57, 10]) torch.Size([57, 1])
+MD: md = -0.0982 tr = 0.4346
+ITER: i_iter = 56 ret = -0.21 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 57
+SHAPES: torch.Size([58, 10]) torch.Size([58, 1])
+MD: md = -0.0944 tr = 0.4260
+ITER: i_iter = 57 ret = -0.21 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 58
+SHAPES: torch.Size([59, 10]) torch.Size([59, 1])
+MD: md = -0.0905 tr = 0.3191
+ITER: i_iter = 58 ret = -0.12 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 59
+SHAPES: torch.Size([60, 10]) torch.Size([60, 1])
+MD: md = -0.0871 tr = 0.3248
+ITER: i_iter = 59 ret = -0.14 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 60
+SHAPES: torch.Size([61, 10]) torch.Size([61, 1])
+MD: md = -0.0849 tr = 0.3983
+ITER: i_iter = 60 ret = -0.20 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 61
+SHAPES: torch.Size([62, 10]) torch.Size([62, 1])
+MD: md = -0.0816 tr = 0.3155
+ITER: i_iter = 61 ret = -0.10 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 62
+SHAPES: torch.Size([63, 10]) torch.Size([63, 1])
+MD: md = -0.0788 tr = 0.3983
+ITER: i_iter = 62 ret = -0.23 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 63
+SHAPES: torch.Size([64, 10]) torch.Size([64, 1])
+MD: md = -0.0758 tr = 0.2598
+ITER: i_iter = 63 ret = -0.16 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 64
+SHAPES: torch.Size([65, 10]) torch.Size([65, 1])
+MD: md = -0.0741 tr = 0.3467
+ITER: i_iter = 64 ret = -0.12 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 65
+SHAPES: torch.Size([66, 10]) torch.Size([66, 1])
+MD: md = -0.0713 tr = 0.4362
+ITER: i_iter = 65 ret = -0.24 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 66
+SHAPES: torch.Size([67, 10]) torch.Size([67, 1])
+MD: md = -0.0687 tr = 0.3413
+ITER: i_iter = 66 ret = -0.25 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 67
+SHAPES: torch.Size([68, 10]) torch.Size([68, 1])
+MD: md = -0.0661 tr = 0.4077
+ITER: i_iter = 67 ret = -0.19 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 68
+SHAPES: torch.Size([69, 10]) torch.Size([69, 1])
+MD: md = -0.0653 tr = 0.4363
+ITER: i_iter = 68 ret = -0.29 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 69
+SHAPES: torch.Size([70, 10]) torch.Size([70, 1])
+MD: md = -0.0627 tr = 0.4207
+ITER: i_iter = 69 ret = -0.18 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 70
+SHAPES: torch.Size([71, 10]) torch.Size([71, 1])
+MD: md = -0.0609 tr = 0.3377
+ITER: i_iter = 70 ret = -0.15 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 71
+SHAPES: torch.Size([72, 10]) torch.Size([72, 1])
+MD: md = -0.0589 tr = 0.3383
+ITER: i_iter = 71 ret = -0.07 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 72
+SHAPES: torch.Size([73, 10]) torch.Size([73, 1])
+MD: md = -0.0555 tr = 0.4417
+ITER: i_iter = 72 ret = -0.32 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 73
+SHAPES: torch.Size([74, 10]) torch.Size([74, 1])
+MD: md = -0.0543 tr = 0.3159
+ITER: i_iter = 73 ret = -0.22 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 74
+SHAPES: torch.Size([75, 10]) torch.Size([75, 1])
+MD: md = -0.0522 tr = 0.3611
+ITER: i_iter = 74 ret = -0.14 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 75
+SHAPES: torch.Size([76, 10]) torch.Size([76, 1])
+MD: md = -0.0511 tr = 0.4128
+ITER: i_iter = 75 ret = -0.22 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 76
+SHAPES: torch.Size([77, 10]) torch.Size([77, 1])
+MD: md = -0.0498 tr = 0.3945
+ITER: i_iter = 76 ret = -0.21 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 77
+SHAPES: torch.Size([78, 10]) torch.Size([78, 1])
+MD: md = -0.0480 tr = 0.3903
+ITER: i_iter = 77 ret = -0.16 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 78
+SHAPES: torch.Size([79, 10]) torch.Size([79, 1])
+MD: md = -0.0467 tr = 0.4258
+ITER: i_iter = 78 ret = -0.21 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 79
+SHAPES: torch.Size([80, 10]) torch.Size([80, 1])
+MD: md = -0.0448 tr = 0.4281
+ITER: i_iter = 79 ret = -0.25 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 80
+SHAPES: torch.Size([81, 10]) torch.Size([81, 1])
+MD: md = -0.0443 tr = 0.4331
+ITER: i_iter = 80 ret = -0.21 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 81
+SHAPES: torch.Size([82, 10]) torch.Size([82, 1])
+MD: md = -0.0430 tr = 0.5081
+ITER: i_iter = 81 ret = -0.33 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 82
+SHAPES: torch.Size([83, 10]) torch.Size([83, 1])
+MD: md = -0.0405 tr = 0.3499
+ITER: i_iter = 82 ret = -0.18 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 83
+SHAPES: torch.Size([84, 10]) torch.Size([84, 1])
+MD: md = -0.0393 tr = 0.2420
+ITER: i_iter = 83 ret = -0.09 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 84
+SHAPES: torch.Size([85, 10]) torch.Size([85, 1])
+MD: md = -0.0377 tr = 0.4354
+ITER: i_iter = 84 ret = -0.19 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 85
+SHAPES: torch.Size([86, 10]) torch.Size([86, 1])
+MD: md = -0.0369 tr = 0.3044
+ITER: i_iter = 85 ret = -0.19 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 86
+SHAPES: torch.Size([87, 10]) torch.Size([87, 1])
+MD: md = -0.0358 tr = 0.3580
+ITER: i_iter = 86 ret = -0.13 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 87
+SHAPES: torch.Size([88, 10]) torch.Size([88, 1])
+MD: md = -0.0350 tr = 0.4185
+ITER: i_iter = 87 ret = -0.24 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 88
+SHAPES: torch.Size([89, 10]) torch.Size([89, 1])
+MD: md = -0.0341 tr = 0.2245
+ITER: i_iter = 88 ret = -0.12 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 89
+SHAPES: torch.Size([90, 10]) torch.Size([90, 1])
+MD: md = -0.0328 tr = 0.4263
+ITER: i_iter = 89 ret = -0.26 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 90
+SHAPES: torch.Size([91, 10]) torch.Size([91, 1])
+MD: md = -0.0322 tr = 0.2904
+ITER: i_iter = 90 ret = -0.18 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 91
+SHAPES: torch.Size([92, 10]) torch.Size([92, 1])
+MD: md = -0.0313 tr = 0.3600
+ITER: i_iter = 91 ret = -0.16 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 92
+SHAPES: torch.Size([93, 10]) torch.Size([93, 1])
+MD: md = -0.0305 tr = 0.4473
+ITER: i_iter = 92 ret = -0.33 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 93
+SHAPES: torch.Size([94, 10]) torch.Size([94, 1])
+MD: md = -0.0292 tr = 0.4805
+ITER: i_iter = 93 ret = -0.27 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 94
+SHAPES: torch.Size([95, 10]) torch.Size([95, 1])
+MD: md = -0.0286 tr = 0.3091
+ITER: i_iter = 94 ret = -0.17 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 95
+SHAPES: torch.Size([96, 10]) torch.Size([96, 1])
+MD: md = -0.0280 tr = 0.4429
+ITER: i_iter = 95 ret = -0.26 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 96
+SHAPES: torch.Size([97, 10]) torch.Size([97, 1])
+MD: md = -0.0277 tr = 0.3615
+ITER: i_iter = 96 ret = -0.11 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 97
+SHAPES: torch.Size([98, 10]) torch.Size([98, 1])
+MD: md = -0.0265 tr = 0.3935
+ITER: i_iter = 97 ret = -0.22 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 98
+SHAPES: torch.Size([99, 10]) torch.Size([99, 1])
+MD: md = -0.0261 tr = 0.4043
+ITER: i_iter = 98 ret = -0.20 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 99
+SHAPES: torch.Size([100, 10]) torch.Size([100, 1])
+MD: md = -0.0254 tr = 0.3598
+ITER: i_iter = 99 ret = -0.27 ret_best = -0.05 delta_tr = 1000000000.00 n_data = 100
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 0 return = -0.098
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 1 return = -0.098
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 2 return = -0.062
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 3 return = -0.062
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 4 return = -0.062
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 5 return = -0.062
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 6 return = -0.062
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 7 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 8 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 9 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 10 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 11 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 12 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 13 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 14 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 15 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 16 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 17 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 18 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 19 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 20 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 21 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 22 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 23 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 24 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 25 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 26 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 27 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 28 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 29 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 30 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 31 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 32 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 33 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 34 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 35 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 36 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 37 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 38 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 39 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 40 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 41 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 42 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 43 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 44 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 45 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 46 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 47 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 48 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 49 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 50 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 51 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 52 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 53 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 54 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 55 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 56 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 57 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 58 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 59 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 60 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 61 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 62 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 63 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 64 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 65 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 66 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 67 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 68 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 69 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 70 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 71 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 72 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 73 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 74 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 75 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 76 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 77 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 78 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 79 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 80 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 81 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 82 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 83 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 84 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 85 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 86 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 87 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 88 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 89 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 90 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 91 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 92 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 93 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 94 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 95 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 96 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 97 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 98 return = -0.049
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 4 i_iter = 99 return = -0.049
+TIME_SAMPLE: 6775.45
+SHAPES: torch.Size([1, 10]) torch.Size([1, 1])
+MD: md = -3.7801 tr = 0.8084
+ITER: i_iter = 0 ret = -0.15 ret_best = -0.15 delta_tr = 1000000000.00 n_data = 1
+SHAPES: torch.Size([2, 10]) torch.Size([2, 1])
+MD: md = -2.0232 tr = 0.2608
+ITER: i_iter = 1 ret = -0.12 ret_best = -0.12 delta_tr = 1000000000.00 n_data = 2
+SHAPES: torch.Size([3, 10]) torch.Size([3, 1])
+MD: md = -1.4047 tr = 0.2106
+ITER: i_iter = 2 ret = -0.11 ret_best = -0.11 delta_tr = 1000000000.00 n_data = 3
+SHAPES: torch.Size([4, 10]) torch.Size([4, 1])
+MD: md = -1.1796 tr = 0.2654
+ITER: i_iter = 3 ret = -0.13 ret_best = -0.11 delta_tr = 1000000000.00 n_data = 4
+SHAPES: torch.Size([5, 10]) torch.Size([5, 1])
+MD: md = -1.0697 tr = 0.2189
+ITER: i_iter = 4 ret = -0.19 ret_best = -0.11 delta_tr = 1000000000.00 n_data = 5
+SHAPES: torch.Size([6, 10]) torch.Size([6, 1])
+MD: md = -1.0160 tr = 0.2292
+ITER: i_iter = 5 ret = -0.13 ret_best = -0.11 delta_tr = 1000000000.00 n_data = 6
+SHAPES: torch.Size([7, 10]) torch.Size([7, 1])
+MD: md = -0.9753 tr = 0.2535
+ITER: i_iter = 6 ret = -0.11 ret_best = -0.11 delta_tr = 1000000000.00 n_data = 7
+SHAPES: torch.Size([8, 10]) torch.Size([8, 1])
+MD: md = -0.9547 tr = 0.2938
+ITER: i_iter = 7 ret = -0.15 ret_best = -0.11 delta_tr = 1000000000.00 n_data = 8
+SHAPES: torch.Size([9, 10]) torch.Size([9, 1])
+MD: md = -0.9429 tr = 0.2191
+ITER: i_iter = 8 ret = -0.10 ret_best = -0.10 delta_tr = 1000000000.00 n_data = 9
+SHAPES: torch.Size([10, 10]) torch.Size([10, 1])
+MD: md = -0.9310 tr = 0.3626
+ITER: i_iter = 9 ret = -0.21 ret_best = -0.10 delta_tr = 1000000000.00 n_data = 10
+SHAPES: torch.Size([11, 10]) torch.Size([11, 1])
+MD: md = -0.9162 tr = 0.3161
+ITER: i_iter = 10 ret = -0.23 ret_best = -0.10 delta_tr = 1000000000.00 n_data = 11
+SHAPES: torch.Size([12, 10]) torch.Size([12, 1])
+MD: md = -0.9010 tr = 0.3319
+ITER: i_iter = 11 ret = -0.24 ret_best = -0.10 delta_tr = 1000000000.00 n_data = 12
+SHAPES: torch.Size([13, 10]) torch.Size([13, 1])
+MD: md = -0.8870 tr = 0.2762
+ITER: i_iter = 12 ret = -0.11 ret_best = -0.10 delta_tr = 1000000000.00 n_data = 13
+SHAPES: torch.Size([14, 10]) torch.Size([14, 1])
+MD: md = -0.8748 tr = 0.3075
+ITER: i_iter = 13 ret = -0.19 ret_best = -0.10 delta_tr = 1000000000.00 n_data = 14
+SHAPES: torch.Size([15, 10]) torch.Size([15, 1])
+MD: md = -0.8583 tr = 0.3231
+ITER: i_iter = 14 ret = -0.12 ret_best = -0.10 delta_tr = 1000000000.00 n_data = 15
+SHAPES: torch.Size([16, 10]) torch.Size([16, 1])
+MD: md = -0.8453 tr = 0.2044
+ITER: i_iter = 15 ret = -0.14 ret_best = -0.10 delta_tr = 1000000000.00 n_data = 16
+SHAPES: torch.Size([17, 10]) torch.Size([17, 1])
+MD: md = -0.8234 tr = 0.2923
+ITER: i_iter = 16 ret = -0.19 ret_best = -0.10 delta_tr = 1000000000.00 n_data = 17
+SHAPES: torch.Size([18, 10]) torch.Size([18, 1])
+MD: md = -0.8009 tr = 0.2938
+ITER: i_iter = 17 ret = -0.14 ret_best = -0.10 delta_tr = 1000000000.00 n_data = 18
+SHAPES: torch.Size([19, 10]) torch.Size([19, 1])
+MD: md = -0.7782 tr = 0.3162
+ITER: i_iter = 18 ret = -0.19 ret_best = -0.10 delta_tr = 1000000000.00 n_data = 19
+SHAPES: torch.Size([20, 10]) torch.Size([20, 1])
+MD: md = -0.7506 tr = 0.3009
+ITER: i_iter = 19 ret = -0.20 ret_best = -0.10 delta_tr = 1000000000.00 n_data = 20
+SHAPES: torch.Size([21, 10]) torch.Size([21, 1])
+MD: md = -0.7234 tr = 0.2994
+ITER: i_iter = 20 ret = -0.11 ret_best = -0.10 delta_tr = 1000000000.00 n_data = 21
+SHAPES: torch.Size([22, 10]) torch.Size([22, 1])
+MD: md = -0.7015 tr = 0.2671
+ITER: i_iter = 21 ret = -0.21 ret_best = -0.10 delta_tr = 1000000000.00 n_data = 22
+SHAPES: torch.Size([23, 10]) torch.Size([23, 1])
+MD: md = -0.6659 tr = 0.3424
+ITER: i_iter = 22 ret = -0.18 ret_best = -0.10 delta_tr = 1000000000.00 n_data = 23
+SHAPES: torch.Size([24, 10]) torch.Size([24, 1])
+MD: md = -0.6304 tr = 0.3100
+ITER: i_iter = 23 ret = -0.11 ret_best = -0.10 delta_tr = 1000000000.00 n_data = 24
+SHAPES: torch.Size([25, 10]) torch.Size([25, 1])
+MD: md = -0.5923 tr = 0.2953
+ITER: i_iter = 24 ret = -0.17 ret_best = -0.10 delta_tr = 1000000000.00 n_data = 25
+SHAPES: torch.Size([26, 10]) torch.Size([26, 1])
+MD: md = -0.5634 tr = 0.2477
+ITER: i_iter = 25 ret = -0.14 ret_best = -0.10 delta_tr = 1000000000.00 n_data = 26
+SHAPES: torch.Size([27, 10]) torch.Size([27, 1])
+MD: md = -0.5371 tr = 0.3824
+ITER: i_iter = 26 ret = -0.20 ret_best = -0.10 delta_tr = 1000000000.00 n_data = 27
+SHAPES: torch.Size([28, 10]) torch.Size([28, 1])
+MD: md = -0.5038 tr = 0.3009
+ITER: i_iter = 27 ret = -0.24 ret_best = -0.10 delta_tr = 1000000000.00 n_data = 28
+SHAPES: torch.Size([29, 10]) torch.Size([29, 1])
+MD: md = -0.4749 tr = 0.2715
+ITER: i_iter = 28 ret = -0.12 ret_best = -0.10 delta_tr = 1000000000.00 n_data = 29
+SHAPES: torch.Size([30, 10]) torch.Size([30, 1])
+MD: md = -0.4485 tr = 0.3131
+ITER: i_iter = 29 ret = -0.13 ret_best = -0.10 delta_tr = 1000000000.00 n_data = 30
+SHAPES: torch.Size([31, 10]) torch.Size([31, 1])
+MD: md = -0.4232 tr = 0.3871
+ITER: i_iter = 30 ret = -0.15 ret_best = -0.10 delta_tr = 1000000000.00 n_data = 31
+SHAPES: torch.Size([32, 10]) torch.Size([32, 1])
+MD: md = -0.3984 tr = 0.2874
+ITER: i_iter = 31 ret = -0.22 ret_best = -0.10 delta_tr = 1000000000.00 n_data = 32
+SHAPES: torch.Size([33, 10]) torch.Size([33, 1])
+MD: md = -0.3732 tr = 0.3497
+ITER: i_iter = 32 ret = -0.16 ret_best = -0.10 delta_tr = 1000000000.00 n_data = 33
+SHAPES: torch.Size([34, 10]) torch.Size([34, 1])
+MD: md = -0.3536 tr = 0.3382
+ITER: i_iter = 33 ret = -0.24 ret_best = -0.10 delta_tr = 1000000000.00 n_data = 34
+SHAPES: torch.Size([35, 10]) torch.Size([35, 1])
+MD: md = -0.3327 tr = 0.2638
+ITER: i_iter = 34 ret = -0.10 ret_best = -0.10 delta_tr = 1000000000.00 n_data = 35
+SHAPES: torch.Size([36, 10]) torch.Size([36, 1])
+MD: md = -0.3096 tr = 0.3555
+ITER: i_iter = 35 ret = -0.27 ret_best = -0.10 delta_tr = 1000000000.00 n_data = 36
+SHAPES: torch.Size([37, 10]) torch.Size([37, 1])
+MD: md = -0.2900 tr = 0.4289
+ITER: i_iter = 36 ret = -0.21 ret_best = -0.10 delta_tr = 1000000000.00 n_data = 37
+SHAPES: torch.Size([38, 10]) torch.Size([38, 1])
+MD: md = -0.2772 tr = 0.2511
+ITER: i_iter = 37 ret = -0.15 ret_best = -0.10 delta_tr = 1000000000.00 n_data = 38
+SHAPES: torch.Size([39, 10]) torch.Size([39, 1])
+MD: md = -0.2582 tr = 0.2723
+ITER: i_iter = 38 ret = -0.16 ret_best = -0.10 delta_tr = 1000000000.00 n_data = 39
+SHAPES: torch.Size([40, 10]) torch.Size([40, 1])
+MD: md = -0.2450 tr = 0.2773
+ITER: i_iter = 39 ret = -0.04 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 40
+SHAPES: torch.Size([41, 10]) torch.Size([41, 1])
+MD: md = -0.2281 tr = 0.4439
+ITER: i_iter = 40 ret = -0.30 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 41
+SHAPES: torch.Size([42, 10]) torch.Size([42, 1])
+MD: md = -0.2144 tr = 0.4002
+ITER: i_iter = 41 ret = -0.13 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 42
+SHAPES: torch.Size([43, 10]) torch.Size([43, 1])
+MD: md = -0.2044 tr = 0.3638
+ITER: i_iter = 42 ret = -0.10 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 43
+SHAPES: torch.Size([44, 10]) torch.Size([44, 1])
+MD: md = -0.1913 tr = 0.4535
+ITER: i_iter = 43 ret = -0.26 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 44
+SHAPES: torch.Size([45, 10]) torch.Size([45, 1])
+MD: md = -0.1812 tr = 0.3471
+ITER: i_iter = 44 ret = -0.19 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 45
+SHAPES: torch.Size([46, 10]) torch.Size([46, 1])
+MD: md = -0.2562 tr = 0.3846
+ITER: i_iter = 45 ret = -0.15 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 46
+SHAPES: torch.Size([47, 10]) torch.Size([47, 1])
+MD: md = -0.1632 tr = 0.3456
+ITER: i_iter = 46 ret = -0.12 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 47
+SHAPES: torch.Size([48, 10]) torch.Size([48, 1])
+MD: md = -0.1553 tr = 0.3280
+ITER: i_iter = 47 ret = -0.16 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 48
+SHAPES: torch.Size([49, 10]) torch.Size([49, 1])
+MD: md = -0.1481 tr = 0.4611
+ITER: i_iter = 48 ret = -0.29 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 49
+SHAPES: torch.Size([50, 10]) torch.Size([50, 1])
+MD: md = -0.1419 tr = 0.5082
+ITER: i_iter = 49 ret = -0.33 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 50
+SHAPES: torch.Size([51, 10]) torch.Size([51, 1])
+MD: md = -0.1336 tr = 0.4918
+ITER: i_iter = 50 ret = -0.29 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 51
+SHAPES: torch.Size([52, 10]) torch.Size([52, 1])
+MD: md = -0.1264 tr = 0.3247
+ITER: i_iter = 51 ret = -0.21 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 52
+SHAPES: torch.Size([53, 10]) torch.Size([53, 1])
+MD: md = -0.1217 tr = 0.4212
+ITER: i_iter = 52 ret = -0.25 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 53
+SHAPES: torch.Size([54, 10]) torch.Size([54, 1])
+MD: md = -0.1168 tr = 0.4331
+ITER: i_iter = 53 ret = -0.25 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 54
+SHAPES: torch.Size([55, 10]) torch.Size([55, 1])
+MD: md = -0.1118 tr = 0.4737
+ITER: i_iter = 54 ret = -0.24 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 55
+SHAPES: torch.Size([56, 10]) torch.Size([56, 1])
+MD: md = -0.1073 tr = 0.3104
+ITER: i_iter = 55 ret = -0.16 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 56
+SHAPES: torch.Size([57, 10]) torch.Size([57, 1])
+MD: md = -0.1025 tr = 0.3961
+ITER: i_iter = 56 ret = -0.19 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 57
+SHAPES: torch.Size([58, 10]) torch.Size([58, 1])
+MD: md = -0.0983 tr = 0.4326
+ITER: i_iter = 57 ret = -0.19 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 58
+SHAPES: torch.Size([59, 10]) torch.Size([59, 1])
+MD: md = -0.0959 tr = 0.4828
+ITER: i_iter = 58 ret = -0.28 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 59
+SHAPES: torch.Size([60, 10]) torch.Size([60, 1])
+MD: md = -0.0920 tr = 0.3934
+ITER: i_iter = 59 ret = -0.18 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 60
+SHAPES: torch.Size([61, 10]) torch.Size([61, 1])
+MD: md = -0.0885 tr = 0.3031
+ITER: i_iter = 60 ret = -0.14 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 61
+SHAPES: torch.Size([62, 10]) torch.Size([62, 1])
+MD: md = -0.0855 tr = 0.4428
+ITER: i_iter = 61 ret = -0.26 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 62
+SHAPES: torch.Size([63, 10]) torch.Size([63, 1])
+MD: md = -0.0819 tr = 0.5051
+ITER: i_iter = 62 ret = -0.27 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 63
+SHAPES: torch.Size([64, 10]) torch.Size([64, 1])
+MD: md = -0.0788 tr = 0.4074
+ITER: i_iter = 63 ret = -0.19 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 64
+SHAPES: torch.Size([65, 10]) torch.Size([65, 1])
+MD: md = -0.0757 tr = 0.3860
+ITER: i_iter = 64 ret = -0.18 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 65
+SHAPES: torch.Size([66, 10]) torch.Size([66, 1])
+MD: md = -0.0731 tr = 0.3070
+ITER: i_iter = 65 ret = -0.14 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 66
+SHAPES: torch.Size([67, 10]) torch.Size([67, 1])
+MD: md = -0.0702 tr = 0.3655
+ITER: i_iter = 66 ret = -0.18 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 67
+SHAPES: torch.Size([68, 10]) torch.Size([68, 1])
+MD: md = -0.0681 tr = 0.3690
+ITER: i_iter = 67 ret = -0.10 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 68
+SHAPES: torch.Size([69, 10]) torch.Size([69, 1])
+MD: md = -0.0649 tr = 0.3894
+ITER: i_iter = 68 ret = -0.21 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 69
+SHAPES: torch.Size([70, 10]) torch.Size([70, 1])
+MD: md = -0.0628 tr = 0.2879
+ITER: i_iter = 69 ret = -0.17 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 70
+SHAPES: torch.Size([71, 10]) torch.Size([71, 1])
+MD: md = -0.0607 tr = 0.5032
+ITER: i_iter = 70 ret = -0.29 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 71
+SHAPES: torch.Size([72, 10]) torch.Size([72, 1])
+MD: md = -0.0585 tr = 0.3647
+ITER: i_iter = 71 ret = -0.15 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 72
+SHAPES: torch.Size([73, 10]) torch.Size([73, 1])
+MD: md = -0.0566 tr = 0.3806
+ITER: i_iter = 72 ret = -0.19 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 73
+SHAPES: torch.Size([74, 10]) torch.Size([74, 1])
+MD: md = -0.0548 tr = 0.3321
+ITER: i_iter = 73 ret = -0.19 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 74
+SHAPES: torch.Size([75, 10]) torch.Size([75, 1])
+MD: md = -0.0538 tr = 0.3248
+ITER: i_iter = 74 ret = -0.16 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 75
+SHAPES: torch.Size([76, 10]) torch.Size([76, 1])
+MD: md = -0.0518 tr = 0.3629
+ITER: i_iter = 75 ret = -0.16 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 76
+SHAPES: torch.Size([77, 10]) torch.Size([77, 1])
+MD: md = -0.0509 tr = 0.4256
+ITER: i_iter = 76 ret = -0.18 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 77
+SHAPES: torch.Size([78, 10]) torch.Size([78, 1])
+MD: md = -0.0493 tr = 0.3215
+ITER: i_iter = 77 ret = -0.16 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 78
+SHAPES: torch.Size([79, 10]) torch.Size([79, 1])
+MD: md = -0.0475 tr = 0.4357
+ITER: i_iter = 78 ret = -0.19 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 79
+SHAPES: torch.Size([80, 10]) torch.Size([80, 1])
+MD: md = -0.0464 tr = 0.5246
+ITER: i_iter = 79 ret = -0.35 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 80
+SHAPES: torch.Size([81, 10]) torch.Size([81, 1])
+MD: md = -0.0435 tr = 0.5447
+ITER: i_iter = 80 ret = -0.29 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 81
+SHAPES: torch.Size([82, 10]) torch.Size([82, 1])
+MD: md = -0.0432 tr = 0.3929
+ITER: i_iter = 81 ret = -0.11 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 82
+SHAPES: torch.Size([83, 10]) torch.Size([83, 1])
+MD: md = -0.0419 tr = 0.3986
+ITER: i_iter = 82 ret = -0.22 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 83
+SHAPES: torch.Size([84, 10]) torch.Size([84, 1])
+MD: md = -0.0407 tr = 0.4189
+ITER: i_iter = 83 ret = -0.26 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 84
+SHAPES: torch.Size([85, 10]) torch.Size([85, 1])
+MD: md = -0.0388 tr = 0.2837
+ITER: i_iter = 84 ret = -0.09 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 85
+SHAPES: torch.Size([86, 10]) torch.Size([86, 1])
+MD: md = -0.0379 tr = 0.4886
+ITER: i_iter = 85 ret = -0.25 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 86
+SHAPES: torch.Size([87, 10]) torch.Size([87, 1])
+MD: md = -0.0365 tr = 0.4676
+ITER: i_iter = 86 ret = -0.18 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 87
+SHAPES: torch.Size([88, 10]) torch.Size([88, 1])
+MD: md = -0.0354 tr = 0.4600
+ITER: i_iter = 87 ret = -0.20 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 88
+SHAPES: torch.Size([89, 10]) torch.Size([89, 1])
+MD: md = -0.0344 tr = 0.4498
+ITER: i_iter = 88 ret = -0.20 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 89
+SHAPES: torch.Size([90, 10]) torch.Size([90, 1])
+MD: md = -0.0337 tr = 0.4455
+ITER: i_iter = 89 ret = -0.26 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 90
+SHAPES: torch.Size([91, 10]) torch.Size([91, 1])
+MD: md = -0.0328 tr = 0.3536
+ITER: i_iter = 90 ret = -0.09 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 91
+SHAPES: torch.Size([92, 10]) torch.Size([92, 1])
+MD: md = -0.0311 tr = 0.3428
+ITER: i_iter = 91 ret = -0.14 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 92
+SHAPES: torch.Size([93, 10]) torch.Size([93, 1])
+MD: md = -0.0308 tr = 0.3971
+ITER: i_iter = 92 ret = -0.17 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 93
+SHAPES: torch.Size([94, 10]) torch.Size([94, 1])
+MD: md = -0.0294 tr = 0.4444
+ITER: i_iter = 93 ret = -0.23 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 94
+SHAPES: torch.Size([95, 10]) torch.Size([95, 1])
+MD: md = -0.0294 tr = 0.3024
+ITER: i_iter = 94 ret = -0.11 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 95
+SHAPES: torch.Size([96, 10]) torch.Size([96, 1])
+MD: md = -0.0282 tr = 0.3128
+ITER: i_iter = 95 ret = -0.15 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 96
+SHAPES: torch.Size([97, 10]) torch.Size([97, 1])
+MD: md = -0.0276 tr = 0.5295
+ITER: i_iter = 96 ret = -0.34 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 97
+SHAPES: torch.Size([98, 10]) torch.Size([98, 1])
+MD: md = -0.0265 tr = 0.4435
+ITER: i_iter = 97 ret = -0.24 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 98
+SHAPES: torch.Size([99, 10]) torch.Size([99, 1])
+MD: md = -0.0259 tr = 0.4713
+ITER: i_iter = 98 ret = -0.27 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 99
+SHAPES: torch.Size([100, 10]) torch.Size([100, 1])
+MD: md = -0.0248 tr = 0.3123
+ITER: i_iter = 99 ret = -0.09 ret_best = -0.04 delta_tr = 1000000000.00 n_data = 100
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 0 return = -0.151
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 1 return = -0.117
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 2 return = -0.105
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 3 return = -0.105
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 4 return = -0.105
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 5 return = -0.105
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 6 return = -0.105
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 7 return = -0.105
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 8 return = -0.096
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 9 return = -0.096
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 10 return = -0.096
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 11 return = -0.096
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 12 return = -0.096
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 13 return = -0.096
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 14 return = -0.096
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 15 return = -0.096
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 16 return = -0.096
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 17 return = -0.096
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 18 return = -0.096
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 19 return = -0.096
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 20 return = -0.096
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 21 return = -0.096
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 22 return = -0.096
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 23 return = -0.096
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 24 return = -0.096
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 25 return = -0.096
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 26 return = -0.096
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 27 return = -0.096
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 28 return = -0.096
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 29 return = -0.096
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 30 return = -0.096
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 31 return = -0.096
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 32 return = -0.096
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 33 return = -0.096
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 34 return = -0.096
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 35 return = -0.096
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 36 return = -0.096
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 37 return = -0.096
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 38 return = -0.096
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 39 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 40 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 41 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 42 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 43 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 44 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 45 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 46 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 47 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 48 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 49 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 50 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 51 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 52 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 53 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 54 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 55 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 56 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 57 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 58 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 59 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 60 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 61 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 62 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 63 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 64 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 65 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 66 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 67 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 68 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 69 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 70 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 71 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 72 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 73 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 74 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 75 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 76 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 77 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 78 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 79 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 80 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 81 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 82 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 83 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 84 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 85 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 86 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 87 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 88 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 89 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 90 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 91 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 92 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 93 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 94 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 95 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 96 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 97 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 98 return = -0.045
+TRACE: name = f:sphere-10d ttype = iopt i_sample = 5 i_iter = 99 return = -0.045
+TIME_SAMPLE: 6531.49
+SHAPES: torch.Size([1, 10]) torch.Size([1, 1])
+MD: md = -3.7797 tr = 0.9307
+ITER: i_iter = 0 ret = -0.21 ret_best = -0.21 delta_tr = 1000000000.00 n_data = 1
+SHAPES: torch.Size([2, 10]) torch.Size([2, 1])
+MD: md = -2.0220 tr = 0.2285
+ITER: i_iter = 1 ret = -0.09 ret_best = -0.09 delta_tr = 1000000000.00 n_data = 2
+SHAPES: torch.Size([3, 10]) torch.Size([3, 1])
+MD: md = -1.3964 tr = 0.2066
+ITER: i_iter = 2 ret = -0.21 ret_best = -0.09 delta_tr = 1000000000.00 n_data = 3
+SHAPES: torch.Size([4, 10]) torch.Size([4, 1])
+MD: md = -1.1782 tr = 0.2540
+ITER: i_iter = 3 ret = -0.17 ret_best = -0.09 delta_tr = 1000000000.00 n_data = 4
+SHAPES: torch.Size([5, 10]) torch.Size([5, 1])
+MD: md = -1.0873 tr = 0.2602
+ITER: i_iter = 4 ret = -0.16 ret_best = -0.09 delta_tr = 1000000000.00 n_data = 5
+SHAPES: torch.Size([6, 10]) torch.Size([6, 1])
+MD: md = -1.0381 tr = 0.2639
+ITER: i_iter = 5 ret = -0.21 ret_best = -0.09 delta_tr = 1000000000.00 n_data = 6
+SHAPES: torch.Size([7, 10]) torch.Size([7, 1])
+MD: md = -1.0061 tr = 0.2714
+ITER: i_iter = 6 ret = -0.16 ret_best = -0.09 delta_tr = 1000000000.00 n_data = 7
+SHAPES: torch.Size([8, 10]) torch.Size([8, 1])
+MD: md = -0.9828 tr = 0.2186
+ITER: i_iter = 7 ret = -0.15 ret_best = -0.09 delta_tr = 1000000000.00 n_data = 8
+SHAPES: torch.Size([9, 10]) torch.Size([9, 1])
+MD: md = -0.9621 tr = 0.1908
