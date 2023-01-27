@@ -1,46 +1,53 @@
 import torch
-from botorch.fit import fit_gpytorch_mll
-from botorch.models import SingleTaskGP
-from gpytorch.mlls import ExactMarginalLogLikelihood
+from botorch.acquisition import AnalyticAcquisitionFunction
+from botorch.models.model import Model
+from botorch.utils import t_batch_mode_transform
 
-from rl_gym.iopt import qIOPT
-
-
-class Standardizer:
-    def __init__(self, Y_orig):
-        stddim = -1 if Y_orig.dim() < 2 else -2
-        Y_std = Y_orig.std(dim=stddim, keepdim=True)
-        self.Y_std = Y_std.where(Y_std >= 1e-9, torch.full_like(Y_std, 1.0))
-        self.Y_mu = Y_orig.mean(dim=stddim, keepdim=True)
-
-    def __call__(self, Y_orig):
-        return (Y_orig - self.Y_mu) / self.Y_std
-
-    def undo(self, Y):
-        return self.Y_mu + self.Y_std * Y
+# from IPython.core.debugger import set_trace
+from torch import Tensor
+from torch.quasirandom import SobolEngine
 
 
-class ACQIOpt:
-    def __init__(self, data, num_samples=512):
-        Y, X = zip(*[self._mk_yx(d) for d in data])
-        Y = torch.tensor(Y)[:, None]
+class AcqIOpt(AnalyticAcquisitionFunction):
+    def __init__(
+        self,
+        model: Model,
+        q: int = 1,
+        num_samples: int = 256,
+        seed: int = None,
+    ) -> None:
+        super(AnalyticAcquisitionFunction, self).__init__(model=model)
+        self.q = q
 
-        X = torch.stack(X).type(torch.float64)
-        Y = Standardizer(Y)(Y).type(torch.float64)
+        X_0 = self.model.train_inputs[0]
+        num_dim = X_0.shape[-1]
+        sobol_engine = SobolEngine(q * num_dim, scramble=True, seed=seed)
+        X_samples = sobol_engine.draw(num_samples, dtype=X_0.dtype)
+        X_samples = X_samples.view(num_samples, q, num_dim).to(device=X_0.device)
+        self.register_buffer("X_samples", X_samples)
 
-        print("SHAPES:", X.shape, Y.shape)
-        gp = SingleTaskGP(X, Y)
-        mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
-        fit_gpytorch_mll(mll)
-        self._qiopt = qIOPT(gp, q=1, num_samples=num_samples)
+    @t_batch_mode_transform()
+    def forward(self, X: Tensor) -> Tensor:
+        """
+        Args:
+            X: A `(b) x q x d`-dim Tensor of `(b)` t-batches with `q` `d`-dim
+                design points each.
+        """
+        assert X.shape[-2] == self.q, (X.shape[-1], self.q, "q must be set in the constructor")
 
-    def _mk_yx(self, datum):
-        return datum.trajectory.rreturn, self._mk_x(datum.policy)
+        self.to(device=X.device)
 
-    def _mk_x(self, policy):
-        return torch.as_tensor(policy.get_params())
+        posterior = self.model.posterior(X)  # predictive posterior
 
-    def __call__(self, policy):
-        X = torch.atleast_2d(self._mk_x(policy))
-        X = X.unsqueeze(0)
-        return self._qiopt(X).squeeze().item()
+        num_batches = X.shape[0]
+        af = []
+        for i_batch in range(num_batches):
+            Y = posterior.mean[i_batch, :]  # q
+            model_next = self.model.condition_on_observations(X=X[i_batch, ::], Y=Y)  # q x d
+
+            samples_y_next = model_next.posterior(self.X_samples)
+            integrated_variance_next = samples_y_next.variance.squeeze().mean()  # q
+
+            af.append(-integrated_variance_next)
+
+        return torch.stack(af)

@@ -1,11 +1,9 @@
-from rl_gym.acq_iopt import ACQIOpt
+from rl_gym.acq_bt import AcqBT
+from rl_gym.acq_iopt import AcqIOpt
+from rl_gym.acq_min_dist import AcqMinDist
+from rl_gym.acq_var import AcqVar
 from rl_gym.datum import Datum
-from rl_gym.distance import distance_actions, distance_actions_corr, distance_parameters
-from rl_gym.min_distance_actions_fast import MinDistanceActionsFast
-from rl_gym.min_distance_parameters import MinDistanceParameters
-from rl_gym.neg_discrepancy import NegDiscrepancy
-from rl_gym.policy_designer import PolicyDesigner
-from rl_gym.surrogate import Surrogate
+from rl_gym.policy_designer_bt import PolicyDesignerBT
 from rl_gym.trajectories import collect_trajectory
 
 
@@ -13,42 +11,30 @@ class Optimizer:
     def __init__(self, env_conf, policy):
         self._env_conf = env_conf
 
-        self._num_opt = 300
         traj = self._collect_trajectory(policy)
         self._datum_best = Datum(policy, traj)
         self._data = []
 
     def _collect_trajectory(self, policy):
-        traj = collect_trajectory(self._env_conf, policy, seed=self._env_conf.seed)
-        # w = np.array(policy.get_params()).flatten()
-        # print ("CT:", traj.rreturn, w.mean(), w.std())
-        return traj
+        return collect_trajectory(self._env_conf, policy, seed=self._env_conf.seed)
 
-    def _iterate(self, trust_distance_fn, acq_fn, data_opt, delta_tr):
-        pd = PolicyDesigner(trust_distance_fn, acq_fn, data_opt, delta_tr)
+    def _iterate(self, acq_fn, data_opt):
+        pd = PolicyDesignerBT(acq_fn, data_opt)
 
-        times = pd.design(self._num_opt)
+        times = pd.design()
         self._times_trace.append(times.mean() / 1e3)
-        if pd.min_dist() is not None:
-            print(f"MD: md = {pd.min_dist():.4f} tr = {pd.trust():.4f}")
-
         policy = pd.get_policy()
         traj = self._collect_trajectory(policy)
         return Datum(policy, traj)
 
     def collect_trace(self, ttype, num_iterations, num_init):
         assert ttype in [
-            "disc",
             "random",
             "sobol",
             "iopt",
-            "bayes-actions",
-            "bayes-params",
-            "actions-cov",
-            "actions-corr",
-            "actions",
-            "params",
-            "params-toroidal",
+            "variance",
+            "maximin",
+            "maximin-toroidal",
             "dumb",
         ]
 
@@ -56,46 +42,24 @@ class Optimizer:
         self._times_trace = []
         max_trajs = 99999
 
-        if ttype in ["bayes-actions", "actions-corr", "actions-cov"]:
-            trust_distance_fn = distance_actions_corr
-        elif ttype == "actions":
-            trust_distance_fn = distance_actions
-        else:
-            trust_distance_fn = distance_parameters
-
         for _ in range(num_iterations):
             i_iter = len(trace)
-
-            if i_iter < num_init:
-                delta_tr = 1e9
-            else:
-                delta_tr = 0.1
             self._data = self._data[-max_trajs:]
             data_opt = self._data + [self._datum_best]
-            if ttype == "bayes-actions":
-                acq_fn = Surrogate(data_opt, MinDistanceActionsFast(data_opt, ttype="corr"))
-            elif ttype == "bayes-params":
-                acq_fn = Surrogate(data_opt, MinDistanceParameters(data_opt, True))
-            elif ttype == "actions-corr":
-                acq_fn = MinDistanceActionsFast(data_opt, ttype="corr")
-            elif ttype == "actions-cov":
-                acq_fn = MinDistanceActionsFast(data_opt, ttype="cov")
-            elif ttype == "actions":
-                acq_fn = MinDistanceActionsFast(data_opt)
-            elif ttype == "params":
-                acq_fn = MinDistanceParameters(data_opt, False)
-            elif ttype == "params-toroidal":
-                acq_fn = MinDistanceParameters(data_opt, True)
-            elif ttype == "disc":
-                acq_fn = NegDiscrepancy(data_opt)
-            elif ttype == "iopt":
-                acq_fn = ACQIOpt(data_opt)
+            if ttype == "iopt":
+                acq_fn = AcqBT(AcqIOpt, data_opt)
+            elif ttype == "variance":
+                acq_fn = AcqBT(AcqVar, data_opt)
+            elif ttype == "maximin":
+                acq_fn = AcqBT(lambda m: AcqMinDist(m, toroidal=False), data_opt)
+            elif ttype == "maximin-toroidal":
+                acq_fn = AcqBT(lambda m: AcqMinDist(m, toroidal=True), data_opt)
             elif ttype in ["random", "sobol", "dumb"]:
                 acq_fn = ttype
             else:
                 assert False
 
-            datum = self._iterate(trust_distance_fn, acq_fn, data_opt, delta_tr)
+            datum = self._iterate(acq_fn, data_opt)
             if datum.trajectory.rreturn > self._datum_best.trajectory.rreturn:
                 self._data.append(self._datum_best)
                 self._datum_best = datum
@@ -105,11 +69,8 @@ class Optimizer:
 
             if i_iter % 1 == 0:
                 print(
-                    f"ITER: i_iter = {i_iter} ret = {datum.trajectory.rreturn:.2f} ret_best = {self._datum_best.trajectory.rreturn:.2f} delta_tr = {delta_tr:.2f} n_data = {len(self._data)}"
+                    f"ITER: i_iter = {i_iter} ret = {datum.trajectory.rreturn:.2f} ret_best = {self._datum_best.trajectory.rreturn:.2f} n_data = {len(self._data)}"
                 )
 
             trace.append(self._datum_best.trajectory.rreturn)
-            if self._datum_best.trajectory.rreturn > self._env_conf.solved:
-                print(f"SOLVED! ret_best = {self._datum_best.trajectory.rreturn:.1f}")
-                break
         return trace
