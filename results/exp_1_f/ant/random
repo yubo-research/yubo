@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/home/dsweet/Projects/bbo/experiments/exp_1.py", line 3, in <module>
+    from rl_gym.env_conf import default_policy
+ModuleNotFoundError: No module named 'rl_gym'
