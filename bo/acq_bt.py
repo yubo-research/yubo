@@ -13,7 +13,7 @@ class AcqBT:
         Y = torch.tensor(Y)[:, None]
 
         X = torch.stack(X).type(torch.float64)
-        Y = standardize(Y)
+        Y = standardize(Y).type(torch.float64)
 
         gp = SingleTaskGP(X, Y)
         mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
