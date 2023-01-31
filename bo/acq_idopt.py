@@ -13,7 +13,7 @@ from torch import Tensor
 from torch.quasirandom import SobolEngine
 
 
-class AcqIOpt(MCAcquisitionFunction):
+class AcqIDOpt(MCAcquisitionFunction):
     def __init__(
         self,
         model: Model,

@@ -3,9 +3,8 @@ from botorch.acquisition import PosteriorMean
 from botorch.fit import fit_gpytorch_mll
 from botorch.models import SingleTaskGP
 from botorch.optim import optimize_acqf
+from botorch.utils import standardize
 from gpytorch.mlls import ExactMarginalLogLikelihood
-
-from bo.standardizer import Standardizer
 
 
 class AcqBT:
@@ -14,7 +13,7 @@ class AcqBT:
         Y = torch.tensor(Y)[:, None]
 
         X = torch.stack(X).type(torch.float64)
-        Y = Standardizer(Y)(Y).type(torch.float64)
+        Y = standardize(Y)
 
         gp = SingleTaskGP(X, Y)
         mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
@@ -54,6 +53,5 @@ class AcqBT:
         return torch.as_tensor(policy.get_params())
 
     def __call__(self, policy):
-        X = torch.atleast_2d(self._mk_x(policy))
-        X = X.unsqueeze(0)
+        X = torch.atleast_2d(self._mk_x(policy)).unsqueeze(0)
         return self.acq_function(X).squeeze().item()

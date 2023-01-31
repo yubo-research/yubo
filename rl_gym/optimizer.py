@@ -2,7 +2,7 @@ from botorch.acquisition import UpperConfidenceBound
 from botorch.acquisition.analytic import LogExpectedImprovement
 
 from bo.acq_bt import AcqBT
-from bo.acq_iopt import AcqIOpt
+from bo.acq_idopt import AcqIDOpt
 from bo.acq_min_dist import AcqMinDist
 from bo.acq_var import AcqVar
 from rl_gym.datum import Datum
@@ -14,19 +14,14 @@ class Optimizer:
     def __init__(self, env_conf, policy):
         self._env_conf = env_conf
 
-        traj = self._collect_trajectory(policy)
-        self._datum_best = Datum(policy, traj)
+        self._datum_best = Datum(policy, self._collect_trajectory(policy))
         self._data = []
 
     def _collect_trajectory(self, policy):
         return collect_trajectory(self._env_conf, policy, seed=self._env_conf.seed)
 
     def _iterate(self, acq_fn, data_opt):
-        pd = PolicyDesignerBT(acq_fn, data_opt)
-
-        times = pd.design()
-        self._times_trace.append(times.mean() / 1e3)
-        policy = pd.get_policy()
+        policy = PolicyDesignerBT(acq_fn, data_opt).design()
         traj = self._collect_trajectory(policy)
         return Datum(policy, traj)
 
@@ -34,39 +29,38 @@ class Optimizer:
         assert ttype in [
             "random",
             "sobol",
-            "iopt-ex",
+            "idopt-ex",
             "variance",
             "maximin",
             "maximin-toroidal",
-            "dumb",
+            "rs",
             "ucb",
             "ei",
-            "iopt",
+            "idopt",
         ], f"Unknown optimizer type {ttype}"
 
         trace = []
-        self._times_trace = []
         max_trajs = 99999
 
         for _ in range(num_iterations):
             i_iter = len(trace)
             self._data = self._data[-max_trajs:]
             data_opt = self._data + [self._datum_best]
-            if ttype == "iopt-ex":
-                acq_fn = AcqBT(AcqIOpt, data_opt, b_bounds=True)
+            if ttype == "idopt-ex":
+                acq_fn = AcqBT(AcqIDOpt, data_opt, acq_kwargs={"bounds": None})
             elif ttype == "variance":
                 acq_fn = AcqBT(AcqVar, data_opt)
             elif ttype == "maximin":
                 acq_fn = AcqBT(lambda m: AcqMinDist(m, toroidal=False), data_opt)
             elif ttype == "maximin-toroidal":
                 acq_fn = AcqBT(lambda m: AcqMinDist(m, toroidal=True), data_opt)
-            elif ttype == "iopt":
-                acq_fn = AcqBT(AcqIOpt, data_opt, acq_kwargs={"X_max": None, "bounds": None})
+            elif ttype == "idopt":
+                acq_fn = AcqBT(AcqIDOpt, data_opt, acq_kwargs={"X_max": None, "bounds": None})
             elif ttype == "ucb":
                 acq_fn = AcqBT(UpperConfidenceBound, data_opt, acq_kwargs={"beta": 1})
             elif ttype == "ei":
                 acq_fn = AcqBT(LogExpectedImprovement, data_opt, acq_kwargs={"best_f": None})
-            elif ttype in ["random", "sobol", "dumb"]:
+            elif ttype in ["random", "sobol", "rs"]:
                 acq_fn = ttype
             else:
                 assert False
