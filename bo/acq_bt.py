@@ -1,13 +1,15 @@
 import torch
+from botorch.acquisition import PosteriorMean
 from botorch.fit import fit_gpytorch_mll
 from botorch.models import SingleTaskGP
+from botorch.optim import optimize_acqf
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
 from bo.standardizer import Standardizer
 
 
 class AcqBT:
-    def __init__(self, acq_factory, data):
+    def __init__(self, acq_factory, data, acq_kwargs=None):
         Y, X = zip(*[self._mk_yx(d) for d in data])
         Y = torch.tensor(Y)[:, None]
 
@@ -19,8 +21,31 @@ class AcqBT:
         fit_gpytorch_mll(mll)
 
         num_dim = X[0].shape[-1]
-        self.acq_function = acq_factory(gp)
         self.bounds = torch.tensor([[0.0] * num_dim, [1.0] * num_dim], device=X.device, dtype=X.dtype)
+
+        if not acq_kwargs:
+            kwargs = {}
+        else:
+            kwargs = dict(acq_kwargs)
+        if "X_max" in kwargs:
+            kwargs["X_max"] = self._find_max(gp, self.bounds)
+        if "best_f" in kwargs:
+            kwargs["best_f"] = gp(self._find_max(gp, self.bounds)).mean
+        if "bounds" in kwargs:
+            kwargs["bounds"] = self.bounds
+
+        self.acq_function = acq_factory(gp, **kwargs)
+
+    def _find_max(self, gp, bounds):
+        x_cand, _ = optimize_acqf(
+            acq_function=PosteriorMean(model=gp),
+            bounds=bounds,
+            q=1,
+            num_restarts=10,
+            raw_samples=512,
+            options={"batch_limit": 10, "maxiter": 200},
+        )
+        return x_cand
 
     def _mk_yx(self, datum):
         return datum.trajectory.rreturn, self._mk_x(datum.policy)

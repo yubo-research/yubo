@@ -2,6 +2,7 @@ import torch
 from botorch.acquisition import AnalyticAcquisitionFunction
 from botorch.models.model import Model
 from botorch.utils import t_batch_mode_transform
+
 # from IPython.core.debugger import set_trace
 from torch import Tensor
 
@@ -36,7 +37,7 @@ class AcqMinDist(AnalyticAcquisitionFunction):
         """
         self.to(device=X.device)
 
-        posterior = self.model.posterior(X)
+        # posterior = self.model.posterior(X)
         num_batches = X.shape[0]
         af = []
         for i_batch in range(num_batches):
