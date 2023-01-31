@@ -14871,3 +14871,594 @@ TRACE: name = Ant-v4 ttype = iopt i_sample = 73 i_iter = 95 return = -17.939
 TRACE: name = Ant-v4 ttype = iopt i_sample = 73 i_iter = 96 return = -17.939
 TRACE: name = Ant-v4 ttype = iopt i_sample = 73 i_iter = 97 return = -17.939
 TRACE: name = Ant-v4 ttype = iopt i_sample = 73 i_iter = 98 return = -17.939
+TRACE: name = Ant-v4 ttype = iopt i_sample = 73 i_iter = 99 return = -17.939
+TIME_SAMPLE: 2205.67
+ITER: i_iter = 0 ret = -3096.39 ret_best = -20.50 n_data = 1
+ITER: i_iter = 1 ret = -22.06 ret_best = -20.50 n_data = 2
+ITER: i_iter = 2 ret = -2995.86 ret_best = -20.50 n_data = 3
+ITER: i_iter = 3 ret = -117.27 ret_best = -20.50 n_data = 4
+ITER: i_iter = 4 ret = -2966.41 ret_best = -20.50 n_data = 5
+ITER: i_iter = 5 ret = -3492.13 ret_best = -20.50 n_data = 6
+ITER: i_iter = 6 ret = -261.86 ret_best = -20.50 n_data = 7
+ITER: i_iter = 7 ret = -295.54 ret_best = -20.50 n_data = 8
+ITER: i_iter = 8 ret = -727.91 ret_best = -20.50 n_data = 9
+ITER: i_iter = 9 ret = -193.38 ret_best = -20.50 n_data = 10
+ITER: i_iter = 10 ret = -1945.35 ret_best = -20.50 n_data = 11
+ITER: i_iter = 11 ret = -2857.83 ret_best = -20.50 n_data = 12
+ITER: i_iter = 12 ret = -161.91 ret_best = -20.50 n_data = 13
+ITER: i_iter = 13 ret = -2985.12 ret_best = -20.50 n_data = 14
+ITER: i_iter = 14 ret = -332.09 ret_best = -20.50 n_data = 15
+ITER: i_iter = 15 ret = -2321.33 ret_best = -20.50 n_data = 16
+ITER: i_iter = 16 ret = -184.49 ret_best = -20.50 n_data = 17
+ITER: i_iter = 17 ret = -467.18 ret_best = -20.50 n_data = 18
+ITER: i_iter = 18 ret = -2925.69 ret_best = -20.50 n_data = 19
+ITER: i_iter = 19 ret = -1162.98 ret_best = -20.50 n_data = 20
+ITER: i_iter = 20 ret = -1291.66 ret_best = -20.50 n_data = 21
+ITER: i_iter = 21 ret = -2991.65 ret_best = -20.50 n_data = 22
+ITER: i_iter = 22 ret = -403.16 ret_best = -20.50 n_data = 23
+ITER: i_iter = 23 ret = -658.97 ret_best = -20.50 n_data = 24
+ITER: i_iter = 24 ret = -366.84 ret_best = -20.50 n_data = 25
+ITER: i_iter = 25 ret = -512.15 ret_best = -20.50 n_data = 26
+ITER: i_iter = 26 ret = -1183.13 ret_best = -20.50 n_data = 27
+ITER: i_iter = 27 ret = -34.61 ret_best = -20.50 n_data = 28
+ITER: i_iter = 28 ret = -486.08 ret_best = -20.50 n_data = 29
+ITER: i_iter = 29 ret = -265.01 ret_best = -20.50 n_data = 30
+ITER: i_iter = 30 ret = -477.05 ret_best = -20.50 n_data = 31
+ITER: i_iter = 31 ret = -91.64 ret_best = -20.50 n_data = 32
+ITER: i_iter = 32 ret = -206.55 ret_best = -20.50 n_data = 33
+ITER: i_iter = 33 ret = -27.25 ret_best = -20.50 n_data = 34
+ITER: i_iter = 34 ret = -71.73 ret_best = -20.50 n_data = 35
+ITER: i_iter = 35 ret = -2253.44 ret_best = -20.50 n_data = 36
+ITER: i_iter = 36 ret = -185.14 ret_best = -20.50 n_data = 37
+ITER: i_iter = 37 ret = -68.55 ret_best = -20.50 n_data = 38
+ITER: i_iter = 38 ret = -277.72 ret_best = -20.50 n_data = 39
+ITER: i_iter = 39 ret = -2968.10 ret_best = -20.50 n_data = 40
+ITER: i_iter = 40 ret = -492.91 ret_best = -20.50 n_data = 41
+ITER: i_iter = 41 ret = -325.22 ret_best = -20.50 n_data = 42
+ITER: i_iter = 42 ret = -259.87 ret_best = -20.50 n_data = 43
+ITER: i_iter = 43 ret = -844.87 ret_best = -20.50 n_data = 44
+ITER: i_iter = 44 ret = -2957.11 ret_best = -20.50 n_data = 45
+ITER: i_iter = 45 ret = -370.31 ret_best = -20.50 n_data = 46
+ITER: i_iter = 46 ret = -148.47 ret_best = -20.50 n_data = 47
+ITER: i_iter = 47 ret = -81.17 ret_best = -20.50 n_data = 48
+ITER: i_iter = 48 ret = -340.71 ret_best = -20.50 n_data = 49
+ITER: i_iter = 49 ret = -3069.42 ret_best = -20.50 n_data = 50
+ITER: i_iter = 50 ret = -1094.15 ret_best = -20.50 n_data = 51
+ITER: i_iter = 51 ret = -30.22 ret_best = -20.50 n_data = 52
+ITER: i_iter = 52 ret = -2959.91 ret_best = -20.50 n_data = 53
+ITER: i_iter = 53 ret = -3436.38 ret_best = -20.50 n_data = 54
+ITER: i_iter = 54 ret = -220.35 ret_best = -20.50 n_data = 55
+ITER: i_iter = 55 ret = -43.77 ret_best = -20.50 n_data = 56
+ITER: i_iter = 56 ret = -887.48 ret_best = -20.50 n_data = 57
+ITER: i_iter = 57 ret = -154.86 ret_best = -20.50 n_data = 58
+ITER: i_iter = 58 ret = -2981.79 ret_best = -20.50 n_data = 59
+ITER: i_iter = 59 ret = -3040.19 ret_best = -20.50 n_data = 60
+ITER: i_iter = 60 ret = -282.16 ret_best = -20.50 n_data = 61
+ITER: i_iter = 61 ret = -108.61 ret_best = -20.50 n_data = 62
+ITER: i_iter = 62 ret = -478.70 ret_best = -20.50 n_data = 63
+ITER: i_iter = 63 ret = -3077.01 ret_best = -20.50 n_data = 64
+ITER: i_iter = 64 ret = -61.03 ret_best = -20.50 n_data = 65
+ITER: i_iter = 65 ret = -690.02 ret_best = -20.50 n_data = 66
+ITER: i_iter = 66 ret = -291.28 ret_best = -20.50 n_data = 67
+ITER: i_iter = 67 ret = -45.77 ret_best = -20.50 n_data = 68
+ITER: i_iter = 68 ret = -244.56 ret_best = -20.50 n_data = 69
+ITER: i_iter = 69 ret = -510.76 ret_best = -20.50 n_data = 70
+ITER: i_iter = 70 ret = -72.19 ret_best = -20.50 n_data = 71
+ITER: i_iter = 71 ret = -58.12 ret_best = -20.50 n_data = 72
+ITER: i_iter = 72 ret = -2990.87 ret_best = -20.50 n_data = 73
+ITER: i_iter = 73 ret = -306.51 ret_best = -20.50 n_data = 74
+ITER: i_iter = 74 ret = -220.34 ret_best = -20.50 n_data = 75
+ITER: i_iter = 75 ret = -35.73 ret_best = -20.50 n_data = 76
+ITER: i_iter = 76 ret = -34.41 ret_best = -20.50 n_data = 77
+ITER: i_iter = 77 ret = -2943.79 ret_best = -20.50 n_data = 78
+ITER: i_iter = 78 ret = -3346.39 ret_best = -20.50 n_data = 79
+ITER: i_iter = 79 ret = -575.30 ret_best = -20.50 n_data = 80
+ITER: i_iter = 80 ret = -285.13 ret_best = -20.50 n_data = 81
+ITER: i_iter = 81 ret = -100.91 ret_best = -20.50 n_data = 82
+ITER: i_iter = 82 ret = -2354.00 ret_best = -20.50 n_data = 83
+ITER: i_iter = 83 ret = -369.68 ret_best = -20.50 n_data = 84
+ITER: i_iter = 84 ret = -2505.54 ret_best = -20.50 n_data = 85
+ITER: i_iter = 85 ret = -428.23 ret_best = -20.50 n_data = 86
+ITER: i_iter = 86 ret = -166.16 ret_best = -20.50 n_data = 87
+ITER: i_iter = 87 ret = -612.78 ret_best = -20.50 n_data = 88
+ITER: i_iter = 88 ret = -2962.63 ret_best = -20.50 n_data = 89
+ITER: i_iter = 89 ret = -31.69 ret_best = -20.50 n_data = 90
+ITER: i_iter = 90 ret = -1851.21 ret_best = -20.50 n_data = 91
+ITER: i_iter = 91 ret = -10.08 ret_best = -10.08 n_data = 92
+ITER: i_iter = 92 ret = -1365.33 ret_best = -10.08 n_data = 93
+ITER: i_iter = 93 ret = -2985.73 ret_best = -10.08 n_data = 94
+ITER: i_iter = 94 ret = -192.55 ret_best = -10.08 n_data = 95
+ITER: i_iter = 95 ret = -145.62 ret_best = -10.08 n_data = 96
+ITER: i_iter = 96 ret = -3330.87 ret_best = -10.08 n_data = 97
+ITER: i_iter = 97 ret = -118.40 ret_best = -10.08 n_data = 98
+ITER: i_iter = 98 ret = -52.27 ret_best = -10.08 n_data = 99
+ITER: i_iter = 99 ret = -2998.94 ret_best = -10.08 n_data = 100
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 0 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 1 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 2 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 3 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 4 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 5 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 6 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 7 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 8 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 9 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 10 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 11 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 12 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 13 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 14 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 15 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 16 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 17 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 18 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 19 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 20 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 21 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 22 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 23 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 24 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 25 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 26 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 27 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 28 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 29 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 30 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 31 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 32 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 33 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 34 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 35 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 36 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 37 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 38 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 39 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 40 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 41 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 42 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 43 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 44 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 45 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 46 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 47 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 48 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 49 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 50 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 51 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 52 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 53 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 54 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 55 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 56 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 57 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 58 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 59 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 60 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 61 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 62 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 63 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 64 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 65 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 66 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 67 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 68 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 69 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 70 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 71 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 72 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 73 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 74 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 75 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 76 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 77 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 78 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 79 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 80 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 81 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 82 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 83 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 84 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 85 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 86 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 87 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 88 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 89 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 90 return = -20.500
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 91 return = -10.082
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 92 return = -10.082
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 93 return = -10.082
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 94 return = -10.082
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 95 return = -10.082
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 96 return = -10.082
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 97 return = -10.082
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 98 return = -10.082
+TRACE: name = Ant-v4 ttype = iopt i_sample = 74 i_iter = 99 return = -10.082
+TIME_SAMPLE: 2480.20
+ITER: i_iter = 0 ret = -278.33 ret_best = -27.88 n_data = 1
+ITER: i_iter = 1 ret = -3459.94 ret_best = -27.88 n_data = 2
+ITER: i_iter = 2 ret = -2480.69 ret_best = -27.88 n_data = 3
+ITER: i_iter = 3 ret = -185.39 ret_best = -27.88 n_data = 4
+ITER: i_iter = 4 ret = -3029.95 ret_best = -27.88 n_data = 5
+ITER: i_iter = 5 ret = -61.78 ret_best = -27.88 n_data = 6
+ITER: i_iter = 6 ret = -2991.63 ret_best = -27.88 n_data = 7
+ITER: i_iter = 7 ret = -213.96 ret_best = -27.88 n_data = 8
+ITER: i_iter = 8 ret = -32.20 ret_best = -27.88 n_data = 9
+ITER: i_iter = 9 ret = -239.73 ret_best = -27.88 n_data = 10
+ITER: i_iter = 10 ret = -2187.59 ret_best = -27.88 n_data = 11
+ITER: i_iter = 11 ret = -119.71 ret_best = -27.88 n_data = 12
+ITER: i_iter = 12 ret = -3000.45 ret_best = -27.88 n_data = 13
+ITER: i_iter = 13 ret = -659.50 ret_best = -27.88 n_data = 14
+ITER: i_iter = 14 ret = -42.42 ret_best = -27.88 n_data = 15
+ITER: i_iter = 15 ret = -244.74 ret_best = -27.88 n_data = 16
+ITER: i_iter = 16 ret = -2515.19 ret_best = -27.88 n_data = 17
+ITER: i_iter = 17 ret = -3081.09 ret_best = -27.88 n_data = 18
+ITER: i_iter = 18 ret = -2182.42 ret_best = -27.88 n_data = 19
+ITER: i_iter = 19 ret = -2892.74 ret_best = -27.88 n_data = 20
+ITER: i_iter = 20 ret = -74.11 ret_best = -27.88 n_data = 21
+ITER: i_iter = 21 ret = -565.35 ret_best = -27.88 n_data = 22
+ITER: i_iter = 22 ret = -27.16 ret_best = -27.16 n_data = 23
+ITER: i_iter = 23 ret = -801.55 ret_best = -27.16 n_data = 24
+ITER: i_iter = 24 ret = -3570.79 ret_best = -27.16 n_data = 25
+ITER: i_iter = 25 ret = -128.14 ret_best = -27.16 n_data = 26
+ITER: i_iter = 26 ret = -389.72 ret_best = -27.16 n_data = 27
+ITER: i_iter = 27 ret = -172.55 ret_best = -27.16 n_data = 28
+ITER: i_iter = 28 ret = -70.43 ret_best = -27.16 n_data = 29
+ITER: i_iter = 29 ret = -580.70 ret_best = -27.16 n_data = 30
+ITER: i_iter = 30 ret = -61.22 ret_best = -27.16 n_data = 31
+ITER: i_iter = 31 ret = -30.37 ret_best = -27.16 n_data = 32
+ITER: i_iter = 32 ret = -34.03 ret_best = -27.16 n_data = 33
+ITER: i_iter = 33 ret = -2999.64 ret_best = -27.16 n_data = 34
+ITER: i_iter = 34 ret = -2997.64 ret_best = -27.16 n_data = 35
+ITER: i_iter = 35 ret = -2720.32 ret_best = -27.16 n_data = 36
+ITER: i_iter = 36 ret = -1253.86 ret_best = -27.16 n_data = 37
+ITER: i_iter = 37 ret = -3190.68 ret_best = -27.16 n_data = 38
+ITER: i_iter = 38 ret = -638.98 ret_best = -27.16 n_data = 39
+ITER: i_iter = 39 ret = -697.93 ret_best = -27.16 n_data = 40
+ITER: i_iter = 40 ret = -353.39 ret_best = -27.16 n_data = 41
+ITER: i_iter = 41 ret = -3245.99 ret_best = -27.16 n_data = 42
+ITER: i_iter = 42 ret = -2980.16 ret_best = -27.16 n_data = 43
+ITER: i_iter = 43 ret = -160.76 ret_best = -27.16 n_data = 44
+ITER: i_iter = 44 ret = -177.03 ret_best = -27.16 n_data = 45
+ITER: i_iter = 45 ret = -47.34 ret_best = -27.16 n_data = 46
+ITER: i_iter = 46 ret = -800.38 ret_best = -27.16 n_data = 47
+ITER: i_iter = 47 ret = -3002.24 ret_best = -27.16 n_data = 48
+ITER: i_iter = 48 ret = -3696.63 ret_best = -27.16 n_data = 49
+ITER: i_iter = 49 ret = -28.33 ret_best = -27.16 n_data = 50
+ITER: i_iter = 50 ret = -3000.13 ret_best = -27.16 n_data = 51
+ITER: i_iter = 51 ret = -2964.90 ret_best = -27.16 n_data = 52
+ITER: i_iter = 52 ret = -3435.43 ret_best = -27.16 n_data = 53
+ITER: i_iter = 53 ret = -3742.45 ret_best = -27.16 n_data = 54
+ITER: i_iter = 54 ret = -330.94 ret_best = -27.16 n_data = 55
+ITER: i_iter = 55 ret = -2997.47 ret_best = -27.16 n_data = 56
+ITER: i_iter = 56 ret = -63.57 ret_best = -27.16 n_data = 57
+ITER: i_iter = 57 ret = -2680.48 ret_best = -27.16 n_data = 58
+ITER: i_iter = 58 ret = -3212.95 ret_best = -27.16 n_data = 59
+ITER: i_iter = 59 ret = -18.61 ret_best = -18.61 n_data = 60
+ITER: i_iter = 60 ret = -2361.00 ret_best = -18.61 n_data = 61
+ITER: i_iter = 61 ret = -2891.73 ret_best = -18.61 n_data = 62
+ITER: i_iter = 62 ret = -598.24 ret_best = -18.61 n_data = 63
+ITER: i_iter = 63 ret = -2982.27 ret_best = -18.61 n_data = 64
+ITER: i_iter = 64 ret = -2990.60 ret_best = -18.61 n_data = 65
+ITER: i_iter = 65 ret = -64.30 ret_best = -18.61 n_data = 66
+ITER: i_iter = 66 ret = -2930.39 ret_best = -18.61 n_data = 67
+ITER: i_iter = 67 ret = -41.71 ret_best = -18.61 n_data = 68
+ITER: i_iter = 68 ret = -502.64 ret_best = -18.61 n_data = 69
+ITER: i_iter = 69 ret = -2964.97 ret_best = -18.61 n_data = 70
+ITER: i_iter = 70 ret = -242.06 ret_best = -18.61 n_data = 71
+ITER: i_iter = 71 ret = -119.22 ret_best = -18.61 n_data = 72
+ITER: i_iter = 72 ret = -2998.78 ret_best = -18.61 n_data = 73
+ITER: i_iter = 73 ret = -2947.60 ret_best = -18.61 n_data = 74
+ITER: i_iter = 74 ret = -2997.54 ret_best = -18.61 n_data = 75
+ITER: i_iter = 75 ret = -209.05 ret_best = -18.61 n_data = 76
+ITER: i_iter = 76 ret = -138.99 ret_best = -18.61 n_data = 77
+ITER: i_iter = 77 ret = -635.91 ret_best = -18.61 n_data = 78
+ITER: i_iter = 78 ret = -43.49 ret_best = -18.61 n_data = 79
+ITER: i_iter = 79 ret = -3488.32 ret_best = -18.61 n_data = 80
+ITER: i_iter = 80 ret = -433.10 ret_best = -18.61 n_data = 81
+ITER: i_iter = 81 ret = -185.90 ret_best = -18.61 n_data = 82
+ITER: i_iter = 82 ret = -25.68 ret_best = -18.61 n_data = 83
+ITER: i_iter = 83 ret = -2998.41 ret_best = -18.61 n_data = 84
+ITER: i_iter = 84 ret = -358.83 ret_best = -18.61 n_data = 85
+ITER: i_iter = 85 ret = -251.86 ret_best = -18.61 n_data = 86
+ITER: i_iter = 86 ret = -2013.45 ret_best = -18.61 n_data = 87
+ITER: i_iter = 87 ret = -3081.06 ret_best = -18.61 n_data = 88
+ITER: i_iter = 88 ret = -533.40 ret_best = -18.61 n_data = 89
+ITER: i_iter = 89 ret = -151.68 ret_best = -18.61 n_data = 90
+ITER: i_iter = 90 ret = -74.52 ret_best = -18.61 n_data = 91
+ITER: i_iter = 91 ret = -61.95 ret_best = -18.61 n_data = 92
+ITER: i_iter = 92 ret = -134.42 ret_best = -18.61 n_data = 93
+ITER: i_iter = 93 ret = -3011.12 ret_best = -18.61 n_data = 94
+ITER: i_iter = 94 ret = -591.16 ret_best = -18.61 n_data = 95
+ITER: i_iter = 95 ret = -344.44 ret_best = -18.61 n_data = 96
+ITER: i_iter = 96 ret = -43.96 ret_best = -18.61 n_data = 97
+ITER: i_iter = 97 ret = -46.54 ret_best = -18.61 n_data = 98
+ITER: i_iter = 98 ret = -1491.41 ret_best = -18.61 n_data = 99
+ITER: i_iter = 99 ret = -60.07 ret_best = -18.61 n_data = 100
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 0 return = -27.876
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 1 return = -27.876
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 2 return = -27.876
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 3 return = -27.876
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 4 return = -27.876
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 5 return = -27.876
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 6 return = -27.876
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 7 return = -27.876
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 8 return = -27.876
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 9 return = -27.876
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 10 return = -27.876
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 11 return = -27.876
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 12 return = -27.876
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 13 return = -27.876
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 14 return = -27.876
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 15 return = -27.876
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 16 return = -27.876
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 17 return = -27.876
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 18 return = -27.876
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 19 return = -27.876
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 20 return = -27.876
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 21 return = -27.876
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 22 return = -27.158
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 23 return = -27.158
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 24 return = -27.158
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 25 return = -27.158
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 26 return = -27.158
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 27 return = -27.158
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 28 return = -27.158
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 29 return = -27.158
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 30 return = -27.158
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 31 return = -27.158
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 32 return = -27.158
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 33 return = -27.158
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 34 return = -27.158
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 35 return = -27.158
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 36 return = -27.158
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 37 return = -27.158
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 38 return = -27.158
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 39 return = -27.158
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 40 return = -27.158
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 41 return = -27.158
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 42 return = -27.158
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 43 return = -27.158
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 44 return = -27.158
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 45 return = -27.158
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 46 return = -27.158
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 47 return = -27.158
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 48 return = -27.158
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 49 return = -27.158
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 50 return = -27.158
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 51 return = -27.158
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 52 return = -27.158
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 53 return = -27.158
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 54 return = -27.158
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 55 return = -27.158
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 56 return = -27.158
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 57 return = -27.158
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 58 return = -27.158
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 59 return = -18.606
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 60 return = -18.606
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 61 return = -18.606
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 62 return = -18.606
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 63 return = -18.606
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 64 return = -18.606
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 65 return = -18.606
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 66 return = -18.606
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 67 return = -18.606
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 68 return = -18.606
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 69 return = -18.606
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 70 return = -18.606
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 71 return = -18.606
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 72 return = -18.606
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 73 return = -18.606
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 74 return = -18.606
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 75 return = -18.606
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 76 return = -18.606
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 77 return = -18.606
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 78 return = -18.606
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 79 return = -18.606
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 80 return = -18.606
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 81 return = -18.606
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 82 return = -18.606
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 83 return = -18.606
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 84 return = -18.606
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 85 return = -18.606
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 86 return = -18.606
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 87 return = -18.606
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 88 return = -18.606
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 89 return = -18.606
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 90 return = -18.606
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 91 return = -18.606
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 92 return = -18.606
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 93 return = -18.606
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 94 return = -18.606
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 95 return = -18.606
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 96 return = -18.606
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 97 return = -18.606
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 98 return = -18.606
+TRACE: name = Ant-v4 ttype = iopt i_sample = 75 i_iter = 99 return = -18.606
+TIME_SAMPLE: 2493.20
+ITER: i_iter = 0 ret = -31.09 ret_best = -31.09 n_data = 1
+ITER: i_iter = 1 ret = -271.20 ret_best = -31.09 n_data = 2
+ITER: i_iter = 2 ret = -3255.04 ret_best = -31.09 n_data = 3
+ITER: i_iter = 3 ret = -2122.83 ret_best = -31.09 n_data = 4
+ITER: i_iter = 4 ret = -57.38 ret_best = -31.09 n_data = 5
+ITER: i_iter = 5 ret = -2715.68 ret_best = -31.09 n_data = 6
+ITER: i_iter = 6 ret = -160.73 ret_best = -31.09 n_data = 7
+ITER: i_iter = 7 ret = -3222.96 ret_best = -31.09 n_data = 8
+ITER: i_iter = 8 ret = -133.06 ret_best = -31.09 n_data = 9
+ITER: i_iter = 9 ret = -1542.31 ret_best = -31.09 n_data = 10
+ITER: i_iter = 10 ret = -559.39 ret_best = -31.09 n_data = 11
+ITER: i_iter = 11 ret = -614.71 ret_best = -31.09 n_data = 12
+ITER: i_iter = 12 ret = -35.01 ret_best = -31.09 n_data = 13
+ITER: i_iter = 13 ret = -3001.60 ret_best = -31.09 n_data = 14
+ITER: i_iter = 14 ret = -32.21 ret_best = -31.09 n_data = 15
+ITER: i_iter = 15 ret = -375.61 ret_best = -31.09 n_data = 16
+ITER: i_iter = 16 ret = -2957.35 ret_best = -31.09 n_data = 17
+ITER: i_iter = 17 ret = -561.64 ret_best = -31.09 n_data = 18
+ITER: i_iter = 18 ret = -438.59 ret_best = -31.09 n_data = 19
+ITER: i_iter = 19 ret = -40.31 ret_best = -31.09 n_data = 20
+ITER: i_iter = 20 ret = -2998.53 ret_best = -31.09 n_data = 21
+ITER: i_iter = 21 ret = -3039.39 ret_best = -31.09 n_data = 22
+ITER: i_iter = 22 ret = -551.44 ret_best = -31.09 n_data = 23
+ITER: i_iter = 23 ret = -3003.42 ret_best = -31.09 n_data = 24
+ITER: i_iter = 24 ret = -2998.31 ret_best = -31.09 n_data = 25
+ITER: i_iter = 25 ret = -50.44 ret_best = -31.09 n_data = 26
+ITER: i_iter = 26 ret = -105.42 ret_best = -31.09 n_data = 27
+ITER: i_iter = 27 ret = -41.88 ret_best = -31.09 n_data = 28
+ITER: i_iter = 28 ret = -41.98 ret_best = -31.09 n_data = 29
+ITER: i_iter = 29 ret = -32.02 ret_best = -31.09 n_data = 30
+ITER: i_iter = 30 ret = -127.34 ret_best = -31.09 n_data = 31
+ITER: i_iter = 31 ret = -511.19 ret_best = -31.09 n_data = 32
+ITER: i_iter = 32 ret = -2828.04 ret_best = -31.09 n_data = 33
+ITER: i_iter = 33 ret = -3000.34 ret_best = -31.09 n_data = 34
+ITER: i_iter = 34 ret = -654.75 ret_best = -31.09 n_data = 35
+ITER: i_iter = 35 ret = -3139.34 ret_best = -31.09 n_data = 36
+ITER: i_iter = 36 ret = -110.57 ret_best = -31.09 n_data = 37
+ITER: i_iter = 37 ret = -3015.17 ret_best = -31.09 n_data = 38
+ITER: i_iter = 38 ret = -3569.46 ret_best = -31.09 n_data = 39
+ITER: i_iter = 39 ret = -1190.22 ret_best = -31.09 n_data = 40
+ITER: i_iter = 40 ret = -386.85 ret_best = -31.09 n_data = 41
+ITER: i_iter = 41 ret = -404.77 ret_best = -31.09 n_data = 42
+ITER: i_iter = 42 ret = -2799.76 ret_best = -31.09 n_data = 43
+ITER: i_iter = 43 ret = -2443.37 ret_best = -31.09 n_data = 44
+ITER: i_iter = 44 ret = -44.97 ret_best = -31.09 n_data = 45
+ITER: i_iter = 45 ret = -2108.28 ret_best = -31.09 n_data = 46
+ITER: i_iter = 46 ret = -132.62 ret_best = -31.09 n_data = 47
+ITER: i_iter = 47 ret = -112.86 ret_best = -31.09 n_data = 48
+ITER: i_iter = 48 ret = -161.38 ret_best = -31.09 n_data = 49
+ITER: i_iter = 49 ret = -3001.63 ret_best = -31.09 n_data = 50
+ITER: i_iter = 50 ret = -44.58 ret_best = -31.09 n_data = 51
+ITER: i_iter = 51 ret = -164.43 ret_best = -31.09 n_data = 52
+ITER: i_iter = 52 ret = -114.53 ret_best = -31.09 n_data = 53
+ITER: i_iter = 53 ret = -2985.90 ret_best = -31.09 n_data = 54
+ITER: i_iter = 54 ret = -261.37 ret_best = -31.09 n_data = 55
+ITER: i_iter = 55 ret = -862.03 ret_best = -31.09 n_data = 56
+ITER: i_iter = 56 ret = -459.69 ret_best = -31.09 n_data = 57
+ITER: i_iter = 57 ret = -37.59 ret_best = -31.09 n_data = 58
+ITER: i_iter = 58 ret = -130.42 ret_best = -31.09 n_data = 59
+ITER: i_iter = 59 ret = -3516.03 ret_best = -31.09 n_data = 60
+ITER: i_iter = 60 ret = -3005.51 ret_best = -31.09 n_data = 61
+ITER: i_iter = 61 ret = -375.33 ret_best = -31.09 n_data = 62
+ITER: i_iter = 62 ret = -63.08 ret_best = -31.09 n_data = 63
+ITER: i_iter = 63 ret = -3202.78 ret_best = -31.09 n_data = 64
+ITER: i_iter = 64 ret = -64.38 ret_best = -31.09 n_data = 65
+ITER: i_iter = 65 ret = -767.54 ret_best = -31.09 n_data = 66
+ITER: i_iter = 66 ret = -33.39 ret_best = -31.09 n_data = 67
+ITER: i_iter = 67 ret = -271.84 ret_best = -31.09 n_data = 68
+ITER: i_iter = 68 ret = -113.59 ret_best = -31.09 n_data = 69
+ITER: i_iter = 69 ret = -30.36 ret_best = -30.36 n_data = 70
+ITER: i_iter = 70 ret = -52.39 ret_best = -30.36 n_data = 71
+ITER: i_iter = 71 ret = -244.46 ret_best = -30.36 n_data = 72
+ITER: i_iter = 72 ret = -38.39 ret_best = -30.36 n_data = 73
+ITER: i_iter = 73 ret = -66.76 ret_best = -30.36 n_data = 74
+ITER: i_iter = 74 ret = -31.10 ret_best = -30.36 n_data = 75
+ITER: i_iter = 75 ret = -3011.13 ret_best = -30.36 n_data = 76
+ITER: i_iter = 76 ret = -25.55 ret_best = -25.55 n_data = 77
+ITER: i_iter = 77 ret = -3002.17 ret_best = -25.55 n_data = 78
+ITER: i_iter = 78 ret = -2965.22 ret_best = -25.55 n_data = 79
+ITER: i_iter = 79 ret = -373.51 ret_best = -25.55 n_data = 80
+ITER: i_iter = 80 ret = -430.83 ret_best = -25.55 n_data = 81
+ITER: i_iter = 81 ret = -102.45 ret_best = -25.55 n_data = 82
+ITER: i_iter = 82 ret = -2017.32 ret_best = -25.55 n_data = 83
+ITER: i_iter = 83 ret = -3000.05 ret_best = -25.55 n_data = 84
+ITER: i_iter = 84 ret = -3082.42 ret_best = -25.55 n_data = 85
+ITER: i_iter = 85 ret = -115.55 ret_best = -25.55 n_data = 86
+ITER: i_iter = 86 ret = -556.91 ret_best = -25.55 n_data = 87
+ITER: i_iter = 87 ret = -2999.70 ret_best = -25.55 n_data = 88
+ITER: i_iter = 88 ret = -3253.00 ret_best = -25.55 n_data = 89
+ITER: i_iter = 89 ret = -574.80 ret_best = -25.55 n_data = 90
+ITER: i_iter = 90 ret = -1144.15 ret_best = -25.55 n_data = 91
+ITER: i_iter = 91 ret = -765.18 ret_best = -25.55 n_data = 92
+ITER: i_iter = 92 ret = -1485.71 ret_best = -25.55 n_data = 93
+ITER: i_iter = 93 ret = -861.05 ret_best = -25.55 n_data = 94
+ITER: i_iter = 94 ret = -42.91 ret_best = -25.55 n_data = 95
+ITER: i_iter = 95 ret = -67.03 ret_best = -25.55 n_data = 96
+ITER: i_iter = 96 ret = -134.19 ret_best = -25.55 n_data = 97
+ITER: i_iter = 97 ret = -2997.04 ret_best = -25.55 n_data = 98
+ITER: i_iter = 98 ret = -19.99 ret_best = -19.99 n_data = 99
+ITER: i_iter = 99 ret = -3001.87 ret_best = -19.99 n_data = 100
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 0 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 1 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 2 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 3 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 4 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 5 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 6 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 7 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 8 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 9 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 10 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 11 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 12 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 13 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 14 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 15 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 16 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 17 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 18 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 19 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 20 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 21 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 22 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 23 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 24 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 25 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 26 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 27 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 28 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 29 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 30 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 31 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 32 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 33 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 34 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 35 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 36 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 37 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 38 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 39 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 40 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 41 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 42 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 43 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 44 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 45 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 46 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 47 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 48 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 49 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 50 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 51 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 52 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 53 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 54 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 55 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 56 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 57 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 58 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 59 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 60 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 61 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 62 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 63 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 64 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 65 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 66 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 67 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 68 return = -31.088
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 69 return = -30.355
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 70 return = -30.355
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 71 return = -30.355
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 72 return = -30.355
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 73 return = -30.355
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 74 return = -30.355
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 75 return = -30.355
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 76 return = -25.549
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 77 return = -25.549
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 78 return = -25.549
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 79 return = -25.549
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 80 return = -25.549
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 81 return = -25.549
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 82 return = -25.549
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 83 return = -25.549
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 84 return = -25.549
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 85 return = -25.549
+TRACE: name = Ant-v4 ttype = iopt i_sample = 76 i_iter = 86 return = -25.549
