@@ -15,7 +15,7 @@ class PolicyDesignerBT:
     def design(self):
         if self._acq_fn == "rs":
             self._design_rs()
-        elif self._acq_fn == "sobol":
+        elif isinstance(self._acq_fn, SobolDesigner):
             self._design_sobol()
         elif self._acq_fn == "random":
             self._design_random()
@@ -27,7 +27,7 @@ class PolicyDesignerBT:
         return self._policy_best
 
     def _design_sobol(self):
-        p = SobolDesigner(self._policy_best.num_params()).get()
+        p = self._acq_fn.get()
         self._policy_best.set_params(p)
 
     def _design_rs(self, eps=0.1):

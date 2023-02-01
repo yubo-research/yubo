@@ -7,6 +7,7 @@ from bo.acq_min_dist import AcqMinDist
 from bo.acq_var import AcqVar
 from rl_gym.datum import Datum
 from rl_gym.policy_designer_bt import PolicyDesignerBT
+from rl_gym.sobol_designer import SobolDesigner
 from rl_gym.trajectories import collect_trajectory
 
 
@@ -16,6 +17,7 @@ class Optimizer:
 
         self._datum_best = Datum(policy, self._collect_trajectory(policy))
         self._data = []
+        self._sobol = None  # SobolDesigner is stateful
 
     def _collect_trajectory(self, policy):
         return collect_trajectory(self._env_conf, policy, seed=self._env_conf.seed)
@@ -60,7 +62,12 @@ class Optimizer:
                 acq_fn = AcqBT(UpperConfidenceBound, data_opt, acq_kwargs={"beta": 1})
             elif ttype == "ei":
                 acq_fn = AcqBT(LogExpectedImprovement, data_opt, acq_kwargs={"best_f": None})
-            elif ttype in ["random", "sobol", "rs"]:
+            elif ttype == "sobol":
+                if self._sobol is None:
+                    print("CREATED_SOBOL")
+                    self._sobol = SobolDesigner(self._datum_best.policy.num_params())
+                acq_fn = self._sobol
+            elif ttype in ["random", "rs"]:
                 acq_fn = ttype
             else:
                 assert False

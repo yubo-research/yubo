@@ -65,13 +65,13 @@ class AcqIDOpt(MCAcquisitionFunction):
             model_next = self.model.condition_on_observations(X=X[i_batch, ::], Y=Y)  # q x d
 
             post_posterior = model_next.posterior(self.X_all, posterior_transform=self.posterior_transform)
-            samples = self.get_posterior_samples(post_posterior).squeeze()  # num_Y_samples x (1 + num_X_samples)
+            Y_samples = self.get_posterior_samples(post_posterior).squeeze()  # num_Y_samples x (1 + num_X_samples)
             if self.use_x_max:
-                Y_max = samples[:, :1]
-                Y_samples = samples[:, 1:]
+                Y_max = Y_samples[:, :1]
+                Y_samples = Y_samples[:, 1:]
                 delta = Y_max - Y_samples
             else:
-                delta = samples
+                delta = Y_samples
             var = delta.var(axis=0)  # num_X_samples
             af.append(-var.mean())
 
