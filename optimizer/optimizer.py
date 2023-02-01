@@ -14,8 +14,9 @@ from .trajectories import collect_trajectory
 
 
 class Optimizer:
-    def __init__(self, env_conf, policy):
+    def __init__(self, env_conf, policy, cb_trace=None):
         self._env_conf = env_conf
+        self._cb_trace = cb_trace
         self._data = []  # Datum(policy, self._collect_trajectory(policy))]
         self._datum_best = None  # self._data[0]
         self._designers = {
@@ -56,5 +57,7 @@ class Optimizer:
                     f"ITER: i_iter = {i_iter} ret = {datum.trajectory.rreturn:.2f} ret_best = {self._datum_best.trajectory.rreturn:.2f} n_data = {len(self._data)}"
                 )
             trace.append(self._datum_best.trajectory.rreturn)
+            if self._cb_trace:
+                self._cb_trace(self._datum_best)
 
         return trace
