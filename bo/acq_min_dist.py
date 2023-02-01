@@ -49,5 +49,5 @@ class AcqMinDist(AnalyticAcquisitionFunction):
                 dist2_max = self._delta_squared(self.X_max, X[i_batch, ::]).sum(axis=-1)
                 # md = md - torch.sqrt(dist2_max.squeeze())
                 md = md - dist2_max.squeeze()
-                af.append(md)
+            af.append(md)
         return torch.stack(af)
