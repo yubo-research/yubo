@@ -1,12 +1,13 @@
 from botorch.acquisition import UpperConfidenceBound
-from botorch.acquisition.analytic import LogExpectedImprovement
+from botorch.acquisition.analytic import ExpectedImprovement
 
-from bo.acq_bt import AcqBT
 from bo.acq_idopt import AcqIDOpt
 from bo.acq_min_dist import AcqMinDist
 from bo.acq_var import AcqVar
+from rl_gym.ax_designer import AxDesigner
+from rl_gym.bt_designer import BTDesigner
 from rl_gym.datum import Datum
-from rl_gym.policy_designer_bt import PolicyDesignerBT
+from rl_gym.random_designer import RandomDesigner
 from rl_gym.sobol_designer import SobolDesigner
 from rl_gym.trajectories import collect_trajectory
 
@@ -14,76 +15,45 @@ from rl_gym.trajectories import collect_trajectory
 class Optimizer:
     def __init__(self, env_conf, policy):
         self._env_conf = env_conf
-
-        self._datum_best = Datum(policy, self._collect_trajectory(policy))
-        self._data = []
-        self._sobol = None  # SobolDesigner is stateful
+        self._data = []  # Datum(policy, self._collect_trajectory(policy))]
+        self._datum_best = None  # self._data[0]
+        self._designers = {
+            "variance": BTDesigner(policy, AcqVar),
+            "minimax": BTDesigner(policy, lambda m: AcqMinDist(m, toroidal=False)),
+            "minimax-toroidal": BTDesigner(policy, lambda m: AcqMinDist(m, toroidal=True)),
+            "iopt": BTDesigner(policy, AcqIDOpt, acq_kwargs={"bounds": None}),
+            "idopt": BTDesigner(policy, AcqIDOpt, acq_kwargs={"X_max": None, "bounds": None}),
+            "ucb": BTDesigner(policy, UpperConfidenceBound, acq_kwargs={"beta": 1}),
+            "ei": BTDesigner(policy, ExpectedImprovement, acq_kwargs={"best_f": None}),
+            "random": RandomDesigner(policy),
+            "sobol": SobolDesigner(policy),
+            "ax": AxDesigner(policy),
+        }
 
     def _collect_trajectory(self, policy):
         return collect_trajectory(self._env_conf, policy, seed=self._env_conf.seed)
 
-    def _iterate(self, acq_fn, data_opt):
-        policy = PolicyDesignerBT(acq_fn, data_opt).design()
+    def _iterate(self, designer):
+        policy = designer(self._data)
         traj = self._collect_trajectory(policy)
         return Datum(policy, traj)
 
-    def collect_trace(self, ttype, num_iterations, num_init):
-        assert ttype in [
-            "random",
-            "sobol",
-            "idopt-ex",
-            "variance",
-            "maximin",
-            "maximin-toroidal",
-            "rs",
-            "ucb",
-            "ei",
-            "idopt",
-        ], f"Unknown optimizer type {ttype}"
+    def collect_trace(self, ttype, num_iterations):
+        assert ttype in self._designers, f"Unknown optimizer type {ttype}"
 
+        designer = self._designers[ttype]
         trace = []
-        max_trajs = 99999
+        for i_iter in range(num_iterations):
+            datum = self._iterate(designer)
+            self._data.append(datum)
 
-        for _ in range(num_iterations):
-            i_iter = len(trace)
-            self._data = self._data[-max_trajs:]
-            data_opt = self._data + [self._datum_best]
-            if ttype == "idopt-ex":
-                acq_fn = AcqBT(AcqIDOpt, data_opt, acq_kwargs={"bounds": None})
-            elif ttype == "variance":
-                acq_fn = AcqBT(AcqVar, data_opt)
-            elif ttype == "maximin":
-                acq_fn = AcqBT(lambda m: AcqMinDist(m, toroidal=False), data_opt)
-            elif ttype == "maximin-toroidal":
-                acq_fn = AcqBT(lambda m: AcqMinDist(m, toroidal=True), data_opt)
-            elif ttype == "idopt":
-                acq_fn = AcqBT(AcqIDOpt, data_opt, acq_kwargs={"X_max": None, "bounds": None})
-            elif ttype == "ucb":
-                acq_fn = AcqBT(UpperConfidenceBound, data_opt, acq_kwargs={"beta": 1})
-            elif ttype == "ei":
-                acq_fn = AcqBT(LogExpectedImprovement, data_opt, acq_kwargs={"best_f": None})
-            elif ttype == "sobol":
-                if self._sobol is None:
-                    print("CREATED_SOBOL")
-                    self._sobol = SobolDesigner(self._datum_best.policy.num_params())
-                acq_fn = self._sobol
-            elif ttype in ["random", "rs"]:
-                acq_fn = ttype
-            else:
-                assert False
-
-            datum = self._iterate(acq_fn, data_opt)
-            if datum.trajectory.rreturn > self._datum_best.trajectory.rreturn:
-                self._data.append(self._datum_best)
+            if self._datum_best is None or datum.trajectory.rreturn > self._datum_best.trajectory.rreturn:
                 self._datum_best = datum
-                # print (f"BEST: ret_best = {self._datum_best.trajectory.rreturn:.2f}")
-            else:
-                self._data.append(datum)
 
             if i_iter % 1 == 0:
                 print(
                     f"ITER: i_iter = {i_iter} ret = {datum.trajectory.rreturn:.2f} ret_best = {self._datum_best.trajectory.rreturn:.2f} n_data = {len(self._data)}"
                 )
-
             trace.append(self._datum_best.trajectory.rreturn)
+
         return trace

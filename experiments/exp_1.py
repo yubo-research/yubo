@@ -7,7 +7,7 @@ from rl_gym.optimizer import Optimizer
 def sample(env_conf, ttype, tag, num_iterations):
     policy = default_policy(env_conf)
     opt = Optimizer(env_conf, policy)
-    for i_iter, rreturn in enumerate(opt.collect_trace(ttype=ttype, num_iterations=num_iterations, num_init=num_iterations)):
+    for i_iter, rreturn in enumerate(opt.collect_trace(ttype=ttype, num_iterations=num_iterations)):
         print(f"TRACE: name = {env_conf.env_name} ttype = {ttype} {tag} i_iter = {i_iter} return = {rreturn:.3f}")
 
 

@@ -1,6 +1,7 @@
 import numpy as np
 from botorch.optim import optimize_acqf
 
+from rl_gym.ax import Ax
 from rl_gym.sobol_designer import SobolDesigner
 
 
@@ -17,6 +18,8 @@ class PolicyDesignerBT:
             self._design_rs()
         elif isinstance(self._acq_fn, SobolDesigner):
             self._design_sobol()
+        elif isinstance(self._acq_fn, Ax):
+            self._design_ax()
         elif self._acq_fn == "random":
             self._design_random()
         else:
@@ -25,6 +28,10 @@ class PolicyDesignerBT:
 
     def get_policy(self):
         return self._policy_best
+
+    def _design_ax(self):
+        p = self._acq_fn.ask()
+        self._policy_best.set_params(p)
 
     def _design_sobol(self):
         p = self._acq_fn.get()
