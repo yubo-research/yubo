@@ -1,0 +1,27 @@
+/home/dsweet/env/lib/python3.9/site-packages/gymnasium/spaces/box.py:129: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  gym.logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+[KeOps] Warning : Cuda libraries were not detected on the system ; using cpu only mode
+Traceback (most recent call last):
+  File "/home/dsweet/Projects/bbo/experiments/exp_1.py", line 29, in <module>
+    sample(env_conf, ttype, tag=f"i_sample = {i_sample}", num_iterations=num_iterations)
+  File "/home/dsweet/Projects/bbo/experiments/exp_1.py", line 10, in sample
+    for i_iter, rreturn in enumerate(opt.collect_trace(ttype=ttype, num_iterations=num_iterations, num_init=num_iterations)):
+  File "/home/dsweet/Projects/bbo/rl_gym/optimizer.py", line 68, in collect_trace
+    datum = self._iterate(acq_fn, data_opt)
+  File "/home/dsweet/Projects/bbo/rl_gym/optimizer.py", line 24, in _iterate
+    policy = PolicyDesignerBT(acq_fn, data_opt).design()
+  File "/home/dsweet/Projects/bbo/rl_gym/policy_designer_bt.py", line 23, in design
+    self._design_bt()
+  File "/home/dsweet/Projects/bbo/rl_gym/policy_designer_bt.py", line 52, in _design_bt
+    X_cand, _ = optimize_acqf(
+  File "/home/dsweet/env/lib/python3.9/site-packages/botorch/optim/optimize.py", line 250, in optimize_acqf
+    batch_initial_conditions = ic_gen(
+  File "/home/dsweet/env/lib/python3.9/site-packages/botorch/optim/initializers.py", line 193, in gen_batch_initial_conditions
+    Y_rnd_curr = acq_function(
+  File "/home/dsweet/env/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1190, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/home/dsweet/env/lib/python3.9/site-packages/botorch/utils/transforms.py", line 276, in decorated
+    output = method(acqf, X, *args, **kwargs)
+  File "/home/dsweet/Projects/bbo/bo/acq_min_dist.py", line 53, in forward
+    return torch.stack(af)
+RuntimeError: stack expects a non-empty TensorList
