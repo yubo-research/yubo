@@ -1,7 +1,7 @@
 import numpy as np
 
-from rl_gym.env_conf import default_policy
-from rl_gym.optimizer import Optimizer
+from optimizer.optimizer import Optimizer
+from problems.env_conf import default_policy
 
 
 def sample(env_conf, ttype, tag, num_iterations):
@@ -15,7 +15,7 @@ if __name__ == "__main__":
     import sys
     import time
 
-    from rl_gym.env_conf import get_env_conf
+    from problems.env_conf import get_env_conf
 
     env_tag = sys.argv[1]
     ttype = sys.argv[2]

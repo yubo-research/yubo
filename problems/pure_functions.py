@@ -1,7 +1,7 @@
 import numpy as np
 from gymnasium.spaces import Box
 
-from rl_gym.functions.sphere import Sphere
+from problems.sphere import Sphere
 
 
 def make(name, seed):

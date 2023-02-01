@@ -3,9 +3,9 @@ from typing import Any
 
 import gymnasium as gym
 
-import rl_gym.pure_functions as pure_functions
-from rl_gym.linear_policy import LinearPolicy
-from rl_gym.pure_function_policy import PureFunctionPolicy
+import problems.pure_functions as pure_functions
+from problems.linear_policy import LinearPolicy
+from problems.pure_function_policy import PureFunctionPolicy
 
 
 def get_env_conf(tag, seed=None):

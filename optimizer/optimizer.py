@@ -4,12 +4,13 @@ from botorch.acquisition.analytic import ExpectedImprovement
 from bo.acq_idopt import AcqIDOpt
 from bo.acq_min_dist import AcqMinDist
 from bo.acq_var import AcqVar
-from rl_gym.ax_designer import AxDesigner
-from rl_gym.bt_designer import BTDesigner
-from rl_gym.datum import Datum
-from rl_gym.random_designer import RandomDesigner
-from rl_gym.sobol_designer import SobolDesigner
-from rl_gym.trajectories import collect_trajectory
+
+from .ax_designer import AxDesigner
+from .bt_designer import BTDesigner
+from .datum import Datum
+from .random_designer import RandomDesigner
+from .sobol_designer import SobolDesigner
+from .trajectories import collect_trajectory
 
 
 class Optimizer:
