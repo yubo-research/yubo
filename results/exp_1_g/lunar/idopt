@@ -1,0 +1,993 @@
+[KeOps] Warning : Cuda libraries were not detected on the system ; using cpu only mode
+ITER: i_iter = 0 ret = -547.60 ret_best = -332.77 n_data = 1
+ITER: i_iter = 1 ret = -531.34 ret_best = -332.77 n_data = 2
+ITER: i_iter = 2 ret = -316.29 ret_best = -316.29 n_data = 3
+ITER: i_iter = 3 ret = -547.47 ret_best = -316.29 n_data = 4
+ITER: i_iter = 4 ret = -548.36 ret_best = -316.29 n_data = 5
+ITER: i_iter = 5 ret = -621.68 ret_best = -316.29 n_data = 6
+ITER: i_iter = 6 ret = -645.32 ret_best = -316.29 n_data = 7
+ITER: i_iter = 7 ret = -530.33 ret_best = -316.29 n_data = 8
+ITER: i_iter = 8 ret = -888.76 ret_best = -316.29 n_data = 9
+ITER: i_iter = 9 ret = -543.20 ret_best = -316.29 n_data = 10
+ITER: i_iter = 10 ret = -379.41 ret_best = -316.29 n_data = 11
+ITER: i_iter = 11 ret = -545.45 ret_best = -316.29 n_data = 12
+ITER: i_iter = 12 ret = -452.05 ret_best = -316.29 n_data = 13
+ITER: i_iter = 13 ret = -700.69 ret_best = -316.29 n_data = 14
+ITER: i_iter = 14 ret = -214.29 ret_best = -214.29 n_data = 15
+ITER: i_iter = 15 ret = -548.36 ret_best = -214.29 n_data = 16
+ITER: i_iter = 16 ret = -480.58 ret_best = -214.29 n_data = 17
+ITER: i_iter = 17 ret = -546.86 ret_best = -214.29 n_data = 18
+ITER: i_iter = 18 ret = -548.60 ret_best = -214.29 n_data = 19
+ITER: i_iter = 19 ret = -592.48 ret_best = -214.29 n_data = 20
+ITER: i_iter = 20 ret = -606.97 ret_best = -214.29 n_data = 21
+ITER: i_iter = 21 ret = -609.23 ret_best = -214.29 n_data = 22
+ITER: i_iter = 22 ret = -548.39 ret_best = -214.29 n_data = 23
+ITER: i_iter = 23 ret = -548.34 ret_best = -214.29 n_data = 24
+ITER: i_iter = 24 ret = -558.01 ret_best = -214.29 n_data = 25
+ITER: i_iter = 25 ret = -613.22 ret_best = -214.29 n_data = 26
+ITER: i_iter = 26 ret = -548.37 ret_best = -214.29 n_data = 27
+ITER: i_iter = 27 ret = -1026.53 ret_best = -214.29 n_data = 28
+ITER: i_iter = 28 ret = -549.65 ret_best = -214.29 n_data = 29
+ITER: i_iter = 29 ret = -549.48 ret_best = -214.29 n_data = 30
+ITER: i_iter = 30 ret = -926.98 ret_best = -214.29 n_data = 31
+ITER: i_iter = 31 ret = -1234.38 ret_best = -214.29 n_data = 32
+ITER: i_iter = 32 ret = -966.05 ret_best = -214.29 n_data = 33
+ITER: i_iter = 33 ret = -653.78 ret_best = -214.29 n_data = 34
+ITER: i_iter = 34 ret = -548.07 ret_best = -214.29 n_data = 35
+ITER: i_iter = 35 ret = -547.55 ret_best = -214.29 n_data = 36
+ITER: i_iter = 36 ret = -579.12 ret_best = -214.29 n_data = 37
+ITER: i_iter = 37 ret = -504.19 ret_best = -214.29 n_data = 38
+ITER: i_iter = 38 ret = -649.93 ret_best = -214.29 n_data = 39
+ITER: i_iter = 39 ret = -328.86 ret_best = -214.29 n_data = 40
+ITER: i_iter = 40 ret = -528.75 ret_best = -214.29 n_data = 41
+ITER: i_iter = 41 ret = -548.02 ret_best = -214.29 n_data = 42
+ITER: i_iter = 42 ret = -548.74 ret_best = -214.29 n_data = 43
+ITER: i_iter = 43 ret = -547.47 ret_best = -214.29 n_data = 44
+ITER: i_iter = 44 ret = -1559.48 ret_best = -214.29 n_data = 45
+ITER: i_iter = 45 ret = -729.88 ret_best = -214.29 n_data = 46
+ITER: i_iter = 46 ret = -532.25 ret_best = -214.29 n_data = 47
+ITER: i_iter = 47 ret = -1137.83 ret_best = -214.29 n_data = 48
+ITER: i_iter = 48 ret = -1186.71 ret_best = -214.29 n_data = 49
+ITER: i_iter = 49 ret = -159.29 ret_best = -159.29 n_data = 50
+ITER: i_iter = 50 ret = -520.98 ret_best = -159.29 n_data = 51
+ITER: i_iter = 51 ret = -989.99 ret_best = -159.29 n_data = 52
+ITER: i_iter = 52 ret = -824.06 ret_best = -159.29 n_data = 53
+ITER: i_iter = 53 ret = -526.99 ret_best = -159.29 n_data = 54
+ITER: i_iter = 54 ret = -548.80 ret_best = -159.29 n_data = 55
+ITER: i_iter = 55 ret = -574.53 ret_best = -159.29 n_data = 56
+ITER: i_iter = 56 ret = -638.77 ret_best = -159.29 n_data = 57
+ITER: i_iter = 57 ret = -767.57 ret_best = -159.29 n_data = 58
+ITER: i_iter = 58 ret = -888.33 ret_best = -159.29 n_data = 59
+ITER: i_iter = 59 ret = -325.11 ret_best = -159.29 n_data = 60
+ITER: i_iter = 60 ret = -554.60 ret_best = -159.29 n_data = 61
+ITER: i_iter = 61 ret = -549.52 ret_best = -159.29 n_data = 62
+ITER: i_iter = 62 ret = -169.87 ret_best = -159.29 n_data = 63
+ITER: i_iter = 63 ret = -539.50 ret_best = -159.29 n_data = 64
+ITER: i_iter = 64 ret = -519.70 ret_best = -159.29 n_data = 65
+ITER: i_iter = 65 ret = -507.42 ret_best = -159.29 n_data = 66
+ITER: i_iter = 66 ret = -1276.94 ret_best = -159.29 n_data = 67
+ITER: i_iter = 67 ret = -615.14 ret_best = -159.29 n_data = 68
+ITER: i_iter = 68 ret = -602.13 ret_best = -159.29 n_data = 69
+ITER: i_iter = 69 ret = -547.57 ret_best = -159.29 n_data = 70
+ITER: i_iter = 70 ret = -532.74 ret_best = -159.29 n_data = 71
+ITER: i_iter = 71 ret = -517.59 ret_best = -159.29 n_data = 72
+ITER: i_iter = 72 ret = -312.85 ret_best = -159.29 n_data = 73
+ITER: i_iter = 73 ret = -1155.45 ret_best = -159.29 n_data = 74
+ITER: i_iter = 74 ret = -190.43 ret_best = -159.29 n_data = 75
+ITER: i_iter = 75 ret = -547.98 ret_best = -159.29 n_data = 76
+ITER: i_iter = 76 ret = -549.63 ret_best = -159.29 n_data = 77
+ITER: i_iter = 77 ret = -545.14 ret_best = -159.29 n_data = 78
+ITER: i_iter = 78 ret = -206.94 ret_best = -159.29 n_data = 79
+ITER: i_iter = 79 ret = -414.62 ret_best = -159.29 n_data = 80
+ITER: i_iter = 80 ret = -548.77 ret_best = -159.29 n_data = 81
+ITER: i_iter = 81 ret = -1059.65 ret_best = -159.29 n_data = 82
+ITER: i_iter = 82 ret = -363.22 ret_best = -159.29 n_data = 83
+ITER: i_iter = 83 ret = -614.56 ret_best = -159.29 n_data = 84
+ITER: i_iter = 84 ret = -589.92 ret_best = -159.29 n_data = 85
+ITER: i_iter = 85 ret = -626.80 ret_best = -159.29 n_data = 86
+ITER: i_iter = 86 ret = -750.96 ret_best = -159.29 n_data = 87
+ITER: i_iter = 87 ret = -879.45 ret_best = -159.29 n_data = 88
+ITER: i_iter = 88 ret = -509.74 ret_best = -159.29 n_data = 89
+ITER: i_iter = 89 ret = -548.60 ret_best = -159.29 n_data = 90
+ITER: i_iter = 90 ret = -155.26 ret_best = -155.26 n_data = 91
+ITER: i_iter = 91 ret = -549.65 ret_best = -155.26 n_data = 92
+ITER: i_iter = 92 ret = -548.36 ret_best = -155.26 n_data = 93
+ITER: i_iter = 93 ret = -548.05 ret_best = -155.26 n_data = 94
+ITER: i_iter = 94 ret = -548.96 ret_best = -155.26 n_data = 95
+ITER: i_iter = 95 ret = -548.29 ret_best = -155.26 n_data = 96
+ITER: i_iter = 96 ret = -548.36 ret_best = -155.26 n_data = 97
+ITER: i_iter = 97 ret = -619.13 ret_best = -155.26 n_data = 98
+ITER: i_iter = 98 ret = -548.45 ret_best = -155.26 n_data = 99
+ITER: i_iter = 99 ret = -1008.93 ret_best = -155.26 n_data = 100
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 0 return = -332.767
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 1 return = -332.767
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 2 return = -316.285
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 3 return = -316.285
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 4 return = -316.285
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 5 return = -316.285
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 6 return = -316.285
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 7 return = -316.285
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 8 return = -316.285
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 9 return = -316.285
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 10 return = -316.285
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 11 return = -316.285
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 12 return = -316.285
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 13 return = -316.285
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 14 return = -214.288
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 15 return = -214.288
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 16 return = -214.288
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 17 return = -214.288
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 18 return = -214.288
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 19 return = -214.288
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 20 return = -214.288
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 21 return = -214.288
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 22 return = -214.288
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 23 return = -214.288
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 24 return = -214.288
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 25 return = -214.288
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 26 return = -214.288
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 27 return = -214.288
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 28 return = -214.288
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 29 return = -214.288
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 30 return = -214.288
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 31 return = -214.288
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 32 return = -214.288
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 33 return = -214.288
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 34 return = -214.288
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 35 return = -214.288
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 36 return = -214.288
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 37 return = -214.288
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 38 return = -214.288
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 39 return = -214.288
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 40 return = -214.288
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 41 return = -214.288
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 42 return = -214.288
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 43 return = -214.288
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 44 return = -214.288
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 45 return = -214.288
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 46 return = -214.288
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 47 return = -214.288
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 48 return = -214.288
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 49 return = -159.289
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 50 return = -159.289
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 51 return = -159.289
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 52 return = -159.289
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 53 return = -159.289
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 54 return = -159.289
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 55 return = -159.289
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 56 return = -159.289
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 57 return = -159.289
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 58 return = -159.289
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 59 return = -159.289
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 60 return = -159.289
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 61 return = -159.289
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 62 return = -159.289
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 63 return = -159.289
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 64 return = -159.289
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 65 return = -159.289
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 66 return = -159.289
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 67 return = -159.289
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 68 return = -159.289
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 69 return = -159.289
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 70 return = -159.289
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 71 return = -159.289
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 72 return = -159.289
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 73 return = -159.289
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 74 return = -159.289
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 75 return = -159.289
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 76 return = -159.289
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 77 return = -159.289
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 78 return = -159.289
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 79 return = -159.289
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 80 return = -159.289
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 81 return = -159.289
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 82 return = -159.289
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 83 return = -159.289
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 84 return = -159.289
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 85 return = -159.289
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 86 return = -159.289
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 87 return = -159.289
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 88 return = -159.289
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 89 return = -159.289
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 90 return = -155.264
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 91 return = -155.264
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 92 return = -155.264
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 93 return = -155.264
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 94 return = -155.264
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 95 return = -155.264
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 96 return = -155.264
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 97 return = -155.264
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 98 return = -155.264
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 0 i_iter = 99 return = -155.264
+TIME_SAMPLE: 1179.22
+ITER: i_iter = 0 ret = -736.18 ret_best = -494.19 n_data = 1
+ITER: i_iter = 1 ret = -322.67 ret_best = -322.67 n_data = 2
+ITER: i_iter = 2 ret = -866.27 ret_best = -322.67 n_data = 3
+ITER: i_iter = 3 ret = -216.53 ret_best = -216.53 n_data = 4
+ITER: i_iter = 4 ret = -254.32 ret_best = -216.53 n_data = 5
+ITER: i_iter = 5 ret = -1531.52 ret_best = -216.53 n_data = 6
+ITER: i_iter = 6 ret = -494.19 ret_best = -216.53 n_data = 7
+ITER: i_iter = 7 ret = -539.07 ret_best = -216.53 n_data = 8
+ITER: i_iter = 8 ret = -494.13 ret_best = -216.53 n_data = 9
+ITER: i_iter = 9 ret = -206.16 ret_best = -206.16 n_data = 10
+ITER: i_iter = 10 ret = -343.85 ret_best = -206.16 n_data = 11
+ITER: i_iter = 11 ret = -529.30 ret_best = -206.16 n_data = 12
+ITER: i_iter = 12 ret = -425.28 ret_best = -206.16 n_data = 13
+ITER: i_iter = 13 ret = -488.79 ret_best = -206.16 n_data = 14
+ITER: i_iter = 14 ret = -949.66 ret_best = -206.16 n_data = 15
+ITER: i_iter = 15 ret = -489.79 ret_best = -206.16 n_data = 16
+ITER: i_iter = 16 ret = -365.52 ret_best = -206.16 n_data = 17
+ITER: i_iter = 17 ret = -494.08 ret_best = -206.16 n_data = 18
+ITER: i_iter = 18 ret = -466.74 ret_best = -206.16 n_data = 19
+ITER: i_iter = 19 ret = -667.62 ret_best = -206.16 n_data = 20
+ITER: i_iter = 20 ret = -511.36 ret_best = -206.16 n_data = 21
+ITER: i_iter = 21 ret = -369.09 ret_best = -206.16 n_data = 22
+ITER: i_iter = 22 ret = -371.60 ret_best = -206.16 n_data = 23
+ITER: i_iter = 23 ret = -489.18 ret_best = -206.16 n_data = 24
+ITER: i_iter = 24 ret = -677.51 ret_best = -206.16 n_data = 25
+ITER: i_iter = 25 ret = -484.72 ret_best = -206.16 n_data = 26
+ITER: i_iter = 26 ret = -373.64 ret_best = -206.16 n_data = 27
+ITER: i_iter = 27 ret = -333.41 ret_best = -206.16 n_data = 28
+ITER: i_iter = 28 ret = -494.10 ret_best = -206.16 n_data = 29
+ITER: i_iter = 29 ret = -494.19 ret_best = -206.16 n_data = 30
+ITER: i_iter = 30 ret = -795.54 ret_best = -206.16 n_data = 31
+ITER: i_iter = 31 ret = -306.95 ret_best = -206.16 n_data = 32
+ITER: i_iter = 32 ret = -428.06 ret_best = -206.16 n_data = 33
+ITER: i_iter = 33 ret = -491.88 ret_best = -206.16 n_data = 34
+ITER: i_iter = 34 ret = -106.59 ret_best = -106.59 n_data = 35
+ITER: i_iter = 35 ret = -876.61 ret_best = -106.59 n_data = 36
+ITER: i_iter = 36 ret = -480.42 ret_best = -106.59 n_data = 37
+ITER: i_iter = 37 ret = -431.34 ret_best = -106.59 n_data = 38
+ITER: i_iter = 38 ret = -249.16 ret_best = -106.59 n_data = 39
+ITER: i_iter = 39 ret = -494.07 ret_best = -106.59 n_data = 40
+ITER: i_iter = 40 ret = -493.79 ret_best = -106.59 n_data = 41
+ITER: i_iter = 41 ret = -492.56 ret_best = -106.59 n_data = 42
+ITER: i_iter = 42 ret = -493.55 ret_best = -106.59 n_data = 43
+ITER: i_iter = 43 ret = -494.18 ret_best = -106.59 n_data = 44
+ITER: i_iter = 44 ret = -704.43 ret_best = -106.59 n_data = 45
+ITER: i_iter = 45 ret = -411.49 ret_best = -106.59 n_data = 46
+ITER: i_iter = 46 ret = -493.98 ret_best = -106.59 n_data = 47
+ITER: i_iter = 47 ret = -495.60 ret_best = -106.59 n_data = 48
+ITER: i_iter = 48 ret = -466.91 ret_best = -106.59 n_data = 49
+ITER: i_iter = 49 ret = -1097.84 ret_best = -106.59 n_data = 50
+ITER: i_iter = 50 ret = -107.61 ret_best = -106.59 n_data = 51
+ITER: i_iter = 51 ret = -494.18 ret_best = -106.59 n_data = 52
+ITER: i_iter = 52 ret = -554.83 ret_best = -106.59 n_data = 53
+ITER: i_iter = 53 ret = -296.78 ret_best = -106.59 n_data = 54
+ITER: i_iter = 54 ret = -493.87 ret_best = -106.59 n_data = 55
+ITER: i_iter = 55 ret = -492.62 ret_best = -106.59 n_data = 56
+ITER: i_iter = 56 ret = -1036.18 ret_best = -106.59 n_data = 57
+ITER: i_iter = 57 ret = -494.13 ret_best = -106.59 n_data = 58
+ITER: i_iter = 58 ret = -1197.01 ret_best = -106.59 n_data = 59
+ITER: i_iter = 59 ret = -494.19 ret_best = -106.59 n_data = 60
+ITER: i_iter = 60 ret = -494.19 ret_best = -106.59 n_data = 61
+ITER: i_iter = 61 ret = -935.22 ret_best = -106.59 n_data = 62
+ITER: i_iter = 62 ret = -445.40 ret_best = -106.59 n_data = 63
+ITER: i_iter = 63 ret = -484.31 ret_best = -106.59 n_data = 64
+ITER: i_iter = 64 ret = -286.58 ret_best = -106.59 n_data = 65
+ITER: i_iter = 65 ret = -487.56 ret_best = -106.59 n_data = 66
+ITER: i_iter = 66 ret = -770.87 ret_best = -106.59 n_data = 67
+ITER: i_iter = 67 ret = -1204.25 ret_best = -106.59 n_data = 68
+ITER: i_iter = 68 ret = -952.55 ret_best = -106.59 n_data = 69
+ITER: i_iter = 69 ret = -494.18 ret_best = -106.59 n_data = 70
+ITER: i_iter = 70 ret = -861.76 ret_best = -106.59 n_data = 71
+ITER: i_iter = 71 ret = -969.65 ret_best = -106.59 n_data = 72
+ITER: i_iter = 72 ret = -494.19 ret_best = -106.59 n_data = 73
+ITER: i_iter = 73 ret = -484.70 ret_best = -106.59 n_data = 74
+ITER: i_iter = 74 ret = -817.52 ret_best = -106.59 n_data = 75
+ITER: i_iter = 75 ret = -482.39 ret_best = -106.59 n_data = 76
+ITER: i_iter = 76 ret = -454.64 ret_best = -106.59 n_data = 77
+ITER: i_iter = 77 ret = -494.14 ret_best = -106.59 n_data = 78
+ITER: i_iter = 78 ret = -494.19 ret_best = -106.59 n_data = 79
+ITER: i_iter = 79 ret = -494.17 ret_best = -106.59 n_data = 80
+ITER: i_iter = 80 ret = -493.76 ret_best = -106.59 n_data = 81
+ITER: i_iter = 81 ret = -812.90 ret_best = -106.59 n_data = 82
+ITER: i_iter = 82 ret = -483.81 ret_best = -106.59 n_data = 83
+ITER: i_iter = 83 ret = -538.58 ret_best = -106.59 n_data = 84
+ITER: i_iter = 84 ret = -175.91 ret_best = -106.59 n_data = 85
+ITER: i_iter = 85 ret = -503.00 ret_best = -106.59 n_data = 86
+ITER: i_iter = 86 ret = -162.74 ret_best = -106.59 n_data = 87
+ITER: i_iter = 87 ret = -1220.33 ret_best = -106.59 n_data = 88
+ITER: i_iter = 88 ret = -410.80 ret_best = -106.59 n_data = 89
+ITER: i_iter = 89 ret = -610.03 ret_best = -106.59 n_data = 90
+ITER: i_iter = 90 ret = -874.55 ret_best = -106.59 n_data = 91
+ITER: i_iter = 91 ret = -494.19 ret_best = -106.59 n_data = 92
+ITER: i_iter = 92 ret = -108.39 ret_best = -106.59 n_data = 93
+ITER: i_iter = 93 ret = -494.19 ret_best = -106.59 n_data = 94
+ITER: i_iter = 94 ret = -854.04 ret_best = -106.59 n_data = 95
+ITER: i_iter = 95 ret = -884.51 ret_best = -106.59 n_data = 96
+ITER: i_iter = 96 ret = -517.00 ret_best = -106.59 n_data = 97
+ITER: i_iter = 97 ret = -877.11 ret_best = -106.59 n_data = 98
+ITER: i_iter = 98 ret = -486.72 ret_best = -106.59 n_data = 99
+ITER: i_iter = 99 ret = -215.92 ret_best = -106.59 n_data = 100
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 0 return = -494.195
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 1 return = -322.670
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 2 return = -322.670
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 3 return = -216.527
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 4 return = -216.527
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 5 return = -216.527
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 6 return = -216.527
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 7 return = -216.527
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 8 return = -216.527
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 9 return = -206.158
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 10 return = -206.158
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 11 return = -206.158
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 12 return = -206.158
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 13 return = -206.158
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 14 return = -206.158
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 15 return = -206.158
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 16 return = -206.158
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 17 return = -206.158
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 18 return = -206.158
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 19 return = -206.158
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 20 return = -206.158
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 21 return = -206.158
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 22 return = -206.158
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 23 return = -206.158
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 24 return = -206.158
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 25 return = -206.158
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 26 return = -206.158
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 27 return = -206.158
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 28 return = -206.158
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 29 return = -206.158
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 30 return = -206.158
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 31 return = -206.158
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 32 return = -206.158
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 33 return = -206.158
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 34 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 35 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 36 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 37 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 38 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 39 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 40 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 41 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 42 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 43 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 44 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 45 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 46 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 47 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 48 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 49 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 50 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 51 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 52 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 53 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 54 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 55 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 56 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 57 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 58 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 59 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 60 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 61 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 62 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 63 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 64 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 65 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 66 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 67 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 68 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 69 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 70 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 71 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 72 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 73 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 74 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 75 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 76 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 77 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 78 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 79 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 80 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 81 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 82 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 83 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 84 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 85 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 86 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 87 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 88 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 89 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 90 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 91 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 92 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 93 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 94 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 95 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 96 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 97 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 98 return = -106.593
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 1 i_iter = 99 return = -106.593
+TIME_SAMPLE: 1187.71
+ITER: i_iter = 0 ret = -1256.63 ret_best = -1256.63 n_data = 1
+ITER: i_iter = 1 ret = -982.55 ret_best = -982.55 n_data = 2
+ITER: i_iter = 2 ret = -1607.26 ret_best = -982.55 n_data = 3
+ITER: i_iter = 3 ret = -710.11 ret_best = -710.11 n_data = 4
+ITER: i_iter = 4 ret = -789.77 ret_best = -710.11 n_data = 5
+ITER: i_iter = 5 ret = -807.08 ret_best = -710.11 n_data = 6
+ITER: i_iter = 6 ret = -789.22 ret_best = -710.11 n_data = 7
+ITER: i_iter = 7 ret = -789.78 ret_best = -710.11 n_data = 8
+ITER: i_iter = 8 ret = -241.11 ret_best = -241.11 n_data = 9
+ITER: i_iter = 9 ret = -736.63 ret_best = -241.11 n_data = 10
+ITER: i_iter = 10 ret = -559.06 ret_best = -241.11 n_data = 11
+ITER: i_iter = 11 ret = -429.48 ret_best = -241.11 n_data = 12
+ITER: i_iter = 12 ret = -789.78 ret_best = -241.11 n_data = 13
+ITER: i_iter = 13 ret = -556.83 ret_best = -241.11 n_data = 14
+ITER: i_iter = 14 ret = -718.35 ret_best = -241.11 n_data = 15
+ITER: i_iter = 15 ret = -1032.82 ret_best = -241.11 n_data = 16
+ITER: i_iter = 16 ret = -747.38 ret_best = -241.11 n_data = 17
+ITER: i_iter = 17 ret = -2159.26 ret_best = -241.11 n_data = 18
+ITER: i_iter = 18 ret = -805.28 ret_best = -241.11 n_data = 19
+ITER: i_iter = 19 ret = -770.88 ret_best = -241.11 n_data = 20
+ITER: i_iter = 20 ret = -767.94 ret_best = -241.11 n_data = 21
+ITER: i_iter = 21 ret = -364.95 ret_best = -241.11 n_data = 22
+ITER: i_iter = 22 ret = -789.75 ret_best = -241.11 n_data = 23
+ITER: i_iter = 23 ret = -772.81 ret_best = -241.11 n_data = 24
+ITER: i_iter = 24 ret = -1423.59 ret_best = -241.11 n_data = 25
+ITER: i_iter = 25 ret = -789.78 ret_best = -241.11 n_data = 26
+ITER: i_iter = 26 ret = -658.98 ret_best = -241.11 n_data = 27
+ITER: i_iter = 27 ret = -798.88 ret_best = -241.11 n_data = 28
+ITER: i_iter = 28 ret = -904.34 ret_best = -241.11 n_data = 29
+ITER: i_iter = 29 ret = -789.77 ret_best = -241.11 n_data = 30
+ITER: i_iter = 30 ret = -789.76 ret_best = -241.11 n_data = 31
+ITER: i_iter = 31 ret = -469.97 ret_best = -241.11 n_data = 32
+ITER: i_iter = 32 ret = -808.12 ret_best = -241.11 n_data = 33
+ITER: i_iter = 33 ret = -789.78 ret_best = -241.11 n_data = 34
+ITER: i_iter = 34 ret = -726.20 ret_best = -241.11 n_data = 35
+ITER: i_iter = 35 ret = -789.78 ret_best = -241.11 n_data = 36
+ITER: i_iter = 36 ret = -2118.10 ret_best = -241.11 n_data = 37
+ITER: i_iter = 37 ret = -789.71 ret_best = -241.11 n_data = 38
+ITER: i_iter = 38 ret = -628.57 ret_best = -241.11 n_data = 39
+ITER: i_iter = 39 ret = -789.72 ret_best = -241.11 n_data = 40
+ITER: i_iter = 40 ret = -789.78 ret_best = -241.11 n_data = 41
+ITER: i_iter = 41 ret = -273.03 ret_best = -241.11 n_data = 42
+ITER: i_iter = 42 ret = -789.78 ret_best = -241.11 n_data = 43
+ITER: i_iter = 43 ret = -1327.30 ret_best = -241.11 n_data = 44
+ITER: i_iter = 44 ret = -570.08 ret_best = -241.11 n_data = 45
+ITER: i_iter = 45 ret = -535.00 ret_best = -241.11 n_data = 46
+ITER: i_iter = 46 ret = -1842.44 ret_best = -241.11 n_data = 47
+ITER: i_iter = 47 ret = -1523.96 ret_best = -241.11 n_data = 48
+ITER: i_iter = 48 ret = -748.88 ret_best = -241.11 n_data = 49
+ITER: i_iter = 49 ret = -477.15 ret_best = -241.11 n_data = 50
+ITER: i_iter = 50 ret = -725.95 ret_best = -241.11 n_data = 51
+ITER: i_iter = 51 ret = -789.98 ret_best = -241.11 n_data = 52
+ITER: i_iter = 52 ret = -395.89 ret_best = -241.11 n_data = 53
+ITER: i_iter = 53 ret = -556.82 ret_best = -241.11 n_data = 54
+ITER: i_iter = 54 ret = -474.98 ret_best = -241.11 n_data = 55
+ITER: i_iter = 55 ret = -789.74 ret_best = -241.11 n_data = 56
+ITER: i_iter = 56 ret = -1324.77 ret_best = -241.11 n_data = 57
+ITER: i_iter = 57 ret = -109.22 ret_best = -109.22 n_data = 58
+ITER: i_iter = 58 ret = -789.78 ret_best = -109.22 n_data = 59
+ITER: i_iter = 59 ret = -1276.73 ret_best = -109.22 n_data = 60
+ITER: i_iter = 60 ret = -1347.06 ret_best = -109.22 n_data = 61
+ITER: i_iter = 61 ret = -730.34 ret_best = -109.22 n_data = 62
+ITER: i_iter = 62 ret = -390.47 ret_best = -109.22 n_data = 63
+ITER: i_iter = 63 ret = -734.20 ret_best = -109.22 n_data = 64
+ITER: i_iter = 64 ret = -723.22 ret_best = -109.22 n_data = 65
+ITER: i_iter = 65 ret = -324.34 ret_best = -109.22 n_data = 66
+ITER: i_iter = 66 ret = -760.95 ret_best = -109.22 n_data = 67
+ITER: i_iter = 67 ret = -789.78 ret_best = -109.22 n_data = 68
+ITER: i_iter = 68 ret = -575.39 ret_best = -109.22 n_data = 69
+ITER: i_iter = 69 ret = -738.48 ret_best = -109.22 n_data = 70
+ITER: i_iter = 70 ret = -1277.09 ret_best = -109.22 n_data = 71
+ITER: i_iter = 71 ret = -1714.52 ret_best = -109.22 n_data = 72
+ITER: i_iter = 72 ret = -773.91 ret_best = -109.22 n_data = 73
+ITER: i_iter = 73 ret = -788.54 ret_best = -109.22 n_data = 74
+ITER: i_iter = 74 ret = -119.44 ret_best = -109.22 n_data = 75
+ITER: i_iter = 75 ret = -368.84 ret_best = -109.22 n_data = 76
+ITER: i_iter = 76 ret = -2016.34 ret_best = -109.22 n_data = 77
+ITER: i_iter = 77 ret = -161.33 ret_best = -109.22 n_data = 78
+ITER: i_iter = 78 ret = -789.78 ret_best = -109.22 n_data = 79
+ITER: i_iter = 79 ret = -787.30 ret_best = -109.22 n_data = 80
+ITER: i_iter = 80 ret = -664.59 ret_best = -109.22 n_data = 81
+ITER: i_iter = 81 ret = -1238.81 ret_best = -109.22 n_data = 82
+ITER: i_iter = 82 ret = -275.72 ret_best = -109.22 n_data = 83
+ITER: i_iter = 83 ret = -889.04 ret_best = -109.22 n_data = 84
+ITER: i_iter = 84 ret = -804.96 ret_best = -109.22 n_data = 85
+ITER: i_iter = 85 ret = -748.06 ret_best = -109.22 n_data = 86
+ITER: i_iter = 86 ret = -736.99 ret_best = -109.22 n_data = 87
+ITER: i_iter = 87 ret = -755.88 ret_best = -109.22 n_data = 88
+ITER: i_iter = 88 ret = -680.96 ret_best = -109.22 n_data = 89
+ITER: i_iter = 89 ret = -789.78 ret_best = -109.22 n_data = 90
+ITER: i_iter = 90 ret = -642.00 ret_best = -109.22 n_data = 91
+ITER: i_iter = 91 ret = -419.07 ret_best = -109.22 n_data = 92
+ITER: i_iter = 92 ret = -740.06 ret_best = -109.22 n_data = 93
+ITER: i_iter = 93 ret = -775.85 ret_best = -109.22 n_data = 94
+ITER: i_iter = 94 ret = -789.53 ret_best = -109.22 n_data = 95
+ITER: i_iter = 95 ret = -149.33 ret_best = -109.22 n_data = 96
+ITER: i_iter = 96 ret = -789.77 ret_best = -109.22 n_data = 97
+ITER: i_iter = 97 ret = -811.77 ret_best = -109.22 n_data = 98
+ITER: i_iter = 98 ret = -789.77 ret_best = -109.22 n_data = 99
+ITER: i_iter = 99 ret = -435.08 ret_best = -109.22 n_data = 100
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 0 return = -1256.625
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 1 return = -982.552
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 2 return = -982.552
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 3 return = -710.105
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 4 return = -710.105
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 5 return = -710.105
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 6 return = -710.105
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 7 return = -710.105
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 8 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 9 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 10 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 11 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 12 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 13 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 14 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 15 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 16 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 17 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 18 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 19 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 20 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 21 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 22 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 23 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 24 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 25 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 26 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 27 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 28 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 29 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 30 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 31 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 32 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 33 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 34 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 35 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 36 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 37 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 38 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 39 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 40 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 41 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 42 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 43 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 44 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 45 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 46 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 47 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 48 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 49 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 50 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 51 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 52 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 53 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 54 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 55 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 56 return = -241.112
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 57 return = -109.219
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 58 return = -109.219
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 59 return = -109.219
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 60 return = -109.219
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 61 return = -109.219
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 62 return = -109.219
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 63 return = -109.219
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 64 return = -109.219
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 65 return = -109.219
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 66 return = -109.219
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 67 return = -109.219
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 68 return = -109.219
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 69 return = -109.219
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 70 return = -109.219
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 71 return = -109.219
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 72 return = -109.219
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 73 return = -109.219
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 74 return = -109.219
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 75 return = -109.219
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 76 return = -109.219
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 77 return = -109.219
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 78 return = -109.219
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 79 return = -109.219
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 80 return = -109.219
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 81 return = -109.219
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 82 return = -109.219
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 83 return = -109.219
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 84 return = -109.219
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 85 return = -109.219
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 86 return = -109.219
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 87 return = -109.219
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 88 return = -109.219
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 89 return = -109.219
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 90 return = -109.219
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 91 return = -109.219
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 92 return = -109.219
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 93 return = -109.219
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 94 return = -109.219
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 95 return = -109.219
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 96 return = -109.219
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 97 return = -109.219
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 98 return = -109.219
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 2 i_iter = 99 return = -109.219
+TIME_SAMPLE: 1167.38
+ITER: i_iter = 0 ret = -822.98 ret_best = -822.98 n_data = 1
+ITER: i_iter = 1 ret = -1167.59 ret_best = -822.98 n_data = 2
+ITER: i_iter = 2 ret = -1183.35 ret_best = -822.98 n_data = 3
+ITER: i_iter = 3 ret = -710.37 ret_best = -710.37 n_data = 4
+ITER: i_iter = 4 ret = -754.60 ret_best = -710.37 n_data = 5
+ITER: i_iter = 5 ret = -712.02 ret_best = -710.37 n_data = 6
+ITER: i_iter = 6 ret = -826.20 ret_best = -710.37 n_data = 7
+ITER: i_iter = 7 ret = -812.79 ret_best = -710.37 n_data = 8
+ITER: i_iter = 8 ret = -818.92 ret_best = -710.37 n_data = 9
+ITER: i_iter = 9 ret = -419.74 ret_best = -419.74 n_data = 10
+ITER: i_iter = 10 ret = -798.69 ret_best = -419.74 n_data = 11
+ITER: i_iter = 11 ret = -465.37 ret_best = -419.74 n_data = 12
+ITER: i_iter = 12 ret = -123.30 ret_best = -123.30 n_data = 13
+ITER: i_iter = 13 ret = -129.77 ret_best = -123.30 n_data = 14
+ITER: i_iter = 14 ret = -820.83 ret_best = -123.30 n_data = 15
+ITER: i_iter = 15 ret = -736.89 ret_best = -123.30 n_data = 16
+ITER: i_iter = 16 ret = -703.05 ret_best = -123.30 n_data = 17
+ITER: i_iter = 17 ret = -765.19 ret_best = -123.30 n_data = 18
+ITER: i_iter = 18 ret = -753.74 ret_best = -123.30 n_data = 19
+ITER: i_iter = 19 ret = -753.61 ret_best = -123.30 n_data = 20
+ITER: i_iter = 20 ret = -751.48 ret_best = -123.30 n_data = 21
+ITER: i_iter = 21 ret = -754.59 ret_best = -123.30 n_data = 22
+ITER: i_iter = 22 ret = -642.22 ret_best = -123.30 n_data = 23
+ITER: i_iter = 23 ret = -799.25 ret_best = -123.30 n_data = 24
+ITER: i_iter = 24 ret = -807.12 ret_best = -123.30 n_data = 25
+ITER: i_iter = 25 ret = -703.98 ret_best = -123.30 n_data = 26
+ITER: i_iter = 26 ret = -1143.24 ret_best = -123.30 n_data = 27
+ITER: i_iter = 27 ret = -704.35 ret_best = -123.30 n_data = 28
+ITER: i_iter = 28 ret = -632.30 ret_best = -123.30 n_data = 29
+ITER: i_iter = 29 ret = -1471.01 ret_best = -123.30 n_data = 30
+ITER: i_iter = 30 ret = -825.81 ret_best = -123.30 n_data = 31
+ITER: i_iter = 31 ret = -828.42 ret_best = -123.30 n_data = 32
+ITER: i_iter = 32 ret = -1025.76 ret_best = -123.30 n_data = 33
+ITER: i_iter = 33 ret = -807.07 ret_best = -123.30 n_data = 34
+ITER: i_iter = 34 ret = -756.58 ret_best = -123.30 n_data = 35
+ITER: i_iter = 35 ret = -741.33 ret_best = -123.30 n_data = 36
+ITER: i_iter = 36 ret = -510.71 ret_best = -123.30 n_data = 37
+ITER: i_iter = 37 ret = -709.70 ret_best = -123.30 n_data = 38
+ITER: i_iter = 38 ret = -358.52 ret_best = -123.30 n_data = 39
+ITER: i_iter = 39 ret = -582.24 ret_best = -123.30 n_data = 40
+ITER: i_iter = 40 ret = -754.44 ret_best = -123.30 n_data = 41
+ITER: i_iter = 41 ret = -754.60 ret_best = -123.30 n_data = 42
+ITER: i_iter = 42 ret = -1491.42 ret_best = -123.30 n_data = 43
+ITER: i_iter = 43 ret = -536.96 ret_best = -123.30 n_data = 44
+ITER: i_iter = 44 ret = -644.87 ret_best = -123.30 n_data = 45
+ITER: i_iter = 45 ret = -1234.47 ret_best = -123.30 n_data = 46
+ITER: i_iter = 46 ret = -850.90 ret_best = -123.30 n_data = 47
+ITER: i_iter = 47 ret = -549.54 ret_best = -123.30 n_data = 48
+ITER: i_iter = 48 ret = -823.29 ret_best = -123.30 n_data = 49
+ITER: i_iter = 49 ret = -823.03 ret_best = -123.30 n_data = 50
+ITER: i_iter = 50 ret = -748.67 ret_best = -123.30 n_data = 51
+ITER: i_iter = 51 ret = -753.07 ret_best = -123.30 n_data = 52
+ITER: i_iter = 52 ret = -360.75 ret_best = -123.30 n_data = 53
+ITER: i_iter = 53 ret = -845.91 ret_best = -123.30 n_data = 54
+ITER: i_iter = 54 ret = -753.57 ret_best = -123.30 n_data = 55
+ITER: i_iter = 55 ret = -837.55 ret_best = -123.30 n_data = 56
+ITER: i_iter = 56 ret = -825.12 ret_best = -123.30 n_data = 57
+ITER: i_iter = 57 ret = -479.75 ret_best = -123.30 n_data = 58
+ITER: i_iter = 58 ret = -821.55 ret_best = -123.30 n_data = 59
+ITER: i_iter = 59 ret = -151.91 ret_best = -123.30 n_data = 60
+ITER: i_iter = 60 ret = -703.41 ret_best = -123.30 n_data = 61
+ITER: i_iter = 61 ret = -823.19 ret_best = -123.30 n_data = 62
+ITER: i_iter = 62 ret = -442.13 ret_best = -123.30 n_data = 63
+ITER: i_iter = 63 ret = -738.54 ret_best = -123.30 n_data = 64
+ITER: i_iter = 64 ret = -136.07 ret_best = -123.30 n_data = 65
+ITER: i_iter = 65 ret = -914.16 ret_best = -123.30 n_data = 66
+ITER: i_iter = 66 ret = -698.82 ret_best = -123.30 n_data = 67
+ITER: i_iter = 67 ret = -144.93 ret_best = -123.30 n_data = 68
+ITER: i_iter = 68 ret = -271.60 ret_best = -123.30 n_data = 69
+ITER: i_iter = 69 ret = -754.56 ret_best = -123.30 n_data = 70
+ITER: i_iter = 70 ret = -748.72 ret_best = -123.30 n_data = 71
+ITER: i_iter = 71 ret = -728.01 ret_best = -123.30 n_data = 72
+ITER: i_iter = 72 ret = -777.73 ret_best = -123.30 n_data = 73
+ITER: i_iter = 73 ret = -1380.49 ret_best = -123.30 n_data = 74
+ITER: i_iter = 74 ret = -754.29 ret_best = -123.30 n_data = 75
+ITER: i_iter = 75 ret = -741.96 ret_best = -123.30 n_data = 76
+ITER: i_iter = 76 ret = -733.76 ret_best = -123.30 n_data = 77
+ITER: i_iter = 77 ret = -1214.11 ret_best = -123.30 n_data = 78
+ITER: i_iter = 78 ret = -753.63 ret_best = -123.30 n_data = 79
+ITER: i_iter = 79 ret = -820.90 ret_best = -123.30 n_data = 80
+ITER: i_iter = 80 ret = -122.60 ret_best = -122.60 n_data = 81
+ITER: i_iter = 81 ret = -754.33 ret_best = -122.60 n_data = 82
+ITER: i_iter = 82 ret = -724.60 ret_best = -122.60 n_data = 83
+ITER: i_iter = 83 ret = -478.92 ret_best = -122.60 n_data = 84
+ITER: i_iter = 84 ret = -144.00 ret_best = -122.60 n_data = 85
+ITER: i_iter = 85 ret = -754.59 ret_best = -122.60 n_data = 86
+ITER: i_iter = 86 ret = -205.80 ret_best = -122.60 n_data = 87
+ITER: i_iter = 87 ret = -823.12 ret_best = -122.60 n_data = 88
+ITER: i_iter = 88 ret = -753.11 ret_best = -122.60 n_data = 89
+ITER: i_iter = 89 ret = -773.74 ret_best = -122.60 n_data = 90
+ITER: i_iter = 90 ret = -705.66 ret_best = -122.60 n_data = 91
+ITER: i_iter = 91 ret = -326.38 ret_best = -122.60 n_data = 92
+ITER: i_iter = 92 ret = -760.55 ret_best = -122.60 n_data = 93
+ITER: i_iter = 93 ret = -822.37 ret_best = -122.60 n_data = 94
+ITER: i_iter = 94 ret = -665.49 ret_best = -122.60 n_data = 95
+ITER: i_iter = 95 ret = -583.33 ret_best = -122.60 n_data = 96
+ITER: i_iter = 96 ret = -478.47 ret_best = -122.60 n_data = 97
+ITER: i_iter = 97 ret = -648.08 ret_best = -122.60 n_data = 98
+ITER: i_iter = 98 ret = -799.81 ret_best = -122.60 n_data = 99
+ITER: i_iter = 99 ret = -754.60 ret_best = -122.60 n_data = 100
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 0 return = -822.975
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 1 return = -822.975
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 2 return = -822.975
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 3 return = -710.370
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 4 return = -710.370
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 5 return = -710.370
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 6 return = -710.370
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 7 return = -710.370
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 8 return = -710.370
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 9 return = -419.739
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 10 return = -419.739
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 11 return = -419.739
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 12 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 13 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 14 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 15 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 16 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 17 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 18 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 19 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 20 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 21 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 22 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 23 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 24 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 25 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 26 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 27 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 28 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 29 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 30 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 31 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 32 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 33 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 34 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 35 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 36 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 37 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 38 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 39 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 40 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 41 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 42 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 43 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 44 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 45 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 46 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 47 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 48 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 49 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 50 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 51 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 52 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 53 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 54 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 55 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 56 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 57 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 58 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 59 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 60 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 61 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 62 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 63 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 64 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 65 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 66 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 67 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 68 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 69 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 70 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 71 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 72 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 73 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 74 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 75 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 76 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 77 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 78 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 79 return = -123.298
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 80 return = -122.603
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 81 return = -122.603
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 82 return = -122.603
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 83 return = -122.603
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 84 return = -122.603
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 85 return = -122.603
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 86 return = -122.603
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 87 return = -122.603
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 88 return = -122.603
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 89 return = -122.603
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 90 return = -122.603
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 91 return = -122.603
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 92 return = -122.603
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 93 return = -122.603
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 94 return = -122.603
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 95 return = -122.603
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 96 return = -122.603
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 97 return = -122.603
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 98 return = -122.603
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 3 i_iter = 99 return = -122.603
+TIME_SAMPLE: 1174.69
+ITER: i_iter = 0 ret = -422.97 ret_best = -422.97 n_data = 1
+ITER: i_iter = 1 ret = -781.71 ret_best = -422.97 n_data = 2
+ITER: i_iter = 2 ret = -556.28 ret_best = -422.97 n_data = 3
+ITER: i_iter = 3 ret = -629.95 ret_best = -422.97 n_data = 4
+ITER: i_iter = 4 ret = -756.31 ret_best = -422.97 n_data = 5
+ITER: i_iter = 5 ret = -283.44 ret_best = -283.44 n_data = 6
+ITER: i_iter = 6 ret = -725.95 ret_best = -283.44 n_data = 7
+ITER: i_iter = 7 ret = -643.58 ret_best = -283.44 n_data = 8
+ITER: i_iter = 8 ret = -1237.91 ret_best = -283.44 n_data = 9
+ITER: i_iter = 9 ret = -767.32 ret_best = -283.44 n_data = 10
+ITER: i_iter = 10 ret = -794.74 ret_best = -283.44 n_data = 11
+ITER: i_iter = 11 ret = -136.22 ret_best = -136.22 n_data = 12
+ITER: i_iter = 12 ret = -2017.46 ret_best = -136.22 n_data = 13
+ITER: i_iter = 13 ret = -841.38 ret_best = -136.22 n_data = 14
+ITER: i_iter = 14 ret = -575.69 ret_best = -136.22 n_data = 15
+ITER: i_iter = 15 ret = -733.99 ret_best = -136.22 n_data = 16
+ITER: i_iter = 16 ret = -897.46 ret_best = -136.22 n_data = 17
+ITER: i_iter = 17 ret = -743.33 ret_best = -136.22 n_data = 18
+ITER: i_iter = 18 ret = -763.56 ret_best = -136.22 n_data = 19
+ITER: i_iter = 19 ret = -798.66 ret_best = -136.22 n_data = 20
+ITER: i_iter = 20 ret = -264.31 ret_best = -136.22 n_data = 21
+ITER: i_iter = 21 ret = -763.56 ret_best = -136.22 n_data = 22
+ITER: i_iter = 22 ret = -757.27 ret_best = -136.22 n_data = 23
+ITER: i_iter = 23 ret = -153.05 ret_best = -136.22 n_data = 24
+ITER: i_iter = 24 ret = -763.56 ret_best = -136.22 n_data = 25
+ITER: i_iter = 25 ret = -747.39 ret_best = -136.22 n_data = 26
+ITER: i_iter = 26 ret = -763.56 ret_best = -136.22 n_data = 27
+ITER: i_iter = 27 ret = -763.56 ret_best = -136.22 n_data = 28
+ITER: i_iter = 28 ret = -741.67 ret_best = -136.22 n_data = 29
+ITER: i_iter = 29 ret = -385.06 ret_best = -136.22 n_data = 30
+ITER: i_iter = 30 ret = -1073.85 ret_best = -136.22 n_data = 31
+ITER: i_iter = 31 ret = -650.76 ret_best = -136.22 n_data = 32
+ITER: i_iter = 32 ret = -316.55 ret_best = -136.22 n_data = 33
+ITER: i_iter = 33 ret = -654.40 ret_best = -136.22 n_data = 34
+ITER: i_iter = 34 ret = -763.56 ret_best = -136.22 n_data = 35
+ITER: i_iter = 35 ret = -789.52 ret_best = -136.22 n_data = 36
+ITER: i_iter = 36 ret = -763.56 ret_best = -136.22 n_data = 37
+ITER: i_iter = 37 ret = -763.52 ret_best = -136.22 n_data = 38
+ITER: i_iter = 38 ret = -741.52 ret_best = -136.22 n_data = 39
+ITER: i_iter = 39 ret = -760.48 ret_best = -136.22 n_data = 40
+ITER: i_iter = 40 ret = -769.09 ret_best = -136.22 n_data = 41
+ITER: i_iter = 41 ret = -763.56 ret_best = -136.22 n_data = 42
+ITER: i_iter = 42 ret = -561.85 ret_best = -136.22 n_data = 43
+ITER: i_iter = 43 ret = -1170.71 ret_best = -136.22 n_data = 44
+ITER: i_iter = 44 ret = -763.56 ret_best = -136.22 n_data = 45
+ITER: i_iter = 45 ret = -153.30 ret_best = -136.22 n_data = 46
+ITER: i_iter = 46 ret = -763.51 ret_best = -136.22 n_data = 47
+ITER: i_iter = 47 ret = -777.05 ret_best = -136.22 n_data = 48
+ITER: i_iter = 48 ret = -742.68 ret_best = -136.22 n_data = 49
+ITER: i_iter = 49 ret = -794.75 ret_best = -136.22 n_data = 50
+ITER: i_iter = 50 ret = -763.56 ret_best = -136.22 n_data = 51
+ITER: i_iter = 51 ret = -755.11 ret_best = -136.22 n_data = 52
+ITER: i_iter = 52 ret = -763.36 ret_best = -136.22 n_data = 53
+ITER: i_iter = 53 ret = -411.04 ret_best = -136.22 n_data = 54
+ITER: i_iter = 54 ret = -806.71 ret_best = -136.22 n_data = 55
+ITER: i_iter = 55 ret = -763.50 ret_best = -136.22 n_data = 56
+ITER: i_iter = 56 ret = -667.84 ret_best = -136.22 n_data = 57
+ITER: i_iter = 57 ret = -271.12 ret_best = -136.22 n_data = 58
+ITER: i_iter = 58 ret = -488.64 ret_best = -136.22 n_data = 59
+ITER: i_iter = 59 ret = -794.71 ret_best = -136.22 n_data = 60
+ITER: i_iter = 60 ret = -794.59 ret_best = -136.22 n_data = 61
+ITER: i_iter = 61 ret = -763.38 ret_best = -136.22 n_data = 62
+ITER: i_iter = 62 ret = -735.73 ret_best = -136.22 n_data = 63
+ITER: i_iter = 63 ret = -457.69 ret_best = -136.22 n_data = 64
+ITER: i_iter = 64 ret = -455.36 ret_best = -136.22 n_data = 65
+ITER: i_iter = 65 ret = -126.34 ret_best = -126.34 n_data = 66
+ITER: i_iter = 66 ret = -738.19 ret_best = -126.34 n_data = 67
+ITER: i_iter = 67 ret = -528.94 ret_best = -126.34 n_data = 68
+ITER: i_iter = 68 ret = -565.15 ret_best = -126.34 n_data = 69
+ITER: i_iter = 69 ret = -778.98 ret_best = -126.34 n_data = 70
+ITER: i_iter = 70 ret = -758.71 ret_best = -126.34 n_data = 71
+ITER: i_iter = 71 ret = -684.75 ret_best = -126.34 n_data = 72
+ITER: i_iter = 72 ret = -797.97 ret_best = -126.34 n_data = 73
+ITER: i_iter = 73 ret = -1465.32 ret_best = -126.34 n_data = 74
+ITER: i_iter = 74 ret = -1840.42 ret_best = -126.34 n_data = 75
+ITER: i_iter = 75 ret = -710.61 ret_best = -126.34 n_data = 76
+ITER: i_iter = 76 ret = -763.39 ret_best = -126.34 n_data = 77
+ITER: i_iter = 77 ret = -278.55 ret_best = -126.34 n_data = 78
+ITER: i_iter = 78 ret = -691.29 ret_best = -126.34 n_data = 79
+ITER: i_iter = 79 ret = -794.73 ret_best = -126.34 n_data = 80
+ITER: i_iter = 80 ret = -699.23 ret_best = -126.34 n_data = 81
+ITER: i_iter = 81 ret = -860.89 ret_best = -126.34 n_data = 82
+ITER: i_iter = 82 ret = -760.74 ret_best = -126.34 n_data = 83
+ITER: i_iter = 83 ret = -604.62 ret_best = -126.34 n_data = 84
+ITER: i_iter = 84 ret = -762.64 ret_best = -126.34 n_data = 85
+ITER: i_iter = 85 ret = -724.29 ret_best = -126.34 n_data = 86
+ITER: i_iter = 86 ret = -542.49 ret_best = -126.34 n_data = 87
+ITER: i_iter = 87 ret = -656.39 ret_best = -126.34 n_data = 88
+ITER: i_iter = 88 ret = -790.02 ret_best = -126.34 n_data = 89
+ITER: i_iter = 89 ret = -895.13 ret_best = -126.34 n_data = 90
+ITER: i_iter = 90 ret = -728.88 ret_best = -126.34 n_data = 91
+ITER: i_iter = 91 ret = -240.36 ret_best = -126.34 n_data = 92
+ITER: i_iter = 92 ret = -763.56 ret_best = -126.34 n_data = 93
+ITER: i_iter = 93 ret = -763.54 ret_best = -126.34 n_data = 94
+ITER: i_iter = 94 ret = -763.56 ret_best = -126.34 n_data = 95
+ITER: i_iter = 95 ret = -227.10 ret_best = -126.34 n_data = 96
+ITER: i_iter = 96 ret = -790.55 ret_best = -126.34 n_data = 97
+ITER: i_iter = 97 ret = -752.62 ret_best = -126.34 n_data = 98
+ITER: i_iter = 98 ret = -786.59 ret_best = -126.34 n_data = 99
+ITER: i_iter = 99 ret = -763.38 ret_best = -126.34 n_data = 100
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 0 return = -422.968
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 1 return = -422.968
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 2 return = -422.968
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 3 return = -422.968
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 4 return = -422.968
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 5 return = -283.437
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 6 return = -283.437
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 7 return = -283.437
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 8 return = -283.437
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 9 return = -283.437
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 10 return = -283.437
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 11 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 12 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 13 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 14 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 15 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 16 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 17 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 18 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 19 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 20 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 21 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 22 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 23 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 24 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 25 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 26 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 27 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 28 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 29 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 30 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 31 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 32 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 33 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 34 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 35 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 36 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 37 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 38 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 39 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 40 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 41 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 42 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 43 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 44 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 45 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 46 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 47 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 48 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 49 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 50 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 51 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 52 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 53 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 54 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 55 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 56 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 57 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 58 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 59 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 60 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 61 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 62 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 63 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 64 return = -136.221
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 65 return = -126.344
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 66 return = -126.344
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 67 return = -126.344
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 68 return = -126.344
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 69 return = -126.344
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 70 return = -126.344
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 71 return = -126.344
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 72 return = -126.344
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 73 return = -126.344
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 74 return = -126.344
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 75 return = -126.344
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 76 return = -126.344
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 77 return = -126.344
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 78 return = -126.344
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 79 return = -126.344
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 80 return = -126.344
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 81 return = -126.344
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 82 return = -126.344
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 83 return = -126.344
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 84 return = -126.344
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 85 return = -126.344
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 86 return = -126.344
+TRACE: name = LunarLander-v2 ttype = idopt i_sample = 4 i_iter = 87 return = -126.344
