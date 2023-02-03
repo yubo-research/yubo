@@ -9,7 +9,7 @@ for TAG in f:sphere-2d f:sphere-3d f:sphere-10d f:sphere-30d
 # for TAG in mcc lunar ant
 #for TAG in lunar mcc f:sphere-2d # f:sphere-3d f:sphere-10d mcc lunar
 do
- for TTYPE in iopt # random sobol ei ucb ax idopt
+ for TTYPE in iei # iopt # random sobol ei ucb ax idopt
  # for TTYPE in variance maximin maximin-toroidal iopt
  do
      echo $TAG $TTYPE
