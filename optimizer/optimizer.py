@@ -2,6 +2,7 @@ from botorch.acquisition import UpperConfidenceBound
 from botorch.acquisition.analytic import ExpectedImprovement
 
 from bo.acq_idopt import AcqIDOpt
+from bo.acq_iei import AcqIEI
 from bo.acq_min_dist import AcqMinDist
 from bo.acq_var import AcqVar
 
@@ -25,6 +26,7 @@ class Optimizer:
             "minimax-toroidal": BTDesigner(policy, lambda m: AcqMinDist(m, toroidal=True)),
             "iopt": BTDesigner(policy, AcqIDOpt, acq_kwargs={"bounds": None}),
             "idopt": BTDesigner(policy, AcqIDOpt, acq_kwargs={"X_max": None, "bounds": None}),
+            "iei": BTDesigner(policy, AcqIEI, acq_kwargs={"Y_max": None, "bounds": None}),
             "ucb": BTDesigner(policy, UpperConfidenceBound, acq_kwargs={"beta": 1}),
             "ei": BTDesigner(policy, ExpectedImprovement, acq_kwargs={"best_f": None}),
             "random": RandomDesigner(policy),

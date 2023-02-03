@@ -30,6 +30,8 @@ class AcqBT:
             kwargs["X_max"] = self._find_max(gp, self.bounds)
         if "best_f" in kwargs:
             kwargs["best_f"] = gp(self._find_max(gp, self.bounds)).mean
+        if "Y_max" in kwargs:
+            kwargs["Y_max"] = gp(self._find_max(gp, self.bounds)).mean
         if "bounds" in kwargs:
             kwargs["bounds"] = self.bounds
 

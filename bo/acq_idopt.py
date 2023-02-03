@@ -20,7 +20,7 @@ class AcqIDOpt(MCAcquisitionFunction):
         bounds: torch.Tensor,
         X_max: torch.Tensor = None,
         num_X_samples: int = 256,
-        num_Y_samples: int = 16,
+        num_Y_samples: int = 64,
         sampler: Optional[MCSampler] = None,
         posterior_transform: Optional[PosteriorTransform] = None,
         **kwargs
