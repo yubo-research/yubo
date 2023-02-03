@@ -3,6 +3,7 @@ from botorch.acquisition.analytic import ExpectedImprovement
 
 from bo.acq_idopt import AcqIDOpt
 from bo.acq_iei import AcqIEI
+from bo.acq_iucb import AcqIUCB
 from bo.acq_min_dist import AcqMinDist
 from bo.acq_var import AcqVar
 
@@ -18,19 +19,20 @@ class Optimizer:
     def __init__(self, env_conf, policy, cb_trace=None):
         self._env_conf = env_conf
         self._cb_trace = cb_trace
-        self._data = []  # Datum(policy, self._collect_trajectory(policy))]
-        self._datum_best = None  # self._data[0]
+        self._data = []
+        self._datum_best = None
         self._designers = {
-            "variance": BTDesigner(policy, AcqVar),
-            "minimax": BTDesigner(policy, lambda m: AcqMinDist(m, toroidal=False)),
-            "minimax-toroidal": BTDesigner(policy, lambda m: AcqMinDist(m, toroidal=True)),
-            "iopt": BTDesigner(policy, AcqIDOpt, acq_kwargs={"bounds": None}),
-            "idopt": BTDesigner(policy, AcqIDOpt, acq_kwargs={"X_max": None, "bounds": None}),
-            "iei": BTDesigner(policy, AcqIEI, acq_kwargs={"Y_max": None, "bounds": None}),
-            "ucb": BTDesigner(policy, UpperConfidenceBound, acq_kwargs={"beta": 1}),
-            "ei": BTDesigner(policy, ExpectedImprovement, acq_kwargs={"best_f": None}),
             "random": RandomDesigner(policy),
             "sobol": SobolDesigner(policy),
+            "minimax": BTDesigner(policy, lambda m: AcqMinDist(m, toroidal=False)),
+            "minimax-toroidal": BTDesigner(policy, lambda m: AcqMinDist(m, toroidal=True)),
+            "variance": BTDesigner(policy, AcqVar),
+            "iopt": BTDesigner(policy, AcqIDOpt, acq_kwargs={"bounds": None}),
+            "idopt": BTDesigner(policy, AcqIDOpt, acq_kwargs={"X_max": None, "bounds": None}),
+            "ei": BTDesigner(policy, ExpectedImprovement, acq_kwargs={"best_f": None}),
+            "iei": BTDesigner(policy, AcqIEI, acq_kwargs={"Y_max": None, "bounds": None}),
+            "ucb": BTDesigner(policy, UpperConfidenceBound, acq_kwargs={"beta": 1}),
+            "iucb": BTDesigner(policy, AcqIUCB, acq_kwargs={"bounds": None}),
             "ax": AxDesigner(policy),
         }
 

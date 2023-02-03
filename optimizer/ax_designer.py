@@ -4,6 +4,7 @@ import numpy as np
 class AxDesigner:
     def __init__(self, policy):
         from ax.service.ax_client import AxClient
+
         self._policy = policy
         self._ax_client = AxClient(verbose_logging=False)
         num_params = policy.num_params()
