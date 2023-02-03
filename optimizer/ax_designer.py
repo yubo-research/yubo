@@ -6,7 +6,7 @@ class AxDesigner:
     def __init__(self, policy):
         self._policy = policy
         self._ax_client = None
-        self._ax_client = AxClient()
+        self._ax_client = AxClient(verbose_logging=False)
         num_params = policy.num_params()
         self._ax_client.create_experiment(
             name=f"ax_{num_params}",
