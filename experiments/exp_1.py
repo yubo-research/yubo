@@ -21,10 +21,9 @@ if __name__ == "__main__":
     ttype = sys.argv[2]
 
     num_iterations = 100
-    for i_sample in range(100):
+    for i_sample in range(30):
         t0 = time.time()
         seed = 1234 + 17 + i_sample
-        np.random.seed(seed)  # cma in PolicyDesigner needs this
         env_conf = get_env_conf(env_tag, seed)
         sample(env_conf, ttype, tag=f"i_sample = {i_sample}", num_iterations=num_iterations)
         print(f"TIME_SAMPLE: {time.time() - t0:.2f}")
