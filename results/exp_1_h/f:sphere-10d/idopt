@@ -10553,3 +10553,1907 @@ TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 37 return = -0.0
 [INFO 02-03 21:01:54] ax.modelbridge.dispatch_utils: calculated num_initialization_trials=20
 [INFO 02-03 21:01:54] ax.modelbridge.dispatch_utils: num_completed_initialization_trials=0 num_remaining_initialization_trials=20
 [INFO 02-03 21:01:54] ax.modelbridge.dispatch_utils: Using Bayesian Optimization generation strategy: GenerationStrategy(name='Sobol+GPEI', steps=[Sobol for 20 trials, GPEI for subsequent trials]). Iterations after 20 will take longer to generate due to model-fitting.
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 38 return = -0.049
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 39 return = -0.049
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 40 return = -0.049
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 41 return = -0.049
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 42 return = -0.049
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 43 return = -0.038
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 44 return = -0.038
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 45 return = -0.038
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 46 return = -0.038
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 47 return = -0.038
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 48 return = -0.038
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 49 return = -0.038
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 50 return = -0.038
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 51 return = -0.038
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 52 return = -0.038
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 53 return = -0.038
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 54 return = -0.038
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 55 return = -0.038
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 56 return = -0.038
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 57 return = -0.038
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 58 return = -0.038
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 59 return = -0.038
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 60 return = -0.038
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 61 return = -0.038
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 62 return = -0.038
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 63 return = -0.038
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 64 return = -0.038
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 65 return = -0.038
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 66 return = -0.038
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 67 return = -0.038
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 68 return = -0.038
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 69 return = -0.038
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 70 return = -0.038
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 71 return = -0.029
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 72 return = -0.029
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 73 return = -0.029
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 74 return = -0.029
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 75 return = -0.029
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 76 return = -0.029
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 77 return = -0.029
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 78 return = -0.029
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 79 return = -0.029
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 80 return = -0.029
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 81 return = -0.029
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 82 return = -0.020
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 83 return = -0.020
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 84 return = -0.020
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 85 return = -0.020
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 86 return = -0.020
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 87 return = -0.020
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 88 return = -0.020
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 89 return = -0.020
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 90 return = -0.013
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 91 return = -0.013
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 92 return = -0.013
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 93 return = -0.013
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 94 return = -0.013
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 95 return = -0.013
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 96 return = -0.013
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 97 return = -0.013
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 98 return = -0.013
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 50 i_iter = 99 return = -0.013
+TIME_SAMPLE: 3742.89
+ITER: i_iter = 0 ret = -0.19 ret_best = -0.19 n_data = 1
+ITER: i_iter = 1 ret = -0.19 ret_best = -0.19 n_data = 2
+ITER: i_iter = 2 ret = -0.14 ret_best = -0.14 n_data = 3
+ITER: i_iter = 3 ret = -0.07 ret_best = -0.07 n_data = 4
+ITER: i_iter = 4 ret = -0.18 ret_best = -0.07 n_data = 5
+ITER: i_iter = 5 ret = -0.14 ret_best = -0.07 n_data = 6
+ITER: i_iter = 6 ret = -0.15 ret_best = -0.07 n_data = 7
+ITER: i_iter = 7 ret = -0.10 ret_best = -0.07 n_data = 8
+ITER: i_iter = 8 ret = -0.14 ret_best = -0.07 n_data = 9
+ITER: i_iter = 9 ret = -0.11 ret_best = -0.07 n_data = 10
+ITER: i_iter = 10 ret = -0.10 ret_best = -0.07 n_data = 11
+ITER: i_iter = 11 ret = -0.17 ret_best = -0.07 n_data = 12
+ITER: i_iter = 12 ret = -0.04 ret_best = -0.04 n_data = 13
+ITER: i_iter = 13 ret = -0.04 ret_best = -0.04 n_data = 14
+ITER: i_iter = 14 ret = -0.14 ret_best = -0.04 n_data = 15
+ITER: i_iter = 15 ret = -0.03 ret_best = -0.03 n_data = 16
+ITER: i_iter = 16 ret = -0.16 ret_best = -0.03 n_data = 17
+ITER: i_iter = 17 ret = -0.02 ret_best = -0.02 n_data = 18
+ITER: i_iter = 18 ret = -0.19 ret_best = -0.02 n_data = 19
+ITER: i_iter = 19 ret = -0.14 ret_best = -0.02 n_data = 20
+ITER: i_iter = 20 ret = -0.17 ret_best = -0.02 n_data = 21
+ITER: i_iter = 21 ret = -0.15 ret_best = -0.02 n_data = 22
+ITER: i_iter = 22 ret = -0.14 ret_best = -0.02 n_data = 23
+ITER: i_iter = 23 ret = -0.12 ret_best = -0.02 n_data = 24
+ITER: i_iter = 24 ret = -0.11 ret_best = -0.02 n_data = 25
+ITER: i_iter = 25 ret = -0.12 ret_best = -0.02 n_data = 26
+ITER: i_iter = 26 ret = -0.10 ret_best = -0.02 n_data = 27
+ITER: i_iter = 27 ret = -0.10 ret_best = -0.02 n_data = 28
+ITER: i_iter = 28 ret = -0.02 ret_best = -0.02 n_data = 29
+ITER: i_iter = 29 ret = -0.07 ret_best = -0.02 n_data = 30
+ITER: i_iter = 30 ret = -0.02 ret_best = -0.02 n_data = 31
+ITER: i_iter = 31 ret = -0.15 ret_best = -0.02 n_data = 32
+ITER: i_iter = 32 ret = -0.09 ret_best = -0.02 n_data = 33
+ITER: i_iter = 33 ret = -0.09 ret_best = -0.02 n_data = 34
+ITER: i_iter = 34 ret = -0.15 ret_best = -0.02 n_data = 35
+ITER: i_iter = 35 ret = -0.14 ret_best = -0.02 n_data = 36
+ITER: i_iter = 36 ret = -0.02 ret_best = -0.02 n_data = 37
+ITER: i_iter = 37 ret = -0.16 ret_best = -0.02 n_data = 38
+ITER: i_iter = 38 ret = -0.16 ret_best = -0.02 n_data = 39
+ITER: i_iter = 39 ret = -0.08 ret_best = -0.02 n_data = 40
+ITER: i_iter = 40 ret = -0.14 ret_best = -0.02 n_data = 41
+ITER: i_iter = 41 ret = -0.19 ret_best = -0.02 n_data = 42
+ITER: i_iter = 42 ret = -0.19 ret_best = -0.02 n_data = 43
+ITER: i_iter = 43 ret = -0.09 ret_best = -0.02 n_data = 44
+ITER: i_iter = 44 ret = -0.08 ret_best = -0.02 n_data = 45
+ITER: i_iter = 45 ret = -0.08 ret_best = -0.02 n_data = 46
+ITER: i_iter = 46 ret = -0.02 ret_best = -0.02 n_data = 47
+ITER: i_iter = 47 ret = -0.18 ret_best = -0.02 n_data = 48
+ITER: i_iter = 48 ret = -0.10 ret_best = -0.02 n_data = 49
+ITER: i_iter = 49 ret = -0.14 ret_best = -0.02 n_data = 50
+ITER: i_iter = 50 ret = -0.12 ret_best = -0.02 n_data = 51
+ITER: i_iter = 51 ret = -0.17 ret_best = -0.02 n_data = 52
+ITER: i_iter = 52 ret = -0.17 ret_best = -0.02 n_data = 53
+ITER: i_iter = 53 ret = -0.11 ret_best = -0.02 n_data = 54
+ITER: i_iter = 54 ret = -0.10 ret_best = -0.02 n_data = 55
+ITER: i_iter = 55 ret = -0.07 ret_best = -0.02 n_data = 56
+ITER: i_iter = 56 ret = -0.13 ret_best = -0.02 n_data = 57
+ITER: i_iter = 57 ret = -0.17 ret_best = -0.02 n_data = 58
+ITER: i_iter = 58 ret = -0.08 ret_best = -0.02 n_data = 59
+ITER: i_iter = 59 ret = -0.16 ret_best = -0.02 n_data = 60
+ITER: i_iter = 60 ret = -0.24 ret_best = -0.02 n_data = 61
+ITER: i_iter = 61 ret = -0.14 ret_best = -0.02 n_data = 62
+ITER: i_iter = 62 ret = -0.10 ret_best = -0.02 n_data = 63
+ITER: i_iter = 63 ret = -0.15 ret_best = -0.02 n_data = 64
+ITER: i_iter = 64 ret = -0.15 ret_best = -0.02 n_data = 65
+ITER: i_iter = 65 ret = -0.17 ret_best = -0.02 n_data = 66
+ITER: i_iter = 66 ret = -0.20 ret_best = -0.02 n_data = 67
+ITER: i_iter = 67 ret = -0.19 ret_best = -0.02 n_data = 68
+ITER: i_iter = 68 ret = -0.11 ret_best = -0.02 n_data = 69
+ITER: i_iter = 69 ret = -0.10 ret_best = -0.02 n_data = 70
+ITER: i_iter = 70 ret = -0.22 ret_best = -0.02 n_data = 71
+ITER: i_iter = 71 ret = -0.08 ret_best = -0.02 n_data = 72
+ITER: i_iter = 72 ret = -0.13 ret_best = -0.02 n_data = 73
+ITER: i_iter = 73 ret = -0.14 ret_best = -0.02 n_data = 74
+ITER: i_iter = 74 ret = -0.05 ret_best = -0.02 n_data = 75
+ITER: i_iter = 75 ret = -0.11 ret_best = -0.02 n_data = 76
+ITER: i_iter = 76 ret = -0.04 ret_best = -0.02 n_data = 77
+ITER: i_iter = 77 ret = -0.13 ret_best = -0.02 n_data = 78
+ITER: i_iter = 78 ret = -0.14 ret_best = -0.02 n_data = 79
+ITER: i_iter = 79 ret = -0.01 ret_best = -0.01 n_data = 80
+ITER: i_iter = 80 ret = -0.28 ret_best = -0.01 n_data = 81
+ITER: i_iter = 81 ret = -0.22 ret_best = -0.01 n_data = 82
+ITER: i_iter = 82 ret = -0.14 ret_best = -0.01 n_data = 83
+ITER: i_iter = 83 ret = -0.18 ret_best = -0.01 n_data = 84
+ITER: i_iter = 84 ret = -0.18 ret_best = -0.01 n_data = 85
+ITER: i_iter = 85 ret = -0.08 ret_best = -0.01 n_data = 86
+ITER: i_iter = 86 ret = -0.12 ret_best = -0.01 n_data = 87
+ITER: i_iter = 87 ret = -0.14 ret_best = -0.01 n_data = 88
+ITER: i_iter = 88 ret = -0.15 ret_best = -0.01 n_data = 89
+ITER: i_iter = 89 ret = -0.08 ret_best = -0.01 n_data = 90
+ITER: i_iter = 90 ret = -0.21 ret_best = -0.01 n_data = 91
+ITER: i_iter = 91 ret = -0.14 ret_best = -0.01 n_data = 92
+ITER: i_iter = 92 ret = -0.16 ret_best = -0.01 n_data = 93
+ITER: i_iter = 93 ret = -0.11 ret_best = -0.01 n_data = 94
+ITER: i_iter = 94 ret = -0.12 ret_best = -0.01 n_data = 95
+ITER: i_iter = 95 ret = -0.23 ret_best = -0.01 n_data = 96
+ITER: i_iter = 96 ret = -0.19 ret_best = -0.01 n_data = 97
+ITER: i_iter = 97 ret = -0.13 ret_best = -0.01 n_data = 98
+ITER: i_iter = 98 ret = -0.21 ret_best = -0.01 n_data = 99
+ITER: i_iter = 99 ret = -0.12 ret_best = -0.01 n_data = 100
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 0 return = -0.187
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 1 return = -0.187
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 2 return = -0.145
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 3 return = -0.068
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 4 return = -0.068
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 5 return = -0.068
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 6 return = -0.068
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 7 return = -0.068
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 8 return = -0.068
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 9 return = -0.068
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 10 return = -0.068
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 11 return = -0.068
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 12 return = -0.040
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 13 return = -0.040
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 14 return = -0.040
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 15 return = -0.029
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 16 return = -0.029
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 17 return = -0.024
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 18 return = -0.024
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 19 return = -0.024
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 20 return = -0.024
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 21 return = -0.024
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 22 return = -0.024
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 23 return = -0.024
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 24 return = -0.024
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 25 return = -0.024
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 26 return = -0.024
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 27 return = -0.024
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 28 return = -0.020
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 29 return = -0.020
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 30 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 31 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 32 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 33 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 34 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 35 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 36 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 37 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 38 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 39 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 40 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 41 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 42 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 43 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 44 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 45 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 46 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 47 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 48 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 49 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 50 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 51 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 52 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 53 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 54 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 55 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 56 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 57 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 58 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 59 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 60 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 61 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 62 return = -0.018
+[INFO 02-03 22:06:10] ax.service.ax_client: Starting optimization with verbose logging. To disable logging, set the `verbose_logging` argument to `False`. Note that float values in the logs are rounded to 6 decimal points.
+[INFO 02-03 22:06:10] ax.service.utils.instantiation: Created search space: SearchSpace(parameters=[RangeParameter(name='x000', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x001', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x002', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x003', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x004', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x005', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x006', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x007', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x008', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x009', parameter_type=FLOAT, range=[-1.0, 1.0])], parameter_constraints=[]).
+[INFO 02-03 22:06:10] ax.modelbridge.dispatch_utils: Using Bayesian optimization since there are more ordered parameters than there are categories for the unordered categorical parameters.
+[INFO 02-03 22:06:10] ax.modelbridge.dispatch_utils: Calculating the number of remaining initialization trials based on num_initialization_trials=None max_initialization_trials=None num_tunable_parameters=10 num_trials=None use_batch_trials=False
+[INFO 02-03 22:06:10] ax.modelbridge.dispatch_utils: calculated num_initialization_trials=20
+[INFO 02-03 22:06:10] ax.modelbridge.dispatch_utils: num_completed_initialization_trials=0 num_remaining_initialization_trials=20
+[INFO 02-03 22:06:10] ax.modelbridge.dispatch_utils: Using Bayesian Optimization generation strategy: GenerationStrategy(name='Sobol+GPEI', steps=[Sobol for 20 trials, GPEI for subsequent trials]). Iterations after 20 will take longer to generate due to model-fitting.
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 63 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 64 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 65 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 66 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 67 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 68 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 69 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 70 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 71 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 72 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 73 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 74 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 75 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 76 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 77 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 78 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 79 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 80 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 81 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 82 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 83 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 84 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 85 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 86 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 87 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 88 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 89 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 90 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 91 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 92 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 93 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 94 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 95 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 96 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 97 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 98 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 51 i_iter = 99 return = -0.011
+TIME_SAMPLE: 3856.54
+ITER: i_iter = 0 ret = -0.17 ret_best = -0.17 n_data = 1
+ITER: i_iter = 1 ret = -0.07 ret_best = -0.07 n_data = 2
+ITER: i_iter = 2 ret = -0.11 ret_best = -0.07 n_data = 3
+ITER: i_iter = 3 ret = -0.11 ret_best = -0.07 n_data = 4
+ITER: i_iter = 4 ret = -0.12 ret_best = -0.07 n_data = 5
+ITER: i_iter = 5 ret = -0.07 ret_best = -0.07 n_data = 6
+ITER: i_iter = 6 ret = -0.10 ret_best = -0.07 n_data = 7
+ITER: i_iter = 7 ret = -0.19 ret_best = -0.07 n_data = 8
+ITER: i_iter = 8 ret = -0.14 ret_best = -0.07 n_data = 9
+ITER: i_iter = 9 ret = -0.09 ret_best = -0.07 n_data = 10
+ITER: i_iter = 10 ret = -0.15 ret_best = -0.07 n_data = 11
+ITER: i_iter = 11 ret = -0.06 ret_best = -0.06 n_data = 12
+ITER: i_iter = 12 ret = -0.18 ret_best = -0.06 n_data = 13
+ITER: i_iter = 13 ret = -0.15 ret_best = -0.06 n_data = 14
+ITER: i_iter = 14 ret = -0.05 ret_best = -0.05 n_data = 15
+ITER: i_iter = 15 ret = -0.07 ret_best = -0.05 n_data = 16
+ITER: i_iter = 16 ret = -0.18 ret_best = -0.05 n_data = 17
+ITER: i_iter = 17 ret = -0.16 ret_best = -0.05 n_data = 18
+ITER: i_iter = 18 ret = -0.12 ret_best = -0.05 n_data = 19
+ITER: i_iter = 19 ret = -0.12 ret_best = -0.05 n_data = 20
+ITER: i_iter = 20 ret = -0.14 ret_best = -0.05 n_data = 21
+ITER: i_iter = 21 ret = -0.04 ret_best = -0.04 n_data = 22
+ITER: i_iter = 22 ret = -0.14 ret_best = -0.04 n_data = 23
+ITER: i_iter = 23 ret = -0.14 ret_best = -0.04 n_data = 24
+ITER: i_iter = 24 ret = -0.11 ret_best = -0.04 n_data = 25
+ITER: i_iter = 25 ret = -0.09 ret_best = -0.04 n_data = 26
+ITER: i_iter = 26 ret = -0.09 ret_best = -0.04 n_data = 27
+ITER: i_iter = 27 ret = -0.08 ret_best = -0.04 n_data = 28
+ITER: i_iter = 28 ret = -0.03 ret_best = -0.03 n_data = 29
+ITER: i_iter = 29 ret = -0.16 ret_best = -0.03 n_data = 30
+ITER: i_iter = 30 ret = -0.08 ret_best = -0.03 n_data = 31
+ITER: i_iter = 31 ret = -0.13 ret_best = -0.03 n_data = 32
+ITER: i_iter = 32 ret = -0.09 ret_best = -0.03 n_data = 33
+ITER: i_iter = 33 ret = -0.09 ret_best = -0.03 n_data = 34
+ITER: i_iter = 34 ret = -0.07 ret_best = -0.03 n_data = 35
+ITER: i_iter = 35 ret = -0.03 ret_best = -0.03 n_data = 36
+ITER: i_iter = 36 ret = -0.18 ret_best = -0.03 n_data = 37
+ITER: i_iter = 37 ret = -0.24 ret_best = -0.03 n_data = 38
+ITER: i_iter = 38 ret = -0.14 ret_best = -0.03 n_data = 39
+ITER: i_iter = 39 ret = -0.02 ret_best = -0.02 n_data = 40
+ITER: i_iter = 40 ret = -0.13 ret_best = -0.02 n_data = 41
+ITER: i_iter = 41 ret = -0.06 ret_best = -0.02 n_data = 42
+ITER: i_iter = 42 ret = -0.10 ret_best = -0.02 n_data = 43
+ITER: i_iter = 43 ret = -0.01 ret_best = -0.01 n_data = 44
+ITER: i_iter = 44 ret = -0.14 ret_best = -0.01 n_data = 45
+ITER: i_iter = 45 ret = -0.18 ret_best = -0.01 n_data = 46
+ITER: i_iter = 46 ret = -0.09 ret_best = -0.01 n_data = 47
+ITER: i_iter = 47 ret = -0.10 ret_best = -0.01 n_data = 48
+ITER: i_iter = 48 ret = -0.08 ret_best = -0.01 n_data = 49
+ITER: i_iter = 49 ret = -0.17 ret_best = -0.01 n_data = 50
+ITER: i_iter = 50 ret = -0.11 ret_best = -0.01 n_data = 51
+ITER: i_iter = 51 ret = -0.10 ret_best = -0.01 n_data = 52
+ITER: i_iter = 52 ret = -0.12 ret_best = -0.01 n_data = 53
+ITER: i_iter = 53 ret = -0.14 ret_best = -0.01 n_data = 54
+ITER: i_iter = 54 ret = -0.14 ret_best = -0.01 n_data = 55
+ITER: i_iter = 55 ret = -0.20 ret_best = -0.01 n_data = 56
+ITER: i_iter = 56 ret = -0.10 ret_best = -0.01 n_data = 57
+ITER: i_iter = 57 ret = -0.07 ret_best = -0.01 n_data = 58
+ITER: i_iter = 58 ret = -0.09 ret_best = -0.01 n_data = 59
+ITER: i_iter = 59 ret = -0.12 ret_best = -0.01 n_data = 60
+ITER: i_iter = 60 ret = -0.01 ret_best = -0.01 n_data = 61
+ITER: i_iter = 61 ret = -0.11 ret_best = -0.01 n_data = 62
+ITER: i_iter = 62 ret = -0.16 ret_best = -0.01 n_data = 63
+ITER: i_iter = 63 ret = -0.17 ret_best = -0.01 n_data = 64
+ITER: i_iter = 64 ret = -0.09 ret_best = -0.01 n_data = 65
+ITER: i_iter = 65 ret = -0.08 ret_best = -0.01 n_data = 66
+ITER: i_iter = 66 ret = -0.15 ret_best = -0.01 n_data = 67
+ITER: i_iter = 67 ret = -0.09 ret_best = -0.01 n_data = 68
+ITER: i_iter = 68 ret = -0.22 ret_best = -0.01 n_data = 69
+ITER: i_iter = 69 ret = -0.16 ret_best = -0.01 n_data = 70
+ITER: i_iter = 70 ret = -0.23 ret_best = -0.01 n_data = 71
+ITER: i_iter = 71 ret = -0.17 ret_best = -0.01 n_data = 72
+ITER: i_iter = 72 ret = -0.17 ret_best = -0.01 n_data = 73
+ITER: i_iter = 73 ret = -0.01 ret_best = -0.01 n_data = 74
+ITER: i_iter = 74 ret = -0.10 ret_best = -0.01 n_data = 75
+ITER: i_iter = 75 ret = -0.13 ret_best = -0.01 n_data = 76
+ITER: i_iter = 76 ret = -0.19 ret_best = -0.01 n_data = 77
+ITER: i_iter = 77 ret = -0.09 ret_best = -0.01 n_data = 78
+ITER: i_iter = 78 ret = -0.16 ret_best = -0.01 n_data = 79
+ITER: i_iter = 79 ret = -0.08 ret_best = -0.01 n_data = 80
+ITER: i_iter = 80 ret = -0.15 ret_best = -0.01 n_data = 81
+ITER: i_iter = 81 ret = -0.09 ret_best = -0.01 n_data = 82
+ITER: i_iter = 82 ret = -0.14 ret_best = -0.01 n_data = 83
+ITER: i_iter = 83 ret = -0.10 ret_best = -0.01 n_data = 84
+ITER: i_iter = 84 ret = -0.17 ret_best = -0.01 n_data = 85
+ITER: i_iter = 85 ret = -0.18 ret_best = -0.01 n_data = 86
+ITER: i_iter = 86 ret = -0.19 ret_best = -0.01 n_data = 87
+ITER: i_iter = 87 ret = -0.10 ret_best = -0.01 n_data = 88
+ITER: i_iter = 88 ret = -0.03 ret_best = -0.01 n_data = 89
+ITER: i_iter = 89 ret = -0.15 ret_best = -0.01 n_data = 90
+ITER: i_iter = 90 ret = -0.01 ret_best = -0.01 n_data = 91
+ITER: i_iter = 91 ret = -0.12 ret_best = -0.01 n_data = 92
+ITER: i_iter = 92 ret = -0.11 ret_best = -0.01 n_data = 93
+ITER: i_iter = 93 ret = -0.15 ret_best = -0.01 n_data = 94
+ITER: i_iter = 94 ret = -0.11 ret_best = -0.01 n_data = 95
+ITER: i_iter = 95 ret = -0.17 ret_best = -0.01 n_data = 96
+ITER: i_iter = 96 ret = -0.14 ret_best = -0.01 n_data = 97
+ITER: i_iter = 97 ret = -0.10 ret_best = -0.01 n_data = 98
+ITER: i_iter = 98 ret = -0.05 ret_best = -0.01 n_data = 99
+ITER: i_iter = 99 ret = -0.17 ret_best = -0.01 n_data = 100
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 0 return = -0.172
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 1 return = -0.071
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 2 return = -0.071
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 3 return = -0.071
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 4 return = -0.071
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 5 return = -0.071
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 6 return = -0.071
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 7 return = -0.071
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 8 return = -0.071
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 9 return = -0.071
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 10 return = -0.071
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 11 return = -0.062
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 12 return = -0.062
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 13 return = -0.062
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 14 return = -0.053
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 15 return = -0.053
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 16 return = -0.053
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 17 return = -0.053
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 18 return = -0.053
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 19 return = -0.053
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 20 return = -0.053
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 21 return = -0.043
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 22 return = -0.043
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 23 return = -0.043
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 24 return = -0.043
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 25 return = -0.043
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 26 return = -0.043
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 27 return = -0.043
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 28 return = -0.028
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 29 return = -0.028
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 30 return = -0.028
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 31 return = -0.028
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 32 return = -0.028
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 33 return = -0.028
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 34 return = -0.028
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 35 return = -0.028
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 36 return = -0.028
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 37 return = -0.028
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 38 return = -0.028
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 39 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 40 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 41 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 42 return = -0.018
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 43 return = -0.015
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 44 return = -0.015
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 45 return = -0.015
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 46 return = -0.015
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 47 return = -0.015
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 48 return = -0.015
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 49 return = -0.015
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 50 return = -0.015
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 51 return = -0.015
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 52 return = -0.015
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 53 return = -0.015
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 54 return = -0.015
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 55 return = -0.015
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 56 return = -0.015
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 57 return = -0.015
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 58 return = -0.015
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 59 return = -0.015
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 60 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 61 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 62 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 63 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 64 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 65 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 66 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 67 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 68 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 69 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 70 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 71 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 72 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 73 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 74 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 75 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 76 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 77 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 78 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 79 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 80 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 81 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 82 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 83 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 84 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 85 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 86 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 87 return = -0.011
+[INFO 02-03 23:05:31] ax.service.ax_client: Starting optimization with verbose logging. To disable logging, set the `verbose_logging` argument to `False`. Note that float values in the logs are rounded to 6 decimal points.
+[INFO 02-03 23:05:31] ax.service.utils.instantiation: Created search space: SearchSpace(parameters=[RangeParameter(name='x000', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x001', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x002', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x003', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x004', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x005', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x006', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x007', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x008', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x009', parameter_type=FLOAT, range=[-1.0, 1.0])], parameter_constraints=[]).
+[INFO 02-03 23:05:31] ax.modelbridge.dispatch_utils: Using Bayesian optimization since there are more ordered parameters than there are categories for the unordered categorical parameters.
+[INFO 02-03 23:05:31] ax.modelbridge.dispatch_utils: Calculating the number of remaining initialization trials based on num_initialization_trials=None max_initialization_trials=None num_tunable_parameters=10 num_trials=None use_batch_trials=False
+[INFO 02-03 23:05:31] ax.modelbridge.dispatch_utils: calculated num_initialization_trials=20
+[INFO 02-03 23:05:31] ax.modelbridge.dispatch_utils: num_completed_initialization_trials=0 num_remaining_initialization_trials=20
+[INFO 02-03 23:05:31] ax.modelbridge.dispatch_utils: Using Bayesian Optimization generation strategy: GenerationStrategy(name='Sobol+GPEI', steps=[Sobol for 20 trials, GPEI for subsequent trials]). Iterations after 20 will take longer to generate due to model-fitting.
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 88 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 89 return = -0.011
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 90 return = -0.006
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 91 return = -0.006
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 92 return = -0.006
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 93 return = -0.006
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 94 return = -0.006
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 95 return = -0.006
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 96 return = -0.006
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 97 return = -0.006
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 98 return = -0.006
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 52 i_iter = 99 return = -0.006
+TIME_SAMPLE: 3561.17
+ITER: i_iter = 0 ret = -0.58 ret_best = -0.58 n_data = 1
+ITER: i_iter = 1 ret = -0.26 ret_best = -0.26 n_data = 2
+ITER: i_iter = 2 ret = -0.14 ret_best = -0.14 n_data = 3
+ITER: i_iter = 3 ret = -0.14 ret_best = -0.14 n_data = 4
+ITER: i_iter = 4 ret = -0.12 ret_best = -0.12 n_data = 5
+ITER: i_iter = 5 ret = -0.30 ret_best = -0.12 n_data = 6
+ITER: i_iter = 6 ret = -0.24 ret_best = -0.12 n_data = 7
+ITER: i_iter = 7 ret = -0.12 ret_best = -0.12 n_data = 8
+ITER: i_iter = 8 ret = -0.16 ret_best = -0.12 n_data = 9
+ITER: i_iter = 9 ret = -0.15 ret_best = -0.12 n_data = 10
+ITER: i_iter = 10 ret = -0.12 ret_best = -0.12 n_data = 11
+ITER: i_iter = 11 ret = -0.20 ret_best = -0.12 n_data = 12
+ITER: i_iter = 12 ret = -0.15 ret_best = -0.12 n_data = 13
+ITER: i_iter = 13 ret = -0.14 ret_best = -0.12 n_data = 14
+ITER: i_iter = 14 ret = -0.12 ret_best = -0.12 n_data = 15
+ITER: i_iter = 15 ret = -0.21 ret_best = -0.12 n_data = 16
+ITER: i_iter = 16 ret = -0.11 ret_best = -0.11 n_data = 17
+ITER: i_iter = 17 ret = -0.13 ret_best = -0.11 n_data = 18
+ITER: i_iter = 18 ret = -0.10 ret_best = -0.10 n_data = 19
+ITER: i_iter = 19 ret = -0.18 ret_best = -0.10 n_data = 20
+ITER: i_iter = 20 ret = -0.15 ret_best = -0.10 n_data = 21
+ITER: i_iter = 21 ret = -0.14 ret_best = -0.10 n_data = 22
+ITER: i_iter = 22 ret = -0.08 ret_best = -0.08 n_data = 23
+ITER: i_iter = 23 ret = -0.09 ret_best = -0.08 n_data = 24
+ITER: i_iter = 24 ret = -0.07 ret_best = -0.07 n_data = 25
+ITER: i_iter = 25 ret = -0.19 ret_best = -0.07 n_data = 26
+ITER: i_iter = 26 ret = -0.19 ret_best = -0.07 n_data = 27
+ITER: i_iter = 27 ret = -0.26 ret_best = -0.07 n_data = 28
+ITER: i_iter = 28 ret = -0.30 ret_best = -0.07 n_data = 29
+ITER: i_iter = 29 ret = -0.16 ret_best = -0.07 n_data = 30
+ITER: i_iter = 30 ret = -0.21 ret_best = -0.07 n_data = 31
+ITER: i_iter = 31 ret = -0.25 ret_best = -0.07 n_data = 32
+ITER: i_iter = 32 ret = -0.21 ret_best = -0.07 n_data = 33
+ITER: i_iter = 33 ret = -0.29 ret_best = -0.07 n_data = 34
+ITER: i_iter = 34 ret = -0.06 ret_best = -0.06 n_data = 35
+ITER: i_iter = 35 ret = -0.07 ret_best = -0.06 n_data = 36
+ITER: i_iter = 36 ret = -0.06 ret_best = -0.06 n_data = 37
+ITER: i_iter = 37 ret = -0.16 ret_best = -0.06 n_data = 38
+ITER: i_iter = 38 ret = -0.18 ret_best = -0.06 n_data = 39
+ITER: i_iter = 39 ret = -0.17 ret_best = -0.06 n_data = 40
+ITER: i_iter = 40 ret = -0.25 ret_best = -0.06 n_data = 41
+ITER: i_iter = 41 ret = -0.17 ret_best = -0.06 n_data = 42
+ITER: i_iter = 42 ret = -0.26 ret_best = -0.06 n_data = 43
+ITER: i_iter = 43 ret = -0.19 ret_best = -0.06 n_data = 44
+ITER: i_iter = 44 ret = -0.03 ret_best = -0.03 n_data = 45
+ITER: i_iter = 45 ret = -0.07 ret_best = -0.03 n_data = 46
+ITER: i_iter = 46 ret = -0.11 ret_best = -0.03 n_data = 47
+ITER: i_iter = 47 ret = -0.25 ret_best = -0.03 n_data = 48
+ITER: i_iter = 48 ret = -0.04 ret_best = -0.03 n_data = 49
+ITER: i_iter = 49 ret = -0.13 ret_best = -0.03 n_data = 50
+ITER: i_iter = 50 ret = -0.21 ret_best = -0.03 n_data = 51
+ITER: i_iter = 51 ret = -0.21 ret_best = -0.03 n_data = 52
+ITER: i_iter = 52 ret = -0.19 ret_best = -0.03 n_data = 53
+ITER: i_iter = 53 ret = -0.20 ret_best = -0.03 n_data = 54
+ITER: i_iter = 54 ret = -0.25 ret_best = -0.03 n_data = 55
+ITER: i_iter = 55 ret = -0.13 ret_best = -0.03 n_data = 56
+ITER: i_iter = 56 ret = -0.15 ret_best = -0.03 n_data = 57
+ITER: i_iter = 57 ret = -0.23 ret_best = -0.03 n_data = 58
+ITER: i_iter = 58 ret = -0.02 ret_best = -0.02 n_data = 59
+ITER: i_iter = 59 ret = -0.17 ret_best = -0.02 n_data = 60
+ITER: i_iter = 60 ret = -0.23 ret_best = -0.02 n_data = 61
+ITER: i_iter = 61 ret = -0.27 ret_best = -0.02 n_data = 62
+ITER: i_iter = 62 ret = -0.15 ret_best = -0.02 n_data = 63
+ITER: i_iter = 63 ret = -0.29 ret_best = -0.02 n_data = 64
+ITER: i_iter = 64 ret = -0.24 ret_best = -0.02 n_data = 65
+ITER: i_iter = 65 ret = -0.16 ret_best = -0.02 n_data = 66
+ITER: i_iter = 66 ret = -0.23 ret_best = -0.02 n_data = 67
+ITER: i_iter = 67 ret = -0.21 ret_best = -0.02 n_data = 68
+ITER: i_iter = 68 ret = -0.14 ret_best = -0.02 n_data = 69
+ITER: i_iter = 69 ret = -0.09 ret_best = -0.02 n_data = 70
+ITER: i_iter = 70 ret = -0.22 ret_best = -0.02 n_data = 71
+ITER: i_iter = 71 ret = -0.22 ret_best = -0.02 n_data = 72
+ITER: i_iter = 72 ret = -0.16 ret_best = -0.02 n_data = 73
+ITER: i_iter = 73 ret = -0.17 ret_best = -0.02 n_data = 74
+ITER: i_iter = 74 ret = -0.16 ret_best = -0.02 n_data = 75
+ITER: i_iter = 75 ret = -0.12 ret_best = -0.02 n_data = 76
+ITER: i_iter = 76 ret = -0.23 ret_best = -0.02 n_data = 77
+ITER: i_iter = 77 ret = -0.26 ret_best = -0.02 n_data = 78
+ITER: i_iter = 78 ret = -0.24 ret_best = -0.02 n_data = 79
+ITER: i_iter = 79 ret = -0.01 ret_best = -0.01 n_data = 80
+ITER: i_iter = 80 ret = -0.18 ret_best = -0.01 n_data = 81
+ITER: i_iter = 81 ret = -0.16 ret_best = -0.01 n_data = 82
+ITER: i_iter = 82 ret = -0.10 ret_best = -0.01 n_data = 83
+ITER: i_iter = 83 ret = -0.32 ret_best = -0.01 n_data = 84
+ITER: i_iter = 84 ret = -0.10 ret_best = -0.01 n_data = 85
+ITER: i_iter = 85 ret = -0.17 ret_best = -0.01 n_data = 86
+ITER: i_iter = 86 ret = -0.15 ret_best = -0.01 n_data = 87
+ITER: i_iter = 87 ret = -0.19 ret_best = -0.01 n_data = 88
+ITER: i_iter = 88 ret = -0.19 ret_best = -0.01 n_data = 89
+ITER: i_iter = 89 ret = -0.25 ret_best = -0.01 n_data = 90
+ITER: i_iter = 90 ret = -0.09 ret_best = -0.01 n_data = 91
+ITER: i_iter = 91 ret = -0.27 ret_best = -0.01 n_data = 92
+ITER: i_iter = 92 ret = -0.01 ret_best = -0.01 n_data = 93
+ITER: i_iter = 93 ret = -0.21 ret_best = -0.01 n_data = 94
+ITER: i_iter = 94 ret = -0.35 ret_best = -0.01 n_data = 95
+ITER: i_iter = 95 ret = -0.17 ret_best = -0.01 n_data = 96
+ITER: i_iter = 96 ret = -0.16 ret_best = -0.01 n_data = 97
+ITER: i_iter = 97 ret = -0.24 ret_best = -0.01 n_data = 98
+ITER: i_iter = 98 ret = -0.34 ret_best = -0.01 n_data = 99
+ITER: i_iter = 99 ret = -0.25 ret_best = -0.01 n_data = 100
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 0 return = -0.576
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 1 return = -0.258
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 2 return = -0.136
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 3 return = -0.136
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 4 return = -0.122
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 5 return = -0.122
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 6 return = -0.122
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 7 return = -0.122
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 8 return = -0.122
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 9 return = -0.122
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 10 return = -0.117
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 11 return = -0.117
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 12 return = -0.117
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 13 return = -0.117
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 14 return = -0.117
+[INFO 02-04 00:14:24] ax.service.ax_client: Starting optimization with verbose logging. To disable logging, set the `verbose_logging` argument to `False`. Note that float values in the logs are rounded to 6 decimal points.
+[INFO 02-04 00:14:24] ax.service.utils.instantiation: Created search space: SearchSpace(parameters=[RangeParameter(name='x000', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x001', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x002', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x003', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x004', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x005', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x006', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x007', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x008', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x009', parameter_type=FLOAT, range=[-1.0, 1.0])], parameter_constraints=[]).
+[INFO 02-04 00:14:24] ax.modelbridge.dispatch_utils: Using Bayesian optimization since there are more ordered parameters than there are categories for the unordered categorical parameters.
+[INFO 02-04 00:14:24] ax.modelbridge.dispatch_utils: Calculating the number of remaining initialization trials based on num_initialization_trials=None max_initialization_trials=None num_tunable_parameters=10 num_trials=None use_batch_trials=False
+[INFO 02-04 00:14:24] ax.modelbridge.dispatch_utils: calculated num_initialization_trials=20
+[INFO 02-04 00:14:24] ax.modelbridge.dispatch_utils: num_completed_initialization_trials=0 num_remaining_initialization_trials=20
+[INFO 02-04 00:14:24] ax.modelbridge.dispatch_utils: Using Bayesian Optimization generation strategy: GenerationStrategy(name='Sobol+GPEI', steps=[Sobol for 20 trials, GPEI for subsequent trials]). Iterations after 20 will take longer to generate due to model-fitting.
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 15 return = -0.117
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 16 return = -0.107
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 17 return = -0.107
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 18 return = -0.096
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 19 return = -0.096
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 20 return = -0.096
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 21 return = -0.096
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 22 return = -0.085
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 23 return = -0.085
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 24 return = -0.071
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 25 return = -0.071
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 26 return = -0.071
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 27 return = -0.071
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 28 return = -0.071
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 29 return = -0.071
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 30 return = -0.071
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 31 return = -0.071
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 32 return = -0.071
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 33 return = -0.071
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 34 return = -0.056
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 35 return = -0.056
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 36 return = -0.056
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 37 return = -0.056
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 38 return = -0.056
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 39 return = -0.056
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 40 return = -0.056
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 41 return = -0.056
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 42 return = -0.056
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 43 return = -0.056
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 44 return = -0.033
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 45 return = -0.033
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 46 return = -0.033
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 47 return = -0.033
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 48 return = -0.033
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 49 return = -0.033
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 50 return = -0.033
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 51 return = -0.033
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 52 return = -0.033
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 53 return = -0.033
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 54 return = -0.033
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 55 return = -0.033
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 56 return = -0.033
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 57 return = -0.033
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 58 return = -0.022
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 59 return = -0.022
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 60 return = -0.022
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 61 return = -0.022
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 62 return = -0.022
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 63 return = -0.022
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 64 return = -0.022
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 65 return = -0.022
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 66 return = -0.022
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 67 return = -0.022
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 68 return = -0.022
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 69 return = -0.022
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 70 return = -0.022
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 71 return = -0.022
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 72 return = -0.022
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 73 return = -0.022
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 74 return = -0.022
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 75 return = -0.022
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 76 return = -0.022
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 77 return = -0.022
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 78 return = -0.022
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 79 return = -0.015
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 80 return = -0.015
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 81 return = -0.015
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 82 return = -0.015
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 83 return = -0.015
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 84 return = -0.015
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 85 return = -0.015
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 86 return = -0.015
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 87 return = -0.015
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 88 return = -0.015
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 89 return = -0.015
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 90 return = -0.015
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 91 return = -0.015
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 92 return = -0.008
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 93 return = -0.008
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 94 return = -0.008
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 95 return = -0.008
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 96 return = -0.008
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 97 return = -0.008
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 98 return = -0.008
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 53 i_iter = 99 return = -0.008
+TIME_SAMPLE: 4132.20
+ITER: i_iter = 0 ret = -0.28 ret_best = -0.28 n_data = 1
+ITER: i_iter = 1 ret = -0.14 ret_best = -0.14 n_data = 2
+ITER: i_iter = 2 ret = -0.07 ret_best = -0.07 n_data = 3
+ITER: i_iter = 3 ret = -0.04 ret_best = -0.04 n_data = 4
+ITER: i_iter = 4 ret = -0.18 ret_best = -0.04 n_data = 5
+ITER: i_iter = 5 ret = -0.16 ret_best = -0.04 n_data = 6
+ITER: i_iter = 6 ret = -0.13 ret_best = -0.04 n_data = 7
+ITER: i_iter = 7 ret = -0.11 ret_best = -0.04 n_data = 8
+ITER: i_iter = 8 ret = -0.26 ret_best = -0.04 n_data = 9
+ITER: i_iter = 9 ret = -0.08 ret_best = -0.04 n_data = 10
+ITER: i_iter = 10 ret = -0.14 ret_best = -0.04 n_data = 11
+ITER: i_iter = 11 ret = -0.08 ret_best = -0.04 n_data = 12
+ITER: i_iter = 12 ret = -0.17 ret_best = -0.04 n_data = 13
+ITER: i_iter = 13 ret = -0.04 ret_best = -0.04 n_data = 14
+ITER: i_iter = 14 ret = -0.22 ret_best = -0.04 n_data = 15
+ITER: i_iter = 15 ret = -0.14 ret_best = -0.04 n_data = 16
+ITER: i_iter = 16 ret = -0.13 ret_best = -0.04 n_data = 17
+ITER: i_iter = 17 ret = -0.18 ret_best = -0.04 n_data = 18
+ITER: i_iter = 18 ret = -0.18 ret_best = -0.04 n_data = 19
+ITER: i_iter = 19 ret = -0.16 ret_best = -0.04 n_data = 20
+ITER: i_iter = 20 ret = -0.08 ret_best = -0.04 n_data = 21
+ITER: i_iter = 21 ret = -0.14 ret_best = -0.04 n_data = 22
+ITER: i_iter = 22 ret = -0.14 ret_best = -0.04 n_data = 23
+ITER: i_iter = 23 ret = -0.11 ret_best = -0.04 n_data = 24
+ITER: i_iter = 24 ret = -0.14 ret_best = -0.04 n_data = 25
+ITER: i_iter = 25 ret = -0.22 ret_best = -0.04 n_data = 26
+ITER: i_iter = 26 ret = -0.09 ret_best = -0.04 n_data = 27
+ITER: i_iter = 27 ret = -0.13 ret_best = -0.04 n_data = 28
+ITER: i_iter = 28 ret = -0.11 ret_best = -0.04 n_data = 29
+ITER: i_iter = 29 ret = -0.16 ret_best = -0.04 n_data = 30
+ITER: i_iter = 30 ret = -0.03 ret_best = -0.03 n_data = 31
+ITER: i_iter = 31 ret = -0.21 ret_best = -0.03 n_data = 32
+ITER: i_iter = 32 ret = -0.15 ret_best = -0.03 n_data = 33
+ITER: i_iter = 33 ret = -0.19 ret_best = -0.03 n_data = 34
+ITER: i_iter = 34 ret = -0.15 ret_best = -0.03 n_data = 35
+ITER: i_iter = 35 ret = -0.19 ret_best = -0.03 n_data = 36
+ITER: i_iter = 36 ret = -0.10 ret_best = -0.03 n_data = 37
+ITER: i_iter = 37 ret = -0.20 ret_best = -0.03 n_data = 38
+ITER: i_iter = 38 ret = -0.19 ret_best = -0.03 n_data = 39
+ITER: i_iter = 39 ret = -0.16 ret_best = -0.03 n_data = 40
+ITER: i_iter = 40 ret = -0.14 ret_best = -0.03 n_data = 41
+ITER: i_iter = 41 ret = -0.17 ret_best = -0.03 n_data = 42
+ITER: i_iter = 42 ret = -0.09 ret_best = -0.03 n_data = 43
+ITER: i_iter = 43 ret = -0.25 ret_best = -0.03 n_data = 44
+ITER: i_iter = 44 ret = -0.02 ret_best = -0.02 n_data = 45
+ITER: i_iter = 45 ret = -0.21 ret_best = -0.02 n_data = 46
+ITER: i_iter = 46 ret = -0.11 ret_best = -0.02 n_data = 47
+ITER: i_iter = 47 ret = -0.11 ret_best = -0.02 n_data = 48
+ITER: i_iter = 48 ret = -0.17 ret_best = -0.02 n_data = 49
+ITER: i_iter = 49 ret = -0.07 ret_best = -0.02 n_data = 50
+ITER: i_iter = 50 ret = -0.13 ret_best = -0.02 n_data = 51
+ITER: i_iter = 51 ret = -0.20 ret_best = -0.02 n_data = 52
+ITER: i_iter = 52 ret = -0.19 ret_best = -0.02 n_data = 53
+ITER: i_iter = 53 ret = -0.02 ret_best = -0.02 n_data = 54
+ITER: i_iter = 54 ret = -0.16 ret_best = -0.02 n_data = 55
+ITER: i_iter = 55 ret = -0.27 ret_best = -0.02 n_data = 56
+ITER: i_iter = 56 ret = -0.09 ret_best = -0.02 n_data = 57
+ITER: i_iter = 57 ret = -0.15 ret_best = -0.02 n_data = 58
+ITER: i_iter = 58 ret = -0.12 ret_best = -0.02 n_data = 59
+ITER: i_iter = 59 ret = -0.02 ret_best = -0.02 n_data = 60
+ITER: i_iter = 60 ret = -0.09 ret_best = -0.02 n_data = 61
+ITER: i_iter = 61 ret = -0.17 ret_best = -0.02 n_data = 62
+ITER: i_iter = 62 ret = -0.22 ret_best = -0.02 n_data = 63
+ITER: i_iter = 63 ret = -0.24 ret_best = -0.02 n_data = 64
+ITER: i_iter = 64 ret = -0.14 ret_best = -0.02 n_data = 65
+ITER: i_iter = 65 ret = -0.15 ret_best = -0.02 n_data = 66
+ITER: i_iter = 66 ret = -0.17 ret_best = -0.02 n_data = 67
+ITER: i_iter = 67 ret = -0.16 ret_best = -0.02 n_data = 68
+ITER: i_iter = 68 ret = -0.18 ret_best = -0.02 n_data = 69
+ITER: i_iter = 69 ret = -0.20 ret_best = -0.02 n_data = 70
+ITER: i_iter = 70 ret = -0.15 ret_best = -0.02 n_data = 71
+ITER: i_iter = 71 ret = -0.22 ret_best = -0.02 n_data = 72
+ITER: i_iter = 72 ret = -0.25 ret_best = -0.02 n_data = 73
+ITER: i_iter = 73 ret = -0.15 ret_best = -0.02 n_data = 74
+ITER: i_iter = 74 ret = -0.13 ret_best = -0.02 n_data = 75
+ITER: i_iter = 75 ret = -0.10 ret_best = -0.02 n_data = 76
+ITER: i_iter = 76 ret = -0.19 ret_best = -0.02 n_data = 77
+ITER: i_iter = 77 ret = -0.24 ret_best = -0.02 n_data = 78
+ITER: i_iter = 78 ret = -0.21 ret_best = -0.02 n_data = 79
+ITER: i_iter = 79 ret = -0.07 ret_best = -0.02 n_data = 80
+ITER: i_iter = 80 ret = -0.18 ret_best = -0.02 n_data = 81
+ITER: i_iter = 81 ret = -0.01 ret_best = -0.01 n_data = 82
+ITER: i_iter = 82 ret = -0.17 ret_best = -0.01 n_data = 83
+ITER: i_iter = 83 ret = -0.30 ret_best = -0.01 n_data = 84
+ITER: i_iter = 84 ret = -0.17 ret_best = -0.01 n_data = 85
+ITER: i_iter = 85 ret = -0.20 ret_best = -0.01 n_data = 86
+ITER: i_iter = 86 ret = -0.20 ret_best = -0.01 n_data = 87
+ITER: i_iter = 87 ret = -0.18 ret_best = -0.01 n_data = 88
+ITER: i_iter = 88 ret = -0.15 ret_best = -0.01 n_data = 89
+ITER: i_iter = 89 ret = -0.20 ret_best = -0.01 n_data = 90
+ITER: i_iter = 90 ret = -0.11 ret_best = -0.01 n_data = 91
+ITER: i_iter = 91 ret = -0.11 ret_best = -0.01 n_data = 92
+ITER: i_iter = 92 ret = -0.24 ret_best = -0.01 n_data = 93
+ITER: i_iter = 93 ret = -0.21 ret_best = -0.01 n_data = 94
+ITER: i_iter = 94 ret = -0.23 ret_best = -0.01 n_data = 95
+ITER: i_iter = 95 ret = -0.01 ret_best = -0.01 n_data = 96
+ITER: i_iter = 96 ret = -0.09 ret_best = -0.01 n_data = 97
+ITER: i_iter = 97 ret = -0.26 ret_best = -0.01 n_data = 98
+ITER: i_iter = 98 ret = -0.23 ret_best = -0.01 n_data = 99
+ITER: i_iter = 99 ret = -0.17 ret_best = -0.01 n_data = 100
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 0 return = -0.285
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 1 return = -0.145
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 2 return = -0.068
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 3 return = -0.040
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 4 return = -0.040
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 5 return = -0.040
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 6 return = -0.040
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 7 return = -0.040
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 8 return = -0.040
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 9 return = -0.040
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 10 return = -0.040
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 11 return = -0.040
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 12 return = -0.040
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 13 return = -0.036
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 14 return = -0.036
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 15 return = -0.036
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 16 return = -0.036
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 17 return = -0.036
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 18 return = -0.036
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 19 return = -0.036
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 20 return = -0.036
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 21 return = -0.036
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 22 return = -0.036
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 23 return = -0.036
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 24 return = -0.036
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 25 return = -0.036
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 26 return = -0.036
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 27 return = -0.036
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 28 return = -0.036
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 29 return = -0.036
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 30 return = -0.028
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 31 return = -0.028
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 32 return = -0.028
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 33 return = -0.028
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 34 return = -0.028
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 35 return = -0.028
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 36 return = -0.028
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 37 return = -0.028
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 38 return = -0.028
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 39 return = -0.028
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 40 return = -0.028
+[INFO 02-04 01:11:21] ax.service.ax_client: Starting optimization with verbose logging. To disable logging, set the `verbose_logging` argument to `False`. Note that float values in the logs are rounded to 6 decimal points.
+[INFO 02-04 01:11:21] ax.service.utils.instantiation: Created search space: SearchSpace(parameters=[RangeParameter(name='x000', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x001', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x002', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x003', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x004', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x005', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x006', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x007', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x008', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x009', parameter_type=FLOAT, range=[-1.0, 1.0])], parameter_constraints=[]).
+[INFO 02-04 01:11:21] ax.modelbridge.dispatch_utils: Using Bayesian optimization since there are more ordered parameters than there are categories for the unordered categorical parameters.
+[INFO 02-04 01:11:21] ax.modelbridge.dispatch_utils: Calculating the number of remaining initialization trials based on num_initialization_trials=None max_initialization_trials=None num_tunable_parameters=10 num_trials=None use_batch_trials=False
+[INFO 02-04 01:11:21] ax.modelbridge.dispatch_utils: calculated num_initialization_trials=20
+[INFO 02-04 01:11:21] ax.modelbridge.dispatch_utils: num_completed_initialization_trials=0 num_remaining_initialization_trials=20
+[INFO 02-04 01:11:21] ax.modelbridge.dispatch_utils: Using Bayesian Optimization generation strategy: GenerationStrategy(name='Sobol+GPEI', steps=[Sobol for 20 trials, GPEI for subsequent trials]). Iterations after 20 will take longer to generate due to model-fitting.
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 41 return = -0.028
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 42 return = -0.028
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 43 return = -0.028
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 44 return = -0.021
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 45 return = -0.021
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 46 return = -0.021
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 47 return = -0.021
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 48 return = -0.021
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 49 return = -0.021
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 50 return = -0.021
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 51 return = -0.021
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 52 return = -0.021
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 53 return = -0.017
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 54 return = -0.017
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 55 return = -0.017
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 56 return = -0.017
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 57 return = -0.017
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 58 return = -0.017
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 59 return = -0.017
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 60 return = -0.017
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 61 return = -0.017
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 62 return = -0.017
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 63 return = -0.017
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 64 return = -0.017
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 65 return = -0.017
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 66 return = -0.017
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 67 return = -0.017
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 68 return = -0.017
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 69 return = -0.017
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 70 return = -0.017
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 71 return = -0.017
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 72 return = -0.017
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 73 return = -0.017
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 74 return = -0.017
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 75 return = -0.017
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 76 return = -0.017
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 77 return = -0.017
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 78 return = -0.017
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 79 return = -0.017
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 80 return = -0.017
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 81 return = -0.010
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 82 return = -0.010
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 83 return = -0.010
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 84 return = -0.010
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 85 return = -0.010
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 86 return = -0.010
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 87 return = -0.010
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 88 return = -0.010
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 89 return = -0.010
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 90 return = -0.010
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 91 return = -0.010
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 92 return = -0.010
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 93 return = -0.010
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 94 return = -0.010
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 95 return = -0.006
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 96 return = -0.006
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 97 return = -0.006
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 98 return = -0.006
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 54 i_iter = 99 return = -0.006
+TIME_SAMPLE: 3416.84
+ITER: i_iter = 0 ret = -0.30 ret_best = -0.30 n_data = 1
+ITER: i_iter = 1 ret = -0.14 ret_best = -0.14 n_data = 2
+ITER: i_iter = 2 ret = -0.07 ret_best = -0.07 n_data = 3
+ITER: i_iter = 3 ret = -0.13 ret_best = -0.07 n_data = 4
+ITER: i_iter = 4 ret = -0.07 ret_best = -0.07 n_data = 5
+ITER: i_iter = 5 ret = -0.14 ret_best = -0.07 n_data = 6
+ITER: i_iter = 6 ret = -0.08 ret_best = -0.07 n_data = 7
+ITER: i_iter = 7 ret = -0.19 ret_best = -0.07 n_data = 8
+ITER: i_iter = 8 ret = -0.21 ret_best = -0.07 n_data = 9
+ITER: i_iter = 9 ret = -0.19 ret_best = -0.07 n_data = 10
+ITER: i_iter = 10 ret = -0.15 ret_best = -0.07 n_data = 11
+ITER: i_iter = 11 ret = -0.15 ret_best = -0.07 n_data = 12
+ITER: i_iter = 12 ret = -0.26 ret_best = -0.07 n_data = 13
+ITER: i_iter = 13 ret = -0.15 ret_best = -0.07 n_data = 14
+ITER: i_iter = 14 ret = -0.11 ret_best = -0.07 n_data = 15
+ITER: i_iter = 15 ret = -0.12 ret_best = -0.07 n_data = 16
+ITER: i_iter = 16 ret = -0.08 ret_best = -0.07 n_data = 17
+ITER: i_iter = 17 ret = -0.24 ret_best = -0.07 n_data = 18
+ITER: i_iter = 18 ret = -0.06 ret_best = -0.06 n_data = 19
+ITER: i_iter = 19 ret = -0.20 ret_best = -0.06 n_data = 20
+ITER: i_iter = 20 ret = -0.10 ret_best = -0.06 n_data = 21
+ITER: i_iter = 21 ret = -0.05 ret_best = -0.05 n_data = 22
+ITER: i_iter = 22 ret = -0.14 ret_best = -0.05 n_data = 23
+ITER: i_iter = 23 ret = -0.17 ret_best = -0.05 n_data = 24
+ITER: i_iter = 24 ret = -0.09 ret_best = -0.05 n_data = 25
+ITER: i_iter = 25 ret = -0.04 ret_best = -0.04 n_data = 26
+ITER: i_iter = 26 ret = -0.15 ret_best = -0.04 n_data = 27
+ITER: i_iter = 27 ret = -0.23 ret_best = -0.04 n_data = 28
+ITER: i_iter = 28 ret = -0.17 ret_best = -0.04 n_data = 29
+ITER: i_iter = 29 ret = -0.08 ret_best = -0.04 n_data = 30
+ITER: i_iter = 30 ret = -0.21 ret_best = -0.04 n_data = 31
+ITER: i_iter = 31 ret = -0.04 ret_best = -0.04 n_data = 32
+ITER: i_iter = 32 ret = -0.19 ret_best = -0.04 n_data = 33
+ITER: i_iter = 33 ret = -0.18 ret_best = -0.04 n_data = 34
+ITER: i_iter = 34 ret = -0.16 ret_best = -0.04 n_data = 35
+ITER: i_iter = 35 ret = -0.10 ret_best = -0.04 n_data = 36
+ITER: i_iter = 36 ret = -0.23 ret_best = -0.04 n_data = 37
+ITER: i_iter = 37 ret = -0.17 ret_best = -0.04 n_data = 38
+ITER: i_iter = 38 ret = -0.14 ret_best = -0.04 n_data = 39
+ITER: i_iter = 39 ret = -0.21 ret_best = -0.04 n_data = 40
+ITER: i_iter = 40 ret = -0.24 ret_best = -0.04 n_data = 41
+ITER: i_iter = 41 ret = -0.26 ret_best = -0.04 n_data = 42
+ITER: i_iter = 42 ret = -0.14 ret_best = -0.04 n_data = 43
+ITER: i_iter = 43 ret = -0.21 ret_best = -0.04 n_data = 44
+ITER: i_iter = 44 ret = -0.14 ret_best = -0.04 n_data = 45
+ITER: i_iter = 45 ret = -0.11 ret_best = -0.04 n_data = 46
+ITER: i_iter = 46 ret = -0.15 ret_best = -0.04 n_data = 47
+ITER: i_iter = 47 ret = -0.03 ret_best = -0.03 n_data = 48
+ITER: i_iter = 48 ret = -0.21 ret_best = -0.03 n_data = 49
+ITER: i_iter = 49 ret = -0.10 ret_best = -0.03 n_data = 50
+ITER: i_iter = 50 ret = -0.03 ret_best = -0.03 n_data = 51
+ITER: i_iter = 51 ret = -0.16 ret_best = -0.03 n_data = 52
+ITER: i_iter = 52 ret = -0.22 ret_best = -0.03 n_data = 53
+ITER: i_iter = 53 ret = -0.23 ret_best = -0.03 n_data = 54
+ITER: i_iter = 54 ret = -0.15 ret_best = -0.03 n_data = 55
+ITER: i_iter = 55 ret = -0.19 ret_best = -0.03 n_data = 56
+ITER: i_iter = 56 ret = -0.11 ret_best = -0.03 n_data = 57
+ITER: i_iter = 57 ret = -0.10 ret_best = -0.03 n_data = 58
+ITER: i_iter = 58 ret = -0.12 ret_best = -0.03 n_data = 59
+ITER: i_iter = 59 ret = -0.13 ret_best = -0.03 n_data = 60
+ITER: i_iter = 60 ret = -0.17 ret_best = -0.03 n_data = 61
+ITER: i_iter = 61 ret = -0.14 ret_best = -0.03 n_data = 62
+ITER: i_iter = 62 ret = -0.02 ret_best = -0.02 n_data = 63
+ITER: i_iter = 63 ret = -0.13 ret_best = -0.02 n_data = 64
+ITER: i_iter = 64 ret = -0.18 ret_best = -0.02 n_data = 65
+ITER: i_iter = 65 ret = -0.19 ret_best = -0.02 n_data = 66
+ITER: i_iter = 66 ret = -0.25 ret_best = -0.02 n_data = 67
+ITER: i_iter = 67 ret = -0.18 ret_best = -0.02 n_data = 68
+ITER: i_iter = 68 ret = -0.14 ret_best = -0.02 n_data = 69
+ITER: i_iter = 69 ret = -0.17 ret_best = -0.02 n_data = 70
+ITER: i_iter = 70 ret = -0.13 ret_best = -0.02 n_data = 71
+ITER: i_iter = 71 ret = -0.17 ret_best = -0.02 n_data = 72
+ITER: i_iter = 72 ret = -0.24 ret_best = -0.02 n_data = 73
+ITER: i_iter = 73 ret = -0.11 ret_best = -0.02 n_data = 74
+ITER: i_iter = 74 ret = -0.14 ret_best = -0.02 n_data = 75
+ITER: i_iter = 75 ret = -0.02 ret_best = -0.02 n_data = 76
+ITER: i_iter = 76 ret = -0.26 ret_best = -0.02 n_data = 77
+ITER: i_iter = 77 ret = -0.12 ret_best = -0.02 n_data = 78
+ITER: i_iter = 78 ret = -0.26 ret_best = -0.02 n_data = 79
+ITER: i_iter = 79 ret = -0.11 ret_best = -0.02 n_data = 80
+ITER: i_iter = 80 ret = -0.24 ret_best = -0.02 n_data = 81
+ITER: i_iter = 81 ret = -0.24 ret_best = -0.02 n_data = 82
+ITER: i_iter = 82 ret = -0.18 ret_best = -0.02 n_data = 83
+ITER: i_iter = 83 ret = -0.10 ret_best = -0.02 n_data = 84
+ITER: i_iter = 84 ret = -0.10 ret_best = -0.02 n_data = 85
+ITER: i_iter = 85 ret = -0.12 ret_best = -0.02 n_data = 86
+ITER: i_iter = 86 ret = -0.11 ret_best = -0.02 n_data = 87
+ITER: i_iter = 87 ret = -0.23 ret_best = -0.02 n_data = 88
+ITER: i_iter = 88 ret = -0.16 ret_best = -0.02 n_data = 89
+ITER: i_iter = 89 ret = -0.16 ret_best = -0.02 n_data = 90
+ITER: i_iter = 90 ret = -0.19 ret_best = -0.02 n_data = 91
+ITER: i_iter = 91 ret = -0.12 ret_best = -0.02 n_data = 92
+ITER: i_iter = 92 ret = -0.16 ret_best = -0.02 n_data = 93
+ITER: i_iter = 93 ret = -0.19 ret_best = -0.02 n_data = 94
+ITER: i_iter = 94 ret = -0.24 ret_best = -0.02 n_data = 95
+ITER: i_iter = 95 ret = -0.19 ret_best = -0.02 n_data = 96
+ITER: i_iter = 96 ret = -0.01 ret_best = -0.01 n_data = 97
+ITER: i_iter = 97 ret = -0.24 ret_best = -0.01 n_data = 98
+ITER: i_iter = 98 ret = -0.19 ret_best = -0.01 n_data = 99
+ITER: i_iter = 99 ret = -0.32 ret_best = -0.01 n_data = 100
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 0 return = -0.300
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 1 return = -0.144
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 2 return = -0.074
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 3 return = -0.074
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 4 return = -0.074
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 5 return = -0.074
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 6 return = -0.074
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 7 return = -0.074
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 8 return = -0.074
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 9 return = -0.074
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 10 return = -0.074
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 11 return = -0.074
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 12 return = -0.074
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 13 return = -0.074
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 14 return = -0.074
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 15 return = -0.074
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 16 return = -0.074
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 17 return = -0.074
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 18 return = -0.063
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 19 return = -0.063
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 20 return = -0.063
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 21 return = -0.047
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 22 return = -0.047
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 23 return = -0.047
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 24 return = -0.047
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 25 return = -0.039
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 26 return = -0.039
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 27 return = -0.039
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 28 return = -0.039
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 29 return = -0.039
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 30 return = -0.039
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 31 return = -0.039
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 32 return = -0.039
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 33 return = -0.039
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 34 return = -0.039
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 35 return = -0.039
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 36 return = -0.039
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 37 return = -0.039
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 38 return = -0.039
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 39 return = -0.039
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 40 return = -0.039
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 41 return = -0.039
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 42 return = -0.039
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 43 return = -0.039
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 44 return = -0.039
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 45 return = -0.039
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 46 return = -0.039
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 47 return = -0.028
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 48 return = -0.028
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 49 return = -0.028
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 50 return = -0.026
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 51 return = -0.026
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 52 return = -0.026
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 53 return = -0.026
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 54 return = -0.026
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 55 return = -0.026
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 56 return = -0.026
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 57 return = -0.026
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 58 return = -0.026
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 59 return = -0.026
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 60 return = -0.026
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 61 return = -0.026
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 62 return = -0.022
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 63 return = -0.022
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 64 return = -0.022
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 65 return = -0.022
+[INFO 02-04 02:21:15] ax.service.ax_client: Starting optimization with verbose logging. To disable logging, set the `verbose_logging` argument to `False`. Note that float values in the logs are rounded to 6 decimal points.
+[INFO 02-04 02:21:15] ax.service.utils.instantiation: Created search space: SearchSpace(parameters=[RangeParameter(name='x000', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x001', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x002', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x003', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x004', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x005', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x006', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x007', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x008', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x009', parameter_type=FLOAT, range=[-1.0, 1.0])], parameter_constraints=[]).
+[INFO 02-04 02:21:15] ax.modelbridge.dispatch_utils: Using Bayesian optimization since there are more ordered parameters than there are categories for the unordered categorical parameters.
+[INFO 02-04 02:21:15] ax.modelbridge.dispatch_utils: Calculating the number of remaining initialization trials based on num_initialization_trials=None max_initialization_trials=None num_tunable_parameters=10 num_trials=None use_batch_trials=False
+[INFO 02-04 02:21:15] ax.modelbridge.dispatch_utils: calculated num_initialization_trials=20
+[INFO 02-04 02:21:15] ax.modelbridge.dispatch_utils: num_completed_initialization_trials=0 num_remaining_initialization_trials=20
+[INFO 02-04 02:21:15] ax.modelbridge.dispatch_utils: Using Bayesian Optimization generation strategy: GenerationStrategy(name='Sobol+GPEI', steps=[Sobol for 20 trials, GPEI for subsequent trials]). Iterations after 20 will take longer to generate due to model-fitting.
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 66 return = -0.022
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 67 return = -0.022
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 68 return = -0.022
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 69 return = -0.022
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 70 return = -0.022
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 71 return = -0.022
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 72 return = -0.022
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 73 return = -0.022
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 74 return = -0.022
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 75 return = -0.019
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 76 return = -0.019
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 77 return = -0.019
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 78 return = -0.019
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 79 return = -0.019
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 80 return = -0.019
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 81 return = -0.019
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 82 return = -0.019
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 83 return = -0.019
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 84 return = -0.019
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 85 return = -0.019
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 86 return = -0.019
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 87 return = -0.019
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 88 return = -0.019
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 89 return = -0.019
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 90 return = -0.019
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 91 return = -0.019
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 92 return = -0.019
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 93 return = -0.019
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 94 return = -0.019
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 95 return = -0.019
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 96 return = -0.010
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 97 return = -0.010
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 98 return = -0.010
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 55 i_iter = 99 return = -0.010
+TIME_SAMPLE: 4193.99
+ITER: i_iter = 0 ret = -0.53 ret_best = -0.53 n_data = 1
+ITER: i_iter = 1 ret = -0.23 ret_best = -0.23 n_data = 2
+ITER: i_iter = 2 ret = -0.11 ret_best = -0.11 n_data = 3
+ITER: i_iter = 3 ret = -0.08 ret_best = -0.08 n_data = 4
+ITER: i_iter = 4 ret = -0.21 ret_best = -0.08 n_data = 5
+ITER: i_iter = 5 ret = -0.13 ret_best = -0.08 n_data = 6
+ITER: i_iter = 6 ret = -0.12 ret_best = -0.08 n_data = 7
+ITER: i_iter = 7 ret = -0.23 ret_best = -0.08 n_data = 8
+ITER: i_iter = 8 ret = -0.12 ret_best = -0.08 n_data = 9
+ITER: i_iter = 9 ret = -0.10 ret_best = -0.08 n_data = 10
+ITER: i_iter = 10 ret = -0.06 ret_best = -0.06 n_data = 11
+ITER: i_iter = 11 ret = -0.15 ret_best = -0.06 n_data = 12
+ITER: i_iter = 12 ret = -0.13 ret_best = -0.06 n_data = 13
+ITER: i_iter = 13 ret = -0.11 ret_best = -0.06 n_data = 14
+ITER: i_iter = 14 ret = -0.06 ret_best = -0.06 n_data = 15
+ITER: i_iter = 15 ret = -0.13 ret_best = -0.06 n_data = 16
+ITER: i_iter = 16 ret = -0.13 ret_best = -0.06 n_data = 17
+ITER: i_iter = 17 ret = -0.05 ret_best = -0.05 n_data = 18
+ITER: i_iter = 18 ret = -0.17 ret_best = -0.05 n_data = 19
+ITER: i_iter = 19 ret = -0.08 ret_best = -0.05 n_data = 20
+ITER: i_iter = 20 ret = -0.05 ret_best = -0.05 n_data = 21
+ITER: i_iter = 21 ret = -0.18 ret_best = -0.05 n_data = 22
+ITER: i_iter = 22 ret = -0.18 ret_best = -0.05 n_data = 23
+ITER: i_iter = 23 ret = -0.12 ret_best = -0.05 n_data = 24
+ITER: i_iter = 24 ret = -0.10 ret_best = -0.05 n_data = 25
+ITER: i_iter = 25 ret = -0.15 ret_best = -0.05 n_data = 26
+ITER: i_iter = 26 ret = -0.06 ret_best = -0.05 n_data = 27
+ITER: i_iter = 27 ret = -0.19 ret_best = -0.05 n_data = 28
+ITER: i_iter = 28 ret = -0.04 ret_best = -0.04 n_data = 29
+ITER: i_iter = 29 ret = -0.07 ret_best = -0.04 n_data = 30
+ITER: i_iter = 30 ret = -0.16 ret_best = -0.04 n_data = 31
+ITER: i_iter = 31 ret = -0.11 ret_best = -0.04 n_data = 32
+ITER: i_iter = 32 ret = -0.16 ret_best = -0.04 n_data = 33
+ITER: i_iter = 33 ret = -0.22 ret_best = -0.04 n_data = 34
+ITER: i_iter = 34 ret = -0.14 ret_best = -0.04 n_data = 35
+ITER: i_iter = 35 ret = -0.04 ret_best = -0.04 n_data = 36
+ITER: i_iter = 36 ret = -0.07 ret_best = -0.04 n_data = 37
+ITER: i_iter = 37 ret = -0.10 ret_best = -0.04 n_data = 38
+ITER: i_iter = 38 ret = -0.15 ret_best = -0.04 n_data = 39
+ITER: i_iter = 39 ret = -0.22 ret_best = -0.04 n_data = 40
+ITER: i_iter = 40 ret = -0.04 ret_best = -0.04 n_data = 41
+ITER: i_iter = 41 ret = -0.02 ret_best = -0.02 n_data = 42
+ITER: i_iter = 42 ret = -0.06 ret_best = -0.02 n_data = 43
+ITER: i_iter = 43 ret = -0.22 ret_best = -0.02 n_data = 44
+ITER: i_iter = 44 ret = -0.05 ret_best = -0.02 n_data = 45
+ITER: i_iter = 45 ret = -0.08 ret_best = -0.02 n_data = 46
+ITER: i_iter = 46 ret = -0.15 ret_best = -0.02 n_data = 47
+ITER: i_iter = 47 ret = -0.14 ret_best = -0.02 n_data = 48
+ITER: i_iter = 48 ret = -0.11 ret_best = -0.02 n_data = 49
+ITER: i_iter = 49 ret = -0.16 ret_best = -0.02 n_data = 50
+ITER: i_iter = 50 ret = -0.12 ret_best = -0.02 n_data = 51
+ITER: i_iter = 51 ret = -0.08 ret_best = -0.02 n_data = 52
+ITER: i_iter = 52 ret = -0.01 ret_best = -0.01 n_data = 53
+ITER: i_iter = 53 ret = -0.10 ret_best = -0.01 n_data = 54
+ITER: i_iter = 54 ret = -0.13 ret_best = -0.01 n_data = 55
+ITER: i_iter = 55 ret = -0.27 ret_best = -0.01 n_data = 56
+ITER: i_iter = 56 ret = -0.12 ret_best = -0.01 n_data = 57
+ITER: i_iter = 57 ret = -0.20 ret_best = -0.01 n_data = 58
+ITER: i_iter = 58 ret = -0.16 ret_best = -0.01 n_data = 59
+ITER: i_iter = 59 ret = -0.18 ret_best = -0.01 n_data = 60
+ITER: i_iter = 60 ret = -0.12 ret_best = -0.01 n_data = 61
+ITER: i_iter = 61 ret = -0.13 ret_best = -0.01 n_data = 62
+ITER: i_iter = 62 ret = -0.15 ret_best = -0.01 n_data = 63
+ITER: i_iter = 63 ret = -0.17 ret_best = -0.01 n_data = 64
+ITER: i_iter = 64 ret = -0.13 ret_best = -0.01 n_data = 65
+ITER: i_iter = 65 ret = -0.14 ret_best = -0.01 n_data = 66
+ITER: i_iter = 66 ret = -0.13 ret_best = -0.01 n_data = 67
+ITER: i_iter = 67 ret = -0.18 ret_best = -0.01 n_data = 68
+ITER: i_iter = 68 ret = -0.12 ret_best = -0.01 n_data = 69
+ITER: i_iter = 69 ret = -0.19 ret_best = -0.01 n_data = 70
+ITER: i_iter = 70 ret = -0.17 ret_best = -0.01 n_data = 71
+ITER: i_iter = 71 ret = -0.18 ret_best = -0.01 n_data = 72
+ITER: i_iter = 72 ret = -0.01 ret_best = -0.01 n_data = 73
+ITER: i_iter = 73 ret = -0.13 ret_best = -0.01 n_data = 74
+ITER: i_iter = 74 ret = -0.16 ret_best = -0.01 n_data = 75
+ITER: i_iter = 75 ret = -0.18 ret_best = -0.01 n_data = 76
+ITER: i_iter = 76 ret = -0.14 ret_best = -0.01 n_data = 77
+ITER: i_iter = 77 ret = -0.15 ret_best = -0.01 n_data = 78
+ITER: i_iter = 78 ret = -0.09 ret_best = -0.01 n_data = 79
+ITER: i_iter = 79 ret = -0.16 ret_best = -0.01 n_data = 80
+ITER: i_iter = 80 ret = -0.15 ret_best = -0.01 n_data = 81
+ITER: i_iter = 81 ret = -0.14 ret_best = -0.01 n_data = 82
+ITER: i_iter = 82 ret = -0.15 ret_best = -0.01 n_data = 83
+ITER: i_iter = 83 ret = -0.04 ret_best = -0.01 n_data = 84
+ITER: i_iter = 84 ret = -0.20 ret_best = -0.01 n_data = 85
+ITER: i_iter = 85 ret = -0.19 ret_best = -0.01 n_data = 86
+ITER: i_iter = 86 ret = -0.11 ret_best = -0.01 n_data = 87
+ITER: i_iter = 87 ret = -0.08 ret_best = -0.01 n_data = 88
+ITER: i_iter = 88 ret = -0.16 ret_best = -0.01 n_data = 89
+ITER: i_iter = 89 ret = -0.31 ret_best = -0.01 n_data = 90
+ITER: i_iter = 90 ret = -0.01 ret_best = -0.01 n_data = 91
+ITER: i_iter = 91 ret = -0.08 ret_best = -0.01 n_data = 92
+ITER: i_iter = 92 ret = -0.17 ret_best = -0.01 n_data = 93
+ITER: i_iter = 93 ret = -0.22 ret_best = -0.01 n_data = 94
+ITER: i_iter = 94 ret = -0.26 ret_best = -0.01 n_data = 95
+ITER: i_iter = 95 ret = -0.15 ret_best = -0.01 n_data = 96
+ITER: i_iter = 96 ret = -0.11 ret_best = -0.01 n_data = 97
+ITER: i_iter = 97 ret = -0.15 ret_best = -0.01 n_data = 98
+ITER: i_iter = 98 ret = -0.24 ret_best = -0.01 n_data = 99
+ITER: i_iter = 99 ret = -0.32 ret_best = -0.01 n_data = 100
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 0 return = -0.525
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 1 return = -0.228
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 2 return = -0.107
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 3 return = -0.083
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 4 return = -0.083
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 5 return = -0.083
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 6 return = -0.083
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 7 return = -0.083
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 8 return = -0.083
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 9 return = -0.083
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 10 return = -0.064
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 11 return = -0.064
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 12 return = -0.064
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 13 return = -0.064
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 14 return = -0.056
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 15 return = -0.056
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 16 return = -0.056
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 17 return = -0.054
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 18 return = -0.054
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 19 return = -0.054
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 20 return = -0.050
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 21 return = -0.050
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 22 return = -0.050
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 23 return = -0.050
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 24 return = -0.050
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 25 return = -0.050
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 26 return = -0.050
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 27 return = -0.050
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 28 return = -0.036
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 29 return = -0.036
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 30 return = -0.036
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 31 return = -0.036
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 32 return = -0.036
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 33 return = -0.036
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 34 return = -0.036
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 35 return = -0.036
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 36 return = -0.036
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 37 return = -0.036
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 38 return = -0.036
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 39 return = -0.036
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 40 return = -0.036
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 41 return = -0.020
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 42 return = -0.020
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 43 return = -0.020
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 44 return = -0.020
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 45 return = -0.020
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 46 return = -0.020
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 47 return = -0.020
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 48 return = -0.020
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 49 return = -0.020
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 50 return = -0.020
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 51 return = -0.020
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 52 return = -0.013
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 53 return = -0.013
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 54 return = -0.013
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 55 return = -0.013
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 56 return = -0.013
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 57 return = -0.013
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 58 return = -0.013
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 59 return = -0.013
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 60 return = -0.013
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 61 return = -0.013
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 62 return = -0.013
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 63 return = -0.013
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 64 return = -0.013
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 65 return = -0.013
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 66 return = -0.013
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 67 return = -0.013
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 68 return = -0.013
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 69 return = -0.013
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 70 return = -0.013
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 71 return = -0.013
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 72 return = -0.006
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 73 return = -0.006
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 74 return = -0.006
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 75 return = -0.006
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 76 return = -0.006
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 77 return = -0.006
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 78 return = -0.006
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 79 return = -0.006
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 80 return = -0.006
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 81 return = -0.006
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 82 return = -0.006
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 83 return = -0.006
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 84 return = -0.006
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 85 return = -0.006
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 86 return = -0.006
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 87 return = -0.006
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 88 return = -0.006
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 89 return = -0.006
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 90 return = -0.006
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 91 return = -0.006
+[INFO 02-04 03:19:41] ax.service.ax_client: Starting optimization with verbose logging. To disable logging, set the `verbose_logging` argument to `False`. Note that float values in the logs are rounded to 6 decimal points.
+[INFO 02-04 03:19:41] ax.service.utils.instantiation: Created search space: SearchSpace(parameters=[RangeParameter(name='x000', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x001', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x002', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x003', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x004', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x005', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x006', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x007', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x008', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x009', parameter_type=FLOAT, range=[-1.0, 1.0])], parameter_constraints=[]).
+[INFO 02-04 03:19:41] ax.modelbridge.dispatch_utils: Using Bayesian optimization since there are more ordered parameters than there are categories for the unordered categorical parameters.
+[INFO 02-04 03:19:41] ax.modelbridge.dispatch_utils: Calculating the number of remaining initialization trials based on num_initialization_trials=None max_initialization_trials=None num_tunable_parameters=10 num_trials=None use_batch_trials=False
+[INFO 02-04 03:19:41] ax.modelbridge.dispatch_utils: calculated num_initialization_trials=20
+[INFO 02-04 03:19:41] ax.modelbridge.dispatch_utils: num_completed_initialization_trials=0 num_remaining_initialization_trials=20
+[INFO 02-04 03:19:41] ax.modelbridge.dispatch_utils: Using Bayesian Optimization generation strategy: GenerationStrategy(name='Sobol+GPEI', steps=[Sobol for 20 trials, GPEI for subsequent trials]). Iterations after 20 will take longer to generate due to model-fitting.
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 92 return = -0.006
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 93 return = -0.006
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 94 return = -0.006
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 95 return = -0.006
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 96 return = -0.006
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 97 return = -0.006
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 98 return = -0.006
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 56 i_iter = 99 return = -0.006
+TIME_SAMPLE: 3506.78
+ITER: i_iter = 0 ret = -0.37 ret_best = -0.37 n_data = 1
+ITER: i_iter = 1 ret = -0.21 ret_best = -0.21 n_data = 2
+ITER: i_iter = 2 ret = -0.16 ret_best = -0.16 n_data = 3
+ITER: i_iter = 3 ret = -0.27 ret_best = -0.16 n_data = 4
+ITER: i_iter = 4 ret = -0.17 ret_best = -0.16 n_data = 5
+ITER: i_iter = 5 ret = -0.20 ret_best = -0.16 n_data = 6
+ITER: i_iter = 6 ret = -0.15 ret_best = -0.15 n_data = 7
+ITER: i_iter = 7 ret = -0.18 ret_best = -0.15 n_data = 8
+ITER: i_iter = 8 ret = -0.21 ret_best = -0.15 n_data = 9
+ITER: i_iter = 9 ret = -0.13 ret_best = -0.13 n_data = 10
+ITER: i_iter = 10 ret = -0.13 ret_best = -0.13 n_data = 11
+ITER: i_iter = 11 ret = -0.25 ret_best = -0.13 n_data = 12
+ITER: i_iter = 12 ret = -0.14 ret_best = -0.13 n_data = 13
+ITER: i_iter = 13 ret = -0.12 ret_best = -0.12 n_data = 14
+ITER: i_iter = 14 ret = -0.26 ret_best = -0.12 n_data = 15
+ITER: i_iter = 15 ret = -0.10 ret_best = -0.10 n_data = 16
+ITER: i_iter = 16 ret = -0.11 ret_best = -0.10 n_data = 17
+ITER: i_iter = 17 ret = -0.09 ret_best = -0.09 n_data = 18
+ITER: i_iter = 18 ret = -0.15 ret_best = -0.09 n_data = 19
+ITER: i_iter = 19 ret = -0.22 ret_best = -0.09 n_data = 20
+ITER: i_iter = 20 ret = -0.07 ret_best = -0.07 n_data = 21
+ITER: i_iter = 21 ret = -0.15 ret_best = -0.07 n_data = 22
+ITER: i_iter = 22 ret = -0.26 ret_best = -0.07 n_data = 23
+ITER: i_iter = 23 ret = -0.19 ret_best = -0.07 n_data = 24
+ITER: i_iter = 24 ret = -0.14 ret_best = -0.07 n_data = 25
+ITER: i_iter = 25 ret = -0.06 ret_best = -0.06 n_data = 26
+ITER: i_iter = 26 ret = -0.16 ret_best = -0.06 n_data = 27
+ITER: i_iter = 27 ret = -0.16 ret_best = -0.06 n_data = 28
+ITER: i_iter = 28 ret = -0.12 ret_best = -0.06 n_data = 29
+ITER: i_iter = 29 ret = -0.14 ret_best = -0.06 n_data = 30
+ITER: i_iter = 30 ret = -0.21 ret_best = -0.06 n_data = 31
+ITER: i_iter = 31 ret = -0.05 ret_best = -0.05 n_data = 32
+ITER: i_iter = 32 ret = -0.24 ret_best = -0.05 n_data = 33
+ITER: i_iter = 33 ret = -0.19 ret_best = -0.05 n_data = 34
+ITER: i_iter = 34 ret = -0.13 ret_best = -0.05 n_data = 35
+ITER: i_iter = 35 ret = -0.08 ret_best = -0.05 n_data = 36
+ITER: i_iter = 36 ret = -0.14 ret_best = -0.05 n_data = 37
+ITER: i_iter = 37 ret = -0.27 ret_best = -0.05 n_data = 38
+ITER: i_iter = 38 ret = -0.20 ret_best = -0.05 n_data = 39
+ITER: i_iter = 39 ret = -0.10 ret_best = -0.05 n_data = 40
+ITER: i_iter = 40 ret = -0.04 ret_best = -0.04 n_data = 41
+ITER: i_iter = 41 ret = -0.27 ret_best = -0.04 n_data = 42
+ITER: i_iter = 42 ret = -0.20 ret_best = -0.04 n_data = 43
+ITER: i_iter = 43 ret = -0.14 ret_best = -0.04 n_data = 44
+ITER: i_iter = 44 ret = -0.13 ret_best = -0.04 n_data = 45
+ITER: i_iter = 45 ret = -0.20 ret_best = -0.04 n_data = 46
+ITER: i_iter = 46 ret = -0.19 ret_best = -0.04 n_data = 47
+ITER: i_iter = 47 ret = -0.22 ret_best = -0.04 n_data = 48
+ITER: i_iter = 48 ret = -0.13 ret_best = -0.04 n_data = 49
+ITER: i_iter = 49 ret = -0.15 ret_best = -0.04 n_data = 50
+ITER: i_iter = 50 ret = -0.11 ret_best = -0.04 n_data = 51
+ITER: i_iter = 51 ret = -0.03 ret_best = -0.03 n_data = 52
+ITER: i_iter = 52 ret = -0.28 ret_best = -0.03 n_data = 53
+ITER: i_iter = 53 ret = -0.20 ret_best = -0.03 n_data = 54
+ITER: i_iter = 54 ret = -0.14 ret_best = -0.03 n_data = 55
+ITER: i_iter = 55 ret = -0.20 ret_best = -0.03 n_data = 56
+ITER: i_iter = 56 ret = -0.21 ret_best = -0.03 n_data = 57
+ITER: i_iter = 57 ret = -0.16 ret_best = -0.03 n_data = 58
+ITER: i_iter = 58 ret = -0.19 ret_best = -0.03 n_data = 59
+ITER: i_iter = 59 ret = -0.17 ret_best = -0.03 n_data = 60
+ITER: i_iter = 60 ret = -0.26 ret_best = -0.03 n_data = 61
+ITER: i_iter = 61 ret = -0.23 ret_best = -0.03 n_data = 62
+ITER: i_iter = 62 ret = -0.10 ret_best = -0.03 n_data = 63
+ITER: i_iter = 63 ret = -0.17 ret_best = -0.03 n_data = 64
+ITER: i_iter = 64 ret = -0.10 ret_best = -0.03 n_data = 65
+ITER: i_iter = 65 ret = -0.12 ret_best = -0.03 n_data = 66
+ITER: i_iter = 66 ret = -0.30 ret_best = -0.03 n_data = 67
+ITER: i_iter = 67 ret = -0.19 ret_best = -0.03 n_data = 68
+ITER: i_iter = 68 ret = -0.25 ret_best = -0.03 n_data = 69
+ITER: i_iter = 69 ret = -0.24 ret_best = -0.03 n_data = 70
+ITER: i_iter = 70 ret = -0.20 ret_best = -0.03 n_data = 71
+ITER: i_iter = 71 ret = -0.18 ret_best = -0.03 n_data = 72
+ITER: i_iter = 72 ret = -0.01 ret_best = -0.01 n_data = 73
+ITER: i_iter = 73 ret = -0.22 ret_best = -0.01 n_data = 74
+ITER: i_iter = 74 ret = -0.28 ret_best = -0.01 n_data = 75
+ITER: i_iter = 75 ret = -0.36 ret_best = -0.01 n_data = 76
+ITER: i_iter = 76 ret = -0.24 ret_best = -0.01 n_data = 77
+ITER: i_iter = 77 ret = -0.21 ret_best = -0.01 n_data = 78
+ITER: i_iter = 78 ret = -0.23 ret_best = -0.01 n_data = 79
+ITER: i_iter = 79 ret = -0.12 ret_best = -0.01 n_data = 80
+ITER: i_iter = 80 ret = -0.17 ret_best = -0.01 n_data = 81
+ITER: i_iter = 81 ret = -0.16 ret_best = -0.01 n_data = 82
+ITER: i_iter = 82 ret = -0.18 ret_best = -0.01 n_data = 83
+ITER: i_iter = 83 ret = -0.18 ret_best = -0.01 n_data = 84
+ITER: i_iter = 84 ret = -0.15 ret_best = -0.01 n_data = 85
+ITER: i_iter = 85 ret = -0.23 ret_best = -0.01 n_data = 86
+ITER: i_iter = 86 ret = -0.01 ret_best = -0.01 n_data = 87
+ITER: i_iter = 87 ret = -0.15 ret_best = -0.01 n_data = 88
+ITER: i_iter = 88 ret = -0.20 ret_best = -0.01 n_data = 89
+ITER: i_iter = 89 ret = -0.26 ret_best = -0.01 n_data = 90
+ITER: i_iter = 90 ret = -0.11 ret_best = -0.01 n_data = 91
+ITER: i_iter = 91 ret = -0.14 ret_best = -0.01 n_data = 92
+ITER: i_iter = 92 ret = -0.30 ret_best = -0.01 n_data = 93
+ITER: i_iter = 93 ret = -0.17 ret_best = -0.01 n_data = 94
+ITER: i_iter = 94 ret = -0.14 ret_best = -0.01 n_data = 95
+ITER: i_iter = 95 ret = -0.19 ret_best = -0.01 n_data = 96
+ITER: i_iter = 96 ret = -0.00 ret_best = -0.00 n_data = 97
+ITER: i_iter = 97 ret = -0.20 ret_best = -0.00 n_data = 98
+ITER: i_iter = 98 ret = -0.11 ret_best = -0.00 n_data = 99
+ITER: i_iter = 99 ret = -0.21 ret_best = -0.00 n_data = 100
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 0 return = -0.374
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 1 return = -0.214
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 2 return = -0.156
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 3 return = -0.156
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 4 return = -0.156
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 5 return = -0.156
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 6 return = -0.151
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 7 return = -0.151
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 8 return = -0.151
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 9 return = -0.126
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 10 return = -0.126
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 11 return = -0.126
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 12 return = -0.126
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 13 return = -0.117
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 14 return = -0.117
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 15 return = -0.099
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 16 return = -0.099
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 17 return = -0.088
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 18 return = -0.088
+[INFO 02-04 04:20:24] ax.service.ax_client: Starting optimization with verbose logging. To disable logging, set the `verbose_logging` argument to `False`. Note that float values in the logs are rounded to 6 decimal points.
+[INFO 02-04 04:20:24] ax.service.utils.instantiation: Created search space: SearchSpace(parameters=[RangeParameter(name='x000', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x001', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x002', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x003', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x004', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x005', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x006', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x007', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x008', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x009', parameter_type=FLOAT, range=[-1.0, 1.0])], parameter_constraints=[]).
+[INFO 02-04 04:20:24] ax.modelbridge.dispatch_utils: Using Bayesian optimization since there are more ordered parameters than there are categories for the unordered categorical parameters.
+[INFO 02-04 04:20:24] ax.modelbridge.dispatch_utils: Calculating the number of remaining initialization trials based on num_initialization_trials=None max_initialization_trials=None num_tunable_parameters=10 num_trials=None use_batch_trials=False
+[INFO 02-04 04:20:24] ax.modelbridge.dispatch_utils: calculated num_initialization_trials=20
+[INFO 02-04 04:20:24] ax.modelbridge.dispatch_utils: num_completed_initialization_trials=0 num_remaining_initialization_trials=20
+[INFO 02-04 04:20:24] ax.modelbridge.dispatch_utils: Using Bayesian Optimization generation strategy: GenerationStrategy(name='Sobol+GPEI', steps=[Sobol for 20 trials, GPEI for subsequent trials]). Iterations after 20 will take longer to generate due to model-fitting.
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 19 return = -0.088
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 20 return = -0.074
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 21 return = -0.074
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 22 return = -0.074
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 23 return = -0.074
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 24 return = -0.074
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 25 return = -0.065
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 26 return = -0.065
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 27 return = -0.065
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 28 return = -0.065
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 29 return = -0.065
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 30 return = -0.065
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 31 return = -0.051
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 32 return = -0.051
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 33 return = -0.051
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 34 return = -0.051
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 35 return = -0.051
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 36 return = -0.051
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 37 return = -0.051
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 38 return = -0.051
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 39 return = -0.051
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 40 return = -0.039
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 41 return = -0.039
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 42 return = -0.039
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 43 return = -0.039
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 44 return = -0.039
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 45 return = -0.039
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 46 return = -0.039
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 47 return = -0.039
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 48 return = -0.039
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 49 return = -0.039
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 50 return = -0.039
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 51 return = -0.029
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 52 return = -0.029
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 53 return = -0.029
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 54 return = -0.029
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 55 return = -0.029
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 56 return = -0.029
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 57 return = -0.029
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 58 return = -0.029
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 59 return = -0.029
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 60 return = -0.029
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 61 return = -0.029
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 62 return = -0.029
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 63 return = -0.029
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 64 return = -0.029
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 65 return = -0.029
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 66 return = -0.029
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 67 return = -0.029
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 68 return = -0.029
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 69 return = -0.029
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 70 return = -0.029
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 71 return = -0.029
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 72 return = -0.015
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 73 return = -0.015
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 74 return = -0.015
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 75 return = -0.015
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 76 return = -0.015
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 77 return = -0.015
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 78 return = -0.015
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 79 return = -0.015
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 80 return = -0.015
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 81 return = -0.015
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 82 return = -0.015
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 83 return = -0.015
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 84 return = -0.015
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 85 return = -0.015
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 86 return = -0.007
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 87 return = -0.007
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 88 return = -0.007
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 89 return = -0.007
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 90 return = -0.007
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 91 return = -0.007
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 92 return = -0.007
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 93 return = -0.007
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 94 return = -0.007
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 95 return = -0.007
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 96 return = -0.003
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 97 return = -0.003
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 98 return = -0.003
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 57 i_iter = 99 return = -0.003
+TIME_SAMPLE: 3642.66
+ITER: i_iter = 0 ret = -0.24 ret_best = -0.24 n_data = 1
+ITER: i_iter = 1 ret = -0.12 ret_best = -0.12 n_data = 2
+ITER: i_iter = 2 ret = -0.13 ret_best = -0.12 n_data = 3
+ITER: i_iter = 3 ret = -0.13 ret_best = -0.12 n_data = 4
+ITER: i_iter = 4 ret = -0.16 ret_best = -0.12 n_data = 5
+ITER: i_iter = 5 ret = -0.12 ret_best = -0.12 n_data = 6
+ITER: i_iter = 6 ret = -0.11 ret_best = -0.11 n_data = 7
+ITER: i_iter = 7 ret = -0.13 ret_best = -0.11 n_data = 8
+ITER: i_iter = 8 ret = -0.12 ret_best = -0.11 n_data = 9
+ITER: i_iter = 9 ret = -0.12 ret_best = -0.11 n_data = 10
+ITER: i_iter = 10 ret = -0.19 ret_best = -0.11 n_data = 11
+ITER: i_iter = 11 ret = -0.19 ret_best = -0.11 n_data = 12
+ITER: i_iter = 12 ret = -0.19 ret_best = -0.11 n_data = 13
+ITER: i_iter = 13 ret = -0.14 ret_best = -0.11 n_data = 14
+ITER: i_iter = 14 ret = -0.27 ret_best = -0.11 n_data = 15
+ITER: i_iter = 15 ret = -0.22 ret_best = -0.11 n_data = 16
+ITER: i_iter = 16 ret = -0.18 ret_best = -0.11 n_data = 17
+ITER: i_iter = 17 ret = -0.19 ret_best = -0.11 n_data = 18
+ITER: i_iter = 18 ret = -0.16 ret_best = -0.11 n_data = 19
+ITER: i_iter = 19 ret = -0.19 ret_best = -0.11 n_data = 20
+ITER: i_iter = 20 ret = -0.12 ret_best = -0.11 n_data = 21
+ITER: i_iter = 21 ret = -0.12 ret_best = -0.11 n_data = 22
+ITER: i_iter = 22 ret = -0.09 ret_best = -0.09 n_data = 23
+ITER: i_iter = 23 ret = -0.12 ret_best = -0.09 n_data = 24
+ITER: i_iter = 24 ret = -0.07 ret_best = -0.07 n_data = 25
+ITER: i_iter = 25 ret = -0.04 ret_best = -0.04 n_data = 26
+ITER: i_iter = 26 ret = -0.03 ret_best = -0.03 n_data = 27
+ITER: i_iter = 27 ret = -0.23 ret_best = -0.03 n_data = 28
+ITER: i_iter = 28 ret = -0.11 ret_best = -0.03 n_data = 29
+ITER: i_iter = 29 ret = -0.15 ret_best = -0.03 n_data = 30
+ITER: i_iter = 30 ret = -0.18 ret_best = -0.03 n_data = 31
+ITER: i_iter = 31 ret = -0.10 ret_best = -0.03 n_data = 32
+ITER: i_iter = 32 ret = -0.18 ret_best = -0.03 n_data = 33
+ITER: i_iter = 33 ret = -0.09 ret_best = -0.03 n_data = 34
+ITER: i_iter = 34 ret = -0.03 ret_best = -0.03 n_data = 35
+ITER: i_iter = 35 ret = -0.12 ret_best = -0.03 n_data = 36
+ITER: i_iter = 36 ret = -0.20 ret_best = -0.03 n_data = 37
+ITER: i_iter = 37 ret = -0.21 ret_best = -0.03 n_data = 38
+ITER: i_iter = 38 ret = -0.24 ret_best = -0.03 n_data = 39
+ITER: i_iter = 39 ret = -0.12 ret_best = -0.03 n_data = 40
+ITER: i_iter = 40 ret = -0.25 ret_best = -0.03 n_data = 41
+ITER: i_iter = 41 ret = -0.17 ret_best = -0.03 n_data = 42
+ITER: i_iter = 42 ret = -0.31 ret_best = -0.03 n_data = 43
+ITER: i_iter = 43 ret = -0.03 ret_best = -0.03 n_data = 44
+ITER: i_iter = 44 ret = -0.10 ret_best = -0.03 n_data = 45
+ITER: i_iter = 45 ret = -0.21 ret_best = -0.03 n_data = 46
+ITER: i_iter = 46 ret = -0.12 ret_best = -0.03 n_data = 47
+ITER: i_iter = 47 ret = -0.15 ret_best = -0.03 n_data = 48
+ITER: i_iter = 48 ret = -0.17 ret_best = -0.03 n_data = 49
+ITER: i_iter = 49 ret = -0.10 ret_best = -0.03 n_data = 50
+ITER: i_iter = 50 ret = -0.20 ret_best = -0.03 n_data = 51
+ITER: i_iter = 51 ret = -0.21 ret_best = -0.03 n_data = 52
+ITER: i_iter = 52 ret = -0.19 ret_best = -0.03 n_data = 53
+ITER: i_iter = 53 ret = -0.22 ret_best = -0.03 n_data = 54
+ITER: i_iter = 54 ret = -0.19 ret_best = -0.03 n_data = 55
+ITER: i_iter = 55 ret = -0.13 ret_best = -0.03 n_data = 56
+ITER: i_iter = 56 ret = -0.22 ret_best = -0.03 n_data = 57
+ITER: i_iter = 57 ret = -0.18 ret_best = -0.03 n_data = 58
+ITER: i_iter = 58 ret = -0.19 ret_best = -0.03 n_data = 59
+ITER: i_iter = 59 ret = -0.15 ret_best = -0.03 n_data = 60
+ITER: i_iter = 60 ret = -0.22 ret_best = -0.03 n_data = 61
+ITER: i_iter = 61 ret = -0.02 ret_best = -0.02 n_data = 62
+ITER: i_iter = 62 ret = -0.23 ret_best = -0.02 n_data = 63
+ITER: i_iter = 63 ret = -0.18 ret_best = -0.02 n_data = 64
+ITER: i_iter = 64 ret = -0.17 ret_best = -0.02 n_data = 65
+ITER: i_iter = 65 ret = -0.09 ret_best = -0.02 n_data = 66
+ITER: i_iter = 66 ret = -0.36 ret_best = -0.02 n_data = 67
+ITER: i_iter = 67 ret = -0.07 ret_best = -0.02 n_data = 68
+ITER: i_iter = 68 ret = -0.17 ret_best = -0.02 n_data = 69
+ITER: i_iter = 69 ret = -0.13 ret_best = -0.02 n_data = 70
+ITER: i_iter = 70 ret = -0.12 ret_best = -0.02 n_data = 71
+ITER: i_iter = 71 ret = -0.24 ret_best = -0.02 n_data = 72
+ITER: i_iter = 72 ret = -0.12 ret_best = -0.02 n_data = 73
+ITER: i_iter = 73 ret = -0.29 ret_best = -0.02 n_data = 74
+ITER: i_iter = 74 ret = -0.16 ret_best = -0.02 n_data = 75
+ITER: i_iter = 75 ret = -0.14 ret_best = -0.02 n_data = 76
+ITER: i_iter = 76 ret = -0.23 ret_best = -0.02 n_data = 77
+ITER: i_iter = 77 ret = -0.01 ret_best = -0.01 n_data = 78
+ITER: i_iter = 78 ret = -0.23 ret_best = -0.01 n_data = 79
+ITER: i_iter = 79 ret = -0.13 ret_best = -0.01 n_data = 80
+ITER: i_iter = 80 ret = -0.18 ret_best = -0.01 n_data = 81
+ITER: i_iter = 81 ret = -0.19 ret_best = -0.01 n_data = 82
+ITER: i_iter = 82 ret = -0.17 ret_best = -0.01 n_data = 83
+ITER: i_iter = 83 ret = -0.17 ret_best = -0.01 n_data = 84
+ITER: i_iter = 84 ret = -0.17 ret_best = -0.01 n_data = 85
+ITER: i_iter = 85 ret = -0.27 ret_best = -0.01 n_data = 86
+ITER: i_iter = 86 ret = -0.16 ret_best = -0.01 n_data = 87
+ITER: i_iter = 87 ret = -0.09 ret_best = -0.01 n_data = 88
+ITER: i_iter = 88 ret = -0.20 ret_best = -0.01 n_data = 89
+ITER: i_iter = 89 ret = -0.22 ret_best = -0.01 n_data = 90
+ITER: i_iter = 90 ret = -0.22 ret_best = -0.01 n_data = 91
+ITER: i_iter = 91 ret = -0.20 ret_best = -0.01 n_data = 92
+ITER: i_iter = 92 ret = -0.02 ret_best = -0.01 n_data = 93
+ITER: i_iter = 93 ret = -0.20 ret_best = -0.01 n_data = 94
+ITER: i_iter = 94 ret = -0.19 ret_best = -0.01 n_data = 95
+ITER: i_iter = 95 ret = -0.23 ret_best = -0.01 n_data = 96
+ITER: i_iter = 96 ret = -0.21 ret_best = -0.01 n_data = 97
+ITER: i_iter = 97 ret = -0.17 ret_best = -0.01 n_data = 98
+ITER: i_iter = 98 ret = -0.18 ret_best = -0.01 n_data = 99
+ITER: i_iter = 99 ret = -0.09 ret_best = -0.01 n_data = 100
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 0 return = -0.242
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 1 return = -0.123
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 2 return = -0.123
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 3 return = -0.123
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 4 return = -0.123
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 5 return = -0.121
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 6 return = -0.111
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 7 return = -0.111
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 8 return = -0.111
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 9 return = -0.111
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 10 return = -0.111
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 11 return = -0.111
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 12 return = -0.111
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 13 return = -0.111
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 14 return = -0.111
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 15 return = -0.111
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 16 return = -0.111
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 17 return = -0.111
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 18 return = -0.111
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 19 return = -0.111
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 20 return = -0.111
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 21 return = -0.111
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 22 return = -0.086
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 23 return = -0.086
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 24 return = -0.066
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 25 return = -0.042
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 26 return = -0.032
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 27 return = -0.032
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 28 return = -0.032
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 29 return = -0.032
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 30 return = -0.032
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 31 return = -0.032
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 32 return = -0.032
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 33 return = -0.032
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 34 return = -0.027
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 35 return = -0.027
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 36 return = -0.027
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 37 return = -0.027
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 38 return = -0.027
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 39 return = -0.027
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 40 return = -0.027
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 41 return = -0.027
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 42 return = -0.027
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 43 return = -0.027
+[INFO 02-04 05:25:50] ax.service.ax_client: Starting optimization with verbose logging. To disable logging, set the `verbose_logging` argument to `False`. Note that float values in the logs are rounded to 6 decimal points.
+[INFO 02-04 05:25:50] ax.service.utils.instantiation: Created search space: SearchSpace(parameters=[RangeParameter(name='x000', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x001', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x002', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x003', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x004', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x005', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x006', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x007', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x008', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x009', parameter_type=FLOAT, range=[-1.0, 1.0])], parameter_constraints=[]).
+[INFO 02-04 05:25:50] ax.modelbridge.dispatch_utils: Using Bayesian optimization since there are more ordered parameters than there are categories for the unordered categorical parameters.
+[INFO 02-04 05:25:50] ax.modelbridge.dispatch_utils: Calculating the number of remaining initialization trials based on num_initialization_trials=None max_initialization_trials=None num_tunable_parameters=10 num_trials=None use_batch_trials=False
+[INFO 02-04 05:25:50] ax.modelbridge.dispatch_utils: calculated num_initialization_trials=20
+[INFO 02-04 05:25:50] ax.modelbridge.dispatch_utils: num_completed_initialization_trials=0 num_remaining_initialization_trials=20
+[INFO 02-04 05:25:50] ax.modelbridge.dispatch_utils: Using Bayesian Optimization generation strategy: GenerationStrategy(name='Sobol+GPEI', steps=[Sobol for 20 trials, GPEI for subsequent trials]). Iterations after 20 will take longer to generate due to model-fitting.
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 44 return = -0.027
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 45 return = -0.027
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 46 return = -0.027
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 47 return = -0.027
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 48 return = -0.027
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 49 return = -0.027
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 50 return = -0.027
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 51 return = -0.027
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 52 return = -0.027
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 53 return = -0.027
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 54 return = -0.027
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 55 return = -0.027
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 56 return = -0.027
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 57 return = -0.027
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 58 return = -0.027
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 59 return = -0.027
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 60 return = -0.027
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 61 return = -0.020
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 62 return = -0.020
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 63 return = -0.020
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 64 return = -0.020
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 65 return = -0.020
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 66 return = -0.020
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 67 return = -0.020
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 68 return = -0.020
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 69 return = -0.020
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 70 return = -0.020
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 71 return = -0.020
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 72 return = -0.020
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 73 return = -0.020
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 74 return = -0.020
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 75 return = -0.020
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 76 return = -0.020
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 77 return = -0.012
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 78 return = -0.012
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 79 return = -0.012
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 80 return = -0.012
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 81 return = -0.012
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 82 return = -0.012
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 83 return = -0.012
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 84 return = -0.012
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 85 return = -0.012
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 86 return = -0.012
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 87 return = -0.012
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 88 return = -0.012
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 89 return = -0.012
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 90 return = -0.012
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 91 return = -0.012
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 92 return = -0.012
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 93 return = -0.012
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 94 return = -0.012
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 95 return = -0.012
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 96 return = -0.012
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 97 return = -0.012
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 98 return = -0.012
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 58 i_iter = 99 return = -0.012
+TIME_SAMPLE: 3926.21
+ITER: i_iter = 0 ret = -0.21 ret_best = -0.21 n_data = 1
+ITER: i_iter = 1 ret = -0.13 ret_best = -0.13 n_data = 2
+ITER: i_iter = 2 ret = -0.10 ret_best = -0.10 n_data = 3
+ITER: i_iter = 3 ret = -0.15 ret_best = -0.10 n_data = 4
+ITER: i_iter = 4 ret = -0.16 ret_best = -0.10 n_data = 5
+ITER: i_iter = 5 ret = -0.13 ret_best = -0.10 n_data = 6
+ITER: i_iter = 6 ret = -0.12 ret_best = -0.10 n_data = 7
+ITER: i_iter = 7 ret = -0.19 ret_best = -0.10 n_data = 8
+ITER: i_iter = 8 ret = -0.17 ret_best = -0.10 n_data = 9
+ITER: i_iter = 9 ret = -0.10 ret_best = -0.10 n_data = 10
+ITER: i_iter = 10 ret = -0.18 ret_best = -0.10 n_data = 11
+ITER: i_iter = 11 ret = -0.25 ret_best = -0.10 n_data = 12
+ITER: i_iter = 12 ret = -0.09 ret_best = -0.09 n_data = 13
+ITER: i_iter = 13 ret = -0.11 ret_best = -0.09 n_data = 14
+ITER: i_iter = 14 ret = -0.10 ret_best = -0.09 n_data = 15
+ITER: i_iter = 15 ret = -0.14 ret_best = -0.09 n_data = 16
+ITER: i_iter = 16 ret = -0.16 ret_best = -0.09 n_data = 17
+ITER: i_iter = 17 ret = -0.08 ret_best = -0.08 n_data = 18
+ITER: i_iter = 18 ret = -0.22 ret_best = -0.08 n_data = 19
+ITER: i_iter = 19 ret = -0.14 ret_best = -0.08 n_data = 20
+ITER: i_iter = 20 ret = -0.17 ret_best = -0.08 n_data = 21
+ITER: i_iter = 21 ret = -0.22 ret_best = -0.08 n_data = 22
+ITER: i_iter = 22 ret = -0.18 ret_best = -0.08 n_data = 23
+ITER: i_iter = 23 ret = -0.20 ret_best = -0.08 n_data = 24
+ITER: i_iter = 24 ret = -0.11 ret_best = -0.08 n_data = 25
+ITER: i_iter = 25 ret = -0.06 ret_best = -0.06 n_data = 26
+ITER: i_iter = 26 ret = -0.13 ret_best = -0.06 n_data = 27
+ITER: i_iter = 27 ret = -0.11 ret_best = -0.06 n_data = 28
+ITER: i_iter = 28 ret = -0.11 ret_best = -0.06 n_data = 29
+ITER: i_iter = 29 ret = -0.04 ret_best = -0.04 n_data = 30
+ITER: i_iter = 30 ret = -0.14 ret_best = -0.04 n_data = 31
+ITER: i_iter = 31 ret = -0.16 ret_best = -0.04 n_data = 32
+ITER: i_iter = 32 ret = -0.13 ret_best = -0.04 n_data = 33
+ITER: i_iter = 33 ret = -0.13 ret_best = -0.04 n_data = 34
+ITER: i_iter = 34 ret = -0.20 ret_best = -0.04 n_data = 35
+ITER: i_iter = 35 ret = -0.03 ret_best = -0.03 n_data = 36
+ITER: i_iter = 36 ret = -0.25 ret_best = -0.03 n_data = 37
+ITER: i_iter = 37 ret = -0.23 ret_best = -0.03 n_data = 38
+ITER: i_iter = 38 ret = -0.18 ret_best = -0.03 n_data = 39
+ITER: i_iter = 39 ret = -0.21 ret_best = -0.03 n_data = 40
+ITER: i_iter = 40 ret = -0.16 ret_best = -0.03 n_data = 41
+ITER: i_iter = 41 ret = -0.14 ret_best = -0.03 n_data = 42
+ITER: i_iter = 42 ret = -0.11 ret_best = -0.03 n_data = 43
+ITER: i_iter = 43 ret = -0.29 ret_best = -0.03 n_data = 44
+ITER: i_iter = 44 ret = -0.26 ret_best = -0.03 n_data = 45
+ITER: i_iter = 45 ret = -0.02 ret_best = -0.02 n_data = 46
+ITER: i_iter = 46 ret = -0.17 ret_best = -0.02 n_data = 47
+ITER: i_iter = 47 ret = -0.21 ret_best = -0.02 n_data = 48
+ITER: i_iter = 48 ret = -0.16 ret_best = -0.02 n_data = 49
+ITER: i_iter = 49 ret = -0.12 ret_best = -0.02 n_data = 50
+ITER: i_iter = 50 ret = -0.17 ret_best = -0.02 n_data = 51
+ITER: i_iter = 51 ret = -0.16 ret_best = -0.02 n_data = 52
+ITER: i_iter = 52 ret = -0.19 ret_best = -0.02 n_data = 53
+ITER: i_iter = 53 ret = -0.14 ret_best = -0.02 n_data = 54
+ITER: i_iter = 54 ret = -0.15 ret_best = -0.02 n_data = 55
+ITER: i_iter = 55 ret = -0.11 ret_best = -0.02 n_data = 56
+ITER: i_iter = 56 ret = -0.11 ret_best = -0.02 n_data = 57
+ITER: i_iter = 57 ret = -0.28 ret_best = -0.02 n_data = 58
+ITER: i_iter = 58 ret = -0.14 ret_best = -0.02 n_data = 59
+ITER: i_iter = 59 ret = -0.14 ret_best = -0.02 n_data = 60
+ITER: i_iter = 60 ret = -0.32 ret_best = -0.02 n_data = 61
+ITER: i_iter = 61 ret = -0.12 ret_best = -0.02 n_data = 62
+ITER: i_iter = 62 ret = -0.14 ret_best = -0.02 n_data = 63
+ITER: i_iter = 63 ret = -0.02 ret_best = -0.02 n_data = 64
+ITER: i_iter = 64 ret = -0.24 ret_best = -0.02 n_data = 65
+ITER: i_iter = 65 ret = -0.16 ret_best = -0.02 n_data = 66
+ITER: i_iter = 66 ret = -0.18 ret_best = -0.02 n_data = 67
+ITER: i_iter = 67 ret = -0.15 ret_best = -0.02 n_data = 68
+ITER: i_iter = 68 ret = -0.08 ret_best = -0.02 n_data = 69
+ITER: i_iter = 69 ret = -0.19 ret_best = -0.02 n_data = 70
+ITER: i_iter = 70 ret = -0.16 ret_best = -0.02 n_data = 71
+ITER: i_iter = 71 ret = -0.22 ret_best = -0.02 n_data = 72
+ITER: i_iter = 72 ret = -0.12 ret_best = -0.02 n_data = 73
+ITER: i_iter = 73 ret = -0.09 ret_best = -0.02 n_data = 74
+ITER: i_iter = 74 ret = -0.15 ret_best = -0.02 n_data = 75
+ITER: i_iter = 75 ret = -0.18 ret_best = -0.02 n_data = 76
+ITER: i_iter = 76 ret = -0.01 ret_best = -0.01 n_data = 77
+ITER: i_iter = 77 ret = -0.19 ret_best = -0.01 n_data = 78
+ITER: i_iter = 78 ret = -0.18 ret_best = -0.01 n_data = 79
+ITER: i_iter = 79 ret = -0.21 ret_best = -0.01 n_data = 80
+ITER: i_iter = 80 ret = -0.14 ret_best = -0.01 n_data = 81
+ITER: i_iter = 81 ret = -0.22 ret_best = -0.01 n_data = 82
+ITER: i_iter = 82 ret = -0.31 ret_best = -0.01 n_data = 83
+ITER: i_iter = 83 ret = -0.19 ret_best = -0.01 n_data = 84
+ITER: i_iter = 84 ret = -0.18 ret_best = -0.01 n_data = 85
+ITER: i_iter = 85 ret = -0.25 ret_best = -0.01 n_data = 86
+ITER: i_iter = 86 ret = -0.14 ret_best = -0.01 n_data = 87
+ITER: i_iter = 87 ret = -0.18 ret_best = -0.01 n_data = 88
+ITER: i_iter = 88 ret = -0.23 ret_best = -0.01 n_data = 89
+ITER: i_iter = 89 ret = -0.18 ret_best = -0.01 n_data = 90
+ITER: i_iter = 90 ret = -0.15 ret_best = -0.01 n_data = 91
+ITER: i_iter = 91 ret = -0.28 ret_best = -0.01 n_data = 92
+ITER: i_iter = 92 ret = -0.23 ret_best = -0.01 n_data = 93
+ITER: i_iter = 93 ret = -0.20 ret_best = -0.01 n_data = 94
+ITER: i_iter = 94 ret = -0.23 ret_best = -0.01 n_data = 95
+ITER: i_iter = 95 ret = -0.11 ret_best = -0.01 n_data = 96
+ITER: i_iter = 96 ret = -0.17 ret_best = -0.01 n_data = 97
+ITER: i_iter = 97 ret = -0.01 ret_best = -0.01 n_data = 98
+ITER: i_iter = 98 ret = -0.22 ret_best = -0.01 n_data = 99
+ITER: i_iter = 99 ret = -0.07 ret_best = -0.01 n_data = 100
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 0 return = -0.206
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 1 return = -0.133
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 2 return = -0.101
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 3 return = -0.101
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 4 return = -0.101
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 5 return = -0.101
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 6 return = -0.101
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 7 return = -0.101
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 8 return = -0.101
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 9 return = -0.101
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 10 return = -0.101
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 11 return = -0.101
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 12 return = -0.090
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 13 return = -0.090
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 14 return = -0.090
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 15 return = -0.090
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 16 return = -0.090
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 17 return = -0.075
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 18 return = -0.075
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 19 return = -0.075
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 20 return = -0.075
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 21 return = -0.075
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 22 return = -0.075
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 23 return = -0.075
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 24 return = -0.075
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 25 return = -0.057
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 26 return = -0.057
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 27 return = -0.057
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 28 return = -0.057
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 29 return = -0.039
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 30 return = -0.039
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 31 return = -0.039
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 32 return = -0.039
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 33 return = -0.039
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 34 return = -0.039
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 35 return = -0.026
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 36 return = -0.026
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 37 return = -0.026
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 38 return = -0.026
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 39 return = -0.026
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 40 return = -0.026
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 41 return = -0.026
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 42 return = -0.026
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 43 return = -0.026
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 44 return = -0.026
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 45 return = -0.021
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 46 return = -0.021
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 47 return = -0.021
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 48 return = -0.021
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 49 return = -0.021
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 50 return = -0.021
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 51 return = -0.021
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 52 return = -0.021
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 53 return = -0.021
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 54 return = -0.021
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 55 return = -0.021
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 56 return = -0.021
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 57 return = -0.021
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 58 return = -0.021
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 59 return = -0.021
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 60 return = -0.021
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 61 return = -0.021
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 62 return = -0.021
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 63 return = -0.016
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 64 return = -0.016
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 65 return = -0.016
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 66 return = -0.016
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 67 return = -0.016
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 68 return = -0.016
+TRACE: name = f:sphere-10d ttype = idopt i_sample = 59 i_iter = 69 return = -0.016
+[INFO 02-04 06:25:10] ax.service.ax_client: Starting optimization with verbose logging. To disable logging, set the `verbose_logging` argument to `False`. Note that float values in the logs are rounded to 6 decimal points.
+[INFO 02-04 06:25:10] ax.service.utils.instantiation: Created search space: SearchSpace(parameters=[RangeParameter(name='x000', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x001', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x002', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x003', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x004', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x005', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x006', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x007', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x008', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x009', parameter_type=FLOAT, range=[-1.0, 1.0])], parameter_constraints=[]).
+[INFO 02-04 06:25:10] ax.modelbridge.dispatch_utils: Using Bayesian optimization since there are more ordered parameters than there are categories for the unordered categorical parameters.
+[INFO 02-04 06:25:10] ax.modelbridge.dispatch_utils: Calculating the number of remaining initialization trials based on num_initialization_trials=None max_initialization_trials=None num_tunable_parameters=10 num_trials=None use_batch_trials=False
+[INFO 02-04 06:25:10] ax.modelbridge.dispatch_utils: calculated num_initialization_trials=20
+[INFO 02-04 06:25:10] ax.modelbridge.dispatch_utils: num_completed_initialization_trials=0 num_remaining_initialization_trials=20
+[INFO 02-04 06:25:10] ax.modelbridge.dispatch_utils: Using Bayesian Optimization generation strategy: GenerationStrategy(name='Sobol+GPEI', steps=[Sobol for 20 trials, GPEI for subsequent trials]). Iterations after 20 will take longer to generate due to model-fitting.
