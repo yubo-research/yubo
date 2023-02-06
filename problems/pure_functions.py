@@ -1,7 +1,7 @@
 import numpy as np
 from gymnasium.spaces import Box
 
-from problems.sphere import Sphere
+from problems.branin import Branin
 
 
 def make(name, seed):
@@ -10,8 +10,8 @@ def make(name, seed):
     name, num_dim = name.split("-")
     assert num_dim[-1] == "d"
     num_dim = int(num_dim[:-1])
-    if name == "sphere":
-        return PureFunctionEnv(Sphere(seed, num_dim), num_dim)
+    if name == "branin":
+        return PureFunctionEnv(Branin(seed, num_dim), num_dim)
     assert False, name
 
 
