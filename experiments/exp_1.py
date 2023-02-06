@@ -1,7 +1,7 @@
 import numpy as np
 
 from optimizer.optimizer import Optimizer
-from branins.env_conf import default_policy
+from problems.env_conf import default_policy
 
 
 def sample(env_conf, ttype, tag, num_iterations):
