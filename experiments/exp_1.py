@@ -1,5 +1,3 @@
-import numpy as np
-
 from optimizer.optimizer import Optimizer
 from problems.env_conf import default_policy
 

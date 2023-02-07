@@ -44,6 +44,10 @@ class AcqIntegrated(MCAcquisitionFunction):
 
         self.register_buffer("X_samples", X_samples)
 
+    def fantasy_observation(self, X: Tensor) -> Tensor:
+        posterior = self.model.posterior(X, observation_noise=True)  # predictive posterior
+        return posterior.mean  # (b) x q
+
     @t_batch_mode_transform()
     def forward(self, X: Tensor) -> Tensor:
         """
@@ -53,16 +57,16 @@ class AcqIntegrated(MCAcquisitionFunction):
         """
         self.to(device=X.device)
 
-        posterior = self.model.posterior(X, posterior_transform=self.posterior_transform)  # predictive posterior
+        Y_obs = self.fantasy_observation(X)  # (b) x q
 
         num_batches = X.shape[0]
         af = []
 
         for i_batch in range(num_batches):
-            Y = posterior.mean[i_batch, :]  # q
+            Y = Y_obs[i_batch, :]  # q
             # model_next is conditioned on having taken *all* q measurements.
             model_next = self.model.condition_on_observations(X=X[i_batch, ::], Y=Y)  # X[] is q x d
-            next_posterior = model_next.posterior(self.X_samples, posterior_transform=self.posterior_transform)
+            next_posterior = model_next.posterior(self.X_samples)
             Y_samples = self.get_posterior_samples(next_posterior).squeeze()  # num_Y_samples x num_X_samples
 
             if self.n_special > 0:
