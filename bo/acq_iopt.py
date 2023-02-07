@@ -13,7 +13,7 @@ from torch.quasirandom import SobolEngine
 
 
 class AcqIOpt(MCAcquisitionFunction):
-    def __init__(self, model: Model, num_X_samples: int = 256, num_p_samples: int = 256, use_qnei: bool = False, **kwargs) -> None:
+    def __init__(self, model: Model, num_X_samples: int = 256, num_p_samples: int = 256, use_sqrt: bool = False, **kwargs) -> None:
         super().__init__(model=model, **kwargs)
 
         X_0 = self.model.train_inputs[0]
@@ -22,7 +22,10 @@ class AcqIOpt(MCAcquisitionFunction):
         X_samples = sobol_engine.draw(num_X_samples, dtype=X_0.dtype)
         self.register_buffer("X_samples", X_samples)
 
-        if np.random.uniform() < self.p_explore(model, num_dim, num_X_samples):
+        p_explore = self.p_explore(model, num_dim, num_X_samples)
+        if use_sqrt:
+            p_explore = np.sqrt(p_explore)
+        if np.random.uniform() < p_explore:
             self.acqf = None
         else:
             self.acqf = qNoisyExpectedImprovement(model, X_baseline=X_0, prune_baseline=True)
@@ -30,7 +33,7 @@ class AcqIOpt(MCAcquisitionFunction):
     def p_explore(self, model, num_dim, num_X_samples):
         X = torch.rand(size=(num_X_samples, num_dim))
         Y = model.posterior(X)
-        return np.sqrt(Y.variance.mean().item())
+        return Y.variance.mean().item()
 
     @t_batch_mode_transform()
     def forward(self, X: Tensor) -> Tensor:
