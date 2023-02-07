@@ -778,3 +778,1946 @@ TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 45 
 [INFO 02-06 20:09:42] ax.modelbridge.dispatch_utils: calculated num_initialization_trials=12
 [INFO 02-06 20:09:42] ax.modelbridge.dispatch_utils: num_completed_initialization_trials=0 num_remaining_initialization_trials=12
 [INFO 02-06 20:09:42] ax.modelbridge.dispatch_utils: Using Bayesian Optimization generation strategy: GenerationStrategy(name='Sobol+GPEI', steps=[Sobol for 12 trials, GPEI for subsequent trials]). Iterations after 12 will take longer to generate due to model-fitting.
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 46 return = 95.191
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 47 return = 95.191
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 48 return = 95.191
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 49 return = 95.191
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 50 return = 95.191
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 51 return = 95.191
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 52 return = 95.191
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 53 return = 95.191
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 54 return = 95.191
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 55 return = 95.191
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 56 return = 95.191
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 57 return = 95.191
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 58 return = 95.191
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 59 return = 95.191
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 60 return = 95.191
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 61 return = 95.191
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 62 return = 95.191
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 63 return = 95.191
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 64 return = 95.191
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 65 return = 95.191
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 66 return = 95.191
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 67 return = 95.191
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 68 return = 95.191
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 69 return = 95.191
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 70 return = 95.191
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 71 return = 95.191
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 72 return = 95.191
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 73 return = 95.191
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 74 return = 95.191
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 75 return = 95.191
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 76 return = 95.191
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 77 return = 95.191
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 78 return = 95.191
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 79 return = 95.191
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 80 return = 95.191
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 81 return = 95.191
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 82 return = 95.191
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 83 return = 95.191
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 84 return = 95.191
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 85 return = 95.947
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 86 return = 95.947
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 87 return = 95.947
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 88 return = 95.947
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 89 return = 95.947
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 90 return = 95.947
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 91 return = 95.947
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 92 return = 95.947
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 93 return = 95.947
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 94 return = 95.947
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 95 return = 95.947
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 96 return = 95.947
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 97 return = 97.413
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 98 return = 97.413
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 3 i_iter = 99 return = 97.413
+TIME_SAMPLE: 514.60
+ITER: i_iter = 0 ret = 0.00 ret_best = 0.00 n_data = 1
+ITER: i_iter = 1 ret = 91.69 ret_best = 91.69 n_data = 2
+ITER: i_iter = 2 ret = -84.33 ret_best = 91.69 n_data = 3
+ITER: i_iter = 3 ret = -42.48 ret_best = 91.69 n_data = 4
+ITER: i_iter = 4 ret = -95.06 ret_best = 91.69 n_data = 5
+ITER: i_iter = 5 ret = 76.82 ret_best = 91.69 n_data = 6
+ITER: i_iter = 6 ret = -79.51 ret_best = 91.69 n_data = 7
+ITER: i_iter = 7 ret = 86.09 ret_best = 91.69 n_data = 8
+ITER: i_iter = 8 ret = -87.72 ret_best = 91.69 n_data = 9
+ITER: i_iter = 9 ret = -86.98 ret_best = 91.69 n_data = 10
+ITER: i_iter = 10 ret = -14.66 ret_best = 91.69 n_data = 11
+ITER: i_iter = 11 ret = 93.02 ret_best = 93.02 n_data = 12
+ITER: i_iter = 12 ret = 89.46 ret_best = 93.02 n_data = 13
+ITER: i_iter = 13 ret = -80.82 ret_best = 93.02 n_data = 14
+ITER: i_iter = 14 ret = 92.71 ret_best = 93.02 n_data = 15
+ITER: i_iter = 15 ret = 91.34 ret_best = 93.02 n_data = 16
+ITER: i_iter = 16 ret = 91.29 ret_best = 93.02 n_data = 17
+ITER: i_iter = 17 ret = -99.54 ret_best = 93.02 n_data = 18
+ITER: i_iter = 18 ret = 27.72 ret_best = 93.02 n_data = 19
+ITER: i_iter = 19 ret = -99.83 ret_best = 93.02 n_data = 20
+ITER: i_iter = 20 ret = 96.19 ret_best = 96.19 n_data = 21
+ITER: i_iter = 21 ret = -87.67 ret_best = 96.19 n_data = 22
+ITER: i_iter = 22 ret = 87.06 ret_best = 96.19 n_data = 23
+ITER: i_iter = 23 ret = -99.65 ret_best = 96.19 n_data = 24
+ITER: i_iter = 24 ret = 92.82 ret_best = 96.19 n_data = 25
+ITER: i_iter = 25 ret = -77.70 ret_best = 96.19 n_data = 26
+ITER: i_iter = 26 ret = 75.34 ret_best = 96.19 n_data = 27
+ITER: i_iter = 27 ret = 86.68 ret_best = 96.19 n_data = 28
+ITER: i_iter = 28 ret = -99.61 ret_best = 96.19 n_data = 29
+ITER: i_iter = 29 ret = 97.00 ret_best = 97.00 n_data = 30
+ITER: i_iter = 30 ret = 93.78 ret_best = 97.00 n_data = 31
+ITER: i_iter = 31 ret = -99.93 ret_best = 97.00 n_data = 32
+ITER: i_iter = 32 ret = 88.43 ret_best = 97.00 n_data = 33
+ITER: i_iter = 33 ret = 90.70 ret_best = 97.00 n_data = 34
+ITER: i_iter = 34 ret = -92.93 ret_best = 97.00 n_data = 35
+ITER: i_iter = 35 ret = 95.60 ret_best = 97.00 n_data = 36
+ITER: i_iter = 36 ret = 85.33 ret_best = 97.00 n_data = 37
+ITER: i_iter = 37 ret = 77.78 ret_best = 97.00 n_data = 38
+ITER: i_iter = 38 ret = -88.39 ret_best = 97.00 n_data = 39
+ITER: i_iter = 39 ret = 65.78 ret_best = 97.00 n_data = 40
+ITER: i_iter = 40 ret = 86.25 ret_best = 97.00 n_data = 41
+ITER: i_iter = 41 ret = 93.30 ret_best = 97.00 n_data = 42
+ITER: i_iter = 42 ret = 94.32 ret_best = 97.00 n_data = 43
+ITER: i_iter = 43 ret = -94.76 ret_best = 97.00 n_data = 44
+ITER: i_iter = 44 ret = 91.98 ret_best = 97.00 n_data = 45
+ITER: i_iter = 45 ret = -95.42 ret_best = 97.00 n_data = 46
+ITER: i_iter = 46 ret = 97.32 ret_best = 97.32 n_data = 47
+ITER: i_iter = 47 ret = -8.64 ret_best = 97.32 n_data = 48
+ITER: i_iter = 48 ret = 88.73 ret_best = 97.32 n_data = 49
+ITER: i_iter = 49 ret = 94.37 ret_best = 97.32 n_data = 50
+ITER: i_iter = 50 ret = 84.39 ret_best = 97.32 n_data = 51
+ITER: i_iter = 51 ret = 83.92 ret_best = 97.32 n_data = 52
+ITER: i_iter = 52 ret = 89.58 ret_best = 97.32 n_data = 53
+ITER: i_iter = 53 ret = 94.68 ret_best = 97.32 n_data = 54
+ITER: i_iter = 54 ret = 85.76 ret_best = 97.32 n_data = 55
+ITER: i_iter = 55 ret = 29.81 ret_best = 97.32 n_data = 56
+ITER: i_iter = 56 ret = -57.70 ret_best = 97.32 n_data = 57
+ITER: i_iter = 57 ret = -75.92 ret_best = 97.32 n_data = 58
+ITER: i_iter = 58 ret = -82.79 ret_best = 97.32 n_data = 59
+ITER: i_iter = 59 ret = 88.73 ret_best = 97.32 n_data = 60
+ITER: i_iter = 60 ret = 91.69 ret_best = 97.32 n_data = 61
+ITER: i_iter = 61 ret = 93.60 ret_best = 97.32 n_data = 62
+ITER: i_iter = 62 ret = -78.66 ret_best = 97.32 n_data = 63
+ITER: i_iter = 63 ret = -75.86 ret_best = 97.32 n_data = 64
+ITER: i_iter = 64 ret = 91.07 ret_best = 97.32 n_data = 65
+ITER: i_iter = 65 ret = -99.33 ret_best = 97.32 n_data = 66
+ITER: i_iter = 66 ret = 68.67 ret_best = 97.32 n_data = 67
+ITER: i_iter = 67 ret = -100.00 ret_best = 97.32 n_data = 68
+ITER: i_iter = 68 ret = -99.40 ret_best = 97.32 n_data = 69
+ITER: i_iter = 69 ret = -94.87 ret_best = 97.32 n_data = 70
+ITER: i_iter = 70 ret = -11.98 ret_best = 97.32 n_data = 71
+ITER: i_iter = 71 ret = -58.75 ret_best = 97.32 n_data = 72
+ITER: i_iter = 72 ret = 88.25 ret_best = 97.32 n_data = 73
+ITER: i_iter = 73 ret = 90.88 ret_best = 97.32 n_data = 74
+ITER: i_iter = 74 ret = 87.68 ret_best = 97.32 n_data = 75
+ITER: i_iter = 75 ret = 89.25 ret_best = 97.32 n_data = 76
+ITER: i_iter = 76 ret = 93.15 ret_best = 97.32 n_data = 77
+ITER: i_iter = 77 ret = 91.62 ret_best = 97.32 n_data = 78
+ITER: i_iter = 78 ret = -84.58 ret_best = 97.32 n_data = 79
+ITER: i_iter = 79 ret = 91.15 ret_best = 97.32 n_data = 80
+ITER: i_iter = 80 ret = -99.97 ret_best = 97.32 n_data = 81
+ITER: i_iter = 81 ret = 93.10 ret_best = 97.32 n_data = 82
+ITER: i_iter = 82 ret = 88.33 ret_best = 97.32 n_data = 83
+ITER: i_iter = 83 ret = 89.51 ret_best = 97.32 n_data = 84
+ITER: i_iter = 84 ret = 95.22 ret_best = 97.32 n_data = 85
+ITER: i_iter = 85 ret = 92.32 ret_best = 97.32 n_data = 86
+ITER: i_iter = 86 ret = -96.14 ret_best = 97.32 n_data = 87
+ITER: i_iter = 87 ret = 88.28 ret_best = 97.32 n_data = 88
+ITER: i_iter = 88 ret = 92.57 ret_best = 97.32 n_data = 89
+ITER: i_iter = 89 ret = -68.86 ret_best = 97.32 n_data = 90
+ITER: i_iter = 90 ret = 93.92 ret_best = 97.32 n_data = 91
+ITER: i_iter = 91 ret = 95.13 ret_best = 97.32 n_data = 92
+ITER: i_iter = 92 ret = -29.24 ret_best = 97.32 n_data = 93
+ITER: i_iter = 93 ret = -65.77 ret_best = 97.32 n_data = 94
+ITER: i_iter = 94 ret = -98.14 ret_best = 97.32 n_data = 95
+ITER: i_iter = 95 ret = -79.00 ret_best = 97.32 n_data = 96
+ITER: i_iter = 96 ret = 90.47 ret_best = 97.32 n_data = 97
+ITER: i_iter = 97 ret = -42.35 ret_best = 97.32 n_data = 98
+ITER: i_iter = 98 ret = -99.70 ret_best = 97.32 n_data = 99
+ITER: i_iter = 99 ret = 53.29 ret_best = 97.32 n_data = 100
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 0 return = 0.000
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 1 return = 91.693
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 2 return = 91.693
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 3 return = 91.693
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 4 return = 91.693
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 5 return = 91.693
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 6 return = 91.693
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 7 return = 91.693
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 8 return = 91.693
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 9 return = 91.693
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 10 return = 91.693
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 11 return = 93.015
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 12 return = 93.015
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 13 return = 93.015
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 14 return = 93.015
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 15 return = 93.015
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 16 return = 93.015
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 17 return = 93.015
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 18 return = 93.015
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 19 return = 93.015
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 20 return = 96.195
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 21 return = 96.195
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 22 return = 96.195
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 23 return = 96.195
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 24 return = 96.195
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 25 return = 96.195
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 26 return = 96.195
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 27 return = 96.195
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 28 return = 96.195
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 29 return = 97.000
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 30 return = 97.000
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 31 return = 97.000
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 32 return = 97.000
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 33 return = 97.000
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 34 return = 97.000
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 35 return = 97.000
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 36 return = 97.000
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 37 return = 97.000
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 38 return = 97.000
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 39 return = 97.000
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 40 return = 97.000
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 41 return = 97.000
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 42 return = 97.000
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 43 return = 97.000
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 44 return = 97.000
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 45 return = 97.000
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 46 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 47 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 48 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 49 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 50 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 51 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 52 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 53 return = 97.324
+[INFO 02-06 20:20:33] ax.service.utils.instantiation: Created search space: SearchSpace(parameters=[RangeParameter(name='x000', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x001', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x002', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x003', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x004', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x005', parameter_type=FLOAT, range=[-1.0, 1.0])], parameter_constraints=[]).
+[INFO 02-06 20:20:33] ax.modelbridge.dispatch_utils: Using Bayesian optimization since there are more ordered parameters than there are categories for the unordered categorical parameters.
+[INFO 02-06 20:20:33] ax.modelbridge.dispatch_utils: Calculating the number of remaining initialization trials based on num_initialization_trials=None max_initialization_trials=None num_tunable_parameters=6 num_trials=None use_batch_trials=False
+[INFO 02-06 20:20:33] ax.modelbridge.dispatch_utils: calculated num_initialization_trials=12
+[INFO 02-06 20:20:33] ax.modelbridge.dispatch_utils: num_completed_initialization_trials=0 num_remaining_initialization_trials=12
+[INFO 02-06 20:20:33] ax.modelbridge.dispatch_utils: Using Bayesian Optimization generation strategy: GenerationStrategy(name='Sobol+GPEI', steps=[Sobol for 12 trials, GPEI for subsequent trials]). Iterations after 12 will take longer to generate due to model-fitting.
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 54 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 55 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 56 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 57 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 58 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 59 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 60 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 61 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 62 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 63 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 64 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 65 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 66 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 67 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 68 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 69 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 70 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 71 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 72 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 73 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 74 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 75 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 76 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 77 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 78 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 79 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 80 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 81 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 82 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 83 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 84 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 85 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 86 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 87 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 88 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 89 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 90 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 91 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 92 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 93 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 94 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 95 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 96 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 97 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 98 return = 97.324
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 4 i_iter = 99 return = 97.324
+TIME_SAMPLE: 651.30
+ITER: i_iter = 0 ret = 0.00 ret_best = 0.00 n_data = 1
+ITER: i_iter = 1 ret = 91.09 ret_best = 91.09 n_data = 2
+ITER: i_iter = 2 ret = -74.45 ret_best = 91.09 n_data = 3
+ITER: i_iter = 3 ret = 86.77 ret_best = 91.09 n_data = 4
+ITER: i_iter = 4 ret = 89.08 ret_best = 91.09 n_data = 5
+ITER: i_iter = 5 ret = -91.88 ret_best = 91.09 n_data = 6
+ITER: i_iter = 6 ret = 84.27 ret_best = 91.09 n_data = 7
+ITER: i_iter = 7 ret = 85.23 ret_best = 91.09 n_data = 8
+ITER: i_iter = 8 ret = -37.10 ret_best = 91.09 n_data = 9
+ITER: i_iter = 9 ret = 88.35 ret_best = 91.09 n_data = 10
+ITER: i_iter = 10 ret = -97.51 ret_best = 91.09 n_data = 11
+ITER: i_iter = 11 ret = 86.71 ret_best = 91.09 n_data = 12
+ITER: i_iter = 12 ret = 82.27 ret_best = 91.09 n_data = 13
+ITER: i_iter = 13 ret = -95.07 ret_best = 91.09 n_data = 14
+ITER: i_iter = 14 ret = 81.40 ret_best = 91.09 n_data = 15
+ITER: i_iter = 15 ret = -98.47 ret_best = 91.09 n_data = 16
+ITER: i_iter = 16 ret = 91.36 ret_best = 91.36 n_data = 17
+ITER: i_iter = 17 ret = 92.93 ret_best = 92.93 n_data = 18
+ITER: i_iter = 18 ret = 89.73 ret_best = 92.93 n_data = 19
+ITER: i_iter = 19 ret = -70.61 ret_best = 92.93 n_data = 20
+ITER: i_iter = 20 ret = 93.17 ret_best = 93.17 n_data = 21
+ITER: i_iter = 21 ret = 89.74 ret_best = 93.17 n_data = 22
+ITER: i_iter = 22 ret = 88.45 ret_best = 93.17 n_data = 23
+ITER: i_iter = 23 ret = 93.72 ret_best = 93.72 n_data = 24
+ITER: i_iter = 24 ret = -99.68 ret_best = 93.72 n_data = 25
+ITER: i_iter = 25 ret = -99.99 ret_best = 93.72 n_data = 26
+ITER: i_iter = 26 ret = -80.20 ret_best = 93.72 n_data = 27
+ITER: i_iter = 27 ret = 92.94 ret_best = 93.72 n_data = 28
+ITER: i_iter = 28 ret = -98.42 ret_best = 93.72 n_data = 29
+ITER: i_iter = 29 ret = 91.55 ret_best = 93.72 n_data = 30
+ITER: i_iter = 30 ret = 72.45 ret_best = 93.72 n_data = 31
+ITER: i_iter = 31 ret = -47.42 ret_best = 93.72 n_data = 32
+ITER: i_iter = 32 ret = -76.56 ret_best = 93.72 n_data = 33
+ITER: i_iter = 33 ret = -99.11 ret_best = 93.72 n_data = 34
+ITER: i_iter = 34 ret = 75.41 ret_best = 93.72 n_data = 35
+ITER: i_iter = 35 ret = -91.65 ret_best = 93.72 n_data = 36
+ITER: i_iter = 36 ret = -99.38 ret_best = 93.72 n_data = 37
+ITER: i_iter = 37 ret = 91.16 ret_best = 93.72 n_data = 38
+ITER: i_iter = 38 ret = -52.73 ret_best = 93.72 n_data = 39
+ITER: i_iter = 39 ret = -99.93 ret_best = 93.72 n_data = 40
+ITER: i_iter = 40 ret = 83.38 ret_best = 93.72 n_data = 41
+ITER: i_iter = 41 ret = 38.44 ret_best = 93.72 n_data = 42
+ITER: i_iter = 42 ret = 93.52 ret_best = 93.72 n_data = 43
+ITER: i_iter = 43 ret = 93.91 ret_best = 93.91 n_data = 44
+ITER: i_iter = 44 ret = -99.36 ret_best = 93.91 n_data = 45
+ITER: i_iter = 45 ret = 90.39 ret_best = 93.91 n_data = 46
+ITER: i_iter = 46 ret = 91.61 ret_best = 93.91 n_data = 47
+ITER: i_iter = 47 ret = 93.09 ret_best = 93.91 n_data = 48
+ITER: i_iter = 48 ret = 95.62 ret_best = 95.62 n_data = 49
+ITER: i_iter = 49 ret = -67.52 ret_best = 95.62 n_data = 50
+ITER: i_iter = 50 ret = 81.07 ret_best = 95.62 n_data = 51
+ITER: i_iter = 51 ret = 91.14 ret_best = 95.62 n_data = 52
+ITER: i_iter = 52 ret = 91.08 ret_best = 95.62 n_data = 53
+ITER: i_iter = 53 ret = 94.53 ret_best = 95.62 n_data = 54
+ITER: i_iter = 54 ret = -87.21 ret_best = 95.62 n_data = 55
+ITER: i_iter = 55 ret = 95.57 ret_best = 95.62 n_data = 56
+ITER: i_iter = 56 ret = -99.57 ret_best = 95.62 n_data = 57
+ITER: i_iter = 57 ret = 90.41 ret_best = 95.62 n_data = 58
+ITER: i_iter = 58 ret = 92.29 ret_best = 95.62 n_data = 59
+ITER: i_iter = 59 ret = 82.18 ret_best = 95.62 n_data = 60
+ITER: i_iter = 60 ret = -37.89 ret_best = 95.62 n_data = 61
+ITER: i_iter = 61 ret = -62.35 ret_best = 95.62 n_data = 62
+ITER: i_iter = 62 ret = 91.43 ret_best = 95.62 n_data = 63
+ITER: i_iter = 63 ret = 95.80 ret_best = 95.80 n_data = 64
+ITER: i_iter = 64 ret = -99.99 ret_best = 95.80 n_data = 65
+ITER: i_iter = 65 ret = -99.09 ret_best = 95.80 n_data = 66
+ITER: i_iter = 66 ret = -99.68 ret_best = 95.80 n_data = 67
+ITER: i_iter = 67 ret = 90.36 ret_best = 95.80 n_data = 68
+ITER: i_iter = 68 ret = 93.11 ret_best = 95.80 n_data = 69
+ITER: i_iter = 69 ret = 96.00 ret_best = 96.00 n_data = 70
+ITER: i_iter = 70 ret = 93.53 ret_best = 96.00 n_data = 71
+ITER: i_iter = 71 ret = 94.54 ret_best = 96.00 n_data = 72
+ITER: i_iter = 72 ret = -91.86 ret_best = 96.00 n_data = 73
+ITER: i_iter = 73 ret = 93.79 ret_best = 96.00 n_data = 74
+ITER: i_iter = 74 ret = -99.70 ret_best = 96.00 n_data = 75
+ITER: i_iter = 75 ret = -99.48 ret_best = 96.00 n_data = 76
+ITER: i_iter = 76 ret = 85.04 ret_best = 96.00 n_data = 77
+ITER: i_iter = 77 ret = -83.49 ret_best = 96.00 n_data = 78
+ITER: i_iter = 78 ret = -56.92 ret_best = 96.00 n_data = 79
+ITER: i_iter = 79 ret = -99.21 ret_best = 96.00 n_data = 80
+ITER: i_iter = 80 ret = 92.68 ret_best = 96.00 n_data = 81
+ITER: i_iter = 81 ret = -88.61 ret_best = 96.00 n_data = 82
+ITER: i_iter = 82 ret = 93.51 ret_best = 96.00 n_data = 83
+ITER: i_iter = 83 ret = -90.43 ret_best = 96.00 n_data = 84
+ITER: i_iter = 84 ret = -99.89 ret_best = 96.00 n_data = 85
+ITER: i_iter = 85 ret = 89.37 ret_best = 96.00 n_data = 86
+ITER: i_iter = 86 ret = 92.19 ret_best = 96.00 n_data = 87
+ITER: i_iter = 87 ret = 89.28 ret_best = 96.00 n_data = 88
+ITER: i_iter = 88 ret = 88.79 ret_best = 96.00 n_data = 89
+ITER: i_iter = 89 ret = -98.59 ret_best = 96.00 n_data = 90
+ITER: i_iter = 90 ret = 91.79 ret_best = 96.00 n_data = 91
+ITER: i_iter = 91 ret = -99.70 ret_best = 96.00 n_data = 92
+ITER: i_iter = 92 ret = -44.57 ret_best = 96.00 n_data = 93
+ITER: i_iter = 93 ret = -26.71 ret_best = 96.00 n_data = 94
+ITER: i_iter = 94 ret = 95.81 ret_best = 96.00 n_data = 95
+ITER: i_iter = 95 ret = -79.70 ret_best = 96.00 n_data = 96
+ITER: i_iter = 96 ret = 92.37 ret_best = 96.00 n_data = 97
+ITER: i_iter = 97 ret = 89.34 ret_best = 96.00 n_data = 98
+ITER: i_iter = 98 ret = 86.80 ret_best = 96.00 n_data = 99
+ITER: i_iter = 99 ret = -49.60 ret_best = 96.00 n_data = 100
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 0 return = 0.000
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 1 return = 91.089
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 2 return = 91.089
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 3 return = 91.089
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 4 return = 91.089
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 5 return = 91.089
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 6 return = 91.089
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 7 return = 91.089
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 8 return = 91.089
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 9 return = 91.089
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 10 return = 91.089
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 11 return = 91.089
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 12 return = 91.089
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 13 return = 91.089
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 14 return = 91.089
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 15 return = 91.089
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 16 return = 91.360
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 17 return = 92.929
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 18 return = 92.929
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 19 return = 92.929
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 20 return = 93.167
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 21 return = 93.167
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 22 return = 93.167
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 23 return = 93.715
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 24 return = 93.715
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 25 return = 93.715
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 26 return = 93.715
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 27 return = 93.715
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 28 return = 93.715
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 29 return = 93.715
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 30 return = 93.715
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 31 return = 93.715
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 32 return = 93.715
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 33 return = 93.715
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 34 return = 93.715
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 35 return = 93.715
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 36 return = 93.715
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 37 return = 93.715
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 38 return = 93.715
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 39 return = 93.715
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 40 return = 93.715
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 41 return = 93.715
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 42 return = 93.715
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 43 return = 93.905
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 44 return = 93.905
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 45 return = 93.905
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 46 return = 93.905
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 47 return = 93.905
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 48 return = 95.624
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 49 return = 95.624
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 50 return = 95.624
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 51 return = 95.624
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 52 return = 95.624
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 53 return = 95.624
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 54 return = 95.624
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 55 return = 95.624
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 56 return = 95.624
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 57 return = 95.624
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 58 return = 95.624
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 59 return = 95.624
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 60 return = 95.624
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 61 return = 95.624
+[INFO 02-06 20:34:42] ax.service.utils.instantiation: Created search space: SearchSpace(parameters=[RangeParameter(name='x000', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x001', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x002', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x003', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x004', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x005', parameter_type=FLOAT, range=[-1.0, 1.0])], parameter_constraints=[]).
+[INFO 02-06 20:34:42] ax.modelbridge.dispatch_utils: Using Bayesian optimization since there are more ordered parameters than there are categories for the unordered categorical parameters.
+[INFO 02-06 20:34:42] ax.modelbridge.dispatch_utils: Calculating the number of remaining initialization trials based on num_initialization_trials=None max_initialization_trials=None num_tunable_parameters=6 num_trials=None use_batch_trials=False
+[INFO 02-06 20:34:42] ax.modelbridge.dispatch_utils: calculated num_initialization_trials=12
+[INFO 02-06 20:34:42] ax.modelbridge.dispatch_utils: num_completed_initialization_trials=0 num_remaining_initialization_trials=12
+[INFO 02-06 20:34:42] ax.modelbridge.dispatch_utils: Using Bayesian Optimization generation strategy: GenerationStrategy(name='Sobol+GPEI', steps=[Sobol for 12 trials, GPEI for subsequent trials]). Iterations after 12 will take longer to generate due to model-fitting.
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 62 return = 95.624
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 63 return = 95.798
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 64 return = 95.798
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 65 return = 95.798
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 66 return = 95.798
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 67 return = 95.798
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 68 return = 95.798
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 69 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 70 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 71 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 72 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 73 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 74 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 75 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 76 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 77 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 78 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 79 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 80 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 81 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 82 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 83 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 84 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 85 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 86 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 87 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 88 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 89 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 90 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 91 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 92 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 93 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 94 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 95 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 96 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 97 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 98 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 5 i_iter = 99 return = 96.002
+TIME_SAMPLE: 848.53
+ITER: i_iter = 0 ret = 0.00 ret_best = 0.00 n_data = 1
+ITER: i_iter = 1 ret = 84.43 ret_best = 84.43 n_data = 2
+ITER: i_iter = 2 ret = 87.88 ret_best = 87.88 n_data = 3
+ITER: i_iter = 3 ret = -98.72 ret_best = 87.88 n_data = 4
+ITER: i_iter = 4 ret = -56.69 ret_best = 87.88 n_data = 5
+ITER: i_iter = 5 ret = 96.00 ret_best = 96.00 n_data = 6
+ITER: i_iter = 6 ret = -90.79 ret_best = 96.00 n_data = 7
+ITER: i_iter = 7 ret = -89.31 ret_best = 96.00 n_data = 8
+ITER: i_iter = 8 ret = 72.38 ret_best = 96.00 n_data = 9
+ITER: i_iter = 9 ret = -57.06 ret_best = 96.00 n_data = 10
+ITER: i_iter = 10 ret = -87.51 ret_best = 96.00 n_data = 11
+ITER: i_iter = 11 ret = 87.29 ret_best = 96.00 n_data = 12
+ITER: i_iter = 12 ret = 93.13 ret_best = 96.00 n_data = 13
+ITER: i_iter = 13 ret = 92.37 ret_best = 96.00 n_data = 14
+ITER: i_iter = 14 ret = -81.78 ret_best = 96.00 n_data = 15
+ITER: i_iter = 15 ret = 92.54 ret_best = 96.00 n_data = 16
+ITER: i_iter = 16 ret = -75.17 ret_best = 96.00 n_data = 17
+ITER: i_iter = 17 ret = 93.75 ret_best = 96.00 n_data = 18
+ITER: i_iter = 18 ret = 93.69 ret_best = 96.00 n_data = 19
+ITER: i_iter = 19 ret = 89.03 ret_best = 96.00 n_data = 20
+ITER: i_iter = 20 ret = 89.38 ret_best = 96.00 n_data = 21
+ITER: i_iter = 21 ret = 94.43 ret_best = 96.00 n_data = 22
+ITER: i_iter = 22 ret = -98.86 ret_best = 96.00 n_data = 23
+ITER: i_iter = 23 ret = 91.25 ret_best = 96.00 n_data = 24
+ITER: i_iter = 24 ret = 95.51 ret_best = 96.00 n_data = 25
+ITER: i_iter = 25 ret = 84.68 ret_best = 96.00 n_data = 26
+ITER: i_iter = 26 ret = -98.06 ret_best = 96.00 n_data = 27
+ITER: i_iter = 27 ret = 89.00 ret_best = 96.00 n_data = 28
+ITER: i_iter = 28 ret = -99.97 ret_best = 96.00 n_data = 29
+ITER: i_iter = 29 ret = 94.55 ret_best = 96.00 n_data = 30
+ITER: i_iter = 30 ret = 92.17 ret_best = 96.00 n_data = 31
+ITER: i_iter = 31 ret = 54.67 ret_best = 96.00 n_data = 32
+ITER: i_iter = 32 ret = 66.59 ret_best = 96.00 n_data = 33
+ITER: i_iter = 33 ret = 96.09 ret_best = 96.09 n_data = 34
+ITER: i_iter = 34 ret = 92.47 ret_best = 96.09 n_data = 35
+ITER: i_iter = 35 ret = 93.62 ret_best = 96.09 n_data = 36
+ITER: i_iter = 36 ret = -90.20 ret_best = 96.09 n_data = 37
+ITER: i_iter = 37 ret = 84.81 ret_best = 96.09 n_data = 38
+ITER: i_iter = 38 ret = 96.35 ret_best = 96.35 n_data = 39
+ITER: i_iter = 39 ret = 95.73 ret_best = 96.35 n_data = 40
+ITER: i_iter = 40 ret = 89.73 ret_best = 96.35 n_data = 41
+ITER: i_iter = 41 ret = 91.92 ret_best = 96.35 n_data = 42
+ITER: i_iter = 42 ret = -99.65 ret_best = 96.35 n_data = 43
+ITER: i_iter = 43 ret = 94.98 ret_best = 96.35 n_data = 44
+ITER: i_iter = 44 ret = 88.96 ret_best = 96.35 n_data = 45
+ITER: i_iter = 45 ret = 93.48 ret_best = 96.35 n_data = 46
+ITER: i_iter = 46 ret = 89.88 ret_best = 96.35 n_data = 47
+ITER: i_iter = 47 ret = 76.35 ret_best = 96.35 n_data = 48
+ITER: i_iter = 48 ret = -99.43 ret_best = 96.35 n_data = 49
+ITER: i_iter = 49 ret = 94.61 ret_best = 96.35 n_data = 50
+ITER: i_iter = 50 ret = 91.27 ret_best = 96.35 n_data = 51
+ITER: i_iter = 51 ret = 87.62 ret_best = 96.35 n_data = 52
+ITER: i_iter = 52 ret = 89.98 ret_best = 96.35 n_data = 53
+ITER: i_iter = 53 ret = -61.07 ret_best = 96.35 n_data = 54
+ITER: i_iter = 54 ret = -11.33 ret_best = 96.35 n_data = 55
+ITER: i_iter = 55 ret = 95.64 ret_best = 96.35 n_data = 56
+ITER: i_iter = 56 ret = 86.79 ret_best = 96.35 n_data = 57
+ITER: i_iter = 57 ret = 88.08 ret_best = 96.35 n_data = 58
+ITER: i_iter = 58 ret = -81.24 ret_best = 96.35 n_data = 59
+ITER: i_iter = 59 ret = 73.20 ret_best = 96.35 n_data = 60
+ITER: i_iter = 60 ret = 89.55 ret_best = 96.35 n_data = 61
+ITER: i_iter = 61 ret = -87.32 ret_best = 96.35 n_data = 62
+ITER: i_iter = 62 ret = 91.31 ret_best = 96.35 n_data = 63
+ITER: i_iter = 63 ret = -99.97 ret_best = 96.35 n_data = 64
+ITER: i_iter = 64 ret = 87.88 ret_best = 96.35 n_data = 65
+ITER: i_iter = 65 ret = -89.99 ret_best = 96.35 n_data = 66
+ITER: i_iter = 66 ret = 93.11 ret_best = 96.35 n_data = 67
+ITER: i_iter = 67 ret = 87.67 ret_best = 96.35 n_data = 68
+ITER: i_iter = 68 ret = 89.28 ret_best = 96.35 n_data = 69
+ITER: i_iter = 69 ret = -44.98 ret_best = 96.35 n_data = 70
+ITER: i_iter = 70 ret = 94.31 ret_best = 96.35 n_data = 71
+ITER: i_iter = 71 ret = -99.92 ret_best = 96.35 n_data = 72
+ITER: i_iter = 72 ret = 89.13 ret_best = 96.35 n_data = 73
+ITER: i_iter = 73 ret = 96.75 ret_best = 96.75 n_data = 74
+ITER: i_iter = 74 ret = -99.15 ret_best = 96.75 n_data = 75
+ITER: i_iter = 75 ret = 94.33 ret_best = 96.75 n_data = 76
+ITER: i_iter = 76 ret = -99.63 ret_best = 96.75 n_data = 77
+ITER: i_iter = 77 ret = 86.95 ret_best = 96.75 n_data = 78
+ITER: i_iter = 78 ret = -78.51 ret_best = 96.75 n_data = 79
+ITER: i_iter = 79 ret = 93.79 ret_best = 96.75 n_data = 80
+ITER: i_iter = 80 ret = -99.95 ret_best = 96.75 n_data = 81
+ITER: i_iter = 81 ret = 89.72 ret_best = 96.75 n_data = 82
+ITER: i_iter = 82 ret = 85.22 ret_best = 96.75 n_data = 83
+ITER: i_iter = 83 ret = 96.50 ret_best = 96.75 n_data = 84
+ITER: i_iter = 84 ret = 52.65 ret_best = 96.75 n_data = 85
+ITER: i_iter = 85 ret = 83.77 ret_best = 96.75 n_data = 86
+ITER: i_iter = 86 ret = 88.21 ret_best = 96.75 n_data = 87
+ITER: i_iter = 87 ret = -97.53 ret_best = 96.75 n_data = 88
+ITER: i_iter = 88 ret = -98.12 ret_best = 96.75 n_data = 89
+ITER: i_iter = 89 ret = 89.04 ret_best = 96.75 n_data = 90
+ITER: i_iter = 90 ret = 93.96 ret_best = 96.75 n_data = 91
+ITER: i_iter = 91 ret = 93.88 ret_best = 96.75 n_data = 92
+ITER: i_iter = 92 ret = 94.02 ret_best = 96.75 n_data = 93
+ITER: i_iter = 93 ret = 90.08 ret_best = 96.75 n_data = 94
+ITER: i_iter = 94 ret = 89.82 ret_best = 96.75 n_data = 95
+ITER: i_iter = 95 ret = 90.58 ret_best = 96.75 n_data = 96
+ITER: i_iter = 96 ret = -98.15 ret_best = 96.75 n_data = 97
+ITER: i_iter = 97 ret = 92.64 ret_best = 96.75 n_data = 98
+ITER: i_iter = 98 ret = 89.42 ret_best = 96.75 n_data = 99
+ITER: i_iter = 99 ret = 91.27 ret_best = 96.75 n_data = 100
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 0 return = 0.000
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 1 return = 84.434
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 2 return = 87.881
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 3 return = 87.881
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 4 return = 87.881
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 5 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 6 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 7 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 8 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 9 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 10 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 11 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 12 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 13 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 14 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 15 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 16 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 17 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 18 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 19 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 20 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 21 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 22 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 23 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 24 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 25 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 26 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 27 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 28 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 29 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 30 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 31 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 32 return = 96.002
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 33 return = 96.088
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 34 return = 96.088
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 35 return = 96.088
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 36 return = 96.088
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 37 return = 96.088
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 38 return = 96.355
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 39 return = 96.355
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 40 return = 96.355
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 41 return = 96.355
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 42 return = 96.355
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 43 return = 96.355
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 44 return = 96.355
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 45 return = 96.355
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 46 return = 96.355
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 47 return = 96.355
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 48 return = 96.355
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 49 return = 96.355
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 50 return = 96.355
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 51 return = 96.355
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 52 return = 96.355
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 53 return = 96.355
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 54 return = 96.355
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 55 return = 96.355
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 56 return = 96.355
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 57 return = 96.355
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 58 return = 96.355
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 59 return = 96.355
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 60 return = 96.355
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 61 return = 96.355
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 62 return = 96.355
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 63 return = 96.355
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 64 return = 96.355
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 65 return = 96.355
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 66 return = 96.355
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 67 return = 96.355
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 68 return = 96.355
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 69 return = 96.355
+[INFO 02-06 20:47:06] ax.service.utils.instantiation: Created search space: SearchSpace(parameters=[RangeParameter(name='x000', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x001', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x002', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x003', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x004', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x005', parameter_type=FLOAT, range=[-1.0, 1.0])], parameter_constraints=[]).
+[INFO 02-06 20:47:06] ax.modelbridge.dispatch_utils: Using Bayesian optimization since there are more ordered parameters than there are categories for the unordered categorical parameters.
+[INFO 02-06 20:47:06] ax.modelbridge.dispatch_utils: Calculating the number of remaining initialization trials based on num_initialization_trials=None max_initialization_trials=None num_tunable_parameters=6 num_trials=None use_batch_trials=False
+[INFO 02-06 20:47:06] ax.modelbridge.dispatch_utils: calculated num_initialization_trials=12
+[INFO 02-06 20:47:06] ax.modelbridge.dispatch_utils: num_completed_initialization_trials=0 num_remaining_initialization_trials=12
+[INFO 02-06 20:47:06] ax.modelbridge.dispatch_utils: Using Bayesian Optimization generation strategy: GenerationStrategy(name='Sobol+GPEI', steps=[Sobol for 12 trials, GPEI for subsequent trials]). Iterations after 12 will take longer to generate due to model-fitting.
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 70 return = 96.355
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 71 return = 96.355
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 72 return = 96.355
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 73 return = 96.747
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 74 return = 96.747
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 75 return = 96.747
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 76 return = 96.747
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 77 return = 96.747
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 78 return = 96.747
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 79 return = 96.747
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 80 return = 96.747
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 81 return = 96.747
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 82 return = 96.747
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 83 return = 96.747
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 84 return = 96.747
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 85 return = 96.747
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 86 return = 96.747
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 87 return = 96.747
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 88 return = 96.747
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 89 return = 96.747
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 90 return = 96.747
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 91 return = 96.747
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 92 return = 96.747
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 93 return = 96.747
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 94 return = 96.747
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 95 return = 96.747
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 96 return = 96.747
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 97 return = 96.747
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 98 return = 96.747
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 6 i_iter = 99 return = 96.747
+TIME_SAMPLE: 743.78
+ITER: i_iter = 0 ret = 0.00 ret_best = 0.00 n_data = 1
+ITER: i_iter = 1 ret = 84.90 ret_best = 84.90 n_data = 2
+ITER: i_iter = 2 ret = 90.31 ret_best = 90.31 n_data = 3
+ITER: i_iter = 3 ret = 76.66 ret_best = 90.31 n_data = 4
+ITER: i_iter = 4 ret = -71.87 ret_best = 90.31 n_data = 5
+ITER: i_iter = 5 ret = -69.10 ret_best = 90.31 n_data = 6
+ITER: i_iter = 6 ret = -94.16 ret_best = 90.31 n_data = 7
+ITER: i_iter = 7 ret = 85.06 ret_best = 90.31 n_data = 8
+ITER: i_iter = 8 ret = 94.32 ret_best = 94.32 n_data = 9
+ITER: i_iter = 9 ret = 88.36 ret_best = 94.32 n_data = 10
+ITER: i_iter = 10 ret = 94.02 ret_best = 94.32 n_data = 11
+ITER: i_iter = 11 ret = -93.84 ret_best = 94.32 n_data = 12
+ITER: i_iter = 12 ret = 45.00 ret_best = 94.32 n_data = 13
+ITER: i_iter = 13 ret = 85.92 ret_best = 94.32 n_data = 14
+ITER: i_iter = 14 ret = 88.44 ret_best = 94.32 n_data = 15
+ITER: i_iter = 15 ret = -99.44 ret_best = 94.32 n_data = 16
+ITER: i_iter = 16 ret = -95.02 ret_best = 94.32 n_data = 17
+ITER: i_iter = 17 ret = -25.23 ret_best = 94.32 n_data = 18
+ITER: i_iter = 18 ret = 89.91 ret_best = 94.32 n_data = 19
+ITER: i_iter = 19 ret = -91.55 ret_best = 94.32 n_data = 20
+ITER: i_iter = 20 ret = 27.03 ret_best = 94.32 n_data = 21
+ITER: i_iter = 21 ret = 92.00 ret_best = 94.32 n_data = 22
+ITER: i_iter = 22 ret = -39.48 ret_best = 94.32 n_data = 23
+ITER: i_iter = 23 ret = 90.53 ret_best = 94.32 n_data = 24
+ITER: i_iter = 24 ret = 94.76 ret_best = 94.76 n_data = 25
+ITER: i_iter = 25 ret = 28.31 ret_best = 94.76 n_data = 26
+ITER: i_iter = 26 ret = -73.03 ret_best = 94.76 n_data = 27
+ITER: i_iter = 27 ret = -95.57 ret_best = 94.76 n_data = 28
+ITER: i_iter = 28 ret = 92.35 ret_best = 94.76 n_data = 29
+ITER: i_iter = 29 ret = 58.28 ret_best = 94.76 n_data = 30
+ITER: i_iter = 30 ret = 80.44 ret_best = 94.76 n_data = 31
+ITER: i_iter = 31 ret = 93.11 ret_best = 94.76 n_data = 32
+ITER: i_iter = 32 ret = 94.88 ret_best = 94.88 n_data = 33
+ITER: i_iter = 33 ret = -99.87 ret_best = 94.88 n_data = 34
+ITER: i_iter = 34 ret = -2.60 ret_best = 94.88 n_data = 35
+ITER: i_iter = 35 ret = 91.55 ret_best = 94.88 n_data = 36
+ITER: i_iter = 36 ret = -99.54 ret_best = 94.88 n_data = 37
+ITER: i_iter = 37 ret = -97.88 ret_best = 94.88 n_data = 38
+ITER: i_iter = 38 ret = 95.77 ret_best = 95.77 n_data = 39
+ITER: i_iter = 39 ret = -97.80 ret_best = 95.77 n_data = 40
+ITER: i_iter = 40 ret = 94.66 ret_best = 95.77 n_data = 41
+ITER: i_iter = 41 ret = 93.20 ret_best = 95.77 n_data = 42
+ITER: i_iter = 42 ret = 92.97 ret_best = 95.77 n_data = 43
+ITER: i_iter = 43 ret = -99.96 ret_best = 95.77 n_data = 44
+ITER: i_iter = 44 ret = -62.71 ret_best = 95.77 n_data = 45
+ITER: i_iter = 45 ret = 93.94 ret_best = 95.77 n_data = 46
+ITER: i_iter = 46 ret = 93.65 ret_best = 95.77 n_data = 47
+ITER: i_iter = 47 ret = -99.74 ret_best = 95.77 n_data = 48
+ITER: i_iter = 48 ret = -95.39 ret_best = 95.77 n_data = 49
+ITER: i_iter = 49 ret = 91.78 ret_best = 95.77 n_data = 50
+ITER: i_iter = 50 ret = 74.04 ret_best = 95.77 n_data = 51
+ITER: i_iter = 51 ret = 87.79 ret_best = 95.77 n_data = 52
+ITER: i_iter = 52 ret = 81.73 ret_best = 95.77 n_data = 53
+ITER: i_iter = 53 ret = 89.80 ret_best = 95.77 n_data = 54
+ITER: i_iter = 54 ret = 92.64 ret_best = 95.77 n_data = 55
+ITER: i_iter = 55 ret = -96.17 ret_best = 95.77 n_data = 56
+ITER: i_iter = 56 ret = -80.10 ret_best = 95.77 n_data = 57
+ITER: i_iter = 57 ret = -96.98 ret_best = 95.77 n_data = 58
+ITER: i_iter = 58 ret = 84.52 ret_best = 95.77 n_data = 59
+ITER: i_iter = 59 ret = 83.78 ret_best = 95.77 n_data = 60
+ITER: i_iter = 60 ret = -96.79 ret_best = 95.77 n_data = 61
+ITER: i_iter = 61 ret = 88.13 ret_best = 95.77 n_data = 62
+ITER: i_iter = 62 ret = -95.71 ret_best = 95.77 n_data = 63
+ITER: i_iter = 63 ret = 89.26 ret_best = 95.77 n_data = 64
+ITER: i_iter = 64 ret = -32.68 ret_best = 95.77 n_data = 65
+ITER: i_iter = 65 ret = 58.96 ret_best = 95.77 n_data = 66
+ITER: i_iter = 66 ret = 90.14 ret_best = 95.77 n_data = 67
+ITER: i_iter = 67 ret = 91.94 ret_best = 95.77 n_data = 68
+ITER: i_iter = 68 ret = 94.19 ret_best = 95.77 n_data = 69
+ITER: i_iter = 69 ret = 8.63 ret_best = 95.77 n_data = 70
+ITER: i_iter = 70 ret = 91.69 ret_best = 95.77 n_data = 71
+ITER: i_iter = 71 ret = 94.78 ret_best = 95.77 n_data = 72
+ITER: i_iter = 72 ret = -99.90 ret_best = 95.77 n_data = 73
+ITER: i_iter = 73 ret = 83.84 ret_best = 95.77 n_data = 74
+ITER: i_iter = 74 ret = -86.03 ret_best = 95.77 n_data = 75
+ITER: i_iter = 75 ret = 91.17 ret_best = 95.77 n_data = 76
+ITER: i_iter = 76 ret = -91.86 ret_best = 95.77 n_data = 77
+ITER: i_iter = 77 ret = 43.10 ret_best = 95.77 n_data = 78
+ITER: i_iter = 78 ret = 93.60 ret_best = 95.77 n_data = 79
+ITER: i_iter = 79 ret = -99.21 ret_best = 95.77 n_data = 80
+ITER: i_iter = 80 ret = 91.97 ret_best = 95.77 n_data = 81
+ITER: i_iter = 81 ret = -99.62 ret_best = 95.77 n_data = 82
+ITER: i_iter = 82 ret = -93.80 ret_best = 95.77 n_data = 83
+ITER: i_iter = 83 ret = 83.43 ret_best = 95.77 n_data = 84
+ITER: i_iter = 84 ret = -68.19 ret_best = 95.77 n_data = 85
+ITER: i_iter = 85 ret = 94.74 ret_best = 95.77 n_data = 86
+ITER: i_iter = 86 ret = -77.04 ret_best = 95.77 n_data = 87
+ITER: i_iter = 87 ret = -94.95 ret_best = 95.77 n_data = 88
+ITER: i_iter = 88 ret = 85.31 ret_best = 95.77 n_data = 89
+ITER: i_iter = 89 ret = 94.08 ret_best = 95.77 n_data = 90
+ITER: i_iter = 90 ret = 92.59 ret_best = 95.77 n_data = 91
+ITER: i_iter = 91 ret = -39.68 ret_best = 95.77 n_data = 92
+ITER: i_iter = 92 ret = -100.00 ret_best = 95.77 n_data = 93
+ITER: i_iter = 93 ret = 90.17 ret_best = 95.77 n_data = 94
+ITER: i_iter = 94 ret = 81.39 ret_best = 95.77 n_data = 95
+ITER: i_iter = 95 ret = -100.00 ret_best = 95.77 n_data = 96
+ITER: i_iter = 96 ret = 92.71 ret_best = 95.77 n_data = 97
+ITER: i_iter = 97 ret = 90.28 ret_best = 95.77 n_data = 98
+ITER: i_iter = 98 ret = 91.13 ret_best = 95.77 n_data = 99
+ITER: i_iter = 99 ret = 95.44 ret_best = 95.77 n_data = 100
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 0 return = 0.000
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 1 return = 84.897
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 2 return = 90.309
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 3 return = 90.309
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 4 return = 90.309
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 5 return = 90.309
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 6 return = 90.309
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 7 return = 90.309
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 8 return = 94.316
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 9 return = 94.316
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 10 return = 94.316
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 11 return = 94.316
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 12 return = 94.316
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 13 return = 94.316
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 14 return = 94.316
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 15 return = 94.316
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 16 return = 94.316
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 17 return = 94.316
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 18 return = 94.316
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 19 return = 94.316
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 20 return = 94.316
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 21 return = 94.316
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 22 return = 94.316
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 23 return = 94.316
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 24 return = 94.762
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 25 return = 94.762
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 26 return = 94.762
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 27 return = 94.762
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 28 return = 94.762
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 29 return = 94.762
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 30 return = 94.762
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 31 return = 94.762
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 32 return = 94.875
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 33 return = 94.875
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 34 return = 94.875
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 35 return = 94.875
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 36 return = 94.875
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 37 return = 94.875
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 38 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 39 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 40 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 41 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 42 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 43 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 44 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 45 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 46 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 47 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 48 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 49 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 50 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 51 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 52 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 53 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 54 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 55 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 56 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 57 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 58 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 59 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 60 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 61 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 62 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 63 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 64 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 65 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 66 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 67 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 68 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 69 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 70 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 71 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 72 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 73 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 74 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 75 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 76 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 77 return = 95.772
+[INFO 02-06 20:59:45] ax.service.utils.instantiation: Created search space: SearchSpace(parameters=[RangeParameter(name='x000', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x001', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x002', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x003', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x004', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x005', parameter_type=FLOAT, range=[-1.0, 1.0])], parameter_constraints=[]).
+[INFO 02-06 20:59:45] ax.modelbridge.dispatch_utils: Using Bayesian optimization since there are more ordered parameters than there are categories for the unordered categorical parameters.
+[INFO 02-06 20:59:45] ax.modelbridge.dispatch_utils: Calculating the number of remaining initialization trials based on num_initialization_trials=None max_initialization_trials=None num_tunable_parameters=6 num_trials=None use_batch_trials=False
+[INFO 02-06 20:59:45] ax.modelbridge.dispatch_utils: calculated num_initialization_trials=12
+[INFO 02-06 20:59:45] ax.modelbridge.dispatch_utils: num_completed_initialization_trials=0 num_remaining_initialization_trials=12
+[INFO 02-06 20:59:45] ax.modelbridge.dispatch_utils: Using Bayesian Optimization generation strategy: GenerationStrategy(name='Sobol+GPEI', steps=[Sobol for 12 trials, GPEI for subsequent trials]). Iterations after 12 will take longer to generate due to model-fitting.
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 78 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 79 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 80 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 81 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 82 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 83 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 84 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 85 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 86 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 87 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 88 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 89 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 90 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 91 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 92 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 93 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 94 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 95 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 96 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 97 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 98 return = 95.772
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 7 i_iter = 99 return = 95.772
+TIME_SAMPLE: 759.16
+ITER: i_iter = 0 ret = 0.00 ret_best = 0.00 n_data = 1
+ITER: i_iter = 1 ret = 86.29 ret_best = 86.29 n_data = 2
+ITER: i_iter = 2 ret = 85.89 ret_best = 86.29 n_data = 3
+ITER: i_iter = 3 ret = 89.50 ret_best = 89.50 n_data = 4
+ITER: i_iter = 4 ret = -37.62 ret_best = 89.50 n_data = 5
+ITER: i_iter = 5 ret = 95.98 ret_best = 95.98 n_data = 6
+ITER: i_iter = 6 ret = 88.47 ret_best = 95.98 n_data = 7
+ITER: i_iter = 7 ret = 87.73 ret_best = 95.98 n_data = 8
+ITER: i_iter = 8 ret = -96.59 ret_best = 95.98 n_data = 9
+ITER: i_iter = 9 ret = 88.75 ret_best = 95.98 n_data = 10
+ITER: i_iter = 10 ret = -84.53 ret_best = 95.98 n_data = 11
+ITER: i_iter = 11 ret = 73.23 ret_best = 95.98 n_data = 12
+ITER: i_iter = 12 ret = 91.42 ret_best = 95.98 n_data = 13
+ITER: i_iter = 13 ret = -99.28 ret_best = 95.98 n_data = 14
+ITER: i_iter = 14 ret = 89.53 ret_best = 95.98 n_data = 15
+ITER: i_iter = 15 ret = 89.14 ret_best = 95.98 n_data = 16
+ITER: i_iter = 16 ret = -96.26 ret_best = 95.98 n_data = 17
+ITER: i_iter = 17 ret = -99.74 ret_best = 95.98 n_data = 18
+ITER: i_iter = 18 ret = 90.28 ret_best = 95.98 n_data = 19
+ITER: i_iter = 19 ret = 76.24 ret_best = 95.98 n_data = 20
+ITER: i_iter = 20 ret = 90.72 ret_best = 95.98 n_data = 21
+ITER: i_iter = 21 ret = 90.21 ret_best = 95.98 n_data = 22
+ITER: i_iter = 22 ret = -80.70 ret_best = 95.98 n_data = 23
+ITER: i_iter = 23 ret = 87.56 ret_best = 95.98 n_data = 24
+ITER: i_iter = 24 ret = -13.14 ret_best = 95.98 n_data = 25
+ITER: i_iter = 25 ret = -51.88 ret_best = 95.98 n_data = 26
+ITER: i_iter = 26 ret = -99.98 ret_best = 95.98 n_data = 27
+ITER: i_iter = 27 ret = 87.79 ret_best = 95.98 n_data = 28
+ITER: i_iter = 28 ret = 91.53 ret_best = 95.98 n_data = 29
+ITER: i_iter = 29 ret = 89.95 ret_best = 95.98 n_data = 30
+ITER: i_iter = 30 ret = 88.33 ret_best = 95.98 n_data = 31
+ITER: i_iter = 31 ret = -73.98 ret_best = 95.98 n_data = 32
+ITER: i_iter = 32 ret = -99.50 ret_best = 95.98 n_data = 33
+ITER: i_iter = 33 ret = 84.37 ret_best = 95.98 n_data = 34
+ITER: i_iter = 34 ret = 81.42 ret_best = 95.98 n_data = 35
+ITER: i_iter = 35 ret = 75.59 ret_best = 95.98 n_data = 36
+ITER: i_iter = 36 ret = 71.37 ret_best = 95.98 n_data = 37
+ITER: i_iter = 37 ret = 94.49 ret_best = 95.98 n_data = 38
+ITER: i_iter = 38 ret = 89.40 ret_best = 95.98 n_data = 39
+ITER: i_iter = 39 ret = -95.58 ret_best = 95.98 n_data = 40
+ITER: i_iter = 40 ret = 95.39 ret_best = 95.98 n_data = 41
+ITER: i_iter = 41 ret = -86.37 ret_best = 95.98 n_data = 42
+ITER: i_iter = 42 ret = 56.36 ret_best = 95.98 n_data = 43
+ITER: i_iter = 43 ret = 91.87 ret_best = 95.98 n_data = 44
+ITER: i_iter = 44 ret = 93.36 ret_best = 95.98 n_data = 45
+ITER: i_iter = 45 ret = 88.74 ret_best = 95.98 n_data = 46
+ITER: i_iter = 46 ret = -98.98 ret_best = 95.98 n_data = 47
+ITER: i_iter = 47 ret = 91.19 ret_best = 95.98 n_data = 48
+ITER: i_iter = 48 ret = -97.02 ret_best = 95.98 n_data = 49
+ITER: i_iter = 49 ret = -99.98 ret_best = 95.98 n_data = 50
+ITER: i_iter = 50 ret = 91.52 ret_best = 95.98 n_data = 51
+ITER: i_iter = 51 ret = 89.22 ret_best = 95.98 n_data = 52
+ITER: i_iter = 52 ret = 92.64 ret_best = 95.98 n_data = 53
+ITER: i_iter = 53 ret = -83.64 ret_best = 95.98 n_data = 54
+ITER: i_iter = 54 ret = 90.09 ret_best = 95.98 n_data = 55
+ITER: i_iter = 55 ret = -99.22 ret_best = 95.98 n_data = 56
+ITER: i_iter = 56 ret = 91.18 ret_best = 95.98 n_data = 57
+ITER: i_iter = 57 ret = 92.09 ret_best = 95.98 n_data = 58
+ITER: i_iter = 58 ret = 92.43 ret_best = 95.98 n_data = 59
+ITER: i_iter = 59 ret = -97.25 ret_best = 95.98 n_data = 60
+ITER: i_iter = 60 ret = 31.62 ret_best = 95.98 n_data = 61
+ITER: i_iter = 61 ret = 57.71 ret_best = 95.98 n_data = 62
+ITER: i_iter = 62 ret = -88.78 ret_best = 95.98 n_data = 63
+ITER: i_iter = 63 ret = -69.86 ret_best = 95.98 n_data = 64
+ITER: i_iter = 64 ret = -66.93 ret_best = 95.98 n_data = 65
+ITER: i_iter = 65 ret = -99.88 ret_best = 95.98 n_data = 66
+ITER: i_iter = 66 ret = 41.47 ret_best = 95.98 n_data = 67
+ITER: i_iter = 67 ret = -78.40 ret_best = 95.98 n_data = 68
+ITER: i_iter = 68 ret = 90.72 ret_best = 95.98 n_data = 69
+ITER: i_iter = 69 ret = 90.23 ret_best = 95.98 n_data = 70
+ITER: i_iter = 70 ret = 87.44 ret_best = 95.98 n_data = 71
+ITER: i_iter = 71 ret = -40.36 ret_best = 95.98 n_data = 72
+ITER: i_iter = 72 ret = 92.15 ret_best = 95.98 n_data = 73
+ITER: i_iter = 73 ret = 92.56 ret_best = 95.98 n_data = 74
+ITER: i_iter = 74 ret = 96.13 ret_best = 96.13 n_data = 75
+ITER: i_iter = 75 ret = 86.72 ret_best = 96.13 n_data = 76
+ITER: i_iter = 76 ret = -99.29 ret_best = 96.13 n_data = 77
+ITER: i_iter = 77 ret = 92.83 ret_best = 96.13 n_data = 78
+ITER: i_iter = 78 ret = 90.98 ret_best = 96.13 n_data = 79
+ITER: i_iter = 79 ret = 81.72 ret_best = 96.13 n_data = 80
+ITER: i_iter = 80 ret = -34.75 ret_best = 96.13 n_data = 81
+ITER: i_iter = 81 ret = 94.05 ret_best = 96.13 n_data = 82
+ITER: i_iter = 82 ret = -41.90 ret_best = 96.13 n_data = 83
+ITER: i_iter = 83 ret = -99.00 ret_best = 96.13 n_data = 84
+ITER: i_iter = 84 ret = 96.63 ret_best = 96.63 n_data = 85
+ITER: i_iter = 85 ret = 95.31 ret_best = 96.63 n_data = 86
+ITER: i_iter = 86 ret = 92.98 ret_best = 96.63 n_data = 87
+ITER: i_iter = 87 ret = 90.81 ret_best = 96.63 n_data = 88
+ITER: i_iter = 88 ret = -99.86 ret_best = 96.63 n_data = 89
+ITER: i_iter = 89 ret = 88.10 ret_best = 96.63 n_data = 90
+ITER: i_iter = 90 ret = 90.25 ret_best = 96.63 n_data = 91
+ITER: i_iter = 91 ret = 89.51 ret_best = 96.63 n_data = 92
+ITER: i_iter = 92 ret = 93.40 ret_best = 96.63 n_data = 93
+ITER: i_iter = 93 ret = 90.53 ret_best = 96.63 n_data = 94
+ITER: i_iter = 94 ret = -18.69 ret_best = 96.63 n_data = 95
+ITER: i_iter = 95 ret = 90.52 ret_best = 96.63 n_data = 96
+ITER: i_iter = 96 ret = 95.17 ret_best = 96.63 n_data = 97
+ITER: i_iter = 97 ret = 93.90 ret_best = 96.63 n_data = 98
+ITER: i_iter = 98 ret = -100.00 ret_best = 96.63 n_data = 99
+ITER: i_iter = 99 ret = -99.90 ret_best = 96.63 n_data = 100
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 0 return = 0.000
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 1 return = 86.287
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 2 return = 86.287
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 3 return = 89.498
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 4 return = 89.498
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 5 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 6 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 7 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 8 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 9 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 10 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 11 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 12 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 13 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 14 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 15 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 16 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 17 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 18 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 19 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 20 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 21 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 22 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 23 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 24 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 25 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 26 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 27 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 28 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 29 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 30 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 31 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 32 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 33 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 34 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 35 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 36 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 37 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 38 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 39 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 40 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 41 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 42 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 43 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 44 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 45 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 46 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 47 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 48 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 49 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 50 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 51 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 52 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 53 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 54 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 55 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 56 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 57 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 58 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 59 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 60 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 61 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 62 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 63 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 64 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 65 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 66 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 67 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 68 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 69 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 70 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 71 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 72 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 73 return = 95.982
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 74 return = 96.132
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 75 return = 96.132
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 76 return = 96.132
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 77 return = 96.132
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 78 return = 96.132
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 79 return = 96.132
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 80 return = 96.132
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 81 return = 96.132
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 82 return = 96.132
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 83 return = 96.132
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 84 return = 96.631
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 85 return = 96.631
+[INFO 02-06 21:10:30] ax.service.utils.instantiation: Created search space: SearchSpace(parameters=[RangeParameter(name='x000', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x001', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x002', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x003', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x004', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x005', parameter_type=FLOAT, range=[-1.0, 1.0])], parameter_constraints=[]).
+[INFO 02-06 21:10:30] ax.modelbridge.dispatch_utils: Using Bayesian optimization since there are more ordered parameters than there are categories for the unordered categorical parameters.
+[INFO 02-06 21:10:30] ax.modelbridge.dispatch_utils: Calculating the number of remaining initialization trials based on num_initialization_trials=None max_initialization_trials=None num_tunable_parameters=6 num_trials=None use_batch_trials=False
+[INFO 02-06 21:10:30] ax.modelbridge.dispatch_utils: calculated num_initialization_trials=12
+[INFO 02-06 21:10:30] ax.modelbridge.dispatch_utils: num_completed_initialization_trials=0 num_remaining_initialization_trials=12
+[INFO 02-06 21:10:30] ax.modelbridge.dispatch_utils: Using Bayesian Optimization generation strategy: GenerationStrategy(name='Sobol+GPEI', steps=[Sobol for 12 trials, GPEI for subsequent trials]). Iterations after 12 will take longer to generate due to model-fitting.
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 86 return = 96.631
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 87 return = 96.631
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 88 return = 96.631
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 89 return = 96.631
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 90 return = 96.631
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 91 return = 96.631
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 92 return = 96.631
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 93 return = 96.631
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 94 return = 96.631
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 95 return = 96.631
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 96 return = 96.631
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 97 return = 96.631
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 98 return = 96.631
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 8 i_iter = 99 return = 96.631
+TIME_SAMPLE: 645.22
+ITER: i_iter = 0 ret = 0.00 ret_best = 0.00 n_data = 1
+ITER: i_iter = 1 ret = -55.00 ret_best = 0.00 n_data = 2
+ITER: i_iter = 2 ret = 78.51 ret_best = 78.51 n_data = 3
+ITER: i_iter = 3 ret = 93.01 ret_best = 93.01 n_data = 4
+ITER: i_iter = 4 ret = 94.09 ret_best = 94.09 n_data = 5
+ITER: i_iter = 5 ret = -90.29 ret_best = 94.09 n_data = 6
+ITER: i_iter = 6 ret = 87.83 ret_best = 94.09 n_data = 7
+ITER: i_iter = 7 ret = -61.62 ret_best = 94.09 n_data = 8
+ITER: i_iter = 8 ret = 93.22 ret_best = 94.09 n_data = 9
+ITER: i_iter = 9 ret = -89.44 ret_best = 94.09 n_data = 10
+ITER: i_iter = 10 ret = -98.97 ret_best = 94.09 n_data = 11
+ITER: i_iter = 11 ret = -71.56 ret_best = 94.09 n_data = 12
+ITER: i_iter = 12 ret = 96.38 ret_best = 96.38 n_data = 13
+ITER: i_iter = 13 ret = -99.58 ret_best = 96.38 n_data = 14
+ITER: i_iter = 14 ret = -99.22 ret_best = 96.38 n_data = 15
+ITER: i_iter = 15 ret = 94.74 ret_best = 96.38 n_data = 16
+ITER: i_iter = 16 ret = -45.26 ret_best = 96.38 n_data = 17
+ITER: i_iter = 17 ret = 91.84 ret_best = 96.38 n_data = 18
+ITER: i_iter = 18 ret = 92.30 ret_best = 96.38 n_data = 19
+ITER: i_iter = 19 ret = 80.30 ret_best = 96.38 n_data = 20
+ITER: i_iter = 20 ret = 90.24 ret_best = 96.38 n_data = 21
+ITER: i_iter = 21 ret = 92.45 ret_best = 96.38 n_data = 22
+ITER: i_iter = 22 ret = -94.21 ret_best = 96.38 n_data = 23
+ITER: i_iter = 23 ret = -86.99 ret_best = 96.38 n_data = 24
+ITER: i_iter = 24 ret = -99.01 ret_best = 96.38 n_data = 25
+ITER: i_iter = 25 ret = 72.62 ret_best = 96.38 n_data = 26
+ITER: i_iter = 26 ret = 80.62 ret_best = 96.38 n_data = 27
+ITER: i_iter = 27 ret = -96.56 ret_best = 96.38 n_data = 28
+ITER: i_iter = 28 ret = -84.00 ret_best = 96.38 n_data = 29
+ITER: i_iter = 29 ret = 91.95 ret_best = 96.38 n_data = 30
+ITER: i_iter = 30 ret = 88.16 ret_best = 96.38 n_data = 31
+ITER: i_iter = 31 ret = 84.99 ret_best = 96.38 n_data = 32
+ITER: i_iter = 32 ret = 89.37 ret_best = 96.38 n_data = 33
+ITER: i_iter = 33 ret = 94.92 ret_best = 96.38 n_data = 34
+ITER: i_iter = 34 ret = 89.81 ret_best = 96.38 n_data = 35
+ITER: i_iter = 35 ret = 85.82 ret_best = 96.38 n_data = 36
+ITER: i_iter = 36 ret = -99.95 ret_best = 96.38 n_data = 37
+ITER: i_iter = 37 ret = -44.77 ret_best = 96.38 n_data = 38
+ITER: i_iter = 38 ret = -96.44 ret_best = 96.38 n_data = 39
+ITER: i_iter = 39 ret = -6.52 ret_best = 96.38 n_data = 40
+ITER: i_iter = 40 ret = 92.39 ret_best = 96.38 n_data = 41
+ITER: i_iter = 41 ret = 90.60 ret_best = 96.38 n_data = 42
+ITER: i_iter = 42 ret = -70.34 ret_best = 96.38 n_data = 43
+ITER: i_iter = 43 ret = -98.41 ret_best = 96.38 n_data = 44
+ITER: i_iter = 44 ret = 90.95 ret_best = 96.38 n_data = 45
+ITER: i_iter = 45 ret = -97.99 ret_best = 96.38 n_data = 46
+ITER: i_iter = 46 ret = -98.02 ret_best = 96.38 n_data = 47
+ITER: i_iter = 47 ret = -91.85 ret_best = 96.38 n_data = 48
+ITER: i_iter = 48 ret = 93.46 ret_best = 96.38 n_data = 49
+ITER: i_iter = 49 ret = -69.07 ret_best = 96.38 n_data = 50
+ITER: i_iter = 50 ret = -99.74 ret_best = 96.38 n_data = 51
+ITER: i_iter = 51 ret = -75.65 ret_best = 96.38 n_data = 52
+ITER: i_iter = 52 ret = 71.05 ret_best = 96.38 n_data = 53
+ITER: i_iter = 53 ret = -53.94 ret_best = 96.38 n_data = 54
+ITER: i_iter = 54 ret = -82.97 ret_best = 96.38 n_data = 55
+ITER: i_iter = 55 ret = 89.02 ret_best = 96.38 n_data = 56
+ITER: i_iter = 56 ret = -98.98 ret_best = 96.38 n_data = 57
+ITER: i_iter = 57 ret = -82.97 ret_best = 96.38 n_data = 58
+ITER: i_iter = 58 ret = -99.90 ret_best = 96.38 n_data = 59
+ITER: i_iter = 59 ret = 82.20 ret_best = 96.38 n_data = 60
+ITER: i_iter = 60 ret = -63.67 ret_best = 96.38 n_data = 61
+ITER: i_iter = 61 ret = 83.62 ret_best = 96.38 n_data = 62
+ITER: i_iter = 62 ret = -95.46 ret_best = 96.38 n_data = 63
+ITER: i_iter = 63 ret = 38.81 ret_best = 96.38 n_data = 64
+ITER: i_iter = 64 ret = -38.17 ret_best = 96.38 n_data = 65
+ITER: i_iter = 65 ret = -93.76 ret_best = 96.38 n_data = 66
+ITER: i_iter = 66 ret = -99.04 ret_best = 96.38 n_data = 67
+ITER: i_iter = 67 ret = -94.91 ret_best = 96.38 n_data = 68
+ITER: i_iter = 68 ret = 89.90 ret_best = 96.38 n_data = 69
+ITER: i_iter = 69 ret = 94.09 ret_best = 96.38 n_data = 70
+ITER: i_iter = 70 ret = 91.43 ret_best = 96.38 n_data = 71
+ITER: i_iter = 71 ret = -97.98 ret_best = 96.38 n_data = 72
+ITER: i_iter = 72 ret = 59.80 ret_best = 96.38 n_data = 73
+ITER: i_iter = 73 ret = 89.18 ret_best = 96.38 n_data = 74
+ITER: i_iter = 74 ret = -51.36 ret_best = 96.38 n_data = 75
+ITER: i_iter = 75 ret = -73.90 ret_best = 96.38 n_data = 76
+ITER: i_iter = 76 ret = 74.20 ret_best = 96.38 n_data = 77
+ITER: i_iter = 77 ret = 88.58 ret_best = 96.38 n_data = 78
+ITER: i_iter = 78 ret = 82.08 ret_best = 96.38 n_data = 79
+ITER: i_iter = 79 ret = 92.15 ret_best = 96.38 n_data = 80
+ITER: i_iter = 80 ret = 89.42 ret_best = 96.38 n_data = 81
+ITER: i_iter = 81 ret = -37.33 ret_best = 96.38 n_data = 82
+ITER: i_iter = 82 ret = 92.02 ret_best = 96.38 n_data = 83
+ITER: i_iter = 83 ret = 89.44 ret_best = 96.38 n_data = 84
+ITER: i_iter = 84 ret = 88.87 ret_best = 96.38 n_data = 85
+ITER: i_iter = 85 ret = 94.57 ret_best = 96.38 n_data = 86
+ITER: i_iter = 86 ret = -59.60 ret_best = 96.38 n_data = 87
+ITER: i_iter = 87 ret = -99.93 ret_best = 96.38 n_data = 88
+ITER: i_iter = 88 ret = 95.55 ret_best = 96.38 n_data = 89
+ITER: i_iter = 89 ret = 93.02 ret_best = 96.38 n_data = 90
+ITER: i_iter = 90 ret = 90.93 ret_best = 96.38 n_data = 91
+ITER: i_iter = 91 ret = 92.95 ret_best = 96.38 n_data = 92
+ITER: i_iter = 92 ret = 80.66 ret_best = 96.38 n_data = 93
+ITER: i_iter = 93 ret = -99.85 ret_best = 96.38 n_data = 94
+ITER: i_iter = 94 ret = -98.30 ret_best = 96.38 n_data = 95
+ITER: i_iter = 95 ret = -66.19 ret_best = 96.38 n_data = 96
+ITER: i_iter = 96 ret = 88.23 ret_best = 96.38 n_data = 97
+ITER: i_iter = 97 ret = -77.01 ret_best = 96.38 n_data = 98
+ITER: i_iter = 98 ret = 92.58 ret_best = 96.38 n_data = 99
+ITER: i_iter = 99 ret = 90.42 ret_best = 96.38 n_data = 100
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 0 return = 0.000
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 1 return = 0.000
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 2 return = 78.515
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 3 return = 93.007
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 4 return = 94.087
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 5 return = 94.087
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 6 return = 94.087
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 7 return = 94.087
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 8 return = 94.087
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 9 return = 94.087
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 10 return = 94.087
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 11 return = 94.087
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 12 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 13 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 14 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 15 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 16 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 17 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 18 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 19 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 20 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 21 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 22 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 23 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 24 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 25 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 26 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 27 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 28 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 29 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 30 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 31 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 32 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 33 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 34 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 35 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 36 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 37 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 38 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 39 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 40 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 41 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 42 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 43 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 44 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 45 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 46 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 47 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 48 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 49 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 50 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 51 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 52 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 53 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 54 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 55 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 56 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 57 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 58 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 59 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 60 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 61 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 62 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 63 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 64 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 65 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 66 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 67 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 68 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 69 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 70 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 71 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 72 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 73 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 74 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 75 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 76 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 77 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 78 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 79 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 80 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 81 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 82 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 83 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 84 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 85 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 86 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 87 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 88 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 89 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 90 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 91 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 92 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 93 return = 96.378
+[INFO 02-06 21:22:18] ax.service.utils.instantiation: Created search space: SearchSpace(parameters=[RangeParameter(name='x000', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x001', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x002', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x003', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x004', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x005', parameter_type=FLOAT, range=[-1.0, 1.0])], parameter_constraints=[]).
+[INFO 02-06 21:22:18] ax.modelbridge.dispatch_utils: Using Bayesian optimization since there are more ordered parameters than there are categories for the unordered categorical parameters.
+[INFO 02-06 21:22:18] ax.modelbridge.dispatch_utils: Calculating the number of remaining initialization trials based on num_initialization_trials=None max_initialization_trials=None num_tunable_parameters=6 num_trials=None use_batch_trials=False
+[INFO 02-06 21:22:18] ax.modelbridge.dispatch_utils: calculated num_initialization_trials=12
+[INFO 02-06 21:22:18] ax.modelbridge.dispatch_utils: num_completed_initialization_trials=0 num_remaining_initialization_trials=12
+[INFO 02-06 21:22:18] ax.modelbridge.dispatch_utils: Using Bayesian Optimization generation strategy: GenerationStrategy(name='Sobol+GPEI', steps=[Sobol for 12 trials, GPEI for subsequent trials]). Iterations after 12 will take longer to generate due to model-fitting.
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 94 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 95 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 96 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 97 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 98 return = 96.378
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 9 i_iter = 99 return = 96.378
+TIME_SAMPLE: 708.57
+ITER: i_iter = 0 ret = 0.00 ret_best = 0.00 n_data = 1
+ITER: i_iter = 1 ret = 91.33 ret_best = 91.33 n_data = 2
+ITER: i_iter = 2 ret = 90.49 ret_best = 91.33 n_data = 3
+ITER: i_iter = 3 ret = -74.61 ret_best = 91.33 n_data = 4
+ITER: i_iter = 4 ret = -83.59 ret_best = 91.33 n_data = 5
+ITER: i_iter = 5 ret = 92.05 ret_best = 92.05 n_data = 6
+ITER: i_iter = 6 ret = -82.96 ret_best = 92.05 n_data = 7
+ITER: i_iter = 7 ret = 92.03 ret_best = 92.05 n_data = 8
+ITER: i_iter = 8 ret = -93.70 ret_best = 92.05 n_data = 9
+ITER: i_iter = 9 ret = -99.81 ret_best = 92.05 n_data = 10
+ITER: i_iter = 10 ret = 69.59 ret_best = 92.05 n_data = 11
+ITER: i_iter = 11 ret = 90.26 ret_best = 92.05 n_data = 12
+ITER: i_iter = 12 ret = 94.85 ret_best = 94.85 n_data = 13
+ITER: i_iter = 13 ret = -92.23 ret_best = 94.85 n_data = 14
+ITER: i_iter = 14 ret = -96.30 ret_best = 94.85 n_data = 15
+ITER: i_iter = 15 ret = 90.89 ret_best = 94.85 n_data = 16
+ITER: i_iter = 16 ret = -67.80 ret_best = 94.85 n_data = 17
+ITER: i_iter = 17 ret = 91.42 ret_best = 94.85 n_data = 18
+ITER: i_iter = 18 ret = 94.83 ret_best = 94.85 n_data = 19
+ITER: i_iter = 19 ret = -13.01 ret_best = 94.85 n_data = 20
+ITER: i_iter = 20 ret = 85.13 ret_best = 94.85 n_data = 21
+ITER: i_iter = 21 ret = 82.17 ret_best = 94.85 n_data = 22
+ITER: i_iter = 22 ret = 92.41 ret_best = 94.85 n_data = 23
+ITER: i_iter = 23 ret = -71.66 ret_best = 94.85 n_data = 24
+ITER: i_iter = 24 ret = 93.51 ret_best = 94.85 n_data = 25
+ITER: i_iter = 25 ret = -76.55 ret_best = 94.85 n_data = 26
+ITER: i_iter = 26 ret = -66.94 ret_best = 94.85 n_data = 27
+ITER: i_iter = 27 ret = 93.09 ret_best = 94.85 n_data = 28
+ITER: i_iter = 28 ret = -99.94 ret_best = 94.85 n_data = 29
+ITER: i_iter = 29 ret = 92.27 ret_best = 94.85 n_data = 30
+ITER: i_iter = 30 ret = -97.41 ret_best = 94.85 n_data = 31
+ITER: i_iter = 31 ret = 94.26 ret_best = 94.85 n_data = 32
+ITER: i_iter = 32 ret = 90.52 ret_best = 94.85 n_data = 33
+ITER: i_iter = 33 ret = 83.17 ret_best = 94.85 n_data = 34
+ITER: i_iter = 34 ret = 3.44 ret_best = 94.85 n_data = 35
+ITER: i_iter = 35 ret = 87.21 ret_best = 94.85 n_data = 36
+ITER: i_iter = 36 ret = 93.79 ret_best = 94.85 n_data = 37
+ITER: i_iter = 37 ret = -99.52 ret_best = 94.85 n_data = 38
+ITER: i_iter = 38 ret = -90.59 ret_best = 94.85 n_data = 39
+ITER: i_iter = 39 ret = 94.20 ret_best = 94.85 n_data = 40
+ITER: i_iter = 40 ret = 81.03 ret_best = 94.85 n_data = 41
+ITER: i_iter = 41 ret = 92.63 ret_best = 94.85 n_data = 42
+ITER: i_iter = 42 ret = 96.75 ret_best = 96.75 n_data = 43
+ITER: i_iter = 43 ret = 87.12 ret_best = 96.75 n_data = 44
+ITER: i_iter = 44 ret = -98.99 ret_best = 96.75 n_data = 45
+ITER: i_iter = 45 ret = -99.26 ret_best = 96.75 n_data = 46
+ITER: i_iter = 46 ret = -66.41 ret_best = 96.75 n_data = 47
+ITER: i_iter = 47 ret = 89.75 ret_best = 96.75 n_data = 48
+ITER: i_iter = 48 ret = 94.40 ret_best = 96.75 n_data = 49
+ITER: i_iter = 49 ret = 91.86 ret_best = 96.75 n_data = 50
+ITER: i_iter = 50 ret = 76.85 ret_best = 96.75 n_data = 51
+ITER: i_iter = 51 ret = 25.65 ret_best = 96.75 n_data = 52
+ITER: i_iter = 52 ret = -44.94 ret_best = 96.75 n_data = 53
+ITER: i_iter = 53 ret = 82.10 ret_best = 96.75 n_data = 54
+ITER: i_iter = 54 ret = 90.93 ret_best = 96.75 n_data = 55
+ITER: i_iter = 55 ret = 89.77 ret_best = 96.75 n_data = 56
+ITER: i_iter = 56 ret = 95.19 ret_best = 96.75 n_data = 57
+ITER: i_iter = 57 ret = 61.05 ret_best = 96.75 n_data = 58
+ITER: i_iter = 58 ret = 93.86 ret_best = 96.75 n_data = 59
+ITER: i_iter = 59 ret = 89.96 ret_best = 96.75 n_data = 60
+ITER: i_iter = 60 ret = 88.03 ret_best = 96.75 n_data = 61
+ITER: i_iter = 61 ret = -99.89 ret_best = 96.75 n_data = 62
+ITER: i_iter = 62 ret = -99.57 ret_best = 96.75 n_data = 63
+ITER: i_iter = 63 ret = 91.69 ret_best = 96.75 n_data = 64
+ITER: i_iter = 64 ret = -99.96 ret_best = 96.75 n_data = 65
+ITER: i_iter = 65 ret = -97.94 ret_best = 96.75 n_data = 66
+ITER: i_iter = 66 ret = 88.10 ret_best = 96.75 n_data = 67
+ITER: i_iter = 67 ret = 94.39 ret_best = 96.75 n_data = 68
+ITER: i_iter = 68 ret = -64.00 ret_best = 96.75 n_data = 69
+ITER: i_iter = 69 ret = 96.11 ret_best = 96.75 n_data = 70
+ITER: i_iter = 70 ret = -99.90 ret_best = 96.75 n_data = 71
+ITER: i_iter = 71 ret = -99.74 ret_best = 96.75 n_data = 72
+ITER: i_iter = 72 ret = 91.75 ret_best = 96.75 n_data = 73
+ITER: i_iter = 73 ret = -62.90 ret_best = 96.75 n_data = 74
+ITER: i_iter = 74 ret = -80.65 ret_best = 96.75 n_data = 75
+ITER: i_iter = 75 ret = -95.89 ret_best = 96.75 n_data = 76
+ITER: i_iter = 76 ret = 90.33 ret_best = 96.75 n_data = 77
+ITER: i_iter = 77 ret = -60.14 ret_best = 96.75 n_data = 78
+ITER: i_iter = 78 ret = 81.47 ret_best = 96.75 n_data = 79
+ITER: i_iter = 79 ret = -94.87 ret_best = 96.75 n_data = 80
+ITER: i_iter = 80 ret = 38.25 ret_best = 96.75 n_data = 81
+ITER: i_iter = 81 ret = -99.93 ret_best = 96.75 n_data = 82
+ITER: i_iter = 82 ret = 88.83 ret_best = 96.75 n_data = 83
+ITER: i_iter = 83 ret = 87.28 ret_best = 96.75 n_data = 84
+ITER: i_iter = 84 ret = 94.22 ret_best = 96.75 n_data = 85
+ITER: i_iter = 85 ret = 94.89 ret_best = 96.75 n_data = 86
+ITER: i_iter = 86 ret = 90.85 ret_best = 96.75 n_data = 87
+ITER: i_iter = 87 ret = -99.95 ret_best = 96.75 n_data = 88
+ITER: i_iter = 88 ret = 91.02 ret_best = 96.75 n_data = 89
+ITER: i_iter = 89 ret = 28.33 ret_best = 96.75 n_data = 90
+ITER: i_iter = 90 ret = -98.87 ret_best = 96.75 n_data = 91
+ITER: i_iter = 91 ret = 89.73 ret_best = 96.75 n_data = 92
+ITER: i_iter = 92 ret = 82.54 ret_best = 96.75 n_data = 93
+ITER: i_iter = 93 ret = 81.19 ret_best = 96.75 n_data = 94
+ITER: i_iter = 94 ret = -32.80 ret_best = 96.75 n_data = 95
+ITER: i_iter = 95 ret = 84.20 ret_best = 96.75 n_data = 96
+ITER: i_iter = 96 ret = -13.80 ret_best = 96.75 n_data = 97
+ITER: i_iter = 97 ret = -77.58 ret_best = 96.75 n_data = 98
+ITER: i_iter = 98 ret = 94.05 ret_best = 96.75 n_data = 99
+ITER: i_iter = 99 ret = 77.23 ret_best = 96.75 n_data = 100
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 0 return = 0.000
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 1 return = 91.329
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 2 return = 91.329
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 3 return = 91.329
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 4 return = 91.329
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 5 return = 92.053
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 6 return = 92.053
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 7 return = 92.053
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 8 return = 92.053
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 9 return = 92.053
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 10 return = 92.053
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 11 return = 92.053
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 12 return = 94.845
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 13 return = 94.845
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 14 return = 94.845
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 15 return = 94.845
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 16 return = 94.845
+[INFO 02-06 21:33:01] ax.service.utils.instantiation: Created search space: SearchSpace(parameters=[RangeParameter(name='x000', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x001', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x002', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x003', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x004', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x005', parameter_type=FLOAT, range=[-1.0, 1.0])], parameter_constraints=[]).
+[INFO 02-06 21:33:01] ax.modelbridge.dispatch_utils: Using Bayesian optimization since there are more ordered parameters than there are categories for the unordered categorical parameters.
+[INFO 02-06 21:33:01] ax.modelbridge.dispatch_utils: Calculating the number of remaining initialization trials based on num_initialization_trials=None max_initialization_trials=None num_tunable_parameters=6 num_trials=None use_batch_trials=False
+[INFO 02-06 21:33:01] ax.modelbridge.dispatch_utils: calculated num_initialization_trials=12
+[INFO 02-06 21:33:01] ax.modelbridge.dispatch_utils: num_completed_initialization_trials=0 num_remaining_initialization_trials=12
+[INFO 02-06 21:33:01] ax.modelbridge.dispatch_utils: Using Bayesian Optimization generation strategy: GenerationStrategy(name='Sobol+GPEI', steps=[Sobol for 12 trials, GPEI for subsequent trials]). Iterations after 12 will take longer to generate due to model-fitting.
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 17 return = 94.845
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 18 return = 94.845
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 19 return = 94.845
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 20 return = 94.845
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 21 return = 94.845
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 22 return = 94.845
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 23 return = 94.845
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 24 return = 94.845
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 25 return = 94.845
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 26 return = 94.845
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 27 return = 94.845
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 28 return = 94.845
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 29 return = 94.845
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 30 return = 94.845
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 31 return = 94.845
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 32 return = 94.845
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 33 return = 94.845
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 34 return = 94.845
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 35 return = 94.845
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 36 return = 94.845
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 37 return = 94.845
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 38 return = 94.845
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 39 return = 94.845
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 40 return = 94.845
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 41 return = 94.845
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 42 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 43 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 44 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 45 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 46 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 47 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 48 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 49 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 50 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 51 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 52 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 53 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 54 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 55 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 56 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 57 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 58 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 59 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 60 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 61 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 62 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 63 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 64 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 65 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 66 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 67 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 68 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 69 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 70 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 71 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 72 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 73 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 74 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 75 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 76 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 77 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 78 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 79 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 80 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 81 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 82 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 83 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 84 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 85 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 86 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 87 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 88 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 89 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 90 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 91 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 92 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 93 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 94 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 95 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 96 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 97 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 98 return = 96.746
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 10 i_iter = 99 return = 96.746
+TIME_SAMPLE: 642.30
+ITER: i_iter = 0 ret = 0.00 ret_best = 0.00 n_data = 1
+ITER: i_iter = 1 ret = 93.85 ret_best = 93.85 n_data = 2
+ITER: i_iter = 2 ret = 92.71 ret_best = 93.85 n_data = 3
+ITER: i_iter = 3 ret = -98.51 ret_best = 93.85 n_data = 4
+ITER: i_iter = 4 ret = 69.61 ret_best = 93.85 n_data = 5
+ITER: i_iter = 5 ret = -79.97 ret_best = 93.85 n_data = 6
+ITER: i_iter = 6 ret = -97.06 ret_best = 93.85 n_data = 7
+ITER: i_iter = 7 ret = 40.14 ret_best = 93.85 n_data = 8
+ITER: i_iter = 8 ret = 91.30 ret_best = 93.85 n_data = 9
+ITER: i_iter = 9 ret = -58.15 ret_best = 93.85 n_data = 10
+ITER: i_iter = 10 ret = 93.38 ret_best = 93.85 n_data = 11
+ITER: i_iter = 11 ret = -97.39 ret_best = 93.85 n_data = 12
+ITER: i_iter = 12 ret = -64.61 ret_best = 93.85 n_data = 13
+ITER: i_iter = 13 ret = -48.00 ret_best = 93.85 n_data = 14
+ITER: i_iter = 14 ret = -32.47 ret_best = 93.85 n_data = 15
+ITER: i_iter = 15 ret = 92.45 ret_best = 93.85 n_data = 16
+ITER: i_iter = 16 ret = 92.64 ret_best = 93.85 n_data = 17
+ITER: i_iter = 17 ret = -79.66 ret_best = 93.85 n_data = 18
+ITER: i_iter = 18 ret = -98.36 ret_best = 93.85 n_data = 19
+ITER: i_iter = 19 ret = 90.30 ret_best = 93.85 n_data = 20
+ITER: i_iter = 20 ret = 80.11 ret_best = 93.85 n_data = 21
+ITER: i_iter = 21 ret = -96.54 ret_best = 93.85 n_data = 22
+ITER: i_iter = 22 ret = -99.58 ret_best = 93.85 n_data = 23
+ITER: i_iter = 23 ret = 93.40 ret_best = 93.85 n_data = 24
+ITER: i_iter = 24 ret = -86.69 ret_best = 93.85 n_data = 25
+ITER: i_iter = 25 ret = -98.37 ret_best = 93.85 n_data = 26
+ITER: i_iter = 26 ret = 67.86 ret_best = 93.85 n_data = 27
+ITER: i_iter = 27 ret = -84.93 ret_best = 93.85 n_data = 28
+ITER: i_iter = 28 ret = -59.14 ret_best = 93.85 n_data = 29
+ITER: i_iter = 29 ret = -93.19 ret_best = 93.85 n_data = 30
+ITER: i_iter = 30 ret = -99.99 ret_best = 93.85 n_data = 31
+ITER: i_iter = 31 ret = 60.86 ret_best = 93.85 n_data = 32
+ITER: i_iter = 32 ret = -49.57 ret_best = 93.85 n_data = 33
+ITER: i_iter = 33 ret = -58.94 ret_best = 93.85 n_data = 34
+ITER: i_iter = 34 ret = -82.58 ret_best = 93.85 n_data = 35
+ITER: i_iter = 35 ret = -99.83 ret_best = 93.85 n_data = 36
+ITER: i_iter = 36 ret = 95.04 ret_best = 95.04 n_data = 37
+ITER: i_iter = 37 ret = 92.22 ret_best = 95.04 n_data = 38
+ITER: i_iter = 38 ret = 90.26 ret_best = 95.04 n_data = 39
+ITER: i_iter = 39 ret = -87.93 ret_best = 95.04 n_data = 40
+ITER: i_iter = 40 ret = 77.45 ret_best = 95.04 n_data = 41
+ITER: i_iter = 41 ret = -98.77 ret_best = 95.04 n_data = 42
+ITER: i_iter = 42 ret = 75.77 ret_best = 95.04 n_data = 43
+ITER: i_iter = 43 ret = -97.01 ret_best = 95.04 n_data = 44
+ITER: i_iter = 44 ret = 84.96 ret_best = 95.04 n_data = 45
+ITER: i_iter = 45 ret = 93.07 ret_best = 95.04 n_data = 46
+ITER: i_iter = 46 ret = 90.07 ret_best = 95.04 n_data = 47
+ITER: i_iter = 47 ret = 59.92 ret_best = 95.04 n_data = 48
+ITER: i_iter = 48 ret = 93.23 ret_best = 95.04 n_data = 49
+ITER: i_iter = 49 ret = 92.84 ret_best = 95.04 n_data = 50
+ITER: i_iter = 50 ret = -99.58 ret_best = 95.04 n_data = 51
+ITER: i_iter = 51 ret = -91.68 ret_best = 95.04 n_data = 52
+ITER: i_iter = 52 ret = 89.48 ret_best = 95.04 n_data = 53
+ITER: i_iter = 53 ret = -99.77 ret_best = 95.04 n_data = 54
+ITER: i_iter = 54 ret = 93.00 ret_best = 95.04 n_data = 55
+ITER: i_iter = 55 ret = 88.96 ret_best = 95.04 n_data = 56
+ITER: i_iter = 56 ret = -66.98 ret_best = 95.04 n_data = 57
+ITER: i_iter = 57 ret = -85.64 ret_best = 95.04 n_data = 58
+ITER: i_iter = 58 ret = 82.77 ret_best = 95.04 n_data = 59
+ITER: i_iter = 59 ret = 91.44 ret_best = 95.04 n_data = 60
+ITER: i_iter = 60 ret = -99.97 ret_best = 95.04 n_data = 61
+ITER: i_iter = 61 ret = -44.51 ret_best = 95.04 n_data = 62
+ITER: i_iter = 62 ret = -8.96 ret_best = 95.04 n_data = 63
+ITER: i_iter = 63 ret = 93.36 ret_best = 95.04 n_data = 64
+ITER: i_iter = 64 ret = 94.21 ret_best = 95.04 n_data = 65
+ITER: i_iter = 65 ret = 90.69 ret_best = 95.04 n_data = 66
+ITER: i_iter = 66 ret = 87.13 ret_best = 95.04 n_data = 67
+ITER: i_iter = 67 ret = 83.78 ret_best = 95.04 n_data = 68
+ITER: i_iter = 68 ret = 92.59 ret_best = 95.04 n_data = 69
+ITER: i_iter = 69 ret = 84.73 ret_best = 95.04 n_data = 70
+ITER: i_iter = 70 ret = 86.46 ret_best = 95.04 n_data = 71
+ITER: i_iter = 71 ret = -98.58 ret_best = 95.04 n_data = 72
+ITER: i_iter = 72 ret = 92.31 ret_best = 95.04 n_data = 73
+ITER: i_iter = 73 ret = 94.87 ret_best = 95.04 n_data = 74
+ITER: i_iter = 74 ret = 88.62 ret_best = 95.04 n_data = 75
+ITER: i_iter = 75 ret = -99.87 ret_best = 95.04 n_data = 76
+ITER: i_iter = 76 ret = 95.32 ret_best = 95.32 n_data = 77
+ITER: i_iter = 77 ret = 95.69 ret_best = 95.69 n_data = 78
+ITER: i_iter = 78 ret = 94.91 ret_best = 95.69 n_data = 79
+ITER: i_iter = 79 ret = -96.85 ret_best = 95.69 n_data = 80
+ITER: i_iter = 80 ret = -63.42 ret_best = 95.69 n_data = 81
+ITER: i_iter = 81 ret = 83.98 ret_best = 95.69 n_data = 82
+ITER: i_iter = 82 ret = 98.56 ret_best = 98.56 n_data = 83
+ITER: i_iter = 83 ret = -58.54 ret_best = 98.56 n_data = 84
+ITER: i_iter = 84 ret = -37.05 ret_best = 98.56 n_data = 85
+ITER: i_iter = 85 ret = -51.41 ret_best = 98.56 n_data = 86
+ITER: i_iter = 86 ret = -99.91 ret_best = 98.56 n_data = 87
+ITER: i_iter = 87 ret = -9.97 ret_best = 98.56 n_data = 88
+ITER: i_iter = 88 ret = 98.01 ret_best = 98.56 n_data = 89
+ITER: i_iter = 89 ret = 91.27 ret_best = 98.56 n_data = 90
+ITER: i_iter = 90 ret = 94.20 ret_best = 98.56 n_data = 91
+ITER: i_iter = 91 ret = -99.90 ret_best = 98.56 n_data = 92
+ITER: i_iter = 92 ret = -97.24 ret_best = 98.56 n_data = 93
+ITER: i_iter = 93 ret = -70.15 ret_best = 98.56 n_data = 94
+ITER: i_iter = 94 ret = -98.82 ret_best = 98.56 n_data = 95
+ITER: i_iter = 95 ret = 94.09 ret_best = 98.56 n_data = 96
+ITER: i_iter = 96 ret = 95.98 ret_best = 98.56 n_data = 97
+ITER: i_iter = 97 ret = -51.21 ret_best = 98.56 n_data = 98
+ITER: i_iter = 98 ret = -85.60 ret_best = 98.56 n_data = 99
+ITER: i_iter = 99 ret = -93.94 ret_best = 98.56 n_data = 100
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 0 return = 0.000
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 1 return = 93.848
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 2 return = 93.848
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 3 return = 93.848
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 4 return = 93.848
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 5 return = 93.848
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 6 return = 93.848
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 7 return = 93.848
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 8 return = 93.848
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 9 return = 93.848
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 10 return = 93.848
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 11 return = 93.848
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 12 return = 93.848
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 13 return = 93.848
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 14 return = 93.848
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 15 return = 93.848
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 16 return = 93.848
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 17 return = 93.848
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 18 return = 93.848
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 19 return = 93.848
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 20 return = 93.848
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 21 return = 93.848
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 22 return = 93.848
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 23 return = 93.848
+[INFO 02-06 21:44:45] ax.service.utils.instantiation: Created search space: SearchSpace(parameters=[RangeParameter(name='x000', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x001', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x002', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x003', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x004', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x005', parameter_type=FLOAT, range=[-1.0, 1.0])], parameter_constraints=[]).
+[INFO 02-06 21:44:45] ax.modelbridge.dispatch_utils: Using Bayesian optimization since there are more ordered parameters than there are categories for the unordered categorical parameters.
+[INFO 02-06 21:44:45] ax.modelbridge.dispatch_utils: Calculating the number of remaining initialization trials based on num_initialization_trials=None max_initialization_trials=None num_tunable_parameters=6 num_trials=None use_batch_trials=False
+[INFO 02-06 21:44:45] ax.modelbridge.dispatch_utils: calculated num_initialization_trials=12
+[INFO 02-06 21:44:45] ax.modelbridge.dispatch_utils: num_completed_initialization_trials=0 num_remaining_initialization_trials=12
+[INFO 02-06 21:44:45] ax.modelbridge.dispatch_utils: Using Bayesian Optimization generation strategy: GenerationStrategy(name='Sobol+GPEI', steps=[Sobol for 12 trials, GPEI for subsequent trials]). Iterations after 12 will take longer to generate due to model-fitting.
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 24 return = 93.848
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 25 return = 93.848
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 26 return = 93.848
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 27 return = 93.848
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 28 return = 93.848
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 29 return = 93.848
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 30 return = 93.848
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 31 return = 93.848
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 32 return = 93.848
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 33 return = 93.848
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 34 return = 93.848
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 35 return = 93.848
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 36 return = 95.039
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 37 return = 95.039
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 38 return = 95.039
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 39 return = 95.039
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 40 return = 95.039
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 41 return = 95.039
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 42 return = 95.039
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 43 return = 95.039
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 44 return = 95.039
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 45 return = 95.039
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 46 return = 95.039
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 47 return = 95.039
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 48 return = 95.039
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 49 return = 95.039
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 50 return = 95.039
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 51 return = 95.039
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 52 return = 95.039
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 53 return = 95.039
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 54 return = 95.039
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 55 return = 95.039
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 56 return = 95.039
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 57 return = 95.039
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 58 return = 95.039
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 59 return = 95.039
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 60 return = 95.039
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 61 return = 95.039
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 62 return = 95.039
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 63 return = 95.039
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 64 return = 95.039
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 65 return = 95.039
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 66 return = 95.039
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 67 return = 95.039
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 68 return = 95.039
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 69 return = 95.039
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 70 return = 95.039
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 71 return = 95.039
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 72 return = 95.039
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 73 return = 95.039
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 74 return = 95.039
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 75 return = 95.039
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 76 return = 95.319
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 77 return = 95.693
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 78 return = 95.693
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 79 return = 95.693
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 80 return = 95.693
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 81 return = 95.693
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 82 return = 98.559
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 83 return = 98.559
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 84 return = 98.559
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 85 return = 98.559
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 86 return = 98.559
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 87 return = 98.559
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 88 return = 98.559
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 89 return = 98.559
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 90 return = 98.559
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 91 return = 98.559
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 92 return = 98.559
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 93 return = 98.559
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 94 return = 98.559
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 95 return = 98.559
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 96 return = 98.559
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 97 return = 98.559
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 98 return = 98.559
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 11 i_iter = 99 return = 98.559
+TIME_SAMPLE: 704.43
+ITER: i_iter = 0 ret = 0.00 ret_best = 0.00 n_data = 1
+ITER: i_iter = 1 ret = 91.52 ret_best = 91.52 n_data = 2
+ITER: i_iter = 2 ret = -97.79 ret_best = 91.52 n_data = 3
+ITER: i_iter = 3 ret = 91.61 ret_best = 91.61 n_data = 4
+ITER: i_iter = 4 ret = 59.09 ret_best = 91.61 n_data = 5
+ITER: i_iter = 5 ret = -61.73 ret_best = 91.61 n_data = 6
+ITER: i_iter = 6 ret = 93.91 ret_best = 93.91 n_data = 7
+ITER: i_iter = 7 ret = 85.24 ret_best = 93.91 n_data = 8
+ITER: i_iter = 8 ret = -92.32 ret_best = 93.91 n_data = 9
+ITER: i_iter = 9 ret = 86.92 ret_best = 93.91 n_data = 10
+ITER: i_iter = 10 ret = 93.06 ret_best = 93.91 n_data = 11
+ITER: i_iter = 11 ret = 90.92 ret_best = 93.91 n_data = 12
+ITER: i_iter = 12 ret = 91.50 ret_best = 93.91 n_data = 13
+ITER: i_iter = 13 ret = 94.90 ret_best = 94.90 n_data = 14
+ITER: i_iter = 14 ret = -95.80 ret_best = 94.90 n_data = 15
+ITER: i_iter = 15 ret = 94.92 ret_best = 94.92 n_data = 16
+ITER: i_iter = 16 ret = 90.46 ret_best = 94.92 n_data = 17
+ITER: i_iter = 17 ret = -94.38 ret_best = 94.92 n_data = 18
+ITER: i_iter = 18 ret = -69.25 ret_best = 94.92 n_data = 19
+ITER: i_iter = 19 ret = -99.94 ret_best = 94.92 n_data = 20
+ITER: i_iter = 20 ret = 74.56 ret_best = 94.92 n_data = 21
+ITER: i_iter = 21 ret = 91.56 ret_best = 94.92 n_data = 22
+ITER: i_iter = 22 ret = 65.45 ret_best = 94.92 n_data = 23
+ITER: i_iter = 23 ret = 91.33 ret_best = 94.92 n_data = 24
+ITER: i_iter = 24 ret = 92.17 ret_best = 94.92 n_data = 25
+ITER: i_iter = 25 ret = 93.95 ret_best = 94.92 n_data = 26
+ITER: i_iter = 26 ret = 93.23 ret_best = 94.92 n_data = 27
+ITER: i_iter = 27 ret = -62.02 ret_best = 94.92 n_data = 28
+ITER: i_iter = 28 ret = 90.21 ret_best = 94.92 n_data = 29
+ITER: i_iter = 29 ret = -49.99 ret_best = 94.92 n_data = 30
+ITER: i_iter = 30 ret = -98.67 ret_best = 94.92 n_data = 31
+ITER: i_iter = 31 ret = 87.06 ret_best = 94.92 n_data = 32
+ITER: i_iter = 32 ret = 94.43 ret_best = 94.92 n_data = 33
+ITER: i_iter = 33 ret = 49.05 ret_best = 94.92 n_data = 34
+ITER: i_iter = 34 ret = 81.96 ret_best = 94.92 n_data = 35
+ITER: i_iter = 35 ret = -80.61 ret_best = 94.92 n_data = 36
+ITER: i_iter = 36 ret = 91.29 ret_best = 94.92 n_data = 37
+ITER: i_iter = 37 ret = 85.47 ret_best = 94.92 n_data = 38
+ITER: i_iter = 38 ret = 89.88 ret_best = 94.92 n_data = 39
+ITER: i_iter = 39 ret = 93.42 ret_best = 94.92 n_data = 40
+ITER: i_iter = 40 ret = 94.06 ret_best = 94.92 n_data = 41
+ITER: i_iter = 41 ret = 93.44 ret_best = 94.92 n_data = 42
+ITER: i_iter = 42 ret = 83.74 ret_best = 94.92 n_data = 43
+ITER: i_iter = 43 ret = -87.77 ret_best = 94.92 n_data = 44
+ITER: i_iter = 44 ret = -99.98 ret_best = 94.92 n_data = 45
+ITER: i_iter = 45 ret = 72.98 ret_best = 94.92 n_data = 46
+ITER: i_iter = 46 ret = 95.18 ret_best = 95.18 n_data = 47
+ITER: i_iter = 47 ret = 89.66 ret_best = 95.18 n_data = 48
+ITER: i_iter = 48 ret = -99.23 ret_best = 95.18 n_data = 49
+ITER: i_iter = 49 ret = -99.40 ret_best = 95.18 n_data = 50
+ITER: i_iter = 50 ret = 92.09 ret_best = 95.18 n_data = 51
+ITER: i_iter = 51 ret = -99.44 ret_best = 95.18 n_data = 52
+ITER: i_iter = 52 ret = 82.47 ret_best = 95.18 n_data = 53
+ITER: i_iter = 53 ret = -97.70 ret_best = 95.18 n_data = 54
+ITER: i_iter = 54 ret = 93.22 ret_best = 95.18 n_data = 55
+ITER: i_iter = 55 ret = 91.93 ret_best = 95.18 n_data = 56
+ITER: i_iter = 56 ret = -85.96 ret_best = 95.18 n_data = 57
+ITER: i_iter = 57 ret = 90.37 ret_best = 95.18 n_data = 58
+ITER: i_iter = 58 ret = 96.41 ret_best = 96.41 n_data = 59
+ITER: i_iter = 59 ret = 73.65 ret_best = 96.41 n_data = 60
+ITER: i_iter = 60 ret = 85.37 ret_best = 96.41 n_data = 61
+ITER: i_iter = 61 ret = -82.74 ret_best = 96.41 n_data = 62
+ITER: i_iter = 62 ret = -36.83 ret_best = 96.41 n_data = 63
+ITER: i_iter = 63 ret = 96.24 ret_best = 96.41 n_data = 64
+ITER: i_iter = 64 ret = -63.47 ret_best = 96.41 n_data = 65
+ITER: i_iter = 65 ret = 80.15 ret_best = 96.41 n_data = 66
+ITER: i_iter = 66 ret = 90.54 ret_best = 96.41 n_data = 67
+ITER: i_iter = 67 ret = 91.32 ret_best = 96.41 n_data = 68
+ITER: i_iter = 68 ret = 92.88 ret_best = 96.41 n_data = 69
+ITER: i_iter = 69 ret = 93.75 ret_best = 96.41 n_data = 70
+ITER: i_iter = 70 ret = -99.92 ret_best = 96.41 n_data = 71
+ITER: i_iter = 71 ret = 92.10 ret_best = 96.41 n_data = 72
+ITER: i_iter = 72 ret = -99.14 ret_best = 96.41 n_data = 73
+ITER: i_iter = 73 ret = 93.57 ret_best = 96.41 n_data = 74
+ITER: i_iter = 74 ret = -97.73 ret_best = 96.41 n_data = 75
+ITER: i_iter = 75 ret = 91.04 ret_best = 96.41 n_data = 76
+ITER: i_iter = 76 ret = 88.44 ret_best = 96.41 n_data = 77
+ITER: i_iter = 77 ret = 98.09 ret_best = 98.09 n_data = 78
+ITER: i_iter = 78 ret = 94.88 ret_best = 98.09 n_data = 79
+ITER: i_iter = 79 ret = 39.68 ret_best = 98.09 n_data = 80
+ITER: i_iter = 80 ret = 90.58 ret_best = 98.09 n_data = 81
+ITER: i_iter = 81 ret = -77.43 ret_best = 98.09 n_data = 82
+ITER: i_iter = 82 ret = 94.30 ret_best = 98.09 n_data = 83
+ITER: i_iter = 83 ret = 88.94 ret_best = 98.09 n_data = 84
+ITER: i_iter = 84 ret = 89.81 ret_best = 98.09 n_data = 85
+ITER: i_iter = 85 ret = 96.71 ret_best = 98.09 n_data = 86
+ITER: i_iter = 86 ret = 93.74 ret_best = 98.09 n_data = 87
+ITER: i_iter = 87 ret = 97.56 ret_best = 98.09 n_data = 88
+ITER: i_iter = 88 ret = -99.70 ret_best = 98.09 n_data = 89
+ITER: i_iter = 89 ret = 83.27 ret_best = 98.09 n_data = 90
+ITER: i_iter = 90 ret = 92.26 ret_best = 98.09 n_data = 91
+ITER: i_iter = 91 ret = -97.32 ret_best = 98.09 n_data = 92
+ITER: i_iter = 92 ret = -44.66 ret_best = 98.09 n_data = 93
+ITER: i_iter = 93 ret = 94.19 ret_best = 98.09 n_data = 94
+ITER: i_iter = 94 ret = -99.99 ret_best = 98.09 n_data = 95
+ITER: i_iter = 95 ret = -98.82 ret_best = 98.09 n_data = 96
+ITER: i_iter = 96 ret = -1.27 ret_best = 98.09 n_data = 97
+ITER: i_iter = 97 ret = -98.89 ret_best = 98.09 n_data = 98
+ITER: i_iter = 98 ret = -99.06 ret_best = 98.09 n_data = 99
+ITER: i_iter = 99 ret = -99.68 ret_best = 98.09 n_data = 100
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 0 return = 0.000
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 1 return = 91.516
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 2 return = 91.516
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 3 return = 91.608
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 4 return = 91.608
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 5 return = 91.608
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 6 return = 93.912
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 7 return = 93.912
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 8 return = 93.912
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 9 return = 93.912
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 10 return = 93.912
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 11 return = 93.912
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 12 return = 93.912
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 13 return = 94.896
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 14 return = 94.896
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 15 return = 94.920
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 16 return = 94.920
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 17 return = 94.920
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 18 return = 94.920
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 19 return = 94.920
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 20 return = 94.920
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 21 return = 94.920
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 22 return = 94.920
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 23 return = 94.920
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 24 return = 94.920
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 25 return = 94.920
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 26 return = 94.920
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 27 return = 94.920
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 28 return = 94.920
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 29 return = 94.920
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 30 return = 94.920
+[INFO 02-06 21:53:27] ax.service.utils.instantiation: Created search space: SearchSpace(parameters=[RangeParameter(name='x000', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x001', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x002', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x003', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x004', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x005', parameter_type=FLOAT, range=[-1.0, 1.0])], parameter_constraints=[]).
+[INFO 02-06 21:53:27] ax.modelbridge.dispatch_utils: Using Bayesian optimization since there are more ordered parameters than there are categories for the unordered categorical parameters.
+[INFO 02-06 21:53:27] ax.modelbridge.dispatch_utils: Calculating the number of remaining initialization trials based on num_initialization_trials=None max_initialization_trials=None num_tunable_parameters=6 num_trials=None use_batch_trials=False
+[INFO 02-06 21:53:27] ax.modelbridge.dispatch_utils: calculated num_initialization_trials=12
+[INFO 02-06 21:53:27] ax.modelbridge.dispatch_utils: num_completed_initialization_trials=0 num_remaining_initialization_trials=12
+[INFO 02-06 21:53:27] ax.modelbridge.dispatch_utils: Using Bayesian Optimization generation strategy: GenerationStrategy(name='Sobol+GPEI', steps=[Sobol for 12 trials, GPEI for subsequent trials]). Iterations after 12 will take longer to generate due to model-fitting.
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 31 return = 94.920
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 32 return = 94.920
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 33 return = 94.920
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 34 return = 94.920
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 35 return = 94.920
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 36 return = 94.920
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 37 return = 94.920
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 38 return = 94.920
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 39 return = 94.920
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 40 return = 94.920
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 41 return = 94.920
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 42 return = 94.920
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 43 return = 94.920
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 44 return = 94.920
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 45 return = 94.920
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 46 return = 95.184
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 47 return = 95.184
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 48 return = 95.184
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 49 return = 95.184
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 50 return = 95.184
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 51 return = 95.184
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 52 return = 95.184
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 53 return = 95.184
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 54 return = 95.184
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 55 return = 95.184
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 56 return = 95.184
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 57 return = 95.184
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 58 return = 96.405
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 59 return = 96.405
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 60 return = 96.405
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 61 return = 96.405
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 62 return = 96.405
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 63 return = 96.405
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 64 return = 96.405
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 65 return = 96.405
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 66 return = 96.405
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 67 return = 96.405
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 68 return = 96.405
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 69 return = 96.405
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 70 return = 96.405
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 71 return = 96.405
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 72 return = 96.405
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 73 return = 96.405
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 74 return = 96.405
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 75 return = 96.405
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 76 return = 96.405
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 77 return = 98.091
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 78 return = 98.091
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 79 return = 98.091
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 80 return = 98.091
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 81 return = 98.091
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 82 return = 98.091
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 83 return = 98.091
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 84 return = 98.091
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 85 return = 98.091
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 86 return = 98.091
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 87 return = 98.091
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 88 return = 98.091
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 89 return = 98.091
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 90 return = 98.091
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 91 return = 98.091
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 92 return = 98.091
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 93 return = 98.091
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 94 return = 98.091
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 95 return = 98.091
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 96 return = 98.091
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 97 return = 98.091
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 98 return = 98.091
+TRACE: name = MountainCarContinuous-v0 ttype = iopt_ei i_sample = 12 i_iter = 99 return = 98.091
+TIME_SAMPLE: 522.15
+ITER: i_iter = 0 ret = 0.00 ret_best = 0.00 n_data = 1
+ITER: i_iter = 1 ret = 92.25 ret_best = 92.25 n_data = 2
+ITER: i_iter = 2 ret = -45.35 ret_best = 92.25 n_data = 3
+ITER: i_iter = 3 ret = 88.77 ret_best = 92.25 n_data = 4
+ITER: i_iter = 4 ret = -96.78 ret_best = 92.25 n_data = 5
+ITER: i_iter = 5 ret = 64.43 ret_best = 92.25 n_data = 6
+ITER: i_iter = 6 ret = 95.08 ret_best = 95.08 n_data = 7
+ITER: i_iter = 7 ret = 92.67 ret_best = 95.08 n_data = 8
+ITER: i_iter = 8 ret = 92.02 ret_best = 95.08 n_data = 9
+ITER: i_iter = 9 ret = 87.94 ret_best = 95.08 n_data = 10
+ITER: i_iter = 10 ret = -62.70 ret_best = 95.08 n_data = 11
+ITER: i_iter = 11 ret = -97.74 ret_best = 95.08 n_data = 12
+ITER: i_iter = 12 ret = -97.00 ret_best = 95.08 n_data = 13
+ITER: i_iter = 13 ret = 47.53 ret_best = 95.08 n_data = 14
+ITER: i_iter = 14 ret = -76.62 ret_best = 95.08 n_data = 15
+ITER: i_iter = 15 ret = -76.70 ret_best = 95.08 n_data = 16
+ITER: i_iter = 16 ret = 63.49 ret_best = 95.08 n_data = 17
+ITER: i_iter = 17 ret = 74.84 ret_best = 95.08 n_data = 18
+ITER: i_iter = 18 ret = -28.83 ret_best = 95.08 n_data = 19
+ITER: i_iter = 19 ret = -96.06 ret_best = 95.08 n_data = 20
+ITER: i_iter = 20 ret = -88.29 ret_best = 95.08 n_data = 21
+ITER: i_iter = 21 ret = -99.73 ret_best = 95.08 n_data = 22
+ITER: i_iter = 22 ret = -98.24 ret_best = 95.08 n_data = 23
+ITER: i_iter = 23 ret = 91.51 ret_best = 95.08 n_data = 24
+ITER: i_iter = 24 ret = -90.35 ret_best = 95.08 n_data = 25
