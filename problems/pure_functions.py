@@ -1,6 +1,5 @@
 import numpy as np
 from gymnasium.spaces import Box
-
 from problems.ackley import Ackley
 
 
