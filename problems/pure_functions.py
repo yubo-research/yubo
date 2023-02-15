@@ -1,7 +1,31 @@
 import numpy as np
 from gymnasium.spaces import Box
-# import problems.sphere as bf
-from problems.benchmark_functions import Ackley,Beale,Branin,Bukin,CrossInTray,DropWave,DixonPrice,EggHolder,Griewank,GrLee12,Hartmann,HolderTable,Levy, Michalewicz,Powell,Rastrigin,Rosenbrock,Shubert,Shekel,SixHumpCamel,StybTang,ThreeHumpCamel
+
+from problems.benchmark_functions import (
+    Ackley,
+    Beale,
+    Branin,
+    Bukin,
+    CrossInTray,
+    DixonPrice,
+    DropWave,
+    EggHolder,
+    Griewank,
+    GrLee12,
+    Hartmann,
+    HolderTable,
+    Levy,
+    Michalewicz,
+    Powell,
+    Rastrigin,
+    Rosenbrock,
+    Shekel,
+    Shubert,
+    SixHumpCamel,
+    Sphere,
+    StybTang,
+    ThreeHumpCamel,
+)
 
 
 def make(name, seed):
@@ -10,71 +34,73 @@ def make(name, seed):
     name, num_dim = name.split("-")
     assert num_dim[-1] == "d"
     num_dim = int(num_dim[:-1])
-    #1
-    if name == "ackley":
+    if name == "sphere":
+        return PureFunctionEnv(Sphere(seed, num_dim), num_dim)
+    # 1
+    elif name == "ackley":
         return PureFunctionEnv(Ackley(seed, num_dim), num_dim)
-    #2
-    if name == "beale":
+    # 2
+    elif name == "beale":
         return PureFunctionEnv(Beale(seed, num_dim), num_dim)
     # 3
-    if name == "branin":
+    elif name == "branin":
         return PureFunctionEnv(Branin(seed, num_dim), num_dim)
     # 4
-    if name == "bukin":
+    elif name == "bukin":
         return PureFunctionEnv(Bukin(seed, num_dim), num_dim)
     # 5
-    if name == "crossintray":
+    elif name == "crossintray":
         return PureFunctionEnv(CrossInTray(seed, num_dim), num_dim)
     # 7
-    if name == "dropwave":
+    elif name == "dropwave":
         return PureFunctionEnv(DropWave(seed, num_dim), num_dim)
     # 7
-    if name == "dixonprice":
+    elif name == "dixonprice":
         return PureFunctionEnv(DixonPrice(seed, num_dim), num_dim)
     # 8
-    if name == "eggHolder":
+    elif name == "eggHolder":
         return PureFunctionEnv(EggHolder(seed, num_dim), num_dim)
     # 9
-    if name == "griewank":
+    elif name == "griewank":
         return PureFunctionEnv(Griewank(seed, num_dim), num_dim)
     # 10
-    if name == "grlee12 ":
+    elif name == "grlee12 ":
         return PureFunctionEnv(GrLee12(seed, num_dim), num_dim)
     # 11
-    if name == "hartmann":
+    elif name == "hartmann":
         return PureFunctionEnv(Hartmann(seed, num_dim), num_dim)
     # 12
-    if name == "holdertable":
+    elif name == "holdertable":
         return PureFunctionEnv(HolderTable(seed, num_dim), num_dim)
     # 13
-    if name == "levy":
+    elif name == "levy":
         return PureFunctionEnv(Levy(seed, num_dim), num_dim)
     # 14
-    if name == "michalewicz":
+    elif name == "michalewicz":
         return PureFunctionEnv(Michalewicz(seed, num_dim), num_dim)
     # 15
-    if name == "powell":
+    elif name == "powell":
         return PureFunctionEnv(Powell(seed, num_dim), num_dim)
     # 16
-    if name == "rastrigin":
+    elif name == "rastrigin":
         return PureFunctionEnv(Rastrigin(seed, num_dim), num_dim)
     # 17
-    if name == "rosenbrock":
+    elif name == "rosenbrock":
         return PureFunctionEnv(Rosenbrock(seed, num_dim), num_dim)
     # 18
-    if name == "shubert":
+    elif name == "shubert":
         return PureFunctionEnv(Shubert(seed, num_dim), num_dim)
     # 19
-    if name == "shekel":
+    elif name == "shekel":
         return PureFunctionEnv(Shekel(seed, num_dim), num_dim)
     # 20
-    if name == "sixhumpcamel":
+    elif name == "sixhumpcamel":
         return PureFunctionEnv(SixHumpCamel(seed, num_dim), num_dim)
     # 21
-    if name == "stybtang":
+    elif name == "stybtang":
         return PureFunctionEnv(StybTang(seed, num_dim), num_dim)
     # 22
-    if name == "threehumpcamel":
+    elif name == "threehumpcamel":
         return PureFunctionEnv(ThreeHumpCamel(seed, num_dim), num_dim)
 
     assert False, name
