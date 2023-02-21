@@ -29,10 +29,11 @@ class PureFunctionEnv:
 
     def step(self, action):
         # state, reward, done = env.step(action)[:3]
+        assert np.all(action >= -1) and np.all(action <= 1), ("action", action)
         x = action - self._x_0
         x[x < 0] /= 1 + self._x_0[x < 0]
         x[x > 0] /= 1 - self._x_0[x > 0]
-
+        assert np.all(x >= -1) and np.all(x <= 1), ("x", x)
         return 1, -self._function(x), True, None
 
     def reset(self, seed):
