@@ -30,6 +30,7 @@ class Optimizer:
             "minimax": BTDesigner(policy, lambda m: AcqMinDist(m, toroidal=False)),
             "minimax-toroidal": BTDesigner(policy, lambda m: AcqMinDist(m, toroidal=True)),
             "variance": BTDesigner(policy, AcqVar),
+            "iopt": BTDesigner(policy, AcqIOpt, {"explore_only": True}),
             "iopt_ei": BTDesigner(policy, AcqIOpt, {"use_sqrt": True}),
             "ioptv_ei": BTDesigner(policy, AcqIOpt, {"use_sqrt": False}),
             "idopt": BTDesigner(policy, AcqIDOpt, acq_kwargs={"X_max": None, "bounds": None}),

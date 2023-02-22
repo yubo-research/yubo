@@ -22,17 +22,29 @@ class PureFunctionEnv:
     def __init__(self, function, num_dim, seed):
         self._function = function
 
+        # state is either 0 or 1
+        # state==0 means that the policy has not been called.
+        # state==1 means that it has.
         self.observation_space = Box(low=0.0, high=1.0, dtype=np.float32)
+        # action is the input to the function (before some transformations)
         self.action_space = Box(low=-np.ones(num_dim), high=np.ones(num_dim), dtype=np.float32)
+
         rng = np.random.default_rng(seed)
-        self._x_0 = -1 + 2 * rng.uniform(size=(num_dim,))
+        self._x_0 = 0.9 * (-1 + 2 * rng.uniform(size=(num_dim,)))
 
     def step(self, action):
         # state, reward, done = env.step(action)[:3]
         assert np.all(action >= -1) and np.all(action <= 1), ("action", action)
         x = action - self._x_0
+
+        # consider action == -1
+        # (action - x0) / (1 + x0) == (-1 - x0) / (1 + x0) == -1
         x[x < 0] /= 1 + self._x_0[x < 0]
+
+        # consider action == 1
+        # (action - x0) / (1 - x0) == (1 - x0) / (1 - x0) == 1
         x[x > 0] /= 1 - self._x_0[x > 0]
+
         assert np.all(x >= -1) and np.all(x <= 1), ("x", x)
         return 1, -self._function(x), True, None
 
