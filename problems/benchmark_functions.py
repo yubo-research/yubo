@@ -77,7 +77,7 @@ class Bukin:
 class CrossInTray:
     def __call__(self, x):
         assert len(x) == 2
-        x = x * 9 + 1 - self._x_0
+        x = x * 10
         x0 = x[0]
         x1 = x[1]
         part1 = np.abs(np.sin(x0) * np.sin(x1) * np.exp(np.abs(100.0 - np.sqrt(x0**2 + x1**2) / np.pi))) + 1.0
@@ -116,7 +116,7 @@ class DixonPrice:
 class EggHolder:
     def __call__(self, x):
         assert len(x) == 2
-        x = x * 511
+        x = x * 512
         x1 = x[0]
         x2 = x[1]
         part1 = -(x2 + 47.0) * np.sin(np.sqrt(np.abs(x2 + x1 / 2.0 + 47.0)))
@@ -148,10 +148,15 @@ class Hartmann:
         self.A = {
             3: np.array((3, 10, 30, 0.1, 10, 35, 3, 10, 30, 0.1, 10, 35)).reshape(4, 3),
             4: np.array((10, 3, 17, 3.5, 1.7, 8, 0.05, 10, 17, 0.1, 8, 14, 3, 3.5, 1.7, 10, 17, 8, 17, 8, 0.05, 10, 0.1, 14)).reshape(4, 6),
+            6:np.array((10, 3, 17, 3.5, 1.7, 8, 0.05, 10, 17, 0.1, 8, 14, 3, 3.5, 1.7, 10, 17, 8, 17, 8, 0.05, 10, 0.1, 14)).reshape(4, 6),
         }
         self.P = {
             3: 10 ** (-4) * np.array((3689, 1170, 2673, 4699, 4387, 7470, 1091, 8732, 5547, 381, 5743, 8828)).reshape(4, 3),
             4: 10 ** (-4)
+            * np.array(
+                (1312, 1696, 5569, 124, 8283, 5886, 2329, 4135, 8307, 3736, 1004, 9991, 2348, 1451, 3522, 2883, 3047, 6650, 4047, 8828, 8732, 5743, 1091, 381)
+            ).reshape(4, 6),
+            6: 10 ** (-4)
             * np.array(
                 (1312, 1696, 5569, 124, 8283, 5886, 2329, 4135, 8307, 3736, 1004, 9991, 2348, 1451, 3522, 2883, 3047, 6650, 4047, 8828, 8732, 5743, 1091, 381)
             ).reshape(4, 6),
@@ -169,15 +174,15 @@ class Hartmann:
         outer = 0
         for i in range(4):
             inner = 0
-            for j in range(self.num_dim):
+            for j in range(num_dim):
                 inner += A[i][j] * (x[j] - P[i][j]) ** 2
             new = self.ALPHA[i] * np.exp(-inner)
             outer += new
-        if self.num_dim == 3:
+        if num_dim == 3:
             return -outer
-        if self.num_dim == 4:
+        if num_dim == 4:
             return (1.1 - outer) / 0.839
-        if self.num_dim == 6:
+        if num_dim == 6:
             return -(2.58 + outer) / 1.94
 
 
@@ -224,7 +229,7 @@ class Michalewicz:
         num_dim = len(x)
         m = 10
         sum = 0
-        for i in range(d):
+        for i in range(num_dim):
             new = np.sin(x[i]) * (np.sin(i * x[i] ** 2 / np.pi)) ** (2 * m)
             sum += new
         return sum
@@ -235,7 +240,8 @@ class Powell:
     def __call__(self, x):
         x = x * 4.5 + 0.5
         result = 0
-        for i in range(self.num_dim // 4):
+        num_dim = len(x)
+        for i in range(num_dim // 4):
             i_ = i + 1
             part1 = (x[4 * i_ - 4] + 10.0 * x[4 * i_ - 3]) ** 2
             part2 = 5.0 * (x[4 * i_ - 2] - x[4 * i_ - 1]) ** 2
