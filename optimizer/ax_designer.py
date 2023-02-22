@@ -1,5 +1,7 @@
 import numpy as np
 
+import common.all_bounds as all_bounds
+
 
 class AxDesigner:
     def __init__(self, policy):
@@ -14,7 +16,7 @@ class AxDesigner:
                 {
                     "name": f"x{i:03d}",
                     "type": "range",
-                    "bounds": [-1.0, 1.0],
+                    "bounds": [all_bounds.x_low, all_bounds.x_high],
                     "value_type": "float",
                 }
                 for i in range(num_params)

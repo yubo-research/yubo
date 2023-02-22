@@ -1,6 +1,7 @@
 import numpy as np
 from gymnasium.spaces import Box
 
+import common.all_bounds as all_bounds
 from problems.benchmark_functions import all_benchmarks
 
 
@@ -30,7 +31,10 @@ class PureFunctionEnv:
         self.action_space = Box(low=-np.ones(num_dim), high=np.ones(num_dim), dtype=np.float32)
 
         rng = np.random.default_rng(seed)
-        self._x_0 = 0.9 * (-1 + 2 * rng.uniform(size=(num_dim,)))
+        self._x_0 = 0.9 * (all_bounds.x_low + all_bounds.x_width * rng.uniform(size=(num_dim,)))
+
+        assert all_bounds.x_low == -1
+        assert all_bounds.x_high == 1
 
     def step(self, action):
         # state, reward, done = env.step(action)[:3]

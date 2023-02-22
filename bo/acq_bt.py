@@ -20,7 +20,8 @@ class AcqBT:
         fit_gpytorch_mll(mll)
 
         num_dim = X[0].shape[-1]
-        self.bounds = torch.tensor([[-1.0] * num_dim, [1.0] * num_dim], device=X.device, dtype=X.dtype)
+        # All BoTorch stuff is coded to bounds of [0,1]!
+        self.bounds = torch.tensor([[0.0] * num_dim, [1.0] * num_dim], device=X.device, dtype=X.dtype)
 
         if not acq_kwargs:
             kwargs = {}
