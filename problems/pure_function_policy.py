@@ -1,10 +1,12 @@
 import numpy as np
 
+import common.all_bounds as all_bounds
+
 
 class PureFunctionPolicy:
     def __init__(self, env_conf):
         self._env_conf = env_conf
-        self._params = np.random.uniform(-1, 1, size=(len(env_conf.action_space.low),))
+        self._params = np.random.uniform(all_bounds.p_low, all_bounds.p_high, size=(len(env_conf.action_space.low),))
 
     def num_params(self):
         return len(self._params)
