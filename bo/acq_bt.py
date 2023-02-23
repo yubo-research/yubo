@@ -57,7 +57,7 @@ class AcqBT:
         return datum.trajectory.rreturn, self._mk_x(datum.policy)
 
     def _mk_x(self, policy):
-        return all_bounds.bt_low + all_bounds.bt_width*( (torch.as_tensor(policy.get_params()) - all_bounds.p_low) / all_bounds.p_width )
+        return all_bounds.bt_low + all_bounds.bt_width * ((torch.as_tensor(policy.get_params()) - all_bounds.p_low) / all_bounds.p_width)
 
     def __call__(self, policy):
         X = torch.atleast_2d(self._mk_x(policy)).unsqueeze(0)
