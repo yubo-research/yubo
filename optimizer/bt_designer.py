@@ -16,7 +16,8 @@ class BTDesigner:
 
         if len(data) == 0:
             policy = self._policy.clone()
-            p = np.zeros(shape=(policy.num_params(),))
+            # p = all_bounds.p_low + all_bounds.p_width*(np.ones(shape=(policy.num_params(),))/2)
+            p = all_bounds.p_low + all_bounds.p_width*(np.random.uniform(size=(policy.num_params(),)))
             policy.set_params(p)
             return policy
 
@@ -34,6 +35,7 @@ class BTDesigner:
             )
         policy = self._policy.clone()
 
-        p = all_bounds.p_low + all_bounds.p_width * X_cand.detach().numpy().flatten()
+        x = (X_cand.detach().numpy().flatten() - all_bounds.bt_low) / all_bounds.bt_width
+        p = all_bounds.p_low + all_bounds.p_width * x
         policy.set_params(p)
         return policy
