@@ -63,7 +63,7 @@ class Optimizer:
 
             if i_iter % 1 == 0:
                 print(
-                    f"ITER: i_iter = {i_iter} ret = {datum.trajectory.rreturn:.2f} ret_best = {self._datum_best.trajectory.rreturn:.2f} n_data = {len(self._data)}"
+                    f"ITER: i_iter = {i_iter} ret = {datum.trajectory.rreturn:.2f} ret_best = {self._datum_best.trajectory.rreturn:.2f} ret = {datum.trajectory.rreturn:.2f}"
                 )
             trace.append(self._datum_best.trajectory.rreturn)
             if self._cb_trace:

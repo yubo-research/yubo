@@ -10,11 +10,11 @@ from problems.pure_function_policy import PureFunctionPolicy
 
 def get_env_conf(tag, seed=None):
     if tag[:2] == "f:":
-        ec = EnvConf(tag, seed=None, max_steps=1000, solved=-0.01)
+        ec = EnvConf(tag, seed=seed, max_steps=1000, solved=9999)
     else:
         ec = _env_confs[tag]
-    ec.seed = seed
-    ec.solved = 9999
+        ec.seed = seed
+        ec.solved = 9999
     return ec
 
 

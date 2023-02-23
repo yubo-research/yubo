@@ -6,6 +6,8 @@ from botorch.optim import optimize_acqf
 from botorch.utils import standardize
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
+import common.all_bounds as all_bounds
+
 
 class AcqBT:
     def __init__(self, acq_factory, data, acq_kwargs=None):
@@ -55,7 +57,7 @@ class AcqBT:
         return datum.trajectory.rreturn, self._mk_x(datum.policy)
 
     def _mk_x(self, policy):
-        return torch.as_tensor(policy.get_params())
+        return (torch.as_tensor(policy.get_params()) - all_bounds.p_low) / all_bounds.p_width
 
     def __call__(self, policy):
         X = torch.atleast_2d(self._mk_x(policy)).unsqueeze(0)

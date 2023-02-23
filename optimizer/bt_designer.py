@@ -34,6 +34,6 @@ class BTDesigner:
             )
         policy = self._policy.clone()
 
-        x = all_bounds.x_low + all_bounds.x_width * X_cand.detach().numpy().flatten()
-        policy.set_params(x)
+        p = all_bounds.p_low + all_bounds.p_width * X_cand.detach().numpy().flatten()
+        policy.set_params(p)
         return policy
