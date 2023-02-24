@@ -1,6 +1,7 @@
 import numpy as np
 from botorch.optim import optimize_acqf
 
+import common.all_bounds as all_bounds
 from bo.acq_bt import AcqBT
 
 
@@ -15,7 +16,8 @@ class BTDesigner:
 
         if len(data) == 0:
             policy = self._policy.clone()
-            p = np.zeros(shape=(policy.num_params(),))
+            # p = all_bounds.p_low + all_bounds.p_width * (np.ones(shape=(policy.num_params(),)) / 2)
+            p = all_bounds.p_low + all_bounds.p_width*(np.random.uniform(size=(policy.num_params(),)))
             policy.set_params(p)
             return policy
 
@@ -25,12 +27,15 @@ class BTDesigner:
         with warnings.catch_warnings():
             X_cand, _ = optimize_acqf(
                 acq_function=acqf.acq_function,
-                bounds=acqf.bounds,
+                bounds=acqf.bounds,  # always [0,1]
                 q=1,
                 num_restarts=10,
                 raw_samples=512,
                 options={"batch_limit": 5, "maxiter": 200},
             )
         policy = self._policy.clone()
-        policy.set_params(X_cand.detach().numpy().flatten())
+
+        x = (X_cand.detach().numpy().flatten() - all_bounds.bt_low) / all_bounds.bt_width
+        p = all_bounds.p_low + all_bounds.p_width * x
+        policy.set_params(p)
         return policy

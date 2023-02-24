@@ -1,32 +1,8 @@
 import numpy as np
 from gymnasium.spaces import Box
 
-# import problems.sphere as bf
-from problems.benchmark_functions import (
-    Ackley,
-    Beale,
-    Branin,
-    Bukin,
-    CrossInTray,
-    DixonPrice,
-    DropWave,
-    EggHolder,
-    Griewank,
-    GrLee12,
-    Hartmann,
-    HolderTable,
-    Levy,
-    Michalewicz,
-    Powell,
-    Rastrigin,
-    Rosenbrock,
-    Shekel,
-    Shubert,
-    SixHumpCamel,
-    Sphere,
-    StybTang,
-    ThreeHumpCamel,
-)
+import common.all_bounds as all_bounds
+from problems.benchmark_functions import all_benchmarks
 
 
 def make(name, seed):
@@ -35,93 +11,46 @@ def make(name, seed):
     name, num_dim = name.split("-")
     assert num_dim[-1] == "d"
     num_dim = int(num_dim[:-1])
-    if name == "sphere" or name == "Sphere":
-        return PureFunctionEnv(Sphere(seed, num_dim), num_dim)
-    # 1
-    if name == "ackley" or name == "Ackley":
-        return PureFunctionEnv(Ackley(seed, num_dim), num_dim)
-    # 2
-    if name == "beale" or name == "Beale":
-        return PureFunctionEnv(Beale(seed, num_dim), num_dim)
-    # 3
-    if name == "branin" or name == "Branin":
-        return PureFunctionEnv(Branin(seed, num_dim), num_dim)
-    # 4
-    if name == "bukin" or name == "Bukin":
-        return PureFunctionEnv(Bukin(seed, num_dim), num_dim)
-    # 5
-    if name == "crossintray" or name == "CrossInTray":
-        return PureFunctionEnv(CrossInTray(seed, num_dim), num_dim)
-    # 7
-    if name == "dropwave" or name == "DropWave":
-        return PureFunctionEnv(DropWave(seed, num_dim), num_dim)
-    # 7
-    if name == "dixonprice" or name == "DixonPrice":
-        return PureFunctionEnv(DixonPrice(seed, num_dim), num_dim)
-    # 8
-    if name == "eggHolder" or name == "EggHolder":
-        return PureFunctionEnv(EggHolder(seed, num_dim), num_dim)
-    # 9
-    if name == "griewank" or name == "GrieWank":
-        return PureFunctionEnv(Griewank(seed, num_dim), num_dim)
-    # 10
-    if name == "grlee12" or name == "GrLee12":
-        return PureFunctionEnv(GrLee12(seed, num_dim), num_dim)
-    # 11
-    if name == "hartmann" or name == "Hartmann":
-        return PureFunctionEnv(Hartmann(seed, num_dim), num_dim)
-    # 12
-    if name == "holdertable" or name == "HolderTable":
-        return PureFunctionEnv(HolderTable(seed, num_dim), num_dim)
-    # 13
-    if name == "levy" or name == "Levy":
-        return PureFunctionEnv(Levy(seed, num_dim), num_dim)
-    # 14
-    if name == "michalewicz" or name == "Michalewicz":
-        return PureFunctionEnv(Michalewicz(seed, num_dim), num_dim)
-    # 15
-    if name == "powell" or name == "Powell":
-        return PureFunctionEnv(Powell(seed, num_dim), num_dim)
-    # 16
-    if name == "rastrigin" or name == "Rastrigin":
-        return PureFunctionEnv(Rastrigin(seed, num_dim), num_dim)
-    # 17
-    if name == "rosenbrock" or name == "Rosenbrock":
-        return PureFunctionEnv(Rosenbrock(seed, num_dim), num_dim)
-    # 18
-    if name == "shubert" or name == "Shubert":
-        return PureFunctionEnv(Shubert(seed, num_dim), num_dim)
-    # 19
-    if name == "shekel" or name == "Shekel":
-        return PureFunctionEnv(Shekel(seed, num_dim), num_dim)
-    # 20
-    if name == "sixhumpcamel" or name == "SixHumpCamel":
-        return PureFunctionEnv(SixHumpCamel(seed, num_dim), num_dim)
-    # 21
-    if name == "stybtang" or name == "StybTang":
-        return PureFunctionEnv(StybTang(seed, num_dim), num_dim)
-    # 22
-    if name == "threehumpcamel" or name == "ThreeHumpCamel":
-        return PureFunctionEnv(ThreeHumpCamel(seed, num_dim), num_dim)
 
+    all_bf = all_benchmarks()
+    if name in all_bf:
+        return PureFunctionEnv(all_bf[name](), num_dim, seed)
     assert False, name
 
 
-# all function maxes are 0
-# all domains are [-1,1]**D
-
-
+# all domains are [-1,1]**num_dim
 class PureFunctionEnv:
-    def __init__(self, function, num_dim):
+    def __init__(self, function, num_dim, seed):
         self._function = function
 
+        # state is either 0 or 1
+        # state==0 means that the policy has not been called.
+        # state==1 means that it has.
         self.observation_space = Box(low=0.0, high=1.0, dtype=np.float32)
-
+        # action is the input to the function (before some transformations)
         self.action_space = Box(low=-np.ones(num_dim), high=np.ones(num_dim), dtype=np.float32)
+
+        rng = np.random.default_rng(seed)
+        self._x_0 = 0.9 * (all_bounds.x_low + all_bounds.x_width * rng.uniform(size=(num_dim,)))
+
+        assert all_bounds.x_low == -1
+        assert all_bounds.x_high == 1
 
     def step(self, action):
         # state, reward, done = env.step(action)[:3]
-        return 1, self._function(action), True, None
+        assert np.all(action >= -1) and np.all(action <= 1), ("action", action)
+        x = action - self._x_0
+
+        # consider action == -1
+        # (action - x0) / (1 + x0) == (-1 - x0) / (1 + x0) == -1
+        x[x < 0] /= 1 + self._x_0[x < 0]
+
+        # consider action == 1
+        # (action - x0) / (1 - x0) == (1 - x0) / (1 - x0) == 1
+        x[x > 0] /= 1 - self._x_0[x > 0]
+
+        assert np.all(x >= -1) and np.all(x <= 1), ("x", x)
+        return 1, -self._function(x), True, None
 
     def reset(self, seed):
         return 0, None

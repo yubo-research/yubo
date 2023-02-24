@@ -1,5 +1,3 @@
-import numpy as np
-
 from optimizer.optimizer import Optimizer
 from problems.env_conf import default_policy
 
@@ -23,7 +21,7 @@ if __name__ == "__main__":
     num_iterations = 100
     for i_sample in range(30):
         t0 = time.time()
-        seed = 1234 + 17 + i_sample
+        seed = 17 + i_sample
         env_conf = get_env_conf(env_tag, seed)
         sample(env_conf, ttype, tag=f"i_sample = {i_sample}", num_iterations=num_iterations)
         print(f"TIME_SAMPLE: {time.time() - t0:.2f}")

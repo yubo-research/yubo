@@ -229,7 +229,6 @@ class Michalewicz:
             sum += new
         return sum
 
-
 # 15 Powell xi ∈ [-4, 5], for all i = 1, …, d.
 class Powell:
     def __call__(self, x):
@@ -251,7 +250,6 @@ class Rastrigin:
         x = x * 5.12
         num_dim = len(x)
         return 10 * num_dim + np.sum(x**2 - 10 * np.cos(np.pi * 2 * x))
-
 
 # 17 Rosenbrock  xi ∈ [-2.048, 2.048], for all i = 1, …, d. result [0,18*10^4]
 class Rosenbrock:
@@ -301,7 +299,6 @@ class Shekel:
             outer += 1 / (inner + bi)
         return outer
 
-
 # 20 SixHumpCamel x1 ∈ [-3, 3], x2 ∈ [-2, 2]. result [-50,200]
 class SixHumpCamel:
     def __call__(self, x):
@@ -318,7 +315,6 @@ class StybTang:
         x = x * 5
         d = len(x)
         return 0.5 * np.sum(x**4 - 16 * x**2 + 5 * x)
-
 
 # 22 ThreeHumpCamel xi ∈ [-5, 5], for all i = 1, 2. result[0,10][0,1000]
 class ThreeHumpCamel:
