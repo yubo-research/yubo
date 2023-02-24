@@ -129,8 +129,8 @@ class Griewank:
     def __call__(self, x):
         x = x * 600
         part1 = np.sum(x**2 / 4000.0)
-        d = len(x)
-        part2 = np.prod(np.cos(x / np.sqrt((1 + np.arange(d)))))
+        num_dim = len(x)
+        part2 = np.prod(np.cos(x / np.sqrt((1 + np.arange(num_dim)))))
         return part1 - part2 + 1
 
 
@@ -224,23 +224,28 @@ class Michalewicz:
         num_dim = len(x)
         m = 10
         sum = 0
-        for i in range(d):
+        for i in range(num_dim):
             new = np.sin(x[i]) * (np.sin(i * x[i] ** 2 / np.pi)) ** (2 * m)
             sum += new
         return sum
 
+
 # 15 Powell xi ∈ [-4, 5], for all i = 1, …, d.
 class Powell:
     def __call__(self, x):
+        num_dim = len(x)
+        assert num_dim % 4 == 0, num_dim
+
         x = x * 4.5 + 0.5
         result = 0
-        for i in range(self.num_dim // 4):
+        for i in range(num_dim // 4):
             i_ = i + 1
             part1 = (x[4 * i_ - 4] + 10.0 * x[4 * i_ - 3]) ** 2
             part2 = 5.0 * (x[4 * i_ - 2] - x[4 * i_ - 1]) ** 2
             part3 = (x[4 * i_ - 3] - 2.0 * x[4 * i_ - 2]) ** 4
             part4 = 10.0 * (x[4 * i_ - 4] - x[4 * i_ - 1]) ** 4
             result += part1 + part2 + part3 + part4
+
         return result
 
 
@@ -250,6 +255,7 @@ class Rastrigin:
         x = x * 5.12
         num_dim = len(x)
         return 10 * num_dim + np.sum(x**2 - 10 * np.cos(np.pi * 2 * x))
+
 
 # 17 Rosenbrock  xi ∈ [-2.048, 2.048], for all i = 1, …, d. result [0,18*10^4]
 class Rosenbrock:
@@ -287,8 +293,8 @@ class Shekel:
         )
 
     def __call__(self, x):
-        assert len(x)==4
-        x = x * 5+5
+        assert len(x) == 4
+        x = x * 5 + 5
         m = self.C.shape[1]
         outer = 0
         for i in range(m):
@@ -298,6 +304,7 @@ class Shekel:
                 inner += (x[j] - self.C[j][i]) ** 2
             outer += 1 / (inner + bi)
         return outer
+
 
 # 20 SixHumpCamel x1 ∈ [-3, 3], x2 ∈ [-2, 2]. result [-50,200]
 class SixHumpCamel:
@@ -313,13 +320,13 @@ class SixHumpCamel:
 class StybTang:
     def __call__(self, x):
         x = x * 5
-        d = len(x)
         return 0.5 * np.sum(x**4 - 16 * x**2 + 5 * x)
+
 
 # 22 ThreeHumpCamel xi ∈ [-5, 5], for all i = 1, 2. result[0,10][0,1000]
 class ThreeHumpCamel:
     def __call__(self, x):
-        assert len(x)==2
+        assert len(x) == 2
         x = x * 5
         x0 = x[0]
         x1 = x[1]
