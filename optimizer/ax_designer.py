@@ -5,11 +5,16 @@ import common.all_bounds as all_bounds
 
 class AxDesigner:
     def __init__(self, policy):
+        self._policy = policy
+        self._ax_client = None
+
+    def _lazy_init(self):
+        if self._ax_client:
+            return
         from ax.service.ax_client import AxClient
 
-        self._policy = policy
         self._ax_client = AxClient(verbose_logging=False)
-        num_params = policy.num_params()
+        num_params = self._policy.num_params()
         self._ax_client.create_experiment(
             name=f"ax_{num_params}",
             parameters=[
@@ -26,6 +31,8 @@ class AxDesigner:
 
     def __call__(self, data, num_arms):
         assert num_arms == 1, "ax only supports one-arm trials"
+        self._lazy_init()
+
         import warnings
 
         warnings.simplefilter("ignore")

@@ -33,10 +33,10 @@ class BTDesigner:
                 raw_samples=512,
                 options={"batch_limit": 5, "maxiter": 200},
             )
-        policy = self._policy.clone()
 
         policies = []
         for x in X_cand:
+            policy = self._policy.clone()
             x = (x.detach().numpy().flatten() - all_bounds.bt_low) / all_bounds.bt_width
             p = all_bounds.p_low + all_bounds.p_width * x
             policy.set_params(p)
