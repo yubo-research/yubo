@@ -2,9 +2,9 @@ from optimizer.optimizer import Optimizer
 from problems.env_conf import default_policy
 
 
-def sample(env_conf, ttype, tag, num_iterations):
+def sample(env_conf, ttype, tag, num_iterations, num_arms):
     policy = default_policy(env_conf)
-    opt = Optimizer(env_conf, policy)
+    opt = Optimizer(env_conf, policy, num_arms=num_arms)
     for i_iter, rreturn in enumerate(opt.collect_trace(ttype=ttype, num_iterations=num_iterations)):
         print(f"TRACE: name = {env_conf.env_name} ttype = {ttype} {tag} i_iter = {i_iter} return = {rreturn:.3f}")
 
@@ -23,5 +23,5 @@ if __name__ == "__main__":
         t0 = time.time()
         seed = 17 + i_sample
         env_conf = get_env_conf(env_tag, seed)
-        sample(env_conf, ttype, tag=f"i_sample = {i_sample}", num_iterations=num_iterations)
+        sample(env_conf, ttype, tag=f"i_sample = {i_sample}", num_iterations=num_iterations, num_arms=1)
         print(f"TIME_SAMPLE: {time.time() - t0:.2f}")

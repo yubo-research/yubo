@@ -24,7 +24,8 @@ class AxDesigner:
         )
         self._trial_index = None
 
-    def __call__(self, data):
+    def __call__(self, data, num_arms):
+        assert num_arms == 1, "ax only supports one-arm trials"
         import warnings
 
         warnings.simplefilter("ignore")
@@ -35,4 +36,5 @@ class AxDesigner:
             p = np.array([parameters.get(f"x{i:03d}") for i in range(self._policy.num_params())])
             policy = self._policy.clone()
             policy.set_params(p)
-            return policy
+
+        return [policy]
