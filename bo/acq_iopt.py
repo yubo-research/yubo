@@ -28,7 +28,7 @@ class AcqIOpt(MCAcquisitionFunction):
         if explore_only or np.random.uniform() < p_explore:
             self.acqf = None
         else:
-            self.acqf = qNoisyExpectedImprovement(model, X_baseline=X_0, prune_baseline=True)
+            self.acqf = qNoisyExpectedImprovement(model, X_baseline=X_0, prune_baseline=False)
 
     def p_explore(self, model, num_dim, num_X_samples):
         X = torch.rand(size=(num_X_samples, num_dim))
