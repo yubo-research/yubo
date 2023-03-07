@@ -1,0 +1,8 @@
+/home/juju/.local/lib/python3.10/site-packages/gymnasium/spaces/box.py:129: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  gym.logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+[INFO 02-25 01:14:21] ax.service.utils.instantiation: Created search space: SearchSpace(parameters=[RangeParameter(name='x000', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x001', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x002', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x003', parameter_type=FLOAT, range=[-1.0, 1.0]), RangeParameter(name='x004', parameter_type=FLOAT, range=[-1.0, 1.0])], parameter_constraints=[]).
+[INFO 02-25 01:14:21] ax.modelbridge.dispatch_utils: Using Bayesian optimization since there are more ordered parameters than there are categories for the unordered categorical parameters.
+[INFO 02-25 01:14:21] ax.modelbridge.dispatch_utils: Calculating the number of remaining initialization trials based on num_initialization_trials=None max_initialization_trials=None num_tunable_parameters=5 num_trials=None use_batch_trials=False
+[INFO 02-25 01:14:21] ax.modelbridge.dispatch_utils: calculated num_initialization_trials=10
+[INFO 02-25 01:14:21] ax.modelbridge.dispatch_utils: num_completed_initialization_trials=0 num_remaining_initialization_trials=10
+[INFO 02-25 01:14:21] ax.modelbridge.dispatch_utils: Using Bayesian Optimization generation strategy: GenerationStrategy(name='Sobol+GPEI', steps=[Sobol for 10 trials, GPEI for subsequent trials]). Iterations after 10 will take longer to generate due to model-fitting.

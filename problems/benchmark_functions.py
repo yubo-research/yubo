@@ -77,7 +77,7 @@ class Bukin:
 class CrossInTray:
     def __call__(self, x):
         assert len(x) == 2
-        x = x * 10
+        x = x * 9 + 1 - self._x_0
         x0 = x[0]
         x1 = x[1]
         part1 = np.abs(np.sin(x0) * np.sin(x1) * np.exp(np.abs(100.0 - np.sqrt(x0**2 + x1**2) / np.pi))) + 1.0
@@ -116,7 +116,7 @@ class DixonPrice:
 class EggHolder:
     def __call__(self, x):
         assert len(x) == 2
-        x = x * 512
+        x = x * 511
         x1 = x[0]
         x2 = x[1]
         part1 = -(x2 + 47.0) * np.sin(np.sqrt(np.abs(x2 + x1 / 2.0 + 47.0)))
@@ -129,8 +129,8 @@ class Griewank:
     def __call__(self, x):
         x = x * 600
         part1 = np.sum(x**2 / 4000.0)
-        d = len(x)
-        part2 = np.prod(np.cos(x / np.sqrt((1 + np.arange(d)))))
+        num_dim = len(x)
+        part2 = np.prod(np.cos(x / np.sqrt((1 + np.arange(num_dim)))))
         return part1 - part2 + 1
 
 
@@ -148,15 +148,10 @@ class Hartmann:
         self.A = {
             3: np.array((3, 10, 30, 0.1, 10, 35, 3, 10, 30, 0.1, 10, 35)).reshape(4, 3),
             4: np.array((10, 3, 17, 3.5, 1.7, 8, 0.05, 10, 17, 0.1, 8, 14, 3, 3.5, 1.7, 10, 17, 8, 17, 8, 0.05, 10, 0.1, 14)).reshape(4, 6),
-            6:np.array((10, 3, 17, 3.5, 1.7, 8, 0.05, 10, 17, 0.1, 8, 14, 3, 3.5, 1.7, 10, 17, 8, 17, 8, 0.05, 10, 0.1, 14)).reshape(4, 6),
         }
         self.P = {
             3: 10 ** (-4) * np.array((3689, 1170, 2673, 4699, 4387, 7470, 1091, 8732, 5547, 381, 5743, 8828)).reshape(4, 3),
             4: 10 ** (-4)
-            * np.array(
-                (1312, 1696, 5569, 124, 8283, 5886, 2329, 4135, 8307, 3736, 1004, 9991, 2348, 1451, 3522, 2883, 3047, 6650, 4047, 8828, 8732, 5743, 1091, 381)
-            ).reshape(4, 6),
-            6: 10 ** (-4)
             * np.array(
                 (1312, 1696, 5569, 124, 8283, 5886, 2329, 4135, 8307, 3736, 1004, 9991, 2348, 1451, 3522, 2883, 3047, 6650, 4047, 8828, 8732, 5743, 1091, 381)
             ).reshape(4, 6),
@@ -174,15 +169,15 @@ class Hartmann:
         outer = 0
         for i in range(4):
             inner = 0
-            for j in range(num_dim):
+            for j in range(self.num_dim):
                 inner += A[i][j] * (x[j] - P[i][j]) ** 2
             new = self.ALPHA[i] * np.exp(-inner)
             outer += new
-        if num_dim == 3:
+        if self.num_dim == 3:
             return -outer
-        if num_dim == 4:
+        if self.num_dim == 4:
             return (1.1 - outer) / 0.839
-        if num_dim == 6:
+        if self.num_dim == 6:
             return -(2.58 + outer) / 1.94
 
 
@@ -238,9 +233,11 @@ class Michalewicz:
 # 15 Powell xi ∈ [-4, 5], for all i = 1, …, d.
 class Powell:
     def __call__(self, x):
+        num_dim = len(x)
+        assert num_dim % 4 == 0, num_dim
+
         x = x * 4.5 + 0.5
         result = 0
-        num_dim = len(x)
         for i in range(num_dim // 4):
             i_ = i + 1
             part1 = (x[4 * i_ - 4] + 10.0 * x[4 * i_ - 3]) ** 2
@@ -248,6 +245,7 @@ class Powell:
             part3 = (x[4 * i_ - 3] - 2.0 * x[4 * i_ - 2]) ** 4
             part4 = 10.0 * (x[4 * i_ - 4] - x[4 * i_ - 1]) ** 4
             result += part1 + part2 + part3 + part4
+
         return result
 
 
@@ -295,8 +293,8 @@ class Shekel:
         )
 
     def __call__(self, x):
-        assert len(x)==4
-        x = x * 5+5
+        assert len(x) == 4
+        x = x * 5 + 5
         m = self.C.shape[1]
         outer = 0
         for i in range(m):
@@ -322,14 +320,13 @@ class SixHumpCamel:
 class StybTang:
     def __call__(self, x):
         x = x * 5
-        d = len(x)
         return 0.5 * np.sum(x**4 - 16 * x**2 + 5 * x)
 
 
 # 22 ThreeHumpCamel xi ∈ [-5, 5], for all i = 1, 2. result[0,10][0,1000]
 class ThreeHumpCamel:
     def __call__(self, x):
-        assert len(x)==2
+        assert len(x) == 2
         x = x * 5
         x0 = x[0]
         x1 = x[1]

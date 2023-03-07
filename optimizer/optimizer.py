@@ -1,8 +1,11 @@
-from botorch.acquisition import UpperConfidenceBound
-from botorch.acquisition.analytic import ExpectedImprovement
+from botorch.acquisition.monte_carlo import (
+    qNoisyExpectedImprovement,
+    qUpperConfidenceBound,
+)
 
 from bo.acq_idopt import AcqIDOpt
 from bo.acq_iei import AcqIEI
+from bo.acq_iopt import AcqIOpt
 from bo.acq_iucb import AcqIUCB
 from bo.acq_min_dist import AcqMinDist
 from bo.acq_var import AcqVar
@@ -27,11 +30,13 @@ class Optimizer:
             "minimax": BTDesigner(policy, lambda m: AcqMinDist(m, toroidal=False)),
             "minimax-toroidal": BTDesigner(policy, lambda m: AcqMinDist(m, toroidal=True)),
             "variance": BTDesigner(policy, AcqVar),
-            "iopt": BTDesigner(policy, AcqIDOpt, acq_kwargs={"bounds": None}),
+            "iopt": BTDesigner(policy, AcqIOpt, {"explore_only": True}),
+            "iopt_ei": BTDesigner(policy, AcqIOpt, {"use_sqrt": True}),
+            "ioptv_ei": BTDesigner(policy, AcqIOpt, {"use_sqrt": False}),
             "idopt": BTDesigner(policy, AcqIDOpt, acq_kwargs={"X_max": None, "bounds": None}),
-            "ei": BTDesigner(policy, ExpectedImprovement, acq_kwargs={"best_f": None}),
+            "ei": BTDesigner(policy, qNoisyExpectedImprovement, acq_kwargs={"X_baseline": None}),
             "iei": BTDesigner(policy, AcqIEI, acq_kwargs={"Y_max": None, "bounds": None}),
-            "ucb": BTDesigner(policy, UpperConfidenceBound, acq_kwargs={"beta": 1}),
+            "ucb": BTDesigner(policy, qUpperConfidenceBound, acq_kwargs={"beta": 1}),
             "iucb": BTDesigner(policy, AcqIUCB, acq_kwargs={"bounds": None}),
             "ax": AxDesigner(policy),
         }
@@ -58,7 +63,7 @@ class Optimizer:
 
             if i_iter % 1 == 0:
                 print(
-                    f"ITER: i_iter = {i_iter} ret = {datum.trajectory.rreturn:.2f} ret_best = {self._datum_best.trajectory.rreturn:.2f} n_data = {len(self._data)}"
+                    f"ITER: i_iter = {i_iter} ret = {datum.trajectory.rreturn:.2f} ret_best = {self._datum_best.trajectory.rreturn:.2f} ret = {datum.trajectory.rreturn:.2f}"
                 )
             trace.append(self._datum_best.trajectory.rreturn)
             if self._cb_trace:
