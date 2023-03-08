@@ -13,8 +13,9 @@ from torch.quasirandom import SobolEngine
 
 
 class AcqIOpt(MCAcquisitionFunction):
-    def __init__(self, model: Model, num_X_samples: int = 256, num_p_samples: int = 256, use_sqrt: bool = False, explore_only=False,
-                 prune_baseline=True, **kwargs) -> None:
+    def __init__(
+        self, model: Model, num_X_samples: int = 256, num_p_samples: int = 256, use_sqrt: bool = False, explore_only=False, prune_baseline=True, **kwargs
+    ) -> None:
         super().__init__(model=model, **kwargs)
 
         X_0 = self.model.train_inputs[0]

@@ -6,16 +6,17 @@ from optimizer.sobol_designer import SobolDesigner
 
 
 class BTDesigner:
-    def __init__(self, policy, acq_fn, acq_kwargs=None):
+    def __init__(self, policy, acq_fn, init_sobol=1, acq_kwargs=None):
         self._policy = policy
         self._acq_fn = acq_fn
+        self._init_sobol = init_sobol
         self._acq_kwargs = acq_kwargs
         self._sobol = SobolDesigner(policy.clone())
 
     def __call__(self, data, num_arms):
         import warnings
 
-        if len(data) == 0:
+        if len(data) < self._init_sobol:
             # policy = self._policy.clone()
             # p = all_bounds.p_low + all_bounds.p_width * (np.ones(shape=(policy.num_params(),)) / 2)
             # p = all_bounds.p_low + all_bounds.p_width * (np.random.uniform(size=(policy.num_params(), num_arms)))

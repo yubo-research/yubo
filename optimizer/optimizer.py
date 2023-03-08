@@ -41,6 +41,7 @@ class Optimizer:
             "ucb": BTDesigner(policy, qUpperConfidenceBound, acq_kwargs={"beta": 1}),
             "iucb": BTDesigner(policy, AcqIUCB, acq_kwargs={"bounds": None}),
             "ax": AxDesigner(policy),
+            "sobol_ei": BTDesigner(policy, qNoisyExpectedImprovement, init_sobol=max(5, 2 * policy.num_params()), acq_kwargs={"X_baseline": None}),
         }
 
     def _collect_trajectory(self, policy):
