@@ -31,15 +31,15 @@ class Optimizer:
             "maximin": BTDesigner(policy, lambda m: AcqMinDist(m, toroidal=False)),
             "maximin-toroidal": BTDesigner(policy, lambda m: AcqMinDist(m, toroidal=True)),
             "variance": BTDesigner(policy, AcqVar),
-            "iopt": BTDesigner(policy, AcqIOpt, acq_kwargs={"explore_only": True}),
-            "iopt_ei": BTDesigner(policy, AcqIOpt, acq_kwargs={"use_sqrt": True}),
-            "ioptv_ei": BTDesigner(policy, AcqIOpt, acq_kwargs={"use_sqrt": False, "prune_baseline": True}),
-            "ioptvp_ei": BTDesigner(policy, AcqIOpt, acq_kwargs={"use_sqrt": False, "prune_baseline": False}),
-            "idopt": BTDesigner(policy, AcqIDOpt, acq_kwargs={"X_max": None, "bounds": None}),
+            "iopt": BTDesigner(policy, AcqIOpt, init_sobol=0, acq_kwargs={"explore_only": True}),
+            "iopt_ei": BTDesigner(policy, AcqIOpt, init_sobol=0, acq_kwargs={"use_sqrt": True}),
+            "ioptv_ei": BTDesigner(policy, AcqIOpt, init_sobol=0, acq_kwargs={"use_sqrt": False, "prune_baseline": True}),
+            "ioptvp_ei": BTDesigner(policy, AcqIOpt, init_sobol=0, acq_kwargs={"use_sqrt": False, "prune_baseline": False}),
+            "idopt": BTDesigner(policy, AcqIDOpt, init_sobol=0, acq_kwargs={"X_max": None, "bounds": None}),
             "ei": BTDesigner(policy, qNoisyExpectedImprovement, acq_kwargs={"X_baseline": None}),
-            "iei": BTDesigner(policy, AcqIEI, acq_kwargs={"Y_max": None, "bounds": None}),
+            "iei": BTDesigner(policy, AcqIEI, init_sobol=0, acq_kwargs={"Y_max": None, "bounds": None}),
             "ucb": BTDesigner(policy, qUpperConfidenceBound, acq_kwargs={"beta": 1}),
-            "iucb": BTDesigner(policy, AcqIUCB, acq_kwargs={"bounds": None}),
+            "iucb": BTDesigner(policy, AcqIUCB, init_sobol=0, acq_kwargs={"bounds": None}),
             "ax": AxDesigner(policy),
             "sobol_ei": BTDesigner(policy, qNoisyExpectedImprovement, init_sobol=max(5, 2 * policy.num_params()), acq_kwargs={"X_baseline": None}),
         }
@@ -61,14 +61,16 @@ class Optimizer:
         designer = self._designers[ttype]
         trace = []
         for i_iter in range(num_iterations):
+            best_in_batch = -1e99
             for datum in self._iterate(designer):
                 self._data.append(datum)
+                best_in_batch = max(best_in_batch, datum.trajectory.rreturn)
                 if self._datum_best is None or datum.trajectory.rreturn > self._datum_best.trajectory.rreturn:
                     self._datum_best = datum
 
             if i_iter % 1 == 0:
                 print(
-                    f"ITER: i_iter = {i_iter} ret = {datum.trajectory.rreturn:.2f} ret_best = {self._datum_best.trajectory.rreturn:.2f} ret = {datum.trajectory.rreturn:.2f}"
+                    f"ITER: i_iter = {i_iter} ret = {datum.trajectory.rreturn:.2f} ret_best = {self._datum_best.trajectory.rreturn:.2f} ret = {best_in_batch:.2f}"
                 )
             trace.append(self._datum_best.trajectory.rreturn)
             if self._cb_trace:

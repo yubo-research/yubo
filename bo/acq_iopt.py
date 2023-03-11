@@ -20,15 +20,20 @@ class AcqIOpt(MCAcquisitionFunction):
 
         X_0 = self.model.train_inputs[0]
         num_dim = X_0.shape[-1]
+        dtype = X_0.dtype
+
         sobol_engine = SobolEngine(num_dim, scramble=True)
-        X_samples = sobol_engine.draw(num_X_samples, dtype=X_0.dtype)
+        X_samples = sobol_engine.draw(num_X_samples, dtype=dtype)
         self.register_buffer("X_samples", X_samples)
 
-        p_iopt = self._integrated_variance(model, num_dim, num_X_samples)
+        if len(X_0) == 0:
+            p_iopt = 1.01
+        else:
+            p_iopt = self._integrated_variance(model, num_dim, num_X_samples)
+
         if use_sqrt:
             p_iopt = np.sqrt(p_iopt)
         if explore_only or np.random.uniform() < p_iopt:
-            print("IOPT")
             self.acqf = None
         else:
             self.acqf = qNoisyExpectedImprovement(model, X_baseline=X_0, prune_baseline=prune_baseline)
