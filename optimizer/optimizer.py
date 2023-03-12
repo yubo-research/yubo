@@ -3,11 +3,11 @@ from botorch.acquisition.monte_carlo import (
     qUpperConfidenceBound,
 )
 
-from bo.acq_idopt import AcqIDOpt
 from bo.acq_iei import AcqIEI
 from bo.acq_iopt import AcqIOpt
 from bo.acq_iucb import AcqIUCB
 from bo.acq_min_dist import AcqMinDist
+from bo.acq_thompson_regret import AcqThompsonRegret
 from bo.acq_var import AcqVar
 
 from .ax_designer import AxDesigner
@@ -16,6 +16,20 @@ from .datum import Datum
 from .random_designer import RandomDesigner
 from .sobol_designer import SobolDesigner
 from .trajectories import collect_trajectory
+
+
+def _iOptFactory(model, acqf=None, X_baseline=None, use_sqrt=None):
+    if acqf == "ei":
+        assert X_baseline is not None
+        if len(X_baseline) > 0:
+            acqf = qNoisyExpectedImprovement(model, X_baseline, prune_baseline=False)
+        else:
+            acqf = None
+    elif acqf == "tr":
+        acqf = AcqThompsonRegret(model)
+    else:
+        assert acqf is None, acqf
+    return AcqIOpt(model, acqf=acqf, use_sqrt=use_sqrt)
 
 
 class Optimizer:
@@ -31,11 +45,11 @@ class Optimizer:
             "maximin": BTDesigner(policy, lambda m: AcqMinDist(m, toroidal=False)),
             "maximin-toroidal": BTDesigner(policy, lambda m: AcqMinDist(m, toroidal=True)),
             "variance": BTDesigner(policy, AcqVar),
-            "iopt": BTDesigner(policy, AcqIOpt, init_sobol=0, acq_kwargs={"explore_only": True}),
-            "iopt_ei": BTDesigner(policy, AcqIOpt, init_sobol=0, acq_kwargs={"use_sqrt": True}),
-            "ioptv_ei": BTDesigner(policy, AcqIOpt, init_sobol=0, acq_kwargs={"use_sqrt": False, "prune_baseline": True}),
-            "ioptvp_ei": BTDesigner(policy, AcqIOpt, init_sobol=0, acq_kwargs={"use_sqrt": False, "prune_baseline": False}),
-            "idopt": BTDesigner(policy, AcqIDOpt, init_sobol=0, acq_kwargs={"X_max": None, "bounds": None}),
+            "iopt": BTDesigner(policy, _iOptFactory, init_sobol=0),
+            "iopt_ei": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "ei", "X_baseline": None, "use_sqrt": True}),
+            "ioptvp_ei": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "ei", "X_baseline": None}),
+            "ioptvp_tr": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "tr"}),
+            "tr": BTDesigner(policy, AcqThompsonRegret),
             "ei": BTDesigner(policy, qNoisyExpectedImprovement, acq_kwargs={"X_baseline": None}),
             "iei": BTDesigner(policy, AcqIEI, init_sobol=0, acq_kwargs={"Y_max": None, "bounds": None}),
             "ucb": BTDesigner(policy, qUpperConfidenceBound, acq_kwargs={"beta": 1}),

@@ -1,8 +1,8 @@
 import numpy as np
 import torch
+from botorch.acquisition import AcquisitionFunction
 from botorch.acquisition.monte_carlo import (
     MCAcquisitionFunction,
-    qNoisyExpectedImprovement,
 )
 from botorch.models.model import Model
 from botorch.utils import t_batch_mode_transform
@@ -14,7 +14,7 @@ from torch.quasirandom import SobolEngine
 
 class AcqIOpt(MCAcquisitionFunction):
     def __init__(
-        self, model: Model, num_X_samples: int = 256, num_p_samples: int = 256, use_sqrt: bool = False, explore_only=False, prune_baseline=True, **kwargs
+        self, model: Model, acqf: AcquisitionFunction = None, num_X_samples: int = 256, num_p_samples: int = 256, use_sqrt: bool = False, **kwargs
     ) -> None:
         super().__init__(model=model, **kwargs)
 
@@ -27,16 +27,13 @@ class AcqIOpt(MCAcquisitionFunction):
         self.register_buffer("X_samples", X_samples)
 
         if len(X_0) == 0:
-            p_iopt = 1.01
+            p_iopt = 1 + 1e-6
         else:
             p_iopt = self._integrated_variance(model, num_dim, num_X_samples)
 
         if use_sqrt:
             p_iopt = np.sqrt(p_iopt)
-        if explore_only or np.random.uniform() < p_iopt:
-            self.acqf = None
-        else:
-            self.acqf = qNoisyExpectedImprovement(model, X_baseline=X_0, prune_baseline=prune_baseline)
+        self.acqf = None if np.random.uniform() < p_iopt else acqf
 
     def _integrated_variance(self, model, num_dim, num_X_samples):
         X = torch.rand(size=(num_X_samples, num_dim))
