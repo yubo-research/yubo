@@ -2,15 +2,17 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def filled_err(ys, x=None, color="#AAAAAA", alpha=0.5, fmt="--", se=False):
+def filled_err(ys, x=None, color="#AAAAAA", alpha=0.5, fmt="--", se=False, ax=None):
+    if ax is None:
+        ax = plt
     mu = ys.mean(axis=0)
     sg = ys.std(axis=0)
     if x is None:
         x = np.arange(len(mu))
     if se:
         sg = sg / np.sqrt(ys.shape[0])
-    plt.fill_between(x, mu - sg, mu + sg, color=color, alpha=alpha, linewidth=1)
-    plt.plot(x, mu, fmt, color=color)
+    ax.fill_between(x, mu - sg, mu + sg, color=color, alpha=alpha, linewidth=1)
+    ax.plot(x, mu, fmt, color=color)
 
 
 def error_area(x, y, yerr, color="#AAAAAA", alpha=0.5, fmt="--"):
@@ -52,6 +54,9 @@ def loadKV(fn, keys, grep_for=None):
         for line in f.readlines():
             if grep_for is not None and grep_for not in line:
                 continue
+            i = line.find("[INFO")
+            if i is not None:
+                line = line[:i]
             d = _extractKV(line)
             for k in skeys:
                 if k in d:
