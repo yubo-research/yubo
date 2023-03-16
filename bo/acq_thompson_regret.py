@@ -15,7 +15,9 @@ class AcqThompsonRegret(qSimpleRegret):
         x = model.train_inputs[0].detach()
         if len(x) == 0:
             return model
-        y = model.posterior(x).mean.detach()
+        # y = model.posterior(x).mean.detach()
+        y = model.posterior(x).rsample().squeeze(0).detach()
+
         # Should we standardize again?
         gp_ts = SingleTaskGP(x, y)
         mll = ExactMarginalLogLikelihood(gp_ts.likelihood, gp_ts)
