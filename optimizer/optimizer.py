@@ -1,5 +1,6 @@
 from botorch.acquisition.monte_carlo import (
     qNoisyExpectedImprovement,
+    qSimpleRegret,
     qUpperConfidenceBound,
 )
 
@@ -7,7 +8,6 @@ from bo.acq_iei import AcqIEI
 from bo.acq_iopt import AcqIOpt
 from bo.acq_iucb import AcqIUCB
 from bo.acq_min_dist import AcqMinDist
-from bo.acq_thompson_regret import AcqThompsonRegret
 from bo.acq_thompson_sample import AcqThompsonSample
 from bo.acq_var import AcqVar
 
@@ -26,8 +26,8 @@ def _iOptFactory(model, acqf=None, X_baseline=None, use_sqrt=None):
             acqf = qNoisyExpectedImprovement(model, X_baseline, prune_baseline=False)
         else:
             acqf = None
-    elif acqf == "tr":
-        acqf = AcqThompsonRegret(model)
+    elif acqf == "sr":
+        acqf = qSimpleRegret(model)
     elif acqf == "ts":
         acqf = AcqThompsonSample(model)
     else:
@@ -51,9 +51,9 @@ class Optimizer:
             "iopt": BTDesigner(policy, _iOptFactory, init_sobol=0),
             "iopt_ei": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "ei", "X_baseline": None, "use_sqrt": True}),
             "ioptvp_ei": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "ei", "X_baseline": None}),
-            "ioptvp_tr": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "tr"}),
+            "ioptvp_sr": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "sr"}),
             "ioptvp_ts": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "ts"}),
-            "tr": BTDesigner(policy, AcqThompsonRegret),
+            "sr": BTDesigner(policy, qSimpleRegret),
             "ts": BTDesigner(policy, AcqThompsonSample),
             "ei": BTDesigner(policy, qNoisyExpectedImprovement, acq_kwargs={"X_baseline": None}),
             "iei": BTDesigner(policy, AcqIEI, init_sobol=0, acq_kwargs={"Y_max": None, "bounds": None}),
