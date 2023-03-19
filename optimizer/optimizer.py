@@ -10,6 +10,7 @@ from bo.acq_iucb import AcqIUCB
 from bo.acq_min_dist import AcqMinDist
 from bo.acq_thompson_sample import AcqThompsonSample
 from bo.acq_var import AcqVar
+from bo.acq_mvo import AcqMVO
 
 from .ax_designer import AxDesigner
 from .bt_designer import BTDesigner
@@ -53,6 +54,7 @@ class Optimizer:
             "iopt_ts": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "ts"}),
             "iopt_ei": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "ei", "X_baseline": None, "use_sqrt": False}),
             "ioptsq_ei": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "ei", "X_baseline": None, "use_sqrt": True}),
+            "mvo": BTDesigner(policy, AcqMVO),
             "sr": BTDesigner(policy, qSimpleRegret),
             "ts": BTDesigner(policy, AcqThompsonSample),
             "ei": BTDesigner(policy, qNoisyExpectedImprovement, acq_kwargs={"X_baseline": None}),

@@ -15,6 +15,9 @@ class AcqThompsonSample(AnalyticAcquisitionFunction):
         x = model.train_inputs[0].detach()
         if len(x) == 0:
             return model
+        # Use rsample for one random sample
+        # Use get_posterior_samples() for differentiable
+        #  samples via reparametrization trick.
         y = model.posterior(x).rsample().squeeze(0).detach()
 
         # Should we standardize again?
