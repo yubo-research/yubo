@@ -8,9 +8,9 @@ from bo.acq_iei import AcqIEI
 from bo.acq_iopt import AcqIOpt
 from bo.acq_iucb import AcqIUCB
 from bo.acq_min_dist import AcqMinDist
+from bo.acq_mvo import AcqMVO
 from bo.acq_thompson_sample import AcqThompsonSample
 from bo.acq_var import AcqVar
-from bo.acq_mvo import AcqMVO
 
 from .ax_designer import AxDesigner
 from .bt_designer import BTDesigner

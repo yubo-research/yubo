@@ -1,9 +1,7 @@
 from botorch.acquisition.analytic import AnalyticAcquisitionFunction
-from botorch.fit import fit_gpytorch_mll
 from botorch.models import SingleTaskGP
 from botorch.models.model import Model
 from botorch.utils import t_batch_mode_transform
-from gpytorch.mlls import ExactMarginalLogLikelihood
 from torch import Tensor
 
 
@@ -15,15 +13,15 @@ class AcqThompsonSample(AnalyticAcquisitionFunction):
         x = model.train_inputs[0].detach()
         if len(x) == 0:
             return model
-        # Use rsample for one random sample
-        # Use get_posterior_samples() for differentiable
-        #  samples via reparametrization trick.
-        y = model.posterior(x).rsample().squeeze(0).detach()
+        # rsample: one random sample, w/gradient
+        # sample: one random sample, w/o gradient; calls rsample()
+        # get_posterior_samples: repeated "frozen" random sampling, suitable for
+        #  optimization
+        y = model.posterior(x).sample().squeeze(0).detach()
 
-        # Should we standardize again?
         gp_ts = SingleTaskGP(x, y)
-        mll = ExactMarginalLogLikelihood(gp_ts.likelihood, gp_ts)
-        fit_gpytorch_mll(mll)
+        gp_ts.initialize(**dict(model.named_parameters()))
+        gp_ts.eval()
         return gp_ts
 
     @t_batch_mode_transform()
