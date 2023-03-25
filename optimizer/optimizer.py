@@ -6,9 +6,9 @@ from botorch.acquisition.monte_carlo import (
 
 from bo.acq_iei import AcqIEI
 from bo.acq_iopt import AcqIOpt
+from bo.acq_eiopt import AcqEIOpt
 from bo.acq_iucb import AcqIUCB
 from bo.acq_min_dist import AcqMinDist
-from bo.acq_mvo import AcqMVO
 from bo.acq_thompson_sample import AcqThompsonSample
 from bo.acq_var import AcqVar
 
@@ -54,7 +54,7 @@ class Optimizer:
             "iopt_ts": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "ts"}),
             "iopt_ei": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "ei", "X_baseline": None, "use_sqrt": False}),
             "ioptsq_ei": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "ei", "X_baseline": None, "use_sqrt": True}),
-            "mvo": BTDesigner(policy, AcqMVO),
+            "eiopt": BTDesigner(policy, AcqEIOpt, init_sobol=0, acq_kwargs={"num_ts_models": 1000}),
             "sr": BTDesigner(policy, qSimpleRegret),
             "ts": BTDesigner(policy, AcqThompsonSample),
             "ei": BTDesigner(policy, qNoisyExpectedImprovement, acq_kwargs={"X_baseline": None}),
