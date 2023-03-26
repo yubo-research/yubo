@@ -4,9 +4,9 @@ from botorch.acquisition.monte_carlo import (
     qUpperConfidenceBound,
 )
 
+from bo.acq_eiopt import AcqEIOpt
 from bo.acq_iei import AcqIEI
 from bo.acq_iopt import AcqIOpt
-from bo.acq_eiopt import AcqEIOpt
 from bo.acq_iucb import AcqIUCB
 from bo.acq_min_dist import AcqMinDist
 from bo.acq_thompson_sample import AcqThompsonSample
