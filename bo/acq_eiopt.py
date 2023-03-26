@@ -22,7 +22,7 @@ class AcqEIOpt(MCAcquisitionFunction):
         self,
         model: Model,
         num_X_samples: int = 256,
-        num_ts_samples: int = None,
+        num_ts_samples: int = 1000,
         num_Y_samples: int = None,
         b_noisy: bool = False,
         sampler: Optional[MCSampler] = None,
