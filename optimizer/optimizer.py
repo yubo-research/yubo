@@ -55,7 +55,7 @@ class Optimizer:
             "iopt_ei": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "ei", "X_baseline": None, "use_sqrt": False}),
             "ioptsq_ei": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "ei", "X_baseline": None, "use_sqrt": True}),
             "eiopt": BTDesigner(policy, AcqEIOpt, init_sobol=0),
-            "eiopt_n": BTDesigner(policy, AcqEIOpt, init_sobol=0, acq_kwargs={"b_noisy":True}),
+            "eiopt_mc": BTDesigner(policy, AcqEIOpt, init_sobol=0, acq_kwargs={"num_Y_samples": 64}),
             "sr": BTDesigner(policy, qSimpleRegret),
             "ts": BTDesigner(policy, AcqThompsonSample),
             "ei": BTDesigner(policy, qNoisyExpectedImprovement, acq_kwargs={"X_baseline": None}),

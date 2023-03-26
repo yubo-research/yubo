@@ -16,6 +16,7 @@ class AcqBT:
             X = torch.empty(size=(0, num_dim), dtype=dtype)
             Y = torch.empty(size=(0, 1), dtype=dtype)
             gp = SingleTaskGP(X, Y)
+            gp.eval()
         else:
             Y, X = zip(*[self._mk_yx(d) for d in data])
             Y = torch.tensor(Y)[:, None]

@@ -1,11 +1,14 @@
 from typing import Optional
 
+import gpytorch
 import torch
+from botorch.acquisition import PosteriorMean
 from botorch.acquisition.monte_carlo import (
     MCAcquisitionFunction,
 )
 from botorch.models import SingleTaskGP
 from botorch.models.model import Model
+from botorch.optim import optimize_acqf
 from botorch.sampling.base import MCSampler
 from botorch.sampling.normal import SobolQMCNormalSampler
 from botorch.utils import t_batch_mode_transform
@@ -15,8 +18,6 @@ from torch import Tensor
 from torch.quasirandom import SobolEngine
 
 
-# TODO: optional MC joint samples of Y in fantasy model
-#        to capture covariance/cross terms
 class AcqEIOpt(MCAcquisitionFunction):
     def __init__(
         self,
@@ -24,7 +25,7 @@ class AcqEIOpt(MCAcquisitionFunction):
         num_X_samples: int = 256,
         num_ts_samples: int = 1000,
         num_Y_samples: int = None,
-        b_noisy: bool = False,
+        b_joint_weights: bool = False,
         sampler: Optional[MCSampler] = None,
         **kwargs
     ) -> None:
@@ -37,33 +38,40 @@ class AcqEIOpt(MCAcquisitionFunction):
 
         X_0 = self.model.train_inputs[0]
         num_dim = X_0.shape[-1]
-        # dtype = X_0.dtype
 
-        self.X_samples = self._sample_x(model, num_dim, num_X_samples, num_ts_samples, b_noisy)
-        # TODO: weights, too?
-        self.weights = torch.ones(size=(len(self.X_samples),))
-        self.weights = self.weights / self.weights.sum()
+        self.X_samples = self._mk_x_samples(model, num_dim, num_X_samples)
+        self.weights = self._calc_weights(model, self.X_samples, num_ts_samples, b_joint_weights)
 
-    def _sample_x(self, model, num_dim, num_X_samples, num_ts_samples, b_noisy):
-        X_samples = []
+    def _mk_x_samples(self, model, num_dim, num_X_samples):
         sobol_engine = SobolEngine(num_dim, scramble=True)
-        for _ in range(num_X_samples):
-            x = sobol_engine.draw(num_ts_samples)
-            if b_noisy:
-                gp = self._get_ts_model(model)
-            else:
-                gp = model
-            y = gp.posterior(x).sample().squeeze(0).squeeze(-1).detach()
-            i = torch.argmax(y + 1e-9 * torch.randn(size=y.shape))
-            X_samples.append(x[i])
-        return torch.stack(X_samples)
+        X_samples = sobol_engine.draw(num_X_samples)
+        if len(self.model.train_inputs[0]) > 0:
+            X_samples = torch.cat((X_samples, self._find_max(self._get_ts_model(model))), axis=0)
+        return X_samples
 
-    def _xxx_calc_weights(self, model, X_samples, num_p_best_samples, b_noisy):
-        if b_noisy:
-            gp_ts = self._thompson_sample_models(model, num_p_best_samples)
-            y = gp_ts.posterior(X_samples).sample().squeeze(0).squeeze(-1).detach()
+    def _find_max(self, gp):
+        X_0 = self.model.train_inputs[0]
+        num_dim = X_0.shape[-1]
+        x_cand, _ = optimize_acqf(
+            acq_function=PosteriorMean(model=gp),
+            bounds=torch.tensor([[0.0] * num_dim, [1.0] * num_dim], device=X_0.device, dtype=X_0.dtype),
+            q=1,
+            num_restarts=10,
+            raw_samples=512,
+            options={"batch_limit": 10, "maxiter": 200},
+        )
+        return x_cand
+
+    def _calc_weights(self, model, X_samples, num_ts_samples, b_joint_weights):
+        X = X_samples.repeat(num_ts_samples, 1, 1)
+
+        pred = model.likelihood(model(X))
+        if b_joint_weights:
+            with torch.no_grad():
+                with gpytorch.settings.ciq_samples(True), gpytorch.settings.num_contour_quadrature(10), gpytorch.settings.minres_tolerance(1e-4):
+                    y = pred.sample().squeeze(0).squeeze(-1).detach()
         else:
-            y = model.posterior(X_samples.repeat(num_p_best_samples, 1, 1)).sample().squeeze(0).squeeze(-1).detach()
+            y = pred.mean + pred.stddev * (torch.randn(size=X.shape[:-1]))
 
         i_best = torch.argmax(y, dim=-1)
         i, counts = torch.unique(i_best, return_counts=True)
@@ -73,16 +81,6 @@ class AcqEIOpt(MCAcquisitionFunction):
 
     def _get_ts_model(self, model):
         x = model.train_inputs[0].detach()
-        y = model.posterior(x, observation_noise=True).sample().squeeze(0).detach()
-
-        model_ts = SingleTaskGP(x, y, model.likelihood)
-        model_ts.initialize(**dict(model.named_parameters()))
-        model_ts.eval()
-        return model_ts
-
-    def _thompson_sample_models(self, model, num_p_best_samples):
-        x = model.train_inputs[0].detach()
-        x = x.repeat(num_p_best_samples, 1, 1)
         y = model.posterior(x, observation_noise=True).sample().squeeze(0).detach()
 
         model_ts = SingleTaskGP(x, y, model.likelihood)
