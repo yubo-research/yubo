@@ -1,3 +1,6 @@
+import numpy as np
+
+
 def _test(problem_name, num_dim, x, y):
     from problems.pure_functions import make
 
@@ -7,4 +10,4 @@ def _test(problem_name, num_dim, x, y):
 
 
 def test_michalewicz():
-    _test(problem_name="michalewicz", num_dim=2, x=0.3, y=0.17602377327570404)
+    _test(problem_name="michalewicz", num_dim=2, x=np.array([0.3, 0.3]), y=0.17602377327570404)

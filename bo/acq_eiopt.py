@@ -2,10 +2,12 @@ from typing import Optional
 
 import gpytorch
 import torch
+from botorch.acquisition import PosteriorMean
 from botorch.acquisition.monte_carlo import (
     MCAcquisitionFunction,
 )
 from botorch.models.model import Model
+from botorch.optim import optimize_acqf
 from botorch.sampling.base import MCSampler
 from botorch.sampling.normal import SobolQMCNormalSampler
 from botorch.utils import t_batch_mode_transform
@@ -21,6 +23,7 @@ class AcqEIOpt(MCAcquisitionFunction):
         model: Model,
         num_X_samples: int = 128,
         b_adaptive_x_sampling: bool = True,
+        b_append_max: bool = False,
         num_ts_samples: int = 1024,
         num_Y_samples: int = None,
         b_joint_sampling: bool = False,
@@ -34,27 +37,44 @@ class AcqEIOpt(MCAcquisitionFunction):
             self.sampler = sampler
         self.num_Y_samples = num_Y_samples
 
+        if b_adaptive_x_sampling:
+            self.X_samples = self._adaptive_samples(num_X_samples, num_ts_samples, b_joint_sampling)
+        else:
+            self.X_samples = self._sobol_samples(num_X_samples)
+        if b_append_max:
+            self.X_samples = torch.cat((self.X_samples, self._find_max()), axis=0)
+        self.weights = self._calc_weights(self.X_samples, num_ts_samples, b_joint_sampling)
+
+    def _find_max(self):
+        X = self.model.train_inputs[0]
+        num_dim = X.shape[-1]
+
+        x_cand, _ = optimize_acqf(
+            acq_function=PosteriorMean(self.model),
+            bounds=torch.tensor([[0.0] * num_dim, [1.0] * num_dim], device=X.device, dtype=X.dtype),
+            q=1,
+            num_restarts=10,
+            raw_samples=512,
+            options={"batch_limit": 10, "maxiter": 200},
+        )
+        return x_cand
+
+    def _sobol_samples(self, num_X_samples):
         X_0 = self.model.train_inputs[0]
         num_dim = X_0.shape[-1]
-
-        if b_adaptive_x_sampling:
-            self.X_samples = self._adaptive_samples(model, num_dim, num_X_samples, num_ts_samples, b_joint_sampling)
-        else:
-            self.X_samples = self._sobol_samples(model, num_dim, num_X_samples)
-        self.weights = self._calc_weights(model, self.X_samples, num_ts_samples, b_joint_sampling)
-
-    def _sobol_samples(self, model, num_dim, num_X_samples):
         sobol_engine = SobolEngine(num_dim, scramble=True)
-        return sobol_engine.draw(num_X_samples)
+        return sobol_engine.draw(num_X_samples).to(X_0.device).type(X_0.dtype)
 
-    def _adaptive_samples(self, model, num_dim, num_X_samples, num_ts_samples, b_joint_sampling):
+    def _adaptive_samples(self, num_X_samples, num_ts_samples, b_joint_sampling):
+        X_0 = self.model.train_inputs[0]
+        num_dim = X_0.shape[-1]
         X_samples = []
         for _ in range(num_X_samples):
             sobol_engine = SobolEngine(num_dim, scramble=True)
             X = sobol_engine.draw(num_ts_samples)
-            Y = self._sample_y(model, X, b_joint_sampling) + 1e-9 * torch.randn(size=(len(X),))
+            Y = self._sample_y(self.model, X, b_joint_sampling) + 1e-9 * torch.randn(size=(len(X),))
             X_samples.append(X[torch.argmax(Y)])
-        return torch.stack(X_samples)
+        return torch.stack(X_samples).to(X_0.device).type(X_0.dtype)
 
     def _sample_y(self, model, x, b_joint_sampling):
         pred = model.likelihood(model(x))
@@ -66,15 +86,17 @@ class AcqEIOpt(MCAcquisitionFunction):
             y = pred.mean + pred.stddev * (torch.randn(size=x.shape[:-1]))
         return y
 
-    def _calc_weights(self, model, X_samples, num_ts_samples, b_joint_sampling):
+    def _calc_weights(self, X_samples, num_ts_samples, b_joint_sampling):
         X = X_samples.repeat(num_ts_samples, 1, 1)
-        y = self._sample_y(model, X, b_joint_sampling)
+        y = self._sample_y(self.model, X, b_joint_sampling)
 
         i_best = torch.argmax(y, dim=-1)
         i, counts = torch.unique(i_best, return_counts=True)
-        p_best = torch.zeros(size=(len(X_samples),)).type(y.dtype)
-        p_best[i] = counts.type(y.dtype)
-        return p_best / p_best.sum()
+        p_best = torch.zeros(size=(len(X_samples),))
+        p_best[i] = counts.type(p_best.dtype)
+
+        X_0 = self.model.train_inputs[0]
+        return (p_best / p_best.sum()).to(X_0.device).type(X_0.dtype)
 
     @t_batch_mode_transform()
     def forward(self, X: Tensor) -> Tensor:
