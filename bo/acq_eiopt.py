@@ -19,9 +19,9 @@ class AcqEIOpt(MCAcquisitionFunction):
     def __init__(
         self,
         model: Model,
-        num_X_samples: int = 256,
+        num_X_samples: int = 128,
         b_adaptive_x_sampling: bool = True,
-        num_ts_samples: int = 1000,
+        num_ts_samples: int = 1024,
         num_Y_samples: int = None,
         b_joint_sampling: bool = False,
         sampler: Optional[MCSampler] = None,
