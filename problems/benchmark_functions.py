@@ -227,7 +227,7 @@ class Michalewicz:
         for i in range(num_dim):
             new = np.sin(x[i]) * (np.sin(i * x[i] ** 2 / np.pi)) ** (2 * m)
             sum += new
-        return sum
+        return -sum
 
 
 # 15 Powell xi ∈ [-4, 5], for all i = 1, …, d.
