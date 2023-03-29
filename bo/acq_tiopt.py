@@ -25,6 +25,7 @@ class AcqTIOpt(MCAcquisitionFunction):
         num_X_samples_per_dim: int = 4,
         num_ts_samples: int = 1024,
         num_Y_samples: int = None,
+            b_concentrate: bool = False,
         b_joint_sampling: bool = False,
         sampler: Optional[MCSampler] = None,
         **kwargs
@@ -43,7 +44,7 @@ class AcqTIOpt(MCAcquisitionFunction):
         self.X_samples = self._sobol_samples(num_X_samples)
         self.X_samples = torch.cat((self.X_samples, self._adaptive_samples(int(num_X_samples / 2), num_ts_samples, b_joint_sampling)), axis=0)
         self.X_samples = torch.cat((self.X_samples, self._noisy_maxes(max(1, int(num_X_samples / 4)))), axis=0)
-        self.weights = self._calc_weights(self.X_samples, num_ts_samples, b_joint_sampling)
+        self.weights = self._calc_weights(self.X_samples, num_ts_samples, b_joint_sampling, b_concentrate)
 
     def _noisy_maxes(self, num_X_samples):
         X_0 = self.model.train_inputs[0]
@@ -105,7 +106,7 @@ class AcqTIOpt(MCAcquisitionFunction):
             y = pred.mean + pred.stddev * (torch.randn(size=x.shape[:-1]))
         return y
 
-    def _calc_weights(self, X_samples, num_ts_samples, b_joint_sampling):
+    def _calc_weights(self, X_samples, num_ts_samples, b_joint_sampling, b_concentrate):
         X = X_samples.repeat(num_ts_samples, 1, 1)
         y = self._sample_y(self.model, X, b_joint_sampling)
 
@@ -115,7 +116,13 @@ class AcqTIOpt(MCAcquisitionFunction):
         p_best[i] = counts.type(p_best.dtype)
 
         X_0 = self.model.train_inputs[0]
-        return (p_best / p_best.sum()).to(X_0.device).type(X_0.dtype)
+        num_dim = X_0.shape[-1]
+        p_best = p_best.type(torch.float64)
+        p_best = p_best / p_best.sum()
+        if b_concentrate:
+            p_best = p_best**num_dim
+            p_best = p_best / p_best.sum()
+        return p_best.to(X_0.device).type(X_0.dtype)
 
     @t_batch_mode_transform()
     def forward(self, X: Tensor) -> Tensor:

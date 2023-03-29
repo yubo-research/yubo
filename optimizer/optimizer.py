@@ -4,12 +4,12 @@ from botorch.acquisition.monte_carlo import (
     qUpperConfidenceBound,
 )
 
-from bo.acq_tiopt import AcqTIOpt
 from bo.acq_iei import AcqIEI
 from bo.acq_iopt import AcqIOpt
 from bo.acq_iucb import AcqIUCB
 from bo.acq_min_dist import AcqMinDist
 from bo.acq_thompson_sample import AcqThompsonSample
+from bo.acq_tiopt import AcqTIOpt
 from bo.acq_var import AcqVar
 
 from .ax_designer import AxDesigner
@@ -55,6 +55,7 @@ class Optimizer:
             "iopt_ei": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "ei", "X_baseline": None, "use_sqrt": False}),
             "ioptsq_ei": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "ei", "X_baseline": None, "use_sqrt": True}),
             "tiopt": BTDesigner(policy, AcqTIOpt, init_sobol=0),
+            "tiopt_d": BTDesigner(policy, AcqTIOpt, init_sobol=0, acq_kwargs={"b_concentrate": True}),
             "sr": BTDesigner(policy, qSimpleRegret),
             "ts": BTDesigner(policy, AcqThompsonSample),
             "ei": BTDesigner(policy, qNoisyExpectedImprovement, acq_kwargs={"X_baseline": None}),
