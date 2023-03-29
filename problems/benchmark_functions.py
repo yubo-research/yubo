@@ -33,7 +33,7 @@ class Ackley:
 
     def __call__(self, x):
         x = 32.768 * x
-        return -self.a * np.exp(-self.b * np.sqrt((x**2).mean())) - np.exp(np.cos(self.c * x).mean()) + self.a  # + np.e
+        return -self.a * np.exp(-self.b * np.sqrt((x**2).mean())) - np.exp(np.cos(self.c * x).mean()) + self.a + np.e
 
 
 # 2  xi ∈ [-4.5, 4.5], for all i = 1, 2. Beale result [0, 4.5*10^5]

@@ -6,6 +6,7 @@ from botorch.acquisition import PosteriorMean
 from botorch.acquisition.monte_carlo import (
     MCAcquisitionFunction,
 )
+from botorch.models import SingleTaskGP
 from botorch.models.model import Model
 from botorch.optim import optimize_acqf
 from botorch.sampling.base import MCSampler
@@ -17,13 +18,11 @@ from torch import Tensor
 from torch.quasirandom import SobolEngine
 
 
-class AcqEIOpt(MCAcquisitionFunction):
+class AcqTIOpt(MCAcquisitionFunction):
     def __init__(
         self,
         model: Model,
-        num_X_samples: int = 128,
-        b_adaptive_x_sampling: bool = True,
-        b_append_max: bool = False,
+        num_X_samples_per_dim: int = 4,
         num_ts_samples: int = 1024,
         num_Y_samples: int = None,
         b_joint_sampling: bool = False,
@@ -37,20 +36,40 @@ class AcqEIOpt(MCAcquisitionFunction):
             self.sampler = sampler
         self.num_Y_samples = num_Y_samples
 
-        if b_adaptive_x_sampling:
-            self.X_samples = self._adaptive_samples(num_X_samples, num_ts_samples, b_joint_sampling)
-        else:
-            self.X_samples = self._sobol_samples(num_X_samples)
-        if b_append_max:
-            self.X_samples = torch.cat((self.X_samples, self._find_max()), axis=0)
+        X = model.train_inputs[0]
+        num_dim = X.shape[-1]
+        num_X_samples = num_X_samples_per_dim * num_dim
+
+        self.X_samples = self._sobol_samples(num_X_samples)
+        self.X_samples = torch.cat((self.X_samples, self._adaptive_samples(int(num_X_samples / 2), num_ts_samples, b_joint_sampling)), axis=0)
+        self.X_samples = torch.cat((self.X_samples, self._noisy_maxes(max(1, int(num_X_samples / 4)))), axis=0)
         self.weights = self._calc_weights(self.X_samples, num_ts_samples, b_joint_sampling)
 
-    def _find_max(self):
-        X = self.model.train_inputs[0]
+    def _noisy_maxes(self, num_X_samples):
+        X_0 = self.model.train_inputs[0]
+        X_samples = []
+        for _ in range(num_X_samples):
+            X_samples.append(self._find_max(self._get_ts_model()))
+        return torch.cat(X_samples, axis=0).to(X_0.device).type(X_0.dtype)
+
+    def _get_ts_model(self):
+        X = self.model.train_inputs[0].detach()
+        if len(X) == 0:
+            return self.model
+
+        Y = self.model.posterior(X, observation_noise=True).sample().squeeze(0).detach()
+
+        model_ts = SingleTaskGP(X, Y, self.model.likelihood)
+        model_ts.initialize(**dict(self.model.named_parameters()))
+        model_ts.eval()
+        return model_ts
+
+    def _find_max(self, model):
+        X = model.train_inputs[0]
         num_dim = X.shape[-1]
 
         x_cand, _ = optimize_acqf(
-            acq_function=PosteriorMean(self.model),
+            acq_function=PosteriorMean(model),
             bounds=torch.tensor([[0.0] * num_dim, [1.0] * num_dim], device=X.device, dtype=X.dtype),
             q=1,
             num_restarts=10,

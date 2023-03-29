@@ -4,7 +4,7 @@ from botorch.acquisition.monte_carlo import (
     qUpperConfidenceBound,
 )
 
-from bo.acq_eiopt import AcqEIOpt
+from bo.acq_tiopt import AcqTIOpt
 from bo.acq_iei import AcqIEI
 from bo.acq_iopt import AcqIOpt
 from bo.acq_iucb import AcqIUCB
@@ -54,9 +54,7 @@ class Optimizer:
             "iopt_ts": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "ts"}),
             "iopt_ei": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "ei", "X_baseline": None, "use_sqrt": False}),
             "ioptsq_ei": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "ei", "X_baseline": None, "use_sqrt": True}),
-            "eiopt": BTDesigner(policy, AcqEIOpt, init_sobol=0, acq_kwargs={"b_adaptive_x_sampling": True}),
-            "eiopt_m": BTDesigner(policy, AcqEIOpt, init_sobol=0, acq_kwargs={"b_adaptive_x_sampling": True, "b_append_max": True}),
-            "eiopt_ss": BTDesigner(policy, AcqEIOpt, init_sobol=0, acq_kwargs={"b_adaptive_x_sampling": False}),
+            "tiopt": BTDesigner(policy, AcqTIOpt, init_sobol=0),
             "sr": BTDesigner(policy, qSimpleRegret),
             "ts": BTDesigner(policy, AcqThompsonSample),
             "ei": BTDesigner(policy, qNoisyExpectedImprovement, acq_kwargs={"X_baseline": None}),
