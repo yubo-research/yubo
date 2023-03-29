@@ -57,7 +57,7 @@ class Optimizer:
             "tiopt": BTDesigner(policy, AcqTIOpt, init_sobol=0),
             "tiopt_d": BTDesigner(policy, AcqTIOpt, init_sobol=0, acq_kwargs={"b_concentrate": True}),
             "sr": BTDesigner(policy, qSimpleRegret),
-            "ts": BTDesigner(policy, AcqThompsonSample),
+            "ts": BTDesigner(policy, AcqThompsonSample, acq_kwargs={"q": num_arms}),
             "ei": BTDesigner(policy, qNoisyExpectedImprovement, acq_kwargs={"X_baseline": None}),
             "iei": BTDesigner(policy, AcqIEI, init_sobol=0, acq_kwargs={"Y_max": None, "bounds": None}),
             "ucb": BTDesigner(policy, qUpperConfidenceBound, acq_kwargs={"beta": 1}),

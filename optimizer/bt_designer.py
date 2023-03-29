@@ -21,17 +21,19 @@ class BTDesigner:
 
         num_dim = self._policy.num_params()
         acqf = AcqBT(self._acq_fn, data, num_dim, self._acq_kwargs)
-
-        warnings.simplefilter("ignore")
-        with warnings.catch_warnings():
-            X_cand, _ = optimize_acqf(
-                acq_function=acqf.acq_function,
-                bounds=acqf.bounds,  # always [0,1]**num_dim
-                q=num_arms,
-                num_restarts=10,
-                raw_samples=512,
-                options={"batch_limit": 5, "maxiter": 200},
-            )
+        if hasattr(acqf.acq_function, "X_cand"):
+            X_cand = acqf.acq_function.X_cand
+        else:
+            warnings.simplefilter("ignore")
+            with warnings.catch_warnings():
+                X_cand, _ = optimize_acqf(
+                    acq_function=acqf.acq_function,
+                    bounds=acqf.bounds,  # always [0,1]**num_dim
+                    q=num_arms,
+                    num_restarts=10,
+                    raw_samples=512,
+                    options={"batch_limit": 5, "maxiter": 200},
+                )
 
         policies = []
         for x in X_cand:
