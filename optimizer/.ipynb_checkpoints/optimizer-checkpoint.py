@@ -20,8 +20,14 @@ from .trajectories import collect_trajectory
 
 class Optimizer:
 <<<<<<< HEAD
+<<<<<<< HEAD
     def __init__(self, env_conf, policy, cb_trace=None):
         self._env_conf = env_conf
+=======
+    def __init__(self, env_conf, policy, num_arms, cb_trace=None):
+        self._env_conf = env_conf
+        self._num_arms = num_arms
+>>>>>>> main
 =======
     def __init__(self, env_conf, policy, num_arms, cb_trace=None):
         self._env_conf = env_conf
@@ -34,6 +40,7 @@ class Optimizer:
             "random": RandomDesigner(policy),
             "sobol": SobolDesigner(policy),
 <<<<<<< HEAD
+<<<<<<< HEAD
             "minimax": BTDesigner(policy, lambda m: AcqMinDist(m, toroidal=False)),
             "minimax-toroidal": BTDesigner(policy, lambda m: AcqMinDist(m, toroidal=True)),
             "variance": BTDesigner(policy, AcqVar),
@@ -41,6 +48,8 @@ class Optimizer:
             "iopt_ei": BTDesigner(policy, AcqIOpt, {"use_sqrt": True}),
             "ioptv_ei": BTDesigner(policy, AcqIOpt, {"use_sqrt": False}),
 =======
+=======
+>>>>>>> main
             "maximin": BTDesigner(policy, lambda m: AcqMinDist(m, toroidal=False)),
             "maximin-toroidal": BTDesigner(policy, lambda m: AcqMinDist(m, toroidal=True)),
             "variance": BTDesigner(policy, AcqVar),
@@ -48,6 +57,9 @@ class Optimizer:
             "iopt_ei": BTDesigner(policy, AcqIOpt, acq_kwargs={"use_sqrt": True}),
             "ioptv_ei": BTDesigner(policy, AcqIOpt, acq_kwargs={"use_sqrt": False, "prune_baseline": True}),
             "ioptvp_ei": BTDesigner(policy, AcqIOpt, acq_kwargs={"use_sqrt": False, "prune_baseline": False}),
+<<<<<<< HEAD
+>>>>>>> main
+=======
 >>>>>>> main
             "idopt": BTDesigner(policy, AcqIDOpt, acq_kwargs={"X_max": None, "bounds": None}),
             "ei": BTDesigner(policy, qNoisyExpectedImprovement, acq_kwargs={"X_baseline": None}),
@@ -56,6 +68,10 @@ class Optimizer:
             "iucb": BTDesigner(policy, AcqIUCB, acq_kwargs={"bounds": None}),
             "ax": AxDesigner(policy),
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+            "sobol_ei": BTDesigner(policy, qNoisyExpectedImprovement, init_sobol=max(5, 2 * policy.num_params()), acq_kwargs={"X_baseline": None}),
+>>>>>>> main
 =======
             "sobol_ei": BTDesigner(policy, qNoisyExpectedImprovement, init_sobol=max(5, 2 * policy.num_params()), acq_kwargs={"X_baseline": None}),
 >>>>>>> main
@@ -66,16 +82,22 @@ class Optimizer:
 
     def _iterate(self, designer):
 <<<<<<< HEAD
+<<<<<<< HEAD
         policy = designer(self._data)
         traj = self._collect_trajectory(policy)
         return Datum(policy, traj)
 =======
+=======
+>>>>>>> main
         policies = designer(self._data, self._num_arms)
         data = []
         for policy in policies:
             traj = self._collect_trajectory(policy)
             data.append(Datum(policy, traj))
         return data
+<<<<<<< HEAD
+>>>>>>> main
+=======
 >>>>>>> main
 
     def collect_trace(self, ttype, num_iterations):
@@ -85,16 +107,22 @@ class Optimizer:
         trace = []
         for i_iter in range(num_iterations):
 <<<<<<< HEAD
+<<<<<<< HEAD
             datum = self._iterate(designer)
             self._data.append(datum)
 
             if self._datum_best is None or datum.trajectory.rreturn > self._datum_best.trajectory.rreturn:
                 self._datum_best = datum
 =======
+=======
+>>>>>>> main
             for datum in self._iterate(designer):
                 self._data.append(datum)
                 if self._datum_best is None or datum.trajectory.rreturn > self._datum_best.trajectory.rreturn:
                     self._datum_best = datum
+<<<<<<< HEAD
+>>>>>>> main
+=======
 >>>>>>> main
 
             if i_iter % 1 == 0:
@@ -106,7 +134,11 @@ class Optimizer:
                 self._cb_trace(self._datum_best)
 
 <<<<<<< HEAD
+<<<<<<< HEAD
         return trace
+=======
+        return trace
+>>>>>>> main
 =======
         return trace
 >>>>>>> main

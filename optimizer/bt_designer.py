@@ -17,18 +17,16 @@ class BTDesigner:
         import warnings
 
         if len(data) < self._init_sobol:
-            # policy = self._policy.clone()
-            # p = all_bounds.p_low + all_bounds.p_width * (np.ones(shape=(policy.num_params(),)) / 2)
-            # p = all_bounds.p_low + all_bounds.p_width * (np.random.uniform(size=(policy.num_params(), num_arms)))
             return self._sobol(data, num_arms)
 
-        acqf = AcqBT(self._acq_fn, data, self._acq_kwargs)
+        num_dim = self._policy.num_params()
+        acqf = AcqBT(self._acq_fn, data, num_dim, self._acq_kwargs)
 
         warnings.simplefilter("ignore")
         with warnings.catch_warnings():
             X_cand, _ = optimize_acqf(
                 acq_function=acqf.acq_function,
-                bounds=acqf.bounds,  # always [0,1]
+                bounds=acqf.bounds,  # always [0,1]**num_dim
                 q=num_arms,
                 num_restarts=10,
                 raw_samples=512,

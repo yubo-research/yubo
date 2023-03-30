@@ -16,4 +16,8 @@ do
      mkdir -p results/${DDIR}/${TAG}
      python experiments/exp_1.py ${TAG} ${TTYPE} &> results/${DDIR}/${TAG}/${TTYPE} &
  done
+<<<<<<< HEAD
 done
+=======
+done
+>>>>>>> main

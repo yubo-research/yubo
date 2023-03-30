@@ -77,7 +77,6 @@ class Bukin:
 class CrossInTray:
     def __call__(self, x):
         assert len(x) == 2
-        x = x * 9 + 1 - self._x_0
         x0 = x[0]
         x1 = x[1]
         part1 = np.abs(np.sin(x0) * np.sin(x1) * np.exp(np.abs(100.0 - np.sqrt(x0**2 + x1**2) / np.pi))) + 1.0
@@ -227,7 +226,7 @@ class Michalewicz:
         for i in range(num_dim):
             new = np.sin(x[i]) * (np.sin(i * x[i] ** 2 / np.pi)) ** (2 * m)
             sum += new
-        return sum
+        return -sum
 
 
 # 15 Powell xi ∈ [-4, 5], for all i = 1, …, d.

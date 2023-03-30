@@ -35,7 +35,7 @@ class AcqIntegrated(MCAcquisitionFunction):
         X_samples = bounds[0] + (bounds[1] - bounds[0]) * X_samples
         X_samples = X_samples.view(num_X_samples, num_dim).to(device=X_0.device)
 
-        if X_special:
+        if X_special is not None:
             X_special = torch.atleast_2d(X_special)
             self.n_special = len(X_special)
             X_samples = torch.concatenate((X_special, X_samples), axis=0)  # want a joint sample
