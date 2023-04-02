@@ -8,8 +8,9 @@ from bo.acq_iei import AcqIEI
 from bo.acq_iopt import AcqIOpt
 from bo.acq_iucb import AcqIUCB
 from bo.acq_min_dist import AcqMinDist
+from bo.acq_noisy_max import AcqNoisyMax
 from bo.acq_thompson_sample import AcqThompsonSample
-from bo.acq_tiopt import AcqTIOpt
+from bo.acq_tsmc import AcqTSMC
 from bo.acq_var import AcqVar
 
 from .ax_designer import AxDesigner
@@ -29,8 +30,8 @@ def _iOptFactory(model, acqf=None, X_baseline=None, use_sqrt=None):
             acqf = None
     elif acqf == "sr":
         acqf = qSimpleRegret(model)
-    elif acqf == "ts":
-        acqf = AcqThompsonSample(model)
+    elif acqf == "nm":
+        acqf = AcqNoisyMax(model)
     else:
         assert acqf is None, acqf
     return AcqIOpt(model, acqf=acqf, use_sqrt=use_sqrt)
@@ -51,11 +52,10 @@ class Optimizer:
             "variance": BTDesigner(policy, AcqVar),
             "iopt": BTDesigner(policy, _iOptFactory, init_sobol=0),
             "iopt_sr": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "sr"}),
-            "iopt_ts": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "ts"}),
+            "iopt_nm": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "ts"}),
             "iopt_ei": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "ei", "X_baseline": None, "use_sqrt": False}),
             "ioptsq_ei": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "ei", "X_baseline": None, "use_sqrt": True}),
-            "tiopt": BTDesigner(policy, AcqTIOpt, init_sobol=0),
-            "tiopt_d": BTDesigner(policy, AcqTIOpt, init_sobol=0, acq_kwargs={"b_concentrate": True}),
+            "tsmc": BTDesigner(policy, AcqTSMC, init_sobol=0),
             "sr": BTDesigner(policy, qSimpleRegret),
             "ts": BTDesigner(policy, AcqThompsonSample, acq_kwargs={"q": num_arms}),
             "ei": BTDesigner(policy, qNoisyExpectedImprovement, acq_kwargs={"X_baseline": None}),
