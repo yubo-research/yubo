@@ -15,18 +15,43 @@ from torch import Tensor
 from torch.quasirandom import SobolEngine
 
 
-class AcqTSMC(MCAcquisitionFunction):
-    def __init__(self, model: Model, num_X_samples_per_dim: int = 4, num_px_samples=4096, num_Y_samples: int = 1024, **kwargs) -> None:
+class AcqIEIG(MCAcquisitionFunction):
+    """Integrated Expected Information Gain
+    Maximize the integral (over X) of the EIG of the distribution
+     of the optimal x: p_*(x).
+
+     - Follows optimal Bayesian experiment design (OED) by maximizing the EIG.
+     - Measure T Thompson samples with q arms
+     - Similar to integrated optimality / elastic integrated optimality
+    """
+
+    def __init__(self, model: Model, num_X_samples: int = 256, num_px_samples=4096, num_Y_samples: int = 1024, joint_sampling: bool = False, **kwargs) -> None:
         super().__init__(model=model, **kwargs)
         self.sampler = SobolQMCNormalSampler(sample_shape=torch.Size([num_Y_samples]))
         self.num_px_samples = num_px_samples
+        self.joint_sampling = joint_sampling
 
-        X = model.train_inputs[0]
-        num_dim = X.shape[-1]
-        num_X_samples = num_X_samples_per_dim * num_dim
+        X_samples = self._sample_X(num_X_samples)
+        assert len(X_samples) >= num_X_samples, len(X_samples)
+        i = np.random.choice(np.arange(len(X_samples)), size=(num_X_samples,), replace=False)
+        self.X_samples = X_samples[i]
+
+        # Diagnostics
+        self.p_max = self._calc_p_max(self.model, self.X_samples)
+        self.weights = self.p_max.clone()
+        if True:
+            # some points never move b/c they and
+            #  their proposals have zero probability
+            th = 0.1 / len(self.X_samples)
+            self.weights[self.weights < th] = 0.0
+            self.weights[self.weights >= th] = 1.0
+            self.weights = self.weights / self.weights.sum()
+
+    def _sample_X(self, num_X_samples):
+        X = self.model.train_inputs[0]
 
         if len(X) == 0:
-            self.X_samples = self._sobol_samples(num_X_samples)
+            return self._sobol_samples(num_X_samples)
         else:
             no2 = num_X_samples
 
@@ -50,25 +75,8 @@ class AcqTSMC(MCAcquisitionFunction):
             for _ in range(10):
                 X_samples = self._mcmc(models, X_samples, eps=0.1)
                 X_all.append(X_samples)
-            self.X_samples = torch.cat(X_all, axis=0)
 
-        self.p_max = self._calc_p_max(self.model, self.X_samples)
-        self.weights = self.p_max.clone()
-        if True:
-            th = 0.1 / len(self.X_samples)
-            self.weights[self.weights < th] = 0.0
-            self.weights[self.weights >= th] = 1.0
-            self.weights = self.weights / self.weights.sum()
-
-    def _calc_entropy(self, model, X_samples, X):
-        Y = model.posterior(X).mean  # q x 1
-        model_t = model.condition_on_observations(X=X, Y=Y)
-
-        posterior_t = model_t.posterior(X_samples, posterior_transform=self.posterior_transform, observation_noise=True)
-        Y = self.get_posterior_samples(posterior_t).squeeze(dim=-1)
-
-        p_max = 1e-9 + self._calc_p_max_from_Y(Y)
-        return (-p_max * torch.log(p_max)).mean(dim=-1)
+            return torch.cat(X_all, axis=0)
 
     def _get_noisy_model(self):
         X = self.model.train_inputs[0].detach()
@@ -143,10 +151,14 @@ class AcqTSMC(MCAcquisitionFunction):
         Y = self.model.posterior(X).mean  # q x 1
         model_t = self.model.condition_on_observations(X=X, Y=Y)
 
-        # No fantasies b/c variance is independent of Y.
+        # No fantazing b/c variance is independent of Y.
         posterior_t = model_t.posterior(self.X_samples, posterior_transform=self.posterior_transform, observation_noise=True)
 
-        # return -self._calc_entropy(self.model, self.X_samples, X)
+        if self.joint_sampling:
+            Y = self.get_posterior_samples(posterior_t).squeeze(dim=-1)
+            var_t = Y.var(dim=0)
+        else:
+            # skip joint sampling for speed (?)
+            var_t = posterior_t.variance.squeeze()
 
-        # skip joint sampling for speed (?)
-        return -(self.weights * posterior_t.variance.squeeze()).sum(dim=-1)
+        return -(self.weights * torch.log(1e-9 + var_t)).sum(dim=-1)
