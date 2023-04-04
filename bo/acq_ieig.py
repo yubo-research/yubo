@@ -25,29 +25,40 @@ class AcqIEIG(MCAcquisitionFunction):
      - Similar to integrated optimality / elastic integrated optimality
     """
 
-    def __init__(self, model: Model, num_X_samples: int = 256, num_px_samples=4096, num_Y_samples: int = 1024, joint_sampling: bool = False, **kwargs) -> None:
+    def __init__(
+        self,
+        model: Model,
+        num_X_samples: int = 256,
+        num_px_samples=4096,
+        num_Y_samples: int = 1024,
+        num_noisy_maxes: int = 5,
+        joint_sampling: bool = False,
+        **kwargs
+    ) -> None:
         super().__init__(model=model, **kwargs)
         self.sampler = SobolQMCNormalSampler(sample_shape=torch.Size([num_Y_samples]))
         self.num_px_samples = num_px_samples
         self.joint_sampling = joint_sampling
 
-        X_samples = self._sample_X(num_X_samples)
+        # SLOW: num_noisy_maxes was 10
+        X_samples = self._sample_X(num_noisy_maxes, num_X_samples)
         assert len(X_samples) >= num_X_samples, len(X_samples)
         i = np.random.choice(np.arange(len(X_samples)), size=(num_X_samples,), replace=False)
         self.X_samples = X_samples[i]
 
         # Diagnostics
-        self.p_max = self._calc_p_max(self.model, self.X_samples)
-        self.weights = self.p_max.clone()
-        if True:
-            # some points never move b/c they and
-            #  their proposals have zero probability
-            th = 0.1 / len(self.X_samples)
-            self.weights[self.weights < th] = 0.0
-            self.weights[self.weights >= th] = 1.0
-            self.weights = self.weights / self.weights.sum()
+        with torch.no_grad():
+            self.p_max = self._calc_p_max(self.model, self.X_samples)
+            self.weights = self.p_max.clone()
+            if True:
+                # some points never move b/c they and
+                #  their proposals have zero probability
+                th = 0.1 / len(self.X_samples)
+                self.weights[self.weights < th] = 0.0
+                self.weights[self.weights >= th] = 1.0
+                self.weights = self.weights / self.weights.sum()
 
-    def _sample_X(self, num_X_samples):
+    def _sample_X(self, num_noisy_maxes, num_X_samples):
         X = self.model.train_inputs[0]
 
         if len(X) == 0:
@@ -55,28 +66,27 @@ class AcqIEIG(MCAcquisitionFunction):
         else:
             no2 = num_X_samples
 
-            models = [self._get_noisy_model() for _ in range(10)]
+            models = [self._get_noisy_model() for _ in range(num_noisy_maxes)]
             x_max = []
             for model in models:
-                x_max.append(self._find_max(self.model))
+                x_max.append(self._find_max(self.model).detach())
             x_max = torch.cat(x_max, axis=0)
             n = int(no2 / len(x_max) + 1)
             # X_samples = torch.cat((X_samples, torch.tile(x_max, (n, 1))), axis=0)
             X_samples = torch.tile(x_max, (n, 1))
-
             assert len(X_samples) >= num_X_samples, (len(X_samples), num_X_samples, no2)
 
             # burn in
             for _ in range(10):
-                X_samples = self._mcmc(models, X_samples, eps=0.1)
+                self._mcmc(models, X_samples, eps=0.1)
 
             # collect paths
             X_all = []
             for _ in range(10):
                 X_samples = self._mcmc(models, X_samples, eps=0.1)
                 X_all.append(X_samples)
-
-            return torch.cat(X_all, axis=0)
+            X_all = torch.cat(X_all, axis=0)
+            return X_all
 
     def _get_noisy_model(self):
         X = self.model.train_inputs[0].detach()
@@ -111,19 +121,21 @@ class AcqIEIG(MCAcquisitionFunction):
     def _mcmc(self, models, X, eps):
         # TODO: keep the whole path (after warm-up)
         # TODO: NUTS
-        X_new = X + eps * torch.randn(size=X.shape)
-        i = np.where((X_new < 0) | (X_new > 1))[0]
-        X_new[i] = torch.rand(size=(len(i), X.shape[-1])).type(X.dtype)
-        assert torch.all((X_new >= 0) & (X_new <= 1)), X_new
-        X_both = torch.cat((X, X_new), axis=0)
-        p_all = 1e-9 + torch.cat([self._calc_p_max(m, X_both)[:, None] for m in models], axis=1).mean(axis=1)
-        p = p_all[: len(X)]
-        p_new = p_all[len(X) :]
+        with torch.no_grad():
+            X_new = X + eps * torch.randn(size=X.shape)
+            i = np.where((X_new < 0) | (X_new > 1))[0]
+            X_new[i] = torch.rand(size=(len(i), X.shape[-1])).type(X.dtype)
+            assert torch.all((X_new >= 0) & (X_new <= 1)), X_new
+            X_both = torch.cat((X, X_new), axis=0)
+            # SLOW p_all = 1e-9 + torch.cat([self._calc_p_max(m, X_both)[:, None] for m in models], axis=1).mean(axis=1)
+            p_all = 1e-9 + self._calc_p_max(self.model, X_both)[:, None].mean(axis=1)
+            p = p_all[: len(X)]
+            p_new = p_all[len(X) :]
 
-        a = p_new / p
-        u = torch.rand(size=(len(X),))
-        i = u <= a
-        X[i] = X_new[i]
+            a = p_new / p
+            u = torch.rand(size=(len(X),))
+            i = u <= a
+            X[i] = X_new[i]
         return X
 
     def _calc_p_max(self, model, X):
@@ -161,4 +173,4 @@ class AcqIEIG(MCAcquisitionFunction):
             # skip joint sampling for speed (?)
             var_t = posterior_t.variance.squeeze()
 
-        return -(self.weights * torch.log(1e-9 + var_t)).sum(dim=-1)
+        return -(self.weights * var_t).sum(dim=-1)
