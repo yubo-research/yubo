@@ -32,7 +32,7 @@ class AcqIEIG(MCAcquisitionFunction):
         num_px_samples=4096,
         num_Y_samples: int = 1024,
         num_noisy_maxes: int = 5,
-        joint_sampling: bool = False,
+        joint_sampling: bool = True,
         **kwargs
     ) -> None:
         super().__init__(model=model, **kwargs)
