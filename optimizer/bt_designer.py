@@ -30,7 +30,7 @@ class BTDesigner:
                     acq_function=acqf.acq_function,
                     bounds=acqf.bounds,  # always [0,1]**num_dim
                     q=num_arms,
-                    num_restarts=10,
+                    num_restarts=3, # 10,
                     raw_samples=512,
                     options={"batch_limit": 5, "maxiter": 200},
                 )

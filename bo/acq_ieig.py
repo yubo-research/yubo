@@ -28,10 +28,10 @@ class AcqIEIG(MCAcquisitionFunction):
     def __init__(
         self,
         model: Model,
-        num_X_samples: int = 256,
-        num_px_samples=4096,
+        num_X_samples: int = 64,
+        num_px_samples = 4096,
         num_Y_samples: int = 1024,
-        num_noisy_maxes: int = 5,
+        num_noisy_maxes: int = 1,
         joint_sampling: bool = True,
         **kwargs
     ) -> None:
@@ -127,8 +127,8 @@ class AcqIEIG(MCAcquisitionFunction):
             X_new[i] = torch.rand(size=(len(i), X.shape[-1])).type(X.dtype)
             assert torch.all((X_new >= 0) & (X_new <= 1)), X_new
             X_both = torch.cat((X, X_new), axis=0)
-            # SLOW p_all = 1e-9 + torch.cat([self._calc_p_max(m, X_both)[:, None] for m in models], axis=1).mean(axis=1)
-            p_all = 1e-9 + self._calc_p_max(self.model, X_both)[:, None].mean(axis=1)
+            p_all = 1e-9 + torch.cat([self._calc_p_max(m, X_both)[:, None] for m in models], axis=1).mean(axis=1)
+            # p_all = 1e-9 + self._calc_p_max(self.model, X_both)[:, None].mean(axis=1)
             p = p_all[: len(X)]
             p_new = p_all[len(X) :]
 
