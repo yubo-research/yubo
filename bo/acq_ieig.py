@@ -28,7 +28,7 @@ class AcqIEIG(MCAcquisitionFunction):
     def __init__(
         self,
         model: Model,
-        num_X_samples: int = 64,
+        num_X_samples: int = 256,
         num_px_samples=4096,
         num_Y_samples: int = 1024,
         num_noisy_maxes: int = 10,
