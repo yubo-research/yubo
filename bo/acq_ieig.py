@@ -29,7 +29,7 @@ class AcqIEIG(MCAcquisitionFunction):
         self,
         model: Model,
         num_X_samples: int = 256,
-        num_px_samples=4096,
+        num_px_samples: int = 4096,
         num_Y_samples: int = 1024,
         num_noisy_maxes: int = 10,
         joint_sampling: bool = True,
@@ -40,7 +40,6 @@ class AcqIEIG(MCAcquisitionFunction):
         self.num_px_samples = num_px_samples
         self.joint_sampling = joint_sampling
 
-        # SLOW: num_noisy_maxes was 10
         X_samples = self._sample_X(num_noisy_maxes, num_X_samples)
         assert len(X_samples) >= num_X_samples, len(X_samples)
         i = np.random.choice(np.arange(len(X_samples)), size=(num_X_samples,), replace=False)
@@ -78,7 +77,7 @@ class AcqIEIG(MCAcquisitionFunction):
 
             # burn in
             for _ in range(10):
-                self._mcmc(models, X_samples, eps=0.1)
+                X_samples = self._mcmc(models, X_samples, eps=0.1)
 
             # collect paths
             X_all = []
@@ -127,9 +126,9 @@ class AcqIEIG(MCAcquisitionFunction):
             X_new[i] = torch.rand(size=(len(i), X.shape[-1])).type(X.dtype)
             assert torch.all((X_new >= 0) & (X_new <= 1)), X_new
             X_both = torch.cat((X, X_new), axis=0)
-            # SLOW p_all = 1e-9 + torch.cat([self._calc_p_max(m, X_both)[:, None] for m in models], axis=1).mean(axis=1)
+            p_all = 1e-9 + torch.cat([self._calc_p_max(m, X_both)[:, None] for m in models], axis=1).mean(axis=1)
             # TODO: draw from a randomly-chosen model
-            p_all = 1e-9 + self._calc_p_max(self.model, X_both)[:, None].mean(axis=1)
+            # p_all = 1e-9 + self._calc_p_max(self.model, X_both)[:, None].mean(axis=1)
             p = p_all[: len(X)]
             p_new = p_all[len(X) :]
 
