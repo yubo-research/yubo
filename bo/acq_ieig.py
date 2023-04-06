@@ -30,17 +30,21 @@ class AcqIEIG(MCAcquisitionFunction):
         model: Model,
         num_X_samples: int = 256,
         num_px_samples: int = 4096,
+        num_mcmc: int = 10,
+        p_all_type: str = "all",
         num_Y_samples: int = 1024,
         num_noisy_maxes: int = 10,
         joint_sampling: bool = True,
+        use_log: bool = True,
         **kwargs
     ) -> None:
         super().__init__(model=model, **kwargs)
         self.sampler = SobolQMCNormalSampler(sample_shape=torch.Size([num_Y_samples]))
         self.num_px_samples = num_px_samples
         self.joint_sampling = joint_sampling
+        self.use_log = use_log
 
-        X_samples = self._sample_X(num_noisy_maxes, num_X_samples)
+        X_samples = self._sample_X(num_noisy_maxes, num_X_samples, num_mcmc, p_all_type)
         assert len(X_samples) >= num_X_samples, len(X_samples)
         i = np.random.choice(np.arange(len(X_samples)), size=(num_X_samples,), replace=False)
         self.X_samples = X_samples[i]
@@ -57,7 +61,7 @@ class AcqIEIG(MCAcquisitionFunction):
                 self.weights[self.weights >= th] = 1.0
                 self.weights = self.weights / self.weights.sum()
 
-    def _sample_X(self, num_noisy_maxes, num_X_samples):
+    def _sample_X(self, num_noisy_maxes, num_X_samples, num_mcmc, p_all_type):
         X = self.model.train_inputs[0]
 
         if len(X) == 0:
@@ -76,13 +80,13 @@ class AcqIEIG(MCAcquisitionFunction):
             assert len(X_samples) >= num_X_samples, (len(X_samples), num_X_samples, no2)
 
             # burn in
-            for _ in range(10):
-                X_samples = self._mcmc(models, X_samples, eps=0.1)
+            for _ in range(num_mcmc):
+                X_samples = self._mcmc(models, X_samples, eps=0.1, p_all_type=p_all_type)
 
             # collect paths
             X_all = []
-            for _ in range(10):
-                X_samples = self._mcmc(models, X_samples, eps=0.1)
+            for _ in range(num_mcmc):
+                X_samples = self._mcmc(models, X_samples, eps=0.1, p_all_type=p_all_type)
                 X_all.append(X_samples)
             X_all = torch.cat(X_all, axis=0)
             return X_all
@@ -117,7 +121,7 @@ class AcqIEIG(MCAcquisitionFunction):
         sobol_engine = SobolEngine(num_dim, scramble=True)
         return sobol_engine.draw(num_X_samples).to(X_0.device).type(X_0.dtype)
 
-    def _mcmc(self, models, X, eps):
+    def _mcmc(self, models, X, eps, p_all_type):
         # TODO: keep the whole path (after warm-up)
         # TODO: NUTS
         with torch.no_grad():
@@ -126,9 +130,14 @@ class AcqIEIG(MCAcquisitionFunction):
             X_new[i] = torch.rand(size=(len(i), X.shape[-1])).type(X.dtype)
             assert torch.all((X_new >= 0) & (X_new <= 1)), X_new
             X_both = torch.cat((X, X_new), axis=0)
-            p_all = 1e-9 + torch.cat([self._calc_p_max(m, X_both)[:, None] for m in models], axis=1).mean(axis=1)
-            # TODO: draw from a randomly-chosen model
-            # p_all = 1e-9 + self._calc_p_max(self.model, X_both)[:, None].mean(axis=1)
+            if p_all_type == "all":
+                p_all = 1e-9 + torch.cat([self._calc_p_max(m, X_both)[:, None] for m in models], axis=1).mean(axis=1)
+            elif p_all_type == "random":
+                p_all = 1e-9 + self._calc_p_max(np.random.choice(models), X_both)[:, None].mean(axis=1)
+            elif p_all_type == "self":
+                p_all = 1e-9 + self._calc_p_max(self.model, X_both)[:, None].mean(axis=1)
+            else:
+                assert False, p_all_type
             p = p_all[: len(X)]
             p_new = p_all[len(X) :]
 
@@ -173,4 +182,6 @@ class AcqIEIG(MCAcquisitionFunction):
             # skip joint sampling for speed (?)
             var_t = posterior_t.variance.squeeze()
 
+        if self.use_log:
+            var_t = torch.log(var_t)
         return -(self.weights * var_t).sum(dim=-1)
