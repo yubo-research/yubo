@@ -1,3 +1,5 @@
+import time
+
 from botorch.acquisition.monte_carlo import (
     qNoisyExpectedImprovement,
     qSimpleRegret,
@@ -64,12 +66,14 @@ class Optimizer:
         return collect_trajectory(self._env_conf, policy, seed=self._env_conf.seed)
 
     def _iterate(self, designer):
+        t0 = time.time()
         policies = designer(self._data, self._num_arms)
+        tf = time.time()
         data = []
         for policy in policies:
             traj = self._collect_trajectory(policy)
             data.append(Datum(policy, traj))
-        return data
+        return data, tf - t0
 
     def collect_trace(self, ttype, num_iterations):
         assert ttype in self._designers, f"Unknown optimizer type {ttype}"
@@ -78,7 +82,8 @@ class Optimizer:
         trace = []
         for i_iter in range(num_iterations):
             best_in_batch = -1e99
-            for datum in self._iterate(designer):
+            data, d_time = self._iterate(designer)
+            for datum in data:
                 self._data.append(datum)
                 best_in_batch = max(best_in_batch, datum.trajectory.rreturn)
                 if self._datum_best is None or datum.trajectory.rreturn > self._datum_best.trajectory.rreturn:
@@ -86,7 +91,7 @@ class Optimizer:
 
             if i_iter % 1 == 0:
                 print(
-                    f"ITER: i_iter = {i_iter} ret = {datum.trajectory.rreturn:.2f} ret_best = {self._datum_best.trajectory.rreturn:.2f} ret = {best_in_batch:.2f}"
+                    f"ITER: i_iter = {i_iter} d_time = {d_time:.2f} ret = {datum.trajectory.rreturn:.2f} ret_best = {self._datum_best.trajectory.rreturn:.2f} ret = {best_in_batch:.2f}"
                 )
             trace.append(self._datum_best.trajectory.rreturn)
             if self._cb_trace:
