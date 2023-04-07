@@ -23,16 +23,27 @@ class AcqIEIG(MCAcquisitionFunction):
      - Follows optimal Bayesian experiment design (OED) by maximizing the EIG.
      - Measure T Thompson samples with q arms
      - Similar to integrated optimality / elastic integrated optimality
-    """
 
-    def __init__(
-        self,
-        model: Model,
+    WORKS:
         num_X_samples: int = 256,
         num_px_samples: int = 4096,
         num_mcmc: int = 10,
         p_all_type: str = "all",
         num_Y_samples: int = 1024,
+        num_noisy_maxes: int = 10,
+        joint_sampling: bool = True,
+        use_log: bool = False,
+
+    """
+
+    def __init__(
+        self,
+        model: Model,
+        num_X_samples: int = 128,
+        num_px_samples: int = 1024,
+        num_mcmc: int = 10,
+        p_all_type: str = "all",
+        num_Y_samples: int = 256,
         num_noisy_maxes: int = 10,
         joint_sampling: bool = True,
         use_log: bool = False,
