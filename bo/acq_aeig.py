@@ -32,7 +32,7 @@ class AcqAEIG(MCAcquisitionFunction):
         self.X_samples = X_samples
 
         with torch.no_grad():
-            self.p_0 = ((1.0 / self.num_X_samples) / 10.0).detach()
+            self.p_0 = ((1.0 / self.num_X_samples) / 10.0)
             self.p_max = self._calc_p_max(self.model, self.X_samples).detach()
             self.weights = self.p_max.clone()
             self.p_max_reg = self.p_0 + self._calc_p_max(self.model, self.X_samples).detach()
