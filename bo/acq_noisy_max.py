@@ -6,23 +6,24 @@ from torch import Tensor
 
 
 class AcqNoisyMax(AnalyticAcquisitionFunction):
-    def __init__(self, model: Model, **kwargs) -> None:
-        super().__init__(model=self._thompson_sample_model(model), **kwargs)
-
-    def _thompson_sample_model(self, model):
-        X = model.train_inputs[0].detach()
+    def __init__(self, model: Model, q=1, **kwargs) -> None:
+        super().__init__(model=model, **kwargs)
+        self.noisy_models = [self._get_noisy_model() for _ in range(q)]
+        
+    def _get_noisy_model(self):
+        X = self.model.train_inputs[0].detach()
         if len(X) == 0:
-            return model
+            return self.model
         # rsample: one random sample, w/gradient
         # sample: one random sample, w/o gradient; calls rsample()
         # get_posterior_samples: repeated "frozen" random sampling, suitable for
         #  optimization
-        Y = model.posterior(X).sample().squeeze(0).detach()
+        Y = self.model.posterior(X, observation_noise=True).sample().squeeze(0).detach()
+        model_ts = SingleTaskGP(X, Y, self.model.likelihood)
+        model_ts.initialize(**dict(self.model.named_parameters()))
+        model_ts.eval()
+        return model_ts
 
-        gp_ts = SingleTaskGP(X, Y)
-        gp_ts.initialize(**dict(model.named_parameters()))
-        gp_ts.eval()
-        return gp_ts
 
     @t_batch_mode_transform()
     def forward(self, X: Tensor) -> Tensor:
@@ -35,6 +36,4 @@ class AcqNoisyMax(AnalyticAcquisitionFunction):
 
         self.to(device=X.device)
 
-        posterior = self.model.posterior(X=X, posterior_transform=self.posterior_transform)
-        Y = posterior.mean.squeeze()
-        return Y
+        return self.noisy_models[0].posterior(X=X, posterior_transform=self.posterior_transform).mean.squeeze()

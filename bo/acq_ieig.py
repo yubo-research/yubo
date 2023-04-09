@@ -1,5 +1,8 @@
+import time
+
 import numpy as np
 import torch
+import gpytorch
 from botorch.acquisition import PosteriorMean
 from botorch.acquisition.monte_carlo import (
     MCAcquisitionFunction,
@@ -54,12 +57,20 @@ class AcqIEIG(MCAcquisitionFunction):
         self.num_px_samples = num_px_samples
         self.joint_sampling = joint_sampling
         self.use_log = use_log
+        self.c_time = 0.
 
-        X_samples = self._sample_X(num_noisy_maxes, num_X_samples, num_mcmc, p_all_type)
+        if len(self.model.train_inputs[0]) == 0:
+            X_samples = self._sobol_samples(num_X_samples)
+        else:
+            X_samples = self._sample_X(num_noisy_maxes, num_X_samples, num_mcmc, p_all_type)
+            
         assert len(X_samples) >= num_X_samples, len(X_samples)
-        i = np.random.choice(np.arange(len(X_samples)), size=(num_X_samples,), replace=False)
-        self.X_samples = X_samples[i]
-
+        if len(X_samples) != num_X_samples:
+            i = np.random.choice(np.arange(len(X_samples)), size=(num_X_samples,), replace=False)
+            self.X_samples = X_samples[i]
+        else:
+            self.X_samples = X_samples
+            
         # Diagnostics
         with torch.no_grad():
             self.p_max = self._calc_p_max(self.model, self.X_samples)
@@ -75,33 +86,30 @@ class AcqIEIG(MCAcquisitionFunction):
     def _sample_X(self, num_noisy_maxes, num_X_samples, num_mcmc, p_all_type):
         X = self.model.train_inputs[0]
 
-        if len(X) == 0:
-            return self._sobol_samples(num_X_samples)
-        else:
-            no2 = num_X_samples
+        no2 = num_X_samples
 
-            models = [self._get_noisy_model() for _ in range(num_noisy_maxes)]
-            x_max = []
-            for model in models:
-                x = self._find_max(model).detach()
-                x_max.append(x)
-            x_max = torch.cat(x_max, axis=0)
-            n = int(no2 / len(x_max) + 1)
-            # X_samples = torch.cat((X_samples, torch.tile(x_max, (n, 1))), axis=0)
-            X_samples = torch.tile(x_max, (n, 1))
-            assert len(X_samples) >= num_X_samples, (len(X_samples), num_X_samples, no2)
+        models = [self._get_noisy_model() for _ in range(num_noisy_maxes)]
+        x_max = []
+        for model in models:
+            x = self._find_max(model).detach()
+            x_max.append(x)
+        x_max = torch.cat(x_max, axis=0)
+        n = int(no2 / len(x_max) + 1)
+        # X_samples = torch.cat((X_samples, torch.tile(x_max, (n, 1))), axis=0)
+        X_samples = torch.tile(x_max, (n, 1))
+        assert len(X_samples) >= num_X_samples, (len(X_samples), num_X_samples, no2)
 
-            # burn in
-            for _ in range(num_mcmc):
-                X_samples = self._mcmc(models, X_samples, eps=0.1, p_all_type=p_all_type)
+        # burn in
+        for _ in range(num_mcmc):
+            X_samples = self._mcmc(models, X_samples, eps=0.1, p_all_type=p_all_type)
 
-            # collect paths
-            X_all = []
-            for _ in range(num_mcmc):
-                X_samples = self._mcmc(models, X_samples, eps=0.1, p_all_type=p_all_type)
-                X_all.append(X_samples)
-            X_all = torch.cat(X_all, axis=0)
-            return X_all
+        # collect paths
+        X_all = []
+        for _ in range(num_mcmc):
+            X_samples = self._mcmc(models, X_samples, eps=0.1, p_all_type=p_all_type)
+            X_all.append(X_samples)
+        X_all = torch.cat(X_all, axis=0)
+        return X_all
 
     def _get_noisy_model(self):
         X = self.model.train_inputs[0].detach()
@@ -181,19 +189,19 @@ class AcqIEIG(MCAcquisitionFunction):
         """
         self.to(device=X.device)
 
-        mvn = self.model.posterior(X)  # q x 1
+        mvn = self.model.posterior(X)  # (b) x q x 1
+
         model_t = self.model.condition_on_observations(X=X, Y=mvn.mean, noise=mvn.variance)
 
-        # No fantazing b/c variance is independent of Y.
         posterior_t = model_t.posterior(self.X_samples, posterior_transform=self.posterior_transform, observation_noise=True)
 
         if self.joint_sampling:
             Y = self.get_posterior_samples(posterior_t).squeeze(dim=-1)
             var_t = Y.var(dim=0)
         else:
-            # skip joint sampling for speed (?)
             var_t = posterior_t.variance.squeeze()
 
         if self.use_log:
             var_t = torch.log(var_t)
+
         return -(self.weights * var_t).sum(dim=-1)
