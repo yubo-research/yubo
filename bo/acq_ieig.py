@@ -43,8 +43,8 @@ class AcqIEIG(MCAcquisitionFunction):
         num_px_samples: int = 1024,
         num_mcmc: int = 10,
         p_all_type: str = "all",
-        num_Y_samples: int = 256,
-        num_noisy_maxes: int = 10,
+        num_Y_samples: int = 128,
+        num_noisy_maxes: int = 3,
         joint_sampling: bool = True,
         use_log: bool = False,
         **kwargs
@@ -83,7 +83,8 @@ class AcqIEIG(MCAcquisitionFunction):
             models = [self._get_noisy_model() for _ in range(num_noisy_maxes)]
             x_max = []
             for model in models:
-                x_max.append(self._find_max(self.model).detach())
+                x = self._find_max(model).detach()
+                x_max.append(x)
             x_max = torch.cat(x_max, axis=0)
             n = int(no2 / len(x_max) + 1)
             # X_samples = torch.cat((X_samples, torch.tile(x_max, (n, 1))), axis=0)
@@ -180,8 +181,8 @@ class AcqIEIG(MCAcquisitionFunction):
         """
         self.to(device=X.device)
 
-        Y = self.model.posterior(X).mean  # q x 1
-        model_t = self.model.condition_on_observations(X=X, Y=Y)
+        mvn = self.model.posterior(X)  # q x 1
+        model_t = self.model.condition_on_observations(X=X, Y=mvn.mean, noise=mvn.variance)
 
         # No fantazing b/c variance is independent of Y.
         posterior_t = model_t.posterior(self.X_samples, posterior_transform=self.posterior_transform, observation_noise=True)
