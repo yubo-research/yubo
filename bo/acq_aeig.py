@@ -32,8 +32,10 @@ class AcqAEIG(MCAcquisitionFunction):
         self.X_samples = X_samples
 
         with torch.no_grad():
+            self.p_0 = ((1.0 / self.num_X_samples) / 10.0).detach()
             self.p_max = self._calc_p_max(self.model, self.X_samples).detach()
             self.weights = self.p_max.clone()
+            self.p_max_reg = self.p_0 + self._calc_p_max(self.model, self.X_samples).detach()
 
     def _sample_X(self, num_X_samples, num_mcmc):
         x_max = self._find_max(self.model).detach()
@@ -116,9 +118,15 @@ class AcqAEIG(MCAcquisitionFunction):
         model_t = self.model.condition_on_observations(X=X, Y=mvn.mean)  # TODO: noise=observation_noise
         p_max_t = self._soft_p_max(model_t)
 
-        # Regularize w_imp to protect against small p_max's.
-        p0 = (1.0 / self.num_X_samples) / 10.0
-        w_imp = (p0 + p_max_t) / (p0 + self.p_max)
+        # Regularize to protect against small p_max's.
+        p_max_t_reg = self.p_0 + p_max_t
+        w_imp_reg = p_max_t_reg / self.p_max_reg
+        w_imp_reg = w_imp_reg / w_imp_reg.sum()
+
+        # p_max is calculated up to a normalizing constant.
+        # That constant is different for every model_t.
+        # So how could we compare different model_t's?
 
         # Approximate the negative entropy: E[ln p_max_t(x)]
-        return torch.log((w_imp * p_max_t).sum(dim=-1))
+        # return (w_imp_reg * torch.log(p_max_reg)).sum(dim=-1))
+        return (w_imp_reg * torch.log(w_imp_reg)).sum(dim=-1)
