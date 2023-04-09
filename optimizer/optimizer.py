@@ -1,3 +1,4 @@
+import sys
 import time
 
 from botorch.acquisition.monte_carlo import (
@@ -91,8 +92,9 @@ class Optimizer:
 
             if i_iter % 1 == 0:
                 print(
-                    f"ITER: i_iter = {i_iter} d_time = {d_time:.2f} ret = {datum.trajectory.rreturn:.2f} ret_best = {self._datum_best.trajectory.rreturn:.2f} ret = {best_in_batch:.2f}"
+                    f"ITER: i_iter = {i_iter} d_time = {d_time:.2f} ret = {best_in_batch:.2f} ret_best = {self._datum_best.trajectory.rreturn:.2f}"
                 )
+                sys.stdout.flush()
             trace.append(self._datum_best.trajectory.rreturn)
             if self._cb_trace:
                 self._cb_trace(self._datum_best)
