@@ -7,6 +7,7 @@ from botorch.acquisition.monte_carlo import (
     qUpperConfidenceBound,
 )
 
+from bo.acq_aeig import AcqAEIG
 from bo.acq_ieig import AcqIEIG
 from bo.acq_iopt import AcqIOpt
 from bo.acq_min_dist import AcqMinDist
@@ -55,6 +56,7 @@ class Optimizer:
             "iopt_nm": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "nm"}),
             "iopt_ei": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "ei", "X_baseline": None}),
             "ieig": BTDesigner(policy, AcqIEIG, init_sobol=0),
+            "aeig": BTDesigner(policy, AcqAEIG, init_sobol=0),
             "sr": BTDesigner(policy, qSimpleRegret),
             "ei": BTDesigner(policy, qNoisyExpectedImprovement, acq_kwargs={"X_baseline": None}),
             "ucb": BTDesigner(policy, qUpperConfidenceBound, acq_kwargs={"beta": 1}),
@@ -91,9 +93,7 @@ class Optimizer:
                     self._datum_best = datum
 
             if i_iter % 1 == 0:
-                print(
-                    f"ITER: i_iter = {i_iter} d_time = {d_time:.2f} ret = {best_in_batch:.2f} ret_best = {self._datum_best.trajectory.rreturn:.2f}"
-                )
+                print(f"ITER: i_iter = {i_iter} d_time = {d_time:.2f} ret = {best_in_batch:.2f} ret_best = {self._datum_best.trajectory.rreturn:.2f}")
                 sys.stdout.flush()
             trace.append(self._datum_best.trajectory.rreturn)
             if self._cb_trace:

@@ -1,8 +1,5 @@
-import time
-
 import numpy as np
 import torch
-import gpytorch
 from botorch.acquisition import PosteriorMean
 from botorch.acquisition.monte_carlo import (
     MCAcquisitionFunction,
@@ -57,20 +54,20 @@ class AcqIEIG(MCAcquisitionFunction):
         self.num_px_samples = num_px_samples
         self.joint_sampling = joint_sampling
         self.use_log = use_log
-        self.c_time = 0.
+        self.c_time = 0.0
 
         if len(self.model.train_inputs[0]) == 0:
             X_samples = self._sobol_samples(num_X_samples)
         else:
             X_samples = self._sample_X(num_noisy_maxes, num_X_samples, num_mcmc, p_all_type)
-            
+
         assert len(X_samples) >= num_X_samples, len(X_samples)
         if len(X_samples) != num_X_samples:
             i = np.random.choice(np.arange(len(X_samples)), size=(num_X_samples,), replace=False)
             self.X_samples = X_samples[i]
         else:
             self.X_samples = X_samples
-            
+
         # Diagnostics
         with torch.no_grad():
             self.p_max = self._calc_p_max(self.model, self.X_samples)
@@ -84,10 +81,7 @@ class AcqIEIG(MCAcquisitionFunction):
                 self.weights = self.weights / self.weights.sum()
 
     def _sample_X(self, num_noisy_maxes, num_X_samples, num_mcmc, p_all_type):
-        X = self.model.train_inputs[0]
-
         no2 = num_X_samples
-
         models = [self._get_noisy_model() for _ in range(num_noisy_maxes)]
         x_max = []
         for model in models:

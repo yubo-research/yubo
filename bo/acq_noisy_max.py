@@ -9,7 +9,7 @@ class AcqNoisyMax(AnalyticAcquisitionFunction):
     def __init__(self, model: Model, q=1, **kwargs) -> None:
         super().__init__(model=model, **kwargs)
         self.noisy_models = [self._get_noisy_model() for _ in range(q)]
-        
+
     def _get_noisy_model(self):
         X = self.model.train_inputs[0].detach()
         if len(X) == 0:
@@ -23,7 +23,6 @@ class AcqNoisyMax(AnalyticAcquisitionFunction):
         model_ts.initialize(**dict(self.model.named_parameters()))
         model_ts.eval()
         return model_ts
-
 
     @t_batch_mode_transform()
     def forward(self, X: Tensor) -> Tensor:
