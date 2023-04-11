@@ -211,11 +211,12 @@ class AcqIEIG(MCAcquisitionFunction):
         mvn_t = model_t.posterior(self.X_samples, observation_noise=True)
         Y_t = self.get_posterior_samples(mvn_t).squeeze(dim=-1)  # num_Y_samples x b x num_X_samples
 
-        if False:
+        if not self.joint_sampling:
             H = torch.log(mvn.stddev).mean(dim=-1)
             H_t = torch.log(mvn_t.stddev).mean(dim=-1)
         else:
             H = torch.log(Y.std(dim=0)).mean(dim=-1)
             H_t = (self.weights * torch.log(Y_t.std(dim=0))).sum(dim=-1) / self.weights.sum()
 
-        return H - H_t
+        # return H - H_t
+        return -H_t
