@@ -175,7 +175,7 @@ class AcqIEIG(MCAcquisitionFunction):
         return p_max
 
     @t_batch_mode_transform()
-    def forward(self, X: Tensor) -> Tensor:
+    def _x__forward(self, X: Tensor) -> Tensor:
         """
         Args:
             X: A `(b) x q x d`-dim Tensor of `(b)` t-batches with `q` `d`-dim
@@ -199,3 +199,23 @@ class AcqIEIG(MCAcquisitionFunction):
             var_t = torch.log(var_t)
 
         return -(self.weights * var_t).sum(dim=-1)
+
+    @t_batch_mode_transform()
+    def forward(self, X: Tensor) -> Tensor:
+        self.to(device=X.device)
+
+        mvn = self.model.posterior(X, observation_noise=True)
+        Y = self.get_posterior_samples(mvn).squeeze(dim=-1)  # num_Y_samples x b x q
+
+        model_t = self.model.condition_on_observations(X=X, Y=mvn.mean)  # TODO: noise=observation_noise
+        mvn_t = model_t.posterior(self.X_samples, observation_noise=True)
+        Y_t = self.get_posterior_samples(mvn_t).squeeze(dim=-1)  # num_Y_samples x b x num_X_samples
+
+        if False:
+            H = torch.log(mvn.stddev).mean(dim=-1)
+            H_t = torch.log(mvn_t.stddev).mean(dim=-1)
+        else:
+            H = torch.log(Y.std(dim=0)).mean(dim=-1)
+            H_t = (self.weights * torch.log(Y_t.std(dim=0))).sum(dim=-1) / self.weights.sum()
+
+        return H - H_t

@@ -26,31 +26,33 @@ class AcqAEIG(MCAcquisitionFunction):
         self.num_X_samples = num_X_samples
         self.sampler = SobolQMCNormalSampler(sample_shape=torch.Size([num_Y_samples]))
 
-        with torch.no_grad():
-            X_samples = self._sample_X(num_X_samples, num_mcmc).detach()
+        # X_samples = self._sobol_samples(num_X_samples)
+        X_samples = self._sample_X(num_X_samples, num_mcmc).detach()
+
         assert len(X_samples) == num_X_samples, len(X_samples)
         self.X_samples = X_samples
 
     def _sample_X(self, num_X_samples, num_mcmc):
         X_samples = self._sobol_samples(num_X_samples)  # // 2)
-        if False:
+        if len(X_samples) < num_X_samples:
             # Needed this in high dimensions?
-            x_max = self._find_max(self.model).detach()
-            X_samples = torch.cat((X_samples, torch.tile(x_max, (num_X_samples - len(X_samples), 1))), axis=0)
+            x_max = self._find_max(self.model)
+            X_samples = torch.cat((X_samples, torch.tile(x_max, (num_X_samples - len(X_samples), 1))), axis=0).detach()
 
-        for eps_mc in [0.3, 0.1, 0.03]:
-            for _ in range(num_mcmc):
-                X_samples = self._tmc(X_samples, eps=eps_mc)
+        with torch.no_grad():
+            for eps_mc in [0.3, 0.1, 0.03]:
+                for _ in range(num_mcmc):
+                    X_samples = self._tmc(X_samples, eps=eps_mc)
 
-        if True:
-            # clean up noise
-            posterior = self.model.posterior(X_samples, posterior_transform=self.posterior_transform, observation_noise=True)
-            Y = posterior.sample(torch.Size([100])).squeeze(dim=-1)  # num_Y_samples x b x len(X)
-            i_best = torch.argmax(Y, dim=-1)
-            i = torch.unique(i_best)
-            X_samples = X_samples[i]
-            i = np.random.choice(np.arange(len(X_samples)), size=(num_X_samples,), replace=True)
-            X_samples = X_samples[i]
+            if True:
+                # clean up noise
+                posterior = self.model.posterior(X_samples, posterior_transform=self.posterior_transform, observation_noise=True)
+                Y = posterior.sample(torch.Size([100])).squeeze(dim=-1)  # num_Y_samples x b x len(X)
+                i_best = torch.argmax(Y, dim=-1)
+                i = torch.unique(i_best)
+                X_samples = X_samples[i]
+                i = np.random.choice(np.arange(len(X_samples)), size=(num_X_samples,), replace=True)
+                X_samples = X_samples[i]
         return X_samples
 
     def _find_max(self, model):
@@ -94,10 +96,18 @@ class AcqAEIG(MCAcquisitionFunction):
     def forward(self, X: Tensor) -> Tensor:
         self.to(device=X.device)
 
-        mvn = self.model.posterior(X)
+        mvn = self.model.posterior(X, observation_noise=True)
+        Y = self.get_posterior_samples(mvn).squeeze(dim=-1)  # num_Y_samples x b x q
+
         model_t = self.model.condition_on_observations(X=X, Y=mvn.mean)  # TODO: noise=observation_noise
+        mvn_t = model_t.posterior(self.X_samples, observation_noise=True)
+        Y_t = self.get_posterior_samples(mvn_t).squeeze(dim=-1)  # num_Y_samples x b x num_X_samples
 
-        posterior = model_t.posterior(self.X_samples, observation_noise=True)
-        Y = self.get_posterior_samples(posterior).squeeze(dim=-1)  # num_Y_samples x b x num_X_samples
+        if True:
+            H = torch.log(mvn.stddev).mean(dim=-1)
+            H_t = torch.log(mvn_t.stddev).mean(dim=-1)
+        else:
+            H = torch.log(Y.std(dim=0)).mean(dim=-1)
+            H_t = torch.log(Y_t.std(dim=0)).mean(dim=-1)
 
-        return -torch.log(Y.var(dim=0)).mean(dim=-1)
+        return H - H_t
