@@ -10,6 +10,7 @@ class SobolDesigner:
         self._ps = qmc.Sobol(policy.num_params()).random(max_points)
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     def __call__(self, data):
         assert len(self._ps) > 0, "max_points exceeded"
 
@@ -19,6 +20,8 @@ class SobolDesigner:
         policy.set_params(all_bounds.p_low + all_bounds.p_width * p)
         return policy
 =======
+=======
+>>>>>>> main
     def __call__(self, data, num_arms):
         assert len(self._ps) > 0, "max_points exceeded"
 
@@ -30,4 +33,7 @@ class SobolDesigner:
             policy.set_params(all_bounds.p_low + all_bounds.p_width * p)
             policies.append(policy)
         return policies
+<<<<<<< HEAD
+>>>>>>> main
+=======
 >>>>>>> main

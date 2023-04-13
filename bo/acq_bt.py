@@ -43,6 +43,10 @@ class AcqBT:
             kwargs["Y_max"] = gp(self._find_max(gp, self.bounds)).mean
         if "bounds" in kwargs:
             kwargs["bounds"] = self.bounds
+        if "optimal_inputs" in kwargs:
+            kwargs["optimal_inputs"] = self._find_max(gp, self.bounds)
+        if "candidate_set" in kwargs:
+            kwargs["candidate_set"] = self._find_max(gp, self.bounds)
 
         self.acq_function = acq_factory(gp, **kwargs)
 

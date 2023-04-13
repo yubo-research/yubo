@@ -8,6 +8,7 @@ class RandomDesigner:
         self._policy = policy
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     def __call__(self, data):
         policy = self._policy.clone()
         p = policy.get_params()
@@ -15,6 +16,8 @@ class RandomDesigner:
         policy.set_params(p)
         return policy
 =======
+=======
+>>>>>>> main
     def __call__(self, data, num_arms):
         policies = []
         for _ in range(num_arms):
@@ -24,4 +27,7 @@ class RandomDesigner:
             policy.set_params(p)
             policies.append(policy)
         return policies
+<<<<<<< HEAD
+>>>>>>> main
+=======
 >>>>>>> main

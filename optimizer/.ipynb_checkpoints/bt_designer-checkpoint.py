@@ -1,11 +1,15 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 import numpy as np
+=======
+>>>>>>> main
 =======
 >>>>>>> main
 from botorch.optim import optimize_acqf
 
 import common.all_bounds as all_bounds
 from bo.acq_bt import AcqBT
+<<<<<<< HEAD
 <<<<<<< HEAD
 
 
@@ -27,6 +31,8 @@ class BTDesigner:
 
         acqf = AcqBT(self._acq_fn, data, self._acq_kwargs)
 =======
+=======
+>>>>>>> main
 from optimizer.sobol_designer import SobolDesigner
 
 
@@ -46,6 +52,9 @@ class BTDesigner:
 
         num_dim = self._policy.num_params()
         acqf = AcqBT(self._acq_fn, data, num_dim, self._acq_kwargs)
+<<<<<<< HEAD
+>>>>>>> main
+=======
 >>>>>>> main
 
         warnings.simplefilter("ignore")
@@ -53,8 +62,13 @@ class BTDesigner:
             X_cand, _ = optimize_acqf(
                 acq_function=acqf.acq_function,
 <<<<<<< HEAD
+<<<<<<< HEAD
                 bounds=acqf.bounds,  # always [0,1]
                 q=1,
+=======
+                bounds=acqf.bounds,  # always [0,1]**num_dim
+                q=num_arms,
+>>>>>>> main
 =======
                 bounds=acqf.bounds,  # always [0,1]**num_dim
                 q=num_arms,
@@ -64,6 +78,7 @@ class BTDesigner:
                 options={"batch_limit": 5, "maxiter": 200},
             )
 <<<<<<< HEAD
+<<<<<<< HEAD
         policy = self._policy.clone()
 
         x = (X_cand.detach().numpy().flatten() - all_bounds.bt_low) / all_bounds.bt_width
@@ -71,6 +86,8 @@ class BTDesigner:
         policy.set_params(p)
         return policy
 =======
+=======
+>>>>>>> main
 
         policies = []
         for x in X_cand:
@@ -80,4 +97,7 @@ class BTDesigner:
             policy.set_params(p)
             policies.append(policy)
         return policies
+<<<<<<< HEAD
+>>>>>>> main
+=======
 >>>>>>> main

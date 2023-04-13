@@ -6,12 +6,15 @@ import common.all_bounds as all_bounds
 class AxDesigner:
     def __init__(self, policy):
 <<<<<<< HEAD
+<<<<<<< HEAD
         from ax.service.ax_client import AxClient
 
         self._policy = policy
         self._ax_client = AxClient(verbose_logging=False)
         num_params = policy.num_params()
 =======
+=======
+>>>>>>> main
         self._policy = policy
         self._ax_client = None
 
@@ -22,6 +25,9 @@ class AxDesigner:
 
         self._ax_client = AxClient(verbose_logging=False)
         num_params = self._policy.num_params()
+<<<<<<< HEAD
+>>>>>>> main
+=======
 >>>>>>> main
         self._ax_client.create_experiment(
             name=f"ax_{num_params}",
@@ -38,12 +44,18 @@ class AxDesigner:
         self._trial_index = None
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     def __call__(self, data):
 =======
+=======
+>>>>>>> main
     def __call__(self, data, num_arms):
         assert num_arms == 1, "ax only supports one-arm trials"
         self._lazy_init()
 
+<<<<<<< HEAD
+>>>>>>> main
+=======
 >>>>>>> main
         import warnings
 
@@ -56,7 +68,12 @@ class AxDesigner:
             policy = self._policy.clone()
             policy.set_params(p)
 <<<<<<< HEAD
+<<<<<<< HEAD
             return policy
+=======
+
+        return [policy]
+>>>>>>> main
 =======
 
         return [policy]

@@ -13,7 +13,7 @@ from torch.quasirandom import SobolEngine
 
 
 class AcqIOpt(MCAcquisitionFunction):
-    def __init__(self, model: Model, acqf: AcquisitionFunction = None, num_X_samples: int = 256, use_sqrt: bool = False, **kwargs) -> None:
+    def __init__(self, model: Model, acqf: AcquisitionFunction = None, num_X_samples: int = 256, **kwargs) -> None:
         super().__init__(model=model, **kwargs)
 
         X_0 = self.model.train_inputs[0]
@@ -25,15 +25,18 @@ class AcqIOpt(MCAcquisitionFunction):
         self.register_buffer("X_samples", X_samples)
 
         if len(X_0) == 0:
-            p_iopt = 1 + 1e-6
+            p_iopt = 1.0
         else:
-            p_iopt = self._integrated_variance(model, num_dim, num_X_samples)
+            # The probability that the optimum will be found by iopt
+            #  (global search) is proportional to the mean variance.
+            # The probability that the optimum will be found by simple
+            #  maximization (local search) is 1 - i_opt.
+            p_iopt = self._mean_variance(model, num_dim, num_X_samples)
 
-        if use_sqrt:
-            p_iopt = np.sqrt(p_iopt)
+        # TODO: ensemble of arms
         self.acqf = None if np.random.uniform() < p_iopt else acqf
 
-    def _integrated_variance(self, model, num_dim, num_X_samples):
+    def _mean_variance(self, model, num_dim, num_X_samples):
         X = torch.rand(size=(num_X_samples, num_dim))
         Y = model.posterior(X)
         return Y.variance.mean().item()

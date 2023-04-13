@@ -78,7 +78,10 @@ class CrossInTray:
     def __call__(self, x):
         assert len(x) == 2
 <<<<<<< HEAD
+<<<<<<< HEAD
         x = x * 9 + 1 - self._x_0
+=======
+>>>>>>> main
 =======
 >>>>>>> main
         x0 = x[0]
@@ -231,7 +234,11 @@ class Michalewicz:
             new = np.sin(x[i]) * (np.sin(i * x[i] ** 2 / np.pi)) ** (2 * m)
             sum += new
 <<<<<<< HEAD
+<<<<<<< HEAD
         return sum
+=======
+        return -sum
+>>>>>>> main
 =======
         return -sum
 >>>>>>> main
@@ -338,7 +345,11 @@ class ThreeHumpCamel:
         x0 = x[0]
         x1 = x[1]
 <<<<<<< HEAD
+<<<<<<< HEAD
         return 2.0 * x0**2 - 1.05 * x0**4 + x0**6 / 6.0 + x0 * x1 + x1**2
+=======
+        return 2.0 * x0**2 - 1.05 * x0**4 + x0**6 / 6.0 + x0 * x1 + x1**2
+>>>>>>> main
 =======
         return 2.0 * x0**2 - 1.05 * x0**4 + x0**6 / 6.0 + x0 * x1 + x1**2
 >>>>>>> main

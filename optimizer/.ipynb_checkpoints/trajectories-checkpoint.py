@@ -54,7 +54,11 @@ def collect_trajectory(env_conf, policy, show_frames=None, seed=None):
         draw()
     env.close()
 <<<<<<< HEAD
+<<<<<<< HEAD
     return Trajectory(return_trajectory, np.array(traj_states).T, np.array(traj_actions).T)
+=======
+    return Trajectory(return_trajectory, np.array(traj_states).T, np.array(traj_actions).T)
+>>>>>>> main
 =======
     return Trajectory(return_trajectory, np.array(traj_states).T, np.array(traj_actions).T)
 >>>>>>> main

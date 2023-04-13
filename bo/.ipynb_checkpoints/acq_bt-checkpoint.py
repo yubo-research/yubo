@@ -10,18 +10,22 @@ import common.all_bounds as all_bounds
 
 
 class AcqBT:
-    def __init__(self, acq_factory, data, acq_kwargs=None):
-        Y, X = zip(*[self._mk_yx(d) for d in data])
-        Y = torch.tensor(Y)[:, None]
+    def __init__(self, acq_factory, data, num_dim, acq_kwargs=None):
+        dtype = torch.float64
+        if len(data) == 0:
+            X = torch.empty(size=(0, num_dim), dtype=dtype)
+            Y = torch.empty(size=(0, 1), dtype=dtype)
+            gp = SingleTaskGP(X, Y)
+            gp.eval()
+        else:
+            Y, X = zip(*[self._mk_yx(d) for d in data])
+            Y = torch.tensor(Y)[:, None]
+            X = torch.stack(X).type(dtype)
+            Y = standardize(Y).type(dtype)
+            gp = SingleTaskGP(X, Y)
+            mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
+            fit_gpytorch_mll(mll)
 
-        X = torch.stack(X).type(torch.float64)
-        Y = standardize(Y).type(torch.float64)
-
-        gp = SingleTaskGP(X, Y)
-        mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
-        fit_gpytorch_mll(mll)
-
-        num_dim = X[0].shape[-1]
         # All BoTorch stuff is coded to bounds of [0,1]!
         self.bounds = torch.tensor([[0.0] * num_dim, [1.0] * num_dim], device=X.device, dtype=X.dtype)
 
@@ -39,6 +43,10 @@ class AcqBT:
             kwargs["Y_max"] = gp(self._find_max(gp, self.bounds)).mean
         if "bounds" in kwargs:
             kwargs["bounds"] = self.bounds
+        if "optimal_inputs" in kwargs:
+            kwargs["optimal_inputs"] = self._find_max(gp, self.bounds)
+        if "candidate_set" in kwargs:
+            kwargs["candidate_set"] = self._find_max(gp, self.bounds)
 
         self.acq_function = acq_factory(gp, **kwargs)
 

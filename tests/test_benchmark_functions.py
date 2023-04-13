@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def _test(problem_name, num_dim, x, y):
     from problems.pure_functions import make
 
@@ -58,6 +59,6 @@ def _test(problem_name, num_dim, x, y):
 # def test_sixhumpcamel():
 #     _test(problem_name="sixhumpcamel", num_dim=2, x=np.array([0.3, 0.3]), y= -1.9158442961058475)
 
-def test_threehumpcamel():
-    _test(problem_name="threehumpcamel", num_dim=2, x=np.array([0.3, 0.3]), y= -6.298071583760114)
 
+def test_threehumpcamel():
+    _test(problem_name="threehumpcamel", num_dim=2, x=np.array([0.3, 0.3]), y=-6.298071583760114)

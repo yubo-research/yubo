@@ -1,15 +1,19 @@
+import sys
+import time
+
 from botorch.acquisition.monte_carlo import (
     qNoisyExpectedImprovement,
     qSimpleRegret,
     qUpperConfidenceBound,
 )
+from botorch.acquisition.predictive_entropy_search import qPredictiveEntropySearch
+from botorch.acquisition.max_value_entropy_search import qMaxValueEntropy
 
-from bo.acq_eiopt import AcqEIOpt
-from bo.acq_iei import AcqIEI
+from bo.acq_aeig import AcqAEIG
+from bo.acq_ieig import AcqIEIG
 from bo.acq_iopt import AcqIOpt
-from bo.acq_iucb import AcqIUCB
 from bo.acq_min_dist import AcqMinDist
-from bo.acq_thompson_sample import AcqThompsonSample
+from bo.acq_noisy_max import AcqNoisyMax
 from bo.acq_var import AcqVar
 
 from .ax_designer import AxDesigner
@@ -20,20 +24,22 @@ from .sobol_designer import SobolDesigner
 from .trajectories import collect_trajectory
 
 
-def _iOptFactory(model, acqf=None, X_baseline=None, use_sqrt=None):
+def _iOptFactory(model, acqf=None, X_baseline=None):
     if acqf == "ei":
         assert X_baseline is not None
         if len(X_baseline) > 0:
             acqf = qNoisyExpectedImprovement(model, X_baseline, prune_baseline=False)
         else:
             acqf = None
+    elif acqf == "pes":
+        a
     elif acqf == "sr":
         acqf = qSimpleRegret(model)
-    elif acqf == "ts":
-        acqf = AcqThompsonSample(model)
+    elif acqf == "nm":
+        acqf = AcqNoisyMax(model)
     else:
         assert acqf is None, acqf
-    return AcqIOpt(model, acqf=acqf, use_sqrt=use_sqrt)
+    return AcqIOpt(model, acqf=acqf)
 
 
 class Optimizer:
@@ -51,33 +57,32 @@ class Optimizer:
             "variance": BTDesigner(policy, AcqVar),
             "iopt": BTDesigner(policy, _iOptFactory, init_sobol=0),
             "iopt_sr": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "sr"}),
-            "iopt_ts": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "ts"}),
-            "iopt_ei": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "ei", "X_baseline": None, "use_sqrt": False}),
-            "ioptsq_ei": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "ei", "X_baseline": None, "use_sqrt": True}),
-            "eiopt": BTDesigner(policy, AcqEIOpt, init_sobol=0, acq_kwargs={"b_adaptive_x_sampling": True}),
-            "eiopt_m": BTDesigner(policy, AcqEIOpt, init_sobol=0, acq_kwargs={"b_adaptive_x_sampling": True, "b_append_max": True}),
-            "eiopt_ss": BTDesigner(policy, AcqEIOpt, init_sobol=0, acq_kwargs={"b_adaptive_x_sampling": False}),
+            "iopt_nm": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "nm"}),
+            "iopt_ei": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "ei", "X_baseline": None}),
+            "ieig": BTDesigner(policy, AcqIEIG, init_sobol=0),
+            "aeig": BTDesigner(policy, AcqAEIG, init_sobol=0),
             "sr": BTDesigner(policy, qSimpleRegret),
-            "ts": BTDesigner(policy, AcqThompsonSample),
             "ei": BTDesigner(policy, qNoisyExpectedImprovement, acq_kwargs={"X_baseline": None}),
-            "iei": BTDesigner(policy, AcqIEI, init_sobol=0, acq_kwargs={"Y_max": None, "bounds": None}),
             "ucb": BTDesigner(policy, qUpperConfidenceBound, acq_kwargs={"beta": 1}),
-            "iucb": BTDesigner(policy, AcqIUCB, init_sobol=0, acq_kwargs={"bounds": None}),
             "ax": AxDesigner(policy),
             "sobol_ei": BTDesigner(policy, qNoisyExpectedImprovement, init_sobol=max(5, 2 * policy.num_params()), acq_kwargs={"X_baseline": None}),
             "sobol_ucb": BTDesigner(policy, qUpperConfidenceBound, init_sobol=max(5, 2 * policy.num_params()), acq_kwargs={"beta": 1}),
+            "pes": BTDesigner(policy, qPredictiveEntropySearch, acq_kwargs={"optimal_inputs": None}),
+            "mes": BTDesigner(policy, qMaxValueEntropy, acq_kwargs={"candidate_set": None})
         }
 
     def _collect_trajectory(self, policy):
         return collect_trajectory(self._env_conf, policy, seed=self._env_conf.seed)
 
     def _iterate(self, designer):
+        t0 = time.time()
         policies = designer(self._data, self._num_arms)
+        tf = time.time()
         data = []
         for policy in policies:
             traj = self._collect_trajectory(policy)
             data.append(Datum(policy, traj))
-        return data
+        return data, tf - t0
 
     def collect_trace(self, ttype, num_iterations):
         assert ttype in self._designers, f"Unknown optimizer type {ttype}"
@@ -86,16 +91,16 @@ class Optimizer:
         trace = []
         for i_iter in range(num_iterations):
             best_in_batch = -1e99
-            for datum in self._iterate(designer):
+            data, d_time = self._iterate(designer)
+            for datum in data:
                 self._data.append(datum)
                 best_in_batch = max(best_in_batch, datum.trajectory.rreturn)
                 if self._datum_best is None or datum.trajectory.rreturn > self._datum_best.trajectory.rreturn:
                     self._datum_best = datum
 
             if i_iter % 1 == 0:
-                print(
-                    f"ITER: i_iter = {i_iter} ret = {datum.trajectory.rreturn:.2f} ret_best = {self._datum_best.trajectory.rreturn:.2f} ret = {best_in_batch:.2f}"
-                )
+                print(f"ITER: i_iter = {i_iter} d_time = {d_time:.2f} ret = {best_in_batch:.2f} ret_best = {self._datum_best.trajectory.rreturn:.2f}")
+                sys.stdout.flush()
             trace.append(self._datum_best.trajectory.rreturn)
             if self._cb_trace:
                 self._cb_trace(self._datum_best)

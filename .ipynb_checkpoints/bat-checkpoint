@@ -17,7 +17,11 @@ do
      python experiments/exp_1.py ${TAG} ${TTYPE} &> results/${DDIR}/${TAG}/${TTYPE} &
  done
 <<<<<<< HEAD
+<<<<<<< HEAD
 done
+=======
+done
+>>>>>>> main
 =======
 done
 >>>>>>> main

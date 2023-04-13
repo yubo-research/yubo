@@ -16,7 +16,7 @@ def sample(env_conf, ttype, tag, num_iterations, num_arms):
     opt = Optimizer(env_conf, policy, num_arms=num_arms)
     name = env_conf.env_name[2:].replace("-", "_")
     for i_iter, rreturn in enumerate(opt.collect_trace(ttype=ttype, num_iterations=num_iterations)):
-        dir_path = f"results/exp_1_n/{name}/"
+        dir_path = f"results/exp_1_o/{name}/"
         filename = f"{ttype}"
         os.makedirs(dir_path, exist_ok=True)
         with open(os.path.join(dir_path, filename), "a") as f:
@@ -53,7 +53,7 @@ if __name__ == "__main__":
         env_conf = get_env_conf(env_tag, seed)
         name = env_conf.env_name[2:].replace("-", "_")
         sample(env_conf, ttype, tag=f"i_sample = {i_sample}", num_iterations=num_iterations, num_arms=1)
-        with open(f"results/exp_1_n/{name}/{ttype}", "a") as f:
+        with open(f"results/exp_1_o/{name}/{ttype}", "a") as f:
             print(f"TIME_SAMPLE: {time.time() - t0:.2f}", file=f)
             
             
