@@ -1,13 +1,13 @@
 import sys
 import time
 
+from botorch.acquisition.max_value_entropy_search import qMaxValueEntropy
 from botorch.acquisition.monte_carlo import (
     qNoisyExpectedImprovement,
     qSimpleRegret,
     qUpperConfidenceBound,
 )
 
-from bo.acq_aeig import AcqAEIG
 from bo.acq_ieig import AcqIEIG
 from bo.acq_iopt import AcqIOpt
 from bo.acq_min_dist import AcqMinDist
@@ -33,6 +33,8 @@ def _iOptFactory(model, acqf=None, X_baseline=None):
         acqf = qSimpleRegret(model)
     elif acqf == "nm":
         acqf = AcqNoisyMax(model)
+    elif acqf == "mes":
+        acqf = qMaxValueEntropy(model, candidate_set=X_baseline)
     else:
         assert acqf is None, acqf
     return AcqIOpt(model, acqf=acqf)
@@ -55,8 +57,9 @@ class Optimizer:
             "iopt_sr": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "sr"}),
             "iopt_nm": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "nm"}),
             "iopt_ei": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "ei", "X_baseline": None}),
+            "iopt_mes": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "mes", "X_baseline": None}),
             "ieig": BTDesigner(policy, AcqIEIG, init_sobol=0),
-            "aeig": BTDesigner(policy, AcqAEIG, init_sobol=0),
+            "ieig_f3": BTDesigner(policy, AcqIEIG, init_sobol=0, acq_kwargs={"num_fantasies": 3}),
             "sr": BTDesigner(policy, qSimpleRegret),
             "ei": BTDesigner(policy, qNoisyExpectedImprovement, acq_kwargs={"X_baseline": None}),
             "ucb": BTDesigner(policy, qUpperConfidenceBound, acq_kwargs={"beta": 1}),

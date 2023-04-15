@@ -43,17 +43,18 @@ class AcqIEIG(MCAcquisitionFunction):
         num_px_samples: int = 1024,
         num_mcmc: int = 10,
         p_all_type: str = "all",
+        num_fantasies: int = 0,
         num_Y_samples: int = 128,
         num_noisy_maxes: int = 3,
-        joint_sampling: bool = True,
-        use_log: bool = True,
         **kwargs
     ) -> None:
         super().__init__(model=model, **kwargs)
         self.sampler = SobolQMCNormalSampler(sample_shape=torch.Size([num_Y_samples]))
+        if num_fantasies > 0:
+            self.sampler_fantasies = SobolQMCNormalSampler(sample_shape=torch.Size([num_fantasies]))
+        self.num_fantasies = num_fantasies
+        self.num_Y_num_f = num_Y_samples * num_fantasies
         self.num_px_samples = num_px_samples
-        self.joint_sampling = joint_sampling
-        self.use_log = use_log
         self.c_time = 0.0
 
         if len(self.model.train_inputs[0]) == 0:
@@ -175,48 +176,22 @@ class AcqIEIG(MCAcquisitionFunction):
         return p_max
 
     @t_batch_mode_transform()
-    def _x__forward(self, X: Tensor) -> Tensor:
-        """
-        Args:
-            X: A `(b) x q x d`-dim Tensor of `(b)` t-batches with `q` `d`-dim
-                design points each.
-        """
-        self.to(device=X.device)
-
-        mvn = self.model.posterior(X)  # (b) x q x 1
-
-        model_t = self.model.condition_on_observations(X=X, Y=mvn.mean, noise=mvn.variance)
-
-        posterior_t = model_t.posterior(self.X_samples, posterior_transform=self.posterior_transform, observation_noise=True)
-
-        if self.joint_sampling:
-            Y = self.get_posterior_samples(posterior_t).squeeze(dim=-1)
-            var_t = Y.var(dim=0)
-        else:
-            var_t = posterior_t.variance.squeeze()
-
-        if self.use_log:
-            var_t = torch.log(var_t)
-
-        return -(self.weights * var_t).sum(dim=-1)
-
-    @t_batch_mode_transform()
     def forward(self, X: Tensor) -> Tensor:
         self.to(device=X.device)
 
-        mvn = self.model.posterior(X, observation_noise=True)
-        Y = self.get_posterior_samples(mvn).squeeze(dim=-1)  # num_Y_samples x b x q
+        if self.num_fantasies == 0:
+            mvn = self.model.posterior(X, observation_noise=True)
+            Y = self.get_posterior_samples(mvn).squeeze(dim=-1)  # num_Y_samples x b x q
 
-        model_t = self.model.condition_on_observations(X=X, Y=mvn.mean)  # TODO: noise=observation_noise
-        mvn_t = model_t.posterior(self.X_samples, observation_noise=True)
-        Y_t = self.get_posterior_samples(mvn_t).squeeze(dim=-1)  # num_Y_samples x b x num_X_samples
-
-        if not self.joint_sampling:
-            H = torch.log(mvn.stddev).mean(dim=-1)
-            H_t = torch.log(mvn_t.stddev).mean(dim=-1)
+            model_t = self.model.condition_on_observations(X=X, Y=mvn.mean)  # TODO: noise=observation_noise?
+            mvn_t = model_t.posterior(self.X_samples, observation_noise=True)
+            Y = self.get_posterior_samples(mvn_t).squeeze(dim=-1)  # num_Y_samples x b x num_X_samples
         else:
-            H = torch.log(Y.std(dim=0)).mean(dim=-1)
-            H_t = (self.weights * torch.log(Y_t.std(dim=0))).sum(dim=-1) / self.weights.sum()
+            model_f = self.model.fantasize(X=X, sampler=self.sampler_fantasies, observation_noise=True)
+            mvn_f = model_f.posterior(self.X_samples, observation_noise=True)
+            Y_f = self.get_posterior_samples(mvn_f).squeeze(dim=-1)  # num_Y_samples x num_fantasies x b x num_X_samples
+            Y = Y_f.reshape(self.num_Y_num_f, Y_f.shape[-2], Y_f.shape[-1])
 
-        # return H - H_t
-        return -H_t
+        H = (self.weights * torch.log(Y.std(dim=0))).sum(dim=-1)
+
+        return -H
