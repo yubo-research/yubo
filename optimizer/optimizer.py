@@ -59,7 +59,7 @@ class Optimizer:
             "iopt_ei": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "ei", "X_baseline": None}),
             "iopt_mes": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "mes", "X_baseline": None}),
             "ieig": BTDesigner(policy, AcqIEIG, init_sobol=0),
-            "ieig_f3": BTDesigner(policy, AcqIEIG, init_sobol=0, acq_kwargs={"num_fantasies": 3}),
+            "ieig_f4": BTDesigner(policy, AcqIEIG, init_sobol=0, acq_kwargs={"num_fantasies": 3, "num_Y_samples": 32}),
             "sr": BTDesigner(policy, qSimpleRegret),
             "ei": BTDesigner(policy, qNoisyExpectedImprovement, acq_kwargs={"X_baseline": None}),
             "ucb": BTDesigner(policy, qUpperConfidenceBound, acq_kwargs={"beta": 1}),
