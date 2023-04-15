@@ -47,6 +47,7 @@ class Optimizer:
         self._cb_trace = cb_trace
         self._data = []
         self._datum_best = None
+        init_ax_default = max(5, 2 * policy.num_params())
         self._designers = {
             "random": RandomDesigner(policy),
             "sobol": SobolDesigner(policy),
@@ -57,15 +58,17 @@ class Optimizer:
             "iopt_sr": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "sr"}),
             "iopt_nm": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "nm"}),
             "iopt_ei": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "ei", "X_baseline": None}),
-            "iopt_mes": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "mes", "X_baseline": None}),
+            # "iopt_mes": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "mes", "X_baseline": None}),
             "ieig": BTDesigner(policy, AcqIEIG, init_sobol=0),
             "ieig_f4": BTDesigner(policy, AcqIEIG, init_sobol=0, acq_kwargs={"num_fantasies": 3, "num_Y_samples": 32}),
             "sr": BTDesigner(policy, qSimpleRegret),
             "ei": BTDesigner(policy, qNoisyExpectedImprovement, acq_kwargs={"X_baseline": None}),
+            "mes": BTDesigner(policy, qMaxValueEntropy, acq_kwargs={"candidate_set": None}),
+            "sobol_mes": BTDesigner(policy, qMaxValueEntropy, init_sobol=init_ax_default, acq_kwargs={"candidate_set": None}),
             "ucb": BTDesigner(policy, qUpperConfidenceBound, acq_kwargs={"beta": 1}),
             "ax": AxDesigner(policy),
-            "sobol_ei": BTDesigner(policy, qNoisyExpectedImprovement, init_sobol=max(5, 2 * policy.num_params()), acq_kwargs={"X_baseline": None}),
-            "sobol_ucb": BTDesigner(policy, qUpperConfidenceBound, init_sobol=max(5, 2 * policy.num_params()), acq_kwargs={"beta": 1}),
+            "sobol_ei": BTDesigner(policy, qNoisyExpectedImprovement, init_sobol=init_ax_default, acq_kwargs={"X_baseline": None}),
+            "sobol_ucb": BTDesigner(policy, qUpperConfidenceBound, init_sobol=init_ax_default, acq_kwargs={"beta": 1}),
         }
 
     def _collect_trajectory(self, policy):

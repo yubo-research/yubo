@@ -1,6 +1,10 @@
 import numpy as np
 from scipy.stats import invwishart, multivariate_normal
 
+# TODO: num_dim > 1
+# TODO: unit test
+# TODO: maybe QMCSampler instead of np.random.normal()
+
 
 class CEMIW:
     """Cross-entropy method for inverse-Wishart distribution
@@ -9,7 +13,6 @@ class CEMIW:
     x is a vector, Sigma is the (diagnoal) covariance matrix.
     """
 
-    # TODO: num_dim > 1
     def __init__(self, mu, scale_0, alpha=0.2):
         self.mu = mu
         self.num_dim = len(mu)

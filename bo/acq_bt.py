@@ -40,7 +40,7 @@ class AcqBT:
         if "X_baseline" in kwargs:
             kwargs["X_baseline"] = X
         if "candidate_set" in kwargs:
-            kwargs["candidate_set"] = X
+            kwargs["candidate_set"] = torch.rand(1000, num_dim)
         if "Y_max" in kwargs:
             kwargs["Y_max"] = gp(self._find_max(gp, self.bounds)).mean
         if "bounds" in kwargs:
