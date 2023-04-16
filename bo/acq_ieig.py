@@ -9,7 +9,6 @@ from botorch.models.model import Model
 from botorch.optim import optimize_acqf
 from botorch.sampling.normal import SobolQMCNormalSampler
 from botorch.utils import t_batch_mode_transform
-
 # from IPython.core.debugger import set_trace
 from torch import Tensor
 from torch.quasirandom import SobolEngine
@@ -179,6 +178,8 @@ class AcqIEIG(MCAcquisitionFunction):
     def forward(self, X: Tensor) -> Tensor:
         self.to(device=X.device)
 
+        weights = self.weights
+
         if self.num_fantasies == 0:
             mvn = self.model.posterior(X, observation_noise=True)
             Y = self.get_posterior_samples(mvn).squeeze(dim=-1)  # num_Y_samples x b x q
@@ -186,12 +187,12 @@ class AcqIEIG(MCAcquisitionFunction):
             model_t = self.model.condition_on_observations(X=X, Y=mvn.mean)  # TODO: noise=observation_noise?
             mvn_t = model_t.posterior(self.X_samples, observation_noise=True)
             Y = self.get_posterior_samples(mvn_t).squeeze(dim=-1)  # num_Y_samples x b x num_X_samples
+            H = (weights * torch.log(Y.std(dim=0))).sum(dim=-1)
         else:
             model_f = self.model.fantasize(X=X, sampler=self.sampler_fantasies, observation_noise=True)
             mvn_f = model_f.posterior(self.X_samples, observation_noise=True)
             Y_f = self.get_posterior_samples(mvn_f).squeeze(dim=-1)  # num_Y_samples x num_fantasies x b x num_X_samples
-            Y = Y_f.reshape(self.num_Y_num_f, Y_f.shape[-2], Y_f.shape[-1])
-
-        H = (self.weights * torch.log(Y.std(dim=0))).sum(dim=-1)
+            # Y = Y_f.reshape(self.num_Y_num_f, Y_f.shape[-2], Y_f.shape[-1])
+            H = (weights * torch.log(Y_f.std(dim=0))).sum(dim=-1).mean(dim=0)
 
         return -H
