@@ -5,6 +5,10 @@ from botorch.acquisition.max_value_entropy_search import (
     qLowerBoundMaxValueEntropy,
     qMaxValueEntropy,
 )
+from botorch.acquisition.predictive_entropy_search import (
+    qPredictiveEntropySearch,
+)
+
 from botorch.acquisition.monte_carlo import (
     qNoisyExpectedImprovement,
     qSimpleRegret,
@@ -67,6 +71,7 @@ class Optimizer:
             "sr": BTDesigner(policy, qSimpleRegret),
             "ei": BTDesigner(policy, qNoisyExpectedImprovement, acq_kwargs={"X_baseline": None}),
             "mes": BTDesigner(policy, qMaxValueEntropy, acq_kwargs={"candidate_set": None}),
+            "pes":BTDesigner(policy, qPredictiveEntropySearch, acq_kwargs={"optimal_inputs": None}),
             "sobol_mes": BTDesigner(policy, qMaxValueEntropy, init_sobol=init_ax_default, acq_kwargs={"candidate_set": None}),
             "gibbon": BTDesigner(policy, qLowerBoundMaxValueEntropy, acq_kwargs={"candidate_set": None}),
             "sobol_gibbon": BTDesigner(policy, qLowerBoundMaxValueEntropy, init_sobol=init_ax_default, acq_kwargs={"candidate_set": None}),
