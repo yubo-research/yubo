@@ -1,0 +1,10 @@
+/home/juju/.local/lib/python3.10/site-packages/gymnasium/spaces/box.py:129: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  gym.logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+Traceback (most recent call last):
+  File "/home/juju/projects/bbo/experiments/exp_1.py", line 26, in <module>
+    sample(env_conf, ttype, tag=f"i_sample = {i_sample}", num_iterations=num_iterations, num_arms=1)
+  File "/home/juju/projects/bbo/experiments/exp_1.py", line 8, in sample
+    for i_iter, rreturn in enumerate(opt.collect_trace(ttype=ttype, num_iterations=num_iterations)):
+  File "/home/juju/projects/bbo/optimizer/optimizer.py", line 93, in collect_trace
+    assert ttype in self._designers, f"Unknown optimizer type {ttype}"
+AssertionError: Unknown optimizer type ioptv_ei
