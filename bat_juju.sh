@@ -1,0 +1,22 @@
+#!/bin/bash
+
+export MKL_NUM_THREADS=3
+export NUMEXPR_NUM_THREADS=3
+export OMP_NUM_THREADS=3
+
+DDIR=exp_1_o
+# f:stybtang-2d f:sphere-2d f:rosenbrock-2d f:ackley-2d f:dixonprice-2d f:griewank-2d f:levy-2d f:michalewicz-2d f:rastrigin-2d f:beale-2d f:branin-2d f:bukin-2d f:crossintray-2d f:dropwave-2d f:eggholder-2d f:hartmann-2d f:holdertable-2d f:shubert-2d f:shekel-2d f:sixhumpcamel-2d f:threehumpcamel-2d
+
+# f:crossintray-2d f:grlee12-2d f:hartmann-3d f:hartmann-4d f:hartmann-6d 
+#f:ackley-20d f:dixonprice-20d f:griewank-20d f:levy-20d
+for TAG in  f:ackley-2d f:stybtang-2d f:sphere-2d f:rosenbrock-2d f:dixonprice-2d f:griewank-2d f:levy-2d f:michalewicz-2d f:rastrigin-2d f:beale-2d f:branin-2d f:bukin-2d f:crossintray-2d f:dropwave-2d f:eggholder-2d f:hartmann-2d f:holdertable-2d f:shubert-2d f:shekel-2d f:sixhumpcamel-2d f:threehumpcamel-2d
+do
+# random sobol ioptv_ei ax ei 
+ for TTYPE in random sobol ei pes mes sobel_ei iopt
+ # for TTYPE in variance maximin maximin-toroidal iopt
+ do
+     echo $TAG $TTYPE
+     # mkdir -p results/${DDIR}/${TAG}
+     python experiments/test.py ${TAG} ${TTYPE} 
+ done
+done
