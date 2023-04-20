@@ -7,7 +7,10 @@ from botorch.utils import standardize
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
 import common.all_bounds as all_bounds
-
+from botorch.acquisition.multi_objective.utils import (
+    sample_optimal_points,
+    random_search_optimizer,
+)
 
 class AcqBT:
     def __init__(self, acq_factory, data, num_dim, acq_kwargs=None):
@@ -42,14 +45,24 @@ class AcqBT:
         if "candidate_set" in kwargs:
             kwargs["candidate_set"] = torch.rand(1000, num_dim)
         if "optimal_inputs" in kwargs:
-            kwargs["optimal_inputs"] = torch.rand(1000, num_dim)
+            num_samples = 10
+            optimal_inputs, optimal_outputs = sample_optimal_points(
+                model=gp,
+                bounds=self.bounds,
+                num_samples=num_samples,
+                num_points=1,
+                optimizer=random_search_optimizer,
+            )
+            kwargs["optimal_inputs"] = optimal_inputs.squeeze(-2)
         if "Y_max" in kwargs:
             kwargs["Y_max"] = gp(self._find_max(gp, self.bounds)).mean
         if "bounds" in kwargs:
             kwargs["bounds"] = self.bounds
 
         self.acq_function = acq_factory(gp, **kwargs)
-
+    
+    
+    
     def _find_max(self, gp, bounds):
         x_cand, _ = optimize_acqf(
             acq_function=PosteriorMean(model=gp),
