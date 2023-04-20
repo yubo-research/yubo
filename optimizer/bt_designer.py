@@ -6,10 +6,11 @@ from optimizer.sobol_designer import SobolDesigner
 
 
 class BTDesigner:
-    def __init__(self, policy, acq_fn, *, acq_kwargs=None, init_sobol=1):
+    def __init__(self, policy, acq_fn, *, acq_kwargs=None, init_sobol=1, optimizer_options={"batch_limit": 5, "maxiter": 200}):
         self._policy = policy
         self._acq_fn = acq_fn
         self._init_sobol = init_sobol
+        self._optimizer_options = optimizer_options
         self._acq_kwargs = acq_kwargs
         self._sobol = SobolDesigner(policy.clone())
 
@@ -32,7 +33,7 @@ class BTDesigner:
                     q=num_arms,
                     num_restarts=10,
                     raw_samples=512,
-                    options={"batch_limit": 5, "maxiter": 200},
+                    options=self._optimizer_options,
                 )
 
         policies = []

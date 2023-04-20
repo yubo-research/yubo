@@ -1,9 +1,9 @@
 import numpy as np
+from botorch.sampling.qmc import MultivariateNormalQMCEngine
 from scipy.stats import invwishart, multivariate_normal
 
 # TODO: num_dim > 1
 # TODO: unit test
-# TODO: maybe QMCSampler instead of np.random.normal()
 
 
 class CEMIW:
