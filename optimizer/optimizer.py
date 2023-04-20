@@ -8,6 +8,10 @@ from botorch.acquisition.max_value_entropy_search import (
 from botorch.acquisition.predictive_entropy_search import (
     qPredictiveEntropySearch,
 )
+from botorch.acquisition.multi_objective.utils import (
+    sample_optimal_points,
+    random_search_optimizer,
+)
 
 from botorch.acquisition.monte_carlo import (
     qNoisyExpectedImprovement,
