@@ -5,23 +5,28 @@ from sampling.cemniw import CEMNIW
 
 
 def _test_cemniw(mu_0, diag_cov_0, known_mu):
+    np.random.seed(17)
+
     mu_0 = np.asarray(mu_0)
     cov_0 = np.diag(diag_cov_0)
 
     def likelihood(samples):
         # a query from some external source; probably slow to make
-        p = [multivariate_normal(mean=mu_0, cov=cov_0).pdf(s.x) for s in samples]
-        return p
+        probs = []
+        for s in samples:
+            assert s.x.min() >= 0 and s.x.max() <= 1
+            probs.append(multivariate_normal(mean=mu_0, cov=cov_0).pdf(s.x))
+        return probs
 
     cemniw = CEMNIW(
         mu_0=mu_0 if known_mu else 0.1 + 0 * mu_0,
         scale_0=0.3**2,
         known_mu=known_mu,
+        sobol_seed=np.random.randint(9999),
     )
 
-    np.random.seed(17)
-    num_samples = 10
-    num_iter = 20 + 10 * len(mu_0)
+    num_samples = 20
+    num_iter = 20 + 10 * len(mu_0) + 10 * int(not known_mu)
     for _ in range(num_iter):
         samples = cemniw.ask(num_samples)
         num_samples = min(30, 3 * num_samples)

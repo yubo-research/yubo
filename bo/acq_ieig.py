@@ -8,11 +8,13 @@ from botorch.models import SingleTaskGP
 from botorch.models.model import Model
 from botorch.optim import optimize_acqf
 from botorch.sampling.normal import SobolQMCNormalSampler
+from botorch.sampling.qmc import MultivariateNormalQMCEngine
 from botorch.utils import t_batch_mode_transform
-
-# from IPython.core.debugger import set_trace
+from IPython.core.debugger import set_trace
 from torch import Tensor
 from torch.quasirandom import SobolEngine
+
+from sampling.cemniw import CEMNIW
 
 
 class AcqIEIG(MCAcquisitionFunction):
@@ -43,9 +45,11 @@ class AcqIEIG(MCAcquisitionFunction):
         num_px_samples: int = 1024,
         num_mcmc: int = 10,
         p_all_type: str = "all",
-        num_fantasies: int = 0,
-        num_Y_samples: int = 128,
+        num_fantasies: int = 3,
+        num_Y_samples: int = 32,
         num_noisy_maxes: int = 3,
+        use_cem=False,
+        q_ts=None,
         **kwargs
     ) -> None:
         super().__init__(model=model, **kwargs)
@@ -57,10 +61,13 @@ class AcqIEIG(MCAcquisitionFunction):
         self.num_px_samples = num_px_samples
         self.c_time = 0.0
 
-        if len(self.model.train_inputs[0]) == 0:
-            X_samples = self._sobol_samples(num_X_samples)
+        if use_cem:
+            X_samples = self._cem_sample_X(num_X_samples)
         else:
-            X_samples = self._sample_X(num_noisy_maxes, num_X_samples, num_mcmc, p_all_type)
+            if len(self.model.train_inputs[0]) == 0:
+                X_samples = self._sobol_samples(num_X_samples)
+            else:
+                X_samples = self._sample_X(num_noisy_maxes, num_X_samples, num_mcmc, p_all_type)
 
         assert len(X_samples) >= num_X_samples, len(X_samples)
         if len(X_samples) != num_X_samples:
@@ -73,13 +80,75 @@ class AcqIEIG(MCAcquisitionFunction):
         with torch.no_grad():
             self.p_max = self._calc_p_max(self.model, self.X_samples)
             self.weights = self.p_max.clone()
-            if True:
+            if use_cem:
+                self.weights = 1.0 + 0.0 * self.weights
+            else:
                 # some points never move b/c they and
                 #  their proposals have zero probability
                 th = 0.1 / len(self.X_samples)
                 self.weights[self.weights < th] = 0.0
                 self.weights[self.weights >= th] = 1.0
-                self.weights = self.weights / self.weights.sum()
+            self.weights = self.weights / self.weights.sum()
+
+            if q_ts is not None:
+                i = np.random.choice(np.arange(len(self.X_samples)), p=self.weights, size=(q_ts,))
+                self.X_cand = torch.atleast_2d(X_samples[i])
+
+    def _likelihoods(self, samples):
+        likelihoods = -np.ones(shape=(len(samples),))
+        i_likelihoods = []
+        xs = []
+        for i, s in enumerate(samples):
+            if s.x.min() < 0 or s.x.max() > 1:
+                likelihoods[i] = 0.0
+            else:
+                xs.append(s.x)
+                i_likelihoods.append(i)
+        X = torch.tensor(xs)
+        if len(X.shape) == 1:
+            X = X[:, None]
+        else:
+            X = torch.atleast_2d(X)
+
+        if len(X) <= 5:
+            return None
+        p = 1e-9 + self._calc_p_max(self.model, X)[:, None].mean(axis=1)
+        i_likelihoods = np.array(i_likelihoods)
+        likelihoods[i_likelihoods] = p
+        return likelihoods
+
+    def _cem_sample_X(self, num_X_samples):
+        X = self.model.train_inputs[0]
+        num_dim = X.shape[-1]
+
+        num_samples = 30
+        for i_outer in range(3):
+            cem = CEMNIW(mu_0=0.5 * np.ones(shape=(num_dim,)), scale_0=0.03)
+            for i_inner in range(30):
+                samples = cem.ask(num_samples)
+                likelihoods = self._likelihoods(samples)
+                if likelihoods is None:
+                    print("NOPE:", i_outer, i_inner, cem.estimate_mu_cov())
+                    num_samples *= 3
+                    break
+                cem.tell(likelihoods, samples)
+            else:
+                break
+        else:
+            assert False, ("Could not fit p*(x)", num_samples)
+
+        mu_est, cov_est = cem.estimate_mu_cov()
+        qmcn = MultivariateNormalQMCEngine(
+            torch.tensor(mu_est),
+            torch.tensor(np.diag(cov_est)),
+        )
+        X_samples = []
+        while len(X_samples) < num_X_samples:
+            x = qmcn.draw(num_X_samples)
+            x = x[x.min(axis=1).values >= 0]
+            x = x[x.max(axis=1).values <= 1]
+            X_samples.extend(list(x))
+        return torch.stack(X_samples[:num_X_samples])
 
     def _sample_X(self, num_noisy_maxes, num_X_samples, num_mcmc, p_all_type):
         no2 = num_X_samples
