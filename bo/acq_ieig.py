@@ -10,7 +10,8 @@ from botorch.optim import optimize_acqf
 from botorch.sampling.normal import SobolQMCNormalSampler
 from botorch.sampling.qmc import MultivariateNormalQMCEngine
 from botorch.utils import t_batch_mode_transform
-from IPython.core.debugger import set_trace
+
+# from IPython.core.debugger import set_trace
 from torch import Tensor
 from torch.quasirandom import SobolEngine
 
@@ -62,7 +63,7 @@ class AcqIEIG(MCAcquisitionFunction):
         self.c_time = 0.0
 
         if use_cem:
-            X_samples = self._cem_sample_X(num_X_samples)
+            X_samples = self._cem_sample_X(num_X_samples, q_ts)
         else:
             if len(self.model.train_inputs[0]) == 0:
                 X_samples = self._sobol_samples(num_X_samples)
@@ -82,48 +83,40 @@ class AcqIEIG(MCAcquisitionFunction):
             self.weights = self.p_max.clone()
             if use_cem:
                 self.weights = 1.0 + 0.0 * self.weights
+                self.weights = self.weights / self.weights.sum()
             else:
                 # some points never move b/c they and
                 #  their proposals have zero probability
                 th = 0.1 / len(self.X_samples)
                 self.weights[self.weights < th] = 0.0
                 self.weights[self.weights >= th] = 1.0
-            self.weights = self.weights / self.weights.sum()
-
-            if q_ts is not None:
-                i = np.random.choice(np.arange(len(self.X_samples)), p=self.weights, size=(q_ts,))
-                self.X_cand = torch.atleast_2d(X_samples[i])
+                self.weights = self.weights / self.weights.sum()
+                if q_ts is not None:
+                    i = np.random.choice(np.arange(len(self.X_samples)), p=self.weights, size=(q_ts,))
+                    self.X_cand = torch.atleast_2d(X_samples[i])
 
     def _likelihoods(self, samples):
-        likelihoods = -np.ones(shape=(len(samples),))
-        i_likelihoods = []
         xs = []
-        for i, s in enumerate(samples):
-            if s.x.min() < 0 or s.x.max() > 1:
-                likelihoods[i] = 0.0
-            else:
-                xs.append(s.x)
-                i_likelihoods.append(i)
+        for s in samples:
+            assert s.x.min() >= 0 and s.x.max() <= 1, s.x
+            xs.append(s.x)
         X = torch.tensor(xs)
         if len(X.shape) == 1:
             X = X[:, None]
         else:
             X = torch.atleast_2d(X)
 
-        if len(X) <= 5:
-            return None
-        p = 1e-9 + self._calc_p_max(self.model, X)[:, None].mean(axis=1)
-        i_likelihoods = np.array(i_likelihoods)
-        likelihoods[i_likelihoods] = p
-        return likelihoods
+        return 1e-9 + self._calc_p_max(self.model, X)[:, None].mean(axis=1)
 
-    def _cem_sample_X(self, num_X_samples):
-        X = self.model.train_inputs[0]
-        num_dim = X.shape[-1]
+    def _cem_sample_X(self, num_X_samples, q_ts):
+        # X = self.model.train_inputs[0]
+        # num_dim = X.shape[-1]
 
+        x_opt = self._find_max(self.model).detach().numpy().flatten()
         num_samples = 30
         for i_outer in range(3):
-            cem = CEMNIW(mu_0=0.5 * np.ones(shape=(num_dim,)), scale_0=0.03)
+            # cem = CEMNIW(mu_0=0.5 * np.ones(shape=(num_dim,)), scale_0=0.03)
+            cem = CEMNIW(mu_0=x_opt, scale_0=0.03, known_mu=True)
             for i_inner in range(30):
                 samples = cem.ask(num_samples)
                 likelihoods = self._likelihoods(samples)
@@ -136,6 +129,9 @@ class AcqIEIG(MCAcquisitionFunction):
                 break
         else:
             assert False, ("Could not fit p*(x)", num_samples)
+
+        if q_ts:
+            self.X_cand = torch.stack([torch.tensor(s.x) for s in cem.ask(q_ts)])
 
         mu_est, cov_est = cem.estimate_mu_cov()
         qmcn = MultivariateNormalQMCEngine(
