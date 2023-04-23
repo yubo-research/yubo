@@ -26,6 +26,9 @@ class CEMNIW:
         self._alpha = alpha
         self._known_mu = known_mu
 
+    def estimate_mu_cov(self):
+        return self._loc, np.diag(self._scale/self._df)
+        
     def ask(self, num_samples):
         rv_iw = invwishart(df=self._df, scale=self._scale)
         covs = rv_iw.rvs(size=(num_samples,))
