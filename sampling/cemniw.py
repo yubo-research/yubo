@@ -35,7 +35,7 @@ class CEMNIW:
     def _init_sample(self, num_samples):
         samples = []
         prob = 1.0 / num_samples
-        for x in qmc.Sobol(self.num_dim, seed=self._sobol_seed).random(num_samples):
+        for x in qmc.Sobol(self.num_dim, seed=self._sobol_seed).random_base2(int(np.log2(num_samples)) + 1)[:num_samples]:
             samples.append(_CEMSample(prob=prob, x=x))
         self._init = False
         return samples

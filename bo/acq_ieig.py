@@ -9,10 +9,9 @@ from botorch.models.model import Model
 from botorch.optim import optimize_acqf
 from botorch.sampling.normal import SobolQMCNormalSampler
 from botorch.sampling.qmc import MultivariateNormalQMCEngine
-from scipy.stats import multivariate_normal
 from botorch.utils import t_batch_mode_transform
-
-from IPython.core.debugger import set_trace
+# from IPython.core.debugger import set_trace
+from scipy.stats import multivariate_normal
 from torch import Tensor
 from torch.quasirandom import SobolEngine
 
@@ -98,8 +97,8 @@ class AcqIEIG(MCAcquisitionFunction):
         xs = []
         for s in samples:
             assert s.x.min() >= 0 and s.x.max() <= 1, s.x
-            xs.append(s.x)
-        X = torch.tensor(xs)
+            xs.append(torch.tensor(s.x))
+        X = torch.stack(xs)
         if len(X.shape) == 1:
             X = X[:, None]
         else:
@@ -124,7 +123,7 @@ class AcqIEIG(MCAcquisitionFunction):
                         print("NOPE:", i_outer, i_inner, cem.estimate_mu_cov())
                         num_samples *= 3
                         break
-                    cem.tell(likelihoods, samples, n_keep=num_samples//3)
+                    cem.tell(likelihoods, samples, n_keep=num_samples // 3)
                 else:
                     break
             else:
@@ -136,11 +135,11 @@ class AcqIEIG(MCAcquisitionFunction):
             X = self.model.train_inputs[0]
             if q_ts:
                 rv = multivariate_normal(mean=mu_est, cov=cov_est)
-                x = rv.rvs(size=(10*q_ts,))
-                x = x[x.min(axis=1)>=0]
-                x = x[x.max(axis=1)<=1]
+                x = rv.rvs(size=(10 * q_ts,))
+                x = x[x.min(axis=1) >= 0]
+                x = x[x.max(axis=1) <= 1]
                 assert len(x) >= q_ts
-                x = x[:q_ts,:]
+                x = x[:q_ts, :]
                 self.X_cand = torch.tensor(x, dtype=X.dtype)
 
             qmcn = MultivariateNormalQMCEngine(
