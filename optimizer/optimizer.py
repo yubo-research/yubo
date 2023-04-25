@@ -63,17 +63,17 @@ class Optimizer:
             "iopt_ei": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "ei", "X_baseline": None}),
             # "iopt_mes": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "mes", "X_baseline": None}),
             "ieig": BTDesigner(policy, AcqIEIG, init_sobol=0),
-            "ieig_qk": BTDesigner(
+            "ieig_znm": BTDesigner(
                 policy,
                 AcqIEIG,
                 init_sobol=0,
                 acq_kwargs={
-                    "num_X_samples": 16,
-                    "num_Y_samples": 4,
-                    "num_mcmc": 10,
-                    "num_fantasies": 4,
+                    # "num_X_samples": 16,
+                    # "num_Y_samples": 4,
+                    # "num_mcmc": 10,
+                    #"num_fantasies": 4,
                     "num_noisy_maxes": 0,
-                    "num_px_samples": 1024,
+                    # "num_px_samples": 1024,
                 },
             ),
             "ieig_cem": BTDesigner(policy, AcqIEIG, init_sobol=0, acq_kwargs={"use_cem": True}),
