@@ -62,7 +62,6 @@ class AcqIEIG(MCAcquisitionFunction):
         self.num_Y_num_f = num_Y_samples * num_fantasies
         self.num_px_samples = num_px_samples
         self.c_time = 0.0
-
         if use_cem:
             X_samples = self._cem_sample_X(num_X_samples, q_ts)
         else:
@@ -113,18 +112,18 @@ class AcqIEIG(MCAcquisitionFunction):
 
         x_opt = self._find_max(self._get_noisy_model()).detach().numpy().flatten()
         with torch.no_grad():
-            num_samples = 30
+            num_samples = 100
             for i_outer in range(1):
-                # cem = CEMNIW(mu_0=0.5 * np.ones(shape=(num_dim,)), scale_0=0.03)
-                cem = CEMNIW(mu_0=x_opt, scale_0=0.1, known_mu=False)
-                for i_inner in range(30):
+                # cem = CEMNIW(mu_0=0.5 * np.ones(shape=(num_dim,)), scale_0=0.03, known_mu=False)
+                cem = CEMNIW(mu_0=x_opt, scale_0=0.03, known_mu=False)
+                for i_inner in range(10):
                     samples = cem.ask(num_samples)
                     likelihoods = self._likelihoods(samples)
                     if likelihoods is None:
                         print("NOPE:", i_outer, i_inner, cem.estimate_mu_cov())
                         num_samples *= 3
                         break
-                    cem.tell(likelihoods, samples, n_keep=num_samples // 3)
+                    cem.tell(likelihoods, samples)  # , n_keep=num_samples // 3)
                 else:
                     break
             else:
@@ -139,7 +138,7 @@ class AcqIEIG(MCAcquisitionFunction):
                 x = rv.rvs(size=(10 * q_ts,))
                 x = x[x.min(axis=1) >= 0]
                 x = x[x.max(axis=1) <= 1]
-                assert len(x) >= q_ts
+                assert len(x) >= q_ts, (mu_est, cov_est)
                 x = x[:q_ts, :]
                 self.X_cand = torch.tensor(x, dtype=X.dtype)
 
@@ -161,7 +160,10 @@ class AcqIEIG(MCAcquisitionFunction):
 
     def _sample_X(self, num_noisy_maxes, num_X_samples, num_mcmc, p_all_type):
         no2 = num_X_samples
-        models = [self._get_noisy_model() for _ in range(num_noisy_maxes)]
+        if num_noisy_maxes == 0:
+            models = [self.model]
+        else:
+            models = [self._get_noisy_model() for _ in range(num_noisy_maxes)]
         x_max = []
         for model in models:
             x = self._find_max(model).detach()

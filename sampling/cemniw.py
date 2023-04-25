@@ -53,7 +53,10 @@ class CEMNIW:
             for cov in covs:
                 if isinstance(cov, np.ndarray):
                     cov = np.diag(np.diag(cov))
-                rv_norm = multivariate_normal(mean=self._loc, cov=cov)
+                rv_norm = multivariate_normal(
+                    mean=self._loc,
+                    cov=1e-9 * np.eye(cov.shape[0]) + cov,
+                )
                 x = rv_norm.rvs(size=(1,))
                 if self.num_dim == 1:
                     x = np.array([x])
