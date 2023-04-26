@@ -8,11 +8,15 @@ from botorch.models import SingleTaskGP
 from botorch.models.model import Model
 from botorch.optim import optimize_acqf
 from botorch.sampling.normal import SobolQMCNormalSampler
+from botorch.sampling.qmc import MultivariateNormalQMCEngine
 from botorch.utils import t_batch_mode_transform
 
-# from IPython.core.debugger import set_trace
+from IPython.core.debugger import set_trace
+from scipy.stats import multivariate_normal
 from torch import Tensor
 from torch.quasirandom import SobolEngine
+
+from sampling.cemniw import CEMNIW
 
 
 class AcqIEIG(MCAcquisitionFunction):
@@ -43,9 +47,11 @@ class AcqIEIG(MCAcquisitionFunction):
         num_px_samples: int = 1024,
         num_mcmc: int = 10,
         p_all_type: str = "all",
-        num_fantasies: int = 0,
-        num_Y_samples: int = 128,
+        num_fantasies: int = 4,
+        num_Y_samples: int = 32,
         num_noisy_maxes: int = 3,
+        use_cem=False,
+        q_ts=None,
         **kwargs
     ) -> None:
         super().__init__(model=model, **kwargs)
@@ -56,11 +62,13 @@ class AcqIEIG(MCAcquisitionFunction):
         self.num_Y_num_f = num_Y_samples * num_fantasies
         self.num_px_samples = num_px_samples
         self.c_time = 0.0
-
-        if len(self.model.train_inputs[0]) == 0:
-            X_samples = self._sobol_samples(num_X_samples)
+        if use_cem:
+            X_samples = self._cem_sample_X(num_X_samples, q_ts)
         else:
-            X_samples = self._sample_X(num_noisy_maxes, num_X_samples, num_mcmc, p_all_type)
+            if len(self.model.train_inputs[0]) == 0:
+                X_samples = self._sobol_samples(num_X_samples)
+            else:
+                X_samples = self._sample_X(num_noisy_maxes, num_X_samples, num_mcmc, p_all_type)
 
         assert len(X_samples) >= num_X_samples, len(X_samples)
         if len(X_samples) != num_X_samples:
@@ -71,28 +79,108 @@ class AcqIEIG(MCAcquisitionFunction):
 
         # Diagnostics
         with torch.no_grad():
-            self.p_max = self._calc_p_max(self.model, self.X_samples)
-            self.weights = self.p_max.clone()
-            if True:
-                # some points never move b/c they and
-                #  their proposals have zero probability
-                th = 0.1 / len(self.X_samples)
-                self.weights[self.weights < th] = 0.0
-                self.weights[self.weights >= th] = 1.0
-                self.weights = self.weights / self.weights.sum()
+            if not use_cem:
+                self.p_max = self._calc_p_max(self.model, self.X_samples)
+                self.weights = self.p_max.clone()
+                
+                if True:
+                    # some points never move b/c they and
+                    #  their proposals have zero probability
+                    th = 0.1 / len(self.X_samples)
+                    i = np.where(self.weights.detach().numpy() >= th)[0]
+                    self.weights = self.weights[i]
+                    self.weights = 1. + 0*self.weights
+                    self.X_samples = self.X_samples[i]
+
+                    # self.weights[self.weights < th] = 0.0
+                    # self.weights[self.weights >= th] = 1.0
+                    self.weights = self.weights / self.weights.sum()
+                    
+                if q_ts is not None:
+                    i = np.random.choice(np.arange(len(self.X_samples)), p=self.weights, size=(q_ts,))
+                    self.X_cand = torch.atleast_2d(X_samples[i])
+
+    def _likelihoods(self, samples):
+        xs = []
+        for s in samples:
+            assert s.x.min() >= 0 and s.x.max() <= 1, s.x
+            xs.append(torch.tensor(s.x))
+        X = torch.stack(xs)
+        if len(X.shape) == 1:
+            X = X[:, None]
+        else:
+            X = torch.atleast_2d(X)
+
+        return 1e-9 + self._calc_p_max(self.model, X)[:, None].mean(axis=1)
+
+    def _cem_sample_X(self, num_X_samples, q_ts):
+        # X = self.model.train_inputs[0]
+        # num_dim = X.shape[-1]
+
+        x_opt = self._find_max(self._get_noisy_model()).detach().numpy().flatten()
+        with torch.no_grad():
+            num_samples = 10
+            for i_outer in range(1):
+                # cem = CEMNIW(mu_0=0.5 * np.ones(shape=(num_dim,)), scale_0=0.03, known_mu=False)
+                cem = CEMNIW(mu_0=x_opt, scale_0=0.01, known_mu=False)
+                for i_inner in range(100):
+                    samples = cem.ask(num_samples)
+                    likelihoods = self._likelihoods(samples)
+                    if likelihoods is None:
+                        print("NOPE:", i_outer, i_inner, cem.estimate_mu_cov())
+                        num_samples *= 3
+                        break
+                    cem.tell(likelihoods, samples)  # , n_keep=num_samples // 3)
+                else:
+                    break
+            else:
+                assert False, ("Could not fit p*(x)", num_samples)
+
+            mu_est, cov_est = cem.estimate_mu_cov()
+            # assert np.all(mu_est == x_opt), (mu_est, x_opt)
+
+            X = self.model.train_inputs[0]
+            if q_ts:
+                rv = multivariate_normal(mean=mu_est, cov=cov_est)
+                x = rv.rvs(size=(10 * q_ts,))
+                x = x[x.min(axis=1) >= 0]
+                x = x[x.max(axis=1) <= 1]
+                assert len(x) >= q_ts, (mu_est, cov_est)
+                x = x[:q_ts, :]
+                self.X_cand = torch.tensor(x, dtype=X.dtype)
+
+            qmcn = MultivariateNormalQMCEngine(
+                torch.tensor(mu_est),
+                torch.tensor(np.diag(cov_est)),
+            )
+            X_samples = []
+            while len(X_samples) < num_X_samples:
+                x = qmcn.draw(num_X_samples)
+                x = x[x.min(axis=1).values >= 0]
+                x = x[x.max(axis=1).values <= 1]
+                X_samples.extend(list(x))
+
+            X_samples = torch.stack(X_samples).type(X.dtype)[:num_X_samples].detach()
+            self.weights = torch.tensor(rv.pdf(X_samples.numpy()), dtype=X.dtype)
+
+        return X_samples
 
     def _sample_X(self, num_noisy_maxes, num_X_samples, num_mcmc, p_all_type):
-        no2 = num_X_samples
-        models = [self._get_noisy_model() for _ in range(num_noisy_maxes)]
+        if num_noisy_maxes == 0:
+            models = [self.model]
+        else:
+            models = [self._get_noisy_model() for _ in range(num_noisy_maxes)]
         x_max = []
         for model in models:
             x = self._find_max(model).detach()
             x_max.append(x)
         x_max = torch.cat(x_max, axis=0)
+        no2 = num_X_samples / num_mcmc # TEST
         n = int(no2 / len(x_max) + 1)
+        assert n > 0, n
         # X_samples = torch.cat((X_samples, torch.tile(x_max, (n, 1))), axis=0)
         X_samples = torch.tile(x_max, (n, 1))
-        assert len(X_samples) >= num_X_samples, (len(X_samples), num_X_samples, no2)
+        # assert len(X_samples) >= num_X_samples, (len(X_samples), num_X_samples, no2)
 
         # burn in
         for _ in range(num_mcmc):
