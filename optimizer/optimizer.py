@@ -71,7 +71,7 @@ class Optimizer:
                     # "num_X_samples": 16,
                     # "num_Y_samples": 4,
                     # "num_mcmc": 10,
-                    #"num_fantasies": 4,
+                    # "num_fantasies": 4,
                     "num_noisy_maxes": 0,
                     # "num_px_samples": 1024,
                 },

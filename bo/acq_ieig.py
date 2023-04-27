@@ -10,7 +10,6 @@ from botorch.optim import optimize_acqf
 from botorch.sampling.normal import SobolQMCNormalSampler
 from botorch.sampling.qmc import MultivariateNormalQMCEngine
 from botorch.utils import t_batch_mode_transform
-
 from IPython.core.debugger import set_trace
 from scipy.stats import multivariate_normal
 from torch import Tensor
@@ -82,20 +81,20 @@ class AcqIEIG(MCAcquisitionFunction):
             if not use_cem:
                 self.p_max = self._calc_p_max(self.model, self.X_samples)
                 self.weights = self.p_max.clone()
-                
+
                 if True:
                     # some points never move b/c they and
                     #  their proposals have zero probability
                     th = 0.1 / len(self.X_samples)
                     i = np.where(self.weights.detach().numpy() >= th)[0]
                     self.weights = self.weights[i]
-                    self.weights = 1. + 0*self.weights
+                    self.weights = 1.0 + 0 * self.weights
                     self.X_samples = self.X_samples[i]
 
                     # self.weights[self.weights < th] = 0.0
                     # self.weights[self.weights >= th] = 1.0
                     self.weights = self.weights / self.weights.sum()
-                    
+
                 if q_ts is not None:
                     i = np.random.choice(np.arange(len(self.X_samples)), p=self.weights, size=(q_ts,))
                     self.X_cand = torch.atleast_2d(X_samples[i])
@@ -175,12 +174,11 @@ class AcqIEIG(MCAcquisitionFunction):
             x = self._find_max(model).detach()
             x_max.append(x)
         x_max = torch.cat(x_max, axis=0)
-        no2 = num_X_samples / num_mcmc # TEST
+        no2 = num_X_samples
         n = int(no2 / len(x_max) + 1)
-        assert n > 0, n
         # X_samples = torch.cat((X_samples, torch.tile(x_max, (n, 1))), axis=0)
         X_samples = torch.tile(x_max, (n, 1))
-        # assert len(X_samples) >= num_X_samples, (len(X_samples), num_X_samples, no2)
+        assert len(X_samples) >= num_X_samples, (len(X_samples), num_X_samples, no2)
 
         # burn in
         for _ in range(num_mcmc):

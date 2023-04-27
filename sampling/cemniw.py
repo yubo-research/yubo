@@ -80,7 +80,7 @@ class CEMNIW:
         probs = np.array([s.prob for s in samples])
 
         probs = probs / probs.sum()
-        
+
         # importance-weighted log-likelihood: log( p(x|theta) / p(x) )
         # Careful. Adding eps's might break it.
         scores = np.log(likelihoods) - np.log(probs)
