@@ -55,7 +55,7 @@ class CEMNIW:
                     cov = np.diag(np.diag(cov))
                 rv_norm = multivariate_normal(
                     mean=self._loc,
-                    cov=1e-9 * np.eye(cov.shape[0]) + cov,
+                    cov=cov,
                 )
                 x = rv_norm.rvs(size=(1,))
                 if self.num_dim == 1:
@@ -79,6 +79,8 @@ class CEMNIW:
         dx = np.stack([s.x for s in samples]) - self._loc
         probs = np.array([s.prob for s in samples])
 
+        probs = probs / probs.sum()
+        
         # importance-weighted log-likelihood: log( p(x|theta) / p(x) )
         # Careful. Adding eps's might break it.
         scores = np.log(likelihoods) - np.log(probs)
