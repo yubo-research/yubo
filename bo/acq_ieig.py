@@ -52,7 +52,7 @@ class AcqIEIG(MCAcquisitionFunction):
         num_Y_samples: int = 32,
         num_noisy_maxes: int = 3,
         use_cem=False,
-        use_softmax=False,
+        use_softmax=True,
         q_ts=None,
         **kwargs
     ) -> None:
