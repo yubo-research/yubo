@@ -24,7 +24,7 @@ def load(fn, keys):
     return np.array(data).squeeze()
 
 
-def loadKV(fn, keys, grep_for=None):
+def load_kv(fn, keys, grep_for=None):
     if isinstance(keys, str):
         keys = keys.split(",")
     skeys = set(keys)
@@ -49,8 +49,8 @@ def loadKV(fn, keys, grep_for=None):
     return out
 
 
-def load_traces(fn):
-    o = loadKV(fn, ["i_sample", "return"], grep_for="TRACE:")
+def load_traces(fn, key="return"):
+    o = load_kv(fn, ["i_sample", key], grep_for="TRACE:")
     traces = []
     n_x = None
     for i_sample in np.unique(o["i_sample"]):

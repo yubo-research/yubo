@@ -1,5 +1,6 @@
 import sys
 import time
+from dataclasses import dataclass
 
 from botorch.acquisition.max_value_entropy_search import (
     qLowerBoundMaxValueEntropy,
@@ -43,6 +44,12 @@ def _iOptFactory(model, acqf=None, X_baseline=None):
     return AcqIOpt(model, acqf=acqf)
 
 
+@dataclass
+class _TraceEntry:
+    rreturn: float
+    time_iteration_seconds: float
+
+
 class Optimizer:
     def __init__(self, env_conf, policy, num_arms, cb_trace=None):
         self._env_conf = env_conf
@@ -62,6 +69,7 @@ class Optimizer:
             "iopt_nm": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "nm"}),
             "iopt_ei": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "ei", "X_baseline": None}),
             "ieig": BTDesigner(policy, AcqIEIG, init_sobol=0),
+            "ieig_init": BTDesigner(policy, AcqIEIG, init_sobol=0, optimizer_options={"init_by_samples": True}),
             "ieig_cem": BTDesigner(policy, AcqIEIG, init_sobol=0, acq_kwargs={"use_cem": True}),
             "ieig_px": BTDesigner(policy, AcqIEIG, init_sobol=0, acq_kwargs={"num_px_samples": 128}),
             "ieig_ts": BTDesigner(
@@ -116,7 +124,7 @@ class Optimizer:
             if i_iter % 1 == 0:
                 print(f"ITER: i_iter = {i_iter} d_time = {d_time:.2f} ret = {best_in_batch:.2f} ret_best = {self._datum_best.trajectory.rreturn:.2f}")
                 sys.stdout.flush()
-            trace.append(self._datum_best.trajectory.rreturn)
+            trace.append(_TraceEntry(self._datum_best.trajectory.rreturn, d_time))
             if self._cb_trace:
                 self._cb_trace(self._datum_best)
 

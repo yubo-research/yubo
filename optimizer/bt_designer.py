@@ -1,3 +1,4 @@
+import numpy as np
 from botorch.optim import optimize_acqf
 
 import common.all_bounds as all_bounds
@@ -6,10 +7,11 @@ from optimizer.sobol_designer import SobolDesigner
 
 
 class BTDesigner:
-    def __init__(self, policy, acq_fn, *, acq_kwargs=None, init_sobol=1, optimizer_options={"batch_limit": 5, "maxiter": 200}):
+    def __init__(self, policy, acq_fn, *, acq_kwargs=None, init_sobol=1, init_X_samples=False, optimizer_options={"batch_limit": 5, "maxiter": 200}):
         self._policy = policy
         self._acq_fn = acq_fn
         self._init_sobol = init_sobol
+        self._init_X_samples = init_X_samples
         self._optimizer_options = optimizer_options
         self._acq_kwargs = acq_kwargs
         self._sobol = SobolDesigner(policy.clone())
@@ -26,6 +28,12 @@ class BTDesigner:
             X_cand = acqf.acq_function.X_cand
         else:
             warnings.simplefilter("ignore")
+            if self._init_X_samples and hasattr(acqf.acq_function, "X_samples"):
+                X = acqf.acq_function.X_samples
+                i = np.random.randint(len(X), size=(10,))
+                batch_initial_conditions = X[i, :].unsqueeze(1)
+            else:
+                batch_initial_conditions = None
             with warnings.catch_warnings():
                 X_cand, _ = optimize_acqf(
                     acq_function=acqf.acq_function,
@@ -34,6 +42,7 @@ class BTDesigner:
                     num_restarts=10,
                     raw_samples=512,
                     options=self._optimizer_options,
+                    batch_initial_conditions=batch_initial_conditions,
                 )
 
         policies = []

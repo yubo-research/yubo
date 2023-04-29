@@ -5,8 +5,8 @@ from problems.env_conf import default_policy
 def sample(env_conf, ttype, tag, num_iterations, num_arms):
     policy = default_policy(env_conf)
     opt = Optimizer(env_conf, policy, num_arms=num_arms)
-    for i_iter, rreturn in enumerate(opt.collect_trace(ttype=ttype, num_iterations=num_iterations)):
-        print(f"TRACE: name = {env_conf.env_name} ttype = {ttype} {tag} i_iter = {i_iter} return = {rreturn:.3f}")
+    for i_iter, te in enumerate(opt.collect_trace(ttype=ttype, num_iterations=num_iterations)):
+        print(f"TRACE: name = {env_conf.env_name} ttype = {ttype} {tag} i_iter = {i_iter} dt = {te.time_iteration_seconds:.3e} return = {te.rreturn:.3e}")
 
 
 if __name__ == "__main__":

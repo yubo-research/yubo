@@ -27,15 +27,16 @@ class AcqIEIG(MCAcquisitionFunction):
      - Measure T Thompson samples with q arms
      - Similar to integrated optimality / elastic integrated optimality
 
-    WORKS:
-        num_X_samples: int = 256,
-        num_px_samples: int = 4096,
+    CURRENT:
+        num_X_samples: int = 128,
+        num_px_samples: int = 128,
         num_mcmc: int = 10,
         p_all_type: str = "all",
-        num_Y_samples: int = 1024,
-        num_noisy_maxes: int = 10,
-        joint_sampling: bool = True,
-        use_log: bool = False,
+        num_fantasies: int = 4,
+        num_Y_samples: int = 32,
+        num_noisy_maxes: int = 3,
+        use_cem=False,
+        q_ts=None,
 
     """
 
@@ -43,7 +44,7 @@ class AcqIEIG(MCAcquisitionFunction):
         self,
         model: Model,
         num_X_samples: int = 128,
-        num_px_samples: int = 1024,
+        num_px_samples: int = 128,
         num_mcmc: int = 10,
         p_all_type: str = "all",
         num_fantasies: int = 4,
