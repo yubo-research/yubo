@@ -10,7 +10,8 @@ from botorch.optim import optimize_acqf
 from botorch.sampling.normal import SobolQMCNormalSampler
 from botorch.sampling.qmc import MultivariateNormalQMCEngine
 from botorch.utils import t_batch_mode_transform
-from IPython.core.debugger import set_trace
+
+# from IPython.core.debugger import set_trace
 from scipy.stats import multivariate_normal
 from torch import Tensor
 from torch.quasirandom import SobolEngine
@@ -51,6 +52,7 @@ class AcqIEIG(MCAcquisitionFunction):
         num_Y_samples: int = 32,
         num_noisy_maxes: int = 3,
         use_cem=False,
+        use_softmax=False,
         q_ts=None,
         **kwargs
     ) -> None:
@@ -62,6 +64,7 @@ class AcqIEIG(MCAcquisitionFunction):
         self.num_Y_num_f = num_Y_samples * num_fantasies
         self.num_px_samples = num_px_samples
         self.c_time = 0.0
+        self._use_softmax = use_softmax
         if use_cem:
             X_samples = self._cem_sample_X(num_X_samples, q_ts)
         else:
@@ -255,11 +258,17 @@ class AcqIEIG(MCAcquisitionFunction):
         return self._calc_p_max_from_Y(Y)
 
     def _calc_p_max_from_Y(self, Y):
-        beta = 12
-        sm = torch.exp(beta * Y)
-        sm = sm / sm.sum(dim=-1).unsqueeze(-1)
-        p_max = sm.mean(dim=0)
-        assert np.abs(p_max.sum() - 1) < 1e-4, p_max
+        if self._use_softmax:
+            beta = 12
+            sm = torch.exp(beta * Y)
+            sm = sm / sm.sum(dim=-1).unsqueeze(-1)
+            p_max = sm.mean(dim=0)
+            assert np.abs(p_max.sum() - 1) < 1e-4, p_max
+        else:
+            is_best = torch.argmax(Y, dim=-1)
+            idcs, counts = torch.unique(is_best, return_counts=True)
+            p_max = torch.zeros(Y.shape[-1])
+            p_max[idcs] = counts / Y.shape[0]
         return p_max
 
     @t_batch_mode_transform()

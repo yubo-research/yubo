@@ -55,7 +55,7 @@ def load_traces(fn, key="return"):
     n_x = None
     for i_sample in np.unique(o["i_sample"]):
         i = np.where(o["i_sample"] == i_sample)[0]
-        x = list(o["return"][i])
+        x = list(o[key][i])
         if n_x is not None:
             while len(x) < n_x:
                 x.append(x[-1])
