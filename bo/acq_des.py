@@ -169,6 +169,6 @@ class AcqDES(MCAcquisitionFunction):
         assert Y_f.shape[0] == self.num_Y_samples, Y_f.shape
         p_max = self._calc_p_max_from_Y(Y_f, across_batches=True)  # num_fantasies x b x num_X_samples
         # H = -((p_max / self._p_max) * torch.log(p_max)).mean(dim=-1).mean(dim=0)
-        H = -(torch.log(p_max)).mean(dim=-1).mean(dim=0)
+        H = (torch.log(p_max)).mean(dim=-1).mean(dim=0)
 
         return -H
