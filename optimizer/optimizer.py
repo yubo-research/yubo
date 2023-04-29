@@ -12,8 +12,8 @@ from botorch.acquisition.monte_carlo import (
     qUpperConfidenceBound,
 )
 
+from bo.acq_des import AcqDES
 from bo.acq_ieig import AcqIEIG
-from bo.acq_ieig import AcqDES
 from bo.acq_iopt import AcqIOpt
 from bo.acq_min_dist import AcqMinDist
 from bo.acq_noisy_max import AcqNoisyMax
@@ -69,9 +69,9 @@ class Optimizer:
             "iopt_sr": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "sr"}),
             "iopt_nm": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "nm"}),
             "iopt_ei": BTDesigner(policy, _iOptFactory, init_sobol=0, acq_kwargs={"acqf": "ei", "X_baseline": None}),
-            "des": BTDesigner(policy, AcqDES, init_sobol=0),
+            "des": BTDesigner(policy, AcqDES, init_sobol=0, init_X_samples=True),
             "ieig": BTDesigner(policy, AcqIEIG, init_sobol=0),
-            "ieig_init": BTDesigner(policy, AcqIEIG, init_sobol=0, optimizer_options={"init_by_samples": True}),
+            "ieig_init": BTDesigner(policy, AcqIEIG, init_sobol=0, init_X_samples=True),
             "ieig_cem": BTDesigner(policy, AcqIEIG, init_sobol=0, acq_kwargs={"use_cem": True}),
             "ieig_px": BTDesigner(policy, AcqIEIG, init_sobol=0, acq_kwargs={"num_px_samples": 128}),
             "ieig_ts": BTDesigner(
