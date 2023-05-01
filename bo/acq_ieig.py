@@ -54,6 +54,7 @@ class AcqIEIG(MCAcquisitionFunction):
         use_cem=False,
         use_softmax=True,
         q_ts=None,
+            no_log=False,
         **kwargs
     ) -> None:
         super().__init__(model=model, **kwargs)
@@ -65,6 +66,7 @@ class AcqIEIG(MCAcquisitionFunction):
         self.num_px_samples = num_px_samples
         self.c_time = 0.0
         self._use_softmax = use_softmax
+        self._no_log = no_log
         if use_cem:
             X_samples = self._cem_sample_X(num_X_samples, q_ts)
         else:
@@ -277,6 +279,13 @@ class AcqIEIG(MCAcquisitionFunction):
 
         weights = self.weights
 
+        if self._no_log:
+            def log(x):
+                return x
+        else:
+            def log(x):
+                return torch.log(x)
+        
         if self.num_fantasies == 0:
             mvn = self.model.posterior(X, observation_noise=True)
             Y = self.get_posterior_samples(mvn).squeeze(dim=-1)  # num_Y_samples x b x q
@@ -284,12 +293,12 @@ class AcqIEIG(MCAcquisitionFunction):
             model_t = self.model.condition_on_observations(X=X, Y=mvn.mean)  # TODO: noise=observation_noise?
             mvn_t = model_t.posterior(self.X_samples, observation_noise=True)
             Y = self.get_posterior_samples(mvn_t).squeeze(dim=-1)  # num_Y_samples x b x num_X_samples
-            H = (weights * torch.log(Y.std(dim=0))).sum(dim=-1)
+            H = (weights * log(Y.std(dim=0))).sum(dim=-1)
         else:
             model_f = self.model.fantasize(X=X, sampler=self.sampler_fantasies, observation_noise=True)
             mvn_f = model_f.posterior(self.X_samples, observation_noise=True)
             Y_f = self.get_posterior_samples(mvn_f).squeeze(dim=-1)  # num_Y_samples x num_fantasies x b x num_X_samples
             # Y = Y_f.reshape(self.num_Y_num_f, Y_f.shape[-2], Y_f.shape[-1])
-            H = (weights * torch.log(Y_f.std(dim=0))).sum(dim=-1).mean(dim=0)
+            H = (weights * log(Y_f.std(dim=0))).sum(dim=-1).mean(dim=0)
 
         return -H

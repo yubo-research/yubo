@@ -28,6 +28,7 @@ class AcqDES(MCAcquisitionFunction):
         num_fantasies: int = 4,
         num_Y_samples: int = 32,
         num_noisy_maxes: int = 3,
+        fantasies_only=False,
         **kwargs
     ) -> None:
         super().__init__(model=model, **kwargs)
@@ -38,7 +39,8 @@ class AcqDES(MCAcquisitionFunction):
         self.num_Y_num_f = num_Y_samples * num_fantasies
         self.num_Y_samples = num_Y_samples
         self.num_px_samples = num_px_samples
-
+        self._fantasies_only = fantasies_only
+        
         if len(self.model.train_inputs[0]) == 0:
             self.X_samples = self._sobol_samples(num_X_samples)
             self._p_max = torch.ones(len(self.X_samples))
@@ -53,6 +55,7 @@ class AcqDES(MCAcquisitionFunction):
 
             self.X_samples = X_samples
             self._p_max = self._calc_p_max(self.model, self.X_samples)
+            print ("P:", self._p_max.max() / self._p_max.min())
 
     def thompson_sample(self, q):
         i = np.random.choice(np.arange(len(self.X_samples)), size=(q,))
@@ -150,8 +153,13 @@ class AcqDES(MCAcquisitionFunction):
         sm = torch.exp(beta * Y)
         if across_batches:
             # Y ~ num_Y_samples x num_fantasies x b x num_X_samples
-            norm = sm.sum(dim=-1).sum(dim=-1).sum(dim=0)
-            norm = norm.unsqueeze(-1).unsqueeze(-1).unsqueeze(0)
+            if self._fantasies_only:
+                norm = sm.sum(dim=-1).sum(dim=0)
+                norm = norm.unsqueeze(-1).unsqueeze(0)
+            else:
+                norm = sm.sum(dim=-1).sum(dim=-1).sum(dim=0)
+                norm = norm.unsqueeze(-1).unsqueeze(-1).unsqueeze(0)
+
         else:
             norm = sm.sum(dim=-1).unsqueeze(-1)
         sm = sm / norm
@@ -168,7 +176,7 @@ class AcqDES(MCAcquisitionFunction):
         Y_f = self.get_posterior_samples(mvn_f).squeeze(dim=-1)  # num_Y_samples x num_fantasies x b x num_X_samples
         assert Y_f.shape[0] == self.num_Y_samples, Y_f.shape
         p_max = self._calc_p_max_from_Y(Y_f, across_batches=True)  # num_fantasies x b x num_X_samples
-        # H = -((p_max / self._p_max) * torch.log(p_max)).mean(dim=-1).mean(dim=0)
-        H = (torch.log(p_max)).mean(dim=-1).mean(dim=0)
+        H = -((p_max / self._p_max) * torch.log(p_max)).mean(dim=-1).mean(dim=0)
+        # H = (torch.log(p_max)).mean(dim=-1).mean(dim=0)
 
         return -H
