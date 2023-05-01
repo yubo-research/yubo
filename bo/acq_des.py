@@ -40,7 +40,7 @@ class AcqDES(MCAcquisitionFunction):
         self.num_Y_samples = num_Y_samples
         self.num_px_samples = num_px_samples
         self._fantasies_only = fantasies_only
-        
+
         if len(self.model.train_inputs[0]) == 0:
             self.X_samples = self._sobol_samples(num_X_samples)
             self._p_max = torch.ones(len(self.X_samples))
@@ -55,7 +55,7 @@ class AcqDES(MCAcquisitionFunction):
 
             self.X_samples = X_samples
             self._p_max = self._calc_p_max(self.model, self.X_samples)
-            print ("P:", self._p_max.max() / self._p_max.min())
+            print("P:", self._p_max.max() / self._p_max.min())
 
     def thompson_sample(self, q):
         i = np.random.choice(np.arange(len(self.X_samples)), size=(q,))

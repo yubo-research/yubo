@@ -54,7 +54,7 @@ class AcqIEIG(MCAcquisitionFunction):
         use_cem=False,
         use_softmax=True,
         q_ts=None,
-            no_log=False,
+        no_log=False,
         **kwargs
     ) -> None:
         super().__init__(model=model, **kwargs)
@@ -280,12 +280,15 @@ class AcqIEIG(MCAcquisitionFunction):
         weights = self.weights
 
         if self._no_log:
+
             def log(x):
                 return x
+
         else:
+
             def log(x):
                 return torch.log(x)
-        
+
         if self.num_fantasies == 0:
             mvn = self.model.posterior(X, observation_noise=True)
             Y = self.get_posterior_samples(mvn).squeeze(dim=-1)  # num_Y_samples x b x q
