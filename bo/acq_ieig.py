@@ -48,7 +48,7 @@ class AcqIEIG(MCAcquisitionFunction):
         num_fantasies: int = 4,
         num_Y_samples: int = 32,
         num_noisy_maxes: int = 3,
-        use_softmax=True,
+        use_softmax=False,
         q_ts=None,
         no_log=False,
             use_weights=True,
