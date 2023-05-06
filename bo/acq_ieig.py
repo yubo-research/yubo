@@ -19,40 +19,26 @@ from torch.quasirandom import SobolEngine
 
 class AcqIEIG(MCAcquisitionFunction):
     """Integrated Expected Information Gain
-    Maximize the integral (over X) of the EIG of the distribution
-     of the optimal x: p_*(x).
 
-     - Follows optimal Bayesian experiment design (OED) by maximizing the EIG.
-     - Measure T Thompson samples with q arms
-     - Similar to integrated optimality / elastic integrated optimality
-
-    CURRENT:
-        num_X_samples: int = 128,
-        num_px_samples: int = 128,
-        num_mcmc: int = 10,
-        p_all_type: str = "all",
-        num_fantasies: int = 4,
-        num_Y_samples: int = 32,
-        num_noisy_maxes: int = 3,
-        q_ts=None,
-
+    TODO: better to not use weights b/c the sample is from p*(x)
     """
 
     def __init__(
         self,
         model: Model,
         num_X_samples: int = 128,
-        num_px_weights: int = 128,
+        num_px_weights: int = 1024,
         num_px_mc: int = 128,
         num_mcmc: int = 10,
         p_all_type: str = "all",
-        num_fantasies: int = 4,
+        num_fantasies: int = 0,
         num_Y_samples: int = 32,
-        num_noisy_maxes: int = 3,
+        num_noisy_maxes: int = 0,
         q_ts=None,
         no_log=False,
         fantasies_only=True,
         use_des=False,
+        no_weights=False,
         **kwargs
     ) -> None:
         super().__init__(model=model, **kwargs)
@@ -80,10 +66,12 @@ class AcqIEIG(MCAcquisitionFunction):
         else:
             self.X_samples = X_samples
 
-        # Diagnostics
         with torch.no_grad():
-            self.p_max = self._calc_p_max(self.model, self.X_samples, num_px=self.num_px_weights)
-            self.weights = self.p_max.clone()
+            if no_weights:
+                self.weights = torch.ones(len(self.X_samples))
+            else:
+                self.p_max = self._calc_p_max(self.model, self.X_samples, num_px=self.num_px_weights)
+                self.weights = self.p_max.clone()
             self.weights = self.weights / self.weights.sum()
 
             if q_ts is not None:

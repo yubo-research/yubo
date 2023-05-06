@@ -67,14 +67,9 @@ class Optimizer:
             "variance": BTDesigner(policy, AcqVar),
             "iopt": BTDesigner(policy, _iOptFactory, init_sobol=0),
             "des": BTDesigner(policy, AcqDES, init_sobol=0, init_X_samples=True),
-            "ieig": BTDesigner(policy, AcqIEIG, init_sobol=0),
+            "ieig": BTDesigner(policy, AcqIEIG, init_sobol=0, init_X_samples=True),
             "ieig_init": BTDesigner(policy, AcqIEIG, init_sobol=0, init_X_samples=True),
-            "ieig_init_uw": BTDesigner(policy, AcqIEIG, init_sobol=0, init_X_samples=True, acq_kwargs={"use_weights": True}),
-            "ieig_sm": BTDesigner(policy, AcqIEIG, init_sobol=0, init_X_samples=True, acq_kwargs={"use_weights": True, "use_softmax": False}),
-            "ieig_nnm": BTDesigner(
-                policy, AcqIEIG, init_sobol=0, init_X_samples=True, acq_kwargs={"use_weights": True, "use_softmax": False, "num_noisy_maxes": 0}
-            ),
-            "ieig_nl": BTDesigner(policy, AcqIEIG, init_sobol=0, init_X_samples=True, acq_kwargs={"no_log": True}),
+            "ieig_nw": BTDesigner(policy, AcqIEIG, init_sobol=0, init_X_samples=True, acq_kwargs={"no_weights": True, "num_px_weights": 0}),
             "ieig_ks": BTDesigner(
                 policy,
                 AcqIEIG,
