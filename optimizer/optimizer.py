@@ -71,9 +71,23 @@ class Optimizer:
             "ieig_init": BTDesigner(policy, AcqIEIG, init_sobol=0, init_X_samples=True),
             "ieig_init_uw": BTDesigner(policy, AcqIEIG, init_sobol=0, init_X_samples=True, acq_kwargs={"use_weights": True}),
             "ieig_sm": BTDesigner(policy, AcqIEIG, init_sobol=0, init_X_samples=True, acq_kwargs={"use_weights": True, "use_softmax": False}),
-            "ieig_nnm": BTDesigner(policy, AcqIEIG, init_sobol=0, init_X_samples=True, acq_kwargs={"use_weights": True, "use_softmax": False, "num_noisy_maxes": 0}),
+            "ieig_nnm": BTDesigner(
+                policy, AcqIEIG, init_sobol=0, init_X_samples=True, acq_kwargs={"use_weights": True, "use_softmax": False, "num_noisy_maxes": 0}
+            ),
             "ieig_nl": BTDesigner(policy, AcqIEIG, init_sobol=0, init_X_samples=True, acq_kwargs={"no_log": True}),
-            "ieig_nl_px": BTDesigner(policy, AcqIEIG, init_sobol=0, init_X_samples=True, acq_kwargs={"no_log": True, "num_px_samples": 128}),
+            "ieig_ks": BTDesigner(
+                policy,
+                AcqIEIG,
+                init_sobol=0,
+                init_X_samples=True,
+                acq_kwargs={
+                    "no_log": True,
+                    "num_px_mc": 128,
+                    "num_px_weights": 1024,
+                    "num_noisy_maxes": 0,
+                    "num_fantasies": 0,
+                },
+            ),
             "ieig_ts": BTDesigner(
                 policy,
                 AcqIEIG,

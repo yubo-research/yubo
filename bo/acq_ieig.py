@@ -42,16 +42,17 @@ class AcqIEIG(MCAcquisitionFunction):
         self,
         model: Model,
         num_X_samples: int = 128,
-        num_px_samples: int = 128,
+        num_px_weights: int = 128,
+        num_px_mc: int = 128,
         num_mcmc: int = 10,
         p_all_type: str = "all",
         num_fantasies: int = 4,
         num_Y_samples: int = 32,
         num_noisy_maxes: int = 3,
-        use_softmax=False,
         q_ts=None,
         no_log=False,
-            use_weights=True,
+        fantasies_only=True,
+        use_des=False,
         **kwargs
     ) -> None:
         super().__init__(model=model, **kwargs)
@@ -60,10 +61,13 @@ class AcqIEIG(MCAcquisitionFunction):
             self.sampler_fantasies = SobolQMCNormalSampler(sample_shape=torch.Size([num_fantasies]))
         self.num_fantasies = num_fantasies
         self.num_Y_num_f = num_Y_samples * num_fantasies
-        self.num_px_samples = num_px_samples
+        self.num_px_mc = num_px_mc
+        self.num_px_weights = num_px_weights
         self.c_time = 0.0
-        self._use_softmax = use_softmax
         self._no_log = no_log
+        self._fantasies_only = fantasies_only
+        self._use_des = use_des
+
         if len(self.model.train_inputs[0]) == 0:
             X_samples = self._sobol_samples(num_X_samples)
         else:
@@ -78,20 +82,8 @@ class AcqIEIG(MCAcquisitionFunction):
 
         # Diagnostics
         with torch.no_grad():
-            self.p_max = self._calc_p_max(self.model, self.X_samples)
+            self.p_max = self._calc_p_max(self.model, self.X_samples, num_px=self.num_px_weights)
             self.weights = self.p_max.clone()
-
-            if not use_weights:
-                # some points never move b/c they and
-                #  their proposals have zero probability
-                th = 0.1 / len(self.X_samples)
-                i = np.where(self.weights.detach().numpy() >= th)[0]
-                self.weights = self.weights[i]
-                self.weights = 1.0 + 0 * self.weights
-                self.X_samples = self.X_samples[i]
-
-                # self.weights[self.weights < th] = 0.0
-                # self.weights[self.weights >= th] = 1.0
             self.weights = self.weights / self.weights.sum()
 
             if q_ts is not None:
@@ -109,7 +101,7 @@ class AcqIEIG(MCAcquisitionFunction):
         else:
             X = torch.atleast_2d(X)
 
-        return 1e-9 + self._calc_p_max(self.model, X)[:, None].mean(axis=1)
+        return 1e-9 + self._calc_p_max(self.model, X, self.num_px_mc)[:, None].mean(axis=1)
 
     def _cem_sample_X(self, num_X_samples, q_ts):
         # X = self.model.train_inputs[0]
@@ -231,11 +223,11 @@ class AcqIEIG(MCAcquisitionFunction):
             assert torch.all((X_new >= 0) & (X_new <= 1)), X_new
             X_both = torch.cat((X, X_new), axis=0)
             if p_all_type == "all":
-                p_all = 1e-9 + torch.cat([self._calc_p_max(m, X_both)[:, None] for m in models], axis=1).mean(axis=1)
+                p_all = 1e-9 + torch.cat([self._calc_p_max(m, X_both, self.num_px_mc)[:, None] for m in models], axis=1).mean(axis=1)
             elif p_all_type == "random":
-                p_all = 1e-9 + self._calc_p_max(np.random.choice(models), X_both)[:, None].mean(axis=1)
+                p_all = 1e-9 + self._calc_p_max(np.random.choice(models), X_both, self.num_px_mc)[:, None].mean(axis=1)
             elif p_all_type == "self":
-                p_all = 1e-9 + self._calc_p_max(self.model, X_both)[:, None].mean(axis=1)
+                p_all = 1e-9 + self._calc_p_max(self.model, X_both, self.num_px_mc)[:, None].mean(axis=1)
             else:
                 assert False, p_all_type
             p = p_all[: len(X)]
@@ -247,30 +239,36 @@ class AcqIEIG(MCAcquisitionFunction):
             X[i] = X_new[i]
         return X
 
-    def _calc_p_max(self, model, X):
+    def _calc_p_max(self, model, X, num_px):
         posterior = model.posterior(X, posterior_transform=self.posterior_transform, observation_noise=True)
-        Y = posterior.sample(torch.Size([self.num_px_samples])).squeeze(dim=-1)  # num_Y_samples x b x len(X)
+        Y = posterior.sample(torch.Size([num_px])).squeeze(dim=-1)  # num_Y_samples x b x len(X)
         return self._calc_p_max_from_Y(Y)
 
     def _calc_p_max_from_Y(self, Y):
-        if self._use_softmax:
-            beta = 12
-            sm = torch.exp(beta * Y)
-            sm = sm / sm.sum(dim=-1).unsqueeze(-1)
-            p_max = sm.mean(dim=0)
-            assert np.abs(p_max.sum() - 1) < 1e-4, p_max
+        is_best = torch.argmax(Y, dim=-1)
+        idcs, counts = torch.unique(is_best, return_counts=True)
+        p_max = torch.zeros(Y.shape[-1])
+        p_max[idcs] = counts / Y.shape[0]
+        return p_max
+
+    def _calc_soft_p_max_from_Y(self, Y):
+        beta = 20
+        sm = torch.exp(beta * Y)
+        # Y ~ num_Y_samples x num_fantasies x b x num_X_samples
+        if self._fantasies_only:
+            norm = sm.sum(dim=-1).sum(dim=0)
+            norm = norm.unsqueeze(-1).unsqueeze(0)
         else:
-            is_best = torch.argmax(Y, dim=-1)
-            idcs, counts = torch.unique(is_best, return_counts=True)
-            p_max = torch.zeros(Y.shape[-1])
-            p_max[idcs] = counts / Y.shape[0]
+            norm = sm.sum(dim=-1).sum(dim=-1).sum(dim=0)
+            norm = norm.unsqueeze(-1).unsqueeze(-1).unsqueeze(0)
+        sm = sm / norm
+
+        p_max = sm.mean(dim=0)
         return p_max
 
     @t_batch_mode_transform()
     def forward(self, X: Tensor) -> Tensor:
         self.to(device=X.device)
-
-        weights = self.weights
 
         if self._no_log:
 
@@ -284,17 +282,29 @@ class AcqIEIG(MCAcquisitionFunction):
 
         if self.num_fantasies == 0:
             mvn = self.model.posterior(X, observation_noise=True)
-            Y = self.get_posterior_samples(mvn).squeeze(dim=-1)  # num_Y_samples x b x q
+            # Y = self.get_posterior_samples(mvn).squeeze(dim=-1)  # num_Y_samples x b x q
 
             model_t = self.model.condition_on_observations(X=X, Y=mvn.mean)  # TODO: noise=observation_noise?
             mvn_t = model_t.posterior(self.X_samples, observation_noise=True)
-            Y = self.get_posterior_samples(mvn_t).squeeze(dim=-1)  # num_Y_samples x b x num_X_samples
-            H = (weights * log(Y.std(dim=0))).sum(dim=-1)
+            Y_f = self.get_posterior_samples(mvn_t).squeeze(dim=-1)  # num_Y_samples x b x num_X_samples
+            Y_f = Y_f.unsqueeze(1)  # num_Y_samples x 1 x b x num_X_samples
+            # H = (self.weights * log(Y.std(dim=0))).sum(dim=-1)
         else:
             model_f = self.model.fantasize(X=X, sampler=self.sampler_fantasies, observation_noise=True)
             mvn_f = model_f.posterior(self.X_samples, observation_noise=True)
             Y_f = self.get_posterior_samples(mvn_f).squeeze(dim=-1)  # num_Y_samples x num_fantasies x b x num_X_samples
             # Y = Y_f.reshape(self.num_Y_num_f, Y_f.shape[-2], Y_f.shape[-1])
-            H = (weights * log(Y_f.std(dim=0))).sum(dim=-1).mean(dim=0)
+
+        if self._use_des:
+            # DES
+            p_max = self._calc_soft_p_max_from_Y(Y_f)
+            assert p_max.min() >= 0 and p_max.max() <= 1
+            # weights = (1 + p_max) / (1 + self.weights)
+            weights = p_max / torch.maximum(p_max, self.weights)
+            weights = weights / weights.mean()
+            H = -(weights * torch.log(p_max)).mean(dim=-1).mean(dim=0)
+        else:
+            # IOPT
+            H = (self.weights * log(Y_f.std(dim=0))).sum(dim=-1).mean(dim=0)
 
         return -H
