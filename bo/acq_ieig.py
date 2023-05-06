@@ -51,7 +51,7 @@ class AcqIEIG(MCAcquisitionFunction):
         use_softmax=True,
         q_ts=None,
         no_log=False,
-        use_weights=False,
+            use_weights=True,
         **kwargs
     ) -> None:
         super().__init__(model=model, **kwargs)

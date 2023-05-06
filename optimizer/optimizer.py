@@ -73,6 +73,7 @@ class Optimizer:
             "ieig": BTDesigner(policy, AcqIEIG, init_sobol=0),
             "ieig_init": BTDesigner(policy, AcqIEIG, init_sobol=0, init_X_samples=True),
             "ieig_init_uw": BTDesigner(policy, AcqIEIG, init_sobol=0, init_X_samples=True, acq_kwargs={"use_weights": True}),
+            "ieig_sm": BTDesigner(policy, AcqIEIG, init_sobol=0, init_X_samples=True, acq_kwargs={"use_weights": True, "use_softmax": False}),
             "ieig_nl": BTDesigner(policy, AcqIEIG, init_sobol=0, init_X_samples=True, acq_kwargs={"no_log": True}),
             "ieig_nl_px": BTDesigner(policy, AcqIEIG, init_sobol=0, init_X_samples=True, acq_kwargs={"no_log": True, "num_px_samples": 128}),
             "ieig_cem": BTDesigner(policy, AcqIEIG, init_sobol=0, acq_kwargs={"use_cem": True}),
