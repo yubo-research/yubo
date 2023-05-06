@@ -16,8 +16,6 @@ from scipy.stats import multivariate_normal
 from torch import Tensor
 from torch.quasirandom import SobolEngine
 
-from sampling.cemniw import CEMNIW
-
 
 class AcqIEIG(MCAcquisitionFunction):
     """Integrated Expected Information Gain
@@ -36,7 +34,6 @@ class AcqIEIG(MCAcquisitionFunction):
         num_fantasies: int = 4,
         num_Y_samples: int = 32,
         num_noisy_maxes: int = 3,
-        use_cem=False,
         q_ts=None,
 
     """
@@ -51,10 +48,10 @@ class AcqIEIG(MCAcquisitionFunction):
         num_fantasies: int = 4,
         num_Y_samples: int = 32,
         num_noisy_maxes: int = 3,
-        use_cem=False,
         use_softmax=True,
         q_ts=None,
         no_log=False,
+        use_weights=False,
         **kwargs
     ) -> None:
         super().__init__(model=model, **kwargs)
@@ -67,13 +64,10 @@ class AcqIEIG(MCAcquisitionFunction):
         self.c_time = 0.0
         self._use_softmax = use_softmax
         self._no_log = no_log
-        if use_cem:
-            X_samples = self._cem_sample_X(num_X_samples, q_ts)
+        if len(self.model.train_inputs[0]) == 0:
+            X_samples = self._sobol_samples(num_X_samples)
         else:
-            if len(self.model.train_inputs[0]) == 0:
-                X_samples = self._sobol_samples(num_X_samples)
-            else:
-                X_samples = self._sample_X(num_noisy_maxes, num_X_samples, num_mcmc, p_all_type)
+            X_samples = self._sample_X(num_noisy_maxes, num_X_samples, num_mcmc, p_all_type)
 
         assert len(X_samples) >= num_X_samples, len(X_samples)
         if len(X_samples) != num_X_samples:
@@ -84,26 +78,25 @@ class AcqIEIG(MCAcquisitionFunction):
 
         # Diagnostics
         with torch.no_grad():
-            if not use_cem:
-                self.p_max = self._calc_p_max(self.model, self.X_samples)
-                self.weights = self.p_max.clone()
+            self.p_max = self._calc_p_max(self.model, self.X_samples)
+            self.weights = self.p_max.clone()
 
-                if True:
-                    # some points never move b/c they and
-                    #  their proposals have zero probability
-                    th = 0.1 / len(self.X_samples)
-                    i = np.where(self.weights.detach().numpy() >= th)[0]
-                    self.weights = self.weights[i]
-                    self.weights = 1.0 + 0 * self.weights
-                    self.X_samples = self.X_samples[i]
+            if not use_weights:
+                # some points never move b/c they and
+                #  their proposals have zero probability
+                th = 0.1 / len(self.X_samples)
+                i = np.where(self.weights.detach().numpy() >= th)[0]
+                self.weights = self.weights[i]
+                self.weights = 1.0 + 0 * self.weights
+                self.X_samples = self.X_samples[i]
 
-                    # self.weights[self.weights < th] = 0.0
-                    # self.weights[self.weights >= th] = 1.0
-                    self.weights = self.weights / self.weights.sum()
+                # self.weights[self.weights < th] = 0.0
+                # self.weights[self.weights >= th] = 1.0
+            self.weights = self.weights / self.weights.sum()
 
-                if q_ts is not None:
-                    i = np.random.choice(np.arange(len(self.X_samples)), p=self.weights, size=(q_ts,))
-                    self.X_cand = torch.atleast_2d(X_samples[i])
+            if q_ts is not None:
+                i = np.random.choice(np.arange(len(self.X_samples)), p=self.weights, size=(q_ts,))
+                self.X_cand = torch.atleast_2d(X_samples[i])
 
     def _likelihoods(self, samples):
         xs = []
