@@ -35,7 +35,7 @@ class AcqIEIG(MCAcquisitionFunction):
         num_Y_samples: int = 32,
         num_noisy_maxes: int = 0,
         q_ts=None,
-        no_log=False,
+        no_log=True,
         fantasies_only=True,
         use_des=False,
         no_weights=False,
@@ -67,11 +67,16 @@ class AcqIEIG(MCAcquisitionFunction):
             self.X_samples = X_samples
 
         with torch.no_grad():
+            self.p_max = self._calc_p_max(self.model, self.X_samples, num_px=self.num_px_weights)
+            self.weights = self.p_max.clone().type(self.X_samples.dtype)
+
             if no_weights:
-                self.weights = torch.ones(len(self.X_samples))
-            else:
-                self.p_max = self._calc_p_max(self.model, self.X_samples, num_px=self.num_px_weights)
-                self.weights = self.p_max.clone()
+                th = 0.1 / len(self.X_samples)
+                i = np.where(self.weights.detach().numpy() >= th)[0]
+                self.weights = 1.0 + 0.0 * self.weights[i]
+                self.X_samples = self.X_samples[i]
+                assert len(self.weights) > 0
+
             self.weights = self.weights / self.weights.sum()
 
             if q_ts is not None:

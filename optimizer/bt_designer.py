@@ -34,6 +34,8 @@ class BTDesigner:
                     weights = acqf.acq_function.weights
                 else:
                     weights = np.ones(size=(len(X),))
+                    weights = weights / weights.sum()
+
                 i = np.random.choice(np.arange(len(X)), size=(10,), p=weights)
                 batch_initial_conditions = X[i, :].unsqueeze(1)
             else:
