@@ -69,7 +69,7 @@ class Optimizer:
             "des": BTDesigner(policy, AcqDES, init_sobol=0, init_X_samples=True),
             "ieig": BTDesigner(policy, AcqIEIG, init_sobol=0, init_X_samples=True),
             "ieig_init": BTDesigner(policy, AcqIEIG, init_sobol=0, init_X_samples=True),
-            "ieig_nl": BTDesigner(policy, AcqIEIG, init_sobol=0, init_X_samples=True, acq_kwargs={"no_log": False}),
+            "ieig_yl": BTDesigner(policy, AcqIEIG, init_sobol=0, init_X_samples=True, acq_kwargs={"no_log": False}),
             "ieig_ts": BTDesigner(
                 policy,
                 AcqIEIG,
