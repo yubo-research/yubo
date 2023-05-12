@@ -51,6 +51,10 @@ class _TraceEntry:
     time_iteration_seconds: float
 
 
+def _kwargs(**kwargs):
+    return kwargs
+
+
 class Optimizer:
     def __init__(self, env_conf, policy, num_arms, cb_trace=None):
         self._env_conf = env_conf
@@ -68,7 +72,48 @@ class Optimizer:
             "iopt": BTDesigner(policy, _iOptFactory, init_sobol=0),
             "des": BTDesigner(policy, AcqDES, init_sobol=0, init_X_samples=True),
             "ieig": BTDesigner(policy, AcqIEIG, init_sobol=0, init_X_samples=True),
-            "ieig_init": BTDesigner(policy, AcqIEIG, init_sobol=0, init_X_samples=True),
+            "ieig_ks": BTDesigner(
+                policy,
+                AcqIEIG,
+                init_sobol=0,
+                init_X_samples=True,
+                acq_kwargs=_kwargs(
+                    num_X_samples=128,
+                    num_px_weights=1024,
+                    num_px_mc=128,
+                    num_mcmc=10,
+                    p_all_type="all",
+                    num_fantasies=0,
+                    num_Y_samples=32,
+                    num_noisy_maxes=0,
+                    q_ts=None,
+                    no_log=True,
+                    fantasies_only=True,
+                    use_des=False,
+                    no_weights=False,
+                ),
+            ),
+            "ieig_ks2": BTDesigner(
+                policy,
+                AcqIEIG,
+                init_sobol=0,
+                init_X_samples=True,
+                acq_kwargs=_kwargs(
+                    num_X_samples=128,
+                    num_px_weights=1024,
+                    num_px_mc=128,
+                    num_mcmc=10,
+                    p_all_type="all",
+                    num_fantasies=0,
+                    num_Y_samples=32,
+                    num_noisy_maxes=0,
+                    q_ts=None,
+                    no_log=False,
+                    fantasies_only=True,
+                    use_des=False,
+                    no_weights=False,
+                ),
+            ),
             "ieig_yl": BTDesigner(policy, AcqIEIG, init_sobol=0, init_X_samples=True, acq_kwargs={"no_log": False}),
             "ieig_ts": BTDesigner(
                 policy,
