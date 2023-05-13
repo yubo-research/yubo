@@ -71,7 +71,7 @@ class Optimizer:
             "variance": BTDesigner(policy, AcqVar),
             "iopt": BTDesigner(policy, _iOptFactory, init_sobol=0),
             "des": BTDesigner(policy, AcqDES, init_sobol=0, init_X_samples=True),
-            "ieig": BTDesigner(policy, AcqIEIG, init_sobol=0, init_X_samples=True),
+            "ieig": BTDesigner(policy, AcqIEIG, init_sobol=0, init_X_samples=False),
             "ieig_ks": BTDesigner(
                 policy,
                 AcqIEIG,

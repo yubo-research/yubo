@@ -302,5 +302,5 @@ class AcqIEIG(MCAcquisitionFunction):
             else:
                 # IOPT
                 H = (self.weights * log(Y_f.std(dim=0))).sum(dim=-1).mean(dim=0)
-                
+
         return -H
