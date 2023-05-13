@@ -26,16 +26,16 @@ class AcqIEIG(MCAcquisitionFunction):
     def __init__(
         self,
         model: Model,
-        num_X_samples: int = 128,
-        num_px_weights: int = 1024,
-        num_px_mc: int = 128,
+        num_X_samples: int = 256,
+        num_px_weights: int = 4096,
+        num_px_mc: int = 4096,
         num_mcmc: int = 10,
         p_all_type: str = "all",
         num_fantasies: int = 0,
-        num_Y_samples: int = 32,
-        num_noisy_maxes: int = 0,
+        num_Y_samples: int = 1024,
+        num_noisy_maxes: int = 10,
         q_ts=None,
-        no_log=True,
+        no_log=False,
         fantasies_only=True,
         use_des=False,
         no_weights=False,
@@ -297,7 +297,10 @@ class AcqIEIG(MCAcquisitionFunction):
             weights = weights / weights.mean()
             H = -(weights * torch.log(p_max)).mean(dim=-1).mean(dim=0)
         else:
-            # IOPT
-            H = (self.weights * log(Y_f.std(dim=0))).sum(dim=-1).mean(dim=0)
-
+            if self._no_log:
+                H = (self.weights * Y_f.var(dim=0)).sum(dim=-1).mean(dim=0)
+            else:
+                # IOPT
+                H = (self.weights * log(Y_f.std(dim=0))).sum(dim=-1).mean(dim=0)
+                
         return -H
