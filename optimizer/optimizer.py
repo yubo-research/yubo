@@ -21,6 +21,7 @@ from bo.acq_var import AcqVar
 
 from .ax_designer import AxDesigner
 from .bt_designer import BTDesigner
+from .center_designer import CenterDesigner
 from .datum import Datum
 from .random_designer import RandomDesigner
 from .sobol_designer import SobolDesigner
@@ -51,10 +52,6 @@ class _TraceEntry:
     time_iteration_seconds: float
 
 
-def _kwargs(**kwargs):
-    return kwargs
-
-
 class Optimizer:
     def __init__(self, env_conf, policy, num_arms, cb_trace=None):
         self._env_conf = env_conf
@@ -63,6 +60,7 @@ class Optimizer:
         self._data = []
         self._datum_best = None
         init_ax_default = max(5, 2 * policy.num_params())
+        self._center_designer = CenterDesigner(policy)
         self._designers = {
             "random": RandomDesigner(policy),
             "sobol": SobolDesigner(policy),
@@ -71,13 +69,13 @@ class Optimizer:
             "variance": BTDesigner(policy, AcqVar),
             "iopt": BTDesigner(policy, _iOptFactory, init_sobol=0),
             "des": BTDesigner(policy, AcqDES, init_sobol=0, init_X_samples=True),
-            "ieig": BTDesigner(policy, AcqIEIG, init_sobol=0, init_X_samples=False),
+            "ieig": BTDesigner(policy, AcqIEIG, init_sobol=0, init_X_samples=False, acq_kwargs=dict(joint_sampling=True)),
             "pts": BTDesigner(
                 policy,
                 AcqIEIG,
                 init_sobol=0,
                 init_X_samples=True,
-                acq_kwargs=_kwargs(
+                acq_kwargs=dict(
                     num_X_samples=128,
                     num_px_weights=1024,
                     num_px_mc=128,
@@ -125,7 +123,14 @@ class Optimizer:
         trace = []
         for i_iter in range(num_iterations):
             best_in_batch = -1e99
-            data, d_time = self._iterate(designer)
+            if self._num_arms == 1 and i_iter == 0:
+                # iopt, etc. like to start at center point -- which is a good idea
+                # Even though the test functions are randomly distorted (moving their optima),
+                #  starting at the center point confers such an advantage and is achieved so
+                #  trivially, that we start all optimizers there.
+                data, d_time = self._iterate(self._center_designer)
+            else:
+                data, d_time = self._iterate(designer)
             for datum in data:
                 self._data.append(datum)
                 best_in_batch = max(best_in_batch, datum.trajectory.rreturn)
