@@ -93,7 +93,7 @@ class Optimizer:
                     no_weights=False,
                 ),
             ),
-            "ieig_ks3": BTDesigner(
+            "ieig_ks4": BTDesigner(
                 policy,
                 AcqIEIG,
                 init_sobol=0,
@@ -106,12 +106,12 @@ class Optimizer:
                     p_all_type="all",
                     num_fantasies=0,
                     num_Y_samples=32,
-                    num_noisy_maxes=10,
+                    num_noisy_maxes=0,
                     q_ts=None,
                     no_log=True,
                     fantasies_only=True,
                     use_des=False,
-                    no_weights=False,
+                    no_weights=True,
                 ),
             ),
             "ieig_yl": BTDesigner(policy, AcqIEIG, init_sobol=0, init_X_samples=True, acq_kwargs={"no_log": False}),
