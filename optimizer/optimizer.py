@@ -27,6 +27,7 @@ from .datum import Datum
 from .random_designer import RandomDesigner
 from .sobol_designer import SobolDesigner
 from .trajectories import collect_trajectory
+from .turbo_designer import TuRBODesigner
 
 
 def _iOptFactory(model, acqf=None, X_baseline=None):
@@ -101,6 +102,7 @@ class Optimizer:
             "sobol_gibbon": BTDesigner(policy, qLowerBoundMaxValueEntropy, init_sobol=init_ax_default, acq_kwargs={"candidate_set": None}),
             "ucb": BTDesigner(policy, qUpperConfidenceBound, acq_kwargs={"beta": 1}),
             "ax": AxDesigner(policy),
+            "turbo": TuRBODesigner(policy),
             "sobol_ei": BTDesigner(policy, qNoisyExpectedImprovement, init_sobol=init_ax_default, acq_kwargs={"X_baseline": None}),
             "sobol_ucb": BTDesigner(policy, qUpperConfidenceBound, init_sobol=init_ax_default, acq_kwargs={"beta": 1}),
         }
