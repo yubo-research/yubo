@@ -12,7 +12,7 @@ from botorch.acquisition.monte_carlo import (
     qUpperConfidenceBound,
 )
 
-from bo.acq_des import AcqDES
+# from bo.acq_des import AcqDES
 from bo.acq_ieig import AcqIEIG
 from bo.acq_iopt import AcqIOpt
 from bo.acq_min_dist import AcqMinDist
@@ -69,7 +69,8 @@ class Optimizer:
             "maximin-toroidal": BTDesigner(policy, lambda m: AcqMinDist(m, toroidal=True)),
             "variance": BTDesigner(policy, AcqVar),
             "iopt": BTDesigner(policy, _iOptFactory, init_sobol=0),
-            "des": BTDesigner(policy, AcqDES, init_sobol=0, init_X_samples=True),
+            "des": BTDesigner(policy, AcqPTS, init_sobol=0, init_X_samples=True),
+            "des_f": BTDesigner(policy, AcqPTS, init_sobol=0, init_X_samples=True, acq_kwargs=dict(num_noisy_maxes=5, num_fantasies=4, num_Y_samples=16)),
             "ieig": BTDesigner(policy, AcqIEIG, init_sobol=0, init_X_samples=False, acq_kwargs=dict(joint_sampling=True)),
             "pts": BTDesigner(
                 policy,

@@ -21,13 +21,13 @@ class AcqDES(MCAcquisitionFunction):
     def __init__(
         self,
         model: Model,
-        num_X_samples: int = 128,
-        num_px_samples: int = 128,
+        num_X_samples: int = 64,
+        num_px_samples: int = 512,
         num_mcmc: int = 10,
         p_all_type: str = "all",
-        num_fantasies: int = 4,
+        num_fantasies: int = 0,
         num_Y_samples: int = 32,
-        num_noisy_maxes: int = 3,
+        num_noisy_maxes: int = 0,
         fantasies_only=False,
         **kwargs
     ) -> None:
