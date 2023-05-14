@@ -10,7 +10,7 @@ from botorch.optim import optimize_acqf
 from botorch.sampling.normal import SobolQMCNormalSampler
 from botorch.utils import t_batch_mode_transform
 
-# from IPython.core.debugger import set_trace
+from IPython.core.debugger import set_trace
 from torch import Tensor
 from torch.quasirandom import SobolEngine
 
@@ -36,6 +36,7 @@ class AcqPTS(MCAcquisitionFunction):
         **kwargs
     ) -> None:
         super().__init__(model=model, **kwargs)
+
         self.sampler = SobolQMCNormalSampler(sample_shape=torch.Size([num_Y_samples]))
         if num_fantasies > 0:
             self.sampler_fantasies = SobolQMCNormalSampler(sample_shape=torch.Size([num_fantasies]))
@@ -59,26 +60,28 @@ class AcqPTS(MCAcquisitionFunction):
         assert len(X_samples) >= num_X_samples, len(X_samples)
         if len(X_samples) != num_X_samples:
             i = np.random.choice(np.arange(len(X_samples)), size=(num_X_samples,), replace=False)
-            self.X_samples = X_samples[i]
+            X_samples = X_samples[i]
         else:
-            self.X_samples = X_samples
+            X_samples = X_samples
 
         with torch.no_grad():
-            self.p_max = self._calc_p_max(self.model, self.X_samples, num_px=self.num_px_weights)
-            self.weights = self.p_max.clone().type(self.X_samples.dtype)
+            self.p_max = self._calc_p_max(self.model, X_samples, num_px=self.num_px_weights)
+            self.weights = self.p_max.clone().type(X_samples.dtype)
 
             if not use_weights:
-                th = 0.1 / len(self.X_samples)
+                th = 0.1 / len(X_samples)
                 i = np.where(self.weights.detach().numpy() >= th)[0]
                 self.weights = 1.0 + 0.0 * self.weights[i]
-                self.X_samples = self.X_samples[i]
+                X_samples = X_samples[i]
                 assert len(self.weights) > 0
 
             self.weights = self.weights / self.weights.sum()
 
             if q_ts is not None:
-                i = np.random.choice(np.arange(len(self.X_samples)), p=self.weights, size=(q_ts,))
+                i = np.random.choice(np.arange(len(X_samples)), p=self.weights, size=(q_ts,))
                 self.X_cand = torch.atleast_2d(X_samples[i])
+        self.X_samples = X_samples
+        
 
     def _sample_X(self, num_noisy_maxes, num_X_samples, num_mcmc, p_all_type):
         models = [self.model]
