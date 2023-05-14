@@ -9,8 +9,7 @@ from botorch.models.model import Model
 from botorch.optim import optimize_acqf
 from botorch.sampling.normal import SobolQMCNormalSampler
 from botorch.utils import t_batch_mode_transform
-
-from IPython.core.debugger import set_trace
+# from IPython.core.debugger import set_trace
 from torch import Tensor
 from torch.quasirandom import SobolEngine
 
@@ -81,7 +80,6 @@ class AcqPTS(MCAcquisitionFunction):
                 i = np.random.choice(np.arange(len(X_samples)), p=self.weights, size=(q_ts,))
                 self.X_cand = torch.atleast_2d(X_samples[i])
         self.X_samples = X_samples
-        
 
     def _sample_X(self, num_noisy_maxes, num_X_samples, num_mcmc, p_all_type):
         models = [self.model]
