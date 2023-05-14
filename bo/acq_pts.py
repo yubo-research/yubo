@@ -28,11 +28,11 @@ class AcqPTS(MCAcquisitionFunction):
         num_Y_samples: int = 1024,
         num_noisy_maxes: int = 10,
         q_ts=None,
-        no_log=False,
+        use_log=False,
         use_sqrt=False,
-        fantasies_only=True,
+        fantasies_only=False,
         use_des=False,
-        no_weights=False,
+        use_weights=False,
         **kwargs
     ) -> None:
         super().__init__(model=model, **kwargs)
@@ -44,12 +44,14 @@ class AcqPTS(MCAcquisitionFunction):
         self.num_px_mc = num_px_mc
         self.num_px_weights = num_px_weights
         self.c_time = 0.0
-        self._no_log = no_log
-        self._fantasies_only = fantasies_only
+        self._use_log = use_log
+        self._fantasies_only = fantasies_only if num_fantasies > 0 else False
         self._use_des = use_des
         self._use_sqrt = use_sqrt
 
-        if len(self.model.train_inputs[0]) == 0:
+        if False:  # len(self.model.train_inputs[0]) == 0:
+            # unnecessary, but slightly faster and more precise
+            #  on the first iteration
             X_samples = self._sobol_samples(num_X_samples)
         else:
             X_samples = self._sample_X(num_noisy_maxes, num_X_samples, num_mcmc, p_all_type)
@@ -65,7 +67,7 @@ class AcqPTS(MCAcquisitionFunction):
             self.p_max = self._calc_p_max(self.model, self.X_samples, num_px=self.num_px_weights)
             self.weights = self.p_max.clone().type(self.X_samples.dtype)
 
-            if no_weights:
+            if not use_weights:
                 th = 0.1 / len(self.X_samples)
                 i = np.where(self.weights.detach().numpy() >= th)[0]
                 self.weights = 1.0 + 0.0 * self.weights[i]
@@ -79,42 +81,32 @@ class AcqPTS(MCAcquisitionFunction):
                 self.X_cand = torch.atleast_2d(X_samples[i])
 
     def _sample_X(self, num_noisy_maxes, num_X_samples, num_mcmc, p_all_type):
-        if num_noisy_maxes == 0:
-            models = [self.model]
-        else:
-            models = [self._get_noisy_model() for _ in range(num_noisy_maxes)]
+        models = [self.model]
+        if num_noisy_maxes > 0:
+            models.extend([self._get_noisy_model() for _ in range(num_noisy_maxes)])
         x_max = []
         for model in models:
             x = self._find_max(model).detach()
             x_max.append(x)
         x_max = torch.cat(x_max, axis=0)
-        no2 = num_X_samples
-        n = int(no2 / len(x_max) + 1)
+        n = int(num_X_samples / len(x_max) + 1)
         # X_samples = torch.cat((X_samples, torch.tile(x_max, (n, 1))), axis=0)
         X_samples = torch.tile(x_max, (n, 1))
-        assert len(X_samples) >= num_X_samples, (len(X_samples), num_X_samples, no2)
+        assert len(X_samples) >= num_X_samples, (len(X_samples), num_X_samples)
 
-        # burn in
         for _ in range(num_mcmc):
             X_samples = self._mcmc(models, X_samples, eps=0.1, p_all_type=p_all_type)
-
-        # collect paths
-        X_all = []
-        for _ in range(num_mcmc):
-            X_samples = self._mcmc(models, X_samples, eps=0.1, p_all_type=p_all_type)
-            X_all.append(X_samples)
-        X_all = torch.cat(X_all, axis=0)
-        return X_all
+        return X_samples
 
     def _get_noisy_model(self):
         X = self.model.train_inputs[0].detach()
         if len(X) == 0:
             return self.model
         Y = self.model.posterior(X, observation_noise=True).sample().squeeze(0).detach()
-        model_ts = SingleTaskGP(X, Y, self.model.likelihood)
-        model_ts.initialize(**dict(self.model.named_parameters()))
-        model_ts.eval()
-        return model_ts
+        model_nm = SingleTaskGP(X, Y, self.model.likelihood)
+        model_nm.initialize(**dict(self.model.named_parameters()))
+        model_nm.eval()
+        return model_nm
 
     def _find_max(self, model):
         X = model.train_inputs[0]
@@ -193,25 +185,22 @@ class AcqPTS(MCAcquisitionFunction):
     def forward(self, X: Tensor) -> Tensor:
         self.to(device=X.device)
 
-        if self._no_log:
-
-            def log(x):
-                return x
-
-        else:
+        if self._use_log:
 
             def log(x):
                 return torch.log(x)
 
+        else:
+
+            def log(x):
+                return x
+
         if self.num_fantasies == 0:
             mvn = self.model.posterior(X, observation_noise=True)
-            # Y = self.get_posterior_samples(mvn).squeeze(dim=-1)  # num_Y_samples x b x q
-
-            model_t = self.model.condition_on_observations(X=X, Y=mvn.mean)  # TODO: noise=observation_noise?
-            mvn_t = model_t.posterior(self.X_samples, observation_noise=True)
-            Y_f = self.get_posterior_samples(mvn_t).squeeze(dim=-1)  # num_Y_samples x b x num_X_samples
+            model_f = self.model.condition_on_observations(X=X, Y=mvn.mean)
+            mvn_f = model_f.posterior(self.X_samples, observation_noise=True)
+            Y_f = self.get_posterior_samples(mvn_f).squeeze(dim=-1)  # num_Y_samples x b x num_X_samples
             Y_f = Y_f.unsqueeze(1)  # num_Y_samples x 1 x b x num_X_samples
-            # H = (self.weights * log(Y.std(dim=0))).sum(dim=-1)
         else:
             model_f = self.model.fantasize(X=X, sampler=self.sampler_fantasies, observation_noise=True)
             mvn_f = model_f.posterior(self.X_samples, observation_noise=True)
@@ -228,9 +217,9 @@ class AcqPTS(MCAcquisitionFunction):
             H = -(weights * torch.log(p_max)).mean(dim=-1).mean(dim=0)
         else:
             if self._use_sqrt:
-                v = Y_f.var(dim=0)
-            else:
                 v = Y_f.std(dim=0)
+            else:
+                v = Y_f.var(dim=0)
 
             # IOPT
             H = (self.weights * log(v)).sum(dim=-1).mean(dim=0)
