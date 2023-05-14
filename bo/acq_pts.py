@@ -22,7 +22,6 @@ class AcqPTS(MCAcquisitionFunction):
         num_px_weights: int = 4096,
         num_px_mc: int = 4096,
         num_mcmc: int = 10,
-        p_all_type: str = "all",
         num_fantasies: int = 0,
         num_Y_samples: int = 1024,
         num_noisy_maxes: int = 10,
@@ -54,7 +53,7 @@ class AcqPTS(MCAcquisitionFunction):
             #  on the first iteration
             X_samples = self._sobol_samples(num_X_samples)
         else:
-            X_samples = self._sample_X(num_noisy_maxes, num_X_samples, num_mcmc, p_all_type)
+            X_samples = self._sample_X(num_noisy_maxes, num_X_samples, num_mcmc)
 
         assert len(X_samples) >= num_X_samples, len(X_samples)
         if len(X_samples) != num_X_samples:
@@ -81,7 +80,7 @@ class AcqPTS(MCAcquisitionFunction):
                 self.X_cand = torch.atleast_2d(X_samples[i])
         self.X_samples = X_samples
 
-    def _sample_X(self, num_noisy_maxes, num_X_samples, num_mcmc, p_all_type):
+    def _sample_X(self, num_noisy_maxes, num_X_samples, num_mcmc):
         models = [self.model]
         if num_noisy_maxes > 0:
             models.extend([self._get_noisy_model() for _ in range(num_noisy_maxes)])
@@ -96,7 +95,7 @@ class AcqPTS(MCAcquisitionFunction):
         assert len(X_samples) >= num_X_samples, (len(X_samples), num_X_samples)
 
         for _ in range(num_mcmc):
-            X_samples = self._mcmc(models, X_samples, eps=0.1, p_all_type=p_all_type)
+            X_samples = self._mcmc(models, X_samples, eps=0.1)
         return X_samples
 
     def _get_noisy_model(self):
@@ -129,25 +128,25 @@ class AcqPTS(MCAcquisitionFunction):
         sobol_engine = SobolEngine(num_dim, scramble=True)
         return sobol_engine.draw(num_X_samples).to(X_0.device).type(X_0.dtype)
 
-    def _mcmc(self, models, X, eps, p_all_type):
-        # TODO: keep the whole path (after warm-up)
-        # TODO: NUTS
+    def _mcmc(self, models, X, eps):
+        reposition_when_out_of_bounds = False
         with torch.no_grad():
             X_new = X + eps * torch.randn(size=X.shape)
-            i = np.where((X_new < 0) | (X_new > 1))[0]
-            X_new[i] = torch.rand(size=(len(i), X.shape[-1])).type(X.dtype)
-            assert torch.all((X_new >= 0) & (X_new <= 1)), X_new
+            if reposition_when_out_of_bounds:
+                i = np.where((X_new < 0) | (X_new > 1))[0]
+                X_new[i] = torch.rand(size=(len(i), X.shape[-1])).type(X.dtype)
+                assert torch.all((X_new >= 0) & (X_new <= 1)), X_new
+
             X_both = torch.cat((X, X_new), axis=0)
-            if p_all_type == "all":
-                p_all = 1e-9 + torch.cat([self._calc_p_max(m, X_both, self.num_px_mc)[:, None] for m in models], axis=1).mean(axis=1)
-            elif p_all_type == "random":
-                p_all = 1e-9 + self._calc_p_max(np.random.choice(models), X_both, self.num_px_mc)[:, None].mean(axis=1)
-            elif p_all_type == "self":
-                p_all = 1e-9 + self._calc_p_max(self.model, X_both, self.num_px_mc)[:, None].mean(axis=1)
-            else:
-                assert False, p_all_type
+            p_all = 1e-9 + torch.cat([self._calc_p_max(m, X_both, self.num_px_mc)[:, None] for m in models], axis=1).mean(axis=1)
             p = p_all[: len(X)]
             p_new = p_all[len(X) :]
+            if not reposition_when_out_of_bounds:
+                i = np.where((X_new < 0) | (X_new > 1))[0]
+                p_new[i] = 0
+                norm = p.sum() + p_new.sum()
+                p /= norm
+                p_new /= norm
 
             a = p_new / p
             u = torch.rand(size=(len(X),))
