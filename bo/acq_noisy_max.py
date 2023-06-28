@@ -1,13 +1,13 @@
 import torch
-
 from botorch.acquisition.analytic import AnalyticAcquisitionFunction
 from botorch.models import SingleTaskGP
 from botorch.models.model import Model
 from botorch.utils import t_batch_mode_transform
 
+# from IPython.core.debugger import set_trace
 from torch import Tensor
 from torch.quasirandom import SobolEngine
-from IPython.core.debugger import set_trace
+
 
 class AcqNoisyMax(AnalyticAcquisitionFunction):
     def __init__(self, model: Model, num_X_samples=None, q=1, **kwargs) -> None:
@@ -16,10 +16,7 @@ class AcqNoisyMax(AnalyticAcquisitionFunction):
             self.noisy_models = [self._get_noisy_model() for _ in range(q)]
         else:
             # num_X_samples = 1 + len(model.train_inputs)
-            self.noisy_models = [
-                self._get_noisy_model_2(num_X_samples)
-                for _ in range(q)
-            ]
+            self.noisy_models = [self._get_noisy_model_2(num_X_samples) for _ in range(q)]
 
     def _get_noisy_model(self):
         X = self.model.train_inputs[0].detach()
@@ -39,9 +36,9 @@ class AcqNoisyMax(AnalyticAcquisitionFunction):
         X_0 = self.model.train_inputs[0].detach()
         num_dim = X_0.shape[-1]
         dtype = X_0.dtype
-        
+
         sobol_engine = SobolEngine(num_dim, scramble=True)
-        X = torch.cat( (X_0, sobol_engine.draw(num_X_samples, dtype=dtype)), axis=0 )
+        X = torch.cat((X_0, sobol_engine.draw(num_X_samples, dtype=dtype)), axis=0)
 
         # rsample: one random sample, w/gradient
         # sample: one random sample, w/o gradient; calls rsample()
@@ -54,7 +51,6 @@ class AcqNoisyMax(AnalyticAcquisitionFunction):
 
         return model_ts
 
-    
     @t_batch_mode_transform()
     def forward(self, X: Tensor) -> Tensor:
         """

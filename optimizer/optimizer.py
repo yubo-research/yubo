@@ -19,6 +19,7 @@ from bo.acq_min_dist import AcqMinDist
 from bo.acq_noisy_max import AcqNoisyMax
 from bo.acq_pts import AcqPTS
 from bo.acq_var import AcqVar
+from bo.acq_vm import AcqVM
 
 from .ax_designer import AxDesigner
 from .bt_designer import BTDesigner
@@ -71,6 +72,7 @@ class Optimizer:
             "variance": BTDesigner(policy, AcqVar),
             "iopt": BTDesigner(policy, _iOptFactory, init_sobol=0),
             "ieig": BTDesigner(policy, AcqIEIG, init_sobol=0, init_X_samples=False, acq_kwargs=dict(joint_sampling=True)),
+            "vm": BTDesigner(policy, AcqVM, init_sobol=0, init_X_samples=False, acq_kwargs=dict(beta=10)),
             "pts_a": BTDesigner(
                 policy,
                 AcqPTS,

@@ -1,21 +1,25 @@
 import torch
-
 from botorch.acquisition.monte_carlo import MCAcquisitionFunction
-from botorch.models import SingleTaskGP
-from botorch.optim import optimize_acqf
-from botorch.acquisition import PosteriorMean
 from botorch.models.model import Model
-from botorch.utils import t_batch_mode_transform
 from botorch.sampling.normal import SobolQMCNormalSampler
-
+from botorch.utils import t_batch_mode_transform
+from IPython.core.debugger import set_trace
 from torch import Tensor
 from torch.quasirandom import SobolEngine
-from IPython.core.debugger import set_trace
+
 
 class AcqVM(MCAcquisitionFunction):
-    """ Soft entropy """
-    def __init__(self, model: Model, num_X_samples, num_Y_samples, **kwargs) -> None:
+    """Soft entropy
+    - uses softmax (numerator) as approximate
+    - can't normalize b/c using a different arm (or set of arms) in
+    each iteration of the optimizer
+    - *can* compare unnormalized values b/c all based on mean & var, which
+    have a consistent scale across iterations
+    """
+
+    def __init__(self, model: Model, beta, num_X_samples, num_Y_samples, **kwargs) -> None:
         super().__init__(model=model, **kwargs)
+        self.beta = beta
         self.sampler = SobolQMCNormalSampler(sample_shape=torch.Size([num_Y_samples]))
 
         X_0 = self.model.train_inputs[0].detach()
@@ -23,8 +27,40 @@ class AcqVM(MCAcquisitionFunction):
         dtype = X_0.dtype
 
         sobol_engine = SobolEngine(num_dim, scramble=True)
-        self.X_samples = sobol_engine.draw(num_X_samples, dtype=dtype)
-    
+        self.X_samples = torch.cat((sobol_engine.draw(num_X_samples, dtype=dtype), self.model.train_inputs[0]), axis=0)
+        mvn = self.model(self.X_samples)
+        # self.weights = self._calc_p_max(self.model, self.X_samples, 1024)
+        p = mvn.mean + mvn.variance / 2
+        self.weights = torch.exp(beta * p)
+        self.weights = self.weights / self.weights.sum()
+
+    def _calc_p_max(self, model, X, num_px):
+        posterior = model.posterior(X, posterior_transform=self.posterior_transform, observation_noise=True)
+        Y = posterior.sample(torch.Size([num_px])).squeeze(dim=-1)  # num_Y_samples x b x len(X)
+        return self._calc_p_max_from_Y(Y)
+
+    def _calc_p_max_from_Y(self, Y):
+        is_best = torch.argmax(Y, dim=-1)
+        idcs, counts = torch.unique(is_best, return_counts=True)
+        p_max = torch.zeros(Y.shape[-1])
+        p_max[idcs] = counts / Y.shape[0]
+        return p_max
+
+    def _soft_entropy(self, Y):
+        p_max = torch.exp(self.beta * Y).mean(dim=0)  # (mu + vr / 2))
+        H = -(p_max * torch.log(p_max))
+        while len(H.shape) > 1:
+            H = H.mean(dim=-1)
+        return H
+
+    @t_batch_mode_transform()
+    def _xxx_forward(self, X: Tensor) -> Tensor:
+        self.to(device=X.device)
+
+        model_f = self.model.condition_on_observations(X=X, Y=self.model.posterior(X).mean)
+        mvn = model_f(self.X_samples)
+        return -(self.weights * mvn.variance).sum(dim=-1)
+
     @t_batch_mode_transform()
     def forward(self, X: Tensor) -> Tensor:
         """
@@ -34,42 +70,36 @@ class AcqVM(MCAcquisitionFunction):
         """
         self.to(device=X.device)
 
-        mvn_0 = self.model(X)
-        mu_0 = mvn_0.mean
-        sg_0 = mvn_0.stddev
-        vr_0 = mvn_0.variance
+        # mvn_0 = self.model(X)
 
-        mvn = self.model(self.X_samples)
-        mu = mvn.mean
-        sg = mvn.stddev
-        vr = mvn.variance
-        
-        mvn = self.model.posterior(X)
-        model_f = self.model.condition_on_observations(X=X, Y=mvn.mean)
+        model_f = self.model.condition_on_observations(X=X, Y=self.model.posterior(X).mean)
 
-        mvn_0_f = self.model(X)
-        mu_0_f = mvn_0_f.mean
-        sg_0_f = mvn_0_f.stddev
-        vr_0_f = mvn_0_f.variance
+        X_samples = torch.cat(
+            (
+                X,
+                torch.tile(self.X_samples.unsqueeze(0), (X.shape[0], 1, 1)),
+            ),
+            axis=1,
+        )
+        mvn_f = model_f.posterior(X_samples, observation_noise=True)
+        Y_f = self.get_posterior_samples(mvn_f).squeeze(dim=-1)
 
-        mvn_f = model_f.posterior(self.X_samples, observation_noise=True)
-        mu_f = mvn_f.mean.squeeze(-1)
-        sg_f = mvn_f.stddev
-        vr_f = mvn_f.variance.squeeze(-1)
-            
+        p_max = torch.exp(self.beta * Y_f)
+        p_max = p_max / p_max.sum(-1).unsqueeze(-1)
+        p_max = p_max.mean(dim=0)
 
-        p_max_0 = torch.exp(mu_0 + vr_0/2)
-        # p_max = torch.exp(mu + vr/2)
+        q = X.shape[-2]
+        p_max_0_f = p_max[:, :q]
+        p_max_f = p_max[:, q:]
 
-        p_max_0_f = torch.exp(mu_0_f + vr_0_f/2)
-        p_max_f = torch.exp(mu_f + vr_f/2)
-        
-        H_0 = -(p_max_0*torch.log(p_max_0)).mean(dim=-1)
-        # H = -(p_max*torch.log(p_max)).mean(dim=-1)
-        
-        H_0_f = -(p_max_0_f*torch.log(p_max_0_f)).mean(dim=-1)
-        H_f = -(p_max_f*torch.log(p_max_f)).mean(dim=-1)
+        H_0_f = -(p_max_0_f * torch.log(p_max_0_f)).mean(dim=-1)
+        H_f = -(p_max_f * torch.log(p_max_f)).mean(dim=-1)
 
-        # H_0?
-        return -H_0_f - H_f
-        
+        # H_f  nice exploration, like IOPT
+        # -H_0  optimizes ok
+        # -H_0_f  optimizes better
+        # H_0 = self._soft_entropy(mvn_0)
+        # H_0_f = self._soft_entropy(mvn_0_f.mean, mvn_0_f.var)
+        # H_f = self._soft_entropy(mvn_f.mean, mvn_f.var)
+
+        return H_0_f - H_f
