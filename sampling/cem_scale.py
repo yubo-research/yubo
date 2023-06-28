@@ -1,15 +1,8 @@
-from dataclasses import dataclass
-
 import numpy as np
 from scipy.stats import multivariate_normal
 
-from sampling.scaled_inv_chi2 import ScaledInverseChi2
-
-
-@dataclass
-class _CEMSample:
-    prob: np.array
-    x: np.array
+from .scaled_inv_chi2 import ScaledInverseChi2
+from .util import mk_normal_samples
 
 
 class CEMScale:
@@ -36,36 +29,15 @@ class CEMScale:
         return np.sqrt(self._scale2)
 
     def ask(self, num_samples):
-        samples = []
-        while len(samples) < num_samples:
-            rv = ScaledInverseChi2(self._df, self._scale2)
-            scale2s = rv.rvs(size=(num_samples,))
-
-            for scale2 in scale2s:
-                cov = scale2 * self._unit_cov_diag
-                rv_norm = multivariate_normal(
-                    mean=self._loc,
-                    cov=cov,
-                )
-
-                x = rv_norm.rvs(size=(1,))
-                if self.num_dim == 1:
-                    x = np.array([x])
-                if x.min() < 0 or x.max() > 1:
-                    continue
-                samples.append(
-                    _CEMSample(
-                        prob=rv_norm.pdf(x),
-                        x=x,
-                    )
-                )
-
-        return samples[:num_samples]
+        rv = ScaledInverseChi2(self._df, self._scale2)
+        scale2s = rv.rvs(size=(num_samples,))
+        mu_covs = [(self._loc, scale2 * self._unit_cov_diag) for scale2 in scale2s]
+        return mk_normal_samples(mu_covs, num_samples)
 
     def tell(self, likelihoods, samples, n_keep=None):
         likelihoods = np.asarray(likelihoods)
         dx = np.stack([s.x for s in samples]) - self._loc
-        probs = np.array([s.prob for s in samples])
+        probs = np.array([s.p for s in samples])
 
         probs = probs / probs.sum()
 

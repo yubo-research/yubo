@@ -35,7 +35,6 @@ def _test_cem_scale(num_dim):
         mu=mu,
         unit_cov_diag=unit_cov_diag,
         sigma_0=3 * sigma,
-        sobol_seed=np.random.randint(9999),
         alpha=0.2,
     )
 
@@ -45,5 +44,6 @@ def _test_cem_scale(num_dim):
         samples = cem.ask(num_samples)
         assert len(samples) == num_samples, len(samples)
         cem.tell(likelihood(samples), samples)
+        print(cem.estimate_sigma())
 
     assert (cem.estimate_sigma() - 0.0314) < 0.01
