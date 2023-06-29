@@ -26,7 +26,7 @@ def mk_normal_samples(mu_covs, num_samples):
                 continue
             samples.append(
                 Sample(
-                    prob=rv_norm.pdf(x),
+                    p=rv_norm.pdf(x),
                     x=x,
                 )
             )

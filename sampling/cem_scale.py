@@ -1,5 +1,4 @@
 import numpy as np
-from scipy.stats import multivariate_normal
 
 from .scaled_inv_chi2 import ScaledInverseChi2
 from .util import mk_normal_samples
