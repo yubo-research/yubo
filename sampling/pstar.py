@@ -3,7 +3,7 @@ import numpy as np
 from .util import mk_normal_samples
 
 
-class PXMax:
+class PStar:
     def __init__(self, mu, cov_aspect, sigma_0, alpha=1.0):
         self._mu = mu
         self._num_dim = len(mu)

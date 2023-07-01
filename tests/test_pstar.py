@@ -1,13 +1,13 @@
-def _test_pxmax(nu, sigma, eps):
+def _test_pstar(nu, sigma, eps):
     import numpy as np
 
-    from sampling.pxmax import PXMax
+    from sampling.pstar import PStar
 
     np.random.seed(17)
     mu = np.array([0.5, 0.5])
     cov = np.array([1, 0.1])
 
-    pxmax = PXMax(mu, cov, sigma_0=0.1)
+    pstar = PStar(mu, cov, sigma_0=0.1)
 
     def _gp(x, nu):
         return -((x - 0.5) ** 2).sum() + nu * np.random.normal()
@@ -24,21 +24,21 @@ def _test_pxmax(nu, sigma, eps):
 
     num = 30
     for _ in range(10):
-        samples = pxmax.ask(num)
+        samples = pstar.ask(num)
         s = np.vstack([s.x for s in samples]).std(axis=0)
         assert s[0] > 2 * s[1], s
 
         resamples = []
         for _ in samples:
             resamples.append(thompson_sample(samples, nu))
-        pxmax.tell(resamples)
-        # print (num, pxmax.sigma())
-    assert (pxmax.sigma() - sigma) < eps
+        pstar.tell(resamples)
+        # print (num, pstar.sigma())
+    assert (pstar.sigma() - sigma) < eps
 
 
-def test_pxmax_000():
-    _test_pxmax(nu=0, sigma=0, eps=1e-6)
+def test_pstar_000():
+    _test_pstar(nu=0, sigma=0, eps=1e-6)
 
 
-def test_pxmax_001():
-    _test_pxmax(nu=0.001, sigma=0.01, eps=0.01)
+def test_pstar_001():
+    _test_pstar(nu=0.001, sigma=0.01, eps=0.01)
