@@ -12,8 +12,10 @@ class PStar:
             len(mu),
             len(cov_aspect),
         )
-        adet = np.abs(np.prod(cov_aspect))
-        self._unit_cov_diag = cov_aspect / (adet ** (1 / self._num_dim))
+        cov_aspect = np.abs(cov_aspect)
+        cov_aspect = cov_aspect / cov_aspect.mean()
+        det = np.prod(cov_aspect)
+        self._unit_cov_diag = cov_aspect / (det ** (1 / self._num_dim))
         self._num = 0
         self._scale2 = sigma_0**2
         self._alpha = alpha
