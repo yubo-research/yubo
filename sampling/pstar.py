@@ -15,7 +15,7 @@ class PStar:
         cov_aspect = np.abs(cov_aspect)
         cov_aspect = cov_aspect / cov_aspect.mean()
         det = np.prod(cov_aspect)
-        self._unit_cov_diag = cov_aspect / (det ** (1 / self._num_dim))
+        self.unit_cov_diag = cov_aspect / (det ** (1 / self._num_dim))
         self._num = 0
         self._scale2 = sigma_0**2
         self._alpha = alpha
@@ -23,9 +23,14 @@ class PStar:
     def sigma(self):
         return np.sqrt(self._scale2)
 
-    def ask(self, num_samples):
-        cov = (self.sigma() ** 2) * self._unit_cov_diag
-        return mk_normal_samples([(self._mu, cov)], num_samples)
+    def mu(self):
+        return self._mu
+
+    def cov(self):
+        return self._scale2 * self.unit_cov_diag
+
+    def ask(self, num_samples, qmc=False):
+        return mk_normal_samples([(self._mu, self.cov())], num_samples, bound=True, qmc=qmc)
 
     def _mk_x_pi(self, samples):
         x = []

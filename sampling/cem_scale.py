@@ -31,7 +31,7 @@ class CEMScale:
         rv = ScaledInverseChi2(self._df, self._scale2)
         scale2s = rv.rvs(size=(num_samples,))
         mu_covs = [(self._loc, scale2 * self._unit_cov_diag) for scale2 in scale2s]
-        return mk_normal_samples(mu_covs, num_samples)
+        return mk_normal_samples(mu_covs, num_samples, bound=True)
 
     def tell(self, likelihoods, samples, n_keep=None):
         likelihoods = np.asarray(likelihoods)
