@@ -7,7 +7,7 @@ from optimizer.sobol_designer import SobolDesigner
 
 
 class BTDesigner:
-    def __init__(self, policy, acq_fn, *, acq_kwargs=None, init_sobol=1, init_X_samples=False, optimizer_options={"batch_limit": 5, "maxiter": 200}):
+    def __init__(self, policy, acq_fn, *, acq_kwargs=None, init_sobol=1, init_X_samples=False, optimizer_options={"batch_limit": 10, "maxiter": 200}):
         self._policy = policy
         self._acq_fn = acq_fn
         self._init_sobol = init_sobol
@@ -34,7 +34,8 @@ class BTDesigner:
                     weights = acqf.acq_function.weights
                 else:
                     weights = np.ones(size=(len(X),))
-                    weights = weights / weights.sum()
+                    
+                weights = weights / weights.sum()
 
                 i = np.random.choice(np.arange(len(X)), size=(10,), p=weights)
                 batch_initial_conditions = X[i, :].unsqueeze(1)
@@ -46,7 +47,7 @@ class BTDesigner:
                     bounds=acqf.bounds,  # always [0,1]**num_dim
                     q=num_arms,
                     num_restarts=10,
-                    raw_samples=512,
+                    raw_samples=10,
                     options=self._optimizer_options,
                     batch_initial_conditions=batch_initial_conditions,
                 )
