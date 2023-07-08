@@ -4,6 +4,7 @@ from botorch.acquisition.monte_carlo import MCAcquisitionFunction
 from botorch.models.model import Model
 from botorch.sampling.normal import SobolQMCNormalSampler
 from botorch.utils import t_batch_mode_transform
+
 # from IPython.core.debugger import set_trace
 from torch import Tensor
 from torch.quasirandom import SobolEngine
@@ -73,7 +74,7 @@ class AcqPStar(MCAcquisitionFunction):
             # print ("S:", pstar.sigma())
 
         samples = pstar.ask(num_X_samples, qmc=True)
-        X_samples = torch.stack([s.x.flatten() for s in samples])
+        X_samples = torch.stack([torch.tensor(s.x.flatten()) for s in samples])
         prob_X_samples = torch.tensor([s.p for s in samples])
         return X_samples, prob_X_samples, mu, pstar.sigma(), unit_cov
 
