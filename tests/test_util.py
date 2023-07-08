@@ -57,8 +57,6 @@ def _test_draw_varied_bounded_normal_samples(num_dim):
     cov = 0.003 * np.ones(shape=(num_dim,))
     cov[0] = 0.001
 
-    num_samples = 1024
-
     mus_covs = [
         (mu, cov),
         (mu, cov),
@@ -68,13 +66,12 @@ def _test_draw_varied_bounded_normal_samples(num_dim):
 
     assert x.shape == (len(mus_covs), num_dim)
     assert len(p) == len(mus_covs)
-    
+
 
 def _xx_test_varied_1():
     _test_draw_varied_bounded_normal_samples(1)
 
+
 def _xx_test_varied_n():
     for n in [2, 3, 10]:
         _test_draw_varied_bounded_normal_samples(n)
-
-    

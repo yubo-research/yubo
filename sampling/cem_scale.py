@@ -42,9 +42,9 @@ class CEMScale:
         dx = x - self._mu
         w = 1 / pi
 
-        score = p_max/pi
+        score = p_max / pi
         i = np.where(score > np.median(score))[0]
-        dx = dx[i,:]
+        dx = dx[i, :]
         w = w[i]
 
         d2 = (w[:, None] * dx * dx).sum(axis=0) / w.sum()

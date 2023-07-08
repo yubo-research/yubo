@@ -33,7 +33,9 @@ def _test_cem(nu, sigma, eps):
         print("S:", cem.sigma())
         if cem.sigma() < 1e-9:
             break
-        cem.tell(*zip(*resamples), )
+        cem.tell(
+            *zip(*resamples),
+        )
 
     assert s[0] > 2 * s[1], s
     assert (cem.sigma() - sigma) < eps
