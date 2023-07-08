@@ -64,14 +64,16 @@ class AcqPStar(MCAcquisitionFunction):
         unit_cov = self._unit_cov(self.model)
         pstar = FitPStar(mu, unit_cov)
         t0 = time.time()
+        self.trace = []
         while not pstar.converged():
-            x, p = pstar.ask(num_X_samples)
+            x, p = pstar.ask(5*num_X_samples)
             X = torch.tensor(x)
             mvn = self.model.posterior(X, observation_noise=True)
             Y = self.sampler_pstar(mvn).squeeze(dim=-1)
             i_ts = torch.argmax(Y, dim=1)
             pstar.tell(x[i_ts, :], p[i_ts])
-
+            self.trace.append(pstar.sigma())
+            
         self.sigma = pstar.sigma()
         x, p = pstar.ask(num_X_samples, qmc=True)
         X_samples = torch.tensor(x)
