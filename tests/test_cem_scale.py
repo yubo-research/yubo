@@ -1,13 +1,13 @@
-def _test_pstar(nu, sigma, eps):
+def _test_cem(nu, sigma, eps):
     import numpy as np
 
-    from sampling.fit_pstar import FitPStar
+    from sampling.cem_scale import CEMScale
 
     np.random.seed(17)
     mu = np.array([0.5, 0.5])
     cov = np.array([1, 0.1])
 
-    pstar = FitPStar(mu, cov)
+    cem = CEMScale(mu, cov, sigma_0=0.3)
 
     def _gp(x, nu):
         return -((x - 0.5) ** 2).sum() + nu * np.random.normal()
@@ -24,24 +24,25 @@ def _test_pstar(nu, sigma, eps):
 
     num = 30
     for _ in range(30):
-        x, p = pstar.ask(num)
+        # while not cem.converged():
+        x, p = cem.ask(num)
         s = x.std(axis=0)
 
         resamples = []
         for _ in range(len(x)):
             resamples.append(thompson_sample(x, p, nu))
-        print("S:", pstar.sigma())
-        if pstar.sigma() < 1e-9:
+        print("S:", cem.sigma())
+        if cem.sigma() < 1e-9:
             break
-        pstar.tell(*zip(*resamples))
+        cem.tell(*zip(*resamples))
 
     assert s[0] > 2 * s[1], s
-    assert (pstar.sigma() - sigma) < eps
+    assert (cem.sigma() - sigma) < eps
 
 
-def test_pstar_000():
-    _test_pstar(nu=0, sigma=1e-5, eps=1e-4)
+def test_cem_000():
+    _test_cem(nu=0, sigma=1e-9, eps=1e-8)
 
 
-def test_pstar_001():
-    _test_pstar(nu=0.001, sigma=0.01, eps=0.01)
+def test_cem_001():
+    _test_cem(nu=0.001, sigma=0.01, eps=0.01)
