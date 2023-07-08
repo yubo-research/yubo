@@ -33,7 +33,7 @@ class BTDesigner:
                 if hasattr(acqf.acq_function, "weights"):
                     weights = acqf.acq_function.weights
                 else:
-                    weights = np.ones(size=(len(X),))
+                    weights = np.ones(shape=(len(X),))
                     
                 weights = weights / weights.sum()
 
