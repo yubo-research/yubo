@@ -1,6 +1,6 @@
 import numpy as np
 
-from .util import mk_normal_samples
+from .util import draw_bounded_normal_samples
 
 
 class PStar:
@@ -30,7 +30,7 @@ class PStar:
         return self._scale2 * self.unit_cov_diag
 
     def ask(self, num_samples, qmc=False):
-        return mk_normal_samples([(self._mu, self.cov())], num_samples, bound=True, qmc=qmc)
+        return draw_bounded_normal_samples(self._mu, self.cov(), num_samples, qmc=qmc)
 
     def _mk_x_pi(self, samples):
         x = []

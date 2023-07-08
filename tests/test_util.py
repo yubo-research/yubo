@@ -1,43 +1,46 @@
-def test_mk_normal_samples():
+def _test_draw_bounded_normal_samples(num_dim, qmc):
     import numpy as np
 
-    from sampling.util import mk_normal_samples
+    from sampling.util import draw_bounded_normal_samples
 
-    mu = np.array([0.2, 0.8])
-    cov = np.array([0.003, 0.01])
-    mu_covs = [
-        (mu, cov),
-    ]
-    num_samples = 100
+    np.random.seed(17)
 
-    samples = mk_normal_samples(mu_covs, num_samples, qmc=False)
+    mu = np.random.uniform(size=(num_dim,))
+    cov = 0.003 * np.ones(shape=(num_dim,))
+    cov[0] = 0.001
+
+    num_samples = 1024
+
+    samples = draw_bounded_normal_samples(mu, cov, num_samples, qmc=qmc)
+
     x = np.array([s.x for s in samples])
-    assert np.abs(x.mean(axis=0) - mu).max() < 0.05
-    assert np.abs(x.var(axis=0) - cov).max() < 0.05
 
-    samples = mk_normal_samples(mu_covs, num_samples, qmc=True)
-    x = np.array([s.x.numpy() for s in samples])
     assert np.abs(x.mean(axis=0) - mu).max() < 0.05
     assert np.abs(x.var(axis=0) - cov).max() < 0.05
 
 
-def test_mk_normal_samples_high_dim():
+def test_narrow():
+    for qmc in [True, False]:
+        for num_dim in [1, 3, 10, 30, 100]:
+            _test_draw_bounded_normal_samples(num_dim, qmc)
+
+
+def test_wide():
     import numpy as np
 
-    from sampling.util import mk_normal_samples
+    from sampling.util import draw_bounded_normal_samples
+
+    np.random.seed(17)
 
     num_dim = 100
     mu = np.random.uniform(size=(num_dim,))
-    cov = 0.01 * np.ones(shape=(num_dim,))
-    cov[0] = 0.003
+    cov = 0.3 * np.ones(shape=(num_dim,))
+    cov[0] = 0.1
 
-    mu_covs = [
-        (mu, cov),
-    ]
+    num_samples = 1024
 
-    num_samples = 64
+    samples = draw_bounded_normal_samples(mu, cov, num_samples, qmc=False)
 
-    samples = mk_normal_samples(mu_covs, num_samples, qmc=False)
     x = np.array([s.x for s in samples])
-    assert np.abs(x.mean(axis=0) - mu).max() < 0.05
-    assert np.abs(x.var(axis=0) - cov).max() < 0.05
+
+    assert x.min() >= 0 and x.max() <= 1
