@@ -17,7 +17,7 @@ from sampling.fit_pstar import FitPStar
 class AcqPStar(MCAcquisitionFunction):
     """Model p*(x) as a Gaussian"""
 
-    def __init__(self, model: Model, num_X_samples, num_Y_samples=None, beta=20, use_soft_entropy=False, **kwargs) -> None:
+    def __init__(self, model: Model, num_X_samples=64, num_Y_samples=None, beta=20, use_soft_entropy=False, **kwargs) -> None:
         super().__init__(model=model, **kwargs)
         self.num_Y_samples = num_Y_samples  # triggers joint sampling in inner loop; slower
         self._beta = beta
@@ -83,6 +83,7 @@ class AcqPStar(MCAcquisitionFunction):
         return X_samples, prob_X_samples, mu, unit_cov
 
     def _ts_max(self):
+        # TODO: add sobol points?
         X_0 = self.model.train_inputs[0].detach()
         if len(X_0) == 1:
             return X_0.flatten()

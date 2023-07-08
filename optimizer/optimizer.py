@@ -12,14 +12,10 @@ from botorch.acquisition.monte_carlo import (
     qUpperConfidenceBound,
 )
 
-# from bo.acq_des import AcqDES
-from bo.acq_ieig import AcqIEIG
 from bo.acq_iopt import AcqIOpt
 from bo.acq_min_dist import AcqMinDist
-from bo.acq_noisy_max import AcqNoisyMax
-from bo.acq_pts import AcqPTS
+from bo.acq_pstar import AcqPStar
 from bo.acq_var import AcqVar
-from bo.acq_vm import AcqVM
 
 from .ax_designer import AxDesigner
 from .bt_designer import BTDesigner
@@ -40,8 +36,6 @@ def _iOptFactory(model, acqf=None, X_baseline=None):
             acqf = None
     elif acqf == "sr":
         acqf = qSimpleRegret(model)
-    elif acqf == "nm":
-        acqf = AcqNoisyMax(model)
     elif acqf == "mes":
         acqf = qMaxValueEntropy(model, candidate_set=X_baseline)
     else:
@@ -71,27 +65,7 @@ class Optimizer:
             "maximin-toroidal": BTDesigner(policy, lambda m: AcqMinDist(m, toroidal=True)),
             "variance": BTDesigner(policy, AcqVar),
             "iopt": BTDesigner(policy, _iOptFactory, init_sobol=0),
-            "ieig": BTDesigner(policy, AcqIEIG, init_sobol=0, init_X_samples=False, acq_kwargs=dict(joint_sampling=True)),
-            "vm": BTDesigner(policy, AcqVM, init_sobol=0, init_X_samples=False, acq_kwargs=dict(beta=10)),
-            "pts_a": BTDesigner(
-                policy,
-                AcqPTS,
-                init_sobol=0,
-                init_X_samples=True,
-                acq_kwargs=dict(
-                    num_X_samples=128,
-                    num_Y_samples=32,
-                    num_fantasies=0,
-                    num_noisy_maxes=0,
-                    num_mcmc=30,
-                    num_px_mc=128,
-                    num_px_weights=256,
-                    use_weights=False,
-                    use_log=False,
-                    fantasies_only=False,
-                    use_des=False,
-                ),
-            ),
+            "pstar": BTDesigner(policy, AcqPStar),
             "sr": BTDesigner(policy, qSimpleRegret),
             "ei": BTDesigner(policy, qNoisyExpectedImprovement, acq_kwargs={"X_baseline": None}),
             "mes": BTDesigner(policy, qMaxValueEntropy, acq_kwargs={"candidate_set": None}),
