@@ -31,17 +31,30 @@ class FitPStar:
     def mu(self):
         return self._mu
 
+    @staticmethod
+    def estimate_scale2(mu, x, pi=None):
+        if pi is None:
+            pi = np.ones(shape=(len(x),))
+            
+        x = np.asarray(x)
+        pi = np.asarray(pi)
+
+        dx = x - mu
+
+        # If mu is in the set x, then
+        #  maybe we're biasing sigma to be smaller.
+        i = np.where(dx != 0)[0]
+        dx = dx[i,:]
+        pi = pi[i]
+        
+        w = 1 / pi
+
+        d2 = (w[:, None] * dx * dx).sum(axis=0) / w.sum()
+        return d2.mean()
+        
     def ask(self, num_samples, qmc=False):
         return draw_bounded_normal_samples(self._mu, self.cov(), num_samples, qmc=qmc)
 
     def tell(self, x, pi):
-        x = np.asarray(x)
-        pi = np.asarray(pi)
-
-        dx = x - self._mu
-        w = 1 / pi
-
-        d2 = (w[:, None] * dx * dx).sum(axis=0) / w.sum()
-        scale2_est = d2.mean()
-
+        scale2_est = self.estimate_scale2(self._mu, x, pi)
         self._scale2 += self._alpha * (scale2_est - self._scale2)

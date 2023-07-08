@@ -24,7 +24,6 @@ def _test_cem(nu, sigma, eps):
 
     num = 30
     for _ in range(30):
-        # while not cem.converged():
         x, p = cem.ask(num)
         s = x.std(axis=0)
 
@@ -34,7 +33,7 @@ def _test_cem(nu, sigma, eps):
         print("S:", cem.sigma())
         if cem.sigma() < 1e-9:
             break
-        cem.tell(*zip(*resamples))
+        cem.tell(*zip(*resamples), )
 
     assert s[0] > 2 * s[1], s
     assert (cem.sigma() - sigma) < eps

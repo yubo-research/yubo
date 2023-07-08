@@ -42,3 +42,39 @@ def test_wide():
     x, _ = draw_bounded_normal_samples(mu, cov, num_samples, qmc=False)
 
     assert x.min() >= 0 and x.max() <= 1
+
+
+def _test_draw_varied_bounded_normal_samples(num_dim):
+    import numpy as np
+    import torch
+
+    from sampling.util import draw_varied_bounded_normal_samples
+
+    np.random.seed(17)
+    torch.manual_seed(17)
+
+    mu = np.random.uniform(size=(num_dim,))
+    cov = 0.003 * np.ones(shape=(num_dim,))
+    cov[0] = 0.001
+
+    num_samples = 1024
+
+    mus_covs = [
+        (mu, cov),
+        (mu, cov),
+        (mu, cov),
+    ]
+    x, p = draw_varied_bounded_normal_samples(mus_covs)
+
+    assert x.shape == (len(mus_covs), num_dim)
+    assert len(p) == len(mus_covs)
+    
+
+def _xx_test_varied_1():
+    _test_draw_varied_bounded_normal_samples(1)
+
+def _xx_test_varied_n():
+    for n in [2, 3, 10]:
+        _test_draw_varied_bounded_normal_samples(n)
+
+    

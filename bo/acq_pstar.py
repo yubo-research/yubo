@@ -7,22 +7,23 @@ from botorch.models.model import Model
 from botorch.sampling.normal import SobolQMCNormalSampler
 from botorch.utils import t_batch_mode_transform
 
-# from IPython.core.debugger import set_trace
+from IPython.core.debugger import set_trace
 from torch import Tensor
 from torch.quasirandom import SobolEngine
 
-from sampling.fit_pstar import FitPStar
+# from sampling.fit_pstar import FitPStar
+from sampling.cem_scale import CEMScale
 
 
 class AcqPStar(MCAcquisitionFunction):
     """Model p*(x) as a Gaussian"""
 
-    def __init__(self, model: Model, num_X_samples=64, num_Y_samples=None, beta=20, use_soft_entropy=False, **kwargs) -> None:
+    def __init__(self, model: Model, num_X_samples=64, num_Y_samples=None, num_ts=1024, beta=20, use_soft_entropy=False, **kwargs) -> None:
         super().__init__(model=model, **kwargs)
         self.num_Y_samples = num_Y_samples  # triggers joint sampling in inner loop; slower
         self._beta = beta
         self._use_soft_entropy = use_soft_entropy
-        self.sampler_pstar = SobolQMCNormalSampler(sample_shape=torch.Size([num_X_samples]))
+        self.sampler_pstar = SobolQMCNormalSampler(sample_shape=torch.Size([num_ts]))
         if num_Y_samples is not None:
             self.sampler = SobolQMCNormalSampler(sample_shape=torch.Size([num_Y_samples]))
         else:
@@ -60,19 +61,30 @@ class AcqPStar(MCAcquisitionFunction):
         assert np.abs(np.prod(unit_cov) - 1) < 1e-6
         return unit_cov
 
+    def _calc_p_max_from_Y(self, Y):
+        is_best = torch.argmax(Y, dim=-1)
+        idcs, counts = torch.unique(is_best, return_counts=True)
+        p_max = torch.zeros(Y.shape[-1])
+        p_max[idcs] = counts / Y.shape[0]
+        return p_max
+    
     def _draw_from_pstar(self, num_X_samples):
         mu = self._ts_max().cpu().detach().numpy()
         unit_cov = self._unit_cov(self.model)
-        pstar = FitPStar(mu, unit_cov)
+        
+        # pstar = FitPStar(mu, unit_cov, sigma_0=sigma_0, alpha=1.0)
+        pstar = CEMScale(mu, unit_cov, sigma_0=0.1, alpha=1.0)
         t0 = time.time()
         self.trace = []
         for _ in range(30):
-            x, p = pstar.ask(5 * num_X_samples)
+            x, p = pstar.ask(num_X_samples, qmc=True)
             X = torch.tensor(x)
-            mvn = self.model.posterior(X, observation_noise=True)
+            mvn = self.model.posterior(X) # TEST, observation_noise=True)
             Y = self.sampler_pstar(mvn).squeeze(dim=-1)
-            i_ts = torch.argmax(Y, dim=1)
-            pstar.tell(x[i_ts, :], p[i_ts])
+            # i_ts = torch.argmax(Y, dim=1)
+            p_max = self._calc_p_max_from_Y(Y)
+            # pstar.tell(x[i_ts, :], p[i_ts])
+            pstar.tell(x, p, p_max)
             self.trace.append(pstar.sigma())
 
         self.sigma = pstar.sigma()

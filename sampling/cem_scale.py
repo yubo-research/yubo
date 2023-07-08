@@ -35,15 +35,24 @@ class CEMScale:
 
         return draw_bounded_normal_samples(self._mu, cov, num_samples, qmc)
 
-    def tell(self, x, pi):
+    def tell(self, x, pi, p_max):
         x = np.asarray(x)
         pi = np.asarray(pi)
 
         dx = x - self._mu
         w = 1 / pi
 
+        score = p_max/pi
+        i = np.where(score > np.median(score))[0]
+        dx = dx[i,:]
+        w = w[i]
+
         d2 = (w[:, None] * dx * dx).sum(axis=0) / w.sum()
         scale2_est = d2.mean()
 
-        self._df += self._alpha * (len(pi) - self._df)
-        self._scale2 += self._alpha * (scale2_est - self._scale2)
+        if self._alpha is None:
+            self._df += len(w)
+            self._scale2 += scale2_est
+        else:
+            self._df += self._alpha * (len(w) - self._df)
+            self._scale2 += self._alpha * (scale2_est - self._scale2)

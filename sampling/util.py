@@ -59,3 +59,35 @@ def draw_bounded_normal_samples(mu, cov, num_samples, qmc=False):
     p = p / p.sum()
 
     return x, p
+
+
+def _xxx_draw_varied_bounded_normal_samples(mus_covs):
+
+    samples = []
+    num_dim = len(mus_covs[0][0])
+    for mu, cov in mus_covs:
+        assert len(mu) == num_dim, (len(mu), num_dim)
+    
+        rv_norm = multivariate_normal(
+            mean=mu,
+            cov=cov,
+        )
+
+        x = rv_norm.rvs()
+        if num_dim == 1:
+            x = np.array([x])
+        x = x[:,None]
+        if x.min() < 0 or x.max() > 1:
+            x = np.random.uniform(size=(1, len(mu)))
+        p = rv_norm.pdf(x.flatten())
+        samples.append( (x, p) )
+
+    samples = np.array(samples)
+    # x = np.vstack(samples[:,0])
+    try:
+        x = np.stack(samples[:,0]).squeeze(-1)
+    except:
+        breakpoint()
+    p = samples[:,1]
+    
+    return x, p
