@@ -1,9 +1,11 @@
 def _test_draw_bounded_normal_samples(num_dim, qmc):
     import numpy as np
+    import torch
 
     from sampling.util import draw_bounded_normal_samples
 
     np.random.seed(17)
+    torch.manual_seed(17)
 
     mu = np.random.uniform(size=(num_dim,))
     cov = 0.003 * np.ones(shape=(num_dim,))
@@ -11,9 +13,7 @@ def _test_draw_bounded_normal_samples(num_dim, qmc):
 
     num_samples = 1024
 
-    samples = draw_bounded_normal_samples(mu, cov, num_samples, qmc=qmc)
-
-    x = np.array([s.x for s in samples])
+    x, p = draw_bounded_normal_samples(mu, cov, num_samples, qmc=qmc)
 
     assert np.abs(x.mean(axis=0) - mu).max() < 0.05
     assert np.abs(x.var(axis=0) - cov).max() < 0.05
@@ -39,8 +39,6 @@ def test_wide():
 
     num_samples = 1024
 
-    samples = draw_bounded_normal_samples(mu, cov, num_samples, qmc=False)
-
-    x = np.array([s.x for s in samples])
+    x, _ = draw_bounded_normal_samples(mu, cov, num_samples, qmc=False)
 
     assert x.min() >= 0 and x.max() <= 1

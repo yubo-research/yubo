@@ -3,8 +3,8 @@ import numpy as np
 from .util import draw_bounded_normal_samples
 
 
-class PStar:
-    def __init__(self, mu, cov_aspect, sigma_0, alpha=1.0):
+class FitPStar:
+    def __init__(self, mu, cov_aspect, alpha=0.5, exp_low_0=-20):
         self._mu = mu
         self._num_dim = len(mu)
         assert len(mu) == len(cov_aspect), (
@@ -16,35 +16,34 @@ class PStar:
         cov_aspect = cov_aspect / cov_aspect.mean()
         det = np.prod(cov_aspect)
         self.unit_cov_diag = cov_aspect / (det ** (1 / self._num_dim))
-        self._num = 0
-        self._scale2 = sigma_0**2
-        self._alpha = alpha
+        self._scale2_exp_low = exp_low_0
+        self._scale2_exp_high = 0
+        self._alpha = 0.5
+
+    def _mid(self):
+        return (self._scale2_exp_low + self._scale2_exp_high) / 2
+
+    def converged(self):
+        return (self._scale2_exp_high - self._scale2_exp_low) < 1
+
+    def scale2(self):
+        return np.exp(self._mid())
+
+    def cov(self):
+        return self.scale2() * self.unit_cov_diag
 
     def sigma(self):
-        return np.sqrt(self._scale2)
+        return np.sqrt(self.scale2())
 
     def mu(self):
         return self._mu
 
-    def cov(self):
-        return self._scale2 * self.unit_cov_diag
-
     def ask(self, num_samples, qmc=False):
         return draw_bounded_normal_samples(self._mu, self.cov(), num_samples, qmc=qmc)
 
-    def _mk_x_pi(self, samples):
-        x = []
-        pi = []
-        for s in samples:
-            x.append(s.x)
-            pi.append(s.p)
-
-        x = np.array(x)
-        pi = np.array(pi)
-        return x, pi
-
-    def tell(self, resamples):
-        x, pi = self._mk_x_pi(resamples)
+    def tell(self, x, pi):
+        x = np.asarray(x)
+        pi = np.asarray(pi)
 
         dx = x - self._mu
         w = 1 / pi
@@ -52,5 +51,7 @@ class PStar:
         d2 = (w[:, None] * dx * dx).sum(axis=0) / w.sum()
         scale2_est = d2.mean()
 
-        self._num += self._alpha * (len(pi) - self._num)
-        self._scale2 += self._alpha * (scale2_est - self._scale2)
+        if scale2_est > self.scale2():
+            self._scale2_exp_low = (1 - self._alpha) * self._scale2_exp_low + self._alpha * self._mid()
+        else:
+            self._scale2_exp_high = (1 - self._alpha) * self._scale2_exp_high + self._alpha * self._mid()

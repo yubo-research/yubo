@@ -58,4 +58,4 @@ def draw_bounded_normal_samples(mu, cov, num_samples, qmc=False):
     p = p[i]
     p = p / p.sum()
 
-    return [Sample(x=xx, p=pp) for xx, pp in zip(x, p)]
+    return x, p
