@@ -6,8 +6,7 @@ from botorch.acquisition.monte_carlo import (
 )
 from botorch.models.model import Model
 from botorch.utils import t_batch_mode_transform
-
-# from IPython.core.debugger import set_trace
+from IPython.core.debugger import set_trace
 from torch import Tensor
 from torch.quasirandom import SobolEngine
 
@@ -41,6 +40,10 @@ class AcqIOpt(MCAcquisitionFunction):
         Y = model.posterior(X)
         return Y.variance.mean().item()
 
+    def model_t(self, X):
+        Y = self.model.posterior(X).mean  # b x q x 1
+        return self.model.condition_on_observations(X=X, Y=Y)
+
     @t_batch_mode_transform()
     def forward(self, X: Tensor) -> Tensor:
         """
@@ -53,9 +56,21 @@ class AcqIOpt(MCAcquisitionFunction):
         if self.acqf is not None:
             return self.acqf(X)
 
-        Y = self.model.posterior(X).mean  # b x q x 1
-        model_t = self.model.condition_on_observations(X=X, Y=Y)
+        model_t = self.model_t(X)
 
-        var_t = model_t.posterior(self.X_samples, observation_noise=True).variance.squeeze().mean(dim=-1)  # mean over X_samples
+        q = X.shape[-2]
+        num_dim = X.shape[-1]
+        num_obs = len(self.model.train_inputs[0])
+        # model_t.covar_module.base_kernel.lengthscale *= (max(1, num_obs) / (max(1, num_obs) + q)) ** (1/num_dim)
+        model_t.covar_module.base_kernel.lengthscale *= ((1 + num_obs) / (1 + num_obs + q)) ** (1.0 / num_dim)
+        var_t = model_t.posterior(self.X_samples, observation_noise=True).variance.squeeze()
 
-        return -var_t
+        # var_t = var_t.mean(dim=-1)  # mean over X_samples
+        # var_t = var_t.max(dim=-1).values # nicer designs than mean, but much slower
+
+        # compromise: mu + sigma
+        m = var_t.mean(dim=-1)
+        s = var_t.std(dim=-1)
+
+        # return -m
+        return -(m + s)
