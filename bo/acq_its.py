@@ -49,6 +49,7 @@ class AcqITS(MCAcquisitionFunction):
         self.to(device=X.device)
 
         q = X.shape[-2]
+        assert len(self.X_samples) >= 10 * q, f"You should use num_X_samples >= 10*q"
         num_dim = X.shape[-1]
         num_obs = len(self.model.train_inputs[0])
 
@@ -56,7 +57,9 @@ class AcqITS(MCAcquisitionFunction):
         model_f.covar_module.base_kernel.lengthscale *= ((1 + num_obs) / (1 + num_obs + q)) ** (1.0 / num_dim)
 
         var_f = model_f.posterior(self.X_samples, observation_noise=True).variance.squeeze()
-        m = var_f.mean(dim=-1)
-        s = var_f.std(dim=-1)
-
-        return -(m + s)
+        if True:
+            m = var_f.mean(dim=-1)
+            s = var_f.std(dim=-1)
+            return -(m + s)
+        else:
+            return -torch.exp(20 * var_f).mean(dim=-1)
