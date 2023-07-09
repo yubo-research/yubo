@@ -30,14 +30,7 @@ class BTDesigner:
             warnings.simplefilter("ignore")
             if self._init_X_samples and hasattr(acqf.acq_function, "X_samples"):
                 X = acqf.acq_function.X_samples
-                if hasattr(acqf.acq_function, "weights"):
-                    weights = acqf.acq_function.weights
-                else:
-                    weights = np.ones(shape=(len(X),))
-
-                weights = weights / weights.sum()
-
-                i = np.random.choice(np.arange(len(X)), size=(10,), p=weights)
+                i = np.random.choice(np.arange(len(X)), size=(10,))
                 batch_initial_conditions = X[i, :].unsqueeze(1)
             else:
                 batch_initial_conditions = None

@@ -10,7 +10,7 @@ from torch.quasirandom import SobolEngine
 
 
 class AcqITS(MCAcquisitionFunction):
-    def __init__(self, model: Model, num_X_samples=128, num_Y_samples=None, **kwargs) -> None:
+    def __init__(self, model: Model, num_X_samples=128, num_Y_samples=64, **kwargs) -> None:
         super().__init__(model=model, **kwargs)
         self._num_X_samples = num_X_samples
         if num_Y_samples is not None:
@@ -76,6 +76,4 @@ class AcqITS(MCAcquisitionFunction):
 
         model_f = self.model.condition_on_observations(X=X, Y=self.model.posterior(X).mean)
 
-        if self._use_soft_entropy:
-            return -self._soft_entropy(model_f)
         return -self._integrated_variance(model_f)
