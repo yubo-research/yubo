@@ -5,10 +5,10 @@ from turbo_ref.turbo_1 import Turbo1
 
 
 class TuRBODesigner:
-    def __init__(self, policy):
+    def __init__(self, policy, num_init=None):
         self._policy = policy
         bounds = np.array([[all_bounds.x_low, all_bounds.x_high]] * policy.num_params())
-        self._turbo = Turbo1(bounds)
+        self._turbo = Turbo1(bounds, n_init=num_init)
 
     def __call__(self, data, num_arms):
         assert num_arms == 1, ("NYI (but possible), num_arms>1", num_arms)

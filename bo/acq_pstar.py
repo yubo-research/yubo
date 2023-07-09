@@ -6,7 +6,6 @@ from botorch.acquisition.monte_carlo import MCAcquisitionFunction
 from botorch.models.model import Model
 from botorch.sampling.normal import SobolQMCNormalSampler
 from botorch.utils import t_batch_mode_transform
-
 # from IPython.core.debugger import set_trace
 from torch import Tensor
 from torch.quasirandom import SobolEngine
@@ -19,6 +18,7 @@ class AcqPStar(MCAcquisitionFunction):
 
     def __init__(self, model: Model, num_X_samples=64, num_Y_samples=None, num_ts=256, beta=20, use_soft_entropy=False, **kwargs) -> None:
         super().__init__(model=model, **kwargs)
+        self._num_X_samples = num_X_samples
         self.num_Y_samples = num_Y_samples  # triggers joint sampling in inner loop; slower
         self._beta = beta
         self._use_soft_entropy = use_soft_entropy
@@ -29,23 +29,65 @@ class AcqPStar(MCAcquisitionFunction):
             self.sampler = None
 
         X_0 = self.model.train_inputs[0].detach()
-        num_obs = X_0.shape[0]
+        self._num_obs = X_0.shape[0]
         self._num_dim = X_0.shape[-1]
-        dtype = X_0.dtype
+        self._dtype = X_0.dtype
 
+        real_pstar = False
         sobol_engine = SobolEngine(self._num_dim, scramble=True)
-        if num_obs == 0:
-            self.X_samples = sobol_engine.draw(num_X_samples, dtype=dtype)
+        if self._num_obs == 0:
+            self.X_samples = sobol_engine.draw(num_X_samples, dtype=self._dtype)
             self._prob_X_samples = torch.ones(num_X_samples) / num_X_samples
             self._unit_cov_0 = torch.ones(self._num_dim)
             self._dx2 = (self.X_samples - 0.5 * torch.ones(self._num_dim)) ** 2
         else:
-            (self.X_samples, self._prob_X_samples, mu, self._unit_cov_0) = self._draw_from_pstar(num_X_samples)
-            self._dx2 = (self.X_samples - mu) ** 2
+            if real_pstar:
+                (self.X_samples, self._prob_X_samples, mu, self._unit_cov_0) = self._draw_from_pstar(num_X_samples)
+                self._dx2 = (self.X_samples - mu) ** 2
+            else:
+                self.X_samples = self._sample_maxes(num_X_samples)
 
-        self._prob_X_samples = self._prob_X_samples.unsqueeze(0)
-        self._dx2 = self._dx2.unsqueeze(0)
-        self._unit_cov_0 = torch.tensor(self._unit_cov_0).unsqueeze(0).unsqueeze(0)
+        if real_pstar:
+            self._prob_X_samples = self._prob_X_samples.unsqueeze(0)
+            self._dx2 = self._dx2.unsqueeze(0)
+            self._unit_cov_0 = torch.tensor(self._unit_cov_0).unsqueeze(0).unsqueeze(0)
+        self._vr_0 = self._variance(self.model)
+
+    def _sample_maxes(self, num_X_samples):
+        X_obs = self.model.train_inputs[0]
+        Y_obs = self.model.posterior(X_obs).mean.squeeze(-1)
+        Y_max = Y_obs.max()
+        X_max = X_obs[Y_obs == Y_max]
+
+        sobol_engine = SobolEngine(self._num_dim, scramble=True)
+
+        X_samples = []
+        while len(X_samples) < num_X_samples:
+            X = sobol_engine.draw(num_X_samples, dtype=self._dtype)
+
+            X = torch.cat(
+                (
+                    X_max,
+                    X,
+                )
+            )
+            Y = self.model.posterior(X, observation_noise=True).sample(torch.Size([num_X_samples])).squeeze(-1)
+            y_m, i = torch.max(Y, dim=1)
+            i = i[y_m > Y[:, 0]]
+            X_samples.extend([X[ii] for ii in i])
+            print("I:", len(i), len(X_samples))
+        return torch.stack(X_samples[:num_X_samples])
+
+    def _ts_max_0(self, X):
+        Y = self.model.posterior(X, observation_noise=True).sample(torch.Size([1]))
+        i = torch.argmax(Y.squeeze())
+        return X[i]
+
+    def _ts_max(self):
+        X_0 = self.model.train_inputs[0].detach()
+        if len(X_0) == 1:
+            return X_0.flatten()
+        return self._ts_max_0(X_0)
 
     def _unit_cov(self, model):
         # Stolen from TurBO:
@@ -71,13 +113,15 @@ class AcqPStar(MCAcquisitionFunction):
         mu = self._ts_max().cpu().detach().numpy()
         unit_cov = self._unit_cov(self.model)
 
-        pstar = CEMScale(mu, unit_cov, sigma_0=0.1, alpha=1.0)
+        X = self.model.train_inputs[0]
+
+        pstar = CEMScale(mu, unit_cov, sigma_0=0.1, alpha=0.9)
         t0 = time.time()
         self.trace = []
         for _ in range(30):
             x, p = pstar.ask(num_X_samples, qmc=True)
             X = torch.tensor(x)
-            mvn = self.model.posterior(X)  # , observation_noise=True)
+            mvn = self.model.posterior(X, observation_noise=True)
             Y = self.sampler_pstar(mvn).squeeze(dim=-1)
             p_max = self._calc_p_max_from_Y(Y)
             pstar.tell(x, p, p_max)
@@ -92,21 +136,6 @@ class AcqPStar(MCAcquisitionFunction):
         self.fit_time = time.time() - t0
         return X_samples, prob_X_samples, mu, unit_cov
 
-    def _ts_max(self):
-        # TODO: add sobol points?
-        X_0 = self.model.train_inputs[0].detach()
-        if len(X_0) == 1:
-            return X_0.flatten()
-        Y = self.model.posterior(X_0).sample(torch.Size([1]))
-        i = torch.argmax(Y.squeeze())
-        return X_0[i]
-
-    """
-    def _pdf_X_samples(self, sigma2):
-        x = (self._dx2 / self._unit_cov_diag) / 2 / sigma2
-        return torch.exp(-x.mean(dim=0)) / torch.sqrt(2 * torch.pi * sigma2)
-    """
-
     def _soft_entropy(self, model):
         assert np.abs(self._unit_cov_0 - self._unit_cov(model)).max() < 1e-6, (self._unit_cov_0, self._unit_cov(model))
         mvn = model.posterior(self.X_samples, observation_noise=True)
@@ -118,7 +147,6 @@ class AcqPStar(MCAcquisitionFunction):
         else:
             Y = self.get_posterior_samples(mvn)
             p_max = torch.exp(self._beta * Y).squeeze(-1)
-            # rescale b/c exp() creates large scale
             p_max = p_max / p_max.sum(dim=-1).unsqueeze(dim=-1)
             p_max = p_max.mean(dim=0)
 
@@ -138,14 +166,18 @@ class AcqPStar(MCAcquisitionFunction):
         #  constants or the ln() (which is monotonic in its argument).
         return sigma2
 
-    def _integrated_variance(self, model):
+    def _variance(self, model):
         mvn = model.posterior(self.X_samples, observation_noise=True)
         if self.sampler is not None:
             Y = self.get_posterior_samples(mvn).squeeze(dim=-1)
             vr = Y.var(dim=0)
         else:
             vr = mvn.variance.squeeze()
+        return vr
 
+    def _integrated_variance(self, model):
+        vr = self._variance(model)
+        # vr = vr / self._vr_0.unsqueeze(0)
         return vr.mean(dim=-1)
 
     @t_batch_mode_transform()

@@ -31,16 +31,14 @@ class FitPStar:
     def mu(self):
         return self._mu
 
-    @staticmethod
-    def estimate_scale2(mu, x, pi=None):
+    def estimate_scale2(self, mu, x, pi=None):
         if pi is None:
             pi = np.ones(shape=(len(x),))
 
         x = np.asarray(x)
         pi = np.asarray(pi)
 
-        dx = x - mu
-
+        dx = (x - mu) / self.unit_cov_diag
         # If mu is in the set x, then
         #  maybe we're biasing sigma to be smaller.
         i = np.where(dx != 0)[0]

@@ -39,13 +39,15 @@ class CEMScale:
         x = np.asarray(x)
         pi = np.asarray(pi)
 
-        dx = x - self._mu
+        dx = (x - self._mu) / self._unit_cov_diag
         w = 1 / pi
 
         score = p_max / pi
-        i = np.where(score > np.median(score))[0]
-        dx = dx[i, :]
-        w = w[i]
+
+        if True:
+            i = np.where(score > np.median(score))[0]
+            dx = dx[i, :]
+            w = w[i]
 
         d2 = (w[:, None] * dx * dx).sum(axis=0) / w.sum()
         scale2_est = d2.mean()

@@ -15,27 +15,39 @@ def _test_cem(nu, sigma, eps):
     def thompson_sample(x, p, nu):
         s_max = None
         y_max = -1e99
-        for xx, pp in zip(x, p):
+        i_max = None
+        for i, (xx, pp) in enumerate(zip(x, p)):
             y = _gp(xx, nu)
             if y > y_max:
                 y_max = y
                 s_max = (xx, pp)
-        return s_max
+                i_max = i
+        return i_max, s_max
+
+    def calc_p_max(x, p, nu):
+        p_max = np.zeros(shape=(len(x),))
+        for _ in range(1024):
+            i_max, _ = thompson_sample(x, p, nu)
+            p_max[i_max] += 1
+        p_max = p_max / p_max.sum()
+        return p_max
 
     num = 30
     for _ in range(30):
         x, p = cem.ask(num)
         s = x.std(axis=0)
 
-        resamples = []
-        for _ in range(len(x)):
-            resamples.append(thompson_sample(x, p, nu))
+        if False:
+            resamples = []
+            for _ in range(len(x)):
+                resamples.append(thompson_sample(x, p, nu))
+
+        p_max = calc_p_max(x, p, nu)
         print("S:", cem.sigma())
         if cem.sigma() < 1e-9:
             break
-        cem.tell(
-            *zip(*resamples),
-        )
+        cem.tell(x, p, p_max)
+        # *zip(*resamples),
 
     assert s[0] > 2 * s[1], s
     assert (cem.sigma() - sigma) < eps

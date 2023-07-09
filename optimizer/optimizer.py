@@ -74,7 +74,7 @@ class Optimizer:
             "sobol_gibbon": BTDesigner(policy, qLowerBoundMaxValueEntropy, init_sobol=init_ax_default, acq_kwargs={"candidate_set": None}),
             "ucb": BTDesigner(policy, qUpperConfidenceBound, acq_kwargs={"beta": 1}),
             "ax": AxDesigner(policy),
-            "turbo": TuRBODesigner(policy),
+            "turbo": TuRBODesigner(policy, num_init=init_ax_default),
             "sobol_ei": BTDesigner(policy, qNoisyExpectedImprovement, init_sobol=init_ax_default, acq_kwargs={"X_baseline": None}),
             "sobol_ucb": BTDesigner(policy, qUpperConfidenceBound, init_sobol=init_ax_default, acq_kwargs={"beta": 1}),
         }
@@ -96,6 +96,7 @@ class Optimizer:
         assert ttype in self._designers, f"Unknown optimizer type {ttype}"
 
         designer = self._designers[ttype]
+
         trace = []
         for i_iter in range(num_iterations):
             best_in_batch = -1e99
