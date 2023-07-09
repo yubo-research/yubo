@@ -6,7 +6,8 @@ from botorch.acquisition.monte_carlo import (
 )
 from botorch.models.model import Model
 from botorch.utils import t_batch_mode_transform
-from IPython.core.debugger import set_trace
+
+# from IPython.core.debugger import set_trace
 from torch import Tensor
 from torch.quasirandom import SobolEngine
 

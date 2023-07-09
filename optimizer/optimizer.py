@@ -65,7 +65,7 @@ class Optimizer:
             "maximin-toroidal": BTDesigner(policy, lambda m: AcqMinDist(m, toroidal=True)),
             "variance": BTDesigner(policy, AcqVar),
             "iopt": BTDesigner(policy, _iOptFactory, init_sobol=0),
-            "its": BTDesigner(policy, AcqITS, init_sobol=0),
+            "its": BTDesigner(policy, AcqITS, init_X_samples=True, init_sobol=0),
             "sr": BTDesigner(policy, qSimpleRegret),
             "ei": BTDesigner(policy, qNoisyExpectedImprovement, acq_kwargs={"X_baseline": None}),
             "mes": BTDesigner(policy, qMaxValueEntropy, acq_kwargs={"candidate_set": None}),
