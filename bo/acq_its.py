@@ -1,23 +1,15 @@
 import torch
 from botorch.acquisition.monte_carlo import MCAcquisitionFunction
-from botorch.models.model import Model
-from botorch.sampling.normal import SobolQMCNormalSampler
 from botorch.utils import t_batch_mode_transform
 
 # from IPython.core.debugger import set_trace
-from torch import Tensor
 from torch.quasirandom import SobolEngine
 
 
 class AcqITS(MCAcquisitionFunction):
-    def __init__(self, model: Model, num_X_samples=128, num_Y_samples=64, **kwargs) -> None:
+    def __init__(self, model, num_X_samples=256, **kwargs) -> None:
         super().__init__(model=model, **kwargs)
         self._num_X_samples = num_X_samples
-        if num_Y_samples is not None:
-            self.sampler = SobolQMCNormalSampler(sample_shape=torch.Size([num_Y_samples]))
-        else:
-            self.sampler = None
-
         X_0 = self.model.train_inputs[0].detach()
         self._num_obs = X_0.shape[0]
         self._num_dim = X_0.shape[-1]
@@ -40,7 +32,7 @@ class AcqITS(MCAcquisitionFunction):
         return X_samples
 
     @t_batch_mode_transform()
-    def forward(self, X: Tensor) -> Tensor:
+    def forward(self, X):
         """
         Args:
             X: A `(b) x q x d`-dim Tensor of `(b)` t-batches with `q` `d`-dim
@@ -49,7 +41,7 @@ class AcqITS(MCAcquisitionFunction):
         self.to(device=X.device)
 
         q = X.shape[-2]
-        assert len(self.X_samples) >= 10 * q, f"You should use num_X_samples >= 10*q"
+        assert len(self.X_samples) >= 10 * q, "You should use num_X_samples >= 10*q"
         num_dim = X.shape[-1]
         num_obs = len(self.model.train_inputs[0])
 
