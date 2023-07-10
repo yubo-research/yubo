@@ -1,5 +1,5 @@
 import torch
-from botorch.acquisition.monte_carlo import MCAcquisitionFunction
+from botorch.acquisition.monte_carlo import MCAcquisitionFunction, qSimpleRegret
 from botorch.models.model import Model
 from botorch.sampling.normal import SobolQMCNormalSampler
 from botorch.utils import t_batch_mode_transform
@@ -15,8 +15,7 @@ class AcqSRMV(MCAcquisitionFunction):
         self._num_X_samples = num_X_samples
         self.num_Y_samples = num_Y_samples
 
-        self.sampler = SobolQMCNormalSampler(sample_shape=torch.Size([num_Y_samples]))
-        self.joint_variance = True
+        # self.sampler = SobolQMCNormalSampler(sample_shape=torch.Size([num_Y_samples]))
 
         X_0 = self.model.train_inputs[0].detach()
         self._num_obs = X_0.shape[0]
@@ -25,18 +24,11 @@ class AcqSRMV(MCAcquisitionFunction):
 
         sobol_engine = SobolEngine(self._num_dim, scramble=True)
         self.X_samples = sobol_engine.draw(num_X_samples, dtype=self._dtype)
-
-    def _variance(self, model):
-        mvn = model.posterior(self.X_samples, observation_noise=True)
-        if self.joint_variance:
-            Y = self.get_posterior_samples(mvn).squeeze(dim=-1)
-            vr = Y.var(dim=0)
+        self._sr = qSimpleRegret(model=self.model, sampler=SobolQMCNormalSampler(sample_shape=torch.Size([num_Y_samples])))
+        if len(self.model.train_targets) > 0:
+            self._Y_max = self.model.train_targets.max()
         else:
-            vr = mvn.variance.squeeze()
-        return vr
-
-    def _integrated_variance(self, model):
-        return self._variance(model).mean(dim=-1)
+            self._Y_max = None
 
     def _max(self, model, X):
         mvn = model.posterior(X, observation_noise=True)
@@ -45,25 +37,6 @@ class AcqSRMV(MCAcquisitionFunction):
         Y_maxmax = Y_max.values.max(dim=1)
         i = Y_max.indices[:, Y_maxmax.indices].diag()
         return torch.diagonal(Y[i, :, :], dim1=0, dim2=1).T
-
-    def _mean_Y(self, model, X):
-        mvn = model.posterior(X, observation_noise=True)
-        return mvn.mean
-
-    def _sd_max(self, model):
-        mvn = model.posterior(self.X_samples, observation_noise=True)
-        Y = self.get_posterior_samples(mvn).squeeze(dim=-1)
-        # in lieu of argmax (which has no gradient)
-        w = torch.exp(10 * Y).mean(dim=0)  # avg over Y
-        w = w / w.sum(dim=-1, keepdims=True)  # norm over X
-
-        X = self.X_samples.unsqueeze(0)
-        w = w.unsqueeze(-1)
-        mu = (w * X).sum(dim=1, keepdims=True)
-        dx = X - mu
-        vr = (w * dx**2).sum(dim=1)
-        vr = vr.mean(dim=-1)  # mean over num_dim
-        return torch.sqrt(vr)
 
     @t_batch_mode_transform()
     def forward(self, X: Tensor) -> Tensor:
@@ -74,17 +47,28 @@ class AcqSRMV(MCAcquisitionFunction):
         """
         self.to(device=X.device)
 
-        if True:
-            Y_obs = self._max(self.model, X)
-        else:
-            Y_obs = self._mean_Y(self.model, X).squeeze(-1)
-
         q = X.shape[-2]
-        if q == 1:
-            Y_obs = Y_obs.unsqueeze(-1)
-        model_f = self.model.condition_on_observations(X=X, Y=Y_obs)
+        assert len(self.X_samples) >= 10 * q, "You should use num_X_samples >= 10*q"
+        num_dim = X.shape[-1]
+        num_obs = len(self.model.train_inputs[0])
 
-        # sdm = self._sd_max(model_f)
-        sd = torch.sqrt(self._integrated_variance(model_f))
-        # Y_max_f = self._max(model_f, self.X_samples).max(dim=-1).values
+        # Y_obs = self._max(self.model, X)
+        mvn = self.model.posterior(X)
+        Y_obs = mvn.mean.squeeze(-1)
+        # if self._Y_max is not None:
+        #    Y_obs = torch.maximum(torch.tensor(0.), Y_obs - self._Y_max)
+        # if q == 1:
+        #    Y_obs = Y_obs.unsqueeze(-1)
+        # set_trace()
+
+        # TODO: Y_obs?
+        # model_f = self.model.condition_on_observations(X=X, Y=Y_obs)
+        model_f = self.model.condition_on_observations(X=X, Y=self.model.posterior(X).mean)
+        model_f.covar_module.base_kernel.lengthscale *= ((1 + num_obs) / (1 + num_obs + q)) ** (1.0 / num_dim)
+
+        var_f = model_f.posterior(self.X_samples, observation_noise=True).variance.squeeze()
+        m = var_f.mean(dim=-1)
+        s = var_f.std(dim=-1)
+        sd = torch.sqrt((m + s) / 2)
+
         return Y_obs.max(dim=-1).values - sd

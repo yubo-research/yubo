@@ -2,6 +2,7 @@ import torch
 from botorch.acquisition.monte_carlo import MCAcquisitionFunction
 from botorch.utils import t_batch_mode_transform
 
+# from botorch.sampling.normal import SobolQMCNormalSampler
 # from IPython.core.debugger import set_trace
 from torch.quasirandom import SobolEngine
 
@@ -9,7 +10,10 @@ from torch.quasirandom import SobolEngine
 class AcqITS(MCAcquisitionFunction):
     def __init__(self, model, num_X_samples=256, **kwargs) -> None:
         super().__init__(model=model, **kwargs)
+        self._num_mcmc = 10
         self._num_X_samples = num_X_samples
+        # self.sampler = SobolQMCNormalSampler(sample_shape=torch.Size([num_Y_samples]))
+
         X_0 = self.model.train_inputs[0].detach()
         self._num_obs = X_0.shape[0]
         self._num_dim = X_0.shape[-1]
@@ -22,18 +26,18 @@ class AcqITS(MCAcquisitionFunction):
             self.X_samples = self._sample_maxes(sobol_engine, num_X_samples)
 
     def _sample_maxes(self, sobol_engine, num_X_samples):
-        X_obs = self.model.train_inputs[0]
-        Y_obs = self.model.posterior(X_obs).mean.squeeze(-1)
-        Y_max = Y_obs.max()
+        # X_obs = self.model.train_inputs[0]
+        # Y_obs = self.model.posterior(X_obs).mean.squeeze(-1)
+        # Y_max = Y_obs.max()
         # X_max = X_obs[Y_obs == Y_max]
 
         eps = 0.01
         X_samples = sobol_engine.draw(3 * num_X_samples, dtype=self._dtype)
-        for _ in range(3):
+        for _ in range(self._num_mcmc):
             X = torch.maximum(torch.tensor(0.0), torch.minimum(torch.tensor(1.0), X_samples + eps * torch.randn(size=X_samples.shape)))
             Y = self.model.posterior(X, observation_noise=True).sample(torch.Size([num_X_samples])).squeeze(-1)
             Y, i = torch.max(Y, dim=1)
-            i = i[Y > Y_max]
+            # doesn't help i = i[Y > Y_max]
             X_samples = X[i]
         i = torch.randint(len(X_samples), (num_X_samples,))
         return X_samples[i]
@@ -55,10 +59,10 @@ class AcqITS(MCAcquisitionFunction):
         model_f = self.model.condition_on_observations(X=X, Y=self.model.posterior(X).mean)
         model_f.covar_module.base_kernel.lengthscale *= ((1 + num_obs) / (1 + num_obs + q)) ** (1.0 / num_dim)
 
-        var_f = model_f.posterior(self.X_samples, observation_noise=True).variance.squeeze()
-        if True:
-            m = var_f.mean(dim=-1)
-            s = var_f.std(dim=-1)
-            return -(m + s)
-        else:
-            return -torch.exp(20 * var_f).mean(dim=-1)
+        mvn = model_f.posterior(self.X_samples, observation_noise=True)
+        var_f = mvn.variance.squeeze()
+        # var_f = self.get_posterior_samples(mvn).squeeze(dim=-1).var(dim=0)
+
+        m = var_f.mean(dim=-1)
+        s = var_f.std(dim=-1)
+        return -(m + s)

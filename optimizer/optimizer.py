@@ -15,6 +15,7 @@ from botorch.acquisition.monte_carlo import (
 from bo.acq_iopt import AcqIOpt
 from bo.acq_its import AcqITS
 from bo.acq_min_dist import AcqMinDist
+from bo.acq_srmv import AcqSRMV
 from bo.acq_var import AcqVar
 
 from .ax_designer import AxDesigner
@@ -65,7 +66,8 @@ class Optimizer:
             "maximin-toroidal": BTDesigner(policy, lambda m: AcqMinDist(m, toroidal=True)),
             "variance": BTDesigner(policy, AcqVar),
             "iopt": BTDesigner(policy, _iOptFactory, init_sobol=0),
-            "its_im": BTDesigner(policy, AcqITS, init_sobol=0),
+            "its_10": BTDesigner(policy, AcqITS, init_sobol=0),
+            "srmv": BTDesigner(policy, AcqSRMV, init_sobol=0),
             "sr": BTDesigner(policy, qSimpleRegret),
             "ei": BTDesigner(policy, qNoisyExpectedImprovement, acq_kwargs={"X_baseline": None}),
             "mes": BTDesigner(policy, qMaxValueEntropy, acq_kwargs={"candidate_set": None}),
