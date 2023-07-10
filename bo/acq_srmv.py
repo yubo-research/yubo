@@ -10,7 +10,7 @@ from torch.quasirandom import SobolEngine
 
 
 class AcqSRMV(MCAcquisitionFunction):
-    def __init__(self, model: Model, num_X_samples=64, num_Y_samples=256, **kwargs) -> None:
+    def __init__(self, model: Model, num_X_samples=256, num_Y_samples=256, **kwargs) -> None:
         super().__init__(model=model, **kwargs)
         self._num_X_samples = num_X_samples
         self.num_Y_samples = num_Y_samples
