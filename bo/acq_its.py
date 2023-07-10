@@ -8,9 +8,9 @@ from torch.quasirandom import SobolEngine
 
 
 class AcqITS(MCAcquisitionFunction):
-    def __init__(self, model, num_X_samples=256, **kwargs) -> None:
+    def __init__(self, model, num_X_samples=256, num_mcmc=3, **kwargs) -> None:
         super().__init__(model=model, **kwargs)
-        self._num_mcmc = 10
+        self._num_mcmc = num_mcmc
         self._num_X_samples = num_X_samples
         # self.sampler = SobolQMCNormalSampler(sample_shape=torch.Size([num_Y_samples]))
 
@@ -57,7 +57,7 @@ class AcqITS(MCAcquisitionFunction):
         num_obs = len(self.model.train_inputs[0])
 
         model_f = self.model.condition_on_observations(X=X, Y=self.model.posterior(X).mean)
-        model_f.covar_module.base_kernel.lengthscale *= ((1 + num_obs) / (1 + num_obs + q)) ** (1.0 / num_dim)
+        model_f.covar_module.base_kernel.lengthscale *= ((1 + num_obs) / (1 + max(num_obs, q))) ** (1.0 / num_dim)
 
         mvn = model_f.posterior(self.X_samples, observation_noise=True)
         var_f = mvn.variance.squeeze()
