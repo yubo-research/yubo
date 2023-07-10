@@ -22,14 +22,21 @@ class AcqITS(MCAcquisitionFunction):
             self.X_samples = self._sample_maxes(sobol_engine, num_X_samples)
 
     def _sample_maxes(self, sobol_engine, num_X_samples):
+        X_obs = self.model.train_inputs[0]
+        Y_obs = self.model.posterior(X_obs).mean.squeeze(-1)
+        Y_max = Y_obs.max()
+        # X_max = X_obs[Y_obs == Y_max]
+
         eps = 0.01
-        X_samples = sobol_engine.draw(num_X_samples, dtype=self._dtype)
+        X_samples = sobol_engine.draw(3 * num_X_samples, dtype=self._dtype)
         for _ in range(3):
-            X = torch.maximum(torch.tensor(0.0), torch.minimum(torch.tensor(1.0), X_samples + eps * torch.randn(*X_samples.shape)))
+            X = torch.maximum(torch.tensor(0.0), torch.minimum(torch.tensor(1.0), X_samples + eps * torch.randn(size=X_samples.shape)))
             Y = self.model.posterior(X, observation_noise=True).sample(torch.Size([num_X_samples])).squeeze(-1)
             Y, i = torch.max(Y, dim=1)
+            i = i[Y > Y_max]
             X_samples = X[i]
-        return X_samples
+        i = torch.randint(len(X_samples), (num_X_samples,))
+        return X_samples[i]
 
     @t_batch_mode_transform()
     def forward(self, X):
