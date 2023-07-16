@@ -60,14 +60,22 @@ class AcqITS(MCAcquisitionFunction):
         model_f.covar_module.base_kernel.lengthscale *= ((1 + num_obs) / (1 + max(num_obs, q))) ** (1.0 / num_dim)
 
         mvn = model_f.posterior(self.X_samples)
+        self.mvn = mvn
 
         # G-Optimality
-        if self.ttype == "diag":
+        if self.ttype == "msvar":
+            var_f = mvn.variance.squeeze()
+            m = var_f.mean(dim=-1)
+            s = var_f.std(dim=-1)
+            return -(m + s)
+        elif self.ttype == "maxvar":
             var_f = mvn.variance.squeeze()
             return -var_f.max(dim=-1).values
+        elif self.ttype == "musd":
+            mu_f = mvn.mean.squeeze()
+            sd_f = mvn.stddev.squeeze()
+            return -(mu_f + sd_f).max(dim=-1).values
         elif self.ttype == "entropy":
             return -mvn.entropy()
-        elif self.ttype == "cov":
-            return -torch.abs(mvn.covariance_matrix).max(dim=-1).values.max(dim=-1).values
         else:
             assert False, ("Unknown", self.ttype)
