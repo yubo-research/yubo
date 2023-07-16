@@ -8,7 +8,7 @@ from torch.quasirandom import SobolEngine
 
 
 class AcqITS(MCAcquisitionFunction):
-    def __init__(self, model, num_X_samples=256, num_mcmc=3, ttype="cov", **kwargs) -> None:
+    def __init__(self, model, num_X_samples=256, num_mcmc=3, ttype="msvar", **kwargs) -> None:
         super().__init__(model=model, **kwargs)
         self._num_mcmc = num_mcmc
         self._num_X_samples = num_X_samples
@@ -34,7 +34,18 @@ class AcqITS(MCAcquisitionFunction):
         eps = 0.01
         X_samples = sobol_engine.draw(3 * num_X_samples, dtype=self._dtype)
         for _ in range(self._num_mcmc):
-            X = torch.maximum(torch.tensor(0.0), torch.minimum(torch.tensor(1.0), X_samples + eps * torch.randn(size=X_samples.shape)))
+            X = None
+            n_loop = 0
+            while X is None or len(X) < num_X_samples:
+                X_eps = X_samples + eps * torch.randn(size=X_samples.shape)
+                X_eps = X_eps[ (X_eps.min(dim=1).values > 0.0) & (X_eps.max(dim=1).values < 1.0) ]
+                if X is None:
+                    X = X_eps
+                else:
+                    X = torch.cat( (X, X_eps), dim=0 )
+                n_loop += 1
+                assert n_loop < 10
+            
             Y = self.model.posterior(X, observation_noise=True).sample(torch.Size([num_X_samples])).squeeze(-1)
             Y, i = torch.max(Y, dim=1)
             # doesn't help i = i[Y > Y_max]
