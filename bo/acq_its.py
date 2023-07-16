@@ -8,11 +8,11 @@ from torch.quasirandom import SobolEngine
 
 
 class AcqITS(MCAcquisitionFunction):
-    def __init__(self, model, num_X_samples=256, num_mcmc=3, **kwargs) -> None:
+    def __init__(self, model, num_X_samples=256, num_mcmc=3, ttype="cov", **kwargs) -> None:
         super().__init__(model=model, **kwargs)
         self._num_mcmc = num_mcmc
         self._num_X_samples = num_X_samples
-        # self.sampler = SobolQMCNormalSampler(sample_shape=torch.Size([num_Y_samples]))
+        self.ttype = ttype
 
         X_0 = self.model.train_inputs[0].detach()
         self._num_obs = X_0.shape[0]
@@ -59,10 +59,15 @@ class AcqITS(MCAcquisitionFunction):
         model_f = self.model.condition_on_observations(X=X, Y=self.model.posterior(X).mean)
         model_f.covar_module.base_kernel.lengthscale *= ((1 + num_obs) / (1 + max(num_obs, q))) ** (1.0 / num_dim)
 
-        mvn = model_f.posterior(self.X_samples, observation_noise=True)
-        var_f = mvn.variance.squeeze()
-        # var_f = self.get_posterior_samples(mvn).squeeze(dim=-1).var(dim=0)
+        mvn = model_f.posterior(self.X_samples)
 
-        m = var_f.mean(dim=-1)
-        s = var_f.std(dim=-1)
-        return -(m + s)
+        # G-Optimality
+        if self.ttype == "diag":
+            var_f = mvn.variance.squeeze()
+            return -var_f.max(dim=-1).values
+        elif self.ttype == "entropy":
+            return -mvn.entropy()
+        elif self.ttype == "cov":
+            return -torch.abs(mvn.covariance_matrix).max(dim=-1).values.max(dim=-1).values
+        else:
+            assert False, ("Unknown", self.ttype)
