@@ -10,7 +10,7 @@ if __name__ == "__main__":
 
     num_iterations = 3
     num_arms = 10
-    for i_sample in range(100):
+    for i_sample in range(30):
         t0 = time.time()
         seed = 13547 + i_sample
         env_conf = get_env_conf(env_tag, seed)
