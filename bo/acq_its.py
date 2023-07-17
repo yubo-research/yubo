@@ -8,12 +8,11 @@ from torch.quasirandom import SobolEngine
 
 
 class AcqITS(MCAcquisitionFunction):
-    def __init__(self, model, num_X_samples=256, num_mcmc=3, ttype="msvar", observation_noise=True, **kwargs) -> None:
+    def __init__(self, model, num_X_samples=256, num_mcmc=3, ttype="msvar", **kwargs) -> None:
         super().__init__(model=model, **kwargs)
         self._num_mcmc = num_mcmc
         self._num_X_samples = num_X_samples
         self.ttype = ttype
-        self._observation_noise = observation_noise
 
         X_0 = self.model.train_inputs[0].detach()
         self._num_obs = X_0.shape[0]
@@ -47,7 +46,7 @@ class AcqITS(MCAcquisitionFunction):
                 n_loop += 1
                 assert n_loop < 10
             
-            Y = self.model.posterior(X, observation_noise=self._observation_noise).sample(torch.Size([num_X_samples])).squeeze(-1)
+            Y = self.model.posterior(X).sample(torch.Size([num_X_samples])).squeeze(-1)
             Y, i = torch.max(Y, dim=1)
             # doesn't help i = i[Y > Y_max]
             X_samples = X[i]
@@ -80,6 +79,10 @@ class AcqITS(MCAcquisitionFunction):
             m = var_f.mean(dim=-1)
             s = var_f.std(dim=-1)
             return -(m + s)
+        elif self.ttype == "mvar":
+            var_f = mvn.variance.squeeze()
+            m = var_f.mean(dim=-1)
+            return -m
         elif self.ttype == "maxvar":
             var_f = mvn.variance.squeeze()
             return -var_f.max(dim=-1).values
