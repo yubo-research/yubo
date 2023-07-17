@@ -67,6 +67,7 @@ class Optimizer:
             "variance": BTDesigner(policy, AcqVar),
             "iopt": BTDesigner(policy, _iOptFactory, init_sobol=0),
             "its_msvar": BTDesigner(policy, AcqITS, init_X_samples=False, init_sobol=0, acq_kwargs={"ttype": "msvar"}),
+            "its_msvar_noon": BTDesigner(policy, AcqITS, init_X_samples=False, init_sobol=0, acq_kwargs={"ttype": "msvar", "observation_noise": False}),
             "its_maxvar": BTDesigner(policy, AcqITS, init_X_samples=False, init_sobol=0, acq_kwargs={"ttype": "maxvar"}),
             "its_musd": BTDesigner(policy, AcqITS, init_X_samples=False, init_sobol=0, acq_kwargs={"ttype": "musd"}),
             "its_entropy": BTDesigner(policy, AcqITS, init_X_samples=False, init_sobol=0, acq_kwargs={"ttype": "entropy"}),
