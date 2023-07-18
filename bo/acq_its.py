@@ -1,5 +1,8 @@
 import torch
-from botorch.acquisition.monte_carlo import MCAcquisitionFunction
+from botorch.acquisition.monte_carlo import (
+    MCAcquisitionFunction,
+    qNoisyExpectedImprovement,
+)
 from botorch.utils import t_batch_mode_transform
 
 # from botorch.sampling.normal import SobolQMCNormalSampler
@@ -8,11 +11,12 @@ from torch.quasirandom import SobolEngine
 
 
 class AcqITS(MCAcquisitionFunction):
-    def __init__(self, model, num_X_samples=256, num_mcmc=3, ttype="msvar", **kwargs) -> None:
+    def __init__(self, model, num_X_samples=256, num_mcmc=3, ttype="msvar", sm_2=False, alt_ei=False, **kwargs) -> None:
         super().__init__(model=model, **kwargs)
         self._num_mcmc = num_mcmc
         self._num_X_samples = num_X_samples
         self.ttype = ttype
+        self._alt_acqf = None
 
         X_0 = self.model.train_inputs[0].detach()
         self._num_obs = X_0.shape[0]
@@ -23,7 +27,26 @@ class AcqITS(MCAcquisitionFunction):
         if self._num_obs == 0:
             self.X_samples = sobol_engine.draw(num_X_samples, dtype=self._dtype)
         else:
-            self.X_samples = self._sample_maxes(sobol_engine, num_X_samples)
+            if alt_ei:
+                self._alt_acqf = qNoisyExpectedImprovement(self.model, X_baseline=self.model.train_inputs[0], prune_baseline=False)
+            else:
+                if sm_2:
+                    self.X_samples = self._sample_maxes_2(sobol_engine, num_X_samples)
+                else:
+                    self.X_samples = self._sample_maxes(sobol_engine, num_X_samples)
+
+    def _sample_maxes_2(self, sobol_engine, num_X_samples):
+        eps = 0.10
+        X_0 = sobol_engine.draw(3 * num_X_samples, dtype=self._dtype)
+        X_all = []
+        for _ in range(3):
+            X = X_0 + eps * torch.randn(size=X_0.shape)
+            Y = self.model.posterior(X).sample(torch.Size([num_X_samples])).squeeze(-1)
+            Y, i = torch.max(Y, dim=1)
+            X_all.extend(X[i].unbind())
+        X = torch.stack(X_all)
+        i = torch.randint(len(X), (num_X_samples,))
+        return X[i]
 
     def _sample_maxes(self, sobol_engine, num_X_samples):
         # X_obs = self.model.train_inputs[0]
@@ -31,25 +54,26 @@ class AcqITS(MCAcquisitionFunction):
         # Y_max = Y_obs.max()
         # X_max = X_obs[Y_obs == Y_max]
 
-        eps = 0.01
+        eps = 0.10
         X_samples = sobol_engine.draw(3 * num_X_samples, dtype=self._dtype)
         for _ in range(self._num_mcmc):
             X = None
             n_loop = 0
             while X is None or len(X) < num_X_samples:
                 X_eps = X_samples + eps * torch.randn(size=X_samples.shape)
-                X_eps = X_eps[ (X_eps.min(dim=1).values > 0.0) & (X_eps.max(dim=1).values < 1.0) ]
+                X_eps = X_eps[(X_eps.min(dim=1).values > 0.0) & (X_eps.max(dim=1).values < 1.0)]
                 if X is None:
                     X = X_eps
                 else:
-                    X = torch.cat( (X, X_eps), dim=0 )
+                    X = torch.cat((X, X_eps), dim=0)
                 n_loop += 1
                 assert n_loop < 10
-            
+
             Y = self.model.posterior(X).sample(torch.Size([num_X_samples])).squeeze(-1)
             Y, i = torch.max(Y, dim=1)
             # doesn't help i = i[Y > Y_max]
             X_samples = X[i]
+            eps /= 2
         i = torch.randint(len(X_samples), (num_X_samples,))
         return X_samples[i]
 
@@ -61,6 +85,10 @@ class AcqITS(MCAcquisitionFunction):
                 design points each.
         """
         self.to(device=X.device)
+
+        if self._alt_acqf:
+            # for testing / comparison
+            return self._alt_acqf(X)
 
         q = X.shape[-2]
         assert len(self.X_samples) >= 10 * q, "You should use num_X_samples >= 10*q"

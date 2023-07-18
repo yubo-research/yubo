@@ -59,6 +59,8 @@ class Optimizer:
         self._datum_best = None
         init_ax_default = max(5, 2 * policy.num_params())
         self._center_designer = CenterDesigner(policy)
+
+        default_num_X_samples = max(64, 10 * self._num_arms)
         self._designers = {
             "random": RandomDesigner(policy),
             "sobol": SobolDesigner(policy),
@@ -66,11 +68,11 @@ class Optimizer:
             "maximin-toroidal": BTDesigner(policy, lambda m: AcqMinDist(m, toroidal=True)),
             "variance": BTDesigner(policy, AcqVar),
             "iopt": BTDesigner(policy, _iOptFactory, init_sobol=0),
-            "its_msvar": BTDesigner(policy, AcqITS, init_X_samples=False, init_sobol=0, acq_kwargs={"ttype": "msvar"}),
-            "its_mvar": BTDesigner(policy, AcqITS, init_X_samples=False, init_sobol=0, acq_kwargs={"ttype": "mvar"}),
-            "its_maxvar": BTDesigner(policy, AcqITS, init_X_samples=False, init_sobol=0, acq_kwargs={"ttype": "maxvar"}),
-            "its_musd": BTDesigner(policy, AcqITS, init_X_samples=False, init_sobol=0, acq_kwargs={"ttype": "musd"}),
-            "its_entropy": BTDesigner(policy, AcqITS, init_X_samples=False, init_sobol=0, acq_kwargs={"ttype": "entropy"}),
+            "its_msvar": BTDesigner(policy, AcqITS, init_X_samples=False, init_sobol=0, acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples}),
+            "its_msvar_ei": BTDesigner(
+                policy, AcqITS, init_X_samples=False, init_sobol=0, acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "alt_ei": True}
+            ),
+            "its_mvar": BTDesigner(policy, AcqITS, init_X_samples=False, init_sobol=0, acq_kwargs={"ttype": "mvar", "num_X_samples": default_num_X_samples}),
             "srmv": BTDesigner(policy, AcqSRMV, init_sobol=0),
             "sr": BTDesigner(policy, qSimpleRegret),
             "ei": BTDesigner(policy, qNoisyExpectedImprovement, acq_kwargs={"X_baseline": None}),
