@@ -30,8 +30,10 @@ class BTDesigner:
             warnings.simplefilter("ignore")
             if self._init_X_samples and hasattr(acqf.acq_function, "X_samples"):
                 X = acqf.acq_function.X_samples
-                i = np.random.choice(np.arange(len(X)), size=(10,))
-                batch_initial_conditions = X[i, :].unsqueeze(1)
+                batch_limit = 10
+                i = np.random.choice(np.arange(len(X)), size=(num_arms * batch_limit,))
+                # batch_size x q x num_dim
+                batch_initial_conditions = X[i, :].reshape(batch_limit, num_arms, num_dim)
             else:
                 batch_initial_conditions = None
             with warnings.catch_warnings():

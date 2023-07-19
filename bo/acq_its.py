@@ -3,7 +3,12 @@ from botorch.acquisition.monte_carlo import (
     MCAcquisitionFunction,
     qNoisyExpectedImprovement,
 )
+from botorch.optim import optimize_acqf
 from botorch.utils import t_batch_mode_transform
+from botorch.utils.probability.utils import ndtr as Phi
+from botorch.utils.probability.utils import (
+    phi,
+)
 
 # from botorch.sampling.normal import SobolQMCNormalSampler
 # from IPython.core.debugger import set_trace
@@ -11,7 +16,7 @@ from torch.quasirandom import SobolEngine
 
 
 class AcqITS(MCAcquisitionFunction):
-    def __init__(self, model, num_X_samples=256, num_mcmc=3, ttype="msvar", sm_2=False, alt_ei=False, **kwargs) -> None:
+    def __init__(self, model, num_X_samples=256, num_mcmc=3, ttype="msvar", sm=None, bounds=None, alt_ei=False, **kwargs) -> None:
         super().__init__(model=model, **kwargs)
         self._num_mcmc = num_mcmc
         self._num_X_samples = num_X_samples
@@ -23,6 +28,10 @@ class AcqITS(MCAcquisitionFunction):
         self._num_dim = X_0.shape[-1]
         self._dtype = X_0.dtype
 
+        if len(self.model.train_targets) == 0:
+            self.best_f = 0
+        else:
+            self.best_f = self.model.train_targets.max()
         sobol_engine = SobolEngine(self._num_dim, scramble=True)
         if self._num_obs == 0:
             self.X_samples = sobol_engine.draw(num_X_samples, dtype=self._dtype)
@@ -30,10 +39,31 @@ class AcqITS(MCAcquisitionFunction):
             if alt_ei:
                 self._alt_acqf = qNoisyExpectedImprovement(self.model, X_baseline=self.model.train_inputs[0], prune_baseline=False)
             else:
-                if sm_2:
+                if sm == "2":
                     self.X_samples = self._sample_maxes_2(sobol_engine, num_X_samples)
+                elif sm == "sr":
+                    self.X_samples = self._sample_maxes_sr(bounds, num_X_samples)
+                elif sm == "sobol":
+                    self.X_samples = sobol_engine.draw(num_X_samples, dtype=self._dtype)
                 else:
                     self.X_samples = self._sample_maxes(sobol_engine, num_X_samples)
+
+    def _sample_maxes_sr(self, bounds, num_X_samples):
+        acqf = qNoisyExpectedImprovement(
+            model=self.model,
+            X_baseline=self.model.train_inputs[0],
+            prune_baseline=False,
+        )
+
+        X_samples, _ = optimize_acqf(
+            acq_function=acqf,
+            bounds=bounds,
+            q=num_X_samples,
+            num_restarts=10,
+            raw_samples=10,
+            options={"batch_limit": 10, "maxiter": 500},
+        )
+        return X_samples
 
     def _sample_maxes_2(self, sobol_engine, num_X_samples):
         eps = 0.10
@@ -111,6 +141,11 @@ class AcqITS(MCAcquisitionFunction):
             var_f = mvn.variance.squeeze()
             m = var_f.mean(dim=-1)
             return -m
+        elif self.ttype == "ei":
+            mu_f = mvn.mean.squeeze()
+            sd_f = mvn.stddev.squeeze()
+            u = _scaled_improvement(mu_f, sd_f, self.best_f)
+            return -(sd_f * _ei_helper(u)).max(dim=-1).values
         elif self.ttype == "maxvar":
             var_f = mvn.variance.squeeze()
             return -var_f.max(dim=-1).values
@@ -122,3 +157,15 @@ class AcqITS(MCAcquisitionFunction):
             return -mvn.entropy()
         else:
             assert False, ("Unknown", self.ttype)
+
+
+def _scaled_improvement(
+    mean,
+    sigma,
+    best_f,
+):
+    return (mean - best_f) / sigma
+
+
+def _ei_helper(u):
+    return phi(u) + u * Phi(u)

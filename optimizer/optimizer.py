@@ -72,7 +72,9 @@ class Optimizer:
             "its_msvar_ei": BTDesigner(
                 policy, AcqITS, init_X_samples=False, init_sobol=0, acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "alt_ei": True}
             ),
-            "its_mvar": BTDesigner(policy, AcqITS, init_X_samples=False, init_sobol=0, acq_kwargs={"ttype": "mvar", "num_X_samples": default_num_X_samples}),
+            "its_sei": BTDesigner(
+                policy, AcqITS, init_X_samples=True, init_sobol=0, acq_kwargs={"ttype": "ei", "sm": "sobol", "num_X_samples": default_num_X_samples}
+            ),
             "srmv": BTDesigner(policy, AcqSRMV, init_sobol=0),
             "sr": BTDesigner(policy, qSimpleRegret),
             "ei": BTDesigner(policy, qNoisyExpectedImprovement, acq_kwargs={"X_baseline": None}),
