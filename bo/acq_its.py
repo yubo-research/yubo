@@ -16,7 +16,7 @@ from torch.quasirandom import SobolEngine
 
 
 class AcqITS(MCAcquisitionFunction):
-    def __init__(self, model, num_X_samples=256, num_mcmc=3, ttype="msvar", sm=None, bounds=None, alt_ei=False, **kwargs) -> None:
+    def __init__(self, model, num_X_samples=256, num_mcmc=3, ttype="msvar", sample_type=None, bounds=None, alt_ei=False, **kwargs) -> None:
         super().__init__(model=model, **kwargs)
         self._num_mcmc = num_mcmc
         self._num_X_samples = num_X_samples
@@ -39,11 +39,11 @@ class AcqITS(MCAcquisitionFunction):
             if alt_ei:
                 self._alt_acqf = qNoisyExpectedImprovement(self.model, X_baseline=self.model.train_inputs[0], prune_baseline=False)
             else:
-                if sm == "2":
+                if sample_type == "2":
                     self.X_samples = self._sample_maxes_2(sobol_engine, num_X_samples)
-                elif sm == "sr":
+                elif sample_type == "sr":
                     self.X_samples = self._sample_maxes_sr(bounds, num_X_samples)
-                elif sm == "sobol":
+                elif sample_type == "sobol":
                     self.X_samples = sobol_engine.draw(num_X_samples, dtype=self._dtype)
                 else:
                     self.X_samples = self._sample_maxes(sobol_engine, num_X_samples)

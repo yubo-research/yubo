@@ -7,7 +7,7 @@ from optimizer.sobol_designer import SobolDesigner
 
 
 class BTDesigner:
-    def __init__(self, policy, acq_fn, *, acq_kwargs=None, init_sobol=1, init_X_samples=False, optimizer_options={"batch_limit": 10, "maxiter": 200}):
+    def __init__(self, policy, acq_fn, *, acq_kwargs=None, init_sobol=1, init_X_samples=False, optimizer_options={"batch_limit": 10, "maxiter": 500}):
         self._policy = policy
         self._acq_fn = acq_fn
         self._init_sobol = init_sobol
