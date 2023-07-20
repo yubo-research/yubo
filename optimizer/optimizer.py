@@ -69,12 +69,9 @@ class Optimizer:
             "variance": BTDesigner(policy, AcqVar),
             "iopt": BTDesigner(policy, _iOptFactory, init_sobol=0),
             "its_msvar": BTDesigner(policy, AcqITS, init_X_samples=False, init_sobol=0, acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples}),
-            "its_msvar_ei_xf": BTDesigner(
-                policy, AcqITS, init_X_samples=False, init_sobol=0, acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "alt_ei": True}
-            ),
-            "its_msvar_ei_xt": BTDesigner(
-                policy, AcqITS, init_X_samples=True, init_sobol=0, acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "alt_ei": True}
-            ),
+            "its_msvar_mh": BTDesigner(policy, AcqITS, init_X_samples=False, init_sobol=0, acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "sample_type": "mh"}),
+            "its_ei_mh": BTDesigner(policy, AcqITS, init_X_samples=False, init_sobol=0, acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "sample_type": "mh", "ttype": "ei"}),
+
             "srmv": BTDesigner(policy, AcqSRMV, init_sobol=0),
             "sr": BTDesigner(policy, qSimpleRegret),
             "ei": BTDesigner(policy, qNoisyExpectedImprovement, acq_kwargs={"X_baseline": None}),
