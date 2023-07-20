@@ -1,4 +1,5 @@
 import torch
+from botorch.acquisition import PosteriorMean
 from botorch.acquisition.monte_carlo import (
     MCAcquisitionFunction,
     qNoisyExpectedImprovement,
@@ -16,7 +17,7 @@ from torch.quasirandom import SobolEngine
 
 
 class AcqITS(MCAcquisitionFunction):
-    def __init__(self, model, num_X_samples=256, num_mcmc=3, ttype="msvar", sample_type=None, bounds=None, alt_ei=False, **kwargs) -> None:
+    def __init__(self, model, num_X_samples=256, num_mcmc=10, ttype="msvar", sample_type=None, bounds=None, alt_ei=False, **kwargs) -> None:
         super().__init__(model=model, **kwargs)
         self._num_mcmc = num_mcmc
         self._num_X_samples = num_X_samples
@@ -28,11 +29,12 @@ class AcqITS(MCAcquisitionFunction):
         self._num_dim = X_0.shape[-1]
         self._dtype = X_0.dtype
 
-        if len(self.model.train_targets) == 0:
-            self.best_f = 0
-        else:
-            self.best_f = self.model.train_targets.max()
         sobol_engine = SobolEngine(self._num_dim, scramble=True)
+
+        if sample_type == "mh" or ttype == "ei":
+            self.X_max = self._find_max()
+            self.Y_max = self.model.posterior(self.X_max).mean
+
         if self._num_obs == 0:
             self.X_samples = sobol_engine.draw(num_X_samples, dtype=self._dtype)
         else:
@@ -41,6 +43,8 @@ class AcqITS(MCAcquisitionFunction):
             else:
                 if sample_type == "2":
                     self.X_samples = self._sample_maxes_2(sobol_engine, num_X_samples)
+                elif sample_type == "mh":
+                    self.X_samples = self._sample_maxes_3(sobol_engine, num_X_samples, num_mcmc)
                 elif sample_type == "sr":
                     self.X_samples = self._sample_maxes_sr(bounds, num_X_samples)
                 elif sample_type == "sobol":
@@ -48,22 +52,38 @@ class AcqITS(MCAcquisitionFunction):
                 else:
                     self.X_samples = self._sample_maxes(sobol_engine, num_X_samples)
 
-    def _sample_maxes_sr(self, bounds, num_X_samples):
-        acqf = qNoisyExpectedImprovement(
-            model=self.model,
-            X_baseline=self.model.train_inputs[0],
-            prune_baseline=False,
-        )
+    def _find_max(self):
+        X = self.model.train_inputs[0]
+        num_dim = X.shape[-1]
 
-        X_samples, _ = optimize_acqf(
-            acq_function=acqf,
-            bounds=bounds,
-            q=num_X_samples,
+        x_cand, _ = optimize_acqf(
+            acq_function=PosteriorMean(self.model),
+            bounds=torch.tensor([[0.0] * num_dim, [1.0] * num_dim], device=X.device, dtype=X.dtype),
+            q=1,
             num_restarts=10,
-            raw_samples=10,
-            options={"batch_limit": 10, "maxiter": 500},
+            raw_samples=512,
+            options={"batch_limit": 10, "maxiter": 200},
         )
-        return X_samples
+        return x_cand
+
+    def _sample_maxes_3(self, sobol_engine, num_X_samples, num_mcmc):
+        eps = 0.1
+        X = torch.tile(self.X_max, (num_X_samples, 1))
+        if False:
+            X = sobol_engine.draw(num_X_samples // 2, dtype=self._dtype)
+            X = torch.cat(
+                (X, torch.tile(self.X_max, (num_X_samples // 2, 1))),
+                dim=0,
+            )
+
+        for _ in range(num_mcmc):
+            X_1 = X + eps * torch.randn(size=X.shape)
+            Y = self.model.posterior(X).sample(torch.Size([1])).squeeze(-1)
+            Y_1 = self.model.posterior(X_1).sample(torch.Size([1])).squeeze(-1)
+            i = (X_1.min(dim=1).values >= 0) & (X_1.min(dim=1).values <= 1) & (Y_1 > Y).flatten()
+            X[i] = X_1[i]
+            # eps /= 3.1622776601683795
+        return X
 
     def _sample_maxes_2(self, sobol_engine, num_X_samples):
         eps = 0.10
@@ -144,17 +164,11 @@ class AcqITS(MCAcquisitionFunction):
         elif self.ttype == "ei":
             mu_f = mvn.mean.squeeze()
             sd_f = mvn.stddev.squeeze()
-            u = _scaled_improvement(mu_f, sd_f, self.best_f)
+            u = _scaled_improvement(mu_f, sd_f, self.Y_max)
             return -(sd_f * _ei_helper(u)).max(dim=-1).values
         elif self.ttype == "maxvar":
             var_f = mvn.variance.squeeze()
             return -var_f.max(dim=-1).values
-        elif self.ttype == "musd":
-            mu_f = mvn.mean.squeeze()
-            sd_f = mvn.stddev.squeeze()
-            return -(mu_f + sd_f).max(dim=-1).values
-        elif self.ttype == "entropy":
-            return -mvn.entropy()
         else:
             assert False, ("Unknown", self.ttype)
 
