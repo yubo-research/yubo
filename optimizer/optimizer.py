@@ -13,9 +13,8 @@ from botorch.acquisition.monte_carlo import (
 )
 
 from bo.acq_iopt import AcqIOpt
-from bo.acq_its import AcqITS
 from bo.acq_min_dist import AcqMinDist
-from bo.acq_srmv import AcqSRMV
+from bo.acq_mtav import AcqMTAV
 from bo.acq_var import AcqVar
 
 from .ax_designer import AxDesigner
@@ -68,11 +67,12 @@ class Optimizer:
             "maximin-toroidal": BTDesigner(policy, lambda m: AcqMinDist(m, toroidal=True)),
             "variance": BTDesigner(policy, AcqVar),
             "iopt": BTDesigner(policy, _iOptFactory, init_sobol=0),
-            "its_msvar": BTDesigner(policy, AcqITS, init_X_samples=False, init_sobol=0, acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples}),
-            "its_msvar_mh": BTDesigner(policy, AcqITS, init_X_samples=False, init_sobol=0, acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "sample_type": "mh"}),
-            "its_ei_mh": BTDesigner(policy, AcqITS, init_X_samples=False, init_sobol=0, acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "sample_type": "mh", "ttype": "ei"}),
-
-            "srmv": BTDesigner(policy, AcqSRMV, init_sobol=0),
+            "mtav_sr": BTDesigner(policy, AcqMTAV, init_X_samples=False, init_sobol=0, acq_kwargs={"ttype": "sr", "num_X_samples": default_num_X_samples}),
+            "mtav_ei": BTDesigner(policy, AcqMTAV, init_X_samples=False, init_sobol=0, acq_kwargs={"ttype": "ei", "num_X_samples": default_num_X_samples}),
+            "mtav_ucb": BTDesigner(policy, AcqMTAV, init_X_samples=False, init_sobol=0, acq_kwargs={"ttype": "ucb", "num_X_samples": default_num_X_samples}),
+            "mtav_maxvar": BTDesigner(
+                policy, AcqMTAV, init_X_samples=False, init_sobol=0, acq_kwargs={"ttype": "maxvar", "num_X_samples": default_num_X_samples}
+            ),
             "sr": BTDesigner(policy, qSimpleRegret),
             "ei": BTDesigner(policy, qNoisyExpectedImprovement, acq_kwargs={"X_baseline": None}),
             "mes": BTDesigner(policy, qMaxValueEntropy, acq_kwargs={"candidate_set": None}),
