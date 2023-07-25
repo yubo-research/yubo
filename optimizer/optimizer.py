@@ -69,7 +69,18 @@ class Optimizer:
             "iopt": BTDesigner(policy, _iOptFactory, init_sobol=0),
             "mtav_sr": BTDesigner(policy, AcqMTAV, init_X_samples=False, init_sobol=0, acq_kwargs={"ttype": "sr", "num_X_samples": default_num_X_samples}),
             "mtav_ei": BTDesigner(policy, AcqMTAV, init_X_samples=False, init_sobol=0, acq_kwargs={"ttype": "ei", "num_X_samples": default_num_X_samples}),
-            "mtav_ucb": BTDesigner(policy, AcqMTAV, init_X_samples=False, init_sobol=0, acq_kwargs={"ttype": "ucb", "num_X_samples": default_num_X_samples}),
+            "mtav_ucb": BTDesigner(
+                policy, AcqMTAV, init_X_samples=False, init_sobol=0, acq_kwargs={"ttype": "ucb", "beta_ucb": 1.96, "num_X_samples": default_num_X_samples}
+            ),
+            "mtav_ucb_1": BTDesigner(
+                policy, AcqMTAV, init_X_samples=False, init_sobol=0, acq_kwargs={"ttype": "ucb", "beta_ucb": 1.0, "num_X_samples": default_num_X_samples}
+            ),
+            "mtav_ucb_3": BTDesigner(
+                policy, AcqMTAV, init_X_samples=False, init_sobol=0, acq_kwargs={"ttype": "ucb", "beta_ucb": 3.0, "num_X_samples": default_num_X_samples}
+            ),
+            "mtav_ucb_10": BTDesigner(
+                policy, AcqMTAV, init_X_samples=False, init_sobol=0, acq_kwargs={"ttype": "ucb", "beta_ucb": 10.0, "num_X_samples": default_num_X_samples}
+            ),
             "mtav_maxvar": BTDesigner(
                 policy, AcqMTAV, init_X_samples=False, init_sobol=0, acq_kwargs={"ttype": "maxvar", "num_X_samples": default_num_X_samples}
             ),

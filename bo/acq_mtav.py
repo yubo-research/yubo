@@ -16,11 +16,12 @@ from torch.quasirandom import SobolEngine
 
 
 class AcqMTAV(MCAcquisitionFunction):
-    def __init__(self, model, num_X_samples=256, num_mcmc=10, num_Y_samples=1, ttype="ucb", sample_type="mh", alt_ei=False, **kwargs) -> None:
+    def __init__(self, model, num_X_samples=256, num_mcmc=10, num_Y_samples=1, ttype="ucb", beta_ucb=1.96, sample_type="mh", alt_ei=False, **kwargs) -> None:
         super().__init__(model=model, **kwargs)
-        self._num_mcmc = num_mcmc
-        self._num_X_samples = num_X_samples
+        self.num_mcmc = num_mcmc
+        self.num_X_samples = num_X_samples
         self.ttype = ttype
+        self.beta_ucb = beta_ucb
         self._alt_acqf = None
         self.sampler = SobolQMCNormalSampler(sample_shape=torch.Size([num_Y_samples]))
 
@@ -127,7 +128,7 @@ class AcqMTAV(MCAcquisitionFunction):
 
         eps = 0.10
         X_samples = sobol_engine.draw(3 * num_X_samples, dtype=self._dtype)
-        for _ in range(self._num_mcmc):
+        for _ in range(self.num_mcmc):
             X = None
             n_loop = 0
             while X is None or len(X) < num_X_samples:
@@ -196,7 +197,7 @@ class AcqMTAV(MCAcquisitionFunction):
         elif self.ttype == "ucb":
             mu_f = mvn.mean.squeeze()
             sd_f = mvn.stddev.squeeze()
-            return -(mu_f + 1.96 * sd_f).max(dim=-1).values
+            return -(mu_f + self.beta_ucb * sd_f).max(dim=-1).values
         elif self.ttype == "maxvar":
             # G-Optimality
             var_f = mvn.variance.squeeze()
@@ -206,7 +207,7 @@ class AcqMTAV(MCAcquisitionFunction):
             return -Y.squeeze(-1).max(dim=0).values.max(dim=-1).values
         elif self.ttype == "cov":
             C = mvn.distribution.covariance_matrix
-            e = torch.ones(self._num_X_samples, dtype=self._dtype)
+            e = torch.ones(self.num_X_samples, dtype=self._dtype)
             var = C @ e
             return -var.max(dim=-1).values
         elif self.ttype == "eig":
