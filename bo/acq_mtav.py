@@ -205,6 +205,9 @@ class AcqMTAV(MCAcquisitionFunction):
         elif self.ttype == "sr":
             Y = self.get_posterior_samples(mvn).squeeze(-1)
             return -Y.squeeze(-1).max(dim=0).values.max(dim=-1).values
+        elif self.ttype == "varmax":
+            Y = self.get_posterior_samples(mvn).squeeze(-1)
+            return -Y.squeeze(-1).max(dim=-1).values.var(dim=0)
         elif self.ttype == "cov":
             C = mvn.distribution.covariance_matrix
             e = torch.ones(self.num_X_samples, dtype=self._dtype)
