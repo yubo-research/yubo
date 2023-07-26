@@ -81,8 +81,8 @@ class Optimizer:
             "mtav_ucb_10": BTDesigner(
                 policy, AcqMTAV, init_X_samples=False, init_sobol=0, acq_kwargs={"ttype": "ucb", "beta_ucb": 10.0, "num_X_samples": default_num_X_samples}
             ),
-            "mtav_maxvar": BTDesigner(
-                policy, AcqMTAV, init_X_samples=False, init_sobol=0, acq_kwargs={"ttype": "maxvar", "num_X_samples": default_num_X_samples}
+            "mtav_varmax": BTDesigner(
+                policy, AcqMTAV, init_X_samples=False, init_sobol=0, acq_kwargs={"ttype": "varmax", "num_X_samples": default_num_X_samples}
             ),
             "sr": BTDesigner(policy, qSimpleRegret),
             "ei": BTDesigner(policy, qNoisyExpectedImprovement, acq_kwargs={"X_baseline": None}),
