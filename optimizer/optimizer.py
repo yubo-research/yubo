@@ -96,7 +96,7 @@ class Optimizer:
             "ei": BTDesigner(policy, qNoisyExpectedImprovement, acq_kwargs={"X_baseline": None}),
             "mes": BTDesigner(policy, qMaxValueEntropy, acq_kwargs={"candidate_set": None}),
             "sobol_mes": BTDesigner(policy, qMaxValueEntropy, init_sobol=init_ax_default, acq_kwargs={"candidate_set": None}),
-            "gibbon": BTDesigner(policy, qLowerBoundMaxValueEntropy, acq_kwargs={"candidate_set": None}),
+            "gibbon": BTDesigner(policy, qLowerBoundMaxValueEntropy, opt_sequential=True, acq_kwargs={"candidate_set": None}),
             "sobol_gibbon": BTDesigner(policy, qLowerBoundMaxValueEntropy, init_sobol=init_ax_default, acq_kwargs={"candidate_set": None}),
             "ucb": BTDesigner(policy, qUpperConfidenceBound, acq_kwargs={"beta": 1}),
             "ax": AxDesigner(policy),
