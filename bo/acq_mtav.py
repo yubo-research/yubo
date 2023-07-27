@@ -11,7 +11,8 @@ from botorch.utils.probability.utils import ndtr as Phi
 from botorch.utils.probability.utils import (
     phi,
 )
-from IPython.core.debugger import set_trace
+
+# from IPython.core.debugger import set_trace
 from torch.quasirandom import SobolEngine
 
 
@@ -57,7 +58,6 @@ class AcqMTAV(MCAcquisitionFunction):
                 else:
                     assert False, f"Unknown sample type [{sample_type}]"
 
-                    
     def _find_max(self):
         X = self.model.train_inputs[0]
         num_dim = X.shape[-1]
@@ -71,7 +71,6 @@ class AcqMTAV(MCAcquisitionFunction):
             options={"batch_limit": 10, "maxiter": 200},
         )
         return x_cand
-
 
     def _sample_maxes_mh(self, sobol_engine, num_X_samples, num_mcmc):
         eps = 0.1
@@ -150,7 +149,7 @@ class AcqMTAV(MCAcquisitionFunction):
             # for testing / comparison
             return self._alt_acqf(X)
 
-        batch_size = X.shape[0]
+        # batch_size = X.shape[0]
         q = X.shape[-2]
         assert len(self.X_samples) >= 10 * q, "You should use num_X_samples >= 10*q"
         num_dim = X.shape[-1]
