@@ -38,7 +38,6 @@ class AcqMTAV(MCAcquisitionFunction):
             self.Y_max = 0.0
             self.Y_best = 0.0
         else:
-
             self.X_max = self._find_max()
             self.Y_max = self.model.posterior(self.X_max).mean
             if len(self.model.train_targets) > 0:
@@ -58,6 +57,7 @@ class AcqMTAV(MCAcquisitionFunction):
                 else:
                     assert False, f"Unknown sample type [{sample_type}]"
 
+                    
     def _find_max(self):
         X = self.model.train_inputs[0]
         num_dim = X.shape[-1]
@@ -72,18 +72,6 @@ class AcqMTAV(MCAcquisitionFunction):
         )
         return x_cand
 
-    def _xxx_ei(self, mvn, X):
-        mu_f = mvn.mean.squeeze()
-        sd_f = mvn.stddev.squeeze()
-        if self.ttype == "ei":
-            y_0 = self.Y_max
-        elif self.ttype == "ei2":
-            y_0 = self.Y_best
-        else:
-            assert False, f"Invalid ttype {self.ttype}"
-
-        u = _scaled_improvement(mu_f, sd_f, y_0)
-        return sd_f * _ei_helper(u)
 
     def _sample_maxes_mh(self, sobol_engine, num_X_samples, num_mcmc):
         eps = 0.1
@@ -213,24 +201,6 @@ class AcqMTAV(MCAcquisitionFunction):
             e = torch.ones(self.num_X_samples, dtype=self._dtype)
             var = C @ e
             return -var.max(dim=-1).values
-        elif self.ttype == "eig":
-            C = mvn.distribution.covariance_matrix
-            # C = C+C.T
-            n_0 = 1
-            e = self._e_0.unsqueeze(0)
-            e = e.tile((batch_size, 1, 1))
-            for _ in range(10):
-                e = e / torch.sign(e[:, 0, :]).unsqueeze(-1)
-                n_1 = torch.linalg.norm(e, dim=1, keepdim=True)
-                max_eval = n_1 / n_0
-                e = e / n_1
-                n_0 = torch.linalg.norm(e, dim=1, keepdim=True)
-                e = C @ e
-            max_eval = max_eval.squeeze(-1).squeeze(-1)
-            if max_eval.min().item() <= 0:
-                set_trace()
-            print(max_eval.min().item())
-            return -max_eval
         else:
             assert False, ("Unknown", self.ttype)
 
