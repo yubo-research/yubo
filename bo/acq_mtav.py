@@ -58,6 +58,9 @@ class AcqMTAV(MCAcquisitionFunction):
                 else:
                     assert False, f"Unknown sample type [{sample_type}]"
 
+        assert self.X_samples.min() >= 0, self.X_samples
+        assert self.X_samples.max() <= 1, self.X_samples
+
     def _find_max(self):
         X = self.model.train_inputs[0]
         num_dim = X.shape[-1]
@@ -89,9 +92,9 @@ class AcqMTAV(MCAcquisitionFunction):
             Y_both = mvn.sample(torch.Size([1])).squeeze(-1).squeeze(0)
             Y = Y_both[: len(X)]
             Y_1 = Y_both[len(X) :]
-            i = (X_1.min(dim=1).values >= 0) & (X_1.min(dim=1).values <= 1) & (Y_1 > Y).flatten()
+            i = (X_1.min(dim=1).values >= 0) & (X_1.max(dim=1).values <= 1) & (Y_1 > Y).flatten()
+
             X[i] = X_1[i]
-            # eps /= 3.1622776601683795
         return X
 
     def _sample_maxes_2(self, sobol_engine, num_X_samples):

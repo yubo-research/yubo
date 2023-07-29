@@ -15,12 +15,14 @@ class BTDesigner:
         acq_kwargs=None,
         init_sobol=1,
         init_X_samples=False,
+        sample_X_samples=False,
         opt_sequential=False,
         optimizer_options={"batch_limit": 10, "maxiter": 500}
     ):
         self._policy = policy
         self._acq_fn = acq_fn
         self._init_sobol = init_sobol
+        self._sample_X_samples = sample_X_samples
         self._init_X_samples = init_X_samples
         self._opt_sequential = opt_sequential
         self._optimizer_options = optimizer_options
@@ -35,8 +37,13 @@ class BTDesigner:
 
         num_dim = self._policy.num_params()
         acqf = AcqBT(self._acq_fn, data, num_dim, self._acq_kwargs)
-        if hasattr(acqf.acq_function, "X_cand"):
-            X_cand = acqf.acq_function.X_cand
+        if self._sample_X_samples:
+            print("Sampling X_samples")
+            X_samples = acqf.acq_function.X_samples
+            assert len(X_samples) >= num_arms, (len(X_samples), num_arms)
+            i = np.arange(len(X_samples))
+            i = np.random.choice(i, size=(int(num_arms)), replace=False)
+            X_cand = X_samples[i]
         else:
             warnings.simplefilter("ignore")
             if self._init_X_samples and hasattr(acqf.acq_function, "X_samples"):
