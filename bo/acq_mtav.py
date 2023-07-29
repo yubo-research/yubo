@@ -2,8 +2,9 @@ import torch
 from botorch.acquisition import PosteriorMean
 from botorch.acquisition.monte_carlo import (
     MCAcquisitionFunction,
-    qNoisyExpectedImprovement,
 )
+
+# qNoisyExpectedImprovement,
 from botorch.optim import optimize_acqf
 from botorch.sampling.normal import SobolQMCNormalSampler
 from botorch.utils import t_batch_mode_transform
@@ -17,7 +18,7 @@ from torch.quasirandom import SobolEngine
 
 
 class AcqMTAV(MCAcquisitionFunction):
-    def __init__(self, model, num_X_samples=256, num_mcmc=10, num_Y_samples=1, ttype="ucb", beta_ucb=1.96, sample_type="mh", alt_ei=False, **kwargs) -> None:
+    def __init__(self, model, num_X_samples=256, num_mcmc=10, num_Y_samples=1, ttype="ucb", beta_ucb=1.96, sample_type="mh", **kwargs) -> None:
         super().__init__(model=model, **kwargs)
         self.num_mcmc = num_mcmc
         self.num_X_samples = num_X_samples
@@ -47,16 +48,12 @@ class AcqMTAV(MCAcquisitionFunction):
             else:
                 self.Y_best = self.Y_max
 
-            if alt_ei:
-                assert sample_type is None, "Set alt_ei=True to just use qNEI when iteration > 0. (For comparison evaluations.)"
-                self._alt_acqf = qNoisyExpectedImprovement(self.model, X_baseline=self.model.train_inputs[0], prune_baseline=False)
+            if sample_type == "mh":
+                self.X_samples = self._sample_maxes_mh(sobol_engine, num_X_samples, num_mcmc)
+            elif sample_type == "sobol":
+                self.X_samples = sobol_engine.draw(num_X_samples, dtype=self._dtype)
             else:
-                if sample_type == "mh":
-                    self.X_samples = self._sample_maxes_mh(sobol_engine, num_X_samples, num_mcmc)
-                elif sample_type == "sobol":
-                    self.X_samples = sobol_engine.draw(num_X_samples, dtype=self._dtype)
-                else:
-                    assert False, f"Unknown sample type [{sample_type}]"
+                assert False, f"Unknown sample type [{sample_type}]"
 
         assert self.X_samples.min() >= 0, self.X_samples
         assert self.X_samples.max() <= 1, self.X_samples
@@ -165,7 +162,7 @@ class AcqMTAV(MCAcquisitionFunction):
         self.mvn = mvn
 
         if self.ttype == "msvar":
-            # appx. G-Optimality
+            # faster appx. G-Optimality
             var_f = mvn.variance.squeeze()
             m = var_f.mean(dim=-1)
             s = var_f.std(dim=-1)
@@ -175,6 +172,10 @@ class AcqMTAV(MCAcquisitionFunction):
             var_f = mvn.variance.squeeze()
             m = var_f.mean(dim=-1)
             return -m
+        elif self.ttype == "maxvar":
+            # G-Optimality
+            var_f = mvn.variance.squeeze()
+            return -var_f.max(dim=-1).values
         elif self.ttype in ["ei", "ei2"]:
             mu_f = mvn.mean.squeeze()
             sd_f = mvn.stddev.squeeze()
@@ -188,21 +189,9 @@ class AcqMTAV(MCAcquisitionFunction):
             mu_f = mvn.mean.squeeze()
             sd_f = mvn.stddev.squeeze()
             return -(mu_f + self.beta_ucb * sd_f).max(dim=-1).values
-        elif self.ttype == "maxvar":
-            # G-Optimality
-            var_f = mvn.variance.squeeze()
-            return -var_f.max(dim=-1).values
         elif self.ttype == "sr":
             Y = self.get_posterior_samples(mvn).squeeze(-1)
             return -Y.squeeze(-1).max(dim=0).values.max(dim=-1).values
-        elif self.ttype == "varmax":
-            Y = self.get_posterior_samples(mvn).squeeze(-1)
-            return -Y.squeeze(-1).max(dim=-1).values.var(dim=0)
-        elif self.ttype == "cov":
-            C = mvn.distribution.covariance_matrix
-            e = torch.ones(self.num_X_samples, dtype=self._dtype)
-            var = C @ e
-            return -var.max(dim=-1).values
         else:
             assert False, ("Unknown", self.ttype)
 
