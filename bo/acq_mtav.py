@@ -161,17 +161,17 @@ class AcqMTAV(MCAcquisitionFunction):
         mvn = model_f.posterior(self.X_samples, observation_noise=True)
         self.mvn = mvn
 
-        if self.ttype == "msvar":
+        if self.ttype == "mvar":
+            # I-Optimality
+            var_f = mvn.variance.squeeze()
+            m = var_f.mean(dim=-1)
+            return -m
+        elif self.ttype == "msvar":
             # faster appx. G-Optimality
             var_f = mvn.variance.squeeze()
             m = var_f.mean(dim=-1)
             s = var_f.std(dim=-1)
             return -(m + s)
-        elif self.ttype == "mvar":
-            # I-Optimality
-            var_f = mvn.variance.squeeze()
-            m = var_f.mean(dim=-1)
-            return -m
         elif self.ttype == "maxvar":
             # G-Optimality
             var_f = mvn.variance.squeeze()

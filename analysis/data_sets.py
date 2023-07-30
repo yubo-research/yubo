@@ -66,6 +66,9 @@ def load_traces(fn, key="return"):
 
 
 def summarize_traces(traces):
+    """
+    One problem, one optimizer, multiple traces
+    """
     mu = traces.mean(axis=0)
     sd = traces.std(axis=0)
     se = sd / np.sqrt(len(traces))
@@ -73,7 +76,12 @@ def summarize_traces(traces):
 
 
 def normalize_summaries(summaries: dict):
-    # summaries[optimizer_name] = (mu, se)
+    """
+    One problem, multiple optimizers
+
+    summaries[optimizer_name] = (mu, se)
+
+    """
     all_mu = np.array([s[0] for s in summaries.values()])
     mean = all_mu.mean()
     std = all_mu.std()
@@ -81,7 +89,10 @@ def normalize_summaries(summaries: dict):
 
 
 def aggregate_normalized_summaries(normalized_summaries: dict):
-    # normalized_summaries[problem_name][optimizer_name] = (normed_mu, normed_se)
+    """
+    Aggregate over problems.
+    normalized_summaries[problem_name][optimizer_name] = (normed_mu, normed_se)
+    """
     agg_by_opt = {}
     for problem_name, ns_by_opt in normalized_summaries.items():
         for optimizer_name, (mu, se) in ns_by_opt.items():
