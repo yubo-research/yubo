@@ -71,17 +71,8 @@ class Optimizer:
                 policy, AcqMTAV, init_X_samples=False, init_sobol=0, sample_X_samples=True, acq_kwargs={"ttype": None, "num_X_samples": default_num_X_samples}
             ),
             "mtav_ts": BTDesigner(policy, AcqMTAV, init_X_samples=False, init_sobol=0, acq_kwargs={"ttype": "maxvar", "num_X_samples": default_num_X_samples}),
-            "mtav_ts_fast_1": BTDesigner(
+            "mtav_ts_fast": BTDesigner(
                 policy, AcqMTAV, init_X_samples=False, init_sobol=0, acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "num_mcmc": 1}
-            ),
-            "mtav_ts_fast_3": BTDesigner(
-                policy, AcqMTAV, init_X_samples=False, init_sobol=0, acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "num_mcmc": 3}
-            ),
-            "mtav_ts_fast_10": BTDesigner(
-                policy, AcqMTAV, init_X_samples=False, init_sobol=0, acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "num_mcmc": 10}
-            ),
-            "mtav_ts_fast_30": BTDesigner(
-                policy, AcqMTAV, init_X_samples=False, init_sobol=0, acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "num_mcmc": 30}
             ),
             "mtav_ts_iopt": BTDesigner(
                 policy, AcqMTAV, init_X_samples=False, init_sobol=0, acq_kwargs={"ttype": "mvar", "num_X_samples": default_num_X_samples}

@@ -66,6 +66,9 @@ class BTDesigner:
                     sequential=self._opt_sequential,
                 )
 
+        self.fig_last_acqf = acqf
+        self.fig_last_arms = X_cand
+        
         policies = []
         for x in X_cand:
             policy = self._policy.clone()
