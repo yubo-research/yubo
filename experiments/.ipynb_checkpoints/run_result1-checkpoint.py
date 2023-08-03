@@ -46,6 +46,8 @@ if __name__ == "__main__":
     ttype = sys.argv[2]
     # "random", "sobol", "minimax", "minimax-toroidal", "variance", "iopt_ei", "ioptv_ei",
     # "idopt", "ei", "iei", "ucb", "iucb", "ax"
+    
+    # FOLDER NAME IF YOU NEED TO CHANGE 
     foldername="exp_test"
     num_iterations = 100
     for i_sample in range(30):
