@@ -1,0 +1,61 @@
+zoom link
+https://us04web.zoom.us/j/2472300830?pwd=cXRON3d1bkR0WElxaE5ZYWhUQmJnQT09
+
+
+conda remove -n bbo --all
+conda info --envs 
+# check conda environments
+
+conda create -n bbo python=3.10
+
+conda activate bbo
+# set environment bbo
+
+export PYTHONPATH=/home/juju/projects/bbo 
+# set up pythonpath so can find all local modules
+
+pip install -r requirements.txt
+
+# check the input
+python experiments/exp_1.py f:branin-2d random
+
+# git learn kit
+# https://git-scm.com/book/en/v2
+# set up git user
+git config --global user.name "JuJu-Ren"
+git config --global user.email jujuren.info@gmail.com
+git config --list
+git config user.name
+
+# git mannual help instruction
+git help config
+
+# linux connect with github setting up with SSH key
+ssh-keygen
+cat ~/.ssh/id_rsa.pub
+ssh -T git@github.com
+
+clone branch
+git clone git@github.com:dsweet99/bbo.git
+
+# check the current branch
+git branch
+# list all git branches
+git branch -a
+# switch to branch working on
+git checkout juju/branin
+# delete a branch
+git branch --delete <branchname>
+
+# remove a git init
+rm -rf .git
+
+# stash change
+git stash
+
+# git prepare(add+commit)
+git status # check the status
+git add a
+git commit a -m "bugfix, in a"
+git add b
+git commit b -m "new feature, in b"
