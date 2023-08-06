@@ -8,8 +8,12 @@ if __name__ == "__main__":
     env_tag = sys.argv[1]
     ttype = sys.argv[2]
 
+    if len(sys.argv) > 3:
+        num_arms = int(sys.argv[3])
+    else:
+        num_arms = 15
+
     num_iterations = 3
-    num_arms = 10
     for i_sample in range(30):
         t0 = time.time()
         seed = 13547 + i_sample

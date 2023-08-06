@@ -14,6 +14,7 @@ class BTDesigner:
         *,
         acq_kwargs=None,
         init_sobol=1,
+        init_center=True,
         init_X_samples=False,
         sample_X_samples=False,
         opt_sequential=False,
@@ -22,12 +23,16 @@ class BTDesigner:
         self._policy = policy
         self._acq_fn = acq_fn
         self._init_sobol = init_sobol
+        self._init_center = init_center
         self._sample_X_samples = sample_X_samples
         self._init_X_samples = init_X_samples
         self._opt_sequential = opt_sequential
         self._optimizer_options = optimizer_options
         self._acq_kwargs = acq_kwargs
         self._sobol = SobolDesigner(policy.clone())
+
+    def init_center(self):
+        return self._init_center
 
     def __call__(self, data, num_arms):
         import warnings
@@ -68,7 +73,7 @@ class BTDesigner:
 
         self.fig_last_acqf = acqf
         self.fig_last_arms = X_cand
-        
+
         policies = []
         for x in X_cand:
             policy = self._policy.clone()
