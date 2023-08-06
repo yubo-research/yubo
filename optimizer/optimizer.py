@@ -28,22 +28,6 @@ from .trajectories import collect_trajectory
 from .turbo_designer import TuRBODesigner
 
 
-def _iOptFactory(model, acqf=None, X_baseline=None):
-    if acqf == "ei":
-        assert X_baseline is not None
-        if len(X_baseline) > 0:
-            acqf = qNoisyExpectedImprovement(model, X_baseline, prune_baseline=False)
-        else:
-            acqf = None
-    elif acqf == "sr":
-        acqf = qSimpleRegret(model)
-    elif acqf == "mes":
-        acqf = qMaxValueEntropy(model, candidate_set=X_baseline)
-    else:
-        assert acqf is None, acqf
-    return AcqIOpt(model, acqf=acqf)
-
-
 @dataclass
 class _TraceEntry:
     rreturn: float
@@ -68,7 +52,7 @@ class Optimizer:
             "maximin": BTDesigner(policy, lambda m: AcqMinDist(m, toroidal=False)),
             "maximin-toroidal": BTDesigner(policy, lambda m: AcqMinDist(m, toroidal=True)),
             "variance": BTDesigner(policy, AcqVar),
-            "iopt": BTDesigner(policy, _iOptFactory, init_sobol=0, init_center=False),
+            "iopt": BTDesigner(policy, AcqIOpt, init_sobol=0, init_center=False),
             "mcmc_ts": BTDesigner(
                 policy,
                 AcqMTAV,
@@ -81,7 +65,7 @@ class Optimizer:
             "mtav_ts": BTDesigner(
                 policy, AcqMTAV, init_X_samples=False, init_sobol=0, init_center=False, acq_kwargs={"ttype": "maxvar", "num_X_samples": default_num_X_samples}
             ),
-            "mtav_ts_fast": BTDesigner(
+            "mtav_msts": BTDesigner(
                 policy,
                 AcqMTAV,
                 init_X_samples=False,

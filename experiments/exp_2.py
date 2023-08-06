@@ -11,7 +11,7 @@ if __name__ == "__main__":
     if len(sys.argv) > 3:
         num_arms = int(sys.argv[3])
     else:
-        num_arms = 15
+        num_arms = 10
 
     num_iterations = 3
     for i_sample in range(30):
