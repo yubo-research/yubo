@@ -18,7 +18,7 @@ from torch.quasirandom import SobolEngine
 
 
 class AcqMTAV(MCAcquisitionFunction):
-    def __init__(self, model, num_X_samples=256, num_mcmc=10, num_Y_samples=1, ttype="ucb", beta_ucb=1.96, sample_type="mh", **kwargs) -> None:
+    def __init__(self, model, num_X_samples=256, num_mcmc=3, num_Y_samples=1, ttype="ucb", beta_ucb=1.96, sample_type="mh", **kwargs) -> None:
         super().__init__(model=model, **kwargs)
         self.num_mcmc = num_mcmc
         self.num_X_samples = num_X_samples
@@ -176,19 +176,27 @@ class AcqMTAV(MCAcquisitionFunction):
             # G-Optimality
             var_f = mvn.variance.squeeze()
             return -var_f.max(dim=-1).values
-        elif self.ttype in ["ei", "ei2"]:
+        elif self.ttype in ["ei", "ei2", "msei"]:
             mu_f = mvn.mean.squeeze()
             sd_f = mvn.stddev.squeeze()
-            if self.ttype == "ei":
+            if self.ttype in ["ei", "msei"]:
                 y_0 = self.Y_max
             else:
                 y_0 = self.Y_best
             u = _scaled_improvement(mu_f, sd_f, y_0)
-            return -(sd_f * _ei_helper(u)).max(dim=-1).values
-        elif self.ttype == "ucb":
+            af = sd_f * _ei_helper(u)
+            if self.ttype.startswith("ms"):
+                return -af.max(dim=-1).values
+            else:
+                return -(af.mean(dim=-1) + af.std(dim=-1))
+        elif self.ttype in ["ucb", "msucb"]:
             mu_f = mvn.mean.squeeze()
             sd_f = mvn.stddev.squeeze()
-            return -(mu_f + self.beta_ucb * sd_f).max(dim=-1).values
+            af = mu_f + self.beta_ucb * sd_f
+            if self.ttype == "ucb":
+                return -af.max(dim=-1).values
+            else:
+                return -(af.mean(dim=-1) + af.std(dim=-1))
         elif self.ttype == "sr":
             Y = self.get_posterior_samples(mvn).squeeze(-1)
             return -Y.squeeze(-1).max(dim=0).values.max(dim=-1).values

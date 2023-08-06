@@ -115,6 +115,9 @@ def load_as_normalized_summaries(exp_tag, problem_names, optimizer_names, data_l
         summaries = {}
         for optimizer_name in optimizer_names:
             fn = data_locator(exp_tag, problem_name, optimizer_name)
-            summaries[optimizer_name] = summarize_traces(load_traces(fn))
+            try:
+                summaries[optimizer_name] = summarize_traces(load_traces(fn))
+            except Exception as e:
+                print(f"Could not load {fn}", e)
         normalized_summaries[problem_name] = normalize_summaries(summaries)
     return normalized_summaries
