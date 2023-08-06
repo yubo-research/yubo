@@ -31,7 +31,14 @@ class PureFunctionEnv:
         self.action_space = Box(low=-np.ones(num_dim), high=np.ones(num_dim), dtype=np.float32)
 
         rng = np.random.default_rng(seed)
-        self._x_0 = 0.9 * (all_bounds.x_low + all_bounds.x_width * rng.uniform(size=(num_dim,)))
+
+        # Distort the parameter space, moving the center
+        #  to a randomly-chosen corner of the bounding box.
+        # alpha = scale of the corner hypercube
+        alpha = 0.01
+        self._x_0 = all_bounds.x_low + (1 - alpha) * all_bounds.x_width + alpha * all_bounds.x_width * rng.uniform(size=(num_dim,))
+        i = rng.choice(np.arange(len(self._x_0)), size=(num_dim // 2,))
+        self._x_0[i] = (all_bounds.x_low + alpha * all_bounds.x_width * rng.uniform(size=(num_dim,)))[i]
 
         assert all_bounds.x_low == -1
         assert all_bounds.x_high == 1
