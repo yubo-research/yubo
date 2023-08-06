@@ -6,7 +6,7 @@ def tight(axs):
     for a in axs:
         a.set_box_aspect(1)
     plt.tight_layout()
-    plt.show()
+    # plt.show()
 
 
 def filled_err(ys, x=None, color="#AAAAAA", alpha=0.5, fmt="--", se=False, ax=None):

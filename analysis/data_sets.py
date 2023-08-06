@@ -118,6 +118,6 @@ def load_as_normalized_summaries(exp_tag, problem_names, optimizer_names, data_l
             try:
                 summaries[optimizer_name] = summarize_traces(load_traces(fn))
             except Exception as e:
-                print (f"Could not load {fn}", e)
+                print(f"Could not load {fn}", e)
         normalized_summaries[problem_name] = normalize_summaries(summaries)
     return normalized_summaries

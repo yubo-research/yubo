@@ -8,8 +8,8 @@ if __name__ == "__main__":
     env_tag = sys.argv[1]
     ttype = sys.argv[2]
 
-    num_iterations = 3
-    num_arms = 10
+    num_iterations = 30
+    num_arms = 15
     for i_sample in range(30):
         t0 = time.time()
         seed = 13547 + i_sample
