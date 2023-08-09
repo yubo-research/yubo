@@ -20,6 +20,8 @@ def make(name, seed):
 
 # all domains are [-1,1]**num_dim
 class PureFunctionEnv:
+    ALPHA = 0.01
+
     def __init__(self, function, num_dim, seed):
         self._function = function
 
@@ -35,7 +37,7 @@ class PureFunctionEnv:
         # Distort the parameter space, moving the center
         #  to a randomly-chosen corner of the bounding box.
         # alpha = scale of the corner hypercube
-        alpha = 0.01
+        alpha = PureFunctionEnv.ALPHA
         self._x_0 = all_bounds.x_low + (1 - alpha) * all_bounds.x_width + alpha * all_bounds.x_width * rng.uniform(size=(num_dim,))
         i = rng.choice(np.arange(len(self._x_0)), size=(num_dim // 2,))
         self._x_0[i] = (all_bounds.x_low + alpha * all_bounds.x_width * rng.uniform(size=(num_dim,)))[i]
