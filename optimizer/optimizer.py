@@ -38,14 +38,16 @@ class Optimizer:
     def __init__(self, env_conf, policy, num_arms, cb_trace=None):
         self._env_conf = env_conf
         self._num_arms = num_arms
-        self._cb_trace = cb_trace
+        # self._cb_trace = cb_trace
 
         self._data = []
         self._datum_best = None
-        init_ax_default = max(5, 2 * policy.num_params())
+        self._i_iter = 0
         self._center_designer = CenterDesigner(policy)
-
+        
+        init_ax_default = max(5, 2 * policy.num_params())
         default_num_X_samples = max(64, 10 * self._num_arms)
+        
         self._designers = {
             "random": RandomDesigner(policy),
             "sobol": SobolDesigner(policy),
@@ -69,6 +71,14 @@ class Optimizer:
                 policy,
                 AcqMTAV,
                 init_X_samples=False,
+                init_sobol=0,
+                init_center=False,
+                acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "num_mcmc": 1},
+            ),
+            "mtav_msts_bic": BTDesigner(
+                policy,
+                AcqMTAV,
+                init_X_samples=True,
                 init_sobol=0,
                 init_center=False,
                 acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "num_mcmc": 1},
@@ -106,7 +116,7 @@ class Optimizer:
             "sobol_ucb": BTDesigner(policy, qUpperConfidenceBound, init_sobol=init_ax_default, acq_kwargs={"beta": 1}),
         }
 
-    def _collect_trajectory(self, policy):
+    def collect_trajectory(self, policy):
         return collect_trajectory(self._env_conf, policy, seed=self._env_conf.seed)
 
     def _iterate(self, designer, num_arms):
@@ -115,7 +125,7 @@ class Optimizer:
         tf = time.time()
         data = []
         for policy in policies:
-            traj = self._collect_trajectory(policy)
+            traj = self.collect_trajectory(policy)
             data.append(Datum(policy, traj))
         return data, tf - t0
 
@@ -129,9 +139,9 @@ class Optimizer:
             init_center = True
 
         trace = []
-        for i_iter in range(num_iterations):
+        for _ in range(num_iterations):
             best_in_batch = -1e99
-            if init_center and i_iter == 0:
+            if init_center and self._i_iter == 0:
                 if self._num_arms == 1:
                     data, d_time = self._iterate(self._center_designer, self._num_arms)
                 else:
@@ -147,11 +157,11 @@ class Optimizer:
                 if self._datum_best is None or datum.trajectory.rreturn > self._datum_best.trajectory.rreturn:
                     self._datum_best = datum
 
-            if i_iter % 1 == 0:
-                print(f"ITER: i_iter = {i_iter} d_time = {d_time:.2f} ret = {best_in_batch:.2f} ret_best = {self._datum_best.trajectory.rreturn:.2f}")
-                sys.stdout.flush()
+            print(f"ITER: self._i_iter = {self._i_iter} d_time = {d_time:.2f} ret = {best_in_batch:.2f} ret_best = {self._datum_best.trajectory.rreturn:.2f}")
+            sys.stdout.flush()
             trace.append(_TraceEntry(self._datum_best.trajectory.rreturn, d_time))
-            if self._cb_trace:
-                self._cb_trace(self._datum_best)
+            # if self._cb_trace:
+            #    self._cb_trace(self._datum_best)
+            self._i_iter += 1
 
         return trace

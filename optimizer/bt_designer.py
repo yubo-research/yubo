@@ -18,7 +18,7 @@ class BTDesigner:
         init_X_samples=False,
         sample_X_samples=False,
         opt_sequential=False,
-        optimizer_options={"batch_limit": 10, "maxiter": 500}
+        optimizer_options={"batch_limit": 10, "maxiter": 1000}
     ):
         self._policy = policy
         self._acq_fn = acq_fn
@@ -59,6 +59,7 @@ class BTDesigner:
                 batch_initial_conditions = X[i, :].reshape(batch_limit, num_arms, num_dim)
             else:
                 batch_initial_conditions = None
+
             with warnings.catch_warnings():
                 X_cand, _ = optimize_acqf(
                     acq_function=acqf.acq_function,
