@@ -22,6 +22,19 @@ def filled_err(ys, x=None, color="#AAAAAA", alpha=0.5, fmt="--", se=False,label=
         sg = sg / np.sqrt(ys.shape[0])
     plt.errorbar(x, mu, yerr=2*sg, fmt=".-", color=color, elinewidth=1,label=label)
 
+def filled_arm_err(ys, x=None, color="#AAAAAA", alpha=0.5, fmt="--", se=False,label="",arm_number=1):
+    mu = ys.mean(axis=0)
+    sg = ys.std(axis=0)
+    if x is None:
+        x = np.arange(len(mu))
+    if se:
+        sg = sg / np.sqrt(ys.shape[0])
+    yerr=2*sg*arm_number
+    xarm = x*arm_number
+    mu = np.interp(x,xarm,mu)
+    yerr = np.interp(x,xarm,yerr)
+    plt.errorbar(x, mu, yerr=2*sg, fmt=".-", color=color, elinewidth=1,label=label)    
+    
 def error_area(x, y, yerr, color="#AAAAAA", alpha=0.5, fmt="--"):
     mu = y
     sg = yerr
