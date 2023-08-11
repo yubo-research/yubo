@@ -44,17 +44,19 @@ def plot_result(fn, color="#AAAAAA", label=""):
         n_x = len(x)
         traces.append(x)
     traces = np.array(traces)
-    print ("Iter rounds:",len(traces), fn)
+    # print ("Iter rounds:",len(traces), fn)
     nbu.filled_err(traces, fmt='-', color=color, se=True, label=label)
 
-def plot_results(exp_tag, problem_name, ttypes=None):
+def plot_results(exp_tag, problem_name, num_iterations,ttypes=None):
     import os
-    ddir = f"/home/juju/projects/bbo/results/{exp_tag}/{problem_name}"
-    colors = ["blue", "green", "red", "black", "cyan", "magenta"]
+    from natsort import natsorted 
+    ddir = f"/home/juju/projects/bbo/results/{exp_tag}/{problem_name}/{num_iterations}iter"
+    colors = ["blue", "green", "red", "black", "cyan", "magenta","brown","palegreen","orange","darkred","darkviolet","hotpink"]
     legend = []
     i_color = 0
     if not ttypes:
         ttypes = glob.glob(f"{ddir}/*")
+        ttypes = natsorted(ttypes)
     for ttype in ttypes:
         ttype = ttype.split("/")[-1]
         if ttype in ["dumb", "rs"]:
@@ -71,15 +73,82 @@ def plot_results(exp_tag, problem_name, ttypes=None):
         if i_color == len(colors):
             i_color = 0
 
+    # env_name = problem_name.split("_")[0]
+    warnings.simplefilter("ignore")
+    with warnings.catch_warnings():
+        plt.legend(legend, loc='lower right');
+    plt.xlabel('iter')
+    plt.ylabel('return')
+    plt.title(f'{problem_name} with {num_iterations} iterations')
+    #if it doesn’t exist we create one
+    myfolder = f"figures/{exp_tag}/{problem_name}/{num_iterations}iter"
+    if not os.path.exists(myfolder):
+        os.makedirs(myfolder)
+    plt.savefig(myfolder+f'/{problem_name}'+'.png')
+
+
+def plot_arm_result(fn, arm_number, color="#AAAAAA", label=""):
+    o = nbu.loadKV(fn,
+                  ["i_sample", "return"],
+                  grep_for="TRACE:"
+                 )
+    traces = []
+    n_x = None
+    for i_sample in np.unique(o['i_sample']):
+        i = np.where(o['i_sample'] == i_sample)[0]
+        x = list(o['return'][i])
+        if n_x is not None:
+            while len(x) < n_x:
+                x.append(x[-1])
+        n_x = len(x)
+        traces.append(x)
+    traces = np.array(traces)
+    # print ("Iter rounds:",len(traces), fn)
+    nbu.filled_arm_err(traces, fmt='-', color=color, se=True, label=label, arm_number=arm_number)
+
+
+def plot_arm_results(exp_tag, problem_name, num_iterations,ttypes=None):
+    import os
+    import re
+    from natsort import natsorted 
+    ddir = f"/home/juju/projects/bbo/results/{exp_tag}/{problem_name}/{num_iterations}iter"
+    colors = ["blue", "green", "red", "black", "cyan", "magenta","brown","palegreen","orange","darkred","darkviolet","hotpink"]
+    legend = []
+    i_color = 0
+    if not ttypes:
+        ttypes = glob.glob(f"{ddir}/*")
+        ttypes = natsorted(ttypes)
+    for ttype in ttypes:
+        ttype = ttype.split("/")[-1]
+        if ttype in ["dumb", "rs"]:
+            continue
+        try:
+
+            pattern = r'_(\d+)arm'
+            match = re.search(pattern, ttype)
+            if match:
+                arm_number = int(match.group(1))
+            else:
+                arm_number = 1
+            plot_arm_result(f"{ddir}/{ttype}", arm_number=arm_number, color=colors[i_color], label=ttype)
+            # legend.extend( [ttype, '_'] )
+            legend.extend( [ttype] )
+            i_color += 1
+        except FileNotFoundError:
+            pass
+        except Exception as e:
+            print (f"Error in {ttype} {e}")
+        if i_color == len(colors):
+            i_color = 0
 
     warnings.simplefilter("ignore")
     with warnings.catch_warnings():
         plt.legend(legend, loc='lower right');
-    plt.xlabel('episodes')
+    plt.xlabel('batchs = iters * arms')
     plt.ylabel('return')
-    plt.title(f'{problem_name}')
+    plt.title(f'Compare value under different arm numbers \n{problem_name} with {num_iterations} iterations')
     #if it doesn’t exist we create one
-    myfolder = f"figures/{exp_tag}"
+    myfolder = f"figures/{exp_tag}/{problem_name}/{num_iterations}iter"
     if not os.path.exists(myfolder):
-        os.mkdir(myfolder)
-    plt.savefig(myfolder+f'/{problem_name}'+'.png')
+        os.makedirs(myfolder)
+    plt.savefig(myfolder+f'/{problem_name}_arm_comp'+'.png')
