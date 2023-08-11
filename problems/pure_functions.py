@@ -20,7 +20,7 @@ def make(name, seed):
 
 # all domains are [-1,1]**num_dim
 class PureFunctionEnv:
-    ALPHA = 0.01
+    ALPHA = 1.0
 
     def __init__(self, function, num_dim, seed):
         self._function = function

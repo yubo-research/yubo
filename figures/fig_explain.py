@@ -1,25 +1,28 @@
 if __name__ == "__main__":
+    import os
     import sys
+    import shutil
 
     from figures.fig_util import expository_problem, mean_contours, show
     from optimizer.optimizer import Optimizer
     from problems.env_conf import default_policy, get_env_conf
 
     out_dir = sys.argv[1]
-
-    env_tag, seed = expository_problem()
-    num_arms = 4
-
-    env_conf = get_env_conf(env_tag, seed)
-    policy = default_policy(env_conf)
+    out_dir += "/fig_explain"
+    shutil.rmtree(out_dir)
+    os.makedirs(out_dir, exist_ok=True)
+    
+    env_conf, policy = expository_problem()
+    
+    num_arms = 9
     default_num_X_samples = max(64, 10 * num_arms)
 
     opt = Optimizer(env_conf, policy, num_arms)
 
     for i_iter in range(3):
-        opt.collect_trace(ttype="mtav_msts", num_iterations=1)
-        acqf = opt._designers["mtav_msts"].fig_last_acqf.acq_function
-        x_arms = opt._designers["mtav_msts"].fig_last_arms
+        opt.collect_trace(ttype="mtav_msts_bic", num_iterations=1)
+        acqf = opt._designers["mtav_msts_bic"].fig_last_acqf.acq_function
+        x_arms = opt._designers["mtav_msts_bic"].fig_last_arms
 
     mean_contours(out_dir, acqf.model)
     # pmax_contours(acqf.model)
