@@ -13,7 +13,7 @@ def run(ddir, funcs, dims, opts, max_parallel):
                 problem = f"f:{func}-{dim}d"
                 out_dir = f"results/{ddir}/{problem}"
                 os.makedirs(out_dir, exist_ok=True)
-                cmd = f"python experiments/exp_2.py {problem} {opt} &> {out_dir}/{opt}"
+                cmd = f"(python experiments/exp_2.py {problem} {opt} &> {out_dir}/{opt})"
                 cmds.append(cmd)
                 
                 if len(cmds) == max_parallel:
@@ -31,6 +31,6 @@ if __name__=="__main__":
         ddir="exp_2_bic",
         funcs=funcs,
         dims=[10],
-        opts=["mcmc_msts", "mcmc_msts_bic"],
+        opts=["mtav_msts", "mtav_msts_bic"],
         max_parallel=5
     )
