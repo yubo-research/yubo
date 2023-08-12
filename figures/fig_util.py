@@ -43,9 +43,10 @@ def dump_mesh(out_dir, tag, x_1, x_2, y):
 
 def mean_func_contours(out_dir, func):
     xs, x_1, x_2 = mk_mesh()
-    ys = gp.posterior(xs).mean.detach().numpy()
-    y = ys.reshape(x_1.shape)
-    dump_mesh(out_dir, "mean", x_1, x_2, y)
+    assert False, "NYI"
+    # ys = gp.posterior(xs).mean.detach().numpy()
+    # y = ys.reshape(x_1.shape)
+    # dump_mesh(out_dir, "mean", x_1, x_2, y)
 
 
 def mean_gp_contours(out_dir, gp):

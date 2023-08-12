@@ -5,7 +5,6 @@ if __name__ == "__main__":
 
     from figures.fig_util import expository_problem, mean_contours, show
     from optimizer.optimizer import Optimizer
-    from problems.env_conf import default_policy, get_env_conf
 
     out_dir = sys.argv[1]
     out_dir += "/fig_explain"

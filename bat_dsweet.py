@@ -31,7 +31,7 @@ def run(ddir, funcs, dims, opts, max_parallel):
                 problem = f"f:{func}-{dim}d"
                 out_dir = f"results/{ddir}/{problem}"
                 os.makedirs(out_dir, exist_ok=True)
-                cmd = f"python experiments/exp_2.py {problem} {opt} &> {out_dir}/{opt}"
+                cmd = f"python experiments/exp_2.py {problem} {opt} > {out_dir}/{opt} 2>&1"
                 cmds.append(cmd)
                 
                 if len(cmds) == max_parallel:
