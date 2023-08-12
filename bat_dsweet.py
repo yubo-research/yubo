@@ -1,5 +1,23 @@
 #!/usr/bin/env python
 
+import multiprocessing
+
+def worker(cmd):
+    import os
+    return os.system(cmd)
+    
+def run_batch(cmds):
+    processes = []
+
+    for cmd in cmds:
+        process = multiprocessing.Process(target=worker, args=(cmd,))
+        processes.append(process)
+        process.start()
+
+    for process in processes:
+        process.join()    
+    print ("DONE_BATCH")
+
 def run(ddir, funcs, dims, opts, max_parallel):
     import os
     
@@ -13,14 +31,11 @@ def run(ddir, funcs, dims, opts, max_parallel):
                 problem = f"f:{func}-{dim}d"
                 out_dir = f"results/{ddir}/{problem}"
                 os.makedirs(out_dir, exist_ok=True)
-                cmd = f"(python experiments/exp_2.py {problem} {opt} &> {out_dir}/{opt})"
+                cmd = f"python experiments/exp_2.py {problem} {opt} &> {out_dir}/{opt}"
                 cmds.append(cmd)
                 
                 if len(cmds) == max_parallel:
-                    cmds.append("wait")
-                    cmd = " & ".join(cmds)
-                    print (cmd)
-                    os.system(cmd)
+                    run_batch(cmds)
                     cmds = []
 
 
