@@ -44,10 +44,10 @@ class Optimizer:
         self._datum_best = None
         self._i_iter = 0
         self._center_designer = CenterDesigner(policy)
-        
+
         init_ax_default = max(5, 2 * policy.num_params())
         default_num_X_samples = max(64, 10 * self._num_arms)
-        
+
         self._designers = {
             "random": RandomDesigner(policy),
             "sobol": SobolDesigner(policy),

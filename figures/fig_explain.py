@@ -1,7 +1,7 @@
 if __name__ == "__main__":
     import os
-    import sys
     import shutil
+    import sys
 
     from figures.fig_util import expository_problem, mean_contours, show
     from optimizer.optimizer import Optimizer
@@ -11,9 +11,9 @@ if __name__ == "__main__":
     out_dir += "/fig_explain"
     shutil.rmtree(out_dir)
     os.makedirs(out_dir, exist_ok=True)
-    
+
     env_conf, policy = expository_problem()
-    
+
     num_arms = 9
     default_num_X_samples = max(64, 10 * num_arms)
 

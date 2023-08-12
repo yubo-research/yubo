@@ -1,8 +1,8 @@
 import numpy as np
 import torch
 
-from problems.pure_functions import PureFunctionEnv
 from problems.env_conf import default_policy, get_env_conf
+from problems.pure_functions import PureFunctionEnv
 
 PureFunctionEnv.ALPHA = 1.0
 
