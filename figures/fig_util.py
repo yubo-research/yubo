@@ -7,13 +7,13 @@ from problems.env_conf import default_policy, get_env_conf
 def expository_problem():
     env_tag = "f:sphere-2d"
 
-    seed = 10
+    seed = 9
     torch.manual_seed(seed)
     np.random.seed(seed)
 
     env_conf = get_env_conf(env_tag, seed)
     policy = default_policy(env_conf)
-    return env_conf, policy, "mtav_msts_bic"
+    return env_conf, policy, "mtav_msts"
 
 
 def show(x):

@@ -18,7 +18,7 @@ from torch.quasirandom import SobolEngine
 
 
 class AcqMTAV(MCAcquisitionFunction):
-    def __init__(self, model, num_X_samples, ttype, num_mcmc=5, num_Y_samples=1, beta_ucb=1, sample_type="mh", **kwargs) -> None:
+    def __init__(self, model, num_X_samples, ttype, num_mcmc=5, num_Y_samples=1, beta_ucb=2, sample_type="mh", **kwargs) -> None:
         super().__init__(model=model, **kwargs)
         self.num_mcmc = num_mcmc
         self.num_X_samples = num_X_samples

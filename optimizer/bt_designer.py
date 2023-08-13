@@ -16,7 +16,7 @@ class BTDesigner:
         acq_kwargs=None,
         init_sobol=1,
         init_center=True,
-        init_X_samples=False,
+        init_X_samples=True,
         sample_X_samples=False,
         opt_sequential=False,
         optimizer_options={"batch_limit": 10, "maxiter": 1000}

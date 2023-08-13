@@ -59,54 +59,30 @@ class Optimizer:
             "mcmc_ts": BTDesigner(
                 policy,
                 AcqMTAV,
-                init_X_samples=False,
                 init_sobol=0,
                 init_center=False,
                 sample_X_samples=True,
                 acq_kwargs={"ttype": None, "num_X_samples": default_num_X_samples},
             ),
-            "mtav_ts": BTDesigner(
-                policy, AcqMTAV, init_X_samples=False, init_sobol=0, init_center=False, acq_kwargs={"ttype": "maxvar", "num_X_samples": default_num_X_samples}
-            ),
-            "mtav_ts_bic": BTDesigner(
-                policy, AcqMTAV, init_X_samples=True, init_sobol=0, init_center=False, acq_kwargs={"ttype": "maxvar", "num_X_samples": default_num_X_samples}
-            ),
+            "mtav_ts": BTDesigner(policy, AcqMTAV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "maxvar", "num_X_samples": default_num_X_samples}),
             "mtav_msts": BTDesigner(
                 policy,
                 AcqMTAV,
-                init_X_samples=False,
                 init_sobol=0,
                 init_center=False,
                 acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples},
             ),
-            "mtav_msts_bic": BTDesigner(
+            "mtav_ei": BTDesigner(policy, AcqMTAV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "ei", "num_X_samples": default_num_X_samples}),
+            "mtav_msei": BTDesigner(policy, AcqMTAV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "msei", "num_X_samples": default_num_X_samples}),
+            "mtav_ucb": BTDesigner(
                 policy,
                 AcqMTAV,
                 init_X_samples=True,
                 init_sobol=0,
                 init_center=False,
-                acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples},
-            ),
-            "mtav_ts_iopt": BTDesigner(
-                policy, AcqMTAV, init_X_samples=False, init_sobol=0, init_center=False, acq_kwargs={"ttype": "mvar", "num_X_samples": default_num_X_samples}
-            ),
-            "mtav_ei": BTDesigner(
-                policy, AcqMTAV, init_X_samples=False, init_sobol=0, init_center=False, acq_kwargs={"ttype": "ei", "num_X_samples": default_num_X_samples}
-            ),
-            "mtav_msei": BTDesigner(
-                policy, AcqMTAV, init_X_samples=False, init_sobol=0, init_center=False, acq_kwargs={"ttype": "msei", "num_X_samples": default_num_X_samples}
-            ),
-            "mtav_ucb": BTDesigner(
-                policy,
-                AcqMTAV,
-                init_X_samples=False,
-                init_sobol=0,
-                init_center=False,
                 acq_kwargs={"ttype": "ucb", "beta_ucb": 1.96, "num_X_samples": default_num_X_samples},
             ),
-            "mtav_msucb": BTDesigner(
-                policy, AcqMTAV, init_X_samples=False, init_sobol=0, init_center=False, acq_kwargs={"ttype": "msucb", "num_X_samples": default_num_X_samples}
-            ),
+            "mtav_msucb": BTDesigner(policy, AcqMTAV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "msucb", "num_X_samples": default_num_X_samples}),
             "sr": BTDesigner(policy, qSimpleRegret),
             "ucb": BTDesigner(policy, qUpperConfidenceBound, acq_kwargs={"beta": 1}),
             "ei": BTDesigner(policy, qNoisyExpectedImprovement, acq_kwargs={"X_baseline": None}),
@@ -119,6 +95,11 @@ class Optimizer:
             "sobol_ei": BTDesigner(policy, qNoisyExpectedImprovement, init_sobol=init_ax_default, acq_kwargs={"X_baseline": None}),
             "sobol_ucb": BTDesigner(policy, qUpperConfidenceBound, init_sobol=init_ax_default, acq_kwargs={"beta": 1}),
         }
+
+        for beta in [0, 1, 2, 3]:
+            self._designers[f"mtav_msts_beta={beta}"] = BTDesigner(
+                policy, AcqMTAV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "beta_ucb": beta}
+            )
 
     def collect_trajectory(self, policy):
         return collect_trajectory(self._env_conf, policy, seed=self._env_conf.seed)
