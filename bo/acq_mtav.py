@@ -18,11 +18,12 @@ from torch.quasirandom import SobolEngine
 
 
 class AcqMTAV(MCAcquisitionFunction):
-    def __init__(self, model, num_X_samples, ttype, num_mcmc=5, num_Y_samples=1, beta_ucb=2, sample_type="mh", **kwargs) -> None:
+    def __init__(self, model, num_X_samples, ttype, beta=1.96, num_mcmc=5, num_Y_samples=1, beta_ucb=2, sample_type="mh", **kwargs) -> None:
         super().__init__(model=model, **kwargs)
         self.num_mcmc = num_mcmc
         self.num_X_samples = num_X_samples
         self.ttype = ttype
+        self.beta = beta
         self.beta_ucb = beta_ucb
         self._alt_acqf = None
         self._k_eps = 0.5
@@ -132,7 +133,7 @@ class AcqMTAV(MCAcquisitionFunction):
             var_f = mvn.variance.squeeze()
             m = var_f.mean(dim=-1)
             s = var_f.std(dim=-1)
-            return -(m + s)
+            return -(m + self.beta * s)
         elif self.ttype == "maxvar":
             # G-Optimality
             var_f = mvn.variance.squeeze()

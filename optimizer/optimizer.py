@@ -80,7 +80,7 @@ class Optimizer:
                 init_X_samples=True,
                 init_sobol=0,
                 init_center=False,
-                acq_kwargs={"ttype": "ucb", "beta_ucb": 1.96, "num_X_samples": default_num_X_samples},
+                acq_kwargs={"ttype": "ucb", "beta_ucb": 1.0, "num_X_samples": default_num_X_samples},
             ),
             "mtav_msucb": BTDesigner(policy, AcqMTAV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "msucb", "num_X_samples": default_num_X_samples}),
             "sr": BTDesigner(policy, qSimpleRegret),
@@ -98,7 +98,7 @@ class Optimizer:
 
         for beta in [0, 1, 2, 3]:
             self._designers[f"mtav_msts_beta={beta}"] = BTDesigner(
-                policy, AcqMTAV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "beta_ucb": beta}
+                policy, AcqMTAV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "beta": beta}
             )
 
     def collect_trajectory(self, policy):
