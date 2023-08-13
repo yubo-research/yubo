@@ -4,8 +4,12 @@ import common.all_bounds as all_bounds
 
 
 class RandomDesigner:
-    def __init__(self, policy):
+    def __init__(self, policy, init_center):
         self._policy = policy
+        self._init_center = init_center
+
+    def init_center(self):
+        return self._init_center
 
     def __call__(self, data, num_arms):
         policies = []

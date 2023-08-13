@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 from botorch.acquisition import PosteriorMean
 from botorch.acquisition.monte_carlo import (
@@ -18,7 +19,7 @@ from torch.quasirandom import SobolEngine
 
 
 class AcqMTAV(MCAcquisitionFunction):
-    def __init__(self, model, num_X_samples=256, num_mcmc=1, num_Y_samples=1, ttype="ucb", beta_ucb=1.96, sample_type="mh", **kwargs) -> None:
+    def __init__(self, model, num_X_samples=256, num_mcmc=10, num_Y_samples=1, ttype="ucb", beta_ucb=1, sample_type="mh", **kwargs) -> None:
         super().__init__(model=model, **kwargs)
         self.num_mcmc = num_mcmc
         self.num_X_samples = num_X_samples
@@ -74,6 +75,7 @@ class AcqMTAV(MCAcquisitionFunction):
 
     def _sample_maxes_mh(self, sobol_engine, num_X_samples, num_mcmc):
         eps = 0.1
+        k_eps = -np.log(0.1) / num_mcmc
         X = torch.tile(self.X_max, (num_X_samples, 1))
         if False:
             X = sobol_engine.draw(num_X_samples // 2, dtype=self._dtype)
@@ -92,6 +94,7 @@ class AcqMTAV(MCAcquisitionFunction):
             i = (X_1.min(dim=1).values >= 0) & (X_1.max(dim=1).values <= 1) & (Y_1 > Y).flatten()
 
             X[i] = X_1[i]
+            eps = k_eps * eps
         return X
 
     def _sample_maxes_2(self, sobol_engine, num_X_samples):
@@ -181,8 +184,10 @@ class AcqMTAV(MCAcquisitionFunction):
             sd_f = mvn.stddev.squeeze()
             if self.ttype in ["ei", "msei"]:
                 y_0 = self.Y_max
-            else:
+            elif self.ttype == "ei2":
                 y_0 = self.Y_best
+            else:
+                assert False, self.ttype
             u = _scaled_improvement(mu_f, sd_f, y_0)
             af = sd_f * _ei_helper(u)
             if self.ttype.startswith("ms"):

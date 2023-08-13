@@ -29,7 +29,7 @@ class BTDesigner:
         self._opt_sequential = opt_sequential
         self._optimizer_options = optimizer_options
         self._acq_kwargs = acq_kwargs
-        self._sobol = SobolDesigner(policy.clone())
+        self._sobol = SobolDesigner(policy.clone(), self._init_center)
 
     def init_center(self):
         return self._init_center

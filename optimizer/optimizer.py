@@ -49,8 +49,10 @@ class Optimizer:
         default_num_X_samples = max(64, 10 * self._num_arms)
 
         self._designers = {
-            "random": RandomDesigner(policy),
-            "sobol": SobolDesigner(policy),
+            "random": RandomDesigner(policy, init_center=False),
+            "random_center": RandomDesigner(policy, init_center=True),
+            "sobol": SobolDesigner(policy, init_center=False),
+            "sobol_center": SobolDesigner(policy, init_center=True),
             "maximin": BTDesigner(policy, lambda m: AcqMinDist(m, toroidal=False)),
             "maximin-toroidal": BTDesigner(policy, lambda m: AcqMinDist(m, toroidal=True)),
             "variance": BTDesigner(policy, AcqVar),
@@ -73,7 +75,7 @@ class Optimizer:
                 init_X_samples=False,
                 init_sobol=0,
                 init_center=False,
-                acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "num_mcmc": 1},
+                acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "num_mcmc": 5},
             ),
             "mtav_msts_bic": BTDesigner(
                 policy,
@@ -81,7 +83,7 @@ class Optimizer:
                 init_X_samples=True,
                 init_sobol=0,
                 init_center=False,
-                acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "num_mcmc": 1},
+                acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "num_mcmc": 5},
             ),
             "mtav_ts_iopt": BTDesigner(
                 policy, AcqMTAV, init_X_samples=False, init_sobol=0, init_center=False, acq_kwargs={"ttype": "mvar", "num_X_samples": default_num_X_samples}
