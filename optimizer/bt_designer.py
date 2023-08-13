@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 from botorch.optim import optimize_acqf
 
 import common.all_bounds as all_bounds
@@ -52,11 +53,14 @@ class BTDesigner:
         else:
             warnings.simplefilter("ignore")
             if self._init_X_samples and hasattr(acqf.acq_function, "X_samples"):
+                # half from X_samples, half random
                 X = acqf.acq_function.X_samples
                 batch_limit = 10
                 i = np.random.choice(np.arange(len(X)), size=(num_arms * batch_limit,))
                 # batch_size x q x num_dim
                 batch_initial_conditions = X[i, :].reshape(batch_limit, num_arms, num_dim)
+                n = batch_initial_conditions.shape[0] // 2
+                batch_initial_conditions[n:, :, :] = torch.randn(size=batch_initial_conditions[n:, :, :].shape)
             else:
                 batch_initial_conditions = None
 
