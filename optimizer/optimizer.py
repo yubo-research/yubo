@@ -38,7 +38,6 @@ class Optimizer:
     def __init__(self, env_conf, policy, num_arms, cb_trace=None):
         self._env_conf = env_conf
         self._num_arms = num_arms
-        # self._cb_trace = cb_trace
 
         self._data = []
         self._datum_best = None
@@ -69,13 +68,16 @@ class Optimizer:
             "mtav_ts": BTDesigner(
                 policy, AcqMTAV, init_X_samples=False, init_sobol=0, init_center=False, acq_kwargs={"ttype": "maxvar", "num_X_samples": default_num_X_samples}
             ),
+            "mtav_ts_bic": BTDesigner(
+                policy, AcqMTAV, init_X_samples=True, init_sobol=0, init_center=False, acq_kwargs={"ttype": "maxvar", "num_X_samples": default_num_X_samples}
+            ),
             "mtav_msts": BTDesigner(
                 policy,
                 AcqMTAV,
                 init_X_samples=False,
                 init_sobol=0,
                 init_center=False,
-                acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "num_mcmc": 5},
+                acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples},
             ),
             "mtav_msts_bic": BTDesigner(
                 policy,
@@ -83,7 +85,7 @@ class Optimizer:
                 init_X_samples=True,
                 init_sobol=0,
                 init_center=False,
-                acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "num_mcmc": 5},
+                acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples},
             ),
             "mtav_ts_iopt": BTDesigner(
                 policy, AcqMTAV, init_X_samples=False, init_sobol=0, init_center=False, acq_kwargs={"ttype": "mvar", "num_X_samples": default_num_X_samples}
@@ -162,8 +164,6 @@ class Optimizer:
             print(f"ITER: self._i_iter = {self._i_iter} d_time = {d_time:.2f} ret = {best_in_batch:.2f} ret_best = {self._datum_best.trajectory.rreturn:.2f}")
             sys.stdout.flush()
             trace.append(_TraceEntry(self._datum_best.trajectory.rreturn, d_time))
-            # if self._cb_trace:
-            #    self._cb_trace(self._datum_best)
             self._i_iter += 1
 
         return trace

@@ -1,13 +1,14 @@
+import numpy as np
 from scipy.stats import qmc
 
 import common.all_bounds as all_bounds
 
 
 class SobolDesigner:
-    def __init__(self, policy, init_center):
+    def __init__(self, policy, init_center, max_points=2**10):
         self._policy = policy
-        max_points = 10240  # TODO: worry later
-        self._ps = qmc.Sobol(policy.num_params()).random(max_points)
+        seed = np.random.randint(99999)
+        self._ps = qmc.Sobol(policy.num_params(), seed=seed).random(max_points)
         self._init_center = init_center
 
     def init_center(self):

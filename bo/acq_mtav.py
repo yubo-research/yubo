@@ -1,4 +1,3 @@
-import numpy as np
 import torch
 from botorch.acquisition import PosteriorMean
 from botorch.acquisition.monte_carlo import (
@@ -19,13 +18,14 @@ from torch.quasirandom import SobolEngine
 
 
 class AcqMTAV(MCAcquisitionFunction):
-    def __init__(self, model, num_X_samples=256, num_mcmc=10, num_Y_samples=1, ttype="ucb", beta_ucb=1, sample_type="mh", **kwargs) -> None:
+    def __init__(self, model, num_X_samples, ttype, num_mcmc=5, num_Y_samples=1, beta_ucb=1, sample_type="mh", **kwargs) -> None:
         super().__init__(model=model, **kwargs)
         self.num_mcmc = num_mcmc
         self.num_X_samples = num_X_samples
         self.ttype = ttype
         self.beta_ucb = beta_ucb
         self._alt_acqf = None
+        self._k_eps = 0.5
         self.sampler = SobolQMCNormalSampler(sample_shape=torch.Size([num_Y_samples]))
 
         X_0 = self.model.train_inputs[0].detach()
@@ -75,7 +75,7 @@ class AcqMTAV(MCAcquisitionFunction):
 
     def _sample_maxes_mh(self, sobol_engine, num_X_samples, num_mcmc):
         eps = 0.1
-        k_eps = -np.log(0.1) / num_mcmc
+        # k_eps = -np.log(0.1) / num_mcmc
         X = torch.tile(self.X_max, (num_X_samples, 1))
         if False:
             X = sobol_engine.draw(num_X_samples // 2, dtype=self._dtype)
@@ -94,50 +94,8 @@ class AcqMTAV(MCAcquisitionFunction):
             i = (X_1.min(dim=1).values >= 0) & (X_1.max(dim=1).values <= 1) & (Y_1 > Y).flatten()
 
             X[i] = X_1[i]
-            eps = k_eps * eps
+            eps = self._k_eps * eps
         return X
-
-    def _sample_maxes_2(self, sobol_engine, num_X_samples):
-        eps = 0.10
-        X_0 = sobol_engine.draw(3 * num_X_samples, dtype=self._dtype)
-        X_all = []
-        for _ in range(3):
-            X = X_0 + eps * torch.randn(size=X_0.shape)
-            Y = self.model.posterior(X).sample(torch.Size([num_X_samples])).squeeze(-1)
-            Y, i = torch.max(Y, dim=1)
-            X_all.extend(X[i].unbind())
-        X = torch.stack(X_all)
-        i = torch.randint(len(X), (num_X_samples,))
-        return X[i]
-
-    def _sample_maxes(self, sobol_engine, num_X_samples):
-        # X_obs = self.model.train_inputs[0]
-        # Y_obs = self.model.posterior(X_obs).mean.squeeze(-1)
-        # Y_max = Y_obs.max()
-        # X_max = X_obs[Y_obs == Y_max]
-
-        eps = 0.10
-        X_samples = sobol_engine.draw(3 * num_X_samples, dtype=self._dtype)
-        for _ in range(self.num_mcmc):
-            X = None
-            n_loop = 0
-            while X is None or len(X) < num_X_samples:
-                X_eps = X_samples + eps * torch.randn(size=X_samples.shape)
-                X_eps = X_eps[(X_eps.min(dim=1).values > 0.0) & (X_eps.max(dim=1).values < 1.0)]
-                if X is None:
-                    X = X_eps
-                else:
-                    X = torch.cat((X, X_eps), dim=0)
-                n_loop += 1
-                assert n_loop < 10
-
-            Y = self.model.posterior(X).sample(torch.Size([num_X_samples])).squeeze(-1)
-            Y, i = torch.max(Y, dim=1)
-            # doesn't help i = i[Y > Y_max]
-            X_samples = X[i]
-            eps /= 2
-        i = torch.randint(len(X_samples), (num_X_samples,))
-        return X_samples[i]
 
     @t_batch_mode_transform()
     def forward(self, X):

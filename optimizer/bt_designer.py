@@ -35,6 +35,22 @@ class BTDesigner:
     def init_center(self):
         return self._init_center
 
+    def _batch_initial_conditions(self, data, num_arms, acqf):
+        # half from X_samples, half random
+        num_dim = self._policy.num_params()
+        batch_limit = self._optimizer_options["batch_limit"]
+        X_0 = acqf.acq_function.X_samples
+        X_s = torch.stack([torch.tensor(x.get_params()) for x in self._sobol(data, len(X_0))])
+        X = torch.cat((X_0, X_s), dim=0)
+
+        i = np.random.choice(
+            np.arange(len(X)),
+            size=(num_arms * batch_limit,),
+            replace=True,
+        )
+        # batch_size x q x num_dim
+        return X[i, :].reshape(batch_limit, num_arms, num_dim)
+
     def __call__(self, data, num_arms):
         import warnings
 
@@ -53,14 +69,7 @@ class BTDesigner:
         else:
             warnings.simplefilter("ignore")
             if self._init_X_samples and hasattr(acqf.acq_function, "X_samples"):
-                # half from X_samples, half random
-                X = acqf.acq_function.X_samples
-                batch_limit = 10
-                i = np.random.choice(np.arange(len(X)), size=(num_arms * batch_limit,))
-                # batch_size x q x num_dim
-                batch_initial_conditions = X[i, :].reshape(batch_limit, num_arms, num_dim)
-                n = batch_initial_conditions.shape[0] // 2
-                batch_initial_conditions[n:, :, :] = torch.randn(size=batch_initial_conditions[n:, :, :].shape)
+                batch_initial_conditions = self._batch_initial_conditions(data, num_arms, acqf)
             else:
                 batch_initial_conditions = None
 
