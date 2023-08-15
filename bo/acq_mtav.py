@@ -150,17 +150,21 @@ class AcqMTAV(MCAcquisitionFunction):
             u = _scaled_improvement(mu_f, sd_f, y_0)
             af = sd_f * _ei_helper(u)
             if self.ttype.startswith("ms"):
-                return -af.max(dim=-1).values
-            else:
                 return -(af.mean(dim=-1) + af.std(dim=-1))
+            else:
+                return -af.mean(dim=-1)
+            # return -af.max(dim=-1).values
         elif self.ttype in ["ucb", "msucb"]:
             mu_f = mvn.mean.squeeze()
             sd_f = mvn.stddev.squeeze()
             af = mu_f + self.beta_ucb * sd_f
             if self.ttype == "ucb":
-                return -af.max(dim=-1).values
-            else:
+                # return -af.max(dim=-1).values
+                return -af.mean(dim=-1)
+            elif self.ttype == "msucb":
                 return -(af.mean(dim=-1) + af.std(dim=-1))
+            else:
+                assert False
         elif self.ttype == "sr":
             Y = self.get_posterior_samples(mvn).squeeze(-1)
             return -Y.squeeze(-1).max(dim=0).values.max(dim=-1).values
