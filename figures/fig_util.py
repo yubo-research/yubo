@@ -13,7 +13,7 @@ def expository_problem():
 
     env_conf = get_env_conf(env_tag, seed)
     policy = default_policy(env_conf)
-    return env_conf, policy, "mtav_msts"
+    return env_conf, policy, "mtav_ts"
 
 
 def show(x):
