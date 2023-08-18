@@ -38,6 +38,8 @@ def run(ddir, funcs, dims, opts, max_parallel):
                     run_batch(cmds)
                     cmds = []
 
+    if len(cmds) > 0:
+        run_batch(cmds)
 
 if __name__=="__main__":
     funcs = ['ackley', 'dixonprice', 'griewank', 'levy', 'michalewicz', 'rastrigin', 'rosenbrock', 'sphere', 'stybtang']
@@ -47,6 +49,6 @@ if __name__=="__main__":
         funcs=funcs,
         dims=[10],
         # opts=[f"mtav_msts_beta={beta}" for beta in [0, 1, 2, 3]],
-        opts=["mcmc_ts", "ei", "ucb"],
+        opts=["mtav_g", "ei", "ucb"],
         max_parallel=7,
     )
