@@ -67,6 +67,12 @@ class Optimizer:
             "mtav_ts": BTDesigner(
                 policy, AcqMTAV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "beta": 0}
             ),
+            "mtav_g": BTDesigner(
+                policy, AcqMTAV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "maxvar", "num_X_samples": default_num_X_samples}
+            ),
+            "mtav_beta=1": BTDesigner(
+                policy, AcqMTAV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "beta": 1}
+            ),
             "mtav_ei": BTDesigner(policy, AcqMTAV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "ei", "num_X_samples": default_num_X_samples}),
             "mtav_ucb": BTDesigner(
                 policy,
