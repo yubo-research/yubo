@@ -43,10 +43,10 @@ if __name__=="__main__":
     funcs = ['ackley', 'dixonprice', 'griewank', 'levy', 'michalewicz', 'rastrigin', 'rosenbrock', 'sphere', 'stybtang']
 
     run(
-        ddir="exp_2_sweep_beta",
+        ddir="exp_2_mtavs",
         funcs=funcs,
         dims=[10],
         # opts=[f"mtav_msts_beta={beta}" for beta in [0, 1, 2, 3]],
-        opts=["mtav_ts", "mtav_ei", "mtav_ucb"]
+        opts=["mcmc_ts", "ei", "ucb"],
         max_parallel=7,
     )
