@@ -48,7 +48,7 @@ if __name__=="__main__":
         ddir="exp_2_mtavs_1d",
         funcs=funcs,
         dims=[1],
-        num_arms=4
+        num_arms=4,
         opts=["sobol", "sobol_c", "ei", "ucb", "ei_c", "mcmc_ts", "mtav_ei", "mtav_ts", "mtav_ucb", "ucb_c"],
         max_parallel=10,
     )
