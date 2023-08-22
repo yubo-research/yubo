@@ -8,11 +8,7 @@ if __name__ == "__main__":
 
     env_tag = sys.argv[1]
     ttype = sys.argv[2]
-
-    if len(sys.argv) > 3:
-        num_arms = int(sys.argv[3])
-    else:
-        num_arms = 10
+    num_arms = int(sys.argv[3])
 
     seed_all(17)
     num_iterations = 3

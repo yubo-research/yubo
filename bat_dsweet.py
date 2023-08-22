@@ -18,7 +18,7 @@ def run_batch(cmds):
         process.join()    
     print ("DONE_BATCH")
 
-def run(ddir, funcs, dims, opts, max_parallel):
+def run(ddir, funcs, dims, num_arms, opts, max_parallel):
     import os
     
     for k in ['MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']:
@@ -31,7 +31,7 @@ def run(ddir, funcs, dims, opts, max_parallel):
                 problem = f"f:{func}-{dim}d"
                 out_dir = f"results/{ddir}/{problem}"
                 os.makedirs(out_dir, exist_ok=True)
-                cmd = f"python experiments/exp_2.py {problem} {opt} > {out_dir}/{opt} 2>&1"
+                cmd = f"python experiments/exp_2.py {problem} {opt} {num_arms} > {out_dir}/{opt} 2>&1"
                 cmds.append(cmd)
                 
                 if len(cmds) == max_parallel:
@@ -45,13 +45,10 @@ if __name__=="__main__":
     funcs = ['ackley', 'dixonprice', 'griewank', 'levy', 'michalewicz', 'rastrigin', 'rosenbrock', 'sphere', 'stybtang']
     
     run(
-        ddir="exp_2_mtavs",
+        ddir="exp_2_mtavs_1d",
         funcs=funcs,
-        dims=[10],
-        # opts=[f"mtav_msts_beta={beta}" for beta in [0, 1, 2, 3]],
-        # opts=["mtav_g", "ei", "ucb"],
-        # opts=["ei_c", "mcmc_ts", "mtav_ei", "mtav_ts", "mtav_ucb", "ucb_c"],
-        # opts=["mtav_beta=1"],
-        opts=["sobol", "sobol_center"],
-        max_parallel=7,
+        dims=[1],
+        num_arms=4
+        opts=["sobol", "sobol_c", "ei", "ucb", "ei_c", "mcmc_ts", "mtav_ei", "mtav_ts", "mtav_ucb", "ucb_c"],
+        max_parallel=10,
     )

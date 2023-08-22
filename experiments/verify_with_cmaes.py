@@ -1,5 +1,6 @@
 import cma
 import numpy as np
+
 from rl_gym.linear_policy import LinearPolicy
 from rl_gym.trajectories import collect_trajectory
 
