@@ -18,7 +18,7 @@ def run_batch(cmds):
         process.join()    
     print ("DONE_BATCH")
 
-def run(ddir, funcs, dims, num_arms, opts, max_parallel):
+def run(ddir, funcs, dims, num_arms, num_samples, opts, max_parallel):
     import os
     
     for k in ['MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']:
@@ -31,7 +31,7 @@ def run(ddir, funcs, dims, num_arms, opts, max_parallel):
                 problem = f"f:{func}-{dim}d"
                 out_dir = f"results/{ddir}/{problem}"
                 os.makedirs(out_dir, exist_ok=True)
-                cmd = f"python experiments/exp_2.py {problem} {opt} {num_arms} > {out_dir}/{opt} 2>&1"
+                cmd = f"python experiments/exp_2.py {problem} {opt} {num_arms} {num_samples} > {out_dir}/{opt} 2>&1"
                 cmds.append(cmd)
                 
                 if len(cmds) == max_parallel:
@@ -49,6 +49,7 @@ if __name__=="__main__":
         funcs=funcs,
         dims=[1],
         num_arms=4,
+        num_samples=100,
         opts=["sobol", "sobol_c", "ei", "ucb", "ei_c", "mcmc_ts", "mtav_ei", "mtav_ts", "mtav_ucb", "ucb_c"],
         max_parallel=10,
     )

@@ -9,10 +9,11 @@ if __name__ == "__main__":
     env_tag = sys.argv[1]
     ttype = sys.argv[2]
     num_arms = int(sys.argv[3])
+    num_samples = int(sys.argv[4])  # was 30
 
     seed_all(17)
     num_iterations = 3
-    for i_sample in range(30):
+    for i_sample in range():
         t0 = time.time()
         seed = 13547 + i_sample
         env_conf = get_env_conf(env_tag, seed)
