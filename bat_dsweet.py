@@ -43,12 +43,15 @@ def run(ddir, funcs, dims, opts, max_parallel):
 
 if __name__=="__main__":
     funcs = ['ackley', 'dixonprice', 'griewank', 'levy', 'michalewicz', 'rastrigin', 'rosenbrock', 'sphere', 'stybtang']
-
+    
     run(
         ddir="exp_2_mtavs",
         funcs=funcs,
         dims=[10],
         # opts=[f"mtav_msts_beta={beta}" for beta in [0, 1, 2, 3]],
-        opts=["mtav_g", "ei", "ucb"],
+        # opts=["mtav_g", "ei", "ucb"],
+        # opts=["ei_c", "mcmc_ts", "mtav_ei", "mtav_ts", "mtav_ucb", "ucb_c"],
+        # opts=["mtav_beta=1"],
+        opts=["sobol", "sobol_center"],
         max_parallel=7,
     )

@@ -50,7 +50,7 @@ class Optimizer:
             "random": RandomDesigner(policy, init_center=False),
             "random_center": RandomDesigner(policy, init_center=True),
             "sobol": SobolDesigner(policy, init_center=False),
-            "sobol_center": SobolDesigner(policy, init_center=True),
+            "sobol_c": SobolDesigner(policy, init_center=True),
             "maximin": BTDesigner(policy, lambda m: AcqMinDist(m, toroidal=False)),
             "maximin-toroidal": BTDesigner(policy, lambda m: AcqMinDist(m, toroidal=True)),
             "variance": BTDesigner(policy, AcqVar),
