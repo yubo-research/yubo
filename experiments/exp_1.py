@@ -13,11 +13,13 @@ if __name__ == "__main__":
     import sys
     import time
 
+    from common.seed_all import seed_all
     from problems.env_conf import get_env_conf
 
     env_tag = sys.argv[1]
     ttype = sys.argv[2]
 
+    seed_all(17)
     num_iterations = 100
     for i_sample in range(30):
         t0 = time.time()

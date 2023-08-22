@@ -2,6 +2,7 @@ if __name__ == "__main__":
     import sys
     import time
 
+    from common.seed_all import seed_all
     from experiments.exp_1 import sample
     from problems.env_conf import get_env_conf
 
@@ -13,6 +14,7 @@ if __name__ == "__main__":
     else:
         num_arms = 10
 
+    seed_all(17)
     num_iterations = 3
     for i_sample in range(30):
         t0 = time.time()

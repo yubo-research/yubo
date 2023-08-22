@@ -2,7 +2,6 @@ import sys
 import time
 from dataclasses import dataclass
 
-import numpy as np
 from botorch.acquisition.max_value_entropy_search import (
     qLowerBoundMaxValueEntropy,
     qMaxValueEntropy,
@@ -67,9 +66,7 @@ class Optimizer:
             "mtav_ts": BTDesigner(
                 policy, AcqMTAV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "beta": 0}
             ),
-            "mtav_g": BTDesigner(
-                policy, AcqMTAV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "maxvar", "num_X_samples": default_num_X_samples}
-            ),
+            "mtav_g": BTDesigner(policy, AcqMTAV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "maxvar", "num_X_samples": default_num_X_samples}),
             "mtav_beta=1": BTDesigner(
                 policy, AcqMTAV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "beta": 1}
             ),
@@ -127,8 +124,9 @@ class Optimizer:
                     data, d_time = self._iterate(self._center_designer, self._num_arms)
                 else:
                     data_c, _ = self._iterate(self._center_designer, num_arms=1)
-                    data, d_time = self._iterate(designer, self._num_arms)
-                    data[np.random.choice(np.arange(self._num_arms))] = data_c[0]
+                    data, d_time = self._iterate(designer, self._num_arms - 1)
+                    data.insert(0, data_c[0])
+                    # data[np.random.choice(np.arange(self._num_arms))] = data_c[0]
             else:
                 data, d_time = self._iterate(designer, self._num_arms)
 
