@@ -66,6 +66,9 @@ class Optimizer:
             "mtv": BTDesigner(
                 policy, AcqMTV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "beta": 0}
             ),
+            "mtv2": BTDesigner(
+                policy, AcqMTV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "beta": 0}
+            ),
             "mtv_no-ic": BTDesigner(
                 policy,
                 AcqMTV,
