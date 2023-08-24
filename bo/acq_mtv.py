@@ -3,8 +3,6 @@ from botorch.acquisition import PosteriorMean
 from botorch.acquisition.monte_carlo import (
     MCAcquisitionFunction,
 )
-
-# qNoisyExpectedImprovement,
 from botorch.optim import optimize_acqf
 from botorch.sampling.normal import SobolQMCNormalSampler
 from botorch.utils import t_batch_mode_transform
@@ -17,7 +15,7 @@ from botorch.utils.probability.utils import (
 from torch.quasirandom import SobolEngine
 
 
-class AcqMTAV(MCAcquisitionFunction):
+class AcqMTV(MCAcquisitionFunction):
     def __init__(self, model, num_X_samples, ttype, beta=1.96, num_mcmc=5, num_Y_samples=1, beta_ucb=2, sample_type="mh", **kwargs) -> None:
         super().__init__(model=model, **kwargs)
         self.num_mcmc = num_mcmc
@@ -138,6 +136,12 @@ class AcqMTAV(MCAcquisitionFunction):
             # G-Optimality
             var_f = mvn.variance.squeeze()
             return -var_f.max(dim=-1).values
+        elif self.ttype == "varvar":
+            var_f = mvn.variance.squeeze()
+            if self._num_obs == 0:
+                return -var_f.max(dim=-1).values
+            m = var_f.mean(dim=-1)
+            return -m
         elif self.ttype in ["ei", "ei2", "msei"]:
             mu_f = mvn.mean.squeeze()
             sd_f = mvn.stddev.squeeze()

@@ -14,7 +14,7 @@ from botorch.acquisition.monte_carlo import (
 
 from bo.acq_iopt import AcqIOpt
 from bo.acq_min_dist import AcqMinDist
-from bo.acq_mtav import AcqMTAV
+from bo.acq_mtv import AcqMTV
 from bo.acq_var import AcqVar
 
 from .ax_designer import AxDesigner
@@ -57,23 +57,37 @@ class Optimizer:
             "iopt": BTDesigner(policy, AcqIOpt, init_sobol=0, init_center=False),
             "mcmc_ts": BTDesigner(
                 policy,
-                AcqMTAV,
+                AcqMTV,
                 init_sobol=0,
                 init_center=False,
                 sample_X_samples=True,
                 acq_kwargs={"ttype": None, "num_X_samples": default_num_X_samples},
             ),
-            "mtav_ts": BTDesigner(
-                policy, AcqMTAV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "beta": 0}
+            "mtv": BTDesigner(
+                policy, AcqMTV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "beta": 0}
             ),
-            "mtav_g": BTDesigner(policy, AcqMTAV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "maxvar", "num_X_samples": default_num_X_samples}),
-            "mtav_beta=1": BTDesigner(
-                policy, AcqMTAV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "beta": 1}
-            ),
-            "mtav_ei": BTDesigner(policy, AcqMTAV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "ei", "num_X_samples": default_num_X_samples}),
-            "mtav_ucb": BTDesigner(
+            "mtv_no-ic": BTDesigner(
                 policy,
-                AcqMTAV,
+                AcqMTV,
+                init_sobol=0,
+                init_center=False,
+                init_X_samples=False,
+                acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "beta": 0},
+            ),
+            "mtv_no-pmax": BTDesigner(
+                policy,
+                AcqMTV,
+                init_sobol=0,
+                init_center=False,
+                acq_kwargs={"ttype": "msvar", "sample_type": "sobol", "num_X_samples": default_num_X_samples, "beta": 0},
+            ),
+            "mtv_beta=1": BTDesigner(
+                policy, AcqMTV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "beta": 1}
+            ),
+            "mtv_ei": BTDesigner(policy, AcqMTV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "ei", "num_X_samples": default_num_X_samples}),
+            "mtv_ucb": BTDesigner(
+                policy,
+                AcqMTV,
                 init_X_samples=True,
                 init_sobol=0,
                 init_center=False,

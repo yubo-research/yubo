@@ -1,4 +1,23 @@
+import os
+
 import numpy as np
+
+
+def problems_in(exp_tag):
+    return sorted(os.listdir(f"/Users/dsweet2/Projects/bbo/results/{exp_tag}"))
+
+
+def optimizers_in(exp_tag, problem):
+    return sorted(os.listdir(f"/Users/dsweet2/Projects/bbo/results/{exp_tag}/{problem}"))
+
+
+def all_in(exp_tag):
+    optimizers = set()
+    problems = problems_in(exp_tag)
+    for problem in problems:
+        for optimizer in optimizers_in(exp_tag, problem):
+            optimizers.update(optimizers_in(exp_tag, problem))
+    return problems, sorted(optimizers)
 
 
 def _extractKV(line):

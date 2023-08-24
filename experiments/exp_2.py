@@ -12,7 +12,7 @@ if __name__ == "__main__":
     num_samples = int(sys.argv[4])  # was 30
 
     seed_all(17)
-    num_iterations = 3
+    num_iterations = 1  # TEST 3
     for i_sample in range(num_samples):
         t0 = time.time()
         seed = 13547 + i_sample
