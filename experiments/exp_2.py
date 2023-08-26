@@ -6,6 +6,7 @@ if __name__ == "__main__":
     from experiments.exp_1 import sample
     from problems.env_conf import get_env_conf
 
+    assert len(sys.argv) == 6, f"{sys.argv[0]} env_tag ttype num_arms num_replications num_rounds"
     env_tag = sys.argv[1]
     ttype = sys.argv[2]
     num_arms = int(sys.argv[3])
@@ -18,4 +19,4 @@ if __name__ == "__main__":
         seed = 13547 + i_sample
         env_conf = get_env_conf(env_tag, seed)
         sample(env_conf, ttype, tag=f"i_sample = {i_sample}", num_iterations=num_rounds, num_arms=num_arms)
-        print(f"TIME_SAMPLE: {time.time() - t0:.2f}")
+        print(f"TIME_REPLICATE: {time.time() - t0:.2f}")

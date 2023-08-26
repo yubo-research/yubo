@@ -15,8 +15,9 @@ from botorch.acquisition.monte_carlo import (
 from bo.acq_iopt import AcqIOpt
 from bo.acq_min_dist import AcqMinDist
 from bo.acq_mtv import AcqMTV
-from bo.acq_var import AcqVar
+from bo.acq_ts import AcqTS
 
+# from bo.acq_var import AcqVar
 from .ax_designer import AxDesigner
 from .bt_designer import BTDesigner
 from .center_designer import CenterDesigner
@@ -53,15 +54,14 @@ class Optimizer:
             "sobol_c": SobolDesigner(policy, init_center=True),
             "maximin": BTDesigner(policy, lambda m: AcqMinDist(m, toroidal=False)),
             "maximin-toroidal": BTDesigner(policy, lambda m: AcqMinDist(m, toroidal=True)),
-            "variance": BTDesigner(policy, AcqVar),
+            # FIXME: "variance": BTDesigner(policy, AcqVar),
             "iopt": BTDesigner(policy, AcqIOpt, init_sobol=0, init_center=False),
             "mcmc_ts": BTDesigner(
                 policy,
                 AcqMTV,
                 init_sobol=0,
                 init_center=False,
-                sample_X_samples=True,
-                acq_kwargs={"ttype": None, "num_X_samples": default_num_X_samples},
+                acq_kwargs={"ttype": "ts", "num_X_samples": default_num_X_samples},
             ),
             "mtv": BTDesigner(
                 policy, AcqMTV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "beta": 0}
@@ -94,6 +94,8 @@ class Optimizer:
                 acq_kwargs={"ttype": "ucb", "beta_ucb": 1.0, "num_X_samples": default_num_X_samples},
             ),
             "sr": BTDesigner(policy, qSimpleRegret),
+            "ts": BTDesigner(policy, AcqTS, init_center=False),
+            "ts_c": BTDesigner(policy, AcqTS, init_center=True),
             "ucb_c": BTDesigner(policy, qUpperConfidenceBound, acq_kwargs={"beta": 1}),
             "ucb": BTDesigner(policy, qUpperConfidenceBound, init_center=False, acq_kwargs={"beta": 1}),
             "ei_c": BTDesigner(policy, qNoisyExpectedImprovement, acq_kwargs={"X_baseline": None}),
