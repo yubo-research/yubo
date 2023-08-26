@@ -19,7 +19,7 @@ class BTDesigner:
         init_X_samples=True,
         sample_X_samples=False,
         opt_sequential=False,
-        optimizer_options={"batch_limit": 10, "maxiter": 1000}
+        optimizer_options={"batch_limit": 10, "maxiter": 1000},
     ):
         assert not sample_X_samples, "Add a draw() method to your acqf"
         self._policy = policy
@@ -31,6 +31,9 @@ class BTDesigner:
         self._optimizer_options = optimizer_options
         self._acq_kwargs = acq_kwargs
         self._sobol = SobolDesigner(policy.clone(), self._init_center)
+
+    def __repr__(self):
+        return f"{self.__class__.__name__} {self._acq_fn}"
 
     def init_center(self):
         return self._init_center

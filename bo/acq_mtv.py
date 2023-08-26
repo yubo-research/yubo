@@ -17,14 +17,14 @@ from torch.quasirandom import SobolEngine
 
 
 class AcqMTV(MCAcquisitionFunction):
-    def __init__(self, model, num_X_samples, ttype, beta=1.96, num_mcmc=5, num_Y_samples=1, beta_ucb=2, sample_type="mh", **kwargs) -> None:
+    def __init__(self, model, num_X_samples, ttype, beta=1.96, num_mcmc=5, num_Y_samples=1, beta_ucb=2, sample_type="mh", alt_acqf=None, **kwargs) -> None:
         super().__init__(model=model, **kwargs)
         self.num_mcmc = num_mcmc
         self.num_X_samples = num_X_samples
         self.ttype = ttype
         self.beta = beta
         self.beta_ucb = beta_ucb
-        self._alt_acqf = None
+        self._alt_acqf = alt_acqf
         self._k_eps = 0.5
         self.sampler = SobolQMCNormalSampler(sample_shape=torch.Size([num_Y_samples]))
 
@@ -116,7 +116,7 @@ class AcqMTV(MCAcquisitionFunction):
         """
         self.to(device=X.device)
 
-        if self._alt_acqf:
+        if self._num_obs > 0 and self._alt_acqf:
             # for testing / comparison
             return self._alt_acqf(X)
 

@@ -81,9 +81,6 @@ class Optimizer:
                 init_center=False,
                 acq_kwargs={"ttype": "msvar", "sample_type": "sobol", "num_X_samples": default_num_X_samples, "beta": 0},
             ),
-            "mtv_beta=1": BTDesigner(
-                policy, AcqMTV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "beta": 1}
-            ),
             "mtv_ei": BTDesigner(policy, AcqMTV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "ei", "num_X_samples": default_num_X_samples}),
             "mtv_ucb": BTDesigner(
                 policy,
@@ -110,6 +107,9 @@ class Optimizer:
             "sobol_ucb": BTDesigner(policy, qUpperConfidenceBound, init_sobol=init_ax_default, acq_kwargs={"beta": 1}),
         }
 
+        self._designers["mtv_then_ei"] = [self._designers["mtv"], self._designers["ei"]]
+        self._designers["mtv_then_ucb"] = [self._designers["mtv"], self._designers["ucb"]]
+
     def collect_trajectory(self, policy):
         return collect_trajectory(self._env_conf, policy, seed=self._env_conf.seed)
 
@@ -126,14 +126,19 @@ class Optimizer:
     def collect_trace(self, ttype, num_iterations):
         assert ttype in self._designers, f"Unknown optimizer type {ttype}"
 
-        designer = self._designers[ttype]
-        if hasattr(designer, "init_center"):
-            init_center = designer.init_center()
+        designers = self._designers[ttype]
+        if not isinstance(designers, list):
+            designers = [designers]
+        if hasattr(designers[0], "init_center"):
+            init_center = designers[0].init_center()
         else:
             init_center = True
 
         trace = []
         for _ in range(num_iterations):
+            designer = designers[min(len(designers) - 1, self._i_iter)]
+            print("D:", self._i_iter, designer)
+
             best_in_batch = -1e99
             if init_center and self._i_iter == 0:
                 if self._num_arms == 1:
