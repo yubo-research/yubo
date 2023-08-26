@@ -21,7 +21,7 @@ if __name__ == "__main__":
 
     seed_all(17)
     num_iterations = 100
-    for i_sample in range(1):  # TEST 30):
+    for i_sample in range(30):
         t0 = time.time()
         seed = 17 + i_sample
         env_conf = get_env_conf(env_tag, seed)

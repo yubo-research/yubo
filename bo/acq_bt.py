@@ -1,5 +1,6 @@
 import torch
 from botorch.acquisition import PosteriorMean
+from botorch.exceptions.errors import ModelFittingError
 from botorch.fit import fit_gpytorch_mll
 from botorch.models import SingleTaskGP
 from botorch.optim import optimize_acqf
@@ -24,7 +25,18 @@ class AcqBT:
             Y = standardize(Y).type(dtype)
             gp = SingleTaskGP(X, Y)
             mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
-            fit_gpytorch_mll(mll)
+            m = None
+            for i_try in range(3):
+                try:
+                    fit_gpytorch_mll(mll)
+                except ModelFittingError as e:
+                    m = e
+                    print(f"Retrying fit i_try = {i_try}")
+                    pass
+                else:
+                    break
+            else:
+                raise m
 
         # All BoTorch stuff is coded to bounds of [0,1]!
         self.bounds = torch.tensor([[0.0] * num_dim, [1.0] * num_dim], device=X.device, dtype=X.dtype)

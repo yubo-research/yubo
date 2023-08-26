@@ -150,7 +150,7 @@ class Optimizer:
                 if self._datum_best is None or datum.trajectory.rreturn > self._datum_best.trajectory.rreturn:
                     self._datum_best = datum
 
-            print(f"ITER: self._i_iter = {self._i_iter} d_time = {d_time:.2f} ret = {best_in_batch:.2f} ret_best = {self._datum_best.trajectory.rreturn:.2f}")
+            print(f"ITER: i_iter = {self._i_iter} d_time = {d_time:.2f} ret = {best_in_batch:.2f} ret_best = {self._datum_best.trajectory.rreturn:.2f}")
             sys.stdout.flush()
             trace.append(_TraceEntry(self._datum_best.trajectory.rreturn, d_time))
             self._i_iter += 1
