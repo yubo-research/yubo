@@ -1,29 +1,28 @@
 #!/usr/bin/env python
 
+import os
 import multiprocessing
 
 def worker(cmd):
     import os
     return os.system(cmd)
     
-def run_batch(cmds):
+def run_batch(cmds, b_dry_run):
     processes = []
 
     for cmd in cmds:
-        process = multiprocessing.Process(target=worker, args=(cmd,))
-        processes.append(process)
-        process.start()
+        print ("RUN:", cmd)
+        if not b_dry_run:
+            process = multiprocessing.Process(target=worker, args=(cmd,))
+            processes.append(process)
+            process.start()
 
-    for process in processes:
-        process.join()    
+    if not b_dry_run:
+        for process in processes:
+            process.join()    
     print ("DONE_BATCH")
 
-def run(ddir, funcs, dims, num_arms, num_samples, opts, max_parallel):
-    import os
-    
-    for k in ['MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']:
-        os.environ[k] = "32"
-
+def prep_cmds(ddir, funcs, dims, num_arms, num_samples, opts):
     cmds = []
     for dim in dims:
         for func in funcs:
@@ -33,23 +32,41 @@ def run(ddir, funcs, dims, num_arms, num_samples, opts, max_parallel):
                 os.makedirs(out_dir, exist_ok=True)
                 cmd = f"python experiments/exp_2.py {problem} {opt} {num_arms} {num_samples} > {out_dir}/{opt} 2>&1"
                 cmds.append(cmd)
-                
-                if len(cmds) == max_parallel:
-                    run_batch(cmds)
-                    cmds = []
+    return cmds
 
-    if len(cmds) > 0:
-        run_batch(cmds)
-
-if __name__=="__main__":
-    funcs = ['ackley', 'dixonprice', 'griewank', 'levy', 'michalewicz', 'rastrigin', 'rosenbrock', 'sphere', 'stybtang']
+def run(cmds, max_parallel, b_dry_run=False):
+    import os
     
-    run(
-        ddir="exp_2_mtavs_1d",
-        funcs=funcs,
+    for k in ['MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']:
+        os.environ[k] = "32"
+
+    while len(cmds) > 0:
+        todo = cmds[:max_parallel]
+        cmds = cmds[max_parallel:]
+        run_batch(todo, b_dry_run)
+        
+if __name__=="__main__":
+    funcs_10d = ['ackley', 'dixonprice', 'griewank', 'levy', 'michalewicz', 'rastrigin', 'rosenbrock', 'sphere', 'stybtang']
+    funcs_1d = ['ackley', 'dixonprice', 'griewank', 'levy', 'rastrigin', 'sphere', 'stybtang']
+
+    # opts=["sobol", "sobol_c", "ei", "ucb", "ei_c", "mcmc_ts", "mtav_ei", "mtav_ts", "mtav_ucb", "ucb_c"],
+
+    opts = ["mtv_then_ei", "mtv_then_ucb"]
+    
+    cmds = prep_cmds(
+        ddir="exp_2_mtv_1d",
+        funcs=funcs_1d,
         dims=[1],
         num_arms=4,
         num_samples=100,
-        opts=["sobol", "sobol_c", "ei", "ucb", "ei_c", "mcmc_ts", "mtav_ei", "mtav_ts", "mtav_ucb", "ucb_c"],
-        max_parallel=10,
+        opts=opts,
+    ) + prep_cmds(
+        ddir="exp_2_mtv_10d",
+        funcs=funcs_10d,
+        dims=[10],
+        num_arms=10,
+        num_samples=100,
+        opts=opts,
     )
+
+    run(cmds, max_parallel=10, b_dry_run=False)
