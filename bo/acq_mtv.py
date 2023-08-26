@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 from botorch.acquisition import PosteriorMean
 from botorch.acquisition.monte_carlo import (
@@ -57,6 +58,16 @@ class AcqMTV(MCAcquisitionFunction):
 
         assert self.X_samples.min() >= 0, self.X_samples
         assert self.X_samples.max() <= 1, self.X_samples
+
+        if ttype == "ts":
+            print("Using draw()")
+            self.draw = self._draw
+
+    def _draw(self, num_arms):
+        assert len(self.X_samples) >= num_arms, (len(self.X_samples), num_arms)
+        i = np.arange(len(self.X_samples))
+        i = np.random.choice(i, size=(int(num_arms)), replace=False)
+        return self.X_samples[i]
 
     def _find_max(self):
         X = self.model.train_inputs[0]

@@ -60,8 +60,7 @@ class Optimizer:
                 AcqMTV,
                 init_sobol=0,
                 init_center=False,
-                sample_X_samples=True,
-                acq_kwargs={"ttype": None, "num_X_samples": default_num_X_samples},
+                acq_kwargs={"ttype": "ts", "num_X_samples": default_num_X_samples},
             ),
             "mtv": BTDesigner(
                 policy, AcqMTV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "beta": 0}
