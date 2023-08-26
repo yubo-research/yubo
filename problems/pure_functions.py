@@ -28,7 +28,7 @@ class PureFunctionEnv:
         # state==1 means that it has.
         self.observation_space = Box(low=0.0, high=1.0, dtype=np.float32)
         # action is the input to the function (before some transformations)
-        self.action_space = Box(low=-np.ones(num_dim), high=np.ones(num_dim), dtype=np.float32)
+        self.action_space = Box(low=-np.ones(num_dim, dtype=np.float32), high=np.ones(num_dim, dtype=np.float32))
 
         rng = np.random.default_rng(seed)
 
