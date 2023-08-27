@@ -81,32 +81,41 @@ def plot_agg(data_locator, exp_tag, problem_names, optimizer_names):
         i_marker = (i_marker + 1) % len(markers)
 
 
-def plot_agg_final(ax, data_locator, exp_tag, problem_names, optimizer_names, sort=False):
-    normalized_summaries = ads.load_as_normalized_summaries(exp_tag, problem_names, optimizer_names, data_locator)
-    agg = ads.aggregate_normalized_summaries(normalized_summaries)
+def plot_agg_final(ax, data_locator, exp_tag, problems, optimizers, sort=False, ranks=False):
+
+    if ranks:
+        agg = ads.agg_rank_summaries(exp_tag, problems, optimizers, data_locator)
+    else:
+        normalized_summaries = ads.load_as_normalized_summaries(exp_tag, problems, optimizers, data_locator)
+        agg = ads.aggregate_normalized_summaries(normalized_summaries)
 
     if sort:
         data = []
-        for optimizer_name in optimizer_names:
+        for optimizer_name in optimizers:
             if optimizer_name not in agg:
                 continue
             mu, sg = agg[optimizer_name]
-            data.append((-mu[-1], optimizer_name))
-        optimizer_names = [d[1] for d in sorted(data)]
+            if not ranks:
+                mu = mu[-1]
+            data.append((-mu, optimizer_name))
+        optimizers = [d[1] for d in sorted(data)]
 
     # colors = ["blue", "green", "red", "black", "cyan", "magenta"]
     # markers = [".", "o", "v", "^", "s"]
     # i_color = 0
     # i_marker = 0
     agg_final = {}
-    for optimizer_name in optimizer_names:
+    for optimizer_name in optimizers:
         if optimizer_name not in agg:
             continue
         mu, sg = agg[optimizer_name]
-        agg_final[optimizer_name] = (mu[-1], sg[-1])
+        if not ranks:
+            mu = mu[-1]
+            sg = sg[-1]
+        agg_final[optimizer_name] = (mu, sg)
 
-    n = np.arange(len(optimizer_names))
-    o = np.array([agg_final[n] for n in optimizer_names])
+    n = np.arange(len(optimizers))
+    o = np.array([agg_final[n] for n in optimizers])
     ax.errorbar(n, o[:, 0], o[:, 1], fmt="ko", capsize=10)
     # ap.error_area(n, o[:,0], o[:,1])
     # plt.plot(n, o[:,0], 'ko--');
@@ -114,7 +123,7 @@ def plot_agg_final(ax, data_locator, exp_tag, problem_names, optimizer_names, so
         xticks = plt.xticks
     else:
         xticks = ax.set_xticks
-    xticks(n, optimizer_names, rotation=90)
+    xticks(n, optimizers, rotation=90)
 
 
 def plot_agg_all(ax, data_locator, exp_tag, optimizers=None, sort=False):
