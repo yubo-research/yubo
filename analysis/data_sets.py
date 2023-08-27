@@ -1,6 +1,7 @@
 import os
 
 import numpy as np
+from scipy.stats import rankdata
 
 
 def problems_in(exp_tag):
@@ -81,6 +82,7 @@ def load_traces(fn, key="return"):
         n_x = len(x)
         traces.append(x)
     traces = np.array(traces)
+    # print (f"Loaded {len(traces)} traces from {fn}")
     return traces
 
 
@@ -102,6 +104,7 @@ def normalize_summaries(summaries: dict):
 
     """
     all_mu = np.array([s[0] for s in summaries.values()])
+
     mean = all_mu.mean()
     std = all_mu.std()
     return {optimizer_name: ((mu - mean) / std, se / std) for optimizer_name, (mu, se) in summaries.items()}
@@ -130,13 +133,78 @@ def aggregate_normalized_summaries(normalized_summaries: dict):
 
 def load_as_normalized_summaries(exp_tag, problem_names, optimizer_names, data_locator):
     normalized_summaries = {}
+    count = {}
     for problem_name in problem_names:
         summaries = {}
         for optimizer_name in optimizer_names:
             fn = data_locator(exp_tag, problem_name, optimizer_name)
             try:
-                summaries[optimizer_name] = summarize_traces(load_traces(fn))
+                traces = load_traces(fn)
             except Exception as e:
                 print(f"Could not load {fn}", e)
+                continue
+            count[f"{problem_name}-{optimizer_name}"] = len(traces)
+            summaries[optimizer_name] = summarize_traces(traces)
         normalized_summaries[problem_name] = normalize_summaries(summaries)
+
+    med_count = np.median(list(count.values()))
+    for k, c in count.items():
+        if c != med_count:
+            print(f"Odd count {c} != {med_count} for {k}")
+
     return normalized_summaries
+
+
+def agg_rank_summaries(exp_tag, problems, optimizers, data_locator, num_boot=100):
+    summaries_by_opt = {}
+    for problem in problems:
+        summary = load_rank_summary(exp_tag, problem, optimizers, data_locator, num_boot)
+        for optimizer in summary:
+            if optimizer not in summaries_by_opt:
+                summaries_by_opt[optimizer] = []
+            summaries_by_opt[optimizer].append(summary[optimizer])
+
+    summary = {}
+    for optimizer, mus_ses in summaries_by_opt.items():
+        mus_ses = np.array(mus_ses)
+        mus = mus_ses[:, 0]
+        ses = mus_ses[:, 0]
+        se = 1 / (1 / ses**2).sum()
+        mu = se * ((1 / ses**2) * mus).sum()
+        summary[optimizer] = (mu, se)
+
+    return summary
+
+
+def load_rank_summary(exp_tag, problem, optimizers, data_locator, num_boot=100):
+    finals = []
+    for optimizer in optimizers:
+        # traces ~ num_replicates X num_rounds
+        try:
+            traces = load_traces(data_locator(exp_tag, problem, optimizer))
+        except Exception as e:
+            print(f"Could not load {exp_tag} {problem} {optimizer}", e)
+            continue
+        finals.append(traces[:, -1])
+    mus_ses = boot_ranks(finals, num_boot)
+    return dict(zip(optimizers, mus_ses))
+
+
+def _boot_sample(finals):
+    bs = []
+    for j in range(len(finals)):
+        bs.append(np.random.choice(finals[j]))
+    return bs
+
+
+def boot_ranks(finals, num_boot):
+    # finals ~ [np.array([final_values])]
+    boot_samples = []
+    for _ in range(num_boot):
+        # draw a final value for each optimizer
+        ranks = rankdata(_boot_sample(finals))
+        boot_samples.append(ranks)
+    boot_samples = np.array(boot_samples)
+    mus = boot_samples.mean(axis=0)
+    ses = boot_samples.std(axis=0)
+    return list(zip(mus, ses))

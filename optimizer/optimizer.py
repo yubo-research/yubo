@@ -74,6 +74,13 @@ class Optimizer:
                 init_X_samples=False,
                 acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "beta": 0},
             ),
+            "mtv_no-len-corr": BTDesigner(
+                policy,
+                AcqMTV,
+                init_sobol=0,
+                init_center=False,
+                acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "beta": 0, "lengthscale_correction": False},
+            ),
             "mtv_no-pmax": BTDesigner(
                 policy,
                 AcqMTV,
@@ -137,7 +144,6 @@ class Optimizer:
         trace = []
         for _ in range(num_iterations):
             designer = designers[min(len(designers) - 1, self._i_iter)]
-            print("D:", self._i_iter, designer)
 
             best_in_batch = -1e99
             if init_center and self._i_iter == 0:

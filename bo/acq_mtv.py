@@ -17,7 +17,20 @@ from torch.quasirandom import SobolEngine
 
 
 class AcqMTV(MCAcquisitionFunction):
-    def __init__(self, model, num_X_samples, ttype, beta=1.96, num_mcmc=5, num_Y_samples=1, beta_ucb=2, sample_type="mh", alt_acqf=None, **kwargs) -> None:
+    def __init__(
+        self,
+        model,
+        num_X_samples,
+        ttype,
+        beta=1.96,
+        num_mcmc=5,
+        num_Y_samples=1,
+        beta_ucb=2,
+        sample_type="mh",
+        alt_acqf=None,
+        lengthscale_correction=True,
+        **kwargs,
+    ) -> None:
         super().__init__(model=model, **kwargs)
         self.num_mcmc = num_mcmc
         self.num_X_samples = num_X_samples
@@ -26,6 +39,7 @@ class AcqMTV(MCAcquisitionFunction):
         self.beta_ucb = beta_ucb
         self._alt_acqf = alt_acqf
         self._k_eps = 0.5
+        self._lengthscale_correction = lengthscale_correction
         self.sampler = SobolQMCNormalSampler(sample_shape=torch.Size([num_Y_samples]))
 
         X_0 = self.model.train_inputs[0].detach()
@@ -127,7 +141,8 @@ class AcqMTV(MCAcquisitionFunction):
         num_obs = len(self.model.train_inputs[0])
 
         model_f = self.model.condition_on_observations(X=X, Y=self.model.posterior(X).mean)
-        model_f.covar_module.base_kernel.lengthscale *= ((1 + num_obs) / (1 + max(num_obs, q))) ** (1.0 / num_dim)
+        if self._lengthscale_correction:
+            model_f.covar_module.base_kernel.lengthscale *= ((1 + num_obs) / (1 + max(num_obs, q))) ** (1.0 / num_dim)
 
         mvn = model_f.posterior(self.X_samples, observation_noise=True)
         self.mvn = mvn
