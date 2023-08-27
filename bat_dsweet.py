@@ -22,7 +22,8 @@ def run_batch(cmds, b_dry_run):
             process.join()    
     print ("DONE_BATCH")
 
-def prep_cmds(ddir, funcs, dims, num_arms, num_samples, opts):
+def prep_cmds(ddir, funcs, dims, num_arms, num_replications, opts):
+    num_rounds = 3
     cmds = []
     for dim in dims:
         for func in funcs:
@@ -30,7 +31,8 @@ def prep_cmds(ddir, funcs, dims, num_arms, num_samples, opts):
                 problem = f"f:{func}-{dim}d"
                 out_dir = f"results/{ddir}/{problem}"
                 os.makedirs(out_dir, exist_ok=True)
-                cmd = f"python experiments/exp_2.py {problem} {opt} {num_arms} {num_samples} > {out_dir}/{opt} 2>&1"
+                #  experiments/exp_2.py env_tag ttype num_arms num_replications num_rounds
+                cmd = f"python experiments/exp_2.py {problem} {opt} {num_arms} {num_replications} {num_rounds} > {out_dir}/{opt} 2>&1"
                 cmds.append(cmd)
     return cmds
 
@@ -53,19 +55,21 @@ if __name__=="__main__":
 
     opts = ["mtv_then_ei", "mtv_then_ucb"]
     
-    cmds = prep_cmds(
+    _cmds = prep_cmds(
         ddir="exp_2_mtv_1d",
         funcs=funcs_1d,
         dims=[1],
         num_arms=4,
-        num_samples=100,
+        num_replications=100,
         opts=opts,
-    ) + prep_cmds(
+    )
+
+    cmds = prep_cmds(
         ddir="exp_2_mtv_10d",
         funcs=funcs_10d,
         dims=[10],
         num_arms=10,
-        num_samples=100,
+        num_replications=30,
         opts=opts,
     )
 
