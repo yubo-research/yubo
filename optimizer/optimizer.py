@@ -56,37 +56,8 @@ class Optimizer:
             "maximin-toroidal": BTDesigner(policy, lambda m: AcqMinDist(m, toroidal=True)),
             # FIXME: "variance": BTDesigner(policy, AcqVar),
             "iopt": BTDesigner(policy, AcqIOpt, init_sobol=0, init_center=False),
-            "mtv_no-opt": BTDesigner(
-                policy,
-                AcqMTV,
-                init_sobol=0,
-                init_center=False,
-                acq_kwargs={"ttype": "ts", "num_X_samples": default_num_X_samples},
-            ),
             "mtv": BTDesigner(
                 policy, AcqMTV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "beta": 0}
-            ),
-            "mtv_no-ic": BTDesigner(
-                policy,
-                AcqMTV,
-                init_sobol=0,
-                init_center=False,
-                init_X_samples=False,
-                acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "beta": 0},
-            ),
-            "mtv_no-len-corr": BTDesigner(
-                policy,
-                AcqMTV,
-                init_sobol=0,
-                init_center=False,
-                acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "beta": 0, "lengthscale_correction": False},
-            ),
-            "mtv_no-pmax": BTDesigner(
-                policy,
-                AcqMTV,
-                init_sobol=0,
-                init_center=False,
-                acq_kwargs={"ttype": "msvar", "sample_type": "sobol", "num_X_samples": default_num_X_samples, "beta": 0},
             ),
             "mtv_ei": BTDesigner(policy, AcqMTV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "ei", "num_X_samples": default_num_X_samples}),
             "mtv_ucb": BTDesigner(
@@ -114,8 +85,57 @@ class Optimizer:
             "sobol_ucb": BTDesigner(policy, qUpperConfidenceBound, init_sobol=init_ax_default, acq_kwargs={"beta": 1}),
         }
 
-        self._designers["mtv_then_ei"] = [self._designers["mtv"], self._designers["ei"]]
-        self._designers["mtv_then_ucb"] = [self._designers["mtv"], self._designers["ucb"]]
+        self._add_ablations(policy, default_num_X_samples)
+
+    def _add_ablations(self, policy, default_num_X_samples):
+        self._designers = self._designers | {
+            "mtv_eps=3.0": BTDesigner(
+                policy, AcqMTV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "beta": 0, "eps_0": 3.0}
+            ),
+            "mtv_eps=1.0": BTDesigner(
+                policy, AcqMTV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "beta": 0, "eps_0": 1.0}
+            ),
+            "mtv_eps=0.3": BTDesigner(
+                policy, AcqMTV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "beta": 0, "eps_0": 0.3}
+            ),
+            "mtv_no-opt": BTDesigner(
+                policy,
+                AcqMTV,
+                init_sobol=0,
+                init_center=False,
+                acq_kwargs={"ttype": "ts", "num_X_samples": default_num_X_samples},
+            ),
+            "mtv_no-ic": BTDesigner(
+                policy,
+                AcqMTV,
+                init_sobol=0,
+                init_center=False,
+                init_X_samples=False,
+                acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "beta": 0},
+            ),
+            "mtv_no-len-corr": BTDesigner(
+                policy,
+                AcqMTV,
+                init_sobol=0,
+                init_center=False,
+                acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "beta": 0, "lengthscale_correction": False},
+            ),
+            "mtv_no-pmax": BTDesigner(
+                policy,
+                AcqMTV,
+                init_sobol=0,
+                init_center=False,
+                acq_kwargs={"ttype": "msvar", "sample_type": "sobol", "num_X_samples": default_num_X_samples, "beta": 0},
+            ),
+            "mtv_then_ei": [
+                self._designers["mtv"],
+                self._designers["ei"],
+            ],
+            "mtv_then_ucb": [
+                self._designers["mtv"],
+                self._designers["ucb"],
+            ],
+        }
 
     def collect_trajectory(self, policy):
         return collect_trajectory(self._env_conf, policy, seed=self._env_conf.seed)

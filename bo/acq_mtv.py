@@ -22,13 +22,14 @@ class AcqMTV(MCAcquisitionFunction):
         model,
         num_X_samples,
         ttype,
-        beta=1.96,
+        beta=0,
         num_mcmc=5,
         num_Y_samples=1,
         beta_ucb=2,
         sample_type="mh",
         alt_acqf=None,
         lengthscale_correction=True,
+        eps_0=0.1,
         **kwargs,
     ) -> None:
         super().__init__(model=model, **kwargs)
@@ -40,6 +41,7 @@ class AcqMTV(MCAcquisitionFunction):
         self._alt_acqf = alt_acqf
         self._k_eps = 0.5
         self._lengthscale_correction = lengthscale_correction
+        self._eps_0 = eps_0
         self.sampler = SobolQMCNormalSampler(sample_shape=torch.Size([num_Y_samples]))
 
         X_0 = self.model.train_inputs[0].detach()
@@ -98,7 +100,7 @@ class AcqMTV(MCAcquisitionFunction):
         return x_cand
 
     def _sample_maxes_mh(self, sobol_engine, num_X_samples, num_mcmc):
-        eps = 0.1
+        eps = self._eps_0  # 0.1
         # k_eps = -np.log(0.1) / num_mcmc
         X = torch.tile(self.X_max, (num_X_samples, 1))
         if False:
