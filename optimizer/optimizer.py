@@ -98,6 +98,12 @@ class Optimizer:
             "mtv_eps=0.3": BTDesigner(
                 policy, AcqMTV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "beta": 0, "eps_0": 0.3}
             ),
+            "mtv_eps=0.1": BTDesigner(
+                policy, AcqMTV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "beta": 0, "eps_0": 0.1}
+            ),
+            "mtv_eps=0.01": BTDesigner(
+                policy, AcqMTV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "beta": 0, "eps_0": 0.01}
+            ),
             "mtv_no-opt": BTDesigner(
                 policy,
                 AcqMTV,
