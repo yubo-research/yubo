@@ -164,6 +164,9 @@ class AcqMTV(MCAcquisitionFunction):
             # G-Optimality
             var_f = mvn.variance.squeeze()
             return -var_f.max(dim=-1).values
+        elif self.ttype == "mcmax":
+            Y = self.get_posterior_samples(mvn).squeeze(-1)
+            return -Y.amax(dim=-1).mean(dim=0)
         elif self.ttype == "varvar":
             var_f = mvn.variance.squeeze()
             if self._num_obs == 0:
