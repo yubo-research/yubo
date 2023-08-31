@@ -46,6 +46,7 @@ class Optimizer:
 
         init_ax_default = max(5, 2 * policy.num_params())
         default_num_X_samples = max(64, 10 * self._num_arms)
+        default_num_Y_samples = 512
 
         self._designers = {
             "random": RandomDesigner(policy, init_center=False),
@@ -58,6 +59,27 @@ class Optimizer:
             "iopt": BTDesigner(policy, AcqIOpt, init_sobol=0, init_center=False),
             "mtv": BTDesigner(
                 policy, AcqMTV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "beta": 0}
+            ),
+            "mtv_sr": BTDesigner(
+                policy,
+                AcqMTV,
+                init_sobol=0,
+                init_center=False,
+                acq_kwargs={"ttype": "srsg", "num_Y_samples": default_num_Y_samples, "num_X_samples": default_num_X_samples},
+            ),
+            "mtv_mxi": BTDesigner(
+                policy,
+                AcqMTV,
+                init_sobol=0,
+                init_center=False,
+                acq_kwargs={"ttype": "mxi", "num_X_samples": default_num_X_samples},
+            ),
+            "mtv_mcmxi": BTDesigner(
+                policy,
+                AcqMTV,
+                init_sobol=0,
+                init_center=False,
+                acq_kwargs={"ttype": "mcmxi", "num_Y_samples": 64, "num_X_samples": default_num_X_samples},
             ),
             "mtv_ei": BTDesigner(policy, AcqMTV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "ei", "num_X_samples": default_num_X_samples}),
             "mtv_ucb": BTDesigner(

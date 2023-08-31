@@ -81,7 +81,7 @@ def plot_agg(data_locator, exp_tag, problem_names, optimizer_names):
         i_marker = (i_marker + 1) % len(markers)
 
 
-def plot_agg_final(ax, data_locator, exp_tag, problems, optimizers, sort=False, ranks=False):
+def plot_agg_final(ax, data_locator, exp_tag, problems, optimizers, sort=False, ranks=False, i_agg=-1):
 
     if ranks:
         agg = ads.agg_rank_summaries(exp_tag, problems, optimizers, data_locator)
@@ -96,7 +96,7 @@ def plot_agg_final(ax, data_locator, exp_tag, problems, optimizers, sort=False, 
                 continue
             mu, sg = agg[optimizer_name]
             if not ranks:
-                mu = mu[-1]
+                mu = mu[i_agg]
             data.append((-mu, optimizer_name))
         optimizers = [d[1] for d in sorted(data)]
 
@@ -110,8 +110,8 @@ def plot_agg_final(ax, data_locator, exp_tag, problems, optimizers, sort=False, 
             continue
         mu, sg = agg[optimizer_name]
         if not ranks:
-            mu = mu[-1]
-            sg = sg[-1]
+            mu = mu[i_agg]
+            sg = sg[i_agg]
         agg_final[optimizer_name] = (mu, sg)
 
     n = np.arange(len(optimizers))
@@ -126,9 +126,9 @@ def plot_agg_final(ax, data_locator, exp_tag, problems, optimizers, sort=False, 
     xticks(n, optimizers, rotation=90)
 
 
-def plot_agg_all(ax, data_locator, exp_tag, optimizers=None, sort=False):
+def plot_agg_all(ax, data_locator, exp_tag, optimizers=None, sort=False, i_agg=-1):
     problems, optimizers_actual = ads.all_in(exp_tag)
     if optimizers is None:
         optimizers = optimizers_actual
-    plot_agg_final(ax, data_locator, exp_tag, problems, optimizers, sort=sort)
+    plot_agg_final(ax, data_locator, exp_tag, problems, optimizers, sort=sort, i_agg=i_agg)
     return optimizers
