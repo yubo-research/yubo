@@ -3,6 +3,7 @@ import torch
 from botorch.acquisition import PosteriorMean
 from botorch.acquisition.monte_carlo import (
     MCAcquisitionFunction,
+    qSimpleRegret,
 )
 from botorch.optim import optimize_acqf
 from botorch.sampling.normal import SobolQMCNormalSampler
@@ -67,6 +68,8 @@ class AcqMTV(MCAcquisitionFunction):
 
             if sample_type == "mh":
                 self.X_samples = self._sample_maxes_mh(sobol_engine, num_X_samples, num_mcmc)
+            elif sample_type == "sr":
+                self.X_samples = self._sample_qsr(num_X_samples)
             elif sample_type == "sobol":
                 self.X_samples = sobol_engine.draw(num_X_samples, dtype=self._dtype)
             else:
@@ -84,6 +87,20 @@ class AcqMTV(MCAcquisitionFunction):
         i = np.arange(len(self.X_samples))
         i = np.random.choice(i, size=(int(num_arms)), replace=False)
         return self.X_samples[i]
+
+    def _sample_qsr(self, num_X_samples):
+        X = self.model.train_inputs[0]
+        num_dim = X.shape[-1]
+
+        x_cand, _ = optimize_acqf(
+            acq_function=qSimpleRegret(self.model),
+            bounds=torch.tensor([[0.0] * num_dim, [1.0] * num_dim], device=X.device, dtype=X.dtype),
+            q=num_X_samples,
+            num_restarts=10,
+            raw_samples=512,
+            options={"batch_limit": 10, "maxiter": 200},
+        )
+        return x_cand
 
     def _find_max(self):
         X = self.model.train_inputs[0]

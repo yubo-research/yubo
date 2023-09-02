@@ -163,6 +163,10 @@ class Optimizer:
                 self._designers["mtv"],
                 self._designers["ucb"],
             ],
+            "mtv_then_sr": [
+                self._designers["mtv"],
+                self._designers["sr"],
+            ],
         }
 
     def collect_trajectory(self, policy):
