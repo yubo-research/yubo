@@ -15,6 +15,7 @@ from botorch.acquisition.monte_carlo import (
 from bo.acq_iopt import AcqIOpt
 from bo.acq_min_dist import AcqMinDist
 from bo.acq_mtv import AcqMTV
+from bo.acq_dpp import AcqDPP
 from bo.acq_ts import AcqTS
 
 # from bo.acq_var import AcqVar
@@ -56,6 +57,8 @@ class Optimizer:
             "maximin": BTDesigner(policy, lambda m: AcqMinDist(m, toroidal=False)),
             "maximin-toroidal": BTDesigner(policy, lambda m: AcqMinDist(m, toroidal=True)),
             # FIXME: "variance": BTDesigner(policy, AcqVar),
+            "dpp": BTDesigner(policy, AcqDPP, init_sobol=1, init_center=False, acq_kwargs={"num_X_samples": default_num_X_samples}),
+            "dpp_c": BTDesigner(policy, AcqDPP, init_sobol=1, init_center=True, acq_kwargs={"num_X_samples": default_num_X_samples}),
             "iopt": BTDesigner(policy, AcqIOpt, init_sobol=0, init_center=False),
             "mtv": BTDesigner(
                 policy, AcqMTV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "beta": 0}
