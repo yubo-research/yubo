@@ -1,4 +1,4 @@
-FILES=`ls */*.py`
+FILES=`ls */*.py */*/*.py */*/*/*.py`
 
 echo Temporary code:
 grep -e TEST -e HACK $FILES

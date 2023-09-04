@@ -56,6 +56,8 @@ class Optimizer:
             "maximin": BTDesigner(policy, lambda m: AcqMinDist(m, toroidal=False)),
             "maximin-toroidal": BTDesigner(policy, lambda m: AcqMinDist(m, toroidal=True)),
             # FIXME: "variance": BTDesigner(policy, AcqVar),
+            "dpp": BTDesigner(policy, init_sobol=1, init_center=False),
+            "dpp_c": BTDesigner(policy, init_sobol=1, init_center=True),
             "iopt": BTDesigner(policy, AcqIOpt, init_sobol=0, init_center=False),
             "mtv": BTDesigner(
                 policy, AcqMTV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "beta": 0}
