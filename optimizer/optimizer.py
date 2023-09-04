@@ -12,10 +12,10 @@ from botorch.acquisition.monte_carlo import (
     qUpperConfidenceBound,
 )
 
+from bo.acq_dpp import AcqDPP
 from bo.acq_iopt import AcqIOpt
 from bo.acq_min_dist import AcqMinDist
 from bo.acq_mtv import AcqMTV
-from bo.acq_dpp import AcqDPP
 from bo.acq_ts import AcqTS
 
 # from bo.acq_var import AcqVar
@@ -45,6 +45,7 @@ class Optimizer:
         self._i_iter = 0
         self._center_designer = CenterDesigner(policy)
 
+        print(f"PROBLEM: env = {env_conf.env_name} num_params = {policy.num_params()}")
         init_ax_default = max(5, 2 * policy.num_params())
         default_num_X_samples = max(64, 10 * self._num_arms)
         default_num_Y_samples = 512
