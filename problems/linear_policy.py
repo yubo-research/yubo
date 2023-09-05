@@ -15,26 +15,34 @@ class LinearPolicy:
                 num_state,
             ),
         )
+        self._scale = np.random.uniform()
         self._ms_filter = MeanStdFilter(env_conf.state_space.shape)
 
     def num_params(self):
-        return self._beta.size
+        return 1 + self._beta.size
 
     def set_params(self, x):
-        self._beta = x.reshape(self._beta.shape)
+        self._scale = x[0]
+        self._beta = x[1:].reshape(self._beta.shape)
 
     def get_params(self):
-        return self._beta.flatten()
+        p = self._beta.flatten()
+        return np.insert(p, 0, self._scale)
 
     def clone(self):
         lp = LinearPolicy(self._env_conf)
+        lp._scale = self._scale
         lp._beta = self._beta.copy()
         return lp
 
     def __call__(self, state):
+        # beta in [-1, 1]
         # state in [0,1]
         self._ms_filter(state)
         m, s = self._ms_filter.get_stats()
         state = state - m
         state = state / s
-        return np.tanh(10 * self._beta @ state)
+        scale = 10 * np.abs(self._scale)
+        # beta = np.sign(self._beta) * (np.exp(np.abs(self._beta)) - 1)
+        beta = scale * self._beta
+        return np.tanh(beta @ state)

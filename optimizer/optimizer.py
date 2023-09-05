@@ -22,6 +22,7 @@ from bo.acq_ts import AcqTS
 from .ax_designer import AxDesigner
 from .bt_designer import BTDesigner
 from .center_designer import CenterDesigner
+from .cma_designer import CMADesigner
 from .datum import Datum
 from .random_designer import RandomDesigner
 from .sobol_designer import SobolDesigner
@@ -51,6 +52,7 @@ class Optimizer:
         default_num_Y_samples = 512
 
         self._designers = {
+            "cma": CMADesigner(policy),
             "random": RandomDesigner(policy, init_center=False),
             "random_center": RandomDesigner(policy, init_center=True),
             "sobol": SobolDesigner(policy, init_center=False),
