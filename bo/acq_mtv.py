@@ -155,7 +155,7 @@ class AcqMTV(MCAcquisitionFunction):
 
         # batch_size = X.shape[0]
         q = X.shape[-2]
-        assert len(self.X_samples) >= 10 * q, "You should use num_X_samples >= 10*q"
+        assert len(self.X_samples) > q, "You should use num_X_samples > q"
         num_dim = X.shape[-1]
         num_obs = len(self.model.train_inputs[0])
 
