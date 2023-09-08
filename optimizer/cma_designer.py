@@ -6,7 +6,6 @@ import common.all_bounds as all_bounds
 class CMADesigner:
     def __init__(self, policy):
         self._policy = policy
-        assert self._policy.num_params() > 1, "CMA needs num_params > 1"
         self._n_told = 0
         self._es = None
 
@@ -15,6 +14,7 @@ class CMADesigner:
 
     def __call__(self, data, num_arms):
         if self._es is None:
+            assert self._policy.num_params() > 1, "CMA needs num_params > 1"
             self._es = cma.CMAEvolutionStrategy(
                 [0] * self._policy.num_params(),
                 0.2,
