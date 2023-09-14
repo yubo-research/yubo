@@ -13,6 +13,7 @@ if __name__ == "__main__":
     num_replications = int(sys.argv[4])  # was 30
     num_rounds = int(sys.argv[5])  # was 3
 
+    print(f"EXPERIMENT: env_tag = {env_tag} ttype = {ttype} num_arms = {num_arms} num_replications = {num_replications} num_rounds = {num_rounds}")
     seed_all(17)
     for i_sample in range(num_replications):
         t0 = time.time()

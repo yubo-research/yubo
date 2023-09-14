@@ -3,7 +3,6 @@ import torch
 from botorch.acquisition import PosteriorMean
 from botorch.acquisition.monte_carlo import (
     MCAcquisitionFunction,
-    qSimpleRegret,
 )
 from botorch.optim import optimize_acqf
 from botorch.sampling.normal import SobolQMCNormalSampler
@@ -15,6 +14,16 @@ from botorch.utils.probability.utils import (
 
 # from IPython.core.debugger import set_trace
 from torch.quasirandom import SobolEngine
+
+
+def acqf_pm(mvn, Y):
+    return Y.mean(dim=0)
+
+
+def acqf_ucb(mvn, Y):
+    mu = Y.mean(dim=0)
+    sg = Y.std(dim=0)
+    return mu + sg
 
 
 class AcqMTV(MCAcquisitionFunction):
@@ -29,6 +38,8 @@ class AcqMTV(MCAcquisitionFunction):
         beta_ucb=2,
         sample_type="mh",
         alt_acqf=None,
+        acqf_pstar="pm",
+        num_pstar_samples=1,
         lengthscale_correction=True,
         eps_0=0.1,
         **kwargs,
@@ -67,9 +78,13 @@ class AcqMTV(MCAcquisitionFunction):
                 self.Y_best = self.Y_max
 
             if sample_type == "mh":
-                self.X_samples = self._sample_maxes_mh(sobol_engine, num_X_samples, num_mcmc)
-            elif sample_type == "sr":
-                self.X_samples = self._sample_qsr(num_X_samples)
+                if acqf_pstar == "pm":
+                    acqf_pstar = acqf_pm
+                elif acqf_pstar == "ucb":
+                    acqf_pstar = acqf_ucb
+                else:
+                    assert False, f"Unknown acqf_pstar = {acqf_pstar}"
+                self.X_samples = self._sample_maxes_mh(acqf_pstar, sobol_engine, num_X_samples, num_mcmc, num_pstar_samples)
             elif sample_type == "sobol":
                 self.X_samples = sobol_engine.draw(num_X_samples, dtype=self._dtype)
             else:
@@ -88,20 +103,6 @@ class AcqMTV(MCAcquisitionFunction):
         i = np.random.choice(i, size=(int(num_arms)), replace=False)
         return self.X_samples[i]
 
-    def _sample_qsr(self, num_X_samples):
-        X = self.model.train_inputs[0]
-        num_dim = X.shape[-1]
-
-        x_cand, _ = optimize_acqf(
-            acq_function=qSimpleRegret(self.model),
-            bounds=torch.tensor([[0.0] * num_dim, [1.0] * num_dim], device=X.device, dtype=X.dtype),
-            q=num_X_samples,
-            num_restarts=10,
-            raw_samples=512,
-            options={"batch_limit": 10, "maxiter": 200},
-        )
-        return x_cand
-
     def _find_max(self):
         X = self.model.train_inputs[0]
         num_dim = X.shape[-1]
@@ -116,14 +117,16 @@ class AcqMTV(MCAcquisitionFunction):
         )
         return x_cand
 
-    def _sample_maxes_mh(self, sobol_engine, num_X_samples, num_mcmc):
+    def _sample_maxes_mh(self, acqf_pstar, sobol_engine, num_X_samples, num_mcmc, num_pstar_samples):
+        X_max = self._find_max()
         eps = self._eps_0  # 0.1
-        # k_eps = -np.log(0.1) / num_mcmc
-        X = torch.tile(self.X_max, (num_X_samples, 1))
+
+        X = torch.tile(X_max, (num_X_samples, 1))
+
         if False:
             X = sobol_engine.draw(num_X_samples // 2, dtype=self._dtype)
             X = torch.cat(
-                (X, torch.tile(self.X_max, (num_X_samples // 2, 1))),
+                (X, torch.tile(X_max, (num_X_samples // 2, 1))),
                 dim=0,
             )
 
@@ -131,10 +134,11 @@ class AcqMTV(MCAcquisitionFunction):
             X_1 = X + eps * torch.randn(size=X.shape)
             X_both = torch.cat((X, X_1), dim=0)
             mvn = self.model.posterior(X_both, observation_noise=True)
-            Y_both = mvn.sample(torch.Size([1])).squeeze(-1).squeeze(0)
-            Y = Y_both[: len(X)]
-            Y_1 = Y_both[len(X) :]
-            i = (X_1.min(dim=1).values >= 0) & (X_1.max(dim=1).values <= 1) & (Y_1 > Y).flatten()
+            Y_both = mvn.sample(torch.Size([num_pstar_samples])).squeeze(-1).squeeze(0)
+            af_both = acqf_pstar(mvn, Y_both)
+            af = af_both[: len(X)]
+            af_1 = af_both[len(X) :]
+            i = (X_1.min(dim=1).values >= 0) & (X_1.max(dim=1).values <= 1) & (af_1 > af).flatten()
 
             X[i] = X_1[i]
             eps = self._k_eps * eps
