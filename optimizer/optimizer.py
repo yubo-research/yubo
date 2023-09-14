@@ -63,10 +63,14 @@ class Optimizer:
             "dpp": BTDesigner(policy, AcqDPP, init_sobol=1, init_center=False, acq_kwargs={"num_X_samples": default_num_X_samples}),
             "dpp_c": BTDesigner(policy, AcqDPP, init_sobol=1, init_center=True, acq_kwargs={"num_X_samples": default_num_X_samples}),
             "iopt": BTDesigner(policy, AcqIOpt, init_sobol=0, init_center=False),
-            "mtv": BTDesigner(
-                policy, AcqMTV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "beta": 0}
+            "mtv": BTDesigner(policy, AcqMTV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "mvar", "num_X_samples": default_num_X_samples}),
+            "mtv_ps-ucb": BTDesigner(
+                policy,
+                AcqMTV,
+                init_sobol=0,
+                init_center=False,
+                acq_kwargs={"ttype": "mvar", "acqf_pstar": "ucb", "num_pstar_samples": 8, "num_X_samples": default_num_X_samples},
             ),
-            "mtv_b": BTDesigner(policy, AcqMTV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "mvar", "num_X_samples": default_num_X_samples}),
             "mtv_sr": BTDesigner(
                 policy,
                 AcqMTV,
