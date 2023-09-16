@@ -17,13 +17,14 @@ from torch.quasirandom import SobolEngine
 
 
 def acqf_pm(mvn, Y):
+    if len(Y.shape) == 1:
+        return Y
     return Y.mean(dim=0)
 
 
 def acqf_ucb(mvn, Y):
-    mu = Y.mean(dim=0)
-    sg = Y.std(dim=0)
-    return mu + sg
+    assert len(Y.shape) == 1
+    return Y + mvn.stddev
 
 
 class AcqMTV(MCAcquisitionFunction):
@@ -40,7 +41,7 @@ class AcqMTV(MCAcquisitionFunction):
         alt_acqf=None,
         acqf_pstar="pm",
         num_pstar_samples=1,
-        lengthscale_correction=True,
+        lengthscale_correction="type_0",
         eps_0=0.1,
         **kwargs,
     ) -> None:
@@ -165,8 +166,16 @@ class AcqMTV(MCAcquisitionFunction):
 
         mvn = self.model.posterior(X)
         model_f = self.model.condition_on_observations(X=X, Y=mvn.mean)
-        if self._lengthscale_correction:
-            model_f.covar_module.base_kernel.lengthscale *= ((1 + num_obs) / (1 + max(num_obs, q))) ** (1.0 / num_dim)
+        if self._lengthscale_correction is not None:
+            # num_obs = 0 ==> 1 "bin", size of whole box
+            # num_obs = 1 ==> 2 "bins", each size of half the box
+            # etc
+            if self._lengthscale_correction == "type_0":
+                model_f.covar_module.base_kernel.lengthscale *= ((1 + num_obs) / (1 + max(num_obs, q))) ** (1.0 / num_dim)
+            elif self._lengthscale_correction == "type_1":
+                model_f.covar_module.base_kernel.lengthscale *= ((1 + num_obs) / (1 + num_obs + q)) ** (1.0 / num_dim)
+            else:
+                assert False, self._lengthscale_correction
 
         mvn_f = model_f.posterior(self.X_samples, observation_noise=True)
         self.mvn_f = mvn_f
