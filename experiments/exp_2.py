@@ -14,10 +14,10 @@ if __name__ == "__main__":
     num_rounds = int(sys.argv[5])  # was 3
 
     print(f"EXPERIMENT: env_tag = {env_tag} ttype = {ttype} num_arms = {num_arms} num_replications = {num_replications} num_rounds = {num_rounds}")
-    seed_all(17)
     for i_sample in range(num_replications):
         t0 = time.time()
-        seed = 13547 + i_sample
+        seed_all(17 + i_sample)
+        seed = 18 + i_sample
         env_conf = get_env_conf(env_tag, seed)
         sample(env_conf, ttype, tag=f"i_sample = {i_sample}", num_iterations=num_rounds, num_arms=num_arms)
         print(f"TIME_REPLICATE: {time.time() - t0:.2f}")
