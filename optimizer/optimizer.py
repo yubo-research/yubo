@@ -64,12 +64,19 @@ class Optimizer:
             "dpp_c": BTDesigner(policy, AcqDPP, init_sobol=1, init_center=True, acq_kwargs={"num_X_samples": default_num_X_samples}),
             "iopt": BTDesigner(policy, AcqIOpt, init_sobol=0, init_center=False),
             "mtv": BTDesigner(policy, AcqMTV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "mvar", "num_X_samples": default_num_X_samples}),
-            "mtv_ps-ucb": BTDesigner(
+            "mtv_ps-ucb_b": BTDesigner(
                 policy,
                 AcqMTV,
                 init_sobol=0,
                 init_center=False,
-                acq_kwargs={"ttype": "mvar", "acqf_pstar": "ucb", "num_pstar_samples": 8, "num_X_samples": default_num_X_samples},
+                acq_kwargs={"ttype": "mvar", "acqf_pstar": "ucb", "num_pstar_samples": 1, "num_X_samples": default_num_X_samples},
+            ),
+            "mtv_lc1": BTDesigner(
+                policy,
+                AcqMTV,
+                init_sobol=0,
+                init_center=False,
+                acq_kwargs={"ttype": "mvar", "num_X_samples": default_num_X_samples, "lengthscale_correction": "type_1"},
             ),
             "mtv_sr": BTDesigner(
                 policy,
@@ -77,20 +84,6 @@ class Optimizer:
                 init_sobol=0,
                 init_center=False,
                 acq_kwargs={"ttype": "srsg", "num_Y_samples": default_num_Y_samples, "num_X_samples": default_num_X_samples},
-            ),
-            "mtv_mxi": BTDesigner(
-                policy,
-                AcqMTV,
-                init_sobol=0,
-                init_center=False,
-                acq_kwargs={"ttype": "mxi", "num_X_samples": default_num_X_samples},
-            ),
-            "mtv_mcmxi": BTDesigner(
-                policy,
-                AcqMTV,
-                init_sobol=0,
-                init_center=False,
-                acq_kwargs={"ttype": "mcmxi", "num_Y_samples": 64, "num_X_samples": default_num_X_samples},
             ),
             "mtv_ei": BTDesigner(policy, AcqMTV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "ei", "num_X_samples": default_num_X_samples}),
             "mtv_ucb": BTDesigner(
