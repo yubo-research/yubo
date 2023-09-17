@@ -24,7 +24,8 @@ def acqf_pm(mvn, Y):
 
 def acqf_ucb(mvn, Y):
     assert len(Y.shape) == 1
-    return Y + mvn.stddev
+    m = mvn.mean.squeeze(-1)
+    return m + 1.253 * torch.abs(Y - m)
 
 
 class AcqMTV(MCAcquisitionFunction):
@@ -185,34 +186,36 @@ class AcqMTV(MCAcquisitionFunction):
             var_f = mvn_f.variance.squeeze()
             m = var_f.mean(dim=-1)
             return -m
+        elif self.ttype == "mstd":
+            # like I-Optimality
+            std_f = mvn_f.stddev.squeeze()
+            m = std_f.mean(dim=-1)
+            return -m
+        elif self.ttype in ["exsr", "exucb"]:
+            std_f = mvn_f.stddev.squeeze()
+            m = std_f.mean(dim=-1)
+            if num_obs == 0:
+                return -m
+            else:
+                Y = self.get_posterior_samples(mvn).squeeze(-1)
+                mean = mvn.mean.squeeze(-1)
+                if self.ttype == "exsr":
+                    mx = Y.amax(dim=-1).mean(dim=0)  # v. good
+                elif self.ttype == "exucb":
+                    mx = (mean + torch.abs(Y - mean.unsqueeze(0))).amax(dim=-1).mean(dim=0)
+                else:
+                    assert False
+                return mx - m
         elif self.ttype == "msvar":
             # faster appx. G-Optimality
             var_f = mvn_f.variance.squeeze()
             m = var_f.mean(dim=-1)
             s = var_f.std(dim=-1)
             return -(m + self.beta * s)
-        elif self.ttype == "mxi":
-            mx = mvn.mean.squeeze(dim=-1).amax(dim=-1)
-            std_f = mvn_f.stddev.mean(dim=-1)
-            return mx - std_f
-        elif self.ttype == "srsg":
-            Y_arms = self.get_posterior_samples(mvn).squeeze(-1)
-            mx = Y_arms.squeeze(dim=-1).amax(dim=-1).mean(dim=0)
-            std_f = mvn_f.stddev.mean(dim=-1)
-            return mx - std_f
         elif self.ttype == "maxvar":
             # G-Optimality
             var_f = mvn_f.variance.squeeze()
             return -var_f.max(dim=-1).values
-        elif self.ttype == "mcmax":
-            Y = self.get_posterior_samples(mvn_f).squeeze(-1)
-            return -Y.amax(dim=-1).mean(dim=0)
-        elif self.ttype == "varvar":
-            var_f = mvn_f.variance.squeeze()
-            if self._num_obs == 0:
-                return -var_f.max(dim=-1).values
-            m = var_f.mean(dim=-1)
-            return -m
         elif self.ttype in ["ei", "ei2", "msei"]:
             mu_f = mvn_f.mean.squeeze()
             sd_f = mvn_f.stddev.squeeze()
