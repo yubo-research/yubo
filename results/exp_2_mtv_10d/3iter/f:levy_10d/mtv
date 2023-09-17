@@ -1,0 +1,13 @@
+Traceback (most recent call last):
+  File "/home/juju/projects/bbo/experiments/exp_2.py", line 19, in <module>
+    env_conf = get_env_conf(env_tag, seed)
+  File "/home/juju/projects/bbo/problems/env_conf.py", line 13, in get_env_conf
+    ec = EnvConf(tag, seed=seed, max_steps=1000, solved=9999)
+  File "<string>", line 11, in __init__
+  File "/home/juju/projects/bbo/problems/env_conf.py", line 47, in __post_init__
+    env = self.make()
+  File "/home/juju/projects/bbo/problems/env_conf.py", line 41, in make
+    return pure_functions.make(self.env_name, seed=self.seed)
+  File "/home/juju/projects/bbo/problems/pure_functions.py", line 11, in make
+    name, num_dim = name.split("-")
+ValueError: not enough values to unpack (expected 2, got 1)

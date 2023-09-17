@@ -1,0 +1,8 @@
+/home/juju/.local/lib/python3.10/site-packages/gymnasium/spaces/box.py:129: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  gym.logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+TRACE: name = f:levy-10d ttype = mtv i_sample = 0 i_iter = 0 dt = 4.174e+02 return = -1.808e+01
+TIME_SAMPLE: 421.11
+TRACE: name = f:levy-10d ttype = mtv i_sample = 1 i_iter = 0 dt = 1.086e+02 return = -1.805e+01
+TIME_SAMPLE: 111.22
+TRACE: name = f:levy-10d ttype = mtv i_sample = 2 i_iter = 0 dt = 1.132e+02 return = -1.924e+01
+TIME_SAMPLE: 115.08
