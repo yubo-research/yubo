@@ -126,7 +126,7 @@ class AcqMTV(MCAcquisitionFunction):
             i, X_1 = self._met_propose(X, eps)
             X[i] = X_1[i]
             frac_changed = (1.0 * i).mean().item()
-            print("FC:", eps, eps_good, frac_changed)
+            # print("FC:", eps, eps_good, frac_changed)
             if frac_changed > 0.50:
                 eps_good = True
             elif frac_changed < 0.40:
