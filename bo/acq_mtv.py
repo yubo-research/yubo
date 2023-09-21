@@ -16,18 +16,6 @@ from botorch.utils.probability.utils import (
 from torch.quasirandom import SobolEngine
 
 
-def acqf_pm(mvn, Y):
-    if len(Y.shape) == 1:
-        return Y
-    return Y.mean(dim=0)
-
-
-def acqf_ucb(mvn, Y):
-    assert len(Y.shape) == 1
-    m = mvn.mean.squeeze(-1)
-    return m + 1.253 * torch.abs(Y - m)
-
-
 class AcqMTV(MCAcquisitionFunction):
     def __init__(
         self,
@@ -40,8 +28,6 @@ class AcqMTV(MCAcquisitionFunction):
         beta_ucb=2,
         sample_type="mh",
         alt_acqf=None,
-        acqf_pstar="pm",
-        num_pstar_samples=1,
         lengthscale_correction="type_0",
         eps_0=0.1,
         **kwargs,
@@ -79,13 +65,11 @@ class AcqMTV(MCAcquisitionFunction):
                 self.Y_best = self.Y_max
 
             if sample_type == "mh":
-                if acqf_pstar == "pm":
-                    acqf_pstar = acqf_pm
-                elif acqf_pstar == "ucb":
-                    acqf_pstar = acqf_ucb
-                else:
-                    assert False, f"Unknown acqf_pstar = {acqf_pstar}"
-                self.X_samples = self._sample_maxes_mh(acqf_pstar, sobol_engine, num_X_samples, num_mcmc, num_pstar_samples)
+                with torch.inference_mode():
+                    self.X_samples = self._sample_maxes_mh(sobol_engine, num_X_samples)
+            elif sample_type == "mh50":
+                with torch.inference_mode():
+                    self.X_samples = self._sample_maxes_mh_50(sobol_engine, num_X_samples)
             elif sample_type == "sobol":
                 self.X_samples = sobol_engine.draw(num_X_samples, dtype=self._dtype)
             else:
@@ -118,49 +102,58 @@ class AcqMTV(MCAcquisitionFunction):
         )
         return x_cand
 
-    def _sample_maxes_mh(self, acqf_pstar, sobol_engine, num_X_samples, num_mcmc, num_pstar_samples):
-        X_max = self._find_max()
+    def _sample_maxes_mh(self, sobol_engine, num_X_samples):
         eps = self._eps_0  # 0.1
 
-        X = torch.tile(X_max, (num_X_samples, 1))
+        X = torch.tile(self.X_max, (num_X_samples, 1))
 
-        if False:
-            X = sobol_engine.draw(num_X_samples // 2, dtype=self._dtype)
-            X = torch.cat(
-                (X, torch.tile(X_max, (num_X_samples // 2, 1))),
-                dim=0,
-            )
-
-        if self.num_mcmc is None:
-            max_mcmc = 100
-        else:
-            max_mcmc = self.num_mcmc
-
-        self.test_std = []
-        last_std = -1
-        for _ in range(max_mcmc):
-            X_1 = X + eps * torch.randn(size=X.shape)
-            X_both = torch.cat((X, X_1), dim=0)
-            mvn = self.model.posterior(X_both, observation_noise=True)
-            Y_both = mvn.sample(torch.Size([num_pstar_samples])).squeeze(-1).squeeze(0)
-            af_both = acqf_pstar(mvn, Y_both)
-            af = af_both[: len(X)]
-            af_1 = af_both[len(X) :]
-            i = (X_1.min(dim=1).values >= 0) & (X_1.max(dim=1).values <= 1) & (af_1 > af).flatten()
-
+        for _ in range(self.num_mcmc):
+            i, X_1 = self._met_propose(X, eps)
             X[i] = X_1[i]
-            if self.num_mcmc is None:
-                std = X.std(axis=0).mean().item()
-                self.test_std.append((eps, std))
-                if std > 1e-6:
-                    if np.abs(std / last_std - 1) < 0.01:
-                        break
-                    last_std = std
-                else:
-                    eps = 0.1 * eps
-            else:
-                eps = 0.5 * eps
+            eps = 0.5 * eps
+
         return X
+
+    def _sample_maxes_mh_50(self, sobol_engine, num_X_samples):
+        eps = self._eps_0
+
+        X = torch.tile(self.X_max, (num_X_samples, 1))
+
+        eps_good = False
+        num_changed = 0
+        max_iterations = 10 * self.num_mcmc
+        for _ in range(max_iterations):
+            i, X_1 = self._met_propose(X, eps)
+            X[i] = X_1[i]
+            frac_changed = (1.0 * i).mean().item()
+            # print("FC:", eps, eps_good, frac_changed)
+            if frac_changed > 0.50:
+                eps_good = True
+            elif frac_changed < 0.40:
+                eps_good = False
+
+            if not eps_good:
+                eps = 0.5 * eps
+            else:
+                num_changed += 1
+                if num_changed == self.num_mcmc:
+                    break
+        else:
+            raise RuntimeError(f"Could not determine eps in {max_iterations} iterations")
+
+        return X
+
+    def _met_propose(self, X, eps):
+        X_1 = X + eps * torch.randn(size=X.shape)
+        # Joint sample for all X -- initial and proposed
+        X_both = torch.cat((X, X_1), dim=0)
+        mvn = self.model.posterior(X_both, observation_noise=True)
+        Y_both = mvn.sample(torch.Size([1])).squeeze(-1).squeeze(0)
+        Y = Y_both[: len(X)]
+        Y_1 = Y_both[len(X) :]
+
+        # P{maximizer | out-out-bounds} == 0
+        return (X_1.min(dim=1).values >= 0) & (X_1.max(dim=1).values <= 1) & (Y_1 > Y).flatten(), X_1
 
     @t_batch_mode_transform()
     def forward(self, X):
