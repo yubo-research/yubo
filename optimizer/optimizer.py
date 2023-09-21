@@ -49,12 +49,12 @@ class Optimizer:
         print(f"PROBLEM: env = {env_conf.env_name} num_params = {policy.num_params()}")
         init_ax_default = max(5, 2 * policy.num_params())
         default_num_X_samples = max(64, 10 * self._num_arms)
-        default_num_Y_samples = 512
+        # default_num_Y_samples = 512
 
         self._designers = {
             "cma": CMADesigner(policy),
             "random": RandomDesigner(policy, init_center=False),
-            "random_center": RandomDesigner(policy, init_center=True),
+            "random_c": RandomDesigner(policy, init_center=True),
             "sobol": SobolDesigner(policy, init_center=False),
             "sobol_c": SobolDesigner(policy, init_center=True),
             "maximin": BTDesigner(policy, lambda m: AcqMinDist(m, toroidal=False)),
@@ -64,19 +64,8 @@ class Optimizer:
             "dpp_c": BTDesigner(policy, AcqDPP, init_sobol=1, init_center=True, acq_kwargs={"num_X_samples": default_num_X_samples}),
             "iopt": BTDesigner(policy, AcqIOpt, init_sobol=0, init_center=False),
             "mtv": BTDesigner(policy, AcqMTV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "mvar", "num_X_samples": default_num_X_samples}),
-            "mtv_exsr": BTDesigner(
-                policy,
-                AcqMTV,
-                init_sobol=0,
-                init_center=False,
-                acq_kwargs={"ttype": "exsr", "num_Y_samples": default_num_Y_samples, "num_X_samples": default_num_X_samples},
-            ),
-            "mtv_exucb": BTDesigner(
-                policy,
-                AcqMTV,
-                init_sobol=0,
-                init_center=False,
-                acq_kwargs={"ttype": "exsr", "num_Y_samples": default_num_Y_samples, "num_X_samples": default_num_X_samples},
+            "mtv_conv": BTDesigner(
+                policy, AcqMTV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "mvar", "num_mcmc": None, "num_X_samples": default_num_X_samples}
             ),
             "sr": BTDesigner(policy, qSimpleRegret),
             "ts": BTDesigner(policy, AcqTS, init_center=False),
@@ -143,17 +132,25 @@ class Optimizer:
                 init_center=False,
                 acq_kwargs={"ttype": "msvar", "sample_type": "sobol", "num_X_samples": default_num_X_samples, "beta": 0},
             ),
-            "mtv_then_ei": [
+            "mtv_then_sr": [
                 self._designers["mtv"],
-                self._designers["ei"],
+                self._designers["sr"],
             ],
             "mtv_then_ucb": [
                 self._designers["mtv"],
                 self._designers["ucb"],
             ],
-            "mtv_then_sr": [
+            "mtv_then_ei": [
                 self._designers["mtv"],
-                self._designers["sr"],
+                self._designers["ei"],
+            ],
+            "mtv_then_dpp": [
+                self._designers["mtv"],
+                self._designers["dpp"],
+            ],
+            "mtv_then_gibbon": [
+                self._designers["mtv"],
+                self._designers["gibbon"],
             ],
         }
 

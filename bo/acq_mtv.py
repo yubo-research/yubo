@@ -53,7 +53,6 @@ class AcqMTV(MCAcquisitionFunction):
         self.beta = beta
         self.beta_ucb = beta_ucb
         self._alt_acqf = alt_acqf
-        self._k_eps = 0.5
         self._lengthscale_correction = lengthscale_correction
         self._eps_0 = eps_0
         self.sampler = SobolQMCNormalSampler(sample_shape=torch.Size([num_Y_samples]))
@@ -132,7 +131,14 @@ class AcqMTV(MCAcquisitionFunction):
                 dim=0,
             )
 
-        for _ in range(num_mcmc):
+        if self.num_mcmc is None:
+            max_mcmc = 100
+        else:
+            max_mcmc = self.num_mcmc
+
+        self.test_std = []
+        last_std = -1
+        for _ in range(max_mcmc):
             X_1 = X + eps * torch.randn(size=X.shape)
             X_both = torch.cat((X, X_1), dim=0)
             mvn = self.model.posterior(X_both, observation_noise=True)
@@ -143,7 +149,17 @@ class AcqMTV(MCAcquisitionFunction):
             i = (X_1.min(dim=1).values >= 0) & (X_1.max(dim=1).values <= 1) & (af_1 > af).flatten()
 
             X[i] = X_1[i]
-            eps = self._k_eps * eps
+            if self.num_mcmc is None:
+                std = X.std(axis=0).mean().item()
+                self.test_std.append((eps, std))
+                if std > 1e-6:
+                    if np.abs(std / last_std - 1) < 0.01:
+                        break
+                    last_std = std
+                else:
+                    eps = 0.1 * eps
+            else:
+                eps = 0.5 * eps
         return X
 
     @t_batch_mode_transform()
