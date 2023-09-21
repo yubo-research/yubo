@@ -65,7 +65,8 @@ class AcqMTV(MCAcquisitionFunction):
                 self.Y_best = self.Y_max
 
             if sample_type == "mh":
-                self.X_samples = self._sample_maxes_mh(sobol_engine, num_X_samples, num_mcmc)
+                with torch.inference_mode():
+                    self.X_samples = self._sample_maxes_mh(sobol_engine, num_X_samples)
             elif sample_type == "sobol":
                 self.X_samples = sobol_engine.draw(num_X_samples, dtype=self._dtype)
             else:
@@ -98,28 +99,32 @@ class AcqMTV(MCAcquisitionFunction):
         )
         return x_cand
 
-    def _sample_maxes_mh(self, sobol_engine, num_X_samples, num_mcmc):
-        X_max = self._find_max()
-        eps = self._eps_0  # 0.1
+    def _sample_maxes_mh(self, sobol_engine, num_X_samples):
+        eps = self._eps_0
 
-        X = torch.tile(X_max, (num_X_samples, 1))
+        X = torch.tile(self.X_max, (num_X_samples, 1))
 
-        if False:
-            X = sobol_engine.draw(num_X_samples // 2, dtype=self._dtype)
-            X = torch.cat(
-                (X, torch.tile(X_max, (num_X_samples // 2, 1))),
-                dim=0,
-            )
-
-        if self.num_mcmc is None:
-            max_mcmc = 100
-        else:
-            max_mcmc = self.num_mcmc
-
-        for _ in range(max_mcmc):
+        eps_good = False
+        num_changed = 0
+        max_iterations = 10*self.num_mcmc
+        for _ in range(max_iterations):
             i, X_1 = self._met_propose(X, eps)
             X[i] = X_1[i]
-            eps = 0.5 * eps
+            frac_changed = (1.0*i).mean().item()
+            print ("FC:", eps, eps_good, frac_changed)
+            if frac_changed > .50:
+                eps_good = True
+            elif frac_changed < .40:
+                eps_good = False
+                
+            if not eps_good:
+                eps = 0.5 * eps
+            else:
+                num_changed += 1
+                if num_changed == self.num_mcmc:
+                    break
+        else:
+            raise RuntimeError(f"Could not determine eps in {max_iterations} iterations")
 
         return X
 
