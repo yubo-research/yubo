@@ -17,11 +17,9 @@ class BTDesigner:
         init_sobol=1,
         init_center=True,
         init_X_samples=True,
-        sample_X_samples=False,
         opt_sequential=False,
         optimizer_options={"batch_limit": 10, "maxiter": 1000},
     ):
-        assert not sample_X_samples, "Add a draw() method to your acqf"
         self._policy = policy
         self._acq_fn = acq_fn
         self._init_sobol = init_sobol
