@@ -67,9 +67,6 @@ class AcqMTV(MCAcquisitionFunction):
             if sample_type == "mh":
                 with torch.inference_mode():
                     self.X_samples = self._sample_maxes_mh(sobol_engine, num_X_samples)
-            elif sample_type == "mh50":
-                with torch.inference_mode():
-                    self.X_samples = self._sample_maxes_mh_50(sobol_engine, num_X_samples)
             elif sample_type == "sobol":
                 self.X_samples = sobol_engine.draw(num_X_samples, dtype=self._dtype)
             else:
@@ -100,25 +97,21 @@ class AcqMTV(MCAcquisitionFunction):
             raw_samples=512,
             options={"batch_limit": 10, "maxiter": 200},
         )
+
+        Y_cand = self.model.posterior(x_cand).mean
+        if len(self.model.train_targets) > 0:
+            i = torch.argmax(self.model.train_targets)
+            Y_tgt = self.model.posterior(self.model.train_inputs[0][i][:, None].T).mean
+            if Y_tgt > Y_cand:
+                print("USED TGT")
+                x_cand = self.model.train_inputs[0][i, :][:, None].T
+
         return x_cand
 
     def _sample_maxes_mh(self, sobol_engine, num_X_samples):
-        eps = self._eps_0  # 0.1
-
         X = torch.tile(self.X_max, (num_X_samples, 1))
 
-        for _ in range(self.num_mcmc):
-            i, X_1 = self._met_propose(X, eps)
-            X[i] = X_1[i]
-            eps = 0.5 * eps
-
-        return X
-
-    def _sample_maxes_mh_50(self, sobol_engine, num_X_samples):
-        eps = self._eps_0
-
-        X = torch.tile(self.X_max, (num_X_samples, 1))
-
+        eps = 1
         eps_good = False
         num_changed = 0
         max_iterations = 10 * self.num_mcmc
@@ -133,7 +126,7 @@ class AcqMTV(MCAcquisitionFunction):
                 eps_good = False
 
             if not eps_good:
-                eps = 0.5 * eps
+                eps = eps / np.sqrt(10.0)
             else:
                 num_changed += 1
                 if num_changed == self.num_mcmc:
