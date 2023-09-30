@@ -13,13 +13,14 @@ class BTDesigner:
         policy,
         acq_fn,
         *,
+        init_center=None,
         acq_kwargs=None,
         init_sobol=1,
-        init_center=True,
         init_X_samples=True,
         opt_sequential=False,
         optimizer_options={"batch_limit": 10, "maxiter": 1000},
     ):
+        assert init_center in [True, False], init_center
         self._policy = policy
         self._acq_fn = acq_fn
         self._init_sobol = init_sobol
@@ -57,6 +58,7 @@ class BTDesigner:
         import warnings
 
         if len(data) < self._init_sobol:
+            print("INIT SOBOL")
             return self._sobol(data, num_arms)
 
         num_dim = self._policy.num_params()

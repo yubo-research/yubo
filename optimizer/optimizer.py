@@ -17,8 +17,8 @@ from bo.acq_iopt import AcqIOpt
 from bo.acq_min_dist import AcqMinDist
 from bo.acq_mtv import AcqMTV
 from bo.acq_ts import AcqTS
+from bo.acq_var import AcqVar
 
-# from bo.acq_var import AcqVar
 from .ax_designer import AxDesigner
 from .bt_designer import BTDesigner
 from .center_designer import CenterDesigner
@@ -52,55 +52,45 @@ class Optimizer:
         # default_num_Y_samples = 512
 
         self._designers = {
+            # Optimization packages
             "cma": CMADesigner(policy),
+            "ax": AxDesigner(policy),
+            # 1D only
+            "maximin": BTDesigner(policy, lambda m: AcqMinDist(m, toroidal=False), init_center=False),
+            "maximin-toroidal": BTDesigner(policy, lambda m: AcqMinDist(m, toroidal=True), init_center=False),
+            "variance": BTDesigner(policy, AcqVar, init_center=False),
+            # Init only, no surrogate, all exploration
             "random": RandomDesigner(policy, init_center=False),
             "random_c": RandomDesigner(policy, init_center=True),
             "sobol": SobolDesigner(policy, init_center=False),
             "sobol_c": SobolDesigner(policy, init_center=True),
-            "maximin": BTDesigner(policy, lambda m: AcqMinDist(m, toroidal=False)),
-            "maximin-toroidal": BTDesigner(policy, lambda m: AcqMinDist(m, toroidal=True)),
-            # FIXME: "variance": BTDesigner(policy, AcqVar),
-            "dpp": BTDesigner(policy, AcqDPP, init_sobol=1, init_center=False, acq_kwargs={"num_X_samples": default_num_X_samples}),
-            "dpp_c": BTDesigner(policy, AcqDPP, init_sobol=1, init_center=True, acq_kwargs={"num_X_samples": default_num_X_samples}),
-            "iopt": BTDesigner(policy, AcqIOpt, init_sobol=0, init_center=False),
-            "mtv": BTDesigner(policy, AcqMTV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "mvar", "num_X_samples": default_num_X_samples}),
-            "mtv_std": BTDesigner(policy, AcqMTV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "mstd", "num_X_samples": default_num_X_samples}),
-            "sr": BTDesigner(policy, qSimpleRegret),
+            # All exploitation
+            "sr": BTDesigner(policy, qSimpleRegret, init_center=False),
+            # Various methods, first batch is Sobol
             "ts": BTDesigner(policy, AcqTS, init_center=False),
-            "ts_c": BTDesigner(policy, AcqTS, init_center=True),
-            "ucb_c": BTDesigner(policy, qUpperConfidenceBound, acq_kwargs={"beta": 1}),
             "ucb": BTDesigner(policy, qUpperConfidenceBound, init_center=False, acq_kwargs={"beta": 1}),
-            "ei_c": BTDesigner(policy, qNoisyExpectedImprovement, acq_kwargs={"X_baseline": None}),
             "ei": BTDesigner(policy, qNoisyExpectedImprovement, init_center=False, acq_kwargs={"X_baseline": None}),
-            "mes": BTDesigner(policy, qMaxValueEntropy, acq_kwargs={"candidate_set": None}),
-            "sobol_mes": BTDesigner(policy, qMaxValueEntropy, init_sobol=init_ax_default, acq_kwargs={"candidate_set": None}),
-            "gibbon": BTDesigner(policy, qLowerBoundMaxValueEntropy, opt_sequential=True, acq_kwargs={"candidate_set": None}),
-            "sobol_gibbon": BTDesigner(policy, qLowerBoundMaxValueEntropy, init_sobol=init_ax_default, acq_kwargs={"candidate_set": None}),
-            "ax": AxDesigner(policy),
+            "gibbon": BTDesigner(policy, qLowerBoundMaxValueEntropy, init_center=False, opt_sequential=True, acq_kwargs={"candidate_set": None}),
             "turbo": TuRBODesigner(policy, num_init=init_ax_default),
-            "sobol_ei": BTDesigner(policy, qNoisyExpectedImprovement, init_sobol=init_ax_default, acq_kwargs={"X_baseline": None}),
-            "sobol_ucb": BTDesigner(policy, qUpperConfidenceBound, init_sobol=init_ax_default, acq_kwargs={"beta": 1}),
+            "dpp": BTDesigner(policy, AcqDPP, init_sobol=1, init_center=False, acq_kwargs={"num_X_samples": default_num_X_samples}),
+            # Force a center point into the initialization
+            "ts_c": BTDesigner(policy, AcqTS, init_center=True),
+            "ucb_c": BTDesigner(policy, qUpperConfidenceBound, init_center=True, acq_kwargs={"beta": 1}),
+            "ei_c": BTDesigner(policy, qNoisyExpectedImprovement, init_center=True, acq_kwargs={"X_baseline": None}),
+            "gibbon_c": BTDesigner(policy, qLowerBoundMaxValueEntropy, init_center=True, opt_sequential=True, acq_kwargs={"candidate_set": None}),
+            "dpp_c": BTDesigner(policy, AcqDPP, init_sobol=1, init_center=True, acq_kwargs={"num_X_samples": default_num_X_samples}),
+            # MTV, ours
+            "mtv": BTDesigner(policy, AcqMTV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "mvar", "num_X_samples": default_num_X_samples}),
+            # Long sobol init, sequential opt
+            "sobol_ucb": BTDesigner(policy, qUpperConfidenceBound, init_center=False, init_sobol=init_ax_default, acq_kwargs={"beta": 1}),
+            "sobol_ei": BTDesigner(policy, qNoisyExpectedImprovement, init_center=False, init_sobol=init_ax_default, acq_kwargs={"X_baseline": None}),
+            "sobol_gibbon": BTDesigner(policy, qLowerBoundMaxValueEntropy, init_center=False, init_sobol=init_ax_default, acq_kwargs={"candidate_set": None}),
         }
 
         self._add_ablations(policy, default_num_X_samples)
 
     def _add_ablations(self, policy, default_num_X_samples):
         self._designers = self._designers | {
-            "mtv_eps=3.0": BTDesigner(
-                policy, AcqMTV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "beta": 0, "eps_0": 3.0}
-            ),
-            "mtv_eps=1.0": BTDesigner(
-                policy, AcqMTV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "beta": 0, "eps_0": 1.0}
-            ),
-            "mtv_eps=0.3": BTDesigner(
-                policy, AcqMTV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "beta": 0, "eps_0": 0.3}
-            ),
-            "mtv_eps=0.1": BTDesigner(
-                policy, AcqMTV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "beta": 0, "eps_0": 0.1}
-            ),
-            "mtv_eps=0.01": BTDesigner(
-                policy, AcqMTV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "beta": 0, "eps_0": 0.01}
-            ),
             "mtv_no-opt": BTDesigner(
                 policy,
                 AcqMTV,
@@ -114,22 +104,23 @@ class Optimizer:
                 init_sobol=0,
                 init_center=False,
                 init_X_samples=False,
-                acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "beta": 0},
+                acq_kwargs={"ttype": "mvar", "num_X_samples": default_num_X_samples},
             ),
             "mtv_no-len-corr": BTDesigner(
                 policy,
                 AcqMTV,
                 init_sobol=0,
                 init_center=False,
-                acq_kwargs={"ttype": "msvar", "num_X_samples": default_num_X_samples, "beta": 0, "lengthscale_correction": False},
+                acq_kwargs={"ttype": "mvar", "num_X_samples": default_num_X_samples, "lengthscale_correction": None},
             ),
             "mtv_no-pmax": BTDesigner(
                 policy,
                 AcqMTV,
                 init_sobol=0,
                 init_center=False,
-                acq_kwargs={"ttype": "msvar", "sample_type": "sobol", "num_X_samples": default_num_X_samples, "beta": 0},
+                acq_kwargs={"ttype": "mvar", "sample_type": "sobol", "num_X_samples": default_num_X_samples},
             ),
+            # MTV for first batch only
             "mtv_then_sr": [
                 self._designers["mtv"],
                 self._designers["sr"],
