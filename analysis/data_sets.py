@@ -96,15 +96,18 @@ def summarize_traces(traces):
     return mu, se
 
 
-def normalize_summaries(summaries: dict):
+def normalize_summaries(summaries: dict, i_only=None):
     """
     One problem, multiple optimizers
 
     summaries[optimizer_name] = (mu, se)
 
     """
-    all_mu = np.array([s[0] for s in summaries.values()])
 
+    if i_only is not None:
+        summaries = {k: ([mu[i_only]], [se[i_only]]) for k, (mu, se) in summaries.items()}
+
+    all_mu = np.array([s[0] for s in summaries.values()])
     mean = all_mu.mean()
     std = all_mu.std()
     return {optimizer_name: ((mu - mean) / std, se / std) for optimizer_name, (mu, se) in summaries.items()}
@@ -131,7 +134,7 @@ def aggregate_normalized_summaries(normalized_summaries: dict):
     return summarized_agg_by_opt
 
 
-def load_as_normalized_summaries(exp_tag, problem_names, optimizer_names, data_locator):
+def load_as_normalized_summaries(exp_tag, problem_names, optimizer_names, data_locator, i_only=None):
     normalized_summaries = {}
     count = {}
     for problem_name in problem_names:
@@ -145,7 +148,7 @@ def load_as_normalized_summaries(exp_tag, problem_names, optimizer_names, data_l
                 continue
             count[f"{problem_name}-{optimizer_name}"] = len(traces)
             summaries[optimizer_name] = summarize_traces(traces)
-        normalized_summaries[problem_name] = normalize_summaries(summaries)
+        normalized_summaries[problem_name] = normalize_summaries(summaries, i_only)
 
     med_count = np.median(list(count.values()))
     for k, c in count.items():

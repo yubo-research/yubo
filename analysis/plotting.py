@@ -60,8 +60,8 @@ def zc(x):
     return (x - x.mean()) / x.std()
 
 
-def plot_agg(data_locator, exp_tag, problem_names, optimizer_names):
-    normalized_summaries = ads.load_as_normalized_summaries(exp_tag, problem_names, optimizer_names, data_locator)
+def plot_agg(data_locator, exp_tag, problem_names, optimizer_names, i_only):
+    normalized_summaries = ads.load_as_normalized_summaries(exp_tag, problem_names, optimizer_names, data_locator, i_only)
     agg = ads.aggregate_normalized_summaries(normalized_summaries)
     colors = ["blue", "green", "red", "black", "cyan", "magenta"]
     markers = [".", "o", "v", "^", "s"]
@@ -86,7 +86,7 @@ def plot_agg_final(ax, data_locator, exp_tag, problems, optimizers, sort=False, 
     if ranks:
         agg = ads.agg_rank_summaries(exp_tag, problems, optimizers, data_locator)
     else:
-        normalized_summaries = ads.load_as_normalized_summaries(exp_tag, problems, optimizers, data_locator)
+        normalized_summaries = ads.load_as_normalized_summaries(exp_tag, problems, optimizers, data_locator, i_only=i_agg)
         agg = ads.aggregate_normalized_summaries(normalized_summaries)
 
     if sort:
@@ -95,6 +95,7 @@ def plot_agg_final(ax, data_locator, exp_tag, problems, optimizers, sort=False, 
             if optimizer_name not in agg:
                 continue
             mu, sg = agg[optimizer_name]
+
             if not ranks:
                 mu = mu[i_agg]
             data.append((-mu, optimizer_name))
