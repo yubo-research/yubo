@@ -59,7 +59,10 @@ class BTDesigner:
 
         if len(data) < self._init_sobol:
             print("INIT SOBOL")
-            return self._sobol(data, num_arms)
+            ret = self._sobol(data, num_arms)
+            self.fig_last_acqf = "sobol"
+            self.fig_last_arms = self._sobol.fig_last_arms
+            return ret
 
         num_dim = self._policy.num_params()
         acqf = AcqBT(self._acq_fn, data, num_dim, self._acq_kwargs)

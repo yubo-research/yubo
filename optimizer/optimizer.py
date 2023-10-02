@@ -4,7 +4,6 @@ from dataclasses import dataclass
 
 from botorch.acquisition.max_value_entropy_search import (
     qLowerBoundMaxValueEntropy,
-    qMaxValueEntropy,
 )
 from botorch.acquisition.monte_carlo import (
     qNoisyExpectedImprovement,
@@ -13,7 +12,6 @@ from botorch.acquisition.monte_carlo import (
 )
 
 from bo.acq_dpp import AcqDPP
-from bo.acq_iopt import AcqIOpt
 from bo.acq_min_dist import AcqMinDist
 from bo.acq_mtv import AcqMTV
 from bo.acq_ts import AcqTS
@@ -40,6 +38,7 @@ class Optimizer:
     def __init__(self, env_conf, policy, num_arms, cb_trace=None):
         self._env_conf = env_conf
         self._num_arms = num_arms
+        self.num_params = policy.num_params()
 
         self._data = []
         self._datum_best = None
@@ -81,6 +80,13 @@ class Optimizer:
             "dpp_c": BTDesigner(policy, AcqDPP, init_sobol=1, init_center=True, acq_kwargs={"num_X_samples": default_num_X_samples}),
             # MTV, ours
             "mtv": BTDesigner(policy, AcqMTV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "mvar", "num_X_samples": default_num_X_samples}),
+            "mtv_musg": BTDesigner(policy, AcqMTV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "musg", "num_X_samples": default_num_X_samples}),
+            "mtv_best_obs": BTDesigner(
+                policy, AcqMTV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "mvar", "x_max_type": "best_obs", "num_X_samples": default_num_X_samples}
+            ),
+            "mtv_best_obs_musg": BTDesigner(
+                policy, AcqMTV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "musg", "x_max_type": "best_obs", "num_X_samples": default_num_X_samples}
+            ),
             # Long sobol init, sequential opt
             "sobol_ucb": BTDesigner(policy, qUpperConfidenceBound, init_center=False, init_sobol=init_ax_default, acq_kwargs={"beta": 1}),
             "sobol_ei": BTDesigner(policy, qNoisyExpectedImprovement, init_center=False, init_sobol=init_ax_default, acq_kwargs={"X_baseline": None}),
@@ -153,7 +159,7 @@ class Optimizer:
         data = []
         for policy in policies:
             traj = self.collect_trajectory(policy)
-            data.append(Datum(policy, traj))
+            data.append(Datum(designer, policy, traj))
         return data, tf - t0
 
     def collect_trace(self, ttype, num_iterations):
