@@ -6,5 +6,6 @@ from .trajectories import Trajectory
 
 @dataclass
 class Datum:
+    designer: Any
     policy: Any
     trajectory: Trajectory

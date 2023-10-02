@@ -33,11 +33,11 @@ def filled_err(ys, x=None, color="#AAAAAA", alpha=0.5, fmt="--", se=False, ax=No
     ax.plot(x, mu, fmt, color=color)
 
 
-def error_area(x, y, yerr, color="#AAAAAA", alpha=0.5, fmt="--", marker=","):
+def error_area(x, y, yerr, color="#AAAAAA", alpha=0.5, fmt="--", marker=",", ax=plt):
     mu = y
     sg = yerr
-    plt.fill_between(x, mu - sg, mu + sg, color=color, alpha=alpha, linewidth=1)
-    plt.plot(x, mu, fmt, color=color)
+    ax.fill_between(x, mu - sg, mu + sg, color=color, alpha=alpha, linewidth=1)
+    ax.plot(x, mu, fmt, color=color)
 
 
 def hline(y0, color="black", ax=None):

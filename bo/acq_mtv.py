@@ -27,6 +27,7 @@ class AcqMTV(MCAcquisitionFunction):
         num_Y_samples=1,
         beta_ucb=2,
         sample_type="mh",
+        x_max_type="find_max",
         alt_acqf=None,
         lengthscale_correction="type_0",
         eps_0=0.1,
@@ -56,7 +57,14 @@ class AcqMTV(MCAcquisitionFunction):
             self.Y_max = 0.0
             self.Y_best = 0.0
         else:
-            self.X_max = self._find_max()
+            if x_max_type == "find_max":
+                self.X_max = self._find_max()
+            elif x_max_type == "best_obs":
+                Y = self.model.posterior(self.model.train_inputs[0]).mean.squeeze(dim=-1)
+                i = np.argmax(Y.detach())
+                self.X_max = self.model.train_inputs[0][i, :][:, None].T
+            else:
+                assert False, ("Unknown x_max_type", x_max_type)
             self.Y_max = self.model.posterior(self.X_max).mean
             if len(self.model.train_targets) > 0:
                 i = torch.argmax(self.model.train_targets)
@@ -167,8 +175,8 @@ class AcqMTV(MCAcquisitionFunction):
         num_dim = X.shape[-1]
         num_obs = len(self.model.train_inputs[0])
 
-        mvn = self.model.posterior(X)
-        model_f = self.model.condition_on_observations(X=X, Y=mvn.mean)
+        mvn_a = self.model.posterior(X)
+        model_f = self.model.condition_on_observations(X=X, Y=mvn_a.mean)
         if self._lengthscale_correction is not None:
             # num_obs = 0 ==> 1 "bin", size of whole box
             # num_obs = 1 ==> 2 "bins", each size of half the box
@@ -188,26 +196,11 @@ class AcqMTV(MCAcquisitionFunction):
             var_f = mvn_f.variance.squeeze()
             m = var_f.mean(dim=-1)
             return -m
-        elif self.ttype == "mstd":
-            # like I-Optimality
-            std_f = mvn_f.stddev.squeeze()
-            m = std_f.mean(dim=-1)
-            return -m
-        elif self.ttype in ["exsr", "exucb"]:
-            std_f = mvn_f.stddev.squeeze()
-            m = std_f.mean(dim=-1)
-            if num_obs == 0:
-                return -m
-            else:
-                Y = self.get_posterior_samples(mvn).squeeze(-1)
-                mean = mvn.mean.squeeze(-1)
-                if self.ttype == "exsr":
-                    mx = Y.amax(dim=-1).mean(dim=0)  # v. good
-                elif self.ttype == "exucb":
-                    mx = (mean + torch.abs(Y - mean.unsqueeze(0))).amax(dim=-1).mean(dim=0)
-                else:
-                    assert False
-                return mx - m
+        elif self.ttype in ["musg"]:
+            # mean(mu(x_a)) - sqrt( sum(p*(x) sg(x) ))
+            mu_a = mvn_a.mean.squeeze(-1)
+            var_f = mvn_f.variance.squeeze(-1)
+            return mu_a.mean(dim=-1) - torch.sqrt(var_f.mean(dim=-1))
         elif self.ttype == "msvar":
             # faster appx. G-Optimality
             var_f = mvn_f.variance.squeeze()
@@ -218,36 +211,6 @@ class AcqMTV(MCAcquisitionFunction):
             # G-Optimality
             var_f = mvn_f.variance.squeeze()
             return -var_f.max(dim=-1).values
-        elif self.ttype in ["ei", "ei2", "msei"]:
-            mu_f = mvn_f.mean.squeeze()
-            sd_f = mvn_f.stddev.squeeze()
-            if self.ttype in ["ei", "msei"]:
-                y_0 = self.Y_max
-            elif self.ttype == "ei2":
-                y_0 = self.Y_best
-            else:
-                assert False, self.ttype
-            u = _scaled_improvement(mu_f, sd_f, y_0)
-            af = sd_f * _ei_helper(u)
-            if self.ttype.startswith("ms"):
-                return -(af.mean(dim=-1) + af.std(dim=-1))
-            else:
-                return -af.mean(dim=-1)
-            # return -af.max(dim=-1).values
-        elif self.ttype in ["ucb", "msucb"]:
-            mu_f = mvn_f.mean.squeeze()
-            sd_f = mvn_f.stddev.squeeze()
-            af = mu_f + self.beta_ucb * sd_f
-            if self.ttype == "ucb":
-                # return -af.max(dim=-1).values
-                return -af.mean(dim=-1)
-            elif self.ttype == "msucb":
-                return -(af.mean(dim=-1) + af.std(dim=-1))
-            else:
-                assert False
-        elif self.ttype == "sr":
-            Y = self.get_posterior_samples(mvn_f).squeeze(-1)
-            return -Y.squeeze(-1).max(dim=0).values.max(dim=-1).values
         else:
             assert False, ("Unknown", self.ttype)
 

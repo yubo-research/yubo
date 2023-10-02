@@ -19,10 +19,12 @@ class SobolDesigner:
         assert len(self._ps) > 0, "max_points exceeded"
 
         policies = []
+        self.fig_last_arms = []
         for _ in range(num_arms):
-            p = self._ps[0, :]
+            x = self._ps[0, :]
+            self.fig_last_arms.append(x)
             self._ps = self._ps[1:, :]
             policy = self._policy.clone()
-            policy.set_params(all_bounds.p_low + all_bounds.p_width * p)
+            policy.set_params(all_bounds.p_low + all_bounds.p_width * x)
             policies.append(policy)
         return policies
