@@ -82,7 +82,6 @@ def plot_agg(data_locator, exp_tag, problem_names, optimizer_names, i_only):
 
 
 def plot_agg_final(ax, data_locator, exp_tag, problems, optimizers, sort=False, ranks=False, i_agg=-1):
-
     if ranks:
         agg = ads.agg_rank_summaries(exp_tag, problems, optimizers, data_locator)
     else:

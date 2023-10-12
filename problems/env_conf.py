@@ -5,12 +5,13 @@ import gymnasium as gym
 
 import problems.pure_functions as pure_functions
 from problems.linear_policy import LinearPolicy
+from problems.noise_maker import NoiseMaker
 from problems.pure_function_policy import PureFunctionPolicy
 
 
-def get_env_conf(tag, seed=None):
+def get_env_conf(tag, seed=None, noise=None):
     if tag[:2] == "f:":
-        ec = EnvConf(tag, seed=seed, max_steps=1000, solved=9999)
+        ec = EnvConf(tag, seed=seed, noise=noise, max_steps=1000, solved=9999)
     else:
         ec = _env_confs[tag]
         ec.seed = seed
@@ -31,20 +32,30 @@ class EnvConf:
     max_steps: int
     solved: int
     seed: int
+    noise: float = None
     show_frames: int = None
     kwargs: dict = None
     state_space: Any = None
     action_space: Any = None
 
-    def make(self, **kwargs):
+    def _make(self, **kwargs):
         if self.env_name[:2] == "f:":
-            return pure_functions.make(self.env_name, seed=self.seed)
-        return gym.make(self.env_name, **(kwargs | self.kwargs))
+            env = pure_functions.make(self.env_name, seed=self.seed)
+        else:
+            env = gym.make(self.env_name, **(kwargs | self.kwargs))
+        return env
+
+    def make(self, **kwargs):
+        env = self._make(**kwargs)
+        if self.noise is not None:
+            assert self.env_name[:2] == "f:", ("NYI: Noise is only supported for pure functions", self.env_name)
+            env = NoiseMaker(env, self.noise)
+        return env
 
     def __post_init__(self):
         if not self.kwargs:
             self.kwargs = {}
-        env = self.make()
+        env = self._make()
         self.state_space = env.observation_space
         self.action_space = env.action_space
         env.close()
