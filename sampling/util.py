@@ -62,7 +62,6 @@ def draw_bounded_normal_samples(mu, cov, num_samples, qmc=False):
 
 
 def _xxx_draw_varied_bounded_normal_samples(mus_covs):
-
     samples = []
     num_dim = len(mus_covs[0][0])
     for mu, cov in mus_covs:
