@@ -5,12 +5,12 @@ import analysis.data_sets as ads
 
 
 def subplots(n, m, figsize):
-    _, axs = plt.subplots(n, m, figsize=(figsize, figsize))
+    fig, axs = plt.subplots(n, m, figsize=(figsize, figsize))
     if isinstance(axs, np.ndarray):
         axs = axs.flatten()
     else:
         axs = [axs]
-    return axs
+    return fig, axs
 
 
 def tight(axs):

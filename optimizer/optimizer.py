@@ -119,7 +119,7 @@ class Optimizer:
                 init_center=False,
                 acq_kwargs={"ttype": "mvar", "num_X_samples": default_num_X_samples, "lengthscale_correction": None},
             ),
-            "mtv_no-pmax": BTDesigner(
+            "mtv_no-pstar": BTDesigner(
                 policy,
                 AcqMTV,
                 init_sobol=0,
