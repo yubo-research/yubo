@@ -33,11 +33,11 @@ def filled_err(ys, x=None, color="#AAAAAA", alpha=0.5, fmt="--", se=False, ax=No
     ax.plot(x, mu, fmt, color=color)
 
 
-def error_area(x, y, yerr, color="#AAAAAA", alpha=0.5, fmt="--", marker=","):
+def error_area(x, y, yerr, color="#AAAAAA", alpha=0.5, fmt="--", marker=",", ax=plt):
     mu = y
     sg = yerr
-    plt.fill_between(x, mu - sg, mu + sg, color=color, alpha=alpha, linewidth=1)
-    plt.plot(x, mu, fmt, color=color)
+    ax.fill_between(x, mu - sg, mu + sg, color=color, alpha=alpha, linewidth=1)
+    ax.plot(x, mu, fmt, color=color)
 
 
 def hline(y0, color="black", ax=None):
@@ -60,8 +60,8 @@ def zc(x):
     return (x - x.mean()) / x.std()
 
 
-def plot_agg(data_locator, exp_tag, problem_names, optimizer_names):
-    normalized_summaries = ads.load_as_normalized_summaries(exp_tag, problem_names, optimizer_names, data_locator)
+def plot_agg(data_locator, exp_tag, problem_names, optimizer_names,num_arms, num_dim, i_only):
+    normalized_summaries = ads.load_as_normalized_summaries(exp_tag, problem_names, optimizer_names, data_locator,num_arms, num_dim, i_only)
     agg = ads.aggregate_normalized_summaries(normalized_summaries)
     colors = ["blue", "green", "red", "black", "cyan", "magenta"]
     markers = [".", "o", "v", "^", "s"]
@@ -81,32 +81,42 @@ def plot_agg(data_locator, exp_tag, problem_names, optimizer_names):
         i_marker = (i_marker + 1) % len(markers)
 
 
-def plot_agg_final(ax, data_locator, exp_tag, problem_names, optimizer_names, sort=False):
-    normalized_summaries = ads.load_as_normalized_summaries(exp_tag, problem_names, optimizer_names, data_locator)
-    agg = ads.aggregate_normalized_summaries(normalized_summaries)
+def plot_agg_final(ax, data_locator, exp_tag, problems, optimizers, num_arms, num_dim, sort=False, ranks=False, i_agg=-1):
+    if ranks:
+        agg = ads.agg_rank_summaries(exp_tag, problems, optimizers, data_locator,num_arms, num_dim)
+    else:
+        normalized_summaries = ads.load_as_normalized_summaries(exp_tag, problems, optimizers, data_locator,num_arms, num_dim, i_only=i_agg)
+        agg = ads.aggregate_normalized_summaries(normalized_summaries)
 
     if sort:
         data = []
-        for optimizer_name in optimizer_names:
+        for optimizer_name in optimizers:
             if optimizer_name not in agg:
                 continue
             mu, sg = agg[optimizer_name]
-            data.append((-mu[-1], optimizer_name))
-        optimizer_names = [d[1] for d in sorted(data)]
+
+            if not ranks:
+                mu = mu[i_agg]
+            data.append((-mu, optimizer_name))
+        optimizers = [d[1] for d in sorted(data)]
 
     # colors = ["blue", "green", "red", "black", "cyan", "magenta"]
     # markers = [".", "o", "v", "^", "s"]
     # i_color = 0
     # i_marker = 0
     agg_final = {}
-    for optimizer_name in optimizer_names:
+    for optimizer_name in optimizers:
         if optimizer_name not in agg:
             continue
         mu, sg = agg[optimizer_name]
-        agg_final[optimizer_name] = (mu[-1], sg[-1])
+        if not ranks:
+            mu = mu[i_agg]
+            sg = sg[i_agg]
+        agg_final[optimizer_name] = (mu, sg)
 
-    n = np.arange(len(optimizer_names))
-    o = np.array([agg_final[n] for n in optimizer_names])
+    n = np.arange(len(optimizers))
+    o = np.array([agg_final[n] for n in optimizers])
+    # print(n, o[:, 0], o[:, 1])
     ax.errorbar(n, o[:, 0], o[:, 1], fmt="ko", capsize=10)
     # ap.error_area(n, o[:,0], o[:,1])
     # plt.plot(n, o[:,0], 'ko--');
@@ -114,12 +124,58 @@ def plot_agg_final(ax, data_locator, exp_tag, problem_names, optimizer_names, so
         xticks = plt.xticks
     else:
         xticks = ax.set_xticks
-    xticks(n, optimizer_names, rotation=90)
+    xticks(n, optimizers, rotation=90)
 
-
-def plot_agg_all(ax, data_locator, exp_tag, optimizers=None, sort=False):
-    problems, optimizers_actual = ads.all_in(exp_tag)
+def plot_agg_all(ax, data_locator, exp_tag,num_arms, num_dim, optimizers=None,  sort=False, i_agg=-1):
+    problems, optimizers_actual = ads.all_in(exp_tag, num_arms, num_dim)
     if optimizers is None:
         optimizers = optimizers_actual
-    plot_agg_final(ax, data_locator, exp_tag, problems, optimizers, sort=sort)
+    plot_agg_final(ax, data_locator, exp_tag, problems, optimizers, num_arms, num_dim, sort=sort, i_agg=i_agg)
     return optimizers
+
+def plot_agg_dim( data_locator, exp_tag, problems, optimizers, num_arms, num_dim, sort=False, ranks=False, i_agg=-1):
+    if ranks:
+        agg = ads.agg_rank_summaries(exp_tag, problems, optimizers, data_locator,num_arms, num_dim)
+    else:
+        normalized_summaries = ads.load_as_normalized_summaries(exp_tag, problems, optimizers, data_locator,num_arms, num_dim, i_only=i_agg)
+        agg = ads.aggregate_normalized_summaries(normalized_summaries)
+
+    if sort:
+        data = []
+        for optimizer_name in optimizers:
+            if optimizer_name not in agg:
+                continue
+            mu, sg = agg[optimizer_name]
+
+            if not ranks:
+                mu = mu[i_agg]
+            data.append((-mu, optimizer_name))
+        optimizers = [d[1] for d in sorted(data)]
+
+    # colors = ["blue", "green", "red", "black", "cyan", "magenta"]
+    # markers = [".", "o", "v", "^", "s"]
+    # i_color = 0
+    # i_marker = 0
+    agg_final = {}
+    for optimizer_name in optimizers:
+        if optimizer_name not in agg:
+            continue
+        mu, sg = agg[optimizer_name]
+        if not ranks:
+            mu = mu[i_agg]
+            sg = sg[i_agg]
+        agg_final[optimizer_name] = (mu, sg)
+    x = num_dim
+    n = np.arange(len(optimizers))
+    o = np.array([agg_final[n] for n in optimizers])
+    return o[:, 0], o[:, 1]
+
+
+def plot_agg_dim_all( data_locator, exp_tag,num_arms, num_dim, optimizers=None,  sort=False, i_agg=-1):
+    problems, optimizers_actual = ads.all_in(exp_tag, num_arms, num_dim)
+    if optimizers is None:
+        optimizers = optimizers_actual
+    mu, sg = plot_agg_dim(data_locator, exp_tag, problems, optimizers, num_arms, num_dim, sort=sort, i_agg=i_agg)
+
+    return mu, sg
+
