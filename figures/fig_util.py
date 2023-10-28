@@ -7,7 +7,7 @@ from problems.env_conf import default_policy, get_env_conf
 def expository_problem():
     env_tag = "f:sphere-2d"
 
-    seed = 2
+    seed = 4
     torch.manual_seed(seed)
     np.random.seed(seed)
 
