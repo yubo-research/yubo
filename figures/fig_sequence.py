@@ -17,12 +17,12 @@ if __name__ == "__main__":
 
     opt = Optimizer(env_conf, policy, num_arms)
 
-    for i_iter in range(6):
+    for i_iter in range(3):
         opt.collect_trace(ttype=ttype, num_iterations=1)
         acqf = opt._designers[ttype].fig_last_acqf.acq_function
         x_arms = opt._designers[ttype].fig_last_arms
 
-        if i_iter in [0, 2, 5]:
+        if i_iter in [0, 1, 2]:
             od = f"{out_dir}/{i_iter}"
             os.makedirs(od, exist_ok=True)
             mean_func_contours(od, env_conf)

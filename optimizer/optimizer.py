@@ -127,6 +127,10 @@ class Optimizer:
                 acq_kwargs={"ttype": "mvar", "sample_type": "sobol", "num_X_samples": default_num_X_samples},
             ),
             # MTV for first batch only
+            "mtv_then_ts": [
+                self._designers["mtv"],
+                self._designers["ts"],
+            ],
             "mtv_then_sr": [
                 self._designers["mtv"],
                 self._designers["sr"],

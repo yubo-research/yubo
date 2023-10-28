@@ -81,24 +81,28 @@ def plot_agg(data_locator, exp_tag, problem_names, optimizer_names, i_only):
         i_marker = (i_marker + 1) % len(markers)
 
 
-def plot_agg_final(ax, data_locator, exp_tag, problems, optimizers, sort=False, ranks=False, i_agg=-1):
+def plot_agg_final(ax, data_locator, exp_tag, problems, optimizers, sort=False, ranks=False, i_agg=-1, renames=None):
     if ranks:
         agg = ads.agg_rank_summaries(exp_tag, problems, optimizers, data_locator)
     else:
         normalized_summaries = ads.load_as_normalized_summaries(exp_tag, problems, optimizers, data_locator, i_only=i_agg)
         agg = ads.aggregate_normalized_summaries(normalized_summaries)
 
+    if renames is None:
+        renames = list(optimizers)
     if sort:
         data = []
-        for optimizer_name in optimizers:
+        for rename, optimizer_name in zip(renames, optimizers):
             if optimizer_name not in agg:
                 continue
             mu, sg = agg[optimizer_name]
 
             if not ranks:
                 mu = mu[i_agg]
-            data.append((-mu, optimizer_name))
-        optimizers = [d[1] for d in sorted(data)]
+            data.append((-mu, rename, optimizer_name))
+        data = sorted(data)
+        optimizers = [d[2] for d in data]
+        renames = [d[1] for d in data]
 
     # colors = ["blue", "green", "red", "black", "cyan", "magenta"]
     # markers = [".", "o", "v", "^", "s"]
@@ -123,12 +127,12 @@ def plot_agg_final(ax, data_locator, exp_tag, problems, optimizers, sort=False, 
         xticks = plt.xticks
     else:
         xticks = ax.set_xticks
-    xticks(n, optimizers, rotation=90)
+    xticks(n, renames, rotation=90)
 
 
-def plot_agg_all(ax, data_locator, exp_tag, optimizers=None, sort=False, i_agg=-1):
+def plot_agg_all(ax, data_locator, exp_tag, optimizers=None, sort=False, i_agg=-1, renames=None):
     problems, optimizers_actual = ads.all_in(exp_tag)
     if optimizers is None:
         optimizers = optimizers_actual
-    plot_agg_final(ax, data_locator, exp_tag, problems, optimizers, sort=sort, i_agg=i_agg)
+    plot_agg_final(ax, data_locator, exp_tag, problems, optimizers, sort=sort, i_agg=i_agg, renames=renames)
     return optimizers
