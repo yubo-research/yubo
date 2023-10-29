@@ -5,6 +5,7 @@ import common.all_bounds as all_bounds
 
 class PureFunctionPolicy:
     def __init__(self, env_conf):
+        self.seed = env_conf.seed
         self._env_conf = env_conf
         self._params = np.random.uniform(all_bounds.p_low, all_bounds.p_high, size=(len(env_conf.action_space.low),))
 

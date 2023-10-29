@@ -29,7 +29,6 @@ class BTDesigner:
         self._opt_sequential = opt_sequential
         self._optimizer_options = optimizer_options
         self._acq_kwargs = acq_kwargs
-        self._sobol = SobolDesigner(policy.clone(), self._init_center)
 
     def __repr__(self):
         return f"{self.__class__.__name__} {self._acq_fn}"
@@ -58,10 +57,12 @@ class BTDesigner:
         import warnings
 
         if len(data) < self._init_sobol:
-            print("INIT SOBOL")
-            ret = self._sobol(data, num_arms)
+            sobol = SobolDesigner(self._policy.clone(), self._init_center)
+            print("INIT SOBOL", sobol.seed, sobol.init_center())
+            ret = sobol(data, num_arms)
+            print("S:", data, num_arms, ret)
             self.fig_last_acqf = "sobol"
-            self.fig_last_arms = self._sobol.fig_last_arms
+            self.fig_last_arms = sobol.fig_last_arms
             return ret
 
         num_dim = self._policy.num_params()

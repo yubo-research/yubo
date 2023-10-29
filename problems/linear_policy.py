@@ -5,6 +5,7 @@ from .ms_filter import MeanStdFilter
 
 class LinearPolicy:
     def __init__(self, env_conf):
+        self.seed = env_conf.seed
         self._env_conf = env_conf
         num_state = env_conf.state_space.shape[0]
         self._beta = np.random.uniform(
