@@ -5,11 +5,11 @@ from scipy.stats import rankdata
 
 
 def problems_in(exp_tag):
-    return sorted(os.listdir(f"/Users/dsweet2/Projects/bbo/results/{exp_tag}"))
+    return sorted(os.listdir(f"results/{exp_tag}"))
 
 
 def optimizers_in(exp_tag, problem):
-    return sorted(os.listdir(f"/Users/dsweet2/Projects/bbo/results/{exp_tag}/{problem}"))
+    return sorted(os.listdir(f"results/{exp_tag}/{problem}"))
 
 
 def all_in(exp_tag):
