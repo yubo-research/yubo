@@ -136,3 +136,139 @@ def plot_agg_all(ax, data_locator, exp_tag, optimizers=None, sort=False, i_agg=-
         optimizers = optimizers_actual
     plot_agg_final(ax, data_locator, exp_tag, problems, optimizers, sort=sort, i_agg=i_agg, renames=renames)
     return optimizers
+
+def plot_agg_dim(ax, data_locator, exp_tag, problems, optimizers, num_arms, sort=False, ranks=False, i_agg=-1, renames=None):
+    if ranks:
+        agg = ads.agg_rank_summaries(exp_tag, problems, optimizers, data_locator)
+    else:
+        normalized_summaries = ads.load_as_normalized_summaries(exp_tag, problems, optimizers, data_locator, i_only=i_agg)
+        agg = ads.aggregate_normalized_summaries(normalized_summaries)
+
+    if renames is None:
+        renames = list(optimizers)
+    if sort:
+        data = []
+        for rename, optimizer_name in zip(renames, optimizers):
+            if optimizer_name not in agg:
+                continue
+            mu, sg = agg[optimizer_name]
+
+            if not ranks:
+                mu = mu[i_agg]
+            data.append((-mu, rename, optimizer_name))
+        data = sorted(data)
+        optimizers = [d[2] for d in data]
+        renames = [d[1] for d in data]
+
+    # colors = ["blue", "green", "red", "black", "cyan", "magenta"]
+    # markers = [".", "o", "v", "^", "s"]
+    # i_color = 0
+    # i_marker = 0
+    agg_final = {}
+    for optimizer_name in optimizers:
+        if optimizer_name not in agg:
+            continue
+        mu, sg = agg[optimizer_name]
+        if not ranks:
+            mu = mu[i_agg]
+            sg = sg[i_agg]
+        agg_final[optimizer_name] = (mu, sg)
+
+    # n = np.arange(len(optimizers))
+    o = np.array([agg_final[n] for n in optimizers])
+    Y = o[:, 0]
+    SG= o[:, 1]
+    colors = ["black","dimgray","darkgray","silver","lightgray"]
+    fmts = ["X-", "+-","o-","^-","8-","s-","*-","D-","v-","P-","1-",",-"]
+    linestyles=["None","--",":",".-"]
+    legend = []
+    for j in range(len(optimizers)):
+        y = Y[j]
+        sg = SG[j]
+        x = str(num_arms)
+        legend.extend(optimizers[j])
+        ax.errorbar(x,y, sg, fmt=fmts[j], capsize=10,color = colors[j], linestyle = linestyles[j],label=optimizers[j])
+        # ax.legend(legend, loc="lower right", bbox_to_anchor=(1, 0))
+    # ap.error_area(n, o[:,0], o[:,1])
+    # plt.plot(n, o[:,0], 'ko--');
+    if ax == plt:
+        xticks = plt.xticks
+    else:
+        xticks = ax.set_xticks
+    # xticks(n, renames, rotation=90)
+
+
+def plot_agg_dim_all(ax, data_locator, exp_tag, num_arms, optimizers=None, sort=False, i_agg=-1, renames=None):
+    problems, optimizers_actual = ads.all_in(exp_tag)
+    if optimizers is None:
+        optimizers = optimizers_actual
+    plot_agg_dim(ax, data_locator, exp_tag, problems, optimizers, num_arms, sort=sort, i_agg=i_agg, renames=renames)
+    return optimizers
+
+def plot_agg_arm(ax, data_locator, exp_tag, problems, optimizers, num_dim, sort=False, ranks=False, i_agg=-1, renames=None):
+    if ranks:
+        agg = ads.agg_rank_summaries(exp_tag, problems, optimizers, data_locator)
+    else:
+        normalized_summaries = ads.load_as_normalized_summaries(exp_tag, problems, optimizers, data_locator, i_only=i_agg)
+        agg = ads.aggregate_normalized_summaries(normalized_summaries)
+
+    if renames is None:
+        renames = list(optimizers)
+    if sort:
+        data = []
+        for rename, optimizer_name in zip(renames, optimizers):
+            if optimizer_name not in agg:
+                continue
+            mu, sg = agg[optimizer_name]
+
+            if not ranks:
+                mu = mu[i_agg]
+            data.append((-mu, rename, optimizer_name))
+        data = sorted(data)
+        optimizers = [d[2] for d in data]
+        renames = [d[1] for d in data]
+
+    # colors = ["blue", "green", "red", "black", "cyan", "magenta"]
+    # markers = [".", "o", "v", "^", "s"]
+    # i_color = 0
+    # i_marker = 0
+    agg_final = {}
+    for optimizer_name in optimizers:
+        if optimizer_name not in agg:
+            continue
+        mu, sg = agg[optimizer_name]
+        if not ranks:
+            mu = mu[i_agg]
+            sg = sg[i_agg]
+        agg_final[optimizer_name] = (mu, sg)
+
+    # n = np.arange(len(optimizers))
+    o = np.array([agg_final[n] for n in optimizers])
+    Y = o[:, 0]
+    SG= o[:, 1]
+    colors = ["black","dimgray","darkgray","silver","lightgray"]
+    fmts = ["X-", "+-","o-","^-","8-","s-","*-","D-","v-","P-","1-",",-"]
+    linestyles=["None","--",":",".-"]
+    legend = []
+    for j in range(len(optimizers)):
+        y = Y[j]
+        sg = SG[j]
+        x = str(num_dim)
+        legend.extend(optimizers[j])
+        ax.errorbar(x,y, sg, fmt=fmts[j], capsize=10,color = colors[j], linestyle = linestyles[j],label=optimizers[j])
+        # ax.legend(legend, loc="lower right", bbox_to_anchor=(1, 0))
+    # ap.error_area(n, o[:,0], o[:,1])
+    # plt.plot(n, o[:,0], 'ko--');
+    if ax == plt:
+        xticks = plt.xticks
+    else:
+        xticks = ax.set_xticks
+    # xticks(n, renames, rotation=90)
+
+
+def plot_agg_arm_all(ax, data_locator, exp_tag, num_dim, optimizers=None, sort=False, i_agg=-1, renames=None):
+    problems, optimizers_actual = ads.all_in(exp_tag)
+    if optimizers is None:
+        optimizers = optimizers_actual
+    plot_agg_arm(ax, data_locator, exp_tag, problems, optimizers, num_dim, sort=sort, i_agg=i_agg, renames=renames)
+    return optimizers
