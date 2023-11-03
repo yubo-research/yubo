@@ -110,6 +110,7 @@ def normalize_summaries(summaries: dict, i_only=None):
     all_mu = np.array([s[0] for s in summaries.values()])
     mean = all_mu.mean()
     std = all_mu.std()
+    print("total mean", mean, "total std", std)
     return {optimizer_name: ((mu - mean) / std, se / std) for optimizer_name, (mu, se) in summaries.items()}
 
 
@@ -148,6 +149,7 @@ def load_as_normalized_summaries(exp_tag, problem_names, optimizer_names, data_l
                 continue
             count[f"{problem_name}-{optimizer_name}"] = len(traces)
             summaries[optimizer_name] = summarize_traces(traces)
+        print("problem", problem_name)
         normalized_summaries[problem_name] = normalize_summaries(summaries, i_only)
 
     med_count = np.median(list(count.values()))
