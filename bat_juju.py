@@ -67,35 +67,36 @@ if __name__=="__main__":
     #     num_arms=100,
     #     num_samples=1,
     #     opts=opts,
-    # )+ prep_cmds(
-    #     ddir="exp_2_plots/plot_3d_100arm",
-    #     funcs=funcs_10d,
-    #     dims=[3],
-    #     num_arms=100,
-    #     num_samples=1,
-    #     opts=opts,
     # )+ 
     cmds = prep_cmds(
-        ddir="exp_2_plots/plot_10d_100arm",
+        ddir="exp_2_plots/plot_3d_100arm",
         funcs=funcs_10d,
-        dims=[10],
-        num_arms=100,
-        num_samples=1,
-        opts=opts,
-    )+ prep_cmds(
-        ddir="exp_2_plots/plot_30d_100arm",
-        funcs=funcs_10d,
-        dims=[30],
-        num_arms=100,
-        num_samples=1,
-        opts=opts,
-    )+ prep_cmds(
-        ddir="exp_2_plots/plot_100d_100arm",
-        funcs=funcs_10d,
-        dims=[100],
+        dims=[3],
         num_arms=100,
         num_samples=1,
         opts=opts,
     )
+    # cmds = prep_cmds(
+    #     ddir="exp_2_plots/plot_10d_100arm",
+    #     funcs=funcs_10d,
+    #     dims=[10],
+    #     num_arms=100,
+    #     num_samples=1,
+    #     opts=opts,
+    # )+ prep_cmds(
+    #     ddir="exp_2_plots/plot_30d_100arm",
+    #     funcs=funcs_10d,
+    #     dims=[30],
+    #     num_arms=100,
+    #     num_samples=1,
+    #     opts=opts,
+    # )+ prep_cmds(
+    #     ddir="exp_2_plots/plot_100d_100arm",
+    #     funcs=funcs_10d,
+    #     dims=[100],
+    #     num_arms=100,
+    #     num_samples=1,
+    #     opts=opts,
+    # )
 
     run(cmds, max_parallel=10, b_dry_run=False)
