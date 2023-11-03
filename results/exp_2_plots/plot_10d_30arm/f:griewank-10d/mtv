@@ -1,0 +1,121 @@
+EXPERIMENT: env_tag = f:griewank-10d ttype = mtv num_arms = 30 num_replications = 30 num_rounds = 1
+PROBLEM: env = f:griewank-10d num_params = 10
+ITER: i_iter = 0 d_time = 176.33 ret = -35.92 ret_best = -35.92
+TRACE: name = f:griewank-10d ttype = mtv i_sample = 0 i_iter = 0 dt = 1.763e+02 return = -3.592e+01
+TIME_REPLICATE: 176.43
+PROBLEM: env = f:griewank-10d num_params = 10
+ITER: i_iter = 0 d_time = 150.90 ret = -96.53 ret_best = -96.53
+TRACE: name = f:griewank-10d ttype = mtv i_sample = 1 i_iter = 0 dt = 1.509e+02 return = -9.653e+01
+TIME_REPLICATE: 150.98
+PROBLEM: env = f:griewank-10d num_params = 10
+ITER: i_iter = 0 d_time = 153.51 ret = -97.17 ret_best = -97.17
+TRACE: name = f:griewank-10d ttype = mtv i_sample = 2 i_iter = 0 dt = 1.535e+02 return = -9.717e+01
+TIME_REPLICATE: 153.57
+PROBLEM: env = f:griewank-10d num_params = 10
+ITER: i_iter = 0 d_time = 192.81 ret = -79.15 ret_best = -79.15
+TRACE: name = f:griewank-10d ttype = mtv i_sample = 3 i_iter = 0 dt = 1.928e+02 return = -7.915e+01
+TIME_REPLICATE: 192.88
+PROBLEM: env = f:griewank-10d num_params = 10
+ITER: i_iter = 0 d_time = 179.95 ret = -88.91 ret_best = -88.91
+TRACE: name = f:griewank-10d ttype = mtv i_sample = 4 i_iter = 0 dt = 1.799e+02 return = -8.891e+01
+TIME_REPLICATE: 180.01
+PROBLEM: env = f:griewank-10d num_params = 10
+ITER: i_iter = 0 d_time = 124.49 ret = -81.69 ret_best = -81.69
+TRACE: name = f:griewank-10d ttype = mtv i_sample = 5 i_iter = 0 dt = 1.245e+02 return = -8.169e+01
+TIME_REPLICATE: 124.55
+PROBLEM: env = f:griewank-10d num_params = 10
+ITER: i_iter = 0 d_time = 150.49 ret = -64.41 ret_best = -64.41
+TRACE: name = f:griewank-10d ttype = mtv i_sample = 6 i_iter = 0 dt = 1.505e+02 return = -6.441e+01
+TIME_REPLICATE: 150.55
+PROBLEM: env = f:griewank-10d num_params = 10
+ITER: i_iter = 0 d_time = 97.68 ret = -64.42 ret_best = -64.42
+TRACE: name = f:griewank-10d ttype = mtv i_sample = 7 i_iter = 0 dt = 9.768e+01 return = -6.442e+01
+TIME_REPLICATE: 97.74
+PROBLEM: env = f:griewank-10d num_params = 10
+ITER: i_iter = 0 d_time = 105.20 ret = -73.15 ret_best = -73.15
+TRACE: name = f:griewank-10d ttype = mtv i_sample = 8 i_iter = 0 dt = 1.052e+02 return = -7.315e+01
+TIME_REPLICATE: 105.26
+PROBLEM: env = f:griewank-10d num_params = 10
+ITER: i_iter = 0 d_time = 146.74 ret = -105.03 ret_best = -105.03
+TRACE: name = f:griewank-10d ttype = mtv i_sample = 9 i_iter = 0 dt = 1.467e+02 return = -1.050e+02
+TIME_REPLICATE: 146.81
+PROBLEM: env = f:griewank-10d num_params = 10
+ITER: i_iter = 0 d_time = 124.16 ret = -95.80 ret_best = -95.80
+TRACE: name = f:griewank-10d ttype = mtv i_sample = 10 i_iter = 0 dt = 1.242e+02 return = -9.580e+01
+TIME_REPLICATE: 124.21
+PROBLEM: env = f:griewank-10d num_params = 10
+ITER: i_iter = 0 d_time = 128.56 ret = -103.06 ret_best = -103.06
+TRACE: name = f:griewank-10d ttype = mtv i_sample = 11 i_iter = 0 dt = 1.286e+02 return = -1.031e+02
+TIME_REPLICATE: 128.62
+PROBLEM: env = f:griewank-10d num_params = 10
+ITER: i_iter = 0 d_time = 137.31 ret = -91.42 ret_best = -91.42
+TRACE: name = f:griewank-10d ttype = mtv i_sample = 12 i_iter = 0 dt = 1.373e+02 return = -9.142e+01
+TIME_REPLICATE: 137.37
+PROBLEM: env = f:griewank-10d num_params = 10
+ITER: i_iter = 0 d_time = 52.80 ret = -103.68 ret_best = -103.68
+TRACE: name = f:griewank-10d ttype = mtv i_sample = 13 i_iter = 0 dt = 5.280e+01 return = -1.037e+02
+TIME_REPLICATE: 52.88
+PROBLEM: env = f:griewank-10d num_params = 10
+ITER: i_iter = 0 d_time = 101.71 ret = -70.34 ret_best = -70.34
+TRACE: name = f:griewank-10d ttype = mtv i_sample = 14 i_iter = 0 dt = 1.017e+02 return = -7.034e+01
+TIME_REPLICATE: 101.78
+PROBLEM: env = f:griewank-10d num_params = 10
+ITER: i_iter = 0 d_time = 58.52 ret = -86.74 ret_best = -86.74
+TRACE: name = f:griewank-10d ttype = mtv i_sample = 15 i_iter = 0 dt = 5.852e+01 return = -8.674e+01
+TIME_REPLICATE: 58.57
+PROBLEM: env = f:griewank-10d num_params = 10
+ITER: i_iter = 0 d_time = 6.58 ret = -105.34 ret_best = -105.34
+TRACE: name = f:griewank-10d ttype = mtv i_sample = 16 i_iter = 0 dt = 6.583e+00 return = -1.053e+02
+TIME_REPLICATE: 6.62
+PROBLEM: env = f:griewank-10d num_params = 10
+ITER: i_iter = 0 d_time = 5.61 ret = -102.32 ret_best = -102.32
+TRACE: name = f:griewank-10d ttype = mtv i_sample = 17 i_iter = 0 dt = 5.605e+00 return = -1.023e+02
+TIME_REPLICATE: 5.64
+PROBLEM: env = f:griewank-10d num_params = 10
+ITER: i_iter = 0 d_time = 9.40 ret = -95.53 ret_best = -95.53
+TRACE: name = f:griewank-10d ttype = mtv i_sample = 18 i_iter = 0 dt = 9.401e+00 return = -9.553e+01
+TIME_REPLICATE: 9.44
+PROBLEM: env = f:griewank-10d num_params = 10
+ITER: i_iter = 0 d_time = 8.73 ret = -96.38 ret_best = -96.38
+TRACE: name = f:griewank-10d ttype = mtv i_sample = 19 i_iter = 0 dt = 8.731e+00 return = -9.638e+01
+TIME_REPLICATE: 8.77
+PROBLEM: env = f:griewank-10d num_params = 10
+ITER: i_iter = 0 d_time = 14.53 ret = -68.66 ret_best = -68.66
+TRACE: name = f:griewank-10d ttype = mtv i_sample = 20 i_iter = 0 dt = 1.453e+01 return = -6.866e+01
+TIME_REPLICATE: 14.56
+PROBLEM: env = f:griewank-10d num_params = 10
+ITER: i_iter = 0 d_time = 10.08 ret = -65.11 ret_best = -65.11
+TRACE: name = f:griewank-10d ttype = mtv i_sample = 21 i_iter = 0 dt = 1.008e+01 return = -6.511e+01
+TIME_REPLICATE: 10.11
+PROBLEM: env = f:griewank-10d num_params = 10
+ITER: i_iter = 0 d_time = 10.69 ret = -89.37 ret_best = -89.37
+TRACE: name = f:griewank-10d ttype = mtv i_sample = 22 i_iter = 0 dt = 1.069e+01 return = -8.937e+01
+TIME_REPLICATE: 10.72
+PROBLEM: env = f:griewank-10d num_params = 10
+ITER: i_iter = 0 d_time = 12.20 ret = -78.86 ret_best = -78.86
+TRACE: name = f:griewank-10d ttype = mtv i_sample = 23 i_iter = 0 dt = 1.220e+01 return = -7.886e+01
+TIME_REPLICATE: 12.24
+PROBLEM: env = f:griewank-10d num_params = 10
+ITER: i_iter = 0 d_time = 8.11 ret = -93.30 ret_best = -93.30
+TRACE: name = f:griewank-10d ttype = mtv i_sample = 24 i_iter = 0 dt = 8.115e+00 return = -9.330e+01
+TIME_REPLICATE: 8.14
+PROBLEM: env = f:griewank-10d num_params = 10
+ITER: i_iter = 0 d_time = 7.07 ret = -80.15 ret_best = -80.15
+TRACE: name = f:griewank-10d ttype = mtv i_sample = 25 i_iter = 0 dt = 7.068e+00 return = -8.015e+01
+TIME_REPLICATE: 7.11
+PROBLEM: env = f:griewank-10d num_params = 10
+ITER: i_iter = 0 d_time = 11.30 ret = -60.91 ret_best = -60.91
+TRACE: name = f:griewank-10d ttype = mtv i_sample = 26 i_iter = 0 dt = 1.130e+01 return = -6.091e+01
+TIME_REPLICATE: 11.34
+PROBLEM: env = f:griewank-10d num_params = 10
+ITER: i_iter = 0 d_time = 10.85 ret = -68.57 ret_best = -68.57
+TRACE: name = f:griewank-10d ttype = mtv i_sample = 27 i_iter = 0 dt = 1.085e+01 return = -6.857e+01
+TIME_REPLICATE: 10.88
+PROBLEM: env = f:griewank-10d num_params = 10
+ITER: i_iter = 0 d_time = 7.63 ret = -79.24 ret_best = -79.24
+TRACE: name = f:griewank-10d ttype = mtv i_sample = 28 i_iter = 0 dt = 7.626e+00 return = -7.924e+01
+TIME_REPLICATE: 7.65
+PROBLEM: env = f:griewank-10d num_params = 10
+ITER: i_iter = 0 d_time = 10.17 ret = -88.32 ret_best = -88.32
+TRACE: name = f:griewank-10d ttype = mtv i_sample = 29 i_iter = 0 dt = 1.017e+01 return = -8.832e+01
+TIME_REPLICATE: 10.19

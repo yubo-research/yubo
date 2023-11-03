@@ -1,0 +1,121 @@
+EXPERIMENT: env_tag = f:levy-2d ttype = random num_arms = 100 num_replications = 30 num_rounds = 1
+PROBLEM: env = f:levy-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -0.22 ret_best = -0.22
+TRACE: name = f:levy-2d ttype = random i_sample = 0 i_iter = 0 dt = 1.710e-03 return = -2.184e-01
+TIME_REPLICATE: 0.14
+PROBLEM: env = f:levy-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -0.37 ret_best = -0.37
+TRACE: name = f:levy-2d ttype = random i_sample = 1 i_iter = 0 dt = 2.230e-03 return = -3.742e-01
+TIME_REPLICATE: 0.08
+PROBLEM: env = f:levy-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -0.81 ret_best = -0.81
+TRACE: name = f:levy-2d ttype = random i_sample = 2 i_iter = 0 dt = 2.481e-03 return = -8.146e-01
+TIME_REPLICATE: 0.09
+PROBLEM: env = f:levy-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -1.11 ret_best = -1.11
+TRACE: name = f:levy-2d ttype = random i_sample = 3 i_iter = 0 dt = 2.454e-03 return = -1.109e+00
+TIME_REPLICATE: 0.09
+PROBLEM: env = f:levy-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -0.03 ret_best = -0.03
+TRACE: name = f:levy-2d ttype = random i_sample = 4 i_iter = 0 dt = 2.997e-03 return = -2.527e-02
+TIME_REPLICATE: 0.11
+PROBLEM: env = f:levy-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -1.13 ret_best = -1.13
+TRACE: name = f:levy-2d ttype = random i_sample = 5 i_iter = 0 dt = 2.638e-03 return = -1.132e+00
+TIME_REPLICATE: 0.11
+PROBLEM: env = f:levy-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -0.23 ret_best = -0.23
+TRACE: name = f:levy-2d ttype = random i_sample = 6 i_iter = 0 dt = 3.122e-03 return = -2.301e-01
+TIME_REPLICATE: 0.11
+PROBLEM: env = f:levy-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -0.00 ret_best = -0.00
+TRACE: name = f:levy-2d ttype = random i_sample = 7 i_iter = 0 dt = 2.402e-03 return = -4.431e-03
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:levy-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -0.22 ret_best = -0.22
+TRACE: name = f:levy-2d ttype = random i_sample = 8 i_iter = 0 dt = 3.720e-03 return = -2.248e-01
+TIME_REPLICATE: 0.08
+PROBLEM: env = f:levy-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -0.16 ret_best = -0.16
+TRACE: name = f:levy-2d ttype = random i_sample = 9 i_iter = 0 dt = 3.218e-03 return = -1.569e-01
+TIME_REPLICATE: 0.11
+PROBLEM: env = f:levy-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -1.67 ret_best = -1.67
+TRACE: name = f:levy-2d ttype = random i_sample = 10 i_iter = 0 dt = 1.674e-03 return = -1.673e+00
+TIME_REPLICATE: 0.13
+PROBLEM: env = f:levy-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -0.21 ret_best = -0.21
+TRACE: name = f:levy-2d ttype = random i_sample = 11 i_iter = 0 dt = 2.387e-03 return = -2.136e-01
+TIME_REPLICATE: 0.11
+PROBLEM: env = f:levy-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -0.16 ret_best = -0.16
+TRACE: name = f:levy-2d ttype = random i_sample = 12 i_iter = 0 dt = 3.672e-03 return = -1.611e-01
+TIME_REPLICATE: 0.10
+PROBLEM: env = f:levy-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -1.24 ret_best = -1.24
+TRACE: name = f:levy-2d ttype = random i_sample = 13 i_iter = 0 dt = 1.675e-03 return = -1.236e+00
+TIME_REPLICATE: 0.10
+PROBLEM: env = f:levy-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -0.41 ret_best = -0.41
+TRACE: name = f:levy-2d ttype = random i_sample = 14 i_iter = 0 dt = 3.014e-03 return = -4.093e-01
+TIME_REPLICATE: 0.10
+PROBLEM: env = f:levy-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -0.12 ret_best = -0.12
+TRACE: name = f:levy-2d ttype = random i_sample = 15 i_iter = 0 dt = 3.692e-03 return = -1.190e-01
+TIME_REPLICATE: 0.09
+PROBLEM: env = f:levy-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -0.25 ret_best = -0.25
+TRACE: name = f:levy-2d ttype = random i_sample = 16 i_iter = 0 dt = 2.654e-03 return = -2.468e-01
+TIME_REPLICATE: 0.10
+PROBLEM: env = f:levy-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -0.21 ret_best = -0.21
+TRACE: name = f:levy-2d ttype = random i_sample = 17 i_iter = 0 dt = 2.631e-03 return = -2.091e-01
+TIME_REPLICATE: 0.09
+PROBLEM: env = f:levy-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -0.17 ret_best = -0.17
+TRACE: name = f:levy-2d ttype = random i_sample = 18 i_iter = 0 dt = 1.723e-03 return = -1.742e-01
+TIME_REPLICATE: 0.09
+PROBLEM: env = f:levy-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -0.01 ret_best = -0.01
+TRACE: name = f:levy-2d ttype = random i_sample = 19 i_iter = 0 dt = 2.431e-03 return = -1.088e-02
+TIME_REPLICATE: 0.09
+PROBLEM: env = f:levy-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -0.78 ret_best = -0.78
+TRACE: name = f:levy-2d ttype = random i_sample = 20 i_iter = 0 dt = 3.003e-03 return = -7.809e-01
+TIME_REPLICATE: 0.10
+PROBLEM: env = f:levy-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -1.23 ret_best = -1.23
+TRACE: name = f:levy-2d ttype = random i_sample = 21 i_iter = 0 dt = 1.623e-03 return = -1.235e+00
+TIME_REPLICATE: 0.10
+PROBLEM: env = f:levy-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -0.41 ret_best = -0.41
+TRACE: name = f:levy-2d ttype = random i_sample = 22 i_iter = 0 dt = 2.562e-03 return = -4.112e-01
+TIME_REPLICATE: 0.10
+PROBLEM: env = f:levy-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -1.23 ret_best = -1.23
+TRACE: name = f:levy-2d ttype = random i_sample = 23 i_iter = 0 dt = 3.505e-03 return = -1.233e+00
+TIME_REPLICATE: 0.10
+PROBLEM: env = f:levy-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -0.00 ret_best = -0.00
+TRACE: name = f:levy-2d ttype = random i_sample = 24 i_iter = 0 dt = 2.491e-03 return = -5.753e-05
+TIME_REPLICATE: 0.11
+PROBLEM: env = f:levy-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -0.31 ret_best = -0.31
+TRACE: name = f:levy-2d ttype = random i_sample = 25 i_iter = 0 dt = 2.275e-03 return = -3.099e-01
+TIME_REPLICATE: 0.11
+PROBLEM: env = f:levy-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -0.22 ret_best = -0.22
+TRACE: name = f:levy-2d ttype = random i_sample = 26 i_iter = 0 dt = 3.178e-03 return = -2.209e-01
+TIME_REPLICATE: 0.11
+PROBLEM: env = f:levy-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -0.54 ret_best = -0.54
+TRACE: name = f:levy-2d ttype = random i_sample = 27 i_iter = 0 dt = 2.243e-03 return = -5.370e-01
+TIME_REPLICATE: 0.09
+PROBLEM: env = f:levy-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -0.88 ret_best = -0.88
+TRACE: name = f:levy-2d ttype = random i_sample = 28 i_iter = 0 dt = 4.024e-03 return = -8.826e-01
+TIME_REPLICATE: 0.09
+PROBLEM: env = f:levy-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -1.65 ret_best = -1.65
+TRACE: name = f:levy-2d ttype = random i_sample = 29 i_iter = 0 dt = 1.740e-03 return = -1.649e+00
+TIME_REPLICATE: 0.10

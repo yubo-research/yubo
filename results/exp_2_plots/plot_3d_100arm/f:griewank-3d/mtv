@@ -1,0 +1,19 @@
+EXPERIMENT: env_tag = f:griewank-3d ttype = mtv num_arms = 100 num_replications = 30 num_rounds = 1
+PROBLEM: env = f:griewank-3d num_params = 3
+ITER: i_iter = 0 d_time = 705.19 ret = -6.89 ret_best = -6.89
+TRACE: name = f:griewank-3d ttype = mtv i_sample = 0 i_iter = 0 dt = 7.052e+02 return = -6.890e+00
+TIME_REPLICATE: 705.43
+PROBLEM: env = f:griewank-3d num_params = 3
+ITER: i_iter = 0 d_time = 532.16 ret = -3.20 ret_best = -3.20
+TRACE: name = f:griewank-3d ttype = mtv i_sample = 1 i_iter = 0 dt = 5.322e+02 return = -3.203e+00
+TIME_REPLICATE: 532.57
+PROBLEM: env = f:griewank-3d num_params = 3
+ITER: i_iter = 0 d_time = 472.48 ret = -6.01 ret_best = -6.01
+TRACE: name = f:griewank-3d ttype = mtv i_sample = 2 i_iter = 0 dt = 4.725e+02 return = -6.015e+00
+TIME_REPLICATE: 472.70
+PROBLEM: env = f:griewank-3d num_params = 3
+ITER: i_iter = 0 d_time = 615.48 ret = -8.54 ret_best = -8.54
+TRACE: name = f:griewank-3d ttype = mtv i_sample = 3 i_iter = 0 dt = 6.155e+02 return = -8.545e+00
+TIME_REPLICATE: 615.83
+PROBLEM: env = f:griewank-3d num_params = 3
+ITER: i_iter = 0 d_time = 518.97 ret = -5.62 ret_best = -5.62

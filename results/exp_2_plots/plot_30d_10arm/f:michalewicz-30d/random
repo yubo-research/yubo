@@ -1,0 +1,121 @@
+EXPERIMENT: env_tag = f:michalewicz-30d ttype = random num_arms = 10 num_replications = 30 num_rounds = 1
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = 5.37 ret_best = 5.37
+TRACE: name = f:michalewicz-30d ttype = random i_sample = 0 i_iter = 0 dt = 3.378e-04 return = 5.370e+00
+TIME_REPLICATE: 0.05
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = 4.70 ret_best = 4.70
+TRACE: name = f:michalewicz-30d ttype = random i_sample = 1 i_iter = 0 dt = 2.308e-04 return = 4.701e+00
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = 5.03 ret_best = 5.03
+TRACE: name = f:michalewicz-30d ttype = random i_sample = 2 i_iter = 0 dt = 2.208e-04 return = 5.025e+00
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = 4.72 ret_best = 4.72
+TRACE: name = f:michalewicz-30d ttype = random i_sample = 3 i_iter = 0 dt = 3.259e-04 return = 4.721e+00
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = 4.86 ret_best = 4.86
+TRACE: name = f:michalewicz-30d ttype = random i_sample = 4 i_iter = 0 dt = 3.183e-04 return = 4.863e+00
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = 4.31 ret_best = 4.31
+TRACE: name = f:michalewicz-30d ttype = random i_sample = 5 i_iter = 0 dt = 3.355e-04 return = 4.312e+00
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = 3.67 ret_best = 3.67
+TRACE: name = f:michalewicz-30d ttype = random i_sample = 6 i_iter = 0 dt = 2.313e-04 return = 3.671e+00
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = 6.10 ret_best = 6.10
+TRACE: name = f:michalewicz-30d ttype = random i_sample = 7 i_iter = 0 dt = 3.250e-04 return = 6.102e+00
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = 5.54 ret_best = 5.54
+TRACE: name = f:michalewicz-30d ttype = random i_sample = 8 i_iter = 0 dt = 2.990e-04 return = 5.542e+00
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = 5.58 ret_best = 5.58
+TRACE: name = f:michalewicz-30d ttype = random i_sample = 9 i_iter = 0 dt = 3.064e-04 return = 5.583e+00
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = 5.04 ret_best = 5.04
+TRACE: name = f:michalewicz-30d ttype = random i_sample = 10 i_iter = 0 dt = 3.016e-04 return = 5.044e+00
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = 5.69 ret_best = 5.69
+TRACE: name = f:michalewicz-30d ttype = random i_sample = 11 i_iter = 0 dt = 2.935e-04 return = 5.691e+00
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = 5.46 ret_best = 5.46
+TRACE: name = f:michalewicz-30d ttype = random i_sample = 12 i_iter = 0 dt = 2.975e-04 return = 5.457e+00
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = 5.53 ret_best = 5.53
+TRACE: name = f:michalewicz-30d ttype = random i_sample = 13 i_iter = 0 dt = 3.061e-04 return = 5.531e+00
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = 5.53 ret_best = 5.53
+TRACE: name = f:michalewicz-30d ttype = random i_sample = 14 i_iter = 0 dt = 3.104e-04 return = 5.534e+00
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = 4.12 ret_best = 4.12
+TRACE: name = f:michalewicz-30d ttype = random i_sample = 15 i_iter = 0 dt = 3.128e-04 return = 4.119e+00
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = 5.91 ret_best = 5.91
+TRACE: name = f:michalewicz-30d ttype = random i_sample = 16 i_iter = 0 dt = 2.251e-04 return = 5.907e+00
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = 6.67 ret_best = 6.67
+TRACE: name = f:michalewicz-30d ttype = random i_sample = 17 i_iter = 0 dt = 3.242e-04 return = 6.672e+00
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = 4.22 ret_best = 4.22
+TRACE: name = f:michalewicz-30d ttype = random i_sample = 18 i_iter = 0 dt = 3.226e-04 return = 4.223e+00
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = 4.83 ret_best = 4.83
+TRACE: name = f:michalewicz-30d ttype = random i_sample = 19 i_iter = 0 dt = 4.885e-04 return = 4.834e+00
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = 6.50 ret_best = 6.50
+TRACE: name = f:michalewicz-30d ttype = random i_sample = 20 i_iter = 0 dt = 3.333e-04 return = 6.499e+00
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = 4.38 ret_best = 4.38
+TRACE: name = f:michalewicz-30d ttype = random i_sample = 21 i_iter = 0 dt = 3.219e-04 return = 4.379e+00
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = 5.64 ret_best = 5.64
+TRACE: name = f:michalewicz-30d ttype = random i_sample = 22 i_iter = 0 dt = 3.140e-04 return = 5.636e+00
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = 7.11 ret_best = 7.11
+TRACE: name = f:michalewicz-30d ttype = random i_sample = 23 i_iter = 0 dt = 3.088e-04 return = 7.112e+00
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = 6.00 ret_best = 6.00
+TRACE: name = f:michalewicz-30d ttype = random i_sample = 24 i_iter = 0 dt = 3.326e-04 return = 6.001e+00
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = 6.28 ret_best = 6.28
+TRACE: name = f:michalewicz-30d ttype = random i_sample = 25 i_iter = 0 dt = 3.207e-04 return = 6.282e+00
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = 4.63 ret_best = 4.63
+TRACE: name = f:michalewicz-30d ttype = random i_sample = 26 i_iter = 0 dt = 3.209e-04 return = 4.626e+00
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = 6.24 ret_best = 6.24
+TRACE: name = f:michalewicz-30d ttype = random i_sample = 27 i_iter = 0 dt = 3.359e-04 return = 6.238e+00
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = 5.11 ret_best = 5.11
+TRACE: name = f:michalewicz-30d ttype = random i_sample = 28 i_iter = 0 dt = 3.595e-04 return = 5.110e+00
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = 4.93 ret_best = 4.93
+TRACE: name = f:michalewicz-30d ttype = random i_sample = 29 i_iter = 0 dt = 3.407e-04 return = 4.931e+00
+TIME_REPLICATE: 0.03

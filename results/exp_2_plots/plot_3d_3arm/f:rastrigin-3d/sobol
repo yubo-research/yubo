@@ -1,0 +1,121 @@
+EXPERIMENT: env_tag = f:rastrigin-3d ttype = sobol num_arms = 3 num_replications = 30 num_rounds = 1
+PROBLEM: env = f:rastrigin-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -23.42 ret_best = -23.42
+TRACE: name = f:rastrigin-3d ttype = sobol i_sample = 0 i_iter = 0 dt = 9.751e-05 return = -2.342e+01
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rastrigin-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -42.23 ret_best = -42.23
+TRACE: name = f:rastrigin-3d ttype = sobol i_sample = 1 i_iter = 0 dt = 7.105e-05 return = -4.223e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -48.16 ret_best = -48.16
+TRACE: name = f:rastrigin-3d ttype = sobol i_sample = 2 i_iter = 0 dt = 7.176e-05 return = -4.816e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -41.76 ret_best = -41.76
+TRACE: name = f:rastrigin-3d ttype = sobol i_sample = 3 i_iter = 0 dt = 7.057e-05 return = -4.176e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -57.85 ret_best = -57.85
+TRACE: name = f:rastrigin-3d ttype = sobol i_sample = 4 i_iter = 0 dt = 7.224e-05 return = -5.785e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -48.86 ret_best = -48.86
+TRACE: name = f:rastrigin-3d ttype = sobol i_sample = 5 i_iter = 0 dt = 7.176e-05 return = -4.886e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -57.89 ret_best = -57.89
+TRACE: name = f:rastrigin-3d ttype = sobol i_sample = 6 i_iter = 0 dt = 8.154e-05 return = -5.789e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -47.66 ret_best = -47.66
+TRACE: name = f:rastrigin-3d ttype = sobol i_sample = 7 i_iter = 0 dt = 7.057e-05 return = -4.766e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -29.48 ret_best = -29.48
+TRACE: name = f:rastrigin-3d ttype = sobol i_sample = 8 i_iter = 0 dt = 7.057e-05 return = -2.948e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -24.51 ret_best = -24.51
+TRACE: name = f:rastrigin-3d ttype = sobol i_sample = 9 i_iter = 0 dt = 7.153e-05 return = -2.451e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -34.12 ret_best = -34.12
+TRACE: name = f:rastrigin-3d ttype = sobol i_sample = 10 i_iter = 0 dt = 7.153e-05 return = -3.412e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -37.30 ret_best = -37.30
+TRACE: name = f:rastrigin-3d ttype = sobol i_sample = 11 i_iter = 0 dt = 7.176e-05 return = -3.730e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -36.01 ret_best = -36.01
+TRACE: name = f:rastrigin-3d ttype = sobol i_sample = 12 i_iter = 0 dt = 7.081e-05 return = -3.601e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -36.43 ret_best = -36.43
+TRACE: name = f:rastrigin-3d ttype = sobol i_sample = 13 i_iter = 0 dt = 7.105e-05 return = -3.643e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -32.85 ret_best = -32.85
+TRACE: name = f:rastrigin-3d ttype = sobol i_sample = 14 i_iter = 0 dt = 7.176e-05 return = -3.285e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -31.34 ret_best = -31.34
+TRACE: name = f:rastrigin-3d ttype = sobol i_sample = 15 i_iter = 0 dt = 7.176e-05 return = -3.134e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -18.68 ret_best = -18.68
+TRACE: name = f:rastrigin-3d ttype = sobol i_sample = 16 i_iter = 0 dt = 7.200e-05 return = -1.868e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -30.35 ret_best = -30.35
+TRACE: name = f:rastrigin-3d ttype = sobol i_sample = 17 i_iter = 0 dt = 7.153e-05 return = -3.035e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -26.36 ret_best = -26.36
+TRACE: name = f:rastrigin-3d ttype = sobol i_sample = 18 i_iter = 0 dt = 7.224e-05 return = -2.636e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -39.35 ret_best = -39.35
+TRACE: name = f:rastrigin-3d ttype = sobol i_sample = 19 i_iter = 0 dt = 7.153e-05 return = -3.935e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -58.39 ret_best = -58.39
+TRACE: name = f:rastrigin-3d ttype = sobol i_sample = 20 i_iter = 0 dt = 7.153e-05 return = -5.839e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -63.21 ret_best = -63.21
+TRACE: name = f:rastrigin-3d ttype = sobol i_sample = 21 i_iter = 0 dt = 7.153e-05 return = -6.321e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -42.40 ret_best = -42.40
+TRACE: name = f:rastrigin-3d ttype = sobol i_sample = 22 i_iter = 0 dt = 7.105e-05 return = -4.240e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -24.09 ret_best = -24.09
+TRACE: name = f:rastrigin-3d ttype = sobol i_sample = 23 i_iter = 0 dt = 7.057e-05 return = -2.409e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -36.73 ret_best = -36.73
+TRACE: name = f:rastrigin-3d ttype = sobol i_sample = 24 i_iter = 0 dt = 7.176e-05 return = -3.673e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -45.27 ret_best = -45.27
+TRACE: name = f:rastrigin-3d ttype = sobol i_sample = 25 i_iter = 0 dt = 7.176e-05 return = -4.527e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -31.51 ret_best = -31.51
+TRACE: name = f:rastrigin-3d ttype = sobol i_sample = 26 i_iter = 0 dt = 7.105e-05 return = -3.151e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -66.27 ret_best = -66.27
+TRACE: name = f:rastrigin-3d ttype = sobol i_sample = 27 i_iter = 0 dt = 7.319e-05 return = -6.627e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -38.23 ret_best = -38.23
+TRACE: name = f:rastrigin-3d ttype = sobol i_sample = 28 i_iter = 0 dt = 7.200e-05 return = -3.823e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -32.16 ret_best = -32.16
+TRACE: name = f:rastrigin-3d ttype = sobol i_sample = 29 i_iter = 0 dt = 7.176e-05 return = -3.216e+01
+TIME_REPLICATE: 0.00

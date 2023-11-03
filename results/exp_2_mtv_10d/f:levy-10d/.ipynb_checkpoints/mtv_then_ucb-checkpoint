@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/home/juju/projects/bbo/experiments/exp_2.py", line 9, in <module>
+    assert len(sys.argv) in [6, 7], f"{sys.argv[0]} env_tag ttype num_arms num_replications num_rounds noise"
+AssertionError: experiments/exp_2.py env_tag ttype num_arms num_replications num_rounds noise

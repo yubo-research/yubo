@@ -1,0 +1,5 @@
+experiments/exp_2.py env_tag ttype num_arms num_replications num_rounds noise
+Traceback (most recent call last):
+  File "/home/juju/projects/bbo/experiments/exp_2.py", line 16, in <module>
+    num_rounds = int(sys.argv[5])  # was 3
+IndexError: list index out of range

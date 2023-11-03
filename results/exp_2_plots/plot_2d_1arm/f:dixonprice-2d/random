@@ -1,0 +1,121 @@
+EXPERIMENT: env_tag = f:dixonprice-2d ttype = random num_arms = 1 num_replications = 30 num_rounds = 1
+PROBLEM: env = f:dixonprice-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -42934.13 ret_best = -42934.13
+TRACE: name = f:dixonprice-2d ttype = random i_sample = 0 i_iter = 0 dt = 5.722e-05 return = -4.293e+04
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:dixonprice-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -80203.94 ret_best = -80203.94
+TRACE: name = f:dixonprice-2d ttype = random i_sample = 1 i_iter = 0 dt = 4.125e-05 return = -8.020e+04
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:dixonprice-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -51955.73 ret_best = -51955.73
+TRACE: name = f:dixonprice-2d ttype = random i_sample = 2 i_iter = 0 dt = 4.172e-05 return = -5.196e+04
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:dixonprice-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -1717.18 ret_best = -1717.18
+TRACE: name = f:dixonprice-2d ttype = random i_sample = 3 i_iter = 0 dt = 3.886e-05 return = -1.717e+03
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:dixonprice-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -47.66 ret_best = -47.66
+TRACE: name = f:dixonprice-2d ttype = random i_sample = 4 i_iter = 0 dt = 3.958e-05 return = -4.766e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:dixonprice-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -17571.99 ret_best = -17571.99
+TRACE: name = f:dixonprice-2d ttype = random i_sample = 5 i_iter = 0 dt = 3.791e-05 return = -1.757e+04
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:dixonprice-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -6712.71 ret_best = -6712.71
+TRACE: name = f:dixonprice-2d ttype = random i_sample = 6 i_iter = 0 dt = 3.815e-05 return = -6.713e+03
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:dixonprice-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -28694.77 ret_best = -28694.77
+TRACE: name = f:dixonprice-2d ttype = random i_sample = 7 i_iter = 0 dt = 3.791e-05 return = -2.869e+04
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:dixonprice-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -165.10 ret_best = -165.10
+TRACE: name = f:dixonprice-2d ttype = random i_sample = 8 i_iter = 0 dt = 3.767e-05 return = -1.651e+02
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:dixonprice-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -1247.53 ret_best = -1247.53
+TRACE: name = f:dixonprice-2d ttype = random i_sample = 9 i_iter = 0 dt = 3.719e-05 return = -1.248e+03
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:dixonprice-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -156.22 ret_best = -156.22
+TRACE: name = f:dixonprice-2d ttype = random i_sample = 10 i_iter = 0 dt = 3.743e-05 return = -1.562e+02
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:dixonprice-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -65275.39 ret_best = -65275.39
+TRACE: name = f:dixonprice-2d ttype = random i_sample = 11 i_iter = 0 dt = 3.791e-05 return = -6.528e+04
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:dixonprice-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -20723.69 ret_best = -20723.69
+TRACE: name = f:dixonprice-2d ttype = random i_sample = 12 i_iter = 0 dt = 3.839e-05 return = -2.072e+04
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:dixonprice-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -9094.48 ret_best = -9094.48
+TRACE: name = f:dixonprice-2d ttype = random i_sample = 13 i_iter = 0 dt = 3.743e-05 return = -9.094e+03
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:dixonprice-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -10793.13 ret_best = -10793.13
+TRACE: name = f:dixonprice-2d ttype = random i_sample = 14 i_iter = 0 dt = 3.695e-05 return = -1.079e+04
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:dixonprice-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -1112.45 ret_best = -1112.45
+TRACE: name = f:dixonprice-2d ttype = random i_sample = 15 i_iter = 0 dt = 3.767e-05 return = -1.112e+03
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:dixonprice-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -249.00 ret_best = -249.00
+TRACE: name = f:dixonprice-2d ttype = random i_sample = 16 i_iter = 0 dt = 3.815e-05 return = -2.490e+02
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:dixonprice-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -9713.89 ret_best = -9713.89
+TRACE: name = f:dixonprice-2d ttype = random i_sample = 17 i_iter = 0 dt = 3.934e-05 return = -9.714e+03
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:dixonprice-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -32.32 ret_best = -32.32
+TRACE: name = f:dixonprice-2d ttype = random i_sample = 18 i_iter = 0 dt = 3.815e-05 return = -3.232e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:dixonprice-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -121.41 ret_best = -121.41
+TRACE: name = f:dixonprice-2d ttype = random i_sample = 19 i_iter = 0 dt = 3.982e-05 return = -1.214e+02
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:dixonprice-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -20003.21 ret_best = -20003.21
+TRACE: name = f:dixonprice-2d ttype = random i_sample = 20 i_iter = 0 dt = 3.886e-05 return = -2.000e+04
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:dixonprice-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -177.26 ret_best = -177.26
+TRACE: name = f:dixonprice-2d ttype = random i_sample = 21 i_iter = 0 dt = 3.910e-05 return = -1.773e+02
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:dixonprice-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -2476.48 ret_best = -2476.48
+TRACE: name = f:dixonprice-2d ttype = random i_sample = 22 i_iter = 0 dt = 3.982e-05 return = -2.476e+03
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:dixonprice-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -39287.28 ret_best = -39287.28
+TRACE: name = f:dixonprice-2d ttype = random i_sample = 23 i_iter = 0 dt = 3.910e-05 return = -3.929e+04
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:dixonprice-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -10031.52 ret_best = -10031.52
+TRACE: name = f:dixonprice-2d ttype = random i_sample = 24 i_iter = 0 dt = 3.862e-05 return = -1.003e+04
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:dixonprice-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -47.09 ret_best = -47.09
+TRACE: name = f:dixonprice-2d ttype = random i_sample = 25 i_iter = 0 dt = 4.005e-05 return = -4.709e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:dixonprice-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -17380.69 ret_best = -17380.69
+TRACE: name = f:dixonprice-2d ttype = random i_sample = 26 i_iter = 0 dt = 3.815e-05 return = -1.738e+04
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:dixonprice-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -6674.34 ret_best = -6674.34
+TRACE: name = f:dixonprice-2d ttype = random i_sample = 27 i_iter = 0 dt = 3.839e-05 return = -6.674e+03
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:dixonprice-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -2134.28 ret_best = -2134.28
+TRACE: name = f:dixonprice-2d ttype = random i_sample = 28 i_iter = 0 dt = 4.864e-05 return = -2.134e+03
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:dixonprice-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -242.25 ret_best = -242.25
+TRACE: name = f:dixonprice-2d ttype = random i_sample = 29 i_iter = 0 dt = 3.815e-05 return = -2.423e+02
+TIME_REPLICATE: 0.00

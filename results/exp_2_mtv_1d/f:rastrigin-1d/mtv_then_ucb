@@ -1,0 +1,7 @@
+EXPERIMENT: env_tag = f:rastrigin-1d ttype = mtv_then_ucb num_arms = 4 num_replications = 30 num_rounds = 1
+PROBLEM: env = f:rastrigin-1d num_params = 1
+ITER: i_iter = 0 d_time = 14.61 ret = -5.03 ret_best = -5.03
+TRACE: name = f:rastrigin-1d ttype = mtv_then_ucb i_sample = 0 i_iter = 0 dt = 1.461e+01 return = -5.026e+00
+TIME_REPLICATE: 14.63
+PROBLEM: env = f:rastrigin-1d num_params = 1
+ITER: i_iter = 0 d_time = 14.15 ret = -16.85 ret_best = -16.85

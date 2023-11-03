@@ -1,0 +1,3 @@
+EXPERIMENT: env_tag = f:griewank-1d ttype = mtv_then_ei num_arms = 4 num_replications = 30 num_rounds = 1
+PROBLEM: env = f:griewank-1d num_params = 1
+ITER: i_iter = 0 d_time = 30.13 ret = -1.18 ret_best = -1.18

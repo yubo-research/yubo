@@ -1,0 +1,23 @@
+EXPERIMENT: env_tag = f:ackley-2d ttype = mtv num_arms = 1 num_replications = 30 num_rounds = 1
+PROBLEM: env = f:ackley-2d num_params = 2
+ITER: i_iter = 0 d_time = 3.01 ret = -17.83 ret_best = -17.83
+TRACE: name = f:ackley-2d ttype = mtv i_sample = 0 i_iter = 0 dt = 3.010e+00 return = -1.783e+01
+TIME_REPLICATE: 3.03
+PROBLEM: env = f:ackley-2d num_params = 2
+ITER: i_iter = 0 d_time = 2.90 ret = -18.92 ret_best = -18.92
+TRACE: name = f:ackley-2d ttype = mtv i_sample = 1 i_iter = 0 dt = 2.903e+00 return = -1.892e+01
+TIME_REPLICATE: 2.91
+PROBLEM: env = f:ackley-2d num_params = 2
+ITER: i_iter = 0 d_time = 2.83 ret = -16.33 ret_best = -16.33
+TRACE: name = f:ackley-2d ttype = mtv i_sample = 2 i_iter = 0 dt = 2.827e+00 return = -1.633e+01
+TIME_REPLICATE: 2.83
+PROBLEM: env = f:ackley-2d num_params = 2
+ITER: i_iter = 0 d_time = 2.08 ret = -18.05 ret_best = -18.05
+TRACE: name = f:ackley-2d ttype = mtv i_sample = 3 i_iter = 0 dt = 2.081e+00 return = -1.805e+01
+TIME_REPLICATE: 2.09
+PROBLEM: env = f:ackley-2d num_params = 2
+ITER: i_iter = 0 d_time = 2.43 ret = -19.35 ret_best = -19.35
+TRACE: name = f:ackley-2d ttype = mtv i_sample = 4 i_iter = 0 dt = 2.426e+00 return = -1.935e+01
+TIME_REPLICATE: 2.43
+PROBLEM: env = f:ackley-2d num_params = 2
+ITER: i_iter = 0 d_time = 2.59 ret = -18.41 ret_best = -18.41

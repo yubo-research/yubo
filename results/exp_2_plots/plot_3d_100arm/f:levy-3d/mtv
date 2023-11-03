@@ -1,0 +1,19 @@
+EXPERIMENT: env_tag = f:levy-3d ttype = mtv num_arms = 100 num_replications = 30 num_rounds = 1
+PROBLEM: env = f:levy-3d num_params = 3
+ITER: i_iter = 0 d_time = 700.17 ret = -1.28 ret_best = -1.28
+TRACE: name = f:levy-3d ttype = mtv i_sample = 0 i_iter = 0 dt = 7.002e+02 return = -1.285e+00
+TIME_REPLICATE: 700.41
+PROBLEM: env = f:levy-3d num_params = 3
+ITER: i_iter = 0 d_time = 532.65 ret = -0.52 ret_best = -0.52
+TRACE: name = f:levy-3d ttype = mtv i_sample = 1 i_iter = 0 dt = 5.326e+02 return = -5.221e-01
+TIME_REPLICATE: 533.13
+PROBLEM: env = f:levy-3d num_params = 3
+ITER: i_iter = 0 d_time = 483.76 ret = -0.88 ret_best = -0.88
+TRACE: name = f:levy-3d ttype = mtv i_sample = 2 i_iter = 0 dt = 4.838e+02 return = -8.840e-01
+TIME_REPLICATE: 484.02
+PROBLEM: env = f:levy-3d num_params = 3
+ITER: i_iter = 0 d_time = 618.05 ret = -2.15 ret_best = -2.15
+TRACE: name = f:levy-3d ttype = mtv i_sample = 3 i_iter = 0 dt = 6.180e+02 return = -2.155e+00
+TIME_REPLICATE: 618.31
+PROBLEM: env = f:levy-3d num_params = 3
+ITER: i_iter = 0 d_time = 531.39 ret = -1.01 ret_best = -1.01

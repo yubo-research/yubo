@@ -1,0 +1,121 @@
+EXPERIMENT: env_tag = f:dixonprice-1d ttype = sobol num_arms = 4 num_replications = 30 num_rounds = 1
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.00 ret = -5.04 ret_best = -5.04
+TRACE: name = f:dixonprice-1d ttype = sobol i_sample = 0 i_iter = 0 dt = 1.209e-04 return = -5.039e+00
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.00 ret = -0.40 ret_best = -0.40
+TRACE: name = f:dixonprice-1d ttype = sobol i_sample = 1 i_iter = 0 dt = 9.108e-05 return = -3.965e-01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.00 ret = -1.93 ret_best = -1.93
+TRACE: name = f:dixonprice-1d ttype = sobol i_sample = 2 i_iter = 0 dt = 9.155e-05 return = -1.933e+00
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.00 ret = -14.52 ret_best = -14.52
+TRACE: name = f:dixonprice-1d ttype = sobol i_sample = 3 i_iter = 0 dt = 9.179e-05 return = -1.452e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.00 ret = -3.16 ret_best = -3.16
+TRACE: name = f:dixonprice-1d ttype = sobol i_sample = 4 i_iter = 0 dt = 9.203e-05 return = -3.158e+00
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.00 ret = -1.53 ret_best = -1.53
+TRACE: name = f:dixonprice-1d ttype = sobol i_sample = 5 i_iter = 0 dt = 9.084e-05 return = -1.525e+00
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.00 ret = -1.16 ret_best = -1.16
+TRACE: name = f:dixonprice-1d ttype = sobol i_sample = 6 i_iter = 0 dt = 9.084e-05 return = -1.165e+00
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.00 ret = -0.13 ret_best = -0.13
+TRACE: name = f:dixonprice-1d ttype = sobol i_sample = 7 i_iter = 0 dt = 9.108e-05 return = -1.346e-01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.00 ret = -12.04 ret_best = -12.04
+TRACE: name = f:dixonprice-1d ttype = sobol i_sample = 8 i_iter = 0 dt = 9.060e-05 return = -1.204e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.00 ret = -3.53 ret_best = -3.53
+TRACE: name = f:dixonprice-1d ttype = sobol i_sample = 9 i_iter = 0 dt = 9.060e-05 return = -3.534e+00
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.00 ret = -2.52 ret_best = -2.52
+TRACE: name = f:dixonprice-1d ttype = sobol i_sample = 10 i_iter = 0 dt = 9.060e-05 return = -2.515e+00
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.00 ret = -0.42 ret_best = -0.42
+TRACE: name = f:dixonprice-1d ttype = sobol i_sample = 11 i_iter = 0 dt = 9.131e-05 return = -4.192e-01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.00 ret = -0.66 ret_best = -0.66
+TRACE: name = f:dixonprice-1d ttype = sobol i_sample = 12 i_iter = 0 dt = 9.084e-05 return = -6.563e-01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.00 ret = -5.54 ret_best = -5.54
+TRACE: name = f:dixonprice-1d ttype = sobol i_sample = 13 i_iter = 0 dt = 9.108e-05 return = -5.543e+00
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.00 ret = -4.59 ret_best = -4.59
+TRACE: name = f:dixonprice-1d ttype = sobol i_sample = 14 i_iter = 0 dt = 9.108e-05 return = -4.589e+00
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.00 ret = -11.83 ret_best = -11.83
+TRACE: name = f:dixonprice-1d ttype = sobol i_sample = 15 i_iter = 0 dt = 9.084e-05 return = -1.183e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.00 ret = -0.56 ret_best = -0.56
+TRACE: name = f:dixonprice-1d ttype = sobol i_sample = 16 i_iter = 0 dt = 9.155e-05 return = -5.566e-01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.00 ret = -0.00 ret_best = -0.00
+TRACE: name = f:dixonprice-1d ttype = sobol i_sample = 17 i_iter = 0 dt = 9.298e-05 return = -1.703e-04
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.00 ret = -1.49 ret_best = -1.49
+TRACE: name = f:dixonprice-1d ttype = sobol i_sample = 18 i_iter = 0 dt = 9.298e-05 return = -1.489e+00
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.00 ret = -4.89 ret_best = -4.89
+TRACE: name = f:dixonprice-1d ttype = sobol i_sample = 19 i_iter = 0 dt = 9.251e-05 return = -4.889e+00
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.00 ret = -5.39 ret_best = -5.39
+TRACE: name = f:dixonprice-1d ttype = sobol i_sample = 20 i_iter = 0 dt = 9.346e-05 return = -5.387e+00
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.00 ret = -15.05 ret_best = -15.05
+TRACE: name = f:dixonprice-1d ttype = sobol i_sample = 21 i_iter = 0 dt = 9.274e-05 return = -1.505e+01
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.00 ret = -1.27 ret_best = -1.27
+TRACE: name = f:dixonprice-1d ttype = sobol i_sample = 22 i_iter = 0 dt = 1.261e-04 return = -1.268e+00
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.00 ret = -1.27 ret_best = -1.27
+TRACE: name = f:dixonprice-1d ttype = sobol i_sample = 23 i_iter = 0 dt = 1.276e-04 return = -1.266e+00
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.00 ret = -10.07 ret_best = -10.07
+TRACE: name = f:dixonprice-1d ttype = sobol i_sample = 24 i_iter = 0 dt = 1.287e-04 return = -1.007e+01
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.00 ret = -0.10 ret_best = -0.10
+TRACE: name = f:dixonprice-1d ttype = sobol i_sample = 25 i_iter = 0 dt = 1.299e-04 return = -1.036e-01
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.00 ret = -0.80 ret_best = -0.80
+TRACE: name = f:dixonprice-1d ttype = sobol i_sample = 26 i_iter = 0 dt = 1.283e-04 return = -8.027e-01
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.00 ret = -3.81 ret_best = -3.81
+TRACE: name = f:dixonprice-1d ttype = sobol i_sample = 27 i_iter = 0 dt = 1.299e-04 return = -3.813e+00
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.00 ret = -4.95 ret_best = -4.95
+TRACE: name = f:dixonprice-1d ttype = sobol i_sample = 28 i_iter = 0 dt = 1.192e-04 return = -4.950e+00
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.00 ret = -8.72 ret_best = -8.72
+TRACE: name = f:dixonprice-1d ttype = sobol i_sample = 29 i_iter = 0 dt = 1.199e-04 return = -8.717e+00
+TIME_REPLICATE: 0.01

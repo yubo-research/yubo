@@ -1,0 +1,121 @@
+EXPERIMENT: env_tag = f:ackley-30d ttype = mtv num_arms = 10 num_replications = 30 num_rounds = 1
+PROBLEM: env = f:ackley-30d num_params = 30
+ITER: i_iter = 0 d_time = 13.23 ret = -20.82 ret_best = -20.82
+TRACE: name = f:ackley-30d ttype = mtv i_sample = 0 i_iter = 0 dt = 1.323e+01 return = -2.082e+01
+TIME_REPLICATE: 13.27
+PROBLEM: env = f:ackley-30d num_params = 30
+ITER: i_iter = 0 d_time = 11.79 ret = -20.73 ret_best = -20.73
+TRACE: name = f:ackley-30d ttype = mtv i_sample = 1 i_iter = 0 dt = 1.179e+01 return = -2.073e+01
+TIME_REPLICATE: 11.81
+PROBLEM: env = f:ackley-30d num_params = 30
+ITER: i_iter = 0 d_time = 13.56 ret = -20.78 ret_best = -20.78
+TRACE: name = f:ackley-30d ttype = mtv i_sample = 2 i_iter = 0 dt = 1.356e+01 return = -2.078e+01
+TIME_REPLICATE: 13.58
+PROBLEM: env = f:ackley-30d num_params = 30
+ITER: i_iter = 0 d_time = 11.00 ret = -19.52 ret_best = -19.52
+TRACE: name = f:ackley-30d ttype = mtv i_sample = 3 i_iter = 0 dt = 1.100e+01 return = -1.952e+01
+TIME_REPLICATE: 11.02
+PROBLEM: env = f:ackley-30d num_params = 30
+ITER: i_iter = 0 d_time = 8.66 ret = -20.58 ret_best = -20.58
+TRACE: name = f:ackley-30d ttype = mtv i_sample = 4 i_iter = 0 dt = 8.662e+00 return = -2.058e+01
+TIME_REPLICATE: 8.68
+PROBLEM: env = f:ackley-30d num_params = 30
+ITER: i_iter = 0 d_time = 15.97 ret = -20.70 ret_best = -20.70
+TRACE: name = f:ackley-30d ttype = mtv i_sample = 5 i_iter = 0 dt = 1.597e+01 return = -2.070e+01
+TIME_REPLICATE: 15.99
+PROBLEM: env = f:ackley-30d num_params = 30
+ITER: i_iter = 0 d_time = 14.17 ret = -20.62 ret_best = -20.62
+TRACE: name = f:ackley-30d ttype = mtv i_sample = 6 i_iter = 0 dt = 1.417e+01 return = -2.062e+01
+TIME_REPLICATE: 14.19
+PROBLEM: env = f:ackley-30d num_params = 30
+ITER: i_iter = 0 d_time = 12.84 ret = -20.62 ret_best = -20.62
+TRACE: name = f:ackley-30d ttype = mtv i_sample = 7 i_iter = 0 dt = 1.284e+01 return = -2.062e+01
+TIME_REPLICATE: 12.86
+PROBLEM: env = f:ackley-30d num_params = 30
+ITER: i_iter = 0 d_time = 11.66 ret = -20.60 ret_best = -20.60
+TRACE: name = f:ackley-30d ttype = mtv i_sample = 8 i_iter = 0 dt = 1.166e+01 return = -2.060e+01
+TIME_REPLICATE: 11.68
+PROBLEM: env = f:ackley-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.38 ret = -20.89 ret_best = -20.89
+TRACE: name = f:ackley-30d ttype = mtv i_sample = 9 i_iter = 0 dt = 3.755e-01 return = -2.089e+01
+TIME_REPLICATE: 0.40
+PROBLEM: env = f:ackley-30d num_params = 30
+ITER: i_iter = 0 d_time = 12.63 ret = -20.72 ret_best = -20.72
+TRACE: name = f:ackley-30d ttype = mtv i_sample = 10 i_iter = 0 dt = 1.263e+01 return = -2.072e+01
+TIME_REPLICATE: 12.65
+PROBLEM: env = f:ackley-30d num_params = 30
+ITER: i_iter = 0 d_time = 11.35 ret = -20.03 ret_best = -20.03
+TRACE: name = f:ackley-30d ttype = mtv i_sample = 11 i_iter = 0 dt = 1.135e+01 return = -2.003e+01
+TIME_REPLICATE: 11.37
+PROBLEM: env = f:ackley-30d num_params = 30
+ITER: i_iter = 0 d_time = 11.83 ret = -20.63 ret_best = -20.63
+TRACE: name = f:ackley-30d ttype = mtv i_sample = 12 i_iter = 0 dt = 1.183e+01 return = -2.063e+01
+TIME_REPLICATE: 11.85
+PROBLEM: env = f:ackley-30d num_params = 30
+ITER: i_iter = 0 d_time = 10.05 ret = -20.77 ret_best = -20.77
+TRACE: name = f:ackley-30d ttype = mtv i_sample = 13 i_iter = 0 dt = 1.005e+01 return = -2.077e+01
+TIME_REPLICATE: 10.07
+PROBLEM: env = f:ackley-30d num_params = 30
+ITER: i_iter = 0 d_time = 11.08 ret = -20.59 ret_best = -20.59
+TRACE: name = f:ackley-30d ttype = mtv i_sample = 14 i_iter = 0 dt = 1.108e+01 return = -2.059e+01
+TIME_REPLICATE: 11.10
+PROBLEM: env = f:ackley-30d num_params = 30
+ITER: i_iter = 0 d_time = 2.36 ret = -19.74 ret_best = -19.74
+TRACE: name = f:ackley-30d ttype = mtv i_sample = 15 i_iter = 0 dt = 2.365e+00 return = -1.974e+01
+TIME_REPLICATE: 2.38
+PROBLEM: env = f:ackley-30d num_params = 30
+ITER: i_iter = 0 d_time = 10.65 ret = -20.95 ret_best = -20.95
+TRACE: name = f:ackley-30d ttype = mtv i_sample = 16 i_iter = 0 dt = 1.065e+01 return = -2.095e+01
+TIME_REPLICATE: 10.67
+PROBLEM: env = f:ackley-30d num_params = 30
+ITER: i_iter = 0 d_time = 10.06 ret = -20.19 ret_best = -20.19
+TRACE: name = f:ackley-30d ttype = mtv i_sample = 17 i_iter = 0 dt = 1.006e+01 return = -2.019e+01
+TIME_REPLICATE: 10.08
+PROBLEM: env = f:ackley-30d num_params = 30
+ITER: i_iter = 0 d_time = 12.03 ret = -20.36 ret_best = -20.36
+TRACE: name = f:ackley-30d ttype = mtv i_sample = 18 i_iter = 0 dt = 1.203e+01 return = -2.036e+01
+TIME_REPLICATE: 12.05
+PROBLEM: env = f:ackley-30d num_params = 30
+ITER: i_iter = 0 d_time = 10.29 ret = -21.02 ret_best = -21.02
+TRACE: name = f:ackley-30d ttype = mtv i_sample = 19 i_iter = 0 dt = 1.029e+01 return = -2.102e+01
+TIME_REPLICATE: 10.31
+PROBLEM: env = f:ackley-30d num_params = 30
+ITER: i_iter = 0 d_time = 9.52 ret = -20.74 ret_best = -20.74
+TRACE: name = f:ackley-30d ttype = mtv i_sample = 20 i_iter = 0 dt = 9.521e+00 return = -2.074e+01
+TIME_REPLICATE: 9.54
+PROBLEM: env = f:ackley-30d num_params = 30
+ITER: i_iter = 0 d_time = 10.14 ret = -19.29 ret_best = -19.29
+TRACE: name = f:ackley-30d ttype = mtv i_sample = 21 i_iter = 0 dt = 1.014e+01 return = -1.929e+01
+TIME_REPLICATE: 10.16
+PROBLEM: env = f:ackley-30d num_params = 30
+ITER: i_iter = 0 d_time = 16.02 ret = -20.53 ret_best = -20.53
+TRACE: name = f:ackley-30d ttype = mtv i_sample = 22 i_iter = 0 dt = 1.602e+01 return = -2.053e+01
+TIME_REPLICATE: 16.04
+PROBLEM: env = f:ackley-30d num_params = 30
+ITER: i_iter = 0 d_time = 18.43 ret = -21.03 ret_best = -21.03
+TRACE: name = f:ackley-30d ttype = mtv i_sample = 23 i_iter = 0 dt = 1.843e+01 return = -2.103e+01
+TIME_REPLICATE: 18.45
+PROBLEM: env = f:ackley-30d num_params = 30
+ITER: i_iter = 0 d_time = 12.12 ret = -19.66 ret_best = -19.66
+TRACE: name = f:ackley-30d ttype = mtv i_sample = 24 i_iter = 0 dt = 1.212e+01 return = -1.966e+01
+TIME_REPLICATE: 12.14
+PROBLEM: env = f:ackley-30d num_params = 30
+ITER: i_iter = 0 d_time = 10.26 ret = -20.61 ret_best = -20.61
+TRACE: name = f:ackley-30d ttype = mtv i_sample = 25 i_iter = 0 dt = 1.026e+01 return = -2.061e+01
+TIME_REPLICATE: 10.28
+PROBLEM: env = f:ackley-30d num_params = 30
+ITER: i_iter = 0 d_time = 11.24 ret = -21.05 ret_best = -21.05
+TRACE: name = f:ackley-30d ttype = mtv i_sample = 26 i_iter = 0 dt = 1.124e+01 return = -2.105e+01
+TIME_REPLICATE: 11.26
+PROBLEM: env = f:ackley-30d num_params = 30
+ITER: i_iter = 0 d_time = 11.16 ret = -20.82 ret_best = -20.82
+TRACE: name = f:ackley-30d ttype = mtv i_sample = 27 i_iter = 0 dt = 1.116e+01 return = -2.082e+01
+TIME_REPLICATE: 11.18
+PROBLEM: env = f:ackley-30d num_params = 30
+ITER: i_iter = 0 d_time = 10.51 ret = -20.76 ret_best = -20.76
+TRACE: name = f:ackley-30d ttype = mtv i_sample = 28 i_iter = 0 dt = 1.051e+01 return = -2.076e+01
+TIME_REPLICATE: 10.54
+PROBLEM: env = f:ackley-30d num_params = 30
+ITER: i_iter = 0 d_time = 9.93 ret = -20.73 ret_best = -20.73
+TRACE: name = f:ackley-30d ttype = mtv i_sample = 29 i_iter = 0 dt = 9.933e+00 return = -2.073e+01
+TIME_REPLICATE: 9.96

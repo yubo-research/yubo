@@ -1,0 +1,121 @@
+EXPERIMENT: env_tag = f:rastrigin-2d ttype = mtv num_arms = 100 num_replications = 30 num_rounds = 1
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 168.96 ret = -6.91 ret_best = -6.91
+TRACE: name = f:rastrigin-2d ttype = mtv i_sample = 0 i_iter = 0 dt = 1.690e+02 return = -6.909e+00
+TIME_REPLICATE: 169.18
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 281.82 ret = -2.52 ret_best = -2.52
+TRACE: name = f:rastrigin-2d ttype = mtv i_sample = 1 i_iter = 0 dt = 2.818e+02 return = -2.524e+00
+TIME_REPLICATE: 281.96
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 213.69 ret = -1.29 ret_best = -1.29
+TRACE: name = f:rastrigin-2d ttype = mtv i_sample = 2 i_iter = 0 dt = 2.137e+02 return = -1.287e+00
+TIME_REPLICATE: 213.88
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 242.75 ret = -7.16 ret_best = -7.16
+TRACE: name = f:rastrigin-2d ttype = mtv i_sample = 3 i_iter = 0 dt = 2.428e+02 return = -7.159e+00
+TIME_REPLICATE: 243.19
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 225.28 ret = -9.87 ret_best = -9.87
+TRACE: name = f:rastrigin-2d ttype = mtv i_sample = 4 i_iter = 0 dt = 2.253e+02 return = -9.872e+00
+TIME_REPLICATE: 225.44
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 262.69 ret = -5.63 ret_best = -5.63
+TRACE: name = f:rastrigin-2d ttype = mtv i_sample = 5 i_iter = 0 dt = 2.627e+02 return = -5.632e+00
+TIME_REPLICATE: 262.87
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 223.61 ret = -9.73 ret_best = -9.73
+TRACE: name = f:rastrigin-2d ttype = mtv i_sample = 6 i_iter = 0 dt = 2.236e+02 return = -9.730e+00
+TIME_REPLICATE: 223.76
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 324.19 ret = -5.08 ret_best = -5.08
+TRACE: name = f:rastrigin-2d ttype = mtv i_sample = 7 i_iter = 0 dt = 3.242e+02 return = -5.077e+00
+TIME_REPLICATE: 324.50
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 186.23 ret = -11.66 ret_best = -11.66
+TRACE: name = f:rastrigin-2d ttype = mtv i_sample = 8 i_iter = 0 dt = 1.862e+02 return = -1.166e+01
+TIME_REPLICATE: 186.38
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 228.17 ret = -10.29 ret_best = -10.29
+TRACE: name = f:rastrigin-2d ttype = mtv i_sample = 9 i_iter = 0 dt = 2.282e+02 return = -1.029e+01
+TIME_REPLICATE: 228.33
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 275.28 ret = -7.90 ret_best = -7.90
+TRACE: name = f:rastrigin-2d ttype = mtv i_sample = 10 i_iter = 0 dt = 2.753e+02 return = -7.896e+00
+TIME_REPLICATE: 275.42
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 207.61 ret = -8.44 ret_best = -8.44
+TRACE: name = f:rastrigin-2d ttype = mtv i_sample = 11 i_iter = 0 dt = 2.076e+02 return = -8.445e+00
+TIME_REPLICATE: 207.79
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 272.81 ret = -9.10 ret_best = -9.10
+TRACE: name = f:rastrigin-2d ttype = mtv i_sample = 12 i_iter = 0 dt = 2.728e+02 return = -9.098e+00
+TIME_REPLICATE: 272.94
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 217.31 ret = -6.97 ret_best = -6.97
+TRACE: name = f:rastrigin-2d ttype = mtv i_sample = 13 i_iter = 0 dt = 2.173e+02 return = -6.973e+00
+TIME_REPLICATE: 217.53
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 265.57 ret = -7.22 ret_best = -7.22
+TRACE: name = f:rastrigin-2d ttype = mtv i_sample = 14 i_iter = 0 dt = 2.656e+02 return = -7.222e+00
+TIME_REPLICATE: 265.73
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 257.71 ret = -7.01 ret_best = -7.01
+TRACE: name = f:rastrigin-2d ttype = mtv i_sample = 15 i_iter = 0 dt = 2.577e+02 return = -7.006e+00
+TIME_REPLICATE: 258.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 283.51 ret = -8.09 ret_best = -8.09
+TRACE: name = f:rastrigin-2d ttype = mtv i_sample = 16 i_iter = 0 dt = 2.835e+02 return = -8.088e+00
+TIME_REPLICATE: 283.66
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 230.85 ret = -5.72 ret_best = -5.72
+TRACE: name = f:rastrigin-2d ttype = mtv i_sample = 17 i_iter = 0 dt = 2.309e+02 return = -5.719e+00
+TIME_REPLICATE: 231.10
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 329.34 ret = -5.91 ret_best = -5.91
+TRACE: name = f:rastrigin-2d ttype = mtv i_sample = 18 i_iter = 0 dt = 3.293e+02 return = -5.909e+00
+TIME_REPLICATE: 329.61
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 222.22 ret = -6.72 ret_best = -6.72
+TRACE: name = f:rastrigin-2d ttype = mtv i_sample = 19 i_iter = 0 dt = 2.222e+02 return = -6.719e+00
+TIME_REPLICATE: 222.40
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 282.09 ret = -8.57 ret_best = -8.57
+TRACE: name = f:rastrigin-2d ttype = mtv i_sample = 20 i_iter = 0 dt = 2.821e+02 return = -8.573e+00
+TIME_REPLICATE: 282.21
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 303.03 ret = -6.68 ret_best = -6.68
+TRACE: name = f:rastrigin-2d ttype = mtv i_sample = 21 i_iter = 0 dt = 3.030e+02 return = -6.679e+00
+TIME_REPLICATE: 303.13
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 229.79 ret = -12.74 ret_best = -12.74
+TRACE: name = f:rastrigin-2d ttype = mtv i_sample = 22 i_iter = 0 dt = 2.298e+02 return = -1.274e+01
+TIME_REPLICATE: 229.89
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 161.45 ret = -5.70 ret_best = -5.70
+TRACE: name = f:rastrigin-2d ttype = mtv i_sample = 23 i_iter = 0 dt = 1.614e+02 return = -5.699e+00
+TIME_REPLICATE: 161.55
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 129.97 ret = -8.73 ret_best = -8.73
+TRACE: name = f:rastrigin-2d ttype = mtv i_sample = 24 i_iter = 0 dt = 1.300e+02 return = -8.727e+00
+TIME_REPLICATE: 130.06
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 230.31 ret = -11.59 ret_best = -11.59
+TRACE: name = f:rastrigin-2d ttype = mtv i_sample = 25 i_iter = 0 dt = 2.303e+02 return = -1.159e+01
+TIME_REPLICATE: 230.41
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 126.45 ret = -10.17 ret_best = -10.17
+TRACE: name = f:rastrigin-2d ttype = mtv i_sample = 26 i_iter = 0 dt = 1.265e+02 return = -1.017e+01
+TIME_REPLICATE: 126.55
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 112.89 ret = -5.25 ret_best = -5.25
+TRACE: name = f:rastrigin-2d ttype = mtv i_sample = 27 i_iter = 0 dt = 1.129e+02 return = -5.254e+00
+TIME_REPLICATE: 113.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 156.77 ret = -7.67 ret_best = -7.67
+TRACE: name = f:rastrigin-2d ttype = mtv i_sample = 28 i_iter = 0 dt = 1.568e+02 return = -7.674e+00
+TIME_REPLICATE: 156.84
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 87.89 ret = -9.37 ret_best = -9.37
+TRACE: name = f:rastrigin-2d ttype = mtv i_sample = 29 i_iter = 0 dt = 8.789e+01 return = -9.368e+00
+TIME_REPLICATE: 87.97
