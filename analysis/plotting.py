@@ -64,13 +64,16 @@ def plot_sorted(ax, optimizers, mu, se, renames=None):
     i_sort = np.argsort(-mu)
     n = np.arange(len(mu))
     ax.errorbar(n, mu[i_sort], se[i_sort], fmt="ko", capsize=10)
-    if renames is None:
-        renames = optimizers
-    ax.set_xticks(n, [optimizers[i] for i in i_sort], rotation=90)
+    names = list(optimizers)
+    if renames is not None:
+        for old, new in renames.items():
+            i = names.index(old)
+            names[i] = new
+    ax.set_xticks(n, [names[i] for i in i_sort], rotation=90)
     ax.set_ylim([0, 1])
 
 
-def plot_sorted_agg(ax, data_locator, exp_tag, optimizers=None, renames=None):
+def plot_sorted_agg(ax, data_locator, exp_tag, optimizers=None, renames=None, i_agg=-1):
     problems = sorted(data_locator.problems_in(exp_tag))
     if optimizers is None:
         optimizers = set()
@@ -79,5 +82,8 @@ def plot_sorted_agg(ax, data_locator, exp_tag, optimizers=None, renames=None):
     # optimizers = sorted(optimizers)
 
     traces = ads.load_multiple_traces(data_locator, exp_tag, problems, optimizers)
+    if i_agg != -1:
+        traces = traces[..., : i_agg + 1]
+
     mu, se = ads.range_summarize(traces)
     plot_sorted(ax, optimizers, mu, se, renames=renames)

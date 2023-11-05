@@ -54,6 +54,7 @@ class AcqDPP:
         # self.x = X_0
         # self.y = model.train_targets
         self.GP = _GP(model)
+        self.model = model
         self.num_rounds = 1.0
         self.start_K = None
 
