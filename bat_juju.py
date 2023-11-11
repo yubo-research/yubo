@@ -30,7 +30,7 @@ def prep_cmds(ddir, funcs, dims, num_arms, num_samples, opts):
                 problem = f"f:{func}-{dim}d"
                 out_dir = f"results/{ddir}/{problem}"
                 os.makedirs(out_dir, exist_ok=True)
-                cmd = f"python experiments/exp_2.py {problem} {opt} {num_arms} 30 {num_samples} > {out_dir}/{opt} 2>&1"
+                cmd = f"python experiments/exp_2.py {problem} {opt} {num_arms} 100 {num_samples} > {out_dir}/{opt} 2>&1"
                 cmds.append(cmd)
     return cmds
 
@@ -54,49 +54,48 @@ if __name__=="__main__":
     opts = ["sobol", "random","mtv"]
     
     # cmds = prep_cmds(
-    #     ddir="exp_2_plots/plot_1d_100arm",
+    #     ddir="exp_2_figure/plot_1d_1arm",
     #     funcs=funcs_1d,
     #     dims=[1],
-    #     num_arms=100,
+    #     num_arms=1,
     #     num_samples=1,
     #     opts=opts,
     # ) + prep_cmds(
-    #     ddir="exp_2_plots/plot_2d_100arm",
+    #     ddir="exp_2_figure/plot_2d_1arm",
     #     funcs=funcs_10d,
     #     dims=[2],
-    #     num_arms=100,
+    #     num_arms=1,
     #     num_samples=1,
     #     opts=opts,
-    # )+ 
+    # )+  
     cmds = prep_cmds(
-        ddir="exp_2_plots/plot_3d_100arm",
+        ddir="exp_2_figure/plot_3d_1arm",
         funcs=funcs_10d,
         dims=[3],
-        num_arms=100,
+        num_arms=1,
+        num_samples=1,
+        opts=opts,
+    )+ prep_cmds(
+        ddir="exp_2_figure/plot_10d_1arm",
+        funcs=funcs_10d,
+        dims=[10],
+        num_arms=1,
+        num_samples=1,
+        opts=opts,
+    )+ prep_cmds(
+        ddir="exp_2_figure/plot_30d_1arm",
+        funcs=funcs_10d,
+        dims=[30],
+        num_arms=1,
+        num_samples=1,
+        opts=opts,
+    )+ prep_cmds(
+        ddir="exp_2_figure/plot_100d_1arm",
+        funcs=funcs_10d,
+        dims=[100],
+        num_arms=1,
         num_samples=1,
         opts=opts,
     )
-    # cmds = prep_cmds(
-    #     ddir="exp_2_plots/plot_10d_100arm",
-    #     funcs=funcs_10d,
-    #     dims=[10],
-    #     num_arms=100,
-    #     num_samples=1,
-    #     opts=opts,
-    # )+ prep_cmds(
-    #     ddir="exp_2_plots/plot_30d_100arm",
-    #     funcs=funcs_10d,
-    #     dims=[30],
-    #     num_arms=100,
-    #     num_samples=1,
-    #     opts=opts,
-    # )+ prep_cmds(
-    #     ddir="exp_2_plots/plot_100d_100arm",
-    #     funcs=funcs_10d,
-    #     dims=[100],
-    #     num_arms=100,
-    #     num_samples=1,
-    #     opts=opts,
-    # )
 
     run(cmds, max_parallel=10, b_dry_run=False)
