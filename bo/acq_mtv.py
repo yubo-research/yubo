@@ -29,7 +29,7 @@ class AcqMTV(MCAcquisitionFunction):
         sample_type="mh",
         x_max_type="find_max",
         alt_acqf=None,
-        lengthscale_correction="type_0",
+        lengthscale_correction=None,
         eps_0=0.1,
         **kwargs,
     ) -> None:

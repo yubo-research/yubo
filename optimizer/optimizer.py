@@ -14,7 +14,6 @@ from botorch.acquisition.monte_carlo import (
 from bo.acq_dpp import AcqDPP
 from bo.acq_min_dist import AcqMinDist
 from bo.acq_mtv import AcqMTV
-from bo.acq_ts import AcqTS
 from bo.acq_var import AcqVar
 
 from .ax_designer import AxDesigner
@@ -66,14 +65,12 @@ class Optimizer:
             # All exploitation
             "sr": BTDesigner(policy, qSimpleRegret, init_center=False),
             # Various methods, first batch is Sobol
-            "ts": BTDesigner(policy, AcqTS, init_center=False),
             "ucb": BTDesigner(policy, qUpperConfidenceBound, init_center=False, acq_kwargs={"beta": 1}),
             "ei": BTDesigner(policy, qNoisyExpectedImprovement, init_center=False, acq_kwargs={"X_baseline": None}),
             "gibbon": BTDesigner(policy, qLowerBoundMaxValueEntropy, init_center=False, opt_sequential=True, acq_kwargs={"candidate_set": None}),
             "turbo": TuRBODesigner(policy, num_init=init_ax_default),
             "dpp": BTDesigner(policy, AcqDPP, init_sobol=1, init_center=False, acq_kwargs={"num_X_samples": default_num_X_samples}),
             # Force a center point into the initialization
-            "ts_c": BTDesigner(policy, AcqTS, init_center=True),
             "ucb_c": BTDesigner(policy, qUpperConfidenceBound, init_center=True, acq_kwargs={"beta": 1}),
             "ei_c": BTDesigner(policy, qNoisyExpectedImprovement, init_center=True, acq_kwargs={"X_baseline": None}),
             "gibbon_c": BTDesigner(policy, qLowerBoundMaxValueEntropy, init_center=True, opt_sequential=True, acq_kwargs={"candidate_set": None}),
@@ -105,13 +102,6 @@ class Optimizer:
                 init_X_samples=False,
                 acq_kwargs={"ttype": "mvar", "num_X_samples": default_num_X_samples},
             ),
-            "mtv_no-len-corr": BTDesigner(
-                policy,
-                AcqMTV,
-                init_sobol=0,
-                init_center=False,
-                acq_kwargs={"ttype": "mvar", "num_X_samples": default_num_X_samples, "lengthscale_correction": None},
-            ),
             "mtv_no-pstar": BTDesigner(
                 policy,
                 AcqMTV,
@@ -120,10 +110,6 @@ class Optimizer:
                 acq_kwargs={"ttype": "mvar", "sample_type": "sobol", "num_X_samples": default_num_X_samples},
             ),
             # MTV for first batch only
-            "mtv_then_ts": [
-                self._designers["mtv"],
-                self._designers["ts"],
-            ],
             "mtv_then_sr": [
                 self._designers["mtv"],
                 self._designers["sr"],

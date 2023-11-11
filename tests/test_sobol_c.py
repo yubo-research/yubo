@@ -13,7 +13,7 @@ def test_sobol_center():
         env_conf = get_env_conf("f:sphere-2d", seed=17)
         policy = default_policy(env_conf)
         opt = Optimizer(env_conf, policy, num_arms=num_arms)
-        opt.collect_trace(ttype="sobol_center", num_iterations=1)
+        opt.collect_trace(ttype="sobol_c", num_iterations=1)
         if prev_data is not None:
             for d_p, d in zip(prev_data, opt._data):
                 num_checks += 1
