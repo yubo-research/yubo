@@ -6,7 +6,7 @@ if __name__ == "__main__":
     from experiments.exp_1 import sample
     from problems.env_conf import get_env_conf
 
-    assert len(sys.argv) in [6, 7], f"{sys.argv[0]} env_tag ttype num_arms num_replications num_rounds noise"
+    assert len(sys.argv) in [6, 7], f"{sys.argv[0]} env_tag ttype num_arms num_replications num_rounds [noise]"
     env_tag = sys.argv[1]
     ttype = sys.argv[2]
     num_arms = int(sys.argv[3])
