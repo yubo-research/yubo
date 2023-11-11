@@ -3,6 +3,7 @@ import numpy as np
 
 import analysis.data_sets as ads
 
+import re 
 
 def subplots(n, m, figsize):
     fig, axs = plt.subplots(n, m, figsize=(figsize, figsize))
@@ -11,6 +12,7 @@ def subplots(n, m, figsize):
     else:
         axs = [axs]
     return fig, axs
+
 
 
 def tight(axs):
@@ -60,124 +62,106 @@ def zc(x):
     return (x - x.mean()) / x.std()
 
 
-def plot_agg(data_locator, exp_tag, problem_names, optimizer_names, i_only):
-    normalized_summaries = ads.load_as_normalized_summaries(exp_tag, problem_names, optimizer_names, data_locator, i_only)
-    agg = ads.aggregate_normalized_summaries(normalized_summaries)
-    colors = ["blue", "green", "red", "black", "cyan", "magenta"]
-    markers = [".", "o", "v", "^", "s"]
-    i_color = 0
-    i_marker = 0
-    for optimizer_name in optimizer_names:
-        n = len(agg[optimizer_name][0])
-        mu, sg = agg[optimizer_name]
-        error_area(
-            np.arange(n),
-            mu,
-            sg,
-            color=colors[i_color],
-            marker=markers[i_marker],
-        )
-        i_color = (i_color + 1) % len(colors)
-        i_marker = (i_marker + 1) % len(markers)
+def plot_sorted(ax, optimizers, mu, se, renames=None):
+    i_sort = np.argsort(-mu)
+    n = np.arange(len(mu))
+    ax.errorbar(n, mu[i_sort], se[i_sort], fmt="ko", capsize=10)
+    print("x",n, "y", mu[i_sort], "err", se[i_sort])
+    names = list(optimizers)
+    if renames is not None:
+        for old, new in renames.items():
+            i = names.index(old)
+            names[i] = new
+    ax.set_xticks(n, [names[i] for i in i_sort], rotation=90)
+    # ax.set_xticks(n, [names[i].split('_')[0] for i in i_sort], rotation=90)
+
+    # print("optimizers", [names[i] for i in i_sort])
+    # print("optimizers",[names[i].split('_')[0] for i in i_sort])
+    ax.set_ylim([0, 1])
 
 
-def plot_agg_final(ax, data_locator, exp_tag, problems, optimizers, sort=False, ranks=False, i_agg=-1, renames=None):
-    if ranks:
-        agg = ads.agg_rank_summaries(exp_tag, problems, optimizers, data_locator)
-    else:
-        normalized_summaries = ads.load_as_normalized_summaries(exp_tag, problems, optimizers, data_locator, i_only=i_agg)
-        agg = ads.aggregate_normalized_summaries(normalized_summaries)
+def plot_sorted_agg(ax, data_locator, exp_tag, optimizers=None, renames=None, i_agg=-1):
+    problems = sorted(data_locator.problems_in(exp_tag))
+    if optimizers is None:
+        optimizers = set()
+        for problem in problems:
+            optimizers.update(data_locator.optimizers_in(exp_tag, problem))
+    # optimizers = sorted(optimizers)
 
-    if renames is None:
-        renames = list(optimizers)
-    if sort:
-        data = []
-        for rename, optimizer_name in zip(renames, optimizers):
-            if optimizer_name not in agg:
-                continue
-            mu, sg = agg[optimizer_name]
+    traces = ads.load_multiple_traces(data_locator, exp_tag, problems, optimizers)
+    if i_agg != -1:
+        traces = traces[..., : i_agg + 1]
 
-            if not ranks:
-                mu = mu[i_agg]
-            data.append((-mu, rename, optimizer_name))
-        data = sorted(data)
-        optimizers = [d[2] for d in data]
-        renames = [d[1] for d in data]
+    mu, se = ads.range_summarize(traces)
+    plot_sorted(ax, optimizers, mu, se, renames=renames)
 
-    # colors = ["blue", "green", "red", "black", "cyan", "magenta"]
-    # markers = [".", "o", "v", "^", "s"]
-    # i_color = 0
-    # i_marker = 0
-    agg_final = {}
-    for optimizer_name in optimizers:
-        if optimizer_name not in agg:
-            continue
-        mu, sg = agg[optimizer_name]
-        if not ranks:
-            mu = mu[i_agg]
-            sg = sg[i_agg]
-        agg_final[optimizer_name] = (mu, sg)
 
-    n = np.arange(len(optimizers))
-    o = np.array([agg_final[n] for n in optimizers])
-    ax.errorbar(n, o[:, 0], o[:, 1], fmt="ko", capsize=10)
-    # ap.error_area(n, o[:,0], o[:,1])
-    # plt.plot(n, o[:,0], 'ko--');
+def plot_sorted_test(ax, optimizers, mu, se, renames=None):
+    i_sort = np.argsort(-mu)
+    # n = [0,1,2]*6
+    names = list(optimizers)
+    legend=[]
+    legend.extend([names[i].split('_')[0] for i in i_sort])
+    n = [int(re.search(r'\d+', names[i]).group()) for i in i_sort]
+    # n =  [str(x) for x in my_list]
+    colbar= {"mtv":"black", "sobol":"dimgray", "random":"darkgray"}
+    labels = [names[i].split('_')[0] for i in i_sort]
+    X = n
+    Y = mu[i_sort]
+    ERR = se[i_sort]
+    for j in range(len(X)):
+        i = len(X)-j-1
+        label = labels[i]
+        ax.errorbar(str(X[i]), Y[i], ERR[i], fmt="ko", capsize=10, label=label, color =colbar[label])
+    # ax.errorbar(n, mu[i_sort], se[i_sort], fmt="ko", capsize=10, label=labels, color =[colbar[i] for i in labels])
+    # print("x",n, "y", mu[i_sort], "err", se[i_sort])
+    # print("labels",[names[i].split('_')[0] for i in i_sort])
+    if renames is not None:
+        for old, new in renames.items():
+            i = names.index(old)
+            names[i] = new
+    # ax.set_xticks(n, [names[i] for i in i_sort], rotation=90)
+    # ax.set_xticks(n, [names[i].split('_')[0] for i in i_sort], rotation=90)
+    # ax.set_xticks(n, [str(re.search(r'\d+', names[i]).group()) for i in i_sort], rotation=90)
+
+    # # print("optimizers", [names[i] for i in i_sort])
+    # # print("optimizers",[names[i].split('_')[0] for i in i_sort])
+    # ax.set_ylim([0, 1])
     if ax == plt:
         xticks = plt.xticks
     else:
         xticks = ax.set_xticks
-    xticks(n, renames, rotation=90)
 
 
-def plot_agg_all(ax, data_locator, exp_tag, optimizers=None, sort=False, i_agg=-1, renames=None):
-    problems, optimizers_actual = ads.all_in(exp_tag)
+def plot_sorted_agg_test(ax, data_locator, exp_tag, optimizers=None, renames=None, i_agg=-1):
+    problems = sorted(data_locator.problems_in(exp_tag))
     if optimizers is None:
-        optimizers = optimizers_actual
-    plot_agg_final(ax, data_locator, exp_tag, problems, optimizers, sort=sort, i_agg=i_agg, renames=renames)
-    return optimizers
+        optimizers = set()
+        for problem in problems:
+            optimizers.update(data_locator.optimizers_in(exp_tag, problem))
+    # optimizers = sorted(optimizers)
 
-def plot_agg_dim(ax, data_locator, exp_tag, problems, optimizers, num_arms, sort=False, ranks=False, i_agg=-1, renames=None):
-    if ranks:
-        agg = ads.agg_rank_summaries(exp_tag, problems, optimizers, data_locator)
-    else:
-        normalized_summaries = ads.load_as_normalized_summaries(exp_tag, problems, optimizers, data_locator, i_only=i_agg)
-        agg = ads.aggregate_normalized_summaries(normalized_summaries)
+    traces = ads.load_multiple_traces(data_locator, exp_tag, problems, optimizers)
+    if i_agg != -1:
+        traces = traces[..., : i_agg + 1]
 
-    if renames is None:
-        renames = list(optimizers)
-    if sort:
-        data = []
-        for rename, optimizer_name in zip(renames, optimizers):
-            if optimizer_name not in agg:
-                continue
-            mu, sg = agg[optimizer_name]
+    mu, se = ads.range_summarize(traces)
+    plot_sorted_test(ax, optimizers, mu, se, renames=renames)
 
-            if not ranks:
-                mu = mu[i_agg]
-            data.append((-mu, rename, optimizer_name))
-        data = sorted(data)
-        optimizers = [d[2] for d in data]
-        renames = [d[1] for d in data]
-
-    # colors = ["blue", "green", "red", "black", "cyan", "magenta"]
-    # markers = [".", "o", "v", "^", "s"]
-    # i_color = 0
-    # i_marker = 0
-    agg_final = {}
-    for optimizer_name in optimizers:
-        if optimizer_name not in agg:
-            continue
-        mu, sg = agg[optimizer_name]
-        if not ranks:
-            mu = mu[i_agg]
-            sg = sg[i_agg]
-        agg_final[optimizer_name] = (mu, sg)
-
-    # n = np.arange(len(optimizers))
-    o = np.array([agg_final[n] for n in optimizers])
-    Y = o[:, 0]
-    SG= o[:, 1]
+def plot_sorted_dim(ax, optimizers, mu, se, num_arms, num_dim, indicator,renames=None):
+    i_sort = np.argsort(-mu)
+    # n = np.arange(len(mu))
+    
+    # n = [str(num_arms)]*len(mu)
+    # ax.errorbar(n, mu[i_sort], se[i_sort], fmt="ko", capsize=10)
+    # print("optimizer", optimizers,"x",n, "y", mu[i_sort], "err", se[i_sort])
+    names = list(optimizers)
+    if renames is not None:
+        for old, new in renames.items():
+            i = names.index(old)
+            names[i] = new
+    Y = mu[i_sort]
+    SG =se[i_sort]
     colors = ["black","dimgray","darkgray","silver","lightgray"]
     fmts = ["X-", "+-","o-","^-","8-","s-","*-","D-","v-","P-","1-",",-"]
     linestyles=["None","--",":",".-"]
@@ -185,90 +169,33 @@ def plot_agg_dim(ax, data_locator, exp_tag, problems, optimizers, num_arms, sort
     for j in range(len(optimizers)):
         y = Y[j]
         sg = SG[j]
-        x = str(num_arms)
-        legend.extend(optimizers[j])
-        ax.errorbar(x,y, sg, fmt=fmts[j], capsize=10,color = colors[j], linestyle = linestyles[j],label=optimizers[j])
-        # ax.legend(legend, loc="lower right", bbox_to_anchor=(1, 0))
-    # ap.error_area(n, o[:,0], o[:,1])
-    # plt.plot(n, o[:,0], 'ko--');
+        if indicator =="Arm":
+            x = str(num_dim)
+        if indicator =="Dim":
+            x = str(num_arms)
+        
+        legend.extend([names[i] for i in i_sort][j])
+        ax.errorbar(x,y, sg, fmt=fmts[j], capsize=10,color = colors[j], linestyle = linestyles[j],label=[names[i] for i in i_sort][j])
+    # ax.set_xticks(n, [names[i] for i in i_sort], rotation=90)
+    # ax.set_xticks(n, n, rotation=90)
+    # ax.set_ylim([0, 1])
     if ax == plt:
         xticks = plt.xticks
     else:
         xticks = ax.set_xticks
-    # xticks(n, renames, rotation=90)
 
 
-def plot_agg_dim_all(ax, data_locator, exp_tag, num_arms, optimizers=None, sort=False, i_agg=-1, renames=None):
-    problems, optimizers_actual = ads.all_in(exp_tag)
+def plot_sorted_agg_dim(ax, data_locator, exp_tag,  num_arms, num_dim, indicator, optimizers=None, renames=None, i_agg=-1):
+    problems = sorted(data_locator.problems_in(exp_tag))
     if optimizers is None:
-        optimizers = optimizers_actual
-    plot_agg_dim(ax, data_locator, exp_tag, problems, optimizers, num_arms, sort=sort, i_agg=i_agg, renames=renames)
-    return optimizers
+        optimizers = set()
+        for problem in problems:
+            optimizers.update(data_locator.optimizers_in(exp_tag, problem))
+    # optimizers = sorted(optimizers)
 
-def plot_agg_arm(ax, data_locator, exp_tag, problems, optimizers, num_dim, sort=False, ranks=False, i_agg=-1, renames=None):
-    if ranks:
-        agg = ads.agg_rank_summaries(exp_tag, problems, optimizers, data_locator)
-    else:
-        normalized_summaries = ads.load_as_normalized_summaries(exp_tag, problems, optimizers, data_locator, i_only=i_agg)
-        agg = ads.aggregate_normalized_summaries(normalized_summaries)
+    traces = ads.load_multiple_traces(data_locator, exp_tag, problems, optimizers)
+    if i_agg != -1:
+        traces = traces[..., : i_agg + 1]
 
-    if renames is None:
-        renames = list(optimizers)
-    if sort:
-        data = []
-        for rename, optimizer_name in zip(renames, optimizers):
-            if optimizer_name not in agg:
-                continue
-            mu, sg = agg[optimizer_name]
-
-            if not ranks:
-                mu = mu[i_agg]
-            data.append((-mu, rename, optimizer_name))
-        data = sorted(data)
-        optimizers = [d[2] for d in data]
-        renames = [d[1] for d in data]
-
-    # colors = ["blue", "green", "red", "black", "cyan", "magenta"]
-    # markers = [".", "o", "v", "^", "s"]
-    # i_color = 0
-    # i_marker = 0
-    agg_final = {}
-    for optimizer_name in optimizers:
-        if optimizer_name not in agg:
-            continue
-        mu, sg = agg[optimizer_name]
-        if not ranks:
-            mu = mu[i_agg]
-            sg = sg[i_agg]
-        agg_final[optimizer_name] = (mu, sg)
-
-    # n = np.arange(len(optimizers))
-    o = np.array([agg_final[n] for n in optimizers])
-    Y = o[:, 0]
-    SG= o[:, 1]
-    colors = ["black","dimgray","darkgray","silver","lightgray"]
-    fmts = ["X-", "+-","o-","^-","8-","s-","*-","D-","v-","P-","1-",",-"]
-    linestyles=["None","--",":",".-"]
-    legend = []
-    for j in range(len(optimizers)):
-        y = Y[j]
-        sg = SG[j]
-        x = str(num_dim)
-        legend.extend(optimizers[j])
-        ax.errorbar(x,y, sg, fmt=fmts[j], capsize=10,color = colors[j], linestyle = linestyles[j],label=optimizers[j])
-        # ax.legend(legend, loc="lower right", bbox_to_anchor=(1, 0))
-    # ap.error_area(n, o[:,0], o[:,1])
-    # plt.plot(n, o[:,0], 'ko--');
-    if ax == plt:
-        xticks = plt.xticks
-    else:
-        xticks = ax.set_xticks
-    # xticks(n, renames, rotation=90)
-
-
-def plot_agg_arm_all(ax, data_locator, exp_tag, num_dim, optimizers=None, sort=False, i_agg=-1, renames=None):
-    problems, optimizers_actual = ads.all_in(exp_tag)
-    if optimizers is None:
-        optimizers = optimizers_actual
-    plot_agg_arm(ax, data_locator, exp_tag, problems, optimizers, num_dim, sort=sort, i_agg=i_agg, renames=renames)
-    return optimizers
+    mu, se = ads.range_summarize(traces)
+    plot_sorted_dim(ax, optimizers, mu, se,  num_arms, num_dim, indicator,renames=None)
