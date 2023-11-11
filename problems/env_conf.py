@@ -10,12 +10,13 @@ from problems.pure_function_policy import PureFunctionPolicy
 
 
 def get_env_conf(tag, seed=None, noise=None):
-    if tag[:2] == "f:":
-        ec = EnvConf(tag, seed=seed, noise=noise, max_steps=1000, solved=9999)
-    else:
+    if tag in _env_confs:
         ec = _env_confs[tag]
         ec.seed = seed
         ec.solved = 9999
+    else:
+        ec = EnvConf(tag, seed=seed, noise=noise, max_steps=1000, solved=9999)
+
     return ec
 
 
