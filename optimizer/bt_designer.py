@@ -58,9 +58,8 @@ class BTDesigner:
 
         if len(data) < self._init_sobol:
             sobol = SobolDesigner(self._policy.clone(), self._init_center)
-            print("INIT SOBOL", sobol.seed, sobol.init_center())
+            # print("INIT SOBOL", sobol.seed, sobol.init_center())
             ret = sobol(data, num_arms)
-            print("S:", data, num_arms, ret)
             self.fig_last_acqf = "sobol"
             self.fig_last_arms = sobol.fig_last_arms
             return ret
