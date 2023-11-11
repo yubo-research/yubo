@@ -1,0 +1,401 @@
+EXPERIMENT: env_tag = f:levy-30d ttype = mtv num_arms = 3 num_replications = 100 num_rounds = 1
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 20.60 ret = -200.31 ret_best = -200.31
+TRACE: name = f:levy-30d ttype = mtv i_sample = 0 i_iter = 0 dt = 2.060e+01 return = -2.003e+02
+TIME_REPLICATE: 20.63
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 20.62 ret = -211.17 ret_best = -211.17
+TRACE: name = f:levy-30d ttype = mtv i_sample = 1 i_iter = 0 dt = 2.062e+01 return = -2.112e+02
+TIME_REPLICATE: 20.63
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 34.47 ret = -216.89 ret_best = -216.89
+TRACE: name = f:levy-30d ttype = mtv i_sample = 2 i_iter = 0 dt = 3.447e+01 return = -2.169e+02
+TIME_REPLICATE: 34.49
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 74.96 ret = -243.09 ret_best = -243.09
+TRACE: name = f:levy-30d ttype = mtv i_sample = 3 i_iter = 0 dt = 7.496e+01 return = -2.431e+02
+TIME_REPLICATE: 74.99
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 49.38 ret = -257.33 ret_best = -257.33
+TRACE: name = f:levy-30d ttype = mtv i_sample = 4 i_iter = 0 dt = 4.938e+01 return = -2.573e+02
+TIME_REPLICATE: 49.40
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 56.04 ret = -229.51 ret_best = -229.51
+TRACE: name = f:levy-30d ttype = mtv i_sample = 5 i_iter = 0 dt = 5.604e+01 return = -2.295e+02
+TIME_REPLICATE: 56.07
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 59.25 ret = -268.34 ret_best = -268.34
+TRACE: name = f:levy-30d ttype = mtv i_sample = 6 i_iter = 0 dt = 5.925e+01 return = -2.683e+02
+TIME_REPLICATE: 59.27
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 88.42 ret = -129.19 ret_best = -129.19
+TRACE: name = f:levy-30d ttype = mtv i_sample = 7 i_iter = 0 dt = 8.842e+01 return = -1.292e+02
+TIME_REPLICATE: 88.44
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 47.54 ret = -208.59 ret_best = -208.59
+TRACE: name = f:levy-30d ttype = mtv i_sample = 8 i_iter = 0 dt = 4.754e+01 return = -2.086e+02
+TIME_REPLICATE: 47.57
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 59.11 ret = -228.59 ret_best = -228.59
+TRACE: name = f:levy-30d ttype = mtv i_sample = 9 i_iter = 0 dt = 5.911e+01 return = -2.286e+02
+TIME_REPLICATE: 59.14
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 55.24 ret = -258.45 ret_best = -258.45
+TRACE: name = f:levy-30d ttype = mtv i_sample = 10 i_iter = 0 dt = 5.524e+01 return = -2.584e+02
+TIME_REPLICATE: 55.28
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 66.81 ret = -213.01 ret_best = -213.01
+TRACE: name = f:levy-30d ttype = mtv i_sample = 11 i_iter = 0 dt = 6.681e+01 return = -2.130e+02
+TIME_REPLICATE: 66.84
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 56.64 ret = -179.35 ret_best = -179.35
+TRACE: name = f:levy-30d ttype = mtv i_sample = 12 i_iter = 0 dt = 5.664e+01 return = -1.794e+02
+TIME_REPLICATE: 56.66
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 31.45 ret = -238.55 ret_best = -238.55
+TRACE: name = f:levy-30d ttype = mtv i_sample = 13 i_iter = 0 dt = 3.145e+01 return = -2.386e+02
+TIME_REPLICATE: 31.47
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 50.84 ret = -93.76 ret_best = -93.76
+TRACE: name = f:levy-30d ttype = mtv i_sample = 14 i_iter = 0 dt = 5.084e+01 return = -9.376e+01
+TIME_REPLICATE: 50.86
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 45.52 ret = -235.53 ret_best = -235.53
+TRACE: name = f:levy-30d ttype = mtv i_sample = 15 i_iter = 0 dt = 4.552e+01 return = -2.355e+02
+TIME_REPLICATE: 45.54
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 18.71 ret = -227.36 ret_best = -227.36
+TRACE: name = f:levy-30d ttype = mtv i_sample = 16 i_iter = 0 dt = 1.871e+01 return = -2.274e+02
+TIME_REPLICATE: 18.73
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 50.01 ret = -219.84 ret_best = -219.84
+TRACE: name = f:levy-30d ttype = mtv i_sample = 17 i_iter = 0 dt = 5.001e+01 return = -2.198e+02
+TIME_REPLICATE: 50.03
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 57.55 ret = -223.17 ret_best = -223.17
+TRACE: name = f:levy-30d ttype = mtv i_sample = 18 i_iter = 0 dt = 5.755e+01 return = -2.232e+02
+TIME_REPLICATE: 57.57
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 37.77 ret = -271.97 ret_best = -271.97
+TRACE: name = f:levy-30d ttype = mtv i_sample = 19 i_iter = 0 dt = 3.777e+01 return = -2.720e+02
+TIME_REPLICATE: 37.80
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 51.18 ret = -226.69 ret_best = -226.69
+TRACE: name = f:levy-30d ttype = mtv i_sample = 20 i_iter = 0 dt = 5.118e+01 return = -2.267e+02
+TIME_REPLICATE: 51.21
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 65.88 ret = -241.79 ret_best = -241.79
+TRACE: name = f:levy-30d ttype = mtv i_sample = 21 i_iter = 0 dt = 6.588e+01 return = -2.418e+02
+TIME_REPLICATE: 65.91
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 46.92 ret = -276.20 ret_best = -276.20
+TRACE: name = f:levy-30d ttype = mtv i_sample = 22 i_iter = 0 dt = 4.692e+01 return = -2.762e+02
+TIME_REPLICATE: 46.95
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 83.93 ret = -160.37 ret_best = -160.37
+TRACE: name = f:levy-30d ttype = mtv i_sample = 23 i_iter = 0 dt = 8.393e+01 return = -1.604e+02
+TIME_REPLICATE: 83.96
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 63.43 ret = -322.74 ret_best = -322.74
+TRACE: name = f:levy-30d ttype = mtv i_sample = 24 i_iter = 0 dt = 6.343e+01 return = -3.227e+02
+TIME_REPLICATE: 63.46
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 49.55 ret = -224.76 ret_best = -224.76
+TRACE: name = f:levy-30d ttype = mtv i_sample = 25 i_iter = 0 dt = 4.955e+01 return = -2.248e+02
+TIME_REPLICATE: 49.57
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 84.22 ret = -264.51 ret_best = -264.51
+TRACE: name = f:levy-30d ttype = mtv i_sample = 26 i_iter = 0 dt = 8.422e+01 return = -2.645e+02
+TIME_REPLICATE: 84.25
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 63.87 ret = -206.62 ret_best = -206.62
+TRACE: name = f:levy-30d ttype = mtv i_sample = 27 i_iter = 0 dt = 6.387e+01 return = -2.066e+02
+TIME_REPLICATE: 63.89
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 71.06 ret = -346.61 ret_best = -346.61
+TRACE: name = f:levy-30d ttype = mtv i_sample = 28 i_iter = 0 dt = 7.106e+01 return = -3.466e+02
+TIME_REPLICATE: 71.09
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 90.76 ret = -163.48 ret_best = -163.48
+TRACE: name = f:levy-30d ttype = mtv i_sample = 29 i_iter = 0 dt = 9.076e+01 return = -1.635e+02
+TIME_REPLICATE: 90.78
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 61.84 ret = -222.10 ret_best = -222.10
+TRACE: name = f:levy-30d ttype = mtv i_sample = 30 i_iter = 0 dt = 6.184e+01 return = -2.221e+02
+TIME_REPLICATE: 61.86
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 60.43 ret = -212.84 ret_best = -212.84
+TRACE: name = f:levy-30d ttype = mtv i_sample = 31 i_iter = 0 dt = 6.043e+01 return = -2.128e+02
+TIME_REPLICATE: 60.46
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 48.55 ret = -200.06 ret_best = -200.06
+TRACE: name = f:levy-30d ttype = mtv i_sample = 32 i_iter = 0 dt = 4.855e+01 return = -2.001e+02
+TIME_REPLICATE: 48.58
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 52.94 ret = -248.70 ret_best = -248.70
+TRACE: name = f:levy-30d ttype = mtv i_sample = 33 i_iter = 0 dt = 5.294e+01 return = -2.487e+02
+TIME_REPLICATE: 52.97
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 15.42 ret = -201.56 ret_best = -201.56
+TRACE: name = f:levy-30d ttype = mtv i_sample = 34 i_iter = 0 dt = 1.542e+01 return = -2.016e+02
+TIME_REPLICATE: 15.44
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 12.46 ret = -242.44 ret_best = -242.44
+TRACE: name = f:levy-30d ttype = mtv i_sample = 35 i_iter = 0 dt = 1.246e+01 return = -2.424e+02
+TIME_REPLICATE: 12.48
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 2.91 ret = -166.02 ret_best = -166.02
+TRACE: name = f:levy-30d ttype = mtv i_sample = 36 i_iter = 0 dt = 2.908e+00 return = -1.660e+02
+TIME_REPLICATE: 2.92
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 3.35 ret = -248.27 ret_best = -248.27
+TRACE: name = f:levy-30d ttype = mtv i_sample = 37 i_iter = 0 dt = 3.352e+00 return = -2.483e+02
+TIME_REPLICATE: 3.37
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 3.15 ret = -292.97 ret_best = -292.97
+TRACE: name = f:levy-30d ttype = mtv i_sample = 38 i_iter = 0 dt = 3.145e+00 return = -2.930e+02
+TIME_REPLICATE: 3.16
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 5.13 ret = -329.86 ret_best = -329.86
+TRACE: name = f:levy-30d ttype = mtv i_sample = 39 i_iter = 0 dt = 5.134e+00 return = -3.299e+02
+TIME_REPLICATE: 5.15
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 3.46 ret = -220.43 ret_best = -220.43
+TRACE: name = f:levy-30d ttype = mtv i_sample = 40 i_iter = 0 dt = 3.463e+00 return = -2.204e+02
+TIME_REPLICATE: 3.48
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 4.41 ret = -191.71 ret_best = -191.71
+TRACE: name = f:levy-30d ttype = mtv i_sample = 41 i_iter = 0 dt = 4.414e+00 return = -1.917e+02
+TIME_REPLICATE: 4.43
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 4.97 ret = -238.55 ret_best = -238.55
+TRACE: name = f:levy-30d ttype = mtv i_sample = 42 i_iter = 0 dt = 4.973e+00 return = -2.386e+02
+TIME_REPLICATE: 4.99
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 4.74 ret = -241.05 ret_best = -241.05
+TRACE: name = f:levy-30d ttype = mtv i_sample = 43 i_iter = 0 dt = 4.745e+00 return = -2.410e+02
+TIME_REPLICATE: 4.76
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 2.61 ret = -207.10 ret_best = -207.10
+TRACE: name = f:levy-30d ttype = mtv i_sample = 44 i_iter = 0 dt = 2.615e+00 return = -2.071e+02
+TIME_REPLICATE: 2.63
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 3.51 ret = -195.71 ret_best = -195.71
+TRACE: name = f:levy-30d ttype = mtv i_sample = 45 i_iter = 0 dt = 3.506e+00 return = -1.957e+02
+TIME_REPLICATE: 3.52
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 4.87 ret = -200.43 ret_best = -200.43
+TRACE: name = f:levy-30d ttype = mtv i_sample = 46 i_iter = 0 dt = 4.865e+00 return = -2.004e+02
+TIME_REPLICATE: 4.88
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.15 ret = -361.83 ret_best = -361.83
+TRACE: name = f:levy-30d ttype = mtv i_sample = 47 i_iter = 0 dt = 1.525e-01 return = -3.618e+02
+TIME_REPLICATE: 0.17
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 3.64 ret = -255.04 ret_best = -255.04
+TRACE: name = f:levy-30d ttype = mtv i_sample = 48 i_iter = 0 dt = 3.644e+00 return = -2.550e+02
+TIME_REPLICATE: 3.66
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 5.07 ret = -183.86 ret_best = -183.86
+TRACE: name = f:levy-30d ttype = mtv i_sample = 49 i_iter = 0 dt = 5.075e+00 return = -1.839e+02
+TIME_REPLICATE: 5.09
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 2.60 ret = -237.68 ret_best = -237.68
+TRACE: name = f:levy-30d ttype = mtv i_sample = 50 i_iter = 0 dt = 2.602e+00 return = -2.377e+02
+TIME_REPLICATE: 2.62
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 2.99 ret = -249.68 ret_best = -249.68
+TRACE: name = f:levy-30d ttype = mtv i_sample = 51 i_iter = 0 dt = 2.993e+00 return = -2.497e+02
+TIME_REPLICATE: 3.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 5.18 ret = -186.74 ret_best = -186.74
+TRACE: name = f:levy-30d ttype = mtv i_sample = 52 i_iter = 0 dt = 5.181e+00 return = -1.867e+02
+TIME_REPLICATE: 5.19
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 4.46 ret = -242.21 ret_best = -242.21
+TRACE: name = f:levy-30d ttype = mtv i_sample = 53 i_iter = 0 dt = 4.460e+00 return = -2.422e+02
+TIME_REPLICATE: 4.47
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 3.28 ret = -232.59 ret_best = -232.59
+TRACE: name = f:levy-30d ttype = mtv i_sample = 54 i_iter = 0 dt = 3.278e+00 return = -2.326e+02
+TIME_REPLICATE: 3.29
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 4.84 ret = -258.10 ret_best = -258.10
+TRACE: name = f:levy-30d ttype = mtv i_sample = 55 i_iter = 0 dt = 4.836e+00 return = -2.581e+02
+TIME_REPLICATE: 4.85
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 2.31 ret = -278.08 ret_best = -278.08
+TRACE: name = f:levy-30d ttype = mtv i_sample = 56 i_iter = 0 dt = 2.305e+00 return = -2.781e+02
+TIME_REPLICATE: 2.32
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 4.79 ret = -321.55 ret_best = -321.55
+TRACE: name = f:levy-30d ttype = mtv i_sample = 57 i_iter = 0 dt = 4.787e+00 return = -3.216e+02
+TIME_REPLICATE: 4.80
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 5.01 ret = -251.39 ret_best = -251.39
+TRACE: name = f:levy-30d ttype = mtv i_sample = 58 i_iter = 0 dt = 5.012e+00 return = -2.514e+02
+TIME_REPLICATE: 5.02
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 3.42 ret = -194.36 ret_best = -194.36
+TRACE: name = f:levy-30d ttype = mtv i_sample = 59 i_iter = 0 dt = 3.418e+00 return = -1.944e+02
+TIME_REPLICATE: 3.43
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.16 ret = -237.36 ret_best = -237.36
+TRACE: name = f:levy-30d ttype = mtv i_sample = 60 i_iter = 0 dt = 1.575e-01 return = -2.374e+02
+TIME_REPLICATE: 0.17
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 4.00 ret = -311.54 ret_best = -311.54
+TRACE: name = f:levy-30d ttype = mtv i_sample = 61 i_iter = 0 dt = 4.001e+00 return = -3.115e+02
+TIME_REPLICATE: 4.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 2.90 ret = -143.61 ret_best = -143.61
+TRACE: name = f:levy-30d ttype = mtv i_sample = 62 i_iter = 0 dt = 2.898e+00 return = -1.436e+02
+TIME_REPLICATE: 2.91
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 6.10 ret = -252.29 ret_best = -252.29
+TRACE: name = f:levy-30d ttype = mtv i_sample = 63 i_iter = 0 dt = 6.097e+00 return = -2.523e+02
+TIME_REPLICATE: 6.11
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 3.63 ret = -248.04 ret_best = -248.04
+TRACE: name = f:levy-30d ttype = mtv i_sample = 64 i_iter = 0 dt = 3.630e+00 return = -2.480e+02
+TIME_REPLICATE: 3.64
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 3.46 ret = -228.72 ret_best = -228.72
+TRACE: name = f:levy-30d ttype = mtv i_sample = 65 i_iter = 0 dt = 3.462e+00 return = -2.287e+02
+TIME_REPLICATE: 3.48
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 3.54 ret = -80.08 ret_best = -80.08
+TRACE: name = f:levy-30d ttype = mtv i_sample = 66 i_iter = 0 dt = 3.537e+00 return = -8.008e+01
+TIME_REPLICATE: 3.55
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 2.56 ret = -290.61 ret_best = -290.61
+TRACE: name = f:levy-30d ttype = mtv i_sample = 67 i_iter = 0 dt = 2.558e+00 return = -2.906e+02
+TIME_REPLICATE: 2.57
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 4.27 ret = -267.23 ret_best = -267.23
+TRACE: name = f:levy-30d ttype = mtv i_sample = 68 i_iter = 0 dt = 4.267e+00 return = -2.672e+02
+TIME_REPLICATE: 4.28
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 5.13 ret = -243.38 ret_best = -243.38
+TRACE: name = f:levy-30d ttype = mtv i_sample = 69 i_iter = 0 dt = 5.127e+00 return = -2.434e+02
+TIME_REPLICATE: 5.14
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 3.59 ret = -216.26 ret_best = -216.26
+TRACE: name = f:levy-30d ttype = mtv i_sample = 70 i_iter = 0 dt = 3.594e+00 return = -2.163e+02
+TIME_REPLICATE: 3.61
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 5.32 ret = -201.68 ret_best = -201.68
+TRACE: name = f:levy-30d ttype = mtv i_sample = 71 i_iter = 0 dt = 5.318e+00 return = -2.017e+02
+TIME_REPLICATE: 5.33
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 4.46 ret = -175.48 ret_best = -175.48
+TRACE: name = f:levy-30d ttype = mtv i_sample = 72 i_iter = 0 dt = 4.459e+00 return = -1.755e+02
+TIME_REPLICATE: 4.47
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 4.67 ret = -301.24 ret_best = -301.24
+TRACE: name = f:levy-30d ttype = mtv i_sample = 73 i_iter = 0 dt = 4.669e+00 return = -3.012e+02
+TIME_REPLICATE: 4.68
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 4.22 ret = -316.62 ret_best = -316.62
+TRACE: name = f:levy-30d ttype = mtv i_sample = 74 i_iter = 0 dt = 4.217e+00 return = -3.166e+02
+TIME_REPLICATE: 4.23
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 3.50 ret = -298.00 ret_best = -298.00
+TRACE: name = f:levy-30d ttype = mtv i_sample = 75 i_iter = 0 dt = 3.498e+00 return = -2.980e+02
+TIME_REPLICATE: 3.51
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 3.17 ret = -231.15 ret_best = -231.15
+TRACE: name = f:levy-30d ttype = mtv i_sample = 76 i_iter = 0 dt = 3.173e+00 return = -2.312e+02
+TIME_REPLICATE: 3.19
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 2.46 ret = -195.89 ret_best = -195.89
+TRACE: name = f:levy-30d ttype = mtv i_sample = 77 i_iter = 0 dt = 2.464e+00 return = -1.959e+02
+TIME_REPLICATE: 2.48
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 3.82 ret = -273.33 ret_best = -273.33
+TRACE: name = f:levy-30d ttype = mtv i_sample = 78 i_iter = 0 dt = 3.824e+00 return = -2.733e+02
+TIME_REPLICATE: 3.84
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 4.41 ret = -247.60 ret_best = -247.60
+TRACE: name = f:levy-30d ttype = mtv i_sample = 79 i_iter = 0 dt = 4.409e+00 return = -2.476e+02
+TIME_REPLICATE: 4.42
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 3.03 ret = -211.25 ret_best = -211.25
+TRACE: name = f:levy-30d ttype = mtv i_sample = 80 i_iter = 0 dt = 3.028e+00 return = -2.113e+02
+TIME_REPLICATE: 3.04
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 3.83 ret = -270.99 ret_best = -270.99
+TRACE: name = f:levy-30d ttype = mtv i_sample = 81 i_iter = 0 dt = 3.829e+00 return = -2.710e+02
+TIME_REPLICATE: 3.84
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 3.27 ret = -233.10 ret_best = -233.10
+TRACE: name = f:levy-30d ttype = mtv i_sample = 82 i_iter = 0 dt = 3.266e+00 return = -2.331e+02
+TIME_REPLICATE: 3.28
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 3.97 ret = -339.84 ret_best = -339.84
+TRACE: name = f:levy-30d ttype = mtv i_sample = 83 i_iter = 0 dt = 3.971e+00 return = -3.398e+02
+TIME_REPLICATE: 3.98
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 4.21 ret = -225.11 ret_best = -225.11
+TRACE: name = f:levy-30d ttype = mtv i_sample = 84 i_iter = 0 dt = 4.212e+00 return = -2.251e+02
+TIME_REPLICATE: 4.23
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 2.78 ret = -334.27 ret_best = -334.27
+TRACE: name = f:levy-30d ttype = mtv i_sample = 85 i_iter = 0 dt = 2.782e+00 return = -3.343e+02
+TIME_REPLICATE: 2.79
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 3.61 ret = -298.22 ret_best = -298.22
+TRACE: name = f:levy-30d ttype = mtv i_sample = 86 i_iter = 0 dt = 3.611e+00 return = -2.982e+02
+TIME_REPLICATE: 3.62
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 3.86 ret = -250.59 ret_best = -250.59
+TRACE: name = f:levy-30d ttype = mtv i_sample = 87 i_iter = 0 dt = 3.862e+00 return = -2.506e+02
+TIME_REPLICATE: 3.88
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 3.41 ret = -206.91 ret_best = -206.91
+TRACE: name = f:levy-30d ttype = mtv i_sample = 88 i_iter = 0 dt = 3.410e+00 return = -2.069e+02
+TIME_REPLICATE: 3.42
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 5.42 ret = -232.95 ret_best = -232.95
+TRACE: name = f:levy-30d ttype = mtv i_sample = 89 i_iter = 0 dt = 5.418e+00 return = -2.330e+02
+TIME_REPLICATE: 5.43
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 4.55 ret = -203.92 ret_best = -203.92
+TRACE: name = f:levy-30d ttype = mtv i_sample = 90 i_iter = 0 dt = 4.548e+00 return = -2.039e+02
+TIME_REPLICATE: 4.56
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 3.20 ret = -194.34 ret_best = -194.34
+TRACE: name = f:levy-30d ttype = mtv i_sample = 91 i_iter = 0 dt = 3.197e+00 return = -1.943e+02
+TIME_REPLICATE: 3.21
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 4.23 ret = -388.41 ret_best = -388.41
+TRACE: name = f:levy-30d ttype = mtv i_sample = 92 i_iter = 0 dt = 4.229e+00 return = -3.884e+02
+TIME_REPLICATE: 4.24
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 3.17 ret = -264.00 ret_best = -264.00
+TRACE: name = f:levy-30d ttype = mtv i_sample = 93 i_iter = 0 dt = 3.173e+00 return = -2.640e+02
+TIME_REPLICATE: 3.19
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 3.65 ret = -201.03 ret_best = -201.03
+TRACE: name = f:levy-30d ttype = mtv i_sample = 94 i_iter = 0 dt = 3.652e+00 return = -2.010e+02
+TIME_REPLICATE: 3.66
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 3.67 ret = -194.51 ret_best = -194.51
+TRACE: name = f:levy-30d ttype = mtv i_sample = 95 i_iter = 0 dt = 3.674e+00 return = -1.945e+02
+TIME_REPLICATE: 3.69
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 2.52 ret = -263.25 ret_best = -263.25
+TRACE: name = f:levy-30d ttype = mtv i_sample = 96 i_iter = 0 dt = 2.519e+00 return = -2.632e+02
+TIME_REPLICATE: 2.53
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 3.68 ret = -145.36 ret_best = -145.36
+TRACE: name = f:levy-30d ttype = mtv i_sample = 97 i_iter = 0 dt = 3.683e+00 return = -1.454e+02
+TIME_REPLICATE: 3.70
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 4.53 ret = -255.90 ret_best = -255.90
+TRACE: name = f:levy-30d ttype = mtv i_sample = 98 i_iter = 0 dt = 4.526e+00 return = -2.559e+02
+TIME_REPLICATE: 4.54
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 2.73 ret = -297.63 ret_best = -297.63
+TRACE: name = f:levy-30d ttype = mtv i_sample = 99 i_iter = 0 dt = 2.731e+00 return = -2.976e+02
+TIME_REPLICATE: 2.74

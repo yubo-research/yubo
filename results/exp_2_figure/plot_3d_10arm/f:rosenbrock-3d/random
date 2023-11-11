@@ -1,0 +1,401 @@
+EXPERIMENT: env_tag = f:rosenbrock-3d ttype = random num_arms = 10 num_replications = 100 num_rounds = 1
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -115.26 ret_best = -115.26
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 0 i_iter = 0 dt = 6.993e-04 return = -1.153e+02
+TIME_REPLICATE: 0.07
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -155.59 ret_best = -155.59
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 1 i_iter = 0 dt = 1.813e-03 return = -1.556e+02
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -348.87 ret_best = -348.87
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 2 i_iter = 0 dt = 6.924e-04 return = -3.489e+02
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -279.81 ret_best = -279.81
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 3 i_iter = 0 dt = 6.907e-04 return = -2.798e+02
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -196.63 ret_best = -196.63
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 4 i_iter = 0 dt = 6.285e-04 return = -1.966e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -79.26 ret_best = -79.26
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 5 i_iter = 0 dt = 6.528e-04 return = -7.926e+01
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -161.06 ret_best = -161.06
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 6 i_iter = 0 dt = 6.273e-04 return = -1.611e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -53.02 ret_best = -53.02
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 7 i_iter = 0 dt = 6.092e-04 return = -5.302e+01
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -212.96 ret_best = -212.96
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 8 i_iter = 0 dt = 5.593e-04 return = -2.130e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -62.63 ret_best = -62.63
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 9 i_iter = 0 dt = 5.548e-04 return = -6.263e+01
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -552.98 ret_best = -552.98
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 10 i_iter = 0 dt = 6.108e-04 return = -5.530e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -245.82 ret_best = -245.82
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 11 i_iter = 0 dt = 6.378e-04 return = -2.458e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -107.42 ret_best = -107.42
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 12 i_iter = 0 dt = 7.060e-04 return = -1.074e+02
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -536.57 ret_best = -536.57
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 13 i_iter = 0 dt = 7.236e-04 return = -5.366e+02
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -102.18 ret_best = -102.18
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 14 i_iter = 0 dt = 6.731e-04 return = -1.022e+02
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -318.08 ret_best = -318.08
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 15 i_iter = 0 dt = 6.645e-04 return = -3.181e+02
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -181.08 ret_best = -181.08
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 16 i_iter = 0 dt = 7.539e-04 return = -1.811e+02
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -264.42 ret_best = -264.42
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 17 i_iter = 0 dt = 7.699e-04 return = -2.644e+02
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -44.17 ret_best = -44.17
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 18 i_iter = 0 dt = 7.598e-04 return = -4.417e+01
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -466.48 ret_best = -466.48
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 19 i_iter = 0 dt = 7.288e-04 return = -4.665e+02
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -200.66 ret_best = -200.66
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 20 i_iter = 0 dt = 7.081e-04 return = -2.007e+02
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -118.35 ret_best = -118.35
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 21 i_iter = 0 dt = 6.955e-04 return = -1.184e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -853.37 ret_best = -853.37
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 22 i_iter = 0 dt = 6.182e-04 return = -8.534e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -378.11 ret_best = -378.11
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 23 i_iter = 0 dt = 6.490e-04 return = -3.781e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -295.93 ret_best = -295.93
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 24 i_iter = 0 dt = 6.917e-04 return = -2.959e+02
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -76.17 ret_best = -76.17
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 25 i_iter = 0 dt = 6.857e-04 return = -7.617e+01
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -69.45 ret_best = -69.45
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 26 i_iter = 0 dt = 7.331e-04 return = -6.945e+01
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -260.06 ret_best = -260.06
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 27 i_iter = 0 dt = 7.188e-04 return = -2.601e+02
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -550.05 ret_best = -550.05
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 28 i_iter = 0 dt = 4.790e-04 return = -5.501e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -187.10 ret_best = -187.10
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 29 i_iter = 0 dt = 4.723e-04 return = -1.871e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -485.52 ret_best = -485.52
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 30 i_iter = 0 dt = 7.150e-04 return = -4.855e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -100.10 ret_best = -100.10
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 31 i_iter = 0 dt = 4.432e-04 return = -1.001e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -435.62 ret_best = -435.62
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 32 i_iter = 0 dt = 4.475e-04 return = -4.356e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -396.27 ret_best = -396.27
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 33 i_iter = 0 dt = 4.764e-04 return = -3.963e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -239.10 ret_best = -239.10
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 34 i_iter = 0 dt = 4.478e-04 return = -2.391e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -377.18 ret_best = -377.18
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 35 i_iter = 0 dt = 4.613e-04 return = -3.772e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -202.76 ret_best = -202.76
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 36 i_iter = 0 dt = 4.206e-04 return = -2.028e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -247.11 ret_best = -247.11
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 37 i_iter = 0 dt = 4.220e-04 return = -2.471e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -198.02 ret_best = -198.02
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 38 i_iter = 0 dt = 4.408e-04 return = -1.980e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -229.02 ret_best = -229.02
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 39 i_iter = 0 dt = 4.494e-04 return = -2.290e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -234.09 ret_best = -234.09
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 40 i_iter = 0 dt = 4.461e-04 return = -2.341e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -134.06 ret_best = -134.06
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 41 i_iter = 0 dt = 4.492e-04 return = -1.341e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -66.45 ret_best = -66.45
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 42 i_iter = 0 dt = 4.375e-04 return = -6.645e+01
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -191.13 ret_best = -191.13
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 43 i_iter = 0 dt = 4.258e-04 return = -1.911e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -838.27 ret_best = -838.27
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 44 i_iter = 0 dt = 3.994e-04 return = -8.383e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -403.21 ret_best = -403.21
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 45 i_iter = 0 dt = 4.244e-04 return = -4.032e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -352.54 ret_best = -352.54
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 46 i_iter = 0 dt = 4.470e-04 return = -3.525e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -154.34 ret_best = -154.34
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 47 i_iter = 0 dt = 4.771e-04 return = -1.543e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -314.97 ret_best = -314.97
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 48 i_iter = 0 dt = 5.033e-04 return = -3.150e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -171.49 ret_best = -171.49
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 49 i_iter = 0 dt = 4.475e-04 return = -1.715e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -5.92 ret_best = -5.92
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 50 i_iter = 0 dt = 4.783e-04 return = -5.924e+00
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -72.47 ret_best = -72.47
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 51 i_iter = 0 dt = 4.478e-04 return = -7.247e+01
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -445.14 ret_best = -445.14
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 52 i_iter = 0 dt = 5.045e-04 return = -4.451e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -239.71 ret_best = -239.71
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 53 i_iter = 0 dt = 5.071e-04 return = -2.397e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -180.64 ret_best = -180.64
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 54 i_iter = 0 dt = 5.155e-04 return = -1.806e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -118.62 ret_best = -118.62
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 55 i_iter = 0 dt = 5.112e-04 return = -1.186e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -345.21 ret_best = -345.21
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 56 i_iter = 0 dt = 4.754e-04 return = -3.452e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -134.12 ret_best = -134.12
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 57 i_iter = 0 dt = 4.470e-04 return = -1.341e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -619.44 ret_best = -619.44
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 58 i_iter = 0 dt = 4.776e-04 return = -6.194e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -19.30 ret_best = -19.30
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 59 i_iter = 0 dt = 4.196e-04 return = -1.930e+01
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -279.85 ret_best = -279.85
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 60 i_iter = 0 dt = 4.206e-04 return = -2.798e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -288.36 ret_best = -288.36
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 61 i_iter = 0 dt = 4.406e-04 return = -2.884e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -220.07 ret_best = -220.07
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 62 i_iter = 0 dt = 4.215e-04 return = -2.201e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -167.00 ret_best = -167.00
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 63 i_iter = 0 dt = 4.461e-04 return = -1.670e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -196.62 ret_best = -196.62
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 64 i_iter = 0 dt = 4.244e-04 return = -1.966e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -42.88 ret_best = -42.88
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 65 i_iter = 0 dt = 4.225e-04 return = -4.288e+01
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -386.62 ret_best = -386.62
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 66 i_iter = 0 dt = 4.265e-04 return = -3.866e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -252.52 ret_best = -252.52
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 67 i_iter = 0 dt = 4.554e-04 return = -2.525e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -279.60 ret_best = -279.60
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 68 i_iter = 0 dt = 3.769e-04 return = -2.796e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -207.61 ret_best = -207.61
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 69 i_iter = 0 dt = 4.208e-04 return = -2.076e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -139.29 ret_best = -139.29
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 70 i_iter = 0 dt = 3.240e-04 return = -1.393e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -614.23 ret_best = -614.23
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 71 i_iter = 0 dt = 4.244e-04 return = -6.142e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -358.39 ret_best = -358.39
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 72 i_iter = 0 dt = 4.895e-04 return = -3.584e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -593.96 ret_best = -593.96
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 73 i_iter = 0 dt = 6.344e-04 return = -5.940e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -251.04 ret_best = -251.04
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 74 i_iter = 0 dt = 8.247e-04 return = -2.510e+02
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -412.74 ret_best = -412.74
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 75 i_iter = 0 dt = 5.732e-04 return = -4.127e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -238.53 ret_best = -238.53
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 76 i_iter = 0 dt = 5.429e-04 return = -2.385e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -415.24 ret_best = -415.24
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 77 i_iter = 0 dt = 5.250e-04 return = -4.152e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -529.90 ret_best = -529.90
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 78 i_iter = 0 dt = 5.276e-04 return = -5.299e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -208.51 ret_best = -208.51
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 79 i_iter = 0 dt = 5.059e-04 return = -2.085e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -676.41 ret_best = -676.41
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 80 i_iter = 0 dt = 4.985e-04 return = -6.764e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -22.85 ret_best = -22.85
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 81 i_iter = 0 dt = 5.403e-04 return = -2.285e+01
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -632.06 ret_best = -632.06
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 82 i_iter = 0 dt = 5.648e-04 return = -6.321e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -428.11 ret_best = -428.11
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 83 i_iter = 0 dt = 4.740e-04 return = -4.281e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -142.75 ret_best = -142.75
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 84 i_iter = 0 dt = 5.000e-04 return = -1.427e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.01 ret = -280.98 ret_best = -280.98
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 85 i_iter = 0 dt = 5.025e-03 return = -2.810e+02
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -514.59 ret_best = -514.59
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 86 i_iter = 0 dt = 5.105e-04 return = -5.146e+02
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -345.83 ret_best = -345.83
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 87 i_iter = 0 dt = 5.298e-04 return = -3.458e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -296.37 ret_best = -296.37
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 88 i_iter = 0 dt = 4.699e-04 return = -2.964e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -428.70 ret_best = -428.70
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 89 i_iter = 0 dt = 5.052e-04 return = -4.287e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -484.17 ret_best = -484.17
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 90 i_iter = 0 dt = 4.723e-04 return = -4.842e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -378.43 ret_best = -378.43
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 91 i_iter = 0 dt = 4.437e-04 return = -3.784e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -284.24 ret_best = -284.24
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 92 i_iter = 0 dt = 4.234e-04 return = -2.842e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -55.01 ret_best = -55.01
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 93 i_iter = 0 dt = 3.984e-04 return = -5.501e+01
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -546.81 ret_best = -546.81
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 94 i_iter = 0 dt = 4.005e-04 return = -5.468e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -235.80 ret_best = -235.80
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 95 i_iter = 0 dt = 4.132e-04 return = -2.358e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -323.90 ret_best = -323.90
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 96 i_iter = 0 dt = 4.001e-04 return = -3.239e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -481.72 ret_best = -481.72
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 97 i_iter = 0 dt = 4.163e-04 return = -4.817e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -441.01 ret_best = -441.01
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 98 i_iter = 0 dt = 4.513e-04 return = -4.410e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rosenbrock-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -392.75 ret_best = -392.75
+TRACE: name = f:rosenbrock-3d ttype = random i_sample = 99 i_iter = 0 dt = 3.066e-04 return = -3.927e+02
+TIME_REPLICATE: 0.02

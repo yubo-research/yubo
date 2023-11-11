@@ -1,0 +1,121 @@
+EXPERIMENT: env_tag = f:michalewicz-30d ttype = mtv num_arms = 2 num_replications = 30 num_rounds = 1
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 19.22 ret = 5.50 ret_best = 5.50
+TRACE: name = f:michalewicz-30d ttype = mtv i_sample = 0 i_iter = 0 dt = 1.922e+01 return = 5.496e+00
+TIME_REPLICATE: 19.26
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 44.24 ret = 3.25 ret_best = 3.25
+TRACE: name = f:michalewicz-30d ttype = mtv i_sample = 1 i_iter = 0 dt = 4.424e+01 return = 3.245e+00
+TIME_REPLICATE: 44.27
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 51.13 ret = 4.79 ret_best = 4.79
+TRACE: name = f:michalewicz-30d ttype = mtv i_sample = 2 i_iter = 0 dt = 5.113e+01 return = 4.790e+00
+TIME_REPLICATE: 51.16
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 79.72 ret = 3.38 ret_best = 3.38
+TRACE: name = f:michalewicz-30d ttype = mtv i_sample = 3 i_iter = 0 dt = 7.972e+01 return = 3.383e+00
+TIME_REPLICATE: 79.74
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 61.47 ret = 4.84 ret_best = 4.84
+TRACE: name = f:michalewicz-30d ttype = mtv i_sample = 4 i_iter = 0 dt = 6.147e+01 return = 4.838e+00
+TIME_REPLICATE: 61.50
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 47.66 ret = 3.34 ret_best = 3.34
+TRACE: name = f:michalewicz-30d ttype = mtv i_sample = 5 i_iter = 0 dt = 4.766e+01 return = 3.339e+00
+TIME_REPLICATE: 47.69
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 70.54 ret = 4.04 ret_best = 4.04
+TRACE: name = f:michalewicz-30d ttype = mtv i_sample = 6 i_iter = 0 dt = 7.054e+01 return = 4.041e+00
+TIME_REPLICATE: 70.57
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 46.69 ret = 4.07 ret_best = 4.07
+TRACE: name = f:michalewicz-30d ttype = mtv i_sample = 7 i_iter = 0 dt = 4.669e+01 return = 4.067e+00
+TIME_REPLICATE: 46.71
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 48.09 ret = 4.70 ret_best = 4.70
+TRACE: name = f:michalewicz-30d ttype = mtv i_sample = 8 i_iter = 0 dt = 4.809e+01 return = 4.700e+00
+TIME_REPLICATE: 48.11
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 38.46 ret = 4.25 ret_best = 4.25
+TRACE: name = f:michalewicz-30d ttype = mtv i_sample = 9 i_iter = 0 dt = 3.846e+01 return = 4.246e+00
+TIME_REPLICATE: 38.48
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 7.84 ret = 3.32 ret_best = 3.32
+TRACE: name = f:michalewicz-30d ttype = mtv i_sample = 10 i_iter = 0 dt = 7.835e+00 return = 3.320e+00
+TIME_REPLICATE: 7.85
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 4.47 ret = 5.41 ret_best = 5.41
+TRACE: name = f:michalewicz-30d ttype = mtv i_sample = 11 i_iter = 0 dt = 4.474e+00 return = 5.410e+00
+TIME_REPLICATE: 4.49
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 2.40 ret = 5.36 ret_best = 5.36
+TRACE: name = f:michalewicz-30d ttype = mtv i_sample = 12 i_iter = 0 dt = 2.398e+00 return = 5.358e+00
+TIME_REPLICATE: 2.42
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 3.34 ret = 6.70 ret_best = 6.70
+TRACE: name = f:michalewicz-30d ttype = mtv i_sample = 13 i_iter = 0 dt = 3.337e+00 return = 6.700e+00
+TIME_REPLICATE: 3.35
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 2.13 ret = 3.30 ret_best = 3.30
+TRACE: name = f:michalewicz-30d ttype = mtv i_sample = 14 i_iter = 0 dt = 2.128e+00 return = 3.303e+00
+TIME_REPLICATE: 2.14
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 1.33 ret = 5.09 ret_best = 5.09
+TRACE: name = f:michalewicz-30d ttype = mtv i_sample = 15 i_iter = 0 dt = 1.333e+00 return = 5.085e+00
+TIME_REPLICATE: 1.34
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 1.81 ret = 4.56 ret_best = 4.56
+TRACE: name = f:michalewicz-30d ttype = mtv i_sample = 16 i_iter = 0 dt = 1.811e+00 return = 4.564e+00
+TIME_REPLICATE: 1.82
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 3.26 ret = 5.42 ret_best = 5.42
+TRACE: name = f:michalewicz-30d ttype = mtv i_sample = 17 i_iter = 0 dt = 3.257e+00 return = 5.421e+00
+TIME_REPLICATE: 3.27
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 3.01 ret = 3.80 ret_best = 3.80
+TRACE: name = f:michalewicz-30d ttype = mtv i_sample = 18 i_iter = 0 dt = 3.007e+00 return = 3.804e+00
+TIME_REPLICATE: 3.02
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 1.29 ret = 4.64 ret_best = 4.64
+TRACE: name = f:michalewicz-30d ttype = mtv i_sample = 19 i_iter = 0 dt = 1.292e+00 return = 4.636e+00
+TIME_REPLICATE: 1.30
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 1.69 ret = 3.59 ret_best = 3.59
+TRACE: name = f:michalewicz-30d ttype = mtv i_sample = 20 i_iter = 0 dt = 1.686e+00 return = 3.587e+00
+TIME_REPLICATE: 1.70
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 1.53 ret = 4.85 ret_best = 4.85
+TRACE: name = f:michalewicz-30d ttype = mtv i_sample = 21 i_iter = 0 dt = 1.528e+00 return = 4.851e+00
+TIME_REPLICATE: 1.54
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 2.31 ret = 5.37 ret_best = 5.37
+TRACE: name = f:michalewicz-30d ttype = mtv i_sample = 22 i_iter = 0 dt = 2.314e+00 return = 5.365e+00
+TIME_REPLICATE: 2.32
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 1.59 ret = 4.14 ret_best = 4.14
+TRACE: name = f:michalewicz-30d ttype = mtv i_sample = 23 i_iter = 0 dt = 1.586e+00 return = 4.143e+00
+TIME_REPLICATE: 1.60
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 1.80 ret = 4.19 ret_best = 4.19
+TRACE: name = f:michalewicz-30d ttype = mtv i_sample = 24 i_iter = 0 dt = 1.796e+00 return = 4.186e+00
+TIME_REPLICATE: 1.80
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 1.70 ret = 8.48 ret_best = 8.48
+TRACE: name = f:michalewicz-30d ttype = mtv i_sample = 25 i_iter = 0 dt = 1.704e+00 return = 8.476e+00
+TIME_REPLICATE: 1.71
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 3.38 ret = 4.51 ret_best = 4.51
+TRACE: name = f:michalewicz-30d ttype = mtv i_sample = 26 i_iter = 0 dt = 3.384e+00 return = 4.512e+00
+TIME_REPLICATE: 3.39
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.12 ret = 3.07 ret_best = 3.07
+TRACE: name = f:michalewicz-30d ttype = mtv i_sample = 27 i_iter = 0 dt = 1.222e-01 return = 3.066e+00
+TIME_REPLICATE: 0.13
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 2.47 ret = 4.20 ret_best = 4.20
+TRACE: name = f:michalewicz-30d ttype = mtv i_sample = 28 i_iter = 0 dt = 2.471e+00 return = 4.196e+00
+TIME_REPLICATE: 2.48
+PROBLEM: env = f:michalewicz-30d num_params = 30
+ITER: i_iter = 0 d_time = 2.03 ret = 6.58 ret_best = 6.58
+TRACE: name = f:michalewicz-30d ttype = mtv i_sample = 29 i_iter = 0 dt = 2.027e+00 return = 6.583e+00
+TIME_REPLICATE: 2.04

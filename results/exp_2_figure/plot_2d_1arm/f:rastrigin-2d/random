@@ -1,0 +1,401 @@
+EXPERIMENT: env_tag = f:rastrigin-2d ttype = random num_arms = 1 num_replications = 100 num_rounds = 1
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -38.40 ret_best = -38.40
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 0 i_iter = 0 dt = 3.219e-05 return = -3.840e+01
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -49.71 ret_best = -49.71
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 1 i_iter = 0 dt = 2.646e-05 return = -4.971e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -50.51 ret_best = -50.51
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 2 i_iter = 0 dt = 2.503e-05 return = -5.051e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -23.86 ret_best = -23.86
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 3 i_iter = 0 dt = 2.456e-05 return = -2.386e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -24.38 ret_best = -24.38
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 4 i_iter = 0 dt = 2.503e-05 return = -2.438e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -57.08 ret_best = -57.08
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 5 i_iter = 0 dt = 2.480e-05 return = -5.708e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -19.70 ret_best = -19.70
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 6 i_iter = 0 dt = 2.503e-05 return = -1.970e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -23.85 ret_best = -23.85
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 7 i_iter = 0 dt = 2.503e-05 return = -2.385e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -37.07 ret_best = -37.07
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 8 i_iter = 0 dt = 2.503e-05 return = -3.707e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -54.29 ret_best = -54.29
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 9 i_iter = 0 dt = 2.480e-05 return = -5.429e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -37.64 ret_best = -37.64
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 10 i_iter = 0 dt = 2.480e-05 return = -3.764e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -46.66 ret_best = -46.66
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 11 i_iter = 0 dt = 2.480e-05 return = -4.666e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -46.45 ret_best = -46.45
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 12 i_iter = 0 dt = 2.480e-05 return = -4.645e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -13.43 ret_best = -13.43
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 13 i_iter = 0 dt = 2.503e-05 return = -1.343e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -18.23 ret_best = -18.23
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 14 i_iter = 0 dt = 2.503e-05 return = -1.823e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -27.40 ret_best = -27.40
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 15 i_iter = 0 dt = 2.456e-05 return = -2.740e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -41.63 ret_best = -41.63
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 16 i_iter = 0 dt = 2.503e-05 return = -4.163e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -43.28 ret_best = -43.28
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 17 i_iter = 0 dt = 2.480e-05 return = -4.328e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -19.59 ret_best = -19.59
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 18 i_iter = 0 dt = 2.456e-05 return = -1.959e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -40.64 ret_best = -40.64
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 19 i_iter = 0 dt = 2.480e-05 return = -4.064e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -50.55 ret_best = -50.55
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 20 i_iter = 0 dt = 2.527e-05 return = -5.055e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -24.97 ret_best = -24.97
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 21 i_iter = 0 dt = 2.503e-05 return = -2.497e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -9.09 ret_best = -9.09
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 22 i_iter = 0 dt = 2.480e-05 return = -9.087e+00
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -30.39 ret_best = -30.39
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 23 i_iter = 0 dt = 2.503e-05 return = -3.039e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -46.07 ret_best = -46.07
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 24 i_iter = 0 dt = 2.527e-05 return = -4.607e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -33.13 ret_best = -33.13
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 25 i_iter = 0 dt = 2.456e-05 return = -3.313e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -45.93 ret_best = -45.93
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 26 i_iter = 0 dt = 2.480e-05 return = -4.593e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -49.70 ret_best = -49.70
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 27 i_iter = 0 dt = 2.480e-05 return = -4.970e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -30.86 ret_best = -30.86
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 28 i_iter = 0 dt = 2.551e-05 return = -3.086e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -34.76 ret_best = -34.76
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 29 i_iter = 0 dt = 2.480e-05 return = -3.476e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -54.85 ret_best = -54.85
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 30 i_iter = 0 dt = 2.480e-05 return = -5.485e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -44.74 ret_best = -44.74
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 31 i_iter = 0 dt = 2.480e-05 return = -4.474e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -35.65 ret_best = -35.65
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 32 i_iter = 0 dt = 2.480e-05 return = -3.565e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -61.81 ret_best = -61.81
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 33 i_iter = 0 dt = 2.527e-05 return = -6.181e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -59.76 ret_best = -59.76
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 34 i_iter = 0 dt = 2.551e-05 return = -5.976e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -32.39 ret_best = -32.39
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 35 i_iter = 0 dt = 2.480e-05 return = -3.239e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -40.64 ret_best = -40.64
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 36 i_iter = 0 dt = 2.480e-05 return = -4.064e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -49.35 ret_best = -49.35
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 37 i_iter = 0 dt = 2.480e-05 return = -4.935e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -22.53 ret_best = -22.53
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 38 i_iter = 0 dt = 2.480e-05 return = -2.253e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -34.19 ret_best = -34.19
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 39 i_iter = 0 dt = 2.480e-05 return = -3.419e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -52.88 ret_best = -52.88
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 40 i_iter = 0 dt = 2.503e-05 return = -5.288e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -38.78 ret_best = -38.78
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 41 i_iter = 0 dt = 2.456e-05 return = -3.878e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -42.28 ret_best = -42.28
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 42 i_iter = 0 dt = 2.503e-05 return = -4.228e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -30.68 ret_best = -30.68
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 43 i_iter = 0 dt = 2.480e-05 return = -3.068e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -52.15 ret_best = -52.15
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 44 i_iter = 0 dt = 2.527e-05 return = -5.215e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -50.18 ret_best = -50.18
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 45 i_iter = 0 dt = 2.503e-05 return = -5.018e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -15.85 ret_best = -15.85
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 46 i_iter = 0 dt = 2.480e-05 return = -1.585e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -38.05 ret_best = -38.05
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 47 i_iter = 0 dt = 2.575e-05 return = -3.805e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -21.41 ret_best = -21.41
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 48 i_iter = 0 dt = 2.646e-05 return = -2.141e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -30.72 ret_best = -30.72
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 49 i_iter = 0 dt = 2.813e-05 return = -3.072e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -35.74 ret_best = -35.74
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 50 i_iter = 0 dt = 2.742e-05 return = -3.574e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -61.99 ret_best = -61.99
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 51 i_iter = 0 dt = 2.575e-05 return = -6.199e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -29.86 ret_best = -29.86
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 52 i_iter = 0 dt = 2.575e-05 return = -2.986e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -38.79 ret_best = -38.79
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 53 i_iter = 0 dt = 2.551e-05 return = -3.879e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -20.83 ret_best = -20.83
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 54 i_iter = 0 dt = 2.551e-05 return = -2.083e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -51.95 ret_best = -51.95
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 55 i_iter = 0 dt = 2.551e-05 return = -5.195e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -56.92 ret_best = -56.92
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 56 i_iter = 0 dt = 2.861e-05 return = -5.692e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -36.10 ret_best = -36.10
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 57 i_iter = 0 dt = 2.670e-05 return = -3.610e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -38.97 ret_best = -38.97
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 58 i_iter = 0 dt = 2.575e-05 return = -3.897e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -23.23 ret_best = -23.23
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 59 i_iter = 0 dt = 2.551e-05 return = -2.323e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -5.35 ret_best = -5.35
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 60 i_iter = 0 dt = 2.551e-05 return = -5.352e+00
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -30.53 ret_best = -30.53
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 61 i_iter = 0 dt = 2.599e-05 return = -3.053e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -25.95 ret_best = -25.95
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 62 i_iter = 0 dt = 2.861e-05 return = -2.595e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -48.17 ret_best = -48.17
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 63 i_iter = 0 dt = 2.551e-05 return = -4.817e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -65.01 ret_best = -65.01
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 64 i_iter = 0 dt = 2.885e-05 return = -6.501e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -52.17 ret_best = -52.17
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 65 i_iter = 0 dt = 2.885e-05 return = -5.217e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -49.50 ret_best = -49.50
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 66 i_iter = 0 dt = 2.503e-05 return = -4.950e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -36.68 ret_best = -36.68
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 67 i_iter = 0 dt = 2.861e-05 return = -3.668e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -28.16 ret_best = -28.16
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 68 i_iter = 0 dt = 2.885e-05 return = -2.816e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -49.37 ret_best = -49.37
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 69 i_iter = 0 dt = 3.791e-05 return = -4.937e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -38.05 ret_best = -38.05
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 70 i_iter = 0 dt = 3.600e-05 return = -3.805e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -38.53 ret_best = -38.53
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 71 i_iter = 0 dt = 2.575e-05 return = -3.853e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -38.75 ret_best = -38.75
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 72 i_iter = 0 dt = 2.837e-05 return = -3.875e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -39.68 ret_best = -39.68
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 73 i_iter = 0 dt = 2.623e-05 return = -3.968e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -34.99 ret_best = -34.99
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 74 i_iter = 0 dt = 3.624e-05 return = -3.499e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -59.05 ret_best = -59.05
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 75 i_iter = 0 dt = 3.600e-05 return = -5.905e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -28.91 ret_best = -28.91
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 76 i_iter = 0 dt = 3.552e-05 return = -2.891e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -48.94 ret_best = -48.94
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 77 i_iter = 0 dt = 3.600e-05 return = -4.894e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -19.96 ret_best = -19.96
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 78 i_iter = 0 dt = 2.742e-05 return = -1.996e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -32.95 ret_best = -32.95
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 79 i_iter = 0 dt = 2.480e-05 return = -3.295e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -57.78 ret_best = -57.78
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 80 i_iter = 0 dt = 3.648e-05 return = -5.778e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -37.01 ret_best = -37.01
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 81 i_iter = 0 dt = 3.648e-05 return = -3.701e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -44.71 ret_best = -44.71
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 82 i_iter = 0 dt = 3.648e-05 return = -4.471e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -55.27 ret_best = -55.27
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 83 i_iter = 0 dt = 3.982e-05 return = -5.527e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -42.20 ret_best = -42.20
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 84 i_iter = 0 dt = 3.552e-05 return = -4.220e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -22.32 ret_best = -22.32
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 85 i_iter = 0 dt = 3.648e-05 return = -2.232e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -50.37 ret_best = -50.37
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 86 i_iter = 0 dt = 3.600e-05 return = -5.037e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -66.16 ret_best = -66.16
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 87 i_iter = 0 dt = 3.624e-05 return = -6.616e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -49.19 ret_best = -49.19
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 88 i_iter = 0 dt = 3.624e-05 return = -4.919e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -53.71 ret_best = -53.71
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 89 i_iter = 0 dt = 3.648e-05 return = -5.371e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -38.83 ret_best = -38.83
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 90 i_iter = 0 dt = 3.600e-05 return = -3.883e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -37.99 ret_best = -37.99
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 91 i_iter = 0 dt = 4.005e-05 return = -3.799e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -53.65 ret_best = -53.65
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 92 i_iter = 0 dt = 3.624e-05 return = -5.365e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -9.25 ret_best = -9.25
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 93 i_iter = 0 dt = 3.600e-05 return = -9.253e+00
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -41.10 ret_best = -41.10
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 94 i_iter = 0 dt = 3.624e-05 return = -4.110e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -26.95 ret_best = -26.95
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 95 i_iter = 0 dt = 3.648e-05 return = -2.695e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -42.43 ret_best = -42.43
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 96 i_iter = 0 dt = 3.648e-05 return = -4.243e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -31.46 ret_best = -31.46
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 97 i_iter = 0 dt = 3.600e-05 return = -3.146e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -29.36 ret_best = -29.36
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 98 i_iter = 0 dt = 3.624e-05 return = -2.936e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:rastrigin-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -26.90 ret_best = -26.90
+TRACE: name = f:rastrigin-2d ttype = random i_sample = 99 i_iter = 0 dt = 3.648e-05 return = -2.690e+01
+TIME_REPLICATE: 0.00

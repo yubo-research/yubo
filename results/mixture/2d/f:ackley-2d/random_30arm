@@ -1,0 +1,121 @@
+EXPERIMENT: env_tag = f:ackley-2d ttype = random num_arms = 30 num_replications = 30 num_rounds = 1
+PROBLEM: env = f:ackley-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -12.19 ret_best = -12.19
+TRACE: name = f:ackley-2d ttype = random i_sample = 0 i_iter = 0 dt = 5.214e-04 return = -1.219e+01
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:ackley-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -11.22 ret_best = -11.22
+TRACE: name = f:ackley-2d ttype = random i_sample = 1 i_iter = 0 dt = 4.842e-04 return = -1.122e+01
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:ackley-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -11.50 ret_best = -11.50
+TRACE: name = f:ackley-2d ttype = random i_sample = 2 i_iter = 0 dt = 4.823e-04 return = -1.150e+01
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:ackley-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -17.06 ret_best = -17.06
+TRACE: name = f:ackley-2d ttype = random i_sample = 3 i_iter = 0 dt = 4.821e-04 return = -1.706e+01
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:ackley-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -11.17 ret_best = -11.17
+TRACE: name = f:ackley-2d ttype = random i_sample = 4 i_iter = 0 dt = 4.971e-04 return = -1.117e+01
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:ackley-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -14.17 ret_best = -14.17
+TRACE: name = f:ackley-2d ttype = random i_sample = 5 i_iter = 0 dt = 7.358e-04 return = -1.417e+01
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:ackley-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -12.79 ret_best = -12.79
+TRACE: name = f:ackley-2d ttype = random i_sample = 6 i_iter = 0 dt = 4.859e-04 return = -1.279e+01
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:ackley-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -10.73 ret_best = -10.73
+TRACE: name = f:ackley-2d ttype = random i_sample = 7 i_iter = 0 dt = 7.236e-04 return = -1.073e+01
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:ackley-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -15.64 ret_best = -15.64
+TRACE: name = f:ackley-2d ttype = random i_sample = 8 i_iter = 0 dt = 4.869e-04 return = -1.564e+01
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:ackley-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -4.67 ret_best = -4.67
+TRACE: name = f:ackley-2d ttype = random i_sample = 9 i_iter = 0 dt = 7.973e-04 return = -4.669e+00
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:ackley-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -17.11 ret_best = -17.11
+TRACE: name = f:ackley-2d ttype = random i_sample = 10 i_iter = 0 dt = 7.327e-04 return = -1.711e+01
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:ackley-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -13.31 ret_best = -13.31
+TRACE: name = f:ackley-2d ttype = random i_sample = 11 i_iter = 0 dt = 7.367e-04 return = -1.331e+01
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:ackley-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -11.01 ret_best = -11.01
+TRACE: name = f:ackley-2d ttype = random i_sample = 12 i_iter = 0 dt = 4.790e-04 return = -1.101e+01
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:ackley-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -13.81 ret_best = -13.81
+TRACE: name = f:ackley-2d ttype = random i_sample = 13 i_iter = 0 dt = 4.823e-04 return = -1.381e+01
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:ackley-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -14.58 ret_best = -14.58
+TRACE: name = f:ackley-2d ttype = random i_sample = 14 i_iter = 0 dt = 7.207e-04 return = -1.458e+01
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:ackley-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -16.55 ret_best = -16.55
+TRACE: name = f:ackley-2d ttype = random i_sample = 15 i_iter = 0 dt = 7.224e-04 return = -1.655e+01
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:ackley-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -6.46 ret_best = -6.46
+TRACE: name = f:ackley-2d ttype = random i_sample = 16 i_iter = 0 dt = 7.131e-04 return = -6.459e+00
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:ackley-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -17.04 ret_best = -17.04
+TRACE: name = f:ackley-2d ttype = random i_sample = 17 i_iter = 0 dt = 7.219e-04 return = -1.704e+01
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:ackley-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -15.21 ret_best = -15.21
+TRACE: name = f:ackley-2d ttype = random i_sample = 18 i_iter = 0 dt = 7.346e-04 return = -1.521e+01
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:ackley-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -9.28 ret_best = -9.28
+TRACE: name = f:ackley-2d ttype = random i_sample = 19 i_iter = 0 dt = 7.410e-04 return = -9.283e+00
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:ackley-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -15.02 ret_best = -15.02
+TRACE: name = f:ackley-2d ttype = random i_sample = 20 i_iter = 0 dt = 8.669e-04 return = -1.502e+01
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:ackley-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -16.90 ret_best = -16.90
+TRACE: name = f:ackley-2d ttype = random i_sample = 21 i_iter = 0 dt = 7.391e-04 return = -1.690e+01
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:ackley-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -13.37 ret_best = -13.37
+TRACE: name = f:ackley-2d ttype = random i_sample = 22 i_iter = 0 dt = 7.405e-04 return = -1.337e+01
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:ackley-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -9.67 ret_best = -9.67
+TRACE: name = f:ackley-2d ttype = random i_sample = 23 i_iter = 0 dt = 8.082e-04 return = -9.669e+00
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:ackley-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -11.60 ret_best = -11.60
+TRACE: name = f:ackley-2d ttype = random i_sample = 24 i_iter = 0 dt = 7.205e-04 return = -1.160e+01
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:ackley-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -13.59 ret_best = -13.59
+TRACE: name = f:ackley-2d ttype = random i_sample = 25 i_iter = 0 dt = 7.513e-04 return = -1.359e+01
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:ackley-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -15.01 ret_best = -15.01
+TRACE: name = f:ackley-2d ttype = random i_sample = 26 i_iter = 0 dt = 7.443e-04 return = -1.501e+01
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:ackley-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -15.33 ret_best = -15.33
+TRACE: name = f:ackley-2d ttype = random i_sample = 27 i_iter = 0 dt = 7.396e-04 return = -1.533e+01
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:ackley-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -15.33 ret_best = -15.33
+TRACE: name = f:ackley-2d ttype = random i_sample = 28 i_iter = 0 dt = 7.980e-04 return = -1.533e+01
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:ackley-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -12.63 ret_best = -12.63
+TRACE: name = f:ackley-2d ttype = random i_sample = 29 i_iter = 0 dt = 7.582e-04 return = -1.263e+01
+TIME_REPLICATE: 0.03

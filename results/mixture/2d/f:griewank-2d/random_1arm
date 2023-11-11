@@ -1,0 +1,121 @@
+EXPERIMENT: env_tag = f:griewank-2d ttype = random num_arms = 1 num_replications = 30 num_rounds = 1
+PROBLEM: env = f:griewank-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -67.09 ret_best = -67.09
+TRACE: name = f:griewank-2d ttype = random i_sample = 0 i_iter = 0 dt = 4.983e-05 return = -6.709e+01
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:griewank-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -112.84 ret_best = -112.84
+TRACE: name = f:griewank-2d ttype = random i_sample = 1 i_iter = 0 dt = 3.695e-05 return = -1.128e+02
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:griewank-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -102.51 ret_best = -102.51
+TRACE: name = f:griewank-2d ttype = random i_sample = 2 i_iter = 0 dt = 4.053e-05 return = -1.025e+02
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:griewank-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -15.20 ret_best = -15.20
+TRACE: name = f:griewank-2d ttype = random i_sample = 3 i_iter = 0 dt = 3.695e-05 return = -1.520e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:griewank-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -30.41 ret_best = -30.41
+TRACE: name = f:griewank-2d ttype = random i_sample = 4 i_iter = 0 dt = 3.672e-05 return = -3.041e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:griewank-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -67.38 ret_best = -67.38
+TRACE: name = f:griewank-2d ttype = random i_sample = 5 i_iter = 0 dt = 3.839e-05 return = -6.738e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:griewank-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -29.76 ret_best = -29.76
+TRACE: name = f:griewank-2d ttype = random i_sample = 6 i_iter = 0 dt = 3.672e-05 return = -2.976e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:griewank-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -72.67 ret_best = -72.67
+TRACE: name = f:griewank-2d ttype = random i_sample = 7 i_iter = 0 dt = 3.719e-05 return = -7.267e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:griewank-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -44.36 ret_best = -44.36
+TRACE: name = f:griewank-2d ttype = random i_sample = 8 i_iter = 0 dt = 3.767e-05 return = -4.436e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:griewank-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -72.64 ret_best = -72.64
+TRACE: name = f:griewank-2d ttype = random i_sample = 9 i_iter = 0 dt = 3.719e-05 return = -7.264e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:griewank-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -39.27 ret_best = -39.27
+TRACE: name = f:griewank-2d ttype = random i_sample = 10 i_iter = 0 dt = 3.719e-05 return = -3.927e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:griewank-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -89.98 ret_best = -89.98
+TRACE: name = f:griewank-2d ttype = random i_sample = 11 i_iter = 0 dt = 3.719e-05 return = -8.998e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:griewank-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -86.50 ret_best = -86.50
+TRACE: name = f:griewank-2d ttype = random i_sample = 12 i_iter = 0 dt = 3.719e-05 return = -8.650e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:griewank-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -34.93 ret_best = -34.93
+TRACE: name = f:griewank-2d ttype = random i_sample = 13 i_iter = 0 dt = 3.695e-05 return = -3.493e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:griewank-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -40.38 ret_best = -40.38
+TRACE: name = f:griewank-2d ttype = random i_sample = 14 i_iter = 0 dt = 3.719e-05 return = -4.038e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:griewank-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -37.05 ret_best = -37.05
+TRACE: name = f:griewank-2d ttype = random i_sample = 15 i_iter = 0 dt = 3.695e-05 return = -3.705e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:griewank-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -60.26 ret_best = -60.26
+TRACE: name = f:griewank-2d ttype = random i_sample = 16 i_iter = 0 dt = 3.719e-05 return = -6.026e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:griewank-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -73.18 ret_best = -73.18
+TRACE: name = f:griewank-2d ttype = random i_sample = 17 i_iter = 0 dt = 3.695e-05 return = -7.318e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:griewank-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -40.39 ret_best = -40.39
+TRACE: name = f:griewank-2d ttype = random i_sample = 18 i_iter = 0 dt = 3.743e-05 return = -4.039e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:griewank-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -55.98 ret_best = -55.98
+TRACE: name = f:griewank-2d ttype = random i_sample = 19 i_iter = 0 dt = 3.672e-05 return = -5.598e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:griewank-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -96.91 ret_best = -96.91
+TRACE: name = f:griewank-2d ttype = random i_sample = 20 i_iter = 0 dt = 3.695e-05 return = -9.691e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:griewank-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -60.62 ret_best = -60.62
+TRACE: name = f:griewank-2d ttype = random i_sample = 21 i_iter = 0 dt = 3.719e-05 return = -6.062e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:griewank-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -18.09 ret_best = -18.09
+TRACE: name = f:griewank-2d ttype = random i_sample = 22 i_iter = 0 dt = 3.719e-05 return = -1.809e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:griewank-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -75.74 ret_best = -75.74
+TRACE: name = f:griewank-2d ttype = random i_sample = 23 i_iter = 0 dt = 3.648e-05 return = -7.574e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:griewank-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -76.63 ret_best = -76.63
+TRACE: name = f:griewank-2d ttype = random i_sample = 24 i_iter = 0 dt = 3.695e-05 return = -7.663e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:griewank-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -10.18 ret_best = -10.18
+TRACE: name = f:griewank-2d ttype = random i_sample = 25 i_iter = 0 dt = 3.695e-05 return = -1.018e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:griewank-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -100.95 ret_best = -100.95
+TRACE: name = f:griewank-2d ttype = random i_sample = 26 i_iter = 0 dt = 3.695e-05 return = -1.010e+02
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:griewank-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -46.02 ret_best = -46.02
+TRACE: name = f:griewank-2d ttype = random i_sample = 27 i_iter = 0 dt = 3.695e-05 return = -4.602e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:griewank-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -34.52 ret_best = -34.52
+TRACE: name = f:griewank-2d ttype = random i_sample = 28 i_iter = 0 dt = 3.695e-05 return = -3.452e+01
+TIME_REPLICATE: 0.00
+PROBLEM: env = f:griewank-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = -84.46 ret_best = -84.46
+TRACE: name = f:griewank-2d ttype = random i_sample = 29 i_iter = 0 dt = 3.672e-05 return = -8.446e+01
+TIME_REPLICATE: 0.00

@@ -1,0 +1,401 @@
+EXPERIMENT: env_tag = f:rastrigin-100d ttype = random num_arms = 2 num_replications = 100 num_rounds = 1
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1825.30 ret_best = -1825.30
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 0 i_iter = 0 dt = 9.847e-05 return = -1.825e+03
+TIME_REPLICATE: 0.05
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1923.04 ret_best = -1923.04
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 1 i_iter = 0 dt = 7.939e-05 return = -1.923e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1778.05 ret_best = -1778.05
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 2 i_iter = 0 dt = 7.534e-05 return = -1.778e+03
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1801.50 ret_best = -1801.50
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 3 i_iter = 0 dt = 7.653e-05 return = -1.801e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1817.54 ret_best = -1817.54
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 4 i_iter = 0 dt = 7.534e-05 return = -1.818e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1723.02 ret_best = -1723.02
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 5 i_iter = 0 dt = 7.653e-05 return = -1.723e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1922.21 ret_best = -1922.21
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 6 i_iter = 0 dt = 7.772e-05 return = -1.922e+03
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1808.02 ret_best = -1808.02
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 7 i_iter = 0 dt = 6.723e-05 return = -1.808e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1887.83 ret_best = -1887.83
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 8 i_iter = 0 dt = 7.582e-05 return = -1.888e+03
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1766.08 ret_best = -1766.08
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 9 i_iter = 0 dt = 8.035e-05 return = -1.766e+03
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1846.42 ret_best = -1846.42
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 10 i_iter = 0 dt = 8.225e-05 return = -1.846e+03
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1818.26 ret_best = -1818.26
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 11 i_iter = 0 dt = 8.035e-05 return = -1.818e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1746.76 ret_best = -1746.76
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 12 i_iter = 0 dt = 7.796e-05 return = -1.747e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1801.12 ret_best = -1801.12
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 13 i_iter = 0 dt = 8.178e-05 return = -1.801e+03
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1703.99 ret_best = -1703.99
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 14 i_iter = 0 dt = 7.486e-05 return = -1.704e+03
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1766.86 ret_best = -1766.86
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 15 i_iter = 0 dt = 7.463e-05 return = -1.767e+03
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1725.25 ret_best = -1725.25
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 16 i_iter = 0 dt = 7.892e-05 return = -1.725e+03
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1752.58 ret_best = -1752.58
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 17 i_iter = 0 dt = 7.772e-05 return = -1.753e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1613.23 ret_best = -1613.23
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 18 i_iter = 0 dt = 8.130e-05 return = -1.613e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1591.92 ret_best = -1591.92
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 19 i_iter = 0 dt = 7.415e-05 return = -1.592e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1821.42 ret_best = -1821.42
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 20 i_iter = 0 dt = 7.463e-05 return = -1.821e+03
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1908.69 ret_best = -1908.69
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 21 i_iter = 0 dt = 7.343e-05 return = -1.909e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1774.69 ret_best = -1774.69
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 22 i_iter = 0 dt = 7.558e-05 return = -1.775e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1756.33 ret_best = -1756.33
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 23 i_iter = 0 dt = 7.820e-05 return = -1.756e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1822.59 ret_best = -1822.59
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 24 i_iter = 0 dt = 7.558e-05 return = -1.823e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1754.18 ret_best = -1754.18
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 25 i_iter = 0 dt = 7.772e-05 return = -1.754e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1791.92 ret_best = -1791.92
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 26 i_iter = 0 dt = 7.868e-05 return = -1.792e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1897.77 ret_best = -1897.77
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 27 i_iter = 0 dt = 7.892e-05 return = -1.898e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1672.08 ret_best = -1672.08
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 28 i_iter = 0 dt = 7.915e-05 return = -1.672e+03
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1714.41 ret_best = -1714.41
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 29 i_iter = 0 dt = 7.725e-05 return = -1.714e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1690.05 ret_best = -1690.05
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 30 i_iter = 0 dt = 7.510e-05 return = -1.690e+03
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1672.16 ret_best = -1672.16
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 31 i_iter = 0 dt = 7.820e-05 return = -1.672e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1748.89 ret_best = -1748.89
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 32 i_iter = 0 dt = 1.309e-04 return = -1.749e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1693.28 ret_best = -1693.28
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 33 i_iter = 0 dt = 7.963e-05 return = -1.693e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1906.17 ret_best = -1906.17
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 34 i_iter = 0 dt = 7.772e-05 return = -1.906e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1779.95 ret_best = -1779.95
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 35 i_iter = 0 dt = 5.841e-05 return = -1.780e+03
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1781.96 ret_best = -1781.96
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 36 i_iter = 0 dt = 7.439e-05 return = -1.782e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1754.87 ret_best = -1754.87
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 37 i_iter = 0 dt = 7.463e-05 return = -1.755e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1901.43 ret_best = -1901.43
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 38 i_iter = 0 dt = 7.391e-05 return = -1.901e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1817.81 ret_best = -1817.81
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 39 i_iter = 0 dt = 5.674e-05 return = -1.818e+03
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1709.47 ret_best = -1709.47
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 40 i_iter = 0 dt = 7.844e-05 return = -1.709e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1780.91 ret_best = -1780.91
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 41 i_iter = 0 dt = 7.725e-05 return = -1.781e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1790.07 ret_best = -1790.07
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 42 i_iter = 0 dt = 7.653e-05 return = -1.790e+03
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1865.59 ret_best = -1865.59
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 43 i_iter = 0 dt = 7.701e-05 return = -1.866e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1818.03 ret_best = -1818.03
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 44 i_iter = 0 dt = 7.343e-05 return = -1.818e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1919.96 ret_best = -1919.96
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 45 i_iter = 0 dt = 7.963e-05 return = -1.920e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1937.82 ret_best = -1937.82
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 46 i_iter = 0 dt = 8.345e-05 return = -1.938e+03
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1892.21 ret_best = -1892.21
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 47 i_iter = 0 dt = 8.202e-05 return = -1.892e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1846.41 ret_best = -1846.41
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 48 i_iter = 0 dt = 1.149e-04 return = -1.846e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1754.76 ret_best = -1754.76
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 49 i_iter = 0 dt = 8.178e-05 return = -1.755e+03
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1774.20 ret_best = -1774.20
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 50 i_iter = 0 dt = 8.130e-05 return = -1.774e+03
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1624.26 ret_best = -1624.26
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 51 i_iter = 0 dt = 7.749e-05 return = -1.624e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1688.94 ret_best = -1688.94
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 52 i_iter = 0 dt = 5.794e-05 return = -1.689e+03
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1780.62 ret_best = -1780.62
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 53 i_iter = 0 dt = 6.223e-05 return = -1.781e+03
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1865.65 ret_best = -1865.65
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 54 i_iter = 0 dt = 7.987e-05 return = -1.866e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1801.02 ret_best = -1801.02
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 55 i_iter = 0 dt = 7.796e-05 return = -1.801e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1785.11 ret_best = -1785.11
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 56 i_iter = 0 dt = 7.915e-05 return = -1.785e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1921.75 ret_best = -1921.75
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 57 i_iter = 0 dt = 7.915e-05 return = -1.922e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1893.65 ret_best = -1893.65
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 58 i_iter = 0 dt = 1.085e-04 return = -1.894e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1770.61 ret_best = -1770.61
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 59 i_iter = 0 dt = 7.248e-05 return = -1.771e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1788.69 ret_best = -1788.69
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 60 i_iter = 0 dt = 7.892e-05 return = -1.789e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1835.03 ret_best = -1835.03
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 61 i_iter = 0 dt = 7.463e-05 return = -1.835e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1771.17 ret_best = -1771.17
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 62 i_iter = 0 dt = 7.463e-05 return = -1.771e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1769.23 ret_best = -1769.23
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 63 i_iter = 0 dt = 7.844e-05 return = -1.769e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1793.58 ret_best = -1793.58
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 64 i_iter = 0 dt = 7.844e-05 return = -1.794e+03
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1861.96 ret_best = -1861.96
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 65 i_iter = 0 dt = 7.868e-05 return = -1.862e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1576.56 ret_best = -1576.56
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 66 i_iter = 0 dt = 7.653e-05 return = -1.577e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1786.80 ret_best = -1786.80
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 67 i_iter = 0 dt = 7.820e-05 return = -1.787e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1758.88 ret_best = -1758.88
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 68 i_iter = 0 dt = 7.629e-05 return = -1.759e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1650.87 ret_best = -1650.87
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 69 i_iter = 0 dt = 8.225e-05 return = -1.651e+03
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1771.17 ret_best = -1771.17
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 70 i_iter = 0 dt = 7.725e-05 return = -1.771e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1841.28 ret_best = -1841.28
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 71 i_iter = 0 dt = 7.558e-05 return = -1.841e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1700.91 ret_best = -1700.91
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 72 i_iter = 0 dt = 9.274e-05 return = -1.701e+03
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1850.80 ret_best = -1850.80
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 73 i_iter = 0 dt = 7.844e-05 return = -1.851e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1744.30 ret_best = -1744.30
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 74 i_iter = 0 dt = 7.796e-05 return = -1.744e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1896.69 ret_best = -1896.69
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 75 i_iter = 0 dt = 7.653e-05 return = -1.897e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1941.78 ret_best = -1941.78
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 76 i_iter = 0 dt = 7.725e-05 return = -1.942e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1755.99 ret_best = -1755.99
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 77 i_iter = 0 dt = 6.032e-05 return = -1.756e+03
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1836.33 ret_best = -1836.33
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 78 i_iter = 0 dt = 7.725e-05 return = -1.836e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1771.51 ret_best = -1771.51
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 79 i_iter = 0 dt = 7.558e-05 return = -1.772e+03
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1735.82 ret_best = -1735.82
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 80 i_iter = 0 dt = 7.296e-05 return = -1.736e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1831.29 ret_best = -1831.29
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 81 i_iter = 0 dt = 8.345e-05 return = -1.831e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1627.31 ret_best = -1627.31
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 82 i_iter = 0 dt = 8.583e-05 return = -1.627e+03
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1795.22 ret_best = -1795.22
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 83 i_iter = 0 dt = 1.240e-04 return = -1.795e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1834.35 ret_best = -1834.35
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 84 i_iter = 0 dt = 8.607e-05 return = -1.834e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1770.50 ret_best = -1770.50
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 85 i_iter = 0 dt = 8.655e-05 return = -1.770e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1853.05 ret_best = -1853.05
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 86 i_iter = 0 dt = 8.607e-05 return = -1.853e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1725.00 ret_best = -1725.00
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 87 i_iter = 0 dt = 9.155e-05 return = -1.725e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1971.37 ret_best = -1971.37
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 88 i_iter = 0 dt = 1.001e-04 return = -1.971e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1732.27 ret_best = -1732.27
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 89 i_iter = 0 dt = 8.965e-05 return = -1.732e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1825.01 ret_best = -1825.01
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 90 i_iter = 0 dt = 8.535e-05 return = -1.825e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1789.85 ret_best = -1789.85
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 91 i_iter = 0 dt = 8.488e-05 return = -1.790e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1687.12 ret_best = -1687.12
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 92 i_iter = 0 dt = 8.750e-05 return = -1.687e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1799.69 ret_best = -1799.69
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 93 i_iter = 0 dt = 9.060e-05 return = -1.800e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1826.65 ret_best = -1826.65
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 94 i_iter = 0 dt = 8.678e-05 return = -1.827e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1747.55 ret_best = -1747.55
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 95 i_iter = 0 dt = 8.726e-05 return = -1.748e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1779.96 ret_best = -1779.96
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 96 i_iter = 0 dt = 8.678e-05 return = -1.780e+03
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1792.91 ret_best = -1792.91
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 97 i_iter = 0 dt = 8.798e-05 return = -1.793e+03
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1856.55 ret_best = -1856.55
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 98 i_iter = 0 dt = 6.843e-05 return = -1.857e+03
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:rastrigin-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -1751.95 ret_best = -1751.95
+TRACE: name = f:rastrigin-100d ttype = random i_sample = 99 i_iter = 0 dt = 9.155e-05 return = -1.752e+03
+TIME_REPLICATE: 0.03

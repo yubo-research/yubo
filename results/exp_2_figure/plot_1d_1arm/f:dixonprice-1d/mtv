@@ -1,0 +1,401 @@
+EXPERIMENT: env_tag = f:dixonprice-1d ttype = mtv num_arms = 1 num_replications = 100 num_rounds = 1
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 1.17 ret = -0.45 ret_best = -0.45
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 0 i_iter = 0 dt = 1.171e+00 return = -4.546e-01
+TIME_REPLICATE: 1.19
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.68 ret = -0.14 ret_best = -0.14
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 1 i_iter = 0 dt = 6.845e-01 return = -1.397e-01
+TIME_REPLICATE: 0.69
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.63 ret = -4.42 ret_best = -4.42
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 2 i_iter = 0 dt = 6.318e-01 return = -4.422e+00
+TIME_REPLICATE: 0.64
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.51 ret = -21.13 ret_best = -21.13
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 3 i_iter = 0 dt = 5.116e-01 return = -2.113e+01
+TIME_REPLICATE: 0.51
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.65 ret = -1.23 ret_best = -1.23
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 4 i_iter = 0 dt = 6.542e-01 return = -1.227e+00
+TIME_REPLICATE: 0.66
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.61 ret = -14.36 ret_best = -14.36
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 5 i_iter = 0 dt = 6.068e-01 return = -1.436e+01
+TIME_REPLICATE: 0.61
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.46 ret = -2.38 ret_best = -2.38
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 6 i_iter = 0 dt = 4.643e-01 return = -2.385e+00
+TIME_REPLICATE: 0.47
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.72 ret = -9.04 ret_best = -9.04
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 7 i_iter = 0 dt = 7.179e-01 return = -9.036e+00
+TIME_REPLICATE: 0.72
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.63 ret = -0.69 ret_best = -0.69
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 8 i_iter = 0 dt = 6.297e-01 return = -6.934e-01
+TIME_REPLICATE: 0.63
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.71 ret = -14.06 ret_best = -14.06
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 9 i_iter = 0 dt = 7.085e-01 return = -1.406e+01
+TIME_REPLICATE: 0.71
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.72 ret = -26.14 ret_best = -26.14
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 10 i_iter = 0 dt = 7.163e-01 return = -2.614e+01
+TIME_REPLICATE: 0.72
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.58 ret = -14.01 ret_best = -14.01
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 11 i_iter = 0 dt = 5.814e-01 return = -1.401e+01
+TIME_REPLICATE: 0.59
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.61 ret = -6.04 ret_best = -6.04
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 12 i_iter = 0 dt = 6.080e-01 return = -6.037e+00
+TIME_REPLICATE: 0.61
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.64 ret = -29.85 ret_best = -29.85
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 13 i_iter = 0 dt = 6.369e-01 return = -2.985e+01
+TIME_REPLICATE: 0.64
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.55 ret = -9.35 ret_best = -9.35
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 14 i_iter = 0 dt = 5.452e-01 return = -9.346e+00
+TIME_REPLICATE: 0.55
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.56 ret = -0.00 ret_best = -0.00
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 15 i_iter = 0 dt = 5.585e-01 return = -1.705e-04
+TIME_REPLICATE: 0.56
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.44 ret = -15.84 ret_best = -15.84
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 16 i_iter = 0 dt = 4.444e-01 return = -1.584e+01
+TIME_REPLICATE: 0.45
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.56 ret = -2.13 ret_best = -2.13
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 17 i_iter = 0 dt = 5.645e-01 return = -2.129e+00
+TIME_REPLICATE: 0.57
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.57 ret = -8.34 ret_best = -8.34
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 18 i_iter = 0 dt = 5.650e-01 return = -8.342e+00
+TIME_REPLICATE: 0.57
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.74 ret = -15.02 ret_best = -15.02
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 19 i_iter = 0 dt = 7.413e-01 return = -1.502e+01
+TIME_REPLICATE: 0.75
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.65 ret = -0.53 ret_best = -0.53
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 20 i_iter = 0 dt = 6.459e-01 return = -5.296e-01
+TIME_REPLICATE: 0.65
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.65 ret = -1.07 ret_best = -1.07
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 21 i_iter = 0 dt = 6.544e-01 return = -1.069e+00
+TIME_REPLICATE: 0.66
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.64 ret = -17.09 ret_best = -17.09
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 22 i_iter = 0 dt = 6.415e-01 return = -1.709e+01
+TIME_REPLICATE: 0.65
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.47 ret = -32.47 ret_best = -32.47
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 23 i_iter = 0 dt = 4.729e-01 return = -3.247e+01
+TIME_REPLICATE: 0.48
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.62 ret = -21.60 ret_best = -21.60
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 24 i_iter = 0 dt = 6.243e-01 return = -2.160e+01
+TIME_REPLICATE: 0.63
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.61 ret = -11.25 ret_best = -11.25
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 25 i_iter = 0 dt = 6.143e-01 return = -1.125e+01
+TIME_REPLICATE: 0.62
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.53 ret = -11.21 ret_best = -11.21
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 26 i_iter = 0 dt = 5.336e-01 return = -1.121e+01
+TIME_REPLICATE: 0.54
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.53 ret = -5.18 ret_best = -5.18
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 27 i_iter = 0 dt = 5.275e-01 return = -5.180e+00
+TIME_REPLICATE: 0.53
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.54 ret = -29.84 ret_best = -29.84
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 28 i_iter = 0 dt = 5.394e-01 return = -2.984e+01
+TIME_REPLICATE: 0.54
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.81 ret = -18.14 ret_best = -18.14
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 29 i_iter = 0 dt = 8.052e-01 return = -1.814e+01
+TIME_REPLICATE: 0.81
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.49 ret = -0.70 ret_best = -0.70
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 30 i_iter = 0 dt = 4.914e-01 return = -7.000e-01
+TIME_REPLICATE: 0.49
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.67 ret = -1.59 ret_best = -1.59
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 31 i_iter = 0 dt = 6.736e-01 return = -1.587e+00
+TIME_REPLICATE: 0.68
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.67 ret = -22.44 ret_best = -22.44
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 32 i_iter = 0 dt = 6.740e-01 return = -2.244e+01
+TIME_REPLICATE: 0.68
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.54 ret = -32.42 ret_best = -32.42
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 33 i_iter = 0 dt = 5.377e-01 return = -3.242e+01
+TIME_REPLICATE: 0.54
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.67 ret = -8.38 ret_best = -8.38
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 34 i_iter = 0 dt = 6.677e-01 return = -8.378e+00
+TIME_REPLICATE: 0.67
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.58 ret = -15.41 ret_best = -15.41
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 35 i_iter = 0 dt = 5.772e-01 return = -1.541e+01
+TIME_REPLICATE: 0.58
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.63 ret = -7.59 ret_best = -7.59
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 36 i_iter = 0 dt = 6.302e-01 return = -7.587e+00
+TIME_REPLICATE: 0.63
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.75 ret = -24.23 ret_best = -24.23
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 37 i_iter = 0 dt = 7.493e-01 return = -2.423e+01
+TIME_REPLICATE: 0.75
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.63 ret = -16.91 ret_best = -16.91
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 38 i_iter = 0 dt = 6.313e-01 return = -1.691e+01
+TIME_REPLICATE: 0.64
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.65 ret = -13.63 ret_best = -13.63
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 39 i_iter = 0 dt = 6.507e-01 return = -1.363e+01
+TIME_REPLICATE: 0.65
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.52 ret = -3.18 ret_best = -3.18
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 40 i_iter = 0 dt = 5.206e-01 return = -3.181e+00
+TIME_REPLICATE: 0.52
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.79 ret = -6.04 ret_best = -6.04
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 41 i_iter = 0 dt = 7.924e-01 return = -6.043e+00
+TIME_REPLICATE: 0.80
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.67 ret = -2.51 ret_best = -2.51
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 42 i_iter = 0 dt = 6.726e-01 return = -2.511e+00
+TIME_REPLICATE: 0.68
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.58 ret = -0.93 ret_best = -0.93
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 43 i_iter = 0 dt = 5.823e-01 return = -9.303e-01
+TIME_REPLICATE: 0.59
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.65 ret = -7.81 ret_best = -7.81
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 44 i_iter = 0 dt = 6.511e-01 return = -7.809e+00
+TIME_REPLICATE: 0.65
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.64 ret = -4.29 ret_best = -4.29
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 45 i_iter = 0 dt = 6.440e-01 return = -4.288e+00
+TIME_REPLICATE: 0.65
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.60 ret = -34.08 ret_best = -34.08
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 46 i_iter = 0 dt = 5.984e-01 return = -3.408e+01
+TIME_REPLICATE: 0.60
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.52 ret = -14.66 ret_best = -14.66
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 47 i_iter = 0 dt = 5.179e-01 return = -1.466e+01
+TIME_REPLICATE: 0.52
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.76 ret = -31.15 ret_best = -31.15
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 48 i_iter = 0 dt = 7.553e-01 return = -3.115e+01
+TIME_REPLICATE: 0.76
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.62 ret = -0.20 ret_best = -0.20
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 49 i_iter = 0 dt = 6.238e-01 return = -2.034e-01
+TIME_REPLICATE: 0.63
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.69 ret = -0.49 ret_best = -0.49
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 50 i_iter = 0 dt = 6.878e-01 return = -4.862e-01
+TIME_REPLICATE: 0.69
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.61 ret = -5.69 ret_best = -5.69
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 51 i_iter = 0 dt = 6.068e-01 return = -5.691e+00
+TIME_REPLICATE: 0.61
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.65 ret = -0.86 ret_best = -0.86
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 52 i_iter = 0 dt = 6.503e-01 return = -8.579e-01
+TIME_REPLICATE: 0.65
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.79 ret = -5.33 ret_best = -5.33
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 53 i_iter = 0 dt = 7.938e-01 return = -5.331e+00
+TIME_REPLICATE: 0.80
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.58 ret = -25.34 ret_best = -25.34
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 54 i_iter = 0 dt = 5.817e-01 return = -2.534e+01
+TIME_REPLICATE: 0.58
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.65 ret = -0.74 ret_best = -0.74
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 55 i_iter = 0 dt = 6.458e-01 return = -7.377e-01
+TIME_REPLICATE: 0.65
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.52 ret = -29.32 ret_best = -29.32
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 56 i_iter = 0 dt = 5.185e-01 return = -2.932e+01
+TIME_REPLICATE: 0.52
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.64 ret = -6.98 ret_best = -6.98
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 57 i_iter = 0 dt = 6.423e-01 return = -6.977e+00
+TIME_REPLICATE: 0.65
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.60 ret = -22.82 ret_best = -22.82
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 58 i_iter = 0 dt = 6.002e-01 return = -2.282e+01
+TIME_REPLICATE: 0.60
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.52 ret = -20.74 ret_best = -20.74
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 59 i_iter = 0 dt = 5.221e-01 return = -2.074e+01
+TIME_REPLICATE: 0.53
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.57 ret = -0.64 ret_best = -0.64
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 60 i_iter = 0 dt = 5.733e-01 return = -6.449e-01
+TIME_REPLICATE: 0.58
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.58 ret = -31.17 ret_best = -31.17
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 61 i_iter = 0 dt = 5.766e-01 return = -3.117e+01
+TIME_REPLICATE: 0.58
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.59 ret = -18.10 ret_best = -18.10
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 62 i_iter = 0 dt = 5.897e-01 return = -1.810e+01
+TIME_REPLICATE: 0.59
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.62 ret = -0.02 ret_best = -0.02
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 63 i_iter = 0 dt = 6.224e-01 return = -2.318e-02
+TIME_REPLICATE: 0.63
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.51 ret = -34.68 ret_best = -34.68
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 64 i_iter = 0 dt = 5.096e-01 return = -3.468e+01
+TIME_REPLICATE: 0.51
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.56 ret = -2.84 ret_best = -2.84
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 65 i_iter = 0 dt = 5.643e-01 return = -2.841e+00
+TIME_REPLICATE: 0.57
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.65 ret = -17.64 ret_best = -17.64
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 66 i_iter = 0 dt = 6.516e-01 return = -1.764e+01
+TIME_REPLICATE: 0.65
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.66 ret = -14.20 ret_best = -14.20
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 67 i_iter = 0 dt = 6.566e-01 return = -1.420e+01
+TIME_REPLICATE: 0.66
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.69 ret = -8.58 ret_best = -8.58
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 68 i_iter = 0 dt = 6.906e-01 return = -8.581e+00
+TIME_REPLICATE: 0.69
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.64 ret = -5.05 ret_best = -5.05
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 69 i_iter = 0 dt = 6.353e-01 return = -5.047e+00
+TIME_REPLICATE: 0.64
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.69 ret = -7.31 ret_best = -7.31
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 70 i_iter = 0 dt = 6.923e-01 return = -7.312e+00
+TIME_REPLICATE: 0.70
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.77 ret = -4.89 ret_best = -4.89
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 71 i_iter = 0 dt = 7.653e-01 return = -4.888e+00
+TIME_REPLICATE: 0.77
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.69 ret = -1.00 ret_best = -1.00
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 72 i_iter = 0 dt = 6.901e-01 return = -1.004e+00
+TIME_REPLICATE: 0.70
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.78 ret = -4.21 ret_best = -4.21
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 73 i_iter = 0 dt = 7.818e-01 return = -4.210e+00
+TIME_REPLICATE: 0.78
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.77 ret = -7.59 ret_best = -7.59
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 74 i_iter = 0 dt = 7.684e-01 return = -7.588e+00
+TIME_REPLICATE: 0.77
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.68 ret = -35.15 ret_best = -35.15
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 75 i_iter = 0 dt = 6.834e-01 return = -3.515e+01
+TIME_REPLICATE: 0.69
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.71 ret = -5.87 ret_best = -5.87
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 76 i_iter = 0 dt = 7.091e-01 return = -5.873e+00
+TIME_REPLICATE: 0.71
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.72 ret = -3.12 ret_best = -3.12
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 77 i_iter = 0 dt = 7.196e-01 return = -3.118e+00
+TIME_REPLICATE: 0.72
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.74 ret = -17.15 ret_best = -17.15
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 78 i_iter = 0 dt = 7.367e-01 return = -1.715e+01
+TIME_REPLICATE: 0.74
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.80 ret = -12.82 ret_best = -12.82
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 79 i_iter = 0 dt = 7.999e-01 return = -1.282e+01
+TIME_REPLICATE: 0.80
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.76 ret = -32.52 ret_best = -32.52
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 80 i_iter = 0 dt = 7.566e-01 return = -3.252e+01
+TIME_REPLICATE: 0.76
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.64 ret = -1.24 ret_best = -1.24
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 81 i_iter = 0 dt = 6.384e-01 return = -1.238e+00
+TIME_REPLICATE: 0.64
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.64 ret = -25.04 ret_best = -25.04
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 82 i_iter = 0 dt = 6.448e-01 return = -2.504e+01
+TIME_REPLICATE: 0.65
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.64 ret = -33.01 ret_best = -33.01
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 83 i_iter = 0 dt = 6.429e-01 return = -3.301e+01
+TIME_REPLICATE: 0.65
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.89 ret = -9.68 ret_best = -9.68
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 84 i_iter = 0 dt = 8.942e-01 return = -9.676e+00
+TIME_REPLICATE: 0.90
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.73 ret = -2.91 ret_best = -2.91
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 85 i_iter = 0 dt = 7.335e-01 return = -2.907e+00
+TIME_REPLICATE: 0.74
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.64 ret = -25.56 ret_best = -25.56
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 86 i_iter = 0 dt = 6.402e-01 return = -2.556e+01
+TIME_REPLICATE: 0.64
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.71 ret = -10.24 ret_best = -10.24
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 87 i_iter = 0 dt = 7.144e-01 return = -1.024e+01
+TIME_REPLICATE: 0.72
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.63 ret = -35.74 ret_best = -35.74
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 88 i_iter = 0 dt = 6.260e-01 return = -3.574e+01
+TIME_REPLICATE: 0.63
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.73 ret = -10.79 ret_best = -10.79
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 89 i_iter = 0 dt = 7.321e-01 return = -1.079e+01
+TIME_REPLICATE: 0.74
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.63 ret = -26.68 ret_best = -26.68
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 90 i_iter = 0 dt = 6.321e-01 return = -2.668e+01
+TIME_REPLICATE: 0.64
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.47 ret = -3.76 ret_best = -3.76
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 91 i_iter = 0 dt = 4.707e-01 return = -3.756e+00
+TIME_REPLICATE: 0.47
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.52 ret = -31.47 ret_best = -31.47
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 92 i_iter = 0 dt = 5.193e-01 return = -3.147e+01
+TIME_REPLICATE: 0.52
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.56 ret = -9.66 ret_best = -9.66
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 93 i_iter = 0 dt = 5.615e-01 return = -9.665e+00
+TIME_REPLICATE: 0.56
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.61 ret = -11.11 ret_best = -11.11
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 94 i_iter = 0 dt = 6.052e-01 return = -1.111e+01
+TIME_REPLICATE: 0.61
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.67 ret = -13.62 ret_best = -13.62
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 95 i_iter = 0 dt = 6.706e-01 return = -1.362e+01
+TIME_REPLICATE: 0.67
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.54 ret = -17.05 ret_best = -17.05
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 96 i_iter = 0 dt = 5.414e-01 return = -1.705e+01
+TIME_REPLICATE: 0.54
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.69 ret = -15.06 ret_best = -15.06
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 97 i_iter = 0 dt = 6.907e-01 return = -1.506e+01
+TIME_REPLICATE: 0.69
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.67 ret = -8.76 ret_best = -8.76
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 98 i_iter = 0 dt = 6.733e-01 return = -8.758e+00
+TIME_REPLICATE: 0.68
+PROBLEM: env = f:dixonprice-1d num_params = 1
+ITER: i_iter = 0 d_time = 0.61 ret = -27.88 ret_best = -27.88
+TRACE: name = f:dixonprice-1d ttype = mtv i_sample = 99 i_iter = 0 dt = 6.069e-01 return = -2.788e+01
+TIME_REPLICATE: 0.61

@@ -1,0 +1,121 @@
+EXPERIMENT: env_tag = f:griewank-30d ttype = sobol num_arms = 30 num_replications = 30 num_rounds = 1
+PROBLEM: env = f:griewank-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -637.01 ret_best = -637.01
+TRACE: name = f:griewank-30d ttype = sobol i_sample = 0 i_iter = 0 dt = 1.155e-03 return = -6.370e+02
+TIME_REPLICATE: 0.06
+PROBLEM: env = f:griewank-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -598.55 ret_best = -598.55
+TRACE: name = f:griewank-30d ttype = sobol i_sample = 1 i_iter = 0 dt = 1.237e-03 return = -5.985e+02
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:griewank-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -476.03 ret_best = -476.03
+TRACE: name = f:griewank-30d ttype = sobol i_sample = 2 i_iter = 0 dt = 8.678e-04 return = -4.760e+02
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:griewank-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -621.83 ret_best = -621.83
+TRACE: name = f:griewank-30d ttype = sobol i_sample = 3 i_iter = 0 dt = 6.049e-04 return = -6.218e+02
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:griewank-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -672.08 ret_best = -672.08
+TRACE: name = f:griewank-30d ttype = sobol i_sample = 4 i_iter = 0 dt = 6.192e-04 return = -6.721e+02
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:griewank-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -656.57 ret_best = -656.57
+TRACE: name = f:griewank-30d ttype = sobol i_sample = 5 i_iter = 0 dt = 1.573e-03 return = -6.566e+02
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:griewank-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -618.40 ret_best = -618.40
+TRACE: name = f:griewank-30d ttype = sobol i_sample = 6 i_iter = 0 dt = 6.185e-04 return = -6.184e+02
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:griewank-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -620.85 ret_best = -620.85
+TRACE: name = f:griewank-30d ttype = sobol i_sample = 7 i_iter = 0 dt = 8.330e-04 return = -6.208e+02
+TIME_REPLICATE: 0.05
+PROBLEM: env = f:griewank-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -580.54 ret_best = -580.54
+TRACE: name = f:griewank-30d ttype = sobol i_sample = 8 i_iter = 0 dt = 1.243e-03 return = -5.805e+02
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:griewank-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -652.05 ret_best = -652.05
+TRACE: name = f:griewank-30d ttype = sobol i_sample = 9 i_iter = 0 dt = 2.260e-03 return = -6.521e+02
+TIME_REPLICATE: 0.05
+PROBLEM: env = f:griewank-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -629.33 ret_best = -629.33
+TRACE: name = f:griewank-30d ttype = sobol i_sample = 10 i_iter = 0 dt = 6.139e-04 return = -6.293e+02
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:griewank-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -611.89 ret_best = -611.89
+TRACE: name = f:griewank-30d ttype = sobol i_sample = 11 i_iter = 0 dt = 8.562e-04 return = -6.119e+02
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:griewank-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -639.13 ret_best = -639.13
+TRACE: name = f:griewank-30d ttype = sobol i_sample = 12 i_iter = 0 dt = 8.719e-04 return = -6.391e+02
+TIME_REPLICATE: 0.05
+PROBLEM: env = f:griewank-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -678.37 ret_best = -678.37
+TRACE: name = f:griewank-30d ttype = sobol i_sample = 13 i_iter = 0 dt = 1.251e-03 return = -6.784e+02
+TIME_REPLICATE: 0.05
+PROBLEM: env = f:griewank-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -615.66 ret_best = -615.66
+TRACE: name = f:griewank-30d ttype = sobol i_sample = 14 i_iter = 0 dt = 1.061e-03 return = -6.157e+02
+TIME_REPLICATE: 0.05
+PROBLEM: env = f:griewank-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -615.88 ret_best = -615.88
+TRACE: name = f:griewank-30d ttype = sobol i_sample = 15 i_iter = 0 dt = 1.336e-03 return = -6.159e+02
+TIME_REPLICATE: 0.05
+PROBLEM: env = f:griewank-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -599.01 ret_best = -599.01
+TRACE: name = f:griewank-30d ttype = sobol i_sample = 16 i_iter = 0 dt = 1.155e-03 return = -5.990e+02
+TIME_REPLICATE: 0.05
+PROBLEM: env = f:griewank-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -662.16 ret_best = -662.16
+TRACE: name = f:griewank-30d ttype = sobol i_sample = 17 i_iter = 0 dt = 6.013e-04 return = -6.622e+02
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:griewank-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -523.77 ret_best = -523.77
+TRACE: name = f:griewank-30d ttype = sobol i_sample = 18 i_iter = 0 dt = 5.987e-04 return = -5.238e+02
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:griewank-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -544.36 ret_best = -544.36
+TRACE: name = f:griewank-30d ttype = sobol i_sample = 19 i_iter = 0 dt = 7.777e-04 return = -5.444e+02
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:griewank-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -558.48 ret_best = -558.48
+TRACE: name = f:griewank-30d ttype = sobol i_sample = 20 i_iter = 0 dt = 6.499e-04 return = -5.585e+02
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:griewank-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -590.94 ret_best = -590.94
+TRACE: name = f:griewank-30d ttype = sobol i_sample = 21 i_iter = 0 dt = 6.721e-04 return = -5.909e+02
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:griewank-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -698.55 ret_best = -698.55
+TRACE: name = f:griewank-30d ttype = sobol i_sample = 22 i_iter = 0 dt = 6.166e-04 return = -6.986e+02
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:griewank-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -569.23 ret_best = -569.23
+TRACE: name = f:griewank-30d ttype = sobol i_sample = 23 i_iter = 0 dt = 8.686e-04 return = -5.692e+02
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:griewank-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -663.47 ret_best = -663.47
+TRACE: name = f:griewank-30d ttype = sobol i_sample = 24 i_iter = 0 dt = 8.564e-04 return = -6.635e+02
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:griewank-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -615.77 ret_best = -615.77
+TRACE: name = f:griewank-30d ttype = sobol i_sample = 25 i_iter = 0 dt = 6.499e-04 return = -6.158e+02
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:griewank-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -576.89 ret_best = -576.89
+TRACE: name = f:griewank-30d ttype = sobol i_sample = 26 i_iter = 0 dt = 8.993e-04 return = -5.769e+02
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:griewank-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -604.83 ret_best = -604.83
+TRACE: name = f:griewank-30d ttype = sobol i_sample = 27 i_iter = 0 dt = 9.043e-04 return = -6.048e+02
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:griewank-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -639.41 ret_best = -639.41
+TRACE: name = f:griewank-30d ttype = sobol i_sample = 28 i_iter = 0 dt = 1.492e-03 return = -6.394e+02
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:griewank-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -513.07 ret_best = -513.07
+TRACE: name = f:griewank-30d ttype = sobol i_sample = 29 i_iter = 0 dt = 9.384e-04 return = -5.131e+02
+TIME_REPLICATE: 0.04

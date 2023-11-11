@@ -1,0 +1,401 @@
+EXPERIMENT: env_tag = f:rosenbrock-30d ttype = mtv num_arms = 30 num_replications = 100 num_rounds = 1
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 38.47 ret = -7658.50 ret_best = -7658.50
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 0 i_iter = 0 dt = 3.847e+01 return = -7.659e+03
+TIME_REPLICATE: 38.53
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 26.23 ret = -6547.23 ret_best = -6547.23
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 1 i_iter = 0 dt = 2.623e+01 return = -6.547e+03
+TIME_REPLICATE: 26.29
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 49.62 ret = -5287.44 ret_best = -5287.44
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 2 i_iter = 0 dt = 4.962e+01 return = -5.287e+03
+TIME_REPLICATE: 49.68
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 36.67 ret = -7118.38 ret_best = -7118.38
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 3 i_iter = 0 dt = 3.667e+01 return = -7.118e+03
+TIME_REPLICATE: 36.73
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 43.05 ret = -6006.04 ret_best = -6006.04
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 4 i_iter = 0 dt = 4.305e+01 return = -6.006e+03
+TIME_REPLICATE: 43.10
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 51.05 ret = -5981.69 ret_best = -5981.69
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 5 i_iter = 0 dt = 5.105e+01 return = -5.982e+03
+TIME_REPLICATE: 51.10
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 40.64 ret = -6018.70 ret_best = -6018.70
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 6 i_iter = 0 dt = 4.064e+01 return = -6.019e+03
+TIME_REPLICATE: 40.70
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 35.55 ret = -4966.72 ret_best = -4966.72
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 7 i_iter = 0 dt = 3.555e+01 return = -4.967e+03
+TIME_REPLICATE: 35.61
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 29.09 ret = -6989.05 ret_best = -6989.05
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 8 i_iter = 0 dt = 2.909e+01 return = -6.989e+03
+TIME_REPLICATE: 29.15
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 34.88 ret = -7404.96 ret_best = -7404.96
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 9 i_iter = 0 dt = 3.488e+01 return = -7.405e+03
+TIME_REPLICATE: 34.93
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 45.32 ret = -7402.76 ret_best = -7402.76
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 10 i_iter = 0 dt = 4.532e+01 return = -7.403e+03
+TIME_REPLICATE: 45.39
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 55.27 ret = -7014.40 ret_best = -7014.40
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 11 i_iter = 0 dt = 5.527e+01 return = -7.014e+03
+TIME_REPLICATE: 55.32
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 31.94 ret = -6737.13 ret_best = -6737.13
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 12 i_iter = 0 dt = 3.194e+01 return = -6.737e+03
+TIME_REPLICATE: 31.99
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 1.03 ret = -9867.38 ret_best = -9867.38
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 13 i_iter = 0 dt = 1.031e+00 return = -9.867e+03
+TIME_REPLICATE: 1.08
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 28.82 ret = -5940.41 ret_best = -5940.41
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 14 i_iter = 0 dt = 2.882e+01 return = -5.940e+03
+TIME_REPLICATE: 28.88
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 36.66 ret = -5114.17 ret_best = -5114.17
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 15 i_iter = 0 dt = 3.666e+01 return = -5.114e+03
+TIME_REPLICATE: 36.71
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 35.99 ret = -9729.78 ret_best = -9729.78
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 16 i_iter = 0 dt = 3.599e+01 return = -9.730e+03
+TIME_REPLICATE: 36.04
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 1.42 ret = -10989.73 ret_best = -10989.73
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 17 i_iter = 0 dt = 1.420e+00 return = -1.099e+04
+TIME_REPLICATE: 1.47
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 37.07 ret = -4472.51 ret_best = -4472.51
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 18 i_iter = 0 dt = 3.707e+01 return = -4.473e+03
+TIME_REPLICATE: 37.13
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 37.61 ret = -5955.08 ret_best = -5955.08
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 19 i_iter = 0 dt = 3.761e+01 return = -5.955e+03
+TIME_REPLICATE: 37.69
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 41.23 ret = -5443.50 ret_best = -5443.50
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 20 i_iter = 0 dt = 4.123e+01 return = -5.444e+03
+TIME_REPLICATE: 41.29
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 28.43 ret = -6204.36 ret_best = -6204.36
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 21 i_iter = 0 dt = 2.843e+01 return = -6.204e+03
+TIME_REPLICATE: 28.51
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 33.57 ret = -5254.31 ret_best = -5254.31
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 22 i_iter = 0 dt = 3.357e+01 return = -5.254e+03
+TIME_REPLICATE: 33.62
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 42.19 ret = -7971.63 ret_best = -7971.63
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 23 i_iter = 0 dt = 4.219e+01 return = -7.972e+03
+TIME_REPLICATE: 42.24
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 30.65 ret = -8398.36 ret_best = -8398.36
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 24 i_iter = 0 dt = 3.065e+01 return = -8.398e+03
+TIME_REPLICATE: 30.72
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 47.10 ret = -7385.91 ret_best = -7385.91
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 25 i_iter = 0 dt = 4.710e+01 return = -7.386e+03
+TIME_REPLICATE: 47.17
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 37.47 ret = -7483.79 ret_best = -7483.79
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 26 i_iter = 0 dt = 3.747e+01 return = -7.484e+03
+TIME_REPLICATE: 37.52
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 45.54 ret = -7309.84 ret_best = -7309.84
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 27 i_iter = 0 dt = 4.554e+01 return = -7.310e+03
+TIME_REPLICATE: 45.60
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 37.81 ret = -6248.34 ret_best = -6248.34
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 28 i_iter = 0 dt = 3.781e+01 return = -6.248e+03
+TIME_REPLICATE: 37.86
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 1.07 ret = -14730.61 ret_best = -14730.61
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 29 i_iter = 0 dt = 1.066e+00 return = -1.473e+04
+TIME_REPLICATE: 1.11
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 36.79 ret = -5584.89 ret_best = -5584.89
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 30 i_iter = 0 dt = 3.679e+01 return = -5.585e+03
+TIME_REPLICATE: 36.83
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 50.16 ret = -7915.37 ret_best = -7915.37
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 31 i_iter = 0 dt = 5.016e+01 return = -7.915e+03
+TIME_REPLICATE: 50.22
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 43.85 ret = -5797.55 ret_best = -5797.55
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 32 i_iter = 0 dt = 4.385e+01 return = -5.798e+03
+TIME_REPLICATE: 43.92
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 21.58 ret = -6048.64 ret_best = -6048.64
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 33 i_iter = 0 dt = 2.158e+01 return = -6.049e+03
+TIME_REPLICATE: 21.65
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 44.49 ret = -6219.10 ret_best = -6219.10
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 34 i_iter = 0 dt = 4.449e+01 return = -6.219e+03
+TIME_REPLICATE: 44.56
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 41.43 ret = -8993.97 ret_best = -8993.97
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 35 i_iter = 0 dt = 4.143e+01 return = -8.994e+03
+TIME_REPLICATE: 41.50
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 38.28 ret = -6858.62 ret_best = -6858.62
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 36 i_iter = 0 dt = 3.828e+01 return = -6.859e+03
+TIME_REPLICATE: 38.33
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 47.67 ret = -5504.68 ret_best = -5504.68
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 37 i_iter = 0 dt = 4.767e+01 return = -5.505e+03
+TIME_REPLICATE: 47.72
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 49.35 ret = -7016.33 ret_best = -7016.33
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 38 i_iter = 0 dt = 4.935e+01 return = -7.016e+03
+TIME_REPLICATE: 49.40
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 35.81 ret = -6733.33 ret_best = -6733.33
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 39 i_iter = 0 dt = 3.581e+01 return = -6.733e+03
+TIME_REPLICATE: 35.86
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 32.31 ret = -5978.68 ret_best = -5978.68
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 40 i_iter = 0 dt = 3.231e+01 return = -5.979e+03
+TIME_REPLICATE: 32.36
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 30.75 ret = -6454.52 ret_best = -6454.52
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 41 i_iter = 0 dt = 3.075e+01 return = -6.455e+03
+TIME_REPLICATE: 30.80
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 40.36 ret = -8451.53 ret_best = -8451.53
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 42 i_iter = 0 dt = 4.036e+01 return = -8.452e+03
+TIME_REPLICATE: 40.44
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 42.17 ret = -9038.34 ret_best = -9038.34
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 43 i_iter = 0 dt = 4.217e+01 return = -9.038e+03
+TIME_REPLICATE: 42.21
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 41.29 ret = -6466.22 ret_best = -6466.22
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 44 i_iter = 0 dt = 4.129e+01 return = -6.466e+03
+TIME_REPLICATE: 41.35
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 39.08 ret = -4839.06 ret_best = -4839.06
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 45 i_iter = 0 dt = 3.908e+01 return = -4.839e+03
+TIME_REPLICATE: 39.13
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 41.68 ret = -7229.88 ret_best = -7229.88
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 46 i_iter = 0 dt = 4.168e+01 return = -7.230e+03
+TIME_REPLICATE: 41.73
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 44.85 ret = -5394.12 ret_best = -5394.12
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 47 i_iter = 0 dt = 4.485e+01 return = -5.394e+03
+TIME_REPLICATE: 44.91
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 36.35 ret = -6116.08 ret_best = -6116.08
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 48 i_iter = 0 dt = 3.635e+01 return = -6.116e+03
+TIME_REPLICATE: 36.41
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 52.91 ret = -5498.46 ret_best = -5498.46
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 49 i_iter = 0 dt = 5.291e+01 return = -5.498e+03
+TIME_REPLICATE: 52.96
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 35.32 ret = -5624.62 ret_best = -5624.62
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 50 i_iter = 0 dt = 3.532e+01 return = -5.625e+03
+TIME_REPLICATE: 35.37
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 45.02 ret = -8621.19 ret_best = -8621.19
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 51 i_iter = 0 dt = 4.502e+01 return = -8.621e+03
+TIME_REPLICATE: 45.09
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 36.03 ret = -4083.00 ret_best = -4083.00
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 52 i_iter = 0 dt = 3.603e+01 return = -4.083e+03
+TIME_REPLICATE: 36.10
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 30.65 ret = -6314.83 ret_best = -6314.83
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 53 i_iter = 0 dt = 3.065e+01 return = -6.315e+03
+TIME_REPLICATE: 30.70
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 41.33 ret = -6368.94 ret_best = -6368.94
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 54 i_iter = 0 dt = 4.133e+01 return = -6.369e+03
+TIME_REPLICATE: 41.37
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 33.02 ret = -6065.74 ret_best = -6065.74
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 55 i_iter = 0 dt = 3.302e+01 return = -6.066e+03
+TIME_REPLICATE: 33.08
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 1.02 ret = -6632.71 ret_best = -6632.71
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 56 i_iter = 0 dt = 1.022e+00 return = -6.633e+03
+TIME_REPLICATE: 1.07
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 1.24 ret = -16020.33 ret_best = -16020.33
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 57 i_iter = 0 dt = 1.239e+00 return = -1.602e+04
+TIME_REPLICATE: 1.28
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 41.72 ret = -6351.29 ret_best = -6351.29
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 58 i_iter = 0 dt = 4.172e+01 return = -6.351e+03
+TIME_REPLICATE: 41.76
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 44.32 ret = -5328.26 ret_best = -5328.26
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 59 i_iter = 0 dt = 4.432e+01 return = -5.328e+03
+TIME_REPLICATE: 44.37
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 38.77 ret = -6212.15 ret_best = -6212.15
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 60 i_iter = 0 dt = 3.877e+01 return = -6.212e+03
+TIME_REPLICATE: 38.83
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 46.73 ret = -7298.77 ret_best = -7298.77
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 61 i_iter = 0 dt = 4.673e+01 return = -7.299e+03
+TIME_REPLICATE: 46.78
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 1.27 ret = -8984.92 ret_best = -8984.92
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 62 i_iter = 0 dt = 1.269e+00 return = -8.985e+03
+TIME_REPLICATE: 1.33
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 37.08 ret = -6938.55 ret_best = -6938.55
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 63 i_iter = 0 dt = 3.708e+01 return = -6.939e+03
+TIME_REPLICATE: 37.14
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 43.98 ret = -6212.64 ret_best = -6212.64
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 64 i_iter = 0 dt = 4.398e+01 return = -6.213e+03
+TIME_REPLICATE: 44.04
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 45.19 ret = -4985.81 ret_best = -4985.81
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 65 i_iter = 0 dt = 4.519e+01 return = -4.986e+03
+TIME_REPLICATE: 45.24
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 44.76 ret = -5131.79 ret_best = -5131.79
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 66 i_iter = 0 dt = 4.476e+01 return = -5.132e+03
+TIME_REPLICATE: 44.81
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 34.79 ret = -6464.83 ret_best = -6464.83
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 67 i_iter = 0 dt = 3.479e+01 return = -6.465e+03
+TIME_REPLICATE: 34.83
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 13.41 ret = -7313.33 ret_best = -7313.33
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 68 i_iter = 0 dt = 1.341e+01 return = -7.313e+03
+TIME_REPLICATE: 13.45
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 12.10 ret = -4985.43 ret_best = -4985.43
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 69 i_iter = 0 dt = 1.210e+01 return = -4.985e+03
+TIME_REPLICATE: 12.15
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 9.56 ret = -6002.96 ret_best = -6002.96
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 70 i_iter = 0 dt = 9.559e+00 return = -6.003e+03
+TIME_REPLICATE: 9.60
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 14.23 ret = -6566.04 ret_best = -6566.04
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 71 i_iter = 0 dt = 1.423e+01 return = -6.566e+03
+TIME_REPLICATE: 14.27
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.36 ret = -10173.52 ret_best = -10173.52
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 72 i_iter = 0 dt = 3.573e-01 return = -1.017e+04
+TIME_REPLICATE: 0.39
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 9.94 ret = -7990.33 ret_best = -7990.33
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 73 i_iter = 0 dt = 9.935e+00 return = -7.990e+03
+TIME_REPLICATE: 9.97
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 14.03 ret = -6567.07 ret_best = -6567.07
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 74 i_iter = 0 dt = 1.403e+01 return = -6.567e+03
+TIME_REPLICATE: 14.07
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.38 ret = -15132.43 ret_best = -15132.43
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 75 i_iter = 0 dt = 3.775e-01 return = -1.513e+04
+TIME_REPLICATE: 0.41
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 18.25 ret = -5774.60 ret_best = -5774.60
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 76 i_iter = 0 dt = 1.825e+01 return = -5.775e+03
+TIME_REPLICATE: 18.29
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 14.26 ret = -6172.33 ret_best = -6172.33
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 77 i_iter = 0 dt = 1.426e+01 return = -6.172e+03
+TIME_REPLICATE: 14.29
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 9.93 ret = -7162.46 ret_best = -7162.46
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 78 i_iter = 0 dt = 9.933e+00 return = -7.162e+03
+TIME_REPLICATE: 9.96
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 10.13 ret = -5482.26 ret_best = -5482.26
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 79 i_iter = 0 dt = 1.013e+01 return = -5.482e+03
+TIME_REPLICATE: 10.15
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 12.53 ret = -4935.57 ret_best = -4935.57
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 80 i_iter = 0 dt = 1.253e+01 return = -4.936e+03
+TIME_REPLICATE: 12.57
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 9.57 ret = -5271.81 ret_best = -5271.81
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 81 i_iter = 0 dt = 9.572e+00 return = -5.272e+03
+TIME_REPLICATE: 9.61
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 13.13 ret = -8670.41 ret_best = -8670.41
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 82 i_iter = 0 dt = 1.313e+01 return = -8.670e+03
+TIME_REPLICATE: 13.15
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 10.13 ret = -8012.02 ret_best = -8012.02
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 83 i_iter = 0 dt = 1.013e+01 return = -8.012e+03
+TIME_REPLICATE: 10.16
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 12.42 ret = -7467.30 ret_best = -7467.30
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 84 i_iter = 0 dt = 1.242e+01 return = -7.467e+03
+TIME_REPLICATE: 12.46
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.48 ret = -9902.31 ret_best = -9902.31
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 85 i_iter = 0 dt = 4.822e-01 return = -9.902e+03
+TIME_REPLICATE: 0.52
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 11.76 ret = -6651.79 ret_best = -6651.79
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 86 i_iter = 0 dt = 1.176e+01 return = -6.652e+03
+TIME_REPLICATE: 11.80
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.37 ret = -12247.79 ret_best = -12247.79
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 87 i_iter = 0 dt = 3.704e-01 return = -1.225e+04
+TIME_REPLICATE: 0.41
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 13.46 ret = -4466.91 ret_best = -4466.91
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 88 i_iter = 0 dt = 1.346e+01 return = -4.467e+03
+TIME_REPLICATE: 13.50
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 12.12 ret = -6573.80 ret_best = -6573.80
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 89 i_iter = 0 dt = 1.212e+01 return = -6.574e+03
+TIME_REPLICATE: 12.16
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 7.15 ret = -6321.80 ret_best = -6321.80
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 90 i_iter = 0 dt = 7.148e+00 return = -6.322e+03
+TIME_REPLICATE: 7.18
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 11.47 ret = -7934.27 ret_best = -7934.27
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 91 i_iter = 0 dt = 1.147e+01 return = -7.934e+03
+TIME_REPLICATE: 11.51
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 10.34 ret = -6519.12 ret_best = -6519.12
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 92 i_iter = 0 dt = 1.034e+01 return = -6.519e+03
+TIME_REPLICATE: 10.38
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 12.57 ret = -6293.31 ret_best = -6293.31
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 93 i_iter = 0 dt = 1.257e+01 return = -6.293e+03
+TIME_REPLICATE: 12.62
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 10.28 ret = -7272.12 ret_best = -7272.12
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 94 i_iter = 0 dt = 1.028e+01 return = -7.272e+03
+TIME_REPLICATE: 10.33
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 13.17 ret = -6691.47 ret_best = -6691.47
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 95 i_iter = 0 dt = 1.317e+01 return = -6.691e+03
+TIME_REPLICATE: 13.21
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 16.55 ret = -5251.86 ret_best = -5251.86
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 96 i_iter = 0 dt = 1.655e+01 return = -5.252e+03
+TIME_REPLICATE: 16.59
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 10.40 ret = -5751.45 ret_best = -5751.45
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 97 i_iter = 0 dt = 1.040e+01 return = -5.751e+03
+TIME_REPLICATE: 10.44
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 21.44 ret = -7452.68 ret_best = -7452.68
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 98 i_iter = 0 dt = 2.144e+01 return = -7.453e+03
+TIME_REPLICATE: 21.48
+PROBLEM: env = f:rosenbrock-30d num_params = 30
+ITER: i_iter = 0 d_time = 9.39 ret = -7091.98 ret_best = -7091.98
+TRACE: name = f:rosenbrock-30d ttype = mtv i_sample = 99 i_iter = 0 dt = 9.393e+00 return = -7.092e+03
+TIME_REPLICATE: 9.43

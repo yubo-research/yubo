@@ -1,0 +1,121 @@
+EXPERIMENT: env_tag = f:ackley-3d ttype = sobol num_arms = 10 num_replications = 30 num_rounds = 1
+PROBLEM: env = f:ackley-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -16.18 ret_best = -16.18
+TRACE: name = f:ackley-3d ttype = sobol i_sample = 0 i_iter = 0 dt = 5.019e-04 return = -1.618e+01
+TIME_REPLICATE: 0.05
+PROBLEM: env = f:ackley-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -20.29 ret_best = -20.29
+TRACE: name = f:ackley-3d ttype = sobol i_sample = 1 i_iter = 0 dt = 4.697e-04 return = -2.029e+01
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:ackley-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -17.82 ret_best = -17.82
+TRACE: name = f:ackley-3d ttype = sobol i_sample = 2 i_iter = 0 dt = 4.869e-04 return = -1.782e+01
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:ackley-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -19.04 ret_best = -19.04
+TRACE: name = f:ackley-3d ttype = sobol i_sample = 3 i_iter = 0 dt = 3.443e-04 return = -1.904e+01
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:ackley-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -5.50 ret_best = -5.50
+TRACE: name = f:ackley-3d ttype = sobol i_sample = 4 i_iter = 0 dt = 4.902e-04 return = -5.496e+00
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:ackley-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -17.38 ret_best = -17.38
+TRACE: name = f:ackley-3d ttype = sobol i_sample = 5 i_iter = 0 dt = 4.661e-04 return = -1.738e+01
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:ackley-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -19.41 ret_best = -19.41
+TRACE: name = f:ackley-3d ttype = sobol i_sample = 6 i_iter = 0 dt = 4.883e-04 return = -1.941e+01
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:ackley-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -18.44 ret_best = -18.44
+TRACE: name = f:ackley-3d ttype = sobol i_sample = 7 i_iter = 0 dt = 4.802e-04 return = -1.844e+01
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:ackley-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -19.84 ret_best = -19.84
+TRACE: name = f:ackley-3d ttype = sobol i_sample = 8 i_iter = 0 dt = 4.368e-04 return = -1.984e+01
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:ackley-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -18.01 ret_best = -18.01
+TRACE: name = f:ackley-3d ttype = sobol i_sample = 9 i_iter = 0 dt = 4.549e-04 return = -1.801e+01
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:ackley-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -19.01 ret_best = -19.01
+TRACE: name = f:ackley-3d ttype = sobol i_sample = 10 i_iter = 0 dt = 4.411e-04 return = -1.901e+01
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:ackley-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -18.92 ret_best = -18.92
+TRACE: name = f:ackley-3d ttype = sobol i_sample = 11 i_iter = 0 dt = 4.673e-04 return = -1.892e+01
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:ackley-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -14.28 ret_best = -14.28
+TRACE: name = f:ackley-3d ttype = sobol i_sample = 12 i_iter = 0 dt = 5.083e-04 return = -1.428e+01
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:ackley-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -19.65 ret_best = -19.65
+TRACE: name = f:ackley-3d ttype = sobol i_sample = 13 i_iter = 0 dt = 4.673e-04 return = -1.965e+01
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:ackley-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -17.61 ret_best = -17.61
+TRACE: name = f:ackley-3d ttype = sobol i_sample = 14 i_iter = 0 dt = 5.145e-04 return = -1.761e+01
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:ackley-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -18.06 ret_best = -18.06
+TRACE: name = f:ackley-3d ttype = sobol i_sample = 15 i_iter = 0 dt = 5.462e-04 return = -1.806e+01
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:ackley-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -17.96 ret_best = -17.96
+TRACE: name = f:ackley-3d ttype = sobol i_sample = 16 i_iter = 0 dt = 4.210e-04 return = -1.796e+01
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:ackley-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -19.78 ret_best = -19.78
+TRACE: name = f:ackley-3d ttype = sobol i_sample = 17 i_iter = 0 dt = 3.555e-04 return = -1.978e+01
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:ackley-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -19.72 ret_best = -19.72
+TRACE: name = f:ackley-3d ttype = sobol i_sample = 18 i_iter = 0 dt = 5.307e-04 return = -1.972e+01
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:ackley-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -18.62 ret_best = -18.62
+TRACE: name = f:ackley-3d ttype = sobol i_sample = 19 i_iter = 0 dt = 4.618e-04 return = -1.862e+01
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:ackley-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -13.33 ret_best = -13.33
+TRACE: name = f:ackley-3d ttype = sobol i_sample = 20 i_iter = 0 dt = 4.392e-04 return = -1.333e+01
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:ackley-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -20.63 ret_best = -20.63
+TRACE: name = f:ackley-3d ttype = sobol i_sample = 21 i_iter = 0 dt = 4.191e-04 return = -2.063e+01
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:ackley-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -18.60 ret_best = -18.60
+TRACE: name = f:ackley-3d ttype = sobol i_sample = 22 i_iter = 0 dt = 4.449e-04 return = -1.860e+01
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:ackley-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -17.37 ret_best = -17.37
+TRACE: name = f:ackley-3d ttype = sobol i_sample = 23 i_iter = 0 dt = 4.525e-04 return = -1.737e+01
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:ackley-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -12.03 ret_best = -12.03
+TRACE: name = f:ackley-3d ttype = sobol i_sample = 24 i_iter = 0 dt = 5.498e-04 return = -1.203e+01
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:ackley-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -16.43 ret_best = -16.43
+TRACE: name = f:ackley-3d ttype = sobol i_sample = 25 i_iter = 0 dt = 5.863e-04 return = -1.643e+01
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:ackley-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -17.79 ret_best = -17.79
+TRACE: name = f:ackley-3d ttype = sobol i_sample = 26 i_iter = 0 dt = 5.479e-04 return = -1.779e+01
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:ackley-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -20.00 ret_best = -20.00
+TRACE: name = f:ackley-3d ttype = sobol i_sample = 27 i_iter = 0 dt = 5.143e-04 return = -2.000e+01
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:ackley-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -13.18 ret_best = -13.18
+TRACE: name = f:ackley-3d ttype = sobol i_sample = 28 i_iter = 0 dt = 4.890e-04 return = -1.318e+01
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:ackley-3d num_params = 3
+ITER: i_iter = 0 d_time = 0.00 ret = -20.86 ret_best = -20.86
+TRACE: name = f:ackley-3d ttype = sobol i_sample = 29 i_iter = 0 dt = 5.128e-04 return = -2.086e+01
+TIME_REPLICATE: 0.02

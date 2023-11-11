@@ -1,0 +1,401 @@
+EXPERIMENT: env_tag = f:stybtang-1d ttype = mtv num_arms = 100 num_replications = 100 num_rounds = 1
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 187.97 ret = 39.00 ret_best = 39.00
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 0 i_iter = 0 dt = 1.880e+02 return = 3.900e+01
+TIME_REPLICATE: 188.29
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 135.32 ret = 38.96 ret_best = 38.96
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 1 i_iter = 0 dt = 1.353e+02 return = 3.896e+01
+TIME_REPLICATE: 135.50
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 168.38 ret = 38.93 ret_best = 38.93
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 2 i_iter = 0 dt = 1.684e+02 return = 3.893e+01
+TIME_REPLICATE: 168.57
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 156.65 ret = 39.16 ret_best = 39.16
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 3 i_iter = 0 dt = 1.567e+02 return = 3.916e+01
+TIME_REPLICATE: 156.80
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 235.61 ret = 39.11 ret_best = 39.11
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 4 i_iter = 0 dt = 2.356e+02 return = 3.911e+01
+TIME_REPLICATE: 236.00
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 243.86 ret = 39.15 ret_best = 39.15
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 5 i_iter = 0 dt = 2.439e+02 return = 3.915e+01
+TIME_REPLICATE: 244.06
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 204.91 ret = 38.97 ret_best = 38.97
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 6 i_iter = 0 dt = 2.049e+02 return = 3.897e+01
+TIME_REPLICATE: 205.06
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 93.62 ret = 39.17 ret_best = 39.17
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 7 i_iter = 0 dt = 9.362e+01 return = 3.917e+01
+TIME_REPLICATE: 93.75
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 113.88 ret = 39.13 ret_best = 39.13
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 8 i_iter = 0 dt = 1.139e+02 return = 3.913e+01
+TIME_REPLICATE: 114.02
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 171.24 ret = 39.16 ret_best = 39.16
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 9 i_iter = 0 dt = 1.712e+02 return = 3.916e+01
+TIME_REPLICATE: 171.41
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 205.39 ret = 39.16 ret_best = 39.16
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 10 i_iter = 0 dt = 2.054e+02 return = 3.916e+01
+TIME_REPLICATE: 205.54
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 205.35 ret = 25.01 ret_best = 25.01
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 11 i_iter = 0 dt = 2.054e+02 return = 2.501e+01
+TIME_REPLICATE: 205.49
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 166.98 ret = 39.14 ret_best = 39.14
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 12 i_iter = 0 dt = 1.670e+02 return = 3.914e+01
+TIME_REPLICATE: 167.15
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 206.84 ret = 39.13 ret_best = 39.13
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 13 i_iter = 0 dt = 2.068e+02 return = 3.913e+01
+TIME_REPLICATE: 206.97
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 219.61 ret = 38.80 ret_best = 38.80
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 14 i_iter = 0 dt = 2.196e+02 return = 3.880e+01
+TIME_REPLICATE: 219.76
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 169.83 ret = 39.16 ret_best = 39.16
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 15 i_iter = 0 dt = 1.698e+02 return = 3.916e+01
+TIME_REPLICATE: 170.15
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 232.80 ret = 25.02 ret_best = 25.02
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 16 i_iter = 0 dt = 2.328e+02 return = 2.502e+01
+TIME_REPLICATE: 232.96
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 162.42 ret = 39.15 ret_best = 39.15
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 17 i_iter = 0 dt = 1.624e+02 return = 3.915e+01
+TIME_REPLICATE: 162.56
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 164.10 ret = 39.11 ret_best = 39.11
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 18 i_iter = 0 dt = 1.641e+02 return = 3.911e+01
+TIME_REPLICATE: 164.29
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 190.55 ret = 39.16 ret_best = 39.16
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 19 i_iter = 0 dt = 1.906e+02 return = 3.916e+01
+TIME_REPLICATE: 190.69
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 263.58 ret = 39.15 ret_best = 39.15
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 20 i_iter = 0 dt = 2.636e+02 return = 3.915e+01
+TIME_REPLICATE: 263.73
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 174.29 ret = 39.15 ret_best = 39.15
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 21 i_iter = 0 dt = 1.743e+02 return = 3.915e+01
+TIME_REPLICATE: 174.47
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 193.62 ret = 39.17 ret_best = 39.17
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 22 i_iter = 0 dt = 1.936e+02 return = 3.917e+01
+TIME_REPLICATE: 193.76
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 144.30 ret = 39.16 ret_best = 39.16
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 23 i_iter = 0 dt = 1.443e+02 return = 3.916e+01
+TIME_REPLICATE: 144.45
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 159.35 ret = 39.17 ret_best = 39.17
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 24 i_iter = 0 dt = 1.594e+02 return = 3.917e+01
+TIME_REPLICATE: 159.50
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 103.55 ret = 39.14 ret_best = 39.14
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 25 i_iter = 0 dt = 1.035e+02 return = 3.914e+01
+TIME_REPLICATE: 103.70
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 166.55 ret = 38.92 ret_best = 38.92
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 26 i_iter = 0 dt = 1.666e+02 return = 3.892e+01
+TIME_REPLICATE: 166.69
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 107.82 ret = 39.16 ret_best = 39.16
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 27 i_iter = 0 dt = 1.078e+02 return = 3.916e+01
+TIME_REPLICATE: 107.95
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 223.61 ret = 39.16 ret_best = 39.16
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 28 i_iter = 0 dt = 2.236e+02 return = 3.916e+01
+TIME_REPLICATE: 223.96
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 137.77 ret = 39.01 ret_best = 39.01
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 29 i_iter = 0 dt = 1.378e+02 return = 3.901e+01
+TIME_REPLICATE: 137.93
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 178.05 ret = 39.16 ret_best = 39.16
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 30 i_iter = 0 dt = 1.780e+02 return = 3.916e+01
+TIME_REPLICATE: 178.22
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 169.83 ret = 38.89 ret_best = 38.89
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 31 i_iter = 0 dt = 1.698e+02 return = 3.889e+01
+TIME_REPLICATE: 169.99
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 214.37 ret = 39.16 ret_best = 39.16
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 32 i_iter = 0 dt = 2.144e+02 return = 3.916e+01
+TIME_REPLICATE: 214.65
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 288.61 ret = 39.16 ret_best = 39.16
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 33 i_iter = 0 dt = 2.886e+02 return = 3.916e+01
+TIME_REPLICATE: 289.20
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 224.38 ret = 39.12 ret_best = 39.12
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 34 i_iter = 0 dt = 2.244e+02 return = 3.912e+01
+TIME_REPLICATE: 224.70
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 125.86 ret = 25.03 ret_best = 25.03
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 35 i_iter = 0 dt = 1.259e+02 return = 2.503e+01
+TIME_REPLICATE: 126.05
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 222.08 ret = 39.14 ret_best = 39.14
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 36 i_iter = 0 dt = 2.221e+02 return = 3.914e+01
+TIME_REPLICATE: 222.24
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 168.18 ret = 39.09 ret_best = 39.09
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 37 i_iter = 0 dt = 1.682e+02 return = 3.909e+01
+TIME_REPLICATE: 168.33
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 136.77 ret = 39.17 ret_best = 39.17
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 38 i_iter = 0 dt = 1.368e+02 return = 3.917e+01
+TIME_REPLICATE: 136.94
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 183.37 ret = 39.16 ret_best = 39.16
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 39 i_iter = 0 dt = 1.834e+02 return = 3.916e+01
+TIME_REPLICATE: 183.52
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 162.52 ret = 39.03 ret_best = 39.03
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 40 i_iter = 0 dt = 1.625e+02 return = 3.903e+01
+TIME_REPLICATE: 162.77
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 189.32 ret = 39.06 ret_best = 39.06
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 41 i_iter = 0 dt = 1.893e+02 return = 3.906e+01
+TIME_REPLICATE: 189.54
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 161.60 ret = 39.11 ret_best = 39.11
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 42 i_iter = 0 dt = 1.616e+02 return = 3.911e+01
+TIME_REPLICATE: 161.80
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 138.15 ret = 38.91 ret_best = 38.91
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 43 i_iter = 0 dt = 1.382e+02 return = 3.891e+01
+TIME_REPLICATE: 138.40
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 160.15 ret = 39.12 ret_best = 39.12
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 44 i_iter = 0 dt = 1.602e+02 return = 3.912e+01
+TIME_REPLICATE: 160.31
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 195.02 ret = 39.16 ret_best = 39.16
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 45 i_iter = 0 dt = 1.950e+02 return = 3.916e+01
+TIME_REPLICATE: 195.18
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 150.63 ret = 39.15 ret_best = 39.15
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 46 i_iter = 0 dt = 1.506e+02 return = 3.915e+01
+TIME_REPLICATE: 150.77
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 172.60 ret = 25.01 ret_best = 25.01
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 47 i_iter = 0 dt = 1.726e+02 return = 2.501e+01
+TIME_REPLICATE: 172.79
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 174.34 ret = 39.16 ret_best = 39.16
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 48 i_iter = 0 dt = 1.743e+02 return = 3.916e+01
+TIME_REPLICATE: 174.52
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 132.05 ret = 38.86 ret_best = 38.86
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 49 i_iter = 0 dt = 1.320e+02 return = 3.886e+01
+TIME_REPLICATE: 132.29
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 186.83 ret = 39.12 ret_best = 39.12
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 50 i_iter = 0 dt = 1.868e+02 return = 3.912e+01
+TIME_REPLICATE: 187.00
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 197.53 ret = 39.17 ret_best = 39.17
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 51 i_iter = 0 dt = 1.975e+02 return = 3.917e+01
+TIME_REPLICATE: 197.74
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 224.20 ret = 39.03 ret_best = 39.03
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 52 i_iter = 0 dt = 2.242e+02 return = 3.903e+01
+TIME_REPLICATE: 224.37
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 116.24 ret = 39.16 ret_best = 39.16
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 53 i_iter = 0 dt = 1.162e+02 return = 3.916e+01
+TIME_REPLICATE: 116.46
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 151.82 ret = 39.17 ret_best = 39.17
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 54 i_iter = 0 dt = 1.518e+02 return = 3.917e+01
+TIME_REPLICATE: 152.00
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 154.89 ret = 39.15 ret_best = 39.15
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 55 i_iter = 0 dt = 1.549e+02 return = 3.915e+01
+TIME_REPLICATE: 155.05
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 151.97 ret = 39.17 ret_best = 39.17
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 56 i_iter = 0 dt = 1.520e+02 return = 3.917e+01
+TIME_REPLICATE: 152.37
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 98.41 ret = 39.12 ret_best = 39.12
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 57 i_iter = 0 dt = 9.841e+01 return = 3.912e+01
+TIME_REPLICATE: 98.59
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 208.38 ret = 39.13 ret_best = 39.13
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 58 i_iter = 0 dt = 2.084e+02 return = 3.913e+01
+TIME_REPLICATE: 208.68
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 162.59 ret = 39.17 ret_best = 39.17
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 59 i_iter = 0 dt = 1.626e+02 return = 3.917e+01
+TIME_REPLICATE: 162.74
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 190.97 ret = 39.13 ret_best = 39.13
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 60 i_iter = 0 dt = 1.910e+02 return = 3.913e+01
+TIME_REPLICATE: 191.15
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 188.80 ret = 39.11 ret_best = 39.11
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 61 i_iter = 0 dt = 1.888e+02 return = 3.911e+01
+TIME_REPLICATE: 189.17
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 206.95 ret = 39.16 ret_best = 39.16
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 62 i_iter = 0 dt = 2.069e+02 return = 3.916e+01
+TIME_REPLICATE: 207.14
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 136.94 ret = 39.12 ret_best = 39.12
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 63 i_iter = 0 dt = 1.369e+02 return = 3.912e+01
+TIME_REPLICATE: 137.16
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 160.15 ret = 39.17 ret_best = 39.17
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 64 i_iter = 0 dt = 1.601e+02 return = 3.917e+01
+TIME_REPLICATE: 160.36
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 168.66 ret = 39.12 ret_best = 39.12
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 65 i_iter = 0 dt = 1.687e+02 return = 3.912e+01
+TIME_REPLICATE: 168.83
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 263.30 ret = 39.17 ret_best = 39.17
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 66 i_iter = 0 dt = 2.633e+02 return = 3.917e+01
+TIME_REPLICATE: 263.52
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 287.26 ret = 24.90 ret_best = 24.90
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 67 i_iter = 0 dt = 2.873e+02 return = 2.490e+01
+TIME_REPLICATE: 287.48
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 99.79 ret = 39.03 ret_best = 39.03
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 68 i_iter = 0 dt = 9.979e+01 return = 3.903e+01
+TIME_REPLICATE: 100.26
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 122.11 ret = 39.15 ret_best = 39.15
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 69 i_iter = 0 dt = 1.221e+02 return = 3.915e+01
+TIME_REPLICATE: 122.32
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 142.39 ret = 38.75 ret_best = 38.75
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 70 i_iter = 0 dt = 1.424e+02 return = 3.875e+01
+TIME_REPLICATE: 142.57
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 166.64 ret = 39.14 ret_best = 39.14
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 71 i_iter = 0 dt = 1.666e+02 return = 3.914e+01
+TIME_REPLICATE: 166.87
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 223.51 ret = 39.17 ret_best = 39.17
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 72 i_iter = 0 dt = 2.235e+02 return = 3.917e+01
+TIME_REPLICATE: 223.66
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 220.58 ret = 38.66 ret_best = 38.66
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 73 i_iter = 0 dt = 2.206e+02 return = 3.866e+01
+TIME_REPLICATE: 220.88
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 111.61 ret = 39.13 ret_best = 39.13
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 74 i_iter = 0 dt = 1.116e+02 return = 3.913e+01
+TIME_REPLICATE: 111.82
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 145.80 ret = 39.15 ret_best = 39.15
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 75 i_iter = 0 dt = 1.458e+02 return = 3.915e+01
+TIME_REPLICATE: 145.97
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 105.36 ret = 39.16 ret_best = 39.16
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 76 i_iter = 0 dt = 1.054e+02 return = 3.916e+01
+TIME_REPLICATE: 105.65
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 141.06 ret = 39.17 ret_best = 39.17
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 77 i_iter = 0 dt = 1.411e+02 return = 3.917e+01
+TIME_REPLICATE: 141.37
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 178.11 ret = 39.16 ret_best = 39.16
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 78 i_iter = 0 dt = 1.781e+02 return = 3.916e+01
+TIME_REPLICATE: 178.27
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 143.44 ret = 39.15 ret_best = 39.15
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 79 i_iter = 0 dt = 1.434e+02 return = 3.915e+01
+TIME_REPLICATE: 143.57
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 185.91 ret = 39.16 ret_best = 39.16
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 80 i_iter = 0 dt = 1.859e+02 return = 3.916e+01
+TIME_REPLICATE: 186.07
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 204.27 ret = 39.15 ret_best = 39.15
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 81 i_iter = 0 dt = 2.043e+02 return = 3.915e+01
+TIME_REPLICATE: 204.44
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 169.54 ret = 39.12 ret_best = 39.12
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 82 i_iter = 0 dt = 1.695e+02 return = 3.912e+01
+TIME_REPLICATE: 169.69
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 169.80 ret = 39.17 ret_best = 39.17
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 83 i_iter = 0 dt = 1.698e+02 return = 3.917e+01
+TIME_REPLICATE: 169.98
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 144.98 ret = 38.97 ret_best = 38.97
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 84 i_iter = 0 dt = 1.450e+02 return = 3.897e+01
+TIME_REPLICATE: 145.10
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 94.35 ret = 39.06 ret_best = 39.06
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 85 i_iter = 0 dt = 9.435e+01 return = 3.906e+01
+TIME_REPLICATE: 94.50
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 151.25 ret = 38.77 ret_best = 38.77
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 86 i_iter = 0 dt = 1.513e+02 return = 3.877e+01
+TIME_REPLICATE: 151.42
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 228.45 ret = 39.09 ret_best = 39.09
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 87 i_iter = 0 dt = 2.285e+02 return = 3.909e+01
+TIME_REPLICATE: 228.70
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 180.17 ret = 39.16 ret_best = 39.16
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 88 i_iter = 0 dt = 1.802e+02 return = 3.916e+01
+TIME_REPLICATE: 180.34
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 121.06 ret = 39.11 ret_best = 39.11
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 89 i_iter = 0 dt = 1.211e+02 return = 3.911e+01
+TIME_REPLICATE: 121.26
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 198.38 ret = 39.17 ret_best = 39.17
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 90 i_iter = 0 dt = 1.984e+02 return = 3.917e+01
+TIME_REPLICATE: 198.57
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 199.45 ret = 39.14 ret_best = 39.14
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 91 i_iter = 0 dt = 1.994e+02 return = 3.914e+01
+TIME_REPLICATE: 199.70
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 174.94 ret = 39.16 ret_best = 39.16
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 92 i_iter = 0 dt = 1.749e+02 return = 3.916e+01
+TIME_REPLICATE: 175.08
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 121.14 ret = 38.67 ret_best = 38.67
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 93 i_iter = 0 dt = 1.211e+02 return = 3.867e+01
+TIME_REPLICATE: 121.30
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 142.60 ret = 38.32 ret_best = 38.32
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 94 i_iter = 0 dt = 1.426e+02 return = 3.832e+01
+TIME_REPLICATE: 142.75
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 159.62 ret = 32.24 ret_best = 32.24
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 95 i_iter = 0 dt = 1.596e+02 return = 3.224e+01
+TIME_REPLICATE: 159.83
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 142.31 ret = 39.13 ret_best = 39.13
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 96 i_iter = 0 dt = 1.423e+02 return = 3.913e+01
+TIME_REPLICATE: 142.50
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 131.51 ret = 38.95 ret_best = 38.95
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 97 i_iter = 0 dt = 1.315e+02 return = 3.895e+01
+TIME_REPLICATE: 131.67
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 153.02 ret = 38.11 ret_best = 38.11
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 98 i_iter = 0 dt = 1.530e+02 return = 3.811e+01
+TIME_REPLICATE: 153.18
+PROBLEM: env = f:stybtang-1d num_params = 1
+ITER: i_iter = 0 d_time = 271.03 ret = 39.14 ret_best = 39.14
+TRACE: name = f:stybtang-1d ttype = mtv i_sample = 99 i_iter = 0 dt = 2.710e+02 return = 3.914e+01
+TIME_REPLICATE: 271.25

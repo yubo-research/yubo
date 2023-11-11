@@ -1,0 +1,121 @@
+EXPERIMENT: env_tag = f:levy-30d ttype = sobol num_arms = 10 num_replications = 30 num_rounds = 1
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -306.67 ret_best = -306.67
+TRACE: name = f:levy-30d ttype = sobol i_sample = 0 i_iter = 0 dt = 2.265e-04 return = -3.067e+02
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -306.57 ret_best = -306.57
+TRACE: name = f:levy-30d ttype = sobol i_sample = 1 i_iter = 0 dt = 2.029e-04 return = -3.066e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -256.52 ret_best = -256.52
+TRACE: name = f:levy-30d ttype = sobol i_sample = 2 i_iter = 0 dt = 2.043e-04 return = -2.565e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -192.87 ret_best = -192.87
+TRACE: name = f:levy-30d ttype = sobol i_sample = 3 i_iter = 0 dt = 2.046e-04 return = -1.929e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -218.25 ret_best = -218.25
+TRACE: name = f:levy-30d ttype = sobol i_sample = 4 i_iter = 0 dt = 2.048e-04 return = -2.183e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -263.21 ret_best = -263.21
+TRACE: name = f:levy-30d ttype = sobol i_sample = 5 i_iter = 0 dt = 2.046e-04 return = -2.632e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -237.80 ret_best = -237.80
+TRACE: name = f:levy-30d ttype = sobol i_sample = 6 i_iter = 0 dt = 2.055e-04 return = -2.378e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -285.72 ret_best = -285.72
+TRACE: name = f:levy-30d ttype = sobol i_sample = 7 i_iter = 0 dt = 2.019e-04 return = -2.857e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -255.09 ret_best = -255.09
+TRACE: name = f:levy-30d ttype = sobol i_sample = 8 i_iter = 0 dt = 2.358e-04 return = -2.551e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -241.67 ret_best = -241.67
+TRACE: name = f:levy-30d ttype = sobol i_sample = 9 i_iter = 0 dt = 3.045e-04 return = -2.417e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -288.15 ret_best = -288.15
+TRACE: name = f:levy-30d ttype = sobol i_sample = 10 i_iter = 0 dt = 2.170e-04 return = -2.881e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -296.17 ret_best = -296.17
+TRACE: name = f:levy-30d ttype = sobol i_sample = 11 i_iter = 0 dt = 2.480e-04 return = -2.962e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -203.26 ret_best = -203.26
+TRACE: name = f:levy-30d ttype = sobol i_sample = 12 i_iter = 0 dt = 3.247e-04 return = -2.033e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -271.10 ret_best = -271.10
+TRACE: name = f:levy-30d ttype = sobol i_sample = 13 i_iter = 0 dt = 5.319e-04 return = -2.711e+02
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -297.16 ret_best = -297.16
+TRACE: name = f:levy-30d ttype = sobol i_sample = 14 i_iter = 0 dt = 5.703e-04 return = -2.972e+02
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -234.04 ret_best = -234.04
+TRACE: name = f:levy-30d ttype = sobol i_sample = 15 i_iter = 0 dt = 4.921e-04 return = -2.340e+02
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -245.07 ret_best = -245.07
+TRACE: name = f:levy-30d ttype = sobol i_sample = 16 i_iter = 0 dt = 4.675e-04 return = -2.451e+02
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -192.63 ret_best = -192.63
+TRACE: name = f:levy-30d ttype = sobol i_sample = 17 i_iter = 0 dt = 3.178e-04 return = -1.926e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -190.27 ret_best = -190.27
+TRACE: name = f:levy-30d ttype = sobol i_sample = 18 i_iter = 0 dt = 4.208e-04 return = -1.903e+02
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -165.40 ret_best = -165.40
+TRACE: name = f:levy-30d ttype = sobol i_sample = 19 i_iter = 0 dt = 4.404e-04 return = -1.654e+02
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -235.05 ret_best = -235.05
+TRACE: name = f:levy-30d ttype = sobol i_sample = 20 i_iter = 0 dt = 3.164e-04 return = -2.351e+02
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -190.08 ret_best = -190.08
+TRACE: name = f:levy-30d ttype = sobol i_sample = 21 i_iter = 0 dt = 4.909e-04 return = -1.901e+02
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -196.11 ret_best = -196.11
+TRACE: name = f:levy-30d ttype = sobol i_sample = 22 i_iter = 0 dt = 3.734e-04 return = -1.961e+02
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -349.56 ret_best = -349.56
+TRACE: name = f:levy-30d ttype = sobol i_sample = 23 i_iter = 0 dt = 4.880e-04 return = -3.496e+02
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -292.03 ret_best = -292.03
+TRACE: name = f:levy-30d ttype = sobol i_sample = 24 i_iter = 0 dt = 4.938e-04 return = -2.920e+02
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -257.16 ret_best = -257.16
+TRACE: name = f:levy-30d ttype = sobol i_sample = 25 i_iter = 0 dt = 3.691e-04 return = -2.572e+02
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -315.41 ret_best = -315.41
+TRACE: name = f:levy-30d ttype = sobol i_sample = 26 i_iter = 0 dt = 5.186e-04 return = -3.154e+02
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -232.03 ret_best = -232.03
+TRACE: name = f:levy-30d ttype = sobol i_sample = 27 i_iter = 0 dt = 3.920e-04 return = -2.320e+02
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -192.30 ret_best = -192.30
+TRACE: name = f:levy-30d ttype = sobol i_sample = 28 i_iter = 0 dt = 4.869e-04 return = -1.923e+02
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -225.34 ret_best = -225.34
+TRACE: name = f:levy-30d ttype = sobol i_sample = 29 i_iter = 0 dt = 4.888e-04 return = -2.253e+02
+TIME_REPLICATE: 0.03

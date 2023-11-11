@@ -1,0 +1,401 @@
+EXPERIMENT: env_tag = f:levy-30d ttype = random num_arms = 2 num_replications = 100 num_rounds = 1
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -350.05 ret_best = -350.05
+TRACE: name = f:levy-30d ttype = random i_sample = 0 i_iter = 0 dt = 8.059e-05 return = -3.501e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -347.30 ret_best = -347.30
+TRACE: name = f:levy-30d ttype = random i_sample = 1 i_iter = 0 dt = 6.437e-05 return = -3.473e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -436.64 ret_best = -436.64
+TRACE: name = f:levy-30d ttype = random i_sample = 2 i_iter = 0 dt = 4.673e-05 return = -4.366e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -395.04 ret_best = -395.04
+TRACE: name = f:levy-30d ttype = random i_sample = 3 i_iter = 0 dt = 6.676e-05 return = -3.950e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -358.09 ret_best = -358.09
+TRACE: name = f:levy-30d ttype = random i_sample = 4 i_iter = 0 dt = 4.625e-05 return = -3.581e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -304.99 ret_best = -304.99
+TRACE: name = f:levy-30d ttype = random i_sample = 5 i_iter = 0 dt = 6.294e-05 return = -3.050e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -354.95 ret_best = -354.95
+TRACE: name = f:levy-30d ttype = random i_sample = 6 i_iter = 0 dt = 6.294e-05 return = -3.550e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -297.93 ret_best = -297.93
+TRACE: name = f:levy-30d ttype = random i_sample = 7 i_iter = 0 dt = 6.557e-05 return = -2.979e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -301.24 ret_best = -301.24
+TRACE: name = f:levy-30d ttype = random i_sample = 8 i_iter = 0 dt = 4.840e-05 return = -3.012e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -299.52 ret_best = -299.52
+TRACE: name = f:levy-30d ttype = random i_sample = 9 i_iter = 0 dt = 5.817e-05 return = -2.995e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -274.27 ret_best = -274.27
+TRACE: name = f:levy-30d ttype = random i_sample = 10 i_iter = 0 dt = 7.081e-05 return = -2.743e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -304.13 ret_best = -304.13
+TRACE: name = f:levy-30d ttype = random i_sample = 11 i_iter = 0 dt = 4.721e-05 return = -3.041e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -316.60 ret_best = -316.60
+TRACE: name = f:levy-30d ttype = random i_sample = 12 i_iter = 0 dt = 6.342e-05 return = -3.166e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -359.14 ret_best = -359.14
+TRACE: name = f:levy-30d ttype = random i_sample = 13 i_iter = 0 dt = 6.986e-05 return = -3.591e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -264.83 ret_best = -264.83
+TRACE: name = f:levy-30d ttype = random i_sample = 14 i_iter = 0 dt = 4.673e-05 return = -2.648e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -360.64 ret_best = -360.64
+TRACE: name = f:levy-30d ttype = random i_sample = 15 i_iter = 0 dt = 6.175e-05 return = -3.606e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -423.20 ret_best = -423.20
+TRACE: name = f:levy-30d ttype = random i_sample = 16 i_iter = 0 dt = 6.413e-05 return = -4.232e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -327.85 ret_best = -327.85
+TRACE: name = f:levy-30d ttype = random i_sample = 17 i_iter = 0 dt = 7.057e-05 return = -3.278e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -299.02 ret_best = -299.02
+TRACE: name = f:levy-30d ttype = random i_sample = 18 i_iter = 0 dt = 4.601e-05 return = -2.990e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -366.54 ret_best = -366.54
+TRACE: name = f:levy-30d ttype = random i_sample = 19 i_iter = 0 dt = 6.461e-05 return = -3.665e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -314.02 ret_best = -314.02
+TRACE: name = f:levy-30d ttype = random i_sample = 20 i_iter = 0 dt = 4.530e-05 return = -3.140e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -400.06 ret_best = -400.06
+TRACE: name = f:levy-30d ttype = random i_sample = 21 i_iter = 0 dt = 6.175e-05 return = -4.001e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -285.16 ret_best = -285.16
+TRACE: name = f:levy-30d ttype = random i_sample = 22 i_iter = 0 dt = 6.771e-05 return = -2.852e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -442.53 ret_best = -442.53
+TRACE: name = f:levy-30d ttype = random i_sample = 23 i_iter = 0 dt = 4.888e-05 return = -4.425e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -172.15 ret_best = -172.15
+TRACE: name = f:levy-30d ttype = random i_sample = 24 i_iter = 0 dt = 6.509e-05 return = -1.722e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -424.63 ret_best = -424.63
+TRACE: name = f:levy-30d ttype = random i_sample = 25 i_iter = 0 dt = 6.509e-05 return = -4.246e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -278.13 ret_best = -278.13
+TRACE: name = f:levy-30d ttype = random i_sample = 26 i_iter = 0 dt = 6.342e-05 return = -2.781e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -348.61 ret_best = -348.61
+TRACE: name = f:levy-30d ttype = random i_sample = 27 i_iter = 0 dt = 6.270e-05 return = -3.486e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -303.89 ret_best = -303.89
+TRACE: name = f:levy-30d ttype = random i_sample = 28 i_iter = 0 dt = 6.652e-05 return = -3.039e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -309.07 ret_best = -309.07
+TRACE: name = f:levy-30d ttype = random i_sample = 29 i_iter = 0 dt = 6.366e-05 return = -3.091e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -420.02 ret_best = -420.02
+TRACE: name = f:levy-30d ttype = random i_sample = 30 i_iter = 0 dt = 6.819e-05 return = -4.200e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -418.00 ret_best = -418.00
+TRACE: name = f:levy-30d ttype = random i_sample = 31 i_iter = 0 dt = 6.485e-05 return = -4.180e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -384.32 ret_best = -384.32
+TRACE: name = f:levy-30d ttype = random i_sample = 32 i_iter = 0 dt = 7.010e-05 return = -3.843e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -412.38 ret_best = -412.38
+TRACE: name = f:levy-30d ttype = random i_sample = 33 i_iter = 0 dt = 6.199e-05 return = -4.124e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -460.56 ret_best = -460.56
+TRACE: name = f:levy-30d ttype = random i_sample = 34 i_iter = 0 dt = 6.342e-05 return = -4.606e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -399.01 ret_best = -399.01
+TRACE: name = f:levy-30d ttype = random i_sample = 35 i_iter = 0 dt = 6.866e-05 return = -3.990e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -353.94 ret_best = -353.94
+TRACE: name = f:levy-30d ttype = random i_sample = 36 i_iter = 0 dt = 5.054e-05 return = -3.539e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -296.73 ret_best = -296.73
+TRACE: name = f:levy-30d ttype = random i_sample = 37 i_iter = 0 dt = 6.700e-05 return = -2.967e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -319.28 ret_best = -319.28
+TRACE: name = f:levy-30d ttype = random i_sample = 38 i_iter = 0 dt = 6.700e-05 return = -3.193e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -452.49 ret_best = -452.49
+TRACE: name = f:levy-30d ttype = random i_sample = 39 i_iter = 0 dt = 6.938e-05 return = -4.525e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -217.78 ret_best = -217.78
+TRACE: name = f:levy-30d ttype = random i_sample = 40 i_iter = 0 dt = 4.721e-05 return = -2.178e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -429.56 ret_best = -429.56
+TRACE: name = f:levy-30d ttype = random i_sample = 41 i_iter = 0 dt = 6.390e-05 return = -4.296e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -217.07 ret_best = -217.07
+TRACE: name = f:levy-30d ttype = random i_sample = 42 i_iter = 0 dt = 7.224e-05 return = -2.171e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -353.99 ret_best = -353.99
+TRACE: name = f:levy-30d ttype = random i_sample = 43 i_iter = 0 dt = 6.604e-05 return = -3.540e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -419.47 ret_best = -419.47
+TRACE: name = f:levy-30d ttype = random i_sample = 44 i_iter = 0 dt = 6.580e-05 return = -4.195e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -184.02 ret_best = -184.02
+TRACE: name = f:levy-30d ttype = random i_sample = 45 i_iter = 0 dt = 6.175e-05 return = -1.840e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -372.38 ret_best = -372.38
+TRACE: name = f:levy-30d ttype = random i_sample = 46 i_iter = 0 dt = 6.199e-05 return = -3.724e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -285.36 ret_best = -285.36
+TRACE: name = f:levy-30d ttype = random i_sample = 47 i_iter = 0 dt = 6.247e-05 return = -2.854e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -316.79 ret_best = -316.79
+TRACE: name = f:levy-30d ttype = random i_sample = 48 i_iter = 0 dt = 6.318e-05 return = -3.168e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -172.94 ret_best = -172.94
+TRACE: name = f:levy-30d ttype = random i_sample = 49 i_iter = 0 dt = 6.557e-05 return = -1.729e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -362.82 ret_best = -362.82
+TRACE: name = f:levy-30d ttype = random i_sample = 50 i_iter = 0 dt = 6.175e-05 return = -3.628e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -390.66 ret_best = -390.66
+TRACE: name = f:levy-30d ttype = random i_sample = 51 i_iter = 0 dt = 6.247e-05 return = -3.907e+02
+TIME_REPLICATE: 0.02
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -329.43 ret_best = -329.43
+TRACE: name = f:levy-30d ttype = random i_sample = 52 i_iter = 0 dt = 4.601e-05 return = -3.294e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -299.38 ret_best = -299.38
+TRACE: name = f:levy-30d ttype = random i_sample = 53 i_iter = 0 dt = 7.558e-05 return = -2.994e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -386.14 ret_best = -386.14
+TRACE: name = f:levy-30d ttype = random i_sample = 54 i_iter = 0 dt = 7.415e-05 return = -3.861e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -392.79 ret_best = -392.79
+TRACE: name = f:levy-30d ttype = random i_sample = 55 i_iter = 0 dt = 6.390e-05 return = -3.928e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -320.45 ret_best = -320.45
+TRACE: name = f:levy-30d ttype = random i_sample = 56 i_iter = 0 dt = 6.223e-05 return = -3.204e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -346.52 ret_best = -346.52
+TRACE: name = f:levy-30d ttype = random i_sample = 57 i_iter = 0 dt = 6.223e-05 return = -3.465e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -350.20 ret_best = -350.20
+TRACE: name = f:levy-30d ttype = random i_sample = 58 i_iter = 0 dt = 6.199e-05 return = -3.502e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -292.66 ret_best = -292.66
+TRACE: name = f:levy-30d ttype = random i_sample = 59 i_iter = 0 dt = 6.175e-05 return = -2.927e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -267.66 ret_best = -267.66
+TRACE: name = f:levy-30d ttype = random i_sample = 60 i_iter = 0 dt = 6.199e-05 return = -2.677e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -211.23 ret_best = -211.23
+TRACE: name = f:levy-30d ttype = random i_sample = 61 i_iter = 0 dt = 6.199e-05 return = -2.112e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -299.30 ret_best = -299.30
+TRACE: name = f:levy-30d ttype = random i_sample = 62 i_iter = 0 dt = 6.151e-05 return = -2.993e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -325.84 ret_best = -325.84
+TRACE: name = f:levy-30d ttype = random i_sample = 63 i_iter = 0 dt = 6.175e-05 return = -3.258e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -296.01 ret_best = -296.01
+TRACE: name = f:levy-30d ttype = random i_sample = 64 i_iter = 0 dt = 6.104e-05 return = -2.960e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -374.49 ret_best = -374.49
+TRACE: name = f:levy-30d ttype = random i_sample = 65 i_iter = 0 dt = 6.223e-05 return = -3.745e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -279.86 ret_best = -279.86
+TRACE: name = f:levy-30d ttype = random i_sample = 66 i_iter = 0 dt = 6.104e-05 return = -2.799e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -286.61 ret_best = -286.61
+TRACE: name = f:levy-30d ttype = random i_sample = 67 i_iter = 0 dt = 6.104e-05 return = -2.866e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -240.03 ret_best = -240.03
+TRACE: name = f:levy-30d ttype = random i_sample = 68 i_iter = 0 dt = 6.151e-05 return = -2.400e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -304.61 ret_best = -304.61
+TRACE: name = f:levy-30d ttype = random i_sample = 69 i_iter = 0 dt = 6.151e-05 return = -3.046e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -386.77 ret_best = -386.77
+TRACE: name = f:levy-30d ttype = random i_sample = 70 i_iter = 0 dt = 6.175e-05 return = -3.868e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -446.94 ret_best = -446.94
+TRACE: name = f:levy-30d ttype = random i_sample = 71 i_iter = 0 dt = 6.175e-05 return = -4.469e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -342.32 ret_best = -342.32
+TRACE: name = f:levy-30d ttype = random i_sample = 72 i_iter = 0 dt = 6.509e-05 return = -3.423e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -281.25 ret_best = -281.25
+TRACE: name = f:levy-30d ttype = random i_sample = 73 i_iter = 0 dt = 6.604e-05 return = -2.812e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -334.50 ret_best = -334.50
+TRACE: name = f:levy-30d ttype = random i_sample = 74 i_iter = 0 dt = 6.485e-05 return = -3.345e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -449.99 ret_best = -449.99
+TRACE: name = f:levy-30d ttype = random i_sample = 75 i_iter = 0 dt = 6.342e-05 return = -4.500e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -222.59 ret_best = -222.59
+TRACE: name = f:levy-30d ttype = random i_sample = 76 i_iter = 0 dt = 6.723e-05 return = -2.226e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -359.13 ret_best = -359.13
+TRACE: name = f:levy-30d ttype = random i_sample = 77 i_iter = 0 dt = 7.010e-05 return = -3.591e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -338.04 ret_best = -338.04
+TRACE: name = f:levy-30d ttype = random i_sample = 78 i_iter = 0 dt = 6.723e-05 return = -3.380e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -306.19 ret_best = -306.19
+TRACE: name = f:levy-30d ttype = random i_sample = 79 i_iter = 0 dt = 6.604e-05 return = -3.062e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -205.24 ret_best = -205.24
+TRACE: name = f:levy-30d ttype = random i_sample = 80 i_iter = 0 dt = 6.723e-05 return = -2.052e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -362.99 ret_best = -362.99
+TRACE: name = f:levy-30d ttype = random i_sample = 81 i_iter = 0 dt = 7.415e-05 return = -3.630e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -381.82 ret_best = -381.82
+TRACE: name = f:levy-30d ttype = random i_sample = 82 i_iter = 0 dt = 6.676e-05 return = -3.818e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -359.50 ret_best = -359.50
+TRACE: name = f:levy-30d ttype = random i_sample = 83 i_iter = 0 dt = 6.366e-05 return = -3.595e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -287.63 ret_best = -287.63
+TRACE: name = f:levy-30d ttype = random i_sample = 84 i_iter = 0 dt = 6.771e-05 return = -2.876e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -354.87 ret_best = -354.87
+TRACE: name = f:levy-30d ttype = random i_sample = 85 i_iter = 0 dt = 6.986e-05 return = -3.549e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -402.02 ret_best = -402.02
+TRACE: name = f:levy-30d ttype = random i_sample = 86 i_iter = 0 dt = 7.224e-05 return = -4.020e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -344.69 ret_best = -344.69
+TRACE: name = f:levy-30d ttype = random i_sample = 87 i_iter = 0 dt = 6.700e-05 return = -3.447e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -332.57 ret_best = -332.57
+TRACE: name = f:levy-30d ttype = random i_sample = 88 i_iter = 0 dt = 6.700e-05 return = -3.326e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -400.22 ret_best = -400.22
+TRACE: name = f:levy-30d ttype = random i_sample = 89 i_iter = 0 dt = 7.105e-05 return = -4.002e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -373.23 ret_best = -373.23
+TRACE: name = f:levy-30d ttype = random i_sample = 90 i_iter = 0 dt = 7.296e-05 return = -3.732e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -276.29 ret_best = -276.29
+TRACE: name = f:levy-30d ttype = random i_sample = 91 i_iter = 0 dt = 7.176e-05 return = -2.763e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -334.29 ret_best = -334.29
+TRACE: name = f:levy-30d ttype = random i_sample = 92 i_iter = 0 dt = 7.153e-05 return = -3.343e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -278.22 ret_best = -278.22
+TRACE: name = f:levy-30d ttype = random i_sample = 93 i_iter = 0 dt = 7.415e-05 return = -2.782e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -279.87 ret_best = -279.87
+TRACE: name = f:levy-30d ttype = random i_sample = 94 i_iter = 0 dt = 7.367e-05 return = -2.799e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -257.66 ret_best = -257.66
+TRACE: name = f:levy-30d ttype = random i_sample = 95 i_iter = 0 dt = 7.176e-05 return = -2.577e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -371.29 ret_best = -371.29
+TRACE: name = f:levy-30d ttype = random i_sample = 96 i_iter = 0 dt = 7.200e-05 return = -3.713e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -414.71 ret_best = -414.71
+TRACE: name = f:levy-30d ttype = random i_sample = 97 i_iter = 0 dt = 7.486e-05 return = -4.147e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -392.49 ret_best = -392.49
+TRACE: name = f:levy-30d ttype = random i_sample = 98 i_iter = 0 dt = 7.176e-05 return = -3.925e+02
+TIME_REPLICATE: 0.01
+PROBLEM: env = f:levy-30d num_params = 30
+ITER: i_iter = 0 d_time = 0.00 ret = -182.98 ret_best = -182.98
+TRACE: name = f:levy-30d ttype = random i_sample = 99 i_iter = 0 dt = 7.010e-05 return = -1.830e+02
+TIME_REPLICATE: 0.01

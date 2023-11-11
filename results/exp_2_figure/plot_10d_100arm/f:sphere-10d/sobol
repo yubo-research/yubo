@@ -1,0 +1,401 @@
+EXPERIMENT: env_tag = f:sphere-10d ttype = sobol num_arms = 100 num_replications = 100 num_rounds = 1
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.11 ret_best = -0.11
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 0 i_iter = 0 dt = 1.893e-03 return = -1.095e-01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.11 ret_best = -0.11
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 1 i_iter = 0 dt = 2.588e-03 return = -1.083e-01
+TIME_REPLICATE: 0.10
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.08 ret_best = -0.08
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 2 i_iter = 0 dt = 2.591e-03 return = -8.329e-02
+TIME_REPLICATE: 0.09
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.11 ret_best = -0.11
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 3 i_iter = 0 dt = 4.032e-03 return = -1.073e-01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.14 ret_best = -0.14
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 4 i_iter = 0 dt = 4.042e-03 return = -1.410e-01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.08 ret_best = -0.08
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 5 i_iter = 0 dt = 4.025e-03 return = -8.368e-02
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.14 ret_best = -0.14
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 6 i_iter = 0 dt = 4.039e-03 return = -1.398e-01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.12 ret_best = -0.12
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 7 i_iter = 0 dt = 4.065e-03 return = -1.199e-01
+TIME_REPLICATE: 0.13
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.10 ret_best = -0.10
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 8 i_iter = 0 dt = 4.323e-03 return = -1.023e-01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.13 ret_best = -0.13
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 9 i_iter = 0 dt = 3.901e-03 return = -1.276e-01
+TIME_REPLICATE: 0.10
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.11 ret_best = -0.11
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 10 i_iter = 0 dt = 3.190e-03 return = -1.139e-01
+TIME_REPLICATE: 0.10
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.08 ret_best = -0.08
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 11 i_iter = 0 dt = 2.810e-03 return = -8.130e-02
+TIME_REPLICATE: 0.09
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.13 ret_best = -0.13
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 12 i_iter = 0 dt = 3.099e-03 return = -1.269e-01
+TIME_REPLICATE: 0.09
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.11 ret_best = -0.11
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 13 i_iter = 0 dt = 2.411e-03 return = -1.144e-01
+TIME_REPLICATE: 0.11
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.13 ret_best = -0.13
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 14 i_iter = 0 dt = 2.391e-03 return = -1.257e-01
+TIME_REPLICATE: 0.10
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.13 ret_best = -0.13
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 15 i_iter = 0 dt = 1.870e-03 return = -1.338e-01
+TIME_REPLICATE: 0.10
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.09 ret_best = -0.09
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 16 i_iter = 0 dt = 4.247e-03 return = -9.357e-02
+TIME_REPLICATE: 0.09
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.10 ret_best = -0.10
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 17 i_iter = 0 dt = 2.691e-03 return = -1.038e-01
+TIME_REPLICATE: 0.09
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.14 ret_best = -0.14
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 18 i_iter = 0 dt = 1.958e-03 return = -1.431e-01
+TIME_REPLICATE: 0.09
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.08 ret_best = -0.08
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 19 i_iter = 0 dt = 4.031e-03 return = -7.993e-02
+TIME_REPLICATE: 0.09
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.12 ret_best = -0.12
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 20 i_iter = 0 dt = 1.843e-03 return = -1.230e-01
+TIME_REPLICATE: 0.09
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.11 ret_best = -0.11
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 21 i_iter = 0 dt = 1.793e-03 return = -1.066e-01
+TIME_REPLICATE: 0.17
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.01 ret = -0.14 ret_best = -0.14
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 22 i_iter = 0 dt = 6.133e-03 return = -1.388e-01
+TIME_REPLICATE: 0.22
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.01 ret = -0.08 ret_best = -0.08
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 23 i_iter = 0 dt = 6.219e-03 return = -8.201e-02
+TIME_REPLICATE: 0.13
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.09 ret_best = -0.09
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 24 i_iter = 0 dt = 2.833e-03 return = -8.984e-02
+TIME_REPLICATE: 0.09
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.10 ret_best = -0.10
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 25 i_iter = 0 dt = 1.866e-03 return = -1.021e-01
+TIME_REPLICATE: 0.11
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.12 ret_best = -0.12
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 26 i_iter = 0 dt = 2.005e-03 return = -1.191e-01
+TIME_REPLICATE: 0.11
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.12 ret_best = -0.12
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 27 i_iter = 0 dt = 1.929e-03 return = -1.245e-01
+TIME_REPLICATE: 0.09
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.10 ret_best = -0.10
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 28 i_iter = 0 dt = 3.942e-03 return = -1.024e-01
+TIME_REPLICATE: 0.10
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.17 ret_best = -0.17
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 29 i_iter = 0 dt = 3.194e-03 return = -1.708e-01
+TIME_REPLICATE: 0.10
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.14 ret_best = -0.14
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 30 i_iter = 0 dt = 1.864e-03 return = -1.446e-01
+TIME_REPLICATE: 0.09
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.12 ret_best = -0.12
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 31 i_iter = 0 dt = 2.371e-03 return = -1.240e-01
+TIME_REPLICATE: 0.11
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.14 ret_best = -0.14
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 32 i_iter = 0 dt = 2.929e-03 return = -1.389e-01
+TIME_REPLICATE: 0.10
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.13 ret_best = -0.13
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 33 i_iter = 0 dt = 3.133e-03 return = -1.270e-01
+TIME_REPLICATE: 0.10
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.13 ret_best = -0.13
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 34 i_iter = 0 dt = 2.275e-03 return = -1.335e-01
+TIME_REPLICATE: 0.10
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.14 ret_best = -0.14
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 35 i_iter = 0 dt = 1.803e-03 return = -1.405e-01
+TIME_REPLICATE: 0.09
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.12 ret_best = -0.12
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 36 i_iter = 0 dt = 3.108e-03 return = -1.171e-01
+TIME_REPLICATE: 0.09
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.13 ret_best = -0.13
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 37 i_iter = 0 dt = 1.818e-03 return = -1.339e-01
+TIME_REPLICATE: 0.08
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.10 ret_best = -0.10
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 38 i_iter = 0 dt = 3.961e-03 return = -1.030e-01
+TIME_REPLICATE: 0.09
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.13 ret_best = -0.13
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 39 i_iter = 0 dt = 4.678e-03 return = -1.254e-01
+TIME_REPLICATE: 0.10
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.11 ret_best = -0.11
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 40 i_iter = 0 dt = 1.889e-03 return = -1.132e-01
+TIME_REPLICATE: 0.08
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.11 ret_best = -0.11
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 41 i_iter = 0 dt = 2.699e-03 return = -1.080e-01
+TIME_REPLICATE: 0.09
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.13 ret_best = -0.13
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 42 i_iter = 0 dt = 1.799e-03 return = -1.309e-01
+TIME_REPLICATE: 0.09
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.13 ret_best = -0.13
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 43 i_iter = 0 dt = 2.691e-03 return = -1.348e-01
+TIME_REPLICATE: 0.08
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.14 ret_best = -0.14
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 44 i_iter = 0 dt = 2.674e-03 return = -1.396e-01
+TIME_REPLICATE: 0.10
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.05 ret_best = -0.05
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 45 i_iter = 0 dt = 2.157e-03 return = -4.751e-02
+TIME_REPLICATE: 0.09
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.11 ret_best = -0.11
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 46 i_iter = 0 dt = 3.191e-03 return = -1.092e-01
+TIME_REPLICATE: 0.10
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.10 ret_best = -0.10
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 47 i_iter = 0 dt = 1.838e-03 return = -1.035e-01
+TIME_REPLICATE: 0.11
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.12 ret_best = -0.12
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 48 i_iter = 0 dt = 4.063e-03 return = -1.236e-01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.09 ret_best = -0.09
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 49 i_iter = 0 dt = 4.020e-03 return = -8.534e-02
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.13 ret_best = -0.13
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 50 i_iter = 0 dt = 4.115e-03 return = -1.339e-01
+TIME_REPLICATE: 0.13
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.01 ret = -0.14 ret_best = -0.14
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 51 i_iter = 0 dt = 7.340e-03 return = -1.431e-01
+TIME_REPLICATE: 0.13
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.09 ret_best = -0.09
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 52 i_iter = 0 dt = 3.770e-03 return = -9.213e-02
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.09 ret_best = -0.09
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 53 i_iter = 0 dt = 4.146e-03 return = -9.483e-02
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.10 ret_best = -0.10
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 54 i_iter = 0 dt = 4.167e-03 return = -1.019e-01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.16 ret_best = -0.16
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 55 i_iter = 0 dt = 4.115e-03 return = -1.638e-01
+TIME_REPLICATE: 0.13
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.11 ret_best = -0.11
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 56 i_iter = 0 dt = 4.096e-03 return = -1.145e-01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.13 ret_best = -0.13
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 57 i_iter = 0 dt = 4.117e-03 return = -1.320e-01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.14 ret_best = -0.14
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 58 i_iter = 0 dt = 4.260e-03 return = -1.429e-01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.13 ret_best = -0.13
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 59 i_iter = 0 dt = 4.433e-03 return = -1.335e-01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.07 ret_best = -0.07
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 60 i_iter = 0 dt = 4.925e-03 return = -7.282e-02
+TIME_REPLICATE: 0.13
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.12 ret_best = -0.12
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 61 i_iter = 0 dt = 4.632e-03 return = -1.237e-01
+TIME_REPLICATE: 0.13
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.12 ret_best = -0.12
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 62 i_iter = 0 dt = 4.641e-03 return = -1.228e-01
+TIME_REPLICATE: 0.13
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.09 ret_best = -0.09
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 63 i_iter = 0 dt = 4.143e-03 return = -9.496e-02
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.12 ret_best = -0.12
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 64 i_iter = 0 dt = 4.101e-03 return = -1.244e-01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.11 ret_best = -0.11
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 65 i_iter = 0 dt = 4.130e-03 return = -1.109e-01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.11 ret_best = -0.11
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 66 i_iter = 0 dt = 4.038e-03 return = -1.095e-01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.08 ret_best = -0.08
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 67 i_iter = 0 dt = 4.357e-03 return = -7.941e-02
+TIME_REPLICATE: 0.13
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.14 ret_best = -0.14
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 68 i_iter = 0 dt = 4.426e-03 return = -1.416e-01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.14 ret_best = -0.14
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 69 i_iter = 0 dt = 4.225e-03 return = -1.392e-01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.14 ret_best = -0.14
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 70 i_iter = 0 dt = 4.519e-03 return = -1.386e-01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.12 ret_best = -0.12
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 71 i_iter = 0 dt = 4.224e-03 return = -1.167e-01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.12 ret_best = -0.12
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 72 i_iter = 0 dt = 4.110e-03 return = -1.194e-01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.09 ret_best = -0.09
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 73 i_iter = 0 dt = 4.067e-03 return = -9.498e-02
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.14 ret_best = -0.14
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 74 i_iter = 0 dt = 4.559e-03 return = -1.391e-01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.12 ret_best = -0.12
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 75 i_iter = 0 dt = 4.134e-03 return = -1.232e-01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.15 ret_best = -0.15
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 76 i_iter = 0 dt = 4.044e-03 return = -1.451e-01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.14 ret_best = -0.14
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 77 i_iter = 0 dt = 4.035e-03 return = -1.410e-01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.09 ret_best = -0.09
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 78 i_iter = 0 dt = 4.131e-03 return = -9.206e-02
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.14 ret_best = -0.14
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 79 i_iter = 0 dt = 4.338e-03 return = -1.365e-01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.15 ret_best = -0.15
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 80 i_iter = 0 dt = 4.272e-03 return = -1.473e-01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.16 ret_best = -0.16
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 81 i_iter = 0 dt = 4.514e-03 return = -1.611e-01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.09 ret_best = -0.09
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 82 i_iter = 0 dt = 4.662e-03 return = -9.336e-02
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.12 ret_best = -0.12
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 83 i_iter = 0 dt = 4.113e-03 return = -1.250e-01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.12 ret_best = -0.12
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 84 i_iter = 0 dt = 4.066e-03 return = -1.182e-01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.16 ret_best = -0.16
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 85 i_iter = 0 dt = 4.016e-03 return = -1.650e-01
+TIME_REPLICATE: 0.11
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.12 ret_best = -0.12
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 86 i_iter = 0 dt = 4.134e-03 return = -1.165e-01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.01 ret = -0.10 ret_best = -0.10
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 87 i_iter = 0 dt = 5.126e-03 return = -1.000e-01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.15 ret_best = -0.15
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 88 i_iter = 0 dt = 4.063e-03 return = -1.501e-01
+TIME_REPLICATE: 0.13
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.01 ret = -0.12 ret_best = -0.12
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 89 i_iter = 0 dt = 5.192e-03 return = -1.206e-01
+TIME_REPLICATE: 0.13
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.12 ret_best = -0.12
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 90 i_iter = 0 dt = 4.213e-03 return = -1.207e-01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.12 ret_best = -0.12
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 91 i_iter = 0 dt = 3.729e-03 return = -1.222e-01
+TIME_REPLICATE: 0.11
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.12 ret_best = -0.12
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 92 i_iter = 0 dt = 3.106e-03 return = -1.239e-01
+TIME_REPLICATE: 0.11
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.14 ret_best = -0.14
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 93 i_iter = 0 dt = 3.534e-03 return = -1.446e-01
+TIME_REPLICATE: 0.11
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.15 ret_best = -0.15
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 94 i_iter = 0 dt = 3.225e-03 return = -1.469e-01
+TIME_REPLICATE: 0.11
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.12 ret_best = -0.12
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 95 i_iter = 0 dt = 3.534e-03 return = -1.195e-01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.11 ret_best = -0.11
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 96 i_iter = 0 dt = 3.303e-03 return = -1.090e-01
+TIME_REPLICATE: 0.11
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.11 ret_best = -0.11
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 97 i_iter = 0 dt = 3.042e-03 return = -1.122e-01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.07 ret_best = -0.07
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 98 i_iter = 0 dt = 3.275e-03 return = -6.912e-02
+TIME_REPLICATE: 0.13
+PROBLEM: env = f:sphere-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = -0.10 ret_best = -0.10
+TRACE: name = f:sphere-10d ttype = sobol i_sample = 99 i_iter = 0 dt = 3.561e-03 return = -9.707e-02
+TIME_REPLICATE: 0.12

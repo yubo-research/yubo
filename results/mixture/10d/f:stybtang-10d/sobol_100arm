@@ -1,0 +1,121 @@
+EXPERIMENT: env_tag = f:stybtang-10d ttype = sobol num_arms = 100 num_replications = 30 num_rounds = 1
+PROBLEM: env = f:stybtang-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = 222.30 ret_best = 222.30
+TRACE: name = f:stybtang-10d ttype = sobol i_sample = 0 i_iter = 0 dt = 1.996e-03 return = 2.223e+02
+TIME_REPLICATE: 0.09
+PROBLEM: env = f:stybtang-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = 206.11 ret_best = 206.11
+TRACE: name = f:stybtang-10d ttype = sobol i_sample = 1 i_iter = 0 dt = 2.990e-03 return = 2.061e+02
+TIME_REPLICATE: 0.10
+PROBLEM: env = f:stybtang-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = 233.44 ret_best = 233.44
+TRACE: name = f:stybtang-10d ttype = sobol i_sample = 2 i_iter = 0 dt = 2.278e-03 return = 2.334e+02
+TIME_REPLICATE: 0.08
+PROBLEM: env = f:stybtang-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = 266.59 ret_best = 266.59
+TRACE: name = f:stybtang-10d ttype = sobol i_sample = 3 i_iter = 0 dt = 2.126e-03 return = 2.666e+02
+TIME_REPLICATE: 0.08
+PROBLEM: env = f:stybtang-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = 215.67 ret_best = 215.67
+TRACE: name = f:stybtang-10d ttype = sobol i_sample = 4 i_iter = 0 dt = 3.048e-03 return = 2.157e+02
+TIME_REPLICATE: 0.13
+PROBLEM: env = f:stybtang-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = 241.23 ret_best = 241.23
+TRACE: name = f:stybtang-10d ttype = sobol i_sample = 5 i_iter = 0 dt = 2.402e-03 return = 2.412e+02
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:stybtang-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = 278.34 ret_best = 278.34
+TRACE: name = f:stybtang-10d ttype = sobol i_sample = 6 i_iter = 0 dt = 3.608e-03 return = 2.783e+02
+TIME_REPLICATE: 0.13
+PROBLEM: env = f:stybtang-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = 209.36 ret_best = 209.36
+TRACE: name = f:stybtang-10d ttype = sobol i_sample = 7 i_iter = 0 dt = 3.840e-03 return = 2.094e+02
+TIME_REPLICATE: 0.13
+PROBLEM: env = f:stybtang-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = 204.54 ret_best = 204.54
+TRACE: name = f:stybtang-10d ttype = sobol i_sample = 8 i_iter = 0 dt = 3.109e-03 return = 2.045e+02
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:stybtang-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = 236.60 ret_best = 236.60
+TRACE: name = f:stybtang-10d ttype = sobol i_sample = 9 i_iter = 0 dt = 3.279e-03 return = 2.366e+02
+TIME_REPLICATE: 0.13
+PROBLEM: env = f:stybtang-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = 237.64 ret_best = 237.64
+TRACE: name = f:stybtang-10d ttype = sobol i_sample = 10 i_iter = 0 dt = 3.710e-03 return = 2.376e+02
+TIME_REPLICATE: 0.14
+PROBLEM: env = f:stybtang-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = 178.01 ret_best = 178.01
+TRACE: name = f:stybtang-10d ttype = sobol i_sample = 11 i_iter = 0 dt = 3.292e-03 return = 1.780e+02
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:stybtang-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = 271.63 ret_best = 271.63
+TRACE: name = f:stybtang-10d ttype = sobol i_sample = 12 i_iter = 0 dt = 3.168e-03 return = 2.716e+02
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:stybtang-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = 242.72 ret_best = 242.72
+TRACE: name = f:stybtang-10d ttype = sobol i_sample = 13 i_iter = 0 dt = 3.292e-03 return = 2.427e+02
+TIME_REPLICATE: 0.13
+PROBLEM: env = f:stybtang-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.01 ret = 248.33 ret_best = 248.33
+TRACE: name = f:stybtang-10d ttype = sobol i_sample = 14 i_iter = 0 dt = 8.865e-03 return = 2.483e+02
+TIME_REPLICATE: 0.13
+PROBLEM: env = f:stybtang-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = 222.58 ret_best = 222.58
+TRACE: name = f:stybtang-10d ttype = sobol i_sample = 15 i_iter = 0 dt = 3.178e-03 return = 2.226e+02
+TIME_REPLICATE: 0.14
+PROBLEM: env = f:stybtang-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.01 ret = 242.26 ret_best = 242.26
+TRACE: name = f:stybtang-10d ttype = sobol i_sample = 16 i_iter = 0 dt = 5.145e-03 return = 2.423e+02
+TIME_REPLICATE: 0.14
+PROBLEM: env = f:stybtang-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = 227.63 ret_best = 227.63
+TRACE: name = f:stybtang-10d ttype = sobol i_sample = 17 i_iter = 0 dt = 4.752e-03 return = 2.276e+02
+TIME_REPLICATE: 0.13
+PROBLEM: env = f:stybtang-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = 195.64 ret_best = 195.64
+TRACE: name = f:stybtang-10d ttype = sobol i_sample = 18 i_iter = 0 dt = 3.177e-03 return = 1.956e+02
+TIME_REPLICATE: 0.17
+PROBLEM: env = f:stybtang-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.01 ret = 237.28 ret_best = 237.28
+TRACE: name = f:stybtang-10d ttype = sobol i_sample = 19 i_iter = 0 dt = 5.213e-03 return = 2.373e+02
+TIME_REPLICATE: 0.13
+PROBLEM: env = f:stybtang-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = 248.25 ret_best = 248.25
+TRACE: name = f:stybtang-10d ttype = sobol i_sample = 20 i_iter = 0 dt = 3.016e-03 return = 2.482e+02
+TIME_REPLICATE: 0.13
+PROBLEM: env = f:stybtang-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = 244.20 ret_best = 244.20
+TRACE: name = f:stybtang-10d ttype = sobol i_sample = 21 i_iter = 0 dt = 3.671e-03 return = 2.442e+02
+TIME_REPLICATE: 0.14
+PROBLEM: env = f:stybtang-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = 246.21 ret_best = 246.21
+TRACE: name = f:stybtang-10d ttype = sobol i_sample = 22 i_iter = 0 dt = 2.985e-03 return = 2.462e+02
+TIME_REPLICATE: 0.13
+PROBLEM: env = f:stybtang-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = 263.38 ret_best = 263.38
+TRACE: name = f:stybtang-10d ttype = sobol i_sample = 23 i_iter = 0 dt = 3.651e-03 return = 2.634e+02
+TIME_REPLICATE: 0.14
+PROBLEM: env = f:stybtang-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = 223.62 ret_best = 223.62
+TRACE: name = f:stybtang-10d ttype = sobol i_sample = 24 i_iter = 0 dt = 4.107e-03 return = 2.236e+02
+TIME_REPLICATE: 0.13
+PROBLEM: env = f:stybtang-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = 212.57 ret_best = 212.57
+TRACE: name = f:stybtang-10d ttype = sobol i_sample = 25 i_iter = 0 dt = 4.182e-03 return = 2.126e+02
+TIME_REPLICATE: 0.13
+PROBLEM: env = f:stybtang-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = 255.65 ret_best = 255.65
+TRACE: name = f:stybtang-10d ttype = sobol i_sample = 26 i_iter = 0 dt = 2.809e-03 return = 2.557e+02
+TIME_REPLICATE: 0.15
+PROBLEM: env = f:stybtang-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = 254.39 ret_best = 254.39
+TRACE: name = f:stybtang-10d ttype = sobol i_sample = 27 i_iter = 0 dt = 4.864e-03 return = 2.544e+02
+TIME_REPLICATE: 0.13
+PROBLEM: env = f:stybtang-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = 246.43 ret_best = 246.43
+TRACE: name = f:stybtang-10d ttype = sobol i_sample = 28 i_iter = 0 dt = 3.158e-03 return = 2.464e+02
+TIME_REPLICATE: 0.11
+PROBLEM: env = f:stybtang-10d num_params = 10
+ITER: i_iter = 0 d_time = 0.00 ret = 203.99 ret_best = 203.99
+TRACE: name = f:stybtang-10d ttype = sobol i_sample = 29 i_iter = 0 dt = 3.897e-03 return = 2.040e+02
+TIME_REPLICATE: 0.12

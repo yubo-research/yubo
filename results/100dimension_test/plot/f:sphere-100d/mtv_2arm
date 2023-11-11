@@ -1,0 +1,121 @@
+EXPERIMENT: env_tag = f:sphere-100d ttype = mtv num_arms = 2 num_replications = 30 num_rounds = 1
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.17 ret = -0.31 ret_best = -0.31
+TRACE: name = f:sphere-100d ttype = mtv i_sample = 0 i_iter = 0 dt = 1.689e-01 return = -3.083e-01
+TIME_REPLICATE: 0.21
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.11 ret = -0.32 ret_best = -0.32
+TRACE: name = f:sphere-100d ttype = mtv i_sample = 1 i_iter = 0 dt = 1.150e-01 return = -3.176e-01
+TIME_REPLICATE: 0.15
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.09 ret = -0.28 ret_best = -0.28
+TRACE: name = f:sphere-100d ttype = mtv i_sample = 2 i_iter = 0 dt = 8.705e-02 return = -2.795e-01
+TIME_REPLICATE: 0.11
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.09 ret = -0.31 ret_best = -0.31
+TRACE: name = f:sphere-100d ttype = mtv i_sample = 3 i_iter = 0 dt = 9.161e-02 return = -3.087e-01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.14 ret = -0.31 ret_best = -0.31
+TRACE: name = f:sphere-100d ttype = mtv i_sample = 4 i_iter = 0 dt = 1.429e-01 return = -3.133e-01
+TIME_REPLICATE: 0.17
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.15 ret = -0.32 ret_best = -0.32
+TRACE: name = f:sphere-100d ttype = mtv i_sample = 5 i_iter = 0 dt = 1.539e-01 return = -3.167e-01
+TIME_REPLICATE: 0.18
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.15 ret = -0.33 ret_best = -0.33
+TRACE: name = f:sphere-100d ttype = mtv i_sample = 6 i_iter = 0 dt = 1.530e-01 return = -3.331e-01
+TIME_REPLICATE: 0.18
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.14 ret = -0.31 ret_best = -0.31
+TRACE: name = f:sphere-100d ttype = mtv i_sample = 7 i_iter = 0 dt = 1.423e-01 return = -3.132e-01
+TIME_REPLICATE: 0.17
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.11 ret = -0.31 ret_best = -0.31
+TRACE: name = f:sphere-100d ttype = mtv i_sample = 8 i_iter = 0 dt = 1.144e-01 return = -3.081e-01
+TIME_REPLICATE: 0.14
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.09 ret = -0.35 ret_best = -0.35
+TRACE: name = f:sphere-100d ttype = mtv i_sample = 9 i_iter = 0 dt = 8.709e-02 return = -3.493e-01
+TIME_REPLICATE: 0.11
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.08 ret = -0.29 ret_best = -0.29
+TRACE: name = f:sphere-100d ttype = mtv i_sample = 10 i_iter = 0 dt = 8.471e-02 return = -2.898e-01
+TIME_REPLICATE: 0.10
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.27 ret = -0.28 ret_best = -0.28
+TRACE: name = f:sphere-100d ttype = mtv i_sample = 11 i_iter = 0 dt = 2.744e-01 return = -2.785e-01
+TIME_REPLICATE: 0.30
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.09 ret = -0.33 ret_best = -0.33
+TRACE: name = f:sphere-100d ttype = mtv i_sample = 12 i_iter = 0 dt = 8.715e-02 return = -3.291e-01
+TIME_REPLICATE: 0.11
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.09 ret = -0.33 ret_best = -0.33
+TRACE: name = f:sphere-100d ttype = mtv i_sample = 13 i_iter = 0 dt = 8.984e-02 return = -3.322e-01
+TIME_REPLICATE: 0.11
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.09 ret = -0.34 ret_best = -0.34
+TRACE: name = f:sphere-100d ttype = mtv i_sample = 14 i_iter = 0 dt = 8.938e-02 return = -3.358e-01
+TIME_REPLICATE: 0.11
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.10 ret = -0.32 ret_best = -0.32
+TRACE: name = f:sphere-100d ttype = mtv i_sample = 15 i_iter = 0 dt = 9.581e-02 return = -3.238e-01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.08 ret = -0.34 ret_best = -0.34
+TRACE: name = f:sphere-100d ttype = mtv i_sample = 16 i_iter = 0 dt = 8.384e-02 return = -3.393e-01
+TIME_REPLICATE: 0.11
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.09 ret = -0.27 ret_best = -0.27
+TRACE: name = f:sphere-100d ttype = mtv i_sample = 17 i_iter = 0 dt = 8.913e-02 return = -2.674e-01
+TIME_REPLICATE: 0.11
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.09 ret = -0.35 ret_best = -0.35
+TRACE: name = f:sphere-100d ttype = mtv i_sample = 18 i_iter = 0 dt = 8.611e-02 return = -3.464e-01
+TIME_REPLICATE: 0.11
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.11 ret = -0.32 ret_best = -0.32
+TRACE: name = f:sphere-100d ttype = mtv i_sample = 19 i_iter = 0 dt = 1.129e-01 return = -3.188e-01
+TIME_REPLICATE: 0.14
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.09 ret = -0.31 ret_best = -0.31
+TRACE: name = f:sphere-100d ttype = mtv i_sample = 20 i_iter = 0 dt = 9.011e-02 return = -3.128e-01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.08 ret = -0.32 ret_best = -0.32
+TRACE: name = f:sphere-100d ttype = mtv i_sample = 21 i_iter = 0 dt = 8.425e-02 return = -3.201e-01
+TIME_REPLICATE: 0.10
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.10 ret = -0.30 ret_best = -0.30
+TRACE: name = f:sphere-100d ttype = mtv i_sample = 22 i_iter = 0 dt = 9.619e-02 return = -3.030e-01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.08 ret = -0.29 ret_best = -0.29
+TRACE: name = f:sphere-100d ttype = mtv i_sample = 23 i_iter = 0 dt = 8.342e-02 return = -2.880e-01
+TIME_REPLICATE: 0.11
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.08 ret = -0.33 ret_best = -0.33
+TRACE: name = f:sphere-100d ttype = mtv i_sample = 24 i_iter = 0 dt = 7.646e-02 return = -3.337e-01
+TIME_REPLICATE: 0.09
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.08 ret = -0.32 ret_best = -0.32
+TRACE: name = f:sphere-100d ttype = mtv i_sample = 25 i_iter = 0 dt = 7.812e-02 return = -3.192e-01
+TIME_REPLICATE: 0.10
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.08 ret = -0.32 ret_best = -0.32
+TRACE: name = f:sphere-100d ttype = mtv i_sample = 26 i_iter = 0 dt = 7.931e-02 return = -3.200e-01
+TIME_REPLICATE: 0.10
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.08 ret = -0.28 ret_best = -0.28
+TRACE: name = f:sphere-100d ttype = mtv i_sample = 27 i_iter = 0 dt = 8.120e-02 return = -2.839e-01
+TIME_REPLICATE: 0.10
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.08 ret = -0.31 ret_best = -0.31
+TRACE: name = f:sphere-100d ttype = mtv i_sample = 28 i_iter = 0 dt = 7.940e-02 return = -3.139e-01
+TIME_REPLICATE: 0.10
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.08 ret = -0.30 ret_best = -0.30
+TRACE: name = f:sphere-100d ttype = mtv i_sample = 29 i_iter = 0 dt = 8.367e-02 return = -3.042e-01
+TIME_REPLICATE: 0.10

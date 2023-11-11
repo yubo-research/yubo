@@ -1,0 +1,121 @@
+EXPERIMENT: env_tag = f:rosenbrock-100d ttype = sobol num_arms = 100 num_replications = 30 num_rounds = 1
+PROBLEM: env = f:rosenbrock-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -51089.45 ret_best = -51089.45
+TRACE: name = f:rosenbrock-100d ttype = sobol i_sample = 0 i_iter = 0 dt = 2.398e-03 return = -5.109e+04
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:rosenbrock-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -51334.62 ret_best = -51334.62
+TRACE: name = f:rosenbrock-100d ttype = sobol i_sample = 1 i_iter = 0 dt = 2.888e-03 return = -5.133e+04
+TIME_REPLICATE: 0.17
+PROBLEM: env = f:rosenbrock-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -48770.50 ret_best = -48770.50
+TRACE: name = f:rosenbrock-100d ttype = sobol i_sample = 2 i_iter = 0 dt = 3.525e-03 return = -4.877e+04
+TIME_REPLICATE: 0.22
+PROBLEM: env = f:rosenbrock-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -52967.13 ret_best = -52967.13
+TRACE: name = f:rosenbrock-100d ttype = sobol i_sample = 3 i_iter = 0 dt = 4.966e-03 return = -5.297e+04
+TIME_REPLICATE: 0.24
+PROBLEM: env = f:rosenbrock-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.01 ret = -51395.68 ret_best = -51395.68
+TRACE: name = f:rosenbrock-100d ttype = sobol i_sample = 4 i_iter = 0 dt = 7.342e-03 return = -5.140e+04
+TIME_REPLICATE: 0.23
+PROBLEM: env = f:rosenbrock-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.01 ret = -50022.35 ret_best = -50022.35
+TRACE: name = f:rosenbrock-100d ttype = sobol i_sample = 5 i_iter = 0 dt = 6.353e-03 return = -5.002e+04
+TIME_REPLICATE: 0.26
+PROBLEM: env = f:rosenbrock-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.01 ret = -52336.48 ret_best = -52336.48
+TRACE: name = f:rosenbrock-100d ttype = sobol i_sample = 6 i_iter = 0 dt = 5.418e-03 return = -5.234e+04
+TIME_REPLICATE: 0.24
+PROBLEM: env = f:rosenbrock-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.01 ret = -43659.13 ret_best = -43659.13
+TRACE: name = f:rosenbrock-100d ttype = sobol i_sample = 7 i_iter = 0 dt = 9.204e-03 return = -4.366e+04
+TIME_REPLICATE: 0.26
+PROBLEM: env = f:rosenbrock-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.01 ret = -54949.20 ret_best = -54949.20
+TRACE: name = f:rosenbrock-100d ttype = sobol i_sample = 8 i_iter = 0 dt = 5.478e-03 return = -5.495e+04
+TIME_REPLICATE: 0.27
+PROBLEM: env = f:rosenbrock-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.01 ret = -55629.21 ret_best = -55629.21
+TRACE: name = f:rosenbrock-100d ttype = sobol i_sample = 9 i_iter = 0 dt = 5.652e-03 return = -5.563e+04
+TIME_REPLICATE: 0.24
+PROBLEM: env = f:rosenbrock-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.01 ret = -55498.35 ret_best = -55498.35
+TRACE: name = f:rosenbrock-100d ttype = sobol i_sample = 10 i_iter = 0 dt = 5.771e-03 return = -5.550e+04
+TIME_REPLICATE: 0.26
+PROBLEM: env = f:rosenbrock-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.01 ret = -50085.72 ret_best = -50085.72
+TRACE: name = f:rosenbrock-100d ttype = sobol i_sample = 11 i_iter = 0 dt = 5.611e-03 return = -5.009e+04
+TIME_REPLICATE: 0.28
+PROBLEM: env = f:rosenbrock-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.01 ret = -52650.88 ret_best = -52650.88
+TRACE: name = f:rosenbrock-100d ttype = sobol i_sample = 12 i_iter = 0 dt = 5.779e-03 return = -5.265e+04
+TIME_REPLICATE: 0.25
+PROBLEM: env = f:rosenbrock-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -52580.16 ret_best = -52580.16
+TRACE: name = f:rosenbrock-100d ttype = sobol i_sample = 13 i_iter = 0 dt = 3.532e-03 return = -5.258e+04
+TIME_REPLICATE: 0.21
+PROBLEM: env = f:rosenbrock-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -49965.91 ret_best = -49965.91
+TRACE: name = f:rosenbrock-100d ttype = sobol i_sample = 14 i_iter = 0 dt = 3.840e-03 return = -4.997e+04
+TIME_REPLICATE: 0.17
+PROBLEM: env = f:rosenbrock-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -50773.85 ret_best = -50773.85
+TRACE: name = f:rosenbrock-100d ttype = sobol i_sample = 15 i_iter = 0 dt = 3.689e-03 return = -5.077e+04
+TIME_REPLICATE: 0.19
+PROBLEM: env = f:rosenbrock-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -56806.90 ret_best = -56806.90
+TRACE: name = f:rosenbrock-100d ttype = sobol i_sample = 16 i_iter = 0 dt = 2.889e-03 return = -5.681e+04
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:rosenbrock-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -53406.21 ret_best = -53406.21
+TRACE: name = f:rosenbrock-100d ttype = sobol i_sample = 17 i_iter = 0 dt = 2.496e-03 return = -5.341e+04
+TIME_REPLICATE: 0.17
+PROBLEM: env = f:rosenbrock-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -50888.25 ret_best = -50888.25
+TRACE: name = f:rosenbrock-100d ttype = sobol i_sample = 18 i_iter = 0 dt = 3.789e-03 return = -5.089e+04
+TIME_REPLICATE: 0.18
+PROBLEM: env = f:rosenbrock-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.01 ret = -49998.72 ret_best = -49998.72
+TRACE: name = f:rosenbrock-100d ttype = sobol i_sample = 19 i_iter = 0 dt = 5.079e-03 return = -5.000e+04
+TIME_REPLICATE: 0.26
+PROBLEM: env = f:rosenbrock-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.01 ret = -46418.21 ret_best = -46418.21
+TRACE: name = f:rosenbrock-100d ttype = sobol i_sample = 20 i_iter = 0 dt = 6.120e-03 return = -4.642e+04
+TIME_REPLICATE: 0.26
+PROBLEM: env = f:rosenbrock-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.01 ret = -48299.64 ret_best = -48299.64
+TRACE: name = f:rosenbrock-100d ttype = sobol i_sample = 21 i_iter = 0 dt = 7.677e-03 return = -4.830e+04
+TIME_REPLICATE: 0.27
+PROBLEM: env = f:rosenbrock-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.01 ret = -43719.60 ret_best = -43719.60
+TRACE: name = f:rosenbrock-100d ttype = sobol i_sample = 22 i_iter = 0 dt = 5.399e-03 return = -4.372e+04
+TIME_REPLICATE: 0.24
+PROBLEM: env = f:rosenbrock-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.01 ret = -56309.12 ret_best = -56309.12
+TRACE: name = f:rosenbrock-100d ttype = sobol i_sample = 23 i_iter = 0 dt = 7.885e-03 return = -5.631e+04
+TIME_REPLICATE: 0.25
+PROBLEM: env = f:rosenbrock-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.01 ret = -53620.99 ret_best = -53620.99
+TRACE: name = f:rosenbrock-100d ttype = sobol i_sample = 24 i_iter = 0 dt = 5.165e-03 return = -5.362e+04
+TIME_REPLICATE: 0.21
+PROBLEM: env = f:rosenbrock-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -50317.03 ret_best = -50317.03
+TRACE: name = f:rosenbrock-100d ttype = sobol i_sample = 25 i_iter = 0 dt = 2.974e-03 return = -5.032e+04
+TIME_REPLICATE: 0.17
+PROBLEM: env = f:rosenbrock-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.01 ret = -54162.89 ret_best = -54162.89
+TRACE: name = f:rosenbrock-100d ttype = sobol i_sample = 26 i_iter = 0 dt = 6.130e-03 return = -5.416e+04
+TIME_REPLICATE: 0.27
+PROBLEM: env = f:rosenbrock-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.01 ret = -47770.45 ret_best = -47770.45
+TRACE: name = f:rosenbrock-100d ttype = sobol i_sample = 27 i_iter = 0 dt = 5.205e-03 return = -4.777e+04
+TIME_REPLICATE: 0.22
+PROBLEM: env = f:rosenbrock-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -54416.20 ret_best = -54416.20
+TRACE: name = f:rosenbrock-100d ttype = sobol i_sample = 28 i_iter = 0 dt = 2.815e-03 return = -5.442e+04
+TIME_REPLICATE: 0.20
+PROBLEM: env = f:rosenbrock-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.01 ret = -54035.59 ret_best = -54035.59
+TRACE: name = f:rosenbrock-100d ttype = sobol i_sample = 29 i_iter = 0 dt = 7.545e-03 return = -5.404e+04
+TIME_REPLICATE: 0.22

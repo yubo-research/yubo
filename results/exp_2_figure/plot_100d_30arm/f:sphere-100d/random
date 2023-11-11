@@ -1,0 +1,401 @@
+EXPERIMENT: env_tag = f:sphere-100d ttype = random num_arms = 30 num_replications = 100 num_rounds = 1
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.27 ret_best = -0.27
+TRACE: name = f:sphere-100d ttype = random i_sample = 0 i_iter = 0 dt = 6.301e-04 return = -2.700e-01
+TIME_REPLICATE: 0.05
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.24 ret_best = -0.24
+TRACE: name = f:sphere-100d ttype = random i_sample = 1 i_iter = 0 dt = 5.932e-04 return = -2.423e-01
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.28 ret_best = -0.28
+TRACE: name = f:sphere-100d ttype = random i_sample = 2 i_iter = 0 dt = 9.537e-04 return = -2.843e-01
+TIME_REPLICATE: 0.05
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.27 ret_best = -0.27
+TRACE: name = f:sphere-100d ttype = random i_sample = 3 i_iter = 0 dt = 1.030e-03 return = -2.664e-01
+TIME_REPLICATE: 0.06
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.26 ret_best = -0.26
+TRACE: name = f:sphere-100d ttype = random i_sample = 4 i_iter = 0 dt = 1.314e-03 return = -2.594e-01
+TIME_REPLICATE: 0.05
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.27 ret_best = -0.27
+TRACE: name = f:sphere-100d ttype = random i_sample = 5 i_iter = 0 dt = 6.127e-04 return = -2.712e-01
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.28 ret_best = -0.28
+TRACE: name = f:sphere-100d ttype = random i_sample = 6 i_iter = 0 dt = 6.058e-04 return = -2.845e-01
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.27 ret_best = -0.27
+TRACE: name = f:sphere-100d ttype = random i_sample = 7 i_iter = 0 dt = 6.196e-04 return = -2.729e-01
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.27 ret_best = -0.27
+TRACE: name = f:sphere-100d ttype = random i_sample = 8 i_iter = 0 dt = 8.795e-04 return = -2.670e-01
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.30 ret_best = -0.30
+TRACE: name = f:sphere-100d ttype = random i_sample = 9 i_iter = 0 dt = 9.201e-04 return = -3.022e-01
+TIME_REPLICATE: 0.06
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.25 ret_best = -0.25
+TRACE: name = f:sphere-100d ttype = random i_sample = 10 i_iter = 0 dt = 1.050e-03 return = -2.479e-01
+TIME_REPLICATE: 0.07
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.26 ret_best = -0.26
+TRACE: name = f:sphere-100d ttype = random i_sample = 11 i_iter = 0 dt = 6.380e-04 return = -2.642e-01
+TIME_REPLICATE: 0.05
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.25 ret_best = -0.25
+TRACE: name = f:sphere-100d ttype = random i_sample = 12 i_iter = 0 dt = 9.041e-04 return = -2.502e-01
+TIME_REPLICATE: 0.05
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.29 ret_best = -0.29
+TRACE: name = f:sphere-100d ttype = random i_sample = 13 i_iter = 0 dt = 1.139e-03 return = -2.897e-01
+TIME_REPLICATE: 0.05
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.25 ret_best = -0.25
+TRACE: name = f:sphere-100d ttype = random i_sample = 14 i_iter = 0 dt = 6.516e-04 return = -2.538e-01
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.27 ret_best = -0.27
+TRACE: name = f:sphere-100d ttype = random i_sample = 15 i_iter = 0 dt = 6.013e-04 return = -2.713e-01
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.27 ret_best = -0.27
+TRACE: name = f:sphere-100d ttype = random i_sample = 16 i_iter = 0 dt = 6.249e-04 return = -2.748e-01
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.31 ret_best = -0.31
+TRACE: name = f:sphere-100d ttype = random i_sample = 17 i_iter = 0 dt = 7.255e-04 return = -3.069e-01
+TIME_REPLICATE: 0.06
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.28 ret_best = -0.28
+TRACE: name = f:sphere-100d ttype = random i_sample = 18 i_iter = 0 dt = 5.777e-04 return = -2.764e-01
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.25 ret_best = -0.25
+TRACE: name = f:sphere-100d ttype = random i_sample = 19 i_iter = 0 dt = 5.980e-04 return = -2.493e-01
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.29 ret_best = -0.29
+TRACE: name = f:sphere-100d ttype = random i_sample = 20 i_iter = 0 dt = 8.545e-04 return = -2.888e-01
+TIME_REPLICATE: 0.05
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.28 ret_best = -0.28
+TRACE: name = f:sphere-100d ttype = random i_sample = 21 i_iter = 0 dt = 6.235e-04 return = -2.817e-01
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.29 ret_best = -0.29
+TRACE: name = f:sphere-100d ttype = random i_sample = 22 i_iter = 0 dt = 6.106e-04 return = -2.861e-01
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.28 ret_best = -0.28
+TRACE: name = f:sphere-100d ttype = random i_sample = 23 i_iter = 0 dt = 6.068e-04 return = -2.797e-01
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.27 ret_best = -0.27
+TRACE: name = f:sphere-100d ttype = random i_sample = 24 i_iter = 0 dt = 1.180e-03 return = -2.704e-01
+TIME_REPLICATE: 0.05
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.28 ret_best = -0.28
+TRACE: name = f:sphere-100d ttype = random i_sample = 25 i_iter = 0 dt = 6.003e-04 return = -2.819e-01
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.27 ret_best = -0.27
+TRACE: name = f:sphere-100d ttype = random i_sample = 26 i_iter = 0 dt = 5.989e-04 return = -2.723e-01
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.29 ret_best = -0.29
+TRACE: name = f:sphere-100d ttype = random i_sample = 27 i_iter = 0 dt = 8.492e-04 return = -2.883e-01
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.27 ret_best = -0.27
+TRACE: name = f:sphere-100d ttype = random i_sample = 28 i_iter = 0 dt = 8.461e-04 return = -2.735e-01
+TIME_REPLICATE: 0.05
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.27 ret_best = -0.27
+TRACE: name = f:sphere-100d ttype = random i_sample = 29 i_iter = 0 dt = 9.303e-04 return = -2.703e-01
+TIME_REPLICATE: 0.06
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.26 ret_best = -0.26
+TRACE: name = f:sphere-100d ttype = random i_sample = 30 i_iter = 0 dt = 6.344e-04 return = -2.580e-01
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.27 ret_best = -0.27
+TRACE: name = f:sphere-100d ttype = random i_sample = 31 i_iter = 0 dt = 5.975e-04 return = -2.744e-01
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.28 ret_best = -0.28
+TRACE: name = f:sphere-100d ttype = random i_sample = 32 i_iter = 0 dt = 9.360e-04 return = -2.833e-01
+TIME_REPLICATE: 0.05
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.27 ret_best = -0.27
+TRACE: name = f:sphere-100d ttype = random i_sample = 33 i_iter = 0 dt = 9.410e-04 return = -2.724e-01
+TIME_REPLICATE: 0.06
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.27 ret_best = -0.27
+TRACE: name = f:sphere-100d ttype = random i_sample = 34 i_iter = 0 dt = 6.318e-04 return = -2.667e-01
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.27 ret_best = -0.27
+TRACE: name = f:sphere-100d ttype = random i_sample = 35 i_iter = 0 dt = 5.939e-04 return = -2.655e-01
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.27 ret_best = -0.27
+TRACE: name = f:sphere-100d ttype = random i_sample = 36 i_iter = 0 dt = 5.946e-04 return = -2.682e-01
+TIME_REPLICATE: 0.05
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.27 ret_best = -0.27
+TRACE: name = f:sphere-100d ttype = random i_sample = 37 i_iter = 0 dt = 8.440e-04 return = -2.661e-01
+TIME_REPLICATE: 0.05
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.28 ret_best = -0.28
+TRACE: name = f:sphere-100d ttype = random i_sample = 38 i_iter = 0 dt = 1.073e-03 return = -2.762e-01
+TIME_REPLICATE: 0.05
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.27 ret_best = -0.27
+TRACE: name = f:sphere-100d ttype = random i_sample = 39 i_iter = 0 dt = 1.000e-03 return = -2.671e-01
+TIME_REPLICATE: 0.06
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.28 ret_best = -0.28
+TRACE: name = f:sphere-100d ttype = random i_sample = 40 i_iter = 0 dt = 9.360e-04 return = -2.751e-01
+TIME_REPLICATE: 0.05
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.28 ret_best = -0.28
+TRACE: name = f:sphere-100d ttype = random i_sample = 41 i_iter = 0 dt = 6.325e-04 return = -2.800e-01
+TIME_REPLICATE: 0.05
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.26 ret_best = -0.26
+TRACE: name = f:sphere-100d ttype = random i_sample = 42 i_iter = 0 dt = 5.829e-04 return = -2.627e-01
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.27 ret_best = -0.27
+TRACE: name = f:sphere-100d ttype = random i_sample = 43 i_iter = 0 dt = 5.841e-04 return = -2.654e-01
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.28 ret_best = -0.28
+TRACE: name = f:sphere-100d ttype = random i_sample = 44 i_iter = 0 dt = 6.123e-04 return = -2.767e-01
+TIME_REPLICATE: 0.03
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.26 ret_best = -0.26
+TRACE: name = f:sphere-100d ttype = random i_sample = 45 i_iter = 0 dt = 5.856e-04 return = -2.648e-01
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.28 ret_best = -0.28
+TRACE: name = f:sphere-100d ttype = random i_sample = 46 i_iter = 0 dt = 1.690e-03 return = -2.812e-01
+TIME_REPLICATE: 0.06
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.27 ret_best = -0.27
+TRACE: name = f:sphere-100d ttype = random i_sample = 47 i_iter = 0 dt = 6.442e-04 return = -2.687e-01
+TIME_REPLICATE: 0.05
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.26 ret_best = -0.26
+TRACE: name = f:sphere-100d ttype = random i_sample = 48 i_iter = 0 dt = 6.416e-04 return = -2.585e-01
+TIME_REPLICATE: 0.06
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.28 ret_best = -0.28
+TRACE: name = f:sphere-100d ttype = random i_sample = 49 i_iter = 0 dt = 1.091e-03 return = -2.780e-01
+TIME_REPLICATE: 0.05
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.27 ret_best = -0.27
+TRACE: name = f:sphere-100d ttype = random i_sample = 50 i_iter = 0 dt = 1.009e-03 return = -2.737e-01
+TIME_REPLICATE: 0.05
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.23 ret_best = -0.23
+TRACE: name = f:sphere-100d ttype = random i_sample = 51 i_iter = 0 dt = 6.471e-04 return = -2.338e-01
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.28 ret_best = -0.28
+TRACE: name = f:sphere-100d ttype = random i_sample = 52 i_iter = 0 dt = 5.953e-04 return = -2.753e-01
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.27 ret_best = -0.27
+TRACE: name = f:sphere-100d ttype = random i_sample = 53 i_iter = 0 dt = 5.953e-04 return = -2.748e-01
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.28 ret_best = -0.28
+TRACE: name = f:sphere-100d ttype = random i_sample = 54 i_iter = 0 dt = 5.925e-04 return = -2.837e-01
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.26 ret_best = -0.26
+TRACE: name = f:sphere-100d ttype = random i_sample = 55 i_iter = 0 dt = 8.330e-04 return = -2.620e-01
+TIME_REPLICATE: 0.05
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.26 ret_best = -0.26
+TRACE: name = f:sphere-100d ttype = random i_sample = 56 i_iter = 0 dt = 6.168e-04 return = -2.637e-01
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.27 ret_best = -0.27
+TRACE: name = f:sphere-100d ttype = random i_sample = 57 i_iter = 0 dt = 9.141e-04 return = -2.713e-01
+TIME_REPLICATE: 0.06
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.27 ret_best = -0.27
+TRACE: name = f:sphere-100d ttype = random i_sample = 58 i_iter = 0 dt = 9.384e-04 return = -2.731e-01
+TIME_REPLICATE: 0.06
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.30 ret_best = -0.30
+TRACE: name = f:sphere-100d ttype = random i_sample = 59 i_iter = 0 dt = 1.589e-03 return = -2.990e-01
+TIME_REPLICATE: 0.06
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.29 ret_best = -0.29
+TRACE: name = f:sphere-100d ttype = random i_sample = 60 i_iter = 0 dt = 6.523e-04 return = -2.850e-01
+TIME_REPLICATE: 0.05
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.28 ret_best = -0.28
+TRACE: name = f:sphere-100d ttype = random i_sample = 61 i_iter = 0 dt = 6.161e-04 return = -2.761e-01
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.28 ret_best = -0.28
+TRACE: name = f:sphere-100d ttype = random i_sample = 62 i_iter = 0 dt = 9.556e-04 return = -2.761e-01
+TIME_REPLICATE: 0.05
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.29 ret_best = -0.29
+TRACE: name = f:sphere-100d ttype = random i_sample = 63 i_iter = 0 dt = 6.075e-04 return = -2.886e-01
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.29 ret_best = -0.29
+TRACE: name = f:sphere-100d ttype = random i_sample = 64 i_iter = 0 dt = 5.918e-04 return = -2.880e-01
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.28 ret_best = -0.28
+TRACE: name = f:sphere-100d ttype = random i_sample = 65 i_iter = 0 dt = 5.913e-04 return = -2.801e-01
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.26 ret_best = -0.26
+TRACE: name = f:sphere-100d ttype = random i_sample = 66 i_iter = 0 dt = 8.190e-04 return = -2.640e-01
+TIME_REPLICATE: 0.05
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.29 ret_best = -0.29
+TRACE: name = f:sphere-100d ttype = random i_sample = 67 i_iter = 0 dt = 8.991e-04 return = -2.909e-01
+TIME_REPLICATE: 0.06
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.29 ret_best = -0.29
+TRACE: name = f:sphere-100d ttype = random i_sample = 68 i_iter = 0 dt = 9.491e-04 return = -2.937e-01
+TIME_REPLICATE: 0.07
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.29 ret_best = -0.29
+TRACE: name = f:sphere-100d ttype = random i_sample = 69 i_iter = 0 dt = 1.091e-03 return = -2.869e-01
+TIME_REPLICATE: 0.06
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.27 ret_best = -0.27
+TRACE: name = f:sphere-100d ttype = random i_sample = 70 i_iter = 0 dt = 8.781e-04 return = -2.653e-01
+TIME_REPLICATE: 0.05
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.27 ret_best = -0.27
+TRACE: name = f:sphere-100d ttype = random i_sample = 71 i_iter = 0 dt = 6.127e-04 return = -2.701e-01
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.27 ret_best = -0.27
+TRACE: name = f:sphere-100d ttype = random i_sample = 72 i_iter = 0 dt = 5.839e-04 return = -2.745e-01
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.26 ret_best = -0.26
+TRACE: name = f:sphere-100d ttype = random i_sample = 73 i_iter = 0 dt = 6.042e-04 return = -2.650e-01
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.26 ret_best = -0.26
+TRACE: name = f:sphere-100d ttype = random i_sample = 74 i_iter = 0 dt = 5.887e-04 return = -2.618e-01
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.27 ret_best = -0.27
+TRACE: name = f:sphere-100d ttype = random i_sample = 75 i_iter = 0 dt = 9.105e-04 return = -2.660e-01
+TIME_REPLICATE: 0.06
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.28 ret_best = -0.28
+TRACE: name = f:sphere-100d ttype = random i_sample = 76 i_iter = 0 dt = 6.852e-04 return = -2.809e-01
+TIME_REPLICATE: 0.06
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.28 ret_best = -0.28
+TRACE: name = f:sphere-100d ttype = random i_sample = 77 i_iter = 0 dt = 1.050e-03 return = -2.846e-01
+TIME_REPLICATE: 0.05
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.28 ret_best = -0.28
+TRACE: name = f:sphere-100d ttype = random i_sample = 78 i_iter = 0 dt = 7.765e-04 return = -2.823e-01
+TIME_REPLICATE: 0.05
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.27 ret_best = -0.27
+TRACE: name = f:sphere-100d ttype = random i_sample = 79 i_iter = 0 dt = 7.014e-04 return = -2.724e-01
+TIME_REPLICATE: 0.05
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.28 ret_best = -0.28
+TRACE: name = f:sphere-100d ttype = random i_sample = 80 i_iter = 0 dt = 6.676e-04 return = -2.826e-01
+TIME_REPLICATE: 0.05
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.28 ret_best = -0.28
+TRACE: name = f:sphere-100d ttype = random i_sample = 81 i_iter = 0 dt = 9.179e-04 return = -2.831e-01
+TIME_REPLICATE: 0.05
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.28 ret_best = -0.28
+TRACE: name = f:sphere-100d ttype = random i_sample = 82 i_iter = 0 dt = 6.135e-04 return = -2.811e-01
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.26 ret_best = -0.26
+TRACE: name = f:sphere-100d ttype = random i_sample = 83 i_iter = 0 dt = 6.037e-04 return = -2.586e-01
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.29 ret_best = -0.29
+TRACE: name = f:sphere-100d ttype = random i_sample = 84 i_iter = 0 dt = 8.988e-04 return = -2.878e-01
+TIME_REPLICATE: 0.06
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.25 ret_best = -0.25
+TRACE: name = f:sphere-100d ttype = random i_sample = 85 i_iter = 0 dt = 6.943e-04 return = -2.532e-01
+TIME_REPLICATE: 0.05
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.26 ret_best = -0.26
+TRACE: name = f:sphere-100d ttype = random i_sample = 86 i_iter = 0 dt = 9.317e-04 return = -2.581e-01
+TIME_REPLICATE: 0.05
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.28 ret_best = -0.28
+TRACE: name = f:sphere-100d ttype = random i_sample = 87 i_iter = 0 dt = 7.882e-04 return = -2.833e-01
+TIME_REPLICATE: 0.05
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.25 ret_best = -0.25
+TRACE: name = f:sphere-100d ttype = random i_sample = 88 i_iter = 0 dt = 6.819e-04 return = -2.550e-01
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.28 ret_best = -0.28
+TRACE: name = f:sphere-100d ttype = random i_sample = 89 i_iter = 0 dt = 6.104e-04 return = -2.771e-01
+TIME_REPLICATE: 0.05
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.30 ret_best = -0.30
+TRACE: name = f:sphere-100d ttype = random i_sample = 90 i_iter = 0 dt = 6.032e-04 return = -2.963e-01
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.29 ret_best = -0.29
+TRACE: name = f:sphere-100d ttype = random i_sample = 91 i_iter = 0 dt = 5.922e-04 return = -2.903e-01
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.28 ret_best = -0.28
+TRACE: name = f:sphere-100d ttype = random i_sample = 92 i_iter = 0 dt = 1.208e-03 return = -2.792e-01
+TIME_REPLICATE: 0.05
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.27 ret_best = -0.27
+TRACE: name = f:sphere-100d ttype = random i_sample = 93 i_iter = 0 dt = 8.452e-04 return = -2.723e-01
+TIME_REPLICATE: 0.04
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.29 ret_best = -0.29
+TRACE: name = f:sphere-100d ttype = random i_sample = 94 i_iter = 0 dt = 9.542e-04 return = -2.863e-01
+TIME_REPLICATE: 0.05
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.27 ret_best = -0.27
+TRACE: name = f:sphere-100d ttype = random i_sample = 95 i_iter = 0 dt = 9.427e-04 return = -2.721e-01
+TIME_REPLICATE: 0.06
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.29 ret_best = -0.29
+TRACE: name = f:sphere-100d ttype = random i_sample = 96 i_iter = 0 dt = 1.350e-03 return = -2.910e-01
+TIME_REPLICATE: 0.06
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.26 ret_best = -0.26
+TRACE: name = f:sphere-100d ttype = random i_sample = 97 i_iter = 0 dt = 8.924e-04 return = -2.649e-01
+TIME_REPLICATE: 0.06
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.26 ret_best = -0.26
+TRACE: name = f:sphere-100d ttype = random i_sample = 98 i_iter = 0 dt = 1.308e-03 return = -2.552e-01
+TIME_REPLICATE: 0.06
+PROBLEM: env = f:sphere-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = -0.28 ret_best = -0.28
+TRACE: name = f:sphere-100d ttype = random i_sample = 99 i_iter = 0 dt = 8.461e-04 return = -2.768e-01
+TIME_REPLICATE: 0.05

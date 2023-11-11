@@ -1,0 +1,121 @@
+EXPERIMENT: env_tag = f:stybtang-2d ttype = random num_arms = 100 num_replications = 30 num_rounds = 1
+PROBLEM: env = f:stybtang-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = 76.06 ret_best = 76.06
+TRACE: name = f:stybtang-2d ttype = random i_sample = 0 i_iter = 0 dt = 2.770e-03 return = 7.606e+01
+TIME_REPLICATE: 0.13
+PROBLEM: env = f:stybtang-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = 76.90 ret_best = 76.90
+TRACE: name = f:stybtang-2d ttype = random i_sample = 1 i_iter = 0 dt = 4.578e-03 return = 7.690e+01
+TIME_REPLICATE: 0.14
+PROBLEM: env = f:stybtang-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.01 ret = 74.57 ret_best = 74.57
+TRACE: name = f:stybtang-2d ttype = random i_sample = 2 i_iter = 0 dt = 5.033e-03 return = 7.457e+01
+TIME_REPLICATE: 0.13
+PROBLEM: env = f:stybtang-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = 74.75 ret_best = 74.75
+TRACE: name = f:stybtang-2d ttype = random i_sample = 3 i_iter = 0 dt = 2.146e-03 return = 7.475e+01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:stybtang-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = 59.29 ret_best = 59.29
+TRACE: name = f:stybtang-2d ttype = random i_sample = 4 i_iter = 0 dt = 4.929e-03 return = 5.929e+01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:stybtang-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = 71.46 ret_best = 71.46
+TRACE: name = f:stybtang-2d ttype = random i_sample = 5 i_iter = 0 dt = 3.330e-03 return = 7.146e+01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:stybtang-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = 70.65 ret_best = 70.65
+TRACE: name = f:stybtang-2d ttype = random i_sample = 6 i_iter = 0 dt = 2.086e-03 return = 7.065e+01
+TIME_REPLICATE: 0.10
+PROBLEM: env = f:stybtang-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = 63.65 ret_best = 63.65
+TRACE: name = f:stybtang-2d ttype = random i_sample = 7 i_iter = 0 dt = 3.741e-03 return = 6.365e+01
+TIME_REPLICATE: 0.13
+PROBLEM: env = f:stybtang-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = 65.60 ret_best = 65.60
+TRACE: name = f:stybtang-2d ttype = random i_sample = 8 i_iter = 0 dt = 4.080e-03 return = 6.560e+01
+TIME_REPLICATE: 0.13
+PROBLEM: env = f:stybtang-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = 78.13 ret_best = 78.13
+TRACE: name = f:stybtang-2d ttype = random i_sample = 9 i_iter = 0 dt = 3.627e-03 return = 7.813e+01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:stybtang-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = 78.09 ret_best = 78.09
+TRACE: name = f:stybtang-2d ttype = random i_sample = 10 i_iter = 0 dt = 3.142e-03 return = 7.809e+01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:stybtang-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = 63.53 ret_best = 63.53
+TRACE: name = f:stybtang-2d ttype = random i_sample = 11 i_iter = 0 dt = 2.953e-03 return = 6.353e+01
+TIME_REPLICATE: 0.13
+PROBLEM: env = f:stybtang-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = 63.76 ret_best = 63.76
+TRACE: name = f:stybtang-2d ttype = random i_sample = 12 i_iter = 0 dt = 2.779e-03 return = 6.376e+01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:stybtang-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = 77.45 ret_best = 77.45
+TRACE: name = f:stybtang-2d ttype = random i_sample = 13 i_iter = 0 dt = 3.074e-03 return = 7.745e+01
+TIME_REPLICATE: 0.13
+PROBLEM: env = f:stybtang-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = 62.67 ret_best = 62.67
+TRACE: name = f:stybtang-2d ttype = random i_sample = 14 i_iter = 0 dt = 3.366e-03 return = 6.267e+01
+TIME_REPLICATE: 0.13
+PROBLEM: env = f:stybtang-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = 77.20 ret_best = 77.20
+TRACE: name = f:stybtang-2d ttype = random i_sample = 15 i_iter = 0 dt = 3.292e-03 return = 7.720e+01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:stybtang-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = 63.90 ret_best = 63.90
+TRACE: name = f:stybtang-2d ttype = random i_sample = 16 i_iter = 0 dt = 1.766e-03 return = 6.390e+01
+TIME_REPLICATE: 0.09
+PROBLEM: env = f:stybtang-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = 74.32 ret_best = 74.32
+TRACE: name = f:stybtang-2d ttype = random i_sample = 17 i_iter = 0 dt = 1.746e-03 return = 7.432e+01
+TIME_REPLICATE: 0.09
+PROBLEM: env = f:stybtang-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = 71.75 ret_best = 71.75
+TRACE: name = f:stybtang-2d ttype = random i_sample = 18 i_iter = 0 dt = 4.054e-03 return = 7.175e+01
+TIME_REPLICATE: 0.13
+PROBLEM: env = f:stybtang-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = 76.41 ret_best = 76.41
+TRACE: name = f:stybtang-2d ttype = random i_sample = 19 i_iter = 0 dt = 4.071e-03 return = 7.641e+01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:stybtang-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = 68.66 ret_best = 68.66
+TRACE: name = f:stybtang-2d ttype = random i_sample = 20 i_iter = 0 dt = 4.468e-03 return = 6.866e+01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:stybtang-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = 67.24 ret_best = 67.24
+TRACE: name = f:stybtang-2d ttype = random i_sample = 21 i_iter = 0 dt = 3.421e-03 return = 6.724e+01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:stybtang-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = 77.45 ret_best = 77.45
+TRACE: name = f:stybtang-2d ttype = random i_sample = 22 i_iter = 0 dt = 3.907e-03 return = 7.745e+01
+TIME_REPLICATE: 0.13
+PROBLEM: env = f:stybtang-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = 76.98 ret_best = 76.98
+TRACE: name = f:stybtang-2d ttype = random i_sample = 23 i_iter = 0 dt = 3.454e-03 return = 7.698e+01
+TIME_REPLICATE: 0.13
+PROBLEM: env = f:stybtang-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = 77.01 ret_best = 77.01
+TRACE: name = f:stybtang-2d ttype = random i_sample = 24 i_iter = 0 dt = 3.505e-03 return = 7.701e+01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:stybtang-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = 63.55 ret_best = 63.55
+TRACE: name = f:stybtang-2d ttype = random i_sample = 25 i_iter = 0 dt = 4.264e-03 return = 6.355e+01
+TIME_REPLICATE: 0.14
+PROBLEM: env = f:stybtang-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = 70.25 ret_best = 70.25
+TRACE: name = f:stybtang-2d ttype = random i_sample = 26 i_iter = 0 dt = 4.651e-03 return = 7.025e+01
+TIME_REPLICATE: 0.12
+PROBLEM: env = f:stybtang-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = 78.08 ret_best = 78.08
+TRACE: name = f:stybtang-2d ttype = random i_sample = 27 i_iter = 0 dt = 3.407e-03 return = 7.808e+01
+TIME_REPLICATE: 0.13
+PROBLEM: env = f:stybtang-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = 62.42 ret_best = 62.42
+TRACE: name = f:stybtang-2d ttype = random i_sample = 28 i_iter = 0 dt = 2.867e-03 return = 6.242e+01
+TIME_REPLICATE: 0.11
+PROBLEM: env = f:stybtang-2d num_params = 2
+ITER: i_iter = 0 d_time = 0.00 ret = 78.32 ret_best = 78.32
+TRACE: name = f:stybtang-2d ttype = random i_sample = 29 i_iter = 0 dt = 2.694e-03 return = 7.832e+01
+TIME_REPLICATE: 0.14

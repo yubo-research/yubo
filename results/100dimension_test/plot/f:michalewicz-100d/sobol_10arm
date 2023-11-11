@@ -1,0 +1,121 @@
+EXPERIMENT: env_tag = f:michalewicz-100d ttype = sobol num_arms = 10 num_replications = 30 num_rounds = 1
+PROBLEM: env = f:michalewicz-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = 12.99 ret_best = 12.99
+TRACE: name = f:michalewicz-100d ttype = sobol i_sample = 0 i_iter = 0 dt = 4.311e-04 return = 1.299e+01
+TIME_REPLICATE: 0.09
+PROBLEM: env = f:michalewicz-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = 11.96 ret_best = 11.96
+TRACE: name = f:michalewicz-100d ttype = sobol i_sample = 1 i_iter = 0 dt = 5.071e-04 return = 1.196e+01
+TIME_REPLICATE: 0.06
+PROBLEM: env = f:michalewicz-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = 14.51 ret_best = 14.51
+TRACE: name = f:michalewicz-100d ttype = sobol i_sample = 2 i_iter = 0 dt = 5.507e-04 return = 1.451e+01
+TIME_REPLICATE: 0.07
+PROBLEM: env = f:michalewicz-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = 13.60 ret_best = 13.60
+TRACE: name = f:michalewicz-100d ttype = sobol i_sample = 3 i_iter = 0 dt = 6.540e-04 return = 1.360e+01
+TIME_REPLICATE: 0.07
+PROBLEM: env = f:michalewicz-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = 15.43 ret_best = 15.43
+TRACE: name = f:michalewicz-100d ttype = sobol i_sample = 4 i_iter = 0 dt = 4.928e-04 return = 1.543e+01
+TIME_REPLICATE: 0.08
+PROBLEM: env = f:michalewicz-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = 18.57 ret_best = 18.57
+TRACE: name = f:michalewicz-100d ttype = sobol i_sample = 5 i_iter = 0 dt = 5.534e-04 return = 1.857e+01
+TIME_REPLICATE: 0.05
+PROBLEM: env = f:michalewicz-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = 15.08 ret_best = 15.08
+TRACE: name = f:michalewicz-100d ttype = sobol i_sample = 6 i_iter = 0 dt = 5.510e-04 return = 1.508e+01
+TIME_REPLICATE: 0.06
+PROBLEM: env = f:michalewicz-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = 13.67 ret_best = 13.67
+TRACE: name = f:michalewicz-100d ttype = sobol i_sample = 7 i_iter = 0 dt = 5.255e-04 return = 1.367e+01
+TIME_REPLICATE: 0.07
+PROBLEM: env = f:michalewicz-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = 14.28 ret_best = 14.28
+TRACE: name = f:michalewicz-100d ttype = sobol i_sample = 8 i_iter = 0 dt = 5.279e-04 return = 1.428e+01
+TIME_REPLICATE: 0.08
+PROBLEM: env = f:michalewicz-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = 15.85 ret_best = 15.85
+TRACE: name = f:michalewicz-100d ttype = sobol i_sample = 9 i_iter = 0 dt = 6.504e-04 return = 1.585e+01
+TIME_REPLICATE: 0.09
+PROBLEM: env = f:michalewicz-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = 14.42 ret_best = 14.42
+TRACE: name = f:michalewicz-100d ttype = sobol i_sample = 10 i_iter = 0 dt = 6.049e-04 return = 1.442e+01
+TIME_REPLICATE: 0.08
+PROBLEM: env = f:michalewicz-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = 13.52 ret_best = 13.52
+TRACE: name = f:michalewicz-100d ttype = sobol i_sample = 11 i_iter = 0 dt = 5.946e-04 return = 1.352e+01
+TIME_REPLICATE: 0.08
+PROBLEM: env = f:michalewicz-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = 14.34 ret_best = 14.34
+TRACE: name = f:michalewicz-100d ttype = sobol i_sample = 12 i_iter = 0 dt = 6.480e-04 return = 1.434e+01
+TIME_REPLICATE: 0.08
+PROBLEM: env = f:michalewicz-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = 14.42 ret_best = 14.42
+TRACE: name = f:michalewicz-100d ttype = sobol i_sample = 13 i_iter = 0 dt = 5.512e-04 return = 1.442e+01
+TIME_REPLICATE: 0.07
+PROBLEM: env = f:michalewicz-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = 13.57 ret_best = 13.57
+TRACE: name = f:michalewicz-100d ttype = sobol i_sample = 14 i_iter = 0 dt = 5.493e-04 return = 1.357e+01
+TIME_REPLICATE: 0.07
+PROBLEM: env = f:michalewicz-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = 15.01 ret_best = 15.01
+TRACE: name = f:michalewicz-100d ttype = sobol i_sample = 15 i_iter = 0 dt = 5.257e-04 return = 1.501e+01
+TIME_REPLICATE: 0.07
+PROBLEM: env = f:michalewicz-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = 14.89 ret_best = 14.89
+TRACE: name = f:michalewicz-100d ttype = sobol i_sample = 16 i_iter = 0 dt = 5.631e-04 return = 1.489e+01
+TIME_REPLICATE: 0.07
+PROBLEM: env = f:michalewicz-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = 14.54 ret_best = 14.54
+TRACE: name = f:michalewicz-100d ttype = sobol i_sample = 17 i_iter = 0 dt = 5.369e-04 return = 1.454e+01
+TIME_REPLICATE: 0.07
+PROBLEM: env = f:michalewicz-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = 14.42 ret_best = 14.42
+TRACE: name = f:michalewicz-100d ttype = sobol i_sample = 18 i_iter = 0 dt = 6.700e-04 return = 1.442e+01
+TIME_REPLICATE: 0.08
+PROBLEM: env = f:michalewicz-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = 15.56 ret_best = 15.56
+TRACE: name = f:michalewicz-100d ttype = sobol i_sample = 19 i_iter = 0 dt = 5.636e-04 return = 1.556e+01
+TIME_REPLICATE: 0.07
+PROBLEM: env = f:michalewicz-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = 14.15 ret_best = 14.15
+TRACE: name = f:michalewicz-100d ttype = sobol i_sample = 20 i_iter = 0 dt = 4.199e-04 return = 1.415e+01
+TIME_REPLICATE: 0.07
+PROBLEM: env = f:michalewicz-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = 13.81 ret_best = 13.81
+TRACE: name = f:michalewicz-100d ttype = sobol i_sample = 21 i_iter = 0 dt = 5.767e-04 return = 1.381e+01
+TIME_REPLICATE: 0.08
+PROBLEM: env = f:michalewicz-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = 13.35 ret_best = 13.35
+TRACE: name = f:michalewicz-100d ttype = sobol i_sample = 22 i_iter = 0 dt = 5.841e-04 return = 1.335e+01
+TIME_REPLICATE: 0.08
+PROBLEM: env = f:michalewicz-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = 12.75 ret_best = 12.75
+TRACE: name = f:michalewicz-100d ttype = sobol i_sample = 23 i_iter = 0 dt = 6.187e-04 return = 1.275e+01
+TIME_REPLICATE: 0.08
+PROBLEM: env = f:michalewicz-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = 14.65 ret_best = 14.65
+TRACE: name = f:michalewicz-100d ttype = sobol i_sample = 24 i_iter = 0 dt = 6.981e-04 return = 1.465e+01
+TIME_REPLICATE: 0.10
+PROBLEM: env = f:michalewicz-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = 14.18 ret_best = 14.18
+TRACE: name = f:michalewicz-100d ttype = sobol i_sample = 25 i_iter = 0 dt = 6.666e-04 return = 1.418e+01
+TIME_REPLICATE: 0.09
+PROBLEM: env = f:michalewicz-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = 14.79 ret_best = 14.79
+TRACE: name = f:michalewicz-100d ttype = sobol i_sample = 26 i_iter = 0 dt = 6.421e-04 return = 1.479e+01
+TIME_REPLICATE: 0.08
+PROBLEM: env = f:michalewicz-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = 13.19 ret_best = 13.19
+TRACE: name = f:michalewicz-100d ttype = sobol i_sample = 27 i_iter = 0 dt = 4.747e-04 return = 1.319e+01
+TIME_REPLICATE: 0.07
+PROBLEM: env = f:michalewicz-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = 14.67 ret_best = 14.67
+TRACE: name = f:michalewicz-100d ttype = sobol i_sample = 28 i_iter = 0 dt = 5.407e-04 return = 1.467e+01
+TIME_REPLICATE: 0.05
+PROBLEM: env = f:michalewicz-100d num_params = 100
+ITER: i_iter = 0 d_time = 0.00 ret = 12.27 ret_best = 12.27
+TRACE: name = f:michalewicz-100d ttype = sobol i_sample = 29 i_iter = 0 dt = 7.608e-04 return = 1.227e+01
+TIME_REPLICATE: 0.07
