@@ -6,7 +6,11 @@ from problems.benchmark_functions import all_benchmarks
 
 
 def make(name, seed):
-    # TODO: noise
+    if name == "f:tlunar":
+        from .turbo_lunar_lander import TurboLunarLander
+
+        return PureFunctionEnv(TurboLunarLander(seed=seed + 17), num_dim=12, seed=seed, distort=False)
+
     _, name = name.split(":")
     name, num_dim = name.split("-")
     assert num_dim[-1] == "d"
@@ -20,7 +24,7 @@ def make(name, seed):
 
 # all domains are [-1,1]**num_dim
 class PureFunctionEnv:
-    def __init__(self, function, num_dim, seed):
+    def __init__(self, function, num_dim, seed, distort=True):
         self._function = function
 
         # state is either 0 or 1
@@ -30,17 +34,26 @@ class PureFunctionEnv:
         # action is the input to the function (before some transformations)
         self.action_space = Box(low=-np.ones(num_dim, dtype=np.float32), high=np.ones(num_dim, dtype=np.float32))
 
-        rng = np.random.default_rng(seed)
+        if distort:
+            rng = np.random.default_rng(seed)
 
-        # Distort the parameter space, moving the center
-        #  to a randomly-chosen corner of the bounding box.
-        self._x_0 = all_bounds.x_low + all_bounds.x_width * rng.uniform(size=(num_dim,))
+            # Distort the parameter space, moving the center
+            #  to a randomly-chosen corner of the bounding box.
+            self._x_0 = all_bounds.x_low + all_bounds.x_width * rng.uniform(size=(num_dim,))
+        else:
+            self._x_0 = np.zeros(shape=(num_dim,))
 
         assert all_bounds.x_low == -1
         assert all_bounds.x_high == 1
 
     def step(self, action):
-        # state, reward, done = env.step(action)[:3]
+        # mimic: state, reward, done = env.step(action)[:3]
+        # Here "action" is just the x values to supply to the pure function.
+        #  The only meaningful return value is the output of the pure function.
+        # We go through this just to preserve the step(action) interface for
+        #  future use.
+        #
+
         assert np.all(action >= -1) and np.all(action <= 1), ("action", action)
         x = action - self._x_0
 

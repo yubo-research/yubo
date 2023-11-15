@@ -111,7 +111,6 @@ class AcqMTV(MCAcquisitionFunction):
             i = torch.argmax(self.model.train_targets)
             Y_tgt = self.model.posterior(self.model.train_inputs[0][i][:, None].T).mean
             if Y_tgt > Y_cand:
-                print("USED TGT")
                 x_cand = self.model.train_inputs[0][i, :][:, None].T
 
         return x_cand
