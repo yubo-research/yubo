@@ -2,6 +2,7 @@ import sys
 import time
 from dataclasses import dataclass
 
+import numpy as np
 from botorch.acquisition.max_value_entropy_search import (
     qLowerBoundMaxValueEntropy,
 )
@@ -132,8 +133,12 @@ class Optimizer:
             ],
         }
 
-    def collect_trajectory(self, policy):
-        return collect_trajectory(self._env_conf, policy, seed=self._env_conf.seed)
+    def collect_trajectory(self, policy, new_seed=None):
+        if new_seed is None:
+            seed = self._env_conf.seed
+        else:
+            seed = new_seed
+        return collect_trajectory(self._env_conf, policy, seed=seed)
 
     def _iterate(self, designer, num_arms):
         t0 = time.time()
@@ -145,7 +150,17 @@ class Optimizer:
             data.append(Datum(designer, policy, traj))
         return data, tf - t0
 
-    def collect_trace(self, ttype, num_iterations):
+    def _denoise(self, datum, num_denoise):
+        rets = []
+        for i in range(num_denoise):
+            traj = self.collect_trajectory(datum.policy, new_seed=12345 + i)
+            rets.append(traj.rreturn)
+        # print ("DENOISE:", rets)
+        assert np.std(rets) > 0, rets
+        return np.mean(rets)
+
+    def collect_trace(self, ttype, num_iterations, num_denoise=None):
+        # TODO: select parameters via different methods
         assert ttype in self._designers, f"Unknown optimizer type {ttype}"
 
         designers = self._designers[ttype]
@@ -160,7 +175,6 @@ class Optimizer:
         for _ in range(num_iterations):
             designer = designers[min(len(designers) - 1, self._i_iter)]
 
-            best_in_batch = -1e99
             if init_center and self._i_iter == 0:
                 if self._num_arms == 1:
                     data, d_time = self._iterate(self._center_designer, self._num_arms)
@@ -172,13 +186,21 @@ class Optimizer:
             else:
                 data, d_time = self._iterate(designer, self._num_arms)
 
+            ret_batch = []
             for datum in data:
                 self._data.append(datum)
-                best_in_batch = max(best_in_batch, datum.trajectory.rreturn)
+                ret_batch.append(datum.trajectory.rreturn)
                 if self._datum_best is None or datum.trajectory.rreturn > self._datum_best.trajectory.rreturn:
                     self._datum_best = datum
+                    if num_denoise is None:
+                        ret_eval = self._datum_best.trajectory.rreturn
+                    else:
+                        ret_eval = self._denoise(self._datum_best, num_denoise)
 
-            print(f"ITER: i_iter = {self._i_iter} d_time = {d_time:.2f} ret = {best_in_batch:.2f} ret_best = {self._datum_best.trajectory.rreturn:.2f}")
+            ret_batch = np.array(ret_batch)
+            print(
+                f"ITER: i_iter = {self._i_iter} d_time = {d_time:.2f} ret_max = {ret_batch.max():.2f} ret_mean = {ret_batch.mean():.2f} ret_eval = {ret_eval:.2f}"
+            )
             sys.stdout.flush()
             trace.append(_TraceEntry(self._datum_best.trajectory.rreturn, d_time))
             self._i_iter += 1

@@ -36,6 +36,12 @@ class BTDesigner:
     def init_center(self):
         return self._init_center
 
+    def best_by_measurement(self):
+        return self._acq_fn.best_by_measurement()
+
+    def best_by_estimate(self):
+        return self._acq_fn.best_by_estimate()
+
     def _batch_initial_conditions(self, data, num_arms, acqf):
         # half from X_samples, half random
         num_dim = self._policy.num_params()

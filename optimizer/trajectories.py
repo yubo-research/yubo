@@ -14,7 +14,7 @@ class Trajectory:
 
 def collect_trajectory(env_conf, policy, show_frames=None, seed=None):
     render_mode = "rgb_array" if show_frames else None
-    env = env_conf.make(render_mode=render_mode)
+    env = env_conf.make(render_mode=render_mode, new_seed=seed)
     done = False
     return_trajectory = 0
     traj_states, traj_actions = [], []

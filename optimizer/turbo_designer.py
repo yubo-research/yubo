@@ -1,7 +1,7 @@
 import numpy as np
 
 import common.all_bounds as all_bounds
-from turbo_ref.turbo_1 import Turbo1
+from turbo_m_ref.turbo_1_ask_tell import Turbo1
 
 
 class TuRBODesigner:

@@ -39,9 +39,13 @@ class EnvConf:
     state_space: Any = None
     action_space: Any = None
 
-    def _make(self, **kwargs):
+    def _make(self, new_seed=None, **kwargs):
         if self.env_name[:2] == "f:":
-            env = pure_functions.make(self.env_name, seed=self.seed)
+            if new_seed is None:
+                seed = self.seed
+            else:
+                seed = new_seed
+            env = pure_functions.make(self.env_name, seed=seed)
         else:
             env = gym.make(self.env_name, **(kwargs | self.kwargs))
         return env
