@@ -23,16 +23,18 @@ def run_batch(cmds, b_dry_run):
             process.join()    
     print ("DONE_BATCH")
 
-def prep_cmd(ddir, problem, opt, num_arms, num_replications, num_rounds, noise):
+def prep_cmd(ddir, problem, opt, num_arms, num_replications, num_rounds, noise, num_denoise):
     if noise is not None:
         out_dir = f"results/{ddir}-{noise:.3f}/{problem}"
     else:
         out_dir = f"results/{ddir}/{problem}"
+    if num_denoise is None:
+        num_denoise = ""
     os.makedirs(out_dir, exist_ok=True)
     # experiments/exp_2.py env_tag ttype num_arms num_replications num_rounds noise
     if noise is None:
         noise = ""
-    return f"python experiments/experiment.py {problem} {opt} {num_arms} {num_replications} {num_rounds} {noise} > {out_dir}/{opt} 2>&1"
+    return f"python experiments/experiment.py {problem} {opt} {num_arms} {num_replications} {num_rounds} {num_denoise} {noise} > {out_dir}/{opt} 2>&1"
 
     
 def prep_cmds(ddir, funcs, dims, num_arms, num_replications, opts, noises):
@@ -43,7 +45,7 @@ def prep_cmds(ddir, funcs, dims, num_arms, num_replications, opts, noises):
             for opt in opts:
                 for noise in noises:
                     problem = f"f:{func}-{dim}d"
-                    cmds.append(prep_cmd(ddir, problem, opt, num_arms, num_replications, num_rounds, noise))
+                    cmds.append(prep_cmd(ddir, problem, opt, num_arms, num_replications, num_rounds, noise, num_denoise=None))
     return cmds
 
 def run(cmds, max_parallel, b_dry_run=False):
@@ -67,7 +69,7 @@ if __name__=="__main__":
 
     # opts = opts_compare + opts_then + opts_ablations
     # opts = opts_then + opts_ablations
-    opts = ["ei", "ucb", "gibbon"]
+    opts = ["sobol", "mtv", "ei", "ucb", "gibbon"]
     
     noises = [None] # 0, 0.1, 0.3]
     
@@ -124,9 +126,10 @@ if __name__=="__main__":
                         problem=problem,
                         opt=opt,
                         num_arms=num_arms,
-                        num_replications=10,
+                        num_replications=30,
                         num_rounds=100,
                         noise=None,
+                        num_denoise=100,
                     )
                 )
 
@@ -134,4 +137,4 @@ if __name__=="__main__":
     # cmds = cmds_1d + cmds_10d
     cmds = cmds_rl
     # random.shuffle(cmds)
-    run(cmds, max_parallel=1, b_dry_run=False)
+    run(cmds, max_parallel=2, b_dry_run=False)
