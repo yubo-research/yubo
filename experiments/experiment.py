@@ -32,7 +32,9 @@ if __name__ == "__main__":
     else:
         noise = None
 
-    print(f"EXPERIMENT: env_tag = {env_tag} ttype = {ttype} num_arms = {num_arms} num_replications = {num_replications} num_rounds = {num_rounds} num_denoise = {num_denoise} noise = {noise}")
+    print(
+        f"EXPERIMENT: env_tag = {env_tag} ttype = {ttype} num_arms = {num_arms} num_replications = {num_replications} num_rounds = {num_rounds} num_denoise = {num_denoise} noise = {noise}"
+    )
     for i_sample in range(num_replications):
         t0 = time.time()
         seed_all(17 + i_sample)
