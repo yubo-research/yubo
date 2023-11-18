@@ -5,7 +5,7 @@ from botorch.fit import fit_gpytorch_mll
 from botorch.models import SingleTaskGP
 from botorch.optim import optimize_acqf
 from botorch.utils import standardize
-from gpytorch.mlls import ExactMarginalLogLikelihood
+from gpytorch.mlls import ExactMarginalLogLikelihood, LeaveOneOutPseudoLikelihood
 
 import common.all_bounds as all_bounds
 
@@ -32,6 +32,8 @@ class AcqBT:
                 except ModelFittingError as e:
                     m = e
                     print(f"Retrying fit i_try = {i_try}")
+                    print("Trying LeaveOneOutPseudoLikelihood")
+                    mll = LeaveOneOutPseudoLikelihood(gp.likelihood, gp)
                     pass
                 else:
                     break

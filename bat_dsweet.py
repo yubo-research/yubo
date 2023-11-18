@@ -69,7 +69,7 @@ if __name__=="__main__":
 
     # opts = opts_compare + opts_then + opts_ablations
     # opts = opts_then + opts_ablations
-    opts = ["sobol", "mtv", "ei", "ucb", "gibbon"]
+    opts = ["mtv", "ei", "ucb", "gibbon"]
     
     noises = [None] # 0, 0.1, 0.3]
     
