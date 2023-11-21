@@ -187,6 +187,8 @@ class Optimizer:
                 data, d_time = self._iterate(designer, self._num_arms)
 
             ret_batch = []
+            if self._datum_best is not None:
+                ret_eval = self._datum_best.trajectory.rreturn
             for datum in data:
                 self._data.append(datum)
                 ret_batch.append(datum.trajectory.rreturn)

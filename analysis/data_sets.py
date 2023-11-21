@@ -20,8 +20,7 @@ def all_in(exp_tag):
     return problems, sorted(optimizers)
 
 
-def _extractKV(line):
-    x = line.strip().split()
+def extract_kv(x):
     d = {}
     for i in range(0, len(x) - 1):
         if x[i] != "=":
@@ -37,7 +36,7 @@ def load(fn, keys):
     data = []
     with open(fn) as f:
         for line in f.readlines():
-            d = _extractKV(line)
+            d = extract_kv(line.strip().split())
             if skeys.issubset(set(d.keys())):
                 data.append([float(d[k]) for k in keys])
     return np.array(data).squeeze()
@@ -55,7 +54,7 @@ def load_kv(fn, keys, grep_for=None):
             i = line.find("[INFO")
             if i is not None:
                 line = line[:i]
-            d = _extractKV(line)
+            d = extract_kv(line.strip().split())
             for k in skeys:
                 if k in d:
                     data[k].append(float(d[k]))
@@ -97,9 +96,9 @@ def load_multiple_traces(data_locator, exp_tag, problem_names, opt_names):
     num_bad = 0
     num_tot = 0
 
-    def _report_bad(problem_name, opt_name):
+    def _report_bad(problem_name, opt_name, msg):
         nonlocal num_bad
-        print("BAD:", exp_tag, problem_name, opt_name)
+        print("BAD:", msg, exp_tag, problem_name, opt_name)
         num_bad += 1
 
     traces = None
@@ -109,17 +108,17 @@ def load_multiple_traces(data_locator, exp_tag, problem_names, opt_names):
             try:
                 trace = load_traces(data_locator(exp_tag, problem_name, opt_name))
             except FileNotFoundError:
-                _report_bad(problem_name, opt_name)
+                _report_bad(problem_name, opt_name, "File not found")
                 continue
             if trace is None:
-                _report_bad(problem_name, opt_name)
+                _report_bad(problem_name, opt_name, "No trace")
                 continue
             if traces is None:
                 traces = np.nan * np.ones(shape=(len(problem_names), len(opt_names), trace.shape[0], trace.shape[1]))
             if trace.shape != traces[i_problem, i_opt, ...].shape:
-                _report_bad(problem_name, opt_name)
-                continue
-            traces[i_problem, i_opt, ...] = trace
+                _report_bad(problem_name, opt_name, f"Trace is wrong shape {trace.shape} != {traces[i_problem, i_opt, ...].shape}")
+                # continue
+            traces[i_problem, i_opt, : trace.shape[0], : trace.shape[1]] = trace
 
     traces = npma.masked_invalid(traces)
     if num_bad > 0:
@@ -137,6 +136,8 @@ def range_summarize(traces: np.ndarray):
     y_min = traces.min(axis=1, keepdims=True)
     y_max = traces.max(axis=1, keepdims=True)
     z = (traces - y_min) / (y_max - y_min)
+
+    # Take last round
     z = z[..., -1]
 
     z = z.swapaxes(0, 1)

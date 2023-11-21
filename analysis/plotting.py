@@ -87,3 +87,51 @@ def plot_sorted_agg(ax, data_locator, exp_tag, optimizers=None, renames=None, i_
 
     mu, se = ads.range_summarize(traces)
     plot_sorted(ax, optimizers, mu, se, renames=renames)
+
+
+def plot_compare_problem(ax, data_locator, exp_name, problem_name, optimizers, b_normalize, title, renames=None):
+    handles = []
+    legend = []
+    i_marker = 0
+    markers = ["o", "v", "s", "+", "*", "X", "^"]
+    traces = ads.load_multiple_traces(data_locator, exp_name, [problem_name], optimizers)
+
+    if b_normalize:
+        yy = traces.squeeze(0).transpose((1, 0, 2))
+        ys = yy.shape
+        yy = yy.reshape((ys[0], ys[1] * ys[2]))
+        y_min = np.expand_dims(yy.min(axis=-1), (0, 1, 3))
+        y_max = np.expand_dims(yy.max(axis=-1), (0, 1, 3))
+        z = (traces - y_min) / (y_max - y_min)
+    else:
+        z = traces
+
+    z = z.squeeze(0)
+
+    for i_opt, optimizer in enumerate(optimizers):
+        y = z[i_opt, ...]
+        x = 1 + np.arange(y.shape[1])
+        filled_err(x=x, ys=y, ax=ax, se=True, alpha=0.25)
+        (h,) = ax.plot(
+            x,
+            y.mean(axis=0),
+            linestyle="none",
+            marker=markers[i_marker],
+            markersize=10,
+            color="#444444",
+            fillstyle="none",
+        )
+        if len(x) < 10:
+            ax.set_xticks(ticks=x)
+        handles.append(h)
+        if renames is not None and optimizer in renames:
+            name = renames[optimizer]
+        else:
+            name = optimizer
+        legend.append(name)
+        i_marker += 1
+
+    ax.legend(handles, legend)
+    ax.set_title(title)
+    ax.set_xlabel("round")
+    ax.set_ylabel("max measured value")
