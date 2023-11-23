@@ -37,9 +37,17 @@ def collect_trajectory(env_conf, policy, show_frames=None, noise_seed=None):
     state, _ = env.reset(seed=noise_seed)
     for i_iter in range(env_conf.max_steps):
         # assert np.all(state >= lb), (state, lb)
+
         state_p = (state - lb) / width
-        action_p = policy(state_p)  # in [-1,1]
-        action = env.action_space.low + (env.action_space.high - env.action_space.low) * (1 + action_p) / 2
+        if env_conf.transform:
+            action_p = policy(state_p)  # in [-1,1]
+        else:
+            action_p = policy(state)
+
+        if hasattr(env.action_space, "low"):
+            action = env.action_space.low + (env.action_space.high - env.action_space.low) * (1 + action_p) / 2
+        else:
+            action = action_p
 
         traj_states.append(state_p)
         traj_actions.append(action_p)

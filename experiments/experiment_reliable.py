@@ -22,7 +22,10 @@ def _is_done(fn):
     if not os.path.exists(fn):
         return False
     with open(fn, "rb") as f:
-        f.seek(-5, 2)
+        try:
+            f.seek(-5, 2)
+        except OSError:
+            return False
         x = f.read(5)
         return x == b"DONE\n"
 

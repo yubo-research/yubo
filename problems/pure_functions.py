@@ -6,11 +6,6 @@ from problems.benchmark_functions import all_benchmarks
 
 
 def make(name, problem_seed):
-    if name == "f:tlunar":
-        from .turbo_lunar_lander import TurboLunarLander
-
-        return PureFunctionEnv(TurboLunarLander(seed=problem_seed + 17), num_dim=12, problem_seed=problem_seed, distort=False)
-
     _, name = name.split(":")
     name, num_dim = name.split("-")
     assert num_dim[-1] == "d"

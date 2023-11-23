@@ -4,8 +4,9 @@ from gymnasium.utils.step_api_compatibility import step_api_compatibility
 
 
 class TurboLunarLander:
-    def __init__(self, seed):
-        self._seed = seed
+    def __init__(self, noise_seed):
+        assert False, "Use env_tag=tlunar instead"
+        self._noise_seed = noise_seed
         self.n_dim = 12
         self.bounds = np.array([(0, 2)] * self.n_dim)
 
@@ -36,7 +37,8 @@ class TurboLunarLander:
     def __call__(self, w):
         env = gym.make("LunarLander-v2", continuous=False)
         total_reward = 0
-        s, info = env.reset(seed=self._seed)
+        print("NOISE_SEED:", self._noise_seed_)
+        s, info = env.reset(seed=self._noise_seed)
         while True:
             a = self._heuristic(env, s, w)
             s, r, terminated, truncated, info = step_api_compatibility(env.step(a), True)

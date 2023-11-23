@@ -7,12 +7,14 @@ import problems.pure_functions as pure_functions
 from problems.linear_policy import LinearPolicy
 from problems.noise_maker import NoiseMaker
 from problems.pure_function_policy import PureFunctionPolicy
+from problems.turbo_lunar_policy import TurboLunarPolicy
 
 
 def get_env_conf(tag, problem_seed=None, noise_level=None, noise_seed_0=None):
     if tag in _env_confs:
         ec = _env_confs[tag]
         ec.problem_seed = problem_seed
+        ec.noise_seed_0 = noise_seed_0
         ec.solved = 9999
     else:
         ec = EnvConf(tag, problem_seed=problem_seed, noise_level=noise_level, noise_seed_0=noise_seed_0, max_steps=1000, solved=9999)
@@ -21,7 +23,9 @@ def get_env_conf(tag, problem_seed=None, noise_level=None, noise_seed_0=None):
 
 
 def default_policy(env_conf):
-    if env_conf.env_name[:2] == "f:":
+    if env_conf.policy_class is not None:
+        return env_conf.policy_class(env_conf)
+    elif env_conf.env_name[:2] == "f:":
         return PureFunctionPolicy(env_conf)
     else:
         return LinearPolicy(env_conf)
@@ -39,6 +43,8 @@ class EnvConf:
     kwargs: dict = None
     state_space: Any = None
     action_space: Any = None
+    policy_class: Any = None
+    transform: bool = True
 
     def _make(self, **kwargs):
         if self.env_name[:2] == "f:":
@@ -68,4 +74,14 @@ _env_confs = {
     "lunar": EnvConf("LunarLander-v2", problem_seed=None, max_steps=500, kwargs={"continuous": True}, solved=999, show_frames=30),
     "ant": EnvConf("Ant-v4", problem_seed=None, max_steps=1000, solved=999, show_frames=30),
     "bw": EnvConf("BipedalWalker-v3", problem_seed=None, max_steps=1600, solved=300, show_frames=100),
+    "tlunar": EnvConf(
+        "LunarLander-v2",
+        problem_seed=None,
+        max_steps=500,
+        kwargs={"continuous": False},
+        solved=999,
+        show_frames=30,
+        policy_class=TurboLunarPolicy,
+        transform=False,
+    ),
 }
