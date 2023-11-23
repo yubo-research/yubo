@@ -43,6 +43,7 @@ class Optimizer:
         self._data = []
         self._datum_best = None
         self._i_iter = 0
+        self._i_noise = 0
         self._center_designer = CenterDesigner(policy)
 
         print(f"PROBLEM: env = {env_conf.env_name} num_params = {policy.num_params()}")
@@ -133,25 +134,26 @@ class Optimizer:
             ],
         }
 
-    def collect_trajectory(self, policy, i_iter):
-        noise_seed = self._env_conf.noise_seed_0 + i_iter
+    def collect_trajectory(self, policy):
+        # Use a different noise seed every time we collect a trajetory.
+        noise_seed = self._env_conf.noise_seed_0 + self._i_noise
+        self._i_noise += 1
         return collect_trajectory(self._env_conf, policy, noise_seed=noise_seed)
 
-    def _iterate(self, designer, num_arms, i_iter):
+    def _iterate(self, designer, num_arms):
         t0 = time.time()
         policies = designer(self._data, num_arms)
         tf = time.time()
         data = []
         for policy in policies:
-            traj = self.collect_trajectory(policy, i_iter)
+            traj = self.collect_trajectory(policy)
             data.append(Datum(designer, policy, traj))
         return data, tf - t0
 
     def _denoise(self, datum, num_denoise):
         rets = []
-        seed_denoise_0 = 123456789
         for i in range(num_denoise):
-            traj = self.collect_trajectory(datum.policy, seed_denoise_0 + i)
+            traj = self.collect_trajectory(datum.policy)
             rets.append(traj.rreturn)
         # print ("DENOISE:", rets)
         assert np.std(rets) > 0, rets
@@ -174,6 +176,7 @@ class Optimizer:
             designer = designers[min(len(designers) - 1, self._i_iter)]
 
             if init_center and self._i_iter == 0:
+                assert False
                 if self._num_arms == 1:
                     data, d_time = self._iterate(self._center_designer, self._num_arms)
                 else:
@@ -182,7 +185,7 @@ class Optimizer:
                     data.insert(0, data_c[0])
                     # data[np.random.choice(np.arange(self._num_arms))] = data_c[0]
             else:
-                data, d_time = self._iterate(designer, self._num_arms, self._i_iter)
+                data, d_time = self._iterate(designer, self._num_arms)
 
             ret_batch = []
             if self._datum_best is not None:

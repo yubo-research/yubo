@@ -74,12 +74,15 @@ if __name__ == "__main__":
             seed_all(17 + i_rep)
             problem_seed = 18 + i_rep
             env_conf = get_env_conf(d_args["env_tag"], problem_seed=problem_seed, noise_level=d_args.get("noise", None), noise_seed_0=10 * problem_seed)
+            num_denoise = d_args.get("num_denoise", None)
+            if num_denoise is not None:
+                num_denoise = int(num_denoise)
             sample(
                 out_fn,
                 env_conf,
                 d_args["opt_name"],
                 num_rounds=int(d_args["num_rounds"]),
                 num_arms=int(d_args["num_arms"]),
-                num_denoise=d_args.get("num_denoise", None),
+                num_denoise=num_denoise,
             )
             print(f"TIME_REPLICATE: {time.time() - t0:.2f}")
