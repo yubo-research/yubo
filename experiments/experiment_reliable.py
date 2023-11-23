@@ -18,6 +18,15 @@ def writer(out_fn):
             f.close()
 
 
+def _is_done(fn):
+    if not os.path.exists(fn):
+        return False
+    with open(fn, "rb") as f:
+        f.seek(-5, 2)
+        x = f.read(5)
+        return x == b"DONE\n"
+
+
 def sample(out_fn, env_conf, opt_name, num_rounds, num_arms, num_denoise):
     policy = default_policy(env_conf)
     opt = Optimizer(env_conf, policy, num_arms=num_arms)
@@ -26,6 +35,7 @@ def sample(out_fn, env_conf, opt_name, num_rounds, num_arms, num_denoise):
             f.write(
                 f"TRACE: name = {env_conf.env_name} opt_name = {opt_name} i_iter = {i_iter} dt = {te.time_iteration_seconds:.3e} return = {te.rreturn:.3e}\n"
             )
+        f.write("DONE\n")
 
 
 def parse_kv(argv):
@@ -53,8 +63,9 @@ if __name__ == "__main__":
     print(f"PARAMS: {d_args}")
     for i_rep in range(int(d_args["num_reps"])):
         out_fn = f"{out_dir}/{i_rep:05d}"
-        if os.path.exists(out_fn):
+        if _is_done(out_fn):
             print(f"Skipping i_rep = {i_rep}. Already done.")
+            continue
         else:
             t0 = time.time()
             seed_all(17 + i_rep)
