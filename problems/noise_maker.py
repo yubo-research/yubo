@@ -3,10 +3,9 @@ from scipy.stats import qmc
 
 
 class NoiseMaker:
-    def __init__(self, env, normalized_noise_level, num_measurements=1000, seed=17):
+    def __init__(self, env, normalized_noise_level, num_measurements=1000):
         self._env = env
         self._real_noise_level = normalized_noise_level * self._measure_noise(env, num_measurements)
-        self._rng = np.random.default_rng(seed)
 
     @property
     def observation_space(self):
@@ -22,7 +21,10 @@ class NoiseMaker:
         return tuple(ret)
 
     def reset(self, seed):
-        return self._env.reset(seed)
+        # seed is req for rl gym interface
+        # This seed is noise_seed.
+        self._rng = np.random.default_rng(seed)
+        # underlying doesn't/shouldn't use reset return self._env.reset(seed)
 
     def close(self):
         self._env.close()

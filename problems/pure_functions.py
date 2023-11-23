@@ -5,11 +5,11 @@ import common.all_bounds as all_bounds
 from problems.benchmark_functions import all_benchmarks
 
 
-def make(name, seed):
+def make(name, problem_seed):
     if name == "f:tlunar":
         from .turbo_lunar_lander import TurboLunarLander
 
-        return PureFunctionEnv(TurboLunarLander(seed=seed + 17), num_dim=12, seed=seed, distort=False)
+        return PureFunctionEnv(TurboLunarLander(seed=problem_seed + 17), num_dim=12, problem_seed=problem_seed, distort=False)
 
     _, name = name.split(":")
     name, num_dim = name.split("-")
@@ -18,13 +18,13 @@ def make(name, seed):
 
     all_bf = all_benchmarks()
     if name in all_bf:
-        return PureFunctionEnv(all_bf[name](), num_dim, seed)
+        return PureFunctionEnv(all_bf[name](), num_dim, problem_seed)
     assert False, name
 
 
 # all domains are [-1,1]**num_dim
 class PureFunctionEnv:
-    def __init__(self, function, num_dim, seed, distort=True):
+    def __init__(self, function, num_dim, problem_seed, distort=True):
         self._function = function
 
         # state is either 0 or 1
@@ -35,7 +35,7 @@ class PureFunctionEnv:
         self.action_space = Box(low=-np.ones(num_dim, dtype=np.float32), high=np.ones(num_dim, dtype=np.float32))
 
         if distort:
-            rng = np.random.default_rng(seed)
+            rng = np.random.default_rng(problem_seed)
 
             # Distort the parameter space, moving the center
             #  to a randomly-chosen corner of the bounding box.

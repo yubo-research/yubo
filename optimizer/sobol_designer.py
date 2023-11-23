@@ -7,7 +7,7 @@ import common.all_bounds as all_bounds
 class SobolDesigner:
     def __init__(self, policy, init_center, max_points=2**12):
         self._policy = policy
-        seed = policy.seed + 12345
+        seed = policy.problem_seed + 12345
         max_points = int(2 ** np.ceil(np.log2(max_points)))
         self._ps = qmc.Sobol(policy.num_params(), seed=seed).random(max_points)
         self._init_center = init_center

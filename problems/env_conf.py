@@ -9,13 +9,13 @@ from problems.noise_maker import NoiseMaker
 from problems.pure_function_policy import PureFunctionPolicy
 
 
-def get_env_conf(tag, seed=None, noise=None):
+def get_env_conf(tag, problem_seed=None, noise_level=None, noise_seed_0=None):
     if tag in _env_confs:
         ec = _env_confs[tag]
-        ec.seed = seed
+        ec.problem_seed = problem_seed
         ec.solved = 9999
     else:
-        ec = EnvConf(tag, seed=seed, noise=noise, max_steps=1000, solved=9999)
+        ec = EnvConf(tag, problem_seed=problem_seed, noise_level=noise_level, noise_seed_0=noise_seed_0, max_steps=1000, solved=9999)
 
     return ec
 
@@ -32,29 +32,26 @@ class EnvConf:
     env_name: str
     max_steps: int
     solved: int
-    seed: int
-    noise: float = None
+    problem_seed: int
+    noise_level: float = None
+    noise_seed_0: int = None
     show_frames: int = None
     kwargs: dict = None
     state_space: Any = None
     action_space: Any = None
 
-    def _make(self, new_seed=None, **kwargs):
+    def _make(self, **kwargs):
         if self.env_name[:2] == "f:":
-            if new_seed is None:
-                seed = self.seed
-            else:
-                seed = new_seed
-            env = pure_functions.make(self.env_name, seed=seed)
+            env = pure_functions.make(self.env_name, problem_seed=self.problem_seed)
         else:
             env = gym.make(self.env_name, **(kwargs | self.kwargs))
         return env
 
     def make(self, **kwargs):
         env = self._make(**kwargs)
-        if self.noise is not None:
+        if self.noise_level is not None:
             assert self.env_name[:2] == "f:", ("NYI: Noise is only supported for pure functions", self.env_name)
-            env = NoiseMaker(env, self.noise)
+            env = NoiseMaker(env, self.noise_level)
         return env
 
     def __post_init__(self):
@@ -67,8 +64,8 @@ class EnvConf:
 
 
 _env_confs = {
-    "mcc": EnvConf("MountainCarContinuous-v0", seed=None, max_steps=1000, solved=9999, show_frames=100),
-    "lunar": EnvConf("LunarLander-v2", seed=None, max_steps=500, kwargs={"continuous": True}, solved=999, show_frames=30),
-    "ant": EnvConf("Ant-v4", seed=None, max_steps=1000, solved=999, show_frames=30),
-    "bw": EnvConf("BipedalWalker-v3", seed=None, max_steps=1600, solved=300, show_frames=100),
+    "mcc": EnvConf("MountainCarContinuous-v0", problem_seed=None, max_steps=1000, solved=9999, show_frames=100),
+    "lunar": EnvConf("LunarLander-v2", problem_seed=None, max_steps=500, kwargs={"continuous": True}, solved=999, show_frames=30),
+    "ant": EnvConf("Ant-v4", problem_seed=None, max_steps=1000, solved=999, show_frames=30),
+    "bw": EnvConf("BipedalWalker-v3", problem_seed=None, max_steps=1600, solved=300, show_frames=100),
 }

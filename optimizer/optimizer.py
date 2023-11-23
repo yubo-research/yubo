@@ -133,27 +133,25 @@ class Optimizer:
             ],
         }
 
-    def collect_trajectory(self, policy, new_seed=None):
-        if new_seed is None:
-            seed = self._env_conf.seed
-        else:
-            seed = new_seed
-        return collect_trajectory(self._env_conf, policy, seed=seed)
+    def collect_trajectory(self, policy, i_iter):
+        noise_seed = self._env_conf.noise_seed_0 + i_iter
+        return collect_trajectory(self._env_conf, policy, noise_seed=noise_seed)
 
-    def _iterate(self, designer, num_arms):
+    def _iterate(self, designer, num_arms, i_iter):
         t0 = time.time()
         policies = designer(self._data, num_arms)
         tf = time.time()
         data = []
         for policy in policies:
-            traj = self.collect_trajectory(policy)
+            traj = self.collect_trajectory(policy, i_iter)
             data.append(Datum(designer, policy, traj))
         return data, tf - t0
 
     def _denoise(self, datum, num_denoise):
         rets = []
+        seed_denoise_0 = 123456789
         for i in range(num_denoise):
-            traj = self.collect_trajectory(datum.policy, new_seed=12345 + i)
+            traj = self.collect_trajectory(datum.policy, seed_denoise_0 + i)
             rets.append(traj.rreturn)
         # print ("DENOISE:", rets)
         assert np.std(rets) > 0, rets
@@ -184,7 +182,7 @@ class Optimizer:
                     data.insert(0, data_c[0])
                     # data[np.random.choice(np.arange(self._num_arms))] = data_c[0]
             else:
-                data, d_time = self._iterate(designer, self._num_arms)
+                data, d_time = self._iterate(designer, self._num_arms, self._i_iter)
 
             ret_batch = []
             if self._datum_best is not None:

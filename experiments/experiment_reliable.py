@@ -44,21 +44,22 @@ if __name__ == "__main__":
     from problems.env_conf import get_env_conf
 
     d_args = parse_kv(sys.argv[1:])
-    reqd_keys = ["out_dir", "env_tag", "opt_name", "num_arms", "num_reps", "num_rounds"]
+    reqd_keys = ["exp_dir", "env_tag", "opt_name", "num_arms", "num_reps", "num_rounds"]
     for k in reqd_keys:
         assert k in d_args, f"Missing {k} in {list(d_args.keys())}. Required: {reqd_keys}"
 
-    os.makedirs(d_args["out_dir"], exist_ok=True)
+    out_dir = f"{d_args['exp_dir']}/{d_args['env_tag']}/{d_args['opt_name']}"
+    os.makedirs(out_dir, exist_ok=True)
     print(f"PARAMS: {d_args}")
     for i_rep in range(int(d_args["num_reps"])):
-        out_fn = f"{d_args['out_dir']}/{i_rep:05d}"
+        out_fn = f"{out_dir}/{i_rep:05d}"
         if os.path.exists(out_fn):
             print(f"Skipping i_rep = {i_rep}. Already done.")
         else:
             t0 = time.time()
             seed_all(17 + i_rep)
-            seed = 18 + i_rep
-            env_conf = get_env_conf(d_args["env_tag"], seed, noise=d_args.get("noise", None))
+            problem_seed = 18 + i_rep
+            env_conf = get_env_conf(d_args["env_tag"], problem_seed=problem_seed, noise_level=d_args.get("noise", None), noise_seed_0=10 * problem_seed)
             sample(
                 out_fn,
                 env_conf,

@@ -12,9 +12,9 @@ class Trajectory:
     actions: np.ndarray
 
 
-def collect_trajectory(env_conf, policy, show_frames=None, seed=None):
+def collect_trajectory(env_conf, policy, show_frames=None, noise_seed=None):
     render_mode = "rgb_array" if show_frames else None
-    env = env_conf.make(render_mode=render_mode, new_seed=seed)
+    env = env_conf.make(render_mode=render_mode)
     done = False
     return_trajectory = 0
     traj_states, traj_actions = [], []
@@ -34,7 +34,7 @@ def collect_trajectory(env_conf, policy, show_frames=None, seed=None):
         plt.title(f"i_iter = {i_iter} return = {return_trajectory:.2f}")
         plt.show()
 
-    state, _ = env.reset(seed=seed)
+    state, _ = env.reset(seed=noise_seed)
     for i_iter in range(env_conf.max_steps):
         # assert np.all(state >= lb), (state, lb)
         state_p = (state - lb) / width
