@@ -89,12 +89,12 @@ def plot_sorted_agg(ax, data_locator, exp_tag, optimizers=None, renames=None, i_
     plot_sorted(ax, optimizers, mu, se, renames=renames)
 
 
-def plot_compare_problem(ax, data_locator, exp_name, problem_name, optimizers, b_normalize, title, renames=None):
+def plot_compare_problem(ax, data_locator, exp_name, problem_name, optimizers, b_normalize, title, renames=None, old_way=True):
     handles = []
     legend = []
     i_marker = 0
     markers = ["o", "v", "s", "+", "*", "X", "^"]
-    traces = ads.load_multiple_traces(data_locator, exp_name, [problem_name], optimizers)
+    traces = ads.load_multiple_traces(data_locator, exp_name, [problem_name], optimizers, old_way=old_way)
 
     if b_normalize:
         yy = traces.squeeze(0).transpose((1, 0, 2))

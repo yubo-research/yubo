@@ -122,12 +122,13 @@ class AcqMTV(MCAcquisitionFunction):
         eps_good = False
         num_changed = 0
         max_iterations = 10 * self.num_mcmc
+        frac_changed = None
         for _ in range(max_iterations):
             i, X_1 = self._met_propose(X, eps)
             X[i] = X_1[i]
             frac_changed = (1.0 * i).mean().item()
             # print("FC:", eps, eps_good, frac_changed)
-            if frac_changed > 0.50:
+            if frac_changed > 0.50 - 1e-5:
                 eps_good = True
             elif frac_changed < 0.40:
                 eps_good = False
@@ -139,7 +140,9 @@ class AcqMTV(MCAcquisitionFunction):
                 if num_changed == self.num_mcmc:
                     break
         else:
-            raise RuntimeError(f"Could not determine eps in {max_iterations} iterations")
+            print(
+                f"WARNING: Could not determine eps in {max_iterations} iterations. Was at eps = {eps} and num_changed = {num_changed}. Last frac_changed = {frac_changed}"
+            )
 
         return X
 

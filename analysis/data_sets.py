@@ -2,6 +2,8 @@ import os
 
 import numpy as np
 
+from .data_io import data_is_done
+
 
 def problems_in(exp_tag):
     return sorted(os.listdir(f"/Users/dsweet2/Projects/bbo/results/{exp_tag}"))
@@ -67,7 +69,32 @@ def load_kv(fn, keys, grep_for=None):
     return out
 
 
-def load_traces(fn, key="return"):
+def load_traces(trace_dir, key="return"):
+    traces = []
+    i_missing = []
+    width = None
+    for fn in sorted(os.listdir(trace_dir)):
+        fn = f"{trace_dir}/{fn}"
+        if not data_is_done(fn):
+            print("NOT_DONE:", fn)
+            i_missing.append(len(traces))
+            traces.append(None)
+            continue
+        o = load_kv(fn, ["i_iter", key], grep_for="TRACE:")
+        trace = o[key]
+        assert width is None or len(trace) == width, (width, len(trace))
+        width = len(trace)
+        traces.append(trace)
+
+    for i in i_missing:
+        traces[i] = np.nan * np.ones(width)
+
+    traces = np.array(traces)
+    # print (f"Loaded {len(traces)} traces from {fn}")
+    return traces
+
+
+def load_traces_old(fn, key="return"):
     o = load_kv(fn, ["i_sample", key], grep_for="TRACE:")
     if len(o) == 0:
         return None
@@ -86,7 +113,7 @@ def load_traces(fn, key="return"):
     return traces
 
 
-def load_multiple_traces(data_locator, exp_tag, problem_names, opt_names):
+def load_multiple_traces(data_locator, exp_tag, problem_names, opt_names, old_way=True):
     import numpy.ma as npma
 
     """
@@ -105,11 +132,16 @@ def load_multiple_traces(data_locator, exp_tag, problem_names, opt_names):
     for i_problem, problem_name in enumerate(problem_names):
         for i_opt, opt_name in enumerate(opt_names):
             num_tot += 1
+            trace_path = data_locator(exp_tag, problem_name, opt_name)
             try:
-                trace = load_traces(data_locator(exp_tag, problem_name, opt_name))
+                if old_way:
+                    trace = load_traces_old(trace_path)
+                else:
+                    trace = load_traces(trace_path)
             except FileNotFoundError:
                 _report_bad(problem_name, opt_name, "File not found")
                 continue
+
             if trace is None:
                 _report_bad(problem_name, opt_name, "No trace")
                 continue
