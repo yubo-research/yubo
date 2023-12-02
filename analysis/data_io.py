@@ -25,4 +25,9 @@ def data_is_done(fn):
         except OSError:
             return False
         x = f.read(5)
-        return x == b"DONE\n"
+        if x != b"DONE\n":
+            return False
+        f.seek(0, 0)
+        for line in f:
+            print(line.strip().decode())
+        return True
