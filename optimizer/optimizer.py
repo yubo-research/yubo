@@ -205,7 +205,7 @@ class Optimizer:
                 f"ITER: i_iter = {self._i_iter} d_time = {d_time:.2f} ret_max = {ret_batch.max():.2f} ret_mean = {ret_batch.mean():.2f} ret_eval = {ret_eval:.2f}"
             )
             sys.stdout.flush()
-            trace.append(_TraceEntry(self._datum_best.trajectory.rreturn, d_time))
+            trace.append(_TraceEntry(ret_eval, d_time))
             self._i_iter += 1
 
         return trace

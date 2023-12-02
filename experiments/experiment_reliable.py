@@ -15,7 +15,9 @@ def sample(out_fn, env_conf, opt_name, num_rounds, num_arms, num_denoise):
 
     with data_writer(out_fn) as f:
         for i_iter, te in enumerate(opt.collect_trace(ttype=opt_name, num_iterations=num_rounds, num_denoise=num_denoise)):
-            _write(f"TRACE: name = {env_conf.env_name} opt_name = {opt_name} i_iter = {i_iter} dt = {te.time_iteration_seconds:.3e} return = {te.rreturn:.3e}")
+            _write(
+                f, f"TRACE: name = {env_conf.env_name} opt_name = {opt_name} i_iter = {i_iter} dt = {te.time_iteration_seconds:.3e} return = {te.rreturn:.3e}"
+            )
         f.write("DONE\n")
 
 
