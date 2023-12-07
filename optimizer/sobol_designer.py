@@ -27,5 +27,5 @@ class SobolDesigner:
             self._ps = self._ps[1:, :]
             policy = self._policy.clone()
             policy.set_params(all_bounds.p_low + all_bounds.p_width * x)
-            policies.append(policy)
+            policies.append((None, policy))
         return policies

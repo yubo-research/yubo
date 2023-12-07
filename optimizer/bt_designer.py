@@ -48,7 +48,7 @@ class BTDesigner:
         batch_limit = self._optimizer_options["batch_limit"]
         X_0 = acqf.acq_function.X_samples
         sobol = SobolDesigner(self._policy.clone(), init_center=False, max_points=len(X_0))
-        X_s = torch.stack([torch.tensor(x.get_params()) for x in sobol(None, len(X_0))])
+        X_s = torch.stack([torch.tensor(x.get_params()) for _, x in sobol(None, len(X_0))])
         X = torch.cat((X_0, X_s), dim=0)
 
         i = np.random.choice(
@@ -97,11 +97,14 @@ class BTDesigner:
         self.fig_last_acqf = acqf
         self.fig_last_arms = X_cand
 
+        # TODO: Write and call AcqBT.refit()
         policies = []
         for x in X_cand:
             policy = self._policy.clone()
+            # e_af = acqf.acq_function(x[:,None].T).item()
+            e_af = None
             x = (x.detach().numpy().flatten() - all_bounds.bt_low) / all_bounds.bt_width
             p = all_bounds.p_low + all_bounds.p_width * x
             policy.set_params(p)
-            policies.append(policy)
+            policies.append((e_af, policy))
         return policies

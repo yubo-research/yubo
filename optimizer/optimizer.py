@@ -34,10 +34,23 @@ class _TraceEntry:
     time_iteration_seconds: float
 
 
+def arm_best_obs(datum_best, datum):
+    if datum_best.trajectory.rreturn >= datum.trajectory.rreturn:
+        return datum_best
+    return datum
+
+
+def arm_best_acqf(datum_best, datum):
+    if datum_best.e_acqf() >= datum.e_acqf():
+        return datum_best
+    return datum
+
+
 class Optimizer:
-    def __init__(self, env_conf, policy, num_arms, cb_trace=None):
+    def __init__(self, env_conf, policy, num_arms, arm_selector=arm_best_obs, cb_trace=None):
         self._env_conf = env_conf
         self._num_arms = num_arms
+        self._arm_selector = arm_selector
         self.num_params = policy.num_params()
 
         self._data = []
@@ -145,9 +158,9 @@ class Optimizer:
         policies = designer(self._data, num_arms)
         tf = time.time()
         data = []
-        for policy in policies:
+        for e_af, policy in policies:
             traj = self.collect_trajectory(policy)
-            data.append(Datum(designer, policy, traj))
+            data.append(Datum(designer, policy, e_af, traj))
         return data, tf - t0
 
     def _denoise(self, datum, num_denoise):
@@ -160,7 +173,6 @@ class Optimizer:
         return np.mean(rets)
 
     def collect_trace(self, ttype, num_iterations, num_denoise=None):
-        # TODO: select parameters via different methods
         assert ttype in self._designers, f"Unknown optimizer type {ttype}"
 
         designers = self._designers[ttype]
@@ -188,17 +200,15 @@ class Optimizer:
                 data, d_time = self._iterate(designer, self._num_arms)
 
             ret_batch = []
-            if self._datum_best is not None:
-                ret_eval = self._datum_best.trajectory.rreturn
             for datum in data:
                 self._data.append(datum)
                 ret_batch.append(datum.trajectory.rreturn)
-                if self._datum_best is None or datum.trajectory.rreturn > self._datum_best.trajectory.rreturn:
+                if self._datum_best is None or self._arm_selector(self._datum_best, datum) is datum:
                     self._datum_best = datum
-                    if num_denoise is None:
-                        ret_eval = self._datum_best.trajectory.rreturn
-                    else:
-                        ret_eval = self._denoise(self._datum_best, num_denoise)
+            if num_denoise is None:
+                ret_eval = self._datum_best.trajectory.rreturn
+            else:
+                ret_eval = self._denoise(self._datum_best, num_denoise)
 
             ret_batch = np.array(ret_batch)
             print(

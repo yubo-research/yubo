@@ -18,5 +18,5 @@ class RandomDesigner:
             p = policy.get_params()
             p = np.random.uniform(all_bounds.p_low, all_bounds.p_high, size=p.shape)
             policy.set_params(p)
-            policies.append(policy)
+            policies.append((None, policy))
         return policies

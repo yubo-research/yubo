@@ -21,4 +21,5 @@ class TuRBODesigner:
         p = self._turbo.ask()
         policy = self._policy.clone()
         policy.set_params(p)
-        return [policy]
+        # TODO: expected_acqf
+        return [(None, policy)]
