@@ -16,7 +16,7 @@ def data_writer(out_fn):
             f.close()
 
 
-def data_is_done(fn):
+def data_is_done(fn, quiet=True):
     if not os.path.exists(fn):
         return False
     with open(fn, "rb") as f:
@@ -28,6 +28,7 @@ def data_is_done(fn):
         if x != b"DONE\n":
             return False
         f.seek(0, 0)
-        for line in f:
-            print(line.strip().decode())
+        if not quiet:
+            for line in f:
+                print(line.strip().decode())
         return True

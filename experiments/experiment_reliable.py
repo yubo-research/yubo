@@ -1,13 +1,19 @@
 import os
 
 from analysis.data_io import data_is_done, data_writer
-from optimizer.optimizer import Optimizer
+from optimizer.optimizer import Optimizer, arm_best_acqf, arm_best_obs
 from problems.env_conf import default_policy
 
 
 def sample(out_fn, env_conf, opt_name, num_rounds, num_arms, num_denoise):
     policy = default_policy(env_conf)
-    opt = Optimizer(env_conf, policy, num_arms=num_arms)
+    if num_denoise is not None:
+        arm_selector = arm_best_acqf
+        print("BEST_ACQF")
+    else:
+        arm_selector = arm_best_obs
+        print("BEST_OBS")
+    opt = Optimizer(env_conf, policy, num_arms=num_arms, arm_selector=arm_selector)
 
     def _write(f, line):
         print(line)

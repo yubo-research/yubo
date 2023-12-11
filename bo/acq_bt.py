@@ -62,15 +62,8 @@ class AcqBT:
 
         self.acq_function = acq_factory(gp, **kwargs)
 
-    def best_by_measurement(self):
-        X = self.model.train_inputs[0]
-        Y = self.model.train_targets
-        return X[torch.argmax(Y)][:, None].T
-
-    def best_by_estimate(self):
-        X = self.model.train_inputs[0]
-        Y = self.model.posterior(X).mean.squeeze(dim=-1)
-        return X[torch.argmax(Y)][:, None].T
+    def estimate(self, X):
+        return self.acq_function.model.posterior(X).mean.squeeze(-1)
 
     def _find_max(self, gp, bounds):
         x_cand, _ = optimize_acqf(

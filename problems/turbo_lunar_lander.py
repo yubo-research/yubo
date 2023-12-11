@@ -37,7 +37,7 @@ class TurboLunarLander:
     def __call__(self, w):
         env = gym.make("LunarLander-v2", continuous=False)
         total_reward = 0
-        print("NOISE_SEED:", self._noise_seed_)
+        # print("NOISE_SEED:", self._noise_seed_)
         s, info = env.reset(seed=self._noise_seed)
         while True:
             a = self._heuristic(env, s, w)

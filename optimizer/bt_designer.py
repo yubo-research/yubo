@@ -36,11 +36,10 @@ class BTDesigner:
     def init_center(self):
         return self._init_center
 
-    def best_by_measurement(self):
-        return self._acq_fn.best_by_measurement()
-
-    def best_by_estimate(self):
-        return self._acq_fn.best_by_estimate()
+    def estimate(self, data, X):
+        num_dim = self._policy.num_params()
+        acqf = AcqBT(self._acq_fn, data, num_dim, self._acq_kwargs)
+        return acqf.estimate(X)
 
     def _batch_initial_conditions(self, data, num_arms, acqf):
         # half from X_samples, half random
@@ -97,14 +96,11 @@ class BTDesigner:
         self.fig_last_acqf = acqf
         self.fig_last_arms = X_cand
 
-        # TODO: Write and call AcqBT.refit()
         policies = []
         for x in X_cand:
             policy = self._policy.clone()
-            # e_af = acqf.acq_function(x[:,None].T).item()
-            e_af = None
             x = (x.detach().numpy().flatten() - all_bounds.bt_low) / all_bounds.bt_width
             p = all_bounds.p_low + all_bounds.p_width * x
             policy.set_params(p)
-            policies.append((e_af, policy))
+            policies.append(policy)
         return policies

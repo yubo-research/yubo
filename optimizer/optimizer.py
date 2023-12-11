@@ -3,6 +3,7 @@ import time
 from dataclasses import dataclass
 
 import numpy as np
+import torch
 from botorch.acquisition.max_value_entropy_search import (
     qLowerBoundMaxValueEntropy,
 )
@@ -41,7 +42,7 @@ def arm_best_obs(datum_best, datum):
 
 
 def arm_best_acqf(datum_best, datum):
-    if datum_best.e_acqf() >= datum.e_acqf():
+    if datum_best.expected_acqf >= datum.expected_acqf:
         return datum_best
     return datum
 
@@ -158,9 +159,16 @@ class Optimizer:
         policies = designer(self._data, num_arms)
         tf = time.time()
         data = []
-        for e_af, policy in policies:
+        X = []
+        for policy in policies:
             traj = self.collect_trajectory(policy)
-            data.append(Datum(designer, policy, e_af, traj))
+            data.append(Datum(designer, policy, None, traj))
+            X.append(policy.get_params())
+
+        X = torch.stack([torch.tensor(x) for x in X])
+        for i, e_af in enumerate(designer.estimate(data, X).detach().numpy().tolist()):
+            data[i].expected_acqf = e_af
+
         return data, tf - t0
 
     def _denoise(self, datum, num_denoise):
