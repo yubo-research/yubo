@@ -39,7 +39,7 @@ class BTDesigner:
     def estimate(self, data, X):
         num_dim = self._policy.num_params()
         acqf = AcqBT(self._acq_fn, data, num_dim, self._acq_kwargs)
-        return acqf.estimate(X)
+        return acqf.estimate(X).detach().numpy().tolist()
 
     def _batch_initial_conditions(self, data, num_arms, acqf):
         # half from X_samples, half random

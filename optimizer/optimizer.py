@@ -166,8 +166,11 @@ class Optimizer:
             X.append(policy.get_params())
 
         X = torch.stack([torch.tensor(x) for x in X])
-        for i, e_af in enumerate(designer.estimate(data, X).detach().numpy().tolist()):
-            data[i].expected_acqf = e_af
+        for i, e_af in enumerate(designer.estimate(data, X)):
+            if e_af is None:
+                data[i].expected_acqf = data[i].trajectory.rreturn
+            else:
+                data[i].expected_acqf = e_af
 
         return data, tf - t0
 

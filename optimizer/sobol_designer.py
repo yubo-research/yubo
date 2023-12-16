@@ -16,6 +16,9 @@ class SobolDesigner:
     def init_center(self):
         return self._init_center
 
+    def estimate(self, data, X):
+        return [None] * len(X)
+
     def __call__(self, _, num_arms):
         assert len(self._ps) > 0, "max_points exceeded"
 
@@ -27,5 +30,5 @@ class SobolDesigner:
             self._ps = self._ps[1:, :]
             policy = self._policy.clone()
             policy.set_params(all_bounds.p_low + all_bounds.p_width * x)
-            policies.append((None, policy))
+            policies.append(policy)
         return policies
