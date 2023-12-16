@@ -47,7 +47,7 @@ class BTDesigner:
         batch_limit = self._optimizer_options["batch_limit"]
         X_0 = acqf.acq_function.X_samples
         sobol = SobolDesigner(self._policy.clone(), init_center=False, max_points=len(X_0))
-        X_s = torch.stack([torch.tensor(x.get_params()) for _, x in sobol(None, len(X_0))])
+        X_s = torch.stack([torch.tensor(x.get_params()) for x in sobol(None, len(X_0))])
         X = torch.cat((X_0, X_s), dim=0)
 
         i = np.random.choice(
