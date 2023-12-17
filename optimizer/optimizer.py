@@ -40,13 +40,6 @@ def arm_best_obs(datum_best, datum):
         return datum_best
     return datum
 
-
-def arm_best_acqf(datum_best, datum):
-    if datum_best.expected_acqf >= datum.expected_acqf:
-        return datum_best
-    return datum
-
-
 class Optimizer:
     def __init__(self, env_conf, policy, num_arms, arm_selector=arm_best_obs, cb_trace=None):
         self._env_conf = env_conf
@@ -164,13 +157,6 @@ class Optimizer:
             traj = self.collect_trajectory(policy)
             data.append(Datum(designer, policy, None, traj))
             X.append(policy.get_params())
-
-        X = torch.stack([torch.tensor(x) for x in X])
-        for i, e_af in enumerate(designer.estimate(data, X)):
-            if e_af is None:
-                data[i].expected_acqf = data[i].trajectory.rreturn
-            else:
-                data[i].expected_acqf = e_af
 
         return data, tf - t0
 

@@ -1,13 +1,11 @@
 import torch
 from botorch.acquisition import PosteriorMean
-from botorch.exceptions.errors import ModelFittingError
-from botorch.fit import fit_gpytorch_mll
 from botorch.models import SingleTaskGP
 from botorch.optim import optimize_acqf
-from botorch.utils import standardize
-from gpytorch.mlls import ExactMarginalLogLikelihood, LeaveOneOutPseudoLikelihood
 
 import common.all_bounds as all_bounds
+
+import bo.fit_gp as fit_gp
 
 
 class AcqBT:
@@ -19,26 +17,7 @@ class AcqBT:
             gp = SingleTaskGP(X, Y)
             gp.eval()
         else:
-            Y, X = zip(*[self._mk_yx(d) for d in data])
-            Y = torch.tensor(Y)[:, None]
-            X = torch.stack(X).type(dtype)
-            Y = standardize(Y).type(dtype)
-            gp = SingleTaskGP(X, Y)
-            mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
-            m = None
-            for i_try in range(3):
-                try:
-                    fit_gpytorch_mll(mll)
-                except ModelFittingError as e:
-                    m = e
-                    print(f"Retrying fit i_try = {i_try}")
-                    print("Trying LeaveOneOutPseudoLikelihood")
-                    mll = LeaveOneOutPseudoLikelihood(gp.likelihood, gp)
-                    pass
-                else:
-                    break
-            else:
-                raise m
+            gp, Y, X = fit_gp.fit_gp(data, dtype)
 
         # All BoTorch stuff is coded to bounds of [0,1]!
         self.bounds = torch.tensor([[0.0] * num_dim, [1.0] * num_dim], device=X.device, dtype=X.dtype)
@@ -62,9 +41,6 @@ class AcqBT:
 
         self.acq_function = acq_factory(gp, **kwargs)
 
-    def estimate(self, X):
-        return self.acq_function.model.posterior(X).mean.squeeze(-1)
-
     def _find_max(self, gp, bounds):
         x_cand, _ = optimize_acqf(
             acq_function=PosteriorMean(model=gp),
@@ -76,12 +52,6 @@ class AcqBT:
         )
         return x_cand
 
-    def _mk_yx(self, datum):
-        return datum.trajectory.rreturn, self._mk_x(datum.policy)
-
-    def _mk_x(self, policy):
-        return all_bounds.bt_low + all_bounds.bt_width * ((torch.as_tensor(policy.get_params()) - all_bounds.p_low) / all_bounds.p_width)
-
     def __call__(self, policy):
-        X = torch.atleast_2d(self._mk_x(policy)).unsqueeze(0)
+        X = torch.atleast_2d(fit_gp.mk_x(policy)).unsqueeze(0)
         return self.acq_function(X).squeeze().item()
