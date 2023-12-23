@@ -4,7 +4,9 @@ from botorch.fit import fit_gpytorch_mll
 from botorch.models import SingleTaskGP
 from botorch.utils import standardize
 from gpytorch.mlls import ExactMarginalLogLikelihood, LeaveOneOutPseudoLikelihood
+
 import common.all_bounds as all_bounds
+
 
 def fit_gp(data, dtype):
     Y, X = zip(*[mk_yx(d) for d in data])
@@ -32,6 +34,7 @@ def fit_gp(data, dtype):
 
 def mk_yx(datum):
     return datum.trajectory.rreturn, mk_x(datum.policy)
+
 
 def mk_x(policy):
     return all_bounds.bt_low + all_bounds.bt_width * ((torch.as_tensor(policy.get_params()) - all_bounds.p_low) / all_bounds.p_width)

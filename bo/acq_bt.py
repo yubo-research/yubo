@@ -3,8 +3,6 @@ from botorch.acquisition import PosteriorMean
 from botorch.models import SingleTaskGP
 from botorch.optim import optimize_acqf
 
-import common.all_bounds as all_bounds
-
 import bo.fit_gp as fit_gp
 
 

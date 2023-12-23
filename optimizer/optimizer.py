@@ -3,7 +3,6 @@ import time
 from dataclasses import dataclass
 
 import numpy as np
-import torch
 from botorch.acquisition.max_value_entropy_search import (
     qLowerBoundMaxValueEntropy,
 )
@@ -25,7 +24,7 @@ from .cma_designer import CMADesigner
 from .datum import Datum
 from .random_designer import RandomDesigner
 from .sobol_designer import SobolDesigner
-from .trajectories import collect_trajectory
+from .trajectories import Trajectory, collect_trajectory
 from .turbo_designer import TuRBODesigner
 
 
@@ -40,10 +39,13 @@ def arm_best_obs(datum_best, datum):
         return datum_best
     return datum
 
+
 class Optimizer:
-    def __init__(self, env_conf, policy, num_arms, arm_selector=arm_best_obs, cb_trace=None):
+    def __init__(self, env_conf, policy, num_arms, num_obs=1, num_denoise=None, arm_selector=arm_best_obs, cb_trace=None):
         self._env_conf = env_conf
         self._num_arms = num_arms
+        self._num_obs = num_obs
+        self._num_denoise = num_denoise
         self._arm_selector = arm_selector
         self.num_params = policy.num_params()
 
@@ -154,22 +156,29 @@ class Optimizer:
         data = []
         X = []
         for policy in policies:
-            traj = self.collect_trajectory(policy)
-            data.append(Datum(designer, policy, None, traj))
+            if self._num_obs == 1:
+                traj = self.collect_trajectory(policy)
+                data.append(Datum(designer, policy, None, traj))
+            else:
+                rreturns = []
+                for _ in range(self._num_obs):
+                    traj = self.collect_trajectory(policy)
+                    rreturns.append(traj.rreturn)
+                data.append(Datum(designer, policy, None, Trajectory(np.mean(rreturns), "n/a when num_obs>1", "n/a when num_obs>1")))
             X.append(policy.get_params())
 
         return data, tf - t0
 
-    def _denoise(self, datum, num_denoise):
+    def _denoise(self, datum):
         rets = []
-        for i in range(num_denoise):
+        for i in range(self._num_denoise):
             traj = self.collect_trajectory(datum.policy)
             rets.append(traj.rreturn)
         # print ("DENOISE:", rets)
         assert np.std(rets) > 0, rets
         return np.mean(rets)
 
-    def collect_trace(self, ttype, num_iterations, num_denoise=None):
+    def collect_trace(self, ttype, num_iterations):
         assert ttype in self._designers, f"Unknown optimizer type {ttype}"
 
         designers = self._designers[ttype]
@@ -202,10 +211,10 @@ class Optimizer:
                 ret_batch.append(datum.trajectory.rreturn)
                 if self._datum_best is None or self._arm_selector(self._datum_best, datum) is datum:
                     self._datum_best = datum
-            if num_denoise is None:
+            if self._num_denoise is None:
                 ret_eval = self._datum_best.trajectory.rreturn
             else:
-                ret_eval = self._denoise(self._datum_best, num_denoise)
+                ret_eval = self._denoise(self._datum_best)
 
             ret_batch = np.array(ret_batch)
             print(

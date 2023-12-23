@@ -5,16 +5,16 @@ from optimizer.optimizer import Optimizer
 from problems.env_conf import default_policy
 
 
-def sample(out_fn, env_conf, opt_name, num_rounds, num_arms, num_denoise):
+def sample(out_fn, env_conf, opt_name, num_rounds, num_arms, num_obs, num_denoise):
     policy = default_policy(env_conf)
-    opt = Optimizer(env_conf, policy, num_arms=num_arms)
+    opt = Optimizer(env_conf, policy, num_arms=num_arms, num_denoise=num_denoise, num_obs=num_obs)
 
     def _write(f, line):
         print(line)
         f.write(line + "\n")
 
     with data_writer(out_fn) as f:
-        for i_iter, te in enumerate(opt.collect_trace(ttype=opt_name, num_iterations=num_rounds, num_denoise=num_denoise)):
+        for i_iter, te in enumerate(opt.collect_trace(ttype=opt_name, num_iterations=num_rounds)):
             _write(
                 f, f"TRACE: name = {env_conf.env_name} opt_name = {opt_name} i_iter = {i_iter} dt = {te.time_iteration_seconds:.3e} return = {te.rreturn:.3e}"
             )
@@ -37,7 +37,7 @@ if __name__ == "__main__":
     from problems.env_conf import get_env_conf
 
     d_args = parse_kv(sys.argv[1:])
-    reqd_keys = ["exp_dir", "env_tag", "opt_name", "num_arms", "num_reps", "num_rounds"]
+    reqd_keys = ["exp_dir", "env_tag", "opt_name", "num_arms", "num_rounds", "num_reps"]
     for k in reqd_keys:
         assert k in d_args, f"Missing {k} in {list(d_args.keys())}. Required: {reqd_keys}"
 
@@ -58,12 +58,14 @@ if __name__ == "__main__":
             num_denoise = d_args.get("num_denoise", None)
             if num_denoise is not None:
                 num_denoise = int(num_denoise)
+            print("NUM_OBS:", d_args["num_obs"])
             sample(
                 out_fn,
                 env_conf,
                 d_args["opt_name"],
                 num_rounds=int(d_args["num_rounds"]),
                 num_arms=int(d_args["num_arms"]),
+                num_obs=int(d_args.get("num_obs", 1)),
                 num_denoise=num_denoise,
             )
             print(f"TIME_REPLICATE: {time.time() - t0:.2f}")
