@@ -58,7 +58,6 @@ if __name__ == "__main__":
             num_denoise = d_args.get("num_denoise", None)
             if num_denoise is not None:
                 num_denoise = int(num_denoise)
-            print("NUM_OBS:", d_args["num_obs"])
             sample(
                 out_fn,
                 env_conf,

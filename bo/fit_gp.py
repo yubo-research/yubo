@@ -19,7 +19,7 @@ def fit_gp(data, dtype):
     for i_try in range(3):
         try:
             fit_gpytorch_mll(mll)
-        except ModelFittingError as e:
+        except (RuntimeError, ModelFittingError) as e:
             m = e
             print(f"Retrying fit i_try = {i_try}")
             print("Trying LeaveOneOutPseudoLikelihood")
