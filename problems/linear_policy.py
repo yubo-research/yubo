@@ -43,7 +43,10 @@ class LinearPolicy:
         m, s = self._ms_filter.get_stats()
         state = state - m
         state = state / s
-        scale = 10 * np.abs(self._scale)
-        # beta = np.sign(self._beta) * (np.exp(np.abs(self._beta)) - 1)
-        beta = scale * self._beta
+        scale = 0.01 + 10 * np.abs(self._scale)
+        norm = scale * np.abs(self._beta).sum()
+        if norm > 0:
+            beta = self._beta / norm
+        else:
+            beta = 0.0 * self._beta
         return np.tanh(beta @ state)
