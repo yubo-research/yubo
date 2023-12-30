@@ -2,7 +2,8 @@ import os
 
 from analysis.data_io import data_is_done, data_writer
 from optimizer.arm_best_est import ArmBestEst
-from optimizer.optimizer import Optimizer, arm_best_obs
+from optimizer.arm_best_obs import ArmBestObs
+from optimizer.optimizer import Optimizer
 from problems.env_conf import default_policy
 
 
@@ -12,7 +13,7 @@ def sample(out_fn, env_conf, opt_name, num_rounds, num_arms, num_obs, num_denois
     if num_denoise is not None and num_denoise > 0:
         arm_selector = ArmBestEst()
     else:
-        arm_selector = arm_best_obs
+        arm_selector = ArmBestObs()
     opt = Optimizer(env_conf, policy, num_arms=num_arms, num_denoise=num_denoise, num_obs=num_obs, arm_selector=arm_selector)
 
     def _write(f, line):

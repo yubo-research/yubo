@@ -8,7 +8,7 @@ class ArmBestEst:
         print("Using ArmBestEst")
         self._Y_hat = None
 
-    def reset(self, data):
+    def _fit(self, data):
         gp, Y, X = fit_gp(data)
         self._X = X.detach().numpy()
         self._Y_hat = gp.posterior(X, observation_noise=False).mean.squeeze(-1).detach().numpy()
@@ -25,9 +25,10 @@ class ArmBestEst:
         assert dists[i] < 1e-6, (x, dists[i], dists)
         return self._Y_hat[i]
 
-    def __call__(self, datum_best, datum):
-        y_best = self._get_est(datum_best)
-        y = self._get_est(datum)
-        if y_best > y:
-            return datum_best
-        return datum
+    def __call__(self, data):
+        self._fit(data)
+
+        y_hat = np.array([self._get_est(d) for d in data])
+        i = np.random.choice(np.where(y_hat == y_hat.max())[0])
+
+        return data[i].policy, y_hat[i]

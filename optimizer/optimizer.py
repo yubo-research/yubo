@@ -34,14 +34,8 @@ class _TraceEntry:
     time_iteration_seconds: float
 
 
-def arm_best_obs(datum_best, datum):
-    if datum_best.trajectory.rreturn >= datum.trajectory.rreturn:
-        return datum_best
-    return datum
-
-
 class Optimizer:
-    def __init__(self, env_conf, policy, num_arms, num_obs=1, num_denoise=None, arm_selector=arm_best_obs, cb_trace=None):
+    def __init__(self, env_conf, policy, num_arms, arm_selector, num_obs=1, num_denoise=None, cb_trace=None):
         self._env_conf = env_conf
         self._num_arms = num_arms
         self._num_obs = num_obs
@@ -50,7 +44,6 @@ class Optimizer:
         self.num_params = policy.num_params()
 
         self._data = []
-        self._datum_best = None
         self._i_iter = 0
         self._i_noise = 0
         self._center_designer = CenterDesigner(policy)
@@ -170,10 +163,10 @@ class Optimizer:
 
         return data, tf - t0
 
-    def _denoise(self, datum):
+    def _denoise(self, policy):
         rets = []
         for i in range(self._num_denoise):
-            traj = self.collect_trajectory(datum.policy)
+            traj = self.collect_trajectory(policy)
             rets.append(traj.rreturn)
         if np.std(rets) == 0:
             print(f"WARNING: All rets are the same {rets}")
@@ -210,22 +203,18 @@ class Optimizer:
             ret_batch = []
             for datum in data:
                 self._data.append(datum)
-
-            if hasattr(self._arm_selector, "reset"):
-                self._arm_selector.reset(self._data)
-            for datum in data:
                 ret_batch.append(datum.trajectory.rreturn)
-                if self._datum_best is None or self._arm_selector(self._datum_best, datum) is datum:
-                    self._datum_best = datum
+
+            policy_best, r_best_est = self._arm_selector(self._data)
             if self._num_denoise is None:
-                ret_eval = self._datum_best.trajectory.rreturn
+                ret_eval = r_best_est
             else:
-                ret_eval = self._denoise(self._datum_best)
+                ret_eval = self._denoise(policy_best)
 
             ret_batch = np.array(ret_batch)
 
             print(
-                f"ITER: i_iter = {self._i_iter} d_time = {d_time:.2f} ret_max = {ret_batch.max():.2f} ret_mean = {ret_batch.mean():.2f} ret_best = {self._datum_best.trajectory.rreturn:.2f} ret_eval = {ret_eval:.2f}"
+                f"ITER: i_iter = {self._i_iter} d_time = {d_time:.2f} ret_max = {ret_batch.max():.2f} ret_mean = {ret_batch.mean():.2f} ret_best = {r_best_est:.2f} ret_eval = {ret_eval:.2f}"
             )
             sys.stdout.flush()
             trace.append(_TraceEntry(ret_eval, d_time))
