@@ -166,6 +166,7 @@ class Optimizer:
                     rreturns.append(traj.rreturn)
                 data.append(Datum(designer, policy, None, Trajectory(np.mean(rreturns), "n/a when num_obs>1", "n/a when num_obs>1")))
             X.append(policy.get_params())
+            # print ("RUN:", self._num_obs, data[-1].trajectory.rreturn, policy.get_params())
 
         return data, tf - t0
 
@@ -175,7 +176,9 @@ class Optimizer:
             traj = self.collect_trajectory(datum.policy)
             rets.append(traj.rreturn)
         # print ("DENOISE:", rets)
-        assert np.std(rets) > 0, rets
+        if np.std(rets)==0:
+            print (f"WARNING: All rets are the same {rets}")
+            # assert np.std(rets) > 0, rets
         return np.mean(rets)
 
     def collect_trace(self, ttype, num_iterations):

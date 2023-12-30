@@ -25,11 +25,10 @@ class AcqMTV(MCAcquisitionFunction):
         beta=0,
         num_mcmc=5,
         num_Y_samples=1,
-        beta_ucb=2,
         sample_type="mh",
         x_max_type="find_max",
         alt_acqf=None,
-        lengthscale_correction="type_0",
+            lengthscale_correction=None,
         eps_0=0.1,
         **kwargs,
     ) -> None:
@@ -38,7 +37,6 @@ class AcqMTV(MCAcquisitionFunction):
         self.num_X_samples = num_X_samples
         self.ttype = ttype
         self.beta = beta
-        self.beta_ucb = beta_ucb
         self._alt_acqf = alt_acqf
         self._lengthscale_correction = lengthscale_correction
         self._eps_0 = eps_0
