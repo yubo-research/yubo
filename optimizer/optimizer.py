@@ -176,8 +176,8 @@ class Optimizer:
             traj = self.collect_trajectory(datum.policy)
             rets.append(traj.rreturn)
         # print ("DENOISE:", rets)
-        if np.std(rets)==0:
-            print (f"WARNING: All rets are the same {rets}")
+        if np.std(rets) == 0:
+            print(f"WARNING: All rets are the same {rets}")
             # assert np.std(rets) > 0, rets
         return np.mean(rets)
 

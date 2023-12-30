@@ -44,6 +44,6 @@ class LinearPolicy:
         state = state - m
         state = state / s
         scale = 10 * np.abs(self._scale)
-        beta = np.sign(self._beta) * (np.exp(np.abs(self._beta)) - 1)
-        # TEST beta = scale * self._beta
+        # beta = np.sign(self._beta) * (np.exp(np.abs(self._beta)) - 1)
+        beta = scale * self._beta
         return np.tanh(beta @ state)
