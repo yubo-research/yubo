@@ -10,9 +10,9 @@ import common.all_bounds as all_bounds
 
 def fit_gp(data, dtype=torch.float64):
     Y, X = zip(*[mk_yx(d) for d in data])
-    Y = torch.tensor(Y)[:, None]
+    Y_0 = torch.tensor(Y)[:, None]
     X = torch.stack(X).type(dtype)
-    Y = standardize(Y).type(dtype)
+    Y = standardize(Y_0).type(dtype)
     gp = SingleTaskGP(X, Y)
     mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
     m = None
@@ -29,7 +29,7 @@ def fit_gp(data, dtype=torch.float64):
             break
     else:
         raise m
-    return gp, Y, X
+    return gp, Y_0, X
 
 
 def mk_yx(datum):

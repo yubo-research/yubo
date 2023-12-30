@@ -1,34 +1,20 @@
 import numpy as np
 
-from bo.fit_gp import fit_gp, mk_x
+from bo.fit_gp import fit_gp
 
 
 class ArmBestEst:
     def __init__(self):
         print("Using ArmBestEst")
-        self._Y_hat = None
 
-    def _fit(self, data):
+    def _calc_y_hat(self, data):
         gp, Y, X = fit_gp(data)
         self._X = X.detach().numpy()
-        self._Y_hat = gp.posterior(X, observation_noise=False).mean.squeeze(-1).detach().numpy()
-
-    def _get_est(self, datum):
-        # slow, silly, but works
-        x = mk_x(datum.policy)
-        dists = []
-        for X in self._X:
-            d = ((x - X) ** 2).sum()
-            dists.append(float(d))
-        dists = np.array(dists)
-        i = np.random.choice(np.where(dists == min(dists))[0])
-        assert dists[i] < 1e-6, (x, dists[i], dists)
-        return self._Y_hat[i]
+        return Y.mean() + Y.std() * gp.posterior(X, observation_noise=False).mean.squeeze(-1).detach().numpy()
 
     def __call__(self, data):
-        self._fit(data)
+        Y_hat = self._calc_y_hat(data)
 
-        y_hat = np.array([self._get_est(d) for d in data])
-        i = np.random.choice(np.where(y_hat == y_hat.max())[0])
+        i = np.random.choice(np.where(Y_hat == Y_hat.max())[0])
 
-        return data[i].policy, y_hat[i]
+        return data[i].policy, Y_hat[i]
