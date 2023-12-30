@@ -76,9 +76,11 @@ _env_confs = {
     "lunar": EnvConf("LunarLander-v2", problem_seed=None, max_steps=500, kwargs={"continuous": True}, solved=999, show_frames=30),
     "ant": EnvConf("Ant-v4", problem_seed=None, max_steps=1000, solved=999, show_frames=30),
     "mpend": EnvConf("InvertedPendulum-v4", problem_seed=None, max_steps=1000, solved=999, show_frames=30),
+    "macro": EnvConf("InvertedDoublePendulum-v4", problem_seed=None, max_steps=1000, solved=999, show_frames=30),
     "swim": EnvConf("Swimmer-v4", problem_seed=None, max_steps=1000, solved=999, show_frames=30),
     "reach": EnvConf("Reacher-v4", problem_seed=None, max_steps=1000, solved=999, show_frames=30),
     "hop": EnvConf("Hopper-v4", problem_seed=None, max_steps=1000, solved=999, show_frames=30),
+    "human": EnvConf("Humanoid-v4", problem_seed=None, max_steps=1000, solved=999, show_frames=30),
     "bw": EnvConf("BipedalWalker-v3", problem_seed=None, max_steps=1600, solved=300, show_frames=100),
     "tlunar": EnvConf(
         "LunarLander-v2",

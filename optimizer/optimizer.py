@@ -147,7 +147,8 @@ class Optimizer:
         # Use a different noise seed every time we collect a trajetory.
         noise_seed = self._env_conf.noise_seed_0 + self._i_noise
         self._i_noise += 1
-        return collect_trajectory(self._env_conf, policy, noise_seed=noise_seed)
+        traj = collect_trajectory(self._env_conf, policy, noise_seed=noise_seed)
+        return traj
 
     def _iterate(self, designer, num_arms):
         t0 = time.time()
@@ -174,7 +175,6 @@ class Optimizer:
         for i in range(self._num_denoise):
             traj = self.collect_trajectory(datum.policy)
             rets.append(traj.rreturn)
-        # print ("DENOISE:", rets)
         if np.std(rets) == 0:
             print(f"WARNING: All rets are the same {rets}")
             # assert np.std(rets) > 0, rets
@@ -220,7 +220,7 @@ class Optimizer:
 
             ret_batch = np.array(ret_batch)
             print(
-                f"ITER: i_iter = {self._i_iter} d_time = {d_time:.2f} ret_max = {ret_batch.max():.2f} ret_mean = {ret_batch.mean():.2f} ret_eval = {ret_eval:.2f}"
+                f"ITER: i_iter = {self._i_iter} d_time = {d_time:.2f} ret_max = {ret_batch.max():.2f} ret_mean = {ret_batch.mean():.2f} ret_best = {self._datum_best.trajectory.rreturn:.2f} ret_eval = {ret_eval:.2f}"
             )
             sys.stdout.flush()
             trace.append(_TraceEntry(ret_eval, d_time))

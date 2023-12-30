@@ -154,7 +154,10 @@ class AcqMTV(MCAcquisitionFunction):
         Y_1 = Y_both[len(X) :]
 
         # P{maximizer | out-out-bounds} == 0
-        return (X_1.min(dim=1).values >= 0) & (X_1.max(dim=1).values <= 1) & (Y_1 > Y).flatten(), X_1
+        # return (X_1.min(dim=1).values >= 0) & (X_1.max(dim=1).values <= 1) & (Y_1 > Y).flatten(), X_1
+        i_good = (X_1.min(dim=1).values >= -1e-6) & (X_1.max(dim=1).values <= 1 + 1e-6) & (Y_1 > Y).flatten()
+        X_1[i_good] = torch.maximum(torch.tensor(0.0), torch.minimum(torch.tensor(1.0), X_1[i_good]))
+        return i_good, X_1
 
     @t_batch_mode_transform()
     def forward(self, X):
