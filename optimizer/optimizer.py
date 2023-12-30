@@ -166,7 +166,6 @@ class Optimizer:
                     rreturns.append(traj.rreturn)
                 data.append(Datum(designer, policy, None, Trajectory(np.mean(rreturns), "n/a when num_obs>1", "n/a when num_obs>1")))
             X.append(policy.get_params())
-            # print ("RUN:", self._num_obs, data[-1].trajectory.rreturn, policy.get_params())
 
         return data, tf - t0
 
