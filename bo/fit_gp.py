@@ -8,7 +8,7 @@ from gpytorch.mlls import ExactMarginalLogLikelihood, LeaveOneOutPseudoLikelihoo
 import common.all_bounds as all_bounds
 
 
-def fit_gp(data, dtype):
+def fit_gp(data, dtype=torch.float64):
     Y, X = zip(*[mk_yx(d) for d in data])
     Y = torch.tensor(Y)[:, None]
     X = torch.stack(X).type(dtype)

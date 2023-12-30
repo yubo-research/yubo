@@ -210,6 +210,10 @@ class Optimizer:
             ret_batch = []
             for datum in data:
                 self._data.append(datum)
+
+            if hasattr(self._arm_selector, "reset"):
+                self._arm_selector.reset(self._data)
+            for datum in data:
                 ret_batch.append(datum.trajectory.rreturn)
                 if self._datum_best is None or self._arm_selector(self._datum_best, datum) is datum:
                     self._datum_best = datum
@@ -219,6 +223,7 @@ class Optimizer:
                 ret_eval = self._denoise(self._datum_best)
 
             ret_batch = np.array(ret_batch)
+
             print(
                 f"ITER: i_iter = {self._i_iter} d_time = {d_time:.2f} ret_max = {ret_batch.max():.2f} ret_mean = {ret_batch.mean():.2f} ret_best = {self._datum_best.trajectory.rreturn:.2f} ret_eval = {ret_eval:.2f}"
             )
