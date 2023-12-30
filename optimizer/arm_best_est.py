@@ -11,7 +11,7 @@ class ArmBestEst:
     def reset(self, data):
         gp, Y, X = fit_gp(data)
         self._X = X.detach().numpy()
-        self._Y_hat = gp.posterior(X).mean.squeeze(-1).detach().numpy()
+        self._Y_hat = gp.posterior(X, observation_noise=False).mean.squeeze(-1).detach().numpy()
 
     def _get_est(self, datum):
         # slow, silly, but works
