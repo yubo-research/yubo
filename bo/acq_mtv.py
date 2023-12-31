@@ -11,9 +11,9 @@ from botorch.utils.probability.utils import ndtr as Phi
 from botorch.utils.probability.utils import (
     phi,
 )
-
-# from IPython.core.debugger import set_trace
 from torch.quasirandom import SobolEngine
+
+# from .fit_gp import fit_gp_XY
 
 
 class AcqMTV(MCAcquisitionFunction):
@@ -90,6 +90,18 @@ class AcqMTV(MCAcquisitionFunction):
         i = np.arange(len(self.X_samples))
         i = np.random.choice(i, size=(int(num_arms)), replace=False)
         return self.X_samples[i]
+
+    def _reimagine(self, num_imag):
+        # X = self.model.train_inputs[0]
+        # num_dim = X.shape[-1]
+        # TODO: X = [orig x] + [sobol samples]
+        # - Y = self.model mean (X)
+        # - gp = fit_gp_XY(X, Y)
+        # - x_* = optimize_acqf(this gp)
+        # - generate num_imag such x_*
+        # - use this in place of mcmc
+        # This should be much more precise in high dimensions
+        pass
 
     def _find_max(self):
         X = self.model.train_inputs[0]

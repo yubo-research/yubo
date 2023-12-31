@@ -71,16 +71,17 @@ class EnvConf:
 
 _env_confs = {
     "mcc": EnvConf("MountainCarContinuous-v0", problem_seed=None, max_steps=1000, solved=9999, show_frames=100),
-    "cart": EnvConf("CartPole-v1", problem_seed=None, max_steps=1000, solved=9999, show_frames=100),
-    "pend": EnvConf("Pendulum-v1", problem_seed=None, max_steps=1000, solved=9999, show_frames=100),
+    "pend": EnvConf("Pendulum-v1", problem_seed=None, max_steps=200, solved=9999, show_frames=100),
     "lunar": EnvConf("LunarLander-v2", problem_seed=None, max_steps=500, kwargs={"continuous": True}, solved=999, show_frames=30),
     "ant": EnvConf("Ant-v4", problem_seed=None, max_steps=1000, solved=999, show_frames=30),
     "mpend": EnvConf("InvertedPendulum-v4", problem_seed=None, max_steps=1000, solved=999, show_frames=30),
     "macro": EnvConf("InvertedDoublePendulum-v4", problem_seed=None, max_steps=1000, solved=999, show_frames=30),
     "swim": EnvConf("Swimmer-v4", problem_seed=None, max_steps=1000, solved=999, show_frames=30),
     "reach": EnvConf("Reacher-v4", problem_seed=None, max_steps=1000, solved=999, show_frames=30),
+    "push": EnvConf("Pusher-v4", problem_seed=None, max_steps=100, solved=999, show_frames=30),
     "hop": EnvConf("Hopper-v4", problem_seed=None, max_steps=1000, solved=999, show_frames=30),
     "human": EnvConf("Humanoid-v4", problem_seed=None, max_steps=1000, solved=999, show_frames=30),
+    "stand": EnvConf("HumanoidStandup-v4", problem_seed=None, max_steps=1000, solved=999, show_frames=30),
     "bw": EnvConf("BipedalWalker-v3", problem_seed=None, max_steps=1600, solved=300, show_frames=100),
     "tlunar": EnvConf(
         "LunarLander-v2",

@@ -8,11 +8,8 @@ from gpytorch.mlls import ExactMarginalLogLikelihood, LeaveOneOutPseudoLikelihoo
 import common.all_bounds as all_bounds
 
 
-def fit_gp(data, dtype=torch.float64):
-    Y, X = zip(*[mk_yx(d) for d in data])
-    Y_0 = torch.tensor(Y)[:, None]
-    X = torch.stack(X).type(dtype)
-    Y = standardize(Y_0).type(dtype)
+def fit_gp_XY(X, Y):
+    Y = standardize(Y).to(X.dtype)
     gp = SingleTaskGP(X, Y)
     mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
     m = None
@@ -29,7 +26,16 @@ def fit_gp(data, dtype=torch.float64):
             break
     else:
         raise m
-    return gp, Y_0, X
+    return gp
+
+
+def fit_gp(data, dtype=torch.float64):
+    Y, X = zip(*[mk_yx(d) for d in data])
+    Y = torch.tensor(Y)[:, None]
+    X = torch.stack(X).type(dtype)
+    gp = fit_gp_XY(X, Y)
+
+    return gp, Y, X
 
 
 def mk_yx(datum):
