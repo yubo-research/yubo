@@ -21,7 +21,7 @@ class AcqMTV(MCAcquisitionFunction):
         num_X_samples,
         ttype,
         beta=0,
-        num_mcmc=50,  # TEST 5,
+        num_mcmc=5,
         num_Y_samples=1,
         sample_type="mh",
         x_max_type="find_max",
@@ -175,15 +175,23 @@ class AcqMTV(MCAcquisitionFunction):
 
         num_chains = X.shape[0]
         num_dim = X.shape[1]
-        # random direction, u
-        u = torch.randn(size=(num_chains, num_dim))
-        u = u / torch.sqrt((u**2).sum(axis=1, keepdims=True))
 
-        # Find bounds along u
-        eps_bound = min(eps, float(self.eps_interior)) / 100
-        llambda_plus = self._find_bounds(X, u, eps_bound)
-        llambda_minus = self._find_bounds(X, -u, eps_bound)
-        # print ("BOUNDS:", (llambda_plus - -(llambda_minus)).min(), (llambda_plus - -(llambda_minus)).max())
+        for _ in range(5):
+            # random direction, u
+            u = torch.randn(size=(num_chains, num_dim))
+            u = u / torch.sqrt((u**2).sum(axis=1, keepdims=True))
+
+            # Find bounds along u
+            eps_bound = min(eps, float(self.eps_interior)) / 100
+            llambda_plus = self._find_bounds(X, u, eps_bound)
+            llambda_minus = self._find_bounds(X, -u, eps_bound)
+            min_length = (llambda_plus - -(llambda_minus)).min()
+            # print ("BOUNDS:", (llambda_plus - -(llambda_minus)))
+            if min_length > 0:
+                break
+        else:
+            assert False, "Could not find a perturbation direction"
+
         # 1D perturbation
         rv = truncnorm(-llambda_minus / eps, llambda_plus / eps, scale=eps)
         X_1 = X + torch.tensor(rv.rvs(num_chains))[:, None] * u
