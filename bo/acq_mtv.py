@@ -13,8 +13,6 @@ from botorch.utils.probability.utils import (
 )
 from torch.quasirandom import SobolEngine
 
-# from .fit_gp import fit_gp_XY
-
 
 class AcqMTV(MCAcquisitionFunction):
     def __init__(
@@ -23,7 +21,7 @@ class AcqMTV(MCAcquisitionFunction):
         num_X_samples,
         ttype,
         beta=0,
-        num_mcmc=5,
+        num_mcmc=50,  # TEST 5,
         num_Y_samples=1,
         sample_type="mh",
         x_max_type="find_max",
@@ -40,6 +38,7 @@ class AcqMTV(MCAcquisitionFunction):
         self._alt_acqf = alt_acqf
         self._lengthscale_correction = lengthscale_correction
         self._eps_0 = eps_0
+        self.eps_interior = torch.tensor(1e-6)
         self.sampler = SobolQMCNormalSampler(sample_shape=torch.Size([num_Y_samples]))
 
         X_0 = self.model.train_inputs[0].detach()
@@ -72,7 +71,10 @@ class AcqMTV(MCAcquisitionFunction):
 
             if sample_type == "mh":
                 with torch.inference_mode():
-                    self.X_samples = self._sample_maxes_mh(sobol_engine, num_X_samples)
+                    self.X_samples = self._sample_maxes_mh(sobol_engine, num_X_samples, prop_type="met")
+            elif sample_type == "hnr":
+                with torch.inference_mode():
+                    self.X_samples = self._sample_maxes_mh(sobol_engine, num_X_samples, prop_type="hnr")
             elif sample_type == "sobol":
                 self.X_samples = sobol_engine.draw(num_X_samples, dtype=self._dtype)
             else:
@@ -90,18 +92,6 @@ class AcqMTV(MCAcquisitionFunction):
         i = np.arange(len(self.X_samples))
         i = np.random.choice(i, size=(int(num_arms)), replace=False)
         return self.X_samples[i]
-
-    def _reimagine(self, num_imag):
-        # X = self.model.train_inputs[0]
-        # num_dim = X.shape[-1]
-        # TODO: X = [orig x] + [sobol samples]
-        # - Y = self.model mean (X)
-        # - gp = fit_gp_XY(X, Y)
-        # - x_* = optimize_acqf(this gp)
-        # - generate num_imag such x_*
-        # - use this in place of mcmc
-        # This should be much more precise in high dimensions
-        pass
 
     def _find_max(self):
         X = self.model.train_inputs[0]
@@ -125,8 +115,9 @@ class AcqMTV(MCAcquisitionFunction):
 
         return x_cand
 
-    def _sample_maxes_mh(self, sobol_engine, num_X_samples):
-        X = torch.tile(self.X_max, (num_X_samples, 1))
+    def _sample_maxes_mh(self, sobol_engine, num_X_samples, prop_type):
+        X_max = torch.maximum(self.eps_interior, torch.minimum(1 - self.eps_interior, self.X_max))
+        X = torch.tile(X_max, (num_X_samples, 1))
 
         eps = 1
         eps_good = False
@@ -134,7 +125,10 @@ class AcqMTV(MCAcquisitionFunction):
         max_iterations = 10 * self.num_mcmc
         frac_changed = None
         for _ in range(max_iterations):
-            i, X_1 = self._met_propose(X, eps)
+            if prop_type == "met":
+                i, X_1 = self._met_propose(X, eps)
+            elif prop_type == "hnr":
+                i, X_1 = self._hnr_propose(X, eps)
             X[i] = X_1[i]
             frac_changed = (1.0 * i).mean().item()
             # print("FC:", eps, eps_good, frac_changed)
@@ -155,6 +149,55 @@ class AcqMTV(MCAcquisitionFunction):
             )
 
         return X
+
+    def _find_bounds(self, X, u, eps_bound):
+        X = X.detach().numpy()
+        u = u.detach().numpy()
+        num_chains = X.shape[0]
+        l_low = np.zeros(shape=(num_chains, 1))
+        l_high = np.ones(shape=(num_chains, 1))
+
+        def _accept(X):
+            return (X.min(axis=1) >= 0) & (X.max(axis=1) <= 1)
+
+        while (l_high - l_low).max() > eps_bound:
+            l_mid = (l_low + l_high) / 2
+            X_mid = X + l_mid * u
+            a = _accept(X_mid)
+            l_low[a] = l_mid[a]
+            l_high[~a] = l_mid[~a]
+            # print ("B:", (l_high - l_low).max(), l_low.mean())
+
+        return l_low.flatten()
+
+    def _hnr_propose(self, X, eps):
+        from scipy.stats import truncnorm
+
+        num_chains = X.shape[0]
+        num_dim = X.shape[1]
+        # random direction, u
+        u = torch.randn(size=(num_chains, num_dim))
+        u = u / torch.sqrt((u**2).sum(axis=1, keepdims=True))
+
+        # Find bounds along u
+        eps_bound = min(eps, float(self.eps_interior)) / 100
+        llambda_plus = self._find_bounds(X, u, eps_bound)
+        llambda_minus = self._find_bounds(X, -u, eps_bound)
+        # print ("BOUNDS:", (llambda_plus - -(llambda_minus)).min(), (llambda_plus - -(llambda_minus)).max())
+        # 1D perturbation
+        rv = truncnorm(-llambda_minus / eps, llambda_plus / eps, scale=eps)
+        X_1 = X + torch.tensor(rv.rvs(num_chains))[:, None] * u
+        assert torch.all((X_1.min(dim=1).values >= 0) & (X_1.max(dim=1).values <= 1)), "Perturbation failed"
+
+        # Metropolis update
+        X_both = torch.cat((X, X_1), dim=0)
+        mvn = self.model.posterior(X_both, observation_noise=True)
+        Y_both = mvn.sample(torch.Size([1])).squeeze(-1).squeeze(0)
+        Y = Y_both[: len(X)]
+        Y_1 = Y_both[len(X) :]
+        b_met_accept = (Y_1 > Y).flatten()
+
+        return b_met_accept, X_1
 
     def _met_propose(self, X, eps):
         X_1 = X + eps * torch.randn(size=X.shape)
