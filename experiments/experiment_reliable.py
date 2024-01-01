@@ -1,13 +1,10 @@
-import os
-
-from analysis.data_io import data_is_done, data_writer
-from optimizer.arm_best_est import ArmBestEst
-from optimizer.arm_best_obs import ArmBestObs
-from optimizer.optimizer import Optimizer
-from problems.env_conf import default_policy
-
-
 def sample(out_fn, env_conf, opt_name, num_rounds, num_arms, num_obs, num_denoise):
+    from analysis.data_io import data_writer
+    from optimizer.arm_best_est import ArmBestEst
+    from optimizer.arm_best_obs import ArmBestObs
+    from optimizer.optimizer import Optimizer
+    from problems.env_conf import default_policy
+
     policy = default_policy(env_conf)
 
     if num_denoise is not None and num_denoise > 0:
@@ -36,17 +33,13 @@ def parse_kv(argv):
     return d
 
 
-if __name__ == "__main__":
-    import sys
+def main(d_args):
+    import os
     import time
 
+    from analysis.data_io import data_is_done
     from common.seed_all import seed_all
     from problems.env_conf import get_env_conf
-
-    d_args = parse_kv(sys.argv[1:])
-    reqd_keys = ["exp_dir", "env_tag", "opt_name", "num_arms", "num_rounds", "num_reps"]
-    for k in reqd_keys:
-        assert k in d_args, f"Missing {k} in {list(d_args.keys())}. Required: {reqd_keys}"
 
     out_dir = f"{d_args['exp_dir']}/{d_args['env_tag']}/{d_args['opt_name']}"
     # TODO: subdirs for all params? Maybe just a key?
@@ -75,3 +68,14 @@ if __name__ == "__main__":
                 num_denoise=num_denoise,
             )
             print(f"TIME_REPLICATE: {time.time() - t0:.2f}")
+
+
+if __name__ == "__main__":
+    import sys
+
+    d_args = parse_kv(sys.argv[1:])
+    reqd_keys = ["exp_dir", "env_tag", "opt_name", "num_arms", "num_rounds", "num_reps"]
+    for k in reqd_keys:
+        assert k in d_args, f"Missing {k} in {list(d_args.keys())}. Required: {reqd_keys}"
+
+    main(d_args)

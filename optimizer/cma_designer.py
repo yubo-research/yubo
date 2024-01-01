@@ -41,5 +41,5 @@ class CMADesigner:
         for x in self._es.ask(num_arms):
             policy = self._policy.clone()
             policy.set_params(x)
-            policies.append((None, policy))
+            policies.append(policy)
         return policies
