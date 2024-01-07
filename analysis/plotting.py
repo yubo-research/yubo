@@ -89,7 +89,7 @@ def plot_sorted_agg(ax, data_locator, exp_tag, optimizers=None, renames=None, i_
     plot_sorted(ax, optimizers, mu, se, renames=renames)
 
 
-def plot_compare_problem(ax, data_locator, exp_name, problem_name, optimizers, b_normalize, title, renames=None, old_way=True):
+def plot_compare_problem(ax, data_locator, exp_name, problem_name, optimizers, b_normalize, title, renames=None, old_way=True, b_legend=True):
     handles = []
     legend = []
     i_marker = 0
@@ -131,7 +131,9 @@ def plot_compare_problem(ax, data_locator, exp_name, problem_name, optimizers, b
         legend.append(name)
         i_marker += 1
 
-    ax.legend(handles, legend)
+    if b_legend:
+        ax.legend(handles, legend)
     ax.set_title(title)
     ax.set_xlabel("round")
     ax.set_ylabel("max measured value")
+    return handles, legend

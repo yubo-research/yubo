@@ -95,11 +95,10 @@ class AcqMTV(MCAcquisitionFunction):
 
     def _find_max(self):
         X = self.model.train_inputs[0]
-        num_dim = X.shape[-1]
 
         x_cand, _ = optimize_acqf(
             acq_function=PosteriorMean(self.model),
-            bounds=torch.tensor([[0.0] * num_dim, [1.0] * num_dim], device=X.device, dtype=X.dtype),
+            bounds=torch.tensor([[0.0] * self._num_dim, [1.0] * self._num_dim], device=X.device, dtype=X.dtype),
             q=1,
             num_restarts=10,
             raw_samples=512,
@@ -119,10 +118,15 @@ class AcqMTV(MCAcquisitionFunction):
         X_max = torch.maximum(self.eps_interior, torch.minimum(1 - self.eps_interior, self.X_max))
         X = torch.tile(X_max, (num_X_samples, 1))
 
+        if prop_type == "hnr":
+            num_mcmc = self._num_dim * self.num_mcmc
+        else:
+            num_mcmc = self.num_mcmc
+
         eps = 1
         eps_good = False
         num_changed = 0
-        max_iterations = 10 * self.num_mcmc
+        max_iterations = 10 * num_mcmc
         frac_changed = None
         for _ in range(max_iterations):
             if prop_type == "met":
@@ -141,7 +145,7 @@ class AcqMTV(MCAcquisitionFunction):
                 eps = eps / np.sqrt(10.0)
             else:
                 num_changed += 1
-                if num_changed == self.num_mcmc:
+                if num_changed == num_mcmc:
                     break
         else:
             print(
@@ -174,11 +178,10 @@ class AcqMTV(MCAcquisitionFunction):
         from scipy.stats import truncnorm
 
         num_chains = X.shape[0]
-        num_dim = X.shape[1]
 
         for _ in range(5):
             # random direction, u
-            u = torch.randn(size=(num_chains, num_dim))
+            u = torch.randn(size=(num_chains, self._num_dim))
             u = u / torch.sqrt((u**2).sum(axis=1, keepdims=True))
 
             # Find bounds along u
@@ -238,7 +241,6 @@ class AcqMTV(MCAcquisitionFunction):
         # batch_size = X.shape[0]
         q = X.shape[-2]
         assert len(self.X_samples) > q, "You should use num_X_samples > q"
-        num_dim = X.shape[-1]
         num_obs = len(self.model.train_inputs[0])
 
         mvn_a = self.model.posterior(X)
@@ -248,9 +250,9 @@ class AcqMTV(MCAcquisitionFunction):
             # num_obs = 1 ==> 2 "bins", each size of half the box
             # etc
             if self._lengthscale_correction == "type_0":
-                model_f.covar_module.base_kernel.lengthscale *= ((1 + num_obs) / (1 + max(num_obs, q))) ** (1.0 / num_dim)
+                model_f.covar_module.base_kernel.lengthscale *= ((1 + num_obs) / (1 + max(num_obs, q))) ** (1.0 / self._num_dim)
             elif self._lengthscale_correction == "type_1":
-                model_f.covar_module.base_kernel.lengthscale *= ((1 + num_obs) / (1 + num_obs + q)) ** (1.0 / num_dim)
+                model_f.covar_module.base_kernel.lengthscale *= ((1 + num_obs) / (1 + num_obs + q)) ** (1.0 / self._num_dim)
             else:
                 assert False, self._lengthscale_correction
 
