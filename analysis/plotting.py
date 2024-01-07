@@ -63,7 +63,7 @@ def zc(x):
 def plot_sorted(ax, optimizers, mu, se, renames=None):
     i_sort = np.argsort(-mu)
     n = np.arange(len(mu))
-    ax.errorbar(n, mu[i_sort], se[i_sort], fmt="ko", capsize=10)
+    ax.errorbar(n, mu[i_sort], se[i_sort], fmt="k.", capsize=7)
     names = list(optimizers)
     if renames is not None:
         for old, new in renames.items():

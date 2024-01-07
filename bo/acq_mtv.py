@@ -120,6 +120,7 @@ class AcqMTV(MCAcquisitionFunction):
 
         if prop_type == "hnr":
             num_mcmc = self._num_dim * self.num_mcmc
+            print ("NMC:", num_mcmc, self._num_dim, self.num_mcmc)
         else:
             num_mcmc = self.num_mcmc
 
