@@ -39,6 +39,7 @@ class AcqMTV(MCAcquisitionFunction):
         self._lengthscale_correction = lengthscale_correction
         self._eps_0 = eps_0
         self.eps_interior = torch.tensor(1e-6)
+        self._eps_min = 1e-8
         self.sampler = SobolQMCNormalSampler(sample_shape=torch.Size([num_Y_samples]))
 
         X_0 = self.model.train_inputs[0].detach()
@@ -120,7 +121,6 @@ class AcqMTV(MCAcquisitionFunction):
 
         if prop_type == "hnr":
             num_mcmc = self._num_dim * self.num_mcmc
-            print ("NMC:", num_mcmc, self._num_dim, self.num_mcmc)
         else:
             num_mcmc = self.num_mcmc
 
@@ -143,7 +143,7 @@ class AcqMTV(MCAcquisitionFunction):
                 eps_good = False
 
             if not eps_good:
-                eps = eps / np.sqrt(10.0)
+                eps = max(self._eps_min, eps / np.sqrt(10.0))
             else:
                 num_changed += 1
                 if num_changed == num_mcmc:
