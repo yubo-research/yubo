@@ -80,13 +80,23 @@ class Optimizer:
             "gibbon_c": BTDesigner(policy, qLowerBoundMaxValueEntropy, init_center=True, opt_sequential=True, acq_kwargs={"candidate_set": None}),
             "dpp_c": BTDesigner(policy, AcqDPP, init_sobol=1, init_center=True, acq_kwargs={"num_X_samples": default_num_X_samples}),
             # MTV
-            "mtv-mh": BTDesigner(policy, AcqMTV, init_sobol=0, init_center=False, acq_kwargs={"ttype": "mvar", "num_X_samples": default_num_X_samples}),
+            "mtv-mh": BTDesigner(
+                policy,
+                AcqMTV,
+                init_sobol=0,
+                init_center=False,
+                acq_kwargs={
+                    "num_X_samples": default_num_X_samples,
+                    "num_mcmc": 5,
+                    "sample_type": "mh",
+                },
+            ),
             "mtv": BTDesigner(
                 policy,
                 AcqMTV,
                 init_sobol=0,
                 init_center=False,
-                acq_kwargs={"ttype": "mvar", "num_X_samples": default_num_X_samples, "sample_type": "hnr", "num_mcmc": 100},
+                acq_kwargs={"num_X_samples": default_num_X_samples},
             ),
             # Long sobol init, sequential opt
             "sobol_ucb": BTDesigner(policy, qUpperConfidenceBound, init_center=False, init_sobol=init_ax_default, acq_kwargs={"beta": 1}),
