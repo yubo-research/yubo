@@ -31,6 +31,7 @@ class AcqMTV(MCAcquisitionFunction):
         **kwargs,
     ) -> None:
         super().__init__(model=model, **kwargs)
+        print (f"AcqMTV: num_X_samples={num_X_samples} ttype={ttype} num_mcmc={num_mcmc} sample_type={sample_type} lengthscale_correction={lengthscale_correction}")
         self.num_mcmc = num_mcmc
         self.num_X_samples = num_X_samples
         self.ttype = ttype

@@ -7,12 +7,13 @@ from problems.env_conf import default_policy, get_env_conf
 def expository_problem():
     env_tag = "f:sphere-2d"
 
-    seed = 4
-    torch.manual_seed(seed)
-    np.random.seed(seed)
+    seed = 11
+    torch.manual_seed(seed+1)
+    np.random.seed(seed+2)
 
-    env_conf = get_env_conf(env_tag, seed)
+    env_conf = get_env_conf(env_tag, seed, noise_seed_0=seed+3)
     policy = default_policy(env_conf)
+
     return env_conf, policy, "mtv"
 
 
