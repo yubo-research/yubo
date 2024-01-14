@@ -129,6 +129,8 @@ def load_multiple_traces(data_locator, exp_tag, problem_names, opt_names, old_wa
         num_bad += 1
 
     def _init(trace):
+        if len(trace.shape) < 2:
+            return None
         return np.nan * np.ones(shape=(len(problem_names), len(opt_names), trace.shape[0], trace.shape[1]))
 
     traces = None
@@ -148,8 +150,16 @@ def load_multiple_traces(data_locator, exp_tag, problem_names, opt_names, old_wa
             if trace is None:
                 _report_bad(problem_name, opt_name, "No trace")
                 continue
+            if len(trace.shape) < 2:
+                _report_bad(problem_name, opt_name, "Empty trace")
+                continue
+
             if traces is None:
                 traces = _init(trace)
+                if traces is None:
+                    _report_bad(problem_name, opt_name, "Empty trace (B)")
+                    continue
+
             if trace.shape[0] > traces.shape[2]:
                 traces_new = _init(trace)
                 traces_new[:, :, : traces.shape[2], :] = traces
@@ -157,7 +167,6 @@ def load_multiple_traces(data_locator, exp_tag, problem_names, opt_names, old_wa
             if trace.shape != traces[i_problem, i_opt, ...].shape:
                 _report_bad(problem_name, opt_name, f"Trace is wrong shape {trace.shape} != {traces[i_problem, i_opt, ...].shape}")
                 # continue
-
             traces[i_problem, i_opt, : trace.shape[0], : trace.shape[1]] = trace
 
     traces = npma.masked_invalid(traces)

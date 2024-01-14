@@ -73,15 +73,16 @@ def plot_sorted(ax, optimizers, mu, se, renames=None):
     ax.set_ylim([0, 1])
 
 
-def plot_sorted_agg(ax, data_locator, exp_tag, optimizers=None, renames=None, i_agg=-1):
+def plot_sorted_agg(ax, data_locator, exp_tag, optimizers=None, renames=None, i_agg=-1, old_way=True):
     problems = sorted(data_locator.problems_in(exp_tag))
+
     if optimizers is None:
         optimizers = set()
         for problem in problems:
             optimizers.update(data_locator.optimizers_in(exp_tag, problem))
     # optimizers = sorted(optimizers)
 
-    traces = ads.load_multiple_traces(data_locator, exp_tag, problems, optimizers)
+    traces = ads.load_multiple_traces(data_locator, exp_tag, problems, optimizers, old_way=old_way)
     if i_agg != -1:
         traces = traces[..., : i_agg + 1]
 

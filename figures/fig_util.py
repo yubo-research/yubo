@@ -8,10 +8,10 @@ def expository_problem():
     env_tag = "f:sphere-2d"
 
     seed = 11
-    torch.manual_seed(seed+1)
-    np.random.seed(seed+2)
+    torch.manual_seed(seed + 1)
+    np.random.seed(seed + 2)
 
-    env_conf = get_env_conf(env_tag, seed, noise_seed_0=seed+3)
+    env_conf = get_env_conf(env_tag, seed, noise_seed_0=seed + 3)
     policy = default_policy(env_conf)
 
     return env_conf, policy, "mtv"

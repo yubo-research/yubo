@@ -4,8 +4,8 @@ if __name__ == "__main__":
     import sys
 
     from figures.fig_util import expository_problem, mean_gp_contours, show
-    from optimizer.optimizer import Optimizer
     from optimizer.arm_best_obs import ArmBestObs
+    from optimizer.optimizer import Optimizer
 
     out_dir = sys.argv[1]
     out_dir += "/fig_explain"

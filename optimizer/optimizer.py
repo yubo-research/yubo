@@ -91,6 +91,17 @@ class Optimizer:
                     "sample_type": "mh",
                 },
             ),
+            "mtv-lite": BTDesigner(
+                policy,
+                AcqMTV,
+                init_sobol=0,
+                init_center=False,
+                acq_kwargs={
+                    "num_X_samples": default_num_X_samples,
+                    "sample_type": "hnr",
+                    "num_mcmc": 10,
+                },
+            ),
             "mtv": BTDesigner(
                 policy,
                 AcqMTV,
