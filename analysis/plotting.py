@@ -63,18 +63,20 @@ def zc(x):
 def plot_sorted(ax, optimizers, mu, se, renames=None):
     i_sort = np.argsort(-mu)
     n = np.arange(len(mu))
-    ax.errorbar(n, mu[i_sort], se[i_sort], fmt="k.", capsize=7)
+    ax.errorbar(n, mu[i_sort], se[i_sort], fmt="k.", capsize=6)
     names = list(optimizers)
     if renames is not None:
         for old, new in renames.items():
-            i = names.index(old)
-            names[i] = new
+            if old in names:
+                i = names.index(old)
+                names[i] = new
     ax.set_xticks(n, [names[i] for i in i_sort], rotation=90)
     ax.set_ylim([0, 1])
 
 
-def plot_sorted_agg(ax, data_locator, exp_tag, optimizers=None, renames=None, i_agg=-1, old_way=True):
-    problems = sorted(data_locator.problems_in(exp_tag))
+def plot_sorted_agg(ax, data_locator, exp_tag, optimizers=None, problems=None, renames=None, i_agg=-1, old_way=True):
+    if problems is None:
+        problems = sorted(data_locator.problems_in(exp_tag))
 
     if optimizers is None:
         optimizers = set()
@@ -134,7 +136,5 @@ def plot_compare_problem(ax, data_locator, exp_name, problem_name, optimizers, b
 
     if b_legend:
         ax.legend(handles, legend)
-    ax.set_title(title)
     ax.set_xlabel("round")
-    ax.set_ylabel("max measured value")
     return handles, legend

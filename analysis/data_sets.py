@@ -80,7 +80,10 @@ def load_traces(trace_dir, key="return"):
             i_missing.append(len(traces))
             traces.append(None)
             continue
-        o = load_kv(fn, ["i_iter", key], grep_for="TRACE:")
+        try:
+            o = load_kv(fn, ["i_iter", key], grep_for="TRACE:")
+        except FileNotFoundError:
+            raise FileNotFoundError(fn)
         trace = o[key]
         assert width is None or len(trace) == width, (width, len(trace))
         width = len(trace)
@@ -95,7 +98,10 @@ def load_traces(trace_dir, key="return"):
 
 
 def load_traces_old(fn, key="return"):
-    o = load_kv(fn, ["i_sample", key], grep_for="TRACE:")
+    try:
+        o = load_kv(fn, ["i_sample", key], grep_for="TRACE:")
+    except FileNotFoundError:
+        raise FileNotFoundError(fn)
     if len(o) == 0:
         return None
     traces = []
@@ -143,9 +149,9 @@ def load_multiple_traces(data_locator, exp_tag, problem_names, opt_names, old_wa
                     trace = load_traces_old(trace_path)
                 else:
                     trace = load_traces(trace_path)
-            except FileNotFoundError:
-                _report_bad(problem_name, opt_name, "File not found")
-                continue
+            except FileNotFoundError as e:
+                _report_bad(problem_name, opt_name, repr(e))
+                raise e
 
             if trace is None:
                 _report_bad(problem_name, opt_name, "No trace")

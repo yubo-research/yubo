@@ -1,5 +1,4 @@
 import numpy as np
-from gymnasium.spaces import Box
 
 import common.all_bounds as all_bounds
 from problems.benchmark_functions import all_benchmarks
@@ -25,9 +24,9 @@ class PureFunctionEnv:
         # state is either 0 or 1
         # state==0 means that the policy has not been called.
         # state==1 means that it has.
-        self.observation_space = Box(low=0.0, high=1.0, dtype=np.float32)
+        self.observation_space = all_bounds.get_box_1d01()
         # action is the input to the function (before some transformations)
-        self.action_space = Box(low=-np.ones(num_dim, dtype=np.float32), high=np.ones(num_dim, dtype=np.float32))
+        self.action_space = all_bounds.get_box_bounds_x(num_dim)
 
         if distort:
             rng = np.random.default_rng(problem_seed)

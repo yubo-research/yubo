@@ -7,7 +7,7 @@ class LinearPolicy:
     def __init__(self, env_conf):
         self.problem_seed = env_conf.problem_seed
         self._env_conf = env_conf
-        num_state = env_conf.state_space.shape[0]
+        num_state = env_conf.gym_conf.state_space.shape[0]
         self._beta = np.random.uniform(
             -1,
             1,
@@ -17,7 +17,7 @@ class LinearPolicy:
             ),
         )
         self._scale = np.random.uniform()
-        self._ms_filter = MeanStdFilter(env_conf.state_space.shape)
+        self._ms_filter = MeanStdFilter(env_conf.gym_conf.state_space.shape)
 
     def num_params(self):
         return 1 + self._beta.size

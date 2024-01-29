@@ -12,7 +12,11 @@ class Trajectory:
     actions: np.ndarray
 
 
-def collect_trajectory(env_conf, policy, show_frames=None, noise_seed=None):
+def collect_trajectory(env_conf, policy, noise_seed=None, show_frames=False):
+    b_gym = env_conf.gym_conf is not None
+    if b_gym and show_frames:
+        num_frames_skip = env_conf.gym_conf.num_frames_skip
+
     render_mode = "rgb_array" if show_frames else None
     env = env_conf.make(render_mode=render_mode)
     done = False
@@ -37,11 +41,16 @@ def collect_trajectory(env_conf, policy, show_frames=None, noise_seed=None):
         plt.show()
 
     state, _ = env.reset(seed=noise_seed)
-    for i_iter in range(env_conf.max_steps):
+    if b_gym:
+        max_steps = env_conf.gym_conf.max_steps
+    else:
+        max_steps = 99999
+
+    for i_iter in range(max_steps):
         # assert np.all(state >= lb), (state, lb)
 
         state_p = (state - lb) / width
-        if env_conf.transform:
+        if b_gym and env_conf.gym_conf.transform_state:
             action_p = policy(state_p)  # in [-1,1]
         else:
             action_p = policy(state)
@@ -56,7 +65,7 @@ def collect_trajectory(env_conf, policy, show_frames=None, noise_seed=None):
 
         state, reward, done = env.step(action)[:3]
         return_trajectory += reward
-        if show_frames and i_iter % max(1, (env_conf.max_steps // show_frames)) == 0:
+        if show_frames and i_iter % max(1, (max_steps // num_frames_skip)) == 0:
             draw()
         if done:
             break
