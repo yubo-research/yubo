@@ -33,7 +33,7 @@ def filled_err(ys, x=None, color="#AAAAAA", alpha=0.5, fmt="--", se=False, ax=No
     ax.plot(x, mu, fmt, color=color)
 
 
-def error_area(x, y, yerr, color="#AAAAAA", alpha=0.5, fmt="--", marker=",", ax=plt):
+def error_area(x, y, yerr, color="#AAAAAA", alpha=0.5, fmt="--", marker="", ax=plt):
     mu = y
     sg = yerr
     ax.fill_between(x, mu - sg, mu + sg, color=color, alpha=alpha, linewidth=1)
@@ -63,7 +63,7 @@ def zc(x):
 def plot_sorted(ax, optimizers, mu, se, renames=None):
     i_sort = np.argsort(-mu)
     n = np.arange(len(mu))
-    ax.errorbar(n, mu[i_sort], se[i_sort], fmt="k.", capsize=6)
+    ax.errorbar(n, mu[i_sort], se[i_sort], fmt="k,", capsize=6)
     names = list(optimizers)
     if renames is not None:
         for old, new in renames.items():

@@ -27,6 +27,7 @@ class AcqMTV(MCAcquisitionFunction):
         x_max_type="find_max",
         alt_acqf=None,
         lengthscale_correction=None,
+        use_obs_noise=True,
         eps_0=0.1,
         **kwargs,
     ) -> None:
@@ -40,6 +41,7 @@ class AcqMTV(MCAcquisitionFunction):
         self.beta = beta
         self._alt_acqf = alt_acqf
         self._lengthscale_correction = lengthscale_correction
+        self._use_obs_noise = use_obs_noise
         self._eps_0 = eps_0
         self.eps_interior = torch.tensor(1e-6)
         self._eps_min = 1e-8
@@ -206,7 +208,7 @@ class AcqMTV(MCAcquisitionFunction):
 
         # Metropolis update
         X_both = torch.cat((X, X_1), dim=0)
-        mvn = self.model.posterior(X_both, observation_noise=True)
+        mvn = self.model.posterior(X_both, observation_noise=self._use_obs_noise)
         Y_both = mvn.sample(torch.Size([1])).squeeze(-1).squeeze(0)
         Y = Y_both[: len(X)]
         Y_1 = Y_both[len(X) :]
@@ -218,7 +220,7 @@ class AcqMTV(MCAcquisitionFunction):
         X_1 = X + eps * torch.randn(size=X.shape)
         # Joint sample for all X -- initial and proposed
         X_both = torch.cat((X, X_1), dim=0)
-        mvn = self.model.posterior(X_both, observation_noise=True)
+        mvn = self.model.posterior(X_both, observation_noise=self._use_obs_noise)
         Y_both = mvn.sample(torch.Size([1])).squeeze(-1).squeeze(0)
         Y = Y_both[: len(X)]
         Y_1 = Y_both[len(X) :]
@@ -260,7 +262,7 @@ class AcqMTV(MCAcquisitionFunction):
             else:
                 assert False, self._lengthscale_correction
 
-        mvn_f = model_f.posterior(self.X_samples, observation_noise=True)
+        mvn_f = model_f.posterior(self.X_samples, observation_noise=self._use_obs_noise)
         self.mvn_f = mvn_f
 
         if self.ttype == "mvar":
