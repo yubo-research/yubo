@@ -106,7 +106,7 @@ class Optimizer:
                 AcqMTV,
                 init_sobol=0,
                 init_center=False,
-                acq_kwargs={"ttype": "ts", "num_X_samples": default_num_X_samples},
+                acq_kwargs={"ts_only": True, "num_X_samples": default_num_X_samples},
             ),
             "mtv_no-ic": BTDesigner(
                 policy,
@@ -114,14 +114,14 @@ class Optimizer:
                 init_sobol=0,
                 init_center=False,
                 init_X_samples=False,
-                acq_kwargs={"ttype": "mvar", "num_X_samples": default_num_X_samples},
+                acq_kwargs={"num_X_samples": default_num_X_samples},
             ),
             "mtv_no-pstar": BTDesigner(
                 policy,
                 AcqMTV,
                 init_sobol=0,
                 init_center=False,
-                acq_kwargs={"ttype": "mvar", "sample_type": "sobol", "num_X_samples": default_num_X_samples},
+                acq_kwargs={"sample_type": "sobol", "num_X_samples": default_num_X_samples},
             ),
             # MTV for first batch only
             "mtv_then_sr": [

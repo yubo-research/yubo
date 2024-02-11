@@ -1,7 +1,24 @@
-def test_all_designers():
-    for dn in _test_designer("random"):
-        print("DESIGNER:", dn)
-        _test_designer(dn)
+def test_designers_0():
+    _test_some_designers(0, 4)
+
+
+def test_designers_1():
+    _test_some_designers(1, 4)
+
+
+def test_designers_2():
+    _test_some_designers(2, 4)
+
+
+def test_designers_3():
+    _test_some_designers(3, 4)
+
+
+def _test_some_designers(k, m):
+    for i, dn in enumerate(_test_designer("random")):
+        if i % m == k:
+            print("DESIGNER:", dn)
+            _test_designer(dn)
 
 
 def _test_designer(designer):
