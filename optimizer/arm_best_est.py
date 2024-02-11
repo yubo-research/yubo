@@ -1,6 +1,6 @@
 import numpy as np
 
-from bo.fit_gp import fit_gp
+from acq.fit_gp import fit_gp
 
 
 class ArmBestEst:

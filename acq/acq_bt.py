@@ -3,7 +3,7 @@ from botorch.acquisition import PosteriorMean
 from botorch.models import SingleTaskGP
 from botorch.optim import optimize_acqf
 
-import bo.fit_gp as fit_gp
+import acq.fit_gp as fit_gp
 
 
 class AcqBT:

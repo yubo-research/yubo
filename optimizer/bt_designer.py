@@ -3,7 +3,7 @@ import torch
 from botorch.optim import optimize_acqf
 
 import common.all_bounds as all_bounds
-from bo.acq_bt import AcqBT
+from acq.acq_bt import AcqBT
 from optimizer.sobol_designer import SobolDesigner
 
 

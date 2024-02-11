@@ -20,12 +20,9 @@ class AcqMTV(MCAcquisitionFunction):
         model,
         num_X_samples,
         ttype="mvar",
-        beta=0,
         num_mcmc=100,
         num_Y_samples=1,
         sample_type="hnr",
-        x_max_type="find_max",
-        alt_acqf=None,
         lengthscale_correction=None,
         use_obs_noise=True,
         eps_0=0.1,
@@ -38,8 +35,6 @@ class AcqMTV(MCAcquisitionFunction):
         self.num_mcmc = num_mcmc
         self.num_X_samples = num_X_samples
         self.ttype = ttype
-        self.beta = beta
-        self._alt_acqf = alt_acqf
         self._lengthscale_correction = lengthscale_correction
         self._use_obs_noise = use_obs_noise
         self._eps_0 = eps_0
@@ -60,14 +55,7 @@ class AcqMTV(MCAcquisitionFunction):
             self.Y_max = 0.0
             self.Y_best = 0.0
         else:
-            if x_max_type == "find_max":
-                self.X_max = self._find_max()
-            elif x_max_type == "best_obs":
-                Y = self.model.posterior(self.model.train_inputs[0]).mean.squeeze(dim=-1)
-                i = np.argmax(Y.detach())
-                self.X_max = self.model.train_inputs[0][i, :][:, None].T
-            else:
-                assert False, ("Unknown x_max_type", x_max_type)
+            self.X_max = self._find_max()
             self.Y_max = self.model.posterior(self.X_max).mean
             if len(self.model.train_targets) > 0:
                 i = torch.argmax(self.model.train_targets)
@@ -75,10 +63,7 @@ class AcqMTV(MCAcquisitionFunction):
             else:
                 self.Y_best = self.Y_max
 
-            if sample_type == "mh":
-                with torch.inference_mode():
-                    self.X_samples = self._sample_maxes_mh(sobol_engine, num_X_samples, prop_type="met")
-            elif sample_type == "hnr":
+            if sample_type == "hnr":
                 with torch.inference_mode():
                     self.X_samples = self._sample_maxes_mh(sobol_engine, num_X_samples, prop_type="hnr")
             elif sample_type == "sobol":
@@ -240,10 +225,6 @@ class AcqMTV(MCAcquisitionFunction):
         """
         self.to(device=X.device)
 
-        if self._num_obs > 0 and self._alt_acqf:
-            # for testing / comparison
-            return self._alt_acqf(X)
-
         # batch_size = X.shape[0]
         q = X.shape[-2]
         assert len(self.X_samples) > q, "You should use num_X_samples > q"
@@ -270,12 +251,6 @@ class AcqMTV(MCAcquisitionFunction):
             var_f = mvn_f.variance.squeeze()
             m = var_f.mean(dim=-1)
             return -m
-        elif self.ttype == "msvar":
-            # faster appx. G-Optimality
-            var_f = mvn_f.variance.squeeze()
-            m = var_f.mean(dim=-1)
-            s = var_f.std(dim=-1)
-            return -(m + self.beta * s)
         elif self.ttype == "maxvar":
             # G-Optimality
             var_f = mvn_f.variance.squeeze()

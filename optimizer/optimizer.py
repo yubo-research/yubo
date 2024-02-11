@@ -12,10 +12,10 @@ from botorch.acquisition.monte_carlo import (
     qUpperConfidenceBound,
 )
 
-from bo.acq_dpp import AcqDPP
-from bo.acq_min_dist import AcqMinDist
-from bo.acq_mtv import AcqMTV
-from bo.acq_var import AcqVar
+from acq.acq_dpp import AcqDPP
+from acq.acq_min_dist import AcqMinDist
+from acq.acq_mtv import AcqMTV
+from acq.acq_var import AcqVar
 
 from .ax_designer import AxDesigner
 from .bt_designer import BTDesigner
