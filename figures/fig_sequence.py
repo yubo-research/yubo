@@ -11,7 +11,7 @@ if __name__ == "__main__":
     out_dir += "/fig_sequence"
     shutil.rmtree(out_dir, ignore_errors=True)
 
-    env_conf, policy, ttype = expository_problem()
+    env_conf, policy, designer_name = expository_problem()
 
     num_arms = 4
     default_num_X_samples = max(64, 10 * num_arms)
@@ -19,9 +19,9 @@ if __name__ == "__main__":
     opt = Optimizer(env_conf, policy, num_arms=num_arms, num_denoise=None, num_obs=1, arm_selector=ArmBestObs())
 
     for i_iter in range(3):
-        opt.collect_trace(ttype=ttype, num_iterations=1)
-        acqf = opt._designers[ttype].fig_last_acqf.acq_function
-        x_arms = opt._designers[ttype].fig_last_arms
+        opt.collect_trace(designer_name=designer_name, num_iterations=1)
+        acqf = opt._designers[designer_name].fig_last_acqf.acq_function
+        x_arms = opt._designers[designer_name].fig_last_arms
 
         if i_iter in [0, 1, 2]:
             od = f"{out_dir}/{i_iter}"

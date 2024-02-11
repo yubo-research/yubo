@@ -1,0 +1,6 @@
+for d in acq admin analysis common experiments figures optimizer problems tests
+do
+ echo ../yubo/$d
+ rm -rfv ../yubo/$d
+ cp -rv $d ../yubo
+done
