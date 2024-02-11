@@ -44,5 +44,4 @@ class AxDesigner:
             policy = self._policy.clone()
             policy.set_params(p)
 
-        # TODO: expected_acqf
-        return [(None, policy)]
+        return [policy]

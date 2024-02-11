@@ -13,4 +13,4 @@ class CenterDesigner:
         p = (all_bounds.p_low + 0.5 * all_bounds.p_width) * np.ones(shape=(policy.num_params(),))
 
         policy.set_params(p)
-        return [(None, policy)]
+        return [policy]

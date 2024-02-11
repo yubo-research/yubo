@@ -4,8 +4,9 @@ def test_noise():
     from problems.env_conf import get_env_conf
 
     noise = 0.1
-    env_conf = get_env_conf("f:ackley-2d", noise=noise, seed=1)
+    env_conf = get_env_conf("f:ackley-2d", noise_level=noise, problem_seed=1, noise_seed_0=2)
     env = env_conf.make()
+    env.reset(seed=17)
 
     assert env._real_noise_level > 0.2
 

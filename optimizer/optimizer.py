@@ -25,7 +25,8 @@ from .datum import Datum
 from .random_designer import RandomDesigner
 from .sobol_designer import SobolDesigner
 from .trajectories import Trajectory, collect_trajectory
-from .turbo_designer import TuRBODesigner
+
+# from .turbo_designer import TuRBODesigner
 
 
 @dataclass
@@ -63,18 +64,18 @@ class Optimizer:
             "variance": BTDesigner(policy, AcqVar, init_center=False),
             # Init only, no surrogate, all exploration
             "random": RandomDesigner(policy, init_center=False),
-            "random_c": RandomDesigner(policy, init_center=True),
             "sobol": SobolDesigner(policy, init_center=False),
-            "sobol_c": SobolDesigner(policy, init_center=True),
             # All exploitation
             "sr": BTDesigner(policy, qSimpleRegret, init_center=False),
             # Various methods, first batch is Sobol
             "ucb": BTDesigner(policy, qUpperConfidenceBound, init_center=False, acq_kwargs={"beta": 1}),
             "ei": BTDesigner(policy, qNoisyExpectedImprovement, init_center=False, acq_kwargs={"X_baseline": None}),
             "gibbon": BTDesigner(policy, qLowerBoundMaxValueEntropy, init_center=False, opt_sequential=True, acq_kwargs={"candidate_set": None}),
-            "turbo": TuRBODesigner(policy, num_init=init_ax_default),
+            # "turbo": TuRBODesigner(policy, num_init=init_ax_default),
             "dpp": BTDesigner(policy, AcqDPP, init_sobol=1, init_center=False, acq_kwargs={"num_X_samples": default_num_X_samples}),
             # Force a center point into the initialization
+            "random_c": RandomDesigner(policy, init_center=True),
+            "sobol_c": SobolDesigner(policy, init_center=True),
             "ucb_c": BTDesigner(policy, qUpperConfidenceBound, init_center=True, acq_kwargs={"beta": 1}),
             "ei_c": BTDesigner(policy, qNoisyExpectedImprovement, init_center=True, acq_kwargs={"X_baseline": None}),
             "gibbon_c": BTDesigner(policy, qLowerBoundMaxValueEntropy, init_center=True, opt_sequential=True, acq_kwargs={"candidate_set": None}),
@@ -87,25 +88,18 @@ class Optimizer:
                 init_center=False,
                 acq_kwargs={"num_X_samples": default_num_X_samples},
             ),
-            "mtv-obn": BTDesigner(
-                policy,
-                AcqMTV,
-                init_sobol=0,
-                init_center=False,
-                acq_kwargs={
-                    "num_X_samples": default_num_X_samples,
-                    "use_obs_noise": False,
-                },
-            ),
             # Long sobol init, sequential opt
             "sobol_ucb": BTDesigner(policy, qUpperConfidenceBound, init_center=False, init_sobol=init_ax_default, acq_kwargs={"beta": 1}),
             "sobol_ei": BTDesigner(policy, qNoisyExpectedImprovement, init_center=False, init_sobol=init_ax_default, acq_kwargs={"X_baseline": None}),
             "sobol_gibbon": BTDesigner(policy, qLowerBoundMaxValueEntropy, init_center=False, init_sobol=init_ax_default, acq_kwargs={"candidate_set": None}),
         }
 
-        self._add_ablations(policy, default_num_X_samples)
+        self._add_ablations_and_ensembles(policy, default_num_X_samples)
 
-    def _add_ablations(self, policy, default_num_X_samples):
+    def all_designer_names(self):
+        return list(self._designers.keys())
+
+    def _add_ablations_and_ensembles(self, policy, default_num_X_samples):
         self._designers = self._designers | {
             "mtv_no-opt": BTDesigner(
                 policy,
@@ -189,10 +183,10 @@ class Optimizer:
             # assert np.std(rets) > 0, rets
         return np.mean(rets)
 
-    def collect_trace(self, ttype, num_iterations):
-        assert ttype in self._designers, f"Unknown optimizer type {ttype}"
+    def collect_trace(self, designer_name, num_iterations):
+        assert designer_name in self._designers, f"Unknown optimizer type {designer_name}"
 
-        designers = self._designers[ttype]
+        designers = self._designers[designer_name]
         if not isinstance(designers, list):
             designers = [designers]
         if hasattr(designers[0], "init_center"):
@@ -205,7 +199,6 @@ class Optimizer:
             designer = designers[min(len(designers) - 1, self._i_iter)]
 
             if init_center and self._i_iter == 0:
-                assert False
                 if self._num_arms == 1:
                     data, d_time = self._iterate(self._center_designer, self._num_arms)
                 else:

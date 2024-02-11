@@ -1,16 +1,1 @@
-FILES=`ls */*.py */*/*.py */*/*/*.py`
-
-echo Temporary code:
-grep -e TEST -e HACK $FILES
-
-echo
-echo Missing files:
-git status $FILES */*.html */*/*.html */*.jinja */*/*.jinja | grep -e py$ -e html$ -e jinja$ | grep -v : | grep -v trash/
-
-echo
-echo Formatting:
-black --line-length=160 -q $FILES
-
-echo
-echo Lint:
-ruff --config config/ruff.toml --force-exclude --fix --fixable I001 $FILES
+admin/lint
