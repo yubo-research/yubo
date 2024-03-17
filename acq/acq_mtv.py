@@ -23,20 +23,18 @@ class AcqMTV(MCAcquisitionFunction):
     ) -> None:
         super().__init__(model=model, **kwargs)
         print(f"AcqMTV: num_X_samples={num_X_samples} ts_only={ts_only} num_mcmc={num_mcmc} sample_type={sample_type}")
-        self.num_mcmc = num_mcmc
-        self.num_X_samples = num_X_samples
         self.ts_only = ts_only
 
         X_0 = self.model.train_inputs[0].detach()
-        self._num_obs = X_0.shape[0]
+        num_obs = X_0.shape[0]
         self._num_dim = X_0.shape[-1]
-        self._dtype = X_0.dtype
-        self._e_0 = torch.randn(size=(num_X_samples, 1), dtype=self._dtype)
+        self.device = X_0.device
+        self.dtype = X_0.dtype
 
         sobol_engine = SobolEngine(self._num_dim, scramble=True)
 
-        if self._num_obs == 0:
-            self.X_samples = sobol_engine.draw(num_X_samples, dtype=self._dtype)
+        if num_obs == 0:
+            self.X_samples = sobol_engine.draw(num_X_samples, dtype=self.dtype)
             self.Y_max = 0.0
             self.Y_best = 0.0
         else:
@@ -49,10 +47,10 @@ class AcqMTV(MCAcquisitionFunction):
                 self.Y_best = self.Y_max
 
             if sample_type == "hnr":
-                pss = PStarSampler(self.num_mcmc, self.model, self.X_max)
+                pss = PStarSampler(num_mcmc, self.model, self.X_max)
                 self.X_samples = pss(num_X_samples)
             elif sample_type == "sobol":
-                self.X_samples = sobol_engine.draw(num_X_samples, dtype=self._dtype)
+                self.X_samples = sobol_engine.draw(num_X_samples, dtype=self.dtype)
             else:
                 assert False, f"Unknown sample type [{sample_type}]"
 
@@ -74,7 +72,7 @@ class AcqMTV(MCAcquisitionFunction):
 
         x_cand, _ = optimize_acqf(
             acq_function=PosteriorMean(self.model),
-            bounds=torch.tensor([[0.0] * self._num_dim, [1.0] * self._num_dim], device=X.device, dtype=X.dtype),
+            bounds=torch.tensor([[0.0] * self._num_dim, [1.0] * self._num_dim], device=self.device, dtype=self.dtype),
             q=1,
             num_restarts=10,
             raw_samples=512,
@@ -101,6 +99,7 @@ class AcqMTV(MCAcquisitionFunction):
         model_f = self.model.condition_on_observations(X=X, Y=mvn_a.mean)
         mvn_f = model_f.posterior(self.X_samples, observation_noise=True)
 
+        # I-Optimality
         var_f = mvn_f.variance.squeeze()
         m = var_f.mean(dim=-1)
         return -m
