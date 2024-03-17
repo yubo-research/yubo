@@ -68,8 +68,6 @@ class AcqMTV(MCAcquisitionFunction):
         return self.X_samples[i]
 
     def _find_max(self):
-        X = self.model.train_inputs[0]
-
         x_cand, _ = optimize_acqf(
             acq_function=PosteriorMean(self.model),
             bounds=torch.tensor([[0.0] * self._num_dim, [1.0] * self._num_dim], device=self.device, dtype=self.dtype),
