@@ -1,6 +1,9 @@
+YUBO=../yubo
 for d in acq admin analysis common experiments figures optimizer problems tests
 do
- echo ../yubo/$d
- rm -rfv ../yubo/$d
- cp -rv $d ../yubo
+ echo ${YUBO}/$d
+ rm -rfv ${YUBO}/$d
+ cp -rv $d ${YUBO}
 done
+cp -v requirements.txt ${YUBO}/
+
