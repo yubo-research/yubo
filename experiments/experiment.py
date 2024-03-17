@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 def sample(out_fn, env_conf, opt_name, num_rounds, num_arms, num_obs, num_denoise):
     from analysis.data_io import data_writer
     from optimizer.arm_best_est import ArmBestEst
