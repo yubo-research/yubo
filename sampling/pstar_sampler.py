@@ -1,6 +1,5 @@
 import numpy as np
 import torch
-from scipy.stats import truncnorm
 
 from sampling.hnr import find_bounds, perturb_normal
 
@@ -73,11 +72,9 @@ class PStarSampler:
             raise RuntimeError("Could not find a perturbation direction")
 
         # Make a 1D perturbation
-        rv = truncnorm(-llambda_minus / eps, llambda_plus / eps, scale=eps)
-        X_1 = X + torch.tensor(rv.rvs(num_chains))[:, None] * u
-        assert torch.all((X_1.min(dim=1).values >= 0) & (X_1.max(dim=1).values <= 1)), "Perturbation failed"
+        X_1 = self._perturb_normal(X, u, eps, llambda_minus, llambda_plus)
 
-        # Metropolis update
+        # Metropolis update (w/coarse approx. of p_*(x))
         X_both = torch.cat((X, X_1), dim=0)
         mvn = self.model.posterior(X_both, observation_noise=True)
         Y_both = mvn.sample(torch.Size([1])).squeeze(-1).squeeze(0)

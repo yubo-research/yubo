@@ -40,3 +40,17 @@ def test_perturb_normal():
 
     X_1 = perturb_normal(X, u, 1e-3, llambda_minus, llambda_plus)
     assert np.all(X_1 > -eps_bound) and np.all(X_1 < 1 + eps_bound)
+
+
+def test_perturb_uniform():
+    import numpy as np
+
+    from sampling.hnr import find_bounds, perturb_uniform
+
+    X, u = _setup()
+    eps_bound = 1e-6
+    llambda_minus = find_bounds(X, -u, eps_bound)
+    llambda_plus = find_bounds(X, u, eps_bound)
+
+    X_1 = perturb_uniform(X, u, llambda_minus, llambda_plus)
+    assert np.all(X_1 > -eps_bound) and np.all(X_1 < 1 + eps_bound)

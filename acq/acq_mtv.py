@@ -1,14 +1,14 @@
 import numpy as np
 import torch
-from botorch.acquisition import PosteriorMean
 from botorch.acquisition.monte_carlo import (
     MCAcquisitionFunction,
 )
-from botorch.optim import optimize_acqf
 from botorch.utils import t_batch_mode_transform
 from torch.quasirandom import SobolEngine
 
 from sampling.pstar_sampler import PStarSampler
+
+from .acq_util import find_max
 
 
 class AcqMTV(MCAcquisitionFunction):
@@ -38,7 +38,10 @@ class AcqMTV(MCAcquisitionFunction):
             self.Y_max = 0.0
             self.Y_best = 0.0
         else:
-            self.X_max = self._find_max()
+            self.X_max = find_max(
+                self.model,
+                bounds=torch.tensor([[0.0] * self._num_dim, [1.0] * self._num_dim], device=self.device, dtype=self.dtype),
+            )
             self.Y_max = self.model.posterior(self.X_max).mean
             if len(self.model.train_targets) > 0:
                 i = torch.argmax(self.model.train_targets)
@@ -66,25 +69,6 @@ class AcqMTV(MCAcquisitionFunction):
         i = np.arange(len(self.X_samples))
         i = np.random.choice(i, size=(int(num_arms)), replace=False)
         return self.X_samples[i]
-
-    def _find_max(self):
-        x_cand, _ = optimize_acqf(
-            acq_function=PosteriorMean(self.model),
-            bounds=torch.tensor([[0.0] * self._num_dim, [1.0] * self._num_dim], device=self.device, dtype=self.dtype),
-            q=1,
-            num_restarts=10,
-            raw_samples=512,
-            options={"batch_limit": 10, "maxiter": 200},
-        )
-
-        Y_cand = self.model.posterior(x_cand).mean
-        if len(self.model.train_targets) > 0:
-            i = torch.argmax(self.model.train_targets)
-            Y_tgt = self.model.posterior(self.model.train_inputs[0][i][:, None].T).mean
-            if Y_tgt > Y_cand:
-                x_cand = self.model.train_inputs[0][i, :][:, None].T
-
-        return x_cand
 
     @t_batch_mode_transform()
     def forward(self, X):

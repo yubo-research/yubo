@@ -2,13 +2,26 @@ import numpy as np
 from scipy.stats import truncnorm
 
 
-def hnr_sample():
-    pass
+def perturb_uniform(X, u, llambda_minus, llambda_plus):
+    """
+    Make a 1D perturbation from X along u
+    Perturbation ~ U(-llambda_minus, llambda_plus)
+
+    llambda_*: (num_chains,)
+    """
+
+    num_chains = X.shape[0]
+    num_dim = X.shape[1]
+    delta = np.random.uniform(size=(num_chains, num_dim))
+    X_min = X - llambda_minus[:, None] * u
+    X_max = X + llambda_plus[:, None] * u
+    return X_min + delta * (X_max - X_min)
 
 
 def perturb_normal(X, u, eps, llambda_minus, llambda_plus):
     """
     Make a 1D perturbation from X along u
+    Perturbation ~ N(0, eps^2), but truncated to [-llambda_minus, llambda_plus]
 
     X: num_chains x num_dim, starting point
     u: num_chains x num_dim, unit-length direction vectors
@@ -53,4 +66,5 @@ def find_bounds(
 
     # TODO: maybe return l_mid
     # l_mid = (l_low + l_high) / 2
-    return l_low.flatten()
+    llambda = l_low.flatten()
+    return llambda
