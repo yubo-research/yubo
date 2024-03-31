@@ -5,7 +5,7 @@ grep -e TEST -e HACK $FILES
 
 echo
 echo Missing files:
-git status $FILES */*.html */*/*.html */*.jinja */*/*.jinja | grep -e py$ -e html$ -e jinja$ | grep -v : | grep -v trash/
+git status $FILES */*.html */*/*.html */*.jinja */*/*.jinja | grep -e py$ -e html$ -e jinja$ | grep -v : | grep -v trash/ | grep -v paper
 
 echo
 echo Formatting:
@@ -13,4 +13,4 @@ black --line-length=160 -q $FILES
 
 echo
 echo Lint:
-ruff --config admin/ruff.toml --force-exclude --fix --fixable I001 $FILES
+ruff check --config admin/ruff.toml --force-exclude --fix --fixable I001 $FILES

@@ -2,11 +2,13 @@ import numpy as np
 import torch
 from scipy.stats import truncnorm
 
+from sampling.hnr import find_bounds, perturb_normal
+
 
 class PStarSampler:
-    def __init__(self, num_mcmc, model, X_max):
+    def __init__(self, k_mcmc, model, X_max):
         self.model = model
-        self.num_mcmc = num_mcmc
+        self.k_mcmc = k_mcmc
         self.X_max = X_max
         self.eps_interior = torch.tensor(1e-6)
         self._eps_min = 1e-8
@@ -20,7 +22,7 @@ class PStarSampler:
         X_max = torch.maximum(self.eps_interior, torch.minimum(1 - self.eps_interior, self.X_max))
         X = torch.tile(X_max, (num_X_samples, 1))
 
-        num_mcmc = self._num_dim * self.num_mcmc
+        num_mcmc = self._num_dim * self.k_mcmc
 
         eps = 1
         eps_good = False
@@ -53,6 +55,7 @@ class PStarSampler:
     def _hnr_propose(self, X, eps):
         num_chains = X.shape[0]
 
+        # Find a perturbation direction
         for _ in range(5):
             # random direction, u
             u = torch.randn(size=(num_chains, self._num_dim))
@@ -67,9 +70,9 @@ class PStarSampler:
             if min_length > 0:
                 break
         else:
-            assert False, "Could not find a perturbation direction"
+            raise RuntimeError("Could not find a perturbation direction")
 
-        # 1D perturbation
+        # Make a 1D perturbation
         rv = truncnorm(-llambda_minus / eps, llambda_plus / eps, scale=eps)
         X_1 = X + torch.tensor(rv.rvs(num_chains))[:, None] * u
         assert torch.all((X_1.min(dim=1).values >= 0) & (X_1.max(dim=1).values <= 1)), "Perturbation failed"
@@ -84,22 +87,8 @@ class PStarSampler:
 
         return b_met_accept, X_1
 
+    def _perturb_normal(self, X, u, eps, llambda_minus, llambda_plus):
+        return torch.tensor(perturb_normal(X.detach().numpy(), u.detach().numpy(), eps, llambda_minus, llambda_plus))
+
     def _find_bounds(self, X, u, eps_bound):
-        X = X.detach().numpy()
-        u = u.detach().numpy()
-        num_chains = X.shape[0]
-        l_low = np.zeros(shape=(num_chains, 1))
-        l_high = np.ones(shape=(num_chains, 1))
-
-        def _accept(X):
-            return (X.min(axis=1) >= 0) & (X.max(axis=1) <= 1)
-
-        while (l_high - l_low).max() > eps_bound:
-            l_mid = (l_low + l_high) / 2
-            X_mid = X + l_mid * u
-            a = _accept(X_mid)
-            l_low[a] = l_mid[a]
-            l_high[~a] = l_mid[~a]
-            # print ("B:", (l_high - l_low).max(), l_low.mean())
-
-        return l_low.flatten()
+        return find_bounds(X.detach().numpy(), u.detach().numpy(), eps_bound)
