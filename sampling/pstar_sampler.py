@@ -9,7 +9,7 @@ class PStarSampler:
         self.model = model
         self.k_mcmc = k_mcmc
         self.X_max = X_max
-        self.eps_interior = torch.tensor(1e-6)
+        self._eps_interior = torch.tensor(1e-6)
         self._eps_min = 1e-8
         self._num_dim = X_max.shape[-1]
 
@@ -18,7 +18,7 @@ class PStarSampler:
             return self._sample_pstar(num_X_samples)
 
     def _sample_pstar(self, num_X_samples):
-        X_max = torch.maximum(self.eps_interior, torch.minimum(1 - self.eps_interior, self.X_max))
+        X_max = torch.maximum(self._eps_interior, torch.minimum(1 - self._eps_interior, self.X_max))
         X = torch.tile(X_max, (num_X_samples, 1))
 
         num_mcmc = self._num_dim * self.k_mcmc
@@ -61,7 +61,7 @@ class PStarSampler:
             u = u / torch.sqrt((u**2).sum(axis=1, keepdims=True))
 
             # Find bounds along u
-            eps_bound = min(eps, float(self.eps_interior)) / 100
+            eps_bound = min(eps, float(self._eps_interior)) / 100
             llambda_plus = self._find_bounds(X, u, eps_bound)
             llambda_minus = self._find_bounds(X, -u, eps_bound)
             min_length = (llambda_plus - -(llambda_minus)).min()
