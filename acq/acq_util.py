@@ -3,7 +3,11 @@ from botorch.acquisition import PosteriorMean
 from botorch.optim import optimize_acqf
 
 
-def find_max(model, bounds):
+def find_max(model, bounds=None):
+    if bounds is None:
+        X = model.train_inputs[0]
+        num_dim = X.shape[1]
+        bounds = torch.tensor([[0.0] * num_dim, [1.0] * num_dim], device=X.device, dtype=X.dtype)
     x_cand, _ = optimize_acqf(
         acq_function=PosteriorMean(model),
         bounds=bounds,
