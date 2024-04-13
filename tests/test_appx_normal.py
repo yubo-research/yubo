@@ -1,18 +1,12 @@
 def test_appx_normal():
     import torch
 
-    from acq.fit_gp import fit_gp_XY
     from sampling.appx_normal import AppxNormal
+    from tests.test_util import gp_parabola
 
     torch.manual_seed(17)
 
-    X = torch.rand(size=torch.Size([3, 2]))
-    mu = torch.tensor([0.3, 0.3])
-    Y = -((X - mu) ** 2).sum(dim=1)
-    Y = Y + 0.25 * torch.randn(size=Y.shape)
-    Y = Y[:, None]
-
-    model = fit_gp_XY(X, Y)
+    model, mu = gp_parabola()
     appx_normal = AppxNormal(
         model,
         mu,
@@ -35,17 +29,13 @@ def test_appx_normal_func():
     import torch
 
     from acq.acq_util import find_max
-    from acq.fit_gp import fit_gp_XY
     from sampling.appx_normal import appx_normal
+    from tests.test_util import gp_parabola
 
     torch.manual_seed(16)
 
-    X = torch.rand(size=torch.Size([10, 2]), dtype=torch.double)
-    Y = -((X - 0.3) ** 2).sum(dim=1)
-    # Y = Y + 0.3 * torch.randn(size=Y.shape)
-    Y = Y[:, None]
+    model = gp_parabola(num_samples=10)[0]
 
-    model = fit_gp_XY(X, Y)
     print()
     print("X_MAX:", find_max(model))
     seed = int(999999 * torch.rand(size=(1,)).item())

@@ -53,7 +53,7 @@ def appx_normal(model, num_X_samples, num_Y_samples=128, num_tries=30, use_gradi
                 f_min = res.fun
                 x_best = res.x
         else:
-            print("Failed")
+            pass
     sigma = torch.tensor(x_best)
     print("MAX_IW:", an.importance_weights(sigma).max())
     return mu, sigma

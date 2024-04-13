@@ -2,6 +2,25 @@ import numpy as np
 from scipy.stats import truncnorm
 
 
+def find_perturbation_direction(X, num_tries, eps_bound):
+    num_chains, num_dim = X.shape
+
+    for _ in range(num_tries):
+        # random direction, u
+        u = np.random.normal(size=(num_chains, num_dim))
+        u = u / np.sqrt((u**2).sum(axis=1, keepdims=True))
+
+        # Find bounds along u
+        llambda_plus = find_bounds(X, u, eps_bound)
+        llambda_minus = find_bounds(X, -u, eps_bound)
+        min_length = (llambda_plus - -(llambda_minus)).min()
+        if min_length > 0:
+            break
+    else:
+        raise RuntimeError("Could not find a perturbation direction")
+    return u, llambda_minus, llambda_plus
+
+
 def perturb_uniform(X, u, llambda_minus, llambda_plus):
     """
     Make a 1D perturbation from X along u

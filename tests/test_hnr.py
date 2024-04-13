@@ -54,3 +54,14 @@ def test_perturb_uniform():
 
     X_1 = perturb_uniform(X, u, llambda_minus, llambda_plus)
     assert np.all(X_1 > -eps_bound) and np.all(X_1 < 1 + eps_bound)
+
+
+def test_find_perturbation_direction():
+    from sampling.hnr import find_perturbation_direction
+
+    X, u = _setup()
+    find_perturbation_direction(
+        X=X,
+        num_tries=5,
+        eps_bound=1e-6,
+    )

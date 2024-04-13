@@ -1,7 +1,7 @@
 import numpy as np
 
+from .sampling_util import draw_bounded_normal_samples
 from .scaled_inv_chi2 import ScaledInverseChi2
-from .util import draw_bounded_normal_samples
 
 
 class CEMScale:

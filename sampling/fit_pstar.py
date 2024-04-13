@@ -1,6 +1,6 @@
 import numpy as np
 
-from .util import draw_bounded_normal_samples
+from .sampling_util import draw_bounded_normal_samples
 
 
 class FitPStar:

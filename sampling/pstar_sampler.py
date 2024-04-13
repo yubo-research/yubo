@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-from sampling.hnr import find_bounds, perturb_normal
+from sampling.hnr import find_perturbation_direction, perturb_normal
 
 
 class PStarSampler:
@@ -52,27 +52,15 @@ class PStarSampler:
         return X
 
     def _hnr_propose(self, X, eps):
-        num_chains = X.shape[0]
-
-        # Find a perturbation direction
-        for _ in range(5):
-            # random direction, u
-            u = torch.randn(size=(num_chains, self._num_dim))
-            u = u / torch.sqrt((u**2).sum(axis=1, keepdims=True))
-
-            # Find bounds along u
-            eps_bound = min(eps, float(self._eps_interior)) / 100
-            llambda_plus = self._find_bounds(X, u, eps_bound)
-            llambda_minus = self._find_bounds(X, -u, eps_bound)
-            min_length = (llambda_plus - -(llambda_minus)).min()
-            # print ("BOUNDS:", (llambda_plus - -(llambda_minus)))
-            if min_length > 0:
-                break
-        else:
-            raise RuntimeError("Could not find a perturbation direction")
+        X_np = X.detach().numpy()
+        u, llambda_minus, llambda_plus = find_perturbation_direction(
+            X=X_np,
+            num_tries=5,
+            eps_bound=min(eps, float(self._eps_interior)) / 100,
+        )
 
         # Make a 1D perturbation
-        X_1 = self._perturb_normal(X, u, eps, llambda_minus, llambda_plus)
+        X_1 = torch.tensor(perturb_normal(X_np, u, eps, llambda_minus, llambda_plus))
 
         # Metropolis update (w/coarse approx. of p_*(x))
         X_both = torch.cat((X, X_1), dim=0)
@@ -83,9 +71,3 @@ class PStarSampler:
         b_met_accept = (Y_1 > Y).flatten()
 
         return b_met_accept, X_1
-
-    def _perturb_normal(self, X, u, eps, llambda_minus, llambda_plus):
-        return torch.tensor(perturb_normal(X.detach().numpy(), u.detach().numpy(), eps, llambda_minus, llambda_plus))
-
-    def _find_bounds(self, X, u, eps_bound):
-        return find_bounds(X.detach().numpy(), u.detach().numpy(), eps_bound)
