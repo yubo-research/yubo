@@ -8,7 +8,7 @@ from scipy.optimize import minimize
 from acq.acq_util import find_max
 
 
-def appx_normal(model, num_X_samples, num_Y_samples=128, num_tries=30, use_gradients=True, seed=None):
+def appx_normal(model, num_X_samples, num_Y_samples=128, num_tries=10, use_gradients=True, seed=None, min_sigma=1e-9):
     mu = find_max(model)
     an = _AppxNormal(model, mu, num_X_samples, num_Y_samples, use_soft_max=use_gradients)
 
@@ -24,7 +24,7 @@ def appx_normal(model, num_X_samples, num_Y_samples=128, num_tries=30, use_gradi
             method="L-BFGS-B" if use_gradients else "Powell",
             fun=fun_jac.fun,
             jac=fun_jac.jac if use_gradients else None,
-            bounds=[torch.tensor((0.0, 2.0), dtype=an.dtype)] * an.num_dim,
+            bounds=[torch.tensor((min_sigma, 2.0), dtype=an.dtype)] * an.num_dim,
         )
         if res.success:
             if res.fun < f_min:
@@ -56,13 +56,16 @@ class AppxNormal:
 
     def calc_importance_weights(self, model, X, num_Y_samples):
         p_star = self.p_star(model, X, num_Y_samples=num_Y_samples)
-        Z = (X - self.mu) / self.sigma
-        sqdet = torch.prod(self.sigma)
-        p_normal = torch.exp(-(Z**2).sum(dim=1) / 2) / sqdet
-        p_normal = p_normal / p_normal.sum()
+        p_normal = self.p_normal(X)
 
         w = p_star / p_normal
         return w / w.mean()
+
+    def p_normal(self, X):
+        Z = (X - self.mu) / self.sigma
+        sqdet = torch.prod(self.sigma)
+        p_normal = torch.exp(-(Z**2).sum(dim=1) / 2) / sqdet
+        return p_normal / p_normal.sum()
 
     def p_star(self, model, X, num_Y_samples):
         mvn = model.posterior(X, observation_noise=False)

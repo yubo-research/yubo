@@ -6,6 +6,7 @@ _exact_match = True
 
 def find_perturbation_direction(X, num_tries, eps_bound):
     num_chains, num_dim = X.shape
+    assert eps_bound > 0, eps_bound
 
     for _ in range(num_tries):
         # random direction, u

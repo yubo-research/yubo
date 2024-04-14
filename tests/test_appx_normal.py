@@ -28,6 +28,7 @@ def test_appx_normal():
 
 
 def test_appx_normal_func():
+    import numpy as np
     import torch
 
     from acq.acq_util import find_max
@@ -39,7 +40,8 @@ def test_appx_normal_func():
     model = gp_parabola(num_samples=10)[0]
 
     print()
-    print("X_MAX:", find_max(model))
+    x_max = find_max(model)
+    print("X_MAX:", x_max)
     seed = int(999999 * torch.rand(size=(1,)).item())
     for use_gradients in [True, False]:
         an = appx_normal(
@@ -50,5 +52,6 @@ def test_appx_normal_func():
             seed=seed,
         )
         print("MS:", an.mu, an.sigma)
+        assert np.abs(an.mu.numpy() - x_max.numpy()).max() < 1e-4
         X = an.sample(num_X_samples=32)
-        print("LOSS_IW:", ((an.calc_importance_weights(model, X, num_Y_samples=1024) - 1) ** 2).sum())
+        assert ((an.calc_importance_weights(model, X, num_Y_samples=1024) - 1) ** 2).mean() < 30
