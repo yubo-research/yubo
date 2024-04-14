@@ -1,28 +1,30 @@
 def test_appx_normal():
     import torch
 
-    from sampling.appx_normal import AppxNormal
+    from sampling.appx_normal import _AppxNormal
     from tests.test_util import gp_parabola
 
     torch.manual_seed(17)
 
     model, mu = gp_parabola()
-    appx_normal = AppxNormal(
-        model,
-        mu,
-        num_X_samples=64,
-        num_Y_samples=128,
-    )
+    for use_soft_max in [True, False]:
+        appx_normal = _AppxNormal(
+            model,
+            mu,
+            num_X_samples=64,
+            num_Y_samples=128,
+            use_soft_max=True,
+        )
 
-    assert appx_normal._mk_p_star(torch.rand(size=torch.Size([10, 2]))).shape == (10,)
-    X = appx_normal._resample_x(torch.tensor([10, 1]), torch.tensor([0.1, 10]))
+        assert appx_normal._mk_p_star(torch.rand(size=torch.Size([10, 2]))).shape == (10,)
+        X = appx_normal._sample_normal(torch.tensor([10, 1]), torch.tensor([0.1, 10]))
 
-    assert abs(X[:, 0].mean() - 10) < 0.1 / 3.1
-    assert abs(X[:, 1].mean() - 1) < 10 / 3.1
+        assert abs(X[:, 0].mean() - 10) < 0.1 / 3.1
+        assert abs(X[:, 1].mean() - 1) < 10 / 3.1
 
-    for _ in range(5):
-        sigma = 0.2 * torch.rand(size=torch.Size([2]))
-        print(mu, sigma, appx_normal.evalutate(sigma))
+        for _ in range(5):
+            sigma = 0.2 * torch.rand(size=torch.Size([2]))
+            print(mu, sigma, appx_normal.evalutate(sigma))
 
 
 def test_appx_normal_func():
@@ -40,12 +42,13 @@ def test_appx_normal_func():
     print("X_MAX:", find_max(model))
     seed = int(999999 * torch.rand(size=(1,)).item())
     for use_gradients in [True, False]:
-        print(
-            appx_normal(
-                model,
-                num_X_samples=64,
-                num_Y_samples=128,
-                use_gradients=use_gradients,
-                seed=seed,
-            )
+        an = appx_normal(
+            model,
+            num_X_samples=32,
+            num_Y_samples=256,
+            use_gradients=use_gradients,
+            seed=seed,
         )
+        print("MS:", an.mu, an.sigma)
+        X = an.sample(num_X_samples=32)
+        print("LOSS_IW:", ((an.calc_importance_weights(model, X, num_Y_samples=1024) - 1) ** 2).sum())

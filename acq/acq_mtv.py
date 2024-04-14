@@ -40,7 +40,11 @@ class AcqMTV(MCAcquisitionFunction):
         else:
             self.X_max = find_max(
                 self.model,
-                bounds=torch.tensor([[0.0] * self._num_dim, [1.0] * self._num_dim], device=self.device, dtype=self.dtype),
+                bounds=torch.tensor(
+                    [[0.0] * self._num_dim, [1.0] * self._num_dim],
+                    device=self.device,
+                    dtype=self.dtype,
+                ),
             )
             self.Y_max = self.model.posterior(self.X_max).mean
             if len(self.model.train_targets) > 0:
