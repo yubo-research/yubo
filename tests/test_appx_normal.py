@@ -54,4 +54,4 @@ def test_appx_normal_func():
         print("MS:", an.mu, an.sigma)
         assert np.abs(an.mu.numpy() - x_max.numpy()).max() < 1e-4
         X = an.sample(num_X_samples=32)
-        assert ((an.calc_importance_weights(model, X, num_Y_samples=1024) - 1) ** 2).mean() < 30
+        assert ((an.calc_importance_weights(X, num_Y_samples=1024) - 1) ** 2).mean() < 30

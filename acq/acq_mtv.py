@@ -6,6 +6,7 @@ from botorch.acquisition.monte_carlo import (
 from botorch.utils import t_batch_mode_transform
 from torch.quasirandom import SobolEngine
 
+from sampling.pstar_is_sampler import PStarISSampler
 from sampling.pstar_sampler import PStarSampler
 
 from .acq_util import find_max
@@ -17,12 +18,12 @@ class AcqMTV(MCAcquisitionFunction):
         model,
         num_X_samples,
         ts_only=False,
-        num_mcmc=100,
+        k_mcmc=100,
         sample_type="hnr",
         **kwargs,
     ) -> None:
         super().__init__(model=model, **kwargs)
-        print(f"AcqMTV: num_X_samples={num_X_samples} ts_only={ts_only} num_mcmc={num_mcmc} sample_type={sample_type}")
+        print(f"AcqMTV: num_X_samples={num_X_samples} ts_only={ts_only} k_mcmc={k_mcmc} sample_type={sample_type}")
         self.ts_only = ts_only
 
         X_0 = self.model.train_inputs[0].detach()
@@ -54,7 +55,10 @@ class AcqMTV(MCAcquisitionFunction):
                 self.Y_best = self.Y_max
 
             if sample_type == "hnr":
-                pss = PStarSampler(num_mcmc, self.model, self.X_max)
+                pss = PStarSampler(k_mcmc, self.model, self.X_max)
+                self.X_samples = pss(num_X_samples)
+            elif sample_type == "is":
+                pss = PStarISSampler(k_mcmc, model)
                 self.X_samples = pss(num_X_samples)
             elif sample_type == "sobol":
                 self.X_samples = sobol_engine.draw(num_X_samples, dtype=self.dtype)

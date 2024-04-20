@@ -86,7 +86,18 @@ class Optimizer:
                 AcqMTV,
                 init_sobol=0,
                 init_center=False,
-                acq_kwargs={"num_X_samples": default_num_X_samples},
+                acq_kwargs={"num_X_samples": default_num_X_samples, "sample_type": "hnr"},
+            ),
+            "mtv-is": BTDesigner(
+                policy,
+                AcqMTV,
+                init_sobol=0,
+                init_center=False,
+                acq_kwargs={
+                    "num_X_samples": default_num_X_samples,
+                    "sample_type": "is",
+                    "k_mcmc": 10,
+                },
             ),
             # Long sobol init, sequential opt
             "sobol_ucb": BTDesigner(policy, qUpperConfidenceBound, init_center=False, init_sobol=init_ax_default, acq_kwargs={"beta": 1}),
@@ -214,16 +225,16 @@ class Optimizer:
                 self._data.append(datum)
                 ret_batch.append(datum.trajectory.rreturn)
 
-            policy_best, r_best_est = self._arm_selector(self._data)
+            policy_best, self.r_best_est = self._arm_selector(self._data)
             if self._num_denoise is None:
-                ret_eval = r_best_est
+                ret_eval = self.r_best_est
             else:
                 ret_eval = self._denoise(policy_best)
 
             ret_batch = np.array(ret_batch)
 
             print(
-                f"ITER: i_iter = {self._i_iter} d_time = {d_time:.2f} ret_max = {ret_batch.max():.2f} ret_mean = {ret_batch.mean():.2f} ret_best = {r_best_est:.2f} ret_eval = {ret_eval:.2f}"
+                f"ITER: i_iter = {self._i_iter} d_time = {d_time:.2f} ret_max = {ret_batch.max():.2f} ret_mean = {ret_batch.mean():.2f} ret_best = {self.r_best_est:.2f} ret_eval = {ret_eval:.2f}"
             )
             sys.stdout.flush()
             trace.append(_TraceEntry(ret_eval, d_time))

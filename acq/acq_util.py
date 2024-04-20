@@ -4,15 +4,18 @@ from botorch.optim import optimize_acqf
 
 
 def find_max(model, bounds=None):
+    # TODO: warm-start; Set some of the initialial conditions
+    #  to recent answers.
     if bounds is None:
         X = model.train_inputs[0]
         num_dim = X.shape[1]
         bounds = torch.tensor([[0.0] * num_dim, [1.0] * num_dim], device=X.device, dtype=X.dtype)
+
     x_cand, _ = optimize_acqf(
         acq_function=PosteriorMean(model),
         bounds=bounds,
         q=1,
-        num_restarts=10,
+        num_restarts=100,
         raw_samples=512,
         options={"batch_limit": 10, "maxiter": 200},
     )
