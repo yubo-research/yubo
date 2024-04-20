@@ -2,6 +2,7 @@ import numpy as np
 import torch
 
 from sampling.appx_normal import appx_normal
+from sampling.gelman_rubin import GelmanRubin
 from sampling.hnr import find_perturbation_direction, perturb_normal
 
 
@@ -50,12 +51,13 @@ class PStarISSampler:
         num_good = 0
         max_iterations = 10 * num_mcmc
         frac_changed = None
+        gr = GelmanRubin()
         for i_iter in range(max_iterations):
             i, X_1 = self._hnr_propose(X, eps)
             frac_changed = (1.0 * i).mean().item()
-            print("FC: eps =", eps, "fc =", frac_changed)
-
             X[i] = X_1[i]
+            gr.append(X.detach().numpy())
+            print("FC: eps =", eps, "gr = ", gr.get(), "fc =", frac_changed)
             if abs(frac_changed - 0.5) < 0.1:
                 num_good += 1
                 # print("GOOD:", num_good)
@@ -63,9 +65,9 @@ class PStarISSampler:
                     print(f"Goodness Achieved at i_iter = {i_iter}")
                     break
             elif frac_changed > 0.5:
-                eps *= 1.3
+                eps *= 1
             else:
-                eps /= 1.3
+                eps /= 1
             # eps = eps * (1 - 1.75 * (0.5 - frac_changed))
             # eps = eps * (1 - 10 * (0.5 - frac_changed))
             eps = min(1.0, max(self._eps_min, eps))

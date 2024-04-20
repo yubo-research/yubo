@@ -7,5 +7,5 @@ def test_gelman_rubin():
 
     gr = GelmanRubin()
     for _ in range(12):
-        gr.append(np.random.uniform(size=(10,)))
+        gr.append(np.random.uniform(size=(10, 3)))
     assert gr.get() < 1.2
