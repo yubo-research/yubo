@@ -2,6 +2,7 @@ import time
 
 import numpy as np
 import torch
+from scipy.stats import truncnorm
 
 from sampling.appx_normal import appx_normal
 from sampling.hnr import find_perturbation_direction, perturb_normal
@@ -41,10 +42,29 @@ class PStarISSampler:
         # print("AN:", self.appx_normal.mu, self.appx_normal.sigma)
 
     def __call__(self, num_X_samples):
+        t_0 = time.time()
         with torch.inference_mode():
-            return torch.as_tensor(self._sample_pstar(num_X_samples))
+            ret = torch.as_tensor(self._sample_pstar(num_X_samples))
+        t_f = time.time()
+        print(f"SAMPLE: dt = {t_f-t_0:.2}s")
+        return ret
 
     def _sample_pstar(self, num_X_samples):
+        # Sample from the approximate p*(x) within the bounding box.
+
+        mu = self.appx_normal.mu.detach().numpy()
+        sigma = self.appx_normal.sigma.detach().numpy()
+        num_dim = len(mu)
+
+        return truncnorm.rvs(
+            (np.zeros(shape=(num_dim,)) - mu) / sigma,
+            (np.ones(shape=(num_dim,)) - mu) / sigma,
+            loc=mu,
+            scale=sigma,
+            size=(num_X_samples, num_dim),
+        )
+
+    def _sample_pstar_hnr(self, num_X_samples):
         # Sample from the approximate p*(x) within the bounding box.
         X_max = self.appx_normal.mu
         X_max = torch.maximum(self._eps_interior, torch.minimum(1 - self._eps_interior, X_max))

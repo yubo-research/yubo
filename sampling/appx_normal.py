@@ -15,8 +15,8 @@ def appx_normal(
     num_tries=10,
     use_gradients=True,
     seed=None,
-    min_sigma=1e-9,
-    max_sigma=1.0,
+    min_k_sigma=1e-9,
+    max_k_sigma=1.0,
     theta=100,
 ):
     mu = find_max(model)
@@ -26,17 +26,19 @@ def appx_normal(
     fun_jac = _FunJac(an, include_jacobian=use_gradients)
     rng = np.random.default_rng(seed)
 
+    max_k_sigma = max_k_sigma * np.sqrt(an.num_dim)
+
     f_min = 1e99
     x_best = None
     for _ in range(num_tries):
         # TODO: parallelize into num_threads threads
-        sigma_0 = min_sigma + (max_sigma - min_sigma) * torch.tensor(rng.uniform(size=(an.num_dim,)), dtype=an.dtype)
+        k_sigma_0 = min_k_sigma + (max_k_sigma - min_k_sigma) * torch.tensor(rng.uniform(size=(an.num_dim,)), dtype=an.dtype)
         res = minimize(
-            x0=sigma_0,
+            x0=k_sigma_0,
             method="L-BFGS-B" if use_gradients else "Powell",
             fun=fun_jac.fun,
             jac=fun_jac.jac if use_gradients else None,
-            bounds=[torch.tensor((min_sigma, max_sigma), dtype=an.dtype)] * an.num_dim,
+            bounds=[torch.tensor((min_k_sigma, max_k_sigma), dtype=an.dtype)] * an.num_dim,
         )
         if res.success:
             if use_gradients:
@@ -48,7 +50,8 @@ def appx_normal(
                 x_best = res.x
         else:
             pass
-    sigma = torch.tensor(x_best)
+    k_sigma = torch.tensor(x_best)
+    sigma = k_sigma * an.sigma_0
     return AppxNormal(model, mu, sigma, theta=theta)
 
 
@@ -108,31 +111,36 @@ class _AppxNormal:
         self._theta = theta
         assert len(X.shape) == 2, (X.shape, "I only handle single-output models")
         self.num_dim = X.shape[1]
+        self.sigma_0 = 1 / np.sqrt(self.num_dim)
         self.device = X.device
         self.dtype = X.dtype
 
-        self._X_base_samples = draw_sobol_normal_samples(
+        self._X_base_samples = self.sigma_0 * draw_sobol_normal_samples(
             self.num_dim,
             num_X_samples,
             device=self.device,
         )
+
         self._p_x = torch.exp(-(self._X_base_samples**2).sum(dim=1) / 2)
+        assert self._p_x.sum() > 0, (self._p_x, self._X_base_samples)
         self._p_x = self._p_x / self._p_x.sum()
+        assert not torch.any(torch.isnan(self._p_x)), self._p_x
         assert self._p_x.shape == (num_X_samples,), (self._p_x.shape, num_X_samples)
 
         self._sampler_y = SobolQMCNormalSampler(sample_shape=torch.Size([num_Y_samples]))
 
-    def calc_importance_weights(self, sigma):
-        p_star = self._mk_p_star(self._sample_normal(self._mu, sigma))
+    def calc_importance_weights(self, k_sigma):
+        p_star = self._mk_p_star(self._sample_normal(self._mu, k_sigma))
         assert p_star.shape == self._p_x.shape, (p_star.shape, self._p_x.shape)
         return _calc_importance_weights(p_star, self._p_x, self._theta)
 
-    def evalutate(self, sigma):
-        importance_weights = self.calc_importance_weights(sigma)
+    def evalutate(self, k_sigma):
+        importance_weights = self.calc_importance_weights(k_sigma)
+        assert not torch.any(torch.isnan(importance_weights)), importance_weights
         return ((importance_weights - 1) ** 2).sum()
 
-    def _sample_normal(self, mu, sigma):
-        return mu + sigma * self._X_base_samples
+    def _sample_normal(self, mu, k_sigma):
+        return mu + k_sigma * self._X_base_samples
 
     def _mk_p_star(self, X):
         mvn = self._model.posterior(X, observation_noise=False)
@@ -146,6 +154,7 @@ def _calc_pstar(Y, use_soft_max):
         # Differentiable
         z = torch.exp(20 * Y)
         z = z / z.sum(dim=1, keepdim=True)
+        assert not torch.any(torch.isnan(z)), z
     else:
         # Not differentiable
         z = torch.zeros(size=Y.shape)
@@ -154,14 +163,20 @@ def _calc_pstar(Y, use_soft_max):
         z[j, i] = 1
 
     p_star = z.mean(dim=0)
-    return p_star / p_star.sum()
+    assert not torch.any(torch.isnan(p_star)), p_star
+    norm = p_star.sum()
+    assert torch.all(norm > 0)
+    return p_star / norm
 
 
 def _calc_importance_weights(p_star, p_normal, theta):
+    assert torch.all(p_normal > 0), p_normal
     w = p_star / p_normal
+    assert not torch.any(torch.isnan(w)), w
     w = w / w.mean()
     if not np.isinf(theta):
         w = torch.min(torch.tensor(theta), torch.max(torch.tensor([1 / theta]), w))
+    assert not torch.any(torch.isnan(w)), w
     return w / w.mean()
 
 
@@ -172,6 +187,7 @@ class _FunJac:
         self._include_jacobian = include_jacobian
 
     def fun(self, x):
+        assert not np.any(np.isnan(x)), x
         self._x = x
         x = torch.tensor(x, requires_grad=self._include_jacobian)
         loss = self._an.evalutate(x)
