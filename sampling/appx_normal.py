@@ -50,9 +50,9 @@ def appx_normal(
                 x_best = res.x
         else:
             pass
-    k_sigma = torch.tensor(x_best)
-    sigma = k_sigma * an.sigma_0
-    return AppxNormal(model, mu, sigma, theta=theta)
+
+    sigma = an.sigma(torch.tensor(x_best))
+    return AppxNormal(model, mu, sigma, num_Y_samples=num_Y_samples, theta=theta)
 
 
 class AppxNormal:
@@ -61,11 +61,13 @@ class AppxNormal:
         model: SingleTaskGP,
         mu: torch.Tensor,
         sigma: torch.Tensor,
+        num_Y_samples: int,
         theta: float,
     ):
         self._model = model
         self.mu = mu.flatten()
         self.sigma = sigma.flatten()
+        self._num_Y_samples = num_Y_samples
         self._theta = theta
         self._num_dim = len(self.mu)
         self.device = self.mu.device
@@ -77,8 +79,8 @@ class AppxNormal:
             device=self.device,
         )
 
-    def calc_importance_weights(self, X, num_Y_samples):
-        p_star = self.p_star(X, num_Y_samples=num_Y_samples)
+    def calc_importance_weights(self, X):
+        p_star = self.p_star(X, num_Y_samples=self._num_Y_samples)
         p_normal = self.p_normal(X)
         return _calc_importance_weights(p_star, p_normal, self._theta)
 
@@ -111,11 +113,11 @@ class _AppxNormal:
         self._theta = theta
         assert len(X.shape) == 2, (X.shape, "I only handle single-output models")
         self.num_dim = X.shape[1]
-        self.sigma_0 = 1 / np.sqrt(self.num_dim)
+        self._sigma_0 = 1 / np.sqrt(self.num_dim)
         self.device = X.device
         self.dtype = X.dtype
 
-        self._X_base_samples = self.sigma_0 * draw_sobol_normal_samples(
+        self._X_base_samples = self._sigma_0 * draw_sobol_normal_samples(
             self.num_dim,
             num_X_samples,
             device=self.device,
@@ -128,6 +130,9 @@ class _AppxNormal:
         assert self._p_x.shape == (num_X_samples,), (self._p_x.shape, num_X_samples)
 
         self._sampler_y = SobolQMCNormalSampler(sample_shape=torch.Size([num_Y_samples]))
+
+    def sigma(self, k_sigma):
+        return k_sigma * self._sigma_0
 
     def calc_importance_weights(self, k_sigma):
         p_star = self._mk_p_star(self._sample_normal(self._mu, k_sigma))

@@ -16,7 +16,7 @@ class PStarISSampler:
         model,
         *,
         num_X_samples_is=64,
-        num_Y_samples=128,
+        num_Y_samples=1024,
         num_tries=30,
         use_gradients=True,
         theta=np.inf,
@@ -44,10 +44,11 @@ class PStarISSampler:
     def __call__(self, num_X_samples):
         t_0 = time.time()
         with torch.inference_mode():
-            ret = torch.as_tensor(self._sample_pstar(num_X_samples))
+            X_samples = torch.as_tensor(self._sample_pstar(num_X_samples))
         t_f = time.time()
         print(f"SAMPLE: dt = {t_f-t_0:.2}s")
-        return ret
+        weights = self.appx_normal.calc_importance_weights(X_samples)
+        return weights, X_samples
 
     def _sample_pstar(self, num_X_samples):
         # Sample from the approximate p*(x) within the bounding box.

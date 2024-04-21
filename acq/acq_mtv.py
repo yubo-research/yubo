@@ -31,6 +31,7 @@ class AcqMTV(MCAcquisitionFunction):
         self._num_dim = X_0.shape[-1]
         self.device = X_0.device
         self.dtype = X_0.dtype
+        self.weights = None
 
         sobol_engine = SobolEngine(self._num_dim, scramble=True)
 
@@ -59,7 +60,7 @@ class AcqMTV(MCAcquisitionFunction):
                 self.X_samples = pss(num_X_samples)
             elif sample_type == "is":
                 pss = PStarISSampler(k_mcmc, model)
-                self.X_samples = pss(num_X_samples)
+                self.weights, self.X_samples = pss(num_X_samples)
             elif sample_type == "sobol":
                 self.X_samples = sobol_engine.draw(num_X_samples, dtype=self.dtype)
             else:
@@ -91,5 +92,7 @@ class AcqMTV(MCAcquisitionFunction):
 
         # I-Optimality
         var_f = mvn_f.variance.squeeze()
+        if self.weights is not None:
+            var_f = self.weights.unsqueeze(0) * var_f
         m = var_f.mean(dim=-1)
         return -m
