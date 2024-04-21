@@ -3,6 +3,7 @@ import time
 from dataclasses import dataclass
 
 import numpy as np
+import torch
 from botorch.acquisition.max_value_entropy_search import (
     qLowerBoundMaxValueEntropy,
 )
@@ -25,8 +26,7 @@ from .datum import Datum
 from .random_designer import RandomDesigner
 from .sobol_designer import SobolDesigner
 from .trajectories import Trajectory, collect_trajectory
-
-# from .turbo_designer import TuRBODesigner
+from .turbo_designer import TuRBODesigner
 
 
 @dataclass
@@ -36,7 +36,7 @@ class _TraceEntry:
 
 
 class Optimizer:
-    def __init__(self, env_conf, policy, num_arms, arm_selector, num_obs=1, num_denoise=None, cb_trace=None):
+    def __init__(self, env_conf, policy, num_arms, arm_selector, num_obs=1, num_denoise=None, cb_trace=None, device="cpu", dtype=torch.float64):
         self._env_conf = env_conf
         self._num_arms = num_arms
         self._num_obs = num_obs
@@ -71,7 +71,7 @@ class Optimizer:
             "ucb": BTDesigner(policy, qUpperConfidenceBound, init_center=False, acq_kwargs={"beta": 1}),
             "ei": BTDesigner(policy, qNoisyExpectedImprovement, init_center=False, acq_kwargs={"X_baseline": None}),
             "gibbon": BTDesigner(policy, qLowerBoundMaxValueEntropy, init_center=False, opt_sequential=True, acq_kwargs={"candidate_set": None}),
-            # "turbo": TuRBODesigner(policy, num_init=init_ax_default),
+            "turbo": TuRBODesigner(policy, num_init=init_ax_default),
             "dpp": BTDesigner(policy, AcqDPP, init_sobol=1, init_center=False, acq_kwargs={"num_X_samples": default_num_X_samples}),
             # Force a center point into the initialization
             "random_c": RandomDesigner(policy, init_center=True),

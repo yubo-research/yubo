@@ -52,6 +52,8 @@ def appx_normal(
             pass
 
     sigma = an.sigma(torch.tensor(x_best))
+    num_dim = len(sigma)
+    print("SIGMA:", float(torch.prod(sigma)) ** (1 / num_dim))
     return AppxNormal(model, mu, sigma, num_Y_samples=num_Y_samples, theta=theta)
 
 
@@ -93,7 +95,7 @@ class AppxNormal:
         mvn = self._model.posterior(X, observation_noise=False)
         Y = mvn.sample(torch.Size([num_Y_samples])).squeeze(-1)
 
-        return _calc_pstar(Y, use_soft_max=False)
+        return _calc_pstar(Y, beta_soft_max=None)
 
 
 class _AppxNormal:
@@ -114,6 +116,7 @@ class _AppxNormal:
         assert len(X.shape) == 2, (X.shape, "I only handle single-output models")
         self.num_dim = X.shape[1]
         self._sigma_0 = 1 / np.sqrt(self.num_dim)
+        self._beta_soft_max = 20
         self.device = X.device
         self.dtype = X.dtype
 
@@ -151,13 +154,13 @@ class _AppxNormal:
         mvn = self._model.posterior(X, observation_noise=False)
         # calls rsample_from_base_samples(), enabling SAA
         Y = self._sampler_y(mvn).squeeze(-1)
-        return _calc_pstar(Y, self._use_soft_max)
+        return _calc_pstar(Y, self._beta_soft_max if self._use_soft_max else None)
 
 
-def _calc_pstar(Y, use_soft_max):
-    if use_soft_max:
+def _calc_pstar(Y, beta_soft_max):
+    if beta_soft_max:
         # Differentiable
-        z = torch.exp(20 * Y)
+        z = torch.exp(beta_soft_max * Y)
         z = z / z.sum(dim=1, keepdim=True)
         assert not torch.any(torch.isnan(z)), z
     else:

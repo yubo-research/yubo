@@ -7,15 +7,23 @@ import acq.fit_gp as fit_gp
 
 
 class AcqBT:
-    def __init__(self, acq_factory, data, num_dim, acq_kwargs=None):
-        dtype = torch.float64
+    def __init__(
+        self,
+        acq_factory,
+        data,
+        num_dim,
+        acq_kwargs=None,
+        *,
+        device,
+        dtype,
+    ):
         if len(data) == 0:
-            X = torch.empty(size=(0, num_dim), dtype=dtype)
-            Y = torch.empty(size=(0, 1), dtype=dtype)
+            X = torch.empty(size=(0, num_dim), dtype=dtype, device=device)
+            Y = torch.empty(size=(0, 1), dtype=dtype, device=device)
             gp = SingleTaskGP(X, Y)
             gp.eval()
         else:
-            gp, Y, X = fit_gp.fit_gp(data, dtype)
+            gp, Y, X = fit_gp.fit_gp(data, dtype, device=device)
 
         # All BoTorch stuff is coded to bounds of [0,1]!
         self.bounds = torch.tensor([[0.0] * num_dim, [1.0] * num_dim], device=X.device, dtype=X.dtype)

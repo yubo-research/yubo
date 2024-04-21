@@ -19,6 +19,8 @@ class BTDesigner:
         init_X_samples=True,
         opt_sequential=False,
         optimizer_options={"batch_limit": 10, "maxiter": 1000},
+        dtype=torch.float64,
+        device=torch.device("cpu"),
     ):
         assert init_center in [True, False], init_center
         self._policy = policy
@@ -29,6 +31,8 @@ class BTDesigner:
         self._opt_sequential = opt_sequential
         self._optimizer_options = optimizer_options
         self._acq_kwargs = acq_kwargs
+        self.device = torch.device(device)
+        self.dtype = dtype if device != torch.device("mps") else torch.float32
 
     def __repr__(self):
         return f"{self.__class__.__name__} {self._acq_fn}"
@@ -65,7 +69,7 @@ class BTDesigner:
             return ret
 
         num_dim = self._policy.num_params()
-        acqf = AcqBT(self._acq_fn, data, num_dim, self._acq_kwargs)
+        acqf = AcqBT(self._acq_fn, data, num_dim, self._acq_kwargs, device=self.device, dtype=self.dtype)
         if hasattr(acqf.acq_function, "draw"):
             # print (f"Draw from {acqf.acq_function.__class__.__name__}")
             X_cand = acqf.acq_function.draw(num_arms)
@@ -73,6 +77,7 @@ class BTDesigner:
             warnings.simplefilter("ignore")
             if self._init_X_samples and hasattr(acqf.acq_function, "X_samples"):
                 batch_initial_conditions = self._batch_initial_conditions(data, num_arms, acqf)
+                batch_initial_conditions = batch_initial_conditions.type(self.dtype).to(self.device)
             else:
                 batch_initial_conditions = None
 
