@@ -6,6 +6,9 @@ def test_gelman_rubin():
     np.random.seed(17)
 
     gr = GelmanRubin()
-    for _ in range(12):
+    for _ in range(30):
         gr.append(np.random.uniform(size=(10, 3)))
-    assert gr.get() < 1.2
+    r_hat = gr.r_hat()
+    print(r_hat)
+    assert r_hat >= 1
+    assert r_hat < 1.2

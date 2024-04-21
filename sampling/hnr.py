@@ -1,22 +1,23 @@
 import numpy as np
 from scipy.stats import truncnorm
 
-_exact_match = True
+_exactly_match_old_way = True
 
 
-def find_perturbation_direction(X, num_tries, eps_bound):
+def find_perturbation_direction(X, num_tries, eps_bound, sigma=1):
     num_chains, num_dim = X.shape
     assert eps_bound > 0, eps_bound
 
     for _ in range(num_tries):
         # random direction, u
-        if _exact_match:
+        if _exactly_match_old_way:
             import torch
 
             u = torch.randn(size=(num_chains, num_dim)).detach().numpy()
         else:
             u = np.random.normal(size=(num_chains, num_dim))
 
+        u = sigma * u
         u = u / np.sqrt((u**2).sum(axis=1, keepdims=True))
 
         # Find bounds along u

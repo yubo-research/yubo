@@ -77,12 +77,11 @@ class AppxNormal:
     def calc_importance_weights(self, X, num_Y_samples):
         p_star = self.p_star(X, num_Y_samples=num_Y_samples)
         p_normal = self.p_normal(X)
-        return _calc_importance_weights(p_star, p_normal, self.theta)
+        return _calc_importance_weights(p_star, p_normal, self._theta)
 
     def p_normal(self, X):
         Z = (X - self.mu) / self.sigma
-        sqdet = torch.prod(self.sigma)
-        p_normal = torch.exp(-(Z**2).sum(dim=1) / 2) / sqdet
+        p_normal = torch.exp(-(Z**2).sum(dim=1) / 2)
         return p_normal / p_normal.sum()
 
     def p_star(self, X, num_Y_samples):

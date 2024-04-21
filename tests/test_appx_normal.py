@@ -14,6 +14,7 @@ def test_appx_normal():
             num_X_samples=64,
             num_Y_samples=128,
             use_soft_max=True,
+            theta=0.1,
         )
 
         assert appx_normal._mk_p_star(torch.rand(size=torch.Size([10, 2]))).shape == (10,)
