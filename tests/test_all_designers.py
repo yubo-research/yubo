@@ -30,7 +30,7 @@ def _test_designer(designer):
     seed_all(17)
     env_conf = get_env_conf("f:sphere-2d", problem_seed=17, noise_seed_0=18)
     policy = default_policy(env_conf)
-    if designer in ["ax", "maximin", "maximin-toroidal", "variance", "sobol_gibbon"]:
+    if designer in ["ax", "maximin", "maximin-toroidal", "variance", "sobol_gibbon", "turbo"]:
         num_arms = 1
     else:
         num_arms = 3

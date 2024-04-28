@@ -31,7 +31,7 @@ def appx_normal(
     f_min = 1e99
     x_best = None
     for _ in range(num_tries):
-        # TODO: parallelize into num_threads threads
+        # TODO: parallelize into num_threads threads?
         k_sigma_0 = min_k_sigma + (max_k_sigma - min_k_sigma) * torch.tensor(rng.uniform(size=(an.num_dim,)), dtype=an.dtype)
         res = minimize(
             x0=k_sigma_0,
@@ -148,7 +148,7 @@ class _AppxNormal:
         return ((importance_weights - 1) ** 2).sum()
 
     def _sample_normal(self, mu, k_sigma):
-        return mu + k_sigma * self._X_base_samples
+        return mu + self.sigma(k_sigma) * self._X_base_samples
 
     def _mk_p_star(self, X):
         mvn = self._model.posterior(X, observation_noise=False)

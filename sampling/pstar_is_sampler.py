@@ -85,7 +85,6 @@ class PStarISSampler:
         pmc = ParallelMCMCConvergence()
         for i_iter in range(max_iterations):
             i, X_1 = self._hnr_propose(X, eps, sigma=sigma)
-            # frac_changed = (1.0 * i).mean().item()
 
             X[i] = X_1[i]
             if pmc.converged(X.detach().numpy()):

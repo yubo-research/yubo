@@ -13,7 +13,7 @@ def test_pstar_sampler():
         k_mcmc=5,
         model=model,
     )
-    X = pss(num_X_samples=16).numpy()
+    X = pss(num_X_samples=16)[1].numpy()
     print(pss.appx_normal.mu, pss.appx_normal.sigma)
     print(X)
     assert np.all(X.flatten() >= 0) and np.all(X.flatten() <= 1)

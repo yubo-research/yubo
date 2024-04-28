@@ -2,6 +2,13 @@ import numpy as np
 
 
 class ParallelMCMCConvergence:
+    """
+    Gelman-Rubin is popular, but doesn't work here b/c it
+     requires the initial points to be cover the target distribution. Our initial
+     points are all the same.
+     https://arxiv.org/pdf/1909.11827  Section 2.4
+    """
+
     def __init__(self, rho_c=0.5, m_stat_c=2, v_stat_c=1):
         self._X_prev = None
         self._rho_c = rho_c
@@ -21,6 +28,9 @@ class ParallelMCMCConvergence:
         return False
 
     def _independent(self, X):
+        # Have we run long enough for the autocorrelation to decay?
+        # With parallel chains, you can measure the autocorrelation
+        #  directly, unlike with a run of a single chain.
         rho = np.corrcoef(
             X.flatten(),
             self._X_prev.flatten(),
@@ -29,6 +39,9 @@ class ParallelMCMCConvergence:
         return rho < self._rho_c
 
     def _statistically_indistinguishsble(self, X):
+        # Has the distribution of the points in the chains stopped changing?
+        # If so, we presume that we are at equilibrium and further sampling
+        #  will not change the distribution.
         mu_prev = self._X_prev.mean(axis=0)
         mu = X.mean(axis=0)
         d_mu = np.abs(mu - mu_prev)
