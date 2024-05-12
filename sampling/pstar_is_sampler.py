@@ -2,10 +2,11 @@ import time
 
 import numpy as np
 import torch
-from scipy.stats import truncnorm
 
-from sampling.appx_normal import appx_normal
+# from sampling.appx_normal import appx_normal
+from sampling.appx_trunc_normal import appx_trunc_normal
 from sampling.hnr import find_perturbation_direction, perturb_normal
+from sampling.mv_truncated_normal import MVTruncatedNormal
 from sampling.parallel_mcmc_convergence import ParallelMCMCConvergence
 
 
@@ -15,9 +16,9 @@ class PStarISSampler:
         k_mcmc,
         model,
         *,
-        num_X_samples_is=64,
+        num_X_samples_appx_normal=64,
         num_Y_samples=1024,
-        num_tries=30,
+        num_tries=3,
         use_gradients=True,
         theta=np.inf,
     ):
@@ -28,9 +29,9 @@ class PStarISSampler:
 
         # Approximate p*(x) by a normal distribution.
         t_0 = time.time()
-        self.appx_normal = appx_normal(
+        self.appx_normal = appx_trunc_normal(
             model=self.model,
-            num_X_samples=num_X_samples_is,
+            num_X_samples=num_X_samples_appx_normal,
             num_Y_samples=num_Y_samples,
             num_tries=num_tries,
             use_gradients=use_gradients,
@@ -42,28 +43,21 @@ class PStarISSampler:
         # print("AN:", self.appx_normal.mu, self.appx_normal.sigma)
 
     def __call__(self, num_X_samples):
-        t_0 = time.time()
+        # t_0 = time.time()
         with torch.inference_mode():
             X_samples = torch.as_tensor(self._sample_pstar(num_X_samples))
-        t_f = time.time()
-        print(f"SAMPLE: dt = {t_f-t_0:.2}s")
+        # t_f = time.time()
+        # print(f"SAMPLE: dt = {t_f-t_0:.2}s")
         weights = self.appx_normal.calc_importance_weights(X_samples)
         return weights, X_samples
 
     def _sample_pstar(self, num_X_samples):
         # Sample from the approximate p*(x) within the bounding box.
 
-        mu = self.appx_normal.mu.detach().numpy()
-        sigma = self.appx_normal.sigma.detach().numpy()
-        num_dim = len(mu)
-
-        return truncnorm.rvs(
-            (np.zeros(shape=(num_dim,)) - mu) / sigma,
-            (np.ones(shape=(num_dim,)) - mu) / sigma,
-            loc=mu,
-            scale=sigma,
-            size=(num_X_samples, num_dim),
-        )
+        return MVTruncatedNormal(
+            loc=self.appx_normal.mu,
+            scale=self.appx_normal.sigma,
+        ).rsample(torch.Size([num_X_samples]))
 
     def _sample_pstar_hnr(self, num_X_samples):
         # Sample from the approximate p*(x) within the bounding box.

@@ -6,22 +6,23 @@ from botorch.utils.sampling import draw_sobol_normal_samples
 from scipy.optimize import minimize
 
 from acq.acq_util import find_max
+from sampling.mv_truncated_normal import MVTruncatedNormal
 
 
-def appx_normal(
+def appx_trunc_normal(
     model,
     num_X_samples,
+    *,
     num_Y_samples=128,
     num_tries=10,
     use_gradients=True,
     seed=None,
     min_k_sigma=1e-9,
     max_k_sigma=1.0,
-    theta=100,
 ):
     mu = find_max(model)
-    an = _AppxNormal(model, mu, num_X_samples, num_Y_samples, use_soft_max=use_gradients, theta=theta)
-    an_no_grad = _AppxNormal(model, mu, num_X_samples, num_Y_samples, use_soft_max=False, theta=theta)
+    an = _AppxTruncNormal(model, num_X_samples, num_Y_samples, use_soft_max=use_gradients)
+    an_no_grad = _AppxTruncNormal(model, num_X_samples, num_Y_samples, use_soft_max=False)
 
     fun_jac = _FunJac(an, include_jacobian=use_gradients)
     rng = np.random.default_rng(seed)
@@ -34,17 +35,19 @@ def appx_normal(
     x_best = None
     for _ in range(num_tries):
         # TODO: parallelize into num_threads threads?
-        k_sigma_0 = min_k_sigma + (max_k_sigma - min_k_sigma) * torch.tensor(rng.uniform(size=(an.num_dim,)), dtype=an.dtype)
+        mu_0 = torch.tensor(rng.uniform(size=(an.num_dim,)), device=an.device, dtype=an.dtype)
+        k_sigma_0 = min_k_sigma + (max_k_sigma - min_k_sigma) * torch.tensor(rng.uniform(size=(an.num_dim,)), device=an.device, dtype=an.dtype)
         res = minimize(
-            x0=k_sigma_0,
+            x0=torch.cat((mu_0, k_sigma_0)),
             method="L-BFGS-B" if use_gradients else "Powell",
             fun=fun_jac.fun,
             jac=fun_jac.jac if use_gradients else None,
-            bounds=[torch.tensor((min_k_sigma, max_k_sigma), dtype=an.dtype)] * an.num_dim,
+            bounds=[(0, 1)] * an.num_dim + [(min_k_sigma, max_k_sigma)] * an.num_dim,
         )
         if res.success:
             if use_gradients:
-                f_check = an_no_grad.evalutate(torch.tensor(res.x))
+                mu, sigma = res.x[:2], res.x[2:]
+                f_check = an_no_grad.evaluate(torch.tensor(mu), torch.tensor(sigma))
             else:
                 f_check = res.fun
             if f_check < f_min:
@@ -53,27 +56,29 @@ def appx_normal(
         else:
             pass
 
-    sigma = an.sigma(torch.tensor(x_best))
+    mu, k_sigma = x_best[:2], x_best[2:]
+    mu = torch.tensor(mu)
+    sigma = an.sigma(torch.tensor(k_sigma))
     num_dim = len(sigma)
     print("F_MIN:", f_min)
+    print("MU:", mu)
     print("SIGMA:", float(torch.prod(sigma)) ** (1 / num_dim))
-    return AppxNormal(model, mu, sigma, num_Y_samples=num_Y_samples, theta=theta)
+
+    return AppxTruncNormal(model, mu, sigma, num_Y_samples=num_Y_samples)
 
 
-class AppxNormal:
+class AppxTruncNormal:
     def __init__(
         self,
         model: SingleTaskGP,
         mu: torch.Tensor,
         sigma: torch.Tensor,
         num_Y_samples: int,
-        theta: float,
     ):
         self._model = model
         self.mu = mu.flatten()
         self.sigma = sigma.flatten()
         self._num_Y_samples = num_Y_samples
-        self._theta = theta
         self._num_dim = len(self.mu)
         self.device = self.mu.device
 
@@ -83,11 +88,6 @@ class AppxNormal:
             num_X_samples,
             device=self.device,
         )
-
-    def calc_importance_weights(self, X):
-        p_star = self.p_star(X, num_Y_samples=self._num_Y_samples)
-        p_normal = self.p_normal(X)
-        return _calc_importance_weights(p_star, p_normal, self._theta)
 
     def p_normal(self, X):
         Z = (X - self.mu) / self.sigma
@@ -100,60 +100,51 @@ class AppxNormal:
 
         return _calc_pstar(Y, beta_soft_max=None)
 
+    def calc_importance_weights(self, X):
+        p_star = self.p_star(X, num_Y_samples=self._num_Y_samples)
+        p_normal = self.p_normal(X)
+        assert torch.all(p_normal > 0), p_normal
+        w = p_star / p_normal
+        assert not torch.any(torch.isnan(w)), w
+        return w / w.mean()
 
-class _AppxNormal:
+
+class _AppxTruncNormal:
     def __init__(
         self,
         model: SingleTaskGP,
-        mu: torch.Tensor,
         num_X_samples,
         num_Y_samples,
         use_soft_max,
-        theta,
     ):
         self._model = model
-        self._mu = mu
         X = model.train_inputs[0]
         self._use_soft_max = use_soft_max
-        self._theta = theta
         assert len(X.shape) == 2, (X.shape, "I only handle single-output models")
         self.num_dim = X.shape[1]
         self._sigma_0 = 1 / np.sqrt(self.num_dim)
-        self._beta_soft_max = 20
+        self._beta_soft_max = 10
         self.device = X.device
         self.dtype = X.dtype
-
-        self._X_base_samples = self._sigma_0 * draw_sobol_normal_samples(
-            self.num_dim,
-            num_X_samples,
-            device=self.device,
-        )
-
-        self._p_x = torch.exp(-(self._X_base_samples**2).sum(dim=1) / 2)
-        assert self._p_x.sum() > 0, (self._p_x, self._X_base_samples)
-        self._p_x = self._p_x / self._p_x.sum()
-        assert not torch.any(torch.isnan(self._p_x)), self._p_x
-        assert self._p_x.shape == (num_X_samples,), (self._p_x.shape, num_X_samples)
-
+        self._num_X_samples = num_X_samples
         self._sampler_y = SobolQMCNormalSampler(sample_shape=torch.Size([num_Y_samples]))
+
+    def _sample_trunc_normal(self, mu, k_sigma):
+        # TODO: Try sobol samples in TruncatedNormal
+        sigma = self.sigma(k_sigma)
+        tn = MVTruncatedNormal(mu, sigma)
+        X = tn.rsample(torch.Size([self._num_X_samples]))
+        p = tn.unnormed_prob(X)
+        p = p / p.sum()
+        return X, p
 
     def sigma(self, k_sigma):
         return k_sigma * self._sigma_0
 
-    def calc_importance_weights(self, k_sigma):
-        p_star = self._mk_p_star(self._sample_normal(self._mu, k_sigma))
-        assert p_star.shape == self._p_x.shape, (p_star.shape, self._p_x.shape)
-        return _calc_importance_weights(p_star, self._p_x, self._theta)
-
-    def _xxx_evalutate(self, k_sigma):
-        importance_weights = self.calc_importance_weights(k_sigma)
-        assert not torch.any(torch.isnan(importance_weights)), importance_weights
-        return ((importance_weights - 1) ** 2).sum()
-
-    def evalutate(self, k_sigma):
-        p_star = self._mk_p_star(self._sample_normal(self._mu, k_sigma))
-        p_normal = self._p_x
+    def evaluate(self, mu, k_sigma):
+        X, p_normal = self._sample_trunc_normal(mu, k_sigma)
         assert torch.all(p_normal > 0), p_normal
+        p_star = self._mk_p_star(X)
 
         i = torch.where(p_star > 0)[0]
         # kl_i = p_star[i] * torch.log(p_star[i] / p_normal[i])
@@ -165,9 +156,6 @@ class _AppxNormal:
         w = p_star[i] / p_normal[i]
         w = w / w.sum()
         return -torch.sum(w * torch.log(w))
-
-    def _sample_normal(self, mu, k_sigma):
-        return mu + self.sigma(k_sigma) * self._X_base_samples
 
     def _mk_p_star(self, X):
         mvn = self._model.posterior(X, observation_noise=False)
@@ -196,17 +184,6 @@ def _calc_pstar(Y, beta_soft_max):
     return p_star / norm
 
 
-def _calc_importance_weights(p_star, p_normal, theta):
-    assert torch.all(p_normal > 0), p_normal
-    w = p_star / p_normal
-    assert not torch.any(torch.isnan(w)), w
-    w = w / w.mean()
-    if not np.isinf(theta):
-        w = torch.min(torch.tensor(theta), torch.max(torch.tensor([1 / theta]), w))
-    assert not torch.any(torch.isnan(w)), w
-    return w / w.mean()
-
-
 class _FunJac:
     def __init__(self, an, include_jacobian=True):
         self._an = an
@@ -217,7 +194,9 @@ class _FunJac:
         assert not np.any(np.isnan(x)), x
         self._x = x
         x = torch.tensor(x, requires_grad=self._include_jacobian)
-        loss = self._an.evalutate(x)
+        mu = x[: self._an.num_dim]
+        k_sigma = x[self._an.num_dim :]
+        loss = self._an.evaluate(mu, k_sigma)
         if self._include_jacobian:
             loss.backward()
             self._grad = x.grad.detach().numpy()
