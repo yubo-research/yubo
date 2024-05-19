@@ -37,25 +37,16 @@ class AcqMTV(MCAcquisitionFunction):
 
         if num_obs == 0:
             self.X_samples = sobol_engine.draw(num_X_samples, dtype=self.dtype)
-            self.Y_max = 0.0
-            self.Y_best = 0.0
         else:
-            self.X_max = find_max(
-                self.model,
-                bounds=torch.tensor(
-                    [[0.0] * self._num_dim, [1.0] * self._num_dim],
-                    device=self.device,
-                    dtype=self.dtype,
-                ),
-            )
-            self.Y_max = self.model.posterior(self.X_max).mean
-            if len(self.model.train_targets) > 0:
-                i = torch.argmax(self.model.train_targets)
-                self.Y_best = self.model.posterior(self.model.train_inputs[0][i][:, None].T).mean
-            else:
-                self.Y_best = self.Y_max
-
             if sample_type == "hnr":
+                self.X_max = find_max(
+                    self.model,
+                    bounds=torch.tensor(
+                        [[0.0] * self._num_dim, [1.0] * self._num_dim],
+                        device=self.device,
+                        dtype=self.dtype,
+                    ),
+                )
                 pss = PStarSampler(k_mcmc, self.model, self.X_max)
                 self.X_samples = pss(num_X_samples)
             elif sample_type == "is":

@@ -28,28 +28,30 @@ def test_appx_trunc_normal():
 
 
 def test_appx_normal_func():
-    import torch
+    import time
 
     from acq.acq_util import find_max
     from sampling.appx_trunc_normal import appx_trunc_normal
     from tests.test_util import gp_parabola
 
-    torch.manual_seed(16)
+    # torch.manual_seed(16)
 
-    model = gp_parabola(num_samples=100)[0]
+    model = gp_parabola(num_samples=3)[0]
 
     print()
     x_max = find_max(model)
     print("X_MAX:", x_max)
-    seed = int(999999 * torch.rand(size=(1,)).item())
+    # seed = int(999999 * torch.rand(size=(1,)).item())
     for use_gradients in [True, False]:
+        t_0 = time.time()
         an = appx_trunc_normal(
             model,
-            num_X_samples=32,
-            num_Y_samples=256,
+            num_X_samples=256,
+            num_Y_samples=1024,
+            num_tries=30,
             use_gradients=use_gradients,
-            seed=seed,
         )
+        print("TIME:", time.time() - t_0)
         print("MS:", an.mu, an.sigma)
         # assert np.abs(an.mu.numpy() - x_max.numpy()).max() < 1e-4
         X = an.sample(num_X_samples=32)

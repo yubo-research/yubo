@@ -17,10 +17,9 @@ class PStarISSampler:
         model,
         *,
         num_X_samples_appx_normal=64,
-        num_Y_samples=1024,
+        num_Y_samples=64,
         num_tries=3,
-        use_gradients=True,
-        theta=np.inf,
+        use_gradients=False,
     ):
         self.model = model
         self.k_mcmc = k_mcmc
@@ -35,8 +34,7 @@ class PStarISSampler:
             num_Y_samples=num_Y_samples,
             num_tries=num_tries,
             use_gradients=use_gradients,
-            seed=None,
-            theta=theta,
+            # seed=None,
         )
         t_f = time.time()
         print(f"APPX_NORMAL: dt = {t_f-t_0:.2}s")
