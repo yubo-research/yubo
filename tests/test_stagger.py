@@ -1,13 +1,81 @@
-def test_boot():
+def _p_normal(X_0, X):
     import torch
 
-    from sampling.stagger import boot
+    num_dim = len(X_0)
+    if num_dim == 1:
+        sigma_0 = torch.tensor([0.1])
+    elif num_dim == 2:
+        sigma_0 = torch.tensor([1e-6, 0.1])
+    elif num_dim == 3:
+        sigma_0 = torch.tensor([1e-6, 5e-3, 0.1])
+    else:
+        assert False, num_dim
+    d2 = ((X - X_0) / sigma_0) ** 2
+    p = torch.exp(-(d2 / 2).sum(dim=1))
+    # p = torch.maximum(torch.tensor(1e-9), p)
+    return p / p.sum()
 
+
+def test_compare_3d():
+    import torch
+
+    from sampling.probe_mv import ProbeMV
+    from sampling.stagger import StaggerIS
+
+    torch.manual_seed(17)
     num_dim = 3
-    X = torch.rand(size=torch.Size([5, num_dim]))
+    num_samples = 100
+    X_0 = torch.rand(size=torch.Size([num_dim]))
+    sigma_min = torch.tensor([1e-6, 1e-6, 1e-6])
+    sigma_max = torch.tensor([10, 10, 10])
 
-    for x in boot(X):
-        assert x in X
+    pm = ProbeMV(X_0, sigma_min, sigma_max)
+    iis = StaggerIS(X_0, sigma_min, sigma_max)
+
+    X_pm = None
+    X_iis = None
+
+    print()
+    for _ in range(30):
+        X_pm = pm.ask(num_samples=num_samples, X_and_p_target=(X_pm, _p_normal(X_0, X_pm)) if X_pm is not None else None)
+        X_iis = iis.ask(num_samples_per_dimension=num_samples, X_and_p_target=(X_iis, _p_normal(X_0, X_iis)) if X_iis is not None else None)
+
+        print()
+        print("TSP:", (X_pm - X_0).std(), pm.sigma_estimate(), pm.convergence_criterion())
+        print("TSS:", (X_iis - X_0).std(), iis.sigma_estimate(), iis.convergence_criterion())
+
+    assert torch.abs(pm.sigma_estimate() / iis.sigma_estimate() - 1).max() < 0.3, torch.abs(pm.sigma_estimate() / iis.sigma_estimate() - 1)
+
+
+def test_compare_1d():
+    import torch
+
+    from sampling.probe_mv import ProbeMV
+    from sampling.stagger import StaggerIS
+
+    torch.manual_seed(17)
+    num_dim = 1
+    num_samples = 100
+    X_0 = torch.rand(size=torch.Size([num_dim]))
+    sigma_min = torch.tensor([1e-6])
+    sigma_max = torch.tensor([10])
+
+    pm = ProbeMV(X_0, sigma_min, sigma_max)
+    iis = StaggerIS(X_0, sigma_min, sigma_max)
+
+    X_pm = None
+    X_iis = None
+
+    print()
+    for _ in range(10):
+        X_pm = pm.ask(num_samples=num_samples, X_and_p_target=(X_pm, _p_normal(X_0, X_pm)) if X_pm is not None else None)
+        X_iis = iis.ask(num_samples_per_dimension=num_samples, X_and_p_target=(X_iis, _p_normal(X_0, X_iis)) if X_iis is not None else None)
+
+        print()
+        print("TSP:", (X_pm - X_0).std(), float(pm.sigma_estimate()), float(pm.convergence_criterion()))
+        print("TSS:", (X_iis - X_0).std(), float(iis.sigma_estimate()), float(iis.convergence_criterion()))
+
+    assert abs(float(pm.sigma_estimate()) - float(iis.sigma_estimate())) < 0.01
 
 
 def test_proposal_stagger():
@@ -35,19 +103,11 @@ def test_stagger_is():
     num_dim = 2
     X_0 = torch.rand(size=torch.Size([num_dim]))
 
-    def p_normal(X):
-        nonlocal X_0
-        sigma_0 = torch.tensor([1e-6, 0.1])
-        d2 = ((X - X_0) / sigma_0) ** 2
-        p = torch.exp(-(d2 / 2).sum(dim=1))
-        # p = torch.maximum(torch.tensor(1e-9), p)
-        return p / p.sum()
-
     iis = StaggerIS(X_0)
     num_samples_per_dimension = 10
 
     X = iis.ask(num_samples_per_dimension=num_samples_per_dimension)
-    X_and_p_target = (X, p_normal(X))
+    X_and_p_target = (X, _p_normal(X_0, X))
     X = iis.ask(num_samples_per_dimension=num_samples_per_dimension, X_and_p_target=X_and_p_target)
 
     dev = X - X_0

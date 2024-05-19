@@ -2,6 +2,8 @@ import numpy as np
 import torch
 from botorch.utils.sampling import draw_sobol_normal_samples
 
+from sampling.bootstrap import boot_means
+
 
 def proposal_stagger(X_0, sigma_min, sigma_max, num_samples, device=None, dtype=torch.double):
     num_dim = len(X_0)
@@ -19,7 +21,9 @@ def proposal_stagger(X_0, sigma_min, sigma_max, num_samples, device=None, dtype=
     X = X_0 + sigma * normal
     # sigma are all equally probable
     pi = torch.exp(-(normal**2 / 2).sum(dim=1))
-    return pi / pi.sum(), X
+    pi = pi / pi.sum()
+    print("PPI:", pi)
+    return pi, X
 
 
 def proposal_normal(X_0, sigma, num_samples, device=None, dtype=torch.double):
@@ -34,13 +38,7 @@ def proposal_normal(X_0, sigma, num_samples, device=None, dtype=torch.double):
     return pi / pi.sum(), X
 
 
-def boot(x):
-    n = len(x)
-    i = np.random.randint(n, size=(n,))
-    return x[i]
-
-
-class StaggerIS:
+class ProbeMV:
     def __init__(self, X_0, sigma_min=None, sigma_max=None):
         # The proposal distribution should have heavier tails than the
         #  target. Go for 100x larger sigma than you think you might find.
@@ -63,7 +61,7 @@ class StaggerIS:
     def sigma_estimate(self):
         return self._mu_std_est
 
-    def ask(self, num_samples, X_and_p_target=None, num_boot=30):
+    def ask(self, num_samples, X_and_p_target=None, num_boot=1000):
         if X_and_p_target is not None:
             X, p_target = X_and_p_target
             sigma_min, sigma_max = self._recalculate_sigma_range(X, p_target, num_boot)
@@ -87,21 +85,18 @@ class StaggerIS:
         return X
 
     def _recalculate_sigma_range(self, X, p_target, num_boot):
+        p_target = p_target / p_target.sum()
         assert p_target.max() > 0, p_target
         w = p_target / self._pi
-
-        # w = torch.clamp(w, 0.1, 10)
         w = w / w.sum()
 
         dev = X - self._X_0
         # mean should be zero
         # mean_est = (w[:, None] * dev).sum(dim=0)
 
-        wd = w[:, None] * dev**2
-        l_std_est = []
-        for _ in range(num_boot):
-            l_std_est.append(torch.log(torch.sqrt((boot(wd)).sum(dim=0))))
-        l_std_est = torch.stack(l_std_est)
+        wd2 = w[:, None] * dev**2
+        std_est = torch.sqrt(len(wd2) * boot_means(wd2, num_boot))
+        l_std_est = torch.log(std_est)
         se_l_std_est = l_std_est.std(dim=0)
         mu_l_std_est = l_std_est.mean(dim=0)
 
