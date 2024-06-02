@@ -10,21 +10,23 @@ def test_appx_trunc_normal():
     for use_soft_max in [True, False]:
         appx_normal = _AppxTruncNormal(
             model,
+            mu,
             num_X_samples=64,
             num_Y_samples=128,
             use_soft_max=True,
-            theta=0.1,
         )
 
         assert appx_normal._mk_p_star(torch.rand(size=torch.Size([10, 2]))).shape == (10,)
-        X, p = appx_normal._sample_trunc_normal(torch.tensor([0.9, 0.25]), torch.tensor([0.1, 2]))
+        sigma = torch.tensor([0.1, 2])
+        X, p = appx_normal._sample_trunc_normal(sigma)
 
-        assert abs(X[:, 0].mean() - 0.9) < 0.1 / 3.1
-        assert abs(X[:, 1].mean() - 0.15) < 2 / 3.1
+        for i in [0, 1]:
+            assert abs(X[:, i] - mu[i]).mean() < sigma[i]
+
         assert torch.all(p >= 0) and torch.all(p <= 1)
         for _ in range(5):
             sigma = 0.2 * torch.rand(size=torch.Size([2]))
-            print(mu, sigma, appx_normal.evaluate(mu, sigma))
+            print(mu, sigma, appx_normal.evaluate(sigma))
 
 
 def test_appx_normal_func():

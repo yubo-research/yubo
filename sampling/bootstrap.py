@@ -1,7 +1,8 @@
+import numpy as np
 import scipy.stats as ss
 import torch
 
 
-def boot_means(x, num_boot):
-    w = torch.tensor(ss.dirichlet(torch.ones(len(x))).rvs(num_boot))
-    return (w.unsqueeze(-1) * x).sum(axis=1)
+def boot_means(X, num_boot):
+    w = torch.tensor(ss.dirichlet(np.ones(len(X))).rvs(num_boot), device=X.device, dtype=X.dtype)
+    return (w.unsqueeze(-1) * X).sum(axis=1)

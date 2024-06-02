@@ -22,7 +22,6 @@ def proposal_stagger(X_0, sigma_min, sigma_max, num_samples, device=None, dtype=
     # sigma are all equally probable
     pi = torch.exp(-(normal**2 / 2).sum(dim=1))
     pi = pi / pi.sum()
-    print("PPI:", pi)
     return pi, X
 
 

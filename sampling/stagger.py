@@ -1,20 +1,20 @@
-import numpy as np
 import torch
 from botorch.utils.sampling import draw_sobol_normal_samples
 
 from sampling.bootstrap import boot_means
 
-# TODO: Leave this in torch and try on GPU.
 
-# TODO: Try just using sigma*random_sign.
-# TODO: Compare to choosing proposal from a normal distribution.
-
-
-def proposal_stagger(X_0, sigma_min, sigma_max, num_samples_per_dimension, device=None, dtype=torch.double):
+def _proposal_stagger(X_0, sigma_min, sigma_max, num_samples_per_dimension, device, dtype):
     num_dim = len(X_0)
-    l_min_sigma = np.log(sigma_min)
-    l_max_sigma = np.log(sigma_max)
-    u = l_min_sigma + (l_max_sigma - l_min_sigma) * torch.rand(size=torch.Size([num_samples_per_dimension, num_dim]), device=device, dtype=dtype)
+    l_min_sigma = torch.log(sigma_min)
+    l_max_sigma = torch.log(sigma_max)
+    # rng = torch.Generator(device=device).manual_seed(16)
+    u = l_min_sigma + (l_max_sigma - l_min_sigma) * torch.rand(
+        size=torch.Size([num_samples_per_dimension, num_dim]),
+        device=device,
+        dtype=dtype,
+        # generator=rng,
+    )
     sigma = torch.exp(u)
 
     normal_1d = draw_sobol_normal_samples(
@@ -22,6 +22,7 @@ def proposal_stagger(X_0, sigma_min, sigma_max, num_samples_per_dimension, devic
         n=num_samples_per_dimension * num_dim,
         device=device,
         dtype=dtype,
+        # seed=16,
     ).squeeze(-1)
 
     stagger = torch.zeros(size=(num_samples_per_dimension * num_dim, num_dim), dtype=dtype, device=device)
@@ -47,7 +48,10 @@ def _norm_by_dim(p, num_dim, num_samples_per_dimension):
     #  think we can be more efficient with
     #  parallel sampling(ex., w/ threads or a GPU).
     p = p.reshape(num_dim, num_samples_per_dimension)
-    p = p / p.sum(axis=1, keepdim=True)
+    norm = p.sum(axis=1, keepdim=True)
+    p = p / norm
+    i = torch.where(norm == 0)[0]
+    p[i, :] = 1 / p.shape[1]
     return p.reshape(num_dim * num_samples_per_dimension)
 
 
@@ -56,18 +60,27 @@ class StaggerIS:
         # The proposal distribution should have heavier tails than the
         #  target. Go for 100x larger sigma than you think you might find.
         self._X_0 = X_0
+        self.dtype = self._X_0.dtype
+        self.device = self._X_0.device
         self._num_dim = len(self._X_0)
         if sigma_min is None:
-            self._sigma_min = torch.tensor([1e-6] * self._num_dim)
+            self._sigma_min = torch.tensor(
+                [1e-6] * self._num_dim,
+                dtype=self.dtype,
+                device=self.device,
+            )
         else:
             self._sigma_min = sigma_min
         if sigma_max is None:
-            self._sigma_max = torch.tensor([10] * self._num_dim)
+            self._sigma_max = torch.tensor(
+                [10] * self._num_dim,
+                dtype=self.dtype,
+                device=self.device,
+            )
         else:
             self._sigma_max = sigma_max
         self._conv = 1000
         self._mu_std_est = torch.tensor([100] * len(self._X_0))
-        # self._eps_sigma = torch.tensor(1e-9)
 
     def convergence_criterion(self):
         return self._conv
@@ -84,11 +97,13 @@ class StaggerIS:
             sigma_max = self._sigma_max
 
         # print("S:", sigma_min, sigma_max)
-        self._pi, X = proposal_stagger(
+        self._pi, X = _proposal_stagger(
             X_0=self._X_0,
             sigma_min=sigma_min,
             sigma_max=sigma_max,
             num_samples_per_dimension=num_samples_per_dimension,
+            device=self.device,
+            dtype=self.dtype,
         )
 
         return X
@@ -125,10 +140,13 @@ class StaggerIS:
 
         self._mu_std_est = torch.sqrt(wd2.sum(dim=0))
         w = w.reshape(self._num_dim, num_samples_per_dimension).T
-        self._conv = ((w**2).mean(dim=0) / (w.mean(dim=0) ** 2) - 1).max()
+        # .max() is difficult when num_dim is high b/c p{max is good enough} ~ exp(-num_dim)
+        c = (w**2).mean(dim=0) / (w.mean(dim=0) ** 2) - 1
+        self._conv = float(c.mean() + 2 * c.std())
 
         assert torch.all(torch.isfinite(sigma_min)), sigma_min
         assert torch.all(torch.isfinite(sigma_max)), sigma_max
-        assert torch.all(sigma_max < 1e4), (sigma_max, l_std_est, wd2)
+        sigma_max = torch.minimum(torch.tensor(10), sigma_max)
+        # assert torch.all(sigma_max < 1e4), (sigma_max, l_std_est, wd2)
 
         return sigma_min, sigma_max

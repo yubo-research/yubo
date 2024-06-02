@@ -81,12 +81,14 @@ def test_compare_1d():
 def test_proposal_stagger():
     import torch
 
-    from sampling.stagger import proposal_stagger
+    from sampling.stagger import _proposal_stagger
 
     torch.manual_seed(17)
     num_dim = 2
     X_0 = torch.rand(size=torch.Size([num_dim]))
-    pi, X = proposal_stagger(X_0, sigma_min=torch.tensor([1e-6, 0.01]), sigma_max=torch.tensor([1e-5, 0.1]), num_samples_per_dimension=5)
+    pi, X = _proposal_stagger(
+        X_0, sigma_min=torch.tensor([1e-6, 0.01]), sigma_max=torch.tensor([1e-5, 0.1]), num_samples_per_dimension=5, device=None, dtype=torch.double
+    )
 
     dev = X - X_0
 
