@@ -1,14 +1,25 @@
 import torch
-from botorch.utils.sampling import draw_sobol_normal_samples
 
+# from botorch.utils.sampling import draw_sobol_normal_samples
 from sampling.bootstrap import boot_means
+from third_party.torch_truncnorm.TruncatedNormal import TruncatedNormal
+
+_ygtiw = "You got the indexing wrong"
 
 
-def _proposal_stagger(X_0, sigma_min, sigma_max, num_samples_per_dimension, device, dtype):
+def _proposal_stagger(X_0, sigma_min, sigma_max, num_samples_per_dimension):
+    device = X_0.device
+    dtype = X_0.dtype
+
+    X_0 = X_0.flatten()
+
     num_dim = len(X_0)
     l_min_sigma = torch.log(sigma_min)
     l_max_sigma = torch.log(sigma_max)
+
     # rng = torch.Generator(device=device).manual_seed(16)
+
+    num_samples = num_samples_per_dimension * num_dim
     u = l_min_sigma + (l_max_sigma - l_min_sigma) * torch.rand(
         size=torch.Size([num_samples_per_dimension, num_dim]),
         device=device,
@@ -17,25 +28,44 @@ def _proposal_stagger(X_0, sigma_min, sigma_max, num_samples_per_dimension, devi
     )
     sigma = torch.exp(u)
 
-    normal_1d = draw_sobol_normal_samples(
-        d=1,
-        n=num_samples_per_dimension * num_dim,
-        device=device,
-        dtype=dtype,
-        # seed=16,
-    ).squeeze(-1)
-
-    stagger = torch.zeros(size=(num_samples_per_dimension * num_dim, num_dim), dtype=dtype, device=device)
+    i = torch.arange(num_samples)
+    # all 0, then all 1, then ...
     j = torch.repeat_interleave(torch.arange(num_dim), repeats=(num_samples_per_dimension))
-    i = torch.arange(stagger.shape[0])
-    stagger[i, j] = normal_1d
-    stagger[i, j] *= sigma.T.reshape(len(normal_1d))
-    X = X_0 + stagger
+    assert torch.all(j[:num_samples_per_dimension] == 0), _ygtiw
 
-    # sigma are all equally probable
-    pi = torch.exp(-(normal_1d**2 / 2))
+    loc = torch.zeros(size=(num_samples_per_dimension * num_dim,), dtype=dtype, device=device)
+    loc[i] = X_0[j]
+
+    scale = torch.zeros(size=(num_samples_per_dimension * num_dim,), dtype=dtype, device=device)
+    scale[i] = sigma.T.flatten()
+    assert scale[1] == sigma[1, 0], _ygtiw
+    assert num_dim == 1 or scale[num_samples_per_dimension] == sigma[0, 1], _ygtiw
+
+    tn = TruncatedNormal(
+        loc=loc,
+        scale=scale,
+        a=torch.zeros_like(loc),
+        b=torch.ones_like(loc),
+    )
+
+    X_perturbed_dimension, pi = tn.p_and_sample((1,))
+    assert X_perturbed_dimension.dtype == dtype, (X_perturbed_dimension.dtype, dtype)
+    assert pi.dtype == dtype, (pi.dtype, dtype)
+
+    X_perturbed_dimension = X_perturbed_dimension.squeeze()
+    pi = pi.squeeze()
+    assert X_perturbed_dimension.shape == (num_samples,), X_perturbed_dimension.shape
+    assert pi.shape == (num_samples,)
+
+    X = torch.tile(X_0, dims=(num_samples, 1))
+    assert X.shape == (num_samples, num_dim), _ygtiw
+
+    X[i, j] = X_perturbed_dimension
+
+    assert not torch.any((X.flatten() < 0) | (X.flatten() > 1)), (X.min(), X.max())
+
     pi = _norm_by_dim(pi, num_dim, num_samples_per_dimension)
-    # pi = torch.maximum(torch.tensor(0.00001 / len(pi)), pi)
+    # pi = torch.maximum(torch.tensor(1e-5 / len(pi)), pi)
 
     assert torch.all(torch.isfinite(pi)), (sigma_min, sigma_max, pi)
     assert torch.all(pi > 0), (sigma_min, sigma_max, pi)
@@ -44,15 +74,19 @@ def _proposal_stagger(X_0, sigma_min, sigma_max, num_samples_per_dimension, devi
 
 def _norm_by_dim(p, num_dim, num_samples_per_dimension):
     # Treat each dimension as a separate problem.
-    # We're only solving them in parallalel b/c we
+    # We're only solving them in parallel b/c we
     #  think we can be more efficient with
-    #  parallel sampling(ex., w/ threads or a GPU).
-    p = p.reshape(num_dim, num_samples_per_dimension)
-    norm = p.sum(axis=1, keepdim=True)
-    p = p / norm
+    #  parallel sampling(ex., w/C++, threads, GPU).
+
+    p_r = p.reshape(num_dim, num_samples_per_dimension)
+    assert num_dim == 1 or p_r[1, 0] == p[num_samples_per_dimension]
+    norm = p_r.sum(axis=1, keepdim=True)
+    p_r = p_r / norm
     i = torch.where(norm == 0)[0]
-    p[i, :] = 1 / p.shape[1]
-    return p.reshape(num_dim * num_samples_per_dimension)
+    p_r[i, :] = 1 / p_r.shape[1]
+    p = p_r.reshape(num_dim * num_samples_per_dimension)
+    assert num_dim == 1 or p_r[1, 0] == p[num_samples_per_dimension]
+    return p
 
 
 class StaggerIS:
@@ -63,6 +97,7 @@ class StaggerIS:
         self.dtype = self._X_0.dtype
         self.device = self._X_0.device
         self._num_dim = len(self._X_0)
+
         if sigma_min is None:
             self._sigma_min = torch.tensor(
                 [1e-6] * self._num_dim,
@@ -80,7 +115,7 @@ class StaggerIS:
         else:
             self._sigma_max = sigma_max
         self._conv = 1000
-        self._mu_std_est = torch.tensor([100] * len(self._X_0))
+        self._mu_std_est = torch.tensor([self._sigma_max.max()] * len(self._X_0))
 
     def convergence_criterion(self):
         return self._conv
@@ -102,8 +137,6 @@ class StaggerIS:
             sigma_min=sigma_min,
             sigma_max=sigma_max,
             num_samples_per_dimension=num_samples_per_dimension,
-            device=self.device,
-            dtype=self.dtype,
         )
 
         return X
@@ -142,7 +175,10 @@ class StaggerIS:
         w = w.reshape(self._num_dim, num_samples_per_dimension).T
         # .max() is difficult when num_dim is high b/c p{max is good enough} ~ exp(-num_dim)
         c = (w**2).mean(dim=0) / (w.mean(dim=0) ** 2) - 1
-        self._conv = float(c.mean() + 2 * c.std())
+        if self._num_dim > 3:
+            self._conv = float(c.mean() + 2 * c.std())
+        else:
+            self._conv = float(c.max())
 
         assert torch.all(torch.isfinite(sigma_min)), sigma_min
         assert torch.all(torch.isfinite(sigma_max)), sigma_max

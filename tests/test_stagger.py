@@ -48,6 +48,7 @@ def test_compare_3d():
 
 
 def test_compare_1d():
+    import numpy as np
     import torch
 
     from sampling.probe_mv import ProbeMV
@@ -76,6 +77,7 @@ def test_compare_1d():
         print("TSS:", (X_iis - X_0).std(), float(iis.sigma_estimate()), float(iis.convergence_criterion()))
 
     assert abs(float(pm.sigma_estimate()) - float(iis.sigma_estimate())) < 0.01
+    assert not np.isnan(iis.convergence_criterion())
 
 
 def test_proposal_stagger():
@@ -85,15 +87,23 @@ def test_proposal_stagger():
 
     torch.manual_seed(17)
     num_dim = 2
-    X_0 = torch.rand(size=torch.Size([num_dim]))
+    num_samples_per_dimension = 5
+    X_0 = torch.rand(size=torch.Size([num_dim]), dtype=torch.double)
     pi, X = _proposal_stagger(
-        X_0, sigma_min=torch.tensor([1e-6, 0.01]), sigma_max=torch.tensor([1e-5, 0.1]), num_samples_per_dimension=5, device=None, dtype=torch.double
+        X_0,
+        sigma_min=torch.tensor([1e-6, 0.01]),
+        sigma_max=torch.tensor([1e-5, 0.1]),
+        num_samples_per_dimension=5,
     )
+
+    num_samples = num_samples_per_dimension * num_dim
+    assert pi.shape == (num_samples,)
+    assert X.shape == (num_samples, num_dim)
 
     dev = X - X_0
 
-    assert torch.abs(dev[:5, 0]).max() < 1e-5
-    assert torch.abs(dev[5:, 1]).mean() > 1e-5
+    assert torch.abs(dev[:5, 1]).max() < 1e-5
+    assert torch.abs(dev[5:, 0]).max() < 1e-5
 
 
 def test_stagger_is():
