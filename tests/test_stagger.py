@@ -100,7 +100,7 @@ def test_stagger_is():
     assert torch.abs(dev[:num_samples_per_dimension, 1]).max() < 1e-5
     assert torch.abs(dev[num_samples_per_dimension:, 0]).max() < 1e-5
 
-    XX = iis._unmk_1d(iis._mk_1d(X_0, 99), 99)
+    XX = iis._unmk_1d(iis._reshape_1d(X_0, 99), 99)
     assert torch.all(XX[0, :] == X_0)
 
     iis.sampler(num_base_samples=100)

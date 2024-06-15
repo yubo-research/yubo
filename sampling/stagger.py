@@ -2,6 +2,7 @@ import numpy as np
 import torch
 
 from sampling.bootstrap import boot_means
+from sampling.sampling_util import var_of_var
 from third_party.torch_truncnorm.TruncatedNormal import TruncatedNormal
 
 from .stagger_distribution import StaggerDistribution
@@ -16,12 +17,12 @@ class _StaggerISSampler:
     def ask(self):
         return self._X
 
-    def tell(self, p_target, w_max=10):
+    def tell(self, p_target, w_max=100):
         assert len(p_target) == len(self._X), len(p_target) == len(self._X)
         p_target = p_target / p_target.sum()
         w = p_target / self._p_tn
         w = torch.min(torch.tensor(w_max), w)
-        w = w / w.sum()
+        self._w = w / w.sum()
 
     def sample(self, num_samples):
         i = np.arange(len(self._X))
@@ -30,9 +31,9 @@ class _StaggerISSampler:
 
 
 class StaggerIS:
-    def __init__(self, X_0, sigma_min=None, sigma_max=None):
+    def __init__(self, X_0, sigma_min=None, sigma_max=None, seed=None):
         # The proposal distribution should have heavier tails than the
-        #  target. Go for 100x larger sigma than you think you might find.
+        #  target.
         self._X_0 = X_0.flatten()
         self.dtype = self._X_0.dtype
         self.device = self._X_0.device
@@ -54,11 +55,19 @@ class StaggerIS:
             )
         else:
             self._sigma_max = sigma_max
-        self._conv = 1000
+
+        self._s_min_now = sigma_min
+        self._s_max_now = sigma_max
+        self._conv_d_sigma = 1000
+        self._conv_R = 1000
         self._mu_std_est = torch.tensor([self._sigma_max.max()] * len(self._X_0))
+        self._seed = seed
 
     def convergence_criterion(self):
-        return self._conv
+        return self._conv_R
+
+    def convergence_criterion_d_sigma(self):
+        return self._conv_d_sigma
 
     def sigma_estimate(self):
         return self._mu_std_est
@@ -67,10 +76,24 @@ class StaggerIS:
         p_target = p_target / p_target.sum()
         sigma = self.sigma_estimate()
         p_normal = torch.exp(-((X - self._X_0) ** 2) / (2 * sigma**2)).flatten()
-        p_normal = p_normal / p_normal.sum()
-        return p_target / p_normal
+        if p_normal.sum() > 0:
+            p_normal = p_normal / p_normal.sum()
+        else:
+            p_normal = 0 * p_normal
+        pi = p_target / p_normal
+        pi[p_normal < 1e-6 * p_normal.mean()] = 0
+        pi = torch.min(torch.tensor(100), pi)
+        # if pi.sum() > 0:
+        #     pi = pi / pi.sum()
+        # else:
+        #     pi = 1 + 0 * pi
+        # try:
+        #     assert not torch.any(torch.isnan(pi))
+        # except:
+        #     breakpoint()
+        return pi
 
-    def _mk_1d(self, x, num_base_samples):
+    def _reshape_1d(self, x, num_base_samples):
         x = torch.tile(torch.atleast_2d(x.flatten()).T, dims=(num_base_samples,)).flatten()
         assert x[0] == x[1]
         if self._num_dim > 1:
@@ -81,8 +104,8 @@ class StaggerIS:
         return torch.reshape(x, (self._num_dim, num_base_samples)).T
 
     def sampler(self, num_base_samples):
-        sigma = self._mk_1d(self.sigma_estimate(), num_base_samples)
-        X_0 = self._mk_1d(self._X_0, num_base_samples)
+        sigma = self._reshape_1d(self.sigma_estimate(), num_base_samples)
+        X_0 = self._reshape_1d(self._X_0, num_base_samples)
 
         tn = TruncatedNormal(
             loc=X_0,
@@ -117,11 +140,14 @@ class StaggerIS:
         self._pi, X = StaggerDistribution(
             X_0=self._X_0,
             num_samples_per_dimension=num_samples_per_dimension,
+            seed=self._seed,
         ).propose(
             sigma_min=sigma_min,
             sigma_max=sigma_max,
         )
 
+        self._s_min_now = sigma_min
+        self._s_max_now = sigma_max
         return X
 
     def _recalculate_sigma_range(self, X, p_target, num_boot):
@@ -147,35 +173,44 @@ class StaggerIS:
         wd2 = w * dev**2
         wd2 = wd2.reshape(self._num_dim, num_samples_per_dimension).T
 
+        self._mu_std_est = torch.sqrt(wd2.sum(dim=0))
         # Use bootstrap to sample a bunch (num_boot) of std_ests
         #  so that we can find sigma_min and sigma_max.
         std_est = torch.sqrt(wd2.shape[0] * boot_means(wd2, num_boot))
+
+        # k = 2
+        # se = std_est.std(dim=0)
+        # sigma_min = self._mu_std_est - k * se
+        # sigma_max = self._mu_std_est + k * se
+
+        # Log-sigma is more symmetric than sigma
+        #  and may be negative (sigma may not).
         l_std_est = torch.log(std_est)
-        se_l_std_est = l_std_est.std(dim=0)
         mu_l_std_est = l_std_est.mean(dim=0)
+        se_l_std_est = l_std_est.std(dim=0)
 
-        sigma_min = torch.exp(mu_l_std_est - 2 * se_l_std_est)
-        sigma_max = torch.exp(mu_l_std_est + 2 * se_l_std_est)
+        k = 2
+        sigma_min = torch.exp(mu_l_std_est - k * se_l_std_est)
+        sigma_max = torch.exp(mu_l_std_est + k * se_l_std_est)
 
-        self._mu_std_est = torch.sqrt(wd2.sum(dim=0))
         w = w.reshape(self._num_dim, num_samples_per_dimension).T
         # .max() is difficult when num_dim is high b/c p{max is good enough} ~ exp(-num_dim)
-        if True:
-            c = sigma_max / sigma_min - 1
-            if self._num_dim > 3:
-                self._conv = min(c.max(), float(c.mean() + 2 * c.std()))
-            else:
-                self._conv = c.max()
+        c = sigma_max / sigma_min - 1
+        if self._num_dim > 3:
+            self._conv_d_sigma = min(c.max(), float(c.mean() + 2 * c.std()))
         else:
-            c = (w**2).mean(dim=0) / (w.mean(dim=0) ** 2) - 1
-            if self._num_dim > 3:
-                self._conv = float(c.mean() + 2 * c.std())
-            else:
-                self._conv = float(c.max())
+            self._conv_d_sigma = c.max()
+
+        c = (w**2).mean(dim=0) / (w.mean(dim=0) ** 2) - 1
+        if self._num_dim > 3:
+            self._conv_R = float(c.mean() + 2 * c.std())
+        else:
+            self._conv_R = float(c.max())
 
         assert torch.all(torch.isfinite(sigma_min)), sigma_min
         assert torch.all(torch.isfinite(sigma_max)), sigma_max
-        sigma_max = torch.minimum(torch.tensor(10), sigma_max)
+        sigma_min = torch.maximum(torch.tensor(self._sigma_min), sigma_min)
+        sigma_max = torch.minimum(torch.tensor(self._sigma_max), sigma_max)
         # assert torch.all(sigma_max < 1e4), (sigma_max, l_std_est, wd2)
 
         return sigma_min, sigma_max

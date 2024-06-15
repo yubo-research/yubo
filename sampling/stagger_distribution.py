@@ -13,9 +13,10 @@ class StaggerDistribution:
         self._num_dim = len(X_0)
         self._num_samples_per_dimension = num_samples_per_dimension
         self._num_samples = num_samples_per_dimension * self._num_dim
-        assert seed is None, "NYI"
-        self._rng = None
-        # rng = torch.Generator(device=device).manual_seed(seed)
+        if seed is None:
+            self._rng = None
+        else:
+            self._rng = torch.Generator(device=self.device).manual_seed(seed)
 
     def _sigma(self, l_min_sigma, l_max_sigma):
         u = l_min_sigma + (l_max_sigma - l_min_sigma) * torch.rand(

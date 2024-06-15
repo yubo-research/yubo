@@ -13,6 +13,21 @@ class Sample:
     p: np.array
 
 
+def var_of_var(w: torch.Tensor, X: torch.Tensor):
+    assert torch.abs(w.sum() - 1) < 1e-6, w.sum()
+    mu = (w * X**2).sum(dim=0)
+    dev = X - mu
+    return var_of_var_dev(w, dev)
+
+
+def var_of_var_dev(w: torch.Tensor, dev: torch.Tensor):
+    assert torch.abs(w.sum() - 1) < 1e-6, w.sum()
+    mu_2 = (w * dev**2).sum(dim=0)
+    mu_4 = (w * dev**4).sum(dim=0)
+    n = len(dev)
+    return (mu_4 - mu_2**2) / n
+
+
 def qmc_normal_sample(mu, cov, num_samples=1):
     qmcn = MultivariateNormalQMCEngine(
         torch.tensor(mu),

@@ -1,3 +1,22 @@
+def test_var_of_var():
+    import torch
+
+    from sampling.sampling_util import var_of_var
+
+    n = 100
+    w = torch.rand(size=(n,))
+    w = w / w.sum()
+    X = torch.randn(size=(n,))
+
+    vv_w = var_of_var(w=w, X=X)
+
+    w_0 = torch.ones(size=(n,))
+    w_0 = w_0 / w_0.sum()
+    vv_0 = var_of_var(w=w_0, X=X)
+
+    assert vv_w > vv_0
+
+
 def _test_draw_bounded_normal_samples(num_dim, qmc):
     import numpy as np
     import torch
