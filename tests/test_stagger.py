@@ -106,6 +106,32 @@ def test_proposal_stagger():
     assert torch.abs(dev[5:, 0]).max() < 1e-5
 
 
+def test_proposal_stagger_narrow():
+    import torch
+
+    from sampling.stagger import _proposal_stagger
+
+    torch.manual_seed(17)
+    num_dim = 2
+    num_samples_per_dimension = 1000
+    X_0 = torch.rand(size=torch.Size([num_dim]), dtype=torch.double)
+    pi, X = _proposal_stagger(
+        X_0,
+        sigma_min=torch.tensor([1e-3, 0.01]),
+        sigma_max=torch.tensor([1.1e-3, 0.011]),
+        num_samples_per_dimension=num_samples_per_dimension,
+    )
+
+    num_samples = num_samples_per_dimension * num_dim
+    assert pi.shape == (num_samples,)
+    assert X.shape == (num_samples, num_dim)
+
+    dev = X - X_0
+
+    assert torch.abs(dev[:num_samples_per_dimension, 0].std() - 1.05e-3) < 0.2e-3
+    assert torch.abs(dev[num_samples_per_dimension:, 1].std() - 0.0105) < 0.2
+
+
 def test_stagger_is():
     import torch
 
@@ -123,5 +149,10 @@ def test_stagger_is():
     X = iis.ask(num_samples_per_dimension=num_samples_per_dimension, X_and_p_target=X_and_p_target)
 
     dev = X - X_0
-    assert torch.abs(dev[:5, 0]).mean() < 1e-3
-    assert torch.abs(dev[5:, 1]).mean() > 1e-3
+    assert torch.abs(dev[:num_samples_per_dimension, 1]).max() < 1e-5
+    assert torch.abs(dev[num_samples_per_dimension:, 0]).max() < 1e-5
+
+    XX = iis._unmk_1d(iis._mk_1d(X_0, 99), 99)
+    assert torch.all(XX[0, :] == X_0)
+
+    iis.sampler(num_base_samples=100)

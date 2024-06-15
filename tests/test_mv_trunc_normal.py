@@ -8,7 +8,7 @@ def test_mv_trunc_normal():
     torch.manual_seed(17)
 
     mu = torch.tensor([0.1, 0.7])
-    sigma = torch.tensor([0.3, 3])
+    sigma = torch.tensor([0.3, 0.01])
     mvtn = MVTruncatedNormal(
         loc=mu,
         scale=sigma,
@@ -27,5 +27,6 @@ def test_mv_trunc_normal():
     assert abs(sp - tn).max() < 1e-6
 
     x_samples = mvtn._tn.rsample(torch.Size([1000])).numpy()
+    assert x_samples.shape == (1000, 2)
     assert x_samples.min() >= 0
     assert x_samples.max() <= 1
