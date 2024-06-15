@@ -1,96 +1,10 @@
 import numpy as np
 import torch
 
-# from botorch.utils.sampling import draw_sobol_normal_samples
 from sampling.bootstrap import boot_means
 from third_party.torch_truncnorm.TruncatedNormal import TruncatedNormal
 
-_ygtiw = "You got the indexing wrong"
-
-
-def _proposal_stagger(X_0, sigma_min, sigma_max, num_samples_per_dimension):
-    device = X_0.device
-    dtype = X_0.dtype
-
-    X_0 = X_0.flatten()
-
-    num_dim = len(X_0)
-    l_min_sigma = torch.log(sigma_min)
-    l_max_sigma = torch.log(sigma_max)
-
-    # rng = torch.Generator(device=device).manual_seed(seed)
-
-    num_samples = num_samples_per_dimension * num_dim
-    u = l_min_sigma + (l_max_sigma - l_min_sigma) * torch.rand(
-        size=torch.Size([num_samples_per_dimension, num_dim]),
-        device=device,
-        dtype=dtype,
-        # generator=rng,
-    )
-    sigma = torch.exp(u)
-
-    i = torch.arange(num_samples)
-    # all 0, then all 1, then ...
-    j = torch.repeat_interleave(torch.arange(num_dim), repeats=(num_samples_per_dimension))
-    assert torch.all(j[:num_samples_per_dimension] == 0), _ygtiw
-
-    loc = torch.zeros(size=(num_samples_per_dimension * num_dim,), dtype=dtype, device=device)
-    loc[i] = X_0[j]
-
-    scale = torch.zeros(size=(num_samples_per_dimension * num_dim,), dtype=dtype, device=device)
-    scale[i] = sigma.T.flatten()
-    assert scale[1] == sigma[1, 0], _ygtiw
-    assert num_dim == 1 or scale[num_samples_per_dimension] == sigma[0, 1], _ygtiw
-
-    tn = TruncatedNormal(
-        loc=loc,
-        scale=scale,
-        a=torch.zeros_like(loc),
-        b=torch.ones_like(loc),
-        # TODO: seed
-    )
-
-    pi_and_x = tn.p_and_sample((1,))
-    pi = pi_and_x.pi.flatten()
-    X_perturbed_dimension = pi_and_x.X.flatten()
-    assert X_perturbed_dimension.dtype == dtype, (X_perturbed_dimension.dtype, dtype)
-    assert pi.dtype == dtype, (pi.dtype, dtype)
-
-    X_perturbed_dimension = X_perturbed_dimension.squeeze()
-    pi = pi.squeeze()
-    assert X_perturbed_dimension.shape == (num_samples,), X_perturbed_dimension.shape
-    assert pi.shape == (num_samples,)
-
-    X = torch.tile(X_0, dims=(num_samples, 1))
-    assert X.shape == (num_samples, num_dim), _ygtiw
-
-    X[i, j] = X_perturbed_dimension
-
-    assert not torch.any((X.flatten() < 0) | (X.flatten() > 1)), (X.min(), X.max())
-
-    pi = _norm_by_dim(pi, num_dim, num_samples_per_dimension)
-    # pi = torch.maximum(torch.tensor(1e-5 / len(pi)), pi)
-
-    assert torch.all(torch.isfinite(pi)), (sigma_min, sigma_max, pi)
-    assert torch.all(pi > 0), (sigma_min, sigma_max, pi)
-    return pi, X
-
-
-def _norm_by_dim(p, num_dim, num_samples_per_dimension):
-    # Treat each dimension as a separate problem.
-    # We're only solving them in parallel b/c we
-    #  think we can be more efficient with
-    #  parallel sampling(ex., w/C++, threads, GPU).
-
-    p_r = p.reshape(num_dim, num_samples_per_dimension)
-    assert num_dim == 1 or p_r[1, 0] == p[num_samples_per_dimension]
-    norm = p_r.sum(axis=1, keepdim=True)
-    p_r = p_r / norm
-    i = torch.where(norm == 0)[0]
-    p_r[i, :] = 1 / p_r.shape[1]
-    p = p_r.reshape(num_dim * num_samples_per_dimension)
-    assert num_dim == 1 or p_r[1, 0] == p[num_samples_per_dimension]
-    return p
+from .stagger_distribution import StaggerDistribution
 
 
 class _StaggerISSampler:
@@ -200,11 +114,12 @@ class StaggerIS:
             sigma_max = self._sigma_max
 
         # print("S:", sigma_min, sigma_max)
-        self._pi, X = _proposal_stagger(
+        self._pi, X = StaggerDistribution(
             X_0=self._X_0,
+            num_samples_per_dimension=num_samples_per_dimension,
+        ).propose(
             sigma_min=sigma_min,
             sigma_max=sigma_max,
-            num_samples_per_dimension=num_samples_per_dimension,
         )
 
         return X
@@ -214,12 +129,12 @@ class StaggerIS:
         assert num_samples_per_dimension == int(num_samples_per_dimension)
         num_samples_per_dimension = int(num_samples_per_dimension)
 
-        p_target = _norm_by_dim(p_target, self._num_dim, num_samples_per_dimension)
+        p_target = StaggerDistribution.norm_by_dim(p_target, self._num_dim, num_samples_per_dimension)
         assert torch.all(torch.isfinite(p_target)), p_target
         assert torch.all(self._pi > 0), self._pi
         w = p_target / self._pi
         assert w.sum() > 0, w
-        w = _norm_by_dim(w, self._num_dim, num_samples_per_dimension)
+        w = StaggerDistribution.norm_by_dim(w, self._num_dim, num_samples_per_dimension)
         assert torch.all(torch.isfinite(w)), w
 
         i = torch.arange(self._num_dim * num_samples_per_dimension)
