@@ -4,7 +4,7 @@ from botorch.optim import optimize_acqf
 
 
 def find_max(model, bounds=None):
-    # TODO: warm-start; Set some of the initialial conditions
+    # TODO: warm-start; Set some of the initial conditions
     #  to recent answers.
     if bounds is None:
         X = model.train_inputs[0]

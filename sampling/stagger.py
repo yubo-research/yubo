@@ -59,7 +59,7 @@ class StaggerIS:
         self._s_min_now = sigma_min
         self._s_max_now = sigma_max
         self._conv_d_sigma = 1000
-        self._conv_R = 1000
+        self._conv_R = 1
         self._mu_std_est = torch.tensor([self._sigma_max.max()] * len(self._X_0))
         self._seed = seed
 
@@ -201,7 +201,7 @@ class StaggerIS:
         else:
             self._conv_d_sigma = c.max()
 
-        c = (w**2).mean(dim=0) / (w.mean(dim=0) ** 2) - 1
+        c = (w**2).mean(dim=0) / (w.mean(dim=0) ** 2) / num_samples_per_dimension - 1
         if self._num_dim > 3:
             self._conv_R = float(c.mean() + 2 * c.std())
         else:
@@ -209,8 +209,8 @@ class StaggerIS:
 
         assert torch.all(torch.isfinite(sigma_min)), sigma_min
         assert torch.all(torch.isfinite(sigma_max)), sigma_max
-        sigma_min = torch.maximum(torch.tensor(self._sigma_min), sigma_min)
-        sigma_max = torch.minimum(torch.tensor(self._sigma_max), sigma_max)
+        sigma_min = torch.maximum(torch.as_tensor(self._sigma_min), sigma_min)
+        sigma_max = torch.minimum(torch.as_tensor(self._sigma_max), sigma_max)
         # assert torch.all(sigma_max < 1e4), (sigma_max, l_std_est, wd2)
 
         return sigma_min, sigma_max

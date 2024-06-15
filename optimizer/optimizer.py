@@ -97,6 +97,22 @@ class Optimizer:
                     "num_X_samples": default_num_X_samples,
                     "sample_type": "is",
                     "k_mcmc": 10,
+                    "num_Y_samples": 1024,
+                    "num_samples_per_dimension": 10,
+                },
+            ),
+            "mtv-is-ts": BTDesigner(
+                policy,
+                AcqMTV,
+                init_sobol=0,
+                init_center=False,
+                acq_kwargs={
+                    "ts_only": True,
+                    "num_X_samples": default_num_X_samples,
+                    "sample_type": "is",
+                    "k_mcmc": 10,
+                    "num_Y_samples": 1024,
+                    "num_samples_per_dimension": 10,
                 },
             ),
             # Long sobol init, sequential opt

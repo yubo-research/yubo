@@ -6,8 +6,8 @@ from botorch.acquisition.monte_carlo import (
 from botorch.utils import t_batch_mode_transform
 from torch.quasirandom import SobolEngine
 
-from sampling.pstar_is_sampler import PStarISSampler
 from sampling.pstar_sampler import PStarSampler
+from sampling.stagger import StaggerIS
 
 from .acq_util import find_max
 
@@ -20,6 +20,8 @@ class AcqMTV(MCAcquisitionFunction):
         ts_only=False,
         k_mcmc=100,
         sample_type="hnr",
+        num_samples_per_dimension=10,
+        num_Y_samples=1024,
         **kwargs,
     ) -> None:
         super().__init__(model=model, **kwargs)
@@ -39,19 +41,12 @@ class AcqMTV(MCAcquisitionFunction):
             self.X_samples = sobol_engine.draw(num_X_samples, dtype=self.dtype)
         else:
             if sample_type == "hnr":
-                self.X_max = find_max(
-                    self.model,
-                    bounds=torch.tensor(
-                        [[0.0] * self._num_dim, [1.0] * self._num_dim],
-                        device=self.device,
-                        dtype=self.dtype,
-                    ),
-                )
+                self._set_x_max()
                 pss = PStarSampler(k_mcmc, self.model, self.X_max)
                 self.X_samples = pss(num_X_samples)
             elif sample_type == "is":
-                pss = PStarISSampler(k_mcmc, model)
-                self.weights, self.X_samples = pss(num_X_samples)
+                self._set_x_max()
+                self.X_samples = self._stagger(num_samples_per_dimension, num_Y_samples, num_X_samples)
             elif sample_type == "sobol":
                 self.X_samples = sobol_engine.draw(num_X_samples, dtype=self.dtype)
             else:
@@ -64,11 +59,53 @@ class AcqMTV(MCAcquisitionFunction):
             print("Using draw()")
             self.draw = self._draw
 
+    def _set_x_max(self):
+        self.X_max = find_max(
+            self.model,
+            bounds=torch.tensor(
+                [[0.0] * self._num_dim, [1.0] * self._num_dim],
+                device=self.device,
+                dtype=self.dtype,
+            ),
+        )
+
     def _draw(self, num_arms):
         assert len(self.X_samples) >= num_arms, (len(self.X_samples), num_arms)
         i = np.arange(len(self.X_samples))
         i = np.random.choice(i, size=(int(num_arms)), replace=False)
         return self.X_samples[i]
+
+    def _calc_p_max_from_Y(self, Y):
+        is_best = torch.argmax(Y, dim=-1)
+        idcs, counts = torch.unique(is_best, return_counts=True)
+        p_max = torch.zeros(Y.shape[-1])
+        p_max[idcs] = counts / Y.shape[0]
+        return p_max
+
+    def _p_target(self, X, num_Y_samples):
+        mvn = self.model.posterior(X)
+        Y = mvn.sample(torch.Size([num_Y_samples])).squeeze()
+        assert torch.all((X >= 0) & (X <= 1))
+        return self._calc_p_max_from_Y(Y)
+
+    def _stagger(self, num_samples_per_dimension, num_Y_samples, num_X_samples, conv_thresh=0.1):
+        stagger = StaggerIS(self.X_max)
+        X_and_p_target = None
+        for i_iter in range(10):
+            X = stagger.ask(
+                num_samples_per_dimension=num_samples_per_dimension,
+                X_and_p_target=X_and_p_target,
+            )
+            if stagger.convergence_criterion() < conv_thresh:
+                print("COVERGED:", i_iter, stagger.convergence_criterion())
+                break
+            X_and_p_target = (X, self._p_target(X, num_Y_samples))
+
+        # TODO: Maybe use more base samples
+        sampler = stagger.sampler(num_base_samples=num_X_samples)
+        X = sampler.ask()
+        sampler.tell(self._p_target(X, num_Y_samples))
+        return sampler.sample(num_samples=num_X_samples)
 
     @t_batch_mode_transform()
     def forward(self, X):
