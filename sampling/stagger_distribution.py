@@ -1,6 +1,6 @@
 import torch
 
-from third_party.torch_truncnorm.TruncatedNormal import TruncatedNormal
+from torch_truncnorm.TruncatedNormal import TruncatedNormal
 
 _ygtiw = "You got the indexing wrong"
 

@@ -3,7 +3,7 @@ def test_truncated_normal():
     import torch
     from scipy.stats import truncnorm
 
-    from third_party.torch_truncnorm.TruncatedNormal import TruncatedNormal
+    from torch_truncnorm.TruncatedNormal import TruncatedNormal
 
     torch.manual_seed(17)
     np.random.seed(17)
@@ -34,7 +34,7 @@ def test_truncated_normal_multiple():
     import numpy as np
     import torch
 
-    from third_party.torch_truncnorm.TruncatedNormal import TruncatedNormal
+    from torch_truncnorm.TruncatedNormal import TruncatedNormal
 
     torch.manual_seed(17)
     np.random.seed(17)
