@@ -2,7 +2,6 @@ import numpy as np
 import torch
 
 from sampling.bootstrap import boot_means
-from sampling.sampling_util import var_of_var
 from third_party.torch_truncnorm.TruncatedNormal import TruncatedNormal
 
 from .stagger_distribution import StaggerDistribution
