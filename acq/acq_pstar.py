@@ -74,7 +74,6 @@ class AcqPStar(MCAcquisitionFunction):
             y_m, i = torch.max(Y, dim=1)
             i = i[y_m > Y[:, 0]]
             X_samples.extend([X[ii] for ii in i])
-            print("I:", len(i), len(X_samples))
         return torch.stack(X_samples[:num_X_samples])
 
     def _ts_max_0(self, X):
