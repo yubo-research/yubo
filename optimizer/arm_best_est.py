@@ -6,6 +6,7 @@ from acq.fit_gp import fit_gp
 class ArmBestEst:
     def __init__(self):
         print("Using ArmBestEst")
+        assert False, "Untested"
 
     def _calc_y_hat(self, data):
         gp, Y, X = fit_gp(data)

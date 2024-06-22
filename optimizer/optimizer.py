@@ -36,7 +36,8 @@ class _TraceEntry:
 
 
 class Optimizer:
-    def __init__(self, env_conf, policy, num_arms, arm_selector, num_obs=1, num_denoise=None, cb_trace=None, device="cpu", dtype=torch.float64):
+    def __init__(self, collector, *, env_conf, policy, num_arms, arm_selector, num_obs=1, num_denoise=None, cb_trace=None, device="cpu", dtype=torch.float64):
+        self._collector = collector
         self._env_conf = env_conf
         self._num_arms = num_arms
         self._num_obs = num_obs
@@ -49,7 +50,7 @@ class Optimizer:
         self._i_noise = 0
         self._center_designer = CenterDesigner(policy)
 
-        print(f"PROBLEM: env = {env_conf.env_name} num_params = {policy.num_params()}")
+        self._collector(f"PROBLEM: env = {env_conf.env_name} num_params = {policy.num_params()}")
         init_ax_default = max(5, 2 * policy.num_params())
         default_num_X_samples = max(64, 10 * self._num_arms)
         # default_num_Y_samples = 512
@@ -206,7 +207,7 @@ class Optimizer:
             traj = self.collect_trajectory(policy)
             rets.append(traj.rreturn)
         if np.std(rets) == 0:
-            print(f"WARNING: All rets are the same {rets}")
+            self._collector(f"WARNING: All rets are the same {rets}")
             # assert np.std(rets) > 0, rets
         return np.mean(rets)
 
@@ -249,7 +250,7 @@ class Optimizer:
 
             ret_batch = np.array(ret_batch)
 
-            print(
+            self._collector(
                 f"ITER: i_iter = {self._i_iter} d_time = {d_time:.2f} ret_max = {ret_batch.max():.2f} ret_mean = {ret_batch.mean():.2f} ret_best = {self.r_best_est:.2f} ret_eval = {ret_eval:.2f}"
             )
             sys.stdout.flush()

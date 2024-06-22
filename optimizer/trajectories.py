@@ -1,8 +1,6 @@
 from dataclasses import dataclass
 
-import matplotlib.pyplot as plt
 import numpy as np
-from IPython.display import clear_output
 
 
 @dataclass
@@ -35,6 +33,9 @@ def collect_trajectory(env_conf, policy, noise_seed=None, show_frames=False):
     assert not np.any(np.isinf(width)), width
 
     def draw():
+        import matplotlib.pyplot as plt
+        from IPython.display import clear_output
+
         clear_output(wait=True)
         plt.imshow(env.render())
         plt.title(f"i_iter = {i_iter} return = {return_trajectory:.2f}")

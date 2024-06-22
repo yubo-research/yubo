@@ -55,6 +55,10 @@ class BTDesigner:
             replace=True,
         )
         # batch_size x q x num_dim
+        print("I:", type(i))
+        print("I:", i.dtype)
+        print("I:", type(X))
+        print("I:", X.dtype)
         return X[i, :].reshape(batch_limit, num_arms, num_dim)
 
     def __call__(self, data, num_arms):

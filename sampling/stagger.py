@@ -23,7 +23,7 @@ class _StaggerISSampler:
         w = torch.min(torch.tensor(w_max), w)
         self._w = w / w.sum()
 
-    def sample(self, num_samples):
+    def importance_sample(self, num_samples):
         i = np.arange(len(self._X))
         i = np.random.choice(i, size=(num_samples,), p=self._w)
         return self._X[i]
@@ -31,8 +31,6 @@ class _StaggerISSampler:
 
 class StaggerIS:
     def __init__(self, X_0, sigma_min=None, sigma_max=None, seed=None):
-        # The proposal distribution should have heavier tails than the
-        #  target.
         self._X_0 = X_0.flatten()
         self.dtype = self._X_0.dtype
         self.device = self._X_0.device
@@ -115,6 +113,7 @@ class StaggerIS:
         pi_and_X = tn.p_and_sample((1,))
         p_tn = pi_and_X.pi.flatten()
         X = pi_and_X.X.flatten()
+        # TODO: Take num_base_samples-1 to make room for X_max
         X = self._unmk_1d(X, num_base_samples)
         p_tn = self._unmk_1d(p_tn, num_base_samples)
         p_tn = torch.cumprod(p_tn, dim=1)[:, -1]
@@ -123,6 +122,31 @@ class StaggerIS:
         else:
             p_tn = p_tn / p_tn.sum()
         p_tn = p_tn / p_tn.sum()
+
+        # TODO: Append X_max w/pi_X_max = 1/num_base_samples and
+        #  reduce p_tn to (1-pi_X_max)*p_tn.
+
+        # TODO: Maybe add other points, too. It should be
+        #  safe to b/c you're going to call _StaggerISSampler.importance_sample()
+        #  which will reweight by true p*(x) probabilities.
+        # You could create a proposal distribution out of:
+        # - TruncatedNormal w/sigma_fit
+        # - X_max
+        # - TruncatedNormal w/sigma_min
+        # - TruncatedNormal w/sigma_max
+        # - Sobol over the whole space
+        # - Or, instead of TruncatedNormals w/sigma_min and sigma_max, you could
+        #    just use the StaggerTruncatedNormal directly.
+        # Maybe ignore sigma_fit and just do the others. The space the range
+        #  from local to global, and they'll all be adjusted by p*(x).
+        # "Composite proposal distribution" / Multiple Importance Sampling
+        # Use a pi proportional to the number of points assigned to
+        #  each distribution. Vary the pi within each distribution
+        #  according to its natural relative probability.
+        # The component distributions are all places where we
+        #  expect p*(x) to have mass -- thus, X_max, is
+        #  a natural point to include.
+
         assert X.shape == (num_base_samples, self._num_dim)
         assert p_tn.shape == (num_base_samples,)
         return _StaggerISSampler(X, p_tn)

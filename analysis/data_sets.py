@@ -151,7 +151,8 @@ def load_multiple_traces(data_locator, exp_tag, problem_names, opt_names, old_wa
                     trace = load_traces(trace_path)
             except FileNotFoundError as e:
                 _report_bad(problem_name, opt_name, repr(e))
-                raise e
+                # raise e
+                trace = None
 
             if trace is None:
                 _report_bad(problem_name, opt_name, "No trace")

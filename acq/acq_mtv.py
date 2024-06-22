@@ -97,7 +97,6 @@ class AcqMTV(MCAcquisitionFunction):
                 X_and_p_target=X_and_p_target,
             )
             if stagger.convergence_criterion() < conv_thresh:
-                print("COVERGED:", i_iter, stagger.convergence_criterion())
                 break
             X_and_p_target = (X, self._p_target(X, num_Y_samples))
 
@@ -105,7 +104,7 @@ class AcqMTV(MCAcquisitionFunction):
         sampler = stagger.sampler(num_base_samples=num_X_samples)
         X = sampler.ask()
         sampler.tell(self._p_target(X, num_Y_samples))
-        return sampler.sample(num_samples=num_X_samples)
+        return sampler.importance_sample(num_samples=num_X_samples)
 
     @t_batch_mode_transform()
     def forward(self, X):
