@@ -17,6 +17,7 @@ def _sample_1_modal(d_args):
 
 
 def _sample_1(env_conf, opt_name, num_rounds, num_arms, num_obs, num_denoise):
+    seed_all(env_conf.problem_seed + 27)
     policy = default_policy(env_conf)
 
     if num_denoise is not None and num_denoise > 0:
@@ -46,12 +47,15 @@ def _sample_1(env_conf, opt_name, num_rounds, num_arms, num_obs, num_denoise):
 
 
 def _post_process(collector_log, collector_trace, trace_fn):
-    for line in collector_log:
-        print(line)
+    def _w(f, l):
+        f.write(l + "\n")
+        print(l)
 
     with data_writer(trace_fn) as f:
+        for line in collector_log:
+            _w(f, line)
         for line in collector_trace:
-            f.write(line + "\n")
+            _w(f, line)
 
 
 def _extract_trace_fns(all_args):
@@ -100,7 +104,6 @@ def sampler(d_args, b_modal=False):
             print(f"Skipping i_rep = {i_rep}. Already done.")
             continue
         else:
-            seed_all(17 + i_rep)
             problem_seed = 18 + i_rep
             env_conf = get_env_conf(d_args["env_tag"], problem_seed=problem_seed, noise_level=d_args.get("noise", None), noise_seed_0=10 * problem_seed)
             num_denoise = d_args.get("num_denoise", None)

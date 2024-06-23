@@ -119,7 +119,7 @@ def load_traces_old(fn, key="return"):
     return traces
 
 
-def load_multiple_traces(data_locator, exp_tag, problem_names, opt_names, old_way=True):
+def load_multiple_traces(data_locator, exp_tag, problem_names, opt_names, old_way=False):
     import numpy.ma as npma
 
     """
@@ -150,7 +150,7 @@ def load_multiple_traces(data_locator, exp_tag, problem_names, opt_names, old_wa
                 else:
                     trace = load_traces(trace_path)
             except FileNotFoundError as e:
-                _report_bad(problem_name, opt_name, repr(e))
+                _report_bad(problem_name, opt_name, f"{trace_path} {repr(e)}")
                 # raise e
                 trace = None
 
@@ -198,6 +198,7 @@ def range_summarize(traces: np.ndarray):
 
     z = z.swapaxes(0, 1)
     z = z.reshape(z.shape[0], z.shape[1] * z.shape[2])
+
     mu = z.mean(axis=-1)
     se = z.std(axis=-1) / np.sqrt(z.shape[-1])
 

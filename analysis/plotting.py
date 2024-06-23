@@ -74,7 +74,7 @@ def plot_sorted(ax, optimizers, mu, se, renames=None):
     ax.set_ylim([0, 1])
 
 
-def plot_sorted_agg(ax, data_locator, exp_tag, optimizers=None, problems=None, renames=None, i_agg=-1, old_way=True):
+def plot_sorted_agg(ax, data_locator, exp_tag, optimizers=None, problems=None, renames=None, i_agg=-1, old_way=False):
     if problems is None:
         problems = sorted(data_locator.problems_in(exp_tag))
 

@@ -1,3 +1,4 @@
+import copy
 from dataclasses import dataclass
 from typing import Any
 
@@ -13,7 +14,7 @@ from problems.turbo_lunar_policy import TurboLunarPolicy
 
 def get_env_conf(tag, problem_seed=None, noise_level=None, noise_seed_0=None):
     if tag in _gym_env_confs:
-        ec = _gym_env_confs[tag]
+        ec = copy.deepcopy(_gym_env_confs[tag])
         ec.problem_seed = problem_seed
         ec.noise_seed_0 = noise_seed_0
     else:
