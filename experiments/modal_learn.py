@@ -1,7 +1,5 @@
 import modal
 
-from acq.fit_gp import fit_gp
-
 app = modal.App(name="botorch_example")
 
 

@@ -11,7 +11,7 @@ from optimizer.optimizer import Optimizer
 from problems.env_conf import default_policy, get_env_conf
 
 
-@modal_app.function(image=modal_image)
+@modal_app.function(image=modal_image, concurrency_limit=100)
 def _sample_1_modal(d_args):
     return _sample_1(**d_args)
 
@@ -47,9 +47,9 @@ def _sample_1(env_conf, opt_name, num_rounds, num_arms, num_obs, num_denoise):
 
 
 def _post_process(collector_log, collector_trace, trace_fn):
-    def _w(f, l):
-        f.write(l + "\n")
-        print(l)
+    def _w(f, line):
+        f.write(line + "\n")
+        print(line)
 
     with data_writer(trace_fn) as f:
         for line in collector_log:
@@ -75,7 +75,7 @@ def _scan_local(all_args):
     print(f"TIME_LOCAL: {t_f - t_0:.2f}")
 
 
-def _dist_modal(all_args):
+def dist_modal(all_args):
     t_0 = time.time()
     trace_fns = _extract_trace_fns(all_args)
     for trace_fn, (collector_log, collector_trace) in zip(trace_fns, _sample_1_modal.map(all_args)):
@@ -92,12 +92,12 @@ def parse_kv(argv):
     return d
 
 
-def sampler(d_args, b_modal=False):
+def mk_replicates(d_args):
     out_dir = f"{d_args['exp_dir']}/{d_args['env_tag']}/{d_args['opt_name']}"
     # TODO: subdirs for all params? Maybe just a key?
     os.makedirs(out_dir, exist_ok=True)
     print(f"PARAMS: {d_args}")
-    all_args = []
+    all_d_args = []
     for i_rep in range(int(d_args["num_reps"])):
         trace_fn = f"{out_dir}/{i_rep:05d}"
         if data_is_done(trace_fn):
@@ -109,7 +109,7 @@ def sampler(d_args, b_modal=False):
             num_denoise = d_args.get("num_denoise", None)
             if num_denoise is not None:
                 num_denoise = int(num_denoise)
-            all_args.append(
+            all_d_args.append(
                 dict(
                     trace_fn=trace_fn,
                     env_conf=env_conf,
@@ -120,8 +120,60 @@ def sampler(d_args, b_modal=False):
                     num_denoise=num_denoise,
                 )
             )
+    return all_d_args
 
+
+def sampler(d_args, b_modal=False):
+    all_d_args = mk_replicates(d_args)
     if b_modal:
-        _dist_modal(all_args)
+        dist_modal(all_d_args)
     else:
-        _scan_local(all_args)
+        _scan_local(all_d_args)
+
+
+def _prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None, num_obs=None):
+    # TODO: noise subdir?
+    assert noise is None, "NYI"
+
+    exp_dir = f"{results_dir}/{exp_dir}"
+    if num_denoise is None:
+        num_denoise = ""
+    else:
+        num_denoise = f"--num-denoise={num_denoise}"
+        assert False, ("NYI", num_denoise)
+
+    if num_obs is None:
+        num_obs = ""
+    else:
+        num_obs = f"--num-obs={num_obs}"
+        assert False, ("NYI", num_obs)
+
+    if noise is None:
+        noise = ""
+    else:
+        noise = f"--noise={noise}"
+        assert False, ("NYI", noise)
+
+    # python experiments/experiment_reliable.py num_rounds=30 num_arms=5 env_tag=tlunar opt_name=gibbon num_reps=1 exp_dir=y_test num_denoise=100
+    # return f"python experiments/experiment.py env_tag={problem} opt_name={opt} num_arms={num_arms} num_reps={num_replications} num_rounds={num_rounds} {num_obs} {num_denoise} {noise} exp_dir={exp_dir} > {logs_dir}/{opt} 2>&1"
+    # return f"modal run experiments/experiment.py --env-tag={problem} --opt-name={opt} --num-arms={num_arms} --num-reps={num_replications} --num-rounds={num_rounds} {num_obs} {num_denoise} {noise} --exp-dir={exp_dir}"
+    return dict(
+        exp_dir=exp_dir,
+        env_tag=problem,
+        opt_name=opt,
+        num_arms=num_arms,
+        num_reps=num_replications,
+        num_rounds=num_rounds,
+    )
+
+
+def prep_d_args(results_dir, exp_dir, funcs, dims, num_arms, num_replications, opts, noises):
+    num_rounds = 3
+    d_argss = []
+    for dim in dims:
+        for func in funcs:
+            for opt in opts:
+                for noise in noises:
+                    problem = f"f:{func}-{dim}d"
+                    d_argss.append(_prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise, num_denoise=None))
+    return d_argss
