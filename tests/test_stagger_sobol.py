@@ -7,4 +7,4 @@ def test_stagger_sobol():
     X_control = torch.rand(size=(1, num_dim))
     ss = StaggerSobol(X_control)
 
-    ss.propose(10)
+    ss.propose(100)

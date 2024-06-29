@@ -33,14 +33,25 @@ class StaggerSobol:
         # proposal = [self._X_control]
         # pi = [1 / num_proposal_points]
 
+        num_sobol = num_proposal_points - 1
         X = draw_sobol_samples(
             bounds=torch.tensor([[0.0] * self._num_dim, [1.0] * self._num_dim], device=self.device, dtype=self.dtype),
-            n=num_proposal_points - 1,
+            n=num_sobol,
             q=1,
         ).squeeze(-2)
 
-        # l_s_min = torch.log(torch.tensor(s_min))
-        # l_s_max = torch.log(torch.tensor(s_max))
-        # s = torch.exp(l_s_min + (l_s_max - l_s_min) * torch.rand(size=(num_proposal_points - 1, self._num_dim)))
+        l_s_min = torch.log(torch.tensor(s_min))
+        l_s_max = torch.log(torch.tensor(s_max))
+        s = torch.exp(l_s_min + (l_s_max - l_s_min) * torch.rand(size=(num_sobol, 1)))
+        assert s.max() <= 1, s
+        assert s.min() > 0, s
 
-        return X
+        X_stagger = self._X_control + s * (X - self._X_control)
+        pi_stagger = (1 / s**2).flatten()
+        pi_stagger = pi_stagger / pi_stagger.sum()
+
+        X_proposal = torch.cat((self._X_control, X_stagger), dim=0)
+        pi_proposal = torch.cat((torch.tensor([1.0 / num_proposal_points]), pi_stagger))
+        pi_proposal = pi_proposal / pi_proposal.sum()
+
+        return pi_proposal, X_proposal
