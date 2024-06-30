@@ -7,4 +7,8 @@ def test_stagger_sobol():
     X_control = torch.rand(size=(1, num_dim))
     ss = StaggerSobol(X_control)
 
-    ss.propose(100)
+    sampler = ss.get_sampler(num_proposal_points=100)
+    X = sampler.ask(num_samples=100)
+
+    assert X.min() >= 0
+    assert X.max() <= 1

@@ -4,19 +4,13 @@ import time
 from analysis.data_io import data_is_done, data_writer
 from common.collector import Collector
 from common.seed_all import seed_all
-from experiments.experiment_modal import modal_app, modal_image
 from optimizer.arm_best_est import ArmBestEst
 from optimizer.arm_best_obs import ArmBestObs
 from optimizer.optimizer import Optimizer
 from problems.env_conf import default_policy, get_env_conf
 
 
-@modal_app.function(image=modal_image, concurrency_limit=100)
-def _sample_1_modal(d_args):
-    return _sample_1(**d_args)
-
-
-def _sample_1(env_conf, opt_name, num_rounds, num_arms, num_obs, num_denoise):
+def sample_1(env_conf, opt_name, num_rounds, num_arms, num_obs, num_denoise):
     seed_all(env_conf.problem_seed + 27)
     policy = default_policy(env_conf)
 
@@ -46,7 +40,7 @@ def _sample_1(env_conf, opt_name, num_rounds, num_arms, num_obs, num_denoise):
     return collector_log, collector_trace
 
 
-def _post_process(collector_log, collector_trace, trace_fn):
+def post_process(collector_log, collector_trace, trace_fn):
     def _w(f, line):
         f.write(line + "\n")
         print(line)
@@ -58,30 +52,21 @@ def _post_process(collector_log, collector_trace, trace_fn):
             _w(f, line)
 
 
-def _extract_trace_fns(all_args):
+def extract_trace_fns(all_args):
     trace_fns = []
     for d_args in all_args:
         trace_fns.append(d_args.pop("trace_fn"))
     return trace_fns
 
 
-def _scan_local(all_args):
+def scan_local(all_args):
     t_0 = time.time()
-    trace_fns = _extract_trace_fns(all_args)
+    trace_fns = extract_trace_fns(all_args)
     for trace_fn, d_args in zip(trace_fns, all_args):
-        collector_log, collector_trace = _sample_1(**d_args)
-        _post_process(collector_log, collector_trace, trace_fn)
+        collector_log, collector_trace = sample_1(**d_args)
+        post_process(collector_log, collector_trace, trace_fn)
     t_f = time.time()
     print(f"TIME_LOCAL: {t_f - t_0:.2f}")
-
-
-def dist_modal(all_args):
-    t_0 = time.time()
-    trace_fns = _extract_trace_fns(all_args)
-    for trace_fn, (collector_log, collector_trace) in zip(trace_fns, _sample_1_modal.map(all_args)):
-        _post_process(collector_log, collector_trace, trace_fn)
-    t_f = time.time()
-    print(f"TIME_MODAL: {t_f - t_0:.2f}")
 
 
 def parse_kv(argv):
@@ -123,12 +108,9 @@ def mk_replicates(d_args):
     return all_d_args
 
 
-def sampler(d_args, b_modal=False):
+def sampler(d_args, distributor_fn):
     all_d_args = mk_replicates(d_args)
-    if b_modal:
-        dist_modal(all_d_args)
-    else:
-        _scan_local(all_d_args)
+    distributor_fn(all_d_args)
 
 
 def _prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None, num_obs=None):

@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 from botorch.utils.sampling import draw_sobol_samples
 
@@ -22,6 +23,37 @@ from botorch.utils.sampling import draw_sobol_samples
 # Include X_control in the proposal w/weight 1/num_samples
 
 
+class _StaggerSobolISSampler:
+    def __init__(self, pi, X):
+        assert len(pi) == len(X), len(pi) == len(X)
+        self._X = X
+        self._pi = pi
+
+    def ask(self, num_samples):
+        """
+        Return points that are appropriate for use in a Thompson Sample.
+        The points are from a stagger about the control point(s), but
+         their frequency is from a uniform distribution over the bounding box (feasible region).
+        """
+        i = np.arange(len(self._X))
+        ips = 1 / self._pi
+        ips = ips / ips.sum()
+        j = np.random.choice(i, size=(num_samples,), replace=True, p=ips)
+        return self._X[j, :]
+
+    def tell(self, p_target, w_max=np.inf):
+        assert len(p_target) == len(self._X), len(p_target) == len(self._X)
+        p_target = p_target / p_target.sum()
+        w = p_target / self._pi
+        w = torch.min(torch.tensor(w_max), w)
+        self._w = w / w.sum()
+
+    def importance_sample(self, num_samples):
+        i = np.arange(len(self._X))
+        i = np.random.choice(i, size=(num_samples,), p=self._w)
+        return self._X[i]
+
+
 class StaggerSobol:
     def __init__(self, X_control):
         self._X_control = torch.atleast_2d(X_control)
@@ -29,10 +61,7 @@ class StaggerSobol:
         self.device = X_control.device
         self.dtype = X_control.dtype
 
-    def propose(self, num_proposal_points, s_min=1e-6, s_max=1):
-        # proposal = [self._X_control]
-        # pi = [1 / num_proposal_points]
-
+    def get_sampler(self, num_proposal_points, s_min=1e-6, s_max=1):
         num_sobol = num_proposal_points - 1
         X = draw_sobol_samples(
             bounds=torch.tensor([[0.0] * self._num_dim, [1.0] * self._num_dim], device=self.device, dtype=self.dtype),
@@ -54,4 +83,4 @@ class StaggerSobol:
         pi_proposal = torch.cat((torch.tensor([1.0 / num_proposal_points]), pi_stagger))
         pi_proposal = pi_proposal / pi_proposal.sum()
 
-        return pi_proposal, X_proposal
+        return _StaggerSobolISSampler(pi_proposal, X_proposal)

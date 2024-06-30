@@ -16,12 +16,13 @@ from botorch.acquisition.monte_carlo import (
 from acq.acq_dpp import AcqDPP
 from acq.acq_min_dist import AcqMinDist
 from acq.acq_mtv import AcqMTV
+from acq.acq_ts import AcqTS
 from acq.acq_var import AcqVar
 
 from .ax_designer import AxDesigner
 from .bt_designer import BTDesigner
 from .center_designer import CenterDesigner
-from .cma_designer import CMADesigner
+from .cma_designer import CMAESDesigner
 from .datum import Datum
 from .random_designer import RandomDesigner
 from .sobol_designer import SobolDesigner
@@ -57,7 +58,7 @@ class Optimizer:
 
         self._designers = {
             # Optimization packages
-            "cma": CMADesigner(policy),
+            "cma": CMAESDesigner(policy),
             "ax": AxDesigner(policy),
             # 1D only
             "maximin": BTDesigner(policy, lambda m: AcqMinDist(m, toroidal=False), init_center=False),
@@ -69,6 +70,9 @@ class Optimizer:
             # All exploitation
             "sr": BTDesigner(policy, qSimpleRegret, init_center=False),
             # Various methods, first batch is Sobol
+            "ts": BTDesigner(policy, AcqTS, init_center=False, acq_kwargs={"sampler": "cholesky"}),
+            "ts-ciq": BTDesigner(policy, AcqTS, init_center=False, acq_kwargs={"sampler": "ciq"}),
+            "ts-lanczos": BTDesigner(policy, AcqTS, init_center=False, acq_kwargs={"sampler": "lanczos"}),
             "ucb": BTDesigner(policy, qUpperConfidenceBound, init_center=False, acq_kwargs={"beta": 1}),
             "ei": BTDesigner(policy, qNoisyExpectedImprovement, init_center=False, acq_kwargs={"X_baseline": None}),
             "gibbon": BTDesigner(policy, qLowerBoundMaxValueEntropy, init_center=False, opt_sequential=True, acq_kwargs={"candidate_set": None}),

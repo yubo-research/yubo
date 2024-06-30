@@ -3,7 +3,7 @@ import cma
 import common.all_bounds as all_bounds
 
 
-class CMADesigner:
+class CMAESDesigner:
     def __init__(self, policy):
         self._policy = policy
         self._n_told = 0
@@ -13,6 +13,7 @@ class CMADesigner:
         return False
 
     def __call__(self, data, num_arms):
+        assert num_arms > 1, "CMAESDesigner does not support num_arms < 2"
         if self._es is None:
             assert self._policy.num_params() > 1, "CMA needs num_params > 1"
             self._es = cma.CMAEvolutionStrategy(
@@ -27,7 +28,7 @@ class CMADesigner:
                 },
             )
 
-        assert num_arms == self._es.popsize, f"CMADesigner wants num_arms == {self._es.popsize} every time."
+        assert num_arms == self._es.popsize, f"CMAESDesigner wants num_arms == {self._es.popsize} every time."
 
         n = len(data) - self._n_told
         if n > 0:

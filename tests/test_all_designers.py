@@ -22,6 +22,7 @@ def _test_some_designers(k, m):
 
 
 def _test_designer(designer):
+    from common.collector import Collector
     from common.seed_all import seed_all
     from optimizer.arm_best_obs import ArmBestObs
     from optimizer.optimizer import Optimizer
@@ -34,7 +35,14 @@ def _test_designer(designer):
         num_arms = 1
     else:
         num_arms = 3
-    opt = Optimizer(env_conf, policy, num_arms=num_arms, arm_selector=ArmBestObs())
+    collector = Collector()
+    opt = Optimizer(
+        collector,
+        env_conf=env_conf,
+        policy=policy,
+        num_arms=num_arms,
+        arm_selector=ArmBestObs(),
+    )
     opt.collect_trace(designer_name=designer, num_iterations=4)
 
     return opt.all_designer_names()
