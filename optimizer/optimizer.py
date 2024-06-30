@@ -70,7 +70,15 @@ class Optimizer:
             # All exploitation
             "sr": BTDesigner(policy, qSimpleRegret, init_center=False),
             # Various methods, first batch is Sobol
-            "ts": BTDesigner(policy, AcqTS, init_center=False, acq_kwargs={"sampler": "cholesky"}),
+            "ts": BTDesigner(
+                policy,
+                AcqTS,
+                init_center=False,
+                acq_kwargs={
+                    "sampler": "cholesky",
+                    "n_candidates": 1024,
+                },
+            ),
             "ts-ciq": BTDesigner(policy, AcqTS, init_center=False, acq_kwargs={"sampler": "ciq"}),
             "ts-lanczos": BTDesigner(policy, AcqTS, init_center=False, acq_kwargs={"sampler": "lanczos"}),
             "ucb": BTDesigner(policy, qUpperConfidenceBound, init_center=False, acq_kwargs={"beta": 1}),
@@ -92,6 +100,17 @@ class Optimizer:
                 init_sobol=0,
                 init_center=False,
                 acq_kwargs={"num_X_samples": default_num_X_samples, "sample_type": "hnr"},
+            ),
+            "mtv-ts": BTDesigner(
+                policy,
+                AcqMTV,
+                init_sobol=0,
+                init_center=False,
+                acq_kwargs={
+                    "ts_only": True,
+                    "num_X_samples": default_num_X_samples,
+                    "sample_type": "hnr",
+                },
             ),
             "mtv-is": BTDesigner(
                 policy,
@@ -118,6 +137,27 @@ class Optimizer:
                     "k_mcmc": 10,
                     "num_Y_samples": 1024,
                     "num_samples_per_dimension": 10,
+                },
+            ),
+            "mtv-ss": BTDesigner(
+                policy,
+                AcqMTV,
+                init_sobol=0,
+                init_center=False,
+                acq_kwargs={
+                    "num_X_samples": default_num_X_samples,
+                    "sample_type": "ss",
+                },
+            ),
+            "mtv-ss-ts": BTDesigner(
+                policy,
+                AcqMTV,
+                init_sobol=0,
+                init_center=False,
+                acq_kwargs={
+                    "ts_only": True,
+                    "sample_type": "ss",
+                    "num_X_samples": default_num_X_samples,
                 },
             ),
             # Long sobol init, sequential opt

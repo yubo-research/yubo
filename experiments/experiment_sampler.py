@@ -78,7 +78,11 @@ def parse_kv(argv):
 
 
 def mk_replicates(d_args):
-    out_dir = f"{d_args['exp_dir']}/{d_args['env_tag']}/{d_args['opt_name']}"
+    assert "noise" not in d_args, "NYI"
+    assert "num_denoise" not in d_args, "NYI"
+    assert "num_obs" not in d_args, "NYI"
+
+    out_dir = f"{d_args['exp_dir']}/env={d_args['env_tag']}--opt_name={d_args['opt_name']}--num_arms={d_args['num_arms']}--num_rounds={d_args['num_rounds']}--num_reps={d_args['num_reps']}"
     # TODO: subdirs for all params? Maybe just a key?
     os.makedirs(out_dir, exist_ok=True)
     print(f"PARAMS: {d_args}")

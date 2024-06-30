@@ -29,7 +29,7 @@ class _StaggerSobolISSampler:
         self._X = X
         self._pi = pi
 
-    def ask(self, num_samples):
+    def sample_uniform(self, num_samples):
         """
         Return points that are appropriate for use in a Thompson Sample.
         The points are from a stagger about the control point(s), but
@@ -38,20 +38,10 @@ class _StaggerSobolISSampler:
         i = np.arange(len(self._X))
         ips = 1 / self._pi
         ips = ips / ips.sum()
+        if isinstance(ips, torch.Tensor):
+            ips = ips.numpy()
         j = np.random.choice(i, size=(num_samples,), replace=True, p=ips)
         return self._X[j, :]
-
-    def tell(self, p_target, w_max=np.inf):
-        assert len(p_target) == len(self._X), len(p_target) == len(self._X)
-        p_target = p_target / p_target.sum()
-        w = p_target / self._pi
-        w = torch.min(torch.tensor(w_max), w)
-        self._w = w / w.sum()
-
-    def importance_sample(self, num_samples):
-        i = np.arange(len(self._X))
-        i = np.random.choice(i, size=(num_samples,), p=self._w)
-        return self._X[i]
 
 
 class StaggerSobol:

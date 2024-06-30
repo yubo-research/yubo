@@ -3,11 +3,13 @@ import torch
 from botorch.acquisition.monte_carlo import (
     MCAcquisitionFunction,
 )
+from botorch.generation import MaxPosteriorSampling
 from botorch.utils import t_batch_mode_transform
 from torch.quasirandom import SobolEngine
 
 from sampling.pstar_sampler import PStarSampler
 from sampling.stagger import StaggerIS
+from sampling.stagger_sobol import StaggerSobol
 
 from .acq_util import find_max
 
@@ -46,14 +48,21 @@ class AcqMTV(MCAcquisitionFunction):
                 self.X_samples = pss(num_X_samples)
             elif sample_type == "is":
                 self._set_x_max()
-                self.X_samples = self._stagger(num_samples_per_dimension, num_Y_samples, num_X_samples)
+                self.X_samples = self._stagger_is(num_samples_per_dimension, num_Y_samples, num_X_samples)
+            elif sample_type == "ss":
+                self._set_x_max()
+                if not ts_only:
+                    self.X_samples = self._stagger_sobol(num_candidates=max(1024, 10 * num_X_samples), num_ts=num_X_samples)
+                else:
+                    self.X_samples = "ss"
             elif sample_type == "sobol":
                 self.X_samples = sobol_engine.draw(num_X_samples, dtype=self.dtype)
             else:
                 assert False, f"Unknown sample type [{sample_type}]"
 
-        assert self.X_samples.min() >= 0, self.X_samples
-        assert self.X_samples.max() <= 1, self.X_samples
+        if hasattr(self.X_samples, "min"):
+            assert self.X_samples.min() >= 0, self.X_samples
+            assert self.X_samples.max() <= 1, self.X_samples
 
         if ts_only:
             print("Using draw()")
@@ -70,10 +79,23 @@ class AcqMTV(MCAcquisitionFunction):
         )
 
     def _draw(self, num_arms):
+        if self.X_samples == "ss":
+            return self._stagger_sobol(num_candidates=1024, num_ts=num_arms)
         assert len(self.X_samples) >= num_arms, (len(self.X_samples), num_arms)
         i = np.arange(len(self.X_samples))
         i = np.random.choice(i, size=(int(num_arms)), replace=False)
         return self.X_samples[i]
+
+    def _stagger_sobol(self, num_candidates, num_ts):
+        ss = StaggerSobol(self.X_max)
+        sampler = ss.get_sampler(num_proposal_points=num_candidates)
+        X_unif = sampler.sample_uniform(num_samples=num_candidates)
+
+        with torch.no_grad():
+            thompson_sampling = MaxPosteriorSampling(model=self.model, replacement=False)
+            X_samples = thompson_sampling(X_unif, num_samples=num_ts)
+
+        return X_samples
 
     def _calc_p_max_from_Y(self, Y):
         is_best = torch.argmax(Y, dim=-1)
@@ -88,7 +110,7 @@ class AcqMTV(MCAcquisitionFunction):
         assert torch.all((X >= 0) & (X <= 1))
         return self._calc_p_max_from_Y(Y)
 
-    def _stagger(self, num_samples_per_dimension, num_Y_samples, num_X_samples, conv_thresh=0.1):
+    def _stagger_is(self, num_samples_per_dimension, num_Y_samples, num_X_samples, conv_thresh=0.1):
         stagger = StaggerIS(self.X_max)
         X_and_p_target = None
         for i_iter in range(10):
@@ -119,7 +141,7 @@ class AcqMTV(MCAcquisitionFunction):
 
         # I-Optimality
         var_f = mvn_f.variance.squeeze()
-        if self.weights is not None:
-            var_f = self.weights.unsqueeze(0) * var_f
+        # if self.weights is not None:
+        #     var_f = self.weights.unsqueeze(0) * var_f
         m = var_f.mean(dim=-1)
         return -m
