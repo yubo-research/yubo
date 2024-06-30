@@ -1,7 +1,6 @@
 import torch
 from botorch.utils.sampling import draw_sobol_samples
 
-
 """
 
 
@@ -26,19 +25,19 @@ Draw from a proposal distribution defined this way:
 
 
 class PStarStagger:
-    def __init__(self, model, X_control, num_ts_samples):
+    def __init__(self, model, X_control, num_samples):
         assert len(X_control) == 1, "NYI: multiple control points"
         self._model = model
-        self._num_ts_samples = num_ts_samples
-        self._X_samples = torch.tile(X_control, dims=(self._num_ts_samples, 1))
+        self._num_samples = num_samples
+        self._X_samples = torch.tile(X_control, dims=(self._num_samples, 1))
         self._num_dim = self._X_samples.shape[-1]
 
         self._X_unif = draw_sobol_samples(
             bounds=torch.tensor([[0.0] * self._num_dim, [1.0] * self._num_dim], device=X_control.device, dtype=X_control.dtype),
-            n=num_ts_samples,
+            n=num_samples,
             q=1,
         ).squeeze(-2)
-        assert self._X_samples.shape == (self._num_ts_samples, self._num_dim), self._X_samples.shape
+        assert self._X_samples.shape == (self._num_samples, self._num_dim), self._X_samples.shape
 
     def samples(self):
         return self._X_samples
@@ -46,19 +45,19 @@ class PStarStagger:
     def refine(self, s_min=1e-6, s_max=1):
         l_s_min = torch.log(torch.tensor(s_min))
         l_s_max = torch.log(torch.tensor(s_max))
-        s = torch.exp(l_s_min + (l_s_max - l_s_min) * torch.rand(size=(self._num_ts_samples, 1)))
+        s = torch.exp(l_s_min + (l_s_max - l_s_min) * torch.rand(size=(self._num_samples, 1)))
         assert s.max() <= 1, s
         assert s.min() > 0, s
 
         X_perturbed = self._X_samples + s * (self._X_unif - self._X_samples)
         X_both = torch.cat([self._X_samples, X_perturbed], dim=0)
-        assert X_both.shape == (2 * self._num_ts_samples, self._num_dim), (X_both.shape, self._num_ts_samples, self._num_dim)
+        assert X_both.shape == (2 * self._num_samples, self._num_dim), (X_both.shape, self._num_samples, self._num_dim)
 
         mvn = self._model.posterior(X_both)
         Y = mvn.sample(torch.Size([1])).squeeze()
-        assert Y.shape == (2 * self._num_ts_samples,), Y.shape
-        Y_ts = Y[: self._num_ts_samples]
-        Y_perturbed = Y[self._num_ts_samples :]
+        assert Y.shape == (2 * self._num_samples,), Y.shape
+        Y_ts = Y[: self._num_samples]
+        Y_perturbed = Y[self._num_samples :]
 
         i = Y_perturbed > Y_ts
         self._X_samples[i] = X_perturbed[i]

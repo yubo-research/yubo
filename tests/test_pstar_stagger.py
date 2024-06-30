@@ -10,7 +10,7 @@ def test_pstar_stagger():
     X_max = torch.atleast_2d(X_max)
     num_dim = X_max.shape[-1]
 
-    pss = PStarStagger(model, X_max, num_ts_samples=16)
+    pss = PStarStagger(model, X_max, num_samples=16)
 
     for _ in range(3):
         pss.refine()

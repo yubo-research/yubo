@@ -160,6 +160,29 @@ class Optimizer:
                     "num_X_samples": default_num_X_samples,
                 },
             ),
+            "mtv-pss": BTDesigner(
+                policy,
+                AcqMTV,
+                init_sobol=0,
+                init_center=False,
+                acq_kwargs={
+                    "num_X_samples": default_num_X_samples,
+                    "sample_type": "pss",
+                    "k_mcmc": 3,
+                },
+            ),
+            "mtv-pss-ts": BTDesigner(
+                policy,
+                AcqMTV,
+                init_sobol=0,
+                init_center=False,
+                acq_kwargs={
+                    "ts_only": True,
+                    "sample_type": "pss",
+                    "num_X_samples": default_num_X_samples,
+                    "k_mcmc": 3,
+                },
+            ),
             # Long sobol init, sequential opt
             "sobol_ucb": BTDesigner(policy, qUpperConfidenceBound, init_center=False, init_sobol=init_ax_default, acq_kwargs={"beta": 1}),
             "sobol_ei": BTDesigner(policy, qNoisyExpectedImprovement, init_center=False, init_sobol=init_ax_default, acq_kwargs={"X_baseline": None}),

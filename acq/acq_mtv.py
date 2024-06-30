@@ -8,6 +8,7 @@ from botorch.utils import t_batch_mode_transform
 from torch.quasirandom import SobolEngine
 
 from sampling.pstar_sampler import PStarSampler
+from sampling.pstar_stagger import PStarStagger
 from sampling.stagger import StaggerIS
 from sampling.stagger_sobol import StaggerSobol
 
@@ -36,6 +37,7 @@ class AcqMTV(MCAcquisitionFunction):
         self.device = X_0.device
         self.dtype = X_0.dtype
         self.weights = None
+        self.k_mcmc = k_mcmc
 
         sobol_engine = SobolEngine(self._num_dim, scramble=True)
 
@@ -55,6 +57,12 @@ class AcqMTV(MCAcquisitionFunction):
                     self.X_samples = self._stagger_sobol(num_candidates=max(1024, 10 * num_X_samples), num_ts=num_X_samples)
                 else:
                     self.X_samples = "ss"
+            elif sample_type == "pss":
+                self._set_x_max()
+                if not ts_only:
+                    self.X_samples = self._pstar_stagger(num_X_samples)
+                else:
+                    self.X_samples = "pss"
             elif sample_type == "sobol":
                 self.X_samples = sobol_engine.draw(num_X_samples, dtype=self.dtype)
             else:
@@ -81,10 +89,18 @@ class AcqMTV(MCAcquisitionFunction):
     def _draw(self, num_arms):
         if self.X_samples == "ss":
             return self._stagger_sobol(num_candidates=1024, num_ts=num_arms)
+        elif self.X_samples == "pss":
+            return self._pstar_stagger(num_arms)
         assert len(self.X_samples) >= num_arms, (len(self.X_samples), num_arms)
         i = np.arange(len(self.X_samples))
         i = np.random.choice(i, size=(int(num_arms)), replace=False)
         return self.X_samples[i]
+
+    def _pstar_stagger(self, num_samples):
+        pss = PStarStagger(self.model, self.X_max, num_samples=num_samples)
+        for _ in range(self.k_mcmc):
+            pss.refine()
+        return pss.samples()
 
     def _stagger_sobol(self, num_candidates, num_ts):
         ss = StaggerSobol(self.X_max)
