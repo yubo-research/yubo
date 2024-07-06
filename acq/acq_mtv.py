@@ -73,7 +73,7 @@ class AcqMTV(MCAcquisitionFunction):
             assert self.X_samples.max() <= 1, self.X_samples
 
         if ts_only:
-            print("Using draw()")
+            # print("Using draw()")
             self.draw = self._draw
 
     def _set_x_max(self):

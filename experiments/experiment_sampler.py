@@ -69,14 +69,6 @@ def scan_local(all_args):
     print(f"TIME_LOCAL: {t_f - t_0:.2f}")
 
 
-def parse_kv(argv):
-    d = {}
-    for a in argv:
-        k, v = a.split("=")
-        d[k] = v
-    return d
-
-
 def mk_replicates(d_args):
     assert "noise" not in d_args, "NYI"
     assert "num_denoise" not in d_args, "NYI"

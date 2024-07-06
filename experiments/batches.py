@@ -5,8 +5,8 @@ import os
 import random
 import time
 
-from experiments.experiment_modal import modal_app as app
-from experiments.experiment_sampler import dist_modal, mk_replicates, prep_d_args
+from experiments.experiment_modal import app, dist_modal
+from experiments.experiment_sampler import mk_replicates, prep_d_args
 
 
 def worker(cmd):
@@ -49,7 +49,8 @@ def run(cmds, max_parallel, b_dry_run=False):
 
 
 def prep_d_argss():
-    results_dir = "results_modal_cost_estimate"
+    results_dir = "results"
+    exp_dir = "exp_pss_A"
 
     funcs_nd = ["ackley", "dixonprice", "griewank", "levy", "michalewicz", "rastrigin", "rosenbrock", "sphere", "stybtang"]
     funcs_1d = ["ackley", "dixonprice", "griewank", "levy", "rastrigin", "sphere", "stybtang"]
@@ -63,17 +64,18 @@ def prep_d_argss():
     # opts = ["mtv", "ei","ucb", "gibbon", "dpp", "sobol"]
     # opts = ["mtv"]
     # opts = opts_compare
-    opts = ["mtv-is", "mtv-is-ts", "mtv", "ei", "sobol", "random"]
+    opts = ["mtv-pss", "mtv-pss-ts", "mtv", "mtv-ts", "ts", "ei", "sobol", "random"]
+    opts = [f"mtv-pss-{i}" for i in [1, 3, 10, 30, 100]]
 
     noises = [None]  # 0, 0.1, 0.3]
 
-    cmds_1d = prep_d_args(results_dir, exp_dir="exp_mtv-is_1d", funcs=funcs_1d, dims=[1], num_arms=3, num_replications=100, opts=opts, noises=noises)
+    cmds_1d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_1d, dims=[1], num_arms=3, num_replications=100, opts=opts, noises=noises)
 
-    cmds_3d = prep_d_args(results_dir, exp_dir="exp_mtv-is_3d", funcs=funcs_nd, dims=[3], num_arms=5, num_replications=30, opts=opts, noises=noises)
+    cmds_3d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_nd, dims=[3], num_arms=5, num_replications=30, opts=opts, noises=noises)
 
-    cmds_10d = prep_d_args(results_dir, exp_dir="exp_mtv-is_10d", funcs=funcs_nd, dims=[10], num_arms=10, num_replications=30, opts=opts, noises=noises)
+    cmds_10d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_nd, dims=[10], num_arms=10, num_replications=30, opts=opts, noises=noises)
 
-    cmds_30d = prep_d_args(results_dir, exp_dir="exp_mtv-is_30d", funcs=funcs_nd, dims=[30], num_arms=10, num_replications=30, opts=opts, noises=noises)
+    cmds_30d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_nd, dims=[30], num_arms=10, num_replications=30, opts=opts, noises=noises)
 
     if False:
         cmds_rl = []
@@ -103,13 +105,19 @@ def prep_d_argss():
 
 @app.local_entrypoint()
 def main_modal():
+    b_dry_run = False
+
     d_argss = prep_d_argss()
     t_0 = time.time()
     batch_of_d_args = []
     for d_args in d_argss:
         batch_of_d_args.extend(mk_replicates(d_args))
     print(f"START: num_tasks = {len(batch_of_d_args)}")
-    dist_modal(batch_of_d_args)
+    if b_dry_run:
+        for d_args in batch_of_d_args:
+            print("D:", d_args)
+    else:
+        dist_modal(batch_of_d_args)
     t_f = time.time()
     print(f"TIME_ALL: {t_f-t_0:.2f}")
     print("DONE_ALL")

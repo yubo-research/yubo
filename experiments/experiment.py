@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 
 
-from experiment_sampler import parse_kv, sampler, scan_local
+from experiment_sampler import sampler, scan_local
+
+from common.util import parse_kv
 
 if __name__ == "__main__":
     import sys

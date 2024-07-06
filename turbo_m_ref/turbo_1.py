@@ -230,6 +230,18 @@ class Turbo1:
             y_cand[indbest, :] = np.inf
         return X_next
 
+    def _evaluate(self, X):
+        print("TODO:", len(X))
+        assert len(X) % self.batch_size == 0, (len(X), self.batch_size)
+        # return np.array([[self.f(x)] for x in X])
+        Y = []
+        while len(Y) < len(X):
+            x = X[len(Y) : len(Y) + self.batch_size]
+            assert len(x) == self.batch_size, (len(x), self.batch_size, len(X), len(Y))
+            Y.extend(self.f(x))
+        assert len(Y) == len(X), (len(Y), len(X))
+        return np.array(Y)[:, None]
+
     def optimize(self):
         """Run the full optimization process."""
         while self.n_evals < self.max_evals:
@@ -244,7 +256,8 @@ class Turbo1:
             # Generate and evalute initial design points
             X_init = latin_hypercube(self.n_init, self.dim)
             X_init = from_unit_cube(X_init, self.lb, self.ub)
-            fX_init = np.array([[self.f(x)] for x in X_init])
+            # fX_init = np.array([[self.f(x)] for x in X_init])
+            fX_init = self._evaluate(X_init)
 
             # Update budget and set as initial data for this TR
             self.n_evals += self.n_init
@@ -276,7 +289,8 @@ class Turbo1:
                 X_next = from_unit_cube(X_next, self.lb, self.ub)
 
                 # Evaluate batch
-                fX_next = np.array([[self.f(x)] for x in X_next])
+                # fX_next = np.array([[self.f(x)] for x in X_next])
+                fX_next = self._evaluate(X_next)
 
                 # Update trust region
                 self._adjust_length(fX_next)

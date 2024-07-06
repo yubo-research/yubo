@@ -119,7 +119,7 @@ def load_traces_old(fn, key="return"):
     return traces
 
 
-def load_multiple_traces(data_locator, exp_tag, problem_names, opt_names, old_way=False):
+def load_multiple_traces(data_locator):
     import numpy.ma as npma
 
     """
@@ -129,31 +129,37 @@ def load_multiple_traces(data_locator, exp_tag, problem_names, opt_names, old_wa
     num_bad = 0
     num_tot = 0
 
+    problems = data_locator.problems()
+    opt_names = data_locator.optimizers()
+
     def _report_bad(problem_name, opt_name, msg):
         nonlocal num_bad
-        print("BAD:", msg, exp_tag, problem_name, opt_name)
+        print("BAD:", msg, data_locator, problem_name, opt_name)
         num_bad += 1
 
     def _init(trace):
         if len(trace.shape) < 2:
             return None
-        return np.nan * np.ones(shape=(len(problem_names), len(opt_names), trace.shape[0], trace.shape[1]))
+        return np.nan * np.ones(shape=(len(problems), len(opt_names), trace.shape[0], trace.shape[1]))
 
     traces = None
-    for i_problem, problem_name in enumerate(problem_names):
+    for i_problem, problem_name in enumerate(problems):
         for i_opt, opt_name in enumerate(opt_names):
             num_tot += 1
-            trace_path = data_locator(exp_tag, problem_name, opt_name)
+            trace_path = data_locator(problem_name, opt_name)
+            if len(trace_path) == 0:
+                _report_bad(problem_name, opt_name, f"Missing data for {problem_name} {opt_name}")
+                continue
+            if len(trace_path) > 1:
+                _report_bad(problem_name, opt_name, f"Extra data for {problem_name} {opt_name} len = {len(trace_path)}")
+                continue
+            trace_path = trace_path[0]
+
             try:
-                if old_way:
-                    trace = load_traces_old(trace_path)
-                else:
-                    trace = load_traces(trace_path)
+                trace = load_traces(trace_path)
             except FileNotFoundError as e:
                 _report_bad(problem_name, opt_name, f"{trace_path} {repr(e)}")
-                # raise e
-                trace = None
-
+                continue
             if trace is None:
                 _report_bad(problem_name, opt_name, "No trace")
                 continue

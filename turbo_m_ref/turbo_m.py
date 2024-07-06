@@ -146,7 +146,8 @@ class TurboM(Turbo1):
         for i in range(self.n_trust_regions):
             X_init = latin_hypercube(self.n_init, self.dim)
             X_init = from_unit_cube(X_init, self.lb, self.ub)
-            fX_init = np.array([[self.f(x)] for x in X_init])
+            # fX_init = np.array([[self.f(x)] for x in X_init])
+            fX_init = self._evaluate(X_init)
 
             # Update budget and set as initial data for this TR
             self.X = np.vstack((self.X, X_init))
@@ -190,7 +191,8 @@ class TurboM(Turbo1):
             X_next = from_unit_cube(X_next, self.lb, self.ub)
 
             # Evaluate batch
-            fX_next = np.array([[self.f(x)] for x in X_next])
+            # fX_next = np.array([[self.f(x)] for x in X_next])
+            fX_next = self._evaluate(X_next)
 
             # Update trust regions
             for i in range(self.n_trust_regions):
@@ -231,7 +233,8 @@ class TurboM(Turbo1):
                     # Create a new initial design
                     X_init = latin_hypercube(self.n_init, self.dim)
                     X_init = from_unit_cube(X_init, self.lb, self.ub)
-                    fX_init = np.array([[self.f(x)] for x in X_init])
+                    # fX_init = np.array([[self.f(x)] for x in X_init])
+                    fX_init = self._evaluate(X_init)
 
                     # Print progress
                     if self.verbose:

@@ -31,13 +31,9 @@ class PStarStagger:
         self._num_samples = num_samples
         self._X_samples = torch.tile(X_control, dims=(self._num_samples, 1))
         self._num_dim = self._X_samples.shape[-1]
-
-        self._X_unif = draw_sobol_samples(
-            bounds=torch.tensor([[0.0] * self._num_dim, [1.0] * self._num_dim], device=X_control.device, dtype=X_control.dtype),
-            n=num_samples,
-            q=1,
-        ).squeeze(-2)
-        assert self._X_samples.shape == (self._num_samples, self._num_dim), self._X_samples.shape
+        self.device = self._X_samples.device
+        self.dtype = self._X_samples.dtype
+        self._bounds = torch.tensor([[0.0] * self._num_dim, [1.0] * self._num_dim], device=self.device, dtype=self.dtype)
 
     def samples(self):
         return self._X_samples
@@ -49,7 +45,14 @@ class PStarStagger:
         assert s.max() <= 1, s
         assert s.min() > 0, s
 
-        X_perturbed = self._X_samples + s * (self._X_unif - self._X_samples)
+        X_unif = draw_sobol_samples(
+            bounds=self._bounds,
+            n=self._num_samples,
+            q=1,
+        ).squeeze(-2)
+        assert self._X_samples.shape == (self._num_samples, self._num_dim), self._X_samples.shape
+
+        X_perturbed = self._X_samples + s * (X_unif - self._X_samples)
         X_both = torch.cat([self._X_samples, X_perturbed], dim=0)
         assert X_both.shape == (2 * self._num_samples, self._num_dim), (X_both.shape, self._num_samples, self._num_dim)
 
