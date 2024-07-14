@@ -1,5 +1,6 @@
 import os
-import time
+
+import torch
 
 from analysis.data_io import data_is_done, data_writer
 from common.collector import Collector
@@ -13,6 +14,12 @@ from problems.env_conf import default_policy, get_env_conf
 
 def sample_1(env_conf, opt_name, num_rounds, num_arms, num_obs, num_denoise):
     seed_all(env_conf.problem_seed + 27)
+
+    if torch.cuda.is_available():
+        torch.set_default_device("cuda")
+    default_device = torch.empty(size=(1,)).device
+    print("DEFAULT_DEVICE:", default_device)
+
     policy = default_policy(env_conf)
 
     if num_denoise is not None and num_denoise > 0:
@@ -55,21 +62,21 @@ def post_process(collector_log, collector_trace, trace_fn):
             _w(f, line)
 
 
-def extract_trace_fns(all_args):
-    trace_fns = []
-    for d_args in all_args:
-        trace_fns.append(d_args.pop("trace_fn"))
-    return trace_fns
+# def extract_trace_fns(all_args):
+#     trace_fns = []
+#     for d_args in all_args:
+#         trace_fns.append(d_args.pop("trace_fn"))
+#     return trace_fns
 
 
-def scan_local(all_args):
-    t_0 = time.time()
-    trace_fns = extract_trace_fns(all_args)
-    for trace_fn, d_args in zip(trace_fns, all_args):
-        collector_log, collector_trace = sample_1(**d_args)
-        post_process(collector_log, collector_trace, trace_fn)
-    t_f = time.time()
-    print(f"TIME_LOCAL: {t_f - t_0:.2f}")
+# def scan_local(all_args):
+#     t_0 = time.time()
+#     trace_fns = extract_trace_fns(all_args)
+#     for trace_fn, d_args in zip(trace_fns, all_args):
+#         collector_log, collector_trace = sample_1(**d_args)
+#         post_process(collector_log, collector_trace, trace_fn)
+#     t_f = time.time()
+#     print(f"TIME_LOCAL: {t_f - t_0:.2f}")
 
 
 def mk_replicates(d_args):

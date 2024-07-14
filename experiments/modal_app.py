@@ -14,9 +14,7 @@ def mk_image():
     mujoco==2.3.7
     gymnasium[box2d]
     gymnasium[mujoco]
-    """.split(
-        "\n"
-    )
+    """.split("\n")
     sreqs = []
     for req in reqs:
         req = req.strip()
@@ -33,7 +31,7 @@ modal_image = mk_image()
 app = modal.App(name="yubo")
 
 
-@app.function(image=modal_image, concurrency_limit=100, timeout=15 * 60)
+@app.function(image=modal_image, concurrency_limit=100, timeout=30 * 60, gpu="any")
 def sample_1_modal(d_args):
     trace_fn = d_args.pop("trace_fn")
     collector_log, collector_trace = sample_1(**d_args)

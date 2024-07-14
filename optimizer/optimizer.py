@@ -38,7 +38,7 @@ class _TraceEntry:
 
 
 class Optimizer:
-    def __init__(self, collector, *, env_conf, policy, num_arms, arm_selector, num_obs=1, num_denoise=None, cb_trace=None, device="cpu", dtype=torch.float64):
+    def __init__(self, collector, *, env_conf, policy, num_arms, arm_selector, num_obs=1, num_denoise=None, cb_trace=None):
         self._collector = collector
         self._env_conf = env_conf
         self._num_arms = num_arms

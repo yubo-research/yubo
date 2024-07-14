@@ -59,7 +59,7 @@ class Turbo1:
         use_ard=True,
         max_cholesky_size=2000,
         n_training_steps=50,
-        min_cuda=1024,
+        min_cuda=128,  # TEST 1024,
         device="cpu",
         dtype="float64",
     ):
@@ -74,10 +74,12 @@ class Turbo1:
         assert max_cholesky_size >= 0 and isinstance(batch_size, int)
         assert n_training_steps >= 30 and isinstance(n_training_steps, int)
         assert max_evals > n_init and max_evals > batch_size
-        assert device == "cpu" or device == "cuda"
+        # assert device == "cpu" or device == "cuda"
         assert dtype == "float32" or dtype == "float64"
-        if device == "cuda":
-            assert torch.cuda.is_available(), "can't use cuda if it's not available"
+        # if device == "cuda":
+        #     assert torch.cuda.is_available(), "can't use cuda if it's not available"
+
+        print("TURBO_DEVICE:", device)
 
         # Save function information
         self.f = f
@@ -118,7 +120,7 @@ class Turbo1:
         # Device and dtype for GPyTorch
         self.min_cuda = min_cuda
         self.dtype = torch.float32 if dtype == "float32" else torch.float64
-        self.device = torch.device("cuda") if device == "cuda" else torch.device("cpu")
+        self.device = torch.device(device)  # "cuda") if device == "cuda" else torch.device("cpu")
         if self.verbose:
             print("Using dtype = %s \nUsing device = %s" % (self.dtype, self.device))
             sys.stdout.flush()
@@ -164,6 +166,7 @@ class Turbo1:
             device, dtype = torch.device("cpu"), torch.float64
         else:
             device, dtype = self.device, self.dtype
+        print("TURBO_DEVICE:", device, len(X), self.min_cuda, self.device)
 
         # We use CG + Lanczos for training if we have enough data
         with gpytorch.settings.max_cholesky_size(self.max_cholesky_size):

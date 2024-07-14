@@ -7,7 +7,7 @@ import time
 
 from experiments.dist_modal import DistModal
 from experiments.experiment_sampler import mk_replicates, prep_d_args
-from experiments.modal_submit import app
+from experiments.modal_interactive import app
 
 
 def worker(cmd):
@@ -62,7 +62,7 @@ def prep_d_argss():
     # opts_ablations = ["mtv_no-ic", "mtv_no-opt", "mtv_no-pstar"]
     # opts_ts = ["mtv-pss-ts", "ts", "mtv-ts", "dpp", "turbo-1", "turbo-5", "sobol", "random"]
 
-    opts = ["sobol"]  # ["mtv-pss-ts", "turbo-1", "random", "sobol"]  #  "mtv-pss-ts", "ts", "mtv-ts", "dpp", "turbo-1", "turbo-5", "sobol", "random"]
+    opts = ["turbo-1"]  # ["mtv-pss-ts", "turbo-1", "random", "sobol"]  #  "mtv-pss-ts", "ts", "mtv-ts", "dpp", "turbo-1", "turbo-5", "sobol", "random"]
     funcs_nd = ["ackley"]
     cmds_ackley_repro = prep_d_args(
         results_dir, exp_dir=exp_dir, funcs=funcs_nd, dims=[200], num_arms=100, num_replications=10, opts=opts, noises=noises, num_rounds=100, func_category="g"

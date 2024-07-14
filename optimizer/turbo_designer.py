@@ -1,6 +1,7 @@
 import threading
 
 import numpy as np
+import torch
 
 import common.all_bounds as all_bounds
 from optimizer.ask_tell_inverter import AskTellInverter, ATIStopped, ATITimeoutError
@@ -15,6 +16,7 @@ class TuRBODesigner:
         self._num_init = num_init
         self._turbo = None
         self._num_arms = None
+        self._default_device = torch.empty(size=(1,)).device
 
     def init_center(self):
         return False
@@ -29,6 +31,7 @@ class TuRBODesigner:
 
         lb = np.array([all_bounds.x_low] * self._policy.num_params())
         ub = np.array([all_bounds.x_high] * self._policy.num_params())
+
         if self._num_trust_regions == 1:
             opt = Turbo1(
                 f=self._ati,
@@ -38,6 +41,7 @@ class TuRBODesigner:
                 batch_size=self._num_arms,
                 max_evals=999999,
                 verbose=False,
+                device=self._default_device,
             )
         else:
             opt = TurboM(
@@ -49,6 +53,7 @@ class TuRBODesigner:
                 batch_size=self._num_arms,
                 max_evals=999999,
                 verbose=False,
+                device=self._default_device,
             )
         try:
             return opt.optimize()
