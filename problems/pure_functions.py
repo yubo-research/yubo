@@ -4,7 +4,7 @@ import common.all_bounds as all_bounds
 from problems.benchmark_functions import all_benchmarks
 
 
-def make(name, problem_seed):
+def make(name, problem_seed, distort=True):
     _, name = name.split(":")
     name, num_dim = name.split("-")
     assert num_dim[-1] == "d"
@@ -12,13 +12,13 @@ def make(name, problem_seed):
 
     all_bf = all_benchmarks()
     if name in all_bf:
-        return PureFunctionEnv(all_bf[name](), num_dim, problem_seed)
+        return PureFunctionEnv(all_bf[name](), num_dim, problem_seed, distort=distort)
     assert False, name
 
 
 # all domains are [-1,1]**num_dim
 class PureFunctionEnv:
-    def __init__(self, function, num_dim, problem_seed, distort=True):
+    def __init__(self, function, num_dim, problem_seed, *, distort=True):
         self._function = function
 
         # state is either 0 or 1

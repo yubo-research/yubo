@@ -5,8 +5,9 @@ import os
 import random
 import time
 
-from experiments.experiment_modal import app, dist_modal
+from experiments.dist_modal import DistModal
 from experiments.experiment_sampler import mk_replicates, prep_d_args
+from experiments.modal_submit import app
 
 
 def worker(cmd):
@@ -50,24 +51,22 @@ def run(cmds, max_parallel, b_dry_run=False):
 
 def prep_d_argss():
     results_dir = "results"
-    exp_dir = "exp_pss_A"
+    exp_dir = "exp_pss_repro_ackley"
 
+    noises = [None]  # 0, 0.1, 0.3]
     funcs_nd = ["ackley", "dixonprice", "griewank", "levy", "michalewicz", "rastrigin", "rosenbrock", "sphere", "stybtang"]
     funcs_1d = ["ackley", "dixonprice", "griewank", "levy", "rastrigin", "sphere", "stybtang"]
 
     # opts_compare = ["sobol", "random", "ei", "ucb", "dpp", "sr", "gibbon", "mtv"]
     # opts_then = ["mtv_then_ei", "mtv_then_sr", "mtv_then_gibbon", "mtv_then_dpp", "mtv_then_ucb"]
     # opts_ablations = ["mtv_no-ic", "mtv_no-opt", "mtv_no-pstar"]
+    # opts_ts = ["mtv-pss-ts", "ts", "mtv-ts", "dpp", "turbo-1", "turbo-5", "sobol", "random"]
 
-    # opts = opts_then + opts_ablations
-    # opts = ["mtv", "ei", "ucb", "gibbon", "dpp"]
-    # opts = ["mtv", "ei","ucb", "gibbon", "dpp", "sobol"]
-    # opts = ["mtv"]
-    # opts = opts_compare
-    opts = ["mtv-pss", "mtv-pss-ts", "mtv", "mtv-ts", "ts", "ei", "sobol", "random"]
-    opts = [f"mtv-pss-{i}" for i in [1, 3, 10, 30, 100]]
-
-    noises = [None]  # 0, 0.1, 0.3]
+    opts = ["sobol"]  # ["mtv-pss-ts", "turbo-1", "random", "sobol"]  #  "mtv-pss-ts", "ts", "mtv-ts", "dpp", "turbo-1", "turbo-5", "sobol", "random"]
+    funcs_nd = ["ackley"]
+    cmds_ackley_repro = prep_d_args(
+        results_dir, exp_dir=exp_dir, funcs=funcs_nd, dims=[200], num_arms=100, num_replications=10, opts=opts, noises=noises, num_rounds=100, func_category="g"
+    )
 
     cmds_1d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_1d, dims=[1], num_arms=3, num_replications=100, opts=opts, noises=noises)
 
@@ -76,6 +75,14 @@ def prep_d_argss():
     cmds_10d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_nd, dims=[10], num_arms=10, num_replications=30, opts=opts, noises=noises)
 
     cmds_30d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_nd, dims=[30], num_arms=10, num_replications=30, opts=opts, noises=noises)
+
+    cmds_100d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_nd, dims=[100], num_arms=1, num_replications=30, opts=opts, noises=noises, num_rounds=100)
+
+    cmds_300d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_nd, dims=[300], num_arms=1, num_replications=30, opts=opts, noises=noises, num_rounds=300)
+
+    cmds_1000d = prep_d_args(
+        results_dir, exp_dir=exp_dir, funcs=funcs_nd, dims=[1000], num_arms=1, num_replications=30, opts=opts, noises=noises, num_rounds=1000
+    )
 
     if False:
         cmds_rl = []
@@ -96,7 +103,9 @@ def prep_d_argss():
                     )
                 )
 
-    cmds = cmds_1d + cmds_3d + cmds_10d + cmds_30d
+    # cmds = cmds_1d + cmds_3d + cmds_10d + cmds_30d
+    cmds = cmds_ackley_repro
+    # cmds = cmds_100d
     # cmds = cmds_1d + cmds_10d
     # cmds = cmds_rl
     random.shuffle(cmds)
@@ -104,8 +113,8 @@ def prep_d_argss():
 
 
 @app.local_entrypoint()
-def main_modal():
-    b_dry_run = False
+def main_modal(job_fn: str, dry_run: bool = False):
+    assert not os.path.exists(job_fn), f"{job_fn} exists"
 
     d_argss = prep_d_argss()
     t_0 = time.time()
@@ -113,14 +122,19 @@ def main_modal():
     for d_args in d_argss:
         batch_of_d_args.extend(mk_replicates(d_args))
     print(f"START: num_tasks = {len(batch_of_d_args)}")
-    if b_dry_run:
+    if dry_run:
         for d_args in batch_of_d_args:
             print("D:", d_args)
     else:
+        dist_modal = DistModal(job_fn)
         dist_modal(batch_of_d_args)
     t_f = time.time()
     print(f"TIME_ALL: {t_f-t_0:.2f}")
-    print("DONE_ALL")
+    if dry_run:
+        dr = "_DRY_RUN"
+    else:
+        dr = ""
+    print(f"DONE_ALL{dr}")
 
 
 if __name__ == "__main__":

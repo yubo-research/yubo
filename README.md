@@ -1,36 +1,16 @@
-# Bayesian optimization
+# Improving sample efficiency of high dimensional Bayesian optimization with MCMC on approximated posterior ratio
 
 
-- Can you do better than space-filling initialization?
-  - Can you be purely stateless? (Sobol isn't, really)
-  - Can you optimize each design instead of choosing an ad-hoc/arbitrary number of initialization points?
-  
-- Possible design methods
-  - minimax dist
-  - maximin dist
-  - minimal integrated posterior variance
-  - toroidal distance
-  - action-space distance for RL problems; non-parameter distance/similarity in general (think of simulation optimization)
+## Installation
 
-# Tasks for application
-## show designs 
-  - 2*2 four - point images
-  - 3*3 nine - point images
+There is `requirements.txt` in this repository, which are mandatory to run MCMC-BO on synthetic functions.
 
-## Present Q arms v.s. Batch
-  e.g. batch =1, q = 10
-       batch = 10, q = 1
-    
-## Plot noise/Dimension 
+If you want to run experiment on Mujoco locomotion tasks, please refer to https://github.com/openai/mujoco-py to configure corresponding environment.
 
-## Batch sampling in high dimensions
+## How to run the algorithm
 
-# References
-1. 
+You can test MCMC-BO by running the following command:
 
-# Tips
- - clone
- - checkout 
- - make
- - push
- - merge
+```bash
+python exp.py --func Ackley --dim 200  --tr_num 1 --eval_num 6000 --init_num 200 --batch_size 100 --noise_var 0 --repeat_num 30 --use_mcmc 1 --gpu_idx 0
+```

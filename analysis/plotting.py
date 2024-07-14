@@ -76,10 +76,16 @@ def plot_sorted(ax, optimizers, mu, se, renames=None):
 
 def plot_sorted_agg(ax, data_locator, renames=None, i_agg=-1):
     traces = ads.load_multiple_traces(data_locator)
-    if i_agg != -1:
-        traces = traces[..., : i_agg + 1]
 
-    mu, se = ads.range_summarize(traces)
+    if i_agg == "mean":
+        mu, se = ads.rank_summarize(traces)
+    else:
+        if i_agg != -1:
+            traces = traces[..., : i_agg + 1]
+        mu, se = ads.range_summarize(traces)
+
+    print("MS:", mu.shape, se.shape)
+
     plot_sorted(ax, data_locator.optimizers(), mu, se, renames=renames)
 
 

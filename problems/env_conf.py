@@ -56,6 +56,8 @@ class EnvConf:
     def _make(self, **kwargs):
         if self.env_name[:2] == "f:":
             env = pure_functions.make(self.env_name, problem_seed=self.problem_seed)
+        elif self.env_name[:2] == "g:":
+            env = pure_functions.make(self.env_name, problem_seed=self.problem_seed, distort=False)
         elif self.gym_conf is not None:
             env = gym.make(self.env_name, **(kwargs | self.kwargs))
         else:
@@ -66,7 +68,7 @@ class EnvConf:
     def make(self, **kwargs):
         env = self._make(**kwargs)
         if self.noise_level is not None:
-            assert self.env_name[:2] == "f:", ("NYI: Noise is only supported for pure functions", self.env_name)
+            assert self.env_name[:2] in ["f:", "g:"], ("NYI: Noise is only supported for pure functions", self.env_name)
             env = NoiseMaker(env, self.noise_level)
         return env
 

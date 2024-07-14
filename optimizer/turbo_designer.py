@@ -21,7 +21,11 @@ class TuRBODesigner:
 
     def _run_opt(self):
         if self._num_init is not None:
-            num_init = self._num_arms * int(self._num_init / self._num_arms + 0.5)
+            num_init = max(self._num_arms, self._num_init)
+            num_init = self._num_arms * int(num_init / self._num_arms + 0.5)
+            assert num_init > 0, (num_init, self._num_init, self._num_arms)
+        else:
+            num_init = self._num_arms
 
         lb = np.array([all_bounds.x_low] * self._policy.num_params())
         ub = np.array([all_bounds.x_high] * self._policy.num_params())
@@ -52,7 +56,7 @@ class TuRBODesigner:
             pass
 
     def _start(self):
-        self._ati = AskTellInverter(timeout_seconds=10)
+        self._ati = AskTellInverter(timeout_seconds=100)
         self._thread = threading.Thread(target=self._run_opt, args=())
         self._thread.start()
 
@@ -66,7 +70,7 @@ class TuRBODesigner:
             self._start()
 
         if len(data) > 0:
-            y = [d.trajectory.rreturn for d in data[-self._num_arms :]]
+            y = [-d.trajectory.rreturn for d in data[-self._num_arms :]]
             # x = data[-1].policy.get_params()
             self._ati.tell(y)
 

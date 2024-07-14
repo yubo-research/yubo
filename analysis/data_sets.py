@@ -1,6 +1,7 @@
 import os
 
 import numpy as np
+from scipy.stats import rankdata
 
 from .data_io import data_is_done
 
@@ -97,28 +98,6 @@ def load_traces(trace_dir, key="return"):
     return traces
 
 
-def load_traces_old(fn, key="return"):
-    try:
-        o = load_kv(fn, ["i_sample", key], grep_for="TRACE:")
-    except FileNotFoundError:
-        raise FileNotFoundError(fn)
-    if len(o) == 0:
-        return None
-    traces = []
-    n_x = None
-    for i_sample in np.unique(o["i_sample"]):
-        i = np.where(o["i_sample"] == i_sample)[0]
-        x = list(o[key][i])
-        if n_x is not None:
-            while len(x) < n_x:
-                x.append(x[-1])
-        n_x = len(x)
-        traces.append(x)
-    traces = np.array(traces)
-    # print (f"Loaded {len(traces)} traces from {fn}")
-    return traces
-
-
 def load_multiple_traces(data_locator):
     import numpy.ma as npma
 
@@ -201,6 +180,26 @@ def range_summarize(traces: np.ndarray):
 
     # Take last round
     z = z[..., -1]
+
+    z = z.swapaxes(0, 1)
+    z = z.reshape(z.shape[0], z.shape[1] * z.shape[2])
+
+    mu = z.mean(axis=-1)
+    se = z.std(axis=-1) / np.sqrt(z.shape[-1])
+
+    return mu, se
+
+
+def rank_summarize(traces: np.array):
+    """
+    traces[i_problem, i_opt, i_replication, i_round]
+    Returns mu,se ~ [i_problem, i_opt]
+    """
+
+    # over opt (method)
+    z = rankdata(traces, axis=1)
+    z = z.mean(axis=-1)
+    z = (z - 1) / z.shape[0]
 
     z = z.swapaxes(0, 1)
     z = z.reshape(z.shape[0], z.shape[1] * z.shape[2])

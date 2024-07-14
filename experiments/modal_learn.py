@@ -1,47 +1,35 @@
+# my_job_queue.py
 import modal
 
-app = modal.App(name="botorch_example")
+app = modal.App("my-job-queue")
 
 
-def mk_image():
-    reqs = """
-    numpy==2.0.0
-    scipy==1.13.1
-    torch==2.1.0
-    botorch==0.9.2
-    gpytorch==1.11
-    gymnasium==0.29.1
-    """.split(
-        "\n"
-    )
-    sreqs = []
-    for req in reqs:
-        req = req.strip()
-        if len(req) == 0:
-            continue
-        print("REQ:", req)
-        sreqs.append(req)
-    print("SREQS:", sreqs)
-    return modal.Image.debian_slim(python_version="3.11.5").pip_install(sreqs)
+@app.function()
+def process_job(data):
+    # Perform the job processing here
+    return {"result": data}
 
 
-image = mk_image()
+def submit_job(data):
+    # Since the `process_job` function is deployed, need to first look it up
+    process_job = modal.Function.lookup("my-job-queue", "process_job")
+    call = process_job.spawn(data)
+    return call.object_id
 
 
-@app.function(image=image)
-def my_function(**kwargs):
-    print(kwargs)
-    import torch
-
-    num_dim = int(kwargs["num_dim"])
-
-    print("NAME:", __name__, num_dim)
-
-    X = torch.rand(size=(10, num_dim))
-    Y = ((X - 0.03) ** 2).sum(dim=1) + torch.randn(size=(10,))
-    print(X)
-    print(Y)
+def get_job_result(call_id):
+    function_call = modal.functions.FunctionCall.from_id(call_id)
+    try:
+        result = function_call.get(timeout=5)
+    except TimeoutError:
+        result = {"result": "pending"}
+    return result
 
 
-if __name__ == "__main__":
-    my_function.local(num_dim=3)
+@app.local_entrypoint()
+def main():
+    data = "my-data"
+
+    # Submit the job to Modal
+    call_id = submit_job(data)
+    print(get_job_result(call_id))

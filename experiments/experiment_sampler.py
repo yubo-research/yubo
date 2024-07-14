@@ -4,6 +4,7 @@ import time
 from analysis.data_io import data_is_done, data_writer
 from common.collector import Collector
 from common.seed_all import seed_all
+from experiments.experiment_util import ensure_parent
 from optimizer.arm_best_est import ArmBestEst
 from optimizer.arm_best_obs import ArmBestObs
 from optimizer.optimizer import Optimizer
@@ -41,6 +42,8 @@ def sample_1(env_conf, opt_name, num_rounds, num_arms, num_obs, num_denoise):
 
 
 def post_process(collector_log, collector_trace, trace_fn):
+    ensure_parent(trace_fn)
+
     def _w(f, line):
         f.write(line + "\n")
         print(line)
@@ -145,13 +148,12 @@ def _prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications,
     )
 
 
-def prep_d_args(results_dir, exp_dir, funcs, dims, num_arms, num_replications, opts, noises):
-    num_rounds = 3
+def prep_d_args(results_dir, exp_dir, funcs, dims, num_arms, num_replications, opts, noises, num_rounds=3, func_category="f"):
     d_argss = []
     for dim in dims:
         for func in funcs:
             for opt in opts:
                 for noise in noises:
-                    problem = f"f:{func}-{dim}d"
+                    problem = f"{func_category}:{func}-{dim}d"
                     d_argss.append(_prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise, num_denoise=None))
     return d_argss
