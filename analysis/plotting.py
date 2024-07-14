@@ -84,8 +84,6 @@ def plot_sorted_agg(ax, data_locator, renames=None, i_agg=-1):
             traces = traces[..., : i_agg + 1]
         mu, se = ads.range_summarize(traces)
 
-    print("MS:", mu.shape, se.shape)
-
     plot_sorted(ax, data_locator.optimizers(), mu, se, renames=renames)
 
 
