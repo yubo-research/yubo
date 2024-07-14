@@ -142,9 +142,15 @@ def main_modal(job_fn: str, dry_run: bool = False):
 
 
 if __name__ == "__main__":
+    import sys
+
+    dry_run = False
+    if len(sys) > 0 and sys.argv[1] == "--dry_run":
+        dry_run = True
+
     d_argss = prep_d_argss()
     t_0 = time.time()
-    run(d_argss, max_parallel=3, b_dry_run=True)
+    run(d_argss, max_parallel=3, b_dry_run=dry_run)
     t_f = time.time()
     print(f"TIME_ALL: {t_f-t_0:.2f}")
     print("DONE_ALL")
