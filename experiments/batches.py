@@ -23,7 +23,8 @@ def run_batch(d_argss, b_dry_run):
 
         cmd = ["python experiments/experiment.py"]
         for k, v in d_args.items():
-            cmd.append(f"{k}={v}")
+            kk = k.replace("_", "-")
+            cmd.append(f"--{kk}={v}")
         cmd.append(f"> {logs_dir}/{d_args['opt_name']} 2>&1")
         cmd = " ".join(cmd)
         print("RUN:", cmd)
@@ -145,7 +146,8 @@ if __name__ == "__main__":
     import sys
 
     dry_run = False
-    if len(sys) > 0 and sys.argv[1] == "--dry_run":
+    if len(sys) > 1:
+        assert sys.argv[1] == "--dry-run"
         dry_run = True
 
     d_argss = prep_d_argss()
