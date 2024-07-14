@@ -61,7 +61,7 @@ class TuRBODesigner:
             pass
 
     def _start(self):
-        self._ati = AskTellInverter(timeout_seconds=100)
+        self._ati = AskTellInverter(timeout_seconds=30 * 60)
         self._thread = threading.Thread(target=self._run_opt, args=())
         self._thread.start()
 

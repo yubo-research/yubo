@@ -1,4 +1,5 @@
 import os
+import time
 
 import torch
 
@@ -62,21 +63,21 @@ def post_process(collector_log, collector_trace, trace_fn):
             _w(f, line)
 
 
-# def extract_trace_fns(all_args):
-#     trace_fns = []
-#     for d_args in all_args:
-#         trace_fns.append(d_args.pop("trace_fn"))
-#     return trace_fns
+def extract_trace_fns(all_args):
+    trace_fns = []
+    for d_args in all_args:
+        trace_fns.append(d_args.pop("trace_fn"))
+    return trace_fns
 
 
-# def scan_local(all_args):
-#     t_0 = time.time()
-#     trace_fns = extract_trace_fns(all_args)
-#     for trace_fn, d_args in zip(trace_fns, all_args):
-#         collector_log, collector_trace = sample_1(**d_args)
-#         post_process(collector_log, collector_trace, trace_fn)
-#     t_f = time.time()
-#     print(f"TIME_LOCAL: {t_f - t_0:.2f}")
+def scan_local(all_args):
+    t_0 = time.time()
+    trace_fns = extract_trace_fns(all_args)
+    for trace_fn, d_args in zip(trace_fns, all_args):
+        collector_log, collector_trace = sample_1(**d_args)
+        post_process(collector_log, collector_trace, trace_fn)
+    t_f = time.time()
+    print(f"TIME_LOCAL: {t_f - t_0:.2f}")
 
 
 def mk_replicates(d_args):
