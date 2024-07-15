@@ -3,7 +3,6 @@ import time
 from dataclasses import dataclass
 
 import numpy as np
-import torch
 from botorch.acquisition.logei import qLogNoisyExpectedImprovement
 from botorch.acquisition.max_value_entropy_search import (
     qLowerBoundMaxValueEntropy,
@@ -230,12 +229,16 @@ class Optimizer:
             ],
         }
 
-    def collect_trajectory(self, policy):
+    def _collect_trajectory(self, policy, denoise_seed=0):
         # Use a different noise seed every time we collect a trajetory.
-        noise_seed = self._env_conf.noise_seed_0 + self._i_noise
-        self._i_noise += 1
-        traj = collect_trajectory(self._env_conf, policy, noise_seed=noise_seed)
-        return traj
+        noise_seed = self._env_conf.noise_seed_0 + self._i_noise + denoise_seed
+        return collect_trajectory(self._env_conf, policy, noise_seed=noise_seed)
+
+    def _collect_denoised_trajectory(self, policy):
+        if self._num_denoise is not None:
+            rreturn = self._denoise(policy)
+            return Trajectory(rreturn, None, None)
+        return self._collect_trajectory(policy)
 
     def _iterate(self, designer, num_arms):
         t0 = time.time()
@@ -245,12 +248,12 @@ class Optimizer:
         X = []
         for policy in policies:
             if self._num_obs == 1:
-                traj = self.collect_trajectory(policy)
+                traj = self._collect_denoised_trajectory(policy)
                 data.append(Datum(designer, policy, None, traj))
             else:
                 rreturns = []
                 for _ in range(self._num_obs):
-                    traj = self.collect_trajectory(policy)
+                    traj = self._collect_denoised_trajectory(policy)
                     rreturns.append(traj.rreturn)
                 data.append(Datum(designer, policy, None, Trajectory(np.mean(rreturns), "n/a when num_obs>1", "n/a when num_obs>1")))
             X.append(policy.get_params())
@@ -260,7 +263,7 @@ class Optimizer:
     def _denoise(self, policy):
         rets = []
         for i in range(self._num_denoise):
-            traj = self.collect_trajectory(policy)
+            traj = self._collect_trajectory(policy, denoise_seed=i)
             rets.append(traj.rreturn)
         if np.std(rets) == 0:
             self._collector(f"WARNING: All rets are the same {rets}")
@@ -278,6 +281,7 @@ class Optimizer:
 
         trace = []
         for _ in range(num_iterations):
+            self._i_noise += 1
             designer = designers[min(len(designers) - 1, self._i_iter)]
 
             if init_center and self._i_iter == 0:
@@ -297,11 +301,7 @@ class Optimizer:
                 ret_batch.append(datum.trajectory.rreturn)
 
             policy_best, self.r_best_est = self._arm_selector(self._data)
-            if self._num_denoise is None:
-                ret_eval = self.r_best_est
-            else:
-                ret_eval = self._denoise(policy_best)
-
+            ret_eval = self.r_best_est
             ret_batch = np.array(ret_batch)
 
             self._collector(

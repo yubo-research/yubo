@@ -2,7 +2,6 @@
 
 import multiprocessing
 import os
-import random
 import time
 
 from experiments.dist_modal import DistModal
@@ -86,11 +85,25 @@ def prep_d_argss():
 
     # Thompson-Sampling in HD
     if True:
-        cmds = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_1d, dims=[1], num_arms=1, num_replications=100, opts=opts, noises=noises, num_rounds=1)
-        for num_dim in [3, 10, 30, 100, 1000]:
+        min_rounds = 30
+        cmds = []
+        # cmds.extend(
+        #     prep_d_args(
+        #         results_dir, exp_dir=exp_dir, funcs=funcs_1d, dims=[1], num_arms=1, num_replications=100, opts=opts, noises=noises, num_rounds=min_rounds
+        #     )
+        # )
+        for num_dim in [300]:  # [3, 10, 30, 100, 300, 1000]:
             cmds.extend(
                 prep_d_args(
-                    results_dir, exp_dir=exp_dir, funcs=funcs_nd, dims=[num_dim], num_arms=1, num_replications=30, opts=opts, noises=noises, num_rounds=num_dim
+                    results_dir,
+                    exp_dir=exp_dir,
+                    funcs=funcs_nd,
+                    dims=[num_dim],
+                    num_arms=1,
+                    num_replications=30,
+                    opts=opts,
+                    noises=noises,
+                    num_rounds=max(min_rounds, num_dim),
                 )
             )
 
@@ -113,7 +126,7 @@ def prep_d_argss():
                     )
                 )
 
-    random.shuffle(cmds)
+    # random.shuffle(cmds)
     return cmds
 
 

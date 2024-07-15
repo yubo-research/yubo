@@ -7,7 +7,8 @@ from analysis.data_io import data_is_done, data_writer
 from common.collector import Collector
 from common.seed_all import seed_all
 from experiments.experiment_util import ensure_parent
-from optimizer.arm_best_est import ArmBestEst
+
+# from optimizer.arm_best_est import ArmBestEst
 from optimizer.arm_best_obs import ArmBestObs
 from optimizer.optimizer import Optimizer
 from problems.env_conf import default_policy, get_env_conf
@@ -23,10 +24,8 @@ def sample_1(env_conf, opt_name, num_rounds, num_arms, num_obs, num_denoise):
 
     policy = default_policy(env_conf)
 
-    if num_denoise is not None and num_denoise > 0:
-        arm_selector = ArmBestEst()
-    else:
-        arm_selector = ArmBestObs()
+    # arm_selector = ArmBestEst()
+    arm_selector = ArmBestObs()
 
     collector_log = Collector()
     opt = Optimizer(
@@ -82,11 +81,13 @@ def scan_local(all_args):
 
 def mk_replicates(d_args):
     assert "noise" not in d_args, "NYI"
-    assert "num_denoise" not in d_args, "NYI"
     assert "num_obs" not in d_args, "NYI"
 
-    out_dir = f"{d_args['exp_dir']}/env={d_args['env_tag']}--opt_name={d_args['opt_name']}--num_arms={d_args['num_arms']}--num_rounds={d_args['num_rounds']}--num_reps={d_args['num_reps']}"
-    # TODO: subdirs for all params? Maybe just a key?
+    out_dir = (
+        f"{d_args['exp_dir']}/env={d_args['env_tag']}--opt_name={d_args['opt_name']}--num_arms={d_args['num_arms']}"
+        f"--num_rounds={d_args['num_rounds']}--num_reps={d_args['num_reps']}--num_denoise={d_args['num_denoise']}"
+    )
+
     os.makedirs(out_dir, exist_ok=True)
     print(f"PARAMS: {d_args}")
     all_d_args = []
@@ -125,11 +126,6 @@ def _prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications,
     assert noise is None, "NYI"
 
     exp_dir = f"{results_dir}/{exp_dir}"
-    if num_denoise is None:
-        num_denoise = ""
-    else:
-        num_denoise = f"--num-denoise={num_denoise}"
-        assert False, ("NYI", num_denoise)
 
     if num_obs is None:
         num_obs = ""
@@ -153,15 +149,16 @@ def _prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications,
         num_arms=num_arms,
         num_reps=num_replications,
         num_rounds=num_rounds,
+        num_denoise=num_denoise,
     )
 
 
-def prep_d_args(results_dir, exp_dir, funcs, dims, num_arms, num_replications, opts, noises, num_rounds=3, func_category="f"):
+def prep_d_args(results_dir, exp_dir, funcs, dims, num_arms, num_replications, opts, noises, num_rounds=3, func_category="f", num_denoise=None):
     d_argss = []
     for dim in dims:
         for func in funcs:
             for opt in opts:
                 for noise in noises:
                     problem = f"{func_category}:{func}-{dim}d"
-                    d_argss.append(_prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise, num_denoise=None))
+                    d_argss.append(_prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise, num_denoise=num_denoise))
     return d_argss

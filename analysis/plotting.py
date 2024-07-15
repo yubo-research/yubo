@@ -20,7 +20,7 @@ def tight(axs):
     # plt.show()
 
 
-def filled_err(ys, x=None, color="#AAAAAA", alpha=0.5, fmt="--", se=False, ax=None):
+def filled_err(ys, x=None, color="#AAAAAA", alpha=0.5, marker=None, linestyle="--", color_line="#AAAAAA", se=False, ax=None):
     if ax is None:
         ax = plt
     mu = ys.mean(axis=0)
@@ -30,7 +30,7 @@ def filled_err(ys, x=None, color="#AAAAAA", alpha=0.5, fmt="--", se=False, ax=No
     if se:
         sg = sg / np.sqrt(ys.shape[0])
     ax.fill_between(x, mu - sg, mu + sg, color=color, alpha=alpha, linewidth=1)
-    ax.plot(x, mu, fmt, color=color)
+    ax.plot(x, mu, color=color_line, marker=marker, linestyle=linestyle)
 
 
 def error_area(x, y, yerr, color="#AAAAAA", alpha=0.5, fmt="--", marker="", ax=plt):
