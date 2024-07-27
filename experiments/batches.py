@@ -4,6 +4,7 @@ import multiprocessing
 import os
 import time
 
+from analysis.data_io import data_is_done
 from experiments.dist_modal import DistModal
 from experiments.experiment_sampler import mk_replicates, prep_d_args
 from experiments.modal_interactive import app
@@ -60,14 +61,16 @@ def prep_d_argss():
     # opts_compare = ["sobol", "random", "ei", "ucb", "dpp", "sr", "gibbon", "mtv"]
     # opts_then = ["mtv_then_ei", "mtv_then_sr", "mtv_then_gibbon", "mtv_then_dpp", "mtv_then_ucb"]
     # opts_ablations = ["mtv_no-ic", "mtv_no-opt", "mtv_no-pstar"]
-    opts_ts = ["mtv-pss", "mtv-pss-ts", "ts", "dpp", "turbo-1", "turbo-5", "sobol", "random"]
+    opts_ts = ["mtv-pss-ts", "ts", "dpp", "turbo-1", "turbo-5", "sobol", "random"]
+    opts_ts = ["turbo-1", "ts", "dpp"]
 
+    #
     # opts_compare = ["mtv-pss", "mtv-pss-ts", "mtv", "sobol", "random", "ei", "ucb", "dpp", "sr", "gibbon"]
     opts = opts_ts
 
     # TuRBO repro
     # funcs_nd = ["ackley"]
-    # cmds_ackley_repro = prep_d_args(
+    # cmds = prep_d_args(
     #     results_dir, exp_dir=exp_dir, funcs=funcs_nd, dims=[200], num_arms=100, num_replications=10, opts=opts, noises=noises, num_rounds=100, func_category="g"
     # )
 
@@ -92,7 +95,7 @@ def prep_d_argss():
         #         results_dir, exp_dir=exp_dir, funcs=funcs_1d, dims=[1], num_arms=1, num_replications=100, opts=opts, noises=noises, num_rounds=min_rounds
         #     )
         # )
-        for num_dim in [300]:  # [3, 10, 30, 100, 300, 1000]:
+        for num_dim in [1000]:  # [3, 10, 30, 100, 300, 1000]:
             cmds.extend(
                 prep_d_args(
                     results_dir,
@@ -142,7 +145,8 @@ def main_modal(job_fn: str, dry_run: bool = False):
     print(f"START: num_tasks = {len(batch_of_d_args)}")
     if dry_run:
         for d_args in batch_of_d_args:
-            print("D:", d_args)
+            if not data_is_done(d_args["trace_fn"]):
+                print("D:", d_args)
     else:
         dist_modal = DistModal(job_fn)
         dist_modal(batch_of_d_args)

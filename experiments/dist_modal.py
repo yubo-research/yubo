@@ -27,7 +27,7 @@ class DistModal:
                 else:
                     raise RuntimeError("Could not submit jobs to Modal")
 
-                print(f"SUBMIT: {call.object_id} {i_args} / {len(all_args)}")
+                print(f"SUBMIT: {call.object_id} {i_args} / {len(all_args)} {d_args}")
                 f.write(f"{call.object_id}\n")
 
         t_f = time.time()

@@ -19,12 +19,14 @@ def data_writer(out_fn):
 def data_is_done(fn, quiet=True):
     if not os.path.exists(fn):
         return False
+    breakpoint()
     with open(fn, "rb") as f:
         try:
             f.seek(-5, 2)
         except OSError:
             return False
         x = f.read(5)
+
         if x != b"DONE\n":
             return False
         f.seek(0, 0)

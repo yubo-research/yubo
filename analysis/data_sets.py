@@ -198,8 +198,8 @@ def rank_summarize(traces: np.array):
 
     # over opt (method)
     z = rankdata(traces, axis=1)
+    z = (z - 1) / (z.shape[1] - 1)
     z = z.mean(axis=-1)
-    z = (z - 1) / z.shape[0]
 
     z = z.swapaxes(0, 1)
     z = z.reshape(z.shape[0], z.shape[1] * z.shape[2])

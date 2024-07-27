@@ -85,7 +85,7 @@ def mk_replicates(d_args):
 
     out_dir = (
         f"{d_args['exp_dir']}/env={d_args['env_tag']}--opt_name={d_args['opt_name']}--num_arms={d_args['num_arms']}"
-        f"--num_rounds={d_args['num_rounds']}--num_reps={d_args['num_reps']}--num_denoise={d_args['num_denoise']}"
+        f"--num_rounds={d_args['num_rounds']}--num_reps={d_args['num_reps']}--num_denoise={d_args.get('num_denoise',None)}"
     )
 
     os.makedirs(out_dir, exist_ok=True)

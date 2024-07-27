@@ -59,7 +59,7 @@ class Turbo1:
         use_ard=True,
         max_cholesky_size=2000,
         n_training_steps=50,
-        min_cuda=128,  # TEST 1024,
+        min_cuda=1024,
         device="cpu",
         dtype="float64",
     ):
