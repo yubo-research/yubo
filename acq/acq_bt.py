@@ -4,6 +4,7 @@ from botorch.models import SingleTaskGP
 from botorch.optim import optimize_acqf
 
 import acq.fit_gp as fit_gp
+from sampling.tight_bounding_box import tight_bounding_box
 
 
 class AcqBT:
@@ -16,6 +17,7 @@ class AcqBT:
         *,
         device,
         dtype,
+        num_keep,
     ):
         if len(data) == 0:
             X = torch.empty(size=(0, num_dim), dtype=dtype, device=device)
@@ -23,7 +25,9 @@ class AcqBT:
             gp = SingleTaskGP(X, Y)
             gp.eval()
         else:
-            gp, Y, X = fit_gp.fit_gp(data, dtype, device=device)
+            Y, X = self._keep_some(data, num_keep, dtype, device)
+            gp = fit_gp.fit_gp_XY(X, Y)
+            print("N:", num_keep, len(Y), X.shape)
 
         # All BoTorch stuff is coded to bounds of [0,1]!
         self.bounds = torch.tensor([[0.0] * num_dim, [1.0] * num_dim], device=X.device, dtype=X.dtype)
@@ -46,6 +50,17 @@ class AcqBT:
             kwargs["bounds"] = self.bounds
 
         self.acq_function = acq_factory(gp, **kwargs)
+
+    @staticmethod
+    def _keep_some(data, num_keep, dtype, device):
+        Y, X = fit_gp.extract_X_Y(data, dtype, device)
+        if num_keep is None:
+            return Y, X
+        i = torch.where(Y == Y.max())[0]
+        X_0 = X[i, :]
+        idx, bounds = tight_bounding_box(X_0, X, num_keep=num_keep)
+        bounds = torch.tensor(bounds)
+        return Y[idx], X[idx, :]
 
     def _find_max(self, gp, bounds):
         x_cand, _ = optimize_acqf(

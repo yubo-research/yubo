@@ -6,8 +6,11 @@ def _test_tight_bounding_box(num_dim, num_samples, num_keep):
     X = torch.rand(size=(num_samples, num_dim))
     X_0 = X[0, :]
 
-    bounds = torch.tensor(tight_bounding_box(X_0, X, num_keep=num_keep))
-    assert torch.sum(torch.all((X > bounds[0, :]) & (X < bounds[1, :]), dim=1)) == num_keep
+    idx, bounds = tight_bounding_box(X_0, X, num_keep=num_keep)
+    bounds = torch.tensor(bounds)
+    assert len(idx) == num_keep
+    assert torch.all(X[idx, :] > bounds[0, :])
+    assert torch.all(X[idx, :] < bounds[1, :])
 
 
 def test_tight_bounding_box():
@@ -17,7 +20,7 @@ def test_tight_bounding_box():
 
     for _ in range(30):
         num_dim = np.random.randint(100)
-        num_samples = np.random.randint(100)
-        num_keep = np.random.randint(num_samples)
+        num_samples = np.random.randint(2, 100)
+        num_keep = 1 + np.random.randint(num_samples - 1)
 
         _test_tight_bounding_box(num_dim, num_samples, num_keep)

@@ -17,7 +17,8 @@ class BTDesigner:
         acq_kwargs=None,
         init_sobol=1,
         init_X_samples=True,
-        opt_sequential=False,
+        opt_sequential=False,  # greed q, not joint q
+        num_keep=None,
         optimizer_options={"batch_limit": 10, "maxiter": 1000},
         dtype=torch.float64,
         device=torch.device("cpu"),
@@ -29,6 +30,7 @@ class BTDesigner:
         self._init_center = init_center
         self._init_X_samples = init_X_samples
         self._opt_sequential = opt_sequential
+        self._num_keep = num_keep
         self._optimizer_options = optimizer_options
         self._acq_kwargs = acq_kwargs
         self.device = torch.device(device)
@@ -69,7 +71,7 @@ class BTDesigner:
             return ret
 
         num_dim = self._policy.num_params()
-        acqf = AcqBT(self._acq_fn, data, num_dim, self._acq_kwargs, device=self.device, dtype=self.dtype)
+        acqf = AcqBT(self._acq_fn, data, num_dim, self._acq_kwargs, device=self.device, dtype=self.dtype, num_keep=self._num_keep)
         if hasattr(acqf.acq_function, "draw"):
             # print (f"Draw from {acqf.acq_function.__class__.__name__}")
             X_cand = acqf.acq_function.draw(num_arms)

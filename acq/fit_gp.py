@@ -29,12 +29,16 @@ def fit_gp_XY(X, Y):
     return gp
 
 
-def fit_gp(data, dtype=torch.float64, device="cpu"):
+def extract_X_Y(data, dtype, device):
     Y, X = zip(*[mk_yx(d) for d in data])
     Y = torch.tensor(Y)[:, None].type(dtype).to(device)
     X = torch.stack(X).type(dtype).to(device)
-    gp = fit_gp_XY(X, Y)
+    return Y, X
 
+
+def fit_gp(data, dtype=torch.float64, device="cpu"):
+    Y, X = extract_X_Y(data, dtype, device)
+    gp = fit_gp_XY(X, Y)
     return gp, Y, X
 
 
