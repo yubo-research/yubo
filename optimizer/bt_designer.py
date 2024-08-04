@@ -87,6 +87,7 @@ class BTDesigner:
             if self._init_X_samples and hasattr(acqf.acq_function, "X_samples"):
                 batch_initial_conditions = self._batch_initial_conditions(data, num_arms, acqf)
                 batch_initial_conditions = batch_initial_conditions.type(self.dtype).to(self.device)
+                print("IC:", batch_initial_conditions.device)
             else:
                 batch_initial_conditions = None
 

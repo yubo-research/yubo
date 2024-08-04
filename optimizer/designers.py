@@ -39,13 +39,7 @@ class Designers:
         default_num_X_samples = max(64, 10 * self._num_arms)
         # default_num_Y_samples = 512
 
-        # TODO: Only instantiate the designer if you're going to use it.
-        # That could make it easy to include options in the opt name, too. EX:
-        #  ei
-        #  ei:k10
-        #  ei:k10-ic
-        #  ei:k10-ic-ey
-
+        # mtv:k100
         if ":" in designer_name:
             designer_name, options = designer_name.split(":")
             options = options.split("-")

@@ -38,18 +38,26 @@ class PStarStagger:
     def samples(self):
         return self._X_samples
 
-    def refine(self, s_min=1e-6, s_max=1):
-        l_s_min = torch.log(torch.tensor(s_min))
-        l_s_max = torch.log(torch.tensor(s_max))
+    def refine(self, num_refinements=1, s_min=1e-6, s_max=1):
+        for _ in range(num_refinements):
+            self._refine(s_min=s_min, s_max=s_max)
+
+    def _refine(self, s_min=1e-6, s_max=1):
+        l_s_min = torch.log(torch.tensor(s_min)).to(self._X_samples)
+        l_s_max = torch.log(torch.tensor(s_max)).to(self._X_samples)
         s = torch.exp(l_s_min + (l_s_max - l_s_min) * torch.rand(size=(self._num_samples, 1)))
         assert s.max() <= 1, s
         assert s.min() > 0, s
 
-        X_unif = draw_sobol_samples(
-            bounds=self._bounds,
-            n=self._num_samples,
-            q=1,
-        ).squeeze(-2)
+        X_unif = (
+            draw_sobol_samples(
+                bounds=self._bounds,
+                n=self._num_samples,
+                q=1,
+            )
+            .squeeze(-2)
+            .to(self._X_samples)
+        )
         assert self._X_samples.shape == (self._num_samples, self._num_dim), self._X_samples.shape
 
         X_perturbed = self._X_samples + s * (X_unif - self._X_samples)
@@ -63,4 +71,5 @@ class PStarStagger:
         Y_perturbed = Y[self._num_samples :]
 
         i = Y_perturbed > Y_ts
+
         self._X_samples[i] = X_perturbed[i]

@@ -23,8 +23,8 @@ class AcqMTV(MCAcquisitionFunction):
         ts_only=False,
         k_mcmc=100,
         sample_type="hnr",
-        num_samples_per_dimension=10,
-        num_Y_samples=1024,
+        # num_samples_per_dimension=10,
+        # num_Y_samples=1024,
         **kwargs,
     ) -> None:
         super().__init__(model=model, **kwargs)
@@ -48,15 +48,6 @@ class AcqMTV(MCAcquisitionFunction):
                 self._set_x_max()
                 pss = PStarSampler(k_mcmc, self.model, self.X_max)
                 self.X_samples = pss(num_X_samples)
-            # elif sample_type == "is":
-            #     self._set_x_max()
-            #     self.X_samples = self._stagger_is(num_samples_per_dimension, num_Y_samples, num_X_samples)
-            # elif sample_type == "ss":
-            #     self._set_x_max()
-            #     if not ts_only:
-            #         self.X_samples = self._stagger_sobol(num_candidates=max(1024, 10 * num_X_samples), num_ts=num_X_samples)
-            #     else:
-            #         self.X_samples = "ss"
             elif sample_type == "pss":
                 self._set_x_max()
                 if not ts_only:
@@ -85,11 +76,10 @@ class AcqMTV(MCAcquisitionFunction):
                 dtype=self.dtype,
             ),
         )
+        print("X_MAX:", self.X_max.device)
 
     def _draw(self, num_arms):
-        if self.X_samples == "ss":
-            return self._stagger_sobol(num_candidates=1024, num_ts=num_arms)
-        elif self.X_samples == "pss":
+        if self.X_samples == "pss":
             return self._pstar_stagger(num_arms)
         assert len(self.X_samples) >= num_arms, (len(self.X_samples), num_arms)
         i = np.arange(len(self.X_samples))
@@ -98,8 +88,7 @@ class AcqMTV(MCAcquisitionFunction):
 
     def _pstar_stagger(self, num_samples):
         pss = PStarStagger(self.model, self.X_max, num_samples=num_samples)
-        for _ in range(self.k_mcmc):
-            pss.refine()
+        pss.refine(self.k_mcmc)
         return pss.samples()
 
     def _stagger_sobol(self, num_candidates, num_ts):
@@ -155,6 +144,7 @@ class AcqMTV(MCAcquisitionFunction):
         model_f = self.model.condition_on_observations(X=X, Y=mvn_a.mean)
         mvn_f = model_f.posterior(self.X_samples, observation_noise=True)
 
+        # print("DEVICE:", X.device)
         # I-Optimality
         var_f = mvn_f.variance.squeeze()
         # if self.weights is not None:

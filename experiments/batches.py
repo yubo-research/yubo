@@ -51,13 +51,13 @@ def run(cmds, max_parallel, b_dry_run=False):
 
 
 def prep_d_argss():
+    from .func_names import funcs_1d, funcs_nd
+
     results_dir = "results"
     # exp_dir = "exp_pss_ts_hd"
     exp_dir = "exp_pss_repro_mtv_3"
 
     noises = [None]  # 0, 0.1, 0.3]
-    funcs_nd = ["ackley", "dixonprice", "griewank", "levy", "michalewicz", "rastrigin", "rosenbrock", "sphere", "stybtang"]
-    funcs_1d = ["ackley", "dixonprice", "griewank", "levy", "rastrigin", "sphere", "stybtang"]
 
     # opts_compare = ["sobol", "random", "ei", "ucb", "dpp", "sr", "gibbon", "mtv"]
     # opts_then = ["mtv_then_ei", "mtv_then_sr", "mtv_then_gibbon", "mtv_then_dpp", "mtv_then_ucb"]

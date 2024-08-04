@@ -104,6 +104,7 @@ class Optimizer:
             sys.stdout.flush()
             trace.append(_TraceEntry(ret_eval, d_time))
             self._i_iter += 1
+            self.last_designer = designer
 
         for designer in designers:
             if hasattr(designer, "stop"):

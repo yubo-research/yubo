@@ -27,7 +27,7 @@ def get_vanilla_kernel(num_dim, batch_shape):
 
 
 def fit_gp_XY(X, Y, use_vanilla=False):
-    Y = standardize(Y).to(X.dtype)
+    Y = standardize(Y).to(X)
     _gp = SingleTaskGP(X, Y)
     if use_vanilla:
         num_dims = X.shape[-1]
@@ -35,8 +35,10 @@ def fit_gp_XY(X, Y, use_vanilla=False):
     else:
         gp = _gp
     mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
+    gp.to(X)
     m = None
     for i_try in range(3):
+        mll.to(X)
         try:
             fit_gpytorch_mll(mll)
         except (RuntimeError, ModelFittingError) as e:
