@@ -52,7 +52,8 @@ def run(cmds, max_parallel, b_dry_run=False):
 
 def prep_d_argss():
     results_dir = "results"
-    exp_dir = "exp_pss_ts_hd"
+    # exp_dir = "exp_pss_ts_hd"
+    exp_dir = "exp_pss_repro_mtv_3"
 
     noises = [None]  # 0, 0.1, 0.3]
     funcs_nd = ["ackley", "dixonprice", "griewank", "levy", "michalewicz", "rastrigin", "rosenbrock", "sphere", "stybtang"]
@@ -61,12 +62,11 @@ def prep_d_argss():
     # opts_compare = ["sobol", "random", "ei", "ucb", "dpp", "sr", "gibbon", "mtv"]
     # opts_then = ["mtv_then_ei", "mtv_then_sr", "mtv_then_gibbon", "mtv_then_dpp", "mtv_then_ucb"]
     # opts_ablations = ["mtv_no-ic", "mtv_no-opt", "mtv_no-pstar"]
-    opts_ts = ["mtv-pss-ts", "ts", "dpp", "turbo-1", "turbo-5", "sobol", "random"]
-    opts_ts = ["turbo-1", "ts", "dpp"]
+    # opts_ts = ["mtv-pss-ts", "ts", "dpp", "turbo-1", "turbo-5", "sobol", "random"]
 
-    #
-    # opts_compare = ["mtv-pss", "mtv-pss-ts", "mtv", "sobol", "random", "ei", "ucb", "dpp", "sr", "gibbon"]
-    opts = opts_ts
+    # opts_compare = ["mtv-pss", "mtv-pss-ts", "mtv", "sobol", "random", "ei", "ucb", "dpp", "sr", "gibbon", "lei"]
+    opts_compare = ["ei", "ucb", "dpp", "sr", "lei"]
+    opts = [f"{op}:van" for op in opts_compare]
 
     # TuRBO repro
     # funcs_nd = ["ackley"]
@@ -75,7 +75,7 @@ def prep_d_argss():
     # )
 
     # MTV repro
-    if False:
+    if True:
         cmds_1d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_1d, dims=[1], num_arms=3, num_replications=100, opts=opts, noises=noises, num_rounds=3)
         cmds_3d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_nd, dims=[3], num_arms=5, num_replications=30, opts=opts, noises=noises, num_rounds=3)
         cmds_10d = prep_d_args(
@@ -87,7 +87,7 @@ def prep_d_argss():
         cmds = cmds_1d + cmds_3d + cmds_10d + cmds_30d
 
     # Thompson-Sampling in HD
-    if True:
+    if False:
         min_rounds = 30
         cmds = []
         # cmds.extend(

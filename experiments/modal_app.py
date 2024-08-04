@@ -33,7 +33,7 @@ modal_image = mk_image()
 app = modal.App(name="yubo")
 
 
-@app.function(image=modal_image, concurrency_limit=300, timeout=45 * 60)  # , gpu="any")
+@app.function(image=modal_image, concurrency_limit=300, timeout=45 * 60, gpu="A100")
 def sample_1_modal(d_args):
     trace_fn = d_args.pop("trace_fn")
     collector_log, collector_trace = sample_1(**d_args)

@@ -24,7 +24,7 @@ def tight_bounding_box_1(X_0, X, num_keep, length_min=1e-9, max_iterations=100):
         length_mid = (length_low + length_high) / 2
         bounds = _bounds(length_mid)
         num_in_box = np.sum(np.all((x > bounds[0, :]) & (x < bounds[1, :]), axis=1))
-        print("N:", num_in_box, length_mid, bounds)
+        # print("N:", num_in_box, length_mid, bounds)
         if num_in_box < num_keep:
             length_low = length_mid
         elif num_in_box > num_keep:

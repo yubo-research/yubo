@@ -5,18 +5,14 @@ import common.all_bounds as all_bounds
 
 
 class SobolDesigner:
-    def __init__(self, policy, init_center, max_points=2**12):
+    def __init__(self, policy, max_points=2**12):
         self._policy = policy
         seed = policy.problem_seed + 12345
         self._max_points = int(2 ** np.ceil(np.log2(max_points)))
-        self._init_center = init_center
         self.seed = seed
         self._i_seed = 0
         self._ps = []
         self._reset()
-
-    def init_center(self):
-        return self._init_center
 
     def estimate(self, data, X):
         return [None] * len(X)

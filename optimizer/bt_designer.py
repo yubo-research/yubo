@@ -13,41 +13,40 @@ class BTDesigner:
         policy,
         acq_fn,
         *,
-        init_center=None,
         acq_kwargs=None,
         init_sobol=1,
         init_X_samples=True,
         opt_sequential=False,  # greed q, not joint q
         num_keep=None,
+        use_vanilla=False,
         optimizer_options={"batch_limit": 10, "maxiter": 1000},
-        dtype=torch.float64,
-        device=torch.device("cpu"),
+        dtype=torch.double,
+        device=None,
     ):
-        assert init_center in [True, False], init_center
+        if device is None:
+            device = torch.empty(size=(1,)).device
+
         self._policy = policy
         self._acq_fn = acq_fn
         self._init_sobol = init_sobol
-        self._init_center = init_center
         self._init_X_samples = init_X_samples
         self._opt_sequential = opt_sequential
         self._num_keep = num_keep
+        self._use_vanilla = use_vanilla
         self._optimizer_options = optimizer_options
         self._acq_kwargs = acq_kwargs
         self.device = torch.device(device)
-        self.dtype = dtype if device != torch.device("mps") else torch.float32
+        self.dtype = dtype
 
     def __repr__(self):
         return f"{self.__class__.__name__} {self._acq_fn}"
-
-    def init_center(self):
-        return self._init_center
 
     def _batch_initial_conditions(self, data, num_arms, acqf):
         # half from X_samples, half random
         num_dim = self._policy.num_params()
         batch_limit = self._optimizer_options["batch_limit"]
         X_0 = acqf.acq_function.X_samples
-        sobol = SobolDesigner(self._policy.clone(), init_center=False, max_points=len(X_0))
+        sobol = SobolDesigner(self._policy.clone(), max_points=len(X_0))
         X_s = torch.stack([torch.tensor(x.get_params()) for x in sobol(None, len(X_0))])
         X = torch.cat((X_0, X_s), dim=0)
 
@@ -63,15 +62,23 @@ class BTDesigner:
         import warnings
 
         if len(data) < self._init_sobol:
-            sobol = SobolDesigner(self._policy.clone(), self._init_center)
-            # print("INIT SOBOL", sobol.seed, sobol.init_center())
+            sobol = SobolDesigner(self._policy.clone())
             ret = sobol(data, num_arms)
             self.fig_last_acqf = "sobol"
             self.fig_last_arms = sobol.fig_last_arms
             return ret
 
         num_dim = self._policy.num_params()
-        acqf = AcqBT(self._acq_fn, data, num_dim, self._acq_kwargs, device=self.device, dtype=self.dtype, num_keep=self._num_keep)
+        acqf = AcqBT(
+            self._acq_fn,
+            data,
+            num_dim,
+            self._acq_kwargs,
+            device=self.device,
+            dtype=self.dtype,
+            num_keep=self._num_keep,
+            use_vanilla=self._use_vanilla,
+        )
         if hasattr(acqf.acq_function, "draw"):
             # print (f"Draw from {acqf.acq_function.__class__.__name__}")
             X_cand = acqf.acq_function.draw(num_arms)
@@ -101,7 +108,7 @@ class BTDesigner:
         policies = []
         for x in X_cand:
             policy = self._policy.clone()
-            x = (x.detach().numpy().flatten() - all_bounds.bt_low) / all_bounds.bt_width
+            x = (x.detach().cpu().numpy().flatten() - all_bounds.bt_low) / all_bounds.bt_width
             p = all_bounds.p_low + all_bounds.p_width * x
             policy.set_params(p)
             policies.append(policy)

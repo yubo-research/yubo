@@ -19,7 +19,6 @@ def data_writer(out_fn):
 def data_is_done(fn, quiet=True):
     if not os.path.exists(fn):
         return False
-    breakpoint()
     with open(fn, "rb") as f:
         try:
             f.seek(-5, 2)

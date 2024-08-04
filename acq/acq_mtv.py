@@ -42,21 +42,21 @@ class AcqMTV(MCAcquisitionFunction):
         sobol_engine = SobolEngine(self._num_dim, scramble=True)
 
         if num_obs == 0:
-            self.X_samples = sobol_engine.draw(num_X_samples, dtype=self.dtype)
+            self.X_samples = sobol_engine.draw(num_X_samples, dtype=self.dtype).to(self.device)
         else:
             if sample_type == "hnr":
                 self._set_x_max()
                 pss = PStarSampler(k_mcmc, self.model, self.X_max)
                 self.X_samples = pss(num_X_samples)
-            elif sample_type == "is":
-                self._set_x_max()
-                self.X_samples = self._stagger_is(num_samples_per_dimension, num_Y_samples, num_X_samples)
-            elif sample_type == "ss":
-                self._set_x_max()
-                if not ts_only:
-                    self.X_samples = self._stagger_sobol(num_candidates=max(1024, 10 * num_X_samples), num_ts=num_X_samples)
-                else:
-                    self.X_samples = "ss"
+            # elif sample_type == "is":
+            #     self._set_x_max()
+            #     self.X_samples = self._stagger_is(num_samples_per_dimension, num_Y_samples, num_X_samples)
+            # elif sample_type == "ss":
+            #     self._set_x_max()
+            #     if not ts_only:
+            #         self.X_samples = self._stagger_sobol(num_candidates=max(1024, 10 * num_X_samples), num_ts=num_X_samples)
+            #     else:
+            #         self.X_samples = "ss"
             elif sample_type == "pss":
                 self._set_x_max()
                 if not ts_only:

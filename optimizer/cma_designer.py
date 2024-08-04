@@ -9,9 +9,6 @@ class CMAESDesigner:
         self._n_told = 0
         self._es = None
 
-    def init_center(self):
-        return False
-
     def __call__(self, data, num_arms):
         assert num_arms > 1, "CMAESDesigner does not support num_arms < 2"
         if self._es is None:

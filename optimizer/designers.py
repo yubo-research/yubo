@@ -53,16 +53,26 @@ class Designers:
             options = []
 
         num_keep = None
-        init_center = False
+        use_vanilla = False
         for option in options:
             if option[0] == "k":
                 num_keep = int(option[1:])
                 print(f"OPTION: num_keep = {num_keep}")
+            elif option == "van":
+                use_vanilla = True
+                print(f"OPTION use_vanilla = {use_vanilla}")
             else:
                 assert False, ("Unknown option", option)
 
         def bt_designer(acq_factory, acq_kwargs=None, init_sobol=1):
-            return BTDesigner(self._policy, acq_factory, acq_kwargs=acq_kwargs, num_keep=num_keep, init_center=init_center, init_sobol=init_sobol)
+            return BTDesigner(
+                self._policy,
+                acq_factory,
+                acq_kwargs=acq_kwargs,
+                num_keep=num_keep,
+                use_vanilla=use_vanilla,
+                init_sobol=init_sobol,
+            )
 
         if designer_name == "cma":
             return CMAESDesigner(self._policy)
@@ -77,9 +87,9 @@ class Designers:
 
         # Init only, no surrogate, all exploration
         elif designer_name == "random":
-            return RandomDesigner(self._policy, init_center=False)
+            return RandomDesigner(self._policy)
         elif designer_name == "sobol":
-            return SobolDesigner(self._policy, init_center=False)
+            return SobolDesigner(self._policy)
 
         # All exploitation
         elif designer_name == "sr":

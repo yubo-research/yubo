@@ -18,6 +18,7 @@ class AcqBT:
         device,
         dtype,
         num_keep,
+        use_vanilla,
     ):
         if len(data) == 0:
             X = torch.empty(size=(0, num_dim), dtype=dtype, device=device)
@@ -26,8 +27,8 @@ class AcqBT:
             gp.eval()
         else:
             Y, X = self._keep_some(data, num_keep, dtype, device)
-            gp = fit_gp.fit_gp_XY(X, Y)
-            print("N:", num_keep, len(Y), X.shape)
+            gp = fit_gp.fit_gp_XY(X, Y, use_vanilla=use_vanilla)
+            # print("N:", num_keep, len(Y), X.shape)
 
         # All BoTorch stuff is coded to bounds of [0,1]!
         self.bounds = torch.tensor([[0.0] * num_dim, [1.0] * num_dim], device=X.device, dtype=X.dtype)

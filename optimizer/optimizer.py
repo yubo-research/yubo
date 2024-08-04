@@ -17,7 +17,7 @@ class _TraceEntry:
 
 
 class Optimizer:
-    def __init__(self, collector, *, env_conf, policy, num_arms, arm_selector, num_obs=1, num_denoise=None, cb_trace=None):
+    def __init__(self, collector, *, env_conf, policy, num_arms, arm_selector, num_obs=1, num_denoise=None):
         self._collector = collector
         self._env_conf = env_conf
         self._num_arms = num_arms
@@ -80,24 +80,13 @@ class Optimizer:
         if not isinstance(designers, list):
             designers = [designers]
 
-        init_center = designers[0].init_center()
-
         trace = []
         t_0 = time.time()
         for _ in range(num_iterations):
             self._i_noise += 1
             designer = designers[min(len(designers) - 1, self._i_iter)]
 
-            if init_center and self._i_iter == 0:
-                if self._num_arms == 1:
-                    data, d_time = self._iterate(self._center_designer, self._num_arms)
-                else:
-                    data_c, _ = self._iterate(self._center_designer, num_arms=1)
-                    data, d_time = self._iterate(designer, self._num_arms - 1)
-                    data.insert(0, data_c[0])
-                    # data[np.random.choice(np.arange(self._num_arms))] = data_c[0]
-            else:
-                data, d_time = self._iterate(designer, self._num_arms)
+            data, d_time = self._iterate(designer, self._num_arms)
 
             ret_batch = []
             for datum in data:

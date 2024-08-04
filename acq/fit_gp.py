@@ -1,16 +1,39 @@
+import numpy as np
 import torch
 from botorch.exceptions.errors import ModelFittingError
 from botorch.fit import fit_gpytorch_mll
 from botorch.models import SingleTaskGP
 from botorch.utils import standardize
+
+# from gpytorch.constraints import Interval
+from gpytorch.kernels import MaternKernel  # , ScaleKernel
 from gpytorch.mlls import ExactMarginalLogLikelihood, LeaveOneOutPseudoLikelihood
+from gpytorch.priors.torch_priors import GammaPrior
 
 import common.all_bounds as all_bounds
 
 
-def fit_gp_XY(X, Y):
+def get_vanilla_kernel(num_dim, batch_shape):
+    # See section 5.1 of
+    #  Hvarfner, C., Hellsten, E.O., & Nardi, L. (2024). Vanilla Bayesian Optimization Performs Great in High Dimensions. ArXiv, abs/2402.02229.
+    #
+    length_scale_0 = np.sqrt(num_dim)
+    return MaternKernel(
+        nu=2.5,
+        ard_num_dims=num_dim,
+        batch_shape=batch_shape,
+        lengthscale_prior=GammaPrior(3.0, 6.0 / length_scale_0),
+    )
+
+
+def fit_gp_XY(X, Y, use_vanilla=False):
     Y = standardize(Y).to(X.dtype)
-    gp = SingleTaskGP(X, Y)
+    _gp = SingleTaskGP(X, Y)
+    if use_vanilla:
+        num_dims = X.shape[-1]
+        gp = SingleTaskGP(X, Y, covar_module=get_vanilla_kernel(num_dims, _gp._aug_batch_shape))
+    else:
+        gp = _gp
     mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
     m = None
     for i_try in range(3):
@@ -26,6 +49,7 @@ def fit_gp_XY(X, Y):
             break
     else:
         raise m
+
     return gp
 
 

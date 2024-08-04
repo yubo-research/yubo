@@ -18,9 +18,6 @@ class TuRBODesigner:
         self._num_arms = None
         self._default_device = torch.empty(size=(1,)).device
 
-    def init_center(self):
-        return False
-
     def _run_opt(self):
         if self._num_init is not None:
             num_init = max(self._num_arms, self._num_init)
