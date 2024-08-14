@@ -55,7 +55,7 @@ def prep_mtv_repro(results_dir):
 
     exp_dir = "exp_pss_repro_mtv_3"
 
-    opts = ["ts", "pss"]  # "mtv-pts", "pts", "mtv", "sobol", "random", "ei", "ucb", "dpp", "sr", "gibbon", "lei"]
+    opts = ["ts", "pts"]  # "mtv-pts", "pts", "mtv", "sobol", "random", "ei", "ucb", "dpp", "sr", "gibbon", "lei"]
     noises = [None]
 
     cmds_1d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_1d, dims=[1], num_arms=3, num_replications=100, opts=opts, noises=noises, num_rounds=3)
@@ -72,7 +72,7 @@ def prep_ts_hd(results_dir):
 
     exp_dir = "exp_pss_ts_hd"
 
-    opts = ["pts", "ts", "dpp", "turbo-1", "turbo-5", "sobol", "random"]
+    opts = ["mtv-pts", "pts", "ts", "turbo-1", "sobol", "random"]
     noises = [None]
 
     min_rounds = 30
