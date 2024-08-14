@@ -48,12 +48,12 @@ class AcqMTV(MCAcquisitionFunction):
                 self._set_x_max()
                 pss = PStarSampler(k_mcmc, self.model, self.X_max)
                 self.X_samples = pss(num_X_samples)
-            elif sample_type == "pss":
+            elif sample_type == "pts":
                 self._set_x_max()
                 if not ts_only:
                     self.X_samples = self._pstar_stagger(num_X_samples)
                 else:
-                    self.X_samples = "pss"
+                    self.X_samples = "pts"
             elif sample_type == "sobol":
                 self.X_samples = sobol_engine.draw(num_X_samples, dtype=self.dtype)
             else:
@@ -79,7 +79,7 @@ class AcqMTV(MCAcquisitionFunction):
         print("X_MAX:", self.X_max.device)
 
     def _draw(self, num_arms):
-        if self.X_samples == "pss":
+        if self.X_samples == "pts":
             return self._pstar_stagger(num_arms)
         assert len(self.X_samples) >= num_arms, (len(self.X_samples), num_arms)
         i = np.arange(len(self.X_samples))
@@ -87,9 +87,9 @@ class AcqMTV(MCAcquisitionFunction):
         return self.X_samples[i]
 
     def _pstar_stagger(self, num_samples):
-        pss = PStarStagger(self.model, self.X_max, num_samples=num_samples)
-        pss.refine(self.k_mcmc)
-        return pss.samples()
+        pts = PStarStagger(self.model, self.X_max, num_samples=num_samples)
+        pts.refine(self.k_mcmc)
+        return pts.samples()
 
     def _stagger_sobol(self, num_candidates, num_ts):
         ss = StaggerSobol(self.X_max)

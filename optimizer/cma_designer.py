@@ -1,4 +1,5 @@
 import cma
+import numpy as np
 
 import common.all_bounds as all_bounds
 
@@ -7,6 +8,8 @@ class CMAESDesigner:
     def __init__(self, policy):
         self._policy = policy
         self._n_told = 0
+        seed = policy.problem_seed + 98765
+        self._rng = np.random.default_rng(seed)
         self._es = None
 
     def __call__(self, data, num_arms):
@@ -14,7 +17,7 @@ class CMAESDesigner:
         if self._es is None:
             assert self._policy.num_params() > 1, "CMA needs num_params > 1"
             self._es = cma.CMAEvolutionStrategy(
-                [0] * self._policy.num_params(),
+                self._rng.uniform(size=(self._policy.num_params(),)),
                 0.2,
                 inopts={
                     "bounds": [

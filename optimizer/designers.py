@@ -50,6 +50,10 @@ class Designers:
         use_vanilla = False
         for option in options:
             if option[0] == "k":
+                # Select a subset of num_keep observations
+                #  to use for modeling and acquisition function
+                #  optimization. The goal is to limit the
+                #  O(num_observations^3) query complexity to O(num_keep^3)
                 num_keep = int(option[1:])
                 print(f"OPTION: num_keep = {num_keep}")
             elif option == "van":
@@ -143,23 +147,23 @@ class Designers:
                     "sample_type": "hnr",
                 },
             )
-        elif designer_name == "mtv-pss":
+        elif designer_name == "mtv-pts":
             return bt_designer(
                 AcqMTV,
                 init_sobol=0,
                 acq_kwargs={
                     "num_X_samples": default_num_X_samples,
-                    "sample_type": "pss",
+                    "sample_type": "pts",
                     "k_mcmc": 30,
                 },
             )
-        elif designer_name == "mtv-pss-ts":
+        elif designer_name == "mtv-pts-ts":
             return bt_designer(
                 AcqMTV,
                 init_sobol=0,
                 acq_kwargs={
                     "ts_only": True,
-                    "sample_type": "pss",
+                    "sample_type": "pts",
                     "num_X_samples": default_num_X_samples,
                     "k_mcmc": 30,
                 },
