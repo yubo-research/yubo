@@ -50,87 +50,81 @@ def run(cmds, max_parallel, b_dry_run=False):
         run_batch(todo, b_dry_run)
 
 
-def prep_d_argss():
+def prep_mtv_repro(results_dir):
     from .func_names import funcs_1d, funcs_nd
 
-    results_dir = "results"
-    # exp_dir = "exp_pss_ts_hd"
     exp_dir = "exp_pss_repro_mtv_3"
 
-    noises = [None]  # 0, 0.1, 0.3]
+    opts = ["mtv-pss", "mtv-pss-ts", "mtv", "sobol", "random", "ei", "ucb", "dpp", "sr", "gibbon", "lei"]
+    noises = [None]
 
-    # opts_compare = ["sobol", "random", "ei", "ucb", "dpp", "sr", "gibbon", "mtv"]
-    # opts_then = ["mtv_then_ei", "mtv_then_sr", "mtv_then_gibbon", "mtv_then_dpp", "mtv_then_ucb"]
-    # opts_ablations = ["mtv_no-ic", "mtv_no-opt", "mtv_no-pstar"]
-    # opts_ts = ["mtv-pss-ts", "ts", "dpp", "turbo-1", "turbo-5", "sobol", "random"]
+    cmds_1d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_1d, dims=[1], num_arms=3, num_replications=100, opts=opts, noises=noises, num_rounds=3)
+    cmds_3d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_nd, dims=[3], num_arms=5, num_replications=30, opts=opts, noises=noises, num_rounds=3)
+    cmds_10d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_nd, dims=[10], num_arms=10, num_replications=30, opts=opts, noises=noises, num_rounds=3)
+    cmds_30d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_nd, dims=[30], num_arms=10, num_replications=30, opts=opts, noises=noises, num_rounds=3)
+    return cmds_1d + cmds_3d + cmds_10d + cmds_30d
 
-    # opts_compare = ["mtv-pss", "mtv-pss-ts", "mtv", "sobol", "random", "ei", "ucb", "dpp", "sr", "gibbon", "lei"]
-    opts_compare = ["ei", "ucb", "dpp", "sr", "lei"]
-    opts = [f"{op}:van" for op in opts_compare]
 
-    # TuRBO repro
-    # funcs_nd = ["ackley"]
-    # cmds = prep_d_args(
-    #     results_dir, exp_dir=exp_dir, funcs=funcs_nd, dims=[200], num_arms=100, num_replications=10, opts=opts, noises=noises, num_rounds=100, func_category="g"
-    # )
-
-    # MTV repro
-    if True:
-        cmds_1d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_1d, dims=[1], num_arms=3, num_replications=100, opts=opts, noises=noises, num_rounds=3)
-        cmds_3d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_nd, dims=[3], num_arms=5, num_replications=30, opts=opts, noises=noises, num_rounds=3)
-        cmds_10d = prep_d_args(
-            results_dir, exp_dir=exp_dir, funcs=funcs_nd, dims=[10], num_arms=10, num_replications=30, opts=opts, noises=noises, num_rounds=3
-        )
-        cmds_30d = prep_d_args(
-            results_dir, exp_dir=exp_dir, funcs=funcs_nd, dims=[30], num_arms=10, num_replications=30, opts=opts, noises=noises, num_rounds=3
-        )
-        cmds = cmds_1d + cmds_3d + cmds_10d + cmds_30d
+def prep_ts_hd(results_dir):
+    from .func_names import funcs_1d, funcs_nd
 
     # Thompson-Sampling in HD
-    if False:
-        min_rounds = 30
-        cmds = []
-        # cmds.extend(
-        #     prep_d_args(
-        #         results_dir, exp_dir=exp_dir, funcs=funcs_1d, dims=[1], num_arms=1, num_replications=100, opts=opts, noises=noises, num_rounds=min_rounds
-        #     )
-        # )
-        for num_dim in [1000]:  # [3, 10, 30, 100, 300, 1000]:
-            cmds.extend(
-                prep_d_args(
-                    results_dir,
-                    exp_dir=exp_dir,
-                    funcs=funcs_nd,
-                    dims=[num_dim],
-                    num_arms=1,
-                    num_replications=30,
-                    opts=opts,
-                    noises=noises,
-                    num_rounds=max(min_rounds, num_dim),
-                )
+
+    exp_dir = "exp_pss_ts_hd"
+
+    opts = ["mtv-pss-ts", "ts", "dpp", "turbo-1", "turbo-5", "sobol", "random"]
+    noises = [None]
+
+    min_rounds = 30
+    cmds = []
+    cmds.extend(
+        prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_1d, dims=[1], num_arms=1, num_replications=100, opts=opts, noises=noises, num_rounds=min_rounds)
+    )
+    for num_dim in [3, 10, 30, 100, 300, 1000]:
+        cmds.extend(
+            prep_d_args(
+                results_dir,
+                exp_dir=exp_dir,
+                funcs=funcs_nd,
+                dims=[num_dim],
+                num_arms=1,
+                num_replications=30,
+                opts=opts,
+                noises=noises,
+                num_rounds=max(min_rounds, num_dim),
             )
+        )
 
-    if False:
-        cmds_rl = []
-        for opt in opts:
-            for num_arms, num_obs, problem in [(5, 30, "mcc"), (30, 30, "hop")]:
-                cmds_rl.append(
-                    prep_d_args(
-                        results_dir,
-                        exp_dir=f"experiment_rl_obs_q{num_arms}_o{num_obs}",
-                        problem=problem,
-                        opt=opt,
-                        num_arms=num_arms,
-                        num_replications=100,
-                        num_rounds=3,
-                        noise=None,
-                        num_obs=num_obs,
-                        num_denoise=None,
-                    )
-                )
 
-    # random.shuffle(cmds)
-    return cmds
+def prep_turbo_ackley_repro(results_dir):
+    # exp_dir = "exp_pss_repro_ackley"
+    # funcs_nd = ["ackley"]
+
+    # noises = [None]
+
+    # return prep_d_args(
+    #     results_dir,
+    #     exp_dir=exp_dir,
+    #     funcs=funcs_nd,
+    #     dims=[200],
+    #     num_arms=100,
+    #     num_replications=10,
+    #     opts=opts,
+    #     noises=noises,
+    #     num_rounds=100,
+    #     func_category="g",
+    # )
+
+    # Ran manually with:
+    # ./experiments/experiment.py --exp-dir=result-repro --env-tag=g:ackley-200d --num-arms=100 --num-rounds=100 --num-reps=10 --opt-name=turbo
+    # And again with --opt_name=   cma, mtv-pts-ts, random, sobol
+    pass
+
+
+def prep_d_argss():
+    assert False, "Select prep function"
+    # cmds = prep_mtv_repro()
+    # return cmds
 
 
 @app.local_entrypoint()

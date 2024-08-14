@@ -16,9 +16,11 @@ class CMAESDesigner:
         assert num_arms > 1, "CMAESDesigner does not support num_arms < 2"
         if self._es is None:
             assert self._policy.num_params() > 1, "CMA needs num_params > 1"
+            x_0 = all_bounds.p_low + all_bounds.p_width * self._rng.uniform(size=(self._policy.num_params(),))
+            sigma_0 = 0.2
             self._es = cma.CMAEvolutionStrategy(
-                self._rng.uniform(size=(self._policy.num_params(),)),
-                0.2,
+                x_0,
+                sigma_0,
                 inopts={
                     "bounds": [
                         all_bounds.p_low,
@@ -34,7 +36,7 @@ class CMAESDesigner:
         if n > 0:
             todo = data[-n:]
             x = [d.policy.get_params() for d in todo]
-            y = [d.trajectory.rreturn for d in todo]
+            y = [-d.trajectory.rreturn for d in todo]
             self._es.tell(x, y)
             self._n_told += len(todo)
 
