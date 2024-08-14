@@ -32,6 +32,14 @@ class _GP:
 
 
 class AcqDPP:
+    """
+    Elvis Nava, Mojmir Mutny, and Andreas Krause. Diversified sampling for batched bayesian
+        optimization with determinantal point processes. In Gustau Camps-Valls, Francisco J. R.
+        Ruiz, and Isabel Valera, editors, Proceedings of The 25th International Conference on
+        Artificial Intelligence and Statistics, volume 151 of Proceedings of Machine Learning Re-
+        search, pages 7031–7054. PMLR, 28–30 Mar 2022. URL https://proceedings.mlr.press/v151/nava22a.html.
+    """
+
     def __init__(self, model, num_X_samples, num_runs=50, DPP_lambda=1.0, cutoff_iter=None, lambda_mode="mult"):
         """
         num_runs are the runs of the MCMC algorithm

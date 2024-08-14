@@ -10,6 +10,13 @@ from turbo_m_ref.turbo_m import TurboM
 
 
 class TuRBODesigner:
+    """
+    David Eriksson and Matthias Poloczek. Scalable constrained bayesian optimization. In
+        Arindam Banerjee and Kenji Fukumizu, editors, Proceedings of The 24th International
+        Conference on Artificial Intelligence and Statistics, volume 130 of Proceedings of Machine
+        Learning Research, pages 730–738. PMLR, 13–15 Apr 2021. URL https://proceedings.mlr.press/v130/eriksson21a.html.
+    """
+
     def __init__(self, policy, num_trust_regions=1, num_init=None):
         self._policy = policy
         self._num_trust_regions = num_trust_regions

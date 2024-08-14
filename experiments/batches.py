@@ -70,7 +70,7 @@ def prep_ts_hd(results_dir):
 
     # Thompson-Sampling in HD
 
-    exp_dir = "_test"  # TEST "exp_pss_ts_hd"
+    exp_dir = "exp_pss_ts_hd"
 
     opts = ["pts", "ts", "dpp", "turbo-1", "turbo-5", "sobol", "random"]
     noises = [None]
