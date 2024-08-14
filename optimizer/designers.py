@@ -102,15 +102,6 @@ class Designers:
                     "n_candidates": 1024,
                 },
             )
-        elif designer_name == "ts-k":
-            return bt_designer(
-                AcqTS,
-                num_keep=30,
-                acq_kwargs={
-                    "sampler": "cholesky",
-                    "n_candidates": 1024,
-                },
-            )
         elif designer_name == "ts-ciq":
             return bt_designer(AcqTS, acq_kwargs={"sampler": "ciq"})
         elif designer_name == "ts-lanczos":
@@ -135,16 +126,16 @@ class Designers:
             return bt_designer(
                 AcqMTV,
                 init_sobol=0,
-                acq_kwargs={"num_X_samples": default_num_X_samples, "sample_type": "hnr"},
+                acq_kwargs={"num_X_samples": default_num_X_samples, "sample_type": "pss"},
             )
-        elif designer_name == "mtv-ts":
+        elif designer_name == "pss":
             return bt_designer(
                 AcqMTV,
                 init_sobol=0,
                 acq_kwargs={
                     "ts_only": True,
                     "num_X_samples": default_num_X_samples,
-                    "sample_type": "hnr",
+                    "sample_type": "pss",
                 },
             )
         elif designer_name == "mtv-pts":
@@ -157,7 +148,7 @@ class Designers:
                     "k_mcmc": 30,
                 },
             )
-        elif designer_name == "mtv-pts-ts":
+        elif designer_name == "pts":
             return bt_designer(
                 AcqMTV,
                 init_sobol=0,

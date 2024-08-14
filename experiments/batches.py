@@ -51,11 +51,11 @@ def run(cmds, max_parallel, b_dry_run=False):
 
 
 def prep_mtv_repro(results_dir):
-    from .func_names import funcs_1d, funcs_nd
+    from experiments.func_names import funcs_1d, funcs_nd
 
     exp_dir = "exp_pss_repro_mtv_3"
 
-    opts = ["mtv-pss", "mtv-pss-ts", "mtv", "sobol", "random", "ei", "ucb", "dpp", "sr", "gibbon", "lei"]
+    opts = ["ts", "pss"]  # "mtv-pts", "pts", "mtv", "sobol", "random", "ei", "ucb", "dpp", "sr", "gibbon", "lei"]
     noises = [None]
 
     cmds_1d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_1d, dims=[1], num_arms=3, num_replications=100, opts=opts, noises=noises, num_rounds=3)
@@ -66,21 +66,21 @@ def prep_mtv_repro(results_dir):
 
 
 def prep_ts_hd(results_dir):
-    from .func_names import funcs_1d, funcs_nd
+    from experiments.func_names import funcs_1d, funcs_nd
 
     # Thompson-Sampling in HD
 
-    exp_dir = "exp_pss_ts_hd"
+    exp_dir = "_test"  # TEST "exp_pss_ts_hd"
 
-    opts = ["mtv-pss-ts", "ts", "dpp", "turbo-1", "turbo-5", "sobol", "random"]
+    opts = ["pts", "ts", "dpp", "turbo-1", "turbo-5", "sobol", "random"]
     noises = [None]
 
     min_rounds = 30
     cmds = []
-    cmds.extend(
-        prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_1d, dims=[1], num_arms=1, num_replications=100, opts=opts, noises=noises, num_rounds=min_rounds)
-    )
-    for num_dim in [3, 10, 30, 100, 300, 1000]:
+    # cmds.extend(
+    #     prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_1d, dims=[1], num_arms=1, num_replications=100, opts=opts, noises=noises, num_rounds=min_rounds)
+    # )
+    for num_dim in [1000]:  # TEST[3, 10, 30, 100, 300, 1000]:
         cmds.extend(
             prep_d_args(
                 results_dir,
@@ -94,6 +94,8 @@ def prep_ts_hd(results_dir):
                 num_rounds=max(min_rounds, num_dim),
             )
         )
+
+    return cmds
 
 
 def prep_turbo_ackley_repro(results_dir):
@@ -117,14 +119,18 @@ def prep_turbo_ackley_repro(results_dir):
 
     # Ran manually with:
     # ./experiments/experiment.py --exp-dir=result-repro --env-tag=g:ackley-200d --num-arms=100 --num-rounds=100 --num-reps=10 --opt-name=turbo
-    # And again with --opt_name=   cma, mtv-pts-ts, random, sobol
+    # And again with --opt_name=   cma, pts, random, sobol
+    # TuRBO took about four days.
+    # PTS took about eight days.
     pass
 
 
 def prep_d_argss():
-    assert False, "Select prep function"
-    # cmds = prep_mtv_repro()
-    # return cmds
+    results_dir = "results"
+
+    # assert False, "Select prep function"
+
+    return prep_ts_hd(results_dir)
 
 
 @app.local_entrypoint()
@@ -157,13 +163,13 @@ if __name__ == "__main__":
     import sys
 
     dry_run = False
-    if len(sys) > 1:
+    if len(sys.argv) > 1:
         assert sys.argv[1] == "--dry-run"
         dry_run = True
 
     d_argss = prep_d_argss()
     t_0 = time.time()
-    run(d_argss, max_parallel=3, b_dry_run=dry_run)
+    run(d_argss, max_parallel=5, b_dry_run=dry_run)
     t_f = time.time()
     print(f"TIME_ALL: {t_f-t_0:.2f}")
     print("DONE_ALL")

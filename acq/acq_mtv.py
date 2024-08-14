@@ -22,7 +22,7 @@ class AcqMTV(MCAcquisitionFunction):
         num_X_samples,
         ts_only=False,
         k_mcmc=100,
-        sample_type="hnr",
+        sample_type="pss",
         # num_samples_per_dimension=10,
         # num_Y_samples=1024,
         **kwargs,
@@ -44,7 +44,7 @@ class AcqMTV(MCAcquisitionFunction):
         if num_obs == 0:
             self.X_samples = sobol_engine.draw(num_X_samples, dtype=self.dtype).to(self.device)
         else:
-            if sample_type == "hnr":
+            if sample_type == "pss":
                 self._set_x_max()
                 pss = PStarSampler(k_mcmc, self.model, self.X_max)
                 self.X_samples = pss(num_X_samples)
