@@ -115,9 +115,9 @@ class Designers:
         elif designer_name == "gibbon":
             return bt_designer(qLowerBoundMaxValueEntropy, opt_sequential=True, acq_kwargs={"candidate_set": None})
         elif designer_name == "turbo-1":
-            return (TuRBODesigner(self._policy, num_init=init_ax_default),)
+            return TuRBODesigner(self._policy, num_init=init_ax_default)
         elif designer_name == "turbo-5":
-            return (TuRBODesigner(self._policy, num_init=init_ax_default, num_trust_regions=5),)
+            return TuRBODesigner(self._policy, num_init=init_ax_default, num_trust_regions=5)
         elif designer_name == "dpp":
             return bt_designer(AcqDPP, init_sobol=1, acq_kwargs={"num_X_samples": default_num_X_samples})
 

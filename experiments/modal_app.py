@@ -14,7 +14,9 @@ def mk_image():
     mujoco==2.3.7
     gymnasium[box2d]
     gymnasium[mujoco]
-    """.split("\n")
+    """.split(
+        "\n"
+    )
     sreqs = []
     for req in reqs:
         req = req.strip()

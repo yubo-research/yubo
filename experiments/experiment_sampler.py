@@ -100,6 +100,8 @@ def mk_replicates(d_args):
             problem_seed = 18 + i_rep
             env_conf = get_env_conf(d_args["env_tag"], problem_seed=problem_seed, noise_level=d_args.get("noise", None), noise_seed_0=10 * problem_seed)
             num_denoise = d_args.get("num_denoise", None)
+            if num_denoise == "None":
+                num_denoise = None
             if num_denoise is not None:
                 num_denoise = int(num_denoise)
             all_d_args.append(
