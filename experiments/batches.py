@@ -68,8 +68,6 @@ def prep_mtv_repro(results_dir):
 def prep_ts_hd(results_dir):
     from experiments.func_names import funcs_1d, funcs_nd
 
-    # Thompson-Sampling in HD
-
     exp_dir = "exp_pss_ts_hd"
 
     opts = ["mtv-pts", "pts", "ts", "turbo-1", "sobol", "random"]
@@ -80,7 +78,7 @@ def prep_ts_hd(results_dir):
     # cmds.extend(
     #     prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_1d, dims=[1], num_arms=1, num_replications=100, opts=opts, noises=noises, num_rounds=min_rounds)
     # )
-    for num_dim in [1000]:  # TEST[3, 10, 30, 100, 300, 1000]:
+    for num_dim in [1000]:  # TEST [3, 10, 30, 100, 300, 1000]:
         cmds.extend(
             prep_d_args(
                 results_dir,
@@ -125,12 +123,49 @@ def prep_turbo_ackley_repro(results_dir):
     pass
 
 
+def prep_sweep_q(results_dir):
+    from experiments.func_names import funcs_1d, funcs_nd
+
+    exp_dir = "exp_sweep_q"
+
+    opts = ["pts"]
+    noises = [None]
+
+    num_func_evals = 1000
+    cmds = []
+
+    for num_arms in [1, 3, 10, 30, 100]:
+        num_rounds = int(num_func_evals / num_arms + 0.5)
+        cmds.extend(
+            prep_d_args(
+                results_dir, exp_dir=exp_dir, funcs=funcs_1d, dims=[1], num_arms=num_arms, num_replications=100, opts=opts, noises=noises, num_rounds=num_rounds
+            )
+        )
+        for num_dim in [3, 10, 30, 100]:
+            cmds.extend(
+                prep_d_args(
+                    results_dir,
+                    exp_dir=exp_dir,
+                    funcs=funcs_nd,
+                    dims=[num_dim],
+                    num_arms=num_arms,
+                    num_replications=30,
+                    opts=opts,
+                    noises=noises,
+                    num_rounds=num_rounds,
+                )
+            )
+
+    return cmds
+
+
 def prep_d_argss():
     results_dir = "results"
 
     # assert False, "Select prep function"
 
-    return prep_ts_hd(results_dir)
+    # return prep_ts_hd(results_dir)
+    return prep_sweep_q(results_dir)
 
 
 @app.local_entrypoint()
