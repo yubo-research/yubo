@@ -1,12 +1,46 @@
+import numpy as np
 import torch
 from botorch.acquisition import PosteriorMean
 from botorch.optim import optimize_acqf
 
 
+def keep_some(Y, num_keep):
+    num_keep_best = num_keep // 2
+    num_keep_rest = num_keep - num_keep_best
+
+    i_all = torch.arange(len(Y))
+    i_best = torch.topk(Y, k=num_keep_best).indices
+
+    i_rest = list(set(i_all) - set(i_best))
+    np.random.shuffle(i_rest)
+    i_rest = i_rest[:num_keep_rest]
+
+    idx = sorted(set(i_best) | set(i_rest))
+    assert len(idx) == len(i_best) + len(i_rest)
+    assert len(idx) == num_keep, len(idx)
+
+    return idx
+
+
+def rebound(X, rebounds):
+    # X is in [0,1]^d
+    lb = rebounds[0, :]
+    ub = rebounds[1, :]
+    X_r = (X - lb) / (ub - lb)
+    return X_r
+
+
+def unrebound(X_r, rebounds):
+    # X_r is in rebounds
+    lb = rebounds[0, :]
+    ub = rebounds[1, :]
+    return lb + (ub - lb) * X_r
+
+
 def find_max(model, bounds=None):
     X = model.train_inputs[0]
-    Y = model.train_targets.squeeze()
-    Y_est = model.posterior(X).mean.squeeze()
+    Y = model.train_targets
+    Y_est = model.posterior(X).mean
 
     num_dim = X.shape[1]
 

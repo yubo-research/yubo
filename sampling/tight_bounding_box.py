@@ -34,7 +34,7 @@ def tight_bounding_box_1(X_0, X, num_keep, length_min=1e-9, max_iterations=100):
     assert False, ("Failed to find lengthscale", num_keep, X_0, X)
 
 
-def tight_bounding_box(X_0, X, num_keep, length_min=1e-9, delta_length=1e-6, max_iterations=100, eps_bounds=1e-9):
+def tight_bounding_box(X_0, X, num_keep, length_min=1e-9, delta_length=1e-6, max_iterations=100, eps_bounds=1e-9, min_box_side_length=0.01):
     x_0 = np.asarray(X_0)
     x = np.asarray(X)
     num_dim = len(x_0.flatten())
@@ -71,6 +71,7 @@ def tight_bounding_box(X_0, X, num_keep, length_min=1e-9, delta_length=1e-6, max
             assert False, ("Impossible", num_in_box, num_keep)
 
         if length_high - length_low < delta_length:
-            return idx, _bounds(length_high)
+            length = max(length_high, min_box_side_length)
+            return idx, _bounds(length)
 
     assert False, ("Failed to find lengthscale", num_keep, X_0, X)

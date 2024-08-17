@@ -1,3 +1,15 @@
+def test_keep_some():
+    import torch
+
+    from acq.acq_util import keep_some
+
+    Y = torch.randn(100)
+
+    idx = keep_some(Y, num_keep=30)
+
+    assert len(idx) == 30
+
+
 def test_find_max():
     import time
 
@@ -26,3 +38,13 @@ def test_find_max():
     print(data)
     print(f"TIME: {data[:,0].mean():.3f}")
     print(f"{data[:,1].mean():.3f} {data[:,1].std():.3f}")
+
+
+def test_rebound():
+    import torch
+
+    from acq.acq_util import rebound
+
+    torch.manual_seed(17)
+    X = torch.rand(size=(10, 3))
+    rebound(X, torch.tensor([[0.3, 0.4, 0.5], [0.9, 0.8, 0.7]]))

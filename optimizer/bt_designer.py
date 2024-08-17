@@ -69,7 +69,7 @@ class BTDesigner:
             return ret
 
         num_dim = self._policy.num_params()
-        acqf = AcqBT(
+        acq_bt = AcqBT(
             self._acq_fn,
             data,
             num_dim,
@@ -79,21 +79,21 @@ class BTDesigner:
             num_keep=self._num_keep,
             use_vanilla=self._use_vanilla,
         )
-        if hasattr(acqf.acq_function, "draw"):
+        if hasattr(acq_bt.acq_function, "draw"):
             # print (f"Draw from {acqf.acq_function.__class__.__name__}")
-            X_cand = acqf.acq_function.draw(num_arms)
+            X_cand = acq_bt.acq_function.draw(num_arms)
         else:
             warnings.simplefilter("ignore")
-            if self._init_X_samples and hasattr(acqf.acq_function, "X_samples"):
-                batch_initial_conditions = self._batch_initial_conditions(data, num_arms, acqf)
+            if self._init_X_samples and hasattr(acq_bt.acq_function, "X_samples"):
+                batch_initial_conditions = self._batch_initial_conditions(data, num_arms, acq_bt)
                 batch_initial_conditions = batch_initial_conditions.type(self.dtype).to(self.device)
             else:
                 batch_initial_conditions = None
 
             with warnings.catch_warnings():
                 X_cand, _ = optimize_acqf(
-                    acq_function=acqf.acq_function,
-                    bounds=acqf.bounds,  # always [0,1]**num_dim
+                    acq_function=acq_bt.acq_function,
+                    bounds=acq_bt.bounds,  # always [0,1]**num_dim
                     q=num_arms,
                     num_restarts=10,
                     raw_samples=10,
@@ -102,7 +102,7 @@ class BTDesigner:
                     sequential=self._opt_sequential,
                 )
 
-        self.fig_last_acqf = acqf
+        self.fig_last_acqf = acq_bt
         self.fig_last_arms = X_cand
 
         policies = []
