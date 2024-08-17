@@ -3,6 +3,8 @@ import numpy as np
 
 import analysis.data_sets as ads
 
+linestyles = ["-", ":", "--", "-."]
+
 
 def subplots(n, m, figsize):
     fig, axs = plt.subplots(n, m, figsize=(figsize, figsize))

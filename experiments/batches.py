@@ -55,7 +55,7 @@ def prep_mtv_repro(results_dir):
 
     exp_dir = "exp_pss_repro_mtv_3"
 
-    opts = ["ts", "pts"]  # "mtv-pts", "pts", "mtv", "sobol", "random", "ei", "ucb", "dpp", "sr", "gibbon", "lei"]
+    opts = ["mtv-pts-m", "mtv-pts-t"]  # "mtv-pts", "pts", "mtv", "sobol", "random", "ei", "ucb", "dpp", "sr", "gibbon", "lei"]
     noises = [None]
 
     cmds_1d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_1d, dims=[1], num_arms=3, num_replications=100, opts=opts, noises=noises, num_rounds=3)
@@ -78,7 +78,7 @@ def prep_ts_hd(results_dir):
     # cmds.extend(
     #     prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_1d, dims=[1], num_arms=1, num_replications=100, opts=opts, noises=noises, num_rounds=min_rounds)
     # )
-    for num_dim in [1000]:  # TEST [3, 10, 30, 100, 300, 1000]:
+    for num_dim in [1000]:  #  [3, 10, 30, 100, 300, 1000]:
         cmds.extend(
             prep_d_args(
                 results_dir,
@@ -159,13 +159,31 @@ def prep_sweep_q(results_dir):
     return cmds
 
 
+def prep_ts_sweep(results_dir):
+    exp_dir = "exp_ts_sweep"
+
+    opts = ["pts", "ei", "ucb"]
+    opts += [f"ts_sweep-{n}" for n in [1, 3, 10, 30, 100, 300, 1000, 3000, 10000, 30000]]
+
+    return prep_d_args(
+        results_dir,
+        exp_dir=exp_dir,
+        funcs=["ackley"],
+        dims=[30],
+        num_arms=1,
+        num_replications=30,
+        opts=opts,
+        noises=[None],
+        num_rounds=10,
+    )
+
+
 def prep_d_argss():
     results_dir = "results"
 
     # assert False, "Select prep function"
 
-    # return prep_ts_hd(results_dir)
-    return prep_sweep_q(results_dir)
+    return prep_mtv_repro(results_dir)
 
 
 @app.local_entrypoint()
@@ -185,6 +203,8 @@ def main_modal(job_fn: str, dry_run: bool = False):
     else:
         dist_modal = DistModal(job_fn)
         dist_modal(batch_of_d_args)
+
+    print("SUBMITTED:", len(batch_of_d_args))
     t_f = time.time()
     print(f"TIME_ALL: {t_f-t_0:.2f}")
     if dry_run:

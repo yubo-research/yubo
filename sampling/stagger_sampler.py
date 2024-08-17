@@ -11,11 +11,11 @@ Draw from a proposal distribution defined this way:
   - Set x_proposal = x + s*(x_proposal-x)  <== Contraction mapping
   - Take a joint sample over the points x and x_proposal.
   - Move each x[i] to x_proposal[i] if x_proposal[i] > x[i].
-  - Repeat a few times.
+  - Repeat until done.
 
-  The contraction mapping results is a point in the feasible region b/c the region is convex. This should be faster
+  The contraction mapping results in a point in the feasible region b/c the region is convex. This should be faster
    to compute than the combination of hnr and truncated normal (used in PStarSampler). Also, hopefully, it'll converge
-   in fewer iterations. Also, there's not need to find or adapt the scale of the normal distribution.
+   in fewer iterations. Also, there's no need to find or adapt the scale of the normal distribution.
 
   The proposal points -- the random ones, before contraction -- could all be chosen up front as a large batch of
    num_iterations * num_ts to take advantage of parallel computation. This could be particularly advantageous
@@ -24,7 +24,7 @@ Draw from a proposal distribution defined this way:
 """
 
 
-class PStarStagger:
+class StaggerSampler:
     def __init__(self, model, X_control, num_samples):
         assert len(X_control) == 1, "NYI: multiple control points"
         self._model = model
@@ -70,6 +70,6 @@ class PStarStagger:
         Y_ts = Y[: self._num_samples]
         Y_perturbed = Y[self._num_samples :]
 
-        i = Y_perturbed > Y_ts
+        i_improved = Y_perturbed > Y_ts
 
-        self._X_samples[i] = X_perturbed[i]
+        self._X_samples[i_improved] = X_perturbed[i_improved]

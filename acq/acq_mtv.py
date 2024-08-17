@@ -3,14 +3,11 @@ import torch
 from botorch.acquisition.monte_carlo import (
     MCAcquisitionFunction,
 )
-from botorch.generation import MaxPosteriorSampling
 from botorch.utils import t_batch_mode_transform
 from torch.quasirandom import SobolEngine
 
 from sampling.pstar_sampler import PStarSampler
-from sampling.pstar_stagger import PStarStagger
-from sampling.stagger import StaggerIS
-from sampling.stagger_sobol import StaggerSobol
+from sampling.stagger_sampler import StaggerSampler
 
 from .acq_util import find_max
 
@@ -22,13 +19,15 @@ class AcqMTV(MCAcquisitionFunction):
         num_X_samples,
         ts_only=False,
         k_mcmc=100,
+        num_refinements=30,
         sample_type="pss",
-        # num_samples_per_dimension=10,
-        # num_Y_samples=1024,
+        x_max_type="find",
         **kwargs,
     ) -> None:
         super().__init__(model=model, **kwargs)
-        print(f"AcqMTV: num_X_samples={num_X_samples} ts_only={ts_only} k_mcmc={k_mcmc} sample_type={sample_type}")
+        print(
+            f"AcqMTV: num_X_samples={num_X_samples} ts_only={ts_only} k_mcmc={k_mcmc} num_refinements = {num_refinements} sample_type={sample_type} x_max_type = {x_max_type}"
+        )
         self.ts_only = ts_only
 
         X_0 = self.model.train_inputs[0].detach()
@@ -37,7 +36,10 @@ class AcqMTV(MCAcquisitionFunction):
         self.device = X_0.device
         self.dtype = X_0.dtype
         self.weights = None
-        self.k_mcmc = k_mcmc
+
+        self._k_mcmc = k_mcmc
+        self._num_refinements = num_refinements
+        self._x_max_type = x_max_type
 
         sobol_engine = SobolEngine(self._num_dim, scramble=True)
 
@@ -68,15 +70,26 @@ class AcqMTV(MCAcquisitionFunction):
             self.draw = self._draw
 
     def _set_x_max(self):
-        self.X_max = find_max(
-            self.model,
-            bounds=torch.tensor(
-                [[0.0] * self._num_dim, [1.0] * self._num_dim],
-                device=self.device,
-                dtype=self.dtype,
-            ),
-        )
-        print("X_MAX:", self.X_max.device)
+        if self._x_max_type == "find":
+            self.X_max = find_max(
+                self.model,
+                bounds=torch.tensor(
+                    [[0.0] * self._num_dim, [1.0] * self._num_dim],
+                    device=self.device,
+                    dtype=self.dtype,
+                ),
+            )
+        elif self._x_max_type == "ts_meas":
+            Y_ts = self.model.posterior(self.model.train_inputs[0]).rsample(torch.Size([1])).squeeze()
+            i = torch.where(Y_ts == Y_ts.max())[0]
+            self.X_max = self.model.train_inputs[0][i]
+        elif self._x_max_type == "meas":
+            Y = self.model.train_targets[0]
+            i = torch.where(Y == Y.max())[0]
+            self.X_max = self.model.train_inputs[0][i]
+        else:
+            assert False, ("Unknown x_max_type", self._x_max_type)
+        # print("X_MAX:", self.X_max.device)
 
     def _draw(self, num_arms):
         if self.X_samples == "pts":
@@ -87,20 +100,9 @@ class AcqMTV(MCAcquisitionFunction):
         return self.X_samples[i]
 
     def _pstar_stagger(self, num_samples):
-        pts = PStarStagger(self.model, self.X_max, num_samples=num_samples)
-        pts.refine(self.k_mcmc)
+        pts = StaggerSampler(self.model, self.X_max, num_samples=num_samples)
+        pts.refine(self._num_refinements)
         return pts.samples()
-
-    def _stagger_sobol(self, num_candidates, num_ts):
-        ss = StaggerSobol(self.X_max)
-        sampler = ss.get_sampler(num_proposal_points=num_candidates)
-        X_unif = sampler.sample_uniform(num_samples=num_candidates)
-
-        with torch.no_grad():
-            thompson_sampling = MaxPosteriorSampling(model=self.model, replacement=False)
-            X_samples = thompson_sampling(X_unif, num_samples=num_ts)
-
-        return X_samples
 
     def _calc_p_max_from_Y(self, Y):
         is_best = torch.argmax(Y, dim=-1)
@@ -114,24 +116,6 @@ class AcqMTV(MCAcquisitionFunction):
         Y = mvn.sample(torch.Size([num_Y_samples])).squeeze()
         assert torch.all((X >= 0) & (X <= 1))
         return self._calc_p_max_from_Y(Y)
-
-    def _stagger_is(self, num_samples_per_dimension, num_Y_samples, num_X_samples, conv_thresh=0.1):
-        stagger = StaggerIS(self.X_max)
-        X_and_p_target = None
-        for i_iter in range(10):
-            X = stagger.ask(
-                num_samples_per_dimension=num_samples_per_dimension,
-                X_and_p_target=X_and_p_target,
-            )
-            if stagger.convergence_criterion() < conv_thresh:
-                break
-            X_and_p_target = (X, self._p_target(X, num_Y_samples))
-
-        # TODO: Maybe use more base samples
-        sampler = stagger.sampler(num_base_samples=num_X_samples)
-        X = sampler.ask()
-        sampler.tell(self._p_target(X, num_Y_samples))
-        return sampler.importance_sample(num_samples=num_X_samples)
 
     @t_batch_mode_transform()
     def forward(self, X):
