@@ -12,6 +12,8 @@ class PStarSampler:
         self._eps_interior = torch.tensor(1e-6)
         self._eps_min = 1e-8
         self._num_dim = X_max.shape[-1]
+        self.dtype = self.X_max.dtype
+        self.device = self.X_max.device
 
     def __call__(self, num_X_samples):
         with torch.inference_mode():

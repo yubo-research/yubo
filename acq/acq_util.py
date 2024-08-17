@@ -5,7 +5,7 @@ from botorch.optim import optimize_acqf
 
 def find_max(model, bounds=None):
     X = model.train_inputs[0]
-    Y = model.train_targets
+    # Y = model.train_targets
     num_dim = X.shape[1]
 
     if bounds is None:
@@ -13,11 +13,12 @@ def find_max(model, bounds=None):
 
     num_ic = 30
     batch_initial_conditions = torch.rand(size=torch.Size((num_ic, 1, num_dim)))
-    k = min(num_ic, len(Y))
-    i = torch.topk(Y, k=k).indices
+    Y_tgt = model.posterior(X).mean.squeeze()
+    k = min(num_ic, len(Y_tgt))
+    i = torch.topk(Y_tgt, k=k).indices
     batch_initial_conditions[:k] = X[i, :].unsqueeze(-2)
 
-    x_cand, _ = optimize_acqf(
+    X_max, _ = optimize_acqf(
         acq_function=PosteriorMean(model),
         bounds=bounds,
         q=1,
@@ -29,11 +30,10 @@ def find_max(model, bounds=None):
         batch_initial_conditions=batch_initial_conditions,
     )
 
-    Y_cand = model.posterior(x_cand).mean
+    Y_max = model.posterior(X_max).mean.squeeze()
     if len(model.train_targets) > 0:
-        i = torch.argmax(model.train_targets)
-        Y_tgt = model.posterior(model.train_inputs[0][i][:, None].T).mean
-        if Y_tgt > Y_cand:
-            x_cand = model.train_inputs[0][i, :][:, None].T
+        i = torch.argmax(Y_tgt)
+        if Y_tgt[i] > Y_max:
+            X_max = X[i, :][:, None].T
 
-    return x_cand
+    return X_max.to(X)

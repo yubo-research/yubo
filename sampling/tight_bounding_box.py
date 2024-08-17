@@ -34,7 +34,7 @@ def tight_bounding_box_1(X_0, X, num_keep, length_min=1e-9, max_iterations=100):
     assert False, ("Failed to find lengthscale", num_keep, X_0, X)
 
 
-def tight_bounding_box(X_0, X, num_keep, length_min=1e-9, delta_length=1e-6, max_iterations=100):
+def tight_bounding_box(X_0, X, num_keep, length_min=1e-9, delta_length=1e-6, max_iterations=100, eps_bounds=1e-9):
     x_0 = np.asarray(X_0)
     x = np.asarray(X)
     num_dim = len(x_0.flatten())
@@ -52,25 +52,25 @@ def tight_bounding_box(X_0, X, num_keep, length_min=1e-9, delta_length=1e-6, max
     idx = np.argpartition(dist, num_keep)[:num_keep]
     x = x[idx, :]
 
-    assert x_0 in x, (num_keep, x_0, x)
+    assert x_0 in x, (num_keep, x_0, x, idx)
 
     length_low = length_min
     length_high = np.sqrt(num_dim)
 
-    eps = 1e-9
-    for _ in range(max_iterations):
+    for i_iter in range(max_iterations):
+        assert length_high > length_low, (i_iter, length_high, length_low)
         length_mid = (length_low + length_high) / 2
         bounds = _bounds(length_mid)
-        num_in_box = np.sum(np.all((x > bounds[0, :] - eps) & (x < bounds[1, :] + eps), axis=1))
+        num_in_box = np.sum(np.all((x > bounds[0, :] - eps_bounds) & (x < bounds[1, :] + eps_bounds), axis=1))
 
         if num_in_box == num_keep:
-            length_low = length_mid
+            length_high = length_mid
         elif num_in_box < num_keep:
-            length_high = 0
+            length_low = length_mid
         else:
             assert False, ("Impossible", num_in_box, num_keep)
 
         if length_high - length_low < delta_length:
-            return idx, bounds
+            return idx, _bounds(length_high)
 
     assert False, ("Failed to find lengthscale", num_keep, X_0, X)

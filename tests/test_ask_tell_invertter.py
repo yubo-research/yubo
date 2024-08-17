@@ -10,7 +10,7 @@ class _Optimizer:
         for _ in range(num_iterations):
             x = x_0 + 0.03 * np.random.normal()
             x = min(1, max(0, x))
-            y = self._func(x)
+            y = float(self._func(np.array([x])))
             if y > y_max:
                 y_max = y
                 x_0 = x
