@@ -16,7 +16,7 @@ class BTDesigner:
         acq_kwargs=None,
         init_sobol=1,
         init_X_samples=True,
-        opt_sequential=False,  # greed q, not joint q
+        opt_sequential=False,  # greedy q, not joint q
         num_keep=None,
         use_vanilla=False,
         optimizer_options={"batch_limit": 10, "maxiter": 1000},

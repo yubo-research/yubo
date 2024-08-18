@@ -17,11 +17,10 @@ class _TraceEntry:
 
 
 class Optimizer:
-    def __init__(self, collector, *, env_conf, policy, num_arms, arm_selector, num_obs=1, num_denoise=None):
+    def __init__(self, collector, *, env_conf, policy, num_arms, arm_selector, num_denoise=None):
         self._collector = collector
         self._env_conf = env_conf
         self._num_arms = num_arms
-        self._num_obs = num_obs
         self._num_denoise = num_denoise
         self._arm_selector = arm_selector
         self.num_params = policy.num_params()
@@ -52,15 +51,8 @@ class Optimizer:
         data = []
         X = []
         for policy in policies:
-            if self._num_obs == 1:
-                traj = self._collect_denoised_trajectory(policy)
-                data.append(Datum(designer, policy, None, traj))
-            else:
-                rreturns = []
-                for _ in range(self._num_obs):
-                    traj = self._collect_denoised_trajectory(policy)
-                    rreturns.append(traj.rreturn)
-                data.append(Datum(designer, policy, None, Trajectory(np.mean(rreturns), "n/a when num_obs>1", "n/a when num_obs>1")))
+            traj = self._collect_denoised_trajectory(policy)
+            data.append(Datum(designer, policy, None, traj))
             X.append(policy.get_params())
 
         return data, tf - t0

@@ -79,7 +79,7 @@ class Turbo1:
         # if device == "cuda":
         #     assert torch.cuda.is_available(), "can't use cuda if it's not available"
 
-        print("TURBO_DEVICE:", device)
+        # print("TURBO_DEVICE:", device)
 
         # Save function information
         self.f = f
@@ -166,7 +166,7 @@ class Turbo1:
             device, dtype = torch.device("cpu"), torch.float64
         else:
             device, dtype = self.device, self.dtype
-        print("TURBO_DEVICE:", device, len(X), self.min_cuda, self.device)
+        # print("TURBO_DEVICE:", device, len(X), self.min_cuda, self.device)
 
         # We use CG + Lanczos for training if we have enough data
         with gpytorch.settings.max_cholesky_size(self.max_cholesky_size):

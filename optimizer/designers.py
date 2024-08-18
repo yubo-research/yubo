@@ -62,7 +62,7 @@ class Designers:
             else:
                 assert False, ("Unknown option", option)
 
-        def bt_designer(acq_factory, acq_kwargs=None, init_sobol=1):
+        def bt_designer(acq_factory, acq_kwargs=None, init_sobol=1, opt_sequential=False):
             return BTDesigner(
                 self._policy,
                 acq_factory,
@@ -70,6 +70,7 @@ class Designers:
                 num_keep=num_keep,
                 use_vanilla=use_vanilla,
                 init_sobol=init_sobol,
+                opt_sequential=opt_sequential,
             )
 
         if designer_name == "cma":
@@ -99,7 +100,7 @@ class Designers:
                 AcqTS,
                 acq_kwargs={
                     "sampler": "cholesky",
-                    "n_candidates": 1024,
+                    "num_candidates": 1024,
                 },
             )
         elif designer_name == "ts-ciq":

@@ -17,7 +17,7 @@ if __name__ == "__main__":
     num_arms = 4
     default_num_X_samples = max(64, 10 * num_arms)
 
-    opt = Optimizer(env_conf, policy, num_arms=num_arms, num_denoise=None, num_obs=1, arm_selector=ArmBestObs())
+    opt = Optimizer(env_conf, policy, num_arms=num_arms, num_denoise=None, arm_selector=ArmBestObs())
 
     for i_iter in range(3):
         opt.collect_trace(designer_name=designer_name, num_iterations=1)

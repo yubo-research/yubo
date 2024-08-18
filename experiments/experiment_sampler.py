@@ -14,7 +14,7 @@ from optimizer.optimizer import Optimizer
 from problems.env_conf import default_policy, get_env_conf
 
 
-def sample_1(env_conf, opt_name, num_rounds, num_arms, num_obs, num_denoise):
+def sample_1(env_conf, opt_name, num_rounds, num_arms, num_denoise):
     seed_all(env_conf.problem_seed + 27)
 
     if torch.cuda.is_available():
@@ -34,7 +34,6 @@ def sample_1(env_conf, opt_name, num_rounds, num_arms, num_obs, num_denoise):
         policy=policy,
         num_arms=num_arms,
         num_denoise=num_denoise,
-        num_obs=num_obs,
         arm_selector=arm_selector,
     )
 
@@ -81,7 +80,6 @@ def scan_local(all_args):
 
 def mk_replicates(d_args):
     assert "noise" not in d_args, "NYI"
-    assert "num_obs" not in d_args, "NYI"
 
     out_dir = (
         f"{d_args['exp_dir']}/env={d_args['env_tag']}--opt_name={d_args['opt_name']}--num_arms={d_args['num_arms']}"
@@ -111,7 +109,6 @@ def mk_replicates(d_args):
                     opt_name=d_args["opt_name"],
                     num_rounds=int(d_args["num_rounds"]),
                     num_arms=int(d_args["num_arms"]),
-                    num_obs=int(d_args.get("num_obs", 1)),
                     num_denoise=num_denoise,
                 )
             )
@@ -123,17 +120,11 @@ def sampler(d_args, distributor_fn):
     distributor_fn(all_d_args)
 
 
-def _prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None, num_obs=None):
+def _prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None):
     # TODO: noise subdir?
     assert noise is None, "NYI"
 
     exp_dir = f"{results_dir}/{exp_dir}"
-
-    if num_obs is None:
-        num_obs = ""
-    else:
-        num_obs = f"--num-obs={num_obs}"
-        assert False, ("NYI", num_obs)
 
     if noise is None:
         noise = ""

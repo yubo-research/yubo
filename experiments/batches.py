@@ -28,7 +28,7 @@ def run_batch(d_argss, b_dry_run):
         cmd.append(f"> {logs_dir}/{d_args['opt_name']} 2>&1")
         cmd = " ".join(cmd)
         print("RUN:", cmd)
-        # env_tag={problem} opt_name={opt} num_arms={num_arms} num_reps={num_replications} num_rounds={num_rounds} {num_obs} {num_denoise} {noise} exp_dir={exp_dir} > {logs_dir}/{opt} 2>&1"
+        # env_tag={problem} opt_name={opt} num_arms={num_arms} num_reps={num_replications} num_rounds={num_rounds} {num_denoise} {noise} exp_dir={exp_dir} > {logs_dir}/{opt} 2>&1"
         if not b_dry_run:
             process = multiprocessing.Process(target=worker, args=(cmd,))
             processes.append(process)

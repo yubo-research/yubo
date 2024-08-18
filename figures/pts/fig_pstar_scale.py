@@ -22,7 +22,6 @@ def collect_pstar_scales(env_tag, designer_name, num_arms, num_samples):
         policy=policy,
         num_arms=num_arms,
         num_denoise=None,
-        num_obs=1,
         arm_selector=arm_selector,
     )
 
