@@ -1,7 +1,7 @@
 def test_pstar_stagger():
     import torch
 
-    from sampling.stagger_sampler import StaggerSampler
+    from sampling.stagger_thompson_sampler import StaggerThompsonSampler
     from tests.test_util import gp_parabola
 
     torch.manual_seed(17)
@@ -10,7 +10,7 @@ def test_pstar_stagger():
     X_max = torch.atleast_2d(X_max)
     num_dim = X_max.shape[-1]
 
-    pss = StaggerSampler(model, X_max, num_samples=16)
+    pss = StaggerThompsonSampler(model, X_max, num_samples=16)
 
     for _ in range(3):
         pss.refine()

@@ -4,7 +4,7 @@ from common.collector import Collector
 from optimizer.arm_best_obs import ArmBestObs
 from optimizer.optimizer import Optimizer
 from problems.env_conf import default_policy, get_env_conf
-from sampling.stagger_sampler import StaggerSampler
+from sampling.stagger_thompson_sampler import StaggerThompsonSampler
 
 
 def collect_pstar_scales(env_tag, designer_name, num_arms, num_samples):
@@ -33,7 +33,7 @@ def collect_pstar_scales(env_tag, designer_name, num_arms, num_samples):
         if not isinstance(acqf.X_samples, str):
             X_samples = acqf.X_samples
         else:
-            pss = StaggerSampler(acqf.model, acqf.X_max, num_samples=num_samples)
+            pss = StaggerThompsonSampler(acqf.model, acqf.X_max, num_samples=num_samples)
             pss.refine(acqf.k_mcmc)
             X_samples = pss.samples()
 

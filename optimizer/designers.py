@@ -148,68 +148,68 @@ class Designers:
                     "sample_type": "pss",
                 },
             )
-        elif designer_name == "mtv-pts":
+        elif designer_name == "mtv-sts":
             return bt_designer(
                 AcqMTV,
                 init_sobol=0,
                 acq_kwargs={
                     "num_X_samples": default_num_X_samples,
-                    "sample_type": "pts",
+                    "sample_type": "sts",
                     "num_refinements": 30,
                 },
             )
-        elif designer_name == "mtv-pts-t":
+        elif designer_name == "mtv-sts-t":
             return bt_designer(
                 AcqMTV,
                 init_sobol=0,
                 acq_kwargs={
                     "num_X_samples": default_num_X_samples,
-                    "sample_type": "pts",
+                    "sample_type": "sts",
                     "num_refinements": 30,
                     "x_max_type": "ts_meas",
                 },
             )
-        elif designer_name == "mtv-pts-m":
+        elif designer_name == "mtv-sts-m":
             return bt_designer(
                 AcqMTV,
                 init_sobol=0,
                 acq_kwargs={
                     "num_X_samples": default_num_X_samples,
-                    "sample_type": "pts",
+                    "sample_type": "sts",
                     "num_refinements": 30,
                     "x_max_type": "meas",
                 },
             )
-        elif designer_name == "pts":
+        elif designer_name == "sts":
             return bt_designer(
                 AcqMTV,
                 init_sobol=0,
                 acq_kwargs={
                     "ts_only": True,
-                    "sample_type": "pts",
+                    "sample_type": "sts",
                     "num_X_samples": default_num_X_samples,
                     "num_refinements": 30,
                 },
             )
-        elif designer_name == "pts-t":
+        elif designer_name == "sts-t":
             return bt_designer(
                 AcqMTV,
                 init_sobol=0,
                 acq_kwargs={
                     "ts_only": True,
-                    "sample_type": "pts",
+                    "sample_type": "sts",
                     "num_X_samples": default_num_X_samples,
                     "num_refinements": 30,
                     "x_max_type": "ts_meas",
                 },
             )
-        elif designer_name == "pts-m":
+        elif designer_name == "sts-m":
             return bt_designer(
                 AcqMTV,
                 init_sobol=0,
                 acq_kwargs={
                     "ts_only": True,
-                    "sample_type": "pts",
+                    "sample_type": "sts",
                     "num_X_samples": default_num_X_samples,
                     "num_refinements": 30,
                     "x_max_type": "meas",

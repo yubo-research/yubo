@@ -7,7 +7,7 @@ from botorch.utils import t_batch_mode_transform
 from torch.quasirandom import SobolEngine
 
 from sampling.pstar_sampler import PStarSampler
-from sampling.stagger_sampler import StaggerSampler
+from sampling.stagger_thompson_sampler import StaggerThompsonSampler
 
 from .acq_util import find_max
 
@@ -50,12 +50,12 @@ class AcqMTV(MCAcquisitionFunction):
                 self._set_x_max()
                 pss = PStarSampler(k_mcmc, self.model, self.X_max)
                 self.X_samples = pss(num_X_samples)
-            elif sample_type == "pts":
+            elif sample_type == "sts":
                 self._set_x_max()
                 if not ts_only:
                     self.X_samples = self._pstar_stagger(num_X_samples)
                 else:
-                    self.X_samples = "pts"
+                    self.X_samples = "sts"
             elif sample_type == "sobol":
                 self.X_samples = sobol_engine.draw(num_X_samples, dtype=self.dtype)
             else:
@@ -92,7 +92,7 @@ class AcqMTV(MCAcquisitionFunction):
         # print("X_MAX:", self.X_max.device)
 
     def _draw(self, num_arms):
-        if self.X_samples == "pts":
+        if self.X_samples == "sts":
             return self._pstar_stagger(num_arms)
         assert len(self.X_samples) >= num_arms, (len(self.X_samples), num_arms)
         i = np.arange(len(self.X_samples))
@@ -100,9 +100,9 @@ class AcqMTV(MCAcquisitionFunction):
         return self.X_samples[i]
 
     def _pstar_stagger(self, num_samples):
-        pts = StaggerSampler(self.model, self.X_max, num_samples=num_samples)
-        pts.refine(self._num_refinements)
-        return pts.samples()
+        sts = StaggerThompsonSampler(self.model, self.X_max, num_samples=num_samples)
+        sts.refine(self._num_refinements)
+        return sts.samples()
 
     def _calc_p_max_from_Y(self, Y):
         is_best = torch.argmax(Y, dim=-1)

@@ -24,7 +24,7 @@ Draw from a proposal distribution defined this way:
 """
 
 
-class StaggerSampler:
+class StaggerThompsonSampler:
     def __init__(self, model, X_control, num_samples):
         assert len(X_control) == 1, "NYI: multiple control points"
         self._model = model

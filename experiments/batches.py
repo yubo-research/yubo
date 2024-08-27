@@ -70,15 +70,15 @@ def prep_ts_hd(results_dir):
 
     exp_dir = "exp_pss_ts_hd"
 
-    opts = ["mtv-pts", "pts", "ts", "turbo-1", "sobol", "random"]
+    opts = ["mtv-sts"]  # ["ei", "ucb", "gibbon", "sr"]  # "mtv-pts", "pts", "ts", "turbo-1", "sobol", "random"]
     noises = [None]
 
     min_rounds = 30
     cmds = []
-    # cmds.extend(
-    #     prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_1d, dims=[1], num_arms=1, num_replications=100, opts=opts, noises=noises, num_rounds=min_rounds)
-    # )
-    for num_dim in [1000]:  #  [3, 10, 30, 100, 300, 1000]:
+    cmds.extend(
+        prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_1d, dims=[1], num_arms=1, num_replications=100, opts=opts, noises=noises, num_rounds=min_rounds)
+    )
+    for num_dim in [3, 10, 30, 100, 300]:  # TODO , 1000]:
         cmds.extend(
             prep_d_args(
                 results_dir,
@@ -178,12 +178,54 @@ def prep_ts_sweep(results_dir):
     )
 
 
+def prep_cum_time_dim(results_dir):
+    exp_dir = "exp_cum_time_dim"
+
+    opts = ["sts", "pss"]
+
+    return prep_d_args(
+        results_dir,
+        exp_dir=exp_dir,
+        funcs=["sphere"],
+        dims=[1, 3, 10, 30, 100, 300],
+        num_arms=1,
+        num_replications=3,
+        opts=opts,
+        noises=[None],
+        num_rounds=10,
+    )
+
+
+def prep_cum_time_obs(results_dir):
+    exp_dir = "exp_cum_time_obs"
+
+    opts = ["sts", "pss"]
+
+    cmds = []
+
+    for num_rounds in [3, 10, 30, 100, 300]:
+        cmds.extend(
+            prep_d_args(
+                results_dir,
+                exp_dir=exp_dir,
+                funcs=["sphere"],
+                dims=[10],
+                num_arms=10,
+                num_replications=3,
+                opts=opts,
+                noises=[None],
+                num_rounds=num_rounds,
+            )
+        )
+    return cmds
+
+
 def prep_d_argss():
     results_dir = "results"
 
     # assert False, "Select prep function"
 
-    return prep_mtv_repro(results_dir)
+    return prep_ts_hd(results_dir)
 
 
 @app.local_entrypoint()

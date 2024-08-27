@@ -1,6 +1,8 @@
 import fnmatch
 import os
 
+import numpy as np
+
 from common.util import parse_kv
 
 
@@ -63,6 +65,14 @@ class DataLocator:
 
     def optimizers_in(self, problem):
         return sorted({d[0]["opt_name"] for d in self._load(problem=problem)})
+
+    def organize_data(self, opt_names, mu, se):
+        # mu and se are ordered by self.optimizers()
+        # You want them ordered by opt_names.
+        data = dict(zip(self.optimizers(), list(zip(mu, se))))
+        data = [data[k] for k in opt_names]
+        mu, se = list(zip(*data))
+        return np.array(mu), np.array(se)
 
     def __call__(self, problem, opt_name):
         return sorted({d[1] for d in self._load(problem, opt_name)})

@@ -4,6 +4,7 @@ import numpy as np
 import analysis.data_sets as ads
 
 linestyles = ["-", ":", "--", "-."]
+markers = ["o", "x", "v", "."]
 
 
 def subplots(n, m, figsize):
@@ -22,7 +23,7 @@ def tight(axs):
     # plt.show()
 
 
-def filled_err(ys, x=None, color="#AAAAAA", alpha=0.5, marker=None, linestyle="--", color_line="#AAAAAA", se=False, ax=None):
+def filled_err(ys, x=None, color="#AAAAAA", alpha=0.5, marker=None, linestyle="--", color_line="#AAAAAA", se=False, two=False, ax=None):
     if ax is None:
         ax = plt
     mu = ys.mean(axis=0)
@@ -31,6 +32,8 @@ def filled_err(ys, x=None, color="#AAAAAA", alpha=0.5, marker=None, linestyle="-
         x = np.arange(len(mu))
     if se:
         sg = sg / np.sqrt(ys.shape[0])
+    if two:
+        sg *= 2
     ax.fill_between(x, mu - sg, mu + sg, color=color, alpha=alpha, linewidth=1, label="_nolegend_")
     ax.plot(x, mu, color=color_line, marker=marker, linestyle=linestyle)
 
@@ -65,7 +68,7 @@ def zc(x):
 def plot_sorted(ax, optimizers, mu, se, renames=None):
     i_sort = np.argsort(-mu)
     n = np.arange(len(mu))
-    ax.errorbar(n, mu[i_sort], se[i_sort], fmt="k,", capsize=6)
+    ax.errorbar(n, mu[i_sort], 2 * se[i_sort], fmt="k,", capsize=6)
     names = list(optimizers)
     if renames is not None:
         for old, new in renames.items():
