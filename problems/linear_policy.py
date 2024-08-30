@@ -1,5 +1,7 @@
 import numpy as np
 
+from .normalizer import Normalizer
+
 
 class LinearPolicy:
     def __init__(self, env_conf):
@@ -14,46 +16,37 @@ class LinearPolicy:
                 num_state,
             ),
         )
-        self._center = np.random.uniform(0, 1, size=(num_state,))
-        self._scale = np.random.uniform(0, 1, size=(num_state,))
-
+        self._normalizer = Normalizer(shape=(num_state,))
         self._num_beta = self._beta.size
-        self._num_center = self._center.size
-        self._num_scale = self._scale.size
 
     def num_params(self):
-        return 1 + self._num_beta + self._num_center + self._num_scale
+        return self._num_beta
 
     def set_params(self, x):
         # x in [-1,1]
         assert x.min() >= -1 and x.max() <= 1, (x.min(), x.max())
         i = 0
         self._beta = x[i : i + self._num_beta].reshape(self._beta.shape)
-        i += self._num_beta
-        self._center = (1 + x[i : i + self._num_center].reshape(self._center.shape)) / 2
-        i += self._num_center
-        self._scale = (1 + x[i : i + self._num_scale].reshape(self._center.shape)) / 2
 
     def get_params(self):
         p = np.zeros(shape=(self.num_params(),))
         i = 0
         p[i : i + self._num_beta] = self._beta.flatten()
-        i += self._num_beta
-        p[i : i + self._num_center] = self._center.flatten()
-        i += self._num_center
-        p[i : i + self._num_scale] = self._scale.flatten()
         return p
 
     def clone(self):
         lp = LinearPolicy(self._env_conf)
         lp._beta = self._beta.copy()
-        lp._center = self._center.copy()
-        lp._scale = self._scale.copy()
         return lp
 
     def __call__(self, state):
         # beta in [-1, 1]
-        # state in [0,1]
-        state = (state - self._center) / self._scale
-        beta = 0.1 * self._beta
+        assert self._beta.min() >= -1 and self._beta.max() <= 1, (self._beta.min(), self._beta.max())
+        self._normalizer.update(state)
+        loc = self._normalizer.mean()
+        scale = self._normalizer.std()
+        state = (state - loc) / scale
+        i = np.where(scale == 0)[0]
+        state[i] = 0.0
+        beta = self._beta
         return np.maximum(-1, np.minimum(1, beta @ state))
