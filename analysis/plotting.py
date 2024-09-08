@@ -3,8 +3,8 @@ import numpy as np
 
 import analysis.data_sets as ads
 
-linestyles = ["-", ":", "--", "-."]
-markers = ["o", "x", "v", "."]
+linestyles = ["-", ":", "--", "-."] * 10
+markers = ["o", "x", "v", ".", "s"] * 10
 
 
 def subplots(n, m, figsize):

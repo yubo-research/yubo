@@ -55,7 +55,7 @@ class EnvConf:
 
     def _make(self, **kwargs):
         if self.env_name[:2] == "f:":
-            env = pure_functions.make(self.env_name, problem_seed=self.problem_seed)
+            env = pure_functions.make(self.env_name, problem_seed=self.problem_seed, distort=True)
         elif self.env_name[:2] == "g:":
             env = pure_functions.make(self.env_name, problem_seed=self.problem_seed, distort=False)
         elif self.gym_conf is not None:
