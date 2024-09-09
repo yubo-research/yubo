@@ -10,7 +10,7 @@ class ATIStopped(Exception):
 
 
 class AskTellInverter:
-    def __init__(self, timeout_seconds=0.1):
+    def __init__(self, timeout_seconds=10):
         self._x = None
         self._timeout_seconds = timeout_seconds
         self._running = True
