@@ -17,6 +17,7 @@ from acq.acq_var import AcqVar
 from .ax_designer import AxDesigner
 from .bt_designer import BTDesigner
 from .cma_designer import CMAESDesigner
+from .optuna_designer import OptunaDesigner
 from .random_designer import RandomDesigner
 from .sobol_designer import SobolDesigner
 from .turbo_designer import TuRBODesigner
@@ -75,6 +76,8 @@ class Designers:
 
         if designer_name == "cma":
             return CMAESDesigner(self._policy)
+        elif designer_name == "optuna":
+            return OptunaDesigner(self._policy)
         elif designer_name == "ax":
             return AxDesigner(self._policy)
         elif designer_name == "maximin":
