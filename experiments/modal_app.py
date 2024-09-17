@@ -12,11 +12,10 @@ def mk_image():
     gymnasium==0.29.1
     cma==3.3.0
     mujoco==2.3.7
+    optuna==4.0.0
     gymnasium[box2d]
     gymnasium[mujoco]
-    """.split(
-        "\n"
-    )
+    """.split("\n")
     sreqs = []
     for req in reqs:
         req = req.strip()
