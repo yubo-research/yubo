@@ -6,19 +6,6 @@ import numpy as np
 # If the function is of fixed dimension, assert it in __call__()
 
 
-def all_benchmarks():
-    import inspect
-    import sys
-
-    mod = sys.modules[__name__]
-    all_bf = {}
-    for name in dir(mod):
-        obj = getattr(mod, name)
-        if inspect.isclass(obj):
-            all_bf[name.lower()] = obj
-    return all_bf
-
-
 class Sphere:
     def __call__(self, x):
         return (x**2).mean()

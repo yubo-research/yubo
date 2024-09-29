@@ -68,6 +68,10 @@ class Optimizer:
         return np.mean(rets)
 
     def collect_trace(self, designer_name, num_iterations):
+        from pympler import tracker
+
+        tr = tracker.SummaryTracker()
+
         designers = self._designers.create(designer_name)
         if not isinstance(designers, list):
             designers = [designers]
@@ -75,6 +79,7 @@ class Optimizer:
         trace = []
         t_0 = time.time()
         for _ in range(num_iterations):
+            tr.print_diff()
             self._i_noise += 1
             designer = designers[min(len(designers) - 1, self._i_iter)]
 

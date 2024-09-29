@@ -53,7 +53,7 @@ class AcqMTV(MCAcquisitionFunction):
             elif sample_type == "sts":
                 self._set_x_max()
                 if not ts_only:
-                    self.X_samples = self._pstar_stagger(num_X_samples)
+                    self.X_samples = self._stagger_thompson_sampler(num_X_samples)
                 else:
                     self.X_samples = "sts"
             elif sample_type == "sobol":
@@ -93,13 +93,13 @@ class AcqMTV(MCAcquisitionFunction):
 
     def _draw(self, num_arms):
         if self.X_samples == "sts":
-            return self._pstar_stagger(num_arms)
+            return self._stagger_thompson_sampler(num_arms)
         assert len(self.X_samples) >= num_arms, (len(self.X_samples), num_arms)
         i = np.arange(len(self.X_samples))
         i = np.random.choice(i, size=(int(num_arms)), replace=False)
         return self.X_samples[i]
 
-    def _pstar_stagger(self, num_samples):
+    def _stagger_thompson_sampler(self, num_samples):
         sts = StaggerThompsonSampler(self.model, self.X_max, num_samples=num_samples)
         sts.refine(self._num_refinements)
         return sts.samples()
