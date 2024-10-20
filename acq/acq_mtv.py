@@ -104,18 +104,18 @@ class AcqMTV(MCAcquisitionFunction):
         sts.refine(self._num_refinements)
         return sts.samples()
 
-    def _calc_p_max_from_Y(self, Y):
-        is_best = torch.argmax(Y, dim=-1)
-        idcs, counts = torch.unique(is_best, return_counts=True)
-        p_max = torch.zeros(Y.shape[-1])
-        p_max[idcs] = counts / Y.shape[0]
-        return p_max
+    # def _calc_p_max_from_Y(self, Y):
+    #     is_best = torch.argmax(Y, dim=-1)
+    #     idcs, counts = torch.unique(is_best, return_counts=True)
+    #     p_max = torch.zeros(Y.shape[-1])
+    #     p_max[idcs] = counts / Y.shape[0]
+    #     return p_max
 
-    def _p_target(self, X, num_Y_samples):
-        mvn = self.model.posterior(X)
-        Y = mvn.sample(torch.Size([num_Y_samples])).squeeze()
-        assert torch.all((X >= 0) & (X <= 1))
-        return self._calc_p_max_from_Y(Y)
+    # def _p_target(self, X, num_Y_samples):
+    #     mvn = self.model.posterior(X)
+    #     Y = mvn.sample(torch.Size([num_Y_samples])).squeeze()
+    #     assert torch.all((X >= 0) & (X <= 1))
+    #     return self._calc_p_max_from_Y(Y)
 
     @t_batch_mode_transform()
     def forward(self, X):

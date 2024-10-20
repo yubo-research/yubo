@@ -68,42 +68,52 @@ class Optimizer:
         return np.mean(rets)
 
     def collect_trace(self, designer_name, num_iterations):
-        from pympler import tracker
+        # from pympler import tracker
 
-        tr = tracker.SummaryTracker()
+        # tr = tracker.SummaryTracker()
 
-        designers = self._designers.create(designer_name)
-        if not isinstance(designers, list):
-            designers = [designers]
-
-        trace = []
-        t_0 = time.time()
+        self.initialize(designer_name)
         for _ in range(num_iterations):
-            tr.print_diff()
-            self._i_noise += 1
-            designer = designers[min(len(designers) - 1, self._i_iter)]
+            self.iterate()
+        self.stop()
+        return self._trace
 
-            data, d_time = self._iterate(designer, self._num_arms)
+    def initialize(self, designer_name):
+        self._opt_designers = self._designers.create(designer_name)
 
-            ret_batch = []
-            for datum in data:
-                self._data.append(datum)
-                ret_batch.append(datum.trajectory.rreturn)
+        if not isinstance(self._opt_designers, list):
+            self._opt_designers = [self._opt_designers]
 
-            policy_best, self.r_best_est = self._arm_selector(self._data)
-            ret_eval = self.r_best_est
-            ret_batch = np.array(ret_batch)
+        self._trace = []
+        self._t_0 = time.time()
 
-            cum_time = time.time() - t_0
-            self._collector(
-                f"ITER: i_iter = {self._i_iter} cum_time = {cum_time:.2f} d_time = {d_time:.2f} ret_max = {ret_batch.max():.3f} ret_mean = {ret_batch.mean():.3f} ret_best = {self.r_best_est:.3f} ret_eval = {ret_eval:.3f}"
-            )
-            sys.stdout.flush()
-            trace.append(_TraceEntry(ret_eval, d_time))
-            self._i_iter += 1
-            self.last_designer = designer
+    def iterate(self):
+        # tr.print_diff()
+        self._i_noise += 1
+        designer = self._opt_designers[min(len(self._opt_designers) - 1, self._i_iter)]
 
-        for designer in designers:
+        data, d_time = self._iterate(designer, self._num_arms)
+
+        ret_batch = []
+        for datum in data:
+            self._data.append(datum)
+            ret_batch.append(datum.trajectory.rreturn)
+
+        policy_best, self.r_best_est = self._arm_selector(self._data)
+        ret_eval = self.r_best_est
+        ret_batch = np.array(ret_batch)
+
+        cum_time = time.time() - self._t_0
+        self._collector(
+            f"ITER: i_iter = {self._i_iter} cum_time = {cum_time:.2f} d_time = {d_time:.2f} ret_max = {ret_batch.max():.3f} ret_mean = {ret_batch.mean():.3f} ret_best = {self.r_best_est:.3f} ret_eval = {ret_eval:.3f}"
+        )
+        sys.stdout.flush()
+        self._trace.append(_TraceEntry(ret_eval, d_time))
+        self._i_iter += 1
+        self.last_designer = designer
+        return self._trace
+
+    def stop(self):
+        for designer in self._opt_designers:
             if hasattr(designer, "stop"):
                 designer.stop()
-        return trace

@@ -11,6 +11,11 @@ class Sphere:
         return (x**2).mean()
 
 
+class Sphere3:
+    def __call__(self, x):
+        return ((x - 0.3) ** 2).mean()
+
+
 # 1 xi ∈ [-32.768, 32.768] ackley result [0,25]
 class Ackley:
     def __init__(self):

@@ -37,6 +37,21 @@ def unrebound(X_r, rebounds):
     return lb + (ub - lb) * X_r
 
 
+def calc_p_max_from_Y(Y):
+    is_best = torch.argmax(Y, dim=-1)
+    idcs, counts = torch.unique(is_best, return_counts=True)
+    p_max = torch.zeros(Y.shape[-1])
+    p_max[idcs] = counts / Y.shape[0]
+    return p_max
+
+
+def calc_p_max(model, X, num_Y_samples):
+    mvn = model.posterior(X)
+    Y = mvn.sample(torch.Size([num_Y_samples])).squeeze()
+    assert torch.all((X >= 0) & (X <= 1))
+    return calc_p_max_from_Y(Y)
+
+
 def find_max(model, bounds=None):
     X = model.train_inputs[0]
     Y = model.train_targets

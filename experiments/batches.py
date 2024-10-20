@@ -243,7 +243,7 @@ def main_modal(job_fn: str, dry_run: bool = False):
             if not data_is_done(d_args["trace_fn"]):
                 print("D:", d_args)
     else:
-        dist_modal = DistModal(job_fn)
+        dist_modal = DistModal("yubo", "sample_1_modal", job_fn)
         dist_modal(batch_of_d_args)
 
     print("SUBMITTED:", len(batch_of_d_args))
