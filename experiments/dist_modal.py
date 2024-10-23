@@ -1,8 +1,7 @@
 import time
 
-from grpclib import GRPCError
-
 import modal
+from grpclib import GRPCError
 
 
 def collect(job_fn, cb_job):

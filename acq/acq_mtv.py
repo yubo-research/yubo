@@ -3,6 +3,8 @@ import torch
 from botorch.acquisition.monte_carlo import (
     MCAcquisitionFunction,
 )
+from botorch.acquisition.thompson_sampling import PathwiseThompsonSampling
+from botorch.optim import optimize_acqf
 from botorch.utils import t_batch_mode_transform
 from torch.quasirandom import SobolEngine
 
@@ -19,8 +21,8 @@ class AcqMTV(MCAcquisitionFunction):
         num_X_samples,
         ts_only=False,
         k_mcmc=100,
+        sample_type="sts",
         num_refinements=30,
-        sample_type="pss",
         x_max_type="find",
         **kwargs,
     ) -> None:
@@ -46,6 +48,7 @@ class AcqMTV(MCAcquisitionFunction):
         if num_obs == 0:
             self.X_samples = sobol_engine.draw(num_X_samples, dtype=self.dtype).to(self.device)
         else:
+            # TODO: Write acq's for pss and sts and get rid of ts_only.
             if sample_type == "pss":
                 self._set_x_max()
                 pss = PStarSampler(k_mcmc, self.model, self.X_max)
@@ -56,6 +59,11 @@ class AcqMTV(MCAcquisitionFunction):
                     self.X_samples = self._stagger_thompson_sampler(num_X_samples)
                 else:
                     self.X_samples = "sts"
+            elif sample_type == "pts":
+                self._set_x_max()
+                assert not ts_only, "Use designer pts directly"
+                self.X_samples = self._pathwise_ts(num_X_samples)
+
             elif sample_type == "sobol":
                 self.X_samples = sobol_engine.draw(num_X_samples, dtype=self.dtype)
             else:
@@ -69,15 +77,33 @@ class AcqMTV(MCAcquisitionFunction):
             # print("Using draw()")
             self.draw = self._draw
 
+    def _pathwise_ts(self, num_X_samples):
+        X_ts, _ = optimize_acqf(
+            acq_function=PathwiseThompsonSampling(self.model),
+            bounds=self._bounds(),
+            q=num_X_samples,
+            # num_restarts=100,
+            raw_samples=128,
+            # options={"batch_limit": 10, "maxiter": 200},
+            num_restarts=3,
+            # options={"batch_limit": num_ic, "maxiter": 100},
+            options={"maxiter": 100},
+            # batch_initial_conditions=batch_initial_conditions,
+        )
+        return X_ts
+
+    def _bounds(self):
+        return torch.tensor(
+            [[0.0] * self._num_dim, [1.0] * self._num_dim],
+            device=self.device,
+            dtype=self.dtype,
+        )
+
     def _set_x_max(self):
         if self._x_max_type == "find":
             self.X_max = find_max(
                 self.model,
-                bounds=torch.tensor(
-                    [[0.0] * self._num_dim, [1.0] * self._num_dim],
-                    device=self.device,
-                    dtype=self.dtype,
-                ),
+                bounds=self._bounds(),
             )
         elif self._x_max_type == "ts_meas":
             Y_ts = self.model.posterior(self.model.train_inputs[0]).rsample(torch.Size([1])).squeeze()

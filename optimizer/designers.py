@@ -7,6 +7,7 @@ from botorch.acquisition.monte_carlo import (
     qSimpleRegret,
     qUpperConfidenceBound,
 )
+from botorch.acquisition.thompson_sampling import PathwiseThompsonSampling
 
 from acq.acq_dpp import AcqDPP
 from acq.acq_min_dist import AcqMinDist
@@ -152,37 +153,28 @@ class Designers:
                 },
             )
         elif designer_name == "mtv-sts":
+            return (
+                bt_designer(
+                    AcqMTV,
+                    init_sobol=0,
+                    acq_kwargs={
+                        "num_X_samples": default_num_X_samples,
+                        "sample_type": "sts",
+                        "num_refinements": 30,
+                    },
+                ),
+            )
+        elif designer_name == "mtv-pts":
             return bt_designer(
                 AcqMTV,
                 init_sobol=0,
                 acq_kwargs={
                     "num_X_samples": default_num_X_samples,
-                    "sample_type": "sts",
+                    "sample_type": "pts",
                     "num_refinements": 30,
                 },
             )
-        elif designer_name == "mtv-sts-t":
-            return bt_designer(
-                AcqMTV,
-                init_sobol=0,
-                acq_kwargs={
-                    "num_X_samples": default_num_X_samples,
-                    "sample_type": "sts",
-                    "num_refinements": 30,
-                    "x_max_type": "ts_meas",
-                },
-            )
-        elif designer_name == "mtv-sts-m":
-            return bt_designer(
-                AcqMTV,
-                init_sobol=0,
-                acq_kwargs={
-                    "num_X_samples": default_num_X_samples,
-                    "sample_type": "sts",
-                    "num_refinements": 30,
-                    "x_max_type": "meas",
-                },
-            )
+
         elif designer_name == "sts":
             return bt_designer(
                 AcqMTV,
@@ -217,6 +209,11 @@ class Designers:
                     "num_refinements": 30,
                     "x_max_type": "meas",
                 },
+            )
+        elif designer_name == "pts":
+            return bt_designer(
+                PathwiseThompsonSampling,
+                init_sobol=0,
             )
 
         # Long sobol init, sequential opt

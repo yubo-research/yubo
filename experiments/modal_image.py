@@ -14,7 +14,9 @@ def mk_image():
     optuna==4.0.0
     gymnasium[box2d]
     gymnasium[mujoco]
-    """.split("\n")
+    """.split(
+        "\n"
+    )
     sreqs = []
     for req in reqs:
         req = req.strip()
