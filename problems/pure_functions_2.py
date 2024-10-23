@@ -1,0 +1,64 @@
+import numpy as np
+
+class Booth:
+    def __call__(self, x):
+        return (x[0] + 2 * x[1] - 7)**2 + (2 * x[0] + x[1] - 5)**2
+
+
+class Himmelblau:
+    def __call__(self, x):
+        return (x[0]**2 + x[1] - 11)**2 + (x[0] + x[1]**2 - 7)**2
+    
+
+class Matyas:
+    def __call__(self, x):
+        return 0.26 * (x[0]**2 + x[1]**2) - 0.48 * x[0] * x[1]
+
+
+class Zettl:
+    def __call__(self, x):
+        return (x[0]**2 + x[1]**2 - 2 * x[0])**2 + 0.25 * x[0]
+
+
+class Sum_Squares:
+    def __call__(self, x):
+        x = np.array(x)
+        return np.sum((x**2) * np.arange(1, 1 + 1))
+
+
+class Perm:
+    def __call__(self, x, beta=10):
+        n = 2
+        return sum(sum((j + beta) * (x[j]**i - 1) for j in range(n))**2 for i in range(1, n+1))
+
+
+class Salomon:
+    def __call__(self, x):
+        r = np.sqrt(sum(xi**2 for xi in x))
+        return 1 - np.cos(2 * np.pi * r) + 0.1 * r
+
+
+class Whitley:
+    def __call__(self, x):
+        x = np.array(x)
+        n = 2
+        sum1 = np.sum((x**2 - 10)**2)
+        sum2 = np.sum(x**2)
+        return (10 * n + sum1 + 1) / (30 * n + sum2)
+
+
+class Brown:
+    def __call__(self, x):
+        x = np.array(x)
+        n = 2
+        sum1 = np.sum(x**2 - 10)**2
+        sum2 = np.prod(x**2)
+        return sum1 + sum2
+
+
+class Zakharov:
+    def __call__(self, x):
+        x = np.array(x)
+        term1 = np.sum(x**2)
+        term2 = np.sum((0.5 * np.arange(1, 2 + 1) * x)**2)
+        return term1 + term2
