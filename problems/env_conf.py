@@ -85,19 +85,19 @@ class EnvConf:
 _gym_env_confs = {
     "mcc": EnvConf("MountainCarContinuous-v0", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=100)),
     "pend": EnvConf("Pendulum-v1", problem_seed=None, gym_conf=GymConf(max_steps=200, num_frames_skip=100)),
-    "lunar": EnvConf("LunarLander-v2", problem_seed=None, gym_conf=GymConf(max_steps=500, num_frames_skip=30), kwargs={"continuous": True}),
+    "lunar": EnvConf("LunarLander-v3", problem_seed=None, gym_conf=GymConf(max_steps=500, num_frames_skip=30), kwargs={"continuous": True}),
     "ant": EnvConf("Ant-v4", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
     "mpend": EnvConf("InvertedPendulum-v4", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
     "macro": EnvConf("InvertedDoublePendulum-v4", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
     "swim": EnvConf("Swimmer-v4", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
     "reach": EnvConf("Reacher-v4", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
-    "push": EnvConf("Pusher-v4", problem_seed=None, gym_conf=GymConf(max_steps=100, num_frames_skip=30)),
+    # "push": EnvConf("Pusher-v4", problem_seed=None, gym_conf=GymConf(max_steps=100, num_frames_skip=30)),
     "hop": EnvConf("Hopper-v4", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
     "human": EnvConf("Humanoid-v4", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
     "stand": EnvConf("HumanoidStandup-v4", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
     "bw": EnvConf("BipedalWalker-v3", problem_seed=None, gym_conf=GymConf(max_steps=1600, num_frames_skip=100)),
     "tlunar": EnvConf(
-        "LunarLander-v2",
+        "LunarLander-v3",
         problem_seed=None,
         gym_conf=GymConf(
             max_steps=500,

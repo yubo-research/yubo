@@ -1,3 +1,5 @@
+import time
+
 import modal
 import numpy as np
 
@@ -15,7 +17,7 @@ modal_image = mk_image()
 # _mode = "all"
 _mode = "sphere3"
 
-_num_dims = [3, 10, 30, 100]
+_num_dims = [5]
 
 _app_name = "yubo-fig-pstar-scale"
 app = modal.App(name=_app_name)
@@ -48,19 +50,26 @@ def calc_pstar_scales(d_args):
         arm_selector=arm_selector,
     )
 
-    for i_iter in range(2 * num_dim):
-        opt.collect_trace(designer_name=designer_name, num_iterations=1)
+    t_0 = time.time()
+    for i_iter in range(max(30, 2 * num_dim)):
+        trace = opt.collect_trace(designer_name=designer_name, num_iterations=1)
+
         if opt.last_designer.fig_last_acqf == "sobol":
             assert i_iter == 0, i_iter
             data.append(None)
             continue
         acqf = opt.last_designer.fig_last_acqf.acq_function
-        X_samples = acqf.draw(num_samples)
-        p_max = calc_p_max(acqf.model, X_samples, num_Y_samples=1024)
+        # X_samples = acqf.draw(num_samples)
 
+        opt.last_designer(opt._data, num_arms=num_samples)
+        X_samples = opt.last_designer.fig_last_arms
+
+        p_max = calc_p_max(acqf.model, X_samples, num_Y_samples=1024)
         X_samples = X_samples.numpy()
+
         if _mode == "sphere3":
             bias = (X_samples - 0.65).mean(axis=0)
+            rmse = np.sqrt(((X_samples - 0.65) ** 2).mean(axis=0))
         elif _mode == "all":
             bias = np.nan
         else:
@@ -69,7 +78,7 @@ def calc_pstar_scales(d_args):
         num_dim = X_samples.shape[-1]
         scale = np.prod(X_samples.std(axis=0)) ** (1 / num_dim)
 
-        data.append((bias, scale, p_max))
+        data.append((bias, scale, rmse, p_max, time.time() - t_0, trace[-1].rreturn))
 
     return designer_name, num_dim, env_tag, data[1:]
 
@@ -78,7 +87,7 @@ def dist_pstar_scales_all_funcs(designer, num_dim):
     from experiments.func_names import funcs_nd
 
     if _mode == "sphere3":
-        funcs = ["sphere3"]
+        funcs = ["sphere3"] * 10
         prefix = "g"
     elif _mode == "all":
         funcs = funcs_nd
