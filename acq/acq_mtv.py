@@ -85,10 +85,10 @@ class AcqMTV(MCAcquisitionFunction):
             # num_restarts=100,
             raw_samples=128,
             # options={"batch_limit": 10, "maxiter": 200},
-            num_restarts=3,
+            num_restarts=30,
             # options={"batch_limit": num_ic, "maxiter": 100},
-            options={"maxiter": 100},
-            # batch_initial_conditions=batch_initial_conditions,
+            options={"maxiter": 1000},
+            # batch_initial_conditions=self.X_max,
         )
         return X_ts
 
