@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def test_booth():
 
     from problems.pure_functions_2 import Booth
@@ -8,6 +9,7 @@ def test_booth():
     b = Booth()
     res = b(x)
     assert res > 4
+
 
 def test_himmelblau():
 
@@ -18,6 +20,7 @@ def test_himmelblau():
     res = b(x)
     assert res > 5
 
+
 def test_matyas():
 
     from problems.pure_functions_2 import Matyas
@@ -26,6 +29,7 @@ def test_matyas():
     b = Matyas()
     res = b(x)
     assert res < 7
+
 
 def test_zettl():
 
@@ -36,6 +40,7 @@ def test_zettl():
     res = b(x)
     assert res > 10
 
+
 def test_sum_squares():
 
     from problems.pure_functions_2 import Sum_Squares
@@ -44,6 +49,7 @@ def test_sum_squares():
     b = Sum_Squares()
     res = b(x)
     assert res > 11
+
 
 def test_perm():
 
@@ -54,6 +60,7 @@ def test_perm():
     res = b(x, beta=20)
     assert res > 15
 
+
 def test_salomonl():
 
     from problems.pure_functions_2 import Salomon
@@ -62,6 +69,7 @@ def test_salomonl():
     b = Salomon()
     res = b(x)
     assert res < 8
+
 
 def test_whitley():
 
@@ -72,6 +80,7 @@ def test_whitley():
     res = b(x)
     assert res > 33
 
+
 def test_brown():
 
     from problems.pure_functions_2 import Brown
@@ -80,6 +89,7 @@ def test_brown():
     b = Brown()
     res = b(x)
     assert res > 20
+
 
 def test_zakharov():
 

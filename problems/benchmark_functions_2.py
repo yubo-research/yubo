@@ -1,5 +1,7 @@
 import numpy as np
 
+from .exceptions import WrongDimensions
+
 
 class Alpine:
     def __call__(self, x):
@@ -7,8 +9,12 @@ class Alpine:
 
 
 class Easom:
-    def __call__(self, x, y):
-        return -np.cos(x) * np.cos(y) * np.exp(-((x - np.pi) ** 2) - (y - np.pi) ** 2)
+    def __call__(self, x):
+        if len(x) != 2:
+            raise WrongDimensions()
+        y = x[1]
+        x = x[0]
+        return np.sum(-np.cos(x) * np.cos(y) * np.exp(-((x - np.pi) ** 2) - (y - np.pi) ** 2))
 
 
 class Booth:
@@ -38,9 +44,11 @@ class Sum_Squares:
 
 
 class Perm:
-    def __call__(self, x, beta=10):
+    beta = 10
+
+    def __call__(self, x):
         n = 2
-        return sum(sum((j + beta) * (x[j] ** i - 1) for j in range(n)) ** 2 for i in range(1, n + 1))
+        return sum(sum((j + self.beta) * (x[j] ** i - 1) for j in range(n)) ** 2 for i in range(1, n + 1))
 
 
 class Salomon:
@@ -52,7 +60,7 @@ class Salomon:
 class Whitley:
     def __call__(self, x):
         x = np.array(x)
-        n = 2
+        n = len(x)
         sum1 = np.sum((x**2 - 10) ** 2)
         sum2 = np.sum(x**2)
         return (10 * n + sum1 + 1) / (30 * n + sum2)
@@ -61,7 +69,6 @@ class Whitley:
 class Brown:
     def __call__(self, x):
         x = np.array(x)
-        n = 2
         sum1 = np.sum(x**2 - 10) ** 2
         sum2 = np.prod(x**2)
         return sum1 + sum2

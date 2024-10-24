@@ -4,6 +4,7 @@ import numpy as np
 # all domains are [-1,1]**num_dim
 # all functions should have *minima* [not maxima]
 # If the function is of fixed dimension, assert it in __call__()
+from .exceptions import WrongDimensions
 
 
 class Sphere:
@@ -31,7 +32,8 @@ class Ackley:
 # 2  xi ∈ [-4.5, 4.5], for all i = 1, 2. Beale result [0, 4.5*10^5]
 class Beale:
     def __call__(self, x):
-        assert len(x) == 2
+        if len(x) != 2:
+            raise WrongDimensions()
         x = 4.5 * x
         part1 = (1.5 - x[0] + x[0] * x[1]) ** 2
         part2 = (2.25 - x[0] + x[0] * x[1] ** 2) ** 2
@@ -50,7 +52,8 @@ class Branin:
         self.t = 1 / (8 * np.pi)
 
     def __call__(self, x):
-        assert len(x) == 2
+        if len(x) != 2:
+            raise WrongDimensions()
         x1 = 7.5 * x[0] + 2.5
         x2 = 7.5 * x[1] + 7.5
         return self.a * (x2 - self.b * x1**2 + self.c * x1 - self.r) ** 2 + self.s * (1 - self.t) * np.cos(x1) + self.s
@@ -59,7 +62,8 @@ class Branin:
 # 4 x1 ∈ [-15, -5], x2 ∈ [-3, 3]. result [0,250] Bukin
 class Bukin:
     def __call__(self, x):
-        assert len(x) == 2
+        if len(x) != 2:
+            raise WrongDimensions()
         x0 = x[0] * 5 - 10
         x1 = x[1] * 3
         return 100.0 * np.sqrt(np.abs(x1 - 0.01 * x0**2)) + 0.01 * np.abs(x0 + 10.0)
@@ -68,8 +72,9 @@ class Bukin:
 # 5 xi ∈ [-10, 10], for all i = 1, 2. result[-2.5,-0.5] CrossInTray
 class CrossInTray:
     def __call__(self, x):
-        assert len(x) == 2
-        x = x * 9 + 1 - self._x_0
+        if len(x) != 2:
+            raise WrongDimensions()
+        x = x * 9 + 1
         x0 = x[0]
         x1 = x[1]
         part1 = np.abs(np.sin(x0) * np.sin(x1) * np.exp(np.abs(100.0 - np.sqrt(x0**2 + x1**2) / np.pi))) + 1.0
@@ -80,7 +85,8 @@ class CrossInTray:
 # 6  xi ∈ [-5.12, 5.12], for all i = 1, 2. result[-1,0] DropWave
 class DropWave:
     def __call__(self, x):
-        assert len(x) == 2
+        if len(x) != 2:
+            raise WrongDimensions()
         x = x * 5.12
         x0 = x[0]
         x1 = x[1]
@@ -107,7 +113,8 @@ class DixonPrice:
 # 8 EggHolder xi ∈ [-512, 512], for all i = 1, 2.result [-1000,1500]
 class EggHolder:
     def __call__(self, x):
-        assert len(x) == 2
+        if len(x) != 2:
+            raise WrongDimensions()
         x = x * 511
         x1 = x[0]
         x2 = x[1]
@@ -129,7 +136,8 @@ class Griewank:
 # 10 GrLee12 one-dimention x ∈ [0.5, 2.5]. result [-1,6]
 class GrLee12:
     def __call__(self, x):
-        assert len(x) == 1
+        if len(x) != 2:
+            raise WrongDimensions()
         x = x[0] + 1.5
         return np.sin(10.0 * np.pi * x) / (2.0 * x) + (x - 1.0) ** 4
 
@@ -152,7 +160,8 @@ class Hartmann:
 
     def __call__(self, x):
         num_dim = len(x)
-        assert num_dim in self.A, num_dim
+        if num_dim not in self.A:
+            raise WrongDimensions()
 
         A = self.A[num_dim]
         P = self.P[num_dim]
@@ -176,7 +185,8 @@ class Hartmann:
 # 12 HolderTable xi ∈ [-10, 10], for all i = 1, 2. result [-20,0]
 class HolderTable:
     def __call__(self, x):
-        assert len(x) == 2
+        if len(x) != 2:
+            raise WrongDimensions()
         x = x * 10
         x0 = x[0]
         x1 = x[1]
@@ -226,7 +236,8 @@ class Michalewicz:
 class Powell:
     def __call__(self, x):
         num_dim = len(x)
-        assert num_dim % 4 == 0, num_dim
+        if num_dim % 4 != 0:
+            raise WrongDimensions()
 
         x = x * 4.5 + 0.5
         result = 0
@@ -285,7 +296,8 @@ class Shekel:
         )
 
     def __call__(self, x):
-        assert len(x) == 4
+        if len(x) != 4:
+            raise WrongDimensions()
         x = x * 5 + 5
         m = self.C.shape[1]
         outer = 0
@@ -301,7 +313,8 @@ class Shekel:
 # 20 SixHumpCamel x1 ∈ [-3, 3], x2 ∈ [-2, 2]. result [-50,200]
 class SixHumpCamel:
     def __call__(self, x):
-        assert len(x) == 2
+        if len(x) != 2:
+            raise WrongDimensions()
         x = x
         x0 = x[0] * 3
         x1 = x[1] * 2
@@ -318,7 +331,8 @@ class StybTang:
 # 22 ThreeHumpCamel xi ∈ [-5, 5], for all i = 1, 2. result[0,10][0,1000]
 class ThreeHumpCamel:
     def __call__(self, x):
-        assert len(x) == 2
+        if len(x) != 2:
+            raise WrongDimensions()
         x = x * 5
         x0 = x[0]
         x1 = x[1]
