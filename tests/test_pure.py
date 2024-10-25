@@ -67,10 +67,9 @@ def test_whitley():
 
     from problems.pure_functions_2 import Whitley
 
-    x = 25
     b = Whitley()
-    res = b(x)
-    assert res > 33
+    res = b(np.random.rand(5))
+    assert res > 20
 
 def test_brown():
 

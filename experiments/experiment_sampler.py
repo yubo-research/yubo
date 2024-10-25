@@ -1,6 +1,8 @@
 import os
 import time
 
+import sys
+sys.path.append('/Users/siddhantanandjadhav/BBO/bbo')
 import torch
 
 from analysis.data_io import data_is_done, data_writer
