@@ -92,7 +92,7 @@ def mk_replicates(d_args):
     for i_rep in range(int(d_args["num_reps"])):
         trace_fn = f"{out_dir}/{i_rep:05d}"
         if data_is_done(trace_fn):
-            print(f"Skipping i_rep = {i_rep}. Already done.")
+            print(f"Skipping trace_fn = {trace_fn}. Already done.")
             continue
         else:
             problem_seed = 18 + i_rep
