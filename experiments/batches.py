@@ -4,11 +4,8 @@ import multiprocessing
 import os
 import time
 
-from analysis.data_io import data_is_done
-from experiments.dist_modal import DistModal
-from experiments.experiment_sampler import mk_replicates, prep_d_args
+from experiments.experiment_sampler import prep_d_args
 from experiments.func_names import funcs_1d, funcs_nd
-from experiments.modal_interactive import app
 
 
 def worker(cmd):
@@ -219,7 +216,7 @@ def prep_pss_sweep(results_dir):
     exp_dir = "exp_pss_sweep"
 
     opts = ["random"]
-    opts += [f"pss_sweep-{n}" for n in [1, 3, 10, 30, 100, 300]]
+    opts += [f"pss_sweep_kmcmc-{n}" for n in [1, 3, 10, 30, 100, 300]]
 
     return prep_d_args(
         results_dir,
@@ -242,34 +239,6 @@ def prep_d_argss():
     results_dir = "results"
 
     return prep_pss_sweep(results_dir)
-
-
-@app.local_entrypoint()
-def main_modal(job_fn: str, dry_run: bool = False):
-    assert not os.path.exists(job_fn), f"{job_fn} exists"
-
-    d_argss = prep_d_argss()
-    t_0 = time.time()
-    batch_of_d_args = []
-    for d_args in d_argss:
-        batch_of_d_args.extend(mk_replicates(d_args))
-    print(f"START: num_tasks = {len(batch_of_d_args)}")
-    if dry_run:
-        for d_args in batch_of_d_args:
-            if not data_is_done(d_args["trace_fn"]):
-                print("D:", d_args)
-    else:
-        dist_modal = DistModal("yubo", "sample_1_modal", job_fn)
-        dist_modal(batch_of_d_args)
-
-    print("SUBMITTED:", len(batch_of_d_args))
-    t_f = time.time()
-    print(f"TIME_ALL: {t_f-t_0:.2f}")
-    if dry_run:
-        dr = "_DRY_RUN"
-    else:
-        dr = ""
-    print(f"DONE_ALL{dr}")
 
 
 if __name__ == "__main__":

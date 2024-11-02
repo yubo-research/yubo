@@ -10,7 +10,6 @@ Initialize num_cand points, x, to some guess at x_max.
   - Pick a batch of num_cand points, x_pivot, uniformly randomly (or Sobol), in the (convex) feasible region (ex., bounding box).
   - Set x_cand = x + s*(x_pivot - x)  <== Contraction mapping
   - Take a joint sample over the points x_cand.
-  - 
 
   The contraction mapping results in a point in the feasible region b/c the region is convex. This should be faster
    to compute than the combination of hnr and truncated normal (used in PStarSampler).
