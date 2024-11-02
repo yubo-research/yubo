@@ -13,6 +13,22 @@ class Sample:
     p: np.array
 
 
+def intersect_with_box(x_inside, x_outside):
+    t_min, t_max = 0, 1  # Initialize the range of valid t values
+    for i in range(len(x_inside)):
+        t0 = (0 - x_inside[i]) / (x_outside[i] - x_inside[i])  # Intersection with the lower boundary
+        t1 = (1 - x_inside[i]) / (x_outside[i] - x_inside[i])  # Intersection with the upper boundary
+        t0, t1 = min(t0, t1), max(t0, t1)  # Order t0 and t1
+        t_min = max(t_min, t0)  # Update the lower bound of t
+        t_max = min(t_max, t1)  # Update the upper bound of t
+
+    print("T:", t_min, t_max)
+    if t_min > t_max:
+        return None  # No valid intersection
+    print("D:", x_outside - x_inside, t_min * (x_outside - x_inside))
+    return x_inside + t_min * (x_outside - x_inside)
+
+
 def var_of_var(w: torch.Tensor, X: torch.Tensor):
     assert torch.abs(w.sum() - 1) < 1e-6, w.sum()
     mu = (w * X**2).sum(dim=0)

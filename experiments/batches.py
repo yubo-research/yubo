@@ -7,6 +7,7 @@ import time
 from analysis.data_io import data_is_done
 from experiments.dist_modal import DistModal
 from experiments.experiment_sampler import mk_replicates, prep_d_args
+from experiments.func_names import funcs_1d, funcs_nd
 from experiments.modal_interactive import app
 
 
@@ -51,8 +52,6 @@ def run(cmds, max_parallel, b_dry_run=False):
 
 
 def prep_mtv_repro(results_dir):
-    from experiments.func_names import funcs_1d, funcs_nd
-
     exp_dir = "exp_pss_repro_mtv_3"
 
     opts = ["optuna"]  # "mtv-pts", "pts", "mtv", "sobol", "random", "ei", "ucb", "dpp", "sr", "gibbon", "lei"]
@@ -66,8 +65,6 @@ def prep_mtv_repro(results_dir):
 
 
 def prep_ts_hd(results_dir):
-    from experiments.func_names import funcs_1d, funcs_nd
-
     exp_dir = "exp_pss_ts_hd"
 
     opts = ["optuna"]  # ["ei", "ucb", "gibbon", "sr"]  # "mtv-pts", "pts", "ts", "turbo-1", "sobol", "random"]
@@ -124,8 +121,6 @@ def prep_turbo_ackley_repro(results_dir):
 
 
 def prep_sweep_q(results_dir):
-    from experiments.func_names import funcs_1d, funcs_nd
-
     exp_dir = "exp_sweep_q"
 
     opts = ["pts"]
@@ -208,7 +203,7 @@ def prep_cum_time_obs(results_dir):
             prep_d_args(
                 results_dir,
                 exp_dir=exp_dir,
-                funcs=["sphere"],
+                funcs=funcs_nd,
                 dims=[10],
                 num_arms=10,
                 num_replications=3,
@@ -220,12 +215,33 @@ def prep_cum_time_obs(results_dir):
     return cmds
 
 
+def prep_pss_sweep(results_dir):
+    exp_dir = "exp_pss_sweep"
+
+    opts = ["random"]
+    opts += [f"pss_sweep-{n}" for n in [1, 3, 10, 30, 100, 300]]
+
+    return prep_d_args(
+        results_dir,
+        exp_dir=exp_dir,
+        funcs=funcs_nd,
+        dims=[1, 3, 10, 30, 100, 300],
+        num_arms=1,
+        num_replications=30,
+        opts=opts,
+        noises=[None],
+        num_rounds=10,
+        func_category="g",
+    )
+
+
+################################
+
+
 def prep_d_argss():
     results_dir = "results"
 
-    # assert False, "Select prep function"
-
-    return prep_mtv_repro(results_dir)
+    return prep_pss_sweep(results_dir)
 
 
 @app.local_entrypoint()

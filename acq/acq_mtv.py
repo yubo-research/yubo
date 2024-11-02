@@ -10,6 +10,7 @@ from torch.quasirandom import SobolEngine
 
 from sampling.pstar_sampler import PStarSampler
 from sampling.stagger_thompson_sampler import StaggerThompsonSampler
+from sampling.stagger_thompson_sampler_2 import StaggerThompsonSampler2
 
 from .acq_util import find_max
 
@@ -21,6 +22,7 @@ class AcqMTV(MCAcquisitionFunction):
         num_X_samples,
         ts_only=False,
         k_mcmc=100,
+        num_mcmc=None,
         sample_type="sts",
         num_refinements=30,
         x_max_type="find",
@@ -28,7 +30,7 @@ class AcqMTV(MCAcquisitionFunction):
     ) -> None:
         super().__init__(model=model, **kwargs)
         print(
-            f"AcqMTV: num_X_samples={num_X_samples} ts_only={ts_only} k_mcmc={k_mcmc} num_refinements = {num_refinements} sample_type={sample_type} x_max_type = {x_max_type}"
+            f"AcqMTV: num_X_samples={num_X_samples} ts_only={ts_only} k_mcmc={k_mcmc} num_mcmc = {num_mcmc} num_refinements = {num_refinements} sample_type={sample_type} x_max_type = {x_max_type}"
         )
         self.ts_only = ts_only
 
@@ -39,7 +41,6 @@ class AcqMTV(MCAcquisitionFunction):
         self.dtype = X_0.dtype
         self.weights = None
 
-        self._k_mcmc = k_mcmc
         self._num_refinements = num_refinements
         self._x_max_type = x_max_type
 
@@ -51,7 +52,7 @@ class AcqMTV(MCAcquisitionFunction):
             # TODO: Write acq's for pss and sts and get rid of ts_only.
             if sample_type == "pss":
                 self._set_x_max()
-                pss = PStarSampler(k_mcmc, self.model, self.X_max)
+                pss = PStarSampler(k_mcmc, num_mcmc, self.model, self.X_max)
                 self.X_samples = pss(num_X_samples)
             elif sample_type == "sts":
                 self._set_x_max()
@@ -59,6 +60,12 @@ class AcqMTV(MCAcquisitionFunction):
                     self.X_samples = self._stagger_thompson_sampler(num_X_samples)
                 else:
                     self.X_samples = "sts"
+            elif sample_type == "sts2":
+                self._set_x_max()
+                if not ts_only:
+                    self.X_samples = self._stagger_thompson_sampler_2(num_X_samples)
+                else:
+                    self.X_samples = "sts2"
             elif sample_type == "pts":
                 self._set_x_max()
                 assert not ts_only, "Use designer pts directly"
@@ -120,6 +127,8 @@ class AcqMTV(MCAcquisitionFunction):
     def _draw(self, num_arms):
         if self.X_samples == "sts":
             return self._stagger_thompson_sampler(num_arms)
+        elif self.X_samples == "sts2":
+            return self._stagger_thompson_sampler_2(num_arms)
         assert len(self.X_samples) >= num_arms, (len(self.X_samples), num_arms)
         i = np.arange(len(self.X_samples))
         i = np.random.choice(i, size=(int(num_arms)), replace=False)
@@ -130,18 +139,9 @@ class AcqMTV(MCAcquisitionFunction):
         sts.refine(self._num_refinements)
         return sts.samples()
 
-    # def _calc_p_max_from_Y(self, Y):
-    #     is_best = torch.argmax(Y, dim=-1)
-    #     idcs, counts = torch.unique(is_best, return_counts=True)
-    #     p_max = torch.zeros(Y.shape[-1])
-    #     p_max[idcs] = counts / Y.shape[0]
-    #     return p_max
-
-    # def _p_target(self, X, num_Y_samples):
-    #     mvn = self.model.posterior(X)
-    #     Y = mvn.sample(torch.Size([num_Y_samples])).squeeze()
-    #     assert torch.all((X >= 0) & (X <= 1))
-    #     return self._calc_p_max_from_Y(Y)
+    def _stagger_thompson_sampler_2(self, num_samples):
+        sts = StaggerThompsonSampler2(self.model, self.X_max, num_candidates=10 * num_samples)
+        return sts.sample(num_samples)
 
     @t_batch_mode_transform()
     def forward(self, X):

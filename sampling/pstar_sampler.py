@@ -5,9 +5,10 @@ from sampling.hnr import find_perturbation_direction, perturb_normal
 
 
 class PStarSampler:
-    def __init__(self, k_mcmc, model, X_max):
+    def __init__(self, k_mcmc, num_mcmc, model, X_max):
         self.model = model
         self.k_mcmc = k_mcmc
+        self.num_mcmc = num_mcmc
         self.X_max = X_max
         self._eps_interior = torch.tensor(1e-6)
         self._eps_min = 1e-8
@@ -23,7 +24,13 @@ class PStarSampler:
         X_max = torch.maximum(self._eps_interior, torch.minimum(1 - self._eps_interior, self.X_max))
         X = torch.tile(X_max, (num_X_samples, 1))
 
-        num_mcmc = self._num_dim * self.k_mcmc
+        if self.k_mcmc is not None:
+            assert self.num_mcmc is None
+            num_mcmc = self._num_dim * self.k_mcmc
+        else:
+            assert self.k_mcmc is None
+            assert self.num_mcmc is not None
+            num_mcmc = self.num_mcmc
 
         eps = 1
         eps_good = False

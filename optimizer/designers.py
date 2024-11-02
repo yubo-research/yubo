@@ -120,6 +120,32 @@ class Designers:
                     "num_candidates": num_candidates,
                 },
             )
+        elif designer_name.startswith("pss_sweep_kmcmc"):
+            k_mcmc = int(designer_name.split("-")[1])
+            return bt_designer(
+                AcqMTV,
+                init_sobol=0,
+                acq_kwargs={"ts_only": True, "num_X_samples": default_num_X_samples, "sample_type": "pss", "k_mcmc": k_mcmc},
+            )
+        elif designer_name.startswith("pss_sweep_num_mcmc"):
+            num_mcmc = int(designer_name.split("-")[1])
+            return bt_designer(
+                AcqMTV,
+                init_sobol=0,
+                acq_kwargs={"ts_only": True, "num_X_samples": default_num_X_samples, "sample_type": "pss", "k_mcmc": None, "num_mcmc": num_mcmc},
+            )
+        elif designer_name.startswith("sts_sweep"):
+            num_refinements = int(designer_name.split("-")[1])
+            return bt_designer(
+                AcqMTV,
+                init_sobol=0,
+                acq_kwargs={
+                    "ts_only": True,
+                    "sample_type": "sts",
+                    "num_X_samples": default_num_X_samples,
+                    "num_refinements": num_refinements,
+                },
+            )
         elif designer_name == "ucb":
             return bt_designer(qUpperConfidenceBound, acq_kwargs={"beta": 1})
         elif designer_name == "ei":
@@ -184,6 +210,16 @@ class Designers:
                     "sample_type": "sts",
                     "num_X_samples": default_num_X_samples,
                     "num_refinements": 30,
+                },
+            )
+        elif designer_name == "sts2":
+            return bt_designer(
+                AcqMTV,
+                init_sobol=0,
+                acq_kwargs={
+                    "ts_only": True,
+                    "sample_type": "sts2",
+                    "num_X_samples": default_num_X_samples,
                 },
             )
         elif designer_name == "sts-t":
