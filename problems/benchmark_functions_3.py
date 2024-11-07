@@ -6,8 +6,6 @@ from numpy import dot
 
 from scipy.special import jv as besselj
 
-from traitlets import This
-
 
 #src = "https://github.com/sigopt/evalset" 
 
@@ -16,10 +14,58 @@ def lzip(*args):
     return list(zip(*args))
 
 
+class SigOptWrapper:
+    def __init__(self, func_class, *args, dim=None, **kwargs):
+        self.function = func_class(*args, **kwargs)
+        dim = getattr(self.function, "dim", dim or 2)
+        if hasattr(self.function, 'bounds'):
+            self.bounds = numpy.array(self.function.bounds)
+        else:
+            raise ValueError("Function class must have a 'bounds' attribute.")
+        self.scaled_bounds = numpy.array([-1, 1])
+        self.fmin = getattr(self.function, 'fmin', None)
+        self.fmax = getattr(self.function, 'fmax', None)
+        self.apply_normalization = self.fmin is not None and self.fmax is not None
+
+    def __call__(self, x):
+        rescaled_x = self._rescale(x, self.scaled_bounds, self.bounds)
+        result = self.function(rescaled_x)
+        if self.apply_normalization:
+            result = self._normalize(result, self.fmin, self.fmax)
+        return result
+
+    def _rescale(self, x, from_bounds, to_bounds):
+        return to_bounds[:, 0] + (x - from_bounds[0]) * (to_bounds[:, 1] - to_bounds[:, 0]) / (from_bounds[1] - from_bounds[0])
+
+    def _normalize(self, result, fmin, fmax):
+        return -1 + 2 * (result - fmin) / (fmax - fmin)
+
+'''
+class SigOptWrapperMcCourt:
+    def __init__(self, func_class, dim=None, *args, **kwargs):
+        self.function = func_class(*args, **kwargs)
+        self.dim = dim if dim else getattr(self.function, 'dim', 7)  
+        self.bounds = numpy.array(self.function.bounds)    
+        self.input_bounds = self.function.bounds
+        self.scaled_bounds = [(-1, 1)] * self.dim
+
+    def scale_input(self, x):
+        lower_bounds = numpy.array([low for low, high in self.input_bounds])
+        upper_bounds = numpy.array([high for low, high in self.input_bounds])
+        return -1 + 2 * (x - lower_bounds) / (upper_bounds - lower_bounds)
+
+    def rescale_output(self, y):
+        min_output, max_output = self.function.fmin, self.function.fmax
+        return -1 + 2 * (y - min_output) / (max_output - min_output)
+
+    def __call__(self, x):
+        x_scaled = self.scale_input(x)
+        raw_output = self.function(x_scaled)
+        return self.rescale_output(raw_output)
+'''
 class Adjiman:
     def __init__(self, dim=2):
         assert dim == 2
-        super(Adjiman, self).__init__(dim)
         self.bounds = ([-1, 2], [-1, 1])
         self.min_loc = [2, 0.10578]
         self.fmin = -2.02180678
@@ -33,23 +79,22 @@ class Adjiman:
 
 class ArithmeticGeometricMean:
     def __init__(self, dim=2):
-        super(ArithmeticGeometricMean, self).__init__(dim)
-        self.bounds = lzip([0] * self.dim, [10] * self.dim)
-        self.min_loc = [0] * self.dim
+        assert dim == 2
+        self.bounds = lzip([0] * dim, [10] * dim)
+        self.min_loc = [0] * dim
         self.fmin = 0
-        self.fmax = (10 * (self.dim - 1.0) / self.dim) ** 2
+        self.fmax = (10 * (dim - 1.0) / dim) ** 2
         self.classifiers = ['bound_min', 'boring', 'multi_min']
 
     def __call__(self, x):
-        return (mean(x) - prod(x) ** (1.0 / self.dim)) ** 2
+        return (mean(x) - prod(x) ** (1.0 / 2)) ** 2
 
 
 class BartelsConn:
     def __init__(self, dim=2):
         assert dim == 2
-        super(BartelsConn, self).__init__(dim)
-        self.bounds = lzip([-2] * self.dim, [5] * self.dim)
-        self.min_loc = [0] * self.dim
+        self.bounds = lzip([-2] * dim, [5] * dim)
+        self.min_loc = [0] * dim
         self.fmin = 1
         self.fmax = 76.2425864601
         self.classifiers = ['nonsmooth', 'unimodal']
@@ -61,8 +106,7 @@ class BartelsConn:
 class Bird:
     def __init__(self, dim=2):
         assert dim == 2
-        super(Bird, self).__init__(dim)
-        self.bounds = lzip([-2 * pi] * self.dim, [2 * pi] * self.dim)
+        self.bounds = lzip([-2 * pi] * dim, [2 * pi] * dim)
         self.min_loc = [4.701055751981055, 3.152946019601391]
         self.fmin = -64.60664462282
         self.fmax = 160.63195224589
@@ -76,9 +120,8 @@ class Bird:
 class Bohachevsky:
     def __init__(self, dim=2):
         assert dim == 2
-        super(Bohachevsky, self).__init__(dim)
-        self.bounds = lzip([-15] * self.dim, [8] * self.dim)
-        self.min_loc = [0] * self.dim
+        self.bounds = lzip([-15] * dim, [8] * dim)
+        self.min_loc = [0] * dim
         self.fmin = 0
         self.fmax = 675.6
         self.classifiers = ['oscillatory']
@@ -91,7 +134,6 @@ class Bohachevsky:
 class BoxBetts:
     def __init__(self, dim=3):
         assert dim == 3
-        super(BoxBetts, self).__init__(dim)
         self.bounds = ([0.9, 1.2], [9, 11.2], [0.9, 1.2])
         self.min_loc = [1, 10, 1]
         self.fmin = 0
@@ -108,9 +150,8 @@ class BoxBetts:
 class Brent:
     def __init__(self, dim=2):
         assert dim == 2
-        super(Brent, self).__init__(dim)
-        self.bounds = lzip([-10] * self.dim, [10] * self.dim)
-        self.min_loc = [-10] * self.dim
+        self.bounds = lzip([-10] * dim, [10] * dim)
+        self.min_loc = [-10] * dim
         self.fmin = 0
         self.fmax = 800
         self.classifiers = ['unimodal', 'bound_min']
@@ -123,8 +164,7 @@ class Brent:
 class CarromTable:
     def __init__(self, dim=2):
         assert dim == 2
-        super(CarromTable, self).__init__(dim)
-        self.bounds = lzip([-10] * self.dim, [10] * self.dim)
+        self.bounds = lzip([-10] * dim, [10] * dim)
         self.min_loc = [9.646157266348881, 9.646134286497169]
         self.fmin = -24.15681551650653
         self.fmax = 0
@@ -138,8 +178,7 @@ class CarromTable:
 class Chichinadze:
     def __init__(self, dim=2):
         assert dim == 2
-        super(Chichinadze, self).__init__(dim)
-        self.bounds = lzip([-30] * self.dim, [30] * self.dim)
+        self.bounds = lzip([-30] * dim, [30] * dim)
         self.min_loc = [6.189866586965680, 0.5]
         self.fmin = -42.94438701899098
         self.fmax = 1261
@@ -154,11 +193,10 @@ class Chichinadze:
 class Cigar:
     def __init__(self, dim=2):
         assert dim > 1
-        super(Cigar, self).__init__(dim)
-        self.bounds = lzip([-1] * self.dim, [1] * self.dim)
-        self.min_loc = [0] * self.dim
+        self.bounds = lzip([-1] * dim, [1] * dim)
+        self.min_loc = [0] * dim
         self.fmin = 0
-        self.fmax = 1 + 1e6 * self.dim
+        self.fmax = 1 + 1e6 * dim
         self.classifiers = ['unimodal', 'unscaled']
 
     def __call__(self, x):
@@ -168,8 +206,7 @@ class Cigar:
 class Cola:
     def __init__(self, dim=17):
         assert dim == 17
-        super(Cola, self).__init__(dim)
-        self.bounds = [[0, 4]] + list(lzip([-4] * (self.dim - 1), [4] * (self.dim - 1)))
+        self.bounds = [[0, 4]] + list(lzip([-4] * (dim - 1), [4] * (dim - 1)))
         self.min_loc = [
             0.651906, 1.30194, 0.099242, -0.883791, -0.8796,
             0.204651, -3.28414, 0.851188, -3.46245, 2.53245, -0.895246,
@@ -201,9 +238,8 @@ class Cola:
 class Corana:
     def __init__(self, dim=4):
         assert dim == 4
-        super(Corana, self).__init__(dim)
-        self.bounds = lzip([-5] * self.dim, [5] * self.dim)
-        self.min_loc = [0] * self.dim
+        self.bounds = lzip([-5] * dim, [5] * dim)
+        self.min_loc = [0] * dim
         self.fglob = 0
         self.fmin = 0
         self.fmax = 24999.3261012
@@ -223,11 +259,10 @@ class Corana:
 
 class CosineMixture:
     def __init__(self, dim=2):
-        super(CosineMixture, self).__init__(dim)
-        self.bounds = lzip([-1] * self.dim, [1] * self.dim)
-        self.min_loc = [0.184872823182918] * self.dim
-        self.fmin = -0.063012202176250 * self.dim
-        self.fmax = 0.9 * self.dim
+        self.bounds = lzip([-1] * dim, [1] * dim)
+        self.min_loc = [0.184872823182918] * dim
+        self.fmin = -0.063012202176250 * dim
+        self.fmax = 0.9 * dim
         self.classifiers = ['oscillatory', 'multi_min']
 
     def __call__(self, x):
@@ -236,11 +271,10 @@ class CosineMixture:
 
 class Csendes:
     def __init__(self, dim=2):
-        super(Csendes, self).__init__(dim)
-        self.bounds = lzip([-0.5] * self.dim, [1] * self.dim)
-        self.min_loc = [0] * self.dim
+        self.bounds = lzip([-0.5] * dim, [1] * dim)
+        self.min_loc = [0] * dim
         self.fmin = 0
-        self.fmax = self.do_evaluate(asarray([1] * self.dim))
+        self.fmax = self.do_evaluate(asarray([1] * dim))
         self.classifiers = ['unimodal']
 
     def __call__(self, x):
@@ -250,9 +284,8 @@ class Csendes:
 class Cube:
     def __init__(self, dim=2):
         assert dim == 2
-        super(Cube, self).__init__(dim)
-        self.bounds = lzip([-10] * self.dim, [10] * self.dim)
-        self.min_loc = [1] * self.dim
+        self.bounds = lzip([-10] * dim, [10] * dim)
+        self.min_loc = [1] * dim
         self.fmin = 0
         self.fmax = 102010121
         self.classifiers = ['unimodal', 'boring', 'unscaled']
@@ -265,9 +298,8 @@ class Cube:
 class Damavandi:
     def __init__(self, dim=2):
         assert dim == 2
-        super(Damavandi, self).__init__(dim)
-        self.bounds = lzip([0] * self.dim, [14] * self.dim)
-        self.min_loc = [2] * self.dim
+        self.bounds = lzip([0] * dim, [14] * dim)
+        self.min_loc = [2] * dim
         self.fmin = 0
         self.fmax = 149
 
@@ -289,35 +321,32 @@ class Damavandi:
 
 class Deb01:
     def __init__(self, dim=2):
-        super(Deb01, self).__init__(dim)
-        self.bounds = lzip([-1] * self.dim, [1] * self.dim)
-        self.min_loc = [0.3] * self.dim
+        self.bounds = lzip([-1] * dim, [1] * dim)
+        self.min_loc = [0.3] * dim
         self.fmin = -1
         self.fmax = 0
         self.classifiers = ['oscillatory', 'multi_min']
 
     def __call__(self, x):
-        return -(1.0 / self.dim) * sum(sin(5 * pi * x) ** 6)
+        return -(1.0 / 2) * sum(sin(5 * pi * x) ** 6)
 
 
 class Deb02:
     def __init__(self, dim=2):
-        super(Deb02, self).__init__(dim)
-        self.bounds = lzip([0] * self.dim, [1] * self.dim)
-        self.min_loc = [0.0796993926887] * self.dim
+        self.bounds = lzip([0] * dim, [1] * dim)
+        self.min_loc = [0.0796993926887] * dim
         self.fmin = -1
         self.fmax = 0
         self.classifiers = ['oscillatory', 'multi_min']
 
     def __call__(self, x):
-        return -(1.0 / self.dim) * sum(sin(5 * pi * (x ** 0.75 - 0.05)) ** 6)
+        return -(1.0 / 2) * sum(sin(5 * pi * (x ** 0.75 - 0.05)) ** 6)
 
 
 class Deceptive:
     def __init__(self, dim=2):
         assert dim == 2
-        super(Deceptive, self).__init__(dim)
-        self.bounds = lzip([0] * self.dim, [1] * self.dim)
+        self.bounds = lzip([0] * dim, [1] * dim)
         self.min_loc = [.333333, .6666666]
         self.fmin = -1
         self.fmax = 0
@@ -326,8 +355,8 @@ class Deceptive:
     def __call__(self, x):
         alpha = asarray(self.min_loc)
         beta = 2
-        g = zeros((self.dim, ))
-        for i in range(self.dim):
+        g = zeros((2, ))
+        for i in range(2):
             if x[i] <= 0:
                 g[i] = x[i]
             elif x[i] < 0.8 * alpha[i]:
@@ -340,18 +369,17 @@ class Deceptive:
                 g[i] = (x[i] - 1) / (1 - alpha[i]) + .8
             else:
                 g[i] = x[i] - 1
-        return -((1.0 / self.dim) * sum(g)) ** beta
+        return -((1.0 / 2) * sum(g)) ** beta
 
 
 class DeflectedCorrugatedSpring:
     def __init__(self, dim=2):
-        super(DeflectedCorrugatedSpring, self).__init__(dim)
         self.alpha = 5.0
         self.K = 5.0
-        self.bounds = lzip([0] * self.dim, [1.5 * self.alpha] * self.dim)
-        self.min_loc = [self.alpha] * self.dim
+        self.bounds = lzip([0] * dim, [1.5 * self.alpha] * dim)
+        self.min_loc = [self.alpha] * dim
         self.fmin = self.do_evaluate(asarray(self.min_loc))
-        self.fmax = self.do_evaluate(zeros(self.dim))
+        self.fmax = self.do_evaluate(zeros(dim))
         self.classifiers = ['oscillatory']
 
     def __call__(self, x):
@@ -361,8 +389,7 @@ class DeflectedCorrugatedSpring:
 class Dolan:
     def __init__(self, dim=5):
         assert dim == 5
-        super(Dolan, self).__init__(dim)
-        self.bounds = lzip([-100] * self.dim, [20] * self.dim)
+        self.bounds = lzip([-100] * dim, [20] * dim)
         self.min_loc = [94.3818, 43.4208, 44.8427, -40.2365, -21.0455]
         self.fmin = 0
         self.fmax = 2491.1585548
@@ -375,9 +402,8 @@ class Dolan:
 
 class DropWave:
     def __init__(self, dim=2):
-        super(DropWave, self).__init__(dim)
-        self.bounds = lzip([-2] * self.dim, [5.12] * self.dim)
-        self.min_loc = [0] * self.dim
+        self.bounds = lzip([-2] * dim, [5.12] * dim)
+        self.min_loc = [0] * dim
         self.fmin = -1
         self.fmax = 0
         self.classifiers = ['oscillatory']
@@ -390,9 +416,8 @@ class DropWave:
 class EggCrate:
     def __init__(self, dim=2):
         assert dim == 2
-        super(EggCrate, self).__init__(dim)
-        self.bounds = lzip([-5] * self.dim, [2] * self.dim)
-        self.min_loc = [0] * self.dim
+        self.bounds = lzip([-5] * dim, [2] * dim)
+        self.min_loc = [0] * dim
         self.fmin = 0
         self.fmax = 96.2896284292
         self.classifiers = ['oscillatory']
@@ -405,8 +430,7 @@ class EggCrate:
 class ElAttarVidyasagarDutta:
     def __init__(self, dim=2):
         assert dim == 2
-        super(ElAttarVidyasagarDutta, self).__init__(dim)
-        self.bounds = lzip([-100] * self.dim, [100] * self.dim)
+        self.bounds = lzip([-100] * dim, [100] * dim)
         self.min_loc = [3.40918683, -2.17143304]
         self.fmin = 1.712780354
         self.fmax = 1.02030165675e+12
@@ -419,11 +443,10 @@ class ElAttarVidyasagarDutta:
 
 class Exponential:
     def __init__(self, dim=2):
-        super(Exponential, self).__init__(dim)
-        self.bounds = lzip([-0.7] * self.dim, [0.2] * self.dim)
-        self.min_loc = [0] * self.dim
+        self.bounds = lzip([-0.7] * dim, [0.2] * dim)
+        self.min_loc = [0] * dim
         self.fmin = -1
-        self.fmax = self.do_evaluate(asarray([-0.7] * self.dim))
+        self.fmax = self.do_evaluate(asarray([-0.7] * dim))
         self.classifiers = ['unimodal']
 
     def __call__(self, x):
@@ -433,8 +456,7 @@ class Exponential:
 class Franke:
     def __init__(self, dim=2):
         assert dim == 2
-        super(Franke, self).__init__(dim)
-        self.bounds = lzip([0] * self.dim, [1] * self.dim)
+        self.bounds = lzip([0] * dim, [1] * dim)
         self.min_loc = [0.45571037432, 0.78419067287]
         self.fmin = 0.00111528244
         self.fmax = 1.22003257123
@@ -452,8 +474,7 @@ class Franke:
 class FreudensteinRoth:
     def __init__(self, dim=2):
         assert dim == 2
-        super(FreudensteinRoth, self).__init__(dim)
-        self.bounds = lzip([-10] * self.dim, [10] * self.dim)
+        self.bounds = lzip([-10] * dim, [10] * dim)
         self.min_loc = [5, 4]
         self.fmin = 0
         self.fmax = 2908130
@@ -469,8 +490,7 @@ class FreudensteinRoth:
 class Gear:
     def __init__(self, dim=4):
         assert dim == 4
-        super(Gear, self).__init__(dim)
-        self.bounds = lzip([12] * self.dim, [60] * self.dim)
+        self.bounds = lzip([12] * dim, [60] * dim)
         self.min_loc = [16, 19, 43, 49]
         self.fmin = 2.7e-12
         self.fmax = 5
@@ -484,8 +504,7 @@ class Gear:
 class Giunta:
     def __init__(self, dim=2):
         assert dim == 2
-        super(Giunta, self).__init__(dim)
-        self.bounds = lzip([-1] * self.dim, [1] * self.dim)
+        self.bounds = lzip([-1] * dim, [1] * dim)
         self.min_loc = [0.4673200277395354, 0.4673200169591304]
         self.fmin = 0.06447042053690566
         self.fmax = 0.752651013458
@@ -499,8 +518,7 @@ class Giunta:
 class GoldsteinPrice:
     def __init__(self, dim=2):
         assert dim == 2
-        super(GoldsteinPrice, self).__init__(dim)
-        self.bounds = lzip([-2] * self.dim, [2] * self.dim)
+        self.bounds = lzip([-2] * dim, [2] * dim)
         self.min_loc = [0, -1]
         self.fmin = 3
         self.fmax = 1015689.58873
@@ -516,8 +534,7 @@ class GoldsteinPrice:
 class Hansen:
     def __init__(self, dim=2):
         assert dim == 2
-        super(Hansen, self).__init__(dim)
-        self.bounds = lzip([-10] * self.dim, [10] * self.dim)
+        self.bounds = lzip([-10] * dim, [10] * dim)
         self.min_loc = [-7.58989583, -7.70831466]
         self.fmin = -176.54
         self.fmax = 198.974631626
@@ -534,8 +551,7 @@ class Hansen:
 class HelicalValley:
     def __init__(self, dim=3):
         assert dim == 3
-        super(HelicalValley, self).__init__(dim)
-        self.bounds = lzip([-1] * self.dim, [2] * self.dim)
+        self.bounds = lzip([-1] * dim, [2] * dim)
         self.min_loc = [1, 0, 0]
         self.fmin = 0
         self.fmax = 4902.295565
@@ -549,8 +565,7 @@ class HelicalValley:
 class HolderTable:
     def __init__(self, dim=2):
         assert dim == 2
-        super(HolderTable, self).__init__(dim)
-        self.bounds = lzip([-10] * self.dim, [10] * self.dim)
+        self.bounds = lzip([-10] * dim, [10] * dim)
         self.min_loc = [8.055023472141116, 9.664590028909654]
         self.fglob = -19.20850256788675
         self.fmin = -19.20850256788675
@@ -565,8 +580,7 @@ class HolderTable:
 class Hosaki:
     def __init__(self, dim=2):
         assert dim == 2
-        super(Hosaki, self).__init__(dim)
-        self.bounds = lzip([0] * self.dim, [5] * self.dim)
+        self.bounds = lzip([0] * dim, [5] * dim)
         self.min_loc = [4, 2]
         self.fmin = -2.3458
         self.fmax = 0.54134113295
@@ -579,8 +593,7 @@ class Hosaki:
 class HosakiExpanded(Hosaki):
     def __init__(self, dim=2):
         assert dim == 2
-        super(HosakiExpanded, self).__init__(dim)
-        self.bounds = lzip([0] * self.dim, [10] * self.dim)
+        self.bounds = lzip([0] * dim, [10] * dim)
         self.fmax = 426.39606928
         self.classifiers = ['boring', 'unscaled']
 
@@ -588,8 +601,7 @@ class HosakiExpanded(Hosaki):
 class JennrichSampson:
     def __init__(self, dim=2):
         assert dim == 2
-        super(JennrichSampson, self).__init__(dim)
-        self.bounds = lzip([-1] * self.dim, [1] * self.dim)
+        self.bounds = lzip([-1] * dim, [1] * dim)
         self.min_loc = [0.257825, 0.257825]
         self.fmin = 124.3621824
         self.fmax = 2241506295.39
@@ -604,8 +616,7 @@ class JennrichSampson:
 class Judge:
     def __init__(self, dim=2):
         assert dim == 2
-        super(Judge, self).__init__(dim)
-        self.bounds = lzip([-10] * self.dim, [10] * self.dim)
+        self.bounds = lzip([-10] * dim, [10] * dim)
         self.min_loc = [0.86479, 1.2357]
         self.fmin = 16.0817307
         self.fmax = 58903.387568
@@ -630,8 +641,7 @@ class Judge:
 class Keane:
     def __init__(self, dim=2):
         assert dim == 2
-        super(Keane, self).__init__(dim)
-        self.bounds = lzip([0] * self.dim, [10] * self.dim)
+        self.bounds = lzip([0] * dim, [10] * dim)
         self.min_loc = [0, 1.39325]
         self.fmin = -0.67366751941
         self.fmax = 0
@@ -645,8 +655,7 @@ class Keane:
 class Langermann:
     def __init__(self, dim=2):
         assert dim == 2
-        super(Langermann, self).__init__(dim)
-        self.bounds = lzip([0] * self.dim, [10] * self.dim)
+        self.bounds = lzip([0] * dim, [10] * dim)
         self.min_loc = [2.00299219, 1.006096]
         self.fmin = -5.1621259
         self.fmax = 4.15526145026
@@ -662,15 +671,14 @@ class Langermann:
 class LennardJones6:
     def __init__(self, dim=6):
         assert dim == 6
-        super(LennardJones6, self).__init__(dim)
-        self.bounds = lzip([-3] * self.dim, [3] * self.dim)
+        self.bounds = lzip([-3] * dim, [3] * dim)
         self.min_loc = [-2.66666470373, 2.73904387714, 1.42304625988, -1.95553276732, 2.81714839844, 2.12175295546]
         self.fmin = -1
         self.fmax = 0
         self.classifiers = ['boring', 'multi_min']
 
     def __call__(self, x):
-        k = int(self.dim / 3)
+        k = int(6 / 3)
         s = 0
         for i in range(k - 1):
             for j in range(i + 1, k):
@@ -689,9 +697,8 @@ class LennardJones6:
 class Leon:
     def __init__(self, dim=2):
         assert dim == 2
-        super(Leon, self).__init__(dim)
-        self.bounds = lzip([-1.2] * self.dim, [1.2] * self.dim)
-        self.min_loc = [0] * self.dim
+        self.bounds = lzip([-1.2] * dim, [1.2] * dim)
+        self.min_loc = [0] * dim
         self.fmin = 0
         self.fmax = 697
         self.classifiers = ['unimodal']
@@ -704,7 +711,6 @@ class Leon:
 class McCormick:
     def __init__(self, dim=2):
         assert dim == 2
-        This.__init__(self, dim)
         self.bounds = [(-1.5, 4), (-3, 4)]
         self.min_loc = [-0.5471975602214493, -1.547197559268372]
         self.fmin = -1.913222954981037
@@ -745,7 +751,6 @@ class McCourtBase:
         return ret_val
 
     def __init__(self, dim, kernel, e_mat, coefs, centers):
-        super(McCourtBase, self).__init__(dim)
         assert e_mat.shape == centers.shape
         assert e_mat.shape[0] == coefs.shape[0]
         assert e_mat.shape[1] == dim
@@ -767,7 +772,7 @@ class McCourtBase:
 
 class McCourt01(McCourtBase):
     def __init__(self, dim=7):
-        assert dim == 7
+        #assert dim == 7
         centers = numpy.array([
             [.1, .1, .1, .1, .1, .1, .1],
             [.3, .1, .5, .1, .8, .8, .6],
@@ -790,7 +795,6 @@ class McCourt01(McCourtBase):
             r2 = self.dist_sq(x, centers, e_mat)
             return 1 / numpy.sqrt(1 + r2)
 
-        super(McCourt01, self).__init__(dim, kernel, e_mat, coefs, centers)
         self.min_loc = [0.6241, 0.7688, 0.8793, 0.2739, 0.7351, 0.8499, 0.6196]
         self.fmin = -0.0859426686096
         self.fmax = 2.06946125482978
@@ -821,7 +825,6 @@ class McCourt02(McCourtBase):
             r2 = self.dist_sq(x, centers, e_mat)
             return 1 / numpy.sqrt(1 + r2)
 
-        super(McCourt02, self).__init__(dim, kernel, e_mat, coefs, centers)
         self.min_loc = [0.4068, 0.4432, 0.6479, 0.1978, 0.7660, 0.7553, 0.5640]
         self.fmin = -2.74162116801
         self.fmax = -1.25057003098
@@ -858,7 +861,6 @@ class McCourt03(McCourtBase):
             r2 = self.dist_sq(x, centers, e_mat)
             return numpy.exp(-r2)
 
-        super(McCourt03, self).__init__(dim, kernel, e_mat, coefs, centers)
         self.min_loc = [0.9317, 0.1891, 0.2503, 0.3646, 0.1603, 0.9829, 0.0392, 0.3263, 0.6523]
         self.fmin = -3.02379637466
         self.fmax = 0.28182628628
@@ -895,7 +897,6 @@ class McCourt04(McCourtBase):
             r2 = self.dist_sq(x, centers, e_mat)
             return numpy.cos(numpy.pi*numpy.sqrt(r2))*numpy.exp(-r2)
 
-        super(McCourt04, self).__init__(dim, kernel, e_mat, coefs, centers)
         self.min_loc = [0.8286, 0.3562, 0.3487, 0.4623, 0.1549, 0.7182, 0.2218, 0.3919, 0.5394, 0.441]
         self.fmin = -4.631135472012
         self.fmax = 0.81136346883
@@ -934,7 +935,6 @@ class McCourt05(McCourtBase):
             r2 = self.dist_sq(x, centers, e_mat)
             return numpy.exp(-r2)
 
-        super(McCourt05, self).__init__(dim, kernel, e_mat, coefs, centers)
         self.min_loc = [0.636, 0.622, 0.39, 0.622, 0.29, 0.047, 0.97, 0.26, 0.311, 0.247, 0.794, 0.189]
         self.fmin = -11.89842508364
         self.fmax = 2.821916955234
@@ -967,7 +967,6 @@ class McCourt06(McCourtBase):
             r2 = self.dist_sq(x, centers, e_mat)
             return numpy.sqrt(1 + r2)
 
-        super(McCourt06, self).__init__(dim, kernel, e_mat, coefs, centers)
         self.min_loc = [1, 1, 0.7636, 0.5268, 1]
         self.fmin = 2.80720263234
         self.fmax = 5.26036468689
@@ -1001,7 +1000,6 @@ class McCourt07(McCourtBase):
             r = numpy.sqrt(self.dist_sq(x, centers, e_mat))
             return (1+r) * numpy.exp(-r)
 
-        super(McCourt07, self).__init__(dim, kernel, e_mat, coefs, centers)
         self.min_loc = [0.3811, 1, 0.2312, 0, 1, 0.1403]
         self.fglob = -0.36321372933
         self.fmin = -0.36321372933
@@ -1036,7 +1034,6 @@ class McCourt08(McCourtBase):
             r = numpy.sqrt(self.dist_sq(x, centers, e_mat))
             return (1 + r + .333 * r ** 2) * numpy.exp(-r)
 
-        super(McCourt08, self).__init__(dim, kernel, e_mat, coefs, centers)
         self.min_loc = [0.5067, 1, 0.5591, 0.0823]
         self.fmin = -3.45224058874
         self.fmax = -0.60279774058
@@ -1072,7 +1069,6 @@ class McCourt09(McCourtBase):
             r2 = self.dist_sq(x, centers, e_mat)
             return numpy.cos(numpy.pi * numpy.sqrt(r2)) * numpy.exp(-r2)
 
-        super(McCourt09, self).__init__(dim, kernel, e_mat, coefs, centers)
         self.min_loc = [0.594, 1, 0.205]
         self.fmin = -10.17146707797
         self.fmax = 6.55195724520
@@ -1112,7 +1108,6 @@ class McCourt10(McCourtBase):
             r2 = self.dist_sq(x, centers, e_mat)
             return 1 / numpy.sqrt(1 + r2)
 
-        super(McCourt10, self).__init__(dim, kernel, e_mat, coefs, centers)
         self.min_loc = [0.5085, 0.5433, 0.2273, 1, 0.3381, 0.0255, 1, 0.5038]
         self.fmin = -2.51939597030
         self.fmax = 5.81472085012
@@ -1152,7 +1147,6 @@ class McCourt11(McCourtBase):
             r = numpy.sqrt(self.dist_sq(x, centers, e_mat))
             return numpy.exp(-r)
 
-        super(McCourt11, self).__init__(dim, kernel, e_mat, coefs, centers)
         self.min_loc = [0.4, 0.6, 0.4, 1, 0.4, 0.2, 1, 0.3]
         self.fmin = -0.39045528652
         self.fmax = 9.07754532532
@@ -1192,7 +1186,6 @@ class McCourt12(McCourtBase):
             r = numpy.sqrt(self.dist_sq(x, centers, e_mat))
             return besselj(0, r)
 
-        super(McCourt12, self).__init__(dim, kernel, e_mat, coefs, centers)
         self.min_loc = [0.4499, 0.4553, 0.0046, 1, 0.3784, 0.3067, 0.6173]
         self.fmin = 3.54274987790
         self.fmax = 9.92924222433
@@ -1242,7 +1235,6 @@ class McCourt13(McCourtBase):
             r2 = self.dist_sq(x, centers, e_mat)
             return numpy.exp(-r2)
 
-        super(McCourt13, self).__init__(dim, kernel, e_mat, coefs, centers)
         self.min_loc = [1, 1, 1]
         self.fmin = 1.49048296359
         self.fmax = 5.15444049449
@@ -1264,7 +1256,6 @@ class McCourt14(McCourtBase):
             r2 = self.dist_sq(x, centers, e_mat)
             return numpy.exp(-r2)
 
-        super(McCourt14, self).__init__(dim, kernel, e_mat, coefs, centers)
         self.min_loc = [.1, .8, .3]
         self.fmin = -5
         self.fmax = 0.00030641748
@@ -1286,7 +1277,6 @@ class McCourt15(McCourtBase):
             r = numpy.sqrt(self.dist_sq(x, centers, e_mat))
             return numpy.exp(-r)
 
-        super(McCourt15, self).__init__(dim, kernel, e_mat, coefs, centers)
         self.min_loc = [.1, .8, .3]
         self.fmin = -5
         self.fmax = 0.00030641748
@@ -1310,7 +1300,6 @@ class McCourt16(McCourtBase):
             r2 = self.dist_sq(x, centers, e_mat)
             return 1 / numpy.sqrt(1 + r2)
 
-        super(McCourt16, self).__init__(dim, kernel, e_mat, coefs, centers)
         self.min_loc = [.1858, .6858, .1858, .4858]
         self.fmin = -0.84221700966
         self.fmax = 0.84132432380
@@ -1336,7 +1325,6 @@ class McCourt17(McCourtBase):
             r2 = self.dist_sq(x, centers, e_mat)
             return 1 / numpy.sqrt(1 + r2)
 
-        super(McCourt17, self).__init__(dim, kernel, e_mat, coefs, centers)
         self.min_loc = [.3125, .9166, .3125, .7062, .0397, .9270, .5979]
         self.fmin = -0.47089199032
         self.fmax = 4.98733340158
@@ -1366,7 +1354,6 @@ class McCourt18(McCourtBase):
             r = numpy.sqrt(self.dist_sq(x, centers, e_mat))
             return (1 + r) * exp(-r)
 
-        super(McCourt18, self).__init__(dim, kernel, e_mat, coefs, centers)
         self.min_loc = [.2677, .8696, .2677, .6594, .1322, .9543, .0577, .295]
         self.fmin = -1.42906223657
         self.fmax = 4.76974923199
@@ -1406,7 +1393,6 @@ class McCourt19(McCourtBase):
             rabs = self.dist_sq(x, centers, e_mat, dist_type=1)
             return rabs
 
-        super(McCourt19, self).__init__(dim, kernel, e_mat, coefs, centers)
         self.min_loc = [.4, .8]
         self.fmin = -8.67263950474
         self.fmax = 21.39025479756
@@ -1446,7 +1432,6 @@ class McCourt20(McCourtBase):
             rabs = self.dist_sq(x, centers, e_mat, dist_type=1)
             return numpy.exp(-rabs)
 
-        super(McCourt20, self).__init__(dim, kernel, e_mat, coefs, centers)
         self.min_loc = [.7, .1]
         self.fmin = -6.59763663216
         self.fmax = 11.97358068925
@@ -1486,7 +1471,6 @@ class McCourt21(McCourtBase):
             rmax = self.dist_sq(x, centers, e_mat, dist_type='inf')
             return numpy.exp(-rmax)
 
-        super(McCourt21, self).__init__(dim, kernel, e_mat, coefs, centers)
         self.min_loc = [.9, .4, .9, .8]
         self.fmin = -7.74993665759
         self.fmax = 8.31973328564
@@ -1520,7 +1504,6 @@ class McCourt22(McCourtBase):
             rmax = self.dist_sq(x, centers, e_mat, dist_type='inf')
             return numpy.exp(-rmax)
 
-        super(McCourt22, self).__init__(dim, kernel, e_mat, coefs, centers)
         self.min_loc = [0.2723, 0.4390, 0.8277, 0.3390, 0.3695]
         self.fmin = -3.08088199150
         self.fmax = 4.96977632014
@@ -1556,7 +1539,6 @@ class McCourt23(McCourtBase):
             rmax = self.dist_sq(x, centers, e_mat, dist_type='inf')
             return besselj(0, rmax)
 
-        super(McCourt23, self).__init__(dim, kernel, e_mat, coefs, centers)
         self.min_loc = [0.7268, 0.3914, 0, 0.7268, 0.5375, 0.8229]
         self.fmin = -18.35750245671
         self.fmax = -16.07462900440
@@ -1594,7 +1576,6 @@ class McCourt24(McCourtBase):
             rmax = self.dist_sq(x, centers, e_mat, dist_type=1)
             return 1 / (1 + rmax)
 
-        super(McCourt24, self).__init__(dim, kernel, e_mat, coefs, centers)
         self.min_loc = [0.7, 0.1369, 0.6, 0.2, 0.5, 0.3, 0.2]
         self.fmin = -0.17296443752
         self.fmax = 4.98299597248
@@ -1634,7 +1615,6 @@ class McCourt25(McCourtBase):  # Need fixed somehow
             rmax = self.dist_sq(x, centers, e_mat, dist_type=1)
             return 1 / (1 + rmax)
 
-        super(McCourt25, self).__init__(dim, kernel, e_mat, coefs, centers)
         self.min_loc = [0.2, 0.6, 0.4, 0.8, 0.4, 0.3, 0.9, 0.8]
         self.fmin = -4.14042985928
         self.fmax = 5.47474174806
@@ -1676,7 +1656,6 @@ class McCourt26(McCourtBase):
             rmax = self.dist_sq(x, centers, e_mat, dist_type=1)
             return numpy.exp(-rmax)
 
-        super(McCourt26, self).__init__(dim, kernel, e_mat, coefs, centers)
         self.min_loc = [0.5, 0.8, 0.3]
         self.fmin = -1.55349754312
         self.fmax = 5.97733366193
@@ -1718,7 +1697,6 @@ class McCourt27(McCourtBase):
             rmax = self.dist_sq(x, centers, e_mat, dist_type=1)
             return numpy.exp(-rmax)
 
-        super(McCourt27, self).__init__(dim, kernel, e_mat, coefs, centers)
         self.min_loc = [0.6, 0.3, 0.5]
         self.fmin = -1.76908456233
         self.fmax = 6.15634715165
@@ -1760,7 +1738,6 @@ class McCourt28(McCourtBase):
             r2 = self.dist_sq(x, centers, e_mat)
             return numpy.exp(-r2)
 
-        super(McCourt28, self).__init__(dim, kernel, e_mat, coefs, centers)
         self.min_loc = [0.4493, 0.0667, 0.9083, 0.2710]
         self.fmin = -7.69432628909
         self.fmax = 9.13671993002
@@ -1770,7 +1747,6 @@ class McCourt28(McCourtBase):
 class MegaDomain01:
     def __init__(self, dim=2):
         assert dim == 2
-        super(MegaDomain01, self).__init__(dim)
         self.bounds = [[.1, 1], [1, 1000]]
         self.min_loc = [.6, 200]
         self.fmin = 0.0
@@ -1784,7 +1760,6 @@ class MegaDomain01:
 class MegaDomain02:
     def __init__(self, dim=3):
         assert dim == 3
-        super(MegaDomain02, self).__init__(dim)
         self.bounds = [[.0001, .1], [1, 10000], [40, 78901]]
         self.min_loc = [.08, 2345, 12345]
         self.fmin = 0.0
@@ -1798,7 +1773,6 @@ class MegaDomain02:
 class MegaDomain03:
     def __init__(self, dim=3):
         assert dim == 3
-        super(MegaDomain03, self).__init__(dim)
         self.bounds = [[.0001, .1], [1, 10000], [40, 78901]]
         self.min_loc = [.08, 2345, 12345]
         self.fmin = -1.0
@@ -1812,7 +1786,6 @@ class MegaDomain03:
 class MegaDomain04:
     def __init__(self, dim=3):
         assert dim == 3
-        super(MegaDomain04, self).__init__(dim)
         self.bounds = [[.0001, .1], [1, 10000], [40, 78901]]
         self.min_loc = [.03, 1234, 65432]
         self.fmin = -1.1
@@ -1826,7 +1799,6 @@ class MegaDomain04:
 class MegaDomain05:
     def __init__(self, dim=4):
         assert dim == 4
-        super(MegaDomain05, self).__init__(dim)
         self.bounds = [[.0001, .1], [.0001, .1], [1, 10000], [40, 78901]]
         self.min_loc = [.0001, .04074477005, 1392.05038121473, 9185.44149117756]
         self.fmin = -1.0999
@@ -1841,8 +1813,7 @@ class MegaDomain05:
 class MieleCantrell:
     def __init__(self, dim=4):
         assert dim == 4
-        super(MieleCantrell, self).__init__(dim)
-        self.bounds = lzip([0] * self.dim, [1] * self.dim)
+        self.bounds = lzip([0] * dim, [1] * dim)
         self.min_loc = [0, 1, 1, 1]
         self.fmin = 0
         self.fmax = 107.04280285028
@@ -1856,23 +1827,21 @@ class MieleCantrell:
 class Mishra02:
     def __init__(self, dim=2):
         assert dim == 2
-        super(Mishra02, self).__init__(dim)
-        self.bounds = lzip([0] * self.dim, [1] * self.dim)
-        self.min_loc = [1] * self.dim
+        self.bounds = lzip([0] * dim, [1] * dim)
+        self.min_loc = [1] * dim
         self.fmin = 2
         self.fmax = 9
 
     def __call__(self, x):
         x1, x2 = x
-        x_avg = self.dim - sum((x1 + x2) / 2)
+        x_avg = 2 - sum((x1 + x2) / 2)
         return (1 + x_avg) ** x_avg
 
 
 class Mishra06:
     def __init__(self, dim=2):
         assert dim == 2
-        super(Mishra06, self).__init__(dim)
-        self.bounds = lzip([-10] * self.dim, [10] * self.dim)
+        self.bounds = lzip([-10] * dim, [10] * dim)
         self.min_loc = [2.88631, 1.82326]
         self.fmin = -2.28395
         self.fmax = 35.1518586485
@@ -1888,8 +1857,7 @@ class Mishra06:
 class Mishra08:
     def __init__(self, dim=2):
         assert dim == 2
-        super(Mishra08, self).__init__(dim)
-        self.bounds = lzip([-10] * self.dim, [10] * self.dim)
+        self.bounds = lzip([-10] * dim, [10] * dim)
         self.min_loc = [2, -3]
         self.fmin = 0
         self.fmax = 3.83363989364e+18
@@ -1906,8 +1874,7 @@ class Mishra08:
 class Mishra10:
     def __init__(self, dim=2):
         assert dim == 2
-        super(Mishra10, self).__init__(dim)
-        self.bounds = lzip([-10] * self.dim, [10] * self.dim)
+        self.bounds = lzip([-10] * dim, [10] * dim)
         self.min_loc = [2, 2]
         self.fmin = 0
         self.fmax = 14400
@@ -1922,11 +1889,10 @@ class Mishra10:
 
 class ManifoldMin:
     def __init__(self, dim=2):
-        super(ManifoldMin, self).__init__(dim)
-        self.bounds = lzip([-10] * self.dim, [10] * self.dim)
-        self.min_loc = [0] * self.dim
+        self.bounds = lzip([-10] * dim, [10] * dim)
+        self.min_loc = [0] * dim
         self.fmin = 0
-        self.fmax = self.do_evaluate([10] * self.dim)
+        self.fmax = self.do_evaluate([10] * dim)
         self.classifiers = ['nonsmooth', 'multi_min', 'unscaled']
 
     def __call__(self, x):
@@ -1937,8 +1903,7 @@ class MixtureOfGaussians01:
 
     def __init__(self, dim=2):
         assert dim == 2
-        super(MixtureOfGaussians01, self).__init__(dim)
-        self.bounds = lzip([-1] * self.dim, [1] * self.dim)
+        self.bounds = lzip([-1] * dim, [1] * dim)
         self.min_loc = [(-0.19870980807, -0.49764469526)]
         self.fmin = -0.50212488514
         self.fmax = -0.00001997307
@@ -1957,8 +1922,7 @@ class MixtureOfGaussians02:
 
     def __init__(self, dim=2):
         assert dim == 2
-        super(MixtureOfGaussians02, self).__init__(dim)
-        self.bounds = lzip([-1] * self.dim, [1] * self.dim)
+        self.bounds = lzip([-1] * dim, [1] * dim)
         self.min_loc = [(-0.19945435737, -0.49900294852)]
         self.fmin = -0.70126732387
         self.fmax = -0.00001198419
@@ -1977,8 +1941,7 @@ class MixtureOfGaussians03:
 
     def __init__(self, dim=2):
         assert dim == 2
-        super(MixtureOfGaussians03, self).__init__(dim)
-        self.bounds = lzip([-1] * self.dim, [1] * self.dim)
+        self.bounds = lzip([-1] * dim, [1] * dim)
         self.min_loc = [(-0.17918253215, -0.46292606370)]
         self.fmin = -0.63338923402
         self.fmax = -0.00993710053
@@ -1997,8 +1960,7 @@ class MixtureOfGaussians04:
 
     def __init__(self, dim=2):
         assert dim == 2
-        super(MixtureOfGaussians04, self).__init__(dim)
-        self.bounds = lzip([-1] * self.dim, [1] * self.dim)
+        self.bounds = lzip([-1] * dim, [1] * dim)
         self.min_loc = [(-0.04454170197, 0.03290524075)]
         self.fmin = -0.582553299011
         self.fmax = -0.00207854059
@@ -2020,8 +1982,7 @@ class MixtureOfGaussians05:
 
     def __init__(self, dim=8):
         assert dim == 8
-        super(MixtureOfGaussians05, self).__init__(dim)
-        self.bounds = lzip([-1] * self.dim, [1] * self.dim)
+        self.bounds = lzip([-1] * dim, [1] * dim)
         self.min_loc = [(-0.19870980798, -0.49764469559, 0, 0, 0, 0, 0, 0)]
         self.fmin = -0.50212691955
         self.fmax = -0.00001997307
@@ -2040,8 +2001,7 @@ class MixtureOfGaussians06:
 
     def __init__(self, dim=8):
         assert dim == 8
-        super(MixtureOfGaussians06, self).__init__(dim)
-        self.bounds = lzip([-1] * self.dim, [1] * self.dim)
+        self.bounds = lzip([-1] * dim, [1] * dim)
         self.min_loc = [(0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5)]
         self.fmin = -0.50016818373
         self.fmax = -0.00004539993
@@ -2059,8 +2019,7 @@ class MixtureOfGaussians06:
 class Ned01:
     def __init__(self, dim=2):
         assert dim == 2
-        super(Ned01, self).__init__(dim)
-        self.bounds = lzip([-10] * self.dim, [10] * self.dim)
+        self.bounds = lzip([-10] * dim, [10] * dim)
         self.min_loc = [-8.4666, -9.9988]
         self.fmin = -0.17894509347721144
         self.fmax = 1.18889613074
@@ -2073,8 +2032,7 @@ class Ned01:
 class Ned03:
     def __init__(self, dim=2):
         assert dim == 2
-        super(Ned03, self).__init__(dim)
-        self.bounds = lzip([-10] * self.dim, [10] * self.dim)
+        self.bounds = lzip([-10] * dim, [10] * dim)
         self.min_loc = [-1.98682, -10]
         self.fmin = -1.019829
         self.fmax = 144.506592895
@@ -2090,8 +2048,7 @@ class Ned03:
 class OddSquare:
     def __init__(self, dim=2):
         assert dim == 2
-        super(OddSquare, self).__init__(dim)
-        self.bounds = lzip([-3 * pi] * self.dim, [3 * pi] * self.dim)
+        self.bounds = lzip([-3 * pi] * dim, [3 * pi] * dim)
         self.min_loc = [0.912667308214834, 1.212667322565022]
         self.fmin = -1.008467279147474
         self.fmax = 0.870736981456
@@ -2099,7 +2056,7 @@ class OddSquare:
 
     def __call__(self, x):
         b = asarray([1, 1.3])
-        d = self.dim * max((x - b) ** 2)
+        d = 2 * max((x - b) ** 2)
         h = sum((x - b) ** 2)
         return -exp(-d / (2 * pi)) * cos(pi * d) * (1 + 0.02 * h / (d + 0.01))
 
@@ -2107,8 +2064,7 @@ class OddSquare:
 class Parsopoulos:
     def __init__(self, dim=2):
         assert dim == 2
-        super(Parsopoulos, self).__init__(dim)
-        self.bounds = lzip([-5] * self.dim, [5] * self.dim)
+        self.bounds = lzip([-5] * dim, [5] * dim)
         self.min_loc = [pi / 2, pi]
         self.fmin = 0
         self.fmax = 2
@@ -2122,9 +2078,8 @@ class Parsopoulos:
 class Pavianini:
     def __init__(self, dim=10):
         assert dim == 10
-        super(Pavianini, self).__init__(dim)
-        self.bounds = lzip([2.001] * self.dim, [9.999] * self.dim)
-        self.min_loc = [9.350266] * self.dim
+        self.bounds = lzip([2.001] * dim, [9.999] * dim)
+        self.min_loc = [9.350266] * dim
         self.fmin = -45.7784684040686
         self.fmax = 516.402401423
 
@@ -2135,9 +2090,8 @@ class Pavianini:
 class Penalty01:
     def __init__(self, dim=2):
         assert dim == 2
-        super(Penalty01, self).__init__(dim)
-        self.bounds = lzip([-4] * self.dim, [4] * self.dim)
-        self.min_loc = [-1] * self.dim
+        self.bounds = lzip([-4] * dim, [4] * dim)
+        self.min_loc = [-1] * dim
         self.fmin = 0
         self.fmax = 2.34982038483
 
@@ -2149,9 +2103,8 @@ class Penalty01:
 class Penalty02:
     def __init__(self, dim=2):
         assert dim == 2
-        super(Penalty02, self).__init__(dim)
-        self.bounds = lzip([-4] * self.dim, [4] * self.dim)
-        self.min_loc = [1] * self.dim
+        self.bounds = lzip([-4] * dim, [4] * dim)
+        self.min_loc = [1] * dim
         self.fmin = 0
         self.fmax = 9.10735658210
         self.classifiers = ['oscillatory']
@@ -2167,8 +2120,7 @@ class Penalty02:
 class PenHolder:
     def __init__(self, dim=2):
         assert dim == 2
-        super(PenHolder, self).__init__(dim)
-        self.bounds = lzip([-11] * self.dim, [11] * self.dim)
+        self.bounds = lzip([-11] * dim, [11] * dim)
         self.min_loc = [-9.646167708023526, 9.646167671043401]
         self.fmin = -0.9635348327265058
         self.fmax = 0
@@ -2182,20 +2134,19 @@ class PenHolder:
 class Pinter:
     def __init__(self, dim=2):
         assert dim > 1
-        super(Pinter, self).__init__(dim)
-        self.bounds = lzip([-5] * self.dim, [2] * self.dim)
-        self.min_loc = [0] * self.dim
+        self.bounds = lzip([-5] * dim, [2] * dim)
+        self.min_loc = [0] * dim
         self.fmin = 0
-        self.fmax = self.do_evaluate([-5] * self.dim)
+        self.fmax = self.do_evaluate([-5] * dim)
 
     def __call__(self, x):
         f = 0
-        for i in range(self.dim):
+        for i in range(2):
             x_i = x[i]
             if i == 0:
                 x_mi = x[-1]
                 x_pi = x[i + 1]
-            elif i == self.dim - 1:
+            elif i == 2 - 1:
                 x_mi = x[i - 1]
                 x_pi = x[0]
             else:
@@ -2209,11 +2160,10 @@ class Pinter:
 
 class Plateau:
     def __init__(self, dim=2):
-        super(Plateau, self).__init__(dim)
-        self.bounds = lzip([-2.34] * self.dim, [5.12] * self.dim)
-        self.min_loc = [0] * self.dim
+        self.bounds = lzip([-2.34] * dim, [5.12] * dim)
+        self.min_loc = [0] * dim
         self.fmin = 30
-        self.fmax = self.do_evaluate([5.12] * self.dim)
+        self.fmax = self.do_evaluate([5.12] * dim)
         self.classifiers = ['discrete', 'unimodal']
 
     def __call__(self, x):
@@ -2223,8 +2173,7 @@ class Plateau:
 class PowerSum:
     def __init__(self, dim=4):
         assert dim == 4
-        super(PowerSum, self).__init__(dim)
-        self.bounds = lzip([0] * self.dim, [4] * self.dim)
+        self.bounds = lzip([0] * dim, [4] * dim)
         self.min_loc = [1, 2, 2, 3]
         self.fmin = 0
         self.fmax = 875224
@@ -2238,11 +2187,10 @@ class PowerSum:
 class Price:
     def __init__(self, dim=2):
         assert dim == 2
-        super(Price, self).__init__(dim)
-        self.bounds = lzip([-15] * self.dim, [15] * self.dim)
+        self.bounds = lzip([-15] * dim, [15] * dim)
         self.min_loc = [5, 5]
         self.fmin = 0
-        self.fmax = self.do_evaluate(asarray([15] * self.dim))
+        self.fmax = self.do_evaluate(asarray([15] * dim))
         self.classifiers = ['multi_min', 'nonsmooth']
 
     def __call__(self, x):
@@ -2253,22 +2201,20 @@ class Price:
 class Qing:
     def __init__(self, dim=2):
         assert dim < 100  # If greater, the optimum is on the boundary
-        super(Qing, self).__init__(dim)
-        self.bounds = lzip([-10] * self.dim, [10] * self.dim)
-        self.min_loc = [sqrt(x) for x in range(1, self.dim + 1)]
+        self.bounds = lzip([-10] * dim, [10] * dim)
+        self.min_loc = [sqrt(x) for x in range(1, dim + 1)]
         self.fmin = 0
         self.fmax = self.do_evaluate(numpy.max(self.bounds, axis=1))
         self.classifiers = ['multi_min']
 
     def __call__(self, x):
-        return sum((x ** 2 - numpy.arange(1, self.dim + 1)) ** 2)
+        return sum((x ** 2 - numpy.arange(1, 2 + 1)) ** 2)
 
 
 class Quadratic:
     def __init__(self, dim=2):
         assert dim == 2
-        super(Quadratic, self).__init__(dim)
-        self.bounds = lzip([-10] * self.dim, [10] * self.dim)
+        self.bounds = lzip([-10] * dim, [10] * dim)
         self.min_loc = [0.19388, 0.48513]
         self.fmin = -3873.72418
         self.fmax = 51303.16
@@ -2282,9 +2228,8 @@ class Quadratic:
 class RippleSmall:
     def __init__(self, dim=2):
         assert dim == 2
-        super(RippleSmall, self).__init__(dim)
-        self.bounds = lzip([0] * self.dim, [1] * self.dim)
-        self.min_loc = [0.1] * self.dim
+        self.bounds = lzip([0] * dim, [1] * dim)
+        self.min_loc = [0.1] * dim
         self.fmin = -2.2
         self.fmax = 0
         self.classifiers = ['oscillatory']
@@ -2296,9 +2241,8 @@ class RippleSmall:
 class RippleBig:
     def __init__(self, dim=2):
         assert dim == 2
-        super(RippleBig, self).__init__(dim)
-        self.bounds = lzip([0] * self.dim, [1] * self.dim)
-        self.min_loc = [0.1] * self.dim
+        self.bounds = lzip([0] * dim, [1] * dim)
+        self.min_loc = [0.1] * dim
         self.fmin = -2
         self.fmax = 0
         self.classifiers = ['oscillatory']
@@ -2310,24 +2254,22 @@ class RippleBig:
 class Sargan:
     def __init__(self, dim=2):
         assert dim > 1
-        super(Sargan, self).__init__(dim)
-        self.bounds = lzip([-2] * self.dim, [4] * self.dim)
-        self.min_loc = [0] * self.dim
+        self.bounds = lzip([-2] * dim, [4] * dim)
+        self.min_loc = [0] * dim
         self.fmin = 0
-        self.fmax = self.do_evaluate(asarray([4] * self.dim))
+        self.fmax = self.do_evaluate(asarray([4] * dim))
         self.classifiers = ['unimodal']
 
     def __call__(self, x):
         x0 = x[:-1]
         x1 = roll(x, -1)[:-1]
-        return sum(self.dim * (x ** 2 + 0.4 * sum(x0 * x1)))
+        return sum(2 * (x ** 2 + 0.4 * sum(x0 * x1)))
 
 
 class SchmidtVetters:
     def __init__(self, dim=3):
         assert dim == 3
-        super(SchmidtVetters, self).__init__(dim)
-        self.bounds = lzip([0] * self.dim, [10] * self.dim)
+        self.bounds = lzip([0] * dim, [10] * dim)
         self.min_loc = [3.79367424567, 3.79367424352, 3.78978412518]
         self.fmin = 3
         self.fmax = -0.99009900990
@@ -2340,11 +2282,10 @@ class SchmidtVetters:
 
 class Schwefel01:
     def __init__(self, dim=2):
-        super(Schwefel01, self).__init__(dim)
-        self.bounds = lzip([-100] * self.dim, [20] * self.dim)
-        self.min_loc = [0] * self.dim
+        self.bounds = lzip([-100] * dim, [20] * dim)
+        self.min_loc = [0] * dim
         self.fmin = 0
-        self.fmax = self.do_evaluate(asarray([-100] * self.dim))
+        self.fmax = self.do_evaluate(asarray([-100] * dim))
         self.classifiers = ['unscaled', 'unimodal']
 
     def __call__(self, x):
@@ -2354,8 +2295,7 @@ class Schwefel01:
 class Schwefel06:
     def __init__(self, dim=2):
         assert dim == 2
-        super(Schwefel06, self).__init__(dim)
-        self.bounds = lzip([-50] * self.dim, [100] * self.dim)
+        self.bounds = lzip([-50] * dim, [100] * dim)
         self.min_loc = [1, 3]
         self.fmin = 0
         self.fmax = 295
@@ -2368,11 +2308,10 @@ class Schwefel06:
 
 class Schwefel20:
     def __init__(self, dim=2):
-        super(Schwefel20, self).__init__(dim)
-        self.bounds = lzip([-60] * self.dim, [100] * self.dim)
-        self.min_loc = [0] * self.dim
+        self.bounds = lzip([-60] * dim, [100] * dim)
+        self.min_loc = [0] * dim
         self.fmin = 0
-        self.fmax = self.do_evaluate(asarray([100] * self.dim))
+        self.fmax = self.do_evaluate(asarray([100] * dim))
         self.classifiers = ['unimodal', 'nonsmooth']
 
     def __call__(self, x):
@@ -2381,11 +2320,10 @@ class Schwefel20:
 
 class Schwefel22:
     def __init__(self, dim=2):
-        super(Schwefel22, self).__init__(dim)
-        self.bounds = lzip([-5] * self.dim, [10] * self.dim)
-        self.min_loc = [0] * self.dim
+        self.bounds = lzip([-5] * dim, [10] * dim)
+        self.min_loc = [0] * dim
         self.fmin = 0
-        self.fmax = self.do_evaluate(asarray([10] * self.dim))
+        self.fmax = self.do_evaluate(asarray([10] * dim))
         self.classifiers = ['unimodal', 'nonsmooth']
 
     def __call__(self, x):
@@ -2395,22 +2333,20 @@ class Schwefel22:
 class Schwefel26:
     def __init__(self, dim=2):
         assert dim == 2
-        super(Schwefel26, self).__init__(dim)
-        self.bounds = lzip([-500] * self.dim, [500] * self.dim)
-        self.min_loc = [420.968746] * self.dim
+        self.bounds = lzip([-500] * dim, [500] * dim)
+        self.min_loc = [420.968746] * dim
         self.fmin = 0
         self.fmax = 1675.92130876
         self.classifiers = ['oscillatory']
 
     def __call__(self, x):
-        return 418.982887 * self.dim - sum([x * sin(sqrt(abs(x)))])
+        return 418.982887 * 2 - sum([x * sin(sqrt(abs(x)))])
 
 
 class Schwefel36:
     def __init__(self, dim=2):
         assert dim == 2
-        super(Schwefel36, self).__init__(dim)
-        self.bounds = lzip([0] * self.dim, [20] * self.dim)
+        self.bounds = lzip([0] * dim, [20] * dim)
         self.min_loc = [12, 12]
         self.fmin = -3456
         self.fmax = 3200
@@ -2424,9 +2360,8 @@ class Schwefel36:
 class Shekel05:
     def __init__(self, dim=4):
         assert dim == 4
-        super(Shekel05, self).__init__(dim)
-        self.bounds = lzip([0] * self.dim, [10] * self.dim)
-        self.min_loc = [4] * self.dim
+        self.bounds = lzip([0] * dim, [10] * dim)
+        self.min_loc = [4] * dim
         self.fmin = -10.152719932456289
         self.fmax = -0.0377034398748
         self.classifiers = ['boring']
@@ -2446,9 +2381,8 @@ class Shekel05:
 class Shekel07:
     def __init__(self, dim=4):
         assert dim == 4
-        super(Shekel07, self).__init__(dim)
-        self.bounds = lzip([0] * self.dim, [10] * self.dim)
-        self.min_loc = [4] * self.dim
+        self.bounds = lzip([0] * dim, [10] * dim)
+        self.min_loc = [4] * dim
         self.fmin = -10.3999
         self.fmax = -0.0503833861496
         self.classifiers = ['boring']
@@ -2470,9 +2404,8 @@ class Shekel07:
 class Shekel10:
     def __init__(self, dim=4):
         assert dim == 4
-        super(Shekel10, self).__init__(dim)
-        self.bounds = lzip([0] * self.dim, [10] * self.dim)
-        self.min_loc = [4] * self.dim
+        self.bounds = lzip([0] * dim, [10] * dim)
+        self.min_loc = [4] * dim
         self.fmin = -10.5319
         self.fmax = -0.0784208993809
         self.classifiers = ['boring']
@@ -2497,8 +2430,7 @@ class Shekel10:
 class Shubert01:
     def __init__(self, dim=2):
         assert dim == 2
-        super(Shubert01, self).__init__(dim)
-        self.bounds = lzip([-10] * self.dim, [10] * self.dim)
+        self.bounds = lzip([-10] * dim, [10] * dim)
         self.min_loc = [-7.0835, 4.8580]
         self.fmin = -186.7309
         self.fmax = 210.448484805
@@ -2511,8 +2443,7 @@ class Shubert01:
 class Shubert03:
     def __init__(self, dim=2):
         assert dim == 2
-        super(Shubert03, self).__init__(dim)
-        self.bounds = lzip([-10] * self.dim, [10] * self.dim)
+        self.bounds = lzip([-10] * dim, [10] * dim)
         self.min_loc = [5.791794, 5.791794]
         self.fmin = -24.062499
         self.fmax = 29.675796163
@@ -2531,11 +2462,10 @@ class Shubert03:
 class SineEnvelope:
     def __init__(self, dim=2):
         assert dim > 1
-        super(SineEnvelope, self).__init__(dim)
-        self.bounds = lzip([-20] * self.dim, [10] * self.dim)
-        self.min_loc = [0] * self.dim
+        self.bounds = lzip([-20] * dim, [10] * dim)
+        self.min_loc = [0] * dim
         self.fmin = 0
-        self.fmax = self.dim - 1
+        self.fmax = dim - 1
         self.classifiers = ['oscillatory']
 
     def __call__(self, x):
@@ -2545,11 +2475,10 @@ class SineEnvelope:
 
 class Step:
     def __init__(self, dim=2):
-        super(Step, self).__init__(dim)
-        self.bounds = lzip([-5] * self.dim, [5] * self.dim)
-        self.min_loc = [0.5] * self.dim
-        self.fmin = self.do_evaluate(asarray([0] * self.dim))
-        self.fmax = self.do_evaluate(asarray([5] * self.dim))
+        self.bounds = lzip([-5] * dim, [5] * dim)
+        self.min_loc = [0.5] * dim
+        self.fmin = self.do_evaluate(asarray([0] * dim))
+        self.fmax = self.do_evaluate(asarray([5] * dim))
         self.classifiers = ['discrete', 'unimodal']
 
     def __call__(self, x):
@@ -2559,8 +2488,7 @@ class Step:
 class StretchedV:
     def __init__(self, dim=2):
         assert dim == 2
-        super(StretchedV, self).__init__(dim)
-        self.bounds = lzip([-10] * self.dim, [5] * self.dim)
+        self.bounds = lzip([-10] * dim, [5] * dim)
         self.min_loc = [-9.38723188, 9.34026753]
         self.fmin = 0
         self.fmax = 3.47171564062
@@ -2573,11 +2501,10 @@ class StretchedV:
 
 class StyblinskiTang:
     def __init__(self, dim=2):
-        super(StyblinskiTang, self).__init__(dim)
-        self.bounds = lzip([-5] * self.dim, [5] * self.dim)
-        self.min_loc = [-2.903534018185960] * self.dim
-        self.fmin = -39.16616570377142 * self.dim
-        self.fmax = self.do_evaluate(asarray([5] * self.dim))
+        self.bounds = lzip([-5] * dim, [5] * dim)
+        self.min_loc = [-2.903534018185960] * dim
+        self.fmin = -39.16616570377142 * dim
+        self.fmax = self.do_evaluate(asarray([5] * dim))
 
     def __call__(self, x):
         return sum(x ** 4 - 16 * x ** 2 + 5 * x) / 2
@@ -2585,22 +2512,20 @@ class StyblinskiTang:
 
 class SumPowers:
     def __init__(self, dim=2):
-        super(SumPowers, self).__init__(dim)
-        self.bounds = lzip([-1] * self.dim, [0.5] * self.dim)
-        self.min_loc = [0] * self.dim
+        self.bounds = lzip([-1] * dim, [0.5] * dim)
+        self.min_loc = [0] * dim
         self.fmin = 0
-        self.fmax = self.do_evaluate(asarray([-1] * self.dim))
+        self.fmax = self.do_evaluate(asarray([-1] * dim))
         self.classifiers = ['unimodal']
 
     def __call__(self, x):
-        return sum([abs(x) ** (i + 1) for i in range(1, self.dim + 1)])
+        return sum([abs(x) ** (i + 1) for i in range(1, 2 + 1)])
 
 
 class TestTubeHolder:
     def __init__(self, dim=2):
         assert dim == 2
-        super(TestTubeHolder, self).__init__(dim)
-        self.bounds = lzip([-10] * self.dim, [10] * self.dim)
+        self.bounds = lzip([-10] * dim, [10] * dim)
         self.min_loc = [-pi / 2, 0]
         self.fmin = -10.87229990155800
         self.fmax = 0
@@ -2614,8 +2539,7 @@ class TestTubeHolder:
 class Trefethen:
     def __init__(self, dim=2):
         assert dim == 2
-        super(Trefethen, self).__init__(dim)
-        self.bounds = lzip([-10] * self.dim, [10] * self.dim)
+        self.bounds = lzip([-10] * dim, [10] * dim)
         self.min_loc = [-0.02440307923, 0.2106124261]
         self.fmin = -3.3068686474
         self.fmax = 56.1190428617
@@ -2632,8 +2556,7 @@ class Trefethen:
 class Trid:
     def __init__(self, dim=6):
         assert dim == 6
-        super(Trid, self).__init__(dim)
-        self.bounds = lzip([0] * self.dim, [20] * self.dim)
+        self.bounds = lzip([0] * dim, [20] * dim)
         self.min_loc = [6, 10, 12, 12, 10, 6]
         self.fmin = -50
         self.fmax = 1086
@@ -2645,8 +2568,7 @@ class Trid:
 class Tripod:
     def __init__(self, dim=2):
         assert dim == 2
-        super(Tripod, self).__init__(dim)
-        self.bounds = lzip([-100] * self.dim, [100] * self.dim)
+        self.bounds = lzip([-100] * dim, [100] * dim)
         self.min_loc = [0, -50]
         self.fmin = 0
         self.fmax = 150
@@ -2662,7 +2584,6 @@ class Tripod:
 class Ursem01:
     def __init__(self, dim=2):
         assert dim == 2
-        super(Ursem01, self).__init__(dim)
         self.bounds = [(-2.5, 3), (-2, 2)]
         self.min_loc = [1.69714, 0]
         self.fmin = -4.8168
@@ -2676,9 +2597,8 @@ class Ursem01:
 class Ursem03:
     def __init__(self, dim=2):
         assert dim == 2
-        super(Ursem03, self).__init__(dim)
         self.bounds = [[-2, 1], [-1.5, 1.5]]
-        self.min_loc = [0] * self.dim
+        self.min_loc = [0] * dim
         self.fmin = -3
         self.fmax = 1.98893400593
         self.classifiers = ['nonsmooth', 'oscillatory']
@@ -2694,9 +2614,8 @@ class Ursem03:
 class Ursem04:
     def __init__(self, dim=2):
         assert dim == 2
-        super(Ursem04, self).__init__(dim)
-        self.bounds = lzip([-2] * self.dim, [1.5] * self.dim)
-        self.min_loc = [0] * self.dim
+        self.bounds = lzip([-2] * dim, [1.5] * dim)
+        self.min_loc = [0] * dim
         self.fmin = -1.5
         self.fmax = 0.267902882972
         self.classifiers = ['nonsmooth', 'unimodal']
@@ -2709,9 +2628,8 @@ class Ursem04:
 class UrsemWaves:
     def __init__(self, dim=2):
         assert dim == 2
-        super(UrsemWaves, self).__init__(dim)
         self.bounds = [(-0.9, 1.2), (-1.2, 1.2)]
-        self.min_loc = [1.2] * self.dim
+        self.min_loc = [1.2] * dim
         self.fmin = -8.5536
         self.fmax = 7.71938723147
         self.classifiers = ['bound_min']
@@ -2727,9 +2645,8 @@ class UrsemWaves:
 class VenterSobiezcczanskiSobieski:
     def __init__(self, dim=2):
         assert dim == 2
-        super(VenterSobiezcczanskiSobieski, self).__init__(dim)
-        self.bounds = lzip([-10] * self.dim, [5] * self.dim)
-        self.min_loc = [0] * self.dim
+        self.bounds = lzip([-10] * dim, [5] * dim)
+        self.min_loc = [0] * dim
         self.fmin = -400
         self.fmax = 4920.34496357
         self.classifiers = ['oscillatory']
@@ -2745,8 +2662,7 @@ class VenterSobiezcczanskiSobieski:
 class Watson:
     def __init__(self, dim=6):
         assert dim == 6
-        super(Watson, self).__init__(dim)
-        self.bounds = lzip([-2] * self.dim, [2] * self.dim)
+        self.bounds = lzip([-2] * dim, [2] * dim)
         self.min_loc = [-0.0158, 1.012, -0.2329, 1.260, -1.513, 0.9928]
         self.fmin = 0.002288
         self.fmax = 3506782.05596
@@ -2757,12 +2673,12 @@ class Watson:
         div = (arange(29) + 1) / 29
         s1 = 0
         dx = 1
-        for j in range(1, self.dim):
+        for j in range(1, 6):
             s1 += j * dx * x[j]
             dx *= div
         s2 = 0
         dx = 1
-        for j in range(self.dim):
+        for j in range(6):
             s2 += dx * x[j]
             dx *= div
         vec[:29] = s1 - s2 ** 2 - 1
@@ -2773,26 +2689,24 @@ class Watson:
 
 class Weierstrass:
     def __init__(self, dim=2):
-        super(Weierstrass, self).__init__(dim)
-        self.bounds = lzip([-0.5] * self.dim, [0.2] * self.dim)
-        self.min_loc = [0] * self.dim
+        self.bounds = lzip([-0.5] * dim, [0.2] * dim)
+        self.min_loc = [0] * dim
         self.fmin = self.do_evaluate(asarray(self.min_loc))
-        self.fmax = self.do_evaluate(asarray([-0.5] * self.dim))
+        self.fmax = self.do_evaluate(asarray([-0.5] * dim))
         self.classifiers = ['complicated']
 
     def __call__(self, x):
         a, b, kmax = 0.5, 3, 20
         ak = a ** (numpy.arange(0, kmax + 1))
         bk = b ** (numpy.arange(0, kmax + 1))
-        return sum([sum(ak * cos(2 * pi * bk * (xx + 0.5))) - self.dim * sum(ak * cos(pi * bk)) for xx in x])
+        return sum([sum(ak * cos(2 * pi * bk * (xx + 0.5))) - 2 * sum(ak * cos(pi * bk)) for xx in x])
 
 
 class Wolfe:
     def __init__(self, dim=3):
         assert dim == 3
-        super(Wolfe, self).__init__(dim)
-        self.bounds = lzip([-1] * self.dim, [2] * self.dim)
-        self.min_loc = [0] * self.dim
+        self.bounds = lzip([-1] * dim, [2] * dim)
+        self.min_loc = [0] * dim
         self.fmin = -1
         self.fmax = 6.30351707066
 
@@ -2804,9 +2718,8 @@ class Wolfe:
 class XinSheYang02:
     def __init__(self, dim=2):
         assert dim == 2
-        super(XinSheYang02, self).__init__(dim)
-        self.bounds = lzip([-pi] * self.dim, [2 * pi] * self.dim)
-        self.min_loc = [0] * self.dim
+        self.bounds = lzip([-pi] * dim, [2 * pi] * dim)
+        self.min_loc = [0] * dim
         self.fmin = 0
         self.fmax = 88.8266046808
         self.classifiers = ['nonsmooth', 'unscaled']
@@ -2818,9 +2731,8 @@ class XinSheYang02:
 class XinSheYang03:
     def __init__(self, dim=2):
         assert dim == 2
-        super(XinSheYang03, self).__init__(dim)
-        self.bounds = lzip([-10] * self.dim, [20] * self.dim)
-        self.min_loc = [0] * self.dim
+        self.bounds = lzip([-10] * dim, [20] * dim)
+        self.min_loc = [0] * dim
         self.fmin = -1
         self.fmax = 1
         self.classifiers = ['boring', 'unimodal']
@@ -2833,8 +2745,7 @@ class XinSheYang03:
 class Xor:
     def __init__(self, dim=9):
         assert dim == 9
-        super(Xor, self).__init__(dim)
-        self.bounds = lzip([-1] * self.dim, [1] * self.dim)
+        self.bounds = lzip([-1] * dim, [1] * dim)
         self.min_loc = [1, -1, 1, -1, -1, 1, 1, -1, 0.421457080713797]
         self.fmin = 0.959758757011962
         self.fmax = 1.77818910738
@@ -2858,11 +2769,10 @@ class Xor:
 
 class YaoLiu:
     def __init__(self, dim=2):
-        super(YaoLiu, self).__init__(dim)
-        self.bounds = lzip([-5.12] * self.dim, [2] * self.dim)
-        self.min_loc = [0] * self.dim
+        self.bounds = lzip([-5.12] * dim, [2] * dim)
+        self.min_loc = [0] * dim
         self.fmin = 0
-        self.fmax = self.do_evaluate(asarray([-4.52299366685] * self.dim))
+        self.fmax = self.do_evaluate(asarray([-4.52299366685] * dim))
         self.classifiers = ['oscillatory']
 
     def __call__(self, x):
@@ -2871,11 +2781,10 @@ class YaoLiu:
 
 class ZeroSum:
     def __init__(self, dim=2):
-        super(ZeroSum, self).__init__(dim)
-        self.bounds = lzip([-8] * self.dim, [6] * self.dim)
-        self.min_loc = [0] * self.dim
+        self.bounds = lzip([-8] * dim, [6] * dim)
+        self.min_loc = [0] * dim
         self.fmin = 1
-        self.fmax = self.do_evaluate(asarray([-8] * self.dim))
+        self.fmax = self.do_evaluate(asarray([-8] * dim))
         self.classifiers = ['nonsmooth', 'multi_min']
 
     def __call__(self, x):
@@ -2885,8 +2794,7 @@ class ZeroSum:
 class Zimmerman:
     def __init__(self, dim=2):
         assert dim == 2
-        super(Zimmerman, self).__init__(dim)
-        self.bounds = lzip([0] * self.dim, [8] * self.dim)
+        self.bounds = lzip([0] * dim, [8] * dim)
         self.min_loc = [7, 2]
         self.fmin = 0
         self.fmax = 3000
@@ -2911,7 +2819,6 @@ class Zimmerman:
 class Problem02:
     def __init__(self, dim=1):
         assert dim == 1
-        super(Problem02, self).__init__(dim)
         self.bounds = [(2.7, 7.5)]
         self.min_loc = 5.145735285687302
         self.fmin = -1.899599349152113
@@ -2925,7 +2832,6 @@ class Problem02:
 class Problem03:
     def __init__(self, dim=1):
         assert dim == 1
-        super(Problem03, self).__init__(dim)
         self.bounds = [(-10, 10)]
         self.min_loc = -6.7745761
         self.fmin = -12.03124
@@ -2940,7 +2846,6 @@ class Problem03:
 class Problem04:
     def __init__(self, dim=1):
         assert dim == 1
-        super(Problem04, self).__init__(dim)
         self.bounds = [(1.9, 3.9)]
         self.min_loc = 7 / 4 + numpy.sqrt(5) / 2
         self.fmin = -3.850450708800220
@@ -2955,7 +2860,6 @@ class Problem04:
 class Problem05:
     def __init__(self, dim=1):
         assert dim == 1
-        super(Problem05, self).__init__(dim)
         self.bounds = [(0, 1.2)]
         self.min_loc = 0.96609
         self.fmin = -1.48907
@@ -2969,7 +2873,6 @@ class Problem05:
 class Problem06:
     def __init__(self, dim=1):
         assert dim == 1
-        super(Problem06, self).__init__(dim)
         self.bounds = [(-10, 10)]
         self.min_loc = 0.67956
         self.fmin = -0.824239
@@ -2984,7 +2887,6 @@ class Problem06:
 class Problem07:
     def __init__(self, dim=1):
         assert dim == 1
-        super(Problem07, self).__init__(dim)
         self.bounds = [(2.7, 7.5)]
         self.min_loc = 5.199778369093496
         self.fmin = -1.601307546494395
@@ -2998,7 +2900,6 @@ class Problem07:
 class Problem09:
     def __init__(self, dim=1):
         assert dim == 1
-        super(Problem09, self).__init__(dim)
         self.bounds = [(3.1, 20.4)]
         self.min_loc = 17.039
         self.fmin = -1.90596
@@ -3012,7 +2913,6 @@ class Problem09:
 class Problem10:
     def __init__(self, dim=1):
         assert dim == 1
-        super(Problem10, self).__init__(dim)
         self.bounds = [(0, 10)]
         self.min_loc = 7.9787
         self.fmin = -7.916727
@@ -3026,7 +2926,6 @@ class Problem10:
 class Problem11:
     def __init__(self, dim=1):
         assert dim == 1
-        super(Problem11, self).__init__(dim)
         self.bounds = [(-pi / 2, 2 * pi)]
         self.min_loc = 2.09439
         self.fmin = -1.5
@@ -3041,7 +2940,6 @@ class Problem11:
 class Problem12:
     def __init__(self, dim=1):
         assert dim == 1
-        super(Problem12, self).__init__(dim)
         self.bounds = [(0, 2 * pi)]
         self.min_loc = pi
         self.fmin = -1
@@ -3056,7 +2954,6 @@ class Problem12:
 class Problem13:
     def __init__(self, dim=1):
         assert dim == 1
-        super(Problem13, self).__init__(dim)
         self.bounds = [(0.001, 0.99)]
         self.min_loc = 1 / sqrt(2)
         self.fmin = -1.587401051968199
@@ -3071,7 +2968,6 @@ class Problem13:
 class Problem14:
     def __init__(self, dim=1):
         assert dim == 1
-        super(Problem14, self).__init__(dim)
         self.bounds = [(0, 4)]
         self.min_loc = 0.224885
         self.fmin = -0.788685
@@ -3086,7 +2982,6 @@ class Problem14:
 class Problem15:
     def __init__(self, dim=1):
         assert dim == 1
-        super(Problem15, self).__init__(dim)
         self.bounds = [(-5, 5)]
         self.min_loc = 2.414194788875151
         self.fmin = -0.035533905879289
@@ -3101,7 +2996,6 @@ class Problem15:
 class Problem18:
     def __init__(self, dim=1):
         assert dim == 1
-        super(Problem18, self).__init__(dim)
         self.bounds = [(0, 6)]
         self.min_loc = 2
         self.fmin = 0
@@ -3118,7 +3012,6 @@ class Problem18:
 class Problem20:
     def __init__(self, dim=1):
         assert dim == 1
-        super(Problem20, self).__init__(dim)
         self.bounds = [(-10, 10)]
         self.min_loc = 1.195137
         self.fmin = -0.0634905
@@ -3133,7 +3026,6 @@ class Problem20:
 class Problem21:
     def __init__(self, dim=1):
         assert dim == 1
-        super(Problem21, self).__init__(dim)
         self.bounds = [(0, 10)]
         self.min_loc = 4.79507
         self.fmin = -9.50835
@@ -3147,7 +3039,6 @@ class Problem21:
 class Problem22:
     def __init__(self, dim=1):
         assert dim == 1
-        super(Problem22, self).__init__(dim)
         self.bounds = [(0, 20)]
         self.min_loc = 9 * pi / 2
         self.fmin = exp(-27 * pi / 2) - 1
