@@ -12,6 +12,7 @@ from botorch.acquisition.thompson_sampling import PathwiseThompsonSampling
 from acq.acq_dpp import AcqDPP
 from acq.acq_min_dist import AcqMinDist
 from acq.acq_mtv import AcqMTV
+from acq.acq_sobol import AcqSobol
 from acq.acq_ts import AcqTS
 from acq.acq_var import AcqVar
 
@@ -93,6 +94,8 @@ class Designers:
             return RandomDesigner(self._policy)
         elif designer_name == "sobol":
             return SobolDesigner(self._policy)
+        elif designer_name == "btsobol":
+            return bt_designer(AcqSobol)
 
         # All exploitation
         elif designer_name == "sr":
@@ -212,14 +215,29 @@ class Designers:
                     "num_refinements": 30,
                 },
             )
-        elif designer_name == "sts2":
+        elif designer_name == "sts-ns":
             return bt_designer(
                 AcqMTV,
                 init_sobol=0,
                 acq_kwargs={
                     "ts_only": True,
-                    "sample_type": "sts2",
+                    "sample_type": "sts",
                     "num_X_samples": default_num_X_samples,
+                    "num_refinements": 30,
+                    "no_stagger": True,
+                },
+            )
+        elif designer_name == "sts-ui":
+            return bt_designer(
+                AcqMTV,
+                init_sobol=0,
+                acq_kwargs={
+                    "ts_only": True,
+                    "sample_type": "sts",
+                    "num_X_samples": default_num_X_samples,
+                    "num_refinements": 30,
+                    "no_stagger": False,
+                    "x_max_type": "rand",
                 },
             )
         elif designer_name == "sts-t":

@@ -1,4 +1,5 @@
 import queue
+import time
 
 import modal
 from experiment_sampler import post_process, sample_1
@@ -43,12 +44,19 @@ def modal_batches_worker():
 
 @app.function(image=modal_image, concurrency_limit=1, timeout=_TIMEOUT_HOURS * 60 * 60)
 def modal_batches_submitter(job_name: str):
-    job_queue = _queue()
-    res_dict = _dict()
+    batches_submitter(job_name)
+
+
+def batches_submitter(job_name: str, count_only=False):
+    if not count_only:
+        job_queue = _queue()
+    num_submitted = 0
     for key, d_args in _gen_jobs(job_name):
         print(f"JOB: {key}")
-        job_queue.put((key, d_args))
-        res_dict[f"{job_name}-key_max"] = key
+        if not count_only:
+            job_queue.put((key, d_args))
+        num_submitted += 1
+    print("TOTAL:", num_submitted)
 
 
 def _gen_jobs(job_name):
@@ -67,42 +75,48 @@ def _job_key(job_name, i_job):
 
 
 def collect():
+    job_queue = _queue()
     res_dict = _dict()
-    # key_max = res_dict[f"{job_name}-key_max"]
-    # i_max = int(key_max.split("-")[-1]) + 1
-    for key, value in res_dict.items():
-        if key.endswith("key_max"):
-            continue
+    while True:
+        num_collected = 0
+        for key, value in res_dict.items():
+            if key.endswith("key_max"):
+                continue
 
-        (trace_fn, collector_log, collector_trace) = res_dict[key]
-        print(f"JOB: {key}")
-        post_process(collector_log, collector_trace, trace_fn)
-        del res_dict[key]
+            (trace_fn, collector_log, collector_trace) = res_dict[key]
+            print(f"JOB: {key}")
+            post_process(collector_log, collector_trace, trace_fn)
+            del res_dict[key]
+            num_collected += 1
+        print("How many jobs are running? Idk.")
+        print(f"jobs_remaining = {job_queue.len()}")
+        if num_collected == 0:
+            time.sleep(30)
+        else:
+            time.sleep(3)
 
 
 def status():
     job_queue = _queue()
     res_dict = _dict()
     print(f"jobs_remaining = {job_queue.len()}")
-    print(f"results_available = {res_dict.len() - 1}")
+    print(f"results_available = {res_dict.len()}")
 
 
 @app.local_entrypoint()
 def batches(cmd: str, job_name: str = None, num: int = None):
-    if cmd == "dry-run":
-        num_jobs = 0
-        for key, _ in _gen_jobs(job_name):
-            print("JOB_DRY_RUN:", key)
-            num_jobs += 1
-        print(f"NUM_JOB: {num_jobs}")
-    elif cmd == "work":
+    if cmd == "work":
         modal_function = modal.Function.lookup("yubo", "modal_batches_worker")
         for i in range(num):
             print("WORK:", i)
             modal_function.spawn()
-    elif cmd == "submit":
+    elif cmd == "submit-all":
         submitter = modal.Function.lookup("yubo", "modal_batches_submitter")
         submitter.spawn(job_name)
+    elif cmd == "submit-missing":
+        batches_submitter(job_name)
+    elif cmd == "count-missing":
+        batches_submitter(job_name, count_only=True)
     elif cmd == "status":
         status()
     elif cmd == "collect":

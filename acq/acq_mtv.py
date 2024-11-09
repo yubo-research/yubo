@@ -10,7 +10,6 @@ from torch.quasirandom import SobolEngine
 
 from sampling.pstar_sampler import PStarSampler
 from sampling.stagger_thompson_sampler import StaggerThompsonSampler
-from sampling.stagger_thompson_sampler_2 import StaggerThompsonSampler2
 
 from .acq_util import find_max
 
@@ -25,6 +24,7 @@ class AcqMTV(MCAcquisitionFunction):
         num_mcmc=None,
         sample_type="sts",
         num_refinements=30,
+        no_stagger=False,
         x_max_type="find",
         **kwargs,
     ) -> None:
@@ -43,6 +43,7 @@ class AcqMTV(MCAcquisitionFunction):
 
         self._num_refinements = num_refinements
         self._x_max_type = x_max_type
+        self._no_stagger = no_stagger
 
         sobol_engine = SobolEngine(self._num_dim, scramble=True)
 
@@ -60,12 +61,6 @@ class AcqMTV(MCAcquisitionFunction):
                     self.X_samples = self._stagger_thompson_sampler(num_X_samples)
                 else:
                     self.X_samples = "sts"
-            elif sample_type == "sts2":
-                self._set_x_max()
-                if not ts_only:
-                    self.X_samples = self._stagger_thompson_sampler_2(num_X_samples)
-                else:
-                    self.X_samples = "sts2"
             elif sample_type == "pts":
                 self._set_x_max()
                 assert not ts_only, "Use designer pts directly"
@@ -108,18 +103,31 @@ class AcqMTV(MCAcquisitionFunction):
 
     def _set_x_max(self):
         if self._x_max_type == "find":
-            self.X_max = find_max(
+            X_max_find = find_max(
                 self.model,
                 bounds=self._bounds(),
             )
+            if len(self.model.train_targets[0].shape) == 0:
+                self.X_max = X_max_find
+                return
+            Y_max_find = self.model.posterior(X_max_find).mean.squeeze()
+            Y = self.model.posterior(self.model.train_targets[0]).mean.squeeze()
+            i = np.random.choice(torch.where(Y == Y.max())[0], size=1)
+            Y_max_meas = Y[i]
+            if Y_max_find > Y_max_meas:
+                self.X_max = X_max_find
+            else:
+                self.X_max = self.model.train_inputs[0][i]
         elif self._x_max_type == "ts_meas":
             Y_ts = self.model.posterior(self.model.train_inputs[0]).rsample(torch.Size([1])).squeeze()
-            i = torch.where(Y_ts == Y_ts.max())[0]
+            i = np.random.choice(torch.where(Y_ts == Y_ts.max())[0], size=1)
             self.X_max = self.model.train_inputs[0][i]
         elif self._x_max_type == "meas":
             Y = self.model.train_targets[0]
-            i = torch.where(Y == Y.max())[0]
+            i = np.random.choice(torch.where(Y == Y.max())[0], size=1)
             self.X_max = self.model.train_inputs[0][i]
+        elif self._x_max_type == "rand":
+            self.X_max = torch.rand(size=(1, self._num_dim))
         else:
             assert False, ("Unknown x_max_type", self._x_max_type)
         # print("X_MAX:", self.X_max.device)
@@ -127,21 +135,15 @@ class AcqMTV(MCAcquisitionFunction):
     def _draw(self, num_arms):
         if self.X_samples == "sts":
             return self._stagger_thompson_sampler(num_arms)
-        elif self.X_samples == "sts2":
-            return self._stagger_thompson_sampler_2(num_arms)
         assert len(self.X_samples) >= num_arms, (len(self.X_samples), num_arms)
         i = np.arange(len(self.X_samples))
         i = np.random.choice(i, size=(int(num_arms)), replace=False)
         return self.X_samples[i]
 
     def _stagger_thompson_sampler(self, num_samples):
-        sts = StaggerThompsonSampler(self.model, self.X_max, num_samples=num_samples)
+        sts = StaggerThompsonSampler(self.model, self.X_max, num_samples=num_samples, no_stagger=self._no_stagger)
         sts.refine(self._num_refinements)
         return sts.samples()
-
-    def _stagger_thompson_sampler_2(self, num_samples):
-        sts = StaggerThompsonSampler2(self.model, self.X_max, num_candidates=10 * num_samples)
-        return sts.sample(num_samples)
 
     @t_batch_mode_transform()
     def forward(self, X):

@@ -25,10 +25,11 @@ Draw from a proposal distribution defined this way:
 
 
 class StaggerThompsonSampler:
-    def __init__(self, model, X_control, num_samples):
+    def __init__(self, model, X_control, num_samples, no_stagger=False):
         assert len(X_control) == 1, "NYI: multiple control points"
         self._model = model
         self._num_samples = num_samples
+        self._no_stagger = no_stagger
         self._X_samples = torch.tile(X_control, dims=(self._num_samples, 1))
         self._num_dim = self._X_samples.shape[-1]
         self.device = self._X_samples.device
@@ -43,9 +44,13 @@ class StaggerThompsonSampler:
             self._refine(s_min=s_min, s_max=s_max)
 
     def _refine(self, s_min=1e-6, s_max=1):
-        l_s_min = torch.log(torch.tensor(s_min)).to(self._X_samples)
-        l_s_max = torch.log(torch.tensor(s_max)).to(self._X_samples)
-        s = torch.exp(l_s_min + (l_s_max - l_s_min) * torch.rand(size=(self._num_samples, 1)))
+        u = torch.rand(size=(self._num_samples, 1))
+        if self._no_stagger:
+            s = s_min + (s_max - s_min) * u
+        else:
+            l_s_min = torch.log(torch.tensor(s_min)).to(self._X_samples)
+            l_s_max = torch.log(torch.tensor(s_max)).to(self._X_samples)
+            s = torch.exp(l_s_min + (l_s_max - l_s_min) * u)
         assert s.max() <= 1, s
         assert s.min() > 0, s
 

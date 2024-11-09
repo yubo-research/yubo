@@ -64,7 +64,7 @@ def prep_mtv_repro(results_dir):
 def prep_ts_hd(results_dir):
     exp_dir = "exp_pss_ts_hd"
 
-    opts = ["optuna"]  # ["ei", "ucb", "gibbon", "sr"]  # "mtv-pts", "pts", "ts", "turbo-1", "sobol", "random"]
+    opts = ["sts"]  # "sts-t", "sts-m"]  # "sts-ui", "sts-ns"]  # "optuna", "ei", "ucb", "gibbon", "sr", "mtv-sts", "sts", "ts", "turbo-1", "sobol", "random"]
     noises = [None]
 
     min_rounds = 30
@@ -216,7 +216,8 @@ def prep_pss_sweep(results_dir):
     exp_dir = "exp_pss_sweep"
 
     opts = ["random"]
-    opts += [f"pss_sweep_kmcmc-{n}" for n in [1, 3, 10, 30, 100, 300]]
+    # opts += [f"pss_sweep_kmcmc-{n}" for n in [1, 3, 10, 30, 100]]
+    opts += [f"pss_sweep_num_mcmc-{n}" for n in [10, 30, 100, 300, 1000]]
 
     return prep_d_args(
         results_dir,
@@ -224,11 +225,31 @@ def prep_pss_sweep(results_dir):
         funcs=funcs_nd,
         dims=[1, 3, 10, 30, 100, 300],
         num_arms=1,
-        num_replications=30,
+        num_replications=10,
         opts=opts,
         noises=[None],
         num_rounds=10,
-        func_category="g",
+        func_category="f",
+    )
+
+
+def prep_sts_sweep(results_dir):
+    exp_dir = "exp_sts_sweep"
+
+    opts = ["random"]
+    opts += [f"sts_sweep-{n:04d}" for n in [10, 30, 100, 300, 1000]]
+
+    return prep_d_args(
+        results_dir,
+        exp_dir=exp_dir,
+        funcs=funcs_nd,
+        dims=[1, 3, 10, 30, 100, 300],
+        num_arms=1,
+        num_replications=10,
+        opts=opts,
+        noises=[None],
+        num_rounds=10,
+        func_category="f",
     )
 
 
@@ -238,7 +259,7 @@ def prep_pss_sweep(results_dir):
 def prep_d_argss():
     results_dir = "results"
 
-    return prep_pss_sweep(results_dir)
+    return prep_ts_hd(results_dir)
 
 
 if __name__ == "__main__":

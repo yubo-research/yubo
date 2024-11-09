@@ -3,7 +3,7 @@ import time
 from experiment_sampler import sampler
 
 from experiments.experiment_sampler import post_process
-from experiments.modal_app import app, sample_1_modal
+from experiments.modal_batches import app, sample_1_modal
 
 
 def dist_modal(all_args):
