@@ -29,9 +29,9 @@ class AcqMTV(MCAcquisitionFunction):
         **kwargs,
     ) -> None:
         super().__init__(model=model, **kwargs)
-        print(
-            f"AcqMTV: num_X_samples={num_X_samples} ts_only={ts_only} k_mcmc={k_mcmc} num_mcmc = {num_mcmc} num_refinements = {num_refinements} sample_type={sample_type} x_max_type = {x_max_type}"
-        )
+        # print(
+        #     f"AcqMTV: num_X_samples={num_X_samples} ts_only={ts_only} k_mcmc={k_mcmc} num_mcmc = {num_mcmc} num_refinements = {num_refinements} sample_type={sample_type} x_max_type = {x_max_type}"
+        # )
         self.ts_only = ts_only
 
         X_0 = self.model.train_inputs[0].detach()
@@ -103,21 +103,10 @@ class AcqMTV(MCAcquisitionFunction):
 
     def _set_x_max(self):
         if self._x_max_type == "find":
-            X_max_find = find_max(
+            self.X_max = find_max(
                 self.model,
                 bounds=self._bounds(),
             )
-            if len(self.model.train_targets[0].shape) == 0:
-                self.X_max = X_max_find
-                return
-            Y_max_find = self.model.posterior(X_max_find).mean.squeeze()
-            Y = self.model.posterior(self.model.train_targets[0]).mean.squeeze()
-            i = np.random.choice(torch.where(Y == Y.max())[0], size=1)
-            Y_max_meas = Y[i]
-            if Y_max_find > Y_max_meas:
-                self.X_max = X_max_find
-            else:
-                self.X_max = self.model.train_inputs[0][i]
         elif self._x_max_type == "ts_meas":
             Y_ts = self.model.posterior(self.model.train_inputs[0]).rsample(torch.Size([1])).squeeze()
             i = np.random.choice(torch.where(Y_ts == Y_ts.max())[0], size=1)

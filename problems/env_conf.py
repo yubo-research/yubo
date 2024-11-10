@@ -93,7 +93,7 @@ _gym_env_confs = {
     "reach": EnvConf("Reacher-v4", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
     # "push": EnvConf("Pusher-v4", problem_seed=None, gym_conf=GymConf(max_steps=100, num_frames_skip=30)),
     "hop": EnvConf("Hopper-v4", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
-    "human": EnvConf("Humanoid-v4", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
+    "human": EnvConf("Humanoid-v5", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
     "stand": EnvConf("HumanoidStandup-v4", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
     "bw": EnvConf("BipedalWalker-v3", problem_seed=None, gym_conf=GymConf(max_steps=1600, num_frames_skip=100)),
     "tlunar": EnvConf(

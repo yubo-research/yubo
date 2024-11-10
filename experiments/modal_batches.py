@@ -52,7 +52,7 @@ def batches_submitter(job_name: str, count_only=False):
         job_queue = _queue()
     num_submitted = 0
     for key, d_args in _gen_jobs(job_name):
-        print(f"JOB: {key}")
+        print(f"JOB: {key} {d_args}")
         if not count_only:
             job_queue.put((key, d_args))
         num_submitted += 1

@@ -27,7 +27,8 @@ def slabel(trans, ax, a):
 
 
 def subplots(n, m, figsize):
-    fig, axs = plt.subplots(n, m, figsize=(figsize, figsize))
+    fig_width = m / n * figsize
+    fig, axs = plt.subplots(n, m, figsize=(fig_width, figsize))
     if isinstance(axs, np.ndarray):
         axs = axs.flatten()
     else:
@@ -35,9 +36,9 @@ def subplots(n, m, figsize):
     return fig, axs
 
 
-def tight(axs):
+def tight(axs, sub_aspect=1):
     for a in axs:
-        a.set_box_aspect(1)
+        a.set_box_aspect(sub_aspect)
     plt.tight_layout()
     # plt.show()
 
