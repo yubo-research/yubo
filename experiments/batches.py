@@ -51,7 +51,7 @@ def run(cmds, max_parallel, b_dry_run=False):
 def prep_mtv_repro(results_dir):
     exp_dir = "exp_pss_repro_mtv_3"
 
-    opts = ["optuna"]  # "mtv-pts", "pts", "mtv", "sobol", "random", "ei", "ucb", "dpp", "sr", "gibbon", "lei"]
+    opts = ["sts", "mtv-sts"]  # "optuna"]  # "mtv-pts", "pts", "mtv", "sobol", "random", "ei", "ucb", "dpp", "sr", "gibbon", "lei"]
     noises = [None]
 
     cmds_1d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_1d, dims=[1], num_arms=3, num_replications=100, opts=opts, noises=noises, num_rounds=3)
@@ -259,7 +259,7 @@ def prep_sts_sweep(results_dir):
 def prep_d_argss():
     results_dir = "results"
 
-    return prep_ts_hd(results_dir)
+    return prep_mtv_repro(results_dir)
 
 
 if __name__ == "__main__":

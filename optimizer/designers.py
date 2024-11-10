@@ -182,24 +182,12 @@ class Designers:
                 },
             )
         elif designer_name == "mtv-sts":
-            return (
-                bt_designer(
-                    AcqMTV,
-                    init_sobol=0,
-                    acq_kwargs={
-                        "num_X_samples": default_num_X_samples,
-                        "sample_type": "sts",
-                        "num_refinements": 30,
-                    },
-                ),
-            )
-        elif designer_name == "mtv-pts":
             return bt_designer(
                 AcqMTV,
                 init_sobol=0,
                 acq_kwargs={
                     "num_X_samples": default_num_X_samples,
-                    "sample_type": "pts",
+                    "sample_type": "sts",
                     "num_refinements": 30,
                 },
             )
