@@ -53,12 +53,12 @@ class Designers:
         keep_style = None
         use_vanilla = False
         for option in options:
-            if option[0] == "ks":
-                num_keep = int(option[1:])
+            if option[:2] == "ks":
+                num_keep = int(option[2:])
                 keep_style = "some"
                 print(f"OPTION: num_keep = {num_keep} keep_style = {keep_style}")
-            elif option[0] == "kb":
-                num_keep = int(option[1:])
+            elif option[:2] == "kb":
+                num_keep = int(option[2:])
                 keep_style = "best"
                 print(f"OPTION: num_keep = {num_keep} keep_style = {keep_style}")
             elif option == "van":
