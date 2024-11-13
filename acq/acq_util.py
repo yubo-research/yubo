@@ -4,6 +4,11 @@ from botorch.acquisition import PosteriorMean
 from botorch.optim import optimize_acqf
 
 
+def keep_best(Y, num_keep):
+    num_keep_best = num_keep
+    return torch.topk(Y, k=num_keep_best).indices.numpy().tolist()
+
+
 def keep_some(Y, num_keep):
     num_keep_best = num_keep // 2
     num_keep_rest = num_keep - num_keep_best

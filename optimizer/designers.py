@@ -50,15 +50,17 @@ class Designers:
             options = []
 
         num_keep = None
+        keep_style = None
         use_vanilla = False
         for option in options:
-            if option[0] == "k":
-                # Select a subset of num_keep observations
-                #  to use for modeling and acquisition function
-                #  optimization. The goal is to limit the
-                #  O(num_observations^3) query complexity to O(num_keep^3)
+            if option[0] == "ks":
                 num_keep = int(option[1:])
-                print(f"OPTION: num_keep = {num_keep}")
+                keep_style = "some"
+                print(f"OPTION: num_keep = {num_keep} keep_style = {keep_style}")
+            elif option[0] == "kb":
+                num_keep = int(option[1:])
+                keep_style = "best"
+                print(f"OPTION: num_keep = {num_keep} keep_style = {keep_style}")
             elif option == "van":
                 use_vanilla = True
                 print(f"OPTION use_vanilla = {use_vanilla}")
@@ -71,6 +73,7 @@ class Designers:
                 acq_factory,
                 acq_kwargs=acq_kwargs,
                 num_keep=num_keep,
+                keep_style=keep_style,
                 use_vanilla=use_vanilla,
                 init_sobol=init_sobol,
                 opt_sequential=opt_sequential,
