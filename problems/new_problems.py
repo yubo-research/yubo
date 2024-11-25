@@ -4,6 +4,7 @@ import torch.nn as nn
 
 #src = "https://openreview.net/pdf?id=lsFa23pHCH"
 
+
 class NNDraw:
     def __init__(self, dim=200, seed=0):
         self.dim = dim
