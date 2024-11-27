@@ -12,6 +12,7 @@ from botorch.acquisition.thompson_sampling import PathwiseThompsonSampling
 from acq.acq_dpp import AcqDPP
 from acq.acq_min_dist import AcqMinDist
 from acq.acq_mtv import AcqMTV
+from acq.acq_sobol import AcqSobol
 from acq.acq_ts import AcqTS
 from acq.acq_var import AcqVar
 
@@ -49,15 +50,17 @@ class Designers:
             options = []
 
         num_keep = None
+        keep_style = None
         use_vanilla = False
         for option in options:
-            if option[0] == "k":
-                # Select a subset of num_keep observations
-                #  to use for modeling and acquisition function
-                #  optimization. The goal is to limit the
-                #  O(num_observations^3) query complexity to O(num_keep^3)
-                num_keep = int(option[1:])
-                print(f"OPTION: num_keep = {num_keep}")
+            if option[:2] == "ks":
+                num_keep = int(option[2:])
+                keep_style = "some"
+                print(f"OPTION: num_keep = {num_keep} keep_style = {keep_style}")
+            elif option[:2] == "kb":
+                num_keep = int(option[2:])
+                keep_style = "best"
+                print(f"OPTION: num_keep = {num_keep} keep_style = {keep_style}")
             elif option == "van":
                 use_vanilla = True
                 print(f"OPTION use_vanilla = {use_vanilla}")
@@ -70,6 +73,7 @@ class Designers:
                 acq_factory,
                 acq_kwargs=acq_kwargs,
                 num_keep=num_keep,
+                keep_style=keep_style,
                 use_vanilla=use_vanilla,
                 init_sobol=init_sobol,
                 opt_sequential=opt_sequential,
@@ -93,6 +97,8 @@ class Designers:
             return RandomDesigner(self._policy)
         elif designer_name == "sobol":
             return SobolDesigner(self._policy)
+        elif designer_name == "btsobol":
+            return bt_designer(AcqSobol)
 
         # All exploitation
         elif designer_name == "sr":
@@ -118,6 +124,32 @@ class Designers:
                 acq_kwargs={
                     "sampler": "cholesky",
                     "num_candidates": num_candidates,
+                },
+            )
+        elif designer_name.startswith("pss_sweep_kmcmc"):
+            k_mcmc = int(designer_name.split("-")[1])
+            return bt_designer(
+                AcqMTV,
+                init_sobol=0,
+                acq_kwargs={"ts_only": True, "num_X_samples": default_num_X_samples, "sample_type": "pss", "k_mcmc": k_mcmc},
+            )
+        elif designer_name.startswith("pss_sweep_num_mcmc"):
+            num_mcmc = int(designer_name.split("-")[1])
+            return bt_designer(
+                AcqMTV,
+                init_sobol=0,
+                acq_kwargs={"ts_only": True, "num_X_samples": default_num_X_samples, "sample_type": "pss", "k_mcmc": None, "num_mcmc": num_mcmc},
+            )
+        elif designer_name.startswith("sts_sweep"):
+            num_refinements = int(designer_name.split("-")[1])
+            return bt_designer(
+                AcqMTV,
+                init_sobol=0,
+                acq_kwargs={
+                    "ts_only": True,
+                    "sample_type": "sts",
+                    "num_X_samples": default_num_X_samples,
+                    "num_refinements": num_refinements,
                 },
             )
         elif designer_name == "ucb":
@@ -153,24 +185,12 @@ class Designers:
                 },
             )
         elif designer_name == "mtv-sts":
-            return (
-                bt_designer(
-                    AcqMTV,
-                    init_sobol=0,
-                    acq_kwargs={
-                        "num_X_samples": default_num_X_samples,
-                        "sample_type": "sts",
-                        "num_refinements": 30,
-                    },
-                ),
-            )
-        elif designer_name == "mtv-pts":
             return bt_designer(
                 AcqMTV,
                 init_sobol=0,
                 acq_kwargs={
                     "num_X_samples": default_num_X_samples,
-                    "sample_type": "pts",
+                    "sample_type": "sts",
                     "num_refinements": 30,
                 },
             )
@@ -184,6 +204,31 @@ class Designers:
                     "sample_type": "sts",
                     "num_X_samples": default_num_X_samples,
                     "num_refinements": 30,
+                },
+            )
+        elif designer_name == "sts-ns":
+            return bt_designer(
+                AcqMTV,
+                init_sobol=0,
+                acq_kwargs={
+                    "ts_only": True,
+                    "sample_type": "sts",
+                    "num_X_samples": default_num_X_samples,
+                    "num_refinements": 30,
+                    "no_stagger": True,
+                },
+            )
+        elif designer_name == "sts-ui":
+            return bt_designer(
+                AcqMTV,
+                init_sobol=0,
+                acq_kwargs={
+                    "ts_only": True,
+                    "sample_type": "sts",
+                    "num_X_samples": default_num_X_samples,
+                    "num_refinements": 30,
+                    "no_stagger": False,
+                    "x_max_type": "rand",
                 },
             )
         elif designer_name == "sts-t":

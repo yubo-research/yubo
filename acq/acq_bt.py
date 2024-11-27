@@ -3,7 +3,7 @@ from botorch.models import SingleTaskGP
 from torch.nn import Module
 
 import acq.fit_gp as fit_gp
-from acq.acq_util import find_max, keep_some
+from acq.acq_util import find_max, keep_best, keep_some
 
 
 class _EmptyTransform(Module):
@@ -31,6 +31,7 @@ class AcqBT:
         device,
         dtype,
         num_keep,
+        keep_style,
         use_vanilla,
     ):
         # All BoTorch stuff is coded to bounds of [0,1]!
@@ -46,7 +47,12 @@ class AcqBT:
         else:
             Y, X = fit_gp.extract_X_Y(data, dtype, device)
             if num_keep is not None and num_keep < len(X):
-                i = keep_some(Y.squeeze(), num_keep)
+                if keep_style == "some":
+                    i = keep_some(Y.squeeze(), num_keep)
+                elif keep_style == "best":
+                    i = keep_best(Y.squeeze(), num_keep)
+                else:
+                    assert False, keep_style
                 Y = Y[i, :]
                 X = X[i, :]
             gp = fit_gp.fit_gp_XY(X, Y, use_vanilla=use_vanilla)

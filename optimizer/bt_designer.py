@@ -18,6 +18,7 @@ class BTDesigner:
         init_X_samples=True,
         opt_sequential=False,  # greedy q, not joint q
         num_keep=None,
+        keep_style=None,
         use_vanilla=False,
         optimizer_options={"batch_limit": 10, "maxiter": 1000},
         dtype=torch.double,
@@ -32,6 +33,7 @@ class BTDesigner:
         self._init_X_samples = init_X_samples
         self._opt_sequential = opt_sequential
         self._num_keep = num_keep
+        self._keep_style = keep_style
         self._use_vanilla = use_vanilla
         self._optimizer_options = optimizer_options
         self._acq_kwargs = acq_kwargs
@@ -77,6 +79,7 @@ class BTDesigner:
             device=self.device,
             dtype=self.dtype,
             num_keep=self._num_keep,
+            keep_style=self._keep_style,
             use_vanilla=self._use_vanilla,
         )
         if hasattr(acq_bt.acq_function, "draw"):

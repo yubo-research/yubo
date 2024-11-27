@@ -1,93 +1,54 @@
-# my_job_queue.py
-import os
+import queue
 import time
 
 import modal
-import torch
 
-
-def mk_image():
-    reqs = """
-    numpy==1.26.0
-    scipy==1.13.1
-    torch==2.1.0
-    botorch==0.9.2
-    gpytorch==1.11
-    gymnasium==0.29.1
-    cma==3.3.0
-    mujoco==2.3.7
-    gymnasium[box2d]
-    gymnasium[mujoco]
-    """.split(
-        "\n"
-    )
-    sreqs = []
-    for req in reqs:
-        req = req.strip()
-        if len(req) == 0:
-            continue
-        print("REQ:", req)
-        sreqs.append(req)
-    # print("SREQS:", sreqs)
-    return modal.Image.debian_slim(python_version="3.11.5").apt_install("swig").pip_install(sreqs)
-
+from experiments.modal_image import mk_image
 
 modal_image = mk_image()
 
-app = modal.App(name="my-job-queue")
+app = modal.App(name="my-job")
 
 
-def time_rand(device):
-    t_0 = time.time()
-    x = torch.rand(size=(100000, 1000), device=device)
-    t_f = time.time()
+@app.function(image=modal_image, concurrency_limit=2, timeout=3000)  # , gpu="T4")
+def process_job(cmd):
+    my_queue = modal.Queue.from_name("my-persisted-queue-b", create_if_missing=True)
+    if cmd == "submit":
+        for i in range(10000):
+            print("PUT:", i)
+            my_queue.put(f"key_{i}")
+        return
 
-    print()
-    print("DEVICE:", x.device)
-    print("X_LAST:", x.flatten()[-1].item())
-    print("TIME:", t_f - t_0)
+    my_dict = modal.Dict.from_name("my-persisted-dict", create_if_missing=True)
 
-
-@app.function(image=modal_image, concurrency_limit=2, timeout=30, gpu="T4")
-def process_job():
-    os.system("nvidia-smi")
-    print(torch.__version__)
-    print("HAS_CUDA:", torch.cuda.is_available())
-    time_rand("cpu")
-    time_rand("cpu")
-    time_rand("cpu")
-    time_rand("cuda:0")
-    time_rand("cuda:0")
-    time_rand("cuda:0")
+    while True:
+        try:
+            key = my_queue.get(block=True, timeout=10)
+        except queue.Empty:
+            break
+        print("KEY:", key)
+        my_dict[key] = (key, "b", time.time())
 
 
-def submit_job(data):
-    # Since the `process_job` function is deployed, need to first look it up
-    process_job = modal.Function.lookup("my-job-queue", "process_job")
-    call = process_job.spawn(data)
-    return call.object_id
+def start(cmd):
+    process_job = modal.Function.lookup("my-job", "process_job")
+    process_job.spawn(cmd)
 
 
-def get_job_result(call_id):
-    function_call = modal.functions.FunctionCall.from_id(call_id)
-    try:
-        result = function_call.get(timeout=5)
-    except TimeoutError:
-        result = {"result": "pending"}
-    return result
+def get_job_result():
+    my_dict = modal.Dict.from_name("my-persisted-dict", create_if_missing=True)
+    for i in range(10000):
+        key = f"key_{i}"
+        print(key, my_dict[key])
 
 
 @app.local_entrypoint()
-def main():
-    process_job.remote()
-
-
-# @app.local_entrypoint()
-# def main():
-#     data = "my-data"
-
-#     if cmd == "submit":
-#         call_id = submit_job(data)
-#         print("CALL_ID:", call_id)
-#     else:
-#         print("RESULT:", get_job_result(cmd))
+def main(cmd):
+    if cmd == "start":
+        start("processor")
+    elif cmd == "submit":
+        start("submitter")
+    elif cmd == "get":
+        get_job_result()
+    else:
+        assert False, cmd

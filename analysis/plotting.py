@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import matplotlib.transforms as mtransforms
 import numpy as np
 
 import analysis.data_sets as ads
@@ -7,8 +8,27 @@ linestyles = ["-", ":", "--", "-."] * 10
 markers = ["o", "x", "v", ".", "s"] * 10
 
 
+def mk_trans(fig, x=10 / 72, y=5 / 72):
+    trans = mtransforms.ScaledTranslation(x, y, fig.dpi_scale_trans)
+    return trans
+
+
+def slabel(trans, ax, a):
+    return ax.text(
+        0.8,
+        0.97,
+        f"({a})",
+        transform=ax.transAxes + trans,
+        # fontsize=14,
+        verticalalignment="top",
+        fontfamily="serif",
+        bbox=dict(facecolor="1", edgecolor="none", pad=3.0),
+    )
+
+
 def subplots(n, m, figsize):
-    fig, axs = plt.subplots(n, m, figsize=(figsize, figsize))
+    fig_width = m / n * figsize
+    fig, axs = plt.subplots(n, m, figsize=(fig_width, figsize))
     if isinstance(axs, np.ndarray):
         axs = axs.flatten()
     else:
@@ -16,9 +36,9 @@ def subplots(n, m, figsize):
     return fig, axs
 
 
-def tight(axs):
+def tight(axs, sub_aspect=1):
     for a in axs:
-        a.set_box_aspect(1)
+        a.set_box_aspect(sub_aspect)
     plt.tight_layout()
     # plt.show()
 
@@ -65,8 +85,11 @@ def zc(x):
     return (x - x.mean()) / x.std()
 
 
-def plot_sorted(ax, optimizers, mu, se, renames=None):
-    i_sort = np.argsort(-mu)
+def plot_sorted(ax, optimizers, mu, se, renames=None, b_sort=True):
+    if b_sort:
+        i_sort = np.argsort(-mu)
+    else:
+        i_sort = np.arange(len(mu))
     n = np.arange(len(mu))
     ax.errorbar(n, mu[i_sort], 2 * se[i_sort], fmt="k,", capsize=6)
     names = list(optimizers)
@@ -79,7 +102,7 @@ def plot_sorted(ax, optimizers, mu, se, renames=None):
     ax.set_ylim([0, 1])
 
 
-def plot_sorted_agg(ax, data_locator, renames=None, i_agg=-1):
+def plot_sorted_agg(ax, data_locator, renames=None, i_agg=-1, b_sort=True):
     traces = ads.load_multiple_traces(data_locator)
 
     if i_agg == "mean":
@@ -89,7 +112,7 @@ def plot_sorted_agg(ax, data_locator, renames=None, i_agg=-1):
             traces = traces[..., : i_agg + 1]
         mu, se = ads.range_summarize(traces)
 
-    plot_sorted(ax, data_locator.optimizers(), mu, se, renames=renames)
+    plot_sorted(ax, data_locator.optimizers(), mu, se, renames=renames, b_sort=b_sort)
 
 
 def plot_compare_problem(ax, data_locator, exp_name, problem_name, optimizers, b_normalize, title, renames=None, old_way=True, b_legend=True):

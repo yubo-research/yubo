@@ -1,3 +1,18 @@
+def test_intersect_with_box():
+    import numpy as np
+
+    from sampling.sampling_util import intersect_with_box
+
+    # Example usage
+    x0 = np.array([0.2, 0.5])
+    x1 = np.array([10, 1.5])
+    intersection = intersect_with_box(x0, x1)
+    print()
+    print("I:", x0)
+    print("O:", x1)
+    print(intersection)
+
+
 def test_var_of_var():
     import torch
 

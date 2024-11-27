@@ -4,18 +4,24 @@ from botorch.acquisition import PosteriorMean
 from botorch.optim import optimize_acqf
 
 
+def keep_best(Y, num_keep):
+    num_keep_best = num_keep
+    return torch.topk(Y, k=num_keep_best).indices.numpy().tolist()
+
+
 def keep_some(Y, num_keep):
     num_keep_best = num_keep // 2
     num_keep_rest = num_keep - num_keep_best
 
-    i_all = torch.arange(len(Y))
-    i_best = torch.topk(Y, k=num_keep_best).indices
+    i_all = torch.arange(len(Y)).numpy().tolist()
+    i_best = torch.topk(Y, k=num_keep_best).indices.numpy().tolist()
 
     i_rest = list(set(i_all) - set(i_best))
     np.random.shuffle(i_rest)
     i_rest = i_rest[:num_keep_rest]
 
-    idx = sorted(set(i_best) | set(i_rest))
+    idx = list(set(i_best) | set(i_rest))
+    idx = sorted(np.unique(idx).tolist())
     assert len(idx) == len(i_best) + len(i_rest)
     assert len(idx) == num_keep, len(idx)
 

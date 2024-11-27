@@ -161,7 +161,11 @@ def load_multiple_traces(data_locator):
                 # continue
             traces[i_problem, i_opt, : trace.shape[0], : trace.shape[1]] = trace
 
-    traces = npma.masked_invalid(traces)
+    try:
+        traces = npma.masked_invalid(traces)
+    except:
+        print("TP:", problems, opt_names)
+        assert False
     if num_bad > 0:
         print(f"\n{num_bad} / {num_tot} files bad. {100*traces.mask.mean():.1f}% missing data")
     else:

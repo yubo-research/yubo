@@ -82,19 +82,25 @@ class EnvConf:
         env.close()
 
 
+# See https://paperswithcode.com/task/openai-gym
 _gym_env_confs = {
+    # 95
     "mcc": EnvConf("MountainCarContinuous-v0", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=100)),
     "pend": EnvConf("Pendulum-v1", problem_seed=None, gym_conf=GymConf(max_steps=200, num_frames_skip=100)),
+    # 300
     "lunar": EnvConf("LunarLander-v3", problem_seed=None, gym_conf=GymConf(max_steps=500, num_frames_skip=30), kwargs={"continuous": True}),
-    "ant": EnvConf("Ant-v4", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
-    "mpend": EnvConf("InvertedPendulum-v4", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
-    "macro": EnvConf("InvertedDoublePendulum-v4", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
-    "swim": EnvConf("Swimmer-v4", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
-    "reach": EnvConf("Reacher-v4", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
+    # 6600
+    "ant": EnvConf("Ant-v5", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
+    "mpend": EnvConf("InvertedPendulum-v5", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
+    "macro": EnvConf("InvertedDoublePendulum-v5", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
+    "swim": EnvConf("Swimmer-v5", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
+    "reach": EnvConf("Reacher-v5", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
     # "push": EnvConf("Pusher-v4", problem_seed=None, gym_conf=GymConf(max_steps=100, num_frames_skip=30)),
-    "hop": EnvConf("Hopper-v4", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
-    "human": EnvConf("Humanoid-v4", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
-    "stand": EnvConf("HumanoidStandup-v4", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
+    # 3300
+    "hop": EnvConf("Hopper-v5", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
+    # 6900
+    "human": EnvConf("Humanoid-v5", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
+    "stand": EnvConf("HumanoidStandup-v5", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
     "bw": EnvConf("BipedalWalker-v3", problem_seed=None, gym_conf=GymConf(max_steps=1600, num_frames_skip=100)),
     "tlunar": EnvConf(
         "LunarLander-v3",
