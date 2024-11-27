@@ -13,6 +13,40 @@ def mk_trans(fig, x=10 / 72, y=5 / 72):
     return trans
 
 
+def hash_marks(ax, x, y, k, color, alpha=1):
+    # Thanks, ChatGPT!
+    x = np.asarray(x)
+    y = np.asarray(y)
+
+    # Calculate the direction vector
+    direction = y - x
+
+    # Normalize the direction vector
+    length = np.sqrt(direction[0] ** 2 + direction[1] ** 2)
+    direction_normalized = direction / length
+
+    # Calculate a point k of the way from x to y
+    mid_point = x + k * direction
+
+    # Calculate the perpendicular vector
+    perpendicular = np.array([-direction_normalized[1], direction_normalized[0]])
+
+    # Length of the perpendicular line
+    perpendicular_length = 0.05
+
+    # Calculate the endpoints of the perpendicular line
+    perpendicular_start = mid_point - (perpendicular_length / 2) * perpendicular
+    perpendicular_end = mid_point + (perpendicular_length / 2) * perpendicular
+
+    # Plot the perpendicular line
+    ax.plot(
+        [perpendicular_start[0], perpendicular_end[0]],
+        [perpendicular_start[1], perpendicular_end[1]],
+        color=color,
+        alpha=alpha,
+    )
+
+
 def slabel(trans, ax, a):
     return ax.text(
         0.8,
@@ -98,7 +132,7 @@ def plot_sorted(ax, optimizers, mu, se, renames=None, b_sort=True):
             if old in names:
                 i = names.index(old)
                 names[i] = new
-    ax.set_xticks(n, [names[i] for i in i_sort], rotation=90)
+    ax.set_xticks(n, [names[i] for i in i_sort], rotation=60, ha="right", va="top")
     ax.set_ylim([0, 1])
 
 
