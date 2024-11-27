@@ -49,9 +49,9 @@ def run(cmds, max_parallel, b_dry_run=False):
 
 
 def prep_mtv_repro(results_dir):
-    exp_dir = "exp_pss_repro_mtv_4"
+    exp_dir = "exp_pss_repro_mtv_5"
 
-    opts = ["sts", "mtv-sts", "optuna", "mtv", "sobol", "random", "ei", "ucb", "dpp", "sr", "gibbon", "lei"]
+    opts = ["lei"]  # "sts", "mtv-sts", "optuna", "mtv", "sobol", "random", "ei", "ucb", "dpp", "sr", "gibbon", "lei"]
     noises = [None]
 
     cmds_1d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_1d, dims=[1], num_arms=3, num_replications=100, opts=opts, noises=noises, num_rounds=3)
@@ -61,13 +61,15 @@ def prep_mtv_repro(results_dir):
     cmds_100d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_nd, dims=[100], num_arms=10, num_replications=30, opts=opts, noises=noises, num_rounds=3)
     cmds_300d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_nd, dims=[300], num_arms=10, num_replications=30, opts=opts, noises=noises, num_rounds=3)
 
-    return cmds_1d + cmds_3d + cmds_10d + cmds_30d + cmds_100d + cmds_300d
+    return cmds_1d + cmds_3d + cmds_10d + cmds_30d  # + cmds_100d + cmds_300d
 
 
 def prep_ts_hd(results_dir):
     exp_dir = "exp_pss_ts_hd"
 
-    opts = ["sts"]  # "sts-t", "sts-m"]  # "sts-ui", "sts-ns"]  # "optuna", "ei", "ucb", "gibbon", "sr", "mtv-sts", "sts", "ts", "turbo-1", "sobol", "random"]
+    opts = [
+        "turbo-1"
+    ]  # "sts", "sts-t", "sts-m"]  # "sts-ui", "sts-ns"]  # "optuna", "ei", "ucb", "gibbon", "sr", "mtv-sts", "sts", "ts", "turbo-1", "sobol", "random"]
     noises = [None]
 
     min_rounds = 30

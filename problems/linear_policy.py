@@ -3,6 +3,9 @@ import numpy as np
 from .normalizer import Normalizer
 
 
+# Simple random search of static linear policies is competitive for reinforcement learning
+# https://proceedings.neurips.cc/paper_files/paper/2018/hash/7634ea65a4e6d9041cfd3f7de18e334a-Abstract.html
+# Ant: 4000 after ~50,000 episodes
 class LinearPolicy:
     def __init__(self, env_conf):
         self.problem_seed = env_conf.problem_seed
@@ -48,7 +51,6 @@ class LinearPolicy:
         i = np.where(scale == 0)[0]
         scale[i] = 1
         state = (state - loc) / scale
-        i = np.where(scale == 0)[0]
         state[i] = 0.0
-        beta = self._beta
+        beta = 0.3 * self._beta
         return np.maximum(-1, np.minimum(1, beta @ state))

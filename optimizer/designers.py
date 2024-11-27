@@ -39,6 +39,7 @@ class Designers:
 
     def create(self, designer_name):
         init_ax_default = max(5, 2 * self._policy.num_params())
+        init_yubo_default = self._num_arms
         default_num_X_samples = max(64, 10 * self._num_arms)
         # default_num_Y_samples = 512
 
@@ -53,13 +54,16 @@ class Designers:
         keep_style = None
         use_vanilla = False
         for option in options:
-            if option[:2] == "ks":
+            if option[0] == "k":
+                if option[1] == "s":
+                    keep_style = "some"
+                elif option[1] == "b":
+                    keep_style = "best"
+                elif option[1] == "r":
+                    keep_style = "random"
+                else:
+                    assert False, option
                 num_keep = int(option[2:])
-                keep_style = "some"
-                print(f"OPTION: num_keep = {num_keep} keep_style = {keep_style}")
-            elif option[:2] == "kb":
-                num_keep = int(option[2:])
-                keep_style = "best"
                 print(f"OPTION: num_keep = {num_keep} keep_style = {keep_style}")
             elif option == "van":
                 use_vanilla = True
@@ -161,9 +165,9 @@ class Designers:
         elif designer_name == "gibbon":
             return bt_designer(qLowerBoundMaxValueEntropy, opt_sequential=True, acq_kwargs={"candidate_set": None})
         elif designer_name == "turbo-1":
-            return TuRBODesigner(self._policy, num_init=init_ax_default)
+            return TuRBODesigner(self._policy, num_init=init_yubo_default)
         elif designer_name == "turbo-5":
-            return TuRBODesigner(self._policy, num_init=init_ax_default, num_trust_regions=5)
+            return TuRBODesigner(self._policy, num_init=init_yubo_default, num_trust_regions=5)
         elif designer_name == "dpp":
             return bt_designer(AcqDPP, init_sobol=1, acq_kwargs={"num_X_samples": default_num_X_samples})
 
