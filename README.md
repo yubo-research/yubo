@@ -2,7 +2,7 @@
 
 
 
-David Sweet. Fast, *Precise Thompson Sampling for Bayesian Optimization*. 2024.
+David Sweet. *Fast, Precise Thompson Sampling for Bayesian Optimization*. 2024.
 arxiv: 2411.17071 [cs.LG]. URL: [https://arxiv.org/abs/2411.17071](https://arxiv.org/abs/2411.17071).
 - Describes Stagger Thompson Sampling (STS)
 - Combines MTV with STS
