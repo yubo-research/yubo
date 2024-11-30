@@ -1,6 +1,4 @@
-# yubo
-
-Yeshiva University Bayesian Optimization
+# yubo: Yeshiva University Bayesian Optimization
 
 
 
