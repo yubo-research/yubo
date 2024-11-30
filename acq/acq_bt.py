@@ -1,55 +1,81 @@
 import torch
-from botorch.acquisition import PosteriorMean
 from botorch.models import SingleTaskGP
-from botorch.optim import optimize_acqf
+from torch.nn import Module
 
 import acq.fit_gp as fit_gp
+from acq.acq_util import find_max, keep_best, keep_some
+
+
+class _EmptyTransform(Module):
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, Y, Yvar=None):
+        return Y, Yvar
+
+    def untransform(self, Y, Yvar=None):
+        return Y, Yvar
+
+    def untransform_posterior(self, posterior):
+        return posterior
 
 
 class AcqBT:
-    def __init__(self, acq_factory, data, num_dim, acq_kwargs=None):
-        dtype = torch.float64
+    def __init__(
+        self,
+        acq_factory,
+        data,
+        num_dim,
+        acq_kwargs=None,
+        *,
+        device,
+        dtype,
+        num_keep,
+        keep_style,
+        use_vanilla,
+    ):
+        # All BoTorch stuff is coded to bounds of [0,1]!
+        self.bounds = torch.tensor([[0.0] * num_dim, [1.0] * num_dim], device=device, dtype=dtype)
+        self._rebounds = None
+
         if len(data) == 0:
-            X = torch.empty(size=(0, num_dim), dtype=dtype)
-            Y = torch.empty(size=(0, 1), dtype=dtype)
-            gp = SingleTaskGP(X, Y)
+            X = torch.empty(size=(0, num_dim), dtype=dtype, device=device)
+            Y = torch.empty(size=(0, 1), dtype=dtype, device=device)
+            gp = SingleTaskGP(X, Y, outcome_transform=_EmptyTransform())
+            gp.to(X)
             gp.eval()
         else:
-            gp, Y, X = fit_gp.fit_gp(data, dtype)
-
-        # All BoTorch stuff is coded to bounds of [0,1]!
-        self.bounds = torch.tensor([[0.0] * num_dim, [1.0] * num_dim], device=X.device, dtype=X.dtype)
+            Y, X = fit_gp.extract_X_Y(data, dtype, device)
+            if num_keep is not None and num_keep < len(X):
+                if keep_style == "some":
+                    i = keep_some(Y.squeeze(), num_keep)
+                elif keep_style == "best":
+                    i = keep_best(Y.squeeze(), num_keep)
+                else:
+                    assert False, keep_style
+                Y = Y[i, :]
+                X = X[i, :]
+            gp = fit_gp.fit_gp_XY(X, Y, use_vanilla=use_vanilla)
+            # print("N:", num_keep, len(Y), X.shape)
 
         if not acq_kwargs:
             kwargs = {}
         else:
             kwargs = dict(acq_kwargs)
         if "X_max" in kwargs:
-            kwargs["X_max"] = self._find_max(gp, self.bounds)
+            kwargs["X_max"] = find_max(gp, self.bounds)
         if "best_f" in kwargs:
-            kwargs["best_f"] = gp(self._find_max(gp, self.bounds)).mean
+            kwargs["best_f"] = gp(find_max(gp, self.bounds)).mean
         if "X_baseline" in kwargs:
             kwargs["X_baseline"] = X
         if "candidate_set" in kwargs:
             kwargs["candidate_set"] = torch.rand(1000, num_dim)
         if "Y_max" in kwargs:
-            kwargs["Y_max"] = gp(self._find_max(gp, self.bounds)).mean
-        if "bounds" in kwargs:
-            kwargs["bounds"] = self.bounds
+            kwargs["Y_max"] = gp(find_max(gp, self.bounds)).mean
 
         self.acq_function = acq_factory(gp, **kwargs)
 
-    def _find_max(self, gp, bounds):
-        x_cand, _ = optimize_acqf(
-            acq_function=PosteriorMean(model=gp),
-            bounds=bounds,
-            q=1,
-            num_restarts=10,
-            raw_samples=512,
-            options={"batch_limit": 10, "maxiter": 200},
-        )
-        return x_cand
-
     def __call__(self, policy):
+        assert False, "This is never called"
         X = torch.atleast_2d(fit_gp.mk_x(policy)).unsqueeze(0)
         return self.acq_function(X).squeeze().item()

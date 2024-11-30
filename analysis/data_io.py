@@ -25,6 +25,7 @@ def data_is_done(fn, quiet=True):
         except OSError:
             return False
         x = f.read(5)
+
         if x != b"DONE\n":
             return False
         f.seek(0, 0)

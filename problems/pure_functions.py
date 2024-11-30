@@ -2,23 +2,30 @@ import numpy as np
 
 import common.all_bounds as all_bounds
 from problems.benchmark_functions import all_benchmarks
+from problems.turbo_ackley import TurboAckley
 
 
-def make(name, problem_seed):
+def _all_pure_functions():
+    all_bf = all_benchmarks()
+    all_bf["tackley"] = TurboAckley
+    return all_bf
+
+
+def make(name, problem_seed, distort):
     _, name = name.split(":")
     name, num_dim = name.split("-")
     assert num_dim[-1] == "d"
     num_dim = int(num_dim[:-1])
 
-    all_bf = all_benchmarks()
+    all_bf = _all_pure_functions()
     if name in all_bf:
-        return PureFunctionEnv(all_bf[name](), num_dim, problem_seed)
+        return PureFunctionEnv(all_bf[name](), num_dim, problem_seed, distort=distort)
     assert False, name
 
 
 # all domains are [-1,1]**num_dim
 class PureFunctionEnv:
-    def __init__(self, function, num_dim, problem_seed, distort=True):
+    def __init__(self, function, num_dim, problem_seed, *, distort):
         self._function = function
 
         # state is either 0 or 1
@@ -35,7 +42,7 @@ class PureFunctionEnv:
             #  to a randomly-chosen corner of the bounding box.
             self._x_0 = all_bounds.x_low + all_bounds.x_width * rng.uniform(size=(num_dim,))
         else:
-            self._x_0 = np.zeros(shape=(num_dim,))
+            self._x_0 = all_bounds.x_low + (all_bounds.x_width / 2) * np.ones(shape=(num_dim,))
 
         assert all_bounds.x_low == -1
         assert all_bounds.x_high == 1

@@ -1,6 +1,7 @@
 import os
 
 import numpy as np
+from scipy.stats import rankdata
 
 from .data_io import data_is_done
 
@@ -97,29 +98,7 @@ def load_traces(trace_dir, key="return"):
     return traces
 
 
-def load_traces_old(fn, key="return"):
-    try:
-        o = load_kv(fn, ["i_sample", key], grep_for="TRACE:")
-    except FileNotFoundError:
-        raise FileNotFoundError(fn)
-    if len(o) == 0:
-        return None
-    traces = []
-    n_x = None
-    for i_sample in np.unique(o["i_sample"]):
-        i = np.where(o["i_sample"] == i_sample)[0]
-        x = list(o[key][i])
-        if n_x is not None:
-            while len(x) < n_x:
-                x.append(x[-1])
-        n_x = len(x)
-        traces.append(x)
-    traces = np.array(traces)
-    # print (f"Loaded {len(traces)} traces from {fn}")
-    return traces
-
-
-def load_multiple_traces(data_locator, exp_tag, problem_names, opt_names, old_way=True):
+def load_multiple_traces(data_locator):
     import numpy.ma as npma
 
     """
@@ -129,30 +108,37 @@ def load_multiple_traces(data_locator, exp_tag, problem_names, opt_names, old_wa
     num_bad = 0
     num_tot = 0
 
+    problems = data_locator.problems()
+    opt_names = data_locator.optimizers()
+
     def _report_bad(problem_name, opt_name, msg):
         nonlocal num_bad
-        print("BAD:", msg, exp_tag, problem_name, opt_name)
+        print("BAD:", msg, data_locator, problem_name, opt_name)
         num_bad += 1
 
     def _init(trace):
         if len(trace.shape) < 2:
             return None
-        return np.nan * np.ones(shape=(len(problem_names), len(opt_names), trace.shape[0], trace.shape[1]))
+        return np.nan * np.ones(shape=(len(problems), len(opt_names), trace.shape[0], trace.shape[1]))
 
     traces = None
-    for i_problem, problem_name in enumerate(problem_names):
+    for i_problem, problem_name in enumerate(problems):
         for i_opt, opt_name in enumerate(opt_names):
             num_tot += 1
-            trace_path = data_locator(exp_tag, problem_name, opt_name)
-            try:
-                if old_way:
-                    trace = load_traces_old(trace_path)
-                else:
-                    trace = load_traces(trace_path)
-            except FileNotFoundError as e:
-                _report_bad(problem_name, opt_name, repr(e))
-                raise e
+            trace_path = data_locator(problem_name, opt_name)
+            if len(trace_path) == 0:
+                _report_bad(problem_name, opt_name, f"Missing data for {problem_name} {opt_name}")
+                continue
+            if len(trace_path) > 1:
+                _report_bad(problem_name, opt_name, f"Extra data for {problem_name} {opt_name} len = {len(trace_path)}")
+                continue
+            trace_path = trace_path[0]
 
+            try:
+                trace = load_traces(trace_path)
+            except FileNotFoundError as e:
+                _report_bad(problem_name, opt_name, f"{trace_path} {repr(e)}")
+                continue
             if trace is None:
                 _report_bad(problem_name, opt_name, "No trace")
                 continue
@@ -175,7 +161,11 @@ def load_multiple_traces(data_locator, exp_tag, problem_names, opt_names, old_wa
                 # continue
             traces[i_problem, i_opt, : trace.shape[0], : trace.shape[1]] = trace
 
-    traces = npma.masked_invalid(traces)
+    try:
+        traces = npma.masked_invalid(traces)
+    except:
+        print("TP:", problems, opt_names)
+        assert False
     if num_bad > 0:
         print(f"\n{num_bad} / {num_tot} files bad. {100*traces.mask.mean():.1f}% missing data")
     else:
@@ -197,6 +187,27 @@ def range_summarize(traces: np.ndarray):
 
     z = z.swapaxes(0, 1)
     z = z.reshape(z.shape[0], z.shape[1] * z.shape[2])
+
+    mu = z.mean(axis=-1)
+    se = z.std(axis=-1) / np.sqrt(z.shape[-1])
+
+    return mu, se
+
+
+def rank_summarize(traces: np.array):
+    """
+    traces[i_problem, i_opt, i_replication, i_round]
+    Returns mu,se ~ [i_problem, i_opt]
+    """
+
+    # over opt (method)
+    z = rankdata(traces, axis=1)
+    z = (z - 1) / (z.shape[1] - 1)
+    z = z.mean(axis=-1)
+
+    z = z.swapaxes(0, 1)
+    z = z.reshape(z.shape[0], z.shape[1] * z.shape[2])
+
     mu = z.mean(axis=-1)
     se = z.std(axis=-1) / np.sqrt(z.shape[-1])
 

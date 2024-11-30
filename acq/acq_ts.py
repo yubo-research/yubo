@@ -11,11 +11,11 @@ class AcqTS:
     From https://botorch.org/tutorials/thompson_sampling
     """
 
-    def __init__(self, model, n_candidates=10000, sampler="cholesky"):
+    def __init__(self, model, num_candidates=10000, sampler="cholesky"):
         assert sampler in ("cholesky", "ciq", "lanczos")
 
         self.model = model
-        self._n_candidates = n_candidates
+        self._num_candidates = num_candidates
         self._sampler = sampler
 
         X_0 = self.model.train_inputs[0].detach()
@@ -25,7 +25,7 @@ class AcqTS:
 
     def draw(self, num_arms):
         sobol = SobolEngine(self._num_dim, scramble=True)
-        X_samples = sobol.draw(self._n_candidates).to(dtype=self._dtype, device=self._device)
+        X_candidates = sobol.draw(self._num_candidates).to(dtype=self._dtype, device=self._device)
 
         with ExitStack() as es:
             if self._sampler == "cholesky":
@@ -42,8 +42,8 @@ class AcqTS:
                 es.enter_context(gpts.max_cholesky_size(0))
                 es.enter_context(gpts.ciq_samples(False))
 
-        with torch.no_grad():
-            thompson_sampling = MaxPosteriorSampling(model=self.model, replacement=False)
-            X_cand = thompson_sampling(X_samples, num_samples=num_arms)
+            with torch.no_grad():
+                thompson_sampling = MaxPosteriorSampling(model=self.model, replacement=False)
+                X_arms = thompson_sampling(X_candidates, num_samples=num_arms)
 
-        return X_cand
+        return X_arms

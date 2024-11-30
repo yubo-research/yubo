@@ -1,3 +1,4 @@
+import copy
 from dataclasses import dataclass
 from typing import Any
 
@@ -13,7 +14,7 @@ from problems.turbo_lunar_policy import TurboLunarPolicy
 
 def get_env_conf(tag, problem_seed=None, noise_level=None, noise_seed_0=None):
     if tag in _gym_env_confs:
-        ec = _gym_env_confs[tag]
+        ec = copy.deepcopy(_gym_env_confs[tag])
         ec.problem_seed = problem_seed
         ec.noise_seed_0 = noise_seed_0
     else:
@@ -54,7 +55,9 @@ class EnvConf:
 
     def _make(self, **kwargs):
         if self.env_name[:2] == "f:":
-            env = pure_functions.make(self.env_name, problem_seed=self.problem_seed)
+            env = pure_functions.make(self.env_name, problem_seed=self.problem_seed, distort=True)
+        elif self.env_name[:2] == "g:":
+            env = pure_functions.make(self.env_name, problem_seed=self.problem_seed, distort=False)
         elif self.gym_conf is not None:
             env = gym.make(self.env_name, **(kwargs | self.kwargs))
         else:
@@ -65,7 +68,7 @@ class EnvConf:
     def make(self, **kwargs):
         env = self._make(**kwargs)
         if self.noise_level is not None:
-            assert self.env_name[:2] == "f:", ("NYI: Noise is only supported for pure functions", self.env_name)
+            assert self.env_name[:2] in ["f:", "g:"], ("NYI: Noise is only supported for pure functions", self.env_name)
             env = NoiseMaker(env, self.noise_level)
         return env
 
@@ -79,22 +82,28 @@ class EnvConf:
         env.close()
 
 
+# See https://paperswithcode.com/task/openai-gym
 _gym_env_confs = {
+    # 95
     "mcc": EnvConf("MountainCarContinuous-v0", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=100)),
     "pend": EnvConf("Pendulum-v1", problem_seed=None, gym_conf=GymConf(max_steps=200, num_frames_skip=100)),
-    "lunar": EnvConf("LunarLander-v2", problem_seed=None, gym_conf=GymConf(max_steps=500, num_frames_skip=30), kwargs={"continuous": True}),
-    "ant": EnvConf("Ant-v4", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
-    "mpend": EnvConf("InvertedPendulum-v4", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
-    "macro": EnvConf("InvertedDoublePendulum-v4", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
-    "swim": EnvConf("Swimmer-v4", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
-    "reach": EnvConf("Reacher-v4", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
-    "push": EnvConf("Pusher-v4", problem_seed=None, gym_conf=GymConf(max_steps=100, num_frames_skip=30)),
-    "hop": EnvConf("Hopper-v4", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
-    "human": EnvConf("Humanoid-v4", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
-    "stand": EnvConf("HumanoidStandup-v4", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
+    # 300
+    "lunar": EnvConf("LunarLander-v3", problem_seed=None, gym_conf=GymConf(max_steps=500, num_frames_skip=30), kwargs={"continuous": True}),
+    # 6600
+    "ant": EnvConf("Ant-v5", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
+    "mpend": EnvConf("InvertedPendulum-v5", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
+    "macro": EnvConf("InvertedDoublePendulum-v5", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
+    "swim": EnvConf("Swimmer-v5", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
+    "reach": EnvConf("Reacher-v5", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
+    # "push": EnvConf("Pusher-v4", problem_seed=None, gym_conf=GymConf(max_steps=100, num_frames_skip=30)),
+    # 3300
+    "hop": EnvConf("Hopper-v5", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
+    # 6900
+    "human": EnvConf("Humanoid-v5", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
+    "stand": EnvConf("HumanoidStandup-v5", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
     "bw": EnvConf("BipedalWalker-v3", problem_seed=None, gym_conf=GymConf(max_steps=1600, num_frames_skip=100)),
     "tlunar": EnvConf(
-        "LunarLander-v2",
+        "LunarLander-v3",
         problem_seed=None,
         gym_conf=GymConf(
             max_steps=500,
