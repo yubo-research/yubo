@@ -11,6 +11,7 @@ from gpytorch.mlls import ExactMarginalLogLikelihood, LeaveOneOutPseudoLikelihoo
 from gpytorch.priors.torch_priors import GammaPrior
 
 import common.all_bounds as all_bounds
+from model.dumbo import DUMBOGP
 
 
 def get_vanilla_kernel(num_dim, batch_shape):
@@ -32,6 +33,8 @@ def fit_gp_XY(X, Y, model_type=None):
     if model_type == "vanilla":
         num_dims = X.shape[-1]
         gp = SingleTaskGP(X, Y, covar_module=get_vanilla_kernel(num_dims, _gp._aug_batch_shape))
+    elif model_type == "dumbo":
+        return DUMBOGP(X, Y)
     else:
         gp = _gp
     mll = ExactMarginalLogLikelihood(gp.likelihood, gp)

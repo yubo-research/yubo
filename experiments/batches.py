@@ -51,7 +51,7 @@ def run(cmds, max_parallel, b_dry_run=False):
 def prep_mtv_repro(results_dir):
     exp_dir = "exp_pss_repro_mtv_5"
 
-    opts = ["lei", "sts", "mtv-sts", "optuna", "mtv", "sobol", "random", "ei", "ucb", "dpp", "sr", "gibbon"]
+    opts = ["turbo-1"]  # "lei", "sts", "mtv-sts", "optuna", "mtv", "sobol", "random", "ei", "ucb", "dpp", "sr", "gibbon"]
     noises = [None]
 
     cmds_1d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_1d, dims=[1], num_arms=3, num_replications=100, opts=opts, noises=noises, num_rounds=3)
@@ -61,7 +61,8 @@ def prep_mtv_repro(results_dir):
     cmds_100d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_nd, dims=[100], num_arms=10, num_replications=30, opts=opts, noises=noises, num_rounds=3)
     cmds_300d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_nd, dims=[300], num_arms=10, num_replications=30, opts=opts, noises=noises, num_rounds=3)
 
-    return cmds_1d + cmds_3d + cmds_10d + cmds_30d  # + cmds_100d + cmds_300d
+    # return cmds_1d + cmds_3d + cmds_10d + cmds_30d  # + cmds_100d + cmds_300d
+    return cmds_100d + cmds_300d
 
 
 def prep_ts_hd(results_dir):
@@ -264,7 +265,7 @@ def prep_sts_sweep(results_dir):
 def prep_d_argss():
     results_dir = "results"
 
-    return prep_ts_hd(results_dir)
+    return prep_mtv_repro(results_dir)
 
 
 if __name__ == "__main__":

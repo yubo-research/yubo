@@ -65,9 +65,12 @@ class Designers:
                     assert False, option
                 num_keep = int(option[2:])
                 print(f"OPTION: num_keep = {num_keep} keep_style = {keep_style}")
-            elif option == "van":
+            elif option == "vanilla":
                 model_type = "vanilla"
-                print("OPTION use_vanilla")
+                print("OPTION model_type = vanilla")
+            elif option == "dumbo":
+                model_type = "dumbo"
+                print("OPTION model_type = dumbo")
             else:
                 assert False, ("Unknown option", option)
 
