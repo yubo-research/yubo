@@ -26,10 +26,10 @@ def get_vanilla_kernel(num_dim, batch_shape):
     )
 
 
-def fit_gp_XY(X, Y, use_vanilla=False):
+def fit_gp_XY(X, Y, model_type=None):
     Y = standardize(Y).to(X)
     _gp = SingleTaskGP(X, Y)
-    if use_vanilla:
+    if model_type == "vanilla":
         num_dims = X.shape[-1]
         gp = SingleTaskGP(X, Y, covar_module=get_vanilla_kernel(num_dims, _gp._aug_batch_shape))
     else:

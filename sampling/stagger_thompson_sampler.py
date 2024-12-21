@@ -77,4 +77,6 @@ class StaggerThompsonSampler:
 
         i_improved = Y_perturbed > Y_ts
 
+        if len(i_improved) == 0:
+            print("STALL")
         self._X_samples[i_improved] = X_perturbed[i_improved]

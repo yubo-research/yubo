@@ -32,7 +32,7 @@ class AcqBT:
         dtype,
         num_keep,
         keep_style,
-        use_vanilla,
+        model_type,
     ):
         # All BoTorch stuff is coded to bounds of [0,1]!
         self.bounds = torch.tensor([[0.0] * num_dim, [1.0] * num_dim], device=device, dtype=dtype)
@@ -55,7 +55,7 @@ class AcqBT:
                     assert False, keep_style
                 Y = Y[i, :]
                 X = X[i, :]
-            gp = fit_gp.fit_gp_XY(X, Y, use_vanilla=use_vanilla)
+            gp = fit_gp.fit_gp_XY(X, Y, model_type=model_type)
             # print("N:", num_keep, len(Y), X.shape)
 
         if not acq_kwargs:

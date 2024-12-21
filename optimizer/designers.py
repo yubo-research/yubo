@@ -52,7 +52,7 @@ class Designers:
 
         num_keep = None
         keep_style = None
-        use_vanilla = False
+        model_type = None
         for option in options:
             if option[0] == "k":
                 if option[1] == "s":
@@ -66,8 +66,8 @@ class Designers:
                 num_keep = int(option[2:])
                 print(f"OPTION: num_keep = {num_keep} keep_style = {keep_style}")
             elif option == "van":
-                use_vanilla = True
-                print(f"OPTION use_vanilla = {use_vanilla}")
+                model_type = "vanilla"
+                print("OPTION use_vanilla")
             else:
                 assert False, ("Unknown option", option)
 
@@ -78,7 +78,7 @@ class Designers:
                 acq_kwargs=acq_kwargs,
                 num_keep=num_keep,
                 keep_style=keep_style,
-                use_vanilla=use_vanilla,
+                model_type=model_type,
                 init_sobol=init_sobol,
                 opt_sequential=opt_sequential,
             )
