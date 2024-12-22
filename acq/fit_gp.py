@@ -9,9 +9,24 @@ from botorch.utils import standardize
 from gpytorch.kernels import MaternKernel  # , ScaleKernel
 from gpytorch.mlls import ExactMarginalLogLikelihood, LeaveOneOutPseudoLikelihood
 from gpytorch.priors.torch_priors import GammaPrior
+from torch.nn import Module
 
 import common.all_bounds as all_bounds
 from model.dumbo import DUMBOGP
+
+
+class _EmptyTransform(Module):
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, Y, Yvar=None):
+        return Y, Yvar
+
+    def untransform(self, Y, Yvar=None):
+        return Y, Yvar
+
+    def untransform_posterior(self, posterior):
+        return posterior
 
 
 def get_vanilla_kernel(num_dim, batch_shape):
@@ -28,6 +43,15 @@ def get_vanilla_kernel(num_dim, batch_shape):
 
 
 def fit_gp_XY(X, Y, model_type=None):
+    if len(X) == 0:
+        if model_type == "dumbo":
+            return DUMBOGP(X, Y)
+        else:
+            gp = SingleTaskGP(X, Y, outcome_transform=_EmptyTransform())
+            gp.to(X)
+            gp.eval()
+            return gp
+
     Y = standardize(Y).to(X)
     _gp = SingleTaskGP(X, Y)
     if model_type == "vanilla":

@@ -1,23 +1,8 @@
 import torch
 from botorch.models import SingleTaskGP
-from torch.nn import Module
 
 import acq.fit_gp as fit_gp
 from acq.acq_util import find_max, keep_best, keep_some
-
-
-class _EmptyTransform(Module):
-    def __init__(self):
-        super().__init__()
-
-    def forward(self, Y, Yvar=None):
-        return Y, Yvar
-
-    def untransform(self, Y, Yvar=None):
-        return Y, Yvar
-
-    def untransform_posterior(self, posterior):
-        return posterior
 
 
 class AcqBT:
@@ -41,9 +26,6 @@ class AcqBT:
         if len(data) == 0:
             X = torch.empty(size=(0, num_dim), dtype=dtype, device=device)
             Y = torch.empty(size=(0, 1), dtype=dtype, device=device)
-            gp = SingleTaskGP(X, Y, outcome_transform=_EmptyTransform())
-            gp.to(X)
-            gp.eval()
         else:
             Y, X = fit_gp.extract_X_Y(data, dtype, device)
             if num_keep is not None and num_keep < len(X):
@@ -55,8 +37,7 @@ class AcqBT:
                     assert False, keep_style
                 Y = Y[i, :]
                 X = X[i, :]
-            gp = fit_gp.fit_gp_XY(X, Y, model_type=model_type)
-            # print("N:", num_keep, len(Y), X.shape)
+        gp = fit_gp.fit_gp_XY(X, Y, model_type=model_type)
 
         if not acq_kwargs:
             kwargs = {}

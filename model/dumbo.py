@@ -1,75 +1,87 @@
 import torch
+from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel
+from botorch.models.model import FantasizeMixin
 from gpytorch.distributions import MultivariateNormal
+from gpytorch.likelihoods.gaussian_likelihood import GaussianLikelihood
+from gpytorch.models.exact_gp import ExactGP
 
 
-class DUMBOGP:
+class DUMBOGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
     """
     To make an empty model, send torch.empty() tensors for train_x and train_y
      with the right dimensions, dtype, and device.
     """
 
-    def __init__(self, train_x, train_y):
-        assert len(train_x) == len(train_y), (len(train_x), len(train_y))
+    def __init__(self, train_X, train_Y):
+        assert len(train_X) == len(train_Y), (len(train_X), len(train_Y))
+        assert train_X.ndim == train_Y.ndim == 2, (train_X.ndim, train_Y.ndim)
+        assert train_Y.shape[-1] == 1
 
-        self._train_x = train_x.unsqueeze(0)
-        self._train_y = train_y.unsqueeze(0)
-        self.train_inputs = (train_x,)
-        self.train_targets = train_y.unsqueeze(0)
-        self.num_outputs = self._train_y.shape[-1]
+        likelihood = GaussianLikelihood()
+        super().__init__(train_X, train_Y, likelihood)
 
-    def __call__(self, X):
-        return self.posterior(X)
+        self._train_x = train_X
+        self._train_Y = train_Y
+        self.train_inputs = (train_X,)
+        self.train_targets = train_Y.squeeze(-1)
+        self._num_outputs = 1
+        self._input_batch_shape = train_X.shape[:-2]
 
-    def posterior(self, X, posterior_transform=None):
+        self._eps_covar_diag = 1e-9
+
+    # def __call__(self, X):
+    #     return self.posterior(X)
+
+    def forward(self, X):  # , posterior_transform=None):
+        # There might be two batch dimensions.
         # X ~ num_batch X num_joint X num_dim
+        # X ~ num_batch_0 X num_batch_1 X num_joint X num_dim
+
         # Y ~ num_batch X num_joint X num_metrics
 
         if len(X.shape) == 2:
+            b_nobatch = True
             X = X.unsqueeze(0)
+        else:
+            b_nobatch = False
 
         b, q, d = X.shape
-        m = self._train_y.shape[-1]
 
         X_m = self._train_x
-        Y_m = self._train_y
+        Y_m = self._train_Y
 
         if self._train_x.numel() == 0:
-            return MultivariateNormal(
-                torch.zeros(size=(m, b, q)).to(X_m),
-                torch.diag_embed(torch.ones(size=(m, b, q))).to(X_m),
-            )
+            if b_nobatch:
+                return MultivariateNormal(
+                    (0 * X.squeeze(0)).to(X_m),
+                    torch.diag_embed(torch.ones(size=(q,))).to(X_m),
+                )
+            else:
+                return MultivariateNormal(
+                    (0 * X).to(X_m),
+                    torch.diag_embed(torch.ones(size=(b, q))).to(X_m),
+                )
 
         X = X.to(X_m)
 
         distance = torch.cdist(X, X_m)
         # distance ~ num_batch x num_joint x num_train_x
 
-        if False:
-            w = torch.exp(1.0 / (1e-2 + distance))
-            assert torch.all(torch.isfinite(w))
+        w = torch.exp(1.0 / (1e-1 + distance))
+        assert torch.all(torch.isfinite(w)), (w, X)
+        w = w / w.sum(dim=-1, keepdims=True)
 
-            w = w / w.sum(dim=-1, keepdims=True)
+        mu = (w * Y_m.squeeze(-1).unsqueeze(0).unsqueeze(0)).sum(dim=-1)
+        vvar = (w * distance).sum(dim=-1)
 
-            # w ~ num_batch x num_joint x num_train_x
-            # Y_m ~ 1 x num_train_x x num_metrics
+        assert mu.shape == (b, q), (mu.shape, b, q)
+        assert vvar.shape == (b, q), (vvar.shape, b, q)
 
-            mu = (w.unsqueeze(-1) * Y_m.unsqueeze(1)).sum(dim=-2)
+        covar = torch.diag_embed(vvar + self._eps_covar_diag)
+        assert covar.shape == (b, q, q), (covar.shape, b, q)
 
-        else:
-            tm = torch.min(distance, dim=-1)
-            # i ~ num_batch x num_joint;  indexes num_train_x
-            i = tm.indices
-            assert i.shape == (b, q), (i.shape, b, q)
-            Y_m = Y_m.squeeze(0).swapdims(0, 1).unsqueeze(-1)
-            mu = torch.cat([Y_m[:, i[:, ii]] for ii in range(i.shape[-1])], dim=-1)
-
-        # mu ~ num_metrics X num_batch X num_joint
-        assert mu.shape == (m, b, q), (mu.shape, m, b, q)
-
-        var = torch.tile(torch.amin(distance, dim=-1), (m, 1, 1))
-        assert var.shape == (m, b, q), (var.shape, m, b, q)
-
-        covar = torch.diag_embed(var + 1e-9)
-        assert covar.shape == (m, b, q, q), (covar.shape, m, b, q)
+        if b_nobatch:
+            mu = mu.squeeze(0)
+            covar = covar.squeeze(0)
 
         return MultivariateNormal(mu, covar)
