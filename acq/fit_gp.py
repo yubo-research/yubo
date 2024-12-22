@@ -45,12 +45,12 @@ def get_vanilla_kernel(num_dim, batch_shape):
 def fit_gp_XY(X, Y, model_type=None):
     if len(X) == 0:
         if model_type == "dumbo":
-            return DUMBOGP(X, Y)
+            gp = DUMBOGP(X, Y)
         else:
             gp = SingleTaskGP(X, Y, outcome_transform=_EmptyTransform())
-            gp.to(X)
-            gp.eval()
-            return gp
+        gp.to(X)
+        gp.eval()
+        return gp
 
     Y = standardize(Y).to(X)
     _gp = SingleTaskGP(X, Y)

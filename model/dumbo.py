@@ -29,10 +29,7 @@ class DUMBOGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
 
         self._eps_covar_diag = 1e-9
 
-    # def __call__(self, X):
-    #     return self.posterior(X)
-
-    def forward(self, X):  # , posterior_transform=None):
+    def forward(self, X):
         # There might be two batch dimensions.
         # X ~ num_batch X num_joint X num_dim
         # X ~ num_batch_0 X num_batch_1 X num_joint X num_dim
@@ -49,20 +46,22 @@ class DUMBOGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
 
         X_m = self._train_x
         Y_m = self._train_Y
+        X = X.to(X_m)
 
         if self._train_x.numel() == 0:
+            # to include X in the autograd graph
+            mu = 0 * (X.sum(-1))
+            vvar = 1 + 0 * (X.sum(-1))
             if b_nobatch:
                 return MultivariateNormal(
-                    (0 * X.squeeze(0).sum(-1)).to(X_m),
-                    torch.diag_embed(torch.ones(size=(q,))).to(X_m),
+                    mu.squeeze(0),
+                    torch.diag_embed(vvar.squeeze(0)).to(X_m),
                 )
             else:
                 return MultivariateNormal(
-                    (0 * X.sum(-1)).to(X_m),
-                    torch.diag_embed(torch.ones(size=(b, q))).to(X_m),
+                    mu,
+                    torch.diag_embed(vvar).to(X_m),
                 )
-
-        X = X.to(X_m)
 
         distance = torch.cdist(X, X_m)
         # distance ~ num_batch x num_joint x num_train_x
