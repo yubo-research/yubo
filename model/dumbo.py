@@ -53,12 +53,12 @@ class DUMBOGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
         if self._train_x.numel() == 0:
             if b_nobatch:
                 return MultivariateNormal(
-                    (0 * X.squeeze(0)).to(X_m),
+                    (0 * X.squeeze(0).sum(-1)).to(X_m),
                     torch.diag_embed(torch.ones(size=(q,))).to(X_m),
                 )
             else:
                 return MultivariateNormal(
-                    (0 * X).to(X_m),
+                    (0 * X.sum(-1)).to(X_m),
                     torch.diag_embed(torch.ones(size=(b, q))).to(X_m),
                 )
 
