@@ -8,10 +8,9 @@ from botorch.optim import optimize_acqf
 from botorch.utils import t_batch_mode_transform
 from torch.quasirandom import SobolEngine
 
+import acq.acq_util as acq_util
 from sampling.pstar_sampler import PStarSampler
 from sampling.stagger_thompson_sampler import StaggerThompsonSampler
-
-from .acq_util import find_max
 
 
 class AcqMTV(MCAcquisitionFunction):
@@ -103,17 +102,17 @@ class AcqMTV(MCAcquisitionFunction):
 
     def _set_x_max(self):
         if self._x_max_type == "find":
-            self.X_max = find_max(
+            self.X_max = acq_util.find_max(
                 self.model,
                 bounds=self._bounds(),
             )
         elif self._x_max_type == "ts_meas":
             Y_ts = self.model.posterior(self.model.train_inputs[0]).rsample(torch.Size([1])).squeeze()
-            i = np.random.choice(torch.where(Y_ts == Y_ts.max())[0], size=1)
+            i = acq_util.torch_random_choice(torch.where(Y_ts == Y_ts.max())[0])
             self.X_max = self.model.train_inputs[0][i]
         elif self._x_max_type == "meas":
             Y = self.model.train_targets[0]
-            i = np.random.choice(torch.where(Y == Y.max())[0], size=1)
+            i = acq_util.torch_random_choice(torch.where(Y == Y.max())[0])
             self.X_max = self.model.train_inputs[0][i]
         elif self._x_max_type == "rand":
             self.X_max = torch.rand(size=(1, self._num_dim))
@@ -125,8 +124,9 @@ class AcqMTV(MCAcquisitionFunction):
         if self.X_samples == "sts":
             return self._stagger_thompson_sampler(num_arms)
         assert len(self.X_samples) >= num_arms, (len(self.X_samples), num_arms)
-        i = np.arange(len(self.X_samples))
-        i = np.random.choice(i, size=(int(num_arms)), replace=False)
+        i = torch.randperm(len(self.X_samples))[:num_arms]
+        # i = np.arange(len(self.X_samples))
+        # i = np.random.choice(i, size=(int(num_arms)), replace=False)
         return self.X_samples[i]
 
     def _stagger_thompson_sampler(self, num_samples):

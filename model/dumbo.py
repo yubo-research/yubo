@@ -28,13 +28,11 @@ class DUMBOGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
         self._input_batch_shape = train_X.shape[:-2]
 
         self._eps_covar_diag = 1e-9
+        self._eps_distance = 0.1
+        self._beta_softmax = 1.0
 
     def forward(self, X):
-        # There might be two batch dimensions.
-        # X ~ num_batch X num_joint X num_dim
-        # X ~ num_batch_0 X num_batch_1 X num_joint X num_dim
-
-        # Y ~ num_batch X num_joint X num_metrics
+        # X ~ (num_batch X) num_joint X num_dim
 
         if len(X.shape) == 2:
             b_nobatch = True
@@ -66,7 +64,7 @@ class DUMBOGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
         distance = torch.cdist(X, X_m)
         # distance ~ num_batch x num_joint x num_train_x
 
-        w = torch.exp(1.0 / (1e-1 + distance))
+        w = torch.exp(self._beta_softmax / (self._eps_distance + distance))
         assert torch.all(torch.isfinite(w)), (w, X)
         w = w / w.sum(dim=-1, keepdims=True)
 

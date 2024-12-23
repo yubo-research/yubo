@@ -1,5 +1,5 @@
 YUBO=../yubo
-for d in acq admin analysis common experiments figures optimizer problems tests
+for d in acq admin analysis common experiments figures optimizer problems tests model
 do
  echo ${YUBO}/$d
  rm -rfv ${YUBO}/$d

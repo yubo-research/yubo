@@ -68,9 +68,9 @@ def prep_mtv_repro(results_dir):
 def prep_ts_hd(results_dir):
     exp_dir = "exp_pss_ts_hd"
 
-    opts = ["lei"]
+    opts = ["sts-t:dumbo"]
 
-    # "turbo-1", "sts", "sts-t", "sts-m"]  # "sts-ui", "sts-ns"]  # "optuna", "ei", "ucb", "gibbon", "sr", "mtv-sts", "sts", "ts", "turbo-1", "sobol", "random"]
+    # "lei", "turbo-1", "sts", "sts-t", "sts-m"]  # "sts-ui", "sts-ns"]  # "optuna", "ei", "ucb", "gibbon", "sr", "mtv-sts", "sts", "ts", "turbo-1", "sobol", "random"]
     noises = [None]
 
     min_rounds = 30
@@ -78,7 +78,7 @@ def prep_ts_hd(results_dir):
     cmds.extend(
         prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_1d, dims=[1], num_arms=1, num_replications=100, opts=opts, noises=noises, num_rounds=min_rounds)
     )
-    for num_dim in [3, 10, 100, 300]:  # TODO , 30, 1000]:
+    for num_dim in [30]:  # [3, 10, 100, 300]:  # TODO , 30, 1000]:
         cmds.extend(
             prep_d_args(
                 results_dir,
@@ -265,7 +265,7 @@ def prep_sts_sweep(results_dir):
 def prep_d_argss():
     results_dir = "results"
 
-    return prep_mtv_repro(results_dir)
+    return prep_ts_hd(results_dir)
 
 
 if __name__ == "__main__":

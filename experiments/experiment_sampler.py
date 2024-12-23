@@ -47,6 +47,16 @@ def sample_1(env_conf, opt_name, num_rounds, num_arms, num_denoise):
     return collector_log, collector_trace
 
 
+def post_process_stdout(
+    collector_log,
+    collector_trace,
+):
+    for line in collector_log:
+        print(line)
+    for line in collector_trace:
+        print(line)
+
+
 def post_process(collector_log, collector_trace, trace_fn):
     ensure_parent(trace_fn)
 
