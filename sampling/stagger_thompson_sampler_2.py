@@ -41,6 +41,7 @@ class StaggerThompsonSampler2:
         ).to(self._X_samples)
         X_dir = X_dir / X_dir.norm(dim=-1, keepdim=True)
         assert X_dir.shape == (self._num_samples, self._num_dim), (X_dir.shape, self._num_samples, self._num_dim)
+        assert torch.abs(torch.linalg.norm(X_dir, dim=-1).min() - 1) < 1e-6
 
         X_target = ray_boundary(self._X_samples, X_dir)
         assert X_target.min() >= 0, X_target.min()
