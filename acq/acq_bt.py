@@ -1,5 +1,4 @@
 import torch
-from botorch.models import SingleTaskGP
 
 import acq.fit_gp as fit_gp
 from acq.acq_util import find_max, keep_best, keep_some

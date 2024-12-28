@@ -273,6 +273,17 @@ class Designers:
                     "x_max_type": "meas",
                 },
             )
+        elif designer_name == "sts2":
+            return bt_designer(
+                AcqMTV,
+                init_sobol=0,
+                acq_kwargs={
+                    "ts_only": True,
+                    "sample_type": "sts2",
+                    "num_X_samples": default_num_X_samples,
+                    "num_refinements": 30,
+                },
+            )
         elif designer_name == "pts":
             return bt_designer(
                 PathwiseThompsonSampling,

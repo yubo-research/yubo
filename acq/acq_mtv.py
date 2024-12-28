@@ -1,4 +1,3 @@
-import numpy as np
 import torch
 from botorch.acquisition.monte_carlo import (
     MCAcquisitionFunction,
@@ -11,6 +10,7 @@ from torch.quasirandom import SobolEngine
 import acq.acq_util as acq_util
 from sampling.pstar_sampler import PStarSampler
 from sampling.stagger_thompson_sampler import StaggerThompsonSampler
+from sampling.stagger_thompson_sampler_2 import StaggerThompsonSampler2
 
 
 class AcqMTV(MCAcquisitionFunction):
@@ -54,12 +54,12 @@ class AcqMTV(MCAcquisitionFunction):
                 self._set_x_max()
                 pss = PStarSampler(k_mcmc, num_mcmc, self.model, self.X_max)
                 self.X_samples = pss(num_X_samples)
-            elif sample_type == "sts":
+            elif sample_type in ["sts", "sts2"]:
                 self._set_x_max()
                 if not ts_only:
-                    self.X_samples = self._stagger_thompson_sampler(num_X_samples)
+                    self.X_samples = self._stagger_thompson_sampler(num_X_samples, sample_type)
                 else:
-                    self.X_samples = "sts"
+                    self.X_samples = sample_type
             elif sample_type == "pts":
                 self._set_x_max()
                 assert not ts_only, "Use designer pts directly"
@@ -121,16 +121,22 @@ class AcqMTV(MCAcquisitionFunction):
         # print("X_MAX:", self.X_max.device)
 
     def _draw(self, num_arms):
-        if self.X_samples == "sts":
-            return self._stagger_thompson_sampler(num_arms)
+        if self.X_samples in ["sts", "sts2"]:
+            return self._stagger_thompson_sampler(num_arms, self.X_samples)
         assert len(self.X_samples) >= num_arms, (len(self.X_samples), num_arms)
         i = torch.randperm(len(self.X_samples))[:num_arms]
         # i = np.arange(len(self.X_samples))
         # i = np.random.choice(i, size=(int(num_arms)), replace=False)
         return self.X_samples[i]
 
-    def _stagger_thompson_sampler(self, num_samples):
-        sts = StaggerThompsonSampler(self.model, self.X_max, num_samples=num_samples, no_stagger=self._no_stagger)
+    def _stagger_thompson_sampler(self, num_samples, sample_type):
+        if sample_type == "sts":
+            sts = StaggerThompsonSampler(self.model, self.X_max, num_samples=num_samples, no_stagger=self._no_stagger)
+        elif sample_type == "sts2":
+            sts = StaggerThompsonSampler2(self.model, self.X_max, num_samples=num_samples, no_stagger=self._no_stagger)
+        else:
+            assert False, ("Unknown sample type", sample_type)
+
         sts.refine(self._num_refinements)
         return sts.samples()
 
