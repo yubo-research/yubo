@@ -268,7 +268,7 @@ class Designers:
                     "ts_only": True,
                     "sample_type": "sts",
                     "num_X_samples": default_num_X_samples,
-                    "num_refinements": 30,
+                    "num_refinements": 300,
                     "x_max_type": "ts_meas",
                 },
             )

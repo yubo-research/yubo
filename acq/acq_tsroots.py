@@ -3,6 +3,7 @@ import torch
 from tsroots.optim import TSRoots
 
 
+# See https://github.com/UQUH/TSRoots/tree/main
 class AcqTSRoots:
     def __init__(self, model):
         # TODO: avoid fitting the model
