@@ -14,6 +14,7 @@ from acq.acq_min_dist import AcqMinDist
 from acq.acq_mtv import AcqMTV
 from acq.acq_sobol import AcqSobol
 from acq.acq_ts import AcqTS
+from acq.acq_tsroots import AcqTSRoots
 from acq.acq_var import AcqVar
 
 from .ax_designer import AxDesigner
@@ -294,10 +295,15 @@ class Designers:
                     "num_refinements": 30,
                 },
             )
-        elif designer_name == "pts":
+        elif designer_name == "path":
             return bt_designer(
                 PathwiseThompsonSampling,
-                init_sobol=0,
+                init_sobol=1,
+            )
+        elif designer_name == "tsroots":
+            return bt_designer(
+                AcqTSRoots,
+                init_sobol=1,
             )
 
         # Long sobol init, sequential opt

@@ -2,8 +2,6 @@ import torch
 from botorch.acquisition.monte_carlo import (
     MCAcquisitionFunction,
 )
-from botorch.acquisition.thompson_sampling import PathwiseThompsonSampling
-from botorch.optim import optimize_acqf
 from botorch.utils import t_batch_mode_transform
 from torch.quasirandom import SobolEngine
 
@@ -60,11 +58,6 @@ class AcqMTV(MCAcquisitionFunction):
                     self.X_samples = self._stagger_thompson_sampler(num_X_samples, sample_type)
                 else:
                     self.X_samples = sample_type
-            elif sample_type == "pts":
-                self._set_x_max()
-                assert not ts_only, "Use designer pts directly"
-                self.X_samples = self._pathwise_ts(num_X_samples)
-
             elif sample_type == "sobol":
                 self.X_samples = sobol_engine.draw(num_X_samples, dtype=self.dtype)
             else:
@@ -78,20 +71,20 @@ class AcqMTV(MCAcquisitionFunction):
             # print("Using draw()")
             self.draw = self._draw
 
-    def _pathwise_ts(self, num_X_samples):
-        X_ts, _ = optimize_acqf(
-            acq_function=PathwiseThompsonSampling(self.model),
-            bounds=self._bounds(),
-            q=num_X_samples,
-            # num_restarts=100,
-            raw_samples=128,
-            # options={"batch_limit": 10, "maxiter": 200},
-            num_restarts=30,
-            # options={"batch_limit": num_ic, "maxiter": 100},
-            options={"maxiter": 1000},
-            # batch_initial_conditions=self.X_max,
-        )
-        return X_ts
+    # def _pathwise_ts(self, num_X_samples):
+    #     X_ts, _ = optimize_acqf(
+    #         acq_function=PathwiseThompsonSampling(self.model),
+    #         bounds=self._bounds(),
+    #         q=num_X_samples,
+    #         # num_restarts=100,
+    #         raw_samples=128,
+    #         # options={"batch_limit": 10, "maxiter": 200},
+    #         num_restarts=30,
+    #         # options={"batch_limit": num_ic, "maxiter": 100},
+    #         options={"maxiter": 1000},
+    #         # batch_initial_conditions=self.X_max,
+    #     )
+    #     return X_ts
 
     def _bounds(self):
         return torch.tensor(
