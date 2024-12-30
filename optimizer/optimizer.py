@@ -69,7 +69,7 @@ class Optimizer:
             #  where the noise is not fixed.
             traj = self._collect_trajectory(policy, denoise_seed=i)
             rets.append(traj.rreturn)
-        if np.std(rets) == 0:
+        if len(rets) > 1 and np.std(rets) == 0:
             self._collector(f"WARNING: All rets are the same {rets}")
             # assert np.std(rets) > 0, rets
         return np.mean(rets)

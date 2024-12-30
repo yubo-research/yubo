@@ -7,7 +7,6 @@ from acq.acq_util import calc_p_max
 from common.collector import Collector
 from experiments.dist_modal import DistModal, collect
 from experiments.modal_image import mk_image
-from optimizer.arm_best_obs import ArmBestObs
 from optimizer.optimizer import Optimizer
 from problems.env_conf import default_policy, get_env_conf
 

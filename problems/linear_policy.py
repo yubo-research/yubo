@@ -21,19 +21,24 @@ class LinearPolicy:
         )
         self._normalizer = Normalizer(shape=(num_state,))
         self._num_beta = self._beta.size
+        self._scale = 1
 
     def num_params(self):
-        return self._num_beta
+        return self._num_beta + 1
 
     def set_params(self, x):
         # x in [-1,1]
         assert x.min() >= -1 and x.max() <= 1, (x.min(), x.max())
         i = 0
+        self._scale = x[0]
+        i += 1
         self._beta = x[i : i + self._num_beta].reshape(self._beta.shape)
 
     def get_params(self):
         p = np.zeros(shape=(self.num_params(),))
         i = 0
+        p[0] = self._scale
+        i += 1
         p[i : i + self._num_beta] = self._beta.flatten()
         return p
 
@@ -44,6 +49,7 @@ class LinearPolicy:
 
     def __call__(self, state):
         # beta in [-1, 1]
+        # scale in [-1, 1]
         assert self._beta.min() >= -1 and self._beta.max() <= 1, (self._beta.min(), self._beta.max())
         self._normalizer.update(state)
         loc = self._normalizer.mean()
@@ -52,5 +58,6 @@ class LinearPolicy:
         scale[i] = 1
         state = (state - loc) / scale
         state[i] = 0.0
-        beta = 0.3 * self._beta
+        k = 10**self._scale  # k in [0.1, 10]
+        beta = k * self._beta
         return np.maximum(-1, np.minimum(1, beta @ state))

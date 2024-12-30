@@ -13,12 +13,24 @@ from problems.turbo_lunar_policy import TurboLunarPolicy
 
 
 def get_env_conf(tag, problem_seed=None, noise_level=None, noise_seed_0=None):
+    frozen_noise = False
+
+    if ":" in tag:
+        x = tag.split(":")
+        opt = x[-1]
+        if opt == "fn":
+            frozen_noise = True
+            tag = ":".join(x[:-1])
+        else:
+            assert len(x) == 2, (x, tag)
+
     if tag in _gym_env_confs:
         ec = copy.deepcopy(_gym_env_confs[tag])
         ec.problem_seed = problem_seed
         ec.noise_seed_0 = noise_seed_0
+        ec.frozen_noise = frozen_noise
     else:
-        ec = EnvConf(tag, problem_seed=problem_seed, noise_level=noise_level, noise_seed_0=noise_seed_0)
+        ec = EnvConf(tag, problem_seed=problem_seed, noise_level=noise_level, noise_seed_0=noise_seed_0, frozen_noise=frozen_noise)
 
     return ec
 
@@ -38,6 +50,7 @@ class GymConf:
     num_frames_skip: int = None
     state_space: Any = None
     transform_state: bool = True
+    bang_bang: bool = False
 
 
 @dataclass
@@ -48,7 +61,7 @@ class EnvConf:
 
     noise_level: float = None
     noise_seed_0: int = None
-    frozen_noise: bool = False
+    frozen_noise: bool = True
 
     gym_conf: GymConf = None
     action_space: Any = None
@@ -86,10 +99,27 @@ class EnvConf:
 # See https://paperswithcode.com/task/openai-gym
 _gym_env_confs = {
     # 95
-    "mcc": EnvConf("MountainCarContinuous-v0", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=100)),
+    "mcc": EnvConf(
+        "MountainCarContinuous-v0",
+        problem_seed=None,
+        gym_conf=GymConf(
+            max_steps=1000,
+            num_frames_skip=100,
+            bang_bang=True,
+        ),
+    ),
     "pend": EnvConf("Pendulum-v1", problem_seed=None, gym_conf=GymConf(max_steps=200, num_frames_skip=100)),
     # 300
-    "lunar": EnvConf("LunarLander-v3", problem_seed=None, gym_conf=GymConf(max_steps=500, num_frames_skip=30), kwargs={"continuous": True}),
+    "lunar": EnvConf(
+        "LunarLander-v3",
+        problem_seed=None,
+        gym_conf=GymConf(
+            max_steps=500,
+            num_frames_skip=30,
+            bang_bang=True,
+        ),
+        kwargs={"continuous": True},
+    ),
     # 6600
     "ant": EnvConf("Ant-v5", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
     "mpend": EnvConf("InvertedPendulum-v5", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
@@ -102,8 +132,16 @@ _gym_env_confs = {
     # 6900
     "human": EnvConf("Humanoid-v5", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
     "stand": EnvConf("HumanoidStandup-v5", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
-    "bw": EnvConf("BipedalWalker-v3", problem_seed=None, gym_conf=GymConf(max_steps=1600, num_frames_skip=100)),
+    "bw": EnvConf(
+        "BipedalWalker-v3",
+        problem_seed=None,
+        gym_conf=GymConf(
+            max_steps=1600,
+            num_frames_skip=100,
+        ),
+    ),
     "tlunar": EnvConf(
+        # TuRBO paper specifies v2, but that raises an exception now
         "LunarLander-v3",
         problem_seed=None,
         gym_conf=GymConf(
@@ -111,7 +149,6 @@ _gym_env_confs = {
             num_frames_skip=30,
             transform_state=False,
         ),
-        # frozen_noise=True,
         kwargs={"continuous": False},
         policy_class=TurboLunarPolicy,
     ),
