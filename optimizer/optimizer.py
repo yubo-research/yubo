@@ -17,13 +17,13 @@ class _TraceEntry:
 
 
 class Optimizer:
-    def __init__(self, collector, *, env_conf, policy, num_arms, arm_selector, num_denoise=None):
+    def __init__(self, collector, *, env_conf, policy, num_arms, num_denoise=None):
         self._collector = collector
         self._env_conf = env_conf
         self._num_arms = num_arms
         self._num_denoise = num_denoise
-        self._arm_selector = arm_selector
         self.num_params = policy.num_params()
+        self.r_best_est = -1e99
 
         self._data = []
         self._i_iter = 0
@@ -34,8 +34,11 @@ class Optimizer:
         self._designers = Designers(policy, num_arms)
 
     def _collect_trajectory(self, policy, denoise_seed=0):
-        # Use a different noise seed every time we collect a trajetory.
-        noise_seed = self._env_conf.noise_seed_0 + self._i_noise + denoise_seed
+        if self._env_conf.frozen_noise:
+            noise_seed = 0
+        else:
+            noise_seed = self._i_noise
+        noise_seed += self._env_conf.noise_seed_0 + denoise_seed
         return collect_trajectory(self._env_conf, policy, noise_seed=noise_seed)
 
     def _collect_denoised_trajectory(self, policy):
@@ -60,6 +63,10 @@ class Optimizer:
     def _denoise(self, policy):
         rets = []
         for i in range(self._num_denoise):
+            # We follow the denoising logic in https://papers.nips.cc/paper_files/paper/2019/file/6c990b7aca7bc7058f5e98ea909e924b-Paper.pdf
+            #  and use a *fixed* set of seeds for every evaluation.
+            # That tends to make a problem much easier. We/you should also study problems
+            #  where the noise is not fixed.
             traj = self._collect_trajectory(policy, denoise_seed=i)
             rets.append(traj.rreturn)
         if np.std(rets) == 0:
@@ -88,10 +95,8 @@ class Optimizer:
         self._t_0 = time.time()
 
     def iterate(self):
-        # tr.print_diff()
-        self._i_noise += 1
         designer = self._opt_designers[min(len(self._opt_designers) - 1, self._i_iter)]
-
+        self._i_noise += 1
         data, d_time = self._iterate(designer, self._num_arms)
 
         ret_batch = []
@@ -99,9 +104,11 @@ class Optimizer:
             self._data.append(datum)
             ret_batch.append(datum.trajectory.rreturn)
 
-        policy_best, self.r_best_est = self._arm_selector(self._data)
-        ret_eval = self.r_best_est
+        # one ret for each *arm* (nothing to do with num_denoise)
         ret_batch = np.array(ret_batch)
+
+        self.r_best_est = max(self.r_best_est, ret_batch.max())
+        ret_eval = self.r_best_est
 
         cum_time = time.time() - self._t_0
         self._collector(

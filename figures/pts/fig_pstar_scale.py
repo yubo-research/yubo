@@ -39,8 +39,6 @@ def calc_pstar_scales(d_args):
     env_conf = get_env_conf(env_tag, problem_seed=seed, noise_seed_0=seed + 1)
     policy = default_policy(env_conf)
 
-    arm_selector = ArmBestObs()
-
     collector_log = Collector()
     opt = Optimizer(
         collector_log,
@@ -48,7 +46,6 @@ def calc_pstar_scales(d_args):
         policy=policy,
         num_arms=num_arms,
         num_denoise=None,
-        arm_selector=arm_selector,
     )
 
     t_0 = time.time()

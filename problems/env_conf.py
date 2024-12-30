@@ -48,6 +48,7 @@ class EnvConf:
 
     noise_level: float = None
     noise_seed_0: int = None
+    frozen_noise: bool = False
 
     gym_conf: GymConf = None
     action_space: Any = None
@@ -110,6 +111,7 @@ _gym_env_confs = {
             num_frames_skip=30,
             transform_state=False,
         ),
+        # frozen_noise=True,
         kwargs={"continuous": False},
         policy_class=TurboLunarPolicy,
     ),
