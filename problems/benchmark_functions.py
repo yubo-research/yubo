@@ -20,7 +20,6 @@ def _collect(mod):
     all_bf = {}
     for name in dir(mod):
         obj = getattr(mod, name)
-
         if inspect.isclass(obj) and Exception not in obj.mro():
             name = name.lower()
             assert name not in all_bf, (name, mod)

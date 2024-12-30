@@ -54,10 +54,10 @@ def prep_mtv_repro(results_dir):
     opts = ["turbo-1"]  # "lei", "sts", "mtv-sts", "optuna", "mtv", "sobol", "random", "ei", "ucb", "dpp", "sr", "gibbon"]
     noises = [None]
 
-    cmds_1d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_1d, dims=[1], num_arms=3, num_replications=100, opts=opts, noises=noises, num_rounds=3)
-    cmds_3d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_nd, dims=[3], num_arms=5, num_replications=30, opts=opts, noises=noises, num_rounds=3)
-    cmds_10d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_nd, dims=[10], num_arms=10, num_replications=30, opts=opts, noises=noises, num_rounds=3)
-    cmds_30d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_nd, dims=[30], num_arms=10, num_replications=30, opts=opts, noises=noises, num_rounds=3)
+    # cmds_1d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_1d, dims=[1], num_arms=3, num_replications=100, opts=opts, noises=noises, num_rounds=3)
+    # cmds_3d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_nd, dims=[3], num_arms=5, num_replications=30, opts=opts, noises=noises, num_rounds=3)
+    # cmds_10d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_nd, dims=[10], num_arms=10, num_replications=30, opts=opts, noises=noises, num_rounds=3)
+    # cmds_30d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_nd, dims=[30], num_arms=10, num_replications=30, opts=opts, noises=noises, num_rounds=3)
     cmds_100d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_nd, dims=[100], num_arms=10, num_replications=30, opts=opts, noises=noises, num_rounds=3)
     cmds_300d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_nd, dims=[300], num_arms=10, num_replications=30, opts=opts, noises=noises, num_rounds=3)
 
@@ -68,15 +68,15 @@ def prep_mtv_repro(results_dir):
 def prep_ts_hd(results_dir):
     exp_dir = "exp_pss_ts_hd"
 
-    opts = ["sts-t:dumbo", "lei", "turbo-1", "sts", "sts-t", "optuna", "ei", "ucb", "gibbon", "sr", "ts", "turbo-1", "sobol", "random"]
+    opts = ["sts2"]  # , "lei", "turbo-1", "sts", "sts-t", "optuna", "ei", "ucb", "gibbon", "sr", "ts", "turbo-1", "sobol", "random"]
     noises = [None]
 
     min_rounds = 30
     cmds = []
-    # cmds.extend(
-    #     prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_1d, dims=[1], num_arms=1, num_replications=100, opts=opts, noises=noises, num_rounds=min_rounds)
-    # )
-    for num_dim in [1000]:  # [3, 10, 100, 300]:  # TODO , 30, 1000]:
+    cmds.extend(
+        prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_1d, dims=[1], num_arms=1, num_replications=100, opts=opts, noises=noises, num_rounds=min_rounds)
+    )
+    for num_dim in [3, 10, 30, 100, 300]:  # TODO , 1000]:
         cmds.extend(
             prep_d_args(
                 results_dir,
