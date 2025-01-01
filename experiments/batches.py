@@ -77,7 +77,8 @@ def prep_ts_hd(results_dir):
     cmds.extend(
         prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_1d, dims=[1], num_arms=1, num_replications=100, opts=opts, noises=noises, num_rounds=min_rounds)
     )
-    for num_dim in [3, 10, 30, 100, 300]:  # TODO , 1000]:
+
+    for num_dim in [3, 10, 30, 100, 300, 1000]:
         cmds.extend(
             prep_d_args(
                 results_dir,
