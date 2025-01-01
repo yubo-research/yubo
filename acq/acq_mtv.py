@@ -71,21 +71,6 @@ class AcqMTV(MCAcquisitionFunction):
             # print("Using draw()")
             self.draw = self._draw
 
-    # def _pathwise_ts(self, num_X_samples):
-    #     X_ts, _ = optimize_acqf(
-    #         acq_function=PathwiseThompsonSampling(self.model),
-    #         bounds=self._bounds(),
-    #         q=num_X_samples,
-    #         # num_restarts=100,
-    #         raw_samples=128,
-    #         # options={"batch_limit": 10, "maxiter": 200},
-    #         num_restarts=30,
-    #         # options={"batch_limit": num_ic, "maxiter": 100},
-    #         options={"maxiter": 1000},
-    #         # batch_initial_conditions=self.X_max,
-    #     )
-    #     return X_ts
-
     def _bounds(self):
         return torch.tensor(
             [[0.0] * self._num_dim, [1.0] * self._num_dim],

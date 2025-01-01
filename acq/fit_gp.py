@@ -47,7 +47,7 @@ def fit_gp_XY(X, Y, model_type=None):
         if model_type == "dumbo":
             gp = DUMBOGP(X, Y)
         elif model_type == "rdumbo":
-            gp = DUMBOGP(X, Y, rank_distance=True)
+            gp = DUMBOGP(X, Y, use_rank_distance=True)
         else:
             gp = SingleTaskGP(X, Y, outcome_transform=_EmptyTransform())
         gp.to(X)

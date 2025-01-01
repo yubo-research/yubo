@@ -13,7 +13,7 @@ class DUMBOGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
      with the right dimensions, dtype, and device.
     """
 
-    def __init__(self, train_X, train_Y, rank_distance=False):
+    def __init__(self, train_X, train_Y, use_rank_distance=False):
         assert len(train_X) == len(train_Y), (len(train_X), len(train_Y))
         assert train_X.ndim == train_Y.ndim == 2, (train_X.ndim, train_Y.ndim)
         assert train_Y.shape[-1] == 1
@@ -23,7 +23,7 @@ class DUMBOGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
 
         self._train_x = train_X
         self._train_Y = train_Y
-        self._rank_distance = rank_distance
+        self._use_rank_distance = use_rank_distance
 
         self.train_inputs = (train_X,)
         self.train_targets = train_Y.squeeze(-1)
@@ -67,9 +67,9 @@ class DUMBOGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
         distance = torch.cdist(X, X_m)
         # distance ~ num_batch x num_joint x num_train_x
 
-        if self._rank_distance:
-            distance = rankdata(distance)
-            w = torch.tensor(1.0) / distance
+        if self._use_rank_distance:
+            r_distance = torch.tensor(rankdata(distance)).reshape(shape=distance.shape).to(distance)
+            w = torch.tensor(1.0) / r_distance
         else:
             w = torch.exp(self._beta_softmax / (self._eps_distance + distance))
 
