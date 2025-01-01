@@ -72,6 +72,9 @@ class Designers:
             elif option == "dumbo":
                 model_type = "dumbo"
                 print("OPTION model_type = dumbo")
+            elif option == "rdumbo":
+                model_type = "rdumbo"
+                print("OPTION model_type = rdumbo")
             else:
                 assert False, ("Unknown option", option)
 
