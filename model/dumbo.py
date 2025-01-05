@@ -68,7 +68,7 @@ class DUMBOGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
         # distance ~ num_batch x num_joint x num_train_x
 
         if self._use_rank_distance:
-            r_distance = torch.tensor(rankdata(distance)).reshape(shape=distance.shape).to(distance)
+            r_distance = torch.tensor(rankdata(distance.detach().numpy())).reshape(shape=distance.shape).to(distance)
             w = torch.tensor(1.0) / r_distance
         else:
             w = torch.exp(self._beta_softmax / (self._eps_distance + distance))

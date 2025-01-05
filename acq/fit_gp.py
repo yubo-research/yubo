@@ -45,7 +45,7 @@ def get_vanilla_kernel(num_dim, batch_shape):
 def fit_gp_XY(X, Y, model_type=None):
     if len(X) == 0:
         if model_type == "dumbo":
-            gp = DUMBOGP(X, Y)
+            gp = DUMBOGP(X, Y, use_rank_distance=False)
         elif model_type == "rdumbo":
             gp = DUMBOGP(X, Y, use_rank_distance=True)
         else:
@@ -60,7 +60,9 @@ def fit_gp_XY(X, Y, model_type=None):
         num_dims = X.shape[-1]
         gp = SingleTaskGP(X, Y, covar_module=get_vanilla_kernel(num_dims, _gp._aug_batch_shape))
     elif model_type == "dumbo":
-        return DUMBOGP(X, Y)
+        return DUMBOGP(X, Y, use_rank_distance=False)
+    elif model_type == "rdumbo":
+        return DUMBOGP(X, Y, use_rank_distance=True)
     else:
         gp = _gp
     mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
