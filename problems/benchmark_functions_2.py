@@ -9,7 +9,12 @@ from .benchmark_util import mk_2d
 
 
 class Alpine:
+    """
+    See: https://www.al-roomi.org/benchmarks/unconstrained/n-dimensions/162-alpine-function-no-1
+    """
+
     def __call__(self, x):
+        x = 5 * (1 + np.asarray(x))
         return np.sum(np.abs(x * np.sin(x) + 0.1 * x))
 
 
