@@ -75,8 +75,41 @@ def _job_key(job_name, i_job):
 
 
 def collect():
+    # job_queue = _queue()
+    res_dict = _dict()
+    print("DICT_SIZE:", res_dict.len())
+
+    while True:
+        collected_keys = set()
+        print("ITEMS")
+        for key, value in res_dict.items():
+            if key.endswith("key_max"):
+                print("SKIP", key)
+                continue
+            print("GETITEM", key)
+            t_0 = time.time()
+            (trace_fn, collector_log, collector_trace) = value
+            t_f = time.time()
+            print(f"GOTITEM: {key} {t_f-t_0:.1f}")
+            if not data_is_done(trace_fn):
+                post_process(collector_log, collector_trace, trace_fn)
+            collected_keys.add(key)
+
+        for key in collected_keys:
+            print("DEL:", key)
+            del res_dict[key]
+        print("How many jobs are running? Idk.")
+        # print(f"jobs_remaining = {job_queue.len()}")
+        if len(collected_keys) == 0:
+            time.sleep(30)
+        else:
+            time.sleep(3)
+
+
+def collect_orig():
     job_queue = _queue()
     res_dict = _dict()
+    print("DICT_SIZE:", res_dict.len())
     while True:
         num_collected = 0
         for key, value in res_dict.items():
@@ -84,7 +117,6 @@ def collect():
                 continue
 
             (trace_fn, collector_log, collector_trace) = res_dict[key]
-            print(f"JOB: {key}")
             post_process(collector_log, collector_trace, trace_fn)
             del res_dict[key]
             num_collected += 1

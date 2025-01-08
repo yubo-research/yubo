@@ -69,7 +69,7 @@ def prep_ts_hd(results_dir):
     exp_dir = "exp_pss_ts_hd"
 
     # opts = ["sts2", "lei", "turbo-1", "sts", "sts-t", "optuna", "ei", "ucb", "gibbon", "sr", "ts", "turbo-1", "sobol", "random"]
-    opts = ["sts-t:dumbo", "sts-t:rdumbo"]
+    opts = ["sts-t:rdumbo"]
     noises = [None]
 
     min_rounds = 30
