@@ -5,7 +5,7 @@ import os
 import time
 
 from experiments.experiment_sampler import prep_d_args
-from experiments.func_names import funcs_1d, funcs_nd
+from experiments.func_names import funcs_1d, funcs_36, funcs_nd
 
 
 def worker(cmd):
@@ -259,13 +259,33 @@ def prep_sts_sweep(results_dir):
     )
 
 
+def prep_sequential_36(results_dir):
+    exp_dir = "exp_check_36"
+
+    opts = ["sts", "random"]
+    noises = [None]
+
+    return prep_d_args(
+        results_dir,
+        exp_dir=exp_dir,
+        funcs=funcs_36,
+        dims=[1, 3, 10, 30, 100, 300],
+        num_arms=1,
+        num_replications=3,
+        opts=opts,
+        noises=noises,
+        num_rounds=10,
+    )
+
+
 ################################
 
 
-def prep_d_argss():
+def prep_d_argss(batch_tag):
     results_dir = "results"
 
-    return prep_ts_hd(results_dir)
+    assert batch_tag in globals(), f"Unknown batch_tag: {batch_tag}"
+    return globals()[batch_tag](results_dir)
 
 
 if __name__ == "__main__":
@@ -273,10 +293,13 @@ if __name__ == "__main__":
 
     dry_run = False
     if len(sys.argv) > 1:
-        assert sys.argv[1] == "--dry-run"
-        dry_run = True
+        if sys.argv[1] == "--dry-run":
+            dry_run = True
+            sys.argv = sys.argv[1:]
 
-    d_argss = prep_d_argss()
+    batch_tag = sys.argv[1]
+
+    d_argss = prep_d_argss(batch_tag)
     t_0 = time.time()
     run(d_argss, max_parallel=5, b_dry_run=dry_run)
     t_f = time.time()

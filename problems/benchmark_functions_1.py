@@ -7,14 +7,19 @@ import numpy as np
 from .benchmark_util import mk_2d, mk_4d
 
 
-class Sphere:
-    def __call__(self, x):
-        return (x**2).mean()
-
-
 class Sphere3:
     def __call__(self, x):
         return ((x - 0.3) ** 2).mean()
+
+
+"""
+See: https://www.sfu.ca/~ssurjano/
+"""
+
+
+class Sphere:
+    def __call__(self, x):
+        return (x**2).mean()
 
 
 # 1 xi ∈ [-32.768, 32.768] ackley result [0,25]
@@ -210,43 +215,36 @@ class Levy:
         return part1 + part2 + part3
 
 
-#####
-## BELOW ARE UNCHECKED
-#####
-
-
-# 14 Michalewicz xi ∈ [0, π], for all i = 1, …, d. result[-1.8,0]
 class Michalewicz:
+    m = 10
+
     def __call__(self, x):
-        x = x * np.pi / 2 + np.pi / 2
-        num_dim = len(x)
-        m = 10
-        sum = 0
-        for i in range(num_dim):
-            new = np.sin(x[i]) * (np.sin(i * x[i] ** 2 / np.pi)) ** (2 * m)
-            sum += new
-        return -sum
+        x = np.pi * (1 + np.asarray(x)) / 2
+        d = len(x)
+        indices = np.arange(1, d + 1)
+
+        sine_term1 = np.sin(x)
+        sine_term2 = np.sin(indices * x**2 / np.pi) ** (2 * self.m)
+
+        return -np.sum(sine_term1 * sine_term2)
 
 
-# 15 Powell xi ∈ [-4, 5], for all i = 1, …, d.
 class Powell:
     def __call__(self, x):
-        num_dim = len(x)
-        if num_dim % 4 != 0:
+        x = 0.5 + 4.5 * np.asarray(x)
+
+        d = len(x)
+        if d % 4 != 0:
             x = mk_4d(x)
-            num_dim = len(x)
+            d = len(x)
 
-        x = x * 4.5 + 0.5
-        result = 0
-        for i in range(num_dim // 4):
-            i_ = i + 1
-            part1 = (x[4 * i_ - 4] + 10.0 * x[4 * i_ - 3]) ** 2
-            part2 = 5.0 * (x[4 * i_ - 2] - x[4 * i_ - 1]) ** 2
-            part3 = (x[4 * i_ - 3] - 2.0 * x[4 * i_ - 2]) ** 4
-            part4 = 10.0 * (x[4 * i_ - 4] - x[4 * i_ - 1]) ** 4
-            result += part1 + part2 + part3 + part4
+        x_grouped = x.reshape(-1, 4)
+        term1 = (x_grouped[:, 0] + 10 * x_grouped[:, 1]) ** 2
+        term2 = 5 * (x_grouped[:, 2] - x_grouped[:, 3]) ** 2
+        term3 = (x_grouped[:, 1] - 2 * x_grouped[:, 2]) ** 4
+        term4 = 10 * (x_grouped[:, 0] - x_grouped[:, 3]) ** 4
 
-        return result
+        return np.sum(term1 + term2 + term3 + term4)
 
 
 # 16 Rastrigin  xi ∈ [-5.12, 5.12], for all i = 1, …, d result[0,90]

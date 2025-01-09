@@ -20,6 +20,7 @@ from acq.acq_var import AcqVar
 from .ax_designer import AxDesigner
 from .bt_designer import BTDesigner
 from .cma_designer import CMAESDesigner
+from .mcmc_bo_designer import MCMCBODesigner
 from .optuna_designer import OptunaDesigner
 from .random_designer import RandomDesigner
 from .sobol_designer import SobolDesigner
@@ -301,12 +302,17 @@ class Designers:
         elif designer_name == "path":
             return bt_designer(
                 PathwiseThompsonSampling,
-                init_sobol=1,
+                init_sobol=init_yubo_default,
             )
         elif designer_name == "tsroots":
             return bt_designer(
                 AcqTSRoots,
-                init_sobol=1,
+                init_sobol=init_yubo_default,
+            )
+        elif designer_name == "mcmcbo":
+            return MCMCBODesigner(
+                self._policy,
+                num_init=init_yubo_default,
             )
 
         # Long sobol init, sequential opt

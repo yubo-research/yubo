@@ -47,11 +47,11 @@ def modal_batches_submitter(job_name: str):
     batches_submitter(job_name)
 
 
-def batches_submitter(job_name: str, count_only=False):
+def batches_submitter(batch_tag: str, count_only=False):
     if not count_only:
         job_queue = _queue()
     num_submitted = 0
-    for key, d_args in _gen_jobs(job_name):
+    for key, d_args in _gen_jobs(batch_tag):
         print(f"JOB: {key} {d_args}")
         if not count_only:
             job_queue.put((key, d_args))
@@ -59,13 +59,13 @@ def batches_submitter(job_name: str, count_only=False):
     print("TOTAL:", num_submitted)
 
 
-def _gen_jobs(job_name):
-    d_argss = prep_d_argss()
+def _gen_jobs(batch_tag):
+    d_argss = prep_d_argss(batch_tag)
     i_job = 0
     for d_args_batch in d_argss:
         for d_args in mk_replicates(d_args_batch):
             if not data_is_done(d_args["trace_fn"]):
-                key = _job_key(job_name, i_job)
+                key = _job_key(batch_tag, i_job)
                 yield key, d_args
                 i_job += 1
 
@@ -96,7 +96,6 @@ def collect():
             collected_keys.add(key)
 
         for key in collected_keys:
-            print("DEL:", key)
             del res_dict[key]
         print("How many jobs are running? Idk.")
         # print(f"jobs_remaining = {job_queue.len()}")
@@ -136,7 +135,7 @@ def status():
 
 
 @app.local_entrypoint()
-def batches(cmd: str, job_name: str = None, num: int = None):
+def batches(cmd: str, batch_tag: str = None, num: int = None):
     if cmd == "work":
         modal_function = modal.Function.lookup("yubo", "modal_batches_worker")
         for i in range(num):
@@ -144,15 +143,15 @@ def batches(cmd: str, job_name: str = None, num: int = None):
             modal_function.spawn()
     elif cmd == "submit-all":
         submitter = modal.Function.lookup("yubo", "modal_batches_submitter")
-        submitter.spawn(job_name)
+        submitter.spawn(batch_tag)
     elif cmd == "submit-missing":
-        batches_submitter(job_name)
+        batches_submitter(batch_tag)
     elif cmd == "count-missing":
-        batches_submitter(job_name, count_only=True)
+        batches_submitter(batch_tag, count_only=True)
     elif cmd == "status":
         status()
     elif cmd == "collect":
-        assert job_name is None
+        assert batch_tag is None
         collect()
     else:
         assert False, cmd
