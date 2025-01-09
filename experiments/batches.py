@@ -262,7 +262,7 @@ def prep_sts_sweep(results_dir):
 def prep_sequential_36(results_dir):
     exp_dir = "exp_check_36"
 
-    opts = ["sts", "random"]
+    opts = ["mcmcbo", "turbo-1", "ei", "optuna", "sts", "random"]
     noises = [None]
 
     return prep_d_args(
@@ -271,7 +271,7 @@ def prep_sequential_36(results_dir):
         funcs=funcs_36,
         dims=[1, 3, 10, 30, 100, 300],
         num_arms=1,
-        num_replications=3,
+        num_replications=10,
         opts=opts,
         noises=noises,
         num_rounds=10,

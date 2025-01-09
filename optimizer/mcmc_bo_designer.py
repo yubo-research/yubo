@@ -1,11 +1,12 @@
 import gpytorch
 import torch
+from botorch.exceptions.errors import ModelFittingError
 from botorch.fit import fit_gpytorch_mll
 from botorch.models import SingleTaskGP
 from gpytorch.constraints import Interval
 from gpytorch.kernels import MaternKernel, ScaleKernel
 from gpytorch.likelihoods import GaussianLikelihood
-from gpytorch.mlls import ExactMarginalLogLikelihood
+from gpytorch.mlls import ExactMarginalLogLikelihood, LeaveOneOutPseudoLikelihood
 
 import acq.fit_gp as fit_gp
 import common.all_bounds as all_bounds
@@ -72,7 +73,11 @@ class MCMCBODesigner:
         )
         mll = ExactMarginalLogLikelihood(model.likelihood, model)
         with gpytorch.settings.max_cholesky_size(float("inf")):
-            fit_gpytorch_mll(mll)
+            try:
+                fit_gpytorch_mll(mll)
+            except (RuntimeError, ModelFittingError):
+                print("Trying LeaveOneOutPseudoLikelihood")
+                mll = LeaveOneOutPseudoLikelihood(model.likelihood, model)
 
         X_cand, _ = generate_batch_multiple_tr(
             state=[self._turbo_state],

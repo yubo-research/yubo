@@ -165,7 +165,11 @@ def generate_batch_multiple_tr(
         # prob_perturb = 1
         mask = torch.rand(n_candidates, dim, dtype=dtype, device=device) <= prob_perturb
         ind = torch.where(mask.sum(dim=1) == 0)[0]
-        mask[ind, torch.randint(0, dim - 1, size=(len(ind),), device=device)] = 1
+        if dim == 1:
+            rr = torch.zeros(size=(len(ind),), device=device, dtype=torch.int64)
+        else:
+            rr = torch.randint(0, dim - 1, size=(len(ind),), device=device)
+        mask[ind, rr] = 1
 
         # Create candidate points from the perturbations and the mask
         X_cand[tr_idx] = x_center.expand(n_candidates, dim).clone()
