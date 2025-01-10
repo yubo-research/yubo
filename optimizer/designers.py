@@ -122,7 +122,15 @@ class Designers:
                 AcqTS,
                 acq_kwargs={
                     "sampler": "cholesky",
-                    "num_candidates": 1024,
+                    "num_candidates": 1000,
+                },
+            )
+        elif designer_name == "ts-10000":
+            return bt_designer(
+                AcqTS,
+                acq_kwargs={
+                    "sampler": "lanczos",
+                    "num_candidates": 10000,
                 },
             )
         elif designer_name == "ts-ciq":
@@ -237,6 +245,18 @@ class Designers:
                     "sample_type": "sts",
                     "num_X_samples": default_num_X_samples,
                     "num_refinements": 30,
+                },
+            )
+        elif designer_name == "sts-im":
+            return bt_designer(
+                AcqMTV,
+                init_sobol=0,
+                acq_kwargs={
+                    "ts_only": True,
+                    "sample_type": "sts",
+                    "num_X_samples": default_num_X_samples,
+                    "num_refinements": 0,
+                    "num_improvements_per_arm": 30,
                 },
             )
         elif designer_name == "sts-ns":

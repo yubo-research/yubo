@@ -1,3 +1,6 @@
+from contextlib import ExitStack
+
+import gpytorch.settings as gpts
 import torch
 from botorch.acquisition.monte_carlo import (
     MCAcquisitionFunction,
@@ -21,6 +24,7 @@ class AcqMTV(MCAcquisitionFunction):
         num_mcmc=None,
         sample_type="sts",
         num_refinements=30,
+        num_improvements_per_arm=0,
         no_stagger=False,
         x_max_type="find",
         **kwargs,
@@ -39,6 +43,7 @@ class AcqMTV(MCAcquisitionFunction):
         self.weights = None
 
         self._num_refinements = num_refinements
+        self._num_improvements_per_arm = num_improvements_per_arm
         self._x_max_type = x_max_type
         self._no_stagger = no_stagger
 
@@ -116,6 +121,7 @@ class AcqMTV(MCAcquisitionFunction):
             assert False, ("Unknown sample type", sample_type)
 
         sts.refine(self._num_refinements)
+        sts.improve(self._num_improvements_per_arm * num_samples)
         return sts.samples()
 
     @t_batch_mode_transform()

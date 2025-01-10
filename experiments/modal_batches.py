@@ -48,15 +48,18 @@ def modal_batches_submitter(job_name: str):
 
 
 def batches_submitter(batch_tag: str, count_only=False):
+    missing = []
+    for key, d_args in _gen_jobs(batch_tag):
+        if not count_only:
+            missing.append((key, d_args))
+            # job_queue.put((key, d_args))
+
     if not count_only:
         job_queue = _queue()
-    num_submitted = 0
-    for key, d_args in _gen_jobs(batch_tag):
-        print(f"JOB: {key} {d_args}")
-        if not count_only:
+        for key, d_args in missing:
+            print(f"JOB: {key} {d_args}")
             job_queue.put((key, d_args))
-        num_submitted += 1
-    print("TOTAL:", num_submitted)
+    print("TOTAL:", len(missing))
 
 
 def _gen_jobs(batch_tag):

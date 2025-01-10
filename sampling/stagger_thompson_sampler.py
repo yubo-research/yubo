@@ -39,9 +39,14 @@ class StaggerThompsonSampler:
     def samples(self):
         return self._X_samples
 
-    def refine(self, num_refinements=1, s_min=1e-6, s_max=1):
+    def refine(self, num_refinements, s_min=1e-6, s_max=1):
         for _ in range(num_refinements):
             self._refine(s_min=s_min, s_max=s_max)
+
+    def improve(self, num_improvements, s_min=1e-6, s_max=1):
+        num_improved = 0
+        while num_improved < num_improvements:
+            num_improved += self._refine(s_min=s_min, s_max=s_max)
 
     def _refine(self, s_min=1e-6, s_max=1):
         u = torch.rand(size=(self._num_samples, 1))
@@ -77,6 +82,5 @@ class StaggerThompsonSampler:
 
         i_improved = Y_perturbed > Y_ts
 
-        if len(i_improved) == 0:
-            print("STALL")
         self._X_samples[i_improved] = X_perturbed[i_improved]
+        return i_improved.sum().item()
