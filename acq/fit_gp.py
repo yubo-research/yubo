@@ -71,7 +71,7 @@ def fit_gp_XY(X, Y, model_type=None):
     for i_try in range(3):
         mll.to(X)
         try:
-            fit_gpytorch_mll(mll)
+            fit_gpytorch_mll(mll)  # go faster: , optimizer_kwargs={"options": {"maxiter": 10}})
         except (RuntimeError, ModelFittingError) as e:
             m = e
             print(f"Retrying fit i_try = {i_try}")
