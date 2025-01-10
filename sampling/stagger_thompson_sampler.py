@@ -43,10 +43,14 @@ class StaggerThompsonSampler:
         for _ in range(num_refinements):
             self._refine(s_min=s_min, s_max=s_max)
 
-    def improve(self, num_improvements, s_min=1e-6, s_max=1):
-        num_improved = 0
-        while num_improved < num_improvements:
-            num_improved += self._refine(s_min=s_min, s_max=s_max)
+    def improve(self, num_acc_rej, s_min=1e-6, s_max=1):
+        num_accepted = 0
+        num_rejected = 0
+        # TODO: Ensure each sample improves at least num_improvements times?
+        while num_accepted < num_acc_rej or num_rejected < num_acc_rej:
+            a, r = self._refine(s_min=s_min, s_max=s_max)
+            num_accepted += a
+            num_rejected += r
 
     def _refine(self, s_min=1e-6, s_max=1):
         u = torch.rand(size=(self._num_samples, 1))
@@ -80,7 +84,8 @@ class StaggerThompsonSampler:
         Y_ts = Y[: self._num_samples]
         Y_perturbed = Y[self._num_samples :]
 
-        i_improved = Y_perturbed > Y_ts
+        i_accepted = Y_perturbed > Y_ts
 
-        self._X_samples[i_improved] = X_perturbed[i_improved]
-        return i_improved.sum().item()
+        self._X_samples[i_accepted] = X_perturbed[i_accepted]
+        num_accepted = i_accepted.sum().item()
+        return num_accepted, len(i_accepted) - num_accepted

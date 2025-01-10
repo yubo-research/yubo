@@ -247,7 +247,8 @@ class Designers:
                     "num_refinements": 30,
                 },
             )
-        elif designer_name == "sts-im":
+        elif designer_name.startswith("sts-ar-"):
+            num_acc_rej = int(designer_name.split("-")[-1])
             return bt_designer(
                 AcqMTV,
                 init_sobol=0,
@@ -256,7 +257,7 @@ class Designers:
                     "sample_type": "sts",
                     "num_X_samples": default_num_X_samples,
                     "num_refinements": 0,
-                    "num_improvements_per_arm": 30,
+                    "num_acc_rej": num_acc_rej,
                 },
             )
         elif designer_name == "sts-ns":
