@@ -50,14 +50,13 @@ def modal_batches_submitter(job_name: str):
 def batches_submitter(batch_tag: str, count_only=False):
     missing = []
     for key, d_args in _gen_jobs(batch_tag):
-        if not count_only:
-            missing.append((key, d_args))
-            # job_queue.put((key, d_args))
+        missing.append((key, d_args))
+        # job_queue.put((key, d_args))
 
-    if not count_only:
-        job_queue = _queue()
-        for key, d_args in missing:
-            print(f"JOB: {key} {d_args}")
+    job_queue = _queue()
+    for key, d_args in missing:
+        print(f"JOB: {key} {d_args}")
+        if not count_only:
             job_queue.put((key, d_args))
     print("TOTAL:", len(missing))
 
@@ -82,7 +81,7 @@ def collect():
     res_dict = _dict()
     print("DICT_SIZE:", res_dict.len())
 
-    while True:
+    if True:
         collected_keys = set()
         print("ITEMS")
         for key, value in res_dict.items():
@@ -98,14 +97,17 @@ def collect():
                 post_process(collector_log, collector_trace, trace_fn)
             collected_keys.add(key)
 
+        print(f"results_available before del: {res_dict.len()}")
         for key in collected_keys:
+            print("DEL:", key)
             del res_dict[key]
-        print("How many jobs are running? Idk.")
-        # print(f"jobs_remaining = {job_queue.len()}")
-        if len(collected_keys) == 0:
-            time.sleep(30)
-        else:
-            time.sleep(3)
+        print(f"results_available after del: {res_dict.len()} num_deleted = {len(collected_keys)}")
+        # print("How many jobs are running? Idk.")
+        # # print(f"jobs_remaining = {job_queue.len()}")
+        # if len(collected_keys) == 0:
+        #     time.sleep(30)
+        # else:
+        #     time.sleep(3)
 
 
 def collect_orig():
