@@ -17,7 +17,7 @@ from problems.env_conf import default_policy, get_env_conf
 
 
 def sample_1(env_conf, opt_name, num_rounds, num_arms, num_denoise):
-    seed_all(env_conf.problem_seed + 27)
+    seed_all(env_conf.problem_seed + 27) 
 
     if torch.cuda.is_available():
         torch.set_default_device("cuda")
@@ -25,8 +25,6 @@ def sample_1(env_conf, opt_name, num_rounds, num_arms, num_denoise):
     print("DEFAULT_DEVICE:", default_device)
 
     policy = default_policy(env_conf)
-
-    # arm_selector = ArmBestEst()
     arm_selector = ArmBestObs()
 
     collector_log = Collector()

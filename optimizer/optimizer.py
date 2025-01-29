@@ -35,7 +35,7 @@ class Optimizer:
 
     def _collect_trajectory(self, policy, denoise_seed=0):
         # Use a different noise seed every time we collect a trajetory.
-        noise_seed = self._env_conf.noise_seed_0 + self._i_noise + denoise_seed
+        noise_seed = (self._env_conf.noise_seed_0 or 0) + self._i_noise + denoise_seed
         return collect_trajectory(self._env_conf, policy, noise_seed=noise_seed)
 
     def _collect_denoised_trajectory(self, policy):
