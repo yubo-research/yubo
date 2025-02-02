@@ -13,6 +13,7 @@ class PureFunctionPolicy:
             # Default to uniform distribution in the range [0, 1]
             self._params = np.random.uniform(0, 1, size=(env_conf.dim if hasattr(env_conf, 'dim') else 200,))
 
+
     def num_params(self):
         # Ensure _params is always initialized
         if self._params is None:
@@ -35,3 +36,4 @@ class PureFunctionPolicy:
         if not np.all((state >= 0) & (state <= 1)):
             print(f"DEBUG: State is out of range: {state}")
         return self._params
+

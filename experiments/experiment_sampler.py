@@ -132,6 +132,7 @@ def _prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications,
         noise = f"--noise={noise}"
         assert False, ("NYI", noise)
 
+
     # python experiments/experiment_reliable.py num_rounds=30 num_arms=5 env_tag=tlunar opt_name=gibbon num_reps=1 exp_dir=y_test num_denoise=100
     # return f"python experiments/experiment.py env_tag={problem} opt_name={opt} num_arms={num_arms} num_reps={num_replications} num_rounds={num_rounds} {num_obs} {num_denoise} {noise} exp_dir={exp_dir} > {logs_dir}/{opt} 2>&1"
     # return f"modal run experiments/experiment.py --env-tag={problem} --opt-name={opt} --num-arms={num_arms} --num-reps={num_replications} --num-rounds={num_rounds} {num_obs} {num_denoise} {noise} --exp-dir={exp_dir}"

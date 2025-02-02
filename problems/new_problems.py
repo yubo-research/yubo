@@ -4,6 +4,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
+
 class NNDraw:
     def __init__(self, dim=200, seed=None):
         self.dim = dim
