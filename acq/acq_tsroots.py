@@ -15,6 +15,5 @@ class AcqTSRoots:
 
     def draw(self, num_arms):
         tsr = TSRoots(self._X, self._Y, np.zeros(shape=(self._num_dim,)), np.ones(shape=(self._num_dim,)))
-        X_arms = torch.stack([torch.as_tensor(tsr.xnew_TSroots()[0]) for _ in range(num_arms)])
-        print(X_arms.shape, X_arms)
-        return X_arms
+
+        return torch.stack([torch.as_tensor(tsr.xnew_TSroots()[0]) for _ in range(num_arms)])

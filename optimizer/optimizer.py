@@ -17,11 +17,11 @@ class _TraceEntry:
 
 
 class Optimizer:
-    def __init__(self, collector, *, env_conf, policy, num_arms, num_denoise=None):
+    def __init__(self, collector, *, env_conf, policy, num_arms, num_denoise_measurement=None):
         self._collector = collector
         self._env_conf = env_conf
         self._num_arms = num_arms
-        self._num_denoise = num_denoise
+        self._num_denoise = num_denoise_measurement
         self.num_params = policy.num_params()
         self.r_best_est = -1e99
 
@@ -43,7 +43,7 @@ class Optimizer:
 
     def _collect_denoised_trajectory(self, policy):
         if self._num_denoise is not None:
-            rreturn = self._denoise(policy)
+            rreturn = self._mean_return_over_runs(policy)
             return Trajectory(rreturn, None, None)
         return self._collect_trajectory(policy)
 
@@ -51,6 +51,7 @@ class Optimizer:
         t0 = time.time()
         policies = designer(self._data, num_arms)
         tf = time.time()
+
         data = []
         X = []
         for policy in policies:
@@ -60,7 +61,7 @@ class Optimizer:
 
         return data, tf - t0
 
-    def _denoise(self, policy):
+    def _mean_return_over_runs(self, policy):
         rets = []
         for i in range(self._num_denoise):
             # We follow the denoising logic in https://papers.nips.cc/paper_files/paper/2019/file/6c990b7aca7bc7058f5e98ea909e924b-Paper.pdf

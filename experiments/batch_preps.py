@@ -3,9 +3,9 @@ from experiments.func_names import funcs_1d, funcs_36, funcs_nd
 
 
 def prep_mtv_repro(results_dir):
-    exp_dir = "exp_pss_repro_mtv_5"
+    exp_dir = "exp_batches_mtv"
 
-    opts = ["turbo-1", "lei", "sts", "mtv-sts", "optuna", "mtv", "sobol", "random", "ei", "ucb", "dpp", "sr", "gibbon"]
+    opts = ["turbo-1", "lei", "sts", "mtv-sts", "optuna", "mtv", "sobol", "random", "ei", "ucb", "dpp", "sr", "gibbon", "mcmcbo", "ts-10000"]
     noises = [None]
 
     # cmds_1d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_1d, dims=[1], num_arms=3, num_replications=100, opts=opts, noises=noises, num_rounds=3)
@@ -216,14 +216,18 @@ def prep_sts_sweep(results_dir):
 def prep_sequential_35(results_dir):
     exp_dir = "exp_sequential_35"
 
-    opts = ["mcmcbo", "turbo-1", "lei", "optuna", "sts", "sobol"]
-    # opts = [f"sts-ar-{k:04d}" for k in [1, 3, 10, 30, 100]]
+    # opts = ["mcmcbo", "turbo-1", "lei", "optuna", "sts", "sobol"]
+    # opts = ["sr", "random", "ucb", "gibbon", "pss", "ts-10000", "path"]
+    # opts = ["tsroots"]
+    # opts = ["sts", "sts-ns", "sts-ui", "sts-m", "sts-t"]
+    opts = ["sts2"]
+    # opts = [f"sts-ar-{i:04d}" for i in [1, 3, 10, 30, 100]]
     noises = [None]
 
     min_rounds = 30
     cmds = []
 
-    for num_dim in [300]:  # [1, 3, 10, 30, 100]:
+    for num_dim in [1, 3, 10, 30, 100]:
         cmds.extend(
             prep_d_args(
                 results_dir,
@@ -235,6 +239,33 @@ def prep_sequential_35(results_dir):
                 opts=opts,
                 noises=noises,
                 num_rounds=max(min_rounds, num_dim),
+            )
+        )
+
+    return cmds
+
+
+def prep_mtv_36(results_dir):
+    exp_dir = "exp_mtv_36"
+
+    # opts = ["turbo-1", "lei", "sts", "mtv-sts", "optuna", "mtv", "sobol", "random", "ucb", "dpp", "sr", "gibbon", "mcmcbo", "ts-10000"]
+    opts = ["cma"]
+    noises = [None]
+
+    cmds = []
+
+    for num_dim in [300]:  # [3, 10, 30, 100]:  # 1, 300
+        cmds.extend(
+            prep_d_args(
+                results_dir,
+                exp_dir=exp_dir,
+                funcs=funcs_36,
+                dims=[num_dim],
+                num_arms=max(3, min(10, num_dim)),
+                num_replications=10,
+                opts=opts,
+                noises=noises,
+                num_rounds=3,
             )
         )
 

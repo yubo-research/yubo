@@ -26,6 +26,9 @@ class StaggerThompsonSampler2:
         for _ in range(num_refinements):
             self._refine(s_min=s_min, s_max=s_max)
 
+    def improve(self, num_acc_rej, s_min=1e-6, s_max=1):
+        assert num_acc_rej == 0, num_acc_rej
+
     def _stagger(self, s_min, s_max):
         u = torch.rand(size=(self._num_samples, 1))
         if self._no_stagger:

@@ -27,7 +27,7 @@ def sample_1(env_conf, opt_name, num_rounds, num_arms, num_denoise):
         env_conf=env_conf,
         policy=policy,
         num_arms=num_arms,
-        num_denoise=num_denoise,
+        num_denoise_measurement=num_denoise,
     )
 
     collector_trace = Collector()

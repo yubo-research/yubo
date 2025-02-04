@@ -19,6 +19,7 @@ from acq.acq_var import AcqVar
 
 from .ax_designer import AxDesigner
 from .bt_designer import BTDesigner
+from .center_designer import CenterDesigner
 from .cma_designer import CMAESDesigner
 from .mcmc_bo_designer import MCMCBODesigner
 from .optuna_designer import OptunaDesigner
@@ -111,6 +112,8 @@ class Designers:
             return SobolDesigner(self._policy)
         elif designer_name == "btsobol":
             return bt_designer(AcqSobol)
+        elif designer_name == "center":
+            return CenterDesigner(self._policy)
 
         # All exploitation
         elif designer_name == "sr":
@@ -133,16 +136,12 @@ class Designers:
                     "num_candidates": 10000,
                 },
             )
-        elif designer_name == "ts-ciq":
-            return bt_designer(AcqTS, acq_kwargs={"sampler": "ciq"})
-        elif designer_name == "ts-lanczos":
-            return bt_designer(AcqTS, acq_kwargs={"sampler": "lanczos"})
         elif designer_name.startswith("ts_sweep"):
             num_candidates = int(designer_name.split("-")[1])
             return bt_designer(
                 AcqTS,
                 acq_kwargs={
-                    "sampler": "cholesky",
+                    "sampler": "lanczos",
                     "num_candidates": num_candidates,
                 },
             )

@@ -44,7 +44,7 @@ def calc_pstar_scales(d_args):
         env_conf=env_conf,
         policy=policy,
         num_arms=num_arms,
-        num_denoise=None,
+        num_denoise_measurement=None,
     )
 
     t_0 = time.time()
@@ -108,16 +108,6 @@ def dist_pstar_scales_all_funcs(designer, num_dim):
     return all_d_args
 
 
-@app.local_entrypoint()
-def spawn_all(cmd: str, job_fn: str, dry_run: bool = False, designer: str = None):
-    if cmd == "dist":
-        distribute(designer, job_fn, dry_run)
-    elif cmd == "collect":
-        collect_all(job_fn)
-    else:
-        assert False, "Bad command"
-
-
 def distribute(designer, job_fn, dry_run):
     all_d_args = []
     for num_dim in _num_dims:
@@ -149,3 +139,13 @@ def collect_all(job_fn):
         with open(fn, "wb") as f:
             pickle.dump(data[designer_name], f)
         print("WROTE:", fn)
+
+
+@app.local_entrypoint()
+def spawn_all(cmd: str, job_fn: str, dry_run: bool = False, designer: str = None):
+    if cmd == "dist":
+        distribute(designer, job_fn, dry_run)
+    elif cmd == "collect":
+        collect_all(job_fn)
+    else:
+        assert False, "Bad command"

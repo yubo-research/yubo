@@ -1,3 +1,6 @@
+from contextlib import ExitStack
+
+import gpytorch.settings as gpts
 import torch
 from botorch.acquisition.monte_carlo import (
     MCAcquisitionFunction,
@@ -110,16 +113,23 @@ class AcqMTV(MCAcquisitionFunction):
         return self.X_samples[i]
 
     def _stagger_thompson_sampler(self, num_samples, sample_type):
-        if sample_type == "sts":
-            sts = StaggerThompsonSampler(self.model, self.X_max, num_samples=num_samples, no_stagger=self._no_stagger)
-        elif sample_type == "sts2":
-            sts = StaggerThompsonSampler2(self.model, self.X_max, num_samples=num_samples, no_stagger=self._no_stagger)
-        else:
-            assert False, ("Unknown sample type", sample_type)
+        with ExitStack() as es:
+            if False:
+                es.enter_context(gpts.fast_computations(covar_root_decomposition=True, log_prob=True, solves=True))
+                es.enter_context(gpts.max_lanczos_quadrature_iterations(10))
+                es.enter_context(gpts.max_cholesky_size(0))
+                es.enter_context(gpts.ciq_samples(False))
+            with torch.inference_mode():
+                if sample_type == "sts":
+                    sts = StaggerThompsonSampler(self.model, self.X_max, num_samples=num_samples, no_stagger=self._no_stagger)
+                elif sample_type == "sts2":
+                    sts = StaggerThompsonSampler2(self.model, self.X_max, num_samples=num_samples, no_stagger=self._no_stagger)
+                else:
+                    assert False, ("Unknown sample type", sample_type)
 
-        sts.refine(self._num_refinements)
-        sts.improve(self._num_acc_rej * num_samples)
-        return sts.samples()
+                sts.refine(self._num_refinements)
+                sts.improve(self._num_acc_rej * num_samples)
+                return sts.samples()
 
     @t_batch_mode_transform()
     def forward(self, X):
