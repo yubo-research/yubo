@@ -125,4 +125,5 @@ _gym_env_confs = {
 _custom_env_confs = {
     "nndraw": EnvConf("nndraw", problem_seed=0),
     "pest_control": EnvConf("pest_control", problem_seed=0),
+    #"mopta08": EnvConf("mopta08", problem_seed=0),
 }
