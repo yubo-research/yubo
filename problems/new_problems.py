@@ -117,6 +117,7 @@ for i in range(10):
 
 class Mopta08:
 
+
     def __init__(self):
         super(Mopta08, self).__init__()
         self.dims = 124

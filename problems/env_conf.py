@@ -2,6 +2,7 @@ import copy
 from dataclasses import dataclass
 from typing import Any
 
+
 import gymnasium as gym
 
 import problems.other as other
