@@ -3,12 +3,13 @@ import torch
 from botorch.exceptions.errors import ModelFittingError
 from botorch.fit import fit_gpytorch_mll
 from botorch.models import SingleTaskGP
+from botorch.models.transforms.input import Warp
 from botorch.utils import standardize
 
 # from gpytorch.constraints import Interval
 from gpytorch.kernels import MaternKernel  # , ScaleKernel
 from gpytorch.mlls import ExactMarginalLogLikelihood, LeaveOneOutPseudoLikelihood
-from gpytorch.priors.torch_priors import GammaPrior
+from gpytorch.priors.torch_priors import GammaPrior, LogNormalPrior
 from torch.nn import Module
 
 import common.all_bounds as all_bounds
@@ -65,7 +66,6 @@ def _parse_spec(model_spec):
 
 def fit_gp_XY(X, Y, model_spec=None):
     model_type, input_warping = _parse_spec(model_spec)
-    print("SPEC:", model_type, input_warping)
 
     if len(X) == 0:
         if model_spec == "dumbo":
@@ -78,19 +78,37 @@ def fit_gp_XY(X, Y, model_spec=None):
         gp.eval()
         return gp
 
+    if input_warping:
+        # See http://proceedings.mlr.press/v32/snoek14.pdf
+        # See https://botorch.org/docs/tutorials/bo_with_warped_gp/
+        input_transform = Warp(
+            indices=list(range(X.shape[-1])),
+            # use a prior with median at 1.
+            # when a=1 and b=1, the Kumaraswamy CDF is the identity function
+            concentration1_prior=LogNormalPrior(0.0, 0.75**0.5),
+            concentration0_prior=LogNormalPrior(0.0, 0.75**0.5),
+        )
+    else:
+        input_transform = None
+
     Y = standardize(Y).to(X)
-    _gp = SingleTaskGP(X, Y)
+
     if model_spec == "vanilla":
         num_dims = X.shape[-1]
-        gp = SingleTaskGP(X, Y, covar_module=get_vanilla_kernel(num_dims, _gp._aug_batch_shape))
+        _gp = SingleTaskGP(X, Y, input_transform=input_transform)
+        gp = SingleTaskGP(X, Y, covar_module=get_vanilla_kernel(num_dims, _gp._aug_batch_shape), input_transform=input_transform)
     elif model_spec == "dumbo":
+        assert input_transform is None, "Unsupported"
         return DUMBOGP(X, Y, use_rank_distance=False)
     elif model_spec == "rdumbo":
+        assert input_transform is None, "Unsupported"
         return DUMBOGP(X, Y, use_rank_distance=True)
     else:
-        gp = _gp
-    mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
+        gp = SingleTaskGP(X, Y, input_transform=input_transform)
     gp.to(X)
+
+    mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
+
     m = None
     for i_try in range(3):
         mll.to(X)
