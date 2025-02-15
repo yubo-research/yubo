@@ -42,11 +42,35 @@ def get_vanilla_kernel(num_dim, batch_shape):
     )
 
 
-def fit_gp_XY(X, Y, model_type=None):
+def _parse_spec(model_spec):
+    model_type = None
+    input_warping = None
+    model_types = {"gp", "dumbo", "rdumbo", "vanilla"}
+
+    if model_spec is not None:
+        for s in model_spec.split("+"):
+            if s in model_types:
+                assert model_type is None, (model_type, s)
+                model_type = s
+            elif s == "wi":
+                assert input_warping is None, (input_warping, s)
+                input_warping = True
+
+    if model_type is None:
+        model_type = "gp"
+    if input_warping is None:
+        input_warping = False
+    return model_type, input_warping
+
+
+def fit_gp_XY(X, Y, model_spec=None):
+    model_type, input_warping = _parse_spec(model_spec)
+    print("SPEC:", model_type, input_warping)
+
     if len(X) == 0:
-        if model_type == "dumbo":
+        if model_spec == "dumbo":
             gp = DUMBOGP(X, Y, use_rank_distance=False)
-        elif model_type == "rdumbo":
+        elif model_spec == "rdumbo":
             gp = DUMBOGP(X, Y, use_rank_distance=True)
         else:
             gp = SingleTaskGP(X, Y, outcome_transform=_EmptyTransform())
@@ -56,14 +80,13 @@ def fit_gp_XY(X, Y, model_type=None):
 
     Y = standardize(Y).to(X)
     _gp = SingleTaskGP(X, Y)
-    if model_type == "vanilla":
+    if model_spec == "vanilla":
         num_dims = X.shape[-1]
         gp = SingleTaskGP(X, Y, covar_module=get_vanilla_kernel(num_dims, _gp._aug_batch_shape))
-    elif model_type == "dumbo":
+    elif model_spec == "dumbo":
         return DUMBOGP(X, Y, use_rank_distance=False)
-    elif model_type == "rdumbo":
+    elif model_spec == "rdumbo":
         return DUMBOGP(X, Y, use_rank_distance=True)
-
     else:
         gp = _gp
     mll = ExactMarginalLogLikelihood(gp.likelihood, gp)

@@ -55,9 +55,9 @@ class Designers:
 
         num_keep = None
         keep_style = None
-        model_type = None
+        model_spec = None
         for option in options:
-            if option[0] == "k":
+            if option[0] == "K":
                 if option[1] == "s":
                     keep_style = "some"
                 elif option[1] == "b":
@@ -68,15 +68,9 @@ class Designers:
                     assert False, option
                 num_keep = int(option[2:])
                 print(f"OPTION: num_keep = {num_keep} keep_style = {keep_style}")
-            elif option == "vanilla":
-                model_type = "vanilla"
+            elif option[0] == "M":
+                model_spec = option[1:]
                 print("OPTION model_type = vanilla")
-            elif option == "dumbo":
-                model_type = "dumbo"
-                print("OPTION model_type = dumbo")
-            elif option == "rdumbo":
-                model_type = "rdumbo"
-                print("OPTION model_type = rdumbo")
             else:
                 assert False, ("Unknown option", option)
 
@@ -87,7 +81,7 @@ class Designers:
                 acq_kwargs=acq_kwargs,
                 num_keep=num_keep,
                 keep_style=keep_style,
-                model_type=model_type,
+                model_spec=model_spec,
                 init_sobol=init_sobol,
                 opt_sequential=opt_sequential,
             )
