@@ -13,6 +13,7 @@ from gpytorch.priors.torch_priors import GammaPrior, LogNormalPrior
 from torch.nn import Module
 
 import common.all_bounds as all_bounds
+from acq.sal_transform import SALTransform
 from model.dumbo import DUMBOGP
 
 
@@ -46,31 +47,38 @@ def get_vanilla_kernel(num_dim, batch_shape):
 def _parse_spec(model_spec):
     model_type = None
     input_warping = None
+    output_warping = None
     model_types = {"gp", "dumbo", "rdumbo", "vanilla"}
 
     if model_spec is not None:
         for s in model_spec.split("+"):
             if s in model_types:
-                assert model_type is None, (model_type, s)
+                assert model_type is None, (model_type, model_spec)
                 model_type = s
             elif s == "wi":
-                assert input_warping is None, (input_warping, s)
+                assert input_warping is None, (input_warping, model_spec)
                 input_warping = True
+            elif s == "wo":
+                assert output_warping is None, (output_warping, model_spec)
+                output_warping = True
 
     if model_type is None:
         model_type = "gp"
     if input_warping is None:
         input_warping = False
-    return model_type, input_warping
+    if output_warping is None:
+        output_warping = False
+    return model_type, input_warping, output_warping
 
 
 def fit_gp_XY(X, Y, model_spec=None):
-    model_type, input_warping = _parse_spec(model_spec)
+    model_type, input_warping, output_warping = _parse_spec(model_spec)
+    del model_spec
 
     if len(X) == 0:
-        if model_spec == "dumbo":
+        if model_type == "dumbo":
             gp = DUMBOGP(X, Y, use_rank_distance=False)
-        elif model_spec == "rdumbo":
+        elif model_type == "rdumbo":
             gp = DUMBOGP(X, Y, use_rank_distance=True)
         else:
             gp = SingleTaskGP(X, Y, outcome_transform=_EmptyTransform())
@@ -91,16 +99,19 @@ def fit_gp_XY(X, Y, model_spec=None):
     else:
         input_transform = None
 
+    if output_warping:
+        output_transform = SALTransform()
+
     Y = standardize(Y).to(X)
 
-    if model_spec == "vanilla":
+    if model_type == "vanilla":
         num_dims = X.shape[-1]
         _gp = SingleTaskGP(X, Y, input_transform=input_transform)
         gp = SingleTaskGP(X, Y, covar_module=get_vanilla_kernel(num_dims, _gp._aug_batch_shape), input_transform=input_transform)
-    elif model_spec == "dumbo":
+    elif model_type == "dumbo":
         assert input_transform is None, "Unsupported"
         return DUMBOGP(X, Y, use_rank_distance=False)
-    elif model_spec == "rdumbo":
+    elif model_type == "rdumbo":
         assert input_transform is None, "Unsupported"
         return DUMBOGP(X, Y, use_rank_distance=True)
     else:

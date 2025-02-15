@@ -1,5 +1,6 @@
 def test_sal_transform():
     import torch
+    from gpytorch.priors.torch_priors import LogNormalPrior
 
     from acq.sal_transform import SALTransform
 
@@ -7,7 +8,9 @@ def test_sal_transform():
     Y = torch.rand(size=(10, num_metrics))
     Yv = 0 * Y + torch.exp(torch.randn(size=(10, num_metrics)))
 
-    sal = SALTransform(1, 2, 3, 4)
+    sal = SALTransform(
+        b_prior=LogNormalPrior(0.0, 0.75**0.5),
+    )
     y_sal, yv_sal = sal(Y, Yv)
     print(y_sal, yv_sal)
 
