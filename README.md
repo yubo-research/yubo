@@ -1,6 +1,7 @@
 # yubo: Yeshiva University Bayesian Optimization
 
-
+*Efficient Thompson Sampling for Bayesian Optimization*, 2025.
+- Code: e1a05da1012021a7e8817bc9b66d962ea63f6ad9
 
 David Sweet. *Fast, Precise Thompson Sampling for Bayesian Optimization*. 2024.
 arxiv: 2411.17071 [cs.LG]. URL: [https://arxiv.org/abs/2411.17071](https://arxiv.org/abs/2411.17071).

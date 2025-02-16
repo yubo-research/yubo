@@ -64,7 +64,7 @@ class PStarSampler:
         X_np = X.detach().numpy()
         u, llambda_minus, llambda_plus = find_perturbation_direction(
             X=X_np,
-            num_tries=5,
+            num_tries=10,
             eps_bound=min(eps, float(self._eps_interior)) / 100,
         )
 

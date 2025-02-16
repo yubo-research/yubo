@@ -4,6 +4,11 @@ from botorch.acquisition import PosteriorMean
 from botorch.optim import optimize_acqf
 
 
+def torch_random_choice(x):
+    i = torch.randint(len(x), (1,))
+    return x[i]
+
+
 def keep_best(Y, num_keep):
     num_keep_best = num_keep
     return torch.topk(Y, k=num_keep_best).indices.numpy().tolist()
