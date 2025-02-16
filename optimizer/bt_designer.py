@@ -19,7 +19,7 @@ class BTDesigner:
         opt_sequential=False,  # greedy q, not joint q
         num_keep=None,
         keep_style=None,
-        model_type=None,
+        model_spec=None,
         optimizer_options={"batch_limit": 10, "maxiter": 1000},
         dtype=torch.double,
         device=None,
@@ -34,7 +34,7 @@ class BTDesigner:
         self._opt_sequential = opt_sequential
         self._num_keep = num_keep
         self._keep_style = keep_style
-        self._model_type = model_type
+        self._model_spec = model_spec
         self._optimizer_options = optimizer_options
         self._acq_kwargs = acq_kwargs
         self.device = torch.device(device)
@@ -80,7 +80,7 @@ class BTDesigner:
             dtype=self.dtype,
             num_keep=self._num_keep,
             keep_style=self._keep_style,
-            model_type=self._model_type,
+            model_spec=self._model_spec,
         )
         if hasattr(acq_bt.acq_function, "draw"):
             # print (f"Draw from {acqf.acq_function.__class__.__name__}")

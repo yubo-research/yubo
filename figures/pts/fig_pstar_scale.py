@@ -7,7 +7,6 @@ from acq.acq_util import calc_p_max
 from common.collector import Collector
 from experiments.dist_modal import DistModal, collect
 from experiments.modal_image import mk_image
-from optimizer.arm_best_obs import ArmBestObs
 from optimizer.optimizer import Optimizer
 from problems.env_conf import default_policy, get_env_conf
 
@@ -39,16 +38,13 @@ def calc_pstar_scales(d_args):
     env_conf = get_env_conf(env_tag, problem_seed=seed, noise_seed_0=seed + 1)
     policy = default_policy(env_conf)
 
-    arm_selector = ArmBestObs()
-
     collector_log = Collector()
     opt = Optimizer(
         collector_log,
         env_conf=env_conf,
         policy=policy,
         num_arms=num_arms,
-        num_denoise=None,
-        arm_selector=arm_selector,
+        num_denoise_measurement=None,
     )
 
     t_0 = time.time()
@@ -112,16 +108,6 @@ def dist_pstar_scales_all_funcs(designer, num_dim):
     return all_d_args
 
 
-@app.local_entrypoint()
-def spawn_all(cmd: str, job_fn: str, dry_run: bool = False, designer: str = None):
-    if cmd == "dist":
-        distribute(designer, job_fn, dry_run)
-    elif cmd == "collect":
-        collect_all(job_fn)
-    else:
-        assert False, "Bad command"
-
-
 def distribute(designer, job_fn, dry_run):
     all_d_args = []
     for num_dim in _num_dims:
@@ -153,3 +139,13 @@ def collect_all(job_fn):
         with open(fn, "wb") as f:
             pickle.dump(data[designer_name], f)
         print("WROTE:", fn)
+
+
+@app.local_entrypoint()
+def spawn_all(cmd: str, job_fn: str, dry_run: bool = False, designer: str = None):
+    if cmd == "dist":
+        distribute(designer, job_fn, dry_run)
+    elif cmd == "collect":
+        collect_all(job_fn)
+    else:
+        assert False, "Bad command"

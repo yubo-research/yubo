@@ -1,5 +1,6 @@
+import time
+
 import torch
-from botorch.models import SingleTaskGP
 
 import acq.fit_gp as fit_gp
 from acq.acq_util import find_max, keep_best, keep_some
@@ -17,7 +18,7 @@ class AcqBT:
         dtype,
         num_keep,
         keep_style,
-        model_type,
+        model_spec,
     ):
         # All BoTorch stuff is coded to bounds of [0,1]!
         self.bounds = torch.tensor([[0.0] * num_dim, [1.0] * num_dim], device=device, dtype=dtype)
@@ -37,7 +38,11 @@ class AcqBT:
                     assert False, keep_style
                 Y = Y[i, :]
                 X = X[i, :]
-        gp = fit_gp.fit_gp_XY(X, Y, model_type=model_type)
+
+        t_0 = time.time()
+        gp = fit_gp.fit_gp_XY(X, Y, model_spec=model_spec)
+        t_f = time.time()
+        print(f"TIME_FIT: time_fit = {t_f - t_0:.3f}")
 
         if not acq_kwargs:
             kwargs = {}

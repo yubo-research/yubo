@@ -1,5 +1,7 @@
 import numpy as np
 
+import common.all_bounds as all_bounds
+
 
 class TurboLunarPolicy:
     def __init__(self, env_conf):
@@ -11,10 +13,12 @@ class TurboLunarPolicy:
         return 12
 
     def set_params(self, x):
-        self._w = x
+        # w in [0,2]
+        self._w_orig = x
+        self._w = 2 * (x - all_bounds.x_low) / all_bounds.x_width
 
     def get_params(self):
-        return self._w
+        return self._w_orig
 
     def clone(self):
         tlp = TurboLunarPolicy(self._env_conf)
@@ -22,6 +26,8 @@ class TurboLunarPolicy:
         return tlp
 
     def __call__(self, state):
+        assert self._w.min() >= 0, self._w
+        assert self._w.max() <= 2, self._w
         angle_targ = state[0] * self._w[0] + state[2] * self._w[1]
         if angle_targ > self._w[2]:
             angle_targ = self._w[2]

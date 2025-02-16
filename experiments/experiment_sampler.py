@@ -7,9 +7,6 @@ from analysis.data_io import data_is_done, data_writer
 from common.collector import Collector
 from common.seed_all import seed_all
 from experiments.experiment_util import ensure_parent
-
-# from optimizer.arm_best_est import ArmBestEst
-from optimizer.arm_best_obs import ArmBestObs
 from optimizer.optimizer import Optimizer
 from problems.env_conf import default_policy, get_env_conf
 
@@ -24,17 +21,13 @@ def sample_1(env_conf, opt_name, num_rounds, num_arms, num_denoise):
 
     policy = default_policy(env_conf)
 
-    # arm_selector = ArmBestEst()
-    arm_selector = ArmBestObs()
-
     collector_log = Collector()
     opt = Optimizer(
         collector_log,
         env_conf=env_conf,
         policy=policy,
         num_arms=num_arms,
-        num_denoise=num_denoise,
-        arm_selector=arm_selector,
+        num_denoise_measurement=num_denoise,
     )
 
     collector_trace = Collector()

@@ -3,6 +3,7 @@ from torch.quasirandom import SobolEngine
 
 class AcqSobol:
     def __init__(self, model):
+        # TODO: avoid fitting the model
         self.model = model
 
         X_0 = self.model.train_inputs[0].detach()

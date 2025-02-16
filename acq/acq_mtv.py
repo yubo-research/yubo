@@ -1,16 +1,17 @@
-import numpy as np
+from contextlib import ExitStack
+
+import gpytorch.settings as gpts
 import torch
 from botorch.acquisition.monte_carlo import (
     MCAcquisitionFunction,
 )
-from botorch.acquisition.thompson_sampling import PathwiseThompsonSampling
-from botorch.optim import optimize_acqf
 from botorch.utils import t_batch_mode_transform
 from torch.quasirandom import SobolEngine
 
 import acq.acq_util as acq_util
 from sampling.pstar_sampler import PStarSampler
 from sampling.stagger_thompson_sampler import StaggerThompsonSampler
+from sampling.stagger_thompson_sampler_2 import StaggerThompsonSampler2
 
 
 class AcqMTV(MCAcquisitionFunction):
@@ -23,6 +24,7 @@ class AcqMTV(MCAcquisitionFunction):
         num_mcmc=None,
         sample_type="sts",
         num_refinements=30,
+        num_acc_rej=0,
         no_stagger=False,
         x_max_type="find",
         **kwargs,
@@ -41,6 +43,7 @@ class AcqMTV(MCAcquisitionFunction):
         self.weights = None
 
         self._num_refinements = num_refinements
+        self._num_acc_rej = num_acc_rej
         self._x_max_type = x_max_type
         self._no_stagger = no_stagger
 
@@ -54,17 +57,12 @@ class AcqMTV(MCAcquisitionFunction):
                 self._set_x_max()
                 pss = PStarSampler(k_mcmc, num_mcmc, self.model, self.X_max)
                 self.X_samples = pss(num_X_samples)
-            elif sample_type == "sts":
+            elif sample_type in ["sts", "sts2"]:
                 self._set_x_max()
                 if not ts_only:
-                    self.X_samples = self._stagger_thompson_sampler(num_X_samples)
+                    self.X_samples = self._stagger_thompson_sampler(num_X_samples, sample_type)
                 else:
-                    self.X_samples = "sts"
-            elif sample_type == "pts":
-                self._set_x_max()
-                assert not ts_only, "Use designer pts directly"
-                self.X_samples = self._pathwise_ts(num_X_samples)
-
+                    self.X_samples = sample_type
             elif sample_type == "sobol":
                 self.X_samples = sobol_engine.draw(num_X_samples, dtype=self.dtype)
             else:
@@ -77,21 +75,6 @@ class AcqMTV(MCAcquisitionFunction):
         if ts_only:
             # print("Using draw()")
             self.draw = self._draw
-
-    def _pathwise_ts(self, num_X_samples):
-        X_ts, _ = optimize_acqf(
-            acq_function=PathwiseThompsonSampling(self.model),
-            bounds=self._bounds(),
-            q=num_X_samples,
-            # num_restarts=100,
-            raw_samples=128,
-            # options={"batch_limit": 10, "maxiter": 200},
-            num_restarts=30,
-            # options={"batch_limit": num_ic, "maxiter": 100},
-            options={"maxiter": 1000},
-            # batch_initial_conditions=self.X_max,
-        )
-        return X_ts
 
     def _bounds(self):
         return torch.tensor(
@@ -121,18 +104,32 @@ class AcqMTV(MCAcquisitionFunction):
         # print("X_MAX:", self.X_max.device)
 
     def _draw(self, num_arms):
-        if self.X_samples == "sts":
-            return self._stagger_thompson_sampler(num_arms)
+        if self.X_samples in ["sts", "sts2"]:
+            return self._stagger_thompson_sampler(num_arms, self.X_samples)
         assert len(self.X_samples) >= num_arms, (len(self.X_samples), num_arms)
         i = torch.randperm(len(self.X_samples))[:num_arms]
         # i = np.arange(len(self.X_samples))
         # i = np.random.choice(i, size=(int(num_arms)), replace=False)
         return self.X_samples[i]
 
-    def _stagger_thompson_sampler(self, num_samples):
-        sts = StaggerThompsonSampler(self.model, self.X_max, num_samples=num_samples, no_stagger=self._no_stagger)
-        sts.refine(self._num_refinements)
-        return sts.samples()
+    def _stagger_thompson_sampler(self, num_samples, sample_type):
+        with ExitStack() as es:
+            if False:
+                es.enter_context(gpts.fast_computations(covar_root_decomposition=True, log_prob=True, solves=True))
+                es.enter_context(gpts.max_lanczos_quadrature_iterations(10))
+                es.enter_context(gpts.max_cholesky_size(0))
+                es.enter_context(gpts.ciq_samples(False))
+            with torch.inference_mode():
+                if sample_type == "sts":
+                    sts = StaggerThompsonSampler(self.model, self.X_max, num_samples=num_samples, no_stagger=self._no_stagger)
+                elif sample_type == "sts2":
+                    sts = StaggerThompsonSampler2(self.model, self.X_max, num_samples=num_samples, no_stagger=self._no_stagger)
+                else:
+                    assert False, ("Unknown sample type", sample_type)
+
+                sts.refine(self._num_refinements)
+                sts.improve(self._num_acc_rej * num_samples)
+                return sts.samples()
 
     @t_batch_mode_transform()
     def forward(self, X):

@@ -1,11 +1,13 @@
 import matplotlib.pyplot as plt
 import matplotlib.transforms as mtransforms
 import numpy as np
+import scipy.constants
 
 import analysis.data_sets as ads
 
 linestyles = ["-", ":", "--", "-."] * 10
 markers = ["o", "x", "v", ".", "s"] * 10
+colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd"] * 10
 
 
 def mk_trans(fig, x=10 / 72, y=5 / 72):
@@ -47,22 +49,37 @@ def hash_marks(ax, x, y, k, color, alpha=1):
     )
 
 
-def slabel(trans, ax, a):
+def label_subplots(axs, fontsize=14):
+    import string
+
+    for ax, a in zip(axs, string.ascii_lowercase):
+        slabel2(ax, 0.1, 0.85, a)
+
+
+def slabel2(ax, x_norm_coords, y_norm_coords, subplot_letter, fontsize=14):
+    ax.text(x_norm_coords, y_norm_coords, f"({subplot_letter})", fontsize=fontsize, ha="center", va="center", transform=ax.transAxes)
+
+
+def slabel(trans, ax, a, fontsize=14):
     return ax.text(
         0.8,
         0.97,
         f"({a})",
         transform=ax.transAxes + trans,
-        # fontsize=14,
+        fontsize=14,
         verticalalignment="top",
         fontfamily="serif",
         bbox=dict(facecolor="1", edgecolor="none", pad=3.0),
     )
 
 
-def subplots(n, m, figsize):
-    fig_width = m / n * figsize
-    fig, axs = plt.subplots(n, m, figsize=(fig_width, figsize))
+def subplots(n, m, figsize, style="square"):
+    figheight = figsize
+    if style == "square":
+        fig_width = m / n * figheight
+    elif style == "landscape":
+        fig_width = m / n * figheight * scipy.constants.golden
+    fig, axs = plt.subplots(n, m, figsize=(fig_width, figheight))
     if isinstance(axs, np.ndarray):
         axs = axs.flatten()
     else:
@@ -75,6 +92,12 @@ def tight(axs, sub_aspect=1):
         a.set_box_aspect(sub_aspect)
     plt.tight_layout()
     # plt.show()
+
+
+def tight_landscape(axs):
+    import scipy
+
+    tight(axs, sub_aspect=1 / scipy.constants.golden)
 
 
 def filled_err(ys, x=None, color="#AAAAAA", alpha=0.5, marker=None, linestyle="--", color_line="#AAAAAA", se=False, two=False, ax=None):

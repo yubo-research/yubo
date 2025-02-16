@@ -1,20 +1,25 @@
 import numpy as np
 
-# Requirements
-# all domains are [-1,1]**num_dim
-# all functions should have *minima* [not maxima]
-# If the function is of fixed dimension, assert it in __call__()
-from .exceptions import WrongDimensions
-
-
-class Sphere:
-    def __call__(self, x):
-        return (x**2).mean()
+# Requirements:
+# - x in [-1,1]**num_dim
+# - have *minima* [not maxima]
+# - support any number of dimensions as input
+from .benchmark_util import mk_2d, mk_4d
 
 
 class Sphere3:
     def __call__(self, x):
         return ((x - 0.3) ** 2).mean()
+
+
+"""
+See: https://www.sfu.ca/~ssurjano/
+"""
+
+
+class Sphere:
+    def __call__(self, x):
+        return (x**2).mean()
 
 
 # 1 xi ∈ [-32.768, 32.768] ackley result [0,25]
@@ -32,8 +37,7 @@ class Ackley:
 # 2  xi ∈ [-4.5, 4.5], for all i = 1, 2. Beale result [0, 4.5*10^5]
 class Beale:
     def __call__(self, x):
-        if len(x) != 2:
-            raise WrongDimensions()
+        x = mk_2d(x)
         x = 4.5 * x
         part1 = (1.5 - x[0] + x[0] * x[1]) ** 2
         part2 = (2.25 - x[0] + x[0] * x[1] ** 2) ** 2
@@ -52,8 +56,7 @@ class Branin:
         self.t = 1 / (8 * np.pi)
 
     def __call__(self, x):
-        if len(x) != 2:
-            raise WrongDimensions()
+        x = mk_2d(x)
         x1 = 7.5 * x[0] + 2.5
         x2 = 7.5 * x[1] + 7.5
         return self.a * (x2 - self.b * x1**2 + self.c * x1 - self.r) ** 2 + self.s * (1 - self.t) * np.cos(x1) + self.s
@@ -62,8 +65,7 @@ class Branin:
 # 4 x1 ∈ [-15, -5], x2 ∈ [-3, 3]. result [0,250] Bukin
 class Bukin:
     def __call__(self, x):
-        if len(x) != 2:
-            raise WrongDimensions()
+        x = mk_2d(x)
         x0 = x[0] * 5 - 10
         x1 = x[1] * 3
         return 100.0 * np.sqrt(np.abs(x1 - 0.01 * x0**2)) + 0.01 * np.abs(x0 + 10.0)
@@ -72,8 +74,7 @@ class Bukin:
 # 5 xi ∈ [-10, 10], for all i = 1, 2. result[-2.5,-0.5] CrossInTray
 class CrossInTray:
     def __call__(self, x):
-        if len(x) != 2:
-            raise WrongDimensions()
+        x = mk_2d(x)
         x = x * 9 + 1
         x0 = x[0]
         x1 = x[1]
@@ -85,8 +86,7 @@ class CrossInTray:
 # 6  xi ∈ [-5.12, 5.12], for all i = 1, 2. result[-1,0] DropWave
 class DropWave:
     def __call__(self, x):
-        if len(x) != 2:
-            raise WrongDimensions()
+        x = mk_2d(x)
         x = x * 5.12
         x0 = x[0]
         x1 = x[1]
@@ -113,8 +113,7 @@ class DixonPrice:
 # 8 EggHolder xi ∈ [-512, 512], for all i = 1, 2.result [-1000,1500]
 class EggHolder:
     def __call__(self, x):
-        if len(x) != 2:
-            raise WrongDimensions()
+        x = mk_2d(x)
         x = x * 511
         x1 = x[0]
         x2 = x[1]
@@ -136,8 +135,7 @@ class Griewank:
 # 10 GrLee12 one-dimention x ∈ [0.5, 2.5]. result [-1,6]
 class GrLee12:
     def __call__(self, x):
-        if len(x) != 2:
-            raise WrongDimensions()
+        x = mk_2d(x)
         x = x[0] + 1.5
         return np.sin(10.0 * np.pi * x) / (2.0 * x) + (x - 1.0) ** 4
 
@@ -161,7 +159,11 @@ class Hartmann:
     def __call__(self, x):
         num_dim = len(x)
         if num_dim not in self.A:
-            raise WrongDimensions()
+            if len(x) == 1:
+                x = np.array([x[0]] * 3)
+            else:
+                x = mk_4d(x)
+            num_dim = len(x)
 
         A = self.A[num_dim]
         P = self.P[num_dim]
@@ -170,23 +172,22 @@ class Hartmann:
         outer = 0
         for i in range(4):
             inner = 0
-            for j in range(self.num_dim):
+            for j in range(num_dim):
                 inner += A[i][j] * (x[j] - P[i][j]) ** 2
             new = self.ALPHA[i] * np.exp(-inner)
             outer += new
-        if self.num_dim == 3:
+        if num_dim == 3:
             return -outer
-        if self.num_dim == 4:
+        if num_dim == 4:
             return (1.1 - outer) / 0.839
-        if self.num_dim == 6:
+        if num_dim == 6:
             return -(2.58 + outer) / 1.94
 
 
 # 12 HolderTable xi ∈ [-10, 10], for all i = 1, 2. result [-20,0]
 class HolderTable:
     def __call__(self, x):
-        if len(x) != 2:
-            raise WrongDimensions()
+        x = mk_2d(x)
         x = x * 10
         x0 = x[0]
         x1 = x[1]
@@ -214,42 +215,36 @@ class Levy:
         return part1 + part2 + part3
 
 
-#####
-## BELOW ARE UNCHECKED
-#####
-
-
-# 14 Michalewicz xi ∈ [0, π], for all i = 1, …, d. result[-1.8,0]
 class Michalewicz:
+    m = 10
+
     def __call__(self, x):
-        x = x * np.pi / 2 + np.pi / 2
-        num_dim = len(x)
-        m = 10
-        sum = 0
-        for i in range(num_dim):
-            new = np.sin(x[i]) * (np.sin(i * x[i] ** 2 / np.pi)) ** (2 * m)
-            sum += new
-        return -sum
+        x = np.pi * (1 + np.asarray(x)) / 2
+        d = len(x)
+        indices = np.arange(1, d + 1)
+
+        sine_term1 = np.sin(x)
+        sine_term2 = np.sin(indices * x**2 / np.pi) ** (2 * self.m)
+
+        return -np.sum(sine_term1 * sine_term2)
 
 
-# 15 Powell xi ∈ [-4, 5], for all i = 1, …, d.
 class Powell:
     def __call__(self, x):
-        num_dim = len(x)
-        if num_dim % 4 != 0:
-            raise WrongDimensions()
+        x = 0.5 + 4.5 * np.asarray(x)
 
-        x = x * 4.5 + 0.5
-        result = 0
-        for i in range(num_dim // 4):
-            i_ = i + 1
-            part1 = (x[4 * i_ - 4] + 10.0 * x[4 * i_ - 3]) ** 2
-            part2 = 5.0 * (x[4 * i_ - 2] - x[4 * i_ - 1]) ** 2
-            part3 = (x[4 * i_ - 3] - 2.0 * x[4 * i_ - 2]) ** 4
-            part4 = 10.0 * (x[4 * i_ - 4] - x[4 * i_ - 1]) ** 4
-            result += part1 + part2 + part3 + part4
+        d = len(x)
+        if d % 4 != 0:
+            x = mk_4d(x)
+            d = len(x)
 
-        return result
+        x_grouped = x.reshape(-1, 4)
+        term1 = (x_grouped[:, 0] + 10 * x_grouped[:, 1]) ** 2
+        term2 = 5 * (x_grouped[:, 2] - x_grouped[:, 3]) ** 2
+        term3 = (x_grouped[:, 1] - 2 * x_grouped[:, 2]) ** 4
+        term4 = 10 * (x_grouped[:, 0] - x_grouped[:, 3]) ** 4
+
+        return np.sum(term1 + term2 + term3 + term4)
 
 
 # 16 Rastrigin  xi ∈ [-5.12, 5.12], for all i = 1, …, d result[0,90]
@@ -274,6 +269,7 @@ class Rosenbrock:
 # 18 Shubert xi ∈ [-5.12, 5.12], for all i = 1, 2. result[-200,300]
 class Shubert:
     def __call__(self, x):
+        x = mk_2d(x)
         x = x * 5.12
         x0 = x[0]
         x1 = x[1]
@@ -297,7 +293,7 @@ class Shekel:
 
     def __call__(self, x):
         if len(x) != 4:
-            raise WrongDimensions()
+            x = mk_4d(x)
         x = x * 5 + 5
         m = self.C.shape[1]
         outer = 0
@@ -313,8 +309,7 @@ class Shekel:
 # 20 SixHumpCamel x1 ∈ [-3, 3], x2 ∈ [-2, 2]. result [-50,200]
 class SixHumpCamel:
     def __call__(self, x):
-        if len(x) != 2:
-            raise WrongDimensions()
+        x = mk_2d(x)
         x = x
         x0 = x[0] * 3
         x1 = x[1] * 2
@@ -331,8 +326,7 @@ class StybTang:
 # 22 ThreeHumpCamel xi ∈ [-5, 5], for all i = 1, 2. result[0,10][0,1000]
 class ThreeHumpCamel:
     def __call__(self, x):
-        if len(x) != 2:
-            raise WrongDimensions()
+        x = mk_2d(x)
         x = x * 5
         x0 = x[0]
         x1 = x[1]

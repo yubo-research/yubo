@@ -17,7 +17,9 @@ class DataLocator:
         self._opt_names = opt_names
 
     def __str__(self):
-        return self._root_path()
+        return (
+            f"{self._root_path()} {self.exp_dir} num_dim = {self.num_dim} num_arms = {self.num_arms} num_rounds = {self.num_rounds} num_reps = {self.num_reps}"
+        )
 
     def _root_path(self):
         return f"{self.results}/{self.exp_dir}"
@@ -39,11 +41,13 @@ class DataLocator:
             if "--" not in fn:
                 continue
             d = parse_kv(fn.split("--"))
+
             if problem is not None and not fnmatch.fnmatch(d["env"], problem):
                 continue
             if opt_names is not None and d["opt_name"] not in opt_names:
                 continue
             if self.num_arms is not None and int(d["num_arms"]) != self.num_arms:
+                # print("SKIP arms", self.num_arms, fn)
                 continue
             if self.num_rounds is not None and int(d["num_rounds"]) != self.num_rounds:
                 continue
@@ -54,6 +58,7 @@ class DataLocator:
                 if len(x) == 2 and x[1][-1] == "d":
                     num_dim = int(x[1][:-1])
                     if num_dim != self.num_dim:
+                        # print("SKIP dim", self.num_dim, fn)
                         continue
 
             data_sets.append((d, f"{root_path}/{fn}"))

@@ -47,25 +47,27 @@ def modal_batches_submitter(job_name: str):
     batches_submitter(job_name)
 
 
-def batches_submitter(job_name: str, count_only=False):
-    if not count_only:
-        job_queue = _queue()
-    num_submitted = 0
-    for key, d_args in _gen_jobs(job_name):
+def batches_submitter(batch_tag: str, count_only=False):
+    missing = []
+    for key, d_args in _gen_jobs(batch_tag):
+        missing.append((key, d_args))
+        # job_queue.put((key, d_args))
+
+    job_queue = _queue()
+    for key, d_args in missing:
         print(f"JOB: {key} {d_args}")
         if not count_only:
             job_queue.put((key, d_args))
-        num_submitted += 1
-    print("TOTAL:", num_submitted)
+    print("TOTAL:", len(missing))
 
 
-def _gen_jobs(job_name):
-    d_argss = prep_d_argss()
+def _gen_jobs(batch_tag):
+    d_argss = prep_d_argss(batch_tag)
     i_job = 0
     for d_args_batch in d_argss:
         for d_args in mk_replicates(d_args_batch):
             if not data_is_done(d_args["trace_fn"]):
-                key = _job_key(job_name, i_job)
+                key = _job_key(batch_tag, i_job)
                 yield key, d_args
                 i_job += 1
 
@@ -75,8 +77,43 @@ def _job_key(job_name, i_job):
 
 
 def collect():
+    # job_queue = _queue()
+    res_dict = _dict()
+    print("DICT_SIZE:", res_dict.len())
+
+    if True:
+        collected_keys = set()
+        print("ITEMS")
+        for key, value in res_dict.items():
+            if key.endswith("key_max"):
+                print("SKIP", key)
+                continue
+            print("GETITEM", key)
+            t_0 = time.time()
+            (trace_fn, collector_log, collector_trace) = value
+            t_f = time.time()
+            print(f"GOTITEM: {key} {t_f-t_0:.1f}")
+            if not data_is_done(trace_fn):
+                post_process(collector_log, collector_trace, trace_fn)
+            collected_keys.add(key)
+
+        print(f"results_available before del: {res_dict.len()}")
+        for key in collected_keys:
+            print("DEL:", key)
+            del res_dict[key]
+        print(f"results_available after del: {res_dict.len()} num_deleted = {len(collected_keys)}")
+        # print("How many jobs are running? Idk.")
+        # # print(f"jobs_remaining = {job_queue.len()}")
+        # if len(collected_keys) == 0:
+        #     time.sleep(30)
+        # else:
+        #     time.sleep(3)
+
+
+def collect_orig():
     job_queue = _queue()
     res_dict = _dict()
+    print("DICT_SIZE:", res_dict.len())
     while True:
         num_collected = 0
         for key, value in res_dict.items():
@@ -84,7 +121,6 @@ def collect():
                 continue
 
             (trace_fn, collector_log, collector_trace) = res_dict[key]
-            print(f"JOB: {key}")
             post_process(collector_log, collector_trace, trace_fn)
             del res_dict[key]
             num_collected += 1
@@ -104,7 +140,7 @@ def status():
 
 
 @app.local_entrypoint()
-def batches(cmd: str, job_name: str = None, num: int = None):
+def batches(cmd: str, batch_tag: str = None, num: int = None):
     if cmd == "work":
         modal_function = modal.Function.lookup("yubo", "modal_batches_worker")
         for i in range(num):
@@ -112,15 +148,15 @@ def batches(cmd: str, job_name: str = None, num: int = None):
             modal_function.spawn()
     elif cmd == "submit-all":
         submitter = modal.Function.lookup("yubo", "modal_batches_submitter")
-        submitter.spawn(job_name)
+        submitter.spawn(batch_tag)
     elif cmd == "submit-missing":
-        batches_submitter(job_name)
+        batches_submitter(batch_tag)
     elif cmd == "count-missing":
-        batches_submitter(job_name, count_only=True)
+        batches_submitter(batch_tag, count_only=True)
     elif cmd == "status":
         status()
     elif cmd == "collect":
-        assert job_name is None
+        assert batch_tag is None
         collect()
     else:
         assert False, cmd

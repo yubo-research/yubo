@@ -14,9 +14,9 @@ def mk_image():
     optuna==4.0.0
     gymnasium[box2d]
     gymnasium[mujoco]
-    """.split(
-        "\n"
-    )
+    tsroots==0.1.21
+    git+https://github.com/chebpy/chebpy.git
+    """.split("\n")
     sreqs = []
     for req in reqs:
         req = req.strip()
@@ -25,4 +25,4 @@ def mk_image():
         print("REQ:", req)
         sreqs.append(req)
     # print("SREQS:", sreqs)
-    return modal.Image.debian_slim(python_version="3.11.5").apt_install("swig").pip_install(sreqs)
+    return modal.Image.debian_slim(python_version="3.11.5").apt_install("swig").apt_install("git").pip_install(sreqs)

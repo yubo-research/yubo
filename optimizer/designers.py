@@ -14,11 +14,14 @@ from acq.acq_min_dist import AcqMinDist
 from acq.acq_mtv import AcqMTV
 from acq.acq_sobol import AcqSobol
 from acq.acq_ts import AcqTS
+from acq.acq_tsroots import AcqTSRoots
 from acq.acq_var import AcqVar
 
 from .ax_designer import AxDesigner
 from .bt_designer import BTDesigner
+from .center_designer import CenterDesigner
 from .cma_designer import CMAESDesigner
+from .mcmc_bo_designer import MCMCBODesigner
 from .optuna_designer import OptunaDesigner
 from .random_designer import RandomDesigner
 from .sobol_designer import SobolDesigner
@@ -52,9 +55,9 @@ class Designers:
 
         num_keep = None
         keep_style = None
-        model_type = None
+        model_spec = None
         for option in options:
-            if option[0] == "k":
+            if option[0] == "K":
                 if option[1] == "s":
                     keep_style = "some"
                 elif option[1] == "b":
@@ -65,12 +68,9 @@ class Designers:
                     assert False, option
                 num_keep = int(option[2:])
                 print(f"OPTION: num_keep = {num_keep} keep_style = {keep_style}")
-            elif option == "vanilla":
-                model_type = "vanilla"
+            elif option[0] == "M":
+                model_spec = option[1:]
                 print("OPTION model_type = vanilla")
-            elif option == "dumbo":
-                model_type = "dumbo"
-                print("OPTION model_type = dumbo")
             else:
                 assert False, ("Unknown option", option)
 
@@ -81,7 +81,7 @@ class Designers:
                 acq_kwargs=acq_kwargs,
                 num_keep=num_keep,
                 keep_style=keep_style,
-                model_type=model_type,
+                model_spec=model_spec,
                 init_sobol=init_sobol,
                 opt_sequential=opt_sequential,
             )
@@ -106,6 +106,8 @@ class Designers:
             return SobolDesigner(self._policy)
         elif designer_name == "btsobol":
             return bt_designer(AcqSobol)
+        elif designer_name == "center":
+            return CenterDesigner(self._policy)
 
         # All exploitation
         elif designer_name == "sr":
@@ -117,19 +119,23 @@ class Designers:
                 AcqTS,
                 acq_kwargs={
                     "sampler": "cholesky",
-                    "num_candidates": 1024,
+                    "num_candidates": 1000,
                 },
             )
-        elif designer_name == "ts-ciq":
-            return bt_designer(AcqTS, acq_kwargs={"sampler": "ciq"})
-        elif designer_name == "ts-lanczos":
-            return bt_designer(AcqTS, acq_kwargs={"sampler": "lanczos"})
+        elif designer_name == "ts-10000":
+            return bt_designer(
+                AcqTS,
+                acq_kwargs={
+                    "sampler": "lanczos",
+                    "num_candidates": 10000,
+                },
+            )
         elif designer_name.startswith("ts_sweep"):
             num_candidates = int(designer_name.split("-")[1])
             return bt_designer(
                 AcqTS,
                 acq_kwargs={
-                    "sampler": "cholesky",
+                    "sampler": "lanczos",
                     "num_candidates": num_candidates,
                 },
             )
@@ -201,6 +207,16 @@ class Designers:
                     "num_refinements": 30,
                 },
             )
+        elif designer_name == "mtv-sts2":
+            return bt_designer(
+                AcqMTV,
+                init_sobol=0,
+                acq_kwargs={
+                    "num_X_samples": default_num_X_samples,
+                    "sample_type": "sts2",
+                    "num_refinements": 30,
+                },
+            )
         elif designer_name == "mtv-sts-t":
             return bt_designer(
                 AcqMTV,
@@ -222,6 +238,19 @@ class Designers:
                     "sample_type": "sts",
                     "num_X_samples": default_num_X_samples,
                     "num_refinements": 30,
+                },
+            )
+        elif designer_name.startswith("sts-ar-"):
+            num_acc_rej = int(designer_name.split("-")[-1])
+            return bt_designer(
+                AcqMTV,
+                init_sobol=0,
+                acq_kwargs={
+                    "ts_only": True,
+                    "sample_type": "sts",
+                    "num_X_samples": default_num_X_samples,
+                    "num_refinements": 0,
+                    "num_acc_rej": num_acc_rej,
                 },
             )
         elif designer_name == "sts-ns":
@@ -273,10 +302,31 @@ class Designers:
                     "x_max_type": "meas",
                 },
             )
-        elif designer_name == "pts":
+        elif designer_name == "sts2":
+            return bt_designer(
+                AcqMTV,
+                init_sobol=0,
+                acq_kwargs={
+                    "ts_only": True,
+                    "sample_type": "sts2",
+                    "num_X_samples": default_num_X_samples,
+                    "num_refinements": 30,
+                },
+            )
+        elif designer_name == "path":
             return bt_designer(
                 PathwiseThompsonSampling,
-                init_sobol=0,
+                init_sobol=init_yubo_default,
+            )
+        elif designer_name == "tsroots":
+            return bt_designer(
+                AcqTSRoots,
+                init_sobol=init_yubo_default,
+            )
+        elif designer_name == "mcmcbo":
+            return MCMCBODesigner(
+                self._policy,
+                num_init=init_yubo_default,
             )
 
         # Long sobol init, sequential opt

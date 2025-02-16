@@ -4,7 +4,6 @@ if __name__ == "__main__":
     import sys
 
     from figures.fig_util import expository_problem, mean_func_contours, show
-    from optimizer.arm_best_obs import ArmBestObs
     from optimizer.optimizer import Optimizer
 
     out_dir = sys.argv[1]
@@ -16,7 +15,7 @@ if __name__ == "__main__":
     num_arms = 4
     default_num_X_samples = max(64, 10 * num_arms)
 
-    opt = Optimizer(env_conf, policy, num_arms=num_arms, num_denoise=None, arm_selector=ArmBestObs())
+    opt = Optimizer(env_conf, policy, num_arms=num_arms, num_denoise_measurement=None)
 
     for i_iter in range(3):
         opt.collect_trace(designer_name=designer_name, num_iterations=1)
