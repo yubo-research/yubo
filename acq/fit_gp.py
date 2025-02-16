@@ -1,15 +1,20 @@
+from typing import Any
+
 import numpy as np
 import torch
 from botorch.exceptions.errors import ModelFittingError
 from botorch.fit import fit_gpytorch_mll
 from botorch.models import SingleTaskGP
 from botorch.models.transforms.input import Warp
+from botorch.optim.closures.core import ForwardBackwardClosure
+from botorch.optim.utils import get_parameters
 from botorch.utils import standardize
 
 # from gpytorch.constraints import Interval
 from gpytorch.kernels import MaternKernel  # , ScaleKernel
 from gpytorch.mlls import ExactMarginalLogLikelihood, LeaveOneOutPseudoLikelihood
-from gpytorch.priors.torch_priors import GammaPrior, LogNormalPrior
+from gpytorch.priors.torch_priors import GammaPrior, LogNormalPrior, NormalPrior
+from torch import Tensor
 from torch.nn import Module
 
 import common.all_bounds as all_bounds
@@ -68,7 +73,35 @@ def _parse_spec(model_spec):
         input_warping = False
     if output_warping is None:
         output_warping = False
+    print(f"MODEL_SPEC: model_type = {model_type} input_warping = {input_warping} output_warping = {output_warping}")
     return model_type, input_warping, output_warping
+
+
+def get_closure(mll, outcome_warp):
+    parameters = get_parameters(mll, requires_grad=True)
+
+    def closure_warping(**kwargs: Any) -> Tensor:
+        model = mll.model
+
+        # print("OWOW:", outcome_warp.a, outcome_warp.b, outcome_warp.c, outcome_warp.d)
+        model_output = model(*model.train_inputs)
+        warped_inputs = (model.transform_inputs(X=t_in) for t_in in model.train_inputs)
+        warped_targets = outcome_warp(model.train_targets)
+        log_likelihood = mll(
+            model_output,
+            warped_targets,
+            *warped_inputs,
+            **kwargs,
+        )
+        return -log_likelihood
+
+    return ForwardBackwardClosure(
+        forward=closure_warping,
+        backward=Tensor.backward,
+        parameters=parameters,
+        reducer=Tensor.sum,
+        context_manager=None,
+    )
 
 
 def fit_gp_XY(X, Y, model_spec=None):
@@ -91,18 +124,26 @@ def fit_gp_XY(X, Y, model_spec=None):
         # See https://botorch.org/docs/tutorials/bo_with_warped_gp/
         input_transform = Warp(
             indices=list(range(X.shape[-1])),
-            # use a prior with median at 1.
-            # when a=1 and b=1, the Kumaraswamy CDF is the identity function
-            concentration1_prior=LogNormalPrior(0.0, 0.75**0.5),
-            concentration0_prior=LogNormalPrior(0.0, 0.75**0.5),
+            concentration1_prior=LogNormalPrior(0.0, 1.0),
+            concentration0_prior=LogNormalPrior(0.0, 1.0),
         )
     else:
         input_transform = None
 
     if output_warping:
-        output_transform = SALTransform()
+        outcome_warp = SALTransform(
+            a_prior=NormalPrior(0, 1),
+            b_prior=LogNormalPrior(0.01, 0.1),
+            c_prior=LogNormalPrior(0.01, 0.1),
+            d_prior=NormalPrior(0, 1),
+        )
+    else:
+        outcome_warp = None
 
     Y = standardize(Y).to(X)
+
+    a = torch.tensor(1.0, dtype=torch.double)
+    a.requires_grad = True
 
     if model_type == "vanilla":
         num_dims = X.shape[-1]
@@ -116,15 +157,21 @@ def fit_gp_XY(X, Y, model_spec=None):
         return DUMBOGP(X, Y, use_rank_distance=True)
     else:
         gp = SingleTaskGP(X, Y, input_transform=input_transform)
-    gp.to(X)
 
+    if outcome_warp:
+        gp.outcome_warp = outcome_warp
+
+    gp.to(X)
     mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
 
     m = None
-    for i_try in range(3):
+    for i_try in range(1):
         mll.to(X)
         try:
-            fit_gpytorch_mll(mll)
+            fit_gpytorch_mll(
+                mll,
+                closure=get_closure(mll, outcome_warp) if outcome_warp else None,
+            )
             # fit_gpytorch_mll(mll, optimizer_kwargs={"options": {"maxiter": 10}})
         except (RuntimeError, ModelFittingError) as e:
             m = e
@@ -137,6 +184,8 @@ def fit_gp_XY(X, Y, model_spec=None):
     else:
         raise m
 
+    if outcome_warp:
+        print("OW:", outcome_warp.a, outcome_warp.b, outcome_warp.c, outcome_warp.d)
     return gp
 
 

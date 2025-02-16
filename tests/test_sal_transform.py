@@ -11,9 +11,11 @@ def test_sal_transform():
     sal = SALTransform(
         b_prior=LogNormalPrior(0.0, 0.75**0.5),
     )
+    assert isinstance(sal(Y), torch.Tensor)
     y_sal, yv_sal = sal(Y, Yv)
     print(y_sal, yv_sal)
 
+    assert isinstance(sal.untransform(Y), torch.Tensor)
     Y_check, Yv_check = sal.untransform(y_sal, yv_sal)
     print(Y_check, Yv_check)
 
