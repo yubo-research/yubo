@@ -6,9 +6,5 @@ def test_pstar_sampler():
 
     model = gp_parabola()[0]
 
-    pss = PStarSampler(
-        k_mcmc=5,
-        model=model,
-        X_max=find_max(model),
-    )
+    pss = PStarSampler(k_mcmc=5, model=model, X_max=find_max(model), num_mcmc=None)
     pss(num_X_samples=10)

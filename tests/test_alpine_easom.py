@@ -17,5 +17,5 @@ def test_easom():
     y = 2
 
     e = Easom()
-    res = e(x, y)
+    res = e([x, y])
     assert res < 1

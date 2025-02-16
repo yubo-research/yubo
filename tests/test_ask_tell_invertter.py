@@ -50,7 +50,7 @@ def test_ask_tell_inverter():
         if y > y_max:
             y_max = y
             x_max = x
-        print("X:", y_max, x_max)
+        # print("X:", y_max, x_max)
         ati.tell(y)
 
     thread.join()
