@@ -1,4 +1,4 @@
-def test_pstar_stagger():
+def test_stagger_thompson_sampler():
     import torch
 
     from sampling.stagger_thompson_sampler import StaggerThompsonSampler
@@ -13,5 +13,5 @@ def test_pstar_stagger():
     pss = StaggerThompsonSampler(model, X_max, num_samples=16)
 
     for _ in range(3):
-        pss.refine()
+        pss.refine(num_refinements=10)
         assert pss.samples().shape == (16, num_dim)

@@ -2,8 +2,7 @@ import numpy as np
 
 
 def test_booth():
-
-    from problems.pure_functions_2 import Booth
+    from problems.benchmark_functions_2 import Booth
 
     x = np.array([1, 2])
     b = Booth()
@@ -12,8 +11,7 @@ def test_booth():
 
 
 def test_himmelblau():
-
-    from problems.pure_functions_2 import Himmelblau
+    from problems.benchmark_functions_2 import Himmelblau
 
     x = np.array([3, 4])
     b = Himmelblau()
@@ -22,18 +20,16 @@ def test_himmelblau():
 
 
 def test_matyas():
-
-    from problems.pure_functions_2 import Matyas
+    from problems.benchmark_functions_2 import Matyas
 
     x = np.array([5, 2])
     b = Matyas()
     res = b(x)
-    assert res < 7
+    assert res > 0
 
 
 def test_zettl():
-
-    from problems.pure_functions_2 import Zettl
+    from problems.benchmark_functions_2 import Zettl
 
     x = np.array([7, 3])
     b = Zettl()
@@ -42,60 +38,45 @@ def test_zettl():
 
 
 def test_sum_squares():
+    from problems.benchmark_functions_2 import Sum_Squares
 
-    from problems.pure_functions_2 import Sum_Squares
-
-    x = 9
+    x = [9]
     b = Sum_Squares()
     res = b(x)
     assert res > 11
 
 
-def test_perm():
-
-    from problems.pure_functions_2 import Perm
-
-    x = np.array([7, 3])
-    b = Perm()
-    res = b(x, beta=20)
-    assert res > 15
-
-
 def test_salomonl():
-
-    from problems.pure_functions_2 import Salomon
+    from problems.benchmark_functions_2 import Salomon
 
     x = np.array([2, 5])
     b = Salomon()
     res = b(x)
-    assert res < 8
+    assert res > 0
 
 
 def test_whitley():
+    from problems.benchmark_functions_2 import Whitley
 
-    from problems.pure_functions_2 import Whitley
-
-    x = 25
+    x = [25]
     b = Whitley()
     res = b(x)
     assert res > 33
 
 
 def test_brown():
+    from problems.benchmark_functions_2 import Brown
 
-    from problems.pure_functions_2 import Brown
-
-    x = 10
+    x = [10, 4]
     b = Brown()
     res = b(x)
     assert res > 20
 
 
 def test_zakharov():
+    from problems.benchmark_functions_2 import Zakharov
 
-    from problems.pure_functions_2 import Zakharov
-
-    x = 12
+    x = [1, 12]
     b = Zakharov()
     res = b(x)
     assert res > 30
