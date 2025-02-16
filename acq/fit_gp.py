@@ -78,12 +78,8 @@ def _parse_spec(model_spec):
 
 
 def get_closure(mll, outcome_warp):
-    parameters = get_parameters(mll, requires_grad=True)
-
     def closure_warping(**kwargs: Any) -> Tensor:
         model = mll.model
-
-        # print("OWOW:", outcome_warp.a, outcome_warp.b, outcome_warp.c, outcome_warp.d)
         model_output = model(*model.train_inputs)
         warped_inputs = (model.transform_inputs(X=t_in) for t_in in model.train_inputs)
         warped_targets = outcome_warp(model.train_targets)
@@ -98,7 +94,7 @@ def get_closure(mll, outcome_warp):
     return ForwardBackwardClosure(
         forward=closure_warping,
         backward=Tensor.backward,
-        parameters=parameters,
+        parameters=get_parameters(mll, requires_grad=True),
         reducer=Tensor.sum,
         context_manager=None,
     )
