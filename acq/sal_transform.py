@@ -83,7 +83,7 @@ class SALTransform(GPyTorchModule):
         Y_new = torch.sinh((torch.arcsinh((Y - self.a) / self.b) + self.d) / self.c)
 
         if Yvar is None:
-            return Y_new, None
+            return Y_new
 
         sinh_arg = self.c * torch.arcsinh(Y_new) - self.d
         cosh_term = torch.cosh(sinh_arg) ** 2
@@ -93,4 +93,3 @@ class SALTransform(GPyTorchModule):
 
     def untransform_posterior(self, posterior: Posterior) -> TransformedPosterior:
         assert False, "NYI"
-        return posterior
