@@ -84,6 +84,7 @@ class Designers:
                 model_spec=model_spec,
                 init_sobol=init_sobol,
                 opt_sequential=opt_sequential,
+                optimizer_options={"batch_limit": 10, "maxiter": 1000, "sample_around_best": False},
             )
 
         if designer_name == "cma":

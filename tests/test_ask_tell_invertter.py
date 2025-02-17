@@ -49,7 +49,7 @@ def test_ask_tell_inverter():
         y = f(x)
         if y > y_max:
             y_max = y
-            x_max = x
+            # x_max = x
         # print("X:", y_max, x_max)
         ati.tell(y)
 

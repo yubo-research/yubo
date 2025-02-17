@@ -11,7 +11,7 @@ from botorch.optim.utils import get_parameters
 from botorch.utils import standardize
 
 # from gpytorch.constraints import Interval
-from gpytorch.kernels import MaternKernel  # , ScaleKernel
+from gpytorch.kernels import MaternKernel
 from gpytorch.mlls import ExactMarginalLogLikelihood, LeaveOneOutPseudoLikelihood
 from gpytorch.priors.torch_priors import GammaPrior, LogNormalPrior, NormalPrior
 from torch import Tensor
@@ -19,6 +19,7 @@ from torch.nn import Module
 
 import common.all_bounds as all_bounds
 from acq.sal_transform import SALTransform
+from acq.y_transform import YTransform
 from model.dumbo import DUMBOGP
 
 
@@ -63,16 +64,21 @@ def _parse_spec(model_spec):
             elif s == "wi":
                 assert input_warping is None, (input_warping, model_spec)
                 input_warping = True
-            elif s == "wo":
+            elif s == "wos":
                 assert output_warping is None, (output_warping, model_spec)
-                output_warping = True
+                output_warping = "sal"
+            elif s == "woy":
+                assert output_warping is None, (output_warping, model_spec)
+                output_warping = "y"
+            else:
+                assert False, ("Unknown option", s)
 
     if model_type is None:
         model_type = "gp"
     if input_warping is None:
         input_warping = False
     if output_warping is None:
-        output_warping = False
+        output_warping = "none"
     print(f"MODEL_SPEC: model_type = {model_type} input_warping = {input_warping} output_warping = {output_warping}")
     return model_type, input_warping, output_warping
 
@@ -122,18 +128,24 @@ def fit_gp_XY(X, Y, model_spec=None):
             indices=list(range(X.shape[-1])),
             concentration1_prior=LogNormalPrior(0.0, 1.0),
             concentration0_prior=LogNormalPrior(0.0, 1.0),
-        )
+        ).to(X)
     else:
         input_transform = None
 
-    if output_warping:
+    if output_warping == "sal":
         outcome_warp = SALTransform(
             a_prior=NormalPrior(0, 1),
-            b_prior=LogNormalPrior(0.01, 0.1),
-            c_prior=LogNormalPrior(0.01, 0.1),
+            b_prior=LogNormalPrior(0.0, 1.0),
+            c_prior=LogNormalPrior(0.0, 1.0),
             d_prior=NormalPrior(0, 1),
-        )
+        ).to(X)
+    elif output_warping == "y":
+        outcome_warp = YTransform(
+            a_prior=LogNormalPrior(0.0, 0.1),
+            b_prior=NormalPrior(0, 1),
+        ).to(X)
     else:
+        assert output_warping == "none", output_warping
         outcome_warp = None
 
     Y = standardize(Y).to(X)
@@ -180,8 +192,6 @@ def fit_gp_XY(X, Y, model_spec=None):
     else:
         raise m
 
-    if outcome_warp:
-        print("OW:", outcome_warp.a, outcome_warp.b, outcome_warp.c, outcome_warp.d)
     return gp
 
 

@@ -16,7 +16,9 @@ def mk_image():
     gymnasium[mujoco]
     tsroots==0.1.21
     git+https://github.com/chebpy/chebpy.git
-    """.split("\n")
+    """.split(
+        "\n"
+    )
     sreqs = []
     for req in reqs:
         req = req.strip()

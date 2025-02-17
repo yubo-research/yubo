@@ -2,8 +2,9 @@ YUBO=../yubo
 for d in acq admin analysis common experiments fig_data figures model ops optimizer problems sampling tests torch_truncnorm turbo_m_ref
 do
  echo ${YUBO}/$d
- rm -rfv ${YUBO}/$d
- cp -rv $d ${YUBO}
+ rsync --delete -rav ${d}/ ${YUBO}/${d}/
+ # rm -rfv ${YUBO}/$d
+ # cp -rv $d ${YUBO}
 done
-cp -v requirements.txt ${YUBO}/
+
 
