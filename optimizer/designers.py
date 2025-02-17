@@ -56,6 +56,7 @@ class Designers:
         num_keep = None
         keep_style = None
         model_spec = None
+        sample_around_best = False
         for option in options:
             if option[0] == "K":
                 if option[1] == "s":
@@ -70,7 +71,10 @@ class Designers:
                 print(f"OPTION: num_keep = {num_keep} keep_style = {keep_style}")
             elif option[0] == "M":
                 model_spec = option[1:]
-                print("OPTION model_type = vanilla")
+                print(f"OPTION model_spec = {option}")
+            elif option[0] == "O":
+                if option[1:] == "sab":
+                    sample_around_best = True
             else:
                 assert False, ("Unknown option", option)
 
@@ -84,7 +88,7 @@ class Designers:
                 model_spec=model_spec,
                 init_sobol=init_sobol,
                 opt_sequential=opt_sequential,
-                optimizer_options={"batch_limit": 10, "maxiter": 1000, "sample_around_best": False},
+                optimizer_options={"batch_limit": 10, "maxiter": 1000, "sample_around_best": sample_around_best},
             )
 
         if designer_name == "cma":

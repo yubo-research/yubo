@@ -1,5 +1,6 @@
 from typing import Any
 
+import gpytorch
 import numpy as np
 import torch
 from botorch.exceptions.errors import ModelFittingError
@@ -9,11 +10,8 @@ from botorch.models.transforms.input import Warp
 from botorch.optim.closures.core import ForwardBackwardClosure
 from botorch.optim.utils import get_parameters
 from botorch.utils import standardize
-
-# from gpytorch.constraints import Interval
-from gpytorch.kernels import MaternKernel
 from gpytorch.mlls import ExactMarginalLogLikelihood, LeaveOneOutPseudoLikelihood
-from gpytorch.priors.torch_priors import GammaPrior, LogNormalPrior, NormalPrior
+from gpytorch.priors.torch_priors import LogNormalPrior, NormalPrior
 from torch import Tensor
 from torch.nn import Module
 
@@ -37,24 +35,12 @@ class _EmptyTransform(Module):
         return posterior
 
 
-def get_vanilla_kernel(num_dim, batch_shape):
-    # See section 5.1 of
-    #  Hvarfner, C., Hellsten, E.O., & Nardi, L. (2024). Vanilla Bayesian Optimization Performs Great in High Dimensions. ArXiv, abs/2402.02229.
-    #
-    length_scale_0 = np.sqrt(num_dim)
-    return MaternKernel(
-        nu=2.5,
-        ard_num_dims=num_dim,
-        batch_shape=batch_shape,
-        lengthscale_prior=GammaPrior(3.0, 6.0 / length_scale_0),
-    )
-
-
 def _parse_spec(model_spec):
     model_type = None
     input_warping = None
     output_warping = None
-    model_types = {"gp", "dumbo", "rdumbo", "vanilla"}
+    # VanillaBO lengthscale prior is now the default in BoTorch
+    model_types = {"gp", "dumbo", "rdumbo"}
 
     if model_spec is not None:
         for s in model_spec.split("+"):
@@ -153,11 +139,7 @@ def fit_gp_XY(X, Y, model_spec=None):
     a = torch.tensor(1.0, dtype=torch.double)
     a.requires_grad = True
 
-    if model_type == "vanilla":
-        num_dims = X.shape[-1]
-        _gp = SingleTaskGP(X, Y, input_transform=input_transform)
-        gp = SingleTaskGP(X, Y, covar_module=get_vanilla_kernel(num_dims, _gp._aug_batch_shape), input_transform=input_transform)
-    elif model_type == "dumbo":
+    if model_type == "dumbo":
         assert input_transform is None, "Unsupported"
         return DUMBOGP(X, Y, use_rank_distance=False)
     elif model_type == "rdumbo":
@@ -172,25 +154,28 @@ def fit_gp_XY(X, Y, model_spec=None):
     gp.to(X)
     mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
 
-    m = None
-    for i_try in range(1):
-        mll.to(X)
-        try:
-            fit_gpytorch_mll(
-                mll,
-                closure=get_closure(mll, outcome_warp) if outcome_warp else None,
-            )
-            # fit_gpytorch_mll(mll, optimizer_kwargs={"options": {"maxiter": 10}})
-        except (RuntimeError, ModelFittingError) as e:
-            m = e
-            print(f"Retrying fit i_try = {i_try}")
-            print("Trying LeaveOneOutPseudoLikelihood")
-            mll = LeaveOneOutPseudoLikelihood(gp.likelihood, gp)
-            pass
+    # See TuRBO code
+    max_cholesky_size = 2000
+    with gpytorch.settings.max_cholesky_size(max_cholesky_size):
+        m = None
+        for i_try in range(1):
+            mll.to(X)
+            try:
+                fit_gpytorch_mll(
+                    mll,
+                    closure=get_closure(mll, outcome_warp) if outcome_warp else None,
+                )
+                # fit_gpytorch_mll(mll, optimizer_kwargs={"options": {"maxiter": 10}})
+            except (RuntimeError, ModelFittingError) as e:
+                m = e
+                print(f"Retrying fit i_try = {i_try}")
+                print("Trying LeaveOneOutPseudoLikelihood")
+                mll = LeaveOneOutPseudoLikelihood(gp.likelihood, gp)
+                pass
+            else:
+                break
         else:
-            break
-    else:
-        raise m
+            raise m
 
     return gp
 
