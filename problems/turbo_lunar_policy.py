@@ -6,7 +6,7 @@ import common.all_bounds as all_bounds
 class TurboLunarPolicy:
     def __init__(self, env_conf):
         self._env_conf = env_conf
-        self._w = np.zeros(12)
+        self._w_orig = self._w = np.zeros(12)
         self.problem_seed = self._env_conf.problem_seed
 
     def num_params(self):

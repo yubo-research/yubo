@@ -1,7 +1,6 @@
 from typing import Any
 
 import gpytorch
-import numpy as np
 import torch
 from botorch.exceptions.errors import ModelFittingError
 from botorch.fit import fit_gpytorch_mll
@@ -10,6 +9,7 @@ from botorch.models.transforms.input import Warp
 from botorch.optim.closures.core import ForwardBackwardClosure
 from botorch.optim.utils import get_parameters
 from botorch.utils import standardize
+from gpytorch.kernels import RFFKernel, ScaleKernel
 from gpytorch.mlls import ExactMarginalLogLikelihood, LeaveOneOutPseudoLikelihood
 from gpytorch.priors.torch_priors import LogNormalPrior, NormalPrior
 from torch import Tensor
@@ -40,7 +40,7 @@ def _parse_spec(model_spec):
     input_warping = None
     output_warping = None
     # VanillaBO lengthscale prior is now the default in BoTorch
-    model_types = {"gp", "dumbo", "rdumbo"}
+    model_types = {"gp", "rff8", "rff128", "rff256", "rff512", "rff1024", "dumbo", "rdumbo"}
 
     if model_spec is not None:
         for s in model_spec.split("+"):
@@ -145,6 +145,14 @@ def fit_gp_XY(X, Y, model_spec=None):
     elif model_type == "rdumbo":
         assert input_transform is None, "Unsupported"
         return DUMBOGP(X, Y, use_rank_distance=True)
+    elif model_type.startswith("rff"):
+        num_samples = int(model_type[3:])
+        gp = SingleTaskGP(
+            X,
+            Y,
+            input_transform=input_transform,
+            covar_module=ScaleKernel(RFFKernel(ard_num_dims=X.shape[-1], num_samples=num_samples)),
+        )
     else:
         gp = SingleTaskGP(X, Y, input_transform=input_transform)
 
