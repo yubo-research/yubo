@@ -20,3 +20,4 @@ def test_pest_control():
     
     # Ensure state updates correctly
     assert not np.array_equal(state, next_state), "State should change after taking an action"
+    

@@ -5,6 +5,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
+
 class PestControl:
     def __init__(self, stages=25, categories=5, seed=None, dim=200):
         self.stages = stages
