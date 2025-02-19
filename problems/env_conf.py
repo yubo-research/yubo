@@ -10,7 +10,8 @@ from problems.linear_policy import LinearPolicy
 from problems.noise_maker import NoiseMaker
 from problems.pure_function_policy import PureFunctionPolicy
 from problems.turbo_lunar_policy import TurboLunarPolicy
-from problems.new_problems import NNDraw, PestControl
+from problems.pest_control import PestControl
+from problems.nn_draw import NNDraw
 
 
 def get_env_conf(tag, problem_seed=None, noise_level=None, noise_seed_0=None):
@@ -20,7 +21,7 @@ def get_env_conf(tag, problem_seed=None, noise_level=None, noise_seed_0=None):
         ec.noise_seed_0 = noise_seed_0
     elif tag in _custom_env_confs:
         ec = copy.deepcopy(_custom_env_confs[tag])
-        ec.problem_seed = problem_seed or 0
+        ec.problem_seed = problem_seed
     else:
         ec = EnvConf(tag, problem_seed=problem_seed, noise_level=noise_level, noise_seed_0=noise_seed_0)
 
@@ -65,7 +66,7 @@ class EnvConf:
         elif self.gym_conf is not None:
             env = gym.make(self.env_name, **(kwargs | self.kwargs))
         elif self.env_name == "nndraw":
-            env = NNDraw(dim=200, seed=self.problem_seed)
+            env = NNDraw(seed=self.problem_seed)
         elif self.env_name == "pest_control":
             env = PestControl(stages=25, categories=5, seed=self.problem_seed)
         else:
