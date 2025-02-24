@@ -24,6 +24,8 @@ class Optimizer:
         self._num_denoise = num_denoise_measurement
         self.num_params = policy.num_params()
         self.r_best_est = -1e99
+        self._r_cumulative = 0
+        self._b_cumulative_reward = False
 
         self._data = []
         self._i_iter = 0
@@ -109,7 +111,11 @@ class Optimizer:
         ret_batch = np.array(ret_batch)
 
         self.r_best_est = max(self.r_best_est, ret_batch.max())
-        ret_eval = self.r_best_est
+        if self._b_cumulative_reward:
+            self._r_cumulative += ret_batch.mean()
+            ret_eval = self._r_cumulative / (1 + self._i_iter)
+        else:
+            ret_eval = self.r_best_est
 
         cum_time = time.time() - self._t_0
         self._collector(
