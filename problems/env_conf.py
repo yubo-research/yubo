@@ -12,6 +12,7 @@ from problems.pure_function_policy import PureFunctionPolicy
 from problems.turbo_lunar_policy import TurboLunarPolicy
 from problems.pest_control import PestControl
 from problems.nn_draw import NNDraw
+from problems.mopta_08 import Mopta08
 
 
 
@@ -70,6 +71,8 @@ class EnvConf:
             env = NNDraw(seed=self.problem_seed)
         elif self.env_name == "pest_control":
             env = PestControl(stages=25, categories=5, seed=self.problem_seed)
+        elif self.env_name == "mopta08":
+            env = Mopta08()
         else:
             env = other.make(self.env_name, problem_seed=self.problem_seed)
 
@@ -128,4 +131,5 @@ _gym_env_confs = {
 _custom_env_confs = {
     "nndraw": EnvConf("nndraw", problem_seed=0),
     "pest_control": EnvConf("pest_control", problem_seed=0),
+    "mopta08": EnvConf("mopta08", problem_seed=0),
 }
