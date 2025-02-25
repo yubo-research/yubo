@@ -11,7 +11,7 @@ from optimizer.optimizer import Optimizer
 from problems.env_conf import default_policy, get_env_conf
 
 
-def sample_1(env_conf, opt_name, num_rounds, num_arms, num_denoise):
+def sample_1(env_conf, opt_name, num_rounds, num_arms, num_denoise, b_trace=True):
     seed_all(env_conf.problem_seed + 27)
 
     if torch.cuda.is_available():
@@ -32,9 +32,12 @@ def sample_1(env_conf, opt_name, num_rounds, num_arms, num_denoise):
 
     collector_trace = Collector()
     for i_iter, te in enumerate(opt.collect_trace(designer_name=opt_name, num_iterations=num_rounds)):
-        collector_trace(
-            f"TRACE: name = {env_conf.env_name} opt_name = {opt_name} i_iter = {i_iter} dt = {te.time_iteration_seconds:.3e} return = {te.rreturn:.3e}"
-        )
+        if b_trace:
+            collector_trace(
+                f"TRACE: name = {env_conf.env_name} opt_name = {opt_name} i_iter = {i_iter} dt = {te.time_iteration_seconds:.3e} return = {te.rreturn:.3e}"
+            )
+
+        pass
     collector_trace("DONE")
 
     return collector_log, collector_trace
@@ -81,6 +84,15 @@ def scan_local(all_args):
     print(f"TIME_LOCAL: {t_f - t_0:.2f}")
 
 
+def true_false(string_bool):
+    string_bool = str(string_bool).lower()
+    if string_bool in ["false", "f"]:
+        return False
+    if string_bool in ["true", "t"]:
+        return True
+    assert False, string_bool
+
+
 def mk_replicates(d_args):
     assert "noise" not in d_args, "NYI"
 
@@ -113,6 +125,7 @@ def mk_replicates(d_args):
                     num_rounds=int(d_args["num_rounds"]),
                     num_arms=int(d_args["num_arms"]),
                     num_denoise=num_denoise,
+                    b_trace=true_false(d_args.get("b_trace", True)),
                 )
             )
     return all_d_args

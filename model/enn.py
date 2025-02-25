@@ -16,7 +16,7 @@ class EpsitemicNearestNeighbors:
         self.k = k
         self._index = faiss.IndexFlatL2(train_X.shape[-1])
         self._index.add(train_X)
-        self._eps_covar_diag = torch.tensor(1e-9)
+        self._eps_var = torch.tensor(1e-9)
 
         self.fancy = fancy
         # Maybe tune this on a sample of data
@@ -52,18 +52,17 @@ class EpsitemicNearestNeighbors:
             mu = mu.mean(dim=1)
             vvar = vvar.mean(dim=1)
         else:
-            w = 1.0 / vvar
+            w = 1.0 / (self._eps_var + vvar)
             assert torch.all(torch.isfinite(w)), (w, X)
             norm = w.sum(dim=1)
             # sum over k neighbors
-            print(w.shape, norm.shape, mu.shape)
             mu = (w * mu).sum(dim=1) / norm
             vvar = 1.0 / norm
 
         assert mu.shape == (b, q), (mu.shape, b, q)
         vvar = self._var_scale * vvar
         assert vvar.shape == (b, q), (vvar.shape, b, q)
-        vvar = torch.maximum(self._eps_covar_diag, vvar)
+        vvar = torch.maximum(self._eps_var, vvar)
         covar = torch.diag_embed(vvar)
         assert covar.shape == (b, q, q), (covar.shape, b, q)
 

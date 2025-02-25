@@ -211,3 +211,14 @@ def mk_x(policy):
 
 def estimate(gp, X):
     return gp.posterior(X).mean.squeeze(-1)
+
+
+def mk_policies(policy_0, X_cand):
+    policies = []
+    for x in X_cand:
+        policy = policy_0.clone()
+        x = (x.detach().cpu().numpy().flatten() - all_bounds.bt_low) / all_bounds.bt_width
+        p = all_bounds.p_low + all_bounds.p_width * x
+        policy.set_params(p)
+        policies.append(policy)
+    return policies

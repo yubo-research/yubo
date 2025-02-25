@@ -26,6 +26,7 @@ from .optuna_designer import OptunaDesigner
 from .random_designer import RandomDesigner
 from .sobol_designer import SobolDesigner
 from .turbo_designer import TuRBODesigner
+from .vhd_designer import VHDDesigner
 
 
 class NoSuchDesignerError(Exception):
@@ -332,6 +333,12 @@ class Designers:
             return MCMCBODesigner(
                 self._policy,
                 num_init=init_yubo_default,
+            )
+        elif designer_name.startswith("vhd-"):
+            k = int(designer_name.split("-")[1])
+            return VHDDesigner(
+                self._policy,
+                k=k,
             )
 
         # Long sobol init, sequential opt

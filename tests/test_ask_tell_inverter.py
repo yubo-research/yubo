@@ -39,7 +39,7 @@ def test_ask_tell_inverter():
     thread.start()
 
     y_max = -1e99
-    x_max = None
+    # x_max = None
     for _ in range(101):
         try:
             x = ati.ask()
