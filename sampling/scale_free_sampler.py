@@ -4,8 +4,8 @@ import torch
 from sampling.log_uniform import np_log_uniform
 
 
-def scale_free_sampler(X_0: torch.Tensor, b_raasp=True):
-    num_dim = X_0.shape[-1]
+def scale_free_sampler(X_0: torch.Tensor, b_raasp=False):
+    num_samples, num_dim = X_0.shape
 
     # RASSSP
     # https://proceedings.mlr.press/v238/rashidi24a/rashidi24a.pdf
@@ -24,12 +24,15 @@ def scale_free_sampler(X_0: torch.Tensor, b_raasp=True):
         i = np.arange(num_dim)
         d = num_dim
     X_t = X_0.clone()
-    X_t[0, i] = torch.rand(size=(1, d)).to(X_0)
+    # TODO: Sobol
+    X_t[:, i] = torch.rand(size=(num_samples, d)).to(X_0)
 
     # Stagger perturbation
     # https://openreview.net/forum?id=YEuObecAhQ&noteId=YEuObecAhQ
     # Efficient Thompson Sampling for Bayesian Optimization
-    # D. Sweet, S. A. Jadhav
-    # s = np_log_uniform(1e-6, 1)
-    s = np.random.uniform()  # TEST
+    # D. Sweet, S. A. Jadhavb
+    s = np_log_uniform(1e-4, 1, num_samples=num_samples)
+    # s = np.random.uniform()
+    s = torch.atleast_2d(torch.as_tensor(s)).T
+
     return X_0 + s * (X_t - X_0)

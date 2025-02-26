@@ -26,7 +26,7 @@ class EpsitemicNearestNeighbors:
     def __call__(self, X):
         # X ~ num_batch X num_dim
 
-        assert len(X.shape) == 2, "NYI: Joint sampling"
+        assert len(X.shape) == 2, ("NYI: Joint sampling", X.shape)
         b, d = X.shape
         assert d == self._num_dim, (d, self._num_dim)
         q = 1
