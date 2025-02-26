@@ -58,6 +58,6 @@ class LinearPolicy:
         scale[i] = 1
         state = (state - loc) / scale
         state[i] = 0.0
-        k = 10**self._scale  # k in [0.1, 10]
+        k = self._scale
         beta = k * self._beta
         return np.maximum(-1, np.minimum(1, beta @ state))
