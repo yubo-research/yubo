@@ -19,5 +19,5 @@ class VHDDesigner:
             X = torch.empty(size=(0, self._policy.num_params()))
             Y = torch.empty(size=(0, 1))
         vhd = AcqVHD(X, Y, k=self._k)
-        X_a = vhd.draw(num_arms)
+        X_a = torch.as_tensor(vhd.draw(num_arms))
         return fit_gp.mk_policies(self._policy, X_a)

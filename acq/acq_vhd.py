@@ -1,17 +1,16 @@
+import numpy as np
 import torch
 
 from model.enn import EpsitemicNearestNeighbors
 from sampling.scale_free_sampler import scale_free_sampler
 
-from .acq_util import torch_random_choice
-
 
 class AcqVHD:
     # TODO: Yvar
     def __init__(self, X_train: torch.Tensor, Y_train: torch.Tensor, *, k: int = 1, num_samples=256):
-        self._X_train = X_train
-        self._Y_train = Y_train
-        self._num_refinements = 100
+        self._X_train = np.asarray(X_train)
+        self._Y_train = np.asarray(Y_train)
+
         self._num_samples = num_samples
         self._b_raasp = False
 
@@ -22,42 +21,29 @@ class AcqVHD:
 
     def _get_max(self):
         assert len(self._X_train) > 0
-        # TODO: ts-max when YVar
-        # TODO: Maybe use ENN
-        Y = self._Y_train
-        i = torch_random_choice(torch.where(Y == Y.max())[0])
+        if self._enn:
+            Y = self._enn(self._X_train).sample()
+        else:
+            Y = self._Y_train
+        i = np.random.choice(np.where(Y == Y.max())[0])
         return self._X_train[i, :]
 
     def draw(self, num_arms):
         if len(self._X_train) == 0:
-            return torch.rand(size=(num_arms, self._X_train.shape[-1]))
+            return np.random.uniform(size=(num_arms, self._X_train.shape[-1]))
+
+        # TODO: self._num_samples ts-maxes for variety, then move X_0 inside loop
+        X_0 = np.tile(self._get_max(), reps=(self._num_samples, 1))
 
         # TODO: MTV for batches
-
         X_a = []
         for _ in range(num_arms):
-            X_0 = self._get_max()
-            # TODO: Make scale_free_sampler produce a batch of num_samples samples
-            X_cand = torch.stack([scale_free_sampler(X_0, b_raasp=self._b_raasp) for _ in range(self._num_samples)]).squeeze(1)
-            if self._enn is not None:
+            X_cand = scale_free_sampler(X_0, b_raasp=self._b_raasp)
+            if self._enn:
                 Y_cand = self._enn(X_cand).sample()
-                i = torch_random_choice(torch.where(Y_cand == Y_cand.max())[0])
+                i = np.random.choice(np.where(Y_cand == Y_cand.max())[0])
             else:
-                i = torch.randint(low=0, high=len(X_cand), size=(1,))
+                i = np.random.randint(low=0, high=len(X_cand), size=(1,))
             X_a.append(X_cand[i])
 
-        return torch.stack(X_a)
-
-    def _xxx_draw_1(self):
-        X = self._X_max
-        for _ in range(self._num_refinements):
-            X_a = scale_free_sampler(X, b_raasp=self._b_raasp)
-            if self._enn is not None:
-                # TODO: enn.joint_2(X, X_a)
-                Y = self._enn(X).sample()
-                Y_a = self._enn(X_a).sample()
-                if Y_a > Y:
-                    X = X_a
-            else:
-                X = X_a
-        return X
+        return np.array(X_a)

@@ -18,6 +18,7 @@ def test_scale_free_sampler_multi():
 
     from sampling.scale_free_sampler import scale_free_sampler
 
-    X = torch.rand(size=(10, 5))
-    x = scale_free_sampler(X)
-    assert x.shape == (10, 5)
+    for b_raasp in [True, False]:
+        X = torch.rand(size=(10, 5))
+        x = scale_free_sampler(X, b_raasp=b_raasp)
+        assert x.shape == (10, 5)
