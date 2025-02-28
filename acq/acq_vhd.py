@@ -12,38 +12,38 @@ class AcqVHD:
         self._Y_train = np.asarray(Y_train)
 
         self._num_samples = num_samples
-        self._b_raasp = False
 
-        if k > 0 and len(self._X_train) > 0:
-            self._enn = EpsitemicNearestNeighbors(self._X_train, self._Y_train, k=k)
+        if len(self._X_train) > 0:
+            self._enn = EpsitemicNearestNeighbors(self._X_train, self._Y_train, k=1)
+            # self._enn_ts = EpsitemicNearestNeighbors(self._X_train, self._Y_train, k=k)
         else:
             self._enn = None
+            self._enn_ts = None
 
     def _get_max(self):
         assert len(self._X_train) > 0
-        if self._enn:
-            Y = self._enn(self._X_train).sample()
+        if False:  # tODO: study noisy observations self._enn_ts:
+            Y = self._enn_ts(self._X_train).sample()
         else:
             Y = self._Y_train
+
         i = np.random.choice(np.where(Y == Y.max())[0])
         return self._X_train[i, :]
 
     def draw(self, num_arms):
         if len(self._X_train) == 0:
+            # TODO: Sobol or LHD
             return np.random.uniform(size=(num_arms, self._X_train.shape[-1]))
 
-        # TODO: self._num_samples ts-maxes for variety, then move X_0 inside loop
+        # TODO: study noisy observations;  move X_0 inside loop
         X_0 = np.tile(self._get_max(), reps=(self._num_samples, 1))
 
-        # TODO: MTV for batches
         X_a = []
         for _ in range(num_arms):
-            X_cand = scale_free_sampler(X_0, b_raasp=self._b_raasp)
-            if self._enn:
-                Y_cand = self._enn(X_cand).sample()
-                i = np.random.choice(np.where(Y_cand == Y_cand.max())[0])
-            else:
-                i = np.random.randint(low=0, high=len(X_cand), size=(1,))
-            X_a.append(X_cand[i])
+            # TODO: farthest_neighbor(), N times
+            # TODO: Choose N that maximizes distance; L2? L1? L1/2? log(1+|dx|)?
+            # X_cand = None
+            # X_a.append(X_cand[i])
+            assert False, "NYI"
 
         return np.array(X_a)
