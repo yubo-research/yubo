@@ -3,6 +3,9 @@ import time
 
 import torch
 
+import sys
+sys.path.append('/Users/siddhantanandjadhav/BBO/bbo')
+
 from analysis.data_io import data_is_done, data_writer
 from common.collector import Collector
 from common.seed_all import seed_all

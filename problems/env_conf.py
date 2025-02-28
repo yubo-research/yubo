@@ -16,7 +16,7 @@ from problems.mopta_08 import Mopta08
 
 
 
-def get_env_conf(tag, problem_seed=None, noise_level=None, noise_seed_0=None):
+def get_env_conf(tag, problem_seed=None, noise_level=None, noise_seed_0=0):
     if tag in _gym_env_confs:
         ec = copy.deepcopy(_gym_env_confs[tag])
         ec.problem_seed = problem_seed
@@ -129,7 +129,7 @@ _gym_env_confs = {
 }
 
 _custom_env_confs = {
-    "nndraw": EnvConf("nndraw", problem_seed=0),
-    "pest_control": EnvConf("pest_control", problem_seed=0),
-    "mopta08": EnvConf("mopta08", problem_seed=0),
+    "pestcontrol": EnvConf("pestcontrol", problem_seed=0, noise_seed_0=0),
+    "nndraw": EnvConf("nndraw", problem_seed=0, noise_seed_0=0),
+    "mopta08": EnvConf("mopta08", problem_seed=0, noise_seed_0=0),
 }
