@@ -334,11 +334,11 @@ class Designers:
                 self._policy,
                 num_init=init_yubo_default,
             )
-        elif designer_name.startswith("vhd-"):
-            k = int(designer_name.split("-")[1])
+        elif designer_name.startswith("vhd-rs"):
+            # k = int(designer_name.split("-")[1])
             return VHDDesigner(
                 self._policy,
-                k=k,
+                k=1,
             )
 
         # Long sobol init, sequential opt

@@ -52,7 +52,7 @@ def farthest_neighbor(enn, x_0: np.array, u: np.array, eps_bound: float = 1e-6):
     while (l_high - l_low).max() > eps_bound:
         l_mid = (l_low + l_high) / 2
         x_mid = x_0 + l_mid * u
-        x_mid = np.maximum(-1, np.minimum(1, x_mid))
+        x_mid = np.maximum(0, np.minimum(1, x_mid))
         a = _is_neighbor(x_mid)
         l_low[a] = l_mid[a]
         l_high[~a] = l_mid[~a]

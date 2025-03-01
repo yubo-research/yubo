@@ -44,4 +44,6 @@ class AcqVHD:
         x_0 = self.get_max()
         assert len(x_0.shape) == 2, x_0.shape
         u = random_direction(self._num_dim)
-        return farthest_neighbor(self._enn, x_0, u)
+        x_a = farthest_neighbor(self._enn, x_0, u)
+        assert x_a.min() >= 0.0 and x_a.max() <= 1.0, x_a
+        return x_a
