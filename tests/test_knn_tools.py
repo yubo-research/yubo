@@ -40,7 +40,7 @@ def test_utils():
 
 
 def test_farthest_neighbor():
-    # import numpy as np
+    import numpy as np
 
     from sampling.knn_tools import farthest_neighbor, random_direction
 
@@ -49,4 +49,5 @@ def test_farthest_neighbor():
 
     # farthest_neighbor(enn, x_0: np.array, u: np.array, eps_bound: float = 1e-6):
     u = random_direction(num_dim)
-    farthest_neighbor(enn, train_x[[0]], u)
+    x_fn = farthest_neighbor(enn, train_x[[0]], u)
+    assert np.all(enn.neighbors(x_fn, k=1) == train_x[[0]])

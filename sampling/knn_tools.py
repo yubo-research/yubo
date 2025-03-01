@@ -34,6 +34,7 @@ def farthest_neighbor(enn, x_0: np.array, u: np.array, eps_bound: float = 1e-6):
     x_0: num_samples x num_dim, center of Voronoi cell
     u: num_samples x num_dim, unit-length direction vectors
     """
+
     assert len(x_0.shape) == 2, x_0.shape
     num_samples = x_0.shape[0]
     l_low = np.zeros(shape=(num_samples, 1))
@@ -53,4 +54,4 @@ def farthest_neighbor(enn, x_0: np.array, u: np.array, eps_bound: float = 1e-6):
         l_low[a] = l_mid[a]
         l_high[~a] = l_mid[~a]
 
-    return (l_low + l_high) / 2
+    return x_0 + l_low * u
