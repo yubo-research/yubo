@@ -40,7 +40,7 @@ def test_utils():
 
 
 def test_farthest_neighbor():
-    import numpy as np
+    # import numpy as np
 
     from sampling.knn_tools import farthest_neighbor, random_direction
 
