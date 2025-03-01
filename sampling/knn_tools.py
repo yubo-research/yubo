@@ -10,8 +10,9 @@ def _idx_nearest_neighbor(enn, x: np.array):
     num_dim = x.shape[-1]
     dists_bdy = []
     for i in range(num_dim):
-        dists_bdy.append(np.abs(1 - x))
-        dists_bdy.append(np.abs(-1 - x))
+        dists_bdy.append(np.abs(1 - x).min())
+        dists_bdy.append(np.abs(0 - x).min())
+
     dist_bdy = np.min(dists_bdy)
 
     idx, dist = enn.about_neighbors(x, k=1)
@@ -41,6 +42,8 @@ def farthest_neighbor(enn, x_0: np.array, u: np.array, eps_bound: float = 1e-6):
     l_high = np.ones(shape=(num_samples, 1))
 
     idx_0 = enn.idx_x(x_0)
+    if len(idx_0) == 0:
+        assert False, "Can't find x_0 in training data for ENN"
     assert len(idx_0) == 1
 
     def _is_neighbor(x):

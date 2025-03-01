@@ -2,6 +2,7 @@ import numpy as np
 import torch
 
 from model.enn import EpsitemicNearestNeighbors
+from sampling.knn_tools import farthest_neighbor, random_direction
 
 
 class AcqVHD:
@@ -11,6 +12,7 @@ class AcqVHD:
         self._Y_train = np.asarray(Y_train)
 
         self._num_samples = num_samples
+        self._num_dim = self._X_train.shape[-1]
 
         if len(self._X_train) > 0:
             self._enn = EpsitemicNearestNeighbors(self._X_train, self._Y_train, k=1)
@@ -19,30 +21,27 @@ class AcqVHD:
             self._enn = None
             self._enn_ts = None
 
-    def _get_max(self):
+    def get_max(self):
         assert len(self._X_train) > 0
-        if False:  # tODO: study noisy observations self._enn_ts:
+        if False:  # TODO: study noisy observations self._enn_ts:
             Y = self._enn_ts(self._X_train).sample()
         else:
             Y = self._Y_train
 
         i = np.random.choice(np.where(Y == Y.max())[0])
-        return self._X_train[i, :]
+        return self._X_train[[i], :]
 
     def draw(self, num_arms):
+        assert num_arms == 1, num_arms
+
         if len(self._X_train) == 0:
-            # TODO: Sobol or LHD
-            return np.random.uniform(size=(num_arms, self._X_train.shape[-1]))
+            # TODO: Sobol or LHD ?
+            return 0.5 + np.zeros(shape=(1, self._num_dim))
 
         # TODO: study noisy observations;  move X_0 inside loop
         # X_0 = np.tile(self._get_max(), reps=(self._num_samples, 1))
 
-        X_a = []
-        for _ in range(num_arms):
-            # TODO: farthest_neighbor(), N times
-            # TODO: Choose N that maximizes distance; L2? L1? L1/2? log(1+|dx|)?
-            # X_cand = None
-            # X_a.append(X_cand[i])
-            assert False, "NYI"
-
-        return np.array(X_a)
+        x_0 = self.get_max()
+        assert len(x_0.shape) == 2, x_0.shape
+        u = random_direction(self._num_dim)
+        return farthest_neighbor(self._enn, x_0, u)
