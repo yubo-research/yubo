@@ -33,7 +33,8 @@ class EpsitemicNearestNeighbors:
         self._var_scale = 1.0
 
     def idx_x(self, x):
-        return np.unique(np.where(self._train_x == x)[0])
+        idxs = [np.unique(np.where(self._train_x == x[i])[0]) for i in range(x.shape[0])]
+        return np.array(idxs)
 
     def about_neighbors(self, x, k=None):
         if k is None:

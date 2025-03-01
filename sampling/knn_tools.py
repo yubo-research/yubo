@@ -7,22 +7,15 @@ def random_direction(num_dim):
 
 
 def _idx_nearest_neighbor(enn, x: np.array):
-    num_dim = x.shape[-1]
-    dists_bdy = []
-    for i in range(num_dim):
-        dists_bdy.append(np.abs(1 - x).min())
-        dists_bdy.append(np.abs(0 - x).min())
+    num_samples, num_dim = x.shape
 
-    dist_bdy = np.min(dists_bdy)
+    dist_bdy = np.minimum(np.abs(1 - x).min(axis=1), np.abs(0 - x).min(axis=1))
 
     idx, dist = enn.about_neighbors(x, k=1)
-    if len(idx) != 1:
-        breakpoint()
-    assert len(idx) == 1, (idx, dist)
+    assert len(idx) == num_samples, (idx, dist)
 
-    if dist[0] < dist_bdy:
-        return idx[0]
-    return -1
+    idx[dist > dist_bdy] = -1
+    return idx
 
 
 def farthest_neighbor(enn, x_0: np.array, u: np.array, eps_bound: float = 1e-6):
@@ -41,10 +34,9 @@ def farthest_neighbor(enn, x_0: np.array, u: np.array, eps_bound: float = 1e-6):
     l_low = np.zeros(shape=(num_samples, 1))
     l_high = np.ones(shape=(num_samples, 1))
 
-    idx_0 = enn.idx_x(x_0)
-    if len(idx_0) == 0:
+    idx_0 = enn.idx_x(x_0).flatten()
+    if len(idx_0) != num_samples:
         assert False, "Can't find x_0 in training data for ENN"
-    assert len(idx_0) == 1
 
     def _is_neighbor(x):
         return _idx_nearest_neighbor(enn, x) == idx_0
@@ -54,6 +46,7 @@ def farthest_neighbor(enn, x_0: np.array, u: np.array, eps_bound: float = 1e-6):
         x_mid = x_0 + l_mid * u
         x_mid = np.maximum(0, np.minimum(1, x_mid))
         a = _is_neighbor(x_mid)
+
         l_low[a] = l_mid[a]
         l_high[~a] = l_mid[~a]
 
