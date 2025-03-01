@@ -15,64 +15,67 @@ class ENNNormal:
 
 class EpsitemicNearestNeighbors:
     # TODO: train_YVar
-    def __init__(self, train_X, train_Y, k):
-        assert len(train_X) == len(train_Y), (len(train_X), len(train_Y))
-        assert train_X.ndim == train_Y.ndim == 2, (train_X.ndim, train_Y.ndim)
+    def __init__(self, train_x, train_y, k):
+        assert len(train_x) == len(train_y), (len(train_x), len(train_y))
+        assert train_x.ndim == train_y.ndim == 2, (train_x.ndim, train_y.ndim)
 
-        self._train_X = train_X
-        self._train_Y = train_Y
-        self._num_obs, self._num_dim = self._train_X.shape
-        self._num_metrics = self._train_Y.shape[-1]
+        self._train_x = train_x
+        self._train_y = train_y
+        self._num_obs, self._num_dim = self._train_x.shape
+        self._num_metrics = self._train_y.shape[-1]
         self.k = k
-        self._index = faiss.IndexFlatL2(train_X.shape[-1])
-        self._index.add(train_X)
+        self._index = faiss.IndexFlatL2(train_x.shape[-1])
+        self._index.add(train_x)
         self._eps_var = 1e-9
 
         # Maybe tune this on a sample of data
-        #  if you want calibrated uncertainty estimates.
+        #  if you want (somewhat) calibrated uncertainty estimates.
         self._var_scale = 1.0
 
-    def idx_neighbors(self, X, k=None):
+    def idx_x(self, x):
+        return np.unique(np.where(self._train_x == x)[0])
+
+    def about_neighbors(self, x, k=None):
         if k is None:
             k = self.k
 
-        if len(self._train_X) == 0:
-            return np.empty(shape=(0,), dtype=np.int64)
+        if len(self._train_x) == 0:
+            return np.empty(shape=(0,), dtype=np.int64), np.empty(shape=(0,), dtype=np.float64)
 
-        _, idx = self._index.search(X, k=k)
-        return idx.flatten()
+        dists, idx = self._index.search(x, k=k)
+        return idx.flatten(), dists.flatten()
 
-    def neighbors(self, X, k=None):
-        idx = self.idx_neighbors(X, k)
-        return self._train_X[idx]
+    def neighbors(self, x, k=None):
+        idx, _ = self.about_neighbors(x, k)
+        return self._train_x[idx]
 
     def __call__(self, X, k=None):
         return self.posterior(X)
 
-    def posterior(self, X, k=None):
+    def posterior(self, x, k=None):
         # X ~ num_batch X num_dim
 
-        assert len(X.shape) == 2, ("NYI: Joint sampling", X.shape)
-        b, d = X.shape
+        assert len(x.shape) == 2, ("NYI: Joint sampling", x.shape)
+        b, d = x.shape
         assert d == self._num_dim, (d, self._num_dim)
         q = 1
 
-        if self._train_X.shape[0] == 0:
-            mu = 0 * (X.sum(-1))
-            vvar = 1 + 0 * (X.sum(-1))
+        if self._train_x.shape[0] == 0:
+            mu = 0 * (x.sum(-1))
+            vvar = 1 + 0 * (x.sum(-1))
             return ENNNormal(
                 mu.squeeze(0),
                 np.sqrt(vvar.squeeze(0)),
             )
 
-        dists, idx = self._index.search(X, k=self.k)
-        mu = self._train_Y[idx]
+        dists, idx = self._index.search(x, k=self.k)
+        mu = self._train_y[idx]
         assert mu.shape == (b, self.k, self._num_metrics), (mu.shape, b, self.k, self._num_metrics)
         vvar = np.expand_dims(dists, axis=-1)
         assert vvar.shape == (b, self.k, self._num_metrics), (vvar.shape, b, self.k, self._num_metrics)
 
         w = 1.0 / (self._eps_var + vvar)
-        assert np.all(np.isfinite(w)), (w, X)
+        assert np.all(np.isfinite(w)), (w, x)
         norm = w.sum(axis=1)
         # sum over k neighbors
         mu = (w * mu).sum(axis=1) / norm
