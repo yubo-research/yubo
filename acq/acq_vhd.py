@@ -2,7 +2,6 @@ import numpy as np
 import torch
 
 from model.enn import EpsitemicNearestNeighbors
-from sampling.scale_free_sampler import scale_free_sampler
 
 
 class AcqVHD:
@@ -36,7 +35,7 @@ class AcqVHD:
             return np.random.uniform(size=(num_arms, self._X_train.shape[-1]))
 
         # TODO: study noisy observations;  move X_0 inside loop
-        X_0 = np.tile(self._get_max(), reps=(self._num_samples, 1))
+        # X_0 = np.tile(self._get_max(), reps=(self._num_samples, 1))
 
         X_a = []
         for _ in range(num_arms):

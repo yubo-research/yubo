@@ -32,7 +32,24 @@ class EpsitemicNearestNeighbors:
         #  if you want calibrated uncertainty estimates.
         self._var_scale = 1.0
 
-    def __call__(self, X):
+    def idx_neighbors(self, X, k=None):
+        if k is None:
+            k = self.k
+
+        if len(self._train_X) == 0:
+            return np.empty(shape=(0,), dtype=np.int64)
+
+        _, idx = self._index.search(X, k=k)
+        return idx.flatten()
+
+    def neighbors(self, X, k=None):
+        idx = self.idx_neighbors(X, k)
+        return self._train_X[idx]
+
+    def __call__(self, X, k=None):
+        return self.posterior(X)
+
+    def posterior(self, X, k=None):
         # X ~ num_batch X num_dim
 
         assert len(X.shape) == 2, ("NYI: Joint sampling", X.shape)
