@@ -15,6 +15,7 @@ class ENNNormal:
 
 class EpsitemicNearestNeighbors:
     # TODO: train_YVar
+    # TODO: Standardize y so that distance-based uncertainties make (some) sense
     def __init__(self, train_x, train_y, k):
         assert len(train_x) == len(train_y), (len(train_x), len(train_y))
         assert train_x.ndim == train_y.ndim == 2, (train_x.ndim, train_y.ndim)

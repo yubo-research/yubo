@@ -35,6 +35,32 @@ class _EmptyTransform(Module):
         return posterior
 
 
+def standardize_torch(Y):
+    # TODO: Standardize Yvar, too
+    assert len(Y.shape) == 2, Y.shape
+    if len(Y) == 0:
+        return Y
+    if len(Y) == 1:
+        return 0 * Y
+    return standardize(Y)
+
+
+# def standardize_np(y: np.ndarray):
+#     assert len(y.shape) == 2, y.shape
+#     assert y.shape[-1] == 1, y.shape
+
+#     if len(y) == 0:
+#         return y
+#     if len(y) == 1:
+#         return 0 * y
+
+#     norm = y.std(axis=0)
+#     norm[norm == 0] = 1
+#     y = (y - y.mean(axis=0)) / norm
+#     y[norm == 0] = 0
+#     return y
+
+
 def _parse_spec(model_spec):
     model_type = None
     input_warping = None
@@ -134,7 +160,7 @@ def fit_gp_XY(X, Y, model_spec=None):
         assert output_warping == "none", output_warping
         outcome_warp = None
 
-    Y = standardize(Y).to(X)
+    Y = standardize_torch(Y).to(X)
 
     a = torch.tensor(1.0, dtype=torch.double)
     a.requires_grad = True
