@@ -41,7 +41,9 @@ class Optimizer:
             noise_seed = 0
         else:
             noise_seed = self._i_noise
+            self._i_noise += 1
         noise_seed += self._env_conf.noise_seed_0 + denoise_seed
+
         return collect_trajectory(self._env_conf, policy, noise_seed=noise_seed)
 
     def _collect_denoised_trajectory(self, policy):
@@ -100,7 +102,7 @@ class Optimizer:
 
     def iterate(self):
         designer = self._opt_designers[min(len(self._opt_designers) - 1, self._i_iter)]
-        self._i_noise += 1
+
         data, dt_proposing = self._iterate(designer, self._num_arms)
 
         ret_batch = []

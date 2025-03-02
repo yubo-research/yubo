@@ -12,6 +12,7 @@ from problems.env_conf import default_policy, get_env_conf
 
 
 def sample_1(env_conf, opt_name, num_rounds, num_arms, num_denoise, b_trace=True):
+    print("PROBLEM_SEED:", env_conf.problem_seed)
     seed_all(env_conf.problem_seed + 27)
 
     if torch.cuda.is_available():
@@ -98,7 +99,7 @@ def mk_replicates(d_args):
 
     out_dir = (
         f"{d_args['exp_dir']}/env={d_args['env_tag']}--opt_name={d_args['opt_name']}--num_arms={d_args['num_arms']}"
-        f"--num_rounds={d_args['num_rounds']}--num_reps={d_args['num_reps']}--num_denoise={d_args.get('num_denoise',None)}"
+        f"--num_rounds={d_args['num_rounds']}--num_reps={d_args['num_reps']}--num_denoise={d_args.get('num_denoise', None)}"
     )
 
     os.makedirs(out_dir, exist_ok=True)

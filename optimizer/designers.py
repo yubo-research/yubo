@@ -21,6 +21,7 @@ from .ax_designer import AxDesigner
 from .bt_designer import BTDesigner
 from .center_designer import CenterDesigner
 from .cma_designer import CMAESDesigner
+from .lhd_designer import LHDDesigner
 from .mcmc_bo_designer import MCMCBODesigner
 from .optuna_designer import OptunaDesigner
 from .random_designer import RandomDesigner
@@ -110,6 +111,8 @@ class Designers:
             return RandomDesigner(self._policy)
         elif designer_name == "sobol":
             return SobolDesigner(self._policy)
+        elif designer_name == "lhd":
+            return LHDDesigner(self._policy)
         elif designer_name == "btsobol":
             return bt_designer(AcqSobol)
         elif designer_name == "center":
@@ -346,7 +349,7 @@ class Designers:
             return VHDDesigner(
                 self._policy,
                 k=k,
-                num_candidates_per_arm=64,
+                num_candidates_per_arm=100,
             )
 
         # Long sobol init, sequential opt

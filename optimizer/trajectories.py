@@ -41,6 +41,7 @@ def collect_trajectory(env_conf, policy, noise_seed=None, show_frames=False):
         plt.title(f"i_iter = {i_iter} return = {return_trajectory:.2f}")
         plt.show()
 
+    # print("NOISE_SEED:", noise_seed)
     state, _ = env.reset(seed=noise_seed)
     if b_gym:
         max_steps = env_conf.gym_conf.max_steps

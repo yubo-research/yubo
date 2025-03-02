@@ -18,6 +18,7 @@ def get_env_conf(tag, problem_seed=None, noise_level=None, noise_seed_0=None):
     if ":" in tag:
         x = tag.split(":")
         opt = x[-1]
+        # Ex: tlunar:fn
         if opt == "fn":
             frozen_noise = True
             tag = ":".join(x[:-1])
@@ -56,11 +57,18 @@ class GymConf:
 @dataclass
 class EnvConf:
     env_name: str
+    # Problem seed is changed once per repetition.
+    # It is fixed for the duration of the optimization (all rounds).
     problem_seed: int
     policy_class: Any = None
 
     noise_level: float = None
+    # The noise seed is changed once per run if num_denoise>0.
+    # num_denoise=1 by default.
     noise_seed_0: int = None
+
+    # If noise is frozen, then the same set of noise seeds
+    #  is used in the denoising runs on every round.
     frozen_noise: bool = True
 
     gym_conf: GymConf = None
