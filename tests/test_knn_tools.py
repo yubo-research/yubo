@@ -17,12 +17,12 @@ def _set_up_enn():
 def test_utils():
     import numpy as np
 
-    from sampling.knn_tools import _idx_nearest_neighbor, random_direction
+    from sampling.knn_tools import _idx_nearest_neighbor, random_directions
 
     num_dim, n, train_x, train_y, k, enn = _set_up_enn()
 
-    u = random_direction(num_dim)
-    assert len(u) == num_dim
+    u = random_directions(1, num_dim)
+    assert u.shape == (1, num_dim)
 
     found_bdy = False
     found_x = False
@@ -42,12 +42,12 @@ def test_utils():
 def test_farthest_neighbor():
     import numpy as np
 
-    from sampling.knn_tools import farthest_neighbor, random_direction
+    from sampling.knn_tools import farthest_neighbor, random_directions
 
     num_dim, n, train_x, train_y, k, enn = _set_up_enn()
 
     # farthest_neighbor(enn, x_0: np.array, u: np.array, eps_bound: float = 1e-6):
-    u = random_direction(num_dim)
+    u = random_directions(1, num_dim)
     x_fn = farthest_neighbor(enn, train_x[[0]], u)
     assert np.all(enn.neighbors(x_fn, k=1) == train_x[[0]])
 
@@ -55,11 +55,15 @@ def test_farthest_neighbor():
 def test_farthest_neighbor_n():
     import numpy as np
 
-    from sampling.knn_tools import farthest_neighbor, random_direction
+    from sampling.knn_tools import farthest_neighbor, random_directions
 
     num_dim, n, train_x, train_y, k, enn = _set_up_enn()
 
-    u = random_direction(num_dim)
+    u = random_directions(3, num_dim)
+
+    x_fn_1 = farthest_neighbor(enn, train_x[[1]], u[[1]])
+
     x_fn = farthest_neighbor(enn, train_x[:3], u)
+    assert np.abs(x_fn[[1]] - x_fn_1).mean() < 1e-4
     for i in range(x_fn.shape[0]):
         assert np.all(enn.neighbors(x_fn[[i]], k=1) == train_x[[i]])

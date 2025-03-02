@@ -32,9 +32,18 @@ class EpsitemicNearestNeighbors:
         #  if you want (somewhat) calibrated uncertainty estimates.
         self._var_scale = 1.0
 
+    def _idx_x_1(self, x):
+        idx = np.where(np.all(self._train_x == x, axis=1))[0]
+        if len(idx) != 1:
+            # TODO: handle duplicates
+            idx = idx[[0]]
+        return idx
+
     def idx_x(self, x):
-        idxs = [np.unique(np.where(self._train_x == x[i])[0]) for i in range(x.shape[0])]
-        return np.array(idxs)
+        idxs = [self._idx_x_1(x[i]) for i in range(x.shape[0])]
+        idxs = np.array(idxs)
+        assert len(idxs.flatten()) == x.shape[0]
+        return idxs
 
     def about_neighbors(self, x, k=None):
         if k is None:

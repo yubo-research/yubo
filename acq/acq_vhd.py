@@ -2,7 +2,8 @@ import numpy as np
 import torch
 
 from model.enn import EpsitemicNearestNeighbors
-from sampling.knn_tools import farthest_neighbor, random_direction
+from sampling.knn_tools import farthest_neighbor, random_directions
+from sampling.lhd import latin_hypercube_design
 
 
 class AcqVHD:
@@ -32,18 +33,18 @@ class AcqVHD:
         return self._X_train[[i], :]
 
     def draw(self, num_arms):
-        assert num_arms == 1, num_arms
-
         if len(self._X_train) == 0:
-            # TODO: Sobol or LHD ?
-            return 0.5 + np.zeros(shape=(1, self._num_dim))
+            # return np.random.uniform(size=(num_arms, self._num_dim))
+            if num_arms == 1:
+                return 0.5 + np.zeros(shape=(num_arms, self._num_dim))
+            else:
+                return latin_hypercube_design(num_arms, self._num_dim)
 
         # TODO: study noisy observations;  move X_0 inside loop
-        # X_0 = np.tile(self._get_max(), reps=(self._num_samples, 1))
+        x_0 = np.tile(self.get_max(), reps=(num_arms, 1))
+        assert x_0.shape == (num_arms, self._num_dim), x_0.shape
 
-        x_0 = self.get_max()
-        assert len(x_0.shape) == 2, x_0.shape
-        u = random_direction(self._num_dim)
+        u = random_directions(num_arms, self._num_dim)
         x_a = farthest_neighbor(self._enn, x_0, u)
-        assert x_a.min() >= 0.0 and x_a.max() <= 1.0, x_a
+        assert x_a.min() >= 0.0 and x_a.max() <= 1.0, (x_a.min(), x_a.max())
         return x_a

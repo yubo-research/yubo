@@ -1,9 +1,9 @@
 import numpy as np
 
 
-def random_direction(num_dim):
-    u = np.random.normal(size=(num_dim,))
-    return u / np.linalg.norm(u)
+def random_directions(num_samples, num_dim):
+    u = np.random.normal(size=(num_samples, num_dim))
+    return u / np.linalg.norm(u, axis=1, keepdims=True)
 
 
 def _idx_nearest_neighbor(enn, x: np.array):
@@ -50,4 +50,5 @@ def farthest_neighbor(enn, x_0: np.array, u: np.array, eps_bound: float = 1e-6):
         l_low[a] = l_mid[a]
         l_high[~a] = l_mid[~a]
 
-    return x_0 + l_low * u
+    x = x_0 + l_low * u
+    return np.maximum(0, np.minimum(1, x))
