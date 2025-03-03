@@ -1,12 +1,24 @@
 import numpy as np
+from botorch.sampling.qmc import MultivariateNormalQMCEngine
 
 
 def random_directions(num_samples, num_dim):
-    u = np.random.normal(size=(num_samples, num_dim))
+    import torch
+
+    # u = np.random.normal(size=(num_samples, num_dim))
+    u = (
+        MultivariateNormalQMCEngine(
+            mean=torch.zeros(size=(num_dim,)),
+            cov=torch.diag(torch.ones(size=(num_dim,))),
+        )
+        .draw(n=num_samples)
+        .detach()
+        .numpy()
+    )
     return u / np.linalg.norm(u, axis=1, keepdims=True)
 
 
-def _idx_nearest_neighbor(enn, x: np.array):
+def idx_nearest_neighbor(enn, x: np.array):
     num_samples, num_dim = x.shape
 
     dist_bdy = np.minimum(np.abs(1 - x).min(axis=1), np.abs(0 - x).min(axis=1))
@@ -39,7 +51,7 @@ def farthest_neighbor(enn, x_0: np.array, u: np.array, eps_bound: float = 1e-6):
         assert False, "Can't find x_0 in training data for ENN"
 
     def _is_neighbor(x):
-        return _idx_nearest_neighbor(enn, x) == idx_0
+        return idx_nearest_neighbor(enn, x) == idx_0
 
     while (l_high - l_low).max() > eps_bound:
         l_mid = (l_low + l_high) / 2
