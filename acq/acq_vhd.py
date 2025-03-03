@@ -45,7 +45,6 @@ class AcqVHD:
         return x[i]
 
     def draw(self, num_arms):
-        assert num_arms == 1, "NYI"
         if len(self._X_train) == 0:
             x_a = 0.5 + np.zeros(shape=(num_arms, self._num_dim))
             if num_arms == 1:

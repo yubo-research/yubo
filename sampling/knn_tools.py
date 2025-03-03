@@ -5,16 +5,18 @@ from botorch.sampling.qmc import MultivariateNormalQMCEngine
 def random_directions(num_samples, num_dim):
     import torch
 
-    # u = np.random.normal(size=(num_samples, num_dim))
-    u = (
-        MultivariateNormalQMCEngine(
-            mean=torch.zeros(size=(num_dim,)),
-            cov=torch.diag(torch.ones(size=(num_dim,))),
+    if False:
+        u = np.random.normal(size=(num_samples, num_dim))
+    else:
+        u = (
+            MultivariateNormalQMCEngine(
+                mean=torch.zeros(size=(num_dim,)),
+                cov=torch.diag(torch.ones(size=(num_dim,))),
+            )
+            .draw(n=num_samples)
+            .detach()
+            .numpy()
         )
-        .draw(n=num_samples)
-        .detach()
-        .numpy()
-    )
     return u / np.linalg.norm(u, axis=1, keepdims=True)
 
 
