@@ -137,7 +137,7 @@ def sampler(d_args, distributor_fn):
     distributor_fn(all_d_args)
 
 
-def _prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None):
+def prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None):
     # TODO: noise subdir?
     assert noise is None, "NYI"
 
@@ -170,5 +170,5 @@ def prep_d_args(results_dir, exp_dir, funcs, dims, num_arms, num_replications, o
             for opt in opts:
                 for noise in noises:
                     problem = f"{func_category}:{func}-{dim}d"
-                    d_argss.append(_prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise, num_denoise=num_denoise))
+                    d_argss.append(prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise, num_denoise=num_denoise))
     return d_argss

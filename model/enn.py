@@ -9,7 +9,7 @@ class ENNNormal:
     mu: np.ndarray
     se: np.ndarray
 
-    def sample(self, num_samples, clip=1):
+    def sample(self, num_samples, clip=None):
         size = list(self.se.shape)
         size.append(num_samples)
 

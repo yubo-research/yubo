@@ -40,10 +40,10 @@ class AcqVHD:
             i = np.random.choice(np.arange(len(x)), num_arms)
             return x[i]
 
+        y = self._enn_ts.posterior(x).sample(2 * num_arms)
         i_arms = np.array([]).astype(np.int64)
         i_retry = 0
-        while len(i_arms) < num_arms:
-            y = self._enn_ts.posterior(x).sample(num_arms)
+        while len(i_arms) < num_arms and i_retry < 10:
             y[i_arms] = -100
             i = np.where(y == y.max(axis=0, keepdims=True))[0]
             i_arms = np.unique(
@@ -52,7 +52,8 @@ class AcqVHD:
                 )
             )
             i_retry += 1
-            assert i_retry < 3, len(i_arms)
+
+        assert len(i_arms) >= num_arms, (i_retry, len(i_arms), x.shape, num_arms)
 
         i_arms = i_arms[:num_arms].astype(np.int64)
         return x[i_arms]
@@ -73,7 +74,9 @@ class AcqVHD:
 
             u = random_directions(num_near, self._num_dim)
             # TODO: try uniform in cell
-            x_near = farthest_neighbor(self._enn_1, x_0, u)
+            x_fn = farthest_neighbor(self._enn_1, x_0, u)
+            alpha = np.random.uniform(size=x_0.shape)
+            x_near = (1 - alpha) * x_0 + alpha * x_fn
 
             assert x_near.min() >= 0.0 and x_near.max() <= 1.0, (x_near.min(), x_near.max())
 

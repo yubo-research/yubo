@@ -17,7 +17,9 @@ def mk_image():
     tsroots==0.1.21
     faiss-cpu==1.9.0
     git+https://github.com/chebpy/chebpy.git
-    """.split("\n")
+    """.split(
+        "\n"
+    )
     sreqs = []
     for req in reqs:
         req = req.strip()

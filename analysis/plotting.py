@@ -111,7 +111,7 @@ def filled_err(ys, x=None, color="#AAAAAA", alpha=0.5, marker=None, linestyle="-
         sg = sg / np.sqrt(ys.shape[0])
     if two:
         sg *= 2
-    ax.fill_between(x, mu - sg, mu + sg, color=color, alpha=alpha, linewidth=1, label="_nolegend_")
+    ax.fill_between(x, mu - sg, mu + sg, color=color, alpha=alpha, linewidth=1, label="_")
     ax.plot(x, mu, color=color_line, marker=marker, linestyle=linestyle)
 
 
