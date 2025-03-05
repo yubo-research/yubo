@@ -9,13 +9,13 @@ class ENNNormal:
     mu: np.ndarray
     se: np.ndarray
 
-    def sample(self, num_samples, clip=None):
+    def sample(self, num_samples, clip=1):
         size = list(self.se.shape)
         size.append(num_samples)
 
         eps = np.random.normal(size=size)
         if clip is not None:
-            eps = clip(eps, a_min=-clip, a_max=clip)
+            eps = np.clip(eps, a_min=-clip, a_max=clip)
 
         return np.expand_dims(self.mu, -1) + np.expand_dims(self.se, -1) * eps
 
