@@ -10,8 +10,10 @@ class ENNNormal:
     se: np.ndarray
 
     def sample(self, num_samples):
-        size = np.tile(self.se.expand_dims(-1), reps=num_samples)
-        return self.mu + self.se * np.random.normal(size=size)
+        size = list(self.se.shape)
+        size.append(num_samples)
+
+        return np.expand_dims(self.mu, -1) + np.expand_dims(self.se, -1) * np.random.normal(size=size)
 
 
 class EpsitemicNearestNeighbors:

@@ -1,13 +1,3 @@
-# def test_enn_posterior():
-#     import numpy as np
-#     from model.enn import ENNNormal
-
-#     num_dim = 3
-#     n = 10
-#     ennn = ENNNormal(mu=np.random.normal(size=(1,num_dim)), se=np.random.uniform(size=(1,num_dim)))
-#     assert ennn.sample(num_samples=1).shape == (n, num_dim, 1)
-
-
 def set_up_enn():
     import numpy as np
 
@@ -25,6 +15,20 @@ def set_up_enn():
 
     enn = EpsitemicNearestNeighbors(train_x, train_y, k=k)
     return num_dim, n, train_x, train_y, k, enn
+
+
+def test_enn_posterior():
+    import numpy as np
+
+    from model.enn import ENNNormal
+
+    num_dim, n, train_x, train_y, k, enn = set_up_enn()
+
+    num_dim = 3
+    ennn = ENNNormal(mu=np.random.normal(size=(1, num_dim)), se=np.random.uniform(size=(1, num_dim)))
+    assert ennn.sample(num_samples=1).shape == (1, num_dim, 1)
+    assert ennn.sample(num_samples=2).shape == (1, num_dim, 2)
+    assert ennn.sample(num_samples=100).shape == (1, num_dim, 100)
 
 
 def test_enn():
