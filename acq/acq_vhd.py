@@ -42,7 +42,7 @@ class AcqVHD:
 
         y = self._enn_ts.posterior(x).sample(num_arms)
 
-        i = np.where(y == y.max(axis=0, keepdims=True))[0]
+        i = np.random.choice(np.where(y == y.max(axis=0, keepdims=True))[0])
         return x[i]
 
     def draw(self, num_arms):
