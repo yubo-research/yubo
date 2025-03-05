@@ -1,19 +1,3 @@
-def set_up_enn():
-    import numpy as np
-
-    from model.enn import EpsitemicNearestNeighbors
-
-    num_dim = 5
-    n = 10
-    train_x = np.random.uniform(size=(n, num_dim))
-    train_y = np.random.normal(size=(n, 1))
-
-    k = 3
-
-    enn = EpsitemicNearestNeighbors(train_x, train_y, k=k)
-    return num_dim, n, train_x, train_y, k, enn
-
-
 def test_random_directions():
     from sampling.knn_tools import random_directions
 
@@ -24,7 +8,9 @@ def test_random_directions():
 def test_utils():
     import numpy as np
 
-    from sampling.knn_tools import idx_nearest_neighbor, random_directions
+    from sampling.knn_tools import nearest_neighbor, random_directions
+
+    from .test_enn import set_up_enn
 
     num_dim, n, train_x, train_y, k, enn = set_up_enn()
 
@@ -35,7 +21,7 @@ def test_utils():
     found_x = False
     for _ in range(100):
         x = np.random.uniform(size=(1, num_dim))
-        idx_nn = idx_nearest_neighbor(enn, x)
+        idx_nn, _ = nearest_neighbor(enn, x)
         if idx_nn == -1:
             found_bdy = True
         else:
@@ -51,6 +37,8 @@ def test_farthest_neighbor():
 
     from sampling.knn_tools import farthest_neighbor, random_directions
 
+    from .test_enn import set_up_enn
+
     num_dim, n, train_x, train_y, k, enn = set_up_enn()
 
     # farthest_neighbor(enn, x_0: np.array, u: np.array, eps_bound: float = 1e-6):
@@ -63,6 +51,8 @@ def test_farthest_neighbor_n():
     import numpy as np
 
     from sampling.knn_tools import farthest_neighbor, random_directions
+
+    from .test_enn import set_up_enn
 
     num_dim, n, train_x, train_y, k, enn = set_up_enn()
 

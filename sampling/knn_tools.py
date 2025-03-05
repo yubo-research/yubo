@@ -20,7 +20,7 @@ def random_directions(num_samples, num_dim):
     return u / np.linalg.norm(u, axis=1, keepdims=True)
 
 
-def idx_nearest_neighbor(enn, x: np.array):
+def nearest_neighbor(enn, x: np.array):
     num_samples, num_dim = x.shape
 
     dist_bdy = np.minimum(np.abs(1 - x).min(axis=1), np.abs(0 - x).min(axis=1))
@@ -28,11 +28,19 @@ def idx_nearest_neighbor(enn, x: np.array):
     idx, dist = enn.about_neighbors(x, k=1)
     assert len(idx) == num_samples, (idx, dist)
 
-    idx[dist > dist_bdy] = -1
-    return idx
+    i = dist > dist_bdy
+    idx[i] = -1
+    dist[i] = dist_bdy[i]
+    return idx, dist
 
 
-def farthest_neighbor(enn, x_0: np.array, u: np.array, eps_bound: float = 1e-6):
+def most_isolated(enn, x: np.ndarray):
+    _, dists = nearest_neighbor(enn, x)
+    i = np.where(dists == dists.max())[0]
+    return x[i]
+
+
+def farthest_neighbor(enn, x_0: np.ndarray, u: np.ndarray, eps_bound: float = 1e-6):
     """
     Find the farthest point from x_0 along direction u that still has x_0 as its nearest neighbor.
     Alternatively, find the boundary of the Vornoi cell that has x_0 as its center.
@@ -53,7 +61,7 @@ def farthest_neighbor(enn, x_0: np.array, u: np.array, eps_bound: float = 1e-6):
         assert False, "Can't find x_0 in training data for ENN"
 
     def _is_neighbor(x):
-        return idx_nearest_neighbor(enn, x) == idx_0
+        return nearest_neighbor(enn, x)[0] == idx_0
 
     while (l_high - l_low).max() > eps_bound:
         l_mid = (l_low + l_high) / 2
@@ -65,4 +73,6 @@ def farthest_neighbor(enn, x_0: np.array, u: np.array, eps_bound: float = 1e-6):
         l_high[~a] = l_mid[~a]
 
     x = x_0 + l_low * u
-    return np.maximum(0, np.minimum(1, x))
+    x = np.maximum(0, np.minimum(1, x))
+    # assert np.all(_is_neighbor(x)), (idx_0, enn.about_neighbors(x, k=1))
+    return x

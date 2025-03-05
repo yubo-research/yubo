@@ -9,8 +9,9 @@ class ENNNormal:
     mu: np.ndarray
     se: np.ndarray
 
-    def sample(self):
-        return self.mu + self.se * np.random.normal(size=self.se.shape)
+    def sample(self, num_samples):
+        size = np.tile(self.se.expand_dims(-1), reps=num_samples)
+        return self.mu + self.se * np.random.normal(size=size)
 
 
 class EpsitemicNearestNeighbors:
@@ -32,11 +33,21 @@ class EpsitemicNearestNeighbors:
         #  if you want (somewhat) calibrated uncertainty estimates.
         self._var_scale = 1.0
 
+    def add(self, x, y):
+        self._index.add(x)
+        self._train_x = np.append(self._train_x, x)
+        self._train_y = np.append(self._train_y, y)
+
+    def __len__(self):
+        return self._index.ntotal
+
     def _idx_x_1(self, x):
         idx = np.where(np.all(self._train_x == x, axis=1))[0]
-        if len(idx) != 1:
-            # TODO: handle duplicates
+        if len(idx) > 1:
+            # TODO: handle duplicates if needed
             idx = idx[[0]]
+        elif len(idx) == 0:
+            return None
         return idx
 
     def idx_x(self, x):

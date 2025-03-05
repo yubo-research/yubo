@@ -3,7 +3,7 @@ def test_find_max_distance():
 
     from acq.acq_vhd import find_farthest_neighbor
 
-    from .test_knn_tools import set_up_enn
+    from .test_enn import set_up_enn
 
     num_dim, n, train_x, train_y, k, enn = set_up_enn()
     x_0 = train_x[[0]]

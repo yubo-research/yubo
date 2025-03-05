@@ -1,4 +1,14 @@
-def test_enn():
+# def test_enn_posterior():
+#     import numpy as np
+#     from model.enn import ENNNormal
+
+#     num_dim = 3
+#     n = 10
+#     ennn = ENNNormal(mu=np.random.normal(size=(1,num_dim)), se=np.random.uniform(size=(1,num_dim)))
+#     assert ennn.sample(num_samples=1).shape == (n, num_dim, 1)
+
+
+def set_up_enn():
     import numpy as np
 
     from model.enn import EpsitemicNearestNeighbors
@@ -11,14 +21,28 @@ def test_enn():
     train_x[1] = train_x[2]
     train_y[1] = train_y[2]
 
-    x = np.random.uniform(size=(1, num_dim))
     k = 3
 
     enn = EpsitemicNearestNeighbors(train_x, train_y, k=k)
+    return num_dim, n, train_x, train_y, k, enn
 
-    assert np.all(enn.idx_x(train_x[1]) == [1, 2])
-    assert enn.idx_x(train_x[3]) == 3
-    assert len(enn.idx_x(x)) == 0
+
+def test_enn():
+    import numpy as np
+
+    from model.enn import EpsitemicNearestNeighbors
+
+    num_dim, n, train_x, train_y, k, enn = set_up_enn()
+
+    x = np.random.uniform(size=(1, num_dim))
+
+    # If duplicates, you just get the first one
+    #  so that knn_tools.farthest_neighbor()
+    #  functions properly.
+    assert np.all(enn.idx_x(train_x[[1]]) == [1])
+    assert enn.idx_x(train_x[[3]]) == 3
+    assert len(enn.idx_x(x)) == 1
+    assert np.all(enn.idx_x(x) == [None])
 
     assert len(enn.about_neighbors(x)[0]) == k
     assert enn.neighbors(x).shape == (k, num_dim)
