@@ -40,10 +40,22 @@ class AcqVHD:
             i = np.random.choice(np.arange(len(x)), num_arms)
             return x[i]
 
-        y = self._enn_ts.posterior(x).sample(num_arms)
+        i_arms = np.array([]).astype(np.int64)
+        i_retry = 0
+        while len(i_arms) < num_arms:
+            y = self._enn_ts.posterior(x).sample(num_arms)
+            y[i_arms] = -100
+            i = np.where(y == y.max(axis=0, keepdims=True))[0]
+            i_arms = np.unique(
+                np.concatenate(
+                    (i_arms, i),
+                )
+            )
+            i_retry += 1
+            assert i_retry < 3, len(i_arms)
 
-        i = np.random.choice(np.where(y == y.max(axis=0, keepdims=True))[0])
-        return x[i]
+        i_arms = i_arms[:num_arms].astype(np.int64)
+        return x[i_arms]
 
     def draw(self, num_arms):
         num_candidates = self._num_candidates_per_arm * num_arms
