@@ -342,7 +342,7 @@ class Designers:
             return VHDDesigner(
                 self._policy,
                 k=0,
-                num_candidates_per_arm=1,
+                num_candidates_per_arm=1000,
             )
         elif designer_name.startswith("vhd-"):
             k = int(designer_name.split("-")[1])

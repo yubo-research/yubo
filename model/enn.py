@@ -9,11 +9,15 @@ class ENNNormal:
     mu: np.ndarray
     se: np.ndarray
 
-    def sample(self, num_samples):
+    def sample(self, num_samples, clip=None):
         size = list(self.se.shape)
         size.append(num_samples)
 
-        return np.expand_dims(self.mu, -1) + np.expand_dims(self.se, -1) * np.random.normal(size=size)
+        eps = np.random.normal(size=size)
+        if clip is not None:
+            eps = clip(eps, a_min=-clip, a_max=clip)
+
+        return np.expand_dims(self.mu, -1) + np.expand_dims(self.se, -1) * eps
 
 
 class EpsitemicNearestNeighbors:

@@ -36,12 +36,13 @@ class AcqVHD:
         return self._X_train[[i], :]
 
     def _thompson_sample(self, x, num_arms):
-        # num_dim = x.shape[-1]
+        if self._enn_ts is None:
+            i = np.random.choice(np.arange(len(x)), num_arms)
+            return x[i]
 
         y = self._enn_ts.posterior(x).sample(num_arms)
-        breakpoint()
 
-        i = np.where(y == y.max(axis=1, keepdims=True))
+        i = np.where(y == y.max(axis=0, keepdims=True))[0]
         return x[i]
 
     def draw(self, num_arms):
@@ -67,7 +68,6 @@ class AcqVHD:
             x_far = np.random.uniform(size=(num_far, self._num_dim))
 
             x_cand = np.append(x_near, x_far, axis=0)
-
             x_a = self._thompson_sample(x_cand, num_arms)
 
         assert len(x_a) == num_arms, (len(x_a), num_arms)
