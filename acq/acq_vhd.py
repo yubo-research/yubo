@@ -3,15 +3,17 @@ import torch
 
 from model.enn import EpsitemicNearestNeighbors
 from sampling.knn_tools import farthest_neighbor, random_directions
+from sampling.lhd import latin_hypercube_design
 
 
 class AcqVHD:
     # TODO: Yvar
-    def __init__(self, X_train: torch.Tensor, Y_train: torch.Tensor, *, k: int = 1, num_candidates_per_arm=100):
+    def __init__(self, X_train: torch.Tensor, Y_train: torch.Tensor, *, k: int = 1, num_candidates_per_arm=100, lhd=False):
         self._X_train = np.asarray(X_train)
         self._Y_train = np.asarray(Y_train)
 
         self._num_candidates_per_arm = num_candidates_per_arm
+        self._lhd = lhd
         self._num_dim = self._X_train.shape[-1]
         self._seed = np.random.randint(0, 9999)
 
@@ -63,7 +65,10 @@ class AcqVHD:
 
         if len(self._X_train) == 0:
             x_c = 0.5 + np.zeros(shape=(1, self._num_dim))
-            xs = np.random.uniform(size=(num_arms - 1, self._num_dim))
+            if self._lhd:
+                xs = latin_hypercube_design(num_arms - len(x_c), self._num_dim, seed=self._seed + len(self._X_train) + 1)
+            else:
+                xs = np.random.uniform(size=(num_arms - len(x_c), self._num_dim))
             x_a = np.append(x_c, xs, axis=0)
         else:
             num_near = num_candidates // 2
