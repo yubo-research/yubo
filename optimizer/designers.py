@@ -344,19 +344,19 @@ class Designers:
                 k=0,
                 num_candidates_per_arm=100,
             )
-        elif designer_name.startswith("vhd-lhd"):
+        elif designer_name.startswith("vhd-sts"):
             return VHDDesigner(
                 self._policy,
                 k=2,
                 num_candidates_per_arm=100,
-                lhd=True,
+                sts=True,
             )
         elif designer_name.startswith("vhd-"):
             k = int(designer_name.split("-")[1])
             return VHDDesigner(
                 self._policy,
                 k=k,
-                num_candidates_per_arm=100,
+                num_candidates_per_arm=10,
             )
 
         # Long sobol init, sequential opt

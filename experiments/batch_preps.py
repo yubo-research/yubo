@@ -303,7 +303,7 @@ def prep_vhd_seq(results_dir):
 def prep_vhd_tlunar(results_dir):
     exp_dir = "exp_vhd_rl"
 
-    opts = ["vhd-lhd", "vhd-rs", "vhd-1", "vhd-2", "vhd-3", "random", "turbo-1", "optuna", "cma"]
+    opts = ["vhd-rs", "vhd-1", "vhd-2", "vhd-3", "random", "turbo-1", "optuna", "cma"]
 
     cmds = []
     for opt in opts:
@@ -323,7 +323,7 @@ def prep_vhd_tlunar(results_dir):
                     problem="tlunar:fn",
                     opt=opt,
                     num_arms=num_arms,
-                    num_replications=10,
+                    num_replications=30,
                     num_rounds=num_rounds,
                     noise=None,
                     num_denoise=num_denoise,

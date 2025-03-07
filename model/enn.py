@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 import faiss
 import numpy as np
+import torch
 
 
 @dataclass
@@ -10,6 +11,10 @@ class ENNNormal:
     se: np.ndarray
 
     def sample(self, num_samples, clip=None):
+        if isinstance(num_samples, torch.Size):
+            num_samples = list(num_samples)
+            assert len(num_samples) == 1, num_samples
+            num_samples = num_samples[0]
         size = list(self.se.shape)
         size.append(num_samples)
 
@@ -81,6 +86,7 @@ class EpsitemicNearestNeighbors:
 
     def posterior(self, x, k=None):
         # X ~ num_batch X num_dim
+        x = np.array(x)
 
         assert len(x.shape) == 2, ("NYI: Joint sampling", x.shape)
         b, d = x.shape
