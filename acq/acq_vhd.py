@@ -3,19 +3,18 @@ import torch
 
 from model.enn import EpsitemicNearestNeighbors
 from sampling.knn_tools import farthest_neighbor, random_directions
-from sampling.stagger_thompson_sampler import StaggerThompsonSampler
 
 
 class AcqVHD:
     # TODO: Yvar
-    def __init__(self, X_train: torch.Tensor, Y_train: torch.Tensor, *, k: int = 1, num_candidates_per_arm=100, sts=True, alpha_sampling=True):
+    def __init__(self, X_train: torch.Tensor, Y_train: torch.Tensor, *, k: int = 1, num_candidates_per_arm=100, two_level=False, alpha_sampling=True):
         self._X_train = np.asarray(X_train)
         self._Y_train = np.asarray(Y_train)
 
         self._num_candidates_per_arm = num_candidates_per_arm
         self._num_dim = self._X_train.shape[-1]
         self._seed = np.random.randint(0, 9999)
-        self._sts = sts
+        self._two_level = two_level
         self._alpha_sampling = alpha_sampling
 
         if len(self._X_train) > 0:
@@ -28,7 +27,7 @@ class AcqVHD:
             self._enn_1 = None
             self._enn_ts = None
 
-    def get_max(self):
+    def _ts_pick_cell(self):
         assert len(self._X_train) > 0
         if False:  # TODO: study noisy observations self._enn_ts:
             y = self._enn_ts(self._X_train).sample()
@@ -47,12 +46,12 @@ class AcqVHD:
 
         return self._X_train[[i], :]
 
-    def _thompson_sample_cell(self, x, num_arms):
+    def _ts_in_cell(self, x, num_arms):
         if self._enn_ts is None:
             i = np.random.choice(np.arange(len(x)), num_arms)
             return x[i]
 
-        y = self._enn_ts.posterior(x).sample(2 * num_arms)
+        y = self._enn_ts.posterior(x).sample(num_arms)
 
         i = np.where(y == y.max(axis=0, keepdims=True))[0]
         i_arms = np.unique(i)
@@ -65,28 +64,41 @@ class AcqVHD:
             xs = np.random.uniform(size=(num_arms - len(x_c), self._num_dim))
             x_a = np.append(x_c, xs, axis=0)
         else:
-            if self._sts:
-                x_a = self._draw_sts(num_arms)
+            if self._two_level:
+                x_a = self._draw_two_level(num_arms)
             else:
                 x_a = self._draw_near_far(num_arms)
 
         assert len(x_a) == num_arms, (len(x_a), num_arms)
         return x_a
 
-    def _draw_sts(self, num_arms):
-        sts = StaggerThompsonSampler(self._enn_ts, torch.tensor(self.get_max()), num_arms)
-        sts.refine(30, s_min=1e-5)
-        return sts.samples()
+    def _draw_two_level(self, num_arms):
+        x_0 = np.vstack([self._ts_pick_cell() for _ in range(num_arms)])
+
+        x_0 = np.tile(x_0, reps=(self._num_candidates_per_arm, 1))
+
+        u = random_directions(len(x_0), self._num_dim)
+        x_cand = farthest_neighbor(self._enn_1, x_0, u)
+        # We want to uniformly sample over the Voronoi cell, but this is
+        #  easier. Maybe we'll come up with something better.
+        alpha = np.random.uniform(size=x_0.shape)
+        x_cand = (1 - alpha) * x_0 + alpha * x_cand
+        assert x_cand.min() >= 0.0 and x_cand.max() <= 1.0, (x_cand.min(), x_cand.max())
+
+        x_a = self._ts_in_cell(x_cand, num_arms)
+        if len(x_a) < num_arms:
+            x_a = np.append(x_a, np.random.uniform(size=(num_arms - len(x_a), self._num_dim)), axis=0)
+        return x_a
 
     def _draw_near_far(self, num_arms):
-        # We want to generate Thompson sampline candidates over the whole space b/c the max could be anywhere.
+        # We want to generate Thompson sampling candidates over the whole space b/c the max could be anywhere.
         # We concentrate them in a high-probability region, a Thompson-sampled Voronoi cell (_thompson_sample_cell()).
         # (Maybe we should TS multiple Voronoi cells. Maybe that's all we should do for candidates.)
 
         num_candidates = self._num_candidates_per_arm * num_arms
         num_near = num_candidates // 2
 
-        x_0 = np.tile(self.get_max(), reps=(num_near, 1))
+        x_0 = np.tile(self._ts_pick_cell(), reps=(num_near, 1))
         assert x_0.shape == (num_near, self._num_dim), x_0.shape
 
         u = random_directions(num_near, self._num_dim)
@@ -103,7 +115,7 @@ class AcqVHD:
         x_far = np.random.uniform(size=(num_far, self._num_dim))
 
         x_cand = np.append(x_near, x_far, axis=0)
-        x_a = self._thompson_sample_cell(x_cand, num_arms)
+        x_a = self._ts_in_cell(x_cand, num_arms)
 
         if len(x_a) < num_arms:
             x_a = np.append(x_a, np.random.uniform(size=(num_arms - len(x_a), self._num_dim)), axis=0)
