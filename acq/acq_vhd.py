@@ -74,7 +74,7 @@ class AcqVHD:
         x_0 = np.tile(x_0, reps=(self._num_candidates_per_arm, 1))
 
         u = random_directions(len(x_0), self._num_dim)
-        x_cand = farthest_neighbor(self._enn_ts, x_0, u)
+        x_cand = farthest_neighbor(self._enn_ts, x_0, u, boundary_is_neighbor=False)
         # We want to uniformly sample over the Voronoi cell, but this is
         #  easier. Maybe we'll come up with something better.
         alpha = np.random.uniform(size=x_0.shape)
@@ -103,7 +103,7 @@ class AcqVHD:
 
         u = random_directions(num_near, self._num_dim)
         # TODO: try uniform in cell
-        x_near = farthest_neighbor(self._enn_ts, x_0, u)
+        x_near = farthest_neighbor(self._enn_ts, x_0, u, boundary_is_neighbor=True)
         if self._alpha_sampling:
             # We want to uniformly sample over the Voronoi cell, but this is
             #  easier. Maybe we'll come up with something better.
