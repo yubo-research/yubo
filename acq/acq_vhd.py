@@ -16,16 +16,13 @@ class AcqVHD:
         self._seed = np.random.randint(0, 9999)
         self._two_level = two_level
         self._alpha_sampling = alpha_sampling
+        self._k = k
 
         if len(self._X_train) > 0:
-            self._enn_1 = EpsitemicNearestNeighbors(self._X_train, self._Y_train, k=1)
-            if k > 0:
-                self._enn_ts = EpsitemicNearestNeighbors(self._X_train, self._Y_train, k=k)
-            else:
-                self._enn_ts = None
+            self._enn_ts = EpsitemicNearestNeighbors(self._X_train, self._Y_train, k=max(1, k))
         else:
-            self._enn_1 = None
             self._enn_ts = None
+        self._bounds = torch.tensor([[0.0] * self._num_dim, [1.0] * self._num_dim])
 
     def _ts_pick_cell(self):
         assert len(self._X_train) > 0
@@ -47,7 +44,7 @@ class AcqVHD:
         return self._X_train[[i], :]
 
     def _ts_in_cell(self, x, num_arms):
-        if self._enn_ts is None:
+        if self._enn_ts is None or self._k == 0:
             i = np.random.choice(np.arange(len(x)), num_arms)
             return x[i]
 
@@ -60,16 +57,15 @@ class AcqVHD:
 
     def draw(self, num_arms):
         if len(self._X_train) == 0:
-            x_c = 0.5 + np.zeros(shape=(1, self._num_dim))
-            xs = np.random.uniform(size=(num_arms - len(x_c), self._num_dim))
-            x_a = np.append(x_c, xs, axis=0)
+            x_a = np.random.uniform(size=(num_arms, self._num_dim))
         else:
             if self._two_level:
                 x_a = self._draw_two_level(num_arms)
             else:
                 x_a = self._draw_near_far(num_arms)
 
-        assert len(x_a) == num_arms, (len(x_a), num_arms)
+        assert x_a.shape == (num_arms, self._num_dim), x_a.shape
+
         return x_a
 
     def _draw_two_level(self, num_arms):
@@ -78,7 +74,7 @@ class AcqVHD:
         x_0 = np.tile(x_0, reps=(self._num_candidates_per_arm, 1))
 
         u = random_directions(len(x_0), self._num_dim)
-        x_cand = farthest_neighbor(self._enn_1, x_0, u)
+        x_cand = farthest_neighbor(self._enn_ts, x_0, u)
         # We want to uniformly sample over the Voronoi cell, but this is
         #  easier. Maybe we'll come up with something better.
         alpha = np.random.uniform(size=x_0.shape)
@@ -86,7 +82,11 @@ class AcqVHD:
         assert x_cand.min() >= 0.0 and x_cand.max() <= 1.0, (x_cand.min(), x_cand.max())
 
         x_a = self._ts_in_cell(x_cand, num_arms)
-        if len(x_a) < num_arms:
+        if False:
+            i = np.arange(len(x_cand))
+            while len(x_a) < num_arms:
+                x_a = np.unique(np.append(x_a, x_cand[np.random.choice(i, size=(num_arms - len(x_a),), replace=False)], axis=0), axis=0)
+        else:
             x_a = np.append(x_a, np.random.uniform(size=(num_arms - len(x_a), self._num_dim)), axis=0)
         return x_a
 
@@ -103,7 +103,7 @@ class AcqVHD:
 
         u = random_directions(num_near, self._num_dim)
         # TODO: try uniform in cell
-        x_near = farthest_neighbor(self._enn_1, x_0, u)
+        x_near = farthest_neighbor(self._enn_ts, x_0, u)
         if self._alpha_sampling:
             # We want to uniformly sample over the Voronoi cell, but this is
             #  easier. Maybe we'll come up with something better.

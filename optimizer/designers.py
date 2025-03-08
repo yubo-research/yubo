@@ -356,7 +356,7 @@ class Designers:
             return VHDDesigner(
                 self._policy,
                 k=k,
-                num_candidates_per_arm=10,
+                num_candidates_per_arm=100,
             )
 
         # Long sobol init, sequential opt
