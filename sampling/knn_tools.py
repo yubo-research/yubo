@@ -2,6 +2,12 @@ import numpy as np
 from botorch.sampling.qmc import MultivariateNormalQMCEngine
 
 
+def target_directions(x_0: np.ndarray):
+    x_t = np.random.uniform(size=x_0.shape)
+    u = x_t - x_0
+    return u / np.linalg.norm(u, axis=1, keepdims=True)
+
+
 def random_directions(num_samples, num_dim):
     import torch
 

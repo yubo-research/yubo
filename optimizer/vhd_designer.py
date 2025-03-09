@@ -5,11 +5,12 @@ from acq.acq_vhd import AcqVHD
 
 
 class VHDDesigner:
-    def __init__(self, policy, k, num_candidates_per_arm, two_level=False):
+    def __init__(self, policy, k, num_candidates_per_arm, two_level=False, target_directions=False):
         self._policy = policy
         self._k = k
         self._num_candidates_per_arm = num_candidates_per_arm
         self._two_level = two_level
+        self._target_directions = target_directions
         self._dtype = torch.double
         self._device = torch.empty(size=(1,)).device
 
@@ -21,6 +22,6 @@ class VHDDesigner:
         else:
             X = torch.empty(size=(0, self._policy.num_params()))
             Y = torch.empty(size=(0, 1))
-        vhd = AcqVHD(X, Y, k=self._k, num_candidates_per_arm=self._num_candidates_per_arm, two_level=self._two_level)
+        vhd = AcqVHD(X, Y, k=self._k, num_candidates_per_arm=self._num_candidates_per_arm, two_level=self._two_level, target_directions=self._target_directions)
         X_a = torch.as_tensor(vhd.draw(num_arms))
         return fit_gp.mk_policies(self._policy, X_a)

@@ -275,14 +275,14 @@ def prep_mtv_36(results_dir):
 def prep_vhd_seq(results_dir):
     exp_dir = "exp_vhd_seq"
 
-    opts = ["vhd-rs", "vhd-1", "vhd-2", "random", "turbo-1", "optuna"]
+    opts = ["vhd-ht", "vhd-rs", "vhd-h", "vhd-2", "random", "turbo-1", "optuna"]
 
     noises = [None]
 
     min_rounds = 30
     cmds = []
 
-    for num_dim in [1, 3, 10, 30, 100]:
+    for num_dim in [1, 3, 10, 30, 100, 300]:
         cmds.extend(
             prep_d_args(
                 results_dir,
@@ -290,7 +290,7 @@ def prep_vhd_seq(results_dir):
                 funcs=funcs_36,
                 dims=[num_dim],
                 num_arms=1,
-                num_replications=3,
+                num_replications=10,
                 opts=opts,
                 noises=noises,
                 num_rounds=max(min_rounds, num_dim),
