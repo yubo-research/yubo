@@ -31,6 +31,22 @@ def test_enn_posterior():
     assert ennn.sample(num_samples=100).shape == (1, num_dim, 100)
 
 
+def test_add():
+    import numpy as np
+
+    num_dim, n, train_x, train_y, k, enn = set_up_enn()
+
+    x = np.random.uniform(size=(1, num_dim))
+    x_eps = x + 1e-6
+    n = len(enn)
+    idx_0, _ = enn.about_neighbors(x_eps)
+    enn.add(x, 3)
+    assert len(enn) == n + 1
+    idx, _ = enn.about_neighbors(x_eps)
+    assert np.all(idx_0 != idx)
+    assert idx[0] == n
+
+
 def test_enn():
     import numpy as np
 

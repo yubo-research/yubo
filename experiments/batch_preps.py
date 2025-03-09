@@ -275,7 +275,7 @@ def prep_mtv_36(results_dir):
 def prep_vhd_seq(results_dir):
     exp_dir = "exp_vhd_seq"
 
-    opts = ["vhd-ht", "vhd-rs", "vhd-h", "vhd-2", "random", "turbo-1", "optuna"]
+    opts = ["sts", "vhd-ht"]  # , "vhd-rs", "vhd-h", "vhd-2", "random", "turbo-1", "optuna"]
 
     noises = [None]
 

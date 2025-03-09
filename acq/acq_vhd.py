@@ -23,6 +23,9 @@ class AcqVHD:
         else:
             self._enn_ts = None
 
+    def add(self, x_train, y_train):
+        pass
+
     def _ts_pick_cell(self):
         assert len(self._X_train) > 0
         if False:  # TODO: study noisy observations self._enn_ts:
