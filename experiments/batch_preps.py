@@ -275,7 +275,7 @@ def prep_mtv_36(results_dir):
 def prep_vhd_seq(results_dir):
     exp_dir = "exp_vhd_seq"
 
-    opts = ["sts", "vhd-ht"]  # , "vhd-rs", "vhd-h", "vhd-2", "random", "turbo-1", "optuna"]
+    opts = ["vhd-htm", "vhd-htmr", "sts", "vhd-ht", "vhd-rs", "vhd-h", "vhd-2", "random", "turbo-1", "optuna"]
 
     noises = [None]
 
@@ -303,15 +303,14 @@ def prep_vhd_seq(results_dir):
 def prep_vhd_tlunar(results_dir):
     exp_dir = "exp_vhdh"
 
-    opts = ["vhd-h", "vhd-rs", "vhd-2", "random", "turbo-1", "optuna", "cma"]
+    opts = ["vhd-hm"]  # , "vhd-h", "vhd-rs", "vhd-2", "random", "turbo-1", "optuna", "cma"]
 
     cmds = []
     for opt in opts:
         for num_arms, num_rounds, num_denoise in [
             (1, 100, 1),
             (10, 100, 10),
-            # (30, 30, 30),
-            (50, 30, 50),
+            # (50, 30, 50),
         ]:
             # prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None):
             if num_arms == 1 and opt == "cma":

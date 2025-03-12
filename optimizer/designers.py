@@ -351,6 +351,21 @@ class Designers:
                 num_candidates_per_arm=100,
                 two_level=True,
             )
+        elif designer_name == "vhd-hx":
+            return VHDDesigner(
+                self._policy,
+                k=2,
+                num_candidates_per_arm=100,
+                two_level=True,
+            )
+        elif designer_name == "vhd-hm":
+            return VHDDesigner(
+                self._policy,
+                k=2,
+                num_candidates_per_arm=100,
+                two_level=True,
+                max_cell=True,
+            )
         elif designer_name == "vhd-ht":
             return VHDDesigner(
                 self._policy,
@@ -359,8 +374,40 @@ class Designers:
                 two_level=True,
                 target_directions=True,
             )
+        elif designer_name == "vhd-htm":
+            return VHDDesigner(
+                self._policy,
+                k=2,
+                num_candidates_per_arm=100,
+                two_level=True,
+                target_directions=True,
+                max_cell=True,
+                num_refinements=1,
+            )
+        elif designer_name == "vhd-htmr":
+            return VHDDesigner(
+                self._policy,
+                k=2,
+                # num_candidates_per_arm=1 ==> use iterated Thompson sampling
+                num_candidates_per_arm=1,
+                two_level=True,
+                target_directions=True,
+                max_cell=True,
+                num_refinements=10,
+            )
+        elif designer_name.startswith("vhd-htm-"):
+            n = int(designer_name.split("-")[-1])
+            return VHDDesigner(
+                self._policy,
+                k=2,
+                num_candidates_per_arm=100,
+                two_level=True,
+                target_directions=True,
+                max_cell=True,
+                num_refinements=1,
+            )
         elif designer_name.startswith("vhd-"):
-            k = int(designer_name.split("-")[1])
+            k = int(designer_name.split("-")[-1])
             return VHDDesigner(
                 self._policy,
                 k=k,
