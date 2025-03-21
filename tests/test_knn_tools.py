@@ -5,6 +5,20 @@ def test_random_directions():
     assert u.shape == (10, 3)
 
 
+def test_approx_ard():
+    import numpy as np
+
+    from sampling.knn_tools import approx_ard
+
+    x_max = np.random.uniform(size=(1, 5))
+    y_max = 1
+    x_n = np.random.uniform(size=(9, 5))
+    y_n = 1 - np.random.uniform(size=(9,))
+
+    u = approx_ard(x_max, y_max, x_n, y_n)
+    print(u)
+
+
 def test_utils():
     import numpy as np
 

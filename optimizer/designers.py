@@ -338,32 +338,41 @@ class Designers:
                 num_init=init_yubo_default,
             )
         elif designer_name.startswith("vhd-rs"):
-            # k = int(designer_name.split("-")[1])
             return VHDDesigner(
                 self._policy,
                 k=0,
+                direction_type="random",
+                two_level=False,
+                max_cell=False,
                 num_candidates_per_arm=100,
             )
         elif designer_name == "vhd-h":
             return VHDDesigner(
                 self._policy,
                 k=2,
+                direction_type="random",
                 num_candidates_per_arm=100,
                 two_level=True,
+                max_cell=False,
             )
         elif designer_name == "vhd-hx":
             return VHDDesigner(
                 self._policy,
                 k=2,
+                direction_type="random",
                 num_candidates_per_arm=100,
                 two_level=True,
+                num_refinements=1,
+                max_cell=False,
             )
         elif designer_name == "vhd-hm":
             return VHDDesigner(
                 self._policy,
                 k=2,
+                direction_type="random",
                 num_candidates_per_arm=100,
                 two_level=True,
+                num_refinements=1,
                 max_cell=True,
             )
         elif designer_name == "vhd-ht":
@@ -372,7 +381,9 @@ class Designers:
                 k=2,
                 num_candidates_per_arm=100,
                 two_level=True,
-                target_directions=True,
+                num_refinements=1,
+                max_cell=False,
+                direction_type="target",
             )
         elif designer_name == "vhd-htm":
             return VHDDesigner(
@@ -380,7 +391,7 @@ class Designers:
                 k=2,
                 num_candidates_per_arm=100,
                 two_level=True,
-                target_directions=True,
+                direction_type="target",
                 max_cell=True,
                 num_refinements=1,
             )
@@ -391,7 +402,7 @@ class Designers:
                 # num_candidates_per_arm=1 ==> use iterated Thompson sampling
                 num_candidates_per_arm=1,
                 two_level=True,
-                target_directions=True,
+                direction_type="target",
                 max_cell=True,
                 num_refinements=10,
             )
@@ -402,7 +413,7 @@ class Designers:
                 k=2,
                 num_candidates_per_arm=100,
                 two_level=True,
-                target_directions=True,
+                direction_type="target",
                 max_cell=True,
                 num_refinements=1,
             )
@@ -411,7 +422,11 @@ class Designers:
             return VHDDesigner(
                 self._policy,
                 k=k,
+                direction_type="random",
+                two_level=False,
+                max_cell=False,
                 num_candidates_per_arm=100,
+                num_refinements=1,
             )
 
         # Long sobol init, sequential opt

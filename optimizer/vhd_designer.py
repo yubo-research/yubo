@@ -5,12 +5,12 @@ from acq.acq_vhd import AcqVHD
 
 
 class VHDDesigner:
-    def __init__(self, policy, k, num_candidates_per_arm, two_level=False, target_directions=False, max_cell=False, num_refinements=1):
+    def __init__(self, policy, k, num_candidates_per_arm, *, direction_type, two_level, max_cell, num_refinements=1):
         self._policy = policy
         self._k = k
         self._num_candidates_per_arm = num_candidates_per_arm
         self._two_level = two_level
-        self._target_directions = target_directions
+        self._direction_type = direction_type
         self._num_refinements = num_refinements
         self._max_cell = max_cell
         self._dtype = torch.double
@@ -30,7 +30,7 @@ class VHDDesigner:
             k=self._k,
             num_candidates_per_arm=self._num_candidates_per_arm,
             two_level=self._two_level,
-            target_directions=self._target_directions,
+            direction_type=self._direction_type,
             max_cell=self._max_cell,
             num_refinements=self._num_refinements,
         )

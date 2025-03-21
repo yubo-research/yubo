@@ -2,7 +2,7 @@ import numpy as np
 import torch
 
 from model.enn import EpsitemicNearestNeighbors
-from sampling.knn_tools import farthest_neighbor, random_directions, target_directions
+from sampling.knn_tools import approx_ard, farthest_neighbor, random_directions, target_directions
 
 
 class AcqVHD:
@@ -15,7 +15,7 @@ class AcqVHD:
         k: int = 1,
         num_candidates_per_arm=100,
         two_level=False,
-        target_directions=False,
+        direction_type="random",
         max_cell=False,
         num_refinements=1,
     ):
@@ -26,7 +26,7 @@ class AcqVHD:
         self._num_dim = self._X_train.shape[-1]
         self._seed = np.random.randint(0, 9999)
         self._two_level = two_level
-        self._target_directions = target_directions
+        self._direction_type = direction_type
         self._max_cell = max_cell
         self._k = k
         self._num_refinements = num_refinements
@@ -105,10 +105,13 @@ class AcqVHD:
 
         x_cand = x_0
         for _ in range(self._num_refinements):
-            if self._target_directions:
+            if self._direction_type == "target":
                 u = target_directions(x_cand)
-            else:
+            elif self._direction_type == "random":
                 u = random_directions(len(x_cand), self._num_dim)
+            elif self._direction_type == "aard":
+                assert self._num_refinements == 1, self._num_refinements
+                u = approx_ard()
             x_fn = farthest_neighbor(self._enn_ts, x_cand, u, boundary_is_neighbor=False)
             # We want to uniformly sample over the Voronoi cell, but this is
             #  easier. Maybe we'll come up with something better.
@@ -124,4 +127,34 @@ class AcqVHD:
         if self._num_candidates_per_arm > 1:
             x_a = self._ts_in_cell(x_cand, num_arms)
         x_a = np.append(x_a, np.random.uniform(size=(num_arms - len(x_a), self._num_dim)), axis=0)
+        return x_a
+
+    def _draw_near_far(self, num_arms):
+        num_candidates = self._num_candidates_per_arm * num_arms
+
+        if len(self._X_train) == 0:
+            x_c = 0.5 + np.zeros(shape=(1, self._num_dim))
+            xs = np.random.uniform(size=(num_arms - len(x_c), self._num_dim))
+            x_a = np.append(x_c, xs, axis=0)
+        else:
+            num_near = num_candidates // 2
+            num_far = num_candidates - num_near
+
+            x_0 = np.tile(self._ts_pick_cell(), reps=(num_near, 1))
+            assert x_0.shape == (num_near, self._num_dim), x_0.shape
+
+            u = random_directions(num_near, self._num_dim)
+            # TODO: try uniform in cell
+            x_fn = farthest_neighbor(self._enn_ts, x_0, u)
+            alpha = np.random.uniform(size=x_0.shape)
+            x_near = (1 - alpha) * x_0 + alpha * x_fn
+
+            assert x_near.min() >= 0.0 and x_near.max() <= 1.0, (x_near.min(), x_near.max())
+
+            x_far = np.random.uniform(size=(num_far, self._num_dim))
+
+            x_cand = np.append(x_near, x_far, axis=0)
+            x_a = self._ts_in_cell(x_cand, num_arms)
+
+        assert len(x_a) == num_arms, (len(x_a), num_arms)
         return x_a

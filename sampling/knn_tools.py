@@ -8,6 +8,19 @@ def target_directions(x_0: np.ndarray):
     return u / np.linalg.norm(u, axis=1, keepdims=True)
 
 
+def approx_ard(x_max, y_max, x_neighbors, y_neighbors, eps=0.01):
+    dx = x_max - x_neighbors
+    slope = np.abs(np.maximum(0.0, y_max - y_neighbors)[:, None] / np.maximum(eps, dx))
+    weight = np.linalg.norm(x_max - x_neighbors, axis=1)
+    weight = weight / weight.sum()
+    u = (weight[:, None] * slope).sum(axis=0)
+    u_norm = np.linalg.norm(u)
+
+    if u_norm > 0:
+        return u / u_norm
+    return np.zeros_like(x_max)
+
+
 def random_directions(num_samples, num_dim):
     import torch
 
