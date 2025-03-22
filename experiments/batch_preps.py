@@ -301,9 +301,9 @@ def prep_vhd_seq(results_dir):
 
 
 def prep_enn_tlunar(results_dir):
-    exp_dir = "exp_vhdh"
+    exp_dir = "exp_enn_tlunar"
 
-    opts = ["enn-3", "enn-b", "enn-u-3"]
+    opts = ["enn-3", "enn-b", "enn-u-3", "random", "turbo-1", "optuna", "cma"]
     # , "vhd-h", "vhd-rs", "vhd-2", "random", "turbo-1", "optuna", "cma"]
 
     cmds = []
@@ -315,6 +315,8 @@ def prep_enn_tlunar(results_dir):
         ]:
             # prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None):
             if num_arms == 1 and opt == "cma":
+                continue
+            if opt == "enn-u-3" and num_arms != 1:
                 continue
             cmds.append(
                 prep_args_1(

@@ -52,7 +52,7 @@ def prep_d_argss(batch_tag):
 
     batch_tags = batch_preps.__dict__.keys()
 
-    assert batch_tag in batch_tags, f"Unknown batch_tag: {batch_tag}"
+    assert batch_tag in batch_tags, f"Unknown batch_tag: {batch_tag} {batch_tags}"
     return getattr(batch_preps, batch_tag)(results_dir)
 
 
@@ -71,5 +71,5 @@ if __name__ == "__main__":
     t_0 = time.time()
     run(d_argss, max_parallel=5, b_dry_run=dry_run)
     t_f = time.time()
-    print(f"TIME_ALL: {t_f-t_0:.2f}")
+    print(f"TIME_ALL: {t_f - t_0:.2f}")
     print("DONE_ALL")

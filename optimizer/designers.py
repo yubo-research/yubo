@@ -401,8 +401,6 @@ class Designers:
                 self._policy,
                 ENNConfig(
                     k=k,
-                    constrain_by_mu=False,
-                    num_candidates_per_arm=10,
                 ),
             )
 

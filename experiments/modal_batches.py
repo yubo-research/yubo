@@ -92,7 +92,7 @@ def collect():
             t_0 = time.time()
             (trace_fn, collector_log, collector_trace) = value
             t_f = time.time()
-            print(f"GOTITEM: {key} {t_f-t_0:.1f}")
+            print(f"GOTITEM: {key} {t_f - t_0:.1f}")
             if not data_is_done(trace_fn):
                 post_process(collector_log, collector_trace, trace_fn)
             collected_keys.add(key)

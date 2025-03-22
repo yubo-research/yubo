@@ -122,16 +122,21 @@ class AcqENN:
         x_cand = x_cand[i]
         se = mvn.se[i]
 
-        pareto_front = []
-        se_max = -1e99
-        for i in range(len(se)):
-            if se[i] >= se_max:
-                pareto_front.append(x_cand[i])
-                se_max = se[i]
-            # TODO: Streaming/reservoir sample until num_arms?
+        i_all = list(range(len(se)))
+        i_pareto_front = []
+        while len(i_pareto_front) < num_arms:
+            se_max = -1e99
+            for i in i_all:
+                if se[i] >= se_max:
+                    i_pareto_front.append(i)
+                    se_max = se[i]
+                # TODO: Streaming/reservoir sample until num_arms?
+            i_all = sorted(set(i_all) - set(i_pareto_front))
 
-        x_front = np.array(pareto_front)
+        i_pareto_front = np.array(i_pareto_front)
+        x_front = x_cand[i_pareto_front]
         # TODO: maxmindist
+
         assert len(x_front) >= num_arms, (len(x_front), num_arms)
 
         i = np.random.choice(np.arange(len(x_front)), size=num_arms, replace=False)
