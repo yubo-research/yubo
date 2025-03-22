@@ -189,6 +189,7 @@ def fit_gp_XY(X, Y, model_spec=None):
     mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
 
     # See TuRBO code
+
     max_cholesky_size = 2000
     with gpytorch.settings.max_cholesky_size(max_cholesky_size):
         m = None

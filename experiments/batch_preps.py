@@ -300,10 +300,11 @@ def prep_vhd_seq(results_dir):
     return cmds
 
 
-def prep_vhd_tlunar(results_dir):
+def prep_enn_tlunar(results_dir):
     exp_dir = "exp_vhdh"
 
-    opts = ["vhd-hm"]  # , "vhd-h", "vhd-rs", "vhd-2", "random", "turbo-1", "optuna", "cma"]
+    opts = ["enn-3", "enn-b", "enn-u-3"]
+    # , "vhd-h", "vhd-rs", "vhd-2", "random", "turbo-1", "optuna", "cma"]
 
     cmds = []
     for opt in opts:

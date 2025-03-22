@@ -263,7 +263,7 @@ class Rosenbrock:
         num_dim = len(x)
         for i in range(num_dim - 1):
             part += (x[i + 1] - x[i] ** 2) ** 2 + (x[i] - 1) ** 2
-        return 100.0 * part
+        return 100.0 * part / num_dim
 
 
 # 18 Shubert xi ∈ [-5.12, 5.12], for all i = 1, 2. result[-200,300]

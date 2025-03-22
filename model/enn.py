@@ -49,6 +49,9 @@ class EpsitemicNearestNeighbors:
         self._train_x = np.append(self._train_x, x)
         self._train_y = np.append(self._train_y, y)
 
+    def calibrate(self, var_scale):
+        self._var_scale = var_scale
+
     def __len__(self):
         return self._index.ntotal
 

@@ -21,13 +21,14 @@ from .ax_designer import AxDesigner
 from .bt_designer import BTDesigner
 from .center_designer import CenterDesigner
 from .cma_designer import CMAESDesigner
+from .enn_designer import ENNConfig, ENNDesigner
 from .lhd_designer import LHDDesigner
 from .mcmc_bo_designer import MCMCBODesigner
 from .optuna_designer import OptunaDesigner
 from .random_designer import RandomDesigner
 from .sobol_designer import SobolDesigner
 from .turbo_designer import TuRBODesigner
-from .vhd_designer import VHDDesigner
+from .vhd_designer import VHDConfig, VHDDesigner
 
 
 class NoSuchDesignerError(Exception):
@@ -340,93 +341,69 @@ class Designers:
         elif designer_name.startswith("vhd-rs"):
             return VHDDesigner(
                 self._policy,
-                k=0,
-                direction_type="random",
-                two_level=False,
-                max_cell=False,
-                num_candidates_per_arm=100,
+                VHDConfig(
+                    k=0,
+                    two_level=False,
+                    max_cell=True,
+                ),
             )
-        elif designer_name == "vhd-h":
+        elif designer_name.startswith("vhd-t-"):
+            k = int(designer_name.split("-")[-1])
             return VHDDesigner(
                 self._policy,
-                k=2,
-                direction_type="random",
-                num_candidates_per_arm=100,
-                two_level=True,
-                max_cell=False,
+                VHDConfig(
+                    k=k,
+                    se_scale=10,
+                ),
             )
-        elif designer_name == "vhd-hx":
+        elif designer_name.startswith("vhd-u-"):
+            k = int(designer_name.split("-")[-1])
             return VHDDesigner(
                 self._policy,
-                k=2,
-                direction_type="random",
-                num_candidates_per_arm=100,
-                two_level=True,
-                num_refinements=1,
-                max_cell=False,
-            )
-        elif designer_name == "vhd-hm":
-            return VHDDesigner(
-                self._policy,
-                k=2,
-                direction_type="random",
-                num_candidates_per_arm=100,
-                two_level=True,
-                num_refinements=1,
-                max_cell=True,
-            )
-        elif designer_name == "vhd-ht":
-            return VHDDesigner(
-                self._policy,
-                k=2,
-                num_candidates_per_arm=100,
-                two_level=True,
-                num_refinements=1,
-                max_cell=False,
-                direction_type="target",
-            )
-        elif designer_name == "vhd-htm":
-            return VHDDesigner(
-                self._policy,
-                k=2,
-                num_candidates_per_arm=100,
-                two_level=True,
-                direction_type="target",
-                max_cell=True,
-                num_refinements=1,
-            )
-        elif designer_name == "vhd-htmr":
-            return VHDDesigner(
-                self._policy,
-                k=2,
-                # num_candidates_per_arm=1 ==> use iterated Thompson sampling
-                num_candidates_per_arm=1,
-                two_level=True,
-                direction_type="target",
-                max_cell=True,
-                num_refinements=10,
-            )
-        elif designer_name.startswith("vhd-htm-"):
-            n = int(designer_name.split("-")[-1])
-            return VHDDesigner(
-                self._policy,
-                k=2,
-                num_candidates_per_arm=100,
-                two_level=True,
-                direction_type="target",
-                max_cell=True,
-                num_refinements=1,
+                VHDConfig(
+                    k=k,
+                    ucb=True,
+                    se_scale=10,
+                ),
             )
         elif designer_name.startswith("vhd-"):
             k = int(designer_name.split("-")[-1])
             return VHDDesigner(
                 self._policy,
-                k=k,
-                direction_type="random",
-                two_level=False,
-                max_cell=False,
-                num_candidates_per_arm=100,
-                num_refinements=1,
+                VHDConfig(
+                    k=k,
+                    two_level=False,
+                    max_cell=False,
+                ),
+            )
+        elif designer_name.startswith("enn-u-"):
+            k = int(designer_name.split("-")[-1])
+            return ENNDesigner(
+                self._policy,
+                ENNConfig(
+                    k=k,
+                    constrain_by_mu=False,
+                    ucb=True,
+                    se_scale=10.0,
+                ),
+            )
+        elif designer_name.startswith("enn-b"):
+            return ENNDesigner(
+                self._policy,
+                ENNConfig(
+                    k=1,
+                    boundary=True,
+                ),
+            )
+        elif designer_name.startswith("enn-"):
+            k = int(designer_name.split("-")[-1])
+            return ENNDesigner(
+                self._policy,
+                ENNConfig(
+                    k=k,
+                    constrain_by_mu=False,
+                    num_candidates_per_arm=10,
+                ),
             )
 
         # Long sobol init, sequential opt
