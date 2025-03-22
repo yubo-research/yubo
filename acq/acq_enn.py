@@ -143,14 +143,16 @@ class AcqENN:
         return x_front[i]
 
     def _draw_two_level(self, num_arms):
-        if self._config.boundary:
-            x_0 = self._ts_pick_cells(num_arms)
-            return self._sample_boundary(x_0)
-
         x_0 = self._ts_pick_cells(self._config.num_candidates_per_arm * num_arms)
-        x_cand = self._sample_in_cell(x_0, num_arms)
+        if self._config.boundary:
+            x_cand = self._sample_boundary(x_0)
+        else:
+            x_cand = self._sample_in_cell(x_0, num_arms)
 
         assert x_cand.min() >= 0.0 and x_cand.max() <= 1.0, (x_cand.min(), x_cand.max())
+
+        if self._config.num_candidates_per_arm == 1:
+            return x_cand
 
         if self._config.ucb:
             return self._ucb(x_cand, num_arms)

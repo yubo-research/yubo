@@ -387,12 +387,23 @@ class Designers:
                     se_scale=10.0,
                 ),
             )
-        elif designer_name.startswith("enn-b"):
+        elif designer_name == "enn-b":
             return ENNDesigner(
                 self._policy,
                 ENNConfig(
                     k=1,
                     boundary=True,
+                    num_candidates_per_arm=1,
+                ),
+            )
+        elif designer_name.startswith("enn-b-"):
+            k = int(designer_name.split("-")[-1])
+            return ENNDesigner(
+                self._policy,
+                ENNConfig(
+                    k=k,
+                    boundary=True,
+                    num_candidates_per_arm=30,
                 ),
             )
         elif designer_name.startswith("enn-"):
@@ -401,6 +412,7 @@ class Designers:
                 self._policy,
                 ENNConfig(
                     k=k,
+                    num_candidates_per_arm=100,
                 ),
             )
 
