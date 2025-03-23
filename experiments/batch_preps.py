@@ -303,7 +303,7 @@ def prep_vhd_seq(results_dir):
 def prep_enn_tlunar(results_dir):
     exp_dir = "exp_enn_tlunar"
 
-    opts = ["enn-3", "enn-b", "enn-u-3", "random", "turbo-1", "optuna", "cma"]
+    opts = ["enn-b-3", "turbo-1", "random", "enn-b-5"]  # "enn-3", "enn-b", "enn-u-3", "random", "turbo-1", "optuna", "cma"]
     # , "vhd-h", "vhd-rs", "vhd-2", "random", "turbo-1", "optuna", "cma"]
 
     cmds = []
@@ -311,7 +311,7 @@ def prep_enn_tlunar(results_dir):
         for num_arms, num_rounds, num_denoise in [
             (1, 100, 1),
             (10, 100, 10),
-            # (50, 30, 50),
+            (50, 30, 50),
         ]:
             # prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None):
             if num_arms == 1 and opt == "cma":
@@ -325,7 +325,7 @@ def prep_enn_tlunar(results_dir):
                     problem="tlunar:fn",
                     opt=opt,
                     num_arms=num_arms,
-                    num_replications=30,
+                    num_replications=100,
                     num_rounds=num_rounds,
                     noise=None,
                     num_denoise=num_denoise,

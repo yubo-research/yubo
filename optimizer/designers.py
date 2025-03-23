@@ -383,7 +383,7 @@ class Designers:
                 ENNConfig(
                     k=k,
                     constrain_by_mu=False,
-                    ucb=True,
+                    acq="ucb",
                     se_scale=10.0,
                 ),
             )
@@ -403,7 +403,21 @@ class Designers:
                 ENNConfig(
                     k=k,
                     boundary=True,
-                    num_candidates_per_arm=30,
+                    num_candidates_per_arm=100,
+                    num_over_sample_per_arm=2,
+                    maximin=True,
+                ),
+            )
+        elif designer_name.startswith("enn-m-"):
+            k = int(designer_name.split("-")[-1])
+            return ENNDesigner(
+                self._policy,
+                ENNConfig(
+                    k=k,
+                    boundary=True,
+                    num_candidates_per_arm=100,
+                    num_over_sample_per_arm=3,
+                    maximin=True,
                 ),
             )
         elif designer_name.startswith("enn-"):
