@@ -420,6 +420,18 @@ class Designers:
                     maximin=True,
                 ),
             )
+        elif designer_name.startswith("enn-t-"):
+            k = int(designer_name.split("-")[-1])
+            return ENNDesigner(
+                self._policy,
+                ENNConfig(
+                    k=k,
+                    boundary=True,
+                    max_cell=True,
+                    num_candidates_per_arm=100,
+                    se_scale=1,
+                ),
+            )
         elif designer_name.startswith("enn-"):
             k = int(designer_name.split("-")[-1])
             return ENNDesigner(

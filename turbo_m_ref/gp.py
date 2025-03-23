@@ -84,9 +84,6 @@ def train_gp(train_x, train_y, use_ard, num_steps, hypers={}):
     # Use the adam optimizer
     optimizer = torch.optim.Adam([{"params": model.parameters()}], lr=0.1)
 
-    import time
-
-    t_0 = time.time()
     for _ in range(num_steps):
         optimizer.zero_grad()
         output = model(train_x)
@@ -94,8 +91,6 @@ def train_gp(train_x, train_y, use_ard, num_steps, hypers={}):
         loss.backward()
         optimizer.step()
 
-    t_f = time.time()
-    print("FIT:", num_steps, t_f - t_0)
     # Switch to eval mode
     model.eval()
     likelihood.eval()

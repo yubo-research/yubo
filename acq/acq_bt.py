@@ -39,10 +39,7 @@ class AcqBT:
                 Y = Y[i, :]
                 X = X[i, :]
 
-        t_0 = time.time()
         gp = fit_gp.fit_gp_XY(X, Y, model_spec=model_spec)
-        t_f = time.time()
-        print(f"TIME_FIT: time_fit = {t_f - t_0:.3f}")
 
         if not acq_kwargs:
             kwargs = {}
