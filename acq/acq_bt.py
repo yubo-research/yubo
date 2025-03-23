@@ -1,5 +1,3 @@
-import time
-
 import torch
 
 import acq.fit_gp as fit_gp
