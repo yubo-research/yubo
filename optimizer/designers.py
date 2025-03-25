@@ -404,8 +404,6 @@ class Designers:
                     k=k,
                     boundary=True,
                     num_candidates_per_arm=100,
-                    num_over_sample_per_arm=2,
-                    maximin=True,
                 ),
             )
         elif designer_name.startswith("enn-m-"):
@@ -420,7 +418,20 @@ class Designers:
                     maximin=True,
                 ),
             )
+        elif designer_name.startswith("enn-f-"):
+            k = int(designer_name.split("-")[-1])
+            return ENNDesigner(
+                self._policy,
+                ENNConfig(
+                    k=k,
+                    boundary=False,
+                    num_candidates_per_arm=100,
+                    num_over_sample_per_arm=3,
+                    maximin=True,
+                ),
+            )
         elif designer_name.startswith("enn-t-"):
+            # Slow when num_arms > 1
             k = int(designer_name.split("-")[-1])
             return ENNDesigner(
                 self._policy,

@@ -21,6 +21,6 @@ class ENNDesigner:
         else:
             X = torch.empty(size=(0, self._policy.num_params()))
             Y = torch.empty(size=(0, 1))
-        vhd = AcqENN(X, Y, self._enn_config)
-        X_a = torch.as_tensor(vhd.draw(num_arms))
+        enn = AcqENN(X, Y, self._enn_config)
+        X_a = torch.as_tensor(enn.draw(num_arms))
         return fit_gp.mk_policies(self._policy, X_a)

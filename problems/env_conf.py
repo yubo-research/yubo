@@ -7,6 +7,7 @@ import gymnasium as gym
 import problems.other as other
 import problems.pure_functions as pure_functions
 from problems.linear_policy import LinearPolicy
+from problems.mlp_policy import MLPPolicyFactory
 from problems.noise_maker import NoiseMaker
 from problems.pure_function_policy import PureFunctionPolicy
 from problems.turbo_lunar_policy import TurboLunarPolicy
@@ -147,6 +148,17 @@ _gym_env_confs = {
             max_steps=1600,
             num_frames_skip=100,
         ),
+    ),
+    # See https://github.com/hardmaru/estool/blob/b0954523e906d852287c6f515f34756c550ccf42/config.py#L309
+    #  for config (i.e., (40,40))
+    "bw-mlp": EnvConf(
+        "BipedalWalker-v3",
+        problem_seed=None,
+        gym_conf=GymConf(
+            max_steps=1600,
+            num_frames_skip=100,
+        ),
+        policy_class=MLPPolicyFactory((40, 40)),
     ),
     "tlunar": EnvConf(
         # TuRBO paper specifies v2, but that raises an exception now

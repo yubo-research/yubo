@@ -35,7 +35,7 @@ def test_utils():
     found_x = False
     for _ in range(100):
         x = np.random.uniform(size=(1, num_dim))
-        idx_nn, _ = nearest_neighbor(enn, x)
+        idx_nn, _ = nearest_neighbor(enn, x, boundary_is_neighbor=True)
         if idx_nn == -1:
             found_bdy = True
         else:

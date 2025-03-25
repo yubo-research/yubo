@@ -27,15 +27,20 @@ def random_directions(num_samples, num_dim):
     if False:
         u = np.random.normal(size=(num_samples, num_dim))
     else:
-        u = (
-            MultivariateNormalQMCEngine(
-                mean=torch.zeros(size=(num_dim,)),
-                cov=torch.diag(torch.ones(size=(num_dim,))),
+        for _ in range(5):
+            u = (
+                MultivariateNormalQMCEngine(
+                    mean=torch.zeros(size=(num_dim,)),
+                    cov=torch.diag(torch.ones(size=(num_dim,))),
+                )
+                .draw(n=num_samples)
+                .detach()
+                .numpy()
             )
-            .draw(n=num_samples)
-            .detach()
-            .numpy()
-        )
+            if not np.any(np.isnan(u)):
+                break
+
+    assert not np.any(np.isnan(u))
     return u / np.linalg.norm(u, axis=1, keepdims=True)
 
 
@@ -70,6 +75,7 @@ def farthest_neighbor(enn, x_0: np.ndarray, u: np.ndarray, eps_bound: float = 1e
     u: num_samples x num_dim, unit-length direction vectors
     """
 
+    assert not np.any(np.isnan(x_0)), x_0
     assert len(x_0.shape) == 2, x_0.shape
     num_samples = x_0.shape[0]
     l_low = np.zeros(shape=(num_samples, 1))
@@ -83,6 +89,9 @@ def farthest_neighbor(enn, x_0: np.ndarray, u: np.ndarray, eps_bound: float = 1e
         return nearest_neighbor(enn, x, boundary_is_neighbor=boundary_is_neighbor)[0] == idx_0
 
     while (l_high - l_low).max() > eps_bound:
+        assert not np.any(np.isnan(l_low)), l_low
+        assert not np.any(np.isnan(l_high)), l_high
+
         l_mid = (l_low + l_high) / 2
         x_mid = x_0 + l_mid * u
         x_mid = np.maximum(0, np.minimum(1, x_mid))
@@ -93,5 +102,6 @@ def farthest_neighbor(enn, x_0: np.ndarray, u: np.ndarray, eps_bound: float = 1e
 
     x = x_0 + l_low * u
     x = np.maximum(0, np.minimum(1, x))
+    assert not np.any(np.isnan(x)), x
     # assert np.all(_is_neighbor(x)), (idx_0, enn.about_neighbors(x, k=1))
     return x

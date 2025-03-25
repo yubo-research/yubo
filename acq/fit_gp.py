@@ -42,6 +42,8 @@ def standardize_torch(Y):
         return Y
     if len(Y) == 1:
         return 0 * Y
+
+    # Y = torch.sign(Y) * torch.log(1 + torch.abs(Y))
     return standardize(Y)
 
 

@@ -47,17 +47,24 @@ class LinearPolicy:
         lp._beta = self._beta.copy()
         return lp
 
+    def _normalize(self, state):
+        self._normalizer.update(state)
+        loc = self._normalizer.mean()
+        scale = self._normalizer.std()
+        state = state - loc
+
+        i = np.where(scale == 0)[0]
+        scale[i] = 1
+        state[i] = 0.0
+        state = state / scale
+
+        return state
+
     def __call__(self, state):
         # beta in [-1, 1]
         # scale in [-1, 1]
         assert self._beta.min() >= -1 and self._beta.max() <= 1, (self._beta.min(), self._beta.max())
-        self._normalizer.update(state)
-        loc = self._normalizer.mean()
-        scale = self._normalizer.std()
-        i = np.where(scale == 0)[0]
-        scale[i] = 1
-        state = (state - loc) / scale
-        state[i] = 0.0
-        k = self._scale
+        state = self._normalize(state)
+        k = np.abs(self._scale)
         beta = k * self._beta
         return np.maximum(-1, np.minimum(1, beta @ state))
