@@ -28,7 +28,6 @@ from .optuna_designer import OptunaDesigner
 from .random_designer import RandomDesigner
 from .sobol_designer import SobolDesigner
 from .turbo_designer import TuRBODesigner
-from .vhd_designer import VHDConfig, VHDDesigner
 
 
 class NoSuchDesignerError(Exception):
