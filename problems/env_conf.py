@@ -129,6 +129,7 @@ _gym_env_confs = {
     "hop": EnvConf("Hopper-v5", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
     # 6900
     "human": EnvConf("Humanoid-v5", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
+    # 130,000 - https://arxiv.org/html/2304.12778
     "stand": EnvConf("HumanoidStandup-v5", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
     "bw": EnvConf(
         "BipedalWalker-v3",
