@@ -141,6 +141,8 @@ _gym_env_confs = {
     ),
     # See https://github.com/hardmaru/estool/blob/b0954523e906d852287c6f515f34756c550ccf42/config.py#L309
     #  for config (i.e., (40,40))
+    # https://arxiv.org/html/2304.12778 uses (16,)
+    #
     "bw-mlp": EnvConf(
         "BipedalWalker-v3",
         problem_seed=None,
@@ -148,7 +150,7 @@ _gym_env_confs = {
             max_steps=1600,
             num_frames_skip=100,
         ),
-        policy_class=MLPPolicyFactory((40, 40)),
+        policy_class=MLPPolicyFactory((256, 64)),
     ),
     # 300
     "lunar": EnvConf(

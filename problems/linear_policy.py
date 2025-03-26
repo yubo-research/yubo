@@ -33,6 +33,8 @@ class LinearPolicy:
         self._scale = x[0]
         i += 1
         self._beta = x[i : i + self._num_beta].reshape(self._beta.shape)
+        self._k = 1 + self._scale
+        print("K:", self._k)
 
     def get_params(self):
         p = np.zeros(shape=(self.num_params(),))
@@ -65,7 +67,6 @@ class LinearPolicy:
         # scale in [-1, 1]
         assert self._beta.min() >= -1 and self._beta.max() <= 1, (self._beta.min(), self._beta.max())
         state = self._normalize(state)
-        k = np.abs(self._scale)
-        beta = k * self._beta
+        beta = self._k * self._beta
 
         return np.maximum(-1, np.minimum(1, beta @ state))

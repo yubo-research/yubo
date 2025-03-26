@@ -24,7 +24,7 @@ def approx_ard(x_max, y_max, x_neighbors, y_neighbors, eps=0.01):
 def random_directions(num_samples, num_dim):
     import torch
 
-    if False:
+    if True:
         u = np.random.normal(size=(num_samples, num_dim))
     else:
         for _ in range(5):
@@ -79,9 +79,10 @@ def farthest_neighbor(enn, x_0: np.ndarray, u: np.ndarray, eps_bound: float = 1e
 
     assert not np.any(np.isnan(x_0)), x_0
     assert len(x_0.shape) == 2, x_0.shape
-    num_samples = x_0.shape[0]
+    num_samples, num_dim = x_0.shape
+
     l_low = np.zeros(shape=(num_samples, 1))
-    l_high = np.ones(shape=(num_samples, 1))
+    l_high = 2 * np.sqrt(num_dim) * np.ones(shape=(num_samples, 1))
 
     idx_0 = enn.idx_x(x_0).flatten()
     if len(idx_0) != num_samples:
