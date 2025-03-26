@@ -280,6 +280,7 @@ class AcqENN:
             return self._thompson_sample(x_cand, num_arms)
         elif self._config.acq == "uniform":
             return self._uniform(x_cand, num_arms)
+
         else:
             assert False, self._config.acq
 

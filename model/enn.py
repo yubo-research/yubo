@@ -78,7 +78,7 @@ class EpsitemicNearestNeighbors:
             return np.empty(shape=(0,), dtype=np.int64), np.empty(shape=(0,), dtype=np.float64)
 
         dists, idx = self._index.search(x, k=k)
-        return idx.flatten(), dists.flatten()
+        return idx, dists
 
     def neighbors(self, x, k=None):
         idx, _ = self.about_neighbors(x, k)

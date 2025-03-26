@@ -67,4 +67,5 @@ class LinearPolicy:
         state = self._normalize(state)
         k = np.abs(self._scale)
         beta = k * self._beta
+
         return np.maximum(-1, np.minimum(1, beta @ state))

@@ -338,44 +338,7 @@ class Designers:
                 self._policy,
                 num_init=init_yubo_default,
             )
-        elif designer_name.startswith("vhd-rs"):
-            return VHDDesigner(
-                self._policy,
-                VHDConfig(
-                    k=0,
-                    two_level=False,
-                    max_cell=True,
-                ),
-            )
-        elif designer_name.startswith("vhd-t-"):
-            k = int(designer_name.split("-")[-1])
-            return VHDDesigner(
-                self._policy,
-                VHDConfig(
-                    k=k,
-                    se_scale=10,
-                ),
-            )
-        elif designer_name.startswith("vhd-u-"):
-            k = int(designer_name.split("-")[-1])
-            return VHDDesigner(
-                self._policy,
-                VHDConfig(
-                    k=k,
-                    ucb=True,
-                    se_scale=10,
-                ),
-            )
-        elif designer_name.startswith("vhd-"):
-            k = int(designer_name.split("-")[-1])
-            return VHDDesigner(
-                self._policy,
-                VHDConfig(
-                    k=k,
-                    two_level=False,
-                    max_cell=False,
-                ),
-            )
+
         elif designer_name.startswith("enn-u-"):
             k = int(designer_name.split("-")[-1])
             return ENNDesigner(
@@ -404,6 +367,7 @@ class Designers:
                     k=k,
                     boundary=True,
                     num_candidates_per_arm=100,
+                    acq="pareto",
                 ),
             )
         elif designer_name.startswith("enn-m-"):
@@ -413,18 +377,6 @@ class Designers:
                 ENNConfig(
                     k=k,
                     boundary=True,
-                    num_candidates_per_arm=100,
-                    num_over_sample_per_arm=3,
-                    maximin=True,
-                ),
-            )
-        elif designer_name.startswith("enn-f-"):
-            k = int(designer_name.split("-")[-1])
-            return ENNDesigner(
-                self._policy,
-                ENNConfig(
-                    k=k,
-                    boundary=False,
                     num_candidates_per_arm=100,
                     num_over_sample_per_arm=3,
                     maximin=True,

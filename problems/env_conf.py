@@ -52,7 +52,6 @@ class GymConf:
     num_frames_skip: int = None
     state_space: Any = None
     transform_state: bool = True
-    bang_bang: bool = False
 
 
 @dataclass
@@ -114,29 +113,19 @@ _gym_env_confs = {
         gym_conf=GymConf(
             max_steps=1000,
             num_frames_skip=100,
-            bang_bang=True,
         ),
     ),
-    "pend": EnvConf("Pendulum-v1", problem_seed=None, gym_conf=GymConf(max_steps=200, num_frames_skip=100)),
-    # 300
-    "lunar": EnvConf(
-        "LunarLander-v3",
-        problem_seed=None,
-        gym_conf=GymConf(
-            max_steps=500,
-            num_frames_skip=30,
-            bang_bang=True,
-        ),
-        kwargs={"continuous": True},
-    ),
-    # 6600
+    # "pend": EnvConf("Pendulum-v1", problem_seed=None, gym_conf=GymConf(max_steps=200, num_frames_skip=100)),
+    # 3580 - https://arxiv.org/pdf/1803.07055
+    # 6600 - 2024 [??ref]
     "ant": EnvConf("Ant-v5", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
     "mpend": EnvConf("InvertedPendulum-v5", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
     "macro": EnvConf("InvertedDoublePendulum-v5", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
+    # 325 - https://arxiv.org/pdf/1803.07055
     "swim": EnvConf("Swimmer-v5", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
     "reach": EnvConf("Reacher-v5", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
     # "push": EnvConf("Pusher-v4", problem_seed=None, gym_conf=GymConf(max_steps=100, num_frames_skip=30)),
-    # 3300
+    # 3120 - https://arxiv.org/pdf/1803.07055
     "hop": EnvConf("Hopper-v5", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
     # 6900
     "human": EnvConf("Humanoid-v5", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
@@ -159,6 +148,27 @@ _gym_env_confs = {
             num_frames_skip=100,
         ),
         policy_class=MLPPolicyFactory((40, 40)),
+    ),
+    # 300
+    "lunar": EnvConf(
+        "LunarLander-v3",
+        problem_seed=None,
+        gym_conf=GymConf(
+            max_steps=500,
+            num_frames_skip=30,
+        ),
+        kwargs={"continuous": True},
+    ),
+    # 300
+    "lunar-mlp": EnvConf(
+        "LunarLander-v3",
+        problem_seed=None,
+        gym_conf=GymConf(
+            max_steps=500,
+            num_frames_skip=30,
+        ),
+        kwargs={"continuous": True},
+        policy_class=MLPPolicyFactory((16, 8)),
     ),
     "tlunar": EnvConf(
         # TuRBO paper specifies v2, but that raises an exception now
