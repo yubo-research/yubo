@@ -34,7 +34,6 @@ class LinearPolicy:
         i += 1
         self._beta = x[i : i + self._num_beta].reshape(self._beta.shape)
         self._k = 1 + self._scale
-        print("K:", self._k)
 
     def get_params(self):
         p = np.zeros(shape=(self.num_params(),))
