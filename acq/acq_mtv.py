@@ -11,7 +11,6 @@ from torch.quasirandom import SobolEngine
 import acq.acq_util as acq_util
 from sampling.pstar_sampler import PStarSampler
 from sampling.stagger_thompson_sampler import StaggerThompsonSampler
-from sampling.stagger_thompson_sampler_2 import StaggerThompsonSampler2
 
 
 class AcqMTV(MCAcquisitionFunction):
@@ -24,16 +23,14 @@ class AcqMTV(MCAcquisitionFunction):
         num_mcmc=None,
         sample_type="sts",
         num_refinements=30,
-        num_acc_rej=0,
         no_stagger=False,
         x_max_type="find",
+        ts_chain=False,
         **kwargs,
     ) -> None:
         super().__init__(model=model, **kwargs)
-        # print(
-        #     f"AcqMTV: num_X_samples={num_X_samples} ts_only={ts_only} k_mcmc={k_mcmc} num_mcmc = {num_mcmc} num_refinements = {num_refinements} sample_type={sample_type} x_max_type = {x_max_type}"
-        # )
         self.ts_only = ts_only
+        self._ts_chain = ts_chain
 
         X_0 = self.model.train_inputs[0].detach()
         num_obs = X_0.shape[0]
@@ -43,7 +40,6 @@ class AcqMTV(MCAcquisitionFunction):
         self.weights = None
 
         self._num_refinements = num_refinements
-        self._num_acc_rej = num_acc_rej
         self._x_max_type = x_max_type
         self._no_stagger = no_stagger
 
@@ -122,13 +118,12 @@ class AcqMTV(MCAcquisitionFunction):
             with torch.inference_mode():
                 if sample_type == "sts":
                     sts = StaggerThompsonSampler(self.model, self.X_max, num_samples=num_samples, no_stagger=self._no_stagger)
-                elif sample_type == "sts2":
-                    sts = StaggerThompsonSampler2(self.model, self.X_max, num_samples=num_samples, no_stagger=self._no_stagger)
                 else:
                     assert False, ("Unknown sample type", sample_type)
 
                 sts.refine(self._num_refinements)
-                sts.improve(self._num_acc_rej * num_samples)
+                if self._ts_chain:
+                    sts.ts_chain()
                 return sts.samples()
 
     @t_batch_mode_transform()
