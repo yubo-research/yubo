@@ -26,6 +26,7 @@ def make(name, problem_seed, distort):
 # all domains are [-1,1]**num_dim
 class PureFunctionEnv:
     def __init__(self, function, num_dim, problem_seed, *, distort):
+        print("PROBLEM_SEED:", problem_seed)
         self._function = function
 
         # state is either 0 or 1
