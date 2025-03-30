@@ -70,7 +70,7 @@ def load_kv(fn, keys, grep_for=None):
     return out
 
 
-def load_traces(trace_dir, key="return"):
+def load_traces(trace_dir, key="return", grep_for="TRACE"):
     traces = []
     i_missing = []
     width = None
@@ -82,7 +82,7 @@ def load_traces(trace_dir, key="return"):
             traces.append(None)
             continue
         try:
-            o = load_kv(fn, ["i_iter", key], grep_for="TRACE:")
+            o = load_kv(fn, ["i_iter", key], grep_for=f"{grep_for}:")
         except FileNotFoundError:
             raise FileNotFoundError(fn)
         trace = o[key]
@@ -167,7 +167,7 @@ def load_multiple_traces(data_locator):
         print("TP:", problems, opt_names, data_locator)
         raise e
     if num_bad > 0:
-        print(f"\n{num_bad} / {num_tot} files bad. {100*traces.mask.mean():.1f}% missing data")
+        print(f"\n{num_bad} / {num_tot} files bad. {100 * traces.mask.mean():.1f}% missing data")
     else:
         print("No bad data")
     return npma.masked_invalid(traces)

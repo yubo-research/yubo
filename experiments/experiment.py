@@ -9,6 +9,7 @@ if __name__ == "__main__":
     import sys
 
     d_args = parse_kv(sys.argv[1:])
+
     reqd_keys = ["exp-dir", "env-tag", "opt-name", "num-arms", "num-rounds", "num-reps"]
     for k in reqd_keys:
         k = "--" + k

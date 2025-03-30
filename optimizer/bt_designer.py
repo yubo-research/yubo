@@ -2,7 +2,7 @@ import numpy as np
 import torch
 from botorch.optim import optimize_acqf
 
-import common.all_bounds as all_bounds
+import acq.fit_gp as fit_gp
 from acq.acq_bt import AcqBT
 from optimizer.sobol_designer import SobolDesigner
 
@@ -108,11 +108,4 @@ class BTDesigner:
         self.fig_last_acqf = acq_bt
         self.fig_last_arms = X_cand
 
-        policies = []
-        for x in X_cand:
-            policy = self._policy.clone()
-            x = (x.detach().cpu().numpy().flatten() - all_bounds.bt_low) / all_bounds.bt_width
-            p = all_bounds.p_low + all_bounds.p_width * x
-            policy.set_params(p)
-            policies.append(policy)
-        return policies
+        return fit_gp.mk_policies(self._policy, X_cand)

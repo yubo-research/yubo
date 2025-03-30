@@ -24,10 +24,13 @@ class Optimizer:
         self._num_denoise = num_denoise_measurement
         self.num_params = policy.num_params()
         self.r_best_est = -1e99
+        self._r_cumulative = 0
+        self._b_cumulative_reward = False
 
         self._data = []
         self._i_iter = 0
         self._i_noise = 0
+        self._cum_dt_proposing = 0
         self._center_designer = CenterDesigner(policy)
 
         self._collector(f"PROBLEM: env = {env_conf.env_name} num_params = {policy.num_params()}")
@@ -38,7 +41,9 @@ class Optimizer:
             noise_seed = 0
         else:
             noise_seed = self._i_noise
+            self._i_noise += 1
         noise_seed += self._env_conf.noise_seed_0 + denoise_seed
+
         return collect_trajectory(self._env_conf, policy, noise_seed=noise_seed)
 
     def _collect_denoised_trajectory(self, policy):
@@ -97,8 +102,8 @@ class Optimizer:
 
     def iterate(self):
         designer = self._opt_designers[min(len(self._opt_designers) - 1, self._i_iter)]
-        self._i_noise += 1
-        data, d_time = self._iterate(designer, self._num_arms)
+
+        data, dt_proposing = self._iterate(designer, self._num_arms)
 
         ret_batch = []
         for datum in data:
@@ -109,14 +114,19 @@ class Optimizer:
         ret_batch = np.array(ret_batch)
 
         self.r_best_est = max(self.r_best_est, ret_batch.max())
-        ret_eval = self.r_best_est
+        if self._b_cumulative_reward:
+            self._r_cumulative += ret_batch.mean()
+            ret_eval = self._r_cumulative / (1 + self._i_iter)
+        else:
+            ret_eval = self.r_best_est
 
         cum_time = time.time() - self._t_0
+        self._cum_dt_proposing += dt_proposing
         self._collector(
-            f"ITER: i_iter = {self._i_iter} cum_time = {cum_time:.2f} d_time = {d_time:.2f} ret_max = {ret_batch.max():.3f} ret_mean = {ret_batch.mean():.3f} ret_best = {self.r_best_est:.3f} ret_eval = {ret_eval:.3f}"
+            f"ITER: i_iter = {self._i_iter} cum_time = {cum_time:.2f} cum_dt_prop = {self._cum_dt_proposing:.3f} ret_max = {ret_batch.max():.3f} ret_mean = {ret_batch.mean():.3f} ret_best = {self.r_best_est:.3f} ret_eval = {ret_eval:.3f}"
         )
         sys.stdout.flush()
-        self._trace.append(_TraceEntry(ret_eval, d_time))
+        self._trace.append(_TraceEntry(ret_eval, dt_proposing))
         self._i_iter += 1
         self.last_designer = designer
         return self._trace

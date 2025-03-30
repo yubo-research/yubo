@@ -7,6 +7,7 @@ import gymnasium as gym
 import problems.other as other
 import problems.pure_functions as pure_functions
 from problems.linear_policy import LinearPolicy
+from problems.mlp_policy import MLPPolicyFactory
 from problems.noise_maker import NoiseMaker
 from problems.pure_function_policy import PureFunctionPolicy
 from problems.turbo_lunar_policy import TurboLunarPolicy
@@ -18,6 +19,7 @@ def get_env_conf(tag, problem_seed=None, noise_level=None, noise_seed_0=None):
     if ":" in tag:
         x = tag.split(":")
         opt = x[-1]
+        # Ex: tlunar:fn
         if opt == "fn":
             frozen_noise = True
             tag = ":".join(x[:-1])
@@ -46,21 +48,27 @@ def default_policy(env_conf):
 
 @dataclass
 class GymConf:
-    max_steps: int = None
-    num_frames_skip: int = None
+    max_steps: int = 1000
+    num_frames_skip: int = 30
     state_space: Any = None
     transform_state: bool = True
-    bang_bang: bool = False
 
 
 @dataclass
 class EnvConf:
     env_name: str
-    problem_seed: int
+    # Problem seed is changed once per repetition.
+    # It is fixed for the duration of the optimization (all rounds).
+    problem_seed: int = None
     policy_class: Any = None
 
     noise_level: float = None
+    # The noise seed is changed once per run if num_denoise>0.
+    # num_denoise=1 by default.
     noise_seed_0: int = None
+
+    # If noise is frozen, then the same set of noise seeds
+    #  is used in the denoising runs on every round.
     frozen_noise: bool = True
 
     gym_conf: GymConf = None
@@ -96,57 +104,81 @@ class EnvConf:
         env.close()
 
 
+def _gym_conf(env_name, gym_conf=None, policy_class=None, kwargs=None):
+    if gym_conf is None:
+        gym_conf = GymConf()
+
+    return EnvConf(env_name, gym_conf=gym_conf, policy_class=policy_class, kwargs=kwargs)
+
+
 # See https://paperswithcode.com/task/openai-gym
+# num_frames_skip is not "frame_skip" in gymnasium. num_frames_skip is only used internally.
 _gym_env_confs = {
     # 95
-    "mcc": EnvConf(
+    "mcc": _gym_conf(
         "MountainCarContinuous-v0",
-        problem_seed=None,
-        gym_conf=GymConf(
-            max_steps=1000,
-            num_frames_skip=100,
-            bang_bang=True,
-        ),
+        gym_conf=GymConf(num_frames_skip=100),
     ),
-    "pend": EnvConf("Pendulum-v1", problem_seed=None, gym_conf=GymConf(max_steps=200, num_frames_skip=100)),
-    # 300
-    "lunar": EnvConf(
-        "LunarLander-v3",
-        problem_seed=None,
-        gym_conf=GymConf(
-            max_steps=500,
-            num_frames_skip=30,
-            bang_bang=True,
-        ),
-        kwargs={"continuous": True},
-    ),
-    # 6600
-    "ant": EnvConf("Ant-v5", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
-    "mpend": EnvConf("InvertedPendulum-v5", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
-    "macro": EnvConf("InvertedDoublePendulum-v5", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
-    "swim": EnvConf("Swimmer-v5", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
-    "reach": EnvConf("Reacher-v5", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
-    # "push": EnvConf("Pusher-v4", problem_seed=None, gym_conf=GymConf(max_steps=100, num_frames_skip=30)),
-    # 3300
-    "hop": EnvConf("Hopper-v5", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
+    # "pend": EnvConf("Pendulum-v1",  gym_conf=GymConf(max_steps=200, num_frames_skip=100)),
+    # 3580 - https://arxiv.org/pdf/1803.07055
+    # 6600 - 2024 [??ref]
+    "ant": _gym_conf("Ant-v5"),
+    "mpend": _gym_conf("InvertedPendulum-v5"),
+    "macro": _gym_conf("InvertedDoublePendulum-v5"),
+    # 325 - https://arxiv.org/pdf/1803.07055
+    "swim": _gym_conf("Swimmer-v5"),
+    "reach": _gym_conf("Reacher-v5"),
+    # "push": EnvConf("Pusher-v4",  gym_conf=GymConf(max_steps=100)),
+    "hop": _gym_conf("Hopper-v5"),
     # 6900
-    "human": EnvConf("Humanoid-v5", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
-    "stand": EnvConf("HumanoidStandup-v5", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
-    "bw": EnvConf(
+    "human": _gym_conf("Humanoid-v5"),
+    # 130,000 - https://arxiv.org/html/2304.12778
+    "stand": _gym_conf("HumanoidStandup-v5"),
+    "stand-mlp": _gym_conf(
+        "HumanoidStandup-v5",
+        policy_class=MLPPolicyFactory((32, 16)),
+    ),
+    "bw": _gym_conf(
         "BipedalWalker-v3",
-        problem_seed=None,
         gym_conf=GymConf(
             max_steps=1600,
             num_frames_skip=100,
         ),
     ),
+    # See https://github.com/hardmaru/estool/blob/b0954523e906d852287c6f515f34756c550ccf42/config.py#L309
+    #  for config (i.e., (40,40))
+    # https://arxiv.org/html/2304.12778 uses (16,)
+    #
+    "bw-mlp": _gym_conf(
+        "BipedalWalker-v3",
+        gym_conf=GymConf(
+            max_steps=1600,
+            num_frames_skip=100,
+        ),
+        policy_class=MLPPolicyFactory((256, 64)),
+    ),
+    # 300
+    "lunar": _gym_conf(
+        "LunarLander-v3",
+        gym_conf=GymConf(
+            max_steps=500,
+        ),
+        kwargs={"continuous": True},
+    ),
+    # 300
+    "lunar-mlp": _gym_conf(
+        "LunarLander-v3",
+        gym_conf=GymConf(
+            max_steps=500,
+        ),
+        kwargs={"continuous": True},
+        policy_class=MLPPolicyFactory((16, 8)),
+    ),
     "tlunar": EnvConf(
         # TuRBO paper specifies v2, but that raises an exception now
         "LunarLander-v3",
-        problem_seed=None,
         gym_conf=GymConf(
             max_steps=500,
-            num_frames_skip=30,
             transform_state=False,
         ),
         kwargs={"continuous": False},

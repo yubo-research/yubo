@@ -1,4 +1,4 @@
-from experiments.experiment_sampler import prep_d_args
+from experiments.experiment_sampler import prep_args_1, prep_d_args
 from experiments.func_names import funcs_1d, funcs_36, funcs_nd
 
 
@@ -268,5 +268,70 @@ def prep_mtv_36(results_dir):
                 num_rounds=3,
             )
         )
+
+    return cmds
+
+
+def prep_vhd_seq(results_dir):
+    exp_dir = "exp_vhd_seq"
+
+    opts = ["vhd-htm", "vhd-htmr", "sts", "vhd-ht", "vhd-rs", "vhd-h", "vhd-2", "random", "turbo-1", "optuna"]
+
+    noises = [None]
+
+    min_rounds = 30
+    cmds = []
+
+    for num_dim in [1, 3, 10, 30, 100, 300]:
+        cmds.extend(
+            prep_d_args(
+                results_dir,
+                exp_dir=exp_dir,
+                funcs=funcs_36,
+                dims=[num_dim],
+                num_arms=1,
+                num_replications=10,
+                opts=opts,
+                noises=noises,
+                num_rounds=max(min_rounds, num_dim),
+            )
+        )
+
+    return cmds
+
+
+def prep_enn_tlunar(results_dir):
+    exp_dir = "exp_enn_tlunar"
+
+    opts = ["enn-f-3"]
+    # "enn-m-3", "enn-t-10",
+    # , "sts"]  # "enn-b-3", "turbo-1", "random", "enn-b-5"]  # "enn-3", "enn-b", "enn-u-3", "random", "turbo-1", "optuna", "cma"]
+    # , "vhd-h", "vhd-rs", "vhd-2", "random", "turbo-1", "optuna", "cma"]
+
+    cmds = []
+    for opt in opts:
+        for num_arms, num_rounds, num_denoise in [
+            (1, 100, 1),
+            (10, 100, 10),
+            # (50, 30, 50),
+        ]:
+            # prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None):
+            if num_arms == 1 and opt == "cma":
+                continue
+            if opt == "enn-u-3" and num_arms != 1:
+                continue
+            cmds.append(
+                prep_args_1(
+                    results_dir,
+                    exp_dir=exp_dir,
+                    problem="tlunar:fn",
+                    opt=opt,
+                    num_arms=num_arms,
+                    num_replications=100,
+                    num_rounds=num_rounds,
+                    noise=None,
+                    num_denoise=num_denoise,
+                )
+            )
 
     return cmds

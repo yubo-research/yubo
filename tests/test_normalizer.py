@@ -11,8 +11,7 @@ def test_normalizer():
         x = mu + sg * np.random.normal(size=(3,))
         msf.update(x)
 
-    m = msf.mean()
-    s = msf.std()
+    m, s = msf.mean_and_std()
 
     print(m)
     print(s)

@@ -21,6 +21,8 @@ from .ax_designer import AxDesigner
 from .bt_designer import BTDesigner
 from .center_designer import CenterDesigner
 from .cma_designer import CMAESDesigner
+from .enn_designer import ENNConfig, ENNDesigner
+from .lhd_designer import LHDDesigner
 from .mcmc_bo_designer import MCMCBODesigner
 from .optuna_designer import OptunaDesigner
 from .random_designer import RandomDesigner
@@ -56,6 +58,7 @@ class Designers:
         num_keep = None
         keep_style = None
         model_spec = None
+        sample_around_best = False
         for option in options:
             if option[0] == "K":
                 if option[1] == "s":
@@ -70,7 +73,10 @@ class Designers:
                 print(f"OPTION: num_keep = {num_keep} keep_style = {keep_style}")
             elif option[0] == "M":
                 model_spec = option[1:]
-                print("OPTION model_type = vanilla")
+                print(f"OPTION model_spec = {option}")
+            elif option[0] == "O":
+                if option[1:] == "sab":
+                    sample_around_best = True
             else:
                 assert False, ("Unknown option", option)
 
@@ -84,7 +90,7 @@ class Designers:
                 model_spec=model_spec,
                 init_sobol=init_sobol,
                 opt_sequential=opt_sequential,
-                optimizer_options={"batch_limit": 10, "maxiter": 1000, "sample_around_best": False},
+                optimizer_options={"batch_limit": 10, "maxiter": 1000, "sample_around_best": sample_around_best},
             )
 
         if designer_name == "cma":
@@ -105,6 +111,8 @@ class Designers:
             return RandomDesigner(self._policy)
         elif designer_name == "sobol":
             return SobolDesigner(self._policy)
+        elif designer_name == "lhd":
+            return LHDDesigner(self._policy)
         elif designer_name == "btsobol":
             return bt_designer(AcqSobol)
         elif designer_name == "center":
@@ -340,6 +348,72 @@ class Designers:
             return MCMCBODesigner(
                 self._policy,
                 num_init=init_yubo_default,
+            )
+
+        elif designer_name.startswith("enn-u-"):
+            k = int(designer_name.split("-")[-1])
+            return ENNDesigner(
+                self._policy,
+                ENNConfig(
+                    k=k,
+                    constrain_by_mu=False,
+                    acq="ucb",
+                    se_scale=10.0,
+                ),
+            )
+        elif designer_name == "enn-b":
+            return ENNDesigner(
+                self._policy,
+                ENNConfig(
+                    k=1,
+                    boundary=True,
+                    num_candidates_per_arm=1,
+                ),
+            )
+        elif designer_name.startswith("enn-b-"):
+            k = int(designer_name.split("-")[-1])
+            return ENNDesigner(
+                self._policy,
+                ENNConfig(
+                    k=k,
+                    boundary=True,
+                    num_candidates_per_arm=100,
+                    acq="pareto",
+                ),
+            )
+        elif designer_name.startswith("enn-m-"):
+            k = int(designer_name.split("-")[-1])
+            return ENNDesigner(
+                self._policy,
+                ENNConfig(
+                    k=k,
+                    boundary=True,
+                    num_candidates_per_arm=100,
+                    num_over_sample_per_arm=3,
+                    maximin=True,
+                ),
+            )
+        elif designer_name.startswith("enn-t-"):
+            # Slow when num_arms > 1
+            k = int(designer_name.split("-")[-1])
+            return ENNDesigner(
+                self._policy,
+                ENNConfig(
+                    k=k,
+                    boundary=True,
+                    max_cell=True,
+                    num_candidates_per_arm=100,
+                    se_scale=1,
+                ),
+            )
+        elif designer_name.startswith("enn-"):
+            k = int(designer_name.split("-")[-1])
+            return ENNDesigner(
+                self._policy,
+                ENNConfig(
+                    k=k,
+                    num_candidates_per_arm=100,
+                ),
             )
 
         # Long sobol init, sequential opt

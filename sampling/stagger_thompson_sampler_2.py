@@ -6,6 +6,7 @@ from sampling.ray_boundary import ray_boundary
 # Maybe perturbing toward a target is better than perturbing in a random direction
 #  b/c targets can pull you toward any spot in the space, whereas a random
 #  direction can get you stuck in a corner.
+# This is discussed in https://proceedings.mlr.press/v238/rashidi24a/rashidi24a.pdf
 
 
 class StaggerThompsonSampler2:

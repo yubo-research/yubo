@@ -7,10 +7,10 @@ import analysis.data_sets as ads
 
 linestyles = ["-", ":", "--", "-."] * 10
 markers = ["o", "x", "v", ".", "s"] * 10
-colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd"] * 10
+colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#666666"] * 10
 
 
-def mk_trans(fig, x=10 / 72, y=5 / 72):
+def mk_trans(fig, x=10 / 72, y=5 / 72):  #
     trans = mtransforms.ScaledTranslation(x, y, fig.dpi_scale_trans)
     return trans
 
@@ -100,7 +100,7 @@ def tight_landscape(axs):
     tight(axs, sub_aspect=1 / scipy.constants.golden)
 
 
-def filled_err(ys, x=None, color="#AAAAAA", alpha=0.5, marker=None, linestyle="--", color_line="#AAAAAA", se=False, two=False, ax=None):
+def filled_err(ys, x=None, color="#AAAAAA", alpha=0.5, marker=None, linestyle="--", color_line="#AAAAAA", se=False, two=False, ax=None, label=None):
     if ax is None:
         ax = plt
     mu = ys.mean(axis=0)
@@ -111,8 +111,8 @@ def filled_err(ys, x=None, color="#AAAAAA", alpha=0.5, marker=None, linestyle="-
         sg = sg / np.sqrt(ys.shape[0])
     if two:
         sg *= 2
-    ax.fill_between(x, mu - sg, mu + sg, color=color, alpha=alpha, linewidth=1, label="_nolegend_")
-    ax.plot(x, mu, color=color_line, marker=marker, linestyle=linestyle)
+    ax.fill_between(x, mu - sg, mu + sg, color=color, alpha=alpha, linewidth=1, label="_")
+    ax.plot(x, mu, color=color_line, marker=marker, linestyle=linestyle, label=label)
 
 
 def error_area(x, y, yerr, color="#AAAAAA", alpha=0.5, fmt="--", marker="", ax=plt):

@@ -1,5 +1,3 @@
-from dataclasses import dataclass
-
 import numpy as np
 import torch
 from botorch.sampling.qmc import MultivariateNormalQMCEngine
@@ -7,10 +5,38 @@ from scipy.stats import multivariate_normal
 from torch.quasirandom import SobolEngine
 
 
-@dataclass
-class Sample:
-    x: np.array
-    p: np.array
+def greedy_maximin(x, num_subsamples):
+    # Credit to ChatGPT
+
+    num_samples = x.shape[0]
+    assert num_subsamples < num_samples, (num_samples, num_subsamples)
+
+    selected_indices = []
+
+    first_idx = np.random.choice(num_samples)
+    selected_indices.append(first_idx)
+
+    diff = x - x[first_idx]
+    min_dists = np.linalg.norm(diff, axis=1)
+    min_dists[first_idx] = 0
+
+    for _ in range(1, num_subsamples):
+        next_idx = np.argmax(min_dists)
+        selected_indices.append(next_idx)
+
+        dists = np.linalg.norm(x - x[next_idx], axis=1)
+        min_dists = np.minimum(min_dists, dists)
+
+    return selected_indices
+
+
+def top_k(x, k):
+    assert len(x.shape) == 1, x.shape
+
+    if k >= len(x):
+        return np.argsort(x)[::-1]
+
+    return np.argpartition(x, -k)[-k:]
 
 
 def intersect_with_box(x_inside, x_outside):
