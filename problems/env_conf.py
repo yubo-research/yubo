@@ -95,8 +95,6 @@ class EnvConf:
         return env
 
     def __post_init__(self):
-        if self.gym_conf is None:
-            self.gym_conf = GymConf()
         if not self.kwargs:
             self.kwargs = {}
         env = self._make()
@@ -106,34 +104,41 @@ class EnvConf:
         env.close()
 
 
+def _gym_conf(env_name, gym_conf=None, policy_class=None, kwargs=None):
+    if gym_conf is None:
+        gym_conf = GymConf()
+
+    return EnvConf(env_name, gym_conf=gym_conf, policy_class=policy_class, kwargs=kwargs)
+
+
 # See https://paperswithcode.com/task/openai-gym
 # num_frames_skip is not "frame_skip" in gymnasium. num_frames_skip is only used internally.
 _gym_env_confs = {
     # 95
-    "mcc": EnvConf(
+    "mcc": _gym_conf(
         "MountainCarContinuous-v0",
         gym_conf=GymConf(num_frames_skip=100),
     ),
     # "pend": EnvConf("Pendulum-v1",  gym_conf=GymConf(max_steps=200, num_frames_skip=100)),
     # 3580 - https://arxiv.org/pdf/1803.07055
     # 6600 - 2024 [??ref]
-    "ant": EnvConf("Ant-v5"),
-    "mpend": EnvConf("InvertedPendulum-v5"),
-    "macro": EnvConf("InvertedDoublePendulum-v5"),
+    "ant": _gym_conf("Ant-v5"),
+    "mpend": _gym_conf("InvertedPendulum-v5"),
+    "macro": _gym_conf("InvertedDoublePendulum-v5"),
     # 325 - https://arxiv.org/pdf/1803.07055
-    "swim": EnvConf("Swimmer-v5"),
-    "reach": EnvConf("Reacher-v5"),
+    "swim": _gym_conf("Swimmer-v5"),
+    "reach": _gym_conf("Reacher-v5"),
     # "push": EnvConf("Pusher-v4",  gym_conf=GymConf(max_steps=100)),
-    "hop": EnvConf("Hopper-v5"),
+    "hop": _gym_conf("Hopper-v5"),
     # 6900
-    "human": EnvConf("Humanoid-v5"),
+    "human": _gym_conf("Humanoid-v5"),
     # 130,000 - https://arxiv.org/html/2304.12778
-    "stand": EnvConf("HumanoidStandup-v5"),
-    "stand-mlp": EnvConf(
+    "stand": _gym_conf("HumanoidStandup-v5"),
+    "stand-mlp": _gym_conf(
         "HumanoidStandup-v5",
         policy_class=MLPPolicyFactory((32, 16)),
     ),
-    "bw": EnvConf(
+    "bw": _gym_conf(
         "BipedalWalker-v3",
         gym_conf=GymConf(
             max_steps=1600,
@@ -144,7 +149,7 @@ _gym_env_confs = {
     #  for config (i.e., (40,40))
     # https://arxiv.org/html/2304.12778 uses (16,)
     #
-    "bw-mlp": EnvConf(
+    "bw-mlp": _gym_conf(
         "BipedalWalker-v3",
         gym_conf=GymConf(
             max_steps=1600,
@@ -153,7 +158,7 @@ _gym_env_confs = {
         policy_class=MLPPolicyFactory((256, 64)),
     ),
     # 300
-    "lunar": EnvConf(
+    "lunar": _gym_conf(
         "LunarLander-v3",
         gym_conf=GymConf(
             max_steps=500,
@@ -161,7 +166,7 @@ _gym_env_confs = {
         kwargs={"continuous": True},
     ),
     # 300
-    "lunar-mlp": EnvConf(
+    "lunar-mlp": _gym_conf(
         "LunarLander-v3",
         gym_conf=GymConf(
             max_steps=500,

@@ -122,6 +122,8 @@ class AcqMTV(MCAcquisitionFunction):
                     assert False, ("Unknown sample type", sample_type)
 
                 sts.refine(self._num_refinements)
+                if self._ts_chain:
+                    sts.ts_chain()
                 return sts.samples()
 
     @t_batch_mode_transform()

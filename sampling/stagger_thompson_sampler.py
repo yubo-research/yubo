@@ -42,8 +42,11 @@ class StaggerThompsonSampler:
         return self._X_samples
 
     def ts_chain(self):
-        self._chain = torch.stack(self._chain)
-        breakpoint()
+        chain = torch.vstack(self._chain)
+        mvn = self._model.posterior(chain)
+        Y = mvn.sample(torch.Size([1])).squeeze()
+        i = torch.argmax(Y)
+        self._X_samples = chain[[i], :]
 
     def refine(self, num_refinements, s_min=1e-6, s_max=1):
         for _ in range(num_refinements):
