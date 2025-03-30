@@ -36,21 +36,22 @@ class StaggerThompsonSampler:
         self.dtype = self._X_samples.dtype
         self._bounds = torch.tensor([[0.0] * self._num_dim, [1.0] * self._num_dim], device=self.device, dtype=self.dtype)
 
+        self._chain = [self._X_samples.clone()]
+
     def samples(self):
         return self._X_samples
+
+    def ts_chain(self):
+        chain = torch.vstack(self._chain)
+        mvn = self._model.posterior(chain)
+        Y = mvn.sample(torch.Size([1])).squeeze()
+        i = torch.argmax(Y)
+        self._X_samples = chain[[i], :]
 
     def refine(self, num_refinements, s_min=1e-6, s_max=1):
         for _ in range(num_refinements):
             self._refine(s_min=s_min, s_max=s_max)
-
-    def improve(self, num_acc_rej, s_min=1e-6, s_max=1):
-        num_accepted = 0
-        num_rejected = 0
-        # TODO: Ensure each sample improves at least num_improvements times?
-        while num_accepted < num_acc_rej or num_rejected < num_acc_rej:
-            a, r = self._refine(s_min=s_min, s_max=s_max)
-            num_accepted += a
-            num_rejected += r
+            self._chain.append(self._X_samples.clone())
 
     def _refine(self, s_min=1e-6, s_max=1):
         u = torch.rand(size=(self._num_samples, 1))

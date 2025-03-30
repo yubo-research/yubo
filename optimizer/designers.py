@@ -241,6 +241,18 @@ class Designers:
                     "num_refinements": 30,
                 },
             )
+        elif designer_name == "sts-ch":
+            return bt_designer(
+                AcqMTV,
+                init_sobol=0,
+                acq_kwargs={
+                    "ts_only": True,
+                    "ts_chain": True,
+                    "sample_type": "sts",
+                    "num_X_samples": default_num_X_samples,
+                    "num_refinements": 30,
+                },
+            )
         elif designer_name.startswith("sts-ar-"):
             num_acc_rej = int(designer_name.split("-")[-1])
             return bt_designer(
