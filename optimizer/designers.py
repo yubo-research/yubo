@@ -24,6 +24,7 @@ from .cma_designer import CMAESDesigner
 from .enn_designer import ENNConfig, ENNDesigner
 from .lhd_designer import LHDDesigner
 from .mcmc_bo_designer import MCMCBODesigner
+from .mts_designer import MTSDesigner
 from .optuna_designer import OptunaDesigner
 from .random_designer import RandomDesigner
 from .sobol_designer import SobolDesigner
@@ -349,7 +350,8 @@ class Designers:
                 self._policy,
                 num_init=init_yubo_default,
             )
-
+        elif designer_name == "mts":
+            return MTSDesigner(self._policy)
         elif designer_name.startswith("enn-u-"):
             k = int(designer_name.split("-")[-1])
             return ENNDesigner(

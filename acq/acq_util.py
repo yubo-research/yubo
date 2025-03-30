@@ -4,6 +4,10 @@ from botorch.acquisition import PosteriorMean
 from botorch.optim import optimize_acqf
 
 
+def default_bounds(num_dim):
+    return torch.tensor([[0.0] * num_dim, [1.0] * num_dim])
+
+
 def torch_random_choice(x):
     i = torch.randint(len(x), (1,))
     return x[i]

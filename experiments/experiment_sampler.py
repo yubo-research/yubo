@@ -12,7 +12,7 @@ from problems.env_conf import default_policy, get_env_conf
 
 
 def sample_1(env_conf, opt_name, num_rounds, num_arms, num_denoise, b_trace=True):
-    print("PROBLEM_SEED:", env_conf.problem_seed)
+    # print("PROBLEM_SEED:", env_conf.problem_seed)
 
     seed_all(env_conf.problem_seed + 27)
 
