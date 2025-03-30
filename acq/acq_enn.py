@@ -41,6 +41,7 @@ class ENNConfig:
 
     constrain_by_mu: bool = False
     num_alpha: int = 1
+    boundary_is_neighbor = False
 
     def __post_init__(self):
         assert self.num_over_sample_per_arm > 0
@@ -87,11 +88,11 @@ class AcqENN:
 
     def _sample_boundary(self, x_0):
         u = random_directions(len(x_0), self._num_dim)
-        return farthest_neighbor(self._enn, x_0, u, boundary_is_neighbor=False)
+        return farthest_neighbor(self._enn, x_0, u, boundary_is_neighbor=self._config.boundary_is_neighbor)
 
     def _sample_in_cell(self, x_cand):
         u = random_directions(len(x_cand), self._num_dim)
-        x_far = farthest_neighbor(self._enn, x_cand, u, boundary_is_neighbor=False)
+        x_far = farthest_neighbor(self._enn, x_cand, u, boundary_is_neighbor=self._config.boundary_is_neighbor)
 
         # We want to uniformly sample over the Voronoi cell, but this is
         #  easier. Maybe we'll come up with something better.

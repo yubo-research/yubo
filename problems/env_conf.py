@@ -48,8 +48,8 @@ def default_policy(env_conf):
 
 @dataclass
 class GymConf:
-    max_steps: int = None
-    num_frames_skip: int = None
+    max_steps: int = 1000
+    num_frames_skip: int = 30
     state_space: Any = None
     transform_state: bool = True
 
@@ -59,7 +59,7 @@ class EnvConf:
     env_name: str
     # Problem seed is changed once per repetition.
     # It is fixed for the duration of the optimization (all rounds).
-    problem_seed: int
+    problem_seed: int = None
     policy_class: Any = None
 
     noise_level: float = None
@@ -95,6 +95,8 @@ class EnvConf:
         return env
 
     def __post_init__(self):
+        if self.gym_conf is None:
+            self.gym_conf = GymConf()
         if not self.kwargs:
             self.kwargs = {}
         env = self._make()
@@ -105,35 +107,34 @@ class EnvConf:
 
 
 # See https://paperswithcode.com/task/openai-gym
+# num_frames_skip is not "frame_skip" in gymnasium. num_frames_skip is only used internally.
 _gym_env_confs = {
     # 95
     "mcc": EnvConf(
         "MountainCarContinuous-v0",
-        problem_seed=None,
-        gym_conf=GymConf(
-            max_steps=1000,
-            num_frames_skip=100,
-        ),
+        gym_conf=GymConf(num_frames_skip=100),
     ),
-    # "pend": EnvConf("Pendulum-v1", problem_seed=None, gym_conf=GymConf(max_steps=200, num_frames_skip=100)),
+    # "pend": EnvConf("Pendulum-v1",  gym_conf=GymConf(max_steps=200, num_frames_skip=100)),
     # 3580 - https://arxiv.org/pdf/1803.07055
     # 6600 - 2024 [??ref]
-    "ant": EnvConf("Ant-v5", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
-    "mpend": EnvConf("InvertedPendulum-v5", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
-    "macro": EnvConf("InvertedDoublePendulum-v5", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
+    "ant": EnvConf("Ant-v5"),
+    "mpend": EnvConf("InvertedPendulum-v5"),
+    "macro": EnvConf("InvertedDoublePendulum-v5"),
     # 325 - https://arxiv.org/pdf/1803.07055
-    "swim": EnvConf("Swimmer-v5", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
-    "reach": EnvConf("Reacher-v5", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
-    # "push": EnvConf("Pusher-v4", problem_seed=None, gym_conf=GymConf(max_steps=100, num_frames_skip=30)),
-    # 3120 - https://arxiv.org/pdf/1803.07055
-    "hop": EnvConf("Hopper-v5", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
+    "swim": EnvConf("Swimmer-v5"),
+    "reach": EnvConf("Reacher-v5"),
+    # "push": EnvConf("Pusher-v4",  gym_conf=GymConf(max_steps=100)),
+    "hop": EnvConf("Hopper-v5"),
     # 6900
-    "human": EnvConf("Humanoid-v5", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
+    "human": EnvConf("Humanoid-v5"),
     # 130,000 - https://arxiv.org/html/2304.12778
-    "stand": EnvConf("HumanoidStandup-v5", problem_seed=None, gym_conf=GymConf(max_steps=1000, num_frames_skip=30)),
+    "stand": EnvConf("HumanoidStandup-v5"),
+    "stand-mlp": EnvConf(
+        "HumanoidStandup-v5",
+        policy_class=MLPPolicyFactory((32, 16)),
+    ),
     "bw": EnvConf(
         "BipedalWalker-v3",
-        problem_seed=None,
         gym_conf=GymConf(
             max_steps=1600,
             num_frames_skip=100,
@@ -145,7 +146,6 @@ _gym_env_confs = {
     #
     "bw-mlp": EnvConf(
         "BipedalWalker-v3",
-        problem_seed=None,
         gym_conf=GymConf(
             max_steps=1600,
             num_frames_skip=100,
@@ -155,20 +155,16 @@ _gym_env_confs = {
     # 300
     "lunar": EnvConf(
         "LunarLander-v3",
-        problem_seed=None,
         gym_conf=GymConf(
             max_steps=500,
-            num_frames_skip=30,
         ),
         kwargs={"continuous": True},
     ),
     # 300
     "lunar-mlp": EnvConf(
         "LunarLander-v3",
-        problem_seed=None,
         gym_conf=GymConf(
             max_steps=500,
-            num_frames_skip=30,
         ),
         kwargs={"continuous": True},
         policy_class=MLPPolicyFactory((16, 8)),
@@ -176,10 +172,8 @@ _gym_env_confs = {
     "tlunar": EnvConf(
         # TuRBO paper specifies v2, but that raises an exception now
         "LunarLander-v3",
-        problem_seed=None,
         gym_conf=GymConf(
             max_steps=500,
-            num_frames_skip=30,
             transform_state=False,
         ),
         kwargs={"continuous": False},

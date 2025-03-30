@@ -49,6 +49,7 @@ def nearest_neighbor(enn, x: np.array, boundary_is_neighbor):
 
     idx, dist = enn.about_neighbors(x, k=1)
     idx = idx.flatten()
+    dist = dist.flatten()
     assert len(idx) == num_samples, (idx, dist)
 
     if boundary_is_neighbor:

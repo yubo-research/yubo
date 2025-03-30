@@ -50,8 +50,8 @@ class LinearPolicy:
 
     def _normalize(self, state):
         self._normalizer.update(state)
-        loc = self._normalizer.mean()
-        scale = self._normalizer.std()
+        loc, scale = self._normalizer.mean_and_std()
+
         state = state - loc
 
         i = np.where(scale == 0)[0]

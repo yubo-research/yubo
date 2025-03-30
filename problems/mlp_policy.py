@@ -37,12 +37,11 @@ class MLPPolicy(nn.Module):
         self.model = nn.Sequential(*layers)
 
         self._normalizer = Normalizer(shape=(num_state,))
-        self._scale = 1.0
 
     def _normalize(self, state):
         self._normalizer.update(state)
-        loc = self._normalizer.mean()
-        scale = self._normalizer.std()
+        loc, scale = self._normalizer.mean_and_std()
+
         i = np.where(scale == 0)[0]
         state = state - loc
         scale[i] = 1
@@ -67,24 +66,20 @@ class MLPPolicy(nn.Module):
         return action.numpy()
 
     def num_params(self):
-        return 1 + sum(p.numel() for p in self.parameters())
+        return sum(p.numel() for p in self.parameters())
 
     def get_params(self):
         with torch.inference_mode():
             params = np.concatenate([p.data.cpu().numpy().flatten() for p in self.parameters()])
-            params = np.insert(params, 0, self._scale)
         return params
 
     def set_params(self, flat_params):
         with torch.inference_mode():
             idx = 0
-            self._scale = flat_params[idx]
-            scale = np.abs(self._scale)
-            idx += 1
             for p in self.parameters():
                 shape = p.shape
                 size = p.numel()
-                p.copy_(scale * torch.from_numpy(flat_params[idx : idx + size].reshape(shape)).float())
+                p.copy_(torch.from_numpy(flat_params[idx : idx + size].reshape(shape)).float())
                 idx += size
 
     def clone(self):
