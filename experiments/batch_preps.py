@@ -272,10 +272,11 @@ def prep_mtv_36(results_dir):
     return cmds
 
 
-def prep_vhd_seq(results_dir):
-    exp_dir = "exp_vhd_seq"
+def prep_seq(results_dir):
+    exp_dir = "exp_mts"
 
-    opts = ["vhd-htm", "vhd-htmr", "sts", "vhd-ht", "vhd-rs", "vhd-h", "vhd-2", "random", "turbo-1", "optuna"]
+    # opts = ["vhd-htm", "vhd-htmr", "sts", "vhd-ht", "vhd-rs", "vhd-h", "vhd-2", "random", "turbo-1", "optuna"]
+    opts = ["mts", "sts", "sobol", "turbo-1", "path", "path-b"]
 
     noises = [None]
 

@@ -15,8 +15,8 @@ class MTSDesigner:
             Y, X = fit_gp.extract_X_Y(data, self._dtype, self._device)
             Y = fit_gp.standardize_torch(Y)
         else:
-            X = torch.empty(size=(0, self._policy.num_params()))
-            Y = torch.empty(size=(0, 1))
+            X = torch.empty(size=(0, self._policy.num_params())).to(self._device).to(self._dtype)
+            Y = torch.empty(size=(0, 1)).to(self._device).to(self._dtype)
 
         gp = fit_gp.fit_gp_XY(X, Y)
         mts = AcqMTS(gp)

@@ -81,7 +81,7 @@ class Designers:
             else:
                 assert False, ("Unknown option", option)
 
-        def bt_designer(acq_factory, acq_kwargs=None, init_sobol=1, opt_sequential=False):
+        def bt_designer(acq_factory, acq_kwargs=None, init_sobol=1, opt_sequential=False, num_restarts=10, raw_samples=10, start_at_max=False):
             return BTDesigner(
                 self._policy,
                 acq_factory,
@@ -92,6 +92,9 @@ class Designers:
                 init_sobol=init_sobol,
                 opt_sequential=opt_sequential,
                 optimizer_options={"batch_limit": 10, "maxiter": 1000, "sample_around_best": sample_around_best},
+                num_restarts=10,
+                raw_samples=10,
+                start_at_max=start_at_max,
             )
 
         if designer_name == "cma":
@@ -340,6 +343,20 @@ class Designers:
                 PathwiseThompsonSampling,
                 init_sobol=init_yubo_default,
             )
+        elif designer_name == "path-b":
+            return bt_designer(
+                PathwiseThompsonSampling,
+                init_sobol=init_yubo_default,
+                num_restarts=20,
+                raw_samples=100,
+            )
+        elif designer_name == "path-m":
+            return bt_designer(
+                PathwiseThompsonSampling,
+                init_sobol=init_yubo_default,
+                start_at_max=True,
+            )
+
         elif designer_name == "tsroots":
             return bt_designer(
                 AcqTSRoots,

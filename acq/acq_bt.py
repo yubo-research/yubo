@@ -38,13 +38,14 @@ class AcqBT:
                 X = X[i, :]
 
         gp = fit_gp.fit_gp_XY(X, Y, model_spec=model_spec)
+        self._gp = gp
 
         if not acq_kwargs:
             kwargs = {}
         else:
             kwargs = dict(acq_kwargs)
         if "X_max" in kwargs:
-            kwargs["X_max"] = find_max(gp, self.bounds)
+            kwargs["X_max"] = self.x_max()
         if "best_f" in kwargs:
             kwargs["best_f"] = gp(find_max(gp, self.bounds)).mean
         if "X_baseline" in kwargs:
@@ -55,6 +56,9 @@ class AcqBT:
             kwargs["Y_max"] = gp(find_max(gp, self.bounds)).mean
 
         self.acq_function = acq_factory(gp, **kwargs)
+
+    def x_max(self):
+        return find_max(self._gp, self.bounds)
 
     def __call__(self, policy):
         assert False, "This is never called"

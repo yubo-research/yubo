@@ -9,7 +9,8 @@ class AcqMTS:
     def __init__(self, model):
         self._model = model
         self._num_iterations = 30
-        self._no_stagger = False
+        self._use_stagger = False
+        self._s_min = 1e-6
 
         self._X_0 = self._model.train_inputs[0].detach()
         self._num_dim = self._X_0.shape[-1]
@@ -40,16 +41,17 @@ class AcqMTS:
 
     def _iterate_(self, mp_sampler, X_best, Y_best):
         num_arms = X_best.shape[0]
-        s_min = 1e-6
+        s_min = self._s_min
         s_max = 1
         u = torch.rand(size=(num_arms, 1))
-        if self._no_stagger:
-            s = s_min + (s_max - s_min) * u
-        else:
+        if self._use_stagger:
             l_s_min = torch.log(torch.tensor(s_min)).to(self._X_0)
             l_s_max = torch.log(torch.tensor(s_max)).to(self._X_0)
             s = torch.exp(l_s_min + (l_s_max - l_s_min) * u)
-        assert s.max() <= 1, s
+        else:
+            s = s_min + (s_max - s_min) * u
+
+        # assert s.max() <= 1, s
         assert s.min() > 0, s
         s = s.unsqueeze(-1)
 
