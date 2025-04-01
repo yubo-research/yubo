@@ -276,7 +276,7 @@ def prep_seq(results_dir):
     exp_dir = "exp_mts"
 
     # opts = ["vhd-htm", "vhd-htmr", "sts", "vhd-ht", "vhd-rs", "vhd-h", "vhd-2", "random", "turbo-1", "optuna"]
-    opts = ["mts", "sts", "sobol", "turbo-1", "path", "path-b"]
+    opts = ["mts", "sts", "sobol", "turbo-1", "path", "path-b", "path-m"]
 
     noises = [None]
 
@@ -301,11 +301,11 @@ def prep_seq(results_dir):
     return cmds
 
 
-def prep_enn_tlunar(results_dir):
-    exp_dir = "exp_enn_tlunar"
+def prep_tlunar(results_dir):
+    exp_dir = "exp_mts_tlunar"
 
-    opts = ["enn-f-3"]
-    # "enn-m-3", "enn-t-10",
+    opts = ["mts", "turbo-1", "path", "path-m", "ts"]
+    # "enn-m-3", "enn-t-10", "enn-f-3"
     # , "sts"]  # "enn-b-3", "turbo-1", "random", "enn-b-5"]  # "enn-3", "enn-b", "enn-u-3", "random", "turbo-1", "optuna", "cma"]
     # , "vhd-h", "vhd-rs", "vhd-2", "random", "turbo-1", "optuna", "cma"]
 
@@ -314,7 +314,7 @@ def prep_enn_tlunar(results_dir):
         for num_arms, num_rounds, num_denoise in [
             (1, 100, 1),
             (10, 100, 10),
-            # (50, 30, 50),
+            (50, 30, 50),
         ]:
             # prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None):
             if num_arms == 1 and opt == "cma":
@@ -335,4 +335,27 @@ def prep_enn_tlunar(results_dir):
                 )
             )
 
+    return cmds
+
+
+def prep_swim(results_dir):
+    exp_dir = "exp_mts_swim"
+
+    opts = ["mts", "turbo-1", "path", "path-m", "ts"]
+
+    cmds = []
+    for opt in opts:
+        cmds.append(
+            prep_args_1(
+                results_dir,
+                exp_dir=exp_dir,
+                problem="swim:fn",
+                opt=opt,
+                num_arms=1,
+                num_replications=100,
+                num_rounds=500,
+                noise=None,
+                num_denoise=1,
+            )
+        )
     return cmds

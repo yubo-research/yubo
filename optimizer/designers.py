@@ -184,6 +184,8 @@ class Designers:
             return bt_designer(qNoisyExpectedImprovement, acq_kwargs={"X_baseline": None})
         elif designer_name == "lei":
             return bt_designer(qLogNoisyExpectedImprovement, acq_kwargs={"X_baseline": None})
+        elif designer_name == "lei-m":
+            return bt_designer(qLogNoisyExpectedImprovement, acq_kwargs={"X_baseline": None}, start_at_max=True)
         elif designer_name == "gibbon":
             return bt_designer(qLowerBoundMaxValueEntropy, opt_sequential=True, acq_kwargs={"candidate_set": None})
         elif designer_name == "turbo-1":
