@@ -44,7 +44,7 @@ def plot_compare(ax, data_locator, i_agg=-1, renames=None, b_sort=True):
     ax.set_ylabel("score")
 
 
-def pc_normal(results_path, exp_dir, ax, num_dim, num_arms, i_agg, opt_names, renames, num_reps=None):
+def pc_normal(results_path, exp_dir, ax, num_dim, num_arms, i_agg, opt_names, renames, num_reps=None, problems: set = None):
     plot_compare(
         ax,
         DataLocator(
@@ -54,6 +54,7 @@ def pc_normal(results_path, exp_dir, ax, num_dim, num_arms, i_agg, opt_names, re
             num_arms=num_arms,
             opt_names=opt_names,
             num_reps=num_reps,
+            problems=problems,
         ),
         renames=renames,
         i_agg=i_agg,
