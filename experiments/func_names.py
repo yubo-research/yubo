@@ -3,7 +3,7 @@ from problems.benchmark_functions import all_benchmarks
 funcs_nd = ["ackley", "dixonprice", "griewank", "levy", "michalewicz", "rastrigin", "rosenbrock", "sphere", "stybtang"]
 funcs_1d = ["ackley", "dixonprice", "griewank", "levy", "rastrigin", "sphere", "stybtang"]
 
-funcs_36 = list(all_benchmarks().keys())
+
 
 
 funcs_multimodal = [
@@ -15,7 +15,7 @@ funcs_multimodal = [
     "grlee12",
     "griewank",
     "holdertable",
-    "langermann",
+    "langerman",
     "levy",
     "levy13",
     "rastrigin",
@@ -25,7 +25,7 @@ funcs_multimodal = [
     "shubert",
 ]
 funcs_bowl = [
-    "bohachevsky",
+    "bohachevsky1",
     "perm",
     "rotatedhyperellipsoid",
     "sphere",
@@ -63,3 +63,6 @@ funcs_other = [
     "shekel",
     "stybtang",
 ]
+
+# 51 functions
+funcs_all = funcs_multimodal + funcs_bowl + funcs_plate + funcs_valley + funcs_ridges + funcs_other

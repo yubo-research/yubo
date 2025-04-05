@@ -6,7 +6,7 @@ import acq.acq_util as acq_util
 
 
 class AcqMTS:
-    def __init__(self, model, use_stagger=True):
+    def __init__(self, model, use_stagger=False):
         self._model = model
         self._num_iterations = 30
         self._use_stagger = use_stagger

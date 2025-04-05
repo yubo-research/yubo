@@ -1,5 +1,5 @@
 from experiments.experiment_sampler import prep_args_1, prep_d_args
-from experiments.func_names import funcs_1d, funcs_36, funcs_nd
+from experiments.func_names import funcs_1d, funcs_all, funcs_nd
 
 
 def prep_mtv_repro(results_dir):
@@ -232,7 +232,7 @@ def prep_sequential_35(results_dir):
             prep_d_args(
                 results_dir,
                 exp_dir=exp_dir,
-                funcs=funcs_36,
+                funcs=funcs_all,
                 dims=[num_dim],
                 num_arms=1,
                 num_replications=10,
@@ -259,7 +259,7 @@ def prep_mtv_36(results_dir):
             prep_d_args(
                 results_dir,
                 exp_dir=exp_dir,
-                funcs=funcs_36,
+                funcs=funcs_all,
                 dims=[num_dim],
                 num_arms=max(3, min(10, num_dim)),
                 num_replications=10,
@@ -273,10 +273,10 @@ def prep_mtv_36(results_dir):
 
 
 def prep_seq(results_dir):
-    exp_dir = "exp_mts"
+    exp_dir = "exp_enn"
 
     # opts = ["vhd-htm", "vhd-htmr", "sts", "vhd-ht", "vhd-rs", "vhd-h", "vhd-2", "random", "turbo-1", "optuna"]
-    opts = ["path:Osab", "mts"]  # ["mts", "sts", "sobol", "turbo-1", "path", "path-b", "path-m"]
+    opts = ["path:Osab", "enn-b-3", "mts-ns", "turbo-1", "random"]  # ["mts", "sts", "sobol", "turbo-1", "path", "path-b", "path-m"]
 
     noises = [None]
 
@@ -288,10 +288,10 @@ def prep_seq(results_dir):
             prep_d_args(
                 results_dir,
                 exp_dir=exp_dir,
-                funcs=funcs_36,
+                funcs=funcs_all,
                 dims=[num_dim],
                 num_arms=1,
-                num_replications=10,
+                num_replications=30,
                 opts=opts,
                 noises=noises,
                 num_rounds=max(min_rounds, num_dim),
