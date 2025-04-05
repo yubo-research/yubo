@@ -30,9 +30,9 @@ Tests
 @dataclass
 class ENNConfig:
     k: int
-    num_candidates_per_arm: int = 100
     max_cell: bool = False
-    boundary: bool = False
+    num_boundary: int = 100
+    num_interior: int = 0
     maximin: bool = False
     acq: str = "pareto"
 
@@ -41,10 +41,11 @@ class ENNConfig:
 
     constrain_by_mu: bool = False
     num_alpha: int = 1
-    boundary_is_neighbor = False
+    p_boundary_is_neighbor: float = 0.0
 
     def __post_init__(self):
         assert self.num_over_sample_per_arm > 0
+        assert self.num_boundary + self.num_interior > 0
 
 
 class AcqENN:
@@ -88,11 +89,11 @@ class AcqENN:
 
     def _sample_boundary(self, x_0):
         u = random_directions(len(x_0), self._num_dim)
-        return farthest_neighbor(self._enn, x_0, u, boundary_is_neighbor=self._config.boundary_is_neighbor)
+        return farthest_neighbor(self._enn, x_0, u, p_boundary_is_neighbor=self._config.p_boundary_is_neighbor)
 
     def _sample_in_cell(self, x_cand):
         u = random_directions(len(x_cand), self._num_dim)
-        x_far = farthest_neighbor(self._enn, x_cand, u, boundary_is_neighbor=self._config.boundary_is_neighbor)
+        x_far = farthest_neighbor(self._enn, x_cand, u, p_boundary_is_neighbor=self._config.p_boundary_is_neighbor)
 
         # We want to uniformly sample over the Voronoi cell, but this is
         #  easier. Maybe we'll come up with something better.
@@ -262,15 +263,16 @@ class AcqENN:
         return x_cand[i]
 
     def _draw_two_level(self, num_arms):
-        x_0 = self._ts_pick_cells(self._config.num_candidates_per_arm * num_arms)
-        if self._config.boundary:
-            x_cand = self._sample_boundary(x_0)
-        else:
-            x_cand = self._sample_in_cell(x_0)
+        x_0 =self._ts_pick_cells((self._config.num_boundary + self._config.num_interior) * num_arms)
+        x_cand = np.empty(shape=(0, self._num_dim))
+        if self._config.num_boundary > 0:
+            x_cand = np.concatenate([x_cand, self._sample_boundary(x_0[:self._config.num_boundary])], axis=0)
+        if self._config.num_interior > 0:
+            x_cand = np.concatenate([x_cand, self._sample_in_cell(x_0[self._config.num_boundary:])], axis=0)
 
         assert x_cand.min() >= 0.0 and x_cand.max() <= 1.0, (x_cand.min(), x_cand.max())
 
-        if self._config.num_candidates_per_arm == 1:
+        if self._config.num_boundary + self._config.num_interior == 1:
             return x_cand
 
         if self._config.acq == "ucb":

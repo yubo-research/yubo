@@ -44,7 +44,7 @@ def random_directions(num_samples, num_dim):
     return u / np.linalg.norm(u, axis=1, keepdims=True)
 
 
-def nearest_neighbor(enn, x: np.array, boundary_is_neighbor):
+def nearest_neighbor(enn, x: np.array, p_boundary_is_neighbor):
     num_samples, num_dim = x.shape
 
     idx, dist = enn.about_neighbors(x, k=1)
@@ -52,22 +52,25 @@ def nearest_neighbor(enn, x: np.array, boundary_is_neighbor):
     dist = dist.flatten()
     assert len(idx) == num_samples, (idx, dist)
 
-    if boundary_is_neighbor:
-        dist_bdy = np.minimum(np.abs(1 - x).min(axis=1), np.abs(0 - x).min(axis=1))
-        i = dist > dist_bdy
-        idx[i] = -1
-        dist[i] = dist_bdy[i]
+    i_bin = np.where(np.random.binomial(n=1, p=p_boundary_is_neighbor, size=num_samples))[0]
+    if len(i_bin) > 0:
+        dist_bdy = np.minimum(np.abs(1 - x[i_bin]).min(axis=1), np.abs(0 - x[i_bin]).min(axis=1))
+        i = np.where(dist[i_bin] > dist_bdy)[0]
+        i_bin = i_bin[i]
+        dist_bdy = dist_bdy[i]
+        idx[i_bin] = -1
+        dist[i_bin] = dist_bdy
 
     return idx, dist
 
 
-def most_isolated(enn, x: np.ndarray, boundary_is_neighbor=True):
-    _, dists = nearest_neighbor(enn, x, boundary_is_neighbor=boundary_is_neighbor)
+def most_isolated(enn, x: np.ndarray, p_boundary_is_neighbor):
+    _, dists = nearest_neighbor(enn, x, p_boundary_is_neighbor=p_boundary_is_neighbor)
     i = np.where(dists == dists.max())[0]
     return x[i]
 
 
-def farthest_neighbor(enn, x_0: np.ndarray, u: np.ndarray, eps_bound: float = 1e-6, boundary_is_neighbor=True):
+def farthest_neighbor(enn, x_0: np.ndarray, u: np.ndarray, eps_bound: float = 1e-6, p_boundary_is_neighbor=0.0):
     """
     Find the farthest point from x_0 along direction u that still has x_0 as its nearest neighbor.
     Alternatively, find the boundary of the Vornoi cell that has x_0 as its center.
@@ -85,12 +88,13 @@ def farthest_neighbor(enn, x_0: np.ndarray, u: np.ndarray, eps_bound: float = 1e
     l_low = np.zeros(shape=(num_samples, 1))
     l_high = 2 * np.sqrt(num_dim) * np.ones(shape=(num_samples, 1))
 
+    
     idx_0 = enn.idx_x(x_0).flatten()
     if len(idx_0) != num_samples:
         assert False, "Can't find x_0 in training data for ENN"
 
     def _is_neighbor(x):
-        return nearest_neighbor(enn, x, boundary_is_neighbor=boundary_is_neighbor)[0] == idx_0
+        return nearest_neighbor(enn, x, p_boundary_is_neighbor=p_boundary_is_neighbor)[0] == idx_0
 
     while (l_high - l_low).max() > eps_bound:
         assert not np.any(np.isnan(l_low)), l_low

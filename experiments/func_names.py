@@ -26,7 +26,7 @@ funcs_multimodal = [
 ]
 funcs_bowl = [
     "bohachevsky1",
-    "perm",
+    # "perm",
     "rotatedhyperellipsoid",
     "sphere",
     "sumofdifferentpowers",

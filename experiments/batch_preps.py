@@ -276,14 +276,14 @@ def prep_seq(results_dir):
     exp_dir = "exp_enn"
 
     # opts = ["vhd-htm", "vhd-htmr", "sts", "vhd-ht", "vhd-rs", "vhd-h", "vhd-2", "random", "turbo-1", "optuna"]
-    opts = ["path:Osab", "enn-b-3", "mts-ns", "turbo-1", "random"]  # ["mts", "sts", "sobol", "turbo-1", "path", "path-b", "path-m"]
+    opts = ["sobol"] # ["path:Osab", "enn-b-3", "mts", "turbo-1", "random"]  # ["mts", "sts", "sobol", "turbo-1", "path", "path-b", "path-m"]
 
     noises = [None]
 
     min_rounds = 30
     cmds = []
 
-    for num_dim in [1, 3, 10, 30, 100, 300]:
+    for num_dim in [1, 3, 10, 30]: #, 1, 3, 100, 300]:
         cmds.extend(
             prep_d_args(
                 results_dir,
@@ -291,6 +291,7 @@ def prep_seq(results_dir):
                 funcs=funcs_all,
                 dims=[num_dim],
                 num_arms=1,
+                # You don't need to run 30 replications
                 num_replications=30,
                 opts=opts,
                 noises=noises,

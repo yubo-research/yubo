@@ -371,24 +371,26 @@ class Designers:
             )
         elif designer_name == "mts":
             return MTSDesigner(self._policy)
-        elif designer_name.startswith("enn-u-"):
+        elif designer_name.startswith("enn-i-"):
             k = int(designer_name.split("-")[-1])
             return ENNDesigner(
                 self._policy,
                 ENNConfig(
                     k=k,
-                    constrain_by_mu=False,
-                    acq="ucb",
-                    se_scale=10.0,
+                    num_boundary=0,
+                    num_interior=100,
+                    acq="pareto",
                 ),
             )
-        elif designer_name == "enn-b":
+        elif designer_name.startswith("enn-bi-"):
+            k = int(designer_name.split("-")[-1])
             return ENNDesigner(
                 self._policy,
                 ENNConfig(
-                    k=1,
-                    boundary=True,
-                    num_candidates_per_arm=1,
+                    k=k,
+                    num_boundary=100,
+                    num_interior=100,
+                    acq="pareto",
                 ),
             )
         elif designer_name.startswith("enn-b-"):
@@ -397,45 +399,12 @@ class Designers:
                 self._policy,
                 ENNConfig(
                     k=k,
-                    boundary=True,
-                    num_candidates_per_arm=100,
+                    num_boundary=100,
+                    num_interior=0,
                     acq="pareto",
                 ),
             )
-        elif designer_name.startswith("enn-m-"):
-            k = int(designer_name.split("-")[-1])
-            return ENNDesigner(
-                self._policy,
-                ENNConfig(
-                    k=k,
-                    boundary=True,
-                    num_candidates_per_arm=100,
-                    num_over_sample_per_arm=3,
-                    maximin=True,
-                ),
-            )
-        elif designer_name.startswith("enn-t-"):
-            # Slow when num_arms > 1
-            k = int(designer_name.split("-")[-1])
-            return ENNDesigner(
-                self._policy,
-                ENNConfig(
-                    k=k,
-                    boundary=True,
-                    max_cell=True,
-                    num_candidates_per_arm=100,
-                    se_scale=1,
-                ),
-            )
-        elif designer_name.startswith("enn-"):
-            k = int(designer_name.split("-")[-1])
-            return ENNDesigner(
-                self._policy,
-                ENNConfig(
-                    k=k,
-                    num_candidates_per_arm=100,
-                ),
-            )
+
 
         # Long sobol init, sequential opt
         elif designer_name == "sobol_ucb":
