@@ -388,9 +388,31 @@ class Designers:
                 self._policy,
                 ENNConfig(
                     k=k,
-                    num_boundary=100,
-                    num_interior=100,
+                    num_boundary=50,
+                    num_interior=50,
                     acq="pareto",
+                ),
+            )
+        elif designer_name.startswith("enn-cbi-"):
+            k = int(designer_name.split("-")[-1])
+            return ENNDesigner(
+                self._policy,
+                ENNConfig(
+                    k=k,
+                    num_boundary=50,
+                    num_interior=50,
+                    acq="pareto_cheb",
+                ),
+            )
+        elif designer_name.startswith("enn-ci-"):
+            k = int(designer_name.split("-")[-1])
+            return ENNDesigner(
+                self._policy,
+                ENNConfig(
+                    k=k,
+                    num_boundary=0,
+                    num_interior=100,
+                    acq="pareto_cheb",
                 ),
             )
         elif designer_name.startswith("enn-b-"):

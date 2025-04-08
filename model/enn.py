@@ -115,7 +115,8 @@ class EpsitemicNearestNeighbors:
         norm = w.sum(axis=1)
         # sum over k neighbors
         mu = (w * mu).sum(axis=1) / norm
-        vvar = 1.0 / norm
+        # vvar = 1.0 / norm
+        vvar = 1.0 / (w**2).sum(axis=1)
 
         assert mu.shape == (b, q), (mu.shape, b, q)
         # TODO: include self variance (Yvar) in 1 / sum(1/var)

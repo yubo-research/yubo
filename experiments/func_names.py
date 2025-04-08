@@ -58,7 +58,7 @@ funcs_other = [
     # "forrester",
     "goldsteinprice",
     "hartmann",
-    "permdbeta",
+    # "permdbeta",
     "powell",
     "shekel",
     "stybtang",

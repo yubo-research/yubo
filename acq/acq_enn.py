@@ -83,7 +83,6 @@ class AcqENN:
         y = y + se * np.random.normal(size=(n, num_arms))
 
         i = np.where(y == y.max(axis=0, keepdims=True))[0]
-        # i = np.random.choice(np.where(y == y.max())[0])
 
         return self._X_train[i, :]
 
@@ -155,85 +154,24 @@ class AcqENN:
         else:
             return x_front
 
-    # def _idx_pareto(self, x_cand: np.ndarray, mu, se, fn_min_dist, k_top_k=None):
-    #     if k_top_k is not None and len(x_cand) >= k_top_k:
-    #         i_mu = set(top_k(mu.flatten(), k_top_k))
-    #         i_se = set(top_k(se.flatten(), k_top_k))
-    #         i_orig = np.array(sorted(i_mu.intersection(i_se)))
-    #         x_cand = x_cand[i_orig, :]
-    #         del i_mu, i_se
-    #     else:
-    #         i_orig = np.arange(len(x_cand))
+    def _pareto_cheb(self, x_cand, num_arms):
+        mvn = self._enn.posterior(x_cand)
+        y = np.concatenate([mvn.mu, mvn.se], axis=1)
+        norm = y.max(axis=0, keepdims=True) - y.min(axis=0, keepdims=True)
+        y = y - y.min(axis=0, keepdims=True)
+        i = np.where(norm == 0)[0]
+        norm[i] = 1
+        y[i] = 0.5
+        y = y / norm
 
-    #     num_samples = x_cand.shape[0]
-    #     dominated = np.zeros(num_samples, dtype=bool)
+        w = np.random.uniform(size=y.shape)
+        w = w / w.sum(axis=1, keepdims=True)
+        y = y * w
+        y = y.min(axis=1)
 
-    #     md_cache = np.nan * np.ones(shape=(num_samples,))
-
-    #     def _get_md(i):
-    #         if np.isnan(md_cache[i]):
-    #             md_cache[i] = fn_min_dist(i)
-    #         return md_cache[i]
-
-    #     for i in range(num_samples):
-    #         if dominated[i]:
-    #             continue
-    #         mu_i = mu[i]
-    #         se_i = se[i]
-    #         md_i = _get_md(i)
-
-    #         for j in range(num_samples):
-    #             if j == i:
-    #                 continue
-    #             mu_j = mu[j]
-    #             se_j = se[j]
-    #             if mu_j < mu_i or se_j < se_i:
-    #                 continue
-    #             md_j = _get_md(j)
-    #             if md_j < md_i:
-    #                 continue
-    #             if md_j > md_i or mu_j > mu_i or se_j > se_i:
-    #                 dominated[i] = True
-    #                 break
-
-    #     return i_orig[np.where(~dominated)[0]]
-
-    # def _acq_pareto(self, x_cand, num_arms):
-    #     mvn = self._enn.posterior(x_cand)
-
-    #     def _fn_min_dist(i):
-    #         return np.linalg.norm(x_cand[i, :] - np.concatenate([x_cand[:i, :], x_cand[i + 1 :, :]], axis=0), axis=1).min()
-
-    #     t_0 = time.time()
-    #     i = self._idx_pareto(x_cand, mvn.mu, mvn.se, _fn_min_dist, k_top_k=None)
-    #     t_f = time.time()
-    #     print("P:", len(i), len(x_cand), t_f - t_0)
-
-    #     if len(i) < num_arms:
-    #         print("BORK:", num_arms - len(i))
-    #         i = set(i)
-    #         i.update(np.random.choice(list(set(np.arange(len(x_cand))) - i), size=num_arms - len(i), replace=False).tolist())
-    #         i = list(i)
-    #     elif len(i) >= num_arms:
-    #         i = np.random.choice(i, size=num_arms, replace=False)
-    #     return x_cand[i]
-
-    # def _acq_approx_pareto(self, x_cand, num_arms):
-    #     # slow
-    #     mvn = self._enn.posterior(x_cand)
-    #     mu_min = mvn.mu.min()
-    #     mu = (mvn.mu - mu_min) / (mvn.mu.max() - mu_min)
-    #     se_min = mvn.se.min()
-    #     se = (mvn.se - se_min) / (mvn.se.max() - se_min)
-
-    #     n = len(x_cand)
-    #     w = np.random.uniform(size=(n, 2))
-    #     w = w / w.sum(axis=1, keepdims=True)
-    #     phi = mu * w[:, 0] + se * w[:, 1]
-    #     i = np.argsort(-phi)
-    #     x_cand = x_cand[i[self._config.num_sub_cand_per_arm], :]
-    #     i = greedy_maximin(x_cand, num_arms)
-    #     return x_cand[i]
+        i = np.argsort(-y, axis=0).flatten()
+        x_cand = x_cand[i]
+        return x_cand[:num_arms]
 
     def _thompson_sample(self, x_cand, num_arms):
         # was 2*num_arms
@@ -263,12 +201,12 @@ class AcqENN:
         return x_cand[i]
 
     def _draw_two_level(self, num_arms):
-        x_0 =self._ts_pick_cells((self._config.num_boundary + self._config.num_interior) * num_arms)
+        x_0 = self._ts_pick_cells((self._config.num_boundary + self._config.num_interior) * num_arms)
         x_cand = np.empty(shape=(0, self._num_dim))
         if self._config.num_boundary > 0:
-            x_cand = np.concatenate([x_cand, self._sample_boundary(x_0[:self._config.num_boundary])], axis=0)
+            x_cand = np.concatenate([x_cand, self._sample_boundary(x_0[: self._config.num_boundary])], axis=0)
         if self._config.num_interior > 0:
-            x_cand = np.concatenate([x_cand, self._sample_in_cell(x_0[self._config.num_boundary:])], axis=0)
+            x_cand = np.concatenate([x_cand, self._sample_in_cell(x_0[self._config.num_boundary :])], axis=0)
 
         assert x_cand.min() >= 0.0 and x_cand.max() <= 1.0, (x_cand.min(), x_cand.max())
 
@@ -279,6 +217,8 @@ class AcqENN:
             return self._ucb(x_cand, num_arms)
         elif self._config.acq == "pareto":
             return self._pareto_front(x_cand, num_arms)
+        elif self._config.acq == "pareto_cheb":
+            return self._pareto_cheb(x_cand, num_arms)
         elif self._config.acq == "ts":
             return self._thompson_sample(x_cand, num_arms)
         elif self._config.acq == "uniform":

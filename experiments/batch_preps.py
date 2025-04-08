@@ -276,14 +276,15 @@ def prep_seq(results_dir):
     exp_dir = "exp_enn"
 
     # opts = ["vhd-htm", "vhd-htmr", "sts", "vhd-ht", "vhd-rs", "vhd-h", "vhd-2", "random", "turbo-1", "optuna"]
-    opts = ["sobol"] # ["path:Osab", "enn-b-3", "mts", "turbo-1", "random"]  # ["mts", "sts", "sobol", "turbo-1", "path", "path-b", "path-m"]
+    # opts = ["enn-i-3", "enn-bi-3", "enn-b-3", "path:Osab", "enn-b-3", "mts", "turbo-1", "random"]  # ["mts", "sts", "sobol", "turbo-1", "path", "path-b", "path-m"]
+    opts = ["path:Osab", "enn-i-3", "enn-bi-3", "enn-b-3", "mts", "turbo-1", "random"]
 
     noises = [None]
 
     min_rounds = 30
     cmds = []
 
-    for num_dim in [1, 3, 10, 30]: #, 1, 3, 100, 300]:
+    for num_dim in [1, 3, 10, 30, 100]:  # , 300]:
         cmds.extend(
             prep_d_args(
                 results_dir,
@@ -303,9 +304,9 @@ def prep_seq(results_dir):
 
 
 def prep_tlunar(results_dir):
-    exp_dir = "exp_mts_tlunar"
+    exp_dir = "exp_enn_tlunar"
 
-    opts = ["path:Osab"]  # "mts", "turbo-1", "path", "path-m", "ts", "mts-ns"]
+    opts = ["path:Osab", "enn-cbi-3", "enn-cbi-10"]  # "mts", "turbo-1", "path", "path-m", "ts", "mts-ns", "enn-bi-3"]
 
     cmds = []
     for opt in opts:
