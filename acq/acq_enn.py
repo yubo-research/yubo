@@ -154,7 +154,7 @@ class AcqENN:
         else:
             return x_front
 
-    def _pareto_cheb(self, x_cand, num_arms):
+    def _pareto_cheb(self, x_cand, num_arms, noisy):
         mvn = self._enn.posterior(x_cand)
         y = np.concatenate([mvn.mu, mvn.se], axis=1)
         norm = y.max(axis=0, keepdims=True) - y.min(axis=0, keepdims=True)
@@ -164,7 +164,10 @@ class AcqENN:
         y[i] = 0.5
         y = y / norm
 
-        w = np.random.uniform(size=y.shape)
+        if noisy:
+            w = np.random.uniform(size=y.shape)
+        else:
+            w = np.random.uniform(size=(1, y.shape[-1]))
         w = w / w.sum(axis=1, keepdims=True)
         y = y * w
         y = y.min(axis=1)
@@ -218,7 +221,9 @@ class AcqENN:
         elif self._config.acq == "pareto":
             return self._pareto_front(x_cand, num_arms)
         elif self._config.acq == "pareto_cheb":
-            return self._pareto_cheb(x_cand, num_arms)
+            return self._pareto_cheb(x_cand, num_arms, noisy=False)
+        elif self._config.acq == "pareto_cheb_noisy":
+            return self._pareto_cheb(x_cand, num_arms, noisy=True)
         elif self._config.acq == "ts":
             return self._thompson_sample(x_cand, num_arms)
         elif self._config.acq == "uniform":

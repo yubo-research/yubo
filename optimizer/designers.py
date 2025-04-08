@@ -401,17 +401,17 @@ class Designers:
                     k=k,
                     num_boundary=50,
                     num_interior=50,
-                    acq="pareto_cheb",
+                    acq="pareto_cheb_noisy",
                 ),
             )
-        elif designer_name.startswith("enn-ci-"):
+        elif designer_name.startswith("enn-cc-"):
             k = int(designer_name.split("-")[-1])
             return ENNDesigner(
                 self._policy,
                 ENNConfig(
                     k=k,
-                    num_boundary=0,
-                    num_interior=100,
+                    num_boundary=50,
+                    num_interior=50,
                     acq="pareto_cheb",
                 ),
             )
@@ -426,7 +426,6 @@ class Designers:
                     acq="pareto",
                 ),
             )
-
 
         # Long sobol init, sequential opt
         elif designer_name == "sobol_ucb":

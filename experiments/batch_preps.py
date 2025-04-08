@@ -306,7 +306,7 @@ def prep_seq(results_dir):
 def prep_tlunar(results_dir):
     exp_dir = "exp_enn_tlunar"
 
-    opts = ["path:Osab", "enn-cbi-3", "enn-cbi-10"]  # "mts", "turbo-1", "path", "path-m", "ts", "mts-ns", "enn-bi-3"]
+    opts = ["cma", "optuna"]  # "mts", "turbo-1", "path", "path-m", "ts", "mts-ns", "enn-bi-3", "path:Osab",
 
     cmds = []
     for opt in opts:
@@ -317,8 +317,6 @@ def prep_tlunar(results_dir):
         ]:
             # prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None):
             if num_arms == 1 and opt == "cma":
-                continue
-            if opt == "enn-u-3" and num_arms != 1:
                 continue
             cmds.append(
                 prep_args_1(
