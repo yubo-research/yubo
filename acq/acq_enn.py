@@ -212,7 +212,7 @@ class AcqENN:
 
         i_front = np.array(i_front)
         assert len(i_front) > 0, (len(i_front), len(x_cand))
-        i_arm = np.random.choice(i_front, size=num_arms, replace=False)
+        i_arm = np.random.choice(i_front, size=1, replace=False)
         x_arms = [x_cand[i_arm]]
 
         if num_arms > 1:
