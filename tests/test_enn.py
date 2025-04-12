@@ -85,13 +85,13 @@ def test_exclude_self():
 
     num_dim, n, train_x, train_y, k, enn = set_up_enn()
 
-    x = train_x[[0]]
+    x = train_x[[0,5]]
 
 
-    mvn_a = enn.posterior(x, exclude_self=False)
-    mvn_b = enn.posterior(x, exclude_self=True)
+    mvn_a = enn.posterior(x, exclude_nearest=False)
+    mvn_b = enn.posterior(x, exclude_nearest=True)
 
     assert np.all(mvn_a.mu != mvn_b.mu)
-    assert np.abs(mvn_a.mu - train_y[0]) < 1e-6
+    assert np.abs(mvn_a.mu - train_y[[0,5]]).max() < 1e-6
     assert np.all(mvn_a.se < mvn_b.se/1000)
     

@@ -68,7 +68,7 @@ class AcqENN:
     def _ts_pick_cells(self, num_arms):
         assert len(self._X_train) > 0
         if self._config.ts_enn:
-            y = self._enn(self._X_train).sample(num_arms)
+            y = self._enn.posterior(self._X_train, exclude_nearest=True).sample(num_arms)
             y = y.squeeze(1)
         else:
             y = self._Y_train  

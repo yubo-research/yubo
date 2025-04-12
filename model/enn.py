@@ -87,7 +87,7 @@ class EpsitemicNearestNeighbors:
     def __call__(self, X):
         return self.posterior(X,)
 
-    def posterior(self, x, k=None, exclude_self=False):
+    def posterior(self, x, k=None, exclude_nearest=False):
         if k is None:
             k = self.k
 
@@ -107,7 +107,7 @@ class EpsitemicNearestNeighbors:
                 np.sqrt(vvar.squeeze(0)),
             )
 
-        if exclude_self and x in self._train_x:
+        if exclude_nearest:
             dists, idx = self._index.search(x, k=k+1)
             dists = dists[:, 1:]
             idx = idx[:,1:]
