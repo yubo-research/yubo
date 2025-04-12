@@ -1,18 +1,26 @@
+name: cogneato2
 channels:
   - conda-forge
   - pkgs/main
 dependencies:
   - absl-py=2.2.0=pyhd8ed1ab_0
   - alembic=1.15.2=pyhd8ed1ab_0
+  - appnope=0.1.2=py311hca03da5_1001
+  - asttokens=3.0.0=py311hca03da5_0
   - botorch=0.12.0=pyhd8ed1ab_1
+  - bottleneck=1.4.2=py311hb9f6ed7_0
   - bzip2=1.0.8=h99b78c6_7
   - ca-certificates=2025.1.31=hf0a4a13_0
   - cloudpickle=3.1.1=pyhd8ed1ab_0
   - cma=4.0.0=pyhecae5ae_0
   - colorama=0.4.6=pyhd8ed1ab_1
   - colorlog=6.9.0=pyh707e725_1
+  - comm=0.2.1=py311hca03da5_0
   - cpython=3.11.12=py311hd8ed1ab_0
+  - debugpy=1.8.11=py311h313beb8_0
+  - decorator=5.1.1=pyhd3eb1b0_0
   - etils=1.12.2=pyhd8ed1ab_0
+  - executing=0.8.3=pyhd3eb1b0_0
   - faiss=1.9.0=py311hc0156c1_0_cpu
   - faiss-cpu=1.9.0=hd610c6a_0
   - farama-notifications=0.0.4=pyhd8ed1ab_0
@@ -28,8 +36,11 @@ dependencies:
   - imageio=2.37.0=pyhfb79c49_0
   - importlib-metadata=8.6.1=pyha770c72_0
   - importlib_resources=6.5.2=pyhd8ed1ab_0
+  - ipykernel=6.29.5=py311hca03da5_1
+  - ipython=8.30.0=py311hca03da5_0
   - jax-jumpy=1.0.0=pyhd8ed1ab_1
   - jaxtyping=0.2.19=pyhd8ed1ab_0
+  - jedi=0.19.2=py311hca03da5_0
   - jinja2=3.1.6=pyhd8ed1ab_0
   - joblib=1.4.2=pyhd8ed1ab_1
   - jupyter_client=8.6.3=py311hca03da5_0
@@ -68,6 +79,7 @@ dependencies:
   - lodepng=20220109=hf86a087_0
   - mako=1.3.10=pyhd8ed1ab_0
   - markupsafe=3.0.2=py311h4921393_1
+  - matplotlib-inline=0.1.6=py311hca03da5_0
   - mpc=1.3.1=h8f1351a_1
   - mpfr=4.2.1=hb693164_3
   - mpmath=1.3.0=pyhd8ed1ab_1
@@ -77,8 +89,10 @@ dependencies:
   - mujoco-simulate=3.2.4=h5833ebf_1
   - multipledispatch=0.6.0=pyhd8ed1ab_1
   - ncurses=6.5=h5e97a16_3
+  - nest-asyncio=1.6.0=py311hca03da5_0
   - networkx=3.4.2=pyh267e887_2
   - nomkl=1.0=h5ca1d4c_0
+  - numexpr=2.10.1=py311h5d9532f_0
   - numpy=1.26.0=py311hb8f3215_0
   - openjpeg=2.5.3=h8a3d83b_0
   - openssl=3.5.0=h81ee809_0
@@ -86,21 +100,32 @@ dependencies:
   - optree=0.15.0=py311h210dab8_0
   - optuna=4.0.0=pyhd8ed1ab_0
   - packaging=24.2=pyhd8ed1ab_2
+  - pandas=2.2.3=py311hcf29cfe_0
+  - parso=0.8.4=py311hca03da5_0
+  - pexpect=4.8.0=pyhd3eb1b0_3
   - pillow=11.1.0=py311hb9ba9e9_0
   - pip=25.0.1=pyh8b19718_0
   - platformdirs=4.3.7=py311hca03da5_0
+  - prompt-toolkit=3.0.43=py311hca03da5_0
+  - prompt_toolkit=3.0.43=hd3eb1b0_0
+  - psutil=5.9.0=py311h80987f9_1
   - pthread-stubs=0.4=hd74edd7_1002
+  - ptyprocess=0.7.0=pyhd3eb1b0_2
+  - pure_eval=0.2.2=pyhd3eb1b0_0
   - pybind11=2.13.6=pyh085cc03_2
   - pybind11-abi=4=hd8ed1ab_3
   - pybind11-global=2.13.6=pyh415d2e4_2
   - pyglfw=2.8.0=pyha770c72_1
+  - pygments=2.15.1=py311hca03da5_1
   - pyopengl=3.1.7=pyhd8ed1ab_0
   - pyro-api=0.1.2=pyhd8ed1ab_0
   - pyro-ppl=1.9.1=pyhd8ed1ab_1
   - python=3.11.5=h47c9636_0_cpython
   - python-dateutil=2.9.0post0=py311hca03da5_2
+  - python-tzdata=2023.3=pyhd3eb1b0_0
   - python_abi=3.11=6_cp311
   - pytorch=2.6.0=cpu_generic_py311_h479557c_1
+  - pytz=2024.1=py311hca03da5_0
   - pyyaml=6.0.2=py311h4921393_2
   - pyzmq=26.2.0=py311h313beb8_0
   - qhull=2020.2=h420ef59_5
@@ -111,6 +136,7 @@ dependencies:
   - six=1.17.0=pyhd8ed1ab_0
   - sleef=3.8=h8391f65_0
   - sqlalchemy=2.0.40=py311h917b07b_0
+  - stack_data=0.2.0=pyhd3eb1b0_0
   - sympy=1.13.3=pyh2585a3b_105
   - threadpoolctl=3.6.0=pyhecae5ae_0
   - tinyxml2=10.0.0=ha1acc90_2
@@ -122,6 +148,7 @@ dependencies:
   - typing-extensions=4.13.2=h0e9735f_0
   - typing_extensions=4.13.2=pyh29332c3_0
   - tzdata=2025b=h78e105d_0
+  - wcwidth=0.2.5=pyhd3eb1b0_0
   - wheel=0.45.1=pyhd8ed1ab_1
   - xorg-libxau=1.0.12=h5505292_0
   - xorg-libxdmcp=1.1.5=hd74edd7_0
