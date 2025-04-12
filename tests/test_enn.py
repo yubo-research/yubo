@@ -76,3 +76,22 @@ def test_enn():
     assert enn.neighbors(x).shape == (0, num_dim)
     assert len(enn.about_neighbors(x, k=1)[0].flatten()) == 0
     assert enn.neighbors(x, k=1).shape == (0, num_dim)
+
+
+
+
+def test_exclude_self():
+    import numpy as np
+
+    num_dim, n, train_x, train_y, k, enn = set_up_enn()
+
+    x = train_x[[0]]
+
+
+    mvn_a = enn.posterior(x, exclude_self=False)
+    mvn_b = enn.posterior(x, exclude_self=True)
+
+    assert np.all(mvn_a.mu != mvn_b.mu)
+    assert np.abs(mvn_a.mu - train_y[0]) < 1e-6
+    assert np.all(mvn_a.se < mvn_b.se/1000)
+    

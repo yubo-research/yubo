@@ -107,10 +107,10 @@ class EpsitemicNearestNeighbors:
                 np.sqrt(vvar.squeeze(0)),
             )
 
-        if exclude_self:
+        if exclude_self and x in self._train_x:
             dists, idx = self._index.search(x, k=k+1)
-            dists =dists[1:]
-            idx = idx[1:]
+            dists = dists[:, 1:]
+            idx = idx[:,1:]
         else:
             dists, idx = self._index.search(x, k=k)
 
