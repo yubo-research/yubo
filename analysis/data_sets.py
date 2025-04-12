@@ -156,8 +156,9 @@ def load_multiple_traces(data_locator):
                 traces_new = _init(trace)
                 traces_new[:, :, : traces.shape[2], :] = traces
                 traces = traces_new
+
             if trace.shape != traces[i_problem, i_opt, ...].shape:
-                _report_bad(problem_name, opt_name, f"Trace is wrong shape {trace.shape} != {traces[i_problem, i_opt, ...].shape}")
+                _report_bad(problem_name, opt_name, f"Warning: Trace is wrong shape {trace.shape} != {traces[i_problem, i_opt, ...].shape}")
                 # continue
             traces[i_problem, i_opt, : trace.shape[0], : trace.shape[1]] = trace
 
@@ -170,7 +171,7 @@ def load_multiple_traces(data_locator):
         print(f"\n{num_bad} / {num_tot} files bad. {100 * traces.mask.mean():.1f}% missing data")
     else:
         print("No bad data")
-    return npma.masked_invalid(traces)
+    return traces
 
 
 def range_summarize(traces: np.ndarray):
@@ -180,7 +181,13 @@ def range_summarize(traces: np.ndarray):
     """
     y_min = traces.min(axis=1, keepdims=True)
     y_max = traces.max(axis=1, keepdims=True)
-    z = (traces - y_min) / (y_max - y_min)
+
+    numer = traces - y_min
+    denom = y_max - y_min
+    i_zero = np.where(denom == 0)[0]
+    numer[i_zero] = 0.5
+    denom[i_zero] = 1
+    z = numer / denom
 
     # Take last round
     z = z[..., -1]
@@ -201,7 +208,8 @@ def rank_summarize(traces: np.array):
     """
 
     # over opt (method)
-    z = rankdata(traces, axis=1)
+
+    z = rankdata(traces, axis=1, nan_policy="omit")
     z = (z - 1) / (z.shape[1] - 1)
     z = z.mean(axis=-1)
 

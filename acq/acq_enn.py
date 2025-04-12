@@ -154,7 +154,7 @@ class AcqENN:
         else:
             return x_front
 
-    def _pareto_cheb(self, x_cand, num_arms, noisy):
+    def _pareto_cheb_noisy(self, x_cand, num_arms):
         mvn = self._enn.posterior(x_cand)
         y = np.concatenate([mvn.mu, mvn.se], axis=1)
         norm = y.max(axis=0, keepdims=True) - y.min(axis=0, keepdims=True)
@@ -164,10 +164,8 @@ class AcqENN:
         y[i] = 0.5
         y = y / norm
 
-        if noisy:
-            w = np.random.uniform(size=y.shape)
-        else:
-            w = np.random.uniform(size=(1, y.shape[-1]))
+        w = np.random.uniform(size=y.shape)
+
         w = w / w.sum(axis=1, keepdims=True)
         y = y * w
         y = y.min(axis=1)
@@ -175,6 +173,53 @@ class AcqENN:
         i = np.argsort(-y, axis=0).flatten()
         x_cand = x_cand[i]
         return x_cand[:num_arms]
+
+    def _pareto_cheb(self, x_cand, num_arms):
+        mvn = self._enn.posterior(x_cand)
+        y = np.concatenate([mvn.mu, mvn.se], axis=1)
+        norm = y.max(axis=0, keepdims=True) - y.min(axis=0, keepdims=True)
+        y = y - y.min(axis=0, keepdims=True)
+        i = np.where(norm == 0)[0]
+        norm[i] = 1
+        y[i] = 0.5
+        y = y / norm
+
+        num_cands_per_arm = x_cand.shape[0] // num_arms
+        x_cand = np.reshape(x_cand, (num_arms, num_cands_per_arm, x_cand.shape[1]))
+        y = np.reshape(y, (num_arms, num_cands_per_arm, y.shape[1]))
+
+        w = np.random.uniform(size=y.shape)
+        w = w / w.sum(axis=-1, keepdims=True)
+        y = y * w
+        y = y.min(axis=-1)
+
+        i = np.argmax(y, axis=1)
+        return np.diagonal(x_cand[:, i, :], axis1=0, axis2=1).T
+
+    def _pareto_front_cheb(self, x_cand, num_arms):
+        mvn = self._enn.posterior(x_cand)
+
+        i = np.argsort(-mvn.mu, axis=0).flatten()
+        x_cand = x_cand[i]
+        se = mvn.se[i]
+
+        i_front = []
+        se_max = -1e99
+        for i in range(len(se)):
+            if se[i] >= se_max:
+                i_front.append(i)
+                se_max = se[i]
+
+        i_front = np.array(i_front)
+        assert len(i_front) > 0, (len(i_front), len(x_cand))
+        i_arm = np.random.choice(i_front, size=num_arms, replace=False)
+        x_arms = [x_cand[i_arm]]
+
+        if num_arms > 1:
+            x_cand = np.delete(x_cand, i_arm, axis=0)
+            x_arms.extend(self._pareto_cheb_noisy(x_cand, num_arms - 1))
+
+        return np.vstack(x_arms)
 
     def _thompson_sample(self, x_cand, num_arms):
         # was 2*num_arms
@@ -221,14 +266,15 @@ class AcqENN:
         elif self._config.acq == "pareto":
             return self._pareto_front(x_cand, num_arms)
         elif self._config.acq == "pareto_cheb":
-            return self._pareto_cheb(x_cand, num_arms, noisy=False)
+            return self._pareto_cheb(x_cand, num_arms)
         elif self._config.acq == "pareto_cheb_noisy":
-            return self._pareto_cheb(x_cand, num_arms, noisy=True)
+            return self._pareto_cheb_noisy(x_cand, num_arms)
+        elif self._config.acq == "pareto_front_cheb":
+            return self._pareto_front_cheb(x_cand, num_arms)
         elif self._config.acq == "ts":
             return self._thompson_sample(x_cand, num_arms)
         elif self._config.acq == "uniform":
             return self._uniform(x_cand, num_arms)
-
         else:
             assert False, self._config.acq
 

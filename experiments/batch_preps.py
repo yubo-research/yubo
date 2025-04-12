@@ -277,7 +277,7 @@ def prep_seq(results_dir):
 
     # opts = ["vhd-htm", "vhd-htmr", "sts", "vhd-ht", "vhd-rs", "vhd-h", "vhd-2", "random", "turbo-1", "optuna"]
     # opts = ["enn-i-3", "enn-bi-3", "enn-b-3", "path:Osab", "enn-b-3", "mts", "turbo-1", "random"]  # ["mts", "sts", "sobol", "turbo-1", "path", "path-b", "path-m"]
-    opts = ["path:Osab", "enn-i-3", "enn-bi-3", "enn-b-3", "mts", "turbo-1", "random"]
+    opts = ["enn-cc-3", "enn-cbi-3"]  # ["path:Osab", "enn-i-3", "enn-bi-3", "enn-b-3", "mts", "turbo-1", "random"]
 
     noises = [None]
 
@@ -306,7 +306,7 @@ def prep_seq(results_dir):
 def prep_tlunar(results_dir):
     exp_dir = "exp_enn_tlunar"
 
-    opts = ["cma", "optuna"]  # "mts", "turbo-1", "path", "path-m", "ts", "mts-ns", "enn-bi-3", "path:Osab",
+    opts = ["enn-cc-3"]  # ["cma", "optuna"]  # "mts", "turbo-1", "path", "path-m", "ts", "mts-ns", "enn-bi-3", "path:Osab",
 
     cmds = []
     for opt in opts:
@@ -336,9 +336,9 @@ def prep_tlunar(results_dir):
 
 
 def prep_swim(results_dir):
-    exp_dir = "exp_mts_swim"
+    exp_dir = "exp_enn_swim"
 
-    opts = ["mts", "turbo-1", "path:Osab", "ts"]
+    opts = ["turbo-1", "path:Osab", "optuna", "cma", "enn-cc-3", "enn-cbi-3", "random"]
 
     cmds = []
     for opt in opts:
@@ -347,6 +347,8 @@ def prep_swim(results_dir):
             (10, 100, 10),
             (50, 30, 50),
         ]:
+            if num_arms == 1 and opt == "cma":
+                continue
             cmds.append(
                 prep_args_1(
                     results_dir,

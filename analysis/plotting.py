@@ -100,7 +100,9 @@ def tight_landscape(axs):
     tight(axs, sub_aspect=1 / scipy.constants.golden)
 
 
-def filled_err(ys, x=None, color="#AAAAAA", alpha=0.5, marker=None, linestyle="--", color_line="#AAAAAA", se=False, two=False, ax=None, label=None):
+def filled_err(
+    ys, x=None, color="#AAAAAA", alpha=0.5, marker=None, linestyle="--", color_line="#AAAAAA", se=False, two=False, ax=None, label=None, alpha_top=1
+):
     if ax is None:
         ax = plt
     mu = ys.mean(axis=0)
@@ -112,7 +114,7 @@ def filled_err(ys, x=None, color="#AAAAAA", alpha=0.5, marker=None, linestyle="-
     if two:
         sg *= 2
     ax.fill_between(x, mu - sg, mu + sg, color=color, alpha=alpha, linewidth=1, label="_")
-    ax.plot(x, mu, color=color_line, marker=marker, linestyle=linestyle, label=label)
+    ax.plot(x, mu, color=color_line, marker=marker, linestyle=linestyle, label=label, alpha=alpha_top)
 
 
 def error_area(x, y, yerr, color="#AAAAAA", alpha=0.5, fmt="--", marker="", ax=plt):
