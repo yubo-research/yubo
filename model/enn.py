@@ -84,17 +84,20 @@ class EpsitemicNearestNeighbors:
         idx, _ = self.about_neighbors(x, k)
         return self._train_x[idx]
 
-    def __call__(self, X, k=None):
-        return self.posterior(X)
+    def __call__(self, X):
+        return self.posterior(X,)
 
-    def posterior(self, x, k=None):
+    def posterior(self, x, k=None, exclude_self=False):
+        if k is None:
+            k = self.k
+
         # X ~ num_batch X num_dim
         x = np.array(x)
 
         assert len(x.shape) == 2, ("NYI: Joint sampling", x.shape)
         b, d = x.shape
         assert d == self._num_dim, (d, self._num_dim)
-        q = 1
+        
 
         if self._train_x.shape[0] == 0:
             mu = 0 * (x.sum(-1))
@@ -104,23 +107,34 @@ class EpsitemicNearestNeighbors:
                 np.sqrt(vvar.squeeze(0)),
             )
 
-        dists, idx = self._index.search(x, k=self.k)
+        if exclude_self:
+            dists, idx = self._index.search(x, k=k+1)
+            dists =dists[1:]
+            idx = idx[1:]
+        else:
+            dists, idx = self._index.search(x, k=k)
+
+        return self._calc_enn_normal(b, dists, idx, k)
+
+    def _calc_enn_normal(self, batch_size, dists, idx, k):
+        q = 1
+
         mu = self._train_y[idx]
-        assert mu.shape == (b, self.k, self._num_metrics), (mu.shape, b, self.k, self._num_metrics)
+        assert mu.shape == (batch_size, k, self._num_metrics), (mu.shape, batch_size, k, self._num_metrics)
         vvar = np.expand_dims(dists, axis=-1)
-        assert vvar.shape == (b, self.k, self._num_metrics), (vvar.shape, b, self.k, self._num_metrics)
+        assert vvar.shape == (batch_size, k, self._num_metrics), (vvar.shape, batch_size, k, self._num_metrics)
 
         w = 1.0 / (self._eps_var + vvar)
-        assert np.all(np.isfinite(w)), (w, x)
+        assert np.all(np.isfinite(w)), w
         norm = w.sum(axis=1)
         # sum over k neighbors
         mu = (w * mu).sum(axis=1) / norm
         vvar = 1.0 / norm
 
-        assert mu.shape == (b, q), (mu.shape, b, q)
+        assert mu.shape == (batch_size, q), (mu.shape, batch_size, q)
         # TODO: include self variance (Yvar) in 1 / sum(1/var)
         vvar = self._var_scale * vvar
-        assert vvar.shape == (b, q), (vvar.shape, b, q)
+        assert vvar.shape == (batch_size, q), (vvar.shape, batch_size, q)
         vvar = np.maximum(self._eps_var, vvar)
 
         return ENNNormal(mu, np.sqrt(vvar))

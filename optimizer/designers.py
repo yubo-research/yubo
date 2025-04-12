@@ -437,6 +437,18 @@ class Designers:
                     acq="pareto",
                 ),
             )
+        elif designer_name.startswith("enn-new-"):
+            k = int(designer_name.split("-")[-1])
+            return ENNDesigner(
+                self._policy,
+                ENNConfig(
+                    k=k,
+                    num_boundary=0,
+                    num_interior=100,
+                    ts_enn=True,
+                    acq="pareto_fronts_strict",
+                ),
+            )
 
         # Long sobol init, sequential opt
         elif designer_name == "sobol_ucb":

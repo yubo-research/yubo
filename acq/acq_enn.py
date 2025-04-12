@@ -31,6 +31,7 @@ Tests
 class ENNConfig:
     k: int
     max_cell: bool = False
+    ts_enn: bool = False
     num_boundary: int = 100
     num_interior: int = 0
     maximin: bool = False
@@ -66,26 +67,26 @@ class AcqENN:
 
     def _ts_pick_cells(self, num_arms):
         assert len(self._X_train) > 0
-        if False:  # TODO: study noisy observations self._enn_ts:
-            y = self._enn(self._X_train).sample()
+        if self._config.ts_enn:
+            y = self._enn(self._X_train).sample(num_arms)
+            y = y.squeeze(1)
         else:
-            y = self._Y_train
-
-        # We Thompson sample over the Voronoi cells.
-        # Our model of the function values in a cell is N(y, se**2)
-        # where y is the (single) measured value in the cell, and
-        #  se**2 is the (homoscedastic) variance, estimated by
-        #  var(y)/N over all measured y's.
-        n = len(y)
-        se = y.std() / np.sqrt(n)
-        if self._config.max_cell:
-            se = 0 * se
-        y = y + se * np.random.normal(size=(n, num_arms))
+            y = self._Y_train  
+            # We Thompson sample over the Voronoi cells.
+            # Our model of the function values in a cell is N(y, se**2)
+            # where y is the (single) measured value in the cell, and
+            #  se**2 is the (homoscedastic) variance, estimated by
+            #  var(y)/N over all measured y's.
+            n = len(y)
+            se = y.std() / np.sqrt(n)
+            if self._config.max_cell:
+                se = 0 * se
+            y = y + se * np.random.normal(size=(n, num_arms))
 
         i = np.where(y == y.max(axis=0, keepdims=True))[0]
 
         return self._X_train[i, :]
-
+    
     def _sample_boundary(self, x_0):
         u = random_directions(len(x_0), self._num_dim)
         return farthest_neighbor(self._enn, x_0, u, p_boundary_is_neighbor=self._config.p_boundary_is_neighbor)
@@ -153,6 +154,35 @@ class AcqENN:
             return x_front[i]
         else:
             return x_front
+        
+    def _pareto_fronts_strict(self, x_cand, num_arms):
+        assert self._config.num_over_sample_per_arm==1, self._config.num_over_sample_per_arm
+        mvn = self._enn.posterior(x_cand)
+
+        i = np.argsort(-mvn.mu, axis=0).flatten()
+        x_cand = x_cand[i]
+        se = mvn.se[i]
+
+        i_all = list(range(len(se)))
+        i_keep = []
+        i_front = []
+        while len(i_keep) < num_arms:
+            se_max = -1e99
+            for i in i_all:
+                if se[i] >= se_max:
+                    i_front.append(i)
+                    se_max = se[i]
+            if len(i_keep) + len(i_front) <= num_arms:
+                i_keep.extend(i_front)
+            else:
+                i_keep.extend(np.random.choice(i_front, size=num_arms - len(i_keep), replace=False))
+            i_all = sorted(set(i_all) - set(i_front))
+
+        i_keep = np.array(i_keep)
+        x_arms = x_cand[i_keep]
+
+        assert len(x_arms) == num_arms, (len(x_arms), num_arms)
+        return x_arms
 
     def _pareto_cheb_noisy(self, x_cand, num_arms):
         mvn = self._enn.posterior(x_cand)
@@ -271,10 +301,13 @@ class AcqENN:
             return self._pareto_cheb_noisy(x_cand, num_arms)
         elif self._config.acq == "pareto_front_cheb":
             return self._pareto_front_cheb(x_cand, num_arms)
+        elif self._config.acq == "pareto_fronts_strict":
+            return self._pareto_fronts_strict(x_cand, num_arms)
         elif self._config.acq == "ts":
             return self._thompson_sample(x_cand, num_arms)
         elif self._config.acq == "uniform":
             return self._uniform(x_cand, num_arms)
+
         else:
             assert False, self._config.acq
 
