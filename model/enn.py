@@ -86,9 +86,9 @@ class EpsitemicNearestNeighbors:
 
     def idx_fast(self, x):
         idx, dist = self.about_neighbors(x, k=1)
-        i = np.where(dist > 0)[0]
-        if len(i) > 1e-4:
-            print(f"WRAN: {len(i)} points may not be in training data, max(dist) = {dist.max()}")
+        i = np.where(dist > 1e-4)[0]
+        if len(i) > 0:
+            print(f"WARN: {len(i)} points may not be in training data, max(dist) = {dist.max()}")
         return idx.flatten()
 
     def about_neighbors(self, x, k=None):

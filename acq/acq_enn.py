@@ -1,11 +1,10 @@
-import time
 from dataclasses import dataclass
 
 import numpy as np
 import torch
 
 from model.enn import EpsitemicNearestNeighbors
-from sampling.knn_tools import farthest_neighbor_fast, random_directions
+from sampling.knn_tools import confidence_region_fast, far_as_you_can_go, farthest_neighbor, farthest_neighbor_fast, random_directions
 from sampling.sampling_util import greedy_maximin
 
 """
@@ -42,6 +41,9 @@ class ENNConfig:
 
     se_scale: float = 1
     num_over_sample_per_arm: int = 1
+
+    region_type: str = "fn"
+    se_max: float = 0.1
 
     p_boundary_is_neighbor: float = 0.0
 
@@ -105,11 +107,16 @@ class AcqENN:
 
     def _sample_boundary(self, x_0):
         u = random_directions(len(x_0), self._num_dim)
-        t_0 = time.time()
-        ret = farthest_neighbor_fast(self._enn, x_0, u, p_boundary_is_neighbor=self._config.p_boundary_is_neighbor)
-        t_f = time.time()
-        print("FN:", t_f - t_0)
-        return ret
+        if self._config.region_type == "fn_fast":
+            return farthest_neighbor_fast(self._enn, x_0, u, p_boundary_is_neighbor=self._config.p_boundary_is_neighbor)
+        elif self._config.region_type == "fn":
+            return farthest_neighbor(self._enn, x_0, u, p_boundary_is_neighbor=self._config.p_boundary_is_neighbor)
+        elif self._config.region_type == "cr":
+            return confidence_region_fast(self._enn, x_0, u, se_max=self._config.se_max, num_steps=100)
+        elif self._config.region_type == "far":
+            return far_as_you_can_go(x_0, u)
+        else:
+            assert False, self._config.region_type
 
     def _sample_in_cell(self, x_0, x_far):
         # We want to uniformly sample over the Voronoi cell, but this is
@@ -303,12 +310,8 @@ class AcqENN:
         else:
             num_interior = 0
 
-        t_0 = time.time()
         x_0 = self._ts_pick_cells((num_boundary + num_interior) * num_arms)
-        t_f = time.time()
-        print("T:", t_f - t_0)
 
-        t_0 = time.time()
         x_cand = np.empty(shape=(0, self._num_dim))
         i_cut = num_boundary * num_arms
 
@@ -318,8 +321,6 @@ class AcqENN:
             x_cand = np.concatenate([x_cand, x_bdy[:i_cut]], axis=0)
         if num_interior > 0:
             x_cand = np.concatenate([x_cand, self._sample_in_cell(x_0[i_cut:], x_bdy[i_cut:])], axis=0)
-        t_f = time.time()
-        print("S:", t_f - t_0)
 
         x_cand = np.unique(x_cand, axis=0)
         num_desired = num_arms * (self._config.num_boundary + self._config.num_interior)
@@ -366,13 +367,10 @@ class AcqENN:
         return x_cand
 
     def _draw_two_level(self, num_arms):
-        t_0 = time.time()
         if self._config.num_quick > 0:
             x_cand = self._candidates_quick(num_arms)
         else:
             x_cand = self._candidates(num_arms)
-        t_f = time.time()
-        print("C:", t_f - t_0)
 
         if len(x_cand) == num_arms:
             return x_cand
@@ -383,8 +381,6 @@ class AcqENN:
             return self._pareto_front(x_cand, num_arms)
         elif self._config.acq == "pareto_cheb":
             return self._pareto_cheb(x_cand, num_arms)
-        elif self._config.acq == "pareto_cheb_all":
-            return self._pareto_cheb_all(x_cand, num_arms)
         elif self._config.acq == "pareto_cheb_noisy":
             return self._pareto_cheb_noisy(x_cand, num_arms)
         elif self._config.acq == "pareto_front_cheb":
