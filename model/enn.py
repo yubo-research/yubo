@@ -43,11 +43,14 @@ class EpsitemicNearestNeighbors:
         # Maybe tune this on a sample of data
         #  if you want (somewhat) calibrated uncertainty estimates.
         self._var_scale = 1.0
+        self._lookup = None
 
     def add(self, x, y):
         self._index.add(x)
         self._train_x = np.append(self._train_x, x)
         self._train_y = np.append(self._train_y, y)
+        if self._lookup is not None:
+            assert False, "NYI: Add to lookup"
 
     def calibrate(self, var_scale):
         self._var_scale = var_scale
@@ -64,11 +67,29 @@ class EpsitemicNearestNeighbors:
             return None
         return idx
 
-    def idx_x(self, x):
+    def idx_x_slow(self, x):
+        # Loop!
         idxs = [self._idx_x_1(x[i]) for i in range(x.shape[0])]
         idxs = np.array(idxs)
         assert len(idxs.flatten()) == x.shape[0]
         return idxs
+
+    def idx_x(self, x):
+        if self._lookup is None:
+            train_x_view = self._train_x.view([("", self._train_x.dtype)] * self._train_x.shape[1])
+            self._lookup = {tuple(row.tolist()): i for i, row in enumerate(train_x_view)}
+
+        x_view = x.view([("", x.dtype)] * x.shape[1])
+        idx = np.array([self._lookup[tuple(row.tolist())] for row in x_view], dtype=int)
+
+        return idx
+
+    def idx_fast(self, x):
+        idx, dist = self.about_neighbors(x, k=1)
+        i = np.where(dist > 0)[0]
+        if len(i) > 1e-4:
+            print(f"WRAN: {len(i)} points may not be in training data, max(dist) = {dist.max()}")
+        return idx.flatten()
 
     def about_neighbors(self, x, k=None):
         if k is None:
@@ -85,7 +106,9 @@ class EpsitemicNearestNeighbors:
         return self._train_x[idx]
 
     def __call__(self, X):
-        return self.posterior(X,)
+        return self.posterior(
+            X,
+        )
 
     def posterior(self, x, k=None, exclude_nearest=False):
         if k is None:
@@ -97,7 +120,6 @@ class EpsitemicNearestNeighbors:
         assert len(x.shape) == 2, ("NYI: Joint sampling", x.shape)
         b, d = x.shape
         assert d == self._num_dim, (d, self._num_dim)
-        
 
         if self._train_x.shape[0] == 0:
             mu = 0 * (x.sum(-1))
@@ -108,9 +130,9 @@ class EpsitemicNearestNeighbors:
             )
 
         if exclude_nearest:
-            dists, idx = self._index.search(x, k=k+1)
+            dists, idx = self._index.search(x, k=k + 1)
             dists = dists[:, 1:]
-            idx = idx[:,1:]
+            idx = idx[:, 1:]
         else:
             dists, idx = self._index.search(x, k=k)
 

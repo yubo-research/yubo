@@ -6,10 +6,11 @@ import acq.acq_util as acq_util
 
 
 class AcqMTS:
-    def __init__(self, model, use_stagger=False):
+    def __init__(self, model, use_stagger=False, include_sobol=False, num_iterations=30):
         self._model = model
-        self._num_iterations = 30
+        self._num_iterations = num_iterations
         self._use_stagger = use_stagger
+        self._include_sobol = include_sobol
         self._s_min = 1e-6
 
         self._X_0 = self._model.train_inputs[0].detach()

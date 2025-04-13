@@ -123,7 +123,7 @@ class Optimizer:
         cum_time = time.time() - self._t_0
         self._cum_dt_proposing += dt_proposing
         self._collector(
-            f"ITER: i_iter = {self._i_iter} cum_time = {cum_time:.2f} cum_dt_prop = {self._cum_dt_proposing:.3f} ret_max = {ret_batch.max():.3f} ret_mean = {ret_batch.mean():.3f} ret_best = {self.r_best_est:.3f} ret_eval = {ret_eval:.3f}"
+            f"ITER: i_iter = {self._i_iter} cum_time = {cum_time:.2f} dt_prop = {dt_proposing:.3f} cum_dt_prop = {self._cum_dt_proposing:.3f} ret_max = {ret_batch.max():.3f} ret_mean = {ret_batch.mean():.3f} ret_best = {self.r_best_est:.3f} ret_eval = {ret_eval:.3f}"
         )
         sys.stdout.flush()
         self._trace.append(_TraceEntry(ret_eval, dt_proposing))

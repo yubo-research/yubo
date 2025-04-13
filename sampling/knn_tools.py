@@ -70,7 +70,64 @@ def most_isolated(enn, x: np.ndarray, p_boundary_is_neighbor):
     return x[i]
 
 
-def farthest_neighbor(enn, x_0: np.ndarray, u: np.ndarray, eps_bound: float = 1e-6, p_boundary_is_neighbor=0.0):
+def farthest_neighbor_fast(enn, x_0: np.ndarray, u: np.ndarray, num_steps: int = 10, eps_bound: float = 1e-6, p_boundary_is_neighbor=0.0):
+    import time
+
+    assert p_boundary_is_neighbor == 0.0, p_boundary_is_neighbor
+    num_samples, num_dim = x_0.shape
+    assert u.shape == (num_samples, num_dim), (u.shape, x_0.shape)
+
+    # t_0 = time.time()
+    # idx_0 = enn.idx_x_slow(x_0).flatten()
+    # t_f = time.time()
+    # print("idx_x:", t_f - t_0)
+
+    t_0 = time.time()
+    idx_0 = enn.idx_fast(x_0)
+    t_f = time.time()
+    print("idx_fast:", t_f - t_0)
+
+    # assert np.all(idx_0 == idx_fast), (idx_0, idx_fast)
+
+    if len(idx_0) != num_samples:
+        assert False, "Can't find x_0 in training data for ENN"
+
+    ll_max = 2 * np.sqrt(num_dim)
+    l_s_min = np.log(0.01)
+    l_s_max = np.log(ll_max)
+    ll = np.exp(l_s_min + (l_s_max - l_s_min) * np.linspace(0, 1, num_steps))
+
+    ll = np.expand_dims(np.expand_dims(ll, -1), -1)
+
+    ll = ll * np.expand_dims(u, 0)
+
+    x = np.expand_dims(x_0, 0)
+
+    x = x + ll
+
+    # Leaving this till the end might be bad.
+    # x = np.minimum(1, x, out=x)
+    # x = np.maximum(0, x, out=x)
+
+    # Where does the time go? Here.
+    idx, __ = enn.about_neighbors(x.reshape(num_samples * num_steps, num_dim), k=1)
+
+    a = idx.flatten() == np.tile(idx_0, num_steps)
+
+    a = a.reshape(num_steps, num_samples)
+    # If no non-neighbors, then i_farthest will be num_steps - 1
+    i_farthest = num_steps - 1 - np.argmax(a[:, 1][::-1], axis=0)
+
+    i = np.arange(x.shape[1])
+    x = x[i_farthest, i, :]
+
+    x = np.minimum(1, x, out=x)
+    x = np.maximum(0, x, out=x)
+
+    return x
+
+
+def farthest_neighbor(enn, x_0: np.ndarray, u: np.ndarray, eps_bound: float = 1e-3, p_boundary_is_neighbor=0.0):
     """
     Find the farthest point from x_0 along direction u that still has x_0 as its nearest neighbor.
     Alternatively, find the boundary of the Vornoi cell that has x_0 as its center.
@@ -88,7 +145,6 @@ def farthest_neighbor(enn, x_0: np.ndarray, u: np.ndarray, eps_bound: float = 1e
     l_low = np.zeros(shape=(num_samples, 1))
     l_high = 2 * np.sqrt(num_dim) * np.ones(shape=(num_samples, 1))
 
-    
     idx_0 = enn.idx_x(x_0).flatten()
     if len(idx_0) != num_samples:
         assert False, "Can't find x_0 in training data for ENN"

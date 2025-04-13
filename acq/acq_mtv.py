@@ -9,6 +9,7 @@ from botorch.utils import t_batch_mode_transform
 from torch.quasirandom import SobolEngine
 
 import acq.acq_util as acq_util
+from acq.acq_mts import AcqMTS
 from sampling.pstar_sampler import PStarSampler
 from sampling.stagger_thompson_sampler import StaggerThompsonSampler
 
@@ -59,6 +60,8 @@ class AcqMTV(MCAcquisitionFunction):
                     self.X_samples = self._stagger_thompson_sampler(num_X_samples, sample_type)
                 else:
                     self.X_samples = sample_type
+            elif sample_type == "mts":
+                self.X_samples = AcqMTS(self.model, num_iterations=num_refinements).draw(num_X_samples)
             elif sample_type == "sobol":
                 self.X_samples = sobol_engine.draw(num_X_samples, dtype=self.dtype)
             else:

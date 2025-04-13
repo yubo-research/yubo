@@ -222,6 +222,16 @@ class Designers:
                     "num_refinements": 30,
                 },
             )
+        elif designer_name == "mtv-mts":
+            return bt_designer(
+                AcqMTV,
+                init_sobol=0,
+                acq_kwargs={
+                    "num_X_samples": default_num_X_samples,
+                    "sample_type": "mts",
+                    "num_refinements": 30,
+                },
+            )
         elif designer_name == "mtv-sts2":
             return bt_designer(
                 AcqMTV,
@@ -405,6 +415,7 @@ class Designers:
                 ),
             )
         elif designer_name.startswith("enn-cc-"):
+            # cc and cbi are very similar
             k = int(designer_name.split("-")[-1])
             return ENNDesigner(
                 self._policy,
@@ -415,15 +426,16 @@ class Designers:
                     acq="pareto_cheb",
                 ),
             )
-        elif designer_name.startswith("enn-fc-"):
+        elif designer_name.startswith("enn-cs-"):
+            # cc and cbi are very similar
             k = int(designer_name.split("-")[-1])
             return ENNDesigner(
                 self._policy,
                 ENNConfig(
                     k=k,
-                    num_boundary=50,
-                    num_interior=50,
-                    acq="pareto_front_cheb",
+                    num_boundary=0,
+                    num_interior=10,
+                    acq="pareto",
                 ),
             )
         elif designer_name.startswith("enn-b-"):
@@ -435,18 +447,6 @@ class Designers:
                     num_boundary=100,
                     num_interior=0,
                     acq="pareto",
-                ),
-            )
-        elif designer_name.startswith("enn-new-"):
-            k = int(designer_name.split("-")[-1])
-            return ENNDesigner(
-                self._policy,
-                ENNConfig(
-                    k=k,
-                    num_boundary=0,
-                    num_interior=100,
-                    ts_enn=True,
-                    acq="pareto_fronts_strict",
                 ),
             )
 

@@ -59,10 +59,10 @@ def test_enn():
     # If duplicates, you just get the first one
     #  so that knn_tools.farthest_neighbor()
     #  functions properly.
-    assert np.all(enn.idx_x(train_x[[1]]) == [1])
-    assert enn.idx_x(train_x[[3]]) == 3
-    assert len(enn.idx_x(x)) == 1
-    assert np.all(enn.idx_x(x) == [None])
+    assert np.all(enn.idx_x_slow(train_x[[1]]) == [1])
+    assert enn.idx_x_slow(train_x[[3]]) == 3
+    assert len(enn.idx_x_slow(x)) == 1
+    assert np.all(enn.idx_x_slow(x) == [None])
 
     assert len(enn.about_neighbors(x)[0].flatten()) == k
     assert enn.neighbors(x).shape == (1, k, num_dim)
@@ -78,20 +78,16 @@ def test_enn():
     assert enn.neighbors(x, k=1).shape == (0, num_dim)
 
 
-
-
 def test_exclude_self():
     import numpy as np
 
     num_dim, n, train_x, train_y, k, enn = set_up_enn()
 
-    x = train_x[[0,5]]
-
+    x = train_x[[0, 5]]
 
     mvn_a = enn.posterior(x, exclude_nearest=False)
     mvn_b = enn.posterior(x, exclude_nearest=True)
 
     assert np.all(mvn_a.mu != mvn_b.mu)
-    assert np.abs(mvn_a.mu - train_y[[0,5]]).max() < 1e-6
-    assert np.all(mvn_a.se < mvn_b.se/1000)
-    
+    assert np.abs(mvn_a.mu - train_y[[0, 5]]).max() < 1e-6
+    assert np.all(mvn_a.se < mvn_b.se / 1000)
