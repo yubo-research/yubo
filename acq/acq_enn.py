@@ -36,6 +36,7 @@ class ENNConfig:
     num_interior: int = 0
     num_quick: int = 0
     maximin: bool = False
+    stagger: bool = False
     weight_by_length: bool = False
     acq: str = "pareto"
 
@@ -122,13 +123,19 @@ class AcqENN:
         # We want to uniformly sample over the Voronoi cell, but this is
         #  easier. Maybe we'll come up with something better.
 
-        if self._config.weight_by_length:
-            p = np.linalg.norm(x_far - x_0, axis=1)
-            p = p / p.sum()
-            i = np.random.choice(np.arange(len(x_0)), size=len(x_0), replace=True, p=p)
-            x_cand = x_0[i]
-
         alpha = np.random.uniform(size=(len(x_0), 1))
+
+        if self._config.weight_by_length:
+            dists = np.linalg.norm(x_0 - x_far, axis=1, keepdims=True)
+            dists = dists / dists.sum(axis=0, keepdims=True)
+            i = np.random.choice(np.arange(len(dists)), size=len(dists), replace=True, p=dists.flatten())
+            x_0 = x_0[i]
+            x_far = x_far[i]
+
+        if self._config.stagger:
+            l_s_min = np.log(1e-4)
+            l_s_max = np.log(1)
+            alpha = np.exp(l_s_min + (l_s_max - l_s_min) * alpha)
         x_cand = alpha * x_0 + (1 - alpha) * x_far
 
         return x_cand
@@ -385,7 +392,7 @@ class AcqENN:
             return self._pareto_cheb_noisy(x_cand, num_arms)
         elif self._config.acq == "pareto_front_cheb":
             return self._pareto_front_cheb(x_cand, num_arms)
-        elif self._config.acq == "pareto_fronts_strict":
+        elif self._config.acq == "pareto_strict":
             return self._pareto_fronts_strict(x_cand, num_arms)
         elif self._config.acq == "ts":
             return self._thompson_sample(x_cand, num_arms)

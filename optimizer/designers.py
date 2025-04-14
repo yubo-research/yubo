@@ -458,9 +458,36 @@ class Designers:
                 ENNConfig(
                     k=k,
                     num_boundary=0,
-                    num_interior=100,
-                    acq="uniform",
+                    num_interior=10,
+                    acq="pareto",
                     region_type="far",
+                ),
+            )
+        elif designer_name.startswith("enn-fars-"):
+            k = int(designer_name.split("-")[-1])
+            return ENNDesigner(
+                self._policy,
+                ENNConfig(
+                    k=k,
+                    num_boundary=0,
+                    num_interior=10,
+                    acq="pareto",
+                    region_type="far",
+                    stagger=True,
+                ),
+            )
+        elif designer_name.startswith("enn-idk-"):
+            k = int(designer_name.split("-")[-1])
+            return ENNDesigner(
+                self._policy,
+                ENNConfig(
+                    k=k,
+                    num_boundary=0,
+                    num_interior=10,
+                    acq="pareto_strict",
+                    region_type="fn_fast",
+                    stagger=True,
+                    weight_by_length=True,
                 ),
             )
         elif designer_name.startswith("enn-ccs-"):

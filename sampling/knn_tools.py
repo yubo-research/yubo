@@ -128,8 +128,6 @@ def far_as_you_can_go(x_0: np.ndarray, u: np.ndarray):
 
 
 def farthest_neighbor_fast(enn, x_0: np.ndarray, u: np.ndarray, num_steps: int = 10, p_boundary_is_neighbor=0.0):
-    import time
-
     assert p_boundary_is_neighbor == 0.0, p_boundary_is_neighbor
     num_samples, num_dim = x_0.shape
     assert u.shape == (num_samples, num_dim), (u.shape, x_0.shape)
@@ -139,10 +137,7 @@ def farthest_neighbor_fast(enn, x_0: np.ndarray, u: np.ndarray, num_steps: int =
     # t_f = time.time()
     # print("idx_x:", t_f - t_0)
 
-    t_0 = time.time()
     idx_0 = enn.idx_fast(x_0)
-    t_f = time.time()
-    print("idx_fast:", t_f - t_0)
 
     # assert np.all(idx_0 == idx_fast), (idx_0, idx_fast)
 

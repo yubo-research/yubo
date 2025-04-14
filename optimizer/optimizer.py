@@ -36,21 +36,21 @@ class Optimizer:
         self._collector(f"PROBLEM: env = {env_conf.env_name} num_params = {policy.num_params()}")
         self._designers = Designers(policy, num_arms)
 
-    def _collect_trajectory(self, policy, denoise_seed=0):
-        if self._env_conf.frozen_noise:
+    def _collect_trajectory(self, policy, i_noise=None, denoise_seed=0):
+        if i_noise is None:
             noise_seed = 0
         else:
-            noise_seed = self._i_noise
-            self._i_noise += 1
+            noise_seed = i_noise
+
         noise_seed += self._env_conf.noise_seed_0 + denoise_seed
 
         return collect_trajectory(self._env_conf, policy, noise_seed=noise_seed)
 
-    def _collect_denoised_trajectory(self, policy):
+    def _collect_denoised_trajectory(self, policy, i_noise=None):
         if self._num_denoise is not None:
             rreturn = self._mean_return_over_runs(policy)
             return Trajectory(rreturn, None, None)
-        return self._collect_trajectory(policy)
+        return self._collect_trajectory(policy, i_noise=i_noise)
 
     def _iterate(self, designer, num_arms):
         t0 = time.time()
@@ -59,8 +59,14 @@ class Optimizer:
 
         data = []
         X = []
+
         for policy in policies:
-            traj = self._collect_denoised_trajectory(policy)
+            if self._env_conf.frozen_noise:
+                i_noise = None
+            else:
+                i_noise = self._i_noise
+                self._i_noise += 1
+            traj = self._collect_denoised_trajectory(policy, i_noise)
             data.append(Datum(designer, policy, None, traj))
             X.append(policy.get_params())
 
