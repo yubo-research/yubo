@@ -486,7 +486,6 @@ class Designers:
                     num_interior=10,
                     acq="pareto_strict",
                     region_type="fn_fast",
-                    stagger=True,
                     weight_by_length=True,
                     keep_bdy=True,
                 ),
