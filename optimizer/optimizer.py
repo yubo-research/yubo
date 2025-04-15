@@ -46,13 +46,16 @@ class Optimizer:
 
         return collect_trajectory(self._env_conf, policy, noise_seed=noise_seed)
 
-    def _collect_denoised_trajectory(self, policy, i_noise=None):
+    def _collect_denoised_trajectory(self, aaa):
+        policy, i_noise = aaa
         if self._num_denoise is not None:
             rreturn = self._mean_return_over_runs(policy)
             return Trajectory(rreturn, None, None)
         return self._collect_trajectory(policy, i_noise=i_noise)
 
     def _iterate(self, designer, num_arms):
+        from concurrent.futures import ProcessPoolExecutor
+
         t0 = time.time()
         policies = designer(self._data, num_arms)
         tf = time.time()
@@ -60,13 +63,19 @@ class Optimizer:
         data = []
         X = []
 
+        args = []
         for policy in policies:
             if self._env_conf.frozen_noise:
                 i_noise = None
             else:
                 i_noise = self._i_noise
                 self._i_noise += 1
-            traj = self._collect_denoised_trajectory(policy, i_noise)
+            args.append((policy, i_noise))
+
+        with ProcessPoolExecutor() as pool:
+            rets = list(pool.map(self._collect_denoised_trajectory, args))  # same order as args
+
+        for policy, traj in zip(policies, rets):
             data.append(Datum(designer, policy, None, traj))
             X.append(policy.get_params())
 
