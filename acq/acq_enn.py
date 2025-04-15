@@ -35,6 +35,7 @@ class ENNConfig:
     num_boundary: int = 100
     num_interior: int = 0
     num_quick: int = 0
+    keep_bdy: bool = False
     maximin: bool = False
     stagger: bool = False
     weight_by_length: bool = False
@@ -137,6 +138,9 @@ class AcqENN:
             l_s_max = np.log(1)
             alpha = np.exp(l_s_min + (l_s_max - l_s_min) * alpha)
         x_cand = alpha * x_0 + (1 - alpha) * x_far
+
+        if self._config.keep_bdy:
+            x_cand = np.concatenate([x_cand, x_far], axis=0)
 
         return x_cand
 

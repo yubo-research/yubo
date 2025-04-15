@@ -488,6 +488,19 @@ class Designers:
                     region_type="fn_fast",
                     stagger=True,
                     weight_by_length=True,
+                    keep_bdy=True,
+                ),
+            )
+        elif designer_name.startswith("enn-ps"):
+            k = int(designer_name.split("-")[-1])
+            return ENNDesigner(
+                self._policy,
+                ENNConfig(
+                    k=k,
+                    num_boundary=0,
+                    num_interior=10,
+                    acq="pareto_strict",
+                    region_type="fn_fast",
                 ),
             )
         elif designer_name.startswith("enn-ccs-"):
