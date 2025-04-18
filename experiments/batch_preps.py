@@ -277,14 +277,14 @@ def prep_seq(results_dir):
 
     # opts = ["vhd-htm", "vhd-htmr", "sts", "vhd-ht", "vhd-rs", "vhd-h", "vhd-2", "random", "turbo-1", "optuna"]
     # opts = ["enn-i-3", "enn-bi-3", "enn-b-3", "path:Osab", "enn-b-3", "mts", "turbo-1", "random"]  # ["mts", "sts", "sobol", "turbo-1", "path", "path-b", "path-m"]
-    opts = ["ucb", "lei"]  # ["enn-fc-3", "enn-cc-3", "enn-cbi-3"]  # ["path:Osab", "enn-i-3", "enn-bi-3", "enn-b-3", "mts", "turbo-1", "random"]
+    opts = ["sobol"]  # ["ucb", "lei"]  # ["enn-fc-3", "enn-cc-3", "enn-cbi-3"]  # ["path:Osab", "enn-i-3", "enn-bi-3", "enn-b-3", "mts", "turbo-1", "random"]
 
     noises = [None]
 
     min_rounds = 30
     cmds = []
 
-    for num_dim in [1, 3, 10, 30, 100]:  # , 300]:
+    for num_dim in [1]:  # , 3, 10, 30, 100]:  # , 300]:
         cmds.extend(
             prep_d_args(
                 results_dir,
