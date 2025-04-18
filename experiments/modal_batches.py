@@ -14,11 +14,8 @@ modal_image = mk_image()
 _APP_NAME = "yubo_batches"
 _TIMEOUT_HOURS = 5
 
-app = modal.App(name="yubo")
-
-
-def _queue():
-    return modal.Queue.from_name("batches_queue", create_if_missing=True)
+_app_name = "yubo"
+app = modal.App(name=_app_name)
 
 
 def _dict():
@@ -26,20 +23,15 @@ def _dict():
 
 
 @app.function(image=modal_image, concurrency_limit=100, timeout=_TIMEOUT_HOURS * 60 * 60)  # , gpu="H100")
-def modal_batches_worker():
-    job_queue = _queue()
+def modal_batches_worker(job):
     res_dict = _dict()
 
-    while True:
-        try:
-            key, d_args = job_queue.get(block=True, timeout=60)
-        except queue.Empty:
-            break
+    key, d_args = job
 
-        print(f"JOB: key = {key} d_args = {d_args}")
-        trace_fn = d_args.pop("trace_fn")
-        collector_log, collector_trace = sample_1(**d_args)
-        res_dict[key] = (trace_fn, collector_log, collector_trace)
+    print(f"JOB: key = {key} d_args = {d_args}")
+    trace_fn = d_args.pop("trace_fn")
+    collector_log, collector_trace = sample_1(**d_args)
+    res_dict[key] = (trace_fn, collector_log, collector_trace)
 
 
 @app.function(image=modal_image, concurrency_limit=1, timeout=_TIMEOUT_HOURS * 60 * 60)
@@ -51,13 +43,12 @@ def batches_submitter(batch_tag: str, count_only=False):
     missing = []
     for key, d_args in _gen_jobs(batch_tag):
         missing.append((key, d_args))
-        # job_queue.put((key, d_args))
 
-    job_queue = _queue()
     for key, d_args in missing:
         print(f"JOB: {key} {d_args}")
         if not count_only:
-            job_queue.put((key, d_args))
+            process_job = modal.Function.from_name(_app_name, "modal_batches_worker")
+            process_job.spawn((key, d_args))
     print("TOTAL:", len(missing))
 
 
@@ -77,7 +68,6 @@ def _job_key(job_name, i_job):
 
 
 def collect():
-    # job_queue = _queue()
     res_dict = _dict()
     print("DICT_SIZE:", res_dict.len())
 
@@ -102,40 +92,10 @@ def collect():
             print("DEL:", key)
             del res_dict[key]
         print(f"results_available after del: {res_dict.len()} num_deleted = {len(collected_keys)}")
-        # print("How many jobs are running? Idk.")
-        # # print(f"jobs_remaining = {job_queue.len()}")
-        # if len(collected_keys) == 0:
-        #     time.sleep(30)
-        # else:
-        #     time.sleep(3)
-
-
-def collect_orig():
-    job_queue = _queue()
-    res_dict = _dict()
-    print("DICT_SIZE:", res_dict.len())
-    while True:
-        num_collected = 0
-        for key, value in res_dict.items():
-            if key.endswith("key_max"):
-                continue
-
-            (trace_fn, collector_log, collector_trace) = res_dict[key]
-            post_process(collector_log, collector_trace, trace_fn)
-            del res_dict[key]
-            num_collected += 1
-        print("How many jobs are running? Idk.")
-        print(f"jobs_remaining = {job_queue.len()}")
-        if num_collected == 0:
-            time.sleep(30)
-        else:
-            time.sleep(3)
 
 
 def status():
-    job_queue = _queue()
     res_dict = _dict()
-    print(f"jobs_remaining = {job_queue.len()}")
     print(f"results_available = {res_dict.len()}")
 
 

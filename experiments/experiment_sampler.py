@@ -36,7 +36,7 @@ def sample_1(env_conf, opt_name, num_rounds, num_arms, num_denoise, b_trace=True
     for i_iter, te in enumerate(opt.collect_trace(designer_name=opt_name, num_iterations=num_rounds)):
         if b_trace:
             collector_trace(
-                f"TRACE: name = {env_conf.env_name} opt_name = {opt_name} i_iter = {i_iter} dt = {te.time_iteration_seconds:.3e} return = {te.rreturn:.3e}"
+                f"TRACE: name = {env_conf.env_name} opt_name = {opt_name} i_iter = {i_iter} dt_prop = {te.dt_prop:.3e} dt_eval = {te.dt_eval:.3e} return = {te.rreturn:.3e}"
             )
 
         pass
