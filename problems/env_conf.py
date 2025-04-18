@@ -155,7 +155,7 @@ _gym_env_confs = {
             max_steps=1600,
             num_frames_skip=100,
         ),
-        policy_class=MLPPolicyFactory((1024,)),
+        policy_class=MLPPolicyFactory((32, 32, 32)),
     ),
     # 300
     "lunar": _gym_conf(

@@ -13,6 +13,10 @@ def torch_random_choice(x):
     return x[i]
 
 
+def keep_trailing(Y, num_keep):
+    return np.arange(len(Y))[-num_keep:]
+
+
 def keep_best(Y, num_keep):
     num_keep_best = num_keep
     return torch.topk(Y, k=num_keep_best).indices.numpy().tolist()

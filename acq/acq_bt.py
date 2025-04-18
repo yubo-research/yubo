@@ -1,7 +1,7 @@
 import torch
 
 import acq.fit_gp as fit_gp
-from acq.acq_util import find_max, keep_best, keep_some
+from acq.acq_util import find_max, keep_best, keep_some, keep_trailing
 
 
 class AcqBT:
@@ -32,6 +32,8 @@ class AcqBT:
                     i = keep_some(Y.squeeze(), num_keep)
                 elif keep_style == "best":
                     i = keep_best(Y.squeeze(), num_keep)
+                elif keep_style == "trailing":
+                    i = keep_trailing(Y.squeeze(), num_keep)
                 else:
                     assert False, keep_style
                 Y = Y[i, :]

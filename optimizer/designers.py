@@ -68,6 +68,8 @@ class Designers:
                     keep_style = "best"
                 elif option[1] == "r":
                     keep_style = "random"
+                elif option[1] == "t":
+                    keep_style = "trailing"
                 else:
                     assert False, option
                 num_keep = int(option[2:])
@@ -489,6 +491,8 @@ class Designers:
                     weight_by_length=True,
                     keep_bdy=True,
                 ),
+                keep_style=keep_style,
+                num_keep=num_keep,
             )
         elif designer_name.startswith("enn-ps"):
             k = int(designer_name.split("-")[-1])
