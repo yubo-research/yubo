@@ -13,6 +13,9 @@ class BTDesigner:
         policy,
         acq_fn,
         *,
+        num_restarts,
+        raw_samples,
+        start_at_max,
         acq_kwargs=None,
         init_sobol=1,
         init_X_samples=True,
@@ -36,6 +39,9 @@ class BTDesigner:
         self._keep_style = keep_style
         self._model_spec = model_spec
         self._optimizer_options = optimizer_options
+        self._num_restarts = num_restarts
+        self._raw_samples = raw_samples
+        self._start_at_max = start_at_max
         self._acq_kwargs = acq_kwargs
         self.device = torch.device(device)
         self.dtype = dtype
@@ -43,7 +49,7 @@ class BTDesigner:
     def __repr__(self):
         return f"{self.__class__.__name__} {self._acq_fn}"
 
-    def _batch_initial_conditions(self, data, num_arms, acqf):
+    def _initialize_at_X_samples(self, data, num_arms, acqf):
         # half from X_samples, half random
         num_dim = self._policy.num_params()
         batch_limit = self._optimizer_options["batch_limit"]
@@ -59,6 +65,10 @@ class BTDesigner:
         )
         # batch_size x q x num_dim
         return X[i, :].reshape(batch_limit, num_arms, num_dim)
+
+    def _initialize_at_x_max(self, acq_bt, num_arms):
+        batch_limit = self._optimizer_options["batch_limit"]
+        return torch.tile(acq_bt.x_max().unsqueeze(0), dims=(num_arms * batch_limit, 1, 1)).to(self.device).to(self.dtype)
 
     def __call__(self, data, num_arms):
         import warnings
@@ -88,8 +98,11 @@ class BTDesigner:
         else:
             warnings.simplefilter("ignore")
             if self._init_X_samples and hasattr(acq_bt.acq_function, "X_samples"):
-                batch_initial_conditions = self._batch_initial_conditions(data, num_arms, acq_bt)
+                batch_initial_conditions = self._initialize_at_X_samples(data, num_arms, acq_bt)
                 batch_initial_conditions = batch_initial_conditions.type(self.dtype).to(self.device)
+            elif self._start_at_max:
+                batch_initial_conditions = self._initialize_at_x_max(acq_bt, num_arms)
+
             else:
                 batch_initial_conditions = None
 
@@ -98,8 +111,8 @@ class BTDesigner:
                     acq_function=acq_bt.acq_function,
                     bounds=acq_bt.bounds,  # always [0,1]**num_dim
                     q=num_arms,
-                    num_restarts=10,
-                    raw_samples=10,
+                    num_restarts=self._num_restarts,
+                    raw_samples=self._raw_samples,
                     options=self._optimizer_options,
                     batch_initial_conditions=batch_initial_conditions,
                     sequential=self._opt_sequential,

@@ -60,15 +60,6 @@ class Sum_Squares:
         return np.sum((x**2) * np.arange(1, len(x) + 1))
 
 
-# class Perm:
-#     beta = 10
-
-#     def __call__(self, x):
-#         d = len(x)
-#         x = d * x
-#         return np.sum([np.sum([((1 + j) ** (1 + i) + self.beta) * ((x[j] / (1 + j)) ** (1 + i) - 1) for j in range(d)]) ** 2 for i in range(d)])
-
-
 class Salomon:
     def __call__(self, x):
         x = 100 * np.asarray(x)

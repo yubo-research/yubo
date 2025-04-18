@@ -1,5 +1,5 @@
 from experiments.experiment_sampler import prep_args_1, prep_d_args
-from experiments.func_names import funcs_1d, funcs_36, funcs_nd
+from experiments.func_names import funcs_1d, funcs_all, funcs_nd
 
 
 def prep_mtv_repro(results_dir):
@@ -232,7 +232,7 @@ def prep_sequential_35(results_dir):
             prep_d_args(
                 results_dir,
                 exp_dir=exp_dir,
-                funcs=funcs_36,
+                funcs=funcs_all,
                 dims=[num_dim],
                 num_arms=1,
                 num_replications=10,
@@ -259,7 +259,7 @@ def prep_mtv_36(results_dir):
             prep_d_args(
                 results_dir,
                 exp_dir=exp_dir,
-                funcs=funcs_36,
+                funcs=funcs_all,
                 dims=[num_dim],
                 num_arms=max(3, min(10, num_dim)),
                 num_replications=10,
@@ -272,25 +272,28 @@ def prep_mtv_36(results_dir):
     return cmds
 
 
-def prep_vhd_seq(results_dir):
-    exp_dir = "exp_vhd_seq"
+def prep_seq(results_dir):
+    exp_dir = "exp_enn"
 
-    opts = ["vhd-htm", "vhd-htmr", "sts", "vhd-ht", "vhd-rs", "vhd-h", "vhd-2", "random", "turbo-1", "optuna"]
+    # opts = ["vhd-htm", "vhd-htmr", "sts", "vhd-ht", "vhd-rs", "vhd-h", "vhd-2", "random", "turbo-1", "optuna"]
+    # opts = ["enn-i-3", "enn-bi-3", "enn-b-3", "path:Osab", "enn-b-3", "mts", "turbo-1", "random"]  # ["mts", "sts", "sobol", "turbo-1", "path", "path-b", "path-m"]
+    opts = ["ucb", "lei"]  # ["enn-fc-3", "enn-cc-3", "enn-cbi-3"]  # ["path:Osab", "enn-i-3", "enn-bi-3", "enn-b-3", "mts", "turbo-1", "random"]
 
     noises = [None]
 
     min_rounds = 30
     cmds = []
 
-    for num_dim in [1, 3, 10, 30, 100, 300]:
+    for num_dim in [1, 3, 10, 30, 100]:  # , 300]:
         cmds.extend(
             prep_d_args(
                 results_dir,
                 exp_dir=exp_dir,
-                funcs=funcs_36,
+                funcs=funcs_all,
                 dims=[num_dim],
                 num_arms=1,
-                num_replications=10,
+                # You don't need to run 30 replications
+                num_replications=30,
                 opts=opts,
                 noises=noises,
                 num_rounds=max(min_rounds, num_dim),
@@ -300,25 +303,20 @@ def prep_vhd_seq(results_dir):
     return cmds
 
 
-def prep_enn_tlunar(results_dir):
+def prep_tlunar(results_dir):
     exp_dir = "exp_enn_tlunar"
 
-    opts = ["enn-f-3"]
-    # "enn-m-3", "enn-t-10",
-    # , "sts"]  # "enn-b-3", "turbo-1", "random", "enn-b-5"]  # "enn-3", "enn-b", "enn-u-3", "random", "turbo-1", "optuna", "cma"]
-    # , "vhd-h", "vhd-rs", "vhd-2", "random", "turbo-1", "optuna", "cma"]
+    opts = ["enn-strict-3"]  # ["enn-cc-3"]  # ["cma", "optuna"]  # "mts", "turbo-1", "path", "path-m", "ts", "mts-ns", "enn-bi-3", "path:Osab",
 
     cmds = []
     for opt in opts:
         for num_arms, num_rounds, num_denoise in [
             (1, 100, 1),
             (10, 100, 10),
-            # (50, 30, 50),
+            (50, 30, 50),
         ]:
             # prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None):
             if num_arms == 1 and opt == "cma":
-                continue
-            if opt == "enn-u-3" and num_arms != 1:
                 continue
             cmds.append(
                 prep_args_1(
@@ -334,4 +332,34 @@ def prep_enn_tlunar(results_dir):
                 )
             )
 
+    return cmds
+
+
+def prep_swim(results_dir):
+    exp_dir = "exp_enn_swim"
+
+    opts = ["enn-fc-3"]  # ["turbo-1", "path:Osab", "optuna", "cma", "enn-cc-3", "enn-cbi-3", "random"]
+
+    cmds = []
+    for opt in opts:
+        for num_arms, num_rounds, num_denoise in [
+            (1, 100, 1),
+            (10, 100, 10),
+            (50, 30, 50),
+        ]:
+            if num_arms == 1 and opt == "cma":
+                continue
+            cmds.append(
+                prep_args_1(
+                    results_dir,
+                    exp_dir=exp_dir,
+                    problem="swim:fn",
+                    opt=opt,
+                    num_arms=num_arms,
+                    num_replications=100,
+                    num_rounds=num_rounds,
+                    noise=None,
+                    num_denoise=num_denoise,
+                )
+            )
     return cmds

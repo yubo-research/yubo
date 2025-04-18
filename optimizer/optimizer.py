@@ -13,7 +13,8 @@ from .trajectories import Trajectory, collect_trajectory
 @dataclass
 class _TraceEntry:
     rreturn: float
-    time_iteration_seconds: float
+    dt_prop: float
+    dt_eval: float
 
 
 class Optimizer:
@@ -36,35 +37,45 @@ class Optimizer:
         self._collector(f"PROBLEM: env = {env_conf.env_name} num_params = {policy.num_params()}")
         self._designers = Designers(policy, num_arms)
 
-    def _collect_trajectory(self, policy, denoise_seed=0):
-        if self._env_conf.frozen_noise:
+    def _collect_trajectory(self, policy, i_noise=None, denoise_seed=0):
+        if i_noise is None:
             noise_seed = 0
         else:
-            noise_seed = self._i_noise
-            self._i_noise += 1
+            noise_seed = i_noise
+
         noise_seed += self._env_conf.noise_seed_0 + denoise_seed
 
         return collect_trajectory(self._env_conf, policy, noise_seed=noise_seed)
 
-    def _collect_denoised_trajectory(self, policy):
+    def _collect_denoised_trajectory(self, policy, i_noise=None):
         if self._num_denoise is not None:
             rreturn = self._mean_return_over_runs(policy)
             return Trajectory(rreturn, None, None)
-        return self._collect_trajectory(policy)
+        return self._collect_trajectory(policy, i_noise=i_noise)
 
     def _iterate(self, designer, num_arms):
         t0 = time.time()
         policies = designer(self._data, num_arms)
         tf = time.time()
+        dt_prop = tf - t0
 
         data = []
         X = []
+
+        t_0 = time.time()
         for policy in policies:
-            traj = self._collect_denoised_trajectory(policy)
+            if self._env_conf.frozen_noise:
+                i_noise = None
+            else:
+                i_noise = self._i_noise
+                self._i_noise += 1
+            traj = self._collect_denoised_trajectory(policy, i_noise)
             data.append(Datum(designer, policy, None, traj))
             X.append(policy.get_params())
+        tf = time.time()
+        dt_eval = tf - t_0
 
-        return data, tf - t0
+        return data, dt_prop, dt_eval
 
     def _mean_return_over_runs(self, policy):
         rets = []
@@ -103,7 +114,7 @@ class Optimizer:
     def iterate(self):
         designer = self._opt_designers[min(len(self._opt_designers) - 1, self._i_iter)]
 
-        data, dt_proposing = self._iterate(designer, self._num_arms)
+        data, dt_prop, dt_eval = self._iterate(designer, self._num_arms)
 
         ret_batch = []
         for datum in data:
@@ -121,12 +132,12 @@ class Optimizer:
             ret_eval = self.r_best_est
 
         cum_time = time.time() - self._t_0
-        self._cum_dt_proposing += dt_proposing
+        self._cum_dt_proposing += dt_prop
         self._collector(
-            f"ITER: i_iter = {self._i_iter} cum_time = {cum_time:.2f} cum_dt_prop = {self._cum_dt_proposing:.3f} ret_max = {ret_batch.max():.3f} ret_mean = {ret_batch.mean():.3f} ret_best = {self.r_best_est:.3f} ret_eval = {ret_eval:.3f}"
+            f"ITER: i_iter = {self._i_iter} cum_time = {cum_time:.2f} dt_eval = {dt_eval:.3f} dt_prop = {dt_prop:.3f} cum_dt_prop = {self._cum_dt_proposing:.3f} ret_max = {ret_batch.max():.3f} ret_mean = {ret_batch.mean():.3f} ret_best = {self.r_best_est:.3f} ret_eval = {ret_eval:.3f}"
         )
         sys.stdout.flush()
-        self._trace.append(_TraceEntry(ret_eval, dt_proposing))
+        self._trace.append(_TraceEntry(ret_eval, dt_prop, dt_eval))
         self._i_iter += 1
         self.last_designer = designer
         return self._trace

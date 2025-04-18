@@ -30,7 +30,7 @@ def _test_pstar(nu, sigma, eps):
         resamples = []
         for _ in range(len(x)):
             resamples.append(thompson_sample(x, p, nu))
-        print("S:", pstar.sigma())
+
         if pstar.sigma() < 1e-9:
             break
         pstar.tell(*zip(*resamples))

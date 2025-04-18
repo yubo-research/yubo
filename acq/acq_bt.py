@@ -1,7 +1,7 @@
 import torch
 
 import acq.fit_gp as fit_gp
-from acq.acq_util import find_max, keep_best, keep_some
+from acq.acq_util import find_max, keep_best, keep_some, keep_trailing
 
 
 class AcqBT:
@@ -32,19 +32,22 @@ class AcqBT:
                     i = keep_some(Y.squeeze(), num_keep)
                 elif keep_style == "best":
                     i = keep_best(Y.squeeze(), num_keep)
+                elif keep_style == "trailing":
+                    i = keep_trailing(Y.squeeze(), num_keep)
                 else:
                     assert False, keep_style
                 Y = Y[i, :]
                 X = X[i, :]
 
         gp = fit_gp.fit_gp_XY(X, Y, model_spec=model_spec)
+        self._gp = gp
 
         if not acq_kwargs:
             kwargs = {}
         else:
             kwargs = dict(acq_kwargs)
         if "X_max" in kwargs:
-            kwargs["X_max"] = find_max(gp, self.bounds)
+            kwargs["X_max"] = self.x_max()
         if "best_f" in kwargs:
             kwargs["best_f"] = gp(find_max(gp, self.bounds)).mean
         if "X_baseline" in kwargs:
@@ -55,6 +58,9 @@ class AcqBT:
             kwargs["Y_max"] = gp(find_max(gp, self.bounds)).mean
 
         self.acq_function = acq_factory(gp, **kwargs)
+
+    def x_max(self):
+        return find_max(self._gp, self.bounds)
 
     def __call__(self, policy):
         assert False, "This is never called"

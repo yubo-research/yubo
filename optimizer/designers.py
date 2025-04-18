@@ -24,6 +24,7 @@ from .cma_designer import CMAESDesigner
 from .enn_designer import ENNConfig, ENNDesigner
 from .lhd_designer import LHDDesigner
 from .mcmc_bo_designer import MCMCBODesigner
+from .mts_designer import MTSDesigner
 from .optuna_designer import OptunaDesigner
 from .random_designer import RandomDesigner
 from .sobol_designer import SobolDesigner
@@ -67,6 +68,8 @@ class Designers:
                     keep_style = "best"
                 elif option[1] == "r":
                     keep_style = "random"
+                elif option[1] == "t":
+                    keep_style = "trailing"
                 else:
                     assert False, option
                 num_keep = int(option[2:])
@@ -80,7 +83,7 @@ class Designers:
             else:
                 assert False, ("Unknown option", option)
 
-        def bt_designer(acq_factory, acq_kwargs=None, init_sobol=1, opt_sequential=False):
+        def bt_designer(acq_factory, acq_kwargs=None, init_sobol=1, opt_sequential=False, num_restarts=10, raw_samples=10, start_at_max=False):
             return BTDesigner(
                 self._policy,
                 acq_factory,
@@ -91,6 +94,9 @@ class Designers:
                 init_sobol=init_sobol,
                 opt_sequential=opt_sequential,
                 optimizer_options={"batch_limit": 10, "maxiter": 1000, "sample_around_best": sample_around_best},
+                num_restarts=10,
+                raw_samples=10,
+                start_at_max=start_at_max,
             )
 
         if designer_name == "cma":
@@ -180,6 +186,8 @@ class Designers:
             return bt_designer(qNoisyExpectedImprovement, acq_kwargs={"X_baseline": None})
         elif designer_name == "lei":
             return bt_designer(qLogNoisyExpectedImprovement, acq_kwargs={"X_baseline": None})
+        elif designer_name == "lei-m":
+            return bt_designer(qLogNoisyExpectedImprovement, acq_kwargs={"X_baseline": None}, start_at_max=True)
         elif designer_name == "gibbon":
             return bt_designer(qLowerBoundMaxValueEntropy, opt_sequential=True, acq_kwargs={"candidate_set": None})
         elif designer_name == "turbo-1":
@@ -213,6 +221,16 @@ class Designers:
                 acq_kwargs={
                     "num_X_samples": default_num_X_samples,
                     "sample_type": "sts",
+                    "num_refinements": 30,
+                },
+            )
+        elif designer_name == "mtv-mts":
+            return bt_designer(
+                AcqMTV,
+                init_sobol=0,
+                acq_kwargs={
+                    "num_X_samples": default_num_X_samples,
+                    "sample_type": "mts",
                     "num_refinements": 30,
                 },
             )
@@ -339,6 +357,20 @@ class Designers:
                 PathwiseThompsonSampling,
                 init_sobol=init_yubo_default,
             )
+        elif designer_name == "path-b":
+            return bt_designer(
+                PathwiseThompsonSampling,
+                init_sobol=init_yubo_default,
+                num_restarts=20,
+                raw_samples=100,
+            )
+        elif designer_name == "path-m":
+            return bt_designer(
+                PathwiseThompsonSampling,
+                init_sobol=init_yubo_default,
+                start_at_max=True,
+            )
+
         elif designer_name == "tsroots":
             return bt_designer(
                 AcqTSRoots,
@@ -349,25 +381,141 @@ class Designers:
                 self._policy,
                 num_init=init_yubo_default,
             )
-
-        elif designer_name.startswith("enn-u-"):
+        elif designer_name == "mts":
+            return MTSDesigner(self._policy)
+        elif designer_name.startswith("enn-i-"):
             k = int(designer_name.split("-")[-1])
             return ENNDesigner(
                 self._policy,
                 ENNConfig(
                     k=k,
-                    constrain_by_mu=False,
-                    acq="ucb",
-                    se_scale=10.0,
+                    num_boundary=0,
+                    num_interior=100,
+                    acq="pareto",
                 ),
             )
-        elif designer_name == "enn-b":
+        elif designer_name.startswith("enn-bi-"):
+            k = int(designer_name.split("-")[-1])
             return ENNDesigner(
                 self._policy,
                 ENNConfig(
-                    k=1,
-                    boundary=True,
-                    num_candidates_per_arm=1,
+                    k=k,
+                    num_boundary=50,
+                    num_interior=50,
+                    acq="pareto",
+                ),
+            )
+        elif designer_name.startswith("enn-cbi-"):
+            k = int(designer_name.split("-")[-1])
+            return ENNDesigner(
+                self._policy,
+                ENNConfig(
+                    k=k,
+                    num_boundary=50,
+                    num_interior=50,
+                    acq="pareto_cheb_noisy",
+                ),
+            )
+        elif designer_name.startswith("enn-cc-"):
+            # cc and cbi are very similar
+            k = int(designer_name.split("-")[-1])
+            return ENNDesigner(
+                self._policy,
+                ENNConfig(
+                    k=k,
+                    num_boundary=50,
+                    num_interior=50,
+                    acq="pareto_cheb",
+                ),
+            )
+        elif designer_name.startswith("enn-pff-"):
+            k = int(designer_name.split("-")[-1])
+            return ENNDesigner(
+                self._policy,
+                ENNConfig(
+                    k=k,
+                    num_boundary=0,
+                    num_interior=10,
+                    acq="pareto",
+                    region_type="fn_fast",
+                ),
+            )
+        elif designer_name.startswith("enn-pcr-"):
+            k = int(designer_name.split("-")[-1])
+            return ENNDesigner(
+                self._policy,
+                ENNConfig(
+                    k=k,
+                    num_boundary=0,
+                    num_interior=10,
+                    acq="pareto",
+                    region_type="cr",
+                    se_max=0.1,
+                ),
+            )
+        elif designer_name.startswith("enn-far-"):
+            k = int(designer_name.split("-")[-1])
+            return ENNDesigner(
+                self._policy,
+                ENNConfig(
+                    k=k,
+                    num_boundary=0,
+                    num_interior=10,
+                    acq="pareto",
+                    region_type="far",
+                ),
+            )
+        elif designer_name.startswith("enn-fars-"):
+            k = int(designer_name.split("-")[-1])
+            return ENNDesigner(
+                self._policy,
+                ENNConfig(
+                    k=k,
+                    num_boundary=0,
+                    num_interior=10,
+                    acq="pareto",
+                    region_type="far",
+                    stagger=True,
+                ),
+            )
+        elif designer_name.startswith("enn-idk-"):
+            k = int(designer_name.split("-")[-1])
+            return ENNDesigner(
+                self._policy,
+                ENNConfig(
+                    k=k,
+                    num_boundary=0,
+                    num_interior=10,
+                    acq="pareto_strict",
+                    region_type="fn_fast",
+                    weight_by_length=True,
+                    keep_bdy=True,
+                ),
+                keep_style=keep_style,
+                num_keep=num_keep,
+            )
+        elif designer_name.startswith("enn-ps"):
+            k = int(designer_name.split("-")[-1])
+            return ENNDesigner(
+                self._policy,
+                ENNConfig(
+                    k=k,
+                    num_boundary=0,
+                    num_interior=10,
+                    acq="pareto_strict",
+                    region_type="fn_fast",
+                ),
+            )
+        elif designer_name.startswith("enn-ccs-"):
+            k = int(designer_name.split("-")[-1])
+            return ENNDesigner(
+                self._policy,
+                ENNConfig(
+                    k=k,
+                    num_boundary=10,
+                    num_interior=10,
+                    acq="pareto_cheb",
+                    weight_by_length=True,
                 ),
             )
         elif designer_name.startswith("enn-b-"):
@@ -376,43 +524,9 @@ class Designers:
                 self._policy,
                 ENNConfig(
                     k=k,
-                    boundary=True,
-                    num_candidates_per_arm=100,
+                    num_boundary=100,
+                    num_interior=0,
                     acq="pareto",
-                ),
-            )
-        elif designer_name.startswith("enn-m-"):
-            k = int(designer_name.split("-")[-1])
-            return ENNDesigner(
-                self._policy,
-                ENNConfig(
-                    k=k,
-                    boundary=True,
-                    num_candidates_per_arm=100,
-                    num_over_sample_per_arm=3,
-                    maximin=True,
-                ),
-            )
-        elif designer_name.startswith("enn-t-"):
-            # Slow when num_arms > 1
-            k = int(designer_name.split("-")[-1])
-            return ENNDesigner(
-                self._policy,
-                ENNConfig(
-                    k=k,
-                    boundary=True,
-                    max_cell=True,
-                    num_candidates_per_arm=100,
-                    se_scale=1,
-                ),
-            )
-        elif designer_name.startswith("enn-"):
-            k = int(designer_name.split("-")[-1])
-            return ENNDesigner(
-                self._policy,
-                ENNConfig(
-                    k=k,
-                    num_candidates_per_arm=100,
                 ),
             )
 

@@ -7,7 +7,7 @@ from common.util import parse_kv
 
 
 class DataLocator:
-    def __init__(self, results_path, exp_dir, num_arms=None, num_rounds=None, num_reps=None, num_dim=None, opt_names=None):
+    def __init__(self, results_path, exp_dir, num_arms=None, num_rounds=None, num_reps=None, num_dim=None, opt_names=None, problems: set = None):
         self.results = results_path
         self.exp_dir = exp_dir
         self.num_arms = num_arms
@@ -15,6 +15,7 @@ class DataLocator:
         self.num_reps = num_reps
         self.num_dim = num_dim
         self._opt_names = opt_names
+        self._problems = problems
 
     def __str__(self):
         return (
@@ -26,7 +27,17 @@ class DataLocator:
 
     def problems(self):
         # env=f:sphere-1d--opt_name=mtv-pss--num_arms=3--num_rounds=3--num_reps=100
-        return sorted({d[0]["env"] for d in self._load()})
+        problems = set()
+        for p in [d[0]["env"] for d in self._load()]:
+            if self._problems is not None:
+                for pp in self._problems:
+                    if pp in p:
+                        problems.add(p)
+            else:
+                problems.add(p)
+        problems = sorted(problems)
+
+        return problems
 
     def _load(self, problem=None, opt_name=None):
         if opt_name is not None:
