@@ -36,12 +36,16 @@ class Mopta08:
         self.directory_name = self.directory_file_descriptor.name
 
     def __call__(self, x):
-        x = (1 + x) / 2
         """
         Evaluate Mopta08 benchmark for one point
         :param x: one input configuration
         :return: value with soft constraints
         """
+
+        assert np.all(x.min() > -1) and np.all(x.max() < 1)
+
+        x = (1 + x) / 2
+
         x = x.flatten()
         assert len(x) == Mopta08.num_dim, len(x)
         # write input to file in dir
