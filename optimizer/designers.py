@@ -382,9 +382,11 @@ class Designers:
                 num_init=init_yubo_default,
             )
         elif designer_name == "mts":
-            return MTSDesigner(self._policy)
+            return MTSDesigner(self._policy, keep_style=keep_style, num_keep=num_keep)
         elif designer_name == "mts-ts":
-            return MTSDesigner(self._policy, ts_meas=True)
+            return MTSDesigner(self._policy, keep_style=keep_style, num_keep=num_keep, init_style="ts")
+        elif designer_name == "mts-meas":
+            return MTSDesigner(self._policy, keep_style=keep_style, num_keep=num_keep, init_style="meas")
         elif designer_name.startswith("enn-i-"):
             k = int(designer_name.split("-")[-1])
             return ENNDesigner(
@@ -512,7 +514,24 @@ class Designers:
                 keep_style=keep_style,
                 num_keep=num_keep,
             )
-        elif designer_name.startswith("enn-B-"):
+        elif designer_name.startswith("enn-ms-"):
+            k = int(designer_name.split("-")[-1])
+            return ENNDesigner(
+                self._policy,
+                ENNConfig(
+                    k=k,
+                    num_boundary=0,
+                    num_interior=10,
+                    acq="pareto_cheb",
+                    region_type="fn_fast",
+                    weight_by_length=True,
+                    keep_bdy=True,
+                    max_cell=True,
+                ),
+                keep_style=keep_style,
+                num_keep=num_keep,
+            )
+        elif designer_name.startswith("enn-se2-"):
             k = int(designer_name.split("-")[-1])
             return ENNDesigner(
                 self._policy,

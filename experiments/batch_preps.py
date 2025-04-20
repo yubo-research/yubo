@@ -280,6 +280,7 @@ def prep_seq(results_dir):
     opts = [
         "mts-ts",
         "mts",
+        "enn-idk-3",
     ]  # ["ucb", "lei"]  # ["enn-fc-3", "enn-cc-3", "enn-cbi-3"]  # ["path:Osab", "enn-i-3", "enn-bi-3", "enn-b-3", "mts", "turbo-1", "random"]
 
     noises = [None]
@@ -287,7 +288,7 @@ def prep_seq(results_dir):
     min_rounds = 30
     cmds = []
 
-    for num_dim in [1]:  # , 3, 10, 30, 100]:  # , 300]:
+    for num_dim in [1, 3, 10, 30, 100]:  # , 300]:
         cmds.extend(
             prep_d_args(
                 results_dir,

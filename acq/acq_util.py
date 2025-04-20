@@ -13,6 +13,18 @@ def torch_random_choice(x, k=1):
     return x[i]
 
 
+def keep_data(data, keep_style, num_keep):
+    if keep_style is None:
+        return data
+
+    if keep_style == "trailing":
+        return data[-num_keep:]
+    elif keep_style == "best":
+        return sorted(data, key=lambda x: x.trajectory.rreturn, reverse=True)[:num_keep]
+    else:
+        assert False, keep_style
+
+
 def keep_trailing(Y, num_keep):
     return np.arange(len(Y))[-num_keep:]
 

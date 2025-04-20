@@ -1,5 +1,6 @@
 import torch
 
+import acq.acq_util as acq_util
 import acq.fit_gp as fit_gp
 from acq.acq_enn import AcqENN, ENNConfig
 
@@ -14,13 +15,7 @@ class ENNDesigner:
         self._keep_style = keep_style
 
     def __call__(self, data, num_arms):
-        if self._keep_style is not None:
-            if self._keep_style == "trailing":
-                data = data[-self._num_keep :]
-            elif self._keep_style == "best":
-                data = sorted(data, key=lambda x: x.trajectory.rreturn, reverse=True)[: self._num_keep]
-            else:
-                assert False, self._keep_style
+        data = acq_util.keep_data(data, self._keep_style, self._num_keep)
 
         if len(data) > 0:
             Y, X = fit_gp.extract_X_Y(data, self._dtype, self._device)
