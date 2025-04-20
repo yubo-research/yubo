@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 from botorch.sampling.pathwise.posterior_samplers import get_matheron_path_model
 from botorch.utils.sampling import draw_sobol_samples
@@ -6,9 +7,10 @@ import acq.acq_util as acq_util
 
 
 class AcqMTS:
-    def __init__(self, model, use_stagger=False, include_sobol=False, num_iterations=30):
+    def __init__(self, model, use_stagger=False, include_sobol=False, num_iterations=30, ts_meas=False):
         self._model = model
         self._num_iterations = num_iterations
+        self._ts_meas = ts_meas
         self._use_stagger = use_stagger
         self._include_sobol = include_sobol
         self._s_min = 1e-6
@@ -32,13 +34,37 @@ class AcqMTS:
 
         mp_sampler = get_matheron_path_model(model=self._model, sample_shape=torch.Size([num_arms]))
 
-        # X_best ~ num_arms X 1 X num_dim
-        X_best = torch.tile(acq_util.find_max(self._model, self._bounds), dims=(num_arms, 1)).unsqueeze(1)
-        Y_best = mp_sampler(X_best)
+        # X_init ~ num_arms X 1 X num_dim
+        if self._ts_meas:
+            X_init = self._thompson_sample_measurements(num_arms)
+        else:
+            X_init = torch.tile(acq_util.find_max(self._model, self._bounds), dims=(num_arms, 1)).unsqueeze(1)
+
+        Y_best = mp_sampler(X_init)
 
         for _ in range(self._num_iterations):
-            self._iterate_(mp_sampler, X_best, Y_best)
-        return X_best
+            self._iterate_(mp_sampler, X_init, Y_best)
+        return X_init
+
+    def _thompson_sample_measurements(self, num_arms):
+        X = self._model.train_inputs[0].detach().numpy()
+        Y = self._model.train_targets.detach().numpy()
+
+        if len(Y) == 1:
+            X_ts = X[[0], :]
+        else:
+            n = len(Y)
+            se = Y.std() / np.sqrt(n)
+
+            Y = np.expand_dims(Y, -1)
+            Y = Y + se * np.random.normal(size=(n, num_arms))
+            i = np.where(Y == Y.max(axis=0, keepdims=True))[0]
+            X_ts = X[i, :]
+
+        X_ts = np.expand_dims(X_ts, 1)
+        assert X_ts.shape == (num_arms, 1, X.shape[-1]), X_ts.shape
+
+        return torch.as_tensor(X_ts)
 
     def _iterate_(self, mp_sampler, X_best, Y_best):
         num_arms = X_best.shape[0]

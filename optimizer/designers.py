@@ -383,6 +383,8 @@ class Designers:
             )
         elif designer_name == "mts":
             return MTSDesigner(self._policy)
+        elif designer_name == "mts-ts":
+            return MTSDesigner(self._policy, ts_meas=True)
         elif designer_name.startswith("enn-i-"):
             k = int(designer_name.split("-")[-1])
             return ENNDesigner(

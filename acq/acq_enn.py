@@ -79,9 +79,10 @@ class AcqENN:
         dist_i = dists.mean(axis=1, keepdims=True)
         return 1 / dist_i.mean()
 
-    def _ts_pick_cells(self, num_arms):
+    def _ts_pick_cells(self, num_samples):
         assert len(self._X_train) > 0
         y = self._Y_train
+
         n = len(y)
         se = y.std() / np.sqrt(n)
 
@@ -103,7 +104,7 @@ class AcqENN:
                     w = w / w.sum(axis=0, keepdims=True)
                     se = se * np.sqrt(w)
 
-        y = y + se * np.random.normal(size=(n, num_arms))
+        y = y + se * np.random.normal(size=(n, num_samples))
         i = np.where(y == y.max(axis=0, keepdims=True))[0]
 
         return self._X_train[i, :]
