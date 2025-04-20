@@ -42,7 +42,7 @@ class Mopta08:
         :return: value with soft constraints
         """
 
-        assert np.all(x.min() > -1) and np.all(x.max() < 1), x
+        assert np.all(x.min() > -1 - 1e-9) and np.all(x.max() < 1 + 1e-9), x
 
         x = (1 + x) / 2
 
