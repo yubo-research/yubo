@@ -1,4 +1,3 @@
-import queue
 import time
 
 import modal
