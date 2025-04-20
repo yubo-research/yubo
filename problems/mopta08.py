@@ -42,12 +42,12 @@ class Mopta08:
         :param x: one input configuration
         :return: value with soft constraints
         """
-        x = x.squeeze()
-        assert x.ndim == 1
+        x = x.flatten()
+        assert len(x) == Mopta08.num_dim, len(x)
         # write input to file in dir
         with open(os.path.join(self.directory_name, "input.txt"), "w+") as tmp_file:
             for _x in x:
-                tmp_file.write(f"{_x.detach().cpu().numpy()}\n")
+                tmp_file.write(f"{_x}\n")
         # pass directory as working directory to process
         popen = subprocess.Popen(
             self._mopta_exectutable,
