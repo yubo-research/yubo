@@ -494,6 +494,39 @@ class Designers:
                 keep_style=keep_style,
                 num_keep=num_keep,
             )
+        elif designer_name.startswith("enn-A-"):
+            k = int(designer_name.split("-")[-1])
+            return ENNDesigner(
+                self._policy,
+                ENNConfig(
+                    k=k,
+                    num_boundary=0,
+                    num_interior=10,
+                    acq="pareto_cheb",
+                    region_type="fn_fast",
+                    weight_by_length=True,
+                    keep_bdy=True,
+                ),
+                keep_style=keep_style,
+                num_keep=num_keep,
+            )
+        elif designer_name.startswith("enn-B-"):
+            k = int(designer_name.split("-")[-1])
+            return ENNDesigner(
+                self._policy,
+                ENNConfig(
+                    k=k,
+                    num_boundary=0,
+                    num_interior=10,
+                    acq="pareto_cheb",
+                    region_type="fn_fast",
+                    weight_by_length=True,
+                    keep_bdy=True,
+                    include_se_2=True,
+                ),
+                keep_style=keep_style,
+                num_keep=num_keep,
+            )
         elif designer_name.startswith("enn-ps"):
             k = int(designer_name.split("-")[-1])
             return ENNDesigner(

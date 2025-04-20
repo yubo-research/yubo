@@ -6,8 +6,6 @@ from acq.acq_enn import AcqENN, ENNConfig
 
 class ENNDesigner:
     def __init__(self, policy, enn_config: ENNConfig, num_keep: int = None, keep_style: str = None):
-        assert keep_style in ["trailing", None], keep_style
-
         self._policy = policy
         self._enn_config = enn_config
         self._dtype = torch.double
@@ -16,8 +14,13 @@ class ENNDesigner:
         self._keep_style = keep_style
 
     def __call__(self, data, num_arms):
-        if self._keep_style == "trailing":
-            data = data[-self._num_keep :]
+        if self._keep_style is not None:
+            if self._keep_style == "trailing":
+                data = data[-self._num_keep :]
+            elif self._keep_style == "best":
+                data = sorted(data, key=lambda x: x.trajectory.rreturn, reverse=True)[: self._num_keep]
+            else:
+                assert False, self._keep_style
 
         if len(data) > 0:
             Y, X = fit_gp.extract_X_Y(data, self._dtype, self._device)

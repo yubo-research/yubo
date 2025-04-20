@@ -43,6 +43,7 @@ class ENNConfig:
 
     se_scale: float = 1
     num_over_sample_per_arm: int = 1
+    include_se_2: bool = False
 
     region_type: str = "fn"
     se_max: float = 0.1
@@ -239,6 +240,9 @@ class AcqENN:
     def _pareto_cheb(self, x_cand, num_arms):
         mvn = self._enn.posterior(x_cand)
         y = np.concatenate([mvn.mu, mvn.se], axis=1)
+        if self._config.include_se_2:
+            y = np.concatenate([y, mvn.se_2], axis=1)
+
         norm = y.max(axis=0, keepdims=True) - y.min(axis=0, keepdims=True)
         y = y - y.min(axis=0, keepdims=True)
         i = np.where(norm == 0)[0]

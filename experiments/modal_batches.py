@@ -39,17 +39,14 @@ def modal_batches_submitter(job_name: str):
     batches_submitter(job_name)
 
 
-def batches_submitter(batch_tag: str, count_only=False):
-    missing = []
+def batches_submitter(batch_tag: str):
+    n = 0
     for key, d_args in _gen_jobs(batch_tag):
-        missing.append((key, d_args))
-
-    for key, d_args in missing:
         print(f"JOB: {key} {d_args}")
-        if not count_only:
-            process_job = modal.Function.from_name(_app_name, "modal_batches_worker")
-            process_job.spawn((key, d_args))
-    print("TOTAL:", len(missing))
+        process_job = modal.Function.from_name(_app_name, "modal_batches_worker")
+        process_job.spawn((key, d_args))
+        n += 1
+    print("TOTAL:", n)
 
 
 def _gen_jobs(batch_tag):
@@ -111,8 +108,6 @@ def batches(cmd: str, batch_tag: str = None, num: int = None):
         submitter.spawn(batch_tag)
     elif cmd == "submit-missing":
         batches_submitter(batch_tag)
-    elif cmd == "count-missing":
-        batches_submitter(batch_tag, count_only=True)
     elif cmd == "status":
         status()
     elif cmd == "collect":

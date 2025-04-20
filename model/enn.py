@@ -9,6 +9,7 @@ import torch
 class ENNNormal:
     mu: np.ndarray
     se: np.ndarray
+    se_2: np.array
 
     def sample(self, num_samples, clip=None):
         if isinstance(num_samples, torch.Size):
@@ -127,6 +128,7 @@ class EpsitemicNearestNeighbors:
             return ENNNormal(
                 mu.squeeze(0),
                 np.sqrt(vvar.squeeze(0)),
+                np.sqrt(vvar.squeeze(0)),
             )
 
         if exclude_nearest:
@@ -159,4 +161,4 @@ class EpsitemicNearestNeighbors:
         assert vvar.shape == (batch_size, q), (vvar.shape, batch_size, q)
         vvar = np.maximum(self._eps_var, vvar)
 
-        return ENNNormal(mu, np.sqrt(vvar))
+        return ENNNormal(mu, np.sqrt(vvar), 1 / np.sqrt(norm))
