@@ -8,8 +8,8 @@ def default_bounds(num_dim):
     return torch.tensor([[0.0] * num_dim, [1.0] * num_dim])
 
 
-def torch_random_choice(x):
-    i = torch.randint(len(x), (1,))
+def torch_random_choice(x, k=1):
+    i = torch.randint(len(x), (k,))
     return x[i]
 
 

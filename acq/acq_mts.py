@@ -59,10 +59,13 @@ class AcqMTS:
             Y = np.expand_dims(Y, -1)
             Y = Y + se * np.random.normal(size=(n, num_arms))
             i = np.where(Y == Y.max(axis=0, keepdims=True))[0]
+            if len(i) > num_arms:
+                i = np.random.choice(i, size=(num_arms,))
+
             X_ts = X[i, :]
 
         X_ts = np.expand_dims(X_ts, 1)
-        assert X_ts.shape == (num_arms, 1, X.shape[-1]), X_ts.shape
+        assert X_ts.shape == (num_arms, 1, X.shape[-1]), (X_ts.shape, num_arms, X.shape[-1])
 
         return torch.as_tensor(X_ts)
 
