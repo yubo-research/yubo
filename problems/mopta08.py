@@ -67,4 +67,4 @@ class Mopta08:
         value = output[0]
         constraints = output[1:]
         # see https://arxiv.org/pdf/2103.00349.pdf E.7
-        return (value + 10 * np.sum(np.clip(constraints, a_min=0, a_max=None))).unsqueeze(-1)
+        return value + 10 * np.sum(np.clip(constraints, a_min=0, a_max=None))
