@@ -40,10 +40,11 @@ class ENNConfig:
     stagger: bool = False
     weight_by_length: bool = False
     acq: str = "pareto"
+    bug_fix: bool = False
 
     se_scale: float = 1
     num_over_sample_per_arm: int = 1
-    include_se_2: bool = False
+    se_2: int = None
 
     region_type: str = "fn"
     se_max: float = 0.1
@@ -67,7 +68,7 @@ class AcqENN:
         self._num_dim = self._X_train.shape[-1]
 
         if len(self._X_train) > 0:
-            self._enn = EpsitemicNearestNeighbors(self._X_train, self._Y_train, k=self._config.k)
+            self._enn = EpsitemicNearestNeighbors(self._X_train, self._Y_train, k=self._config.k, bug_fix=self._config.bug_fix)
             self._enn.calibrate(self._config.se_scale**2)
         else:
             self._enn = None
@@ -117,10 +118,19 @@ class AcqENN:
             return farthest_neighbor(self._enn, x_0, u, p_boundary_is_neighbor=self._config.p_boundary_is_neighbor)
         elif self._config.region_type == "cr":
             return confidence_region_fast(self._enn, x_0, u, se_max=self._config.se_max, num_steps=100)
-        elif self._config.region_type == "far":
+        elif self._config.region_type in ["far", "farp"]:
             return far_as_you_can_go(x_0, u)
         else:
             assert False, self._config.region_type
+
+    def _xform_dm2(self, u):
+        a = 1e-9
+        b = 1
+        d = self._num_dim
+        if d == 1:
+            return a * (b / a) ** u
+        else:
+            return (a ** (d - 1) + u * (b ** (d - 1) - a ** (d - 1))) ** (1 / (d - 1))
 
     def _sample_in_cell(self, x_0, x_far):
         # We want to uniformly sample over the Voronoi cell, but this is
@@ -139,6 +149,11 @@ class AcqENN:
             l_s_min = np.log(1e-4)
             l_s_max = np.log(1)
             alpha = np.exp(l_s_min + (l_s_max - l_s_min) * alpha)
+
+        if self._config.region_type == "farp":
+            assert not self._config.stagger
+            alpha = 1 - self._xform_dm2(alpha)
+
         x_cand = alpha * x_0 + (1 - alpha) * x_far
 
         if self._config.keep_bdy:
@@ -241,8 +256,8 @@ class AcqENN:
     def _pareto_cheb(self, x_cand, num_arms):
         mvn = self._enn.posterior(x_cand)
         y = np.concatenate([mvn.mu, mvn.se], axis=1)
-        if self._config.include_se_2:
-            y = np.concatenate([y, mvn.se_2], axis=1)
+        if self._config.se_2 is not None:
+            y = np.concatenate([y, self._config.se_2 * mvn.se_2], axis=1)
 
         norm = y.max(axis=0, keepdims=True) - y.min(axis=0, keepdims=True)
         y = y - y.min(axis=0, keepdims=True)

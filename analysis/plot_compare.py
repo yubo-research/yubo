@@ -29,22 +29,27 @@ class PlotCompare:
         ax.set_ylabel("$y_{max}$\n(normalized)")
 
 
-def plot_compare(ax, data_locator, i_agg=-1, renames=None, b_sort=True):
+def plot_compare(ax, data_locator, i_agg=-1, renames=None, b_sort=True, highlight=None, y_or_time="y"):
     ap.plot_sorted_agg(
         ax,
         data_locator,
         renames=renames,
         i_agg=i_agg,
         b_sort=b_sort,
+        highlight=highlight,
     )
 
     if data_locator.num_dim is not None and data_locator.num_arms is not None:
         ax.set_title(f"num_dim = {data_locator.num_dim}  num_arms = {data_locator.num_arms}", fontsize=14)
-        ax.set_ylim([0, 1.03])
-    ax.set_ylabel("score")
+        ax.set_ylim([-0.1, 1.03])
+
+    if y_or_time == "y":
+        ax.set_ylabel("score(y_max)")
+    else:
+        ax.set_ylabel("score(proposal time)")
 
 
-def pc_normal(results_path, exp_dir, ax, num_dim, num_arms, i_agg, opt_names, renames, num_reps=None, problems: set = None):
+def pc_normal(results_path, exp_dir, ax, num_dim, num_arms, i_agg, opt_names, renames, num_reps=None, problems: set = None, highlight=None, y_or_time="y"):
     plot_compare(
         ax,
         DataLocator(
@@ -55,7 +60,11 @@ def pc_normal(results_path, exp_dir, ax, num_dim, num_arms, i_agg, opt_names, re
             opt_names=opt_names,
             num_reps=num_reps,
             problems=problems,
+            key="return" if y_or_time == "y" else "cum_dt_prop",
+            grep_for="TRACE" if y_or_time == "y" else "ITER",
         ),
         renames=renames,
         i_agg=i_agg,
+        highlight=highlight,
+        y_or_time=y_or_time,
     )

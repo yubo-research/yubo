@@ -7,7 +7,19 @@ from common.util import parse_kv
 
 
 class DataLocator:
-    def __init__(self, results_path, exp_dir, num_arms=None, num_rounds=None, num_reps=None, num_dim=None, opt_names=None, problems: set = None):
+    def __init__(
+        self,
+        results_path,
+        exp_dir,
+        num_arms=None,
+        num_rounds=None,
+        num_reps=None,
+        num_dim=None,
+        opt_names=None,
+        problems: set = None,
+        key="return",
+        grep_for="TRACE",
+    ):
         self.results = results_path
         self.exp_dir = exp_dir
         self.num_arms = num_arms
@@ -16,6 +28,8 @@ class DataLocator:
         self.num_dim = num_dim
         self._opt_names = opt_names
         self._problems = problems
+        self.key = key
+        self.grep_for = grep_for
 
     def __str__(self):
         return (

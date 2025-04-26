@@ -48,7 +48,8 @@ class AcqMTS:
 
         for _ in range(self._num_iterations):
             self._iterate_(mp_sampler, X_init, Y_best)
-        return X_init
+
+        return X_init.squeeze(-2)
 
     def _best_measured(self):
         X = self._model.train_inputs[0]

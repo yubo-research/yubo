@@ -469,7 +469,7 @@ class Designers:
                     region_type="far",
                 ),
             )
-        elif designer_name.startswith("enn-fars-"):
+        elif designer_name.startswith("enn-bf-"):
             k = int(designer_name.split("-")[-1])
             return ENNDesigner(
                 self._policy,
@@ -479,7 +479,7 @@ class Designers:
                     num_interior=10,
                     acq="pareto",
                     region_type="far",
-                    stagger=True,
+                    bug_fix=3,
                 ),
             )
         elif designer_name.startswith("enn-idk-"):
@@ -491,22 +491,6 @@ class Designers:
                     num_boundary=0,
                     num_interior=10,
                     acq="pareto_strict",
-                    region_type="fn_fast",
-                    weight_by_length=True,
-                    keep_bdy=True,
-                ),
-                keep_style=keep_style,
-                num_keep=num_keep,
-            )
-        elif designer_name.startswith("enn-A-"):
-            k = int(designer_name.split("-")[-1])
-            return ENNDesigner(
-                self._policy,
-                ENNConfig(
-                    k=k,
-                    num_boundary=0,
-                    num_interior=10,
-                    acq="pareto_cheb",
                     region_type="fn_fast",
                     weight_by_length=True,
                     keep_bdy=True,
@@ -531,7 +515,7 @@ class Designers:
                 keep_style=keep_style,
                 num_keep=num_keep,
             )
-        elif designer_name.startswith("enn-se2-"):
+        elif designer_name.startswith("enn-far-"):
             k = int(designer_name.split("-")[-1])
             return ENNDesigner(
                 self._policy,
@@ -540,37 +524,13 @@ class Designers:
                     num_boundary=0,
                     num_interior=10,
                     acq="pareto_cheb",
-                    region_type="fn_fast",
+                    region_type="far",
                     weight_by_length=True,
                     keep_bdy=True,
-                    include_se_2=True,
+                    max_cell=True,
                 ),
                 keep_style=keep_style,
                 num_keep=num_keep,
-            )
-        elif designer_name.startswith("enn-ps"):
-            k = int(designer_name.split("-")[-1])
-            return ENNDesigner(
-                self._policy,
-                ENNConfig(
-                    k=k,
-                    num_boundary=0,
-                    num_interior=10,
-                    acq="pareto_strict",
-                    region_type="fn_fast",
-                ),
-            )
-        elif designer_name.startswith("enn-ccs-"):
-            k = int(designer_name.split("-")[-1])
-            return ENNDesigner(
-                self._policy,
-                ENNConfig(
-                    k=k,
-                    num_boundary=10,
-                    num_interior=10,
-                    acq="pareto_cheb",
-                    weight_by_length=True,
-                ),
             )
         elif designer_name.startswith("enn-b-"):
             k = int(designer_name.split("-")[-1])

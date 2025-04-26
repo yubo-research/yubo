@@ -144,7 +144,7 @@ def zc(x):
     return (x - x.mean()) / x.std()
 
 
-def plot_sorted(ax, optimizers, mu, se, renames=None, b_sort=True):
+def plot_sorted(ax, optimizers, mu, se, renames=None, b_sort=True, highlight=None):
     if b_sort:
         i_sort = np.argsort(-mu)
     else:
@@ -157,11 +157,19 @@ def plot_sorted(ax, optimizers, mu, se, renames=None, b_sort=True):
             if old in names:
                 i = names.index(old)
                 names[i] = new
-    ax.set_xticks(n, [names[i] for i in i_sort], rotation=60, ha="right", va="top")
-    ax.set_ylim([0, 1])
+
+    names = [names[i] for i in i_sort]
+
+    for i_n, nn in enumerate(names):
+        if nn == highlight:
+            ax.errorbar(i_n, mu[i_sort][i_n], 2 * se[i_sort][i_n], fmt="k,", capsize=6, elinewidth=3, capthick=3)
+            break
+
+    ax.set_xticks(n, names, rotation=60, ha="right", va="top")
+    ax.set_ylim([-0.1, 1])
 
 
-def plot_sorted_agg(ax, data_locator, renames=None, i_agg=-1, b_sort=True):
+def plot_sorted_agg(ax, data_locator, renames=None, i_agg=-1, b_sort=True, highlight=None):
     traces = ads.load_multiple_traces(data_locator)
 
     if i_agg == "mean":
@@ -171,7 +179,7 @@ def plot_sorted_agg(ax, data_locator, renames=None, i_agg=-1, b_sort=True):
             traces = traces[..., : i_agg + 1]
         mu, se = ads.range_summarize(traces)
 
-    plot_sorted(ax, data_locator.optimizers(), mu, se, renames=renames, b_sort=b_sort)
+    plot_sorted(ax, data_locator.optimizers(), mu, se, renames=renames, b_sort=b_sort, highlight=highlight)
 
 
 def plot_compare_problem(ax, data_locator, exp_name, problem_name, optimizers, b_normalize, title, renames=None, old_way=True, b_legend=True):

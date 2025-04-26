@@ -122,6 +122,9 @@ def far_as_you_can_go(x_0: np.ndarray, u: np.ndarray):
 
     ll_max = 2 * np.sqrt(num_dim)
     x = x_0 + ll_max * u
+
+    # puts us in the corners, though, not at the
+    #  intersection of the boundary and the ray...
     x = np.minimum(1, x, out=x)
     x = np.maximum(0, x, out=x)
     return x

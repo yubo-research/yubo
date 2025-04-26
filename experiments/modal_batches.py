@@ -33,18 +33,39 @@ def modal_batches_worker(job):
     res_dict[key] = (trace_fn, collector_log, collector_trace)
 
 
+# @app.function(image=modal_image, concurrency_limit=1, timeout=_TIMEOUT_HOURS * 60 * 60)
+# def modal_batches_submitter(job_name: str):
+#     batches_submitter(job_name)
+
+
 @app.function(image=modal_image, concurrency_limit=1, timeout=_TIMEOUT_HOURS * 60 * 60)
-def modal_batches_submitter(job_name: str):
-    batches_submitter(job_name)
+def modal_batches_resubmitter(batch_of_args):
+    for key, d_args in batch_of_args:
+        process_job = modal.Function.from_name(_app_name, "modal_batches_worker")
+        process_job.spawn((key, d_args))
 
 
 def batches_submitter(batch_tag: str):
     n = 0
+    batch = []
+    MAX_BATCH = 100
+
+    def _flush():
+        nonlocal batch
+        func = modal.Function.from_name(_app_name, "modal_batches_resubmitter")
+        func.spawn(batch)
+        batch = []
+
     for key, d_args in _gen_jobs(batch_tag):
         print(f"JOB: {key} {d_args}")
-        process_job = modal.Function.from_name(_app_name, "modal_batches_worker")
-        process_job.spawn((key, d_args))
+        # process_job = modal.Function.from_name(_app_name, "modal_batches_worker")
+        # process_job.spawn((key, d_args))
+        batch.append((key, d_args))
+        if len(batch) == MAX_BATCH:
+            _flush()
         n += 1
+
+    _flush()
     print("TOTAL:", n)
 
 
@@ -61,6 +82,17 @@ def _gen_jobs(batch_tag):
 
 def _job_key(job_name, i_job):
     return f"{job_name}-{i_job}"
+
+
+@app.function(image=modal_image, concurrency_limit=1, timeout=_TIMEOUT_HOURS * 60 * 60)
+def modal_batch_deleter(collected_keys):
+    res_dict = _dict()
+    for key in collected_keys:
+        print("DEL:", key)
+        try:
+            del res_dict[key]
+        except KeyError:
+            pass
 
 
 def collect():
@@ -84,10 +116,12 @@ def collect():
             collected_keys.add(key)
 
         print(f"results_available before del: {res_dict.len()}")
-        for key in collected_keys:
-            print("DEL:", key)
-            del res_dict[key]
-        print(f"results_available after del: {res_dict.len()} num_deleted = {len(collected_keys)}")
+        # for key in collected_keys:
+        #     print("DEL:", key)
+        #     del res_dict[key]
+        func = modal.Function.from_name(_app_name, "modal_batch_deleter")
+        func.spawn(collected_keys)
+        print(f"num_collected = {len(collected_keys)}")
 
 
 def status():
@@ -102,9 +136,9 @@ def batches(cmd: str, batch_tag: str = None, num: int = None):
         for i in range(num):
             print("WORK:", i)
             modal_function.spawn()
-    elif cmd == "submit-all":
-        submitter = modal.Function.lookup("yubo", "modal_batches_submitter")
-        submitter.spawn(batch_tag)
+    # elif cmd == "submit-all":
+    #     submitter = modal.Function.lookup("yubo", "modal_batches_submitter")
+    #     submitter.spawn(batch_tag)
     elif cmd == "submit-missing":
         batches_submitter(batch_tag)
     elif cmd == "status":

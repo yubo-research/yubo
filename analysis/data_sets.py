@@ -76,6 +76,8 @@ def load_traces(trace_dir, key="return", grep_for="TRACE"):
     width = None
     for fn in sorted(os.listdir(trace_dir)):
         fn = f"{trace_dir}/{fn}"
+        if not os.path.isfile(fn):
+            continue
         if not data_is_done(fn):
             print("NOT_DONE:", fn)
             i_missing.append(len(traces))
@@ -135,7 +137,7 @@ def load_multiple_traces(data_locator):
             trace_path = trace_path[0]
 
             try:
-                trace = load_traces(trace_path)
+                trace = load_traces(trace_path, key=data_locator.key, grep_for=data_locator.grep_for)
             except FileNotFoundError as e:
                 _report_bad(problem_name, opt_name, f"{trace_path} {repr(e)}")
                 continue
@@ -166,6 +168,7 @@ def load_multiple_traces(data_locator):
         traces = npma.masked_invalid(traces)
     except Exception as e:
         print("TP:", problems, opt_names, data_locator)
+        print("TP:", traces)
         raise e
     if num_bad > 0:
         print(f"\n{num_bad} / {num_tot} files bad. {100 * traces.mask.mean():.1f}% missing data")
