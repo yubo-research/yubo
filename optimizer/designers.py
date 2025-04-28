@@ -387,88 +387,18 @@ class Designers:
             return MTSDesigner(self._policy, keep_style=keep_style, num_keep=num_keep, init_style="ts")
         elif designer_name == "mts-meas":
             return MTSDesigner(self._policy, keep_style=keep_style, num_keep=num_keep, init_style="meas")
-        elif designer_name.startswith("enn-i-"):
-            k = int(designer_name.split("-")[-1])
-            return ENNDesigner(
-                self._policy,
-                ENNConfig(
-                    k=k,
-                    num_boundary=0,
-                    num_interior=100,
-                    acq="pareto",
-                ),
-            )
-        elif designer_name.startswith("enn-bi-"):
-            k = int(designer_name.split("-")[-1])
-            return ENNDesigner(
-                self._policy,
-                ENNConfig(
-                    k=k,
-                    num_boundary=50,
-                    num_interior=50,
-                    acq="pareto",
-                ),
-            )
-        elif designer_name.startswith("enn-cbi-"):
-            k = int(designer_name.split("-")[-1])
-            return ENNDesigner(
-                self._policy,
-                ENNConfig(
-                    k=k,
-                    num_boundary=50,
-                    num_interior=50,
-                    acq="pareto_cheb_noisy",
-                ),
-            )
-        elif designer_name.startswith("enn-cc-"):
-            # cc and cbi are very similar
-            k = int(designer_name.split("-")[-1])
-            return ENNDesigner(
-                self._policy,
-                ENNConfig(
-                    k=k,
-                    num_boundary=50,
-                    num_interior=50,
-                    acq="pareto_cheb",
-                ),
-            )
-        elif designer_name.startswith("enn-pff-"):
-            k = int(designer_name.split("-")[-1])
-            return ENNDesigner(
-                self._policy,
-                ENNConfig(
-                    k=k,
-                    num_boundary=0,
-                    num_interior=10,
-                    acq="pareto",
-                    region_type="fn_fast",
-                ),
-            )
-        elif designer_name.startswith("enn-pcr-"):
-            k = int(designer_name.split("-")[-1])
-            return ENNDesigner(
-                self._policy,
-                ENNConfig(
-                    k=k,
-                    num_boundary=0,
-                    num_interior=10,
-                    acq="pareto",
-                    region_type="cr",
-                    se_max=0.1,
-                ),
-            )
-        elif designer_name.startswith("enn-far-"):
-            k = int(designer_name.split("-")[-1])
-            return ENNDesigner(
-                self._policy,
-                ENNConfig(
-                    k=k,
-                    num_boundary=0,
-                    num_interior=10,
-                    acq="pareto",
-                    region_type="far",
-                ),
-            )
+        # elif designer_name.startswith("enn-far-"):
+        #     k = int(designer_name.split("-")[-1])
+        #     return ENNDesigner(
+        #         self._policy,
+        #         ENNConfig(
+        #             k=k,
+        #             num_boundary=0,
+        #             num_interior=10,
+        #             acq="pareto",
+        #             region_type="far",
+        #         ),
+        #     )
         elif designer_name.startswith("enn-bf-"):
             k = int(designer_name.split("-")[-1])
             return ENNDesigner(
@@ -479,10 +409,10 @@ class Designers:
                     num_interior=10,
                     acq="pareto",
                     region_type="far",
-                    bug_fix=3,
+                    bug_fix=True,
                 ),
             )
-        elif designer_name.startswith("enn-idk-"):
+        elif designer_name.startswith("enn-fark-"):
             k = int(designer_name.split("-")[-1])
             return ENNDesigner(
                 self._policy,
@@ -490,60 +420,14 @@ class Designers:
                     k=k,
                     num_boundary=0,
                     num_interior=10,
-                    acq="pareto_strict",
-                    region_type="fn_fast",
-                    weight_by_length=True,
-                    keep_bdy=True,
-                ),
-                keep_style=keep_style,
-                num_keep=num_keep,
-            )
-        elif designer_name.startswith("enn-ms-"):
-            k = int(designer_name.split("-")[-1])
-            return ENNDesigner(
-                self._policy,
-                ENNConfig(
-                    k=k,
-                    num_boundary=0,
-                    num_interior=10,
-                    acq="pareto_cheb",
-                    region_type="fn_fast",
-                    weight_by_length=True,
-                    keep_bdy=True,
-                    max_cell=True,
-                ),
-                keep_style=keep_style,
-                num_keep=num_keep,
-            )
-        elif designer_name.startswith("enn-far-"):
-            k = int(designer_name.split("-")[-1])
-            return ENNDesigner(
-                self._policy,
-                ENNConfig(
-                    k=k,
-                    num_boundary=0,
-                    num_interior=10,
-                    acq="pareto_cheb",
-                    region_type="far",
-                    weight_by_length=True,
-                    keep_bdy=True,
-                    max_cell=True,
-                ),
-                keep_style=keep_style,
-                num_keep=num_keep,
-            )
-        elif designer_name.startswith("enn-b-"):
-            k = int(designer_name.split("-")[-1])
-            return ENNDesigner(
-                self._policy,
-                ENNConfig(
-                    k=k,
-                    num_boundary=100,
-                    num_interior=0,
                     acq="pareto",
+                    region_type="far",
+                    bug_fix=True,
+                    # keep_bdy=True,
+                    # weight_by_length=True,
+                    max_cell=True,
                 ),
             )
-
         # Long sobol init, sequential opt
         elif designer_name == "sobol_ucb":
             return bt_designer(qUpperConfidenceBound, init_sobol=init_ax_default, acq_kwargs={"beta": 1})

@@ -1,6 +1,8 @@
 import numpy as np
 from botorch.sampling.qmc import MultivariateNormalQMCEngine
 
+from .ray_boundary import ray_boundary_np
+
 
 def target_directions(x_0: np.ndarray):
     x_t = np.random.uniform(size=x_0.shape)
@@ -116,18 +118,56 @@ def confidence_region_fast(enn, x_0: np.ndarray, u: np.ndarray, se_max: float, n
     return _farthest_true(x, a)
 
 
-def far_as_you_can_go(x_0: np.ndarray, u: np.ndarray):
+def random_corner(num_samples, num_dim):
+    return np.random.choice([0, 1], size=(num_samples, num_dim))
+
+
+def far_clip(x_0: np.ndarray, u: np.ndarray, k=2):
     num_samples, num_dim = x_0.shape
     assert u.shape == (num_samples, num_dim), (u.shape, x_0.shape)
 
-    ll_max = 2 * np.sqrt(num_dim)
+    ll_max = k * np.sqrt(num_dim)
     x = x_0 + ll_max * u
 
-    # puts us in the corners, though, not at the
-    #  intersection of the boundary and the ray...
     x = np.minimum(1, x, out=x)
     x = np.maximum(0, x, out=x)
+
     return x
+
+
+def _cgpt_zero_out_k_per_row_(u: np.ndarray, k: int):
+    rng = np.random.default_rng()
+    n, d = u.shape
+    if not 0 <= k < d:
+        raise ValueError("k must satisfy 0 <= k < d")
+
+    # 1. Draw a matrix of independent Uniform(0,1) numbers
+    r = rng.random(u.shape)  # shape (n, d)
+
+    # 2. In each row pick the indices of the k *smallest* random numbers
+    cols = np.argpartition(r, k - 1, axis=1)[:, :k]  # shape (n, k)
+
+    # 3. Broadcast row indices so we can index the 2-D array in one shot
+    rows = np.arange(n)[:, None]  # shape (n, 1)
+
+    # 4. Zero them out
+    u[rows, cols] = 0
+
+
+def raasp(x_0: np.ndarray, num_perturb):
+    _, num_dim = x_0.shape
+
+    if num_perturb < num_dim:
+        dx = np.random.uniform(size=x_0.shape) - x_0
+        _cgpt_zero_out_k_per_row_(dx, num_dim - num_perturb)
+        return x_0 + dx
+    return np.random.uniform(size=x_0.shape)
+
+
+def clip_to_boundary(x_0: np.ndarray, u: np.ndarray):
+    num_samples, num_dim = x_0.shape
+    assert u.shape == (num_samples, num_dim), (u.shape, x_0.shape)
+    return ray_boundary_np(x_0, u)
 
 
 def farthest_neighbor_fast(enn, x_0: np.ndarray, u: np.ndarray, num_steps: int = 10, p_boundary_is_neighbor=0.0):

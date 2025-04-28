@@ -282,7 +282,8 @@ def prep_seq(results_dir):
         # "path:Osab",
         # "ucb",
         # "lei",
-        "enn-far-10"
+        # "enn-fark-3",
+        "lei"
     ]  # ["ucb", "lei"]  # ["enn-fc-3", "enn-cc-3", "enn-cbi-3"]  # ["path:Osab", "enn-i-3", "enn-bi-3", "enn-b-3", "mts", "turbo-1", "random"]
 
     noises = [None]
@@ -291,7 +292,7 @@ def prep_seq(results_dir):
     cmds = []
 
     # dims = [1, 3, 10, 30, 100]
-    dims = [1, 3, 10, 30, 100, 300]  # , 1000]
+    dims = [1, 3, 10, 30, 100, 300, 1000]
     for num_dim in dims:
         if num_dim == 1000 and opts == "path:Osab":
             continue
@@ -319,9 +320,7 @@ def prep_seq(results_dir):
 def prep_tlunar(results_dir):
     exp_dir = "exp_enn_tlunar"
 
-    opts = [
-        "enn-far-3",
-    ]  # ["enn-cc-3"]  # ["cma", "optuna"]  # "mts", "turbo-1", "path", "path-m", "ts", "mts-ns", "enn-bi-3", "path:Osab",
+    opts = ["enn-fark-3"]  # ["enn-cc-3"]  # ["cma", "optuna"]  # "mts", "turbo-1", "path", "path-m", "ts", "mts-ns", "enn-bi-3", "path:Osab",
 
     cmds = []
     for opt in opts:
@@ -353,9 +352,7 @@ def prep_tlunar(results_dir):
 def prep_swim(results_dir):
     exp_dir = "exp_enn_swim"
 
-    opts = [
-        "enn-far-3",
-    ]  # ["turbo-1", "path:Osab", "optuna", "cma", "enn-cc-3", "enn-cbi-3", "random"]
+    opts = ["enn-fark-3"]  # ["turbo-1", "path:Osab", "optuna", "cma", "enn-cc-3", "enn-cbi-3", "random"]
 
     cmds = []
     for opt in opts:
@@ -385,7 +382,7 @@ def prep_swim(results_dir):
 def prep_hop(results_dir):
     exp_dir = "exp_enn_hop"
 
-    opts = ["enn-far-3", "turbo-1", "path:Osab", "optuna", "cma", "random"]  # ["turbo-1", "path:Osab", "optuna", "cma", "enn-cc-3", "enn-cbi-3", "random"]
+    opts = ["enn-fark-3", "turbo-1", "path:Osab", "optuna", "cma", "random"]
 
     cmds = []
     for opt in opts:
@@ -400,7 +397,7 @@ def prep_hop(results_dir):
                 prep_args_1(
                     results_dir,
                     exp_dir=exp_dir,
-                    problem="swim:fn",
+                    problem="hop:fn",
                     opt=opt,
                     num_arms=num_arms,
                     num_replications=100,

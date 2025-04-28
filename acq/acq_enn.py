@@ -4,7 +4,16 @@ import numpy as np
 import torch
 
 from model.enn import EpsitemicNearestNeighbors
-from sampling.knn_tools import confidence_region_fast, far_as_you_can_go, farthest_neighbor, farthest_neighbor_fast, random_directions
+from sampling.knn_tools import (
+    clip_to_boundary,
+    confidence_region_fast,
+    far_clip,
+    farthest_neighbor,
+    farthest_neighbor_fast,
+    raasp,
+    random_corner,
+    random_directions,
+)
 from sampling.sampling_util import greedy_maximin
 
 """
@@ -41,12 +50,11 @@ class ENNConfig:
     weight_by_length: bool = False
     acq: str = "pareto"
     bug_fix: bool = False
+    k_far_clip: float = 2
 
-    se_scale: float = 1
     num_over_sample_per_arm: int = 1
-    se_2: int = None
 
-    region_type: str = "fn"
+    region_type: str = "far"
     se_max: float = 0.1
 
     p_boundary_is_neighbor: float = 0.0
@@ -69,7 +77,7 @@ class AcqENN:
 
         if len(self._X_train) > 0:
             self._enn = EpsitemicNearestNeighbors(self._X_train, self._Y_train, k=self._config.k, bug_fix=self._config.bug_fix)
-            self._enn.calibrate(self._config.se_scale**2)
+            # self._enn.calibrate(self._config.se_scale**2)
         else:
             self._enn = None
 
@@ -118,19 +126,27 @@ class AcqENN:
             return farthest_neighbor(self._enn, x_0, u, p_boundary_is_neighbor=self._config.p_boundary_is_neighbor)
         elif self._config.region_type == "cr":
             return confidence_region_fast(self._enn, x_0, u, se_max=self._config.se_max, num_steps=100)
-        elif self._config.region_type in ["far", "farp"]:
-            return far_as_you_can_go(x_0, u)
+        elif self._config.region_type == "far":
+            return far_clip(x_0, u, k=self._config.k_far_clip)
+        elif self._config.region_type == "bdy":
+            return clip_to_boundary(x_0, u)
+        elif self._config.region_type == "corner":
+            return random_corner(*x_0.shape)
+        elif self._config.region_type == "raasp":
+            return raasp(x_0, max(20, int(np.sqrt(self._num_dim) + 0.5)))
+        elif self._config.region_type == "unif":
+            return np.random.uniform(size=x_0.shape)
         else:
             assert False, self._config.region_type
 
-    def _xform_dm2(self, u):
-        a = 1e-9
-        b = 1
-        d = self._num_dim
-        if d == 1:
-            return a * (b / a) ** u
-        else:
-            return (a ** (d - 1) + u * (b ** (d - 1) - a ** (d - 1))) ** (1 / (d - 1))
+    # def _xform_dm2(self, u):
+    #     a = 1e-9
+    #     b = 1
+    #     d = self._num_dim
+    #     if d == 1:
+    #         return a * (b / a) ** u
+    #     else:
+    #         return (a ** (d - 1) + u * (b ** (d - 1) - a ** (d - 1))) ** (1 / (d - 1))
 
     def _sample_in_cell(self, x_0, x_far):
         # We want to uniformly sample over the Voronoi cell, but this is
@@ -149,10 +165,6 @@ class AcqENN:
             l_s_min = np.log(1e-4)
             l_s_max = np.log(1)
             alpha = np.exp(l_s_min + (l_s_max - l_s_min) * alpha)
-
-        if self._config.region_type == "farp":
-            assert not self._config.stagger
-            alpha = 1 - self._xform_dm2(alpha)
 
         x_cand = alpha * x_0 + (1 - alpha) * x_far
 
@@ -256,8 +268,6 @@ class AcqENN:
     def _pareto_cheb(self, x_cand, num_arms):
         mvn = self._enn.posterior(x_cand)
         y = np.concatenate([mvn.mu, mvn.se], axis=1)
-        if self._config.se_2 is not None:
-            y = np.concatenate([y, self._config.se_2 * mvn.se_2], axis=1)
 
         norm = y.max(axis=0, keepdims=True) - y.min(axis=0, keepdims=True)
         y = y - y.min(axis=0, keepdims=True)
