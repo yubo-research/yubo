@@ -48,8 +48,8 @@ class EpsitemicNearestNeighbors:
 
     def add(self, x, y):
         self._index.add(x)
-        self._train_x = np.append(self._train_x, x)
-        self._train_y = np.append(self._train_y, y)
+        self._train_x = np.append(self._train_x, x, axis=0)
+        self._train_y = np.append(self._train_y, y, axis=0)
         if self._lookup is not None:
             assert False, "NYI: Add to lookup"
 

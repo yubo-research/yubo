@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 
 import numpy as np
-import torch
 
 from model.enn import EpsitemicNearestNeighbors
 from sampling.knn_tools import (
@@ -67,30 +66,41 @@ class ENNConfig:
 
 class AcqENN:
     # TODO: Yvar
-    def __init__(self, X_train: torch.Tensor, Y_train: torch.Tensor, config: ENNConfig):
+    # def __init__(self, X_train: torch.Tensor, Y_train: torch.Tensor, config: ENNConfig):
+    def __init__(self, num_dim, config: ENNConfig):
         assert config.k > 0, config
-        self._X_train = np.asarray(X_train)
-        self._Y_train = np.asarray(Y_train)
+        self._num_dim = num_dim
+
+        self._x_train = np.empty(shape=(0, num_dim))
+        self._y_train = np.empty(shape=(0, 1))
 
         self._config = config
-        self._num_dim = self._X_train.shape[-1]
+        self._enn = None
 
-        if len(self._X_train) > 0:
-            self._enn = EpsitemicNearestNeighbors(self._X_train, self._Y_train, k=self._config.k, bug_fix=self._config.bug_fix)
-            # self._enn.calibrate(self._config.se_scale**2)
+    def add(self, x, y):
+        if len(x) == 0:
+            return
+        x = np.asarray(x)
+        y = np.asarray(y)
+        if self._enn is None:
+            print("CONSTRUCT")
+            self._enn = EpsitemicNearestNeighbors(x, y, k=self._config.k, bug_fix=self._config.bug_fix)
         else:
-            self._enn = None
+            self._enn.add(x, y)
+        self._x_train = np.append(self._x_train, x, axis=0)
+        self._y_train = np.append(self._y_train, y, axis=0)
+        print("XY:", self._x_train.shape, self._y_train.shape)
 
     def _var_calib(self):
-        if len(self._X_train) < 2:
+        if len(self._x_train) < 2:
             return 1
-        _, dists = self._enn.about_neighbors(self._X_train, k=self._config.k)
+        _, dists = self._enn.about_neighbors(self._x_train, k=self._config.k)
         dist_i = dists.mean(axis=1, keepdims=True)
         return 1 / dist_i.mean()
 
     def _ts_pick_cells(self, num_samples):
-        assert len(self._X_train) > 0
-        y = self._Y_train
+        assert len(self._x_train) > 0
+        y = self._y_train
 
         n = len(y)
         se = y.std() / np.sqrt(n)
@@ -106,7 +116,7 @@ class AcqENN:
 
             if self._config.ts_enn:
                 if n > 1:
-                    _, dists = self._enn.about_neighbors(self._X_train, k=self._config.k)
+                    _, dists = self._enn.about_neighbors(self._x_train, k=self._config.k)
                     dist_i = dists.mean(axis=1, keepdims=True)
                     dist_norm = dist_i.mean()
                     w = dist_i / dist_norm
@@ -116,7 +126,7 @@ class AcqENN:
         y = y + se * np.random.normal(size=(n, num_samples))
         i = np.where(y == y.max(axis=0, keepdims=True))[0]
 
-        return self._X_train[i, :]
+        return self._x_train[i, :]
 
     def _sample_boundary(self, x_0):
         u = random_directions(len(x_0), self._num_dim)
@@ -184,6 +194,7 @@ class AcqENN:
         return x_cand[i_arms]
 
     def _pareto_front(self, x_cand, num_arms):
+        # Random selection from union of multiple fronts
         mvn = self._enn.posterior(x_cand)
 
         i = np.argsort(-mvn.mu, axis=0).flatten()
@@ -216,6 +227,7 @@ class AcqENN:
             return x_front
 
     def _pareto_fronts_strict(self, x_cand, num_arms):
+        # Full fronts, then random selection from *last* front.
         assert self._config.num_over_sample_per_arm == 1, self._config.num_over_sample_per_arm
         mvn = self._enn.posterior(x_cand)
 
@@ -437,7 +449,7 @@ class AcqENN:
             assert False, self._config.acq
 
     def draw(self, num_arms):
-        if len(self._X_train) == 0:
+        if len(self._x_train) == 0:
             # x_a = 0.5 + np.zeros(shape=(1, self._num_dim))
             # x_a = np.append(x_a, np.random.uniform(size=(num_arms - 1, self._num_dim)), axis=0)
             x_a = np.random.uniform(size=(num_arms, self._num_dim))

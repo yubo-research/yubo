@@ -398,8 +398,37 @@ class Designers:
         #             acq="pareto",
         #             region_type="far",
         #         ),
+        # #     )
+        # elif designer_name.startswith("enn-bf-"):
+        #     k = int(designer_name.split("-")[-1])
+        #     return ENNDesigner(
+        #         self._policy,
+        #         ENNConfig(
+        #             k=k,
+        #             num_boundary=0,
+        #             num_interior=10,
+        #             acq="pareto",
+        #             region_type="far",
+        #             bug_fix=True,
+        #         ),
         #     )
-        elif designer_name.startswith("enn-bf-"):
+        # elif designer_name.startswith("enn-fark-"):
+        #     k = int(designer_name.split("-")[-1])
+        #     return ENNDesigner(
+        #         self._policy,
+        #         ENNConfig(
+        #             k=k,
+        #             num_boundary=0,
+        #             num_interior=10,
+        #             acq="pareto",
+        #             region_type="far",
+        #             bug_fix=True,
+        #             # keep_bdy=True,
+        #             # weight_by_length=True,
+        #             max_cell=True,
+        #         ),
+        #     )
+        elif designer_name.startswith("enn-fps-"):
             k = int(designer_name.split("-")[-1])
             return ENNDesigner(
                 self._policy,
@@ -407,23 +436,26 @@ class Designers:
                     k=k,
                     num_boundary=0,
                     num_interior=10,
-                    acq="pareto",
-                    region_type="far",
-                    bug_fix=True,
-                ),
-            )
-        elif designer_name.startswith("enn-fark-"):
-            k = int(designer_name.split("-")[-1])
-            return ENNDesigner(
-                self._policy,
-                ENNConfig(
-                    k=k,
-                    num_boundary=0,
-                    num_interior=10,
-                    acq="pareto",
+                    acq="pareto_strict",
                     region_type="far",
                     bug_fix=True,
                     # keep_bdy=True,
+                    # weight_by_length=True,
+                    max_cell=True,
+                ),
+            )
+        elif designer_name.startswith("enn-fpsb-"):
+            k = int(designer_name.split("-")[-1])
+            return ENNDesigner(
+                self._policy,
+                ENNConfig(
+                    k=k,
+                    num_boundary=0,
+                    num_interior=10,
+                    acq="pareto_strict",
+                    region_type="far",
+                    bug_fix=True,
+                    keep_bdy=True,
                     # weight_by_length=True,
                     max_cell=True,
                 ),

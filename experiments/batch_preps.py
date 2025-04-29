@@ -320,7 +320,10 @@ def prep_seq(results_dir):
 def prep_tlunar(results_dir):
     exp_dir = "exp_enn_tlunar"
 
-    opts = ["enn-fark-3"]  # ["enn-cc-3"]  # ["cma", "optuna"]  # "mts", "turbo-1", "path", "path-m", "ts", "mts-ns", "enn-bi-3", "path:Osab",
+    opts = [
+        "enn-fark-3",
+        "enn-fps-3",
+    ]  # ["enn-cc-3"]  # ["cma", "optuna"]  # "mts", "turbo-1", "path", "path-m", "ts", "mts-ns", "enn-bi-3", "path:Osab",
 
     cmds = []
     for opt in opts:
@@ -352,7 +355,10 @@ def prep_tlunar(results_dir):
 def prep_swim(results_dir):
     exp_dir = "exp_enn_swim"
 
-    opts = ["enn-fark-3"]  # ["turbo-1", "path:Osab", "optuna", "cma", "enn-cc-3", "enn-cbi-3", "random"]
+    opts = [
+        "enn-fark-3",
+        "enn-fps-3",
+    ]  # ["turbo-1", "path:Osab", "optuna", "cma", "enn-cc-3", "enn-cbi-3", "random"]
 
     cmds = []
     for opt in opts:
@@ -382,7 +388,7 @@ def prep_swim(results_dir):
 def prep_hop(results_dir):
     exp_dir = "exp_enn_hop"
 
-    opts = ["enn-fark-3", "turbo-1", "path:Osab", "optuna", "cma", "random"]
+    opts = ["enn-fpsb-3"]  # ["enn-fark-3", "turbo-1", "path:Osab", "optuna", "cma", "random"]
 
     cmds = []
     for opt in opts:
