@@ -27,13 +27,13 @@ class ENNNormal:
 
 class EpsitemicNearestNeighbors:
     # TODO: train_YVar; treat as third metric in acquisition function b/c not calibrate to epistemic var
-    def __init__(self, train_x, train_y, k, bug_fix=False):
+    def __init__(self, train_x, train_y, k, linear_variance=False):
         assert len(train_x) == len(train_y), (len(train_x), len(train_y))
         assert train_x.ndim == train_y.ndim == 2, (train_x.ndim, train_y.ndim)
 
         self._train_x = train_x
         self._train_y = train_y
-        self._bug_fix = bug_fix
+        self._linear_variance = linear_variance
         self._num_obs, self._num_dim = self._train_x.shape
         self._num_metrics = self._train_y.shape[-1]
         self.k = k
@@ -142,7 +142,7 @@ class EpsitemicNearestNeighbors:
 
     def _search(self, x, k):
         dists2, idx = self._index.search(x, k=k)
-        if self._bug_fix:
+        if self._linear_variance:
             return np.sqrt(dists2), idx
         else:
             return dists2, idx

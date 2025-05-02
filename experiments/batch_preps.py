@@ -283,7 +283,14 @@ def prep_seq(results_dir):
         # "ucb",
         # "lei",
         # "enn-fark-3",
-        "lei"
+        # "lei"
+        # "enn-fps-3",
+        # "enn-ucb-3",
+        "enn-lv-10",
+        # "enn-mtvpf-3",
+        # "enn-uu-3",
+        # "enn-mu-3",
+        # "enn-uf-3",
     ]  # ["ucb", "lei"]  # ["enn-fc-3", "enn-cc-3", "enn-cbi-3"]  # ["path:Osab", "enn-i-3", "enn-bi-3", "enn-b-3", "mts", "turbo-1", "random"]
 
     noises = [None]
@@ -321,8 +328,12 @@ def prep_tlunar(results_dir):
     exp_dir = "exp_enn_tlunar"
 
     opts = [
-        "enn-fark-3",
-        "enn-fps-3",
+        # "enn-fps-3",
+        # "enn-ucb-3",
+        # "enn-mtvpf-3",
+        "enn-uu-3",
+        "enn-mu-3",
+        "enn-uf-3",
     ]  # ["enn-cc-3"]  # ["cma", "optuna"]  # "mts", "turbo-1", "path", "path-m", "ts", "mts-ns", "enn-bi-3", "path:Osab",
 
     cmds = []
@@ -356,8 +367,11 @@ def prep_swim(results_dir):
     exp_dir = "exp_enn_swim"
 
     opts = [
-        "enn-fark-3",
-        "enn-fps-3",
+        # "enn-fark-3",
+        # "enn-fps-3",
+        "enn-uu-3",
+        "enn-mu-3",
+        "enn-uf-3",
     ]  # ["turbo-1", "path:Osab", "optuna", "cma", "enn-cc-3", "enn-cbi-3", "random"]
 
     cmds = []
@@ -388,7 +402,11 @@ def prep_swim(results_dir):
 def prep_hop(results_dir):
     exp_dir = "exp_enn_hop"
 
-    opts = ["enn-fpsb-3"]  # ["enn-fark-3", "turbo-1", "path:Osab", "optuna", "cma", "random"]
+    opts = [
+        "enn-uu-3",
+        "enn-mu-3",
+        "enn-uf-3",
+    ]  # ["enn-fark-3", "turbo-1", "path:Osab", "optuna", "cma", "random"]
 
     cmds = []
     for opt in opts:

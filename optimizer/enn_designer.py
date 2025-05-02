@@ -8,15 +8,16 @@ _acq_enn = None
 
 
 class ENNDesigner:
-    def __init__(self, policy, enn_config: ENNConfig, num_keep: int = None, keep_style: str = None, warm_starting=True):
+    def __init__(self, policy, enn_config: ENNConfig, num_keep: int = None, keep_style: str = None, warm_starting=False):
         self._policy = policy
         self._enn_config = enn_config
-        self._dtype = torch.double
-        self._device = torch.empty(size=(1,)).device
         self._num_keep = num_keep
         self._keep_style = keep_style
-        self._i_data_last = 0
         self._warm_starting = warm_starting
+
+        self._i_data_last = 0
+        self._dtype = torch.double
+        self._device = torch.empty(size=(1,)).device
 
     def __call__(self, data, num_arms):
         data = acq_util.keep_data(data, self._keep_style, self._num_keep)
