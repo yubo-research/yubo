@@ -147,13 +147,13 @@ class AcqENN:
         elif self._config.region_type == "uniform":
             return np.random.uniform(size=x_0.shape)
         elif self._config.region_type == "mixed":
-            n = x_0.shape[0] // 3
-            n_f = x_0.shape[0] - 2 * n
+            n = x_0.shape[0] // 2
+            n_f = x_0.shape[0] - n
             return np.concatenate(
                 (
                     far_clip(x_0[:n], u[:n], k=self._config.k_far_clip),
-                    np.random.uniform(size=(n, x_0.shape[1])),
-                    random_corner(n_f, x_0.shape[1]),
+                    np.random.uniform(size=(n_f, x_0.shape[1])),
+                    # random_corner(n_f, x_0.shape[1]),
                 ),
                 axis=0,
             )
@@ -173,7 +173,7 @@ class AcqENN:
         # We want to uniformly sample over the Voronoi cell, but this is
         #  easier. Maybe we'll come up with something better.
 
-        assert x_0.shape == x_far.shape, x_0.shape.x_far.shape
+        assert x_0.shape == x_far.shape, (x_0.shape, x_far.shape)
 
         alpha = np.random.uniform(size=(len(x_0), 1))
 
@@ -374,6 +374,24 @@ class AcqENN:
 
         return x_front[[i_arm]]
 
+    def _max_mu(self, x_cand, num_arms):
+        n = x_cand.shape[0] // num_arms
+        assert n * num_arms == x_cand.shape[0]
+
+        mvn = self._enn.posterior(x_cand)
+        mu = np.reshape(mvn.mu, newshape=(n, num_arms))
+        se = np.reshape(mvn.se, newshape=(n, num_arms))
+        phi = mu
+        i = np.random.uniform(size=(num_arms,)) < 0.1
+        phi[:, i] = se[:, i]
+        del mu, se
+
+        x_cand = np.reshape(x_cand, newshape=(n, num_arms, self._num_dim))
+
+        i = np.argmax(phi, axis=0)
+        arms = np.arange(x_cand.shape[1])
+        return x_cand[i, arms, :]
+
     def _uniform(self, x_cand, num_arms):
         if self._config.maximin:
             i = greedy_maximin(x_cand, num_arms)
@@ -487,6 +505,8 @@ class AcqENN:
             return self._thompson_sample(x_cand, num_arms)
         elif self._config.acq == "mtv":
             return self._mtv(x_cand, num_arms)
+        elif self._config.acq == "max_mu":
+            return self._max_mu(x_cand, num_arms)
         elif self._config.acq == "uniform":
             return self._uniform(x_cand, num_arms)
 

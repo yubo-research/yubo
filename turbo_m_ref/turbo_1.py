@@ -62,6 +62,8 @@ class Turbo1:
         min_cuda=1024,
         device="cpu",
         dtype="float64",
+        *,
+        surrogate_type="original",
     ):
         # Very basic input checks
         assert lb.ndim == 1 and ub.ndim == 1
@@ -80,6 +82,8 @@ class Turbo1:
         #     assert torch.cuda.is_available(), "can't use cuda if it's not available"
 
         # print("TURBO_DEVICE:", device)
+
+        self._surrogate_type = surrogate_type
 
         # Save function information
         self.f = f
@@ -104,6 +108,9 @@ class Turbo1:
 
         # Tolerances and counters
         self.n_cand = min(100 * self.dim, 5000)
+        if self._surrogate_type.startswith("enn-"):
+            self.n_cand = max(self.n_cand, 10 * self.batch_size)
+
         self.failtol = np.ceil(np.max([4.0 / batch_size, self.dim / batch_size]))
         self.succtol = 3
         self.n_evals = 0
@@ -172,14 +179,18 @@ class Turbo1:
         with gpytorch.settings.max_cholesky_size(self.max_cholesky_size):
             X_torch = torch.tensor(X).to(device=device, dtype=dtype)
             y_torch = torch.tensor(fX).to(device=device, dtype=dtype)
-            gp = train_gp(train_x=X_torch, train_y=y_torch, use_ard=self.use_ard, num_steps=n_training_steps, hypers=hypers)
-
-            # Save state dict
-            hypers = gp.state_dict()
+            if self._surrogate_type == "original":
+                gp = train_gp(train_x=X_torch, train_y=y_torch, use_ard=self.use_ard, num_steps=n_training_steps, hypers=hypers)
+                # Save state dict
+                hypers = gp.state_dict()
 
         # Create the trust region boundaries
         x_center = X[fX.argmin().item(), :][None, :]
-        weights = gp.covar_module.base_kernel.lengthscale.cpu().detach().numpy().ravel()
+        if self._surrogate_type == "original":
+            weights = gp.covar_module.base_kernel.lengthscale.cpu().detach().numpy().ravel()
+        else:
+            weights = np.ones(shape=x_center.shape)
+
         weights = weights / weights.mean()  # This will make the next line more stable
         weights = weights / np.prod(np.power(weights, 1.0 / len(weights)))  # We now have weights.prod() = 1
         lb = np.clip(x_center - weights * length / 2.0, 0.0, 1.0)
@@ -207,30 +218,44 @@ class Turbo1:
         else:
             device, dtype = self.device, self.dtype
 
-        # We may have to move the GP to a new device
-        gp = gp.to(dtype=dtype, device=device)
+        if self._surrogate_type == "original":
+            # We may have to move the GP to a new device
+            gp = gp.to(dtype=dtype, device=device)
 
-        # We use Lanczos for sampling if we have enough data
-        with torch.no_grad(), gpytorch.settings.max_cholesky_size(self.max_cholesky_size):
-            X_cand_torch = torch.tensor(X_cand).to(device=device, dtype=dtype)
-            y_cand = gp.likelihood(gp(X_cand_torch)).sample(torch.Size([self.batch_size])).t().cpu().detach().numpy()
+            # We use Lanczos for sampling if we have enough data
+            with torch.no_grad(), gpytorch.settings.max_cholesky_size(self.max_cholesky_size):
+                X_cand_torch = torch.tensor(X_cand).to(device=device, dtype=dtype)
+                y_cand = gp.likelihood(gp(X_cand_torch)).sample(torch.Size([self.batch_size])).t().cpu().detach().numpy()
 
-        # Remove the torch variables
-        del X_torch, y_torch, X_cand_torch, gp
+            # De-standardize the sampled values
+            y_cand = mu + sigma * y_cand
+            # Remove the torch variables
+            del X_cand_torch, gp
+        elif self._surrogate_type == "none":
+            y_cand = np.random.normal(size=(X_cand.shape[0], self.batch_size))
 
-        # De-standardize the sampled values
-        y_cand = mu + sigma * y_cand
+        elif self._surrogate_type.startswith("enn-"):
+            from model.enn import EpsitemicNearestNeighbors
+
+            k = int(self._surrogate_type.split("-")[1])
+            enn = EpsitemicNearestNeighbors(X, fX[:, None], k=k)
+            y_cand = enn.posterior(X_cand)
+
+        del X_torch, y_torch
 
         return X_cand, y_cand, hypers
 
     def _select_candidates(self, X_cand, y_cand):
         """Select candidates."""
-        X_next = np.ones((self.batch_size, self.dim))
-        for i in range(self.batch_size):
-            # Pick the best point and make sure we never pick it again
-            indbest = np.argmin(y_cand[:, i])
-            X_next[i, :] = deepcopy(X_cand[indbest, :])
-            y_cand[indbest, :] = np.inf
+        if self._surrogate_type.startswith("enn-"):
+            X_next = arms_from_pareto_fronts(X_cand, y_cand, self.batch_size)
+        else:
+            X_next = np.ones((self.batch_size, self.dim))
+            for i in range(self.batch_size):
+                # Pick the best point and make sure we never pick it again
+                indbest = np.argmin(y_cand[:, i])
+                X_next[i, :] = deepcopy(X_cand[indbest, :])
+                y_cand[indbest, :] = np.inf
         return X_next
 
     def _evaluate(self, X):
@@ -286,6 +311,7 @@ class Turbo1:
                 # Create th next batch
                 X_cand, y_cand, _ = self._create_candidates(X, fX, length=self.length, n_training_steps=self.n_training_steps, hypers={})
                 X_next = self._select_candidates(X_cand, y_cand)
+                del y_cand
 
                 # Undo the warping
                 X_next = from_unit_cube(X_next, self.lb, self.ub)
@@ -310,3 +336,31 @@ class Turbo1:
                 # Append data to the global history
                 self.X = np.vstack((self.X, deepcopy(X_next)))
                 self.fX = np.vstack((self.fX, deepcopy(fX_next)))
+
+
+def arms_from_pareto_fronts(x_cand, mvn, num_arms):
+    i = np.argsort(mvn.mu, axis=0).flatten()
+    x_cand = x_cand[i]
+    se = mvn.se[i]
+
+    i_all = list(range(len(se)))
+    i_keep = []
+
+    while len(i_keep) < num_arms:
+        se_max = -1e99
+        i_front = []
+        for i in i_all:
+            if se[i] >= se_max:
+                i_front.append(i)
+                se_max = se[i]
+        if len(i_keep) + len(i_front) <= num_arms:
+            i_keep.extend(i_front)
+        else:
+            i_keep.extend(np.random.choice(i_front, size=num_arms - len(i_keep), replace=False))
+        i_all = sorted(set(i_all) - set(i_front))
+
+    i_keep = np.array(i_keep)
+    x_arms = x_cand[i_keep]
+
+    assert len(x_arms) == num_arms, (len(x_arms), num_arms)
+    return x_arms

@@ -192,6 +192,11 @@ class Designers:
             return bt_designer(qLowerBoundMaxValueEntropy, opt_sequential=True, acq_kwargs={"candidate_set": None})
         elif designer_name == "turbo-1":
             return TuRBODesigner(self._policy, num_init=init_yubo_default)
+        elif designer_name == "turbo-f":
+            return TuRBODesigner(self._policy, num_init=init_yubo_default, surrogate_type="none")
+        elif designer_name.startswith("turbo-enn-"):
+            k = int(designer_name.split("-")[-1])
+            return TuRBODesigner(self._policy, num_init=init_yubo_default, surrogate_type=f"enn-{k}")
         elif designer_name == "turbo-5":
             return TuRBODesigner(self._policy, num_init=init_yubo_default, num_trust_regions=5)
         elif designer_name == "dpp":
@@ -554,16 +559,16 @@ class Designers:
         #         keep_style=keep_style,
         #         num_keep=num_keep,
         #     )
-        elif designer_name.startswith("enn-mx-"):
+        elif designer_name.startswith("enn-mu-"):
             k = int(designer_name.split("-")[-1])
             return ENNDesigner(
                 self._policy,
                 ENNConfig(
                     k=k,
                     num_boundary=0,
-                    num_interior=15,
-                    acq="pareto_strict",
-                    region_type="mixed",
+                    num_interior=10,
+                    acq="max_mu",
+                    region_type="far",
                     linear_variance=False,
                     # keep_bdy=True,
                     # weight_by_length=True,
