@@ -44,9 +44,9 @@ def plot_compare(ax, data_locator, i_agg=-1, renames=None, b_sort=True, highligh
         ax.set_ylim([-0.1, 1.03])
 
     if y_or_time == "y":
-        ax.set_ylabel("score(y_max)")
+        ax.set_ylabel("score($y_{max}$)")
     else:
-        ax.set_ylabel("score(proposal time)")
+        ax.set_ylabel("score($t_{proposal}$)")
 
 
 def pc_normal(results_path, exp_dir, ax, num_dim, num_arms, i_agg, opt_names, renames, num_reps=None, problems: set = None, highlight=None, y_or_time="y"):

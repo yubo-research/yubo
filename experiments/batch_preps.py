@@ -291,7 +291,9 @@ def prep_seq(results_dir):
         # "enn-uu-3",
         # "enn-mu-3",
         # "enn-uf-3",
-        "enn-mx-3",
+        "turbo-enn-1",
+        "turbo-enn-10",
+        "turbo-f",
     ]  # ["ucb", "lei"]  # ["enn-fc-3", "enn-cc-3", "enn-cbi-3"]  # ["path:Osab", "enn-i-3", "enn-bi-3", "enn-b-3", "mts", "turbo-1", "random"]
 
     noises = [None]
@@ -329,7 +331,9 @@ def prep_tlunar(results_dir):
     exp_dir = "exp_enn_tlunar"
 
     opts = [
-        "turbo-f",
+        # "turbo-enn-3",
+        # "turbo-f",
+        "turbo-enn-10",
     ]  # ["enn-cc-3"]  # ["cma", "optuna"]  # "mts", "turbo-1", "path", "path-m", "ts", "mts-ns", "enn-bi-3", "path:Osab",
 
     cmds = []
@@ -363,7 +367,9 @@ def prep_swim(results_dir):
     exp_dir = "exp_enn_swim"
 
     opts = [
-        "turbo-f",
+        # "turbo-enn-3",
+        # "turbo-f",
+        "turbo-enn-10",
     ]  # ["turbo-1", "path:Osab", "optuna", "cma", "enn-cc-3", "enn-cbi-3", "random"]
 
     cmds = []
@@ -395,7 +401,9 @@ def prep_hop(results_dir):
     exp_dir = "exp_enn_hop"
 
     opts = [
-        "turbo-f",
+        # "turbo-enn-3",
+        # "turbo-f",
+        "turbo-enn-10",
     ]  # ["enn-fark-3", "turbo-1", "path:Osab", "optuna", "cma", "random"]
 
     cmds = []

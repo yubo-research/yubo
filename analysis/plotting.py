@@ -150,7 +150,9 @@ def plot_sorted(ax, optimizers, mu, se, renames=None, b_sort=True, highlight=Non
     else:
         i_sort = np.arange(len(mu))
     n = np.arange(len(mu))
-    ax.errorbar(n, mu[i_sort], 2 * se[i_sort], fmt="k,", capsize=6)
+    num_opt = len(optimizers)
+    ax.errorbar(n, mu[i_sort], 2 * se[i_sort], fmt="k,", capsize=6 * max(1, 20 / num_opt))
+
     names = list(optimizers)
     if renames is not None:
         for old, new in renames.items():
