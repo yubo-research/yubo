@@ -7,7 +7,7 @@ import analysis.data_sets as ads
 
 linestyles = ["-", ":", "--", "-."] * 10
 markers = ["o", "x", "v", ".", "s"] * 10
-colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#666666"] * 10
+colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#666666", "#FF0055"] * 10
 
 
 def mk_trans(fig, x=10 / 72, y=5 / 72):  #

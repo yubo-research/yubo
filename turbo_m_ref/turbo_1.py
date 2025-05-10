@@ -237,7 +237,7 @@ class Turbo1:
         elif self._surrogate_type.startswith("enn-"):
             from model.enn import EpsitemicNearestNeighbors
 
-            k = int(self._surrogate_type.split("-")[1])
+            k = int(self._surrogate_type.split("-")[-1])
             enn = EpsitemicNearestNeighbors(X, fX[:, None], k=k)
             y_cand = enn.posterior(X_cand)
 
@@ -247,7 +247,18 @@ class Turbo1:
 
     def _select_candidates(self, X_cand, y_cand):
         """Select candidates."""
-        if self._surrogate_type.startswith("enn-"):
+        if self._surrogate_type.startswith("enn-mu-"):
+            assert self.batch_size == 1, self.batch_size
+            i = np.argmax(y_cand.mu)
+            X_next = X_cand[[i], :]
+        elif self._surrogate_type.startswith("enn-se-"):
+            assert self.batch_size == 1, self.batch_size
+            i = np.argmax(y_cand.se)
+            X_next = X_cand[[i], :]
+        elif self._surrogate_type.startswith("enn-fse-"):
+            y_cand.se = np.random.uniform(size=y_cand.se.shape)
+            X_next = arms_from_pareto_fronts(X_cand, y_cand, self.batch_size)
+        elif self._surrogate_type.startswith("enn-"):
             X_next = arms_from_pareto_fronts(X_cand, y_cand, self.batch_size)
         else:
             X_next = np.ones((self.batch_size, self.dim))

@@ -195,8 +195,8 @@ class Designers:
         elif designer_name == "turbo-f":
             return TuRBODesigner(self._policy, num_init=init_yubo_default, surrogate_type="none")
         elif designer_name.startswith("turbo-enn-"):
-            k = int(designer_name.split("-")[-1])
-            return TuRBODesigner(self._policy, num_init=init_yubo_default, surrogate_type=f"enn-{k}")
+            # k = int(designer_name.split("-")[-1])
+            return TuRBODesigner(self._policy, num_init=init_yubo_default, surrogate_type=designer_name[6:])
         elif designer_name == "turbo-5":
             return TuRBODesigner(self._policy, num_init=init_yubo_default, num_trust_regions=5)
         elif designer_name == "dpp":
