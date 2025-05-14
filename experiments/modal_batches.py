@@ -11,7 +11,7 @@ from experiments.modal_image import mk_image
 modal_image = mk_image()
 
 _APP_NAME = "yubo_batches"
-_TIMEOUT_HOURS = 5
+_TIMEOUT_HOURS = 24  # was: 5
 
 _app_name = "yubo"
 app = modal.App(name=_app_name)

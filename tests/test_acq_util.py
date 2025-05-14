@@ -1,3 +1,17 @@
+def test_torch_random_choice():
+    import torch
+
+    from acq.acq_util import torch_random_choice
+
+    X = torch.rand(size=(10, 3))
+
+    X_a = torch_random_choice(X, 4, replace=True)
+    assert X_a.shape == (4, 3)
+
+    X_a = torch_random_choice(X, 4, replace=False)
+    assert X_a.shape == (4, 3)
+
+
 def test_keep_some():
     import torch
 
@@ -36,8 +50,8 @@ def test_find_max():
 
     print()
     print(data)
-    print(f"TIME: {data[:,0].mean():.3f}")
-    print(f"{data[:,1].mean():.3f} {data[:,1].std():.3f}")
+    print(f"TIME: {data[:, 0].mean():.3f}")
+    print(f"{data[:, 1].mean():.3f} {data[:, 1].std():.3f}")
 
 
 def test_rebound():

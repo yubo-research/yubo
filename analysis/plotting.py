@@ -101,7 +101,21 @@ def tight_landscape(axs):
 
 
 def filled_err(
-    ys, x=None, color="#AAAAAA", alpha=0.5, marker=None, linestyle="--", color_line="#AAAAAA", se=False, two=False, ax=None, label=None, alpha_top=1
+    ys,
+    x=None,
+    color="#AAAAAA",
+    alpha=0.5,
+    marker=None,
+    linestyle="--",
+    color_line="#AAAAAA",
+    se=False,
+    two=False,
+    ax=None,
+    label=None,
+    alpha_top=1,
+    markersize=10,
+    fillstyle="none",
+    max_markers=None,
 ):
     if ax is None:
         ax = plt
@@ -114,7 +128,12 @@ def filled_err(
     if two:
         sg *= 2
     ax.fill_between(x, mu - sg, mu + sg, color=color, alpha=alpha, linewidth=1, label="_")
-    ax.plot(x, mu, color=color_line, marker=marker, linestyle=linestyle, label=label, alpha=alpha_top)
+
+    if max_markers is not None:
+        n_skip = len(x) // max_markers
+        x = x[::n_skip]
+        mu = mu[::n_skip]
+    ax.plot(x, mu, color=color_line, marker=marker, linestyle=linestyle, label=label, alpha=alpha_top, markersize=markersize, fillstyle=fillstyle)
 
 
 def error_area(x, y, yerr, color="#AAAAAA", alpha=0.5, fmt="--", marker="", ax=plt):
@@ -162,10 +181,11 @@ def plot_sorted(ax, optimizers, mu, se, renames=None, b_sort=True, highlight=Non
 
     names = [names[i] for i in i_sort]
 
-    for i_n, nn in enumerate(names):
-        if nn == highlight:
-            ax.errorbar(i_n, mu[i_sort][i_n], 2 * se[i_sort][i_n], fmt="k,", capsize=6, elinewidth=3, capthick=3)
-            break
+    if highlight is not None:
+        for i_n, nn in enumerate(names):
+            if nn == highlight:
+                ax.errorbar(i_n, mu[i_sort][i_n], 2 * se[i_sort][i_n], fmt="k,", capsize=6, elinewidth=3, capthick=3)
+                break
 
     ax.set_xticks(n, names, rotation=60, ha="right", va="top")
     ax.set_ylim([-0.1, 1])

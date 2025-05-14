@@ -232,7 +232,7 @@ class Turbo1:
             # Remove the torch variables
             del X_cand_torch, gp
         elif self._surrogate_type == "none":
-            y_cand = np.random.normal(size=(X_cand.shape[0], self.batch_size))
+            y_cand = None  # np.random.normal(size=(X_cand.shape[0], self.batch_size))
 
         elif self._surrogate_type.startswith("enn-"):
             from model.enn import EpsitemicNearestNeighbors
@@ -260,6 +260,10 @@ class Turbo1:
             X_next = arms_from_pareto_fronts(X_cand, y_cand, self.batch_size)
         elif self._surrogate_type.startswith("enn-"):
             X_next = arms_from_pareto_fronts(X_cand, y_cand, self.batch_size)
+        elif self._surrogate_type == "none":
+            from acq.acq_util import torch_random_choice
+
+            X_next = torch_random_choice(X_cand, self.batch_size, replace=False)
         else:
             X_next = np.ones((self.batch_size, self.dim))
             for i in range(self.batch_size):

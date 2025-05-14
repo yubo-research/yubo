@@ -276,15 +276,19 @@ def prep_seq(results_dir):
     exp_dir = "exp_enn"
 
     opts = [
-        "random",
-        "lei",
-        "ucb",
-        "turbo-1",
+        # "random",
+        # "lei",
+        # "ucb",
+        # "turbo-1",
         "optuna",
-        "turbo-enn-1",
-        "turbo-enn-3",
-        "turbo-f",
-        "turbo-enn-10",
+        # "turbo-enn-1",
+        # "turbo-enn-3",
+        # "turbo-f",
+        # "turbo-enn-30",
+        # "turbo-enn-100",
+        # "turbo-enn-mu-10",
+        # "turbo-enn-se-10",
+        # "turbo-enn-fse-10",
     ]
 
     noises = [None]
@@ -293,7 +297,7 @@ def prep_seq(results_dir):
     cmds = []
 
     # dims = [1, 3, 10, 30, 100]
-    dims = [1, 3, 10, 30, 100, 300]  # , 1000]
+    dims = [1000]  # 1, 3, 10, 30, 100, 300, 1000]
     for num_dim in dims:
         if num_dim == 1000 and opts == "path:Osab":
             continue
@@ -370,7 +374,7 @@ def prep_hop(results_dir):
 def prep_rl_one(results_dir, name):
     exp_dir = f"exp_enn_{name}"
 
-    opts = ["turbo-enn-1", "turbo-enn-3", "turbo-f", "turbo-enn-10", "random", "cma"]  # , "turbo-1", "cma", "optuna"]
+    opts = ["turbo-f", "turbo-enn-10", "random"]
 
     cmds = []
     for opt in opts:
@@ -381,8 +385,8 @@ def prep_rl_one(results_dir, name):
                 problem=f"{name}:fn",
                 opt=opt,
                 num_arms=100,
-                num_replications=100,
-                num_rounds=100,
+                num_replications=30,
+                num_rounds=1000,
                 noise=None,
                 num_denoise=1,
             )

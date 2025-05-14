@@ -49,7 +49,9 @@ def plot_compare(ax, data_locator, i_agg=-1, renames=None, b_sort=True, highligh
         ax.set_ylabel("score($t_{proposal}$)")
 
 
-def pc_normal(results_path, exp_dir, ax, num_dim, num_arms, i_agg, opt_names, renames, num_reps=None, problems: set = None, highlight=None, y_or_time="y"):
+def pc_normal(
+    results_path, exp_dir, ax, num_dim, num_arms, i_agg, opt_names, renames, num_reps=None, problems: set = None, highlight=None, y_or_time="y", b_sort=True
+):
     plot_compare(
         ax,
         DataLocator(
@@ -67,4 +69,5 @@ def pc_normal(results_path, exp_dir, ax, num_dim, num_arms, i_agg, opt_names, re
         i_agg=i_agg,
         highlight=highlight,
         y_or_time=y_or_time,
+        b_sort=b_sort,
     )
