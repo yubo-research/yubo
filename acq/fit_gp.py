@@ -175,6 +175,7 @@ def fit_gp_XY(X, Y, model_spec=None):
         return DUMBOGP(X, Y, use_rank_distance=True)
     elif model_type.startswith("rff"):
         num_samples = int(model_type[3:])
+        print(f"Using RFF({num_samples})")
         gp = SingleTaskGP(
             X,
             Y,

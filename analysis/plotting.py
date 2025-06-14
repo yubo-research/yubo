@@ -7,7 +7,7 @@ import analysis.data_sets as ads
 
 linestyles = ["-", ":", "--", "-."] * 10
 markers = ["o", "x", "v", ".", "s"] * 10
-colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#666666"] * 10
+colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#666666", "#FF0055"] * 10
 
 
 def mk_trans(fig, x=10 / 72, y=5 / 72):  #
@@ -101,7 +101,21 @@ def tight_landscape(axs):
 
 
 def filled_err(
-    ys, x=None, color="#AAAAAA", alpha=0.5, marker=None, linestyle="--", color_line="#AAAAAA", se=False, two=False, ax=None, label=None, alpha_top=1
+    ys,
+    x=None,
+    color="#AAAAAA",
+    alpha=0.5,
+    marker=None,
+    linestyle="--",
+    color_line="#AAAAAA",
+    se=False,
+    two=False,
+    ax=None,
+    label=None,
+    alpha_top=1,
+    markersize=10,
+    fillstyle="none",
+    max_markers=None,
 ):
     if ax is None:
         ax = plt
@@ -114,7 +128,12 @@ def filled_err(
     if two:
         sg *= 2
     ax.fill_between(x, mu - sg, mu + sg, color=color, alpha=alpha, linewidth=1, label="_")
-    ax.plot(x, mu, color=color_line, marker=marker, linestyle=linestyle, label=label, alpha=alpha_top)
+
+    if max_markers is not None:
+        n_skip = len(x) // max_markers
+        x = x[::n_skip]
+        mu = mu[::n_skip]
+    ax.plot(x, mu, color=color_line, marker=marker, linestyle=linestyle, label=label, alpha=alpha_top, markersize=markersize, fillstyle=fillstyle)
 
 
 def error_area(x, y, yerr, color="#AAAAAA", alpha=0.5, fmt="--", marker="", ax=plt):
@@ -144,24 +163,35 @@ def zc(x):
     return (x - x.mean()) / x.std()
 
 
-def plot_sorted(ax, optimizers, mu, se, renames=None, b_sort=True):
+def plot_sorted(ax, optimizers, mu, se, renames=None, b_sort=True, highlight=None):
     if b_sort:
         i_sort = np.argsort(-mu)
     else:
         i_sort = np.arange(len(mu))
     n = np.arange(len(mu))
-    ax.errorbar(n, mu[i_sort], 2 * se[i_sort], fmt="k,", capsize=6)
+    num_opt = len(optimizers)
+    ax.errorbar(n, mu[i_sort], 2 * se[i_sort], fmt="k,", capsize=6 * max(1, 20 / num_opt))
+
     names = list(optimizers)
     if renames is not None:
         for old, new in renames.items():
             if old in names:
                 i = names.index(old)
                 names[i] = new
-    ax.set_xticks(n, [names[i] for i in i_sort], rotation=60, ha="right", va="top")
-    ax.set_ylim([0, 1])
+
+    names = [names[i] for i in i_sort]
+
+    if highlight is not None:
+        for i_n, nn in enumerate(names):
+            if nn == highlight:
+                ax.errorbar(i_n, mu[i_sort][i_n], 2 * se[i_sort][i_n], fmt="k,", capsize=6, elinewidth=3, capthick=3)
+                break
+
+    ax.set_xticks(n, names, rotation=60, ha="right", va="top")
+    ax.set_ylim([-0.1, 1])
 
 
-def plot_sorted_agg(ax, data_locator, renames=None, i_agg=-1, b_sort=True):
+def plot_sorted_agg(ax, data_locator, renames=None, i_agg=-1, b_sort=True, highlight=None):
     traces = ads.load_multiple_traces(data_locator)
 
     if i_agg == "mean":
@@ -171,7 +201,7 @@ def plot_sorted_agg(ax, data_locator, renames=None, i_agg=-1, b_sort=True):
             traces = traces[..., : i_agg + 1]
         mu, se = ads.range_summarize(traces)
 
-    plot_sorted(ax, data_locator.optimizers(), mu, se, renames=renames, b_sort=b_sort)
+    plot_sorted(ax, data_locator.optimizers(), mu, se, renames=renames, b_sort=b_sort, highlight=highlight)
 
 
 def plot_compare_problem(ax, data_locator, exp_name, problem_name, optimizers, b_normalize, title, renames=None, old_way=True, b_legend=True):

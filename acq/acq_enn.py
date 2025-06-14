@@ -1,10 +1,19 @@
 from dataclasses import dataclass
 
 import numpy as np
-import torch
+from scipy.spatial.distance import cdist
 
 from model.enn import EpsitemicNearestNeighbors
-from sampling.knn_tools import confidence_region_fast, far_as_you_can_go, farthest_neighbor, farthest_neighbor_fast, random_directions
+from sampling.knn_tools import (
+    clip_to_boundary,
+    confidence_region_fast,
+    far_clip,
+    farthest_neighbor,
+    farthest_neighbor_fast,
+    raasp,
+    random_corner,
+    random_directions,
+)
 from sampling.sampling_util import greedy_maximin
 
 """
@@ -35,16 +44,18 @@ class ENNConfig:
     num_boundary: int = 100
     num_interior: int = 0
     num_quick: int = 0
+    # This bad. Why?
     keep_bdy: bool = False
     maximin: bool = False
     stagger: bool = False
     weight_by_length: bool = False
     acq: str = "pareto"
+    linear_variance: bool = False
+    k_far_clip: float = 2
 
-    se_scale: float = 1
     num_over_sample_per_arm: int = 1
 
-    region_type: str = "fn"
+    region_type: str = "far"
     se_max: float = 0.1
 
     p_boundary_is_neighbor: float = 0.0
@@ -57,30 +68,40 @@ class ENNConfig:
 
 class AcqENN:
     # TODO: Yvar
-    def __init__(self, X_train: torch.Tensor, Y_train: torch.Tensor, config: ENNConfig):
+    # def __init__(self, X_train: torch.Tensor, Y_train: torch.Tensor, config: ENNConfig):
+    def __init__(self, num_dim, config: ENNConfig):
         assert config.k > 0, config
-        self._X_train = np.asarray(X_train)
-        self._Y_train = np.asarray(Y_train)
+        self._num_dim = num_dim
+
+        self._x_train = np.empty(shape=(0, num_dim))
+        self._y_train = np.empty(shape=(0, 1))
 
         self._config = config
-        self._num_dim = self._X_train.shape[-1]
+        self._enn = None
 
-        if len(self._X_train) > 0:
-            self._enn = EpsitemicNearestNeighbors(self._X_train, self._Y_train, k=self._config.k)
-            self._enn.calibrate(self._config.se_scale**2)
+    def add(self, x, y):
+        if len(x) == 0:
+            return
+        x = np.asarray(x)
+        y = np.asarray(y)
+        if self._enn is None:
+            self._enn = EpsitemicNearestNeighbors(x, y, k=self._config.k, linear_variance=self._config.linear_variance)
         else:
-            self._enn = None
+            self._enn.add(x, y)
+        self._x_train = np.append(self._x_train, x, axis=0)
+        self._y_train = np.append(self._y_train, y, axis=0)
 
     def _var_calib(self):
-        if len(self._X_train) < 2:
+        if len(self._x_train) < 2:
             return 1
-        _, dists = self._enn.about_neighbors(self._X_train, k=self._config.k)
+        _, dists = self._enn.about_neighbors(self._x_train, k=self._config.k)
         dist_i = dists.mean(axis=1, keepdims=True)
         return 1 / dist_i.mean()
 
-    def _ts_pick_cells(self, num_arms):
-        assert len(self._X_train) > 0
-        y = self._Y_train
+    def _ts_pick_cells(self, num_samples):
+        assert len(self._x_train) > 0
+        y = self._y_train
+
         n = len(y)
         se = y.std() / np.sqrt(n)
 
@@ -95,19 +116,19 @@ class AcqENN:
 
             if self._config.ts_enn:
                 if n > 1:
-                    _, dists = self._enn.about_neighbors(self._X_train, k=self._config.k)
+                    _, dists = self._enn.about_neighbors(self._x_train, k=self._config.k)
                     dist_i = dists.mean(axis=1, keepdims=True)
                     dist_norm = dist_i.mean()
                     w = dist_i / dist_norm
                     w = w / w.sum(axis=0, keepdims=True)
                     se = se * np.sqrt(w)
 
-        y = y + se * np.random.normal(size=(n, num_arms))
+        y = y + se * np.random.normal(size=(n, num_samples))
         i = np.where(y == y.max(axis=0, keepdims=True))[0]
 
-        return self._X_train[i, :]
+        return self._x_train[i, :]
 
-    def _sample_boundary(self, x_0):
+    def _sample_targets(self, x_0):
         u = random_directions(len(x_0), self._num_dim)
         if self._config.region_type == "fn_fast":
             return farthest_neighbor_fast(self._enn, x_0, u, p_boundary_is_neighbor=self._config.p_boundary_is_neighbor)
@@ -116,13 +137,43 @@ class AcqENN:
         elif self._config.region_type == "cr":
             return confidence_region_fast(self._enn, x_0, u, se_max=self._config.se_max, num_steps=100)
         elif self._config.region_type == "far":
-            return far_as_you_can_go(x_0, u)
+            return far_clip(x_0, u, k=self._config.k_far_clip)
+        elif self._config.region_type == "bdy":
+            return clip_to_boundary(x_0, u)
+        elif self._config.region_type == "corner":
+            return random_corner(*x_0.shape)
+        elif self._config.region_type == "raasp":
+            return raasp(x_0, max(20, int(np.sqrt(self._num_dim) + 0.5)))
+        elif self._config.region_type == "uniform":
+            return np.random.uniform(size=x_0.shape)
+        elif self._config.region_type == "mixed":
+            n = x_0.shape[0] // 2
+            n_f = x_0.shape[0] - n
+            return np.concatenate(
+                (
+                    far_clip(x_0[:n], u[:n], k=self._config.k_far_clip),
+                    np.random.uniform(size=(n_f, x_0.shape[1])),
+                    # random_corner(n_f, x_0.shape[1]),
+                ),
+                axis=0,
+            )
         else:
             assert False, self._config.region_type
 
-    def _sample_in_cell(self, x_0, x_far):
+    # def _xform_dm2(self, u):
+    #     a = 1e-9
+    #     b = 1
+    #     d = self._num_dim
+    #     if d == 1:
+    #         return a * (b / a) ** u
+    #     else:
+    #         return (a ** (d - 1) + u * (b ** (d - 1) - a ** (d - 1))) ** (1 / (d - 1))
+
+    def _sample_segments(self, x_0, x_far):
         # We want to uniformly sample over the Voronoi cell, but this is
         #  easier. Maybe we'll come up with something better.
+
+        assert x_0.shape == x_far.shape, (x_0.shape, x_far.shape)
 
         alpha = np.random.uniform(size=(len(x_0), 1))
 
@@ -137,6 +188,7 @@ class AcqENN:
             l_s_min = np.log(1e-4)
             l_s_max = np.log(1)
             alpha = np.exp(l_s_min + (l_s_max - l_s_min) * alpha)
+
         x_cand = alpha * x_0 + (1 - alpha) * x_far
 
         if self._config.keep_bdy:
@@ -155,6 +207,7 @@ class AcqENN:
         return x_cand[i_arms]
 
     def _pareto_front(self, x_cand, num_arms):
+        # Random selection from union of multiple fronts
         mvn = self._enn.posterior(x_cand)
 
         i = np.argsort(-mvn.mu, axis=0).flatten()
@@ -187,6 +240,7 @@ class AcqENN:
             return x_front
 
     def _pareto_fronts_strict(self, x_cand, num_arms):
+        # Full fronts, then random selection from *last* front.
         assert self._config.num_over_sample_per_arm == 1, self._config.num_over_sample_per_arm
         mvn = self._enn.posterior(x_cand)
 
@@ -239,6 +293,7 @@ class AcqENN:
     def _pareto_cheb(self, x_cand, num_arms):
         mvn = self._enn.posterior(x_cand)
         y = np.concatenate([mvn.mu, mvn.se], axis=1)
+
         norm = y.max(axis=0, keepdims=True) - y.min(axis=0, keepdims=True)
         y = y - y.min(axis=0, keepdims=True)
         i = np.where(norm == 0)[0]
@@ -304,6 +359,39 @@ class AcqENN:
         i_arms = i_arms[:num_arms].astype(np.int64)
         return x_cand[i_arms]
 
+    def _mtv(self, x_cand, num_arms):
+        assert x_cand.shape[0] >= 10 * num_arms, (x_cand.shape, num_arms)
+        assert num_arms == 1, "NYI: batches"
+        assert not self._config.linear_variance, "MTV requires variance := distance**2"
+
+        x_front = self._pareto_fronts_strict(x_cand, x_cand.shape[0] // 3)
+
+        mvn = self._enn.posterior(x_front)
+        vvar = mvn.se**2
+        dists2 = cdist(x_front, x_front, metric="sqeuclidean")
+        mtv = 1 / (1 / vvar + 1 / dists2).sum(axis=1)
+        i_arm = np.random.choice(np.where(mtv == mtv.min())[0])
+
+        return x_front[[i_arm]]
+
+    def _max_mu(self, x_cand, num_arms):
+        n = x_cand.shape[0] // num_arms
+        assert n * num_arms == x_cand.shape[0]
+
+        mvn = self._enn.posterior(x_cand)
+        mu = np.reshape(mvn.mu, newshape=(n, num_arms))
+        se = np.reshape(mvn.se, newshape=(n, num_arms))
+        phi = mu
+        i = np.random.uniform(size=(num_arms,)) < 0.1
+        phi[:, i] = se[:, i]
+        del mu, se
+
+        x_cand = np.reshape(x_cand, newshape=(n, num_arms, self._num_dim))
+
+        i = np.argmax(phi, axis=0)
+        arms = np.arange(x_cand.shape[1])
+        return x_cand[i, arms, :]
+
     def _uniform(self, x_cand, num_arms):
         if self._config.maximin:
             i = greedy_maximin(x_cand, num_arms)
@@ -312,6 +400,21 @@ class AcqENN:
         return x_cand[i]
 
     def _candidates(self, num_arms):
+        assert self._config.num_boundary == 0
+
+        x_0 = self._ts_pick_cells((self._config.num_interior) * num_arms)
+
+        x_far = self._sample_targets(x_0)
+        x_cand = self._sample_segments(x_0, x_far)
+
+        x_cand = np.unique(x_cand, axis=0)
+
+        assert x_cand.min() >= 0.0 and x_cand.max() <= 1.0, (x_cand.min(), x_cand.max())
+        assert len(np.unique(x_cand, axis=0)) == x_cand.shape[0], (len(np.unique(x_cand, axis=0)), x_cand.shape[0])
+
+        return x_cand
+
+    def _xxx_candidates(self, num_arms):
         if self._config.num_boundary > 0:
             num_boundary = int(self._config.num_boundary * 1.2)
         else:
@@ -326,12 +429,12 @@ class AcqENN:
         x_cand = np.empty(shape=(0, self._num_dim))
         i_cut = num_boundary * num_arms
 
-        x_bdy = self._sample_boundary(x_0)
+        x_bdy = self._sample_targets(x_0)
 
         if num_boundary > 0:
             x_cand = np.concatenate([x_cand, x_bdy[:i_cut]], axis=0)
         if num_interior > 0:
-            x_cand = np.concatenate([x_cand, self._sample_in_cell(x_0[i_cut:], x_bdy[i_cut:])], axis=0)
+            x_cand = np.concatenate([x_cand, self._sample_segments(x_0[i_cut:], x_bdy[i_cut:])], axis=0)
 
         x_cand = np.unique(x_cand, axis=0)
         num_desired = num_arms * (self._config.num_boundary + self._config.num_interior)
@@ -400,6 +503,10 @@ class AcqENN:
             return self._pareto_fronts_strict(x_cand, num_arms)
         elif self._config.acq == "ts":
             return self._thompson_sample(x_cand, num_arms)
+        elif self._config.acq == "mtv":
+            return self._mtv(x_cand, num_arms)
+        elif self._config.acq == "max_mu":
+            return self._max_mu(x_cand, num_arms)
         elif self._config.acq == "uniform":
             return self._uniform(x_cand, num_arms)
 
@@ -407,7 +514,7 @@ class AcqENN:
             assert False, self._config.acq
 
     def draw(self, num_arms):
-        if len(self._X_train) == 0:
+        if len(self._x_train) == 0:
             # x_a = 0.5 + np.zeros(shape=(1, self._num_dim))
             # x_a = np.append(x_a, np.random.uniform(size=(num_arms - 1, self._num_dim)), axis=0)
             x_a = np.random.uniform(size=(num_arms, self._num_dim))

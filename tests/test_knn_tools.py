@@ -1,3 +1,19 @@
+def test_raasp():
+    import numpy as np
+
+    from sampling.knn_tools import raasp
+
+    d = 100
+    k = 49
+    n = 125
+    x_0 = np.random.uniform(size=(n, d))
+
+    x = raasp(x_0, k)
+    for i_x in range(x.shape[0]):
+        i = np.where(x[i_x, :] == x_0[i_x, :])[0]
+        assert len(i) == d - k
+
+
 def test_random_directions():
     from sampling.knn_tools import random_directions
 

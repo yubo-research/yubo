@@ -9,7 +9,7 @@ git status $FILES */*.html */*/*.html */*.jinja */*/*.jinja | grep -e py$ -e htm
 
 echo
 echo Formatting:
-black --line-length=160 -q $FILES
+# black --line-length=160 -q $FILES
 
 echo
 echo Lint:

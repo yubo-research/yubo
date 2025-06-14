@@ -26,13 +26,14 @@ class ENNNormal:
 
 
 class EpsitemicNearestNeighbors:
-    # TODO: train_YVar
-    def __init__(self, train_x, train_y, k):
+    # TODO: train_YVar; treat as third metric in acquisition function b/c not calibrate to epistemic var
+    def __init__(self, train_x, train_y, k, linear_variance=False):
         assert len(train_x) == len(train_y), (len(train_x), len(train_y))
         assert train_x.ndim == train_y.ndim == 2, (train_x.ndim, train_y.ndim)
 
         self._train_x = train_x
         self._train_y = train_y
+        self._linear_variance = linear_variance
         self._num_obs, self._num_dim = self._train_x.shape
         self._num_metrics = self._train_y.shape[-1]
         self.k = k
@@ -47,8 +48,8 @@ class EpsitemicNearestNeighbors:
 
     def add(self, x, y):
         self._index.add(x)
-        self._train_x = np.append(self._train_x, x)
-        self._train_y = np.append(self._train_y, y)
+        self._train_x = np.append(self._train_x, x, axis=0)
+        self._train_y = np.append(self._train_y, y, axis=0)
         if self._lookup is not None:
             assert False, "NYI: Add to lookup"
 
@@ -98,7 +99,7 @@ class EpsitemicNearestNeighbors:
         if len(self._train_x) == 0:
             return np.empty(shape=(0,), dtype=np.int64), np.empty(shape=(0,), dtype=np.float64)
 
-        dists, idx = self._index.search(x, k=k)
+        dists, idx = self._search(x, k=k)
         return idx, dists
 
     def neighbors(self, x, k=None):
@@ -127,16 +128,24 @@ class EpsitemicNearestNeighbors:
             return ENNNormal(
                 mu.squeeze(0),
                 np.sqrt(vvar.squeeze(0)),
+                np.sqrt(vvar.squeeze(0)),
             )
 
         if exclude_nearest:
-            dists, idx = self._index.search(x, k=k + 1)
+            dists, idx = self._search(x, k=k + 1)
             dists = dists[:, 1:]
             idx = idx[:, 1:]
         else:
-            dists, idx = self._index.search(x, k=k)
+            dists, idx = self._search(x, k=k)
 
         return self._calc_enn_normal(b, dists, idx, k)
+
+    def _search(self, x, k):
+        dists2, idx = self._index.search(x, k=k)
+        if self._linear_variance:
+            return np.sqrt(dists2), idx
+        else:
+            return dists2, idx
 
     def _calc_enn_normal(self, batch_size, dists, idx, k):
         q = 1
@@ -154,7 +163,6 @@ class EpsitemicNearestNeighbors:
         vvar = 1.0 / norm
 
         assert mu.shape == (batch_size, q), (mu.shape, batch_size, q)
-        # TODO: include self variance (Yvar) in 1 / sum(1/var)
         vvar = self._var_scale * vvar
         assert vvar.shape == (batch_size, q), (vvar.shape, batch_size, q)
         vvar = np.maximum(self._eps_var, vvar)

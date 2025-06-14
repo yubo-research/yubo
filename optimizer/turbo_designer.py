@@ -17,12 +17,13 @@ class TuRBODesigner:
         Learning Research, pages 730–738. PMLR, 13–15 Apr 2021. URL https://proceedings.mlr.press/v130/eriksson21a.html.
     """
 
-    def __init__(self, policy, num_trust_regions=1, num_init=None):
+    def __init__(self, policy, num_trust_regions=1, num_init=None, *, surrogate_type="original"):
         self._policy = policy
         self._num_trust_regions = num_trust_regions
         self._num_init = num_init
         self._turbo = None
         self._num_arms = None
+        self._surrogate_type = surrogate_type
         self._default_device = torch.empty(size=(1,)).device
 
     def _run_opt(self):
@@ -46,8 +47,10 @@ class TuRBODesigner:
                 max_evals=999999,
                 verbose=False,
                 device=self._default_device,
+                surrogate_type=self._surrogate_type,
             )
         else:
+            assert self._surrogate_type == "original", "NYI: surrogate_type for TurboM"
             opt = TurboM(
                 f=self._ati,
                 lb=lb,

@@ -7,7 +7,21 @@ from common.util import parse_kv
 
 
 class DataLocator:
-    def __init__(self, results_path, exp_dir, num_arms=None, num_rounds=None, num_reps=None, num_dim=None, opt_names=None, problems: set = None):
+    def __init__(
+        self,
+        results_path,
+        exp_dir,
+        num_arms=None,
+        num_rounds=None,
+        num_reps=None,
+        num_dim=None,
+        opt_names=None,
+        problems: set = None,
+        key="return",
+        grep_for="TRACE",
+    ):
+        assert len(opt_names) == len(set(opt_names)), opt_names
+
         self.results = results_path
         self.exp_dir = exp_dir
         self.num_arms = num_arms
@@ -16,6 +30,8 @@ class DataLocator:
         self.num_dim = num_dim
         self._opt_names = opt_names
         self._problems = problems
+        self.key = key
+        self.grep_for = grep_for
 
     def __str__(self):
         return (
@@ -43,7 +59,7 @@ class DataLocator:
         if opt_name is not None:
             opt_names = set([opt_name])
         elif self._opt_names is not None:
-            opt_names = set(self._opt_names)
+            opt_names = list(self._opt_names)
         else:
             opt_names = None
         root_path = self._root_path()
@@ -77,7 +93,9 @@ class DataLocator:
         return data_sets
 
     def optimizers(self):
-        return sorted({d[0]["opt_name"] for d in self._load()})
+        # return sorted({d[0]["opt_name"] for d in self._load()})
+        opt_names = {d[0]["opt_name"] for d in self._load()}
+        return [n for n in self._opt_names if n in opt_names]
 
     def optimizers_in(self, problem):
         return sorted({d[0]["opt_name"] for d in self._load(problem=problem)})

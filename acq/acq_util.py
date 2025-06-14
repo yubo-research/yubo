@@ -8,9 +8,24 @@ def default_bounds(num_dim):
     return torch.tensor([[0.0] * num_dim, [1.0] * num_dim])
 
 
-def torch_random_choice(x):
-    i = torch.randint(len(x), (1,))
+def torch_random_choice(x, k=1, replace=True):
+    if replace:
+        i = torch.randint(len(x), (k,))
+    else:
+        i = np.random.choice(np.arange(len(x)), k)
     return x[i]
+
+
+def keep_data(data, keep_style, num_keep):
+    if keep_style is None:
+        return data
+
+    if keep_style == "trailing":
+        return data[-num_keep:]
+    elif keep_style == "best":
+        return sorted(data, key=lambda x: x.trajectory.rreturn, reverse=True)[:num_keep]
+    else:
+        assert False, keep_style
 
 
 def keep_trailing(Y, num_keep):
