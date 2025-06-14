@@ -249,13 +249,13 @@ class Turbo1:
         """Select candidates."""
         if self._surrogate_type.startswith("enn-mu-"):
             assert self.batch_size == 1, self.batch_size
-            i = np.argmax(y_cand.mu)
+            i = np.argmin(y_cand.mu)
             X_next = X_cand[[i], :]
         elif self._surrogate_type.startswith("enn-se-"):
             assert self.batch_size == 1, self.batch_size
             i = np.argmax(y_cand.se)
             X_next = X_cand[[i], :]
-        elif self._surrogate_type.startswith("enn-fse-"):
+        elif self._surrogate_type.startswith("enn-rand-"):
             y_cand.se = np.random.uniform(size=y_cand.se.shape)
             X_next = arms_from_pareto_fronts(X_cand, y_cand, self.batch_size)
         elif self._surrogate_type.startswith("enn-"):
@@ -354,6 +354,7 @@ class Turbo1:
 
 
 def arms_from_pareto_fronts(x_cand, mvn, num_arms):
+    # minimize mu (b/c TuRBO-1 is written as a minimization)
     i = np.argsort(mvn.mu, axis=0).flatten()
     x_cand = x_cand[i]
     se = mvn.se[i]
@@ -365,6 +366,7 @@ def arms_from_pareto_fronts(x_cand, mvn, num_arms):
         se_max = -1e99
         i_front = []
         for i in i_all:
+            # .. but still maximize se
             if se[i] >= se_max:
                 i_front.append(i)
                 se_max = se[i]

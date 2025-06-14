@@ -192,7 +192,7 @@ class Designers:
             return bt_designer(qLowerBoundMaxValueEntropy, opt_sequential=True, acq_kwargs={"candidate_set": None})
         elif designer_name == "turbo-1":
             return TuRBODesigner(self._policy, num_init=init_yubo_default)
-        elif designer_name == "turbo-f":
+        elif designer_name == "turbo-0":
             return TuRBODesigner(self._policy, num_init=init_yubo_default, surrogate_type="none")
         elif designer_name.startswith("turbo-enn-"):
             # k = int(designer_name.split("-")[-1])

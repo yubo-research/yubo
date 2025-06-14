@@ -280,13 +280,14 @@ def prep_seq(results_dir):
         # "lei",
         # "ucb",
         # "turbo-1",
-        "optuna",
+        # "optuna",
         # "turbo-enn-1",
         # "turbo-enn-3",
         # "turbo-f",
         # "turbo-enn-30",
         # "turbo-enn-100",
-        # "turbo-enn-mu-10",
+        "turbo-enn-mu-10",
+        "turbo-enn-rand-10",
         # "turbo-enn-se-10",
         # "turbo-enn-fse-10",
     ]
@@ -297,7 +298,7 @@ def prep_seq(results_dir):
     cmds = []
 
     # dims = [1, 3, 10, 30, 100]
-    dims = [1000]  # 1, 3, 10, 30, 100, 300, 1000]
+    dims = [1, 3, 10, 30, 100, 300, 1000]
     for num_dim in dims:
         if num_dim == 1000 and opts == "path:Osab":
             continue
@@ -329,8 +330,8 @@ def prep_rl_three(results_dir, name):
     opts = [
         # "turbo-enn-3",
         # "turbo-f",
-        "turbo-enn-10",
-    ]  # ["enn-cc-3"]  # ["cma", "optuna"]  # "mts", "turbo-1", "path", "path-m", "ts", "mts-ns", "enn-bi-3", "path:Osab",
+        "turbo-0",
+    ]
 
     cmds = []
     for opt in opts:
