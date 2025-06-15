@@ -402,7 +402,23 @@ class Designers:
                     num_interior=10,
                     acq="pareto_strict",
                     region_type="far",
-                    linear_variance=False,
+                    stagger=True,
+                    small_world_M=None,
+                ),
+                keep_style=keep_style,
+                num_keep=num_keep,
+            )
+        elif designer_name.startswith("enn-sw-"):
+            k = int(designer_name.split("-")[-1])
+            return ENNDesigner(
+                self._policy,
+                ENNConfig(
+                    k=k,
+                    num_interior=10,
+                    acq="pareto_strict",
+                    region_type="far",
+                    stagger=True,
+                    small_world_M=16,
                 ),
                 keep_style=keep_style,
                 num_keep=num_keep,

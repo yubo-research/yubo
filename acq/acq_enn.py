@@ -3,15 +3,13 @@ from dataclasses import dataclass
 import numpy as np
 
 from model.enn import EpsitemicNearestNeighbors
-from sampling.knn_tools import (
-    far_clip,
-    random_directions,
-)
+from sampling.knn_tools import single_coordinate_perturbation
 
 """
-- Remove least-likely points from observation set
+- Remove least-likely points from observation set, i.e. Pareto(-mu_as_if_missing, -sigma_as_if_missing), i.e., "If the
+-   observation were removed, would we want to put it back?"
 - Select P pivot observations randomly w/replacement from Pareto(mu, abs(mu - mu_hat_as_if_missing))
-- For each pivot point, sample a candidatealong a line segment starting at the pivot point and ending at a boundary.
+- For each pivot point, sample a candidate along a line segment starting at the pivot point and ending at a boundary.
 - Select A points w/o replacement from Pareto(mu, sigma) from the P candidates.
 """
 
@@ -22,7 +20,7 @@ class ENNConfig:
     num_interior: int = 0
     stagger: bool = False
     acq: str = "pareto"
-    linear_variance: bool = False
+    small_world_M: int = None
 
     num_over_sample_per_arm: int = 1
 
@@ -51,21 +49,14 @@ class AcqENN:
         x = np.asarray(x)
         y = np.asarray(y)
         if self._enn is None:
-            self._enn = EpsitemicNearestNeighbors(x, y, k=self._config.k, linear_variance=self._config.linear_variance)
+            self._enn = EpsitemicNearestNeighbors(x, y, k=self._config.k, small_world_M=self._config.small_world_M)
         else:
             self._enn.add(x, y)
         self._x_train = np.append(self._x_train, x, axis=0)
         self._y_train = np.append(self._y_train, y, axis=0)
 
-    def _sample_targets(self, x_0):
-        # TODO: Random, axis-aligned
-        u = random_directions(len(x_0), self._num_dim)
-        if self._config.region_type == "far":
-            return far_clip(x_0, u, k=2)
-        elif self._config.region_type == "uniform":
-            return np.random.uniform(size=x_0.shape)
-        else:
-            assert False, self._config.region_type
+    def rebuild_if(self, max_observations, trim_to_num_observations):
+        assert False, "NYI"
 
     def _sample_segments(self, x_0, x_far):
         assert x_0.shape == x_far.shape, (x_0.shape, x_far.shape)
@@ -141,7 +132,7 @@ class AcqENN:
     def _candidates(self, num_arms):
         x_0 = self._select_pivots(self._config.num_interior * num_arms)
 
-        x_far = self._sample_targets(x_0)
+        x_far = single_coordinate_perturbation(x_0)
         x_cand = self._sample_segments(x_0, x_far)
 
         x_cand = np.unique(x_cand, axis=0)

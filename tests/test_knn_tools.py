@@ -1,13 +1,13 @@
-def test_raasp_1():
+def test_coordinate_perturbation():
     import numpy as np
 
-    from sampling.knn_tools import raasp_1
+    from sampling.knn_tools import single_coordinate_perturbation
 
     d = 30
     n = 100
     x_0 = np.random.uniform(size=(n, d))
 
-    x = raasp_1(x_0)
+    x = single_coordinate_perturbation(x_0)
     for i_x in range(x.shape[0]):
         i = np.where(x[i_x, :] == x_0[i_x, :])[0]
         assert len(i) == d - 1
