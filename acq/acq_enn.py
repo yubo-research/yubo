@@ -68,9 +68,6 @@ class AcqENN:
             assert False, self._config.region_type
 
     def _sample_segments(self, x_0, x_far):
-        # We want to uniformly sample over the Voronoi cell, but this is
-        #  easier. Maybe we'll come up with something better.
-
         assert x_0.shape == x_far.shape, (x_0.shape, x_far.shape)
 
         alpha = np.random.uniform(size=(len(x_0), 1))
