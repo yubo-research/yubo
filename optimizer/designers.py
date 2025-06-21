@@ -393,6 +393,34 @@ class Designers:
         elif designer_name == "mts-meas":
             return MTSDesigner(self._policy, keep_style=keep_style, num_keep=num_keep, init_style="meas")
 
+        elif designer_name.startswith("enn-s"):
+            k = int(designer_name.split("-")[-1])
+            return ENNDesigner(
+                self._policy,
+                ENNConfig(
+                    k=k,
+                    num_interior=1000,
+                    acq="pareto_strict",
+                    stagger=False,
+                    small_world_M=None,
+                ),
+                keep_style=keep_style,
+                num_keep=num_keep,
+            )
+        elif designer_name.startswith("enn-ss"):
+            k = int(designer_name.split("-")[-1])
+            return ENNDesigner(
+                self._policy,
+                ENNConfig(
+                    k=k,
+                    num_interior=1000,
+                    acq="pareto_strict",
+                    stagger=True,
+                    small_world_M=None,
+                ),
+                keep_style=keep_style,
+                num_keep=num_keep,
+            )
         elif designer_name.startswith("enn-"):
             k = int(designer_name.split("-")[-1])
             return ENNDesigner(
@@ -401,24 +429,8 @@ class Designers:
                     k=k,
                     num_interior=10,
                     acq="pareto_strict",
-                    region_type="far",
                     stagger=True,
                     small_world_M=None,
-                ),
-                keep_style=keep_style,
-                num_keep=num_keep,
-            )
-        elif designer_name.startswith("enn-sw-"):
-            k = int(designer_name.split("-")[-1])
-            return ENNDesigner(
-                self._policy,
-                ENNConfig(
-                    k=k,
-                    num_interior=10,
-                    acq="pareto_strict",
-                    region_type="far",
-                    stagger=True,
-                    small_world_M=16,
                 ),
                 keep_style=keep_style,
                 num_keep=num_keep,

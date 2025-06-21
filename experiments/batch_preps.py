@@ -273,18 +273,19 @@ def prep_mtv_36(results_dir):
 
 
 def prep_seq(results_dir):
-    exp_dir = "exp_enn"
+    exp_dir = "exp_enn_2_seq"
 
     opts = [
-        "random",
-        "lei",
-        "ucb",
-        "turbo-0",
-        "turbo-1",
-        "optuna",
-        "turbo-enn-10",
-        "enn-3",
-        "enn-sw-3",
+        # "random",
+        # # "lei",
+        # # "ucb",
+        # "turbo-0",
+        # "turbo-1",
+        # # "optuna",
+        # "turbo-enn-10",
+        # "enn-3",
+        # "enn-sw-3",
+        "enn-ss-3",
     ]
 
     noises = [None]

@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 
 import numpy as np
+import torch
+from botorch.utils.sampling import draw_sobol_samples
 
 from model.enn import EpsitemicNearestNeighbors
 from sampling.knn_tools import single_coordinate_perturbation
@@ -24,7 +26,7 @@ class ENNConfig:
 
     num_over_sample_per_arm: int = 1
 
-    region_type: str = "far"
+    region_type: str = "sobol"
 
     def __post_init__(self):
         assert self.num_over_sample_per_arm > 0
@@ -73,11 +75,12 @@ class AcqENN:
         return x_cand
 
     def _select_pivots(self, num_pivot):
-        mvn = self._enn.posterior(self._x_train, exclude_nearest=False)
+        # mvn = self._enn.posterior(self._x_train, exclude_nearest=False)
+        y = self._y_train
         mvn_as_if_missing = self._enn.posterior(self._x_train, exclude_nearest=True)
-        discrep = np.abs(mvn.mu - mvn_as_if_missing.mu)
+        discrep = np.abs(y - mvn_as_if_missing.mu)
 
-        i = np.argsort(-mvn.mu, axis=0).flatten()
+        i = np.argsort(-y, axis=0).flatten()
         x_cand = self._x_train[i]
         discrep = discrep[i]
 
@@ -130,10 +133,21 @@ class AcqENN:
         return x_cand[i]
 
     def _candidates(self, num_arms):
-        x_0 = self._select_pivots(self._config.num_interior * num_arms)
+        if self._config.region_type == "sobol":
+            x_cand = (
+                draw_sobol_samples(
+                    bounds=torch.tensor([[0.0, 1.0]] * self._num_dim).T,
+                    n=self._config.num_interior * num_arms,
+                    q=1,
+                )
+                .detach()
+                .numpy()
+            ).squeeze(1)
 
-        x_far = single_coordinate_perturbation(x_0)
-        x_cand = self._sample_segments(x_0, x_far)
+        else:
+            x_0 = self._select_pivots(self._config.num_interior * num_arms)
+            x_far = single_coordinate_perturbation(x_0)
+            x_cand = self._sample_segments(x_0, x_far)
 
         x_cand = np.unique(x_cand, axis=0)
 
