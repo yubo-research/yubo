@@ -5,7 +5,8 @@ import torch
 from botorch.utils.sampling import draw_sobol_samples
 
 from model.enn import EpsitemicNearestNeighbors
-from sampling.knn_tools import single_coordinate_perturbation
+from sampling.knn_tools import random_directions  #  single_coordinate_perturbation
+from sampling.ray_boundary import ray_boundary_np
 
 """
 - Remove least-likely points from observation set, i.e. Pareto(-mu_as_if_missing, -sigma_as_if_missing), i.e., "If the
@@ -69,11 +70,11 @@ class AcqENN:
         alpha = np.random.uniform(size=(len(x_0), 1))
 
         if self._config.stagger:
-            l_s_min = np.log(1e-4)
+            l_s_min = np.log(1e-5)
             l_s_max = np.log(1)
             alpha = np.exp(l_s_min + (l_s_max - l_s_min) * alpha)
 
-        x_cand = alpha * x_0 + (1 - alpha) * x_far
+        x_cand = (1 - alpha) * x_0 + alpha * x_far
 
         return x_cand
 
@@ -112,7 +113,10 @@ class AcqENN:
         i_all = list(range(len(se)))
         i_keep = []
 
+        num_tries = 0
         while len(i_keep) < num_arms:
+            num_tries += 1
+            assert num_tries < 100, num_tries
             se_max = -1e99
             i_front = []
             for i in i_all:
@@ -131,6 +135,7 @@ class AcqENN:
         i_keep = self._i_pareto_fronts_strict(x_cand, num_arms, exclude_nearest)
         x_arms = x_cand[i_keep]
 
+        print("P:", i_keep)
         assert len(x_arms) == num_arms, (len(x_arms), num_arms)
         return x_arms
 
@@ -149,11 +154,40 @@ class AcqENN:
                 .detach()
                 .numpy()
             ).squeeze(1)
-
         elif self._config.region_type == "pivots":
             x_0 = self._select_pivots(self._config.num_interior * num_arms)
-            x_far = single_coordinate_perturbation(x_0)
+            x_far = ray_boundary_np(x_0, random_directions(len(x_0), self._num_dim))
             x_cand = self._sample_segments(x_0, x_far)
+        elif self._config.region_type == "rand_train":
+            x_0 = self._x_train[np.random.choice(np.arange(len(self._x_train)), size=num_arms, replace=True)]
+            x_far = ray_boundary_np(x_0, random_directions(len(x_0), self._num_dim))
+            x_cand = self._sample_segments(x_0, x_far)
+        elif self._config.region_type == "convex":
+            num_cand = self._config.num_interior * num_arms
+            mx = self._x_train.mean(axis=0, keepdims=True)
+
+            x_0 = self._select_pivots(num_cand)
+            w = np.random.dirichlet(size=num_cand, alpha=np.ones(len(x_0)))
+            w = w / w.sum(axis=1, keepdims=True)
+            m = (x_0.T @ w.T).T
+            x_cand = m  #  + (m - mx) * np.sqrt(len(x_0))
+
+            u = x_cand - mx
+            assert not np.isnan(u.sum())
+            norm = np.linalg.norm(u, axis=1, keepdims=True)
+            i = np.where(norm < 1e-9)[0]
+            norm[i] = 1
+            u = u / norm
+            u[i] = 0
+            assert not np.isnan(u.sum())
+            x_boundary = ray_boundary_np(mx, 0.1 * u)
+            dist_cand = np.linalg.norm(x_cand - mx, axis=1)
+            dist_boundary = np.linalg.norm(x_boundary - mx, axis=1)
+            i_clip = dist_cand > dist_boundary
+            x_cand[i_clip] = x_boundary[i_clip]
+
+        else:
+            assert False, self._config.region_type
 
         x_cand = np.unique(x_cand, axis=0)
 
@@ -168,9 +202,7 @@ class AcqENN:
         if len(x_cand) == num_arms:
             return x_cand
 
-        if self._config.acq == "pareto":
-            return self._pareto_front(x_cand, num_arms)
-        elif self._config.acq == "pareto_strict":
+        if self._config.acq == "pareto_strict":
             return self._pareto_fronts_strict(x_cand, num_arms)
         elif self._config.acq == "uniform":
             return self._uniform(x_cand, num_arms)

@@ -47,8 +47,14 @@ def ray_boundary_np(x_0, u, eps=1e-6):
     # one t_min (t_max) for each coordinate, each x in batch
 
     t_candidates = np.where(u > 0, t_max, np.where(u < 0, t_min, np.inf))
-    t_candidates = t_candidates[t_candidates >= 0]
-    t_min_positive = np.min(t_candidates)
+
+    # Find minimum positive t for each sample
+    # Replace inf with a large number for the min operation
+    t_candidates_finite = np.where(np.isfinite(t_candidates), t_candidates, 1e10)
+    t_min_positive = np.min(t_candidates_finite, axis=1)
+
+    # Expand t_min_positive to match the shape for broadcasting
+    t_min_positive = t_min_positive[:, np.newaxis]
 
     x = x_0 + t_min_positive * u
     assert x.min() > -eps, (x.min(), x, x_0)
