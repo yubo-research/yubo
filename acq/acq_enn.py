@@ -61,8 +61,8 @@ class AcqENN:
     def keep_top_n(self, num_keep):
         if len(self._x_train) <= num_keep:
             return self._x_train, self._y_train
-        # TODO: Swtich to lowest discrepancy points (opposit of pivot point seletor)
-        i = self._i_pareto_fronts_discrepancy(self._x_train, num_keep)
+
+        i = self._i_pareto_fronts_discrepancy(num_keep)
         return self._x_train[i], self._y_train[i]
 
     def _sample_segments(self, x_0, x_far):
@@ -102,33 +102,32 @@ class AcqENN:
         i = np.random.choice(np.arange(len(x_front)), size=num_pivot, replace=True)
         return x_front[i]
 
-    def _i_pareto_fronts_discrepancy(self, x_cand, num_arms):
+    def _i_pareto_fronts_discrepancy(self, num_keep):
         # Full fronts, then random selection from *last* front.
-        assert self._config.num_over_sample_per_arm == 1, self._config.num_over_sample_per_arm
-        mvn = self._enn.posterior(x_cand, exclude_nearest=True)
-        discrep = np.abs(self._y_train - mvn.mu)
+        y = self._y_train
+        mvn = self._enn.posterior(self._x_train, exclude_nearest=True)
+        discrep = np.abs(y - mvn.mu)
 
-        i = np.argsort(-discrep, axis=0).flatten()
-        x_cand = x_cand[i]
-        se = mvn.se[i]
+        i = np.argsort(-y, axis=0).flatten()
+        discrep = discrep[i]
 
-        i_all = list(range(len(se)))
+        i_all = list(range(len(discrep)))
         i_keep = []
 
         num_tries = 0
-        while len(i_keep) < num_arms:
+        while len(i_keep) < num_keep:
             num_tries += 1
             assert num_tries < 100, num_tries
-            se_max = -1e99
+            discrep_max = -1e99
             i_front = []
             for i in i_all:
-                if se[i] >= se_max:
+                if discrep[i] >= discrep_max:
                     i_front.append(i)
-                    se_max = se[i]
-            if len(i_keep) + len(i_front) <= num_arms:
+                    discrep_max = discrep[i]
+            if len(i_keep) + len(i_front) <= num_keep:
                 i_keep.extend(i_front)
             else:
-                i_keep.extend(np.random.choice(i_front, size=num_arms - len(i_keep), replace=False))
+                i_keep.extend(np.random.choice(i_front, size=num_keep - len(i_keep), replace=False))
             i_all = sorted(set(i_all) - set(i_front))
 
         return np.array(i_keep)
@@ -167,7 +166,6 @@ class AcqENN:
         i_keep = self._i_pareto_fronts_strict(x_cand, num_arms, exclude_nearest)
         x_arms = x_cand[i_keep]
 
-        print("P:", i_keep)
         assert len(x_arms) == num_arms, (len(x_arms), num_arms)
         return x_arms
 
@@ -176,26 +174,32 @@ class AcqENN:
         return x_cand[i]
 
     def _candidates(self, num_arms):
+        num_cand = self._config.num_interior * num_arms
         if self._config.region_type == "sobol":
             x_cand = (
                 draw_sobol_samples(
                     bounds=torch.tensor([[0.0, 1.0]] * self._num_dim).T,
-                    n=self._config.num_interior * num_arms,
+                    n=num_cand,
                     q=1,
                 )
                 .detach()
                 .numpy()
             ).squeeze(1)
+        elif self._config.region_type == "best":
+            x_0 = self._x_train[np.argsort(-self._y_train, axis=0).flatten()[:num_arms]]
+            x_0 = x_0[np.random.choice(np.arange(len(x_0)), size=num_cand, replace=True)]
+            x_far = ray_boundary_np(x_0, random_directions(len(x_0), self._num_dim))
+            x_cand = self._sample_segments(x_0, x_far)
         elif self._config.region_type == "pivots":
-            x_0 = self._select_pivots(self._config.num_interior * num_arms)
+            x_0 = self._select_pivots(num_cand)
             x_far = ray_boundary_np(x_0, random_directions(len(x_0), self._num_dim))
             x_cand = self._sample_segments(x_0, x_far)
         elif self._config.region_type == "rand_train":
             x_0 = self._x_train[np.random.choice(np.arange(len(self._x_train)), size=num_arms, replace=True)]
+            x_0 = x_0[np.random.choice(np.arange(len(x_0)), size=num_cand, replace=True)]
             x_far = ray_boundary_np(x_0, random_directions(len(x_0), self._num_dim))
             x_cand = self._sample_segments(x_0, x_far)
         elif self._config.region_type == "convex":
-            num_cand = self._config.num_interior * num_arms
             mx = self._x_train.mean(axis=0, keepdims=True)
 
             x_0 = self._select_pivots(num_cand)

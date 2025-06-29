@@ -394,8 +394,7 @@ class Designers:
             return MTSDesigner(self._policy, keep_style=keep_style, num_keep=num_keep, init_style="ts")
         elif designer_name == "mts-meas":
             return MTSDesigner(self._policy, keep_style=keep_style, num_keep=num_keep, init_style="meas")
-
-        elif designer_name.startswith("enn-c"):
+        elif designer_name.startswith("enn-p"):
             k = int(designer_name.split("-")[-1])
             return ENNDesigner(
                 self._policy,
@@ -403,9 +402,24 @@ class Designers:
                     k=k,
                     num_interior=10,
                     acq="pareto_strict",
-                    stagger=False,
+                    stagger=True,
                     small_world_M=None,
-                    region_type="convex",
+                    region_type="best",
+                ),
+                keep_style=keep_style,
+                num_keep=num_keep,
+            )
+        elif designer_name.startswith("enn-b"):
+            k = int(designer_name.split("-")[-1])
+            return ENNDesigner(
+                self._policy,
+                ENNConfig(
+                    k=k,
+                    num_interior=1,
+                    acq=None,
+                    stagger=True,
+                    small_world_M=None,
+                    region_type="best",
                 ),
                 keep_style=keep_style,
                 num_keep=num_keep,
@@ -417,7 +431,7 @@ class Designers:
                 ENNConfig(
                     k=k,
                     num_interior=1,
-                    acq="pareto_strict",
+                    acq=None,
                     stagger=True,
                     small_world_M=None,
                     region_type="pivots",
