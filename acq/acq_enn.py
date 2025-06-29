@@ -57,8 +57,11 @@ class AcqENN:
         self._x_train = np.append(self._x_train, x, axis=0)
         self._y_train = np.append(self._y_train, y, axis=0)
 
-    def rebuild_if(self, max_observations, trim_to_num_observations):
-        assert False, "NYI"
+    def keep_top_n(self, num_keep):
+        if len(self._x_train) <= num_keep:
+            return self._x_train, self._y_train
+        i = self._i_pareto_fronts_strict(self._x_train, num_keep, exclude_nearest=True)
+        return self._x_train[i], self._y_train[i]
 
     def _sample_segments(self, x_0, x_far):
         assert x_0.shape == x_far.shape, (x_0.shape, x_far.shape)
@@ -97,10 +100,10 @@ class AcqENN:
         i = np.random.choice(np.arange(len(x_front)), size=num_pivot, replace=True)
         return x_front[i]
 
-    def _pareto_fronts_strict(self, x_cand, num_arms):
+    def _i_pareto_fronts_strict(self, x_cand, num_arms, exclude_nearest=False):
         # Full fronts, then random selection from *last* front.
         assert self._config.num_over_sample_per_arm == 1, self._config.num_over_sample_per_arm
-        mvn = self._enn.posterior(x_cand)
+        mvn = self._enn.posterior(x_cand, exclude_nearest=exclude_nearest)
 
         i = np.argsort(-mvn.mu, axis=0).flatten()
         x_cand = x_cand[i]
@@ -122,7 +125,10 @@ class AcqENN:
                 i_keep.extend(np.random.choice(i_front, size=num_arms - len(i_keep), replace=False))
             i_all = sorted(set(i_all) - set(i_front))
 
-        i_keep = np.array(i_keep)
+        return np.array(i_keep)
+
+    def _pareto_fronts_strict(self, x_cand, num_arms, exclude_nearest=False):
+        i_keep = self._i_pareto_fronts_strict(x_cand, num_arms, exclude_nearest)
         x_arms = x_cand[i_keep]
 
         assert len(x_arms) == num_arms, (len(x_arms), num_arms)
@@ -144,7 +150,7 @@ class AcqENN:
                 .numpy()
             ).squeeze(1)
 
-        else:
+        elif self._config.region_type == "pivots":
             x_0 = self._select_pivots(self._config.num_interior * num_arms)
             x_far = single_coordinate_perturbation(x_0)
             x_cand = self._sample_segments(x_0, x_far)
