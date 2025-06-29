@@ -59,6 +59,7 @@ def test_utils():
 
     from .test_enn import set_up_enn
 
+    np.random.seed(17)
     num_dim, n, train_x, train_y, k, enn = set_up_enn()
 
     u = random_directions(1, num_dim)
