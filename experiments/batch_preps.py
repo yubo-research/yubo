@@ -273,23 +273,19 @@ def prep_mtv_36(results_dir):
 
 
 def prep_seq(results_dir):
-    exp_dir = "exp_enn"
+    exp_dir = "exp_enn_2_seq"
 
     opts = [
         # "random",
-        # "lei",
-        # "ucb",
+        # # "lei",
+        # # "ucb",
+        # "turbo-0",
         # "turbo-1",
-        # "optuna",
-        # "turbo-enn-1",
-        # "turbo-enn-3",
-        # "turbo-f",
-        # "turbo-enn-30",
-        # "turbo-enn-100",
-        "turbo-enn-mu-10",
-        "turbo-enn-rand-10",
-        # "turbo-enn-se-10",
-        # "turbo-enn-fse-10",
+        # # "optuna",
+        # "turbo-enn-10",
+        # "enn-3",
+        # "enn-sw-3",
+        "enn-ss-3",
     ]
 
     noises = [None]
@@ -304,9 +300,9 @@ def prep_seq(results_dir):
             continue
 
         if num_dim <= 100:
-            num_replications = 30
+            num_replications = 3
         else:
-            num_replications = 10
+            num_replications = 3
         cmds.extend(
             prep_d_args(
                 results_dir,

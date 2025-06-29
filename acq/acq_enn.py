@@ -1,74 +1,40 @@
 from dataclasses import dataclass
 
 import numpy as np
-from scipy.spatial.distance import cdist
+import torch
+from botorch.utils.sampling import draw_sobol_samples
 
 from model.enn import EpsitemicNearestNeighbors
-from sampling.knn_tools import (
-    clip_to_boundary,
-    confidence_region_fast,
-    far_clip,
-    farthest_neighbor,
-    farthest_neighbor_fast,
-    raasp,
-    random_corner,
-    random_directions,
-)
-from sampling.sampling_util import greedy_maximin
+from sampling.knn_tools import single_coordinate_perturbation
 
 """
-Don't calibrate (fit).
-TODO
-- TR: Voronoi cell for distance (se); avoids hyperparameter
-    - Any rejection sampling (on delta_mu < k) in the HnR phase takes as much time as oversampling candidates would.
-    - Do this: Find the boundary, then take several alpha samples along the line (to reduce the number of time-consuming bisection searches).
-    - Then reject all points with mu(x) < mean(mu(all boundary points)).
-- TR: max(0, se(x)**2 - se(x_max)**2) < k  and  max(0, mu(x_max) - mu(x)) < k
-- Take samples in TR, find Pareto front (maximizing se, maximizing mu), sample arm from that
-  - Batching: Sample all arms from Pareto front, maximizing min dist between arms
-
-- Ref CRBO, Pareto BO
-
-
-Tests
-- Performance should increase to an asymptote w/increasing num_candidates_per_arm.
-- Performance should increase to an asymptote w/increasing k (ideally, but maybe the model only works locally. That's ok, too).
+- Remove least-likely points from observation set, i.e. Pareto(-mu_as_if_missing, -sigma_as_if_missing), i.e., "If the
+-   observation were removed, would we want to put it back?"
+- Select P pivot observations randomly w/replacement from Pareto(mu, abs(mu - mu_hat_as_if_missing))
+- For each pivot point, sample a candidate along a line segment starting at the pivot point and ending at a boundary.
+- Select A points w/o replacement from Pareto(mu, sigma) from the P candidates.
 """
 
 
 @dataclass
 class ENNConfig:
     k: int
-    max_cell: bool = False
-    ts_enn: bool = False
-    num_boundary: int = 100
     num_interior: int = 0
-    num_quick: int = 0
-    # This bad. Why?
-    keep_bdy: bool = False
-    maximin: bool = False
     stagger: bool = False
-    weight_by_length: bool = False
     acq: str = "pareto"
-    linear_variance: bool = False
-    k_far_clip: float = 2
+    small_world_M: int = None
 
     num_over_sample_per_arm: int = 1
 
-    region_type: str = "far"
-    se_max: float = 0.1
-
-    p_boundary_is_neighbor: float = 0.0
+    region_type: str = "sobol"
 
     def __post_init__(self):
         assert self.num_over_sample_per_arm > 0
-        assert self.num_quick > 0 or self.num_boundary + self.num_interior > 0
-        assert self.num_quick == 0 or self.num_boundary + self.num_interior == 0, (self.num_quick, self.num_boundary, self.num_interior)
 
 
 class AcqENN:
     # TODO: Yvar
-    # def __init__(self, X_train: torch.Tensor, Y_train: torch.Tensor, config: ENNConfig):
+
     def __init__(self, num_dim, config: ENNConfig):
         assert config.k > 0, config
         self._num_dim = num_dim
@@ -85,104 +51,19 @@ class AcqENN:
         x = np.asarray(x)
         y = np.asarray(y)
         if self._enn is None:
-            self._enn = EpsitemicNearestNeighbors(x, y, k=self._config.k, linear_variance=self._config.linear_variance)
+            self._enn = EpsitemicNearestNeighbors(x, y, k=self._config.k, small_world_M=self._config.small_world_M)
         else:
             self._enn.add(x, y)
         self._x_train = np.append(self._x_train, x, axis=0)
         self._y_train = np.append(self._y_train, y, axis=0)
 
-    def _var_calib(self):
-        if len(self._x_train) < 2:
-            return 1
-        _, dists = self._enn.about_neighbors(self._x_train, k=self._config.k)
-        dist_i = dists.mean(axis=1, keepdims=True)
-        return 1 / dist_i.mean()
-
-    def _ts_pick_cells(self, num_samples):
-        assert len(self._x_train) > 0
-        y = self._y_train
-
-        n = len(y)
-        se = y.std() / np.sqrt(n)
-
-        if self._config.max_cell:
-            se = 0 * se
-        else:
-            # We Thompson sample over the Voronoi cells.
-            # Our model of the function values in a cell is N(y, se**2)
-            # where y is the (single) measured value in the cell, and
-            #  se**2 is the (homoscedastic) variance, estimated by
-            #  var(y)/N over all measured y's.
-
-            if self._config.ts_enn:
-                if n > 1:
-                    _, dists = self._enn.about_neighbors(self._x_train, k=self._config.k)
-                    dist_i = dists.mean(axis=1, keepdims=True)
-                    dist_norm = dist_i.mean()
-                    w = dist_i / dist_norm
-                    w = w / w.sum(axis=0, keepdims=True)
-                    se = se * np.sqrt(w)
-
-        y = y + se * np.random.normal(size=(n, num_samples))
-        i = np.where(y == y.max(axis=0, keepdims=True))[0]
-
-        return self._x_train[i, :]
-
-    def _sample_targets(self, x_0):
-        u = random_directions(len(x_0), self._num_dim)
-        if self._config.region_type == "fn_fast":
-            return farthest_neighbor_fast(self._enn, x_0, u, p_boundary_is_neighbor=self._config.p_boundary_is_neighbor)
-        elif self._config.region_type == "fn":
-            return farthest_neighbor(self._enn, x_0, u, p_boundary_is_neighbor=self._config.p_boundary_is_neighbor)
-        elif self._config.region_type == "cr":
-            return confidence_region_fast(self._enn, x_0, u, se_max=self._config.se_max, num_steps=100)
-        elif self._config.region_type == "far":
-            return far_clip(x_0, u, k=self._config.k_far_clip)
-        elif self._config.region_type == "bdy":
-            return clip_to_boundary(x_0, u)
-        elif self._config.region_type == "corner":
-            return random_corner(*x_0.shape)
-        elif self._config.region_type == "raasp":
-            return raasp(x_0, max(20, int(np.sqrt(self._num_dim) + 0.5)))
-        elif self._config.region_type == "uniform":
-            return np.random.uniform(size=x_0.shape)
-        elif self._config.region_type == "mixed":
-            n = x_0.shape[0] // 2
-            n_f = x_0.shape[0] - n
-            return np.concatenate(
-                (
-                    far_clip(x_0[:n], u[:n], k=self._config.k_far_clip),
-                    np.random.uniform(size=(n_f, x_0.shape[1])),
-                    # random_corner(n_f, x_0.shape[1]),
-                ),
-                axis=0,
-            )
-        else:
-            assert False, self._config.region_type
-
-    # def _xform_dm2(self, u):
-    #     a = 1e-9
-    #     b = 1
-    #     d = self._num_dim
-    #     if d == 1:
-    #         return a * (b / a) ** u
-    #     else:
-    #         return (a ** (d - 1) + u * (b ** (d - 1) - a ** (d - 1))) ** (1 / (d - 1))
+    def rebuild_if(self, max_observations, trim_to_num_observations):
+        assert False, "NYI"
 
     def _sample_segments(self, x_0, x_far):
-        # We want to uniformly sample over the Voronoi cell, but this is
-        #  easier. Maybe we'll come up with something better.
-
         assert x_0.shape == x_far.shape, (x_0.shape, x_far.shape)
 
         alpha = np.random.uniform(size=(len(x_0), 1))
-
-        if self._config.weight_by_length:
-            dists = np.linalg.norm(x_0 - x_far, axis=1, keepdims=True)
-            dists = dists / dists.sum(axis=0, keepdims=True)
-            i = np.random.choice(np.arange(len(dists)), size=len(dists), replace=True, p=dists.flatten())
-            x_0 = x_0[i]
-            x_far = x_far[i]
 
         if self._config.stagger:
             l_s_min = np.log(1e-4)
@@ -191,53 +72,30 @@ class AcqENN:
 
         x_cand = alpha * x_0 + (1 - alpha) * x_far
 
-        if self._config.keep_bdy:
-            x_cand = np.concatenate([x_cand, x_far], axis=0)
-
         return x_cand
 
-    def _ucb(self, x_cand, num_arms):
-        assert num_arms == 1, num_arms
-        mvn = self._enn.posterior(x_cand)
-        ucb = mvn.mu + mvn.se
+    def _select_pivots(self, num_pivot):
+        # mvn = self._enn.posterior(self._x_train, exclude_nearest=False)
+        y = self._y_train
+        mvn_as_if_missing = self._enn.posterior(self._x_train, exclude_nearest=True)
+        discrep = np.abs(y - mvn_as_if_missing.mu)
 
-        i = np.where(ucb == ucb.max(axis=0, keepdims=True))[0]
-        i_arms = np.unique(i)
-        i_arms = i_arms[:num_arms].astype(np.int64)
-        return x_cand[i_arms]
+        i = np.argsort(-y, axis=0).flatten()
+        x_cand = self._x_train[i]
+        discrep = discrep[i]
 
-    def _pareto_front(self, x_cand, num_arms):
-        # Random selection from union of multiple fronts
-        mvn = self._enn.posterior(x_cand)
+        i_front = []
+        discrep_max = -1e99
+        for i in range(len(discrep)):
+            if discrep[i] >= discrep_max:
+                i_front.append(i)
+                discrep_max = discrep[i]
 
-        i = np.argsort(-mvn.mu, axis=0).flatten()
-        x_cand = x_cand[i]
-        se = mvn.se[i]
+        i_front = np.array(i_front)
+        x_front = x_cand[i_front]
 
-        num_keep = self._config.num_over_sample_per_arm * num_arms
-        i_all = list(range(len(se)))
-        i_keep = []
-        while len(i_keep) < num_keep:
-            se_max = -1e99
-            for i in i_all:
-                if se[i] >= se_max:
-                    i_keep.append(i)
-                    se_max = se[i]
-            i_all = sorted(set(i_all) - set(i_keep))
-
-        i_keep = np.array(i_keep)
-        x_front = x_cand[i_keep]
-
-        assert len(x_front) >= num_arms, (len(x_front), num_arms)
-
-        if len(x_front) > num_arms:
-            if num_arms > 1 and self._config.maximin:
-                i = greedy_maximin(x_front, num_arms)
-            else:
-                i = np.random.choice(np.arange(len(x_front)), size=num_arms, replace=False)
-            return x_front[i]
-        else:
-            return x_front
+        i = np.random.choice(np.arange(len(x_front)), size=num_pivot, replace=True)
+        return x_front[i]
 
     def _pareto_fronts_strict(self, x_cand, num_arms):
         # Full fronts, then random selection from *last* front.
@@ -270,246 +128,46 @@ class AcqENN:
         assert len(x_arms) == num_arms, (len(x_arms), num_arms)
         return x_arms
 
-    def _pareto_cheb_noisy(self, x_cand, num_arms):
-        mvn = self._enn.posterior(x_cand)
-        y = np.concatenate([mvn.mu, mvn.se], axis=1)
-        norm = y.max(axis=0, keepdims=True) - y.min(axis=0, keepdims=True)
-        y = y - y.min(axis=0, keepdims=True)
-        i = np.where(norm == 0)[0]
-        norm[i] = 1
-        y[i] = 0.5
-        y = y / norm
-
-        w = np.random.uniform(size=y.shape)
-
-        w = w / w.sum(axis=1, keepdims=True)
-        y = y * w
-        y = y.min(axis=1)
-
-        i = np.argsort(-y, axis=0).flatten()
-        x_cand = x_cand[i]
-        return x_cand[:num_arms]
-
-    def _pareto_cheb(self, x_cand, num_arms):
-        mvn = self._enn.posterior(x_cand)
-        y = np.concatenate([mvn.mu, mvn.se], axis=1)
-
-        norm = y.max(axis=0, keepdims=True) - y.min(axis=0, keepdims=True)
-        y = y - y.min(axis=0, keepdims=True)
-        i = np.where(norm == 0)[0]
-        norm[i] = 1
-        y[i] = 0.5
-        y = y / norm
-
-        num_cands_per_arm = x_cand.shape[0] // num_arms
-        x_cand = np.reshape(x_cand, (num_arms, num_cands_per_arm, x_cand.shape[1]))
-        y = np.reshape(y, (num_arms, num_cands_per_arm, y.shape[1]))
-
-        w = np.random.uniform(size=y.shape)
-        w = w / w.sum(axis=-1, keepdims=True)
-        y = y * w
-        y = y.min(axis=-1)
-
-        i = np.argmax(y, axis=1)
-        return np.diagonal(x_cand[:, i, :], axis1=0, axis2=1).T
-
-    def _pareto_front_cheb(self, x_cand, num_arms):
-        mvn = self._enn.posterior(x_cand)
-
-        i = np.argsort(-mvn.mu, axis=0).flatten()
-        x_cand = x_cand[i]
-        se = mvn.se[i]
-
-        i_front = []
-        se_max = -1e99
-        for i in range(len(se)):
-            if se[i] >= se_max:
-                i_front.append(i)
-                se_max = se[i]
-
-        i_front = np.array(i_front)
-        assert len(i_front) > 0, (len(i_front), len(x_cand))
-        i_arm = np.random.choice(i_front, size=1, replace=False)
-        x_arms = [x_cand[i_arm]]
-
-        if num_arms > 1:
-            x_cand = np.delete(x_cand, i_arm, axis=0)
-            x_arms.extend(self._pareto_cheb_noisy(x_cand, num_arms - 1))
-
-        return np.vstack(x_arms)
-
-    def _thompson_sample(self, x_cand, num_arms):
-        # was 2*num_arms
-        self._enn.calibrate(self._var_calib())
-        y = self._enn.posterior(x_cand).sample(num_arms)
-        i_arms = np.array([]).astype(np.int64)
-        i_retry = 0
-        while len(i_arms) < num_arms and i_retry < 10:
-            y[i_arms] = -100
-            i = np.where(y == y.max(axis=0, keepdims=True))[0]
-            i_arms = np.unique(
-                np.concatenate(
-                    (i_arms, i),
-                )
-            )
-            i_retry += 1
-
-        assert len(i_arms) >= num_arms, (i_retry, len(i_arms), x_cand.shape, num_arms)
-
-        i_arms = i_arms[:num_arms].astype(np.int64)
-        return x_cand[i_arms]
-
-    def _mtv(self, x_cand, num_arms):
-        assert x_cand.shape[0] >= 10 * num_arms, (x_cand.shape, num_arms)
-        assert num_arms == 1, "NYI: batches"
-        assert not self._config.linear_variance, "MTV requires variance := distance**2"
-
-        x_front = self._pareto_fronts_strict(x_cand, x_cand.shape[0] // 3)
-
-        mvn = self._enn.posterior(x_front)
-        vvar = mvn.se**2
-        dists2 = cdist(x_front, x_front, metric="sqeuclidean")
-        mtv = 1 / (1 / vvar + 1 / dists2).sum(axis=1)
-        i_arm = np.random.choice(np.where(mtv == mtv.min())[0])
-
-        return x_front[[i_arm]]
-
-    def _max_mu(self, x_cand, num_arms):
-        n = x_cand.shape[0] // num_arms
-        assert n * num_arms == x_cand.shape[0]
-
-        mvn = self._enn.posterior(x_cand)
-        mu = np.reshape(mvn.mu, newshape=(n, num_arms))
-        se = np.reshape(mvn.se, newshape=(n, num_arms))
-        phi = mu
-        i = np.random.uniform(size=(num_arms,)) < 0.1
-        phi[:, i] = se[:, i]
-        del mu, se
-
-        x_cand = np.reshape(x_cand, newshape=(n, num_arms, self._num_dim))
-
-        i = np.argmax(phi, axis=0)
-        arms = np.arange(x_cand.shape[1])
-        return x_cand[i, arms, :]
-
     def _uniform(self, x_cand, num_arms):
-        if self._config.maximin:
-            i = greedy_maximin(x_cand, num_arms)
-        else:
-            i = np.random.choice(np.arange(len(x_cand)), size=num_arms, replace=False)
+        i = np.random.choice(np.arange(len(x_cand)), size=num_arms, replace=False)
         return x_cand[i]
 
     def _candidates(self, num_arms):
-        assert self._config.num_boundary == 0
+        if self._config.region_type == "sobol":
+            x_cand = (
+                draw_sobol_samples(
+                    bounds=torch.tensor([[0.0, 1.0]] * self._num_dim).T,
+                    n=self._config.num_interior * num_arms,
+                    q=1,
+                )
+                .detach()
+                .numpy()
+            ).squeeze(1)
 
-        x_0 = self._ts_pick_cells((self._config.num_interior) * num_arms)
-
-        x_far = self._sample_targets(x_0)
-        x_cand = self._sample_segments(x_0, x_far)
+        else:
+            x_0 = self._select_pivots(self._config.num_interior * num_arms)
+            x_far = single_coordinate_perturbation(x_0)
+            x_cand = self._sample_segments(x_0, x_far)
 
         x_cand = np.unique(x_cand, axis=0)
 
         assert x_cand.min() >= 0.0 and x_cand.max() <= 1.0, (x_cand.min(), x_cand.max())
         assert len(np.unique(x_cand, axis=0)) == x_cand.shape[0], (len(np.unique(x_cand, axis=0)), x_cand.shape[0])
 
-        return x_cand
-
-    def _xxx_candidates(self, num_arms):
-        if self._config.num_boundary > 0:
-            num_boundary = int(self._config.num_boundary * 1.2)
-        else:
-            num_boundary = 0
-        if self._config.num_interior > 0:
-            num_interior = int(self._config.num_interior * 1.2)
-        else:
-            num_interior = 0
-
-        x_0 = self._ts_pick_cells((num_boundary + num_interior) * num_arms)
-
-        x_cand = np.empty(shape=(0, self._num_dim))
-        i_cut = num_boundary * num_arms
-
-        x_bdy = self._sample_targets(x_0)
-
-        if num_boundary > 0:
-            x_cand = np.concatenate([x_cand, x_bdy[:i_cut]], axis=0)
-        if num_interior > 0:
-            x_cand = np.concatenate([x_cand, self._sample_segments(x_0[i_cut:], x_bdy[i_cut:])], axis=0)
-
-        x_cand = np.unique(x_cand, axis=0)
-        num_desired = num_arms * (self._config.num_boundary + self._config.num_interior)
-        if len(x_cand) < num_desired:
-            x_cand = np.concatenate(
-                [x_cand, np.random.uniform(size=(num_desired - len(x_cand), self._num_dim))],
-                axis=0,
-            )
-        else:
-            x_cand = x_cand[:num_desired]
-
-        assert x_cand.min() >= 0.0 and x_cand.max() <= 1.0, (x_cand.min(), x_cand.max())
-        assert len(np.unique(x_cand, axis=0)) == x_cand.shape[0], (len(np.unique(x_cand, axis=0)), x_cand.shape[0])
-
-        return x_cand
-
-    def _candidates_quick(self, num_arms):
-        x_0 = self._ts_pick_cells(self._config.num_quick * num_arms)
-        assert x_0.min() >= 0.0 and x_0.max() <= 1.0, (x_0.min(), x_0.max())
-
-        _, dists = self._enn.about_neighbors(x_0, k=self._config.k)
-        dists = dists.mean(axis=1, keepdims=True)
-        x_target = np.random.uniform(size=(x_0.shape[0], self._num_dim))
-        u = x_target - x_0
-        u = u / np.linalg.norm(u, axis=1, keepdims=True)
-        # u = random_directions(len(x_0), self._num_dim)
-        x_target = np.minimum(1.0, np.maximum(0.0, x_0 + dists * u))
-
-        alpha = np.random.uniform(size=(x_0.shape[0], 1))
-        # alpha = 10 ** (-6 * alpha)
-
-        x_cand = x_0 + alpha * (x_target - x_0)
-
-        x_cand = np.unique(x_cand, axis=0)
-        num_desired = num_arms * self._config.num_quick
-        if len(x_cand) < num_desired:
-            x_cand = np.concatenate(
-                [x_cand, np.random.uniform(size=(num_desired - len(x_cand), self._num_dim))],
-                axis=0,
-            )
-
-        assert len(x_cand) == len(np.unique(x_cand, axis=0)), (len(x_cand), len(np.unique(x_cand, axis=0)))
-        assert x_cand.min() >= 0.0 and x_cand.max() <= 1.0, (x_cand.min(), x_cand.max(), dists.max())
         return x_cand
 
     def _draw_two_level(self, num_arms):
-        if self._config.num_quick > 0:
-            x_cand = self._candidates_quick(num_arms)
-        else:
-            x_cand = self._candidates(num_arms)
+        x_cand = self._candidates(num_arms)
 
         if len(x_cand) == num_arms:
             return x_cand
 
-        if self._config.acq == "ucb":
-            return self._ucb(x_cand, num_arms)
-        elif self._config.acq == "pareto":
+        if self._config.acq == "pareto":
             return self._pareto_front(x_cand, num_arms)
-        elif self._config.acq == "pareto_cheb":
-            return self._pareto_cheb(x_cand, num_arms)
-        elif self._config.acq == "pareto_cheb_noisy":
-            return self._pareto_cheb_noisy(x_cand, num_arms)
-        elif self._config.acq == "pareto_front_cheb":
-            return self._pareto_front_cheb(x_cand, num_arms)
         elif self._config.acq == "pareto_strict":
             return self._pareto_fronts_strict(x_cand, num_arms)
-        elif self._config.acq == "ts":
-            return self._thompson_sample(x_cand, num_arms)
-        elif self._config.acq == "mtv":
-            return self._mtv(x_cand, num_arms)
-        elif self._config.acq == "max_mu":
-            return self._max_mu(x_cand, num_arms)
         elif self._config.acq == "uniform":
             return self._uniform(x_cand, num_arms)
-
         else:
             assert False, self._config.acq
 

@@ -26,8 +26,6 @@ class ENNDesigner:
             Y, X = fit_gp.extract_X_Y(data[self._i_data_last :], self._dtype, self._device)
             if self._warm_starting:
                 self._i_data_last = len(data)
-            # TODO: Do we need to standardize? No.
-            # Y = fit_gp.standardize_torch(Y)
         else:
             X = torch.empty(size=(0, self._policy.num_params()))
             Y = torch.empty(size=(0, 1))

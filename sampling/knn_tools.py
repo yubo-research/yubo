@@ -154,6 +154,16 @@ def _cgpt_zero_out_k_per_row_(u: np.ndarray, k: int):
     u[rows, cols] = 0
 
 
+def single_coordinate_perturbation(x_0: np.ndarray):
+    num_samples, num_dim = x_0.shape
+    i = np.random.choice(num_dim, size=num_samples, replace=True)
+    bdy = np.random.choice([0, 1], size=num_samples)
+    x_f = x_0.copy()
+    x_f[np.arange(num_samples), i] = bdy
+
+    return x_f
+
+
 def raasp(x_0: np.ndarray, num_perturb):
     _, num_dim = x_0.shape
 
