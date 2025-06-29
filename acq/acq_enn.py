@@ -5,7 +5,8 @@ import torch
 from botorch.utils.sampling import draw_sobol_samples
 
 from model.enn import EpsitemicNearestNeighbors
-from sampling.knn_tools import single_coordinate_perturbation
+from sampling.knn_tools import random_directions  #  single_coordinate_perturbation
+from sampling.ray_boundary import ray_boundary_np
 
 """
 - Remove least-likely points from observation set, i.e. Pareto(-mu_as_if_missing, -sigma_as_if_missing), i.e., "If the
@@ -57,8 +58,12 @@ class AcqENN:
         self._x_train = np.append(self._x_train, x, axis=0)
         self._y_train = np.append(self._y_train, y, axis=0)
 
-    def rebuild_if(self, max_observations, trim_to_num_observations):
-        assert False, "NYI"
+    def keep_top_n(self, num_keep):
+        if len(self._x_train) <= num_keep:
+            return self._x_train, self._y_train
+
+        i = self._i_pareto_fronts_discrepancy(num_keep)
+        return self._x_train[i], self._y_train[i]
 
     def _sample_segments(self, x_0, x_far):
         assert x_0.shape == x_far.shape, (x_0.shape, x_far.shape)
@@ -67,10 +72,10 @@ class AcqENN:
 
         if self._config.stagger:
             l_s_min = np.log(1e-4)
-            l_s_max = np.log(1)
+            l_s_max = np.log(1.0)
             alpha = np.exp(l_s_min + (l_s_max - l_s_min) * alpha)
 
-        x_cand = alpha * x_0 + (1 - alpha) * x_far
+        x_cand = (1 - alpha) * x_0 + alpha * x_far
 
         return x_cand
 
@@ -97,10 +102,40 @@ class AcqENN:
         i = np.random.choice(np.arange(len(x_front)), size=num_pivot, replace=True)
         return x_front[i]
 
-    def _pareto_fronts_strict(self, x_cand, num_arms):
+    def _i_pareto_fronts_discrepancy(self, num_keep):
+        # Full fronts, then random selection from *last* front.
+        y = self._y_train
+        mvn = self._enn.posterior(self._x_train, exclude_nearest=True)
+        discrep = np.abs(y - mvn.mu)
+
+        i = np.argsort(-y, axis=0).flatten()
+        discrep = discrep[i]
+
+        i_all = list(range(len(discrep)))
+        i_keep = []
+
+        num_tries = 0
+        while len(i_keep) < num_keep:
+            num_tries += 1
+            assert num_tries < 100, num_tries
+            discrep_max = -1e99
+            i_front = []
+            for i in i_all:
+                if discrep[i] >= discrep_max:
+                    i_front.append(i)
+                    discrep_max = discrep[i]
+            if len(i_keep) + len(i_front) <= num_keep:
+                i_keep.extend(i_front)
+            else:
+                i_keep.extend(np.random.choice(i_front, size=num_keep - len(i_keep), replace=False))
+            i_all = sorted(set(i_all) - set(i_front))
+
+        return np.array(i_keep)
+
+    def _i_pareto_fronts_strict(self, x_cand, num_arms, exclude_nearest=False):
         # Full fronts, then random selection from *last* front.
         assert self._config.num_over_sample_per_arm == 1, self._config.num_over_sample_per_arm
-        mvn = self._enn.posterior(x_cand)
+        mvn = self._enn.posterior(x_cand, exclude_nearest=exclude_nearest)
 
         i = np.argsort(-mvn.mu, axis=0).flatten()
         x_cand = x_cand[i]
@@ -109,7 +144,10 @@ class AcqENN:
         i_all = list(range(len(se)))
         i_keep = []
 
+        num_tries = 0
         while len(i_keep) < num_arms:
+            num_tries += 1
+            assert num_tries < 100, num_tries
             se_max = -1e99
             i_front = []
             for i in i_all:
@@ -122,7 +160,10 @@ class AcqENN:
                 i_keep.extend(np.random.choice(i_front, size=num_arms - len(i_keep), replace=False))
             i_all = sorted(set(i_all) - set(i_front))
 
-        i_keep = np.array(i_keep)
+        return np.array(i_keep)
+
+    def _pareto_fronts_strict(self, x_cand, num_arms, exclude_nearest=False):
+        i_keep = self._i_pareto_fronts_strict(x_cand, num_arms, exclude_nearest)
         x_arms = x_cand[i_keep]
 
         assert len(x_arms) == num_arms, (len(x_arms), num_arms)
@@ -133,21 +174,56 @@ class AcqENN:
         return x_cand[i]
 
     def _candidates(self, num_arms):
+        num_cand = self._config.num_interior * num_arms
         if self._config.region_type == "sobol":
             x_cand = (
                 draw_sobol_samples(
                     bounds=torch.tensor([[0.0, 1.0]] * self._num_dim).T,
-                    n=self._config.num_interior * num_arms,
+                    n=num_cand,
                     q=1,
                 )
                 .detach()
                 .numpy()
             ).squeeze(1)
+        elif self._config.region_type == "best":
+            x_0 = self._x_train[np.argsort(-self._y_train, axis=0).flatten()[:1]]
+            x_0 = x_0[np.random.choice(np.arange(len(x_0)), size=num_cand, replace=True)]
+            x_far = ray_boundary_np(x_0, random_directions(len(x_0), self._num_dim))
+            x_cand = self._sample_segments(x_0, x_far)
+        elif self._config.region_type == "pivots":
+            x_0 = self._select_pivots(num_cand)
+            x_far = ray_boundary_np(x_0, random_directions(len(x_0), self._num_dim))
+            x_cand = self._sample_segments(x_0, x_far)
+        elif self._config.region_type == "rand_train":
+            x_0 = self._x_train[np.random.choice(np.arange(len(self._x_train)), size=num_arms, replace=True)]
+            x_0 = x_0[np.random.choice(np.arange(len(x_0)), size=num_cand, replace=True)]
+            x_far = ray_boundary_np(x_0, random_directions(len(x_0), self._num_dim))
+            x_cand = self._sample_segments(x_0, x_far)
+        elif self._config.region_type == "convex":
+            mx = self._x_train.mean(axis=0, keepdims=True)
+
+            x_0 = self._select_pivots(num_cand)
+            w = np.random.dirichlet(size=num_cand, alpha=np.ones(len(x_0)))
+            w = w / w.sum(axis=1, keepdims=True)
+            m = (x_0.T @ w.T).T
+            x_cand = m  #  + (m - mx) * np.sqrt(len(x_0))
+
+            u = x_cand - mx
+            assert not np.isnan(u.sum())
+            norm = np.linalg.norm(u, axis=1, keepdims=True)
+            i = np.where(norm < 1e-9)[0]
+            norm[i] = 1
+            u = u / norm
+            u[i] = 0
+            assert not np.isnan(u.sum())
+            x_boundary = ray_boundary_np(mx, 0.1 * u)
+            dist_cand = np.linalg.norm(x_cand - mx, axis=1)
+            dist_boundary = np.linalg.norm(x_boundary - mx, axis=1)
+            i_clip = dist_cand > dist_boundary
+            x_cand[i_clip] = x_boundary[i_clip]
 
         else:
-            x_0 = self._select_pivots(self._config.num_interior * num_arms)
-            x_far = single_coordinate_perturbation(x_0)
-            x_cand = self._sample_segments(x_0, x_far)
+            assert False, self._config.region_type
 
         x_cand = np.unique(x_cand, axis=0)
 
@@ -162,9 +238,7 @@ class AcqENN:
         if len(x_cand) == num_arms:
             return x_cand
 
-        if self._config.acq == "pareto":
-            return self._pareto_front(x_cand, num_arms)
-        elif self._config.acq == "pareto_strict":
+        if self._config.acq == "pareto_strict":
             return self._pareto_fronts_strict(x_cand, num_arms)
         elif self._config.acq == "uniform":
             return self._uniform(x_cand, num_arms)

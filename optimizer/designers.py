@@ -70,6 +70,8 @@ class Designers:
                     keep_style = "random"
                 elif option[1] == "t":
                     keep_style = "trailing"
+                elif option[1] == "p":
+                    keep_style = "pareto"
                 else:
                     assert False, option
                 num_keep = int(option[2:])
@@ -392,45 +394,17 @@ class Designers:
             return MTSDesigner(self._policy, keep_style=keep_style, num_keep=num_keep, init_style="ts")
         elif designer_name == "mts-meas":
             return MTSDesigner(self._policy, keep_style=keep_style, num_keep=num_keep, init_style="meas")
-
-        elif designer_name.startswith("enn-s"):
-            k = int(designer_name.split("-")[-1])
-            return ENNDesigner(
-                self._policy,
-                ENNConfig(
-                    k=k,
-                    num_interior=1000,
-                    acq="pareto_strict",
-                    stagger=False,
-                    small_world_M=None,
-                ),
-                keep_style=keep_style,
-                num_keep=num_keep,
-            )
-        elif designer_name.startswith("enn-ss"):
-            k = int(designer_name.split("-")[-1])
-            return ENNDesigner(
-                self._policy,
-                ENNConfig(
-                    k=k,
-                    num_interior=1000,
-                    acq="pareto_strict",
-                    stagger=True,
-                    small_world_M=None,
-                ),
-                keep_style=keep_style,
-                num_keep=num_keep,
-            )
         elif designer_name.startswith("enn-"):
             k = int(designer_name.split("-")[-1])
             return ENNDesigner(
                 self._policy,
                 ENNConfig(
                     k=k,
-                    num_interior=10,
-                    acq="pareto_strict",
+                    num_interior=1,
+                    acq=None,
                     stagger=True,
                     small_world_M=None,
+                    region_type="pivots",
                 ),
                 keep_style=keep_style,
                 num_keep=num_keep,
