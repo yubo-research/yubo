@@ -71,8 +71,8 @@ class AcqENN:
         alpha = np.random.uniform(size=(len(x_0), 1))
 
         if self._config.stagger:
-            l_s_min = np.log(1e-5)
-            l_s_max = np.log(1)
+            l_s_min = np.log(1e-4)
+            l_s_max = np.log(1.0)
             alpha = np.exp(l_s_min + (l_s_max - l_s_min) * alpha)
 
         x_cand = (1 - alpha) * x_0 + alpha * x_far
@@ -186,7 +186,7 @@ class AcqENN:
                 .numpy()
             ).squeeze(1)
         elif self._config.region_type == "best":
-            x_0 = self._x_train[np.argsort(-self._y_train, axis=0).flatten()[:num_arms]]
+            x_0 = self._x_train[np.argsort(-self._y_train, axis=0).flatten()[:1]]
             x_0 = x_0[np.random.choice(np.arange(len(x_0)), size=num_cand, replace=True)]
             x_far = ray_boundary_np(x_0, random_directions(len(x_0), self._num_dim))
             x_cand = self._sample_segments(x_0, x_far)
