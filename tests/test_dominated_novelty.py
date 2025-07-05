@@ -17,7 +17,7 @@ def test_dominated_novelty():
 
     x_train = np.random.uniform(0, 1, (20, num_dim))
     y_train = np.random.uniform(0, 1, (20, 1))
-    d_train = np.random.uniform(0, 1, (20, 1))
+    d_train = np.random.uniform(0, 1, (20, 7))
 
     acq.add(x_train, y_train, d_train)
 

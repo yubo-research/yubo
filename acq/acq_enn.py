@@ -208,23 +208,23 @@ class AcqENN:
         # TODO: Consider se
         d_cand = self._enn_d.posterior(x_cand, exclude_nearest=False).mu
 
+        zero = np.zeros(shape=(1, 1))
         enn_dn = EpistemicNearestNeighbors(
             d_cand[[0]],
-            np.zeros(size=(d_cand.shape[0], 1)),
+            zero,
             k=self._config.k_novelty,
         )
         fitnesses = []
-        for x_c, d_c in zip(x_cand, d_cand):
-            x_c = np.atleast_2d(x_c)
+        for d_c in d_cand:
             d_c = np.atleast_2d(d_c)
-            idx, dists = enn_dn.about_neighbors(x_c)
+            idx, dists = enn_dn.about_neighbors(d_c)
             if len(idx) == 0:
                 fitnesses.append(np.inf)
             else:
                 idx = idx.flatten()
                 dists = dists.flatten()
                 fitnesses.append(np.mean(dists))
-            enn_dn.add(x_c, d_c)
+            enn_dn.add(d_c, zero)
 
         fitnesses = np.array(fitnesses)
         i_selected = np.argsort(-fitnesses)[:num_arms]
