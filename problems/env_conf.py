@@ -6,6 +6,7 @@ import gymnasium as gym
 
 import problems.other as other
 import problems.pure_functions as pure_functions
+from problems.ar_linear_policy import ARLinearPolicy
 from problems.linear_policy import LinearPolicy
 from problems.mlp_policy import MLPPolicyFactory
 from problems.noise_maker import NoiseMaker
@@ -145,6 +146,14 @@ _gym_env_confs = {
             num_frames_skip=100,
         ),
     ),
+    "bw-ar": _gym_conf(
+        "BipedalWalker-v3",
+        gym_conf=GymConf(
+            max_steps=1600,
+            num_frames_skip=100,
+        ),
+        policy_class=ARLinearPolicy,
+    ),
     # See https://github.com/hardmaru/estool/blob/b0954523e906d852287c6f515f34756c550ccf42/config.py#L309
     #  for config (i.e., (40,40))
     # https://arxiv.org/html/2304.12778 uses (16,)
@@ -173,6 +182,14 @@ _gym_env_confs = {
         ),
         kwargs={"continuous": True},
         policy_class=MLPPolicyFactory((16, 8)),
+    ),
+    "lunar-ar": _gym_conf(
+        "LunarLander-v3",
+        gym_conf=GymConf(
+            max_steps=500,
+        ),
+        kwargs={"continuous": True},
+        policy_class=ARLinearPolicy,
     ),
     "tlunar": EnvConf(
         # TuRBO paper specifies v2, but that raises an exception now

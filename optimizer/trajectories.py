@@ -48,14 +48,24 @@ def collect_trajectory(env_conf, policy, noise_seed=None, show_frames=False):
     else:
         max_steps = 99999
 
+    if hasattr(policy, "big_call"):
+        call_fn = policy.big_call
+    else:
+
+        def call_fn(s, a, r):
+            return policy.__call__(s)
+
+    action_p = 0.0
+    reward = 0
     for i_iter in range(max_steps):
         # assert np.all(state >= lb), (state, lb)
 
         state_p = (state - lb) / width
         if b_gym and env_conf.gym_conf.transform_state:
-            action_p = policy(state_p)  # in [-1,1]
+            # action_p in [-1,1]
+            action_p = call_fn(state_p, action_p, reward)
         else:
-            action_p = policy(state)
+            action_p = call_fn(state, action_p, reward)
 
         if hasattr(env.action_space, "low"):
             action = env.action_space.low + (env.action_space.high - env.action_space.low) * (1 + action_p) / 2

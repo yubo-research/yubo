@@ -124,6 +124,9 @@ def fit_gp_XY(X, Y, model_spec=None):
     model_type, input_warping, output_warping = _parse_spec(model_spec)
     del model_spec
 
+    X = X.to(dtype=torch.double)
+    Y = Y.to(dtype=torch.double)
+
     if len(X) == 0:
         if model_type == "dumbo":
             gp = DUMBOGP(X, Y, use_rank_distance=False)

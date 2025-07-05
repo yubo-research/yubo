@@ -277,15 +277,20 @@ def prep_seq(results_dir):
 
     opts = [
         # "random",
-        # # "lei",
+        # "lei",
         # # "ucb",
         # "turbo-0",
         # "turbo-1",
         # # "optuna",
         # "turbo-enn-10",
-        # "enn-3",
-        # "enn-sw-3",
-        "enn-ss-3",
+        # "turbo-yubo",
+        # "enn-r-10",
+        # "enn-trc-10",
+        # "enn-trp-10",
+        # "enn-trr-10",
+        # "enn-p-10",
+        # "turbo-yubo-nr"
+        "enn-ps-10",
     ]
 
     noises = [None]
@@ -294,7 +299,7 @@ def prep_seq(results_dir):
     cmds = []
 
     # dims = [1, 3, 10, 30, 100]
-    dims = [1, 3, 10, 30, 100, 300, 1000]
+    dims = [1, 3, 10, 30, 100, 300]  # , 300, 1000]
     for num_dim in dims:
         if num_dim == 1000 and opts == "path:Osab":
             continue
@@ -324,9 +329,16 @@ def prep_rl_three(results_dir, name):
     exp_dir = f"exp_enn_{name}"
 
     opts = [
+        # "random",
+        # "cma",
+        # "optuna",
+        # "turbo-0",
         # "turbo-enn-3",
-        # "turbo-f",
-        "turbo-0",
+        # "turbo-1",
+        # "enn-p-10",
+        # "enn-tr-10",
+        # "enn-trp-10",
+        "enn-ps-10",
     ]
 
     cmds = []

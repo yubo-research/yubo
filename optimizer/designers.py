@@ -29,6 +29,7 @@ from .optuna_designer import OptunaDesigner
 from .random_designer import RandomDesigner
 from .sobol_designer import SobolDesigner
 from .turbo_designer import TuRBODesigner
+from .turbo_yubo_designer import TurboYUBODesigner
 
 
 class NoSuchDesignerError(Exception):
@@ -71,7 +72,7 @@ class Designers:
                 elif option[1] == "t":
                     keep_style = "trailing"
                 elif option[1] == "p":
-                    keep_style = "pareto"
+                    keep_style = "lap"
                 else:
                     assert False, option
                 num_keep = int(option[2:])
@@ -394,21 +395,178 @@ class Designers:
             return MTSDesigner(self._policy, keep_style=keep_style, num_keep=num_keep, init_style="ts")
         elif designer_name == "mts-meas":
             return MTSDesigner(self._policy, keep_style=keep_style, num_keep=num_keep, init_style="meas")
-        elif designer_name.startswith("enn-"):
+        elif designer_name.startswith("enn-u"):
             k = int(designer_name.split("-")[-1])
             return ENNDesigner(
                 self._policy,
                 ENNConfig(
                     k=k,
-                    num_interior=1,
-                    acq=None,
-                    stagger=True,
+                    num_interior=1000,
+                    acq="uniform",
+                    stagger=False,
                     small_world_M=None,
-                    region_type="pivots",
+                    region_type="sobol+best",
                 ),
                 keep_style=keep_style,
                 num_keep=num_keep,
             )
+
+        elif designer_name.startswith("enn-tr0-"):
+            k = int(designer_name.split("-")[-1])
+            return ENNDesigner(
+                self._policy,
+                ENNConfig(
+                    k=k,
+                    num_interior=100,
+                    acq="pareto_strict",
+                    stagger=False,
+                    small_world_M=None,
+                    region_type="tr",
+                    tr_type="0",
+                ),
+                keep_style=keep_style,
+                num_keep=num_keep,
+            )
+        elif designer_name.startswith("enn-trm-"):
+            k = int(designer_name.split("-")[-1])
+            return ENNDesigner(
+                self._policy,
+                ENNConfig(
+                    k=k,
+                    num_interior=100,
+                    acq="pareto_strict",
+                    stagger=False,
+                    small_world_M=None,
+                    region_type="tr",
+                    tr_type="median",
+                ),
+                keep_style=keep_style,
+                num_keep=num_keep,
+            )
+        elif designer_name.startswith("enn-trr-"):
+            k = int(designer_name.split("-")[-1])
+            return ENNDesigner(
+                self._policy,
+                ENNConfig(
+                    k=k,
+                    num_interior=100,
+                    acq="pareto_strict",
+                    stagger=False,
+                    small_world_M=None,
+                    region_type="tr",
+                    tr_type="mean",
+                    raasp_type="raasp",
+                ),
+                keep_style=keep_style,
+                num_keep=num_keep,
+            )
+        elif designer_name.startswith("enn-trp-"):
+            k = int(designer_name.split("-")[-1])
+            return ENNDesigner(
+                self._policy,
+                ENNConfig(
+                    k=k,
+                    num_interior=100,
+                    acq="pareto_strict",
+                    stagger=False,
+                    small_world_M=None,
+                    region_type="tr",
+                    tr_type="mean",
+                    raasp_type="raasp_p",
+                ),
+                keep_style=keep_style,
+                num_keep=num_keep,
+            )
+        elif designer_name.startswith("enn-p-"):
+            k = int(designer_name.split("-")[-1])
+            return ENNDesigner(
+                self._policy,
+                ENNConfig(
+                    k=k,
+                    num_interior=100,
+                    acq="pareto_strict",
+                    stagger=False,
+                    small_world_M=None,
+                    region_type="best",
+                    tr_type="mean",
+                    raasp_type="raasp_p",
+                ),
+                keep_style=keep_style,
+                num_keep=num_keep,
+            )
+        elif designer_name.startswith("enn-ps-"):
+            k = int(designer_name.split("-")[-1])
+            return ENNDesigner(
+                self._policy,
+                ENNConfig(
+                    k=k,
+                    num_interior=100,
+                    acq="pareto_strict",
+                    stagger=True,
+                    small_world_M=None,
+                    region_type="best",
+                    tr_type="mean",
+                    raasp_type="raasp_p",
+                ),
+                keep_style=keep_style,
+                num_keep=num_keep,
+            )
+        elif designer_name.startswith("enn-r1-"):
+            k = int(designer_name.split("-")[-1])
+            return ENNDesigner(
+                self._policy,
+                ENNConfig(
+                    k=k,
+                    num_interior=100,
+                    acq="pareto_strict",
+                    stagger=False,
+                    small_world_M=None,
+                    region_type="best",
+                    tr_type="mean",
+                    raasp_type="raasp_1",
+                ),
+                keep_style=keep_style,
+                num_keep=num_keep,
+            )
+        elif designer_name.startswith("enn-ru1-"):
+            k = int(designer_name.split("-")[-1])
+            return ENNDesigner(
+                self._policy,
+                ENNConfig(
+                    k=k,
+                    num_interior=100,
+                    acq="uniform",
+                    stagger=False,
+                    small_world_M=None,
+                    region_type="best",
+                    tr_type="mean",
+                    raasp_type="raasp_1",
+                ),
+                keep_style=keep_style,
+                num_keep=num_keep,
+            )
+        elif designer_name.startswith("enn-tr-"):
+            k = int(designer_name.split("-")[-1])
+            return ENNDesigner(
+                self._policy,
+                ENNConfig(
+                    k=k,
+                    num_interior=100,
+                    acq="pareto_strict",
+                    stagger=False,
+                    small_world_M=None,
+                    region_type="tr",
+                    tr_type="mean",
+                    raasp_type=None,
+                ),
+                keep_style=keep_style,
+                num_keep=num_keep,
+            )
+
+        elif designer_name == "turbo-yubo":
+            return TurboYUBODesigner(self._policy, num_keep=num_keep, keep_style=keep_style, raasp=True)
+        elif designer_name == "turbo-yubo-nr":
+            return TurboYUBODesigner(self._policy, num_keep=num_keep, keep_style=keep_style, raasp=False)
 
         # Long sobol init, sequential opt
         elif designer_name == "sobol_ucb":

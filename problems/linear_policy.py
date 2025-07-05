@@ -1,6 +1,4 @@
-import numpy as np
-
-from .normalizer import Normalizer
+from problems.linear_policty_calculator import LinearPolicyCalculator
 
 
 # Simple random search of static linear policies is competitive for reinforcement learning
@@ -11,61 +9,22 @@ class LinearPolicy:
         self.problem_seed = env_conf.problem_seed
         self._env_conf = env_conf
         num_state = env_conf.gym_conf.state_space.shape[0]
-        self._beta = np.random.uniform(
-            -1,
-            1,
-            size=(
-                env_conf.action_space.shape[0],
-                num_state,
-            ),
-        )
-        self._normalizer = Normalizer(shape=(num_state,))
-        self._num_beta = self._beta.size
-        self._scale = 1
+        num_action = env_conf.action_space.shape[0]
+        self._calculator = LinearPolicyCalculator(num_state, num_action)
 
     def num_params(self):
-        return self._num_beta + 1
+        return self._calculator.num_params()
 
     def set_params(self, x):
-        # x in [-1,1]
-        assert x.min() >= -1 and x.max() <= 1, (x.min(), x.max())
-        i = 0
-        self._scale = x[0]
-        i += 1
-        self._beta = x[i : i + self._num_beta].reshape(self._beta.shape)
-        self._k = 1 + self._scale
+        self._calculator.set_params(x)
 
     def get_params(self):
-        p = np.zeros(shape=(self.num_params(),))
-        i = 0
-        p[0] = self._scale
-        i += 1
-        p[i : i + self._num_beta] = self._beta.flatten()
-        return p
+        return self._calculator.get_params()
 
     def clone(self):
         lp = LinearPolicy(self._env_conf)
-        lp._beta = self._beta.copy()
+        lp._calculator = self._calculator.clone()
         return lp
 
-    def _normalize(self, state):
-        self._normalizer.update(state)
-        loc, scale = self._normalizer.mean_and_std()
-
-        state = state - loc
-
-        i = np.where(scale == 0)[0]
-        scale[i] = 1
-        state[i] = 0.0
-        state = state / scale
-
-        return state
-
     def __call__(self, state):
-        # beta in [-1, 1]
-        # scale in [-1, 1]
-        assert self._beta.min() >= -1 and self._beta.max() <= 1, (self._beta.min(), self._beta.max())
-        state = self._normalize(state)
-        beta = self._k * self._beta
-
-        return np.maximum(-1, np.minimum(1, beta @ state))
+        return self._calculator.calculate(state)

@@ -1,7 +1,8 @@
 import numpy as np
 import torch
 from botorch.sampling.qmc import MultivariateNormalQMCEngine
-from scipy.stats import multivariate_normal
+from botorch.utils.sampling import draw_sobol_samples
+from scipy.stats import multivariate_normal, qmc
 from torch.quasirandom import SobolEngine
 
 
@@ -143,3 +144,88 @@ def _xxx_draw_varied_bounded_normal_samples(mus_covs):
     p = samples[:, 1]
 
     return x, p
+
+
+def raasp_np_choice(
+    x_center,
+    lb,
+    ub,
+    num_candidates,
+):
+    num_dim = x_center.shape[-1]
+    k = min(20, num_dim)
+
+    sobol_engine = qmc.Sobol(num_dim, scramble=True)
+    sobol_samples = sobol_engine.random(num_candidates)
+
+    lb_array = np.asarray(lb)
+    ub_array = np.asarray(ub)
+    pert = lb_array + (ub_array - lb_array) * sobol_samples
+
+    if k == num_dim:
+        return pert
+    else:
+        candidates = np.tile(x_center, (num_candidates, 1))
+        rand = np.random.rand(num_candidates, num_dim)
+        dims = np.argpartition(rand, k, axis=1)[:, :k]
+        row_idx = np.repeat(np.arange(num_candidates), k)
+        col_idx = dims.ravel()
+        candidates[row_idx, col_idx] = pert[row_idx, col_idx]
+        return candidates
+
+
+def raasp_np_p(x_center, lb, ub, num_candidates):
+    num_dim = x_center.shape[-1]
+    return raasp_np(x_center, lb, ub, num_candidates, num_pert=min(20, int(num_dim * 0.20 + 0.5)))
+
+
+def raasp_np(x_center, lb, ub, num_candidates, num_pert=20):
+    num_dim = x_center.shape[-1]
+    prob_perturb = min(num_pert / num_dim, 1.0)
+    mask = np.random.rand(num_candidates, num_dim) <= prob_perturb
+
+    ind = np.where(np.sum(mask, axis=1) == 0)[0]
+    if len(ind) > 0:
+        mask[ind, np.random.randint(0, num_dim, size=len(ind))] = True
+
+    return sobol_perturb_np(x_center, lb, ub, num_candidates, mask)
+
+
+def sobol_perturb_np(x_center, lb, ub, num_candidates, mask):
+    num_dim = x_center.shape[-1]
+    sobol_engine = qmc.Sobol(num_dim, scramble=True)
+    sobol_samples = sobol_engine.random(num_candidates)
+    lb_array = np.asarray(lb)
+    ub_array = np.asarray(ub)
+    pert = lb_array + (ub_array - lb_array) * sobol_samples
+
+    candidates = np.tile(x_center, (num_candidates, 1))
+    candidates[mask] = pert[mask]
+
+    return candidates
+
+
+def raasp(x_center, lb, ub, num_candidates, device, dtype):
+    num_dim = x_center.shape[-1]
+    prob_perturb = min(20.0 / num_dim, 1.0)
+    mask = torch.rand(num_candidates, num_dim, device=device) <= prob_perturb
+
+    ind = torch.where(torch.sum(mask, dim=1) == 0)[0]
+    if len(ind) > 0:
+        mask[ind, torch.randint(0, num_dim, (len(ind),), device=device)] = True
+
+    sobol_samples = draw_sobol_samples(
+        bounds=torch.tensor([[0.0] * num_dim, [1.0] * num_dim], dtype=dtype, device=device),
+        n=num_candidates,
+        q=1,
+    ).squeeze(1)
+
+    lb_tensor = torch.tensor(lb, dtype=dtype, device=device)
+    ub_tensor = torch.tensor(ub, dtype=dtype, device=device)
+    pert = lb_tensor + (ub_tensor - lb_tensor) * sobol_samples
+
+    candidates = x_center.expand(num_candidates, -1)
+    candidates = candidates.clone()
+    candidates[mask] = pert[mask]
+
+    return candidates

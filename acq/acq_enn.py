@@ -7,6 +7,7 @@ from botorch.utils.sampling import draw_sobol_samples
 from model.enn import EpsitemicNearestNeighbors
 from sampling.knn_tools import random_directions  #  single_coordinate_perturbation
 from sampling.ray_boundary import ray_boundary_np
+from sampling.sampling_util import raasp_np, raasp_np_choice, raasp_np_p, sobol_perturb_np
 
 """
 - Remove least-likely points from observation set, i.e. Pareto(-mu_as_if_missing, -sigma_as_if_missing), i.e., "If the
@@ -28,6 +29,8 @@ class ENNConfig:
     num_over_sample_per_arm: int = 1
 
     region_type: str = "sobol"
+    tr_type: str = "mean"
+    raasp_type: str = None
 
     def __post_init__(self):
         assert self.num_over_sample_per_arm > 0
@@ -62,6 +65,8 @@ class AcqENN:
         if len(self._x_train) <= num_keep:
             return self._x_train, self._y_train
 
+        # TODO: Use a greedy algorithm to remove points one-by-one
+        #  otherwise you could remove two points that are close to each other.
         i = self._i_pareto_fronts_discrepancy(num_keep)
         return self._x_train[i], self._y_train[i]
 
@@ -140,8 +145,11 @@ class AcqENN:
         i = np.argsort(-mvn.mu, axis=0).flatten()
         x_cand = x_cand[i]
         se = mvn.se[i]
+        i_rev = list(range(len(se)))
+        i_rev = np.array(i_rev)[i]
 
         i_all = list(range(len(se)))
+
         i_keep = []
 
         num_tries = 0
@@ -160,7 +168,7 @@ class AcqENN:
                 i_keep.extend(np.random.choice(i_front, size=num_arms - len(i_keep), replace=False))
             i_all = sorted(set(i_all) - set(i_front))
 
-        return np.array(i_keep)
+        return i_rev[np.array(i_keep)]
 
     def _pareto_fronts_strict(self, x_cand, num_arms, exclude_nearest=False):
         i_keep = self._i_pareto_fronts_strict(x_cand, num_arms, exclude_nearest)
@@ -173,59 +181,151 @@ class AcqENN:
         i = np.random.choice(np.arange(len(x_cand)), size=num_arms, replace=False)
         return x_cand[i]
 
+    def _draw_sobol(self, num_cand, bounds=None):
+        if bounds is None:
+            bounds = torch.tensor([[0.0, 1.0]] * self._num_dim).T
+        else:
+            bounds = torch.as_tensor(bounds, dtype=torch.float32)
+        return (
+            draw_sobol_samples(
+                bounds=bounds,
+                n=num_cand,
+                q=1,
+            )
+            .detach()
+            .numpy()
+        ).squeeze(1)
+
+    def _biased_raasp(self, x_center, num_cand, lb=0.0, ub=1.0):
+        x_cand_0 = raasp_np(x_center, lb, ub, num_cand, num_pert=1)
+        num_dim_raasp = max(1, min(20, int(0.2 * self._num_dim + 0.5)))
+        x_cand_0 = self._pareto_fronts_strict(x_cand_0, num_dim_raasp)
+        delta = np.abs(x_cand_0 - x_center)
+        i_dim_perturbed = np.where(delta.sum(axis=0) > 1e-6)[0]
+        assert len(i_dim_perturbed) > 0, i_dim_perturbed
+        mask = np.zeros(shape=(num_cand, self._num_dim), dtype=bool)
+        mask[:, i_dim_perturbed] = True
+        x_cand_1 = sobol_perturb_np(x_center, lb, ub, num_cand, mask)
+        return np.concatenate([x_cand_0, x_cand_1], axis=0)
+
+    def _raasp(self, x_center, num_cand, lb=0.0, ub=1.0):
+        if self._config.raasp_type == "raasp":
+            return raasp_np(x_center, lb, ub, num_cand)
+        elif self._config.raasp_type == "raasp_choice":
+            return raasp_np_choice(x_center, lb, ub, num_cand)
+        elif self._config.raasp_type == "raasp_p":
+            return raasp_np_p(x_center, lb, ub, num_cand)
+        elif self._config.raasp_type == "biased_raasp":
+            return self._biased_raasp(x_center, num_cand, lb, ub)
+        elif self._config.raasp_type == "raasp_1":
+            return raasp_np(x_center, lb, ub, num_cand, num_pert=1)
+        else:
+            return None
+
+    def _raasp_or_sobol(self, x_center, num_cand, lb=0.0, ub=1.0):
+        raasp = self._raasp(x_center, num_cand, lb, ub)
+        if raasp is not None:
+            return raasp
+        else:
+            return self._draw_sobol(num_cand)
+
+    def _trust_region(self, num_cand):
+        if len(self._x_train) < 3:
+            return self._draw_sobol(num_cand)
+        x_center = self._x_train[[np.argmax(self._y_train)]]
+
+        mvn = self._enn.posterior(self._x_train, exclude_nearest=True, k=2)
+        loocv = mvn.mu - self._y_train  # / mvn.se
+        if loocv.std() < 1e-9:
+            return self._raasp_or_sobol(x_center, num_cand)
+        idx, dists = self._enn.about_neighbors(x_center, k=len(self._x_train))
+        idx = idx.flatten()
+        dists = dists.flatten()
+        d = np.abs(loocv)
+        if self._config.tr_type == "mean":
+            d = d[idx] / d.mean()
+        elif self._config.tr_type == "0":
+            d = d[idx] / d[0]
+        elif self._config.tr_type == "median":
+            d = d[idx] / np.median(d)
+        else:
+            assert False, self._config.tr_type
+
+        if d[0] > 1.0 + 1e-9:
+            tr = dists[1] / 2
+        else:
+            d[0] = 0.0
+            i = np.where(d > 1.0 + 1e-9)[0]
+            if len(i) == 0:
+                tr = dists[1] / 2
+            else:
+                i = i.min()
+                if i == len(idx):
+                    return self._draw_sobol(num_cand)
+                tr = (dists[i] + dists[i - 1]) / 2
+
+        bounds = np.array([x_center[0] - tr, x_center[0] + tr])
+        bounds = np.maximum(0.0, bounds)
+        bounds = np.minimum(1.0, bounds)
+        return self._raasp_or_sobol(x_center, num_cand, bounds[0], bounds[1])
+
     def _candidates(self, num_arms):
         num_cand = self._config.num_interior * num_arms
-        if self._config.region_type == "sobol":
-            x_cand = (
-                draw_sobol_samples(
-                    bounds=torch.tensor([[0.0, 1.0]] * self._num_dim).T,
-                    n=num_cand,
-                    q=1,
-                )
-                .detach()
-                .numpy()
-            ).squeeze(1)
-        elif self._config.region_type == "best":
-            x_0 = self._x_train[np.argsort(-self._y_train, axis=0).flatten()[:1]]
-            x_0 = x_0[np.random.choice(np.arange(len(x_0)), size=num_cand, replace=True)]
-            x_far = ray_boundary_np(x_0, random_directions(len(x_0), self._num_dim))
-            x_cand = self._sample_segments(x_0, x_far)
-        elif self._config.region_type == "pivots":
-            x_0 = self._select_pivots(num_cand)
-            x_far = ray_boundary_np(x_0, random_directions(len(x_0), self._num_dim))
-            x_cand = self._sample_segments(x_0, x_far)
-        elif self._config.region_type == "rand_train":
-            x_0 = self._x_train[np.random.choice(np.arange(len(self._x_train)), size=num_arms, replace=True)]
-            x_0 = x_0[np.random.choice(np.arange(len(x_0)), size=num_cand, replace=True)]
-            x_far = ray_boundary_np(x_0, random_directions(len(x_0), self._num_dim))
-            x_cand = self._sample_segments(x_0, x_far)
-        elif self._config.region_type == "convex":
-            mx = self._x_train.mean(axis=0, keepdims=True)
+        x_cands = []
+        for region_type in self._config.region_type.split("+"):
+            if region_type == "tr":
+                x_cand = self._trust_region(num_cand)
+            elif region_type == "sobol":
+                return self._draw_sobol(num_cand)
+            elif region_type == "best":
+                x_0 = self._x_train[[np.argmax(self._y_train)]]
+                raasp = self._raasp(x_0, num_cand)
+                if raasp is not None:
+                    return raasp
+                else:
+                    x_0 = x_0[np.random.choice(np.arange(len(x_0)), size=num_cand, replace=True)]
+                    x_far = ray_boundary_np(x_0, random_directions(len(x_0), self._num_dim))
+                    return self._sample_segments(x_0, x_far)
+            elif region_type == "pivots":
+                x_0 = self._select_pivots(num_cand)
+                x_far = ray_boundary_np(x_0, random_directions(len(x_0), self._num_dim))
+                x_cand = self._sample_segments(x_0, x_far)
+            elif region_type == "rand_train":
+                x_0 = self._x_train[np.random.choice(np.arange(len(self._x_train)), size=num_arms, replace=True)]
+                x_0 = x_0[np.random.choice(np.arange(len(x_0)), size=num_cand, replace=True)]
+                x_far = ray_boundary_np(x_0, random_directions(len(x_0), self._num_dim))
+                x_cand = self._sample_segments(x_0, x_far)
+            elif region_type == "convex":
+                # slow
+                mx = self._x_train.mean(axis=0, keepdims=True)
 
-            x_0 = self._select_pivots(num_cand)
-            w = np.random.dirichlet(size=num_cand, alpha=np.ones(len(x_0)))
-            w = w / w.sum(axis=1, keepdims=True)
-            m = (x_0.T @ w.T).T
-            x_cand = m  #  + (m - mx) * np.sqrt(len(x_0))
+                x_0 = self._select_pivots(num_cand)
+                w = np.random.dirichlet(size=num_cand, alpha=np.ones(len(x_0)))
+                w = w / w.sum(axis=1, keepdims=True)
+                m = (x_0.T @ w.T).T
+                x_cand = m  #  + (m - mx) * np.sqrt(len(x_0))
 
-            u = x_cand - mx
-            assert not np.isnan(u.sum())
-            norm = np.linalg.norm(u, axis=1, keepdims=True)
-            i = np.where(norm < 1e-9)[0]
-            norm[i] = 1
-            u = u / norm
-            u[i] = 0
-            assert not np.isnan(u.sum())
-            x_boundary = ray_boundary_np(mx, 0.1 * u)
-            dist_cand = np.linalg.norm(x_cand - mx, axis=1)
-            dist_boundary = np.linalg.norm(x_boundary - mx, axis=1)
-            i_clip = dist_cand > dist_boundary
-            x_cand[i_clip] = x_boundary[i_clip]
+                u = x_cand - mx
+                assert not np.isnan(u.sum())
+                norm = np.linalg.norm(u, axis=1, keepdims=True)
+                i = np.where(norm < 1e-9)[0]
+                norm[i] = 1
+                u = u / norm
+                u[i] = 0
+                assert not np.isnan(u.sum())
+                x_boundary = ray_boundary_np(mx, 0.1 * u)
+                dist_cand = np.linalg.norm(x_cand - mx, axis=1)
+                dist_boundary = np.linalg.norm(x_boundary - mx, axis=1)
+                i_clip = dist_cand > dist_boundary
+                x_cand[i_clip] = x_boundary[i_clip]
 
-        else:
-            assert False, self._config.region_type
+            else:
+                assert False, region_type
 
-        x_cand = np.unique(x_cand, axis=0)
+            x_cands.append(x_cand)
+
+        x_cand = np.concatenate(x_cands, axis=0)
+        x_cand = np.unique(np.concatenate(x_cands, axis=0), axis=0)
 
         assert x_cand.min() >= 0.0 and x_cand.max() <= 1.0, (x_cand.min(), x_cand.max())
         assert len(np.unique(x_cand, axis=0)) == x_cand.shape[0], (len(np.unique(x_cand, axis=0)), x_cand.shape[0])
