@@ -60,7 +60,7 @@ def test_utils():
     from .test_enn import set_up_enn
 
     np.random.seed(17)
-    num_dim, n, train_x, train_y, k, enn = set_up_enn()
+    num_dim, n, train_x, train_y, k, enn = set_up_enn(1)
 
     u = random_directions(1, num_dim)
     assert u.shape == (1, num_dim)
@@ -87,7 +87,7 @@ def test_farthest_neighbor():
 
     from .test_enn import set_up_enn
 
-    num_dim, n, train_x, train_y, k, enn = set_up_enn()
+    num_dim, n, train_x, train_y, k, enn = set_up_enn(1)
 
     # farthest_neighbor(enn, x_0: np.array, u: np.array, eps_bound: float = 1e-6):
     u = random_directions(1, num_dim)
@@ -102,7 +102,7 @@ def test_farthest_neighbor_n():
 
     from .test_enn import set_up_enn
 
-    num_dim, n, train_x, train_y, k, enn = set_up_enn()
+    num_dim, n, train_x, train_y, k, enn = set_up_enn(1)
 
     u = random_directions(3, num_dim)
 
