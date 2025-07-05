@@ -2,7 +2,7 @@ import numpy as np
 import torch
 from scipy.stats import binom
 
-from model.enn import EpsitemicNearestNeighbors
+from model.enn import EpistemicNearestNeighbors
 from sampling.knn_tools import farthest_neighbor, most_isolated, nearest_neighbor, random_directions
 from sampling.lhd import latin_hypercube_design
 
@@ -18,12 +18,12 @@ class AcqVHD:
         self._seed = np.random.randint(0, 9999)
 
         if len(self._X_train) > 0:
-            self._enn = EpsitemicNearestNeighbors(self._X_train, self._Y_train, k=1)
+            self._enn = EpistemicNearestNeighbors(self._X_train, self._Y_train, k=1)
             if k > 0:
-                self._enn_ts = EpsitemicNearestNeighbors(self._X_train, self._Y_train, k=k)
+                self._enn_ts = EpistemicNearestNeighbors(self._X_train, self._Y_train, k=k)
             else:
                 # self._enn_ts = None
-                self._enn_ts = EpsitemicNearestNeighbors(self._X_train, self._Y_train, k=1)
+                self._enn_ts = EpistemicNearestNeighbors(self._X_train, self._Y_train, k=1)
         else:
             self._enn = None
             self._enn_ts = None
@@ -48,9 +48,9 @@ class AcqVHD:
 
     def _find_isolated(self, x_a, num_samples):
         if len(self._X_train) == 0:
-            enn = EpsitemicNearestNeighbors(x_a, 0 * x_a.sum(axis=1, keepdims=True), k=1)
+            enn = EpistemicNearestNeighbors(x_a, 0 * x_a.sum(axis=1, keepdims=True), k=1)
         else:
-            enn = EpsitemicNearestNeighbors(self._X_train, self._Y_train, k=1)
+            enn = EpistemicNearestNeighbors(self._X_train, self._Y_train, k=1)
         if len(x_a) > 0:
             enn.add(x_a, 0)
 
@@ -121,7 +121,7 @@ class AcqVHD:
         return x_a
 
 
-def find_farthest_neighbor(enn: EpsitemicNearestNeighbors, x_0: np.ndarray):
+def find_farthest_neighbor(enn: EpistemicNearestNeighbors, x_0: np.ndarray):
     import torch
 
     idx_0, dist_0 = enn.about_neighbors(x_0, k=1)

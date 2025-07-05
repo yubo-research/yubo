@@ -9,6 +9,8 @@ from .normalizer import Normalizer
 
 class MLPPolicyFactory:
     def __init__(self, hidden_sizes):
+        if not isinstance(hidden_sizes, (list, tuple)) or not all(isinstance(x, int) and x > 0 for x in hidden_sizes):
+            raise ValueError("hidden_sizes must be a sequence of positive integers")
         self._hidden_sizes = hidden_sizes
 
     def __call__(self, env_conf):
@@ -32,20 +34,20 @@ class MLPPolicy(nn.Module):
             layers.append(nn.Tanh())
 
         layers.append(nn.Linear(dims[-2], dims[-1]))
-        layers.append(nn.Tanh())  # to bound action space
+        layers.append(nn.Tanh())
 
         self.model = nn.Sequential(*layers)
-
         self._normalizer = Normalizer(shape=(num_state,))
 
     def _normalize(self, state):
+        state = state.copy()
         self._normalizer.update(state)
         loc, scale = self._normalizer.mean_and_std()
 
-        i = np.where(scale == 0)[0]
+        zero_scale_mask = scale == 0
         state = state - loc
-        scale[i] = 1
-        state[i] = 0.0
+        scale[zero_scale_mask] = 1
+        state[zero_scale_mask] = 0.0
         state = state / scale
         return state
 
@@ -53,25 +55,26 @@ class MLPPolicy(nn.Module):
         return self.model(x)
 
     def __call__(self, state):
-        """
-        Takes a state (NumPy array or torch.Tensor) and returns an action (NumPy array).
-        Applies online normalization to the input.
-        """
-
         state = self._normalize(state)
-        state = torch.from_numpy(state).float()
+        state_tensor = torch.from_numpy(state).float().to(self.device)
 
         with torch.inference_mode():
-            action = self.forward(state)
-        return action.numpy()
+            action = self.forward(state_tensor)
+        return action.cpu().numpy()
+
+    @property
+    def device(self):
+        return next(self.parameters()).device
 
     def num_params(self):
         return sum(p.numel() for p in self.parameters())
 
     def get_params(self):
         with torch.inference_mode():
-            params = np.concatenate([p.data.cpu().numpy().flatten() for p in self.parameters()])
-        return params
+            params = []
+            for p in self.parameters():
+                params.append(p.data.cpu().numpy().flatten())
+            return np.concatenate(params)
 
     def set_params(self, flat_params):
         with torch.inference_mode():
@@ -79,7 +82,8 @@ class MLPPolicy(nn.Module):
             for p in self.parameters():
                 shape = p.shape
                 size = p.numel()
-                p.copy_(torch.from_numpy(flat_params[idx : idx + size].reshape(shape)).float())
+                param_data = torch.from_numpy(flat_params[idx : idx + size].reshape(shape)).float()
+                p.copy_(param_data.to(p.device))
                 idx += size
 
     def clone(self):

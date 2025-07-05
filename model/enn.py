@@ -25,7 +25,7 @@ class ENNNormal:
         return np.expand_dims(self.mu, -1) + np.expand_dims(self.se, -1) * eps
 
 
-class EpsitemicNearestNeighbors:
+class EpistemicNearestNeighbors:
     # TODO: train_YVar; treat as third metric in acquisition function b/c not calibrate to epistemic var
     def __init__(self, train_x, train_y, k, small_world_M=None):
         assert len(train_x) == len(train_y), (len(train_x), len(train_y))
@@ -55,7 +55,8 @@ class EpsitemicNearestNeighbors:
         if np.isscalar(y):
             y = np.array([[y]])
         elif y.ndim == 1:
-            y = y.reshape(-1, 1)
+            y = np.atleast_2d(y)
+            assert y.shape == (1, self._num_metrics), y.shape
         self._train_y = np.append(self._train_y, y, axis=0)
         if self._lookup is not None:
             assert False, "NYI: Add to lookup"
@@ -160,6 +161,7 @@ class EpsitemicNearestNeighbors:
         mu = self._train_y[idx]
         assert mu.shape == (batch_size, k, self._num_metrics), (mu.shape, batch_size, k, self._num_metrics)
         vvar = np.expand_dims(dist2s, axis=-1)
+        vvar = np.tile(vvar, (1, 1, self._num_metrics))
         assert vvar.shape == (batch_size, k, self._num_metrics), (vvar.shape, batch_size, k, self._num_metrics)
 
         w = 1.0 / (self._eps_var + vvar)
@@ -169,9 +171,9 @@ class EpsitemicNearestNeighbors:
         mu = (w * mu).sum(axis=1) / norm
         vvar = 1.0 / norm
 
-        assert mu.shape == (batch_size, q), (mu.shape, batch_size, q)
+        assert mu.shape == (batch_size, self._num_metrics), (mu.shape, batch_size, self._num_metrics)
         vvar = self._var_scale * vvar
-        assert vvar.shape == (batch_size, q), (vvar.shape, batch_size, q)
+        assert vvar.shape == (batch_size, self._num_metrics), (vvar.shape, batch_size, self._num_metrics)
         vvar = np.maximum(self._eps_var, vvar)
 
         return ENNNormal(mu, np.sqrt(vvar))

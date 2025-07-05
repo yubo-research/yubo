@@ -3,7 +3,7 @@ from dataclasses import dataclass
 import numpy as np
 from scipy.spatial.distance import cdist
 
-from model.enn import EpsitemicNearestNeighbors
+from model.enn import EpistemicNearestNeighbors
 from sampling.knn_tools import (
     clip_to_boundary,
     confidence_region_fast,
@@ -85,7 +85,7 @@ class AcqENN:
         x = np.asarray(x)
         y = np.asarray(y)
         if self._enn is None:
-            self._enn = EpsitemicNearestNeighbors(x, y, k=self._config.k, linear_variance=self._config.linear_variance)
+            self._enn = EpistemicNearestNeighbors(x, y, k=self._config.k, linear_variance=self._config.linear_variance)
         else:
             self._enn.add(x, y)
         self._x_train = np.append(self._x_train, x, axis=0)

@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-from model.enn import EpsitemicNearestNeighbors
+from model.enn import EpistemicNearestNeighbors
 from sampling.scale_free_sampler import scale_free_sampler
 
 
@@ -15,7 +15,7 @@ class AcqVHD:
         self._b_raasp = False
 
         if k > 0 and len(self._X_train) > 0:
-            self._enn = EpsitemicNearestNeighbors(self._X_train, self._Y_train, k=k)
+            self._enn = EpistemicNearestNeighbors(self._X_train, self._Y_train, k=k)
         else:
             self._enn = None
 

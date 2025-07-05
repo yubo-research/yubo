@@ -4,7 +4,7 @@ import numpy as np
 import torch
 from botorch.utils.sampling import draw_sobol_samples
 
-from model.enn import EpsitemicNearestNeighbors
+from model.enn import EpistemicNearestNeighbors
 from sampling.knn_tools import random_directions  #  single_coordinate_perturbation
 from sampling.ray_boundary import ray_boundary_np
 from sampling.sampling_util import raasp_np, raasp_np_choice, raasp_np_p, sobol_perturb_np
@@ -21,7 +21,7 @@ from sampling.sampling_util import raasp_np, raasp_np_choice, raasp_np_p, sobol_
 @dataclass
 class ENNConfig:
     k: int
-    num_interior: int = 0
+    num_candidates_per_arm: int = 0
     stagger: bool = False
     acq: str = "pareto"
     small_world_M: int = None
@@ -31,6 +31,8 @@ class ENNConfig:
     region_type: str = "sobol"
     tr_type: str = "mean"
     raasp_type: str = None
+
+    k_novelty: int = None
 
     def __post_init__(self):
         assert self.num_over_sample_per_arm > 0
@@ -45,30 +47,46 @@ class AcqENN:
 
         self._x_train = np.empty(shape=(0, num_dim))
         self._y_train = np.empty(shape=(0, 1))
+        self._d_train = None
 
         self._config = config
         self._enn = None
+        self._enn_d = None
 
-    def add(self, x, y):
+    def add(self, x, y, d=None):
         if len(x) == 0:
             return
         x = np.asarray(x)
         y = np.asarray(y)
         if self._enn is None:
-            self._enn = EpsitemicNearestNeighbors(x, y, k=self._config.k, small_world_M=self._config.small_world_M)
+            # Metric surrogate
+            self._enn = EpistemicNearestNeighbors(x, y, k=self._config.k, small_world_M=self._config.small_world_M)
         else:
             self._enn.add(x, y)
         self._x_train = np.append(self._x_train, x, axis=0)
         self._y_train = np.append(self._y_train, y, axis=0)
 
+        if self._config.k_novelty is not None:
+            d = np.asarray(d)
+            if self._enn_d is None:
+                # Descriptor surrogate (predicts d)
+                self._enn_d = EpistemicNearestNeighbors(x, d, k=self._config.k, small_world_M=self._config.small_world_M)
+                self._d_train = np.empty(shape=(0, d.shape[-1]))
+            else:
+                self._enn_d.add(x, d)
+            self._d_train = np.append(self._d_train, d, axis=0)
+
     def keep_top_n(self, num_keep):
         if len(self._x_train) <= num_keep:
             return self._x_train, self._y_train
 
-        # TODO: Use a greedy algorithm to remove points one-by-one
+        # Use a greedy algorithm to remove points one-by-one
         #  otherwise you could remove two points that are close to each other.
-        i = self._i_pareto_fronts_discrepancy(num_keep)
-        return self._x_train[i], self._y_train[i]
+        while len(self._x_train) > num_keep:
+            i = self._i_pareto_fronts_discrepancy(len(self._x_train) - 1)
+            self._x_train = self._x_train[i]
+            self._y_train = self._y_train[i]
+        return self._x_train, self._y_train
 
     def _sample_segments(self, x_0, x_far):
         assert x_0.shape == x_far.shape, (x_0.shape, x_far.shape)
@@ -181,6 +199,37 @@ class AcqENN:
         i = np.random.choice(np.arange(len(x_cand)), size=num_arms, replace=False)
         return x_cand[i]
 
+    def _dominated_novelty_selection(self, x_cand, num_arms):
+        if len(self._x_train) == 0:
+            return self._uniform(x_cand, num_arms)
+
+        i_sorted = self._i_pareto_fronts_strict(x_cand, len(x_cand), exclude_nearest=False)
+        x_cand = x_cand[i_sorted]
+        # TODO: Consider se
+        d_cand = self._enn_d.posterior(x_cand, exclude_nearest=False).mu
+
+        enn_dn = EpistemicNearestNeighbors(
+            d_cand[[0]],
+            np.zeros(size=(d_cand.shape[0], 1)),
+            k=self._config.k_novelty,
+        )
+        fitnesses = []
+        for x_c, d_c in zip(x_cand, d_cand):
+            x_c = np.atleast_2d(x_c)
+            d_c = np.atleast_2d(d_c)
+            idx, dists = enn_dn.about_neighbors(x_c)
+            if len(idx) == 0:
+                fitnesses.append(np.inf)
+            else:
+                idx = idx.flatten()
+                dists = dists.flatten()
+                fitnesses.append(np.mean(dists))
+            enn_dn.add(x_c, d_c)
+
+        fitnesses = np.array(fitnesses)
+        i_selected = np.argsort(-fitnesses)[:num_arms]
+        return x_cand[i_selected]
+
     def _draw_sobol(self, num_cand, bounds=None):
         if bounds is None:
             bounds = torch.tensor([[0.0, 1.0]] * self._num_dim).T
@@ -270,7 +319,7 @@ class AcqENN:
         return self._raasp_or_sobol(x_center, num_cand, bounds[0], bounds[1])
 
     def _candidates(self, num_arms):
-        num_cand = self._config.num_interior * num_arms
+        num_cand = self._config.num_candidates_per_arm * num_arms
         x_cands = []
         for region_type in self._config.region_type.split("+"):
             if region_type == "tr":
@@ -338,7 +387,9 @@ class AcqENN:
         if len(x_cand) == num_arms:
             return x_cand
 
-        if self._config.acq == "pareto_strict":
+        if self._config.acq == "dominated_novelty":
+            return self._dominated_novelty_selection(x_cand, num_arms)
+        elif self._config.acq == "pareto_strict":
             return self._pareto_fronts_strict(x_cand, num_arms)
         elif self._config.acq == "uniform":
             return self._uniform(x_cand, num_arms)
@@ -346,6 +397,7 @@ class AcqENN:
             assert False, self._config.acq
 
     def draw(self, num_arms):
+        # print("T:", len(self._x_train), len(self._y_train))
         if len(self._x_train) == 0:
             # x_a = 0.5 + np.zeros(shape=(1, self._num_dim))
             # x_a = np.append(x_a, np.random.uniform(size=(num_arms - 1, self._num_dim)), axis=0)

@@ -49,8 +49,12 @@ class Optimizer:
 
     def _collect_denoised_trajectory(self, policy, i_noise=None):
         if self._num_denoise is not None:
+            if self._num_denoise == 1:
+                # TODO: Think about what to do with states and actions when num_denoise > 1
+                return self._collect_trajectory(policy, denoise_seed=0)
             rreturn = self._mean_return_over_runs(policy)
             return Trajectory(rreturn, None, None)
+
         return self._collect_trajectory(policy, i_noise=i_noise)
 
     def _iterate(self, designer, num_arms):

@@ -14,6 +14,7 @@ class ENNDesigner:
         self._i_data_last = 0
         self._X_train = torch.empty(size=(0, self._policy.num_params()))
         self._Y_train = torch.empty(size=(0, 1))
+        self._D_train = None
 
         self._dtype = torch.double
         self._device = torch.empty(size=(1,)).device
@@ -26,20 +27,46 @@ class ENNDesigner:
             self._i_data_last = len(data)
             data = data_use
 
+        D = None
         if len(data) > 0:
+            # states ~ num_states X num_steps
+            # actions ~ num_actions X num_steps
             Y, X = fit_gp.extract_X_Y(data, self._dtype, self._device)
 
             self._X_train = torch.cat([self._X_train, X])
             self._Y_train = torch.cat([self._Y_train, Y])
+
+            # TODO: Try other descriptors
+            D = []
+            for datum in data:
+                s = datum.trajectory.states
+                D.append(
+                    torch.cat(
+                        [
+                            torch.as_tensor(s[:, [s.shape[1] // 2]], dtype=self._dtype, device=self._device),
+                            torch.as_tensor(s[:, [-1]], dtype=self._dtype, device=self._device),
+                        ],
+                        dim=0,
+                    )
+                )
+
+            D = torch.cat(D, dim=1).T
+
+            if self._D_train is None:
+                self._D_train = torch.empty(size=(0, D.shape[1]))
+
+            self._D_train = torch.cat([self._D_train, D], dim=0)
+
             if self._keep_style == "lap":
                 X = self._X_train
                 Y = self._Y_train
+                D = self._D_train
         else:
             X = torch.empty(size=(0, self._policy.num_params()))
             Y = torch.empty(size=(0, 1))
 
         acq_enn = AcqENN(self._policy.num_params(), self._enn_config)
-        acq_enn.add(X, Y)
+        acq_enn.add(X, Y, D)
 
         X_a = torch.as_tensor(acq_enn.draw(num_arms).copy())
 

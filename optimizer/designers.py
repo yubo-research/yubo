@@ -401,7 +401,7 @@ class Designers:
                 self._policy,
                 ENNConfig(
                     k=k,
-                    num_interior=1000,
+                    num_candidates_per_arm=1000,
                     acq="uniform",
                     stagger=False,
                     small_world_M=None,
@@ -417,7 +417,7 @@ class Designers:
                 self._policy,
                 ENNConfig(
                     k=k,
-                    num_interior=100,
+                    num_candidates_per_arm=100,
                     acq="pareto_strict",
                     stagger=False,
                     small_world_M=None,
@@ -433,7 +433,7 @@ class Designers:
                 self._policy,
                 ENNConfig(
                     k=k,
-                    num_interior=100,
+                    num_candidates_per_arm=100,
                     acq="pareto_strict",
                     stagger=False,
                     small_world_M=None,
@@ -449,7 +449,7 @@ class Designers:
                 self._policy,
                 ENNConfig(
                     k=k,
-                    num_interior=100,
+                    num_candidates_per_arm=100,
                     acq="pareto_strict",
                     stagger=False,
                     small_world_M=None,
@@ -466,7 +466,7 @@ class Designers:
                 self._policy,
                 ENNConfig(
                     k=k,
-                    num_interior=100,
+                    num_candidates_per_arm=100,
                     acq="pareto_strict",
                     stagger=False,
                     small_world_M=None,
@@ -483,7 +483,7 @@ class Designers:
                 self._policy,
                 ENNConfig(
                     k=k,
-                    num_interior=100,
+                    num_candidates_per_arm=100,
                     acq="pareto_strict",
                     stagger=False,
                     small_world_M=None,
@@ -494,19 +494,20 @@ class Designers:
                 keep_style=keep_style,
                 num_keep=num_keep,
             )
-        elif designer_name.startswith("enn-ps-"):
+        elif designer_name.startswith("enn-dn-"):
             k = int(designer_name.split("-")[-1])
             return ENNDesigner(
                 self._policy,
                 ENNConfig(
                     k=k,
-                    num_interior=100,
-                    acq="pareto_strict",
-                    stagger=True,
+                    num_candidates_per_arm=100,
+                    acq="dominated_novelty",
+                    stagger=False,
                     small_world_M=None,
                     region_type="best",
                     tr_type="mean",
                     raasp_type="raasp_p",
+                    k_novelty=1,
                 ),
                 keep_style=keep_style,
                 num_keep=num_keep,
@@ -517,7 +518,7 @@ class Designers:
                 self._policy,
                 ENNConfig(
                     k=k,
-                    num_interior=100,
+                    num_candidates_per_arm=100,
                     acq="pareto_strict",
                     stagger=False,
                     small_world_M=None,
@@ -534,7 +535,7 @@ class Designers:
                 self._policy,
                 ENNConfig(
                     k=k,
-                    num_interior=100,
+                    num_candidates_per_arm=100,
                     acq="uniform",
                     stagger=False,
                     small_world_M=None,
@@ -551,7 +552,7 @@ class Designers:
                 self._policy,
                 ENNConfig(
                     k=k,
-                    num_interior=100,
+                    num_candidates_per_arm=100,
                     acq="pareto_strict",
                     stagger=False,
                     small_world_M=None,

@@ -235,10 +235,10 @@ class Turbo1:
             y_cand = None  # np.random.normal(size=(X_cand.shape[0], self.batch_size))
 
         elif self._surrogate_type.startswith("enn-"):
-            from model.enn import EpsitemicNearestNeighbors
+            from model.enn import EpistemicNearestNeighbors
 
             k = int(self._surrogate_type.split("-")[-1])
-            enn = EpsitemicNearestNeighbors(X, fX[:, None], k=k)
+            enn = EpistemicNearestNeighbors(X, fX[:, None], k=k)
             y_cand = enn.posterior(X_cand)
 
         del X_torch, y_torch
