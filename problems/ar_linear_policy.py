@@ -6,10 +6,10 @@ from .linear_policy import LinearPolicyCalculator
 
 
 class ARLinearPolicy:
-    def __init__(self, env_conf):
+    def __init__(self, env_conf, num_ar=2, use_differences=False):
         self._env_conf = env_conf
-        self._num_ar = 2
-        self._use_differences = False
+        self._num_ar = num_ar
+        self._use_differences = use_differences
         self._queue = deque(maxlen=self._num_ar)
         num_state = env_conf.gym_conf.state_space.shape[0]
         num_action = env_conf.action_space.shape[0]
