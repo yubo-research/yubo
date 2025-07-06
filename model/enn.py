@@ -27,37 +27,34 @@ class ENNNormal:
 
 class EpistemicNearestNeighbors:
     # TODO: train_YVar; treat as third metric in acquisition function b/c not calibrate to epistemic var
-    def __init__(self, train_x, train_y, k, small_world_M=None):
-        assert len(train_x) == len(train_y), (len(train_x), len(train_y))
-        assert train_x.ndim == train_y.ndim == 2, (train_x.ndim, train_y.ndim)
-
-        self._train_x = train_x
-        self._train_y = train_y
-        self._num_obs, self._num_dim = self._train_x.shape
-        self._num_metrics = self._train_y.shape[-1]
+    def __init__(self, k=3, small_world_M=None):
         self.k = k
-        if small_world_M is not None:
-            self._index = faiss.IndexHNSW(train_x.shape[-1], M=small_world_M)
-        else:
-            self._index = faiss.IndexFlatL2(train_x.shape[-1])
-        self._index.add(train_x)
+        self._num_dim = None
+        self._num_metrics = None
+        self._train_x = None
+        self._train_y = None
         self._eps_var = 1e-9
-
-        # Maybe tune this on a sample of data
-        #  if you want (somewhat) calibrated uncertainty estimates.
         self._var_scale = 1.0
         self._lookup = None
+        self._index = None
+        self._small_world_M = small_world_M
 
     def add(self, x, y):
+        assert x.ndim == y.ndim == 2, (x.ndim, y.ndim)
+        assert len(x) == len(y), (len(x), len(y))
+        if self._train_x is None:
+            self._num_dim = x.shape[1]
+            self._num_metrics = y.shape[1]
+            self._train_x = np.empty((0, self._num_dim))
+            self._train_y = np.empty((0, self._num_metrics))
+            if self._small_world_M is not None:
+                self._index = faiss.IndexHNSW(self._num_dim, M=self._small_world_M)
+            else:
+                self._index = faiss.IndexFlatL2(self._num_dim)
         self._index.add(x)
         self._train_x = np.append(self._train_x, x, axis=0)
-        # Handle scalar y values by reshaping to match train_y dimensions
-        if np.isscalar(y):
-            y = np.array([[y]])
-        elif y.ndim == 1:
-            y = np.atleast_2d(y)
-            assert y.shape == (1, self._num_metrics), y.shape
         self._train_y = np.append(self._train_y, y, axis=0)
+        self._num_obs = self._train_x.shape[0]
         if self._lookup is not None:
             assert False, "NYI: Add to lookup"
 
@@ -101,11 +98,10 @@ class EpistemicNearestNeighbors:
         return idx.flatten()
 
     def about_neighbors(self, x, k=None):
-        # Returns dist (not dist2)
         if k is None:
             k = self.k
 
-        if len(self._train_x) == 0:
+        if self._train_x is None or len(self._train_x) == 0:
             return np.empty(shape=(0,), dtype=np.int64), np.empty(shape=(0,), dtype=np.float64)
 
         dist2s, idx = self._search(x, k=k)
@@ -113,6 +109,8 @@ class EpistemicNearestNeighbors:
 
     def neighbors(self, x, k=None):
         idx, _ = self.about_neighbors(x, k)
+        if self._train_x is None:
+            return np.empty((0, x.shape[1]))
         return self._train_x[idx]
 
     def __call__(self, X):

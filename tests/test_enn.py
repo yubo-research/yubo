@@ -16,7 +16,8 @@ def set_up_enn(num_metrics):
 
     k = 3
 
-    enn = EpistemicNearestNeighbors(train_x, train_y, k=k)
+    enn = EpistemicNearestNeighbors(k=k)
+    enn.add(train_x, train_y)
     return num_dim, n, train_x, train_y, k, enn
 
 
@@ -45,7 +46,7 @@ def test_add(num_metrics):
     x_eps = x + 1e-6
     n = len(enn)
     idx_0, _ = enn.about_neighbors(x_eps)
-    enn.add(x, 3 * np.ones(num_metrics))
+    enn.add(x, np.ones((1, num_metrics)) * 3)
     assert len(enn) == n + 1
     idx, _ = enn.about_neighbors(x_eps)
     assert np.all(idx_0 != idx)
@@ -77,7 +78,7 @@ def test_enn(num_metrics):
     assert len(enn.about_neighbors(train_x[[1]], k=1)[0].flatten()) == 1
     assert enn.neighbors(x, k=1).shape == (1, 1, num_dim)
 
-    enn = EpistemicNearestNeighbors(np.empty((0, num_dim)), np.empty((0, num_metrics)), k=3)
+    enn = EpistemicNearestNeighbors(k=3)
     assert len(enn.about_neighbors(x)[0].flatten()) == 0
     assert enn.neighbors(x).shape == (0, num_dim)
     assert len(enn.about_neighbors(x, k=1)[0].flatten()) == 0

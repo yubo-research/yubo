@@ -3,6 +3,7 @@ from dataclasses import dataclass
 import numpy as np
 import torch
 from botorch.utils.sampling import draw_sobol_samples
+from nds import ndomsort
 
 from model.enn import EpistemicNearestNeighbors
 from sampling.knn_tools import random_directions  #  single_coordinate_perturbation
@@ -60,7 +61,8 @@ class AcqENN:
         y = np.asarray(y)
         if self._enn is None:
             # Metric surrogate
-            self._enn = EpistemicNearestNeighbors(x, y, k=self._config.k, small_world_M=self._config.small_world_M)
+            self._enn = EpistemicNearestNeighbors(k=self._config.k, small_world_M=self._config.small_world_M)
+            self._enn.add(x, y)
         else:
             self._enn.add(x, y)
         self._x_train = np.append(self._x_train, x, axis=0)
@@ -70,7 +72,8 @@ class AcqENN:
             d = np.asarray(d)
             if self._enn_d is None:
                 # Descriptor surrogate (predicts d)
-                self._enn_d = EpistemicNearestNeighbors(x, d, k=self._config.k, small_world_M=self._config.small_world_M)
+                self._enn_d = EpistemicNearestNeighbors(k=self._config.k, small_world_M=self._config.small_world_M)
+                self._enn_d.add(x, d)
                 self._d_train = np.empty(shape=(0, d.shape[-1]))
             else:
                 self._enn_d.add(x, d)
@@ -199,36 +202,52 @@ class AcqENN:
         i = np.random.choice(np.arange(len(x_cand)), size=num_arms, replace=False)
         return x_cand[i]
 
+    # def _dns(self, x_cand, mu_se):
+    #     fronts = ndomsort.non_domin_sort(mu_se)
+    #     mvn_d = self._enn_d.posterior(x_cand, exclude_nearest=False)
+    #     # TODO: Consider se
+    #     mu_d = mvn_d.mu
+    #     zero = np.zeros(shape=(1, 1))
+
+    #     enn_dn = EpistemicNearestNeighbors(
+    #         mu_d[fronts[0]],
+    #         zero,
+    #         k=self._config.k_novelty,
+    #     )
+    #     dns = []
+    #     for i in fronts[0]:
+    #         idx, dists = enn_dn.about_neighbors(mu_d[i])
+    #         idx = idx.flatten()
+    #         dists = dists.flatten()
+    #         dns.append(np.mean(dists))
+    #     enn_dn.add(mu_d[i], zero)
+
     def _dominated_novelty_selection(self, x_cand, num_arms):
-        if len(self._x_train) == 0:
-            return self._uniform(x_cand, num_arms)
+        assert False, "NYI"
+        # if len(self._x_train) == 0:
+        #     return self._uniform(x_cand, num_arms)
 
-        i_sorted = self._i_pareto_fronts_strict(x_cand, len(x_cand), exclude_nearest=False)
-        x_cand = x_cand[i_sorted]
-        # TODO: Consider se
-        d_cand = self._enn_d.posterior(x_cand, exclude_nearest=False).mu
+        # mvn = self._enn.posterior(x_cand, exclude_nearest=False)
+        # mu_se = np.concatenate([mvn.mu, mvn.se], axis=1)
+        # fronts = ndomsort.non_domin_sort(mu_se)
+        # mvn_d = self._enn_d.posterior(x_cand, exclude_nearest=False)
+        # # TODO: Consider se
+        # mu_d = mvn_d.mu
 
-        zero = np.zeros(shape=(1, 1))
-        enn_dn = EpistemicNearestNeighbors(
-            d_cand[[0]],
-            zero,
-            k=self._config.k_novelty,
-        )
-        fitnesses = []
-        for d_c in d_cand:
-            d_c = np.atleast_2d(d_c)
-            idx, dists = enn_dn.about_neighbors(d_c)
-            if len(idx) == 0:
-                fitnesses.append(np.inf)
-            else:
-                idx = idx.flatten()
-                dists = dists.flatten()
-                fitnesses.append(np.mean(dists))
-            enn_dn.add(d_c, zero)
+        # zero = np.zeros(shape=(1, 1))
+        # enn_dn = EpistemicNearestNeighbors(
+        #     mu_d[fronts[0]],
+        #     zero,
+        #     k=self._config.k_novelty,
+        # )
 
-        fitnesses = np.array(fitnesses)
-        i_selected = np.argsort(-fitnesses)[:num_arms]
-        return x_cand[i_selected]
+        # dns = np.array(dns)
+        # assert len(dns) == len(x_cand), (len(dns), len(x_cand))
+
+        # # TODO: Pareto(mu, se, dns)
+        # assert False, "TODO"
+        # i_selected = np.argsort(-dns)[:num_arms]
+        # return x_cand[i_selected]
 
     def _draw_sobol(self, num_cand, bounds=None):
         if bounds is None:
