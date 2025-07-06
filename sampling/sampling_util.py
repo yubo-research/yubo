@@ -193,7 +193,7 @@ def raasp_np(x_center, lb, ub, num_candidates, num_pert=20):
 
 def sobol_perturb_np(x_center, lb, ub, num_candidates, mask):
     num_dim = x_center.shape[-1]
-    sobol_engine = qmc.Sobol(num_dim, scramble=True)
+    sobol_engine = qmc.Sobol(num_dim, scramble=True, seed=np.random.randint(999999))
     sobol_samples = sobol_engine.random(num_candidates)
     lb_array = np.asarray(lb)
     ub_array = np.asarray(ub)

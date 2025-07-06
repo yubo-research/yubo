@@ -507,7 +507,7 @@ class Designers:
                     region_type="best",
                     tr_type="mean",
                     raasp_type="raasp_p",
-                    k_novelty=1,
+                    k_novelty=3,
                 ),
                 keep_style=keep_style,
                 num_keep=num_keep,

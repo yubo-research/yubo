@@ -5,6 +5,7 @@ import torch
 from botorch.utils.sampling import draw_sobol_samples
 from nds import ndomsort
 
+from model.edn import EpistemicDominatedNovelty
 from model.enn import EpistemicNearestNeighbors
 from sampling.knn_tools import random_directions  #  single_coordinate_perturbation
 from sampling.ray_boundary import ray_boundary_np
@@ -202,48 +203,47 @@ class AcqENN:
         i = np.random.choice(np.arange(len(x_cand)), size=num_arms, replace=False)
         return x_cand[i]
 
-    def _dns(self, x_cand, neg_mu_se):
-        idx_front = np.array(ndomsort.non_domin_sort(neg_mu_se, only_front_indices=True))
+    def _dns(self, x_cand, mu_se):
+        idx_front = np.array(ndomsort.non_domin_sort(-mu_se, only_front_indices=True))
         # d signifies "descriptor" (not distance)
         mvn_d = self._enn_d.posterior(x_cand, exclude_nearest=False)
-        mu_d = mvn_d.mu
 
         max_front = 1 + max(idx_front)
-        enn_dn = EpistemicNearestNeighbors(k=self._config.k_novelty, small_world_M=self._config.small_world_M)
+        edn = EpistemicDominatedNovelty(self._config.k_novelty)
         dns = np.zeros(shape=(len(x_cand), 1))
+        dns_se = np.zeros(shape=(len(x_cand), 1))
         for n_front in range(max_front):
             front_indices = np.where(idx_front == n_front)[0]
-            enn_dn.add(mu_d[front_indices], np.zeros(shape=(len(front_indices), 1)))
+            edn.add(mvn_d.mu[front_indices], mvn_d.se[front_indices])
             for i in front_indices:
-                mu_d_i = mu_d[i][None, :] if mu_d[i].ndim == 1 else mu_d[i]
                 if n_front == 0 and len(front_indices) == 1:
                     dns[i] = 0
+                    dns_se[i] = 0
                 else:
-                    _, dists = enn_dn.about_neighbors(mu_d_i)
-                    # distances in descriptor space
-                    dists = dists.flatten()
-                    dns[i] = np.mean(dists)
+                    dns[i], dns_se[i] = edn.posterior(-1)
 
-        return dns
+        return dns, dns_se
 
     def _dominated_novelty_selection(self, x_cand, num_arms):
         if len(self._x_train) == 0:
             return self._uniform(x_cand, num_arms)
 
         mvn = self._enn.posterior(x_cand, exclude_nearest=False)
-        neg_mu_se = np.concatenate([-mvn.mu, -mvn.se], axis=1)
-        dns = self._dns(x_cand, neg_mu_se)
+        mu_se = np.concatenate([mvn.mu, mvn.se], axis=1)
+        dns, dns_se = self._dns(x_cand, mu_se)
         assert len(dns) == len(x_cand), (len(dns), len(x_cand))
+        assert len(dns_se) == len(x_cand), (len(dns_se), len(x_cand))
 
-        neg_mu_se_dns = np.concatenate(
+        mu_se_dns = np.concatenate(
             [
-                -mvn.mu,
-                -mvn.se,
-                -dns,
+                mvn.mu,
+                mvn.se,
+                dns,
+                dns_se,
             ],
             axis=1,
         )
-        idx_front = np.array(ndomsort.non_domin_sort(neg_mu_se_dns, only_front_indices=True))
+        idx_front = np.array(ndomsort.non_domin_sort(-mu_se_dns, only_front_indices=True))
 
         i_keep = []
         for n_front in range(1 + max(idx_front)):

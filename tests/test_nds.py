@@ -18,3 +18,11 @@ def test_nds():
     # 'fronts' is a tuple of front's indices, not a dictionary.
     fronts = ndomsort.non_domin_sort(seq, only_front_indices=True)
     print(type(fronts), fronts)
+
+    seq = np.random.randint(low=-10, high=10, size=(300, 5))
+    assert (
+        ndomsort.non_domin_sort(seq, only_front_indices=True)
+        == ndomsort.non_domin_sort(seq, only_front_indices=True)
+        == ndomsort.non_domin_sort(seq, only_front_indices=True)
+        == ndomsort.non_domin_sort(seq, only_front_indices=True)
+    )

@@ -97,30 +97,29 @@ class EpistemicNearestNeighbors:
             print(f"WARN: {len(i)} points may not be in training data, max(dist) = {dist.max()}")
         return idx.flatten()
 
-    def about_neighbors(self, x, k=None):
+    def about_neighbors(self, x, *, k=None, exclude_nearest=False):
         if k is None:
             k = self.k
 
         if self._train_x is None or len(self._train_x) == 0:
             return np.empty(shape=(0,), dtype=np.int64), np.empty(shape=(0,), dtype=np.float64)
 
-        dist2s, idx = self._search(x, k=k)
+        dist2s, idx = self._search(x, k=k, exclude_nearest=exclude_nearest)
         return idx, np.sqrt(dist2s)
 
-    def neighbors(self, x, k=None):
-        idx, _ = self.about_neighbors(x, k)
+    def neighbors(self, x, k=None, exclude_nearest=False):
+        idx, _ = self.about_neighbors(x, k=k, exclude_nearest=exclude_nearest)
         if self._train_x is None:
             return np.empty((0, x.shape[1]))
         return self._train_x[idx]
 
     def __call__(self, X):
-        return self.posterior(
-            X,
-        )
+        return self.posterior(X)
 
-    def posterior(self, x, k=None, exclude_nearest=False):
+    def posterior(self, x, *, k=None, exclude_nearest=False):
         if k is None:
             k = self.k
+        k = min(k, len(self))
 
         # X ~ num_batch X num_dim
         x = np.array(x)
@@ -138,23 +137,29 @@ class EpistemicNearestNeighbors:
                 np.sqrt(vvar.squeeze(0)),
             )
 
-        if exclude_nearest:
-            dist2s, idx = self._search(x, k=k + 1)
-            dist2s = dist2s[:, 1:]
-            idx = idx[:, 1:]
-        else:
-            dist2s, idx = self._search(x, k=k)
+        dist2s, idx = self._search(x, k=k, exclude_nearest=exclude_nearest)
 
         return self._calc_enn_normal(b, dist2s, idx, k)
 
-    def _search(self, x, k):
+    def _search(self, x, k, *, exclude_nearest=False):
         # https://github.com/facebookresearch/faiss/wiki/MetricType-and-distances?utm_source=chatgpt.com
         # "Faiss reports squared Euclidean (L2) distance..."
+
+        assert len(self) > 0, len(self)
+
+        if exclude_nearest:
+            assert len(self) > 1, len(self)
+            k += 1
+
+        k = min(k, len(self))
         dist2s, idx = self._index.search(x, k=k)
+        if exclude_nearest:
+            dist2s = dist2s[:, 1:]
+            idx = idx[:, 1:]
         return dist2s, idx
 
     def _calc_enn_normal(self, batch_size, dist2s, idx, k):
-        q = 1
+        # q = 1
 
         mu = self._train_y[idx]
         assert mu.shape == (batch_size, k, self._num_metrics), (mu.shape, batch_size, k, self._num_metrics)
