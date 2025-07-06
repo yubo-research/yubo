@@ -238,7 +238,8 @@ class Turbo1:
             from model.enn import EpistemicNearestNeighbors
 
             k = int(self._surrogate_type.split("-")[-1])
-            enn = EpistemicNearestNeighbors(X, fX[:, None], k=k)
+            enn = EpistemicNearestNeighbors(k=k)
+            enn.add(X, fX[:, None])
             y_cand = enn.posterior(X_cand)
 
         del X_torch, y_torch
