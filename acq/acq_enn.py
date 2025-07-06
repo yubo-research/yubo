@@ -202,52 +202,51 @@ class AcqENN:
         i = np.random.choice(np.arange(len(x_cand)), size=num_arms, replace=False)
         return x_cand[i]
 
-    # def _dns(self, x_cand, mu_se):
-    #     fronts = ndomsort.non_domin_sort(mu_se)
-    #     mvn_d = self._enn_d.posterior(x_cand, exclude_nearest=False)
-    #     # TODO: Consider se
-    #     mu_d = mvn_d.mu
-    #     zero = np.zeros(shape=(1, 1))
+    def _dns(self, x_cand, mu_se):
+        idx_front = np.array(ndomsort.non_domin_sort(mu_se, only_front_indices=True))
+        mvn_d = self._enn_d.posterior(x_cand, exclude_nearest=False)
+        mu_d = mvn_d.mu
 
-    #     enn_dn = EpistemicNearestNeighbors(
-    #         mu_d[fronts[0]],
-    #         zero,
-    #         k=self._config.k_novelty,
-    #     )
-    #     dns = []
-    #     for i in fronts[0]:
-    #         idx, dists = enn_dn.about_neighbors(mu_d[i])
-    #         idx = idx.flatten()
-    #         dists = dists.flatten()
-    #         dns.append(np.mean(dists))
-    #     enn_dn.add(mu_d[i], zero)
+        max_front = 1 + max(idx_front)
+        enn_dn = EpistemicNearestNeighbors(k=self._config.k_novelty, small_world_M=self._config.small_world_M)
+        dns = []
+        for n_front in range(max_front):
+            front_indices = np.where(idx_front == n_front)[0]
+            enn_dn.add(mu_d[front_indices], np.zeros(shape=(len(front_indices), 1)))
+            for i in front_indices:
+                mu_d_i = mu_d[i][None, :] if mu_d[i].ndim == 1 else mu_d[i]
+                if n_front == 0 and len(front_indices) == 1:
+                    dns.append(np.inf)
+                else:
+                    _, dists = enn_dn.about_neighbors(mu_d_i)
+                    dists = dists.flatten()
+                    dns.append(np.mean(dists))
+
+        return np.array(dns)
 
     def _dominated_novelty_selection(self, x_cand, num_arms):
-        assert False, "NYI"
-        # if len(self._x_train) == 0:
-        #     return self._uniform(x_cand, num_arms)
+        if len(self._x_train) == 0:
+            return self._uniform(x_cand, num_arms)
 
-        # mvn = self._enn.posterior(x_cand, exclude_nearest=False)
-        # mu_se = np.concatenate([mvn.mu, mvn.se], axis=1)
-        # fronts = ndomsort.non_domin_sort(mu_se)
-        # mvn_d = self._enn_d.posterior(x_cand, exclude_nearest=False)
-        # # TODO: Consider se
-        # mu_d = mvn_d.mu
+        mvn = self._enn.posterior(x_cand, exclude_nearest=False)
+        neg_mu_se = np.concatenate([-mvn.mu, -mvn.se], axis=1)
+        dns = self._dns(x_cand, neg_mu_se)
+        assert len(dns) == len(x_cand), (len(dns), len(x_cand))
 
-        # zero = np.zeros(shape=(1, 1))
-        # enn_dn = EpistemicNearestNeighbors(
-        #     mu_d[fronts[0]],
-        #     zero,
-        #     k=self._config.k_novelty,
-        # )
+        neg_mu_se_dns = np.concatenate([-mvn.mu, -mvn.se, dns[:, None]], axis=1)
+        idx_front = np.array(ndomsort.non_domin_sort(neg_mu_se_dns, only_front_indices=True))
 
-        # dns = np.array(dns)
-        # assert len(dns) == len(x_cand), (len(dns), len(x_cand))
+        i_keep = []
+        for n_front in range(1 + max(idx_front)):
+            front_indices = np.where(idx_front == n_front)[0]
+            if len(i_keep) + len(front_indices) <= num_arms:
+                i_keep.extend(front_indices)
+            else:
+                remaining = num_arms - len(i_keep)
+                i_keep.extend(np.random.choice(front_indices, size=remaining, replace=False))
+                break
 
-        # # TODO: Pareto(mu, se, dns)
-        # assert False, "TODO"
-        # i_selected = np.argsort(-dns)[:num_arms]
-        # return x_cand[i_selected]
+        return x_cand[i_keep]
 
     def _draw_sobol(self, num_cand, bounds=None):
         if bounds is None:

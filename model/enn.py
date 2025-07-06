@@ -62,7 +62,7 @@ class EpistemicNearestNeighbors:
         self._var_scale = var_scale
 
     def __len__(self):
-        return self._index.ntotal
+        return 0 if self._train_x is None else len(self._train_x)
 
     def _idx_x_1(self, x):
         idx = np.where(np.all(self._train_x == x, axis=1))[0]
