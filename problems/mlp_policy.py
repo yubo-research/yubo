@@ -30,10 +30,16 @@ class MLPPolicy(nn.Module):
         dims = [num_state] + list(hidden_sizes) + [num_action]
 
         for i in range(len(dims) - 2):
-            layers.append(nn.Linear(dims[i], dims[i + 1]))
-            layers.append(nn.Tanh())
+            linear = nn.Linear(dims[i], dims[i + 1], bias=True)
+            layers.append(linear)
+            nn.init.kaiming_normal_(linear.weight, mode="fan_in", nonlinearity="relu")
+            nn.init.zeros_(linear.bias)
+            layers.append(nn.ReLU())
 
-        layers.append(nn.Linear(dims[-2], dims[-1]))
+        linear = nn.Linear(dims[-2], dims[-1], bias=True)
+        layers.append(linear)
+        nn.init.uniform_(linear.weight, a=-3e-3, b=3e-3)
+        nn.init.zeros_(linear.bias)
         layers.append(nn.Tanh())
 
         self.model = nn.Sequential(*layers)

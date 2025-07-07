@@ -203,7 +203,7 @@ class AcqENN:
         i = np.random.choice(np.arange(len(x_cand)), size=num_arms, replace=False)
         return x_cand[i]
 
-    def _dns(self, x_cand, mu_se):
+    def _edn(self, x_cand, mu_se):
         idx_front = np.array(ndomsort.non_domin_sort(-mu_se, only_front_indices=True))
         # d signifies "descriptor" (not distance)
         mvn_d = self._enn_d.posterior(x_cand, exclude_nearest=False)
@@ -230,7 +230,7 @@ class AcqENN:
 
         mvn = self._enn.posterior(x_cand, exclude_nearest=False)
         mu_se = np.concatenate([mvn.mu, mvn.se], axis=1)
-        dns, dns_se = self._dns(x_cand, mu_se)
+        dns, dns_se = self._edn(x_cand, mu_se)
         assert len(dns) == len(x_cand), (len(dns), len(x_cand))
         assert len(dns_se) == len(x_cand), (len(dns_se), len(x_cand))
 
