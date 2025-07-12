@@ -129,6 +129,7 @@ _gym_env_confs = {
     # 325 - https://arxiv.org/pdf/1803.07055
     "swim": _gym_conf("Swimmer-v5"),
     "reach": _gym_conf("Reacher-v5"),
+    "reach-ar": _gym_conf("Reacher-v5", policy_class=ARLinearPolicy),
     # "push": EnvConf("Pusher-v4",  gym_conf=GymConf(max_steps=100)),
     "hop": _gym_conf("Hopper-v5"),
     "hop-mlp": _gym_conf("Hopper-v5", policy_class=MLPPolicyFactory((16,))),

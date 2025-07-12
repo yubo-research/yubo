@@ -18,7 +18,7 @@ class ARLinearPolicy:
             big_state_size = (self._num_ar - 1) * (num_state + num_action + 1)
         else:
             big_state_size = self._num_ar * (num_state + num_action + 1)
-        self._calculator = LinearPolicyCalculator(big_state_size, num_action)
+        self._calculator = LinearPolicyCalculator(id_int=env_conf.problem_seed, num_state=big_state_size, num_action=num_action)
 
     def num_params(self):
         return self._calculator.num_params()
