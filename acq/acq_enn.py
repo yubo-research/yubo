@@ -7,7 +7,7 @@ from nds import ndomsort
 
 from model.edn import EpistemicNovelty
 from model.enn import EpistemicNearestNeighbors
-from sampling.knn_tools import random_directions  #  single_coordinate_perturbation
+from sampling.knn_tools import random_directions
 from sampling.ray_boundary import ray_boundary_np
 from sampling.sampling_util import raasp_np, raasp_np_choice, raasp_np_p, sobol_perturb_np
 
@@ -160,7 +160,31 @@ class AcqENN:
         return np.array(i_keep)
 
     def _i_pareto_fronts_strict(self, x_cand, num_arms, exclude_nearest=False):
-        # Full fronts, then random selection from *last* front.
+        assert self._config.num_over_sample_per_arm == 1, self._config.num_over_sample_per_arm
+        mvn = self._enn.posterior(x_cand, exclude_nearest=exclude_nearest)
+
+        i = np.argsort(-mvn.mu, axis=0).flatten()
+        x_cand = x_cand[i]
+        se = mvn.se[i]
+        i_rev = list(range(len(se)))
+        i_rev = np.array(i_rev)[i]
+
+        mu_se = np.concatenate([mvn.mu[i], se], axis=1)
+        idx_front = np.array(ndomsort.non_domin_sort(-mu_se, only_front_indices=True))
+
+        i_keep = []
+        for n_front in range(1 + max(idx_front)):
+            front_indices = np.where(idx_front == n_front)[0]
+            if len(i_keep) + len(front_indices) <= num_arms:
+                i_keep.extend(front_indices)
+            else:
+                remaining = num_arms - len(i_keep)
+                i_keep.extend(np.random.choice(front_indices, size=remaining, replace=False))
+                break
+
+        return i_rev[np.array(i_keep)]
+
+    def _xxx_i_pareto_fronts_strict(self, x_cand, num_arms, exclude_nearest=False):
         assert self._config.num_over_sample_per_arm == 1, self._config.num_over_sample_per_arm
         mvn = self._enn.posterior(x_cand, exclude_nearest=exclude_nearest)
 
