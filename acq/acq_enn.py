@@ -5,7 +5,7 @@ import torch
 from botorch.utils.sampling import draw_sobol_samples
 from nds import ndomsort
 
-from model.edn import EpistemicDominatedNovelty
+from model.edn import EpistemicNovelty
 from model.enn import EpistemicNearestNeighbors
 from sampling.knn_tools import random_directions  #  single_coordinate_perturbation
 from sampling.ray_boundary import ray_boundary_np
@@ -53,7 +53,7 @@ class AcqENN:
 
         self._config = config
         self._enn = None
-        self._enn_d = None
+        self._enn_b = None
 
     def add(self, x, y, d=None):
         if len(x) == 0:
@@ -71,13 +71,13 @@ class AcqENN:
 
         if self._config.k_novelty is not None:
             d = np.asarray(d)
-            if self._enn_d is None:
-                # Descriptor surrogate (predicts d)
-                self._enn_d = EpistemicNearestNeighbors(k=self._config.k, small_world_M=self._config.small_world_M)
-                self._enn_d.add(x, d)
+            if self._enn_b is None:
+                # Behavior/descriptor surrogate
+                self._enn_b = EpistemicNearestNeighbors(k=self._config.k, small_world_M=self._config.small_world_M)
+                self._enn_b.add(x, d)
                 self._d_train = np.empty(shape=(0, d.shape[-1]))
             else:
-                self._enn_d.add(x, d)
+                self._enn_b.add(x, d)
             self._d_train = np.append(self._d_train, d, axis=0)
 
     def keep_top_n(self, num_keep):
@@ -205,22 +205,22 @@ class AcqENN:
 
     def _edn(self, x_cand, mu_se):
         idx_front = np.array(ndomsort.non_domin_sort(-mu_se, only_front_indices=True))
-        # d signifies "descriptor" (not distance)
-        mvn_d = self._enn_d.posterior(x_cand, exclude_nearest=False)
+
+        mvn_b = self._enn_b.posterior(x_cand, exclude_nearest=False)
 
         max_front = 1 + max(idx_front)
-        edn = EpistemicDominatedNovelty(self._config.k_novelty)
+        edn = EpistemicNovelty(self._config.k_novelty)
         dns = np.zeros(shape=(len(x_cand), 1))
         dns_se = np.zeros(shape=(len(x_cand), 1))
         for n_front in range(max_front):
             front_indices = np.where(idx_front == n_front)[0]
-            edn.add(mvn_d.mu[front_indices], mvn_d.se[front_indices])
+            edn.add(mvn_b.mu[front_indices], mvn_b.se[front_indices])
             for i in front_indices:
                 if n_front == 0 and len(front_indices) == 1:
                     dns[i] = np.inf
                     dns_se[i] = 0
                 else:
-                    dns[i], dns_se[i] = edn.posterior(-1)
+                    dns[i], dns_se[i] = edn.dominated_novelty_of_last_addition()
 
         return dns, dns_se
 
