@@ -30,7 +30,7 @@ class ENNConfig:
 
     num_over_sample_per_arm: int = 1
 
-    region_type: str = "sobol"
+    candidate_generator: str = "sobol"
     tr_type: str = "mean"
     raasp_type: str = None
 
@@ -53,7 +53,7 @@ class AcqENN:
 
         self._config = config
         self._enn = None
-        self._enn_b = None
+        self._enn_d = None
 
     def add(self, x, y, d=None):
         if len(x) == 0:
@@ -71,13 +71,13 @@ class AcqENN:
 
         if self._config.k_novelty is not None:
             d = np.asarray(d)
-            if self._enn_b is None:
+            if self._enn_d is None:
                 # Behavior/descriptor surrogate
-                self._enn_b = EpistemicNearestNeighbors(k=self._config.k, small_world_M=self._config.small_world_M)
-                self._enn_b.add(x, d)
+                self._enn_d = EpistemicNearestNeighbors(k=self._config.k, small_world_M=self._config.small_world_M)
+                self._enn_d.add(x, d)
                 self._d_train = np.empty(shape=(0, d.shape[-1]))
             else:
-                self._enn_b.add(x, d)
+                self._enn_d.add(x, d)
             self._d_train = np.append(self._d_train, d, axis=0)
 
     def keep_top_n(self, num_keep):
@@ -129,99 +129,64 @@ class AcqENN:
         i = np.random.choice(np.arange(len(x_front)), size=num_pivot, replace=True)
         return x_front[i]
 
-    def _i_pareto_fronts_discrepancy(self, num_keep):
-        # Full fronts, then random selection from *last* front.
-        y = self._y_train
-        mvn = self._enn.posterior(self._x_train, exclude_nearest=True)
-        discrep = np.abs(y - mvn.mu)
-
-        i = np.argsort(-y, axis=0).flatten()
-        discrep = discrep[i]
-
-        i_all = list(range(len(discrep)))
-        i_keep = []
-
-        num_tries = 0
-        while len(i_keep) < num_keep:
-            num_tries += 1
-            assert num_tries < 100, num_tries
-            discrep_max = -1e99
-            i_front = []
-            for i in i_all:
-                if discrep[i] >= discrep_max:
-                    i_front.append(i)
-                    discrep_max = discrep[i]
-            if len(i_keep) + len(i_front) <= num_keep:
-                i_keep.extend(i_front)
-            else:
-                i_keep.extend(np.random.choice(i_front, size=num_keep - len(i_keep), replace=False))
-            i_all = sorted(set(i_all) - set(i_front))
-
-        return np.array(i_keep)
-
-    def _i_pareto_fronts_strict(self, x_cand, num_arms, exclude_nearest=False):
-        assert self._config.num_over_sample_per_arm == 1, self._config.num_over_sample_per_arm
-        mvn = self._enn.posterior(x_cand, exclude_nearest=exclude_nearest)
-
-        i = np.argsort(-mvn.mu, axis=0).flatten()
-        x_cand = x_cand[i]
-        se = mvn.se[i]
-        i_rev = list(range(len(se)))
-        i_rev = np.array(i_rev)[i]
-
-        mu_se = np.concatenate([mvn.mu[i], se], axis=1)
-        idx_front = np.array(ndomsort.non_domin_sort(-mu_se, only_front_indices=True))
+    def _pareto_front_selection(self, num_select, *metrics):
+        combined_data = np.concatenate(metrics, axis=1)
+        idx_front = np.array(ndomsort.non_domin_sort(-combined_data, only_front_indices=True))
 
         i_keep = []
         for n_front in range(1 + max(idx_front)):
             front_indices = np.where(idx_front == n_front)[0]
-            if len(i_keep) + len(front_indices) <= num_arms:
+            if len(i_keep) + len(front_indices) <= num_select:
                 i_keep.extend(front_indices)
             else:
-                remaining = num_arms - len(i_keep)
+                remaining = num_select - len(i_keep)
                 i_keep.extend(np.random.choice(front_indices, size=remaining, replace=False))
                 break
 
-        return i_rev[np.array(i_keep)]
+        return np.array(i_keep)
 
-    def _xxx_i_pareto_fronts_strict(self, x_cand, num_arms, exclude_nearest=False):
+    def _i_pareto_fronts_discrepancy(self, num_keep):
+        y = self._y_train
+        mvn = self._enn.posterior(self._x_train, exclude_nearest=True)
+        discrep = np.abs(y - mvn.mu)
+
+        return self._pareto_front_selection(num_keep, y, discrep)
+
+    def _i_pareto_fronts_strict(self, x_cand, num_arms):
         assert self._config.num_over_sample_per_arm == 1, self._config.num_over_sample_per_arm
-        mvn = self._enn.posterior(x_cand, exclude_nearest=exclude_nearest)
+        mvn = self._enn.posterior(x_cand)
 
-        i = np.argsort(-mvn.mu, axis=0).flatten()
-        x_cand = x_cand[i]
-        se = mvn.se[i]
-        i_rev = list(range(len(se)))
-        i_rev = np.array(i_rev)[i]
+        return self._pareto_front_selection(num_arms, mvn.mu, mvn.se)
 
-        i_all = list(range(len(se)))
-
-        i_keep = []
-
-        num_tries = 0
-        while len(i_keep) < num_arms:
-            num_tries += 1
-            assert num_tries < 100, num_tries
-            se_max = -1e99
-            i_front = []
-            for i in i_all:
-                if se[i] >= se_max:
-                    i_front.append(i)
-                    se_max = se[i]
-            if len(i_keep) + len(i_front) <= num_arms:
-                i_keep.extend(i_front)
-            else:
-                i_keep.extend(np.random.choice(i_front, size=num_arms - len(i_keep), replace=False))
-            i_all = sorted(set(i_all) - set(i_front))
-
-        return i_rev[np.array(i_keep)]
-
-    def _pareto_fronts_strict(self, x_cand, num_arms, exclude_nearest=False):
-        i_keep = self._i_pareto_fronts_strict(x_cand, num_arms, exclude_nearest)
+    def _pareto_fronts_strict(self, x_cand, num_arms):
+        i_keep = self._i_pareto_fronts_strict(x_cand, num_arms)
         x_arms = x_cand[i_keep]
 
         assert len(x_arms) == num_arms, (len(x_arms), num_arms)
         return x_arms
+
+    def _novelty(self, x_cand, num_arms):
+        en = EpistemicNovelty(self._config.k_novelty)
+        d_se = np.zeros_like(self._d_train)
+        en.add(self._d_train, d_se)
+
+        mvn_d = self._enn_d.posterior(x_cand)
+        nv, nv_se = en.novelty(mvn_d.mu, mvn_d.se)
+
+        return nv, nv_se
+
+    def _novelty_search(self, x_cand, num_arms):
+        nv, nv_se = self._novelty(x_cand, num_arms)
+        i_arms = self._pareto_front_selection(num_arms, nv[:, None], nv_se[:, None])
+        return x_cand[i_arms]
+
+    def _quality_diversity(self, x_cand, num_arms):
+        mvn = self._enn.posterior(x_cand)
+        quality = mvn.mu
+        quality_se = mvn.se
+        diversity, diversity_se = self._novelty(x_cand, num_arms)
+        i_arms = self._pareto_front_selection(num_arms, quality, quality_se, diversity[:, None], diversity_se[:, None])
+        return x_cand[i_arms]
 
     def _uniform(self, x_cand, num_arms):
         i = np.random.choice(np.arange(len(x_cand)), size=num_arms, replace=False)
@@ -230,7 +195,7 @@ class AcqENN:
     def _edn(self, x_cand, mu_se):
         idx_front = np.array(ndomsort.non_domin_sort(-mu_se, only_front_indices=True))
 
-        mvn_b = self._enn_b.posterior(x_cand, exclude_nearest=False)
+        mvn_b = self._enn_d.posterior(x_cand, exclude_nearest=False)
 
         max_front = 1 + max(idx_front)
         edn = EpistemicNovelty(self._config.k_novelty)
@@ -373,7 +338,7 @@ class AcqENN:
     def _candidates(self, num_arms):
         num_cand = self._config.num_candidates_per_arm * num_arms
         x_cands = []
-        for region_type in self._config.region_type.split("+"):
+        for region_type in self._config.candidate_generator.split("+"):
             if region_type == "tr":
                 x_cand = self._trust_region(num_cand)
             elif region_type == "sobol":
@@ -443,6 +408,10 @@ class AcqENN:
             return self._dominated_novelty_selection(x_cand, num_arms)
         elif self._config.acq == "pareto_strict":
             return self._pareto_fronts_strict(x_cand, num_arms)
+        elif self._config.acq == "novelty_search":
+            return self._novelty_search(x_cand, num_arms)
+        elif self._config.acq == "quality_diversity":
+            return self._quality_diversity(x_cand, num_arms)
         elif self._config.acq == "uniform":
             return self._uniform(x_cand, num_arms)
         else:

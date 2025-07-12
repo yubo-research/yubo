@@ -66,6 +66,7 @@ class ENNDesigner:
             Y = torch.empty(size=(0, 1))
 
         acq_enn = AcqENN(self._policy.num_params(), self._enn_config)
+
         acq_enn.add(X, Y, D)
 
         X_a = torch.as_tensor(acq_enn.draw(num_arms).copy())

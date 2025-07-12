@@ -8,7 +8,7 @@ def test_dominated_novelty():
     config = ENNConfig(
         k=3,
         num_candidates_per_arm=10,
-        region_type="sobol",
+        candidate_generator="sobol",
         acq="dominated_novelty",
         k_novelty=1,
     )
