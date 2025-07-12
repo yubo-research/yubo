@@ -38,7 +38,7 @@ class MLPPolicy(nn.Module):
 
         linear = nn.Linear(dims[-2], dims[-1], bias=True)
         layers.append(linear)
-        nn.init.uniform_(linear.weight, a=-3e-3, b=3e-3)
+        nn.init.uniform_(linear.weight, a=-3e-1, b=3e-1)
         nn.init.zeros_(linear.bias)
         layers.append(nn.Tanh())
 

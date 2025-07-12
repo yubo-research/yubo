@@ -18,7 +18,7 @@ if __name__ == "__main__":
     opt = Optimizer(env_conf, policy, num_arms=num_arms, num_denoise_measurement=None)
 
     for i_iter in range(3):
-        opt.collect_trace(designer_name=designer_name, num_iterations=1)
+        opt.collect_trace(designer_name=designer_name, max_iterations=1)
         acqf = opt._designers[designer_name].fig_last_acqf.acq_function
         x_arms = opt._designers[designer_name].fig_last_arms
 

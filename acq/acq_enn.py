@@ -217,7 +217,7 @@ class AcqENN:
             edn.add(mvn_d.mu[front_indices], mvn_d.se[front_indices])
             for i in front_indices:
                 if n_front == 0 and len(front_indices) == 1:
-                    dns[i] = 0
+                    dns[i] = np.inf
                     dns_se[i] = 0
                 else:
                     dns[i], dns_se[i] = edn.posterior(-1)
@@ -239,7 +239,7 @@ class AcqENN:
                 mvn.mu,
                 mvn.se,
                 dns,
-                dns_se,
+                # dns_se,
             ],
             axis=1,
         )

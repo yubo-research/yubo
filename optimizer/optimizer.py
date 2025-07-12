@@ -95,14 +95,12 @@ class Optimizer:
             # assert np.std(rets) > 0, rets
         return np.mean(rets)
 
-    def collect_trace(self, designer_name, num_iterations):
-        # from pympler import tracker
-
-        # tr = tracker.SummaryTracker()
-
+    def collect_trace(self, designer_name, max_iterations, max_proposal_seconds=np.inf):
         self.initialize(designer_name)
-        for _ in range(num_iterations):
+        num_iterations = 0
+        while num_iterations < max_iterations and self._cum_dt_proposing < max_proposal_seconds:
             self.iterate()
+            num_iterations += 1
         self.stop()
         return self._trace
 

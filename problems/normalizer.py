@@ -3,6 +3,7 @@ import numpy as np
 
 class Normalizer:
     def __init__(self, shape):
+        print("Normalizer:")
         self._x = np.zeros(shape=shape)
         self._x2 = np.zeros(shape=shape)
         self._num = 0

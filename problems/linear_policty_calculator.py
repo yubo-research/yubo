@@ -28,7 +28,7 @@ class LinearPolicyCalculator:
         self._scale = x[0]
         i += 1
         self._beta = x[i : i + self._num_beta].reshape(self._beta.shape)
-        self._k = 1 + self._scale
+        self._k = 2 * (1 + self._scale)
 
     def get_params(self):
         p = np.zeros(shape=(self.num_params(),))
@@ -49,6 +49,7 @@ class LinearPolicyCalculator:
     def _normalize(self, state):
         self._normalizer.update(state)
         loc, scale = self._normalizer.mean_and_std()
+        # print("LS:", np.abs(loc).mean(), np.abs(scale).mean())
 
         state = state - loc
 
@@ -65,4 +66,3 @@ class LinearPolicyCalculator:
         beta = self._k * self._beta
 
         return np.maximum(-1, np.minimum(1, beta @ state))
-        # return np.tanh(beta @ state)

@@ -11,7 +11,7 @@ from optimizer.optimizer import Optimizer
 from problems.env_conf import default_policy, get_env_conf
 
 
-def sample_1(env_conf, opt_name, num_rounds, num_arms, num_denoise, b_trace=True):
+def sample_1(env_conf, opt_name, num_rounds, num_arms, num_denoise, max_proposal_seconds, b_trace=True):
     # print("PROBLEM_SEED:", env_conf.problem_seed)
 
     seed_all(env_conf.problem_seed + 27)
@@ -33,7 +33,7 @@ def sample_1(env_conf, opt_name, num_rounds, num_arms, num_denoise, b_trace=True
     )
 
     collector_trace = Collector()
-    for i_iter, te in enumerate(opt.collect_trace(designer_name=opt_name, num_iterations=num_rounds)):
+    for i_iter, te in enumerate(opt.collect_trace(designer_name=opt_name, max_iterations=num_rounds, max_proposal_seconds=max_proposal_seconds)):
         if b_trace:
             collector_trace(
                 f"TRACE: name = {env_conf.env_name} opt_name = {opt_name} i_iter = {i_iter} dt_prop = {te.dt_prop:.3e} dt_eval = {te.dt_eval:.3e} return = {te.rreturn:.3e}"
@@ -100,7 +100,7 @@ def mk_replicates(d_args):
 
     out_dir = (
         f"{d_args['exp_dir']}/env={d_args['env_tag']}--opt_name={d_args['opt_name']}--num_arms={d_args['num_arms']}"
-        f"--num_rounds={d_args['num_rounds']}--num_reps={d_args['num_reps']}--num_denoise={d_args.get('num_denoise', None)}"
+        f"--num_rounds={d_args['num_rounds']}--max_proposal_seconds={d_args['max_proposal_seconds']}--num_reps={d_args['num_reps']}--num_denoise={d_args.get('num_denoise', None)}"
     )
 
     os.makedirs(out_dir, exist_ok=True)
@@ -125,6 +125,7 @@ def mk_replicates(d_args):
                     env_conf=env_conf,
                     opt_name=d_args["opt_name"],
                     num_rounds=int(d_args["num_rounds"]),
+                    max_proposal_seconds=int(d_args["max_proposal_seconds"]),
                     num_arms=int(d_args["num_arms"]),
                     num_denoise=num_denoise,
                     b_trace=true_false(d_args.get("b_trace", True)),
@@ -138,7 +139,7 @@ def sampler(d_args, distributor_fn):
     distributor_fn(all_d_args)
 
 
-def prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None):
+def prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, max_proposal_seconds, noise=None, num_denoise=None):
     # TODO: noise subdir?
     assert noise is None, "NYI"
 
@@ -150,9 +151,6 @@ def prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, 
         noise = f"--noise={noise}"
         assert False, ("NYI", noise)
 
-    # python experiments/experiment_reliable.py num_rounds=30 num_arms=5 env_tag=tlunar opt_name=gibbon num_reps=1 exp_dir=y_test num_denoise=100
-    # return f"python experiments/experiment.py env_tag={problem} opt_name={opt} num_arms={num_arms} num_reps={num_replications} num_rounds={num_rounds} {num_obs} {num_denoise} {noise} exp_dir={exp_dir} > {logs_dir}/{opt} 2>&1"
-    # return f"modal run experiments/experiment.py --env-tag={problem} --opt-name={opt} --num-arms={num_arms} --num-reps={num_replications} --num-rounds={num_rounds} {num_obs} {num_denoise} {noise} --exp-dir={exp_dir}"
     return dict(
         exp_dir=exp_dir,
         env_tag=problem,
@@ -161,15 +159,22 @@ def prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, 
         num_reps=num_replications,
         num_rounds=num_rounds,
         num_denoise=num_denoise,
+        max_proposal_seconds=max_proposal_seconds,
     )
 
 
-def prep_d_args(results_dir, exp_dir, funcs, dims, num_arms, num_replications, opts, noises, num_rounds=3, func_category="f", num_denoise=None):
+def prep_d_args(
+    results_dir, exp_dir, funcs, dims, num_arms, num_replications, opts, noises, num_rounds, max_proposal_seconds, func_category="f", num_denoise=None
+):
     d_argss = []
     for dim in dims:
         for func in funcs:
             for opt in opts:
                 for noise in noises:
                     problem = f"{func_category}:{func}-{dim}d"
-                    d_argss.append(prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise, num_denoise=num_denoise))
+                    d_argss.append(
+                        prep_args_1(
+                            results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, max_proposal_seconds, noise, num_denoise=num_denoise
+                        )
+                    )
     return d_argss

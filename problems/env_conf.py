@@ -131,6 +131,7 @@ _gym_env_confs = {
     "reach": _gym_conf("Reacher-v5"),
     # "push": EnvConf("Pusher-v4",  gym_conf=GymConf(max_steps=100)),
     "hop": _gym_conf("Hopper-v5"),
+    "hop-mlp": _gym_conf("Hopper-v5", policy_class=MLPPolicyFactory((16,))),
     # 6900
     "human": _gym_conf("Humanoid-v5"),
     # 130,000 - https://arxiv.org/html/2304.12778

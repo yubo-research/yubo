@@ -49,7 +49,7 @@ def calc_pstar_scales(d_args):
 
     t_0 = time.time()
     for i_iter in range(max(30, 2 * num_dim)):
-        trace = opt.collect_trace(designer_name=designer_name, num_iterations=1)
+        trace = opt.collect_trace(designer_name=designer_name, max_iterations=1)
 
         if opt.last_designer.fig_last_acqf == "sobol":
             assert i_iter == 0, i_iter
