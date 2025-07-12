@@ -23,6 +23,7 @@ def test_benchmark(bm_name, num_dim):
         "num_arms": 2,
         "num_rounds": 3,
         "num_reps": 1,
+        "max_proposal_seconds": 99999,
     }
 
     sampler(d_args, distributor_fn=scan_local)
