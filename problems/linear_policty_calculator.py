@@ -2,9 +2,12 @@ import numpy as np
 
 from problems.normalizer import Normalizer
 
+_normalizer = {}
+
 
 class LinearPolicyCalculator:
-    def __init__(self, num_state, num_action):
+    def __init__(self, id_int, num_state, num_action):
+        self._id_int = id_int
         self._num_state = num_state
         self._num_action = num_action
         self._beta = np.random.uniform(
@@ -15,7 +18,10 @@ class LinearPolicyCalculator:
                 num_state,
             ),
         )
-        self._normalizer = Normalizer(shape=(num_state,))
+
+        if id_int not in _normalizer:
+            _normalizer[id_int] = Normalizer(shape=(num_state,))
+        self._normalizer = _normalizer[id_int]
         self._num_beta = self._beta.size
         self._scale = 1
 
@@ -39,9 +45,10 @@ class LinearPolicyCalculator:
         return p
 
     def clone(self):
-        calc = LinearPolicyCalculator(self._num_state, self._num_action)
+        calc = LinearPolicyCalculator(self._id_int, self._num_state, self._num_action)
         calc._beta = self._beta.copy()
         calc._scale = self._scale
+        calc._normalizer = self._normalizer
         if hasattr(self, "_k"):
             calc._k = self._k
         return calc

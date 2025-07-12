@@ -10,7 +10,7 @@ class LinearPolicy:
         self._env_conf = env_conf
         num_state = env_conf.gym_conf.state_space.shape[0]
         num_action = env_conf.action_space.shape[0]
-        self._calculator = LinearPolicyCalculator(num_state, num_action)
+        self._calculator = LinearPolicyCalculator(id_int=env_conf.problem_seed, num_state=num_state, num_action=num_action)
 
     def num_params(self):
         return self._calculator.num_params()
