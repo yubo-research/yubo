@@ -7,6 +7,7 @@ import gymnasium as gym
 import problems.other as other
 import problems.pure_functions as pure_functions
 from problems.ar_linear_policy import ARLinearPolicy
+from problems.khepera_maze_env import khepera_maze_conf
 from problems.linear_policy import LinearPolicy
 from problems.mlp_policy import MLPPolicyFactory
 from problems.noise_maker import NoiseMaker
@@ -28,7 +29,11 @@ def get_env_conf(tag, problem_seed=None, noise_level=None, noise_seed_0=None):
             assert len(x) == 2, (x, tag)
 
     if tag in _gym_env_confs:
-        ec = copy.deepcopy(_gym_env_confs[tag])
+        env_conf = _gym_env_confs[tag]
+        if callable(env_conf):
+            ec = env_conf()
+        else:
+            ec = copy.deepcopy(env_conf)
         ec.problem_seed = problem_seed
         ec.noise_seed_0 = noise_seed_0
         ec.frozen_noise = frozen_noise
@@ -203,4 +208,5 @@ _gym_env_confs = {
         kwargs={"continuous": False},
         policy_class=TurboLunarPolicy,
     ),
+    "khepera": lambda: khepera_maze_conf(),
 }

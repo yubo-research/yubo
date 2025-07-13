@@ -8,12 +8,12 @@ from problems.linear_policy import LinearPolicy
 def test_linear_policy_initialization():
     env = gym.make("LunarLander-v3", continuous=True)
     gym_conf = GymConf(max_steps=500)
-    env_conf = EnvConf("LunarLander-v3", gym_conf=gym_conf, kwargs={"continuous": True})
+    env_conf = EnvConf("LunarLander-v3", gym_conf=gym_conf, kwargs={"continuous": True}, problem_seed=44)
     env.close()
 
     policy = LinearPolicy(env_conf)
 
-    assert policy.problem_seed is None
+    assert policy.problem_seed == 44
     assert policy._env_conf == env_conf
     assert policy._calculator._beta.shape == (env.action_space.shape[0], env.observation_space.shape[0])
     assert policy._calculator._normalizer is not None
@@ -24,7 +24,7 @@ def test_linear_policy_initialization():
 def test_linear_policy_num_params():
     env = gym.make("LunarLander-v3", continuous=True)
     gym_conf = GymConf(max_steps=500)
-    env_conf = EnvConf("LunarLander-v3", gym_conf=gym_conf, kwargs={"continuous": True})
+    env_conf = EnvConf("LunarLander-v3", gym_conf=gym_conf, kwargs={"continuous": True}, problem_seed=45)
     env.close()
 
     policy = LinearPolicy(env_conf)
@@ -36,7 +36,7 @@ def test_linear_policy_num_params():
 def test_linear_policy_set_get_params():
     env = gym.make("LunarLander-v3", continuous=True)
     gym_conf = GymConf(max_steps=500)
-    env_conf = EnvConf("LunarLander-v3", gym_conf=gym_conf, kwargs={"continuous": True})
+    env_conf = EnvConf("LunarLander-v3", gym_conf=gym_conf, kwargs={"continuous": True}, problem_seed=46)
     env.close()
 
     policy = LinearPolicy(env_conf)
@@ -54,7 +54,7 @@ def test_linear_policy_set_get_params():
 def test_linear_policy_clone():
     env = gym.make("LunarLander-v3", continuous=True)
     gym_conf = GymConf(max_steps=500)
-    env_conf = EnvConf("LunarLander-v3", gym_conf=gym_conf, kwargs={"continuous": True})
+    env_conf = EnvConf("LunarLander-v3", gym_conf=gym_conf, kwargs={"continuous": True}, problem_seed=47)
     env.close()
 
     policy = LinearPolicy(env_conf)
@@ -75,7 +75,7 @@ def test_linear_policy_clone():
 def test_linear_policy_call():
     env = gym.make("LunarLander-v3", continuous=True)
     gym_conf = GymConf(max_steps=500)
-    env_conf = EnvConf("LunarLander-v3", gym_conf=gym_conf, kwargs={"continuous": True})
+    env_conf = EnvConf("LunarLander-v3", gym_conf=gym_conf, kwargs={"continuous": True}, problem_seed=42)
     env.close()
 
     policy = LinearPolicy(env_conf)
@@ -91,7 +91,7 @@ def test_linear_policy_call():
 def test_linear_policy_normalization():
     env = gym.make("LunarLander-v3", continuous=True)
     gym_conf = GymConf(max_steps=500)
-    env_conf = EnvConf("LunarLander-v3", gym_conf=gym_conf, kwargs={"continuous": True})
+    env_conf = EnvConf("LunarLander-v3", gym_conf=gym_conf, kwargs={"continuous": True}, problem_seed=43)
     env.close()
 
     policy = LinearPolicy(env_conf)
@@ -110,7 +110,7 @@ def test_linear_policy_normalization():
 def test_linear_policy_parameter_bounds():
     env = gym.make("LunarLander-v3", continuous=True)
     gym_conf = GymConf(max_steps=500)
-    env_conf = EnvConf("LunarLander-v3", gym_conf=gym_conf, kwargs={"continuous": True})
+    env_conf = EnvConf("LunarLander-v3", gym_conf=gym_conf, kwargs={"continuous": True}, problem_seed=48)
     env.close()
 
     policy = LinearPolicy(env_conf)

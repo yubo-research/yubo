@@ -185,6 +185,10 @@ class AcqENN:
         quality = mvn.mu
         quality_se = mvn.se
         diversity, diversity_se = self._novelty(x_cand, num_arms)
+        if diversity is None:
+            print("Diversity is None, returning uniform")
+            return self._uniform(x_cand, num_arms)
+
         i_arms = self._pareto_front_selection(num_arms, quality, quality_se, diversity[:, None], diversity_se[:, None])
         return x_cand[i_arms]
 
