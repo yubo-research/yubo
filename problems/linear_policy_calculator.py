@@ -1,8 +1,8 @@
+import copy
+
 import numpy as np
 
 from problems.normalizer import Normalizer
-
-_normalizer = {}
 
 
 class LinearPolicyCalculator:
@@ -19,14 +19,19 @@ class LinearPolicyCalculator:
             ),
         )
 
-        if id_int not in _normalizer:
-            _normalizer[id_int] = Normalizer(shape=(num_state,))
-        self._normalizer = _normalizer[id_int]
+        # We recreate the normalizer every time b/c we want this policy to
+        #  be clonable and we want our results to be reproducible.
+        # Could we replace the normalizer with parameters for loc and scale?
+        self._normalizer = None
         self._num_beta = self._beta.size
         self._scale = 1
+        self._num_state = num_state
+        self._loc_0 = np.zeros(shape=(self._num_state,))
+        self._scale_0 = np.ones(shape=(self._num_state,))
+        self._num_init_x = 1
 
     def num_params(self):
-        return self._num_beta + 1
+        return self._num_beta + 2 + 2 * self._num_state
 
     def set_params(self, x):
         assert x.min() >= -1 and x.max() <= 1, (x.min(), x.max())
@@ -34,6 +39,20 @@ class LinearPolicyCalculator:
         self._scale = x[0]
         i += 1
         self._beta = x[i : i + self._num_beta].reshape(self._beta.shape)
+        i += self._num_beta
+        self._loc_0 = x[i : i + self._num_state]
+        i += self._num_state
+        self._scale_0 = 0.5 * (1 + x[i : i + self._num_state])
+        i += self._num_state
+        self._num_init_x = x[i]
+        i += 1
+        self._normalizer = Normalizer(
+            shape=(self._num_state,),
+            num_init=int(30 * self._num_init_x),
+            init_mean=self._loc_0,
+            init_var=self._scale_0,
+        )
+
         self._k = 2 * (1 + self._scale)
 
     def get_params(self):
@@ -42,13 +61,20 @@ class LinearPolicyCalculator:
         p[0] = self._scale
         i += 1
         p[i : i + self._num_beta] = self._beta.flatten()
+        i += self._num_beta
+        p[i : i + self._num_state] = self._loc_0
+        i += self._num_state
+        p[i : i + self._num_state] = 2 * self._scale_0 - 1
+        i += self._num_state
+        p[i] = self._num_init_x
+        i += 1
         return p
 
     def clone(self):
         calc = LinearPolicyCalculator(self._id_int, self._num_state, self._num_action)
         calc._beta = self._beta.copy()
         calc._scale = self._scale
-        calc._normalizer = self._normalizer
+        calc._normalizer = copy.deepcopy(self._normalizer)
         if hasattr(self, "_k"):
             calc._k = self._k
         return calc
@@ -56,7 +82,7 @@ class LinearPolicyCalculator:
     def _normalize(self, state):
         self._normalizer.update(state)
         loc, scale = self._normalizer.mean_and_std()
-        # print("LS:", np.abs(loc).mean(), np.abs(scale).mean())
+        # print("LS:", loc, scale)
 
         state = state - loc
 

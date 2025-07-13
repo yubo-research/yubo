@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 
 import acq.acq_util as acq_util
@@ -39,18 +40,12 @@ class ENNDesigner:
             # TODO: Try other descriptors
             D = []
             for datum in data:
-                s = datum.trajectory.states
-                D.append(
-                    torch.cat(
-                        [
-                            torch.as_tensor(s[:, [s.shape[1] // 2]], dtype=self._dtype, device=self._device),
-                            torch.as_tensor(s[:, [-1]], dtype=self._dtype, device=self._device),
-                        ],
-                        dim=0,
-                    )
-                )
-
-            D = torch.cat(D, dim=1).T
+                s = datum.trajectory.states  # shape: (state_dim, num_steps)
+                num_steps = s.shape[1]
+                idxs = np.linspace(0, num_steps - 1, 10).round().astype(int)
+                idxs = np.clip(idxs, 0, num_steps - 1)
+                D.append(torch.as_tensor(s[:, idxs], dtype=self._dtype, device=self._device).flatten())
+            D = torch.stack(D, dim=0)
 
             if self._D_train is None:
                 self._D_train = torch.empty(size=(0, D.shape[1]))

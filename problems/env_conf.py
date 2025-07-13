@@ -55,7 +55,7 @@ def default_policy(env_conf):
 @dataclass
 class GymConf:
     max_steps: int = 1000
-    num_frames_skip: int = 30
+    num_frames_show: int = 10
     state_space: Any = None
     transform_state: bool = True
 
@@ -127,12 +127,11 @@ def kheperax_conf():
 
 
 # See https://paperswithcode.com/task/openai-gym
-# num_frames_skip is not "frame_skip" in gymnasium. num_frames_skip is only used internally.
 _gym_env_confs = {
     # 95
     "mcc": _gym_conf(
         "MountainCarContinuous-v0",
-        gym_conf=GymConf(num_frames_skip=100),
+        gym_conf=GymConf(),
     ),
     # "pend": EnvConf("Pendulum-v1",  gym_conf=GymConf(max_steps=200, num_frames_skip=100)),
     # 3580 - https://arxiv.org/pdf/1803.07055
@@ -159,14 +158,14 @@ _gym_env_confs = {
         "BipedalWalker-v3",
         gym_conf=GymConf(
             max_steps=1600,
-            num_frames_skip=100,
+            num_frames_show=30,
         ),
     ),
     "bw-ar": _gym_conf(
         "BipedalWalker-v3",
         gym_conf=GymConf(
             max_steps=1600,
-            num_frames_skip=100,
+            num_frames_show=30,
         ),
         policy_class=ARLinearPolicy,
     ),
@@ -178,7 +177,7 @@ _gym_env_confs = {
         "BipedalWalker-v3",
         gym_conf=GymConf(
             max_steps=1600,
-            num_frames_skip=100,
+            num_frames_show=30,
         ),
         policy_class=MLPPolicyFactory((32, 32)),
     ),

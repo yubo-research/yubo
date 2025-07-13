@@ -1,5 +1,3 @@
-import gpytorch
-from gpytorch.kernels.kernel import Distance
 from gpytorch.kernels.rbf_kernel import RBFKernel
 
 

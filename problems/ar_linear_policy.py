@@ -2,7 +2,7 @@ from collections import deque
 
 import numpy as np
 
-from .linear_policy import LinearPolicyCalculator
+from .linear_policy_calculator import LinearPolicyCalculator
 
 
 class ARLinearPolicy:

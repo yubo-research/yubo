@@ -9,6 +9,8 @@ from .datum import Datum
 from .designers import Designers
 from .trajectories import Trajectory, collect_trajectory
 
+_INTERACTIVE_DEBUG = True
+
 
 @dataclass
 class _TraceEntry:
@@ -44,14 +46,29 @@ class Optimizer:
             noise_seed = i_noise
 
         noise_seed += self._env_conf.noise_seed_0 + denoise_seed
+        self._last_noise_seed = noise_seed
 
+        # policy_a = policy.clone()
+        # policy_b = policy.clone()
+        # a = collect_trajectory(self._env_conf, policy_a, noise_seed=noise_seed)
+        # b = collect_trajectory(self._env_conf, policy_b, noise_seed=noise_seed)
+        # assert a.rreturn == b.rreturn, f"{a.rreturn} != {b.rreturn}"
+        # return a
         return collect_trajectory(self._env_conf, policy, noise_seed=noise_seed)
 
     def _collect_denoised_trajectory(self, policy, i_noise=None):
         if self._num_denoise is not None:
             if self._num_denoise == 1:
                 # TODO: Think about what to do with states and actions when num_denoise > 1)
-                return self._collect_trajectory(policy, denoise_seed=0)
+                policy_orig = policy.clone()
+                traj = self._collect_trajectory(policy, denoise_seed=0)
+                if _INTERACTIVE_DEBUG:
+                    if traj.rreturn > self.r_best_est:
+                        self._policy_viz = policy_orig.clone()
+                        self._ret_viz = traj.rreturn
+                        self._noise_seed_viz = self._last_noise_seed
+
+                return traj
             rreturn = self._mean_return_over_runs(policy)
             return Trajectory(rreturn, None, None)
 
@@ -125,6 +142,11 @@ class Optimizer:
 
         # one ret for each *arm* (nothing to do with num_denoise)
         ret_batch = np.array(ret_batch)
+
+        if _INTERACTIVE_DEBUG:
+            if ret_batch.max() > self.r_best_est:
+                print("BEST:", ret_batch.max(), self._ret_viz, self.r_best_est)
+                collect_trajectory(self._env_conf, self._policy_viz, noise_seed=self._noise_seed_viz, show_frames=True)
 
         self.r_best_est = max(self.r_best_est, ret_batch.max())
         if self._b_cumulative_reward:

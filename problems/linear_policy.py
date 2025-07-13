@@ -1,4 +1,4 @@
-from problems.linear_policty_calculator import LinearPolicyCalculator
+from problems.linear_policy_calculator import LinearPolicyCalculator
 
 
 # Simple random search of static linear policies is competitive for reinforcement learning

@@ -1,4 +1,3 @@
-import matplotlib.pyplot as plt
 import numpy as np
 
 from problems.mlp_policy import MLPPolicyFactory
@@ -32,7 +31,7 @@ class MockGymConf:
         self.state_space = MockStateSpace(obs_size)
         self.max_steps = max_steps
         self.transform_state = transform_state
-        self.num_frames_skip = 10
+        self.num_frames_show = 10
 
 
 def khepera_maze_conf():
@@ -48,9 +47,6 @@ def khepera_maze_conf():
             return KheperaMazeEnv()
 
     return KheperaMazeEnvConf()
-
-
-_max = -1e99
 
 
 class KheperaMazeEnv:
@@ -97,6 +93,7 @@ class KheperaMazeEnv:
         # ok to ignore seed
         self.state = np.array([0.15, 0.15, np.pi / 2])
         self.steps = 0
+        self._return = 0
         return self._get_obs(), {}
 
     def step(self, action):
@@ -114,11 +111,12 @@ class KheperaMazeEnv:
         self.state = next_state
         self.steps += 1
         done = self._at_goal() or self.steps >= self.max_steps
-        reward = -np.linalg.norm(self.state[:2] - self.goal)
-        global _max
-        if reward > _max:
-            _max = reward
-            print("R:", _max, reward)
+        dist_to_goal = np.linalg.norm(self.state[:2] - self.goal)
+        if done:
+            reward = 0.0 if self._at_goal() else -100 * dist_to_goal
+        else:
+            reward = -1.0
+        self._return += reward
         return self._get_obs(), reward, done, {}
 
     def _get_obs(self):
@@ -178,10 +176,10 @@ class KheperaMazeEnv:
         return np.linalg.norm(self.state[:2] - self.goal) < self.goal_radius
 
     def render(self, ax=None):
-        import matplotlib.pyplot as plt
-
         close_fig = False
         if ax is None:
+            import matplotlib.pyplot as plt
+
             fig, ax = plt.subplots(figsize=(5, 5))
             close_fig = True
         ax.clear()

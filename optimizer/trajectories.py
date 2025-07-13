@@ -11,11 +11,9 @@ class Trajectory:
 
 
 def collect_trajectory(env_conf, policy, noise_seed=None, show_frames=False):
-    show_frames = True  # TEST
-
     b_gym = env_conf.gym_conf is not None
     if b_gym and show_frames:
-        num_frames_skip = env_conf.gym_conf.num_frames_skip
+        num_frames_skip = env_conf.gym_conf.max_steps // env_conf.gym_conf.num_frames_show
 
     render_mode = "rgb_array" if show_frames else None
     env = env_conf.make(render_mode=render_mode)
@@ -41,9 +39,12 @@ def collect_trajectory(env_conf, policy, noise_seed=None, show_frames=False):
         clear_output(wait=True)
         plt.imshow(env.render())
         plt.title(f"i_iter = {i_iter} return = {return_trajectory:.2f}")
-        plt.show(block=block)
+        plt.show(block=False)
         if not block:
             plt.pause(0.001)
+        else:
+            plt.pause(1)
+            plt.close()
 
     # print("NOISE_SEED:", noise_seed)
     state, _ = env.reset(seed=noise_seed)
@@ -84,7 +85,6 @@ def collect_trajectory(env_conf, policy, noise_seed=None, show_frames=False):
         return_trajectory += reward
 
         if show_frames and (i_iter % num_frames_skip) == 0:
-            print("DRAW")
             draw(block=False)
         if done:
             break
