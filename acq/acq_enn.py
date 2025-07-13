@@ -177,6 +177,9 @@ class AcqENN:
 
     def _novelty_search(self, x_cand, num_arms):
         nv, nv_se = self._novelty(x_cand, num_arms)
+        if nv is None:
+            print("Novelty is None, returning uniform")
+            return self._uniform(x_cand, num_arms)
         i_arms = self._pareto_front_selection(num_arms, nv[:, None], nv_se[:, None])
         return x_cand[i_arms]
 

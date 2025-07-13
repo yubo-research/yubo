@@ -14,7 +14,7 @@ _wrappers = {}
 class KheperaxEnvConf:
     kheperax_config: any
     problem_seed: int = None
-    max_steps: int = 1000
+    max_steps: int = 250
     noise_seed_0: int = 0
 
     def __post_init__(self):
@@ -77,6 +77,7 @@ class KheperaxGymWrapper:
         self.observation_space = MockObservationSpace(obs_size)
         action_size = self.env.action_size
         self.action_space = MockActionSpace(action_size)
+        self._max_reward = -1e99
 
     def reset(self, seed=None):
         rng = jax.random.PRNGKey(seed if seed is not None else 0)
@@ -95,7 +96,9 @@ class KheperaxGymWrapper:
         if self.step_count >= self.max_steps:
             done = True
         info = {}
-        print("STEP", self.step_count, reward, done)
+        if reward > self._max_reward:
+            self._max_reward = reward
+            print("STEP", self.step_count, reward, done, self._max_reward)
         return obs, reward, done, False, info
 
     def close(self):

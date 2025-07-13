@@ -11,6 +11,8 @@ class Trajectory:
 
 
 def collect_trajectory(env_conf, policy, noise_seed=None, show_frames=False):
+    show_frames = True  # TEST
+
     b_gym = env_conf.gym_conf is not None
     if b_gym and show_frames:
         num_frames_skip = env_conf.gym_conf.num_frames_skip
@@ -32,14 +34,16 @@ def collect_trajectory(env_conf, policy, noise_seed=None, show_frames=False):
         width = np.ones(shape=width.shape)
     assert not np.any(np.isinf(width)), width
 
-    def draw():
+    def draw(block):
         import matplotlib.pyplot as plt
         from IPython.display import clear_output
 
         clear_output(wait=True)
         plt.imshow(env.render())
         plt.title(f"i_iter = {i_iter} return = {return_trajectory:.2f}")
-        plt.show()
+        plt.show(block=block)
+        if not block:
+            plt.pause(0.001)
 
     # print("NOISE_SEED:", noise_seed)
     state, _ = env.reset(seed=noise_seed)
@@ -78,11 +82,13 @@ def collect_trajectory(env_conf, policy, noise_seed=None, show_frames=False):
         state, reward, done = env.step(action)[:3]
         # print("INFO:", info)
         return_trajectory += reward
-        if show_frames and i_iter % max(1, (max_steps // num_frames_skip)) == 0:
-            draw()
+
+        if show_frames and (i_iter % num_frames_skip) == 0:
+            print("DRAW")
+            draw(block=False)
         if done:
             break
     if show_frames:
-        draw()
+        draw(block=True)
     env.close()
     return Trajectory(return_trajectory, np.array(traj_states).T, np.array(traj_actions).T)

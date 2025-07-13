@@ -47,6 +47,7 @@ def test_khepera_env_equivalence():
     for action in actions:
         o1, r1, d1, *_ = env1.step(action)
         o2, r2, d2, *_ = env2.step(action)
+        print("R:", r1, r2)
         assert len(o1) == len(o2) == 5
         # Just check that both environments return reasonable values
         assert np.all(np.isfinite(o1)) and np.all(np.isfinite(o2))

@@ -117,6 +117,15 @@ def _gym_conf(env_name, gym_conf=None, policy_class=None, kwargs=None):
     return EnvConf(env_name, gym_conf=gym_conf, policy_class=policy_class, kwargs=kwargs)
 
 
+def kheperax_conf():
+    from kheperax.tasks.target import TargetKheperaxConfig
+
+    from optimizer.khepera_wrapper import KheperaxEnvConf
+
+    config = TargetKheperaxConfig.get_default_for_map("standard")
+    return KheperaxEnvConf(kheperax_config=config)
+
+
 # See https://paperswithcode.com/task/openai-gym
 # num_frames_skip is not "frame_skip" in gymnasium. num_frames_skip is only used internally.
 _gym_env_confs = {
@@ -209,4 +218,5 @@ _gym_env_confs = {
         policy_class=TurboLunarPolicy,
     ),
     "khepera": lambda: khepera_maze_conf(),
+    "kheperax": lambda: kheperax_conf(),
 }
