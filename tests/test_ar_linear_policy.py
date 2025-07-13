@@ -14,7 +14,7 @@ def test_ar_linear_policy_initialization():
     policy = ARLinearPolicy(env_conf, num_ar=3, use_differences=True)
 
     assert policy._num_ar == 3
-    assert policy._use_differences == True
+    assert policy._use_differences
     assert policy._queue.maxlen == 3
     assert len(policy._queue) == 0
 

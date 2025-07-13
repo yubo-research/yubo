@@ -2,7 +2,6 @@
 
 import multiprocessing
 import os
-import random
 
 
 def worker(cmd):

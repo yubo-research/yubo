@@ -2,6 +2,8 @@ line-length = 160
 exclude = [
     "trash",
     "dpp-bbo-ref",
+    "mcmc_bo.py",
+    "exp.py",
 ]
 
 [format]
