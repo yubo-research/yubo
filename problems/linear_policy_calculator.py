@@ -76,6 +76,9 @@ class LinearPolicyCalculator:
         calc = LinearPolicyCalculator(self._id_int, self._num_state, self._num_action)
         calc._beta = self._beta.copy()
         calc._scale = self._scale
+        calc._loc_0 = self._loc_0.copy()
+        calc._scale_0 = self._scale_0.copy()
+        calc._num_init_x = self._num_init_x
         calc._normalizer = copy.deepcopy(self._normalizer)
         if hasattr(self, "_k"):
             calc._k = self._k

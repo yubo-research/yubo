@@ -6,7 +6,7 @@ from .linear_policy_calculator import LinearPolicyCalculator
 
 
 class ARLinearPolicy:
-    def __init__(self, env_conf, num_ar=2, use_differences=False):
+    def __init__(self, env_conf, num_ar=3, use_differences=False):
         self.problem_seed = env_conf.problem_seed
         self._env_conf = env_conf
         self._num_ar = num_ar

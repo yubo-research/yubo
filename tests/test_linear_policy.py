@@ -12,6 +12,7 @@ def test_linear_policy_initialization():
     env.close()
 
     policy = LinearPolicy(env_conf)
+    policy.set_params(policy.get_params())
 
     assert policy.problem_seed == 44
     assert policy._env_conf == env_conf
@@ -28,7 +29,7 @@ def test_linear_policy_num_params():
     env.close()
 
     policy = LinearPolicy(env_conf)
-    expected_params = policy._calculator._num_beta + 1
+    expected_params = policy._calculator._num_beta + 2 + 2 * policy._calculator._num_state
 
     assert policy.num_params() == expected_params
 

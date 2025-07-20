@@ -13,7 +13,7 @@ class Normalizer:
             self._num = 0
         else:
             self._x = init_mean * num_init + np.zeros(shape=shape)
-            self._x2 = (init_var + init_mean**2) * num_init
+            self._x2 = (init_var + init_mean**2) * num_init + np.zeros(shape=shape)
             assert self._x2.min() >= 0, self._x2.min()
             self._num = num_init
 
