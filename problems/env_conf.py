@@ -55,7 +55,7 @@ def default_policy(env_conf):
 @dataclass
 class GymConf:
     max_steps: int = 1000
-    num_frames_show: int = 10
+    num_frames_show: int = 100
     state_space: Any = None
     transform_state: bool = True
 

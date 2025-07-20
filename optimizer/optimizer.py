@@ -10,6 +10,7 @@ from .designers import Designers
 from .trajectories import Trajectory, collect_trajectory
 
 _INTERACTIVE_DEBUG = True
+_SHOW_EVERY_N_ITER = 30
 
 
 @dataclass
@@ -144,8 +145,9 @@ class Optimizer:
         ret_batch = np.array(ret_batch)
 
         if _INTERACTIVE_DEBUG:
-            if ret_batch.max() > self.r_best_est:
-                print("BEST:", ret_batch.max(), self._ret_viz, self.r_best_est)
+            # if ret_batch.max() > self.r_best_est:
+            if self._i_iter % _SHOW_EVERY_N_ITER == 0:
+                print("RET:", self._ret_viz, self.r_best_est, ret_batch.max())
                 collect_trajectory(self._env_conf, self._policy_viz, noise_seed=self._noise_seed_viz, show_frames=True)
 
         self.r_best_est = max(self.r_best_est, ret_batch.max())

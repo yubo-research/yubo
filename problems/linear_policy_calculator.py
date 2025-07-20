@@ -26,9 +26,11 @@ class LinearPolicyCalculator:
         self._num_beta = self._beta.size
         self._scale = 1
         self._num_state = num_state
-        self._loc_0 = np.zeros(shape=(self._num_state,))
-        self._scale_0 = np.ones(shape=(self._num_state,))
-        self._num_init_x = 1
+        self._loc_0 = np.random.uniform(-1, 1, size=(self._num_state,))
+        self._scale_0 = np.random.uniform(0, 1, size=(self._num_state,))
+        self._num_init_x = np.random.uniform(0, 1)
+        self._K = 3
+        self._max_num_init_x = 10
 
     def num_params(self):
         return self._num_beta + 2 + 2 * self._num_state
@@ -40,20 +42,20 @@ class LinearPolicyCalculator:
         i += 1
         self._beta = x[i : i + self._num_beta].reshape(self._beta.shape)
         i += self._num_beta
-        self._loc_0 = x[i : i + self._num_state]
+        self._loc_0 = self._K * x[i : i + self._num_state]
         i += self._num_state
-        self._scale_0 = 0.5 * (1 + x[i : i + self._num_state])
+        self._scale_0 = self._K * (0.5 * (1 + x[i : i + self._num_state]))
         i += self._num_state
-        self._num_init_x = x[i]
+        self._num_init_x = (1 + x[i]) / 2
         i += 1
         self._normalizer = Normalizer(
             shape=(self._num_state,),
-            num_init=int(30 * self._num_init_x),
+            num_init=int(self._max_num_init_x * self._num_init_x),
             init_mean=self._loc_0,
             init_var=self._scale_0,
         )
 
-        self._k = 2 * (1 + self._scale)
+        self._k = 1 * (1 + self._scale)
 
     def get_params(self):
         p = np.zeros(shape=(self.num_params(),))
@@ -62,11 +64,11 @@ class LinearPolicyCalculator:
         i += 1
         p[i : i + self._num_beta] = self._beta.flatten()
         i += self._num_beta
-        p[i : i + self._num_state] = self._loc_0
+        p[i : i + self._num_state] = self._loc_0 / self._K
         i += self._num_state
-        p[i : i + self._num_state] = 2 * self._scale_0 - 1
+        p[i : i + self._num_state] = 2 * self._scale_0 / self._K - 1
         i += self._num_state
-        p[i] = self._num_init_x
+        p[i] = 2 * self._num_init_x - 1
         i += 1
         return p
 

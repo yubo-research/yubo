@@ -13,7 +13,7 @@ class Trajectory:
 def collect_trajectory(env_conf, policy, noise_seed=None, show_frames=False):
     b_gym = env_conf.gym_conf is not None
     if b_gym and show_frames:
-        num_frames_skip = env_conf.gym_conf.max_steps // env_conf.gym_conf.num_frames_show
+        num_frames_skip = max(1, env_conf.gym_conf.max_steps // env_conf.gym_conf.num_frames_show)
 
     render_mode = "rgb_array" if show_frames else None
     env = env_conf.make(render_mode=render_mode)

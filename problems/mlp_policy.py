@@ -43,7 +43,13 @@ class MLPPolicy(nn.Module):
         layers.append(nn.Tanh())
 
         self.model = nn.Sequential(*layers)
-        self._normalizer = Normalizer(shape=(num_state,))
+        # self._normalizer = Normalizer(shape=(num_state,))
+        self._normalizer = None
+        self._num_state = num_state
+        self._max_num_init_x = 10
+        self._num_init_x = np.random.uniform(0, 1)
+        self._loc_0 = np.random.uniform(-1, 1, size=(self._num_state,))
+        self._scale_0 = np.random.uniform(0, 1, size=(self._num_state,))
 
     def _normalize(self, state):
         state = state.copy()
@@ -83,6 +89,12 @@ class MLPPolicy(nn.Module):
             return np.concatenate(params)
 
     def set_params(self, flat_params):
+        self._normalizer = Normalizer(
+            shape=(self._num_state,),
+            num_init=int(self._max_num_init_x * self._num_init_x),
+            init_mean=self._loc_0,
+            init_var=self._scale_0,
+        )
         with torch.inference_mode():
             idx = 0
             for p in self.parameters():
