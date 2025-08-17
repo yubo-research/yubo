@@ -324,17 +324,19 @@ def prep_rl_three(results_dir, name):
     exp_dir = f"exp_enn_{name}"
 
     opts = [
-        # "turbo-enn-3",
-        # "turbo-f",
+        "turbo-enn-10",
+        "turbo-f",
         "turbo-0",
+        "random",
+        "enn-p-10",
     ]
 
     cmds = []
     for opt in opts:
         for num_arms, num_rounds, num_denoise in [
             (1, 100, 1),
-            (10, 100, 10),
-            (50, 30, 50),
+            # (10, 100, 10),
+            # (50, 30, 50),
         ]:
             # prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None):
             if num_arms == 1 and opt == "cma":

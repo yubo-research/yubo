@@ -7,6 +7,7 @@ from acq.acq_turbo_yubo import AcqTurboYUBO, TurboYUBOConfig, TurboYUBOState
 
 class TurboYUBODesigner:
     def __init__(self, policy, num_keep: int = None, keep_style: str = None, raasp: bool = True):
+        assert False, "Not ready for use"
         self._policy = policy
         self._num_keep = num_keep
         self._keep_style = keep_style
