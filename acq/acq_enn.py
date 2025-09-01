@@ -36,6 +36,7 @@ class ENNConfig:
     raasp_type: str = None
     thompson: bool = False
     met_3: str = None
+    met_4: str = None
 
     k_novelty: int = None
 
@@ -167,7 +168,7 @@ class AcqENN:
             met_2 = mvn.se
 
         mets = [mvn.mu, met_2]
-        if x_center is not None:
+        if self._config.met_3 is not None:
             if self._config.met_3 == "L2":
                 dist = -np.linalg.norm(x_cand - x_center, axis=1)[:, None]
             elif self._config.met_3 == "L1":
@@ -179,6 +180,15 @@ class AcqENN:
             else:
                 assert False, self._config.met_3
             mets.append(dist)
+
+        if self._config.met_4 is not None:
+            if self._config.met_4 == "qd":
+                diversity, diversity_se = self._novelty(x_cand, num_arms)
+                if diversity is not None:
+                    mets.append(diversity[:, None])
+                    mets.append(diversity_se[:, None])
+            else:
+                assert False, self._config.met_4
         return self._i_pareto_front_selection(num_arms, *mets)
 
     def _tau(self, x_obs, x):

@@ -9,6 +9,9 @@ from .datum import Datum
 from .designers import Designers
 from .trajectories import Trajectory, collect_trajectory
 
+_INTERACTIVE_DEBUG = False
+_SHOW_EVERY_N_ITER = 30
+
 
 @dataclass
 class _TraceEntry:
@@ -36,6 +39,7 @@ class Optimizer:
 
         self._collector(f"PROBLEM: env = {env_conf.env_name} num_params = {policy.num_params()}")
         self._designers = Designers(policy, num_arms)
+        self._ret_viz = -1e99
 
     def _collect_trajectory(self, policy, i_noise=None, denoise_seed=0):
         if i_noise is None:
@@ -44,13 +48,33 @@ class Optimizer:
             noise_seed = i_noise
 
         noise_seed += self._env_conf.noise_seed_0 + denoise_seed
+        self._last_noise_seed = noise_seed
 
+        # policy_a = policy.clone()
+        # policy_b = policy.clone()
+        # a = collect_trajectory(self._env_conf, policy_a, noise_seed=noise_seed)
+        # b = collect_trajectory(self._env_conf, policy_b, noise_seed=noise_seed)
+        # assert a.rreturn == b.rreturn, f"{a.rreturn} != {b.rreturn}"
+        # return a
         return collect_trajectory(self._env_conf, policy, noise_seed=noise_seed)
 
     def _collect_denoised_trajectory(self, policy, i_noise=None):
         if self._num_denoise is not None:
+            if self._num_denoise == 1:
+                # TODO: Think about what to do with states and actions when num_denoise > 1)
+                policy_orig = policy.clone()
+                traj = self._collect_trajectory(policy, denoise_seed=0)
+                if _INTERACTIVE_DEBUG:
+                    if traj.rreturn > self._ret_viz:
+                        print("COLLECT_VIZ:", traj.rreturn, self.r_best_est)
+                        self._policy_viz = policy_orig.clone()
+                        self._ret_viz = traj.rreturn
+                        self._noise_seed_viz = self._last_noise_seed
+
+                return traj
             rreturn = self._mean_return_over_runs(policy)
             return Trajectory(rreturn, None, None)
+
         return self._collect_trajectory(policy, i_noise=i_noise)
 
     def _iterate(self, designer, num_arms):
@@ -91,14 +115,12 @@ class Optimizer:
             # assert np.std(rets) > 0, rets
         return np.mean(rets)
 
-    def collect_trace(self, designer_name, num_iterations):
-        # from pympler import tracker
-
-        # tr = tracker.SummaryTracker()
-
+    def collect_trace(self, designer_name, max_iterations, max_proposal_seconds=np.inf):
         self.initialize(designer_name)
-        for _ in range(num_iterations):
+        num_iterations = 0
+        while num_iterations < max_iterations and self._cum_dt_proposing < max_proposal_seconds:
             self.iterate()
+            num_iterations += 1
         self.stop()
         return self._trace
 
@@ -123,6 +145,12 @@ class Optimizer:
 
         # one ret for each *arm* (nothing to do with num_denoise)
         ret_batch = np.array(ret_batch)
+
+        if _INTERACTIVE_DEBUG:
+            # if ret_batch.max() > self.r_best_est:
+            if self._i_iter % _SHOW_EVERY_N_ITER == 0:
+                print("VIZ:", self._ret_viz, self.r_best_est, ret_batch.max())
+                collect_trajectory(self._env_conf, self._policy_viz, noise_seed=self._noise_seed_viz, show_frames=True)
 
         self.r_best_est = max(self.r_best_est, ret_batch.max())
         if self._b_cumulative_reward:
