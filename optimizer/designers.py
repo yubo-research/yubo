@@ -396,38 +396,6 @@ class Designers:
             return MTSDesigner(self._policy, keep_style=keep_style, num_keep=num_keep, init_style="ts")
         elif designer_name == "mts-meas":
             return MTSDesigner(self._policy, keep_style=keep_style, num_keep=num_keep, init_style="meas")
-        elif designer_name.startswith("enn-u"):
-            k = int(designer_name.split("-")[-1])
-            return ENNDesigner(
-                self._policy,
-                ENNConfig(
-                    k=k,
-                    num_candidates_per_arm=1000,
-                    acq="uniform",
-                    stagger=False,
-                    small_world_M=None,
-                    candidate_generator="sobol+best",
-                ),
-                keep_style=keep_style,
-                num_keep=num_keep,
-            )
-
-        elif designer_name.startswith("enn-tr0-"):
-            k = int(designer_name.split("-")[-1])
-            return ENNDesigner(
-                self._policy,
-                ENNConfig(
-                    k=k,
-                    num_candidates_per_arm=100,
-                    acq="pareto_strict",
-                    stagger=False,
-                    small_world_M=None,
-                    candidate_generator="tr",
-                    tr_type="0",
-                ),
-                keep_style=keep_style,
-                num_keep=num_keep,
-            )
         elif designer_name.startswith("enn-p-"):
             k = int(designer_name.split("-")[-1])
             return ENNDesigner(
@@ -446,7 +414,7 @@ class Designers:
                 keep_style=keep_style,
                 num_keep=num_keep,
             )
-        elif designer_name.startswith("enn-pstag-"):
+        elif designer_name.startswith("enn-trk-"):
             k = int(designer_name.split("-")[-1])
             return ENNDesigner(
                 self._policy,
@@ -454,70 +422,74 @@ class Designers:
                     k=k,
                     num_candidates_per_arm=100,
                     acq="pareto_strict",
-                    small_world_M=None,
-                    candidate_generator="best",
-                    tr_type=None,
-                    raasp_type="raasp_p",
-                    stagger=True,
-                    thompson=False,
-                ),
-                keep_style=keep_style,
-                num_keep=num_keep,
-            )
-        elif designer_name.startswith("enn-trr-"):
-            k = int(designer_name.split("-")[-1])
-            return ENNDesigner(
-                self._policy,
-                ENNConfig(
-                    k=k,
-                    num_candidates_per_arm=100,
-                    acq="pareto_strict",
-                    stagger=False,
                     small_world_M=None,
                     candidate_generator="tr",
-                    tr_type="mean",
+                    tr_type=None,
                     raasp_type="raasp_p",
+                    thompson=False,
+                    stagger=False,
                 ),
                 keep_style=keep_style,
                 num_keep=num_keep,
             )
-        elif designer_name.startswith("enn-pr-"):
+        elif designer_name.startswith("enn-pd-"):
             k = int(designer_name.split("-")[-1])
             return ENNDesigner(
                 self._policy,
                 ENNConfig(
                     k=k,
                     num_candidates_per_arm=100,
-                    acq="pareto_strict",
-                    stagger=False,
+                    acq="pareto_dist",
                     small_world_M=None,
                     candidate_generator="best",
                     tr_type=None,
-                    raasp_type="two-stage",
+                    raasp_type="raasp_p",
                     thompson=False,
+                    stagger=False,
+                    met_3="L2",
+                ),
+                keep_style=keep_style,
+                num_keep=num_keep,
+            )
+        elif designer_name.startswith("enn-pd1-"):
+            k = int(designer_name.split("-")[-1])
+            return ENNDesigner(
+                self._policy,
+                ENNConfig(
+                    k=k,
+                    num_candidates_per_arm=100,
+                    acq="pareto_dist",
+                    small_world_M=None,
+                    candidate_generator="best",
+                    tr_type=None,
+                    raasp_type="raasp_p",
+                    thompson=False,
+                    stagger=False,
+                    met_3="L1",
+                ),
+                keep_style=keep_style,
+                num_keep=num_keep,
+            )
+        elif designer_name.startswith("enn-pdt-"):
+            k = int(designer_name.split("-")[-1])
+            return ENNDesigner(
+                self._policy,
+                ENNConfig(
+                    k=k,
+                    num_candidates_per_arm=100,
+                    acq="pareto_dist",
+                    small_world_M=None,
+                    candidate_generator="best",
+                    tr_type=None,
+                    raasp_type="raasp_p",
+                    thompson=False,
+                    stagger=False,
+                    met_3="tau",
                 ),
                 keep_style=keep_style,
                 num_keep=num_keep,
             )
 
-        elif designer_name.startswith("enn-p4-"):
-            k = int(designer_name.split("-")[-1])
-            return ENNDesigner(
-                self._policy,
-                ENNConfig(
-                    k=k,
-                    num_candidates_per_arm=100,
-                    acq="pareto_strict",
-                    stagger=False,
-                    small_world_M=None,
-                    candidate_generator="bestold",
-                    tr_type=None,
-                    raasp_type="raasp_p",
-                    thompson=False,
-                ),
-                keep_style=keep_style,
-                num_keep=num_keep,
-            )
         elif designer_name.startswith("enn-n-"):
             k = int(designer_name.split("-")[-1])
             return ENNDesigner(
@@ -557,57 +529,6 @@ class Designers:
                 keep_style=keep_style,
                 num_keep=num_keep,
                 want_descriptors=True,
-            )
-        elif designer_name.startswith("enn-r1-"):
-            k = int(designer_name.split("-")[-1])
-            return ENNDesigner(
-                self._policy,
-                ENNConfig(
-                    k=k,
-                    num_candidates_per_arm=100,
-                    acq="pareto_strict",
-                    stagger=False,
-                    small_world_M=None,
-                    candidate_generator="best",
-                    tr_type="mean",
-                    raasp_type="raasp_1",
-                ),
-                keep_style=keep_style,
-                num_keep=num_keep,
-            )
-        elif designer_name.startswith("enn-ru1-"):
-            k = int(designer_name.split("-")[-1])
-            return ENNDesigner(
-                self._policy,
-                ENNConfig(
-                    k=k,
-                    num_candidates_per_arm=100,
-                    acq="uniform",
-                    stagger=False,
-                    small_world_M=None,
-                    candidate_generator="best",
-                    tr_type="mean",
-                    raasp_type="raasp_1",
-                ),
-                keep_style=keep_style,
-                num_keep=num_keep,
-            )
-        elif designer_name.startswith("enn-tr-"):
-            k = int(designer_name.split("-")[-1])
-            return ENNDesigner(
-                self._policy,
-                ENNConfig(
-                    k=k,
-                    num_candidates_per_arm=100,
-                    acq="pareto_strict",
-                    stagger=False,
-                    small_world_M=None,
-                    candidate_generator="tr",
-                    tr_type="mean",
-                    raasp_type=None,
-                ),
-                keep_style=keep_style,
-                num_keep=num_keep,
             )
 
         elif designer_name == "turbo-yubo":

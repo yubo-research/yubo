@@ -1,6 +1,8 @@
 import modal
 
 
+# git+https://github.com/chebpy/chebpy.git
+# tsroots==0.1.21
 def mk_image():
     reqs = """
     numpy==1.26.0
@@ -14,12 +16,10 @@ def mk_image():
     optuna==4.0.0
     gymnasium[box2d]
     gymnasium[mujoco]
-    tsroots==0.1.21
+    
     faiss-cpu==1.9.0
-    git+https://github.com/chebpy/chebpy.git
-    """.split(
-        "\n"
-    )
+    nds==0.4.3
+    """.split("\n")
     sreqs = []
     for req in reqs:
         req = req.strip()

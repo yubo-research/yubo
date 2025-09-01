@@ -9,12 +9,7 @@ from model.edn import EpistemicNovelty
 from model.enn import EpistemicNearestNeighbors
 from sampling.knn_tools import random_directions
 from sampling.ray_boundary import ray_boundary_np
-from sampling.sampling_util import (
-    raasp_np,
-    raasp_np_choice,
-    raasp_np_p,
-    sobol_perturb_np,
-)
+from sampling.sampling_util import raasp_np, raasp_np_1d, raasp_np_choice, raasp_np_p, sobol_perturb_np
 
 """
 - Pick starting point(s), x_0
@@ -40,6 +35,7 @@ class ENNConfig:
     tr_type: str = "mean"
     raasp_type: str = None
     thompson: bool = False
+    met_3: str = None
 
     k_novelty: int = None
 
@@ -161,7 +157,7 @@ class AcqENN:
 
         return self._i_pareto_front_selection(num_keep, y, discrep)
 
-    def _i_pareto_fronts_strict(self, x_cand, num_arms):
+    def _i_pareto_fronts_strict(self, x_cand, num_arms, *, x_center=None):
         assert self._config.num_over_sample_per_arm == 1, self._config.num_over_sample_per_arm
         mvn = self._enn.posterior(x_cand)
 
@@ -170,10 +166,35 @@ class AcqENN:
         else:
             met_2 = mvn.se
 
-        return self._i_pareto_front_selection(num_arms, mvn.mu, met_2)
+        mets = [mvn.mu, met_2]
+        if x_center is not None:
+            if self._config.met_3 == "L2":
+                dist = -np.linalg.norm(x_cand - x_center, axis=1)[:, None]
+            elif self._config.met_3 == "L1":
+                dist = -np.abs(x_cand - x_center).sum(axis=1)[:, None]
+            elif self._config.met_3 == "L0":
+                dist = -np.zeros_like(x_cand - x_center).sum(axis=1)[:, None]
+            elif self._config.met_3 == "tau":
+                dist = -self._tau(self._x_train, x_cand)
+            else:
+                assert False, self._config.met_3
+            mets.append(dist)
+        return self._i_pareto_front_selection(num_arms, *mets)
+
+    def _tau(self, x_obs, x):
+        assert x.ndim == 2, x.ndim
+        diff = np.abs(x_obs[:, None, :] - x[None, :, :])
+        return np.sum(np.min(diff, axis=0), axis=1, keepdims=True)
 
     def _pareto_fronts_strict(self, x_cand, num_arms):
-        i_keep = self._i_pareto_fronts_strict(np.unique(x_cand, axis=0), num_arms)
+        i_keep = self._i_pareto_fronts_strict(x_cand, num_arms)
+        x_arms = x_cand[i_keep]
+
+        assert num_arms is None or len(x_arms) == num_arms, (len(x_arms), num_arms)
+        return x_arms
+
+    def _pareto_fronts_dist(self, x_center, x_cand, num_arms):
+        i_keep = self._i_pareto_fronts_strict(x_cand, num_arms, x_center=x_center)
         x_arms = x_cand[i_keep]
 
         assert num_arms is None or len(x_arms) == num_arms, (len(x_arms), num_arms)
@@ -304,8 +325,6 @@ class AcqENN:
             return raasp_np_p(x_center, lb, ub, num_cand, stagger=self._config.stagger)
         elif self._config.raasp_type == "biased_raasp":
             return self._biased_raasp(x_center, num_cand, lb, ub)
-        elif self._config.raasp_type == "raasp_1":
-            return raasp_np(x_center, lb, ub, num_cand, num_pert=1)
         elif self._config.raasp_type == "two-stage":
             return self._two_stage_raasp(x_center, lb, ub, num_cand)
         else:
@@ -335,71 +354,46 @@ class AcqENN:
     def _raasp_or_sobol(self, x_center, num_cand, lb=0.0, ub=1.0):
         raasp = self._raasp(x_center, num_cand, lb, ub)
         if raasp is not None:
+            print("RAASP")
             return raasp
         else:
+            print("SOBOL")
             return self._draw_sobol(num_cand)
 
     def _trust_region(self, num_cand):
-        if len(self._x_train) < 3:
-            return self._draw_sobol(num_cand)
+        if len(self._x_train) < 2:
+            return None, self._draw_sobol(num_cand)
         x_center = self._x_train[[np.argmax(self._y_train)]]
 
-        mvn = self._enn.posterior(self._x_train, exclude_nearest=True, k=2)
-        loocv = mvn.mu - self._y_train  # / mvn.se
-        if loocv.std() < 1e-9:
-            return self._raasp_or_sobol(x_center, num_cand)
-        idx, dists = self._enn.about_neighbors(x_center, k=len(self._x_train))
-        idx = idx.flatten()
-        dists = dists.flatten()
-        d = np.abs(loocv)
-        if self._config.tr_type == "mean":
-            d = d[idx] / d.mean()
-        elif self._config.tr_type == "0":
-            d = d[idx] / d[0]
-        elif self._config.tr_type == "median":
-            d = d[idx] / np.median(d)
-        else:
-            assert False, self._config.tr_type
+        idx, dists = self._enn.about_neighbors(x_center)
+        tr = dists.flatten()[-1]
 
-        if d[0] > 1.0 + 1e-9:
-            tr = dists[1] / 2
-        else:
-            d[0] = 0.0
-            i = np.where(d > 1.0 + 1e-9)[0]
-            if len(i) == 0:
-                tr = dists[1] / 2
-            else:
-                i = i.min()
-                if i == len(idx):
-                    return self._draw_sobol(num_cand)
-                tr = (dists[i] + dists[i - 1]) / 2
-
-        bounds = np.array([x_center[0] - tr, x_center[0] + tr])
-        bounds = np.maximum(0.0, bounds)
-        bounds = np.minimum(1.0, bounds)
-        return self._raasp_or_sobol(x_center, num_cand, bounds[0], bounds[1])
+        lb = np.maximum(0.0, x_center[0] - tr)
+        ub = np.minimum(1.0, x_center[0] + tr)
+        return raasp_np_p(x_center, lb, ub, num_cand)
 
     def _candidates(self, num_arms):
         num_cand = self._config.num_candidates_per_arm * num_arms
+        x_0 = None
         x_cands = []
         for region_type in self._config.candidate_generator.split("+"):
             if region_type == "tr":
                 x_cand = self._trust_region(num_cand)
             elif region_type == "sobol":
-                return self._draw_sobol(num_cand)
+                x_cand = self._draw_sobol(num_cand)
             elif region_type == "best":
                 x_0 = self._x_train[[np.argmax(self._y_train)]]
                 raasp = self._raasp(x_0, num_cand)
                 if raasp is not None:
-                    return raasp
+                    x_cand = raasp
                 else:
                     x_0 = x_0[np.random.choice(np.arange(len(x_0)), size=num_cand, replace=True)]
                     x_far = ray_boundary_np(x_0, random_directions(len(x_0), self._num_dim))
-                    return self._sample_segments(x_0, x_far)
+                    x_cand = self._sample_segments(x_0, x_far)
             elif region_type == "best_seg":
                 x_0 = self._x_train[[np.argmax(self._y_train)]]
                 x_far = ray_boundary_np(x_0, random_directions(len(x_0), self._num_dim))
-                return self._sample_segments(x_0, x_far)
+                x_cand = self._sample_segments(x_0, x_far)
             elif region_type == "pivots":
                 x_0 = self._select_pivots(num_cand)
                 x_far = ray_boundary_np(x_0, random_directions(len(x_0), self._num_dim))
@@ -444,18 +438,22 @@ class AcqENN:
         assert x_cand.min() >= 0.0 and x_cand.max() <= 1.0, (x_cand.min(), x_cand.max())
         assert len(np.unique(x_cand, axis=0)) == x_cand.shape[0], (len(np.unique(x_cand, axis=0)), x_cand.shape[0])
 
-        return x_cand
+        return x_0, x_cand
 
     def _draw_two_level(self, num_arms):
-        x_cand = self._candidates(num_arms)
+        x_center, x_cand = self._candidates(num_arms)
 
         if len(x_cand) == num_arms:
             return x_cand
+
+        x_cand = np.unique(x_cand, axis=0)
 
         if self._config.acq == "dominated_novelty":
             return self._dominated_novelty_selection(x_cand, num_arms)
         elif self._config.acq == "pareto_strict":
             return self._pareto_fronts_strict(x_cand, num_arms)
+        elif self._config.acq == "pareto_dist":
+            return self._pareto_fronts_dist(x_center, x_cand, num_arms)
         elif self._config.acq == "novelty_search":
             return self._novelty_search(x_cand, num_arms)
         elif self._config.acq == "quality_diversity":
