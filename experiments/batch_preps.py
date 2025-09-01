@@ -276,16 +276,17 @@ def prep_seq(results_dir):
     exp_dir = "exp_enn_2_seq"
 
     opts = [
-        # "random",
-        # # "lei",
+        "random",
+        "lei",
         # # "ucb",
-        # "turbo-0",
-        # "turbo-1",
+        "turbo-0",
+        "turbo-1",
         # # "optuna",
         # "turbo-enn-10",
         # "enn-3",
         # "enn-sw-3",
-        "enn-ss-3",
+        # "enn-ss-3",
+        "enn-pd-10",
     ]
 
     noises = [None]
@@ -293,8 +294,8 @@ def prep_seq(results_dir):
     min_rounds = 30
     cmds = []
 
-    # dims = [1, 3, 10, 30, 100]
-    dims = [1, 3, 10, 30, 100, 300, 1000]
+    dims = [1, 3, 10, 30, 100]
+    # dims = [1, 3, 10, 30, 100, 300, 1000]
     for num_dim in dims:
         if num_dim == 1000 and opts == "path:Osab":
             continue
@@ -340,7 +341,7 @@ def prep_rl_three(results_dir, name):
         for num_arms, num_rounds, num_denoise in [
             (1, 100, 1),
             (10, 100, 10),
-            (50, 30, 50),
+            # (50, 30, 50),
         ]:
             # prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None):
             if num_arms == 1 and opt == "cma":
