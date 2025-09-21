@@ -1,7 +1,7 @@
 def set_up_enn():
     import numpy as np
 
-    from model.enn import EpsitemicNearestNeighbors
+    from model.enn import EpistemicNearestNeighbors
 
     num_dim = 5
     n = 10
@@ -13,7 +13,8 @@ def set_up_enn():
 
     k = 3
 
-    enn = EpsitemicNearestNeighbors(train_x, train_y, k=k)
+    enn = EpistemicNearestNeighbors(k=k)
+    enn.add(train_x, train_y)
     return num_dim, n, train_x, train_y, k, enn
 
 
@@ -40,7 +41,7 @@ def test_add():
     x_eps = x + 1e-6
     n = len(enn)
     idx_0, _ = enn.about_neighbors(x_eps)
-    enn.add(x, 3)
+    enn.add(x, np.array([[3]]))
     assert len(enn) == n + 1
     idx, _ = enn.about_neighbors(x_eps)
     assert np.all(idx_0 != idx)
@@ -50,7 +51,7 @@ def test_add():
 def test_enn():
     import numpy as np
 
-    from model.enn import EpsitemicNearestNeighbors
+    from model.enn import EpistemicNearestNeighbors
 
     num_dim, n, train_x, train_y, k, enn = set_up_enn()
 
@@ -71,7 +72,8 @@ def test_enn():
     assert len(enn.about_neighbors(train_x[[1]], k=1)[0].flatten()) == 1
     assert enn.neighbors(x, k=1).shape == (1, 1, num_dim)
 
-    enn = EpsitemicNearestNeighbors(np.empty((0, num_dim)), np.empty((0, 1)), k=3)
+    enn = EpistemicNearestNeighbors(k=3)
+    enn.add(np.empty((0, num_dim)), np.empty((0, 1)))
     assert len(enn.about_neighbors(x)[0].flatten()) == 0
     assert enn.neighbors(x).shape == (0, num_dim)
     assert len(enn.about_neighbors(x, k=1)[0].flatten()) == 0

@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-from model.enn import EpsitemicNearestNeighbors
+from model.enn import EpistemicNearestNeighbors
 from sampling.knn_tools import farthest_neighbor, random_directions
 from sampling.lhd import latin_hypercube_design
 
@@ -18,9 +18,9 @@ class AcqVHD:
         self._seed = np.random.randint(0, 9999)
 
         if len(self._X_train) > 0:
-            self._enn_1 = EpsitemicNearestNeighbors(self._X_train, self._Y_train, k=1)
+            self._enn_1 = EpistemicNearestNeighbors(self._X_train, self._Y_train, k=1)
             if k > 0:
-                self._enn_ts = EpsitemicNearestNeighbors(self._X_train, self._Y_train, k=k)
+                self._enn_ts = EpistemicNearestNeighbors(self._X_train, self._Y_train, k=k)
             else:
                 self._enn_ts = None
         else:
