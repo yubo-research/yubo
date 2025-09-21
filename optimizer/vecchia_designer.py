@@ -10,15 +10,11 @@ class VecchiaDesigner:
         self._policy = policy
         self._num_candidates_per_arm = num_candidates_per_arm
 
-        # device/dtype
-        # pyvecch/faiss expect float32
         self._dtype = torch.float32
         self._device = torch.empty(size=(1,)).device
 
-        # Fallback sampler for cold-start
         self._sobol = SobolDesigner(policy)
 
-        # Lazy import flags
         self._pyvecch_ready = None
 
     def _ensure_pyvecch(self):
@@ -78,10 +74,10 @@ class VecchiaDesigner:
         with torch.no_grad():
             posterior = model.posterior(X_cand)
             mu = posterior.mean
-            # Reduce any batch/output dims to per-candidate mean
+
             while mu.dim() > 1:
                 mu = mu.mean(dim=0)
-            # Ensure 1D of length num_candidates
+
             mu = mu.reshape(-1)
             k = min(num_arms, mu.shape[0])
             topk = torch.topk(mu, k=k, largest=True).indices
@@ -118,12 +114,15 @@ class VecchiaDesigner:
         X_train = X_train.to(dtype=torch.float32, device=torch.device("cpu")).contiguous()
         Y_train = Y_train.to(dtype=torch.float32, device=torch.device("cpu")).contiguous()
 
+        if len(X_train) <= 1:
+            return self._sobol(data, num_arms)
+
         model = self._fit_vecchia(X_train, Y_train)
 
         # Candidate set: simple Sobol cloud in TR-like box around best x
         from torch.quasirandom import SobolEngine
 
-        if len(X_train) == 0 or model is None:
+        if len(X_train) <= 1 or model is None:
             return self._sobol(data, num_arms)
 
         y_std = Y_train.std()

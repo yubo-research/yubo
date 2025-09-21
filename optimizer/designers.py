@@ -31,6 +31,7 @@ from .random_designer import RandomDesigner
 from .sobol_designer import SobolDesigner
 from .turbo_designer import TuRBODesigner
 from .turbo_yubo_designer import TurboYUBODesigner
+from .vecchia_designer import VecchiaDesigner
 
 
 class NoSuchDesignerError(Exception):
@@ -205,6 +206,8 @@ class Designers:
             return TuRBODesigner(self._policy, num_init=init_yubo_default, num_trust_regions=5)
         elif designer_name == "dpp":
             return bt_designer(AcqDPP, init_sobol=1, acq_kwargs={"num_X_samples": default_num_X_samples})
+        elif designer_name == "vecchia":
+            return VecchiaDesigner(self._policy, num_candidates_per_arm=default_num_X_samples)
 
         # MTV
         elif designer_name == "mtv":

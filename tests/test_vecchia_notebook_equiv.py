@@ -167,7 +167,5 @@ def test_vecchia_notebook_equivalence_first_5_steps():
 
     for (n, best, tr), (en, ebest, etr) in zip(outputs, expected):
         assert n == en
-        # compare with tolerance since floats
-        print("COMPARE:", n, en, best, ebest, tr, etr)
         assert abs(best - ebest) < 5e-2
         assert abs(tr - etr) < 1e-6
