@@ -287,6 +287,7 @@ def prep_seq(results_dir):
         # "enn-sw-3",
         # "enn-ss-3",
         "enn-pd-10",
+        "enn-qdd-10",
     ]
 
     noises = [None]
@@ -334,6 +335,8 @@ def prep_rl_three(results_dir, name):
         #     "enn-pd-10",
         #     "enn-pd1-10",
         "enn-pdt-10",
+        "enn-qdd-10",
+        "enn-qd-10",
     ]
 
     cmds = []
