@@ -8,8 +8,9 @@ from nds import ndomsort
 from model.edn import EpistemicNovelty
 from model.enn import EpistemicNearestNeighbors
 from sampling.knn_tools import random_directions
+from sampling.log_uniform import np_log_uniform
 from sampling.ray_boundary import ray_boundary_np
-from sampling.sampling_util import raasp_np, raasp_np_1d, raasp_np_choice, raasp_np_p, sobol_perturb_np
+from sampling.sampling_util import raasp_np, raasp_np_choice, raasp_np_p, sobol_perturb_np
 
 """
 - Pick starting point(s), x_0
@@ -32,7 +33,6 @@ class ENNConfig:
     num_over_sample_per_arm: int = 1
 
     candidate_generator: str = "sobol"
-    tr_type: str = "mean"
     raasp_type: str = None
     thompson: bool = False
     met_3: str = None
@@ -372,11 +372,13 @@ class AcqENN:
 
     def _trust_region(self, num_cand):
         if len(self._x_train) < 2:
-            return None, self._draw_sobol(num_cand)
+            return self._draw_sobol(num_cand)
         x_center = self._x_train[[np.argmax(self._y_train)]]
 
-        idx, dists = self._enn.about_neighbors(x_center)
-        tr = dists.flatten()[-1]
+        # idx, dists = self._enn.about_neighbors(x_center)
+        # tr = dists.flatten()[-1]
+        tr = np.random.choice([0.1, 1])  # np_log_uniform(0.5, 1.0)
+        print("TR:", tr)
 
         lb = np.maximum(0.0, x_center[0] - tr)
         ub = np.minimum(1.0, x_center[0] + tr)
