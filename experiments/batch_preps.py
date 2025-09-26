@@ -273,38 +273,29 @@ def prep_mtv_36(results_dir):
 
 
 def prep_seq(results_dir):
-    exp_dir = "exp_enn_2_seq"
+    exp_dir = "exp_enn"
 
-    opts = [
-        "random",
-        "lei",
-        # # "ucb",
-        "turbo-0",
-        "turbo-1",
-        # # "optuna",
-        # "turbo-enn-10",
-        # "enn-3",
-        # "enn-sw-3",
-        # "enn-ss-3",
-        "enn-pd-10",
-        "enn-qdd-10",
-    ]
+    opts = ["vecchia"]
 
     noises = [None]
 
     min_rounds = 30
     cmds = []
 
-    dims = [1, 3, 10, 30, 100]
+    # dims = [1, 3, 10, 30, 100]
+    dims = [300, 1000]
     # dims = [1, 3, 10, 30, 100, 300, 1000]
     for num_dim in dims:
-        if num_dim == 1000 and opts == "path:Osab":
-            continue
+        # if num_dim <= 100:
+        #     num_replications = 3
+        # else:
+        #     num_replications = 3
 
         if num_dim <= 100:
-            num_replications = 3
+            num_replications = 30
         else:
-            num_replications = 3
+            num_replications = 10
+
         cmds.extend(
             prep_d_args(
                 results_dir,

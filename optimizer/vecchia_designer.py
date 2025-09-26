@@ -21,11 +21,7 @@ class VecchiaDesigner:
         if self._pyvecch_ready is not None:
             return self._pyvecch_ready
         try:
-            from pyvecch.input_transforms import Identity  # noqa: F401
-            from pyvecch.models import RFVecchia  # noqa: F401
-            from pyvecch.nbrs import ExactOracle  # noqa: F401
-            from pyvecch.prediction import IndependentRF  # noqa: F401
-            from pyvecch.training import fit_model  # noqa: F401
+            import pyvecch  # noqa: F401
         except Exception:
             self._pyvecch_ready = False
         else:
@@ -83,7 +79,6 @@ class VecchiaDesigner:
             topk = torch.topk(mu, k=k, largest=True).indices
             X_next = X_cand[topk]
 
-        # If for any reason we have fewer than requested, pad uniquely from candidates
         if X_next.shape[-2] < num_arms:
             need = num_arms - X_next.shape[-2]
             existing = {tuple(map(float, row.tolist())) for row in X_next}
@@ -100,17 +95,13 @@ class VecchiaDesigner:
         return X_next
 
     def __call__(self, data, num_arms):
-        # Require pyvecch to be available
         if not self._ensure_pyvecch():
             raise ImportError("VecchiaDesigner requires 'pyvecch'. Please install VecchiaBO (pyvecch) from https://github.com/feji3769/VecchiaBO")
 
-        # Cold-start: fall back to Sobol when no training data yet
         if len(data) == 0:
             return self._sobol(data, num_arms)
 
-        # Gather training data in [0,1]^d (BoTorch space)
         Y_train, X_train = fit_gp.extract_X_Y(data, self._dtype, self._device)
-        # Ensure float32 on CPU and contiguous for faiss/pyvecch
         X_train = X_train.to(dtype=torch.float32, device=torch.device("cpu")).contiguous()
         Y_train = Y_train.to(dtype=torch.float32, device=torch.device("cpu")).contiguous()
 
@@ -119,7 +110,6 @@ class VecchiaDesigner:
 
         model = self._fit_vecchia(X_train, Y_train)
 
-        # Candidate set: simple Sobol cloud in TR-like box around best x
         from torch.quasirandom import SobolEngine
 
         if len(X_train) <= 1 or model is None:
@@ -133,7 +123,6 @@ class VecchiaDesigner:
 
         x_center = X_train[torch.argmax(y_z), :].clone()
 
-        # Lengthscale-proportional box; fall back to isotropic if unavailable
         try:
             weights = model.covar_module.base_kernel.lengthscale.squeeze().detach()
             weights = weights / weights.mean()
@@ -153,5 +142,4 @@ class VecchiaDesigner:
 
         X_next = self._select_candidates(model, X_cand, num_arms)
 
-        # Convert candidates back to policies in parameter space
         return fit_gp.mk_policies(self._policy, X_next)

@@ -2,21 +2,20 @@ import modal
 
 
 # git+https://github.com/chebpy/chebpy.git
-# tsroots==0.1.21
+# tsroots==0.1.22
 def mk_image():
     reqs = """
-    numpy==1.26.0
-    scipy==1.11.3
-    torch==2.5.0
+    numpy==1.26.4
+    scipy==1.15.3
+    torch==2.3.1
     botorch==0.12.0
     gpytorch==1.13
-    gymnasium==1.0.0
+    gymnasium==1.2.0
     cma==4.0.0
-    mujoco==3.2.4
+    mujoco==3.3.3
     optuna==4.0.0
     gymnasium[box2d]
     gymnasium[mujoco]
-    
     faiss-cpu==1.9.0
     nds==0.4.3
     """.split("\n")
@@ -27,5 +26,7 @@ def mk_image():
             continue
         print("REQ:", req)
         sreqs.append(req)
+
+    sreqs_2 = ["git+https://github.com/feji3769/VecchiaBO.git#subdirectory=code"]
     # print("SREQS:", sreqs)
-    return modal.Image.debian_slim(python_version="3.11.5").apt_install("swig").apt_install("git").pip_install(sreqs)
+    return modal.Image.debian_slim(python_version="3.11.9").apt_install("swig").apt_install("git").pip_install(sreqs).pip_install(sreqs_2)
