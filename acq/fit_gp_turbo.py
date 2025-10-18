@@ -1,0 +1,82 @@
+###############################################################################
+# Copied (with attribution) from TuRBO reference implementation (turbo_m_ref/gp.py)
+# This file provides a local GP + train_gp for use outside turbo_m_ref.
+###############################################################################
+
+import math
+
+import torch
+from gpytorch.constraints.constraints import Interval
+from gpytorch.distributions import MultivariateNormal
+from gpytorch.kernels import MaternKernel, ScaleKernel
+from gpytorch.likelihoods import GaussianLikelihood
+from gpytorch.means import ConstantMean
+from gpytorch.mlls import ExactMarginalLogLikelihood
+from gpytorch.models import ExactGP
+
+
+class GP(ExactGP):
+    def __init__(self, train_x, train_y, likelihood, lengthscale_constraint, outputscale_constraint, ard_dims):
+        super(GP, self).__init__(train_x, train_y, likelihood)
+        self.ard_dims = ard_dims
+        self.mean_module = ConstantMean()
+        base_kernel = MaternKernel(lengthscale_constraint=lengthscale_constraint, ard_num_dims=ard_dims, nu=2.5)
+        self.covar_module = ScaleKernel(base_kernel, outputscale_constraint=outputscale_constraint)
+
+    def forward(self, x):
+        mean_x = self.mean_module(x)
+        covar_x = self.covar_module(x)
+        return MultivariateNormal(mean_x, covar_x)
+
+
+def train_gp(train_x, train_y, use_ard, num_steps, hypers={}):
+    """Fit a GP model where train_x is in [0, 1]^d and train_y is standardized."""
+    assert train_x.ndim == 2
+    assert train_y.ndim == 1
+    assert train_x.shape[0] == train_y.shape[0]
+
+    noise_constraint = Interval(5e-4, 0.2)
+    if use_ard:
+        lengthscale_constraint = Interval(0.005, 2.0)
+    else:
+        lengthscale_constraint = Interval(0.005, math.sqrt(train_x.shape[1]))
+    outputscale_constraint = Interval(0.05, 20.0)
+
+    likelihood = GaussianLikelihood(noise_constraint=noise_constraint).to(device=train_x.device, dtype=train_y.dtype)
+    ard_dims = train_x.shape[1] if use_ard else None
+    model = GP(
+        train_x=train_x,
+        train_y=train_y,
+        likelihood=likelihood,
+        lengthscale_constraint=lengthscale_constraint,
+        outputscale_constraint=outputscale_constraint,
+        ard_dims=ard_dims,
+    ).to(device=train_x.device, dtype=train_x.dtype)
+
+    model.train()
+    likelihood.train()
+
+    mll = ExactMarginalLogLikelihood(likelihood, model)
+
+    if hypers:
+        model.load_state_dict(hypers)
+    else:
+        hypers = {}
+        hypers["covar_module.outputscale"] = 1.0
+        hypers["covar_module.base_kernel.lengthscale"] = 0.5
+        hypers["likelihood.noise"] = 0.005
+        model.initialize(**hypers)
+
+    optimizer = torch.optim.Adam([{"params": model.parameters()}], lr=0.1)
+
+    for _ in range(num_steps):
+        optimizer.zero_grad()
+        output = model(train_x)
+        loss = -mll(output, train_y)
+        loss.backward()
+        optimizer.step()
+
+    model.eval()
+    likelihood.eval()
+
+    return model
