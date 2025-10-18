@@ -6,11 +6,12 @@ from acq.acq_mts import AcqMTS
 
 
 class MTSDesigner:
-    def __init__(self, policy, init_style="find", keep_style=None, num_keep=None):
+    def __init__(self, policy, init_style="find", keep_style=None, num_keep=None, use_stagger=False):
         self._policy = policy
         self._init_style = init_style
         self._keep_style = keep_style
         self._num_keep = num_keep
+        self._use_stagger = use_stagger
         self._dtype = torch.double
         self._device = torch.empty(size=(1,)).device
 
@@ -25,6 +26,6 @@ class MTSDesigner:
             Y = torch.empty(size=(0, 1)).to(self._device).to(self._dtype)
 
         gp = fit_gp.fit_gp_XY(X, Y)
-        mts = AcqMTS(gp, init_style=self._init_style)
+        mts = AcqMTS(gp, init_style=self._init_style, use_stagger=self._use_stagger)
         X_a = torch.as_tensor(mts.draw(num_arms))
         return fit_gp.mk_policies(self._policy, X_a)

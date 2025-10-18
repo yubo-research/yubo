@@ -12,7 +12,7 @@ class AcqTS:
     """
 
     def __init__(self, model, num_candidates=10000, sampler="cholesky"):
-        assert sampler in ("cholesky", "ciq", "lanczos")
+        assert sampler in ("cholesky", "ciq", "lanczos", "rff")
 
         self.model = model
         self._num_candidates = num_candidates
@@ -41,6 +41,8 @@ class AcqTS:
                 es.enter_context(gpts.max_lanczos_quadrature_iterations(10))
                 es.enter_context(gpts.max_cholesky_size(0))
                 es.enter_context(gpts.ciq_samples(False))
+            elif self._sampler == "rff":
+                es.enter_context(gpts.fast_computations(covar_root_decomposition=True))
 
             with torch.no_grad():
                 thompson_sampling = MaxPosteriorSampling(model=self.model, replacement=False)

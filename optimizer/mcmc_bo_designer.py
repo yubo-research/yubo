@@ -85,7 +85,7 @@ class MCMCBODesigner:
             X=X.unsqueeze(0),
             Y=Y.unsqueeze(0),  # add Y_turbo to recover normalized GP sampling
             batch_size=num_arms,
-            n_candidates=num_candidates,
+            num_candidates=num_candidates,
             acqf="ts",
             mcmc_type=self._mcmc_type,
             dtype=self._dtype,

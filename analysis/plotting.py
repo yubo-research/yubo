@@ -130,7 +130,7 @@ def filled_err(
     ax.fill_between(x, mu - sg, mu + sg, color=color, alpha=alpha, linewidth=1, label="_")
 
     if max_markers is not None:
-        n_skip = len(x) // max_markers
+        n_skip = max(1, len(x) // max_markers)
         x = x[::n_skip]
         mu = mu[::n_skip]
     ax.plot(x, mu, color=color_line, marker=marker, linestyle=linestyle, label=label, alpha=alpha_top, markersize=markersize, fillstyle=fillstyle)

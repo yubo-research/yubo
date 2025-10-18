@@ -125,7 +125,7 @@ def generate_batch_multiple_tr(
     batch_size,
     dtype,
     device,
-    n_candidates=None,  # Number of candidates for Thompson sampling
+    num_candidates=None,  # Number of candidates for Thompson sampling
     acqf="ts",  # "ei" or "ts"
     mcmc_type=None,
     # use_langevin=False
@@ -135,12 +135,12 @@ def generate_batch_multiple_tr(
 
     for tr_idx in range(tr_num):
         assert X[tr_idx].min() >= 0.0 and X[tr_idx].max() <= 1.0 and torch.all(torch.isfinite(Y[tr_idx]))
-    if n_candidates is None:
-        n_candidates = min(5000, max(2000, 200 * X.shape[-1]))
+    if num_candidates is None:
+        num_candidates = min(5000, max(2000, 200 * X.shape[-1]))
     dim = X[0].shape[1]
     # Scale the TR to be proportional to the lengthscales
-    X_cand = torch.zeros(tr_num, n_candidates, dim).to(device=device, dtype=dtype)
-    Y_cand = torch.zeros(tr_num, n_candidates, batch_size).to(device=device, dtype=dtype)
+    X_cand = torch.zeros(tr_num, num_candidates, dim).to(device=device, dtype=dtype)
+    Y_cand = torch.zeros(tr_num, num_candidates, batch_size).to(device=device, dtype=dtype)
     tr_lb = torch.zeros(tr_num, dim).to(device=device, dtype=dtype)
     tr_ub = torch.zeros(tr_num, dim).to(device=device, dtype=dtype)
     for tr_idx in range(tr_num):
@@ -157,13 +157,13 @@ def generate_batch_multiple_tr(
             tr_ub[tr_idx] = torch.clamp(x_center + state[tr_idx].length / 2.0, 0.0, 1.0)
 
         sobol = SobolEngine(dim, scramble=True)
-        pert = sobol.draw(n_candidates).to(dtype=dtype, device=device)
+        pert = sobol.draw(num_candidates).to(dtype=dtype, device=device)
         pert = tr_lb[tr_idx] + (tr_ub[tr_idx] - tr_lb[tr_idx]) * pert
 
         # Create a perturbation mask
         prob_perturb = min(20.0 / dim, 1.0)
         # prob_perturb = 1
-        mask = torch.rand(n_candidates, dim, dtype=dtype, device=device) <= prob_perturb
+        mask = torch.rand(num_candidates, dim, dtype=dtype, device=device) <= prob_perturb
         ind = torch.where(mask.sum(dim=1) == 0)[0]
         if dim == 1:
             rr = torch.zeros(size=(len(ind),), device=device, dtype=torch.int64)
@@ -172,13 +172,13 @@ def generate_batch_multiple_tr(
         mask[ind, rr] = 1
 
         # Create candidate points from the perturbations and the mask
-        X_cand[tr_idx] = x_center.expand(n_candidates, dim).clone()
+        X_cand[tr_idx] = x_center.expand(num_candidates, dim).clone()
         X_cand[tr_idx][mask] = pert[mask]
 
         # Sample on the candidate points
         posterior = model[tr_idx].posterior(X_cand[tr_idx])
         samples = posterior.rsample(sample_shape=torch.Size([batch_size]))
-        samples = samples.reshape([batch_size, n_candidates])
+        samples = samples.reshape([batch_size, num_candidates])
         Y_cand[tr_idx] = samples.permute(1, 0)
         # recover from normalized value
         Y_cand[tr_idx] = Y[tr_idx].mean() + Y_cand[tr_idx] * Y[tr_idx].std()
@@ -188,7 +188,7 @@ def generate_batch_multiple_tr(
     X_next = torch.zeros(batch_size, dim).to(device=device, dtype=dtype)
     tr_idx_next = np.zeros(batch_size)
     for k in range(batch_size):
-        i, j = np.unravel_index(np.argmax(y_cand[:, :, k]), (tr_num, n_candidates))
+        i, j = np.unravel_index(np.argmax(y_cand[:, :, k]), (tr_num, num_candidates))
         X_next[k] = X_cand[i, j]
         tr_idx_next[k] = i
         assert np.isfinite(y_cand[i, j, k])  # Just to make sure we never select nan or inf

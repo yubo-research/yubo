@@ -7,12 +7,11 @@ import acq.acq_util as acq_util
 
 
 class AcqMTS:
-    def __init__(self, model, use_stagger=False, include_sobol=False, num_iterations=30, init_style="find"):
+    def __init__(self, model, use_stagger=False, num_iterations=30, init_style="find"):
         self._model = model
         self._num_iterations = num_iterations
         self._init_style = init_style
         self._use_stagger = use_stagger
-        self._include_sobol = include_sobol
         self._s_min = 1e-6
 
         self._X_0 = self._model.train_inputs[0].detach()
@@ -81,6 +80,8 @@ class AcqMTS:
         return torch.as_tensor(X_ts)
 
     def _iterate_(self, mp_sampler, X_best, Y_best):
+        # HnR, targeting-style
+        # Idea/hope: If we take more samples in locations that are more likely to be optimal, we will find the optimal location faster. (No exactly clever or magical.)
         num_arms = X_best.shape[0]
         s_min = self._s_min
         s_max = 1

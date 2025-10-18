@@ -5,12 +5,13 @@ import torch
 from botorch.exceptions.errors import ModelFittingError
 from botorch.fit import fit_gpytorch_mll
 from botorch.models import SingleTaskGP
+from botorch.models.approximate_gp import SingleTaskVariationalGP
 from botorch.models.transforms.input import Warp
 from botorch.optim.closures.core import ForwardBackwardClosure
 from botorch.optim.utils import get_parameters
 from botorch.utils import standardize
 from gpytorch.kernels import RFFKernel, ScaleKernel
-from gpytorch.mlls import ExactMarginalLogLikelihood, LeaveOneOutPseudoLikelihood
+from gpytorch.mlls import ExactMarginalLogLikelihood, LeaveOneOutPseudoLikelihood, VariationalELBO
 from gpytorch.priors.torch_priors import LogNormalPrior, NormalPrior
 from torch import Tensor
 from torch.nn import Module
@@ -68,7 +69,7 @@ def _parse_spec(model_spec):
     input_warping = None
     output_warping = None
     # VanillaBO lengthscale prior is now the default in BoTorch
-    model_types = {"gp", "rff8", "rff128", "rff256", "rff512", "rff1024", "dumbo", "rdumbo"}
+    model_types = {"gp", "rff8", "rff128", "rff256", "rff512", "rff1024", "dumbo", "rdumbo", "sparse"}
 
     if model_spec is not None:
         for s in model_spec.split("+"):
@@ -129,6 +130,10 @@ def fit_gp_XY(X, Y, model_spec=None):
             gp = DUMBOGP(X, Y, use_rank_distance=False)
         elif model_type == "rdumbo":
             gp = DUMBOGP(X, Y, use_rank_distance=True)
+        elif model_type == "sparse":
+            assert False
+            inducing_points = torch.empty((0, X.shape[-1]), dtype=X.dtype, device=X.device)
+            gp = SingleTaskVariationalGP(X, inducing_points=inducing_points, outcome_transform=_EmptyTransform())
         else:
             gp = SingleTaskGP(X, Y, outcome_transform=_EmptyTransform())
         gp.to(X)
@@ -173,9 +178,10 @@ def fit_gp_XY(X, Y, model_spec=None):
     elif model_type == "rdumbo":
         assert input_transform is None, "Unsupported"
         return DUMBOGP(X, Y, use_rank_distance=True)
+    elif model_type == "sparse":
+        gp = SingleTaskVariationalGP(X, Y, input_transform=input_transform)
     elif model_type.startswith("rff"):
         num_samples = int(model_type[3:])
-        print(f"Using RFF({num_samples})")
         gp = SingleTaskGP(
             X,
             Y,
@@ -189,7 +195,11 @@ def fit_gp_XY(X, Y, model_spec=None):
         gp.outcome_warp = outcome_warp
 
     gp.to(X)
-    mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
+
+    if model_type == "sparse":
+        mll = VariationalELBO(gp.likelihood, gp.model, num_data=X.shape[-2])
+    else:
+        mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
 
     # See TuRBO code
 
@@ -208,7 +218,8 @@ def fit_gp_XY(X, Y, model_spec=None):
                 m = e
                 print(f"Retrying fit i_try = {i_try}")
                 print("Trying LeaveOneOutPseudoLikelihood")
-                mll = LeaveOneOutPseudoLikelihood(gp.likelihood, gp)
+                if model_type != "sparse":
+                    mll = LeaveOneOutPseudoLikelihood(gp.likelihood, gp)
                 pass
             else:
                 break

@@ -57,11 +57,11 @@ def update_state(state, Y_next):
     return state
 
 
-def generate_batch(state, model, X, Y, batch_size, n_candidates=None, acqf="ts"):
+def generate_batch(state, model, X, Y, batch_size, num_candidates=None, acqf="ts"):
     assert acqf in ("ts", "ei")
     assert X.min() >= 0.0 and X.max() <= 1.0 and torch.all(torch.isfinite(Y))
-    if n_candidates is None:
-        n_candidates = min(5000, max(2000, 200 * X.shape[-1]))
+    if num_candidates is None:
+        num_candidates = min(5000, max(2000, 200 * X.shape[-1]))
 
     x_center = X[Y.argmax(), :].clone()
     weights = model.covar_module.base_kernel.lengthscale.squeeze().detach()
@@ -73,15 +73,15 @@ def generate_batch(state, model, X, Y, batch_size, n_candidates=None, acqf="ts")
     assert acqf == "ts"
     dim = X.shape[-1]
     sobol = SobolEngine(dim, scramble=True)
-    pert = sobol.draw(n_candidates).to(dtype=X.dtype, device=X.device)
+    pert = sobol.draw(num_candidates).to(dtype=X.dtype, device=X.device)
     pert = tr_lb + (tr_ub - tr_lb) * pert
 
     prob_perturb = min(20.0 / dim, 1.0)
-    mask = torch.rand(n_candidates, dim, dtype=X.dtype, device=X.device) <= prob_perturb
+    mask = torch.rand(num_candidates, dim, dtype=X.dtype, device=X.device) <= prob_perturb
     ind = torch.where(mask.sum(dim=1) == 0)[0]
     mask[ind, torch.randint(0, dim - 1, size=(len(ind),), device=X.device)] = 1
 
-    X_cand = x_center.expand(n_candidates, dim).clone()
+    X_cand = x_center.expand(num_candidates, dim).clone()
     X_cand[mask] = pert[mask]
 
     thompson_sampling = MaxPosteriorSampling(model=model, replacement=False)
@@ -144,7 +144,7 @@ def test_vecchia_notebook_equivalence_first_5_steps():
             X=X,
             Y=z,
             batch_size=batch_size,
-            n_candidates=min(5000, max(2000, 200 * dim)),
+            num_candidates=min(5000, max(2000, 200 * dim)),
             acqf="ts",
         ).squeeze(0)
 

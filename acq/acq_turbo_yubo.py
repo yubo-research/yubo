@@ -11,7 +11,7 @@ from sampling.sampling_util import raasp
 @dataclass
 class TurboYUBOConfig:
     raasp: bool = True
-    lhd: bool = False
+    lhd: bool = True
 
 
 @dataclass
@@ -19,6 +19,7 @@ class TurboYUBOState:
     num_dim: int
     batch_size: int
     length: float = 0.8
+    length_init: float = 0.8
     length_min: float = 0.5**7
     length_max: float = 1.6
     failure_counter: int = 0
@@ -33,6 +34,13 @@ class TurboYUBOState:
         self.failure_tolerance = np.ceil(max([4.0 / self.batch_size, float(self.num_dim) / self.batch_size]))
 
     def update_state(self, Y_next):
+        if len(Y_next) == 0:
+            return self
+        if not np.isfinite(self.best_value):
+            # Initialize best_value without modifying counters on the first update
+            self.best_value = max(Y_next).item()
+            self.prev_y_length += len(Y_next)
+            return self
         if max(Y_next) > self.best_value + 1e-3 * np.fabs(self.best_value):
             self.success_counter += 1
             self.failure_counter = 0
@@ -59,19 +67,19 @@ class TurboYUBOState:
             self.prev_y_length = len(Y)
 
     def restart(self):
-        self.length = self.length_min
+        self.length = self.length_init
         self.success_counter = 0
         self.failure_counter = 0
         self.restart_triggered = False
 
 
 class AcqTurboYUBO:
-    def __init__(self, model, state=None, config=None):
+    def __init__(self, model, state=None, config=None, obs_X=None, obs_Y_raw=None):
         assert model is not None, "Model must be provided to AcqTurbo constructor"
         self.model = model
         self.config = config or TurboYUBOConfig()
 
-        X_0 = model.train_inputs[0].detach()
+        X_0 = (obs_X if obs_X is not None else model.train_inputs[0]).detach()
         num_dim = X_0.shape[-1]
         batch_size = 1
 
@@ -83,12 +91,12 @@ class AcqTurboYUBO:
 
         self.state = state
 
-        self.n_candidates = min(100 * self.state.num_dim, 5000)
+        self.num_candidates = min(100 * self.state.num_dim, 5000)
         self.device = X_0.device
         self.dtype = X_0.dtype
 
-        self.X = model.train_inputs[0].detach()
-        self.Y = model.train_targets.detach()
+        self.X = X_0
+        self.Y = (obs_Y_raw if obs_Y_raw is not None else model.train_targets).detach()
 
         self.state.update_from_model(self.Y)
 
@@ -115,17 +123,17 @@ class AcqTurboYUBO:
         ub = np.clip(x_center.cpu().numpy() + weights * self.state.length / 2.0, 0.0, 1.0)
         return lb, ub
 
-    def _sample_candidates(self, lb, ub, n_candidates):
+    def _sample_candidates(self, lb, ub, num_candidates):
         if self.config.raasp:
             best_idx = torch.argmax(self.Y).item()
             x_center = self.X[best_idx : best_idx + 1, :]
-            candidates = raasp(x_center, lb, ub, n_candidates, self.device, self.dtype)
+            x_cand = raasp(x_center, lb, ub, num_candidates, self.device, self.dtype)
         else:
             bounds = np.array([lb, ub])
             bounds = torch.tensor(bounds, dtype=self.dtype, device=self.device)
-            candidates = draw_sobol_samples(bounds=bounds, n=n_candidates, q=1).squeeze(1)
+            x_cand = draw_sobol_samples(bounds=bounds, n=num_candidates, q=1).squeeze(1)
 
-        return candidates
+        return x_cand
 
     def _thompson_sample(self, x_cand, num_arms):
         if len(self.X) == 0:
@@ -133,14 +141,19 @@ class AcqTurboYUBO:
             return x_cand[indices]
         with torch.no_grad():
             posterior = self.model.posterior(x_cand)
-            samples = posterior.rsample(sample_shape=torch.Size([num_arms]))
-            best_indices = torch.argmax(samples, dim=1)
-            x_arm = x_cand[best_indices]
-            while len(torch.unique(x_arm, dim=0)) < len(x_arm):
-                samples = posterior.rsample(sample_shape=torch.Size([num_arms]))
-                best_indices = torch.argmax(samples, dim=1)
-                x_arm = x_cand[best_indices]
-            return x_arm
+            samples = posterior.sample(sample_shape=torch.Size([num_arms])).squeeze(-1)  # [num_arms, n_cand]
+            if samples.dim() == 1:
+                samples = samples.unsqueeze(0)
+            # Transpose to [n_cand, num_arms] to match TuRBO-1 selection logic
+            y_cand = samples.t().contiguous()
+            # Greedy unique selection across arms (maximize)
+            chosen = []
+            for i in range(num_arms):
+                indbest = torch.argmax(y_cand[:, i]).item()
+                chosen.append(indbest)
+                y_cand[indbest, :] = -float("inf")
+            chosen = torch.tensor(chosen, device=x_cand.device)
+            return x_cand[chosen]
 
     def _draw_uniform(self, num_arms):
         if self.config.lhd:
@@ -162,6 +175,6 @@ class AcqTurboYUBO:
         lb, ub = self._create_trust_region()
         if lb is None or ub is None:
             return self._draw_uniform(num_arms)
-        x_cand = self._sample_candidates(lb, ub, self.n_candidates)
+        x_cand = self._sample_candidates(lb, ub, self.num_candidates)
         x_arm = self._thompson_sample(x_cand, num_arms)
         return x_arm

@@ -275,15 +275,19 @@ def prep_mtv_36(results_dir):
 def prep_seq(results_dir):
     exp_dir = "exp_enn"
 
-    opts = ["vecchia"]
+    opts = [
+        "mts",
+        "mts-ts",
+        "mts-meas",
+        "mts-stagger",
+    ]
 
     noises = [None]
 
     min_rounds = 30
     cmds = []
 
-    # dims = [1, 3, 10, 30, 100]
-    dims = [300, 1000]
+    dims = [1, 3, 10, 30, 100, 300]
     # dims = [1, 3, 10, 30, 100, 300, 1000]
     for num_dim in dims:
         # if num_dim <= 100:
@@ -317,25 +321,21 @@ def prep_rl_three(results_dir, name):
     exp_dir = f"exp_enn_{name}"
 
     opts = [
-        #     "turbo-enn-10",
-        #     "turbo-1",
-        #     "turbo-0",
-        #     "random",
-        #     "enn-p-10",
-        #     "optuna",
-        #     "enn-pd-10",
-        #     "enn-pd1-10",
-        "enn-pdt-10",
-        "enn-qdd-10",
-        "enn-qd-10",
+        # "random",
+        # "turbo-1",
+        # "mts",
+        # "mtv-mts",
+        "turbo-1-iso",
+        "turbo-yubo",
     ]
 
     cmds = []
     for opt in opts:
         for num_arms, num_rounds, num_denoise in [
+            # (500, 3, 50),
             (1, 100, 1),
             (10, 100, 10),
-            # (50, 30, 50),
+            (50, 30, 50),
         ]:
             # prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None):
             if num_arms == 1 and opt == "cma":

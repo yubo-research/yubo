@@ -3,11 +3,11 @@ import torch
 import acq.acq_util as acq_util
 import acq.fit_gp as fit_gp
 from acq.acq_turbo_yubo import AcqTurboYUBO, TurboYUBOConfig, TurboYUBOState
+from acq.fit_gp_turbo import train_gp as turbo_train_gp
 
 
 class TurboYUBODesigner:
     def __init__(self, policy, num_keep: int = None, keep_style: str = None, raasp: bool = True):
-        assert False, "Not ready for use"
         self._policy = policy
         self._num_keep = num_keep
         self._keep_style = keep_style
@@ -40,12 +40,38 @@ class TurboYUBODesigner:
             X = torch.empty(size=(0, self._policy.num_params()))
             Y = torch.empty(size=(0, 1))
 
-        model = fit_gp.fit_gp_XY(X, Y)
+        # Build a TuRBO-style GP on standardized targets (median/STD) in [0,1]^d
+        if len(X) == 0:
+            model = fit_gp.fit_gp_XY(X, Y)
+            y_raw = Y.squeeze(-1)
+        else:
+            y_raw = Y.squeeze(-1)
+            mu = torch.median(y_raw)
+            sigma = y_raw.std()
+            if sigma < 1e-6:
+                sigma = torch.tensor(1.0, dtype=y_raw.dtype, device=y_raw.device)
+            y_std = (y_raw - mu) / sigma
+
+            gp = turbo_train_gp(train_x=X, train_y=y_std, use_ard=True, num_steps=50, hypers={})
+
+            class _TurboPosteriorModel:
+                def __init__(self, gp):
+                    self._gp = gp
+                    self.train_inputs = gp.train_inputs
+                    # Keep standardized targets here; raw targets are supplied separately to AcqTurboYUBO
+                    self.train_targets = gp.train_targets
+                    self.covar_module = gp.covar_module
+
+                def posterior(self, X):
+                    with torch.no_grad():
+                        return self._gp.likelihood(self._gp(X))
+
+            model = _TurboPosteriorModel(gp)
 
         if self._turbo_yubo_state is None:
             self._turbo_yubo_state = TurboYUBOState(num_dim=self._policy.num_params(), batch_size=num_arms)
 
-        acq_turbo = AcqTurboYUBO(model=model, state=self._turbo_yubo_state, config=TurboYUBOConfig(raasp=self._raasp))
+        acq_turbo = AcqTurboYUBO(model=model, state=self._turbo_yubo_state, config=TurboYUBOConfig(raasp=self._raasp), obs_X=X, obs_Y_raw=y_raw)
         X_a = acq_turbo.draw(num_arms)
         self._turbo_yubo_state = acq_turbo.get_state()
 

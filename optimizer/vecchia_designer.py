@@ -135,9 +135,9 @@ class VecchiaDesigner:
         tr_ub = torch.clamp(x_center + weights * tr_len / 2.0, 0.0, 1.0)
 
         dim = X_train.shape[-1]
-        n_candidates = max(2000, min(5000, 200 * dim))
+        num_candidates = max(2000, min(5000, 200 * dim))
         sobol = SobolEngine(dim, scramble=True)
-        X_cand = sobol.draw(n_candidates).to(dtype=torch.float32, device=torch.device("cpu")).contiguous()
+        X_cand = sobol.draw(num_candidates).to(dtype=torch.float32, device=torch.device("cpu")).contiguous()
         X_cand = tr_lb + (tr_ub - tr_lb) * X_cand
 
         X_next = self._select_candidates(model, X_cand, num_arms)

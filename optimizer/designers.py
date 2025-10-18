@@ -159,6 +159,15 @@ class Designers:
                     "num_candidates": num_candidates,
                 },
             )
+        elif designer_name.startswith("rff-"):
+            num_candidates = int(designer_name.split("-")[1])
+            return bt_designer(
+                AcqTS,
+                acq_kwargs={
+                    "sampler": "rff",
+                    "num_candidates": num_candidates,
+                },
+            )
         elif designer_name.startswith("pss_sweep_kmcmc"):
             k_mcmc = int(designer_name.split("-")[1])
             return bt_designer(
@@ -196,14 +205,16 @@ class Designers:
         elif designer_name == "gibbon":
             return bt_designer(qLowerBoundMaxValueEntropy, opt_sequential=True, acq_kwargs={"candidate_set": None})
         elif designer_name == "turbo-1":
-            return TuRBODesigner(self._policy, num_init=init_yubo_default)
+            return TuRBODesigner(self._policy, num_init=init_yubo_default, ard=True)
+        elif designer_name == "turbo-1-iso":
+            return TuRBODesigner(self._policy, num_init=init_yubo_default, ard=False)
         elif designer_name == "turbo-0":
-            return TuRBODesigner(self._policy, num_init=init_yubo_default, surrogate_type="none")
+            return TuRBODesigner(self._policy, num_init=init_yubo_default, surrogate_type="none", ard=True)
         elif designer_name.startswith("turbo-enn-"):
             # k = int(designer_name.split("-")[-1])
-            return TuRBODesigner(self._policy, num_init=init_yubo_default, surrogate_type=designer_name[6:])
+            return TuRBODesigner(self._policy, num_init=init_yubo_default, surrogate_type=designer_name[6:], ard=True)
         elif designer_name == "turbo-5":
-            return TuRBODesigner(self._policy, num_init=init_yubo_default, num_trust_regions=5)
+            return TuRBODesigner(self._policy, num_init=init_yubo_default, num_trust_regions=5, ard=True)
         elif designer_name == "dpp":
             return bt_designer(AcqDPP, init_sobol=1, acq_kwargs={"num_X_samples": default_num_X_samples})
         elif designer_name == "vecchia":
@@ -393,8 +404,11 @@ class Designers:
                 self._policy,
                 num_init=init_yubo_default,
             )
+
         elif designer_name == "mts":
-            return MTSDesigner(self._policy, keep_style=keep_style, num_keep=num_keep)
+            return MTSDesigner(self._policy, keep_style=keep_style, num_keep=num_keep, init_style="find")
+        elif designer_name == "mts-stagger":
+            return MTSDesigner(self._policy, keep_style=keep_style, num_keep=num_keep, init_style="find", use_stagger=True)
         elif designer_name == "mts-ts":
             return MTSDesigner(self._policy, keep_style=keep_style, num_keep=num_keep, init_style="ts")
         elif designer_name == "mts-meas":
