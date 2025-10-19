@@ -166,15 +166,11 @@ class AcqTurboYUBO:
             indices = torch.randperm(len(x_cand))[:num_arms]
             return x_cand[indices]
         with torch.no_grad():
-            # Match turbo_1 sampling path when possible
-            if hasattr(self.model, "_gp") and hasattr(self.model._gp, "likelihood"):
-                y_cand = self.model._gp.likelihood(self.model._gp(x_cand)).sample(torch.Size([num_arms])).t()
-            else:
-                posterior = self.model.posterior(x_cand)
-                samples = posterior.sample(sample_shape=torch.Size([num_arms])).squeeze(-1)
-                if samples.dim() == 1:
-                    samples = samples.unsqueeze(0)
-                y_cand = samples.t().contiguous()
+            posterior = self.model.posterior(x_cand)
+            samples = posterior.sample(sample_shape=torch.Size([num_arms])).squeeze(-1)
+            if samples.dim() == 1:
+                samples = samples.unsqueeze(0)
+            y_cand = samples.t().contiguous()
             # Greedy unique selection across arms (maximize)
             chosen = []
             for i in range(num_arms):
