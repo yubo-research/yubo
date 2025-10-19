@@ -8,6 +8,11 @@ from torch.quasirandom import SobolEngine
 from sampling.lhd import latin_hypercube_design
 from sampling.sampling_util import raasp_turbo_np
 
+"""
+677bd902b83cf0b0f01a7523676c9b385ce7bf4f
+Designer "turbo-yubo" matches the reference designed, turbo-1, in y_max and proposal time on tlunar:fn.  See notes/turbo_yubo.png.
+"""
+
 
 class TurboYUBORestartError(Exception):
     pass
