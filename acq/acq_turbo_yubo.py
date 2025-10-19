@@ -52,14 +52,7 @@ class AcqTurboYUBO:
             kernel = covar_module.base_kernel
         else:
             kernel = covar_module
-        if hasattr(kernel, "lengthscale"):
-            weights = kernel.lengthscale.cpu().detach().numpy().ravel()
-            weights = weights / weights.mean()
-            weights = weights / np.prod(np.power(weights, 1.0 / len(weights)))
-        else:
-            weights = np.ones(self.state.num_dim)
-        lb = np.clip(x_center.cpu().numpy() - weights * self.state.length / 2.0, 0.0, 1.0)
-        ub = np.clip(x_center.cpu().numpy() + weights * self.state.length / 2.0, 0.0, 1.0)
+        lb, ub = self.state.create_trust_region(x_center, kernel)
         return lb, ub
 
     def _sample_candidates(self, lb, ub, num_candidates):
@@ -122,8 +115,7 @@ class AcqTurboYUBO:
         return x_arm
 
     def draw(self, num_arms):
-        if self.state.restart_triggered:
-            self.state.restart()
+        self.state.pre_draw()
         if len(self.X) == 0:
             return self._draw_uniform(num_arms)
 

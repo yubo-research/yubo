@@ -25,7 +25,7 @@ def test_acq_turbo_yubo_draw():
     Y = torch.rand(size=(4,), dtype=torch.double)
     model = _DummyModel(X, Y)
 
-    state = TurboYUBOState(num_dim=2, batch_size=2)
+    state = TurboYUBOState(num_dim=2, _num_arms=2)
     acq = AcqTurboYUBO(model=model, state=state, config=TurboYUBOConfig(raasp=False, tr=True))
     out = acq.draw(num_arms=2)
 

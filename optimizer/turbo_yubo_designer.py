@@ -62,7 +62,7 @@ class TurboYUBODesigner:
             model = self._config.model_factory(train_x=X, train_y=y_raw)
 
         if self._turbo_yubo_state is None:
-            self._turbo_yubo_state = TurboYUBOState(num_dim=self._policy.num_params(), batch_size=num_arms)
+            self._turbo_yubo_state = TurboYUBOState(num_dim=self._policy.num_params(), _num_arms=num_arms)
 
         acq_turbo = AcqTurboYUBO(
             model=model,
