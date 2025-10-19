@@ -137,6 +137,7 @@ class Turbo1:
         self._restart()
 
     def _restart(self):
+        print("RESTART")
         self._X = []
         self._fX = []
         self.failcount = 0

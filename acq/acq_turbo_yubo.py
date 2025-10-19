@@ -10,10 +10,15 @@ from sampling.lhd import latin_hypercube_design
 from sampling.sampling_util import raasp_turbo_np
 
 
+class TurboYUBORestartError(Exception):
+    pass
+
+
 @dataclass
 class TurboYUBOConfig:
     raasp: bool = True
     lhd: bool = True
+    tr: bool = True
 
 
 @dataclass
@@ -69,10 +74,12 @@ class TurboYUBOState:
             self.prev_y_length = len(Y)
 
     def restart(self):
+        print("RESTART")
         self.length = self.length_init
         self.success_counter = 0
         self.failure_counter = 0
         self.restart_triggered = False
+        raise TurboYUBORestartError()
 
 
 class AcqTurboYUBO:
@@ -198,7 +205,12 @@ class AcqTurboYUBO:
             t1 = time.perf_counter()
             self.last_timing = {"tr": 0.0, "cand": 0.0, "ts": t1 - t0}
             return x
-        lb, ub = self._create_trust_region()
+
+        if self.config.tr:
+            lb = np.zeros((1, self.state.num_dim))
+            ub = np.ones((1, self.state.num_dim))
+        else:
+            lb, ub = self._create_trust_region()
         t1 = time.perf_counter()
         if lb is None or ub is None:
             x = self._draw_uniform(num_arms)

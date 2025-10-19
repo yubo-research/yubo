@@ -4,32 +4,39 @@ import torch
 
 import acq.acq_util as acq_util
 import acq.fit_gp as fit_gp
-from acq.acq_turbo_yubo import AcqTurboYUBO, TurboYUBOConfig, TurboYUBOState
+from acq.acq_turbo_yubo import AcqTurboYUBO, TurboYUBOConfig, TurboYUBORestartError, TurboYUBOState
 from acq.fit_gp_turbo import train_gp as turbo_train_gp
 
 
 class TurboYUBODesigner:
-    def __init__(self, policy, num_keep: int = None, keep_style: str = None, raasp: bool = True):
+    def __init__(self, policy, num_keep: int = None, keep_style: str = None, raasp: bool = True, tr: bool = True):
         self._policy = policy
         self._num_keep = num_keep
         self._keep_style = keep_style
-        self._i_data_last = 0
+        self._i_data_0 = 0
         self._X_train = torch.empty(size=(0, self._policy.num_params()))
         self._Y_train = torch.empty(size=(0, 1))
         self._turbo_yubo_state = None
         self._raasp = raasp
-
+        self._tr = tr
         self._dtype = torch.double
         self._device = torch.empty(size=(1,)).device
 
     def __call__(self, data, num_arms):
-        t0 = time.perf_counter()
         if self._keep_style != "lap":
             data = acq_util.keep_data(data, self._keep_style, self._num_keep)
         else:
-            data_use = data[self._i_data_last :]
-            self._i_data_last = len(data)
-            data = data_use
+            assert False, "lap not supported"
+
+        for _ in range(2):
+            try:
+                return self._run_opt(data[self._i_data_0 :], num_arms)
+            except TurboYUBORestartError as e:
+                self._i_data_0 = len(data)
+        raise RuntimeError("Restarted twice")
+
+    def _run_opt(self, data, num_arms):
+        t0 = time.perf_counter()
 
         if len(data) > 0:
             Y, X = fit_gp.extract_X_Y(data, self._dtype, self._device)
@@ -86,7 +93,7 @@ class TurboYUBODesigner:
         if self._turbo_yubo_state is None:
             self._turbo_yubo_state = TurboYUBOState(num_dim=self._policy.num_params(), batch_size=num_arms)
 
-        acq_turbo = AcqTurboYUBO(model=model, state=self._turbo_yubo_state, config=TurboYUBOConfig(raasp=self._raasp), obs_X=X, obs_Y_raw=y_raw)
+        acq_turbo = AcqTurboYUBO(model=model, state=self._turbo_yubo_state, config=TurboYUBOConfig(raasp=self._raasp, tr=self._tr), obs_X=X, obs_Y_raw=y_raw)
         t_acq0 = time.perf_counter()
         X_a = acq_turbo.draw(num_arms)
         t_acq1 = time.perf_counter()
