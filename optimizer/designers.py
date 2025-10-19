@@ -511,10 +511,10 @@ class Designers:
             )
 
         elif designer_name == "turbo-yubo":
-            return TurboYUBODesigner(self._policy, num_keep=num_keep, keep_style=keep_style, config=TurboYUBOConfig(raasp=True))
+            return TurboYUBODesigner(self._policy, num_keep=num_keep, keep_style=keep_style, config=TurboYUBOConfig(candidate_sampler=True))
         elif designer_name.startswith("turbo-yubo-enn-"):
             k = int(designer_name.split("-")[-1])
-            cfg = TurboYUBOConfig(raasp=True)
+            cfg = TurboYUBOConfig(candidate_sampler=True)
             from acq.turbo_yubo.turbo_yubo_enn_model_factory import build_turbo_yubo_enn_model
 
             def _factory(*, train_x, train_y):

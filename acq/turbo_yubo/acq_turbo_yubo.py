@@ -48,7 +48,7 @@ class AcqTurboYUBO:
     def _sample_candidates(self, lb, ub, num_candidates):
         best_idx = torch.argmax(self.Y).item()
         x_center = self.X[best_idx : best_idx + 1, :]
-        x_cand = self.config.raasp(x_center, lb, ub, num_candidates, self.device, self.dtype)
+        x_cand = self.config.candidate_sampler(x_center, lb, ub, num_candidates, self.device, self.dtype)
 
         return x_cand
 
@@ -72,7 +72,7 @@ class AcqTurboYUBO:
 
     def _draw_initial(self, num_arms):
         return torch.tensor(
-            self.config.initializer(num_arms, self.state.num_dim, seed=int(torch.randint(999999, (1,)).item())),
+            self.config.candidate_initializer(num_arms, self.state.num_dim, seed=int(torch.randint(999999, (1,)).item())),
             dtype=self.dtype,
             device=self.device,
         )
