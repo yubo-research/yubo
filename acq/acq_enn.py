@@ -8,7 +8,6 @@ from nds import ndomsort
 from model.edn import EpistemicNovelty
 from model.enn import EpistemicNearestNeighbors
 from sampling.knn_tools import random_directions
-from sampling.log_uniform import np_log_uniform
 from sampling.ray_boundary import ray_boundary_np
 from sampling.sampling_util import raasp_np, raasp_np_choice, raasp_np_p, sobol_perturb_np
 
