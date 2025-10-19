@@ -1,10 +1,8 @@
 import numpy as np
 import torch
-from botorch.utils.sampling import draw_sobol_samples
 from torch.quasirandom import SobolEngine
 
 from acq.turbo_yubo_config import TurboYUBOConfig
-from sampling.lhd import latin_hypercube_design
 from sampling.sampling_util import raasp_turbo_np
 
 """
@@ -102,30 +100,21 @@ class AcqTurboYUBO:
             chosen = torch.tensor(chosen, device=x_cand.device)
             return x_cand[chosen]
 
-    def _draw_uniform(self, num_arms):
-        if self.config.lhd:
-            lhd_samples = latin_hypercube_design(num_arms, self.state.num_dim, seed=int(torch.randint(999999, (1,)).item()))
-            x_arm = torch.tensor(lhd_samples, dtype=self.dtype, device=self.device)
-        else:
-            x_arm = draw_sobol_samples(
-                bounds=torch.tensor([[0.0] * self.state.num_dim, [1.0] * self.state.num_dim], dtype=self.dtype, device=self.device),
-                n=num_arms,
-                q=1,
-            ).squeeze(1)
-        return x_arm
+    def _draw_initial(self, num_arms):
+        return torch.tensor(
+            self.config.initializer(num_arms, self.state.num_dim, seed=int(torch.randint(999999, (1,)).item())),
+            dtype=self.dtype,
+            device=self.device,
+        )
 
     def draw(self, num_arms):
         self.state.pre_draw()
         if len(self.X) == 0:
-            return self._draw_uniform(num_arms)
+            return self._draw_initial(num_arms)
 
-        if not self.config.tr:
-            lb = np.zeros((1, self.state.num_dim))
-            ub = np.ones((1, self.state.num_dim))
-        else:
-            lb, ub = self._create_trust_region()
+        lb, ub = self._create_trust_region()
         if lb is None or ub is None:
-            return self._draw_uniform(num_arms)
+            return self._draw_initial(num_arms)
         x_cand = self._sample_candidates(lb, ub, self.num_candidates)
         x_arm = self._thompson_sample(x_cand, num_arms)
         return x_arm
