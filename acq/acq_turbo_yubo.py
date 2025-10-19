@@ -1,4 +1,3 @@
-import time
 from dataclasses import dataclass
 
 import numpy as np
@@ -74,10 +73,11 @@ class TurboYUBOState:
             self.prev_y_length = len(Y)
 
     def restart(self):
-        print("RESTART")
         self.length = self.length_init
         self.success_counter = 0
         self.failure_counter = 0
+        self.best_value: float = -float("inf")
+        self.prev_y_length = 0
         self.restart_triggered = False
         raise TurboYUBORestartError()
 
@@ -108,7 +108,6 @@ class AcqTurboYUBO:
         self.Y = (obs_Y_raw if obs_Y_raw is not None else model.train_targets).detach()
 
         self.state.update_from_model(self.Y)
-        self.last_timing = {}
 
     def get_state(self):
         return self.state
@@ -193,29 +192,18 @@ class AcqTurboYUBO:
         return x_arm
 
     def draw(self, num_arms):
-        t0 = time.perf_counter()
         if self.state.restart_triggered:
             self.state.restart()
         if len(self.X) == 0:
-            x = self._draw_uniform(num_arms)
-            t1 = time.perf_counter()
-            self.last_timing = {"tr": 0.0, "cand": 0.0, "ts": t1 - t0}
-            return x
+            return self._draw_uniform(num_arms)
 
-        if self.config.tr:
+        if not self.config.tr:
             lb = np.zeros((1, self.state.num_dim))
             ub = np.ones((1, self.state.num_dim))
         else:
             lb, ub = self._create_trust_region()
-        t1 = time.perf_counter()
         if lb is None or ub is None:
-            x = self._draw_uniform(num_arms)
-            t2 = time.perf_counter()
-            self.last_timing = {"tr": t1 - t0, "cand": 0.0, "ts": t2 - t1}
-            return x
+            return self._draw_uniform(num_arms)
         x_cand = self._sample_candidates(lb, ub, self.num_candidates)
-        t2 = time.perf_counter()
         x_arm = self._thompson_sample(x_cand, num_arms)
-        t3 = time.perf_counter()
-        self.last_timing = {"tr": t1 - t0, "cand": t2 - t1, "ts": t3 - t2}
         return x_arm

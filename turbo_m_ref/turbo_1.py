@@ -11,7 +11,6 @@
 
 import math
 import sys
-import time
 from copy import deepcopy
 
 import gpytorch
@@ -137,7 +136,6 @@ class Turbo1:
         self._restart()
 
     def _restart(self):
-        print("RESTART")
         self._X = []
         self._fX = []
         self.failcount = 0
@@ -165,8 +163,6 @@ class Turbo1:
         # NOTE: This may not be robust to noise, in which case the posterior mean of the GP can be used instead
         assert X.min() >= 0.0 and X.max() <= 1.0
 
-        t0 = time.perf_counter()
-
         # Standardize function values.
         mu, sigma = np.median(fX), fX.std()
         sigma = 1.0 if sigma < 1e-6 else sigma
@@ -184,11 +180,9 @@ class Turbo1:
             X_torch = torch.tensor(X).to(device=device, dtype=dtype)
             y_torch = torch.tensor(fX).to(device=device, dtype=dtype)
             if self._surrogate_type == "original":
-                t_train0 = time.perf_counter()
                 gp = train_gp(train_x=X_torch, train_y=y_torch, use_ard=self.use_ard, num_steps=n_training_steps, hypers=hypers)
                 # Save state dict
                 hypers = gp.state_dict()
-                t_train1 = time.perf_counter()
 
         # Create the trust region boundaries
         x_center = X[fX.argmin().item(), :][None, :]
@@ -218,8 +212,6 @@ class Turbo1:
         X_cand = x_center.copy() * np.ones((self.n_cand, self.dim))
         X_cand[mask] = pert[mask]
 
-        t_cand1 = time.perf_counter()
-
         # Figure out what device we are running on
         if len(X_cand) < self.min_cuda:
             device, dtype = torch.device("cpu"), torch.float64
@@ -233,9 +225,7 @@ class Turbo1:
             # We use Lanczos for sampling if we have enough data
             with torch.no_grad(), gpytorch.settings.max_cholesky_size(self.max_cholesky_size):
                 X_cand_torch = torch.tensor(X_cand).to(device=device, dtype=dtype)
-                t_ts0 = time.perf_counter()
                 y_cand = gp.likelihood(gp(X_cand_torch)).sample(torch.Size([self.batch_size])).t().cpu().detach().numpy()
-                t_ts1 = time.perf_counter()
 
             # De-standardize the sampled values
             y_cand = mu + sigma * y_cand
@@ -253,18 +243,6 @@ class Turbo1:
             y_cand = enn.posterior(X_cand)
 
         del X_torch, y_torch
-
-        # Record timing breakdown for comparison
-        try:
-            t_train = (t_train1 - t_train0) if self._surrogate_type == "original" else 0.0
-        except NameError:
-            t_train = 0.0
-        try:
-            t_ts = (t_ts1 - t_ts0) if self._surrogate_type == "original" else 0.0
-        except NameError:
-            t_ts = 0.0
-        t_cand = (t_cand1 - t0) - t_train  # candidate gen excluding training
-        self.last_timing = {"train": t_train, "cand": t_cand, "ts": t_ts}
 
         return X_cand, y_cand, hypers
 
@@ -351,10 +329,7 @@ class Turbo1:
                 X_next = self._select_candidates(X_cand, y_cand)
                 del y_cand
 
-                # Print timing from candidate creation / sampling
-                if hasattr(self, "last_timing"):
-                    lt = self.last_timing
-                    print(f"turbo-1 timing: train={lt.get('train', 0.0):.3f}s cand={lt.get('cand', 0.0):.3f}s ts={lt.get('ts', 0.0):.3f}s")
+                # No timing print
 
                 # Undo the warping
                 X_next = from_unit_cube(X_next, self.lb, self.ub)
