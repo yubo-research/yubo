@@ -1,8 +1,9 @@
 def test_acq_turbo_yubo_draw():
     import torch
 
-    from acq.acq_turbo_yubo import AcqTurboYUBO, TurboYUBOState
+    from acq.acq_turbo_yubo import AcqTurboYUBO
     from acq.turbo_yubo_config import TurboYUBOConfig
+    from acq.turbo_yubo_state import TurboYUBOState
 
     class _DummyModel:
         def __init__(self, X, Y):

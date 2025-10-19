@@ -1,5 +1,3 @@
-from dataclasses import dataclass
-
 import numpy as np
 import torch
 from botorch.utils.sampling import draw_sobol_samples
@@ -15,72 +13,6 @@ from sampling.sampling_util import raasp_turbo_np
 """
 
 
-class TurboYUBORestartError(Exception):
-    pass
-
-
-@dataclass
-class TurboYUBOState:
-    num_dim: int
-    batch_size: int
-    length: float = 0.8
-    length_init: float = 0.8
-    length_min: float = 0.5**7
-    length_max: float = 1.6
-    failure_counter: int = 0
-    failure_tolerance: int = float("nan")
-    success_counter: int = 0
-    success_tolerance: int = 3
-    best_value: float = -float("inf")
-    restart_triggered: bool = False
-    prev_y_length: int = 0
-
-    def __post_init__(self):
-        self.failure_tolerance = np.ceil(max([4.0 / self.batch_size, float(self.num_dim) / self.batch_size]))
-
-    def update_state(self, Y_next):
-        if len(Y_next) == 0:
-            return self
-        if not np.isfinite(self.best_value):
-            # Initialize best_value without modifying counters on the first update
-            self.best_value = max(Y_next).item()
-            self.prev_y_length += len(Y_next)
-            return self
-        if max(Y_next) > self.best_value + 1e-3 * np.fabs(self.best_value):
-            self.success_counter += 1
-            self.failure_counter = 0
-        else:
-            self.success_counter = 0
-            self.failure_counter += 1
-
-        if self.success_counter == self.success_tolerance:
-            self.length = min(2.0 * self.length, self.length_max)
-            self.success_counter = 0
-        elif self.failure_counter == self.failure_tolerance:
-            self.length /= 2.0
-            self.failure_counter = 0
-
-        self.best_value = max(self.best_value, max(Y_next).item())
-        if self.length < self.length_min:
-            self.restart_triggered = True
-        return self
-
-    def update_from_model(self, Y):
-        if len(Y) > self.prev_y_length:
-            new_Y = Y[self.prev_y_length :]
-            self.update_state(new_Y)
-            self.prev_y_length = len(Y)
-
-    def restart(self):
-        self.length = self.length_init
-        self.success_counter = 0
-        self.failure_counter = 0
-        self.best_value: float = -float("inf")
-        self.prev_y_length = 0
-        self.restart_triggered = False
-        raise TurboYUBORestartError()
-
-
 class AcqTurboYUBO:
     def __init__(self, model, state=None, config=None, obs_X=None, obs_Y_raw=None):
         self.config = config or TurboYUBOConfig()
@@ -92,13 +24,9 @@ class AcqTurboYUBO:
 
         X_0 = (obs_X if obs_X is not None else self.model.train_inputs[0]).detach()
         num_dim = X_0.shape[-1]
-        batch_size = 1
 
-        if state is None:
-            state = TurboYUBOState(num_dim=num_dim, batch_size=batch_size)
-        else:
-            if state.num_dim != num_dim:
-                raise ValueError(f"State dimension ({state.num_dim}) must match model dimension ({num_dim})")
+        if state.num_dim != num_dim:
+            raise ValueError(f"State dimension ({state.num_dim}) must match model dimension ({num_dim})")
 
         self.state = state
 

@@ -3,7 +3,7 @@ import torch
 from acq.fit_gp_turbo import train_gp as turbo_train_gp
 
 
-def build_turbo_yubo_model(train_x: torch.Tensor, train_y: torch.Tensor):
+def build_default_turbo_yubo_model(train_x: torch.Tensor, train_y: torch.Tensor):
     y = train_y
     if y.dim() > 1:
         y = y.squeeze(-1)

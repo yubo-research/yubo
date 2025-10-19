@@ -2,8 +2,9 @@ import torch
 
 import acq.acq_util as acq_util
 import acq.fit_gp as fit_gp
-from acq.acq_turbo_yubo import AcqTurboYUBO, TurboYUBORestartError, TurboYUBOState
+from acq.acq_turbo_yubo import AcqTurboYUBO
 from acq.turbo_yubo_config import TurboYUBOConfig
+from acq.turbo_yubo_state import TurboYUBORestartError, TurboYUBOState
 
 
 class TurboYUBODesigner:
