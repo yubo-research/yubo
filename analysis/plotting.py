@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import matplotlib.transforms as mtransforms
 import numpy as np
 import scipy.constants
+import scipy.stats as ss
 
 import analysis.data_sets as ads
 
@@ -116,11 +117,16 @@ def filled_err(
     markersize=10,
     fillstyle="none",
     max_markers=None,
+    use_median=False,
 ):
     if ax is None:
         ax = plt
-    mu = ys.mean(axis=0)
-    sg = ys.std(axis=0)
+    if use_median:
+        mu = np.median(ys, axis=0)
+        sg = ss.median_abs_deviation(ys, axis=0)
+    else:
+        mu = ys.mean(axis=0)
+        sg = ys.std(axis=0)
     if x is None:
         x = np.arange(len(mu))
     if se:
