@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from acq.turbo_yubo.turbo_yubo_model_factory import build_default_turbo_yubo_model
+from acq.turbo_yubo.ty_model_factory import build_default_turbo_yubo_model
 from sampling.lhd import latin_hypercube_design
 from sampling.sampling_util import raasp_turbo_np
 

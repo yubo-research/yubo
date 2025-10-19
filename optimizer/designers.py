@@ -18,6 +18,7 @@ from acq.acq_ts import AcqTS
 # from acq.acq_tsroots import AcqTSRoots
 from acq.acq_var import AcqVar
 from acq.turbo_yubo.turbo_yubo_config import TurboYUBOConfig
+from acq.turbo_yubo.ty_enn_model_factory import build_turbo_yubo_enn_model
 
 from .ax_designer import AxDesigner
 from .bt_designer import BTDesigner
@@ -511,11 +512,10 @@ class Designers:
             )
 
         elif designer_name == "turbo-yubo":
-            return TurboYUBODesigner(self._policy, num_keep=num_keep, keep_style=keep_style, config=TurboYUBOConfig(candidate_sampler=True))
+            return TurboYUBODesigner(self._policy, num_keep=num_keep, keep_style=keep_style, config=TurboYUBOConfig())
         elif designer_name.startswith("turbo-yubo-enn-"):
             k = int(designer_name.split("-")[-1])
-            cfg = TurboYUBOConfig(candidate_sampler=True)
-            from acq.turbo_yubo.turbo_yubo_enn_model_factory import build_turbo_yubo_enn_model
+            cfg = TurboYUBOConfig()
 
             def _factory(*, train_x, train_y):
                 return build_turbo_yubo_enn_model(train_x=train_x, train_y=train_y, k=k)

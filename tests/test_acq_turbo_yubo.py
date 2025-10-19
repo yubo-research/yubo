@@ -3,7 +3,7 @@ def test_acq_turbo_yubo_draw():
 
     from acq.turbo_yubo.acq_turbo_yubo import AcqTurboYUBO
     from acq.turbo_yubo.turbo_yubo_config import TurboYUBOConfig
-    from acq.turbo_yubo.turbo_yubo_state import TurboYUBOState
+    from acq.turbo_yubo.turbo_yubo_state import TYDefaultTR
 
     class _DummyModel:
         def __init__(self, X, Y):
@@ -25,7 +25,7 @@ def test_acq_turbo_yubo_draw():
     Y = torch.rand(size=(4,), dtype=torch.double)
     model = _DummyModel(X, Y)
 
-    state = TurboYUBOState(num_dim=2, _num_arms=2)
+    state = TYDefaultTR(num_dim=2, _num_arms=2)
 
     def _fake_raasp(x_center, lb, ub, num_candidates, device, dtype):
         lb_t = torch.as_tensor(lb, dtype=dtype, device=device)

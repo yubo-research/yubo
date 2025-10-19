@@ -4,7 +4,7 @@ import acq.acq_util as acq_util
 import acq.fit_gp as fit_gp
 from acq.turbo_yubo.acq_turbo_yubo import AcqTurboYUBO
 from acq.turbo_yubo.turbo_yubo_config import TurboYUBOConfig
-from acq.turbo_yubo.turbo_yubo_state import TurboYUBORestartError, TurboYUBOState
+from acq.turbo_yubo.ty_default_tr import TurboYUBORestartError, TYDefaultTR
 
 
 class TurboYUBODesigner:
@@ -62,7 +62,7 @@ class TurboYUBODesigner:
             model = self._config.model_factory(train_x=X, train_y=y_raw)
 
         if self._turbo_yubo_state is None:
-            self._turbo_yubo_state = TurboYUBOState(num_dim=self._policy.num_params(), _num_arms=num_arms)
+            self._turbo_yubo_state = TYDefaultTR(num_dim=self._policy.num_params(), _num_arms=num_arms)
 
         acq_turbo = AcqTurboYUBO(
             model=model,

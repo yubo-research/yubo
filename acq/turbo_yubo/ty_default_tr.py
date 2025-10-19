@@ -8,7 +8,7 @@ class TurboYUBORestartError(Exception):
 
 
 @dataclass
-class TurboYUBOState:
+class TYDefaultTR:
     num_dim: int
 
     _num_arms: int
