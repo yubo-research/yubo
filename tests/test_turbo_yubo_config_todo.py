@@ -1,7 +1,7 @@
 def test_turbo_yubo_config_model_factory_contract():
     import torch
 
-    from acq.turbo_yubo_config import TurboYUBOConfig
+    from acq.turbo_yubo.turbo_yubo_config import TurboYUBOConfig
 
     cfg = TurboYUBOConfig()
     assert hasattr(cfg, "model_factory")

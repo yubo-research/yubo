@@ -2,7 +2,7 @@ import numpy as np
 import torch
 from torch.quasirandom import SobolEngine
 
-from acq.turbo_yubo_config import TurboYUBOConfig
+from acq.turbo_yubo.turbo_yubo_config import TurboYUBOConfig
 from sampling.sampling_util import raasp_turbo_np
 
 """

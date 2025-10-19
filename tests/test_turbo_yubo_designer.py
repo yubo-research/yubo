@@ -1,5 +1,5 @@
 def test_turbo_yubo_designer_basic():
-    from acq.turbo_yubo_config import TurboYUBOConfig
+    from acq.turbo_yubo.turbo_yubo_config import TurboYUBOConfig
     from optimizer.turbo_yubo_designer import TurboYUBODesigner
     from problems.env_conf import default_policy, get_env_conf
 

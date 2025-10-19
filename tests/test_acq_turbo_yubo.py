@@ -1,9 +1,9 @@
 def test_acq_turbo_yubo_draw():
     import torch
 
-    from acq.acq_turbo_yubo import AcqTurboYUBO
-    from acq.turbo_yubo_config import TurboYUBOConfig
-    from acq.turbo_yubo_state import TurboYUBOState
+    from acq.turbo_yubo.acq_turbo_yubo import AcqTurboYUBO
+    from acq.turbo_yubo.turbo_yubo_config import TurboYUBOConfig
+    from acq.turbo_yubo.turbo_yubo_state import TurboYUBOState
 
     class _DummyModel:
         def __init__(self, X, Y):
@@ -26,7 +26,7 @@ def test_acq_turbo_yubo_draw():
     model = _DummyModel(X, Y)
 
     state = TurboYUBOState(num_dim=2, _num_arms=2)
-    acq = AcqTurboYUBO(model=model, state=state, config=TurboYUBOConfig(raasp=False, tr=True))
+    acq = AcqTurboYUBO(model=model, state=state, config=TurboYUBOConfig(raasp=False))
     out = acq.draw(num_arms=2)
 
     assert out.shape == (2, 2)
