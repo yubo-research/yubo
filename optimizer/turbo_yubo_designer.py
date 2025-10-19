@@ -1,3 +1,5 @@
+import time
+
 import torch
 
 import acq.acq_util as acq_util
@@ -21,6 +23,7 @@ class TurboYUBODesigner:
         self._device = torch.empty(size=(1,)).device
 
     def __call__(self, data, num_arms):
+        t0 = time.perf_counter()
         if self._keep_style != "lap":
             data = acq_util.keep_data(data, self._keep_style, self._num_keep)
         else:
@@ -42,7 +45,17 @@ class TurboYUBODesigner:
 
         # Build a TuRBO-style GP on standardized targets (median/STD) in [0,1]^d
         if len(X) == 0:
-            model = fit_gp.fit_gp_XY(X, Y)
+            # Avoid constructing a GP when there is no data; mirror turbo-1 behavior
+            class _EmptyModel:
+                def __init__(self, X):
+                    self.train_inputs = (X,)
+                    self.train_targets = torch.empty(size=(0,))
+                    self.covar_module = None
+
+                def posterior(self, X):
+                    raise RuntimeError("Posterior requested with no data")
+
+            model = _EmptyModel(X)
             y_raw = Y.squeeze(-1)
         else:
             y_raw = Y.squeeze(-1)
@@ -52,7 +65,9 @@ class TurboYUBODesigner:
                 sigma = torch.tensor(1.0, dtype=y_raw.dtype, device=y_raw.device)
             y_std = (y_raw - mu) / sigma
 
+            t_fit0 = time.perf_counter()
             gp = turbo_train_gp(train_x=X, train_y=y_std, use_ard=True, num_steps=50, hypers={})
+            t_fit1 = time.perf_counter()
 
             class _TurboPosteriorModel:
                 def __init__(self, gp):
@@ -72,12 +87,23 @@ class TurboYUBODesigner:
             self._turbo_yubo_state = TurboYUBOState(num_dim=self._policy.num_params(), batch_size=num_arms)
 
         acq_turbo = AcqTurboYUBO(model=model, state=self._turbo_yubo_state, config=TurboYUBOConfig(raasp=self._raasp), obs_X=X, obs_Y_raw=y_raw)
+        t_acq0 = time.perf_counter()
         X_a = acq_turbo.draw(num_arms)
+        t_acq1 = time.perf_counter()
         self._turbo_yubo_state = acq_turbo.get_state()
 
         if self._keep_style == "lap":
             self._X_train, self._Y_train = acq_util.keep_top_n(X, Y, self._num_keep)
             self._X_train = torch.as_tensor(self._X_train, dtype=self._dtype, device=self._device)
             self._Y_train = torch.as_tensor(self._Y_train, dtype=self._dtype, device=self._device)
+
+        timing = getattr(acq_turbo, "last_timing", {})
+        timing_total = t_acq1 - t0
+        timing_fit = (t_fit1 - t_fit0) if len(X) > 0 else 0.0
+        timing_acq = t_acq1 - t_acq0
+        print(
+            f"turbo-yubo timing: total={timing_total:.3f}s fit={timing_fit:.3f}s acq={timing_acq:.3f}s "
+            f"tr={timing.get('tr', 0.0):.3f}s cand={timing.get('cand', 0.0):.3f}s ts={timing.get('ts', 0.0):.3f}s"
+        )
 
         return fit_gp.mk_policies(self._policy, X_a)

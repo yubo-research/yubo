@@ -292,3 +292,26 @@ def raasp(x_center, lb, ub, num_candidates, device, dtype):
     candidates[mask] = pert[mask]
 
     return candidates
+
+
+def raasp_turbo_np(x_center, lb, ub, num_candidates, device, dtype):
+    num_dim = x_center.shape[-1]
+    prob_perturb = min(20.0 / num_dim, 1.0)
+
+    x_center_np = x_center.detach().cpu().numpy()
+    lb_np = np.asarray(lb)
+    ub_np = np.asarray(ub)
+
+    sobol = qmc.Sobol(num_dim, scramble=True, seed=np.random.randint(999999))
+    sobol_samples = sobol.random(num_candidates)
+    pert = lb_np + (ub_np - lb_np) * sobol_samples
+
+    mask = np.random.rand(num_candidates, num_dim) <= prob_perturb
+    ind = np.where(np.sum(mask, axis=1) == 0)[0]
+    if len(ind) > 0:
+        mask[ind, np.random.randint(0, num_dim - 1, size=len(ind))] = True
+
+    candidates = x_center_np.copy() * np.ones((num_candidates, num_dim))
+    candidates[mask] = pert[mask]
+
+    return torch.tensor(candidates, dtype=dtype, device=device)

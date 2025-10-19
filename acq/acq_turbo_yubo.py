@@ -1,11 +1,13 @@
+import time
 from dataclasses import dataclass
 
 import numpy as np
 import torch
 from botorch.utils.sampling import draw_sobol_samples
+from torch.quasirandom import SobolEngine
 
 from sampling.lhd import latin_hypercube_design
-from sampling.sampling_util import raasp
+from sampling.sampling_util import raasp_turbo_np
 
 
 @dataclass
@@ -99,6 +101,7 @@ class AcqTurboYUBO:
         self.Y = (obs_Y_raw if obs_Y_raw is not None else model.train_targets).detach()
 
         self.state.update_from_model(self.Y)
+        self.last_timing = {}
 
     def get_state(self):
         return self.state
@@ -127,11 +130,27 @@ class AcqTurboYUBO:
         if self.config.raasp:
             best_idx = torch.argmax(self.Y).item()
             x_center = self.X[best_idx : best_idx + 1, :]
-            x_cand = raasp(x_center, lb, ub, num_candidates, self.device, self.dtype)
+            # Use numpy-based RAASP matching turbo-1 style to minimize device churn
+            x_cand = raasp_turbo_np(x_center, lb, ub, num_candidates, self.device, self.dtype)
         else:
-            bounds = np.array([lb, ub])
-            bounds = torch.tensor(bounds, dtype=self.dtype, device=self.device)
-            x_cand = draw_sobol_samples(bounds=bounds, n=num_candidates, q=1).squeeze(1)
+            # Match turbo_1 SobolEngine + mask behavior
+            best_idx = torch.argmax(self.Y).item()
+            x_center = self.X[best_idx : best_idx + 1, :].cpu().numpy()
+            lb_np = np.asarray(lb)
+            ub_np = np.asarray(ub)
+            sobol = SobolEngine(self.state.num_dim, scramble=True, seed=np.random.randint(int(1e6)))
+            pert = sobol.draw(num_candidates).to(dtype=self.dtype, device=self.device).cpu().detach().numpy()
+            pert = lb_np + (ub_np - lb_np) * pert
+
+            prob_perturb = min(20.0 / self.state.num_dim, 1.0)
+            mask = np.random.rand(num_candidates, self.state.num_dim) <= prob_perturb
+            ind = np.where(np.sum(mask, axis=1) == 0)[0]
+            if len(ind) > 0:
+                mask[ind, np.random.randint(0, self.state.num_dim - 1, size=len(ind))] = 1
+
+            X_cand = x_center.copy() * np.ones((num_candidates, self.state.num_dim))
+            X_cand[mask] = pert[mask]
+            x_cand = torch.tensor(X_cand, dtype=self.dtype, device=self.device)
 
         return x_cand
 
@@ -140,12 +159,15 @@ class AcqTurboYUBO:
             indices = torch.randperm(len(x_cand))[:num_arms]
             return x_cand[indices]
         with torch.no_grad():
-            posterior = self.model.posterior(x_cand)
-            samples = posterior.sample(sample_shape=torch.Size([num_arms])).squeeze(-1)  # [num_arms, n_cand]
-            if samples.dim() == 1:
-                samples = samples.unsqueeze(0)
-            # Transpose to [n_cand, num_arms] to match TuRBO-1 selection logic
-            y_cand = samples.t().contiguous()
+            # Match turbo_1 sampling path when possible
+            if hasattr(self.model, "_gp") and hasattr(self.model._gp, "likelihood"):
+                y_cand = self.model._gp.likelihood(self.model._gp(x_cand)).sample(torch.Size([num_arms])).t()
+            else:
+                posterior = self.model.posterior(x_cand)
+                samples = posterior.sample(sample_shape=torch.Size([num_arms])).squeeze(-1)
+                if samples.dim() == 1:
+                    samples = samples.unsqueeze(0)
+                y_cand = samples.t().contiguous()
             # Greedy unique selection across arms (maximize)
             chosen = []
             for i in range(num_arms):
@@ -168,13 +190,24 @@ class AcqTurboYUBO:
         return x_arm
 
     def draw(self, num_arms):
+        t0 = time.perf_counter()
         if self.state.restart_triggered:
             self.state.restart()
         if len(self.X) == 0:
-            return self._draw_uniform(num_arms)
+            x = self._draw_uniform(num_arms)
+            t1 = time.perf_counter()
+            self.last_timing = {"tr": 0.0, "cand": 0.0, "ts": t1 - t0}
+            return x
         lb, ub = self._create_trust_region()
+        t1 = time.perf_counter()
         if lb is None or ub is None:
-            return self._draw_uniform(num_arms)
+            x = self._draw_uniform(num_arms)
+            t2 = time.perf_counter()
+            self.last_timing = {"tr": t1 - t0, "cand": 0.0, "ts": t2 - t1}
+            return x
         x_cand = self._sample_candidates(lb, ub, self.num_candidates)
+        t2 = time.perf_counter()
         x_arm = self._thompson_sample(x_cand, num_arms)
+        t3 = time.perf_counter()
+        self.last_timing = {"tr": t1 - t0, "cand": t2 - t1, "ts": t3 - t2}
         return x_arm
