@@ -26,7 +26,14 @@ def test_acq_turbo_yubo_draw():
     model = _DummyModel(X, Y)
 
     state = TurboYUBOState(num_dim=2, _num_arms=2)
-    acq = AcqTurboYUBO(model=model, state=state, config=TurboYUBOConfig(raasp=False))
+
+    def _fake_raasp(x_center, lb, ub, num_candidates, device, dtype):
+        lb_t = torch.as_tensor(lb, dtype=dtype, device=device)
+        ub_t = torch.as_tensor(ub, dtype=dtype, device=device)
+        u = torch.rand((num_candidates, x_center.shape[-1]), dtype=dtype, device=device)
+        return lb_t + (ub_t - lb_t) * u
+
+    acq = AcqTurboYUBO(model=model, state=state, config=TurboYUBOConfig(raasp=_fake_raasp))
     out = acq.draw(num_arms=2)
 
     assert out.shape == (2, 2)
