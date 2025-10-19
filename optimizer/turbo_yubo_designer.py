@@ -2,12 +2,13 @@ import torch
 
 import acq.acq_util as acq_util
 import acq.fit_gp as fit_gp
-from acq.acq_turbo_yubo import AcqTurboYUBO, TurboYUBOConfig, TurboYUBORestartError, TurboYUBOState
+from acq.acq_turbo_yubo import AcqTurboYUBO, TurboYUBORestartError, TurboYUBOState
 from acq.fit_gp_turbo import train_gp as turbo_train_gp
+from acq.turbo_yubo_config import TurboYUBOConfig
 
 
 class TurboYUBODesigner:
-    def __init__(self, policy, num_keep: int = None, keep_style: str = None, raasp: bool = True, tr: bool = True):
+    def __init__(self, policy, num_keep: int = None, keep_style: str = None, config: TurboYUBOConfig | None = None):
         self._policy = policy
         self._num_keep = num_keep
         self._keep_style = keep_style
@@ -15,8 +16,7 @@ class TurboYUBODesigner:
         self._X_train = torch.empty(size=(0, self._policy.num_params()))
         self._Y_train = torch.empty(size=(0, 1))
         self._turbo_yubo_state = None
-        self._raasp = raasp
-        self._tr = tr
+        self._config = config or TurboYUBOConfig()
         self._dtype = torch.double
         self._device = torch.empty(size=(1,)).device
 
@@ -87,7 +87,7 @@ class TurboYUBODesigner:
         acq_turbo = AcqTurboYUBO(
             model=model,
             state=self._turbo_yubo_state,
-            config=TurboYUBOConfig(raasp=self._raasp, tr=self._tr),
+            config=self._config,
             obs_X=X,
             obs_Y_raw=y_raw,
         )

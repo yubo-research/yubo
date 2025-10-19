@@ -5,6 +5,7 @@ import torch
 from botorch.utils.sampling import draw_sobol_samples
 from torch.quasirandom import SobolEngine
 
+from acq.turbo_yubo_config import TurboYUBOConfig
 from sampling.lhd import latin_hypercube_design
 from sampling.sampling_util import raasp_turbo_np
 
@@ -16,13 +17,6 @@ Designer "turbo-yubo" matches the reference designed, turbo-1, in y_max and prop
 
 class TurboYUBORestartError(Exception):
     pass
-
-
-@dataclass
-class TurboYUBOConfig:
-    raasp: bool = True
-    lhd: bool = True
-    tr: bool = True
 
 
 @dataclass

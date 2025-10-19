@@ -17,6 +17,7 @@ from acq.acq_ts import AcqTS
 
 # from acq.acq_tsroots import AcqTSRoots
 from acq.acq_var import AcqVar
+from acq.turbo_yubo_config import TurboYUBOConfig
 
 from .ax_designer import AxDesigner
 from .bt_designer import BTDesigner
@@ -510,9 +511,7 @@ class Designers:
             )
 
         elif designer_name == "turbo-yubo":
-            return TurboYUBODesigner(self._policy, num_keep=num_keep, keep_style=keep_style, raasp=True)
-        elif designer_name == "turbo-yubo-nr":
-            return TurboYUBODesigner(self._policy, num_keep=num_keep, keep_style=keep_style, raasp=False)
+            return TurboYUBODesigner(self._policy, num_keep=num_keep, keep_style=keep_style, config=TurboYUBOConfig(raasp=True))
 
         # Long sobol init, sequential opt
         elif designer_name == "sobol_ucb":
