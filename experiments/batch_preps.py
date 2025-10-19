@@ -325,7 +325,7 @@ def prep_rl_three(results_dir, name):
         # "turbo-1",
         # "mts",
         # "mtv-mts",
-        "turbo-1-iso",
+        # "turbo-1-iso",
         "turbo-yubo",
     ]
 
