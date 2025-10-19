@@ -131,7 +131,6 @@ def fit_gp_XY(X, Y, model_spec=None):
         elif model_type == "rdumbo":
             gp = DUMBOGP(X, Y, use_rank_distance=True)
         elif model_type == "sparse":
-            assert False
             inducing_points = torch.empty((0, X.shape[-1]), dtype=X.dtype, device=X.device)
             gp = SingleTaskVariationalGP(X, inducing_points=inducing_points, outcome_transform=_EmptyTransform())
         else:
