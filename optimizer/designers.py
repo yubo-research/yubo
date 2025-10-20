@@ -19,6 +19,7 @@ from acq.acq_ts import AcqTS
 from acq.acq_var import AcqVar
 from acq.turbo_yubo.turbo_yubo_config import TurboYUBOConfig
 from acq.turbo_yubo.ty_enn_model_factory import build_turbo_yubo_enn_model
+from acq.turbo_yubo.ty_shrink_tr import TYShrinkTR
 from acq.turbo_yubo.ty_stagger_tr import TYStaggerTR
 from acq.turbo_yubo.ty_uniform_tr import TYUniformTR
 
@@ -517,7 +518,9 @@ class Designers:
             return TurboYUBODesigner(self._policy, num_keep=num_keep, keep_style=keep_style, config=TurboYUBOConfig())
         elif designer_name == "turbo-yubo-stagger":
             return TurboYUBODesigner(self._policy, num_keep=num_keep, keep_style=keep_style, config=TurboYUBOConfig(trust_region_manager=TYStaggerTR))
-        elif designer_name.startswith("turbo-yubo-uniform"):
+        elif designer_name == "turbo-yubo-shrink":
+            return TurboYUBODesigner(self._policy, num_keep=num_keep, keep_style=keep_style, config=TurboYUBOConfig(trust_region_manager=TYShrinkTR))
+        elif designer_name == "turbo-yubo-uniform":
             return TurboYUBODesigner(
                 self._policy,
                 num_keep=num_keep,

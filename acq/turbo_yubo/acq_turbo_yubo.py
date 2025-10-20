@@ -42,7 +42,7 @@ class AcqTurboYUBO:
             kernel = covar_module.base_kernel
         else:
             kernel = covar_module
-        lb, ub = self.state.create_trust_region(x_center, kernel)
+        lb, ub = self.state.create_trust_region(x_center, kernel, len(self.Y))
         return lb, ub
 
     def _sample_candidates(self, lb, ub, num_candidates):

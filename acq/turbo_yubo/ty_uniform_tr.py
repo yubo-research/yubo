@@ -1,15 +1,16 @@
 from dataclasses import dataclass
 
+import numpy as np
+
 from acq.turbo_yubo.ty_default_tr import mk_lb_ub_from_kernel
-from sampling.log_uniform import np_log_uniform
 
 
 @dataclass
-class TYStaggerTR:
+class TYUniformTR:
     num_dim: int
     num_arms: int
 
-    s_min: float = 0.1  # 0.5**7
+    s_min: float = 0.5**7
     s_max: float = 1.0
 
     def update_from_model(self, Y):
@@ -19,5 +20,6 @@ class TYStaggerTR:
         pass
 
     def create_trust_region(self, x_center, kernel, num_obs):
-        length = np_log_uniform(self.s_min, self.s_max)
+        length = np.random.uniform(self.s_min, self.s_max)
+        print("LENGTH:", length)
         return mk_lb_ub_from_kernel(x_center, kernel, length)

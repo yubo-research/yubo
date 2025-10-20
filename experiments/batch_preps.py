@@ -326,9 +326,11 @@ def prep_rl_three(results_dir, name):
         # "mts",
         # "mtv-mts",
         # "turbo-1-iso",
-        "turbo-yubo",
+        # "turbo-yubo",
+        # "turbo-yubo-uniform",
+        # "turbo-yubo-uniform-enn-3",
+        # "turbo-yubo-uniform-enn-10",
         "turbo-yubo-stagger",
-        "turbo-yubo-stagger-enn-3",
     ]
 
     cmds = []

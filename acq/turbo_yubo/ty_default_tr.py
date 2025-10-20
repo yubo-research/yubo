@@ -51,7 +51,7 @@ class TYDefaultTR:
         if self._restart_triggered:
             self._restart()
 
-    def create_trust_region(self, x_center, kernel):
+    def create_trust_region(self, x_center, kernel, num_obs):
         return mk_lb_ub_from_kernel(x_center, kernel, self._length)
 
     def _update_state(self, Y_next):
