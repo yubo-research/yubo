@@ -3,7 +3,7 @@ def test_acq_turbo_yubo_draw():
 
     from acq.turbo_yubo.acq_turbo_yubo import AcqTurboYUBO
     from acq.turbo_yubo.turbo_yubo_config import TurboYUBOConfig
-    from acq.turbo_yubo.turbo_yubo_state import TYDefaultTR
+    from acq.turbo_yubo.ty_default_tr import TYDefaultTR
 
     class _DummyModel:
         def __init__(self, X, Y):

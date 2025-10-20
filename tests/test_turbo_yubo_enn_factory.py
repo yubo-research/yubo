@@ -1,7 +1,7 @@
 def test_turbo_yubo_enn_model_factory_contract():
     import torch
 
-    from acq.turbo_yubo.turbo_yubo_enn_model_factory import build_turbo_yubo_enn_model
+    from acq.turbo_yubo.ty_enn_model_factory import build_turbo_yubo_enn_model
 
     train_x = torch.rand(5, 3, dtype=torch.double)
     train_y = torch.rand(5, dtype=torch.double)
@@ -22,7 +22,7 @@ def test_turbo_yubo_designer_with_enn_factory():
     import torch
 
     from acq.turbo_yubo.turbo_yubo_config import TurboYUBOConfig
-    from acq.turbo_yubo.turbo_yubo_enn_model_factory import build_turbo_yubo_enn_model
+    from acq.turbo_yubo.ty_enn_model_factory import build_turbo_yubo_enn_model
     from optimizer.turbo_yubo_designer import TurboYUBODesigner
     from problems.env_conf import default_policy, get_env_conf
 
