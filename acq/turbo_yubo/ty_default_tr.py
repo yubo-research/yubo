@@ -7,6 +7,20 @@ class TurboYUBORestartError(Exception):
     pass
 
 
+def mk_lb_ub_from_kernel(x_center, kernel, length):
+    num_dim = x_center.shape[1]
+    if hasattr(kernel, "lengthscale"):
+        weights = kernel.lengthscale.cpu().detach().numpy().ravel()
+        weights = weights / weights.mean()
+        weights = weights / np.prod(np.power(weights, 1.0 / len(weights)))
+    else:
+        weights = np.ones(num_dim)
+
+    lb = np.clip(x_center.cpu().numpy() - weights * length / 2.0, 0.0, 1.0)
+    ub = np.clip(x_center.cpu().numpy() + weights * length / 2.0, 0.0, 1.0)
+    return lb, ub
+
+
 @dataclass
 class TYDefaultTR:
     num_dim: int
@@ -38,15 +52,7 @@ class TYDefaultTR:
             self._restart()
 
     def create_trust_region(self, x_center, kernel):
-        if hasattr(kernel, "lengthscale"):
-            weights = kernel.lengthscale.cpu().detach().numpy().ravel()
-            weights = weights / weights.mean()
-            weights = weights / np.prod(np.power(weights, 1.0 / len(weights)))
-        else:
-            weights = np.ones(self.num_dim)
-        lb = np.clip(x_center.cpu().numpy() - weights * self._length / 2.0, 0.0, 1.0)
-        ub = np.clip(x_center.cpu().numpy() + weights * self._length / 2.0, 0.0, 1.0)
-        return lb, ub
+        return mk_lb_ub_from_kernel(x_center, kernel, self._length)
 
     def _update_state(self, Y_next):
         if len(Y_next) == 0:

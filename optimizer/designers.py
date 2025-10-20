@@ -20,6 +20,7 @@ from acq.acq_var import AcqVar
 from acq.turbo_yubo.turbo_yubo_config import TurboYUBOConfig
 from acq.turbo_yubo.ty_enn_model_factory import build_turbo_yubo_enn_model
 from acq.turbo_yubo.ty_stagger_tr import TYStaggerTR
+from acq.turbo_yubo.ty_uniform_tr import TYUniformTR
 
 from .ax_designer import AxDesigner
 from .bt_designer import BTDesigner
@@ -516,15 +517,27 @@ class Designers:
             return TurboYUBODesigner(self._policy, num_keep=num_keep, keep_style=keep_style, config=TurboYUBOConfig())
         elif designer_name == "turbo-yubo-stagger":
             return TurboYUBODesigner(self._policy, num_keep=num_keep, keep_style=keep_style, config=TurboYUBOConfig(trust_region_manager=TYStaggerTR))
+        elif designer_name.startswith("turbo-yubo-uniform"):
+            return TurboYUBODesigner(
+                self._policy,
+                num_keep=num_keep,
+                keep_style=keep_style,
+                config=TurboYUBOConfig(trust_region_manager=TYUniformTR),
+            )
         elif designer_name.startswith("turbo-yubo-enn-"):
             k = int(designer_name.split("-")[-1])
-            cfg = TurboYUBOConfig()
 
             def _factory(*, train_x, train_y):
                 return build_turbo_yubo_enn_model(train_x=train_x, train_y=train_y, k=k)
 
-            cfg.model_factory = staticmethod(_factory)
-            return TurboYUBODesigner(self._policy, num_keep=num_keep, keep_style=keep_style, config=cfg)
+            return TurboYUBODesigner(
+                self._policy,
+                num_keep=num_keep,
+                keep_style=keep_style,
+                config=TurboYUBOConfig(
+                    model_factory=staticmethod(_factory),
+                ),
+            )
         elif designer_name.startswith("turbo-yubo-stagger-enn-"):
             k = int(designer_name.split("-")[-1])
 
@@ -540,6 +553,22 @@ class Designers:
                     trust_region_manager=staticmethod(TYStaggerTR),
                 ),
             )
+        elif designer_name.startswith("turbo-yubo-uniform-enn-"):
+            k = int(designer_name.split("-")[-1])
+
+            def _factory(*, train_x, train_y):
+                return build_turbo_yubo_enn_model(train_x=train_x, train_y=train_y, k=k)
+
+            return TurboYUBODesigner(
+                self._policy,
+                num_keep=num_keep,
+                keep_style=keep_style,
+                config=TurboYUBOConfig(
+                    model_factory=staticmethod(_factory),
+                    trust_region_manager=TYUniformTR,
+                ),
+            )
+
         # Long sobol init, sequential opt
         elif designer_name == "sobol_ucb":
             return bt_designer(qUpperConfidenceBound, init_sobol=init_ax_default, acq_kwargs={"beta": 1})

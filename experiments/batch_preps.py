@@ -327,6 +327,8 @@ def prep_rl_three(results_dir, name):
         # "mtv-mts",
         # "turbo-1-iso",
         "turbo-yubo",
+        "turbo-yubo-stagger",
+        "turbo-yubo-stagger-enn-3",
     ]
 
     cmds = []
