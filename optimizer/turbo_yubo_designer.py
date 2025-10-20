@@ -4,7 +4,7 @@ import acq.acq_util as acq_util
 import acq.fit_gp as fit_gp
 from acq.turbo_yubo.acq_turbo_yubo import AcqTurboYUBO
 from acq.turbo_yubo.turbo_yubo_config import TurboYUBOConfig
-from acq.turbo_yubo.ty_default_tr import TurboYUBORestartError, TYDefaultTR
+from acq.turbo_yubo.ty_default_tr import TurboYUBORestartError
 
 
 class TurboYUBODesigner:
@@ -15,7 +15,7 @@ class TurboYUBODesigner:
         self._i_data_0 = 0
         self._X_train = torch.empty(size=(0, self._policy.num_params()))
         self._Y_train = torch.empty(size=(0, 1))
-        self._turbo_yubo_state = None
+        self._turbo_yubo_trman = None
         self._config = config or TurboYUBOConfig()
         self._dtype = torch.double
         self._device = torch.empty(size=(1,)).device
@@ -61,18 +61,17 @@ class TurboYUBODesigner:
             y_raw = Y.squeeze(-1)
             model = self._config.model_factory(train_x=X, train_y=y_raw)
 
-        if self._turbo_yubo_state is None:
-            self._turbo_yubo_state = TYDefaultTR(num_dim=self._policy.num_params(), _num_arms=num_arms)
+        if self._turbo_yubo_trman is None:
+            self._turbo_yubo_trman = self._config.trust_region_manager(num_dim=self._policy.num_params(), num_arms=num_arms)
 
         acq_turbo = AcqTurboYUBO(
             model=model,
-            state=self._turbo_yubo_state,
+            trman=self._turbo_yubo_trman,
             config=self._config,
             obs_X=X,
             obs_Y_raw=y_raw,
         )
         X_a = acq_turbo.draw(num_arms)
-        self._turbo_yubo_state = acq_turbo.get_state()
 
         if self._keep_style == "lap":
             self._X_train, self._Y_train = acq_util.keep_top_n(X, Y, self._num_keep)

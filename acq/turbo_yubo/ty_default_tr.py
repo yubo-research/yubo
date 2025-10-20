@@ -10,8 +10,8 @@ class TurboYUBORestartError(Exception):
 @dataclass
 class TYDefaultTR:
     num_dim: int
+    num_arms: int
 
-    _num_arms: int
     _length: float = 0.8
     _length_init: float = 0.8
     _length_min: float = 0.5**7
@@ -25,7 +25,7 @@ class TYDefaultTR:
     _prev_y_length: int = 0
 
     def __post_init__(self):
-        self._failure_tolerance = np.ceil(max([4.0 / self._num_arms, float(self.num_dim) / self._num_arms]))
+        self._failure_tolerance = np.ceil(max([4.0 / self.num_arms, float(self.num_dim) / self.num_arms]))
 
     def update_from_model(self, Y):
         if len(Y) > self._prev_y_length:

@@ -9,7 +9,8 @@ from sampling.log_uniform import np_log_uniform
 @dataclass
 class TYStaggerTR:
     num_dim: int
-    _num_arms: int
+    num_arms: int
+
     s_min: float = 1e-4
     length_sampler: Optional[Callable[[float, float], float]] = None
 

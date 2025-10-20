@@ -5,7 +5,7 @@ def test_create_trust_region_no_kernel_uses_length():
     import acq.turbo_yubo.ty_stagger_tr as ty_stagger_tr
 
     x_center = torch.tensor([0.6, 0.4, 0.5], dtype=torch.double)
-    tr = ty_stagger_tr.TYStaggerTR(num_dim=3, _num_arms=5, s_min=0.1, length_sampler=lambda s_min, s_max: 0.5)
+    tr = ty_stagger_tr.TYStaggerTR(num_dim=3, num_arms=5, s_min=0.1, length_sampler=lambda s_min, s_max: 0.5)
     tr.pre_draw()
     tr.update_from_model([0.1, 0.2])
     lb, ub = tr.create_trust_region(x_center, kernel=object())
@@ -27,7 +27,7 @@ def test_create_trust_region_with_kernel_weights():
             self.lengthscale = torch.tensor([2.0, 1.0, 0.5], dtype=torch.double)
 
     x_center = torch.tensor([0.5, 0.5, 0.5], dtype=torch.double)
-    tr = ty_stagger_tr.TYStaggerTR(num_dim=3, _num_arms=3, s_min=0.1, length_sampler=lambda s_min, s_max: 1.0)
+    tr = ty_stagger_tr.TYStaggerTR(num_dim=3, num_arms=3, s_min=0.1, length_sampler=lambda s_min, s_max: 1.0)
     lb, ub = tr.create_trust_region(x_center, kernel=K())
 
     weights = np.array([2.0, 1.0, 0.5])
@@ -51,7 +51,7 @@ def test_length_changes_between_calls_stateless():
         return values.pop(0)
 
     x_center = torch.tensor([0.5, 0.5], dtype=torch.double)
-    tr = ty_stagger_tr.TYStaggerTR(num_dim=2, _num_arms=2, s_min=0.1, length_sampler=next_length)
+    tr = ty_stagger_tr.TYStaggerTR(num_dim=2, num_arms=2, s_min=0.1, length_sampler=next_length)
     lb1, ub1 = tr.create_trust_region(x_center, kernel=object())
     lb2, ub2 = tr.create_trust_region(x_center, kernel=object())
 

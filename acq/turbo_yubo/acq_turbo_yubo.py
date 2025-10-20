@@ -4,7 +4,7 @@ from acq.turbo_yubo.turbo_yubo_config import TurboYUBOConfig
 
 
 class AcqTurboYUBO:
-    def __init__(self, model, state=None, config=None, obs_X=None, obs_Y_raw=None):
+    def __init__(self, model, trman=None, config=None, obs_X=None, obs_Y_raw=None):
         self.config = config or TurboYUBOConfig()
         if model is None and obs_X is not None and obs_Y_raw is not None:
             self.model = self.config.model_factory(train_x=obs_X, train_y=obs_Y_raw)
@@ -15,10 +15,10 @@ class AcqTurboYUBO:
         X_0 = (obs_X if obs_X is not None else self.model.train_inputs[0]).detach()
         num_dim = X_0.shape[-1]
 
-        if state.num_dim != num_dim:
-            raise ValueError(f"State dimension ({state.num_dim}) must match model dimension ({num_dim})")
+        if trman.num_dim != num_dim:
+            raise ValueError(f"State dimension ({trman.num_dim}) must match model dimension ({num_dim})")
 
-        self.state = state
+        self.state = trman
 
         self.num_candidates = min(100 * self.state.num_dim, 5000)
         self.device = X_0.device
