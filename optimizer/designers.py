@@ -536,21 +536,6 @@ class Designers:
                     model_factory=staticmethod(_factory),
                 ),
             )
-        elif designer_name.startswith("turbo-yubo-stagger-enn-"):
-            k = int(designer_name.split("-")[-1])
-
-            def _factory(*, train_x, train_y):
-                return build_turbo_yubo_enn_model(train_x=train_x, train_y=train_y, k=k)
-
-            return TurboYUBODesigner(
-                self._policy,
-                num_keep=num_keep,
-                keep_style=keep_style,
-                config=TurboYUBOConfig(
-                    model_factory=staticmethod(_factory),
-                    trust_region_manager=staticmethod(TYStaggerTR),
-                ),
-            )
         elif designer_name.startswith("turbo-yubo-shrink-enn-"):
             k = int(designer_name.split("-")[-1])
 
@@ -564,6 +549,21 @@ class Designers:
                 config=TurboYUBOConfig(
                     model_factory=staticmethod(_factory),
                     trust_region_manager=TYShrinkTR,
+                ),
+            )
+        elif designer_name.startswith("turbo-yubo-signal-enn-"):
+            k = int(designer_name.split("-")[-1])
+
+            def _factory(*, train_x, train_y):
+                return build_turbo_yubo_enn_model(train_x=train_x, train_y=train_y, k=k)
+
+            return TurboYUBODesigner(
+                self._policy,
+                num_keep=num_keep,
+                keep_style=keep_style,
+                config=TurboYUBOConfig(
+                    model_factory=staticmethod(_factory),
+                    trust_region_manager=TYSignalTR,
                 ),
             )
 

@@ -331,6 +331,7 @@ def prep_rl_three(results_dir, name):
         # "turbo-yubo-uniform-enn-3",
         # "turbo-yubo-uniform-enn-10",
         "turbo-yubo-shrink",
+        "turbo-yubo-signal",
     ]
 
     cmds = []

@@ -18,5 +18,5 @@ class TYShrinkTR:
         pass
 
     def create_trust_region(self, x_center, kernel, num_obs):
-        length = num_obs ** (1.0 / self.num_dim)
+        length = num_obs**self.num_dim
         return mk_lb_ub_from_kernel(x_center, kernel, length)
