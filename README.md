@@ -14,3 +14,8 @@ arXiv: 2404.17997 [cs.LG]. URL: [https://arxiv.org/abs/2404.17997](https://arxiv
 - Describes Minimal Terminal Variance (MTV)
 - Code: f833844b559e56515e748f4ead5735ef2140d7a8
 
+## Grants
+
+2025: [Cohere Labs Catalyst Grant](https://cohere.com/research/grants)
+2024: [Katz Faculty Research Initiative](https://www.yu.edu/katz/faculty-research-initiative)
+2024: [Modal for Startups](https://modal.com)
