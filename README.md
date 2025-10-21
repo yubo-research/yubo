@@ -16,6 +16,7 @@ arXiv: 2404.17997 [cs.LG]. URL: [https://arxiv.org/abs/2404.17997](https://arxiv
 
 ## Grants
 
-2025: [Cohere Labs Catalyst Grant](https://cohere.com/research/grants)
-2024: [Katz Faculty Research Initiative](https://www.yu.edu/katz/faculty-research-initiative)
-2024: [Modal for Startups](https://modal.com)
+2025: [Cohere Labs Catalyst Grant](https://cohere.com/research/grants)  
+2024: [Katz Faculty Research Initiative](https://www.yu.edu/katz/faculty-research-initiative)  
+2024: [Modal for Startups](https://modal.com)  
+
