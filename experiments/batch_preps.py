@@ -330,8 +330,11 @@ def prep_rl_three(results_dir, name):
         # "turbo-yubo-signal",
         # "turbo-yubo-signal-enn-3",
         # "turbo-yubo-signal-enn-10",
-        "turbo-yubo-gumbel",
-        "turbo-yubo-gumbel-enn-3",
+        "turbo-yubo-gumbel:Kt3",
+        "turbo-yubo-gumbel:Kt10",
+        "turbo-yubo-gumbel:Kt30",
+        "turbo-yubo-gumbel:Kt100",
+        "turbo-yubo-gumbel:Kt300",
     ]
 
     cmds = []
