@@ -20,7 +20,7 @@ from acq.acq_var import AcqVar
 from acq.turbo_yubo.turbo_yubo_config import TurboYUBOConfig
 from acq.turbo_yubo.ty_enn_model_factory import build_turbo_yubo_enn_model
 from acq.turbo_yubo.ty_shrink_tr import TYShrinkTR
-from acq.turbo_yubo.ty_signal_tr import TYSignalTR
+from acq.turbo_yubo.ty_signal_tr import TYSignalTR, ty_signal_tr_factory_factory
 from acq.turbo_yubo.ty_stagger_tr import TYStaggerTR
 
 from .ax_designer import AxDesigner
@@ -522,6 +522,15 @@ class Designers:
             return TurboYUBODesigner(self._policy, num_keep=num_keep, keep_style=keep_style, config=TurboYUBOConfig(trust_region_manager=TYShrinkTR))
         elif designer_name == "turbo-yubo-signal":
             return TurboYUBODesigner(self._policy, num_keep=num_keep, keep_style=keep_style, config=TurboYUBOConfig(trust_region_manager=TYSignalTR))
+        elif designer_name == "turbo-yubo-gumbel":
+            return TurboYUBODesigner(
+                self._policy,
+                num_keep=num_keep,
+                keep_style=keep_style,
+                config=TurboYUBOConfig(
+                    trust_region_manager=ty_signal_tr_factory_factory(use_gumbel=True),
+                ),
+            )
         elif designer_name.startswith("turbo-yubo-enn-"):
             k = int(designer_name.split("-")[-1])
 
@@ -534,21 +543,6 @@ class Designers:
                 keep_style=keep_style,
                 config=TurboYUBOConfig(
                     model_factory=staticmethod(_factory),
-                ),
-            )
-        elif designer_name.startswith("turbo-yubo-shrink-enn-"):
-            k = int(designer_name.split("-")[-1])
-
-            def _factory(*, train_x, train_y):
-                return build_turbo_yubo_enn_model(train_x=train_x, train_y=train_y, k=k)
-
-            return TurboYUBODesigner(
-                self._policy,
-                num_keep=num_keep,
-                keep_style=keep_style,
-                config=TurboYUBOConfig(
-                    model_factory=staticmethod(_factory),
-                    trust_region_manager=TYShrinkTR,
                 ),
             )
         elif designer_name.startswith("turbo-yubo-signal-enn-"):
@@ -566,7 +560,21 @@ class Designers:
                     trust_region_manager=TYSignalTR,
                 ),
             )
+        elif designer_name.startswith("turbo-yubo-gumbel-enn-"):
+            k = int(designer_name.split("-")[-1])
 
+            def _factory(*, train_x, train_y):
+                return build_turbo_yubo_enn_model(train_x=train_x, train_y=train_y, k=k)
+
+            return TurboYUBODesigner(
+                self._policy,
+                num_keep=num_keep,
+                keep_style=keep_style,
+                config=TurboYUBOConfig(
+                    model_factory=staticmethod(_factory),
+                    trust_region_manager=ty_signal_tr_factory_factory(use_gumbel=True),
+                ),
+            )
         # Long sobol init, sequential opt
         elif designer_name == "sobol_ucb":
             return bt_designer(qUpperConfidenceBound, init_sobol=init_ax_default, acq_kwargs={"beta": 1})

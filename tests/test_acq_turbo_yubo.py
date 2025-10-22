@@ -33,7 +33,7 @@ def test_acq_turbo_yubo_draw():
         u = torch.rand((num_candidates, x_center.shape[-1]), dtype=dtype, device=device)
         return lb_t + (ub_t - lb_t) * u
 
-    acq = AcqTurboYUBO(model=model, trman=state, config=TurboYUBOConfig(candidate_sampler=_fake_raasp))
+    acq = AcqTurboYUBO(model=model, trman=state, config=TurboYUBOConfig(candidate_sampler=_fake_raasp), obs_X=X, obs_Y_raw=Y)
     out = acq.draw(num_arms=2)
 
     assert out.shape == (2, 2)

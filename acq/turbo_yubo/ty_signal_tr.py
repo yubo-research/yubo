@@ -3,12 +3,21 @@ from dataclasses import dataclass
 import numpy as np
 
 from acq.turbo_yubo.ty_default_tr import mk_lb_ub_from_kernel
+from sampling.sampling_util import gumbel
+
+
+def ty_signal_tr_factory_factory(use_gumbel: bool = False):
+    def _factory(*, num_dim: int, num_arms: int):
+        return TYSignalTR(num_dim=num_dim, num_arms=num_arms, use_gumbel=use_gumbel)
+
+    return _factory
 
 
 @dataclass
 class TYSignalTR:
     num_dim: int
     num_arms: int
+    use_gumbel: bool = False
 
     s_min: float = 0.1  # 0.5**7
     s_max: float = 1.0
@@ -17,10 +26,11 @@ class TYSignalTR:
 
     def update_from_model(self, y):
         y = y.detach().cpu().numpy()
-        if len(y) == 0:
+        if len(y) <= 1:
             self._signal = 0
         else:
-            self._signal = ((y.max() - np.median(y)) / (1e-6 + y.std()) / 4.33) ** 2
+            denom = 2 * gumbel(len(y)) if self.use_gumbel else 4.33
+            self._signal = ((y.max() - np.median(y)) / (1e-6 + y.std()) / denom) ** 2
 
     def pre_draw(self):
         pass

@@ -2,9 +2,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-
-class TurboYUBORestartError(Exception):
-    pass
+from acq.turbo_yubo.ty_exceptions import TuRBORestartError
 
 
 def mk_lb_ub_from_kernel(x_center, kernel, length):
@@ -87,4 +85,4 @@ class TYDefaultTR:
         self._best_value: float = -float("inf")
         self._prev_y_length = 0
         self._restart_triggered = False
-        raise TurboYUBORestartError()
+        raise TuRBORestartError()

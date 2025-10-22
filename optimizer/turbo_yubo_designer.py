@@ -4,7 +4,7 @@ import acq.acq_util as acq_util
 import acq.fit_gp as fit_gp
 from acq.turbo_yubo.acq_turbo_yubo import AcqTurboYUBO
 from acq.turbo_yubo.turbo_yubo_config import TurboYUBOConfig
-from acq.turbo_yubo.ty_default_tr import TurboYUBORestartError
+from acq.turbo_yubo.ty_default_tr import TuRBORestartError
 
 
 class TurboYUBODesigner:
@@ -29,7 +29,7 @@ class TurboYUBODesigner:
         for _ in range(2):
             try:
                 return self._run_opt(data[self._i_data_0 :], num_arms)
-            except TurboYUBORestartError:
+            except TuRBORestartError:
                 self._i_data_0 = len(data)
         raise RuntimeError("Restarted twice")
 
@@ -42,10 +42,8 @@ class TurboYUBODesigner:
         else:
             X = torch.empty(size=(0, self._policy.num_params()))
             Y = torch.empty(size=(0, 1))
-
-        # Build a model via the configured factory when data is available
         if len(X) == 0:
-            # Avoid constructing a GP when there is no data; mirror turbo-1 behavior
+
             class _EmptyModel:
                 def __init__(self, X):
                     self.train_inputs = (X,)

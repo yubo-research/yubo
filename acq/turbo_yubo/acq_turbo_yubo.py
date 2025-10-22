@@ -1,36 +1,34 @@
+from typing import Any
+
 import torch
 
 from acq.turbo_yubo.turbo_yubo_config import TurboYUBOConfig
 
 
 class AcqTurboYUBO:
-    def __init__(self, model, trman=None, config=None, obs_X=None, obs_Y_raw=None):
-        self.config = config or TurboYUBOConfig()
-        if model is None and obs_X is not None and obs_Y_raw is not None:
-            self.model = self.config.model_factory(train_x=obs_X, train_y=obs_Y_raw)
-        else:
-            assert model is not None, "Model must be provided to AcqTurbo constructor"
-            self.model = model
+    def __init__(self, model, trman: Any, config: TurboYUBOConfig, obs_X: torch.Tensor, obs_Y_raw: torch.Tensor, max_candidates: int = 5000):
+        assert model is not None
+        assert trman is not None
+        assert config is not None
+        assert obs_X is not None
+        assert obs_Y_raw is not None
 
-        X_0 = (obs_X if obs_X is not None else self.model.train_inputs[0]).detach()
-        num_dim = X_0.shape[-1]
+        self.config = config
+        self.model = model
 
-        if trman.num_dim != num_dim:
-            raise ValueError(f"State dimension ({trman.num_dim}) must match model dimension ({num_dim})")
+        num_dim = obs_X.shape[-1]
 
+        assert trman.num_dim == num_dim, (trman.num_dim, num_dim)
         self.state = trman
 
-        self.num_candidates = min(100 * self.state.num_dim, 5000)
-        self.device = X_0.device
-        self.dtype = X_0.dtype
+        self.num_candidates = min(100 * self.state.num_dim, max_candidates)
+        self.device = obs_X.device
+        self.dtype = obs_X.dtype
 
-        self.X = X_0
-        self.Y = (obs_Y_raw if obs_Y_raw is not None else self.model.train_targets).detach()
+        self.X = obs_X
+        self.Y = obs_Y_raw.detach()
 
         self.state.update_from_model(self.Y)
-
-    def get_state(self):
-        return self.state
 
     def _create_trust_region(self):
         if len(self.Y) == 0:

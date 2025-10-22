@@ -315,3 +315,14 @@ def raasp_turbo_np(x_center, lb, ub, num_candidates, device, dtype):
     candidates[mask] = pert[mask]
 
     return torch.tensor(candidates, dtype=dtype, device=device)
+
+
+def gumbel(n):
+    if n <= 0:
+        return 0.0
+    if n == 1:
+        return 0.0
+
+    log_n = np.log(n)
+    log_log_n = np.log(log_n)
+    return np.sqrt(2 * log_n) - (log_log_n + np.log(4 * np.pi)) / (2 * np.sqrt(2 * log_n))
