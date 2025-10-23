@@ -26,7 +26,7 @@ class ENNNormal:
 
 
 class EpistemicNearestNeighbors:
-    # TODO: train_YVar; treat as third metric in acquisition function b/c not calibrate to epistemic var
+    # TODO: train_YVar; treat as third metric in acquisition function b/c not calibrated to epistemic var
     def __init__(self, k=3, small_world_M=None):
         self.k = k
         self._num_dim = None

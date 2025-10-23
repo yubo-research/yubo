@@ -21,6 +21,13 @@ def keep_data(data, keep_style, num_keep):
         return data
 
     if keep_style == "trailing":
+        if not data:
+            return data
+        best_idx = max(range(len(data)), key=lambda i: data[i].trajectory.rreturn)
+        if best_idx < len(data) - num_keep:
+            data_list = list(data[-num_keep + 1 :])
+            data_list.append(data[best_idx])
+            return data_list
         return data[-num_keep:]
     elif keep_style == "best":
         return sorted(data, key=lambda x: x.trajectory.rreturn, reverse=True)[:num_keep]
