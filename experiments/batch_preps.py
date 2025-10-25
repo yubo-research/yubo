@@ -321,20 +321,8 @@ def prep_rl_three(results_dir, name):
     exp_dir = f"exp_enn_{name}"
 
     opts = [
-        # "random",
-        # "turbo-1",
-        # "mts",
-        # "mtv-mts",
-        # "turbo-1-iso",
-        # "turbo-yubo",
-        # "turbo-yubo-signal",
-        # "turbo-yubo-signal-enn-3",
-        # "turbo-yubo-signal-enn-10",
-        "turbo-yubo-gumbel:Kt3",
-        "turbo-yubo-gumbel:Kt10",
-        "turbo-yubo-gumbel:Kt30",
-        "turbo-yubo-gumbel:Kt100",
-        "turbo-yubo-gumbel:Kt300",
+        "turbo-yubo-gumbel-sobol-enn-3:Kt100",
+        "turbo-yubo-gumbel-sobol-enn-10:Kt100",
     ]
 
     cmds = []

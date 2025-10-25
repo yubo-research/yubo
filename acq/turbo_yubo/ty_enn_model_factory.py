@@ -14,7 +14,7 @@ def _to_torch(a: np.ndarray, *, like: torch.Tensor):
     return torch.as_tensor(a, dtype=like.dtype, device=like.device)
 
 
-def build_turbo_yubo_enn_model(*, train_x: torch.Tensor, train_y: torch.Tensor, k: int = 3, small_world_M: int | None = None):
+def build_turbo_yubo_enn_model(*, train_x: torch.Tensor, train_y: torch.Tensor, k: int = 3, small_world_M: int | None = None, weighting: str | None = None):
     x_t = train_x
     y_t = train_y
     if y_t.dim() > 1:
@@ -23,7 +23,7 @@ def build_turbo_yubo_enn_model(*, train_x: torch.Tensor, train_y: torch.Tensor, 
     x_np = _to_numpy(x_t)
     y_np = _to_numpy(y_t)[..., None]
 
-    enn = EpistemicNearestNeighbors(k=k, small_world_M=small_world_M)
+    enn = EpistemicNearestNeighbors(k=k, small_world_M=small_world_M, weighting=weighting)
     enn.add(x_np, y_np)
 
     class _ENNModel:

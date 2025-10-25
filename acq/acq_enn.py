@@ -63,7 +63,7 @@ class AcqENN:
         y = np.asarray(y)
         if self._enn is None:
             # Metric surrogate
-            self._enn = EpistemicNearestNeighbors(k=self._config.k, small_world_M=self._config.small_world_M)
+            self._enn = EpistemicNearestNeighbors(k=self._config.k, small_world_M=self._config.small_world_M, weighting=self._config.weighting)
             self._enn.add(x, y)
         else:
             self._enn.add(x, y)
@@ -74,7 +74,7 @@ class AcqENN:
             d = np.asarray(d)
             if self._enn_d is None:
                 # Behavior/descriptor surrogate
-                self._enn_d = EpistemicNearestNeighbors(k=self._config.k, small_world_M=self._config.small_world_M)
+                self._enn_d = EpistemicNearestNeighbors(k=self._config.k, small_world_M=self._config.small_world_M, weighting=self._config.weighting)
                 self._enn_d.add(x, d)
                 self._d_train = np.empty(shape=(0, d.shape[-1]))
             else:

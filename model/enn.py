@@ -4,6 +4,8 @@ import faiss
 import numpy as np
 import torch
 
+from sampling.sobol_indices import calculate_sobol_indices_np
+
 
 @dataclass
 class ENNNormal:
@@ -26,7 +28,8 @@ class ENNNormal:
 
 
 class EpistemicNearestNeighbors:
-    def __init__(self, k=3, small_world_M=None, dim_weights=None):
+    def __init__(self, k=3, small_world_M=None, weighting: str | None = None):
+        assert weighting in [None, "sobol_indices"], weighting
         assert isinstance(k, int), k
         self.k = k
         self._num_dim = None
@@ -38,29 +41,31 @@ class EpistemicNearestNeighbors:
         self._lookup = None
         self._index = None
         self._small_world_M = small_world_M
-        self._dim_weights = None if dim_weights is None else np.asarray(dim_weights, dtype=np.float32)
+        self._weighting = weighting
 
     def add(self, x, y):
+        dim_weights = self._weights(x, y)
+
         assert x.ndim == y.ndim == 2, (x.ndim, y.ndim)
         assert len(x) == len(y), (len(x), len(y))
         if self._train_x is None:
             self._num_dim = x.shape[1]
             self._num_metrics = y.shape[1]
-            if self._dim_weights is None:
-                self._dim_weights = np.ones((self._num_dim,), dtype=np.float32)
-            assert self._dim_weights.shape == (self._num_dim,), (self._dim_weights.shape, self._num_dim)
-            assert self._dim_weights.dtype == np.float32, self._dim_weights.dtype
-            assert np.all(self._dim_weights > 0), self._dim_weights
+            if dim_weights is None:
+                dim_weights = np.ones((self._num_dim,), dtype=np.float32)
+            assert dim_weights.shape == (self._num_dim,), (dim_weights.shape, self._num_dim)
+            assert dim_weights.dtype == np.float32, dim_weights.dtype
+            assert np.all(dim_weights > 0), dim_weights
             self._train_x = np.empty((0, self._num_dim))
             self._train_y = np.empty((0, self._num_metrics))
             if self._small_world_M is not None:
                 base_index = faiss.IndexHNSWFlat(self._num_dim, self._small_world_M)
             else:
                 base_index = faiss.IndexFlatL2(self._num_dim)
-            if self._dim_weights is None:
+            if dim_weights is None:
                 self._index = base_index
             else:
-                scales = np.sqrt(self._dim_weights).astype(np.float32)
+                scales = np.sqrt(dim_weights).astype(np.float32)
                 A = np.diag(scales)
                 lt = faiss.LinearTransform(self._num_dim, self._num_dim)
                 faiss.copy_array_to_vector(A.ravel(), lt.A)
@@ -73,8 +78,18 @@ class EpistemicNearestNeighbors:
         if self._lookup is not None:
             assert False, "NYI: Add to lookup"
 
-    def calibrate(self, var_scale):
-        self._var_scale = var_scale
+    def _weights(self, x, y):
+        if self._weighting is None:
+            return None
+        assert self._train_x is None, "You can't add extra data when using weighting"
+        if self._weighting == "sobol_indices":
+            si = calculate_sobol_indices_np(x, y).astype(np.float32)
+            w = 1.0 / (1e-6 + si)
+            w = w / w.sum()
+
+            return np.maximum(1e-6, w)
+        else:
+            assert False, "Invalid weighting"
 
     def __len__(self):
         return 0 if self._train_x is None else len(self._train_x)

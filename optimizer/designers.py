@@ -565,6 +565,26 @@ class Designers:
                     trust_region_manager=ty_signal_tr_factory_factory(use_gumbel=True),
                 ),
             )
+        elif designer_name.startswith("turbo-yubo-gumbel-sobol-enn-"):
+            x = designer_name.split("-")
+            k = int(x[5])
+            if len(x) > 6:
+                small_world_M = int(x[6])
+            else:
+                small_world_M = None
+
+            def _factory(*, train_x, train_y):
+                return build_turbo_yubo_enn_model(train_x=train_x, train_y=train_y, k=k, small_world_M=small_world_M, weighting="sobol_indices")
+
+            return TurboYUBODesigner(
+                self._policy,
+                num_keep=num_keep,
+                keep_style=keep_style,
+                config=TurboYUBOConfig(
+                    model_factory=staticmethod(_factory),
+                    trust_region_manager=ty_signal_tr_factory_factory(use_gumbel=True),
+                ),
+            )
         # Long sobol init, sequential opt
         elif designer_name == "sobol_ucb":
             return bt_designer(qUpperConfidenceBound, init_sobol=init_ax_default, acq_kwargs={"beta": 1})
