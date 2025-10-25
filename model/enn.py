@@ -42,6 +42,7 @@ class EpistemicNearestNeighbors:
         self._index = None
         self._small_world_M = small_world_M
         self._weighting = weighting
+        self._scales = None
 
     def add(self, x, y):
         dim_weights = self._weights(x, y)
@@ -63,15 +64,11 @@ class EpistemicNearestNeighbors:
             else:
                 base_index = faiss.IndexFlatL2(self._num_dim)
             if dim_weights is None:
-                self._index = base_index
+                self._scales = np.ones((self._num_dim,), dtype=np.float32)
             else:
-                scales = np.sqrt(dim_weights).astype(np.float32)
-                A = np.diag(scales)
-                lt = faiss.LinearTransform(self._num_dim, self._num_dim)
-                faiss.copy_array_to_vector(A.ravel(), lt.A)
-                lt.is_trained = True
-                self._index = faiss.IndexPreTransform(lt, base_index)
-        self._index.add(x)
+                self._scales = np.sqrt(dim_weights).astype(np.float32)
+            self._index = base_index
+        self._index.add((x * self._scales).astype(np.float32))
         self._train_x = np.append(self._train_x, x, axis=0)
         self._train_y = np.append(self._train_y, y, axis=0)
         self._num_obs = self._train_x.shape[0]
@@ -84,6 +81,7 @@ class EpistemicNearestNeighbors:
         assert self._train_x is None, "You can't add extra data when using weighting"
         if self._weighting == "sobol_indices":
             si = calculate_sobol_indices_np(x, y).astype(np.float32)
+            si = si / si.sum()
             w = 1.0 / (1e-6 + si)
             w = w / w.sum()
 
@@ -182,7 +180,7 @@ class EpistemicNearestNeighbors:
             k += 1
 
         k = min(k, len(self))
-        dist2s, idx = self._index.search(x, k=k)
+        dist2s, idx = self._index.search((x * self._scales).astype(np.float32), k=k)
         if exclude_nearest:
             dist2s = dist2s[:, 1:]
             idx = idx[:, 1:]
