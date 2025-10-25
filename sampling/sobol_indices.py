@@ -41,4 +41,9 @@ def calculate_sobol_indices_np(x: np.ndarray, y: np.ndarray) -> np.ndarray:
         p_b = counts[valid] / float(n)
         diff = mu_b[valid] - mu
         S[j] = np.sum(p_b * (diff * diff)) / vy
-    return np.clip(S, 0.0, 1.0)
+
+    S = np.clip(S, 0.0, 1.0)
+    total = S.sum()
+    if total <= 0.0 or not np.isfinite(total):
+        return np.full(d, 1.0 / d, dtype=float)
+    return S / total

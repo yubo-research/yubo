@@ -41,6 +41,8 @@ def test_calculate_sobol_indices_nonlinear_single_input():
     y = X[:, 0] ** 2 + rng.normal(0.0, noise_sd, size=n)
 
     S = calculate_sobol_indices_np(X, y)
+    print(S)
+    assert abs(S.sum() - 1.0) < 1e-6
 
     vx2 = 1.0 / 5.0 - (1.0 / 3.0) ** 2
     vy = vx2 + noise_sd * noise_sd
@@ -71,6 +73,6 @@ def test_calculate_sobol_indices_small_n():
         y = X[:, 0] + 0.1 * rng.normal(0.0, 1.0, size=n)
         S = calculate_sobol_indices_np(X, y)
         assert S.shape == (d,)
-        assert np.isfinite(S).all()
+        assert np.isfinite(S).all(), (n, S)
         assert (S >= 0.0).all()
         assert (S <= 1.0 + 1e-12).all()
