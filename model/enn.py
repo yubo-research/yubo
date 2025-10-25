@@ -26,8 +26,8 @@ class ENNNormal:
 
 
 class EpistemicNearestNeighbors:
-    # TODO: train_YVar; treat as third metric in acquisition function b/c not calibrated to epistemic var
-    def __init__(self, k=3, small_world_M=None):
+    def __init__(self, k=3, small_world_M=None, dim_weights=None):
+        assert isinstance(k, int), k
         self.k = k
         self._num_dim = None
         self._num_metrics = None
@@ -38,6 +38,7 @@ class EpistemicNearestNeighbors:
         self._lookup = None
         self._index = None
         self._small_world_M = small_world_M
+        self._dim_weights = None if dim_weights is None else np.asarray(dim_weights, dtype=np.float32)
 
     def add(self, x, y):
         assert x.ndim == y.ndim == 2, (x.ndim, y.ndim)
@@ -45,12 +46,26 @@ class EpistemicNearestNeighbors:
         if self._train_x is None:
             self._num_dim = x.shape[1]
             self._num_metrics = y.shape[1]
+            if self._dim_weights is None:
+                self._dim_weights = np.ones((self._num_dim,), dtype=np.float32)
+            assert self._dim_weights.shape == (self._num_dim,), (self._dim_weights.shape, self._num_dim)
+            assert self._dim_weights.dtype == np.float32, self._dim_weights.dtype
+            assert np.all(self._dim_weights > 0), self._dim_weights
             self._train_x = np.empty((0, self._num_dim))
             self._train_y = np.empty((0, self._num_metrics))
             if self._small_world_M is not None:
-                self._index = faiss.IndexHNSW(self._num_dim, M=self._small_world_M)
+                base_index = faiss.IndexHNSWFlat(self._num_dim, self._small_world_M)
             else:
-                self._index = faiss.IndexFlatL2(self._num_dim)
+                base_index = faiss.IndexFlatL2(self._num_dim)
+            if self._dim_weights is None:
+                self._index = base_index
+            else:
+                scales = np.sqrt(self._dim_weights).astype(np.float32)
+                A = np.diag(scales)
+                lt = faiss.LinearTransform(self._num_dim, self._num_dim)
+                faiss.copy_array_to_vector(A.ravel(), lt.A)
+                lt.is_trained = True
+                self._index = faiss.IndexPreTransform(lt, base_index)
         self._index.add(x)
         self._train_x = np.append(self._train_x, x, axis=0)
         self._train_y = np.append(self._train_y, y, axis=0)
@@ -105,7 +120,7 @@ class EpistemicNearestNeighbors:
             return np.empty(shape=(0,), dtype=np.int64), np.empty(shape=(0,), dtype=np.float64)
 
         dist2s, idx = self._search(x, k=k, exclude_nearest=exclude_nearest)
-        return idx, np.sqrt(dist2s)
+        return idx, dist2s
 
     def neighbors(self, x, k=None, exclude_nearest=False):
         idx, _ = self.about_neighbors(x, k=k, exclude_nearest=exclude_nearest)

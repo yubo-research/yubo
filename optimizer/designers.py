@@ -545,26 +545,16 @@ class Designers:
                     model_factory=staticmethod(_factory),
                 ),
             )
-        elif designer_name.startswith("turbo-yubo-signal-enn-"):
-            k = int(designer_name.split("-")[-1])
-
-            def _factory(*, train_x, train_y):
-                return build_turbo_yubo_enn_model(train_x=train_x, train_y=train_y, k=k)
-
-            return TurboYUBODesigner(
-                self._policy,
-                num_keep=num_keep,
-                keep_style=keep_style,
-                config=TurboYUBOConfig(
-                    model_factory=staticmethod(_factory),
-                    trust_region_manager=TYSignalTR,
-                ),
-            )
         elif designer_name.startswith("turbo-yubo-gumbel-enn-"):
-            k = int(designer_name.split("-")[-1])
+            x = designer_name.split("-")
+            k = int(x[4])
+            if len(x) > 5:
+                small_world_M = int(x[5])
+            else:
+                small_world_M = None
 
             def _factory(*, train_x, train_y):
-                return build_turbo_yubo_enn_model(train_x=train_x, train_y=train_y, k=k)
+                return build_turbo_yubo_enn_model(train_x=train_x, train_y=train_y, k=k, small_world_M=small_world_M)
 
             return TurboYUBODesigner(
                 self._policy,
