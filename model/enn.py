@@ -81,9 +81,7 @@ class EpistemicNearestNeighbors:
         assert self._train_x is None, "You can't add extra data when using weighting"
         if self._weighting == "sobol_indices":
             si = calculate_sobol_indices_np(x, y).astype(np.float32)
-            si = si / si.sum()
-            w = 1.0 / (1e-6 + si)
-            w = w / w.sum()
+            w = si / si.sum()
 
             return np.maximum(1e-6, w)
         else:
