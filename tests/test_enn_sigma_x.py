@@ -25,13 +25,14 @@ def test_sigma_x_changes_neighbor_identity_and_scales_by_inverse_std():
 
     enn_sig = ENNWeighter(k=1, small_world_M=None, weighting="sigma_x")
     enn_sig.add(x, y)
+    enn_sig.set_x_center(None)
     idx_sig, _ = enn_sig.about_neighbors(q, k=1)
     assert idx_sig.shape == (1, 1)
     assert idx_sig[0, 0] == 0
 
     s = np.std(x, axis=0)
     r_expected = s[1] / s[0]
-    r_actual = enn_sig._scales[0] / enn_sig._scales[1]
+    r_actual = enn_sig._weights[0] / enn_sig._weights[1]
     assert np.isfinite(r_actual)
     np.testing.assert_allclose(r_actual, r_expected, rtol=0.2)
 
