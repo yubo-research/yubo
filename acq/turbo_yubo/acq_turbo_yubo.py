@@ -84,6 +84,8 @@ class AcqTurboYUBO:
 
         if hasattr(self.model, "set_x_center"):
             self.model.set_x_center(x_center)
+        else:
+            breakpoint()
         lb, ub = self._create_trust_region(x_center)
         if lb is None or ub is None:
             return self._draw_initial(num_arms)

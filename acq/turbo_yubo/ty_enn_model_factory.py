@@ -26,21 +26,21 @@ def build_turbo_yubo_enn_model(*, train_x: torch.Tensor, train_y: torch.Tensor, 
 
     if weighting is None:
         enn_core = EpistemicNearestNeighbors(k=k, small_world_M=small_world_M)
-        builder = enn_core
     else:
         enn_core = ENNWeighter(k=k, small_world_M=small_world_M, weighting=weighting)
-        builder = enn_core
-    builder.add(x_np, y_np)
+    enn_core.add(x_np, y_np)
 
     class _ENNModel:
         def __init__(self, x_like: torch.Tensor, y_like: torch.Tensor):
             self.train_inputs = (x_like.detach(),)
             self.train_targets = y_like.detach()
             self.covar_module = None
+            if hasattr(enn_core, "set_x_center"):
+                self.set_x_center = enn_core.set_x_center
 
         def posterior(self, X: torch.Tensor):
             X_np = _to_numpy(X)
-            mvn = builder.posterior(X_np)
+            mvn = enn_core.posterior(X_np)
 
             class _P:
                 def __init__(self, X_like: torch.Tensor, mvn):
