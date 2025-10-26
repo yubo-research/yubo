@@ -321,8 +321,7 @@ def prep_rl_three(results_dir, name):
     exp_dir = f"exp_enn_{name}"
 
     opts = [
-        "turbo-yubo-gumbel-sobol-enn-3:Kt100",
-        "turbo-yubo-gumbel-sobol-enn-10:Kt100",
+        "turbo-yubo-gumbel-enn-3:Kt100",
     ]
 
     cmds = []

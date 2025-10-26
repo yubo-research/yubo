@@ -19,9 +19,10 @@ from acq.acq_ts import AcqTS
 from acq.acq_var import AcqVar
 from acq.turbo_yubo.turbo_yubo_config import TurboYUBOConfig
 from acq.turbo_yubo.ty_enn_model_factory import build_turbo_yubo_enn_model
+from acq.turbo_yubo.ty_full_space import FullSpaceTR, PartialTargeter
+from acq.turbo_yubo.ty_model_factory import TurboYUBONOOPModel
 from acq.turbo_yubo.ty_shrink_tr import TYShrinkTR
-from acq.turbo_yubo.ty_signal_tr import TYSignalTR, ty_signal_tr_factory_factory
-from acq.turbo_yubo.ty_stagger_tr import TYStaggerTR
+from acq.turbo_yubo.ty_signal_tr import ty_signal_tr_factory_factory
 
 from .ax_designer import AxDesigner
 from .bt_designer import BTDesigner
@@ -516,12 +517,9 @@ class Designers:
 
         elif designer_name == "turbo-yubo":
             return TurboYUBODesigner(self._policy, num_keep=num_keep, keep_style=keep_style, config=TurboYUBOConfig())
-        elif designer_name == "turbo-yubo-stagger":
-            return TurboYUBODesigner(self._policy, num_keep=num_keep, keep_style=keep_style, config=TurboYUBOConfig(trust_region_manager=TYStaggerTR))
         elif designer_name == "turbo-yubo-shrink":
             return TurboYUBODesigner(self._policy, num_keep=num_keep, keep_style=keep_style, config=TurboYUBOConfig(trust_region_manager=TYShrinkTR))
-        elif designer_name == "turbo-yubo-signal":
-            return TurboYUBODesigner(self._policy, num_keep=num_keep, keep_style=keep_style, config=TurboYUBOConfig(trust_region_manager=TYSignalTR))
+
         elif designer_name == "turbo-yubo-gumbel":
             return TurboYUBODesigner(
                 self._policy,
@@ -529,6 +527,16 @@ class Designers:
                 keep_style=keep_style,
                 config=TurboYUBOConfig(
                     trust_region_manager=ty_signal_tr_factory_factory(use_gumbel=True),
+                ),
+            )
+        elif designer_name == "turbo-yubo-gumbel-0":
+            return TurboYUBODesigner(
+                self._policy,
+                num_keep=num_keep,
+                keep_style=keep_style,
+                config=TurboYUBOConfig(
+                    trust_region_manager=ty_signal_tr_factory_factory(use_gumbel=True),
+                    model_factory=TurboYUBONOOPModel,
                 ),
             )
         elif designer_name.startswith("turbo-yubo-enn-"):
@@ -542,7 +550,7 @@ class Designers:
                 num_keep=num_keep,
                 keep_style=keep_style,
                 config=TurboYUBOConfig(
-                    model_factory=staticmethod(_factory),
+                    model_factory=_factory,
                 ),
             )
         elif designer_name.startswith("turbo-yubo-gumbel-enn-"):
@@ -561,7 +569,7 @@ class Designers:
                 num_keep=num_keep,
                 keep_style=keep_style,
                 config=TurboYUBOConfig(
-                    model_factory=staticmethod(_factory),
+                    model_factory=_factory,
                     trust_region_manager=ty_signal_tr_factory_factory(use_gumbel=True),
                 ),
             )
@@ -581,8 +589,19 @@ class Designers:
                 num_keep=num_keep,
                 keep_style=keep_style,
                 config=TurboYUBOConfig(
-                    model_factory=staticmethod(_factory),
+                    model_factory=_factory,
                     trust_region_manager=ty_signal_tr_factory_factory(use_gumbel=True),
+                ),
+            )
+        elif designer_name == "ty-targeter":
+            return TurboYUBODesigner(
+                self._policy,
+                num_keep=num_keep,
+                keep_style=keep_style,
+                config=TurboYUBOConfig(
+                    model_factory=TurboYUBONOOPModel,
+                    targeter=PartialTargeter(alpha=0.1),
+                    trust_region_manager=FullSpaceTR,
                 ),
             )
         # Long sobol init, sequential opt
