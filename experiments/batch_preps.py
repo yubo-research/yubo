@@ -321,7 +321,7 @@ def prep_rl_three(results_dir, name):
     exp_dir = f"exp_enn_{name}"
 
     opts = [
-        "tygs-enn-10:Kt100",
+        "tygsg-enn-10:Kt300",
     ]
 
     cmds = []

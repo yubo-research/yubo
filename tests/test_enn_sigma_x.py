@@ -33,3 +33,18 @@ def test_sigma_x_changes_neighbor_identity_and_scales_by_inverse_std():
     r_actual = enn_sig._scales[0] / enn_sig._scales[1]
     assert np.isfinite(r_actual)
     np.testing.assert_allclose(r_actual, r_expected, rtol=0.2)
+
+
+def test_sigma_x_single_point_causes_invalid_indices():
+    from model.enn import EpistemicNearestNeighbors
+
+    x = np.array([[1.0, 2.0]], dtype=np.float32)
+    y = np.array([[0.5]], dtype=np.float32)
+    q = np.array([[1.5, 2.5]], dtype=np.float32)
+
+    enn = EpistemicNearestNeighbors(k=1, small_world_M=None, weighting="sigma_x")
+    enn.add(x, y)
+
+    posterior = enn.posterior(q)
+    assert np.isfinite(posterior.mu).all()
+    assert np.isfinite(posterior.se).all()
