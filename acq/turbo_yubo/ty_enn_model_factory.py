@@ -2,6 +2,7 @@ import numpy as np
 import torch
 
 from model.enn import EpistemicNearestNeighbors
+from model.enn_weighter import ENNWeighter
 
 
 def _to_numpy(t: torch.Tensor):
@@ -23,8 +24,13 @@ def build_turbo_yubo_enn_model(*, train_x: torch.Tensor, train_y: torch.Tensor, 
     x_np = _to_numpy(x_t)
     y_np = _to_numpy(y_t)[..., None]
 
-    enn = EpistemicNearestNeighbors(k=k, small_world_M=small_world_M, weighting=weighting)
-    enn.add(x_np, y_np)
+    if weighting is None:
+        enn_core = EpistemicNearestNeighbors(k=k, small_world_M=small_world_M)
+        builder = enn_core
+    else:
+        enn_core = ENNWeighter(k=k, small_world_M=small_world_M, weighting=weighting)
+        builder = enn_core
+    builder.add(x_np, y_np)
 
     class _ENNModel:
         def __init__(self, x_like: torch.Tensor, y_like: torch.Tensor):
@@ -34,7 +40,7 @@ def build_turbo_yubo_enn_model(*, train_x: torch.Tensor, train_y: torch.Tensor, 
 
         def posterior(self, X: torch.Tensor):
             X_np = _to_numpy(X)
-            mvn = enn.posterior(X_np)
+            mvn = builder.posterior(X_np)
 
             class _P:
                 def __init__(self, X_like: torch.Tensor, mvn):

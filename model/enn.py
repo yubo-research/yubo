@@ -4,8 +4,6 @@ import faiss
 import numpy as np
 import torch
 
-from sampling.sobol_indices import calculate_sobol_indices_np
-
 
 @dataclass
 class ENNNormal:
@@ -28,8 +26,7 @@ class ENNNormal:
 
 
 class EpistemicNearestNeighbors:
-    def __init__(self, k=3, small_world_M=None, weighting: str | None = None):
-        assert weighting in [None, "sobol_indices", "sigma_x", "sobol_sigma"], weighting
+    def __init__(self, k=3, small_world_M=None):
         assert isinstance(k, int), k
         self.k = k
         self._num_dim = None
@@ -41,63 +38,26 @@ class EpistemicNearestNeighbors:
         self._lookup = None
         self._index = None
         self._small_world_M = small_world_M
-        self._weighting = weighting
-        self._scales = None
 
     def add(self, x, y):
-        dim_weights = self._weights(x, y)
-
         assert x.ndim == y.ndim == 2, (x.ndim, y.ndim)
         assert len(x) == len(y), (len(x), len(y))
         if self._train_x is None:
             self._num_dim = x.shape[1]
             self._num_metrics = y.shape[1]
-            if dim_weights is None:
-                dim_weights = np.ones((self._num_dim,), dtype=np.float32)
-            assert dim_weights.shape == (self._num_dim,), (dim_weights.shape, self._num_dim)
-            assert dim_weights.dtype == np.float32, dim_weights.dtype
-            assert np.all(dim_weights > 0), dim_weights
             self._train_x = np.empty((0, self._num_dim))
             self._train_y = np.empty((0, self._num_metrics))
             if self._small_world_M is not None:
                 base_index = faiss.IndexHNSWFlat(self._num_dim, self._small_world_M)
             else:
                 base_index = faiss.IndexFlatL2(self._num_dim)
-            if dim_weights is None:
-                self._scales = np.ones((self._num_dim,), dtype=np.float32)
-            else:
-                self._scales = np.sqrt(dim_weights).astype(np.float32)
             self._index = base_index
-        self._index.add((x * self._scales).astype(np.float32))
+        self._index.add(x.astype(np.float32))
         self._train_x = np.append(self._train_x, x, axis=0)
         self._train_y = np.append(self._train_y, y, axis=0)
         self._num_obs = self._train_x.shape[0]
         if self._lookup is not None:
             assert False, "NYI: Add to lookup"
-
-    def _weights(self, x, y):
-        if self._weighting is None:
-            return None
-        assert self._train_x is None, "You can't add extra data when using weighting"
-        if self._weighting == "sobol_indices":
-            si = calculate_sobol_indices_np(x, y).astype(np.float32)
-            w = si / si.sum()
-            return np.maximum(1e-6, w)
-        elif self._weighting == "sigma_x":
-            s = np.std(x, axis=0).astype(np.float32)
-            s = np.maximum(s, 1e-6)
-            w = 1.0 / s
-            return np.maximum(1e-6, w)
-        elif self._weighting == "sobol_sigma":
-            si = calculate_sobol_indices_np(x, y).astype(np.float32)
-            si = si / si.sum()
-            s = np.maximum(1e-6, np.std(x, axis=0).astype(np.float32))
-            s = s / s.sum()
-            w = si / s
-            w = w / w.sum()
-            return np.maximum(1e-6, w)
-        else:
-            assert False, "Invalid weighting"
 
     def __len__(self):
         return 0 if self._train_x is None else len(self._train_x)
@@ -190,7 +150,7 @@ class EpistemicNearestNeighbors:
             k += 1
 
         k = min(k, len(self))
-        dist2s, idx = self._index.search((x * self._scales).astype(np.float32), k=k)
+        dist2s, idx = self._index.search(x.astype(np.float32), k=k)
         if exclude_nearest:
             dist2s = dist2s[:, 1:]
             idx = idx[:, 1:]

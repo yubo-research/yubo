@@ -593,26 +593,7 @@ class Designers:
                     trust_region_manager=ty_signal_tr_factory_factory(use_gumbel=True),
                 ),
             )
-        elif designer_name.startswith("tygss-enn-"):
-            x = designer_name.split("-")
-            k = int(x[2])
-            if len(x) > 3:
-                small_world_M = int(x[3])
-            else:
-                small_world_M = None
 
-            def _factory(*, train_x, train_y):
-                return build_turbo_yubo_enn_model(train_x=train_x, train_y=train_y, k=k, small_world_M=small_world_M, weighting="sobol_sigma")
-
-            return TurboYUBODesigner(
-                self._policy,
-                num_keep=num_keep,
-                keep_style=keep_style,
-                config=TurboYUBOConfig(
-                    model_factory=_factory,
-                    trust_region_manager=ty_signal_tr_factory_factory(use_gumbel=True),
-                ),
-            )
         elif designer_name == "ty-targeter":
             return TurboYUBODesigner(
                 self._policy,
