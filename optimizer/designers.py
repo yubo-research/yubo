@@ -18,7 +18,7 @@ from acq.acq_ts import AcqTS
 # from acq.acq_tsroots import AcqTSRoots
 from acq.acq_var import AcqVar
 from acq.turbo_yubo.turbo_yubo_config import TurboYUBOConfig
-from acq.turbo_yubo.ty_enn_model_factory import build_turbo_yubo_enn_model
+from acq.turbo_yubo.ty_enn_model_factory import build_turbo_yubo_enn_model, build_turbo_yubo_enn_multi_model
 from acq.turbo_yubo.ty_full_space import FullSpaceTR, PartialTargeter
 from acq.turbo_yubo.ty_model_factory import TurboYUBONOOPModel
 from acq.turbo_yubo.ty_shrink_tr import TYShrinkTR
@@ -608,6 +608,26 @@ class Designers:
                     k=k,
                     small_world_M=small_world_M,
                     weighting="curvature",
+                )
+
+            return TurboYUBODesigner(
+                self._policy,
+                num_keep=num_keep,
+                keep_style=keep_style,
+                config=TurboYUBOConfig(
+                    model_factory=_factory,
+                    trust_region_manager=ty_signal_tr_factory_factory(use_gumbel=True),
+                ),
+            )
+        elif designer_name.startswith("tygm-enn-"):
+            x = designer_name.split("-")
+            ks = [int(xx) for xx in x[2:]]
+
+            def _factory(*, train_x, train_y):
+                return build_turbo_yubo_enn_multi_model(
+                    train_x=train_x,
+                    train_y=train_y,
+                    ks=ks,
                 )
 
             return TurboYUBODesigner(

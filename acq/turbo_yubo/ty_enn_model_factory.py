@@ -2,6 +2,7 @@ import numpy as np
 import torch
 
 from model.enn import EpistemicNearestNeighbors
+from model.enn_multi import ENNMulti
 from model.enn_weighter import ENNWeighter
 
 
@@ -28,6 +29,45 @@ def build_turbo_yubo_enn_model(*, train_x: torch.Tensor, train_y: torch.Tensor, 
         enn_core = EpistemicNearestNeighbors(k=k, small_world_M=small_world_M)
     else:
         enn_core = ENNWeighter(k=k, small_world_M=small_world_M, weighting=weighting)
+    enn_core.add(x_np, y_np)
+
+    class _ENNModel:
+        def __init__(self, x_like: torch.Tensor, y_like: torch.Tensor):
+            self.train_inputs = (x_like.detach(),)
+            self.train_targets = y_like.detach()
+            self.covar_module = None
+            if hasattr(enn_core, "set_x_center"):
+                self.set_x_center = enn_core.set_x_center
+
+        def posterior(self, X: torch.Tensor):
+            X_np = _to_numpy(X)
+            mvn = enn_core.posterior(X_np)
+
+            class _P:
+                def __init__(self, X_like: torch.Tensor, mvn):
+                    self._X_like = X_like
+                    self._mvn = mvn
+
+                def sample(self, sample_shape: torch.Size):
+                    samples_np = self._mvn.sample(sample_shape)
+                    samples_t = _to_torch(samples_np, like=self._X_like)
+                    return samples_t.permute(2, 0, 1).contiguous()
+
+            return _P(X, mvn)
+
+    return _ENNModel(x_t, y_t)
+
+
+def build_turbo_yubo_enn_multi_model(*, train_x: torch.Tensor, train_y: torch.Tensor, ks: list[int], small_world_M: int | None = None):
+    x_t = train_x
+    y_t = train_y
+    if y_t.dim() > 1:
+        y_t = y_t.squeeze(-1)
+
+    x_np = _to_numpy(x_t)
+    y_np = _to_numpy(y_t)[..., None]
+
+    enn_core = ENNMulti(ks=ks)
     enn_core.add(x_np, y_np)
 
     class _ENNModel:
