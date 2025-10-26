@@ -20,6 +20,7 @@ from acq.acq_var import AcqVar
 from acq.turbo_yubo.turbo_yubo_config import TurboYUBOConfig
 from acq.turbo_yubo.ty_enn_model_factory import build_turbo_yubo_enn_model, build_turbo_yubo_enn_multi_model
 from acq.turbo_yubo.ty_full_space import FullSpaceTR, PartialTargeter
+from acq.turbo_yubo.ty_kenn_model_factory import build_turbo_yubo_kenn_model
 from acq.turbo_yubo.ty_model_factory import TurboYUBONOOPModel
 from acq.turbo_yubo.ty_shrink_tr import TYShrinkTR
 from acq.turbo_yubo.ty_signal_tr import ty_signal_tr_factory_factory
@@ -629,6 +630,22 @@ class Designers:
                     train_y=train_y,
                     ks=ks,
                 )
+
+            return TurboYUBODesigner(
+                self._policy,
+                num_keep=num_keep,
+                keep_style=keep_style,
+                config=TurboYUBOConfig(
+                    model_factory=_factory,
+                    trust_region_manager=ty_signal_tr_factory_factory(use_gumbel=True),
+                ),
+            )
+        elif designer_name.startswith("kenn-"):
+            x = designer_name.split("-")
+            k = int(x[1])
+
+            def _factory(*, train_x, train_y):
+                return build_turbo_yubo_kenn_model(train_x=train_x, train_y=train_y, k=k)
 
             return TurboYUBODesigner(
                 self._policy,

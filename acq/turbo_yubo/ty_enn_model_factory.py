@@ -31,11 +31,28 @@ def build_turbo_yubo_enn_model(*, train_x: torch.Tensor, train_y: torch.Tensor, 
         enn_core = ENNWeighter(k=k, small_world_M=small_world_M, weighting=weighting)
     enn_core.add(x_np, y_np)
 
+    class _FakeKernel:
+        def __init__(self, enn_core_ref, num_dim):
+            self._enn_core_ref = enn_core_ref
+            self._num_dim = num_dim
+
+        @property
+        def lengthscale(self):
+            if hasattr(self._enn_core_ref, "_weights") and self._enn_core_ref._weights is not None:
+                weights_np = self._enn_core_ref._weights
+            else:
+                weights_np = np.ones(self._num_dim)
+            weights_t = torch.from_numpy(weights_np).to(dtype=torch.float32)
+            return (1.0 / weights_t).unsqueeze(0)
+
     class _ENNModel:
         def __init__(self, x_like: torch.Tensor, y_like: torch.Tensor):
             self.train_inputs = (x_like.detach(),)
             self.train_targets = y_like.detach()
-            self.covar_module = None
+            if hasattr(enn_core, "_weights"):
+                self.covar_module = _FakeKernel(enn_core, x_like.shape[1])
+            else:
+                self.covar_module = None
             if hasattr(enn_core, "set_x_center"):
                 self.set_x_center = enn_core.set_x_center
 
