@@ -573,16 +573,16 @@ class Designers:
                     trust_region_manager=ty_signal_tr_factory_factory(use_gumbel=True),
                 ),
             )
-        elif designer_name.startswith("turbo-yubo-gumbel-sobol-enn-"):
+        elif designer_name.startswith("tygsg-enn-"):
             x = designer_name.split("-")
-            k = int(x[5])
-            if len(x) > 6:
-                small_world_M = int(x[6])
+            k = int(x[2])
+            if len(x) > 3:
+                small_world_M = int(x[3])
             else:
                 small_world_M = None
 
             def _factory(*, train_x, train_y):
-                return build_turbo_yubo_enn_model(train_x=train_x, train_y=train_y, k=k, small_world_M=small_world_M, weighting="sobol_indices")
+                return build_turbo_yubo_enn_model(train_x=train_x, train_y=train_y, k=k, small_world_M=small_world_M, weighting="sigma_x")
 
             return TurboYUBODesigner(
                 self._policy,

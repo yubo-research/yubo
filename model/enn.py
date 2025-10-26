@@ -29,7 +29,7 @@ class ENNNormal:
 
 class EpistemicNearestNeighbors:
     def __init__(self, k=3, small_world_M=None, weighting: str | None = None):
-        assert weighting in [None, "sobol_indices"], weighting
+        assert weighting in [None, "sobol_indices", "sigma_x"], weighting
         assert isinstance(k, int), k
         self.k = k
         self._num_dim = None
@@ -65,6 +65,8 @@ class EpistemicNearestNeighbors:
                 base_index = faiss.IndexFlatL2(self._num_dim)
             if dim_weights is None:
                 self._scales = np.ones((self._num_dim,), dtype=np.float32)
+            elif self._weighting == "sigma_x":
+                self._scales = dim_weights.astype(np.float32)
             else:
                 self._scales = np.sqrt(dim_weights).astype(np.float32)
             self._index = base_index
@@ -82,7 +84,10 @@ class EpistemicNearestNeighbors:
         if self._weighting == "sobol_indices":
             si = calculate_sobol_indices_np(x, y).astype(np.float32)
             w = si / si.sum()
-
+            return np.maximum(1e-6, w)
+        elif self._weighting == "sigma_x":
+            s = np.std(x, axis=0).astype(np.float32)
+            w = 1.0 / s
             return np.maximum(1e-6, w)
         else:
             assert False, "Invalid weighting"
