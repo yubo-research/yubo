@@ -30,25 +30,25 @@ class AcqTurboYUBO:
 
         self.state.update_from_model(self.Y)
 
-    def _create_trust_region(self):
+    def _x_center(self):
+        if len(self.Y) == 0:
+            return None
+        best_idx = torch.argmax(self.Y).item()
+        return self.X[best_idx : best_idx + 1, :]
+
+    def _create_trust_region(self, x_center):
         if len(self.Y) == 0:
             return None, None
-        best_idx = torch.argmax(self.Y).item()
-        x_center = self.X[best_idx : best_idx + 1, :]
-        covar_module = self.model.covar_module
-        if hasattr(covar_module, "base_kernel"):
-            kernel = covar_module.base_kernel
+        if hasattr(self.model, "covar_module"):
+            covar_module = self.model.covar_module
+            if hasattr(covar_module, "base_kernel"):
+                kernel = covar_module.base_kernel
+            else:
+                kernel = covar_module
         else:
-            kernel = covar_module
+            kernel = None
         lb, ub = self.state.create_trust_region(x_center, kernel, len(self.Y))
         return lb, ub
-
-    def _sample_candidates(self, lb, ub, num_candidates):
-        best_idx = torch.argmax(self.Y).item()
-        x_center = self.X[best_idx : best_idx + 1, :]
-        x_cand = self.config.candidate_sampler(x_center, lb, ub, num_candidates, self.device, self.dtype)
-
-        return x_cand
 
     def _thompson_sample(self, x_cand, num_arms):
         if len(self.X) == 0:
@@ -66,6 +66,7 @@ class AcqTurboYUBO:
                 chosen.append(indbest)
                 y_cand[indbest, :] = -float("inf")
             chosen = torch.tensor(chosen, device=x_cand.device)
+
             return x_cand[chosen]
 
     def _draw_initial(self, num_arms):
@@ -76,13 +77,19 @@ class AcqTurboYUBO:
         )
 
     def draw(self, num_arms):
+        x_center = self._x_center()
         self.state.pre_draw()
         if len(self.X) == 0:
             return self._draw_initial(num_arms)
 
-        lb, ub = self._create_trust_region()
+        if hasattr(self.model, "set_x_center"):
+            self.model.set_x_center(x_center)
+
+        lb, ub = self._create_trust_region(x_center)
         if lb is None or ub is None:
             return self._draw_initial(num_arms)
-        x_cand = self._sample_candidates(lb, ub, self.num_candidates)
-        x_arm = self._thompson_sample(x_cand, num_arms)
+        x_cand = self.config.candidate_sampler(x_center, lb, ub, self.num_candidates, self.device, self.dtype)
+        x_target = self._thompson_sample(x_cand, num_arms)
+        x_arm = self.config.targeter(x_center, x_target)
+
         return x_arm

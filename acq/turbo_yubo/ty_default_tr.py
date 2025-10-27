@@ -7,7 +7,7 @@ from acq.turbo_yubo.ty_exceptions import TuRBORestartError
 
 def mk_lb_ub_from_kernel(x_center, kernel, length):
     num_dim = x_center.shape[1]
-    if hasattr(kernel, "lengthscale"):
+    if kernel is not None and hasattr(kernel, "lengthscale"):
         weights = kernel.lengthscale.cpu().detach().numpy().ravel()
         weights = weights / weights.mean()
         weights = weights / np.prod(np.power(weights, 1.0 / len(weights)))

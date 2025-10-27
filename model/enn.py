@@ -26,8 +26,8 @@ class ENNNormal:
 
 
 class EpistemicNearestNeighbors:
-    # TODO: train_YVar; treat as third metric in acquisition function b/c not calibrated to epistemic var
     def __init__(self, k=3, small_world_M=None):
+        assert isinstance(k, int), k
         self.k = k
         self._num_dim = None
         self._num_metrics = None
@@ -48,18 +48,16 @@ class EpistemicNearestNeighbors:
             self._train_x = np.empty((0, self._num_dim))
             self._train_y = np.empty((0, self._num_metrics))
             if self._small_world_M is not None:
-                self._index = faiss.IndexHNSW(self._num_dim, M=self._small_world_M)
+                base_index = faiss.IndexHNSWFlat(self._num_dim, self._small_world_M)
             else:
-                self._index = faiss.IndexFlatL2(self._num_dim)
-        self._index.add(x)
+                base_index = faiss.IndexFlatL2(self._num_dim)
+            self._index = base_index
+        self._index.add(x.astype(np.float32))
         self._train_x = np.append(self._train_x, x, axis=0)
         self._train_y = np.append(self._train_y, y, axis=0)
         self._num_obs = self._train_x.shape[0]
         if self._lookup is not None:
             assert False, "NYI: Add to lookup"
-
-    def calibrate(self, var_scale):
-        self._var_scale = var_scale
 
     def __len__(self):
         return 0 if self._train_x is None else len(self._train_x)
@@ -105,7 +103,7 @@ class EpistemicNearestNeighbors:
             return np.empty(shape=(0,), dtype=np.int64), np.empty(shape=(0,), dtype=np.float64)
 
         dist2s, idx = self._search(x, k=k, exclude_nearest=exclude_nearest)
-        return idx, np.sqrt(dist2s)
+        return idx, dist2s
 
     def neighbors(self, x, k=None, exclude_nearest=False):
         idx, _ = self.about_neighbors(x, k=k, exclude_nearest=exclude_nearest)
@@ -139,7 +137,47 @@ class EpistemicNearestNeighbors:
 
         dist2s, idx = self._search(x, k=k, exclude_nearest=exclude_nearest)
 
-        return self._calc_enn_normal(b, dist2s, idx, k=dist2s.shape[-1])
+        return self._calc_enn_normal(dist2s, self._train_y[idx])
+
+    def multi_posterior(self, x, *, ks: list[int]) -> ENNNormal:
+        x = np.array(x)
+        assert x.ndim == 2, x.ndim
+        batch_size, num_dim = x.shape
+        assert num_dim == self._num_dim, (num_dim, self._num_dim)
+
+        if self._train_x is None or self._train_x.shape[0] == 0:
+            mu = np.zeros((batch_size, len(ks), self._num_metrics))
+            se = np.ones((batch_size, len(ks), self._num_metrics))
+            return ENNNormal(mu, se)
+
+        ks = list(ks)
+        k_max = min(max(ks), len(self)) if len(ks) > 0 else 0
+        if k_max == 0:
+            mu = np.zeros((batch_size, 0, self._num_metrics))
+            se = np.ones((batch_size, 0, self._num_metrics))
+            return ENNNormal(mu, se)
+
+        dist2s_all, idx_all = self._search(x, k=k_max, exclude_nearest=False)
+        assert dist2s_all.shape == (batch_size, k_max), (dist2s_all.shape, batch_size, k_max)
+        assert idx_all.shape == (batch_size, k_max), (idx_all.shape, batch_size, k_max)
+
+        mu_stack = np.zeros((batch_size, len(ks), self._num_metrics))
+        se_stack = np.zeros((batch_size, len(ks), self._num_metrics))
+
+        k_last = 0
+        for j, k in enumerate(ks):
+            assert k_last < k, (k_last, k)
+            kk = min(int(k), len(self))
+            d2 = dist2s_all[:, k_last:kk]
+            yk = self._train_y[idx_all[:, k_last:kk]]
+            mvn = self._calc_enn_normal(d2, yk)
+            mu_stack[:, j, :] = mvn.mu
+            se_stack[:, j, :] = mvn.se
+            k_last = kk
+
+        assert mu_stack.shape == (batch_size, len(ks), self._num_metrics), (mu_stack.shape, batch_size, len(ks), self._num_metrics)
+        assert se_stack.shape == (batch_size, len(ks), self._num_metrics), (se_stack.shape, batch_size, len(ks), self._num_metrics)
+        return ENNNormal(mu_stack, se_stack)
 
     def _search(self, x, k, *, exclude_nearest=False):
         # https://github.com/facebookresearch/faiss/wiki/MetricType-and-distances?utm_source=chatgpt.com
@@ -152,25 +190,28 @@ class EpistemicNearestNeighbors:
             k += 1
 
         k = min(k, len(self))
-        dist2s, idx = self._index.search(x, k=k)
+        dist2s, idx = self._index.search(x.astype(np.float32), k=k)
         if exclude_nearest:
             dist2s = dist2s[:, 1:]
             idx = idx[:, 1:]
         return dist2s, idx
 
-    def _calc_enn_normal(self, batch_size, dist2s, idx, k):
-        # q = 1
+    def _calc_enn_normal(self, dist2s, y):
+        assert len(dist2s) == len(y), (len(dist2s), len(y))
+        assert y.shape[-1] == self._num_metrics, (y.shape, self._num_metrics)
 
-        mu = self._train_y[idx]
-        assert mu.shape == (batch_size, k, self._num_metrics), (mu.shape, batch_size, k, self._num_metrics)
+        batch_size, num_neighbors, _ = y.shape
+
+        mu = y
+        assert mu.shape == (batch_size, num_neighbors, self._num_metrics), (mu.shape, batch_size, num_neighbors, self._num_metrics)
         vvar = np.expand_dims(dist2s, axis=-1)
         vvar = np.tile(vvar, (1, 1, self._num_metrics))
-        assert vvar.shape == (batch_size, k, self._num_metrics), (vvar.shape, batch_size, k, self._num_metrics)
+        assert vvar.shape == (batch_size, num_neighbors, self._num_metrics), (vvar.shape, batch_size, num_neighbors, self._num_metrics)
 
         w = 1.0 / (self._eps_var + vvar)
         assert np.all(np.isfinite(w)), w
         norm = w.sum(axis=1)
-        # sum over k neighbors
+        # sum over num_neighbors neighbors
         mu = (w * mu).sum(axis=1) / norm
         vvar = 1.0 / norm
 

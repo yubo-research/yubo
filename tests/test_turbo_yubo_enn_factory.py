@@ -45,7 +45,7 @@ def test_turbo_yubo_designer_with_enn_factory():
         data.append(_Datum(p, float(torch.rand(()).item())))
 
     cfg = TurboYUBOConfig()
-    cfg.model_factory = staticmethod(build_turbo_yubo_enn_model)
+    cfg.model_factory = build_turbo_yubo_enn_model
 
     designer = TurboYUBODesigner(policy, config=cfg)
     out = designer(data, num_arms=3)

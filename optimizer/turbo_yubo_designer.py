@@ -54,10 +54,11 @@ class TurboYUBODesigner:
                     raise RuntimeError("Posterior requested with no data")
 
             model = _EmptyModel(X)
-            y_raw = Y.squeeze(-1)
+            # y_raw = Y.squeeze(-1)
+
         else:
-            y_raw = Y.squeeze(-1)
-            model = self._config.model_factory(train_x=X, train_y=y_raw)
+            # y_raw = Y.squeeze(-1)
+            model = self._config.model_factory(train_x=X, train_y=Y)
 
         if self._turbo_yubo_trman is None:
             self._turbo_yubo_trman = self._config.trust_region_manager(num_dim=self._policy.num_params(), num_arms=num_arms)
@@ -67,7 +68,7 @@ class TurboYUBODesigner:
             trman=self._turbo_yubo_trman,
             config=self._config,
             obs_X=X,
-            obs_Y_raw=y_raw,
+            obs_Y_raw=Y,
         )
         X_a = acq_turbo.draw(num_arms)
 

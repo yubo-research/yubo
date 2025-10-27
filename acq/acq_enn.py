@@ -7,6 +7,7 @@ from nds import ndomsort
 
 from model.edn import EpistemicNovelty
 from model.enn import EpistemicNearestNeighbors
+from model.enn_weighter import ENNWeighter
 from sampling.knn_tools import random_directions
 from sampling.ray_boundary import ray_boundary_np
 from sampling.sampling_util import raasp_np, raasp_np_choice, raasp_np_p, sobol_perturb_np
@@ -63,7 +64,10 @@ class AcqENN:
         y = np.asarray(y)
         if self._enn is None:
             # Metric surrogate
-            self._enn = EpistemicNearestNeighbors(k=self._config.k, small_world_M=self._config.small_world_M)
+            if getattr(self._config, "weighting", None) is None:
+                self._enn = EpistemicNearestNeighbors(k=self._config.k, small_world_M=self._config.small_world_M)
+            else:
+                self._enn = ENNWeighter(k=self._config.k, small_world_M=self._config.small_world_M, weighting=self._config.weighting)
             self._enn.add(x, y)
         else:
             self._enn.add(x, y)
@@ -74,7 +78,10 @@ class AcqENN:
             d = np.asarray(d)
             if self._enn_d is None:
                 # Behavior/descriptor surrogate
-                self._enn_d = EpistemicNearestNeighbors(k=self._config.k, small_world_M=self._config.small_world_M)
+                if getattr(self._config, "weighting", None) is None:
+                    self._enn_d = EpistemicNearestNeighbors(k=self._config.k, small_world_M=self._config.small_world_M)
+                else:
+                    self._enn_d = ENNWeighter(k=self._config.k, small_world_M=self._config.small_world_M, weighting=self._config.weighting)
                 self._enn_d.add(x, d)
                 self._d_train = np.empty(shape=(0, d.shape[-1]))
             else:
