@@ -5,6 +5,7 @@ from model.enn import ENNNormal
 
 
 class KernlizedEpistemicNearestNeighbors:
+    # TODO: Try linear regression for weights
     def __init__(self, lengthscales: np.ndarray, k=3, small_world_M=None):
         assert len(lengthscales.shape) == 1, lengthscales.shape
         self.lengthscales = lengthscales
