@@ -21,5 +21,4 @@ class TYUniformTR:
 
     def create_trust_region(self, x_center, kernel, num_obs):
         length = np.random.uniform(self.s_min, self.s_max)
-        print("LENGTH:", length)
         return mk_lb_ub_from_kernel(x_center, kernel, length)

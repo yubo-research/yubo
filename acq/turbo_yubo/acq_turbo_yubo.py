@@ -50,25 +50,6 @@ class AcqTurboYUBO:
         lb, ub = self.state.create_trust_region(x_center, kernel, len(self.Y))
         return lb, ub
 
-    def _thompson_sample(self, x_cand, num_arms):
-        if len(self.X) == 0:
-            indices = torch.randperm(len(x_cand))[:num_arms]
-            return x_cand[indices]
-        with torch.no_grad():
-            posterior = self.model.posterior(x_cand)
-            samples = posterior.sample(sample_shape=torch.Size([num_arms])).squeeze(-1)
-            if samples.dim() == 1:
-                samples = samples.unsqueeze(0)
-            y_cand = samples.t().contiguous()
-            chosen = []
-            for i in range(num_arms):
-                indbest = torch.argmax(y_cand[:, i]).item()
-                chosen.append(indbest)
-                y_cand[indbest, :] = -float("inf")
-            chosen = torch.tensor(chosen, device=x_cand.device)
-
-            return x_cand[chosen]
-
     def _draw_initial(self, num_arms):
         return torch.tensor(
             self.config.candidate_initializer(num_arms, self.state.num_dim, seed=int(torch.randint(999999, (1,)).item())),
@@ -89,7 +70,7 @@ class AcqTurboYUBO:
         if lb is None or ub is None:
             return self._draw_initial(num_arms)
         x_cand = self.config.candidate_sampler(x_center, lb, ub, self.num_candidates, self.device, self.dtype)
-        x_target = self._thompson_sample(x_cand, num_arms)
+        x_target = self.config.candidate_selector(self.X, self.model, x_cand, num_arms)
         x_arm = self.config.targeter(x_center, x_target)
 
         return x_arm

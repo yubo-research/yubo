@@ -2,11 +2,11 @@ import numpy as np
 
 from model.enn import EpistemicNearestNeighbors
 from sampling.sobol_indices import calculate_sobol_indices_np
+from sampling.x_cov import evec_1
 
 
 class ENNWeighter:
     def __init__(self, *, weighting: str, k=3, small_world_M=None):
-        assert weighting in ["sobol_indices", "sigma_x", "curvature"], weighting
         self._weighting = weighting
         self._x_center = None
 
@@ -17,10 +17,16 @@ class ENNWeighter:
     def __len__(self):
         return len(self._enn)
 
+    @property
+    def weights(self):
+        self._set_weights()
+        return self._weights
+
     def _calc_weights(self, x, y):
         assert len(self) == 0
         if self._weighting == "sobol_indices":
             w = calculate_sobol_indices_np(x, y).astype(np.double)
+            w = w / w.sum()
         elif self._weighting == "sigma_x":
             s = np.std(x, axis=0).astype(np.double)
             s = np.maximum(s, 1e-6)
@@ -28,17 +34,33 @@ class ENNWeighter:
         elif self._weighting == "curvature":
             assert self._x_center is not None, "x_center is required for curvature weighting"
             w = calculate_curvature_weights_np(x, y, self._x_center)
+        elif self._weighting == "sobol_over_sigma":
+            s = np.std(x, axis=0).astype(np.double)
+            s = np.maximum(s, 1e-6)
+            w = calculate_sobol_indices_np(x, y).astype(np.double) / s
+            w = w / w.sum()
+        elif self._weighting == "sobol_over_evec":
+            assert self._x_center is not None, "x_center is required for sobol_over_evec weighting"
+            if x.shape[0] < 2:
+                w = np.ones(x.shape[1])
+            else:
+                evec = np.maximum(1e-6, np.abs(evec_1(self._x_center, x)))
+                w = calculate_sobol_indices_np(x, y).astype(np.double) / evec
+            w = w / w.sum()
         else:
             assert False
 
         return np.maximum(1e-6, w).astype(np.double)
 
-    def _rescale(self, x):
+    def _set_weights(self):
         if self._weights is None:
             train_x, train_y = self._xy
             self._xy = "done"
             self._weights = self._calc_weights(train_x, train_y)
             self._enn.add(train_x * self._weights, train_y)
+
+    def _rescale(self, x):
+        self._set_weights()
         return x * self._weights
 
     def set_x_center(self, x_center):
@@ -50,21 +72,6 @@ class ENNWeighter:
     def add(self, x, y):
         assert self._xy is None, "You may only add once to an ENNWeighter"
         self._xy = (x, y)
-
-    def idx_x_slow(self, x):
-        return self._enn.idx_x_slow(self._rescale(x))
-
-    def idx_x(self, x):
-        return self._enn.idx_x(self._rescale(x))
-
-    def idx_fast(self, x):
-        return self._enn.idx_fast(self._rescale(x))
-
-    def about_neighbors(self, x, *, k=None, exclude_nearest=False):
-        return self._enn.about_neighbors(self._rescale(x), k=k, exclude_nearest=exclude_nearest)
-
-    def neighbors(self, x, k=None, exclude_nearest=False):
-        return self._enn.neighbors(self._rescale(x), k=k, exclude_nearest=exclude_nearest)
 
     def __call__(self, x):
         return self.posterior(x)
@@ -98,4 +105,5 @@ def calculate_curvature_weights_np(x: np.ndarray, y: np.ndarray, x_center: np.nd
     beta[nonzero] = cov_xy[nonzero] / var_xx[nonzero]
 
     w = np.maximum(1e-6, np.abs(beta))
+    w = w / w.sum()
     return w

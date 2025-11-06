@@ -321,7 +321,7 @@ def prep_rl_three(results_dir, name):
     exp_dir = f"exp_enn_{name}"
 
     opts = [
-        "kenn-10:Kt100",
+        "tygo-enn-10:Kt100",
     ]
 
     cmds = []
@@ -361,7 +361,43 @@ def prep_swim(results_dir):
 
 
 def prep_hop(results_dir):
-    return prep_rl_three(results_dir, "hop")
+    exp_dir = "exp_enn_hop"
+
+    opts = [
+        # "random",
+        # "optuna",
+        # "turbo-0",
+        "tyg-0",
+        # "turbo-1",
+        # "tygo-enn-10:Kt100",
+    ]
+
+    cmds = []
+    for opt in opts:
+        for num_arms, num_rounds, num_denoise, num_reps in [
+            (1, 1000, 1, 100),
+            (1, 10000, 1, 30),
+            # (10, 1000, 10),
+            # (50, 30, 50),
+        ]:
+            # prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None):
+            if num_arms == 1 and opt == "cma":
+                continue
+            cmds.append(
+                prep_args_1(
+                    results_dir,
+                    exp_dir=exp_dir,
+                    problem="hop:fn",
+                    opt=opt,
+                    num_arms=num_arms,
+                    num_replications=num_reps,
+                    num_rounds=num_rounds,
+                    noise=None,
+                    num_denoise=num_denoise,
+                )
+            )
+
+    return cmds
 
 
 def prep_rl_one(results_dir, name):

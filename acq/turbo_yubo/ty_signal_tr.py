@@ -40,5 +40,4 @@ class TYSignalTR:
         scale = 1.0 / (1e-6 + self._signal)
         # scale = scale**self.num_dim
         length = np.minimum(self.s_max, np.maximum(self.s_min, scale))
-        print("length:", length, self._signal)
         return mk_lb_ub_from_kernel(x_center, kernel, length)

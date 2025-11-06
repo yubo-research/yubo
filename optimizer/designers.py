@@ -18,11 +18,11 @@ from acq.acq_ts import AcqTS
 # from acq.acq_tsroots import AcqTSRoots
 from acq.acq_var import AcqVar
 from acq.turbo_yubo.turbo_yubo_config import TurboYUBOConfig
-from acq.turbo_yubo.ty_enn_model_factory import build_turbo_yubo_enn_model, build_turbo_yubo_enn_multi_model
-from acq.turbo_yubo.ty_full_space import FullSpaceTR, PartialTargeter
-from acq.turbo_yubo.ty_kenn_model_factory import build_turbo_yubo_kenn_model
+from acq.turbo_yubo.ty_aenn_model_factory import build_turbo_yubo_aenn_model
+from acq.turbo_yubo.ty_enn_model_factory import build_turbo_yubo_enn_model
+from acq.turbo_yubo.ty_gpe_model_factor import build_turbo_yubo_ge_model
 from acq.turbo_yubo.ty_model_factory import TurboYUBONOOPModel
-from acq.turbo_yubo.ty_shrink_tr import TYShrinkTR
+from acq.turbo_yubo.ty_selectors import ty_pareto
 from acq.turbo_yubo.ty_signal_tr import ty_signal_tr_factory_factory
 
 from .ax_designer import AxDesigner
@@ -518,8 +518,6 @@ class Designers:
 
         elif designer_name == "turbo-yubo":
             return TurboYUBODesigner(self._policy, num_keep=num_keep, keep_style=keep_style, config=TurboYUBOConfig())
-        elif designer_name == "turbo-yubo-shrink":
-            return TurboYUBODesigner(self._policy, num_keep=num_keep, keep_style=keep_style, config=TurboYUBOConfig(trust_region_manager=TYShrinkTR))
 
         elif designer_name == "turbo-yubo-gumbel":
             return TurboYUBODesigner(
@@ -530,7 +528,7 @@ class Designers:
                     trust_region_manager=ty_signal_tr_factory_factory(use_gumbel=True),
                 ),
             )
-        elif designer_name == "turbo-yubo-gumbel-0":
+        elif designer_name == "tyg-0":
             return TurboYUBODesigner(
                 self._policy,
                 num_keep=num_keep,
@@ -540,7 +538,7 @@ class Designers:
                     model_factory=TurboYUBONOOPModel,
                 ),
             )
-        elif designer_name.startswith("turbo-yubo-enn-"):
+        elif designer_name.startswith("ty-enn-"):
             k = int(designer_name.split("-")[-1])
 
             def _factory(*, train_x, train_y):
@@ -552,13 +550,14 @@ class Designers:
                 keep_style=keep_style,
                 config=TurboYUBOConfig(
                     model_factory=_factory,
+                    candidate_selector=ty_pareto,
                 ),
             )
-        elif designer_name.startswith("turbo-yubo-gumbel-enn-"):
+        elif designer_name.startswith("tyg-enn-"):
             x = designer_name.split("-")
-            k = int(x[4])
-            if len(x) > 5:
-                small_world_M = int(x[5])
+            k = int(x[2])
+            if len(x) > 3:
+                small_world_M = int(x[3])
             else:
                 small_world_M = None
 
@@ -572,9 +571,10 @@ class Designers:
                 config=TurboYUBOConfig(
                     model_factory=_factory,
                     trust_region_manager=ty_signal_tr_factory_factory(use_gumbel=True),
+                    candidate_selector=ty_pareto,
                 ),
             )
-        elif designer_name.startswith("tygsg-enn-"):
+        elif designer_name.startswith("tyg") and "-enn-" in designer_name:
             x = designer_name.split("-")
             k = int(x[2])
             if len(x) > 3:
@@ -582,8 +582,21 @@ class Designers:
             else:
                 small_world_M = None
 
+            if designer_name[3] == "s":
+                weighting = "sigma_x"
+            elif designer_name[3] == "c":
+                weighting = "curvature"
+            elif designer_name[3] == "i":
+                weighting = "sobol_indices"
+            elif designer_name[3] == "o":
+                weighting = "sobol_over_sigma"
+            elif designer_name[3] == "e":
+                weighting = "sobol_over_evec"
+            else:
+                assert False, (designer_name[3], designer_name)
+
             def _factory(*, train_x, train_y):
-                return build_turbo_yubo_enn_model(train_x=train_x, train_y=train_y, k=k, small_world_M=small_world_M, weighting="sigma_x")
+                return build_turbo_yubo_enn_model(train_x=train_x, train_y=train_y, k=k, small_world_M=small_world_M, weighting=weighting)
 
             return TurboYUBODesigner(
                 self._policy,
@@ -592,9 +605,10 @@ class Designers:
                 config=TurboYUBOConfig(
                     model_factory=_factory,
                     trust_region_manager=ty_signal_tr_factory_factory(use_gumbel=True),
+                    candidate_selector=ty_pareto,
                 ),
             )
-        elif designer_name.startswith("tygc-enn-"):
+        elif designer_name.startswith("tyo-enn-"):
             x = designer_name.split("-")
             k = int(x[2])
             if len(x) > 3:
@@ -602,14 +616,10 @@ class Designers:
             else:
                 small_world_M = None
 
+            weighting = "sobol_over_sigma"
+
             def _factory(*, train_x, train_y):
-                return build_turbo_yubo_enn_model(
-                    train_x=train_x,
-                    train_y=train_y,
-                    k=k,
-                    small_world_M=small_world_M,
-                    weighting="curvature",
-                )
+                return build_turbo_yubo_enn_model(train_x=train_x, train_y=train_y, k=k, small_world_M=small_world_M, weighting=weighting)
 
             return TurboYUBODesigner(
                 self._policy,
@@ -617,19 +627,18 @@ class Designers:
                 keep_style=keep_style,
                 config=TurboYUBOConfig(
                     model_factory=_factory,
-                    trust_region_manager=ty_signal_tr_factory_factory(use_gumbel=True),
+                    trust_region_manager=ty_signal_tr_factory_factory(use_gumbel=False),
+                    candidate_selector=ty_pareto,
                 ),
             )
-        elif designer_name.startswith("tygm-enn-"):
+
+        elif designer_name.startswith("tyg-aenn-"):
             x = designer_name.split("-")
-            ks = [int(xx) for xx in x[2:]]
+            k = int(x[2])
+            assert len(x) == 3
 
             def _factory(*, train_x, train_y):
-                return build_turbo_yubo_enn_multi_model(
-                    train_x=train_x,
-                    train_y=train_y,
-                    ks=ks,
-                )
+                return build_turbo_yubo_aenn_model(train_x=train_x, train_y=train_y, k=k)
 
             return TurboYUBODesigner(
                 self._policy,
@@ -638,14 +647,17 @@ class Designers:
                 config=TurboYUBOConfig(
                     model_factory=_factory,
                     trust_region_manager=ty_signal_tr_factory_factory(use_gumbel=True),
+                    candidate_selector=ty_pareto,
                 ),
             )
-        elif designer_name.startswith("kenn-"):
+
+        elif designer_name.startswith("tygpe-"):
             x = designer_name.split("-")
             k = int(x[1])
+            num_gps = int(x[2]) if len(x) > 2 else 1
 
             def _factory(*, train_x, train_y):
-                return build_turbo_yubo_kenn_model(train_x=train_x, train_y=train_y, k=k)
+                return build_turbo_yubo_ge_model(train_x=train_x, train_y=train_y, k=k, num_gps=num_gps)
 
             return TurboYUBODesigner(
                 self._policy,
@@ -657,17 +669,6 @@ class Designers:
                 ),
             )
 
-        elif designer_name == "ty-targeter":
-            return TurboYUBODesigner(
-                self._policy,
-                num_keep=num_keep,
-                keep_style=keep_style,
-                config=TurboYUBOConfig(
-                    model_factory=TurboYUBONOOPModel,
-                    targeter=PartialTargeter(alpha=0.1),
-                    trust_region_manager=FullSpaceTR,
-                ),
-            )
         # Long sobol init, sequential opt
         elif designer_name == "sobol_ucb":
             return bt_designer(qUpperConfidenceBound, init_sobol=init_ax_default, acq_kwargs={"beta": 1})
