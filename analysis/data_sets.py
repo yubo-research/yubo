@@ -1,25 +1,26 @@
 import os
+from pathlib import Path
 
 import numpy as np
 from scipy.stats import rankdata
 
-from .data_io import data_is_done
+from .data_io import data_is_done, read_trace_jsonl
 
 
-def problems_in(exp_tag):
-    return sorted(os.listdir(f"/Users/dsweet2/Projects/bbo/results/{exp_tag}"))
+def problems_in(results_path, exp_tag):
+    return sorted(os.listdir(f"{results_path}/{exp_tag}"))
 
 
-def optimizers_in(exp_tag, problem):
-    return sorted(os.listdir(f"/Users/dsweet2/Projects/bbo/results/{exp_tag}/{problem}"))
+def optimizers_in(results_path, exp_tag, problem):
+    return sorted(os.listdir(f"{results_path}/{exp_tag}/{problem}"))
 
 
-def all_in(exp_tag):
+def all_in(results_path, exp_tag):
     optimizers = set()
-    problems = problems_in(exp_tag)
+    problems = problems_in(results_path, exp_tag)
     for problem in problems:
-        for optimizer in optimizers_in(exp_tag, problem):
-            optimizers.update(optimizers_in(exp_tag, problem))
+        for optimizer in optimizers_in(results_path, exp_tag, problem):
+            optimizers.update(optimizers_in(results_path, exp_tag, problem))
     return problems, sorted(optimizers)
 
 
@@ -38,7 +39,7 @@ def load(fn, keys):
     skeys = set(keys)
     data = []
     with open(fn) as f:
-        for line in f.readlines():
+        for line in f:
             d = extract_kv(line.strip().split())
             if skeys.issubset(set(d.keys())):
                 data.append([float(d[k]) for k in keys])
@@ -51,11 +52,11 @@ def load_kv(fn, keys, grep_for=None):
     skeys = set(keys)
     data = {k: [] for k in skeys}
     with open(fn) as f:
-        for line in f.readlines():
+        for line in f:
             if grep_for is not None and grep_for not in line:
                 continue
             i = line.find("[INFO")
-            if i is not None:
+            if i != -1:
                 line = line[:i]
             d = extract_kv(line.strip().split())
             for k in skeys:
@@ -70,7 +71,51 @@ def load_kv(fn, keys, grep_for=None):
     return out
 
 
+def load_traces_jsonl(trace_dir, key="rreturn"):
+    traces = []
+    i_missing = []
+    width = None
+    trace_dir = Path(trace_dir)
+
+    traces_subdir = trace_dir / "traces"
+    if traces_subdir.exists():
+        trace_dir = traces_subdir
+
+    for fn in sorted(trace_dir.iterdir()):
+        if fn.suffix != ".jsonl":
+            continue
+        if not data_is_done(str(fn)):
+            print("NOT_DONE:", fn)
+            i_missing.append(len(traces))
+            traces.append(None)
+            continue
+        try:
+            records = read_trace_jsonl(str(fn))
+        except FileNotFoundError:
+            raise FileNotFoundError(fn)
+
+        trace = np.array([getattr(r, key) for r in records])
+        if width is not None and len(trace) != width:
+            print(f"WARNING: trace length mismatch {len(trace)} != {width} in {fn}")
+        width = len(trace) if width is None else width
+        traces.append(trace)
+
+    for i in i_missing:
+        traces[i] = np.nan * np.ones(width) if width else np.array([np.nan])
+
+    traces = np.array(traces)
+    return traces
+
+
 def load_traces(trace_dir, key="return", grep_for="TRACE"):
+    trace_dir_path = Path(trace_dir)
+    traces_subdir = trace_dir_path / "traces"
+    if traces_subdir.exists():
+        jsonl_files = list(traces_subdir.glob("*.jsonl"))
+        if jsonl_files:
+            key_map = {"return": "rreturn"}
+            return load_traces_jsonl(trace_dir, key=key_map.get(key, key))
+
     traces = []
     i_missing = []
     width = None
@@ -96,7 +141,6 @@ def load_traces(trace_dir, key="return", grep_for="TRACE"):
         traces[i] = np.nan * np.ones(width)
 
     traces = np.array(traces)
-    # print (f"Loaded {len(traces)} traces from {fn}")
     return traces
 
 
@@ -121,7 +165,9 @@ def load_multiple_traces(data_locator):
     def _init(trace):
         if len(trace.shape) < 2:
             return None
-        return np.nan * np.ones(shape=(len(problems), len(opt_names), trace.shape[0], trace.shape[1]))
+        # Ensure float dtype from the start
+        arr = np.nan * np.ones(shape=(len(problems), len(opt_names), trace.shape[0], trace.shape[1]), dtype=float)
+        return arr
 
     traces = None
     for i_problem, problem_name in enumerate(problems):
@@ -162,13 +208,44 @@ def load_multiple_traces(data_locator):
             if trace.shape != traces[i_problem, i_opt, ...].shape:
                 _report_bad(problem_name, opt_name, f"Warning: Trace is wrong shape {trace.shape} != {traces[i_problem, i_opt, ...].shape}")
                 # continue
+            # Ensure trace is numeric before assignment - force conversion to float
+            if trace.dtype != np.float64 and trace.dtype != np.float32:
+                try:
+                    trace = np.asarray(trace, dtype=float)
+                except (ValueError, TypeError):
+                    # If conversion fails, try to convert element by element
+                    trace = np.array([float(x) if x is not None else np.nan for x in trace.flat]).reshape(trace.shape)
             traces[i_problem, i_opt, : trace.shape[0], : trace.shape[1]] = trace
+
+    # Ensure traces is initialized and has numeric dtype
+    if traces is None:
+        # No valid traces found, create empty array with float dtype
+        traces = np.array([], dtype=float).reshape((len(problems), len(opt_names), 0, 0))
+    else:
+        # Force conversion to float - handle object arrays and other non-numeric types
+        if traces.dtype == object or not np.issubdtype(traces.dtype, np.number):
+            # Try to convert to float, replacing invalid values with NaN
+            try:
+                # First try direct conversion
+                traces = np.asarray(traces, dtype=float, casting="unsafe")
+            except (ValueError, TypeError):
+                # If that fails, use a safer conversion that handles mixed types
+                traces_flat = traces.flatten()
+                traces_converted = []
+                for val in traces_flat:
+                    try:
+                        traces_converted.append(float(val))
+                    except (ValueError, TypeError):
+                        traces_converted.append(np.nan)
+                traces = np.array(traces_converted, dtype=float).reshape(traces.shape)
 
     try:
         traces = npma.masked_invalid(traces)
     except Exception as e:
         print("TP:", problems, opt_names, data_locator)
         print("TP:", traces)
+        print("TP: traces dtype:", traces.dtype if traces is not None else None)
+        print("TP: traces shape:", traces.shape if traces is not None else None)
         raise e
     if num_bad > 0:
         print(f"\n{num_bad} / {num_tot} files bad. {100 * traces.mask.mean():.1f}% missing data")

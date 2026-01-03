@@ -252,7 +252,7 @@ class Rastrigin:
     def __call__(self, x):
         x = x * 5.12
         num_dim = len(x)
-        return 10 * num_dim + np.sum(x**2 - 10 * np.cos(np.pi * 2 * x))
+        return 10 + np.sum(x**2 - 10 * np.cos(np.pi * 2 * x)) / num_dim
 
 
 # 17 Rosenbrock  xi ∈ [-2.048, 2.048], for all i = 1, …, d. result [0,18*10^4]

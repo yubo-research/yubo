@@ -67,8 +67,6 @@ def test_fit_gp_single_point(single_point_data):
         "gp",
         "rff128",
         "rff256",
-        "dumbo",
-        "rdumbo",
         "sparse",
     ],
 )
@@ -165,12 +163,10 @@ def test_fit_gp_device_placement(simple_data):
 @pytest.mark.parametrize(
     "model_spec",
     [
-        "dumbo",
-        "rdumbo",
         "sparse",
     ],
 )
-def test_fit_gp_dumbo_empty(empty_data, model_spec):
+def test_fit_gp_sparse_empty(empty_data, model_spec):
     from acq.fit_gp import fit_gp_XY
 
     X, Y = empty_data

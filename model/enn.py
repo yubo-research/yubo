@@ -162,6 +162,12 @@ class EpistemicNearestNeighbors:
 
         batch_size, num_neighbors, _ = y.shape
 
+        if num_neighbors == 1:
+            mu = y[:, 0, :]
+            vvar = np.ones((batch_size, self._num_metrics), dtype=np.float32)
+            se = np.sqrt(vvar).astype(np.float32, copy=False)
+            return ENNNormal(mu.astype(np.float32, copy=False), se)
+
         mu = y
         assert mu.shape == (batch_size, num_neighbors, self._num_metrics), (mu.shape, batch_size, num_neighbors, self._num_metrics)
         vvar = np.expand_dims(dist2s, axis=-1)
@@ -180,4 +186,6 @@ class EpistemicNearestNeighbors:
         assert vvar.shape == (batch_size, self._num_metrics), (vvar.shape, batch_size, self._num_metrics)
         vvar = np.maximum(self._eps_var, vvar)
 
-        return ENNNormal(mu, np.sqrt(vvar))
+        mu = mu.astype(np.float32, copy=False)
+        se = np.sqrt(vvar).astype(np.float32, copy=False)
+        return ENNNormal(mu, se)

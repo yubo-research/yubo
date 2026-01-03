@@ -1,5 +1,7 @@
 import fnmatch
+import json
 import os
+from pathlib import Path
 
 import numpy as np
 
@@ -42,9 +44,10 @@ class DataLocator:
         return f"{self.results}/{self.exp_dir}"
 
     def problems(self):
-        # env=f:sphere-1d--opt_name=mtv-pss--num_arms=3--num_rounds=3--num_reps=100
         problems = set()
-        for p in [d[0]["env"] for d in self._load()]:
+        for p in [d[0].get("env") or d[0].get("env_tag") for d in self._load()]:
+            if p is None:
+                continue
             if self._problems is not None:
                 for pp in self._problems:
                     if pp in p:
@@ -54,6 +57,13 @@ class DataLocator:
         problems = sorted(problems)
 
         return problems
+
+    def _load_config_json(self, dir_path):
+        config_path = Path(dir_path) / "config.json"
+        if config_path.exists():
+            with open(config_path) as f:
+                return json.load(f)
+        return None
 
     def _load(self, problem=None, opt_name=None):
         if opt_name is not None:
@@ -65,44 +75,53 @@ class DataLocator:
         root_path = self._root_path()
         data_sets = []
         for fn in os.listdir(root_path):
-            if "--" not in fn:
-                continue
-            d = parse_kv(fn.split("--"))
+            full_path = f"{root_path}/{fn}"
 
-            if problem is not None and not fnmatch.fnmatch(d["env"], problem):
+            config = self._load_config_json(full_path)
+            if config is not None:
+                d = {
+                    "env": config.get("env_tag"),
+                    "opt_name": config.get("opt_name"),
+                    "num_arms": config.get("num_arms"),
+                    "num_rounds": config.get("num_rounds"),
+                    "num_reps": config.get("num_reps"),
+                }
+            elif "--" in fn:
+                d = parse_kv(fn.split("--"))
+            else:
                 continue
-            if opt_names is not None and d["opt_name"] not in opt_names:
+
+            env_key = d.get("env") or d.get("env_tag")
+            if problem is not None and env_key and not fnmatch.fnmatch(env_key, problem):
                 continue
-            if self.num_arms is not None and int(d["num_arms"]) != self.num_arms:
-                # print("SKIP arms", self.num_arms, fn)
+            if opt_names is not None and d.get("opt_name") not in opt_names:
                 continue
-            if self.num_rounds is not None and int(d["num_rounds"]) != self.num_rounds:
+            if self.num_arms is not None and d.get("num_arms") is not None and int(d["num_arms"]) != self.num_arms:
                 continue
-            if self.num_reps is not None and int(d["num_reps"]) != self.num_reps:
+            if self.num_rounds is not None and d.get("num_rounds") is not None and int(d["num_rounds"]) != self.num_rounds:
                 continue
-            if self.num_dim is not None:
-                x = d["env"].split("-")
+            if self.num_reps is not None and d.get("num_reps") is not None and int(d["num_reps"]) != self.num_reps:
+                continue
+            if self.num_dim is not None and env_key:
+                x = env_key.split("-")
                 if len(x) == 2 and x[1][-1] == "d":
                     num_dim = int(x[1][:-1])
                     if num_dim != self.num_dim:
-                        # print("SKIP dim", self.num_dim, fn)
                         continue
 
-            data_sets.append((d, f"{root_path}/{fn}"))
+            data_sets.append((d, full_path))
 
         return data_sets
 
     def optimizers(self):
-        # return sorted({d[0]["opt_name"] for d in self._load()})
-        opt_names = {d[0]["opt_name"] for d in self._load()}
+        opt_names = {d[0].get("opt_name") for d in self._load()}
+        opt_names.discard(None)
         return [n for n in self._opt_names if n in opt_names]
 
     def optimizers_in(self, problem):
-        return sorted({d[0]["opt_name"] for d in self._load(problem=problem)})
+        return sorted({d[0].get("opt_name") for d in self._load(problem=problem) if d[0].get("opt_name")})
 
     def organize_data(self, opt_names, mu, se):
-        # mu and se are ordered by self.optimizers()
-        # You want them ordered by opt_names.
         data = dict(zip(self.optimizers(), list(zip(mu, se))))
         data = [data[k] for k in opt_names]
         mu, se = list(zip(*data))

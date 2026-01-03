@@ -1,3 +1,5 @@
+import time
+
 import torch
 
 import acq.fit_gp as fit_gp
@@ -17,6 +19,7 @@ class AcqBT:
         num_keep,
         keep_style,
         model_spec,
+        telemetry=None,
     ):
         # All BoTorch stuff is coded to bounds of [0,1]!
         self.bounds = torch.tensor([[0.0] * num_dim, [1.0] * num_dim], device=device, dtype=dtype)
@@ -39,7 +42,11 @@ class AcqBT:
                 Y = Y[i, :]
                 X = X[i, :]
 
+        t0 = time.perf_counter()
         gp = fit_gp.fit_gp_XY(X, Y, model_spec=model_spec)
+        dt_fit = time.perf_counter() - t0
+        if telemetry is not None:
+            telemetry.set_dt_fit(dt_fit)
         self._gp = gp
 
         if not acq_kwargs:

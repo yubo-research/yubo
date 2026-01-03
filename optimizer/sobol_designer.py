@@ -1,3 +1,5 @@
+import time
+
 import numpy as np
 from scipy.stats import qmc
 
@@ -22,9 +24,13 @@ class SobolDesigner:
             self._ps = qmc.Sobol(self._policy.num_params(), seed=self.seed + self._i_seed).random(self._max_points)
             self._i_seed += 1
 
-    def __call__(self, _, num_arms):
+    def __call__(self, _, num_arms, *, telemetry=None):
+        if telemetry is not None:
+            telemetry.set_dt_fit(0.0)
+        t0 = time.perf_counter()
         policies = []
         self.fig_last_arms = []
+        t0 = time.perf_counter()
         for _ in range(num_arms):
             self._reset()
             x = self._ps[0, :]
@@ -33,4 +39,7 @@ class SobolDesigner:
             policy = self._policy.clone()
             policy.set_params(all_bounds.p_low + all_bounds.p_width * x)
             policies.append(policy)
+        dt_select = time.perf_counter() - t0
+        if telemetry is not None:
+            telemetry.set_dt_select(dt_select)
         return policies

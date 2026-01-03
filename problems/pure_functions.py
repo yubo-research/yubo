@@ -8,6 +8,9 @@ from problems.turbo_ackley import TurboAckley
 def _all_pure_functions():
     all_bf = all_benchmarks()
     all_bf["tackley"] = TurboAckley
+    from problems.double_ackley import DoubleAckley
+
+    all_bf["doubleackley"] = DoubleAckley
     return all_bf
 
 
@@ -70,7 +73,45 @@ class PureFunctionEnv:
         assert np.all(x >= -1) and np.all(x <= 1), ("x", x)
         return 1, -self._function(x), True, None
 
+    def reward_batch(self, actions: np.ndarray) -> np.ndarray:
+        actions = np.asarray(actions, dtype=float)
+        if actions.ndim != 2:
+            raise ValueError(actions.shape)
+        if actions.shape[1] != self.action_space.shape[0]:
+            raise ValueError((actions.shape, self.action_space.shape))
+        if not (np.all(actions >= -1) and np.all(actions <= 1)):
+            raise ValueError("actions out of bounds")
+
+        x0 = np.asarray(self._x_0, dtype=float).reshape(-1)
+        x_raw = actions - x0
+        neg = x_raw < 0
+        pos = x_raw > 0
+        denom_neg = 1.0 + x0
+        denom_pos = 1.0 - x0
+        x = x_raw
+        if np.any(neg):
+            x = np.where(neg, x / denom_neg, x)
+        if np.any(pos):
+            x = np.where(pos, x / denom_pos, x)
+        if not (np.all(x >= -1) and np.all(x <= 1)):
+            raise ValueError("transformed x out of bounds")
+
+        try:
+            y = self._function(x)
+            y = np.asarray(y, dtype=float)
+            if y.shape == (actions.shape[0],):
+                return -y
+        except Exception:
+            pass
+
+        out = np.empty((actions.shape[0],), dtype=float)
+        for i in range(actions.shape[0]):
+            out[i] = float(-self._function(x[i]))
+        return out
+
     def reset(self, seed):
+        if hasattr(self._function, "reset"):
+            self._function.reset(seed)
         return 0, None
 
     def close(self):

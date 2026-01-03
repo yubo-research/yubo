@@ -4,6 +4,7 @@ import torch
 import acq.acq_util as acq_util
 import acq.fit_gp as fit_gp
 from acq.acq_enn import AcqENN, ENNConfig
+from optimizer.designer_asserts import assert_scalar_rreturn
 
 
 class ENNDesigner:
@@ -21,13 +22,15 @@ class ENNDesigner:
         self._dtype = torch.double
         self._device = torch.empty(size=(1,)).device
 
-    def __call__(self, data, num_arms):
+    def __call__(self, data, num_arms, *, telemetry=None):
         if self._keep_style != "pareto":
             data = acq_util.keep_data(data, self._keep_style, self._num_keep)
         else:
             data_use = data[self._i_data_last :]
             self._i_data_last = len(data)
             data = data_use
+
+        assert_scalar_rreturn(data)
 
         D = None
         if len(data) > 0:

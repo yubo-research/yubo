@@ -6,11 +6,14 @@ import numpy as np
 @dataclass
 class Trajectory:
     rreturn: float
+
     states: np.ndarray
     actions: np.ndarray
+    rreturn_se: float = None
 
 
 def collect_trajectory(env_conf, policy, noise_seed=None, show_frames=False):
+    # print("NOISE_SEED:", noise_seed)
     b_gym = env_conf.gym_conf is not None
     if b_gym and show_frames:
         num_frames_skip = env_conf.gym_conf.num_frames_skip
@@ -22,13 +25,11 @@ def collect_trajectory(env_conf, policy, noise_seed=None, show_frames=False):
     traj_states, traj_actions = [], []
     lb = env.observation_space.low
     if np.all(np.isinf(lb)):
-        # lb = -1 * np.ones(shape=lb.shape)
         lb = np.zeros(shape=lb.shape)
     assert not np.any(np.isinf(lb)), lb
 
     width = env.observation_space.high - lb
     if np.all(np.isinf(width)):
-        # width = 2 * np.ones(shape=width.shape)
         width = np.ones(shape=width.shape)
     assert not np.any(np.isinf(width)), width
 
@@ -41,10 +42,14 @@ def collect_trajectory(env_conf, policy, noise_seed=None, show_frames=False):
         plt.title(f"i_iter = {i_iter} return = {return_trajectory:.2f}")
         plt.show()
 
-    # print("NOISE_SEED:", noise_seed)
+    if hasattr(policy, "reset_state"):
+        policy.reset_state()
+
     state, _ = env.reset(seed=noise_seed)
     if b_gym:
         max_steps = env_conf.gym_conf.max_steps
+    elif hasattr(env_conf, "max_steps"):
+        max_steps = env_conf.max_steps
     else:
         max_steps = 99999
 
@@ -75,4 +80,9 @@ def collect_trajectory(env_conf, policy, noise_seed=None, show_frames=False):
     if show_frames:
         draw()
     env.close()
-    return Trajectory(return_trajectory, np.array(traj_states).T, np.array(traj_actions).T)
+    rreturn = return_trajectory
+    if hasattr(policy, "wants_vector_return") and bool(policy.wants_vector_return()):
+        assert hasattr(policy, "metrics")
+        mets = np.asarray(policy.metrics(), dtype=np.float64)
+        rreturn = np.concatenate([np.asarray([float(return_trajectory)], dtype=np.float64), mets], axis=0)
+    return Trajectory(rreturn, np.array(traj_states).T, np.array(traj_actions).T, rreturn_se=None)

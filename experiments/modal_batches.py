@@ -1,11 +1,10 @@
 import time
 
 import modal
-from experiment_sampler import post_process, sample_1
 
 from analysis.data_io import data_is_done
 from experiments.batches import prep_d_argss
-from experiments.experiment_sampler import mk_replicates
+from experiments.experiment_sampler import mk_replicates, post_process, sample_1
 from experiments.modal_image import mk_image
 
 modal_image = mk_image()
@@ -25,12 +24,11 @@ def _dict():
 def modal_batches_worker(job):
     res_dict = _dict()
 
-    key, d_args = job
+    key, run_config = job
 
-    print(f"JOB: key = {key} d_args = {d_args}")
-    trace_fn = d_args.pop("trace_fn")
-    collector_log, collector_trace = sample_1(**d_args)
-    res_dict[key] = (trace_fn, collector_log, collector_trace)
+    print(f"JOB: key = {key} run_config = {run_config}")
+    collector_log, collector_trace, trace_records = sample_1(run_config)
+    res_dict[key] = (run_config.trace_fn, collector_log, collector_trace, trace_records)
 
 
 # @app.function(image=modal_image, concurrency_limit=1, timeout=_TIMEOUT_HOURS * 60 * 60)
@@ -39,10 +37,10 @@ def modal_batches_worker(job):
 
 
 @app.function(image=modal_image, concurrency_limit=1, timeout=_TIMEOUT_HOURS * 60 * 60)
-def modal_batches_resubmitter(batch_of_args):
-    for key, d_args in batch_of_args:
+def modal_batches_resubmitter(batch_of_configs):
+    for key, run_config in batch_of_configs:
         process_job = modal.Function.from_name(_app_name, "modal_batches_worker")
-        process_job.spawn((key, d_args))
+        process_job.spawn((key, run_config))
 
 
 def batches_submitter(batch_tag: str):
@@ -56,11 +54,11 @@ def batches_submitter(batch_tag: str):
         func.spawn(batch)
         batch = []
 
-    for key, d_args in _gen_jobs(batch_tag):
-        print(f"JOB: {key} {d_args}")
+    for key, run_config in _gen_jobs(batch_tag):
+        print(f"JOB: {key} {run_config}")
         # process_job = modal.Function.from_name(_app_name, "modal_batches_worker")
         # process_job.spawn((key, d_args))
-        batch.append((key, d_args))
+        batch.append((key, run_config))
         if len(batch) == MAX_BATCH:
             _flush()
         n += 1
@@ -70,13 +68,13 @@ def batches_submitter(batch_tag: str):
 
 
 def _gen_jobs(batch_tag):
-    d_argss = prep_d_argss(batch_tag)
+    configs = prep_d_argss(batch_tag)
     i_job = 0
-    for d_args_batch in d_argss:
-        for d_args in mk_replicates(d_args_batch):
-            if not data_is_done(d_args["trace_fn"]):
+    for config in configs:
+        for run_config in mk_replicates(config):
+            if not data_is_done(run_config.trace_fn):
                 key = _job_key(batch_tag, i_job)
-                yield key, d_args
+                yield key, run_config
                 i_job += 1
 
 
@@ -99,29 +97,29 @@ def collect():
     res_dict = _dict()
     print("DICT_SIZE:", res_dict.len())
 
-    if True:
-        collected_keys = set()
-        print("ITEMS")
-        for key, value in res_dict.items():
-            if key.endswith("key_max"):
-                print("SKIP", key)
-                continue
-            print("GETITEM", key)
-            t_0 = time.time()
+    collected_keys = set()
+    print("ITEMS")
+    for key, value in res_dict.items():
+        if key.endswith("key_max"):
+            print("SKIP", key)
+            continue
+        print("GETITEM", key)
+        t_0 = time.time()
+        if len(value) == 4:
+            (trace_fn, collector_log, collector_trace, trace_records) = value
+        else:
             (trace_fn, collector_log, collector_trace) = value
-            t_f = time.time()
-            print(f"GOTITEM: {key} {t_f - t_0:.1f}")
-            if not data_is_done(trace_fn):
-                post_process(collector_log, collector_trace, trace_fn)
-            collected_keys.add(key)
+            trace_records = None
+        t_f = time.time()
+        print(f"GOTITEM: {key} {t_f - t_0:.1f}")
+        if not data_is_done(trace_fn):
+            post_process(collector_log, collector_trace, trace_fn, trace_records)
+        collected_keys.add(key)
 
-        print(f"results_available before del: {res_dict.len()}")
-        # for key in collected_keys:
-        #     print("DEL:", key)
-        #     del res_dict[key]
-        func = modal.Function.from_name(_app_name, "modal_batch_deleter")
-        func.spawn(collected_keys)
-        print(f"num_collected = {len(collected_keys)}")
+    print(f"results_available before del: {res_dict.len()}")
+    func = modal.Function.from_name(_app_name, "modal_batch_deleter")
+    func.spawn(collected_keys)
+    print(f"num_collected = {len(collected_keys)}")
 
 
 def status():

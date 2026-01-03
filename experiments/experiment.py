@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 
 
-from experiment_sampler import sampler, scan_local
-
 from common.util import parse_kv
+from experiments.experiment_sampler import ExperimentConfig, sampler, scan_local
 
 if __name__ == "__main__":
     import sys
@@ -11,6 +10,12 @@ if __name__ == "__main__":
     d_args = parse_kv(sys.argv[1:])
 
     reqd_keys = ["exp-dir", "env-tag", "opt-name", "num-arms", "num-rounds", "num-reps"]
+    opt_keys = ["num-denoise", "num-denoise-eval", "max-proposal-seconds", "b-trace"]
+    valid_keys = set("--" + k for k in reqd_keys + opt_keys)
+
+    for k in d_args:
+        assert k in valid_keys, f"Unknown argument {k}. Valid: {sorted(valid_keys)}"
+
     for k in reqd_keys:
         k = "--" + k
         assert k in d_args, f"Missing {k} in {list(d_args.keys())}. Required: {reqd_keys}"
@@ -21,4 +26,5 @@ if __name__ == "__main__":
         kk = kk.replace("-", "_")
         d_args_cleaned[kk] = v
 
-    sampler(d_args_cleaned, distributor_fn=scan_local)
+    config = ExperimentConfig.from_dict(d_args_cleaned)
+    sampler(config, distributor_fn=scan_local)

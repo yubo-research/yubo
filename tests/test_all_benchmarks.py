@@ -8,7 +8,7 @@ def test_benchmark(bm_name, num_dim):
     import os
     import shutil
 
-    from experiments.experiment_sampler import sampler, scan_local
+    from experiments.experiment_sampler import ExperimentConfig, sampler, scan_local
 
     path = "_test/bm"
 
@@ -16,13 +16,13 @@ def test_benchmark(bm_name, num_dim):
 
     shutil.rmtree(path, ignore_errors=True)
     os.makedirs(path)
-    d_args = {
-        "exp_dir": path,
-        "env_tag": f"f:{bm_name}-{num_dim}d",
-        "opt_name": "random",
-        "num_arms": 2,
-        "num_rounds": 3,
-        "num_reps": 1,
-    }
+    config = ExperimentConfig(
+        exp_dir=path,
+        env_tag=f"f:{bm_name}-{num_dim}d",
+        opt_name="random",
+        num_arms=2,
+        num_rounds=3,
+        num_reps=1,
+    )
 
-    sampler(d_args, distributor_fn=scan_local)
+    sampler(config, distributor_fn=scan_local)

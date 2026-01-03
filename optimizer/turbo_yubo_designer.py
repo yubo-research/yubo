@@ -5,6 +5,7 @@ import acq.fit_gp as fit_gp
 from acq.turbo_yubo.acq_turbo_yubo import AcqTurboYUBO
 from acq.turbo_yubo.turbo_yubo_config import TurboYUBOConfig
 from acq.turbo_yubo.ty_default_tr import TuRBORestartError
+from optimizer.designer_asserts import assert_scalar_rreturn
 
 
 class TurboYUBODesigner:
@@ -20,11 +21,13 @@ class TurboYUBODesigner:
         self._dtype = torch.double
         self._device = torch.empty(size=(1,)).device
 
-    def __call__(self, data, num_arms):
+    def __call__(self, data, num_arms, *, telemetry=None):
         if self._keep_style != "lap":
             data = acq_util.keep_data(data, self._keep_style, self._num_keep)
         else:
             assert False, "lap not supported"
+
+        assert_scalar_rreturn(data)
 
         for _ in range(2):
             try:
@@ -35,6 +38,7 @@ class TurboYUBODesigner:
 
     def _run_opt(self, data, num_arms):
         if len(data) > 0:
+            assert_scalar_rreturn(data)
             Y, X = fit_gp.extract_X_Y(data, self._dtype, self._device)
 
             self._X_train = torch.cat([self._X_train, X])

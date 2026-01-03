@@ -50,20 +50,23 @@ def run(cmds, max_parallel, b_dry_run=False):
 def prep_d_argss(batch_tag):
     results_dir = "results"
 
-    batch_tags = batch_preps.__dict__.keys()
+    preps = {k: v for k, v in batch_preps.__dict__.items() if k.startswith("prep_") and callable(v)}
 
-    assert batch_tag in batch_tags, f"Unknown batch_tag: {batch_tag} {batch_tags}"
-    return getattr(batch_preps, batch_tag)(results_dir)
+    fn = preps.get(batch_tag)
+    if fn is None and not batch_tag.startswith("prep_"):
+        fn = preps.get(f"prep_{batch_tag}")
+
+    assert fn is not None, f"Unknown batch_tag: {batch_tag} (known: {sorted(preps.keys())})"
+    return fn(results_dir)
 
 
 if __name__ == "__main__":
     import sys
 
     dry_run = False
-    if len(sys.argv) > 1:
-        if sys.argv[1] == "--dry-run":
-            dry_run = True
-            sys.argv = sys.argv[1:]
+    if len(sys.argv) > 1 and sys.argv[1] == "--dry-run":
+        dry_run = True
+        sys.argv.pop(1)
 
     batch_tag = sys.argv[1]
 

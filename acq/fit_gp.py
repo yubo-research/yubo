@@ -8,6 +8,7 @@ from botorch.models import SingleTaskGP
 from botorch.models.approximate_gp import SingleTaskVariationalGP
 from botorch.models.transforms.input import Warp
 from botorch.optim.closures.core import ForwardBackwardClosure
+from botorch.optim.fit import fit_gpytorch_mll_scipy, fit_gpytorch_mll_torch
 from botorch.optim.utils import get_parameters
 from botorch.utils import standardize
 from gpytorch.kernels import RFFKernel, ScaleKernel
@@ -19,7 +20,6 @@ from torch.nn import Module
 import common.all_bounds as all_bounds
 from acq.sal_transform import SALTransform
 from acq.y_transform import YTransform
-from model.dumbo import DUMBOGP
 
 
 class _EmptyTransform(Module):
@@ -64,12 +64,13 @@ def standardize_torch(Y):
 #     return y
 
 
-def _parse_spec(model_spec):
+def _parse_spec(model_spec, num_obs):
+    _SPARSE_MIN_OBS = 10
     model_type = None
     input_warping = None
     output_warping = None
     # VanillaBO lengthscale prior is now the default in BoTorch
-    model_types = {"gp", "rff8", "rff128", "rff256", "rff512", "rff1024", "dumbo", "rdumbo", "sparse"}
+    model_types = {"gp", "rff8", "rff128", "rff256", "rff512", "rff1024", "sparse"}
 
     if model_spec is not None:
         for s in model_spec.split("+"):
@@ -89,6 +90,8 @@ def _parse_spec(model_spec):
                 assert False, ("Unknown option", s)
 
     if model_type is None:
+        model_type = "gp"
+    if model_type == "sparse" and num_obs < _SPARSE_MIN_OBS:
         model_type = "gp"
     if input_warping is None:
         input_warping = False
@@ -122,15 +125,11 @@ def get_closure(mll, outcome_warp):
 
 
 def fit_gp_XY(X, Y, model_spec=None):
-    model_type, input_warping, output_warping = _parse_spec(model_spec)
+    model_type, input_warping, output_warping = _parse_spec(model_spec, num_obs=len(Y))
     del model_spec
 
     if len(X) == 0:
-        if model_type == "dumbo":
-            gp = DUMBOGP(X, Y, use_rank_distance=False)
-        elif model_type == "rdumbo":
-            gp = DUMBOGP(X, Y, use_rank_distance=True)
-        elif model_type == "sparse":
+        if model_type == "sparse":
             inducing_points = torch.empty((0, X.shape[-1]), dtype=X.dtype, device=X.device)
             gp = SingleTaskVariationalGP(X, inducing_points=inducing_points, outcome_transform=_EmptyTransform())
         else:
@@ -171,13 +170,7 @@ def fit_gp_XY(X, Y, model_spec=None):
     a = torch.tensor(1.0, dtype=torch.double)
     a.requires_grad = True
 
-    if model_type == "dumbo":
-        assert input_transform is None, "Unsupported"
-        return DUMBOGP(X, Y, use_rank_distance=False)
-    elif model_type == "rdumbo":
-        assert input_transform is None, "Unsupported"
-        return DUMBOGP(X, Y, use_rank_distance=True)
-    elif model_type == "sparse":
+    if model_type == "sparse":
         gp = SingleTaskVariationalGP(X, Y, input_transform=input_transform)
     elif model_type.startswith("rff"):
         num_samples = int(model_type[3:])
@@ -205,13 +198,24 @@ def fit_gp_XY(X, Y, model_spec=None):
     max_cholesky_size = 2000
     with gpytorch.settings.max_cholesky_size(max_cholesky_size):
         m = None
-        for i_try in range(1):
+        if model_type == "sparse":
+            num_tries = 2
+        else:
+            num_tries = 1
+        for i_try in range(num_tries):
             mll.to(X)
             try:
-                fit_gpytorch_mll(
-                    mll,
-                    closure=get_closure(mll, outcome_warp) if outcome_warp else None,
-                )
+                kwargs = {}
+                if outcome_warp:
+                    kwargs["closure"] = get_closure(mll, outcome_warp)
+                if model_type == "sparse":
+                    if i_try == 0:
+                        kwargs["optimizer"] = fit_gpytorch_mll_scipy
+                        kwargs["optimizer_kwargs"] = {"options": {"maxiter": 4000, "maxfun": 4000}}
+                    else:
+                        kwargs["optimizer"] = fit_gpytorch_mll_torch
+                        kwargs["optimizer_kwargs"] = {"step_limit": 4000}
+                fit_gpytorch_mll(mll, **kwargs)
                 # fit_gpytorch_mll(mll, optimizer_kwargs={"options": {"maxiter": 10}})
             except (RuntimeError, ModelFittingError) as e:
                 m = e

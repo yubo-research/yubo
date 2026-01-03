@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import modal
 
 
@@ -27,6 +29,36 @@ def mk_image():
         print("REQ:", req)
         sreqs.append(req)
 
-    sreqs_2 = ["git+https://github.com/feji3769/VecchiaBO.git#subdirectory=code"]
-    # print("SREQS:", sreqs)
-    return modal.Image.debian_slim(python_version="3.11.9").apt_install("swig").apt_install("git").pip_install(sreqs).pip_install(sreqs_2)
+    sreqs_2 = [
+        "git+https://github.com/feji3769/VecchiaBO.git#subdirectory=code",
+    ]
+
+    image = (
+        modal.Image.debian_slim(python_version="3.11.9")
+        .apt_install("swig")
+        .apt_install("git")
+        .pip_install(sreqs)
+        .pip_install(sreqs_2)
+        .env({"PYTHONPATH": "/root:/root/experiments"})
+    )
+
+    project_root = Path(__file__).resolve().parents[1]
+    for d in [
+        "acq",
+        "analysis",
+        "common",
+        "enn",
+        "experiments",
+        "model",
+        "ops",
+        "optimizer",
+        "problems",
+        "sampling",
+        "third_party",
+        "torch_truncnorm",
+        "turbo_m_ref",
+        "uhd",
+    ]:
+        image = image.add_local_dir(str(project_root / d), remote_path=f"/root/{d}")
+
+    return image

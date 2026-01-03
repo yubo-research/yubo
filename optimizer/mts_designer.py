@@ -1,8 +1,11 @@
+import time
+
 import torch
 
 import acq.acq_util as acq_util
 import acq.fit_gp as fit_gp
 from acq.acq_mts import AcqMTS
+from optimizer.designer_asserts import assert_scalar_rreturn
 
 
 class MTSDesigner:
@@ -15,8 +18,9 @@ class MTSDesigner:
         self._dtype = torch.double
         self._device = torch.empty(size=(1,)).device
 
-    def __call__(self, data, num_arms):
+    def __call__(self, data, num_arms, *, telemetry=None):
         data = acq_util.keep_data(data, self._keep_style, self._num_keep)
+        assert_scalar_rreturn(data)
 
         if len(data) > 0:
             Y, X = fit_gp.extract_X_Y(data, self._dtype, self._device)
@@ -25,7 +29,15 @@ class MTSDesigner:
             X = torch.empty(size=(0, self._policy.num_params())).to(self._device).to(self._dtype)
             Y = torch.empty(size=(0, 1)).to(self._device).to(self._dtype)
 
+        t0 = time.perf_counter()
         gp = fit_gp.fit_gp_XY(X, Y)
+        dt_fit = time.perf_counter() - t0
+        if telemetry is not None:
+            telemetry.set_dt_fit(dt_fit)
         mts = AcqMTS(gp, init_style=self._init_style, use_stagger=self._use_stagger)
+        t0 = time.perf_counter()
         X_a = torch.as_tensor(mts.draw(num_arms))
+        dt_select = time.perf_counter() - t0
+        if telemetry is not None:
+            telemetry.set_dt_select(dt_select)
         return fit_gp.mk_policies(self._policy, X_a)

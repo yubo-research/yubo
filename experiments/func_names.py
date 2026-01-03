@@ -61,4 +61,6 @@ funcs_other = [
 ]
 
 # 51 functions
-funcs_all = funcs_multimodal + funcs_bowl + funcs_plate + funcs_valley + funcs_ridges + funcs_other
+func_lists = [funcs_multimodal, funcs_bowl, funcs_plate, funcs_valley, funcs_ridges, funcs_other]
+funcs_all = [f for fl in func_lists for f in fl]
+func_brief = [fn[0] for fn in func_lists]

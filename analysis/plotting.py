@@ -210,12 +210,13 @@ def plot_sorted_agg(ax, data_locator, renames=None, i_agg=-1, b_sort=True, highl
     plot_sorted(ax, data_locator.optimizers(), mu, se, renames=renames, b_sort=b_sort, highlight=highlight)
 
 
-def plot_compare_problem(ax, data_locator, exp_name, problem_name, optimizers, b_normalize, title, renames=None, old_way=True, b_legend=True):
+def plot_compare_problem(ax, data_locator, b_normalize, title, renames=None, b_legend=True):
     handles = []
     legend = []
     i_marker = 0
     markers = ["o", "v", "s", "+", "*", "X", "^"]
-    traces = ads.load_multiple_traces(data_locator, exp_name, [problem_name], optimizers, old_way=old_way)
+    optimizers = data_locator.optimizers()
+    traces = ads.load_multiple_traces(data_locator)
 
     if b_normalize:
         yy = traces.squeeze(0).transpose((1, 0, 2))

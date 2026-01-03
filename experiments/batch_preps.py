@@ -1,5 +1,5 @@
 from experiments.experiment_sampler import prep_args_1, prep_d_args
-from experiments.func_names import funcs_1d, funcs_all, funcs_nd
+from experiments.func_names import func_brief, funcs_1d, funcs_all, funcs_nd
 
 
 def prep_mtv_repro(results_dir):
@@ -23,7 +23,7 @@ def prep_ts_hd(results_dir):
     exp_dir = "exp_pss_ts_hd"
 
     # opts = ["sts2", "lei", "turbo-1", "sts", "sts-t", "optuna", "ei", "ucb", "gibbon", "sr", "ts", "turbo-1", "sobol", "random"]
-    opts = ["sts-t:rdumbo"]
+    opts = ["sts-t"]
     noises = [None]
 
     min_rounds = 30
@@ -273,13 +273,19 @@ def prep_mtv_36(results_dir):
 
 
 def prep_seq(results_dir):
-    exp_dir = "exp_enn"
+    exp_dir = "exp_enn_nov"
 
     opts = [
-        "mts",
-        "mts-ts",
-        "mts-meas",
-        "mts-stagger",
+        "random",
+        "optuna",
+        "ucb",
+        # "cma",
+        "ucb:Msparse",
+        "vecchia",
+        "turbo-one",
+        "turbo-zero",
+        "turbo-enn-fit-ucb",
+        "enn-fit-ucb",
     ]
 
     noises = [None]
@@ -287,14 +293,9 @@ def prep_seq(results_dir):
     min_rounds = 30
     cmds = []
 
-    dims = [1, 3, 10, 30, 100, 300]
-    # dims = [1, 3, 10, 30, 100, 300, 1000]
-    for num_dim in dims:
-        # if num_dim <= 100:
-        #     num_replications = 3
-        # else:
-        #     num_replications = 3
+    dims = [1, 3, 10, 30, 100, 300, 1000]
 
+    for num_dim in dims:
         if num_dim <= 100:
             num_replications = 30
         else:
@@ -304,7 +305,7 @@ def prep_seq(results_dir):
             prep_d_args(
                 results_dir,
                 exp_dir=exp_dir,
-                funcs=funcs_all,
+                funcs=func_brief,
                 dims=[num_dim],
                 num_arms=1,
                 num_replications=num_replications,
@@ -317,20 +318,25 @@ def prep_seq(results_dir):
     return cmds
 
 
-def prep_rl_three(results_dir, name):
-    exp_dir = f"exp_enn_{name}"
+def prep_push(results_dir):
+    exp_dir = "exp_ennbo_push"
 
     opts = [
-        "tygo-enn-10:Kt100",
+        "random",
+        "turbo-zero",
+        "turbo-one",
+        "turbo-enn-fit-ucb",
+        "enn-fit-ucb",
+        "cma",
+        "optuna",
     ]
 
     cmds = []
     for opt in opts:
-        for num_arms, num_rounds, num_denoise in [
-            # (500, 3, 50),
-            (1, 100, 1),
-            (10, 100, 10),
-            (50, 30, 50),
+        for num_arms, num_rounds, num_denoise, num_denoise_passive, fn in [
+            (1, 10000, 1, 30, False),
+            # (10, 100, 10),
+            (50, 300, 50, None, True),
         ]:
             # prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None):
             if num_arms == 1 and opt == "cma":
@@ -339,13 +345,14 @@ def prep_rl_three(results_dir, name):
                 prep_args_1(
                     results_dir,
                     exp_dir=exp_dir,
-                    problem=f"{name}:fn",
+                    problem="push:fn" if fn else "push",
                     opt=opt,
                     num_arms=num_arms,
-                    num_replications=100,
+                    num_replications=30,
                     num_rounds=num_rounds,
                     noise=None,
                     num_denoise=num_denoise,
+                    num_denoise_passive=num_denoise_passive,
                 )
             )
 
@@ -353,11 +360,44 @@ def prep_rl_three(results_dir, name):
 
 
 def prep_tlunar(results_dir):
-    return prep_rl_three(results_dir, "tlunar")
+    exp_dir = "exp_ennbo_tlunar"
 
+    opts = [
+        "random",
+        "turbo-zero",
+        "turbo-one",
+        "turbo-enn-fit-ucb",
+        "enn-fit-ucb",
+        "cma",
+        "optuna",
+    ]
 
-def prep_swim(results_dir):
-    return prep_rl_three(results_dir, "swim")
+    cmds = []
+    for opt in opts:
+        for num_arms, num_rounds, num_denoise, num_denoise_passive, fn in [
+            (1, 300, 1, 30, False),
+            # (10, 100, 10),
+            (50, 30, 50, None, True),
+        ]:
+            # prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None):
+            if num_arms == 1 and opt == "cma":
+                continue
+            cmds.append(
+                prep_args_1(
+                    results_dir,
+                    exp_dir=exp_dir,
+                    problem="tlunar:fn" if fn else "tlunar",
+                    opt=opt,
+                    num_arms=num_arms,
+                    num_replications=30,
+                    num_rounds=num_rounds,
+                    noise=None,
+                    num_denoise=num_denoise,
+                    num_denoise_passive=num_denoise_passive,
+                )
+            )
+
+    return cmds
 
 
 def prep_hop(results_dir):

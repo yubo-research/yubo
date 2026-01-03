@@ -1,14 +1,13 @@
-from botorch.acquisition.monte_carlo import (
-    qNoisyExpectedImprovement,
-    qUpperConfidenceBound,
-)
-
 from bo.acq_idopt import AcqIDOpt
 from bo.acq_iei import AcqIEI
 from bo.acq_iopt import AcqIOpt
 from bo.acq_iucb import AcqIUCB
 from bo.acq_min_dist import AcqMinDist
 from bo.acq_var import AcqVar
+from botorch.acquisition.monte_carlo import (
+    qNoisyExpectedImprovement,
+    qUpperConfidenceBound,
+)
 
 from .ax_designer import AxDesigner
 from .bt_designer import BTDesigner

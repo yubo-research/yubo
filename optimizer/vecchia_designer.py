@@ -2,6 +2,7 @@ import numpy as np
 import torch
 
 import acq.fit_gp as fit_gp
+from optimizer.designer_asserts import assert_scalar_rreturn
 from optimizer.sobol_designer import SobolDesigner
 
 
@@ -94,12 +95,14 @@ class VecchiaDesigner:
                 X_next = torch.cat([X_next, torch.stack(add, dim=0)], dim=0)
         return X_next
 
-    def __call__(self, data, num_arms):
+    def __call__(self, data, num_arms, *, telemetry=None):
         if not self._ensure_pyvecch():
             raise ImportError("VecchiaDesigner requires 'pyvecch'. Please install VecchiaBO (pyvecch) from https://github.com/feji3769/VecchiaBO")
 
         if len(data) == 0:
-            return self._sobol(data, num_arms)
+            return self._sobol(data, num_arms, telemetry=telemetry)
+
+        assert_scalar_rreturn(data)
 
         Y_train, X_train = fit_gp.extract_X_Y(data, self._dtype, self._device)
         X_train = X_train.to(dtype=torch.float32, device=torch.device("cpu")).contiguous()

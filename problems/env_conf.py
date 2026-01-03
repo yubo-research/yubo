@@ -6,10 +6,14 @@ import gymnasium as gym
 
 import problems.other as other
 import problems.pure_functions as pure_functions
+from problems.bipedal_walker_feat_policy import BipedalWalkerFeatPolicy
+from problems.bipedal_walker_policy import BipedalWalkerPolicy
+from problems.control_policy import ControlPolicyFactory
 from problems.linear_policy import LinearPolicy
 from problems.mlp_policy import MLPPolicyFactory
 from problems.noise_maker import NoiseMaker
 from problems.pure_function_policy import PureFunctionPolicy
+from problems.reactor_policy import ReactorPolicyFactory
 from problems.turbo_lunar_policy import TurboLunarPolicy
 
 
@@ -19,15 +23,17 @@ def get_env_conf(tag, problem_seed=None, noise_level=None, noise_seed_0=None):
     if ":" in tag:
         x = tag.split(":")
         opt = x[-1]
-        # Ex: tlunar:fn
         if opt == "fn":
             frozen_noise = True
             tag = ":".join(x[:-1])
-        else:
-            assert len(x) == 2, (x, tag)
 
     if tag in _gym_env_confs:
         ec = copy.deepcopy(_gym_env_confs[tag])
+        ec.problem_seed = problem_seed
+        ec.noise_seed_0 = noise_seed_0
+        ec.frozen_noise = frozen_noise
+    elif tag in _pufferlib_env_confs:
+        ec = copy.deepcopy(_pufferlib_env_confs[tag])
         ec.problem_seed = problem_seed
         ec.noise_seed_0 = noise_seed_0
         ec.frozen_noise = frozen_noise
@@ -104,11 +110,11 @@ class EnvConf:
         env.close()
 
 
-def _gym_conf(env_name, gym_conf=None, policy_class=None, kwargs=None):
+def _gym_conf(env_name, gym_conf=None, policy_class=None, kwargs=None, noise_seed_0=None):
     if gym_conf is None:
         gym_conf = GymConf()
 
-    return EnvConf(env_name, gym_conf=gym_conf, policy_class=policy_class, kwargs=kwargs)
+    return EnvConf(env_name, gym_conf=gym_conf, policy_class=policy_class, kwargs=kwargs, noise_seed_0=noise_seed_0)
 
 
 # See https://paperswithcode.com/task/openai-gym
@@ -119,7 +125,7 @@ _gym_env_confs = {
         "MountainCarContinuous-v0",
         gym_conf=GymConf(num_frames_skip=100),
     ),
-    # "pend": EnvConf("Pendulum-v1",  gym_conf=GymConf(max_steps=200, num_frames_skip=100)),
+    "pend": EnvConf("Pendulum-v1", gym_conf=GymConf(max_steps=200, num_frames_skip=100)),
     # 3580 - https://arxiv.org/pdf/1803.07055
     # 6600 - 2024 [??ref]
     "ant": _gym_conf("Ant-v5"),
@@ -145,6 +151,14 @@ _gym_env_confs = {
             num_frames_skip=100,
         ),
     ),
+    "bw-linraw": _gym_conf(
+        "BipedalWalker-v3",
+        gym_conf=GymConf(
+            max_steps=1600,
+            num_frames_skip=100,
+            transform_state=False,
+        ),
+    ),
     # See https://github.com/hardmaru/estool/blob/b0954523e906d852287c6f515f34756c550ccf42/config.py#L309
     #  for config (i.e., (40,40))
     # https://arxiv.org/html/2304.12778 uses (16,)
@@ -155,7 +169,116 @@ _gym_env_confs = {
             max_steps=1600,
             num_frames_skip=100,
         ),
-        policy_class=MLPPolicyFactory((64, 64)),
+        policy_class=MLPPolicyFactory((), rnn_hidden_size=4, use_layer_norm=True, use_prev_action=True),
+    ),
+    "bw-mlp-r4": _gym_conf(
+        "BipedalWalker-v3",
+        gym_conf=GymConf(
+            max_steps=1600,
+            num_frames_skip=100,
+        ),
+        policy_class=MLPPolicyFactory((), rnn_hidden_size=4, use_layer_norm=True, use_prev_action=False),
+    ),
+    "bw-mlp-walk": _gym_conf(
+        "BipedalWalker-v3",
+        gym_conf=GymConf(
+            max_steps=1600,
+            num_frames_skip=100,
+        ),
+        policy_class=MLPPolicyFactory(
+            (),
+            rnn_hidden_size=4,
+            use_layer_norm=True,
+            use_prev_action=False,
+            use_phase_features=True,
+            num_phase_harmonics=2,
+        ),
+    ),
+    "bw-mlp-r4h8": _gym_conf(
+        "BipedalWalker-v3",
+        gym_conf=GymConf(
+            max_steps=1600,
+            num_frames_skip=100,
+        ),
+        policy_class=MLPPolicyFactory((8,), rnn_hidden_size=4, use_layer_norm=True, use_prev_action=False),
+    ),
+    "bw-mlp-r6": _gym_conf(
+        "BipedalWalker-v3",
+        gym_conf=GymConf(
+            max_steps=1600,
+            num_frames_skip=100,
+        ),
+        policy_class=MLPPolicyFactory((), rnn_hidden_size=6, use_layer_norm=True, use_prev_action=False),
+    ),
+    "bw-mlp-r6h8": _gym_conf(
+        "BipedalWalker-v3",
+        gym_conf=GymConf(
+            max_steps=1600,
+            num_frames_skip=100,
+        ),
+        policy_class=MLPPolicyFactory((8,), rnn_hidden_size=6, use_layer_norm=True, use_prev_action=False),
+    ),
+    "bw-control": _gym_conf(
+        "BipedalWalker-v3",
+        gym_conf=GymConf(
+            max_steps=1600,
+            num_frames_skip=100,
+        ),
+        policy_class=ControlPolicyFactory(use_layer_norm=True),
+    ),
+    "bw-reactor": _gym_conf(
+        "BipedalWalker-v3",
+        gym_conf=GymConf(
+            max_steps=1600,
+            num_frames_skip=100,
+        ),
+        policy_class=ReactorPolicyFactory(
+            num_modes=3,
+            memory_dim=6,
+            delta_hidden=8,
+            joint_angle_idx=[4, 6, 9, 11],
+            joint_vel_idx=[5, 7, 10, 12],
+            contact_idx=[8, 13],
+            hazard_idx=[20, 21, 22, 23],
+            vx_idx=2,
+        ),
+    ),
+    "bw-reactor-mo": _gym_conf(
+        "BipedalWalker-v3",
+        gym_conf=GymConf(
+            max_steps=1600,
+            num_frames_skip=100,
+        ),
+        policy_class=ReactorPolicyFactory(
+            num_modes=3,
+            memory_dim=6,
+            delta_hidden=8,
+            joint_angle_idx=[4, 6, 9, 11],
+            joint_vel_idx=[5, 7, 10, 12],
+            contact_idx=[8, 13],
+            hazard_idx=[20, 21, 22, 23],
+            vx_idx=2,
+            return_metrics=True,
+        ),
+    ),
+    "bw-heur": _gym_conf(
+        "BipedalWalker-v3",
+        gym_conf=GymConf(
+            max_steps=1600,
+            num_frames_skip=100,
+            transform_state=False,
+        ),
+        policy_class=BipedalWalkerPolicy,
+        noise_seed_0=1,
+    ),
+    "bw-feat": _gym_conf(
+        "BipedalWalker-v3",
+        gym_conf=GymConf(
+            max_steps=1600,
+            num_frames_skip=100,
+            transform_state=False,
+        ),
+        policy_class=BipedalWalkerFeatPolicy,
     ),
     # 300
     "lunar": _gym_conf(
@@ -183,5 +306,47 @@ _gym_env_confs = {
         ),
         kwargs={"continuous": False},
         policy_class=TurboLunarPolicy,
+    ),
+}
+
+
+@dataclass
+class PufferLibEnvConf:
+    env_name: str
+    problem_seed: int = None
+    policy_class_name: str = None
+    noise_level: float = None
+    noise_seed_0: int = None
+    frozen_noise: bool = True
+    gym_conf: GymConf = None
+    action_space: Any = None
+    kwargs: dict = None
+    max_steps: int = 10000
+    _policy_class: Any = None
+
+    @property
+    def policy_class(self):
+        if self._policy_class is None and self.policy_class_name is not None:
+            if self.policy_class_name == "PufferLibBreakoutPolicy":
+                from problems.pufferlib_breakout_policy import PufferLibBreakoutPolicy
+
+                self._policy_class = PufferLibBreakoutPolicy
+        return self._policy_class
+
+    def make(self, **kwargs):
+        from problems.pufferlib_env import PufferLibBreakoutEnv
+
+        return PufferLibBreakoutEnv(num_envs=1)
+
+    def __post_init__(self):
+        if not self.kwargs:
+            self.kwargs = {}
+
+
+_pufferlib_env_confs = {
+    "pl:breakout": PufferLibEnvConf(
+        env_name="pl:breakout",
+        policy_class_name="PufferLibBreakoutPolicy",
+        max_steps=10000,
     ),
 }

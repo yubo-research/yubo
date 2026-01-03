@@ -22,6 +22,7 @@ class LinearPolicy:
         self._normalizer = Normalizer(shape=(num_state,))
         self._num_beta = self._beta.size
         self._scale = 1
+        self._k = 1 + self._scale
 
     def num_params(self):
         return self._num_beta + 1
@@ -46,6 +47,9 @@ class LinearPolicy:
     def clone(self):
         lp = LinearPolicy(self._env_conf)
         lp._beta = self._beta.copy()
+        lp._scale = self._scale
+        lp._normalizer = self._normalizer.clone()
+        lp._k = self._k
         return lp
 
     def _normalize(self, state):

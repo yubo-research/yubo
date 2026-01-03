@@ -11,6 +11,7 @@ from gpytorch.mlls import ExactMarginalLogLikelihood, LeaveOneOutPseudoLikelihoo
 import acq.fit_gp as fit_gp
 import common.all_bounds as all_bounds
 from acq.mcmc_bo import TurboState, generate_batch_multiple_tr
+from optimizer.designer_asserts import assert_scalar_rreturn
 from optimizer.sobol_designer import SobolDesigner
 
 
@@ -35,11 +36,13 @@ class MCMCBODesigner:
     def _sobol(self, num_arms):
         return SobolDesigner(self._policy.clone(), max_points=num_arms)(None, num_arms)
 
-    def __call__(self, data, num_arms):
+    def __call__(self, data, num_arms, *, telemetry=None):
         num_dim = self._policy.num_params()
 
         if len(data) < self._num_init:
             return self._sobol(num_arms)
+
+        assert_scalar_rreturn(data)
 
         if self._turbo_state is None or self._turbo_state.restart_triggered:
             y_max = max(d.trajectory.rreturn for d in data)

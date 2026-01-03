@@ -6,4 +6,8 @@ def make(env_name, problem_seed):
         from problems.mopta08 import Mopta08
 
         return PureFunctionEnv(Mopta08(), Mopta08.num_dim, problem_seed=problem_seed, distort=False)
+    elif env_name == "push":
+        from problems.push import Push
+
+        return PureFunctionEnv(Push(), Push.num_dim, problem_seed=problem_seed, distort=False)
     assert False, ("Unknown env_name", env_name)

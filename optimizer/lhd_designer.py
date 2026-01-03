@@ -22,7 +22,7 @@ class LHDDesigner:
         policy.set_params(all_bounds.p_low + all_bounds.p_width * x)
         return policy
 
-    def __call__(self, _, num_arms):
+    def __call__(self, _, num_arms, *, telemetry=None):
         policies = []
         for _ in range(num_arms):
             policies.append(self._get_policy())

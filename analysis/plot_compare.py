@@ -15,11 +15,8 @@ class PlotCompare:
         ap.plot_sorted_agg(
             ax,
             self._data_locator,
-            exp_name,
-            self._optimizers,
             renames=renames,
             i_agg=i_agg,
-            old_way=False,
         )
         if num_dim == 1:
             d = "dimension"

@@ -1,9 +1,12 @@
+import time
+
 import numpy as np
 import torch
 from botorch.optim import optimize_acqf
 
 import acq.fit_gp as fit_gp
 from acq.acq_bt import AcqBT
+from optimizer.designer_asserts import assert_scalar_rreturn
 from optimizer.sobol_designer import SobolDesigner
 
 
@@ -71,15 +74,17 @@ class BTDesigner:
         batch_limit = self._optimizer_options["batch_limit"]
         return torch.tile(acq_bt.x_max().unsqueeze(0), dims=(num_arms * batch_limit, 1, 1)).to(self.device).to(self.dtype)
 
-    def __call__(self, data, num_arms):
+    def __call__(self, data, num_arms, *, telemetry=None):
         import warnings
 
         if len(data) < self._init_sobol:
             sobol = SobolDesigner(self._policy.clone())
-            ret = sobol(data, num_arms)
+            ret = sobol(data, num_arms, telemetry=telemetry)
             self.fig_last_acqf = "sobol"
             self.fig_last_arms = sobol.fig_last_arms
             return ret
+
+        assert_scalar_rreturn(data)
 
         num_dim = self._policy.num_params()
         acq_bt = AcqBT(
@@ -92,22 +97,24 @@ class BTDesigner:
             num_keep=self._num_keep,
             keep_style=self._keep_style,
             model_spec=self._model_spec,
+            telemetry=telemetry,
         )
+        t0 = time.perf_counter()
         if hasattr(acq_bt.acq_function, "draw"):
             # print (f"Draw from {acqf.acq_function.__class__.__name__}")
             X_cand = acq_bt.acq_function.draw(num_arms)
         else:
-            warnings.simplefilter("ignore")
             if self._init_X_samples and hasattr(acq_bt.acq_function, "X_samples"):
                 batch_initial_conditions = self._initialize_at_X_samples(data, num_arms, acq_bt)
                 batch_initial_conditions = batch_initial_conditions.type(self.dtype).to(self.device)
             elif self._start_at_max:
                 batch_initial_conditions = self._initialize_at_x_max(acq_bt, num_arms)
-
             else:
                 batch_initial_conditions = None
 
             with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=RuntimeWarning)
+                warnings.filterwarnings("ignore", message=".*Optimization failed.*")
                 X_cand, _ = optimize_acqf(
                     acq_function=acq_bt.acq_function,
                     bounds=acq_bt.bounds,  # always [0,1]**num_dim
@@ -118,6 +125,10 @@ class BTDesigner:
                     batch_initial_conditions=batch_initial_conditions,
                     sequential=self._opt_sequential,
                 )
+
+        dt_select = time.perf_counter() - t0
+        if telemetry is not None:
+            telemetry.set_dt_select(dt_select)
 
         self.fig_last_acqf = acq_bt
         self.fig_last_arms = X_cand

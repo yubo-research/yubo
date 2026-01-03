@@ -21,13 +21,15 @@ def test_enn_per_dimension_weighting_changes_neighbor_identity():
     y_dim2 = x[:, 1:2]
     enn_dim2 = ENNWeighter(k=1, small_world_M=None, weighting="sobol_indices")
     enn_dim2.add(x, y_dim2)
-    idx2, _ = enn_dim2.about_neighbors(q, k=1)
+    w2 = enn_dim2.weights
+    idx2, _ = enn_dim2._enn.about_neighbors(q * w2, k=1)
     assert idx2.shape == (1, 1)
     assert idx2[0, 0] == 2
 
     y_dim1 = x[:, 0:1]
     enn_dim1 = ENNWeighter(k=1, small_world_M=None, weighting="sobol_indices")
     enn_dim1.add(x, y_dim1)
-    idx1, _ = enn_dim1.about_neighbors(q, k=1)
+    w1 = enn_dim1.weights
+    idx1, _ = enn_dim1._enn.about_neighbors(q * w1, k=1)
     assert idx1.shape == (1, 1)
     assert idx1[0, 0] == 1

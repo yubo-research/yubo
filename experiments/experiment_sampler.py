@@ -1,9 +1,18 @@
+import hashlib
 import os
 import time
+from dataclasses import asdict, dataclass
+from typing import Optional
 
 import torch
 
-from analysis.data_io import data_is_done, data_writer
+from analysis.data_io import (
+    TraceRecord,
+    data_is_done,
+    data_writer,
+    write_config,
+    write_trace_jsonl,
+)
 from common.collector import Collector
 from common.seed_all import seed_all
 from experiments.experiment_util import ensure_parent
@@ -11,8 +20,90 @@ from optimizer.optimizer import Optimizer
 from problems.env_conf import default_policy, get_env_conf
 
 
-def sample_1(env_conf, opt_name, num_rounds, num_arms, num_denoise, b_trace=True):
-    # print("PROBLEM_SEED:", env_conf.problem_seed)
+@dataclass
+class ExperimentConfig:
+    exp_dir: str
+    env_tag: str
+    opt_name: str
+    num_arms: int
+    num_rounds: int
+    num_reps: int
+    num_denoise: Optional[int] = None
+    num_denoise_passive: Optional[int] = None
+    max_proposal_seconds: Optional[float] = None
+    b_trace: bool = True
+
+    def to_dir_name(self) -> str:
+        config_str = (
+            f"env={self.env_tag}--opt_name={self.opt_name}"
+            f"--num_arms={self.num_arms}--num_rounds={self.num_rounds}"
+            f"--num_reps={self.num_reps}--num_denoise={self.num_denoise}"
+            f"--max_proposal_seconds={self.max_proposal_seconds}"
+        )
+        short_hash = hashlib.md5(config_str.encode()).hexdigest()[:8]
+        return f"{self.exp_dir}/{short_hash}"
+
+    def to_dir_name_legacy(self) -> str:
+        return (
+            f"{self.exp_dir}/env={self.env_tag}--opt_name={self.opt_name}"
+            f"--num_arms={self.num_arms}--num_rounds={self.num_rounds}"
+            f"--num_reps={self.num_reps}--num_denoise={self.num_denoise}"
+        )
+
+    def to_dict(self) -> dict:
+        return asdict(self)
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "ExperimentConfig":
+        max_prop = d.get("max_proposal_seconds")
+        if max_prop in (None, "None"):
+            max_prop = None
+        else:
+            max_prop = float(max_prop)
+        return cls(
+            exp_dir=d["exp_dir"],
+            env_tag=d["env_tag"],
+            opt_name=d["opt_name"],
+            num_arms=int(d["num_arms"]),
+            num_rounds=int(d["num_rounds"]),
+            num_reps=int(d["num_reps"]),
+            num_denoise=None if d.get("num_denoise") in (None, "None") else int(d["num_denoise"]),
+            num_denoise_passive=None if d.get("num_denoise_passive") in (None, "None") else int(d["num_denoise_passive"]),
+            max_proposal_seconds=max_prop,
+            b_trace=true_false(d.get("b_trace", True)),
+        )
+
+
+@dataclass
+class RunConfig:
+    env_conf: object
+    opt_name: str
+    num_rounds: int
+    num_arms: int
+    num_denoise: Optional[int]
+    num_denoise_passive: Optional[int]
+    max_proposal_seconds: Optional[float]
+    b_trace: bool
+    trace_fn: str
+
+    def to_dict(self) -> dict:
+        return asdict(self)
+
+
+def sample_1(run_config: RunConfig):
+    import numpy as np
+
+    env_conf = run_config.env_conf
+    opt_name = run_config.opt_name
+    num_rounds = run_config.num_rounds
+    num_arms = run_config.num_arms
+    num_denoise = run_config.num_denoise
+    num_denoise_passive = run_config.num_denoise_passive
+    max_proposal_seconds = run_config.max_proposal_seconds
+    b_trace = run_config.b_trace
+
+    if max_proposal_seconds is None:
+        max_proposal_seconds = np.inf
 
     seed_all(env_conf.problem_seed + 27)
 
@@ -30,24 +121,34 @@ def sample_1(env_conf, opt_name, num_rounds, num_arms, num_denoise, b_trace=True
         policy=policy,
         num_arms=num_arms,
         num_denoise_measurement=num_denoise,
+        num_denoise_passive=num_denoise_passive,
     )
 
+    trace_records = []
     collector_trace = Collector()
-    for i_iter, te in enumerate(opt.collect_trace(designer_name=opt_name, max_iterations=num_rounds)):
+    for i_iter, te in enumerate(opt.collect_trace(designer_name=opt_name, max_iterations=num_rounds, max_proposal_seconds=max_proposal_seconds)):
+        record = TraceRecord(
+            i_iter=i_iter,
+            dt_prop=te.dt_prop,
+            dt_eval=te.dt_eval,
+            rreturn=te.rreturn,
+            env_name=env_conf.env_name,
+            opt_name=opt_name,
+        )
+        trace_records.append(record)
         if b_trace:
             collector_trace(
                 f"TRACE: name = {env_conf.env_name} opt_name = {opt_name} i_iter = {i_iter} dt_prop = {te.dt_prop:.3e} dt_eval = {te.dt_eval:.3e} return = {te.rreturn:.3e}"
             )
-
-        pass
     collector_trace("DONE")
 
-    return collector_log, collector_trace
+    return collector_log, collector_trace, trace_records
 
 
 def post_process_stdout(
     collector_log,
     collector_trace,
+    trace_records=None,
 ):
     for line in collector_log:
         print(line)
@@ -55,12 +156,15 @@ def post_process_stdout(
         print(line)
 
 
-def post_process(collector_log, collector_trace, trace_fn):
+def post_process(collector_log, collector_trace, trace_fn, trace_records=None):
     ensure_parent(trace_fn)
+
+    if trace_records is not None:
+        jsonl_fn = trace_fn + ".jsonl"
+        write_trace_jsonl(jsonl_fn, trace_records)
 
     def _w(f, line):
         f.write(line + "\n")
-        print(line)
 
     with data_writer(trace_fn) as f:
         for line in collector_log:
@@ -69,19 +173,15 @@ def post_process(collector_log, collector_trace, trace_fn):
             _w(f, line)
 
 
-def extract_trace_fns(all_args):
-    trace_fns = []
-    for d_args in all_args:
-        trace_fns.append(d_args.pop("trace_fn"))
-    return trace_fns
+def extract_trace_fns(run_configs: list[RunConfig]) -> list[str]:
+    return [rc.trace_fn for rc in run_configs]
 
 
-def scan_local(all_args):
+def scan_local(run_configs: list[RunConfig]):
     t_0 = time.time()
-    trace_fns = extract_trace_fns(all_args)
-    for trace_fn, d_args in zip(trace_fns, all_args):
-        collector_log, collector_trace = sample_1(**d_args)
-        post_process(collector_log, collector_trace, trace_fn)
+    for run_config in run_configs:
+        collector_log, collector_trace, trace_records = sample_1(run_config)
+        post_process(collector_log, collector_trace, run_config.trace_fn, trace_records)
     t_f = time.time()
     print(f"TIME_LOCAL: {t_f - t_0:.2f}")
 
@@ -95,81 +195,83 @@ def true_false(string_bool):
     assert False, string_bool
 
 
-def mk_replicates(d_args):
-    assert "noise" not in d_args, "NYI"
-
-    out_dir = (
-        f"{d_args['exp_dir']}/env={d_args['env_tag']}--opt_name={d_args['opt_name']}--num_arms={d_args['num_arms']}"
-        f"--num_rounds={d_args['num_rounds']}--num_reps={d_args['num_reps']}--num_denoise={d_args.get('num_denoise', None)}"
-    )
+def mk_replicates(config: ExperimentConfig) -> list[RunConfig]:
+    out_dir = config.to_dir_name()
 
     os.makedirs(out_dir, exist_ok=True)
-    print(f"PARAMS: {d_args}")
-    all_d_args = []
-    for i_rep in range(int(d_args["num_reps"])):
-        trace_fn = f"{out_dir}/{i_rep:05d}"
-        if data_is_done(trace_fn):
+    write_config(out_dir, config.to_dict())
+    print(f"PARAMS: {config}")
+    run_configs = []
+    for i_rep in range(config.num_reps):
+        trace_fn = f"{out_dir}/traces/{i_rep:05d}"
+        jsonl_fn = trace_fn + ".jsonl"
+        if data_is_done(trace_fn) or data_is_done(jsonl_fn):
             print(f"Skipping trace_fn = {trace_fn}. Already done.")
             continue
         else:
             problem_seed = 18 + i_rep
-            env_conf = get_env_conf(d_args["env_tag"], problem_seed=problem_seed, noise_level=d_args.get("noise", None), noise_seed_0=10 * problem_seed)
-            num_denoise = d_args.get("num_denoise", None)
-            if num_denoise == "None":
-                num_denoise = None
-            if num_denoise is not None:
-                num_denoise = int(num_denoise)
-            all_d_args.append(
-                dict(
+            env_conf = get_env_conf(config.env_tag, problem_seed=problem_seed, noise_level=None, noise_seed_0=10 * problem_seed)
+            run_configs.append(
+                RunConfig(
                     trace_fn=trace_fn,
                     env_conf=env_conf,
-                    opt_name=d_args["opt_name"],
-                    num_rounds=int(d_args["num_rounds"]),
-                    num_arms=int(d_args["num_arms"]),
-                    num_denoise=num_denoise,
-                    b_trace=true_false(d_args.get("b_trace", True)),
+                    opt_name=config.opt_name,
+                    num_rounds=config.num_rounds,
+                    num_arms=config.num_arms,
+                    num_denoise=config.num_denoise,
+                    num_denoise_passive=config.num_denoise_passive,
+                    max_proposal_seconds=config.max_proposal_seconds,
+                    b_trace=config.b_trace,
                 )
             )
-    return all_d_args
+    return run_configs
 
 
-def sampler(d_args, distributor_fn):
-    all_d_args = mk_replicates(d_args)
-    distributor_fn(all_d_args)
+def sampler(config: ExperimentConfig, distributor_fn):
+    run_configs = mk_replicates(config)
+    distributor_fn(run_configs)
 
 
-def prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None):
-    # TODO: noise subdir?
+def prep_args_1(
+    results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None, num_denoise_passive=None
+) -> ExperimentConfig:
     assert noise is None, "NYI"
 
-    exp_dir = f"{results_dir}/{exp_dir}"
+    full_exp_dir = f"{results_dir}/{exp_dir}"
 
-    if noise is None:
-        noise = ""
-    else:
-        noise = f"--noise={noise}"
-        assert False, ("NYI", noise)
-
-    # python experiments/experiment_reliable.py num_rounds=30 num_arms=5 env_tag=tlunar opt_name=gibbon num_reps=1 exp_dir=y_test num_denoise=100
-    # return f"python experiments/experiment.py env_tag={problem} opt_name={opt} num_arms={num_arms} num_reps={num_replications} num_rounds={num_rounds} {num_obs} {num_denoise} {noise} exp_dir={exp_dir} > {logs_dir}/{opt} 2>&1"
-    # return f"modal run experiments/experiment.py --env-tag={problem} --opt-name={opt} --num-arms={num_arms} --num-reps={num_replications} --num-rounds={num_rounds} {num_obs} {num_denoise} {noise} --exp-dir={exp_dir}"
-    return dict(
-        exp_dir=exp_dir,
+    return ExperimentConfig(
+        exp_dir=full_exp_dir,
         env_tag=problem,
         opt_name=opt,
         num_arms=num_arms,
         num_reps=num_replications,
         num_rounds=num_rounds,
         num_denoise=num_denoise,
+        num_denoise_passive=num_denoise_passive,
     )
 
 
-def prep_d_args(results_dir, exp_dir, funcs, dims, num_arms, num_replications, opts, noises, num_rounds=3, func_category="f", num_denoise=None):
-    d_argss = []
+def prep_d_args(
+    results_dir, exp_dir, funcs, dims, num_arms, num_replications, opts, noises, num_rounds=3, func_category="f", num_denoise=None, num_denoise_passive=None
+) -> list[ExperimentConfig]:
+    configs = []
     for dim in dims:
         for func in funcs:
             for opt in opts:
                 for noise in noises:
                     problem = f"{func_category}:{func}-{dim}d"
-                    d_argss.append(prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise, num_denoise=num_denoise))
-    return d_argss
+                    configs.append(
+                        prep_args_1(
+                            results_dir,
+                            exp_dir,
+                            problem,
+                            opt,
+                            num_arms,
+                            num_replications,
+                            num_rounds,
+                            noise,
+                            num_denoise=num_denoise,
+                            num_denoise_passive=num_denoise_passive,
+                        )
+                    )
+    return configs

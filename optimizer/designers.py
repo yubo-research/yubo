@@ -1,3 +1,4 @@
+import torch
 from botorch.acquisition.logei import qLogNoisyExpectedImprovement
 from botorch.acquisition.max_value_entropy_search import (
     qLowerBoundMaxValueEntropy,
@@ -18,12 +19,14 @@ from acq.acq_ts import AcqTS
 # from acq.acq_tsroots import AcqTSRoots
 from acq.acq_var import AcqVar
 from acq.turbo_yubo.turbo_yubo_config import TurboYUBOConfig
-from acq.turbo_yubo.ty_aenn_model_factory import build_turbo_yubo_aenn_model
 from acq.turbo_yubo.ty_enn_model_factory import build_turbo_yubo_enn_model
-from acq.turbo_yubo.ty_gpe_model_factor import build_turbo_yubo_ge_model
+from acq.turbo_yubo.ty_enngp_wrapper import ENNGPWrapper
 from acq.turbo_yubo.ty_model_factory import TurboYUBONOOPModel
 from acq.turbo_yubo.ty_selectors import ty_pareto
 from acq.turbo_yubo.ty_signal_tr import ty_signal_tr_factory_factory
+from model.enn_botorch_t import EpistemicNearestNeighborsBoTorchT, EpistemicNearestNeighborsWeighterBoTorchT
+from model.enn_fit_t import enn_fit
+from model.enn_gp_t import EpistemicNearestNeighborsGP
 
 from .ax_designer import AxDesigner
 from .bt_designer import BTDesigner
@@ -36,7 +39,8 @@ from .mts_designer import MTSDesigner
 from .optuna_designer import OptunaDesigner
 from .random_designer import RandomDesigner
 from .sobol_designer import SobolDesigner
-from .turbo_designer import TuRBODesigner
+from .turbo_enn_designer import TurboENNDesigner
+from .turbo_ref_designer import TuRBORefDesigner
 from .turbo_yubo_designer import TurboYUBODesigner
 from .vecchia_designer import VecchiaDesigner
 
@@ -212,16 +216,113 @@ class Designers:
         elif designer_name == "gibbon":
             return bt_designer(qLowerBoundMaxValueEntropy, opt_sequential=True, acq_kwargs={"candidate_set": None})
         elif designer_name == "turbo-1":
-            return TuRBODesigner(self._policy, num_init=init_yubo_default, ard=True)
+            return TuRBORefDesigner(self._policy, num_init=init_yubo_default, ard=True)
         elif designer_name == "turbo-1-iso":
-            return TuRBODesigner(self._policy, num_init=init_yubo_default, ard=False)
+            return TuRBORefDesigner(self._policy, num_init=init_yubo_default, ard=False)
         elif designer_name == "turbo-0":
-            return TuRBODesigner(self._policy, num_init=init_yubo_default, surrogate_type="none", ard=True)
-        elif designer_name.startswith("turbo-enn-"):
-            # k = int(designer_name.split("-")[-1])
-            return TuRBODesigner(self._policy, num_init=init_yubo_default, surrogate_type=designer_name[6:], ard=True)
+            return TuRBORefDesigner(self._policy, num_init=init_yubo_default, surrogate_type="none", ard=True)
+        elif designer_name == "turbo-enn":
+            num_keep_val = num_keep if keep_style == "trailing" else None
+            return TurboENNDesigner(self._policy, turbo_mode="turbo-enn", k=10, num_keep=num_keep_val)
+        elif designer_name.startswith("turbo-enn-fit-") and designer_name != "turbo-enn-fit-ucb-v":
+            num_keep_val = num_keep if keep_style == "trailing" else None
+            suffix = designer_name[len("turbo-enn-fit-") :]
+            parts = suffix.split("-")
+            kind = parts[0]
+            variant = parts[1] if len(parts) > 1 else None
+
+            if kind == "p":
+                acq_type = "pareto"
+            elif kind == "ts":
+                acq_type = "thompson"
+            elif kind == "ucb":
+                acq_type = "ucb"
+            else:
+                raise NoSuchDesignerError(designer_name)
+
+            if variant is None:
+                tr_type = None
+            else:
+                raise NoSuchDesignerError(designer_name)
+
+            return TurboENNDesigner(
+                self._policy,
+                turbo_mode="turbo-enn",
+                k=10,
+                num_keep=num_keep_val,
+                num_fit_samples=100,
+                num_fit_candidates=100,
+                acq_type=acq_type,
+                tr_type=tr_type,
+            )
+        elif designer_name == "enn-fit-ucb":
+            num_keep_val = num_keep if keep_style == "trailing" else None
+            return TurboENNDesigner(
+                self._policy,
+                turbo_mode="turbo-enn",
+                k=10,
+                num_keep=num_keep_val,
+                num_fit_samples=100,
+                num_fit_candidates=100,
+                acq_type="ucb",
+                tr_type="none",
+            )
+        elif designer_name == "turbo-enn-fit-ucb-v":
+            num_keep_val = num_keep if keep_style == "trailing" else None
+            return TurboENNDesigner(
+                self._policy,
+                turbo_mode="turbo-enn",
+                k=10,
+                num_keep=num_keep_val,
+                num_fit_samples=30,
+                acq_type="ucb",
+                use_y_var=True,
+            )
+        elif designer_name == "turbo-zero":
+            return TurboENNDesigner(self._policy, turbo_mode="turbo-zero")
+        elif designer_name == "turbo-one":
+            return TurboENNDesigner(self._policy, turbo_mode="turbo-one", num_init=init_yubo_default)
+        elif designer_name == "turbo-one-v":
+            return TurboENNDesigner(self._policy, turbo_mode="turbo-one", num_init=init_yubo_default, use_y_var=True)
+
+        # MORBO variants (multi-objective)
+        elif designer_name == "morbo-zero":
+            return TurboENNDesigner(self._policy, turbo_mode="turbo-zero", tr_type="morbo")
+        elif designer_name == "morbo-one":
+            return TurboENNDesigner(self._policy, turbo_mode="turbo-one", num_init=init_yubo_default, tr_type="morbo")
+        elif designer_name == "morbo-enn":
+            num_keep_val = num_keep if keep_style == "trailing" else None
+            return TurboENNDesigner(self._policy, turbo_mode="turbo-enn", k=10, num_keep=num_keep_val, tr_type="morbo")
+        elif designer_name.startswith("morbo-enn-fit-"):
+            num_keep_val = num_keep if keep_style == "trailing" else None
+            suffix = designer_name[len("morbo-enn-fit-") :]
+            parts = suffix.split("-")
+            kind = parts[0]
+
+            if kind == "p":
+                acq_type = "pareto"
+            elif kind == "ts":
+                acq_type = "thompson"
+            elif kind == "ucb":
+                acq_type = "ucb"
+            else:
+                raise NoSuchDesignerError(designer_name)
+
+            return TurboENNDesigner(
+                self._policy,
+                turbo_mode="turbo-enn",
+                k=10,
+                num_keep=num_keep_val,
+                num_fit_samples=100,
+                num_fit_candidates=100 * self._num_arms,
+                acq_type=acq_type,
+                tr_type="morbo",
+            )
+        # elif designer_name.startswith("turbo-enn-"):
+        # k = int(designer_name.split("-")[-1])
+        # return TuRBORefDesigner(self._policy, num_init=init_yubo_default, surrogate_type=designer_name[6:], ard=True)
         elif designer_name == "turbo-5":
-            return TuRBODesigner(self._policy, num_init=init_yubo_default, num_trust_regions=5, ard=True)
+            return TuRBORefDesigner(self._policy, num_init=init_yubo_default, num_trust_regions=5, ard=True)
         elif designer_name == "dpp":
             return bt_designer(AcqDPP, init_sobol=1, acq_kwargs={"num_X_samples": default_num_X_samples})
         elif designer_name == "vecchia":
@@ -553,6 +654,55 @@ class Designers:
                     candidate_selector=ty_pareto,
                 ),
             )
+
+        elif designer_name.startswith("tyg-ennt-"):
+
+            def _factory(*, train_x, train_y):
+                if train_y.dim() > 1:
+                    train_y = train_y.squeeze(-1)
+                train_y = train_y[..., None]
+                train_yvar = torch.zeros_like(train_y)
+                model = EpistemicNearestNeighborsBoTorchT(train_X=train_x, train_Y=train_y, train_Yvar=train_yvar)
+                return ENNGPWrapper(model)
+
+            return TurboYUBODesigner(
+                self._policy,
+                num_keep=num_keep,
+                keep_style=keep_style,
+                config=TurboYUBOConfig(
+                    model_factory=_factory,
+                    trust_region_manager=ty_signal_tr_factory_factory(use_gumbel=True),
+                    candidate_selector=ty_pareto,
+                ),
+            )
+
+        elif designer_name.startswith("tygo-ennt-"):
+            x = designer_name.split("-")
+            P = int(x[2])
+            weighting = "sobol_over_sigma"
+
+            def _factory(*, train_x, train_y):
+                if train_y.dim() > 1:
+                    train_y = train_y.squeeze(-1)
+                train_y_gp = train_y[..., None]
+                train_yvar_gp = torch.zeros_like(train_y_gp)
+                gp_model = EpistemicNearestNeighborsGP(train_X=train_x, train_Y=train_y_gp, train_Yvar=train_yvar_gp)
+                result = enn_fit(gp_model, P=P)
+                k_best = int(result["k"])
+                model = EpistemicNearestNeighborsWeighterBoTorchT(train_X=train_x, train_Y=train_y, weighting=weighting, k=k_best)
+                return ENNGPWrapper(model)
+
+            return TurboYUBODesigner(
+                self._policy,
+                num_keep=num_keep,
+                keep_style=keep_style,
+                config=TurboYUBOConfig(
+                    model_factory=_factory,
+                    trust_region_manager=ty_signal_tr_factory_factory(use_gumbel=True),
+                    candidate_selector=ty_pareto,
+                ),
+            )
+
         elif designer_name.startswith("tyg-enn-"):
             x = designer_name.split("-")
             k = int(x[2])
@@ -629,43 +779,6 @@ class Designers:
                     model_factory=_factory,
                     trust_region_manager=ty_signal_tr_factory_factory(use_gumbel=False),
                     candidate_selector=ty_pareto,
-                ),
-            )
-
-        elif designer_name.startswith("tyg-aenn-"):
-            x = designer_name.split("-")
-            k = int(x[2])
-            assert len(x) == 3
-
-            def _factory(*, train_x, train_y):
-                return build_turbo_yubo_aenn_model(train_x=train_x, train_y=train_y, k=k)
-
-            return TurboYUBODesigner(
-                self._policy,
-                num_keep=num_keep,
-                keep_style=keep_style,
-                config=TurboYUBOConfig(
-                    model_factory=_factory,
-                    trust_region_manager=ty_signal_tr_factory_factory(use_gumbel=True),
-                    candidate_selector=ty_pareto,
-                ),
-            )
-
-        elif designer_name.startswith("tygpe-"):
-            x = designer_name.split("-")
-            k = int(x[1])
-            num_gps = int(x[2]) if len(x) > 2 else 1
-
-            def _factory(*, train_x, train_y):
-                return build_turbo_yubo_ge_model(train_x=train_x, train_y=train_y, k=k, num_gps=num_gps)
-
-            return TurboYUBODesigner(
-                self._policy,
-                num_keep=num_keep,
-                keep_style=keep_style,
-                config=TurboYUBOConfig(
-                    model_factory=_factory,
-                    trust_region_manager=ty_signal_tr_factory_factory(use_gumbel=True),
                 ),
             )
 

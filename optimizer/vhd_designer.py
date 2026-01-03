@@ -2,6 +2,7 @@ import torch
 
 import acq.fit_gp as fit_gp
 from acq.acq_vhd import AcqVHD, VHDConfig
+from optimizer.designer_asserts import assert_scalar_rreturn
 
 
 class VHDDesigner:
@@ -11,9 +12,10 @@ class VHDDesigner:
         self._dtype = torch.double
         self._device = torch.empty(size=(1,)).device
 
-    def __call__(self, data, num_arms):
+    def __call__(self, data, num_arms, *, telemetry=None):
         # TODO: Permanently discard worst samples from data. Only keep best B, where B ~ 1000
         # TODO: Or, permanently discard samples not in the B ~ 1000 nearest neighbors to x_max
+        assert_scalar_rreturn(data)
         if len(data) > 0:
             Y, X = fit_gp.extract_X_Y(data, self._dtype, self._device)
             Y = fit_gp.standardize_torch(Y)
