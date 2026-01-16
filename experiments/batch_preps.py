@@ -363,6 +363,7 @@ def prep_tlunar(results_dir):
     exp_dir = "exp_compare_tlunar"
 
     opts = [
+        "random",
         "turbo-1",
         "turbo-one",
     ]
