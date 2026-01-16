@@ -4,8 +4,22 @@ import numpy as np
 
 import common.all_bounds as all_bounds
 from optimizer.designer_asserts import assert_scalar_rreturn
-from third_party.enn.turbo import Turbo, TurboMode
-from third_party.enn.turbo.turbo_config import TurboConfig, TurboENNConfig, TurboOneConfig, TurboZeroConfig
+from third_party.enn.turbo.config.acq_type import AcqType
+from third_party.enn.turbo.config.candidate_gen_config import CandidateGenConfig
+from third_party.enn.turbo.config.candidate_rv import CandidateRV
+from third_party.enn.turbo.config.enn_surrogate_config import ENNSurrogateConfig
+from third_party.enn.turbo.config.factory import (
+    turbo_enn_config,
+    turbo_one_config,
+    turbo_zero_config,
+)
+from third_party.enn.turbo.config.trust_region import (
+    MorboTRConfig,
+    NoTRConfig,
+    TrustRegionConfig,
+    TurboTRConfig,
+)
+from third_party.enn.turbo.optimizer import create_optimizer
 
 
 class TurboENNDesigner:
@@ -23,18 +37,14 @@ class TurboENNDesigner:
         use_y_var: bool = False,
         num_candidates: Optional[int] = None,
         candidate_rv: Optional[str] = None,
+        num_metrics: Optional[int] = None,
     ):
         self._policy = policy
-        if turbo_mode == "turbo-enn":
-            self._turbo_mode = TurboMode.TURBO_ENN
-        elif turbo_mode == "turbo-zero":
-            self._turbo_mode = TurboMode.TURBO_ZERO
-            assert k is None
-        elif turbo_mode == "turbo-one":
-            self._turbo_mode = TurboMode.TURBO_ONE
-            assert k is None
-        else:
+        if turbo_mode not in ("turbo-enn", "turbo-zero", "turbo-one"):
             raise ValueError(f"Invalid turbo mode: {turbo_mode}")
+        if turbo_mode in ("turbo-zero", "turbo-one"):
+            assert k is None
+        self._turbo_mode = turbo_mode
         self._num_init = num_init
         self._k = k
         self._num_keep = num_keep
@@ -45,61 +55,86 @@ class TurboENNDesigner:
         self._use_y_var = use_y_var
         self._num_candidates = num_candidates
         self._candidate_rv = candidate_rv
+        self._num_metrics = num_metrics
 
         self._turbo = None
         self._num_arms = None
         self._rng = np.random.default_rng(np.random.randint(2**31))
         self._num_told = 0
 
-    def _make_config(self, num_init: int) -> TurboConfig:
-        num_candidates = self._num_candidates
-        candidate_rv = self._candidate_rv if self._candidate_rv is not None else "sobol"
+    def _parse_candidate_rv(self) -> CandidateRV:
+        if self._candidate_rv is None:
+            return CandidateRV.SOBOL
+        candidate_rv = self._candidate_rv.lower()
+        if candidate_rv == "gpu_uniform":
+            candidate_rv = "uniform"
+        try:
+            return CandidateRV(candidate_rv)
+        except ValueError as exc:
+            raise ValueError(f"Invalid candidate_rv: {self._candidate_rv}") from exc
 
-        if self._turbo_mode == TurboMode.TURBO_ENN:
-            return TurboENNConfig(
+    def _parse_acq_type(self) -> AcqType:
+        try:
+            return AcqType(self._acq_type.lower())
+        except ValueError as exc:
+            raise ValueError(f"Invalid acq_type: {self._acq_type}") from exc
+
+    def _make_trust_region(self, num_metrics: int | None) -> TrustRegionConfig:
+        if self._tr_type == "turbo":
+            return TurboTRConfig()
+        if self._tr_type == "none":
+            return NoTRConfig()
+        if self._tr_type == "morbo":
+            if num_metrics is None:
+                raise ValueError("num_metrics is required for tr_type='morbo'")
+            return MorboTRConfig(num_metrics=int(num_metrics))
+        raise ValueError(f"Invalid tr_type: {self._tr_type}")
+
+    def _make_config(self, num_init: int, num_metrics: int | None):
+        num_candidates = self._num_candidates
+        candidate_rv = self._parse_candidate_rv()
+        trust_region = self._make_trust_region(num_metrics)
+
+        if self._turbo_mode == "turbo-enn":
+            acq_type = self._parse_acq_type()
+            enn = ENNSurrogateConfig(
                 k=self._k,
-                num_init=num_init,
-                trailing_obs=self._num_keep,
                 num_fit_samples=self._num_fit_samples,
                 num_fit_candidates=self._num_fit_candidates,
-                acq_type=self._acq_type,
-                tr_type=self._tr_type,
-                candidate_rv=candidate_rv,
-                num_candidates=num_candidates,
             )
-        elif self._turbo_mode == TurboMode.TURBO_ZERO:
-            return TurboZeroConfig(
+            candidates = None
+            if num_candidates is not None or self._candidate_rv is not None:
+                if num_candidates is None:
+                    candidates = CandidateGenConfig(candidate_rv=candidate_rv)
+                else:
+                    candidates = CandidateGenConfig(candidate_rv=candidate_rv, num_candidates=num_candidates)
+            return turbo_enn_config(
+                enn=enn,
+                trust_region=trust_region,
+                candidates=candidates,
                 num_init=num_init,
                 trailing_obs=self._num_keep,
-                tr_type=self._tr_type,
-                candidate_rv=candidate_rv,
-                num_candidates=num_candidates,
+                acq_type=acq_type,
             )
-        elif self._turbo_mode == TurboMode.TURBO_ONE:
-            return TurboOneConfig(
+        if self._turbo_mode == "turbo-zero":
+            return turbo_zero_config(
+                num_candidates=num_candidates,
                 num_init=num_init,
                 trailing_obs=self._num_keep,
-                tr_type=self._tr_type,
+                trust_region=trust_region,
                 candidate_rv=candidate_rv,
-                num_candidates=num_candidates,
             )
-        else:
-            raise ValueError(f"Invalid turbo mode: {self._turbo_mode}")
+        if self._turbo_mode == "turbo-one":
+            return turbo_one_config(
+                num_candidates=num_candidates,
+                num_init=num_init,
+                trailing_obs=self._num_keep,
+                trust_region=trust_region,
+                candidate_rv=candidate_rv,
+            )
+        raise ValueError(f"Invalid turbo mode: {self._turbo_mode}")
 
     def __call__(self, data, num_arms, *, telemetry=None):
-        TurboENNConfig(
-            k=10,
-            num_candidates=None,
-            num_init=1,
-            trailing_obs=None,
-            tr_type="turbo",
-            num_metrics=None,
-            candidate_rv="sobol",
-            acq_type="ucb",
-            num_fit_samples=100,
-            num_fit_candidates=100,
-            scale_x=False,
-        )
         if self._num_arms is None:
             self._num_arms = num_arms
             if self._num_init is not None:
@@ -110,13 +145,28 @@ class TurboENNDesigner:
                 num_init = self._num_arms
             num_dim = self._policy.num_params()
             bounds = np.array([[all_bounds.x_low, all_bounds.x_high]] * num_dim)
-            config = self._make_config(num_init)
+            num_metrics = self._num_metrics
+            if self._tr_type == "morbo":
+                if num_metrics is None:
+                    policy_metrics = getattr(self._policy, "num_metrics", None)
+                    if callable(policy_metrics):
+                        policy_metrics = policy_metrics()
+                    if policy_metrics is not None:
+                        num_metrics = int(policy_metrics)
+                    elif len(data) > 0:
+                        y = np.asarray([d.trajectory.rreturn for d in data])
+                        num_metrics = int(y.shape[1]) if y.ndim == 2 else 1
+                    else:
+                        num_metrics = 2
+                if num_metrics < 2:
+                    raise ValueError("num_metrics must be >= 2 for tr_type='morbo'")
+                self._num_metrics = num_metrics
+            config = self._make_config(num_init, num_metrics)
 
-            self._turbo = Turbo(
+            self._turbo = create_optimizer(
                 bounds=bounds,
-                mode=self._turbo_mode,
-                rng=self._rng,
                 config=config,
+                rng=self._rng,
             )
 
         if len(data) > self._num_told:
