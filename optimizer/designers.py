@@ -216,6 +216,16 @@ class Designers:
         elif designer_name == "turbo-enn":
             num_keep_val = num_keep if keep_style == "trailing" else None
             return TurboENNDesigner(self._policy, turbo_mode="turbo-enn", k=10, num_keep=num_keep_val)
+        elif designer_name == "turbo-enn-p":
+            num_keep_val = num_keep if keep_style == "trailing" else None
+            return TurboENNDesigner(
+                self._policy,
+                turbo_mode="turbo-enn",
+                k=10,
+                num_keep=num_keep_val,
+                num_fit_samples=None,
+                acq_type="pareto",
+            )
         elif designer_name.startswith("turbo-enn-fit-"):
             num_keep_val = num_keep if keep_style == "trailing" else None
             suffix = designer_name[len("turbo-enn-fit-") :]

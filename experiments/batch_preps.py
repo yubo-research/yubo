@@ -285,7 +285,9 @@ def prep_seq(results_dir):
         "turbo-one",
         "turbo-zero",
         "turbo-enn-fit-ucb",
-        "enn-fit-ucb",
+        "turbo-enn-f",
+        "turbo-one-f",
+        "turbo-enn-p",
     ]
 
     noises = [None]
