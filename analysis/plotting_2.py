@@ -95,6 +95,50 @@ def _scan_experiment_configs(root: Path) -> tuple[set[str], set[str]]:
     return env_tags, opt_names
 
 
+def infer_experiment_from_configs(results_path: str, exp_dir: str) -> dict:
+    results_path, exp_dir = _normalize_results_and_exp_dir(results_path, exp_dir)
+    root = Path(results_path) / exp_dir
+    if not root.exists():
+        raise FileNotFoundError(str(root))
+
+    cfgs: list[dict] = []
+    for child in sorted(root.iterdir()):
+        if not child.is_dir():
+            continue
+        p = child / "config.json"
+        if not p.exists():
+            continue
+        try:
+            with open(p) as f:
+                cfgs.append(json.load(f))
+        except Exception:
+            continue
+
+    if not cfgs:
+        raise ValueError(f"No config.json files found under {str(root)!r}")
+
+    env_tags = sorted({c.get("env_tag") or c.get("env") for c in cfgs if isinstance(c.get("env_tag") or c.get("env"), str)})
+    opt_names = sorted({c.get("opt_name") for c in cfgs if isinstance(c.get("opt_name"), str)})
+
+    def _uniq_int(key: str) -> int | None:
+        xs = {c.get(key) for c in cfgs if isinstance(c.get(key), int)}
+        if len(xs) == 1:
+            return int(next(iter(xs)))
+        return None
+
+    out = {
+        "results_path": results_path,
+        "exp_dir": exp_dir,
+        "env_tags": env_tags,
+        "opt_names": opt_names,
+        "num_arms": _uniq_int("num_arms"),
+        "num_rounds": _uniq_int("num_rounds"),
+        "num_reps": _uniq_int("num_reps"),
+        "configs": cfgs,
+    }
+    return out
+
+
 def _infer_params_from_configs(
     results_path: str,
     exp_dir: str,
@@ -103,7 +147,7 @@ def _infer_params_from_configs(
     problem_batch: str,
     opt_names: list[str],
 ) -> dict[str, int]:
-    """Infer (num_rounds_seq, num_rounds_batch, num_arms_batch, num_reps) from config.json."""
+    """Infer (num_rounds_seq, num_rounds_batch, num_arms_seq, num_arms_batch, num_reps) from config.json."""
     results_path, exp_dir = _normalize_results_and_exp_dir(results_path, exp_dir)
     root = Path(results_path) / exp_dir
 
@@ -147,6 +191,7 @@ def _infer_params_from_configs(
     out: dict[str, int] = {}
     nr_seq = _uniq_int([r["num_rounds"] for r in seq])
     nr_batch = _uniq_int([r["num_rounds"] for r in batch])
+    na_seq = _uniq_int([r["num_arms"] for r in seq])
     na_batch = _uniq_int([r["num_arms"] for r in batch])
     reps_seq = _uniq_int([r["num_reps"] for r in seq])
     reps_batch = _uniq_int([r["num_reps"] for r in batch])
@@ -155,6 +200,8 @@ def _infer_params_from_configs(
         out["num_rounds_seq"] = nr_seq
     if nr_batch is not None:
         out["num_rounds_batch"] = nr_batch
+    if na_seq is not None:
+        out["num_arms_seq"] = na_seq
     if na_batch is not None:
         out["num_arms_batch"] = na_batch
 
@@ -192,6 +239,7 @@ def load_rl_traces(
         num_reps=num_reps,
         opt_names=opt_names,
         problems={problem},
+        problems_exact=True,
         key=key,
     )
 
@@ -447,6 +495,197 @@ def plot_rl_experiment(
     return fig, ax, data_locator, traces
 
 
+def _best_so_far(traces: np.ndarray) -> np.ndarray:
+    z = traces
+    if np.ma.isMaskedArray(z):
+        z2 = z.filled(np.nan)
+        z2 = np.maximum.accumulate(z2, axis=-1)
+        return np.ma.masked_invalid(z2)
+    z2 = np.asarray(z, dtype=float)
+    z2 = np.maximum.accumulate(z2, axis=-1)
+    return z2
+
+
+def _cum_time_from_dt(dt_prop: np.ndarray, dt_eval: np.ndarray) -> np.ndarray:
+    z = dt_prop + dt_eval
+    if np.ma.isMaskedArray(z):
+        return np.ma.cumsum(z, axis=-1)
+    return np.cumsum(np.asarray(z, dtype=float), axis=-1)
+
+
+def _interp_1d(x: np.ndarray, y: np.ndarray, xq: np.ndarray) -> np.ndarray:
+    x = np.asarray(x, dtype=float)
+    y = np.asarray(y, dtype=float)
+    ok = np.isfinite(x) & np.isfinite(y)
+    if np.sum(ok) < 2:
+        return np.full_like(xq, np.nan, dtype=float)
+    xo = x[ok]
+    yo = y[ok]
+    order = np.argsort(xo, kind="mergesort")
+    xo = xo[order]
+    yo = yo[order]
+    xo, uniq = np.unique(xo, return_index=True)
+    yo = yo[uniq]
+    if xo.shape[0] < 2:
+        return np.full_like(xq, np.nan, dtype=float)
+    xq = np.asarray(xq, dtype=float)
+    xq_clip = np.clip(xq, xo[0], xo[-1])
+    return np.interp(xq_clip, xo, yo)
+
+
+def plot_rl_experiment_vs_time(
+    results_path: str,
+    exp_dir: str,
+    opt_names: list[str],
+    num_arms: int,
+    num_rounds: int,
+    num_reps: int,
+    problem: str,
+    title: str | None = None,
+    figsize: tuple = (10, 6),
+    n_grid: int = 200,
+):
+    data_locator_ret, traces_ret = load_rl_traces(
+        results_path,
+        exp_dir,
+        opt_names,
+        num_arms=num_arms,
+        num_rounds=num_rounds,
+        num_reps=num_reps,
+        problem=problem,
+        key="rreturn",
+    )
+    _, traces_dt_prop = load_rl_traces(
+        results_path,
+        exp_dir,
+        opt_names,
+        num_arms=num_arms,
+        num_rounds=num_rounds,
+        num_reps=num_reps,
+        problem=problem,
+        key="dt_prop",
+    )
+    _, traces_dt_eval = load_rl_traces(
+        results_path,
+        exp_dir,
+        opt_names,
+        num_arms=num_arms,
+        num_rounds=num_rounds,
+        num_reps=num_reps,
+        problem=problem,
+        key="dt_eval",
+    )
+
+    y = _best_so_far(traces_ret.squeeze(0))
+    t = _cum_time_from_dt(traces_dt_prop.squeeze(0), traces_dt_eval.squeeze(0))
+
+    optimizers = data_locator_ret.optimizers()
+    n_opt = int(y.shape[0])
+    n_rep = int(y.shape[1])
+    fig, ax = plt.subplots(1, 1, figsize=figsize)
+
+    for i_opt in range(n_opt):
+        color = ap.colors[i_opt]
+        marker = ap.markers[i_opt]
+        label = optimizers[i_opt]
+
+        ti = t[i_opt, ...]
+        yi = y[i_opt, ...]
+
+        if n_rep == 1:
+            x = np.asarray(ti[0], dtype=float)
+            yy = np.asarray(yi[0], dtype=float)
+            ok = np.isfinite(x) & np.isfinite(yy)
+            ax.plot(x[ok], yy[ok], color=color, label=label, marker=marker, markevery=max(1, int(np.sum(ok) / 10)))
+            continue
+
+        t_ends = []
+        for r in range(n_rep):
+            xr = np.asarray(ti[r], dtype=float)
+            ok = np.isfinite(xr)
+            if np.any(ok):
+                t_ends.append(float(np.nanmax(xr[ok])))
+        if not t_ends:
+            continue
+        t_max = float(np.nanmin(t_ends))
+        if not np.isfinite(t_max) or t_max <= 0:
+            continue
+        xq = np.linspace(0.0, t_max, int(n_grid))
+
+        yq = np.full((n_rep, xq.shape[0]), np.nan, dtype=float)
+        for r in range(n_rep):
+            xr = np.asarray(ti[r], dtype=float)
+            yr = np.asarray(yi[r], dtype=float)
+            yq[r, :] = _interp_1d(xr, yr, xq)
+
+        mu = np.nanmean(yq, axis=0)
+        se = np.nanstd(yq, axis=0) / np.sqrt(float(n_rep))
+        ax.plot(xq, mu, color=color, label=label, marker=marker, markevery=max(1, int(xq.shape[0] / 10)))
+        ax.fill_between(xq, mu - se, mu + se, color=color, alpha=0.25)
+
+    ax.set_xlabel("Cumulative time (s)", fontsize=12)
+    ax.set_ylabel("Return (best so far)", fontsize=12)
+    if title:
+        ax.set_title(title, fontsize=14)
+    ax.legend(loc="lower right")
+    ax.grid(True, alpha=0.3)
+    plt.tight_layout()
+    return fig, ax, data_locator_ret, traces_ret, t
+
+
+def plot_rl_experiment_vs_time_auto(
+    results_path: str,
+    exp_dir: str,
+    *,
+    problem: str | None = None,
+    opt_names: list[str] | None = None,
+    num_arms: int | None = None,
+    num_rounds: int | None = None,
+    num_reps: int | None = None,
+    title: str | None = None,
+    figsize: tuple = (10, 6),
+    n_grid: int = 200,
+):
+    info = infer_experiment_from_configs(results_path, exp_dir)
+    results_path = info["results_path"]
+    exp_dir = info["exp_dir"]
+
+    if opt_names is None:
+        opt_names = info["opt_names"]
+    if not opt_names:
+        raise ValueError(f"No opt_names found for results_path={results_path!r}, exp_dir={exp_dir!r}")
+
+    if problem is None:
+        env_tags = info["env_tags"]
+        if len(env_tags) != 1:
+            raise ValueError(f"Multiple env_tags found {env_tags!r}; pass problem= explicitly")
+        problem = env_tags[0]
+
+    if num_arms is None:
+        num_arms = info["num_arms"]
+    if num_rounds is None:
+        num_rounds = info["num_rounds"]
+    if num_reps is None:
+        num_reps = info["num_reps"]
+
+    missing = [k for k, v in [("num_arms", num_arms), ("num_rounds", num_rounds), ("num_reps", num_reps)] if v is None]
+    if missing:
+        raise ValueError(f"Couldn't infer {missing} from config.json; pass explicitly")
+
+    return plot_rl_experiment_vs_time(
+        results_path,
+        exp_dir,
+        opt_names,
+        num_arms=int(num_arms),
+        num_rounds=int(num_rounds),
+        num_reps=int(num_reps),
+        problem=problem,
+        title=title,
+        figsize=figsize,
+        n_grid=n_grid,
+    )
+
+
 def plot_rl_comparison(
     results_path: str,
     exp_dir: str,
@@ -457,6 +696,7 @@ def plot_rl_comparison(
     num_reps: int = 30,
     num_rounds_seq: int = 100,
     num_rounds_batch: int = 30,
+    num_arms_seq: int = 1,
     num_arms_batch: int = 50,
     suptitle: str = None,
     figsize: tuple = (14, 9),
@@ -466,7 +706,7 @@ def plot_rl_comparison(
         results_path,
         exp_dir,
         opt_names_seq,
-        num_arms=1,
+        num_arms=num_arms_seq,
         num_rounds=num_rounds_seq,
         num_reps=num_reps,
         problem=problem_seq,
@@ -479,7 +719,7 @@ def plot_rl_comparison(
             results_path,
             exp_dir,
             opt_names_seq,
-            num_arms=1,
+            num_arms=num_arms_seq,
             num_rounds=num_rounds_seq,
             num_reps=num_reps,
             problem=problem_seq,
@@ -528,16 +768,16 @@ def plot_rl_comparison(
     denoise_seq = _get_denoise_value(data_locator_seq, problem_seq)
     if denoise_seq is not None:
         if problem_seq.endswith(":fn"):
-            title_seq = f"Sequential (num_arms / round = 1)\n{noise_seq}, num_denoise_measurement = {denoise_seq}"
+            title_seq = f"Sequential (num_arms / round = {num_arms_seq})\n{noise_seq}, num_denoise_measurement = {denoise_seq}"
         else:
-            title_seq = f"Sequential (num_arms / round = 1)\n{noise_seq}, num_denoise_passive= {denoise_seq}"
+            title_seq = f"Sequential (num_arms / round = {num_arms_seq})\n{noise_seq}, num_denoise_passive= {denoise_seq}"
     else:
-        title_seq = f"Sequential (num_arms / round = 1)\n{noise_seq}"
+        title_seq = f"Sequential (num_arms / round = {num_arms_seq})\n{noise_seq}"
     plot_learning_curves(
         axs[0, 0],
         data_locator_seq,
         traces_seq,
-        num_arms=1,
+        num_arms=num_arms_seq,
         title=title_seq,
         cum_dt_prop_final_by_opt=cum_dt_prop_seq,
     )
@@ -573,7 +813,7 @@ def plot_rl_comparison(
             axs[1, 0],
             data_locator_seq_dt,
             traces_seq_dt_plot,
-            num_arms=1,
+            num_arms=num_arms_seq,
             title=None,
             xlabel="N, number of observations",
             ylabel=ylabel_seq,
@@ -623,6 +863,7 @@ def plot_rl_final_comparison(
     num_reps: int = 30,
     num_rounds_seq: int = 100,
     num_rounds_batch: int = 30,
+    num_arms_seq: int = 1,
     num_arms_batch: int = 50,
     suptitle: str = None,
     figsize: tuple = (14, 5),
@@ -631,7 +872,7 @@ def plot_rl_final_comparison(
         results_path,
         exp_dir,
         opt_names_seq,
-        num_arms=1,
+        num_arms=num_arms_seq,
         num_rounds=num_rounds_seq,
         num_reps=num_reps,
         problem=problem_seq,
@@ -653,11 +894,11 @@ def plot_rl_final_comparison(
     denoise_seq = _get_denoise_value(data_locator_seq, problem_seq)
     if denoise_seq is not None:
         if problem_seq.endswith(":fn"):
-            title_seq = f"Sequential (num_arms / round = 1)\n{noise_seq}, num_denoise = {denoise_seq}"
+            title_seq = f"Sequential (num_arms / round = {num_arms_seq})\n{noise_seq}, num_denoise = {denoise_seq}"
         else:
-            title_seq = f"Sequential (num_arms / round = 1)\n{noise_seq}, num_denoise_passive= {denoise_seq}"
+            title_seq = f"Sequential (num_arms / round = {num_arms_seq})\n{noise_seq}, num_denoise_passive= {denoise_seq}"
     else:
-        title_seq = f"Sequential (num_arms / round = 1)\n{noise_seq}"
+        title_seq = f"Sequential (num_arms / round = {num_arms_seq})\n{noise_seq}"
     plot_final_performance(
         axs[0],
         data_locator_seq,
@@ -702,6 +943,7 @@ def plot_results(
     num_reps: int | None = None,
     num_rounds_seq: int | None = None,
     num_rounds_batch: int | None = None,
+    num_arms_seq: int | None = None,
     num_arms_batch: int | None = None,
 ):
     problem_name = _long_names.get(problem, problem)
@@ -721,6 +963,8 @@ def plot_results(
         num_rounds_seq = inferred.get("num_rounds_seq", 100)
     if num_rounds_batch is None:
         num_rounds_batch = inferred.get("num_rounds_batch", 30)
+    if num_arms_seq is None:
+        num_arms_seq = inferred.get("num_arms_seq", 1)
     if num_arms_batch is None:
         num_arms_batch = inferred.get("num_arms_batch", 50)
 
@@ -734,6 +978,7 @@ def plot_results(
         num_reps=num_reps,
         num_rounds_seq=num_rounds_seq,
         num_rounds_batch=num_rounds_batch,
+        num_arms_seq=num_arms_seq,
         num_arms_batch=num_arms_batch,
         suptitle=f"{problem_name} Optimization Results",
         cum_dt_prop=problem in {"tlunar", "push"},
@@ -749,6 +994,7 @@ def plot_results(
         num_reps=num_reps,
         num_rounds_seq=num_rounds_seq,
         num_rounds_batch=num_rounds_batch,
+        num_arms_seq=num_arms_seq,
         num_arms_batch=num_arms_batch,
         suptitle=f"{problem_name} Final Performance Comparison (±2 SE)",
     )

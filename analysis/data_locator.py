@@ -19,6 +19,7 @@ class DataLocator:
         num_dim=None,
         opt_names=None,
         problems: set = None,
+        problems_exact: bool = False,
         key="return",
         grep_for="TRACE",
     ):
@@ -32,6 +33,7 @@ class DataLocator:
         self.num_dim = num_dim
         self._opt_names = opt_names
         self._problems = problems
+        self._problems_exact = problems_exact
         self.key = key
         self.grep_for = grep_for
 
@@ -50,8 +52,12 @@ class DataLocator:
                 continue
             if self._problems is not None:
                 for pp in self._problems:
-                    if pp in p:
-                        problems.add(p)
+                    if self._problems_exact:
+                        if pp == p:
+                            problems.add(p)
+                    else:
+                        if pp in p:
+                            problems.add(p)
             else:
                 problems.add(p)
         problems = sorted(problems)

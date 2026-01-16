@@ -21,6 +21,8 @@ class TurboENNDesigner:
         acq_type: str = "pareto",
         tr_type: Optional[str] = None,
         use_y_var: bool = False,
+        num_candidates: Optional[int] = None,
+        candidate_rv: Optional[str] = None,
     ):
         self._policy = policy
         if turbo_mode == "turbo-enn":
@@ -41,6 +43,8 @@ class TurboENNDesigner:
         self._acq_type = acq_type
         self._tr_type = tr_type if tr_type is not None else "turbo"
         self._use_y_var = use_y_var
+        self._num_candidates = num_candidates
+        self._candidate_rv = candidate_rv
 
         self._turbo = None
         self._num_arms = None
@@ -48,6 +52,9 @@ class TurboENNDesigner:
         self._num_told = 0
 
     def _make_config(self, num_init: int) -> TurboConfig:
+        num_candidates = self._num_candidates
+        candidate_rv = self._candidate_rv if self._candidate_rv is not None else "sobol"
+
         if self._turbo_mode == TurboMode.TURBO_ENN:
             return TurboENNConfig(
                 k=self._k,
@@ -57,26 +64,42 @@ class TurboENNDesigner:
                 num_fit_candidates=self._num_fit_candidates,
                 acq_type=self._acq_type,
                 tr_type=self._tr_type,
-                candidate_rv="uniform",
-                num_candidates=1000 * self._num_arms,
+                candidate_rv=candidate_rv,
+                num_candidates=num_candidates,
             )
         elif self._turbo_mode == TurboMode.TURBO_ZERO:
             return TurboZeroConfig(
                 num_init=num_init,
                 trailing_obs=self._num_keep,
                 tr_type=self._tr_type,
-                # num_candidates=100 * self._num_arms,
+                candidate_rv=candidate_rv,
+                num_candidates=num_candidates,
             )
         elif self._turbo_mode == TurboMode.TURBO_ONE:
             return TurboOneConfig(
                 num_init=num_init,
                 trailing_obs=self._num_keep,
                 tr_type=self._tr_type,
+                candidate_rv=candidate_rv,
+                num_candidates=num_candidates,
             )
         else:
             raise ValueError(f"Invalid turbo mode: {self._turbo_mode}")
 
     def __call__(self, data, num_arms, *, telemetry=None):
+        TurboENNConfig(
+            k=10,
+            num_candidates=None,
+            num_init=1,
+            trailing_obs=None,
+            tr_type="turbo",
+            num_metrics=None,
+            candidate_rv="sobol",
+            acq_type="ucb",
+            num_fit_samples=100,
+            num_fit_candidates=100,
+            scale_x=False,
+        )
         if self._num_arms is None:
             self._num_arms = num_arms
             if self._num_init is not None:
@@ -88,6 +111,7 @@ class TurboENNDesigner:
             num_dim = self._policy.num_params()
             bounds = np.array([[all_bounds.x_low, all_bounds.x_high]] * num_dim)
             config = self._make_config(num_init)
+
             self._turbo = Turbo(
                 bounds=bounds,
                 mode=self._turbo_mode,

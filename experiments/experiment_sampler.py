@@ -31,6 +31,7 @@ class ExperimentConfig:
     num_denoise: Optional[int] = None
     num_denoise_passive: Optional[int] = None
     max_proposal_seconds: Optional[float] = None
+    max_total_seconds: Optional[float] = None
     b_trace: bool = True
 
     def to_dir_name(self) -> str:
@@ -60,6 +61,11 @@ class ExperimentConfig:
             max_prop = None
         else:
             max_prop = float(max_prop)
+        max_total = d.get("max_total_seconds")
+        if max_total in (None, "None"):
+            max_total = None
+        else:
+            max_total = float(max_total)
         return cls(
             exp_dir=d["exp_dir"],
             env_tag=d["env_tag"],
@@ -70,6 +76,7 @@ class ExperimentConfig:
             num_denoise=None if d.get("num_denoise") in (None, "None") else int(d["num_denoise"]),
             num_denoise_passive=None if d.get("num_denoise_passive") in (None, "None") else int(d["num_denoise_passive"]),
             max_proposal_seconds=max_prop,
+            max_total_seconds=max_total,
             b_trace=true_false(d.get("b_trace", True)),
         )
 
@@ -85,6 +92,7 @@ class RunConfig:
     max_proposal_seconds: Optional[float]
     b_trace: bool
     trace_fn: str
+    deadline: Optional[float] = None
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -101,6 +109,7 @@ def sample_1(run_config: RunConfig):
     num_denoise_passive = run_config.num_denoise_passive
     max_proposal_seconds = run_config.max_proposal_seconds
     b_trace = run_config.b_trace
+    deadline = run_config.deadline
 
     if max_proposal_seconds is None:
         max_proposal_seconds = np.inf
@@ -126,7 +135,9 @@ def sample_1(run_config: RunConfig):
 
     trace_records = []
     collector_trace = Collector()
-    for i_iter, te in enumerate(opt.collect_trace(designer_name=opt_name, max_iterations=num_rounds, max_proposal_seconds=max_proposal_seconds)):
+    for i_iter, te in enumerate(
+        opt.collect_trace(designer_name=opt_name, max_iterations=num_rounds, max_proposal_seconds=max_proposal_seconds, deadline=deadline)
+    ):
         record = TraceRecord(
             i_iter=i_iter,
             dt_prop=te.dt_prop,
@@ -177,9 +188,14 @@ def extract_trace_fns(run_configs: list[RunConfig]) -> list[str]:
     return [rc.trace_fn for rc in run_configs]
 
 
-def scan_local(run_configs: list[RunConfig]):
+def scan_local(run_configs: list[RunConfig], max_total_seconds: Optional[float] = None):
     t_0 = time.time()
+    deadline = None if max_total_seconds is None else t_0 + max_total_seconds
     for run_config in run_configs:
+        if deadline is not None and time.time() >= deadline:
+            print(f"TIME_LIMIT: Stopping after {time.time() - t_0:.2f}s (max_total_seconds={max_total_seconds})")
+            break
+        run_config.deadline = deadline
         collector_log, collector_trace, trace_records = sample_1(run_config)
         post_process(collector_log, collector_trace, run_config.trace_fn, trace_records)
     t_f = time.time()
@@ -229,7 +245,10 @@ def mk_replicates(config: ExperimentConfig) -> list[RunConfig]:
 
 def sampler(config: ExperimentConfig, distributor_fn):
     run_configs = mk_replicates(config)
-    distributor_fn(run_configs)
+    if distributor_fn == scan_local:
+        distributor_fn(run_configs, max_total_seconds=config.max_total_seconds)
+    else:
+        distributor_fn(run_configs)
 
 
 def prep_args_1(

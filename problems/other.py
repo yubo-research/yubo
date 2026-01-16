@@ -10,4 +10,8 @@ def make(env_name, problem_seed):
         from problems.push import Push
 
         return PureFunctionEnv(Push(), Push.num_dim, problem_seed=problem_seed, distort=False)
+    elif env_name == "leukemia":
+        from problems.leukemia_env import LeukemiaEnv
+
+        return LeukemiaEnv(seed=problem_seed)
     assert False, ("Unknown env_name", env_name)

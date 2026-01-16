@@ -20,6 +20,9 @@ def mk_image():
     gymnasium[mujoco]
     faiss-cpu==1.9.0
     nds==0.4.3
+    matplotlib==3.10.8
+    celer==0.7.4
+    hyperopt==0.2.7
     """.split("\n")
     sreqs = []
     for req in reqs:
@@ -31,6 +34,7 @@ def mk_image():
 
     sreqs_2 = [
         "git+https://github.com/feji3769/VecchiaBO.git#subdirectory=code",
+        "sparse-ho @ https://github.com/QB3/sparse-ho/archive/master.zip",
     ]
 
     image = (

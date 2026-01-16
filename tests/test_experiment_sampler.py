@@ -315,7 +315,7 @@ def test_sample_1(mock_torch, mock_seed_all, mock_default_policy, mock_optimizer
     mock_seed_all.assert_called_once_with(42 + 27)
     mock_default_policy.assert_called_once_with(mock_env_conf)
     mock_optimizer_class.assert_called_once()
-    mock_optimizer.collect_trace.assert_called_once_with(designer_name="ucb", max_iterations=2, max_proposal_seconds=100.0)
+    mock_optimizer.collect_trace.assert_called_once_with(designer_name="ucb", max_iterations=2, max_proposal_seconds=100.0, deadline=None)
 
     trace_lines = list(collector_trace)
     assert len(trace_lines) == 3

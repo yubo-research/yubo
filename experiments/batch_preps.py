@@ -401,24 +401,21 @@ def prep_tlunar(results_dir):
 
 
 def prep_hop(results_dir):
-    exp_dir = "exp_enn_hop"
+    exp_dir = "exp_ennbo_hop"
 
     opts = [
-        # "random",
-        # "optuna",
-        # "turbo-0",
-        "tyg-0",
-        # "turbo-1",
-        # "tygo-enn-10:Kt100",
+        "random",
+        "optuna",
+        "turbo-zero",
+        # "turbo-one",
+        "turbo-enn-fit-ucb",
     ]
 
     cmds = []
     for opt in opts:
-        for num_arms, num_rounds, num_denoise, num_reps in [
-            (1, 1000, 1, 100),
-            (1, 10000, 1, 30),
-            # (10, 1000, 10),
-            # (50, 30, 50),
+        for num_arms, num_rounds, num_reps, num_denoise, num_denoise_passive, fn in [
+            (10, 1000, 30, None, 10, False),
+            (10, 1000, 30, 10, None, True),
         ]:
             # prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None):
             if num_arms == 1 and opt == "cma":
@@ -427,13 +424,54 @@ def prep_hop(results_dir):
                 prep_args_1(
                     results_dir,
                     exp_dir=exp_dir,
-                    problem="hop:fn",
+                    problem="hop:fn" if fn else "hop",
                     opt=opt,
                     num_arms=num_arms,
                     num_replications=num_reps,
                     num_rounds=num_rounds,
                     noise=None,
                     num_denoise=num_denoise,
+                    num_denoise_passive=num_denoise_passive,
+                )
+            )
+
+    return cmds
+
+
+def prep_leukemia(results_dir):
+    exp_dir = "exp_ennbo_leukemia"
+
+    opts = [
+        "random",
+        "optuna",
+        "cma",
+        "turbo-zero-f",
+        # "turbo-one-f",
+        "turbo-enn-f:Kt100",
+        "turbo-enn-f:Kt300",
+    ]
+
+    cmds = []
+    for opt in opts:
+        for num_arms, num_rounds, num_reps, num_denoise, num_denoise_passive, fn in [
+            (10, 1000, 30, None, 10, False),
+            (10, 1000, 30, 10, None, True),
+        ]:
+            # prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None):
+            if num_arms == 1 and opt == "cma":
+                continue
+            cmds.append(
+                prep_args_1(
+                    results_dir,
+                    exp_dir=exp_dir,
+                    problem="leukemia:fn" if fn else "leukemia",
+                    opt=opt,
+                    num_arms=num_arms,
+                    num_replications=num_reps,
+                    num_rounds=num_rounds,
+                    noise=None,
+                    num_denoise=num_denoise,
+                    num_denoise_passive=num_denoise_passive,
                 )
             )
 

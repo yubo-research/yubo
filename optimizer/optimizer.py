@@ -23,8 +23,8 @@ def _pareto_mask_max(y: np.ndarray) -> np.ndarray:
         if not keep[i]:
             continue
         yi = y[i]
-        ge = np.all(y >= yi, axis=1)
-        gt = np.any(y > yi, axis=1)
+        ge = np.all(yi >= y, axis=1)
+        gt = np.any(yi > y, axis=1)
         dom = ge & gt
         dom[i] = False
         keep[dom] = False
@@ -40,8 +40,8 @@ def _pareto_mask_min(y: np.ndarray) -> np.ndarray:
         if not keep[i]:
             continue
         yi = y[i]
-        le = np.all(y <= yi, axis=1)
-        lt = np.any(y < yi, axis=1)
+        le = np.all(yi <= y, axis=1)
+        lt = np.any(yi < y, axis=1)
         dom = le & lt
         dom[i] = False
         keep[dom] = False
@@ -56,7 +56,16 @@ class _TraceEntry:
 
 
 class Optimizer:
-    def __init__(self, collector, *, env_conf, policy, num_arms, num_denoise_measurement=None, num_denoise_passive=None):
+    def __init__(
+        self,
+        collector,
+        *,
+        env_conf,
+        policy,
+        num_arms,
+        num_denoise_measurement=None,
+        num_denoise_passive=None,
+    ):
         self._collector = collector
         self._env_conf = env_conf
         self.best_policy = policy
@@ -113,10 +122,12 @@ class Optimizer:
 
         return data, dt_prop, dt_eval
 
-    def collect_trace(self, designer_name, max_iterations, max_proposal_seconds=np.inf):
+    def collect_trace(self, designer_name, max_iterations, max_proposal_seconds=np.inf, deadline=None):
         self.initialize(designer_name)
         num_iterations = 0
         while num_iterations < max_iterations and self._cum_dt_proposing < max_proposal_seconds:
+            if deadline is not None and time.time() >= deadline:
+                break
             self.iterate()
             num_iterations += 1
         self.stop()

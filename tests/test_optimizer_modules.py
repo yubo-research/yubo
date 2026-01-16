@@ -388,34 +388,6 @@ class TestMTSDesigner:
         assert md._init_style == "find"
 
 
-class TestENNDesigner:
-    def test_init(self):
-        from acq.acq_enn import ENNConfig
-        from optimizer.enn_designer import ENNDesigner
-        from problems.env_conf import default_policy, get_env_conf
-
-        env_conf = get_env_conf("f:sphere-5d", problem_seed=42, noise_seed_0=18)
-        policy = default_policy(env_conf)
-
-        config = ENNConfig(k=10)
-        ed = ENNDesigner(policy, config)
-        assert ed._policy == policy
-
-
-class TestVHDDesigner:
-    def test_init(self):
-        from acq.acq_vhd import VHDConfig
-        from optimizer.vhd_designer import VHDDesigner
-        from problems.env_conf import default_policy, get_env_conf
-
-        env_conf = get_env_conf("f:sphere-5d", problem_seed=42, noise_seed_0=18)
-        policy = default_policy(env_conf)
-
-        config = VHDConfig(k=10)
-        vd = VHDDesigner(policy, config)
-        assert vd._policy == policy
-
-
 class TestCMADesigner:
     def test_init(self):
         from optimizer.cma_designer import CMAESDesigner
@@ -658,6 +630,102 @@ class TestOptimizer:
         opt.initialize("random")
         opt.iterate()
         assert opt.r_best_est > initial_best
+
+    def test_iterate_internal(self):
+        from unittest.mock import MagicMock
+
+        from common.collector import Collector
+        from optimizer.optimizer import Optimizer
+        from problems.env_conf import default_policy, get_env_conf
+
+        env_conf = get_env_conf("f:sphere-2d", problem_seed=42, noise_seed_0=18)
+        policy = default_policy(env_conf)
+        collector = Collector()
+        opt = Optimizer(collector, env_conf=env_conf, policy=policy, num_arms=1)
+
+        mock_designer = MagicMock()
+        mock_designer.return_value = [policy]
+
+        data, dt_prop, dt_eval = opt._iterate(mock_designer, num_arms=1)
+
+        assert len(data) == 1
+        assert dt_prop >= 0
+        assert dt_eval >= 0
+        mock_designer.assert_called_once()
+
+    def test_iterate_multiobjective(self):
+        from unittest.mock import MagicMock
+
+        import numpy as np
+
+        from common.collector import Collector
+        from optimizer.datum import Datum
+        from optimizer.optimizer import Optimizer
+        from optimizer.trajectories import Trajectory
+        from problems.env_conf import default_policy, get_env_conf
+
+        env_conf = get_env_conf("f:sphere-2d", problem_seed=42, noise_seed_0=18)
+        policy = default_policy(env_conf)
+        collector = Collector()
+        opt = Optimizer(collector, env_conf=env_conf, policy=policy, num_arms=2)
+
+        # Mock designer to return policies
+        mock_designer = MagicMock()
+        mock_designer.return_value = [policy, policy]
+        opt._opt_designers = [mock_designer]
+        opt._t_0 = time.time()
+        opt._trace = []  # Initialize trace
+
+        # Mock _iterate to return multi-objective data
+        traj1 = Trajectory(rreturn=np.array([1.0, 2.0]), states=np.array([]), actions=np.array([]))
+        traj2 = Trajectory(rreturn=np.array([2.0, 1.0]), states=np.array([]), actions=np.array([]))
+        data = [Datum(mock_designer, policy, None, traj1), Datum(mock_designer, policy, None, traj2)]
+
+        opt._iterate = MagicMock(return_value=(data, 0.1, 0.1))
+
+        # Manually set a 2D reference point to match the 2D mock rewards
+        opt._ref_point = np.array([0.0, 0.0])
+
+        # We need a reference point for HV calculation.
+        # iterate() will create one if it's None, but we pre-set it.
+        opt.iterate()
+
+        assert opt.y_best is not None
+        assert len(opt.y_best) == 2
+        assert opt.r_best_est > -1e99  # HV should be computed
+
+
+class TestParetoMask:
+    def test_pareto_mask_max(self):
+        from optimizer.optimizer import _pareto_mask_max
+
+        y = np.array(
+            [
+                [1.0, 1.0],
+                [2.0, 2.0],  # dominates [1, 1]
+                [2.0, 1.0],  # dominated by [2, 2]
+                [1.0, 2.0],  # dominated by [2, 2]
+                [3.0, 0.5],  # non-dominated
+            ]
+        )
+        mask = _pareto_mask_max(y)
+        expected = np.array([False, True, False, False, True])
+        np.testing.assert_array_equal(mask, expected)
+
+    def test_pareto_mask_min(self):
+        from optimizer.optimizer import _pareto_mask_min
+
+        y = np.array(
+            [
+                [1.0, 1.0],  # dominates [2, 2]
+                [2.0, 2.0],  # dominated by [1, 1]
+                [0.5, 3.0],  # non-dominated
+                [3.0, 0.5],  # non-dominated
+            ]
+        )
+        mask = _pareto_mask_min(y)
+        expected = np.array([True, False, True, True])
+        np.testing.assert_array_equal(mask, expected)
 
 
 class TestDesigners:

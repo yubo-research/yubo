@@ -6,14 +6,11 @@ import gymnasium as gym
 
 import problems.other as other
 import problems.pure_functions as pure_functions
-from problems.bipedal_walker_feat_policy import BipedalWalkerFeatPolicy
 from problems.bipedal_walker_policy import BipedalWalkerPolicy
-from problems.control_policy import ControlPolicyFactory
 from problems.linear_policy import LinearPolicy
 from problems.mlp_policy import MLPPolicyFactory
 from problems.noise_maker import NoiseMaker
 from problems.pure_function_policy import PureFunctionPolicy
-from problems.reactor_policy import ReactorPolicyFactory
 from problems.turbo_lunar_policy import TurboLunarPolicy
 
 
@@ -171,96 +168,6 @@ _gym_env_confs = {
         ),
         policy_class=MLPPolicyFactory((), rnn_hidden_size=4, use_layer_norm=True, use_prev_action=True),
     ),
-    "bw-mlp-r4": _gym_conf(
-        "BipedalWalker-v3",
-        gym_conf=GymConf(
-            max_steps=1600,
-            num_frames_skip=100,
-        ),
-        policy_class=MLPPolicyFactory((), rnn_hidden_size=4, use_layer_norm=True, use_prev_action=False),
-    ),
-    "bw-mlp-walk": _gym_conf(
-        "BipedalWalker-v3",
-        gym_conf=GymConf(
-            max_steps=1600,
-            num_frames_skip=100,
-        ),
-        policy_class=MLPPolicyFactory(
-            (),
-            rnn_hidden_size=4,
-            use_layer_norm=True,
-            use_prev_action=False,
-            use_phase_features=True,
-            num_phase_harmonics=2,
-        ),
-    ),
-    "bw-mlp-r4h8": _gym_conf(
-        "BipedalWalker-v3",
-        gym_conf=GymConf(
-            max_steps=1600,
-            num_frames_skip=100,
-        ),
-        policy_class=MLPPolicyFactory((8,), rnn_hidden_size=4, use_layer_norm=True, use_prev_action=False),
-    ),
-    "bw-mlp-r6": _gym_conf(
-        "BipedalWalker-v3",
-        gym_conf=GymConf(
-            max_steps=1600,
-            num_frames_skip=100,
-        ),
-        policy_class=MLPPolicyFactory((), rnn_hidden_size=6, use_layer_norm=True, use_prev_action=False),
-    ),
-    "bw-mlp-r6h8": _gym_conf(
-        "BipedalWalker-v3",
-        gym_conf=GymConf(
-            max_steps=1600,
-            num_frames_skip=100,
-        ),
-        policy_class=MLPPolicyFactory((8,), rnn_hidden_size=6, use_layer_norm=True, use_prev_action=False),
-    ),
-    "bw-control": _gym_conf(
-        "BipedalWalker-v3",
-        gym_conf=GymConf(
-            max_steps=1600,
-            num_frames_skip=100,
-        ),
-        policy_class=ControlPolicyFactory(use_layer_norm=True),
-    ),
-    "bw-reactor": _gym_conf(
-        "BipedalWalker-v3",
-        gym_conf=GymConf(
-            max_steps=1600,
-            num_frames_skip=100,
-        ),
-        policy_class=ReactorPolicyFactory(
-            num_modes=3,
-            memory_dim=6,
-            delta_hidden=8,
-            joint_angle_idx=[4, 6, 9, 11],
-            joint_vel_idx=[5, 7, 10, 12],
-            contact_idx=[8, 13],
-            hazard_idx=[20, 21, 22, 23],
-            vx_idx=2,
-        ),
-    ),
-    "bw-reactor-mo": _gym_conf(
-        "BipedalWalker-v3",
-        gym_conf=GymConf(
-            max_steps=1600,
-            num_frames_skip=100,
-        ),
-        policy_class=ReactorPolicyFactory(
-            num_modes=3,
-            memory_dim=6,
-            delta_hidden=8,
-            joint_angle_idx=[4, 6, 9, 11],
-            joint_vel_idx=[5, 7, 10, 12],
-            contact_idx=[8, 13],
-            hazard_idx=[20, 21, 22, 23],
-            vx_idx=2,
-            return_metrics=True,
-        ),
-    ),
     "bw-heur": _gym_conf(
         "BipedalWalker-v3",
         gym_conf=GymConf(
@@ -270,15 +177,6 @@ _gym_env_confs = {
         ),
         policy_class=BipedalWalkerPolicy,
         noise_seed_0=1,
-    ),
-    "bw-feat": _gym_conf(
-        "BipedalWalker-v3",
-        gym_conf=GymConf(
-            max_steps=1600,
-            num_frames_skip=100,
-            transform_state=False,
-        ),
-        policy_class=BipedalWalkerFeatPolicy,
     ),
     # 300
     "lunar": _gym_conf(
