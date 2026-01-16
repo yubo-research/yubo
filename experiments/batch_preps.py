@@ -360,23 +360,19 @@ def prep_push(results_dir):
 
 
 def prep_tlunar(results_dir):
-    exp_dir = "exp_ennbo_tlunar"
+    exp_dir = "exp_compare_tlunar"
 
     opts = [
-        "random",
-        "turbo-zero",
+        "turbo-1",
         "turbo-one",
-        "turbo-enn-fit-ucb",
-        "enn-fit-ucb",
-        "cma",
-        "optuna",
     ]
 
     cmds = []
     for opt in opts:
         for num_arms, num_rounds, num_denoise, num_denoise_passive, fn in [
-            (1, 300, 1, 30, False),
-            # (10, 100, 10),
+            # (1, 300, 1, 30, False),
+            (1, 300, 1, None, True),
+            (10, 100, 10, None, True),
             (50, 30, 50, None, True),
         ]:
             # prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None):

@@ -216,7 +216,7 @@ class Designers:
         elif designer_name == "turbo-enn":
             num_keep_val = num_keep if keep_style == "trailing" else None
             return TurboENNDesigner(self._policy, turbo_mode="turbo-enn", k=10, num_keep=num_keep_val)
-        elif designer_name.startswith("turbo-enn-fit-") and designer_name != "turbo-enn-fit-ucb-v":
+        elif designer_name.startswith("turbo-enn-fit-"):
             num_keep_val = num_keep if keep_style == "trailing" else None
             suffix = designer_name[len("turbo-enn-fit-") :]
             parts = suffix.split("-")
@@ -249,6 +249,10 @@ class Designers:
             )
         elif designer_name == "turbo-enn-f":
             num_keep_val = num_keep if keep_style == "trailing" else None
+
+            def num_candidates(num_dim, num_arms):
+                return min(5000, 100 * num_arms)
+
             return TurboENNDesigner(
                 self._policy,
                 turbo_mode="turbo-enn",
@@ -257,7 +261,7 @@ class Designers:
                 num_fit_samples=100,
                 num_fit_candidates=100,
                 acq_type="ucb",
-                num_candidates=min(5000, 100 * self._num_arms),
+                num_candidates=num_candidates,
                 candidate_rv="uniform",
             )
 
