@@ -1,10 +1,27 @@
 import os
+from functools import lru_cache
 from pathlib import Path
 
 import numpy as np
 from scipy.stats import rankdata
 
 from .data_io import data_is_done, read_trace_jsonl
+
+CACHE_DEBUG = True
+
+
+def clear_cache():
+    _load_kv_cached.cache_clear()
+    load_traces_jsonl.cache_clear()
+    _load_traces_cached.cache_clear()
+
+
+def cache_stats():
+    return {
+        "load_kv": _load_kv_cached.cache_info(),
+        "load_traces_jsonl": load_traces_jsonl.cache_info(),
+        "load_traces": _load_traces_cached.cache_info(),
+    }
 
 
 def problems_in(results_path, exp_tag):
@@ -46,10 +63,9 @@ def load(fn, keys):
     return np.array(data).squeeze()
 
 
-def load_kv(fn, keys, grep_for=None):
-    if isinstance(keys, str):
-        keys = keys.split(",")
-    skeys = set(keys)
+@lru_cache(maxsize=1024)
+def _load_kv_cached(fn, keys_tuple, grep_for):
+    skeys = set(keys_tuple)
     data = {k: [] for k in skeys}
     with open(fn) as f:
         for line in f:
@@ -71,6 +87,13 @@ def load_kv(fn, keys, grep_for=None):
     return out
 
 
+def load_kv(fn, keys, grep_for=None):
+    if isinstance(keys, str):
+        keys = keys.split(",")
+    return _load_kv_cached(fn, tuple(sorted(keys)), grep_for)
+
+
+@lru_cache(maxsize=1024)
 def load_traces_jsonl(trace_dir, key="rreturn"):
     traces = []
     i_missing = []
@@ -107,7 +130,8 @@ def load_traces_jsonl(trace_dir, key="rreturn"):
     return traces
 
 
-def load_traces(trace_dir, key="return", grep_for="TRACE"):
+@lru_cache(maxsize=1024)
+def _load_traces_cached(trace_dir, key, grep_for):
     trace_dir_path = Path(trace_dir)
     traces_subdir = trace_dir_path / "traces"
     if traces_subdir.exists():
@@ -142,6 +166,19 @@ def load_traces(trace_dir, key="return", grep_for="TRACE"):
 
     traces = np.array(traces)
     return traces
+
+
+def load_traces(trace_dir, key="return", grep_for="TRACE"):
+    if CACHE_DEBUG:
+        info_before = _load_traces_cached.cache_info()
+    result = _load_traces_cached(trace_dir, key, grep_for)
+    if CACHE_DEBUG:
+        info_after = _load_traces_cached.cache_info()
+        if info_after.hits > info_before.hits:
+            print(f"CACHE HIT: load_traces({trace_dir[-40:]}, {key})")
+        else:
+            print(f"CACHE MISS: load_traces({trace_dir[-40:]}, {key})")
+    return result
 
 
 def load_multiple_traces(data_locator):

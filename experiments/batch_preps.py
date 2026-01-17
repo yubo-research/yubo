@@ -1,5 +1,5 @@
 from experiments.experiment_sampler import prep_args_1, prep_d_args
-from experiments.func_names import func_brief, funcs_1d, funcs_all, funcs_nd
+from experiments.func_names import func_brief_2, funcs_1d, funcs_all, funcs_nd
 
 
 def prep_mtv_repro(results_dir):
@@ -273,13 +273,12 @@ def prep_mtv_36(results_dir):
 
 
 def prep_seq(results_dir):
-    exp_dir = "exp_enn_nov"
+    exp_dir = "exp_enn_seq_jan"
 
     opts = [
         "random",
         "optuna",
         "ucb",
-        # "cma",
         "ucb:Msparse",
         "vecchia",
         "turbo-one",
@@ -287,6 +286,7 @@ def prep_seq(results_dir):
         "turbo-enn-fit-ucb",
         "turbo-enn-f",
         "turbo-one-f",
+        "turbo-zero-f",
         "turbo-enn-p",
     ]
 
@@ -307,7 +307,7 @@ def prep_seq(results_dir):
             prep_d_args(
                 results_dir,
                 exp_dir=exp_dir,
-                funcs=func_brief,
+                funcs=func_brief_2,
                 dims=[num_dim],
                 num_arms=1,
                 num_replications=num_replications,

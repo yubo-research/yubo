@@ -11,18 +11,26 @@ modal_image = mk_image()
 
 _APP_NAME = "yubo_batches"
 _TIMEOUT_HOURS = 24  # was: 5
+_MAX_CONTAINERS = 1000
 
 _app_name = "yubo"
 app = modal.App(name=_app_name)
 
 
-def _dict():
+# TODO: Make the resubmitter and deleter a single function to save a slot. Or maybe that's not how functions work.
+
+
+def _results_dict():
     return modal.Dict.from_name("batches_dict", create_if_missing=True)
 
 
-@app.function(image=modal_image, concurrency_limit=100, timeout=_TIMEOUT_HOURS * 60 * 60)  # , gpu="H100")
+def _submitted_dict():
+    return modal.Dict.from_name("submitted_dict", create_if_missing=True)
+
+
+@app.function(image=modal_image, concurrency_limit=_MAX_CONTAINERS, timeout=_TIMEOUT_HOURS * 60 * 60)  # , gpu="H100")
 def modal_batches_worker(job):
-    res_dict = _dict()
+    res_dict = _results_dict()
 
     key, run_config = job
 
@@ -31,22 +39,26 @@ def modal_batches_worker(job):
     res_dict[key] = (run_config.trace_fn, collector_log, collector_trace, trace_records)
 
 
-# @app.function(image=modal_image, concurrency_limit=1, timeout=_TIMEOUT_HOURS * 60 * 60)
-# def modal_batches_submitter(job_name: str):
-#     batches_submitter(job_name)
-
-
-@app.function(image=modal_image, concurrency_limit=1, timeout=_TIMEOUT_HOURS * 60 * 60)
+@app.function(image=modal_image, concurrency_limit=_MAX_CONTAINERS // 10, timeout=_TIMEOUT_HOURS * 60 * 60)
 def modal_batches_resubmitter(batch_of_configs):
+    submitted_dict = _submitted_dict()
+    todo = []
     for key, run_config in batch_of_configs:
-        process_job = modal.Function.from_name(_app_name, "modal_batches_worker")
-        process_job.spawn((key, run_config))
+        if key in submitted_dict:
+            continue
+        submitted_dict[key] = True
+        todo.append((key, run_config))
+
+    print("TODO:", len(todo))
+
+    worker = modal.Function.from_name(_app_name, "modal_batches_worker")
+    worker.spawn_map(todo)
 
 
 def batches_submitter(batch_tag: str):
     n = 0
     batch = []
-    MAX_BATCH = 100
+    MAX_BATCH = 1000
 
     def _flush():
         nonlocal batch
@@ -84,7 +96,7 @@ def _job_key(job_name, i_job):
 
 @app.function(image=modal_image, concurrency_limit=1, timeout=_TIMEOUT_HOURS * 60 * 60)
 def modal_batch_deleter(collected_keys):
-    res_dict = _dict()
+    res_dict = _results_dict()
     for key in collected_keys:
         print("DEL:", key)
         try:
@@ -94,7 +106,7 @@ def modal_batch_deleter(collected_keys):
 
 
 def collect():
-    res_dict = _dict()
+    res_dict = _results_dict()
     print("DICT_SIZE:", res_dict.len())
 
     collected_keys = set()
@@ -119,12 +131,15 @@ def collect():
     print(f"results_available before del: {res_dict.len()}")
     func = modal.Function.from_name(_app_name, "modal_batch_deleter")
     func.spawn(collected_keys)
+
     print(f"num_collected = {len(collected_keys)}")
 
 
 def status():
-    res_dict = _dict()
+    res_dict = _results_dict()
+    submitted_dict = _submitted_dict()
     print(f"results_available = {res_dict.len()}")
+    print(f"submitted = {submitted_dict.len()}")
 
 
 @app.local_entrypoint()
