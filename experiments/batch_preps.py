@@ -324,13 +324,11 @@ def prep_push(results_dir):
     exp_dir = "exp_ennbo_push"
 
     opts = [
-        # "random",
-        # "turbo-zero",
-        # "turbo-one",
-        # "turbo-enn-fit-ucb",
-        # "enn-fit-ucb",
-        # "cma",
-        # "optuna",
+        "random",
+        "optuna",
+        "turbo-zero",
+        "turbo-one",
+        "turbo-enn-fit-ucb",
         "turbo-enn-p",
     ]
 
@@ -338,8 +336,7 @@ def prep_push(results_dir):
     for opt in opts:
         for num_arms, num_rounds, num_denoise, num_denoise_passive, fn in [
             (1, 10000, 1, 30, False),
-            # (10, 100, 10),
-            (50, 300, 50, None, True),
+            # (50, 300, 50, None, True),
         ]:
             # prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None):
             if num_arms == 1 and opt == "cma":
@@ -367,9 +364,11 @@ def prep_tlunar(results_dir):
     exp_dir = "exp_ennbo_tlunar"
 
     opts = [
-        # "random",
-        # "turbo-1",
-        # "turbo-one",
+        "random",
+        "optuna",
+        "turbo-zero",
+        "turbo-one",
+        "turbo-enn-fit-ucb",
         "turbo-enn-p",
     ]
 
@@ -377,9 +376,7 @@ def prep_tlunar(results_dir):
     for opt in opts:
         for num_arms, num_rounds, num_denoise, num_denoise_passive, fn in [
             (1, 300, 1, 30, False),
-            # (1, 300, 1, None, True),
-            # (10, 100, 10, None, True),
-            (50, 30, 50, None, True),
+            # (50, 30, 50, None, True),
         ]:
             # prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None):
             if num_arms == 1 and opt == "cma":
@@ -409,9 +406,9 @@ def prep_hop(results_dir):
         "random",
         "optuna",
         "turbo-zero",
-        # "turbo-one",
+        "turbo-one",
         "turbo-enn-fit-ucb",
-        "turbo-p",
+        "turbo-enn-p",
     ]
 
     cmds = []

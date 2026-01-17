@@ -191,7 +191,9 @@ class TurboENNDesigner:
             assert len(y_se_list) == 0 or len(y_se_list) == len(y_list), (len(y_se_list), len(y_list))
             if len(x_list) > 0:
                 x = np.array(x_list)
-                y_obs = np.atleast_2d(np.array(y_list))
+                y_obs = np.array(y_list)
+                if len(y_obs.shape) == 1:
+                    y_obs = y_obs[:, None]
                 if len(y_se_list) > 0:
                     y_se = np.array(y_se_list)
                     # print("Using y_var", y_se)

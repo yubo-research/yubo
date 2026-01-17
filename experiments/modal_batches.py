@@ -142,6 +142,15 @@ def status():
     print(f"submitted = {submitted_dict.len()}")
 
 
+def clean_up():
+    for name in ["batches_dict", "submitted_dict"]:
+        try:
+            modal.Dict.delete(name)
+            print(f"CLEANUP: deleted dict name={name}")
+        except Exception as e:
+            print(f"CLEANUP: dict delete failed name={name} err={e!r}")
+
+
 @app.local_entrypoint()
 def batches(cmd: str, batch_tag: str = None, num: int = None):
     if cmd == "work":
@@ -159,5 +168,8 @@ def batches(cmd: str, batch_tag: str = None, num: int = None):
     elif cmd == "collect":
         assert batch_tag is None
         collect()
+    elif cmd == "clean_up":
+        assert batch_tag is None
+        clean_up()
     else:
         assert False, cmd
