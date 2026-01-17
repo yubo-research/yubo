@@ -51,6 +51,7 @@ def _pareto_mask_min(y: np.ndarray) -> np.ndarray:
 @dataclass
 class _TraceEntry:
     rreturn: float
+    rreturn_decision: float
     dt_prop: float
     dt_eval: float
 
@@ -76,8 +77,6 @@ class Optimizer:
         self.r_best_est = -1e99
         self.y_best = None
         self.best_datum = None
-        self._r_cumulative = 0
-        self._b_cumulative_reward = False
 
         self._data = []
         self._i_iter = 0
@@ -164,28 +163,46 @@ class Optimizer:
                 collect_trajectory(self._env_conf, self._policy_viz, noise_seed=self._noise_seed_viz, show_frames=True)
 
         if ret_batch.ndim <= 1:
-            if self._num_denoise_passive_eval is not None:
-                eval_rets = [evaluate_for_best(self._env_conf, datum.policy, self._num_denoise_passive_eval) for datum in data]
-                best_idx = int(np.argmax(np.asarray(eval_rets, dtype=np.float64)))
-                ret_best_batch = float(eval_rets[best_idx])
-            else:
-                best_idx = int(np.argmax(np.asarray(ret_batch, dtype=np.float64)))
-                ret_best_batch = float(ret_batch[best_idx])
+            did_update_best = False
+            used_designer_best = False
+            if hasattr(designer, "best_datum") and callable(getattr(designer, "best_datum")):
+                datum_best = designer.best_datum()
+                if datum_best is not None:
+                    decision_best = float(datum_best.trajectory.get_decision_rreturn())
+                    if decision_best > float(self.r_best_est):
+                        self.r_best_est = decision_best
+                        self.best_datum = datum_best
+                        self.best_policy = self.best_datum.policy.clone()
+                        did_update_best = True
+                    self.r_best_est = max(self.r_best_est, decision_best)
+                    used_designer_best = True
+            if not used_designer_best:
+                decision_batch = []
+                for datum in data:
+                    decision_batch.append(datum.trajectory.get_decision_rreturn())
+                decision_batch = np.asarray(decision_batch, dtype=np.float64)
+                best_idx = int(np.argmax(decision_batch))
+                decision_best_batch = float(decision_batch[best_idx])
 
-            if float(ret_best_batch) > float(self.r_best_est):
-                self.r_best_est = float(ret_best_batch)
-                self.y_best = self.r_best_est
-                self.best_datum = data[best_idx]
-                self.best_policy = self.best_datum.policy.clone()
+                if float(decision_best_batch) > float(self.r_best_est):
+                    self.r_best_est = float(decision_best_batch)
+                    self.best_datum = data[best_idx]
+                    self.best_policy = self.best_datum.policy.clone()
+                    did_update_best = True
 
-            ret_best_batch = float(ret_best_batch)
-            self.r_best_est = max(self.r_best_est, float(ret_best_batch))
-            self.y_best = self.r_best_est
-            if self._b_cumulative_reward:
-                self._r_cumulative += float(ret_batch.mean())
-                ret_eval = self._r_cumulative / (1 + self._i_iter)
+                self.r_best_est = max(self.r_best_est, float(decision_best_batch))
+
+            if self._num_denoise_passive_eval is None:
+                if self.best_datum is not None:
+                    self.y_best = float(self.best_datum.trajectory.rreturn)
+                else:
+                    self.y_best = float(self.r_best_est)
             else:
-                ret_eval = self.r_best_est
+                if did_update_best or self.y_best is None:
+                    self.y_best = float(evaluate_for_best(self._env_conf, self.best_policy, self._num_denoise_passive_eval))
+
+            ret_eval = float(self.y_best)
+
             y_best_s = f"{float(self.y_best):.3f}"
             ret_best_s = f"{float(self.r_best_est):.3f}"
             ret_eval_s = f"{float(ret_eval):.3f}"
@@ -255,11 +272,12 @@ class Optimizer:
 
         cum_time = time.time() - self._t_0
         self._cum_dt_proposing += dt_prop
-        self._collector(
-            f"ITER: i_iter = {self._i_iter} cum_time = {cum_time:.2f} dt_eval = {dt_eval:.3f} dt_prop = {dt_prop:.3f} {self._telemetry.format()} cum_dt_prop = {self._cum_dt_proposing:.3f} y_best = {y_best_s} ret_best = {ret_best_s} ret_eval = {ret_eval_s}"
-        )
+        if ret_eval > -1e98:
+            self._collector(
+                f"ITER: i_iter = {self._i_iter} cum_time = {cum_time:.2f} dt_eval = {dt_eval:.3f} dt_prop = {dt_prop:.3f} {self._telemetry.format()} cum_dt_prop = {self._cum_dt_proposing:.3f} y_best = {y_best_s} ret_best = {ret_best_s} ret_eval = {ret_eval_s}"
+            )
         sys.stdout.flush()
-        self._trace.append(_TraceEntry(ret_eval, dt_prop, dt_eval))
+        self._trace.append(_TraceEntry(float(ret_eval), float(self.r_best_est), dt_prop, dt_eval))
         self._i_iter += 1
         self.last_designer = designer
         return self._trace

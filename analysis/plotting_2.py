@@ -768,7 +768,7 @@ def plot_rl_comparison(
     denoise_seq = _get_denoise_value(data_locator_seq, problem_seq)
     if denoise_seq is not None:
         if problem_seq.endswith(":fn"):
-            title_seq = f"Sequential (num_arms / round = {num_arms_seq})\n{noise_seq}, num_denoise_measurement = {denoise_seq}"
+            title_seq = f"Sequential (num_arms / round = {num_arms_seq})\n{noise_seq}, num_denoise_obs = {denoise_seq}"
         else:
             title_seq = f"Sequential (num_arms / round = {num_arms_seq})\n{noise_seq}, num_denoise_passive= {denoise_seq}"
     else:
@@ -787,7 +787,7 @@ def plot_rl_comparison(
     denoise_batch = _get_denoise_value(data_locator_batch, problem_batch)
     if denoise_batch is not None:
         if problem_batch.endswith(":fn"):
-            title_batch = f"Batch (num_arms / round = {num_arms_batch})\n{noise_batch}, num_denoise_measurement = {denoise_batch}"
+            title_batch = f"Batch (num_arms / round = {num_arms_batch})\n{noise_batch}, num_denoise_obs = {denoise_batch}"
         else:
             title_batch = f"Batch (num_arms / round = {num_arms_batch})\n{noise_batch}, num_denoise_passive= {denoise_batch}"
     else:

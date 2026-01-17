@@ -66,6 +66,7 @@ class ExperimentConfig:
             max_total = None
         else:
             max_total = float(max_total)
+
         return cls(
             exp_dir=d["exp_dir"],
             env_tag=d["env_tag"],

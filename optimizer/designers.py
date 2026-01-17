@@ -261,7 +261,7 @@ class Designers:
             num_keep_val = num_keep if keep_style == "trailing" else None
 
             def num_candidates(num_dim, num_arms):
-                return min(5000, 100 * num_arms)
+                return 100 * num_arms
 
             return TurboENNDesigner(
                 self._policy,

@@ -130,7 +130,7 @@ _gym_env_confs = {
     "macro": _gym_conf("InvertedDoublePendulum-v5"),
     # 325 - https://arxiv.org/pdf/1803.07055
     "swim": _gym_conf("Swimmer-v5"),
-    "reach": _gym_conf("Reacher-v5"),
+    "reach": EnvConf("Reacher-v5", gym_conf=GymConf(max_steps=50)),
     # "push": EnvConf("Pusher-v4",  gym_conf=GymConf(max_steps=100)),
     "hop": _gym_conf("Hopper-v5"),
     # 6900

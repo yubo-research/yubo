@@ -10,6 +10,12 @@ class Trajectory:
     states: np.ndarray
     actions: np.ndarray
     rreturn_se: float = None
+    rreturn_est: float = None
+
+    def get_decision_rreturn(self) -> float:
+        if self.rreturn_est is None:
+            return float(self.rreturn)
+        return float(self.rreturn_est)
 
 
 def collect_trajectory(env_conf, policy, noise_seed=None, show_frames=False):

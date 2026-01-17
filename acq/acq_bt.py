@@ -66,6 +66,9 @@ class AcqBT:
 
         self.acq_function = acq_factory(gp, **kwargs)
 
+    def model(self):
+        return self._gp
+
     def x_max(self):
         return find_max(self._gp, self.bounds)
 

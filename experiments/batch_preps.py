@@ -324,13 +324,14 @@ def prep_push(results_dir):
     exp_dir = "exp_ennbo_push"
 
     opts = [
-        "random",
-        "turbo-zero",
-        "turbo-one",
-        "turbo-enn-fit-ucb",
-        "enn-fit-ucb",
-        "cma",
-        "optuna",
+        # "random",
+        # "turbo-zero",
+        # "turbo-one",
+        # "turbo-enn-fit-ucb",
+        # "enn-fit-ucb",
+        # "cma",
+        # "optuna",
+        "turbo-enn-p",
     ]
 
     cmds = []
@@ -362,20 +363,22 @@ def prep_push(results_dir):
 
 
 def prep_tlunar(results_dir):
-    exp_dir = "exp_compare_tlunar"
+    # exp_dir = "exp_compare_tlunar"
+    exp_dir = "exp_ennbo_tlunar"
 
     opts = [
-        "random",
-        "turbo-1",
-        "turbo-one",
+        # "random",
+        # "turbo-1",
+        # "turbo-one",
+        "turbo-enn-p",
     ]
 
     cmds = []
     for opt in opts:
         for num_arms, num_rounds, num_denoise, num_denoise_passive, fn in [
-            # (1, 300, 1, 30, False),
-            (1, 300, 1, None, True),
-            (10, 100, 10, None, True),
+            (1, 300, 1, 30, False),
+            # (1, 300, 1, None, True),
+            # (10, 100, 10, None, True),
             (50, 30, 50, None, True),
         ]:
             # prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None):
@@ -408,13 +411,53 @@ def prep_hop(results_dir):
         "turbo-zero",
         # "turbo-one",
         "turbo-enn-fit-ucb",
+        "turbo-p",
     ]
 
     cmds = []
     for opt in opts:
         for num_arms, num_rounds, num_reps, num_denoise, num_denoise_passive, fn in [
-            (10, 1000, 30, None, 10, False),
-            (10, 1000, 30, 10, None, True),
+            (1, 10000, 30, None, 10, False),
+            (50, 1000, 30, 10, None, True),
+        ]:
+            # prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None):
+            if num_arms == 1 and opt == "cma":
+                continue
+            cmds.append(
+                prep_args_1(
+                    results_dir,
+                    exp_dir=exp_dir,
+                    problem="hop:fn" if fn else "hop",
+                    opt=opt,
+                    num_arms=num_arms,
+                    num_replications=num_reps,
+                    num_rounds=num_rounds,
+                    noise=None,
+                    num_denoise=num_denoise,
+                    num_denoise_passive=num_denoise_passive,
+                )
+            )
+
+    return cmds
+
+
+def prep_bw(results_dir):
+    exp_dir = "exp_ennbo_bw"
+
+    opts = [
+        "random",
+        "optuna",
+        "turbo-zero",
+        # "turbo-one",
+        "turbo-enn-fit-ucb",
+        "turbo-p",
+    ]
+
+    cmds = []
+    for opt in opts:
+        for num_arms, num_rounds, num_reps, num_denoise, num_denoise_passive, fn in [
+            (1, 10000, 30, None, 10, False),
+            (50, 1000, 30, 10, None, True),
         ]:
             # prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None):
             if num_arms == 1 and opt == "cma":
