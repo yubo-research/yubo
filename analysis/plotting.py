@@ -133,13 +133,32 @@ def filled_err(
         sg = sg / np.sqrt(ys.shape[0])
     if two:
         sg *= 2
-    ax.fill_between(x, mu - sg, mu + sg, color=color, alpha=alpha, linewidth=1, label="_")
+    x_full = x
+    mu_full = mu
+    sg_full = sg
+    ax.fill_between(x_full, mu_full - sg_full, mu_full + sg_full, color=color, alpha=alpha, linewidth=1, label="_")
 
     if max_markers is not None:
-        n_skip = max(1, len(x) // max_markers)
-        x = x[::n_skip]
-        mu = mu[::n_skip]
-    ax.plot(x, mu, color=color_line, marker=marker, linestyle=linestyle, label=label, alpha=alpha_top, markersize=markersize, fillstyle=fillstyle)
+        n_skip = max(1, len(x_full) // max_markers)
+        idx = np.arange(0, len(x_full), n_skip)
+        if idx.size == 0 or idx[-1] != len(x_full) - 1:
+            idx = np.append(idx, len(x_full) - 1)
+        x_plot = np.asarray(x_full)[idx]
+        mu_plot = np.asarray(mu_full)[idx]
+    else:
+        x_plot = x_full
+        mu_plot = mu_full
+    ax.plot(
+        x_plot,
+        mu_plot,
+        color=color_line,
+        marker=marker,
+        linestyle=linestyle,
+        label=label,
+        alpha=alpha_top,
+        markersize=markersize,
+        fillstyle=fillstyle,
+    )
 
 
 def error_area(x, y, yerr, color="#AAAAAA", alpha=0.5, fmt="--", marker="", ax=plt):
