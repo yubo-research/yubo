@@ -439,22 +439,23 @@ def prep_hop(results_dir):
 
 
 def prep_bw(results_dir):
-    exp_dir = "exp_ennbo_bw"
+    exp_dir = "exp_ennbo_bw2"
 
     opts = [
         "random",
         "optuna",
+        "cma",
         "turbo-zero",
         # "turbo-one",
         "turbo-enn-fit-ucb",
-        "turbo-p",
+        "turbo-enn-p",
     ]
 
     cmds = []
     for opt in opts:
         for num_arms, num_rounds, num_reps, num_denoise, num_denoise_passive, fn in [
-            (1, 10000, 30, None, 10, False),
-            (50, 1000, 30, 10, None, True),
+            (1, 1000, 10, None, 10, False),
+            (50, 100, 10, 10, None, True),
         ]:
             # prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None):
             if num_arms == 1 and opt == "cma":
@@ -463,7 +464,7 @@ def prep_bw(results_dir):
                 prep_args_1(
                     results_dir,
                     exp_dir=exp_dir,
-                    problem="hop:fn" if fn else "hop",
+                    problem="bw:fn" if fn else "bw",
                     opt=opt,
                     num_arms=num_arms,
                     num_replications=num_reps,

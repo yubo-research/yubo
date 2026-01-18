@@ -286,6 +286,8 @@ def _mean_final_by_optimizer(data_locator: DataLocator, traces: np.ndarray) -> d
     """Return {opt_name: mean(final_value_over_reps)} for a single-problem trace tensor."""
     optimizers = data_locator.optimizers()
     z = traces.squeeze(0)  # [n_opt, n_rep, n_round]
+    if z.ndim != 3 or z.shape[2] == 0:
+        raise ValueError(f"Empty traces: shape={getattr(z, 'shape', None)} for key={getattr(data_locator, 'key', None)}")
     out: dict[str, float] = {}
     for i_opt, opt_name in enumerate(optimizers):
         y_final = z[i_opt, :, -1]
@@ -294,6 +296,22 @@ def _mean_final_by_optimizer(data_locator: DataLocator, traces: np.ndarray) -> d
             out[opt_name] = float(np.ma.mean(y_final))
         except Exception:
             out[opt_name] = float(np.mean(np.asarray(y_final, dtype=float)))
+    return out
+
+
+def _median_final_by_optimizer(data_locator: DataLocator, traces: np.ndarray) -> dict[str, float]:
+    """Return {opt_name: median(final_value_over_reps)} for a single-problem trace tensor."""
+    optimizers = data_locator.optimizers()
+    z = traces.squeeze(0)  # [n_opt, n_rep, n_round]
+    if z.ndim != 3 or z.shape[2] == 0:
+        raise ValueError(f"Empty traces: shape={getattr(z, 'shape', None)} for key={getattr(data_locator, 'key', None)}")
+    out: dict[str, float] = {}
+    for i_opt, opt_name in enumerate(optimizers):
+        y_final = z[i_opt, :, -1]
+        try:
+            out[opt_name] = float(np.ma.median(y_final))
+        except Exception:
+            out[opt_name] = float(np.median(np.asarray(y_final, dtype=float)))
     return out
 
 
@@ -726,7 +744,7 @@ def plot_rl_comparison(
             key="dt_prop",
         )
         traces_seq_cum = _cum_dt_prop_from_dt_prop_traces(traces_seq_dt)
-        cum_dt_prop_seq = _mean_final_by_optimizer(data_locator_seq_dt, traces_seq_cum)
+        cum_dt_prop_seq = _median_final_by_optimizer(data_locator_seq_dt, traces_seq_cum)
     except ValueError:
         cum_dt_prop_seq = None
         data_locator_seq_dt = None
@@ -756,7 +774,7 @@ def plot_rl_comparison(
             key="dt_prop",
         )
         traces_batch_cum = _cum_dt_prop_from_dt_prop_traces(traces_batch_dt)
-        cum_dt_prop_batch = _mean_final_by_optimizer(data_locator_batch_dt, traces_batch_cum)
+        cum_dt_prop_batch = _median_final_by_optimizer(data_locator_batch_dt, traces_batch_cum)
     except ValueError:
         cum_dt_prop_batch = None
         data_locator_batch_dt = None

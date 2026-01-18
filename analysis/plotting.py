@@ -133,15 +133,19 @@ def filled_err(
         sg = sg / np.sqrt(ys.shape[0])
     if two:
         sg *= 2
-    x_full = x
-    mu_full = mu
-    sg_full = sg
+    x_full = np.asarray(x)
+    mu_full = np.asarray(mu)
+    sg_full = np.asarray(sg)
+    if x_full.size == 0 or mu_full.size == 0:
+        return
     ax.fill_between(x_full, mu_full - sg_full, mu_full + sg_full, color=color, alpha=alpha, linewidth=1, label="_")
 
     if max_markers is not None:
         n_skip = max(1, len(x_full) // max_markers)
         idx = np.arange(0, len(x_full), n_skip)
-        if idx.size == 0 or idx[-1] != len(x_full) - 1:
+        if idx.size == 0:
+            return
+        if idx[-1] != len(x_full) - 1:
             idx = np.append(idx, len(x_full) - 1)
         x_plot = np.asarray(x_full)[idx]
         mu_plot = np.asarray(mu_full)[idx]

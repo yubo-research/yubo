@@ -118,7 +118,7 @@ class TurboENNDesigner:
                 trailing_obs=self._num_keep,
                 acq_type=acq_type,
             )
-        if self._turbo_mode == "turbo-zero":
+        elif self._turbo_mode == "turbo-zero":
             return turbo_zero_config(
                 num_candidates=num_candidates,
                 num_init=num_init,
@@ -126,7 +126,7 @@ class TurboENNDesigner:
                 trust_region=trust_region,
                 candidate_rv=candidate_rv,
             )
-        if self._turbo_mode == "turbo-one":
+        elif self._turbo_mode == "turbo-one":
             return turbo_one_config(
                 num_candidates=num_candidates,
                 num_init=num_init,
