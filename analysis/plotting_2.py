@@ -846,6 +846,11 @@ def plot_rl_comparison(
     else:
         axs[1, 1].axis("off")
 
+    axs[0, 0].set_xlabel("")
+    axs[0, 1].set_xlabel("")
+    axs[0, 1].set_ylabel("")
+    axs[1, 1].set_ylabel("")
+
     if suptitle:
         fig.suptitle(suptitle, fontsize=16, y=1.02)
     plt.tight_layout()

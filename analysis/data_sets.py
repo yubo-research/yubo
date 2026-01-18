@@ -12,14 +12,14 @@ CACHE_DEBUG = True
 
 def clear_cache():
     _load_kv_cached.cache_clear()
-    load_traces_jsonl.cache_clear()
+    _load_traces_jsonl_cached.cache_clear()
     _load_traces_cached.cache_clear()
 
 
 def cache_stats():
     return {
         "load_kv": _load_kv_cached.cache_info(),
-        "load_traces_jsonl": load_traces_jsonl.cache_info(),
+        "load_traces_jsonl": _load_traces_jsonl_cached.cache_info(),
         "load_traces": _load_traces_cached.cache_info(),
     }
 
@@ -63,8 +63,7 @@ def load(fn, keys):
     return np.array(data).squeeze()
 
 
-@lru_cache(maxsize=1024)
-def _load_kv_cached(fn, keys_tuple, grep_for):
+def _load_kv_uncached(fn, keys_tuple, grep_for):
     skeys = set(keys_tuple)
     data = {k: [] for k in skeys}
     with open(fn) as f:
@@ -87,14 +86,21 @@ def _load_kv_cached(fn, keys_tuple, grep_for):
     return out
 
 
+@lru_cache(maxsize=1024)
+def _load_kv_cached(fn, keys_tuple, grep_for):
+    return _load_kv_uncached(fn, keys_tuple, grep_for)
+
+
 def load_kv(fn, keys, grep_for=None):
     if isinstance(keys, str):
         keys = keys.split(",")
-    return _load_kv_cached(fn, tuple(sorted(keys)), grep_for)
+    keys_tuple = tuple(sorted(keys))
+    if data_is_done(fn):
+        return _load_kv_cached(fn, keys_tuple, grep_for)
+    return _load_kv_uncached(fn, keys_tuple, grep_for)
 
 
-@lru_cache(maxsize=1024)
-def load_traces_jsonl(trace_dir, key="rreturn"):
+def _load_traces_jsonl_uncached(trace_dir, key="rreturn"):
     traces = []
     i_missing = []
     width = None
@@ -131,7 +137,40 @@ def load_traces_jsonl(trace_dir, key="rreturn"):
 
 
 @lru_cache(maxsize=1024)
-def _load_traces_cached(trace_dir, key, grep_for):
+def _load_traces_jsonl_cached(trace_dir, key):
+    return _load_traces_jsonl_uncached(trace_dir, key=key)
+
+
+def _trace_dir_cacheable_jsonl(trace_dir: str) -> bool:
+    trace_dir_path = Path(trace_dir)
+    traces_subdir = trace_dir_path / "traces"
+    if traces_subdir.exists():
+        trace_dir_path = traces_subdir
+    jsonl_files = sorted(trace_dir_path.glob("*.jsonl"))
+    if not jsonl_files:
+        return False
+    return all(data_is_done(str(fn)) for fn in jsonl_files)
+
+
+def load_traces_jsonl(trace_dir, key="rreturn"):
+    if not _trace_dir_cacheable_jsonl(trace_dir):
+        if CACHE_DEBUG:
+            print(f"CACHE BYPASS: load_traces_jsonl({str(trace_dir)[-40:]}, {key}) (incomplete)")
+        return _load_traces_jsonl_uncached(trace_dir, key=key)
+
+    if CACHE_DEBUG:
+        info_before = _load_traces_jsonl_cached.cache_info()
+    result = _load_traces_jsonl_cached(trace_dir, key)
+    if CACHE_DEBUG:
+        info_after = _load_traces_jsonl_cached.cache_info()
+        if info_after.hits > info_before.hits:
+            print(f"CACHE HIT: load_traces_jsonl({str(trace_dir)[-40:]}, {key})")
+        else:
+            print(f"CACHE MISS: load_traces_jsonl({str(trace_dir)[-40:]}, {key})")
+    return result
+
+
+def _load_traces_uncached(trace_dir, key, grep_for):
     trace_dir_path = Path(trace_dir)
     traces_subdir = trace_dir_path / "traces"
     if traces_subdir.exists():
@@ -146,6 +185,8 @@ def _load_traces_cached(trace_dir, key, grep_for):
     for fn in sorted(os.listdir(trace_dir)):
         fn = f"{trace_dir}/{fn}"
         if not os.path.isfile(fn):
+            continue
+        if fn.endswith(".done") or fn.endswith(".jsonl"):
             continue
         if not data_is_done(fn):
             print("NOT_DONE:", fn)
@@ -168,7 +209,46 @@ def _load_traces_cached(trace_dir, key, grep_for):
     return traces
 
 
+@lru_cache(maxsize=1024)
+def _load_traces_cached(trace_dir, key, grep_for):
+    return _load_traces_uncached(trace_dir, key, grep_for)
+
+
+def _trace_dir_cacheable_kv(trace_dir: str) -> bool:
+    trace_dir_path = Path(trace_dir)
+    traces_subdir = trace_dir_path / "traces"
+    if traces_subdir.exists():
+        trace_dir_path = traces_subdir
+    any_trace_file = False
+    for fn in sorted(os.listdir(str(trace_dir_path))):
+        full = str(trace_dir_path / fn)
+        if not os.path.isfile(full):
+            continue
+        if full.endswith(".done") or full.endswith(".jsonl"):
+            continue
+        any_trace_file = True
+        if not data_is_done(full):
+            return False
+    return any_trace_file
+
+
 def load_traces(trace_dir, key="return", grep_for="TRACE"):
+    trace_dir_path = Path(trace_dir)
+    traces_subdir = trace_dir_path / "traces"
+    if traces_subdir.exists():
+        jsonl_files = list(traces_subdir.glob("*.jsonl"))
+        if jsonl_files:
+            cacheable = _trace_dir_cacheable_jsonl(trace_dir)
+        else:
+            cacheable = _trace_dir_cacheable_kv(trace_dir)
+    else:
+        cacheable = _trace_dir_cacheable_kv(trace_dir)
+
+    if not cacheable:
+        if CACHE_DEBUG:
+            print(f"CACHE BYPASS: load_traces({str(trace_dir)[-40:]}, {key}) (incomplete)")
+        return _load_traces_uncached(trace_dir, key, grep_for)
+
     if CACHE_DEBUG:
         info_before = _load_traces_cached.cache_info()
     result = _load_traces_cached(trace_dir, key, grep_for)
