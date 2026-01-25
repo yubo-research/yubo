@@ -226,6 +226,16 @@ class Designers:
                 num_fit_samples=None,
                 acq_type="pareto",
             )
+        elif designer_name == "turbo-enn-sweep-":
+            k = int(designer_name.split("-")[-1])
+            return TurboENNDesigner(
+                self._policy,
+                turbo_mode="turbo-enn",
+                k=k,
+                num_keep=None,
+                num_fit_samples=None,
+                acq_type="pareto",
+            )
         elif designer_name.startswith("turbo-enn-fit-"):
             num_keep_val = num_keep if keep_style == "trailing" else None
             suffix = designer_name[len("turbo-enn-fit-") :]
@@ -286,6 +296,9 @@ class Designers:
             )
         elif designer_name == "turbo-one":
             return TurboENNDesigner(self._policy, turbo_mode="turbo-one", num_init=init_yubo_default)
+        elif designer_name == "turbo-one-na":
+            assert False, "NYI: Noise aware"
+            return TurboENNDesigner(self._policy, turbo_mode="turbo-one", num_init=init_yubo_default)
         elif designer_name == "turbo-one-f":
             return TurboENNDesigner(
                 self._policy,
@@ -294,6 +307,8 @@ class Designers:
                 num_candidates=min(5000, 100 * self._num_arms),
                 candidate_rv="uniform",
             )
+        elif designer_name == "lhd_only":
+            return TurboENNDesigner(self._policy, turbo_mode="lhd-only")
 
         # MORBO variants (multi-objective)
         elif designer_name == "morbo-zero":

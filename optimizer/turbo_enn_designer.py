@@ -7,8 +7,9 @@ from optimizer.designer_asserts import assert_scalar_rreturn
 from third_party.enn.turbo.config.acq_type import AcqType
 from third_party.enn.turbo.config.candidate_gen_config import CandidateGenConfig
 from third_party.enn.turbo.config.candidate_rv import CandidateRV
-from third_party.enn.turbo.config.enn_surrogate_config import ENNSurrogateConfig
+from third_party.enn.turbo.config.enn_surrogate_config import ENNFitConfig, ENNSurrogateConfig
 from third_party.enn.turbo.config.factory import (
+    lhd_only_config,
     turbo_enn_config,
     turbo_one_config,
     turbo_zero_config,
@@ -40,9 +41,9 @@ class TurboENNDesigner:
         num_metrics: Optional[int] = None,
     ):
         self._policy = policy
-        if turbo_mode not in ("turbo-enn", "turbo-zero", "turbo-one"):
+        if turbo_mode not in ("turbo-enn", "turbo-zero", "turbo-one", "lhd-only"):
             raise ValueError(f"Invalid turbo mode: {turbo_mode}")
-        if turbo_mode in ("turbo-zero", "turbo-one"):
+        if turbo_mode in ("turbo-zero", "turbo-one", "lhd-only"):
             assert k is None
         self._turbo_mode = turbo_mode
         self._num_init = num_init
@@ -101,8 +102,10 @@ class TurboENNDesigner:
             acq_type = self._parse_acq_type()
             enn = ENNSurrogateConfig(
                 k=self._k,
-                num_fit_samples=self._num_fit_samples,
-                num_fit_candidates=self._num_fit_candidates,
+                fit=ENNFitConfig(
+                    num_fit_samples=self._num_fit_samples,
+                    num_fit_candidates=self._num_fit_candidates,
+                ),
             )
             candidates = None
             if num_candidates is not None or self._candidate_rv is not None:
@@ -128,6 +131,14 @@ class TurboENNDesigner:
             )
         elif self._turbo_mode == "turbo-one":
             return turbo_one_config(
+                num_candidates=num_candidates,
+                num_init=num_init,
+                trailing_obs=self._num_keep,
+                trust_region=trust_region,
+                candidate_rv=candidate_rv,
+            )
+        elif self._turbo_mode == "lhd-only":
+            return lhd_only_config(
                 num_candidates=num_candidates,
                 num_init=num_init,
                 trailing_obs=self._num_keep,

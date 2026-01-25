@@ -7,7 +7,7 @@ from scipy.stats import rankdata
 
 from .data_io import data_is_done, read_trace_jsonl
 
-CACHE_DEBUG = True
+CACHE_DEBUG = False
 
 
 def clear_cache():
@@ -367,7 +367,8 @@ def load_multiple_traces(data_locator):
     if num_bad > 0:
         print(f"\n{num_bad} / {num_tot} files bad. {100 * traces.mask.mean():.1f}% missing data")
     else:
-        print("No bad data")
+        # print("No bad data")
+        pass
     return traces
 
 

@@ -43,8 +43,8 @@ def modal_batches_worker(job):
 def modal_batches_resubmitter(batch_of_configs):
     submitted_dict = _submitted_dict()
     todo = []
-    for key, run_config in batch_of_configs:
-        if key in submitted_dict:
+    for key, run_config, force in batch_of_configs:
+        if (not force) and (key in submitted_dict):
             continue
         submitted_dict[key] = True
         todo.append((key, run_config))
@@ -55,7 +55,7 @@ def modal_batches_resubmitter(batch_of_configs):
     worker.spawn_map(todo)
 
 
-def batches_submitter(batch_tag: str):
+def batches_submitter(batch_tag: str, force: bool = False):
     n = 0
     batch = []
     MAX_BATCH = 1000
@@ -70,7 +70,7 @@ def batches_submitter(batch_tag: str):
         print(f"JOB: {key} {run_config}")
         # process_job = modal.Function.from_name(_app_name, "modal_batches_worker")
         # process_job.spawn((key, d_args))
-        batch.append((key, run_config))
+        batch.append((key, run_config, force))
         if len(batch) == MAX_BATCH:
             _flush()
         n += 1
@@ -81,17 +81,15 @@ def batches_submitter(batch_tag: str):
 
 def _gen_jobs(batch_tag):
     configs = prep_d_argss(batch_tag)
-    i_job = 0
     for config in configs:
         for run_config in mk_replicates(config):
             if not data_is_done(run_config.trace_fn):
-                key = _job_key(batch_tag, i_job)
+                key = _job_key(batch_tag, run_config.trace_fn)
                 yield key, run_config
-                i_job += 1
 
 
-def _job_key(job_name, i_job):
-    return f"{job_name}-{i_job}"
+def _job_key(job_name, path):
+    return f"{job_name}-{path}"
 
 
 @app.function(image=modal_image, concurrency_limit=1, timeout=_TIMEOUT_HOURS * 60 * 60)
@@ -163,6 +161,8 @@ def batches(cmd: str, batch_tag: str = None, num: int = None):
     #     submitter.spawn(batch_tag)
     elif cmd == "submit-missing":
         batches_submitter(batch_tag)
+    elif cmd == "submit-missing-force":
+        batches_submitter(batch_tag, force=True)
     elif cmd == "status":
         status()
     elif cmd == "collect":

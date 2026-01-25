@@ -6,13 +6,85 @@ import numpy as np
 
 import analysis.data_sets as ds
 import analysis.plotting as ap
+from analysis.data_io import data_is_done
 from analysis.data_locator import DataLocator
 
 
 def _noise_label(problem: str) -> str:
     if problem.endswith(":fn"):
-        return "frozen noise"
-    return "natural noise"
+        return "Frozen noise"
+    return "Natural noise"
+
+
+def _speedup_x_label(cum_dt_prop_final_by_opt: dict[str, float] | None, problem: str) -> str | None:
+    if not cum_dt_prop_final_by_opt:
+        return None
+
+    baseline_candidates = ("turbo-one", "turbo-one-na", "turbo-one-f")
+    baseline_opt = next((o for o in baseline_candidates if o in cum_dt_prop_final_by_opt), None)
+    if baseline_opt is None:
+        return None
+
+    compare_opt = "turbo-enn-p" if problem.endswith(":fn") else "turbo-enn-fit-ucb"
+    if compare_opt not in cum_dt_prop_final_by_opt:
+        return None
+
+    t_baseline = cum_dt_prop_final_by_opt.get(baseline_opt, None)
+    t_compare = cum_dt_prop_final_by_opt.get(compare_opt, None)
+    if t_baseline is None or t_compare is None or not np.isfinite(t_baseline) or not np.isfinite(t_compare) or t_compare <= 0:
+        return None
+
+    x = int(round(float(t_baseline) / float(t_compare)))
+    if x <= 0:
+        return None
+    return f"{x}x speedup"
+
+
+def _consolidate_bottom_legend(
+    fig,
+    axs,
+    *,
+    fontsize: int = 11,
+    ncol: int = 5,
+) -> None:
+    handles: list[object] = []
+    labels: list[str] = []
+    seen: set[str] = set()
+
+    for ax in axs:
+        handles_ax, labels_ax = ax.get_legend_handles_labels()
+        for hi, li in zip(handles_ax, labels_ax, strict=False):
+            if not li or li.startswith("_"):
+                continue
+
+            base = li.split(" (", 1)[0]
+            if base.startswith("turbo-enn"):
+                li2 = "turbo-enn"
+            else:
+                li2 = base
+            if li2 in seen:
+                continue
+            seen.add(li2)
+            handles.append(hi)
+            labels.append(li2)
+
+    for ax in axs:
+        leg = ax.get_legend()
+        if leg is not None:
+            leg.remove()
+
+    if not handles:
+        return
+
+    fig.legend(
+        handles,
+        labels,
+        loc="lower center",
+        bbox_to_anchor=(0.5, -0.02),
+        ncol=int(ncol),
+        frameon=False,
+        fontsize=fontsize,
+    )
 
 
 def _get_denoise_value(data_locator: DataLocator, problem: str) -> int:
@@ -205,15 +277,13 @@ def _infer_params_from_configs(
     if na_batch is not None:
         out["num_arms_batch"] = na_batch
 
-    if reps_seq is not None and reps_batch is not None and reps_seq != reps_batch:
-        raise ValueError(
-            "Can't infer a single num_reps for both sequential and batch. "
-            f"{problem_seq!r} has num_reps={reps_seq}, {problem_batch!r} has num_reps={reps_batch}. "
-            "Pass num_reps explicitly."
-        )
-    reps = reps_seq if reps_seq is not None else reps_batch
-    if reps is not None:
-        out["num_reps"] = reps
+    if reps_seq is not None and reps_batch is not None and reps_seq == reps_batch:
+        out["num_reps"] = int(reps_seq)
+    else:
+        if reps_seq is not None:
+            out["num_reps_seq"] = int(reps_seq)
+        if reps_batch is not None:
+            out["num_reps_batch"] = int(reps_batch)
 
     return out
 
@@ -224,7 +294,7 @@ def load_rl_traces(
     opt_names: list[str],
     num_arms: int,
     num_rounds: int,
-    num_reps: int,
+    num_reps: int | None,
     problem: str,
     key: str = "rreturn",
 ):
@@ -280,6 +350,64 @@ def load_rl_traces(
         )
     traces = ds.load_multiple_traces(data_locator)
     return data_locator, traces
+
+
+def _count_done_reps(trace_dir: str) -> int:
+    p = Path(trace_dir)
+    traces_subdir = p / "traces"
+    if traces_subdir.exists():
+        p = traces_subdir
+    jsonl_files = sorted(p.glob("*.jsonl"))
+    if jsonl_files:
+        return int(sum(1 for fn in jsonl_files if data_is_done(str(fn))))
+    n = 0
+    for fn in sorted(p.iterdir()):
+        if not fn.is_file():
+            continue
+        if fn.name.endswith(".done") or fn.name.endswith(".jsonl"):
+            continue
+        if data_is_done(str(fn)):
+            n += 1
+    return int(n)
+
+
+def _print_dataset_summary(
+    results_path: str,
+    exp_dir: str,
+    *,
+    problem: str,
+    opt_names: list[str],
+    num_arms: int,
+    num_rounds: int,
+    num_reps: int | None,
+):
+    data_locator = DataLocator(
+        results_path,
+        exp_dir,
+        num_arms=num_arms,
+        num_rounds=num_rounds,
+        num_reps=num_reps,
+        opt_names=opt_names,
+        problems={problem},
+        problems_exact=True,
+        key="rreturn",
+    )
+    for opt in data_locator.optimizers():
+        paths = data_locator(problem, opt)
+        if not paths:
+            continue
+        trace_dir = paths[0]
+        cfg_reps = None
+        cfg_path = Path(trace_dir) / "config.json"
+        if cfg_path.exists():
+            try:
+                with open(cfg_path) as f:
+                    cfg_reps = json.load(f).get("num_reps")
+            except Exception:
+                cfg_reps = None
+        reps_done = _count_done_reps(trace_dir)
+        root = Path(trace_dir).name
+        print(f"PLOT: env={problem} opt={opt} arms={num_arms} rounds={num_rounds} reps_done={reps_done} reps_cfg={cfg_reps} dir={root}")
 
 
 def _mean_final_by_optimizer(data_locator: DataLocator, traces: np.ndarray) -> dict[str, float]:
@@ -373,6 +501,17 @@ def _cum_dt_prop_from_dt_prop_traces(dt_prop_traces: np.ndarray) -> np.ndarray:
     return np.expand_dims(z_cum, axis=0)
 
 
+def _print_cum_dt_prop(cum_dt_prop_final_by_opt: dict[str, float] | None, opt_order: list[str] | None, *, header: str) -> None:
+    if not cum_dt_prop_final_by_opt:
+        return
+    order = opt_order or sorted(cum_dt_prop_final_by_opt.keys())
+    items = [f"\\texttt{{{o}}} {cum_dt_prop_final_by_opt[o]:.1f}s" for o in order if o in cum_dt_prop_final_by_opt]
+    if not items:
+        return
+    print(header)
+    print("  " + ", ".join(items))
+
+
 def _load_cum_dt_prop(
     results_path: str,
     exp_dir: str,
@@ -406,11 +545,12 @@ def plot_learning_curves(
     traces: np.ndarray,
     num_arms: int = 1,
     title: str = None,
-    xlabel: str = "N, number of observations",
-    ylabel: str = "Return (best so far)",
+    xlabel: str = "N",
+    ylabel: str = "y_{best}",
     markersize: int = 5,
     cum_dt_prop_final_by_opt: dict[str, float] | None = None,
     x_start: int = 1,
+    opt_names_all: list[str] | None = None,
 ):
     optimizers = data_locator.optimizers()
     z = traces.squeeze(0)
@@ -418,8 +558,13 @@ def plot_learning_curves(
     for i_opt, opt_name in enumerate(optimizers):
         y = z[i_opt, ...]
         x = num_arms * (int(x_start) + np.arange(y.shape[1]))
-        color = ap.colors[i_opt]
-        marker = ap.markers[i_opt]
+        style_idx = opt_names_all.index(opt_name) if opt_names_all and opt_name in opt_names_all else i_opt
+        if opt_name.startswith("turbo-enn"):
+            color = "#333333"
+            marker = "s"
+        else:
+            color = ap.colors[style_idx]
+            marker = ap.markers[style_idx]
         label = opt_name
         if cum_dt_prop_final_by_opt is not None and opt_name in cum_dt_prop_final_by_opt:
             label = f"{opt_name} ({cum_dt_prop_final_by_opt[opt_name]:.1f}s)"
@@ -437,10 +582,11 @@ def plot_learning_curves(
             markersize=markersize,
         )
 
-    ax.set_xlabel(xlabel, fontsize=12)
-    ax.set_ylabel(ylabel, fontsize=12)
+    ax.set_xlabel(xlabel, fontsize=16)
+    ax.set_ylabel(ylabel, fontsize=16)
     if title:
-        ax.set_title(title, fontsize=14)
+        ax.set_title(title, fontsize=16)
+    ax.tick_params(axis="both", labelsize=16)
     ax.legend(loc="lower right")
     ax.grid(True, alpha=0.3)
 
@@ -451,9 +597,19 @@ def plot_final_performance(
     traces: np.ndarray,
     title: str = None,
     ylabel: str = "Mean normalized rank",
+    opt_names_all: list[str] | None = None,
 ):
     optimizers = data_locator.optimizers()
     means, stes = _mean_normalized_rank_score_by_optimizer(data_locator, traces)
+
+    colors = []
+    for opt_name in optimizers:
+        if opt_name.startswith("turbo-enn"):
+            colors.append("#333333")
+        elif opt_names_all and opt_name in opt_names_all:
+            colors.append(ap.colors[opt_names_all.index(opt_name)])
+        else:
+            colors.append(ap.colors[optimizers.index(opt_name)])
 
     x_pos = np.arange(len(optimizers))
     ax.bar(
@@ -461,7 +617,7 @@ def plot_final_performance(
         means,
         yerr=2 * stes,
         capsize=5,
-        color=[ap.colors[i] for i in range(len(optimizers))],
+        color=colors,
         alpha=0.8,
     )
     ax.set_xticks(x_pos)
@@ -508,6 +664,7 @@ def plot_rl_experiment(
         num_arms=num_arms,
         title=title,
         cum_dt_prop_final_by_opt=cum_dt_prop_final_by_opt,
+        opt_names_all=opt_names,
     )
     plt.tight_layout()
     return fig, ax, data_locator, traces
@@ -711,14 +868,15 @@ def plot_rl_comparison(
     opt_names_batch: list[str],
     problem_seq: str,
     problem_batch: str,
-    num_reps: int = 30,
+    num_reps: int | None = None,
     num_rounds_seq: int = 100,
     num_rounds_batch: int = 30,
     num_arms_seq: int = 1,
     num_arms_batch: int = 50,
     suptitle: str = None,
-    figsize: tuple = (14, 9),
+    figsize: tuple = (12, 5),
     cum_dt_prop: bool = False,
+    opt_names_all: list[str] | None = None,
 ):
     data_locator_seq, traces_seq = load_rl_traces(
         results_path,
@@ -750,20 +908,10 @@ def plot_rl_comparison(
         data_locator_seq_dt = None
         traces_seq_dt = None
 
-    data_locator_batch, traces_batch = load_rl_traces(
-        results_path,
-        exp_dir,
-        opt_names_batch,
-        num_arms=num_arms_batch,
-        num_rounds=num_rounds_batch,
-        num_reps=num_reps,
-        problem=problem_batch,
-    )
-    cum_dt_prop_batch = None
-    data_locator_batch_dt = None
-    traces_batch_dt = None
+    data_locator_batch = None
+    traces_batch = None
     try:
-        data_locator_batch_dt, traces_batch_dt = load_rl_traces(
+        data_locator_batch, traces_batch = load_rl_traces(
             results_path,
             exp_dir,
             opt_names_batch,
@@ -771,107 +919,101 @@ def plot_rl_comparison(
             num_rounds=num_rounds_batch,
             num_reps=num_reps,
             problem=problem_batch,
-            key="dt_prop",
         )
-        traces_batch_cum = _cum_dt_prop_from_dt_prop_traces(traces_batch_dt)
-        cum_dt_prop_batch = _median_final_by_optimizer(data_locator_batch_dt, traces_batch_cum)
+    except ValueError:
+        data_locator_batch = None
+        traces_batch = None
+    cum_dt_prop_batch = None
+    data_locator_batch_dt = None
+    traces_batch_dt = None
+    try:
+        if data_locator_batch is not None:
+            data_locator_batch_dt, traces_batch_dt = load_rl_traces(
+                results_path,
+                exp_dir,
+                opt_names_batch,
+                num_arms=num_arms_batch,
+                num_rounds=num_rounds_batch,
+                num_reps=num_reps,
+                problem=problem_batch,
+                key="dt_prop",
+            )
+            traces_batch_cum = _cum_dt_prop_from_dt_prop_traces(traces_batch_dt)
+            cum_dt_prop_batch = _median_final_by_optimizer(data_locator_batch_dt, traces_batch_cum)
     except ValueError:
         cum_dt_prop_batch = None
         data_locator_batch_dt = None
         traces_batch_dt = None
 
-    fig, axs = plt.subplots(2, 2, figsize=figsize)
+    _print_cum_dt_prop(
+        cum_dt_prop_seq,
+        opt_names_all if opt_names_all else opt_names_seq,
+        header=f"cumulative proposal times ({problem_seq})",
+    )
+    _print_cum_dt_prop(
+        cum_dt_prop_batch,
+        opt_names_all if opt_names_all else opt_names_batch,
+        header=f"cumulative proposal times ({problem_batch})",
+    )
+
+    fig, axs = plt.subplots(1, 2, figsize=figsize, sharey=True)
 
     noise_seq = _noise_label(problem_seq)
     denoise_seq = _get_denoise_value(data_locator_seq, problem_seq)
+    speedup_seq = _speedup_x_label(cum_dt_prop_seq, problem_seq)
+    line1_seq = f"{noise_seq}, {speedup_seq}" if speedup_seq else noise_seq
+    parts_seq = [f"num_arms = {num_arms_seq}"]
     if denoise_seq is not None:
-        if problem_seq.endswith(":fn"):
-            title_seq = f"Sequential (num_arms / round = {num_arms_seq})\n{noise_seq}, num_denoise_obs = {denoise_seq}"
-        else:
-            title_seq = f"Sequential (num_arms / round = {num_arms_seq})\n{noise_seq}, num_denoise_passive= {denoise_seq}"
-    else:
-        title_seq = f"Sequential (num_arms / round = {num_arms_seq})\n{noise_seq}"
+        denoise_key_seq = "num_denoise_obs" if problem_seq.endswith(":fn") else "num_denoise_passive"
+        parts_seq.append(f"{denoise_key_seq} = {denoise_seq}")
+    title_seq = f"{line1_seq}\n{', '.join(parts_seq)}"
     plot_learning_curves(
-        axs[0, 0],
+        axs[0],
         data_locator_seq,
         traces_seq,
         num_arms=num_arms_seq,
         title=title_seq,
         cum_dt_prop_final_by_opt=cum_dt_prop_seq,
+        opt_names_all=opt_names_all if opt_names_all else opt_names_seq,
     )
-    axs[0, 0].legend(loc="lower right", fontsize=9)
 
-    noise_batch = _noise_label(problem_batch)
-    denoise_batch = _get_denoise_value(data_locator_batch, problem_batch)
-    if denoise_batch is not None:
-        if problem_batch.endswith(":fn"):
-            title_batch = f"Batch (num_arms / round = {num_arms_batch})\n{noise_batch}, num_denoise_obs = {denoise_batch}"
-        else:
-            title_batch = f"Batch (num_arms / round = {num_arms_batch})\n{noise_batch}, num_denoise_passive= {denoise_batch}"
-    else:
-        title_batch = f"Batch (num_arms / round = {num_arms_batch})\n{noise_batch}"
-    plot_learning_curves(
-        axs[0, 1],
-        data_locator_batch,
-        traces_batch,
-        num_arms=num_arms_batch,
-        title=title_batch,
-        cum_dt_prop_final_by_opt=cum_dt_prop_batch,
-    )
-    axs[0, 1].legend(loc="lower right", fontsize=9)
-
-    if traces_seq_dt is not None:
-        if cum_dt_prop:
-            traces_seq_dt_plot = _cum_dt_prop_from_dt_prop_traces(traces_seq_dt)
-            ylabel_seq = "Cumulative proposal time (s)"
-        else:
-            traces_seq_dt_plot = traces_seq_dt
-            ylabel_seq = "Proposal time (s)"
+    if data_locator_batch is not None and traces_batch is not None:
+        noise_batch = _noise_label(problem_batch)
+        denoise_batch = _get_denoise_value(data_locator_batch, problem_batch)
+        speedup_batch = _speedup_x_label(cum_dt_prop_batch, problem_batch)
+        line1_batch = f"{noise_batch}, {speedup_batch}" if speedup_batch else noise_batch
+        parts_batch = [f"num_arms = {num_arms_batch}"]
+        if denoise_batch is not None:
+            denoise_key_batch = "num_denoise_obs" if problem_batch.endswith(":fn") else "num_denoise_passive"
+            parts_batch.append(f"{denoise_key_batch} = {denoise_batch}")
+        title_batch = f"{line1_batch}\n{', '.join(parts_batch)}"
         plot_learning_curves(
-            axs[1, 0],
-            data_locator_seq_dt,
-            traces_seq_dt_plot,
-            num_arms=num_arms_seq,
-            title=None,
-            xlabel="N, number of observations",
-            ylabel=ylabel_seq,
-            cum_dt_prop_final_by_opt=None,
-            x_start=0,
-        )
-        axs[1, 0].legend(loc="upper left", fontsize=9)
-    else:
-        axs[1, 0].axis("off")
-
-    if traces_batch_dt is not None:
-        if cum_dt_prop:
-            traces_batch_dt_plot = _cum_dt_prop_from_dt_prop_traces(traces_batch_dt)
-            ylabel_batch = "Cumulative proposal time (s)"
-        else:
-            traces_batch_dt_plot = traces_batch_dt
-            ylabel_batch = "Proposal time (s)"
-        plot_learning_curves(
-            axs[1, 1],
-            data_locator_batch_dt,
-            traces_batch_dt_plot,
+            axs[1],
+            data_locator_batch,
+            traces_batch,
             num_arms=num_arms_batch,
-            title=None,
-            xlabel="N, number of observations",
-            ylabel=ylabel_batch,
-            cum_dt_prop_final_by_opt=None,
-            x_start=0,
+            title=title_batch,
+            cum_dt_prop_final_by_opt=cum_dt_prop_batch,
+            opt_names_all=opt_names_all if opt_names_all else opt_names_batch,
         )
-        axs[1, 1].legend(loc="upper left", fontsize=9)
     else:
-        axs[1, 1].axis("off")
+        axs[1].axis("off")
 
-    axs[0, 0].set_xlabel("")
-    axs[0, 1].set_xlabel("")
-    axs[0, 1].set_ylabel("")
-    axs[1, 1].set_ylabel("")
+    axs[0].set_xlabel("N", fontsize=16)
+    if axs[1].axison:
+        axs[1].set_xlabel("N", fontsize=16)
+        axs[1].set_ylabel("")
+        axs[1].tick_params(axis="y", labelleft=False, labelsize=16)
 
     if suptitle:
         fig.suptitle(suptitle, fontsize=16, y=1.02)
-    plt.tight_layout()
+    _consolidate_bottom_legend(
+        fig,
+        axs,
+        fontsize=16,
+        ncol=6,
+    )
+    fig.tight_layout(rect=(0.0, 0.12, 1.0, 1.0))
 
     return fig, axs, (data_locator_seq, traces_seq), (data_locator_batch, traces_batch)
 
@@ -883,13 +1025,14 @@ def plot_rl_final_comparison(
     opt_names_batch: list[str],
     problem_seq: str,
     problem_batch: str,
-    num_reps: int = 30,
+    num_reps: int | None = None,
     num_rounds_seq: int = 100,
     num_rounds_batch: int = 30,
     num_arms_seq: int = 1,
     num_arms_batch: int = 50,
     suptitle: str = None,
     figsize: tuple = (14, 5),
+    opt_names_all: list[str] | None = None,
 ):
     data_locator_seq, traces_seq = load_rl_traces(
         results_path,
@@ -901,49 +1044,95 @@ def plot_rl_final_comparison(
         problem=problem_seq,
     )
 
-    data_locator_batch, traces_batch = load_rl_traces(
-        results_path,
-        exp_dir,
-        opt_names_batch,
-        num_arms=num_arms_batch,
-        num_rounds=num_rounds_batch,
-        num_reps=num_reps,
-        problem=problem_batch,
-    )
+    cum_dt_prop_seq = None
+    try:
+        data_locator_seq_dt, traces_seq_dt = load_rl_traces(
+            results_path,
+            exp_dir,
+            opt_names_seq,
+            num_arms=num_arms_seq,
+            num_rounds=num_rounds_seq,
+            num_reps=num_reps,
+            problem=problem_seq,
+            key="dt_prop",
+        )
+        traces_seq_cum = _cum_dt_prop_from_dt_prop_traces(traces_seq_dt)
+        cum_dt_prop_seq = _median_final_by_optimizer(data_locator_seq_dt, traces_seq_cum)
+    except ValueError:
+        cum_dt_prop_seq = None
+
+    data_locator_batch = None
+    traces_batch = None
+    try:
+        data_locator_batch, traces_batch = load_rl_traces(
+            results_path,
+            exp_dir,
+            opt_names_batch,
+            num_arms=num_arms_batch,
+            num_rounds=num_rounds_batch,
+            num_reps=num_reps,
+            problem=problem_batch,
+        )
+    except ValueError:
+        data_locator_batch = None
+        traces_batch = None
+
+    cum_dt_prop_batch = None
+    try:
+        if data_locator_batch is not None:
+            data_locator_batch_dt, traces_batch_dt = load_rl_traces(
+                results_path,
+                exp_dir,
+                opt_names_batch,
+                num_arms=num_arms_batch,
+                num_rounds=num_rounds_batch,
+                num_reps=num_reps,
+                problem=problem_batch,
+                key="dt_prop",
+            )
+            traces_batch_cum = _cum_dt_prop_from_dt_prop_traces(traces_batch_dt)
+            cum_dt_prop_batch = _median_final_by_optimizer(data_locator_batch_dt, traces_batch_cum)
+    except ValueError:
+        cum_dt_prop_batch = None
 
     fig, axs = plt.subplots(1, 2, figsize=figsize)
 
     noise_seq = _noise_label(problem_seq)
     denoise_seq = _get_denoise_value(data_locator_seq, problem_seq)
+    speedup_seq = _speedup_x_label(cum_dt_prop_seq, problem_seq)
+    line1_seq = f"{noise_seq}, {speedup_seq}" if speedup_seq else noise_seq
+    parts_seq = [f"num_arms = {num_arms_seq}"]
     if denoise_seq is not None:
-        if problem_seq.endswith(":fn"):
-            title_seq = f"Sequential (num_arms / round = {num_arms_seq})\n{noise_seq}, num_denoise = {denoise_seq}"
-        else:
-            title_seq = f"Sequential (num_arms / round = {num_arms_seq})\n{noise_seq}, num_denoise_passive= {denoise_seq}"
-    else:
-        title_seq = f"Sequential (num_arms / round = {num_arms_seq})\n{noise_seq}"
+        denoise_key_seq = "num_denoise" if problem_seq.endswith(":fn") else "num_denoise_passive"
+        parts_seq.append(f"{denoise_key_seq} = {denoise_seq}")
+    title_seq = f"{line1_seq}\n{', '.join(parts_seq)}"
     plot_final_performance(
         axs[0],
         data_locator_seq,
         traces_seq,
         title=title_seq,
+        opt_names_all=opt_names_all if opt_names_all else opt_names_seq,
     )
 
-    noise_batch = _noise_label(problem_batch)
-    denoise_batch = _get_denoise_value(data_locator_batch, problem_batch)
-    if denoise_batch is not None:
-        if problem_batch.endswith(":fn"):
-            title_batch = f"Batch (num_arms / round = {num_arms_batch})\n{noise_batch}, num_denoise = {denoise_batch}"
-        else:
-            title_batch = f"Batch (num_arms / round = {num_arms_batch})\n{noise_batch}, num_denoise_passive= {denoise_batch}"
+    if data_locator_batch is not None and traces_batch is not None:
+        noise_batch = _noise_label(problem_batch)
+        denoise_batch = _get_denoise_value(data_locator_batch, problem_batch)
+        speedup_batch = _speedup_x_label(cum_dt_prop_batch, problem_batch)
+        line1_batch = f"{noise_batch}, {speedup_batch}" if speedup_batch else noise_batch
+        parts_batch = [f"num_arms = {num_arms_batch}"]
+        if denoise_batch is not None:
+            denoise_key_batch = "num_denoise" if problem_batch.endswith(":fn") else "num_denoise_passive"
+            parts_batch.append(f"{denoise_key_batch} = {denoise_batch}")
+        title_batch = f"{line1_batch}\n{', '.join(parts_batch)}"
+        plot_final_performance(
+            axs[1],
+            data_locator_batch,
+            traces_batch,
+            title=title_batch,
+            opt_names_all=opt_names_all if opt_names_all else opt_names_batch,
+        )
     else:
-        title_batch = f"Batch (num_arms / round = {num_arms_batch})\n{noise_batch}"
-    plot_final_performance(
-        axs[1],
-        data_locator_batch,
-        traces_batch,
-        title=title_batch,
-    )
+        axs[1].axis("off")
 
     if suptitle:
         fig.suptitle(suptitle, fontsize=16, y=1.02)
@@ -955,6 +1144,9 @@ def plot_rl_final_comparison(
 _long_names = {
     "tlunar": "LunarLander-v3",
     "push": "Push-v3",
+    "hop": "Hopper-v5",
+    "bw-heur": "BipedalWalker-v3",
+    "dna": "LASSO-DNA",
 }
 
 
@@ -968,10 +1160,15 @@ def plot_results(
     num_rounds_batch: int | None = None,
     num_arms_seq: int | None = None,
     num_arms_batch: int | None = None,
+    exclude_seq: list[str] | None = None,
+    exclude_batch: list[str] | None = None,
 ):
     problem_name = _long_names.get(problem, problem)
     problem_seq = problem
     problem_batch = f"{problem}:fn"
+
+    opt_names_seq = [o for o in opt_names if o not in (exclude_seq or [])]
+    opt_names_batch = [o for o in opt_names if o not in (exclude_batch or [])]
 
     inferred = _infer_params_from_configs(
         results_path,
@@ -981,7 +1178,7 @@ def plot_results(
         opt_names=opt_names,
     )
     if num_reps is None:
-        num_reps = inferred.get("num_reps", 30)
+        num_reps = inferred.get("num_reps", None)
     if num_rounds_seq is None:
         num_rounds_seq = inferred.get("num_rounds_seq", 100)
     if num_rounds_batch is None:
@@ -991,11 +1188,30 @@ def plot_results(
     if num_arms_batch is None:
         num_arms_batch = inferred.get("num_arms_batch", 50)
 
+    _print_dataset_summary(
+        results_path,
+        exp_dir,
+        problem=problem_seq,
+        opt_names=opt_names_seq,
+        num_arms=num_arms_seq,
+        num_rounds=num_rounds_seq,
+        num_reps=num_reps,
+    )
+    _print_dataset_summary(
+        results_path,
+        exp_dir,
+        problem=problem_batch,
+        opt_names=opt_names_batch,
+        num_arms=num_arms_batch,
+        num_rounds=num_rounds_batch,
+        num_reps=num_reps,
+    )
+
     fig_curves, axs_curves, seq_data, batch_data = plot_rl_comparison(
         results_path,
         exp_dir,
-        opt_names_seq=opt_names,
-        opt_names_batch=opt_names,
+        opt_names_seq=opt_names_seq,
+        opt_names_batch=opt_names_batch,
         problem_seq=problem_seq,
         problem_batch=problem_batch,
         num_reps=num_reps,
@@ -1003,15 +1219,16 @@ def plot_results(
         num_rounds_batch=num_rounds_batch,
         num_arms_seq=num_arms_seq,
         num_arms_batch=num_arms_batch,
-        suptitle=f"{problem_name} Optimization Results",
+        suptitle=f"{problem_name}",
         cum_dt_prop=problem in {"tlunar", "push"},
+        opt_names_all=opt_names,
     )
 
     fig_final, axs_final, _, _ = plot_rl_final_comparison(
         results_path,
         exp_dir,
-        opt_names_seq=opt_names,
-        opt_names_batch=opt_names,
+        opt_names_seq=opt_names_seq,
+        opt_names_batch=opt_names_batch,
         problem_seq=problem_seq,
         problem_batch=problem_batch,
         num_reps=num_reps,
@@ -1020,6 +1237,119 @@ def plot_results(
         num_arms_seq=num_arms_seq,
         num_arms_batch=num_arms_batch,
         suptitle=f"{problem_name} Final Performance Comparison (±2 SE)",
+        opt_names_all=opt_names,
     )
 
     return (fig_curves, axs_curves), (fig_final, axs_final), seq_data, batch_data
+
+
+def compute_pareto_data(
+    results_path: str,
+    exp_dir: dict[str, str],
+    opt_names: list[str],
+    baseline_opt: str = "turbo-one",
+    exclude_opts: list[str] | None = None,
+    mode: str = "both",
+):
+    if exclude_opts is None:
+        exclude_opts = ["random"]
+    opt_names_filtered = [o for o in opt_names if o not in exclude_opts]
+
+    all_returns = {}
+    all_times = {}
+
+    for problem, exp in exp_dir.items():
+        problem_seq = problem
+        problem_batch = f"{problem}:fn"
+
+        inferred = _infer_params_from_configs(
+            results_path,
+            exp,
+            problem_seq=problem_seq,
+            problem_batch=problem_batch,
+            opt_names=opt_names_filtered,
+        )
+        num_reps = inferred.get("num_reps", None)
+        num_rounds_seq = inferred.get("num_rounds_seq", 100)
+        num_rounds_batch = inferred.get("num_rounds_batch", 30)
+        num_arms_seq = inferred.get("num_arms_seq", 1)
+        num_arms_batch = inferred.get("num_arms_batch", 50)
+
+        configs_to_load = []
+        if mode in ("seq", "both"):
+            configs_to_load.append((f"{problem}_seq", problem_seq, num_arms_seq, num_rounds_seq))
+        if mode in ("batch", "both"):
+            configs_to_load.append((f"{problem}_batch", problem_batch, num_arms_batch, num_rounds_batch))
+
+        for label, prob, num_arms, num_rounds in configs_to_load:
+            try:
+                data_locator, traces = load_rl_traces(
+                    results_path,
+                    exp,
+                    opt_names_filtered,
+                    num_arms=num_arms,
+                    num_rounds=num_rounds,
+                    num_reps=num_reps,
+                    problem=prob,
+                )
+                returns_by_opt = _mean_final_by_optimizer(data_locator, traces)
+                all_returns[label] = returns_by_opt
+            except ValueError:
+                pass
+
+            try:
+                data_locator_dt, traces_dt = load_rl_traces(
+                    results_path,
+                    exp,
+                    opt_names_filtered,
+                    num_arms=num_arms,
+                    num_rounds=num_rounds,
+                    num_reps=num_reps,
+                    problem=prob,
+                    key="dt_prop",
+                )
+                traces_cum = _cum_dt_prop_from_dt_prop_traces(traces_dt)
+                times_by_opt = _mean_final_by_optimizer(data_locator_dt, traces_cum)
+                all_times[label] = times_by_opt
+            except ValueError:
+                pass
+
+    problems = sorted(set(all_returns.keys()) & set(all_times.keys()))
+    opts_in_data = set()
+    for p in problems:
+        opts_in_data.update(all_returns[p].keys())
+        opts_in_data.update(all_times[p].keys())
+    opts_in_data = [o for o in opt_names_filtered if o in opts_in_data]
+
+    r_matrix = np.full((len(problems), len(opts_in_data)), np.nan)
+    t_matrix = np.full((len(problems), len(opts_in_data)), np.nan)
+
+    for i_p, p in enumerate(problems):
+        for i_o, o in enumerate(opts_in_data):
+            if p in all_returns and o in all_returns[p]:
+                r_matrix[i_p, i_o] = all_returns[p][o]
+            if p in all_times and o in all_times[p]:
+                t_matrix[i_p, i_o] = all_times[p][o]
+
+    if baseline_opt not in opts_in_data:
+        raise ValueError(f"Baseline optimizer {baseline_opt!r} not found in data. Available: {opts_in_data}")
+    i_baseline = opts_in_data.index(baseline_opt)
+
+    r_baseline = r_matrix[:, i_baseline : i_baseline + 1]
+    r_centered = r_matrix - r_baseline
+    rms = np.sqrt(np.nanmean(r_centered**2, axis=1, keepdims=True))
+    rms = np.where(rms == 0, 1.0, rms)
+    r_normalized = r_centered / rms
+
+    t_baseline = t_matrix[:, i_baseline : i_baseline + 1]
+    speedup = t_baseline / t_matrix
+
+    return {
+        "problems": problems,
+        "opt_names": opts_in_data,
+        "r_normalized": r_normalized,
+        "speedup": speedup,
+        "r_raw": r_matrix,
+        "t_raw": t_matrix,
+        "baseline_opt": baseline_opt,
+    }

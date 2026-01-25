@@ -164,7 +164,7 @@ class TestModalBatches:
 
         assert len(jobs) == 1
         key, run_config = jobs[0]
-        assert key == "test_batch-0"
+        assert key == "test_batch-/path/to/trace"
         assert run_config == mock_run_config
 
     @patch("experiments.modal_batches.prep_d_argss")
