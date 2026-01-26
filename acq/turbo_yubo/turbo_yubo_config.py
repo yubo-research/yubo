@@ -2,7 +2,10 @@ from dataclasses import dataclass
 from typing import Callable
 
 from acq.turbo_yubo.ty_default_tr import TYDefaultTR
-from acq.turbo_yubo.ty_model_factory import build_default_turbo_yubo_model, default_targeter
+from acq.turbo_yubo.ty_model_factory import (
+    build_default_turbo_yubo_model,
+    default_targeter,
+)
 from acq.turbo_yubo.ty_selectors import ty_thompson
 from sampling.lhd import latin_hypercube_design
 from sampling.sampling_util import raasp_turbo_np

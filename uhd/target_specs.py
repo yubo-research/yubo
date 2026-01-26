@@ -41,7 +41,9 @@ def _make_scalar_metric() -> Any:
 def _make_mnist_metric() -> Any:
     from uhd.mnist_metric import MNISTMetric
 
-    return MNISTMetric(data_root="./data", batch_size=64, seed=0, train=True, num_workers=0)
+    return MNISTMetric(
+        data_root="./data", batch_size=64, seed=0, train=True, num_workers=0
+    )
 
 
 TARGET_SPECS = {

@@ -50,13 +50,19 @@ def run(cmds, max_parallel, b_dry_run=False):
 def prep_d_argss(batch_tag):
     results_dir = "results"
 
-    preps = {k: v for k, v in batch_preps.__dict__.items() if k.startswith("prep_") and callable(v)}
+    preps = {
+        k: v
+        for k, v in batch_preps.__dict__.items()
+        if k.startswith("prep_") and callable(v)
+    }
 
     fn = preps.get(batch_tag)
     if fn is None and not batch_tag.startswith("prep_"):
         fn = preps.get(f"prep_{batch_tag}")
 
-    assert fn is not None, f"Unknown batch_tag: {batch_tag} (known: {sorted(preps.keys())})"
+    assert fn is not None, (
+        f"Unknown batch_tag: {batch_tag} (known: {sorted(preps.keys())})"
+    )
     return fn(results_dir)
 
 

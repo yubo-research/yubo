@@ -66,7 +66,9 @@ def test_parity_with_reference_transform():
     k = 5
     idx = torch.randperm(D, generator=gen)[:k]
     vals = torch.randn(k, generator=gen)
-    dx = make_sparse_vector(idx.tolist(), vals.tolist(), D, dtype=x0.dtype, device=x0.device)
+    dx = make_sparse_vector(
+        idx.tolist(), vals.tolist(), D, dtype=x0.dtype, device=x0.device
+    )
     dut = DeltaSparseJL_T(num_dim_ambient=D, num_dim_embedding=d, s=s, seed=seed)
     dut.initialize(x0)
     y = dut.transform(dx)
@@ -97,7 +99,9 @@ def test_seed_determinism():
     x0 = torch.randn(D, generator=g)
     idx = torch.randperm(D, generator=g)[:6]
     vals = torch.randn(6, generator=g)
-    dx = make_sparse_vector(idx.tolist(), vals.tolist(), D, dtype=x0.dtype, device=x0.device)
+    dx = make_sparse_vector(
+        idx.tolist(), vals.tolist(), D, dtype=x0.dtype, device=x0.device
+    )
     a = DeltaSparseJL_T(num_dim_ambient=D, num_dim_embedding=d, s=s, seed=seed)
     b = DeltaSparseJL_T(num_dim_ambient=D, num_dim_embedding=d, s=s, seed=seed)
     a.initialize(x0)
@@ -149,7 +153,9 @@ def test_delta_sparse_jl_t_timing_prints():
     x0 = torch.randn(D, generator=gen)
     idx = torch.randperm(D, generator=gen)[:k]
     vals = torch.randn(k, generator=gen) * 0.05
-    dx = make_sparse_vector(idx.tolist(), vals.tolist(), D, dtype=x0.dtype, device=x0.device)
+    dx = make_sparse_vector(
+        idx.tolist(), vals.tolist(), D, dtype=x0.dtype, device=x0.device
+    )
     dut = DeltaSparseJL_T(num_dim_ambient=D, num_dim_embedding=d, s=s, seed=0)
     dut.initialize(x0)
     times_ms = []
@@ -160,7 +166,9 @@ def test_delta_sparse_jl_t_timing_prints():
         t1 = time.perf_counter()
         times_ms.append((t1 - t0) * 1000.0)
     mean_ms = sum(times_ms) / len(times_ms)
-    print(f"D={D}, d={d}, s={s}, k={k}, time_ms_mean={mean_ms:.2f}, y_norm={float(torch.linalg.norm(y)):.4f}")
+    print(
+        f"D={D}, d={d}, s={s}, k={k}, time_ms_mean={mean_ms:.2f}, y_norm={float(torch.linalg.norm(y)):.4f}"
+    )
 
 
 def test_delta_sparse_jl_t_timing_sparse_dx_prints():
@@ -174,7 +182,9 @@ def test_delta_sparse_jl_t_timing_sparse_dx_prints():
     x0 = torch.zeros(D)
     idx = torch.randperm(D, generator=gen)[:k]
     vals = torch.randn(k, generator=gen)
-    dx = make_sparse_vector(idx.tolist(), vals.tolist(), D, dtype=x0.dtype, device=x0.device)
+    dx = make_sparse_vector(
+        idx.tolist(), vals.tolist(), D, dtype=x0.dtype, device=x0.device
+    )
     dut = DeltaSparseJL_T(num_dim_ambient=D, num_dim_embedding=d, s=s, seed=1)
     dut.initialize(x0)
     times_ms = []
@@ -185,4 +195,6 @@ def test_delta_sparse_jl_t_timing_sparse_dx_prints():
         t1 = time.perf_counter()
         times_ms.append((t1 - t0) * 1000.0)
     mean_ms = sum(times_ms) / len(times_ms)
-    print(f"D={D}, d={d}, s={s}, k={k}, time_ms_mean={mean_ms:.2f}, y_norm={float(torch.linalg.norm(y)):.4f}")
+    print(
+        f"D={D}, d={d}, s={s}, k={k}, time_ms_mean={mean_ms:.2f}, y_norm={float(torch.linalg.norm(y)):.4f}"
+    )

@@ -1,7 +1,11 @@
 import torch
 import torch.nn as nn
 
-from uhd.param_accessor import ModuleParamAccessor, SingleTensorAccessor, make_param_accessor
+from uhd.param_accessor import (
+    ModuleParamAccessor,
+    SingleTensorAccessor,
+    make_param_accessor,
+)
 
 
 class Tiny(nn.Module):

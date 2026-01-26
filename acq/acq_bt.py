@@ -22,7 +22,9 @@ class AcqBT:
         telemetry=None,
     ):
         # All BoTorch stuff is coded to bounds of [0,1]!
-        self.bounds = torch.tensor([[0.0] * num_dim, [1.0] * num_dim], device=device, dtype=dtype)
+        self.bounds = torch.tensor(
+            [[0.0] * num_dim, [1.0] * num_dim], device=device, dtype=dtype
+        )
         self._rebounds = None
 
         if len(data) == 0:

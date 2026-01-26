@@ -83,7 +83,9 @@ class Optimizer:
         self._i_noise = 0
         self._cum_dt_proposing = 0
 
-        self._collector(f"PROBLEM: env = {env_conf.env_name} num_params = {policy.num_params()}")
+        self._collector(
+            f"PROBLEM: env = {env_conf.env_name} num_params = {policy.num_params()}"
+        )
 
         self._ret_viz = -1e99
         self._telemetry = Telemetry()
@@ -108,7 +110,9 @@ class Optimizer:
                 else:
                     delta = self._num_denoise
                 self._i_noise += delta
-            traj, noise_seed = collect_denoised_trajectory(self._env_conf, policy, self._num_denoise, i_noise)
+            traj, noise_seed = collect_denoised_trajectory(
+                self._env_conf, policy, self._num_denoise, i_noise
+            )
             if _INTERACTIVE_DEBUG and self._num_denoise == 1:
                 r = np.asarray(traj.rreturn)
                 if r.ndim == 0 and float(r) > self._ret_viz:
@@ -121,10 +125,15 @@ class Optimizer:
 
         return data, dt_prop, dt_eval
 
-    def collect_trace(self, designer_name, max_iterations, max_proposal_seconds=np.inf, deadline=None):
+    def collect_trace(
+        self, designer_name, max_iterations, max_proposal_seconds=np.inf, deadline=None
+    ):
         self.initialize(designer_name)
         num_iterations = 0
-        while num_iterations < max_iterations and self._cum_dt_proposing < max_proposal_seconds:
+        while (
+            num_iterations < max_iterations
+            and self._cum_dt_proposing < max_proposal_seconds
+        ):
             if deadline is not None and time.time() >= deadline:
                 break
             self.iterate()
@@ -160,12 +169,19 @@ class Optimizer:
         if _INTERACTIVE_DEBUG:
             if ret_batch.ndim == 1 and self._i_iter % _SHOW_EVERY_N_ITER == 0:
                 print("VIZ:", self._ret_viz, self.r_best_est, ret_batch.max())
-                collect_trajectory(self._env_conf, self._policy_viz, noise_seed=self._noise_seed_viz, show_frames=True)
+                collect_trajectory(
+                    self._env_conf,
+                    self._policy_viz,
+                    noise_seed=self._noise_seed_viz,
+                    show_frames=True,
+                )
 
         if ret_batch.ndim <= 1:
             did_update_best = False
             used_designer_best = False
-            if hasattr(designer, "best_datum") and callable(getattr(designer, "best_datum")):
+            if hasattr(designer, "best_datum") and callable(
+                getattr(designer, "best_datum")
+            ):
                 datum_best = designer.best_datum()
                 if datum_best is not None:
                     decision_best = float(datum_best.trajectory.get_decision_rreturn())
@@ -199,7 +215,13 @@ class Optimizer:
                     self.y_best = float(self.r_best_est)
             else:
                 if did_update_best or self.y_best is None:
-                    self.y_best = float(evaluate_for_best(self._env_conf, self.best_policy, self._num_denoise_passive_eval))
+                    self.y_best = float(
+                        evaluate_for_best(
+                            self._env_conf,
+                            self.best_policy,
+                            self._num_denoise_passive_eval,
+                        )
+                    )
 
             ret_eval = float(self.y_best)
 
@@ -210,13 +232,19 @@ class Optimizer:
             assert ret_batch.ndim == 2, ret_batch.shape
             num_metrics = int(ret_batch.shape[1])
             assert num_metrics >= 2, ret_batch.shape
-            assert self._num_denoise_passive_eval is None, "NYI: passive denoise for vector returns"
+            assert self._num_denoise_passive_eval is None, (
+                "NYI: passive denoise for vector returns"
+            )
 
             if num_metrics == 2:
                 if self._ref_point is None:
                     from analysis.ref_point import SobolRefPoint
 
-                    noise_seed_0 = 0 if self._env_conf.noise_seed_0 is None else int(self._env_conf.noise_seed_0)
+                    noise_seed_0 = (
+                        0
+                        if self._env_conf.noise_seed_0 is None
+                        else int(self._env_conf.noise_seed_0)
+                    )
                     seed = int(self._env_conf.problem_seed) + 99991
                     self._ref_point = SobolRefPoint(
                         num_cal=max(128, 10 * int(self._num_arms)),
@@ -224,10 +252,23 @@ class Optimizer:
                         num_denoise=self._num_denoise,
                         noise_seed_0=noise_seed_0,
                         std_margin_scale=0.1,
-                    ).compute(self._env_conf, policy=self.best_policy.clone() if self.best_policy is not None else None)
-                    self._collector(f"REF_POINT: ref = {np.array2string(self._ref_point, precision=6, floatmode='fixed')}")
+                    ).compute(
+                        self._env_conf,
+                        policy=self.best_policy.clone()
+                        if self.best_policy is not None
+                        else None,
+                    )
+                    self._collector(
+                        f"REF_POINT: ref = {np.array2string(self._ref_point, precision=6, floatmode='fixed')}"
+                    )
 
-                all_y = np.asarray([np.asarray(d.trajectory.rreturn, dtype=np.float64) for d in self._data], dtype=np.float64)
+                all_y = np.asarray(
+                    [
+                        np.asarray(d.trajectory.rreturn, dtype=np.float64)
+                        for d in self._data
+                    ],
+                    dtype=np.float64,
+                )
                 import torch
                 from botorch.utils.multi_objective.hypervolume import Hypervolume
                 from botorch.utils.multi_objective.pareto import is_non_dominated
@@ -244,7 +285,9 @@ class Optimizer:
                     ref_t = torch.as_tensor(self._ref_point, dtype=torch.double)
                     hv = float(Hypervolume(ref_t).compute(front))
                     front_np = front.cpu().numpy()
-                    normalized = (front_np - self._ref_point) / np.abs(self._ref_point + 1e-9)
+                    normalized = (front_np - self._ref_point) / np.abs(
+                        self._ref_point + 1e-9
+                    )
                     scores = normalized.sum(axis=1)
                     best_idx = int(np.argmax(scores))
                     self.y_best = front_np[best_idx]
@@ -277,7 +320,9 @@ class Optimizer:
                 f"ITER: i_iter = {self._i_iter} cum_time = {cum_time:.2f} dt_eval = {dt_eval:.3f} dt_prop = {dt_prop:.3f} {self._telemetry.format()} cum_dt_prop = {self._cum_dt_proposing:.3f} y_best = {y_best_s} ret_best = {ret_best_s} ret_eval = {ret_eval_s}"
             )
         sys.stdout.flush()
-        self._trace.append(_TraceEntry(float(ret_eval), float(self.r_best_est), dt_prop, dt_eval))
+        self._trace.append(
+            _TraceEntry(float(ret_eval), float(self.r_best_est), dt_prop, dt_eval)
+        )
         self._i_iter += 1
         self.last_designer = designer
         return self._trace

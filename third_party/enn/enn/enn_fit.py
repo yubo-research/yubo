@@ -10,7 +10,9 @@ if TYPE_CHECKING:
     from .enn_params import ENNParams
 
 
-def _validate_subsample_inputs(x: np.ndarray | Any, y: np.ndarray | Any, P: int, paramss: list) -> tuple[np.ndarray, np.ndarray]:
+def _validate_subsample_inputs(
+    x: np.ndarray | Any, y: np.ndarray | Any, P: int, paramss: list
+) -> tuple[np.ndarray, np.ndarray]:
     import numpy as np
 
     x_array = np.asarray(x, dtype=float)
@@ -30,7 +32,9 @@ def _validate_subsample_inputs(x: np.ndarray | Any, y: np.ndarray | Any, P: int,
     return x_array, y_array
 
 
-def _compute_single_loglik(y_scaled: np.ndarray, mu_i: np.ndarray, se_i: np.ndarray) -> float:
+def _compute_single_loglik(
+    y_scaled: np.ndarray, mu_i: np.ndarray, se_i: np.ndarray
+) -> float:
     import numpy as np
 
     if not np.isfinite(mu_i).all() or not np.isfinite(se_i).all():
@@ -38,7 +42,9 @@ def _compute_single_loglik(y_scaled: np.ndarray, mu_i: np.ndarray, se_i: np.ndar
     if np.any(se_i <= 0.0):
         return 0.0
     var_scaled = se_i**2
-    loglik = -0.5 * np.sum(np.log(2.0 * np.pi * var_scaled) + (y_scaled - mu_i) ** 2 / var_scaled)
+    loglik = -0.5 * np.sum(
+        np.log(2.0 * np.pi * var_scaled) + (y_scaled - mu_i) ** 2 / var_scaled
+    )
     return float(loglik) if np.isfinite(loglik) else 0.0
 
 
@@ -58,7 +64,9 @@ def subsample_loglik(
     if n == 0 or len(model) <= 1:
         return [0.0] * len(paramss)
     P_actual = min(P, n)
-    indices = np.arange(n, dtype=int) if P_actual == n else rng.permutation(n)[:P_actual]
+    indices = (
+        np.arange(n, dtype=int) if P_actual == n else rng.permutation(n)[:P_actual]
+    )
     x_sel, y_sel = x_array[indices], y_array[indices]
     if not np.isfinite(y_sel).all():
         return [0.0] * len(paramss)
@@ -78,7 +86,10 @@ def subsample_loglik(
     y_scaled = y_sel / y_std
     mu_scaled = post.mu / y_std
     se_scaled = post.se / y_std
-    return [_compute_single_loglik(y_scaled, mu_scaled[i], se_scaled[i]) for i in range(num_params)]
+    return [
+        _compute_single_loglik(y_scaled, mu_scaled[i], se_scaled[i])
+        for i in range(num_params)
+    ]
 
 
 def enn_fit(
@@ -98,7 +109,9 @@ def enn_fit(
     log_max = 3.0
     epi_var_scale_log_values = rng.uniform(log_min, log_max, size=num_fit_candidates)
     epi_var_scale_values = 10**epi_var_scale_log_values
-    ale_homoscedastic_log_values = rng.uniform(log_min, log_max, size=num_fit_candidates)
+    ale_homoscedastic_log_values = rng.uniform(
+        log_min, log_max, size=num_fit_candidates
+    )
     ale_homoscedastic_values = 10**ale_homoscedastic_log_values
     paramss = [
         ENNParams(
@@ -124,7 +137,9 @@ def enn_fit(
         )
     import numpy as np
 
-    logliks = subsample_loglik(model, train_x, train_y, paramss=paramss, P=num_fit_samples, rng=rng)
+    logliks = subsample_loglik(
+        model, train_x, train_y, paramss=paramss, P=num_fit_samples, rng=rng
+    )
     if len(logliks) == 0:
         return paramss[0]
     best_idx = int(np.argmax(logliks))

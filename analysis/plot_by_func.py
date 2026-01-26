@@ -6,10 +6,25 @@ import numpy as np
 from analysis.data_locator import DataLocator
 from analysis.data_sets import load_multiple_traces, range_summarize
 from analysis.plotting import subplots
-from experiments.func_names import funcs_bowl, funcs_multimodal, funcs_other, funcs_plate, funcs_ridges, funcs_valley
+from experiments.func_names import (
+    funcs_bowl,
+    funcs_multimodal,
+    funcs_other,
+    funcs_plate,
+    funcs_ridges,
+    funcs_valley,
+)
 
 
-def plot_by_func(results_path, exp_dir, opt_names, renames=None, save_path=None, figsize=12, num_dims=None):
+def plot_by_func(
+    results_path,
+    exp_dir,
+    opt_names,
+    renames=None,
+    save_path=None,
+    figsize=12,
+    num_dims=None,
+):
     """
     Create plots grouped by function type, with one subplot per function.
     Each subplot shows error bars for each optimizer, averaged over all dimensions, rounds, and replications.
@@ -59,7 +74,12 @@ def plot_by_func(results_path, exp_dir, opt_names, renames=None, save_path=None,
 
             if num_dims is None:
                 data_locator = DataLocator(
-                    results_path=results_path, exp_dir=exp_dir, opt_names=opt_names, problems={func_name}, key="return", grep_for="TRACE"
+                    results_path=results_path,
+                    exp_dir=exp_dir,
+                    opt_names=opt_names,
+                    problems={func_name},
+                    key="return",
+                    grep_for="TRACE",
                 )
                 traces = load_multiple_traces(data_locator)
                 if traces.size > 0:
@@ -67,14 +87,27 @@ def plot_by_func(results_path, exp_dir, opt_names, renames=None, save_path=None,
             else:
                 for dim in num_dims:
                     data_locator = DataLocator(
-                        results_path=results_path, exp_dir=exp_dir, opt_names=opt_names, problems={func_name}, key="return", grep_for="TRACE", num_dim=dim
+                        results_path=results_path,
+                        exp_dir=exp_dir,
+                        opt_names=opt_names,
+                        problems={func_name},
+                        key="return",
+                        grep_for="TRACE",
+                        num_dim=dim,
                     )
                     traces = load_multiple_traces(data_locator)
                     if traces.size > 0:
                         all_traces.append(traces)
 
             if len(all_traces) == 0:
-                ax.text(0.5, 0.5, "No data", ha="center", va="center", transform=ax.transAxes)
+                ax.text(
+                    0.5,
+                    0.5,
+                    "No data",
+                    ha="center",
+                    va="center",
+                    transform=ax.transAxes,
+                )
                 continue
 
             # Concatenate traces from all dimensions
@@ -113,12 +146,28 @@ def plot_by_func(results_path, exp_dir, opt_names, renames=None, save_path=None,
             ax.set_title(func_name, fontsize=10)
             ax.set_ylabel("Score", fontsize=9)
             ax.set_xticks(x_pos)
-            ax.set_xticklabels([renames.get(name, name) if renames else name for name in sorted_opt_names], rotation=45, ha="right", fontsize=8)
+            ax.set_xticklabels(
+                [
+                    renames.get(name, name) if renames else name
+                    for name in sorted_opt_names
+                ],
+                rotation=45,
+                ha="right",
+                fontsize=8,
+            )
             ax.grid(True, alpha=0.3)
             ax.set_ylim([-0.1, 1.1])
 
         except Exception as e:
-            ax.text(0.5, 0.5, f"Error:\n{str(e)[:50]}...", ha="center", va="center", transform=ax.transAxes, fontsize=8)
+            ax.text(
+                0.5,
+                0.5,
+                f"Error:\n{str(e)[:50]}...",
+                ha="center",
+                va="center",
+                transform=ax.transAxes,
+                fontsize=8,
+            )
 
     # Add group labels
     current_group = None
@@ -130,7 +179,9 @@ def plot_by_func(results_path, exp_dir, opt_names, renames=None, save_path=None,
         if current_group != group_name:
             # Add label for previous group if it exists
             if current_group is not None and group_start_idx < i_func:
-                _add_group_label(fig, axs, group_start_idx, i_func - 1, cols, current_group)
+                _add_group_label(
+                    fig, axs, group_start_idx, i_func - 1, cols, current_group
+                )
 
             # Start new group
             current_group = group_name
@@ -148,7 +199,9 @@ def plot_by_func(results_path, exp_dir, opt_names, renames=None, save_path=None,
     plt.show()
 
     if num_funcs > rows * cols:
-        print(f"Note: Showing first {rows * cols} of {num_funcs} functions. Consider using plot_by_func_grouped() for better organization.")
+        print(
+            f"Note: Showing first {rows * cols} of {num_funcs} functions. Consider using plot_by_func_grouped() for better organization."
+        )
 
     return fig, axs
 
@@ -175,7 +228,16 @@ def _add_group_label(fig, axs, start_idx, end_idx, cols, group_name):
     label_y = pos.y1 + 0.03  # Just above the top row
 
     # Add the label
-    fig.text(label_x, label_y, group_name, ha="center", va="bottom", fontsize=12, fontweight="bold", transform=fig.transFigure)
+    fig.text(
+        label_x,
+        label_y,
+        group_name,
+        ha="center",
+        va="bottom",
+        fontsize=12,
+        fontweight="bold",
+        transform=fig.transFigure,
+    )
 
 
 def plot_by_func_grouped(
@@ -229,7 +291,12 @@ def plot_by_func_grouped(
 
                 if num_dims is None:
                     data_locator = DataLocator(
-                        results_path=results_path, exp_dir=exp_dir, opt_names=opt_names, problems={func_name}, key="return", grep_for="TRACE"
+                        results_path=results_path,
+                        exp_dir=exp_dir,
+                        opt_names=opt_names,
+                        problems={func_name},
+                        key="return",
+                        grep_for="TRACE",
                     )
                     traces = load_multiple_traces(data_locator)
                     if traces.size > 0:
@@ -237,14 +304,27 @@ def plot_by_func_grouped(
                 else:
                     for dim in num_dims:
                         data_locator = DataLocator(
-                            results_path=results_path, exp_dir=exp_dir, opt_names=opt_names, problems={func_name}, key="return", grep_for="TRACE", num_dim=dim
+                            results_path=results_path,
+                            exp_dir=exp_dir,
+                            opt_names=opt_names,
+                            problems={func_name},
+                            key="return",
+                            grep_for="TRACE",
+                            num_dim=dim,
                         )
                         traces = load_multiple_traces(data_locator)
                         if traces.size > 0:
                             all_traces.append(traces)
 
                 if len(all_traces) == 0:
-                    ax.text(0.5, 0.5, "No data", ha="center", va="center", transform=ax.transAxes)
+                    ax.text(
+                        0.5,
+                        0.5,
+                        "No data",
+                        ha="center",
+                        va="center",
+                        transform=ax.transAxes,
+                    )
                     continue
 
                 if len(all_traces) == 1:
@@ -263,7 +343,9 @@ def plot_by_func_grouped(
                 x_pos = np.arange(len(opt_names))
 
                 for i_opt, opt_name in enumerate(sorted_opt_names):
-                    display_name = renames.get(opt_name, opt_name) if renames else opt_name
+                    display_name = (
+                        renames.get(opt_name, opt_name) if renames else opt_name
+                    )
 
                     ax.errorbar(
                         x_pos[i_opt],
@@ -281,12 +363,28 @@ def plot_by_func_grouped(
                 ax.set_title(func_name, fontsize=10)
                 ax.set_ylabel("Score", fontsize=9)
                 ax.set_xticks(x_pos)
-                ax.set_xticklabels([renames.get(name, name) if renames else name for name in sorted_opt_names], rotation=45, ha="right", fontsize=8)
+                ax.set_xticklabels(
+                    [
+                        renames.get(name, name) if renames else name
+                        for name in sorted_opt_names
+                    ],
+                    rotation=45,
+                    ha="right",
+                    fontsize=8,
+                )
                 ax.grid(True, alpha=0.3)
                 ax.set_ylim([-0.1, 1.1])
 
             except Exception as e:
-                ax.text(0.5, 0.5, f"Error:\n{str(e)[:50]}...", ha="center", va="center", transform=ax.transAxes, fontsize=8)
+                ax.text(
+                    0.5,
+                    0.5,
+                    f"Error:\n{str(e)[:50]}...",
+                    ha="center",
+                    va="center",
+                    transform=ax.transAxes,
+                    fontsize=8,
+                )
 
         if suptitle:
             fig.suptitle(f"{group_name}", fontsize=14, fontweight="bold")
@@ -298,21 +396,41 @@ def plot_by_func_grouped(
         if save_dir is not None:
             os.makedirs(save_dir, exist_ok=True)
             fn = f"{group_name.lower().replace(' ', '_')}.pdf"
-            fig.savefig(os.path.join(save_dir, fn), format="pdf", bbox_inches="tight", dpi=dpi)
+            fig.savefig(
+                os.path.join(save_dir, fn), format="pdf", bbox_inches="tight", dpi=dpi
+            )
 
         figures.append(fig)
 
     return figures
 
 
-def plot_by_func_publication(results_path, exp_dir, opt_names, renames=None, save_path=None, num_dims=None):
+def plot_by_func_publication(
+    results_path, exp_dir, opt_names, renames=None, save_path=None, num_dims=None
+):
     """
     Publication-ready version with larger fonts and cleaner styling.
     """
     plt.rcParams.update(
-        {"font.size": 12, "axes.titlesize": 10, "axes.labelsize": 9, "xtick.labelsize": 8, "ytick.labelsize": 8, "legend.fontsize": 8, "figure.titlesize": 14}
+        {
+            "font.size": 12,
+            "axes.titlesize": 10,
+            "axes.labelsize": 9,
+            "xtick.labelsize": 8,
+            "ytick.labelsize": 8,
+            "legend.fontsize": 8,
+            "figure.titlesize": 14,
+        }
     )
 
-    fig, axs = plot_by_func(results_path, exp_dir, opt_names, renames, save_path, figsize=16, num_dims=num_dims)
+    fig, axs = plot_by_func(
+        results_path,
+        exp_dir,
+        opt_names,
+        renames,
+        save_path,
+        figsize=16,
+        num_dims=num_dims,
+    )
 
     return fig, axs

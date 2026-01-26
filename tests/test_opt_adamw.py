@@ -15,7 +15,9 @@ class CETrainingMetric:
         x = torch.randn((num_samples, 1, 28, 28), generator=g)
         y = torch.randint(low=0, high=10, size=(num_samples,), generator=g)
         self.dataset = TensorDataset(x, y)
-        self.loader = DataLoader(self.dataset, batch_size=batch_size, shuffle=True, generator=g)
+        self.loader = DataLoader(
+            self.dataset, batch_size=batch_size, shuffle=True, generator=g
+        )
         self.it = iter(self.loader)
         self.criterion = nn.CrossEntropyLoss()
 
@@ -37,7 +39,9 @@ def test_opt_adamw_trains_and_reduces_loss_cpu():
     controller = TMMNIST(seed=123)
     metric = CETrainingMetric(num_samples=256, batch_size=64, seed=0)
     base_collector = Collector()
-    collector = UHDCollector(name="tm_mnist", opt_name="adamw", collector=base_collector)
+    collector = UHDCollector(
+        name="tm_mnist", opt_name="adamw", collector=base_collector
+    )
     config = AdamWConfig(
         lr=1e-3,
         betas=(0.9, 0.999),
@@ -56,7 +60,9 @@ def test_opt_adamw_device_migration_and_forward():
     controller = TMMNIST(seed=7).to(device)
     metric = CETrainingMetric(num_samples=128, batch_size=32, seed=1)
     base_collector = Collector()
-    collector = UHDCollector(name="tm_mnist", opt_name="adamw", collector=base_collector)
+    collector = UHDCollector(
+        name="tm_mnist", opt_name="adamw", collector=base_collector
+    )
     config = AdamWConfig(
         lr=5e-4,
         betas=(0.9, 0.999),

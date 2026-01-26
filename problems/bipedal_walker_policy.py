@@ -70,7 +70,9 @@ class BipedalWalkerPolicy:
         return lp
 
     def _set_derived(self, x):
-        x = np.clip(self._x_center + self._x_scale * np.asarray(x, dtype=np.float64), -1.0, 1.0)
+        x = np.clip(
+            self._x_center + self._x_scale * np.asarray(x, dtype=np.float64), -1.0, 1.0
+        )
 
         self._speed = _map_pm1(x[0], 0.15, 0.50)
         self._hip_swing = _map_pm1(x[1], 0.6, 1.5)
@@ -124,7 +126,9 @@ class BipedalWalkerPolicy:
             self._supporting_knee_angle += 0.03
             if s[2] > self._speed:
                 self._supporting_knee_angle += 0.03
-            self._supporting_knee_angle = min(self._supporting_knee_angle, self._knee_support)
+            self._supporting_knee_angle = min(
+                self._supporting_knee_angle, self._knee_support
+            )
             knee_targ[supporting] = self._supporting_knee_angle
             if float(s[supporting_s + 0]) < 0.10:
                 self._state = self._STATE_PUT_DOWN
@@ -137,7 +141,9 @@ class BipedalWalkerPolicy:
             if moving_contact:
                 self._state = self._STATE_PUSH_OFF
                 self._t_in_state = 0
-                self._supporting_knee_angle = min(float(s[moving_s + 2]), self._knee_support)
+                self._supporting_knee_angle = min(
+                    float(s[moving_s + 2]), self._knee_support
+                )
 
         if self._state == self._STATE_PUSH_OFF:
             knee_targ[moving] = self._supporting_knee_angle
@@ -148,7 +154,9 @@ class BipedalWalkerPolicy:
                 self._moving_leg = 1 - self._moving_leg
                 self._supporting_knee_angle = self._knee_support
 
-        if self._t_in_state >= self._swap_timeout and not (moving_contact or supporting_contact):
+        if self._t_in_state >= self._swap_timeout and not (
+            moving_contact or supporting_contact
+        ):
             self._state = self._STATE_STAY
             self._t_in_state = 0
             self._moving_leg = 1 - self._moving_leg
@@ -158,18 +166,28 @@ class BipedalWalkerPolicy:
         knee_todo = np.zeros(2, dtype=np.float64)
 
         if hip_targ[0] is not None:
-            hip_todo[0] = self._hip_p * (float(hip_targ[0]) - float(s[4])) - self._hip_d * float(s[5])
+            hip_todo[0] = self._hip_p * (
+                float(hip_targ[0]) - float(s[4])
+            ) - self._hip_d * float(s[5])
         if hip_targ[1] is not None:
-            hip_todo[1] = self._hip_p * (float(hip_targ[1]) - float(s[9])) - self._hip_d * float(s[10])
+            hip_todo[1] = self._hip_p * (
+                float(hip_targ[1]) - float(s[9])
+            ) - self._hip_d * float(s[10])
         if knee_targ[0] is not None:
-            knee_todo[0] = self._knee_p * (float(knee_targ[0]) - float(s[6])) - self._knee_d * float(s[7])
+            knee_todo[0] = self._knee_p * (
+                float(knee_targ[0]) - float(s[6])
+            ) - self._knee_d * float(s[7])
         if knee_targ[1] is not None:
-            knee_todo[1] = self._knee_p * (float(knee_targ[1]) - float(s[11])) - self._knee_d * float(s[12])
+            knee_todo[1] = self._knee_p * (
+                float(knee_targ[1]) - float(s[11])
+            ) - self._knee_d * float(s[12])
 
         hip_todo -= self._torso_p * (0.0 - float(s[0])) - self._torso_d * float(s[1])
         knee_todo -= self._vert_d * float(s[3])
 
-        a = np.array([hip_todo[0], knee_todo[0], hip_todo[1], knee_todo[1]], dtype=np.float64)
+        a = np.array(
+            [hip_todo[0], knee_todo[0], hip_todo[1], knee_todo[1]], dtype=np.float64
+        )
         a = np.clip(self._act_scale * a, -1.0, 1.0)
 
         self._t_in_state += 1

@@ -47,7 +47,9 @@ class AcqMTV(MCAcquisitionFunction):
         sobol_engine = SobolEngine(self._num_dim, scramble=True)
 
         if num_obs == 0:
-            self.X_samples = sobol_engine.draw(num_X_samples, dtype=self.dtype).to(self.device)
+            self.X_samples = sobol_engine.draw(num_X_samples, dtype=self.dtype).to(
+                self.device
+            )
         else:
             # TODO: Write acq's for pss and sts and get rid of ts_only.
             if sample_type == "pss":
@@ -57,11 +59,15 @@ class AcqMTV(MCAcquisitionFunction):
             elif sample_type in ["sts", "sts2"]:
                 self._set_x_max()
                 if not ts_only:
-                    self.X_samples = self._stagger_thompson_sampler(num_X_samples, sample_type)
+                    self.X_samples = self._stagger_thompson_sampler(
+                        num_X_samples, sample_type
+                    )
                 else:
                     self.X_samples = sample_type
             elif sample_type == "mts":
-                self.X_samples = AcqMTS(self.model, num_iterations=num_refinements).draw(num_X_samples)
+                self.X_samples = AcqMTS(
+                    self.model, num_iterations=num_refinements
+                ).draw(num_X_samples)
             elif sample_type == "sobol":
                 self.X_samples = sobol_engine.draw(num_X_samples, dtype=self.dtype)
             else:
@@ -89,7 +95,11 @@ class AcqMTV(MCAcquisitionFunction):
                 bounds=self._bounds(),
             )
         elif self._x_max_type == "ts_meas":
-            Y_ts = self.model.posterior(self.model.train_inputs[0]).rsample(torch.Size([1])).squeeze()
+            Y_ts = (
+                self.model.posterior(self.model.train_inputs[0])
+                .rsample(torch.Size([1]))
+                .squeeze()
+            )
             i = acq_util.torch_random_choice(torch.where(Y_ts == Y_ts.max())[0])
             self.X_max = self.model.train_inputs[0][i]
         elif self._x_max_type == "meas":
@@ -114,13 +124,22 @@ class AcqMTV(MCAcquisitionFunction):
     def _stagger_thompson_sampler(self, num_samples, sample_type):
         with ExitStack() as es:
             if False:
-                es.enter_context(gpts.fast_computations(covar_root_decomposition=True, log_prob=True, solves=True))
+                es.enter_context(
+                    gpts.fast_computations(
+                        covar_root_decomposition=True, log_prob=True, solves=True
+                    )
+                )
                 es.enter_context(gpts.max_lanczos_quadrature_iterations(10))
                 es.enter_context(gpts.max_cholesky_size(0))
                 es.enter_context(gpts.ciq_samples(False))
             with torch.inference_mode():
                 if sample_type == "sts":
-                    sts = StaggerThompsonSampler(self.model, self.X_max, num_samples=num_samples, no_stagger=self._no_stagger)
+                    sts = StaggerThompsonSampler(
+                        self.model,
+                        self.X_max,
+                        num_samples=num_samples,
+                        no_stagger=self._no_stagger,
+                    )
                 else:
                     assert False, ("Unknown sample type", sample_type)
 

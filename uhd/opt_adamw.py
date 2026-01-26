@@ -16,7 +16,9 @@ class AdamWConfig:
     metric: Any
 
 
-def optimize_adamw(controller: nn.Module, collector: UHDCollector, num_rounds: int, config: AdamWConfig) -> float:
+def optimize_adamw(
+    controller: nn.Module, collector: UHDCollector, num_rounds: int, config: AdamWConfig
+) -> float:
     assert isinstance(controller, nn.Module)
     assert isinstance(collector, UHDCollector)
     assert isinstance(num_rounds, int) and num_rounds >= 0

@@ -20,7 +20,9 @@ class TurboState:
     restart_triggered: bool = False
 
     def __post_init__(self):
-        self.failure_tolerance = np.ceil(max([4.0 / self.batch_size, float(self.dim) / self.batch_size]))
+        self.failure_tolerance = np.ceil(
+            max([4.0 / self.batch_size, float(self.dim) / self.batch_size])
+        )
 
     def update_state(self, Y_next):
         if max(Y_next) > self.best_value + 1e-3 * np.fabs(self.best_value):
@@ -54,9 +56,13 @@ def get_point_in_tr(x, lb, ub):
 
 
 def mcmc_one_transit(original_x, noise_size, model, dtype, device, lb=0, ub=1):
-    x_set = torch.zeros((original_x.shape[0], 2, original_x.shape[1])).to(dtype=dtype, device=device)
+    x_set = torch.zeros((original_x.shape[0], 2, original_x.shape[1])).to(
+        dtype=dtype, device=device
+    )
     x_set[:, 0, :] = original_x
-    x_set[:, 1, :] = original_x + noise_size * torch.randn(original_x.shape).to(dtype=dtype, device=device)
+    x_set[:, 1, :] = original_x + noise_size * torch.randn(original_x.shape).to(
+        dtype=dtype, device=device
+    )
     # reject points out of trust region
     for i, x in enumerate(x_set):
         if not get_point_in_tr(x_set[i, 1, :], lb, ub):
@@ -68,7 +74,9 @@ def mcmc_one_transit(original_x, noise_size, model, dtype, device, lb=0, ub=1):
     mean = x_set_dis.mean[:, 0] - x_set_dis.mean[:, 1]
 
     temp = (torch.zeros(mean.shape).cuda() - mean) / (torch.sqrt(new_cov + 1e-6))
-    m = torch.distributions.normal.Normal(torch.tensor([0.0]).cuda(), torch.tensor([1.0]).cuda())
+    m = torch.distributions.normal.Normal(
+        torch.tensor([0.0]).cuda(), torch.tensor([1.0]).cuda()
+    )
     p = m.cdf(temp)  # normally distributed with loc=0 and scale=1
     p_ratio = (p) / (1 - p + 1e-7)
     alpha = torch.clamp(p_ratio, 0, 1)
@@ -82,7 +90,9 @@ def mcmc_one_transit(original_x, noise_size, model, dtype, device, lb=0, ub=1):
     return new_pop
 
 
-def langevin_update(x_cur, langevin_epsilon, model, dtype, device, lb=0, ub=1, h=5e-5, n_splits=4):
+def langevin_update(
+    x_cur, langevin_epsilon, model, dtype, device, lb=0, ub=1, h=5e-5, n_splits=4
+):
     beta = 2
     n, d = x_cur.shape[0], x_cur.shape[1]
     if n > n_splits:
@@ -91,7 +101,12 @@ def langevin_update(x_cur, langevin_epsilon, model, dtype, device, lb=0, ub=1, h
         batch_size = n
     gradients_all = torch.zeros_like(x_cur)
     for idx in range(0, n, batch_size):
-        aug_x = x_cur[idx : idx + batch_size, :].unsqueeze(1).unsqueeze(1).repeat(1, d, 2, 1)
+        aug_x = (
+            x_cur[idx : idx + batch_size, :]
+            .unsqueeze(1)
+            .unsqueeze(1)
+            .repeat(1, d, 2, 1)
+        )
         for dim in range(d):
             aug_x[:, dim, 1, dim] += h
 
@@ -100,8 +115,17 @@ def langevin_update(x_cur, langevin_epsilon, model, dtype, device, lb=0, ub=1, h
         Sigma = f_covar.detach()
         Sigma[:, :, 0, 0] += 1e-4
         Sigma[:, :, 1, 1] += 1e-4
-        Sigma_nd = Sigma[:, :, 0, 0] + Sigma[:, :, 1, 1] - Sigma[:, :, 1, 0] - Sigma[:, :, 0, 1]
-        mu_nd = f_mean[:, :, 0] - f_mean[:, :, 1] + beta * (Sigma[:, :, 0, 0] - Sigma[:, :, 1, 1])
+        Sigma_nd = (
+            Sigma[:, :, 0, 0]
+            + Sigma[:, :, 1, 1]
+            - Sigma[:, :, 1, 0]
+            - Sigma[:, :, 0, 1]
+        )
+        mu_nd = (
+            f_mean[:, :, 0]
+            - f_mean[:, :, 1]
+            + beta * (Sigma[:, :, 0, 0] - Sigma[:, :, 1, 1])
+        )
         x_grad = mu_nd / torch.sqrt(4 * Sigma_nd)
         x_grad = cdf(-1 * x_grad)
         try:
@@ -109,7 +133,9 @@ def langevin_update(x_cur, langevin_epsilon, model, dtype, device, lb=0, ub=1, h
         except ZeroDivisionError:
             print(f"ZeroDivisionError: {x_grad}")
         gradients_all[idx : idx + batch_size, :] = x_grad
-    noise = torch.randn_like(x_cur, device=device) * torch.sqrt(torch.Tensor([2 * langevin_epsilon]).to(device=device))
+    noise = torch.randn_like(x_cur, device=device) * torch.sqrt(
+        torch.Tensor([2 * langevin_epsilon]).to(device=device)
+    )
     x_cur = x_cur + langevin_epsilon * gradients_all + noise  # (n, d)
     if torch.isnan(gradients_all).any():
         raise AssertionError("Gradient nan")
@@ -134,23 +160,35 @@ def generate_batch_multiple_tr(
     tr_num = len(state)
 
     for tr_idx in range(tr_num):
-        assert X[tr_idx].min() >= 0.0 and X[tr_idx].max() <= 1.0 and torch.all(torch.isfinite(Y[tr_idx]))
+        assert (
+            X[tr_idx].min() >= 0.0
+            and X[tr_idx].max() <= 1.0
+            and torch.all(torch.isfinite(Y[tr_idx]))
+        )
     if num_candidates is None:
         num_candidates = min(5000, max(2000, 200 * X.shape[-1]))
     dim = X[0].shape[1]
     # Scale the TR to be proportional to the lengthscales
     X_cand = torch.zeros(tr_num, num_candidates, dim).to(device=device, dtype=dtype)
-    Y_cand = torch.zeros(tr_num, num_candidates, batch_size).to(device=device, dtype=dtype)
+    Y_cand = torch.zeros(tr_num, num_candidates, batch_size).to(
+        device=device, dtype=dtype
+    )
     tr_lb = torch.zeros(tr_num, dim).to(device=device, dtype=dtype)
     tr_ub = torch.zeros(tr_num, dim).to(device=device, dtype=dtype)
     for tr_idx in range(tr_num):
         x_center = X[tr_idx][Y[tr_idx].argmax(), :].clone()
         try:
-            weights = model[tr_idx].covar_module.base_kernel.lengthscale.squeeze().detach()
+            weights = (
+                model[tr_idx].covar_module.base_kernel.lengthscale.squeeze().detach()
+            )
             weights = weights / weights.mean()
             weights = weights / torch.prod(weights.pow(1.0 / len(weights)))
-            tr_lb[tr_idx] = torch.clamp(x_center - weights * state[tr_idx].length / 2.0, 0.0, 1.0)
-            tr_ub[tr_idx] = torch.clamp(x_center + weights * state[tr_idx].length / 2.0, 0.0, 1.0)
+            tr_lb[tr_idx] = torch.clamp(
+                x_center - weights * state[tr_idx].length / 2.0, 0.0, 1.0
+            )
+            tr_ub[tr_idx] = torch.clamp(
+                x_center + weights * state[tr_idx].length / 2.0, 0.0, 1.0
+            )
         except Exception:  # Linear kernel
             weights = 1
             tr_lb[tr_idx] = torch.clamp(x_center - state[tr_idx].length / 2.0, 0.0, 1.0)
@@ -163,7 +201,9 @@ def generate_batch_multiple_tr(
         # Create a perturbation mask
         prob_perturb = min(20.0 / dim, 1.0)
         # prob_perturb = 1
-        mask = torch.rand(num_candidates, dim, dtype=dtype, device=device) <= prob_perturb
+        mask = (
+            torch.rand(num_candidates, dim, dtype=dtype, device=device) <= prob_perturb
+        )
         ind = torch.where(mask.sum(dim=1) == 0)[0]
         if dim == 1:
             rr = torch.zeros(size=(len(ind),), device=device, dtype=torch.int64)
@@ -191,7 +231,9 @@ def generate_batch_multiple_tr(
         i, j = np.unravel_index(np.argmax(y_cand[:, :, k]), (tr_num, num_candidates))
         X_next[k] = X_cand[i, j]
         tr_idx_next[k] = i
-        assert np.isfinite(y_cand[i, j, k])  # Just to make sure we never select nan or inf
+        assert np.isfinite(
+            y_cand[i, j, k]
+        )  # Just to make sure we never select nan or inf
         # Make sure we never pick this point again
         y_cand[i, j, :] = -np.inf
 

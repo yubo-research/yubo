@@ -16,12 +16,16 @@ def _noise_label(problem: str) -> str:
     return "Natural noise"
 
 
-def _speedup_x_label(cum_dt_prop_final_by_opt: dict[str, float] | None, problem: str) -> str | None:
+def _speedup_x_label(
+    cum_dt_prop_final_by_opt: dict[str, float] | None, problem: str
+) -> str | None:
     if not cum_dt_prop_final_by_opt:
         return None
 
     baseline_candidates = ("turbo-one", "turbo-one-na", "turbo-one-f")
-    baseline_opt = next((o for o in baseline_candidates if o in cum_dt_prop_final_by_opt), None)
+    baseline_opt = next(
+        (o for o in baseline_candidates if o in cum_dt_prop_final_by_opt), None
+    )
     if baseline_opt is None:
         return None
 
@@ -31,7 +35,13 @@ def _speedup_x_label(cum_dt_prop_final_by_opt: dict[str, float] | None, problem:
 
     t_baseline = cum_dt_prop_final_by_opt.get(baseline_opt, None)
     t_compare = cum_dt_prop_final_by_opt.get(compare_opt, None)
-    if t_baseline is None or t_compare is None or not np.isfinite(t_baseline) or not np.isfinite(t_compare) or t_compare <= 0:
+    if (
+        t_baseline is None
+        or t_compare is None
+        or not np.isfinite(t_baseline)
+        or not np.isfinite(t_compare)
+        or t_compare <= 0
+    ):
         return None
 
     x = int(round(float(t_baseline) / float(t_compare)))
@@ -102,7 +112,9 @@ def _get_denoise_value(data_locator: DataLocator, problem: str) -> int:
             if problem.endswith(":fn"):
                 return config.get("num_denoise")
             else:
-                return config.get("num_denoise_passive", config.get("num_denoise_eval", None))
+                return config.get(
+                    "num_denoise_passive", config.get("num_denoise_eval", None)
+                )
     return None
 
 
@@ -189,8 +201,16 @@ def infer_experiment_from_configs(results_path: str, exp_dir: str) -> dict:
     if not cfgs:
         raise ValueError(f"No config.json files found under {str(root)!r}")
 
-    env_tags = sorted({c.get("env_tag") or c.get("env") for c in cfgs if isinstance(c.get("env_tag") or c.get("env"), str)})
-    opt_names = sorted({c.get("opt_name") for c in cfgs if isinstance(c.get("opt_name"), str)})
+    env_tags = sorted(
+        {
+            c.get("env_tag") or c.get("env")
+            for c in cfgs
+            if isinstance(c.get("env_tag") or c.get("env"), str)
+        }
+    )
+    opt_names = sorted(
+        {c.get("opt_name") for c in cfgs if isinstance(c.get("opt_name"), str)}
+    )
 
     def _uniq_int(key: str) -> int | None:
         xs = {c.get(key) for c in cfgs if isinstance(c.get(key), int)}
@@ -407,15 +427,21 @@ def _print_dataset_summary(
                 cfg_reps = None
         reps_done = _count_done_reps(trace_dir)
         root = Path(trace_dir).name
-        print(f"PLOT: env={problem} opt={opt} arms={num_arms} rounds={num_rounds} reps_done={reps_done} reps_cfg={cfg_reps} dir={root}")
+        print(
+            f"PLOT: env={problem} opt={opt} arms={num_arms} rounds={num_rounds} reps_done={reps_done} reps_cfg={cfg_reps} dir={root}"
+        )
 
 
-def _mean_final_by_optimizer(data_locator: DataLocator, traces: np.ndarray) -> dict[str, float]:
+def _mean_final_by_optimizer(
+    data_locator: DataLocator, traces: np.ndarray
+) -> dict[str, float]:
     """Return {opt_name: mean(final_value_over_reps)} for a single-problem trace tensor."""
     optimizers = data_locator.optimizers()
     z = traces.squeeze(0)  # [n_opt, n_rep, n_round]
     if z.ndim != 3 or z.shape[2] == 0:
-        raise ValueError(f"Empty traces: shape={getattr(z, 'shape', None)} for key={getattr(data_locator, 'key', None)}")
+        raise ValueError(
+            f"Empty traces: shape={getattr(z, 'shape', None)} for key={getattr(data_locator, 'key', None)}"
+        )
     out: dict[str, float] = {}
     for i_opt, opt_name in enumerate(optimizers):
         y_final = z[i_opt, :, -1]
@@ -427,12 +453,16 @@ def _mean_final_by_optimizer(data_locator: DataLocator, traces: np.ndarray) -> d
     return out
 
 
-def _median_final_by_optimizer(data_locator: DataLocator, traces: np.ndarray) -> dict[str, float]:
+def _median_final_by_optimizer(
+    data_locator: DataLocator, traces: np.ndarray
+) -> dict[str, float]:
     """Return {opt_name: median(final_value_over_reps)} for a single-problem trace tensor."""
     optimizers = data_locator.optimizers()
     z = traces.squeeze(0)  # [n_opt, n_rep, n_round]
     if z.ndim != 3 or z.shape[2] == 0:
-        raise ValueError(f"Empty traces: shape={getattr(z, 'shape', None)} for key={getattr(data_locator, 'key', None)}")
+        raise ValueError(
+            f"Empty traces: shape={getattr(z, 'shape', None)} for key={getattr(data_locator, 'key', None)}"
+        )
     out: dict[str, float] = {}
     for i_opt, opt_name in enumerate(optimizers):
         y_final = z[i_opt, :, -1]
@@ -501,11 +531,20 @@ def _cum_dt_prop_from_dt_prop_traces(dt_prop_traces: np.ndarray) -> np.ndarray:
     return np.expand_dims(z_cum, axis=0)
 
 
-def _print_cum_dt_prop(cum_dt_prop_final_by_opt: dict[str, float] | None, opt_order: list[str] | None, *, header: str) -> None:
+def _print_cum_dt_prop(
+    cum_dt_prop_final_by_opt: dict[str, float] | None,
+    opt_order: list[str] | None,
+    *,
+    header: str,
+) -> None:
     if not cum_dt_prop_final_by_opt:
         return
     order = opt_order or sorted(cum_dt_prop_final_by_opt.keys())
-    items = [f"\\texttt{{{o}}} {cum_dt_prop_final_by_opt[o]:.1f}s" for o in order if o in cum_dt_prop_final_by_opt]
+    items = [
+        f"\\texttt{{{o}}} {cum_dt_prop_final_by_opt[o]:.1f}s"
+        for o in order
+        if o in cum_dt_prop_final_by_opt
+    ]
     if not items:
         return
     print(header)
@@ -558,7 +597,11 @@ def plot_learning_curves(
     for i_opt, opt_name in enumerate(optimizers):
         y = z[i_opt, ...]
         x = num_arms * (int(x_start) + np.arange(y.shape[1]))
-        style_idx = opt_names_all.index(opt_name) if opt_names_all and opt_name in opt_names_all else i_opt
+        style_idx = (
+            opt_names_all.index(opt_name)
+            if opt_names_all and opt_name in opt_names_all
+            else i_opt
+        )
         if opt_name.startswith("turbo-enn"):
             color = "#333333"
             marker = "s"
@@ -566,7 +609,10 @@ def plot_learning_curves(
             color = ap.colors[style_idx]
             marker = ap.markers[style_idx]
         label = opt_name
-        if cum_dt_prop_final_by_opt is not None and opt_name in cum_dt_prop_final_by_opt:
+        if (
+            cum_dt_prop_final_by_opt is not None
+            and opt_name in cum_dt_prop_final_by_opt
+        ):
             label = f"{opt_name} ({cum_dt_prop_final_by_opt[opt_name]:.1f}s)"
         ap.filled_err(
             x=x,
@@ -640,7 +686,9 @@ def plot_rl_experiment(
     title: str = None,
     figsize: tuple = (10, 6),
 ):
-    data_locator, traces = load_rl_traces(results_path, exp_dir, opt_names, num_arms, num_rounds, num_reps, problem)
+    data_locator, traces = load_rl_traces(
+        results_path, exp_dir, opt_names, num_arms, num_rounds, num_reps, problem
+    )
     cum_dt_prop_final_by_opt = None
     try:
         data_locator_dt, traces_cum = _load_cum_dt_prop(
@@ -771,7 +819,14 @@ def plot_rl_experiment_vs_time(
             x = np.asarray(ti[0], dtype=float)
             yy = np.asarray(yi[0], dtype=float)
             ok = np.isfinite(x) & np.isfinite(yy)
-            ax.plot(x[ok], yy[ok], color=color, label=label, marker=marker, markevery=max(1, int(np.sum(ok) / 10)))
+            ax.plot(
+                x[ok],
+                yy[ok],
+                color=color,
+                label=label,
+                marker=marker,
+                markevery=max(1, int(np.sum(ok) / 10)),
+            )
             continue
 
         t_ends = []
@@ -795,7 +850,14 @@ def plot_rl_experiment_vs_time(
 
         mu = np.nanmean(yq, axis=0)
         se = np.nanstd(yq, axis=0) / np.sqrt(float(n_rep))
-        ax.plot(xq, mu, color=color, label=label, marker=marker, markevery=max(1, int(xq.shape[0] / 10)))
+        ax.plot(
+            xq,
+            mu,
+            color=color,
+            label=label,
+            marker=marker,
+            markevery=max(1, int(xq.shape[0] / 10)),
+        )
         ax.fill_between(xq, mu - se, mu + se, color=color, alpha=0.25)
 
     ax.set_xlabel("Cumulative time (s)", fontsize=12)
@@ -828,12 +890,16 @@ def plot_rl_experiment_vs_time_auto(
     if opt_names is None:
         opt_names = info["opt_names"]
     if not opt_names:
-        raise ValueError(f"No opt_names found for results_path={results_path!r}, exp_dir={exp_dir!r}")
+        raise ValueError(
+            f"No opt_names found for results_path={results_path!r}, exp_dir={exp_dir!r}"
+        )
 
     if problem is None:
         env_tags = info["env_tags"]
         if len(env_tags) != 1:
-            raise ValueError(f"Multiple env_tags found {env_tags!r}; pass problem= explicitly")
+            raise ValueError(
+                f"Multiple env_tags found {env_tags!r}; pass problem= explicitly"
+            )
         problem = env_tags[0]
 
     if num_arms is None:
@@ -843,7 +909,15 @@ def plot_rl_experiment_vs_time_auto(
     if num_reps is None:
         num_reps = info["num_reps"]
 
-    missing = [k for k, v in [("num_arms", num_arms), ("num_rounds", num_rounds), ("num_reps", num_reps)] if v is None]
+    missing = [
+        k
+        for k, v in [
+            ("num_arms", num_arms),
+            ("num_rounds", num_rounds),
+            ("num_reps", num_reps),
+        ]
+        if v is None
+    ]
     if missing:
         raise ValueError(f"Couldn't infer {missing} from config.json; pass explicitly")
 
@@ -902,7 +976,9 @@ def plot_rl_comparison(
             key="dt_prop",
         )
         traces_seq_cum = _cum_dt_prop_from_dt_prop_traces(traces_seq_dt)
-        cum_dt_prop_seq = _median_final_by_optimizer(data_locator_seq_dt, traces_seq_cum)
+        cum_dt_prop_seq = _median_final_by_optimizer(
+            data_locator_seq_dt, traces_seq_cum
+        )
     except ValueError:
         cum_dt_prop_seq = None
         data_locator_seq_dt = None
@@ -939,7 +1015,9 @@ def plot_rl_comparison(
                 key="dt_prop",
             )
             traces_batch_cum = _cum_dt_prop_from_dt_prop_traces(traces_batch_dt)
-            cum_dt_prop_batch = _median_final_by_optimizer(data_locator_batch_dt, traces_batch_cum)
+            cum_dt_prop_batch = _median_final_by_optimizer(
+                data_locator_batch_dt, traces_batch_cum
+            )
     except ValueError:
         cum_dt_prop_batch = None
         data_locator_batch_dt = None
@@ -964,7 +1042,9 @@ def plot_rl_comparison(
     line1_seq = f"{noise_seq}, {speedup_seq}" if speedup_seq else noise_seq
     parts_seq = [f"num_arms = {num_arms_seq}"]
     if denoise_seq is not None:
-        denoise_key_seq = "num_denoise_obs" if problem_seq.endswith(":fn") else "num_denoise_passive"
+        denoise_key_seq = (
+            "num_denoise_obs" if problem_seq.endswith(":fn") else "num_denoise_passive"
+        )
         parts_seq.append(f"{denoise_key_seq} = {denoise_seq}")
     title_seq = f"{line1_seq}\n{', '.join(parts_seq)}"
     plot_learning_curves(
@@ -981,10 +1061,16 @@ def plot_rl_comparison(
         noise_batch = _noise_label(problem_batch)
         denoise_batch = _get_denoise_value(data_locator_batch, problem_batch)
         speedup_batch = _speedup_x_label(cum_dt_prop_batch, problem_batch)
-        line1_batch = f"{noise_batch}, {speedup_batch}" if speedup_batch else noise_batch
+        line1_batch = (
+            f"{noise_batch}, {speedup_batch}" if speedup_batch else noise_batch
+        )
         parts_batch = [f"num_arms = {num_arms_batch}"]
         if denoise_batch is not None:
-            denoise_key_batch = "num_denoise_obs" if problem_batch.endswith(":fn") else "num_denoise_passive"
+            denoise_key_batch = (
+                "num_denoise_obs"
+                if problem_batch.endswith(":fn")
+                else "num_denoise_passive"
+            )
             parts_batch.append(f"{denoise_key_batch} = {denoise_batch}")
         title_batch = f"{line1_batch}\n{', '.join(parts_batch)}"
         plot_learning_curves(
@@ -1057,7 +1143,9 @@ def plot_rl_final_comparison(
             key="dt_prop",
         )
         traces_seq_cum = _cum_dt_prop_from_dt_prop_traces(traces_seq_dt)
-        cum_dt_prop_seq = _median_final_by_optimizer(data_locator_seq_dt, traces_seq_cum)
+        cum_dt_prop_seq = _median_final_by_optimizer(
+            data_locator_seq_dt, traces_seq_cum
+        )
     except ValueError:
         cum_dt_prop_seq = None
 
@@ -1091,7 +1179,9 @@ def plot_rl_final_comparison(
                 key="dt_prop",
             )
             traces_batch_cum = _cum_dt_prop_from_dt_prop_traces(traces_batch_dt)
-            cum_dt_prop_batch = _median_final_by_optimizer(data_locator_batch_dt, traces_batch_cum)
+            cum_dt_prop_batch = _median_final_by_optimizer(
+                data_locator_batch_dt, traces_batch_cum
+            )
     except ValueError:
         cum_dt_prop_batch = None
 
@@ -1103,7 +1193,9 @@ def plot_rl_final_comparison(
     line1_seq = f"{noise_seq}, {speedup_seq}" if speedup_seq else noise_seq
     parts_seq = [f"num_arms = {num_arms_seq}"]
     if denoise_seq is not None:
-        denoise_key_seq = "num_denoise" if problem_seq.endswith(":fn") else "num_denoise_passive"
+        denoise_key_seq = (
+            "num_denoise" if problem_seq.endswith(":fn") else "num_denoise_passive"
+        )
         parts_seq.append(f"{denoise_key_seq} = {denoise_seq}")
     title_seq = f"{line1_seq}\n{', '.join(parts_seq)}"
     plot_final_performance(
@@ -1118,10 +1210,16 @@ def plot_rl_final_comparison(
         noise_batch = _noise_label(problem_batch)
         denoise_batch = _get_denoise_value(data_locator_batch, problem_batch)
         speedup_batch = _speedup_x_label(cum_dt_prop_batch, problem_batch)
-        line1_batch = f"{noise_batch}, {speedup_batch}" if speedup_batch else noise_batch
+        line1_batch = (
+            f"{noise_batch}, {speedup_batch}" if speedup_batch else noise_batch
+        )
         parts_batch = [f"num_arms = {num_arms_batch}"]
         if denoise_batch is not None:
-            denoise_key_batch = "num_denoise" if problem_batch.endswith(":fn") else "num_denoise_passive"
+            denoise_key_batch = (
+                "num_denoise"
+                if problem_batch.endswith(":fn")
+                else "num_denoise_passive"
+            )
             parts_batch.append(f"{denoise_key_batch} = {denoise_batch}")
         title_batch = f"{line1_batch}\n{', '.join(parts_batch)}"
         plot_final_performance(
@@ -1277,9 +1375,13 @@ def compute_pareto_data(
 
         configs_to_load = []
         if mode in ("seq", "both"):
-            configs_to_load.append((f"{problem}_seq", problem_seq, num_arms_seq, num_rounds_seq))
+            configs_to_load.append(
+                (f"{problem}_seq", problem_seq, num_arms_seq, num_rounds_seq)
+            )
         if mode in ("batch", "both"):
-            configs_to_load.append((f"{problem}_batch", problem_batch, num_arms_batch, num_rounds_batch))
+            configs_to_load.append(
+                (f"{problem}_batch", problem_batch, num_arms_batch, num_rounds_batch)
+            )
 
         for label, prob, num_arms, num_rounds in configs_to_load:
             try:
@@ -1332,7 +1434,9 @@ def compute_pareto_data(
                 t_matrix[i_p, i_o] = all_times[p][o]
 
     if baseline_opt not in opts_in_data:
-        raise ValueError(f"Baseline optimizer {baseline_opt!r} not found in data. Available: {opts_in_data}")
+        raise ValueError(
+            f"Baseline optimizer {baseline_opt!r} not found in data. Available: {opts_in_data}"
+        )
     i_baseline = opts_in_data.index(baseline_opt)
 
     r_baseline = r_matrix[:, i_baseline : i_baseline + 1]

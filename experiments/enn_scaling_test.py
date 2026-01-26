@@ -3,7 +3,10 @@ import time
 
 import numpy as np
 
-from third_party.enn.turbo.config.enn_surrogate_config import ENNFitConfig, ENNSurrogateConfig
+from third_party.enn.turbo.config.enn_surrogate_config import (
+    ENNFitConfig,
+    ENNSurrogateConfig,
+)
 from third_party.enn.turbo.config.factory import turbo_enn_config
 from third_party.enn.turbo.optimizer import create_optimizer
 
@@ -12,7 +15,9 @@ def run_scaling_test(num_dim=10, max_n=10000):
     rng = np.random.default_rng(42)
     bounds = np.array([[0.0, 1.0]] * num_dim)
 
-    enn = ENNSurrogateConfig(k=10, fit=ENNFitConfig(num_fit_samples=100, num_fit_candidates=100))
+    enn = ENNSurrogateConfig(
+        k=10, fit=ENNFitConfig(num_fit_samples=100, num_fit_candidates=100)
+    )
 
     # Use a single optimizer instance for the whole run
     config = turbo_enn_config(enn=enn, num_init=1)
@@ -52,11 +57,25 @@ def run_scaling_test(num_dim=10, max_n=10000):
             cum_ask_times.append(total_ask_time)
             cum_tell_times.append(total_tell_time)
             with open("enn_scaling_results.json", "w") as f:
-                json.dump({"ns": recorded_ns, "cum_ask_times": cum_ask_times, "cum_tell_times": cum_tell_times}, f)
-            print(f"N={n}, cum_ask={total_ask_time:.4f}s, cum_tell={total_tell_time:.4f}s", flush=True)
+                json.dump(
+                    {
+                        "ns": recorded_ns,
+                        "cum_ask_times": cum_ask_times,
+                        "cum_tell_times": cum_tell_times,
+                    },
+                    f,
+                )
+            print(
+                f"N={n}, cum_ask={total_ask_time:.4f}s, cum_tell={total_tell_time:.4f}s",
+                flush=True,
+            )
             target_idx += 1
 
-    results = {"ns": recorded_ns, "cum_ask_times": cum_ask_times, "cum_tell_times": cum_tell_times}
+    results = {
+        "ns": recorded_ns,
+        "cum_ask_times": cum_ask_times,
+        "cum_tell_times": cum_tell_times,
+    }
 
     with open("enn_scaling_results.json", "w") as f:
         json.dump(results, f)

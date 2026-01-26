@@ -5,15 +5,51 @@ from experiments.func_names import func_brief_2, funcs_1d, funcs_nd
 def prep_mtv_repro(results_dir):
     exp_dir = "exp_batches_mtv"
 
-    opts = ["turbo-1", "lei", "sts", "mtv-sts", "optuna", "mtv", "sobol", "random", "ei", "ucb", "dpp", "sr", "gibbon", "mcmcbo", "ts-10000"]
+    opts = [
+        "turbo-1",
+        "lei",
+        "sts",
+        "mtv-sts",
+        "optuna",
+        "mtv",
+        "sobol",
+        "random",
+        "ei",
+        "ucb",
+        "dpp",
+        "sr",
+        "gibbon",
+        "mcmcbo",
+        "ts-10000",
+    ]
     noises = [None]
 
     # cmds_1d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_1d, dims=[1], num_arms=3, num_replications=100, opts=opts, noises=noises, num_rounds=3)
     # cmds_3d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_nd, dims=[3], num_arms=5, num_replications=30, opts=opts, noises=noises, num_rounds=3)
     # cmds_10d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_nd, dims=[10], num_arms=10, num_replications=30, opts=opts, noises=noises, num_rounds=3)
     # cmds_30d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_nd, dims=[30], num_arms=10, num_replications=30, opts=opts, noises=noises, num_rounds=3)
-    cmds_100d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_nd, dims=[100], num_arms=10, num_replications=30, opts=opts, noises=noises, num_rounds=3)
-    cmds_300d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_nd, dims=[300], num_arms=10, num_replications=30, opts=opts, noises=noises, num_rounds=3)
+    cmds_100d = prep_d_args(
+        results_dir,
+        exp_dir=exp_dir,
+        funcs=funcs_nd,
+        dims=[100],
+        num_arms=10,
+        num_replications=30,
+        opts=opts,
+        noises=noises,
+        num_rounds=3,
+    )
+    cmds_300d = prep_d_args(
+        results_dir,
+        exp_dir=exp_dir,
+        funcs=funcs_nd,
+        dims=[300],
+        num_arms=10,
+        num_replications=30,
+        opts=opts,
+        noises=noises,
+        num_rounds=3,
+    )
 
     # return cmds_1d + cmds_3d + cmds_10d + cmds_30d  # + cmds_100d + cmds_300d
     return cmds_100d + cmds_300d
@@ -29,7 +65,17 @@ def prep_ts_hd(results_dir):
     min_rounds = 30
     cmds = []
     cmds.extend(
-        prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_1d, dims=[1], num_arms=1, num_replications=100, opts=opts, noises=noises, num_rounds=min_rounds)
+        prep_d_args(
+            results_dir,
+            exp_dir=exp_dir,
+            funcs=funcs_1d,
+            dims=[1],
+            num_arms=1,
+            num_replications=100,
+            opts=opts,
+            noises=noises,
+            num_rounds=min_rounds,
+        )
     )
 
     for num_dim in [3, 10, 30, 100, 300, 1000]:
@@ -90,7 +136,15 @@ def prep_sweep_q(results_dir):
         num_rounds = int(num_func_evals / num_arms + 0.5)
         cmds.extend(
             prep_d_args(
-                results_dir, exp_dir=exp_dir, funcs=funcs_1d, dims=[1], num_arms=num_arms, num_replications=100, opts=opts, noises=noises, num_rounds=num_rounds
+                results_dir,
+                exp_dir=exp_dir,
+                funcs=funcs_1d,
+                dims=[1],
+                num_arms=num_arms,
+                num_replications=100,
+                opts=opts,
+                noises=noises,
+                num_rounds=num_rounds,
             )
         )
         for num_dim in [3, 10, 30, 100]:
@@ -115,7 +169,9 @@ def prep_ts_sweep(results_dir):
     exp_dir = "exp_ts_sweep"
 
     opts = ["pts", "ei", "ucb"]
-    opts += [f"ts_sweep-{n}" for n in [1, 3, 10, 30, 100, 300, 1000, 3000, 10000, 30000]]
+    opts += [
+        f"ts_sweep-{n}" for n in [1, 3, 10, 30, 100, 300, 1000, 3000, 10000, 30000]
+    ]
 
     return prep_d_args(
         results_dir,

@@ -122,7 +122,10 @@ def test_sub_k_invalid_inputs_raise_torch():
         pass
 
     try:
-        kr.sub_k(torch.tensor([0, 1], dtype=torch.int64), torch.ones((2, d + 1), dtype=torch.float64))
+        kr.sub_k(
+            torch.tensor([0, 1], dtype=torch.int64),
+            torch.ones((2, d + 1), dtype=torch.float64),
+        )
         assert False
     except AssertionError:
         pass

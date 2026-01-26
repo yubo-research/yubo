@@ -37,7 +37,9 @@ class TYDefaultTR:
     _prev_y_length: int = 0
 
     def __post_init__(self):
-        self._failure_tolerance = np.ceil(max([4.0 / self.num_arms, float(self.num_dim) / self.num_arms]))
+        self._failure_tolerance = np.ceil(
+            max([4.0 / self.num_arms, float(self.num_dim) / self.num_arms])
+        )
 
     def update_from_model(self, Y):
         if len(Y) > self._prev_y_length:

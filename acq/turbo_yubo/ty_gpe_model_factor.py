@@ -33,7 +33,9 @@ class _ENNNormalWrapper:
         return samples_t.permute(2, 0, 1).contiguous()
 
 
-def build_turbo_yubo_ge_model(*, train_x: torch.Tensor, train_y: torch.Tensor, k: int = 3, num_gps: int = 1):
+def build_turbo_yubo_ge_model(
+    *, train_x: torch.Tensor, train_y: torch.Tensor, k: int = 3, num_gps: int = 1
+):
     x_t = train_x
     y_t = train_y
     if y_t.dim() == 1:

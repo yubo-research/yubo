@@ -18,7 +18,15 @@ class TuRBORefDesigner:
         Learning Research, pages 730–738. PMLR, 13–15 Apr 2021. URL https://proceedings.mlr.press/v130/eriksson21a.html.
     """
 
-    def __init__(self, policy, num_trust_regions=1, num_init=None, *, surrogate_type="original", ard=True):
+    def __init__(
+        self,
+        policy,
+        num_trust_regions=1,
+        num_init=None,
+        *,
+        surrogate_type="original",
+        ard=True,
+    ):
         self._policy = policy
         self._num_trust_regions = num_trust_regions
         self._num_init = num_init

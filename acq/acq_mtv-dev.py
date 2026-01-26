@@ -59,13 +59,17 @@ class AcqMTV(MCAcquisitionFunction):
             self.Y_max = self.model.posterior(self.X_max).mean
             if len(self.model.train_targets) > 0:
                 i = torch.argmax(self.model.train_targets)
-                self.Y_best = self.model.posterior(self.model.train_inputs[0][i][:, None].T).mean
+                self.Y_best = self.model.posterior(
+                    self.model.train_inputs[0][i][:, None].T
+                ).mean
             else:
                 self.Y_best = self.Y_max
 
             if sample_type == "hnr":
                 with torch.inference_mode():
-                    self.X_samples = self._sample_maxes_mh(sobol_engine, num_X_samples, prop_type="hnr")
+                    self.X_samples = self._sample_maxes_mh(
+                        sobol_engine, num_X_samples, prop_type="hnr"
+                    )
             elif sample_type == "sobol":
                 self.X_samples = sobol_engine.draw(num_X_samples, dtype=self._dtype)
             else:
@@ -89,7 +93,11 @@ class AcqMTV(MCAcquisitionFunction):
 
         x_cand, _ = optimize_acqf(
             acq_function=PosteriorMean(self.model),
-            bounds=torch.tensor([[0.0] * self._num_dim, [1.0] * self._num_dim], device=X.device, dtype=X.dtype),
+            bounds=torch.tensor(
+                [[0.0] * self._num_dim, [1.0] * self._num_dim],
+                device=X.device,
+                dtype=X.dtype,
+            ),
             q=1,
             num_restarts=10,
             raw_samples=512,
@@ -106,7 +114,9 @@ class AcqMTV(MCAcquisitionFunction):
         return x_cand
 
     def _sample_maxes_mh(self, sobol_engine, num_X_samples, prop_type):
-        X_max = torch.maximum(self.eps_interior, torch.minimum(1 - self.eps_interior, self.X_max))
+        X_max = torch.maximum(
+            self.eps_interior, torch.minimum(1 - self.eps_interior, self.X_max)
+        )
         X = torch.tile(X_max, (num_X_samples, 1))
 
         if prop_type == "hnr":
@@ -189,7 +199,9 @@ class AcqMTV(MCAcquisitionFunction):
         # 1D perturbation
         rv = truncnorm(-llambda_minus / eps, llambda_plus / eps, scale=eps)
         X_1 = X + torch.tensor(rv.rvs(num_chains))[:, None] * u
-        assert torch.all((X_1.min(dim=1).values >= 0) & (X_1.max(dim=1).values <= 1)), "Perturbation failed"
+        assert torch.all((X_1.min(dim=1).values >= 0) & (X_1.max(dim=1).values <= 1)), (
+            "Perturbation failed"
+        )
 
         # Metropolis update
         X_both = torch.cat((X, X_1), dim=0)
@@ -212,8 +224,14 @@ class AcqMTV(MCAcquisitionFunction):
 
         # P{maximizer | out-out-bounds} == 0
         # return (X_1.min(dim=1).values >= 0) & (X_1.max(dim=1).values <= 1) & (Y_1 > Y).flatten(), X_1
-        i_good = (X_1.min(dim=1).values >= -1e-6) & (X_1.max(dim=1).values <= 1 + 1e-6) & (Y_1 > Y).flatten()
-        X_1[i_good] = torch.maximum(torch.tensor(0.0), torch.minimum(torch.tensor(1.0), X_1[i_good]))
+        i_good = (
+            (X_1.min(dim=1).values >= -1e-6)
+            & (X_1.max(dim=1).values <= 1 + 1e-6)
+            & (Y_1 > Y).flatten()
+        )
+        X_1[i_good] = torch.maximum(
+            torch.tensor(0.0), torch.minimum(torch.tensor(1.0), X_1[i_good])
+        )
         return i_good, X_1
 
     @t_batch_mode_transform()
@@ -237,9 +255,13 @@ class AcqMTV(MCAcquisitionFunction):
             # num_obs = 1 ==> 2 "bins", each size of half the box
             # etc
             if self._lengthscale_correction == "type_0":
-                model_f.covar_module.base_kernel.lengthscale *= ((1 + num_obs) / (1 + max(num_obs, q))) ** (1.0 / self._num_dim)
+                model_f.covar_module.base_kernel.lengthscale *= (
+                    (1 + num_obs) / (1 + max(num_obs, q))
+                ) ** (1.0 / self._num_dim)
             elif self._lengthscale_correction == "type_1":
-                model_f.covar_module.base_kernel.lengthscale *= ((1 + num_obs) / (1 + num_obs + q)) ** (1.0 / self._num_dim)
+                model_f.covar_module.base_kernel.lengthscale *= (
+                    (1 + num_obs) / (1 + num_obs + q)
+                ) ** (1.0 / self._num_dim)
             else:
                 assert False, self._lengthscale_correction
 

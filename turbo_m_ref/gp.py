@@ -25,12 +25,24 @@ from gpytorch.models import ExactGP
 
 # GP Model
 class GP(ExactGP):
-    def __init__(self, train_x, train_y, likelihood, lengthscale_constraint, outputscale_constraint, ard_dims):
+    def __init__(
+        self,
+        train_x,
+        train_y,
+        likelihood,
+        lengthscale_constraint,
+        outputscale_constraint,
+        ard_dims,
+    ):
         super(GP, self).__init__(train_x, train_y, likelihood)
         self.ard_dims = ard_dims
         self.mean_module = ConstantMean()
-        base_kernel = MaternKernel(lengthscale_constraint=lengthscale_constraint, ard_num_dims=ard_dims, nu=2.5)
-        self.covar_module = ScaleKernel(base_kernel, outputscale_constraint=outputscale_constraint)
+        base_kernel = MaternKernel(
+            lengthscale_constraint=lengthscale_constraint, ard_num_dims=ard_dims, nu=2.5
+        )
+        self.covar_module = ScaleKernel(
+            base_kernel, outputscale_constraint=outputscale_constraint
+        )
 
     def forward(self, x):
         mean_x = self.mean_module(x)
@@ -49,11 +61,15 @@ def train_gp(train_x, train_y, use_ard, num_steps, hypers={}):
     if use_ard:
         lengthscale_constraint = Interval(0.005, 2.0)
     else:
-        lengthscale_constraint = Interval(0.005, math.sqrt(train_x.shape[1]))  # [0.005, sqrt(dim)]
+        lengthscale_constraint = Interval(
+            0.005, math.sqrt(train_x.shape[1])
+        )  # [0.005, sqrt(dim)]
     outputscale_constraint = Interval(0.05, 20.0)
 
     # Create models
-    likelihood = GaussianLikelihood(noise_constraint=noise_constraint).to(device=train_x.device, dtype=train_y.dtype)
+    likelihood = GaussianLikelihood(noise_constraint=noise_constraint).to(
+        device=train_x.device, dtype=train_y.dtype
+    )
     ard_dims = train_x.shape[1] if use_ard else None
     model = GP(
         train_x=train_x,

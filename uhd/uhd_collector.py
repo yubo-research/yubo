@@ -8,7 +8,9 @@ from common.collector import Collector
 
 
 class UHDCollector:
-    def __init__(self, name: str, opt_name: str, collector: Optional[Collector] = None) -> None:
+    def __init__(
+        self, name: str, opt_name: str, collector: Optional[Collector] = None
+    ) -> None:
         assert isinstance(name, str) and len(name) > 0
         assert isinstance(opt_name, str) and len(opt_name) > 0
         self.name = name
@@ -22,26 +24,38 @@ class UHDCollector:
         self._i_iter: int = 0
 
     def start_prop(self) -> None:
-        assert self._t0_prop is None, "start_prop() already called, call stop_prop() first"
-        assert self._dt_prop is None, "stop_prop() must be called before starting a new prop timing"
+        assert self._t0_prop is None, (
+            "start_prop() already called, call stop_prop() first"
+        )
+        assert self._dt_prop is None, (
+            "stop_prop() must be called before starting a new prop timing"
+        )
         self._t0_prop = time.time()
 
     def stop_prop(self) -> float:
         assert self._dt_prop is None, "stop_prop() already called for this iteration"
-        assert self._t0_prop is not None, "start_prop() must be called before stop_prop()"
+        assert self._t0_prop is not None, (
+            "start_prop() must be called before stop_prop()"
+        )
         dt = time.time() - self._t0_prop
         self._t0_prop = None
         self._dt_prop = dt
         return dt
 
     def start_eval(self) -> None:
-        assert self._t0_eval is None, "start_eval() already called, call stop_eval() first"
-        assert self._dt_eval is None, "stop_eval() must be called before starting a new eval timing"
+        assert self._t0_eval is None, (
+            "start_eval() already called, call stop_eval() first"
+        )
+        assert self._dt_eval is None, (
+            "stop_eval() must be called before starting a new eval timing"
+        )
         self._t0_eval = time.time()
 
     def stop_eval(self) -> float:
         assert self._dt_eval is None, "stop_eval() already called for this iteration"
-        assert self._t0_eval is not None, "start_eval() must be called before stop_eval()"
+        assert self._t0_eval is not None, (
+            "start_eval() must be called before stop_eval()"
+        )
         dt = time.time() - self._t0_eval
         self._t0_eval = None
         self._dt_eval = dt
@@ -60,12 +74,18 @@ class UHDCollector:
         mu = float(flat.mean().item())
         sd = float(flat.std(unbiased=False).item())
         target_name = getattr(controller, "name", type(controller).__name__)
-        self._collector(f"PARAMS: target = {target_name} min = {mn:.6f} max = {mx:.6f} mean = {mu:.6f} std = {sd:.6f}")
+        self._collector(
+            f"PARAMS: target = {target_name} min = {mn:.6f} max = {mx:.6f} mean = {mu:.6f} std = {sd:.6f}"
+        )
 
     def trace(self, y: float) -> None:
         assert isinstance(y, (int, float))
-        assert self._dt_prop is not None, "stop_prop() must be called exactly once before trace()"
-        assert self._dt_eval is not None, "stop_eval() must be called exactly once before trace()"
+        assert self._dt_prop is not None, (
+            "stop_prop() must be called exactly once before trace()"
+        )
+        assert self._dt_eval is not None, (
+            "stop_eval() must be called exactly once before trace()"
+        )
         assert self._t0_prop is None, "start_prop() called but stop_prop() not called"
         assert self._t0_eval is None, "start_eval() called but stop_eval() not called"
         self.update_best(float(y))

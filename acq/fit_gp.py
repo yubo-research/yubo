@@ -12,7 +12,11 @@ from botorch.optim.fit import fit_gpytorch_mll_scipy, fit_gpytorch_mll_torch
 from botorch.optim.utils import get_parameters
 from botorch.utils import standardize
 from gpytorch.kernels import RFFKernel, ScaleKernel
-from gpytorch.mlls import ExactMarginalLogLikelihood, LeaveOneOutPseudoLikelihood, VariationalELBO
+from gpytorch.mlls import (
+    ExactMarginalLogLikelihood,
+    LeaveOneOutPseudoLikelihood,
+    VariationalELBO,
+)
 from gpytorch.priors.torch_priors import LogNormalPrior, NormalPrior
 from torch import Tensor
 from torch.nn import Module
@@ -130,8 +134,12 @@ def fit_gp_XY(X, Y, model_spec=None):
 
     if len(X) == 0:
         if model_type == "sparse":
-            inducing_points = torch.empty((0, X.shape[-1]), dtype=X.dtype, device=X.device)
-            gp = SingleTaskVariationalGP(X, inducing_points=inducing_points, outcome_transform=_EmptyTransform())
+            inducing_points = torch.empty(
+                (0, X.shape[-1]), dtype=X.dtype, device=X.device
+            )
+            gp = SingleTaskVariationalGP(
+                X, inducing_points=inducing_points, outcome_transform=_EmptyTransform()
+            )
         else:
             gp = SingleTaskGP(X, Y, outcome_transform=_EmptyTransform())
         gp.to(X)
@@ -178,7 +186,9 @@ def fit_gp_XY(X, Y, model_spec=None):
             X,
             Y,
             input_transform=input_transform,
-            covar_module=ScaleKernel(RFFKernel(ard_num_dims=X.shape[-1], num_samples=num_samples)),
+            covar_module=ScaleKernel(
+                RFFKernel(ard_num_dims=X.shape[-1], num_samples=num_samples)
+            ),
         )
     else:
         gp = SingleTaskGP(X, Y, input_transform=input_transform)
@@ -211,7 +221,9 @@ def fit_gp_XY(X, Y, model_spec=None):
                 if model_type == "sparse":
                     if i_try == 0:
                         kwargs["optimizer"] = fit_gpytorch_mll_scipy
-                        kwargs["optimizer_kwargs"] = {"options": {"maxiter": 4000, "maxfun": 4000}}
+                        kwargs["optimizer_kwargs"] = {
+                            "options": {"maxiter": 4000, "maxfun": 4000}
+                        }
                     else:
                         kwargs["optimizer"] = fit_gpytorch_mll_torch
                         kwargs["optimizer_kwargs"] = {"step_limit": 4000}
@@ -250,7 +262,9 @@ def mk_yx(datum):
 
 
 def mk_x(policy):
-    return all_bounds.bt_low + all_bounds.bt_width * ((torch.as_tensor(policy.get_params()) - all_bounds.p_low) / all_bounds.p_width)
+    return all_bounds.bt_low + all_bounds.bt_width * (
+        (torch.as_tensor(policy.get_params()) - all_bounds.p_low) / all_bounds.p_width
+    )
 
 
 def estimate(gp, X):
@@ -261,7 +275,9 @@ def mk_policies(policy_0, X_cand):
     policies = []
     for x in X_cand:
         policy = policy_0.clone()
-        x = (x.detach().cpu().numpy().flatten() - all_bounds.bt_low) / all_bounds.bt_width
+        x = (
+            x.detach().cpu().numpy().flatten() - all_bounds.bt_low
+        ) / all_bounds.bt_width
         p = all_bounds.p_low + all_bounds.p_width * x
         policy.set_params(p)
         policies.append(policy)

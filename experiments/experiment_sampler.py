@@ -74,8 +74,12 @@ class ExperimentConfig:
             num_arms=int(d["num_arms"]),
             num_rounds=int(d["num_rounds"]),
             num_reps=int(d["num_reps"]),
-            num_denoise=None if d.get("num_denoise") in (None, "None") else int(d["num_denoise"]),
-            num_denoise_passive=None if d.get("num_denoise_passive") in (None, "None") else int(d["num_denoise_passive"]),
+            num_denoise=None
+            if d.get("num_denoise") in (None, "None")
+            else int(d["num_denoise"]),
+            num_denoise_passive=None
+            if d.get("num_denoise_passive") in (None, "None")
+            else int(d["num_denoise_passive"]),
             max_proposal_seconds=max_prop,
             max_total_seconds=max_total,
             b_trace=true_false(d.get("b_trace", True)),
@@ -137,7 +141,12 @@ def sample_1(run_config: RunConfig):
     trace_records = []
     collector_trace = Collector()
     for i_iter, te in enumerate(
-        opt.collect_trace(designer_name=opt_name, max_iterations=num_rounds, max_proposal_seconds=max_proposal_seconds, deadline=deadline)
+        opt.collect_trace(
+            designer_name=opt_name,
+            max_iterations=num_rounds,
+            max_proposal_seconds=max_proposal_seconds,
+            deadline=deadline,
+        )
     ):
         record = TraceRecord(
             i_iter=i_iter,
@@ -194,7 +203,9 @@ def scan_local(run_configs: list[RunConfig], max_total_seconds: Optional[float] 
     deadline = None if max_total_seconds is None else t_0 + max_total_seconds
     for run_config in run_configs:
         if deadline is not None and time.time() >= deadline:
-            print(f"TIME_LIMIT: Stopping after {time.time() - t_0:.2f}s (max_total_seconds={max_total_seconds})")
+            print(
+                f"TIME_LIMIT: Stopping after {time.time() - t_0:.2f}s (max_total_seconds={max_total_seconds})"
+            )
             break
         run_config.deadline = deadline
         collector_log, collector_trace, trace_records = sample_1(run_config)
@@ -227,7 +238,12 @@ def mk_replicates(config: ExperimentConfig) -> list[RunConfig]:
             continue
         else:
             problem_seed = 18 + i_rep
-            env_conf = get_env_conf(config.env_tag, problem_seed=problem_seed, noise_level=None, noise_seed_0=10 * problem_seed)
+            env_conf = get_env_conf(
+                config.env_tag,
+                problem_seed=problem_seed,
+                noise_level=None,
+                noise_seed_0=10 * problem_seed,
+            )
             run_configs.append(
                 RunConfig(
                     trace_fn=trace_fn,
@@ -253,7 +269,16 @@ def sampler(config: ExperimentConfig, distributor_fn):
 
 
 def prep_args_1(
-    results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None, num_denoise_passive=None
+    results_dir,
+    exp_dir,
+    problem,
+    opt,
+    num_arms,
+    num_replications,
+    num_rounds,
+    noise=None,
+    num_denoise=None,
+    num_denoise_passive=None,
 ) -> ExperimentConfig:
     assert noise is None, "NYI"
 
@@ -272,7 +297,18 @@ def prep_args_1(
 
 
 def prep_d_args(
-    results_dir, exp_dir, funcs, dims, num_arms, num_replications, opts, noises, num_rounds=3, func_category="f", num_denoise=None, num_denoise_passive=None
+    results_dir,
+    exp_dir,
+    funcs,
+    dims,
+    num_arms,
+    num_replications,
+    opts,
+    noises,
+    num_rounds=3,
+    func_category="f",
+    num_denoise=None,
+    num_denoise_passive=None,
 ) -> list[ExperimentConfig]:
     configs = []
     for dim in dims:

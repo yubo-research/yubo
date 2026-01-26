@@ -16,7 +16,9 @@ def test_run_experiment_new_controller_and_collector_and_seeding():
     seen = []
     collector_ids = []
 
-    def dummy_optimizer(controller: nn.Module, collector: Collector, num_rounds: int) -> Tensor:
+    def dummy_optimizer(
+        controller: nn.Module, collector: Collector, num_rounds: int
+    ) -> Tensor:
         assert isinstance(controller, TMSphere)
         seen.append((float(controller.x_0.item()), controller.active_idx.tolist()))
         collector_ids.append(id(collector))

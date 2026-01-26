@@ -17,7 +17,9 @@ if __name__ == "__main__":
     noise_levels = []
     abs_returns = []
     for _ in range(10):
-        x = all_bounds.p_low + all_bounds.p_width * np.random.uniform(size=(policy.num_params(),))
+        x = all_bounds.p_low + all_bounds.p_width * np.random.uniform(
+            size=(policy.num_params(),)
+        )
         r = []
         for _ in range(10):
             policy.set_params(x)
@@ -29,4 +31,6 @@ if __name__ == "__main__":
 
     noise_level = np.mean(noise_levels)
     abs_return = np.mean(abs_returns)
-    print(f"{env_tag} noise_level = {noise_level:.4f} abs_r = {abs_return:.4f} num_params = {policy.num_params()}")
+    print(
+        f"{env_tag} noise_level = {noise_level:.4f} abs_r = {abs_return:.4f} num_params = {policy.num_params()}"
+    )

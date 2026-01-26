@@ -25,7 +25,9 @@ class AcqTS:
 
     def draw(self, num_arms):
         sobol = SobolEngine(self._num_dim, scramble=True)
-        X_candidates = sobol.draw(self._num_candidates).to(dtype=self._dtype, device=self._device)
+        X_candidates = sobol.draw(self._num_candidates).to(
+            dtype=self._dtype, device=self._device
+        )
 
         with ExitStack() as es:
             if self._sampler == "cholesky":
@@ -34,10 +36,16 @@ class AcqTS:
                 es.enter_context(gpts.fast_computations(covar_root_decomposition=True))
                 es.enter_context(gpts.max_cholesky_size(0))
                 es.enter_context(gpts.ciq_samples(True))
-                es.enter_context(gpts.minres_tolerance(2e-3))  # Controls accuracy and runtime
+                es.enter_context(
+                    gpts.minres_tolerance(2e-3)
+                )  # Controls accuracy and runtime
                 es.enter_context(gpts.num_contour_quadrature(15))
             elif self._sampler == "lanczos":
-                es.enter_context(gpts.fast_computations(covar_root_decomposition=True, log_prob=True, solves=True))
+                es.enter_context(
+                    gpts.fast_computations(
+                        covar_root_decomposition=True, log_prob=True, solves=True
+                    )
+                )
                 es.enter_context(gpts.max_lanczos_quadrature_iterations(10))
                 es.enter_context(gpts.max_cholesky_size(0))
                 es.enter_context(gpts.ciq_samples(False))
@@ -45,7 +53,9 @@ class AcqTS:
                 es.enter_context(gpts.fast_computations(covar_root_decomposition=True))
 
             with torch.no_grad():
-                thompson_sampling = MaxPosteriorSampling(model=self.model, replacement=False)
+                thompson_sampling = MaxPosteriorSampling(
+                    model=self.model, replacement=False
+                )
                 X_arms = thompson_sampling(X_candidates, num_samples=num_arms)
 
         return X_arms

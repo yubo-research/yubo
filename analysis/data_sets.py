@@ -155,7 +155,9 @@ def _trace_dir_cacheable_jsonl(trace_dir: str) -> bool:
 def load_traces_jsonl(trace_dir, key="rreturn"):
     if not _trace_dir_cacheable_jsonl(trace_dir):
         if CACHE_DEBUG:
-            print(f"CACHE BYPASS: load_traces_jsonl({str(trace_dir)[-40:]}, {key}) (incomplete)")
+            print(
+                f"CACHE BYPASS: load_traces_jsonl({str(trace_dir)[-40:]}, {key}) (incomplete)"
+            )
         return _load_traces_jsonl_uncached(trace_dir, key=key)
 
     if CACHE_DEBUG:
@@ -246,7 +248,9 @@ def load_traces(trace_dir, key="return", grep_for="TRACE"):
 
     if not cacheable:
         if CACHE_DEBUG:
-            print(f"CACHE BYPASS: load_traces({str(trace_dir)[-40:]}, {key}) (incomplete)")
+            print(
+                f"CACHE BYPASS: load_traces({str(trace_dir)[-40:]}, {key}) (incomplete)"
+            )
         return _load_traces_uncached(trace_dir, key, grep_for)
 
     if CACHE_DEBUG:
@@ -283,7 +287,10 @@ def load_multiple_traces(data_locator):
         if len(trace.shape) < 2:
             return None
         # Ensure float dtype from the start
-        arr = np.nan * np.ones(shape=(len(problems), len(opt_names), trace.shape[0], trace.shape[1]), dtype=float)
+        arr = np.nan * np.ones(
+            shape=(len(problems), len(opt_names), trace.shape[0], trace.shape[1]),
+            dtype=float,
+        )
         return arr
 
     traces = None
@@ -292,15 +299,25 @@ def load_multiple_traces(data_locator):
             num_tot += 1
             trace_path = data_locator(problem_name, opt_name)
             if len(trace_path) == 0:
-                _report_bad(problem_name, opt_name, f"Missing data for {problem_name} {opt_name}")
+                _report_bad(
+                    problem_name,
+                    opt_name,
+                    f"Missing data for {problem_name} {opt_name}",
+                )
                 continue
             if len(trace_path) > 1:
-                _report_bad(problem_name, opt_name, f"Extra data for {problem_name} {opt_name} len = {len(trace_path)}")
+                _report_bad(
+                    problem_name,
+                    opt_name,
+                    f"Extra data for {problem_name} {opt_name} len = {len(trace_path)}",
+                )
                 continue
             trace_path = trace_path[0]
 
             try:
-                trace = load_traces(trace_path, key=data_locator.key, grep_for=data_locator.grep_for)
+                trace = load_traces(
+                    trace_path, key=data_locator.key, grep_for=data_locator.grep_for
+                )
             except FileNotFoundError as e:
                 _report_bad(problem_name, opt_name, f"{trace_path} {repr(e)}")
                 continue
@@ -323,7 +340,11 @@ def load_multiple_traces(data_locator):
                 traces = traces_new
 
             if trace.shape != traces[i_problem, i_opt, ...].shape:
-                _report_bad(problem_name, opt_name, f"Warning: Trace is wrong shape {trace.shape} != {traces[i_problem, i_opt, ...].shape}")
+                _report_bad(
+                    problem_name,
+                    opt_name,
+                    f"Warning: Trace is wrong shape {trace.shape} != {traces[i_problem, i_opt, ...].shape}",
+                )
                 # continue
             # Ensure trace is numeric before assignment - force conversion to float
             if trace.dtype != np.float64 and trace.dtype != np.float32:
@@ -331,13 +352,17 @@ def load_multiple_traces(data_locator):
                     trace = np.asarray(trace, dtype=float)
                 except (ValueError, TypeError):
                     # If conversion fails, try to convert element by element
-                    trace = np.array([float(x) if x is not None else np.nan for x in trace.flat]).reshape(trace.shape)
+                    trace = np.array(
+                        [float(x) if x is not None else np.nan for x in trace.flat]
+                    ).reshape(trace.shape)
             traces[i_problem, i_opt, : trace.shape[0], : trace.shape[1]] = trace
 
     # Ensure traces is initialized and has numeric dtype
     if traces is None:
         # No valid traces found, create empty array with float dtype
-        traces = np.array([], dtype=float).reshape((len(problems), len(opt_names), 0, 0))
+        traces = np.array([], dtype=float).reshape(
+            (len(problems), len(opt_names), 0, 0)
+        )
     else:
         # Force conversion to float - handle object arrays and other non-numeric types
         if traces.dtype == object or not np.issubdtype(traces.dtype, np.number):
@@ -365,7 +390,9 @@ def load_multiple_traces(data_locator):
         print("TP: traces shape:", traces.shape if traces is not None else None)
         raise e
     if num_bad > 0:
-        print(f"\n{num_bad} / {num_tot} files bad. {100 * traces.mask.mean():.1f}% missing data")
+        print(
+            f"\n{num_bad} / {num_tot} files bad. {100 * traces.mask.mean():.1f}% missing data"
+        )
     else:
         # print("No bad data")
         pass

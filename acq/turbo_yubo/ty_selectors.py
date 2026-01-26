@@ -33,7 +33,9 @@ def ty_pareto(train_x, model, x_cand, num_arms):
 
 def _i_pareto_front_selection(num_select, *metrics):
     combined_data = np.concatenate(metrics, axis=1)
-    idx_front = np.array(ndomsort.non_domin_sort(-combined_data, only_front_indices=True))
+    idx_front = np.array(
+        ndomsort.non_domin_sort(-combined_data, only_front_indices=True)
+    )
 
     i_keep = []
     for n_front in range(1 + max(idx_front)):
@@ -46,7 +48,9 @@ def _i_pareto_front_selection(num_select, *metrics):
             i_keep.extend(front_indices)
         else:
             remaining = num_select - len(i_keep)
-            i_keep.extend(np.random.choice(front_indices, size=remaining, replace=False))
+            i_keep.extend(
+                np.random.choice(front_indices, size=remaining, replace=False)
+            )
             break
 
     return np.array(i_keep)

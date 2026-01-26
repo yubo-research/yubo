@@ -19,14 +19,18 @@ def _as_2d(y: np.ndarray) -> np.ndarray:
     assert False, y.shape
 
 
-def _eval_mean_return(env_conf, policy, *, num_denoise: Optional[int], noise_seed_0: int, i_noise: int) -> np.ndarray:
+def _eval_mean_return(
+    env_conf, policy, *, num_denoise: Optional[int], noise_seed_0: int, i_noise: int
+) -> np.ndarray:
     if num_denoise is None:
         num_denoise = 1
     assert num_denoise >= 1, num_denoise
 
     rets = []
     for i in range(num_denoise):
-        traj = collect_trajectory(env_conf, policy, noise_seed=noise_seed_0 + i_noise + i)
+        traj = collect_trajectory(
+            env_conf, policy, noise_seed=noise_seed_0 + i_noise + i
+        )
         rets.append(traj.rreturn)
     y = np.mean(np.asarray(rets), axis=0)
     return np.asarray(y)
@@ -59,7 +63,15 @@ class SobolRefPoint:
         for i in range(self.num_cal):
             p.set_params(x[i])
             i_noise = 0 if getattr(env_conf, "frozen_noise", True) else int(i) * stride
-            ys.append(_eval_mean_return(env_conf, p, num_denoise=self.num_denoise, noise_seed_0=int(self.noise_seed_0), i_noise=i_noise))
+            ys.append(
+                _eval_mean_return(
+                    env_conf,
+                    p,
+                    num_denoise=self.num_denoise,
+                    noise_seed_0=int(self.noise_seed_0),
+                    i_noise=i_noise,
+                )
+            )
 
         p.set_params(x_0)
 

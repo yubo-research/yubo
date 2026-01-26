@@ -8,7 +8,10 @@ class TMSphere(nn.Module):
     def __init__(self, num_dim: int, num_active: int, seed: int) -> None:
         super().__init__()
         assert isinstance(num_dim, int) and num_dim > 0
-        assert isinstance(num_active, int) and 0 < num_active <= num_dim, (num_dim, num_active)
+        assert isinstance(num_active, int) and 0 < num_active <= num_dim, (
+            num_dim,
+            num_active,
+        )
         assert isinstance(seed, int)
         self.lb = 0.0
         self.ub = 1.0

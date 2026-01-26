@@ -47,8 +47,13 @@ def _resolve_exp_dir(results_dir: Path, exp_hash: str) -> Path:
     results_dir_resolved = results_dir.resolve()
     exp_dir_resolved = (results_dir / exp_hash_path).resolve()
 
-    if exp_dir_resolved == results_dir_resolved or results_dir_resolved not in exp_dir_resolved.parents:
-        raise click.ClickException(f"exp_hash must point to a subdirectory of results_dir: results_dir={results_dir} exp_hash={exp_hash}")
+    if (
+        exp_dir_resolved == results_dir_resolved
+        or results_dir_resolved not in exp_dir_resolved.parents
+    ):
+        raise click.ClickException(
+            f"exp_hash must point to a subdirectory of results_dir: results_dir={results_dir} exp_hash={exp_hash}"
+        )
 
     return exp_dir_resolved
 
@@ -91,7 +96,9 @@ def ls(results_dir: Path, verbose: bool):
         num_rounds = config.get("num_rounds", "?")
         num_arms = config.get("num_arms", "?")
 
-        click.echo(f"{exp_dir.name}  [{status}]  {opt_name:20s}  {env_tag:20s}  arms={num_arms}  rounds={num_rounds}  reps={total}")
+        click.echo(
+            f"{exp_dir.name}  [{status}]  {opt_name:20s}  {env_tag:20s}  arms={num_arms}  rounds={num_rounds}  reps={total}"
+        )
 
         if verbose:
             for k, v in sorted(config.items()):
@@ -136,7 +143,9 @@ def cat(exp_path: Path, trace: int, head: int, config_only: bool):
     with open(trace_file) as f:
         for i, line in enumerate(f):
             if head is not None and i >= head:
-                click.echo(f"... ({head} of {sum(1 for _ in open(trace_file))} lines shown)")
+                click.echo(
+                    f"... ({head} of {sum(1 for _ in open(trace_file))} lines shown)"
+                )
                 break
             record = json.loads(line)
             i_iter = record.get("i_iter", "?")
@@ -144,9 +153,13 @@ def cat(exp_path: Path, trace: int, head: int, config_only: bool):
             dt_prop = record.get("dt_prop", 0)
             dt_eval = record.get("dt_eval", 0)
             if isinstance(rreturn, float):
-                click.echo(f"  {i_iter:4d}  ret={rreturn:10.4f}  dt_prop={dt_prop:.4f}  dt_eval={dt_eval:.4f}")
+                click.echo(
+                    f"  {i_iter:4d}  ret={rreturn:10.4f}  dt_prop={dt_prop:.4f}  dt_eval={dt_eval:.4f}"
+                )
             else:
-                click.echo(f"  {i_iter:4d}  ret={rreturn}  dt_prop={dt_prop}  dt_eval={dt_eval}")
+                click.echo(
+                    f"  {i_iter:4d}  ret={rreturn}  dt_prop={dt_prop}  dt_eval={dt_eval}"
+                )
 
 
 @cli.command()

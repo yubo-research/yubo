@@ -8,7 +8,9 @@ def simple_data():
     num_samples = 10
     num_dim = 3
     X = torch.rand(size=(num_samples, num_dim), dtype=torch.double)
-    Y = torch.sin(X.sum(dim=1, keepdim=True)) + 0.1 * torch.randn(num_samples, 1, dtype=torch.double)
+    Y = torch.sin(X.sum(dim=1, keepdim=True)) + 0.1 * torch.randn(
+        num_samples, 1, dtype=torch.double
+    )
     return X, Y
 
 

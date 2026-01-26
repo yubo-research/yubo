@@ -43,8 +43,12 @@ def top_k(x, k):
 def intersect_with_box(x_inside, x_outside):
     t_min, t_max = 0, 1  # Initialize the range of valid t values
     for i in range(len(x_inside)):
-        t0 = (0 - x_inside[i]) / (x_outside[i] - x_inside[i])  # Intersection with the lower boundary
-        t1 = (1 - x_inside[i]) / (x_outside[i] - x_inside[i])  # Intersection with the upper boundary
+        t0 = (0 - x_inside[i]) / (
+            x_outside[i] - x_inside[i]
+        )  # Intersection with the lower boundary
+        t1 = (1 - x_inside[i]) / (
+            x_outside[i] - x_inside[i]
+        )  # Intersection with the upper boundary
         t0, t1 = min(t0, t1), max(t0, t1)  # Order t0 and t1
         t_min = max(t_min, t0)  # Update the lower bound of t
         t_max = min(t_max, t1)  # Update the upper bound of t
@@ -176,10 +180,20 @@ def raasp_np_choice(
 
 def raasp_np_p(x_center, lb, ub, num_candidates, i_dim_allowed=None, stagger=False):
     num_dim = x_center.shape[-1]
-    return raasp_np(x_center, lb, ub, num_candidates, num_pert=min(20, int(num_dim * 0.20 + 0.5)), i_dim_allowed=i_dim_allowed, stagger=stagger)
+    return raasp_np(
+        x_center,
+        lb,
+        ub,
+        num_candidates,
+        num_pert=min(20, int(num_dim * 0.20 + 0.5)),
+        i_dim_allowed=i_dim_allowed,
+        stagger=stagger,
+    )
 
 
-def raasp_np(x_center, lb, ub, num_candidates, num_pert=20, *, i_dim_allowed=None, stagger=False):
+def raasp_np(
+    x_center, lb, ub, num_candidates, num_pert=20, *, i_dim_allowed=None, stagger=False
+):
     num_dim = x_center.shape[-1]
 
     if i_dim_allowed is not None:
@@ -197,13 +211,25 @@ def raasp_np(x_center, lb, ub, num_candidates, num_pert=20, *, i_dim_allowed=Non
     return sobol_perturb_np(x_center, lb, ub, num_candidates, mask, stagger=stagger)
 
 
-def raasp_np_1d(x_centers: np.ndarray, lb: np.ndarray, ub: np.ndarray, num_candidates: int) -> np.ndarray:
+def raasp_np_1d(
+    x_centers: np.ndarray, lb: np.ndarray, ub: np.ndarray, num_candidates: int
+) -> np.ndarray:
     # TODO: Return the corresponding centers, too.
-    assert len(x_centers.shape) == 2, f"x_centers must be 2D, got shape {x_centers.shape}"
-    assert len(lb.shape) == 2 and lb.shape[0] == 1, f"lb must have shape (1, num_dim), got shape {lb.shape}"
-    assert len(ub.shape) == 2 and ub.shape[0] == 1, f"ub must have shape (1, num_dim), got shape {ub.shape}"
-    assert x_centers.shape[1] == lb.shape[1], f"x_centers and lb must have same num_dim, got {x_centers.shape[1]} and {lb.shape[1]}"
-    assert lb.shape[1] == ub.shape[1], f"lb and ub must have same num_dim, got {lb.shape[1]} and {ub.shape[1]}"
+    assert len(x_centers.shape) == 2, (
+        f"x_centers must be 2D, got shape {x_centers.shape}"
+    )
+    assert len(lb.shape) == 2 and lb.shape[0] == 1, (
+        f"lb must have shape (1, num_dim), got shape {lb.shape}"
+    )
+    assert len(ub.shape) == 2 and ub.shape[0] == 1, (
+        f"ub must have shape (1, num_dim), got shape {ub.shape}"
+    )
+    assert x_centers.shape[1] == lb.shape[1], (
+        f"x_centers and lb must have same num_dim, got {x_centers.shape[1]} and {lb.shape[1]}"
+    )
+    assert lb.shape[1] == ub.shape[1], (
+        f"lb and ub must have same num_dim, got {lb.shape[1]} and {ub.shape[1]}"
+    )
     assert num_candidates > 0, f"num_candidates must be positive, got {num_candidates}"
 
     num_centers, num_dim = x_centers.shape
@@ -223,11 +249,15 @@ def raasp_np_1d(x_centers: np.ndarray, lb: np.ndarray, ub: np.ndarray, num_candi
     return x_candidates
 
 
-def truncated_normal_np(mu: np.ndarray, sigma: np.ndarray, lb: np.ndarray, ub: np.ndarray, num_candidates):
+def truncated_normal_np(
+    mu: np.ndarray, sigma: np.ndarray, lb: np.ndarray, ub: np.ndarray, num_candidates
+):
     assert mu.shape == sigma.shape == lb.shape == ub.shape, (
         f"All inputs must have same shape, got mu: {mu.shape}, sigma: {sigma.shape}, lb: {lb.shape}, ub: {ub.shape}"
     )
-    assert len(mu.shape) == 2 and mu.shape[0] == 1, f"All inputs must have shape (1, num_dim), got {mu.shape}"
+    assert len(mu.shape) == 2 and mu.shape[0] == 1, (
+        f"All inputs must have shape (1, num_dim), got {mu.shape}"
+    )
     num_dim = mu.shape[1]
     assert np.all(sigma >= 0), "All sigma values must be non-negative"
     assert np.all(lb < ub), "All lb values must be less than ub values"
@@ -263,7 +293,9 @@ def sobol_perturb_np(x_center, lb, ub, num_candidates, mask, stagger=False):
         else:
             alpha = np.ones((num_candidates, num_dim))
 
-        candidates[mask] = candidates[mask] + alpha[mask] * (pert[mask] - candidates[mask])
+        candidates[mask] = candidates[mask] + alpha[mask] * (
+            pert[mask] - candidates[mask]
+        )
 
     return candidates
 
@@ -278,7 +310,9 @@ def raasp(x_center, lb, ub, num_candidates, device, dtype):
         mask[ind, torch.randint(0, num_dim, (len(ind),), device=device)] = True
 
     sobol_samples = draw_sobol_samples(
-        bounds=torch.tensor([[0.0] * num_dim, [1.0] * num_dim], dtype=dtype, device=device),
+        bounds=torch.tensor(
+            [[0.0] * num_dim, [1.0] * num_dim], dtype=dtype, device=device
+        ),
         n=num_candidates,
         q=1,
     ).squeeze(1)
@@ -325,4 +359,6 @@ def gumbel(n):
 
     log_n = np.log(n)
     log_log_n = np.log(log_n)
-    return np.sqrt(2 * log_n) - (log_log_n + np.log(4 * np.pi)) / (2 * np.sqrt(2 * log_n))
+    return np.sqrt(2 * log_n) - (log_log_n + np.log(4 * np.pi)) / (
+        2 * np.sqrt(2 * log_n)
+    )

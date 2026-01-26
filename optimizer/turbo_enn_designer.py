@@ -7,7 +7,10 @@ from optimizer.designer_asserts import assert_scalar_rreturn
 from third_party.enn.turbo.config.acq_type import AcqType
 from third_party.enn.turbo.config.candidate_gen_config import CandidateGenConfig
 from third_party.enn.turbo.config.candidate_rv import CandidateRV
-from third_party.enn.turbo.config.enn_surrogate_config import ENNFitConfig, ENNSurrogateConfig
+from third_party.enn.turbo.config.enn_surrogate_config import (
+    ENNFitConfig,
+    ENNSurrogateConfig,
+)
 from third_party.enn.turbo.config.enums import RAASPDriver
 from third_party.enn.turbo.config.factory import (
     lhd_only_config,
@@ -111,7 +114,9 @@ class TurboENNDesigner:
             candidates = None
             if num_candidates is not None or self._candidate_rv is not None:
                 if num_candidates is None:
-                    candidates = CandidateGenConfig(candidate_rv=candidate_rv, raasp_driver=RAASPDriver.FAST)
+                    candidates = CandidateGenConfig(
+                        candidate_rv=candidate_rv, raasp_driver=RAASPDriver.FAST
+                    )
                 else:
                     candidates = CandidateGenConfig(
                         candidate_rv=candidate_rv,
@@ -206,7 +211,10 @@ class TurboENNDesigner:
                 for d in new_data:
                     assert d.trajectory.rreturn_se is not None
                     y_se_list.append(d.trajectory.rreturn_se)
-            assert len(y_se_list) == 0 or len(y_se_list) == len(y_list), (len(y_se_list), len(y_list))
+            assert len(y_se_list) == 0 or len(y_se_list) == len(y_list), (
+                len(y_se_list),
+                len(y_list),
+            )
             if len(x_list) > 0:
                 x = np.array(x_list)
                 y_obs = np.array(y_list)

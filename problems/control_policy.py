@@ -27,17 +27,35 @@ class ControlPolicy(nn.Module):
         self._k = 2
 
         self._const_scale = 0.5
-        self.in_norm = nn.LayerNorm(num_state, elementwise_affine=True) if bool(use_layer_norm) else None
+        self.in_norm = (
+            nn.LayerNorm(num_state, elementwise_affine=True)
+            if bool(use_layer_norm)
+            else None
+        )
 
-        self.w_state = nn.Parameter(torch.empty((self._k, num_action, num_state), dtype=torch.float32))
-        self.w_phase = nn.Parameter(torch.empty((self._k, num_action, 2), dtype=torch.float32))
-        self.b_err = nn.Parameter(torch.zeros((self._k, num_action), dtype=torch.float32))
+        self.w_state = nn.Parameter(
+            torch.empty((self._k, num_action, num_state), dtype=torch.float32)
+        )
+        self.w_phase = nn.Parameter(
+            torch.empty((self._k, num_action, 2), dtype=torch.float32)
+        )
+        self.b_err = nn.Parameter(
+            torch.zeros((self._k, num_action), dtype=torch.float32)
+        )
 
-        self.kp_raw = nn.Parameter(torch.full((self._k, num_action), -2.0, dtype=torch.float32))
-        self.ki_raw = nn.Parameter(torch.full((self._k, num_action), -4.0, dtype=torch.float32))
-        self.kd_raw = nn.Parameter(torch.full((self._k, num_action), -3.0, dtype=torch.float32))
+        self.kp_raw = nn.Parameter(
+            torch.full((self._k, num_action), -2.0, dtype=torch.float32)
+        )
+        self.ki_raw = nn.Parameter(
+            torch.full((self._k, num_action), -4.0, dtype=torch.float32)
+        )
+        self.kd_raw = nn.Parameter(
+            torch.full((self._k, num_action), -3.0, dtype=torch.float32)
+        )
 
-        self.gate_w = nn.Parameter(torch.zeros((self._k, num_state), dtype=torch.float32))
+        self.gate_w = nn.Parameter(
+            torch.zeros((self._k, num_state), dtype=torch.float32)
+        )
         self.gate_b = nn.Parameter(torch.zeros((self._k,), dtype=torch.float32))
 
         self.filter_alpha_logit = nn.Parameter(torch.tensor(-1.0, dtype=torch.float32))
@@ -47,7 +65,9 @@ class ControlPolicy(nn.Module):
         self.aw_gain_raw = nn.Parameter(torch.tensor(-2.0, dtype=torch.float32))
 
         self.phase_omega_raw = nn.Parameter(torch.tensor(-2.0, dtype=torch.float32))
-        self.phase_omega_state = nn.Parameter(torch.zeros((num_state,), dtype=torch.float32))
+        self.phase_omega_state = nn.Parameter(
+            torch.zeros((num_state,), dtype=torch.float32)
+        )
 
         for k in range(self._k):
             nn.init.orthogonal_(self.w_state[k], gain=0.1)
@@ -56,7 +76,9 @@ class ControlPolicy(nn.Module):
         self.reset_state()
 
         with torch.inference_mode():
-            self._flat_params_init = np.concatenate([p.data.detach().cpu().numpy().reshape(-1) for p in self.parameters()])
+            self._flat_params_init = np.concatenate(
+                [p.data.detach().cpu().numpy().reshape(-1) for p in self.parameters()]
+            )
 
     def reset_state(self):
         num_state = self._env_conf.gym_conf.state_space.shape[0]
@@ -76,7 +98,9 @@ class ControlPolicy(nn.Module):
         self._z_filt = (1.0 - alpha) * self._z_filt + alpha * x
 
         omega = F.softplus(self.phase_omega_raw) + 1e-3
-        omega = omega + 0.02 * torch.tanh(torch.dot(self.phase_omega_state, self._z_filt))
+        omega = omega + 0.02 * torch.tanh(
+            torch.dot(self.phase_omega_state, self._z_filt)
+        )
         omega = torch.clamp(omega, 1e-3, 1.0)
         self._phi = torch.remainder(self._phi + omega, 2.0 * math.pi)
         phase_feat = torch.stack([torch.sin(self._phi), torch.cos(self._phi)], dim=0)
@@ -85,7 +109,11 @@ class ControlPolicy(nn.Module):
         w = torch.softmax(w_logits, dim=0)
 
         leak = torch.sigmoid(self.int_leak_logit)
-        e = torch.einsum("kan,n->ka", self.w_state, self._z_filt) + torch.einsum("kaj,j->ka", self.w_phase, phase_feat) + self.b_err
+        e = (
+            torch.einsum("kan,n->ka", self.w_state, self._z_filt)
+            + torch.einsum("kaj,j->ka", self.w_phase, phase_feat)
+            + self.b_err
+        )
         self._i = (1.0 - leak) * self._i + e
         de = e - self._e_prev
         self._e_prev = e
@@ -120,19 +148,31 @@ class ControlPolicy(nn.Module):
 
     def get_params(self):
         with torch.inference_mode():
-            flat_params = np.concatenate([p.data.detach().cpu().numpy().reshape(-1) for p in self.parameters()])
+            flat_params = np.concatenate(
+                [p.data.detach().cpu().numpy().reshape(-1) for p in self.parameters()]
+            )
         return (flat_params - self._flat_params_init) / self._const_scale
 
     def set_params(self, flat_params):
-        assert flat_params.min() >= -1 and flat_params.max() <= 1, (flat_params.min(), flat_params.max())
-        assert flat_params.shape == self._flat_params_init.shape, (flat_params.shape, self._flat_params_init.shape)
+        assert flat_params.min() >= -1 and flat_params.max() <= 1, (
+            flat_params.min(),
+            flat_params.max(),
+        )
+        assert flat_params.shape == self._flat_params_init.shape, (
+            flat_params.shape,
+            self._flat_params_init.shape,
+        )
         flat_params = self._flat_params_init + flat_params * self._const_scale
         with torch.inference_mode():
             idx = 0
             for p in self.parameters():
                 shape = p.shape
                 size = p.numel()
-                p.copy_(torch.from_numpy(flat_params[idx : idx + size].reshape(shape)).float())
+                p.copy_(
+                    torch.from_numpy(
+                        flat_params[idx : idx + size].reshape(shape)
+                    ).float()
+                )
                 idx += size
 
     def clone(self):

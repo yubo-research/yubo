@@ -24,7 +24,13 @@ def _compute_signal_length_from_y(ys: List[float]) -> float:
     return length
 
 
-def mk_turbo_config(use_tr: bool, num_raasp: float, num_trail: int = 32, num_candidates: int = 1, alpha: float = 1.0) -> UHDBOConfig:
+def mk_turbo_config(
+    use_tr: bool,
+    num_raasp: float,
+    num_trail: int = 32,
+    num_candidates: int = 1,
+    alpha: float = 1.0,
+) -> UHDBOConfig:
     assert isinstance(use_tr, bool)
     assert isinstance(num_raasp, (int, float)) and num_raasp >= -1.0
     assert isinstance(num_trail, int) and num_trail > 0
@@ -72,7 +78,9 @@ def mk_turbo_config(use_tr: bool, num_raasp: float, num_trail: int = 32, num_can
 
             if self.use_tr:
                 if self._tr is None:
-                    self._tr = TrustRegionAdjustor(dim=num_dim, batch_size=self._batch_size)
+                    self._tr = TrustRegionAdjustor(
+                        dim=num_dim, batch_size=self._batch_size
+                    )
                 half_tr = 1e-3  # 0.5 * float(self._tr.length)
                 print("HALF_TR:", half_tr)
                 u01 = torch.rand(k, device=device, dtype=dtype)

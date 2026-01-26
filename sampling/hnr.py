@@ -61,7 +61,9 @@ def perturb_normal(X, u, eps, llambda_minus, llambda_plus):
     num_chains = X.shape[0]
     rv = truncnorm(-llambda_minus / eps, llambda_plus / eps, scale=eps)
     X_1 = X + np.array(rv.rvs(num_chains))[:, None] * u
-    assert np.all((X_1.min(axis=1) >= 0) & (X_1.max(axis=1) <= 1)), "Perturbation failed"
+    assert np.all((X_1.min(axis=1) >= 0) & (X_1.max(axis=1) <= 1)), (
+        "Perturbation failed"
+    )
     return X_1
 
 

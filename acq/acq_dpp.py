@@ -40,7 +40,15 @@ class AcqDPP:
         search, pages 7031–7054. PMLR, 28–30 Mar 2022. URL https://proceedings.mlr.press/v151/nava22a.html.
     """
 
-    def __init__(self, model, num_X_samples, num_runs=50, DPP_lambda=1.0, cutoff_iter=None, lambda_mode="mult"):
+    def __init__(
+        self,
+        model,
+        num_X_samples,
+        num_runs=50,
+        DPP_lambda=1.0,
+        cutoff_iter=None,
+        lambda_mode="mult",
+    ):
         """
         num_runs are the runs of the MCMC algorithm
         DPP_lambda: either a number, or a callable to get lambda a function of t (iter number)
@@ -79,7 +87,9 @@ class AcqDPP:
                     ),
                     dtype=torch.double,
                 )
-            (_, self.start_K) = self.GP.mean_var(xtest if xtest is not None else self.fake_xtest, full=True)
+            (_, self.start_K) = self.GP.mean_var(
+                xtest if xtest is not None else self.fake_xtest, full=True
+            )
 
     def draw(self, num_arms, first_ts=False):
         num_runs = self._num_runs
@@ -100,7 +110,10 @@ class AcqDPP:
                 X_batch = torch.cat((X_batch, torch.t(X_next)), dim=0)
         (_, post_K_S) = self.GP.mean_var(X_batch, full=True)
         if self._lambda_mode == "mult":
-            K_S = torch.eye(num_arms, dtype=torch.float64) + self._DPP_lambda * (self.GP.s**-2) * post_K_S
+            K_S = (
+                torch.eye(num_arms, dtype=torch.float64)
+                + self._DPP_lambda * (self.GP.s**-2) * post_K_S
+            )
             det_K_S = torch.det(K_S)
         elif self._lambda_mode == "pow":
             K_S = torch.eye(num_arms, dtype=torch.float64) + (self.GP.s**-2) * post_K_S
@@ -113,20 +126,30 @@ class AcqDPP:
         # MCMC
         if self._cutoff_iter is None or self.num_rounds < self._cutoff_iter:
             while num_runs > 0:
-                switch_i = np.random.randint(0 if not first_ts else 1, num_arms)  # If first was sampled with regular TS, cannot swap it during MCMC
+                switch_i = np.random.randint(
+                    0 if not first_ts else 1, num_arms
+                )  # If first was sampled with regular TS, cannot swap it during MCMC
                 X_next = self.GP.sample_from_pmax(self._X_samples)
                 X_batch_prop = X_batch.clone()
                 X_batch_prop[switch_i] = torch.t(X_next.view(-1, 1))
                 (_, post_K_S) = self.GP.mean_var(X_batch_prop, full=True)
                 if self._lambda_mode == "mult":
-                    K_S = torch.eye(num_arms, dtype=torch.float64) + self._DPP_lambda * (self.GP.s**-2) * post_K_S
+                    K_S = (
+                        torch.eye(num_arms, dtype=torch.float64)
+                        + self._DPP_lambda * (self.GP.s**-2) * post_K_S
+                    )
                     det_K_S_prop = torch.det(K_S)
                 elif self._lambda_mode == "pow":
-                    K_S = torch.eye(num_arms, dtype=torch.float64) + (self.GP.s**-2) * post_K_S
+                    K_S = (
+                        torch.eye(num_arms, dtype=torch.float64)
+                        + (self.GP.s**-2) * post_K_S
+                    )
                     det_K_S_prop = torch.det(K_S) ** self._DPP_lambda
                 else:
                     raise ValueError(f"Unsupported lambda_mode {self._lambda_mode}")
-                alpha = torch.min(torch.tensor(1, dtype=torch.double), det_K_S_prop / det_K_S)
+                alpha = torch.min(
+                    torch.tensor(1, dtype=torch.double), det_K_S_prop / det_K_S
+                )
                 if torch.rand(1) < alpha:
                     X_batch = X_batch_prop
                     det_K_S = det_K_S_prop

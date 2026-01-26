@@ -28,7 +28,11 @@ def _submitted_dict():
     return modal.Dict.from_name("submitted_dict", create_if_missing=True)
 
 
-@app.function(image=modal_image, concurrency_limit=_MAX_CONTAINERS, timeout=_TIMEOUT_HOURS * 60 * 60)  # , gpu="H100")
+@app.function(
+    image=modal_image,
+    concurrency_limit=_MAX_CONTAINERS,
+    timeout=_TIMEOUT_HOURS * 60 * 60,
+)  # , gpu="H100")
 def modal_batches_worker(job):
     res_dict = _results_dict()
 
@@ -39,7 +43,11 @@ def modal_batches_worker(job):
     res_dict[key] = (run_config.trace_fn, collector_log, collector_trace, trace_records)
 
 
-@app.function(image=modal_image, concurrency_limit=_MAX_CONTAINERS // 10, timeout=_TIMEOUT_HOURS * 60 * 60)
+@app.function(
+    image=modal_image,
+    concurrency_limit=_MAX_CONTAINERS // 10,
+    timeout=_TIMEOUT_HOURS * 60 * 60,
+)
 def modal_batches_resubmitter(batch_of_configs):
     submitted_dict = _submitted_dict()
     todo = []

@@ -35,7 +35,13 @@ def get_env_conf(tag, problem_seed=None, noise_level=None, noise_seed_0=None):
         ec.noise_seed_0 = noise_seed_0
         ec.frozen_noise = frozen_noise
     else:
-        ec = EnvConf(tag, problem_seed=problem_seed, noise_level=noise_level, noise_seed_0=noise_seed_0, frozen_noise=frozen_noise)
+        ec = EnvConf(
+            tag,
+            problem_seed=problem_seed,
+            noise_level=noise_level,
+            noise_seed_0=noise_seed_0,
+            frozen_noise=frozen_noise,
+        )
 
     return ec
 
@@ -80,9 +86,13 @@ class EnvConf:
 
     def _make(self, **kwargs):
         if self.env_name[:2] == "f:":
-            env = pure_functions.make(self.env_name, problem_seed=self.problem_seed, distort=True)
+            env = pure_functions.make(
+                self.env_name, problem_seed=self.problem_seed, distort=True
+            )
         elif self.env_name[:2] == "g:":
-            env = pure_functions.make(self.env_name, problem_seed=self.problem_seed, distort=False)
+            env = pure_functions.make(
+                self.env_name, problem_seed=self.problem_seed, distort=False
+            )
         elif self.gym_conf is not None:
             env = gym.make(self.env_name, **(kwargs | self.kwargs))
         else:
@@ -93,7 +103,10 @@ class EnvConf:
     def make(self, **kwargs):
         env = self._make(**kwargs)
         if self.noise_level is not None:
-            assert self.env_name[:2] in ["f:", "g:"], ("NYI: Noise is only supported for pure functions", self.env_name)
+            assert self.env_name[:2] in ["f:", "g:"], (
+                "NYI: Noise is only supported for pure functions",
+                self.env_name,
+            )
             env = NoiseMaker(env, self.noise_level)
         return env
 
@@ -107,11 +120,19 @@ class EnvConf:
         env.close()
 
 
-def _gym_conf(env_name, gym_conf=None, policy_class=None, kwargs=None, noise_seed_0=None):
+def _gym_conf(
+    env_name, gym_conf=None, policy_class=None, kwargs=None, noise_seed_0=None
+):
     if gym_conf is None:
         gym_conf = GymConf()
 
-    return EnvConf(env_name, gym_conf=gym_conf, policy_class=policy_class, kwargs=kwargs, noise_seed_0=noise_seed_0)
+    return EnvConf(
+        env_name,
+        gym_conf=gym_conf,
+        policy_class=policy_class,
+        kwargs=kwargs,
+        noise_seed_0=noise_seed_0,
+    )
 
 
 # See https://paperswithcode.com/task/openai-gym
@@ -122,7 +143,9 @@ _gym_env_confs = {
         "MountainCarContinuous-v0",
         gym_conf=GymConf(num_frames_skip=100),
     ),
-    "pend": EnvConf("Pendulum-v1", gym_conf=GymConf(max_steps=200, num_frames_skip=100)),
+    "pend": EnvConf(
+        "Pendulum-v1", gym_conf=GymConf(max_steps=200, num_frames_skip=100)
+    ),
     # 3580 - https://arxiv.org/pdf/1803.07055
     # 6600 - 2024 [??ref]
     "ant": _gym_conf("Ant-v5"),
@@ -166,7 +189,9 @@ _gym_env_confs = {
             max_steps=1600,
             num_frames_skip=100,
         ),
-        policy_class=MLPPolicyFactory((), rnn_hidden_size=4, use_layer_norm=True, use_prev_action=True),
+        policy_class=MLPPolicyFactory(
+            (), rnn_hidden_size=4, use_layer_norm=True, use_prev_action=True
+        ),
     ),
     "bw-heur": _gym_conf(
         "BipedalWalker-v3",

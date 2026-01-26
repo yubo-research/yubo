@@ -16,6 +16,7 @@ def compute_gp_ll(model, test_x, test_y):
     # Standardize test_y using the same logic as fit_gp_XY
     # fit_gp_XY calls standardize_torch(Y) which uses botorch.utils.standardize
     from acq.fit_gp import standardize_torch
+
     test_y_standardized = standardize_torch(test_y[:, None]).squeeze(-1)
 
     with torch.no_grad():
@@ -77,7 +78,9 @@ def sweep_dim_ll_gp_vs_enn(
             train_r = np.array(train_r)
             std_r = np.std(train_r)
             assert np.isfinite(std_r) and std_r > 0
-            train_y = train_r + sigma_noise * std_r * rng.standard_normal(size=train_r.shape)
+            train_y = train_r + sigma_noise * std_r * rng.standard_normal(
+                size=train_r.shape
+            )
 
             # Generate test data
             test_x = rng.uniform(-1, 1, size=(num_samples_out, dim))

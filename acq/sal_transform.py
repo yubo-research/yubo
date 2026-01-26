@@ -68,7 +68,9 @@ class SALTransform(GPyTorchModule):
             )
             self.register_constraint(param_name=p_name, constraint=constraint)
 
-    def forward(self, Y: Tensor, Yvar: Tensor | None = None, X: Tensor | None = None) -> tuple[Tensor, Tensor | None]:
+    def forward(
+        self, Y: Tensor, Yvar: Tensor | None = None, X: Tensor | None = None
+    ) -> tuple[Tensor, Tensor | None]:
         sinh_arg = self.c * torch.arcsinh(Y) - self.d
         Y_new = self.a + self.b * torch.sinh(sinh_arg)
         if Yvar is None:
@@ -79,7 +81,9 @@ class SALTransform(GPyTorchModule):
         Yvar_new = (self.b**2) * (self.c**2) * cosh_term * (Yvar / denom)
         return Y_new, Yvar_new
 
-    def untransform(self, Y: Tensor, Yvar: Tensor | None = None, X: Tensor | None = None) -> tuple[Tensor, Tensor | None]:
+    def untransform(
+        self, Y: Tensor, Yvar: Tensor | None = None, X: Tensor | None = None
+    ) -> tuple[Tensor, Tensor | None]:
         Y_new = torch.sinh((torch.arcsinh((Y - self.a) / self.b) + self.d) / self.c)
 
         if Yvar is None:

@@ -11,7 +11,10 @@ def test_ray_boundary():
         x_f = ray_boundary(x, u)
         assert x_f.shape == x.shape
 
-        assert torch.all(((x_f.max(axis=1).values - 1) < 1e-6) | ((x_f.min(axis=1).values - 0) < 1e-6))
+        assert torch.all(
+            ((x_f.max(axis=1).values - 1) < 1e-6)
+            | ((x_f.min(axis=1).values - 0) < 1e-6)
+        )
 
 
 def test_ray_boundary_edge():
@@ -26,4 +29,6 @@ def test_ray_boundary_edge():
     x_f = ray_boundary(x, u)
     assert x_f.shape == x.shape
 
-    assert torch.all(((x_f.max(axis=1).values - 1) < 1e-6) | ((x_f.min(axis=1).values - 0) < 1e-6))
+    assert torch.all(
+        ((x_f.max(axis=1).values - 1) < 1e-6) | ((x_f.min(axis=1).values - 0) < 1e-6)
+    )
