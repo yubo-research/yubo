@@ -8,6 +8,7 @@ from third_party.enn.turbo.config.acq_type import AcqType
 from third_party.enn.turbo.config.candidate_gen_config import CandidateGenConfig
 from third_party.enn.turbo.config.candidate_rv import CandidateRV
 from third_party.enn.turbo.config.enn_surrogate_config import ENNFitConfig, ENNSurrogateConfig
+from third_party.enn.turbo.config.enums import RAASPDriver
 from third_party.enn.turbo.config.factory import (
     lhd_only_config,
     turbo_enn_config,
@@ -110,9 +111,15 @@ class TurboENNDesigner:
             candidates = None
             if num_candidates is not None or self._candidate_rv is not None:
                 if num_candidates is None:
-                    candidates = CandidateGenConfig(candidate_rv=candidate_rv)
+                    candidates = CandidateGenConfig(candidate_rv=candidate_rv, raasp_driver=RAASPDriver.FAST)
                 else:
-                    candidates = CandidateGenConfig(candidate_rv=candidate_rv, num_candidates=num_candidates)
+                    candidates = CandidateGenConfig(
+                        candidate_rv=candidate_rv,
+                        num_candidates=num_candidates,
+                        raasp_driver=RAASPDriver.FAST,
+                    )
+            else:
+                candidates = CandidateGenConfig(raasp_driver=RAASPDriver.FAST)
             return turbo_enn_config(
                 enn=enn,
                 trust_region=trust_region,

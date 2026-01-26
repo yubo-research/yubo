@@ -287,26 +287,10 @@ class Designers:
 
         elif designer_name == "turbo-zero":
             return TurboENNDesigner(self._policy, turbo_mode="turbo-zero")
-        elif designer_name == "turbo-zero-f":
-            return TurboENNDesigner(
-                self._policy,
-                turbo_mode="turbo-zero",
-                num_candidates=min(5000, 100 * self._num_arms),
-                candidate_rv="uniform",
-            )
+
         elif designer_name == "turbo-one":
             return TurboENNDesigner(self._policy, turbo_mode="turbo-one", num_init=init_yubo_default)
-        elif designer_name == "turbo-one-na":
-            assert False, "NYI: Noise aware"
-            return TurboENNDesigner(self._policy, turbo_mode="turbo-one", num_init=init_yubo_default)
-        elif designer_name == "turbo-one-f":
-            return TurboENNDesigner(
-                self._policy,
-                turbo_mode="turbo-one",
-                num_init=init_yubo_default,
-                num_candidates=min(5000, 100 * self._num_arms),
-                candidate_rv="uniform",
-            )
+
         elif designer_name == "lhd_only":
             return TurboENNDesigner(self._policy, turbo_mode="lhd-only")
 
