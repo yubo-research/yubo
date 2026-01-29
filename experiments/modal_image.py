@@ -64,7 +64,6 @@ def mk_image():
         "third_party",
         "torch_truncnorm",
         "turbo_m_ref",
-        "uhd",
     ]:
         image = image.add_local_dir(str(project_root / d), remote_path=f"/root/{d}")
 
