@@ -169,9 +169,7 @@ def prep_ts_sweep(results_dir):
     exp_dir = "exp_ts_sweep"
 
     opts = ["pts", "ei", "ucb"]
-    opts += [
-        f"ts_sweep-{n}" for n in [1, 3, 10, 30, 100, 300, 1000, 3000, 10000, 30000]
-    ]
+    opts += [f"ts_sweep-{n}" for n in [1, 3, 10, 30, 100, 300, 1000, 3000, 10000, 30000]]
 
     return prep_d_args(
         results_dir,
@@ -355,7 +353,7 @@ def prep_push(results_dir):
 
 def prep_tlunar(results_dir):
     # exp_dir = "exp_compare_tlunar"
-    exp_dir = "exp_ennbo_tlunar_2"
+    exp_dir = "exp_ennbo_tlunar_3"
 
     opts = [
         "random",
@@ -370,7 +368,7 @@ def prep_tlunar(results_dir):
     cmds = []
     for opt in opts:
         for num_arms, num_rounds, num_denoise, num_denoise_passive, fn in [
-            (1, 1500, 1, 30, False),
+            (1, 10000, 1, 30, False),
             # (50, 30, 50, None, True),
         ]:
             # prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None):

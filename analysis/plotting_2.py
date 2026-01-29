@@ -86,15 +86,18 @@ def _consolidate_bottom_legend(
     if not handles:
         return
 
-    fig.legend(
+    leg = fig.legend(
         handles,
         labels,
         loc="lower center",
-        bbox_to_anchor=(0.5, -0.02),
+        bbox_to_anchor=(0.5, -0.01),
         ncol=int(ncol),
         frameon=False,
         fontsize=fontsize,
     )
+    for handle in leg.legend_handles:
+        handle.set_markersize(10)
+        handle.set_linewidth(3.0)
 
 
 def _get_denoise_value(data_locator: DataLocator, problem: str) -> int:
@@ -585,11 +588,12 @@ def plot_learning_curves(
     num_arms: int = 1,
     title: str = None,
     xlabel: str = "N",
-    ylabel: str = "y_{best}",
+    ylabel: str = "$y_{best}$",
     markersize: int = 5,
     cum_dt_prop_final_by_opt: dict[str, float] | None = None,
     x_start: int = 1,
     opt_names_all: list[str] | None = None,
+    show_title: bool = True,
 ):
     optimizers = data_locator.optimizers()
     z = traces.squeeze(0)
@@ -630,7 +634,7 @@ def plot_learning_curves(
 
     ax.set_xlabel(xlabel, fontsize=16)
     ax.set_ylabel(ylabel, fontsize=16)
-    if title:
+    if show_title and title:
         ax.set_title(title, fontsize=16)
     ax.tick_params(axis="both", labelsize=16)
     ax.legend(loc="lower right")
@@ -644,6 +648,7 @@ def plot_final_performance(
     title: str = None,
     ylabel: str = "Mean normalized rank",
     opt_names_all: list[str] | None = None,
+    show_title: bool = True,
 ):
     optimizers = data_locator.optimizers()
     means, stes = _mean_normalized_rank_score_by_optimizer(data_locator, traces)
@@ -669,7 +674,7 @@ def plot_final_performance(
     ax.set_xticks(x_pos)
     ax.set_xticklabels(optimizers, rotation=45, ha="right")
     ax.set_ylabel(ylabel, fontsize=12)
-    if title:
+    if show_title and title:
         ax.set_title(title, fontsize=14)
     ax.grid(True, alpha=0.3, axis="y")
     ax.set_ylim(-0.05, 1.05)
@@ -951,6 +956,8 @@ def plot_rl_comparison(
     figsize: tuple = (12, 5),
     cum_dt_prop: bool = False,
     opt_names_all: list[str] | None = None,
+    show_titles: bool = True,
+    print_titles: bool = False,
 ):
     data_locator_seq, traces_seq = load_rl_traces(
         results_path,
@@ -1047,6 +1054,8 @@ def plot_rl_comparison(
         )
         parts_seq.append(f"{denoise_key_seq} = {denoise_seq}")
     title_seq = f"{line1_seq}\n{', '.join(parts_seq)}"
+    if print_titles:
+        print(title_seq)
     plot_learning_curves(
         axs[0],
         data_locator_seq,
@@ -1055,6 +1064,7 @@ def plot_rl_comparison(
         title=title_seq,
         cum_dt_prop_final_by_opt=cum_dt_prop_seq,
         opt_names_all=opt_names_all if opt_names_all else opt_names_seq,
+        show_title=show_titles,
     )
 
     if data_locator_batch is not None and traces_batch is not None:
@@ -1073,6 +1083,8 @@ def plot_rl_comparison(
             )
             parts_batch.append(f"{denoise_key_batch} = {denoise_batch}")
         title_batch = f"{line1_batch}\n{', '.join(parts_batch)}"
+        if print_titles:
+            print(title_batch)
         plot_learning_curves(
             axs[1],
             data_locator_batch,
@@ -1081,6 +1093,7 @@ def plot_rl_comparison(
             title=title_batch,
             cum_dt_prop_final_by_opt=cum_dt_prop_batch,
             opt_names_all=opt_names_all if opt_names_all else opt_names_batch,
+            show_title=show_titles,
         )
     else:
         axs[1].axis("off")
@@ -1099,7 +1112,7 @@ def plot_rl_comparison(
         fontsize=16,
         ncol=6,
     )
-    fig.tight_layout(rect=(0.0, 0.12, 1.0, 1.0))
+    fig.tight_layout(rect=(0.0, 0.04, 1.0, 1.0))
 
     return fig, axs, (data_locator_seq, traces_seq), (data_locator_batch, traces_batch)
 
@@ -1119,6 +1132,8 @@ def plot_rl_final_comparison(
     suptitle: str = None,
     figsize: tuple = (14, 5),
     opt_names_all: list[str] | None = None,
+    show_titles: bool = True,
+    print_titles: bool = False,
 ):
     data_locator_seq, traces_seq = load_rl_traces(
         results_path,
@@ -1198,12 +1213,15 @@ def plot_rl_final_comparison(
         )
         parts_seq.append(f"{denoise_key_seq} = {denoise_seq}")
     title_seq = f"{line1_seq}\n{', '.join(parts_seq)}"
+    if print_titles:
+        print(title_seq)
     plot_final_performance(
         axs[0],
         data_locator_seq,
         traces_seq,
         title=title_seq,
         opt_names_all=opt_names_all if opt_names_all else opt_names_seq,
+        show_title=show_titles,
     )
 
     if data_locator_batch is not None and traces_batch is not None:
@@ -1222,12 +1240,15 @@ def plot_rl_final_comparison(
             )
             parts_batch.append(f"{denoise_key_batch} = {denoise_batch}")
         title_batch = f"{line1_batch}\n{', '.join(parts_batch)}"
+        if print_titles:
+            print(title_batch)
         plot_final_performance(
             axs[1],
             data_locator_batch,
             traces_batch,
             title=title_batch,
             opt_names_all=opt_names_all if opt_names_all else opt_names_batch,
+            show_title=show_titles,
         )
     else:
         axs[1].axis("off")
@@ -1305,6 +1326,8 @@ def plot_results(
         num_reps=num_reps,
     )
 
+    suptitle1 = f"{problem_name}"
+    print(suptitle1)
     fig_curves, axs_curves, seq_data, batch_data = plot_rl_comparison(
         results_path,
         exp_dir,
@@ -1317,11 +1340,15 @@ def plot_results(
         num_rounds_batch=num_rounds_batch,
         num_arms_seq=num_arms_seq,
         num_arms_batch=num_arms_batch,
-        suptitle=f"{problem_name}",
+        suptitle=None,
         cum_dt_prop=problem in {"tlunar", "push"},
         opt_names_all=opt_names,
+        show_titles=False,
+        print_titles=True,
     )
 
+    suptitle2 = f"{problem_name} Final Performance Comparison (±2 SE)"
+    print(suptitle2)
     fig_final, axs_final, _, _ = plot_rl_final_comparison(
         results_path,
         exp_dir,
@@ -1334,8 +1361,10 @@ def plot_results(
         num_rounds_batch=num_rounds_batch,
         num_arms_seq=num_arms_seq,
         num_arms_batch=num_arms_batch,
-        suptitle=f"{problem_name} Final Performance Comparison (±2 SE)",
+        suptitle=None,
         opt_names_all=opt_names,
+        show_titles=False,
+        print_titles=True,
     )
 
     return (fig_curves, axs_curves), (fig_final, axs_final), seq_data, batch_data

@@ -1,9 +1,6 @@
 from typing import Optional
 
 import numpy as np
-
-import common.all_bounds as all_bounds
-from optimizer.designer_asserts import assert_scalar_rreturn
 from third_party.enn.turbo.config.acq_type import AcqType
 from third_party.enn.turbo.config.candidate_gen_config import CandidateGenConfig
 from third_party.enn.turbo.config.candidate_rv import CandidateRV
@@ -11,13 +8,13 @@ from third_party.enn.turbo.config.enn_surrogate_config import (
     ENNFitConfig,
     ENNSurrogateConfig,
 )
-from third_party.enn.turbo.config.enums import RAASPDriver
 from third_party.enn.turbo.config.factory import (
     lhd_only_config,
     turbo_enn_config,
     turbo_one_config,
     turbo_zero_config,
 )
+from third_party.enn.turbo.config.raasp_driver import RAASPDriver
 from third_party.enn.turbo.config.trust_region import (
     MorboTRConfig,
     NoTRConfig,
@@ -25,6 +22,9 @@ from third_party.enn.turbo.config.trust_region import (
     TurboTRConfig,
 )
 from third_party.enn.turbo.optimizer import create_optimizer
+
+import common.all_bounds as all_bounds
+from optimizer.designer_asserts import assert_scalar_rreturn
 
 
 class TurboENNDesigner:

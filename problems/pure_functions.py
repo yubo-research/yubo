@@ -44,13 +44,9 @@ class PureFunctionEnv:
 
             # Distort the parameter space, moving the center
             #  to a randomly-chosen corner of the bounding box.
-            self._x_0 = all_bounds.x_low + all_bounds.x_width * rng.uniform(
-                size=(num_dim,)
-            )
+            self._x_0 = all_bounds.x_low + all_bounds.x_width * rng.uniform(size=(num_dim,))
         else:
-            self._x_0 = all_bounds.x_low + (all_bounds.x_width / 2) * np.ones(
-                shape=(num_dim,)
-            )
+            self._x_0 = all_bounds.x_low + (all_bounds.x_width / 2) * np.ones(shape=(num_dim,))
 
         assert all_bounds.x_low == -1
         assert all_bounds.x_high == 1
