@@ -51,3 +51,19 @@ def test_keep_data_none():
     data = [1, 2, 3]
     result = keep_data(data, None, 2)
     assert result == [1, 2, 3]
+
+
+def test_calc_p_max():
+    from botorch.models import SingleTaskGP
+
+    from acq.acq_util import calc_p_max
+
+    X = torch.tensor([[0.1, 0.1], [0.5, 0.5], [0.9, 0.9]], dtype=torch.float64)
+    Y = torch.tensor([[1.0], [2.0], [1.5]], dtype=torch.float64)
+    model = SingleTaskGP(X, Y)
+    model.eval()
+
+    X_test = torch.tensor([[0.2, 0.2], [0.4, 0.4], [0.6, 0.6]], dtype=torch.float64)
+    p_max = calc_p_max(model, X_test, num_Y_samples=10)
+    assert p_max.shape == (3,)
+    assert torch.isclose(p_max.sum(), torch.tensor(1.0))

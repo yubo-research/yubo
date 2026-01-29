@@ -77,3 +77,41 @@ def test_clip_to_boundary():
     x = clip_to_boundary(x_0, u)
     assert x.shape == (1, 2)
     assert np.all(x >= 0) and np.all(x <= 1)
+
+
+class MockENN:
+    def __init__(self, X):
+        self._X = np.array(X)
+
+    def about_neighbors(self, x, k=1):
+        x = np.atleast_2d(x)
+        dists = np.linalg.norm(x[:, None, :] - self._X[None, :, :], axis=2)
+        idx = np.argsort(dists, axis=1)[:, :k]
+        sorted_dists = np.take_along_axis(dists, idx, axis=1)
+        return idx, sorted_dists
+
+    def idx_fast(self, x):
+        x = np.atleast_2d(x)
+        dists = np.linalg.norm(x[:, None, :] - self._X[None, :, :], axis=2)
+        return np.argmin(dists, axis=1)
+
+
+def test_nearest_neighbor():
+    from sampling.knn_tools import nearest_neighbor
+
+    X = np.array([[0.1, 0.1], [0.5, 0.5], [0.9, 0.9]])
+    enn = MockENN(X)
+    x = np.array([[0.4, 0.4], [0.8, 0.8]])
+    idx, dist = nearest_neighbor(enn, x, p_boundary_is_neighbor=0.0)
+    assert idx.shape == (2,)
+    assert dist.shape == (2,)
+
+
+def test_most_isolated():
+    from sampling.knn_tools import most_isolated
+
+    X = np.array([[0.1, 0.1], [0.5, 0.5], [0.9, 0.9]])
+    enn = MockENN(X)
+    x = np.array([[0.2, 0.2], [0.5, 0.5], [0.7, 0.7]])
+    result = most_isolated(enn, x, p_boundary_is_neighbor=0.0)
+    assert len(result) >= 1
