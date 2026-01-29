@@ -38,9 +38,7 @@ class DataLocator:
         self.grep_for = grep_for
 
     def __str__(self):
-        return (
-            f"{self._root_path()} {self.exp_dir} num_dim = {self.num_dim} num_arms = {self.num_arms} num_rounds = {self.num_rounds} num_reps = {self.num_reps}"
-        )
+        return f"{self._root_path()} {self.exp_dir} num_dim = {self.num_dim} num_arms = {self.num_arms} num_rounds = {self.num_rounds} num_reps = {self.num_reps}"
 
     def _root_path(self):
         return f"{self.results}/{self.exp_dir}"
@@ -98,15 +96,31 @@ class DataLocator:
                 continue
 
             env_key = d.get("env") or d.get("env_tag")
-            if problem is not None and env_key and not fnmatch.fnmatch(env_key, problem):
+            if (
+                problem is not None
+                and env_key
+                and not fnmatch.fnmatch(env_key, problem)
+            ):
                 continue
             if opt_names is not None and d.get("opt_name") not in opt_names:
                 continue
-            if self.num_arms is not None and d.get("num_arms") is not None and int(d["num_arms"]) != self.num_arms:
+            if (
+                self.num_arms is not None
+                and d.get("num_arms") is not None
+                and int(d["num_arms"]) != self.num_arms
+            ):
                 continue
-            if self.num_rounds is not None and d.get("num_rounds") is not None and int(d["num_rounds"]) != self.num_rounds:
+            if (
+                self.num_rounds is not None
+                and d.get("num_rounds") is not None
+                and int(d["num_rounds"]) != self.num_rounds
+            ):
                 continue
-            if self.num_reps is not None and d.get("num_reps") is not None and int(d["num_reps"]) != self.num_reps:
+            if (
+                self.num_reps is not None
+                and d.get("num_reps") is not None
+                and int(d["num_reps"]) != self.num_reps
+            ):
                 continue
             if self.num_dim is not None and env_key:
                 x = env_key.split("-")
@@ -125,7 +139,13 @@ class DataLocator:
         return [n for n in self._opt_names if n in opt_names]
 
     def optimizers_in(self, problem):
-        return sorted({d[0].get("opt_name") for d in self._load(problem=problem) if d[0].get("opt_name")})
+        return sorted(
+            {
+                d[0].get("opt_name")
+                for d in self._load(problem=problem)
+                if d[0].get("opt_name")
+            }
+        )
 
     def organize_data(self, opt_names, mu, se):
         data = dict(zip(self.optimizers(), list(zip(mu, se))))

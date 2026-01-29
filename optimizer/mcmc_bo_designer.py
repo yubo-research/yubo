@@ -25,7 +25,10 @@ class MCMCBODesigner:
         dtype=torch.double,
         device=None,
     ):
-        assert num_trust_regions == 1, ("NYI: Multiple trust regions", num_trust_regions)
+        assert num_trust_regions == 1, (
+            "NYI: Multiple trust regions",
+            num_trust_regions,
+        )
         self._turbo_state = None
         self._policy = policy
         self._num_init = num_init
@@ -60,11 +63,13 @@ class MCMCBODesigner:
         Y, X = fit_gp.extract_X_Y(data, self._dtype, self._device)
         self._turbo_state.update_state(Y)
         likelihood = GaussianLikelihood(noise_constraint=Interval(1e-8, 1e-3))
-        covar_module = ScaleKernel(  # Use the same lengthscale prior as in the TuRBO paper
-            MaternKernel(
-                nu=2.5,
-                ard_num_dims=num_dim,
-                lengthscale_constraint=Interval(0.005, 4.0),
+        covar_module = (
+            ScaleKernel(  # Use the same lengthscale prior as in the TuRBO paper
+                MaternKernel(
+                    nu=2.5,
+                    ard_num_dims=num_dim,
+                    lengthscale_constraint=Interval(0.005, 4.0),
+                )
             )
         )
 
@@ -98,7 +103,9 @@ class MCMCBODesigner:
         policies = []
         for x in X_cand:
             policy = self._policy.clone()
-            x = (x.detach().cpu().numpy().flatten() - all_bounds.bt_low) / all_bounds.bt_width
+            x = (
+                x.detach().cpu().numpy().flatten() - all_bounds.bt_low
+            ) / all_bounds.bt_width
             p = all_bounds.p_low + all_bounds.p_width * x
             policy.set_params(p)
             policies.append(policy)

@@ -10,7 +10,9 @@ from uhd.uhd_collector import UHDCollector
 
 def test_uhd_collector_basic():
     collector = Collector()
-    uhd_collector = UHDCollector(name="tm_sphere", opt_name="turbo", collector=collector)
+    uhd_collector = UHDCollector(
+        name="tm_sphere", opt_name="turbo", collector=collector
+    )
     assert uhd_collector.name == "tm_sphere"
     assert uhd_collector.opt_name == "turbo"
 
@@ -93,7 +95,9 @@ def test_uhd_collector_default_collector():
 
 def test_uhd_collector_trace_formatting():
     collector = Collector()
-    uhd_collector = UHDCollector(name="tm_ackley", opt_name="turbo", collector=collector)
+    uhd_collector = UHDCollector(
+        name="tm_ackley", opt_name="turbo", collector=collector
+    )
 
     uhd_collector.start_prop()
     time.sleep(0.0015)

@@ -9,7 +9,13 @@ from optimizer.designer_asserts import assert_scalar_rreturn
 
 
 class TurboYUBODesigner:
-    def __init__(self, policy, num_keep: int = None, keep_style: str = None, config: TurboYUBOConfig | None = None):
+    def __init__(
+        self,
+        policy,
+        num_keep: int = None,
+        keep_style: str = None,
+        config: TurboYUBOConfig | None = None,
+    ):
         self._policy = policy
         self._num_keep = num_keep
         self._keep_style = keep_style
@@ -65,7 +71,9 @@ class TurboYUBODesigner:
             model = self._config.model_factory(train_x=X, train_y=Y)
 
         if self._turbo_yubo_trman is None:
-            self._turbo_yubo_trman = self._config.trust_region_manager(num_dim=self._policy.num_params(), num_arms=num_arms)
+            self._turbo_yubo_trman = self._config.trust_region_manager(
+                num_dim=self._policy.num_params(), num_arms=num_arms
+            )
 
         acq_turbo = AcqTurboYUBO(
             model=model,
@@ -78,7 +86,11 @@ class TurboYUBODesigner:
 
         if self._keep_style == "lap":
             self._X_train, self._Y_train = acq_util.keep_top_n(X, Y, self._num_keep)
-            self._X_train = torch.as_tensor(self._X_train, dtype=self._dtype, device=self._device)
-            self._Y_train = torch.as_tensor(self._Y_train, dtype=self._dtype, device=self._device)
+            self._X_train = torch.as_tensor(
+                self._X_train, dtype=self._dtype, device=self._device
+            )
+            self._Y_train = torch.as_tensor(
+                self._Y_train, dtype=self._dtype, device=self._device
+            )
 
         return fit_gp.mk_policies(self._policy, X_a)

@@ -55,14 +55,20 @@ class MLPPolicy(nn.Module):
         num_action = env_conf.action_space.shape[0]
         self._const_scale = 0.5
         self._use_layer_norm = bool(use_layer_norm)
-        self._rnn_hidden_size = None if rnn_hidden_size is None else int(rnn_hidden_size)
+        self._rnn_hidden_size = (
+            None if rnn_hidden_size is None else int(rnn_hidden_size)
+        )
         if self._rnn_hidden_size is not None:
             assert self._rnn_hidden_size >= 1
         self._use_prev_action = bool(use_prev_action)
         self._use_phase_features = bool(use_phase_features)
         self._num_phase_harmonics = int(num_phase_harmonics)
         assert self._num_phase_harmonics >= 1
-        self.in_norm = nn.LayerNorm(num_state, elementwise_affine=True) if self._use_layer_norm else None
+        self.in_norm = (
+            nn.LayerNorm(num_state, elementwise_affine=True)
+            if self._use_layer_norm
+            else None
+        )
 
         layers = []
         dims = [num_state] + list(hidden_sizes) + [num_action]
@@ -83,7 +89,9 @@ class MLPPolicy(nn.Module):
         else:
             self.model = None
             phase_dim = 2 * self._num_phase_harmonics if self._use_phase_features else 0
-            in_dim = num_state + phase_dim + (num_action if self._use_prev_action else 0)
+            in_dim = (
+                num_state + phase_dim + (num_action if self._use_prev_action else 0)
+            )
 
             feat_layers = []
             d_in = in_dim
@@ -96,12 +104,16 @@ class MLPPolicy(nn.Module):
             self.embed = nn.Sequential(*feat_layers)
 
             self.rnn = nn.GRUCell(self._rnn_hidden_size, self._rnn_hidden_size)
-            self.head = nn.Sequential(nn.Linear(self._rnn_hidden_size, num_action), nn.Tanh())
+            self.head = nn.Sequential(
+                nn.Linear(self._rnn_hidden_size, num_action), nn.Tanh()
+            )
             self.reset_state()
 
         self._init_params()
         with torch.inference_mode():
-            self._flat_params_init = np.concatenate([p.data.detach().cpu().numpy().reshape(-1) for p in self.parameters()])
+            self._flat_params_init = np.concatenate(
+                [p.data.detach().cpu().numpy().reshape(-1) for p in self.parameters()]
+            )
 
     def _init_params(self):
         for m in self.modules():
@@ -150,7 +162,9 @@ class MLPPolicy(nn.Module):
             return
         self._h = torch.zeros((self._rnn_hidden_size,), dtype=torch.float32)
         if self._use_prev_action:
-            self._prev_action = torch.zeros((self._env_conf.action_space.shape[0],), dtype=torch.float32)
+            self._prev_action = torch.zeros(
+                (self._env_conf.action_space.shape[0],), dtype=torch.float32
+            )
         if self._use_phase_features:
             self._phase = 0.0
             self._phase_omega = 0.12
@@ -171,19 +185,31 @@ class MLPPolicy(nn.Module):
 
     def get_params(self):
         with torch.inference_mode():
-            flat_params = np.concatenate([p.data.detach().cpu().numpy().reshape(-1) for p in self.parameters()])
+            flat_params = np.concatenate(
+                [p.data.detach().cpu().numpy().reshape(-1) for p in self.parameters()]
+            )
         return (flat_params - self._flat_params_init) / self._const_scale
 
     def set_params(self, flat_params):
-        assert flat_params.min() >= -1 and flat_params.max() <= 1, (flat_params.min(), flat_params.max())
-        assert flat_params.shape == self._flat_params_init.shape, (flat_params.shape, self._flat_params_init.shape)
+        assert flat_params.min() >= -1 and flat_params.max() <= 1, (
+            flat_params.min(),
+            flat_params.max(),
+        )
+        assert flat_params.shape == self._flat_params_init.shape, (
+            flat_params.shape,
+            self._flat_params_init.shape,
+        )
         flat_params = self._flat_params_init + flat_params * self._const_scale
         with torch.inference_mode():
             idx = 0
             for p in self.parameters():
                 shape = p.shape
                 size = p.numel()
-                p.copy_(torch.from_numpy(flat_params[idx : idx + size].reshape(shape)).float())
+                p.copy_(
+                    torch.from_numpy(
+                        flat_params[idx : idx + size].reshape(shape)
+                    ).float()
+                )
                 idx += size
 
     def clone(self):

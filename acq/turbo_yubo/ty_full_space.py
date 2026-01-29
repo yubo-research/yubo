@@ -12,7 +12,9 @@ class FullSpaceTR:
     def pre_draw(self):
         pass
 
-    def create_trust_region(self, x_center: torch.Tensor, kernel: torch.Tensor, num_obs: int):
+    def create_trust_region(
+        self, x_center: torch.Tensor, kernel: torch.Tensor, num_obs: int
+    ):
         return torch.zeros(self.num_dim), torch.ones(self.num_dim)
 
 

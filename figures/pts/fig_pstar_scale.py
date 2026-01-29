@@ -22,7 +22,9 @@ _app_name = "yubo-fig-pstar-scale"
 app = modal.App(name=_app_name)
 
 
-@app.function(image=modal_image, concurrency_limit=100, timeout=3 * 60 * 60)  # , gpu="H100")
+@app.function(
+    image=modal_image, concurrency_limit=100, timeout=3 * 60 * 60
+)  # , gpu="H100")
 def calc_pstar_scales(d_args):
     env_tag, designer_name, num_arms, num_samples, num_dim = (
         d_args["env_tag"],

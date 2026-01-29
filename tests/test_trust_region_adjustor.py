@@ -14,7 +14,13 @@ def test_trust_region_default_config_and_reset():
 
 
 def test_grow_on_successes_and_cap_by_max():
-    tr = TrustRegionAdjustor(dim=8, batch_size=1, config=TrustRegionConfig(length_min=0.5**7, length_max=1.6, length_init=0.2, succtol=2, failtol=10))
+    tr = TrustRegionAdjustor(
+        dim=8,
+        batch_size=1,
+        config=TrustRegionConfig(
+            length_min=0.5**7, length_max=1.6, length_init=0.2, succtol=2, failtol=10
+        ),
+    )
     l0 = tr.length
     tr.update([1.0])
     tr.update([1.01])
@@ -27,7 +33,13 @@ def test_grow_on_successes_and_cap_by_max():
 
 
 def test_shrink_on_failures_in_steps_of_two():
-    tr = TrustRegionAdjustor(dim=20, batch_size=2, config=TrustRegionConfig(length_min=0.5**7, length_max=1.6, length_init=0.8, succtol=3, failtol=2))
+    tr = TrustRegionAdjustor(
+        dim=20,
+        batch_size=2,
+        config=TrustRegionConfig(
+            length_min=0.5**7, length_max=1.6, length_init=0.8, succtol=3, failtol=2
+        ),
+    )
     initial_length = tr.length
     tr.update([1.0, 1.1])
     tr.update([1.0, 1.1])
@@ -39,7 +51,13 @@ def test_shrink_on_failures_in_steps_of_two():
 
 
 def test_relative_improvement_threshold():
-    tr = TrustRegionAdjustor(dim=5, batch_size=1, config=TrustRegionConfig(length_min=0.5**7, length_max=1.6, length_init=0.5, succtol=2, failtol=3))
+    tr = TrustRegionAdjustor(
+        dim=5,
+        batch_size=1,
+        config=TrustRegionConfig(
+            length_min=0.5**7, length_max=1.6, length_init=0.5, succtol=2, failtol=3
+        ),
+    )
     tr.update([100.0])
     initial_length = tr.length
     tr.update([100.09])
@@ -61,7 +79,9 @@ def test_length_never_below_min_on_many_failures():
     tr = TrustRegionAdjustor(
         dim=10,
         batch_size=1,
-        config=TrustRegionConfig(length_min=1e-3, length_max=1.6, length_init=0.8, succtol=10, failtol=1),
+        config=TrustRegionConfig(
+            length_min=1e-3, length_max=1.6, length_init=0.8, succtol=10, failtol=1
+        ),
     )
     for _ in range(2000):
         tr.update([0.0])
@@ -73,7 +93,9 @@ def test_length_capped_at_max_on_many_successes():
     tr = TrustRegionAdjustor(
         dim=10,
         batch_size=1,
-        config=TrustRegionConfig(length_min=0.5**7, length_max=0.9, length_init=0.1, succtol=1, failtol=1000),
+        config=TrustRegionConfig(
+            length_min=0.5**7, length_max=0.9, length_init=0.1, succtol=1, failtol=1000
+        ),
     )
     base = 1.0
     for _ in range(100):

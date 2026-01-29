@@ -1,5 +1,23 @@
-funcs_nd = ["ackley", "dixonprice", "griewank", "levy", "michalewicz", "rastrigin", "rosenbrock", "sphere", "stybtang"]
-funcs_1d = ["ackley", "dixonprice", "griewank", "levy", "rastrigin", "sphere", "stybtang"]
+funcs_nd = [
+    "ackley",
+    "dixonprice",
+    "griewank",
+    "levy",
+    "michalewicz",
+    "rastrigin",
+    "rosenbrock",
+    "sphere",
+    "stybtang",
+]
+funcs_1d = [
+    "ackley",
+    "dixonprice",
+    "griewank",
+    "levy",
+    "rastrigin",
+    "sphere",
+    "stybtang",
+]
 
 
 funcs_multimodal = [
@@ -61,6 +79,28 @@ funcs_other = [
 ]
 
 # 51 functions
-func_lists = [funcs_multimodal, funcs_bowl, funcs_plate, funcs_valley, funcs_ridges, funcs_other]
+func_lists = [
+    funcs_multimodal,
+    funcs_bowl,
+    funcs_plate,
+    funcs_valley,
+    funcs_ridges,
+    funcs_other,
+]
 funcs_all = [f for fl in func_lists for f in fl]
+# 6 Functions
 func_brief = [fn[0] for fn in func_lists]
+func_brief_2 = [
+    "ackley",
+    "rastrigin",
+    "sphere",
+    "trid",
+    "booth",
+    "mccormick",
+    "dixonprice",
+    "rosenbrock",
+    "dejong5",
+    "easom",
+    "branin",
+    "stybtang",
+]

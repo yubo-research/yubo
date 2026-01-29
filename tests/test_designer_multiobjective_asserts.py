@@ -13,7 +13,9 @@ def test_optuna_designer_rejects_vector_returns():
     designer = OptunaDesigner(policy)
 
     p = designer([], num_arms=1)[0]
-    traj = Trajectory(rreturn=np.array([1.0, 2.0]), states=None, actions=None, rreturn_se=None)
+    traj = Trajectory(
+        rreturn=np.array([1.0, 2.0]), states=None, actions=None, rreturn_se=None
+    )
     datum = Datum(designer=designer, policy=p, expected_acqf=None, trajectory=traj)
 
     with pytest.raises(AssertionError):

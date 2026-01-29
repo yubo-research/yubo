@@ -27,7 +27,17 @@ def run_batch(cmds, b_dry_run):
     print("DONE_BATCH")
 
 
-def prep_cmd(exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None, num_obs=None):
+def prep_cmd(
+    exp_dir,
+    problem,
+    opt,
+    num_arms,
+    num_replications,
+    num_rounds,
+    noise=None,
+    num_denoise=None,
+    num_obs=None,
+):
     # TODO: noise subdir?
     assert noise is None, "NYI"
 
@@ -61,7 +71,18 @@ def prep_cmds(exp_dir, funcs, dims, num_arms, num_replications, opts, noises):
             for opt in opts:
                 for noise in noises:
                     problem = f"f:{func}-{dim}d"
-                    cmds.append(prep_cmd(exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise, num_denoise=None))
+                    cmds.append(
+                        prep_cmd(
+                            exp_dir,
+                            problem,
+                            opt,
+                            num_arms,
+                            num_replications,
+                            num_rounds,
+                            noise,
+                            num_denoise=None,
+                        )
+                    )
     return cmds
 
 
@@ -88,11 +109,25 @@ if __name__ == "__main__":
         b_dry_run = False
     figure_name = sys.argv[ia]
 
-    funcs_1d = ["ackley", "dixonprice", "griewank", "levy", "rastrigin", "sphere", "stybtang"]
+    funcs_1d = [
+        "ackley",
+        "dixonprice",
+        "griewank",
+        "levy",
+        "rastrigin",
+        "sphere",
+        "stybtang",
+    ]
     funcs_nd = funcs_1d + ["michalewicz", "rosenbrock"]
 
     opts_compare = ["sobol", "random", "ei", "ucb", "dpp", "sr", "gibbon", "mtv"]
-    opts_ensemble = ["mtv_then_ei", "mtv_then_sr", "mtv_then_gibbon", "mtv_then_dpp", "mtv_then_ucb"]
+    opts_ensemble = [
+        "mtv_then_ei",
+        "mtv_then_sr",
+        "mtv_then_gibbon",
+        "mtv_then_dpp",
+        "mtv_then_ucb",
+    ]
     opts_ablate = ["mtv_no-ic", "mtv_no-opt", "mtv_no-pstar"]
 
     noises = [None]
@@ -107,10 +142,42 @@ if __name__ == "__main__":
         assert False, "Pick a figure_name to reproduce"
 
     if figure_name != "rl":
-        cmds_1d = prep_cmds(exp_dir="exp_2024_1d", funcs=funcs_1d, dims=[1], num_arms=3, num_replications=100, opts=opts, noises=noises)
-        cmds_3d = prep_cmds(exp_dir="exp_2024_3d", funcs=funcs_nd, dims=[3], num_arms=5, num_replications=30, opts=opts, noises=noises)
-        cmds_10d = prep_cmds(exp_dir="exp_2024_10d", funcs=funcs_nd, dims=[10], num_arms=10, num_replications=30, opts=opts, noises=noises)
-        cmds_30d = prep_cmds(exp_dir="exp_2024_30d", funcs=funcs_nd, dims=[30], num_arms=10, num_replications=30, opts=opts, noises=noises)
+        cmds_1d = prep_cmds(
+            exp_dir="exp_2024_1d",
+            funcs=funcs_1d,
+            dims=[1],
+            num_arms=3,
+            num_replications=100,
+            opts=opts,
+            noises=noises,
+        )
+        cmds_3d = prep_cmds(
+            exp_dir="exp_2024_3d",
+            funcs=funcs_nd,
+            dims=[3],
+            num_arms=5,
+            num_replications=30,
+            opts=opts,
+            noises=noises,
+        )
+        cmds_10d = prep_cmds(
+            exp_dir="exp_2024_10d",
+            funcs=funcs_nd,
+            dims=[10],
+            num_arms=10,
+            num_replications=30,
+            opts=opts,
+            noises=noises,
+        )
+        cmds_30d = prep_cmds(
+            exp_dir="exp_2024_30d",
+            funcs=funcs_nd,
+            dims=[30],
+            num_arms=10,
+            num_replications=30,
+            opts=opts,
+            noises=noises,
+        )
         cmds = cmds_1d + cmds_3d + cmds_10d + cmds_30d
     else:
         cmds = []

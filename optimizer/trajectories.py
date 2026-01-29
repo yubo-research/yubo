@@ -10,6 +10,12 @@ class Trajectory:
     states: np.ndarray
     actions: np.ndarray
     rreturn_se: float = None
+    rreturn_est: float = None
+
+    def get_decision_rreturn(self) -> float:
+        if self.rreturn_est is None:
+            return float(self.rreturn)
+        return float(self.rreturn_est)
 
 
 def collect_trajectory(env_conf, policy, noise_seed=None, show_frames=False):
@@ -63,7 +69,10 @@ def collect_trajectory(env_conf, policy, noise_seed=None, show_frames=False):
             action_p = policy(state)
 
         if hasattr(env.action_space, "low"):
-            action = env.action_space.low + (env.action_space.high - env.action_space.low) * (1 + action_p) / 2
+            action = (
+                env.action_space.low
+                + (env.action_space.high - env.action_space.low) * (1 + action_p) / 2
+            )
         else:
             action = action_p
 
@@ -84,5 +93,9 @@ def collect_trajectory(env_conf, policy, noise_seed=None, show_frames=False):
     if hasattr(policy, "wants_vector_return") and bool(policy.wants_vector_return()):
         assert hasattr(policy, "metrics")
         mets = np.asarray(policy.metrics(), dtype=np.float64)
-        rreturn = np.concatenate([np.asarray([float(return_trajectory)], dtype=np.float64), mets], axis=0)
-    return Trajectory(rreturn, np.array(traj_states).T, np.array(traj_actions).T, rreturn_se=None)
+        rreturn = np.concatenate(
+            [np.asarray([float(return_trajectory)], dtype=np.float64), mets], axis=0
+        )
+    return Trajectory(
+        rreturn, np.array(traj_states).T, np.array(traj_actions).T, rreturn_se=None
+    )

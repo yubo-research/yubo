@@ -158,7 +158,9 @@ def test_uhd_bo_invalid_args(num_rounds, num_candidates):
 
         class _Selector2:
             def select(self, embeddings):
-                vals = torch.tensor([float(e.detach().cpu().item()) for e in embeddings])
+                vals = torch.tensor(
+                    [float(e.detach().cpu().item()) for e in embeddings]
+                )
                 return int(torch.argmax(vals).item())
 
         conf = UHDBOConfig(

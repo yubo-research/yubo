@@ -7,7 +7,9 @@ class PureFunctionPolicy:
     def __init__(self, env_conf):
         self.problem_seed = env_conf.problem_seed
         self._env_conf = env_conf
-        self._params = np.random.uniform(all_bounds.p_low, all_bounds.p_high, size=(len(env_conf.action_space.low),))
+        self._params = np.random.uniform(
+            all_bounds.p_low, all_bounds.p_high, size=(len(env_conf.action_space.low),)
+        )
 
     def num_params(self):
         return len(self._params)

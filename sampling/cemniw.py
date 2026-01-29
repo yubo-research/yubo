@@ -35,7 +35,9 @@ class CEMNIW:
     def _init_sample(self, num_samples):
         samples = []
         prob = 1.0 / num_samples
-        for x in qmc.Sobol(self.num_dim, seed=self._sobol_seed).random_base2(int(np.log2(num_samples)) + 1)[:num_samples]:
+        for x in qmc.Sobol(self.num_dim, seed=self._sobol_seed).random_base2(
+            int(np.log2(num_samples)) + 1
+        )[:num_samples]:
             samples.append(_CEMSample(prob=prob, x=x))
         self._init = False
         return samples
@@ -92,4 +94,6 @@ class CEMNIW:
         self._df += self._alpha * (n_keep - self._df)
         if not self._known_mu:
             self._loc += self._alpha * dx_keep.mean(axis=0)
-        self._scale += self._alpha * (np.diag(np.diag(dx_keep.T @ dx_keep)) - self._scale)
+        self._scale += self._alpha * (
+            np.diag(np.diag(dx_keep.T @ dx_keep)) - self._scale
+        )

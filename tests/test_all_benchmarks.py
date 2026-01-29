@@ -3,7 +3,10 @@ import pytest
 from problems.benchmark_functions import all_benchmarks
 
 
-@pytest.mark.parametrize("bm_name, num_dim", [(bm, num_dim) for bm in all_benchmarks() for num_dim in [1, 2, 3, 10]])
+@pytest.mark.parametrize(
+    "bm_name, num_dim",
+    [(bm, num_dim) for bm in all_benchmarks() for num_dim in [1, 2, 3, 10]],
+)
 def test_benchmark(bm_name, num_dim):
     import os
     import shutil

@@ -198,14 +198,22 @@ class Turbo1:
         x_center = X[fX.argmin().item(), :][None, :]
         weights = gp.covar_module.base_kernel.lengthscale.cpu().detach().numpy().ravel()
         weights = weights / weights.mean()  # This will make the next line more stable
-        weights = weights / np.prod(np.power(weights, 1.0 / len(weights)))  # We now have weights.prod() = 1
+        weights = weights / np.prod(
+            np.power(weights, 1.0 / len(weights))
+        )  # We now have weights.prod() = 1
         lb = np.clip(x_center - weights * length / 2.0, 0.0, 1.0)
         ub = np.clip(x_center + weights * length / 2.0, 0.0, 1.0)
 
         # Draw a Sobolev sequence in [lb, ub]
         seed = np.random.randint(int(1e6))
         sobol = SobolEngine(self.dim, scramble=True, seed=seed)
-        pert = sobol.draw(self.n_cand).to(dtype=dtype, device=device).cpu().detach().numpy()
+        pert = (
+            sobol.draw(self.n_cand)
+            .to(dtype=dtype, device=device)
+            .cpu()
+            .detach()
+            .numpy()
+        )
         pert = lb + (ub - lb) * pert
 
         # Create a perturbation mask
@@ -228,9 +236,19 @@ class Turbo1:
         gp = gp.to(dtype=dtype, device=device)
 
         # We use Lanczos for sampling if we have enough data
-        with torch.no_grad(), gpytorch.settings.max_cholesky_size(self.max_cholesky_size):
+        with (
+            torch.no_grad(),
+            gpytorch.settings.max_cholesky_size(self.max_cholesky_size),
+        ):
             X_cand_torch = torch.tensor(X_cand).to(device=device, dtype=dtype)
-            y_cand = gp.likelihood(gp(X_cand_torch)).sample(torch.Size([self.batch_size])).t().cpu().detach().numpy()
+            y_cand = (
+                gp.likelihood(gp(X_cand_torch))
+                .sample(torch.Size([self.batch_size]))
+                .t()
+                .cpu()
+                .detach()
+                .numpy()
+            )
 
         # Remove the torch variables
         del X_torch, y_torch, X_cand_torch, gp

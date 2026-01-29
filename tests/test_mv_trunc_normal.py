@@ -16,7 +16,9 @@ def test_mv_trunc_normal():
 
     loc = mu.numpy()
     scale = sigma.numpy()
-    rv = truncnorm(a=(0 - loc) / scale, b=(1 - loc) / scale, loc=mu.numpy(), scale=sigma.numpy())
+    rv = truncnorm(
+        a=(0 - loc) / scale, b=(1 - loc) / scale, loc=mu.numpy(), scale=sigma.numpy()
+    )
 
     x = 0.001 + (1 - 2 * 0.001) * np.random.uniform(size=(1000, len(mu)))
     sp = rv.pdf(x)

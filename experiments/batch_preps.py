@@ -1,19 +1,55 @@
 from experiments.experiment_sampler import prep_args_1, prep_d_args
-from experiments.func_names import func_brief, funcs_1d, funcs_all, funcs_nd
+from experiments.func_names import func_brief_2, funcs_1d, funcs_nd
 
 
 def prep_mtv_repro(results_dir):
     exp_dir = "exp_batches_mtv"
 
-    opts = ["turbo-1", "lei", "sts", "mtv-sts", "optuna", "mtv", "sobol", "random", "ei", "ucb", "dpp", "sr", "gibbon", "mcmcbo", "ts-10000"]
+    opts = [
+        "turbo-1",
+        "lei",
+        "sts",
+        "mtv-sts",
+        "optuna",
+        "mtv",
+        "sobol",
+        "random",
+        "ei",
+        "ucb",
+        "dpp",
+        "sr",
+        "gibbon",
+        "mcmcbo",
+        "ts-10000",
+    ]
     noises = [None]
 
     # cmds_1d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_1d, dims=[1], num_arms=3, num_replications=100, opts=opts, noises=noises, num_rounds=3)
     # cmds_3d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_nd, dims=[3], num_arms=5, num_replications=30, opts=opts, noises=noises, num_rounds=3)
     # cmds_10d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_nd, dims=[10], num_arms=10, num_replications=30, opts=opts, noises=noises, num_rounds=3)
     # cmds_30d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_nd, dims=[30], num_arms=10, num_replications=30, opts=opts, noises=noises, num_rounds=3)
-    cmds_100d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_nd, dims=[100], num_arms=10, num_replications=30, opts=opts, noises=noises, num_rounds=3)
-    cmds_300d = prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_nd, dims=[300], num_arms=10, num_replications=30, opts=opts, noises=noises, num_rounds=3)
+    cmds_100d = prep_d_args(
+        results_dir,
+        exp_dir=exp_dir,
+        funcs=funcs_nd,
+        dims=[100],
+        num_arms=10,
+        num_replications=30,
+        opts=opts,
+        noises=noises,
+        num_rounds=3,
+    )
+    cmds_300d = prep_d_args(
+        results_dir,
+        exp_dir=exp_dir,
+        funcs=funcs_nd,
+        dims=[300],
+        num_arms=10,
+        num_replications=30,
+        opts=opts,
+        noises=noises,
+        num_rounds=3,
+    )
 
     # return cmds_1d + cmds_3d + cmds_10d + cmds_30d  # + cmds_100d + cmds_300d
     return cmds_100d + cmds_300d
@@ -29,7 +65,17 @@ def prep_ts_hd(results_dir):
     min_rounds = 30
     cmds = []
     cmds.extend(
-        prep_d_args(results_dir, exp_dir=exp_dir, funcs=funcs_1d, dims=[1], num_arms=1, num_replications=100, opts=opts, noises=noises, num_rounds=min_rounds)
+        prep_d_args(
+            results_dir,
+            exp_dir=exp_dir,
+            funcs=funcs_1d,
+            dims=[1],
+            num_arms=1,
+            num_replications=100,
+            opts=opts,
+            noises=noises,
+            num_rounds=min_rounds,
+        )
     )
 
     for num_dim in [3, 10, 30, 100, 300, 1000]:
@@ -90,7 +136,15 @@ def prep_sweep_q(results_dir):
         num_rounds = int(num_func_evals / num_arms + 0.5)
         cmds.extend(
             prep_d_args(
-                results_dir, exp_dir=exp_dir, funcs=funcs_1d, dims=[1], num_arms=num_arms, num_replications=100, opts=opts, noises=noises, num_rounds=num_rounds
+                results_dir,
+                exp_dir=exp_dir,
+                funcs=funcs_1d,
+                dims=[1],
+                num_arms=num_arms,
+                num_replications=100,
+                opts=opts,
+                noises=noises,
+                num_rounds=num_rounds,
             )
         )
         for num_dim in [3, 10, 30, 100]:
@@ -172,120 +226,22 @@ def prep_cum_time_obs(results_dir):
     return cmds
 
 
-def prep_pss_sweep(results_dir):
-    exp_dir = "exp_pss_sweep"
-
-    opts = ["random"]
-    # opts += [f"pss_sweep_kmcmc-{n}" for n in [1, 3, 10, 30, 100]]
-    opts += [f"pss_sweep_num_mcmc-{n}" for n in [10, 30, 100, 300, 1000]]
-
-    return prep_d_args(
-        results_dir,
-        exp_dir=exp_dir,
-        funcs=funcs_nd,
-        dims=[1, 3, 10, 30, 100, 300],
-        num_arms=1,
-        num_replications=10,
-        opts=opts,
-        noises=[None],
-        num_rounds=10,
-        func_category="f",
-    )
-
-
-def prep_sts_sweep(results_dir):
-    exp_dir = "exp_sts_sweep"
-
-    opts = ["random"]
-    opts += [f"sts_sweep-{n:04d}" for n in [10, 30, 100, 300, 1000]]
-
-    return prep_d_args(
-        results_dir,
-        exp_dir=exp_dir,
-        funcs=funcs_nd,
-        dims=[1, 3, 10, 30, 100, 300],
-        num_arms=1,
-        num_replications=10,
-        opts=opts,
-        noises=[None],
-        num_rounds=10,
-        func_category="f",
-    )
-
-
-def prep_sequential_35(results_dir):
-    exp_dir = "exp_sequential_35"
-
-    # opts = ["mcmcbo", "turbo-1", "lei", "optuna", "sts", "sobol"]
-    # opts = ["sr", "random", "ucb", "gibbon", "pss", "ts-10000", "path"]
-    # opts = ["tsroots"]
-    # opts = ["sts", "sts-ns", "sts-ui", "sts-m", "sts-t"]
-    opts = ["sts2"]
-    # opts = [f"sts-ar-{i:04d}" for i in [1, 3, 10, 30, 100]]
-    noises = [None]
-
-    min_rounds = 30
-    cmds = []
-
-    for num_dim in [1, 3, 10, 30, 100]:
-        cmds.extend(
-            prep_d_args(
-                results_dir,
-                exp_dir=exp_dir,
-                funcs=funcs_all,
-                dims=[num_dim],
-                num_arms=1,
-                num_replications=10,
-                opts=opts,
-                noises=noises,
-                num_rounds=max(min_rounds, num_dim),
-            )
-        )
-
-    return cmds
-
-
-def prep_mtv_36(results_dir):
-    exp_dir = "exp_mtv_36"
-
-    # opts = ["turbo-1", "lei", "sts", "mtv-sts", "optuna", "mtv", "sobol", "random", "ucb", "dpp", "sr", "gibbon", "mcmcbo", "ts-10000"]
-    opts = ["cma"]
-    noises = [None]
-
-    cmds = []
-
-    for num_dim in [300]:  # [3, 10, 30, 100]:  # 1, 300
-        cmds.extend(
-            prep_d_args(
-                results_dir,
-                exp_dir=exp_dir,
-                funcs=funcs_all,
-                dims=[num_dim],
-                num_arms=max(3, min(10, num_dim)),
-                num_replications=10,
-                opts=opts,
-                noises=noises,
-                num_rounds=3,
-            )
-        )
-
-    return cmds
-
-
 def prep_seq(results_dir):
-    exp_dir = "exp_enn_nov"
+    exp_dir = "exp_enn_seq_jan"
 
     opts = [
-        "random",
-        "optuna",
-        "ucb",
-        # "cma",
-        "ucb:Msparse",
-        "vecchia",
-        "turbo-one",
-        "turbo-zero",
-        "turbo-enn-fit-ucb",
-        "enn-fit-ucb",
+        # "random",
+        # "optuna",
+        # "ucb",
+        # "ucb:Msparse",
+        # "vecchia",
+        # "turbo-one",
+        # "turbo-zero",
+        # "turbo-enn-fit-ucb",
+        # "turbo-enn-f",
+        # "turbo-one-f",
+        # "turbo-zero-f",
+        "turbo-enn-p",
     ]
 
     noises = [None]
@@ -305,7 +261,7 @@ def prep_seq(results_dir):
             prep_d_args(
                 results_dir,
                 exp_dir=exp_dir,
-                funcs=func_brief,
+                funcs=func_brief_2,
                 dims=[num_dim],
                 num_arms=1,
                 num_replications=num_replications,
@@ -318,24 +274,60 @@ def prep_seq(results_dir):
     return cmds
 
 
+def prep_sweep_k(results_dir):
+    exp_dir = "exp_enn_sweep_k"
+
+    opts = [
+        "turbo-enn-sweep-3",
+        "turbo-enn-sweep-10",
+        "turbo-enn-sweep-30",
+        "turbo-enn-sweep-100",
+    ]
+
+    cmds = []
+
+    dims = [30, 100, 300]
+
+    for num_dim in dims:
+        if num_dim <= 100:
+            num_replications = 30
+        else:
+            num_replications = 10
+
+        cmds.extend(
+            prep_d_args(
+                results_dir,
+                exp_dir=exp_dir,
+                funcs=func_brief_2,
+                dims=[num_dim],
+                num_arms=1,
+                num_replications=num_replications,
+                opts=opts,
+                noises=[None],
+                num_rounds=2 * num_dim,
+            )
+        )
+
+    return cmds
+
+
 def prep_push(results_dir):
     exp_dir = "exp_ennbo_push"
 
     opts = [
         "random",
+        "optuna",
         "turbo-zero",
         "turbo-one",
         "turbo-enn-fit-ucb",
-        "enn-fit-ucb",
+        "turbo-enn-p",
         "cma",
-        "optuna",
     ]
 
     cmds = []
     for opt in opts:
         for num_arms, num_rounds, num_denoise, num_denoise_passive, fn in [
             (1, 10000, 1, 30, False),
-            # (10, 100, 10),
             (50, 300, 50, None, True),
         ]:
             # prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None):
@@ -360,20 +352,24 @@ def prep_push(results_dir):
 
 
 def prep_tlunar(results_dir):
-    exp_dir = "exp_compare_tlunar"
+    # exp_dir = "exp_compare_tlunar"
+    exp_dir = "exp_ennbo_tlunar_3"
 
     opts = [
-        "turbo-1",
+        "random",
+        "optuna",
+        "cma",
+        "turbo-zero",
         "turbo-one",
+        "turbo-enn-fit-ucb",
+        "turbo-enn-p",
     ]
 
     cmds = []
     for opt in opts:
         for num_arms, num_rounds, num_denoise, num_denoise_passive, fn in [
-            # (1, 300, 1, 30, False),
-            (1, 300, 1, None, True),
-            (10, 100, 10, None, True),
-            (50, 30, 50, None, True),
+            (1, 10000, 1, 30, False),
+            # (50, 30, 50, None, True),
         ]:
             # prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None):
             if num_arms == 1 and opt == "cma":
@@ -402,16 +398,18 @@ def prep_hop(results_dir):
     opts = [
         "random",
         "optuna",
+        "cma",
         "turbo-zero",
-        # "turbo-one",
+        "turbo-one",
         "turbo-enn-fit-ucb",
+        "turbo-enn-p",
     ]
 
     cmds = []
     for opt in opts:
         for num_arms, num_rounds, num_reps, num_denoise, num_denoise_passive, fn in [
-            (10, 1000, 30, None, 10, False),
-            (10, 1000, 30, 10, None, True),
+            (1, 10000, 30, None, 30, False),
+            (50, 1000, 30, 10, None, True),
         ]:
             # prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None):
             if num_arms == 1 and opt == "cma":
@@ -421,6 +419,46 @@ def prep_hop(results_dir):
                     results_dir,
                     exp_dir=exp_dir,
                     problem="hop:fn" if fn else "hop",
+                    opt=opt,
+                    num_arms=num_arms,
+                    num_replications=num_reps,
+                    num_rounds=num_rounds,
+                    noise=None,
+                    num_denoise=num_denoise,
+                    num_denoise_passive=num_denoise_passive,
+                )
+            )
+
+    return cmds
+
+
+def prep_bw(results_dir):
+    exp_dir = "exp_ennbo_bw_2"
+
+    opts = [
+        "random",
+        "optuna",
+        "cma",
+        "turbo-zero",
+        "turbo-one",
+        "turbo-enn-fit-ucb",
+        "turbo-enn-p",
+    ]
+
+    cmds = []
+    for opt in opts:
+        for num_arms, num_rounds, num_reps, num_denoise, num_denoise_passive, fn in [
+            (1, 10000, 30, None, 30, False),
+            (50, 100, 30, 30, None, True),
+        ]:
+            # prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None):
+            if num_arms == 1 and opt == "cma":
+                continue
+            cmds.append(
+                prep_args_1(
+                    results_dir,
+                    exp_dir=exp_dir,
+                    problem="bw-heur:fn" if fn else "bw-heur",
                     opt=opt,
                     num_arms=num_arms,
                     num_replications=num_reps,
@@ -461,6 +499,46 @@ def prep_leukemia(results_dir):
                     results_dir,
                     exp_dir=exp_dir,
                     problem="leukemia:fn" if fn else "leukemia",
+                    opt=opt,
+                    num_arms=num_arms,
+                    num_replications=num_reps,
+                    num_rounds=num_rounds,
+                    noise=None,
+                    num_denoise=num_denoise,
+                    num_denoise_passive=num_denoise_passive,
+                )
+            )
+
+    return cmds
+
+
+def prep_dna(results_dir):
+    exp_dir = "exp_ennbo_dna"
+
+    opts = [
+        "random",
+        "optuna",
+        "cma",
+        "turbo-zero",
+        "turbo-one",
+        "turbo-enn-fit-ucb",
+        "turbo-enn-p",
+    ]
+
+    cmds = []
+    for opt in opts:
+        for num_arms, num_rounds, num_reps, num_denoise, num_denoise_passive, fn in [
+            (1, 1000, 30, None, 10, False),
+            (1, 1000, 30, 10, None, True),
+        ]:
+            # prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None):
+            if num_arms == 1 and opt == "cma":
+                continue
+            cmds.append(
+                prep_args_1(
+                    results_dir,
+                    exp_dir=exp_dir,
+                    problem="dna:fn" if fn else "dna",
                     opt=opt,
                     num_arms=num_arms,
                     num_replications=num_reps,

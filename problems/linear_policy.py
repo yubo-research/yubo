@@ -68,7 +68,10 @@ class LinearPolicy:
     def __call__(self, state):
         # beta in [-1, 1]
         # scale in [-1, 1]
-        assert self._beta.min() >= -1 and self._beta.max() <= 1, (self._beta.min(), self._beta.max())
+        assert self._beta.min() >= -1 and self._beta.max() <= 1, (
+            self._beta.min(),
+            self._beta.max(),
+        )
         state = self._normalize(state)
         beta = self._k * self._beta
 

@@ -5,11 +5,15 @@ from botorch.utils.sampling import draw_sobol_normal_samples
 from sampling.bootstrap import boot_means
 
 
-def proposal_stagger(X_0, sigma_min, sigma_max, num_samples, device=None, dtype=torch.double):
+def proposal_stagger(
+    X_0, sigma_min, sigma_max, num_samples, device=None, dtype=torch.double
+):
     num_dim = len(X_0)
     l_min_sigma = np.log(sigma_min)
     l_max_sigma = np.log(sigma_max)
-    u = l_min_sigma + (l_max_sigma - l_min_sigma) * torch.rand(size=torch.Size([num_samples, num_dim]), device=device, dtype=dtype)
+    u = l_min_sigma + (l_max_sigma - l_min_sigma) * torch.rand(
+        size=torch.Size([num_samples, num_dim]), device=device, dtype=dtype
+    )
     sigma = torch.exp(u)
 
     normal = draw_sobol_normal_samples(

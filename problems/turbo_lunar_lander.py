@@ -41,7 +41,9 @@ class TurboLunarLander:
         s, info = env.reset(seed=self._noise_seed)
         while True:
             a = self._heuristic(env, s, w)
-            s, r, terminated, truncated, info = step_api_compatibility(env.step(a), True)
+            s, r, terminated, truncated, info = step_api_compatibility(
+                env.step(a), True
+            )
             total_reward += r
             if terminated or truncated:
                 break

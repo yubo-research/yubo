@@ -9,7 +9,14 @@ from optimizer.designer_asserts import assert_scalar_rreturn
 
 
 class MTSDesigner:
-    def __init__(self, policy, init_style="find", keep_style=None, num_keep=None, use_stagger=False):
+    def __init__(
+        self,
+        policy,
+        init_style="find",
+        keep_style=None,
+        num_keep=None,
+        use_stagger=False,
+    ):
         self._policy = policy
         self._init_style = init_style
         self._keep_style = keep_style
@@ -26,7 +33,11 @@ class MTSDesigner:
             Y, X = fit_gp.extract_X_Y(data, self._dtype, self._device)
             Y = fit_gp.standardize_torch(Y)
         else:
-            X = torch.empty(size=(0, self._policy.num_params())).to(self._device).to(self._dtype)
+            X = (
+                torch.empty(size=(0, self._policy.num_params()))
+                .to(self._device)
+                .to(self._dtype)
+            )
             Y = torch.empty(size=(0, 1)).to(self._device).to(self._dtype)
 
         t0 = time.perf_counter()

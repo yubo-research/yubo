@@ -13,7 +13,9 @@ def _test_tight_bounding_box(num_dim, num_samples, num_keep):
     X_keep = X[idx, :]
 
     assert torch.all(X_keep > bounds[0, :] - 1e-9)
-    assert torch.all(X_keep < bounds[1, :] + 1e-9), torch.maximum(torch.tensor(0.0), X_keep - bounds[1, :])
+    assert torch.all(X_keep < bounds[1, :] + 1e-9), torch.maximum(
+        torch.tensor(0.0), X_keep - bounds[1, :]
+    )
 
 
 def test_tight_bounding_box():

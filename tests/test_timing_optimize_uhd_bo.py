@@ -38,7 +38,9 @@ def test_optimize_uhd_bo_large_problem_timings():
     before_mb = r_before / denom
     after_mb = r_after / denom
     delta_mb = max(0.0, after_mb - before_mb)
-    print(f"PEAK_MEM_OPT_UHD_BO: ru_maxrss_before_MB = {before_mb:.2f} ru_maxrss_after_MB = {after_mb:.2f} delta_MB = {delta_mb:.2f} MB")
+    print(
+        f"PEAK_MEM_OPT_UHD_BO: ru_maxrss_before_MB = {before_mb:.2f} ru_maxrss_after_MB = {after_mb:.2f} delta_MB = {delta_mb:.2f} MB"
+    )
 
 
 def test_optimize_uhd_bo_tr_raasp_timing():
@@ -69,7 +71,9 @@ def test_optimize_uhd_bo_tr_raasp_timing():
     before_mb = r_before / denom
     after_mb = r_after / denom
     delta_mb = max(0.0, after_mb - before_mb)
-    print(f"PEAK_MEM_OPT_UHD_BO: ru_maxrss_before_MB = {before_mb:.2f} ru_maxrss_after_MB = {after_mb:.2f} delta_MB = {delta_mb:.2f} MB")
+    print(
+        f"PEAK_MEM_OPT_UHD_BO: ru_maxrss_before_MB = {before_mb:.2f} ru_maxrss_after_MB = {after_mb:.2f} delta_MB = {delta_mb:.2f} MB"
+    )
 
 
 def test_optimize_uhd_bo_raasp_no_tr_timing():
@@ -100,4 +104,6 @@ def test_optimize_uhd_bo_raasp_no_tr_timing():
     before_mb = r_before / denom
     after_mb = r_after / denom
     delta_mb = max(0.0, after_mb - before_mb)
-    print(f"PEAK_MEM_OPT_UHD_BO: ru_maxrss_before_MB = {before_mb:.2f} ru_maxrss_after_MB = {after_mb:.2f} delta_MB = {delta_mb:.2f} MB")
+    print(
+        f"PEAK_MEM_OPT_UHD_BO: ru_maxrss_before_MB = {before_mb:.2f} ru_maxrss_after_MB = {after_mb:.2f} delta_MB = {delta_mb:.2f} MB"
+    )

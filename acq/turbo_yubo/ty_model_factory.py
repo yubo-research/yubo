@@ -13,7 +13,9 @@ def build_default_turbo_yubo_model(train_x: torch.Tensor, train_y: torch.Tensor)
         sigma = torch.tensor(1.0, dtype=y.dtype, device=y.device)
     y_std = (y - mu) / sigma
 
-    gp = turbo_train_gp(train_x=train_x, train_y=y_std, use_ard=True, num_steps=50, hypers={})
+    gp = turbo_train_gp(
+        train_x=train_x, train_y=y_std, use_ard=True, num_steps=50, hypers={}
+    )
 
     class _TurboPosteriorModel:
         def __init__(self, gp):

@@ -31,13 +31,17 @@ class AcqMTS:
                 .to(self._X_0)
             )
 
-        mp_sampler = get_matheron_path_model(model=self._model, sample_shape=torch.Size([num_arms]))
+        mp_sampler = get_matheron_path_model(
+            model=self._model, sample_shape=torch.Size([num_arms])
+        )
 
         # X_init ~ num_arms X 1 X num_dim
         if self._init_style == "ts":
             X_init = self._thompson_sample_measurements(num_arms)
         elif self._init_style == "find":
-            X_init = torch.tile(acq_util.find_max(self._model, self._bounds), dims=(num_arms, 1)).unsqueeze(1)
+            X_init = torch.tile(
+                acq_util.find_max(self._model, self._bounds), dims=(num_arms, 1)
+            ).unsqueeze(1)
         elif self._init_style == "meas":
             X_init = torch.tile(self._best_measured(), dims=(num_arms, 1)).unsqueeze(1)
         else:
@@ -75,7 +79,11 @@ class AcqMTS:
             X_ts = X[i, :]
 
         X_ts = np.expand_dims(X_ts, 1)
-        assert X_ts.shape == (num_arms, 1, X.shape[-1]), (X_ts.shape, num_arms, X.shape[-1])
+        assert X_ts.shape == (num_arms, 1, X.shape[-1]), (
+            X_ts.shape,
+            num_arms,
+            X.shape[-1],
+        )
 
         return torch.as_tensor(X_ts)
 

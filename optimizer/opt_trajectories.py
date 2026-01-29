@@ -17,7 +17,9 @@ def collect_trajectory_with_noise(env_conf, policy, i_noise=None, denoise_seed=0
 def mean_return_over_runs(env_conf, policy, num_denoise, i_noise=None):
     rets = []
     for i in range(num_denoise):
-        traj, _ = collect_trajectory_with_noise(env_conf, policy, i_noise=i_noise, denoise_seed=i)
+        traj, _ = collect_trajectory_with_noise(
+            env_conf, policy, i_noise=i_noise, denoise_seed=i
+        )
         rets.append(traj.rreturn)
     std_rets = np.std(rets)
     all_same = len(rets) > 1 and std_rets == 0
@@ -29,9 +31,13 @@ def collect_denoised_trajectory(env_conf, policy, num_denoise, i_noise=None):
         return collect_trajectory_with_noise(env_conf, policy, i_noise=i_noise)
 
     if num_denoise == 1:
-        return collect_trajectory_with_noise(env_conf, policy, i_noise=i_noise, denoise_seed=0)
+        return collect_trajectory_with_noise(
+            env_conf, policy, i_noise=i_noise, denoise_seed=0
+        )
 
-    rreturn, rreturn_se, _ = mean_return_over_runs(env_conf, policy, num_denoise, i_noise=i_noise)
+    rreturn, rreturn_se, _ = mean_return_over_runs(
+        env_conf, policy, num_denoise, i_noise=i_noise
+    )
 
     if env_conf.frozen_noise:
         rreturn_se = None
@@ -40,5 +46,7 @@ def collect_denoised_trajectory(env_conf, policy, num_denoise, i_noise=None):
 
 
 def evaluate_for_best(env_conf, policy, num_denoise_passiveuation):
-    mean_ret, _, _ = mean_return_over_runs(env_conf, policy, num_denoise_passiveuation, i_noise=99999)
+    mean_ret, _, _ = mean_return_over_runs(
+        env_conf, policy, num_denoise_passiveuation, i_noise=99999
+    )
     return mean_ret

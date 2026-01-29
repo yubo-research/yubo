@@ -42,7 +42,9 @@ def mk_random_perturbations_config(eps: float, num_trail: int = 32) -> UHDBOConf
         def unperturb(self, target: Any) -> None:
             assert self._backup is not None
             orig_vals = self._backup["orig"]
-            indices = torch.arange(orig_vals.numel(), device=target.device, dtype=torch.long)
+            indices = torch.arange(
+                orig_vals.numel(), device=target.device, dtype=torch.long
+            )
             target.scatter_(indices, orig_vals)
             target.clamp_(target.lb, target.ub)
             self._backup = None

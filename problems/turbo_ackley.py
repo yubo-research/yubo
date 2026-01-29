@@ -15,4 +15,9 @@ class TurboAckley:
         x = 15 * x / 2
         x = 2.5 + x
         # x in [-5, 10]
-        return -self.a * np.exp(-self.b * np.sqrt((x**2).mean())) - np.exp(np.cos(self.c * x).mean()) + self.a + np.e
+        return (
+            -self.a * np.exp(-self.b * np.sqrt((x**2).mean()))
+            - np.exp(np.cos(self.c * x).mean())
+            + self.a
+            + np.e
+        )

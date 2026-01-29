@@ -48,9 +48,14 @@ class BTDesigner:
         self._acq_kwargs = acq_kwargs
         self.device = torch.device(device)
         self.dtype = dtype
+        self._datum_best = None
+        self._y_est_best = None
 
     def __repr__(self):
         return f"{self.__class__.__name__} {self._acq_fn}"
+
+    def best_datum(self):
+        return self._datum_best
 
     def _initialize_at_X_samples(self, data, num_arms, acqf):
         # half from X_samples, half random
@@ -72,7 +77,11 @@ class BTDesigner:
 
     def _initialize_at_x_max(self, acq_bt, num_arms):
         batch_limit = self._optimizer_options["batch_limit"]
-        return torch.tile(acq_bt.x_max().unsqueeze(0), dims=(num_arms * batch_limit, 1, 1)).to(self.device).to(self.dtype)
+        return (
+            torch.tile(acq_bt.x_max().unsqueeze(0), dims=(num_arms * batch_limit, 1, 1))
+            .to(self.device)
+            .to(self.dtype)
+        )
 
     def __call__(self, data, num_arms, *, telemetry=None):
         import warnings
@@ -99,14 +108,29 @@ class BTDesigner:
             model_spec=self._model_spec,
             telemetry=telemetry,
         )
+        Y, X = fit_gp.extract_X_Y(data, self.dtype, self.device)
+        y_est = (
+            fit_gp.estimate(acq_bt.model(), X).detach().cpu().numpy().astype(np.float64)
+        )
+        best_i = int(np.argmax(y_est))
+        best_y = float(y_est[best_i])
+        for i, d in enumerate(data):
+            d.trajectory.rreturn_est = float(y_est[i])
+        if self._y_est_best is None or best_y > float(self._y_est_best):
+            self._y_est_best = best_y
+            self._datum_best = data[best_i]
         t0 = time.perf_counter()
         if hasattr(acq_bt.acq_function, "draw"):
             # print (f"Draw from {acqf.acq_function.__class__.__name__}")
             X_cand = acq_bt.acq_function.draw(num_arms)
         else:
             if self._init_X_samples and hasattr(acq_bt.acq_function, "X_samples"):
-                batch_initial_conditions = self._initialize_at_X_samples(data, num_arms, acq_bt)
-                batch_initial_conditions = batch_initial_conditions.type(self.dtype).to(self.device)
+                batch_initial_conditions = self._initialize_at_X_samples(
+                    data, num_arms, acq_bt
+                )
+                batch_initial_conditions = batch_initial_conditions.type(self.dtype).to(
+                    self.device
+                )
             elif self._start_at_max:
                 batch_initial_conditions = self._initialize_at_x_max(acq_bt, num_arms)
             else:

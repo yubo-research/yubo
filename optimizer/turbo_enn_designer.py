@@ -1,18 +1,20 @@
 from typing import Optional
 
 import numpy as np
-
-import common.all_bounds as all_bounds
-from optimizer.designer_asserts import assert_scalar_rreturn
 from third_party.enn.turbo.config.acq_type import AcqType
 from third_party.enn.turbo.config.candidate_gen_config import CandidateGenConfig
 from third_party.enn.turbo.config.candidate_rv import CandidateRV
-from third_party.enn.turbo.config.enn_surrogate_config import ENNSurrogateConfig
+from third_party.enn.turbo.config.enn_surrogate_config import (
+    ENNFitConfig,
+    ENNSurrogateConfig,
+)
 from third_party.enn.turbo.config.factory import (
+    lhd_only_config,
     turbo_enn_config,
     turbo_one_config,
     turbo_zero_config,
 )
+from third_party.enn.turbo.config.raasp_driver import RAASPDriver
 from third_party.enn.turbo.config.trust_region import (
     MorboTRConfig,
     NoTRConfig,
@@ -20,6 +22,9 @@ from third_party.enn.turbo.config.trust_region import (
     TurboTRConfig,
 )
 from third_party.enn.turbo.optimizer import create_optimizer
+
+import common.all_bounds as all_bounds
+from optimizer.designer_asserts import assert_scalar_rreturn
 
 
 class TurboENNDesigner:
@@ -40,9 +45,9 @@ class TurboENNDesigner:
         num_metrics: Optional[int] = None,
     ):
         self._policy = policy
-        if turbo_mode not in ("turbo-enn", "turbo-zero", "turbo-one"):
+        if turbo_mode not in ("turbo-enn", "turbo-zero", "turbo-one", "lhd-only"):
             raise ValueError(f"Invalid turbo mode: {turbo_mode}")
-        if turbo_mode in ("turbo-zero", "turbo-one"):
+        if turbo_mode in ("turbo-zero", "turbo-one", "lhd-only"):
             assert k is None
         self._turbo_mode = turbo_mode
         self._num_init = num_init
@@ -61,6 +66,8 @@ class TurboENNDesigner:
         self._num_arms = None
         self._rng = np.random.default_rng(np.random.randint(2**31))
         self._num_told = 0
+        self._datum_best = None
+        self._y_est_best = None
 
     def _parse_candidate_rv(self) -> CandidateRV:
         if self._candidate_rv is None:
@@ -99,15 +106,25 @@ class TurboENNDesigner:
             acq_type = self._parse_acq_type()
             enn = ENNSurrogateConfig(
                 k=self._k,
-                num_fit_samples=self._num_fit_samples,
-                num_fit_candidates=self._num_fit_candidates,
+                fit=ENNFitConfig(
+                    num_fit_samples=self._num_fit_samples,
+                    num_fit_candidates=self._num_fit_candidates,
+                ),
             )
             candidates = None
             if num_candidates is not None or self._candidate_rv is not None:
                 if num_candidates is None:
-                    candidates = CandidateGenConfig(candidate_rv=candidate_rv)
+                    candidates = CandidateGenConfig(
+                        candidate_rv=candidate_rv, raasp_driver=RAASPDriver.FAST
+                    )
                 else:
-                    candidates = CandidateGenConfig(candidate_rv=candidate_rv, num_candidates=num_candidates)
+                    candidates = CandidateGenConfig(
+                        candidate_rv=candidate_rv,
+                        num_candidates=num_candidates,
+                        raasp_driver=RAASPDriver.FAST,
+                    )
+            else:
+                candidates = CandidateGenConfig(raasp_driver=RAASPDriver.FAST)
             return turbo_enn_config(
                 enn=enn,
                 trust_region=trust_region,
@@ -116,7 +133,7 @@ class TurboENNDesigner:
                 trailing_obs=self._num_keep,
                 acq_type=acq_type,
             )
-        if self._turbo_mode == "turbo-zero":
+        elif self._turbo_mode == "turbo-zero":
             return turbo_zero_config(
                 num_candidates=num_candidates,
                 num_init=num_init,
@@ -124,7 +141,7 @@ class TurboENNDesigner:
                 trust_region=trust_region,
                 candidate_rv=candidate_rv,
             )
-        if self._turbo_mode == "turbo-one":
+        elif self._turbo_mode == "turbo-one":
             return turbo_one_config(
                 num_candidates=num_candidates,
                 num_init=num_init,
@@ -132,7 +149,18 @@ class TurboENNDesigner:
                 trust_region=trust_region,
                 candidate_rv=candidate_rv,
             )
+        elif self._turbo_mode == "lhd-only":
+            return lhd_only_config(
+                num_candidates=num_candidates,
+                num_init=num_init,
+                trailing_obs=self._num_keep,
+                trust_region=trust_region,
+                candidate_rv=candidate_rv,
+            )
         raise ValueError(f"Invalid turbo mode: {self._turbo_mode}")
+
+    def best_datum(self):
+        return self._datum_best
 
     def __call__(self, data, num_arms, *, telemetry=None):
         if self._num_arms is None:
@@ -183,17 +211,34 @@ class TurboENNDesigner:
                 for d in new_data:
                     assert d.trajectory.rreturn_se is not None
                     y_se_list.append(d.trajectory.rreturn_se)
-            assert len(y_se_list) == 0 or len(y_se_list) == len(y_list), (len(y_se_list), len(y_list))
+            assert len(y_se_list) == 0 or len(y_se_list) == len(y_list), (
+                len(y_se_list),
+                len(y_list),
+            )
             if len(x_list) > 0:
                 x = np.array(x_list)
-                y = np.array(y_list)
+                y_obs = np.array(y_list)
+                if len(y_obs.shape) == 1:
+                    y_obs = y_obs[:, None]
                 if len(y_se_list) > 0:
                     y_se = np.array(y_se_list)
                     # print("Using y_var", y_se)
-                    self._turbo.tell(x, y, y_var=y_se**2)
+                    y_est = self._turbo.tell(x, y_obs, y_var=y_se**2)
                 else:
-                    self._turbo.tell(x, y)
-                self._num_told = len(data)
+                    y_est = self._turbo.tell(x, y_obs)
+                assert y_obs.shape == y_est.shape, (y_obs.shape, y_est.shape)
+                assert y_obs.shape[0] == len(new_data), (y_obs.shape, len(new_data))
+                if y_est.shape[1] == 1:
+                    y_est_0 = np.asarray(y_est[:, 0], dtype=np.float64)
+                    for i, d in enumerate(new_data):
+                        d.trajectory.rreturn_est = float(y_est_0[i])
+                    best_i = int(np.argmax(y_est_0))
+                    best_y = float(y_est_0[best_i])
+                    if self._y_est_best is None or best_y > float(self._y_est_best):
+                        self._y_est_best = best_y
+                        self._datum_best = new_data[best_i]
+
+            self._num_told = len(data)
 
         x_new = self._turbo.ask(num_arms)
         turbo_telemetry = self._turbo.telemetry()

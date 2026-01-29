@@ -87,7 +87,9 @@ class TurboM(Turbo1):
 
         # Very basic input checks
         assert n_trust_regions > 1 and isinstance(max_evals, int)
-        assert max_evals > n_trust_regions * n_init, "Not enough trust regions to do initial evaluations"
+        assert max_evals > n_trust_regions * n_init, (
+            "Not enough trust regions to do initial evaluations"
+        )
         assert max_evals > batch_size, "Not enough evaluations to do a single batch"
 
         # Remember the hypers for trust regions we don't sample from
@@ -97,7 +99,9 @@ class TurboM(Turbo1):
         self._restart()
 
     def _restart(self):
-        self._idx = np.zeros((0, 1), dtype=int)  # Track what trust region proposed what using an index vector
+        self._idx = np.zeros(
+            (0, 1), dtype=int
+        )  # Track what trust region proposed what using an index vector
         self.failcount = np.zeros(self.n_trust_regions, dtype=int)
         self.succcount = np.zeros(self.n_trust_regions, dtype=int)
         self.length = self.length_init * np.ones(self.n_trust_regions)
@@ -116,7 +120,9 @@ class TurboM(Turbo1):
         if self.succcount[i] == self.succtol:  # Expand trust region
             self.length[i] = min([2.0 * self.length[i], self.length_max])
             self.succcount[i] = 0
-        elif self.failcount[i] >= self.failtol:  # Shrink trust region (we may have exceeded the failtol)
+        elif (
+            self.failcount[i] >= self.failtol
+        ):  # Shrink trust region (we may have exceeded the failtol)
             self.length[i] /= 2.0
             self.failcount[i] = 0
 
@@ -124,16 +130,22 @@ class TurboM(Turbo1):
         """Select candidates from samples from all trust regions."""
         assert X_cand.shape == (self.n_trust_regions, self.n_cand, self.dim)
         assert y_cand.shape == (self.n_trust_regions, self.n_cand, self.batch_size)
-        assert X_cand.min() >= 0.0 and X_cand.max() <= 1.0 and np.all(np.isfinite(y_cand))
+        assert (
+            X_cand.min() >= 0.0 and X_cand.max() <= 1.0 and np.all(np.isfinite(y_cand))
+        )
 
         X_next = np.zeros((self.batch_size, self.dim))
         idx_next = np.zeros((self.batch_size, 1), dtype=int)
         for k in range(self.batch_size):
-            i, j = np.unravel_index(np.argmin(y_cand[:, :, k]), (self.n_trust_regions, self.n_cand))
+            i, j = np.unravel_index(
+                np.argmin(y_cand[:, :, k]), (self.n_trust_regions, self.n_cand)
+            )
             assert y_cand[:, :, k].min() == y_cand[i, j, k]
             X_next[k, :] = deepcopy(X_cand[i, j, :])
             idx_next[k, 0] = i
-            assert np.isfinite(y_cand[i, j, k])  # Just to make sure we never select nan or inf
+            assert np.isfinite(
+                y_cand[i, j, k]
+            )  # Just to make sure we never select nan or inf
 
             # Make sure we never pick this point again
             y_cand[i, j, :] = np.inf
@@ -164,7 +176,9 @@ class TurboM(Turbo1):
         while self.n_evals < self.max_evals:
             # Generate candidates from each TR
             X_cand = np.zeros((self.n_trust_regions, self.n_cand, self.dim))
-            y_cand = np.inf * np.ones((self.n_trust_regions, self.n_cand, self.batch_size))
+            y_cand = np.inf * np.ones(
+                (self.n_trust_regions, self.n_cand, self.batch_size)
+            )
             for i in range(self.n_trust_regions):
                 idx = np.where(self._idx == i)[0]  # Extract all "active" indices
 
@@ -179,8 +193,14 @@ class TurboM(Turbo1):
                 n_training_steps = 0 if self.hypers[i] else self.n_training_steps
 
                 # Create new candidates
-                X_cand[i, :, :], y_cand[i, :, :], self.hypers[i] = self._create_candidates(
-                    X, fX, length=self.length[i], n_training_steps=n_training_steps, hypers=self.hypers[i]
+                X_cand[i, :, :], y_cand[i, :, :], self.hypers[i] = (
+                    self._create_candidates(
+                        X,
+                        fX,
+                        length=self.length[i],
+                        n_training_steps=n_training_steps,
+                        hypers=self.hypers[i],
+                    )
                 )
 
             # Select the next candidates
@@ -201,7 +221,9 @@ class TurboM(Turbo1):
                     self.hypers[i] = {}  # Remove model hypers
                     fX_i = fX_next[idx_i]
 
-                    if self.verbose and fX_i.min() < self.fX.min() - 1e-3 * math.fabs(self.fX.min()):
+                    if self.verbose and fX_i.min() < self.fX.min() - 1e-3 * math.fabs(
+                        self.fX.min()
+                    ):
                         n_evals, fbest = self.n_evals, fX_i.min()
                         print(f"{n_evals}) New best @ TR-{i}: {fbest:.4}")
                         sys.stdout.flush()
@@ -215,7 +237,9 @@ class TurboM(Turbo1):
 
             # Check if any TR needs to be restarted
             for i in range(self.n_trust_regions):
-                if self.length[i] < self.length_min:  # Restart trust region if converged
+                if (
+                    self.length[i] < self.length_min
+                ):  # Restart trust region if converged
                     idx_i = self._idx[:, 0] == i
 
                     if self.verbose:
@@ -245,5 +269,7 @@ class TurboM(Turbo1):
                     # Append data to local history
                     self.X = np.vstack((self.X, X_init))
                     self.fX = np.vstack((self.fX, fX_init))
-                    self._idx = np.vstack((self._idx, i * np.ones((self.n_init, 1), dtype=int)))
+                    self._idx = np.vstack(
+                        (self._idx, i * np.ones((self.n_init, 1), dtype=int))
+                    )
                     self.n_evals += self.n_init

@@ -23,7 +23,15 @@ class b2WorldInterface:
 
 
 class end_effector:
-    def __init__(self, b2world_interface, init_pos, base, init_angle, hand_shape="rectangle", hand_size=(0.3, 1)):
+    def __init__(
+        self,
+        b2world_interface,
+        init_pos,
+        base,
+        init_angle,
+        hand_shape="rectangle",
+        hand_size=(0.3, 1),
+    ):
         world = b2world_interface.world
         self.hand = world.CreateDynamicBody(position=init_pos, angle=init_angle)
         self.hand_shape = hand_shape
@@ -66,11 +74,18 @@ class end_effector:
         self.hand.ApplyForce(force, self.hand.position, wake=True)
 
     def get_state(self, verbose=False):
-        state = list(self.hand.position) + [self.hand.angle] + list(self.hand.linearVelocity) + [self.hand.angularVelocity]
+        state = (
+            list(self.hand.position)
+            + [self.hand.angle]
+            + list(self.hand.linearVelocity)
+            + [self.hand.angularVelocity]
+        )
         return state
 
 
-def create_body(base, b2world_interface, body_shape, body_size, body_friction, body_density, obj_loc):
+def create_body(
+    base, b2world_interface, body_shape, body_size, body_friction, body_density, obj_loc
+):
     world = b2world_interface.world
 
     link = world.CreateDynamicBody(position=obj_loc)
@@ -110,13 +125,32 @@ def make_base(table_width, table_length, b2world_interface):
     return base
 
 
-def run_simulation(world, body, body2, robot, robot2, xvel, yvel, xvel2, yvel2, rtor, rtor2, simulation_steps, simulation_steps2, rng):
+def run_simulation(
+    world,
+    body,
+    body2,
+    robot,
+    robot2,
+    xvel,
+    yvel,
+    xvel2,
+    yvel2,
+    rtor,
+    rtor2,
+    simulation_steps,
+    simulation_steps2,
+    rng,
+):
     assert rng is not None
     desired_vel = np.array([xvel, yvel])
-    rvel = b2Vec2(desired_vel[0] + rng.normal(0, 0.01), desired_vel[1] + rng.normal(0, 0.01))
+    rvel = b2Vec2(
+        desired_vel[0] + rng.normal(0, 0.01), desired_vel[1] + rng.normal(0, 0.01)
+    )
 
     desired_vel2 = np.array([xvel2, yvel2])
-    rvel2 = b2Vec2(desired_vel2[0] + rng.normal(0, 0.01), desired_vel2[1] + rng.normal(0, 0.01))
+    rvel2 = b2Vec2(
+        desired_vel2[0] + rng.normal(0, 0.01), desired_vel2[1] + rng.normal(0, 0.01)
+    )
 
     tmax = np.max([simulation_steps, simulation_steps2])
     for t in range(tmax + 100):

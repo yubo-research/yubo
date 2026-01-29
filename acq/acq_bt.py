@@ -22,7 +22,9 @@ class AcqBT:
         telemetry=None,
     ):
         # All BoTorch stuff is coded to bounds of [0,1]!
-        self.bounds = torch.tensor([[0.0] * num_dim, [1.0] * num_dim], device=device, dtype=dtype)
+        self.bounds = torch.tensor(
+            [[0.0] * num_dim, [1.0] * num_dim], device=device, dtype=dtype
+        )
         self._rebounds = None
 
         if len(data) == 0:
@@ -65,6 +67,9 @@ class AcqBT:
             kwargs["Y_max"] = gp(find_max(gp, self.bounds)).mean
 
         self.acq_function = acq_factory(gp, **kwargs)
+
+    def model(self):
+        return self._gp
 
     def x_max(self):
         return find_max(self._gp, self.bounds)

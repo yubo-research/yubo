@@ -10,7 +10,13 @@ if __name__ == "__main__":
     d_args = parse_kv(sys.argv[1:])
 
     reqd_keys = ["exp-dir", "env-tag", "opt-name", "num-arms", "num-rounds", "num-reps"]
-    opt_keys = ["num-denoise", "num-denoise-eval", "max-proposal-seconds", "max-total-seconds", "b-trace"]
+    opt_keys = [
+        "num-denoise",
+        "num-denoise-passive",
+        "max-proposal-seconds",
+        "max-total-seconds",
+        "b-trace",
+    ]
     valid_keys = set("--" + k for k in reqd_keys + opt_keys)
 
     for k in d_args:
@@ -18,7 +24,9 @@ if __name__ == "__main__":
 
     for k in reqd_keys:
         k = "--" + k
-        assert k in d_args, f"Missing {k} in {list(d_args.keys())}. Required: {reqd_keys}"
+        assert k in d_args, (
+            f"Missing {k} in {list(d_args.keys())}. Required: {reqd_keys}"
+        )
 
     d_args_cleaned = {}
     for k, v in d_args.items():

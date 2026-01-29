@@ -15,7 +15,9 @@ class TrustRegionConfig:
 
 
 class TrustRegionAdjustor:
-    def __init__(self, *, dim: int, batch_size: int, config: Optional[TrustRegionConfig] = None) -> None:
+    def __init__(
+        self, *, dim: int, batch_size: int, config: Optional[TrustRegionConfig] = None
+    ) -> None:
         assert isinstance(dim, int) and dim > 0
         assert isinstance(batch_size, int) and batch_size > 0
         if config is None:
@@ -33,8 +35,14 @@ class TrustRegionAdjustor:
                 failtol=failtol,
             )
         assert isinstance(config.length_min, (int, float)) and config.length_min > 0
-        assert isinstance(config.length_max, (int, float)) and config.length_max > config.length_min
-        assert isinstance(config.length_init, (int, float)) and config.length_min <= config.length_init <= config.length_max
+        assert (
+            isinstance(config.length_max, (int, float))
+            and config.length_max > config.length_min
+        )
+        assert (
+            isinstance(config.length_init, (int, float))
+            and config.length_min <= config.length_init <= config.length_max
+        )
         assert isinstance(config.succtol, int) and config.succtol > 0
         assert isinstance(config.failtol, int) and config.failtol > 0
         self._dim = dim

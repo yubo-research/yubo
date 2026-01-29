@@ -3,7 +3,14 @@ from torch import Tensor, nn
 
 
 class MNISTMetric(nn.Module):
-    def __init__(self, data_root: str, batch_size: int, seed: int, train: bool = True, num_workers: int = 0) -> None:
+    def __init__(
+        self,
+        data_root: str,
+        batch_size: int,
+        seed: int,
+        train: bool = True,
+        num_workers: int = 0,
+    ) -> None:
         super().__init__()
         assert isinstance(data_root, str) and len(data_root) > 0
         assert isinstance(batch_size, int) and batch_size > 0
@@ -14,10 +21,21 @@ class MNISTMetric(nn.Module):
 
         g = torch.Generator(device="cpu")
         g.manual_seed(seed)
-        transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
-        ds = datasets.MNIST(root=data_root, train=train, download=True, transform=transform)
+        transform = transforms.Compose(
+            [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
+        )
+        ds = datasets.MNIST(
+            root=data_root, train=train, download=True, transform=transform
+        )
         pin = torch.cuda.is_available()
-        self.loader = torch.utils.data.DataLoader(ds, batch_size=batch_size, shuffle=True, generator=g, num_workers=num_workers, pin_memory=pin)
+        self.loader = torch.utils.data.DataLoader(
+            ds,
+            batch_size=batch_size,
+            shuffle=True,
+            generator=g,
+            num_workers=num_workers,
+            pin_memory=pin,
+        )
         self._it = iter(self.loader)
         self.criterion = nn.CrossEntropyLoss()
 

@@ -24,7 +24,9 @@ class TurboObservation:
     embedding: torch.Tensor
 
 
-def _trim_history(history: List[TurboObservation], best: TurboObservation, limit: int) -> None:
+def _trim_history(
+    history: List[TurboObservation], best: TurboObservation, limit: int
+) -> None:
     assert isinstance(limit, int) and limit > 0
     assert any(obs is best for obs in history)
     excess = len(history) - limit
@@ -41,7 +43,9 @@ def _trim_history(history: List[TurboObservation], best: TurboObservation, limit
             idx = 0
 
 
-def optimize_turbo(controller: nn.Module, collector: UHDCollector, num_rounds: int, config: UHDBOConfig) -> float:
+def optimize_turbo(
+    controller: nn.Module, collector: UHDCollector, num_rounds: int, config: UHDBOConfig
+) -> float:
     assert isinstance(controller, nn.Module)
     assert isinstance(collector, UHDCollector)
     assert isinstance(num_rounds, int) and num_rounds >= 0
@@ -67,7 +71,9 @@ def optimize_turbo(controller: nn.Module, collector: UHDCollector, num_rounds: i
     initial_embedding = config.embedder.embed(accessor.clone_flat())
     assert isinstance(initial_embedding, torch.Tensor)
     collector.update_best(initial_y)
-    history: List[TurboObservation] = [TurboObservation(y=initial_y, embedding=initial_embedding)]
+    history: List[TurboObservation] = [
+        TurboObservation(y=initial_y, embedding=initial_embedding)
+    ]
     best_observation = history[0]
     iteration_index = 0
 

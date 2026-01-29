@@ -91,7 +91,15 @@ class Designers:
             else:
                 assert False, ("Unknown option", option)
 
-        def bt_designer(acq_factory, acq_kwargs=None, init_sobol=1, opt_sequential=False, num_restarts=10, raw_samples=10, start_at_max=False):
+        def bt_designer(
+            acq_factory,
+            acq_kwargs=None,
+            init_sobol=1,
+            opt_sequential=False,
+            num_restarts=10,
+            raw_samples=10,
+            start_at_max=False,
+        ):
             return BTDesigner(
                 self._policy,
                 acq_factory,
@@ -101,7 +109,11 @@ class Designers:
                 model_spec=model_spec,
                 init_sobol=init_sobol,
                 opt_sequential=opt_sequential,
-                optimizer_options={"batch_limit": 10, "maxiter": 1000, "sample_around_best": sample_around_best},
+                optimizer_options={
+                    "batch_limit": 10,
+                    "maxiter": 1000,
+                    "sample_around_best": sample_around_best,
+                },
                 num_restarts=10,
                 raw_samples=10,
                 start_at_max=start_at_max,
@@ -176,14 +188,25 @@ class Designers:
             return bt_designer(
                 AcqMTV,
                 init_sobol=0,
-                acq_kwargs={"ts_only": True, "num_X_samples": default_num_X_samples, "sample_type": "pss", "k_mcmc": k_mcmc},
+                acq_kwargs={
+                    "ts_only": True,
+                    "num_X_samples": default_num_X_samples,
+                    "sample_type": "pss",
+                    "k_mcmc": k_mcmc,
+                },
             )
         elif designer_name.startswith("pss_sweep_num_mcmc"):
             num_mcmc = int(designer_name.split("-")[1])
             return bt_designer(
                 AcqMTV,
                 init_sobol=0,
-                acq_kwargs={"ts_only": True, "num_X_samples": default_num_X_samples, "sample_type": "pss", "k_mcmc": None, "num_mcmc": num_mcmc},
+                acq_kwargs={
+                    "ts_only": True,
+                    "num_X_samples": default_num_X_samples,
+                    "sample_type": "pss",
+                    "k_mcmc": None,
+                    "num_mcmc": num_mcmc,
+                },
             )
         elif designer_name.startswith("sts_sweep"):
             num_refinements = int(designer_name.split("-")[1])
@@ -200,22 +223,61 @@ class Designers:
         elif designer_name == "ucb":
             return bt_designer(qUpperConfidenceBound, acq_kwargs={"beta": 1})
         elif designer_name == "ei":
-            return bt_designer(qNoisyExpectedImprovement, acq_kwargs={"X_baseline": None})
+            return bt_designer(
+                qNoisyExpectedImprovement, acq_kwargs={"X_baseline": None}
+            )
         elif designer_name == "lei":
-            return bt_designer(qLogNoisyExpectedImprovement, acq_kwargs={"X_baseline": None})
+            return bt_designer(
+                qLogNoisyExpectedImprovement, acq_kwargs={"X_baseline": None}
+            )
         elif designer_name == "lei-m":
-            return bt_designer(qLogNoisyExpectedImprovement, acq_kwargs={"X_baseline": None}, start_at_max=True)
+            return bt_designer(
+                qLogNoisyExpectedImprovement,
+                acq_kwargs={"X_baseline": None},
+                start_at_max=True,
+            )
         elif designer_name == "gibbon":
-            return bt_designer(qLowerBoundMaxValueEntropy, opt_sequential=True, acq_kwargs={"candidate_set": None})
+            return bt_designer(
+                qLowerBoundMaxValueEntropy,
+                opt_sequential=True,
+                acq_kwargs={"candidate_set": None},
+            )
         elif designer_name == "turbo-1":
             return TuRBORefDesigner(self._policy, num_init=init_yubo_default, ard=True)
         elif designer_name == "turbo-1-iso":
             return TuRBORefDesigner(self._policy, num_init=init_yubo_default, ard=False)
         elif designer_name == "turbo-0":
-            return TuRBORefDesigner(self._policy, num_init=init_yubo_default, surrogate_type="none", ard=True)
+            return TuRBORefDesigner(
+                self._policy,
+                num_init=init_yubo_default,
+                surrogate_type="none",
+                ard=True,
+            )
         elif designer_name == "turbo-enn":
             num_keep_val = num_keep if keep_style == "trailing" else None
-            return TurboENNDesigner(self._policy, turbo_mode="turbo-enn", k=10, num_keep=num_keep_val)
+            return TurboENNDesigner(
+                self._policy, turbo_mode="turbo-enn", k=10, num_keep=num_keep_val
+            )
+        elif designer_name == "turbo-enn-p":
+            num_keep_val = num_keep if keep_style == "trailing" else None
+            return TurboENNDesigner(
+                self._policy,
+                turbo_mode="turbo-enn",
+                k=10,
+                num_keep=num_keep_val,
+                num_fit_samples=None,
+                acq_type="pareto",
+            )
+        elif designer_name == "turbo-enn-sweep-":
+            k = int(designer_name.split("-")[-1])
+            return TurboENNDesigner(
+                self._policy,
+                turbo_mode="turbo-enn",
+                k=k,
+                num_keep=None,
+                num_fit_samples=None,
+                acq_type="pareto",
+            )
         elif designer_name.startswith("turbo-enn-fit-"):
             num_keep_val = num_keep if keep_style == "trailing" else None
             suffix = designer_name[len("turbo-enn-fit-") :]
@@ -251,7 +313,7 @@ class Designers:
             num_keep_val = num_keep if keep_style == "trailing" else None
 
             def num_candidates(num_dim, num_arms):
-                return min(5000, 100 * num_arms)
+                return 100 * num_arms
 
             return TurboENNDesigner(
                 self._policy,
@@ -267,32 +329,36 @@ class Designers:
 
         elif designer_name == "turbo-zero":
             return TurboENNDesigner(self._policy, turbo_mode="turbo-zero")
-        elif designer_name == "turbo-zero-f":
-            return TurboENNDesigner(
-                self._policy,
-                turbo_mode="turbo-zero",
-                num_candidates=min(5000, 100 * self._num_arms),
-                candidate_rv="uniform",
-            )
+
         elif designer_name == "turbo-one":
-            return TurboENNDesigner(self._policy, turbo_mode="turbo-one", num_init=init_yubo_default)
-        elif designer_name == "turbo-one-f":
+            return TurboENNDesigner(
+                self._policy, turbo_mode="turbo-one", num_init=init_yubo_default
+            )
+
+        elif designer_name == "lhd_only":
+            return TurboENNDesigner(self._policy, turbo_mode="lhd-only")
+
+        # MORBO variants (multi-objective)
+        elif designer_name == "morbo-zero":
+            return TurboENNDesigner(
+                self._policy, turbo_mode="turbo-zero", tr_type="morbo"
+            )
+        elif designer_name == "morbo-one":
             return TurboENNDesigner(
                 self._policy,
                 turbo_mode="turbo-one",
                 num_init=init_yubo_default,
-                num_candidates=min(5000, 100 * self._num_arms),
-                candidate_rv="uniform",
+                tr_type="morbo",
             )
-
-        # MORBO variants (multi-objective)
-        elif designer_name == "morbo-zero":
-            return TurboENNDesigner(self._policy, turbo_mode="turbo-zero", tr_type="morbo")
-        elif designer_name == "morbo-one":
-            return TurboENNDesigner(self._policy, turbo_mode="turbo-one", num_init=init_yubo_default, tr_type="morbo")
         elif designer_name == "morbo-enn":
             num_keep_val = num_keep if keep_style == "trailing" else None
-            return TurboENNDesigner(self._policy, turbo_mode="turbo-enn", k=10, num_keep=num_keep_val, tr_type="morbo")
+            return TurboENNDesigner(
+                self._policy,
+                turbo_mode="turbo-enn",
+                k=10,
+                num_keep=num_keep_val,
+                tr_type="morbo",
+            )
         elif designer_name.startswith("morbo-enn-fit-"):
             num_keep_val = num_keep if keep_style == "trailing" else None
             suffix = designer_name[len("morbo-enn-fit-") :]
@@ -323,16 +389,25 @@ class Designers:
         # return TuRBORefDesigner(self._policy, num_init=init_yubo_default, surrogate_type=designer_name[6:], ard=True)
 
         elif designer_name == "dpp":
-            return bt_designer(AcqDPP, init_sobol=1, acq_kwargs={"num_X_samples": default_num_X_samples})
+            return bt_designer(
+                AcqDPP,
+                init_sobol=1,
+                acq_kwargs={"num_X_samples": default_num_X_samples},
+            )
         elif designer_name == "vecchia":
-            return VecchiaDesigner(self._policy, num_candidates_per_arm=default_num_X_samples)
+            return VecchiaDesigner(
+                self._policy, num_candidates_per_arm=default_num_X_samples
+            )
 
         # MTV
         elif designer_name == "mtv":
             return bt_designer(
                 AcqMTV,
                 init_sobol=0,
-                acq_kwargs={"num_X_samples": default_num_X_samples, "sample_type": "pss"},
+                acq_kwargs={
+                    "num_X_samples": default_num_X_samples,
+                    "sample_type": "pss",
+                },
             )
         elif designer_name == "pss":
             return bt_designer(
@@ -513,16 +588,39 @@ class Designers:
             )
 
         elif designer_name == "mts":
-            return MTSDesigner(self._policy, keep_style=keep_style, num_keep=num_keep, init_style="find")
+            return MTSDesigner(
+                self._policy,
+                keep_style=keep_style,
+                num_keep=num_keep,
+                init_style="find",
+            )
         elif designer_name == "mts-stagger":
-            return MTSDesigner(self._policy, keep_style=keep_style, num_keep=num_keep, init_style="find", use_stagger=True)
+            return MTSDesigner(
+                self._policy,
+                keep_style=keep_style,
+                num_keep=num_keep,
+                init_style="find",
+                use_stagger=True,
+            )
         elif designer_name == "mts-ts":
-            return MTSDesigner(self._policy, keep_style=keep_style, num_keep=num_keep, init_style="ts")
+            return MTSDesigner(
+                self._policy, keep_style=keep_style, num_keep=num_keep, init_style="ts"
+            )
         elif designer_name == "mts-meas":
-            return MTSDesigner(self._policy, keep_style=keep_style, num_keep=num_keep, init_style="meas")
+            return MTSDesigner(
+                self._policy,
+                keep_style=keep_style,
+                num_keep=num_keep,
+                init_style="meas",
+            )
 
         elif designer_name == "turbo-yubo":
-            return TurboYUBODesigner(self._policy, num_keep=num_keep, keep_style=keep_style, config=TurboYUBOConfig())
+            return TurboYUBODesigner(
+                self._policy,
+                num_keep=num_keep,
+                keep_style=keep_style,
+                config=TurboYUBOConfig(),
+            )
 
         elif designer_name == "turbo-yubo-gumbel":
             return TurboYUBODesigner(
@@ -546,10 +644,22 @@ class Designers:
 
         # Long sobol init, sequential opt
         elif designer_name == "sobol_ucb":
-            return bt_designer(qUpperConfidenceBound, init_sobol=init_ax_default, acq_kwargs={"beta": 1})
+            return bt_designer(
+                qUpperConfidenceBound,
+                init_sobol=init_ax_default,
+                acq_kwargs={"beta": 1},
+            )
         elif designer_name == "sobol_ei":
-            return bt_designer(qNoisyExpectedImprovement, init_sobol=init_ax_default, acq_kwargs={"X_baseline": None})
+            return bt_designer(
+                qNoisyExpectedImprovement,
+                init_sobol=init_ax_default,
+                acq_kwargs={"X_baseline": None},
+            )
         elif designer_name == "sobol_gibbon":
-            return bt_designer(qLowerBoundMaxValueEntropy, init_sobol=init_ax_default, acq_kwargs={"candidate_set": None})
+            return bt_designer(
+                qLowerBoundMaxValueEntropy,
+                init_sobol=init_ax_default,
+                acq_kwargs={"candidate_set": None},
+            )
 
         raise NoSuchDesignerError(designer_name)

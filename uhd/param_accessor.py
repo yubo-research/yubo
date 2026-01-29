@@ -24,7 +24,9 @@ class SingleTensorAccessor:
         return self.clone_flat()
 
     def add_inplace_(self, delta_flat: torch.Tensor) -> None:
-        assert isinstance(delta_flat, torch.Tensor) and delta_flat.numel() == self.numel()
+        assert (
+            isinstance(delta_flat, torch.Tensor) and delta_flat.numel() == self.numel()
+        )
         with torch.no_grad():
             self._tensor.add_(delta_flat.view_as(self._tensor))
 
@@ -66,13 +68,18 @@ class SingleTensorAccessor:
             return torch.randn_like(self._tensor, **kwargs)
         if func is torch.rand_like:
             return torch.rand_like(self._tensor, **kwargs)
-        raise TypeError(f"{type(self).__name__} does not support torch function {func.__name__}")
+        raise TypeError(
+            f"{type(self).__name__} does not support torch function {func.__name__}"
+        )
 
     def backup(self) -> torch.Tensor:
         return self.clone_flat()
 
     def restore(self, backup_flat: torch.Tensor) -> None:
-        assert isinstance(backup_flat, torch.Tensor) and backup_flat.numel() == self.numel()
+        assert (
+            isinstance(backup_flat, torch.Tensor)
+            and backup_flat.numel() == self.numel()
+        )
         with torch.no_grad():
             self._tensor.copy_(backup_flat.view_as(self._tensor))
 
@@ -99,7 +106,13 @@ class ModuleParamAccessor:
         return int(self._total)
 
     def clone_flat(self) -> torch.Tensor:
-        out = torch.empty(self._total, dtype=self._params[0].dtype, device=self._params[0].device) if self._total > 0 else torch.tensor(0.0)
+        out = (
+            torch.empty(
+                self._total, dtype=self._params[0].dtype, device=self._params[0].device
+            )
+            if self._total > 0
+            else torch.tensor(0.0)
+        )
         if self._total == 0:
             return out
         i = 0
@@ -110,7 +123,9 @@ class ModuleParamAccessor:
         return out
 
     def add_inplace_(self, delta_flat: torch.Tensor) -> None:
-        assert isinstance(delta_flat, torch.Tensor) and delta_flat.numel() == self._total
+        assert (
+            isinstance(delta_flat, torch.Tensor) and delta_flat.numel() == self._total
+        )
         with torch.no_grad():
             for (start, end), p in zip(self._splits, self._params):
                 p.view(-1).add_(delta_flat[start:end])
@@ -163,7 +178,9 @@ class ModuleParamAccessor:
         return self.clone_flat()
 
     def restore(self, backup_flat: torch.Tensor) -> None:
-        assert isinstance(backup_flat, torch.Tensor) and backup_flat.numel() == self._total
+        assert (
+            isinstance(backup_flat, torch.Tensor) and backup_flat.numel() == self._total
+        )
         with torch.no_grad():
             for (start, end), p in zip(self._splits, self._params):
                 p.view(-1).copy_(backup_flat[start:end])

@@ -1,7 +1,9 @@
 import numpy as np
 
 
-def block_sparse_jl_transform(x: np.ndarray, d: int, s: int = 4, seed: int = 42) -> np.ndarray:
+def block_sparse_jl_transform(
+    x: np.ndarray, d: int, s: int = 4, seed: int = 42
+) -> np.ndarray:
     assert x.ndim == 1
     assert d > 0
     assert s > 0

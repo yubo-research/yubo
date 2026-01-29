@@ -18,7 +18,9 @@ def _assert_single_dimension_perturbation(x_candidates, x_centers):
         center = x_centers[center_idx]
 
         diff_dims = np.where(np.abs(candidate - center) > 1e-10)[0]
-        assert len(diff_dims) <= 1, f"Candidate {i} differs in {len(diff_dims)} dimensions"
+        assert len(diff_dims) <= 1, (
+            f"Candidate {i} differs in {len(diff_dims)} dimensions"
+        )
 
 
 def test_raasp_np_1d_basic_functionality():

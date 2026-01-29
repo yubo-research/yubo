@@ -170,7 +170,9 @@ def test_mk_replicates_skips_done(mock_data_is_done, mock_get_env_conf):
 def test_mk_replicates_creates_out_dir():
     with tempfile.TemporaryDirectory() as tmpdir:
         with patch("experiments.experiment_sampler.get_env_conf") as mock_get_env_conf:
-            with patch("experiments.experiment_sampler.data_is_done") as mock_data_is_done:
+            with patch(
+                "experiments.experiment_sampler.data_is_done"
+            ) as mock_data_is_done:
                 mock_data_is_done.return_value = False
                 mock_get_env_conf.return_value = MagicMock()
 
@@ -292,7 +294,9 @@ def test_sample_1(mock_torch, mock_seed_all, mock_default_policy, mock_optimizer
     mock_trace_entry.rreturn = 1.5
 
     mock_optimizer = MagicMock()
-    mock_optimizer.collect_trace.return_value = iter([mock_trace_entry, mock_trace_entry])
+    mock_optimizer.collect_trace.return_value = iter(
+        [mock_trace_entry, mock_trace_entry]
+    )
     mock_optimizer_class.return_value = mock_optimizer
 
     mock_env_conf = MagicMock()
@@ -315,7 +319,9 @@ def test_sample_1(mock_torch, mock_seed_all, mock_default_policy, mock_optimizer
     mock_seed_all.assert_called_once_with(42 + 27)
     mock_default_policy.assert_called_once_with(mock_env_conf)
     mock_optimizer_class.assert_called_once()
-    mock_optimizer.collect_trace.assert_called_once_with(designer_name="ucb", max_iterations=2, max_proposal_seconds=100.0, deadline=None)
+    mock_optimizer.collect_trace.assert_called_once_with(
+        designer_name="ucb", max_iterations=2, max_proposal_seconds=100.0, deadline=None
+    )
 
     trace_lines = list(collector_trace)
     assert len(trace_lines) == 3
@@ -331,7 +337,9 @@ def test_sample_1(mock_torch, mock_seed_all, mock_default_policy, mock_optimizer
 @patch("experiments.experiment_sampler.default_policy")
 @patch("experiments.experiment_sampler.seed_all")
 @patch("experiments.experiment_sampler.torch")
-def test_sample_1_no_trace(mock_torch, mock_seed_all, mock_default_policy, mock_optimizer_class):
+def test_sample_1_no_trace(
+    mock_torch, mock_seed_all, mock_default_policy, mock_optimizer_class
+):
     mock_torch.cuda.is_available.return_value = False
     mock_torch.empty.return_value.device = "cpu"
     mock_default_policy.return_value = MagicMock()
@@ -413,7 +421,11 @@ def test_scan_local(mock_sample_1, mock_post_process):
     mock_collector_log = MagicMock()
     mock_collector_trace = MagicMock()
     mock_trace_records = MagicMock()
-    mock_sample_1.return_value = (mock_collector_log, mock_collector_trace, mock_trace_records)
+    mock_sample_1.return_value = (
+        mock_collector_log,
+        mock_collector_trace,
+        mock_trace_records,
+    )
 
     mock_env = MagicMock()
     run_configs = [
@@ -445,8 +457,12 @@ def test_scan_local(mock_sample_1, mock_post_process):
 
     assert mock_sample_1.call_count == 2
     assert mock_post_process.call_count == 2
-    mock_post_process.assert_any_call(mock_collector_log, mock_collector_trace, "/path/a", mock_trace_records)
-    mock_post_process.assert_any_call(mock_collector_log, mock_collector_trace, "/path/b", mock_trace_records)
+    mock_post_process.assert_any_call(
+        mock_collector_log, mock_collector_trace, "/path/a", mock_trace_records
+    )
+    mock_post_process.assert_any_call(
+        mock_collector_log, mock_collector_trace, "/path/b", mock_trace_records
+    )
 
 
 @patch("experiments.experiment_sampler.mk_replicates")

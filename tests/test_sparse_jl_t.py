@@ -17,8 +17,12 @@ def test_sparse_jl_t_preserves_neighbors_and_correlations():
     assert s < d
     theta_base = torch.linspace(0.1, 1.0, D)
     gen0 = torch.Generator().manual_seed(2024)
-    theta0 = torch.stack([theta_base + torch.randn(D, generator=gen0) * 0.01 for _ in range(N)], dim=0)
-    y0 = torch.stack([block_sparse_jl_transform_t(theta0[i], d, s=s) for i in range(N)], dim=0)
+    theta0 = torch.stack(
+        [theta_base + torch.randn(D, generator=gen0) * 0.01 for _ in range(N)], dim=0
+    )
+    y0 = torch.stack(
+        [block_sparse_jl_transform_t(theta0[i], d, s=s) for i in range(N)], dim=0
+    )
     gen = torch.Generator().manual_seed(123)
     dists_orig = torch.zeros((C, N), dtype=torch.float64)
     dists_embed = torch.zeros((C, N), dtype=torch.float64)
@@ -32,7 +36,9 @@ def test_sparse_jl_t_preserves_neighbors_and_correlations():
         y_c = block_sparse_jl_transform_t(theta_c, d, s=s)
         dists_orig[c] = torch.linalg.norm(theta0 - theta_c, dim=1).double()
         dists_embed[c] = torch.linalg.norm(y0 - y_c, dim=1).double()
-        pearson_all[c] = np.corrcoef(dists_orig[c].numpy(), dists_embed[c].numpy())[0, 1]
+        pearson_all[c] = np.corrcoef(dists_orig[c].numpy(), dists_embed[c].numpy())[
+            0, 1
+        ]
         spearman_all[c] = spearmanr(dists_orig[c].numpy(), dists_embed[c].numpy())[0]
     nn_orig = torch.argmin(dists_orig, dim=1).numpy()
     nn_embed = torch.argmin(dists_embed, dim=1).numpy()
@@ -55,7 +61,9 @@ def test_sparse_jl_t_without_replacement_per_column():
     y = block_sparse_jl_transform_t(x, d=d, s=s, seed=seed)
     idx = torch.nonzero(torch.abs(y) > 1e-12, as_tuple=False).squeeze(-1)
     assert int(idx.numel()) == s
-    assert torch.allclose(torch.abs(y[idx]), torch.full((s,), 1.0 / np.sqrt(s), dtype=y.dtype))
+    assert torch.allclose(
+        torch.abs(y[idx]), torch.full((s,), 1.0 / np.sqrt(s), dtype=y.dtype)
+    )
 
 
 def test_sparse_jl_t_zero_maps_to_zero():
@@ -109,7 +117,9 @@ def test_sparse_jl_t_timing_prints():
         y = block_sparse_jl_transform_t(x, d=d, s=s, seed=0)
         t1 = time.perf_counter()
         elapsed_ms = (t1 - t0) * 1000.0
-        print(f"D={D}, d={d}, s={s}, time_ms={elapsed_ms:.2f}, y_norm={float(torch.linalg.norm(y)):.4f}")
+        print(
+            f"D={D}, d={d}, s={s}, time_ms={elapsed_ms:.2f}, y_norm={float(torch.linalg.norm(y)):.4f}"
+        )
 
 
 def test_sparse_jl_t_timing_sparse_x_prints():
@@ -127,4 +137,6 @@ def test_sparse_jl_t_timing_sparse_x_prints():
     y = block_sparse_jl_transform_t(x, d=d, s=s, seed=1)
     t1 = time.perf_counter()
     elapsed_ms = (t1 - t0) * 1000.0
-    print(f"D={D}, d={d}, s={s}, k={k}, time_ms={elapsed_ms:.2f}, y_norm={float(torch.linalg.norm(y)):.4f}")
+    print(
+        f"D={D}, d={d}, s={s}, k={k}, time_ms={elapsed_ms:.2f}, y_norm={float(torch.linalg.norm(y)):.4f}"
+    )

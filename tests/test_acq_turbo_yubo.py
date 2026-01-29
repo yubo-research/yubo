@@ -17,7 +17,11 @@ def test_acq_turbo_yubo_draw():
                     self._X = X
 
                 def sample(self, sample_shape):
-                    return torch.rand(sample_shape + (self._X.shape[0], 1), dtype=self._X.dtype, device=self._X.device)
+                    return torch.rand(
+                        sample_shape + (self._X.shape[0], 1),
+                        dtype=self._X.dtype,
+                        device=self._X.device,
+                    )
 
             return _P(X)
 
@@ -33,7 +37,13 @@ def test_acq_turbo_yubo_draw():
         u = torch.rand((num_candidates, x_center.shape[-1]), dtype=dtype, device=device)
         return lb_t + (ub_t - lb_t) * u
 
-    acq = AcqTurboYUBO(model=model, trman=state, config=TurboYUBOConfig(candidate_sampler=_fake_raasp), obs_X=X, obs_Y_raw=Y)
+    acq = AcqTurboYUBO(
+        model=model,
+        trman=state,
+        config=TurboYUBOConfig(candidate_sampler=_fake_raasp),
+        obs_X=X,
+        obs_Y_raw=Y,
+    )
     out = acq.draw(num_arms=2)
 
     assert out.shape == (2, 2)

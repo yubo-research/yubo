@@ -8,7 +8,15 @@ import analysis.data_sets as ads
 
 linestyles = ["-", ":", "--", "-."] * 10
 markers = ["o", "x", "v", ".", "s"] * 10
-colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#666666", "#FF0055"] * 10
+colors = [
+    "#1f77b4",
+    "#ff7f0e",
+    "#2ca02c",
+    "#d62728",
+    "#9467bd",
+    "#666666",
+    "#FF0055",
+] * 10
 
 
 def mk_trans(fig, x=10 / 72, y=5 / 72):  #
@@ -58,7 +66,15 @@ def label_subplots(axs, fontsize=14):
 
 
 def slabel2(ax, x_norm_coords, y_norm_coords, subplot_letter, fontsize=14):
-    ax.text(x_norm_coords, y_norm_coords, f"({subplot_letter})", fontsize=fontsize, ha="center", va="center", transform=ax.transAxes)
+    ax.text(
+        x_norm_coords,
+        y_norm_coords,
+        f"({subplot_letter})",
+        fontsize=fontsize,
+        ha="center",
+        va="center",
+        transform=ax.transAxes,
+    )
 
 
 def slabel(trans, ax, a, fontsize=14):
@@ -133,13 +149,44 @@ def filled_err(
         sg = sg / np.sqrt(ys.shape[0])
     if two:
         sg *= 2
-    ax.fill_between(x, mu - sg, mu + sg, color=color, alpha=alpha, linewidth=1, label="_")
+    x_full = np.asarray(x)
+    mu_full = np.asarray(mu)
+    sg_full = np.asarray(sg)
+    if x_full.size == 0 or mu_full.size == 0:
+        return
+    ax.fill_between(
+        x_full,
+        mu_full - sg_full,
+        mu_full + sg_full,
+        color=color,
+        alpha=alpha,
+        linewidth=1,
+        label="_",
+    )
 
     if max_markers is not None:
-        n_skip = max(1, len(x) // max_markers)
-        x = x[::n_skip]
-        mu = mu[::n_skip]
-    ax.plot(x, mu, color=color_line, marker=marker, linestyle=linestyle, label=label, alpha=alpha_top, markersize=markersize, fillstyle=fillstyle)
+        n_skip = max(1, len(x_full) // max_markers)
+        idx = np.arange(0, len(x_full), n_skip)
+        if idx.size == 0:
+            return
+        if idx[-1] != len(x_full) - 1:
+            idx = np.append(idx, len(x_full) - 1)
+        x_plot = np.asarray(x_full)[idx]
+        mu_plot = np.asarray(mu_full)[idx]
+    else:
+        x_plot = x_full
+        mu_plot = mu_full
+    ax.plot(
+        x_plot,
+        mu_plot,
+        color=color_line,
+        marker=marker,
+        linestyle=linestyle,
+        label=label,
+        alpha=alpha_top,
+        markersize=markersize,
+        fillstyle=fillstyle,
+    )
 
 
 def error_area(x, y, yerr, color="#AAAAAA", alpha=0.5, fmt="--", marker="", ax=plt):
@@ -176,7 +223,9 @@ def plot_sorted(ax, optimizers, mu, se, renames=None, b_sort=True, highlight=Non
         i_sort = np.arange(len(mu))
     n = np.arange(len(mu))
     num_opt = len(optimizers)
-    ax.errorbar(n, mu[i_sort], 2 * se[i_sort], fmt="k,", capsize=6 * max(1, 20 / num_opt))
+    ax.errorbar(
+        n, mu[i_sort], 2 * se[i_sort], fmt="k,", capsize=6 * max(1, 20 / num_opt)
+    )
 
     names = list(optimizers)
     if renames is not None:
@@ -190,14 +239,24 @@ def plot_sorted(ax, optimizers, mu, se, renames=None, b_sort=True, highlight=Non
     if highlight is not None:
         for i_n, nn in enumerate(names):
             if nn == highlight:
-                ax.errorbar(i_n, mu[i_sort][i_n], 2 * se[i_sort][i_n], fmt="k,", capsize=6, elinewidth=3, capthick=3)
+                ax.errorbar(
+                    i_n,
+                    mu[i_sort][i_n],
+                    2 * se[i_sort][i_n],
+                    fmt="k,",
+                    capsize=6,
+                    elinewidth=3,
+                    capthick=3,
+                )
                 break
 
     ax.set_xticks(n, names, rotation=60, ha="right", va="top")
     ax.set_ylim([-0.1, 1])
 
 
-def plot_sorted_agg(ax, data_locator, renames=None, i_agg=-1, b_sort=True, highlight=None):
+def plot_sorted_agg(
+    ax, data_locator, renames=None, i_agg=-1, b_sort=True, highlight=None
+):
     traces = ads.load_multiple_traces(data_locator)
 
     if i_agg == "mean":
@@ -207,10 +266,20 @@ def plot_sorted_agg(ax, data_locator, renames=None, i_agg=-1, b_sort=True, highl
             traces = traces[..., : i_agg + 1]
         mu, se = ads.range_summarize(traces)
 
-    plot_sorted(ax, data_locator.optimizers(), mu, se, renames=renames, b_sort=b_sort, highlight=highlight)
+    plot_sorted(
+        ax,
+        data_locator.optimizers(),
+        mu,
+        se,
+        renames=renames,
+        b_sort=b_sort,
+        highlight=highlight,
+    )
 
 
-def plot_compare_problem(ax, data_locator, b_normalize, title, renames=None, b_legend=True):
+def plot_compare_problem(
+    ax, data_locator, b_normalize, title, renames=None, b_legend=True
+):
     handles = []
     legend = []
     i_marker = 0

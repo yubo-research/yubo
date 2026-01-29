@@ -54,9 +54,13 @@ def nearest_neighbor(enn, x: np.array, p_boundary_is_neighbor):
     dist = dist.flatten()
     assert len(idx) == num_samples, (idx, dist)
 
-    i_bin = np.where(np.random.binomial(n=1, p=p_boundary_is_neighbor, size=num_samples))[0]
+    i_bin = np.where(
+        np.random.binomial(n=1, p=p_boundary_is_neighbor, size=num_samples)
+    )[0]
     if len(i_bin) > 0:
-        dist_bdy = np.minimum(np.abs(1 - x[i_bin]).min(axis=1), np.abs(0 - x[i_bin]).min(axis=1))
+        dist_bdy = np.minimum(
+            np.abs(1 - x[i_bin]).min(axis=1), np.abs(0 - x[i_bin]).min(axis=1)
+        )
         i = np.where(dist[i_bin] > dist_bdy)[0]
         i_bin = i_bin[i]
         dist_bdy = dist_bdy[i]
@@ -106,7 +110,9 @@ def _farthest_true(x: np.ndarray, a: np.ndarray):
     return x
 
 
-def confidence_region_fast(enn, x_0: np.ndarray, u: np.ndarray, se_max: float, num_steps: int = 10):
+def confidence_region_fast(
+    enn, x_0: np.ndarray, u: np.ndarray, se_max: float, num_steps: int = 10
+):
     num_samples, num_dim = x_0.shape
     assert u.shape == (num_samples, num_dim), (u.shape, x_0.shape)
 
@@ -180,7 +186,9 @@ def clip_to_boundary(x_0: np.ndarray, u: np.ndarray):
     return ray_boundary_np(x_0, u)
 
 
-def farthest_neighbor_fast(enn, x_0: np.ndarray, u: np.ndarray, num_steps: int = 10, p_boundary_is_neighbor=0.0):
+def farthest_neighbor_fast(
+    enn, x_0: np.ndarray, u: np.ndarray, num_steps: int = 10, p_boundary_is_neighbor=0.0
+):
     assert p_boundary_is_neighbor == 0.0, p_boundary_is_neighbor
     num_samples, num_dim = x_0.shape
     assert u.shape == (num_samples, num_dim), (u.shape, x_0.shape)
@@ -211,7 +219,13 @@ def farthest_neighbor_fast(enn, x_0: np.ndarray, u: np.ndarray, num_steps: int =
     return _farthest_true(x, a)
 
 
-def farthest_neighbor(enn, x_0: np.ndarray, u: np.ndarray, eps_bound: float = 1e-3, p_boundary_is_neighbor=0.0):
+def farthest_neighbor(
+    enn,
+    x_0: np.ndarray,
+    u: np.ndarray,
+    eps_bound: float = 1e-3,
+    p_boundary_is_neighbor=0.0,
+):
     """
     Find the farthest point from x_0 along direction u that still has x_0 as its nearest neighbor.
     Alternatively, find the boundary of the Vornoi cell that has x_0 as its center.
@@ -234,7 +248,10 @@ def farthest_neighbor(enn, x_0: np.ndarray, u: np.ndarray, eps_bound: float = 1e
         assert False, "Can't find x_0 in training data for ENN"
 
     def _is_neighbor(x):
-        return nearest_neighbor(enn, x, p_boundary_is_neighbor=p_boundary_is_neighbor)[0] == idx_0
+        return (
+            nearest_neighbor(enn, x, p_boundary_is_neighbor=p_boundary_is_neighbor)[0]
+            == idx_0
+        )
 
     while (l_high - l_low).max() > eps_bound:
         assert not np.any(np.isnan(l_low)), l_low

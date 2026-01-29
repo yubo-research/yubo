@@ -40,9 +40,13 @@ class AxDesigner:
         with warnings.catch_warnings():
             if self._trial_index is not None:
                 assert_scalar_rreturn([data[-1]])
-                self._ax_client.complete_trial(trial_index=self._trial_index, raw_data=data[-1].trajectory.rreturn)
+                self._ax_client.complete_trial(
+                    trial_index=self._trial_index, raw_data=data[-1].trajectory.rreturn
+                )
             parameters, self._trial_index = self._ax_client.get_next_trial()
-            p = np.array([parameters.get(f"x{i:03d}") for i in range(self._policy.num_params())])
+            p = np.array(
+                [parameters.get(f"x{i:03d}") for i in range(self._policy.num_params())]
+            )
             policy = self._policy.clone()
             policy.set_params(p)
 

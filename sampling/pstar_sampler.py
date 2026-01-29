@@ -21,7 +21,9 @@ class PStarSampler:
             return self._sample_pstar(num_X_samples)
 
     def _sample_pstar(self, num_X_samples):
-        X_max = torch.maximum(self._eps_interior, torch.minimum(1 - self._eps_interior, self.X_max))
+        X_max = torch.maximum(
+            self._eps_interior, torch.minimum(1 - self._eps_interior, self.X_max)
+        )
         X = torch.tile(X_max, (num_X_samples, 1))
 
         if self.k_mcmc is not None:

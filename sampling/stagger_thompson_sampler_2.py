@@ -48,7 +48,11 @@ class StaggerThompsonSampler2:
             d=self._num_dim,
         ).to(self._X_samples)
         X_dir = X_dir / X_dir.norm(dim=-1, keepdim=True)
-        assert X_dir.shape == (self._num_samples, self._num_dim), (X_dir.shape, self._num_samples, self._num_dim)
+        assert X_dir.shape == (self._num_samples, self._num_dim), (
+            X_dir.shape,
+            self._num_samples,
+            self._num_dim,
+        )
         assert torch.abs(torch.linalg.norm(X_dir, dim=-1).min() - 1) < 1e-6
 
         X_target = ray_boundary(self._X_samples, X_dir)
@@ -59,7 +63,11 @@ class StaggerThompsonSampler2:
     def _thompson_sample(self, X_target, s):
         X_perturbed = self._X_samples + s * (X_target - self._X_samples)
         X_both = torch.cat([self._X_samples, X_perturbed], dim=0)
-        assert X_both.shape == (2 * self._num_samples, self._num_dim), (X_both.shape, self._num_samples, self._num_dim)
+        assert X_both.shape == (2 * self._num_samples, self._num_dim), (
+            X_both.shape,
+            self._num_samples,
+            self._num_dim,
+        )
 
         mvn = self._model.posterior(X_both)
         Y = mvn.sample(torch.Size([1])).squeeze()
@@ -68,7 +76,9 @@ class StaggerThompsonSampler2:
         Y_perturbed = Y[self._num_samples :]
         i_improved = Y_perturbed > Y_ts
         self._X_samples[i_improved] = X_perturbed[i_improved]
-        assert self._X_samples.shape == (self._num_samples, self._num_dim), self._X_samples.shape
+        assert self._X_samples.shape == (self._num_samples, self._num_dim), (
+            self._X_samples.shape
+        )
         assert self._X_samples.min() >= 0, self._X_samples.min()
         assert self._X_samples.max() <= 1, self._X_samples.max()
 

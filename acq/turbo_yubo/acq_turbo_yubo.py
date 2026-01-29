@@ -6,7 +6,15 @@ from acq.turbo_yubo.turbo_yubo_config import TurboYUBOConfig
 
 
 class AcqTurboYUBO:
-    def __init__(self, model, trman: Any, config: TurboYUBOConfig, obs_X: torch.Tensor, obs_Y_raw: torch.Tensor, max_candidates: int = 5000):
+    def __init__(
+        self,
+        model,
+        trman: Any,
+        config: TurboYUBOConfig,
+        obs_X: torch.Tensor,
+        obs_Y_raw: torch.Tensor,
+        max_candidates: int = 5000,
+    ):
         assert model is not None
         assert trman is not None
         assert config is not None
@@ -52,7 +60,11 @@ class AcqTurboYUBO:
 
     def _draw_initial(self, num_arms):
         return torch.tensor(
-            self.config.candidate_initializer(num_arms, self.state.num_dim, seed=int(torch.randint(999999, (1,)).item())),
+            self.config.candidate_initializer(
+                num_arms,
+                self.state.num_dim,
+                seed=int(torch.randint(999999, (1,)).item()),
+            ),
             dtype=self.dtype,
             device=self.device,
         )
@@ -69,7 +81,9 @@ class AcqTurboYUBO:
         lb, ub = self._create_trust_region(x_center)
         if lb is None or ub is None:
             return self._draw_initial(num_arms)
-        x_cand = self.config.candidate_sampler(x_center, lb, ub, self.num_candidates, self.device, self.dtype)
+        x_cand = self.config.candidate_sampler(
+            x_center, lb, ub, self.num_candidates, self.device, self.dtype
+        )
         x_target = self.config.candidate_selector(self.X, self.model, x_cand, num_arms)
         x_arm = self.config.targeter(x_center, x_target)
 

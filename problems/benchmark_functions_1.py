@@ -31,7 +31,12 @@ class Ackley:
 
     def __call__(self, x):
         x = 32.768 * x
-        return -self.a * np.exp(-self.b * np.sqrt((x**2).mean())) - np.exp(np.cos(self.c * x).mean()) + self.a + np.e
+        return (
+            -self.a * np.exp(-self.b * np.sqrt((x**2).mean()))
+            - np.exp(np.cos(self.c * x).mean())
+            + self.a
+            + np.e
+        )
 
 
 # 2  xi ∈ [-4.5, 4.5], for all i = 1, 2. Beale result [0, 4.5*10^5]
@@ -59,7 +64,11 @@ class Branin:
         x = mk_2d(x)
         x1 = 7.5 * x[0] + 2.5
         x2 = 7.5 * x[1] + 7.5
-        return self.a * (x2 - self.b * x1**2 + self.c * x1 - self.r) ** 2 + self.s * (1 - self.t) * np.cos(x1) + self.s
+        return (
+            self.a * (x2 - self.b * x1**2 + self.c * x1 - self.r) ** 2
+            + self.s * (1 - self.t) * np.cos(x1)
+            + self.s
+        )
 
 
 # 4 x1 ∈ [-15, -5], x2 ∈ [-3, 3]. result [0,250] Bukin
@@ -78,7 +87,14 @@ class CrossInTray:
         x = x * 9 + 1
         x0 = x[0]
         x1 = x[1]
-        part1 = np.abs(np.sin(x0) * np.sin(x1) * np.exp(np.abs(100.0 - np.sqrt(x0**2 + x1**2) / np.pi))) + 1.0
+        part1 = (
+            np.abs(
+                np.sin(x0)
+                * np.sin(x1)
+                * np.exp(np.abs(100.0 - np.sqrt(x0**2 + x1**2) / np.pi))
+            )
+            + 1.0
+        )
         part2 = np.power(part1, 0.1)
         return -0.0001 * part2
 
@@ -145,13 +161,68 @@ class Hartmann:
     def __init__(self):
         self.A = {
             3: np.array((3, 10, 30, 0.1, 10, 35, 3, 10, 30, 0.1, 10, 35)).reshape(4, 3),
-            4: np.array((10, 3, 17, 3.5, 1.7, 8, 0.05, 10, 17, 0.1, 8, 14, 3, 3.5, 1.7, 10, 17, 8, 17, 8, 0.05, 10, 0.1, 14)).reshape(4, 6),
+            4: np.array(
+                (
+                    10,
+                    3,
+                    17,
+                    3.5,
+                    1.7,
+                    8,
+                    0.05,
+                    10,
+                    17,
+                    0.1,
+                    8,
+                    14,
+                    3,
+                    3.5,
+                    1.7,
+                    10,
+                    17,
+                    8,
+                    17,
+                    8,
+                    0.05,
+                    10,
+                    0.1,
+                    14,
+                )
+            ).reshape(4, 6),
         }
         self.P = {
-            3: 10 ** (-4) * np.array((3689, 1170, 2673, 4699, 4387, 7470, 1091, 8732, 5547, 381, 5743, 8828)).reshape(4, 3),
+            3: 10 ** (-4)
+            * np.array(
+                (3689, 1170, 2673, 4699, 4387, 7470, 1091, 8732, 5547, 381, 5743, 8828)
+            ).reshape(4, 3),
             4: 10 ** (-4)
             * np.array(
-                (1312, 1696, 5569, 124, 8283, 5886, 2329, 4135, 8307, 3736, 1004, 9991, 2348, 1451, 3522, 2883, 3047, 6650, 4047, 8828, 8732, 5743, 1091, 381)
+                (
+                    1312,
+                    1696,
+                    5569,
+                    124,
+                    8283,
+                    5886,
+                    2329,
+                    4135,
+                    8307,
+                    3736,
+                    1004,
+                    9991,
+                    2348,
+                    1451,
+                    3522,
+                    2883,
+                    3047,
+                    6650,
+                    4047,
+                    8828,
+                    8732,
+                    5743,
+                    1091,
+                    381,
+                )
             ).reshape(4, 6),
         }
         self.ALPHA = [1.0, 1.2, 3.0, 3.2]
@@ -287,9 +358,50 @@ class Shubert:
 class Shekel:
     def __init__(self):
         self.beta = 0.1 * np.array((1, 2, 2, 4, 4, 6, 3, 7, 5, 5)).T
-        self.C = np.array((4, 1, 8, 6, 3, 2, 5, 8, 6, 7, 4, 1, 8, 6, 7, 9, 3, 1, 2, 3.6, 4, 1, 8, 6, 3, 2, 5, 8, 6, 7, 4, 1, 8, 6, 7, 9, 3, 1, 2, 3.6)).reshape(
-            4, 10
-        )
+        self.C = np.array(
+            (
+                4,
+                1,
+                8,
+                6,
+                3,
+                2,
+                5,
+                8,
+                6,
+                7,
+                4,
+                1,
+                8,
+                6,
+                7,
+                9,
+                3,
+                1,
+                2,
+                3.6,
+                4,
+                1,
+                8,
+                6,
+                3,
+                2,
+                5,
+                8,
+                6,
+                7,
+                4,
+                1,
+                8,
+                6,
+                7,
+                9,
+                3,
+                1,
+                2,
+                3.6,
+            )
+        ).reshape(4, 10)
 
     def __call__(self, x):
         if len(x) != 4:
@@ -489,7 +601,9 @@ class McCormick:
 
 class PowerSum:
     def __init__(self, b=None):
-        self.b = np.array(b) if b is not None else np.array([8, 18, 44, 114])  # Default for d=4
+        self.b = (
+            np.array(b) if b is not None else np.array([8, 18, 44, 114])
+        )  # Default for d=4
 
     def __call__(self, x):
         x = np.asarray(x)
@@ -533,9 +647,13 @@ class GoldsteinPrice:
         x = 2 * x
         x1, x2 = x[0], x[1]
 
-        part1 = 1 + (x1 + x2 + 1) ** 2 * (19 - 14 * x1 + 3 * x1**2 - 14 * x2 + 6 * x1 * x2 + 3 * x2**2)
+        part1 = 1 + (x1 + x2 + 1) ** 2 * (
+            19 - 14 * x1 + 3 * x1**2 - 14 * x2 + 6 * x1 * x2 + 3 * x2**2
+        )
 
-        part2 = 30 + (2 * x1 - 3 * x2) ** 2 * (18 - 32 * x1 + 12 * x1**2 + 48 * x2 - 36 * x1 * x2 + 27 * x2**2)
+        part2 = 30 + (2 * x1 - 3 * x2) ** 2 * (
+            18 - 32 * x1 + 12 * x1**2 + 48 * x2 - 36 * x1 * x2 + 27 * x2**2
+        )
 
         return part1 * part2
 

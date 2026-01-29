@@ -27,7 +27,9 @@ def run_experiment(params: "ExpParams", opt_name: str) -> None:
         controller_name = controller.name
         base_collector = Collector()
         mapped_opt_name = "uhd_bo" if opt_name in ("random", "turbo") else opt_name
-        collector = UHDCollector(name=controller_name, opt_name=mapped_opt_name, collector=base_collector)
+        collector = UHDCollector(
+            name=controller_name, opt_name=mapped_opt_name, collector=base_collector
+        )
         params.optimizer(controller, collector, params.num_rounds)
         controllers.append(controller)
         collectors.append(collector)
@@ -67,7 +69,9 @@ if __name__ == "__main__":
 
     if spec.requires_dims:
         if "num_dim" not in args or "num_active" not in args:
-            print("Error: num_dim and num_active are required when target is tm_sphere or tm_ackley")
+            print(
+                "Error: num_dim and num_active are required when target is tm_sphere or tm_ackley"
+            )
             sys.exit(1)
         num_dim = int(args["num_dim"])
         num_active = int(args["num_active"])
@@ -77,13 +81,17 @@ if __name__ == "__main__":
         eps = float(args["eps"])
 
         def get_conf():
-            from uhd.mk_random_perturbations_config import mk_random_perturbations_config
+            from uhd.mk_random_perturbations_config import (
+                mk_random_perturbations_config,
+            )
 
             conf = mk_random_perturbations_config(eps=eps, num_trail=num_trail)
             conf.metric = spec.make_bo_metric()
             return conf
     elif opt_name == "turbo":
-        assert "use_tr" in args and "num_raasp" in args, "use_tr and num_raasp required when opt_name=turbo"
+        assert "use_tr" in args and "num_raasp" in args, (
+            "use_tr and num_raasp required when opt_name=turbo"
+        )
         assert "num_candidates" in args, "num_candidates required when opt_name=turbo"
         assert "alpha" in args, "alpha required when opt_name=turbo"
         use_tr_raw = str(args["use_tr"]).lower()
@@ -102,7 +110,13 @@ if __name__ == "__main__":
         def get_conf():
             from uhd.mk_turbo_config import mk_turbo_config
 
-            conf = mk_turbo_config(use_tr=use_tr, num_raasp=num_raasp, num_trail=num_trail, num_candidates=num_candidates, alpha=alpha)
+            conf = mk_turbo_config(
+                use_tr=use_tr,
+                num_raasp=num_raasp,
+                num_trail=num_trail,
+                num_candidates=num_candidates,
+                alpha=alpha,
+            )
             conf.metric = spec.make_bo_metric()
             return conf
     else:
@@ -112,7 +126,9 @@ if __name__ == "__main__":
 
             metric = spec.make_adamw_metric()
 
-            return AdamWConfig(lr=1e-3, betas=(0.9, 0.999), eps=1e-8, weight_decay=1e-2, metric=metric)
+            return AdamWConfig(
+                lr=1e-3, betas=(0.9, 0.999), eps=1e-8, weight_decay=1e-2, metric=metric
+            )
 
     _Controller = spec.controller_type_factory()
 
