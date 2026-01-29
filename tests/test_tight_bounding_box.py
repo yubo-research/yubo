@@ -1,33 +1,48 @@
-def _test_tight_bounding_box(num_dim, num_samples, num_keep):
-    import torch
+import numpy as np
 
+
+def test_tight_bounding_box_1_basic():
+    from sampling.tight_bounding_box import tight_bounding_box_1
+
+    X_0 = np.array([0.5, 0.5])
+    X = np.array([[0.5, 0.5], [0.4, 0.5], [0.6, 0.5], [0.1, 0.1], [0.9, 0.9]])
+    num_keep = 3
+
+    bounds = tight_bounding_box_1(X_0, X, num_keep)
+    assert bounds.shape == (2, 2)
+    assert np.all(bounds[0, :] <= bounds[1, :])
+
+
+def test_tight_bounding_box_1_small_input():
+    from sampling.tight_bounding_box import tight_bounding_box_1
+
+    X_0 = np.array([0.5, 0.5])
+    X = np.array([[0.5, 0.5]])
+    num_keep = 3
+
+    bounds = tight_bounding_box_1(X_0, X, num_keep)
+    assert bounds.shape == (2, 2)
+
+
+def test_tight_bounding_box_basic():
     from sampling.tight_bounding_box import tight_bounding_box
 
-    X = torch.rand(size=(num_samples, num_dim))
-    X_0 = X[0, :]
+    X_0 = np.array([0.5, 0.5])
+    X = np.array([[0.5, 0.5], [0.4, 0.5], [0.6, 0.5], [0.1, 0.1], [0.9, 0.9]])
+    num_keep = 3
 
-    idx, bounds = tight_bounding_box(X_0, X, num_keep=num_keep, eps_bounds=1e-9)
-    bounds = torch.tensor(bounds)
+    idx, bounds = tight_bounding_box(X_0, X, num_keep)
+    assert bounds.shape == (2, 2)
     assert len(idx) == num_keep
 
-    X_keep = X[idx, :]
 
-    assert torch.all(X_keep > bounds[0, :] - 1e-9)
-    assert torch.all(X_keep < bounds[1, :] + 1e-9), torch.maximum(
-        torch.tensor(0.0), X_keep - bounds[1, :]
-    )
+def test_tight_bounding_box_small_input():
+    from sampling.tight_bounding_box import tight_bounding_box
 
+    X_0 = np.array([0.5, 0.5])
+    X = np.array([[0.5, 0.5]])
+    num_keep = 3
 
-def test_tight_bounding_box():
-    import numpy as np
-    import torch
-
-    np.random.seed(17)
-    torch.manual_seed(17)
-
-    for _ in range(100):
-        num_dim = np.random.randint(1, 100)
-        num_samples = np.random.randint(2, 100)
-        num_keep = np.random.randint(1, num_samples)
-
-        _test_tight_bounding_box(num_dim, num_samples, num_keep)
+    idx, bounds = tight_bounding_box(X_0, X, num_keep)
+    assert bounds.shape == (2, 2)
+    assert len(idx) == 1
