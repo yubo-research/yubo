@@ -1,29 +1,29 @@
 from typing import Optional
 
 import numpy as np
-from third_party.enn.turbo.config.acq_type import AcqType
-from third_party.enn.turbo.config.candidate_gen_config import CandidateGenConfig
-from third_party.enn.turbo.config.candidate_rv import CandidateRV
-from third_party.enn.turbo.config.enn_surrogate_config import (
+
+import common.all_bounds as all_bounds
+from enn.turbo.config.acq_type import AcqType
+from enn.turbo.config.candidate_gen_config import CandidateGenConfig
+from enn.turbo.config.candidate_rv import CandidateRV
+from enn.turbo.config.enn_surrogate_config import (
     ENNFitConfig,
     ENNSurrogateConfig,
 )
-from third_party.enn.turbo.config.factory import (
+from enn.turbo.config.factory import (
     lhd_only_config,
     turbo_enn_config,
     turbo_one_config,
     turbo_zero_config,
 )
-from third_party.enn.turbo.config.raasp_driver import RAASPDriver
-from third_party.enn.turbo.config.trust_region import (
+from enn.turbo.config.raasp_driver import RAASPDriver
+from enn.turbo.config.trust_region import (
     MorboTRConfig,
     NoTRConfig,
     TrustRegionConfig,
     TurboTRConfig,
 )
-from third_party.enn.turbo.optimizer import create_optimizer
-
-import common.all_bounds as all_bounds
+from enn.turbo.optimizer import create_optimizer
 from optimizer.designer_asserts import assert_scalar_rreturn
 
 
@@ -94,7 +94,9 @@ class TurboENNDesigner:
         if self._tr_type == "morbo":
             if num_metrics is None:
                 raise ValueError("num_metrics is required for tr_type='morbo'")
-            return MorboTRConfig(num_metrics=int(num_metrics))
+            from enn.turbo.config.trust_region import MultiObjectiveConfig
+
+            return MorboTRConfig(multi_objective=MultiObjectiveConfig(num_metrics=int(num_metrics)))
         raise ValueError(f"Invalid tr_type: {self._tr_type}")
 
     def _make_config(self, num_init: int, num_metrics: int | None):
@@ -114,9 +116,7 @@ class TurboENNDesigner:
             candidates = None
             if num_candidates is not None or self._candidate_rv is not None:
                 if num_candidates is None:
-                    candidates = CandidateGenConfig(
-                        candidate_rv=candidate_rv, raasp_driver=RAASPDriver.FAST
-                    )
+                    candidates = CandidateGenConfig(candidate_rv=candidate_rv, raasp_driver=RAASPDriver.FAST)
                 else:
                     candidates = CandidateGenConfig(
                         candidate_rv=candidate_rv,

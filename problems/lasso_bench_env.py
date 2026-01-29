@@ -1,7 +1,8 @@
 class LassoBenchEnv:
     def __init__(self, pick_data, seed):
+        from LassoBench import RealBenchmark
+
         import common.all_bounds as all_bounds
-        from third_party.LassoBench import RealBenchmark
 
         self._bench = RealBenchmark(pick_data=pick_data, seed=seed)
         self.n_features = self._bench.n_features
