@@ -29,11 +29,6 @@ def get_env_conf(tag, problem_seed=None, noise_level=None, noise_seed_0=None):
         ec.problem_seed = problem_seed
         ec.noise_seed_0 = noise_seed_0
         ec.frozen_noise = frozen_noise
-    elif tag in _pufferlib_env_confs:
-        ec = copy.deepcopy(_pufferlib_env_confs[tag])
-        ec.problem_seed = problem_seed
-        ec.noise_seed_0 = noise_seed_0
-        ec.frozen_noise = frozen_noise
     else:
         ec = EnvConf(
             tag,
@@ -219,47 +214,5 @@ _gym_env_confs = {
         ),
         kwargs={"continuous": False},
         policy_class=TurboLunarPolicy,
-    ),
-}
-
-
-@dataclass
-class PufferLibEnvConf:
-    env_name: str
-    problem_seed: int = None
-    policy_class_name: str = None
-    noise_level: float = None
-    noise_seed_0: int = None
-    frozen_noise: bool = True
-    gym_conf: GymConf = None
-    action_space: Any = None
-    kwargs: dict = None
-    max_steps: int = 10000
-    _policy_class: Any = None
-
-    @property
-    def policy_class(self):
-        if self._policy_class is None and self.policy_class_name is not None:
-            if self.policy_class_name == "PufferLibBreakoutPolicy":
-                from problems.pufferlib_breakout_policy import PufferLibBreakoutPolicy
-
-                self._policy_class = PufferLibBreakoutPolicy
-        return self._policy_class
-
-    def make(self, **kwargs):
-        from problems.pufferlib_env import PufferLibBreakoutEnv
-
-        return PufferLibBreakoutEnv(num_envs=1)
-
-    def __post_init__(self):
-        if not self.kwargs:
-            self.kwargs = {}
-
-
-_pufferlib_env_confs = {
-    "pl:breakout": PufferLibEnvConf(
-        env_name="pl:breakout",
-        policy_class_name="PufferLibBreakoutPolicy",
-        max_steps=10000,
     ),
 }

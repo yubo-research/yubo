@@ -50,16 +50,3 @@ def test_default_policy():
     env_conf = get_env_conf("f:ackley-3d", problem_seed=0, noise_seed_0=0)
     policy = default_policy(env_conf)
     assert policy is not None
-
-
-def test_pufferlib_env_conf_policy_class():
-    pytest = __import__("pytest")
-    try:
-        from problems.env_conf import PufferLibEnvConf
-
-        # Create a PufferLibEnvConf without a policy_class_name
-        conf = PufferLibEnvConf(env_name="pufferlib-test")
-        # policy_class property should return None when no class_name is set
-        assert conf.policy_class is None
-    except ImportError:
-        pytest.skip("pufferlib not installed")
