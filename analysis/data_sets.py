@@ -265,137 +265,99 @@ def load_traces(trace_dir, key="return", grep_for="TRACE"):
     return result
 
 
+def _ensure_float_trace(trace):
+    if trace.dtype == np.float64 or trace.dtype == np.float32:
+        return trace
+    try:
+        return np.asarray(trace, dtype=float)
+    except (ValueError, TypeError):
+        return np.array([float(x) if x is not None else np.nan for x in trace.flat]).reshape(trace.shape)
+
+
+def _ensure_float_traces(traces):
+    if traces.dtype != object and np.issubdtype(traces.dtype, np.number):
+        return traces
+    try:
+        return np.asarray(traces, dtype=float, casting="unsafe")
+    except (ValueError, TypeError):
+        def safe_float(v):
+            try:
+                return float(v)
+            except (ValueError, TypeError):
+                return np.nan
+        return np.array([safe_float(v) for v in traces.flatten()], dtype=float).reshape(traces.shape)
+
+
+def _validate_trace_path(trace_path, problem_name, opt_name, report_bad):
+    if len(trace_path) == 0:
+        report_bad(problem_name, opt_name, f"Missing data for {problem_name} {opt_name}")
+        return None
+    if len(trace_path) > 1:
+        report_bad(problem_name, opt_name, f"Extra data len = {len(trace_path)}")
+        return None
+    return trace_path[0]
+
+
+def _load_and_validate_trace(trace_path, data_locator, problem_name, opt_name, report_bad):
+    try:
+        trace = load_traces(trace_path, key=data_locator.key, grep_for=data_locator.grep_for)
+    except FileNotFoundError as e:
+        report_bad(problem_name, opt_name, f"{trace_path} {repr(e)}")
+        return None
+    if trace is None or len(trace.shape) < 2:
+        report_bad(problem_name, opt_name, "No/empty trace")
+        return None
+    return trace
+
+
 def load_multiple_traces(data_locator):
     import numpy.ma as npma
 
-    """
-    Returns traces[i_problem, i_opt, i_replication, i_round]
-    """
-
     num_bad = 0
     num_tot = 0
-
     problems = data_locator.problems()
     opt_names = data_locator.optimizers()
 
-    def _report_bad(problem_name, opt_name, msg):
+    def report_bad(problem_name, opt_name, msg):
         nonlocal num_bad
         print("BAD:", msg, data_locator, problem_name, opt_name)
         num_bad += 1
 
-    def _init(trace):
-        if len(trace.shape) < 2:
-            return None
-        # Ensure float dtype from the start
-        arr = np.nan * np.ones(
-            shape=(len(problems), len(opt_names), trace.shape[0], trace.shape[1]),
-            dtype=float,
-        )
-        return arr
+    def init_traces(trace):
+        return np.nan * np.ones((len(problems), len(opt_names), trace.shape[0], trace.shape[1]), dtype=float) if len(trace.shape) >= 2 else None
 
     traces = None
     for i_problem, problem_name in enumerate(problems):
         for i_opt, opt_name in enumerate(opt_names):
             num_tot += 1
-            trace_path = data_locator(problem_name, opt_name)
-            if len(trace_path) == 0:
-                _report_bad(
-                    problem_name,
-                    opt_name,
-                    f"Missing data for {problem_name} {opt_name}",
-                )
+            trace_path = _validate_trace_path(data_locator(problem_name, opt_name), problem_name, opt_name, report_bad)
+            if trace_path is None:
                 continue
-            if len(trace_path) > 1:
-                _report_bad(
-                    problem_name,
-                    opt_name,
-                    f"Extra data for {problem_name} {opt_name} len = {len(trace_path)}",
-                )
-                continue
-            trace_path = trace_path[0]
-
-            try:
-                trace = load_traces(
-                    trace_path, key=data_locator.key, grep_for=data_locator.grep_for
-                )
-            except FileNotFoundError as e:
-                _report_bad(problem_name, opt_name, f"{trace_path} {repr(e)}")
-                continue
+            trace = _load_and_validate_trace(trace_path, data_locator, problem_name, opt_name, report_bad)
             if trace is None:
-                _report_bad(problem_name, opt_name, "No trace")
                 continue
-            if len(trace.shape) < 2:
-                _report_bad(problem_name, opt_name, "Empty trace")
-                continue
-
             if traces is None:
-                traces = _init(trace)
+                traces = init_traces(trace)
                 if traces is None:
-                    _report_bad(problem_name, opt_name, "Empty trace (B)")
+                    report_bad(problem_name, opt_name, "Empty trace (B)")
                     continue
-
             if trace.shape[0] > traces.shape[2]:
-                traces_new = _init(trace)
+                traces_new = init_traces(trace)
                 traces_new[:, :, : traces.shape[2], :] = traces
                 traces = traces_new
-
             if trace.shape != traces[i_problem, i_opt, ...].shape:
-                _report_bad(
-                    problem_name,
-                    opt_name,
-                    f"Warning: Trace is wrong shape {trace.shape} != {traces[i_problem, i_opt, ...].shape}",
-                )
-                # continue
-            # Ensure trace is numeric before assignment - force conversion to float
-            if trace.dtype != np.float64 and trace.dtype != np.float32:
-                try:
-                    trace = np.asarray(trace, dtype=float)
-                except (ValueError, TypeError):
-                    # If conversion fails, try to convert element by element
-                    trace = np.array(
-                        [float(x) if x is not None else np.nan for x in trace.flat]
-                    ).reshape(trace.shape)
+                report_bad(problem_name, opt_name, f"Wrong shape {trace.shape}")
+            trace = _ensure_float_trace(trace)
             traces[i_problem, i_opt, : trace.shape[0], : trace.shape[1]] = trace
 
-    # Ensure traces is initialized and has numeric dtype
     if traces is None:
-        # No valid traces found, create empty array with float dtype
-        traces = np.array([], dtype=float).reshape(
-            (len(problems), len(opt_names), 0, 0)
-        )
+        traces = np.array([], dtype=float).reshape((len(problems), len(opt_names), 0, 0))
     else:
-        # Force conversion to float - handle object arrays and other non-numeric types
-        if traces.dtype == object or not np.issubdtype(traces.dtype, np.number):
-            # Try to convert to float, replacing invalid values with NaN
-            try:
-                # First try direct conversion
-                traces = np.asarray(traces, dtype=float, casting="unsafe")
-            except (ValueError, TypeError):
-                # If that fails, use a safer conversion that handles mixed types
-                traces_flat = traces.flatten()
-                traces_converted = []
-                for val in traces_flat:
-                    try:
-                        traces_converted.append(float(val))
-                    except (ValueError, TypeError):
-                        traces_converted.append(np.nan)
-                traces = np.array(traces_converted, dtype=float).reshape(traces.shape)
+        traces = _ensure_float_traces(traces)
 
-    try:
-        traces = npma.masked_invalid(traces)
-    except Exception as e:
-        print("TP:", problems, opt_names, data_locator)
-        print("TP:", traces)
-        print("TP: traces dtype:", traces.dtype if traces is not None else None)
-        print("TP: traces shape:", traces.shape if traces is not None else None)
-        raise e
+    traces = npma.masked_invalid(traces)
     if num_bad > 0:
-        print(
-            f"\n{num_bad} / {num_tot} files bad. {100 * traces.mask.mean():.1f}% missing data"
-        )
-    else:
-        # print("No bad data")
-        pass
+        print(f"\n{num_bad} / {num_tot} files bad. {100 * traces.mask.mean():.1f}% missing data")
     return traces
 
 

@@ -16,6 +16,47 @@ from experiments.func_names import (
 )
 
 
+def _load_traces_for_func(results_path, exp_dir, opt_names, func_name, num_dims):
+    all_traces = []
+    dims_to_load = [None] if num_dims is None else num_dims
+    for dim in dims_to_load:
+        kwargs = {"results_path": results_path, "exp_dir": exp_dir, "opt_names": opt_names,
+                  "problems": {func_name}, "key": "return", "grep_for": "TRACE"}
+        if dim is not None:
+            kwargs["num_dim"] = dim
+        data_locator = DataLocator(**kwargs)
+        traces = load_multiple_traces(data_locator)
+        if traces.size > 0:
+            all_traces.append(traces)
+    return all_traces
+
+
+def _get_display_name(name, renames):
+    return renames.get(name, name) if renames else name
+
+
+def _plot_func_subplot(ax, all_traces, opt_names, renames, func_name):
+    if len(all_traces) == 0:
+        ax.text(0.5, 0.5, "No data", ha="center", va="center", transform=ax.transAxes)
+        return False
+    combined_traces = all_traces[0] if len(all_traces) == 1 else np.concatenate(all_traces, axis=2)
+    mu, se = range_summarize(combined_traces)
+    sort_indices = np.argsort(-mu)
+    sorted_mu, sorted_se = mu[sort_indices], se[sort_indices]
+    sorted_opt_names = [opt_names[i] for i in sort_indices]
+    x_pos = np.arange(len(opt_names))
+    for i_opt, opt_name in enumerate(sorted_opt_names):
+        ax.errorbar(x_pos[i_opt], sorted_mu[i_opt], 2 * sorted_se[i_opt], fmt="o", color="black",
+                    capsize=4, capthick=1, label=_get_display_name(opt_name, renames), markersize=4, ecolor="black")
+    ax.set_title(func_name, fontsize=10)
+    ax.set_ylabel("Score", fontsize=9)
+    ax.set_xticks(x_pos)
+    ax.set_xticklabels([_get_display_name(n, renames) for n in sorted_opt_names], rotation=45, ha="right", fontsize=8)
+    ax.grid(True, alpha=0.3)
+    ax.set_ylim([-0.1, 1.1])
+    return True
+
+
 def plot_by_func(
     results_path,
     exp_dir,
@@ -68,106 +109,11 @@ def plot_by_func(
 
     for i_func, func_name in enumerate(all_funcs):
         ax = axs[i_func]
-
         try:
-            all_traces = []
-
-            if num_dims is None:
-                data_locator = DataLocator(
-                    results_path=results_path,
-                    exp_dir=exp_dir,
-                    opt_names=opt_names,
-                    problems={func_name},
-                    key="return",
-                    grep_for="TRACE",
-                )
-                traces = load_multiple_traces(data_locator)
-                if traces.size > 0:
-                    all_traces.append(traces)
-            else:
-                for dim in num_dims:
-                    data_locator = DataLocator(
-                        results_path=results_path,
-                        exp_dir=exp_dir,
-                        opt_names=opt_names,
-                        problems={func_name},
-                        key="return",
-                        grep_for="TRACE",
-                        num_dim=dim,
-                    )
-                    traces = load_multiple_traces(data_locator)
-                    if traces.size > 0:
-                        all_traces.append(traces)
-
-            if len(all_traces) == 0:
-                ax.text(
-                    0.5,
-                    0.5,
-                    "No data",
-                    ha="center",
-                    va="center",
-                    transform=ax.transAxes,
-                )
-                continue
-
-            # Concatenate traces from all dimensions
-            if len(all_traces) == 1:
-                combined_traces = all_traces[0]
-            else:
-                # Stack along the replication dimension
-                combined_traces = np.concatenate(all_traces, axis=2)
-
-            mu, se = range_summarize(combined_traces)
-
-            # Sort optimizers by performance (highest to lowest)
-            sort_indices = np.argsort(-mu)
-            sorted_mu = mu[sort_indices]
-            sorted_se = se[sort_indices]
-            sorted_opt_names = [opt_names[i] for i in sort_indices]
-
-            x_pos = np.arange(len(opt_names))
-
-            for i_opt, opt_name in enumerate(sorted_opt_names):
-                display_name = renames.get(opt_name, opt_name) if renames else opt_name
-
-                ax.errorbar(
-                    x_pos[i_opt],
-                    sorted_mu[i_opt],
-                    2 * sorted_se[i_opt],
-                    fmt="o",
-                    color="black",
-                    capsize=4,
-                    capthick=1,
-                    label=display_name,
-                    markersize=4,
-                    ecolor="black",
-                )
-
-            ax.set_title(func_name, fontsize=10)
-            ax.set_ylabel("Score", fontsize=9)
-            ax.set_xticks(x_pos)
-            ax.set_xticklabels(
-                [
-                    renames.get(name, name) if renames else name
-                    for name in sorted_opt_names
-                ],
-                rotation=45,
-                ha="right",
-                fontsize=8,
-            )
-            ax.grid(True, alpha=0.3)
-            ax.set_ylim([-0.1, 1.1])
-
+            all_traces = _load_traces_for_func(results_path, exp_dir, opt_names, func_name, num_dims)
+            _plot_func_subplot(ax, all_traces, opt_names, renames, func_name)
         except Exception as e:
-            ax.text(
-                0.5,
-                0.5,
-                f"Error:\n{str(e)[:50]}...",
-                ha="center",
-                va="center",
-                transform=ax.transAxes,
-                fontsize=8,
-            )
+            ax.text(0.5, 0.5, f"Error:\n{str(e)[:50]}...", ha="center", va="center", transform=ax.transAxes, fontsize=8)
 
     # Add group labels
     current_group = None

@@ -1,36 +1,4 @@
-from botorch.acquisition.logei import qLogNoisyExpectedImprovement
-from botorch.acquisition.max_value_entropy_search import (
-    qLowerBoundMaxValueEntropy,
-)
-from botorch.acquisition.monte_carlo import (
-    qNoisyExpectedImprovement,
-    qSimpleRegret,
-    qUpperConfidenceBound,
-)
-from botorch.acquisition.thompson_sampling import PathwiseThompsonSampling
-
-from acq.acq_dpp import AcqDPP
-from acq.acq_min_dist import AcqMinDist
-from acq.acq_mtv import AcqMTV
-from acq.acq_sobol import AcqSobol
-from acq.acq_ts import AcqTS
-
-# from acq.acq_tsroots import AcqTSRoots
-from acq.acq_var import AcqVar
-
-from .ax_designer import AxDesigner
-from .bt_designer import BTDesigner
-from .center_designer import CenterDesigner
-from .cma_designer import CMAESDesigner
-from .lhd_designer import LHDDesigner
-from .mcmc_bo_designer import MCMCBODesigner
-from .mts_designer import MTSDesigner
-from .optuna_designer import OptunaDesigner
-from .random_designer import RandomDesigner
-from .sobol_designer import SobolDesigner
-from .turbo_enn_designer import TurboENNDesigner
-from .turbo_ref_designer import TuRBORefDesigner
-from .vecchia_designer import VecchiaDesigner
+# Lazy imports to reduce dependency depth - imported when needed in methods
 
 
 class NoSuchDesignerError(Exception):
@@ -67,36 +35,43 @@ def _dispatch_prefix(name, ctx):
 
 
 def _h_ts_sweep(name, ctx):
+    from acq.acq_ts import AcqTS
     num_candidates = int(name.split("-")[1])
     return ctx.bt(AcqTS, acq_kwargs={"sampler": "lanczos", "num_candidates": num_candidates})
 
 
 def _h_rff(name, ctx):
+    from acq.acq_ts import AcqTS
     num_candidates = int(name.split("-")[1])
     return ctx.bt(AcqTS, acq_kwargs={"sampler": "rff", "num_candidates": num_candidates})
 
 
 def _h_pss_sweep_kmcmc(name, ctx):
+    from acq.acq_mtv import AcqMTV
     k_mcmc = int(name.split("-")[1])
     return ctx.bt(AcqMTV, init_sobol=0, acq_kwargs={"ts_only": True, "num_X_samples": ctx.default_num_X_samples, "sample_type": "pss", "k_mcmc": k_mcmc})
 
 
 def _h_pss_sweep_num_mcmc(name, ctx):
+    from acq.acq_mtv import AcqMTV
     num_mcmc = int(name.split("-")[1])
     return ctx.bt(AcqMTV, init_sobol=0, acq_kwargs={"ts_only": True, "num_X_samples": ctx.default_num_X_samples, "sample_type": "pss", "k_mcmc": None, "num_mcmc": num_mcmc})
 
 
 def _h_sts_sweep(name, ctx):
+    from acq.acq_mtv import AcqMTV
     num_refinements = int(name.split("-")[1])
     return ctx.bt(AcqMTV, init_sobol=0, acq_kwargs={"ts_only": True, "sample_type": "sts", "num_X_samples": ctx.default_num_X_samples, "num_refinements": num_refinements})
 
 
 def _h_turbo_enn_sweep(name, ctx):
+    from .turbo_enn_designer import TurboENNDesigner
     k = int(name.split("-")[-1])
     return TurboENNDesigner(ctx.policy, turbo_mode="turbo-enn", k=k, num_keep=None, num_fit_samples=None, acq_type="pareto")
 
 
 def _h_turbo_enn_fit(name, ctx):
+    from .turbo_enn_designer import TurboENNDesigner
     suffix = name[len("turbo-enn-fit-"):]
     parts = suffix.split("-")
     kind = parts[0]
@@ -108,12 +83,14 @@ def _h_turbo_enn_fit(name, ctx):
 
 
 def _h_turbo_enn_f(name, ctx):
+    from .turbo_enn_designer import TurboENNDesigner
     def num_candidates(num_dim, num_arms):
         return 100 * num_arms
     return TurboENNDesigner(ctx.policy, turbo_mode="turbo-enn", k=10, num_keep=ctx.num_keep_val, num_fit_samples=100, num_fit_candidates=100, acq_type="ucb", num_candidates=num_candidates, candidate_rv="uniform")
 
 
 def _h_morbo_enn_fit(name, ctx):
+    from .turbo_enn_designer import TurboENNDesigner
     suffix = name[len("morbo-enn-fit-"):]
     parts = suffix.split("-")
     kind = parts[0]
@@ -125,6 +102,7 @@ def _h_morbo_enn_fit(name, ctx):
 
 
 def _h_sts_ar(name, ctx):
+    from acq.acq_mtv import AcqMTV
     num_acc_rej = int(name.split("-")[-1])
     return ctx.bt(AcqMTV, init_sobol=0, acq_kwargs={"ts_only": True, "sample_type": "sts", "num_X_samples": ctx.default_num_X_samples, "num_refinements": 0, "num_acc_rej": num_acc_rej})
 
@@ -183,6 +161,7 @@ class Designers:
         model_spec=None,
         sample_around_best=False,
     ):
+        from .bt_designer import BTDesigner
         return BTDesigner(
             self._policy,
             acq_factory,
@@ -203,6 +182,32 @@ class Designers:
         )
 
     def _get_simple_designers(self, opts):
+        # Lazy imports to reduce module dependency depth
+        from botorch.acquisition.logei import qLogNoisyExpectedImprovement
+        from botorch.acquisition.max_value_entropy_search import qLowerBoundMaxValueEntropy
+        from botorch.acquisition.monte_carlo import qNoisyExpectedImprovement, qSimpleRegret, qUpperConfidenceBound
+        from botorch.acquisition.thompson_sampling import PathwiseThompsonSampling
+
+        from acq.acq_dpp import AcqDPP
+        from acq.acq_min_dist import AcqMinDist
+        from acq.acq_mtv import AcqMTV
+        from acq.acq_sobol import AcqSobol
+        from acq.acq_ts import AcqTS
+        from acq.acq_var import AcqVar
+
+        from .ax_designer import AxDesigner
+        from .center_designer import CenterDesigner
+        from .cma_designer import CMAESDesigner
+        from .lhd_designer import LHDDesigner
+        from .mcmc_bo_designer import MCMCBODesigner
+        from .mts_designer import MTSDesigner
+        from .optuna_designer import OptunaDesigner
+        from .random_designer import RandomDesigner
+        from .sobol_designer import SobolDesigner
+        from .turbo_enn_designer import TurboENNDesigner
+        from .turbo_ref_designer import TuRBORefDesigner
+        from .vecchia_designer import VecchiaDesigner
+
         num_keep, keep_style, model_spec, sample_around_best = opts
         init_ax_default = max(5, 2 * self._policy.num_params())
         init_yubo_default = self._num_arms
