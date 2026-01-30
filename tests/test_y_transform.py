@@ -34,4 +34,6 @@ def test_y_transform_all_same_values():
     Y = torch.tensor([5.0, 5.0, 5.0, 5.0])
     Y_transformed = transform(Y)
     assert Y_transformed.shape == Y.shape
-    assert torch.all(torch.isfinite(Y_transformed)), f"Expected finite values, got {Y_transformed}"
+    assert torch.all(torch.isfinite(Y_transformed)), (
+        f"Expected finite values, got {Y_transformed}"
+    )

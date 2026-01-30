@@ -122,7 +122,8 @@ class CrossInTray:
         x1 = x[1]
         part1 = (
             np.abs(
-                np.sin(x0) * np.sin(x1)
+                np.sin(x0)
+                * np.sin(x1)
                 * np.exp(np.abs(100.0 - np.sqrt(x0**2 + x1**2) / np.pi))
             )
             + 1.0

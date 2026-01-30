@@ -10,7 +10,9 @@ class PolicyParamsMixin:
 
     def get_params(self):
         with torch.inference_mode():
-            flat_params = np.concatenate([p.data.detach().cpu().numpy().reshape(-1) for p in self.parameters()])
+            flat_params = np.concatenate(
+                [p.data.detach().cpu().numpy().reshape(-1) for p in self.parameters()]
+            )
         return (flat_params - self._flat_params_init) / self._const_scale
 
     def set_params(self, flat_params):
@@ -28,7 +30,11 @@ class PolicyParamsMixin:
             for p in self.parameters():
                 shape = p.shape
                 size = p.numel()
-                p.copy_(torch.from_numpy(flat_params[idx : idx + size].reshape(shape)).float())
+                p.copy_(
+                    torch.from_numpy(
+                        flat_params[idx : idx + size].reshape(shape)
+                    ).float()
+                )
                 idx += size
 
     def clone(self):

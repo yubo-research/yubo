@@ -81,9 +81,13 @@ class EnvConf:
 
     def _make(self, **kwargs):
         if self.env_name[:2] == "f:":
-            env = pure_functions.make(self.env_name, problem_seed=self.problem_seed, distort=True)
+            env = pure_functions.make(
+                self.env_name, problem_seed=self.problem_seed, distort=True
+            )
         elif self.env_name[:2] == "g:":
-            env = pure_functions.make(self.env_name, problem_seed=self.problem_seed, distort=False)
+            env = pure_functions.make(
+                self.env_name, problem_seed=self.problem_seed, distort=False
+            )
         elif self.gym_conf is not None:
             env = gym.make(self.env_name, **(kwargs | self.kwargs))
         else:
@@ -111,7 +115,9 @@ class EnvConf:
         env.close()
 
 
-def _gym_conf(env_name, gym_conf=None, policy_class=None, kwargs=None, noise_seed_0=None):
+def _gym_conf(
+    env_name, gym_conf=None, policy_class=None, kwargs=None, noise_seed_0=None
+):
     if gym_conf is None:
         gym_conf = GymConf()
 
@@ -132,7 +138,9 @@ _gym_env_confs = {
         "MountainCarContinuous-v0",
         gym_conf=GymConf(num_frames_skip=100),
     ),
-    "pend": EnvConf("Pendulum-v1", gym_conf=GymConf(max_steps=200, num_frames_skip=100)),
+    "pend": EnvConf(
+        "Pendulum-v1", gym_conf=GymConf(max_steps=200, num_frames_skip=100)
+    ),
     # 3580 - https://arxiv.org/pdf/1803.07055
     # 6600 - 2024 [??ref] k
     "ant": _gym_conf("Ant-v5"),
@@ -176,7 +184,9 @@ _gym_env_confs = {
             max_steps=1600,
             num_frames_skip=100,
         ),
-        policy_class=MLPPolicyFactory((), rnn_hidden_size=4, use_layer_norm=True, use_prev_action=True),
+        policy_class=MLPPolicyFactory(
+            (), rnn_hidden_size=4, use_layer_norm=True, use_prev_action=True
+        ),
     ),
     "bw-heur": _gym_conf(
         "BipedalWalker-v3",

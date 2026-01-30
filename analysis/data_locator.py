@@ -86,11 +86,23 @@ class DataLocator:
     def _passes_filters(self, d, problem, opt_names):
         env_key = d.get("env") or d.get("env_tag")
         checks = [
-            (problem is not None and env_key, lambda: fnmatch.fnmatch(env_key, problem)),
+            (
+                problem is not None and env_key,
+                lambda: fnmatch.fnmatch(env_key, problem),
+            ),
             (opt_names is not None, lambda: d.get("opt_name") in opt_names),
-            (self.num_arms is not None and d.get("num_arms") is not None, lambda: int(d["num_arms"]) == self.num_arms),
-            (self.num_rounds is not None and d.get("num_rounds") is not None, lambda: int(d["num_rounds"]) == self.num_rounds),
-            (self.num_reps is not None and d.get("num_reps") is not None, lambda: int(d["num_reps"]) == self.num_reps),
+            (
+                self.num_arms is not None and d.get("num_arms") is not None,
+                lambda: int(d["num_arms"]) == self.num_arms,
+            ),
+            (
+                self.num_rounds is not None and d.get("num_rounds") is not None,
+                lambda: int(d["num_rounds"]) == self.num_rounds,
+            ),
+            (
+                self.num_reps is not None and d.get("num_reps") is not None,
+                lambda: int(d["num_reps"]) == self.num_reps,
+            ),
             (self.num_dim is not None and env_key, lambda: self._check_dim(env_key)),
         ]
         return all(check_fn() for condition, check_fn in checks if condition)
@@ -102,7 +114,11 @@ class DataLocator:
         return True
 
     def _load(self, problem=None, opt_name=None):
-        opt_names = {opt_name} if opt_name is not None else (list(self._opt_names) if self._opt_names is not None else None)
+        opt_names = (
+            {opt_name}
+            if opt_name is not None
+            else (list(self._opt_names) if self._opt_names is not None else None)
+        )
         root_path = self._root_path()
         data_sets = []
         for fn in os.listdir(root_path):

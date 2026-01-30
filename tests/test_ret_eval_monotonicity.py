@@ -30,7 +30,9 @@ class MockDesignerWithRreturnEst:
         # Set rreturn_est to a UCB-like estimate (different from raw rreturn)
         for i, d in enumerate(data):
             # UCB estimate: simulate model uncertainty
-            d.trajectory.rreturn_est = float(d.trajectory.rreturn) + np.random.randn() * 10
+            d.trajectory.rreturn_est = (
+                float(d.trajectory.rreturn) + np.random.randn() * 10
+            )
 
         # Return random policies
         policies = []

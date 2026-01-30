@@ -150,16 +150,20 @@ def test_confidence_region_fast():
 def test_farthest_true_per_sample():
     from sampling.knn_tools import _farthest_true
 
-    x = np.array([
-        [[0.1, 0.1], [0.2, 0.2], [0.3, 0.3]],
-        [[0.4, 0.4], [0.5, 0.5], [0.6, 0.6]],
-        [[0.7, 0.7], [0.8, 0.8], [0.9, 0.9]],
-    ])
-    a = np.array([
-        [True, True, True],
-        [True, True, True],
-        [False, True, True],
-    ])
+    x = np.array(
+        [
+            [[0.1, 0.1], [0.2, 0.2], [0.3, 0.3]],
+            [[0.4, 0.4], [0.5, 0.5], [0.6, 0.6]],
+            [[0.7, 0.7], [0.8, 0.8], [0.9, 0.9]],
+        ]
+    )
+    a = np.array(
+        [
+            [True, True, True],
+            [True, True, True],
+            [False, True, True],
+        ]
+    )
 
     result = _farthest_true(x, a)
 

@@ -131,7 +131,9 @@ def get_closure(mll, outcome_warp):
 def _create_empty_gp(X, Y, model_type):
     if model_type == "sparse":
         inducing_points = torch.empty((0, X.shape[-1]), dtype=X.dtype, device=X.device)
-        gp = SingleTaskVariationalGP(X, inducing_points=inducing_points, outcome_transform=_EmptyTransform())
+        gp = SingleTaskVariationalGP(
+            X, inducing_points=inducing_points, outcome_transform=_EmptyTransform()
+        )
     else:
         gp = SingleTaskGP(X, Y, outcome_transform=_EmptyTransform())
     gp.to(X)
@@ -142,9 +144,14 @@ def _create_empty_gp(X, Y, model_type):
 def _create_outcome_warp(output_warping, X):
     warp_factories = {
         "sal": lambda: SALTransform(
-            a_prior=NormalPrior(0, 1), b_prior=LogNormalPrior(0.0, 1.0),
-            c_prior=LogNormalPrior(0.0, 1.0), d_prior=NormalPrior(0, 1)).to(X),
-        "y": lambda: YTransform(a_prior=LogNormalPrior(0.0, 0.1), b_prior=NormalPrior(0, 1)).to(X),
+            a_prior=NormalPrior(0, 1),
+            b_prior=LogNormalPrior(0.0, 1.0),
+            c_prior=LogNormalPrior(0.0, 1.0),
+            d_prior=NormalPrior(0, 1),
+        ).to(X),
+        "y": lambda: YTransform(
+            a_prior=LogNormalPrior(0.0, 0.1), b_prior=NormalPrior(0, 1)
+        ).to(X),
         "none": lambda: None,
     }
     return warp_factories[output_warping]()
@@ -155,8 +162,14 @@ def _create_gp_model(X, Y, model_type, input_transform):
         return SingleTaskVariationalGP(X, Y, input_transform=input_transform)
     if model_type.startswith("rff"):
         num_samples = int(model_type[3:])
-        return SingleTaskGP(X, Y, input_transform=input_transform,
-            covar_module=ScaleKernel(RFFKernel(ard_num_dims=X.shape[-1], num_samples=num_samples)))
+        return SingleTaskGP(
+            X,
+            Y,
+            input_transform=input_transform,
+            covar_module=ScaleKernel(
+                RFFKernel(ard_num_dims=X.shape[-1], num_samples=num_samples)
+            ),
+        )
     return SingleTaskGP(X, Y, input_transform=input_transform)
 
 
@@ -168,9 +181,18 @@ def _fit_gp_model(gp, mll, model_type, outcome_warp, X):
         for i_try in range(num_tries):
             mll.to(X)
             try:
-                kwargs = {"closure": get_closure(mll, outcome_warp)} if outcome_warp else {}
+                kwargs = (
+                    {"closure": get_closure(mll, outcome_warp)} if outcome_warp else {}
+                )
                 if model_type == "sparse":
-                    opt, opt_kw = (fit_gpytorch_mll_scipy, {"options": {"maxiter": 4000, "maxfun": 4000}}) if i_try == 0 else (fit_gpytorch_mll_torch, {"step_limit": 4000})
+                    opt, opt_kw = (
+                        (
+                            fit_gpytorch_mll_scipy,
+                            {"options": {"maxiter": 4000, "maxfun": 4000}},
+                        )
+                        if i_try == 0
+                        else (fit_gpytorch_mll_torch, {"step_limit": 4000})
+                    )
                     kwargs.update({"optimizer": opt, "optimizer_kwargs": opt_kw})
                 fit_gpytorch_mll(mll, **kwargs)
             except (RuntimeError, ModelFittingError) as e:
@@ -191,11 +213,15 @@ def fit_gp_XY(X, Y, model_spec=None):
     if len(X) == 0:
         return _create_empty_gp(X, Y, model_type)
 
-    input_transform = Warp(
-        indices=list(range(X.shape[-1])),
-        concentration1_prior=LogNormalPrior(0.0, 1.0),
-        concentration0_prior=LogNormalPrior(0.0, 1.0),
-    ).to(X) if input_warping else None
+    input_transform = (
+        Warp(
+            indices=list(range(X.shape[-1])),
+            concentration1_prior=LogNormalPrior(0.0, 1.0),
+            concentration0_prior=LogNormalPrior(0.0, 1.0),
+        ).to(X)
+        if input_warping
+        else None
+    )
 
     outcome_warp = _create_outcome_warp(output_warping, X)
     Y = standardize_torch(Y).to(X)
@@ -205,7 +231,11 @@ def fit_gp_XY(X, Y, model_spec=None):
         gp.outcome_warp = outcome_warp
     gp.to(X)
 
-    mll = VariationalELBO(gp.likelihood, gp.model, num_data=X.shape[-2]) if model_type == "sparse" else ExactMarginalLogLikelihood(gp.likelihood, gp)
+    mll = (
+        VariationalELBO(gp.likelihood, gp.model, num_data=X.shape[-2])
+        if model_type == "sparse"
+        else ExactMarginalLogLikelihood(gp.likelihood, gp)
+    )
     _fit_gp_model(gp, mll, model_type, outcome_warp, X)
     return gp
 

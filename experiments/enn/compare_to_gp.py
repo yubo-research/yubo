@@ -99,12 +99,16 @@ def sweep_dim_ll_gp_vs_enn(
             test_x_unit = (test_x + 1.0) / 2.0
 
             train_x_torch = torch.from_numpy(train_x_unit).to(torch.float64)
-            train_y_torch = torch.from_numpy(train_y_standardized[:, None]).to(torch.float64)
+            train_y_torch = torch.from_numpy(train_y_standardized[:, None]).to(
+                torch.float64
+            )
             gp_model = fit_gp_XY(train_x_torch, train_y_torch)
             gp_ll = compute_gp_ll(gp_model, test_x_unit, test_y_standardized)
 
             # 2. Fit ENN
-            enn_model = EpistemicNearestNeighbors(train_x, train_y_standardized[:, None])
+            enn_model = EpistemicNearestNeighbors(
+                train_x, train_y_standardized[:, None]
+            )
             enn_params = enn_fit(
                 enn_model,
                 k=k,
