@@ -98,8 +98,7 @@ def _farthest_true(x: np.ndarray, a: np.ndarray):
 
     a = a.reshape(num_steps, num_samples)
 
-    # If no non-neighbors, then i_farthest will be num_steps - 1
-    i_farthest = num_steps - 1 - np.argmax(a[:, 1][::-1], axis=0)
+    i_farthest = num_steps - 1 - np.argmax(a[::-1, :], axis=0)
 
     i = np.arange(x.shape[1])
     x = x[i_farthest, i, :]

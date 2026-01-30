@@ -47,7 +47,7 @@ class AcqMinDist(AnalyticAcquisitionFunction):
             )
             md = dist2.min()
             # md = torch.sqrt(1e-9 + md)
-            if self.X_max:
+            if self.X_max is not None:
                 dist2_max = self._delta_squared(self.X_max, X[i_batch, ::]).sum(axis=-1)
                 # md = md - torch.sqrt(dist2_max.squeeze())
                 md = md - dist2_max.squeeze()

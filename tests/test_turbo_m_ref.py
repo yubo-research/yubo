@@ -42,3 +42,16 @@ def test_turbo_1_ask_tell_maximize():
     t = Turbo1(x_bounds=x_bounds, n_init=3, batch_size=1)
     t.maximize(f, max_evals=5)
     assert t.n_evals >= 5
+
+
+def test_turbo_1_randint_full_range():
+    num_dim = 10
+    dim_selected = set()
+    for seed in range(5000):
+        np.random.seed(seed)
+        idx = np.random.randint(0, num_dim, size=1)[0]
+        dim_selected.add(idx)
+
+    assert len(dim_selected) == num_dim, (
+        f"randint(0, num_dim) should select all dims; got {sorted(dim_selected)}"
+    )

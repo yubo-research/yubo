@@ -25,3 +25,13 @@ def test_y_transform_batch_shape():
 
     transform = YTransform(batch_shape=torch.Size([2]))
     assert transform.batch_shape == torch.Size([2])
+
+
+def test_y_transform_all_same_values():
+    from acq.y_transform import YTransform
+
+    transform = YTransform()
+    Y = torch.tensor([5.0, 5.0, 5.0, 5.0])
+    Y_transformed = transform(Y)
+    assert Y_transformed.shape == Y.shape
+    assert torch.all(torch.isfinite(Y_transformed)), f"Expected finite values, got {Y_transformed}"

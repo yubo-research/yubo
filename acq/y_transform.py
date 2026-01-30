@@ -66,10 +66,10 @@ class YTransform(GPyTorchModule):
     def forward(self, Y: Tensor) -> Tensor:
         if len(Y) <= 1:
             return Y
-        # Y should not change throughout the fitting process,
-        #  so we should take Y in the constructor and
-        #  calculate these numbers there.
-        Y = (Y - Y.amin()) / (Y.amax() - Y.amin())
+        y_range = Y.amax() - Y.amin()
+        if y_range == 0:
+            return Y
+        Y = (Y - Y.amin()) / y_range
         Y = 2 * Y - 1
         Y = torch.tanh(self.a * Y) / self.a
         Y = torch.clip(Y, -1 + self._eps_positive, 1 - self._eps_positive)

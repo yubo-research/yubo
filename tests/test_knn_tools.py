@@ -145,3 +145,24 @@ def test_confidence_region_fast():
     u = np.array([[1.0, 0.0], [0.0, 1.0]])
     x = confidence_region_fast(enn, x_0, u, se_max=1.0, num_steps=5)
     assert x.shape == (2, 2)
+
+
+def test_farthest_true_per_sample():
+    from sampling.knn_tools import _farthest_true
+
+    x = np.array([
+        [[0.1, 0.1], [0.2, 0.2], [0.3, 0.3]],
+        [[0.4, 0.4], [0.5, 0.5], [0.6, 0.6]],
+        [[0.7, 0.7], [0.8, 0.8], [0.9, 0.9]],
+    ])
+    a = np.array([
+        [True, True, True],
+        [True, True, True],
+        [False, True, True],
+    ])
+
+    result = _farthest_true(x, a)
+
+    assert result[0, 0] == 0.4, f"Sample 0 should use step 1, got {result[0]}"
+    assert result[1, 0] == 0.8, f"Sample 1 should use step 2, got {result[1]}"
+    assert result[2, 0] == 0.9, f"Sample 2 should use step 2, got {result[2]}"

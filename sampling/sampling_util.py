@@ -343,7 +343,7 @@ def raasp_turbo_np(x_center, lb, ub, num_candidates, device, dtype):
     mask = np.random.rand(num_candidates, num_dim) <= prob_perturb
     ind = np.where(np.sum(mask, axis=1) == 0)[0]
     if len(ind) > 0:
-        mask[ind, np.random.randint(0, num_dim - 1, size=len(ind))] = True
+        mask[ind, np.random.randint(0, num_dim, size=len(ind))] = True
 
     candidates = x_center_np.copy() * np.ones((num_candidates, num_dim))
     candidates[mask] = pert[mask]

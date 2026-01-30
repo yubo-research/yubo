@@ -226,7 +226,7 @@ class Turbo1:
         prob_perturb = min(20.0 / self.dim, 1.0)
         mask = np.random.rand(self.n_cand, self.dim) <= prob_perturb
         ind = np.where(np.sum(mask, axis=1) == 0)[0]
-        mask[ind, np.random.randint(0, self.dim - 1, size=len(ind))] = 1
+        mask[ind, np.random.randint(0, self.dim, size=len(ind))] = 1
 
         # Create candidate points
         X_cand = x_center.copy() * np.ones((self.n_cand, self.dim))

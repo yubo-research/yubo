@@ -114,3 +114,22 @@ def _xx_test_varied_1():
 def _xx_test_varied_n():
     for n in [2, 3, 10]:
         _test_draw_varied_bounded_normal_samples(n)
+
+
+def test_raasp_turbo_np_randint_uses_full_range():
+    import numpy as np
+
+    num_dim = 10
+    num_trials = 5000
+    dim_selected = set()
+    for seed in range(num_trials):
+        np.random.seed(seed)
+        idx = np.random.randint(0, num_dim, size=1)[0]
+        dim_selected.add(idx)
+
+    assert len(dim_selected) == num_dim, (
+        f"randint(0, num_dim) should select all dims; got {sorted(dim_selected)}"
+    )
+    assert num_dim - 1 in dim_selected, (
+        f"Last dimension (index {num_dim - 1}) must be selectable"
+    )

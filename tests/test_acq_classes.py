@@ -31,6 +31,17 @@ def test_acq_min_dist_toroidal():
     assert torch.isfinite(result).all()
 
 
+def test_acq_min_dist_with_x_max():
+    from acq.acq_min_dist import AcqMinDist
+
+    model = _make_simple_gp()
+    X_max = torch.tensor([[0.5, 0.5]], dtype=torch.float64)
+    acq = AcqMinDist(model, toroidal=False, X_max=X_max)
+    X = torch.tensor([[[0.3, 0.3]]], dtype=torch.float64)
+    result = acq(X)
+    assert torch.isfinite(result).all()
+
+
 def test_acq_var_init():
     from acq.acq_var import AcqVar
 
