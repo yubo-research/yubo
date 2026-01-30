@@ -1,7 +1,9 @@
 import numpy as np
+import pytest
 
 
-def test_ackley_3d_runs_with_vecchia_optimizer():
+@pytest.mark.parametrize("designer_name", ["vecchia", "turbo-zero"])
+def test_ackley_3d_runs_with_optimizer(designer_name):
     from common.collector import Collector
     from optimizer.optimizer import Optimizer
     from problems.env_conf import default_policy, get_env_conf
@@ -17,6 +19,8 @@ def test_ackley_3d_runs_with_vecchia_optimizer():
         num_denoise_measurement=None,
         num_denoise_passive=None,
     )
-    trace = opt.collect_trace(designer_name="vecchia", max_iterations=3, max_proposal_seconds=np.inf)
+    trace = opt.collect_trace(
+        designer_name=designer_name, max_iterations=3, max_proposal_seconds=np.inf
+    )
     assert len(trace) == 3
     assert np.isfinite(trace[-1].rreturn)

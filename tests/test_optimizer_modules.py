@@ -6,6 +6,18 @@ import numpy as np
 import pytest
 
 
+@pytest.fixture
+def sphere_2d_setup():
+    """Common test setup for sphere-2d environment."""
+    from common.collector import Collector
+    from problems.env_conf import default_policy, get_env_conf
+
+    env_conf = get_env_conf("f:sphere-2d", problem_seed=42, noise_seed_0=18)
+    policy = default_policy(env_conf)
+    collector = Collector()
+    return env_conf, policy, collector
+
+
 class TestTrajectory:
     def test_trajectory_dataclass(self):
         from optimizer.trajectories import Trajectory
@@ -440,15 +452,10 @@ class TestVecchiaDesigner:
 
 
 class TestOptimizer:
-    def test_init(self):
-        from common.collector import Collector
+    def test_init(self, sphere_2d_setup):
         from optimizer.optimizer import Optimizer
-        from problems.env_conf import default_policy, get_env_conf
 
-        env_conf = get_env_conf("f:sphere-2d", problem_seed=42, noise_seed_0=18)
-        policy = default_policy(env_conf)
-
-        collector = Collector()
+        env_conf, policy, collector = sphere_2d_setup
         opt = Optimizer(
             collector,
             env_conf=env_conf,
@@ -458,15 +465,10 @@ class TestOptimizer:
         assert opt._num_arms == 3
         assert opt.num_params == 2
 
-    def test_initialize(self):
-        from common.collector import Collector
+    def test_initialize(self, sphere_2d_setup):
         from optimizer.optimizer import Optimizer
-        from problems.env_conf import default_policy, get_env_conf
 
-        env_conf = get_env_conf("f:sphere-2d", problem_seed=42, noise_seed_0=18)
-        policy = default_policy(env_conf)
-
-        collector = Collector()
+        env_conf, policy, collector = sphere_2d_setup
         opt = Optimizer(
             collector,
             env_conf=env_conf,
@@ -480,15 +482,10 @@ class TestOptimizer:
         assert opt._trace == []
         assert opt._t_0 > 0
 
-    def test_iterate(self):
-        from common.collector import Collector
+    def test_iterate(self, sphere_2d_setup):
         from optimizer.optimizer import Optimizer
-        from problems.env_conf import default_policy, get_env_conf
 
-        env_conf = get_env_conf("f:sphere-2d", problem_seed=42, noise_seed_0=18)
-        policy = default_policy(env_conf)
-
-        collector = Collector()
+        env_conf, policy, collector = sphere_2d_setup
         opt = Optimizer(
             collector,
             env_conf=env_conf,
@@ -506,15 +503,10 @@ class TestOptimizer:
         assert opt.best_policy is not None
         assert opt.best_datum is not None
 
-    def test_iterate_multiple(self):
-        from common.collector import Collector
+    def test_iterate_multiple(self, sphere_2d_setup):
         from optimizer.optimizer import Optimizer
-        from problems.env_conf import default_policy, get_env_conf
 
-        env_conf = get_env_conf("f:sphere-2d", problem_seed=42, noise_seed_0=18)
-        policy = default_policy(env_conf)
-
-        collector = Collector()
+        env_conf, policy, collector = sphere_2d_setup
         opt = Optimizer(
             collector,
             env_conf=env_conf,
@@ -529,15 +521,10 @@ class TestOptimizer:
         assert opt._i_iter == 3
         assert len(opt._data) == 6
 
-    def test_stop(self):
-        from common.collector import Collector
+    def test_stop(self, sphere_2d_setup):
         from optimizer.optimizer import Optimizer
-        from problems.env_conf import default_policy, get_env_conf
 
-        env_conf = get_env_conf("f:sphere-2d", problem_seed=42, noise_seed_0=18)
-        policy = default_policy(env_conf)
-
-        collector = Collector()
+        env_conf, policy, collector = sphere_2d_setup
         opt = Optimizer(
             collector,
             env_conf=env_conf,
