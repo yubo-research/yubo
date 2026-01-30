@@ -5,6 +5,27 @@ import torch
 import acq.fit_gp as fit_gp
 from acq.acq_util import find_max, keep_best, keep_some, keep_trailing
 
+_KEEP_STYLE_FNS = {
+    "some": keep_some,
+    "best": keep_best,
+    "trailing": keep_trailing,
+}
+
+
+def _extract_and_trim(data, dtype, device, num_dim, num_keep, keep_style):
+    if len(data) == 0:
+        X = torch.empty(size=(0, num_dim), dtype=dtype, device=device)
+        Y = torch.empty(size=(0, 1), dtype=dtype, device=device)
+        return X, Y
+    Y, X = fit_gp.extract_X_Y(data, dtype, device)
+    if num_keep is not None and num_keep < len(X):
+        keep_fn = _KEEP_STYLE_FNS.get(keep_style)
+        assert keep_fn is not None, keep_style
+        i = keep_fn(Y.squeeze(), num_keep)
+        Y = Y[i, :]
+        X = X[i, :]
+    return X, Y
+
 
 class AcqBT:
     def __init__(
@@ -21,28 +42,12 @@ class AcqBT:
         model_spec,
         telemetry=None,
     ):
-        # All BoTorch stuff is coded to bounds of [0,1]!
         self.bounds = torch.tensor(
             [[0.0] * num_dim, [1.0] * num_dim], device=device, dtype=dtype
         )
         self._rebounds = None
 
-        if len(data) == 0:
-            X = torch.empty(size=(0, num_dim), dtype=dtype, device=device)
-            Y = torch.empty(size=(0, 1), dtype=dtype, device=device)
-        else:
-            Y, X = fit_gp.extract_X_Y(data, dtype, device)
-            if num_keep is not None and num_keep < len(X):
-                if keep_style == "some":
-                    i = keep_some(Y.squeeze(), num_keep)
-                elif keep_style == "best":
-                    i = keep_best(Y.squeeze(), num_keep)
-                elif keep_style == "trailing":
-                    i = keep_trailing(Y.squeeze(), num_keep)
-                else:
-                    assert False, keep_style
-                Y = Y[i, :]
-                X = X[i, :]
+        X, Y = _extract_and_trim(data, dtype, device, num_dim, num_keep, keep_style)
 
         t0 = time.perf_counter()
         gp = fit_gp.fit_gp_XY(X, Y, model_spec=model_spec)
@@ -51,22 +56,21 @@ class AcqBT:
             telemetry.set_dt_fit(dt_fit)
         self._gp = gp
 
-        if not acq_kwargs:
-            kwargs = {}
-        else:
-            kwargs = dict(acq_kwargs)
-        if "X_max" in kwargs:
-            kwargs["X_max"] = self.x_max()
-        if "best_f" in kwargs:
-            kwargs["best_f"] = gp(find_max(gp, self.bounds)).mean
-        if "X_baseline" in kwargs:
-            kwargs["X_baseline"] = X
-        if "candidate_set" in kwargs:
-            kwargs["candidate_set"] = torch.rand(1000, num_dim)
-        if "Y_max" in kwargs:
-            kwargs["Y_max"] = gp(find_max(gp, self.bounds)).mean
-
+        kwargs = dict(acq_kwargs) if acq_kwargs else {}
+        self._populate_kwargs(kwargs, gp, X, num_dim)
         self.acq_function = acq_factory(gp, **kwargs)
+
+    def _populate_kwargs(self, kwargs, gp, X, num_dim):
+        kwarg_values = {
+            "X_max": lambda: self.x_max(),
+            "best_f": lambda: gp(find_max(gp, self.bounds)).mean,
+            "X_baseline": lambda: X,
+            "candidate_set": lambda: torch.rand(1000, num_dim),
+            "Y_max": lambda: gp(find_max(gp, self.bounds)).mean,
+        }
+        for key, value_fn in kwarg_values.items():
+            if key in kwargs:
+                kwargs[key] = value_fn()
 
     def model(self):
         return self._gp
