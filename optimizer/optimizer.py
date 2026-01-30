@@ -209,10 +209,12 @@ class Optimizer:
                 self.r_best_est = max(self.r_best_est, float(decision_best_batch))
 
             if self._num_denoise_passive_eval is None:
-                if self.best_datum is not None:
-                    self.y_best = float(self.best_datum.trajectory.rreturn)
+                # Frozen noise: track best raw rreturn seen so far (monotonically increasing)
+                best_raw_rreturn_batch = float(np.max(ret_batch))
+                if self.y_best is None:
+                    self.y_best = best_raw_rreturn_batch
                 else:
-                    self.y_best = float(self.r_best_est)
+                    self.y_best = max(float(self.y_best), best_raw_rreturn_batch)
             else:
                 if did_update_best or self.y_best is None:
                     self.y_best = float(
