@@ -1,13 +1,4 @@
-import torch
-from botorch.models import SingleTaskGP
-
-
-def _make_simple_gp():
-    X = torch.tensor([[0.1, 0.1], [0.5, 0.5], [0.9, 0.9]], dtype=torch.float64)
-    Y = torch.tensor([[1.0], [2.0], [1.5]], dtype=torch.float64)
-    model = SingleTaskGP(X, Y)
-    model.eval()
-    return model
+from tests.test_util import make_simple_gp as _make_simple_gp
 
 
 def test_gp_init():

@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -7,27 +6,11 @@ import numpy as np
 import analysis.data_sets as ds
 import analysis.plotting as ap
 from analysis.data_locator import DataLocator
-
-
-def _normalize_results_and_exp_dir(results_path: str, exp_dir: str) -> tuple[str, str]:
-    """Normalize (results_path, exp_dir) to what DataLocator expects."""
-    rp = Path(results_path).expanduser()
-    ed = Path(exp_dir).expanduser()
-
-    # results_path is repo root and has results/<exp_dir>
-    if (rp / "results" / exp_dir).exists():
-        return str(rp / "results"), exp_dir
-
-    # exp_dir is "results/<exp>" while results_path ends with ".../results"
-    if rp.name == "results" and exp_dir.startswith("results/"):
-        exp_dir = exp_dir[len("results/") :]
-        return str(rp), exp_dir
-
-    # exp_dir is a path to the experiment directory
-    if ed.exists() and ed.is_dir():
-        return str(ed.parent), ed.name
-
-    return str(rp), exp_dir
+from analysis.plot_util import (
+    collect_config_rows,
+    normalize_results_and_exp_dir,
+    uniq_int,
+)
 
 
 def _infer_params_from_configs(
@@ -39,53 +22,20 @@ def _infer_params_from_configs(
     opt_names: list[str],
 ) -> dict[str, int]:
     """Infer (num_rounds_seq, num_rounds_batch, num_arms_batch, num_reps) from config.json."""
-    results_path, exp_dir = _normalize_results_and_exp_dir(results_path, exp_dir)
+    results_path, exp_dir = normalize_results_and_exp_dir(results_path, exp_dir)
     root = Path(results_path) / exp_dir
 
-    rows: list[dict] = []
-    for child in root.iterdir() if root.exists() else []:
-        if not child.is_dir():
-            continue
-        cfg = child / "config.json"
-        if not cfg.exists():
-            continue
-        try:
-            with open(cfg) as f:
-                c = json.load(f)
-        except Exception:
-            continue
-
-        env_tag = c.get("env_tag") or c.get("env")
-        opt = c.get("opt_name")
-        if not isinstance(env_tag, str) or not isinstance(opt, str):
-            continue
-        if opt not in opt_names:
-            continue
-
-        rows.append(
-            {
-                "env_tag": env_tag,
-                "num_arms": c.get("num_arms"),
-                "num_rounds": c.get("num_rounds"),
-                "num_reps": c.get("num_reps"),
-            }
-        )
-
-    def _uniq_int(vals: list) -> int | None:
-        xs = {v for v in vals if isinstance(v, int)}
-        if len(xs) == 1:
-            return next(iter(xs))
-        return None
+    rows = collect_config_rows(root, opt_names, include_opt_name=False)
 
     seq = [r for r in rows if r["env_tag"] == problem_seq]
     batch = [r for r in rows if r["env_tag"] == problem_batch]
 
     out: dict[str, int] = {}
-    nr_seq = _uniq_int([r["num_rounds"] for r in seq])
-    nr_batch = _uniq_int([r["num_rounds"] for r in batch])
-    na_batch = _uniq_int([r["num_arms"] for r in batch])
-    reps_seq = _uniq_int([r["num_reps"] for r in seq])
-    reps_batch = _uniq_int([r["num_reps"] for r in batch])
+    nr_seq = uniq_int([r["num_rounds"] for r in seq])
+    nr_batch = uniq_int([r["num_rounds"] for r in batch])
+    na_batch = uniq_int([r["num_arms"] for r in batch])
+    reps_seq = uniq_int([r["num_reps"] for r in seq])
+    reps_batch = uniq_int([r["num_reps"] for r in batch])
 
     if nr_seq is not None:
         out["num_rounds_seq"] = nr_seq
@@ -112,7 +62,7 @@ def _load_traces(
     problem: str,
     key: str,
 ) -> tuple[DataLocator, np.ndarray]:
-    results_path, exp_dir = _normalize_results_and_exp_dir(results_path, exp_dir)
+    results_path, exp_dir = normalize_results_and_exp_dir(results_path, exp_dir)
     dl = DataLocator(
         results_path,
         exp_dir,
@@ -144,18 +94,12 @@ def _sum_traces(a: np.ndarray, b: np.ndarray) -> np.ndarray:
     return a + b
 
 
-def _mean_final_cum_dt_total_by_opt(
-    traces_dt_total: np.ndarray, optimizers: list[str]
-) -> dict[str, float]:
+def _mean_final_cum_dt_total_by_opt(traces_dt_total: np.ndarray, optimizers: list[str]) -> dict[str, float]:
     z = traces_dt_total.squeeze(0)  # [n_opt, n_rep, n_round]
     out: dict[str, float] = {}
     for i_opt, opt_name in enumerate(optimizers):
         dt = z[i_opt, ...]
-        cum = (
-            np.ma.cumsum(dt, axis=-1)
-            if np.ma.isMaskedArray(dt)
-            else np.cumsum(dt, axis=-1)
-        )
+        cum = np.ma.cumsum(dt, axis=-1) if np.ma.isMaskedArray(dt) else np.cumsum(dt, axis=-1)
         out[opt_name] = float(np.ma.mean(cum[:, -1]))
     return out
 
@@ -275,9 +219,7 @@ def plot_results_grid(
 
     fig, axs = plt.subplots(2, 2, figsize=figsize, sharey=False)
 
-    def _plot_vs_fe(
-        ax, dl, tr_r, *, num_arms: int, title: str, t_final: dict[str, float]
-    ):
+    def _plot_vs_fe(ax, dl, tr_r, *, num_arms: int, title: str, t_final: dict[str, float]):
         opts = dl.optimizers()
         z = tr_r.squeeze(0)
         for i_opt, opt_name in enumerate(opts):
@@ -324,31 +266,15 @@ def plot_results_grid(
         if xlim_opt_name in opts:
             i_ref = opts.index(xlim_opt_name)
             dt_ref = z_dt[i_ref, ...]
-            x_ref_rep = (
-                np.ma.cumsum(dt_ref, axis=-1)
-                if np.ma.isMaskedArray(dt_ref)
-                else np.cumsum(dt_ref, axis=-1)
-            )
-            x_ref = (
-                np.ma.mean(x_ref_rep, axis=0)
-                if np.ma.isMaskedArray(x_ref_rep)
-                else x_ref_rep.mean(axis=0)
-            )
+            x_ref_rep = np.ma.cumsum(dt_ref, axis=-1) if np.ma.isMaskedArray(dt_ref) else np.cumsum(dt_ref, axis=-1)
+            x_ref = np.ma.mean(x_ref_rep, axis=0) if np.ma.isMaskedArray(x_ref_rep) else x_ref_rep.mean(axis=0)
             x_max = float(x_ref[-1])
 
         for i_opt, opt_name in enumerate(opts):
             y = _best_so_far(z_r[i_opt, ...])
             dt = z_dt[i_opt, ...]
-            x_rep = (
-                np.ma.cumsum(dt, axis=-1)
-                if np.ma.isMaskedArray(dt)
-                else np.cumsum(dt, axis=-1)
-            )
-            x = (
-                np.ma.mean(x_rep, axis=0)
-                if np.ma.isMaskedArray(x_rep)
-                else x_rep.mean(axis=0)
-            )
+            x_rep = np.ma.cumsum(dt, axis=-1) if np.ma.isMaskedArray(dt) else np.cumsum(dt, axis=-1)
+            x = np.ma.mean(x_rep, axis=0) if np.ma.isMaskedArray(x_rep) else x_rep.mean(axis=0)
 
             if x_max is not None:
                 # Truncate to the reference optimizer's time horizon.

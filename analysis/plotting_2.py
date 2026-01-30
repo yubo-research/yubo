@@ -8,6 +8,11 @@ import analysis.data_sets as ds
 import analysis.plotting as ap
 from analysis.data_io import data_is_done
 from analysis.data_locator import DataLocator
+from analysis.plot_util import (
+    collect_config_rows,
+    normalize_results_and_exp_dir,
+    uniq_int,
+)
 
 
 def _noise_label(problem: str) -> str:
@@ -16,16 +21,12 @@ def _noise_label(problem: str) -> str:
     return "Natural noise"
 
 
-def _speedup_x_label(
-    cum_dt_prop_final_by_opt: dict[str, float] | None, problem: str
-) -> str | None:
+def _speedup_x_label(cum_dt_prop_final_by_opt: dict[str, float] | None, problem: str) -> str | None:
     if not cum_dt_prop_final_by_opt:
         return None
 
     baseline_candidates = ("turbo-one", "turbo-one-na", "turbo-one-f")
-    baseline_opt = next(
-        (o for o in baseline_candidates if o in cum_dt_prop_final_by_opt), None
-    )
+    baseline_opt = next((o for o in baseline_candidates if o in cum_dt_prop_final_by_opt), None)
     if baseline_opt is None:
         return None
 
@@ -35,13 +36,7 @@ def _speedup_x_label(
 
     t_baseline = cum_dt_prop_final_by_opt.get(baseline_opt, None)
     t_compare = cum_dt_prop_final_by_opt.get(compare_opt, None)
-    if (
-        t_baseline is None
-        or t_compare is None
-        or not np.isfinite(t_baseline)
-        or not np.isfinite(t_compare)
-        or t_compare <= 0
-    ):
+    if t_baseline is None or t_compare is None or not np.isfinite(t_baseline) or not np.isfinite(t_compare) or t_compare <= 0:
         return None
 
     x = int(round(float(t_baseline) / float(t_compare)))
@@ -115,44 +110,8 @@ def _get_denoise_value(data_locator: DataLocator, problem: str) -> int:
             if problem.endswith(":fn"):
                 return config.get("num_denoise")
             else:
-                return config.get(
-                    "num_denoise_passive", config.get("num_denoise_eval", None)
-                )
+                return config.get("num_denoise_passive", config.get("num_denoise_eval", None))
     return None
-
-
-def _normalize_results_and_exp_dir(results_path: str, exp_dir: str) -> tuple[str, str]:
-    """
-    Normalize (results_path, exp_dir) to what DataLocator expects.
-
-    DataLocator assumes root = Path(results_path) / exp_dir.
-    This helper makes common caller variants work:
-    - results_path is repo root (contains a "results/" subdir)
-    - exp_dir is "results/<exp>" while results_path already points at ".../results"
-    - exp_dir is an absolute/relative path to the experiment directory
-    - results_path itself points at the experiment directory
-    """
-    rp = Path(results_path).expanduser()
-    ed = Path(exp_dir).expanduser()
-
-    # Case: results_path is repo root and has results/<exp_dir>
-    if (rp / "results" / exp_dir).exists():
-        return str(rp / "results"), exp_dir
-
-    # Case: exp_dir includes "results/<exp>" while results_path already ends with ".../results"
-    if rp.name == "results" and exp_dir.startswith("results/"):
-        exp_dir = exp_dir[len("results/") :]
-        return str(rp), exp_dir
-
-    # Case: exp_dir is a path to the experiment directory
-    if ed.exists() and ed.is_dir():
-        return str(ed.parent), ed.name
-
-    # Case: results_path points directly at the experiment directory
-    if rp.exists() and rp.is_dir() and rp.name == exp_dir:
-        return str(rp.parent), rp.name
-
-    return str(rp), exp_dir
 
 
 def _scan_experiment_configs(root: Path) -> tuple[set[str], set[str]]:
@@ -183,7 +142,7 @@ def _scan_experiment_configs(root: Path) -> tuple[set[str], set[str]]:
 
 
 def infer_experiment_from_configs(results_path: str, exp_dir: str) -> dict:
-    results_path, exp_dir = _normalize_results_and_exp_dir(results_path, exp_dir)
+    results_path, exp_dir = normalize_results_and_exp_dir(results_path, exp_dir)
     root = Path(results_path) / exp_dir
     if not root.exists():
         raise FileNotFoundError(str(root))
@@ -204,16 +163,8 @@ def infer_experiment_from_configs(results_path: str, exp_dir: str) -> dict:
     if not cfgs:
         raise ValueError(f"No config.json files found under {str(root)!r}")
 
-    env_tags = sorted(
-        {
-            c.get("env_tag") or c.get("env")
-            for c in cfgs
-            if isinstance(c.get("env_tag") or c.get("env"), str)
-        }
-    )
-    opt_names = sorted(
-        {c.get("opt_name") for c in cfgs if isinstance(c.get("opt_name"), str)}
-    )
+    env_tags = sorted({c.get("env_tag") or c.get("env") for c in cfgs if isinstance(c.get("env_tag") or c.get("env"), str)})
+    opt_names = sorted({c.get("opt_name") for c in cfgs if isinstance(c.get("opt_name"), str)})
 
     def _uniq_int(key: str) -> int | None:
         xs = {c.get(key) for c in cfgs if isinstance(c.get(key), int)}
@@ -243,53 +194,21 @@ def _infer_params_from_configs(
     opt_names: list[str],
 ) -> dict[str, int]:
     """Infer (num_rounds_seq, num_rounds_batch, num_arms_seq, num_arms_batch, num_reps) from config.json."""
-    results_path, exp_dir = _normalize_results_and_exp_dir(results_path, exp_dir)
+    results_path, exp_dir = normalize_results_and_exp_dir(results_path, exp_dir)
     root = Path(results_path) / exp_dir
 
-    rows: list[dict] = []
-    for child in root.iterdir() if root.exists() else []:
-        if not child.is_dir():
-            continue
-        cfg = child / "config.json"
-        if not cfg.exists():
-            continue
-        try:
-            with open(cfg) as f:
-                c = json.load(f)
-        except Exception:
-            continue
-        env_tag = c.get("env_tag") or c.get("env")
-        opt = c.get("opt_name")
-        if not isinstance(env_tag, str) or not isinstance(opt, str):
-            continue
-        if opt not in opt_names:
-            continue
-        rows.append(
-            {
-                "env_tag": env_tag,
-                "opt_name": opt,
-                "num_arms": c.get("num_arms"),
-                "num_rounds": c.get("num_rounds"),
-                "num_reps": c.get("num_reps"),
-            }
-        )
-
-    def _uniq_int(vals: list) -> int | None:
-        xs = {v for v in vals if isinstance(v, int)}
-        if len(xs) == 1:
-            return next(iter(xs))
-        return None
+    rows = collect_config_rows(root, opt_names, include_opt_name=True)
 
     seq = [r for r in rows if r["env_tag"] == problem_seq]
     batch = [r for r in rows if r["env_tag"] == problem_batch]
 
     out: dict[str, int] = {}
-    nr_seq = _uniq_int([r["num_rounds"] for r in seq])
-    nr_batch = _uniq_int([r["num_rounds"] for r in batch])
-    na_seq = _uniq_int([r["num_arms"] for r in seq])
-    na_batch = _uniq_int([r["num_arms"] for r in batch])
-    reps_seq = _uniq_int([r["num_reps"] for r in seq])
-    reps_batch = _uniq_int([r["num_reps"] for r in batch])
+    nr_seq = uniq_int([r["num_rounds"] for r in seq])
+    nr_batch = uniq_int([r["num_rounds"] for r in batch])
+    na_seq = uniq_int([r["num_arms"] for r in seq])
+    na_batch = uniq_int([r["num_arms"] for r in batch])
+    reps_seq = uniq_int([r["num_reps"] for r in seq])
+    reps_batch = uniq_int([r["num_reps"] for r in batch])
 
     if nr_seq is not None:
         out["num_rounds_seq"] = nr_seq
@@ -321,7 +240,7 @@ def load_rl_traces(
     problem: str,
     key: str = "rreturn",
 ):
-    results_path, exp_dir = _normalize_results_and_exp_dir(results_path, exp_dir)
+    results_path, exp_dir = normalize_results_and_exp_dir(results_path, exp_dir)
     root = Path(results_path) / exp_dir
 
     data_locator = DataLocator(
@@ -430,21 +349,15 @@ def _print_dataset_summary(
                 cfg_reps = None
         reps_done = _count_done_reps(trace_dir)
         root = Path(trace_dir).name
-        print(
-            f"PLOT: env={problem} opt={opt} arms={num_arms} rounds={num_rounds} reps_done={reps_done} reps_cfg={cfg_reps} dir={root}"
-        )
+        print(f"PLOT: env={problem} opt={opt} arms={num_arms} rounds={num_rounds} reps_done={reps_done} reps_cfg={cfg_reps} dir={root}")
 
 
-def _mean_final_by_optimizer(
-    data_locator: DataLocator, traces: np.ndarray
-) -> dict[str, float]:
+def _mean_final_by_optimizer(data_locator: DataLocator, traces: np.ndarray) -> dict[str, float]:
     """Return {opt_name: mean(final_value_over_reps)} for a single-problem trace tensor."""
     optimizers = data_locator.optimizers()
     z = traces.squeeze(0)  # [n_opt, n_rep, n_round]
     if z.ndim != 3 or z.shape[2] == 0:
-        raise ValueError(
-            f"Empty traces: shape={getattr(z, 'shape', None)} for key={getattr(data_locator, 'key', None)}"
-        )
+        raise ValueError(f"Empty traces: shape={getattr(z, 'shape', None)} for key={getattr(data_locator, 'key', None)}")
     out: dict[str, float] = {}
     for i_opt, opt_name in enumerate(optimizers):
         y_final = z[i_opt, :, -1]
@@ -456,16 +369,12 @@ def _mean_final_by_optimizer(
     return out
 
 
-def _median_final_by_optimizer(
-    data_locator: DataLocator, traces: np.ndarray
-) -> dict[str, float]:
+def _median_final_by_optimizer(data_locator: DataLocator, traces: np.ndarray) -> dict[str, float]:
     """Return {opt_name: median(final_value_over_reps)} for a single-problem trace tensor."""
     optimizers = data_locator.optimizers()
     z = traces.squeeze(0)  # [n_opt, n_rep, n_round]
     if z.ndim != 3 or z.shape[2] == 0:
-        raise ValueError(
-            f"Empty traces: shape={getattr(z, 'shape', None)} for key={getattr(data_locator, 'key', None)}"
-        )
+        raise ValueError(f"Empty traces: shape={getattr(z, 'shape', None)} for key={getattr(data_locator, 'key', None)}")
     out: dict[str, float] = {}
     for i_opt, opt_name in enumerate(optimizers):
         y_final = z[i_opt, :, -1]
@@ -543,11 +452,7 @@ def _print_cum_dt_prop(
     if not cum_dt_prop_final_by_opt:
         return
     order = opt_order or sorted(cum_dt_prop_final_by_opt.keys())
-    items = [
-        f"\\texttt{{{o}}} {cum_dt_prop_final_by_opt[o]:.1f}s"
-        for o in order
-        if o in cum_dt_prop_final_by_opt
-    ]
+    items = [f"\\texttt{{{o}}} {cum_dt_prop_final_by_opt[o]:.1f}s" for o in order if o in cum_dt_prop_final_by_opt]
     if not items:
         return
     print(header)
@@ -601,11 +506,7 @@ def plot_learning_curves(
     for i_opt, opt_name in enumerate(optimizers):
         y = z[i_opt, ...]
         x = num_arms * (int(x_start) + np.arange(y.shape[1]))
-        style_idx = (
-            opt_names_all.index(opt_name)
-            if opt_names_all and opt_name in opt_names_all
-            else i_opt
-        )
+        style_idx = opt_names_all.index(opt_name) if opt_names_all and opt_name in opt_names_all else i_opt
         if opt_name.startswith("turbo-enn"):
             color = "#333333"
             marker = "s"
@@ -613,10 +514,7 @@ def plot_learning_curves(
             color = ap.colors[style_idx]
             marker = ap.markers[style_idx]
         label = opt_name
-        if (
-            cum_dt_prop_final_by_opt is not None
-            and opt_name in cum_dt_prop_final_by_opt
-        ):
+        if cum_dt_prop_final_by_opt is not None and opt_name in cum_dt_prop_final_by_opt:
             label = f"{opt_name} ({cum_dt_prop_final_by_opt[opt_name]:.1f}s)"
         ap.filled_err(
             x=x,
@@ -691,9 +589,7 @@ def plot_rl_experiment(
     title: str = None,
     figsize: tuple = (10, 6),
 ):
-    data_locator, traces = load_rl_traces(
-        results_path, exp_dir, opt_names, num_arms, num_rounds, num_reps, problem
-    )
+    data_locator, traces = load_rl_traces(results_path, exp_dir, opt_names, num_arms, num_rounds, num_reps, problem)
     cum_dt_prop_final_by_opt = None
     try:
         data_locator_dt, traces_cum = _load_cum_dt_prop(
@@ -895,16 +791,12 @@ def plot_rl_experiment_vs_time_auto(
     if opt_names is None:
         opt_names = info["opt_names"]
     if not opt_names:
-        raise ValueError(
-            f"No opt_names found for results_path={results_path!r}, exp_dir={exp_dir!r}"
-        )
+        raise ValueError(f"No opt_names found for results_path={results_path!r}, exp_dir={exp_dir!r}")
 
     if problem is None:
         env_tags = info["env_tags"]
         if len(env_tags) != 1:
-            raise ValueError(
-                f"Multiple env_tags found {env_tags!r}; pass problem= explicitly"
-            )
+            raise ValueError(f"Multiple env_tags found {env_tags!r}; pass problem= explicitly")
         problem = env_tags[0]
 
     if num_arms is None:
@@ -983,9 +875,7 @@ def plot_rl_comparison(
             key="dt_prop",
         )
         traces_seq_cum = _cum_dt_prop_from_dt_prop_traces(traces_seq_dt)
-        cum_dt_prop_seq = _median_final_by_optimizer(
-            data_locator_seq_dt, traces_seq_cum
-        )
+        cum_dt_prop_seq = _median_final_by_optimizer(data_locator_seq_dt, traces_seq_cum)
     except ValueError:
         cum_dt_prop_seq = None
         data_locator_seq_dt = None
@@ -1022,9 +912,7 @@ def plot_rl_comparison(
                 key="dt_prop",
             )
             traces_batch_cum = _cum_dt_prop_from_dt_prop_traces(traces_batch_dt)
-            cum_dt_prop_batch = _median_final_by_optimizer(
-                data_locator_batch_dt, traces_batch_cum
-            )
+            cum_dt_prop_batch = _median_final_by_optimizer(data_locator_batch_dt, traces_batch_cum)
     except ValueError:
         cum_dt_prop_batch = None
         data_locator_batch_dt = None
@@ -1049,9 +937,7 @@ def plot_rl_comparison(
     line1_seq = f"{noise_seq}, {speedup_seq}" if speedup_seq else noise_seq
     parts_seq = [f"num_arms = {num_arms_seq}"]
     if denoise_seq is not None:
-        denoise_key_seq = (
-            "num_denoise_obs" if problem_seq.endswith(":fn") else "num_denoise_passive"
-        )
+        denoise_key_seq = "num_denoise_obs" if problem_seq.endswith(":fn") else "num_denoise_passive"
         parts_seq.append(f"{denoise_key_seq} = {denoise_seq}")
     title_seq = f"{line1_seq}\n{', '.join(parts_seq)}"
     if print_titles:
@@ -1071,16 +957,10 @@ def plot_rl_comparison(
         noise_batch = _noise_label(problem_batch)
         denoise_batch = _get_denoise_value(data_locator_batch, problem_batch)
         speedup_batch = _speedup_x_label(cum_dt_prop_batch, problem_batch)
-        line1_batch = (
-            f"{noise_batch}, {speedup_batch}" if speedup_batch else noise_batch
-        )
+        line1_batch = f"{noise_batch}, {speedup_batch}" if speedup_batch else noise_batch
         parts_batch = [f"num_arms = {num_arms_batch}"]
         if denoise_batch is not None:
-            denoise_key_batch = (
-                "num_denoise_obs"
-                if problem_batch.endswith(":fn")
-                else "num_denoise_passive"
-            )
+            denoise_key_batch = "num_denoise_obs" if problem_batch.endswith(":fn") else "num_denoise_passive"
             parts_batch.append(f"{denoise_key_batch} = {denoise_batch}")
         title_batch = f"{line1_batch}\n{', '.join(parts_batch)}"
         if print_titles:
@@ -1158,9 +1038,7 @@ def plot_rl_final_comparison(
             key="dt_prop",
         )
         traces_seq_cum = _cum_dt_prop_from_dt_prop_traces(traces_seq_dt)
-        cum_dt_prop_seq = _median_final_by_optimizer(
-            data_locator_seq_dt, traces_seq_cum
-        )
+        cum_dt_prop_seq = _median_final_by_optimizer(data_locator_seq_dt, traces_seq_cum)
     except ValueError:
         cum_dt_prop_seq = None
 
@@ -1194,9 +1072,7 @@ def plot_rl_final_comparison(
                 key="dt_prop",
             )
             traces_batch_cum = _cum_dt_prop_from_dt_prop_traces(traces_batch_dt)
-            cum_dt_prop_batch = _median_final_by_optimizer(
-                data_locator_batch_dt, traces_batch_cum
-            )
+            cum_dt_prop_batch = _median_final_by_optimizer(data_locator_batch_dt, traces_batch_cum)
     except ValueError:
         cum_dt_prop_batch = None
 
@@ -1208,9 +1084,7 @@ def plot_rl_final_comparison(
     line1_seq = f"{noise_seq}, {speedup_seq}" if speedup_seq else noise_seq
     parts_seq = [f"num_arms = {num_arms_seq}"]
     if denoise_seq is not None:
-        denoise_key_seq = (
-            "num_denoise" if problem_seq.endswith(":fn") else "num_denoise_passive"
-        )
+        denoise_key_seq = "num_denoise" if problem_seq.endswith(":fn") else "num_denoise_passive"
         parts_seq.append(f"{denoise_key_seq} = {denoise_seq}")
     title_seq = f"{line1_seq}\n{', '.join(parts_seq)}"
     if print_titles:
@@ -1228,16 +1102,10 @@ def plot_rl_final_comparison(
         noise_batch = _noise_label(problem_batch)
         denoise_batch = _get_denoise_value(data_locator_batch, problem_batch)
         speedup_batch = _speedup_x_label(cum_dt_prop_batch, problem_batch)
-        line1_batch = (
-            f"{noise_batch}, {speedup_batch}" if speedup_batch else noise_batch
-        )
+        line1_batch = f"{noise_batch}, {speedup_batch}" if speedup_batch else noise_batch
         parts_batch = [f"num_arms = {num_arms_batch}"]
         if denoise_batch is not None:
-            denoise_key_batch = (
-                "num_denoise"
-                if problem_batch.endswith(":fn")
-                else "num_denoise_passive"
-            )
+            denoise_key_batch = "num_denoise" if problem_batch.endswith(":fn") else "num_denoise_passive"
             parts_batch.append(f"{denoise_key_batch} = {denoise_batch}")
         title_batch = f"{line1_batch}\n{', '.join(parts_batch)}"
         if print_titles:
@@ -1404,13 +1272,9 @@ def compute_pareto_data(
 
         configs_to_load = []
         if mode in ("seq", "both"):
-            configs_to_load.append(
-                (f"{problem}_seq", problem_seq, num_arms_seq, num_rounds_seq)
-            )
+            configs_to_load.append((f"{problem}_seq", problem_seq, num_arms_seq, num_rounds_seq))
         if mode in ("batch", "both"):
-            configs_to_load.append(
-                (f"{problem}_batch", problem_batch, num_arms_batch, num_rounds_batch)
-            )
+            configs_to_load.append((f"{problem}_batch", problem_batch, num_arms_batch, num_rounds_batch))
 
         for label, prob, num_arms, num_rounds in configs_to_load:
             try:
@@ -1463,9 +1327,7 @@ def compute_pareto_data(
                 t_matrix[i_p, i_o] = all_times[p][o]
 
     if baseline_opt not in opts_in_data:
-        raise ValueError(
-            f"Baseline optimizer {baseline_opt!r} not found in data. Available: {opts_in_data}"
-        )
+        raise ValueError(f"Baseline optimizer {baseline_opt!r} not found in data. Available: {opts_in_data}")
     i_baseline = opts_in_data.index(baseline_opt)
 
     r_baseline = r_matrix[:, i_baseline : i_baseline + 1]

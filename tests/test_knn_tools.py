@@ -117,22 +117,7 @@ def test_most_isolated():
     assert len(result) >= 1
 
 
-class MockENNForFarthest:
-    def __init__(self, X):
-        self._X = np.array(X)
-
-    def idx_fast(self, x):
-        x = np.atleast_2d(x)
-        dists = np.linalg.norm(x[:, None, :] - self._X[None, :, :], axis=2)
-        return np.argmin(dists, axis=1)
-
-    def about_neighbors(self, x, k=1):
-        x = np.atleast_2d(x)
-        dists = np.linalg.norm(x[:, None, :] - self._X[None, :, :], axis=2)
-        idx = np.argsort(dists, axis=1)[:, :k]
-        sorted_dists = np.take_along_axis(dists, idx, axis=1)
-        return idx, sorted_dists
-
+class MockENNForFarthest(MockENN):
     def posterior(self, x):
         from types import SimpleNamespace
 
