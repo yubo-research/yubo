@@ -35,9 +35,7 @@ class TestTrajectory:
     def test_trajectory_with_se(self):
         from optimizer.trajectories import Trajectory
 
-        traj = Trajectory(
-            rreturn=10.5, states=np.array([]), actions=np.array([]), rreturn_se=0.5
-        )
+        traj = Trajectory(rreturn=10.5, states=np.array([]), actions=np.array([]), rreturn_se=0.5)
         assert traj.rreturn_se == 0.5
 
 
@@ -62,9 +60,7 @@ class TestDatum:
         from optimizer.trajectories import Trajectory
 
         traj = Trajectory(rreturn=5.0, states=np.array([]), actions=np.array([]))
-        datum = Datum(
-            designer="test", policy=MagicMock(), expected_acqf=0.5, trajectory=traj
-        )
+        datum = Datum(designer="test", policy=MagicMock(), expected_acqf=0.5, trajectory=traj)
         assert datum.designer == "test"
         assert datum.expected_acqf == 0.5
         assert datum.trajectory.rreturn == 5.0
@@ -143,17 +139,13 @@ class TestArmBestObs:
                 designer=None,
                 policy=mock_policy_1,
                 expected_acqf=None,
-                trajectory=Trajectory(
-                    rreturn=5.0, states=np.array([]), actions=np.array([])
-                ),
+                trajectory=Trajectory(rreturn=5.0, states=np.array([]), actions=np.array([])),
             ),
             Datum(
                 designer=None,
                 policy=mock_policy_2,
                 expected_acqf=None,
-                trajectory=Trajectory(
-                    rreturn=10.0, states=np.array([]), actions=np.array([])
-                ),
+                trajectory=Trajectory(rreturn=10.0, states=np.array([]), actions=np.array([])),
             ),
         ]
 
@@ -605,9 +597,7 @@ class TestOptimizer:
             policy=policy,
             num_arms=2,
         )
-        trace = opt.collect_trace(
-            "random", max_iterations=1000, max_proposal_seconds=0.001
-        )
+        trace = opt.collect_trace("random", max_iterations=1000, max_proposal_seconds=0.001)
         assert len(trace) < 1000
 
     def test_r_best_est_updates(self):
@@ -676,12 +666,8 @@ class TestOptimizer:
         opt._trace = []  # Initialize trace
 
         # Mock _iterate to return multi-objective data
-        traj1 = Trajectory(
-            rreturn=np.array([1.0, 2.0]), states=np.array([]), actions=np.array([])
-        )
-        traj2 = Trajectory(
-            rreturn=np.array([2.0, 1.0]), states=np.array([]), actions=np.array([])
-        )
+        traj1 = Trajectory(rreturn=np.array([1.0, 2.0]), states=np.array([]), actions=np.array([]))
+        traj2 = Trajectory(rreturn=np.array([2.0, 1.0]), states=np.array([]), actions=np.array([]))
         data = [
             Datum(mock_designer, policy, None, traj1),
             Datum(mock_designer, policy, None, traj2),

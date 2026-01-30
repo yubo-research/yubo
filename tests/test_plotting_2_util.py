@@ -40,17 +40,13 @@ class TestSpeedupXLabel:
     def test_computes_speedup_for_frozen_noise(self):
         from analysis.plotting_2_util import speedup_x_label
 
-        result = speedup_x_label(
-            {"turbo-one": 100.0, "turbo-enn-p": 10.0}, "problem:fn"
-        )
+        result = speedup_x_label({"turbo-one": 100.0, "turbo-enn-p": 10.0}, "problem:fn")
         assert result == "10x speedup"
 
     def test_computes_speedup_for_natural_noise(self):
         from analysis.plotting_2_util import speedup_x_label
 
-        result = speedup_x_label(
-            {"turbo-one": 50.0, "turbo-enn-fit-ucb": 10.0}, "problem"
-        )
+        result = speedup_x_label({"turbo-one": 50.0, "turbo-enn-fit-ucb": 10.0}, "problem")
         assert result == "5x speedup"
 
 

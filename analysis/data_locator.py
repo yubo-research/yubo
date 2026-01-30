@@ -38,7 +38,9 @@ class DataLocator:
         self.grep_for = grep_for
 
     def __str__(self):
-        return f"{self._root_path()} {self.exp_dir} num_dim = {self.num_dim} num_arms = {self.num_arms} num_rounds = {self.num_rounds} num_reps = {self.num_reps}"
+        return (
+            f"{self._root_path()} {self.exp_dir} num_dim = {self.num_dim} num_arms = {self.num_arms} num_rounds = {self.num_rounds} num_reps = {self.num_reps}"
+        )
 
     def _root_path(self):
         return f"{self.results}/{self.exp_dir}"
@@ -114,11 +116,7 @@ class DataLocator:
         return True
 
     def _load(self, problem=None, opt_name=None):
-        opt_names = (
-            {opt_name}
-            if opt_name is not None
-            else (list(self._opt_names) if self._opt_names is not None else None)
-        )
+        opt_names = {opt_name} if opt_name is not None else (list(self._opt_names) if self._opt_names is not None else None)
         root_path = self._root_path()
         data_sets = []
         for fn in os.listdir(root_path):
@@ -136,13 +134,7 @@ class DataLocator:
         return [n for n in self._opt_names if n in opt_names]
 
     def optimizers_in(self, problem):
-        return sorted(
-            {
-                d[0].get("opt_name")
-                for d in self._load(problem=problem)
-                if d[0].get("opt_name")
-            }
-        )
+        return sorted({d[0].get("opt_name") for d in self._load(problem=problem) if d[0].get("opt_name")})
 
     def organize_data(self, opt_names, mu, se):
         data = dict(zip(self.optimizers(), list(zip(mu, se))))

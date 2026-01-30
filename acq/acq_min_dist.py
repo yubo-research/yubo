@@ -42,9 +42,7 @@ class AcqMinDist(AnalyticAcquisitionFunction):
         af = []
         for i_batch in range(num_batches):
             # Y = posterior.mean[i_batch, :]  # q
-            dist2 = self._delta_squared(X[i_batch, ::], self.model.train_inputs[0]).sum(
-                axis=-1
-            )
+            dist2 = self._delta_squared(X[i_batch, ::], self.model.train_inputs[0]).sum(axis=-1)
             md = dist2.min()
             # md = torch.sqrt(1e-9 + md)
             if self.X_max is not None:

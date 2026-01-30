@@ -42,9 +42,7 @@ class AcqBT:
         model_spec,
         telemetry=None,
     ):
-        self.bounds = torch.tensor(
-            [[0.0] * num_dim, [1.0] * num_dim], device=device, dtype=dtype
-        )
+        self.bounds = torch.tensor([[0.0] * num_dim, [1.0] * num_dim], device=device, dtype=dtype)
         self._rebounds = None
 
         X, Y = _extract_and_trim(data, dtype, device, num_dim, num_keep, keep_style)

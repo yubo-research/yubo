@@ -128,21 +128,15 @@ def print_dataset_summary(
                 cfg_reps = None
         reps_done = count_done_reps(trace_dir)
         root = Path(trace_dir).name
-        print(
-            f"PLOT: env={problem} opt={opt} arms={num_arms} rounds={num_rounds} reps_done={reps_done} reps_cfg={cfg_reps} dir={root}"
-        )
+        print(f"PLOT: env={problem} opt={opt} arms={num_arms} rounds={num_rounds} reps_done={reps_done} reps_cfg={cfg_reps} dir={root}")
 
 
-def mean_final_by_optimizer(
-    data_locator: DataLocator, traces: np.ndarray
-) -> dict[str, float]:
+def mean_final_by_optimizer(data_locator: DataLocator, traces: np.ndarray) -> dict[str, float]:
     """Return {opt_name: mean(final_value_over_reps)} for a single-problem trace tensor."""
     optimizers = data_locator.optimizers()
     z = traces.squeeze(0)
     if z.ndim != 3 or z.shape[2] == 0:
-        raise ValueError(
-            f"Empty traces: shape={getattr(z, 'shape', None)} for key={getattr(data_locator, 'key', None)}"
-        )
+        raise ValueError(f"Empty traces: shape={getattr(z, 'shape', None)} for key={getattr(data_locator, 'key', None)}")
     out: dict[str, float] = {}
     for i_opt, opt_name in enumerate(optimizers):
         y_final = z[i_opt, :, -1]
@@ -153,16 +147,12 @@ def mean_final_by_optimizer(
     return out
 
 
-def median_final_by_optimizer(
-    data_locator: DataLocator, traces: np.ndarray
-) -> dict[str, float]:
+def median_final_by_optimizer(data_locator: DataLocator, traces: np.ndarray) -> dict[str, float]:
     """Return {opt_name: median(final_value_over_reps)} for a single-problem trace tensor."""
     optimizers = data_locator.optimizers()
     z = traces.squeeze(0)
     if z.ndim != 3 or z.shape[2] == 0:
-        raise ValueError(
-            f"Empty traces: shape={getattr(z, 'shape', None)} for key={getattr(data_locator, 'key', None)}"
-        )
+        raise ValueError(f"Empty traces: shape={getattr(z, 'shape', None)} for key={getattr(data_locator, 'key', None)}")
     out: dict[str, float] = {}
     for i_opt, opt_name in enumerate(optimizers):
         y_final = z[i_opt, :, -1]
@@ -235,11 +225,7 @@ def print_cum_dt_prop(
     if not cum_dt_prop_final_by_opt:
         return
     order = opt_order or sorted(cum_dt_prop_final_by_opt.keys())
-    items = [
-        f"\\texttt{{{o}}} {cum_dt_prop_final_by_opt[o]:.1f}s"
-        for o in order
-        if o in cum_dt_prop_final_by_opt
-    ]
+    items = [f"\\texttt{{{o}}} {cum_dt_prop_final_by_opt[o]:.1f}s" for o in order if o in cum_dt_prop_final_by_opt]
     if not items:
         return
     print(header)

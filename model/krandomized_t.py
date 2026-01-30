@@ -14,11 +14,7 @@ class KRandomizedT:
         l_max = 1.0
         self._lengthscales = torch.exp(
             torch.log(torch.tensor(l_min, dtype=torch.float64))
-            + u
-            * (
-                torch.log(torch.tensor(l_max, dtype=torch.float64))
-                - torch.log(torch.tensor(l_min, dtype=torch.float64))
-            )
+            + u * (torch.log(torch.tensor(l_max, dtype=torch.float64)) - torch.log(torch.tensor(l_min, dtype=torch.float64)))
         )
 
         Xs = self._train_x / self._lengthscales
@@ -30,9 +26,7 @@ class KRandomizedT:
         K.fill_diagonal_(1.0)
         self._K = K
 
-    def sub_k(
-        self, idxs: torch.Tensor, x: torch.Tensor
-    ) -> tuple[torch.Tensor, torch.Tensor]:
+    def sub_k(self, idxs: torch.Tensor, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         assert isinstance(idxs, torch.Tensor)
         assert idxs.ndim == 1
         assert isinstance(x, torch.Tensor)

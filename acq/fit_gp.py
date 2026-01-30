@@ -131,9 +131,7 @@ def get_closure(mll, outcome_warp):
 def _create_empty_gp(X, Y, model_type):
     if model_type == "sparse":
         inducing_points = torch.empty((0, X.shape[-1]), dtype=X.dtype, device=X.device)
-        gp = SingleTaskVariationalGP(
-            X, inducing_points=inducing_points, outcome_transform=_EmptyTransform()
-        )
+        gp = SingleTaskVariationalGP(X, inducing_points=inducing_points, outcome_transform=_EmptyTransform())
     else:
         gp = SingleTaskGP(X, Y, outcome_transform=_EmptyTransform())
     gp.to(X)
@@ -149,9 +147,7 @@ def _create_outcome_warp(output_warping, X):
             c_prior=LogNormalPrior(0.0, 1.0),
             d_prior=NormalPrior(0, 1),
         ).to(X),
-        "y": lambda: YTransform(
-            a_prior=LogNormalPrior(0.0, 0.1), b_prior=NormalPrior(0, 1)
-        ).to(X),
+        "y": lambda: YTransform(a_prior=LogNormalPrior(0.0, 0.1), b_prior=NormalPrior(0, 1)).to(X),
         "none": lambda: None,
     }
     return warp_factories[output_warping]()
@@ -166,9 +162,7 @@ def _create_gp_model(X, Y, model_type, input_transform):
             X,
             Y,
             input_transform=input_transform,
-            covar_module=ScaleKernel(
-                RFFKernel(ard_num_dims=X.shape[-1], num_samples=num_samples)
-            ),
+            covar_module=ScaleKernel(RFFKernel(ard_num_dims=X.shape[-1], num_samples=num_samples)),
         )
     return SingleTaskGP(X, Y, input_transform=input_transform)
 
@@ -181,9 +175,7 @@ def _fit_gp_model(gp, mll, model_type, outcome_warp, X):
         for i_try in range(num_tries):
             mll.to(X)
             try:
-                kwargs = (
-                    {"closure": get_closure(mll, outcome_warp)} if outcome_warp else {}
-                )
+                kwargs = {"closure": get_closure(mll, outcome_warp)} if outcome_warp else {}
                 if model_type == "sparse":
                     opt, opt_kw = (
                         (
@@ -231,11 +223,7 @@ def fit_gp_XY(X, Y, model_spec=None):
         gp.outcome_warp = outcome_warp
     gp.to(X)
 
-    mll = (
-        VariationalELBO(gp.likelihood, gp.model, num_data=X.shape[-2])
-        if model_type == "sparse"
-        else ExactMarginalLogLikelihood(gp.likelihood, gp)
-    )
+    mll = VariationalELBO(gp.likelihood, gp.model, num_data=X.shape[-2]) if model_type == "sparse" else ExactMarginalLogLikelihood(gp.likelihood, gp)
     _fit_gp_model(gp, mll, model_type, outcome_warp, X)
     return gp
 
@@ -258,9 +246,7 @@ def mk_yx(datum):
 
 
 def mk_x(policy):
-    return all_bounds.bt_low + all_bounds.bt_width * (
-        (torch.as_tensor(policy.get_params()) - all_bounds.p_low) / all_bounds.p_width
-    )
+    return all_bounds.bt_low + all_bounds.bt_width * ((torch.as_tensor(policy.get_params()) - all_bounds.p_low) / all_bounds.p_width)
 
 
 def estimate(gp, X):
@@ -271,9 +257,7 @@ def mk_policies(policy_0, X_cand):
     policies = []
     for x in X_cand:
         policy = policy_0.clone()
-        x = (
-            x.detach().cpu().numpy().flatten() - all_bounds.bt_low
-        ) / all_bounds.bt_width
+        x = (x.detach().cpu().numpy().flatten() - all_bounds.bt_low) / all_bounds.bt_width
         p = all_bounds.p_low + all_bounds.p_width * x
         policy.set_params(p)
         policies.append(policy)

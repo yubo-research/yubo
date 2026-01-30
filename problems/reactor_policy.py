@@ -40,12 +40,8 @@ class ReactorPolicy:
 
         assert self._joint_angle_idx.ndim == 1
         assert self._joint_vel_idx.ndim == 1
-        assert self._joint_angle_idx.shape == (self._action_dim,), (
-            self._joint_angle_idx.shape
-        )
-        assert self._joint_vel_idx.shape == (self._action_dim,), (
-            self._joint_vel_idx.shape
-        )
+        assert self._joint_angle_idx.shape == (self._action_dim,), self._joint_angle_idx.shape
+        assert self._joint_vel_idx.shape == (self._action_dim,), self._joint_vel_idx.shape
 
         if contact_idx is None:
             self._contact_idx = None
@@ -225,9 +221,7 @@ class ReactorPolicy:
 
         self._timer_gamma_logit = float(x[i])
         i += 1
-        self._timer_gamma = 0.5 + 0.49 * (
-            1.0 / (1.0 + np.exp(-self._timer_gamma_logit))
-        )
+        self._timer_gamma = 0.5 + 0.49 * (1.0 / (1.0 + np.exp(-self._timer_gamma_logit)))
 
         if d_mem > 1:
             r = d_mem - 1
@@ -259,9 +253,7 @@ class ReactorPolicy:
 
         self._memory_alpha = 1.0 / (1.0 + np.exp(-self._memory_alpha_logit))
         self._action_alpha = 1.0 / (1.0 + np.exp(-self._action_alpha_logit))
-        self._action_scale = 0.25 + 0.75 * (
-            1.0 / (1.0 + np.exp(-self._action_scale_logit))
-        )
+        self._action_scale = 0.25 + 0.75 * (1.0 / (1.0 + np.exp(-self._action_scale_logit)))
 
         self._kp = 0.1 + 6.0 * (1.0 / (1.0 + np.exp(-self._kp_logit)))
         self._kd = 0.0 + 2.0 * (1.0 / (1.0 + np.exp(-self._kd_logit)))
@@ -290,47 +282,29 @@ class ReactorPolicy:
         if self._memory_dim > 1:
             assert self._memory_w is not None
             memory_incr = self._memory_w @ o + self._memory_b
-            self._m_state[1:] = (1.0 - self._memory_alpha) * self._m_state[
-                1:
-            ] + self._memory_alpha * memory_incr
+            self._m_state[1:] = (1.0 - self._memory_alpha) * self._m_state[1:] + self._memory_alpha * memory_incr
 
         t_in_state = self._m_state[0] if self._memory_dim >= 1 else 0.0
         targ_feat = self._target_features(o, t_in_state)
-        target_angles = (
-            self._target_base[self._fsm_state]
-            + self._target_coeff[self._fsm_state] @ targ_feat
-        )
+        target_angles = self._target_base[self._fsm_state] + self._target_coeff[self._fsm_state] @ targ_feat
 
         joint_angles = o[self._joint_angle_idx]
         joint_vels = o[self._joint_vel_idx]
-        torque_cmd = (
-            self._kp[self._fsm_state] * (target_angles - joint_angles)
-            - self._kd[self._fsm_state] * joint_vels
-        )
+        torque_cmd = self._kp[self._fsm_state] * (target_angles - joint_angles) - self._kd[self._fsm_state] * joint_vels
         torque_cmd = np.tanh(self._action_scale * torque_cmd)
 
-        action = (
-            1.0 - self._action_alpha
-        ) * self._prev_action + self._action_alpha * torque_cmd
+        action = (1.0 - self._action_alpha) * self._prev_action + self._action_alpha * torque_cmd
         action = np.clip(action, -1.0, 1.0)
 
         self._metrics_steps += 1
         self._metrics_sat += float(np.mean(np.abs(action) > 0.95))
         self._metrics_abs_action += float(np.mean(np.abs(action)))
-        self._metrics_abs_daction += float(
-            np.mean(np.abs(action - self._prev_action)) * 0.5
-        )
-        self._metrics_track += float(
-            np.mean(np.tanh(np.abs(target_angles - joint_angles)))
-        )
+        self._metrics_abs_daction += float(np.mean(np.abs(action - self._prev_action)) * 0.5)
+        self._metrics_track += float(np.mean(np.tanh(np.abs(target_angles - joint_angles))))
         if self._metrics_prev_target is not None:
-            self._metrics_dtarget += float(
-                np.mean(np.tanh(np.abs(target_angles - self._metrics_prev_target)))
-            )
+            self._metrics_dtarget += float(np.mean(np.tanh(np.abs(target_angles - self._metrics_prev_target))))
         self._metrics_prev_target = target_angles.copy()
-        self._metrics_mem_norm += float(
-            np.tanh(np.linalg.norm(self._m_state) / max(1.0, float(self._memory_dim)))
-        )
+        self._metrics_mem_norm += float(np.tanh(np.linalg.norm(self._m_state) / max(1.0, float(self._memory_dim))))
 
         self._prev_action = action
         return action

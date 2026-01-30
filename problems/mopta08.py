@@ -31,9 +31,7 @@ class Mopta08:
         else:
             raise RuntimeError("Machine with this architecture is not supported")
 
-        self._mopta_exectutable = os.path.join(
-            Path(__file__).parent.parent, "data", "mopta08", self._mopta_exectutable
-        )
+        self._mopta_exectutable = os.path.join(Path(__file__).parent.parent, "data", "mopta08", self._mopta_exectutable)
         self.directory_file_descriptor = tempfile.TemporaryDirectory()
         self.directory_name = self.directory_file_descriptor.name
 

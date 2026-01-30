@@ -21,6 +21,4 @@ class AcqTSRoots:
             np.ones(shape=(self._num_dim,)),
         )
 
-        return torch.stack(
-            [torch.as_tensor(tsr.xnew_TSroots()[0]) for _ in range(num_arms)]
-        )
+        return torch.stack([torch.as_tensor(tsr.xnew_TSroots()[0]) for _ in range(num_arms)])

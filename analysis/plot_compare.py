@@ -26,9 +26,7 @@ class PlotCompare:
         ax.set_ylabel("$y_{max}$\n(normalized)")
 
 
-def plot_compare(
-    ax, data_locator, i_agg=-1, renames=None, b_sort=True, highlight=None, y_or_time="y"
-):
+def plot_compare(ax, data_locator, i_agg=-1, renames=None, b_sort=True, highlight=None, y_or_time="y"):
     ap.plot_sorted_agg(
         ax,
         data_locator,

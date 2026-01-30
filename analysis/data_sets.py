@@ -155,9 +155,7 @@ def _trace_dir_cacheable_jsonl(trace_dir: str) -> bool:
 def load_traces_jsonl(trace_dir, key="rreturn"):
     if not _trace_dir_cacheable_jsonl(trace_dir):
         if CACHE_DEBUG:
-            print(
-                f"CACHE BYPASS: load_traces_jsonl({str(trace_dir)[-40:]}, {key}) (incomplete)"
-            )
+            print(f"CACHE BYPASS: load_traces_jsonl({str(trace_dir)[-40:]}, {key}) (incomplete)")
         return _load_traces_jsonl_uncached(trace_dir, key=key)
 
     if CACHE_DEBUG:
@@ -248,9 +246,7 @@ def load_traces(trace_dir, key="return", grep_for="TRACE"):
 
     if not cacheable:
         if CACHE_DEBUG:
-            print(
-                f"CACHE BYPASS: load_traces({str(trace_dir)[-40:]}, {key}) (incomplete)"
-            )
+            print(f"CACHE BYPASS: load_traces({str(trace_dir)[-40:]}, {key}) (incomplete)")
         return _load_traces_uncached(trace_dir, key, grep_for)
 
     if CACHE_DEBUG:
@@ -271,9 +267,7 @@ def _ensure_float_trace(trace):
     try:
         return np.asarray(trace, dtype=float)
     except (ValueError, TypeError):
-        return np.array(
-            [float(x) if x is not None else np.nan for x in trace.flat]
-        ).reshape(trace.shape)
+        return np.array([float(x) if x is not None else np.nan for x in trace.flat]).reshape(trace.shape)
 
 
 def _ensure_float_traces(traces):
@@ -289,16 +283,12 @@ def _ensure_float_traces(traces):
             except (ValueError, TypeError):
                 return np.nan
 
-        return np.array([safe_float(v) for v in traces.flatten()], dtype=float).reshape(
-            traces.shape
-        )
+        return np.array([safe_float(v) for v in traces.flatten()], dtype=float).reshape(traces.shape)
 
 
 def _validate_trace_path(trace_path, problem_name, opt_name, report_bad):
     if len(trace_path) == 0:
-        report_bad(
-            problem_name, opt_name, f"Missing data for {problem_name} {opt_name}"
-        )
+        report_bad(problem_name, opt_name, f"Missing data for {problem_name} {opt_name}")
         return None
     if len(trace_path) > 1:
         report_bad(problem_name, opt_name, f"Extra data len = {len(trace_path)}")
@@ -306,13 +296,9 @@ def _validate_trace_path(trace_path, problem_name, opt_name, report_bad):
     return trace_path[0]
 
 
-def _load_and_validate_trace(
-    trace_path, data_locator, problem_name, opt_name, report_bad
-):
+def _load_and_validate_trace(trace_path, data_locator, problem_name, opt_name, report_bad):
     try:
-        trace = load_traces(
-            trace_path, key=data_locator.key, grep_for=data_locator.grep_for
-        )
+        trace = load_traces(trace_path, key=data_locator.key, grep_for=data_locator.grep_for)
     except FileNotFoundError as e:
         report_bad(problem_name, opt_name, f"{trace_path} {repr(e)}")
         return None
@@ -350,14 +336,10 @@ def load_multiple_traces(data_locator):
     for i_problem, problem_name in enumerate(problems):
         for i_opt, opt_name in enumerate(opt_names):
             num_tot += 1
-            trace_path = _validate_trace_path(
-                data_locator(problem_name, opt_name), problem_name, opt_name, report_bad
-            )
+            trace_path = _validate_trace_path(data_locator(problem_name, opt_name), problem_name, opt_name, report_bad)
             if trace_path is None:
                 continue
-            trace = _load_and_validate_trace(
-                trace_path, data_locator, problem_name, opt_name, report_bad
-            )
+            trace = _load_and_validate_trace(trace_path, data_locator, problem_name, opt_name, report_bad)
             if trace is None:
                 continue
             if traces is None:
@@ -375,17 +357,13 @@ def load_multiple_traces(data_locator):
             traces[i_problem, i_opt, : trace.shape[0], : trace.shape[1]] = trace
 
     if traces is None:
-        traces = np.array([], dtype=float).reshape(
-            (len(problems), len(opt_names), 0, 0)
-        )
+        traces = np.array([], dtype=float).reshape((len(problems), len(opt_names), 0, 0))
     else:
         traces = _ensure_float_traces(traces)
 
     traces = npma.masked_invalid(traces)
     if num_bad > 0:
-        print(
-            f"\n{num_bad} / {num_tot} files bad. {100 * traces.mask.mean():.1f}% missing data"
-        )
+        print(f"\n{num_bad} / {num_tot} files bad. {100 * traces.mask.mean():.1f}% missing data")
     return traces
 
 

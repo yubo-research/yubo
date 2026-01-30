@@ -94,18 +94,12 @@ def _sum_traces(a: np.ndarray, b: np.ndarray) -> np.ndarray:
     return a + b
 
 
-def _mean_final_cum_dt_total_by_opt(
-    traces_dt_total: np.ndarray, optimizers: list[str]
-) -> dict[str, float]:
+def _mean_final_cum_dt_total_by_opt(traces_dt_total: np.ndarray, optimizers: list[str]) -> dict[str, float]:
     z = traces_dt_total.squeeze(0)  # [n_opt, n_rep, n_round]
     out: dict[str, float] = {}
     for i_opt, opt_name in enumerate(optimizers):
         dt = z[i_opt, ...]
-        cum = (
-            np.ma.cumsum(dt, axis=-1)
-            if np.ma.isMaskedArray(dt)
-            else np.cumsum(dt, axis=-1)
-        )
+        cum = np.ma.cumsum(dt, axis=-1) if np.ma.isMaskedArray(dt) else np.cumsum(dt, axis=-1)
         out[opt_name] = float(np.ma.mean(cum[:, -1]))
     return out
 
@@ -225,9 +219,7 @@ def plot_results_grid(
 
     fig, axs = plt.subplots(2, 2, figsize=figsize, sharey=False)
 
-    def _plot_vs_fe(
-        ax, dl, tr_r, *, num_arms: int, title: str, t_final: dict[str, float]
-    ):
+    def _plot_vs_fe(ax, dl, tr_r, *, num_arms: int, title: str, t_final: dict[str, float]):
         opts = dl.optimizers()
         z = tr_r.squeeze(0)
         for i_opt, opt_name in enumerate(opts):
@@ -274,31 +266,15 @@ def plot_results_grid(
         if xlim_opt_name in opts:
             i_ref = opts.index(xlim_opt_name)
             dt_ref = z_dt[i_ref, ...]
-            x_ref_rep = (
-                np.ma.cumsum(dt_ref, axis=-1)
-                if np.ma.isMaskedArray(dt_ref)
-                else np.cumsum(dt_ref, axis=-1)
-            )
-            x_ref = (
-                np.ma.mean(x_ref_rep, axis=0)
-                if np.ma.isMaskedArray(x_ref_rep)
-                else x_ref_rep.mean(axis=0)
-            )
+            x_ref_rep = np.ma.cumsum(dt_ref, axis=-1) if np.ma.isMaskedArray(dt_ref) else np.cumsum(dt_ref, axis=-1)
+            x_ref = np.ma.mean(x_ref_rep, axis=0) if np.ma.isMaskedArray(x_ref_rep) else x_ref_rep.mean(axis=0)
             x_max = float(x_ref[-1])
 
         for i_opt, opt_name in enumerate(opts):
             y = _best_so_far(z_r[i_opt, ...])
             dt = z_dt[i_opt, ...]
-            x_rep = (
-                np.ma.cumsum(dt, axis=-1)
-                if np.ma.isMaskedArray(dt)
-                else np.cumsum(dt, axis=-1)
-            )
-            x = (
-                np.ma.mean(x_rep, axis=0)
-                if np.ma.isMaskedArray(x_rep)
-                else x_rep.mean(axis=0)
-            )
+            x_rep = np.ma.cumsum(dt, axis=-1) if np.ma.isMaskedArray(dt) else np.cumsum(dt, axis=-1)
+            x = np.ma.mean(x_rep, axis=0) if np.ma.isMaskedArray(x_rep) else x_rep.mean(axis=0)
 
             if x_max is not None:
                 # Truncate to the reference optimizer's time horizon.

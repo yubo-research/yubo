@@ -5,9 +5,7 @@ from scipy.stats import qmc
 class NoiseMaker:
     def __init__(self, env, normalized_noise_level, num_measurements=1000):
         self._env = env
-        self._real_noise_level = normalized_noise_level * self._measure_noise(
-            env, num_measurements
-        )
+        self._real_noise_level = normalized_noise_level * self._measure_noise(env, num_measurements)
 
     @property
     def observation_space(self):

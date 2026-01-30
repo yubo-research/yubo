@@ -17,9 +17,7 @@ def test_double_ackley_runs_with_sobol_optimizer():
         num_denoise_measurement=None,
         num_denoise_passive=None,
     )
-    trace = opt.collect_trace(
-        designer_name="sobol", max_iterations=3, max_proposal_seconds=np.inf
-    )
+    trace = opt.collect_trace(designer_name="sobol", max_iterations=3, max_proposal_seconds=np.inf)
     assert len(trace) == 3
     assert np.isfinite(trace[-1].rreturn)
 
@@ -40,8 +38,6 @@ def test_double_ackley_runs_with_morbo_enn_fit_ucb():
         num_denoise_measurement=None,
         num_denoise_passive=None,
     )
-    trace = opt.collect_trace(
-        designer_name="morbo-enn-fit-ucb", max_iterations=3, max_proposal_seconds=np.inf
-    )
+    trace = opt.collect_trace(designer_name="morbo-enn-fit-ucb", max_iterations=3, max_proposal_seconds=np.inf)
     assert len(trace) == 3
     assert np.isfinite(trace[-1].rreturn)

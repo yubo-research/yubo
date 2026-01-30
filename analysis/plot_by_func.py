@@ -45,9 +45,7 @@ def _plot_func_subplot(ax, all_traces, opt_names, renames, func_name):
     if len(all_traces) == 0:
         ax.text(0.5, 0.5, "No data", ha="center", va="center", transform=ax.transAxes)
         return False
-    combined_traces = (
-        all_traces[0] if len(all_traces) == 1 else np.concatenate(all_traces, axis=2)
-    )
+    combined_traces = all_traces[0] if len(all_traces) == 1 else np.concatenate(all_traces, axis=2)
     mu, se = range_summarize(combined_traces)
     sort_indices = np.argsort(-mu)
     sorted_mu, sorted_se = mu[sort_indices], se[sort_indices]
@@ -133,9 +131,7 @@ def plot_by_func(
     for i_func, func_name in enumerate(all_funcs):
         ax = axs[i_func]
         try:
-            all_traces = _load_traces_for_func(
-                results_path, exp_dir, opt_names, func_name, num_dims
-            )
+            all_traces = _load_traces_for_func(results_path, exp_dir, opt_names, func_name, num_dims)
             _plot_func_subplot(ax, all_traces, opt_names, renames, func_name)
         except Exception as e:
             ax.text(
@@ -158,9 +154,7 @@ def plot_by_func(
         if current_group != group_name:
             # Add label for previous group if it exists
             if current_group is not None and group_start_idx < i_func:
-                _add_group_label(
-                    fig, axs, group_start_idx, i_func - 1, cols, current_group
-                )
+                _add_group_label(fig, axs, group_start_idx, i_func - 1, cols, current_group)
 
             # Start new group
             current_group = group_name
@@ -178,9 +172,7 @@ def plot_by_func(
     plt.show()
 
     if num_funcs > rows * cols:
-        print(
-            f"Note: Showing first {rows * cols} of {num_funcs} functions. Consider using plot_by_func_grouped() for better organization."
-        )
+        print(f"Note: Showing first {rows * cols} of {num_funcs} functions. Consider using plot_by_func_grouped() for better organization.")
 
     return fig, axs
 
@@ -322,9 +314,7 @@ def plot_by_func_grouped(
                 x_pos = np.arange(len(opt_names))
 
                 for i_opt, opt_name in enumerate(sorted_opt_names):
-                    display_name = (
-                        renames.get(opt_name, opt_name) if renames else opt_name
-                    )
+                    display_name = renames.get(opt_name, opt_name) if renames else opt_name
 
                     ax.errorbar(
                         x_pos[i_opt],
@@ -343,10 +333,7 @@ def plot_by_func_grouped(
                 ax.set_ylabel("Score", fontsize=9)
                 ax.set_xticks(x_pos)
                 ax.set_xticklabels(
-                    [
-                        renames.get(name, name) if renames else name
-                        for name in sorted_opt_names
-                    ],
+                    [renames.get(name, name) if renames else name for name in sorted_opt_names],
                     rotation=45,
                     ha="right",
                     fontsize=8,
@@ -375,18 +362,14 @@ def plot_by_func_grouped(
         if save_dir is not None:
             os.makedirs(save_dir, exist_ok=True)
             fn = f"{group_name.lower().replace(' ', '_')}.pdf"
-            fig.savefig(
-                os.path.join(save_dir, fn), format="pdf", bbox_inches="tight", dpi=dpi
-            )
+            fig.savefig(os.path.join(save_dir, fn), format="pdf", bbox_inches="tight", dpi=dpi)
 
         figures.append(fig)
 
     return figures
 
 
-def plot_by_func_publication(
-    results_path, exp_dir, opt_names, renames=None, save_path=None, num_dims=None
-):
+def plot_by_func_publication(results_path, exp_dir, opt_names, renames=None, save_path=None, num_dims=None):
     """
     Publication-ready version with larger fonts and cleaner styling.
     """

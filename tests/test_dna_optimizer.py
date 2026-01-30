@@ -17,8 +17,6 @@ def test_dna_runs_with_random_optimizer():
         num_denoise_measurement=None,
         num_denoise_passive=None,
     )
-    trace = opt.collect_trace(
-        designer_name="random", max_iterations=3, max_proposal_seconds=np.inf
-    )
+    trace = opt.collect_trace(designer_name="random", max_iterations=3, max_proposal_seconds=np.inf)
     assert len(trace) == 3
     assert np.isfinite(trace[-1].rreturn)

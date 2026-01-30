@@ -27,16 +27,12 @@ class AcqPStar(MCAcquisitionFunction):
     ) -> None:
         super().__init__(model=model, **kwargs)
         self._num_X_samples = num_X_samples
-        self.num_Y_samples = (
-            num_Y_samples  # triggers joint sampling in inner loop; slower
-        )
+        self.num_Y_samples = num_Y_samples  # triggers joint sampling in inner loop; slower
         self._beta = beta
         self._use_soft_entropy = use_soft_entropy
         self.sampler_pstar = SobolQMCNormalSampler(sample_shape=torch.Size([num_ts]))
         if num_Y_samples is not None:
-            self.sampler = SobolQMCNormalSampler(
-                sample_shape=torch.Size([num_Y_samples])
-            )
+            self.sampler = SobolQMCNormalSampler(sample_shape=torch.Size([num_Y_samples]))
         else:
             self.sampler = None
 
@@ -54,9 +50,7 @@ class AcqPStar(MCAcquisitionFunction):
             self._dx2 = (self.X_samples - 0.5 * torch.ones(self._num_dim)) ** 2
         else:
             if real_pstar:
-                (self.X_samples, self._prob_X_samples, mu, self._unit_cov_0) = (
-                    self._draw_from_pstar(num_X_samples)
-                )
+                (self.X_samples, self._prob_X_samples, mu, self._unit_cov_0) = self._draw_from_pstar(num_X_samples)
                 self._dx2 = (self.X_samples - mu) ** 2
             else:
                 self.X_samples = self._sample_maxes(num_X_samples)
@@ -85,11 +79,7 @@ class AcqPStar(MCAcquisitionFunction):
                     X,
                 )
             )
-            Y = (
-                self.model.posterior(X, observation_noise=True)
-                .sample(torch.Size([num_X_samples]))
-                .squeeze(-1)
-            )
+            Y = self.model.posterior(X, observation_noise=True).sample(torch.Size([num_X_samples])).squeeze(-1)
             y_m, i = torch.max(Y, dim=1)
             i = i[y_m > Y[:, 0]]
             X_samples.extend([X[ii] for ii in i])
@@ -110,12 +100,7 @@ class AcqPStar(MCAcquisitionFunction):
         # Stolen from TurBO:
         # - idea of using kernel lengthscale for trust region aspect ratio
         # - the code that does it (next line, from turbo_1.py)
-        cov = (
-            self.model.covar_module.base_kernel.lengthscale.cpu()
-            .detach()
-            .numpy()
-            .ravel()
-        )
+        cov = self.model.covar_module.base_kernel.lengthscale.cpu().detach().numpy().ravel()
         assert np.all(cov > 0), cov
 
         cov = cov / cov.mean()
@@ -181,9 +166,7 @@ class AcqPStar(MCAcquisitionFunction):
         # unit_cov doesn't seem to change upon conditioning,
         #  i.e., the relative length scales don't change,
         # so unit_cov_now = unit_cov_0
-        sigma2 = (
-            (weights * self._dx2 / self._unit_cov_0).sum(dim=-1) / weights.sum(dim=-1)
-        ).mean(dim=-1)
+        sigma2 = ((weights * self._dx2 / self._unit_cov_0).sum(dim=-1) / weights.sum(dim=-1)).mean(dim=-1)
 
         # and det(cov_now) = sigma2 * det(unit_cov_now) = sigma2
         # since det(unit_cov_0) == 1 by construction.
@@ -216,9 +199,7 @@ class AcqPStar(MCAcquisitionFunction):
         """
         self.to(device=X.device)
 
-        model_f = self.model.condition_on_observations(
-            X=X, Y=self.model.posterior(X).mean
-        )
+        model_f = self.model.condition_on_observations(X=X, Y=self.model.posterior(X).mean)
 
         if self._use_soft_entropy:
             return -self._soft_entropy(model_f)

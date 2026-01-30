@@ -21,9 +21,7 @@ class SobolDesigner:
 
     def _reset(self):
         if len(self._ps) == 0:
-            self._ps = qmc.Sobol(
-                self._policy.num_params(), seed=self.seed + self._i_seed
-            ).random(self._max_points)
+            self._ps = qmc.Sobol(self._policy.num_params(), seed=self.seed + self._i_seed).random(self._max_points)
             self._i_seed += 1
 
     def __call__(self, _, num_arms, *, telemetry=None):

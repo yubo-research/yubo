@@ -28,9 +28,7 @@ class Easom:
         x = 100 * mk_2d(x)
         y = x[1]
         x = x[0]
-        return np.sum(
-            -np.cos(x) * np.cos(y) * np.exp(-((x - np.pi) ** 2) - (y - np.pi) ** 2)
-        )
+        return np.sum(-np.cos(x) * np.cos(y) * np.exp(-((x - np.pi) ** 2) - (y - np.pi) ** 2))
 
 
 class Booth:

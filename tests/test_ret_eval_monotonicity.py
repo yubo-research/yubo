@@ -30,9 +30,7 @@ class MockDesignerWithRreturnEst:
         # Set rreturn_est to a UCB-like estimate (different from raw rreturn)
         for i, d in enumerate(data):
             # UCB estimate: simulate model uncertainty
-            d.trajectory.rreturn_est = (
-                float(d.trajectory.rreturn) + np.random.randn() * 10
-            )
+            d.trajectory.rreturn_est = float(d.trajectory.rreturn) + np.random.randn() * 10
 
         # Return random policies
         policies = []
@@ -123,10 +121,7 @@ class TestRetEvalFrozenNoise:
         )
 
         assert len(ret_eval_values) == 5
-        assert _is_monotonically_increasing(ret_eval_values), (
-            f"ret_eval should be monotonically increasing for frozen noise, "
-            f"but got: {ret_eval_values}"
-        )
+        assert _is_monotonically_increasing(ret_eval_values), f"ret_eval should be monotonically increasing for frozen noise, but got: {ret_eval_values}"
 
     def test_frozen_noise_without_rreturn_est(self):
         """Frozen noise + designer does NOT provide rreturn_est: ret_eval monotonic."""
@@ -138,10 +133,7 @@ class TestRetEvalFrozenNoise:
         )
 
         assert len(ret_eval_values) == 5
-        assert _is_monotonically_increasing(ret_eval_values), (
-            f"ret_eval should be monotonically increasing for frozen noise, "
-            f"but got: {ret_eval_values}"
-        )
+        assert _is_monotonically_increasing(ret_eval_values), f"ret_eval should be monotonically increasing for frozen noise, but got: {ret_eval_values}"
 
 
 class TestRetEvalNaturalNoise:

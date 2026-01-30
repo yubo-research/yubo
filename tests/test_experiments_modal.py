@@ -31,9 +31,7 @@ class TestModalBatches:
     @patch("experiments.modal_batches.prep_d_argss")
     @patch("experiments.modal_batches.mk_replicates")
     @patch("experiments.modal_batches.data_is_done")
-    def test_gen_jobs_skips_done(
-        self, mock_data_is_done, mock_mk_replicates, mock_prep_d_argss
-    ):
+    def test_gen_jobs_skips_done(self, mock_data_is_done, mock_mk_replicates, mock_prep_d_argss):
         from experiments.modal_batches import _gen_jobs
 
         mock_data_is_done.return_value = True

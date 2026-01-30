@@ -56,18 +56,8 @@ def test_load_traces_jsonl():
         # Create a trace file in the directory
         trace_file = Path(tmpdir) / "00000.jsonl"
         with open(trace_file, "w") as f:
-            f.write(
-                json.dumps(
-                    {"i_iter": 0, "dt_prop": 0.1, "dt_eval": 0.2, "rreturn": 1.0}
-                )
-                + "\n"
-            )
-            f.write(
-                json.dumps(
-                    {"i_iter": 1, "dt_prop": 0.2, "dt_eval": 0.3, "rreturn": 2.0}
-                )
-                + "\n"
-            )
+            f.write(json.dumps({"i_iter": 0, "dt_prop": 0.1, "dt_eval": 0.2, "rreturn": 1.0}) + "\n")
+            f.write(json.dumps({"i_iter": 1, "dt_prop": 0.2, "dt_eval": 0.3, "rreturn": 2.0}) + "\n")
 
         # Create a .done marker file
         done_file = Path(tmpdir) / "00000.done"

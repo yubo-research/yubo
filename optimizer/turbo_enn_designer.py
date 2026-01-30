@@ -1,8 +1,6 @@
 from typing import Optional
 
 import numpy as np
-
-import common.all_bounds as all_bounds
 from enn.turbo.config.acq_type import AcqType
 from enn.turbo.config.candidate_gen_config import CandidateGenConfig
 from enn.turbo.config.candidate_rv import CandidateRV
@@ -24,6 +22,8 @@ from enn.turbo.config.trust_region import (
     TurboTRConfig,
 )
 from enn.turbo.optimizer import create_optimizer
+
+import common.all_bounds as all_bounds
 from optimizer.designer_asserts import assert_scalar_rreturn
 
 
@@ -96,9 +96,7 @@ class TurboENNDesigner:
                 raise ValueError("num_metrics is required for tr_type='morbo'")
             from enn.turbo.config.trust_region import MultiObjectiveConfig
 
-            return MorboTRConfig(
-                multi_objective=MultiObjectiveConfig(num_metrics=int(num_metrics))
-            )
+            return MorboTRConfig(multi_objective=MultiObjectiveConfig(num_metrics=int(num_metrics)))
         raise ValueError(f"Invalid tr_type: {self._tr_type}")
 
     def _make_config(self, num_init: int, num_metrics: int | None):
@@ -118,9 +116,7 @@ class TurboENNDesigner:
             candidates = None
             if num_candidates is not None or self._candidate_rv is not None:
                 if num_candidates is None:
-                    candidates = CandidateGenConfig(
-                        candidate_rv=candidate_rv, raasp_driver=RAASPDriver.FAST
-                    )
+                    candidates = CandidateGenConfig(candidate_rv=candidate_rv, raasp_driver=RAASPDriver.FAST)
                 else:
                     candidates = CandidateGenConfig(
                         candidate_rv=candidate_rv,
@@ -209,9 +205,7 @@ class TurboENNDesigner:
             assert_scalar_rreturn(new_data)
         x_list = [d.policy.get_params() for d in new_data]
         y_list = [d.trajectory.rreturn for d in new_data]
-        y_se_list = (
-            [d.trajectory.rreturn_se for d in new_data] if self._use_y_var else []
-        )
+        y_se_list = [d.trajectory.rreturn_se for d in new_data] if self._use_y_var else []
         if self._use_y_var:
             assert all(se is not None for se in y_se_list)
         if len(x_list) == 0:
@@ -219,11 +213,7 @@ class TurboENNDesigner:
         x = np.array(x_list)
         y_obs = np.array(y_list)
         y_obs = y_obs[:, None] if y_obs.ndim == 1 else y_obs
-        y_est = (
-            self._turbo.tell(x, y_obs, y_var=np.array(y_se_list) ** 2)
-            if y_se_list
-            else self._turbo.tell(x, y_obs)
-        )
+        y_est = self._turbo.tell(x, y_obs, y_var=np.array(y_se_list) ** 2) if y_se_list else self._turbo.tell(x, y_obs)
         assert y_obs.shape == y_est.shape and y_obs.shape[0] == len(new_data)
         if y_est.shape[1] == 1:
             self._update_best_estimate(new_data, y_est[:, 0])

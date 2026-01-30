@@ -68,12 +68,7 @@ class Ackley:
 
     def __call__(self, x):
         x = 32.768 * x
-        return (
-            -self.a * np.exp(-self.b * np.sqrt((x**2).mean()))
-            - np.exp(np.cos(self.c * x).mean())
-            + self.a
-            + np.e
-        )
+        return -self.a * np.exp(-self.b * np.sqrt((x**2).mean())) - np.exp(np.cos(self.c * x).mean()) + self.a + np.e
 
 
 class Beale:
@@ -99,11 +94,7 @@ class Branin:
         x = mk_2d(x)
         x1 = 7.5 * x[0] + 2.5
         x2 = 7.5 * x[1] + 7.5
-        return (
-            self.a * (x2 - self.b * x1**2 + self.c * x1 - self.r) ** 2
-            + self.s * (1 - self.t) * np.cos(x1)
-            + self.s
-        )
+        return self.a * (x2 - self.b * x1**2 + self.c * x1 - self.r) ** 2 + self.s * (1 - self.t) * np.cos(x1) + self.s
 
 
 class Bukin:
@@ -120,14 +111,7 @@ class CrossInTray:
         x = x * 9 + 1
         x0 = x[0]
         x1 = x[1]
-        part1 = (
-            np.abs(
-                np.sin(x0)
-                * np.sin(x1)
-                * np.exp(np.abs(100.0 - np.sqrt(x0**2 + x1**2) / np.pi))
-            )
-            + 1.0
-        )
+        part1 = np.abs(np.sin(x0) * np.sin(x1) * np.exp(np.abs(100.0 - np.sqrt(x0**2 + x1**2) / np.pi))) + 1.0
         part2 = np.power(part1, 0.1)
         return -0.0001 * part2
 

@@ -39,13 +39,7 @@ def mk_image():
         "ennbo>=0.1.7",
     ]
 
-    image = (
-        modal.Image.debian_slim(python_version="3.11.9")
-        .apt_install("swig")
-        .apt_install("git")
-        .pip_install(sreqs)
-        .pip_install(sreqs_2)
-    )
+    image = modal.Image.debian_slim(python_version="3.11.9").apt_install("swig").apt_install("git").pip_install(sreqs).pip_install(sreqs_2)
 
     local_enn = Path(__file__).resolve().parents[2] / "enn"
     if local_enn.exists():

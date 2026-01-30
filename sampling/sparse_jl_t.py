@@ -63,9 +63,7 @@ def _block_sparse_hash_scatter_from_nz_t(
     return y
 
 
-def block_sparse_jl_transform_t(
-    x: torch.Tensor, d: int, s: int = 4, seed: int = 42
-) -> torch.Tensor:
+def block_sparse_jl_transform_t(x: torch.Tensor, d: int, s: int = 4, seed: int = 42) -> torch.Tensor:
     assert x.ndim == 1
     assert d > 0
     assert s > 0

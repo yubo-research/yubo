@@ -16,9 +16,7 @@ class AcqNoisyMax(AnalyticAcquisitionFunction):
             self.noisy_models = [self._get_noisy_model() for _ in range(q)]
         else:
             # num_X_samples = 1 + len(model.train_inputs)
-            self.noisy_models = [
-                self._get_noisy_model_2(num_X_samples) for _ in range(q)
-            ]
+            self.noisy_models = [self._get_noisy_model_2(num_X_samples) for _ in range(q)]
 
     def _build_noisy_model(self, X):
         """Build a noisy model from X by sampling Y from the posterior."""
@@ -55,8 +53,4 @@ class AcqNoisyMax(AnalyticAcquisitionFunction):
 
         self.to(device=X.device)
 
-        return (
-            self.noisy_models[0]
-            .posterior(X=X, posterior_transform=self.posterior_transform)
-            .mean.squeeze()
-        )
+        return self.noisy_models[0].posterior(X=X, posterior_transform=self.posterior_transform).mean.squeeze()

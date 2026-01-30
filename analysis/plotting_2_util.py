@@ -18,16 +18,12 @@ def noise_label(problem: str) -> str:
     return "Natural noise"
 
 
-def speedup_x_label(
-    cum_dt_prop_final_by_opt: dict[str, float] | None, problem: str
-) -> str | None:
+def speedup_x_label(cum_dt_prop_final_by_opt: dict[str, float] | None, problem: str) -> str | None:
     if not cum_dt_prop_final_by_opt:
         return None
 
     baseline_candidates = ("turbo-one", "turbo-one-na", "turbo-one-f")
-    baseline_opt = next(
-        (o for o in baseline_candidates if o in cum_dt_prop_final_by_opt), None
-    )
+    baseline_opt = next((o for o in baseline_candidates if o in cum_dt_prop_final_by_opt), None)
     if baseline_opt is None:
         return None
 
@@ -37,13 +33,7 @@ def speedup_x_label(
 
     t_baseline = cum_dt_prop_final_by_opt.get(baseline_opt, None)
     t_compare = cum_dt_prop_final_by_opt.get(compare_opt, None)
-    if (
-        t_baseline is None
-        or t_compare is None
-        or not np.isfinite(t_baseline)
-        or not np.isfinite(t_compare)
-        or t_compare <= 0
-    ):
+    if t_baseline is None or t_compare is None or not np.isfinite(t_baseline) or not np.isfinite(t_compare) or t_compare <= 0:
         return None
 
     x = int(round(float(t_baseline) / float(t_compare)))
@@ -116,9 +106,7 @@ def get_denoise_value(data_locator, problem: str) -> int:
             if problem.endswith(":fn"):
                 return config.get("num_denoise")
             else:
-                return config.get(
-                    "num_denoise_passive", config.get("num_denoise_eval", None)
-                )
+                return config.get("num_denoise_passive", config.get("num_denoise_eval", None))
     return None
 
 
@@ -171,16 +159,8 @@ def infer_experiment_from_configs(results_path: str, exp_dir: str) -> dict:
     if not cfgs:
         raise ValueError(f"No config.json files found under {str(root)!r}")
 
-    env_tags = sorted(
-        {
-            c.get("env_tag") or c.get("env")
-            for c in cfgs
-            if isinstance(c.get("env_tag") or c.get("env"), str)
-        }
-    )
-    opt_names = sorted(
-        {c.get("opt_name") for c in cfgs if isinstance(c.get("opt_name"), str)}
-    )
+    env_tags = sorted({c.get("env_tag") or c.get("env") for c in cfgs if isinstance(c.get("env_tag") or c.get("env"), str)})
+    opt_names = sorted({c.get("opt_name") for c in cfgs if isinstance(c.get("opt_name"), str)})
 
     def _uniq_int(key: str) -> int | None:
         xs = {c.get(key) for c in cfgs if isinstance(c.get(key), int)}

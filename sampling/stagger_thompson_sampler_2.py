@@ -76,9 +76,7 @@ class StaggerThompsonSampler2:
         Y_perturbed = Y[self._num_samples :]
         i_improved = Y_perturbed > Y_ts
         self._X_samples[i_improved] = X_perturbed[i_improved]
-        assert self._X_samples.shape == (self._num_samples, self._num_dim), (
-            self._X_samples.shape
-        )
+        assert self._X_samples.shape == (self._num_samples, self._num_dim), self._X_samples.shape
         assert self._X_samples.min() >= 0, self._X_samples.min()
         assert self._X_samples.max() <= 1, self._X_samples.max()
 

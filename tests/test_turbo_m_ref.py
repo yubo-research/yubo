@@ -52,6 +52,4 @@ def test_turbo_1_randint_full_range():
         idx = np.random.randint(0, num_dim, size=1)[0]
         dim_selected.add(idx)
 
-    assert len(dim_selected) == num_dim, (
-        f"randint(0, num_dim) should select all dims; got {sorted(dim_selected)}"
-    )
+    assert len(dim_selected) == num_dim, f"randint(0, num_dim) should select all dims; got {sorted(dim_selected)}"

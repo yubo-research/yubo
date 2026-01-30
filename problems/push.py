@@ -61,9 +61,7 @@ class Push:
 
     @property
     def f_max(self):
-        return np.linalg.norm(np.array(self.gxy) - np.array(self.sxy)) + np.linalg.norm(
-            np.array(self.gxy2) - np.array(self.sxy2)
-        )
+        return np.linalg.norm(np.array(self.gxy) - np.array(self.sxy)) + np.linalg.norm(np.array(self.gxy2) - np.array(self.sxy2))
 
     def __call__(self, x):
         assert x.shape == (Push.num_dim,), x.shape
@@ -92,15 +90,11 @@ class Push:
         ofriction, odensity, hand_shape, hand_size = 0.01, 0.05, "rectangle", (1, 0.3)
 
         base = make_base(500, 500, world)
-        body = create_body(
-            base, world, "rectangle", (0.5, 0.5), ofriction, odensity, self.sxy
-        )
+        body = create_body(base, world, "rectangle", (0.5, 0.5), ofriction, odensity, self.sxy)
         body2 = create_body(base, world, "circle", 1, ofriction, odensity, self.sxy2)
 
         robot = end_effector(world, (rx, ry), base, init_angle, hand_shape, hand_size)
-        robot2 = end_effector(
-            world, (rx2, ry2), base, init_angle2, hand_shape, hand_size
-        )
+        robot2 = end_effector(world, (rx2, ry2), base, init_angle2, hand_shape, hand_size)
         (ret1, ret2) = run_simulation(
             world,
             body,

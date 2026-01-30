@@ -101,9 +101,7 @@ def find_max(model, bounds=None):
     num_dim = X.shape[1]
 
     if bounds is None:
-        bounds = torch.tensor(
-            [[0.0] * num_dim, [1.0] * num_dim], device=X.device, dtype=X.dtype
-        )
+        bounds = torch.tensor([[0.0] * num_dim, [1.0] * num_dim], device=X.device, dtype=X.dtype)
 
     num_ic = 30
     batch_initial_conditions = torch.rand(size=torch.Size((num_ic, 1, num_dim))).to(X)

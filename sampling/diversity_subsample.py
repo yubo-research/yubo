@@ -53,9 +53,7 @@ def diversity_subsample(x, M, num_bins_per_dim=None, seed=None):
         all_indices = set(range(N))
         unselected = sorted(all_indices - set(selected_indices))
         if len(unselected) >= remaining_needed:
-            additional = np.random.choice(
-                unselected, size=remaining_needed, replace=False
-            )
+            additional = np.random.choice(unselected, size=remaining_needed, replace=False)
             selected_indices.extend(additional.tolist())
         else:
             selected_indices.extend(unselected)

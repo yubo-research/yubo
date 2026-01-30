@@ -36,9 +36,7 @@ class DeltaSparseJL_T:
         assert x_0.shape[0] == self.num_dim_ambient
         self._x0 = x_0
         if self.incremental:
-            self._y0 = block_sparse_jl_transform_t(
-                x_0, d=self.num_dim_embedding, s=self.s, seed=self.seed
-            )
+            self._y0 = block_sparse_jl_transform_t(x_0, d=self.num_dim_embedding, s=self.s, seed=self.seed)
         self._initialized = True
 
     def transform(self, d_x: torch.Tensor) -> torch.Tensor:
@@ -50,9 +48,7 @@ class DeltaSparseJL_T:
         assert d_x.dtype == self._x0.dtype
         if not self.incremental:
             x = self._x0 + d_x.to_dense()
-            y = block_sparse_jl_transform_t(
-                x, d=self.num_dim_embedding, s=self.s, seed=self.seed
-            )
+            y = block_sparse_jl_transform_t(x, d=self.num_dim_embedding, s=self.s, seed=self.seed)
             assert y.shape == (self.num_dim_embedding,)
             return y
         if d_x._nnz() == 0:

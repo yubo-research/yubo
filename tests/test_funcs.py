@@ -22,6 +22,4 @@ def test_load_all_funcs():
 
                 assert func in all_benchmarks()
             except ImportError:
-                raise ImportError(
-                    f"Function {func} not found in all_benchmarks()"
-                ) from None
+                raise ImportError(f"Function {func} not found in all_benchmarks()") from None

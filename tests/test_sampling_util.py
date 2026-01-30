@@ -127,9 +127,5 @@ def test_raasp_turbo_np_randint_uses_full_range():
         idx = np.random.randint(0, num_dim, size=1)[0]
         dim_selected.add(idx)
 
-    assert len(dim_selected) == num_dim, (
-        f"randint(0, num_dim) should select all dims; got {sorted(dim_selected)}"
-    )
-    assert num_dim - 1 in dim_selected, (
-        f"Last dimension (index {num_dim - 1}) must be selectable"
-    )
+    assert len(dim_selected) == num_dim, f"randint(0, num_dim) should select all dims; got {sorted(dim_selected)}"
+    assert num_dim - 1 in dim_selected, f"Last dimension (index {num_dim - 1}) must be selectable"

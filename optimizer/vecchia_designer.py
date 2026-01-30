@@ -110,9 +110,7 @@ class VecchiaDesigner:
 
     def __call__(self, data, num_arms, *, telemetry=None):
         if not self._ensure_pyvecch():
-            raise ImportError(
-                "VecchiaDesigner requires 'pyvecch'. Please install VecchiaBO (pyvecch) from https://github.com/feji3769/VecchiaBO"
-            )
+            raise ImportError("VecchiaDesigner requires 'pyvecch'. Please install VecchiaBO (pyvecch) from https://github.com/feji3769/VecchiaBO")
 
         if len(data) == 0:
             return self._sobol(data, num_arms, telemetry=telemetry)
@@ -120,12 +118,8 @@ class VecchiaDesigner:
         assert_scalar_rreturn(data)
 
         Y_train, X_train = fit_gp.extract_X_Y(data, self._dtype, self._device)
-        X_train = X_train.to(
-            dtype=torch.float32, device=torch.device("cpu")
-        ).contiguous()
-        Y_train = Y_train.to(
-            dtype=torch.float32, device=torch.device("cpu")
-        ).contiguous()
+        X_train = X_train.to(dtype=torch.float32, device=torch.device("cpu")).contiguous()
+        Y_train = Y_train.to(dtype=torch.float32, device=torch.device("cpu")).contiguous()
 
         if len(X_train) <= 1:
             return self._sobol(data, num_arms)
@@ -159,11 +153,7 @@ class VecchiaDesigner:
         dim = X_train.shape[-1]
         num_candidates = max(2000, min(5000, 200 * dim))
         sobol = SobolEngine(dim, scramble=True)
-        X_cand = (
-            sobol.draw(num_candidates)
-            .to(dtype=torch.float32, device=torch.device("cpu"))
-            .contiguous()
-        )
+        X_cand = sobol.draw(num_candidates).to(dtype=torch.float32, device=torch.device("cpu")).contiguous()
         X_cand = tr_lb + (tr_ub - tr_lb) * X_cand
 
         X_next = self._select_candidates(model, X_cand, num_arms)

@@ -31,21 +31,15 @@ def _get_max_steps(env_conf, b_gym):
 def _transform_action(action_p, action_space):
     if not hasattr(action_space, "low"):
         return action_p
-    return (
-        action_space.low + (action_space.high - action_space.low) * (1 + action_p) / 2
-    )
+    return action_space.low + (action_space.high - action_space.low) * (1 + action_p) / 2
 
 
 def _make_return(policy, return_trajectory):
-    if not (
-        hasattr(policy, "wants_vector_return") and bool(policy.wants_vector_return())
-    ):
+    if not (hasattr(policy, "wants_vector_return") and bool(policy.wants_vector_return())):
         return return_trajectory
     assert hasattr(policy, "metrics")
     mets = np.asarray(policy.metrics(), dtype=np.float64)
-    return np.concatenate(
-        [np.asarray([float(return_trajectory)], dtype=np.float64), mets], axis=0
-    )
+    return np.concatenate([np.asarray([float(return_trajectory)], dtype=np.float64), mets], axis=0)
 
 
 def collect_trajectory(env_conf, policy, noise_seed=None, show_frames=False):
@@ -94,6 +88,4 @@ def collect_trajectory(env_conf, policy, noise_seed=None, show_frames=False):
         draw()
     env.close()
     rreturn = _make_return(policy, return_trajectory)
-    return Trajectory(
-        rreturn, np.array(traj_states).T, np.array(traj_actions).T, rreturn_se=None
-    )
+    return Trajectory(rreturn, np.array(traj_states).T, np.array(traj_actions).T, rreturn_se=None)

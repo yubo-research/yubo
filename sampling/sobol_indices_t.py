@@ -21,9 +21,7 @@ def calculate_sobol_indices_t(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     ranks = torch.empty_like(order)
     ranks.scatter_(0, order, row_idx)
     idx = (ranks * B) // n
-    oh = torch.nn.functional.one_hot(idx.to(torch.long), num_classes=B).to(
-        dtype=x.dtype
-    )
+    oh = torch.nn.functional.one_hot(idx.to(torch.long), num_classes=B).to(dtype=x.dtype)
     counts = oh.sum(dim=0)
     sums = (oh * y.view(n, 1, 1)).sum(dim=0)
     mu_b = torch.zeros_like(sums)

@@ -46,18 +46,14 @@ def _h_ts_sweep(name, ctx):
     from acq.acq_ts import AcqTS
 
     num_candidates = int(name.split("-")[1])
-    return ctx.bt(
-        AcqTS, acq_kwargs={"sampler": "lanczos", "num_candidates": num_candidates}
-    )
+    return ctx.bt(AcqTS, acq_kwargs={"sampler": "lanczos", "num_candidates": num_candidates})
 
 
 def _h_rff(name, ctx):
     from acq.acq_ts import AcqTS
 
     num_candidates = int(name.split("-")[1])
-    return ctx.bt(
-        AcqTS, acq_kwargs={"sampler": "rff", "num_candidates": num_candidates}
-    )
+    return ctx.bt(AcqTS, acq_kwargs={"sampler": "rff", "num_candidates": num_candidates})
 
 
 def _h_pss_sweep_kmcmc(name, ctx):
@@ -347,19 +343,11 @@ class Designers:
             "btsobol": lambda: bt(AcqSobol),
             "center": lambda: CenterDesigner(self._policy),
             "sr": lambda: bt(qSimpleRegret),
-            "ts": lambda: bt(
-                AcqTS, acq_kwargs={"sampler": "cholesky", "num_candidates": 1000}
-            ),
-            "ts-10000": lambda: bt(
-                AcqTS, acq_kwargs={"sampler": "lanczos", "num_candidates": 10000}
-            ),
+            "ts": lambda: bt(AcqTS, acq_kwargs={"sampler": "cholesky", "num_candidates": 1000}),
+            "ts-10000": lambda: bt(AcqTS, acq_kwargs={"sampler": "lanczos", "num_candidates": 10000}),
             "ucb": lambda: bt(qUpperConfidenceBound, acq_kwargs={"beta": 1}),
-            "ei": lambda: bt(
-                qNoisyExpectedImprovement, acq_kwargs={"X_baseline": None}
-            ),
-            "lei": lambda: bt(
-                qLogNoisyExpectedImprovement, acq_kwargs={"X_baseline": None}
-            ),
+            "ei": lambda: bt(qNoisyExpectedImprovement, acq_kwargs={"X_baseline": None}),
+            "lei": lambda: bt(qLogNoisyExpectedImprovement, acq_kwargs={"X_baseline": None}),
             "lei-m": lambda: bt(
                 qLogNoisyExpectedImprovement,
                 acq_kwargs={"X_baseline": None},
@@ -370,21 +358,15 @@ class Designers:
                 opt_sequential=True,
                 acq_kwargs={"candidate_set": None},
             ),
-            "turbo-1": lambda: TuRBORefDesigner(
-                self._policy, num_init=init_yubo_default, ard=True
-            ),
-            "turbo-1-iso": lambda: TuRBORefDesigner(
-                self._policy, num_init=init_yubo_default, ard=False
-            ),
+            "turbo-1": lambda: TuRBORefDesigner(self._policy, num_init=init_yubo_default, ard=True),
+            "turbo-1-iso": lambda: TuRBORefDesigner(self._policy, num_init=init_yubo_default, ard=False),
             "turbo-0": lambda: TuRBORefDesigner(
                 self._policy,
                 num_init=init_yubo_default,
                 surrogate_type="none",
                 ard=True,
             ),
-            "turbo-enn": lambda: TurboENNDesigner(
-                self._policy, turbo_mode="turbo-enn", k=10, num_keep=num_keep_val
-            ),
+            "turbo-enn": lambda: TurboENNDesigner(self._policy, turbo_mode="turbo-enn", k=10, num_keep=num_keep_val),
             "turbo-enn-p": lambda: TurboENNDesigner(
                 self._policy,
                 turbo_mode="turbo-enn",
@@ -393,16 +375,10 @@ class Designers:
                 num_fit_samples=None,
                 acq_type="pareto",
             ),
-            "turbo-zero": lambda: TurboENNDesigner(
-                self._policy, turbo_mode="turbo-zero"
-            ),
-            "turbo-one": lambda: TurboENNDesigner(
-                self._policy, turbo_mode="turbo-one", num_init=init_yubo_default
-            ),
+            "turbo-zero": lambda: TurboENNDesigner(self._policy, turbo_mode="turbo-zero"),
+            "turbo-one": lambda: TurboENNDesigner(self._policy, turbo_mode="turbo-one", num_init=init_yubo_default),
             "lhd_only": lambda: TurboENNDesigner(self._policy, turbo_mode="lhd-only"),
-            "morbo-zero": lambda: TurboENNDesigner(
-                self._policy, turbo_mode="turbo-zero", tr_type="morbo"
-            ),
+            "morbo-zero": lambda: TurboENNDesigner(self._policy, turbo_mode="turbo-zero", tr_type="morbo"),
             "morbo-one": lambda: TurboENNDesigner(
                 self._policy,
                 turbo_mode="turbo-one",
@@ -421,9 +397,7 @@ class Designers:
                 init_sobol=1,
                 acq_kwargs={"num_X_samples": default_num_X_samples},
             ),
-            "vecchia": lambda: VecchiaDesigner(
-                self._policy, num_candidates_per_arm=default_num_X_samples
-            ),
+            "vecchia": lambda: VecchiaDesigner(self._policy, num_candidates_per_arm=default_num_X_samples),
             "mtv": lambda: bt(
                 AcqMTV,
                 init_sobol=0,
@@ -580,9 +554,7 @@ class Designers:
                 init_style="find",
                 use_stagger=True,
             ),
-            "mts-ts": lambda: MTSDesigner(
-                self._policy, keep_style=keep_style, num_keep=num_keep, init_style="ts"
-            ),
+            "mts-ts": lambda: MTSDesigner(self._policy, keep_style=keep_style, num_keep=num_keep, init_style="ts"),
             "mts-meas": lambda: MTSDesigner(
                 self._policy,
                 keep_style=keep_style,
@@ -633,9 +605,7 @@ class Designers:
         return _dispatch_prefix(designer_name, ctx)
 
     def create(self, designer_name):
-        designer_name, num_keep, keep_style, model_spec, sample_around_best = (
-            _parse_options(designer_name)
-        )
+        designer_name, num_keep, keep_style, model_spec, sample_around_best = _parse_options(designer_name)
         opts = (num_keep, keep_style, model_spec, sample_around_best)
 
         simple_designers = self._get_simple_designers(opts)
