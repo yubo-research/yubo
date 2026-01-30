@@ -17,9 +17,6 @@ from acq.acq_ts import AcqTS
 
 # from acq.acq_tsroots import AcqTSRoots
 from acq.acq_var import AcqVar
-from acq.turbo_yubo.turbo_yubo_config import TurboYUBOConfig
-from acq.turbo_yubo.ty_model_factory import TurboYUBONOOPModel
-from acq.turbo_yubo.ty_signal_tr import ty_signal_tr_factory_factory
 
 from .ax_designer import AxDesigner
 from .bt_designer import BTDesigner
@@ -33,7 +30,6 @@ from .random_designer import RandomDesigner
 from .sobol_designer import SobolDesigner
 from .turbo_enn_designer import TurboENNDesigner
 from .turbo_ref_designer import TuRBORefDesigner
-from .turbo_yubo_designer import TurboYUBODesigner
 from .vecchia_designer import VecchiaDesigner
 
 
@@ -223,13 +219,9 @@ class Designers:
         elif designer_name == "ucb":
             return bt_designer(qUpperConfidenceBound, acq_kwargs={"beta": 1})
         elif designer_name == "ei":
-            return bt_designer(
-                qNoisyExpectedImprovement, acq_kwargs={"X_baseline": None}
-            )
+            return bt_designer(qNoisyExpectedImprovement, acq_kwargs={"X_baseline": None})
         elif designer_name == "lei":
-            return bt_designer(
-                qLogNoisyExpectedImprovement, acq_kwargs={"X_baseline": None}
-            )
+            return bt_designer(qLogNoisyExpectedImprovement, acq_kwargs={"X_baseline": None})
         elif designer_name == "lei-m":
             return bt_designer(
                 qLogNoisyExpectedImprovement,
@@ -255,9 +247,7 @@ class Designers:
             )
         elif designer_name == "turbo-enn":
             num_keep_val = num_keep if keep_style == "trailing" else None
-            return TurboENNDesigner(
-                self._policy, turbo_mode="turbo-enn", k=10, num_keep=num_keep_val
-            )
+            return TurboENNDesigner(self._policy, turbo_mode="turbo-enn", k=10, num_keep=num_keep_val)
         elif designer_name == "turbo-enn-p":
             num_keep_val = num_keep if keep_style == "trailing" else None
             return TurboENNDesigner(
@@ -331,18 +321,14 @@ class Designers:
             return TurboENNDesigner(self._policy, turbo_mode="turbo-zero")
 
         elif designer_name == "turbo-one":
-            return TurboENNDesigner(
-                self._policy, turbo_mode="turbo-one", num_init=init_yubo_default
-            )
+            return TurboENNDesigner(self._policy, turbo_mode="turbo-one", num_init=init_yubo_default)
 
         elif designer_name == "lhd_only":
             return TurboENNDesigner(self._policy, turbo_mode="lhd-only")
 
         # MORBO variants (multi-objective)
         elif designer_name == "morbo-zero":
-            return TurboENNDesigner(
-                self._policy, turbo_mode="turbo-zero", tr_type="morbo"
-            )
+            return TurboENNDesigner(self._policy, turbo_mode="turbo-zero", tr_type="morbo")
         elif designer_name == "morbo-one":
             return TurboENNDesigner(
                 self._policy,
@@ -395,9 +381,7 @@ class Designers:
                 acq_kwargs={"num_X_samples": default_num_X_samples},
             )
         elif designer_name == "vecchia":
-            return VecchiaDesigner(
-                self._policy, num_candidates_per_arm=default_num_X_samples
-            )
+            return VecchiaDesigner(self._policy, num_candidates_per_arm=default_num_X_samples)
 
         # MTV
         elif designer_name == "mtv":
@@ -603,43 +587,13 @@ class Designers:
                 use_stagger=True,
             )
         elif designer_name == "mts-ts":
-            return MTSDesigner(
-                self._policy, keep_style=keep_style, num_keep=num_keep, init_style="ts"
-            )
+            return MTSDesigner(self._policy, keep_style=keep_style, num_keep=num_keep, init_style="ts")
         elif designer_name == "mts-meas":
             return MTSDesigner(
                 self._policy,
                 keep_style=keep_style,
                 num_keep=num_keep,
                 init_style="meas",
-            )
-
-        elif designer_name == "turbo-yubo":
-            return TurboYUBODesigner(
-                self._policy,
-                num_keep=num_keep,
-                keep_style=keep_style,
-                config=TurboYUBOConfig(),
-            )
-
-        elif designer_name == "turbo-yubo-gumbel":
-            return TurboYUBODesigner(
-                self._policy,
-                num_keep=num_keep,
-                keep_style=keep_style,
-                config=TurboYUBOConfig(
-                    trust_region_manager=ty_signal_tr_factory_factory(use_gumbel=True),
-                ),
-            )
-        elif designer_name == "tyg-0":
-            return TurboYUBODesigner(
-                self._policy,
-                num_keep=num_keep,
-                keep_style=keep_style,
-                config=TurboYUBOConfig(
-                    trust_region_manager=ty_signal_tr_factory_factory(use_gumbel=True),
-                    model_factory=TurboYUBONOOPModel,
-                ),
             )
 
         # Long sobol init, sequential opt

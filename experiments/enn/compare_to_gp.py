@@ -1,12 +1,12 @@
 import numpy as np
 import pandas as pd
 import torch
+from third_party.enn import EpistemicNearestNeighbors, enn_fit
+from third_party.enn.enn.enn_params import PosteriorFlags
 from tqdm import tqdm
 
 from acq.fit_gp import fit_gp_XY
 from problems.env_conf import get_env_conf
-from third_party.enn import EpistemicNearestNeighbors, enn_fit
-from third_party.enn.enn.enn_params import PosteriorFlags
 
 
 def compute_gp_ll(model, test_x, test_y_standardized):

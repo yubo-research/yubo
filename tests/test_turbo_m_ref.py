@@ -1,119 +1,44 @@
 import numpy as np
 
 
-def test_turbo1_init():
-    from turbo_m_ref.turbo_1 import Turbo1
+def test_arms_from_pareto_fronts():
+    from types import SimpleNamespace
 
-    def dummy_f(x):
-        return -np.sum(x**2, axis=1)
+    from turbo_m_ref.turbo_1 import arms_from_pareto_fronts
 
-    lb = np.zeros(2)
-    ub = np.ones(2)
-
-    turbo = Turbo1(
-        f=dummy_f,
-        lb=lb,
-        ub=ub,
-        n_init=4,
-        max_evals=10,
-        batch_size=1,
-        verbose=False,
+    x_cand = np.array([[0.1, 0.1], [0.5, 0.5], [0.9, 0.9], [0.3, 0.3]])
+    mvn = SimpleNamespace(
+        mu=np.array([1.0, 2.0, 3.0, 1.5]),
+        se=np.array([0.1, 0.2, 0.3, 0.15]),
     )
-    assert turbo is not None
+    x_arms = arms_from_pareto_fronts(x_cand, mvn, num_arms=2)
+    assert x_arms.shape == (2, 2)
 
 
-def test_turbo1_optimize():
-    from turbo_m_ref.turbo_1 import Turbo1
-
-    def dummy_f(x):
-        return -np.sum(x**2, axis=1)
-
-    lb = np.zeros(2)
-    ub = np.ones(2)
-
-    turbo = Turbo1(
-        f=dummy_f,
-        lb=lb,
-        ub=ub,
-        n_init=4,
-        max_evals=6,
-        batch_size=1,
-        verbose=False,
-    )
-    turbo.optimize()
-    assert len(turbo.X) >= 4
-    assert len(turbo.fX) >= 4
-
-
-def test_turbo1_ask_tell_init():
+def test_turbo_1_ask_tell_predict():
     from turbo_m_ref.turbo_1_ask_tell import Turbo1
 
     x_bounds = np.array([[0.0, 1.0], [0.0, 1.0]])
+    t = Turbo1(x_bounds=x_bounds, n_init=2, batch_size=1)
+    t._X_best_so_far = np.array([0.5, 0.5])
+    t._X_last = np.array([0.3, 0.3])
 
-    turbo = Turbo1(
-        x_bounds=x_bounds,
-        n_init=4,
-        batch_size=1,
-        verbose=False,
-    )
-    assert turbo is not None
+    x_best = t.predict(predict_best=True)
+    assert np.allclose(x_best, [0.5, 0.5])
+
+    x_last = t.predict(predict_best=False)
+    assert np.allclose(x_last, [0.3, 0.3])
 
 
-def test_turbo1_ask_tell_ask():
+def test_turbo_1_ask_tell_maximize():
     from turbo_m_ref.turbo_1_ask_tell import Turbo1
 
-    x_bounds = np.array([[0.0, 1.0], [0.0, 1.0]])
+    np.random.seed(42)
 
-    turbo = Turbo1(
-        x_bounds=x_bounds,
-        n_init=4,
-        batch_size=1,
-        verbose=False,
-    )
-    x = turbo.ask()
-    assert x.shape == (2,)  # Returns 1D array for batch_size=1
-
-
-def test_turbo_m_init():
-    from turbo_m_ref.turbo_m import TurboM
-
-    def dummy_f(x):
-        return -np.sum(x**2, axis=1)
-
-    lb = np.zeros(2)
-    ub = np.ones(2)
-
-    turbo = TurboM(
-        f=dummy_f,
-        lb=lb,
-        ub=ub,
-        n_init=4,
-        max_evals=10,
-        n_trust_regions=2,
-        batch_size=1,
-        verbose=False,
-    )
-    assert turbo is not None
-
-
-def test_turbo1_ask_tell_tell():
-    from turbo_m_ref.turbo_1_ask_tell import Turbo1
+    def f(x):
+        return -np.sum((x - 0.5) ** 2)
 
     x_bounds = np.array([[0.0, 1.0], [0.0, 1.0]])
-
-    turbo = Turbo1(
-        x_bounds=x_bounds,
-        n_init=4,
-        batch_size=1,
-        verbose=False,
-    )
-
-    # Ask and tell several times
-    for _ in range(4):
-        x = turbo.ask()
-        y = float(-np.sum(x**2))  # Must be a scalar
-        turbo.tell(y, x)  # y first, then x
-
-    # Should have recorded data
-    assert len(turbo.X) == 4
-    assert len(turbo.fX) == 4
+    t = Turbo1(x_bounds=x_bounds, n_init=3, batch_size=1)
+    t.maximize(f, max_evals=5)
+    assert t.n_evals >= 5

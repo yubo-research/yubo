@@ -1,6 +1,38 @@
 import numpy as np
 
 
+def test_reactor_policy_factory_init():
+    from problems.reactor_policy import ReactorPolicyFactory
+
+    factory = ReactorPolicyFactory(
+        num_modes=3,
+        memory_dim=6,
+        delta_hidden=8,
+        return_metrics=False,
+    )
+    assert factory._num_modes == 3
+    assert factory._memory_dim == 6
+
+
+def test_reactor_policy_wants_vector_return():
+    from types import SimpleNamespace
+
+    from problems.reactor_policy import ReactorPolicy
+
+    env_conf = SimpleNamespace(
+        problem_seed=0,
+        gym_conf=SimpleNamespace(state_space=SimpleNamespace(shape=(24,))),
+        action_space=SimpleNamespace(shape=(4,)),
+        env_name="BipedalWalker-v3",
+    )
+
+    p = ReactorPolicy(env_conf, num_modes=3, memory_dim=6, return_metrics=False)
+    assert p.wants_vector_return() is False
+
+    p2 = ReactorPolicy(env_conf, num_modes=3, memory_dim=6, return_metrics=True)
+    assert p2.wants_vector_return() is True
+
+
 def test_reactor_policy_roundtrip_and_bounds():
     from types import SimpleNamespace
 

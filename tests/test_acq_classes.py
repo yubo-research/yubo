@@ -105,6 +105,26 @@ def test_acq_dpp_init():
     model = _make_simple_gp()
     acq = AcqDPP(model, num_X_samples=16)
     assert acq is not None
+    assert acq._num_dim == 2
+    assert acq._num_runs == 50
+
+
+def test_acq_dpp_draw():
+    from acq.acq_dpp import AcqDPP
+
+    model = _make_simple_gp()
+    acq = AcqDPP(model, num_X_samples=16, num_runs=5)
+    X_arms = acq.draw(num_arms=2)
+    assert X_arms.shape == (2, 2)
+
+
+def test_acq_dpp_gp_init():
+    from acq.acq_dpp import _GP
+
+    model = _make_simple_gp()
+    gp = _GP(model)
+    assert gp.d == 2
+    assert gp.model is not None
 
 
 def test_acq_dpp_mean_var():

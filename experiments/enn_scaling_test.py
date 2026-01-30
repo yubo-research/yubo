@@ -2,7 +2,6 @@ import json
 import time
 
 import numpy as np
-
 from third_party.enn.turbo.config.enn_surrogate_config import (
     ENNFitConfig,
     ENNSurrogateConfig,

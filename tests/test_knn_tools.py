@@ -115,3 +115,48 @@ def test_most_isolated():
     x = np.array([[0.2, 0.2], [0.5, 0.5], [0.7, 0.7]])
     result = most_isolated(enn, x, p_boundary_is_neighbor=0.0)
     assert len(result) >= 1
+
+
+class MockENNForFarthest:
+    def __init__(self, X):
+        self._X = np.array(X)
+
+    def idx_fast(self, x):
+        x = np.atleast_2d(x)
+        dists = np.linalg.norm(x[:, None, :] - self._X[None, :, :], axis=2)
+        return np.argmin(dists, axis=1)
+
+    def about_neighbors(self, x, k=1):
+        x = np.atleast_2d(x)
+        dists = np.linalg.norm(x[:, None, :] - self._X[None, :, :], axis=2)
+        idx = np.argsort(dists, axis=1)[:, :k]
+        sorted_dists = np.take_along_axis(dists, idx, axis=1)
+        return idx, sorted_dists
+
+    def posterior(self, x):
+        from types import SimpleNamespace
+
+        n = x.shape[0]
+        return SimpleNamespace(se=np.ones(n) * 0.5)
+
+
+def test_farthest_neighbor_fast():
+    from sampling.knn_tools import farthest_neighbor_fast
+
+    X = np.array([[0.1, 0.1], [0.5, 0.5], [0.9, 0.9]])
+    enn = MockENNForFarthest(X)
+    x_0 = np.array([[0.3, 0.3], [0.7, 0.7]])
+    u = np.array([[1.0, 0.0], [0.0, 1.0]])
+    x = farthest_neighbor_fast(enn, x_0, u, num_steps=5, p_boundary_is_neighbor=0.0)
+    assert x.shape == (2, 2)
+
+
+def test_confidence_region_fast():
+    from sampling.knn_tools import confidence_region_fast
+
+    X = np.array([[0.1, 0.1], [0.5, 0.5], [0.9, 0.9]])
+    enn = MockENNForFarthest(X)
+    x_0 = np.array([[0.3, 0.3], [0.7, 0.7]])
+    u = np.array([[1.0, 0.0], [0.0, 1.0]])
+    x = confidence_region_fast(enn, x_0, u, se_max=1.0, num_steps=5)
+    assert x.shape == (2, 2)
