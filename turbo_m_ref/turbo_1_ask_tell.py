@@ -28,6 +28,18 @@ class _CandidatesResult(NamedTuple):
     hypers: dict
 
 
+class _StandardizedFX(NamedTuple):
+    fX: np.ndarray
+    mu: float
+    sigma: float
+
+
+class _TrustRegion(NamedTuple):
+    x_center: np.ndarray
+    lb: np.ndarray
+    ub: np.ndarray
+
+
 def _validate_init_args(lb, ub, *, n_init, batch_size, verbose, use_ard, max_cholesky_size, n_training_steps, device, dtype):
     assert lb.ndim == 1 and ub.ndim == 1
     assert len(lb) == len(ub)
@@ -58,6 +70,71 @@ def _init_counters_and_tr(self, *, batch_size, length_fixed):
     self.length_max = 1.6
     self.length_init = 0.8
     self.length_fixed = length_fixed
+
+
+def _device_dtype_for(self, n_points: int):
+    if n_points < self.min_cuda:
+        return torch.device("cpu"), torch.float64
+    return self.device, self.dtype
+
+
+def _standardize_fX(fX) -> _StandardizedFX:
+    mu, sigma = np.median(fX), fX.std()
+    sigma = 1.0 if sigma < 1e-6 else sigma
+    return _StandardizedFX(fX=(deepcopy(fX) - mu) / sigma, mu=mu, sigma=sigma)
+
+
+def _train_gp_model(self, X, fX, n_training_steps, hypers, device, dtype):
+    with gpytorch.settings.max_cholesky_size(self.max_cholesky_size):
+        X_torch = torch.tensor(X).to(device=device, dtype=dtype)
+        y_torch = torch.tensor(fX).to(device=device, dtype=dtype)
+        gp = train_gp(
+            train_x=X_torch,
+            train_y=y_torch,
+            use_ard=self.use_ard,
+            num_steps=n_training_steps,
+            hypers=hypers,
+        )
+    del X_torch, y_torch
+    return gp
+
+
+def _trust_region_bounds(self, X, fX, gp, length) -> _TrustRegion:
+    x_center = X[fX.argmin().item(), :][None, :]
+    weights = gp.covar_module.base_kernel.lengthscale.cpu().detach().numpy().ravel()
+    weights = weights / weights.mean()
+    weights = weights / np.prod(np.power(weights, 1.0 / len(weights)))
+    lb = np.clip(x_center - weights * length / 2.0, 0.0, 1.0)
+    ub = np.clip(x_center + weights * length / 2.0, 0.0, 1.0)
+    return _TrustRegion(x_center=x_center, lb=lb, ub=ub)
+
+
+def _make_candidates(self, *, x_center, lb, ub, device, dtype):
+    seed = np.random.randint(int(1e6))
+    sobol = SobolEngine(self.dim, scramble=True, seed=seed)
+    pert = sobol.draw(self.n_cand).to(dtype=dtype, device=device).cpu().detach().numpy()
+    pert = lb + (ub - lb) * pert
+
+    prob_perturb = min(20.0 / self.dim, 1.0)
+    mask = np.random.rand(self.n_cand, self.dim) <= prob_perturb
+    ind = np.where(np.sum(mask, axis=1) == 0)[0]
+    mask[ind, np.random.randint(0, self.dim, size=len(ind))] = 1
+
+    X_cand = x_center.copy() * np.ones((self.n_cand, self.dim))
+    X_cand[mask] = pert[mask]
+    return X_cand
+
+
+def _sample_candidates(gp, X_cand, *, device, dtype, batch_size, max_cholesky_size):
+    gp = gp.to(dtype=dtype, device=device)
+    with (
+        torch.no_grad(),
+        gpytorch.settings.max_cholesky_size(max_cholesky_size),
+    ):
+        X_cand_torch = torch.tensor(X_cand).to(device=device, dtype=dtype)
+        y_cand = gp.likelihood(gp(X_cand_torch)).sample(torch.Size([batch_size])).t().cpu().detach().numpy()
+    del X_cand_torch, gp
+    return y_cand
 
 
 class Turbo1:
@@ -178,78 +255,23 @@ class Turbo1:
         # NOTE: This may not be robust to noise, in which case the posterior mean of the GP can be used instead
         assert X.min() >= 0.0 and X.max() <= 1.0
 
-        # Standardize function values.
-        mu, sigma = np.median(fX), fX.std()
-        sigma = 1.0 if sigma < 1e-6 else sigma
-        fX = (deepcopy(fX) - mu) / sigma
+        z = _standardize_fX(fX)
+        device, dtype = _device_dtype_for(self, len(X))
+        gp = _train_gp_model(self, X, z.fX, n_training_steps, hypers, device, dtype)
 
-        # Figure out what device we are running on
-        if len(X) < self.min_cuda:
-            device, dtype = torch.device("cpu"), torch.float64
-        else:
-            device, dtype = self.device, self.dtype
+        tr = _trust_region_bounds(self, X, z.fX, gp, length)
+        X_cand = _make_candidates(self, x_center=tr.x_center, lb=tr.lb, ub=tr.ub, device=device, dtype=dtype)
 
-        # We use CG + Lanczos for training if we have enough data
-        with gpytorch.settings.max_cholesky_size(self.max_cholesky_size):
-            X_torch = torch.tensor(X).to(device=device, dtype=dtype)
-            y_torch = torch.tensor(fX).to(device=device, dtype=dtype)
-            gp = train_gp(
-                train_x=X_torch,
-                train_y=y_torch,
-                use_ard=self.use_ard,
-                num_steps=n_training_steps,
-                hypers=hypers,
-            )
-
-            # Save state dict
-            # not used hypers = gp.state_dict()
-
-        # Create the trust region boundaries
-        x_center = X[fX.argmin().item(), :][None, :]
-        weights = gp.covar_module.base_kernel.lengthscale.cpu().detach().numpy().ravel()
-        weights = weights / weights.mean()  # This will make the next line more stable
-        weights = weights / np.prod(np.power(weights, 1.0 / len(weights)))  # We now have weights.prod() = 1
-        lb = np.clip(x_center - weights * length / 2.0, 0.0, 1.0)
-        ub = np.clip(x_center + weights * length / 2.0, 0.0, 1.0)
-
-        # Draw a Sobolev sequence in [lb, ub]
-        seed = np.random.randint(int(1e6))
-        sobol = SobolEngine(self.dim, scramble=True, seed=seed)
-        pert = sobol.draw(self.n_cand).to(dtype=dtype, device=device).cpu().detach().numpy()
-        pert = lb + (ub - lb) * pert
-
-        # Create a perturbation mask
-        prob_perturb = min(20.0 / self.dim, 1.0)
-        mask = np.random.rand(self.n_cand, self.dim) <= prob_perturb
-        ind = np.where(np.sum(mask, axis=1) == 0)[0]
-        mask[ind, np.random.randint(0, self.dim, size=len(ind))] = 1
-
-        # Create candidate points
-        X_cand = x_center.copy() * np.ones((self.n_cand, self.dim))
-        X_cand[mask] = pert[mask]
-
-        # Figure out what device we are running on
-        if len(X_cand) < self.min_cuda:
-            device, dtype = torch.device("cpu"), torch.float64
-        else:
-            device, dtype = self.device, self.dtype
-
-        # We may have to move the GP to a new device
-        gp = gp.to(dtype=dtype, device=device)
-
-        # We use Lanczos for sampling if we have enough data
-        with (
-            torch.no_grad(),
-            gpytorch.settings.max_cholesky_size(self.max_cholesky_size),
-        ):
-            X_cand_torch = torch.tensor(X_cand).to(device=device, dtype=dtype)
-            y_cand = gp.likelihood(gp(X_cand_torch)).sample(torch.Size([self.batch_size])).t().cpu().detach().numpy()
-
-        # Remove the torch variables
-        del X_torch, y_torch, X_cand_torch, gp
-
-        # De-standardize the sampled values
-        y_cand = mu + sigma * y_cand
+        device2, dtype2 = _device_dtype_for(self, len(X_cand))
+        y_cand = _sample_candidates(
+            gp,
+            X_cand,
+            device=device2,
+            dtype=dtype2,
+            batch_size=self.batch_size,
+            max_cholesky_size=self.max_cholesky_size,
+        )
+        y_cand = z.mu + z.sigma * y_cand
 
         return _CandidatesResult(X_cand=X_cand, y_cand=y_cand, hypers=hypers)
 

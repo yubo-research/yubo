@@ -285,6 +285,49 @@ def plot_rl_experiment(
     return _PlotRLExperimentResult(fig=fig, ax=ax, data_locator=data_locator, traces=traces)
 
 
+def _plot_rl_vs_time_one_rep(ax, *, ti, yi, color, marker, label):
+    x, yy = np.asarray(ti[0], dtype=float), np.asarray(yi[0], dtype=float)
+    ok = np.isfinite(x) & np.isfinite(yy)
+    ax.plot(
+        x[ok],
+        yy[ok],
+        color=color,
+        label=label,
+        marker=marker,
+        markevery=max(1, int(np.sum(ok) / 10)),
+    )
+
+
+def _plot_rl_vs_time_multi_rep(ax, *, ti, yi, n_rep: int, color, marker, label, n_grid: int):
+    t_ends = [
+        float(np.nanmax(np.asarray(ti[r], dtype=float)[np.isfinite(np.asarray(ti[r], dtype=float))]))
+        for r in range(n_rep)
+        if np.any(np.isfinite(np.asarray(ti[r], dtype=float)))
+    ]
+    if not t_ends:
+        return
+    t_max = float(np.nanmin(t_ends))
+    if not np.isfinite(t_max) or t_max <= 0:
+        return
+    xq = np.linspace(0.0, t_max, int(n_grid))
+
+    yq = np.full((n_rep, xq.shape[0]), np.nan, dtype=float)
+    for r in range(n_rep):
+        yq[r, :] = interp_1d(np.asarray(ti[r], dtype=float), np.asarray(yi[r], dtype=float), xq)
+
+    mu = np.nanmean(yq, axis=0)
+    se = np.nanstd(yq, axis=0) / np.sqrt(float(n_rep))
+    ax.plot(
+        xq,
+        mu,
+        color=color,
+        label=label,
+        marker=marker,
+        markevery=max(1, int(xq.shape[0] / 10)),
+    )
+    ax.fill_between(xq, mu - se, mu + se, color=color, alpha=0.25)
+
+
 def plot_rl_experiment_vs_time(
     results_path: str,
     exp_dir: str,
@@ -340,44 +383,19 @@ def plot_rl_experiment_vs_time(
         ti, yi = t[i_opt, ...], y[i_opt, ...]
 
         if n_rep == 1:
-            x, yy = np.asarray(ti[0], dtype=float), np.asarray(yi[0], dtype=float)
-            ok = np.isfinite(x) & np.isfinite(yy)
-            ax.plot(
-                x[ok],
-                yy[ok],
-                color=color,
-                label=label,
-                marker=marker,
-                markevery=max(1, int(np.sum(ok) / 10)),
-            )
+            _plot_rl_vs_time_one_rep(ax, ti=ti, yi=yi, color=color, marker=marker, label=label)
             continue
 
-        t_ends = [
-            float(np.nanmax(np.asarray(ti[r], dtype=float)[np.isfinite(np.asarray(ti[r], dtype=float))]))
-            for r in range(n_rep)
-            if np.any(np.isfinite(np.asarray(ti[r], dtype=float)))
-        ]
-        if not t_ends:
-            continue
-        t_max = float(np.nanmin(t_ends))
-        if not np.isfinite(t_max) or t_max <= 0:
-            continue
-        xq = np.linspace(0.0, t_max, int(n_grid))
-
-        yq = np.full((n_rep, xq.shape[0]), np.nan, dtype=float)
-        for r in range(n_rep):
-            yq[r, :] = interp_1d(np.asarray(ti[r], dtype=float), np.asarray(yi[r], dtype=float), xq)
-
-        mu, se = np.nanmean(yq, axis=0), np.nanstd(yq, axis=0) / np.sqrt(float(n_rep))
-        ax.plot(
-            xq,
-            mu,
+        _plot_rl_vs_time_multi_rep(
+            ax,
+            ti=ti,
+            yi=yi,
+            n_rep=n_rep,
             color=color,
-            label=label,
             marker=marker,
-            markevery=max(1, int(xq.shape[0] / 10)),
+            label=label,
+            n_grid=n_grid,
         )
-        ax.fill_between(xq, mu - se, mu + se, color=color, alpha=0.25)
 
     ax.set_xlabel("Cumulative time (s)", fontsize=12)
     ax.set_ylabel("Return (best so far)", fontsize=12)
