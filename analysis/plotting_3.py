@@ -193,7 +193,7 @@ def _plot_vs_time(
     *,
     title: str,
     t_final: dict[str, float],
-    xlim_opt_name: str = "turbo-enn-fit-ucb",
+    xlim_opt_name: str = "turbo-enn-fit/acq_type=ucb",
 ):
     opts = dl_r.optimizers()
     z_r = tr_r.squeeze(0)

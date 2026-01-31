@@ -46,7 +46,7 @@ class TestSpeedupXLabel:
     def test_computes_speedup_for_natural_noise(self):
         from analysis.plotting_2_util import speedup_x_label
 
-        result = speedup_x_label({"turbo-one": 50.0, "turbo-enn-fit-ucb": 10.0}, "problem")
+        result = speedup_x_label({"turbo-one": 50.0, "turbo-enn-fit/acq_type=ucb": 10.0}, "problem")
         assert result == "5x speedup"
 
 

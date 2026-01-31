@@ -6,7 +6,7 @@ import pytest
     "designer_name,num_arms",
     [
         ("sobol", 4),
-        ("morbo-enn-fit-ucb", 1),
+        ("morbo-enn-fit/acq_type=ucb", 1),
     ],
 )
 def test_double_ackley_runs(designer_name, num_arms):
