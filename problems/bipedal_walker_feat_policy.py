@@ -2,6 +2,8 @@ import copy
 
 import numpy as np
 
+from problems.np_policy_util import set_params_pm1
+
 
 def _logsumexp(x):
     m = np.max(x)
@@ -38,11 +40,7 @@ class BipedalWalkerFeatPolicy:
         return self._num_p
 
     def set_params(self, x):
-        x = np.asarray(x, dtype=np.float64)
-        assert x.shape == (self._num_p,), x.shape
-        assert x.min() >= -1 and x.max() <= 1, (x.min(), x.max())
-        self._x_orig = x.copy()
-        self._set_derived(self._x_orig)
+        set_params_pm1(self, x)
 
     def get_params(self):
         return self._x_orig.copy()

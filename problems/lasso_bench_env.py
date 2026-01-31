@@ -1,3 +1,13 @@
+from typing import NamedTuple
+
+
+class _StepResult(NamedTuple):
+    state: int
+    reward: float
+    done: bool
+    info: object | None
+
+
 class LassoBenchEnv:
     def __init__(self, pick_data, seed):
         from LassoBench import RealBenchmark
@@ -16,7 +26,7 @@ class LassoBenchEnv:
         assert action.shape == (self.n_features,)
         assert np.all(action >= -1) and np.all(action <= 1)
         loss = self._bench.evaluate(action)
-        return 1, -float(loss), True, None
+        return _StepResult(1, -float(loss), True, None)
 
     def reset(self, seed):
         return 0, None

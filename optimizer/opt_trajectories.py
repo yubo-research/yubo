@@ -1,6 +1,14 @@
+from typing import NamedTuple
+
 import numpy as np
 
 from .trajectories import Trajectory, collect_trajectory
+
+
+class _MeanReturnResult(NamedTuple):
+    mean: float
+    se: float
+    all_same: bool
 
 
 def collect_trajectory_with_noise(env_conf, policy, i_noise=None, denoise_seed=0):
@@ -21,7 +29,11 @@ def mean_return_over_runs(env_conf, policy, num_denoise, i_noise=None):
         rets.append(traj.rreturn)
     std_rets = np.std(rets)
     all_same = len(rets) > 1 and std_rets == 0
-    return np.mean(rets), std_rets / np.sqrt(len(rets)), all_same
+    return _MeanReturnResult(
+        mean=float(np.mean(rets)),
+        se=float(std_rets / np.sqrt(len(rets))),
+        all_same=bool(all_same),
+    )
 
 
 def collect_denoised_trajectory(env_conf, policy, num_denoise, i_noise=None):

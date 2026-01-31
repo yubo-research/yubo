@@ -1,7 +1,16 @@
+from typing import NamedTuple
+
 import numpy as np
 import torch
 
+from acq.acq_util import calc_p_max_from_Y as _calc_p_max_from_Y
 from problems.env_conf import default_policy, get_env_conf
+
+
+class _ExpositoryProblem(NamedTuple):
+    env_conf: object
+    policy: object
+    opt_name: str
 
 
 def expository_problem():
@@ -14,7 +23,7 @@ def expository_problem():
     env_conf = get_env_conf(env_tag, seed, noise_seed_0=seed + 3)
     policy = default_policy(env_conf)
 
-    return env_conf, policy, "mtv"
+    return _ExpositoryProblem(env_conf=env_conf, policy=policy, opt_name="mtv")
 
 
 def show(x):
@@ -24,10 +33,16 @@ def show(x):
     return " ".join([str(xx) for xx in x.flatten().tolist()])
 
 
+class _Mesh(NamedTuple):
+    xs: torch.Tensor
+    x_1: np.ndarray
+    x_2: np.ndarray
+
+
 def mk_mesh(n=100):
     x_1, x_2 = np.meshgrid(np.linspace(0, 1, n), np.linspace(0, 1, n))
     xs = torch.tensor(list(zip(x_1.flatten(), x_2.flatten())))
-    return xs, x_1, x_2
+    return _Mesh(xs=xs, x_1=x_1, x_2=x_2)
 
 
 def dump_mesh(out_dir, tag, x_1, x_2, y):
@@ -60,14 +75,6 @@ def var_contours(out_dir, gp):
     ys = gp.posterior(xs).variance.detach().numpy()
     y = ys.reshape(x_1.shape)
     dump_mesh(out_dir, "var", x_1, x_2, y)
-
-
-def _calc_p_max_from_Y(Y):
-    is_best = torch.argmax(Y, dim=-1)
-    idcs, counts = torch.unique(is_best, return_counts=True)
-    p_max = torch.zeros(Y.shape[-1])
-    p_max[idcs] = counts / Y.shape[0]
-    return p_max
 
 
 def pmax_contours(out_dir, gp):

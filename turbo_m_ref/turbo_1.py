@@ -9,9 +9,9 @@
 # limitations under the License.                                              #
 ###############################################################################
 
-import math
 import sys
 from copy import deepcopy
+from typing import NamedTuple
 
 import gpytorch
 import numpy as np
@@ -19,7 +19,86 @@ import torch
 from torch.quasirandom import SobolEngine
 
 from .gp import train_gp
-from .utils import from_unit_cube, latin_hypercube, to_unit_cube
+from .utils import from_unit_cube, latin_hypercube, to_unit_cube, turbo_adjust_length
+
+
+class _CandidatesResult(NamedTuple):
+    X_cand: np.ndarray
+    y_cand: object
+    hypers: dict
+
+
+def _validate_init_args(lb, ub, *, n_init, max_evals, batch_size, verbose, use_ard, max_cholesky_size, n_training_steps, dtype):
+    assert lb.ndim == 1 and ub.ndim == 1
+    assert len(lb) == len(ub)
+    assert np.all(ub > lb)
+    assert max_evals > 0 and isinstance(max_evals, int)
+    assert n_init > 0 and isinstance(n_init, int), n_init
+    assert batch_size > 0 and isinstance(batch_size, int)
+    assert isinstance(verbose, bool) and isinstance(use_ard, bool)
+    assert max_cholesky_size >= 0 and isinstance(batch_size, int)
+    assert n_training_steps >= 30 and isinstance(n_training_steps, int)
+    assert max_evals > n_init and max_evals > batch_size
+    assert dtype == "float32" or dtype == "float64"
+
+
+def _init_hypers(self):
+    self.mean = np.zeros((0, 1))
+    self.signal_var = np.zeros((0, 1))
+    self.noise_var = np.zeros((0, 1))
+    self.lengthscales = np.zeros((0, self.dim)) if self.use_ard else np.zeros((0, 1))
+
+
+def _init_counters_and_tr(self, *, batch_size):
+    self.n_cand = min(100 * self.dim, 5000)
+    if self._surrogate_type.startswith("enn-"):
+        self.n_cand = max(self.n_cand, 10 * self.batch_size)
+    self.failtol = np.ceil(np.max([4.0 / batch_size, self.dim / batch_size]))
+    self.succtol = 3
+    self.n_evals = 0
+    self.length_min = 0.5**7
+    self.length_max = 1.6
+    self.length_init = 0.8
+
+
+def _make_X_cand(self, *, x_center, lb, ub, device, dtype):
+    seed = np.random.randint(int(1e6))
+    sobol = SobolEngine(self.dim, scramble=True, seed=seed)
+    pert = sobol.draw(self.n_cand).to(dtype=dtype, device=device).cpu().detach().numpy()
+    pert = lb + (ub - lb) * pert
+
+    prob_perturb = min(20.0 / self.dim, 1.0)
+    mask = np.random.rand(self.n_cand, self.dim) <= prob_perturb
+    ind = np.where(np.sum(mask, axis=1) == 0)[0]
+    mask[ind, np.random.randint(0, self.dim, size=len(ind))] = 1
+
+    X_cand = x_center.copy() * np.ones((self.n_cand, self.dim))
+    X_cand[mask] = pert[mask]
+    return X_cand
+
+
+def _compute_y_cand(self, *, X, fX, X_cand, mu, sigma, gp, device, dtype):
+    if self._surrogate_type == "original":
+        gp = gp.to(dtype=dtype, device=device)
+        with (
+            torch.no_grad(),
+            gpytorch.settings.max_cholesky_size(self.max_cholesky_size),
+        ):
+            X_cand_torch = torch.tensor(X_cand).to(device=device, dtype=dtype)
+            y_cand = gp.likelihood(gp(X_cand_torch)).sample(torch.Size([self.batch_size])).t().cpu().detach().numpy()
+        y_cand = mu + sigma * y_cand
+        del X_cand_torch, gp
+        return y_cand
+    if self._surrogate_type == "none":
+        return None
+    if self._surrogate_type.startswith("enn-"):
+        from model.enn import EpistemicNearestNeighbors
+
+        k = int(self._surrogate_type.split("-")[-1])
+        enn = EpistemicNearestNeighbors(k=k)
+        enn.add(X, fX[:, None])
+        return enn.posterior(X_cand)
+    raise ValueError(f"Unknown surrogate_type: {self._surrogate_type}")
 
 
 class Turbo1:
@@ -65,19 +144,18 @@ class Turbo1:
         *,
         surrogate_type="original",
     ):
-        # Very basic input checks
-        assert lb.ndim == 1 and ub.ndim == 1
-        assert len(lb) == len(ub)
-        assert np.all(ub > lb)
-        assert max_evals > 0 and isinstance(max_evals, int)
-        assert n_init > 0 and isinstance(n_init, int), n_init
-        assert batch_size > 0 and isinstance(batch_size, int)
-        assert isinstance(verbose, bool) and isinstance(use_ard, bool)
-        assert max_cholesky_size >= 0 and isinstance(batch_size, int)
-        assert n_training_steps >= 30 and isinstance(n_training_steps, int)
-        assert max_evals > n_init and max_evals > batch_size
-        # assert device == "cpu" or device == "cuda"
-        assert dtype == "float32" or dtype == "float64"
+        _validate_init_args(
+            lb,
+            ub,
+            n_init=n_init,
+            max_evals=max_evals,
+            batch_size=batch_size,
+            verbose=verbose,
+            use_ard=use_ard,
+            max_cholesky_size=max_cholesky_size,
+            n_training_steps=n_training_steps,
+            dtype=dtype,
+        )
         # if device == "cuda":
         #     assert torch.cuda.is_available(), "can't use cuda if it's not available"
 
@@ -100,25 +178,8 @@ class Turbo1:
         self.max_cholesky_size = max_cholesky_size
         self.n_training_steps = n_training_steps
 
-        # Hyperparameters
-        self.mean = np.zeros((0, 1))
-        self.signal_var = np.zeros((0, 1))
-        self.noise_var = np.zeros((0, 1))
-        self.lengthscales = np.zeros((0, self.dim)) if self.use_ard else np.zeros((0, 1))
-
-        # Tolerances and counters
-        self.n_cand = min(100 * self.dim, 5000)
-        if self._surrogate_type.startswith("enn-"):
-            self.n_cand = max(self.n_cand, 10 * self.batch_size)
-
-        self.failtol = np.ceil(np.max([4.0 / batch_size, self.dim / batch_size]))
-        self.succtol = 3
-        self.n_evals = 0
-
-        # Trust region sizes
-        self.length_min = 0.5**7
-        self.length_max = 1.6
-        self.length_init = 0.8
+        _init_hypers(self)
+        _init_counters_and_tr(self, batch_size=batch_size)
 
         # Save the full history
         self.X = np.zeros((0, self.dim))
@@ -143,19 +204,7 @@ class Turbo1:
         self.length = self.length_init
 
     def _adjust_length(self, fX_next):
-        if np.min(fX_next) < np.min(self._fX) - 1e-3 * math.fabs(np.min(self._fX)):
-            self.succcount += 1
-            self.failcount = 0
-        else:
-            self.succcount = 0
-            self.failcount += 1
-
-        if self.succcount == self.succtol:  # Expand trust region
-            self.length = min([2.0 * self.length, self.length_max])
-            self.succcount = 0
-        elif self.failcount == self.failtol:  # Shrink trust region
-            self.length /= 2.0
-            self.failcount = 0
+        turbo_adjust_length(self, fX_next)
 
     def _create_candidates(self, X, fX, length, n_training_steps, hypers):
         """Generate candidates assuming X has been scaled to [0,1]^d."""
@@ -202,21 +251,7 @@ class Turbo1:
         lb = np.clip(x_center - weights * length / 2.0, 0.0, 1.0)
         ub = np.clip(x_center + weights * length / 2.0, 0.0, 1.0)
 
-        # Draw a Sobolev sequence in [lb, ub]
-        seed = np.random.randint(int(1e6))
-        sobol = SobolEngine(self.dim, scramble=True, seed=seed)
-        pert = sobol.draw(self.n_cand).to(dtype=dtype, device=device).cpu().detach().numpy()
-        pert = lb + (ub - lb) * pert
-
-        # Create a perturbation mask
-        prob_perturb = min(20.0 / self.dim, 1.0)
-        mask = np.random.rand(self.n_cand, self.dim) <= prob_perturb
-        ind = np.where(np.sum(mask, axis=1) == 0)[0]
-        mask[ind, np.random.randint(0, self.dim, size=len(ind))] = 1
-
-        # Create candidate points
-        X_cand = x_center.copy() * np.ones((self.n_cand, self.dim))
-        X_cand[mask] = pert[mask]
+        X_cand = _make_X_cand(self, x_center=x_center, lb=lb, ub=ub, device=device, dtype=dtype)
 
         # Figure out what device we are running on
         if len(X_cand) < self.min_cuda:
@@ -224,36 +259,21 @@ class Turbo1:
         else:
             device, dtype = self.device, self.dtype
 
-        if self._surrogate_type == "original":
-            # We may have to move the GP to a new device
-            gp = gp.to(dtype=dtype, device=device)
-
-            # We use Lanczos for sampling if we have enough data
-            with (
-                torch.no_grad(),
-                gpytorch.settings.max_cholesky_size(self.max_cholesky_size),
-            ):
-                X_cand_torch = torch.tensor(X_cand).to(device=device, dtype=dtype)
-                y_cand = gp.likelihood(gp(X_cand_torch)).sample(torch.Size([self.batch_size])).t().cpu().detach().numpy()
-
-            # De-standardize the sampled values
-            y_cand = mu + sigma * y_cand
-            # Remove the torch variables
-            del X_cand_torch, gp
-        elif self._surrogate_type == "none":
-            y_cand = None  # np.random.normal(size=(X_cand.shape[0], self.batch_size))
-
-        elif self._surrogate_type.startswith("enn-"):
-            from model.enn import EpistemicNearestNeighbors
-
-            k = int(self._surrogate_type.split("-")[-1])
-            enn = EpistemicNearestNeighbors(k=k)
-            enn.add(X, fX[:, None])
-            y_cand = enn.posterior(X_cand)
+        y_cand = _compute_y_cand(
+            self,
+            X=X,
+            fX=fX,
+            X_cand=X_cand,
+            mu=mu,
+            sigma=sigma,
+            gp=gp if self._surrogate_type == "original" else None,
+            device=device,
+            dtype=dtype,
+        )
 
         del X_torch, y_torch
 
-        return X_cand, y_cand, hypers
+        return _CandidatesResult(X_cand=X_cand, y_cand=y_cand, hypers=hypers)
 
     def _select_candidates(self, X_cand, y_cand):
         """Select candidates."""

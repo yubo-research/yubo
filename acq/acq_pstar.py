@@ -1,4 +1,5 @@
 import time
+from typing import NamedTuple
 
 import numpy as np
 import torch
@@ -9,7 +10,15 @@ from botorch.utils import t_batch_mode_transform
 from torch import Tensor
 from torch.quasirandom import SobolEngine
 
+from acq.acq_util import calc_p_max_from_Y
 from sampling.cem_scale import CEMScale
+
+
+class _DrawFromPStarResult(NamedTuple):
+    X_samples: torch.Tensor
+    prob_X_samples: torch.Tensor
+    mu: np.ndarray
+    unit_cov: np.ndarray
 
 
 class AcqPStar(MCAcquisitionFunction):
@@ -110,11 +119,7 @@ class AcqPStar(MCAcquisitionFunction):
         return unit_cov
 
     def _calc_p_max_from_Y(self, Y):
-        is_best = torch.argmax(Y, dim=-1)
-        idcs, counts = torch.unique(is_best, return_counts=True)
-        p_max = torch.zeros(Y.shape[-1])
-        p_max[idcs] = counts / Y.shape[0]
-        return p_max
+        return calc_p_max_from_Y(Y)
 
     def _draw_from_pstar(self, num_X_samples):
         mu = self._ts_max().cpu().detach().numpy()
@@ -141,7 +146,12 @@ class AcqPStar(MCAcquisitionFunction):
         X_samples = torch.tensor(x)
         prob_X_samples = torch.tensor(p)
         self.fit_time = time.time() - t0
-        return X_samples, prob_X_samples, mu, unit_cov
+        return _DrawFromPStarResult(
+            X_samples=X_samples,
+            prob_X_samples=prob_X_samples,
+            mu=mu,
+            unit_cov=unit_cov,
+        )
 
     def _soft_entropy(self, model):
         assert np.abs(self._unit_cov_0 - self._unit_cov(model)).max() < 1e-6, (

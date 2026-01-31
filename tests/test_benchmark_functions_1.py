@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 
 def test_sphere3():
@@ -280,19 +281,17 @@ def test_perm():
     assert np.isfinite(y)
 
 
-def test_schaffer2():
-    from problems.benchmark_functions_1 import Schaffer2
+@pytest.mark.parametrize(
+    "fn_cls",
+    [
+        "Schaffer2",
+        "Schaffer4",
+    ],
+)
+def test_schaffer(fn_cls):
+    from problems import benchmark_functions_1
 
-    f = Schaffer2()
-    x = np.zeros(2)
-    y = f(x)
-    assert np.isfinite(y)
-
-
-def test_schaffer4():
-    from problems.benchmark_functions_1 import Schaffer4
-
-    f = Schaffer4()
+    f = getattr(benchmark_functions_1, fn_cls)()
     x = np.zeros(2)
     y = f(x)
     assert np.isfinite(y)

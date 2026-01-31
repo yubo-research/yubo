@@ -50,9 +50,30 @@ class MLPPolicy(PolicyParamsMixin, nn.Module):
         super().__init__()
         self.problem_seed = env_conf.problem_seed
         self._env_conf = env_conf
+        num_state, num_action = self._init_flags(
+            env_conf,
+            use_layer_norm=use_layer_norm,
+            rnn_hidden_size=rnn_hidden_size,
+            use_prev_action=use_prev_action,
+            use_phase_features=use_phase_features,
+            num_phase_harmonics=num_phase_harmonics,
+        )
+        self._build_network(num_state, num_action, hidden_sizes)
+        self._init_params()
+        self._cache_flat_params_init()
 
-        num_state = env_conf.gym_conf.state_space.shape[0]
-        num_action = env_conf.action_space.shape[0]
+    def _init_flags(
+        self,
+        env_conf,
+        *,
+        use_layer_norm,
+        rnn_hidden_size,
+        use_prev_action,
+        use_phase_features,
+        num_phase_harmonics,
+    ):
+        num_state = int(env_conf.gym_conf.state_space.shape[0])
+        num_action = int(env_conf.action_space.shape[0])
         self._const_scale = 0.5
         self._use_layer_norm = bool(use_layer_norm)
         self._rnn_hidden_size = None if rnn_hidden_size is None else int(rnn_hidden_size)
@@ -63,15 +84,15 @@ class MLPPolicy(PolicyParamsMixin, nn.Module):
         self._num_phase_harmonics = int(num_phase_harmonics)
         assert self._num_phase_harmonics >= 1
         self.in_norm = nn.LayerNorm(num_state, elementwise_affine=True) if self._use_layer_norm else None
+        return num_state, num_action
 
-        layers = []
+    def _build_network(self, num_state, num_action, hidden_sizes):
         dims = [num_state] + list(hidden_sizes) + [num_action]
-
         if self._rnn_hidden_size is None:
+            layers = []
             for i in range(len(dims) - 2):
                 layers.append(nn.Linear(dims[i], dims[i + 1]))
                 layers.append(nn.SiLU())
-
             layers.append(nn.Linear(dims[-2], dims[-1]))
             layers.append(nn.Tanh())
             self.model = nn.Sequential(*layers)
@@ -80,26 +101,25 @@ class MLPPolicy(PolicyParamsMixin, nn.Module):
             self.head = None
             self._use_prev_action = False
             self._prev_action = None
-        else:
-            self.model = None
-            phase_dim = 2 * self._num_phase_harmonics if self._use_phase_features else 0
-            in_dim = num_state + phase_dim + (num_action if self._use_prev_action else 0)
+            return
 
-            feat_layers = []
-            d_in = in_dim
-            for hs in list(hidden_sizes):
-                feat_layers.append(nn.Linear(d_in, int(hs)))
-                feat_layers.append(nn.SiLU())
-                d_in = int(hs)
-            feat_layers.append(nn.Linear(d_in, self._rnn_hidden_size))
+        self.model = None
+        phase_dim = 2 * self._num_phase_harmonics if self._use_phase_features else 0
+        in_dim = num_state + phase_dim + (num_action if self._use_prev_action else 0)
+        feat_layers = []
+        d_in = in_dim
+        for hs in list(hidden_sizes):
+            feat_layers.append(nn.Linear(d_in, int(hs)))
             feat_layers.append(nn.SiLU())
-            self.embed = nn.Sequential(*feat_layers)
+            d_in = int(hs)
+        feat_layers.append(nn.Linear(d_in, self._rnn_hidden_size))
+        feat_layers.append(nn.SiLU())
+        self.embed = nn.Sequential(*feat_layers)
+        self.rnn = nn.GRUCell(self._rnn_hidden_size, self._rnn_hidden_size)
+        self.head = nn.Sequential(nn.Linear(self._rnn_hidden_size, num_action), nn.Tanh())
+        self.reset_state()
 
-            self.rnn = nn.GRUCell(self._rnn_hidden_size, self._rnn_hidden_size)
-            self.head = nn.Sequential(nn.Linear(self._rnn_hidden_size, num_action), nn.Tanh())
-            self.reset_state()
-
-        self._init_params()
+    def _cache_flat_params_init(self):
         with torch.inference_mode():
             self._flat_params_init = np.concatenate([p.data.detach().cpu().numpy().reshape(-1) for p in self.parameters()])
 

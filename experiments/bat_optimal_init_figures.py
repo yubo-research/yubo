@@ -4,6 +4,8 @@ import multiprocessing
 import os
 import random
 
+from experiments.batch_util import run_in_batches
+
 
 def worker(cmd):
     import os
@@ -87,15 +89,7 @@ def prep_cmds(exp_dir, funcs, dims, num_arms, num_replications, opts, noises):
 
 
 def run(cmds, max_parallel, b_dry_run=False):
-    import os
-
-    for k in ["MKL_NUM_THREADS", "NUMEXPR_NUM_THREADS", "OMP_NUM_THREADS"]:
-        os.environ[k] = "32"
-
-    while len(cmds) > 0:
-        todo = cmds[:max_parallel]
-        cmds = cmds[max_parallel:]
-        run_batch(todo, b_dry_run)
+    run_in_batches(cmds, max_parallel, run_batch, b_dry_run=b_dry_run, num_threads=32)
 
 
 if __name__ == "__main__":

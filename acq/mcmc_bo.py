@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import NamedTuple
 
 import numpy as np
 import torch
@@ -117,6 +118,110 @@ def langevin_update(x_cur, langevin_epsilon, model, dtype, device, lb=0, ub=1, h
     return x_next
 
 
+class _TRBounds(NamedTuple):
+    tr_lb: torch.Tensor
+    tr_ub: torch.Tensor
+    weights: torch.Tensor
+
+
+def _tr_bounds_and_weights(model_tr, x_center, length, dtype, device):
+    try:
+        weights = model_tr.covar_module.base_kernel.lengthscale.squeeze().detach()
+    except Exception:
+        weights = None
+    if weights is None:
+        weights = torch.ones_like(x_center, dtype=dtype, device=device)
+        tr_lb = torch.clamp(x_center - length / 2.0, 0.0, 1.0)
+        tr_ub = torch.clamp(x_center + length / 2.0, 0.0, 1.0)
+        return _TRBounds(tr_lb=tr_lb, tr_ub=tr_ub, weights=weights)
+
+    weights = weights / weights.mean()
+    weights = weights / torch.prod(weights.pow(1.0 / len(weights)))
+    tr_lb = torch.clamp(x_center - weights * length / 2.0, 0.0, 1.0)
+    tr_ub = torch.clamp(x_center + weights * length / 2.0, 0.0, 1.0)
+    return _TRBounds(tr_lb=tr_lb, tr_ub=tr_ub, weights=weights)
+
+
+def _tr_candidates(x_center, tr_lb, tr_ub, num_candidates, dim, dtype, device):
+    sobol = SobolEngine(dim, scramble=True)
+    pert = sobol.draw(num_candidates).to(dtype=dtype, device=device)
+    pert = tr_lb + (tr_ub - tr_lb) * pert
+
+    prob_perturb = min(20.0 / dim, 1.0)
+    mask = torch.rand(num_candidates, dim, dtype=dtype, device=device) <= prob_perturb
+    ind = torch.where(mask.sum(dim=1) == 0)[0]
+    rr = torch.zeros(size=(len(ind),), device=device, dtype=torch.int64) if dim == 1 else torch.randint(0, dim - 1, size=(len(ind),), device=device)
+    mask[ind, rr] = 1
+
+    X_cand = x_center.expand(num_candidates, dim).clone()
+    X_cand[mask] = pert[mask]
+    return X_cand
+
+
+def _tr_sample_y(model_tr, X_cand, Y_tr, batch_size):
+    posterior = model_tr.posterior(X_cand)
+    samples = posterior.rsample(sample_shape=torch.Size([batch_size]))
+    samples = samples.reshape([batch_size, X_cand.shape[0]])
+    Y_cand = samples.permute(1, 0)
+    return Y_tr.mean() + Y_cand * Y_tr.std()
+
+
+def _select_across_tr(X_cand, Y_cand, batch_size):
+    tr_num, num_candidates, dim = X_cand.shape
+    y_cand = Y_cand.detach().cpu().numpy()
+    X_next = torch.zeros(batch_size, dim).to(device=X_cand.device, dtype=X_cand.dtype)
+    tr_idx_next = np.zeros(batch_size)
+    for k in range(batch_size):
+        i, j = np.unravel_index(np.argmax(y_cand[:, :, k]), (tr_num, num_candidates))
+        X_next[k] = X_cand[i, j]
+        tr_idx_next[k] = i
+        assert np.isfinite(y_cand[i, j, k])
+        y_cand[i, j, :] = -np.inf
+    return X_next, tr_idx_next
+
+
+def _refine_mh(X_next, tr_idx_next, state, model, tr_lb, tr_ub, weights_by_tr, dim):
+    tr_num = len(state)
+    for tr_idx in range(tr_num):
+        noise_size = state[tr_idx].length * weights_by_tr[tr_idx] / 2
+        idx_in_tr = np.argwhere(tr_idx_next == tr_idx).reshape(-1)
+        if idx_in_tr.shape[0] == 0:
+            continue
+        with torch.no_grad():
+            mcmc_round = max(200, dim)
+            for _ in range(mcmc_round):
+                new_pop = mcmc_one_transit(
+                    X_next[idx_in_tr],
+                    0.001 * noise_size,
+                    model[tr_idx],
+                    tr_lb[tr_idx].detach().cpu().numpy(),
+                    tr_ub[tr_idx].detach().cpu().numpy(),
+                )
+                X_next[idx_in_tr] = new_pop
+    return X_next
+
+
+def _refine_langevin(X_next, tr_idx_next, state, model, tr_lb, tr_ub, dim):
+    tr_num = len(state)
+    for tr_idx in range(tr_num):
+        noise_size = state[tr_idx].length
+        idx_in_tr = np.argwhere(tr_idx_next == tr_idx).reshape(-1)
+        if idx_in_tr.shape[0] == 0:
+            continue
+        with torch.no_grad():
+            rounds = max(200, dim)
+            for _ in range(rounds):
+                new_pop = langevin_update(
+                    X_next[idx_in_tr],
+                    2e-3 * noise_size,
+                    model[tr_idx],
+                    tr_lb[tr_idx].detach().cpu().numpy(),
+                    tr_ub[tr_idx].detach().cpu().numpy(),
+                )
+                X_next[idx_in_tr] = new_pop
+    return X_next
+
+
 def generate_batch_multiple_tr(
     state,
     model,  # GP model
@@ -138,97 +243,29 @@ def generate_batch_multiple_tr(
     if num_candidates is None:
         num_candidates = min(5000, max(2000, 200 * X.shape[-1]))
     dim = X[0].shape[1]
-    # Scale the TR to be proportional to the lengthscales
     X_cand = torch.zeros(tr_num, num_candidates, dim).to(device=device, dtype=dtype)
     Y_cand = torch.zeros(tr_num, num_candidates, batch_size).to(device=device, dtype=dtype)
     tr_lb = torch.zeros(tr_num, dim).to(device=device, dtype=dtype)
     tr_ub = torch.zeros(tr_num, dim).to(device=device, dtype=dtype)
+    weights_by_tr = [None] * tr_num
     for tr_idx in range(tr_num):
         x_center = X[tr_idx][Y[tr_idx].argmax(), :].clone()
-        try:
-            weights = model[tr_idx].covar_module.base_kernel.lengthscale.squeeze().detach()
-            weights = weights / weights.mean()
-            weights = weights / torch.prod(weights.pow(1.0 / len(weights)))
-            tr_lb[tr_idx] = torch.clamp(x_center - weights * state[tr_idx].length / 2.0, 0.0, 1.0)
-            tr_ub[tr_idx] = torch.clamp(x_center + weights * state[tr_idx].length / 2.0, 0.0, 1.0)
-        except Exception:  # Linear kernel
-            weights = 1
-            tr_lb[tr_idx] = torch.clamp(x_center - state[tr_idx].length / 2.0, 0.0, 1.0)
-            tr_ub[tr_idx] = torch.clamp(x_center + state[tr_idx].length / 2.0, 0.0, 1.0)
+        tr_lb[tr_idx], tr_ub[tr_idx], weights_by_tr[tr_idx] = _tr_bounds_and_weights(
+            model[tr_idx],
+            x_center,
+            float(state[tr_idx].length),
+            dtype,
+            device,
+        )
+        X_cand[tr_idx] = _tr_candidates(x_center, tr_lb[tr_idx], tr_ub[tr_idx], num_candidates, dim, dtype, device)
+        Y_cand[tr_idx] = _tr_sample_y(model[tr_idx], X_cand[tr_idx], Y[tr_idx], batch_size)
 
-        sobol = SobolEngine(dim, scramble=True)
-        pert = sobol.draw(num_candidates).to(dtype=dtype, device=device)
-        pert = tr_lb[tr_idx] + (tr_ub[tr_idx] - tr_lb[tr_idx]) * pert
-
-        # Create a perturbation mask
-        prob_perturb = min(20.0 / dim, 1.0)
-        # prob_perturb = 1
-        mask = torch.rand(num_candidates, dim, dtype=dtype, device=device) <= prob_perturb
-        ind = torch.where(mask.sum(dim=1) == 0)[0]
-        if dim == 1:
-            rr = torch.zeros(size=(len(ind),), device=device, dtype=torch.int64)
-        else:
-            rr = torch.randint(0, dim - 1, size=(len(ind),), device=device)
-        mask[ind, rr] = 1
-
-        # Create candidate points from the perturbations and the mask
-        X_cand[tr_idx] = x_center.expand(num_candidates, dim).clone()
-        X_cand[tr_idx][mask] = pert[mask]
-
-        # Sample on the candidate points
-        posterior = model[tr_idx].posterior(X_cand[tr_idx])
-        samples = posterior.rsample(sample_shape=torch.Size([batch_size]))
-        samples = samples.reshape([batch_size, num_candidates])
-        Y_cand[tr_idx] = samples.permute(1, 0)
-        # recover from normalized value
-        Y_cand[tr_idx] = Y[tr_idx].mean() + Y_cand[tr_idx] * Y[tr_idx].std()
-
-    # Compare across trust region
-    y_cand = Y_cand.detach().cpu().numpy()
-    X_next = torch.zeros(batch_size, dim).to(device=device, dtype=dtype)
-    tr_idx_next = np.zeros(batch_size)
-    for k in range(batch_size):
-        i, j = np.unravel_index(np.argmax(y_cand[:, :, k]), (tr_num, num_candidates))
-        X_next[k] = X_cand[i, j]
-        tr_idx_next[k] = i
-        assert np.isfinite(y_cand[i, j, k])  # Just to make sure we never select nan or inf
-        # Make sure we never pick this point again
-        y_cand[i, j, :] = -np.inf
+    X_next, tr_idx_next = _select_across_tr(X_cand, Y_cand, batch_size)
 
     if mcmc_type == "MH":
-        for tr_idx in range(tr_num):
-            noise_size = state[tr_idx].length * weights / 2
-            idx_in_tr = np.argwhere(tr_idx_next == tr_idx).reshape(-1)
-            if idx_in_tr.shape[0] == 0:
-                continue
-            with torch.no_grad():  # We don't need gradients when using TS
-                mcmc_round = max(200, dim)
-                for i in range(mcmc_round):
-                    new_pop = mcmc_one_transit(
-                        X_next[idx_in_tr],
-                        0.001 * noise_size,
-                        model[tr_idx],
-                        tr_lb[tr_idx].detach().cpu().numpy(),
-                        tr_ub[tr_idx].detach().cpu().numpy(),
-                    )
-                    X_next[idx_in_tr] = new_pop
+        X_next = _refine_mh(X_next, tr_idx_next, state, model, tr_lb, tr_ub, weights_by_tr, dim)
     elif mcmc_type == "Langevin":
-        for tr_idx in range(tr_num):
-            noise_size = state[tr_idx].length
-            idx_in_tr = np.argwhere(tr_idx_next == tr_idx).reshape(-1)
-            if idx_in_tr.shape[0] == 0:
-                continue
-            with torch.no_grad():  # We don't need gradients when using TS
-                round = max(200, dim)
-                for i in range(round):
-                    new_pop = langevin_update(
-                        X_next[idx_in_tr],
-                        2e-3 * noise_size,
-                        model[tr_idx],
-                        tr_lb[tr_idx].detach().cpu().numpy(),
-                        tr_ub[tr_idx].detach().cpu().numpy(),
-                    )
-                    X_next[idx_in_tr] = new_pop
+        X_next = _refine_langevin(X_next, tr_idx_next, state, model, tr_lb, tr_ub, dim)
     else:
         assert mcmc_type is None, mcmc_type
 

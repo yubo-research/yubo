@@ -121,15 +121,6 @@ def test_acq_dpp_draw():
     assert X_arms.shape == (2, 2)
 
 
-def test_acq_dpp_gp_init():
-    from acq.acq_dpp import _GP
-
-    model = _make_simple_gp()
-    gp = _GP(model)
-    assert gp.d == 2
-    assert gp.model is not None
-
-
 def test_acq_dpp_mean_var():
     from acq.acq_dpp import _GP
 

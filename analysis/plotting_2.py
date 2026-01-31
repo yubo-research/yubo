@@ -1,5 +1,7 @@
 """Main plotting module for RL experiment visualization."""
 
+from typing import NamedTuple
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -38,6 +40,115 @@ _count_done_reps = None  # Not re-exported
 _print_dataset_summary = print_dataset_summary
 _mean_final_by_optimizer = mean_final_by_optimizer
 _median_final_by_optimizer = median_final_by_optimizer
+
+
+class _PlotRLExperimentResult(NamedTuple):
+    fig: object
+    ax: object
+    data_locator: DataLocator
+    traces: np.ndarray
+
+
+class _PlotRLExperimentVsTimeResult(NamedTuple):
+    fig: object
+    ax: object
+    data_locator: DataLocator
+    traces: np.ndarray
+    t: np.ndarray
+
+
+class _RLTracesWithCumDtProp(NamedTuple):
+    data_locator: DataLocator
+    traces: np.ndarray
+    cum_dt_prop: dict[str, float] | None
+
+
+class _PlotRLComparisonResult(NamedTuple):
+    fig: object
+    axs: object
+    seq: _RLTracesWithCumDtProp
+    batch: _RLTracesWithCumDtProp | None
+
+
+class _PlotRLFinalComparisonResult(NamedTuple):
+    fig: object
+    axs: object
+    seq: _RLTracesWithCumDtProp
+    batch: _RLTracesWithCumDtProp | None
+
+
+class _PlotResultsResult(NamedTuple):
+    curves: tuple[object, object]
+    final: tuple[object, object]
+    seq_data: object
+    batch_data: object
+
+
+def _load_rl_with_cum_dt_prop(results_path, exp_dir, opt_names, *, num_arms, num_rounds, num_reps, problem):
+    data_locator, traces = load_rl_traces(
+        results_path,
+        exp_dir,
+        opt_names,
+        num_arms=num_arms,
+        num_rounds=num_rounds,
+        num_reps=num_reps,
+        problem=problem,
+    )
+    cum_dt_prop = None
+    try:
+        data_locator_dt, traces_dt = load_rl_traces(
+            results_path,
+            exp_dir,
+            opt_names,
+            num_arms=num_arms,
+            num_rounds=num_rounds,
+            num_reps=num_reps,
+            problem=problem,
+            key="dt_prop",
+        )
+        cum_dt_prop = median_final_by_optimizer(data_locator_dt, cum_dt_prop_from_dt_prop_traces(traces_dt))
+    except ValueError:
+        cum_dt_prop = None
+    return _RLTracesWithCumDtProp(data_locator=data_locator, traces=traces, cum_dt_prop=cum_dt_prop)
+
+
+def _try_load_rl_with_cum_dt_prop(results_path, exp_dir, opt_names, *, num_arms, num_rounds, num_reps, problem):
+    try:
+        return _load_rl_with_cum_dt_prop(
+            results_path,
+            exp_dir,
+            opt_names,
+            num_arms=num_arms,
+            num_rounds=num_rounds,
+            num_reps=num_reps,
+            problem=problem,
+        )
+    except ValueError:
+        return None
+
+
+def _print_cum_dt_props(
+    cum_dt_prop_seq,
+    cum_dt_prop_batch,
+    *,
+    opt_names_seq,
+    opt_names_batch,
+    opt_names_all,
+    problem_seq,
+    problem_batch,
+):
+    print_cum_dt_prop(
+        cum_dt_prop_seq,
+        opt_names_all or opt_names_seq,
+        header=f"cumulative proposal times ({problem_seq})",
+    )
+    print_cum_dt_prop(
+        cum_dt_prop_batch,
+        opt_names_all or opt_names_batch,
+        header=f"cumulative proposal times ({problem_batch})",
+    )
+
+
 _normalized_ranks_0_1 = None  # Not re-exported
 _mean_normalized_rank_score_by_optimizer = mean_normalized_rank_score_by_optimizer
 _cum_dt_prop_from_dt_prop_traces = cum_dt_prop_from_dt_prop_traces
@@ -171,7 +282,7 @@ def plot_rl_experiment(
         opt_names_all=opt_names,
     )
     plt.tight_layout()
-    return fig, ax, data_locator, traces
+    return _PlotRLExperimentResult(fig=fig, ax=ax, data_locator=data_locator, traces=traces)
 
 
 def plot_rl_experiment_vs_time(
@@ -275,7 +386,7 @@ def plot_rl_experiment_vs_time(
     ax.legend(loc="lower right")
     ax.grid(True, alpha=0.3)
     plt.tight_layout()
-    return fig, ax, data_locator_ret, traces_ret, t
+    return _PlotRLExperimentVsTimeResult(fig=fig, ax=ax, data_locator=data_locator_ret, traces=traces_ret, t=t)
 
 
 def plot_rl_experiment_vs_time_auto(
@@ -354,7 +465,7 @@ def plot_rl_comparison(
     show_titles: bool = True,
     print_titles: bool = False,
 ):
-    data_locator_seq, traces_seq = load_rl_traces(
+    seq = _load_rl_with_cum_dt_prop(
         results_path,
         exp_dir,
         opt_names_seq,
@@ -363,62 +474,28 @@ def plot_rl_comparison(
         num_reps=num_reps,
         problem=problem_seq,
     )
-    cum_dt_prop_seq = None
-    try:
-        data_locator_seq_dt, traces_seq_dt = load_rl_traces(
-            results_path,
-            exp_dir,
-            opt_names_seq,
-            num_arms=num_arms_seq,
-            num_rounds=num_rounds_seq,
-            num_reps=num_reps,
-            problem=problem_seq,
-            key="dt_prop",
-        )
-        cum_dt_prop_seq = median_final_by_optimizer(data_locator_seq_dt, cum_dt_prop_from_dt_prop_traces(traces_seq_dt))
-    except ValueError:
-        pass
-
-    data_locator_batch, traces_batch = None, None
-    try:
-        data_locator_batch, traces_batch = load_rl_traces(
-            results_path,
-            exp_dir,
-            opt_names_batch,
-            num_arms=num_arms_batch,
-            num_rounds=num_rounds_batch,
-            num_reps=num_reps,
-            problem=problem_batch,
-        )
-    except ValueError:
-        pass
-
-    cum_dt_prop_batch = None
-    try:
-        if data_locator_batch is not None:
-            data_locator_batch_dt, traces_batch_dt = load_rl_traces(
-                results_path,
-                exp_dir,
-                opt_names_batch,
-                num_arms=num_arms_batch,
-                num_rounds=num_rounds_batch,
-                num_reps=num_reps,
-                problem=problem_batch,
-                key="dt_prop",
-            )
-            cum_dt_prop_batch = median_final_by_optimizer(data_locator_batch_dt, cum_dt_prop_from_dt_prop_traces(traces_batch_dt))
-    except ValueError:
-        pass
-
-    print_cum_dt_prop(
-        cum_dt_prop_seq,
-        opt_names_all or opt_names_seq,
-        header=f"cumulative proposal times ({problem_seq})",
+    batch = _try_load_rl_with_cum_dt_prop(
+        results_path,
+        exp_dir,
+        opt_names_batch,
+        num_arms=num_arms_batch,
+        num_rounds=num_rounds_batch,
+        num_reps=num_reps,
+        problem=problem_batch,
     )
-    print_cum_dt_prop(
+    data_locator_seq, traces_seq, cum_dt_prop_seq = seq.data_locator, seq.traces, seq.cum_dt_prop
+    data_locator_batch = None if batch is None else batch.data_locator
+    traces_batch = None if batch is None else batch.traces
+    cum_dt_prop_batch = None if batch is None else batch.cum_dt_prop
+
+    _print_cum_dt_props(
+        cum_dt_prop_seq,
         cum_dt_prop_batch,
-        opt_names_all or opt_names_batch,
-        header=f"cumulative proposal times ({problem_batch})",
+        opt_names_seq=opt_names_seq,
+        opt_names_batch=opt_names_batch,
+        opt_names_all=opt_names_all,
+        problem_seq=problem_seq,
+        problem_batch=problem_batch,
     )
 
     fig, axs = plt.subplots(1, 2, figsize=figsize, sharey=True)
@@ -477,7 +554,7 @@ def plot_rl_comparison(
     consolidate_bottom_legend(fig, axs, fontsize=16, ncol=6)
     fig.tight_layout(rect=(0.0, 0.04, 1.0, 1.0))
 
-    return fig, axs, (data_locator_seq, traces_seq), (data_locator_batch, traces_batch)
+    return _PlotRLComparisonResult(fig=fig, axs=axs, seq=seq, batch=batch)
 
 
 def plot_rl_final_comparison(
@@ -498,7 +575,7 @@ def plot_rl_final_comparison(
     show_titles: bool = True,
     print_titles: bool = False,
 ):
-    data_locator_seq, traces_seq = load_rl_traces(
+    seq = _load_rl_with_cum_dt_prop(
         results_path,
         exp_dir,
         opt_names_seq,
@@ -507,53 +584,19 @@ def plot_rl_final_comparison(
         num_reps=num_reps,
         problem=problem_seq,
     )
-
-    cum_dt_prop_seq = None
-    try:
-        data_locator_seq_dt, traces_seq_dt = load_rl_traces(
-            results_path,
-            exp_dir,
-            opt_names_seq,
-            num_arms=num_arms_seq,
-            num_rounds=num_rounds_seq,
-            num_reps=num_reps,
-            problem=problem_seq,
-            key="dt_prop",
-        )
-        cum_dt_prop_seq = median_final_by_optimizer(data_locator_seq_dt, cum_dt_prop_from_dt_prop_traces(traces_seq_dt))
-    except ValueError:
-        pass
-
-    data_locator_batch, traces_batch = None, None
-    try:
-        data_locator_batch, traces_batch = load_rl_traces(
-            results_path,
-            exp_dir,
-            opt_names_batch,
-            num_arms=num_arms_batch,
-            num_rounds=num_rounds_batch,
-            num_reps=num_reps,
-            problem=problem_batch,
-        )
-    except ValueError:
-        pass
-
-    cum_dt_prop_batch = None
-    try:
-        if data_locator_batch is not None:
-            data_locator_batch_dt, traces_batch_dt = load_rl_traces(
-                results_path,
-                exp_dir,
-                opt_names_batch,
-                num_arms=num_arms_batch,
-                num_rounds=num_rounds_batch,
-                num_reps=num_reps,
-                problem=problem_batch,
-                key="dt_prop",
-            )
-            cum_dt_prop_batch = median_final_by_optimizer(data_locator_batch_dt, cum_dt_prop_from_dt_prop_traces(traces_batch_dt))
-    except ValueError:
-        pass
+    batch = _try_load_rl_with_cum_dt_prop(
+        results_path,
+        exp_dir,
+        opt_names_batch,
+        num_arms=num_arms_batch,
+        num_rounds=num_rounds_batch,
+        num_reps=num_reps,
+        problem=problem_batch,
+    )
+    data_locator_seq, traces_seq, cum_dt_prop_seq = seq.data_locator, seq.traces, seq.cum_dt_prop
+    data_locator_batch = None if batch is None else batch.data_locator
+    traces_batch = None if batch is None else batch.traces
+    cum_dt_prop_batch = None if batch is None else batch.cum_dt_prop
 
     fig, axs = plt.subplots(1, 2, figsize=figsize)
 
@@ -600,7 +643,7 @@ def plot_rl_final_comparison(
         fig.suptitle(suptitle, fontsize=16, y=1.02)
     plt.tight_layout()
 
-    return fig, axs, (data_locator_seq, traces_seq), (data_locator_batch, traces_batch)
+    return _PlotRLFinalComparisonResult(fig=fig, axs=axs, seq=seq, batch=batch)
 
 
 _long_names = {
@@ -701,7 +744,12 @@ def plot_results(
         print_titles=True,
     )
 
-    return (fig_curves, axs_curves), (fig_final, axs_final), seq_data, batch_data
+    return _PlotResultsResult(
+        curves=(fig_curves, axs_curves),
+        final=(fig_final, axs_final),
+        seq_data=seq_data,
+        batch_data=batch_data,
+    )
 
 
 def compute_pareto_data(
@@ -716,8 +764,12 @@ def compute_pareto_data(
         exclude_opts = ["random"]
     opt_names_filtered = [o for o in opt_names if o not in exclude_opts]
 
-    all_returns, all_times = {}, {}
+    all_returns, all_times = _collect_returns_times(results_path, exp_dir, opt_names_filtered, mode)
+    return _normalize_returns_times(all_returns, all_times, opt_names_filtered, baseline_opt)
 
+
+def _collect_returns_times(results_path, exp_dir, opt_names_filtered, mode):
+    all_returns, all_times = {}, {}
     for problem, exp in exp_dir.items():
         problem_seq, problem_batch = problem, f"{problem}:fn"
         inferred = infer_params_from_configs(
@@ -728,14 +780,8 @@ def compute_pareto_data(
             opt_names=opt_names_filtered,
         )
         num_reps = inferred.get("num_reps")
-        num_rounds_seq, num_rounds_batch = (
-            inferred.get("num_rounds_seq", 100),
-            inferred.get("num_rounds_batch", 30),
-        )
-        num_arms_seq, num_arms_batch = (
-            inferred.get("num_arms_seq", 1),
-            inferred.get("num_arms_batch", 50),
-        )
+        num_rounds_seq, num_rounds_batch = inferred.get("num_rounds_seq", 100), inferred.get("num_rounds_batch", 30)
+        num_arms_seq, num_arms_batch = inferred.get("num_arms_seq", 1), inferred.get("num_arms_batch", 50)
 
         configs_to_load = []
         if mode in ("seq", "both"):
@@ -744,34 +790,64 @@ def compute_pareto_data(
             configs_to_load.append((f"{problem}_batch", problem_batch, num_arms_batch, num_rounds_batch))
 
         for label, prob, num_arms, num_rounds in configs_to_load:
-            try:
-                data_locator, traces = load_rl_traces(
-                    results_path,
-                    exp,
-                    opt_names_filtered,
-                    num_arms=num_arms,
-                    num_rounds=num_rounds,
-                    num_reps=num_reps,
-                    problem=prob,
-                )
-                all_returns[label] = mean_final_by_optimizer(data_locator, traces)
-            except ValueError:
-                pass
-            try:
-                data_locator_dt, traces_dt = load_rl_traces(
-                    results_path,
-                    exp,
-                    opt_names_filtered,
-                    num_arms=num_arms,
-                    num_rounds=num_rounds,
-                    num_reps=num_reps,
-                    problem=prob,
-                    key="dt_prop",
-                )
-                all_times[label] = mean_final_by_optimizer(data_locator_dt, cum_dt_prop_from_dt_prop_traces(traces_dt))
-            except ValueError:
-                pass
+            _try_update_returns_times(
+                results_path,
+                exp,
+                opt_names_filtered,
+                num_arms=num_arms,
+                num_rounds=num_rounds,
+                num_reps=num_reps,
+                problem=prob,
+                label=label,
+                all_returns=all_returns,
+                all_times=all_times,
+            )
+    return all_returns, all_times
 
+
+def _try_update_returns_times(
+    results_path,
+    exp,
+    opt_names_filtered,
+    *,
+    num_arms,
+    num_rounds,
+    num_reps,
+    problem,
+    label,
+    all_returns,
+    all_times,
+):
+    try:
+        data_locator, traces = load_rl_traces(
+            results_path,
+            exp,
+            opt_names_filtered,
+            num_arms=num_arms,
+            num_rounds=num_rounds,
+            num_reps=num_reps,
+            problem=problem,
+        )
+        all_returns[label] = mean_final_by_optimizer(data_locator, traces)
+    except ValueError:
+        pass
+    try:
+        data_locator_dt, traces_dt = load_rl_traces(
+            results_path,
+            exp,
+            opt_names_filtered,
+            num_arms=num_arms,
+            num_rounds=num_rounds,
+            num_reps=num_reps,
+            problem=problem,
+            key="dt_prop",
+        )
+        all_times[label] = mean_final_by_optimizer(data_locator_dt, cum_dt_prop_from_dt_prop_traces(traces_dt))
+    except ValueError:
+        pass
+
+
+def _normalize_returns_times(all_returns, all_times, opt_names_filtered, baseline_opt):
     problems = sorted(set(all_returns.keys()) & set(all_times.keys()))
     opts_in_data = set()
     for p in problems:
@@ -784,9 +860,9 @@ def compute_pareto_data(
 
     for i_p, p in enumerate(problems):
         for i_o, o in enumerate(opts_in_data):
-            if p in all_returns and o in all_returns[p]:
+            if o in all_returns.get(p, {}):
                 r_matrix[i_p, i_o] = all_returns[p][o]
-            if p in all_times and o in all_times[p]:
+            if o in all_times.get(p, {}):
                 t_matrix[i_p, i_o] = all_times[p][o]
 
     if baseline_opt not in opts_in_data:

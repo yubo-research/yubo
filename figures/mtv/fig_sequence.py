@@ -4,6 +4,7 @@ if __name__ == "__main__":
     import sys
 
     from figures.fig_util import expository_problem, mean_func_contours, show
+
     from optimizer.optimizer import Optimizer
 
     out_dir = sys.argv[1]

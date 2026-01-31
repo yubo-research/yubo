@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, NamedTuple
 
 import gpytorch
 import torch
@@ -24,6 +24,18 @@ from torch.nn import Module
 import common.all_bounds as all_bounds
 from acq.sal_transform import SALTransform
 from acq.y_transform import YTransform
+
+
+class _ParsedSpec(NamedTuple):
+    model_type: str
+    input_warping: bool
+    output_warping: str
+
+
+class _FitGpResult(NamedTuple):
+    gp: object
+    Y: Tensor
+    X: Tensor
 
 
 class _EmptyTransform(Module):
@@ -102,7 +114,7 @@ def _parse_spec(model_spec, num_obs):
     if output_warping is None:
         output_warping = "none"
     # print(f"MODEL_SPEC: model_type = {model_type} input_warping = {input_warping} output_warping = {output_warping}")
-    return model_type, input_warping, output_warping
+    return _ParsedSpec(model_type=model_type, input_warping=bool(input_warping), output_warping=str(output_warping))
 
 
 def get_closure(mll, outcome_warp):
@@ -174,18 +186,19 @@ def _fit_gp_model(gp, mll, model_type, outcome_warp, X):
         num_tries = 2 if model_type == "sparse" else 1
         for i_try in range(num_tries):
             mll.to(X)
-            try:
-                kwargs = {"closure": get_closure(mll, outcome_warp)} if outcome_warp else {}
-                if model_type == "sparse":
-                    opt, opt_kw = (
-                        (
-                            fit_gpytorch_mll_scipy,
-                            {"options": {"maxiter": 4000, "maxfun": 4000}},
-                        )
-                        if i_try == 0
-                        else (fit_gpytorch_mll_torch, {"step_limit": 4000})
+            kwargs = {"closure": get_closure(mll, outcome_warp)} if outcome_warp else {}
+            if model_type == "sparse":
+                opt, opt_kw = (
+                    (
+                        fit_gpytorch_mll_scipy,
+                        {"options": {"maxiter": 4000, "maxfun": 4000}},
                     )
-                    kwargs.update({"optimizer": opt, "optimizer_kwargs": opt_kw})
+                    if i_try == 0
+                    else (fit_gpytorch_mll_torch, {"step_limit": 4000})
+                )
+                kwargs = dict(kwargs)
+                kwargs.update({"optimizer": opt, "optimizer_kwargs": opt_kw})
+            try:
                 fit_gpytorch_mll(mll, **kwargs)
             except (RuntimeError, ModelFittingError) as e:
                 m = e
@@ -238,7 +251,7 @@ def extract_X_Y(data, dtype, device):
 def fit_gp(data, dtype=torch.float64, device="cpu"):
     Y, X = extract_X_Y(data, dtype, device)
     gp = fit_gp_XY(X, Y)
-    return gp, Y, X
+    return _FitGpResult(gp=gp, Y=Y, X=X)
 
 
 def mk_yx(datum):

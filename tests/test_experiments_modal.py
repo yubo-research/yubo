@@ -1,10 +1,15 @@
 from unittest.mock import MagicMock, patch
 
 
+def _get(mod_name, attr):
+    import importlib
+
+    return getattr(importlib.import_module(mod_name), attr)
+
+
 class TestModalBatches:
     def test_job_key(self):
-        from experiments.modal_batches import _job_key
-
+        _job_key = _get("experiments.modal_batches", "_job_key")
         key = _job_key("test_batch", 42)
         assert key == "test_batch-42"
 
@@ -12,8 +17,7 @@ class TestModalBatches:
     @patch("experiments.modal_batches.mk_replicates")
     @patch("experiments.modal_batches.data_is_done")
     def test_gen_jobs(self, mock_data_is_done, mock_mk_replicates, mock_prep_d_argss):
-        from experiments.modal_batches import _gen_jobs
-
+        _gen_jobs = _get("experiments.modal_batches", "_gen_jobs")
         mock_data_is_done.return_value = False
         mock_run_config = MagicMock()
         mock_run_config.trace_fn = "/path/to/trace"
@@ -32,8 +36,7 @@ class TestModalBatches:
     @patch("experiments.modal_batches.mk_replicates")
     @patch("experiments.modal_batches.data_is_done")
     def test_gen_jobs_skips_done(self, mock_data_is_done, mock_mk_replicates, mock_prep_d_argss):
-        from experiments.modal_batches import _gen_jobs
-
+        _gen_jobs = _get("experiments.modal_batches", "_gen_jobs")
         mock_data_is_done.return_value = True
         mock_run_config = MagicMock()
         mock_run_config.trace_fn = "/path/to/trace"
@@ -48,8 +51,7 @@ class TestModalBatches:
 
 class TestDistModal:
     def test_dist_modal_init(self):
-        from experiments.dist_modal import DistModal
-
+        DistModal = _get("experiments.dist_modal", "DistModal")
         dist = DistModal("test_app", "test_function", "/path/to/jobs")
         assert dist._app_name == "test_app"
         assert dist._function_name == "test_function"

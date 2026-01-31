@@ -1,8 +1,17 @@
+from typing import NamedTuple
+
 import numpy as np
 
 import common.all_bounds as all_bounds
 from problems.benchmark_functions import all_benchmarks
 from problems.turbo_ackley import TurboAckley
+
+
+class _StepResult(NamedTuple):
+    state: int
+    reward: object
+    done: bool
+    info: object | None
 
 
 def _all_pure_functions():
@@ -71,7 +80,7 @@ class PureFunctionEnv:
         x[x > 0] /= 1 - self._x_0[x > 0]
 
         assert np.all(x >= -1) and np.all(x <= 1), ("x", x)
-        return 1, -self._function(x), True, None
+        return _StepResult(1, -self._function(x), True, None)
 
     def reset(self, seed):
         if hasattr(self._function, "reset"):

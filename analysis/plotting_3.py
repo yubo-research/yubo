@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import NamedTuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -11,6 +12,13 @@ from analysis.plot_util import (
     normalize_results_and_exp_dir,
     uniq_int,
 )
+
+
+class _LoadedTraces(NamedTuple):
+    dl_r: DataLocator
+    tr_r: np.ndarray
+    tr_dt_prop: np.ndarray
+    tr_dt_total: np.ndarray
 
 
 def _infer_params_from_configs(
@@ -104,6 +112,140 @@ def _mean_final_cum_dt_total_by_opt(traces_dt_total: np.ndarray, optimizers: lis
     return out
 
 
+def _load_r_and_dt(
+    results_path: str,
+    exp_dir: str,
+    *,
+    opt_names: list[str],
+    num_arms: int,
+    num_rounds: int,
+    num_reps: int,
+    problem: str,
+):
+    dl_r, tr_r = _load_traces(
+        results_path,
+        exp_dir,
+        opt_names=opt_names,
+        num_arms=num_arms,
+        num_rounds=num_rounds,
+        num_reps=num_reps,
+        problem=problem,
+        key="rreturn",
+    )
+    _, tr_dt_prop = _load_traces(
+        results_path,
+        exp_dir,
+        opt_names=opt_names,
+        num_arms=num_arms,
+        num_rounds=num_rounds,
+        num_reps=num_reps,
+        problem=problem,
+        key="dt_prop",
+    )
+    _, tr_dt_eval = _load_traces(
+        results_path,
+        exp_dir,
+        opt_names=opt_names,
+        num_arms=num_arms,
+        num_rounds=num_rounds,
+        num_reps=num_reps,
+        problem=problem,
+        key="dt_eval",
+    )
+    tr_dt_total = _sum_traces(tr_dt_prop, tr_dt_eval)
+    return _LoadedTraces(dl_r=dl_r, tr_r=tr_r, tr_dt_prop=tr_dt_prop, tr_dt_total=tr_dt_total)
+
+
+def _plot_vs_fe(ax, dl, tr_r, *, num_arms: int, title: str, t_final: dict[str, float]):
+    opts = dl.optimizers()
+    z = tr_r.squeeze(0)
+    for i_opt, opt_name in enumerate(opts):
+        y = _best_so_far(z[i_opt, ...])
+        x = num_arms * (1 + np.arange(y.shape[1]))
+        label = opt_name
+        if opt_name in t_final:
+            label = f"{opt_name} ({t_final[opt_name]:.1f}s)"
+        ap.filled_err(
+            x=x,
+            ys=y,
+            ax=ax,
+            se=True,
+            alpha=0.25,
+            color=ap.colors[i_opt],
+            color_line=ap.colors[i_opt],
+            label=label,
+            marker=ap.markers[i_opt],
+            max_markers=10,
+            markersize=5,
+        )
+    ax.set_title(title, fontsize=12)
+    ax.set_xlabel("# Function Evaluations", fontsize=11)
+    ax.set_ylabel("Return (best so far)", fontsize=11)
+    ax.grid(True, alpha=0.3)
+    ax.legend(loc="lower right", fontsize=9)
+
+
+def _plot_vs_time(
+    ax,
+    dl_r,
+    tr_r,
+    tr_dt,
+    *,
+    title: str,
+    t_final: dict[str, float],
+    xlim_opt_name: str = "turbo-enn-fit-ucb",
+):
+    opts = dl_r.optimizers()
+    z_r = tr_r.squeeze(0)
+    z_dt = tr_dt.squeeze(0)
+
+    x_max = None
+    if xlim_opt_name in opts:
+        i_ref = opts.index(xlim_opt_name)
+        dt_ref = z_dt[i_ref, ...]
+        x_ref_rep = np.ma.cumsum(dt_ref, axis=-1) if np.ma.isMaskedArray(dt_ref) else np.cumsum(dt_ref, axis=-1)
+        x_ref = np.ma.mean(x_ref_rep, axis=0) if np.ma.isMaskedArray(x_ref_rep) else x_ref_rep.mean(axis=0)
+        x_max = float(x_ref[-1])
+
+    for i_opt, opt_name in enumerate(opts):
+        y = _best_so_far(z_r[i_opt, ...])
+        dt = z_dt[i_opt, ...]
+        x_rep = np.ma.cumsum(dt, axis=-1) if np.ma.isMaskedArray(dt) else np.cumsum(dt, axis=-1)
+        x = np.ma.mean(x_rep, axis=0) if np.ma.isMaskedArray(x_rep) else x_rep.mean(axis=0)
+
+        if x_max is not None:
+            keep = np.asarray(x) <= x_max
+            n_keep = int(np.sum(keep))
+            if n_keep <= 0:
+                continue
+            x = x[:n_keep]
+            y = y[:, :n_keep]
+
+        label = opt_name
+        if opt_name in t_final:
+            label = f"{opt_name} ({t_final[opt_name]:.1f}s)"
+        ap.filled_err(
+            x=x,
+            ys=y,
+            ax=ax,
+            se=True,
+            alpha=0.25,
+            color=ap.colors[i_opt],
+            color_line=ap.colors[i_opt],
+            label=label,
+            marker=ap.markers[i_opt],
+            max_markers=10,
+            markersize=5,
+        )
+    ax.set_title(title, fontsize=12)
+    ax.set_xlabel("cumsum(dt_prop + dt_eval) [s]", fontsize=11)
+    ax.set_ylabel("Return (best so far)", fontsize=11)
+    ax.grid(True, alpha=0.3)
+    ax.legend(loc="lower right", fontsize=9)
+    if x_max is not None:
+        ax.set_xlim(0, x_max)
+
+
 def plot_results_grid(
     results_path: str,
     exp_dir: str,
@@ -146,8 +288,7 @@ def plot_results_grid(
     if num_arms_batch is None:
         num_arms_batch = inferred.get("num_arms_batch", 50)
 
-    # Load return + (dt_prop + dt_eval) for sequential and batch
-    dl_seq_r, tr_seq_r = _load_traces(
+    dl_seq_r, tr_seq_r, tr_seq_dt_prop, tr_seq_dt_total = _load_r_and_dt(
         results_path,
         exp_dir,
         opt_names=opt_names,
@@ -155,31 +296,8 @@ def plot_results_grid(
         num_rounds=num_rounds_seq,
         num_reps=num_reps,
         problem=problem_seq,
-        key="rreturn",
     )
-    dl_seq_dt_prop, tr_seq_dt_prop = _load_traces(
-        results_path,
-        exp_dir,
-        opt_names=opt_names,
-        num_arms=1,
-        num_rounds=num_rounds_seq,
-        num_reps=num_reps,
-        problem=problem_seq,
-        key="dt_prop",
-    )
-    _, tr_seq_dt_eval = _load_traces(
-        results_path,
-        exp_dir,
-        opt_names=opt_names,
-        num_arms=1,
-        num_rounds=num_rounds_seq,
-        num_reps=num_reps,
-        problem=problem_seq,
-        key="dt_eval",
-    )
-    tr_seq_dt_total = _sum_traces(tr_seq_dt_prop, tr_seq_dt_eval)
-
-    dl_batch_r, tr_batch_r = _load_traces(
+    dl_batch_r, tr_batch_r, tr_batch_dt_prop, tr_batch_dt_total = _load_r_and_dt(
         results_path,
         exp_dir,
         opt_names=opt_names,
@@ -187,29 +305,7 @@ def plot_results_grid(
         num_rounds=num_rounds_batch,
         num_reps=num_reps,
         problem=problem_batch,
-        key="rreturn",
     )
-    dl_batch_dt_prop, tr_batch_dt_prop = _load_traces(
-        results_path,
-        exp_dir,
-        opt_names=opt_names,
-        num_arms=num_arms_batch,
-        num_rounds=num_rounds_batch,
-        num_reps=num_reps,
-        problem=problem_batch,
-        key="dt_prop",
-    )
-    _, tr_batch_dt_eval = _load_traces(
-        results_path,
-        exp_dir,
-        opt_names=opt_names,
-        num_arms=num_arms_batch,
-        num_rounds=num_rounds_batch,
-        num_reps=num_reps,
-        problem=problem_batch,
-        key="dt_eval",
-    )
-    tr_batch_dt_total = _sum_traces(tr_batch_dt_prop, tr_batch_dt_eval)
 
     # Legend timing (mean final sum(dt_prop) over reps)
     seq_opts = dl_seq_r.optimizers()
@@ -218,96 +314,6 @@ def plot_results_grid(
     batch_t_final = _mean_final_cum_dt_total_by_opt(tr_batch_dt_prop, batch_opts)
 
     fig, axs = plt.subplots(2, 2, figsize=figsize, sharey=False)
-
-    def _plot_vs_fe(ax, dl, tr_r, *, num_arms: int, title: str, t_final: dict[str, float]):
-        opts = dl.optimizers()
-        z = tr_r.squeeze(0)
-        for i_opt, opt_name in enumerate(opts):
-            y = _best_so_far(z[i_opt, ...])
-            x = num_arms * (1 + np.arange(y.shape[1]))
-            label = opt_name
-            if opt_name in t_final:
-                label = f"{opt_name} ({t_final[opt_name]:.1f}s)"
-            ap.filled_err(
-                x=x,
-                ys=y,
-                ax=ax,
-                se=True,
-                alpha=0.25,
-                color=ap.colors[i_opt],
-                color_line=ap.colors[i_opt],
-                label=label,
-                marker=ap.markers[i_opt],
-                max_markers=10,
-                markersize=5,
-            )
-        ax.set_title(title, fontsize=12)
-        ax.set_xlabel("# Function Evaluations", fontsize=11)
-        ax.set_ylabel("Return (best so far)", fontsize=11)
-        ax.grid(True, alpha=0.3)
-        ax.legend(loc="lower right", fontsize=9)
-
-    def _plot_vs_time(
-        ax,
-        dl_r,
-        tr_r,
-        tr_dt,
-        *,
-        title: str,
-        t_final: dict[str, float],
-        xlim_opt_name: str = "turbo-enn-fit-ucb",
-    ):
-        opts = dl_r.optimizers()
-        z_r = tr_r.squeeze(0)
-        z_dt = tr_dt.squeeze(0)
-
-        # Set the time horizon to the reference optimizer's time range, if present.
-        x_max = None
-        if xlim_opt_name in opts:
-            i_ref = opts.index(xlim_opt_name)
-            dt_ref = z_dt[i_ref, ...]
-            x_ref_rep = np.ma.cumsum(dt_ref, axis=-1) if np.ma.isMaskedArray(dt_ref) else np.cumsum(dt_ref, axis=-1)
-            x_ref = np.ma.mean(x_ref_rep, axis=0) if np.ma.isMaskedArray(x_ref_rep) else x_ref_rep.mean(axis=0)
-            x_max = float(x_ref[-1])
-
-        for i_opt, opt_name in enumerate(opts):
-            y = _best_so_far(z_r[i_opt, ...])
-            dt = z_dt[i_opt, ...]
-            x_rep = np.ma.cumsum(dt, axis=-1) if np.ma.isMaskedArray(dt) else np.cumsum(dt, axis=-1)
-            x = np.ma.mean(x_rep, axis=0) if np.ma.isMaskedArray(x_rep) else x_rep.mean(axis=0)
-
-            if x_max is not None:
-                # Truncate to the reference optimizer's time horizon.
-                keep = np.asarray(x) <= x_max
-                n_keep = int(np.sum(keep))
-                if n_keep <= 0:
-                    continue
-                x = x[:n_keep]
-                y = y[:, :n_keep]
-
-            label = opt_name
-            if opt_name in t_final:
-                label = f"{opt_name} ({t_final[opt_name]:.1f}s)"
-            ap.filled_err(
-                x=x,
-                ys=y,
-                ax=ax,
-                se=True,
-                alpha=0.25,
-                color=ap.colors[i_opt],
-                color_line=ap.colors[i_opt],
-                label=label,
-                marker=ap.markers[i_opt],
-                max_markers=10,
-                markersize=5,
-            )
-        ax.set_title(title, fontsize=12)
-        ax.set_xlabel("cumsum(dt_prop + dt_eval) [s]", fontsize=11)
-        ax.set_ylabel("Return (best so far)", fontsize=11)
-        ax.grid(True, alpha=0.3)
-        ax.legend(loc="lower right", fontsize=9)
-        if x_max is not None:
-            ax.set_xlim(0, x_max)
 
     _plot_vs_fe(
         axs[0, 0],

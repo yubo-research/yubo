@@ -1,6 +1,7 @@
 import sys
 import time
 from dataclasses import dataclass
+from typing import NamedTuple
 
 import numpy as np
 
@@ -12,6 +13,12 @@ from .trajectories import collect_trajectory
 
 _INTERACTIVE_DEBUG = False
 _SHOW_EVERY_N_ITER = 30
+
+
+class _IterateResult(NamedTuple):
+    data: list[Datum]
+    dt_prop: float
+    dt_eval: float
 
 
 def _pareto_mask_max(y: np.ndarray) -> np.ndarray:
@@ -119,7 +126,7 @@ class Optimizer:
         tf = time.time()
         dt_eval = tf - t_0
 
-        return data, dt_prop, dt_eval
+        return _IterateResult(data=data, dt_prop=float(dt_prop), dt_eval=float(dt_eval))
 
     def collect_trace(self, designer_name, max_iterations, max_proposal_seconds=np.inf, deadline=None):
         self.initialize(designer_name)

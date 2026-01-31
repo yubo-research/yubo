@@ -1,6 +1,39 @@
 import numpy as np
 
 
+def _mix64(z: int, *, mask: int, m1: int, m2: int) -> int:
+    z &= mask
+    z ^= z >> 30
+    z = (z * m1) & mask
+    z ^= z >> 27
+    z = (z * m2) & mask
+    z ^= z >> 31
+    return z
+
+
+def _choose_rows_and_signs(*, seed: int, j: int, d_local: int, s_local: int, inc: int, m1: int, m2: int, mask: int):
+    acc = inc ^ (int(seed) & mask) ^ ((int(j) & mask) << 1)
+    chosen = []
+    chosen_rows = []
+    while len(chosen_rows) < s_local:
+        acc = (acc + inc) & mask
+        z = _mix64(acc, mask=mask, m1=m1, m2=m2)
+        row = int(z % d_local)
+        duplicate = False
+        for rr in chosen_rows:
+            if rr == row:
+                duplicate = True
+                break
+        if duplicate:
+            continue
+        chosen_rows.append(row)
+        acc = (acc + inc) & mask
+        z2 = _mix64(acc, mask=mask, m1=m1, m2=m2)
+        sign = 1.0 if (z2 & 1) == 1 else -1.0
+        chosen.append((row, sign))
+    return chosen
+
+
 def block_sparse_jl_transform(x: np.ndarray, d: int, s: int = 4, seed: int = 42) -> np.ndarray:
     assert x.ndim == 1
     assert d > 0
@@ -22,33 +55,15 @@ def block_sparse_jl_transform(x: np.ndarray, d: int, s: int = 4, seed: int = 42)
         v = x[j]
         if v == 0.0:
             continue
-        acc = inc ^ (int(seed) & mask) ^ ((int(j) & mask) << 1)
-        chosen_rows = []
-        while len(chosen_rows) < s_local:
-            acc = (acc + inc) & mask
-            z = acc
-            z ^= z >> 30
-            z = (z * m1) & mask
-            z ^= z >> 27
-            z = (z * m2) & mask
-            z ^= z >> 31
-            row = int(z % d_local)
-            # linear membership check for tiny s
-            duplicate = False
-            for rr in chosen_rows:
-                if rr == row:
-                    duplicate = True
-                    break
-            if duplicate:
-                continue
-            chosen_rows.append(row)
-            acc = (acc + inc) & mask
-            z2 = acc
-            z2 ^= z2 >> 30
-            z2 = (z2 * m1) & mask
-            z2 ^= z2 >> 27
-            z2 = (z2 * m2) & mask
-            z2 ^= z2 >> 31
-            sign = 1.0 if (z2 & 1) == 1 else -1.0
+        for row, sign in _choose_rows_and_signs(
+            seed=seed,
+            j=j,
+            d_local=d_local,
+            s_local=s_local,
+            inc=inc,
+            m1=m1,
+            m2=m2,
+            mask=mask,
+        ):
             y[row] += sign * v * inv_sqrt_s
     return y

@@ -1,18 +1,19 @@
 import numpy as np
+import pytest
 
 
-def test_normalizer_new_init():
+@pytest.mark.parametrize(
+    "num_init,expected_num",
+    [
+        (1, 1),
+        (0, 0),
+    ],
+)
+def test_normalizer_new_init(num_init, expected_num):
     from problems.normalizer_new import NormalizerNew
 
-    norm = NormalizerNew(shape=(3,), num_init=1)
-    assert norm._num == 1
-
-
-def test_normalizer_new_init_zero():
-    from problems.normalizer_new import NormalizerNew
-
-    norm = NormalizerNew(shape=(3,), num_init=0)
-    assert norm._num == 0
+    norm = NormalizerNew(shape=(3,), num_init=num_init)
+    assert norm._num == expected_num
 
 
 def test_normalizer_new_update():

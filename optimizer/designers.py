@@ -200,6 +200,15 @@ def _h_sts_ar(name, ctx):
 
 
 def _parse_options(designer_name):
+    from typing import NamedTuple
+
+    class ParsedOptions(NamedTuple):
+        designer_name: str
+        num_keep: int | None
+        keep_style: str | None
+        model_spec: str | None
+        sample_around_best: bool
+
     if ":" in designer_name:
         designer_name, options_str = designer_name.split(":")
         options = options_str.split("-")
@@ -234,7 +243,13 @@ def _parse_options(designer_name):
         else:
             assert False, ("Unknown option", option)
 
-    return designer_name, num_keep, keep_style, model_spec, sample_around_best
+    return ParsedOptions(
+        designer_name=designer_name,
+        num_keep=num_keep,
+        keep_style=keep_style,
+        model_spec=model_spec,
+        sample_around_best=sample_around_best,
+    )
 
 
 class Designers:

@@ -2,7 +2,7 @@ import hashlib
 import os
 import time
 from dataclasses import asdict, dataclass
-from typing import Optional
+from typing import NamedTuple, Optional
 
 import torch
 
@@ -18,6 +18,12 @@ from common.seed_all import seed_all
 from experiments.experiment_util import ensure_parent
 from optimizer.optimizer import Optimizer
 from problems.env_conf import default_policy, get_env_conf
+
+
+class _SampleResult(NamedTuple):
+    collector_log: Collector
+    collector_trace: Collector
+    trace_records: list[TraceRecord]
 
 
 @dataclass
@@ -159,7 +165,7 @@ def sample_1(run_config: RunConfig):
             )
     collector_trace("DONE")
 
-    return collector_log, collector_trace, trace_records
+    return _SampleResult(collector_log=collector_log, collector_trace=collector_trace, trace_records=trace_records)
 
 
 def post_process_stdout(
