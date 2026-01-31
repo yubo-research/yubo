@@ -27,7 +27,7 @@ def speedup_x_label(cum_dt_prop_final_by_opt: dict[str, float] | None, problem: 
     if baseline_opt is None:
         return None
 
-    compare_opt = "turbo-enn-p" if problem.endswith(":fn") else "turbo-enn-fit-ucb"
+    compare_opt = "turbo-enn-p" if problem.endswith(":fn") else "turbo-enn-fit/acq_type=ucb"
     if compare_opt not in cum_dt_prop_final_by_opt:
         return None
 

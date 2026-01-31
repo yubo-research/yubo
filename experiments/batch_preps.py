@@ -169,7 +169,7 @@ def prep_ts_sweep(results_dir):
     exp_dir = "exp_ts_sweep"
 
     opts = ["pts", "ei", "ucb"]
-    opts += [f"ts_sweep-{n}" for n in [1, 3, 10, 30, 100, 300, 1000, 3000, 10000, 30000]]
+    opts += [f"ts_sweep/num_candidates={n}" for n in [1, 3, 10, 30, 100, 300, 1000, 3000, 10000, 30000]]
 
     return prep_d_args(
         results_dir,
