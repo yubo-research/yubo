@@ -36,5 +36,3 @@ pip install ennbo --no-deps
 ```bash
 pytest -sv tests
 ```
-
-
