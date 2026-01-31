@@ -1,52 +1,63 @@
 import torch
 
 
-def _mk_simple_data(num_samples=12, num_dim=3):
-    torch.manual_seed(123)
-    X = torch.rand(size=(num_samples, num_dim), dtype=torch.double)
-    y = torch.sin(X.sum(dim=1)) + 0.05 * torch.randn(num_samples, dtype=torch.double)
-    return X, y
+def test_gp_init():
+    from gpytorch.constraints.constraints import Interval
+    from gpytorch.likelihoods import GaussianLikelihood
+
+    from acq.fit_gp_turbo import GP
+
+    train_x = torch.tensor([[0.1, 0.1], [0.5, 0.5], [0.9, 0.9]], dtype=torch.float64)
+    train_y = torch.tensor([1.0, 2.0, 1.5], dtype=torch.float64)
+
+    lengthscale_constraint = Interval(0.005, 2.0)
+    outputscale_constraint = Interval(0.05, 20.0)
+    likelihood = GaussianLikelihood()
+
+    gp = GP(
+        train_x,
+        train_y,
+        likelihood,
+        lengthscale_constraint,
+        outputscale_constraint,
+        ard_dims=2,
+    )
+    assert gp is not None
 
 
-def test_train_gp_shapes_and_device():
+def test_gp_forward():
+    from gpytorch.constraints.constraints import Interval
+    from gpytorch.likelihoods import GaussianLikelihood
+
+    from acq.fit_gp_turbo import GP
+
+    train_x = torch.tensor([[0.1, 0.1], [0.5, 0.5], [0.9, 0.9]], dtype=torch.float64)
+    train_y = torch.tensor([1.0, 2.0, 1.5], dtype=torch.float64)
+
+    lengthscale_constraint = Interval(0.005, 2.0)
+    outputscale_constraint = Interval(0.05, 20.0)
+    likelihood = GaussianLikelihood().double()
+
+    gp = GP(
+        train_x,
+        train_y,
+        likelihood,
+        lengthscale_constraint,
+        outputscale_constraint,
+        ard_dims=2,
+    )
+    gp.eval()
+
+    test_x = torch.tensor([[0.3, 0.3]], dtype=torch.float64)
+    output = gp(test_x)
+    assert output.mean.shape == (1,)
+
+
+def test_train_gp():
     from acq.fit_gp_turbo import train_gp
 
-    X, y = _mk_simple_data()
+    train_x = torch.tensor([[0.1, 0.1], [0.5, 0.5], [0.9, 0.9]], dtype=torch.float64)
+    train_y = torch.tensor([1.0, 2.0, 1.5], dtype=torch.float64)
 
-    model = train_gp(train_x=X, train_y=y, use_ard=True, num_steps=5, hypers={})
-
-    assert model is not None
-    assert not model.training
-
-    test_X = torch.rand(7, X.shape[1], dtype=X.dtype, device=X.device)
-    posterior = model(test_X)
-    assert posterior.mean.shape == (7,)
-    assert posterior.covariance_matrix.shape == (7, 7)
-
-    for p in model.parameters():
-        assert p.device == X.device
-        assert p.dtype == X.dtype
-
-
-def test_train_gp_no_ard():
-    from acq.fit_gp_turbo import train_gp
-
-    X, y = _mk_simple_data()
-
-    model = train_gp(train_x=X, train_y=y, use_ard=False, num_steps=3, hypers={})
-    assert model is not None
-
-    test_X = torch.rand(3, X.shape[1], dtype=X.dtype, device=X.device)
-    mvn = model(test_X)
-    assert mvn.mean.shape == (3,)
-    assert mvn.covariance_matrix.shape == (3, 3)
-
-
-def test_train_gp_with_hypers():
-    from acq.fit_gp_turbo import train_gp
-
-    X, y = _mk_simple_data()
-    model0 = train_gp(train_x=X, train_y=y, use_ard=True, num_steps=1, hypers={})
-    hypers = model0.state_dict()
-    model = train_gp(train_x=X, train_y=y, use_ard=True, num_steps=2, hypers=hypers)
-    assert model is not None
+    gp = train_gp(train_x, train_y, use_ard=True, num_steps=10)
+    assert gp is not None

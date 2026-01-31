@@ -81,8 +81,8 @@ def unrebound(X_r, rebounds):
 def calc_p_max_from_Y(Y):
     is_best = torch.argmax(Y, dim=-1)
     idcs, counts = torch.unique(is_best, return_counts=True)
-    p_max = torch.zeros(Y.shape[-1])
-    p_max[idcs] = counts / Y.shape[0]
+    p_max = torch.zeros(Y.shape[-1], device=Y.device)
+    p_max[idcs] = counts / float(Y.shape[0])
     return p_max
 
 
@@ -101,9 +101,7 @@ def find_max(model, bounds=None):
     num_dim = X.shape[1]
 
     if bounds is None:
-        bounds = torch.tensor(
-            [[0.0] * num_dim, [1.0] * num_dim], device=X.device, dtype=X.dtype
-        )
+        bounds = torch.tensor([[0.0] * num_dim, [1.0] * num_dim], device=X.device, dtype=X.dtype)
 
     num_ic = 30
     batch_initial_conditions = torch.rand(size=torch.Size((num_ic, 1, num_dim))).to(X)

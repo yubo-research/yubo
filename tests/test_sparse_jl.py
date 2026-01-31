@@ -17,12 +17,8 @@ def test_sparse_jl_preserves_neighbors_and_correlations():
 
     theta_base = np.linspace(0.1, 1.0, D)
     rng0 = np.random.default_rng(2024)
-    theta0 = np.stack(
-        [theta_base + rng0.normal(scale=0.01, size=D) for _ in range(N)], axis=0
-    )
-    y0 = np.stack(
-        [block_sparse_jl_transform(theta0[i], d, s=s) for i in range(N)], axis=0
-    )
+    theta0 = np.stack([theta_base + rng0.normal(scale=0.01, size=D) for _ in range(N)], axis=0)
+    y0 = np.stack([block_sparse_jl_transform(theta0[i], d, s=s) for i in range(N)], axis=0)
     rng = np.random.default_rng(123)
     dists_orig = np.zeros((C, N))
     dists_embed = np.zeros((C, N))
@@ -114,9 +110,7 @@ def test_sparse_jl_timing_prints():
         y = block_sparse_jl_transform(x, d=d, s=s, seed=0)
         t1 = time.perf_counter()
         elapsed_ms = (t1 - t0) * 1000.0
-        print(
-            f"D={D}, d={d}, s={s}, time_ms={elapsed_ms:.2f}, y_norm={float(np.linalg.norm(y)):.4f}"
-        )
+        print(f"D={D}, d={d}, s={s}, time_ms={elapsed_ms:.2f}, y_norm={float(np.linalg.norm(y)):.4f}")
 
 
 def test_sparse_jl_timing_sparse_x_prints():
@@ -134,6 +128,4 @@ def test_sparse_jl_timing_sparse_x_prints():
     y = block_sparse_jl_transform(x, d=d, s=s, seed=1)
     t1 = time.perf_counter()
     elapsed_ms = (t1 - t0) * 1000.0
-    print(
-        f"D={D}, d={d}, s={s}, k={k}, time_ms={elapsed_ms:.2f}, y_norm={float(np.linalg.norm(y)):.4f}"
-    )
+    print(f"D={D}, d={d}, s={s}, k={k}, time_ms={elapsed_ms:.2f}, y_norm={float(np.linalg.norm(y)):.4f}")

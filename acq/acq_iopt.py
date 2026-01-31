@@ -10,9 +10,7 @@ from torch.quasirandom import SobolEngine
 
 
 class AcqIOpt(MCAcquisitionFunction):
-    def __init__(
-        self, model: Model, num_X_samples: int = 256, g_opt: bool = False, **kwargs
-    ) -> None:
+    def __init__(self, model: Model, num_X_samples: int = 256, g_opt: bool = False, **kwargs) -> None:
         super().__init__(model=model, **kwargs)
 
         self.g_opt = g_opt
@@ -40,9 +38,7 @@ class AcqIOpt(MCAcquisitionFunction):
     def _get_num_sr(self, X):
         if self._num_sr is None:
             q = X.shape[-2]
-            self._num_sr = np.random.choice(
-                [0, 1], p=[self.p_iopt, 1 - self.p_iopt], size=(q,)
-            ).sum()
+            self._num_sr = np.random.choice([0, 1], p=[self.p_iopt, 1 - self.p_iopt], size=(q,)).sum()
             # print ("NUM_SR:", X.shape, self._num_sr)
         return self._num_sr
 
@@ -73,16 +69,12 @@ class AcqIOpt(MCAcquisitionFunction):
             Y = self.model.posterior(X_iopt).mean  # b x q x 1
             model_f = self.model.condition_on_observations(X=X_iopt, Y=Y)
             # model_f.covar_module.base_kernel.lengthscale *= (max(1, num_obs) / (max(1, num_obs) + q_iopt)) ** (1/self.num_dim)
-            model_f.covar_module.base_kernel.lengthscale *= (
-                (1 + num_obs) / (1 + num_obs + q_iopt)
-            ) ** (1.0 / self.num_dim)
+            model_f.covar_module.base_kernel.lengthscale *= ((1 + num_obs) / (1 + num_obs + q_iopt)) ** (1.0 / self.num_dim)
             # var_f = model_f.posterior(self.X_samples, observation_noise=True).variance.squeeze()
             var_f = model_f.posterior(self.X_samples).variance.squeeze()
 
             if self.g_opt:
-                af_iopt = -var_f.amax(
-                    dim=-1
-                )  # nicer designs than mean, but much slower
+                af_iopt = -var_f.amax(dim=-1)  # nicer designs than mean, but much slower
             else:
                 af_iopt = -var_f.mean(dim=-1)
         else:

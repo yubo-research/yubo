@@ -29,11 +29,6 @@ def get_env_conf(tag, problem_seed=None, noise_level=None, noise_seed_0=None):
         ec.problem_seed = problem_seed
         ec.noise_seed_0 = noise_seed_0
         ec.frozen_noise = frozen_noise
-    elif tag in _pufferlib_env_confs:
-        ec = copy.deepcopy(_pufferlib_env_confs[tag])
-        ec.problem_seed = problem_seed
-        ec.noise_seed_0 = noise_seed_0
-        ec.frozen_noise = frozen_noise
     else:
         ec = EnvConf(
             tag,
@@ -86,13 +81,9 @@ class EnvConf:
 
     def _make(self, **kwargs):
         if self.env_name[:2] == "f:":
-            env = pure_functions.make(
-                self.env_name, problem_seed=self.problem_seed, distort=True
-            )
+            env = pure_functions.make(self.env_name, problem_seed=self.problem_seed, distort=True)
         elif self.env_name[:2] == "g:":
-            env = pure_functions.make(
-                self.env_name, problem_seed=self.problem_seed, distort=False
-            )
+            env = pure_functions.make(self.env_name, problem_seed=self.problem_seed, distort=False)
         elif self.gym_conf is not None:
             env = gym.make(self.env_name, **(kwargs | self.kwargs))
         else:
@@ -120,9 +111,7 @@ class EnvConf:
         env.close()
 
 
-def _gym_conf(
-    env_name, gym_conf=None, policy_class=None, kwargs=None, noise_seed_0=None
-):
+def _gym_conf(env_name, gym_conf=None, policy_class=None, kwargs=None, noise_seed_0=None):
     if gym_conf is None:
         gym_conf = GymConf()
 
@@ -143,11 +132,9 @@ _gym_env_confs = {
         "MountainCarContinuous-v0",
         gym_conf=GymConf(num_frames_skip=100),
     ),
-    "pend": EnvConf(
-        "Pendulum-v1", gym_conf=GymConf(max_steps=200, num_frames_skip=100)
-    ),
+    "pend": EnvConf("Pendulum-v1", gym_conf=GymConf(max_steps=200, num_frames_skip=100)),
     # 3580 - https://arxiv.org/pdf/1803.07055
-    # 6600 - 2024 [??ref]
+    # 6600 - 2024 [??ref] k
     "ant": _gym_conf("Ant-v5"),
     "mpend": _gym_conf("InvertedPendulum-v5"),
     "macro": _gym_conf("InvertedDoublePendulum-v5"),
@@ -189,9 +176,7 @@ _gym_env_confs = {
             max_steps=1600,
             num_frames_skip=100,
         ),
-        policy_class=MLPPolicyFactory(
-            (), rnn_hidden_size=4, use_layer_norm=True, use_prev_action=True
-        ),
+        policy_class=MLPPolicyFactory((), rnn_hidden_size=4, use_layer_norm=True, use_prev_action=True),
     ),
     "bw-heur": _gym_conf(
         "BipedalWalker-v3",
@@ -229,47 +214,5 @@ _gym_env_confs = {
         ),
         kwargs={"continuous": False},
         policy_class=TurboLunarPolicy,
-    ),
-}
-
-
-@dataclass
-class PufferLibEnvConf:
-    env_name: str
-    problem_seed: int = None
-    policy_class_name: str = None
-    noise_level: float = None
-    noise_seed_0: int = None
-    frozen_noise: bool = True
-    gym_conf: GymConf = None
-    action_space: Any = None
-    kwargs: dict = None
-    max_steps: int = 10000
-    _policy_class: Any = None
-
-    @property
-    def policy_class(self):
-        if self._policy_class is None and self.policy_class_name is not None:
-            if self.policy_class_name == "PufferLibBreakoutPolicy":
-                from problems.pufferlib_breakout_policy import PufferLibBreakoutPolicy
-
-                self._policy_class = PufferLibBreakoutPolicy
-        return self._policy_class
-
-    def make(self, **kwargs):
-        from problems.pufferlib_env import PufferLibBreakoutEnv
-
-        return PufferLibBreakoutEnv(num_envs=1)
-
-    def __post_init__(self):
-        if not self.kwargs:
-            self.kwargs = {}
-
-
-_pufferlib_env_confs = {
-    "pl:breakout": PufferLibEnvConf(
-        env_name="pl:breakout",
-        policy_class_name="PufferLibBreakoutPolicy",
-        max_steps=10000,
     ),
 }

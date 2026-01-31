@@ -1,4 +1,5 @@
 import time
+from typing import NamedTuple
 
 import modal
 import numpy as np
@@ -22,9 +23,14 @@ _app_name = "yubo-fig-pstar-scale"
 app = modal.App(name=_app_name)
 
 
-@app.function(
-    image=modal_image, concurrency_limit=100, timeout=3 * 60 * 60
-)  # , gpu="H100")
+class _PStarScalesResult(NamedTuple):
+    designer_name: str
+    num_dim: int
+    env_tag: str
+    data: list
+
+
+@app.function(image=modal_image, max_containers=100, timeout=3 * 60 * 60)  # , gpu="H100")
 def calc_pstar_scales(d_args):
     env_tag, designer_name, num_arms, num_samples, num_dim = (
         d_args["env_tag"],
@@ -79,7 +85,7 @@ def calc_pstar_scales(d_args):
 
         data.append((bias, scale, rmse, p_max, time.time() - t_0, trace[-1].rreturn))
 
-    return designer_name, num_dim, env_tag, data[1:]
+    return _PStarScalesResult(designer_name=designer_name, num_dim=num_dim, env_tag=env_tag, data=data[1:])
 
 
 def dist_pstar_scales_all_funcs(designer, num_dim):

@@ -1,2 +1,0 @@
-class TuRBORestartError(Exception):
-    pass

@@ -37,3 +37,21 @@ def latin_hypercube(n_pts, dim):
     pert = np.random.uniform(-1.0, 1.0, (n_pts, dim)) / float(2 * n_pts)
     X += pert
     return X
+
+
+def turbo_adjust_length(opt, fX_next):
+    if getattr(opt, "length_fixed", False):
+        return
+    if np.min(fX_next) < np.min(opt._fX) - 1e-3 * abs(float(np.min(opt._fX))):
+        opt.succcount += 1
+        opt.failcount = 0
+    else:
+        opt.succcount = 0
+        opt.failcount += 1
+
+    if opt.succcount == opt.succtol:
+        opt.length = min([2.0 * opt.length, opt.length_max])
+        opt.succcount = 0
+    elif opt.failcount == opt.failtol:
+        opt.length /= 2.0
+        opt.failcount = 0

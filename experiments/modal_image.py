@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import enn
 import modal
 
 
@@ -29,39 +30,39 @@ def mk_image():
         req = req.strip()
         if len(req) == 0:
             continue
-        print("REQ:", req)
         sreqs.append(req)
 
     sreqs_2 = [
         "git+https://github.com/feji3769/VecchiaBO.git#subdirectory=code",
         "sparse-ho @ https://github.com/QB3/sparse-ho/archive/master.zip",
+        "LassoBench @ git+https://github.com/ksehic/LassoBench.git",
     ]
 
     image = (
         modal.Image.debian_slim(python_version="3.11.9")
-        .apt_install("swig")
-        .apt_install("git")
+        .apt_install("swig", "git", "gcc", "g++")
         .pip_install(sreqs)
-        .pip_install(sreqs_2)
-        .env({"PYTHONPATH": "/root:/root/experiments"})
+        .pip_install(sreqs_2, extra_options="--no-deps")
     )
+
+    image = image.env({"PYTHONPATH": "/root"})
+    ennbo_path = Path(enn.__file__).parent
+    print("ADDING: ", ennbo_path)
+    image = image.add_local_dir(str(ennbo_path), remote_path="/root/enn")
 
     project_root = Path(__file__).resolve().parents[1]
     for d in [
         "acq",
         "analysis",
         "common",
-        "enn",
         "experiments",
         "model",
         "ops",
         "optimizer",
         "problems",
         "sampling",
-        "third_party",
         "torch_truncnorm",
         "turbo_m_ref",
-        "uhd",
     ]:
         image = image.add_local_dir(str(project_root / d), remote_path=f"/root/{d}")
 

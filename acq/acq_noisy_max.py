@@ -16,23 +16,22 @@ class AcqNoisyMax(AnalyticAcquisitionFunction):
             self.noisy_models = [self._get_noisy_model() for _ in range(q)]
         else:
             # num_X_samples = 1 + len(model.train_inputs)
-            self.noisy_models = [
-                self._get_noisy_model_2(num_X_samples) for _ in range(q)
-            ]
+            self.noisy_models = [self._get_noisy_model_2(num_X_samples) for _ in range(q)]
 
-    def _get_noisy_model(self):
-        X = self.model.train_inputs[0].detach()
-        if len(X) == 0:
-            return self.model
-        # rsample: one random sample, w/gradient
+    def _build_noisy_model(self, X):
+        """Build a noisy model from X by sampling Y from the posterior."""
         # sample: one random sample, w/o gradient; calls rsample()
-        # get_posterior_samples: repeated "frozen" random sampling, suitable for
-        #  optimization
         Y = self.model.posterior(X, observation_noise=True).sample().squeeze(0).detach()
         model_ts = SingleTaskGP(X, Y, self.model.likelihood)
         model_ts.initialize(**dict(self.model.named_parameters()))
         model_ts.eval()
         return model_ts
+
+    def _get_noisy_model(self):
+        X = self.model.train_inputs[0].detach()
+        if len(X) == 0:
+            return self.model
+        return self._build_noisy_model(X)
 
     def _get_noisy_model_2(self, num_X_samples):
         X_0 = self.model.train_inputs[0].detach()
@@ -41,17 +40,7 @@ class AcqNoisyMax(AnalyticAcquisitionFunction):
 
         sobol_engine = SobolEngine(num_dim, scramble=True)
         X = torch.cat((X_0, sobol_engine.draw(num_X_samples, dtype=dtype)), axis=0)
-
-        # rsample: one random sample, w/gradient
-        # sample: one random sample, w/o gradient; calls rsample()
-        # get_posterior_samples: repeated "frozen" random sampling, suitable for
-        #  optimization
-        Y = self.model.posterior(X, observation_noise=True).sample().squeeze(0).detach()
-        model_ts = SingleTaskGP(X, Y, self.model.likelihood)
-        model_ts.initialize(**dict(self.model.named_parameters()))
-        model_ts.eval()
-
-        return model_ts
+        return self._build_noisy_model(X)
 
     @t_batch_mode_transform()
     def forward(self, X: Tensor) -> Tensor:
@@ -64,8 +53,4 @@ class AcqNoisyMax(AnalyticAcquisitionFunction):
 
         self.to(device=X.device)
 
-        return (
-            self.noisy_models[0]
-            .posterior(X=X, posterior_transform=self.posterior_transform)
-            .mean.squeeze()
-        )
+        return self.noisy_models[0].posterior(X=X, posterior_transform=self.posterior_transform).mean.squeeze()

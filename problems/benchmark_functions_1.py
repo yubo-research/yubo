@@ -1,10 +1,48 @@
 import numpy as np
 
+# Re-export classes from split files
+from .benchmark_functions_1a import (  # noqa: F401
+    Griewank,
+    GrLee12,
+    Hartmann,
+    HolderTable,
+    Levy,
+    Michalewicz,
+    Powell,
+    Rastrigin,
+    Rosenbrock,
+    Shubert,
+)
+from .benchmark_functions_1b import (  # noqa: F401
+    Bohachevsky1,
+    Langerman,
+    Levy13,
+    RotatedHyperEllipsoid,
+    Shekel,
+    SixHumpCamel,
+    StybTang,
+    SumOfDifferentPowers,
+    ThreeHumpCamel,
+    Trid,
+)
+from .benchmark_functions_1c import (  # noqa: F401
+    Colville,
+    DeJong5,
+    GoldsteinPrice,
+    McCormick,
+    Perm,
+    PermDBeta,
+    PowerSum,
+    Schaffer2,
+    Schaffer4,
+    Schwefel,
+)
+
 # Requirements:
 # - x in [-1,1]**num_dim
 # - have *minima* [not maxima]
 # - support any number of dimensions as input
-from .benchmark_util import mk_2d, mk_4d
+from .benchmark_util import mk_2d
 
 
 class Sphere3:
@@ -22,7 +60,6 @@ class Sphere:
         return (x**2).mean()
 
 
-# 1 xi ∈ [-32.768, 32.768] ackley result [0,25]
 class Ackley:
     def __init__(self):
         self.a = 20.0
@@ -31,15 +68,9 @@ class Ackley:
 
     def __call__(self, x):
         x = 32.768 * x
-        return (
-            -self.a * np.exp(-self.b * np.sqrt((x**2).mean()))
-            - np.exp(np.cos(self.c * x).mean())
-            + self.a
-            + np.e
-        )
+        return -self.a * np.exp(-self.b * np.sqrt((x**2).mean())) - np.exp(np.cos(self.c * x).mean()) + self.a + np.e
 
 
-# 2  xi ∈ [-4.5, 4.5], for all i = 1, 2. Beale result [0, 4.5*10^5]
 class Beale:
     def __call__(self, x):
         x = mk_2d(x)
@@ -50,7 +81,6 @@ class Beale:
         return part1 + part2 + part3
 
 
-# 3 x1 ∈ [-5, 10], x2 ∈ [0, 15]. result [0,350] Branin
 class Branin:
     def __init__(self):
         self.a = 1
@@ -64,14 +94,9 @@ class Branin:
         x = mk_2d(x)
         x1 = 7.5 * x[0] + 2.5
         x2 = 7.5 * x[1] + 7.5
-        return (
-            self.a * (x2 - self.b * x1**2 + self.c * x1 - self.r) ** 2
-            + self.s * (1 - self.t) * np.cos(x1)
-            + self.s
-        )
+        return self.a * (x2 - self.b * x1**2 + self.c * x1 - self.r) ** 2 + self.s * (1 - self.t) * np.cos(x1) + self.s
 
 
-# 4 x1 ∈ [-15, -5], x2 ∈ [-3, 3]. result [0,250] Bukin
 class Bukin:
     def __call__(self, x):
         x = mk_2d(x)
@@ -80,26 +105,17 @@ class Bukin:
         return 100.0 * np.sqrt(np.abs(x1 - 0.01 * x0**2)) + 0.01 * np.abs(x0 + 10.0)
 
 
-# 5 xi ∈ [-10, 10], for all i = 1, 2. result[-2.5,-0.5] CrossInTray
 class CrossInTray:
     def __call__(self, x):
         x = mk_2d(x)
         x = x * 9 + 1
         x0 = x[0]
         x1 = x[1]
-        part1 = (
-            np.abs(
-                np.sin(x0)
-                * np.sin(x1)
-                * np.exp(np.abs(100.0 - np.sqrt(x0**2 + x1**2) / np.pi))
-            )
-            + 1.0
-        )
+        part1 = np.abs(np.sin(x0) * np.sin(x1) * np.exp(np.abs(100.0 - np.sqrt(x0**2 + x1**2) / np.pi))) + 1.0
         part2 = np.power(part1, 0.1)
         return -0.0001 * part2
 
 
-# 6  xi ∈ [-5.12, 5.12], for all i = 1, 2. result[-1,0] DropWave
 class DropWave:
     def __call__(self, x):
         x = mk_2d(x)
@@ -112,7 +128,6 @@ class DropWave:
         return -part1 / part2
 
 
-# 7 xi ∈ [-10, 10] result [0,9*10^4] DixonPrice
 class DixonPrice:
     def __call__(self, x):
         x = x * 10
@@ -126,7 +141,6 @@ class DixonPrice:
         return part1 + sum_terms
 
 
-# 8 EggHolder xi ∈ [-512, 512], for all i = 1, 2.result [-1000,1500]
 class EggHolder:
     def __call__(self, x):
         x = mk_2d(x)
@@ -136,567 +150,3 @@ class EggHolder:
         part1 = -(x2 + 47.0) * np.sin(np.sqrt(np.abs(x2 + x1 / 2.0 + 47.0)))
         part2 = -x1 * np.sin(np.sqrt(np.abs(x1 - (x2 + 47.0))))
         return part1 + part2
-
-
-# 9 Griewank xi ∈ [-600, 600] , for all i = 1, …, d. result [0,200]
-class Griewank:
-    def __call__(self, x):
-        x = x * 600
-        part1 = np.sum(x**2 / 4000.0)
-        num_dim = len(x)
-        part2 = np.prod(np.cos(x / np.sqrt((1 + np.arange(num_dim)))))
-        return part1 - part2 + 1
-
-
-# 10 GrLee12 one-dimention x ∈ [0.5, 2.5]. result [-1,6]
-class GrLee12:
-    def __call__(self, x):
-        x = mk_2d(x)
-        x = x[0] + 1.5
-        return np.sin(10.0 * np.pi * x) / (2.0 * x) + (x - 1.0) ** 4
-
-
-# 11 Hartmann xi ∈ (0, 1), for all i , dimention =3,4,6
-class Hartmann:
-    def __init__(self):
-        self.A = {
-            3: np.array((3, 10, 30, 0.1, 10, 35, 3, 10, 30, 0.1, 10, 35)).reshape(4, 3),
-            4: np.array(
-                (
-                    10,
-                    3,
-                    17,
-                    3.5,
-                    1.7,
-                    8,
-                    0.05,
-                    10,
-                    17,
-                    0.1,
-                    8,
-                    14,
-                    3,
-                    3.5,
-                    1.7,
-                    10,
-                    17,
-                    8,
-                    17,
-                    8,
-                    0.05,
-                    10,
-                    0.1,
-                    14,
-                )
-            ).reshape(4, 6),
-        }
-        self.P = {
-            3: 10 ** (-4)
-            * np.array(
-                (3689, 1170, 2673, 4699, 4387, 7470, 1091, 8732, 5547, 381, 5743, 8828)
-            ).reshape(4, 3),
-            4: 10 ** (-4)
-            * np.array(
-                (
-                    1312,
-                    1696,
-                    5569,
-                    124,
-                    8283,
-                    5886,
-                    2329,
-                    4135,
-                    8307,
-                    3736,
-                    1004,
-                    9991,
-                    2348,
-                    1451,
-                    3522,
-                    2883,
-                    3047,
-                    6650,
-                    4047,
-                    8828,
-                    8732,
-                    5743,
-                    1091,
-                    381,
-                )
-            ).reshape(4, 6),
-        }
-        self.ALPHA = [1.0, 1.2, 3.0, 3.2]
-
-    def __call__(self, x):
-        num_dim = len(x)
-        if num_dim not in self.A:
-            if len(x) == 1:
-                x = np.array([x[0]] * 3)
-            else:
-                x = mk_4d(x)
-            num_dim = len(x)
-
-        A = self.A[num_dim]
-        P = self.P[num_dim]
-
-        x = 0.5 * x + 0.5
-        outer = 0
-        for i in range(4):
-            inner = 0
-            for j in range(num_dim):
-                inner += A[i][j] * (x[j] - P[i][j]) ** 2
-            new = self.ALPHA[i] * np.exp(-inner)
-            outer += new
-        if num_dim == 3:
-            return -outer
-        if num_dim == 4:
-            return (1.1 - outer) / 0.839
-        if num_dim == 6:
-            return -(2.58 + outer) / 1.94
-
-
-# 12 HolderTable xi ∈ [-10, 10], for all i = 1, 2. result [-20,0]
-class HolderTable:
-    def __call__(self, x):
-        x = mk_2d(x)
-        x = x * 10
-        x0 = x[0]
-        x1 = x[1]
-        part1 = np.sin(x0) * np.cos(x1)
-        part2 = np.exp(np.abs(1 - np.sqrt(x0**2 + x1**2) / np.pi))
-        return -np.abs(part1 * part2)
-
-
-# 13 Levy  xi ∈ [-10, 10], for all i = 1, …, d. result [0,100]
-class Levy:
-    def __call__(self, x):
-        x = 10 * x
-        w = 1.0 + (x - 1.0) / 4.0
-        part1 = np.sin(np.pi * w[0]) ** 2
-        # part2 = np.sum(
-        #     (w[:, :-1] - 1.0) ** 2
-        #     * (1.0 + 10.0 * np.sin(np.pi * w[:, :-1] + 1.0) ** 2),
-        #     dim=1,
-        # )
-        part2 = 0
-        num_dim = len(x)
-        for i in range(num_dim - 1):
-            part2 += (w[i] - 1) ** 2 * (1 + 10 * np.sin(np.pi * w[i] + 1) ** 2)
-        part3 = (w[-1] - 1.0) ** 2 * (1.0 + np.sin(2.0 * np.pi * w[-1]) ** 2)
-        return part1 + part2 + part3
-
-
-class Michalewicz:
-    m = 10
-
-    def __call__(self, x):
-        x = np.pi * (1 + np.asarray(x)) / 2
-        d = len(x)
-        indices = np.arange(1, d + 1)
-
-        sine_term1 = np.sin(x)
-        sine_term2 = np.sin(indices * x**2 / np.pi) ** (2 * self.m)
-
-        return -np.sum(sine_term1 * sine_term2)
-
-
-class Powell:
-    def __call__(self, x):
-        x = 0.5 + 4.5 * np.asarray(x)
-
-        d = len(x)
-        if d % 4 != 0:
-            x = mk_4d(x)
-            d = len(x)
-
-        x_grouped = x.reshape(-1, 4)
-        term1 = (x_grouped[:, 0] + 10 * x_grouped[:, 1]) ** 2
-        term2 = 5 * (x_grouped[:, 2] - x_grouped[:, 3]) ** 2
-        term3 = (x_grouped[:, 1] - 2 * x_grouped[:, 2]) ** 4
-        term4 = 10 * (x_grouped[:, 0] - x_grouped[:, 3]) ** 4
-
-        return np.sum(term1 + term2 + term3 + term4)
-
-
-# 16 Rastrigin  xi ∈ [-5.12, 5.12], for all i = 1, …, d result[0,90]
-class Rastrigin:
-    def __call__(self, x):
-        x = x * 5.12
-        num_dim = len(x)
-        return 10 + np.sum(x**2 - 10 * np.cos(np.pi * 2 * x)) / num_dim
-
-
-# 17 Rosenbrock  xi ∈ [-2.048, 2.048], for all i = 1, …, d. result [0,18*10^4]
-class Rosenbrock:
-    def __call__(self, x):
-        x = x * 2.048
-        part = 0
-        num_dim = len(x)
-        for i in range(num_dim - 1):
-            part += (x[i + 1] - x[i] ** 2) ** 2 + (x[i] - 1) ** 2
-        return 100.0 * part / num_dim
-
-
-# 18 Shubert xi ∈ [-5.12, 5.12], for all i = 1, 2. result[-200,300]
-class Shubert:
-    def __call__(self, x):
-        x = mk_2d(x)
-        x = x * 5.12
-        x0 = x[0]
-        x1 = x[1]
-        part1 = 0
-        part2 = 0
-        for i in range(1, 6):
-            new1 = i * np.cos((i + 1) * x0 + i)
-            new2 = i * np.cos((i + 1) * x1 + i)
-            part1 += new1
-            part2 += new2
-        return part1 * part2
-
-
-# 19 Shekel  xi ∈ [0, 10], for all i = 1, 2, 3, 4. dimentions 4
-class Shekel:
-    def __init__(self):
-        self.beta = 0.1 * np.array((1, 2, 2, 4, 4, 6, 3, 7, 5, 5)).T
-        self.C = np.array(
-            (
-                4,
-                1,
-                8,
-                6,
-                3,
-                2,
-                5,
-                8,
-                6,
-                7,
-                4,
-                1,
-                8,
-                6,
-                7,
-                9,
-                3,
-                1,
-                2,
-                3.6,
-                4,
-                1,
-                8,
-                6,
-                3,
-                2,
-                5,
-                8,
-                6,
-                7,
-                4,
-                1,
-                8,
-                6,
-                7,
-                9,
-                3,
-                1,
-                2,
-                3.6,
-            )
-        ).reshape(4, 10)
-
-    def __call__(self, x):
-        if len(x) != 4:
-            x = mk_4d(x)
-        x = x * 5 + 5
-        m = self.C.shape[1]
-        outer = 0
-        for i in range(m):
-            bi = self.beta[i]
-            inner = 0
-            for j in range(4):
-                inner += (x[j] - self.C[j][i]) ** 2
-            outer += 1 / (inner + bi)
-        return outer
-
-
-# 20 SixHumpCamel x1 ∈ [-3, 3], x2 ∈ [-2, 2]. result [-50,200]
-class SixHumpCamel:
-    def __call__(self, x):
-        x = mk_2d(x)
-        x = x
-        x0 = x[0] * 3
-        x1 = x[1] * 2
-        return (4 - 2.1 * x0**2 + x0**4 / 3) * x0**2 + x0 * x1 + (4 * x1**2 - 4) * x1**2
-
-
-# 21 StybTang  xi ∈ [-5, 5], for all i = 1, …, d. result [-100,250]
-class StybTang:
-    def __call__(self, x):
-        x = x * 5
-        return 0.5 * np.sum(x**4 - 16 * x**2 + 5 * x)
-
-
-# 22 ThreeHumpCamel xi ∈ [-5, 5], for all i = 1, 2. result[0,10][0,1000]
-class ThreeHumpCamel:
-    def __call__(self, x):
-        x = mk_2d(x)
-        x = x * 5
-        x0 = x[0]
-        x1 = x[1]
-        return 2.0 * x0**2 - 1.05 * x0**4 + x0**6 / 6.0 + x0 * x1 + x1**2
-
-
-####
-
-
-class Langerman:
-    def __init__(self):
-        self.c = np.array([1, 2, 5, 2, 3])
-        self.A = np.array([[3, 5], [5, 2], [2, 1], [1, 4], [7, 9]])
-        self.m = 5
-
-    def __call__(self, x):
-        x = np.asarray(x)
-        x = mk_2d(x)
-        x = 5 * x + 10
-        # x in [0, 10]
-
-        outer = 0.0
-        for i in range(self.m):
-            inner = np.sum((x - self.A[i, :]) ** 2)
-            new = self.c[i] * np.exp(-inner / np.pi) * np.cos(np.pi * inner)
-            outer += new
-
-        return outer
-
-
-class Levy13:
-    def __call__(self, x):
-        x = np.asarray(x)
-        x = 10 * x
-        # x in [-10, 10]
-        x = mk_2d(x)
-
-        x1 = x[0]
-        x2 = x[1]
-
-        term1 = np.sin(3 * np.pi * x1) ** 2
-        term2 = (x1 - 1) ** 2 * (1 + np.sin(3 * np.pi * x2) ** 2)
-        term3 = (x2 - 1) ** 2 * (1 + np.sin(2 * np.pi * x2) ** 2)
-
-        return term1 + term2 + term3
-
-
-class Bohachevsky1:
-    def __call__(self, x):
-        x = np.asarray(x)
-        x = mk_2d(x)
-        x = 100 * x
-
-        x1, x2 = x[0], x[1]
-
-        term1 = x1**2
-        term2 = 2 * x2**2
-        term3 = -0.3 * np.cos(3 * np.pi * x1)
-        term4 = -0.4 * np.cos(4 * np.pi * x2)
-
-        return term1 + term2 + term3 + term4 + 0.7
-
-
-class RotatedHyperEllipsoid:
-    def __call__(self, x):
-        x = np.asarray(x)
-        x = 65.536 * x
-        return np.sum(np.cumsum(x**2))
-
-
-class SumOfDifferentPowers:
-    def __call__(self, x):
-        x = np.asarray(x)
-        return np.sum(np.abs(x) ** (np.arange(1, len(x) + 1) + 1))
-
-
-class Trid:
-    def __call__(self, x):
-        x = np.asarray(x)
-        d = len(x)
-        x = (d**2) * x
-
-        term1 = np.sum((x - 1) ** 2)
-        term2 = np.sum(x[1:] * x[:-1])
-
-        return term1 - term2
-
-
-class Perm:
-    def __init__(self, beta=0.5):
-        self.beta = beta
-
-    def __call__(self, x):
-        x = np.asarray(x)
-        d = len(x)
-        x = d * x
-
-        total = 0.0
-        for i in range(1, d + 1):
-            inner = 0.0
-            for j in range(1, d + 1):
-                term = (j + self.beta) * (x[j - 1] ** i - 1 / (j**i))
-                inner += term
-            total += inner**2
-
-        return total
-
-
-class Schaffer2:
-    def __call__(self, x):
-        x = np.asarray(x)
-        x = mk_2d(x)
-        x = 100 * x
-        x1, x2 = x[0], x[1]
-
-        numerator = np.sin(x1**2 - x2**2) ** 2 - 0.5
-        denominator = (1 + 0.001 * (x1**2 + x2**2)) ** 2
-
-        return 0.5 + numerator / denominator
-
-
-class Schaffer4:
-    def __call__(self, x):
-        x = np.asarray(x)
-        x = mk_2d(x)
-        x = 100 * x
-        x1, x2 = x[0], x[1]
-
-        diff = np.abs(x1**2 - x2**2)
-        numerator = np.cos(np.sin(diff)) ** 2 - 0.5
-        denominator = (1 + 0.001 * (x1**2 + x2**2)) ** 2
-
-        return 0.5 + numerator / denominator
-
-
-class Schwefel:
-    def __call__(self, x):
-        x = np.asarray(x)
-        d = len(x)
-        x = 500 * x
-
-        return 418.9829 * d - np.sum(x * np.sin(np.sqrt(np.abs(x))))
-
-
-class McCormick:
-    def __call__(self, x):
-        x = np.asarray(x)
-        x = mk_2d(x)
-        # Scale from [-1, 1] to true domain
-        x1 = (4 + 1.5) / 2 * x[0] + (4 - 1.5) / 2  # → [-1.5, 4]
-        x2 = (4 + 3) / 2 * x[1] + (4 - 3) / 2  # → [-3, 4]
-
-        term1 = np.sin(x1 + x2)
-        term2 = (x1 - x2) ** 2
-        term3 = -1.5 * x1
-        term4 = 2.5 * x2
-
-        return term1 + term2 + term3 + term4 + 1
-
-
-class PowerSum:
-    def __init__(self, b=None):
-        self.b = (
-            np.array(b) if b is not None else np.array([8, 18, 44, 114])
-        )  # Default for d=4
-
-    def __call__(self, x):
-        x = np.asarray(x)
-        x = mk_4d(x)
-        d = len(x)
-        x = (x + 1) * d / 2
-        # x in [0, d]
-
-        total = 0.0
-        for i in range(1, d + 1):
-            inner_sum = np.sum(x**i)
-            total += (inner_sum - self.b[i - 1]) ** 2
-
-        return total
-
-
-class PermDBeta:
-    def __init__(self, beta=0.5):
-        self.beta = beta
-
-    def __call__(self, x):
-        x = np.asarray(x)
-        d = len(x)
-        x = d * x
-
-        total = 0.0
-        for i in range(1, d + 1):
-            inner = 0.0
-            for j in range(1, d + 1):
-                term = (j**i + self.beta) * (((x[j - 1] / j) ** i) - 1)
-                inner += term
-            total += inner**2
-
-        return total
-
-
-class GoldsteinPrice:
-    def __call__(self, x):
-        x = np.asarray(x)
-        x = mk_2d(x)
-        x = 2 * x
-        x1, x2 = x[0], x[1]
-
-        part1 = 1 + (x1 + x2 + 1) ** 2 * (
-            19 - 14 * x1 + 3 * x1**2 - 14 * x2 + 6 * x1 * x2 + 3 * x2**2
-        )
-
-        part2 = 30 + (2 * x1 - 3 * x2) ** 2 * (
-            18 - 32 * x1 + 12 * x1**2 + 48 * x2 - 36 * x1 * x2 + 27 * x2**2
-        )
-
-        return part1 * part2
-
-
-class Colville:
-    def __call__(self, x):
-        x = np.asarray(x)
-        x = mk_4d(x)
-        x = 10 * x
-        x1, x2, x3, x4 = x[0], x[1], x[2], x[3]
-
-        term1 = 100 * (x1**2 - x2) ** 2
-        term2 = (x1 - 1) ** 2
-        term3 = 90 * (x3**2 - x4) ** 2
-        term4 = (x3 - 1) ** 2
-        term5 = 10.1 * ((x2 - 1) ** 2 + (x4 - 1) ** 2)
-        term6 = 19.8 * (x2 - 1) * (x4 - 1)
-
-        return term1 + term2 + term3 + term4 + term5 + term6
-
-
-class DeJong5:
-    def __init__(self):
-        a_vals = np.array([-32, -16, 0, 16, 32])
-        self.a = np.array([[x, y] for x in a_vals for y in a_vals]).T
-
-    def __call__(self, x):
-        x = np.asarray(x)
-        x = mk_2d(x)
-        x = 65.536 * x
-        x1, x2 = x[0], x[1]
-
-        sum_terms = 0.0
-        for i in range(25):
-            ai1 = self.a[0, i]
-            ai2 = self.a[1, i]
-            denom = i + 1 + (x1 - ai1) ** 6 + (x2 - ai2) ** 6
-            sum_terms += 1 / denom
-
-        return 1.0 / (0.002 + sum_terms)
-
-
-# class Forrester:
-#     def __call__(self, x):
-#         x = np.asarray(x)
-#         return (6 * x - 2) ** 2 * np.sin(12 * x - 4)

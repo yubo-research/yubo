@@ -74,18 +74,11 @@ class end_effector:
         self.hand.ApplyForce(force, self.hand.position, wake=True)
 
     def get_state(self, verbose=False):
-        state = (
-            list(self.hand.position)
-            + [self.hand.angle]
-            + list(self.hand.linearVelocity)
-            + [self.hand.angularVelocity]
-        )
+        state = list(self.hand.position) + [self.hand.angle] + list(self.hand.linearVelocity) + [self.hand.angularVelocity]
         return state
 
 
-def create_body(
-    base, b2world_interface, body_shape, body_size, body_friction, body_density, obj_loc
-):
+def create_body(base, b2world_interface, body_shape, body_size, body_friction, body_density, obj_loc):
     world = b2world_interface.world
 
     link = world.CreateDynamicBody(position=obj_loc)
@@ -143,14 +136,10 @@ def run_simulation(
 ):
     assert rng is not None
     desired_vel = np.array([xvel, yvel])
-    rvel = b2Vec2(
-        desired_vel[0] + rng.normal(0, 0.01), desired_vel[1] + rng.normal(0, 0.01)
-    )
+    rvel = b2Vec2(desired_vel[0] + rng.normal(0, 0.01), desired_vel[1] + rng.normal(0, 0.01))
 
     desired_vel2 = np.array([xvel2, yvel2])
-    rvel2 = b2Vec2(
-        desired_vel2[0] + rng.normal(0, 0.01), desired_vel2[1] + rng.normal(0, 0.01)
-    )
+    rvel2 = b2Vec2(desired_vel2[0] + rng.normal(0, 0.01), desired_vel2[1] + rng.normal(0, 0.01))
 
     tmax = np.max([simulation_steps, simulation_steps2])
     for t in range(tmax + 100):

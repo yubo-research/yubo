@@ -1,12 +1,14 @@
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.8.1
+    rev: v0.14.14
     hooks:
       - id: ruff
         args: [--config, admin/ruff.toml, --fix, --fixable, I001]
+      - id: ruff-format
+        args: [--config, admin/ruff.toml]
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: check-ast
       - id: check-added-large-files

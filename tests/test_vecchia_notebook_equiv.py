@@ -33,9 +33,7 @@ class TurboState:
     restart_triggered: bool = False
 
     def __post_init__(self):
-        self.failure_tolerance = math.ceil(
-            max([4.0 / self.batch_size, float(self.dim) / self.batch_size])
-        )
+        self.failure_tolerance = math.ceil(max([4.0 / self.batch_size, float(self.dim) / self.batch_size]))
 
 
 def update_state(state, Y_next):
@@ -79,9 +77,7 @@ def generate_batch(state, model, X, Y, batch_size, num_candidates=None, acqf="ts
     pert = tr_lb + (tr_ub - tr_lb) * pert
 
     prob_perturb = min(20.0 / dim, 1.0)
-    mask = (
-        torch.rand(num_candidates, dim, dtype=X.dtype, device=X.device) <= prob_perturb
-    )
+    mask = torch.rand(num_candidates, dim, dtype=X.dtype, device=X.device) <= prob_perturb
     ind = torch.where(mask.sum(dim=1) == 0)[0]
     mask[ind, torch.randint(0, dim - 1, size=(len(ind),), device=X.device)] = 1
 

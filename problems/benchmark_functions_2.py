@@ -1,5 +1,6 @@
 import numpy as np
 
+from .benchmark_functions_3 import Zakharov  # noqa: F401
 from .benchmark_util import mk_2d
 
 # Requirements:
@@ -27,9 +28,7 @@ class Easom:
         x = 100 * mk_2d(x)
         y = x[1]
         x = x[0]
-        return np.sum(
-            -np.cos(x) * np.cos(y) * np.exp(-((x - np.pi) ** 2) - (y - np.pi) ** 2)
-        )
+        return np.sum(-np.cos(x) * np.cos(y) * np.exp(-((x - np.pi) ** 2) - (y - np.pi) ** 2))
 
 
 class Booth:
@@ -109,12 +108,4 @@ class Brown:
         return np.sum(term1 + term2)
 
 
-class Zakharov:
-    """
-    See: https://www.sfu.ca/~ssurjano/zakharov.html
-    """
-
-    def __call__(self, x):
-        x = 2.5 + 7.5 * np.array(x)
-        s = np.sum(0.5 * np.arange(1, len(x) + 1) * x)
-        return np.sum(x**2) + s**2 + s**4
+# Zakharov moved to benchmark_functions_3.py

@@ -2,7 +2,7 @@ import hashlib
 import os
 import time
 from dataclasses import asdict, dataclass
-from typing import Optional
+from typing import NamedTuple, Optional
 
 import torch
 
@@ -18,6 +18,12 @@ from common.seed_all import seed_all
 from experiments.experiment_util import ensure_parent
 from optimizer.optimizer import Optimizer
 from problems.env_conf import default_policy, get_env_conf
+
+
+class _SampleResult(NamedTuple):
+    collector_log: Collector
+    collector_trace: Collector
+    trace_records: list[TraceRecord]
 
 
 @dataclass
@@ -74,12 +80,8 @@ class ExperimentConfig:
             num_arms=int(d["num_arms"]),
             num_rounds=int(d["num_rounds"]),
             num_reps=int(d["num_reps"]),
-            num_denoise=None
-            if d.get("num_denoise") in (None, "None")
-            else int(d["num_denoise"]),
-            num_denoise_passive=None
-            if d.get("num_denoise_passive") in (None, "None")
-            else int(d["num_denoise_passive"]),
+            num_denoise=None if d.get("num_denoise") in (None, "None") else int(d["num_denoise"]),
+            num_denoise_passive=None if d.get("num_denoise_passive") in (None, "None") else int(d["num_denoise_passive"]),
             max_proposal_seconds=max_prop,
             max_total_seconds=max_total,
             b_trace=true_false(d.get("b_trace", True)),
@@ -163,7 +165,7 @@ def sample_1(run_config: RunConfig):
             )
     collector_trace("DONE")
 
-    return collector_log, collector_trace, trace_records
+    return _SampleResult(collector_log=collector_log, collector_trace=collector_trace, trace_records=trace_records)
 
 
 def post_process_stdout(
@@ -203,9 +205,7 @@ def scan_local(run_configs: list[RunConfig], max_total_seconds: Optional[float] 
     deadline = None if max_total_seconds is None else t_0 + max_total_seconds
     for run_config in run_configs:
         if deadline is not None and time.time() >= deadline:
-            print(
-                f"TIME_LIMIT: Stopping after {time.time() - t_0:.2f}s (max_total_seconds={max_total_seconds})"
-            )
+            print(f"TIME_LIMIT: Stopping after {time.time() - t_0:.2f}s (max_total_seconds={max_total_seconds})")
             break
         run_config.deadline = deadline
         collector_log, collector_trace, trace_records = sample_1(run_config)

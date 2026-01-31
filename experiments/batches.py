@@ -5,6 +5,7 @@ import os
 import time
 
 import experiments.batch_preps as batch_preps
+from experiments.batch_util import run_in_batches
 
 
 def worker(cmd):
@@ -38,31 +39,19 @@ def run_batch(d_argss, b_dry_run):
 
 
 def run(cmds, max_parallel, b_dry_run=False):
-    for k in ["MKL_NUM_THREADS", "NUMEXPR_NUM_THREADS", "OMP_NUM_THREADS"]:
-        os.environ[k] = "16"
-
-    while len(cmds) > 0:
-        todo = cmds[:max_parallel]
-        cmds = cmds[max_parallel:]
-        run_batch(todo, b_dry_run)
+    run_in_batches(cmds, max_parallel, run_batch, b_dry_run=b_dry_run, num_threads=16)
 
 
 def prep_d_argss(batch_tag):
     results_dir = "results"
 
-    preps = {
-        k: v
-        for k, v in batch_preps.__dict__.items()
-        if k.startswith("prep_") and callable(v)
-    }
+    preps = {k: v for k, v in batch_preps.__dict__.items() if k.startswith("prep_") and callable(v)}
 
     fn = preps.get(batch_tag)
     if fn is None and not batch_tag.startswith("prep_"):
         fn = preps.get(f"prep_{batch_tag}")
 
-    assert fn is not None, (
-        f"Unknown batch_tag: {batch_tag} (known: {sorted(preps.keys())})"
-    )
+    assert fn is not None, f"Unknown batch_tag: {batch_tag} (known: {sorted(preps.keys())})"
     return fn(results_dir)
 
 

@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, NamedTuple
 
 import gpytorch
 import torch
@@ -24,6 +24,18 @@ from torch.nn import Module
 import common.all_bounds as all_bounds
 from acq.sal_transform import SALTransform
 from acq.y_transform import YTransform
+
+
+class _ParsedSpec(NamedTuple):
+    model_type: str
+    input_warping: bool
+    output_warping: str
+
+
+class _FitGpResult(NamedTuple):
+    gp: object
+    Y: Tensor
+    X: Tensor
 
 
 class _EmptyTransform(Module):
@@ -102,7 +114,7 @@ def _parse_spec(model_spec, num_obs):
     if output_warping is None:
         output_warping = "none"
     # print(f"MODEL_SPEC: model_type = {model_type} input_warping = {input_warping} output_warping = {output_warping}")
-    return model_type, input_warping, output_warping
+    return _ParsedSpec(model_type=model_type, input_warping=bool(input_warping), output_warping=str(output_warping))
 
 
 def get_closure(mll, outcome_warp):
@@ -128,119 +140,104 @@ def get_closure(mll, outcome_warp):
     )
 
 
-def fit_gp_XY(X, Y, model_spec=None):
-    model_type, input_warping, output_warping = _parse_spec(model_spec, num_obs=len(Y))
-    del model_spec
-
-    if len(X) == 0:
-        if model_type == "sparse":
-            inducing_points = torch.empty(
-                (0, X.shape[-1]), dtype=X.dtype, device=X.device
-            )
-            gp = SingleTaskVariationalGP(
-                X, inducing_points=inducing_points, outcome_transform=_EmptyTransform()
-            )
-        else:
-            gp = SingleTaskGP(X, Y, outcome_transform=_EmptyTransform())
-        gp.to(X)
-        gp.eval()
-        return gp
-
-    if input_warping:
-        # See http://proceedings.mlr.press/v32/snoek14.pdf
-        # See https://botorch.org/docs/tutorials/bo_with_warped_gp/
-        input_transform = Warp(
-            indices=list(range(X.shape[-1])),
-            concentration1_prior=LogNormalPrior(0.0, 1.0),
-            concentration0_prior=LogNormalPrior(0.0, 1.0),
-        ).to(X)
+def _create_empty_gp(X, Y, model_type):
+    if model_type == "sparse":
+        inducing_points = torch.empty((0, X.shape[-1]), dtype=X.dtype, device=X.device)
+        gp = SingleTaskVariationalGP(X, inducing_points=inducing_points, outcome_transform=_EmptyTransform())
     else:
-        input_transform = None
+        gp = SingleTaskGP(X, Y, outcome_transform=_EmptyTransform())
+    gp.to(X)
+    gp.eval()
+    return gp
 
-    if output_warping == "sal":
-        outcome_warp = SALTransform(
+
+def _create_outcome_warp(output_warping, X):
+    warp_factories = {
+        "sal": lambda: SALTransform(
             a_prior=NormalPrior(0, 1),
             b_prior=LogNormalPrior(0.0, 1.0),
             c_prior=LogNormalPrior(0.0, 1.0),
             d_prior=NormalPrior(0, 1),
-        ).to(X)
-    elif output_warping == "y":
-        outcome_warp = YTransform(
-            a_prior=LogNormalPrior(0.0, 0.1),
-            b_prior=NormalPrior(0, 1),
-        ).to(X)
-    else:
-        assert output_warping == "none", output_warping
-        outcome_warp = None
+        ).to(X),
+        "y": lambda: YTransform(a_prior=LogNormalPrior(0.0, 0.1), b_prior=NormalPrior(0, 1)).to(X),
+        "none": lambda: None,
+    }
+    return warp_factories[output_warping]()
 
-    Y = standardize_torch(Y).to(X)
 
-    a = torch.tensor(1.0, dtype=torch.double)
-    a.requires_grad = True
-
+def _create_gp_model(X, Y, model_type, input_transform):
     if model_type == "sparse":
-        gp = SingleTaskVariationalGP(X, Y, input_transform=input_transform)
-    elif model_type.startswith("rff"):
+        return SingleTaskVariationalGP(X, Y, input_transform=input_transform)
+    if model_type.startswith("rff"):
         num_samples = int(model_type[3:])
-        gp = SingleTaskGP(
+        return SingleTaskGP(
             X,
             Y,
             input_transform=input_transform,
-            covar_module=ScaleKernel(
-                RFFKernel(ard_num_dims=X.shape[-1], num_samples=num_samples)
-            ),
+            covar_module=ScaleKernel(RFFKernel(ard_num_dims=X.shape[-1], num_samples=num_samples)),
         )
-    else:
-        gp = SingleTaskGP(X, Y, input_transform=input_transform)
+    return SingleTaskGP(X, Y, input_transform=input_transform)
 
-    if outcome_warp:
-        gp.outcome_warp = outcome_warp
 
-    gp.to(X)
-
-    if model_type == "sparse":
-        mll = VariationalELBO(gp.likelihood, gp.model, num_data=X.shape[-2])
-    else:
-        mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
-
-    # See TuRBO code
-
+def _fit_gp_model(gp, mll, model_type, outcome_warp, X):
     max_cholesky_size = 2000
     with gpytorch.settings.max_cholesky_size(max_cholesky_size):
         m = None
-        if model_type == "sparse":
-            num_tries = 2
-        else:
-            num_tries = 1
+        num_tries = 2 if model_type == "sparse" else 1
         for i_try in range(num_tries):
             mll.to(X)
+            kwargs = {"closure": get_closure(mll, outcome_warp)} if outcome_warp else {}
+            if model_type == "sparse":
+                opt, opt_kw = (
+                    (
+                        fit_gpytorch_mll_scipy,
+                        {"options": {"maxiter": 4000, "maxfun": 4000}},
+                    )
+                    if i_try == 0
+                    else (fit_gpytorch_mll_torch, {"step_limit": 4000})
+                )
+                kwargs = dict(kwargs)
+                kwargs.update({"optimizer": opt, "optimizer_kwargs": opt_kw})
             try:
-                kwargs = {}
-                if outcome_warp:
-                    kwargs["closure"] = get_closure(mll, outcome_warp)
-                if model_type == "sparse":
-                    if i_try == 0:
-                        kwargs["optimizer"] = fit_gpytorch_mll_scipy
-                        kwargs["optimizer_kwargs"] = {
-                            "options": {"maxiter": 4000, "maxfun": 4000}
-                        }
-                    else:
-                        kwargs["optimizer"] = fit_gpytorch_mll_torch
-                        kwargs["optimizer_kwargs"] = {"step_limit": 4000}
                 fit_gpytorch_mll(mll, **kwargs)
-                # fit_gpytorch_mll(mll, optimizer_kwargs={"options": {"maxiter": 10}})
             except (RuntimeError, ModelFittingError) as e:
                 m = e
                 print(f"Retrying fit i_try = {i_try}")
                 print("Trying LeaveOneOutPseudoLikelihood")
                 if model_type != "sparse":
                     mll = LeaveOneOutPseudoLikelihood(gp.likelihood, gp)
-                pass
             else:
                 break
         else:
             raise m
 
+
+def fit_gp_XY(X, Y, model_spec=None):
+    model_type, input_warping, output_warping = _parse_spec(model_spec, num_obs=len(Y))
+
+    if len(X) == 0:
+        return _create_empty_gp(X, Y, model_type)
+
+    input_transform = (
+        Warp(
+            indices=list(range(X.shape[-1])),
+            concentration1_prior=LogNormalPrior(0.0, 1.0),
+            concentration0_prior=LogNormalPrior(0.0, 1.0),
+        ).to(X)
+        if input_warping
+        else None
+    )
+
+    outcome_warp = _create_outcome_warp(output_warping, X)
+    Y = standardize_torch(Y).to(X)
+    gp = _create_gp_model(X, Y, model_type, input_transform)
+
+    if outcome_warp:
+        gp.outcome_warp = outcome_warp
+    gp.to(X)
+
+    mll = VariationalELBO(gp.likelihood, gp.model, num_data=X.shape[-2]) if model_type == "sparse" else ExactMarginalLogLikelihood(gp.likelihood, gp)
+    _fit_gp_model(gp, mll, model_type, outcome_warp, X)
     return gp
 
 
@@ -254,7 +251,7 @@ def extract_X_Y(data, dtype, device):
 def fit_gp(data, dtype=torch.float64, device="cpu"):
     Y, X = extract_X_Y(data, dtype, device)
     gp = fit_gp_XY(X, Y)
-    return gp, Y, X
+    return _FitGpResult(gp=gp, Y=Y, X=X)
 
 
 def mk_yx(datum):
@@ -262,9 +259,7 @@ def mk_yx(datum):
 
 
 def mk_x(policy):
-    return all_bounds.bt_low + all_bounds.bt_width * (
-        (torch.as_tensor(policy.get_params()) - all_bounds.p_low) / all_bounds.p_width
-    )
+    return all_bounds.bt_low + all_bounds.bt_width * ((torch.as_tensor(policy.get_params()) - all_bounds.p_low) / all_bounds.p_width)
 
 
 def estimate(gp, X):
@@ -275,9 +270,7 @@ def mk_policies(policy_0, X_cand):
     policies = []
     for x in X_cand:
         policy = policy_0.clone()
-        x = (
-            x.detach().cpu().numpy().flatten() - all_bounds.bt_low
-        ) / all_bounds.bt_width
+        x = (x.detach().cpu().numpy().flatten() - all_bounds.bt_low) / all_bounds.bt_width
         p = all_bounds.p_low + all_bounds.p_width * x
         policy.set_params(p)
         policies.append(policy)

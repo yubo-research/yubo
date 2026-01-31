@@ -223,9 +223,7 @@ def plot_sorted(ax, optimizers, mu, se, renames=None, b_sort=True, highlight=Non
         i_sort = np.arange(len(mu))
     n = np.arange(len(mu))
     num_opt = len(optimizers)
-    ax.errorbar(
-        n, mu[i_sort], 2 * se[i_sort], fmt="k,", capsize=6 * max(1, 20 / num_opt)
-    )
+    ax.errorbar(n, mu[i_sort], 2 * se[i_sort], fmt="k,", capsize=6 * max(1, 20 / num_opt))
 
     names = list(optimizers)
     if renames is not None:
@@ -254,9 +252,7 @@ def plot_sorted(ax, optimizers, mu, se, renames=None, b_sort=True, highlight=Non
     ax.set_ylim([-0.1, 1])
 
 
-def plot_sorted_agg(
-    ax, data_locator, renames=None, i_agg=-1, b_sort=True, highlight=None
-):
+def plot_sorted_agg(ax, data_locator, renames=None, i_agg=-1, b_sort=True, highlight=None):
     traces = ads.load_multiple_traces(data_locator)
 
     if i_agg == "mean":
@@ -277,9 +273,7 @@ def plot_sorted_agg(
     )
 
 
-def plot_compare_problem(
-    ax, data_locator, b_normalize, title, renames=None, b_legend=True
-):
+def plot_compare_problem(ax, data_locator, b_normalize, title, renames=None, b_legend=True):
     handles = []
     legend = []
     i_marker = 0

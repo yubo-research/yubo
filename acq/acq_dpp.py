@@ -87,9 +87,27 @@ class AcqDPP:
                     ),
                     dtype=torch.double,
                 )
-            (_, self.start_K) = self.GP.mean_var(
-                xtest if xtest is not None else self.fake_xtest, full=True
-            )
+            (_, self.start_K) = self.GP.mean_var(xtest if xtest is not None else self.fake_xtest, full=True)
+
+    def _sample_initial_batch(self, num_arms):
+        X_batch = torch.tensor([], dtype=torch.double)
+        for _ in range(num_arms):
+            X_next = self.GP.sample_from_pmax(self._X_samples)
+            X_next = X_next.view(-1, 1)
+            if X_batch.size()[0] == 0:
+                X_batch = torch.t(X_next)
+            else:
+                X_batch = torch.cat((X_batch, torch.t(X_next)), dim=0)
+        return X_batch
+
+    def _det_K_S(self, post_K_S, num_arms):
+        if self._lambda_mode == "mult":
+            K_S = torch.eye(num_arms, dtype=torch.float64) + self._DPP_lambda * (self.GP.s**-2) * post_K_S
+            return torch.det(K_S)
+        if self._lambda_mode == "pow":
+            K_S = torch.eye(num_arms, dtype=torch.float64) + (self.GP.s**-2) * post_K_S
+            return torch.det(K_S) ** self._DPP_lambda
+        raise ValueError(f"Unsupported lambda_mode {self._lambda_mode}")
 
     def draw(self, num_arms, first_ts=False):
         num_runs = self._num_runs
@@ -99,57 +117,22 @@ class AcqDPP:
         if callable(self._DPP_lambda):
             self._DPP_lambda = self._DPP_lambda(self.num_rounds)
 
-        # Sample first X_batch
-        X_batch = torch.tensor([], dtype=torch.double)
-        for i in range(num_arms):
-            X_next = self.GP.sample_from_pmax(self._X_samples)
-            X_next = X_next.view(-1, 1)
-            if X_batch.size()[0] == 0:
-                X_batch = torch.t(X_next)
-            else:
-                X_batch = torch.cat((X_batch, torch.t(X_next)), dim=0)
+        X_batch = self._sample_initial_batch(num_arms)
         (_, post_K_S) = self.GP.mean_var(X_batch, full=True)
-        if self._lambda_mode == "mult":
-            K_S = (
-                torch.eye(num_arms, dtype=torch.float64)
-                + self._DPP_lambda * (self.GP.s**-2) * post_K_S
-            )
-            det_K_S = torch.det(K_S)
-        elif self._lambda_mode == "pow":
-            K_S = torch.eye(num_arms, dtype=torch.float64) + (self.GP.s**-2) * post_K_S
-            det_K_S = torch.det(K_S) ** self._DPP_lambda
-        else:
-            raise ValueError(f"Unsupported lambda_mode {self._lambda_mode}")
+        det_K_S = self._det_K_S(post_K_S, num_arms)
         log_lik = torch.log(det_K_S)
         log_lik_hist = log_lik.view(1, 1)
 
         # MCMC
         if self._cutoff_iter is None or self.num_rounds < self._cutoff_iter:
             while num_runs > 0:
-                switch_i = np.random.randint(
-                    0 if not first_ts else 1, num_arms
-                )  # If first was sampled with regular TS, cannot swap it during MCMC
+                switch_i = np.random.randint(0 if not first_ts else 1, num_arms)  # If first was sampled with regular TS, cannot swap it during MCMC
                 X_next = self.GP.sample_from_pmax(self._X_samples)
                 X_batch_prop = X_batch.clone()
                 X_batch_prop[switch_i] = torch.t(X_next.view(-1, 1))
                 (_, post_K_S) = self.GP.mean_var(X_batch_prop, full=True)
-                if self._lambda_mode == "mult":
-                    K_S = (
-                        torch.eye(num_arms, dtype=torch.float64)
-                        + self._DPP_lambda * (self.GP.s**-2) * post_K_S
-                    )
-                    det_K_S_prop = torch.det(K_S)
-                elif self._lambda_mode == "pow":
-                    K_S = (
-                        torch.eye(num_arms, dtype=torch.float64)
-                        + (self.GP.s**-2) * post_K_S
-                    )
-                    det_K_S_prop = torch.det(K_S) ** self._DPP_lambda
-                else:
-                    raise ValueError(f"Unsupported lambda_mode {self._lambda_mode}")
-                alpha = torch.min(
-                    torch.tensor(1, dtype=torch.double), det_K_S_prop / det_K_S
-                )
+                det_K_S_prop = self._det_K_S(post_K_S, num_arms)
+                alpha = torch.min(torch.tensor(1, dtype=torch.double), det_K_S_prop / det_K_S)
                 if torch.rand(1) < alpha:
                     X_batch = X_batch_prop
                     det_K_S = det_K_S_prop

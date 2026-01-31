@@ -77,9 +77,7 @@ class StaggerThompsonSampler:
             .squeeze(-2)
             .to(self._X_samples)
         )
-        assert self._X_samples.shape == (self._num_samples, self._num_dim), (
-            self._X_samples.shape
-        )
+        assert self._X_samples.shape == (self._num_samples, self._num_dim), self._X_samples.shape
 
         X_perturbed = self._X_samples + s * (X_unif - self._X_samples)
         X_both = torch.cat([self._X_samples, X_perturbed], dim=0)

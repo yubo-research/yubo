@@ -1,6 +1,6 @@
 import math
-from dataclasses import dataclass
 from numbers import Number
+from typing import NamedTuple
 
 import torch
 from torch.distributions import Distribution, constraints
@@ -13,8 +13,7 @@ CONST_LOG_INV_SQRT_2PI = math.log(CONST_INV_SQRT_2PI)
 CONST_LOG_SQRT_2PI_E = 0.5 * math.log(2 * math.pi * math.e)
 
 
-@dataclass
-class _PiAndX:
+class _PiAndX(NamedTuple):
     pi: torch.Tensor
     X: torch.Tensor
 
@@ -41,9 +40,7 @@ class TruncatedStandardNormal(Distribution):
             batch_shape = torch.Size()
         else:
             batch_shape = self.a.size()
-        super(TruncatedStandardNormal, self).__init__(
-            batch_shape, validate_args=validate_args
-        )
+        super(TruncatedStandardNormal, self).__init__(batch_shape, validate_args=validate_args)
         if self.a.dtype != self.b.dtype:
             raise ValueError("Truncation bounds types are different")
         if any(
@@ -65,16 +62,9 @@ class TruncatedStandardNormal(Distribution):
         self._log_Z = self._Z.log()
         little_phi_coeff_a = torch.nan_to_num(self.a, nan=math.nan)
         little_phi_coeff_b = torch.nan_to_num(self.b, nan=math.nan)
-        self._lpbb_m_lpaa_d_Z = (
-            self._little_phi_b * little_phi_coeff_b
-            - self._little_phi_a * little_phi_coeff_a
-        ) / self._Z
+        self._lpbb_m_lpaa_d_Z = (self._little_phi_b * little_phi_coeff_b - self._little_phi_a * little_phi_coeff_a) / self._Z
         self._mean = -(self._little_phi_b - self._little_phi_a) / self._Z
-        self._variance = (
-            1
-            - self._lpbb_m_lpaa_d_Z
-            - ((self._little_phi_b - self._little_phi_a) / self._Z) ** 2
-        )
+        self._variance = 1 - self._lpbb_m_lpaa_d_Z - ((self._little_phi_b - self._little_phi_a) / self._Z) ** 2
         self._entropy = CONST_LOG_SQRT_2PI_E + self._log_Z - 0.5 * self._lpbb_m_lpaa_d_Z
 
     @constraints.dependent_property
@@ -89,7 +79,6 @@ class TruncatedStandardNormal(Distribution):
     def variance(self):
         return self._variance
 
-    @property
     def entropy(self):
         return self._entropy
 
@@ -128,9 +117,7 @@ class TruncatedStandardNormal(Distribution):
     def p_and_sample(self, sample_shape=torch.Size()):
         shape = self._extended_shape(sample_shape)
         # TODO: Try Sobol instead of uniform
-        p = torch.empty(shape, device=self.device, dtype=self.dtype).uniform_(
-            self._dtype_min_gt_0, self._dtype_max_lt_1
-        )
+        p = torch.empty(shape, device=self.device, dtype=self.dtype).uniform_(self._dtype_min_gt_0, self._dtype_max_lt_1)
         return _PiAndX(p, self.icdf(p))
 
 
