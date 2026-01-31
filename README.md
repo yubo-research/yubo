@@ -12,6 +12,7 @@ ENV_LIB="${CONDA_PREFIX}/lib" LDFLAGS="-L${CONDA_PREFIX}/lib" LIBRARY_PATH="${CO
 pip install "LassoBench @ git+https://github.com/ksehic/LassoBench.git" --no-deps
 
 pip install ennbo --no-deps
+cargo install kiss-ai
 ```
 
 Apologies for the complexity of installation. We're blending lots of algorithms and test environments, much of which is research-quality code, some of which may be unmaintained.
@@ -29,6 +30,7 @@ ENV_LIB="${CONDA_PREFIX}/lib" LDFLAGS="-L${CONDA_PREFIX}/lib" LIBRARY_PATH="${CO
 pip install "LassoBench @ git+https://github.com/ksehic/LassoBench.git" --no-deps
 
 pip install ennbo --no-deps
+cargo install kiss-ai
 ```
 
 ## Verifying Installation
@@ -36,5 +38,3 @@ pip install ennbo --no-deps
 ```bash
 pytest -sv tests
 ```
-
-
