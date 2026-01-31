@@ -10,7 +10,7 @@ modal_image = mk_image()
 app = modal.App(name="my-job")
 
 
-@app.function(image=modal_image, concurrency_limit=2, timeout=3000)  # , gpu="T4")
+@app.function(image=modal_image, max_containers=2, timeout=3000)  # , gpu="T4")
 def process_job(cmd):
     my_queue = modal.Queue.from_name("my-persisted-queue-b", create_if_missing=True)
     if cmd == "submit":

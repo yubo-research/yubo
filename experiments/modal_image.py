@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import enn
 import modal
 
 
@@ -42,21 +43,18 @@ def mk_image():
         .apt_install("swig", "git", "gcc", "g++")
         .pip_install(sreqs)
         .pip_install(sreqs_2, extra_options="--no-deps")
-        .add_local_python_source("ennbo")
     )
 
-    local_enn = Path(__file__).resolve().parents[2] / "enn"
-    image = image.env({"PYTHONPATH": "/root:/root/experiments"})
-
-    if local_enn.exists():
-        image = image.add_local_dir(str(local_enn), remote_path="/root/enn_local")
+    image = image.env({"PYTHONPATH": "/root"})
+    ennbo_path = Path(enn.__file__).parent
+    print("ADDING: ", ennbo_path)
+    image = image.add_local_dir(str(ennbo_path), remote_path="/root/enn")
 
     project_root = Path(__file__).resolve().parents[1]
     for d in [
         "acq",
         "analysis",
         "common",
-        "enn",
         "experiments",
         "model",
         "ops",

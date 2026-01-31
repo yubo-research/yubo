@@ -30,7 +30,7 @@ def _submitted_dict():
 
 @app.function(
     image=modal_image,
-    concurrency_limit=_MAX_CONTAINERS,
+    max_containers=_MAX_CONTAINERS,
     timeout=_TIMEOUT_HOURS * 60 * 60,
 )  # , gpu="H100")
 def modal_batches_worker(job):
@@ -45,7 +45,7 @@ def modal_batches_worker(job):
 
 @app.function(
     image=modal_image,
-    concurrency_limit=_MAX_CONTAINERS // 10,
+    max_containers=_MAX_CONTAINERS // 10,
     timeout=_TIMEOUT_HOURS * 60 * 60,
 )
 def modal_batches_resubmitter(batch_of_configs):
@@ -100,7 +100,7 @@ def _job_key(job_name, path):
     return f"{job_name}-{path}"
 
 
-@app.function(image=modal_image, concurrency_limit=1, timeout=_TIMEOUT_HOURS * 60 * 60)
+@app.function(image=modal_image, max_containers=1, timeout=_TIMEOUT_HOURS * 60 * 60)
 def modal_batch_deleter(collected_keys):
     res_dict = _results_dict()
     for key in collected_keys:

@@ -149,7 +149,7 @@ class Optimizer:
             return False, False
         datum_best = designer.best_datum()
         if datum_best is None:
-            return False, True
+            return False, False
         decision_best = float(datum_best.trajectory.get_decision_rreturn())
         did_update = decision_best > float(self.r_best_est)
         if did_update:

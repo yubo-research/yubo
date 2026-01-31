@@ -6,7 +6,7 @@ from experiments.modal_batches import app
 from experiments.modal_image import mk_image
 
 
-@app.function(image=mk_image(), concurrency_limit=1, timeout=60 * 60)  # , gpu="A100")
+@app.function(image=mk_image(), max_containers=1, timeout=60 * 60)  # , gpu="A100")
 def modal_sample_1(d_args):
     collector_log, collector_trace = sample_1(**d_args)
     return collector_log, collector_trace
