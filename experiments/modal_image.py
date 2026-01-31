@@ -29,25 +29,27 @@ def mk_image():
         req = req.strip()
         if len(req) == 0:
             continue
-        print("REQ:", req)
         sreqs.append(req)
 
     sreqs_2 = [
         "git+https://github.com/feji3769/VecchiaBO.git#subdirectory=code",
         "sparse-ho @ https://github.com/QB3/sparse-ho/archive/master.zip",
         "LassoBench @ git+https://github.com/ksehic/LassoBench.git",
-        "ennbo>=0.1.7",
     ]
 
-    image = modal.Image.debian_slim(python_version="3.11.9").apt_install("swig").apt_install("git").pip_install(sreqs).pip_install(sreqs_2)
+    image = (
+        modal.Image.debian_slim(python_version="3.11.9")
+        .apt_install("swig", "git", "gcc", "g++")
+        .pip_install(sreqs)
+        .pip_install(sreqs_2, extra_options="--no-deps")
+        .add_local_python_source("ennbo")
+    )
 
     local_enn = Path(__file__).resolve().parents[2] / "enn"
+    image = image.env({"PYTHONPATH": "/root:/root/experiments"})
+
     if local_enn.exists():
         image = image.add_local_dir(str(local_enn), remote_path="/root/enn_local")
-        # The shim in bbo/enn/__init__.py will find it at /root/enn_local
-        image = image.env({"PYTHONPATH": "/root:/root/experiments"})
-    else:
-        image = image.env({"PYTHONPATH": "/root:/root/experiments"})
 
     project_root = Path(__file__).resolve().parents[1]
     for d in [
@@ -61,7 +63,6 @@ def mk_image():
         "optimizer",
         "problems",
         "sampling",
-        "third_party",
         "torch_truncnorm",
         "turbo_m_ref",
     ]:
