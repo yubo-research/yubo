@@ -361,6 +361,7 @@ def prep_tlunar(results_dir):
         # "cma",
         "turbo-zero",
         "turbo-one",
+        "turbo-1",
         # "turbo-enn-fit-ucb",
         "turbo-enn-p",
     ]
