@@ -1,5 +1,7 @@
 
 
+# Installation
+
 ## Installation on MacOS
 
 ```bash
@@ -33,7 +35,13 @@ pip install ennbo --no-deps
 cargo install kiss-ai
 ```
 
-## Verifying Installation
+## Setup
+```bash
+pre-commit install
+```
+
+
+## Verification
 
 ```bash
 pytest -sv tests

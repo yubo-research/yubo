@@ -1,0 +1,2 @@
+class NoSuchDesignerError(Exception):
+    pass
