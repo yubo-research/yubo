@@ -1,0 +1,23 @@
+[experiment]
+exp_dir = "_tmp/halfcheetah_enn_grad_ellipsoid"
+env_tag = "cheetah-mlp"
+num_arms = 10
+num_rounds = 10000
+num_reps = 1
+num_denoise = 1
+num_denoise_passive = 1
+b_trace = true
+# rollout_workers = 10
+
+[optimizer]
+name = "turbo-enn-fit"
+
+[optimizer.params]
+acq_type = "thompson"
+geometry = "enn_grad_ellipsoid"
+sampler = "low_rank"
+rank = 10
+
+[optimizer.general]
+num_keep = 10
+keep_style = "best"

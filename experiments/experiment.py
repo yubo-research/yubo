@@ -2,7 +2,7 @@
 
 
 from common.util import parse_kv
-from experiments.experiment_sampler import ExperimentConfig, sampler, scan_local
+from experiments.experiment_sampler import ExperimentConfig, sampler, scan_local, scan_parallel
 
 if __name__ == "__main__":
     import sys
@@ -15,6 +15,9 @@ if __name__ == "__main__":
         "num-denoise-passive",
         "max-proposal-seconds",
         "max-total-seconds",
+        "run-workers",
+        "checkpoint-every",
+        "resume",
         "b-trace",
     ]
     valid_keys = set("--" + k for k in reqd_keys + opt_keys)
@@ -33,4 +36,15 @@ if __name__ == "__main__":
         d_args_cleaned[kk] = v
 
     config = ExperimentConfig.from_dict(d_args_cleaned)
-    sampler(config, distributor_fn=scan_local)
+    if config.run_workers and int(config.run_workers) > 1:
+
+        def _scan(run_configs, max_total_seconds=None):
+            scan_parallel(
+                run_configs,
+                max_total_seconds=max_total_seconds,
+                max_workers=int(config.run_workers),
+            )
+
+        sampler(config, distributor_fn=_scan)
+    else:
+        sampler(config, distributor_fn=scan_local)

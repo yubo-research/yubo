@@ -1,0 +1,27 @@
+[experiment]
+exp_dir = "_tmp/halfcheetah_ts_ell_k80_20m_trlen16"
+env_tag = "cheetah-mlp-raw"
+num_arms = 10
+num_rounds = 2000
+num_reps = 10
+num_denoise = 1
+num_denoise_passive = 1
+b_trace = true
+
+[optimizer]
+name = "turbo-enn-fit"
+
+[optimizer.params]
+acq_type = "thompson"
+k = 80
+geometry = "enn_ellipsoid"
+sampler = "low_rank"
+# tr_length_fixed = 0.8
+candidate_rv = "sobol"
+num_candidates = 64
+num_fit_samples = 10
+num_fit_candidates = 100
+
+[optimizer.general]
+num_keep = 8000
+keep_style = "trailing"

@@ -1,24 +1,22 @@
 import sys
 import time
 from dataclasses import dataclass
-from typing import NamedTuple
 
 import numpy as np
 
 from common.telemetry import Telemetry
 
-from .datum import Datum
-from .opt_trajectories import collect_denoised_trajectory, evaluate_for_best
+from .checkpointing import (
+    apply_state_dict,
+    build_state_dict,
+    save_optimizer_checkpoint,
+)
+from .iteration_step import iterate_step
+from .opt_trajectories import evaluate_for_best
 from .trajectories import collect_trajectory
 
 _INTERACTIVE_DEBUG = False
 _SHOW_EVERY_N_ITER = 30
-
-
-class _IterateResult(NamedTuple):
-    data: list[Datum]
-    dt_prop: float
-    dt_eval: float
 
 
 def _pareto_mask_max(y: np.ndarray) -> np.ndarray:
@@ -69,17 +67,22 @@ class Optimizer:
         collector,
         *,
         env_conf,
+        env_tag=None,
         policy,
         num_arms,
         num_denoise_measurement=None,
         num_denoise_passive=None,
+        rollout_workers=None,
     ):
         self._collector = collector
         self._env_conf = env_conf
+        self._env_tag = env_tag
         self.best_policy = policy
+        self._policy_template = policy.clone()
         self._num_arms = num_arms
         self._num_denoise = num_denoise_measurement
         self._num_denoise_passive_eval = num_denoise_passive
+        self._rollout_workers = rollout_workers
         self.num_params = policy.num_params()
         self.r_best_est = -1e99
         self.y_best = None
@@ -95,47 +98,40 @@ class Optimizer:
         self._ret_viz = -1e99
         self._telemetry = Telemetry()
         self._ref_point = None
+        self._rollout_pool = None
+        self.last_designer = None
+        self._last_designer_index: int | None = None
 
-    def _iterate(self, designer, num_arms):
-        self._telemetry.reset()
-        t_0 = time.time()
-        policies = designer(self._data, num_arms, telemetry=self._telemetry)
-        t_f = time.time()
-        dt_prop = t_f - t_0
+    def state_dict(self, *, designer_name: str) -> dict:
+        return build_state_dict(self, designer_name=designer_name)
 
-        data = []
-        t_0 = time.time()
-        for policy in policies:
-            if self._env_conf.frozen_noise:
-                i_noise = None
-            else:
-                i_noise = self._i_noise
-                if self._num_denoise is None:
-                    delta = 1
-                else:
-                    delta = self._num_denoise
-                self._i_noise += delta
-            traj, noise_seed = collect_denoised_trajectory(self._env_conf, policy, self._num_denoise, i_noise)
-            if _INTERACTIVE_DEBUG and self._num_denoise == 1:
-                r = np.asarray(traj.rreturn)
-                if r.ndim == 0 and float(r) > self._ret_viz:
-                    self._policy_viz = policy.clone()
-                    self._ret_viz = float(r)
-                    self._noise_seed_viz = noise_seed
-            data.append(Datum(designer, policy, None, traj))
-        tf = time.time()
-        dt_eval = tf - t_0
+    def load_state_dict(self, state: dict, *, designer_name: str) -> None:
+        apply_state_dict(self, state, designer_name=designer_name)
 
-        return _IterateResult(data=data, dt_prop=float(dt_prop), dt_eval=float(dt_eval))
-
-    def collect_trace(self, designer_name, max_iterations, max_proposal_seconds=np.inf, deadline=None):
-        self.initialize(designer_name)
-        num_iterations = 0
-        while num_iterations < max_iterations and self._cum_dt_proposing < max_proposal_seconds:
+    def collect_trace(
+        self,
+        designer_name,
+        max_iterations,
+        max_proposal_seconds=np.inf,
+        deadline=None,
+        *,
+        resume_state: dict | None = None,
+        checkpoint_every: int | None = None,
+        checkpoint_path: str | None = None,
+    ):
+        if resume_state is None:
+            self.initialize(designer_name)
+        else:
+            self.load_state_dict(resume_state, designer_name=designer_name)
+        while self._i_iter < max_iterations and self._cum_dt_proposing < max_proposal_seconds:
             if deadline is not None and time.time() >= deadline:
                 break
             self.iterate()
-            num_iterations += 1
+            if checkpoint_every is not None and checkpoint_every > 0 and checkpoint_path is not None:
+                if self._i_iter % int(checkpoint_every) == 0:
+                    save_optimizer_checkpoint(self, checkpoint_path, designer_name=designer_name)
+        if checkpoint_path is not None and checkpoint_every is not None and checkpoint_every > 0:
+            save_optimizer_checkpoint(self, checkpoint_path, designer_name=designer_name)
         self.stop()
         return self._trace
 
@@ -270,8 +266,9 @@ class Optimizer:
         return float(self.r_best_est)
 
     def iterate(self):
-        designer = self._opt_designers[min(len(self._opt_designers) - 1, self._i_iter)]
-        data, dt_prop, dt_eval = self._iterate(designer, self._num_arms)
+        designer_index = min(len(self._opt_designers) - 1, self._i_iter)
+        designer = self._opt_designers[designer_index]
+        data, dt_prop, dt_eval = iterate_step(self, designer, self._num_arms)
 
         for datum in data:
             self._data.append(datum)
@@ -303,9 +300,13 @@ class Optimizer:
         self._trace.append(_TraceEntry(float(ret_eval), float(self.r_best_est), dt_prop, dt_eval))
         self._i_iter += 1
         self.last_designer = designer
+        self._last_designer_index = designer_index
         return self._trace
 
     def stop(self):
+        if self._rollout_pool is not None:
+            self._rollout_pool.shutdown(wait=True, cancel_futures=True)
+            self._rollout_pool = None
         for designer in self._opt_designers:
             if hasattr(designer, "stop"):
                 designer.stop()

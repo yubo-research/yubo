@@ -3,7 +3,7 @@ def test_bw_mlp_uses_layernorm_with_affine_and_episode_reset_only_resets_rnn_sta
 
     import torch
 
-    from problems.mlp_policy import MLPPolicy
+    from problems.mlp_policy import MLPPolicy, MLPPolicyFlags
 
     env_conf = SimpleNamespace(
         problem_seed=0,
@@ -11,7 +11,12 @@ def test_bw_mlp_uses_layernorm_with_affine_and_episode_reset_only_resets_rnn_sta
         action_space=SimpleNamespace(shape=(4,)),
     )
 
-    p = MLPPolicy(env_conf, hidden_sizes=(), use_layer_norm=True, rnn_hidden_size=8)
+    p = MLPPolicy(
+        env_conf,
+        hidden_sizes=(),
+        flags=MLPPolicyFlags(use_layer_norm=True),
+        rnn_hidden_size=8,
+    )
     assert p.in_norm is not None
     assert isinstance(p.in_norm, torch.nn.LayerNorm)
     assert p.in_norm.elementwise_affine is True

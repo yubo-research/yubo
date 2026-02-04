@@ -1,4 +1,15 @@
 __pycache__
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+
+# Local run artifacts
+_tmp/
+_test/
+_test_results/
+
+.DS_Store
 style.md
 *~
 design.md

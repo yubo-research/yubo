@@ -112,3 +112,22 @@ def test_designers_catalog_dataclasses_are_instantiable():
     assert entry.base_name == "x"
     assert entry.options[0].name == "k"
     assert spec.base == "x"
+
+
+def test_turbo_enn_fit_accepts_int_num_candidates():
+    from optimizer.designers import Designers
+
+    policy = MockPolicy(num_params=3)
+    designers = Designers(policy, num_arms=1)
+    designer = designers.create("turbo-enn-fit/acq_type=thompson/k=3/num_candidates=2/candidate_rv=uniform/num_fit_samples=2/num_fit_candidates=2")
+    policies = designer([], 1)
+    assert len(policies) == 1
+
+
+def test_designers_create_morbo_enn_multi():
+    from optimizer.designers import Designers
+
+    policy = MockPolicy(num_params=3)
+    designers = Designers(policy, num_arms=1)
+    designer = designers.create("morbo-enn-multi/acq_type=ucb/num_regions=1/num_metrics=2")
+    assert designer is not None

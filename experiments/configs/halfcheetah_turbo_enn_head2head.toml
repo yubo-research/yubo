@@ -1,0 +1,14 @@
+[experiment]
+exp_dir = "_tmp/halfcheetah_head2head"
+env_tag = "cheetah-mlp"
+# 20M env-step equivalent: 2000 rounds * 10 arms * 1000 max_steps
+
+[optimizer]
+name = "turbo-enn-fit"
+
+[optimizer.params]
+acq_type = "ucb"
+
+[optimizer.general]
+num_keep = 10
+keep_style = "best"

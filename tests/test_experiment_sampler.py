@@ -48,23 +48,31 @@ def test_extract_trace_fns():
     run_configs = [
         RunConfig(
             env_conf=mock_env,
+            env_tag="f:ackley-10d",
+            problem_seed=0,
+            noise_seed_0=0,
             opt_name="ucb",
             num_rounds=10,
             num_arms=5,
             num_denoise=None,
             num_denoise_passive=None,
             max_proposal_seconds=None,
+            rollout_workers=None,
             b_trace=True,
             trace_fn="/path/a",
         ),
         RunConfig(
             env_conf=mock_env,
+            env_tag="f:ackley-10d",
+            problem_seed=1,
+            noise_seed_0=10,
             opt_name="ei",
             num_rounds=10,
             num_arms=5,
             num_denoise=None,
             num_denoise_passive=None,
             max_proposal_seconds=None,
+            rollout_workers=None,
             b_trace=True,
             trace_fn="/path/b",
         ),
@@ -115,12 +123,9 @@ def test_prep_d_args():
     assert results[0].opt_name == "ucb"
 
 
-@patch("experiments.experiment_sampler.get_env_conf")
 @patch("experiments.experiment_sampler.data_is_done")
-def test_mk_replicates(mock_data_is_done, mock_get_env_conf):
+def test_mk_replicates(mock_data_is_done):
     mock_data_is_done.return_value = False
-    mock_env_conf = MagicMock()
-    mock_get_env_conf.return_value = mock_env_conf
 
     with tempfile.TemporaryDirectory() as tmpdir:
         config = ExperimentConfig(
@@ -142,15 +147,14 @@ def test_mk_replicates(mock_data_is_done, mock_get_env_conf):
     assert results[0].num_rounds == 10
     assert results[0].num_denoise == 100
     assert results[0].b_trace is True
-    assert results[0].env_conf == mock_env_conf
+    assert results[0].env_conf is None
+    assert results[0].problem_seed == 18
+    assert results[0].noise_seed_0 == 180
 
 
-@patch("experiments.experiment_sampler.get_env_conf")
 @patch("experiments.experiment_sampler.data_is_done")
-def test_mk_replicates_skips_done(mock_data_is_done, mock_get_env_conf):
+def test_mk_replicates_skips_done(mock_data_is_done):
     mock_data_is_done.return_value = True
-    mock_env_conf = MagicMock()
-    mock_get_env_conf.return_value = mock_env_conf
 
     with tempfile.TemporaryDirectory() as tmpdir:
         config = ExperimentConfig(
@@ -169,25 +173,23 @@ def test_mk_replicates_skips_done(mock_data_is_done, mock_get_env_conf):
 
 def test_mk_replicates_creates_out_dir():
     with tempfile.TemporaryDirectory() as tmpdir:
-        with patch("experiments.experiment_sampler.get_env_conf") as mock_get_env_conf:
-            with patch("experiments.experiment_sampler.data_is_done") as mock_data_is_done:
-                mock_data_is_done.return_value = False
-                mock_get_env_conf.return_value = MagicMock()
+        with patch("experiments.experiment_sampler.data_is_done") as mock_data_is_done:
+            mock_data_is_done.return_value = False
 
-                config = ExperimentConfig(
-                    exp_dir=tmpdir,
-                    env_tag="f:test-5d",
-                    opt_name="random",
-                    num_arms=2,
-                    num_rounds=5,
-                    num_reps=1,
-                    num_denoise=None,
-                )
-                mk_replicates(config)
+            config = ExperimentConfig(
+                exp_dir=tmpdir,
+                env_tag="f:test-5d",
+                opt_name="random",
+                num_arms=2,
+                num_rounds=5,
+                num_reps=1,
+                num_denoise=None,
+            )
+            mk_replicates(config)
 
-                expected_dir = config.to_dir_name()
-                assert os.path.isdir(expected_dir)
-                assert os.path.isfile(f"{expected_dir}/config.json")
+            expected_dir = config.to_dir_name()
+            assert os.path.isdir(expected_dir)
+            assert os.path.isfile(f"{expected_dir}/config.json")
 
 
 def test_experiment_config_to_dir_name():
@@ -275,6 +277,38 @@ def test_experiment_config_from_dict_none_denoise():
     assert config.num_denoise is None
 
 
+def test_scan_parallel_empty_run_configs(monkeypatch, capsys):
+    import concurrent.futures as cf
+
+    from experiments.experiment_sampler import scan_parallel
+
+    class DummyFuture:
+        def result(self):
+            return None
+
+    class DummyExecutor:
+        def __init__(self, *args, **kwargs):
+            _ = args
+            self._max_workers = kwargs.get("max_workers")
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            _ = (exc_type, exc, tb)
+            return False
+
+        def submit(self, _fn, _rc):
+            return DummyFuture()
+
+    monkeypatch.setattr(cf, "ProcessPoolExecutor", DummyExecutor)
+    monkeypatch.setattr(cf, "as_completed", lambda _futs: [])
+
+    scan_parallel([], max_total_seconds=None, max_workers=2)
+    out = capsys.readouterr().out
+    assert "TIME_PARALLEL:" in out
+
+
 @patch("experiments.experiment_sampler.Optimizer")
 @patch("experiments.experiment_sampler.default_policy")
 @patch("experiments.experiment_sampler.seed_all")
@@ -301,12 +335,16 @@ def test_sample_1(mock_torch, mock_seed_all, mock_default_policy, mock_optimizer
 
     run_config = RunConfig(
         env_conf=mock_env_conf,
+        env_tag="f:test-5d",
+        problem_seed=0,
+        noise_seed_0=0,
         opt_name="ucb",
         num_rounds=2,
         num_arms=5,
         num_denoise=None,
         num_denoise_passive=None,
         max_proposal_seconds=100.0,
+        rollout_workers=None,
         b_trace=True,
         trace_fn="/path/to/trace",
     )
@@ -315,7 +353,15 @@ def test_sample_1(mock_torch, mock_seed_all, mock_default_policy, mock_optimizer
     mock_seed_all.assert_called_once_with(42 + 27)
     mock_default_policy.assert_called_once_with(mock_env_conf)
     mock_optimizer_class.assert_called_once()
-    mock_optimizer.collect_trace.assert_called_once_with(designer_name="ucb", max_iterations=2, max_proposal_seconds=100.0, deadline=None)
+    mock_optimizer.collect_trace.assert_called_once_with(
+        designer_name="ucb",
+        max_iterations=2,
+        max_proposal_seconds=100.0,
+        deadline=None,
+        resume_state=None,
+        checkpoint_every=None,
+        checkpoint_path=None,
+    )
 
     trace_lines = list(collector_trace)
     assert len(trace_lines) == 3
@@ -325,6 +371,62 @@ def test_sample_1(mock_torch, mock_seed_all, mock_default_policy, mock_optimizer
     assert len(trace_records) == 2
     assert trace_records[0].i_iter == 0
     assert trace_records[0].rreturn == 1.5
+
+
+@patch("experiments.experiment_sampler.get_env_conf")
+@patch("experiments.experiment_sampler.Optimizer")
+@patch("experiments.experiment_sampler.default_policy")
+@patch("experiments.experiment_sampler.seed_all")
+@patch("experiments.experiment_sampler.torch")
+def test_sample_1_rebuilds_env_conf(
+    mock_torch,
+    mock_seed_all,
+    mock_default_policy,
+    mock_optimizer_class,
+    mock_get_env_conf,
+):
+    mock_torch.cuda.is_available.return_value = False
+    mock_torch.empty.return_value.device = "cpu"
+    mock_default_policy.return_value = MagicMock()
+
+    mock_trace_entry = MagicMock()
+    mock_trace_entry.dt_prop = 0.1
+    mock_trace_entry.dt_eval = 0.2
+    mock_trace_entry.rreturn = 1.5
+
+    mock_optimizer = MagicMock()
+    mock_optimizer.collect_trace.return_value = iter([mock_trace_entry])
+    mock_optimizer_class.return_value = mock_optimizer
+
+    mock_env_conf = MagicMock()
+    mock_env_conf.problem_seed = 7
+    mock_env_conf.env_name = "test_env"
+    mock_get_env_conf.return_value = mock_env_conf
+
+    run_config = RunConfig(
+        env_conf=None,
+        env_tag="f:test-5d",
+        problem_seed=7,
+        noise_seed_0=70,
+        opt_name="ucb",
+        num_rounds=1,
+        num_arms=5,
+        num_denoise=None,
+        num_denoise_passive=None,
+        max_proposal_seconds=None,
+        rollout_workers=None,
+        b_trace=True,
+        trace_fn="/path/to/trace",
+    )
+    sample_1(run_config)
+
+    mock_get_env_conf.assert_called_once_with(
+        "f:test-5d",
+        problem_seed=7,
+        noise_level=None,
+        noise_seed_0=70,
+    )
+    mock_seed_all.assert_called_once_with(7 + 27)
 
 
 @patch("experiments.experiment_sampler.Optimizer")
@@ -350,12 +452,16 @@ def test_sample_1_no_trace(mock_torch, mock_seed_all, mock_default_policy, mock_
 
     run_config = RunConfig(
         env_conf=mock_env_conf,
+        env_tag="f:test-5d",
+        problem_seed=0,
+        noise_seed_0=0,
         opt_name="random",
         num_rounds=1,
         num_arms=1,
         num_denoise=None,
         num_denoise_passive=None,
         max_proposal_seconds=None,
+        rollout_workers=None,
         b_trace=False,
         trace_fn="/path/to/trace",
     )
@@ -423,23 +529,31 @@ def test_scan_local(mock_sample_1, mock_post_process):
     run_configs = [
         RunConfig(
             env_conf=mock_env,
+            env_tag="f:ackley-10d",
+            problem_seed=0,
+            noise_seed_0=0,
             opt_name="ucb",
             num_rounds=10,
             num_arms=5,
             num_denoise=None,
             num_denoise_passive=None,
             max_proposal_seconds=None,
+            rollout_workers=None,
             b_trace=True,
             trace_fn="/path/a",
         ),
         RunConfig(
             env_conf=mock_env,
+            env_tag="f:ackley-10d",
+            problem_seed=1,
+            noise_seed_0=10,
             opt_name="ei",
             num_rounds=5,
             num_arms=3,
             num_denoise=10,
             num_denoise_passive=None,
             max_proposal_seconds=50.0,
+            rollout_workers=None,
             b_trace=True,
             trace_fn="/path/b",
         ),

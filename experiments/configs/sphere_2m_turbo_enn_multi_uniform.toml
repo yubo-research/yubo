@@ -1,0 +1,32 @@
+[experiment]
+exp_dir = "_tmp/sphere_2m_turbo_enn_uniform"
+env_tag = "f:sphere-2000000d"
+
+# Keep the run tiny: each (candidate/fit) sample is a 2M-dim vector.
+num_arms = 10
+num_rounds = 100
+num_reps = 1
+num_denoise = 1
+num_denoise_passive = 1
+b_trace = true
+
+[optimizer]
+name = "turbo-enn-multi"
+
+[optimizer.params]
+acq_type = "ucb"
+num_regions = 1
+strategy = "independent"
+arm_mode = "split"
+
+# Stress-test large-D candidate generation.
+candidate_rv = "uniform"
+num_candidates = 10
+
+# Keep ENN fit-time sampling tiny at 2M dims.
+num_fit_samples = 2
+num_fit_candidates = 2
+
+[optimizer.general]
+num_keep = 10
+keep_style = "best"

@@ -13,7 +13,7 @@ ENV_LIB="${CONDA_PREFIX}/lib" LDFLAGS="-L${CONDA_PREFIX}/lib" LIBRARY_PATH="${CO
 
 pip install "LassoBench @ git+https://github.com/ksehic/LassoBench.git" --no-deps
 
-pip install ennbo --no-deps
+pip install ennbo==0.1.7 --no-deps
 cargo install kiss-ai
 ```
 
@@ -31,7 +31,7 @@ ENV_LIB="${CONDA_PREFIX}/lib" LDFLAGS="-L${CONDA_PREFIX}/lib" LIBRARY_PATH="${CO
 
 pip install "LassoBench @ git+https://github.com/ksehic/LassoBench.git" --no-deps
 
-pip install ennbo --no-deps
+pip install ennbo==0.1.7 --no-deps
 cargo install kiss-ai
 ```
 
@@ -45,4 +45,32 @@ pre-commit install
 
 ```bash
 pytest -sv tests
+```
+
+## RL runs
+
+```bash
+python -m rl.algos.runner --config experiments/configs/pendulum_ppo.toml
+python -m rl.algos.runner --config experiments/configs/pendulum_ppo.toml --seeds 1,2,3 --workers 3
+```
+
+You can also set this in the TOML:
+```toml
+[rl.run]
+seeds = [1, 2, 3]
+workers = 3
+```
+
+Checkpointing (optional):
+```toml
+[rl.ppo]
+checkpoint_interval = 10
+resume_from = "_tmp/pendulum_ppo/checkpoint_last.pt"
+```
+
+BO checkpoints (optional):
+```toml
+[experiment]
+checkpoint_every = 10
+resume = true
 ```

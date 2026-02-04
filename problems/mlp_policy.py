@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -10,29 +12,39 @@ class MLPPolicyFactory:
         self,
         hidden_sizes,
         *,
-        use_layer_norm=True,
+        flags=None,
         rnn_hidden_size=None,
-        use_prev_action=False,
-        use_phase_features=False,
         num_phase_harmonics=1,
     ):
         self._hidden_sizes = hidden_sizes
-        self._use_layer_norm = bool(use_layer_norm)
+        self._flags = _coerce_flags(flags)
         self._rnn_hidden_size = rnn_hidden_size
-        self._use_prev_action = bool(use_prev_action)
-        self._use_phase_features = bool(use_phase_features)
         self._num_phase_harmonics = int(num_phase_harmonics)
 
     def __call__(self, env_conf):
         return MLPPolicy(
             env_conf,
             self._hidden_sizes,
-            use_layer_norm=self._use_layer_norm,
+            flags=self._flags,
             rnn_hidden_size=self._rnn_hidden_size,
-            use_prev_action=self._use_prev_action,
-            use_phase_features=self._use_phase_features,
             num_phase_harmonics=self._num_phase_harmonics,
         )
+
+
+@dataclass(frozen=True)
+class MLPPolicyFlags:
+    use_layer_norm: bool = True
+    use_prev_action: bool = False
+    use_phase_features: bool = False
+    action_squash: bool = True
+
+
+def _coerce_flags(flags):
+    if flags is None:
+        return MLPPolicyFlags()
+    if isinstance(flags, MLPPolicyFlags):
+        return flags
+    raise TypeError(f"flags must be an MLPPolicyFlags instance, got {type(flags).__name__}")
 
 
 class MLPPolicy(PolicyParamsMixin, nn.Module):
@@ -41,21 +53,18 @@ class MLPPolicy(PolicyParamsMixin, nn.Module):
         env_conf,
         hidden_sizes,
         *,
-        use_layer_norm=True,
+        flags=None,
         rnn_hidden_size=None,
-        use_prev_action=False,
-        use_phase_features=False,
         num_phase_harmonics=1,
     ):
         super().__init__()
         self.problem_seed = env_conf.problem_seed
         self._env_conf = env_conf
+        flags = _coerce_flags(flags)
         num_state, num_action = self._init_flags(
             env_conf,
-            use_layer_norm=use_layer_norm,
+            flags=flags,
             rnn_hidden_size=rnn_hidden_size,
-            use_prev_action=use_prev_action,
-            use_phase_features=use_phase_features,
             num_phase_harmonics=num_phase_harmonics,
         )
         self._build_network(num_state, num_action, hidden_sizes)
@@ -66,21 +75,20 @@ class MLPPolicy(PolicyParamsMixin, nn.Module):
         self,
         env_conf,
         *,
-        use_layer_norm,
+        flags,
         rnn_hidden_size,
-        use_prev_action,
-        use_phase_features,
         num_phase_harmonics,
     ):
         num_state = int(env_conf.gym_conf.state_space.shape[0])
         num_action = int(env_conf.action_space.shape[0])
         self._const_scale = 0.5
-        self._use_layer_norm = bool(use_layer_norm)
+        self._use_layer_norm = bool(flags.use_layer_norm)
         self._rnn_hidden_size = None if rnn_hidden_size is None else int(rnn_hidden_size)
         if self._rnn_hidden_size is not None:
             assert self._rnn_hidden_size >= 1
-        self._use_prev_action = bool(use_prev_action)
-        self._use_phase_features = bool(use_phase_features)
+        self._use_prev_action = bool(flags.use_prev_action)
+        self._use_phase_features = bool(flags.use_phase_features)
+        self._action_squash = bool(flags.action_squash)
         self._num_phase_harmonics = int(num_phase_harmonics)
         assert self._num_phase_harmonics >= 1
         self.in_norm = nn.LayerNorm(num_state, elementwise_affine=True) if self._use_layer_norm else None
@@ -94,7 +102,8 @@ class MLPPolicy(PolicyParamsMixin, nn.Module):
                 layers.append(nn.Linear(dims[i], dims[i + 1]))
                 layers.append(nn.SiLU())
             layers.append(nn.Linear(dims[-2], dims[-1]))
-            layers.append(nn.Tanh())
+            if self._action_squash:
+                layers.append(nn.Tanh())
             self.model = nn.Sequential(*layers)
             self.embed = None
             self.rnn = None
@@ -116,7 +125,10 @@ class MLPPolicy(PolicyParamsMixin, nn.Module):
         feat_layers.append(nn.SiLU())
         self.embed = nn.Sequential(*feat_layers)
         self.rnn = nn.GRUCell(self._rnn_hidden_size, self._rnn_hidden_size)
-        self.head = nn.Sequential(nn.Linear(self._rnn_hidden_size, num_action), nn.Tanh())
+        head_layers = [nn.Linear(self._rnn_hidden_size, num_action)]
+        if self._action_squash:
+            head_layers.append(nn.Tanh())
+        self.head = nn.Sequential(*head_layers)
         self.reset_state()
 
     def _cache_flat_params_init(self):

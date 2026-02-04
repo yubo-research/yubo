@@ -1,0 +1,21 @@
+[experiment]
+exp_dir = "_tmp/halfcheetah_nn_parallel"
+env_tag = "cheetah-mlp"
+num_arms = 10
+num_rounds = 10000
+num_reps = 10
+num_denoise = 1
+num_denoise_passive = 1
+b_trace = true
+run_workers = 2
+# rollout_workers = 10
+
+[optimizer]
+name = "turbo-enn-fit"
+
+[optimizer.params]
+acq_type = "ucb"
+
+[optimizer.general]
+num_keep = 10
+keep_style = "best"

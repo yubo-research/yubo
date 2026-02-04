@@ -4,12 +4,13 @@ scipy==1.15.3
 pytest==8.3.4
 ipykernel==6.29.5
 
-gymnasium==1.2.0
+gymnasium==1.2.3
 cma==4.0.0
 mujoco==3.3.3
 optuna==4.0.0
-gymnasium[box2d]
-gymnasium[mujoco]
+gymnasium[box2d]==1.2.3
+gymnasium[mujoco]==1.2.3
+torchrl==0.11.0
 nds==0.4.3
 matplotlib==3.10.8
 pybind11==3.0.1

@@ -8,7 +8,7 @@ import problems.other as other
 import problems.pure_functions as pure_functions
 from problems.bipedal_walker_policy import BipedalWalkerPolicy
 from problems.linear_policy import LinearPolicy
-from problems.mlp_policy import MLPPolicyFactory
+from problems.mlp_policy import MLPPolicyFactory, MLPPolicyFlags
 from problems.noise_maker import NoiseMaker
 from problems.pure_function_policy import PureFunctionPolicy
 from problems.turbo_lunar_policy import TurboLunarPolicy
@@ -42,6 +42,8 @@ def get_env_conf(tag, problem_seed=None, noise_level=None, noise_seed_0=None):
 
 
 def default_policy(env_conf):
+    if env_conf.gym_conf is not None:
+        env_conf.ensure_spaces()
     if env_conf.policy_class is not None:
         return env_conf.policy_class(env_conf)
     elif env_conf.gym_conf is not None:
@@ -92,6 +94,8 @@ class EnvConf:
         return env
 
     def make(self, **kwargs):
+        if self.gym_conf:
+            self.ensure_spaces()
         env = self._make(**kwargs)
         if self.noise_level is not None:
             assert self.env_name[:2] in ["f:", "g:"], (
@@ -104,9 +108,22 @@ class EnvConf:
     def __post_init__(self):
         if not self.kwargs:
             self.kwargs = {}
-        env = self._make()
         if self.gym_conf:
-            self.gym_conf.state_space = env.observation_space
+            # Delay gym.make to avoid eagerly instantiating all envs at import time.
+            self.gym_conf.state_space = None
+            self.action_space = None
+            return
+        env = self._make()
+        self.action_space = env.action_space
+        env.close()
+
+    def ensure_spaces(self):
+        if not self.gym_conf:
+            return
+        if self.gym_conf.state_space is not None and self.action_space is not None:
+            return
+        env = self._make()
+        self.gym_conf.state_space = env.observation_space
         self.action_space = env.action_space
         env.close()
 
@@ -143,6 +160,15 @@ _gym_env_confs = {
     "reach": EnvConf("Reacher-v5", gym_conf=GymConf(max_steps=50)),
     # "push": EnvConf("Pusher-v4",  gym_conf=GymConf(max_steps=100)),
     "hop": _gym_conf("Hopper-v5"),
+    "cheetah": _gym_conf("HalfCheetah-v5"),
+    "cheetah-mlp": _gym_conf(
+        "HalfCheetah-v5",
+        policy_class=MLPPolicyFactory((32, 16)),
+    ),
+    "cheetah-mlp-raw": _gym_conf(
+        "HalfCheetah-v5",
+        policy_class=MLPPolicyFactory((32, 16), flags=MLPPolicyFlags(action_squash=False)),
+    ),
     # 6900
     "human": _gym_conf("Humanoid-v5"),
     # 130,000 - https://arxiv.org/html/2304.12778
@@ -176,7 +202,11 @@ _gym_env_confs = {
             max_steps=1600,
             num_frames_skip=100,
         ),
-        policy_class=MLPPolicyFactory((), rnn_hidden_size=4, use_layer_norm=True, use_prev_action=True),
+        policy_class=MLPPolicyFactory(
+            (),
+            rnn_hidden_size=4,
+            flags=MLPPolicyFlags(use_layer_norm=True, use_prev_action=True),
+        ),
     ),
     "bw-heur": _gym_conf(
         "BipedalWalker-v3",
