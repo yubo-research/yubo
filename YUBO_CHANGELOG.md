@@ -1,4 +1,4 @@
-# Yubo Branch Summary (ppo-constraint-fix)
+# Yubo Branch Summary 
 
 This doc is a concise snapshot of this branch and may change as the branch evolves.
 Scope: `yubo/` only.
