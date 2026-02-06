@@ -7,6 +7,12 @@ from pathlib import Path
 import click
 
 
+def _add_repo_root_to_syspath() -> None:
+    repo_root = Path(__file__).resolve().parents[1]
+    if str(repo_root) not in sys.path:
+        sys.path.insert(0, str(repo_root))
+
+
 def _find_experiments(results_dir: Path):
     for exp_dir in sorted(results_dir.iterdir()):
         if not exp_dir.is_dir():
@@ -69,6 +75,11 @@ def _resolve_exp_dirs(results_dir: Path, exp_hashes: tuple[str, ...]) -> list[Pa
 
 @click.group()
 def cli():
+    # Ensure this CLI is "integrated" into the repo's import graph for
+    # static analysis tools (and allow future internal imports).
+    _add_repo_root_to_syspath()
+    import ops.catalog  # noqa: F401
+
     pass
 
 
