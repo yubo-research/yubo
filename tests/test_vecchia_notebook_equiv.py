@@ -1,7 +1,10 @@
 import math
+import os
+import sys
 from dataclasses import dataclass
 
 import numpy as np
+import pytest
 import torch
 from botorch.generation import MaxPosteriorSampling
 from botorch.test_functions import Ackley
@@ -10,12 +13,19 @@ from gpytorch.constraints import Interval
 from gpytorch.kernels import MaternKernel, ScaleKernel
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.means import ZeroMean
+from torch.quasirandom import SobolEngine
+
+if sys.platform == "darwin" and os.environ.get("YUBO_ALLOW_PYVECCH_ON_DARWIN") not in {"1", "true", "TRUE"}:
+    pytest.skip(
+        "pyvecch/faiss can segfault on macOS; set YUBO_ALLOW_PYVECCH_ON_DARWIN=1 to force run",
+        allow_module_level=True,
+    )
+
 from pyvecch.input_transforms import Identity
 from pyvecch.models import RFVecchia
 from pyvecch.nbrs import ExactOracle
 from pyvecch.prediction import IndependentRF
 from pyvecch.training import fit_model
-from torch.quasirandom import SobolEngine
 
 
 @dataclass

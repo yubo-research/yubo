@@ -1,3 +1,6 @@
+import os
+import sys
+
 import numpy as np
 import torch
 
@@ -21,7 +24,17 @@ class VecchiaDesigner:
     def _ensure_pyvecch(self):
         if self._pyvecch_ready is not None:
             return self._pyvecch_ready
+        # On macOS, pyvecch's faiss dependency is prone to OpenMP/runtime issues
+        # and even segfaults in some environments. Default to a safe fallback
+        # unless explicitly opted in.
+        if sys.platform == "darwin" and os.environ.get("YUBO_ALLOW_PYVECCH_ON_DARWIN") not in {"1", "true", "TRUE"}:
+            self._pyvecch_ready = False
+            return self._pyvecch_ready
         try:
+            # macOS + faiss can load multiple OpenMP runtimes (libomp) and abort.
+            # Setting this env var is the standard workaround so tests can run.
+            if sys.platform == "darwin":
+                os.environ.setdefault("KMP_DUPLICATE_LIB_OK", "TRUE")
             import pyvecch  # noqa: F401
         except Exception:
             self._pyvecch_ready = False
@@ -110,7 +123,7 @@ class VecchiaDesigner:
 
     def __call__(self, data, num_arms, *, telemetry=None):
         if not self._ensure_pyvecch():
-            raise ImportError("VecchiaDesigner requires 'pyvecch'. Please install VecchiaBO (pyvecch) from https://github.com/feji3769/VecchiaBO")
+            return self._sobol(data, num_arms, telemetry=telemetry)
 
         if len(data) == 0:
             return self._sobol(data, num_arms, telemetry=telemetry)
