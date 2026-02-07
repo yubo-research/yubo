@@ -515,6 +515,28 @@ def _d_turbo_enn_f(ctx: _SimpleContext, opts: dict):
     )
 
 
+def _d_turbo_enn_f_p(ctx: _SimpleContext, opts: dict):
+    if opts:
+        keys = ", ".join(sorted(opts))
+        raise NoSuchDesignerError(f"Designer 'turbo-enn-f-p' does not support options (got: {keys}).")
+
+    def num_candidates(num_dim, num_arms):
+        return 100 * num_arms
+
+    TurboENNDesigner = _load_symbol("optimizer.turbo_enn_designer", "TurboENNDesigner")
+    return TurboENNDesigner(
+        ctx.policy,
+        turbo_mode="turbo-enn",
+        k=10,
+        num_keep=ctx.num_keep_val,
+        num_fit_samples=100,
+        num_fit_candidates=100,
+        acq_type="pareto",
+        num_candidates=num_candidates,
+        candidate_rv="uniform",
+    )
+
+
 def _d_morbo_enn_fit(ctx: _SimpleContext, opts: dict):
     acq_type = _require_str_in(
         opts,
@@ -644,6 +666,7 @@ _DESIGNER_DISPATCH = {name: partial(_no_opts, name, builder) for name, builder i
     "turbo-enn-sweep": _d_turbo_enn_sweep,
     "turbo-enn-fit": _d_turbo_enn_fit,
     "turbo-enn-f": _d_turbo_enn_f,
+    "turbo-enn-f-p": _d_turbo_enn_f_p,
     "morbo-enn-fit": _d_morbo_enn_fit,
     "sts-ar": _d_sts_ar,
 }
