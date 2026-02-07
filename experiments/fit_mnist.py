@@ -4,11 +4,10 @@ import time
 
 import torch
 import torch.nn as nn
+from problems.mnist_classifier import MnistClassifier
 from torch.optim.lr_scheduler import OneCycleLR
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
-
-from problems.mnist_classifier import MnistClassifier
 
 TIMEOUT_SECONDS = 3 * 60
 
@@ -66,6 +65,9 @@ def fit_mnist(*, num_epochs=3, batch_size=1024, lr=8e-3, weight_decay=1e-2, devi
         if time.monotonic() >= deadline:
             print(f"timeout after {timeout_seconds}s (after epoch {epoch})")
             break
+
+    accuracy = _eval_accuracy(model, test_loader, device)
+    print(f"final test_acc={accuracy:.4f}")
 
     return model
 
