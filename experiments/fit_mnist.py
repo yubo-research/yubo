@@ -4,10 +4,11 @@ import time
 
 import torch
 import torch.nn as nn
-from problems.mnist_classifier import MnistClassifier
 from torch.optim.lr_scheduler import OneCycleLR
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
+
+from problems.mnist_classifier import MnistClassifier
 
 TIMEOUT_SECONDS = 3 * 60
 
@@ -39,7 +40,7 @@ def _eval_accuracy(model, test_loader, device):
     return correct / len(test_loader.dataset)
 
 
-def fit_mnist(*, num_epochs=3, batch_size=1024, lr=8e-3, weight_decay=1e-2, device=None, timeout_seconds=TIMEOUT_SECONDS):
+def fit_mnist(*, num_epochs=4, batch_size=1024, lr=1.2e-2, weight_decay=1e-2, device=None, timeout_seconds=TIMEOUT_SECONDS):
     if device is None:
         device = "cuda" if torch.cuda.is_available() else "cpu"
 
