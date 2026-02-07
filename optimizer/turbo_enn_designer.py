@@ -102,6 +102,8 @@ class TurboENNDesigner:
 
     def _parse_candidate_rv(self) -> CandidateRV:
         if self._candidate_rv is None:
+            if self._policy.num_params() >= 10000:
+                return CandidateRV.UNIFORM
             return CandidateRV.SOBOL
         candidate_rv = self._candidate_rv.lower()
         if candidate_rv == "gpu_uniform":
@@ -147,18 +149,14 @@ class TurboENNDesigner:
                     num_fit_candidates=self._num_fit_candidates,
                 ),
             )
-            candidates = None
-            if num_candidates is not None or self._candidate_rv is not None:
-                if num_candidates is None:
-                    candidates = CandidateGenConfig(candidate_rv=candidate_rv, raasp_driver=RAASPDriver.FAST)
-                else:
-                    candidates = CandidateGenConfig(
-                        candidate_rv=candidate_rv,
-                        num_candidates=num_candidates,
-                        raasp_driver=RAASPDriver.FAST,
-                    )
+            if num_candidates is None:
+                candidates = CandidateGenConfig(candidate_rv=candidate_rv, raasp_driver=RAASPDriver.FAST)
             else:
-                candidates = CandidateGenConfig(raasp_driver=RAASPDriver.FAST)
+                candidates = CandidateGenConfig(
+                    candidate_rv=candidate_rv,
+                    num_candidates=num_candidates,
+                    raasp_driver=RAASPDriver.FAST,
+                )
             return turbo_enn_config(
                 enn=enn,
                 trust_region=trust_region,

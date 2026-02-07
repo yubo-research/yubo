@@ -165,7 +165,11 @@ def sample_1(run_config: RunConfig):
             )
     collector_trace("DONE")
 
-    return _SampleResult(collector_log=collector_log, collector_trace=collector_trace, trace_records=trace_records)
+    return _SampleResult(
+        collector_log=collector_log,
+        collector_trace=collector_trace,
+        trace_records=trace_records,
+    )
 
 
 def post_process_stdout(

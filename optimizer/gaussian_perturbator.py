@@ -26,10 +26,14 @@ class GaussianPerturbator:
         for param, n in zip(self._module.parameters(), self._generate_noise(), strict=True):
             param.data.add_(n)
 
+    def accept(self) -> None:
+        assert self._perturbed, "Not perturbed"
+        self._perturbed = False
+        self._seed = None
+        self._sigma = None
+
     def unperturb(self) -> None:
         assert self._perturbed, "Not perturbed"
         for param, n in zip(self._module.parameters(), self._generate_noise(), strict=True):
             param.data.sub_(n)
-        self._perturbed = False
-        self._seed = None
-        self._sigma = None
+        self.accept()

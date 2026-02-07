@@ -22,4 +22,8 @@ def make(env_name, problem_seed):
         from problems.rcv1_env import Rcv1Env
 
         return Rcv1Env(seed=problem_seed)
+    elif env_name == "mnist":
+        from problems.mnist_env import MnistEnv
+
+        return MnistEnv()
     assert False, ("Unknown env_name", env_name)

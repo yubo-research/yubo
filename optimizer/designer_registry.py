@@ -64,7 +64,12 @@ def _require_str_in(opts: dict, key: str, allowed: set[str], *, example: str) ->
 
 def _turbo_ref(ctx: _SimpleContext, *, ard: bool, surrogate_type: str = "gp"):
     TuRBORefDesigner = _load_symbol("optimizer.turbo_ref_designer", "TuRBORefDesigner")
-    return TuRBORefDesigner(ctx.policy, num_init=ctx.init_yubo_default, ard=ard, surrogate_type=surrogate_type)
+    return TuRBORefDesigner(
+        ctx.policy,
+        num_init=ctx.init_yubo_default,
+        ard=ard,
+        surrogate_type=surrogate_type,
+    )
 
 
 def _turbo_enn(ctx: _SimpleContext, **kw):
@@ -87,9 +92,24 @@ def _build_maximin(ctx: _SimpleContext, *, toroidal: bool):
     return ctx.bt(lambda m: AcqMinDist(m, toroidal=toroidal))
 
 
-def _build_bt_acq(ctx: _SimpleContext, module: str, name: str, *, acq_kwargs=None, init_sobol=1, opt_sequential=False, start_at_max=False):
+def _build_bt_acq(
+    ctx: _SimpleContext,
+    module: str,
+    name: str,
+    *,
+    acq_kwargs=None,
+    init_sobol=1,
+    opt_sequential=False,
+    start_at_max=False,
+):
     Acq = _load_symbol(module, name)
-    return ctx.bt(Acq, acq_kwargs=acq_kwargs, init_sobol=init_sobol, opt_sequential=opt_sequential, start_at_max=start_at_max)
+    return ctx.bt(
+        Acq,
+        acq_kwargs=acq_kwargs,
+        init_sobol=init_sobol,
+        opt_sequential=opt_sequential,
+        start_at_max=start_at_max,
+    )
 
 
 def _build_turbo_ref(ctx: _SimpleContext, kind: str):
@@ -104,28 +124,81 @@ def _build_turbo_enn(ctx: _SimpleContext, kind: str):
     if kind == "turbo-enn":
         return _turbo_enn(ctx, turbo_mode="turbo-enn", k=10, num_keep=ctx.num_keep_val)
     if kind == "turbo-enn-p":
-        return _turbo_enn(ctx, turbo_mode="turbo-enn", k=10, num_keep=ctx.num_keep_val, num_fit_samples=None, num_fit_candidates=None, acq_type="pareto")
+        return _turbo_enn(
+            ctx,
+            turbo_mode="turbo-enn",
+            k=10,
+            num_keep=ctx.num_keep_val,
+            num_fit_samples=None,
+            num_fit_candidates=None,
+            acq_type="pareto",
+        )
+    if kind == "turbo-enn-fit-ucb":
+        return _turbo_enn(
+            ctx,
+            turbo_mode="turbo-enn",
+            k=10,
+            num_keep=ctx.num_keep_val,
+            num_fit_samples=100,
+            num_fit_candidates=100,
+            acq_type="ucb",
+        )
     if kind == "turbo-zero":
         return _turbo_enn(ctx, turbo_mode="turbo-zero", num_fit_samples=None, num_fit_candidates=None)
     if kind == "turbo-one":
-        return _turbo_enn(ctx, turbo_mode="turbo-one", num_init=ctx.init_yubo_default, num_fit_samples=None, num_fit_candidates=None)
+        return _turbo_enn(
+            ctx,
+            turbo_mode="turbo-one",
+            num_init=ctx.init_yubo_default,
+            num_fit_samples=None,
+            num_fit_candidates=None,
+        )
     if kind == "lhd_only":
         return _turbo_enn(ctx, turbo_mode="lhd-only", num_fit_samples=None, num_fit_candidates=None)
     if kind == "morbo-zero":
-        return _turbo_enn(ctx, turbo_mode="turbo-zero", tr_type="morbo", num_fit_samples=None, num_fit_candidates=None)
+        return _turbo_enn(
+            ctx,
+            turbo_mode="turbo-zero",
+            tr_type="morbo",
+            num_fit_samples=None,
+            num_fit_candidates=None,
+        )
     if kind == "morbo-one":
-        return _turbo_enn(ctx, turbo_mode="turbo-one", num_init=ctx.init_yubo_default, tr_type="morbo", num_fit_samples=None, num_fit_candidates=None)
+        return _turbo_enn(
+            ctx,
+            turbo_mode="turbo-one",
+            num_init=ctx.init_yubo_default,
+            tr_type="morbo",
+            num_fit_samples=None,
+            num_fit_candidates=None,
+        )
     return _turbo_enn(ctx, turbo_mode="turbo-enn", k=10, num_keep=ctx.num_keep_val, tr_type="morbo")
 
 
 def _build_mts(ctx: _SimpleContext, kind: str):
     MTSDesigner = _load_symbol("optimizer.mts_designer", "MTSDesigner")
     if kind == "mts":
-        return MTSDesigner(ctx.policy, keep_style=ctx.keep_style, num_keep=ctx.num_keep, init_style="find")
+        return MTSDesigner(
+            ctx.policy,
+            keep_style=ctx.keep_style,
+            num_keep=ctx.num_keep,
+            init_style="find",
+        )
     if kind == "mts-stagger":
-        return MTSDesigner(ctx.policy, keep_style=ctx.keep_style, num_keep=ctx.num_keep, init_style="find", use_stagger=True)
+        return MTSDesigner(
+            ctx.policy,
+            keep_style=ctx.keep_style,
+            num_keep=ctx.num_keep,
+            init_style="find",
+            use_stagger=True,
+        )
     if kind == "mts-ts":
-        return MTSDesigner(ctx.policy, keep_style=ctx.keep_style, num_keep=ctx.num_keep, init_style="ts")
+        return MTSDesigner(
+            ctx.policy,
+            keep_style=ctx.keep_style,
+            num_keep=ctx.num_keep,
+            init_style="ts",
+        )
     return MTSDesigner(ctx.policy, keep_style=ctx.keep_style, num_keep=ctx.num_keep, init_style="meas")
 
 
@@ -136,13 +209,43 @@ def _build_mtv_family(ctx: _SimpleContext, kind: str):
         "mtv-sts": {"sample_type": "sts", "num_refinements": 30},
         "mtv-mts": {"sample_type": "mts", "num_refinements": 30},
         "mtv-sts2": {"sample_type": "sts2", "num_refinements": 30},
-        "mtv-sts-t": {"sample_type": "sts", "num_refinements": 30, "x_max_type": "ts_meas"},
+        "mtv-sts-t": {
+            "sample_type": "sts",
+            "num_refinements": 30,
+            "x_max_type": "ts_meas",
+        },
         "sts": {"ts_only": True, "sample_type": "sts", "num_refinements": 30},
-        "sts-ch": {"ts_only": True, "ts_chain": True, "sample_type": "sts", "num_refinements": 30},
-        "sts-ns": {"ts_only": True, "sample_type": "sts", "num_refinements": 30, "no_stagger": True},
-        "sts-ui": {"ts_only": True, "sample_type": "sts", "num_refinements": 30, "no_stagger": False, "x_max_type": "rand"},
-        "sts-t": {"ts_only": True, "sample_type": "sts", "num_refinements": 30, "x_max_type": "ts_meas"},
-        "sts-m": {"ts_only": True, "sample_type": "sts", "num_refinements": 30, "x_max_type": "meas"},
+        "sts-ch": {
+            "ts_only": True,
+            "ts_chain": True,
+            "sample_type": "sts",
+            "num_refinements": 30,
+        },
+        "sts-ns": {
+            "ts_only": True,
+            "sample_type": "sts",
+            "num_refinements": 30,
+            "no_stagger": True,
+        },
+        "sts-ui": {
+            "ts_only": True,
+            "sample_type": "sts",
+            "num_refinements": 30,
+            "no_stagger": False,
+            "x_max_type": "rand",
+        },
+        "sts-t": {
+            "ts_only": True,
+            "sample_type": "sts",
+            "num_refinements": 30,
+            "x_max_type": "ts_meas",
+        },
+        "sts-m": {
+            "ts_only": True,
+            "sample_type": "sts",
+            "num_refinements": 30,
+            "x_max_type": "meas",
+        },
         "sts2": {"ts_only": True, "sample_type": "sts2", "num_refinements": 30},
     }
     base = base_kwargs_by_kind.get(kind)
@@ -156,19 +259,38 @@ def _build_pathwise(ctx: _SimpleContext, kind: str):
     if kind == "path":
         return ctx.bt(PathwiseThompsonSampling, init_sobol=ctx.init_yubo_default)
     if kind == "path-b":
-        return ctx.bt(PathwiseThompsonSampling, init_sobol=ctx.init_yubo_default, num_restarts=20, raw_samples=100)
+        return ctx.bt(
+            PathwiseThompsonSampling,
+            init_sobol=ctx.init_yubo_default,
+            num_restarts=20,
+            raw_samples=100,
+        )
     return ctx.bt(PathwiseThompsonSampling, init_sobol=ctx.init_yubo_default, start_at_max=True)
 
 
 def _build_sobol_mc(ctx: _SimpleContext, kind: str):
     if kind == "sobol_ucb":
-        return _build_bt_acq(ctx, "botorch.acquisition.monte_carlo", "qUpperConfidenceBound", init_sobol=ctx.init_ax_default, acq_kwargs={"beta": 1})
+        return _build_bt_acq(
+            ctx,
+            "botorch.acquisition.monte_carlo",
+            "qUpperConfidenceBound",
+            init_sobol=ctx.init_ax_default,
+            acq_kwargs={"beta": 1},
+        )
     if kind == "sobol_ei":
         return _build_bt_acq(
-            ctx, "botorch.acquisition.monte_carlo", "qNoisyExpectedImprovement", init_sobol=ctx.init_ax_default, acq_kwargs={"X_baseline": None}
+            ctx,
+            "botorch.acquisition.monte_carlo",
+            "qNoisyExpectedImprovement",
+            init_sobol=ctx.init_ax_default,
+            acq_kwargs={"X_baseline": None},
         )
     return _build_bt_acq(
-        ctx, "botorch.acquisition.max_value_entropy_search", "qLowerBoundMaxValueEntropy", init_sobol=ctx.init_ax_default, acq_kwargs={"candidate_set": None}
+        ctx,
+        "botorch.acquisition.max_value_entropy_search",
+        "qLowerBoundMaxValueEntropy",
+        init_sobol=ctx.init_ax_default,
+        acq_kwargs={"candidate_set": None},
     )
 
 
@@ -186,14 +308,43 @@ _SIMPLE_BUILDERS = {
     "maximin-toroidal": partial(_build_maximin, toroidal=True),
     "variance": partial(_build_bt_acq, module="acq.acq_var", name="AcqVar"),
     "btsobol": partial(_build_bt_acq, module="acq.acq_sobol", name="AcqSobol"),
-    "ts": partial(_build_bt_acq, module="acq.acq_ts", name="AcqTS", acq_kwargs={"sampler": "cholesky", "num_candidates": 1000}),
-    "ts-10000": partial(_build_bt_acq, module="acq.acq_ts", name="AcqTS", acq_kwargs={"sampler": "lanczos", "num_candidates": 10000}),
+    "ts": partial(
+        _build_bt_acq,
+        module="acq.acq_ts",
+        name="AcqTS",
+        acq_kwargs={"sampler": "cholesky", "num_candidates": 1000},
+    ),
+    "ts-10000": partial(
+        _build_bt_acq,
+        module="acq.acq_ts",
+        name="AcqTS",
+        acq_kwargs={"sampler": "lanczos", "num_candidates": 10000},
+    ),
     "sr": partial(_build_bt_acq, module="botorch.acquisition.monte_carlo", name="qSimpleRegret"),
-    "ucb": partial(_build_bt_acq, module="botorch.acquisition.monte_carlo", name="qUpperConfidenceBound", acq_kwargs={"beta": 1}),
-    "ei": partial(_build_bt_acq, module="botorch.acquisition.monte_carlo", name="qNoisyExpectedImprovement", acq_kwargs={"X_baseline": None}),
-    "lei": partial(_build_bt_acq, module="botorch.acquisition.logei", name="qLogNoisyExpectedImprovement", acq_kwargs={"X_baseline": None}),
+    "ucb": partial(
+        _build_bt_acq,
+        module="botorch.acquisition.monte_carlo",
+        name="qUpperConfidenceBound",
+        acq_kwargs={"beta": 1},
+    ),
+    "ei": partial(
+        _build_bt_acq,
+        module="botorch.acquisition.monte_carlo",
+        name="qNoisyExpectedImprovement",
+        acq_kwargs={"X_baseline": None},
+    ),
+    "lei": partial(
+        _build_bt_acq,
+        module="botorch.acquisition.logei",
+        name="qLogNoisyExpectedImprovement",
+        acq_kwargs={"X_baseline": None},
+    ),
     "lei-m": partial(
-        _build_bt_acq, module="botorch.acquisition.logei", name="qLogNoisyExpectedImprovement", acq_kwargs={"X_baseline": None}, start_at_max=True
+        _build_bt_acq,
+        module="botorch.acquisition.logei",
+        name="qLogNoisyExpectedImprovement",
+        acq_kwargs={"X_baseline": None},
+        start_at_max=True,
     ),
     "gibbon": partial(
         _build_bt_acq,
@@ -214,6 +365,7 @@ _SIMPLE_BUILDERS = {
     "turbo-0": partial(_build_turbo_ref, kind="turbo-0"),
     "turbo-enn": partial(_build_turbo_enn, kind="turbo-enn"),
     "turbo-enn-p": partial(_build_turbo_enn, kind="turbo-enn-p"),
+    "turbo-enn-fit-ucb": partial(_build_turbo_enn, kind="turbo-enn-fit-ucb"),
     "turbo-zero": partial(_build_turbo_enn, kind="turbo-zero"),
     "turbo-one": partial(_build_turbo_enn, kind="turbo-one"),
     "lhd_only": partial(_build_turbo_enn, kind="lhd_only"),
@@ -251,38 +403,93 @@ _SIMPLE_DISPATCH = {k: v for k, v in _SIMPLE_BUILDERS.items()}
 
 def _d_ts_sweep(ctx: _SimpleContext, opts: dict):
     num_candidates = _require_int(opts, "num_candidates", example="ts_sweep/num_candidates=10000")
-    return _build_bt_acq(ctx, "acq.acq_ts", "AcqTS", acq_kwargs={"sampler": "lanczos", "num_candidates": num_candidates})
+    return _build_bt_acq(
+        ctx,
+        "acq.acq_ts",
+        "AcqTS",
+        acq_kwargs={"sampler": "lanczos", "num_candidates": num_candidates},
+    )
 
 
 def _d_rff(ctx: _SimpleContext, opts: dict):
     num_candidates = _require_int(opts, "num_candidates", example="rff/num_candidates=10000")
-    return _build_bt_acq(ctx, "acq.acq_ts", "AcqTS", acq_kwargs={"sampler": "rff", "num_candidates": num_candidates})
+    return _build_bt_acq(
+        ctx,
+        "acq.acq_ts",
+        "AcqTS",
+        acq_kwargs={"sampler": "rff", "num_candidates": num_candidates},
+    )
 
 
 def _d_pss_sweep_kmcmc(ctx: _SimpleContext, opts: dict):
     k_mcmc = _require_int(opts, "k_mcmc", example="pss_sweep_kmcmc/k_mcmc=8")
-    return _mtv(ctx, acq_kwargs={"ts_only": True, "num_X_samples": ctx.default_num_X_samples, "sample_type": "pss", "k_mcmc": k_mcmc})
+    return _mtv(
+        ctx,
+        acq_kwargs={
+            "ts_only": True,
+            "num_X_samples": ctx.default_num_X_samples,
+            "sample_type": "pss",
+            "k_mcmc": k_mcmc,
+        },
+    )
 
 
 def _d_pss_sweep_num_mcmc(ctx: _SimpleContext, opts: dict):
     num_mcmc = _require_int(opts, "num_mcmc", example="pss_sweep_num_mcmc/num_mcmc=16")
-    return _mtv(ctx, acq_kwargs={"ts_only": True, "num_X_samples": ctx.default_num_X_samples, "sample_type": "pss", "k_mcmc": None, "num_mcmc": num_mcmc})
+    return _mtv(
+        ctx,
+        acq_kwargs={
+            "ts_only": True,
+            "num_X_samples": ctx.default_num_X_samples,
+            "sample_type": "pss",
+            "k_mcmc": None,
+            "num_mcmc": num_mcmc,
+        },
+    )
 
 
 def _d_sts_sweep(ctx: _SimpleContext, opts: dict):
     num_refinements = _require_int(opts, "num_refinements", example="sts_sweep/num_refinements=30")
-    return _mtv(ctx, acq_kwargs={"ts_only": True, "sample_type": "sts", "num_X_samples": ctx.default_num_X_samples, "num_refinements": num_refinements})
+    return _mtv(
+        ctx,
+        acq_kwargs={
+            "ts_only": True,
+            "sample_type": "sts",
+            "num_X_samples": ctx.default_num_X_samples,
+            "num_refinements": num_refinements,
+        },
+    )
 
 
 def _d_turbo_enn_sweep(ctx: _SimpleContext, opts: dict):
     k = _require_int(opts, "k", example="turbo-enn-sweep/k=10")
-    return _turbo_enn(ctx, turbo_mode="turbo-enn", k=k, num_keep=None, num_fit_samples=None, num_fit_candidates=None, acq_type="pareto")
+    return _turbo_enn(
+        ctx,
+        turbo_mode="turbo-enn",
+        k=k,
+        num_keep=None,
+        num_fit_samples=None,
+        num_fit_candidates=None,
+        acq_type="pareto",
+    )
 
 
 def _d_turbo_enn_fit(ctx: _SimpleContext, opts: dict):
-    acq_type = _require_str_in(opts, "acq_type", {"pareto", "thompson", "ucb"}, example="turbo-enn-fit/acq_type=ucb")
+    acq_type = _require_str_in(
+        opts,
+        "acq_type",
+        {"pareto", "thompson", "ucb"},
+        example="turbo-enn-fit/acq_type=ucb",
+    )
     return _turbo_enn(
-        ctx, turbo_mode="turbo-enn", k=10, num_keep=ctx.num_keep_val, num_fit_samples=100, num_fit_candidates=100, acq_type=acq_type, tr_type=None
+        ctx,
+        turbo_mode="turbo-enn",
+        k=10,
+        num_keep=ctx.num_keep_val,
+        num_fit_samples=100,
+        num_fit_candidates=100,
+        acq_type=acq_type,
+        tr_type=None,
     )
 
 
@@ -309,7 +516,12 @@ def _d_turbo_enn_f(ctx: _SimpleContext, opts: dict):
 
 
 def _d_morbo_enn_fit(ctx: _SimpleContext, opts: dict):
-    acq_type = _require_str_in(opts, "acq_type", {"pareto", "thompson", "ucb"}, example="morbo-enn-fit/acq_type=ucb")
+    acq_type = _require_str_in(
+        opts,
+        "acq_type",
+        {"pareto", "thompson", "ucb"},
+        example="morbo-enn-fit/acq_type=ucb",
+    )
     return _turbo_enn(
         ctx,
         turbo_mode="turbo-enn",
@@ -325,7 +537,14 @@ def _d_morbo_enn_fit(ctx: _SimpleContext, opts: dict):
 def _d_sts_ar(ctx: _SimpleContext, opts: dict):
     num_acc_rej = _require_int(opts, "num_acc_rej", example="sts-ar/num_acc_rej=10")
     return _mtv(
-        ctx, acq_kwargs={"ts_only": True, "sample_type": "sts", "num_X_samples": ctx.default_num_X_samples, "num_refinements": 0, "num_acc_rej": num_acc_rej}
+        ctx,
+        acq_kwargs={
+            "ts_only": True,
+            "sample_type": "sts",
+            "num_X_samples": ctx.default_num_X_samples,
+            "num_refinements": 0,
+            "num_acc_rej": num_acc_rej,
+        },
     )
 
 
@@ -341,12 +560,20 @@ _DESIGNER_OPTION_SPECS: dict[str, list[DesignerOptionSpec]] = {
     ],
     "rff": [
         DesignerOptionSpec(
-            name="num_candidates", required=True, value_type="int", description="Number of TS candidates (RFF sampler).", example="rff/num_candidates=10000"
+            name="num_candidates",
+            required=True,
+            value_type="int",
+            description="Number of TS candidates (RFF sampler).",
+            example="rff/num_candidates=10000",
         )
     ],
     "pss_sweep_kmcmc": [
         DesignerOptionSpec(
-            name="k_mcmc", required=True, value_type="int", description="Number of MCMC chains per refinement (PSS).", example="pss_sweep_kmcmc/k_mcmc=8"
+            name="k_mcmc",
+            required=True,
+            value_type="int",
+            description="Number of MCMC chains per refinement (PSS).",
+            example="pss_sweep_kmcmc/k_mcmc=8",
         )
     ],
     "pss_sweep_num_mcmc": [
@@ -360,11 +587,21 @@ _DESIGNER_OPTION_SPECS: dict[str, list[DesignerOptionSpec]] = {
     ],
     "sts_sweep": [
         DesignerOptionSpec(
-            name="num_refinements", required=True, value_type="int", description="Number of STS refinements.", example="sts_sweep/num_refinements=30"
+            name="num_refinements",
+            required=True,
+            value_type="int",
+            description="Number of STS refinements.",
+            example="sts_sweep/num_refinements=30",
         )
     ],
     "turbo-enn-sweep": [
-        DesignerOptionSpec(name="k", required=True, value_type="int", description="Ensemble size for TuRBO-ENN sweep.", example="turbo-enn-sweep/k=10")
+        DesignerOptionSpec(
+            name="k",
+            required=True,
+            value_type="int",
+            description="Ensemble size for TuRBO-ENN sweep.",
+            example="turbo-enn-sweep/k=10",
+        )
     ],
     "turbo-enn-fit": [
         DesignerOptionSpec(
@@ -387,7 +624,13 @@ _DESIGNER_OPTION_SPECS: dict[str, list[DesignerOptionSpec]] = {
         )
     ],
     "sts-ar": [
-        DesignerOptionSpec(name="num_acc_rej", required=True, value_type="int", description="Number of accept/reject steps.", example="sts-ar/num_acc_rej=10")
+        DesignerOptionSpec(
+            name="num_acc_rej",
+            required=True,
+            value_type="int",
+            description="Number of accept/reject steps.",
+            example="sts-ar/num_acc_rej=10",
+        )
     ],
 }
 

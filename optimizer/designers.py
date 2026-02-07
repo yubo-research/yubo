@@ -1,6 +1,16 @@
 from .designer_errors import NoSuchDesignerError
-from .designer_registry import _DESIGNER_DISPATCH, _DESIGNER_OPTION_SPECS, _SIMPLE_DISPATCH, _SimpleContext
-from .designer_spec import DesignerCatalogEntry, DesignerOptionSpec, DesignerSpec, parse_designer_spec
+from .designer_registry import (
+    _DESIGNER_DISPATCH,
+    _DESIGNER_OPTION_SPECS,
+    _SIMPLE_DISPATCH,
+    _SimpleContext,
+)
+from .designer_spec import (
+    DesignerCatalogEntry,
+    DesignerOptionSpec,
+    DesignerSpec,
+    parse_designer_spec,
+)
 
 __all__ = [
     "Designers",

@@ -15,7 +15,11 @@ from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.means import ZeroMean
 from torch.quasirandom import SobolEngine
 
-if sys.platform == "darwin" and os.environ.get("YUBO_ALLOW_PYVECCH_ON_DARWIN") not in {"1", "true", "TRUE"}:
+if sys.platform == "darwin" and os.environ.get("YUBO_ALLOW_PYVECCH_ON_DARWIN") not in {
+    "1",
+    "true",
+    "TRUE",
+}:
     pytest.skip(
         "pyvecch/faiss can segfault on macOS; set YUBO_ALLOW_PYVECCH_ON_DARWIN=1 to force run",
         allow_module_level=True,

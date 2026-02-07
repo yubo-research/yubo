@@ -40,7 +40,15 @@ def _eval_accuracy(model, test_loader, device):
     return correct / len(test_loader.dataset)
 
 
-def fit_mnist(*, num_epochs=4, batch_size=1024, lr=1.2e-2, weight_decay=1e-2, device=None, timeout_seconds=TIMEOUT_SECONDS):
+def fit_mnist(
+    *,
+    num_epochs=4,
+    batch_size=1024,
+    lr=1.2e-2,
+    weight_decay=1e-2,
+    device=None,
+    timeout_seconds=TIMEOUT_SECONDS,
+):
     if device is None:
         device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -57,7 +65,15 @@ def fit_mnist(*, num_epochs=4, batch_size=1024, lr=1.2e-2, weight_decay=1e-2, de
 
     deadline = time.monotonic() + timeout_seconds
     for epoch in range(1, num_epochs + 1):
-        train_loss = _train_one_epoch(model, train_loader, optimizer, loss_fn, device, deadline=deadline, scheduler=scheduler)
+        train_loss = _train_one_epoch(
+            model,
+            train_loader,
+            optimizer,
+            loss_fn,
+            device,
+            deadline=deadline,
+            scheduler=scheduler,
+        )
         if train_loss is None:
             print(f"timeout after {timeout_seconds}s (during epoch {epoch})")
             break

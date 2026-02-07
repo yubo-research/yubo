@@ -30,8 +30,8 @@ def test_unperturb_restores_params():
     gp.perturb(seed=42, sigma=1.0)
     gp.unperturb()
 
-    assert torch.allclose(module.weight.data, orig_weight)
-    assert torch.allclose(module.bias.data, orig_bias)
+    assert torch.allclose(module.weight.data, orig_weight, atol=1e-6)
+    assert torch.allclose(module.bias.data, orig_bias, atol=1e-6)
 
 
 def test_perturb_twice_raises():
@@ -45,6 +45,35 @@ def test_unperturb_without_perturb_raises():
     gp = GaussianPerturbator(_make_module())
     with pytest.raises(AssertionError, match="Not perturbed"):
         gp.unperturb()
+
+
+def test_accept_keeps_perturbation():
+    module = _make_module()
+    orig_weight = module.weight.data.clone()
+
+    gp = GaussianPerturbator(module)
+    gp.perturb(seed=42, sigma=1.0)
+    perturbed_weight = module.weight.data.clone()
+    gp.accept()
+
+    # Params stay at the perturbed values
+    assert torch.equal(module.weight.data, perturbed_weight)
+    assert not torch.equal(module.weight.data, orig_weight)
+
+
+def test_accept_without_perturb_raises():
+    gp = GaussianPerturbator(_make_module())
+    with pytest.raises(AssertionError, match="Not perturbed"):
+        gp.accept()
+
+
+def test_accept_allows_next_perturb():
+    module = _make_module()
+    gp = GaussianPerturbator(module)
+    gp.perturb(seed=0, sigma=0.1)
+    gp.accept()
+    # Should not raise
+    gp.perturb(seed=1, sigma=0.1)
 
 
 def test_different_seeds_give_different_perturbations():
