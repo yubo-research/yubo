@@ -4,8 +4,11 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from gymnasium.spaces import Box
+from torch.utils.data import DataLoader
 
 from problems.mnist_classifier import MnistClassifier
+
+_MNIST_ROOT = "data/mnist"
 
 
 class _StepResult(NamedTuple):
@@ -15,19 +18,30 @@ class _StepResult(NamedTuple):
     info: object | None
 
 
+def _mnist_transform():
+    from torchvision import transforms
+
+    return transforms.Compose(
+        [
+            transforms.ToTensor(),
+            transforms.Normalize((0.1307,), (0.3081,)),
+        ]
+    )
+
+
 _cached_dataset = None
 
 
 def _get_mnist_dataset():
     global _cached_dataset  # noqa: PLW0603
     if _cached_dataset is None:
-        from torchvision import datasets, transforms
+        from torchvision import datasets
 
         _cached_dataset = datasets.MNIST(
-            root=".mnist_data",
+            root=_MNIST_ROOT,
             train=True,
             download=True,
-            transform=transforms.ToTensor(),
+            transform=_mnist_transform(),
         )
     return _cached_dataset
 
@@ -39,12 +53,22 @@ class MnistTorchEnv:
     module.forward() with zero param copies.
     """
 
-    def __init__(self, module=None, batch_size=1024):
+    def __init__(self, module, batch_size: int):
         self._module = module
         self._batch_size = batch_size
         self._dataset = _get_mnist_dataset()
         self._labels = None
-        self._rng = None
+
+        self._loader = DataLoader(
+            self._dataset,
+            batch_size=batch_size,
+            shuffle=True,
+            drop_last=True,
+        )
+        self._iter = iter(self._loader)
+        self._cached_seed = None
+        self._cached_images = None
+        self._cached_labels = None
 
         # observation = batch of images; action = batch of logits
         # Box(-1,1) makes _transform_action an identity in collect_trajectory.
@@ -58,11 +82,22 @@ class MnistTorchEnv:
         return self._module
 
     def reset(self, seed=None):
-        self._rng = np.random.default_rng(seed)
-        indices = self._rng.integers(len(self._dataset), size=self._batch_size)
-        images = torch.stack([self._dataset[i][0] for i in indices])
-        self._labels = torch.tensor([self._dataset[i][1] for i in indices])
-        return images.numpy(), None
+        # Return cached batch if same seed (e.g. antithetic pair).
+        if seed is not None and seed == self._cached_seed:
+            self._labels = self._cached_labels
+            return self._cached_images, None
+
+        try:
+            images, labels = next(self._iter)
+        except StopIteration:
+            self._iter = iter(self._loader)
+            images, labels = next(self._iter)
+
+        self._labels = labels
+        self._cached_seed = seed
+        self._cached_images = images.numpy()
+        self._cached_labels = labels
+        return self._cached_images, None
 
     def step(self, action):
         logits = torch.as_tensor(action, dtype=torch.float32)
@@ -83,7 +118,7 @@ class MnistEnv:
 
     num_dim = None  # set in __init__
 
-    def __init__(self, batch_size=1024):
+    def __init__(self, batch_size: int):
         self._classifier = MnistClassifier()
         self._batch_size = batch_size
         self._dataset = _get_mnist_dataset()
@@ -139,7 +174,7 @@ class MnistEnv:
 class MnistEvaluator:
     """Standalone evaluator for UHD (no set_params, module is perturbed directly)."""
 
-    def __init__(self, module: torch.nn.Module, batch_size: int = 128):
+    def __init__(self, module: torch.nn.Module, batch_size: int):
         self._module = module
         self._batch_size = batch_size
         self._dataset = _get_mnist_dataset()

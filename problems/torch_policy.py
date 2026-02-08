@@ -26,8 +26,9 @@ class TorchPolicy:
             std = np.where(std == 0, 1.0, std)
             state = (state - mean) / std
 
-        state_t = torch.as_tensor(state, dtype=torch.float32)
-        with torch.inference_mode():
+        device = next(self.module.parameters()).device
+        state_t = torch.as_tensor(state, dtype=torch.float32).to(device)
+        with torch.no_grad():
             action_t = self.module(state_t)
         if self._clamp:
             action_t = torch.clamp(action_t, -1, 1)

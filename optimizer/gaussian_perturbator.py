@@ -7,14 +7,13 @@ class GaussianPerturbator:
         self._module = module
         self._perturbed = False
         self._seed: int | None = None
-        self._sigma: float | None = None
 
-    def _generate_noise(self) -> list[torch.Tensor]:
+    def _generate_noise(self, sigma: float) -> list[torch.Tensor]:
         rng = torch.Generator()
         rng.manual_seed(self._seed)
         noise = []
         for param in self._module.parameters():
-            n = torch.randn(param.shape, generator=rng) * self._sigma
+            n = torch.randn(param.shape, generator=rng) * sigma
             noise.append(n.to(param.device))
         return noise
 
@@ -23,17 +22,16 @@ class GaussianPerturbator:
         self._seed = seed
         self._sigma = sigma
         self._perturbed = True
-        for param, n in zip(self._module.parameters(), self._generate_noise(), strict=True):
+        for param, n in zip(self._module.parameters(), self._generate_noise(sigma), strict=True):
             param.data.add_(n)
 
     def accept(self) -> None:
         assert self._perturbed, "Not perturbed"
         self._perturbed = False
         self._seed = None
-        self._sigma = None
 
     def unperturb(self) -> None:
         assert self._perturbed, "Not perturbed"
-        for param, n in zip(self._module.parameters(), self._generate_noise(), strict=True):
+        for param, n in zip(self._module.parameters(), self._generate_noise(self._sigma), strict=True):
             param.data.sub_(n)
         self.accept()

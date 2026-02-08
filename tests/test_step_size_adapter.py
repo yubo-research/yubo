@@ -6,85 +6,82 @@ def test_initial_sigma():
     assert adapter.sigma == 0.1
 
 
-def test_first_update_is_improvement():
-    adapter = StepSizeAdapter(sigma_0=0.1, dim=10)
-    assert adapter.update(1.0) is True
-
-
-def test_no_improvement():
-    adapter = StepSizeAdapter(sigma_0=0.1, dim=10)
-    adapter.update(10.0)
-    assert adapter.update(5.0) is False
-
-
 def test_expand_after_success_tolerance():
     adapter = StepSizeAdapter(sigma_0=0.1, dim=10, success_tolerance=3)
-    adapter.update(1.0)
-    adapter.update(2.0)
-    adapter.update(3.0)  # 3rd consecutive success -> expand
+    adapter.update(accepted=True)
+    adapter.update(accepted=True)
+    adapter.update(accepted=True)  # 3rd consecutive success -> expand
     assert adapter.sigma > 0.1
 
 
 def test_expand_doubles_sigma():
     adapter = StepSizeAdapter(sigma_0=0.1, dim=10, success_tolerance=3)
-    adapter.update(1.0)
-    adapter.update(2.0)
-    adapter.update(3.0)
+    adapter.update(accepted=True)
+    adapter.update(accepted=True)
+    adapter.update(accepted=True)
     assert adapter.sigma == 0.2
 
 
 def test_expand_capped_at_sigma_max():
     adapter = StepSizeAdapter(sigma_0=0.15, dim=10, sigma_max=0.2, success_tolerance=3)
-    adapter.update(1.0)
-    adapter.update(2.0)
-    adapter.update(3.0)
+    adapter.update(accepted=True)
+    adapter.update(accepted=True)
+    adapter.update(accepted=True)
     assert adapter.sigma == 0.2  # capped, not 0.3
 
 
 def test_shrink_after_failure_tolerance():
-    adapter = StepSizeAdapter(sigma_0=0.1, dim=2)
-    # failure_tolerance = ceil(2) = 2
-    adapter.update(10.0)  # first, accepted
-    adapter.update(5.0)  # fail 1
-    adapter.update(3.0)  # fail 2 -> shrink
+    # failure_tolerance = max(10, 5*3) = 15
+    adapter = StepSizeAdapter(sigma_0=0.1, dim=100)
+    for _ in range(14):
+        adapter.update(accepted=False)
+    assert adapter.sigma == 0.1  # not yet
+    adapter.update(accepted=False)  # 15th failure -> shrink
     assert adapter.sigma == 0.05
 
 
 def test_shrink_floored_at_sigma_min():
-    adapter = StepSizeAdapter(sigma_0=1e-5, dim=1, sigma_min=1e-5)
-    adapter.update(10.0)
-    adapter.update(5.0)  # fail 1 -> shrink (dim=1, tol=1)
+    adapter = StepSizeAdapter(sigma_0=1e-5, dim=100, sigma_min=1e-5)
+    for _ in range(15):
+        adapter.update(accepted=False)
     assert adapter.sigma == 1e-5
 
 
-def test_failure_tolerance_is_ceil_dim():
-    adapter = StepSizeAdapter(sigma_0=0.1, dim=5)
-    adapter.update(10.0)
-    # 4 failures should not shrink (tolerance = 5)
-    for _ in range(4):
-        adapter.update(0.0)
+def test_failure_tolerance_scales_with_success_tolerance():
+    # success_tolerance=5 -> failure_tolerance = max(10, 5*5) = 25
+    adapter = StepSizeAdapter(sigma_0=0.1, dim=10, success_tolerance=5)
+    for _ in range(24):
+        adapter.update(accepted=False)
     assert adapter.sigma == 0.1
-    # 5th failure triggers shrink
-    adapter.update(0.0)
+    adapter.update(accepted=False)  # 25th failure
+    assert adapter.sigma == 0.05
+
+
+def test_failure_tolerance_minimum_is_10():
+    # success_tolerance=1 -> 5*1=5 -> max(10, 5) = 10
+    adapter = StepSizeAdapter(sigma_0=0.1, dim=4, success_tolerance=1)
+    for _ in range(9):
+        adapter.update(accepted=False)
+    assert adapter.sigma == 0.1
+    adapter.update(accepted=False)  # 10th failure
     assert adapter.sigma == 0.05
 
 
 def test_success_resets_failure_count():
-    adapter = StepSizeAdapter(sigma_0=0.1, dim=3)
-    adapter.update(10.0)
-    adapter.update(5.0)  # fail 1
-    adapter.update(3.0)  # fail 2
-    adapter.update(11.0)  # success resets failure count
-    adapter.update(1.0)  # fail 1 (not 3)
-    adapter.update(0.0)  # fail 2
+    adapter = StepSizeAdapter(sigma_0=0.1, dim=100)
+    for _ in range(8):
+        adapter.update(accepted=False)  # 8 failures
+    adapter.update(accepted=True)  # resets failure count
+    for _ in range(9):
+        adapter.update(accepted=False)  # 9 more failures (not 10 total)
     assert adapter.sigma == 0.1  # no shrink yet
 
 
 def test_failure_resets_success_count():
     adapter = StepSizeAdapter(sigma_0=0.1, dim=10, success_tolerance=3)
-    adapter.update(1.0)  # success 1
-    adapter.update(2.0)  # success 2
-    adapter.update(0.0)  # failure resets success count
-    adapter.update(3.0)  # success 1 again
-    adapter.update(4.0)  # success 2
+    adapter.update(accepted=True)  # success 1
+    adapter.update(accepted=True)  # success 2
+    adapter.update(accepted=False)  # failure resets success count
+    adapter.update(accepted=True)  # success 1 again
+    adapter.update(accepted=True)  # success 2
     assert adapter.sigma == 0.1  # no expand yet

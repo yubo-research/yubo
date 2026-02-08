@@ -118,7 +118,7 @@ def test_torch_env_sees_perturbation():
 
 
 def test_torch_env_lazy_module():
-    torch_env = MnistTorchEnv(batch_size=16)
+    torch_env = MnistTorchEnv(module=None, batch_size=16)
     # Module is created lazily on first access
     assert isinstance(torch_env.module, MnistClassifier)
 

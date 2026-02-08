@@ -25,5 +25,5 @@ def make(env_name, problem_seed):
     elif env_name == "mnist":
         from problems.mnist_env import MnistEnv
 
-        return MnistEnv()
+        return MnistEnv(batch_size=4096)
     assert False, ("Unknown env_name", env_name)

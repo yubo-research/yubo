@@ -1,5 +1,6 @@
 import torch
 
+from optimizer.gaussian_perturbator import GaussianPerturbator
 from problems.mnist_classifier import MnistClassifier
 
 
@@ -26,3 +27,15 @@ def test_mnist_classifier_gradients():
     loss.backward()
     for p in model.parameters():
         assert p.grad is not None
+
+
+def test_perturb_unperturb_roundtrip():
+    model = MnistClassifier()
+    orig = [p.data.clone() for p in model.parameters()]
+
+    gp = GaussianPerturbator(model)
+    gp.perturb(seed=42, sigma=1.0)
+    gp.unperturb()
+
+    for p, o in zip(model.parameters(), orig, strict=True):
+        assert torch.allclose(p.data, o, atol=1e-6)

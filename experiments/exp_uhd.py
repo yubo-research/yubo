@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 
+import math
 import warnings
 
 import click
+import torch
+import torch.nn.functional as F
 
 from optimizer.uhd_loop import UHDLoop
 
@@ -12,12 +15,45 @@ def cli():
     pass
 
 
-def _make_loop(env_tag, num_rounds):
+def _get_device():
+    if torch.backends.mps.is_available():
+        return torch.device("mps")
+    if torch.cuda.is_available():
+        return torch.device("cuda")
+    return torch.device("cpu")
+
+
+def _make_accuracy_fn(module, device):
+    from torchvision import datasets
+
+    from problems.mnist_env import _MNIST_ROOT, _mnist_transform
+
+    test_dataset = datasets.MNIST(
+        root=_MNIST_ROOT,
+        train=False,
+        download=True,
+        transform=_mnist_transform(),
+    )
+    images = torch.stack([test_dataset[i][0] for i in range(len(test_dataset))]).to(device)
+    labels = torch.tensor([test_dataset[i][1] for i in range(len(test_dataset))]).to(device)
+
+    def accuracy_fn():
+        module.eval()
+        with torch.no_grad():
+            preds = module(images).argmax(dim=1)
+        module.train()
+        return float((preds == labels).float().mean())
+
+    return accuracy_fn
+
+
+def _make_loop(env_tag, num_rounds, lr=0.001, sigma=0.001):
     from problems.env_conf import get_env_conf
     from problems.torch_policy import TorchPolicy
 
+    device = _get_device()
     env_conf = get_env_conf(env_tag)
-    assert not env_conf.frozen_noise, "frozen_noise not supported for UHD"
+    noise_seed_0 = env_conf.noise_seed_0 or 0
 
     env = env_conf.make()
 
@@ -26,14 +62,22 @@ def _make_loop(env_tag, num_rounds):
         # TorchPolicy runs module.forward() on data from the env;
         # GaussianPerturbator perturbs the same module in-place.
         torch_env = env.torch_env()
-        module = torch_env.module
+        module = torch_env.module.to(device)
+        module.train()  # BN uses batch statistics, matching fit_mnist.py
         policy = TorchPolicy(module, env_conf)
 
-        def evaluate_fn():
-            state, _ = torch_env.reset()
+        def evaluate_fn(eval_seed):
+            noise_seed = eval_seed + noise_seed_0
+            state, _ = torch_env.reset(seed=noise_seed)
             logits = policy(state)
-            _, reward, _, _ = torch_env.step(logits)
-            return float(reward)
+            logits_t = torch.as_tensor(logits, dtype=torch.float32)
+            with torch.inference_mode():
+                per_sample = F.cross_entropy(logits_t, torch_env._labels, reduction="none")
+            mu = -float(per_sample.mean())
+            se = float(per_sample.std() / math.sqrt(len(per_sample)))
+            return mu, se
+
+        accuracy_fn = _make_accuracy_fn(module, device)
     else:
         # Gym env — build policy network, evaluate via collect_trajectory.
         env.close()
@@ -50,13 +94,22 @@ def _make_loop(env_tag, num_rounds):
         num_state = env_conf.gym_conf.state_space.shape[0]
         num_action = env_conf.action_space.shape[0]
 
-        module = MLPPolicyModule(num_state, num_action, hidden_sizes=(32, 16))
+        module = MLPPolicyModule(num_state, num_action, hidden_sizes=(32, 16)).to(device)
         policy = TorchPolicy(module, env_conf)
 
-        def evaluate_fn():
-            return float(collect_trajectory(env_conf, policy).rreturn)
+        def evaluate_fn(eval_seed):
+            noise_seed = eval_seed + noise_seed_0
+            return float(collect_trajectory(env_conf, policy, noise_seed=noise_seed).rreturn), 0.0
 
-    return UHDLoop(module, evaluate_fn, sigma_0=0.1, num_iterations=num_rounds)
+    acc_fn = accuracy_fn if hasattr(env, "torch_env") else None
+    return UHDLoop(
+        module,
+        evaluate_fn,
+        num_iterations=num_rounds,
+        lr=lr,
+        sigma=sigma,
+        accuracy_fn=acc_fn,
+    )
 
 
 @cli.command()
@@ -66,8 +119,10 @@ def _make_loop(env_tag, num_rounds):
     help="Environment tag (e.g. lunar, ant, bw, mnist)",
 )
 @click.option("--num-rounds", required=True, type=int, help="Number of UHD iterations")
-def local(env_tag, num_rounds):
-    loop = _make_loop(env_tag, num_rounds)
+@click.option("--lr", default=0.001, type=float, help="Max learning rate")
+@click.option("--sigma", default=0.001, type=float, help="Perturbation scale for gradient estimation")
+def local(env_tag, num_rounds, lr, sigma):
+    loop = _make_loop(env_tag, num_rounds, lr=lr, sigma=sigma)
     loop.run()
 
 
