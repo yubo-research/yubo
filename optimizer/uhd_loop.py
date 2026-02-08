@@ -5,6 +5,7 @@ from torch import nn
 
 from optimizer.gaussian_perturbator import GaussianPerturbator
 from optimizer.lr_scheduler import ConstantLR
+from optimizer.sparse_gaussian_perturbator import SparseGaussianPerturbator
 from optimizer.uhd_mezo import UHDMeZO
 
 
@@ -18,6 +19,7 @@ class UHDLoop:
         lr: float = 0.001,
         sigma: float = 0.001,
         weight_decay: float = 0.0,
+        num_dim_target: float | None = None,
         accuracy_fn: Callable[[], float] | None = None,
     ):
         self._module = module
@@ -26,7 +28,10 @@ class UHDLoop:
         self._accuracy_fn = accuracy_fn
 
         dim = sum(p.numel() for p in module.parameters())
-        perturbator = GaussianPerturbator(module)
+        if num_dim_target is not None:
+            perturbator = SparseGaussianPerturbator(module, num_dim_target=num_dim_target)
+        else:
+            perturbator = GaussianPerturbator(module)
         lr_scheduler = ConstantLR(lr)
         self._uhd = UHDMeZO(perturbator, dim=dim, lr_scheduler=lr_scheduler, sigma=sigma, weight_decay=weight_decay)
 

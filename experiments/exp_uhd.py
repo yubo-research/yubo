@@ -47,7 +47,7 @@ def _make_accuracy_fn(module, device):
     return accuracy_fn
 
 
-def _make_loop(env_tag, num_rounds, lr=0.001, sigma=0.001):
+def _make_loop(env_tag, num_rounds, lr=0.001, sigma=0.001, num_dim_target=None):
     from problems.env_conf import get_env_conf
     from problems.torch_policy import TorchPolicy
 
@@ -109,6 +109,7 @@ def _make_loop(env_tag, num_rounds, lr=0.001, sigma=0.001):
         lr=lr,
         sigma=sigma,
         accuracy_fn=acc_fn,
+        num_dim_target=num_dim_target,
     )
 
 
@@ -120,9 +121,14 @@ def _make_loop(env_tag, num_rounds, lr=0.001, sigma=0.001):
 )
 @click.option("--num-rounds", required=True, type=int, help="Number of UHD iterations")
 @click.option("--lr", default=0.001, type=float, help="Max learning rate")
-@click.option("--sigma", default=0.001, type=float, help="Perturbation scale for gradient estimation")
-def local(env_tag, num_rounds, lr, sigma):
-    loop = _make_loop(env_tag, num_rounds, lr=lr, sigma=sigma)
+@click.option(
+    "--ndt",
+    default=0.5,
+    type=float,
+    help="Sparse perturbation target (<1=fraction, >=1=count)",
+)
+def local(env_tag, num_rounds, lr, ndt):
+    loop = _make_loop(env_tag, num_rounds, lr=lr, sigma=0.001, num_dim_target=ndt)
     loop.run()
 
 
