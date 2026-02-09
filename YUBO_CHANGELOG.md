@@ -1,4 +1,4 @@
-# Yubo Branch Summary (ppo-constraint-fix)
+# Yubo Branch Summary 
 
 This doc is a concise snapshot of this branch and may change as the branch evolves.
 Scope: `yubo/` only.
@@ -11,7 +11,6 @@ Scope: `yubo/` only.
 - **Backbone/hidden size parametrization**: Direction is fewer knobs in config files via better abstractions; expect changes here.
 - **Tests**: Expanded unit tests for configs, designers, optimizers, and RL utilities.
 - **Example configs**: Added canonical TOML examples for BO (TuRBO‑ENN) and PPO.
-- **Micromamba branch setup**: Added pinned branch setup files under `admin/mb/` and one-command setup scripts `admin/setupmacos.sh` and `admin/setuplinux.sh`.
 
 ## Key New/Updated Modules
 - `common/config_toml.py`: load/apply TOML overrides.
@@ -98,9 +97,3 @@ Notes (concise):
 - One‑liner (no activation step): `micromamba run -n yubo python -m experiments.experiment_toml --config path/to/config.toml`
 - TOML can live anywhere (including `_tmp/`), as long as `--config` points to it.
 - If the environment needs updates, follow `README.md` setup and re‑install deps (e.g., `requirements.txt`).
-
-## Branch Setup Files (admin/mb)
-- `admin/mb/conda.yml`: Linux CUDA-focused pinned micromamba environment.
-- `admin/mb/conda-macos.yml`: macOS MPS-focused pinned micromamba environment.
-- `admin/setuplinux.sh`: full Linux setup + install + verification script.
-- `admin/setupmacos.sh`: full macOS setup + install + verification script.

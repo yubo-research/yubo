@@ -15,14 +15,3 @@ style.md
 design.md
 review.md
 .cursor*
-
-# Tool/build caches
-.cache/
-*.egg-info/
-
-# Local setup logs
-*.setup.log
-
-# Local mutagen session files
-/mutagen.yml
-/mutagen.yml.lock
