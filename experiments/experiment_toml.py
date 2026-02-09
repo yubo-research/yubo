@@ -3,35 +3,8 @@
 import sys
 from dataclasses import fields
 
-from common.config_toml import apply_overrides, load_toml, parse_value
+from common.config_toml import apply_overrides, load_toml, parse_set_args
 from experiments.experiment_sampler import ExperimentConfig, sampler, scan_local, scan_parallel
-
-
-def _parse_set_args(argv):
-    overrides = {}
-    i = 0
-    while i < len(argv):
-        arg = argv[i]
-        if arg == "--set":
-            if i + 1 >= len(argv):
-                raise ValueError("Expected KEY=VALUE after --set")
-            kv = argv[i + 1]
-            if "=" not in kv:
-                raise ValueError(f"Invalid --set value: {kv}")
-            k, v = kv.split("=", 1)
-            overrides[k] = parse_value(v)
-            i += 2
-            continue
-        if arg.startswith("--set="):
-            kv = arg[len("--set=") :]
-            if "=" not in kv:
-                raise ValueError(f"Invalid --set value: {kv}")
-            k, v = kv.split("=", 1)
-            overrides[k] = parse_value(v)
-            i += 1
-            continue
-        raise ValueError(f"Unknown argument: {arg}")
-    return overrides
 
 
 def _extract_experiment_cfg(cfg):
@@ -97,7 +70,7 @@ def main(argv: list[str] | None = None) -> None:
     rest = argv[idx + 2 :]
 
     cfg = load_toml(config_path)
-    overrides = _parse_set_args(rest)
+    overrides = parse_set_args(rest)
     if overrides:
         apply_overrides(cfg, overrides)
 

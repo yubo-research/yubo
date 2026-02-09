@@ -32,8 +32,36 @@ def parse_value(raw: str) -> Any:
     if raw.lower() in {"true", "false"}:
         return raw.lower() == "true"
     try:
-        if "." in raw:
-            return float(raw)
         return int(raw)
     except ValueError:
-        return raw
+        try:
+            return float(raw)
+        except ValueError:
+            return raw
+
+
+def parse_set_args(argv: list[str]) -> Dict[str, Any]:
+    overrides: Dict[str, Any] = {}
+    i = 0
+    while i < len(argv):
+        arg = argv[i]
+        if arg == "--set":
+            if i + 1 >= len(argv):
+                raise ValueError("Expected KEY=VALUE after --set")
+            kv = argv[i + 1]
+            if "=" not in kv:
+                raise ValueError(f"Invalid --set value: {kv}")
+            k, v = kv.split("=", 1)
+            overrides[k] = parse_value(v)
+            i += 2
+            continue
+        if arg.startswith("--set="):
+            kv = arg[len("--set=") :]
+            if "=" not in kv:
+                raise ValueError(f"Invalid --set value: {kv}")
+            k, v = kv.split("=", 1)
+            overrides[k] = parse_value(v)
+            i += 1
+            continue
+        raise ValueError(f"Unknown argument: {arg}")
+    return overrides

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import time
+from contextlib import contextmanager
 from typing import Any, Optional
 
 import numpy as np
@@ -86,6 +87,22 @@ def run_updates_if_due(
     return latest_losses, total_updates
 
 
+@contextmanager
+def temporary_actor_state(
+    modules: Any,
+    actor_state: dict,
+    *,
+    capture_actor_state: Any,
+    restore_actor_state: Any,
+):
+    previous_actor_state = capture_actor_state(modules)
+    restore_actor_state(modules, actor_state)
+    try:
+        yield
+    finally:
+        restore_actor_state(modules, previous_actor_state)
+
+
 def evaluate_heldout_if_enabled(
     config: Any,
     env_setup: Any,
@@ -101,18 +118,20 @@ def evaluate_heldout_if_enabled(
 ) -> float | None:
     if config.num_denoise_passive_eval is None or train_state.best_actor_state is None:
         return None
-    current_actor_state = capture_actor_state(modules)
-    restore_actor_state(modules, train_state.best_actor_state)
-    best_eval_policy = eval_policy_factory(modules, env_setup, device)
-    heldout_return = float(
-        evaluate_for_best(
-            get_env_conf(config.env_tag, problem_seed=env_setup.problem_seed, noise_seed_0=env_setup.noise_seed_0),
-            best_eval_policy,
-            config.num_denoise_passive_eval,
+    with temporary_actor_state(
+        modules,
+        train_state.best_actor_state,
+        capture_actor_state=capture_actor_state,
+        restore_actor_state=restore_actor_state,
+    ):
+        best_eval_policy = eval_policy_factory(modules, env_setup, device)
+        return float(
+            evaluate_for_best(
+                get_env_conf(config.env_tag, problem_seed=env_setup.problem_seed, noise_seed_0=env_setup.noise_seed_0),
+                best_eval_policy,
+                config.num_denoise_passive_eval,
+            )
         )
-    )
-    restore_actor_state(modules, current_actor_state)
-    return heldout_return
 
 
 def evaluate_if_due(

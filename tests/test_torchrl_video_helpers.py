@@ -182,4 +182,3 @@ def test_render_best_policy_videos_selection_and_guards(monkeypatch, tmp_path):
         capture_actor_state=lambda *_args: {"current": 1},
         temporary_actor_state=_temporary_actor_state,
     )
-

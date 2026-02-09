@@ -61,6 +61,14 @@ class _TraceEntry:
     dt_eval: float
 
 
+@dataclass(frozen=True)
+class _IterEvalSummary:
+    ret_eval: float
+    y_best_s: str
+    ret_best_s: str
+    ret_eval_s: str
+
+
 class Optimizer:
     def __init__(
         self,
@@ -187,11 +195,11 @@ class Optimizer:
             did_update = self._update_best_from_batch(data)
         self._update_y_best_scalar(ret_batch, did_update)
         ret_eval = float(self.y_best)
-        return (
-            ret_eval,
-            f"{float(self.y_best):.3f}",
-            f"{float(self.r_best_est):.3f}",
-            f"{ret_eval:.3f}",
+        return _IterEvalSummary(
+            ret_eval=ret_eval,
+            y_best_s=f"{float(self.y_best):.3f}",
+            ret_best_s=f"{float(self.r_best_est):.3f}",
+            ret_eval_s=f"{ret_eval:.3f}",
         )
 
     def _handle_multi_objective_returns(self, data, ret_batch, num_metrics):
@@ -199,11 +207,11 @@ class Optimizer:
             ret_eval = self._handle_hypervolume(num_metrics)
         else:
             ret_eval = self._handle_first_objective(data, ret_batch)
-        return (
-            ret_eval,
-            np.array2string(self.y_best, precision=3, floatmode="fixed"),
-            f"{float(self.r_best_est):.6f}",
-            f"{ret_eval:.6f}",
+        return _IterEvalSummary(
+            ret_eval=ret_eval,
+            y_best_s=np.array2string(self.y_best, precision=3, floatmode="fixed"),
+            ret_best_s=f"{float(self.r_best_est):.6f}",
+            ret_eval_s=f"{ret_eval:.6f}",
         )
 
     def _handle_hypervolume(self, num_metrics):
@@ -284,20 +292,20 @@ class Optimizer:
             )
 
         if ret_batch.ndim <= 1:
-            ret_eval, y_best_s, ret_best_s, ret_eval_s = self._handle_scalar_returns(designer, data, ret_batch)
+            iter_summary = self._handle_scalar_returns(designer, data, ret_batch)
         else:
             num_metrics = int(ret_batch.shape[1])
             assert num_metrics >= 2 and self._num_denoise_passive_eval is None
-            ret_eval, y_best_s, ret_best_s, ret_eval_s = self._handle_multi_objective_returns(data, ret_batch, num_metrics)
+            iter_summary = self._handle_multi_objective_returns(data, ret_batch, num_metrics)
 
         cum_time = time.time() - self._t_0
         self._cum_dt_proposing += dt_prop
-        if ret_eval > -1e98:
+        if iter_summary.ret_eval > -1e98:
             self._collector(
-                f"ITER: i_iter = {self._i_iter} cum_time = {cum_time:.2f} dt_eval = {dt_eval:.3f} dt_prop = {dt_prop:.3f} {self._telemetry.format()} cum_dt_prop = {self._cum_dt_proposing:.3f} y_best = {y_best_s} ret_best = {ret_best_s} ret_eval = {ret_eval_s}"
+                f"ITER: i_iter = {self._i_iter} cum_time = {cum_time:.2f} dt_eval = {dt_eval:.3f} dt_prop = {dt_prop:.3f} {self._telemetry.format()} cum_dt_prop = {self._cum_dt_proposing:.3f} y_best = {iter_summary.y_best_s} ret_best = {iter_summary.ret_best_s} ret_eval = {iter_summary.ret_eval_s}"
             )
         sys.stdout.flush()
-        self._trace.append(_TraceEntry(float(ret_eval), float(self.r_best_est), dt_prop, dt_eval))
+        self._trace.append(_TraceEntry(float(iter_summary.ret_eval), float(self.r_best_est), dt_prop, dt_eval))
         self._i_iter += 1
         self.last_designer = designer
         self._last_designer_index = designer_index

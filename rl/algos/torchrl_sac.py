@@ -1,14 +1,12 @@
 from __future__ import annotations
 
-import time
 import dataclasses
+import time
 from pathlib import Path
-from typing import Any, Optional
 
 import numpy as np
 import torch
 import torch.nn as nn
-import torch.optim as optim
 from tensordict import TensorDict
 from tensordict.nn import TensorDictModule
 from torchrl.data import LazyTensorStorage, ReplayBuffer
@@ -18,9 +16,9 @@ from torchrl.objectives import SACLoss, SoftUpdate
 
 from analysis.data_io import write_config
 from common.seed_all import seed_all
-from optimizer.opt_trajectories import collect_denoised_trajectory, evaluate_for_best
 from problems.env_conf import get_env_conf
 from rl.algos.checkpointing import CheckpointManager, load_checkpoint
+from rl.algos.torchrl_common import ObsScaler, obs_scale_from_env, select_device, temporary_distribution_validate_args
 from rl.algos.torchrl_sac_actor_eval import (
     SacActorEvalPolicy,
     capture_sac_actor_snapshot,
@@ -36,7 +34,6 @@ from rl.algos.torchrl_sac_loop import (
     save_final_checkpoint_if_enabled,
     select_training_action,
 )
-from rl.algos.torchrl_common import ObsScaler, obs_scale_from_env, select_device
 from rl.backbone import BackboneSpec, HeadSpec, build_backbone, build_mlp_head
 
 
@@ -45,8 +42,8 @@ class SACConfig:
     exp_dir: str = "_tmp/sac"
     env_tag: str = "pend"
     seed: int = 1
-    problem_seed: Optional[int] = None
-    noise_seed_0: Optional[int] = None
+    problem_seed: int | None = None
+    noise_seed_0: int | None = None
 
     total_timesteps: int = 1000000
     learning_rate_actor: float = 3e-4
@@ -60,12 +57,12 @@ class SACConfig:
     update_every: int = 1
     updates_per_step: int = 1
     alpha_init: float = 0.2
-    target_entropy: Optional[float] = None
+    target_entropy: float | None = None
 
     eval_interval_steps: int = 10000
-    num_denoise_eval: Optional[int] = None
-    num_denoise_passive_eval: Optional[int] = None
-    eval_seed_base: Optional[int] = None
+    num_denoise_eval: int | None = None
+    num_denoise_passive_eval: int | None = None
+    eval_seed_base: int | None = None
 
     backbone_name: str = "mlp"
     backbone_hidden_sizes: tuple[int, ...] = (256, 256)
@@ -74,12 +71,12 @@ class SACConfig:
     actor_head_hidden_sizes: tuple[int, ...] = ()
     critic_head_hidden_sizes: tuple[int, ...] = ()
     head_activation: str = "silu"
-    theta_dim: Optional[int] = None
+    theta_dim: int | None = None
 
     device: str = "auto"
     log_interval_steps: int = 1000
-    checkpoint_interval_steps: Optional[int] = None
-    resume_from: Optional[str] = None
+    checkpoint_interval_steps: int | None = None
+    resume_from: str | None = None
 
     def to_dict(self) -> dict:
         return dataclasses.asdict(self)
@@ -97,13 +94,13 @@ class SACConfig:
 class TrainResult:
     best_return: float
     last_eval_return: float
-    last_heldout_return: Optional[float]
+    last_heldout_return: float | None
     num_steps: int
 
 
 @dataclasses.dataclass(frozen=True)
 class _EnvSetup:
-    env_conf: Any
+    env_conf: object
     problem_seed: int
     noise_seed_0: int
     obs_dim: int
@@ -127,9 +124,9 @@ class _TrainingSetup:
     replay: ReplayBuffer
     loss_module: SACLoss
     target_updater: SoftUpdate
-    actor_optimizer: optim.Adam
-    critic_optimizer: optim.Adam
-    alpha_optimizer: optim.Adam
+    actor_optimizer: torch.optim.AdamW
+    critic_optimizer: torch.optim.AdamW
+    alpha_optimizer: torch.optim.AdamW
     exp_dir: Path
     metrics_path: Path
     checkpoint_manager: CheckpointManager
@@ -241,9 +238,7 @@ def _build_modules(config: SACConfig, env: _EnvSetup, *, device: torch.device) -
     qvalue.to(device)
     obs_scaler.to(device)
 
-    actor_param_count = sum(p.numel() for p in actor_backbone.parameters()) + sum(
-        p.numel() for p in actor_head.parameters()
-    )
+    actor_param_count = sum(p.numel() for p in actor_backbone.parameters()) + sum(p.numel() for p in actor_head.parameters())
     if config.theta_dim is not None:
         assert actor_param_count == int(config.theta_dim), (actor_param_count, config.theta_dim)
 
@@ -271,9 +266,9 @@ def _build_training(config: SACConfig, loss_module: SACLoss) -> _TrainingSetup:
     critic_params = list(loss_module.qvalue_network_params.flatten_keys().values())
     alpha_params = [loss_module.log_alpha]
 
-    actor_optimizer = optim.Adam(actor_params, lr=float(config.learning_rate_actor))
-    critic_optimizer = optim.Adam(critic_params, lr=float(config.learning_rate_critic))
-    alpha_optimizer = optim.Adam(alpha_params, lr=float(config.learning_rate_alpha))
+    actor_optimizer = torch.optim.AdamW(actor_params, lr=float(config.learning_rate_actor), weight_decay=0.0)
+    critic_optimizer = torch.optim.AdamW(critic_params, lr=float(config.learning_rate_critic), weight_decay=0.0)
+    alpha_optimizer = torch.optim.AdamW(alpha_params, lr=float(config.learning_rate_alpha), weight_decay=0.0)
 
     exp_dir = Path(config.exp_dir)
     exp_dir.mkdir(parents=True, exist_ok=True)
@@ -300,6 +295,8 @@ def _evaluate_actor(
     device: torch.device,
     eval_seed: int,
 ) -> float:
+    from optimizer.opt_trajectories import collect_denoised_trajectory
+
     eval_env = get_env_conf(config.env_tag, problem_seed=env.problem_seed, noise_seed_0=env.noise_seed_0)
     eval_policy = SacActorEvalPolicy(
         modules.actor_backbone,
@@ -438,136 +435,135 @@ def train_sac(config: SACConfig) -> TrainResult:
     # TorchRL's `ContinuousDistribution.support` currently calls
     # `torch.distributions.constraints.real()` which fails when `validate_args=True`.
     # Keep SAC stable regardless of global validation settings.
-    from torch.distributions import Distribution
+    with temporary_distribution_validate_args(False):
+        from optimizer.opt_trajectories import evaluate_for_best
 
-    Distribution.set_default_validate_args(False)
+        seed_all(config.seed)
+        env = _build_env_setup(config)
+        device = select_device(config.device)
+        modules, loss_module = _build_modules(config, env, device=device)
+        training = _build_training(config, loss_module)
+        state = _resume_if_requested(config, modules, training, device=device)
 
-    seed_all(config.seed)
-    env = _build_env_setup(config)
-    device = select_device(config.device)
-    modules, loss_module = _build_modules(config, env, device=device)
-    training = _build_training(config, loss_module)
-    state = _resume_if_requested(config, modules, training, device=device)
-
-    print(
-        "[rl/sac/torchrl]"
-        f" env_tag={config.env_tag}"
-        f" exp_dir={training.exp_dir}"
-        f" seed={config.seed}"
-        f" device={device.type}"
-        f" obs_dim={env.obs_dim}"
-        f" act_dim={env.act_dim}"
-        f" total_timesteps={config.total_timesteps}"
-        f" learning_starts={config.learning_starts}"
-        f" batch_size={config.batch_size}"
-        f" replay_size={config.replay_size}"
-        f" update_every={config.update_every}"
-        f" updates_per_step={config.updates_per_step}",
-        flush=True,
-    )
-
-    train_env = env.env_conf.make()
-    observation, _ = train_env.reset(seed=env.problem_seed)
-    if hasattr(train_env, "action_space") and hasattr(train_env.action_space, "seed"):
-        train_env.action_space.seed(env.problem_seed)
-    start_time = time.time()
-
-    latest_losses = {"loss_actor": float("nan"), "loss_critic": float("nan"), "loss_alpha": float("nan")}
-    total_updates = 0
-
-    for step in range(state.start_step + 1, int(config.total_timesteps) + 1):
-        action_env, action_norm = select_training_action(
-            config,
-            env,
-            modules,
-            step=step,
-            observation=observation,
-            train_env=train_env,
-            device=device,
-            unscale_action_from_env=_unscale_action_from_env,
-            scale_action_to_env=_scale_action_to_env,
+        print(
+            "[rl/sac/torchrl]"
+            f" env_tag={config.env_tag}"
+            f" exp_dir={training.exp_dir}"
+            f" seed={config.seed}"
+            f" device={device.type}"
+            f" obs_dim={env.obs_dim}"
+            f" act_dim={env.act_dim}"
+            f" total_timesteps={config.total_timesteps}"
+            f" learning_starts={config.learning_starts}"
+            f" batch_size={config.batch_size}"
+            f" replay_size={config.replay_size}"
+            f" update_every={config.update_every}"
+            f" updates_per_step={config.updates_per_step}",
+            flush=True,
         )
-        observation = advance_env_and_store(
-            training,
-            train_env=train_env,
-            observation=observation,
-            action_env=action_env,
-            action_norm=action_norm,
-            make_transition=_make_transition,
-        )
-        latest_losses, total_updates = run_updates_if_due(
-            config,
-            training,
-            step=step,
-            device=device,
-            latest_losses=latest_losses,
-            total_updates=total_updates,
-            update_step=_update_step,
-        )
-        evaluate_if_due(
-            config,
-            env,
-            modules,
-            training,
-            state,
-            step=step,
-            device=device,
-            start_time=start_time,
-            latest_losses=latest_losses,
-            total_updates=total_updates,
-            evaluate_actor=_evaluate_actor,
-            capture_actor_state=capture_sac_actor_snapshot,
-            evaluate_heldout=lambda cfg, env_setup, local_modules, local_state, *, device: evaluate_heldout_if_enabled(
-                cfg,
-                env_setup,
-                local_modules,
-                local_state,
+
+        train_env = env.env_conf.make()
+        observation, _ = train_env.reset(seed=env.problem_seed)
+        if hasattr(train_env, "action_space") and hasattr(train_env.action_space, "seed"):
+            train_env.action_space.seed(env.problem_seed)
+        start_time = time.time()
+
+        latest_losses = {"loss_actor": float("nan"), "loss_critic": float("nan"), "loss_alpha": float("nan")}
+        total_updates = 0
+
+        for step in range(state.start_step + 1, int(config.total_timesteps) + 1):
+            action_env, action_norm = select_training_action(
+                config,
+                env,
+                modules,
+                step=step,
+                observation=observation,
+                train_env=train_env,
                 device=device,
+                unscale_action_from_env=_unscale_action_from_env,
+                scale_action_to_env=_scale_action_to_env,
+            )
+            observation = advance_env_and_store(
+                training,
+                train_env=train_env,
+                observation=observation,
+                action_env=action_env,
+                action_norm=action_norm,
+                make_transition=_make_transition,
+            )
+            latest_losses, total_updates = run_updates_if_due(
+                config,
+                training,
+                step=step,
+                device=device,
+                latest_losses=latest_losses,
+                total_updates=total_updates,
+                update_step=_update_step,
+            )
+            evaluate_if_due(
+                config,
+                env,
+                modules,
+                training,
+                state,
+                step=step,
+                device=device,
+                start_time=start_time,
+                latest_losses=latest_losses,
+                total_updates=total_updates,
+                evaluate_actor=_evaluate_actor,
                 capture_actor_state=capture_sac_actor_snapshot,
-                restore_actor_state=restore_sac_actor_snapshot,
-                eval_policy_factory=lambda actor_modules, actor_env_setup, actor_device: SacActorEvalPolicy(
-                    actor_modules.actor_backbone,
-                    actor_modules.actor_head,
-                    actor_modules.obs_scaler,
-                    act_dim=actor_env_setup.act_dim,
-                    device=actor_device,
+                evaluate_heldout=lambda cfg, env_setup, local_modules, local_state, *, device: evaluate_heldout_if_enabled(
+                    cfg,
+                    env_setup,
+                    local_modules,
+                    local_state,
+                    device=device,
+                    capture_actor_state=capture_sac_actor_snapshot,
+                    restore_actor_state=restore_sac_actor_snapshot,
+                    eval_policy_factory=lambda actor_modules, actor_env_setup, actor_device: SacActorEvalPolicy(
+                        actor_modules.actor_backbone,
+                        actor_modules.actor_head,
+                        actor_modules.obs_scaler,
+                        act_dim=actor_env_setup.act_dim,
+                        device=actor_device,
+                    ),
+                    get_env_conf=get_env_conf,
+                    evaluate_for_best=evaluate_for_best,
                 ),
-                get_env_conf=get_env_conf,
-                evaluate_for_best=evaluate_for_best,
-            ),
-        )
-        log_if_due(
-            config,
-            state,
-            step=step,
-            start_time=start_time,
-            latest_losses=latest_losses,
-            total_updates=total_updates,
-        )
-        checkpoint_if_due(
+            )
+            log_if_due(
+                config,
+                state,
+                step=step,
+                start_time=start_time,
+                latest_losses=latest_losses,
+                total_updates=total_updates,
+            )
+            checkpoint_if_due(
+                config,
+                modules,
+                training,
+                state,
+                step=step,
+                build_checkpoint_payload=_checkpoint_payload,
+            )
+
+        train_env.close()
+        save_final_checkpoint_if_enabled(
             config,
             modules,
             training,
             state,
-            step=step,
             build_checkpoint_payload=_checkpoint_payload,
         )
 
-    train_env.close()
-    save_final_checkpoint_if_enabled(
-        config,
-        modules,
-        training,
-        state,
-        build_checkpoint_payload=_checkpoint_payload,
-    )
-
-    return TrainResult(
-        best_return=float(state.best_return),
-        last_eval_return=float(state.last_eval_return),
-        last_heldout_return=state.last_heldout_return,
-        num_steps=int(config.total_timesteps),
-    )
+        return TrainResult(
+            best_return=float(state.best_return),
+            last_eval_return=float(state.last_eval_return),
+            last_heldout_return=state.last_heldout_return,
+            num_steps=int(config.total_timesteps),
+        )
 
 
 def register():

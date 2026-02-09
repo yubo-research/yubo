@@ -47,6 +47,31 @@ class _ActorStub:
         return {"action": self._action}
 
 
+def test_temporary_actor_state_restores_on_exception():
+    modules = SimpleNamespace()
+    restore_calls = []
+
+    def _capture_actor_state(_modules):
+        return {"current": 5}
+
+    def _restore_actor_state(_modules, snapshot):
+        restore_calls.append(snapshot)
+
+    try:
+        with torchrl_sac_loop.temporary_actor_state(
+            modules,
+            {"best": 99},
+            capture_actor_state=_capture_actor_state,
+            restore_actor_state=_restore_actor_state,
+        ):
+            raise RuntimeError("boom")
+    except RuntimeError as exc:
+        assert "boom" in str(exc)
+
+    assert restore_calls[0] == {"best": 99}
+    assert restore_calls[1] == {"current": 5}
+
+
 def test_is_due():
     assert not torchrl_sac_loop.is_due(4, None)
     assert not torchrl_sac_loop.is_due(4, 0)
@@ -209,6 +234,36 @@ def test_evaluate_heldout_if_enabled():
         evaluate_for_best=lambda _env_conf, _policy, denoise: 4.5 if denoise == 3 else -1.0,
     )
     assert result == 4.5
+    assert restore_calls[0] == {"best": 99}
+    assert restore_calls[1] == {"current": 5}
+
+
+def test_evaluate_heldout_if_enabled_restores_actor_state_on_exception():
+    restore_calls = []
+    config = SimpleNamespace(num_denoise_passive_eval=3, env_tag="env")
+    env_setup = SimpleNamespace(problem_seed=1, noise_seed_0=2)
+    modules = SimpleNamespace()
+    train_state = SimpleNamespace(best_actor_state={"best": 99})
+
+    def _raise_in_eval(*_args, **_kwargs):
+        raise RuntimeError("heldout-failure")
+
+    try:
+        torchrl_sac_loop.evaluate_heldout_if_enabled(
+            config,
+            env_setup,
+            modules,
+            train_state,
+            device=torch.device("cpu"),
+            capture_actor_state=lambda *_: {"current": 5},
+            restore_actor_state=lambda _modules, snapshot: restore_calls.append(snapshot),
+            eval_policy_factory=lambda *_: "policy",
+            get_env_conf=lambda *_args, **_kwargs: "env_conf",
+            evaluate_for_best=_raise_in_eval,
+        )
+        assert False, "expected RuntimeError"
+    except RuntimeError as exc:
+        assert "heldout-failure" in str(exc)
     assert restore_calls[0] == {"best": 99}
     assert restore_calls[1] == {"current": 5}
 

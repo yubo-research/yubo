@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextlib import contextmanager
 from typing import Any
 
 import numpy as np
@@ -57,3 +58,13 @@ def obs_scale_from_env(env_conf: Any):
     if np.any(np.isinf(lb)) or np.any(np.isinf(width)):
         raise ValueError("Observation bounds must be finite for transform_state.")
     return lb, width
+
+
+@contextmanager
+def temporary_distribution_validate_args(enabled: bool):
+    previous_validate_args = getattr(torch.distributions.Distribution, "_validate_args", True)
+    torch.distributions.Distribution.set_default_validate_args(bool(enabled))
+    try:
+        yield
+    finally:
+        torch.distributions.Distribution.set_default_validate_args(previous_validate_args)

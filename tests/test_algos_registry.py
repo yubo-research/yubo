@@ -2,11 +2,14 @@ from rl.algos import builtins
 from rl.algos.registry import AlgoSpec, available_algos, get_algo, register_algo
 
 
-def test_algos_registry_registers_ppo():
+def test_algos_registry_registers_builtin_algos():
     builtins.register_all()
-    algo = get_algo("ppo")
-    assert algo.name == "ppo"
+    ppo_algo = get_algo("ppo")
+    sac_algo = get_algo("sac")
+    assert ppo_algo.name == "ppo"
+    assert sac_algo.name == "sac"
     assert "ppo" in available_algos()
+    assert "sac" in available_algos()
 
 
 def test_algos_registry_custom_register():

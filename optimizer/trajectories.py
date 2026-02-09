@@ -19,7 +19,18 @@ class Trajectory:
 
 
 def _get_bounds_safe(arr, default_fn):
-    return default_fn(arr.shape) if np.all(np.isinf(arr)) else arr
+    values = np.asarray(arr, dtype=np.float64)
+    defaults = np.asarray(default_fn(values.shape), dtype=np.float64)
+    mask = ~np.isfinite(values)
+    if np.any(mask):
+        values = values.copy()
+        values[mask] = defaults[mask]
+    return values
+
+
+def _sanitize_observation(state):
+    values = np.asarray(state, dtype=np.float64)
+    return np.nan_to_num(values, nan=0.0, posinf=0.0, neginf=0.0)
 
 
 def _get_max_steps(env_conf, b_gym):
@@ -72,8 +83,13 @@ def collect_trajectory(env_conf, policy, noise_seed=None, show_frames=False):
     transform_state = b_gym and env_conf.gym_conf.transform_state
 
     for i_iter in range(max_steps):
-        state_p = (state - lb) / width
-        action_p = policy(state_p if transform_state else state)
+        state_f = _sanitize_observation(state)
+        state_p = (state_f - lb) / width
+        state_p = np.nan_to_num(state_p, nan=0.0, posinf=0.0, neginf=0.0)
+        policy_input = state_p if transform_state else state_f
+        action_p = np.asarray(policy(policy_input), dtype=np.float64)
+        action_p = np.nan_to_num(action_p, nan=0.0, posinf=1.0, neginf=-1.0)
+        action_p = np.clip(action_p, -1.0, 1.0)
         action = _transform_action(action_p, env.action_space)
         traj_states.append(state_p)
         traj_actions.append(action_p)

@@ -42,13 +42,13 @@ class _EmptyTransform(Module):
     def __init__(self):
         super().__init__()
 
-    def forward(self, Y, Yvar=None):
+    def forward(self, Y: Tensor, Yvar: Tensor | None = None, X: Tensor | None = None) -> tuple[Tensor, Tensor | None]:
         return Y, Yvar
 
-    def untransform(self, Y, Yvar=None):
+    def untransform(self, Y: Tensor, Yvar: Tensor | None = None, X: Tensor | None = None) -> tuple[Tensor, Tensor | None]:
         return Y, Yvar
 
-    def untransform_posterior(self, posterior):
+    def untransform_posterior(self, posterior, X: Tensor | None = None):
         return posterior
 
 
@@ -121,7 +121,7 @@ def get_closure(mll, outcome_warp):
     def closure_warping(**kwargs: Any) -> Tensor:
         model = mll.model
         model_output = model(*model.train_inputs)
-        warped_inputs = (model.transform_inputs(X=t_in) for t_in in model.train_inputs)
+        warped_inputs = tuple(model.transform_inputs(X=t_in) for t_in in model.train_inputs)
         warped_targets = outcome_warp(model.train_targets)
         log_likelihood = mll(
             model_output,
@@ -133,10 +133,7 @@ def get_closure(mll, outcome_warp):
 
     return ForwardBackwardClosure(
         forward=closure_warping,
-        backward=Tensor.backward,
         parameters=get_parameters(mll, requires_grad=True),
-        reducer=Tensor.sum,
-        context_manager=None,
     )
 
 

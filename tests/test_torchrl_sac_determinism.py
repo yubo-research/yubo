@@ -5,7 +5,6 @@ import pytest
 
 from rl.algos.torchrl_sac import SACConfig, train_sac
 
-
 _BASELINE_ROWS = [
     {
         "step": 32,

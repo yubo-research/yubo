@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 from botorch.acquisition.monte_carlo import (
     MCAcquisitionFunction,
     qSimpleRegret,
@@ -69,7 +70,15 @@ class AcqIOpt(MCAcquisitionFunction):
             Y = self.model.posterior(X_iopt).mean  # b x q x 1
             model_f = self.model.condition_on_observations(X=X_iopt, Y=Y)
             # model_f.covar_module.base_kernel.lengthscale *= (max(1, num_obs) / (max(1, num_obs) + q_iopt)) ** (1/self.num_dim)
-            model_f.covar_module.base_kernel.lengthscale *= ((1 + num_obs) / (1 + num_obs + q_iopt)) ** (1.0 / self.num_dim)
+            kernel = model_f.covar_module
+            # Some models use `ScaleKernel(base_kernel=...)` while others use a bare kernel.
+            if hasattr(kernel, "base_kernel"):
+                kernel = kernel.base_kernel
+            factor = ((1 + num_obs) / (1 + num_obs + q_iopt)) ** (1.0 / self.num_dim)
+            # Adjusting kernel hyperparameters is part of the acquisition heuristic, not something
+            # we want autograd to track.
+            with torch.no_grad():
+                kernel.lengthscale.mul_(factor)
             # var_f = model_f.posterior(self.X_samples, observation_noise=True).variance.squeeze()
             var_f = model_f.posterior(self.X_samples).variance.squeeze()
 

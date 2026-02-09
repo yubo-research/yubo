@@ -13,7 +13,7 @@ ENV_LIB="${CONDA_PREFIX}/lib" LDFLAGS="-L${CONDA_PREFIX}/lib" LIBRARY_PATH="${CO
 
 pip install "LassoBench @ git+https://github.com/ksehic/LassoBench.git" --no-deps
 
-pip install "git+https://github.com/yubo-research/enn.git" --no-deps
+pip install ennbo --no-deps
 cargo install kiss-ai
 ```
 
@@ -31,8 +31,27 @@ ENV_LIB="${CONDA_PREFIX}/lib" LDFLAGS="-L${CONDA_PREFIX}/lib" LIBRARY_PATH="${CO
 
 pip install "LassoBench @ git+https://github.com/ksehic/LassoBench.git" --no-deps
 
-pip install "git+https://github.com/yubo-research/enn.git" --no-deps
+pip install ennbo --no-deps
 cargo install kiss-ai
+```
+
+## Reproducible setup (`admin/mb`)
+
+Use the pinned micromamba environments if you want the branch-validated setup.
+
+```bash
+# macOS (MPS)
+micromamba env create -n yubo_tmp -f admin/mb/conda-macos.yml
+
+# Linux (CUDA)
+micromamba env create -n yubo_tmp -f admin/mb/conda.yml
+```
+
+Or run the one-command setup scripts:
+
+```bash
+./admin/setupmacos.sh
+./admin/setuplinux.sh
 ```
 
 ## Setup

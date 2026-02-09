@@ -3,7 +3,6 @@ from __future__ import annotations
 import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Optional
 
 import numpy as np
 import torch
@@ -20,15 +19,14 @@ from torchrl.objectives.value import GAE
 
 from analysis.data_io import write_config
 from common.seed_all import seed_all
-from optimizer.opt_trajectories import collect_denoised_trajectory, evaluate_for_best
 from problems.env_conf import get_env_conf
+from rl.algos.checkpointing import CheckpointManager, append_jsonl, load_checkpoint
 from rl.algos.torchrl_actor_eval import (
     ActorEvalPolicy,
     capture_actor_snapshot,
     restore_actor_snapshot,
     use_actor_snapshot,
 )
-from rl.algos.checkpointing import CheckpointManager, append_jsonl, load_checkpoint
 from rl.algos.torchrl_checkpoint_io import save_final_checkpoint, save_periodic_checkpoint
 from rl.algos.torchrl_common import (
     ObsScaler,
@@ -45,8 +43,8 @@ class PPOConfig:
     exp_dir: str = "_tmp/ppo"
     env_tag: str = "pend"
     seed: int = 1
-    problem_seed: Optional[int] = None
-    noise_seed_0: Optional[int] = None
+    problem_seed: int | None = None
+    noise_seed_0: int | None = None
 
     total_timesteps: int = 1000000
     learning_rate: float = 3e-4
@@ -63,12 +61,12 @@ class PPOConfig:
     ent_coef: float = 0.0
     vf_coef: float = 0.5
     max_grad_norm: float = 0.5
-    target_kl: Optional[float] = None
+    target_kl: float | None = None
 
     eval_interval: int = 1
-    num_denoise_eval: Optional[int] = None
-    num_denoise_passive_eval: Optional[int] = None
-    eval_seed_base: Optional[int] = None
+    num_denoise_eval: int | None = None
+    num_denoise_passive_eval: int | None = None
+    eval_seed_base: int | None = None
 
     backbone_name: str = "mlp"
     backbone_hidden_sizes: tuple[int, ...] = (64, 64)
@@ -80,18 +78,18 @@ class PPOConfig:
     share_backbone: bool = True
     log_std_init: float = 0.0
 
-    theta_dim: Optional[int] = None
+    theta_dim: int | None = None
     device: str = "auto"
     log_interval: int = 1
-    checkpoint_interval: Optional[int] = None
-    resume_from: Optional[str] = None
+    checkpoint_interval: int | None = None
+    resume_from: str | None = None
     video_enable: bool = False
-    video_dir: Optional[str] = None
+    video_dir: str | None = None
     video_prefix: str = "policy"
     video_num_episodes: int = 10
     video_num_video_episodes: int = 3
     video_episode_selection: str = "best"
-    video_seed_base: Optional[int] = None
+    video_seed_base: int | None = None
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -113,13 +111,13 @@ class PPOConfig:
 class TrainResult:
     best_return: float
     last_eval_return: float
-    last_heldout_return: Optional[float]
+    last_heldout_return: float | None
     num_iterations: int
 
 
 @dataclass(frozen=True)
 class _EnvSetup:
-    env_conf: Any
+    env_conf: object
     problem_seed: int
     noise_seed_0: int
     obs_dim: int
@@ -150,7 +148,7 @@ class _TrainingSetup:
     loss_module: ClipPPOLoss
     gae: GAE
     train_params: list[torch.nn.Parameter]
-    optimizer: optim.Adam
+    optimizer: optim.AdamW
     exp_dir: Path
     metrics_path: Path
     checkpoint_manager: CheckpointManager
@@ -341,7 +339,7 @@ def _build_training(config: PPOConfig, env: _EnvSetup, modules: _Modules) -> _Tr
     )
 
     train_params = _unique_param_list(modules.actor, modules.critic, extra_params=[modules.log_std])
-    optimizer = optim.Adam(train_params, lr=config.learning_rate, eps=1e-5)
+    optimizer = optim.AdamW(train_params, lr=config.learning_rate, eps=1e-5, weight_decay=0.0)
 
     exp_dir = Path(config.exp_dir)
     exp_dir.mkdir(parents=True, exist_ok=True)
@@ -448,6 +446,8 @@ def _evaluate_actor(
     device: torch.device,
     eval_seed: int,
 ) -> float:
+    from optimizer.opt_trajectories import collect_denoised_trajectory
+
     eval_env = get_env_conf(config.env_tag, problem_seed=env.problem_seed, noise_seed_0=env.noise_seed_0)
     eval_policy = ActorEvalPolicy(
         modules.actor_backbone,
@@ -477,6 +477,8 @@ def _maybe_eval_and_log(
     device: torch.device,
     start_time: float,
 ) -> None:
+    from optimizer.opt_trajectories import evaluate_for_best
+
     do_eval = bool(config.eval_interval) and iteration % int(config.eval_interval) == 0
     do_log = bool(config.log_interval) and iteration % int(config.log_interval) == 0
     if not do_eval:

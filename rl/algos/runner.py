@@ -1,4 +1,4 @@
-from common.config_toml import apply_overrides, load_toml, parse_value
+from common.config_toml import apply_overrides, load_toml, parse_set_args
 from rl.algos.registry import get_algo
 
 
@@ -8,33 +8,6 @@ class _RuntimeArgs:
         self.workers = workers
         self.workers_cli_set = workers_cli_set
         self.cleaned = cleaned
-
-
-def _parse_set_args(argv):
-    overrides = {}
-    i = 0
-    while i < len(argv):
-        arg = argv[i]
-        if arg == "--set":
-            if i + 1 >= len(argv):
-                raise ValueError("Expected KEY=VALUE after --set")
-            kv = argv[i + 1]
-            if "=" not in kv:
-                raise ValueError(f"Invalid --set value: {kv}")
-            k, v = kv.split("=", 1)
-            overrides[k] = parse_value(v)
-            i += 2
-            continue
-        if arg.startswith("--set="):
-            kv = arg[len("--set=") :]
-            if "=" not in kv:
-                raise ValueError(f"Invalid --set value: {kv}")
-            k, v = kv.split("=", 1)
-            overrides[k] = parse_value(v)
-            i += 1
-            continue
-        raise ValueError(f"Unknown argument: {arg}")
-    return overrides
 
 
 def _split_config_and_args(argv: list[str]) -> tuple[str, list[str]]:
@@ -87,7 +60,7 @@ def _extract_algo_cfg(cfg: dict) -> tuple[str, dict]:
     root = cfg["rl"]
     algo = root.get("algo")
     if not algo:
-        raise ValueError('[rl] must set algo = "ppo" (or other registered name).')
+        raise ValueError('[rl] must set algo (for example "ppo" or "sac").')
     algo_cfg = root.get(str(algo), {})
     if algo_cfg is None:
         algo_cfg = {}
@@ -165,6 +138,8 @@ def _run_single(path: str, overrides: dict | None, seed: int | None):
     from rl.algos import builtins
 
     builtins.register_all()
+    overrides_keys = sorted(overrides) if overrides else []
+    print(f"[rl] start config={path} seed={seed} overrides={overrides_keys}", flush=True)
     cfg = load_toml(path)
     if overrides:
         apply_overrides(cfg, overrides)
@@ -183,7 +158,7 @@ def main(argv: list[str] | None = None):
     builtins.register_all()
     runtime = _parse_runtime_args(rest)
 
-    overrides = _parse_set_args(runtime.cleaned)
+    overrides = parse_set_args(runtime.cleaned)
     cfg = load_toml(config_path)
     if overrides:
         apply_overrides(cfg, overrides)
@@ -191,6 +166,11 @@ def main(argv: list[str] | None = None):
     if runtime.seeds_raw is not None:
         seeds = _parse_seeds(runtime.seeds_raw)
     workers = runtime.workers if runtime.workers_cli_set else cfg_workers
+    overrides_keys = sorted(overrides) if overrides else []
+    print(
+        f"[rl] config={config_path} seeds={seeds if seeds else ['default']} workers={workers} overrides={overrides_keys}",
+        flush=True,
+    )
     if not seeds:
         _run_from_cfg(cfg, seed=None)
         return

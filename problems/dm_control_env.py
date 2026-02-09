@@ -3,9 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-import numpy as np
-
 import gymnasium as gym
+import numpy as np
 
 
 @dataclass(frozen=True)
@@ -121,9 +120,7 @@ class DMControlEnv(gym.Env):
         try:
             from dm_control import suite
         except Exception as exc:
-            raise ImportError(
-                "dm_control is not installed. Install it to use dm_control environments."
-            ) from exc
+            raise ImportError("dm_control is not installed. Install it to use dm_control environments.") from exc
         task_kwargs = {"random": seed} if seed is not None else None
         return suite.load(self._domain, self._task, task_kwargs=task_kwargs)
 

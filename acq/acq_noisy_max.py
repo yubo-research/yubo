@@ -22,7 +22,8 @@ class AcqNoisyMax(AnalyticAcquisitionFunction):
         """Build a noisy model from X by sampling Y from the posterior."""
         # sample: one random sample, w/o gradient; calls rsample()
         Y = self.model.posterior(X, observation_noise=True).sample().squeeze(0).detach()
-        model_ts = SingleTaskGP(X, Y, self.model.likelihood)
+        # Pass likelihood by keyword so BoTorch doesn't treat it as train_Yvar.
+        model_ts = SingleTaskGP(X, Y, likelihood=self.model.likelihood)
         model_ts.initialize(**dict(self.model.named_parameters()))
         model_ts.eval()
         return model_ts

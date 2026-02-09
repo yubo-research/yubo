@@ -24,6 +24,18 @@ def get_env_conf(tag, problem_seed=None, noise_level=None, noise_seed_0=None):
             frozen_noise = True
             tag = ":".join(x[:-1])
 
+    if tag.startswith("dm:") or tag.startswith("dm_control/"):
+        env_name = _normalize_dm_control_name(tag)
+        ec = EnvConf(
+            env_name,
+            gym_conf=GymConf(max_steps=1000, num_frames_skip=1, transform_state=False),
+            policy_class=MLPPolicyFactory((32, 16)),
+        )
+        ec.problem_seed = problem_seed
+        ec.noise_seed_0 = noise_seed_0
+        ec.frozen_noise = frozen_noise
+        return ec
+
     if tag in _gym_env_confs:
         ec = copy.deepcopy(_gym_env_confs[tag])
         ec.problem_seed = problem_seed
@@ -39,6 +51,16 @@ def get_env_conf(tag, problem_seed=None, noise_level=None, noise_seed_0=None):
         )
 
     return ec
+
+
+def _normalize_dm_control_name(tag: str) -> str:
+    if tag.startswith("dm:"):
+        name = tag.split(":", 1)[1]
+    else:
+        name = tag.split("/", 1)[1]
+    if not name.endswith("-v0") and not name.endswith("-v1"):
+        name = f"{name}-v0"
+    return f"dm_control/{name}"
 
 
 def default_policy(env_conf):
@@ -86,6 +108,10 @@ class EnvConf:
             env = pure_functions.make(self.env_name, problem_seed=self.problem_seed, distort=True)
         elif self.env_name[:2] == "g:":
             env = pure_functions.make(self.env_name, problem_seed=self.problem_seed, distort=False)
+        elif self.env_name.startswith("dm_control/"):
+            from problems.dm_control_env import make as make_dm_control_env
+
+            env = make_dm_control_env(self.env_name, **kwargs)
         elif self.gym_conf is not None:
             env = gym.make(self.env_name, **(kwargs | self.kwargs))
         else:

@@ -1,6 +1,6 @@
 import torch
 
-from rl.algos.ppo_checkpointing import _checkpoint_paths, _load_checkpoint, _save_checkpoint
+from rl.algos.checkpoint_helpers import _checkpoint_paths, _load_checkpoint, _save_checkpoint
 
 
 def test_checkpoint_helpers_roundtrip(tmp_path):

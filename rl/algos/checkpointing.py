@@ -41,4 +41,3 @@ class CheckpointManager:
         save_checkpoint(ckpt_path, state)
         save_checkpoint(latest_path, state)
         return ckpt_path, latest_path
-

@@ -99,9 +99,7 @@ def render_best_policy_videos(
         raise ValueError("video_episode_selection must be one of: best, first, random")
 
     base_seed = int(
-        config.video_seed_base
-        if config.video_seed_base is not None
-        else (config.eval_seed_base if config.eval_seed_base is not None else config.seed)
+        config.video_seed_base if config.video_seed_base is not None else (config.eval_seed_base if config.eval_seed_base is not None else config.seed)
     )
     num_episodes = int(config.video_num_episodes)
     num_video_episodes = int(config.video_num_video_episodes)
@@ -133,8 +131,7 @@ def render_best_policy_videos(
             base_seed=base_seed,
         )
         print(
-            f"[rl/ppo/torchrl] videos dir={video_dir} episodes={num_episodes} "
-            f"videos={len(selected_indices)} select={selection}",
+            f"[rl/ppo/torchrl] videos dir={video_dir} episodes={num_episodes} videos={len(selected_indices)} select={selection}",
             flush=True,
         )
         for episode_idx in selected_indices:

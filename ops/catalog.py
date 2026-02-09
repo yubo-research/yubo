@@ -4,11 +4,14 @@ from pathlib import Path
 
 import click
 
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
 
 def _add_repo_root_to_syspath():
-    repo_root = Path(__file__).resolve().parents[1]
-    if str(repo_root) not in sys.path:
-        sys.path.insert(0, str(repo_root))
+    if str(_REPO_ROOT) not in sys.path:
+        sys.path.insert(0, str(_REPO_ROOT))
 
 
 class _CatalogPolicy:
@@ -62,6 +65,16 @@ def environments():
         click.echo(f"f:{name}")
     for name in env_names:
         click.echo(name)
+
+
+@cli.command(name="data-commands")
+def data_commands():
+    """List available `ops/data.py` subcommands."""
+    _add_repo_root_to_syspath()
+    import ops.data as _ops_data
+
+    for cmd_name in sorted(_ops_data.cli.commands.keys()):
+        click.echo(cmd_name)
 
 
 if __name__ == "__main__":

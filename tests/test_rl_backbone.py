@@ -65,3 +65,16 @@ def test_actorcritic_action_bounds():
     assert value2.shape == (4,)
 
     assert agent.actor_num_params() > 0
+
+
+def test_actionvalue_namedtuple_fields():
+    av = ActionValue(
+        action=torch.zeros(2),
+        log_prob=torch.ones(1),
+        entropy=torch.ones(1) * 2,
+        value=torch.ones(1) * 3,
+    )
+    assert torch.equal(av.action, torch.zeros(2))
+    assert torch.equal(av.log_prob, torch.ones(1))
+    assert torch.equal(av.entropy, torch.ones(1) * 2)
+    assert torch.equal(av.value, torch.ones(1) * 3)

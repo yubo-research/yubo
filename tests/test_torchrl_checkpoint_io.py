@@ -94,4 +94,3 @@ def test_save_final_checkpoint_respects_interval():
     assert len(training_setup.checkpoint_manager.calls) == 1
     _, saved_iteration = training_setup.checkpoint_manager.calls[0]
     assert saved_iteration == training_setup.num_iterations
-

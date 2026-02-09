@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
+from enn.turbo.components.incumbent_selector import ScalarIncumbentSelector
 from enn.turbo.config.candidate_rv import CandidateRV
 from enn.turbo.config.enn_surrogate_config import ENNFitConfig, ENNSurrogateConfig
 from scipy.stats import qmc
@@ -28,6 +29,53 @@ def _build_tr(num_dim: int, *, geometry: str = "enn_ellipsoid", sampler=None, ra
     assert isinstance(tr, EllipsoidTrustRegionBase)
     assert isinstance(tr, ENNEllipsoidTrustRegion)
     return tr
+
+
+def test_config_length_properties_are_exposed():
+    cfg = EllipsoidTRConfig(geometry="enn_ellipsoid")
+    assert cfg.length_init == cfg.length.length_init
+    assert cfg.length_min == cfg.length.length_min
+    assert cfg.length_max == cfg.length.length_max
+
+
+def test_base_tr_fixed_length_disables_restart_check():
+    cfg = EllipsoidTRConfig(geometry="enn_ellipsoid", fixed_length=0.25)
+    tr = EllipsoidTrustRegionBase(
+        config=cfg,
+        num_dim=3,
+        incumbent_selector=ScalarIncumbentSelector(noise_aware=False),
+        candidate_rv=CandidateRV.SOBOL,
+    )
+    assert tr.length == 0.25
+    assert tr.needs_restart() is False
+
+
+def test_base_tr_needs_restart_delegates_without_fixed_length(monkeypatch):
+    cfg = EllipsoidTRConfig(geometry="enn_ellipsoid")
+    tr = EllipsoidTrustRegionBase(
+        config=cfg,
+        num_dim=2,
+        incumbent_selector=ScalarIncumbentSelector(noise_aware=False),
+        candidate_rv=CandidateRV.SOBOL,
+    )
+
+    monkeypatch.setattr(
+        "optimizer.ellipsoid_trust_region.TurboTrustRegion.needs_restart",
+        lambda self: True,
+    )
+    assert tr.needs_restart() is True
+
+
+def test_enn_ellipsoid_trust_region_direct_construction():
+    cfg = EllipsoidTRConfig(geometry="enn_ellipsoid")
+    tr = ENNEllipsoidTrustRegion(
+        config=cfg,
+        num_dim=2,
+        incumbent_selector=ScalarIncumbentSelector(noise_aware=False),
+        candidate_rv=CandidateRV.SOBOL,
+    )
+    assert isinstance(tr, ENNEllipsoidTrustRegion)
+    assert isinstance(tr, EllipsoidTrustRegionBase)
 
 
 def test_ellipsoid_candidates_are_sparse_in_identity_geometry():

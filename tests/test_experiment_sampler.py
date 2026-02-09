@@ -7,6 +7,7 @@ import pytest
 from experiments.experiment_sampler import (
     ExperimentConfig,
     RunConfig,
+    _resolve_video_dir,
     extract_trace_fns,
     mk_replicates,
     post_process,
@@ -277,6 +278,72 @@ def test_experiment_config_from_dict_none_denoise():
     assert config.num_denoise is None
 
 
+def test_sampler_forwards_max_total_seconds_to_wrapped_distributor(monkeypatch):
+    config = ExperimentConfig(
+        exp_dir="/results/exp1",
+        env_tag="f:ackley-10d",
+        opt_name="ucb",
+        num_arms=5,
+        num_rounds=10,
+        num_reps=1,
+        max_total_seconds=12.5,
+    )
+    monkeypatch.setattr("experiments.experiment_sampler.mk_replicates", lambda _config: [MagicMock()])
+
+    calls = {}
+
+    def wrapped_distributor(run_configs, max_total_seconds=None):
+        calls["num_runs"] = len(run_configs)
+        calls["max_total_seconds"] = max_total_seconds
+
+    sampler(config, wrapped_distributor)
+    assert calls["num_runs"] == 1
+    assert calls["max_total_seconds"] == 12.5
+
+
+def test_sampler_handles_distributor_without_timeout_param(monkeypatch):
+    config = ExperimentConfig(
+        exp_dir="/results/exp1",
+        env_tag="f:ackley-10d",
+        opt_name="ucb",
+        num_arms=5,
+        num_rounds=10,
+        num_reps=1,
+        max_total_seconds=12.5,
+    )
+    monkeypatch.setattr("experiments.experiment_sampler.mk_replicates", lambda _config: [MagicMock(), MagicMock()])
+
+    calls = {}
+
+    def distributor_without_timeout(run_configs):
+        calls["num_runs"] = len(run_configs)
+
+    sampler(config, distributor_without_timeout)
+    assert calls["num_runs"] == 2
+
+
+def test_sampler_fallback_when_signature_introspection_fails(monkeypatch):
+    config = ExperimentConfig(
+        exp_dir="/results/exp1",
+        env_tag="f:ackley-10d",
+        opt_name="ucb",
+        num_arms=5,
+        num_rounds=10,
+        num_reps=1,
+        max_total_seconds=12.5,
+    )
+    monkeypatch.setattr("experiments.experiment_sampler.mk_replicates", lambda _config: [MagicMock()])
+    monkeypatch.setattr("experiments.experiment_sampler.inspect.signature", lambda _fn: (_ for _ in ()).throw(TypeError()))
+
+    calls = {}
+
+    def distributor_without_timeout(run_configs):
+        calls["num_runs"] = len(run_configs)
+
+    sampler(config, distributor_without_timeout)
+    assert calls["num_runs"] == 1
+
+
 def test_scan_parallel_empty_run_configs(monkeypatch, capsys):
     import concurrent.futures as cf
 
@@ -351,6 +418,7 @@ def test_sample_1(mock_torch, mock_seed_all, mock_default_policy, mock_optimizer
     collector_log, collector_trace, trace_records = sample_1(run_config)
 
     mock_seed_all.assert_called_once_with(42 + 27)
+    mock_torch.set_default_device.assert_not_called()
     mock_default_policy.assert_called_once_with(mock_env_conf)
     mock_optimizer_class.assert_called_once()
     mock_optimizer.collect_trace.assert_called_once_with(
@@ -427,6 +495,7 @@ def test_sample_1_rebuilds_env_conf(
         noise_seed_0=70,
     )
     mock_seed_all.assert_called_once_with(7 + 27)
+    mock_torch.set_default_device.assert_not_called()
 
 
 @patch("experiments.experiment_sampler.Optimizer")
@@ -466,6 +535,7 @@ def test_sample_1_no_trace(mock_torch, mock_seed_all, mock_default_policy, mock_
         trace_fn="/path/to/trace",
     )
     collector_log, collector_trace, trace_records = sample_1(run_config)
+    mock_torch.set_default_device.assert_not_called()
 
     trace_lines = list(collector_trace)
     assert len(trace_lines) == 1
@@ -585,4 +655,60 @@ def test_sampler(mock_mk_replicates):
     sampler(config, mock_distributor)
 
     mock_mk_replicates.assert_called_once_with(config)
-    mock_distributor.assert_called_once_with([mock_run_config])
+    mock_distributor.assert_called_once_with([mock_run_config], max_total_seconds=None)
+
+
+def test_resolve_video_dir_default_under_run_root(tmp_path):
+    trace_dir = tmp_path / "a1b2c3d4" / "traces"
+    trace_dir.mkdir(parents=True)
+    trace_path = trace_dir / "00000"
+    trace_path.write_text("")
+    run_config = RunConfig(
+        env_conf=None,
+        env_tag="f:ackley-10d",
+        problem_seed=0,
+        noise_seed_0=0,
+        opt_name="ucb",
+        num_rounds=1,
+        num_arms=1,
+        num_denoise=None,
+        num_denoise_passive=None,
+        max_proposal_seconds=None,
+        rollout_workers=None,
+        b_trace=False,
+        trace_fn=str(trace_path),
+        video_enable=True,
+        video_dir=None,
+    )
+    video_dir, resolved_trace = _resolve_video_dir(run_config)
+    assert resolved_trace == trace_path.resolve()
+    assert video_dir == (tmp_path / "a1b2c3d4" / "videos" / "00000").resolve()
+    assert video_dir.is_dir()
+
+
+def test_resolve_video_dir_relative_uses_cwd(tmp_path, monkeypatch):
+    trace_dir = tmp_path / "a1b2c3d4" / "traces"
+    trace_dir.mkdir(parents=True)
+    trace_path = trace_dir / "00000"
+    trace_path.write_text("")
+    monkeypatch.chdir(tmp_path)
+    run_config = RunConfig(
+        env_conf=None,
+        env_tag="f:ackley-10d",
+        problem_seed=0,
+        noise_seed_0=0,
+        opt_name="ucb",
+        num_rounds=1,
+        num_arms=1,
+        num_denoise=None,
+        num_denoise_passive=None,
+        max_proposal_seconds=None,
+        rollout_workers=None,
+        b_trace=False,
+        trace_fn=str(trace_path),
+        video_enable=True,
+        video_dir="_tmp/custom_videos",
+    )
+    video_dir, _ = _resolve_video_dir(run_config)
+    assert video_dir == (tmp_path / "_tmp" / "custom_videos").resolve()
+    assert video_dir.is_dir()

@@ -1,4 +1,5 @@
 import hashlib
+import inspect
 import os
 import time
 from dataclasses import asdict, dataclass
@@ -44,6 +45,13 @@ class ExperimentConfig:
     checkpoint_every: Optional[int] = None
     resume: bool = False
     b_trace: bool = True
+    video_enable: bool = False
+    video_dir: Optional[str] = None
+    video_prefix: str = "bo"
+    video_num_episodes: int = 10
+    video_num_video_episodes: int = 3
+    video_episode_selection: str = "best"
+    video_seed_base: Optional[int] = None
 
     def to_dir_name(self) -> str:
         config_str = (
@@ -83,6 +91,13 @@ class ExperimentConfig:
             checkpoint_every=_parse_optional_int(d.get("checkpoint_every")),
             resume=true_false(d.get("resume", False)),
             b_trace=true_false(d.get("b_trace", True)),
+            video_enable=true_false(d.get("video_enable", False)),
+            video_dir=d.get("video_dir"),
+            video_prefix=d.get("video_prefix", "bo"),
+            video_num_episodes=int(d.get("video_num_episodes", 10)),
+            video_num_video_episodes=int(d.get("video_num_video_episodes", 3)),
+            video_episode_selection=str(d.get("video_episode_selection", "best")),
+            video_seed_base=_parse_optional_int(d.get("video_seed_base")),
         )
 
 
@@ -105,89 +120,165 @@ class RunConfig:
     checkpoint_every: Optional[int] = None
     checkpoint_path: Optional[str] = None
     resume: bool = False
+    video_enable: bool = False
+    video_dir: Optional[str] = None
+    video_prefix: str = "bo"
+    video_num_episodes: int = 10
+    video_num_video_episodes: int = 3
+    video_episode_selection: str = "best"
+    video_seed_base: Optional[int] = None
 
     def to_dict(self) -> dict:
         return asdict(self)
 
 
 def sample_1(run_config: RunConfig):
-    import numpy as np
-
-    env_conf = run_config.env_conf
-    if env_conf is None:
-        env_conf = get_env_conf(
-            run_config.env_tag,
-            problem_seed=run_config.problem_seed,
-            noise_level=None,
-            noise_seed_0=run_config.noise_seed_0,
-        )
-    opt_name = run_config.opt_name
-    num_rounds = run_config.num_rounds
-    num_arms = run_config.num_arms
-    num_denoise = run_config.num_denoise
-    num_denoise_passive = run_config.num_denoise_passive
-    max_proposal_seconds = run_config.max_proposal_seconds
-    b_trace = run_config.b_trace
-    deadline = run_config.deadline
-
-    if max_proposal_seconds is None:
-        max_proposal_seconds = np.inf
+    env_conf = _resolve_env_conf(run_config)
+    max_proposal_seconds = _resolve_max_proposal_seconds(run_config.max_proposal_seconds)
 
     seed_all(env_conf.problem_seed + 27)
-
-    if torch.cuda.is_available():
-        torch.set_default_device("cuda")
-    default_device = torch.empty(size=(1,)).device
-    print("DEFAULT_DEVICE:", default_device)
+    _set_default_device()
 
     policy = default_policy(env_conf)
-
     collector_log = Collector()
-    opt = Optimizer(
+    opt = _build_optimizer(run_config, env_conf, policy, collector_log)
+    collector_trace, trace_records = _collect_trace(run_config, env_conf, opt, max_proposal_seconds)
+    _maybe_render_videos(run_config, env_conf, opt)
+    return _SampleResult(collector_log=collector_log, collector_trace=collector_trace, trace_records=trace_records)
+
+
+def _resolve_env_conf(run_config: RunConfig):
+    if run_config.env_conf is not None:
+        return run_config.env_conf
+    return get_env_conf(
+        run_config.env_tag,
+        problem_seed=run_config.problem_seed,
+        noise_level=None,
+        noise_seed_0=run_config.noise_seed_0,
+    )
+
+
+def _resolve_max_proposal_seconds(value: Optional[float]) -> float:
+    import numpy as np
+
+    if value is None:
+        return float(np.inf)
+    return float(value)
+
+
+def _set_default_device() -> None:
+    # Keep runtime visibility without mutating process-global torch defaults.
+    default_device = "cuda" if torch.cuda.is_available() else "cpu"
+    print("DEFAULT_DEVICE:", default_device)
+
+
+def _build_optimizer(run_config: RunConfig, env_conf, policy, collector_log: Collector) -> Optimizer:
+    return Optimizer(
         collector_log,
         env_conf=env_conf,
         env_tag=run_config.env_tag,
         policy=policy,
-        num_arms=num_arms,
-        num_denoise_measurement=num_denoise,
-        num_denoise_passive=num_denoise_passive,
+        num_arms=run_config.num_arms,
+        num_denoise_measurement=run_config.num_denoise,
+        num_denoise_passive=run_config.num_denoise_passive,
         rollout_workers=run_config.rollout_workers,
     )
 
-    trace_records = []
-    collector_trace = Collector()
-    resume_state = None
-    if run_config.resume and run_config.checkpoint_path:
-        if os.path.exists(run_config.checkpoint_path):
-            resume_state = load_optimizer_checkpoint(run_config.checkpoint_path)
 
+def _load_resume_state(run_config: RunConfig):
+    if not run_config.resume:
+        return None
+    checkpoint_path = run_config.checkpoint_path
+    if not checkpoint_path:
+        return None
+    if not os.path.exists(checkpoint_path):
+        return None
+    return load_optimizer_checkpoint(checkpoint_path)
+
+
+def _collect_trace(
+    run_config: RunConfig,
+    env_conf,
+    opt: Optimizer,
+    max_proposal_seconds: float,
+) -> tuple[Collector, list[TraceRecord]]:
+    collector_trace = Collector()
+    trace_records: list[TraceRecord] = []
+    resume_state = _load_resume_state(run_config)
     for i_iter, te in enumerate(
         opt.collect_trace(
-            designer_name=opt_name,
-            max_iterations=num_rounds,
+            designer_name=run_config.opt_name,
+            max_iterations=run_config.num_rounds,
             max_proposal_seconds=max_proposal_seconds,
-            deadline=deadline,
+            deadline=run_config.deadline,
             resume_state=resume_state,
             checkpoint_every=run_config.checkpoint_every,
             checkpoint_path=run_config.checkpoint_path,
         )
     ):
-        record = TraceRecord(
-            i_iter=i_iter,
-            dt_prop=te.dt_prop,
-            dt_eval=te.dt_eval,
-            rreturn=te.rreturn,
-            env_name=env_conf.env_name,
-            opt_name=opt_name,
+        trace_records.append(
+            TraceRecord(
+                i_iter=i_iter,
+                dt_prop=te.dt_prop,
+                dt_eval=te.dt_eval,
+                rreturn=te.rreturn,
+                env_name=env_conf.env_name,
+                opt_name=run_config.opt_name,
+            )
         )
-        trace_records.append(record)
-        if b_trace:
+        if run_config.b_trace:
             collector_trace(
-                f"TRACE: name = {env_conf.env_name} opt_name = {opt_name} i_iter = {i_iter} dt_prop = {te.dt_prop:.3e} dt_eval = {te.dt_eval:.3e} return = {te.rreturn:.3e}"
+                f"TRACE: name = {env_conf.env_name} opt_name = {run_config.opt_name} i_iter = {i_iter} dt_prop = {te.dt_prop:.3e} dt_eval = {te.dt_eval:.3e} return = {te.rreturn:.3e}"
             )
     collector_trace("DONE")
+    return collector_trace, trace_records
 
-    return _SampleResult(collector_log=collector_log, collector_trace=collector_trace, trace_records=trace_records)
+
+def _resolve_video_dir(run_config: RunConfig):
+    from pathlib import Path
+
+    trace_path = Path(run_config.trace_fn).resolve()
+    run_root = trace_path.parent.parent
+    if run_config.video_dir is None:
+        video_dir = run_root / "videos" / trace_path.name
+    else:
+        video_dir = Path(run_config.video_dir).expanduser()
+        if not video_dir.is_absolute():
+            video_dir = (Path.cwd() / video_dir).resolve()
+    video_dir.mkdir(parents=True, exist_ok=True)
+    return video_dir, trace_path
+
+
+def _maybe_render_videos(run_config: RunConfig, env_conf, opt: Optimizer) -> None:
+    if not run_config.video_enable:
+        return
+    if opt.best_policy is None:
+        print("VIDEO: best_policy is None; skipping")
+        return
+    if env_conf.gym_conf is None:
+        print(f"VIDEO: env={env_conf.env_name} is not gym; skipping")
+        return
+
+    from experiments.video_render import render_policy_videos
+
+    video_dir, trace_path = _resolve_video_dir(run_config)
+    seed_base = int(run_config.video_seed_base) if run_config.video_seed_base is not None else int(env_conf.problem_seed)
+    prefix = f"{run_config.video_prefix}_{trace_path.name}"
+    print(
+        f"VIDEO: dir={video_dir} episodes={run_config.video_num_episodes} "
+        f"videos={run_config.video_num_video_episodes} select={run_config.video_episode_selection}",
+        flush=True,
+    )
+    render_policy_videos(
+        env_conf,
+        opt.best_policy.clone(),
+        video_dir=video_dir,
+        video_prefix=prefix,
+        num_episodes=int(run_config.video_num_episodes),
+        num_video_episodes=int(run_config.video_num_video_episodes),
+        episode_selection=str(run_config.video_episode_selection),
+        seed_base=int(seed_base),
+    )
 
 
 def post_process_stdout(
@@ -314,6 +405,13 @@ def _make_run_config(config: ExperimentConfig, out_dir: str, rep_idx: int) -> Ru
         checkpoint_every=config.checkpoint_every,
         checkpoint_path=f"{trace_fn}.ckpt.npz",
         resume=bool(config.resume),
+        video_enable=bool(config.video_enable),
+        video_dir=config.video_dir,
+        video_prefix=str(config.video_prefix),
+        video_num_episodes=int(config.video_num_episodes),
+        video_num_video_episodes=int(config.video_num_video_episodes),
+        video_episode_selection=str(config.video_episode_selection),
+        video_seed_base=config.video_seed_base,
     )
 
 
@@ -337,7 +435,14 @@ def mk_replicates(config: ExperimentConfig) -> list[RunConfig]:
 
 def sampler(config: ExperimentConfig, distributor_fn):
     run_configs = mk_replicates(config)
-    if distributor_fn == scan_local:
+    try:
+        signature = inspect.signature(distributor_fn)
+    except (TypeError, ValueError):
+        signature = None
+    supports_timeout = False
+    if signature is not None:
+        supports_timeout = "max_total_seconds" in signature.parameters or any(p.kind == inspect.Parameter.VAR_KEYWORD for p in signature.parameters.values())
+    if supports_timeout:
         distributor_fn(run_configs, max_total_seconds=config.max_total_seconds)
     else:
         distributor_fn(run_configs)
