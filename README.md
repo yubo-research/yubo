@@ -13,7 +13,7 @@ ENV_LIB="${CONDA_PREFIX}/lib" LDFLAGS="-L${CONDA_PREFIX}/lib" LIBRARY_PATH="${CO
 
 pip install "LassoBench @ git+https://github.com/ksehic/LassoBench.git" --no-deps
 
-pip install "git+https://github.com/yubo-research/enn.git" --no-deps
+pip install ennbo --no-deps
 cargo install kiss-ai
 ```
 
@@ -31,7 +31,7 @@ ENV_LIB="${CONDA_PREFIX}/lib" LDFLAGS="-L${CONDA_PREFIX}/lib" LIBRARY_PATH="${CO
 
 pip install "LassoBench @ git+https://github.com/ksehic/LassoBench.git" --no-deps
 
-pip install "git+https://github.com/yubo-research/enn.git" --no-deps
+pip install ennbo --no-deps
 cargo install kiss-ai
 ```
 
@@ -47,30 +47,42 @@ pre-commit install
 pytest -sv tests
 ```
 
-## RL runs
+## Micromamba Branch Setup (`admin/mb`)
+
+Use these branch-specific files if you want reproducible setup flows with pinned `torch`/`torchrl`/`tensordict` behavior:
 
 ```bash
-python -m rl.algos.runner --config experiments/configs/pendulum_ppo.toml
-python -m rl.algos.runner --config experiments/configs/pendulum_ppo.toml --seeds 1,2,3 --workers 3
+# macOS (MPS)
+micromamba env create -n yubo_tmp_mb_macos -f admin/mb/conda-macos.yml
+
+# Linux (CUDA)
+micromamba env create -n yubo_tmp_mb_linux -f admin/mb/conda.yml
 ```
 
-You can also set this in the TOML:
-```toml
-[rl.run]
-seeds = [1, 2, 3]
-workers = 3
+One-command full setup + verification scripts:
+
+```bash
+# from repo root
+./admin/setupmacos.sh
+./admin/setuplinux.sh
 ```
 
-Checkpointing (optional):
-```toml
-[rl.ppo]
-checkpoint_interval = 10
-resume_from = "_tmp/pendulum_ppo/checkpoint_last.pt"
+These scripts perform environment creation, dependency installation, and `pytest -sv tests -rs`.
+
+## Branch Add-ons
+
+Use these only if you want this branch's stricter/reproducible setup on top of upstream:
+
+```bash
+# Optional: pin ennbo instead of floating latest
+pip install ennbo==0.2.1 --no-deps
+
+# Optional: pin pyvecch commit used on this branch
+pip uninstall -y pyvecch
+pip install --no-build-isolation --no-deps --no-cache-dir --force-reinstall \
+  "pyvecch @ git+https://github.com/feji3769/VecchiaBO.git@88fd0cc972ce07dee0f13881fd002f7412dfa617#subdirectory=code"
 ```
 
-BO checkpoints (optional):
-```toml
-[experiment]
-checkpoint_every = 10
-resume = true
-```
+Optional add-ons in the same `yubo` env:
+
+- `dm-control`/`mujoco`/`moviepy` are installed via `requirements.txt`.
