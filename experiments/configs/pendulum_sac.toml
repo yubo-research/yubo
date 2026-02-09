@@ -1,0 +1,34 @@
+[rl]
+algo = "sac"
+
+[rl.sac]
+exp_dir = "_tmp/pendulum_sac"
+env_tag = "pend"
+seed = 1
+total_timesteps = 200000
+learning_starts = 5000
+batch_size = 256
+replay_size = 1000000
+update_every = 1
+updates_per_step = 1
+learning_rate_actor = 3e-4
+learning_rate_critic = 3e-4
+learning_rate_alpha = 3e-4
+gamma = 0.99
+tau = 0.005
+alpha_init = 0.2
+
+eval_interval_steps = 10000
+num_denoise_eval = 1
+num_denoise_passive_eval = 1
+
+backbone_name = "mlp"
+backbone_hidden_sizes = [256, 256]
+backbone_activation = "silu"
+backbone_layer_norm = false
+actor_head_hidden_sizes = []
+critic_head_hidden_sizes = []
+
+[rl.run]
+seeds = [1, 2, 3]
+workers = 3

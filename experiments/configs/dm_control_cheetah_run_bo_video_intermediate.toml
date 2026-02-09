@@ -1,0 +1,24 @@
+[experiment]
+exp_dir = "_tmp/dm_control_cheetah_run_bo_video_intermediate"
+env_tag = "dm_control/cheetah-run-v0"
+num_arms = 4
+num_rounds = 20
+num_reps = 2
+num_denoise = 2
+num_denoise_passive = 2
+b_trace = true
+video_enable = true
+video_prefix = "bo"
+video_num_episodes = 10
+video_num_video_episodes = 3
+video_episode_selection = "best"
+
+[optimizer]
+name = "turbo-enn-fit"
+
+[optimizer.params]
+acq_type = "ucb"
+
+[optimizer.general]
+num_keep = 20
+keep_style = "best"
