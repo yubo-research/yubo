@@ -1,13 +1,13 @@
 class StepSizeAdapter:
-    _SIGMA_FIXED = 1e-3
+    _SIGMA_DEFAULT = 1e-3
 
     def __init__(
         self,
         dim: int,
         *,
-        sigma_0: float = _SIGMA_FIXED,
-        sigma_min: float = _SIGMA_FIXED,
-        sigma_max: float = _SIGMA_FIXED,
+        sigma_0: float = _SIGMA_DEFAULT,
+        sigma_min: float = 1e-8,
+        sigma_max: float = 1e8,
         success_tolerance: int = 3,
     ):
         self._sigma = max(sigma_min, min(sigma_max, sigma_0))
