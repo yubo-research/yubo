@@ -59,7 +59,14 @@ def _parse_perturb(perturb: str) -> tuple[float | None, float | None]:
     raise click.BadParameter(msg)
 
 
-def _make_loop(env_tag, num_rounds, lr=0.001, sigma=0.001, num_dim_target=None, num_module_target=None):
+def _make_loop(
+    env_tag,
+    num_rounds,
+    lr=0.001,
+    sigma=0.001,
+    num_dim_target=None,
+    num_module_target=None,
+):
     from problems.env_conf import get_env_conf
     from problems.torch_policy import TorchPolicy
 
@@ -141,7 +148,14 @@ def _make_loop(env_tag, num_rounds, lr=0.001, sigma=0.001, num_dim_target=None, 
 )
 def local(env_tag, num_rounds, lr, perturb):
     ndt, nmt = _parse_perturb(perturb)
-    loop = _make_loop(env_tag, num_rounds, lr=lr, sigma=0.001, num_dim_target=ndt, num_module_target=nmt)
+    loop = _make_loop(
+        env_tag,
+        num_rounds,
+        lr=lr,
+        sigma=0.001,
+        num_dim_target=ndt,
+        num_module_target=nmt,
+    )
     loop.run()
 
 

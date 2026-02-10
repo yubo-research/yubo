@@ -37,7 +37,13 @@ class UHDLoop:
         else:
             perturbator = GaussianPerturbator(module)
         lr_scheduler = ConstantLR(lr)
-        self._uhd = UHDMeZO(perturbator, dim=dim, lr_scheduler=lr_scheduler, sigma=sigma, weight_decay=weight_decay)
+        self._uhd = UHDMeZO(
+            perturbator,
+            dim=dim,
+            lr_scheduler=lr_scheduler,
+            sigma=sigma,
+            weight_decay=weight_decay,
+        )
 
     def run(self) -> None:
         num_params = sum(p.numel() for p in self._module.parameters())

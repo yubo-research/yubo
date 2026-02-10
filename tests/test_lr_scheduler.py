@@ -1,6 +1,11 @@
 import pytest
 
-from optimizer.lr_scheduler import ConstantLR, LinearLRScheduler, LRScheduler, OneCycleLR
+from optimizer.lr_scheduler import (
+    ConstantLR,
+    LinearLRScheduler,
+    LRScheduler,
+    OneCycleLR,
+)
 
 
 def test_protocol_isinstance():
