@@ -47,7 +47,19 @@ def _make_accuracy_fn(module, device):
     return accuracy_fn
 
 
-def _make_loop(env_tag, num_rounds, lr=0.001, sigma=0.001, num_dim_target=None):
+def _parse_perturb(perturb: str) -> tuple[float | None, float | None]:
+    """Parse --perturb flag into (num_dim_target, num_module_target)."""
+    if perturb == "dense":
+        return None, None
+    if perturb.startswith("dim:"):
+        return float(perturb[4:]), None
+    if perturb.startswith("mod:"):
+        return None, float(perturb[4:])
+    msg = f"Invalid --perturb value: {perturb!r}. Use 'dense', 'dim:<n>', or 'mod:<n>'."
+    raise click.BadParameter(msg)
+
+
+def _make_loop(env_tag, num_rounds, lr=0.001, sigma=0.001, num_dim_target=None, num_module_target=None):
     from problems.env_conf import get_env_conf
     from problems.torch_policy import TorchPolicy
 
@@ -110,6 +122,7 @@ def _make_loop(env_tag, num_rounds, lr=0.001, sigma=0.001, num_dim_target=None):
         sigma=sigma,
         accuracy_fn=acc_fn,
         num_dim_target=num_dim_target,
+        num_module_target=num_module_target,
     )
 
 
@@ -122,13 +135,13 @@ def _make_loop(env_tag, num_rounds, lr=0.001, sigma=0.001, num_dim_target=None):
 @click.option("--num-rounds", required=True, type=int, help="Number of UHD iterations")
 @click.option("--lr", default=0.001, type=float, help="Max learning rate")
 @click.option(
-    "--ndt",
-    default=0.5,
-    type=float,
-    help="Sparse perturbation target (<1=fraction, >=1=count)",
+    "--perturb",
+    default="dim:0.5",
+    help="Perturbation strategy: 'dense', 'dim:<target>', or 'mod:<target>'",
 )
-def local(env_tag, num_rounds, lr, ndt):
-    loop = _make_loop(env_tag, num_rounds, lr=lr, sigma=0.001, num_dim_target=ndt)
+def local(env_tag, num_rounds, lr, perturb):
+    ndt, nmt = _parse_perturb(perturb)
+    loop = _make_loop(env_tag, num_rounds, lr=lr, sigma=0.001, num_dim_target=ndt, num_module_target=nmt)
     loop.run()
 
 
