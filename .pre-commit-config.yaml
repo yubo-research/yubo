@@ -30,6 +30,13 @@ repos:
         pass_filenames: false
         always_run: true
 
+      - id: fan-in-out
+        name: Check fan-in/fan-out thresholds
+        entry: python admin/fan_in_out.py
+        language: system
+        pass_filenames: false
+        always_run: true
+
       - id: kiss-check
         name: kiss check
         entry: kiss check

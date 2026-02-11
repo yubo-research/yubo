@@ -14,7 +14,7 @@ ENV_LIB="${CONDA_PREFIX}/lib" LDFLAGS="-L${CONDA_PREFIX}/lib" LIBRARY_PATH="${CO
 pip install "LassoBench @ git+https://github.com/ksehic/LassoBench.git" --no-deps
 
 pip install ennbo --no-deps
-cargo install kiss-ai
+cargo install kiss-ai --version 0.2.4
 ```
 
 Apologies for the complexity of installation. We're blending lots of algorithms and test environments, much of which is research-quality code, some of which may be unmaintained.
@@ -46,3 +46,10 @@ pre-commit install
 ```bash
 pytest -sv tests
 ```
+
+If your code crashes or hangs, try this [hack](https://discuss.pytorch.org/t/ran-into-this-issue-while-executing/101460):
+```
+export KMP_DUPLICATE_LIB_OK=TRUE
+export OMP_NUM_THREADS=1
+```
+I don't recommend this, however, as it may slow things down.

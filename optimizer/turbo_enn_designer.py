@@ -1,27 +1,58 @@
 from typing import Optional
 
 import numpy as np
-from enn.turbo.config.acq_type import AcqType
-from enn.turbo.config.candidate_gen_config import CandidateGenConfig
-from enn.turbo.config.candidate_rv import CandidateRV
-from enn.turbo.config.enn_surrogate_config import (
-    ENNFitConfig,
-    ENNSurrogateConfig,
-)
-from enn.turbo.config.factory import (
-    lhd_only_config,
-    turbo_enn_config,
-    turbo_one_config,
-    turbo_zero_config,
-)
-from enn.turbo.config.raasp_driver import RAASPDriver
-from enn.turbo.config.trust_region import (
-    MorboTRConfig,
-    NoTRConfig,
-    TrustRegionConfig,
-    TurboTRConfig,
-)
-from enn.turbo.optimizer import create_optimizer
+
+try:
+    from enn.turbo.config.acq_type import AcqType
+    from enn.turbo.config.candidate_gen_config import CandidateGenConfig
+    from enn.turbo.config.candidate_rv import CandidateRV
+    from enn.turbo.config.enn_surrogate_config import (
+        ENNFitConfig,
+        ENNSurrogateConfig,
+    )
+    from enn.turbo.config.factory import (
+        lhd_only_config,
+        turbo_enn_config,
+        turbo_one_config,
+        turbo_zero_config,
+    )
+    from enn.turbo.config.raasp_driver import RAASPDriver
+    from enn.turbo.config.trust_region import (
+        MorboTRConfig,
+        NoTRConfig,
+        TrustRegionConfig,
+        TurboTRConfig,
+    )
+    from enn.turbo.optimizer import create_optimizer
+except ModuleNotFoundError:
+    try:
+        # Newer `ennbo` distributions may expose the package as `ennbo.*`.
+        from ennbo.turbo.config.acq_type import AcqType
+        from ennbo.turbo.config.candidate_gen_config import CandidateGenConfig
+        from ennbo.turbo.config.candidate_rv import CandidateRV
+        from ennbo.turbo.config.enn_surrogate_config import (
+            ENNFitConfig,
+            ENNSurrogateConfig,
+        )
+        from ennbo.turbo.config.factory import (
+            lhd_only_config,
+            turbo_enn_config,
+            turbo_one_config,
+            turbo_zero_config,
+        )
+        from ennbo.turbo.config.raasp_driver import RAASPDriver
+        from ennbo.turbo.config.trust_region import (
+            MorboTRConfig,
+            NoTRConfig,
+            TrustRegionConfig,
+            TurboTRConfig,
+        )
+        from ennbo.turbo.optimizer import create_optimizer
+    except ModuleNotFoundError as exc:
+        raise ModuleNotFoundError(
+            "Could not import ENN/TuRBO dependencies. Install either a distribution exposing "
+            "`enn.turbo.*` (e.g. older `ennbo`) or one exposing `ennbo.turbo.*`."
+        ) from exc
 
 import common.all_bounds as all_bounds
 from optimizer.designer_asserts import assert_scalar_rreturn
@@ -94,7 +125,10 @@ class TurboENNDesigner:
         if self._tr_type == "morbo":
             if num_metrics is None:
                 raise ValueError("num_metrics is required for tr_type='morbo'")
-            from enn.turbo.config.trust_region import MultiObjectiveConfig
+            try:
+                from enn.turbo.config.trust_region import MultiObjectiveConfig
+            except ModuleNotFoundError:
+                from ennbo.turbo.config.trust_region import MultiObjectiveConfig
 
             return MorboTRConfig(multi_objective=MultiObjectiveConfig(num_metrics=int(num_metrics)))
         raise ValueError(f"Invalid tr_type: {self._tr_type}")
