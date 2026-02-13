@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 
-import sys
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
+import click
 import tomllib
 
-from experiments.experiment_sampler import ExperimentConfig, sampler, scan_local
+if TYPE_CHECKING:
+    from experiments.experiment_sampler import ExperimentConfig
 
-_CONFIG_KEY = "config"
 _REQUIRED_KEYS = (
     "exp_dir",
     "env_tag",
@@ -24,15 +24,10 @@ _OPTIONAL_KEYS = (
     "b_trace",
 )
 _ALL_EXPERIMENT_KEYS = set(_REQUIRED_KEYS + _OPTIONAL_KEYS)
-_VALID_CLI_FLAGS = sorted({f"--{k.replace('_', '-')}" for k in _ALL_EXPERIMENT_KEYS} | {f"--{_CONFIG_KEY}"})
 
 
 def _normalize_key(key: str) -> str:
     return key.replace("-", "_")
-
-
-def _raise_unknown_arg(key: str) -> None:
-    raise ValueError(f"Unknown argument {key}. Valid: {_VALID_CLI_FLAGS}")
 
 
 def _coerce_mapping_keys(raw: dict[str, Any], *, source: str) -> dict[str, Any]:
@@ -56,53 +51,40 @@ def _load_toml_config(path: str) -> dict[str, Any]:
     return _coerce_mapping_keys(section, source=f"TOML '{path}'")
 
 
-def _parse_cli_overrides(argv: list[str]) -> tuple[str | None, dict[str, Any]]:
-    out: dict[str, Any] = {}
-    config_path = None
-    i = 0
-
-    while i < len(argv):
-        token = argv[i]
-        if not token.startswith("--"):
-            raise ValueError(f"Argument must start with '--': {token}")
-        if "=" in token:
-            key, value = token.split("=", 1)
-        else:
-            if i + 1 >= len(argv):
-                raise ValueError(f"Missing value for argument: {token}")
-            key = token
-            value = argv[i + 1]
-            i += 1
-        norm = _normalize_key(key[2:])
-        if norm == _CONFIG_KEY:
-            config_path = value
-        else:
-            if norm not in _ALL_EXPERIMENT_KEYS:
-                _raise_unknown_arg(key)
-            out[norm] = value
-        i += 1
-
-    return config_path, out
-
-
 def _validate_required(cfg: dict[str, Any]) -> None:
     missing = [k for k in _REQUIRED_KEYS if k not in cfg]
     if missing:
         raise ValueError(f"Missing required fields: {missing}. Required: {sorted(_REQUIRED_KEYS)}")
 
 
-def load_experiment_config(argv: list[str]) -> ExperimentConfig:
-    config_path, cli_cfg = _parse_cli_overrides(argv)
-    toml_cfg = _load_toml_config(config_path) if config_path else {}
-    merged = {**toml_cfg, **cli_cfg}
-    _validate_required(merged)
-    return ExperimentConfig.from_dict(merged)
+def load_experiment_config(*, config_toml_path: str) -> "ExperimentConfig":
+    from experiments.experiment_sampler import ExperimentConfig
+
+    cfg = _load_toml_config(config_toml_path)
+    _validate_required(cfg)
+    return ExperimentConfig.from_dict(cfg)
 
 
-def main(argv: list[str] | None = None) -> None:
-    args = sys.argv[1:] if argv is None else argv
-    config = load_experiment_config(args)
+@click.group(help="Run experiments from a TOML config.")
+def cli() -> None:
+    pass
+
+
+@cli.command(help="Run locally (single process) from a config TOML.")
+@click.argument("config_toml", type=click.Path(exists=True, dir_okay=False, path_type=str))
+def local(config_toml: str) -> None:
+    from experiments.experiment_sampler import sampler, scan_local
+
+    try:
+        config = load_experiment_config(config_toml_path=config_toml)
+    except (OSError, tomllib.TOMLDecodeError, TypeError, ValueError) as e:
+        raise click.ClickException(str(e)) from e
+
     sampler(config, distributor_fn=scan_local)
+
+
+def main() -> None:
+    cli()
 
 
 if __name__ == "__main__":
