@@ -42,8 +42,13 @@ def ray_boundary_np(x_0, u, eps=1e-6):
 
     x_0 = _bound(x_0)
     # x_ray = x + t*u
-    t_min = (zero - x_0) / u
-    t_max = (one - x_0) / u
+    # Avoid divide-by-zero warnings when a direction component is 0.
+    # Those entries are ignored downstream (we use +inf candidates for u == 0).
+    t_min = np.full_like(x_0, np.inf, dtype=np.float64)
+    t_max = np.full_like(x_0, np.inf, dtype=np.float64)
+    nonzero = u != 0
+    np.divide(zero - x_0, u, out=t_min, where=nonzero)
+    np.divide(one - x_0, u, out=t_max, where=nonzero)
     # one t_min (t_max) for each coordinate, each x in batch
 
     t_candidates = np.where(u > 0, t_max, np.where(u < 0, t_min, np.inf))
