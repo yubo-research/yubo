@@ -2,12 +2,49 @@
 
 import math
 import warnings
+from typing import Any
 
 import click
+import tomllib
 import torch
 import torch.nn.functional as F
 
 from optimizer.uhd_loop import UHDLoop
+
+_REQUIRED_TOML_KEYS = ("env_tag", "num_rounds")
+_OPTIONAL_TOML_KEYS = ("lr", "perturb")
+_ALL_TOML_KEYS = set(_REQUIRED_TOML_KEYS + _OPTIONAL_TOML_KEYS)
+
+
+def _normalize_key(key: str) -> str:
+    # Match experiments/experiment.py convention: allow hyphenated keys in TOML.
+    return key.replace("-", "_")
+
+
+def _coerce_mapping_keys(raw: dict[str, Any], *, source: str) -> dict[str, Any]:
+    if not isinstance(raw, dict):
+        raise TypeError("TOML config must be a mapping at root or under [uhd].")
+
+    out: dict[str, Any] = {}
+    for key, value in raw.items():
+        norm = _normalize_key(str(key))
+        if norm not in _ALL_TOML_KEYS:
+            raise ValueError(f"Unknown key '{key}' in {source}. Valid keys: {sorted(_ALL_TOML_KEYS)}")
+        out[norm] = value
+    return out
+
+
+def _load_toml_config(path: str) -> dict[str, Any]:
+    with open(path, "rb") as f:
+        data = tomllib.load(f)
+    section = data.get("uhd", data)
+    return _coerce_mapping_keys(section, source=f"TOML '{path}'")
+
+
+def _validate_required(cfg: dict[str, Any]) -> None:
+    missing = [k for k in _REQUIRED_TOML_KEYS if k not in cfg]
+    if missing:
+        raise ValueError(f"Missing required fields: {missing}. Required: {sorted(_REQUIRED_TOML_KEYS)}")
 
 
 @click.group()
@@ -133,20 +170,23 @@ def _make_loop(
     )
 
 
-@cli.command()
-@click.option(
-    "--env-tag",
-    required=True,
-    help="Environment tag (e.g. lunar, ant, bw, mnist)",
-)
-@click.option("--num-rounds", required=True, type=int, help="Number of UHD iterations")
-@click.option("--lr", default=0.001, type=float, help="Max learning rate")
-@click.option(
-    "--perturb",
-    default="dim:0.5",
-    help="Perturbation strategy: 'dense', 'dim:<target>', or 'mod:<target>'",
-)
-def local(env_tag, num_rounds, lr, perturb):
+@cli.command(help="Run locally (single process) from a config TOML.")
+@click.argument("config_toml", type=click.Path(exists=True, dir_okay=False, path_type=str))
+def local(config_toml: str) -> None:
+    lr_default = 0.001
+    perturb_default = "dim:0.5"
+
+    try:
+        cfg = _load_toml_config(config_toml)
+        _validate_required(cfg)
+    except (OSError, tomllib.TOMLDecodeError, TypeError, ValueError) as e:
+        raise click.ClickException(str(e)) from e
+
+    env_tag = str(cfg["env_tag"])
+    num_rounds = int(cfg["num_rounds"])
+    lr = float(cfg.get("lr", lr_default))
+    perturb = str(cfg.get("perturb", perturb_default))
+
     ndt, nmt = _parse_perturb(perturb)
     loop = _make_loop(
         env_tag,
