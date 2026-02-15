@@ -294,8 +294,9 @@ def test_kiss_cov_noise_maker_and_policy_mixin():
     assert PolicyParamsMixin.num_params(p) == 2
 
 
-def test_kiss_cov_exp_uhd_cli_and_local(monkeypatch):
-    import experiments.exp_uhd as exp_uhd
+def test_kiss_cov_exp_uhd_cli_and_local(monkeypatch, tmp_path):
+    import ops.exp_uhd as exp_uhd
+    import ops.uhd_setup as uhd_setup
 
     called = {"run": 0}
 
@@ -303,9 +304,11 @@ def test_kiss_cov_exp_uhd_cli_and_local(monkeypatch):
         def run(self):
             called["run"] += 1
 
-    monkeypatch.setattr(exp_uhd, "_make_loop", lambda *a, **k: _Loop())
+    monkeypatch.setattr(uhd_setup, "make_loop", lambda *a, **k: _Loop())
     exp_uhd.cli.callback()
-    exp_uhd.local.callback("f:sphere-2d", 1, 0.001, "dense")
+    toml_file = tmp_path / "test.toml"
+    toml_file.write_text('[uhd]\nenv_tag = "f:sphere-2d"\nnum_rounds = 1\n')
+    exp_uhd.local.callback(str(toml_file))
     assert called["run"] == 1
 
 

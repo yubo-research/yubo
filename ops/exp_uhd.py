@@ -1,18 +1,13 @@
 #!/usr/bin/env python
 
-import math
-import warnings
+from dataclasses import dataclass
 from typing import Any
 
 import click
 import tomllib
-import torch
-import torch.nn.functional as F
-
-from optimizer.uhd_loop import UHDLoop
 
 _REQUIRED_TOML_KEYS = ("env_tag", "num_rounds")
-_OPTIONAL_TOML_KEYS = ("lr", "perturb")
+_OPTIONAL_TOML_KEYS = ("lr", "perturb", "log_interval", "accuracy_interval", "target_accuracy")
 _ALL_TOML_KEYS = set(_REQUIRED_TOML_KEYS + _OPTIONAL_TOML_KEYS)
 
 
@@ -52,38 +47,6 @@ def cli():
     pass
 
 
-def _get_device():
-    if torch.backends.mps.is_available():
-        return torch.device("mps")
-    if torch.cuda.is_available():
-        return torch.device("cuda")
-    return torch.device("cpu")
-
-
-def _make_accuracy_fn(module, device):
-    from torchvision import datasets
-
-    from problems.mnist_env import _MNIST_ROOT, _mnist_transform
-
-    test_dataset = datasets.MNIST(
-        root=_MNIST_ROOT,
-        train=False,
-        download=True,
-        transform=_mnist_transform(),
-    )
-    images = torch.stack([test_dataset[i][0] for i in range(len(test_dataset))]).to(device)
-    labels = torch.tensor([test_dataset[i][1] for i in range(len(test_dataset))]).to(device)
-
-    def accuracy_fn():
-        module.eval()
-        with torch.no_grad():
-            preds = module(images).argmax(dim=1)
-        module.train()
-        return float((preds == labels).float().mean())
-
-    return accuracy_fn
-
-
 def _parse_perturb(perturb: str) -> tuple[float | None, float | None]:
     """Parse --perturb flag into (num_dim_target, num_module_target)."""
     if perturb == "dense":
@@ -96,85 +59,51 @@ def _parse_perturb(perturb: str) -> tuple[float | None, float | None]:
     raise click.BadParameter(msg)
 
 
-def _make_loop(
-    env_tag,
-    num_rounds,
-    lr=0.001,
-    sigma=0.001,
-    num_dim_target=None,
-    num_module_target=None,
-):
-    from problems.env_conf import get_env_conf
-    from problems.torch_policy import TorchPolicy
+@dataclass(frozen=True)
+class UHDConfig:
+    env_tag: str
+    num_rounds: int
+    lr: float
+    num_dim_target: float | None
+    num_module_target: float | None
+    log_interval: int
+    accuracy_interval: int
+    target_accuracy: float | None
 
-    device = _get_device()
-    env_conf = get_env_conf(env_tag)
-    noise_seed_0 = env_conf.noise_seed_0 or 0
 
-    env = env_conf.make()
+def _parse_cfg(cfg: dict[str, Any]) -> UHDConfig:
+    lr_default = 0.001
+    perturb_default = "dim:0.5"
+    log_interval_default = 1
+    accuracy_interval_default = 1000
+    target_accuracy_default = None
 
-    if hasattr(env, "torch_env"):
-        # Env provides a TorchEnv (e.g. MNIST).
-        # TorchPolicy runs module.forward() on data from the env;
-        # GaussianPerturbator perturbs the same module in-place.
-        torch_env = env.torch_env()
-        module = torch_env.module.to(device)
-        module.train()  # BN uses batch statistics, matching fit_mnist.py
-        policy = TorchPolicy(module, env_conf)
-
-        def evaluate_fn(eval_seed):
-            noise_seed = eval_seed + noise_seed_0
-            state, _ = torch_env.reset(seed=noise_seed)
-            logits = policy(state)
-            logits_t = torch.as_tensor(logits, dtype=torch.float32)
-            with torch.inference_mode():
-                per_sample = F.cross_entropy(logits_t, torch_env._labels, reduction="none")
-            mu = -float(per_sample.mean())
-            se = float(per_sample.std() / math.sqrt(len(per_sample)))
-            return mu, se
-
-        accuracy_fn = _make_accuracy_fn(module, device)
-    else:
-        # Gym env — build policy network, evaluate via collect_trajectory.
-        env.close()
-
-        from optimizer.trajectories import collect_trajectory
-        from problems.mlp_torch_policy import MLPPolicyModule
-
-        if env_conf.policy_class is not None:
-            warnings.warn(
-                f"Replacing policy_class {env_conf.policy_class} with MLPPolicyModule",
-                stacklevel=2,
-            )
-
-        num_state = env_conf.gym_conf.state_space.shape[0]
-        num_action = env_conf.action_space.shape[0]
-
-        module = MLPPolicyModule(num_state, num_action, hidden_sizes=(32, 16)).to(device)
-        policy = TorchPolicy(module, env_conf)
-
-        def evaluate_fn(eval_seed):
-            noise_seed = eval_seed + noise_seed_0
-            return float(collect_trajectory(env_conf, policy, noise_seed=noise_seed).rreturn), 0.0
-
-    acc_fn = accuracy_fn if hasattr(env, "torch_env") else None
-    return UHDLoop(
-        module,
-        evaluate_fn,
-        num_iterations=num_rounds,
+    env_tag = str(cfg["env_tag"])
+    num_rounds = int(cfg["num_rounds"])
+    lr = float(cfg.get("lr", lr_default))
+    perturb = str(cfg.get("perturb", perturb_default))
+    log_interval = int(cfg.get("log_interval", log_interval_default))
+    accuracy_interval = int(cfg.get("accuracy_interval", accuracy_interval_default))
+    target_accuracy = cfg.get("target_accuracy", target_accuracy_default)
+    if target_accuracy is not None:
+        target_accuracy = float(target_accuracy)
+    ndt, nmt = _parse_perturb(perturb)
+    return UHDConfig(
+        env_tag=env_tag,
+        num_rounds=num_rounds,
         lr=lr,
-        sigma=sigma,
-        accuracy_fn=acc_fn,
-        num_dim_target=num_dim_target,
-        num_module_target=num_module_target,
+        num_dim_target=ndt,
+        num_module_target=nmt,
+        log_interval=log_interval,
+        accuracy_interval=accuracy_interval,
+        target_accuracy=target_accuracy,
     )
 
 
 @cli.command(help="Run locally (single process) from a config TOML.")
 @click.argument("config_toml", type=click.Path(exists=True, dir_okay=False, path_type=str))
 def local(config_toml: str) -> None:
-    lr_default = 0.001
-    perturb_default = "dim:0.5"
+    from ops.uhd_setup import make_loop
 
     try:
         cfg = _load_toml_config(config_toml)
@@ -182,21 +111,51 @@ def local(config_toml: str) -> None:
     except (OSError, tomllib.TOMLDecodeError, TypeError, ValueError) as e:
         raise click.ClickException(str(e)) from e
 
-    env_tag = str(cfg["env_tag"])
-    num_rounds = int(cfg["num_rounds"])
-    lr = float(cfg.get("lr", lr_default))
-    perturb = str(cfg.get("perturb", perturb_default))
-
-    ndt, nmt = _parse_perturb(perturb)
-    loop = _make_loop(
-        env_tag,
-        num_rounds,
-        lr=lr,
+    parsed = _parse_cfg(cfg)
+    loop = make_loop(
+        parsed.env_tag,
+        parsed.num_rounds,
+        lr=parsed.lr,
         sigma=0.001,
-        num_dim_target=ndt,
-        num_module_target=nmt,
+        num_dim_target=parsed.num_dim_target,
+        num_module_target=parsed.num_module_target,
+        log_interval=parsed.log_interval,
+        accuracy_interval=parsed.accuracy_interval,
+        target_accuracy=parsed.target_accuracy,
     )
     loop.run()
+
+
+@cli.command(name="modal", help="Run on Modal. Streams to stdout; optionally saves to --log-file.")
+@click.argument("config_toml", type=click.Path(exists=True, dir_okay=False, path_type=str))
+@click.option("--log-file", type=click.Path(dir_okay=False), default=None, help="Also save log to this local file.")
+@click.option("--gpu", type=str, default="A100", help="Modal GPU type (e.g. T4, A10, A100, H100).")
+def modal_cmd(config_toml: str, log_file: str | None, gpu: str) -> None:
+    from ops.modal_uhd import run as modal_run
+
+    try:
+        cfg = _load_toml_config(config_toml)
+        _validate_required(cfg)
+    except (OSError, tomllib.TOMLDecodeError, TypeError, ValueError) as e:
+        raise click.ClickException(str(e)) from e
+
+    parsed = _parse_cfg(cfg)
+    log_text = modal_run(
+        parsed.env_tag,
+        parsed.num_rounds,
+        parsed.lr,
+        parsed.num_dim_target,
+        parsed.num_module_target,
+        gpu=gpu,
+        log_interval=parsed.log_interval,
+        accuracy_interval=parsed.accuracy_interval,
+        target_accuracy=parsed.target_accuracy,
+    )
+
+    if log_file is not None:
+        with open(log_file, "w") as f:
+            f.write(log_text)
+        click.echo(f"Log saved to {log_file}")
 
 
 if __name__ == "__main__":
