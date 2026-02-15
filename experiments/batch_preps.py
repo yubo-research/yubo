@@ -230,6 +230,7 @@ def prep_seq(results_dir):
     exp_dir = "exp_enn_seq_jan"
 
     opts = [
+        "sobol",
         # "random",
         # "optuna",
         # "ucb",
@@ -241,7 +242,7 @@ def prep_seq(results_dir):
         # "turbo-enn-f",
         # "turbo-one-f",
         # "turbo-zero-f",
-        "turbo-enn-p",
+        # "turbo-enn-p",
     ]
 
     noises = [None]
@@ -249,7 +250,7 @@ def prep_seq(results_dir):
     min_rounds = 30
     cmds = []
 
-    dims = [1, 3, 10, 30, 100, 300, 1000]
+    dims = [1]  # , 3, 10, 30, 100, 300, 1000]
 
     for num_dim in dims:
         if num_dim <= 100:

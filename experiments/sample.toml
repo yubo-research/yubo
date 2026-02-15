@@ -1,8 +1,8 @@
 [experiment]
-exp_dir = "_tmp/preprint/turbo_enn/tlunar_natural"
-env_tag = "tlunar"
-opt_name = "turbo-enn-fit/acq_type=ucb"
-num_arms = 1
-num_rounds = 300
-num_reps = 30
-num_denoise_passive = 30
+exp_dir = "_tmp"
+env_tag = "tlunar:fn"
+opt_name = "turbo-enn-p"
+num_arms = 10
+num_rounds = 100
+num_reps = 1
+num_denoise = 1

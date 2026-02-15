@@ -114,7 +114,11 @@ def _parse_spec(model_spec, num_obs):
     if output_warping is None:
         output_warping = "none"
     # print(f"MODEL_SPEC: model_type = {model_type} input_warping = {input_warping} output_warping = {output_warping}")
-    return _ParsedSpec(model_type=model_type, input_warping=bool(input_warping), output_warping=str(output_warping))
+    return _ParsedSpec(
+        model_type=model_type,
+        input_warping=bool(input_warping),
+        output_warping=str(output_warping),
+    )
 
 
 def get_closure(mll, outcome_warp):

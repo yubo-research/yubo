@@ -11,7 +11,17 @@ def _mix64(z: int, *, mask: int, m1: int, m2: int) -> int:
     return z
 
 
-def _choose_rows_and_signs(*, seed: int, j: int, d_local: int, s_local: int, inc: int, m1: int, m2: int, mask: int):
+def _choose_rows_and_signs(
+    *,
+    seed: int,
+    j: int,
+    d_local: int,
+    s_local: int,
+    inc: int,
+    m1: int,
+    m2: int,
+    mask: int,
+):
     acc = inc ^ (int(seed) & mask) ^ ((int(j) & mask) << 1)
     chosen = []
     chosen_rows = []

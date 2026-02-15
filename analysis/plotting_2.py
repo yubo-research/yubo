@@ -501,7 +501,11 @@ def plot_rl_comparison(
         num_reps=num_reps,
         problem=problem_batch,
     )
-    data_locator_seq, traces_seq, cum_dt_prop_seq = seq.data_locator, seq.traces, seq.cum_dt_prop
+    data_locator_seq, traces_seq, cum_dt_prop_seq = (
+        seq.data_locator,
+        seq.traces,
+        seq.cum_dt_prop,
+    )
     data_locator_batch = None if batch is None else batch.data_locator
     traces_batch = None if batch is None else batch.traces
     cum_dt_prop_batch = None if batch is None else batch.cum_dt_prop
@@ -611,7 +615,11 @@ def plot_rl_final_comparison(
         num_reps=num_reps,
         problem=problem_batch,
     )
-    data_locator_seq, traces_seq, cum_dt_prop_seq = seq.data_locator, seq.traces, seq.cum_dt_prop
+    data_locator_seq, traces_seq, cum_dt_prop_seq = (
+        seq.data_locator,
+        seq.traces,
+        seq.cum_dt_prop,
+    )
     data_locator_batch = None if batch is None else batch.data_locator
     traces_batch = None if batch is None else batch.traces
     cum_dt_prop_batch = None if batch is None else batch.cum_dt_prop
@@ -798,8 +806,14 @@ def _collect_returns_times(results_path, exp_dir, opt_names_filtered, mode):
             opt_names=opt_names_filtered,
         )
         num_reps = inferred.get("num_reps")
-        num_rounds_seq, num_rounds_batch = inferred.get("num_rounds_seq", 100), inferred.get("num_rounds_batch", 30)
-        num_arms_seq, num_arms_batch = inferred.get("num_arms_seq", 1), inferred.get("num_arms_batch", 50)
+        num_rounds_seq, num_rounds_batch = (
+            inferred.get("num_rounds_seq", 100),
+            inferred.get("num_rounds_batch", 30),
+        )
+        num_arms_seq, num_arms_batch = (
+            inferred.get("num_arms_seq", 1),
+            inferred.get("num_arms_batch", 50),
+        )
 
         configs_to_load = []
         if mode in ("seq", "both"):
