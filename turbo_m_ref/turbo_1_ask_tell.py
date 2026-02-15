@@ -40,7 +40,19 @@ class _TrustRegion(NamedTuple):
     ub: np.ndarray
 
 
-def _validate_init_args(lb, ub, *, n_init, batch_size, verbose, use_ard, max_cholesky_size, n_training_steps, device, dtype):
+def _validate_init_args(
+    lb,
+    ub,
+    *,
+    n_init,
+    batch_size,
+    verbose,
+    use_ard,
+    max_cholesky_size,
+    n_training_steps,
+    device,
+    dtype,
+):
     assert lb.ndim == 1 and ub.ndim == 1
     assert len(lb) == len(ub)
     assert np.all(ub > lb)

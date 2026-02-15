@@ -63,6 +63,14 @@ class _TraceEntry:
     dt_eval: float
 
 
+@dataclass(frozen=True)
+class _ReturnSummary:
+    ret_eval: float
+    y_best_s: str
+    ret_best_s: str
+    ret_eval_s: str
+
+
 class Optimizer:
     def __init__(
         self,
@@ -191,11 +199,11 @@ class Optimizer:
             did_update = self._update_best_from_batch(data)
         self._update_y_best_scalar(ret_batch, did_update)
         ret_eval = float(self.y_best)
-        return (
-            ret_eval,
-            f"{float(self.y_best):.3f}",
-            f"{float(self.r_best_est):.3f}",
-            f"{ret_eval:.3f}",
+        return _ReturnSummary(
+            ret_eval=ret_eval,
+            y_best_s=f"{float(self.y_best):.3f}",
+            ret_best_s=f"{float(self.r_best_est):.3f}",
+            ret_eval_s=f"{ret_eval:.3f}",
         )
 
     def _handle_multi_objective_returns(self, data, ret_batch, num_metrics):
@@ -203,11 +211,11 @@ class Optimizer:
             ret_eval = self._handle_hypervolume(num_metrics)
         else:
             ret_eval = self._handle_first_objective(data, ret_batch)
-        return (
-            ret_eval,
-            np.array2string(self.y_best, precision=3, floatmode="fixed"),
-            f"{float(self.r_best_est):.6f}",
-            f"{ret_eval:.6f}",
+        return _ReturnSummary(
+            ret_eval=float(ret_eval),
+            y_best_s=np.array2string(self.y_best, precision=3, floatmode="fixed"),
+            ret_best_s=f"{float(self.r_best_est):.6f}",
+            ret_eval_s=f"{float(ret_eval):.6f}",
         )
 
     def _handle_hypervolume(self, num_metrics):
@@ -287,11 +295,17 @@ class Optimizer:
             )
 
         if ret_batch.ndim <= 1:
-            ret_eval, y_best_s, ret_best_s, ret_eval_s = self._handle_scalar_returns(designer, data, ret_batch)
+            ret_s = self._handle_scalar_returns(designer, data, ret_batch)
         else:
             num_metrics = int(ret_batch.shape[1])
             assert num_metrics >= 2 and self._num_denoise_passive_eval is None
-            ret_eval, y_best_s, ret_best_s, ret_eval_s = self._handle_multi_objective_returns(data, ret_batch, num_metrics)
+            ret_s = self._handle_multi_objective_returns(data, ret_batch, num_metrics)
+        ret_eval, y_best_s, ret_best_s, ret_eval_s = (
+            ret_s.ret_eval,
+            ret_s.y_best_s,
+            ret_s.ret_best_s,
+            ret_s.ret_eval_s,
+        )
 
         cum_time = time.time() - self._t_0
         self._cum_dt_proposing += dt_prop

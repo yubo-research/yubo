@@ -258,7 +258,15 @@ def plot_by_func_grouped(
         _hide_extra_axes(axs, num_funcs)
 
         for i_func, func_name in enumerate(funcs):
-            _safe_plot_func(axs[i_func], results_path, exp_dir, opt_names, func_name, num_dims, renames)
+            _safe_plot_func(
+                axs[i_func],
+                results_path,
+                exp_dir,
+                opt_names,
+                func_name,
+                num_dims,
+                renames,
+            )
 
         if suptitle:
             fig.suptitle(f"{group_name}", fontsize=14, fontweight="bold")
