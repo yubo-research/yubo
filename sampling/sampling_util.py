@@ -6,6 +6,21 @@ from scipy.stats import multivariate_normal, qmc
 from torch.quasirandom import SobolEngine
 
 
+def _sobol_random_n(num_dim: int, n: int, *, scramble: bool = True, seed=None) -> np.ndarray:
+    """
+    Draw n Sobol points in [0, 1]^d without SciPy's "n must be a power of 2" warning.
+
+    SciPy's `Sobol.random(n)` emits a warning when n is not a power of 2. We instead draw
+    `2**m` points via `random_base2(m)` (which expects powers of 2) and slice.
+    """
+    if n <= 0:
+        return np.empty((0, num_dim), dtype=np.float64)
+
+    engine = qmc.Sobol(num_dim, scramble=scramble, seed=seed)
+    m = (n - 1).bit_length()  # smallest m with 2**m >= n (m=0 when n=1)
+    return engine.random_base2(m)[:n]
+
+
 def greedy_maximin(x, num_subsamples):
     # Credit to ChatGPT
 
@@ -155,8 +170,7 @@ def raasp_np_choice(
     num_dim = x_center.shape[-1]
     k = min(20, num_dim)
 
-    sobol_engine = qmc.Sobol(num_dim, scramble=True)
-    sobol_samples = sobol_engine.random(num_candidates)
+    sobol_samples = _sobol_random_n(num_dim, num_candidates, scramble=True)
 
     lb_array = np.asarray(lb)
     ub_array = np.asarray(ub)
@@ -222,8 +236,12 @@ def raasp_np_1d(x_centers: np.ndarray, lb: np.ndarray, ub: np.ndarray, num_candi
     dim_indices = np.random.randint(0, num_dim, size=num_candidates)
     row_indices = np.arange(num_candidates)
 
-    sobol_engine = qmc.Sobol(num_dim, scramble=True, seed=np.random.randint(999999))
-    sobol_samples = sobol_engine.random(num_candidates)
+    sobol_samples = _sobol_random_n(
+        num_dim,
+        num_candidates,
+        scramble=True,
+        seed=np.random.randint(999999),
+    )
     perturbations = lb + (ub - lb) * sobol_samples
 
     x_candidates[row_indices, dim_indices] = perturbations[row_indices, dim_indices]
@@ -253,8 +271,12 @@ def truncated_normal_np(mu: np.ndarray, sigma: np.ndarray, lb: np.ndarray, ub: n
 
 def sobol_perturb_np(x_center, lb, ub, num_candidates, mask, stagger=False):
     num_dim = x_center.shape[-1]
-    sobol_engine = qmc.Sobol(num_dim, scramble=True, seed=np.random.randint(999999))
-    sobol_samples = sobol_engine.random(num_candidates)
+    sobol_samples = _sobol_random_n(
+        num_dim,
+        num_candidates,
+        scramble=True,
+        seed=np.random.randint(999999),
+    )
     lb_array = np.asarray(lb)
     ub_array = np.asarray(ub)
     pert = lb_array + (ub_array - lb_array) * sobol_samples
@@ -310,8 +332,12 @@ def raasp_turbo_np(x_center, lb, ub, num_candidates, device, dtype):
     lb_np = np.asarray(lb)
     ub_np = np.asarray(ub)
 
-    sobol = qmc.Sobol(num_dim, scramble=True, seed=np.random.randint(999999))
-    sobol_samples = sobol.random(num_candidates)
+    sobol_samples = _sobol_random_n(
+        num_dim,
+        num_candidates,
+        scramble=True,
+        seed=np.random.randint(999999),
+    )
     pert = lb_np + (ub_np - lb_np) * sobol_samples
 
     mask = np.random.rand(num_candidates, num_dim) <= prob_perturb

@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 from botorch.acquisition.monte_carlo import (
     MCAcquisitionFunction,
     qSimpleRegret,
@@ -68,8 +69,12 @@ class AcqIOpt(MCAcquisitionFunction):
             X_iopt = X[:, :q_iopt, :]
             Y = self.model.posterior(X_iopt).mean  # b x q x 1
             model_f = self.model.condition_on_observations(X=X_iopt, Y=Y)
-            # model_f.covar_module.base_kernel.lengthscale *= (max(1, num_obs) / (max(1, num_obs) + q_iopt)) ** (1/self.num_dim)
-            model_f.covar_module.base_kernel.lengthscale *= ((1 + num_obs) / (1 + num_obs + q_iopt)) ** (1.0 / self.num_dim)
+            # BoTorch models may expose either ScaleKernel(base_kernel=...) or a direct kernel.
+            # Adjust whichever kernel owns the lengthscale parameter.
+            kernel = getattr(model_f.covar_module, "base_kernel", model_f.covar_module)
+            scale = ((1 + num_obs) / (1 + num_obs + q_iopt)) ** (1.0 / self.num_dim)
+            with torch.no_grad():
+                kernel.lengthscale = kernel.lengthscale * scale
             # var_f = model_f.posterior(self.X_samples, observation_noise=True).variance.squeeze()
             var_f = model_f.posterior(self.X_samples).variance.squeeze()
 
