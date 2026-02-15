@@ -1,8 +1,9 @@
 import numpy as np
 import torch
 from scipy.stats import spearmanr
+from torch import nn
 
-from sampling.sparse_jl_t import block_sparse_jl_transform_t
+from sampling.sparse_jl_t import block_sparse_jl_transform_module, block_sparse_jl_transform_t
 
 
 def test_sparse_jl_t_preserves_neighbors_and_correlations():
@@ -79,7 +80,8 @@ def test_sparse_jl_t_linearity_and_determinism():
     y_sum = block_sparse_jl_transform_t(x + z, d=d, s=s, seed=seed)
     y_x = block_sparse_jl_transform_t(x, d=d, s=s, seed=seed)
     y_z = block_sparse_jl_transform_t(z, d=d, s=s, seed=seed)
-    assert torch.allclose(y_sum, y_x + y_z)
+    # atol covers float32 rounding in scatter_add for near-zero output bins
+    assert torch.allclose(y_sum, y_x + y_z, atol=1e-6)
     y1 = block_sparse_jl_transform_t(x, d=d, s=s, seed=seed)
     y2 = block_sparse_jl_transform_t(x, d=d, s=s, seed=seed)
     assert torch.equal(y1, y2)
@@ -128,3 +130,69 @@ def test_sparse_jl_t_timing_sparse_x_prints():
     t1 = time.perf_counter()
     elapsed_ms = (t1 - t0) * 1000.0
     print(f"D={D}, d={d}, s={s}, k={k}, time_ms={elapsed_ms:.2f}, y_norm={float(torch.linalg.norm(y)):.4f}")
+
+
+def test_module_matches_flattened_tensor():
+    model = nn.Linear(100, 10, bias=True)
+    d, s, seed = 32, 4, 42
+    ym = block_sparse_jl_transform_module(model, d=d, s=s, seed=seed)
+    params_flat = torch.cat([p.detach().reshape(-1) for p in model.parameters()])
+    yt = block_sparse_jl_transform_t(params_flat, d=d, s=s, seed=seed)
+    torch.testing.assert_close(ym, yt, atol=0, rtol=0)
+
+
+def test_module_determinism():
+    model = nn.Sequential(nn.Linear(50, 20), nn.ReLU(), nn.Linear(20, 5))
+    d, s, seed = 16, 4, 7
+    y1 = block_sparse_jl_transform_module(model, d=d, s=s, seed=seed)
+    y2 = block_sparse_jl_transform_module(model, d=d, s=s, seed=seed)
+    assert torch.equal(y1, y2)
+    y3 = block_sparse_jl_transform_module(model, d=d, s=s, seed=seed + 1)
+    assert not torch.equal(y1, y3)
+
+
+def test_module_zero_params():
+    model = nn.Linear(30, 10, bias=False)
+    nn.init.zeros_(model.weight)
+    y = block_sparse_jl_transform_module(model, d=16, s=4, seed=0)
+    assert int(torch.count_nonzero(y)) == 0
+
+
+def test_module_linearity():
+    m1 = nn.Linear(20, 5, bias=False)
+    m2 = nn.Linear(20, 5, bias=False)
+    m_sum = nn.Linear(20, 5, bias=False)
+    m_sum.weight.data = m1.weight.data + m2.weight.data
+    d, s, seed = 16, 4, 99
+    y1 = block_sparse_jl_transform_module(m1, d=d, s=s, seed=seed)
+    y2 = block_sparse_jl_transform_module(m2, d=d, s=s, seed=seed)
+    y_sum = block_sparse_jl_transform_module(m_sum, d=d, s=s, seed=seed)
+    assert torch.allclose(y_sum, y1 + y2)
+
+
+def test_module_raises_s_exceeds_d():
+    import pytest
+
+    model = nn.Linear(10, 5)
+    with pytest.raises(ValueError):
+        block_sparse_jl_transform_module(model, d=4, s=5, seed=0)
+
+
+def test_module_no_parameters():
+    model = nn.ReLU()
+    y = block_sparse_jl_transform_module(model, d=8, s=2, seed=0)
+    assert y.shape == (8,)
+    assert int(torch.count_nonzero(y)) == 0
+
+
+def test_module_multi_layer():
+    model = nn.Sequential(
+        nn.Linear(64, 32),
+        nn.Linear(32, 16),
+        nn.Linear(16, 8),
+    )
+    d, s, seed = 64, 4, 42
+    ym = block_sparse_jl_transform_module(model, d=d, s=s, seed=seed)
+    params_flat = torch.cat([p.detach().reshape(-1) for p in model.parameters()])
+    yt = block_sparse_jl_transform_t(params_flat, d=d, s=s, seed=seed)
+    torch.testing.assert_close(ym, yt, atol=0, rtol=0)
