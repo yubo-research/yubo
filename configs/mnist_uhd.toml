@@ -1,0 +1,7 @@
+[uhd]
+env_tag = "mnist"
+num_rounds = 10000
+
+# Optional (matches ops/exp_uhd.py defaults)
+lr = 0.001
+perturb = "dim:0.5"
