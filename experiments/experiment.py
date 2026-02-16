@@ -22,6 +22,12 @@ _OPTIONAL_KEYS = (
     "max_proposal_seconds",
     "max_total_seconds",
     "b_trace",
+    "video_enable",
+    "video_num_episodes",
+    "video_num_video_episodes",
+    "video_episode_selection",
+    "video_seed_base",
+    "video_prefix",
 )
 _ALL_EXPERIMENT_KEYS = set(_REQUIRED_KEYS + _OPTIONAL_KEYS)
 
