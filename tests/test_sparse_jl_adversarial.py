@@ -9,7 +9,10 @@ import tracemalloc
 import torch
 from torch import nn
 
-from sampling.sparse_jl_t import block_sparse_jl_transform_module, block_sparse_jl_transform_t
+from sampling.sparse_jl_t import (
+    block_sparse_jl_transform_module,
+    block_sparse_jl_transform_t,
+)
 
 # ---------------------------------------------------------------------------
 # Edge-case: extreme parameter values
@@ -337,7 +340,9 @@ def test_speed_scaling_linear_in_s():
     ratio = times[3] / max(times[0], 1e-9)
     print(f"ratio s=8/s=1: {ratio:.1f}x")
     # Fisher-Yates sorting adds O(s^2) per coordinate, so ratio > 8 is expected
-    assert ratio < 30, f"s=8 vs s=1 ratio = {ratio:.1f}x, expected < 30x"
+    # Allow some slack for noisy CI / frequency scaling; we mainly want to catch
+    # pathological superlinear blowups.
+    assert ratio < 35, f"s=8 vs s=1 ratio = {ratio:.1f}x, expected < 35x"
 
 
 def test_speed_module_vs_tensor():

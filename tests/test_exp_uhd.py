@@ -22,7 +22,13 @@ num_rounds = 1
     env["PYTHONPATH"] = str(repo_root)
 
     proc = subprocess.run(
-        [sys.executable, "-u", str(repo_root / "ops" / "exp_uhd.py"), "local", str(cfg)],
+        [
+            sys.executable,
+            "-u",
+            str(repo_root / "ops" / "exp_uhd.py"),
+            "local",
+            str(cfg),
+        ],
         cwd=str(repo_root),
         env=env,
         capture_output=True,

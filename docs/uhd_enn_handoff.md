@@ -56,7 +56,7 @@ In this codebase, ENN is treated as providing:
 
 Given new observations, you call `enn_fit()`; for candidate scoring you only call `posterior()`.
 
-Canonical pattern (see `experiments/enn/compare_to_gp.py`):
+Canonical pattern:
 
 ```python
 from third_party.enn import EpistemicNearestNeighbors, enn_fit
@@ -250,18 +250,53 @@ Keep integration modular so it’s easy to A/B:
   - improved `y_best` at equal evaluation budget, or
   - similar `y_best` with fewer real evals.
 
-# Other ideas to consider
+## New: ENN integration ideas to reduce wall-time-to-90% (not just eval-count per step)
 
+After basic throughput optimizations, MNIST wall-clock is dominated by the forward+loss evaluation itself. To reduce *wall-time-to-90%*, ENN should ideally be used to **avoid some real objective evaluations**, not just to rank directions.
 
-**Model-based step-size/sigma control**: Use ENN to predict \(\mu(z \pm \sigma e)\) across a grid of \(\sigma\) values and pick \(\sigma\) that maximizes predicted improvement (or maximizes predicted \(|g_{\text{proj}}|\)) before paying for real evals. This is a BO loop over \(\sigma\) with ENN as the surrogate.
+### Trick: get both + and − “candidates” from one direction embedding
+Because SparseJL is linear, if you maintain `z = T(x)` and compute one direction embedding `e = T(ε(seed))`, then:
+- `z_plus  = z + sigma * e`
+- `z_minus = z - sigma * e`
 
-**Early rejection / accept-reject filtering**: Evaluate only \(x^+\) first. If `UCB(x^+)` is too low (or realized \(\mu_+\) is poor), skip evaluating \(x^-\) and instead try a new seed (saves ~50% evals). You’ll need a modified estimator (biased but often worthwhile).
+So you can form both surrogate inputs with a cheap reflection in embedding space (no need to embed `x±` separately). You can also batch all `z_plus`/`z_minus` into one `posterior()` call.
 
-**Surrogate control variates**: Keep UHDMeZO’s real \((\mu_+ - \mu_-)\) estimator, but reduce variance by subtracting ENN’s predicted difference:
-  \[
-  g_{\text{cv}} = \frac{(\mu_+ - \mu_-) - (\hat\mu_+ - \hat\mu_-)}{2\sigma} + \frac{\hat\mu_+ - \hat\mu_-}{2\sigma}
-  \]
-  The second term is cheap; the first term is lower-variance if ENN is decent.
+### Trick: keep `z = T(x)` up to date without re-embedding parameters
+If the accepted update is `x ← x + step_scale * ε(seed)` (UHDMeZO), linearity gives an exact embedding update:
+- `z ← z + step_scale * e`
 
-**Acquisition on “expected best” rather than local gradient**: Instead of chasing \(|g_{\text{proj}}|\), directly score candidate steps by predicted `UCB(z + step_scale * e)` (i.e., “where you’d land if you took that step”), then evaluate only the steps with best predicted landing UCB.
-[dsweet] You'd probably want to use UHDSimple for this.
+This avoids repeated calls to `block_sparse_jl_transform_module(...)` after initialization, as long as you already computed `e` for the chosen seed.
+
+### Option 1 (recommended first): “Surrogate negative phase” (reduce evals/update toward ~1)
+Baseline UHD uses two real evaluations per effective update (`x+` and `x-`). A practical eval-saving variant:
+- Always do **real** eval at `x+` to stay anchored to truth.
+- Use ENN to predict `μ̂(x-)` (and uncertainty) and **skip** the real `x-` evaluation when the surrogate is confident.
+- Gate the skip decision using surrogate `se` (or similar), e.g.:
+  - if `se(z_minus) < τ` → use surrogate for `mu_minus`
+  - else → pay for real `mu_minus`
+
+This can reduce wall-clock directly if the skip rate is high once ENN is warmed up.
+
+### Option 2: Early rejection / accept-reject filtering (biased but can save ~50%)
+Evaluate real `x+` first; if it looks unpromising, skip `x-` and resample a new seed. You can use:
+- realized `mu_plus`, and/or
+- surrogate `UCB(z_minus)` to decide whether `x-` is worth paying for.
+
+This can save evaluations, but introduces bias; treat as an empirical speed hack.
+
+### Option 3: ENN seed filtering (Variant A) to reduce iterations-to-target
+Sample `K` candidate seeds, embed directions, use ENN to score, then run the real antithetic pair only for the best seed. This does *not* reduce evaluations per selected seed, but can reduce **iterations-to-90%** enough to win overall.
+
+### Critical engineering requirement: direction embedding without O(D) allocations
+All variants depend on computing `e = T(ε(seed))` cheaply.
+- Naively generating full parameter-shaped noise/masks is O(D) temporary memory and can dominate runtime.
+- Preferred: a `JLNoiseEmbedding` that mirrors the perturbator’s RNG and computes `T(ε)` in a streaming/chunked way (or nnz-proportional for sparse perturbations), without materializing dense D-sized tensors.
+
+### Minimal falsifiable experiment plan (MNIST)
+A/B compare against baseline, measure:
+- **time-to-0.90 test accuracy** (primary)
+- number of **real** objective evals used
+- skip rate of `x-` evals (for Option 1/2)
+- stability across RNG seeds
+
+Start with Option 1 using a small grid of thresholds `τ` and log: predicted `(μ̂-, se-)`, realized `μ-` when paid, and downstream `g_proj` behavior.
