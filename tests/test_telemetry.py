@@ -5,12 +5,12 @@ def test_telemetry_format():
     t = Telemetry()
     t.set_dt_fit(1.234)
     t.set_dt_select(5.6789)
-    assert t.format() == "dt_fit = 1.234 dt_sel = 5.679"
+    assert t.format() == "fit_dt=1.234 select_dt=5.679"
 
 
 def test_telemetry_format_unset():
     t = Telemetry()
-    assert t.format() == "dt_fit = N/A dt_sel = N/A"
+    assert t.format() == "fit_dt=N/A select_dt=N/A"
 
 
 def test_telemetry_reset():
