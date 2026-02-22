@@ -5,6 +5,7 @@ import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
+from optimizer.gaussian_perturbator import GaussianPerturbator
 from optimizer.sparse_gaussian_perturbator import SparseGaussianPerturbator
 from optimizer.uhd_enn_imputer import ENNImputerConfig, ENNMinusImputer
 from optimizer.uhd_enn_seed_selector import ENNMuPlusSeedSelector, ENNSeedSelectConfig
@@ -307,3 +308,173 @@ def make_loop(
     enn_minus_impute, enn_cfg = _parse_enn_cfg(enn)
     _maybe_attach_enn(loop, module=module, env=env, enabled=enn_minus_impute, cfg=enn_cfg)
     return loop
+
+
+def _make_simple_optimizer(
+    module,
+    perturbator,
+    *,
+    optimizer: str,
+    sigma: float,
+    dim: int,
+    be_num_probes: int,
+    be_num_candidates: int,
+    be_warmup: int,
+    be_fit_interval: int,
+    be_enn_k: int,
+):
+    if optimizer == "simple_be":
+        from embedding.behavioral_embedder import BehavioralEmbedder
+        from optimizer.uhd_simple_be import UHDSimpleBE
+
+        lb = (0.0 - 0.1307) / 0.3081
+        ub = (1.0 - 0.1307) / 0.3081
+        bounds = torch.zeros(2, 1, 28, 28)
+        bounds[0] = lb
+        bounds[1] = ub
+        embedder = BehavioralEmbedder(bounds, num_probes=be_num_probes, seed=0)
+        return UHDSimpleBE(
+            perturbator,
+            sigma_0=sigma,
+            dim=dim,
+            module=module,
+            embedder=embedder,
+            num_candidates=be_num_candidates,
+            warmup=be_warmup,
+            fit_interval=be_fit_interval,
+            enn_k=be_enn_k,
+        )
+    from optimizer.uhd_simple import UHDSimple
+
+    return UHDSimple(perturbator, sigma_0=sigma, dim=dim)
+
+
+def run_simple_loop(
+    env_tag: str,
+    num_rounds: int,
+    *,
+    optimizer: str = "simple",
+    sigma: float = 0.001,
+    num_dim_target: float | None = None,
+    log_interval: int = 1,
+    accuracy_interval: int = 1000,
+    target_accuracy: float | None = None,
+    be_num_probes: int = 10,
+    be_num_candidates: int = 10,
+    be_warmup: int = 20,
+    be_fit_interval: int = 10,
+    be_enn_k: int = 25,
+) -> None:
+    from problems.env_conf import get_env_conf
+
+    env_conf = get_env_conf(env_tag)
+    env = env_conf.make()
+    if not hasattr(env, "torch_env"):
+        raise ValueError(f"Simple loop only supports torch envs, got {env_tag}")
+
+    device = _get_device()
+    torch_env = env.torch_env()
+    module = torch_env.module.to(device)
+    module.train()
+    train_images, train_labels = _preload_mnist_train_to_device(device)
+
+    dim = sum(p.numel() for p in module.parameters())
+    if num_dim_target is not None:
+        perturbator = SparseGaussianPerturbator(module, num_dim_target=num_dim_target)
+    else:
+        perturbator = GaussianPerturbator(module)
+
+    uhd = _make_simple_optimizer(
+        module,
+        perturbator,
+        optimizer=optimizer,
+        sigma=sigma,
+        dim=dim,
+        be_num_probes=be_num_probes,
+        be_num_candidates=be_num_candidates,
+        be_warmup=be_warmup,
+        be_fit_interval=be_fit_interval,
+        be_enn_k=be_enn_k,
+    )
+    accuracy_fn = _make_accuracy_fn(module, device)
+    print(f"UHD-Simple: num_params = {dim}, optimizer = {optimizer}")
+
+    _run_simple_iterations(
+        uhd,
+        module=module,
+        train_images=train_images,
+        train_labels=train_labels,
+        accuracy_fn=accuracy_fn,
+        num_rounds=num_rounds,
+        log_interval=log_interval,
+        accuracy_interval=accuracy_interval,
+        target_accuracy=target_accuracy,
+    )
+
+
+def _run_simple_iterations(
+    uhd,
+    *,
+    module,
+    train_images,
+    train_labels,
+    accuracy_fn,
+    num_rounds: int,
+    log_interval: int,
+    accuracy_interval: int,
+    target_accuracy: float | None,
+) -> None:
+    import time
+
+    chunk = 8192
+    t0 = time.perf_counter()
+    acc = None
+    for i in range(num_rounds):
+        uhd.ask()
+        mu, se = _eval_full_train_acc(module, train_images, train_labels, chunk)
+        uhd.tell(mu, se)
+
+        if not _should_log_simple(i, num_rounds, log_interval):
+            continue
+        y_best = uhd.y_best
+        y_str = f"{y_best:.4f}" if y_best is not None else "N/A"
+        if acc is None or i == num_rounds - 1 or (accuracy_interval > 0 and i % accuracy_interval == 0):
+            acc = accuracy_fn()
+        line = f"EVAL: i_iter = {i} sigma = {uhd.sigma:.6f} mu = {mu:.4f} se = {se:.4f} y_best = {y_str}"
+        if acc is not None:
+            line += f" test_acc = {acc:.4f}"
+        print(line)
+        if target_accuracy is not None and acc is not None and acc >= target_accuracy:
+            elapsed = time.perf_counter() - t0
+            print(f"UHD-Simple: target reached {acc:.4f} >= {target_accuracy:.4f} at i_iter={i} ({elapsed:.2f}s)")
+            break
+
+    elapsed = time.perf_counter() - t0
+    print(f"UHD-Simple: elapsed = {elapsed:.2f}s ({min(i + 1, num_rounds)} iterations)")
+
+
+def _eval_full_train_acc(module, images, labels, chunk: int) -> tuple[float, float]:
+    was_training = module.training
+    module.eval()
+    correct = _count_correct(module, images, labels, chunk)
+    if was_training:
+        module.train()
+    n = int(images.shape[0])
+    acc = correct / n
+    se = float((acc * (1.0 - acc) / n) ** 0.5)
+    return float(acc), se
+
+
+def _count_correct(module, images, labels, chunk: int) -> int:
+    n = int(images.shape[0])
+    correct = 0
+    with torch.inference_mode():
+        for start in range(0, n, chunk):
+            end = min(start + chunk, n)
+            pred = module(images[start:end]).argmax(dim=1)
+            correct += int((pred == labels[start:end]).sum())
+    return correct
+
+
+def _should_log_simple(i: int, num_rounds: int, log_interval: int) -> bool:
+    return i == 0 or i == num_rounds - 1 or (log_interval > 0 and i % log_interval == 0)

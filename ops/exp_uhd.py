@@ -21,6 +21,14 @@ _OPTIONAL_TOML_KEYS = (
     "early_reject_warmup_pos",
     "early_reject_quantile",
     "early_reject_window",
+    # Optimizer type: "mezo" (default), "simple", or "simple_be"
+    "optimizer",
+    # BehavioralEmbedder settings (used when optimizer = "simple_be")
+    "be_num_probes",
+    "be_num_candidates",
+    "be_warmup",
+    "be_fit_interval",
+    "be_enn_k",
     # ENN minus imputation (prototype)
     "enn_minus_impute",
     "enn_d",
@@ -126,6 +134,12 @@ class UHDConfig:
     early_reject_warmup_pos: int | None
     early_reject_quantile: float | None
     early_reject_window: int | None
+    optimizer: str
+    be_num_probes: int
+    be_num_candidates: int
+    be_warmup: int
+    be_fit_interval: int
+    be_enn_k: int
     enn_minus_impute: bool
     enn_d: int
     enn_s: int
@@ -248,6 +262,12 @@ def _parse_cfg(cfg: dict[str, Any]) -> UHDConfig:
     target_accuracy = cfg.get("target_accuracy", None)
     if target_accuracy is not None:
         target_accuracy = float(target_accuracy)
+    optimizer = str(cfg.get("optimizer", "mezo"))
+    be_num_probes = int(cfg.get("be_num_probes", 10))
+    be_num_candidates = int(cfg.get("be_num_candidates", 10))
+    be_warmup = int(cfg.get("be_warmup", 20))
+    be_fit_interval = int(cfg.get("be_fit_interval", 10))
+    be_enn_k = int(cfg.get("be_enn_k", 25))
     er = _parse_early_reject_fields(cfg)
     enn = _parse_enn_fields(cfg)
     ndt, nmt = _parse_perturb(perturb)
@@ -268,6 +288,12 @@ def _parse_cfg(cfg: dict[str, Any]) -> UHDConfig:
         early_reject_warmup_pos=er.warmup_pos,
         early_reject_quantile=er.quantile,
         early_reject_window=er.window,
+        optimizer=optimizer,
+        be_num_probes=be_num_probes,
+        be_num_candidates=be_num_candidates,
+        be_warmup=be_warmup,
+        be_fit_interval=be_fit_interval,
+        be_enn_k=be_enn_k,
         enn_minus_impute=enn.minus_impute,
         enn_d=enn.d,
         enn_s=enn.s,
@@ -288,8 +314,6 @@ def _parse_cfg(cfg: dict[str, Any]) -> UHDConfig:
 @_cli.command(name="local", help="Run locally (single process) from a config TOML.")
 @click.argument("config_toml", type=click.Path(exists=True, dir_okay=False, path_type=str))
 def _local(config_toml: str) -> None:
-    from ops.uhd_setup import make_loop
-
     try:
         cfg = _load_toml_config(config_toml)
         _validate_required(cfg)
@@ -297,6 +321,35 @@ def _local(config_toml: str) -> None:
         raise click.ClickException(str(e)) from e
 
     parsed = _parse_cfg(cfg)
+    if parsed.optimizer in {"simple", "simple_be"}:
+        _run_simple(parsed)
+    else:
+        _run_mezo(parsed)
+
+
+def _run_simple(parsed: UHDConfig) -> None:
+    from ops.uhd_setup import run_simple_loop
+
+    run_simple_loop(
+        parsed.env_tag,
+        parsed.num_rounds,
+        optimizer=parsed.optimizer,
+        sigma=0.001,
+        num_dim_target=parsed.num_dim_target,
+        log_interval=parsed.log_interval,
+        accuracy_interval=parsed.accuracy_interval,
+        target_accuracy=parsed.target_accuracy,
+        be_num_probes=parsed.be_num_probes,
+        be_num_candidates=parsed.be_num_candidates,
+        be_warmup=parsed.be_warmup,
+        be_fit_interval=parsed.be_fit_interval,
+        be_enn_k=parsed.be_enn_k,
+    )
+
+
+def _run_mezo(parsed: UHDConfig) -> None:
+    from ops.uhd_setup import make_loop
+
     loop = make_loop(
         parsed.env_tag,
         parsed.num_rounds,
