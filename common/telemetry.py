@@ -15,4 +15,4 @@ class Telemetry:
     def format(self):
         dt_fit_str = f"{self._dt_fit:.3f}" if self._dt_fit is not None else "N/A"
         dt_sel_str = f"{self._dt_select:.3f}" if self._dt_select is not None else "N/A"
-        return f"dt_fit = {dt_fit_str} dt_sel = {dt_sel_str}"
+        return f"fit_dt={dt_fit_str} select_dt={dt_sel_str}"

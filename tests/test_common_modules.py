@@ -180,21 +180,21 @@ class TestTelemetry:
         t = Telemetry()
         t.set_dt_fit(1.234)
         t.set_dt_select(5.6789)
-        assert t.format() == "dt_fit = 1.234 dt_sel = 5.679"
+        assert t.format() == "fit_dt=1.234 select_dt=5.679"
 
     def test_format_with_none(self):
         from common.telemetry import Telemetry
 
         t = Telemetry()
-        assert t.format() == "dt_fit = N/A dt_sel = N/A"
+        assert t.format() == "fit_dt=N/A select_dt=N/A"
 
     def test_format_partial(self):
         from common.telemetry import Telemetry
 
         t = Telemetry()
         t.set_dt_fit(1.0)
-        assert t.format() == "dt_fit = 1.000 dt_sel = N/A"
+        assert t.format() == "fit_dt=1.000 select_dt=N/A"
 
         t.reset()
         t.set_dt_select(2.0)
-        assert t.format() == "dt_fit = N/A dt_sel = 2.000"
+        assert t.format() == "fit_dt=N/A select_dt=2.000"

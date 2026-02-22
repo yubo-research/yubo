@@ -309,9 +309,19 @@ class Optimizer:
 
         cum_time = time.time() - self._t_0
         self._cum_dt_proposing += dt_prop
+        tr_length = None
+        turbo = getattr(designer, "_turbo", None)
+        if turbo is not None and hasattr(turbo, "tr_length"):
+            try:
+                tr_length = float(turbo.tr_length)
+            except (TypeError, ValueError):
+                tr_length = None
+        tr_str = f" tr_length={tr_length:.3f}" if tr_length is not None else ""
         if ret_eval > -1e98:
             self._collector(
-                f"ITER: i_iter = {self._i_iter} cum_time = {cum_time:.2f} dt_eval = {dt_eval:.3f} dt_prop = {dt_prop:.3f} {self._telemetry.format()} cum_dt_prop = {self._cum_dt_proposing:.3f} y_best = {y_best_s} ret_best = {ret_best_s} ret_eval = {ret_eval_s}"
+                f"ITER: iter={self._i_iter} elapsed={cum_time:.2f}s eval_dt={dt_eval:.3f}s proposal_dt={dt_prop:.3f}s "
+                f"{self._telemetry.format()}{tr_str} proposal_elapsed={self._cum_dt_proposing:.3f}s "
+                f"y_best={y_best_s} ret_best={ret_best_s} ret_eval={ret_eval_s}"
             )
         sys.stdout.flush()
         self._trace.append(_TraceEntry(float(ret_eval), float(self.r_best_est), dt_prop, dt_eval))
