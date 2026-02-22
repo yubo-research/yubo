@@ -243,7 +243,7 @@ _gym_env_confs = {
             max_steps=1600,
             num_frames_skip=100,
         ),
-        policy_class=MLPPolicyFactory((), rnn_hidden_size=4, use_layer_norm=True, use_prev_action=True),
+        policy_class=MLPPolicyFactory((1024, 512, 256, 128)),
     ),
     "bw-heur": _gym_conf(
         "BipedalWalker-v3",

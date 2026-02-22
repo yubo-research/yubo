@@ -1,6 +1,6 @@
 [uhd]
 env_tag = "bw-heur:fn"
-num_rounds = 100
+num_rounds = 1000
 optimizer = "simple_be"
 log_interval = 10
 noise_seed_0 = 1
