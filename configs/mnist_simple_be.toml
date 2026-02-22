@@ -5,12 +5,12 @@
 env_tag = "mnist_fulltrain_acc"
 num_rounds = 1000
 optimizer = "simple_be"
-perturb = "dim:0.5"
+perturb = "dense"
 log_interval = 10
 accuracy_interval = 100
 
 be_num_probes = 10
-be_num_candidates = 10
+be_num_candidates = 30
 be_warmup = 20
 be_fit_interval = 10
-be_enn_k = 25
+be_enn_k = 10

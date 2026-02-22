@@ -4,6 +4,6 @@
 env_tag = "mnist_fulltrain_acc"
 num_rounds = 1000
 optimizer = "simple"
-perturb = "dim:0.5"
+perturb = "dense"
 log_interval = 10
 accuracy_interval = 100
