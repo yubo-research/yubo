@@ -230,6 +230,53 @@ def test_policy_for_bo_rollout_with_transform():
     assert np.allclose(out, [1.0])
 
 
+def test_policy_for_bo_rollout_with_partial_infinite_bounds():
+    class _SpaceStub:
+        low = np.array([0.0, -np.inf], dtype=np.float32)
+        high = np.array([2.0, np.inf], dtype=np.float32)
+
+    class _EnvConfTransform:
+        def ensure_spaces(self):
+            self.gym_conf = SimpleNamespace(transform_state=True, state_space=_SpaceStub())
+
+    env_conf = _EnvConfTransform()
+    env_conf.ensure_spaces()
+
+    captured = {}
+
+    def policy(s):
+        captured["state"] = np.asarray(s, dtype=np.float32)
+        return np.array([0.0], dtype=np.float32)
+
+    wrapped = policy_for_bo_rollout(env_conf, policy)
+    _ = wrapped(np.array([1.0, 3.0], dtype=np.float32))
+    assert np.allclose(captured["state"], np.array([0.5, 3.0], dtype=np.float32))
+
+
+def test_policy_for_bo_rollout_with_all_infinite_bounds_sanitizes_nan_input():
+    class _SpaceStub:
+        low = np.array([-np.inf, -np.inf], dtype=np.float32)
+        high = np.array([np.inf, np.inf], dtype=np.float32)
+
+    class _EnvConfTransform:
+        def ensure_spaces(self):
+            self.gym_conf = SimpleNamespace(transform_state=True, state_space=_SpaceStub())
+
+    env_conf = _EnvConfTransform()
+    env_conf.ensure_spaces()
+
+    captured = {}
+
+    def policy(s):
+        captured["state"] = np.asarray(s, dtype=np.float32)
+        return np.array([0.0], dtype=np.float32)
+
+    wrapped = policy_for_bo_rollout(env_conf, policy)
+    _ = wrapped(np.array([np.nan, np.inf], dtype=np.float32))
+    assert np.isfinite(captured["state"]).all()
+    assert np.allclose(captured["state"], np.array([0.0, 1e6], dtype=np.float32))
+
+
 def test_render_policy_videos_bo_smoke(monkeypatch, tmp_path):
     env_conf = _EnvConfStub(max_steps=2, gym_conf=True)
     env_conf.ensure_spaces = lambda: None

@@ -1,7 +1,8 @@
 [experiment]
 exp_dir = "_tmp/bo/cheetah/exp_cheetah_natural_turbo_enn_p"
 env_tag = "cheetah"
-opt_name = "turbo_enn_p"
+opt_name = "turbo-enn-p"
 num_arms = 10
 num_rounds = 30
 num_reps = 1
+video_enable = true

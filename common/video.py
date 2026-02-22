@@ -151,12 +151,23 @@ def policy_for_bo_rollout(env_conf: Any, policy: Any) -> Any:
         _plain._recurrent = recurrent
         return _plain
 
-    lb = np.asarray(g.state_space.low, dtype=np.float32)
-    width = np.asarray(g.state_space.high - g.state_space.low, dtype=np.float32)
-    width = np.maximum(width, 1e-8)
+    low = np.asarray(g.state_space.low, dtype=np.float32)
+    high = np.asarray(g.state_space.high, dtype=np.float32)
+    width_raw = np.asarray(high - low, dtype=np.float32)
+    bounded = np.isfinite(low) & np.isfinite(high) & np.isfinite(width_raw) & (width_raw > 0)
+    lb = np.where(bounded, low, 0.0).astype(np.float32)
+    width = np.where(bounded, np.maximum(width_raw, 1e-8), 1.0).astype(np.float32)
 
     def wrapped(state: np.ndarray, **kwargs) -> np.ndarray:
-        state_norm = (np.asarray(state, dtype=np.float32) - lb) / width
+        state_arr = np.asarray(state, dtype=np.float32)
+        state_norm = np.asarray(state_arr, dtype=np.float32).copy()
+        if state_norm.shape == bounded.shape:
+            state_norm[bounded] = (state_arr[bounded] - lb[bounded]) / width[bounded]
+        else:
+            # Fallback for unexpected shape mismatch: preserve previous behavior,
+            # then sanitize to avoid NaN/Inf driving unstable control.
+            state_norm = (state_arr - lb) / width
+        state_norm = np.nan_to_num(state_norm, nan=0.0, posinf=1e6, neginf=-1e6)
         return np.asarray(policy(state_norm, **kwargs), dtype=np.float32)
 
     wrapped._recurrent = recurrent
