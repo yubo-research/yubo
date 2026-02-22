@@ -72,13 +72,16 @@ def load_experiment_config(*, config_toml_path: str) -> "ExperimentConfig":
 
 
 @click.group(help="Run experiments from a TOML config.")
-def cli() -> None:
+def _cli() -> None:
     pass
 
 
-@cli.command(help="Run locally (single process) from a config TOML.")
+cli = _cli
+
+
+@_cli.command(name="local", help="Run locally (single process) from a config TOML.")
 @click.argument("config_toml", type=click.Path(exists=True, dir_okay=False, path_type=str))
-def local(config_toml: str) -> None:
+def _local(config_toml: str) -> None:
     from experiments.experiment_sampler import sampler, scan_local
 
     try:
@@ -89,8 +92,14 @@ def local(config_toml: str) -> None:
     sampler(config, distributor_fn=scan_local)
 
 
-def main() -> None:
+local = _local
+
+
+def _main() -> None:
     cli()
+
+
+main = _main
 
 
 if __name__ == "__main__":

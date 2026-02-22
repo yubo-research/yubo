@@ -55,7 +55,7 @@ def collect_trajectory(env_conf, policy, noise_seed=None, show_frames=False):
     assert not np.any(np.isinf(lb)), lb
     assert not np.any(np.isinf(width)), width
 
-    def draw():
+    def _draw():
         import matplotlib.pyplot as plt
         from IPython.display import clear_output
 
@@ -80,12 +80,12 @@ def collect_trajectory(env_conf, policy, noise_seed=None, show_frames=False):
         state, reward, done = env.step(action)[:3]
         return_trajectory += reward
         if show_frames and i_iter % max(1, max_steps // num_frames_skip) == 0:
-            draw()
+            _draw()
         if done:
             break
 
     if show_frames:
-        draw()
+        _draw()
     env.close()
     rreturn = _make_return(policy, return_trajectory)
     return Trajectory(rreturn, np.array(traj_states).T, np.array(traj_actions).T, rreturn_se=None)

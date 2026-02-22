@@ -6,7 +6,8 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
 from optimizer.sparse_gaussian_perturbator import SparseGaussianPerturbator
-from optimizer.uhd_enn_imputer import ENNImputerConfig, ENNMinusImputer, ENNMuPlusSeedSelector, ENNSeedSelectConfig
+from optimizer.uhd_enn_imputer import ENNImputerConfig, ENNMinusImputer
+from optimizer.uhd_enn_seed_selector import ENNMuPlusSeedSelector, ENNSeedSelectConfig
 from optimizer.uhd_loop import UHDLoop
 
 
@@ -73,14 +74,14 @@ def _make_accuracy_fn(module, device):
     images = torch.stack([test_dataset[i][0] for i in range(len(test_dataset))]).to(device)
     labels = torch.tensor([test_dataset[i][1] for i in range(len(test_dataset))]).to(device)
 
-    def accuracy_fn():
+    def _accuracy_fn():
         module.eval()
         with torch.no_grad():
             preds = module(images).argmax(dim=1)
         module.train()
         return float((preds == labels).float().mean())
 
-    return accuracy_fn
+    return _accuracy_fn
 
 
 def _preload_mnist_train_to_device(
@@ -176,7 +177,7 @@ def make_loop(
         use_full_train_acc = str(env_tag) == "mnist_fulltrain_acc"
         full_train_chunk = 8192
 
-        def evaluate_fn(eval_seed):
+        def _evaluate_fn(eval_seed):
             if use_full_train_loss:
                 was_training = module.training
                 module.eval()
@@ -271,7 +272,7 @@ def make_loop(
             module = MLPPolicyModule(num_state, num_action, hidden_sizes=(32, 16)).to(device)
             policy = TorchPolicy(module, env_conf)
 
-        def evaluate_fn(eval_seed):
+        def _evaluate_fn(eval_seed):
             if bool(getattr(env_conf, "frozen_noise", False)):
                 noise_seed = noise_seed_0
             else:
@@ -281,7 +282,7 @@ def make_loop(
     acc_fn = accuracy_fn if hasattr(env, "torch_env") else None
     loop = UHDLoop(
         module,
-        evaluate_fn,
+        _evaluate_fn,
         num_iterations=num_rounds,
         lr=lr,
         sigma=sigma,

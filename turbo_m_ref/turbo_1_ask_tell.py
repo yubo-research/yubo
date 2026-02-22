@@ -149,7 +149,7 @@ def _sample_candidates(gp, X_cand, *, device, dtype, batch_size, max_cholesky_si
     return y_cand
 
 
-class Turbo1:
+class Turbo1AskTell:
     """The TuRBO-1 algorithm.
 
     Parameters
@@ -417,3 +417,6 @@ class Turbo1:
             fX_next = f(X_next)
 
             self._tell(fX_next, X_next)
+
+
+Turbo1 = Turbo1AskTell

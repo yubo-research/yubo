@@ -13,12 +13,15 @@ def _ensure_repo_root_on_path() -> None:
     sys.path.insert(0, str(repo_root))
 
 
-def main() -> None:
+def _main() -> None:
     _ensure_repo_root_on_path()
 
     from experiments.experiment import cli
 
     cli()
+
+
+main = _main
 
 
 if __name__ == "__main__":

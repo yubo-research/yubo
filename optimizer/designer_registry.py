@@ -498,7 +498,7 @@ def _d_turbo_enn_f(ctx: _SimpleContext, opts: dict):
         keys = ", ".join(sorted(opts))
         raise NoSuchDesignerError(f"Designer 'turbo-enn-f' does not support options (got: {keys}).")
 
-    def num_candidates(num_dim, num_arms):
+    def _num_candidates(num_dim, num_arms):
         return 100 * num_arms
 
     TurboENNDesigner = _load_symbol("optimizer.turbo_enn_designer", "TurboENNDesigner")
@@ -510,7 +510,7 @@ def _d_turbo_enn_f(ctx: _SimpleContext, opts: dict):
         num_fit_samples=100,
         num_fit_candidates=100,
         acq_type="ucb",
-        num_candidates=num_candidates,
+        num_candidates=_num_candidates,
         candidate_rv="uniform",
     )
 
@@ -520,7 +520,7 @@ def _d_turbo_enn_f_p(ctx: _SimpleContext, opts: dict):
         keys = ", ".join(sorted(opts))
         raise NoSuchDesignerError(f"Designer 'turbo-enn-f-p' does not support options (got: {keys}).")
 
-    def num_candidates(num_dim, num_arms):
+    def _num_candidates(num_dim, num_arms):
         return 100 * num_arms
 
     TurboENNDesigner = _load_symbol("optimizer.turbo_enn_designer", "TurboENNDesigner")
@@ -532,7 +532,7 @@ def _d_turbo_enn_f_p(ctx: _SimpleContext, opts: dict):
         num_fit_samples=100,
         num_fit_candidates=100,
         acq_type="pareto",
-        num_candidates=num_candidates,
+        num_candidates=_num_candidates,
         candidate_rv="uniform",
     )
 

@@ -1,7 +1,7 @@
 from .pure_functions import PureFunctionEnv
 
 
-def make(env_name, problem_seed):
+def _make(env_name, problem_seed):
     if env_name == "mopta08":
         from problems.mopta08 import Mopta08
 
@@ -38,3 +38,6 @@ def make(env_name, problem_seed):
         # Same MNIST module/data; uhd_setup switches the objective to full-train accuracy.
         return MnistEnv(batch_size=4096)
     assert False, ("Unknown env_name", env_name)
+
+
+make = _make

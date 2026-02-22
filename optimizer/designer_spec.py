@@ -86,7 +86,7 @@ def parse_designer_spec(designer_name: str) -> DesignerSpec:
 
 
 def _parse_options(designer_name):
-    class ParsedOptions(NamedTuple):
+    class _ParsedOptions(NamedTuple):
         designer_name: str
         num_keep: int | None
         keep_style: str | None
@@ -127,7 +127,7 @@ def _parse_options(designer_name):
         else:
             assert False, ("Unknown option", option)
 
-    return ParsedOptions(
+    return _ParsedOptions(
         designer_name=designer_name,
         num_keep=num_keep,
         keep_style=keep_style,

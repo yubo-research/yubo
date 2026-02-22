@@ -89,8 +89,11 @@ def _validate_required(cfg: dict[str, Any]) -> None:
 
 
 @click.group()
-def cli():
+def _cli():
     pass
+
+
+cli = _cli
 
 
 def _parse_perturb(perturb: str) -> tuple[float | None, float | None]:
@@ -282,9 +285,9 @@ def _parse_cfg(cfg: dict[str, Any]) -> UHDConfig:
     )
 
 
-@cli.command(help="Run locally (single process) from a config TOML.")
+@_cli.command(name="local", help="Run locally (single process) from a config TOML.")
 @click.argument("config_toml", type=click.Path(exists=True, dir_okay=False, path_type=str))
-def local(config_toml: str) -> None:
+def _local(config_toml: str) -> None:
     from ops.uhd_setup import make_loop
 
     try:
@@ -332,7 +335,10 @@ def local(config_toml: str) -> None:
     loop.run()
 
 
-@cli.command(
+local = _local
+
+
+@_cli.command(
     name="modal",
     help="Run on Modal. Streams to stdout; optionally saves to --log-file.",
 )

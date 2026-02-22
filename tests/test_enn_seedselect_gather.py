@@ -2,7 +2,7 @@ import torch
 from torch import nn
 
 from optimizer.sparse_gaussian_perturbator import SparseGaussianPerturbator
-from optimizer.uhd_enn_imputer import ENNMuPlusSeedSelector, ENNSeedSelectConfig
+from optimizer.uhd_enn_seed_selector import ENNMuPlusSeedSelector, ENNSeedSelectConfig
 
 
 def _clone_params(module: nn.Module) -> list[torch.Tensor]:

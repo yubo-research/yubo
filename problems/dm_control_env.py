@@ -137,10 +137,13 @@ class DMControlEnv(gym.Env):
             return
 
 
-def make(
+def _make(
     env_name: str,
     *,
     render_mode: str | None = None,
 ):
     domain, task = _parse_env_name(env_name)
     return DMControlEnv(domain, task, render_mode=render_mode)
+
+
+make = _make

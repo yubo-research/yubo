@@ -8,7 +8,8 @@ from optimizer.gaussian_perturbator import GaussianPerturbator
 from optimizer.lr_scheduler import ConstantLR
 from optimizer.sparse_gaussian_perturbator import SparseGaussianPerturbator
 from optimizer.submodule_perturbator import SubmodulePerturbator
-from optimizer.uhd_enn_imputer import ENNMinusImputer, ENNMuPlusSeedSelector
+from optimizer.uhd_enn_imputer import ENNMinusImputer
+from optimizer.uhd_enn_seed_selector import ENNMuPlusSeedSelector
 from optimizer.uhd_mezo import UHDMeZO
 
 

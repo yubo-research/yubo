@@ -113,7 +113,7 @@ def _compute_y_cand(self, *, X, fX, X_cand, mu, sigma, gp, device, dtype):
     raise ValueError(f"Unknown surrogate_type: {self._surrogate_type}")
 
 
-class Turbo1:
+class Turbo1Standard:
     """The TuRBO-1 algorithm.
 
     Parameters
@@ -431,3 +431,6 @@ def arms_from_pareto_fronts(x_cand, mvn, num_arms):
 
     assert len(x_arms) == num_arms, (len(x_arms), num_arms)
     return x_arms
+
+
+Turbo1 = Turbo1Standard

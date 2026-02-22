@@ -122,7 +122,7 @@ def _parse_spec(model_spec, num_obs):
 
 
 def get_closure(mll, outcome_warp):
-    def closure_warping(**kwargs: Any) -> Tensor:
+    def _closure_warping(**kwargs: Any) -> Tensor:
         model = mll.model
         model_output = model(*model.train_inputs)
         warped_inputs = (model.transform_inputs(X=t_in) for t_in in model.train_inputs)
@@ -136,7 +136,7 @@ def get_closure(mll, outcome_warp):
         return -log_likelihood
 
     return ForwardBackwardClosure(
-        forward=closure_warping,
+        forward=_closure_warping,
         backward=Tensor.backward,
         parameters=get_parameters(mll, requires_grad=True),
         reducer=Tensor.sum,
@@ -266,8 +266,11 @@ def mk_x(policy):
     return all_bounds.bt_low + all_bounds.bt_width * ((torch.as_tensor(policy.get_params()) - all_bounds.p_low) / all_bounds.p_width)
 
 
-def estimate(gp, X):
+def _estimate(gp, X):
     return gp.posterior(X).mean.squeeze(-1)
+
+
+estimate = _estimate
 
 
 def mk_policies(policy_0, X_cand):

@@ -35,20 +35,26 @@ def start(cmd):
     process_job.spawn(cmd)
 
 
-def get_job_result():
+def _get_job_result():
     my_dict = modal.Dict.from_name("my-persisted-dict", create_if_missing=True)
     for i in range(10000):
         key = f"key_{i}"
         print(key, my_dict[key])
 
 
+get_job_result = _get_job_result
+
+
 @app.local_entrypoint()
-def main(cmd):
+def _main(cmd):
     if cmd == "start":
         start("processor")
     elif cmd == "submit":
         start("submitter")
     elif cmd == "get":
-        get_job_result()
+        _get_job_result()
     else:
         assert False, cmd
+
+
+main = _main

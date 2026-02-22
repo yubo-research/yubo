@@ -104,7 +104,7 @@ def _parse_enn_fields(enn: dict[str, object] | None) -> _ENNFields:
     )
 
 
-def run(
+def _run(
     env_tag,
     num_rounds,
     lr,
@@ -128,7 +128,7 @@ def run(
     app = modal.App(name="yubo-uhd")
 
     @app.function(image=_image, timeout=2 * 60 * 60, gpu=gpu, serialized=True)
-    def run_uhd(
+    def _run_uhd(
         env_tag,
         num_rounds,
         lr,
@@ -214,7 +214,7 @@ def run(
 
     with modal.enable_output():
         with app.run():
-            return run_uhd.remote(
+            return _run_uhd.remote(
                 env_tag,
                 num_rounds,
                 lr,
@@ -247,3 +247,6 @@ def run(
                 str(enn_f.embedder),
                 int(enn_f.gather_t),
             )
+
+
+run = _run
