@@ -1,5 +1,3 @@
-from typing import NamedTuple
-
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -9,13 +7,6 @@ from torch.utils.data import DataLoader
 from problems.mnist_classifier import MnistClassifier
 
 _MNIST_ROOT = "data/mnist"
-
-
-class _StepResult(NamedTuple):
-    state: object
-    reward: float
-    done: bool
-    info: object | None
 
 
 def _mnist_transform():
@@ -103,7 +94,7 @@ class MnistTorchEnv:
         logits = torch.as_tensor(action, dtype=torch.float32)
         with torch.inference_mode():
             loss = F.cross_entropy(logits, self._labels)
-        return _StepResult(np.zeros(1), -float(loss), True, None)
+        return np.zeros(1), -float(loss), True, False, None
 
     def close(self):
         pass
@@ -165,7 +156,7 @@ class MnistEnv:
             logits = self._classifier(images)
             loss = F.cross_entropy(logits, labels)
 
-        return _StepResult(1, -float(loss), True, None)
+        return 1, -float(loss), True, False, None
 
     def close(self):
         pass

@@ -115,7 +115,7 @@ def test_prep_d_args():
     assert results[0].opt_name == "ucb"
 
 
-@patch("experiments.experiment_sampler.get_env_conf")
+@patch("problems.env_conf.get_env_conf")
 @patch("experiments.experiment_sampler.data_is_done")
 def test_mk_replicates(mock_data_is_done, mock_get_env_conf):
     mock_data_is_done.return_value = False
@@ -145,7 +145,7 @@ def test_mk_replicates(mock_data_is_done, mock_get_env_conf):
     assert results[0].env_conf == mock_env_conf
 
 
-@patch("experiments.experiment_sampler.get_env_conf")
+@patch("problems.env_conf.get_env_conf")
 @patch("experiments.experiment_sampler.data_is_done")
 def test_mk_replicates_skips_done(mock_data_is_done, mock_get_env_conf):
     mock_data_is_done.return_value = True
@@ -169,7 +169,7 @@ def test_mk_replicates_skips_done(mock_data_is_done, mock_get_env_conf):
 
 def test_mk_replicates_creates_out_dir():
     with tempfile.TemporaryDirectory() as tmpdir:
-        with patch("experiments.experiment_sampler.get_env_conf") as mock_get_env_conf:
+        with patch("problems.env_conf.get_env_conf") as mock_get_env_conf:
             with patch("experiments.experiment_sampler.data_is_done") as mock_data_is_done:
                 mock_data_is_done.return_value = False
                 mock_get_env_conf.return_value = MagicMock()
@@ -275,8 +275,8 @@ def test_experiment_config_from_dict_none_denoise():
     assert config.num_denoise is None
 
 
-@patch("experiments.experiment_sampler.Optimizer")
-@patch("experiments.experiment_sampler.default_policy")
+@patch("optimizer.optimizer.Optimizer")
+@patch("problems.env_conf.default_policy")
 @patch("experiments.experiment_sampler.seed_all")
 @patch("experiments.experiment_sampler.torch")
 def test_sample_1(mock_torch, mock_seed_all, mock_default_policy, mock_optimizer_class):
@@ -327,8 +327,8 @@ def test_sample_1(mock_torch, mock_seed_all, mock_default_policy, mock_optimizer
     assert trace_records[0].rreturn == 1.5
 
 
-@patch("experiments.experiment_sampler.Optimizer")
-@patch("experiments.experiment_sampler.default_policy")
+@patch("optimizer.optimizer.Optimizer")
+@patch("problems.env_conf.default_policy")
 @patch("experiments.experiment_sampler.seed_all")
 @patch("experiments.experiment_sampler.torch")
 def test_sample_1_no_trace(mock_torch, mock_seed_all, mock_default_policy, mock_optimizer_class):

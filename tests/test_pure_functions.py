@@ -17,8 +17,8 @@ def test_pure_function_env_step():
     env = PureFunctionEnv(Sphere(), num_dim=5, problem_seed=0, distort=False)
     action = np.zeros(5)
     result = env.step(action)
-    assert len(result) == 4
-    assert result[2] is True
+    assert len(result) == 5  # Gymnasium API: obs, reward, terminated, truncated, info
+    assert result[2] is True  # terminated
 
 
 def test_pure_function_env_reset():

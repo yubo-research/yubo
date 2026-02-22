@@ -16,9 +16,9 @@ def test_mnist_env_step():
     assert state == 0
     num_params = env.action_space.shape[0]
     action = np.zeros(num_params, dtype=np.float32)
-    state, reward, done, _ = env.step(action)
+    state, reward, terminated, truncated, _ = env.step(action)
     assert state == 1
-    assert done is True
+    assert terminated or truncated
     assert reward <= 0.0  # -loss
     assert reward > -100.0
     env.close()
@@ -66,8 +66,8 @@ def test_torch_env_step():
 
     with torch.inference_mode():
         logits = module(torch.as_tensor(state, dtype=torch.float32))
-    _, reward, done, _ = torch_env.step(logits.numpy())
-    assert done is True
+    _, reward, terminated, truncated, _ = torch_env.step(logits.numpy())
+    assert terminated or truncated
     assert reward <= 0.0
     assert reward > -100.0
     torch_env.close()
@@ -86,8 +86,8 @@ def test_torch_env_with_torch_policy():
 
     state, _ = torch_env.reset(seed=0)
     logits = policy(state)
-    _, reward, done, _ = torch_env.step(logits)
-    assert done is True
+    _, reward, terminated, truncated, _ = torch_env.step(logits)
+    assert terminated or truncated
     assert isinstance(reward, float)
     assert reward <= 0.0
 

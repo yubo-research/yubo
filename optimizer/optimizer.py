@@ -8,6 +8,7 @@ import numpy as np
 from common.telemetry import Telemetry
 
 from .datum import Datum
+from .designer_protocol import get_designer_algo_metrics
 from .opt_trajectories import collect_denoised_trajectory, evaluate_for_best
 from .trajectories import collect_trajectory
 
@@ -309,9 +310,16 @@ class Optimizer:
 
         cum_time = time.time() - self._t_0
         self._cum_dt_proposing += dt_prop
+        algo_metrics = get_designer_algo_metrics(designer)
+        if algo_metrics:
+            algo_str = " " + " ".join(f"{k}={v:.3f}" for k, v in sorted(algo_metrics.items()) if isinstance(v, (int, float)) and v == v)
+        else:
+            algo_str = " " + self._telemetry.format()
         if ret_eval > -1e98:
             self._collector(
-                f"ITER: i_iter = {self._i_iter} cum_time = {cum_time:.2f} dt_eval = {dt_eval:.3f} dt_prop = {dt_prop:.3f} {self._telemetry.format()} cum_dt_prop = {self._cum_dt_proposing:.3f} y_best = {y_best_s} ret_best = {ret_best_s} ret_eval = {ret_eval_s}"
+                f"ITER: iter={self._i_iter} elapsed={cum_time:.2f}s eval_dt={dt_eval:.3f}s proposal_dt={dt_prop:.3f}s "
+                f"{self._telemetry.format()}{algo_str} proposal_elapsed={self._cum_dt_proposing:.3f}s "
+                f"y_best={y_best_s} ret_best={ret_best_s} ret_eval={ret_eval_s}"
             )
         sys.stdout.flush()
         self._trace.append(_TraceEntry(float(ret_eval), float(self.r_best_est), dt_prop, dt_eval))

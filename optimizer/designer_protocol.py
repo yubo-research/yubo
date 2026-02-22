@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING, Optional, Protocol
 
 if TYPE_CHECKING:
@@ -13,3 +15,14 @@ class Designer(Protocol):
         *,
         telemetry: Optional["Telemetry"] = None,
     ) -> list: ...
+
+
+def get_designer_algo_metrics(designer) -> dict[str, float]:
+    """Extract optimizer-specific metrics from a designer. Returns {} if not supported."""
+    if not hasattr(designer, "get_algo_metrics") or not callable(designer.get_algo_metrics):
+        return {}
+    try:
+        out = designer.get_algo_metrics()
+        return dict(out) if out else {}
+    except Exception:
+        return {}

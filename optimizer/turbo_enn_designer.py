@@ -1,58 +1,27 @@
 from typing import Optional
 
 import numpy as np
-
-try:
-    from enn.turbo.config.acq_type import AcqType
-    from enn.turbo.config.candidate_gen_config import CandidateGenConfig
-    from enn.turbo.config.candidate_rv import CandidateRV
-    from enn.turbo.config.enn_surrogate_config import (
-        ENNFitConfig,
-        ENNSurrogateConfig,
-    )
-    from enn.turbo.config.factory import (
-        lhd_only_config,
-        turbo_enn_config,
-        turbo_one_config,
-        turbo_zero_config,
-    )
-    from enn.turbo.config.raasp_driver import RAASPDriver
-    from enn.turbo.config.trust_region import (
-        MorboTRConfig,
-        NoTRConfig,
-        TrustRegionConfig,
-        TurboTRConfig,
-    )
-    from enn.turbo.optimizer import create_optimizer
-except ModuleNotFoundError:
-    try:
-        # Newer `ennbo` distributions may expose the package as `ennbo.*`.
-        from ennbo.turbo.config.acq_type import AcqType
-        from ennbo.turbo.config.candidate_gen_config import CandidateGenConfig
-        from ennbo.turbo.config.candidate_rv import CandidateRV
-        from ennbo.turbo.config.enn_surrogate_config import (
-            ENNFitConfig,
-            ENNSurrogateConfig,
-        )
-        from ennbo.turbo.config.factory import (
-            lhd_only_config,
-            turbo_enn_config,
-            turbo_one_config,
-            turbo_zero_config,
-        )
-        from ennbo.turbo.config.raasp_driver import RAASPDriver
-        from ennbo.turbo.config.trust_region import (
-            MorboTRConfig,
-            NoTRConfig,
-            TrustRegionConfig,
-            TurboTRConfig,
-        )
-        from ennbo.turbo.optimizer import create_optimizer
-    except ModuleNotFoundError as exc:
-        raise ModuleNotFoundError(
-            "Could not import ENN/TuRBO dependencies. Install either a distribution exposing "
-            "`enn.turbo.*` (e.g. older `ennbo`) or one exposing `ennbo.turbo.*`."
-        ) from exc
+from enn.turbo.config.acq_type import AcqType
+from enn.turbo.config.candidate_gen_config import CandidateGenConfig
+from enn.turbo.config.candidate_rv import CandidateRV
+from enn.turbo.config.enn_surrogate_config import (
+    ENNFitConfig,
+    ENNSurrogateConfig,
+)
+from enn.turbo.config.factory import (
+    lhd_only_config,
+    turbo_enn_config,
+    turbo_one_config,
+    turbo_zero_config,
+)
+from enn.turbo.config.raasp_driver import RAASPDriver
+from enn.turbo.config.trust_region import (
+    MorboTRConfig,
+    NoTRConfig,
+    TrustRegionConfig,
+    TurboTRConfig,
+)
+from enn.turbo.optimizer import create_optimizer
 
 import common.all_bounds as all_bounds
 from optimizer.designer_asserts import assert_scalar_rreturn
@@ -127,10 +96,7 @@ class TurboENNDesigner:
         if self._tr_type == "morbo":
             if num_metrics is None:
                 raise ValueError("num_metrics is required for tr_type='morbo'")
-            try:
-                from enn.turbo.config.trust_region import MultiObjectiveConfig
-            except ModuleNotFoundError:
-                from ennbo.turbo.config.trust_region import MultiObjectiveConfig
+            from enn.turbo.config.trust_region import MultiObjectiveConfig
 
             return MorboTRConfig(multi_objective=MultiObjectiveConfig(num_metrics=int(num_metrics)))
         raise ValueError(f"Invalid tr_type: {self._tr_type}")
@@ -280,3 +246,29 @@ class TurboENNDesigner:
         policy = self._policy.clone()
         policy.set_params(x)
         return policy
+
+    def get_algo_metrics(self) -> dict[str, float]:
+        """Return optimizer-specific metrics for console display."""
+        out: dict[str, float] = {}
+        turbo = getattr(self, "_turbo", None)
+        if turbo is None:
+            return out
+        if hasattr(turbo, "tr_length"):
+            try:
+                out["tr_length"] = float(turbo.tr_length)
+            except (TypeError, ValueError):
+                pass
+        if hasattr(turbo, "tr_obs_count"):
+            try:
+                out["tr_obs"] = float(turbo.tr_obs_count)
+            except (TypeError, ValueError):
+                pass
+        tel = getattr(turbo, "telemetry", None)
+        if callable(tel):
+            t = tel()
+            if t is not None:
+                if hasattr(t, "dt_fit") and t.dt_fit is not None:
+                    out["fit_dt"] = float(t.dt_fit)
+                if hasattr(t, "dt_sel") and t.dt_sel is not None:
+                    out["select_dt"] = float(t.dt_sel)
+        return out

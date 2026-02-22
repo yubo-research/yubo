@@ -1,3 +1,4 @@
+numpy<2
 gpytorch==1.13
 botorch==0.12.0
 scipy==1.15.3
@@ -6,10 +7,14 @@ ipykernel==6.29.5
 
 gymnasium==1.2.0
 cma==4.0.0
-mujoco==3.3.3
+mujoco>=3.4,<4
 optuna==4.0.0
 gymnasium[box2d]
 gymnasium[mujoco]
+gymnasium[other]
+ale-py  # Atari;
+dm-control>=1.0.37
+shimmy[dm-control]
 nds==0.4.3
 matplotlib==3.10.8
 pybind11==3.0.1
@@ -19,4 +24,5 @@ celer==0.7.4
 hyperopt==0.2.7
 sparse-ho @ https://github.com/QB3/sparse-ho/archive/master.zip
 click==8.3.1
+attrs>=24.0
 setuptools==71.1.0

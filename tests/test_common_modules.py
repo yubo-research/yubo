@@ -78,6 +78,42 @@ class TestSeedAll:
         torch.testing.assert_close(t1, t2)
 
 
+class TestExperimentSeeds:
+    """Verify experiment_seeds matches legacy BO formulas."""
+
+    def test_problem_seed_from_rep_index(self):
+        from common.experiment_seeds import problem_seed_from_rep_index
+
+        assert problem_seed_from_rep_index(0) == 18
+        assert problem_seed_from_rep_index(1) == 19
+        assert problem_seed_from_rep_index(2) == 20
+
+    def test_noise_seed_0_from_problem_seed(self):
+        from common.experiment_seeds import noise_seed_0_from_problem_seed
+
+        assert noise_seed_0_from_problem_seed(18) == 180
+        assert noise_seed_0_from_problem_seed(19) == 190
+
+    def test_global_seed_for_run(self):
+        from common.experiment_seeds import global_seed_for_run
+
+        assert global_seed_for_run(18) == 45
+        assert global_seed_for_run(42) == 69
+
+    def test_rl_seed_util_alignment(self):
+        from common.experiment_seeds import problem_seed_from_rep_index
+        from rl.algos.seed_util import resolve_problem_seed
+
+        for rl_seed, bo_i_rep in [(1, 0), (2, 1), (3, 2)]:
+            assert resolve_problem_seed(seed=rl_seed, problem_seed=None) == problem_seed_from_rep_index(bo_i_rep)
+
+    def test_resolve_noise_seed_0(self):
+        from rl.algos.seed_util import resolve_noise_seed_0
+
+        assert resolve_noise_seed_0(problem_seed=18, noise_seed_0=None) == 180
+        assert resolve_noise_seed_0(problem_seed=18, noise_seed_0=42) == 42
+
+
 class TestParseKv:
     def test_parse_kv_simple(self):
         from common.util import parse_kv
@@ -180,21 +216,21 @@ class TestTelemetry:
         t = Telemetry()
         t.set_dt_fit(1.234)
         t.set_dt_select(5.6789)
-        assert t.format() == "dt_fit = 1.234 dt_sel = 5.679"
+        assert t.format() == "fit_dt=1.234 select_dt=5.679"
 
     def test_format_with_none(self):
         from common.telemetry import Telemetry
 
         t = Telemetry()
-        assert t.format() == "dt_fit = N/A dt_sel = N/A"
+        assert t.format() == "fit_dt=N/A select_dt=N/A"
 
     def test_format_partial(self):
         from common.telemetry import Telemetry
 
         t = Telemetry()
         t.set_dt_fit(1.0)
-        assert t.format() == "dt_fit = 1.000 dt_sel = N/A"
+        assert t.format() == "fit_dt=1.000 select_dt=N/A"
 
         t.reset()
         t.set_dt_select(2.0)
-        assert t.format() == "dt_fit = N/A dt_sel = 2.000"
+        assert t.format() == "fit_dt=N/A select_dt=2.000"

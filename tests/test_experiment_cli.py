@@ -163,3 +163,88 @@ def test_cli_local_runs_with_stubbed_sampler(monkeypatch, tmp_path):
     config, distributor_fn = calls[0]
     assert isinstance(config, _StubExperimentConfig)
     assert distributor_fn is sys.modules["experiments.experiment_sampler"].scan_local
+
+
+def test_load_experiment_config_toml_optimizer_table(tmp_path):
+    toml_path = _write_toml(
+        tmp_path,
+        """
+        [experiment]
+        exp_dir = "_tmp/exp"
+        env_tag = "f:ackley-2d"
+        num_arms = 2
+        num_rounds = 3
+        num_reps = 1
+
+        [optimizer]
+        name = "turbo-enn-fit"
+
+        [optimizer.params]
+        acq_type = "ucb"
+        num_candidates = 64
+        """,
+    )
+    cfg = load_experiment_config(config_toml_path=str(toml_path))
+    assert cfg.opt_name == "turbo-enn-fit/acq_type=ucb/num_candidates=64"
+
+
+def test_load_experiment_config_toml_optimizer_unknown_key_raises(tmp_path):
+    toml_path = _write_toml(
+        tmp_path,
+        """
+        [experiment]
+        exp_dir = "_tmp/exp"
+        env_tag = "f:ackley-2d"
+        num_arms = 2
+        num_rounds = 3
+        num_reps = 1
+
+        [optimizer]
+        name = "turbo-enn-fit"
+        bad_key = 1
+        """,
+    )
+    with pytest.raises(ValueError, match="Unknown key"):
+        load_experiment_config(config_toml_path=str(toml_path))
+
+
+def test_load_experiment_config_toml_optimizer_invalid_param_type_raises(tmp_path):
+    toml_path = _write_toml(
+        tmp_path,
+        """
+        [experiment]
+        exp_dir = "_tmp/exp"
+        env_tag = "f:ackley-2d"
+        num_arms = 2
+        num_rounds = 3
+        num_reps = 1
+
+        [optimizer]
+        name = "turbo-enn-fit"
+
+        [optimizer.params]
+        bad = [1, 2]
+        """,
+    )
+    with pytest.raises(TypeError, match="must be int/float/str/bool"):
+        load_experiment_config(config_toml_path=str(toml_path))
+
+
+def test_load_experiment_config_toml_opt_name_and_optimizer_both_set_raises(tmp_path):
+    toml_path = _write_toml(
+        tmp_path,
+        """
+        [experiment]
+        exp_dir = "_tmp/exp"
+        env_tag = "f:ackley-2d"
+        opt_name = "random"
+        num_arms = 2
+        num_rounds = 3
+        num_reps = 1
+
+        [optimizer]
+        name = "turbo-enn-fit"
+        """,
+    )
+    with pytest.raises(ValueError, match="both experiment\\.opt_name and \\[optimizer\\]\\.name"):
+        load_experiment_config(config_toml_path=str(toml_path))

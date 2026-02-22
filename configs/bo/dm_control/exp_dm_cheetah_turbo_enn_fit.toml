@@ -1,0 +1,7 @@
+[experiment]
+exp_dir = "_tmp/bo/dm_control/exp_dm_cheetah_turbo_enn_fit"
+env_tag = "dm:cheetah:run"
+opt_name = "turbo_enn_fit"
+num_arms = 10
+num_rounds = 30
+num_reps = 1

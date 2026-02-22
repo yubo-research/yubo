@@ -1,0 +1,71 @@
+# Atari Pong with PufferLib backend on macOS (MPS).
+# Run: python -m rl.algos.runner local --config configs/rl/atari/ppo_pong_puffer_macos.toml
+
+[rl]
+algo = "ppo"
+backend = "pufferlib"
+
+[rl.ppo]
+exp_dir = "_tmp/atari/ppo_pong_puffer_macos"
+env_tag = "atari:Pong"
+seed = 1
+
+# PPO core
+total_timesteps = 10000000
+learning_rate = 2.5e-4
+anneal_lr = true
+gamma = 0.99
+gae_lambda = 0.95
+
+# Rollout/update shape
+num_envs = 8
+num_steps = 128
+num_minibatches = 4
+update_epochs = 4
+norm_adv = true
+clip_coef = 0.1
+clip_vloss = true
+ent_coef = 0.01
+vf_coef = 0.5
+max_grad_norm = 0.5
+target_kl = 0.03
+
+# Eval: same denoised contract used by TorchRL PPO.
+eval_interval = 1
+num_denoise_eval = 1
+num_denoise_passive_eval = 3
+eval_seed_base = 1000
+eval_noise_mode = "frozen"
+checkpoint_interval = 50
+
+# Save end-of-run videos from evaluation rollouts.
+video_enable = true
+video_prefix = "ppo_puffer_macos"
+video_num_episodes = 8
+video_num_video_episodes = 3
+video_episode_selection = "best"
+video_seed_base = 1000
+
+# Puffer vector backend tuned for macOS stability.
+vector_backend = "serial"
+vector_num_workers = 8
+vector_batch_size = 8
+vector_overwork = false
+framestack = 4
+
+# Shared backbone stack with TorchRL Atari configs.
+backbone_name = "nature_cnn_atari"
+backbone_hidden_sizes = []
+backbone_activation = "relu"
+backbone_layer_norm = false
+actor_head_hidden_sizes = [512]
+critic_head_hidden_sizes = [512]
+head_activation = "relu"
+share_backbone = true
+
+device = "mps"
+log_interval = 1
+
+[rl.run]
+seeds = [1]
+workers = 1

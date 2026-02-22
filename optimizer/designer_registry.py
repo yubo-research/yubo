@@ -670,3 +670,846 @@ _DESIGNER_DISPATCH = {name: partial(_no_opts, name, builder) for name, builder i
     "morbo-enn-fit": _d_morbo_enn_fit,
     "sts-ar": _d_sts_ar,
 }
+
+
+def _optional_int(opts: dict, key: str) -> int | None:
+    if key not in opts:
+        return None
+    v = opts[key]
+    if not isinstance(v, int):
+        raise NoSuchDesignerError(f"Designer option '{key}' must be an int.")
+    return v
+
+
+def _optional_float(opts: dict, key: str) -> float | None:
+    if key not in opts:
+        return None
+    v = opts[key]
+    if not isinstance(v, (int, float)):
+        raise NoSuchDesignerError(f"Designer option '{key}' must be a float.")
+    return float(v)
+
+
+def _optional_str_in(opts: dict, key: str, allowed: set[str]) -> str | None:
+    if key not in opts:
+        return None
+    v = opts[key]
+    if not isinstance(v, str):
+        raise NoSuchDesignerError(f"Designer option '{key}' must be a string.")
+    if v not in allowed:
+        raise NoSuchDesignerError(f"Designer option '{key}' must be one of: {', '.join(sorted(allowed))}.")
+    return v
+
+
+def _turbo_enn_multi(ctx: _SimpleContext, **kw):
+    MultiTurboHarnessConfig = _load_symbol("optimizer.multi_turbo_enn_designer", "MultiTurboHarnessConfig")
+    TurboENNRegionConfig = _load_symbol("optimizer.multi_turbo_enn_designer", "TurboENNRegionConfig")
+    MultiTurboENNConfig = _load_symbol("optimizer.multi_turbo_enn_designer", "MultiTurboENNConfig")
+    MultiTurboENNDesigner = _load_symbol("optimizer.multi_turbo_enn_designer", "MultiTurboENNDesigner")
+    data = dict(kw)
+    if "turbo_mode" not in data:
+        raise NoSuchDesignerError("Designer option 'turbo_mode' is required.")
+    harness = MultiTurboHarnessConfig(
+        num_regions=data.pop("num_regions", 2),
+        strategy=data.pop("strategy", "independent"),
+        arm_mode=data.pop("arm_mode", "split"),
+        pool_multiplier=data.pop("pool_multiplier", 2),
+    )
+    region = TurboENNRegionConfig(
+        turbo_mode=data.pop("turbo_mode"),
+        num_init=data.pop("num_init", None),
+        k=data.pop("k", None),
+        num_keep=data.pop("num_keep", None),
+        num_fit_samples=data.pop("num_fit_samples", None),
+        num_fit_candidates=data.pop("num_fit_candidates", None),
+        acq_type=data.pop("acq_type", "pareto"),
+        tr_type=data.pop("tr_type", None),
+        tr_geometry=data.pop("tr_geometry", None),
+        metric_sampler=data.pop("metric_sampler", None),
+        metric_rank=data.pop("metric_rank", None),
+        pc_rotation_mode=data.pop("pc_rotation_mode", None),
+        pc_rank=data.pop("pc_rank", None),
+        tr_length_fixed=data.pop("tr_length_fixed", None),
+        update_option=data.pop("update_option", "option_a"),
+        p_raasp=data.pop("p_raasp", 0.2),
+        radial_mode=data.pop("radial_mode", "ball_uniform"),
+        shape_period=data.pop("shape_period", 5),
+        shape_ema=data.pop("shape_ema", 0.2),
+        rho_bad=data.pop("rho_bad", 0.25),
+        rho_good=data.pop("rho_good", 0.75),
+        gamma_down=data.pop("gamma_down", 0.5),
+        gamma_up=data.pop("gamma_up", 2.0),
+        boundary_tol=data.pop("boundary_tol", 0.1),
+        use_y_var=data.pop("use_y_var", False),
+        num_candidates=data.pop("num_candidates", None),
+        candidate_rv=data.pop("candidate_rv", None),
+        num_metrics=data.pop("num_metrics", None),
+    )
+    if data:
+        keys = ", ".join(sorted(data.keys()))
+        raise NoSuchDesignerError(f"Unknown designer option(s): {keys}")
+    config = MultiTurboENNConfig(harness=harness, region=region)
+    return MultiTurboENNDesigner(ctx.policy, config=config)
+
+
+def _d_turbo_enn_fit_ext(ctx: _SimpleContext, opts: dict):
+    acq_type = _require_str_in(
+        opts,
+        "acq_type",
+        {"pareto", "thompson", "ucb"},
+        example="turbo-enn-fit/acq_type=ucb",
+    )
+    candidate_rv = _optional_str_in(opts, "candidate_rv", {"sobol", "uniform", "gpu_uniform"})
+    num_candidates = _optional_int(opts, "num_candidates")
+    num_fit_samples = _optional_int(opts, "num_fit_samples")
+    num_fit_candidates = _optional_int(opts, "num_fit_candidates")
+    geometry = _optional_str_in(
+        opts,
+        "geometry",
+        {
+            "box",
+            "enn_metric_shaped",
+            "enn_grad_metric_shaped",
+            "enn_true_ellipsoid",
+            "enn_grad_true_ellipsoid",
+        },
+    )
+    sampler = _optional_str_in(opts, "sampler", {"full", "low_rank"})
+    rank = _optional_int(opts, "rank")
+    tr_length_fixed = _optional_float(opts, "tr_length_fixed")
+    update_option = _optional_str_in(opts, "update_option", {"option_a", "option_b", "option_c"})
+    p_raasp = _optional_float(opts, "p_raasp")
+    radial_mode = _optional_str_in(opts, "radial_mode", {"ball_uniform", "boundary"})
+    shape_period = _optional_int(opts, "shape_period")
+    shape_ema = _optional_float(opts, "shape_ema")
+    rho_bad = _optional_float(opts, "rho_bad")
+    rho_good = _optional_float(opts, "rho_good")
+    gamma_down = _optional_float(opts, "gamma_down")
+    gamma_up = _optional_float(opts, "gamma_up")
+    boundary_tol = _optional_float(opts, "boundary_tol")
+    pc_rotation_mode = _optional_str_in(opts, "pc_rotation_mode", {"full", "low_rank"})
+    pc_rank = _optional_int(opts, "pc_rank")
+    return _turbo_enn(
+        ctx,
+        turbo_mode="turbo-enn",
+        k=10,
+        num_keep=ctx.num_keep_val,
+        num_fit_samples=100 if num_fit_samples is None else num_fit_samples,
+        num_fit_candidates=100 if num_fit_candidates is None else num_fit_candidates,
+        acq_type=acq_type,
+        tr_type=None,
+        tr_geometry=geometry,
+        metric_sampler=sampler,
+        metric_rank=rank,
+        pc_rotation_mode=pc_rotation_mode,
+        pc_rank=pc_rank,
+        tr_length_fixed=tr_length_fixed,
+        update_option="option_a" if update_option is None else update_option,
+        p_raasp=0.2 if p_raasp is None else p_raasp,
+        radial_mode="ball_uniform" if radial_mode is None else radial_mode,
+        shape_period=5 if shape_period is None else shape_period,
+        shape_ema=0.2 if shape_ema is None else shape_ema,
+        rho_bad=0.25 if rho_bad is None else rho_bad,
+        rho_good=0.75 if rho_good is None else rho_good,
+        gamma_down=0.5 if gamma_down is None else gamma_down,
+        gamma_up=2.0 if gamma_up is None else gamma_up,
+        boundary_tol=0.1 if boundary_tol is None else boundary_tol,
+        candidate_rv=candidate_rv,
+        num_candidates=num_candidates,
+    )
+
+
+def _d_morbo_enn_fit_ext(ctx: _SimpleContext, opts: dict):
+    from optimizer.bo_scale import apply_scale_to_opts
+
+    num_dim = ctx.policy.num_params()
+    opts = apply_scale_to_opts(opts, num_dim, merge=True)
+    acq_type = _require_str_in(
+        opts,
+        "acq_type",
+        {"pareto", "thompson", "ucb"},
+        example="morbo-enn-fit/acq_type=ucb",
+    )
+    candidate_rv = _optional_str_in(opts, "candidate_rv", {"sobol", "uniform", "gpu_uniform"})
+    num_candidates = _optional_int(opts, "num_candidates")
+    num_fit_samples = _optional_int(opts, "num_fit_samples")
+    num_fit_candidates = _optional_int(opts, "num_fit_candidates")
+    return _turbo_enn(
+        ctx,
+        turbo_mode="turbo-enn",
+        k=10,
+        num_keep=ctx.num_keep_val,
+        num_fit_samples=100 if num_fit_samples is None else num_fit_samples,
+        num_fit_candidates=(100 * ctx.num_arms) if num_fit_candidates is None else num_fit_candidates,
+        acq_type=acq_type,
+        tr_type="morbo",
+        candidate_rv=candidate_rv,
+        num_candidates=num_candidates,
+    )
+
+
+def _d_turbo_enn_multi_ext(ctx: _SimpleContext, opts: dict):
+    acq_type = _require_str_in(
+        opts,
+        "acq_type",
+        {"pareto", "thompson", "ucb"},
+        example="turbo-enn-multi/acq_type=ucb",
+    )
+    num_regions = _require_int(opts, "num_regions", example="turbo-enn-multi/num_regions=4")
+    strategy = _optional_str_in(opts, "strategy", {"independent", "shared_data"})
+    arm_mode = _optional_str_in(opts, "arm_mode", {"split", "per_region", "allocated"})
+    pool_multiplier = _optional_int(opts, "pool_multiplier")
+    candidate_rv = _optional_str_in(opts, "candidate_rv", {"sobol", "uniform", "gpu_uniform"})
+    num_candidates = _optional_int(opts, "num_candidates")
+    num_fit_samples = _optional_int(opts, "num_fit_samples")
+    num_fit_candidates = _optional_int(opts, "num_fit_candidates")
+    geometry = _optional_str_in(
+        opts,
+        "geometry",
+        {
+            "box",
+            "enn_metric_shaped",
+            "enn_grad_metric_shaped",
+            "enn_true_ellipsoid",
+            "enn_grad_true_ellipsoid",
+        },
+    )
+    sampler = _optional_str_in(opts, "sampler", {"full", "low_rank"})
+    rank = _optional_int(opts, "rank")
+    tr_length_fixed = _optional_float(opts, "tr_length_fixed")
+    update_option = _optional_str_in(opts, "update_option", {"option_a", "option_b", "option_c"})
+    p_raasp = _optional_float(opts, "p_raasp")
+    radial_mode = _optional_str_in(opts, "radial_mode", {"ball_uniform", "boundary"})
+    shape_period = _optional_int(opts, "shape_period")
+    shape_ema = _optional_float(opts, "shape_ema")
+    rho_bad = _optional_float(opts, "rho_bad")
+    rho_good = _optional_float(opts, "rho_good")
+    gamma_down = _optional_float(opts, "gamma_down")
+    gamma_up = _optional_float(opts, "gamma_up")
+    boundary_tol = _optional_float(opts, "boundary_tol")
+    pc_rotation_mode = _optional_str_in(opts, "pc_rotation_mode", {"full", "low_rank"})
+    pc_rank = _optional_int(opts, "pc_rank")
+    return _turbo_enn_multi(
+        ctx,
+        turbo_mode="turbo-enn",
+        num_regions=num_regions,
+        strategy=strategy if strategy is not None else "independent",
+        arm_mode=arm_mode if arm_mode is not None else "split",
+        pool_multiplier=pool_multiplier if pool_multiplier is not None else 2,
+        k=10,
+        num_keep=ctx.num_keep_val,
+        num_fit_samples=100 if num_fit_samples is None else num_fit_samples,
+        num_fit_candidates=100 if num_fit_candidates is None else num_fit_candidates,
+        acq_type=acq_type,
+        tr_type="turbo",
+        tr_geometry=geometry,
+        metric_sampler=sampler,
+        metric_rank=rank,
+        pc_rotation_mode=pc_rotation_mode,
+        pc_rank=pc_rank,
+        tr_length_fixed=tr_length_fixed,
+        update_option="option_a" if update_option is None else update_option,
+        p_raasp=0.2 if p_raasp is None else p_raasp,
+        radial_mode="ball_uniform" if radial_mode is None else radial_mode,
+        shape_period=5 if shape_period is None else shape_period,
+        shape_ema=0.2 if shape_ema is None else shape_ema,
+        rho_bad=0.25 if rho_bad is None else rho_bad,
+        rho_good=0.75 if rho_good is None else rho_good,
+        gamma_down=0.5 if gamma_down is None else gamma_down,
+        gamma_up=2.0 if gamma_up is None else gamma_up,
+        boundary_tol=0.1 if boundary_tol is None else boundary_tol,
+        candidate_rv=candidate_rv,
+        num_candidates=num_candidates,
+    )
+
+
+def _d_morbo_enn_multi_ext(ctx: _SimpleContext, opts: dict):
+    acq_type = _require_str_in(
+        opts,
+        "acq_type",
+        {"pareto", "thompson", "ucb"},
+        example="morbo-enn-multi/acq_type=ucb",
+    )
+    num_regions = _require_int(opts, "num_regions", example="morbo-enn-multi/num_regions=4")
+    strategy = _optional_str_in(opts, "strategy", {"independent", "shared_data"})
+    arm_mode = _optional_str_in(opts, "arm_mode", {"split", "per_region", "allocated"})
+    pool_multiplier = _optional_int(opts, "pool_multiplier")
+    candidate_rv = _optional_str_in(opts, "candidate_rv", {"sobol", "uniform", "gpu_uniform"})
+    num_candidates = _optional_int(opts, "num_candidates")
+    num_fit_samples = _optional_int(opts, "num_fit_samples")
+    num_fit_candidates = _optional_int(opts, "num_fit_candidates")
+    return _turbo_enn_multi(
+        ctx,
+        turbo_mode="turbo-enn",
+        num_regions=num_regions,
+        strategy=strategy if strategy is not None else "independent",
+        arm_mode=arm_mode if arm_mode is not None else "split",
+        pool_multiplier=pool_multiplier if pool_multiplier is not None else 2,
+        k=10,
+        num_keep=ctx.num_keep_val,
+        num_fit_samples=100 if num_fit_samples is None else num_fit_samples,
+        num_fit_candidates=(100 * ctx.num_arms) if num_fit_candidates is None else num_fit_candidates,
+        acq_type=acq_type,
+        tr_type="morbo",
+        candidate_rv=candidate_rv,
+        num_candidates=num_candidates,
+    )
+
+
+_DESIGNER_OPTION_SPECS["turbo-enn-fit"] = [
+    DesignerOptionSpec(
+        name="acq_type",
+        required=True,
+        value_type="str",
+        description="Acquisition type for fit-time candidate generation.",
+        example="turbo-enn-fit/acq_type=ucb",
+        allowed_values=("pareto", "thompson", "ucb"),
+    ),
+    DesignerOptionSpec(
+        name="candidate_rv",
+        required=False,
+        value_type="str",
+        description="Candidate random variable family.",
+        example="turbo-enn-fit/candidate_rv=uniform",
+        allowed_values=("sobol", "uniform", "gpu_uniform"),
+    ),
+    DesignerOptionSpec(
+        name="num_candidates",
+        required=False,
+        value_type="int",
+        description="Number of trust-region candidates.",
+        example="turbo-enn-fit/num_candidates=64",
+    ),
+    DesignerOptionSpec(
+        name="num_fit_samples",
+        required=False,
+        value_type="int",
+        description="ENN fit samples for surrogate update.",
+        example="turbo-enn-fit/num_fit_samples=50",
+    ),
+    DesignerOptionSpec(
+        name="num_fit_candidates",
+        required=False,
+        value_type="int",
+        description="ENN fit candidates per surrogate step.",
+        example="turbo-enn-fit/num_fit_candidates=50",
+    ),
+    DesignerOptionSpec(
+        name="geometry",
+        required=False,
+        value_type="str",
+        description="Trust-region geometry.",
+        example="turbo-enn-fit/geometry=enn_metric_shaped",
+        allowed_values=(
+            "box",
+            "enn_metric_shaped",
+            "enn_grad_metric_shaped",
+            "enn_true_ellipsoid",
+            "enn_grad_true_ellipsoid",
+        ),
+    ),
+    DesignerOptionSpec(
+        name="sampler",
+        required=False,
+        value_type="str",
+        description="Metric-shaped sampler for non-box geometry.",
+        example="turbo-enn-fit/sampler=low_rank",
+        allowed_values=("full", "low_rank"),
+    ),
+    DesignerOptionSpec(
+        name="rank",
+        required=False,
+        value_type="int",
+        description="Low-rank sampler rank cap.",
+        example="turbo-enn-fit/rank=5",
+    ),
+    DesignerOptionSpec(
+        name="tr_length_fixed",
+        required=False,
+        value_type="float",
+        description="Fixed trust-region length.",
+        example="turbo-enn-fit/tr_length_fixed=1.6",
+    ),
+    DesignerOptionSpec(
+        name="update_option",
+        required=False,
+        value_type="str",
+        description="True-ellipsoid update controller.",
+        example="turbo-enn-fit/update_option=option_a",
+        allowed_values=("option_a", "option_b", "option_c"),
+    ),
+    DesignerOptionSpec(
+        name="p_raasp",
+        required=False,
+        value_type="float",
+        description="RAASP sparsity probability in whitened coordinates.",
+        example="turbo-enn-fit/p_raasp=0.2",
+    ),
+    DesignerOptionSpec(
+        name="radial_mode",
+        required=False,
+        value_type="str",
+        description="Radial sampler for true ellipsoid candidates.",
+        example="turbo-enn-fit/radial_mode=ball_uniform",
+        allowed_values=("ball_uniform", "boundary"),
+    ),
+    DesignerOptionSpec(
+        name="shape_period",
+        required=False,
+        value_type="int",
+        description="Shape update period for option_a/option_b.",
+        example="turbo-enn-fit/shape_period=5",
+    ),
+    DesignerOptionSpec(
+        name="shape_ema",
+        required=False,
+        value_type="float",
+        description="EMA factor for shape updates.",
+        example="turbo-enn-fit/shape_ema=0.2",
+    ),
+    DesignerOptionSpec(
+        name="rho_bad",
+        required=False,
+        value_type="float",
+        description="Lower acceptance-ratio threshold for option_c.",
+        example="turbo-enn-fit/rho_bad=0.25",
+    ),
+    DesignerOptionSpec(
+        name="rho_good",
+        required=False,
+        value_type="float",
+        description="Upper acceptance-ratio threshold for option_c.",
+        example="turbo-enn-fit/rho_good=0.75",
+    ),
+    DesignerOptionSpec(
+        name="gamma_down",
+        required=False,
+        value_type="float",
+        description="Shrink factor for option_c.",
+        example="turbo-enn-fit/gamma_down=0.5",
+    ),
+    DesignerOptionSpec(
+        name="gamma_up",
+        required=False,
+        value_type="float",
+        description="Expand factor for option_c.",
+        example="turbo-enn-fit/gamma_up=2.0",
+    ),
+    DesignerOptionSpec(
+        name="boundary_tol",
+        required=False,
+        value_type="float",
+        description="Boundary threshold to trigger expansion in option_c.",
+        example="turbo-enn-fit/boundary_tol=0.1",
+    ),
+    DesignerOptionSpec(
+        name="scale",
+        required=False,
+        value_type="str",
+        description="Dim-based scaling: auto|low|medium|high|huge. Overrides num_keep, num_candidates, num_fit_* when set.",
+        example="turbo-enn-fit/scale=auto",
+        allowed_values=("auto", "low", "medium", "high", "huge"),
+    ),
+]
+
+
+_DESIGNER_OPTION_SPECS["morbo-enn-fit"] = [
+    DesignerOptionSpec(
+        name="acq_type",
+        required=True,
+        value_type="str",
+        description="Acquisition type for fit-time candidate generation (MORBO TR).",
+        example="morbo-enn-fit/acq_type=ucb",
+        allowed_values=("pareto", "thompson", "ucb"),
+    ),
+    DesignerOptionSpec(
+        name="candidate_rv",
+        required=False,
+        value_type="str",
+        description="Candidate random variable family.",
+        example="morbo-enn-fit/candidate_rv=uniform",
+        allowed_values=("sobol", "uniform", "gpu_uniform"),
+    ),
+    DesignerOptionSpec(
+        name="num_candidates",
+        required=False,
+        value_type="int",
+        description="Number of trust-region candidates.",
+        example="morbo-enn-fit/num_candidates=64",
+    ),
+    DesignerOptionSpec(
+        name="num_fit_samples",
+        required=False,
+        value_type="int",
+        description="ENN fit samples for surrogate update.",
+        example="morbo-enn-fit/num_fit_samples=50",
+    ),
+    DesignerOptionSpec(
+        name="num_fit_candidates",
+        required=False,
+        value_type="int",
+        description="ENN fit candidates per surrogate step.",
+        example="morbo-enn-fit/num_fit_candidates=50",
+    ),
+]
+
+
+_DESIGNER_OPTION_SPECS["turbo-enn-multi"] = [
+    DesignerOptionSpec(
+        name="acq_type",
+        required=True,
+        value_type="str",
+        description="Acquisition type for multi-region selection.",
+        example="turbo-enn-multi/acq_type=ucb",
+        allowed_values=("pareto", "thompson", "ucb"),
+    ),
+    DesignerOptionSpec(
+        name="num_regions",
+        required=True,
+        value_type="int",
+        description="Number of trust regions.",
+        example="turbo-enn-multi/num_regions=4",
+    ),
+    DesignerOptionSpec(
+        name="strategy",
+        required=False,
+        value_type="str",
+        description="Data sharing strategy across regions.",
+        example="turbo-enn-multi/strategy=independent",
+        allowed_values=("independent", "shared_data"),
+    ),
+    DesignerOptionSpec(
+        name="arm_mode",
+        required=False,
+        value_type="str",
+        description="Arm allocation mode across regions.",
+        example="turbo-enn-multi/arm_mode=allocated",
+        allowed_values=("split", "per_region", "allocated"),
+    ),
+    DesignerOptionSpec(
+        name="pool_multiplier",
+        required=False,
+        value_type="int",
+        description="Proposal pool scaling when arm_mode=allocated.",
+        example="turbo-enn-multi/pool_multiplier=2",
+    ),
+    DesignerOptionSpec(
+        name="candidate_rv",
+        required=False,
+        value_type="str",
+        description="Candidate random variable family.",
+        example="turbo-enn-multi/candidate_rv=uniform",
+        allowed_values=("sobol", "uniform", "gpu_uniform"),
+    ),
+    DesignerOptionSpec(
+        name="num_candidates",
+        required=False,
+        value_type="int",
+        description="Number of trust-region candidates.",
+        example="turbo-enn-multi/num_candidates=64",
+    ),
+    DesignerOptionSpec(
+        name="num_fit_samples",
+        required=False,
+        value_type="int",
+        description="ENN fit samples for surrogate update.",
+        example="turbo-enn-multi/num_fit_samples=50",
+    ),
+    DesignerOptionSpec(
+        name="num_fit_candidates",
+        required=False,
+        value_type="int",
+        description="ENN fit candidates per surrogate step.",
+        example="turbo-enn-multi/num_fit_candidates=50",
+    ),
+    DesignerOptionSpec(
+        name="geometry",
+        required=False,
+        value_type="str",
+        description="Trust-region geometry.",
+        example="turbo-enn-multi/geometry=enn_metric_shaped",
+        allowed_values=(
+            "box",
+            "enn_metric_shaped",
+            "enn_grad_metric_shaped",
+            "enn_true_ellipsoid",
+            "enn_grad_true_ellipsoid",
+        ),
+    ),
+    DesignerOptionSpec(
+        name="sampler",
+        required=False,
+        value_type="str",
+        description="Metric-shaped sampler for non-box geometry.",
+        example="turbo-enn-multi/sampler=low_rank",
+        allowed_values=("full", "low_rank"),
+    ),
+    DesignerOptionSpec(
+        name="rank",
+        required=False,
+        value_type="int",
+        description="Low-rank sampler rank cap.",
+        example="turbo-enn-multi/rank=5",
+    ),
+    DesignerOptionSpec(
+        name="tr_length_fixed",
+        required=False,
+        value_type="float",
+        description="Fixed trust-region length.",
+        example="turbo-enn-multi/tr_length_fixed=1.6",
+    ),
+    DesignerOptionSpec(
+        name="update_option",
+        required=False,
+        value_type="str",
+        description="True-ellipsoid update controller.",
+        example="turbo-enn-multi/update_option=option_a",
+        allowed_values=("option_a", "option_b", "option_c"),
+    ),
+    DesignerOptionSpec(
+        name="p_raasp",
+        required=False,
+        value_type="float",
+        description="RAASP sparsity probability in whitened coordinates.",
+        example="turbo-enn-multi/p_raasp=0.2",
+    ),
+    DesignerOptionSpec(
+        name="radial_mode",
+        required=False,
+        value_type="str",
+        description="Radial sampler for true ellipsoid candidates.",
+        example="turbo-enn-multi/radial_mode=ball_uniform",
+        allowed_values=("ball_uniform", "boundary"),
+    ),
+    DesignerOptionSpec(
+        name="shape_period",
+        required=False,
+        value_type="int",
+        description="Shape update period for option_a/option_b.",
+        example="turbo-enn-multi/shape_period=5",
+    ),
+    DesignerOptionSpec(
+        name="shape_ema",
+        required=False,
+        value_type="float",
+        description="EMA factor for shape updates.",
+        example="turbo-enn-multi/shape_ema=0.2",
+    ),
+    DesignerOptionSpec(
+        name="rho_bad",
+        required=False,
+        value_type="float",
+        description="Lower acceptance-ratio threshold for option_c.",
+        example="turbo-enn-multi/rho_bad=0.25",
+    ),
+    DesignerOptionSpec(
+        name="rho_good",
+        required=False,
+        value_type="float",
+        description="Upper acceptance-ratio threshold for option_c.",
+        example="turbo-enn-multi/rho_good=0.75",
+    ),
+    DesignerOptionSpec(
+        name="gamma_down",
+        required=False,
+        value_type="float",
+        description="Shrink factor for option_c.",
+        example="turbo-enn-multi/gamma_down=0.5",
+    ),
+    DesignerOptionSpec(
+        name="gamma_up",
+        required=False,
+        value_type="float",
+        description="Expand factor for option_c.",
+        example="turbo-enn-multi/gamma_up=2.0",
+    ),
+    DesignerOptionSpec(
+        name="boundary_tol",
+        required=False,
+        value_type="float",
+        description="Boundary threshold to trigger expansion in option_c.",
+        example="turbo-enn-multi/boundary_tol=0.1",
+    ),
+]
+
+
+_DESIGNER_OPTION_SPECS["morbo-enn-multi"] = [
+    DesignerOptionSpec(
+        name="acq_type",
+        required=True,
+        value_type="str",
+        description="Acquisition type for multi-region selection.",
+        example="morbo-enn-multi/acq_type=ucb",
+        allowed_values=("pareto", "thompson", "ucb"),
+    ),
+    DesignerOptionSpec(
+        name="num_regions",
+        required=True,
+        value_type="int",
+        description="Number of trust regions.",
+        example="morbo-enn-multi/num_regions=4",
+    ),
+    DesignerOptionSpec(
+        name="strategy",
+        required=False,
+        value_type="str",
+        description="Data sharing strategy across regions.",
+        example="morbo-enn-multi/strategy=independent",
+        allowed_values=("independent", "shared_data"),
+    ),
+    DesignerOptionSpec(
+        name="arm_mode",
+        required=False,
+        value_type="str",
+        description="Arm allocation mode across regions.",
+        example="morbo-enn-multi/arm_mode=allocated",
+        allowed_values=("split", "per_region", "allocated"),
+    ),
+    DesignerOptionSpec(
+        name="pool_multiplier",
+        required=False,
+        value_type="int",
+        description="Proposal pool scaling when arm_mode=allocated.",
+        example="morbo-enn-multi/pool_multiplier=2",
+    ),
+    DesignerOptionSpec(
+        name="candidate_rv",
+        required=False,
+        value_type="str",
+        description="Candidate random variable family.",
+        example="morbo-enn-multi/candidate_rv=uniform",
+        allowed_values=("sobol", "uniform", "gpu_uniform"),
+    ),
+    DesignerOptionSpec(
+        name="num_candidates",
+        required=False,
+        value_type="int",
+        description="Number of trust-region candidates.",
+        example="morbo-enn-multi/num_candidates=64",
+    ),
+    DesignerOptionSpec(
+        name="num_fit_samples",
+        required=False,
+        value_type="int",
+        description="ENN fit samples for surrogate update.",
+        example="morbo-enn-multi/num_fit_samples=50",
+    ),
+    DesignerOptionSpec(
+        name="num_fit_candidates",
+        required=False,
+        value_type="int",
+        description="ENN fit candidates per surrogate step.",
+        example="morbo-enn-multi/num_fit_candidates=50",
+    ),
+]
+
+
+_DESIGNER_DISPATCH.update(
+    {
+        "turbo-enn-fit": _d_turbo_enn_fit_ext,
+        "morbo-enn-fit": _d_morbo_enn_fit_ext,
+        "turbo-enn-multi": _d_turbo_enn_multi_ext,
+        "morbo-enn-multi": _d_morbo_enn_multi_ext,
+    }
+)
+
+
+def _turbo_enn_ext(ctx: _SimpleContext, **kw):
+    TurboENNDesigner = _load_symbol("optimizer.turbo_enn_designer_ext", "TurboENNDesigner")
+    return TurboENNDesigner(ctx.policy, **kw)
+
+
+def _d_turbo_enn_fit_ext_v2(ctx: _SimpleContext, opts: dict):
+    acq_type = _require_str_in(
+        opts,
+        "acq_type",
+        {"pareto", "thompson", "ucb"},
+        example="turbo-enn-fit/acq_type=ucb",
+    )
+    candidate_rv = _optional_str_in(opts, "candidate_rv", {"sobol", "uniform", "gpu_uniform"})
+    num_candidates = _optional_int(opts, "num_candidates")
+    num_fit_samples = _optional_int(opts, "num_fit_samples")
+    num_fit_candidates = _optional_int(opts, "num_fit_candidates")
+    geometry = _optional_str_in(
+        opts,
+        "geometry",
+        {
+            "box",
+            "enn_metric_shaped",
+            "enn_grad_metric_shaped",
+            "enn_true_ellipsoid",
+            "enn_grad_true_ellipsoid",
+        },
+    )
+    sampler = _optional_str_in(opts, "sampler", {"full", "low_rank"})
+    rank = _optional_int(opts, "rank")
+    tr_length_fixed = _optional_float(opts, "tr_length_fixed")
+    update_option = _optional_str_in(opts, "update_option", {"option_a", "option_b", "option_c"})
+    p_raasp = _optional_float(opts, "p_raasp")
+    radial_mode = _optional_str_in(opts, "radial_mode", {"ball_uniform", "boundary"})
+    shape_period = _optional_int(opts, "shape_period")
+    shape_ema = _optional_float(opts, "shape_ema")
+    rho_bad = _optional_float(opts, "rho_bad")
+    rho_good = _optional_float(opts, "rho_good")
+    gamma_down = _optional_float(opts, "gamma_down")
+    gamma_up = _optional_float(opts, "gamma_up")
+    boundary_tol = _optional_float(opts, "boundary_tol")
+    return _turbo_enn_ext(
+        ctx,
+        turbo_mode="turbo-enn",
+        k=10,
+        num_keep=ctx.num_keep_val,
+        num_fit_samples=100 if num_fit_samples is None else num_fit_samples,
+        num_fit_candidates=100 if num_fit_candidates is None else num_fit_candidates,
+        acq_type=acq_type,
+        tr_type=None,
+        tr_geometry=geometry,
+        metric_sampler=sampler,
+        metric_rank=rank,
+        tr_length_fixed=tr_length_fixed,
+        update_option="option_a" if update_option is None else update_option,
+        p_raasp=0.2 if p_raasp is None else p_raasp,
+        radial_mode="ball_uniform" if radial_mode is None else radial_mode,
+        shape_period=5 if shape_period is None else shape_period,
+        shape_ema=0.2 if shape_ema is None else shape_ema,
+        rho_bad=0.25 if rho_bad is None else rho_bad,
+        rho_good=0.75 if rho_good is None else rho_good,
+        gamma_down=0.5 if gamma_down is None else gamma_down,
+        gamma_up=2.0 if gamma_up is None else gamma_up,
+        boundary_tol=0.1 if boundary_tol is None else boundary_tol,
+        candidate_rv=candidate_rv,
+        num_candidates=num_candidates,
+    )
+
+
+def _d_morbo_enn_fit_ext_v2(ctx: _SimpleContext, opts: dict):
+    acq_type = _require_str_in(
+        opts,
+        "acq_type",
+        {"pareto", "thompson", "ucb"},
+        example="morbo-enn-fit/acq_type=ucb",
+    )
+    candidate_rv = _optional_str_in(opts, "candidate_rv", {"sobol", "uniform", "gpu_uniform"})
+    num_candidates = _optional_int(opts, "num_candidates")
+    num_fit_samples = _optional_int(opts, "num_fit_samples")
+    num_fit_candidates = _optional_int(opts, "num_fit_candidates")
+    return _turbo_enn_ext(
+        ctx,
+        turbo_mode="turbo-enn",
+        k=10,
+        num_keep=ctx.num_keep_val,
+        num_fit_samples=100 if num_fit_samples is None else num_fit_samples,
+        num_fit_candidates=(100 * ctx.num_arms) if num_fit_candidates is None else num_fit_candidates,
+        acq_type=acq_type,
+        tr_type="morbo",
+        candidate_rv=candidate_rv,
+        num_candidates=num_candidates,
+    )
+
+
+_DESIGNER_DISPATCH.update(
+    {
+        "turbo-enn-fit": _d_turbo_enn_fit_ext_v2,
+        "morbo-enn-fit": _d_morbo_enn_fit_ext_v2,
+    }
+)

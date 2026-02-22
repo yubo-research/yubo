@@ -1,6 +1,8 @@
 import hashlib
+import importlib
 import os
 import time
+from contextlib import contextmanager
 from dataclasses import asdict, dataclass
 from typing import NamedTuple, Optional
 
@@ -14,16 +16,26 @@ from analysis.data_io import (
     write_trace_jsonl,
 )
 from common.collector import Collector
+from common.experiment_seeds import (
+    global_seed_for_run,
+    noise_seed_0_from_problem_seed,
+    problem_seed_from_rep_index,
+)
 from common.seed_all import seed_all
+from experiments.bo_console import BOConsoleCollector, print_bo_footer
 from experiments.experiment_util import ensure_parent
-from optimizer.optimizer import Optimizer
-from problems.env_conf import default_policy, get_env_conf
 
 
 class _SampleResult(NamedTuple):
     collector_log: Collector
     collector_trace: Collector
     trace_records: list[TraceRecord]
+
+
+def _load_attr(module_parts: tuple[str, ...], attr_name: str):
+    module_name = ".".join(module_parts)
+    module = importlib.import_module(module_name)
+    return getattr(module, attr_name)
 
 
 @dataclass
@@ -39,6 +51,13 @@ class ExperimentConfig:
     max_proposal_seconds: Optional[float] = None
     max_total_seconds: Optional[float] = None
     b_trace: bool = True
+    video_enable: bool = False
+    scale: Optional[str] = None  # "auto" | "low" | "medium" | "high" | "huge" for dim-based scaling
+    video_num_episodes: int = 8
+    video_num_video_episodes: int = 3
+    video_episode_selection: str = "best"
+    video_seed_base: Optional[int] = None
+    video_prefix: str = "bo"
 
     def to_dir_name(self) -> str:
         config_str = (
@@ -46,6 +65,7 @@ class ExperimentConfig:
             f"--num_arms={self.num_arms}--num_rounds={self.num_rounds}"
             f"--num_reps={self.num_reps}--num_denoise={self.num_denoise}"
             f"--max_proposal_seconds={self.max_proposal_seconds}"
+            f"--video_enable={self.video_enable}"
         )
         short_hash = hashlib.md5(config_str.encode()).hexdigest()[:8]
         return f"{self.exp_dir}/{short_hash}"
@@ -85,6 +105,11 @@ class ExperimentConfig:
             max_proposal_seconds=max_prop,
             max_total_seconds=max_total,
             b_trace=true_false(d.get("b_trace", True)),
+            video_enable=true_false(d.get("video_enable", False)),
+            video_num_video_episodes=3,
+            video_episode_selection="best",
+            video_seed_base=None,
+            video_prefix="bo",
         )
 
 
@@ -99,10 +124,88 @@ class RunConfig:
     max_proposal_seconds: Optional[float]
     b_trace: bool
     trace_fn: str
+    bo_console: bool = True
     deadline: Optional[float] = None
+    video_enable: bool = False
+    video_num_episodes: int = 8
+    video_num_video_episodes: int = 3
+    video_episode_selection: str = "best"
+    video_seed_base: Optional[int] = None
+    video_prefix: str = "bo"
 
     def to_dict(self) -> dict:
         return asdict(self)
+
+
+@contextmanager
+def _temporary_cuda_default_device():
+    if not torch.cuda.is_available():
+        yield
+        return
+    prev_default_device = torch.get_default_device() if hasattr(torch, "get_default_device") else "cpu"
+    torch.set_default_device("cuda")
+    try:
+        yield
+    finally:
+        torch.set_default_device(prev_default_device)
+
+
+def _collect_trace_records(opt, opt_name, num_rounds, max_proposal_seconds, deadline, env_conf, b_trace):
+    trace_records = []
+    collector_trace = Collector()
+    for i_iter, te in enumerate(
+        opt.collect_trace(
+            designer_name=opt_name,
+            max_iterations=num_rounds,
+            max_proposal_seconds=max_proposal_seconds,
+            deadline=deadline,
+        )
+    ):
+        trace_records.append(
+            TraceRecord(
+                i_iter=i_iter,
+                dt_prop=te.dt_prop,
+                dt_eval=te.dt_eval,
+                rreturn=te.rreturn,
+                env_name=env_conf.env_name,
+                opt_name=opt_name,
+            )
+        )
+        if b_trace:
+            collector_trace(
+                f"TRACE: env={env_conf.env_name} opt_name={opt_name} iter={i_iter} "
+                f"proposal_dt={te.dt_prop:.3e}s eval_dt={te.dt_eval:.3e}s return={te.rreturn:.3e}"
+            )
+    collector_trace("DONE")
+    return trace_records, collector_trace
+
+
+def _render_sample_video(
+    opt,
+    run_config,
+    env_conf,
+    video_prefix,
+    video_num_episodes,
+    video_num_video_episodes,
+    video_episode_selection,
+    video_seed_base,
+):
+    from pathlib import Path
+
+    render_policy_videos_bo = _load_attr(("common", "video"), "render_policy_videos_bo")
+
+    video_dir = Path(run_config.trace_fn).parent / "videos"
+    seed_base = int(video_seed_base) if video_seed_base is not None else int(env_conf.problem_seed)
+    render_policy_videos_bo(
+        env_conf,
+        opt.best_policy.clone(),
+        video_dir=video_dir,
+        video_prefix=str(video_prefix),
+        num_episodes=int(video_num_episodes),
+        num_video_episodes=int(video_num_video_episodes),
+        episode_selection=str(video_episode_selection),
+        seed_base=int(seed_base),
+    )
 
 
 def sample_1(run_config: RunConfig):
@@ -117,59 +220,74 @@ def sample_1(run_config: RunConfig):
     max_proposal_seconds = run_config.max_proposal_seconds
     b_trace = run_config.b_trace
     deadline = run_config.deadline
+    video_enable = run_config.video_enable
+    video_num_episodes = run_config.video_num_episodes
+    video_num_video_episodes = run_config.video_num_video_episodes
+    video_episode_selection = run_config.video_episode_selection
+    video_seed_base = run_config.video_seed_base
+    video_prefix = run_config.video_prefix
+    bo_console = getattr(run_config, "bo_console", True)
 
     if max_proposal_seconds is None:
         max_proposal_seconds = np.inf
 
-    seed_all(env_conf.problem_seed + 27)
+    seed_all(global_seed_for_run(env_conf.problem_seed))
 
-    if torch.cuda.is_available():
-        torch.set_default_device("cuda")
-    default_device = torch.empty(size=(1,)).device
-    print("DEFAULT_DEVICE:", default_device)
+    with _temporary_cuda_default_device():
+        default_device = torch.empty(size=(1,)).device
+        print("DEFAULT_DEVICE:", default_device)
 
-    policy = default_policy(env_conf)
+        default_policy = _load_attr(("problems", "env_conf"), "default_policy")
+        policy = default_policy(env_conf)
 
-    collector_log = Collector()
-    opt = Optimizer(
-        collector_log,
-        env_conf=env_conf,
-        policy=policy,
-        num_arms=num_arms,
-        num_denoise_measurement=num_denoise,
-        num_denoise_passive=num_denoise_passive,
-    )
-
-    trace_records = []
-    collector_trace = Collector()
-    for i_iter, te in enumerate(
-        opt.collect_trace(
-            designer_name=opt_name,
-            max_iterations=num_rounds,
-            max_proposal_seconds=max_proposal_seconds,
-            deadline=deadline,
-        )
-    ):
-        record = TraceRecord(
-            i_iter=i_iter,
-            dt_prop=te.dt_prop,
-            dt_eval=te.dt_eval,
-            rreturn=te.rreturn,
-            env_name=env_conf.env_name,
-            opt_name=opt_name,
-        )
-        trace_records.append(record)
-        if b_trace:
-            collector_trace(
-                f"TRACE: name = {env_conf.env_name} opt_name = {opt_name} i_iter = {i_iter} dt_prop = {te.dt_prop:.3e} dt_eval = {te.dt_eval:.3e} return = {te.rreturn:.3e}"
+        if bo_console:
+            collector_log = BOConsoleCollector(
+                env_tag=env_conf.env_name,
+                opt_name=opt_name,
+                num_rounds=num_rounds,
+                num_arms=num_arms,
             )
-    collector_trace("DONE")
+        else:
+            collector_log = Collector()
+        Optimizer = _load_attr(("optimizer", "optimizer"), "Optimizer")
+        opt = Optimizer(
+            collector_log,
+            env_conf=env_conf,
+            policy=policy,
+            num_arms=num_arms,
+            num_denoise_measurement=num_denoise,
+            num_denoise_passive=num_denoise_passive,
+        )
 
-    return _SampleResult(
-        collector_log=collector_log,
-        collector_trace=collector_trace,
-        trace_records=trace_records,
-    )
+        trace_records, collector_trace = _collect_trace_records(opt, opt_name, num_rounds, max_proposal_seconds, deadline, env_conf, b_trace)
+
+        if bo_console:
+            t0 = getattr(opt, "_t_0", None)
+            if t0 is not None and isinstance(t0, (int, float)):
+                total_time = time.time() - float(t0)
+            else:
+                total_time = 0.0
+            best = getattr(opt, "r_best_est", None)
+            best_val = float(best) if best is not None and isinstance(best, (int, float)) else 0.0
+            print_bo_footer(best_val, max(0.0, total_time))
+
+        if video_enable and video_num_video_episodes > 0 and opt.best_policy is not None:
+            _render_sample_video(
+                opt,
+                run_config,
+                env_conf,
+                video_prefix,
+                video_num_episodes,
+                video_num_video_episodes,
+                video_episode_selection,
+                video_seed_base,
+            )
+
+        return _SampleResult(
+            collector_log=collector_log,
+            collector_trace=collector_trace,
+            trace_records=trace_records,
+        )
 
 
 def post_process_stdout(
@@ -228,6 +346,8 @@ def true_false(string_bool):
 
 
 def mk_replicates(config: ExperimentConfig) -> list[RunConfig]:
+    get_env_conf = _load_attr(("problems", "env_conf"), "get_env_conf")
+
     out_dir = config.to_dir_name()
 
     os.makedirs(out_dir, exist_ok=True)
@@ -241,12 +361,12 @@ def mk_replicates(config: ExperimentConfig) -> list[RunConfig]:
             print(f"Skipping trace_fn = {trace_fn}. Already done.")
             continue
         else:
-            problem_seed = 18 + i_rep
+            problem_seed = problem_seed_from_rep_index(i_rep)
             env_conf = get_env_conf(
                 config.env_tag,
                 problem_seed=problem_seed,
                 noise_level=None,
-                noise_seed_0=10 * problem_seed,
+                noise_seed_0=noise_seed_0_from_problem_seed(problem_seed),
             )
             run_configs.append(
                 RunConfig(
@@ -259,6 +379,12 @@ def mk_replicates(config: ExperimentConfig) -> list[RunConfig]:
                     num_denoise_passive=config.num_denoise_passive,
                     max_proposal_seconds=config.max_proposal_seconds,
                     b_trace=config.b_trace,
+                    video_enable=config.video_enable,
+                    video_num_episodes=config.video_num_episodes,
+                    video_num_video_episodes=config.video_num_video_episodes,
+                    video_episode_selection=config.video_episode_selection,
+                    video_seed_base=config.video_seed_base,
+                    video_prefix=config.video_prefix,
                 )
             )
     return run_configs

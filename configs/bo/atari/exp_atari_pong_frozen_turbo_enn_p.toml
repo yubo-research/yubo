@@ -1,0 +1,7 @@
+[experiment]
+exp_dir = "_tmp/bo/atari/exp_atari_pong_frozen_turbo_enn_p"
+env_tag = "atari:Pong"
+opt_name = "turbo_enn_p/freeze=true"
+num_arms = 10
+num_rounds = 30
+num_reps = 1

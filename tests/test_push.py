@@ -20,6 +20,6 @@ def test_push_env():
     env = ec.make()
     env.reset(seed=0)
     action = np.zeros(14)
-    state, reward, done, info = env.step(action)
+    state, reward, terminated, truncated, info = env.step(action)
     assert np.isfinite(reward)
     env.close()
