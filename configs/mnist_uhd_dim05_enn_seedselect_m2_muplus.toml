@@ -1,0 +1,22 @@
+[uhd]
+env_tag = "mnist"
+num_rounds = 1200
+
+lr = 0.001
+perturb = "dim:0.5"
+log_interval = 50
+accuracy_interval = 200
+
+enn_minus_impute = true
+enn_target = "mu_plus"
+enn_num_candidates = 2
+
+enn_d = 100
+enn_s = 4
+enn_jl_seed = 123
+enn_k = 25
+enn_fit_interval = 50
+enn_warmup_real_obs = 200
+
+# No negative-phase imputation (not supported/used in this mode).
+enn_se_threshold = 0.0

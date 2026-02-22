@@ -1,0 +1,18 @@
+[uhd]
+env_tag = "mnist"
+num_rounds = 400
+lr = 0.001
+perturb = "dim:5000"
+log_interval = 50
+accuracy_interval = 200
+
+# ENN paired-minus imputation prototype (k-sparse perturbations only)
+enn_minus_impute = true
+enn_d = 100
+enn_s = 4
+enn_jl_seed = 123
+enn_k = 25
+enn_fit_interval = 20
+enn_warmup_real_obs = 40
+enn_refresh_interval = 10
+enn_se_threshold = 0.5

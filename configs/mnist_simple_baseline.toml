@@ -1,0 +1,9 @@
+# Baseline: UHDSimple (1+1)-ES on full-train accuracy.
+# No ENN seed selection — sequential seed evaluation.
+
+env_tag = "mnist_fulltrain_acc"
+num_rounds = 1000
+optimizer = "simple"
+perturb = "dim:0.5"
+log_interval = 10
+accuracy_interval = 100

@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 import torch.nn as nn
 
@@ -15,3 +16,11 @@ class BehavioralEmbedder:
         with torch.inference_mode():
             outputs = module(self.probes.to(device))
         return outputs.reshape(-1)
+
+    def embed_policy(self, policy, x) -> np.ndarray:
+        policy.set_params(x)
+        if hasattr(policy, "reset_state"):
+            policy.reset_state()
+        probes_np = self.probes.numpy()
+        outputs = [policy(probe) for probe in probes_np]
+        return np.concatenate(outputs).reshape(-1)

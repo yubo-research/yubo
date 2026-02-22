@@ -1,0 +1,26 @@
+[uhd]
+env_tag = "mnist"
+num_rounds = 10000
+
+lr = 0.001
+perturb = "dim:0.5"
+log_interval = 50
+accuracy_interval = 200
+target_accuracy = 0.90
+
+enn_minus_impute = true
+enn_target = "mu_plus"
+enn_num_candidates = 2
+enn_select_interval = 1
+
+# Use gather-based module embedding for candidate selection (fast on MPS).
+enn_embedder = "gather"
+enn_gather_t = 64
+
+enn_d = 128
+enn_k = 25
+enn_fit_interval = 50
+enn_warmup_real_obs = 200
+
+# No negative-phase imputation (not supported/used in this mode).
+enn_se_threshold = 0.0

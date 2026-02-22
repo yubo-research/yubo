@@ -202,6 +202,10 @@ _gym_env_confs = {
         "HumanoidStandup-v5",
         policy_class=MLPPolicyFactory((32, 16)),
     ),
+    "stand-mlp2": _gym_conf(
+        "HumanoidStandup-v5",
+        policy_class=MLPPolicyFactory((256, 128)),
+    ),
     "bw": _gym_conf(
         "BipedalWalker-v3",
         gym_conf=GymConf(

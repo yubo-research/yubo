@@ -336,6 +336,8 @@ def _run_simple(parsed: UHDConfig) -> None:
         optimizer=parsed.optimizer,
         sigma=0.001,
         num_dim_target=parsed.num_dim_target,
+        problem_seed=parsed.problem_seed,
+        noise_seed_0=parsed.noise_seed_0,
         log_interval=parsed.log_interval,
         accuracy_interval=parsed.accuracy_interval,
         target_accuracy=parsed.target_accuracy,

@@ -1,0 +1,12 @@
+[uhd]
+env_tag = "bw-heur:fn"
+num_rounds = 100
+optimizer = "simple_be"
+log_interval = 10
+noise_seed_0 = 1
+
+be_num_probes = 10
+be_num_candidates = 30
+be_warmup = 20
+be_fit_interval = 10
+be_enn_k = 10

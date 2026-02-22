@@ -1,0 +1,8 @@
+[uhd]
+env_tag = "mnist"
+num_rounds = 1200
+
+lr = 0.001
+perturb = "dim:0.5"
+log_interval = 50
+accuracy_interval = 200
