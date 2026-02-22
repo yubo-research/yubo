@@ -2,6 +2,6 @@
 env_tag = "stand-mlp2:fn"
 num_rounds = 500
 optimizer = "simple"
-perturb = "dim:0.5"
+perturb = "dense"
 log_interval = 10
 noise_seed_0 = 0
