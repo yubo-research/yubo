@@ -1,4 +1,5 @@
 import copy
+import importlib
 from dataclasses import dataclass
 from typing import Any
 
@@ -11,7 +12,6 @@ from problems.linear_policy import LinearPolicy
 from problems.mlp_policy import MLPPolicyFactory
 from problems.noise_maker import NoiseMaker
 from problems.pure_function_policy import PureFunctionPolicy
-from problems.turbo_lunar_policy import TurboLunarPolicy
 
 
 def get_env_conf(tag, problem_seed=None, noise_level=None, noise_seed_0=None):
@@ -23,6 +23,18 @@ def get_env_conf(tag, problem_seed=None, noise_level=None, noise_seed_0=None):
         if opt == "fn":
             frozen_noise = True
             tag = ":".join(x[:-1])
+
+    if tag.startswith("dm:") or tag.startswith("dm_control/"):
+        env_name = _normalize_dm_control_name(tag)
+        ec = EnvConf(
+            env_name,
+            gym_conf=GymConf(max_steps=1000, num_frames_skip=1, transform_state=False),
+            policy_class=MLPPolicyFactory((32, 16)),
+        )
+        ec.problem_seed = problem_seed
+        ec.noise_seed_0 = noise_seed_0
+        ec.frozen_noise = frozen_noise
+        return ec
 
     if tag in _gym_env_confs:
         ec = copy.deepcopy(_gym_env_confs[tag])
@@ -41,7 +53,27 @@ def get_env_conf(tag, problem_seed=None, noise_level=None, noise_seed_0=None):
     return ec
 
 
+def _lazy_policy(module_name: str, class_name: str):
+    def _factory(env_conf):
+        cls = getattr(importlib.import_module(module_name), class_name)
+        return cls(env_conf)
+
+    return _factory
+
+
+def _normalize_dm_control_name(tag: str) -> str:
+    if tag.startswith("dm:"):
+        name = tag.split(":", 1)[1]
+    else:
+        name = tag.split("/", 1)[1]
+    if not name.endswith("-v0") and not name.endswith("-v1"):
+        name = f"{name}-v0"
+    return f"dm_control/{name}"
+
+
 def default_policy(env_conf):
+    if env_conf.gym_conf is not None:
+        env_conf.ensure_spaces()
     if env_conf.policy_class is not None:
         return env_conf.policy_class(env_conf)
     elif env_conf.gym_conf is not None:
@@ -84,6 +116,10 @@ class EnvConf:
             env = pure_functions.make(self.env_name, problem_seed=self.problem_seed, distort=True)
         elif self.env_name[:2] == "g:":
             env = pure_functions.make(self.env_name, problem_seed=self.problem_seed, distort=False)
+        elif self.env_name.startswith("dm_control/"):
+            from problems.dm_control_env import make as make_dm_control_env
+
+            env = make_dm_control_env(self.env_name, **kwargs)
         elif self.gym_conf is not None:
             env = gym.make(self.env_name, **(kwargs | self.kwargs))
         else:
@@ -92,6 +128,8 @@ class EnvConf:
         return env
 
     def make(self, **kwargs):
+        if self.gym_conf:
+            self.ensure_spaces()
         env = self._make(**kwargs)
         if self.noise_level is not None:
             assert self.env_name[:2] in ["f:", "g:"], (
@@ -104,9 +142,22 @@ class EnvConf:
     def __post_init__(self):
         if not self.kwargs:
             self.kwargs = {}
-        env = self._make()
         if self.gym_conf:
-            self.gym_conf.state_space = env.observation_space
+            # Delay gym.make to avoid eagerly instantiating all envs at import time.
+            self.gym_conf.state_space = None
+            self.action_space = None
+            return
+        env = self._make()
+        self.action_space = env.action_space
+        env.close()
+
+    def ensure_spaces(self):
+        if not self.gym_conf:
+            return
+        if self.gym_conf.state_space is not None and self.action_space is not None:
+            return
+        env = self._make()
+        self.gym_conf.state_space = env.observation_space
         self.action_space = env.action_space
         env.close()
 
@@ -213,6 +264,6 @@ _gym_env_confs = {
             transform_state=False,
         ),
         kwargs={"continuous": False},
-        policy_class=TurboLunarPolicy,
+        policy_class=_lazy_policy("problems.turbo_lunar_policy", "TurboLunarPolicy"),
     ),
 }

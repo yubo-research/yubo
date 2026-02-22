@@ -6,10 +6,11 @@ ipykernel==6.29.5
 
 gymnasium==1.2.0
 cma==4.0.0
-mujoco==3.3.3
+mujoco>=3.4,<4
 optuna==4.0.0
 gymnasium[box2d]
 gymnasium[mujoco]
+dm-control==1.0.36
 nds==0.4.3
 matplotlib==3.10.8
 pybind11==3.0.1

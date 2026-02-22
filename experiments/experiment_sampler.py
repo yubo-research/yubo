@@ -1,6 +1,7 @@
 import hashlib
 import os
 import time
+from contextlib import contextmanager
 from dataclasses import asdict, dataclass
 from typing import NamedTuple, Optional
 
@@ -39,6 +40,12 @@ class ExperimentConfig:
     max_proposal_seconds: Optional[float] = None
     max_total_seconds: Optional[float] = None
     b_trace: bool = True
+    video_enable: bool = False
+    video_num_episodes: int = 0
+    video_num_video_episodes: int = 0
+    video_episode_selection: str = "best"
+    video_seed_base: Optional[int] = None
+    video_prefix: str = "bo"
 
     def to_dir_name(self) -> str:
         config_str = (
@@ -46,6 +53,12 @@ class ExperimentConfig:
             f"--num_arms={self.num_arms}--num_rounds={self.num_rounds}"
             f"--num_reps={self.num_reps}--num_denoise={self.num_denoise}"
             f"--max_proposal_seconds={self.max_proposal_seconds}"
+            f"--video_enable={self.video_enable}"
+            f"--video_num_episodes={self.video_num_episodes}"
+            f"--video_num_video_episodes={self.video_num_video_episodes}"
+            f"--video_episode_selection={self.video_episode_selection}"
+            f"--video_seed_base={self.video_seed_base}"
+            f"--video_prefix={self.video_prefix}"
         )
         short_hash = hashlib.md5(config_str.encode()).hexdigest()[:8]
         return f"{self.exp_dir}/{short_hash}"
@@ -85,6 +98,12 @@ class ExperimentConfig:
             max_proposal_seconds=max_prop,
             max_total_seconds=max_total,
             b_trace=true_false(d.get("b_trace", True)),
+            video_enable=true_false(d.get("video_enable", False)),
+            video_num_episodes=int(d.get("video_num_episodes", 0)),
+            video_num_video_episodes=int(d.get("video_num_video_episodes", 0)),
+            video_episode_selection=str(d.get("video_episode_selection", "best")),
+            video_seed_base=None if d.get("video_seed_base") in (None, "None") else int(d["video_seed_base"]),
+            video_prefix=str(d.get("video_prefix", "bo")),
         )
 
 
@@ -99,10 +118,29 @@ class RunConfig:
     max_proposal_seconds: Optional[float]
     b_trace: bool
     trace_fn: str
+    video_enable: bool = False
+    video_num_episodes: int = 0
+    video_num_video_episodes: int = 0
+    video_episode_selection: str = "best"
+    video_seed_base: Optional[int] = None
+    video_prefix: str = "bo"
     deadline: Optional[float] = None
 
     def to_dict(self) -> dict:
         return asdict(self)
+
+
+@contextmanager
+def _temporary_cuda_default_device():
+    if not torch.cuda.is_available():
+        yield
+        return
+    prev_default_device = torch.get_default_device() if hasattr(torch, "get_default_device") else "cpu"
+    torch.set_default_device("cuda")
+    try:
+        yield
+    finally:
+        torch.set_default_device(prev_default_device)
 
 
 def sample_1(run_config: RunConfig):
@@ -116,6 +154,12 @@ def sample_1(run_config: RunConfig):
     num_denoise_passive = run_config.num_denoise_passive
     max_proposal_seconds = run_config.max_proposal_seconds
     b_trace = run_config.b_trace
+    video_enable = run_config.video_enable
+    video_num_episodes = run_config.video_num_episodes
+    video_num_video_episodes = run_config.video_num_video_episodes
+    video_episode_selection = run_config.video_episode_selection
+    video_seed_base = run_config.video_seed_base
+    video_prefix = run_config.video_prefix
     deadline = run_config.deadline
 
     if max_proposal_seconds is None:
@@ -123,53 +167,71 @@ def sample_1(run_config: RunConfig):
 
     seed_all(env_conf.problem_seed + 27)
 
-    if torch.cuda.is_available():
-        torch.set_default_device("cuda")
-    default_device = torch.empty(size=(1,)).device
-    print("DEFAULT_DEVICE:", default_device)
+    with _temporary_cuda_default_device():
+        default_device = torch.empty(size=(1,)).device
+        print("DEFAULT_DEVICE:", default_device)
 
-    policy = default_policy(env_conf)
+        policy = default_policy(env_conf)
 
-    collector_log = Collector()
-    opt = Optimizer(
-        collector_log,
-        env_conf=env_conf,
-        policy=policy,
-        num_arms=num_arms,
-        num_denoise_measurement=num_denoise,
-        num_denoise_passive=num_denoise_passive,
-    )
-
-    trace_records = []
-    collector_trace = Collector()
-    for i_iter, te in enumerate(
-        opt.collect_trace(
-            designer_name=opt_name,
-            max_iterations=num_rounds,
-            max_proposal_seconds=max_proposal_seconds,
-            deadline=deadline,
+        collector_log = Collector()
+        opt = Optimizer(
+            collector_log,
+            env_conf=env_conf,
+            policy=policy,
+            num_arms=num_arms,
+            num_denoise_measurement=num_denoise,
+            num_denoise_passive=num_denoise_passive,
         )
-    ):
-        record = TraceRecord(
-            i_iter=i_iter,
-            dt_prop=te.dt_prop,
-            dt_eval=te.dt_eval,
-            rreturn=te.rreturn,
-            env_name=env_conf.env_name,
-            opt_name=opt_name,
-        )
-        trace_records.append(record)
-        if b_trace:
-            collector_trace(
-                f"TRACE: name = {env_conf.env_name} opt_name = {opt_name} i_iter = {i_iter} dt_prop = {te.dt_prop:.3e} dt_eval = {te.dt_eval:.3e} return = {te.rreturn:.3e}"
+
+        trace_records = []
+        collector_trace = Collector()
+        for i_iter, te in enumerate(
+            opt.collect_trace(
+                designer_name=opt_name,
+                max_iterations=num_rounds,
+                max_proposal_seconds=max_proposal_seconds,
+                deadline=deadline,
             )
-    collector_trace("DONE")
+        ):
+            record = TraceRecord(
+                i_iter=i_iter,
+                dt_prop=te.dt_prop,
+                dt_eval=te.dt_eval,
+                rreturn=te.rreturn,
+                env_name=env_conf.env_name,
+                opt_name=opt_name,
+            )
+            trace_records.append(record)
+            if b_trace:
+                collector_trace(
+                    f"TRACE: env={env_conf.env_name} opt_name={opt_name} iter={i_iter} "
+                    f"proposal_dt={te.dt_prop:.3e}s eval_dt={te.dt_eval:.3e}s return={te.rreturn:.3e}"
+                )
+        collector_trace("DONE")
 
-    return _SampleResult(
-        collector_log=collector_log,
-        collector_trace=collector_trace,
-        trace_records=trace_records,
-    )
+        if video_enable and video_num_video_episodes > 0 and opt.best_policy is not None:
+            from pathlib import Path
+
+            from experiments.video_render import render_policy_videos
+
+            video_dir = Path(run_config.trace_fn).parent / "videos"
+            seed_base = int(video_seed_base) if video_seed_base is not None else int(env_conf.problem_seed)
+            render_policy_videos(
+                env_conf,
+                opt.best_policy.clone(),
+                video_dir=video_dir,
+                video_prefix=str(video_prefix),
+                num_episodes=int(video_num_episodes),
+                num_video_episodes=int(video_num_video_episodes),
+                episode_selection=str(video_episode_selection),
+                seed_base=int(seed_base),
+            )
+
+        return _SampleResult(
+            collector_log=collector_log,
+            collector_trace=collector_trace,
+            trace_records=trace_records,
+        )
 
 
 def post_process_stdout(
@@ -259,6 +321,12 @@ def mk_replicates(config: ExperimentConfig) -> list[RunConfig]:
                     num_denoise_passive=config.num_denoise_passive,
                     max_proposal_seconds=config.max_proposal_seconds,
                     b_trace=config.b_trace,
+                    video_enable=config.video_enable,
+                    video_num_episodes=config.video_num_episodes,
+                    video_num_video_episodes=config.video_num_video_episodes,
+                    video_episode_selection=config.video_episode_selection,
+                    video_seed_base=config.video_seed_base,
+                    video_prefix=config.video_prefix,
                 )
             )
     return run_configs
