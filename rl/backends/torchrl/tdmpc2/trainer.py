@@ -1,4 +1,7 @@
-"""TorchRL TD-MPC2 trainer."""
+"""TorchRL TD-MPC2 trainer.
+
+TODO(tdmpc2): align this implementation with full TD-MPC2 training targets.
+"""
 
 from __future__ import annotations
 
@@ -226,6 +229,7 @@ def _train_step(
     with torch.no_grad():
         z_next = model.encode(nxt)
 
+    # TODO(tdmpc2): switch to multi-step latent/reward consistency with sequence replay.
     pred_z_next = model.next_latent(z, act)
     pred_rew = model.reward_pred(z, act)
     model_loss = torch.mean((pred_z_next - z_next) ** 2) + torch.mean((pred_rew - rew) ** 2)
@@ -243,6 +247,7 @@ def _train_step(
     torch.nn.utils.clip_grad_norm_(model.value.parameters(), 10.0)
     value_opt.step()
 
+    # TODO(tdmpc2): replace behavior-cloning actor loss with value-max objective from imagined rollouts.
     z_actor = model.encode(obs).detach()
     a_actor = model.actor_action(z_actor)
     actor_loss = torch.mean((a_actor - act) ** 2)
