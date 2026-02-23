@@ -29,6 +29,7 @@ _OPTIONAL_TOML_KEYS = (
     "be_warmup",
     "be_fit_interval",
     "be_enn_k",
+    "be_sigma_range",
     # ENN minus imputation (prototype)
     "enn_minus_impute",
     "enn_d",
@@ -44,6 +45,7 @@ _OPTIONAL_TOML_KEYS = (
     "enn_select_interval",
     "enn_embedder",
     "enn_gather_t",
+    "batch_size",
 )
 _ALL_TOML_KEYS = set(_REQUIRED_TOML_KEYS + _OPTIONAL_TOML_KEYS)
 
@@ -140,6 +142,8 @@ class UHDConfig:
     be_warmup: int
     be_fit_interval: int
     be_enn_k: int
+    be_sigma_range: tuple[float, float] | None
+    batch_size: int
     enn_minus_impute: bool
     enn_d: int
     enn_s: int
@@ -268,6 +272,9 @@ def _parse_cfg(cfg: dict[str, Any]) -> UHDConfig:
     be_warmup = int(cfg.get("be_warmup", 20))
     be_fit_interval = int(cfg.get("be_fit_interval", 10))
     be_enn_k = int(cfg.get("be_enn_k", 25))
+    be_sigma_range_raw = cfg.get("be_sigma_range", None)
+    be_sigma_range = tuple(float(v) for v in be_sigma_range_raw) if be_sigma_range_raw is not None else None
+    batch_size = int(cfg.get("batch_size", 4096))
     er = _parse_early_reject_fields(cfg)
     enn = _parse_enn_fields(cfg)
     ndt, nmt = _parse_perturb(perturb)
@@ -294,6 +301,8 @@ def _parse_cfg(cfg: dict[str, Any]) -> UHDConfig:
         be_warmup=be_warmup,
         be_fit_interval=be_fit_interval,
         be_enn_k=be_enn_k,
+        be_sigma_range=be_sigma_range,
+        batch_size=batch_size,
         enn_minus_impute=enn.minus_impute,
         enn_d=enn.d,
         enn_s=enn.s,
@@ -321,7 +330,7 @@ def _local(config_toml: str) -> None:
         raise click.ClickException(str(e)) from e
 
     parsed = _parse_cfg(cfg)
-    if parsed.optimizer in {"simple", "simple_be"}:
+    if parsed.optimizer in {"simple", "simple_be", "mezo_be"}:
         _run_simple(parsed)
     else:
         _run_mezo(parsed)
@@ -333,11 +342,12 @@ def _run_simple(parsed: UHDConfig) -> None:
     run_simple_loop(
         parsed.env_tag,
         parsed.num_rounds,
-        optimizer=parsed.optimizer,
-        sigma=0.001,
+        0.001,
+        parsed.optimizer,
         num_dim_target=parsed.num_dim_target,
         problem_seed=parsed.problem_seed,
         noise_seed_0=parsed.noise_seed_0,
+        batch_size=parsed.batch_size,
         log_interval=parsed.log_interval,
         accuracy_interval=parsed.accuracy_interval,
         target_accuracy=parsed.target_accuracy,
@@ -346,6 +356,7 @@ def _run_simple(parsed: UHDConfig) -> None:
         be_warmup=parsed.be_warmup,
         be_fit_interval=parsed.be_fit_interval,
         be_enn_k=parsed.be_enn_k,
+        be_sigma_range=parsed.be_sigma_range,
     )
 
 
@@ -357,6 +368,7 @@ def _run_mezo(parsed: UHDConfig) -> None:
         parsed.num_rounds,
         problem_seed=parsed.problem_seed,
         noise_seed_0=parsed.noise_seed_0,
+        batch_size=parsed.batch_size,
         lr=parsed.lr,
         sigma=0.001,
         num_dim_target=parsed.num_dim_target,

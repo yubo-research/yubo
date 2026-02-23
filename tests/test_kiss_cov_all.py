@@ -243,6 +243,8 @@ def test_cov_exp_uhd_UHDConfig_local_modal_cmd(monkeypatch, tmp_path):
         be_warmup=20,
         be_fit_interval=10,
         be_enn_k=25,
+        be_sigma_range=None,
+        batch_size=4096,
         enn_minus_impute=False,
         enn_d=100,
         enn_s=4,

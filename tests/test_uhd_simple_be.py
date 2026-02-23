@@ -6,7 +6,7 @@ from optimizer.gaussian_perturbator import GaussianPerturbator
 from optimizer.uhd_simple_be import UHDSimpleBE, _SimpleENN, _SimplePosterior
 
 
-def _make_uhd_be(sigma_0=1.0, warmup=5, num_candidates=3, fit_interval=1):
+def _make_uhd_be(sigma_0=1.0, warmup=5, num_candidates=3, fit_interval=1, sigma_range=None):
     module = nn.Linear(3, 2, bias=True)
     dim = sum(p.numel() for p in module.parameters())
     gp = GaussianPerturbator(module)
@@ -22,6 +22,7 @@ def _make_uhd_be(sigma_0=1.0, warmup=5, num_candidates=3, fit_interval=1):
         num_candidates=num_candidates,
         warmup=warmup,
         fit_interval=fit_interval,
+        sigma_range=sigma_range,
     )
     return module, uhd
 
@@ -105,6 +106,34 @@ def test_after_warmup_seeds_advance_by_num_candidates():
 
 def test_runs_many_steps():
     module, uhd = _make_uhd_be(warmup=5, num_candidates=3, fit_interval=2)
+    for _ in range(20):
+        uhd.ask()
+        mu = float(torch.randn(1).item())
+        uhd.tell(mu, 0.0)
+    assert torch.isfinite(module.weight.data).all()
+
+
+def test_sample_sigmas_log_uniform():
+    import numpy as np
+
+    _, uhd = _make_uhd_be(sigma_range=(1e-5, 1e-1), num_candidates=50)
+    sigmas = uhd._sample_sigmas(base_seed=42, n=50)
+    assert sigmas.shape == (50,)
+    assert np.all(sigmas >= 1e-5)
+    assert np.all(sigmas <= 1e-1)
+    assert not np.allclose(sigmas, sigmas[0])
+
+
+def test_sample_sigmas_none_uses_adapter():
+    import numpy as np
+
+    _, uhd = _make_uhd_be(sigma_0=0.5, num_candidates=5)
+    sigmas = uhd._sample_sigmas(base_seed=0, n=5)
+    assert np.allclose(sigmas, 0.5)
+
+
+def test_runs_many_steps_with_sigma_range():
+    module, uhd = _make_uhd_be(warmup=5, num_candidates=3, fit_interval=2, sigma_range=(1e-5, 1e-1))
     for _ in range(20):
         uhd.ask()
         mu = float(torch.randn(1).item())

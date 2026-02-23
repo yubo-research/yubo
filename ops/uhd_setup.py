@@ -144,6 +144,7 @@ def make_loop(
     *,
     problem_seed: int | None = None,
     noise_seed_0: int | None = None,
+    batch_size: int = 4096,
     log_interval: int = 1,
     accuracy_interval: int = 1000,
     target_accuracy: float | None = None,
@@ -162,6 +163,9 @@ def make_loop(
     env_conf = get_env_conf(env_tag, problem_seed=problem_seed, noise_seed_0=noise_seed_0)
     noise_seed_0 = env_conf.noise_seed_0 or 0
 
+    if env_conf.problem_seed is not None:
+        seed_all(int(env_conf.problem_seed))
+
     env = env_conf.make()
 
     if hasattr(env, "torch_env"):
@@ -173,7 +177,6 @@ def make_loop(
         # MNIST-specific fast path: preload full train tensors to device and sample batches by seed.
         # This preserves antithetic pairing (same eval_seed → same sampled batch).
         train_images, train_labels = _preload_mnist_train_to_device(device)
-        batch_size = int(getattr(torch_env, "_batch_size", 4096))
         use_full_train_loss = str(env_tag) == "mnist_fulltrain"
         use_full_train_acc = str(env_tag) == "mnist_fulltrain_acc"
         full_train_chunk = 8192
@@ -324,16 +327,34 @@ def _make_simple_optimizer(
     be_warmup: int,
     be_fit_interval: int,
     be_enn_k: int,
+    be_sigma_range: tuple[float, float] | None = None,
 ):
-    if optimizer == "simple_be":
+    if optimizer in {"simple_be", "mezo_be"}:
         from embedding.behavioral_embedder import BehavioralEmbedder
-        from optimizer.uhd_simple_be import UHDSimpleBE
 
         if embed_bounds is None:
             embed_bounds = _mnist_embed_bounds()
         if embed_module is None:
             embed_module = module
         embedder = BehavioralEmbedder(embed_bounds, num_probes=be_num_probes, seed=0)
+
+        if optimizer == "mezo_be":
+            from optimizer.uhd_simple_be import UHDMeZOBE
+
+            return UHDMeZOBE(
+                perturbator,
+                dim,
+                embed_module,
+                embedder,
+                sigma=sigma,
+                num_candidates=be_num_candidates,
+                warmup=be_warmup,
+                fit_interval=be_fit_interval,
+                enn_k=be_enn_k,
+            )
+
+        from optimizer.uhd_simple_be import UHDSimpleBE
+
         return UHDSimpleBE(
             perturbator,
             sigma_0=sigma,
@@ -344,10 +365,11 @@ def _make_simple_optimizer(
             warmup=be_warmup,
             fit_interval=be_fit_interval,
             enn_k=be_enn_k,
+            sigma_range=be_sigma_range,
         )
     from optimizer.uhd_simple import UHDSimple
 
-    return UHDSimple(perturbator, sigma_0=sigma, dim=dim)
+    return UHDSimple(perturbator, sigma_0=sigma, dim=dim, sigma_range=be_sigma_range)
 
 
 def _mnist_embed_bounds() -> torch.Tensor:
@@ -369,12 +391,13 @@ def _gym_embed_bounds(num_state: int) -> torch.Tensor:
 def run_simple_loop(
     env_tag: str,
     num_rounds: int,
-    *,
-    optimizer: str = "simple",
     sigma: float = 0.001,
+    optimizer: str = "simple",
+    *,
     num_dim_target: float | None = None,
     problem_seed: int | None = None,
     noise_seed_0: int | None = None,
+    batch_size: int = 4096,
     log_interval: int = 1,
     accuracy_interval: int = 1000,
     target_accuracy: float | None = None,
@@ -383,10 +406,14 @@ def run_simple_loop(
     be_warmup: int = 20,
     be_fit_interval: int = 10,
     be_enn_k: int = 25,
+    be_sigma_range: tuple[float, float] | None = None,
 ) -> None:
+    from common.seed_all import seed_all
     from problems.env_conf import get_env_conf
 
     env_conf = get_env_conf(env_tag, problem_seed=problem_seed, noise_seed_0=noise_seed_0)
+    if env_conf.problem_seed is not None:
+        seed_all(int(env_conf.problem_seed))
     env = env_conf.make()
     if hasattr(env, "torch_env"):
         _run_simple_torch(
@@ -397,6 +424,7 @@ def run_simple_loop(
             optimizer=optimizer,
             sigma=sigma,
             num_dim_target=num_dim_target,
+            batch_size=batch_size,
             log_interval=log_interval,
             accuracy_interval=accuracy_interval,
             target_accuracy=target_accuracy,
@@ -405,6 +433,7 @@ def run_simple_loop(
             be_warmup=be_warmup,
             be_fit_interval=be_fit_interval,
             be_enn_k=be_enn_k,
+            be_sigma_range=be_sigma_range,
         )
     else:
         _run_simple_gym(
@@ -421,6 +450,7 @@ def run_simple_loop(
             be_warmup=be_warmup,
             be_fit_interval=be_fit_interval,
             be_enn_k=be_enn_k,
+            be_sigma_range=be_sigma_range,
         )
 
 
@@ -433,6 +463,7 @@ def _run_simple_torch(
     optimizer,
     sigma,
     num_dim_target,
+    batch_size,
     log_interval,
     accuracy_interval,
     target_accuracy,
@@ -441,6 +472,7 @@ def _run_simple_torch(
     be_warmup,
     be_fit_interval,
     be_enn_k,
+    be_sigma_range,
 ) -> None:
     device = _get_device()
     torch_env = env.torch_env()
@@ -461,11 +493,26 @@ def _run_simple_torch(
         be_warmup=be_warmup,
         be_fit_interval=be_fit_interval,
         be_enn_k=be_enn_k,
+        be_sigma_range=be_sigma_range,
     )
     accuracy_fn = _make_accuracy_fn(module, device)
 
-    def evaluate_fn():
-        return _eval_full_train_acc(module, train_images, train_labels, 8192)
+    if str(env_tag) == "mnist_fulltrain_acc":
+
+        def evaluate_fn():
+            return _eval_full_train_acc(module, train_images, train_labels, 8192)
+    else:
+
+        def evaluate_fn():
+            g = torch.Generator()
+            g.manual_seed(int(uhd.eval_seed))
+            idx = torch.randint(train_images.shape[0], (batch_size,), generator=g).to(device)
+            with torch.inference_mode():
+                logits = module(train_images.index_select(0, idx))
+                per_sample = F.cross_entropy(logits, train_labels.index_select(0, idx), reduction="none")
+            mu = -float(per_sample.mean())
+            se = float(per_sample.std() / math.sqrt(len(per_sample)))
+            return mu, se
 
     print(f"UHD-Simple: num_params = {dim}, optimizer = {optimizer}")
     _run_simple_iterations(
@@ -494,6 +541,7 @@ def _run_simple_gym(
     be_warmup,
     be_fit_interval,
     be_enn_k,
+    be_sigma_range,
 ) -> None:
     from common.seed_all import seed_all
 
@@ -545,6 +593,7 @@ def _run_simple_gym(
         be_warmup=be_warmup,
         be_fit_interval=be_fit_interval,
         be_enn_k=be_enn_k,
+        be_sigma_range=be_sigma_range,
     )
 
     frozen = bool(getattr(env_conf, "frozen_noise", False))
