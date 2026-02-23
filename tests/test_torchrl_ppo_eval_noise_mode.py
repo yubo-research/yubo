@@ -9,8 +9,8 @@ import torch
 
 def test_ppo_eval_noise_mode_natural_advances_eval_and_heldout(monkeypatch, tmp_path):
     from optimizer import opt_trajectories
-    from rl.algos.backends.torchrl.ppo import core as ppo_core
-    from rl.algos.backends.torchrl.ppo import deps as op_deps
+    from rl.backends.torchrl.ppo import core as ppo_core
+    from rl.backends.torchrl.ppo import deps as op_deps
 
     eval_seeds: list[int] = []
     heldout_noise_indices: list[int] = []
@@ -87,8 +87,8 @@ def test_ppo_eval_noise_mode_natural_advances_eval_and_heldout(monkeypatch, tmp_
 
 def test_ppo_eval_noise_mode_frozen_uses_fixed_seeds(monkeypatch, tmp_path):
     from optimizer import opt_trajectories
-    from rl.algos.backends.torchrl.ppo import core as ppo_core
-    from rl.algos.backends.torchrl.ppo import deps as op_deps
+    from rl.backends.torchrl.ppo import core as ppo_core
+    from rl.backends.torchrl.ppo import deps as op_deps
 
     eval_seeds: list[int] = []
     heldout_noise_indices: list[int] = []
@@ -164,7 +164,7 @@ def test_ppo_eval_noise_mode_frozen_uses_fixed_seeds(monkeypatch, tmp_path):
 
 
 def test_ppo_eval_noise_mode_invalid_rejected_before_env_build(monkeypatch):
-    from rl.algos.backends.torchrl.ppo import core as ppo_core
+    from rl.backends.torchrl.ppo import core as ppo_core
 
     monkeypatch.setattr(
         ppo_core,

@@ -674,6 +674,136 @@ def test_kiss_cov_metric_and_multi_turbo_units():
     assert load_designer._state.num_told_global == 2
 
 
+def test_kiss_cov_trust_region_internal_units():
+    from enn.turbo.config.candidate_rv import CandidateRV
+
+    from optimizer.box_trust_region import FixedLengthTurboTrustRegion
+    from optimizer.metric_trust_region import ENNMetricShapedTrustRegion, MetricShapedTrustRegion
+    from optimizer.pc_rotation import PCRotationResult
+    from optimizer.trust_region_config import MetricShapedTRConfig
+    from optimizer.trust_region_utils import (
+        _AxisAlignedStepSampler,
+        _LengthPolicy,
+        _MetricGeometryModel,
+        _OptionCLengthPolicy,
+        _TrueEllipsoidStepSampler,
+    )
+
+    base_policy = _LengthPolicy()
+    assert base_policy.pending_rho is None
+    assert (
+        base_policy.apply_after_super_update(
+            current_length=1.23,
+            base_length=1.0,
+            fixed_length=None,
+            length_max=2.0,
+        )
+        == 1.23
+    )
+
+    option_c = _OptionCLengthPolicy(rho_bad=0.25, rho_good=0.75, gamma_down=0.5, gamma_up=2.0)
+    option_c.set_acceptance_ratio(pred=1.0, act=-1.0, boundary_hit=False)
+    assert option_c.pending_rho is not None
+    shrunk = option_c.apply_after_super_update(
+        current_length=1.0,
+        base_length=1.0,
+        fixed_length=None,
+        length_max=4.0,
+    )
+    assert shrunk < 1.0
+    assert option_c.pending_rho is None
+
+    cfg_box = MetricShapedTRConfig(geometry="box", fixed_length=1.6)
+    tr_box = cfg_box.build(num_dim=3, rng=np.random.default_rng(100))
+    assert isinstance(tr_box, FixedLengthTurboTrustRegion)
+    tr_box.update(np.array([0.0]), np.array([0.0]))
+    assert np.isclose(float(tr_box.length), 1.6)
+    tr_box.restart(rng=np.random.default_rng(101))
+    assert np.isclose(float(tr_box.length), 1.6)
+
+    cfg_metric = MetricShapedTRConfig(geometry="enn_metric_shaped", metric_sampler="full")
+    tr_metric = cfg_metric.build(num_dim=3, rng=np.random.default_rng(102))
+    assert isinstance(tr_metric, MetricShapedTrustRegion)
+    assert isinstance(tr_metric, ENNMetricShapedTrustRegion)
+    tr_metric.set_gradient_geometry(
+        delta_x=np.eye(3, dtype=float),
+        delta_y=np.array([1.0, 0.5, 0.25], dtype=float),
+        weights=np.ones((3,), dtype=float),
+    )
+
+    model = _MetricGeometryModel(
+        num_dim=3,
+        metric_sampler="full",
+        metric_rank=None,
+        pc_rotation_mode="full",
+        pc_rank=None,
+    )
+    delta_x = np.array(
+        [
+            [1.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0],
+            [0.0, 0.0, 1.0],
+        ],
+        dtype=float,
+    )
+    weights = np.array([1.0, 2.0, 1.0], dtype=float)
+    model.set_gradient_geometry(
+        delta_x=delta_x,
+        delta_y=np.array([1.0, 0.5, 0.2], dtype=float),
+        weights=weights,
+    )
+    centered = delta_x - np.mean(delta_x, axis=0, keepdims=True)
+    model.update_from_cov(
+        centered=centered,
+        weights=np.array([0.25, 0.5, 0.25], dtype=float),
+        cov=np.eye(3, dtype=float),
+    )
+    model.update_from_pc_rotation(
+        PCRotationResult(
+            center=np.zeros((3,), dtype=float),
+            basis=np.eye(3, dtype=float),
+            singular_values=np.array([2.0, 1.0, 0.5], dtype=float),
+            has_rotation=True,
+        )
+    )
+    cov = model.covariance_matrix(jitter=1e-6)
+    assert cov.shape == (3, 3)
+    step = model.build_step(np.zeros((4, 3), dtype=float), np.random.default_rng(103))
+    assert step.shape == (4, 3)
+
+    axis_sampler = _AxisAlignedStepSampler(default_candidate_rv=CandidateRV.UNIFORM)
+    axis_candidates = axis_sampler.generate(
+        x_center=np.full((3,), 0.5, dtype=float),
+        length=0.5,
+        num_dim=3,
+        num_candidates=8,
+        rng=np.random.default_rng(104),
+        candidate_rv=CandidateRV.UNIFORM,
+        sobol_engine=None,
+        num_pert=2,
+        build_step=lambda z, _rng: z,
+    )
+    assert axis_candidates.shape == (8, 3)
+
+    ellipsoid_sampler = _TrueEllipsoidStepSampler(
+        default_candidate_rv=CandidateRV.SOBOL,
+        p_raasp=0.4,
+        radial_mode="boundary",
+    )
+    ellipsoid_candidates = ellipsoid_sampler.generate(
+        x_center=np.full((3,), 0.5, dtype=float),
+        num_dim=3,
+        num_candidates=8,
+        length=0.25,
+        rng=np.random.default_rng(105),
+        candidate_rv=CandidateRV.UNIFORM,
+        covariance_matrix=np.eye(3, dtype=float),
+    )
+    assert ellipsoid_candidates.shape == (8, 3)
+    assert np.all(ellipsoid_candidates >= -1e-10)
+    assert np.all(ellipsoid_candidates <= 1.0 + 1e-10)
+
+
 def test_kiss_cov_env_conf_atari_dm():
     """Cover env_conf_atari_dm lazy-load helpers."""
     from problems.env_conf_atari_dm import (

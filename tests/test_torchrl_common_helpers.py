@@ -3,7 +3,7 @@ from types import SimpleNamespace
 import numpy as np
 import torch
 
-from rl.algos.backends.torchrl.common import common as torchrl_common
+from rl.backends.torchrl.common import common as torchrl_common
 
 
 def test_temporary_distribution_validate_args_restores_after_exception():

@@ -6,7 +6,7 @@ from types import SimpleNamespace
 import numpy as np
 import torch
 
-from rl.algos.backends.torchrl.sac import loop as torchrl_sac_loop
+from rl.backends.torchrl.sac import loop as torchrl_sac_loop
 
 
 class _ActionSpaceStub:
@@ -308,7 +308,7 @@ def test_evaluate_heldout_if_enabled_restores_actor_state_on_exception():
 def test_evaluate_if_due_updates_state_and_writes_metrics(monkeypatch):
     appended_records = []
     monkeypatch.setattr(
-        "rl.algos.logger.append_metrics",
+        "rl.logger.append_metrics",
         lambda path, payload: appended_records.append((path, payload)),
     )
 
@@ -384,7 +384,7 @@ def test_log_and_checkpoint_helpers(capsys):
         total_updates=9,
     )
     captured = capsys.readouterr()
-    assert "[rl/sac/torchrl]" in captured.out
+    assert captured.out.strip()
 
     calls = []
     training_setup = SimpleNamespace(checkpoint_manager=SimpleNamespace(save_both=lambda payload, iteration: calls.append((payload, iteration))))

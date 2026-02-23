@@ -21,7 +21,7 @@ def test_no_direct_select_device_usage_outside_runtime_layer():
             continue
         tree = ast.parse(path.read_text(), filename=str(path))
         for node in ast.walk(tree):
-            if isinstance(node, ast.ImportFrom) and node.module == "rl.algos.backends.torchrl.common.common":
+            if isinstance(node, ast.ImportFrom) and node.module == "rl.backends.torchrl.common.common":
                 if any(alias.name == "select_device" for alias in node.names):
                     violations.append(f"{path.relative_to(_TORCHRL_BACKEND_DIR)}: imports select_device from torchrl.common.common")
             if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):

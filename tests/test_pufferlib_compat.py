@@ -2,7 +2,7 @@ import sys
 
 import gymnasium as gym
 
-from rl.algos.pufferlib_compat import _install_gym_alias
+from rl.pufferlib_compat import _install_gym_alias
 
 
 def test_install_gym_alias_registers_gym_module():

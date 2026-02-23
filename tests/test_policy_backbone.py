@@ -4,8 +4,8 @@ import gymnasium as gym
 import numpy as np
 import torch
 
-from rl.algos.backends.torchrl.common import env_contract as torchrl_env_contract
 from rl.backbone import BackboneSpec, HeadSpec, build_backbone, build_mlp_head
+from rl.backends.torchrl.common import env_contract as torchrl_env_contract
 from rl.policy_backbone import (
     ActorBackbonePolicy,
     ActorBackbonePolicyFactory,

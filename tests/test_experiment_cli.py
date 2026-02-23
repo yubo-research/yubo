@@ -74,6 +74,8 @@ def test_load_experiment_config_toml_experiment_table(tmp_path):
         num_reps = 5
         b_trace = false
         max_total_seconds = 30.5
+        runtime_device = "cpu"
+        local_workers = 4
         """,
     )
     cfg = load_experiment_config(config_toml_path=str(toml_path))
@@ -85,6 +87,8 @@ def test_load_experiment_config_toml_experiment_table(tmp_path):
     assert cfg.num_reps == 5
     assert cfg.b_trace is False
     assert cfg.max_total_seconds == 30.5
+    assert cfg.runtime_device == "cpu"
+    assert cfg.local_workers == 4
 
 
 def test_load_experiment_config_toml_root_and_hyphen_keys(tmp_path):

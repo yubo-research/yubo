@@ -33,5 +33,5 @@ bash admin/setup-rl.sh --env-name my-env
 ## Quick verification
 
 ```bash
-micromamba run -n yubo-rl python -c "from rl.algos.pufferlib_compat import import_pufferlib_modules; import_pufferlib_modules(); print('pufferlib ok')"
+micromamba run -n yubo-rl python -c "from rl.pufferlib_compat import import_pufferlib_modules; import_pufferlib_modules(); print('pufferlib ok')"
 ```

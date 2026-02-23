@@ -1,3 +1,12 @@
+"""Trust-region geometry utilities.
+
+References:
+- TuRBO: Eriksson et al., NeurIPS 2019 (Scalable Global Optimization via Local Bayesian Optimization),
+  https://arxiv.org/abs/1910.01739
+- Classical trust-region ratio update: Conn, Gould, Toint, *Trust Region Methods* (SIAM, 2000),
+  https://doi.org/10.1137/1.9780898719857
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -246,6 +255,11 @@ class _TrueEllipsoidGeometryModel(_MetricGeometryModel):
             self._apply_shape_update(np.asarray(delta_x, dtype=float), np.asarray(weights, dtype=float))
 
     def _apply_shape_update(self, delta_x: np.ndarray, weights: np.ndarray) -> None:
+        """Apply repository-specific shape-update heuristics for option_a/option_b.
+
+        Note: this update controller is an in-repo heuristic layer, not a direct
+        implementation of a single published algorithm.
+        """
         dx = np.asarray(delta_x, dtype=float)
         if dx.ndim != 2 or dx.shape[0] == 0:
             return
@@ -294,6 +308,11 @@ class _AxisAlignedStepSampler:
         num_pert: int,
         build_step: Callable[[np.ndarray, Any], np.ndarray],
     ) -> np.ndarray:
+        """Generate TuRBO-style RAASP candidates, then apply geometry transform.
+
+        Candidate perturbations are produced by ENN's `generate_raasp_candidates`
+        helper (TuRBO lineage), then mapped through the current geometry model.
+        """
         z_center = np.zeros(num_dim, dtype=float)
         lb = -0.5 * np.ones(num_dim, dtype=float)
         ub = 0.5 * np.ones(num_dim, dtype=float)
@@ -327,6 +346,11 @@ class _TrueEllipsoidStepSampler:
         rng: Any,
         candidate_rv: CandidateRV,
     ) -> np.ndarray:
+        """Sample directions in whitened space, then draw a radius.
+
+        `ball_uniform` uses rho = u^(1/d), which yields uniform volume density
+        inside a d-ball. `boundary` is an in-repo boundary-focused heuristic.
+        """
         prob = float(self.p_raasp)
         mask = rng.random((num_candidates, num_dim)) < prob
         empty = np.where(np.sum(mask, axis=1) == 0)[0]
@@ -419,6 +443,12 @@ class _LengthPolicy:
 
 @dataclass
 class _OptionCLengthPolicy(_LengthPolicy):
+    """Classical trust-region acceptance-ratio controller.
+
+    Uses rho = actual / predicted with thresholded shrink/expand multipliers,
+    following standard trust-region ratio logic.
+    """
+
     rho_bad: float
     rho_good: float
     gamma_down: float

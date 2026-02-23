@@ -19,6 +19,12 @@ from optimizer.trust_region_utils import (
 
 @dataclass
 class ENNTrueEllipsoidalTrustRegion(ENNMetricShapedTrustRegion):
+    """True-ellipsoid TR variant on top of TuRBO state updates.
+
+    TuRBO controls base trust-region bookkeeping. For `update_option=option_c`,
+    this class also applies a classical acceptance-ratio (`rho`) controller.
+    """
+
     _prev_incumbent_value: float | None = field(default=None, init=False, repr=False)
     _prev_incumbent_x: np.ndarray | None = field(default=None, init=False, repr=False)
 
@@ -84,6 +90,11 @@ class ENNTrueEllipsoidalTrustRegion(ENNMetricShapedTrustRegion):
         y_value: float,
         predict_delta,
     ) -> None:
+        """Compute predicted/actual improvement and record trust-region ratio state.
+
+        This prepares `rho = actual/predicted` plus a boundary-hit flag for
+        the option_c length controller.
+        """
         curr_x = np.asarray(x_center, dtype=float).reshape(-1)
         prev_pair = self.record_incumbent_transition(x_center=curr_x, y_value=float(y_value))
         if prev_pair is None:

@@ -1,4 +1,4 @@
-from rl.algos.backends.torchrl.sac import api as torchrl_sac
+from rl.backends.torchrl.sac import api as torchrl_sac
 
 
 def test_sac_config_from_dict_converts_hidden_sizes():
@@ -18,7 +18,7 @@ def test_sac_register_delegates_to_registry(monkeypatch):
     def fake_register_algo(name, config_cls, train_fn):
         calls.append((name, config_cls, train_fn))
 
-    monkeypatch.setattr("rl.algos.registry.register_algo", fake_register_algo)
+    monkeypatch.setattr("rl.registry.register_algo", fake_register_algo)
     torchrl_sac.register()
 
     assert len(calls) == 1

@@ -2,7 +2,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from rl.algos.registry import (
+from rl.registry import (
     AlgoSpec,
     available_algos,
     get_algo,
@@ -44,10 +44,10 @@ def test_get_unknown_algo_raises():
 
 
 def test_register_algo_lazy_registers_on_first_get(monkeypatch):
-    import rl.algos.registry as registry
+    import rl.registry as registry
 
     lazy_name = "_lazy_reg_test"
-    lazy_module = "rl.algos._fake_lazy_for_test"
+    lazy_module = "rl._fake_lazy_for_test"
     called = {"register": False}
 
     class _LazyModule:
@@ -69,9 +69,9 @@ def test_register_algo_lazy_registers_on_first_get(monkeypatch):
 
 def test_register_algo_lazy_duplicate_raises():
     name = "_lazy_dup_test"
-    register_algo_lazy(name, "rl.algos._fake_lazy_dup_1")
+    register_algo_lazy(name, "rl._fake_lazy_dup_1")
     with pytest.raises(ValueError, match="already registered"):
-        register_algo_lazy(name, "rl.algos._fake_lazy_dup_2")
+        register_algo_lazy(name, "rl._fake_lazy_dup_2")
 
 
 def test_register_algo_backend_and_resolve_get_algo():

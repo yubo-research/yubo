@@ -26,6 +26,13 @@ def _apply_fixed_length_to_tr(tr: TurboTrustRegion) -> None:
 
 @dataclass
 class MetricShapedTrustRegion(TurboTrustRegion):
+    """TuRBO-derived trust-region state with metric-shaped candidate geometry.
+
+    Base length/counter updates come from `TurboTrustRegion` (TuRBO: Eriksson et al.,
+    NeurIPS 2019, https://arxiv.org/abs/1910.01739). Geometry shaping is handled
+    by this repository's extensions.
+    """
+
     candidate_rv: CandidateRV = CandidateRV.SOBOL
     metric_sampler: str = "full"
     metric_rank: int | None = None
@@ -92,10 +99,12 @@ class MetricShapedTrustRegion(TurboTrustRegion):
         y_obs: np.ndarray,
         maximize: bool = True,
     ) -> None:
-        """Update geometry from LABCAT-style weighted PCA (see pc_rotation module).
+        """Update geometry from LABCAT-style weighted PCA.
 
         Uses all observations to compute principal-component rotation. Only applies
-        when pc_rotation_mode is set in config.
+        when `pc_rotation_mode` is set.
+
+        Reference: Visser et al., LABCAT (arXiv:2311.11328).
         """
         if getattr(self.config, "pc_rotation_mode", None) is None:
             return

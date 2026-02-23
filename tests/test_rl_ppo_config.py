@@ -1,6 +1,6 @@
 """Tests for PPO config types. Uses shallow imports to keep dependency depth low."""
 
-from rl.algos.backends.torchrl.ppo.config import PPOConfig, TrainResult
+from rl.backends.torchrl.ppo.config import PPOConfig, TrainResult
 
 
 def test_train_result_dataclass_fields():

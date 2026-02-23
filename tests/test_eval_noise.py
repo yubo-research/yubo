@@ -1,6 +1,6 @@
 import pytest
 
-from rl.algos.eval_noise import (
+from rl.eval_noise import (
     EvalPlan,
     build_eval_plan,
     eval_index_for_due_step,

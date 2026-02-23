@@ -96,7 +96,7 @@ else
 fi
 
 echo "[setup-rl] validating pufferlib import"
-python -c "from rl.algos.pufferlib_compat import import_pufferlib_modules; import_pufferlib_modules(); print('pufferlib ok')"
+python -c "from rl.pufferlib_compat import import_pufferlib_modules; import_pufferlib_modules(); print('pufferlib ok')"
 
 echo "[setup-rl] done"
 echo "activate with: micromamba activate ${ENV_NAME}"

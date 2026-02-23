@@ -74,7 +74,7 @@ def test_print_run_header():
 
 
 def test_print_run_header_atari_backbone(capsys):
-    from rl.algos.backends.torchrl.common.env_contract import (
+    from rl.backends.torchrl.common.env_contract import (
         EnvIOContract,
         ObservationContract,
     )
@@ -145,6 +145,7 @@ def test_prefixed_rl_table_alignment(capsys):
     assert any(line.startswith(prefix) and "iter" in line for line in lines)
     assert any(line.startswith(prefix) and "4,096" in line for line in lines)
     assert any(line.startswith(prefix) and "8,192" in line for line in lines)
+    assert not any(line.startswith(prefix + "(") for line in lines)
 
 
 def test_print_run_footer():

@@ -4,14 +4,14 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from rl.algos.backends.torchrl.common.env_contract import ObservationContract
-from rl.algos.backends.torchrl.ppo.actor_eval import (
+from rl.backends.torchrl.common.env_contract import ObservationContract
+from rl.backends.torchrl.ppo.actor_eval import (
     ActorEvalPolicy,
     capture_actor_snapshot,
     restore_actor_snapshot,
     use_actor_snapshot,
 )
-from rl.algos.backends.torchrl.sac.actor_eval import (
+from rl.backends.torchrl.sac.actor_eval import (
     SacActorEvalPolicy,
     capture_sac_actor_snapshot,
     restore_sac_actor_snapshot,

@@ -1,13 +1,13 @@
 def test_ppo_register_delegates_to_registry(monkeypatch):
     """BO-style: import inside test to defer heavy deps (matches test_turbo_ackley)."""
-    from rl.algos.backends.torchrl.ppo import api as ppo
+    from rl.backends.torchrl.ppo import api as ppo
 
     calls = []
 
     def fake_register_algo(name, config_cls, train_fn):
         calls.append((name, config_cls, train_fn))
 
-    monkeypatch.setattr("rl.algos.registry.register_algo", fake_register_algo)
+    monkeypatch.setattr("rl.registry.register_algo", fake_register_algo)
     ppo.register()
 
     assert len(calls) == 1
@@ -19,7 +19,7 @@ def test_ppo_register_delegates_to_registry(monkeypatch):
 
 def test_tanhnormal_support_property():
     """BO-style: import inside test to defer heavy deps."""
-    from rl.algos.backends.torchrl.ppo import core as ppo
+    from rl.backends.torchrl.ppo import core as ppo
 
     dist = ppo._TanhNormal(
         loc=ppo.torch.zeros(1),

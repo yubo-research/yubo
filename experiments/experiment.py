@@ -23,6 +23,8 @@ _OPTIONAL_KEYS = (
     "max_total_seconds",
     "b_trace",
     "video_enable",
+    "runtime_device",
+    "local_workers",
 )
 _ALL_EXPERIMENT_KEYS = set(_REQUIRED_KEYS + _OPTIONAL_KEYS)
 _OPTIMIZER_KEYS = {"name", "params"}

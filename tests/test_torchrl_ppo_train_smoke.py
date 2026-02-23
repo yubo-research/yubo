@@ -3,7 +3,7 @@ from pathlib import Path
 
 def test_ppo_train_smoke(tmp_path):
     """BO-style: import inside test to defer heavy deps (matches test_ackley_3d_runs_with_optimizer)."""
-    from rl.algos.backends.torchrl.ppo.core import PPOConfig, train_ppo
+    from rl.backends.torchrl.ppo.core import PPOConfig, train_ppo
 
     exp_dir = Path(tmp_path) / "ppo_smoke"
     cfg = PPOConfig(

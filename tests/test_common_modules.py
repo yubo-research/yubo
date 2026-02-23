@@ -102,13 +102,13 @@ class TestExperimentSeeds:
 
     def test_rl_seed_util_alignment(self):
         from common.experiment_seeds import problem_seed_from_rep_index
-        from rl.algos.seed_util import resolve_problem_seed
+        from rl.seed_util import resolve_problem_seed
 
-        for rl_seed, bo_i_rep in [(1, 0), (2, 1), (3, 2)]:
+        for rl_seed, bo_i_rep in [(0, 0), (1, 1), (2, 2)]:
             assert resolve_problem_seed(seed=rl_seed, problem_seed=None) == problem_seed_from_rep_index(bo_i_rep)
 
     def test_resolve_noise_seed_0(self):
-        from rl.algos.seed_util import resolve_noise_seed_0
+        from rl.seed_util import resolve_noise_seed_0
 
         assert resolve_noise_seed_0(problem_seed=18, noise_seed_0=None) == 180
         assert resolve_noise_seed_0(problem_seed=18, noise_seed_0=42) == 42

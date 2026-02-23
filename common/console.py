@@ -37,6 +37,37 @@ def _fmt_metric(val: float | None, fmt: str, width: int) -> str:
     return ("{:" + fmt + "}").format(val).rjust(width)
 
 
+def _with_prefix(line: str, prefix: str) -> str:
+    return f"{prefix}{line}" if prefix else line
+
+
+def _print_line(line: str, *, prefix: str = "") -> None:
+    print(_with_prefix(line, prefix), flush=True)
+
+
+def _global_step(iteration: int, frames_per_batch: int, step_override: int | None) -> int:
+    if step_override is not None:
+        return int(step_override)
+    return int(iteration * frames_per_batch)
+
+
+def _format_sps(global_step: int, elapsed: float, *, width: int = 6, dash: str = "  -  ") -> str:
+    sps = float(global_step / elapsed) if elapsed > 0 else float("nan")
+    return (f"{sps:.0f}" if not (sps != sps) else dash).rjust(width)
+
+
+def _algo_metric_strings(
+    *,
+    algo_name: str,
+    algo_metrics: dict[str, float] | None,
+    dash: str = "  -  ",
+) -> list[str]:
+    schema = _ALGO_SCHEMAS.get(algo_name, [])
+    if algo_metrics:
+        return [_fmt_metric(algo_metrics.get(name), fmt, width) for name, width, fmt in schema]
+    return [dash.rjust(width) for _, width, _ in schema]
+
+
 # ---- RL (algo) metrics ----
 
 PPO_METRICS = [("kl", 7, ".4f"), ("clipfrac", 8, ".4f")]
@@ -80,25 +111,22 @@ def print_run_header(
         backbone = "nature_cnn" if from_pixels else getattr(config, "backbone_name", "mlp")
     algo_metrics = _ALGO_SCHEMAS.get(algo_name, [])
 
-    def _prefixed(s: str) -> str:
-        return f"{prefix}{s}" if prefix else s
-
-    print(_prefixed(_dim("─" * 80)), flush=True)
+    _print_line(_dim("─" * 80), prefix=prefix)
     if algo_name == "ppo":
         title = (
             _bold("PPO")
             + f"  {config.env_tag}  seed={config.seed}  {runtime.device.type}  "
-            + f"{training.frames_per_batch} frames/batch  {training.num_iterations} {total_label}",
+            + f"{training.frames_per_batch} frames/batch  {training.num_iterations} {total_label}"
         )
-        print(_prefixed(title), flush=True)
+        _print_line(title, prefix=prefix)
         first_col = "iter"
     else:
         total = getattr(config, "total_timesteps", 0)
-        title = (_bold(algo_name.upper()) + f"  {config.env_tag}  seed={config.seed}  {runtime.device.type}  " + f"total={total:,}",)
-        print(_prefixed(title), flush=True)
+        title = _bold(algo_name.upper()) + f"  {config.env_tag}  seed={config.seed}  {runtime.device.type}  " + f"total={total:,}"
+        _print_line(title, prefix=prefix)
         first_col = "step"
-    print(_prefixed(_dim(f"  obs={env.obs_dim} act={env.act_dim} backbone={backbone} from_pixels={from_pixels}")), flush=True)
-    print(_prefixed(_dim("─" * 80)), flush=True)
+    _print_line(_dim(f"  obs={env.obs_dim} act={env.act_dim} backbone={backbone} from_pixels={from_pixels}"), prefix=prefix)
+    _print_line(_dim("─" * 80), prefix=prefix)
 
     if algo_name == "ppo":
         parts = [
@@ -113,8 +141,8 @@ def print_run_header(
     for name, width, _ in algo_metrics:
         parts.append(name.rjust(width))
     parts.extend([f"{'time':>7}", f"{'sps':>6}"])
-    print(_prefixed(" ".join(parts)), flush=True)
-    print(_prefixed(_dim("-" * 80)), flush=True)
+    _print_line(" ".join(parts), prefix=prefix)
+    _print_line(_dim("-" * 80), prefix=prefix)
 
 
 def print_iteration_log(
@@ -132,23 +160,13 @@ def print_iteration_log(
     prefix: str = "",
 ) -> None:
     """Print a single iteration log line with eval and algo-specific metrics."""
-    if step_override is not None:
-        global_step = step_override
-    else:
-        global_step = iteration * frames_per_batch
-    sps = float(global_step / elapsed) if elapsed > 0 else float("nan")
+    dash = "  -  "
+    global_step = _global_step(iteration, frames_per_batch, step_override)
     eval_str = (f"{eval_return:.1f}" if eval_return is not None else "  -  ").rjust(7)
     heldout_str = (f"{heldout_return:.1f}" if heldout_return is not None else "  -  ").rjust(7)
     best_str = f"{best_return:.1f}".rjust(7)
-    sps_str = (f"{sps:.0f}" if not (sps != sps) else "  -  ").rjust(6)
-
-    schema = _ALGO_SCHEMAS.get(algo_name, [])
-    algo_strs = []
-    if algo_metrics:
-        for name, width, fmt in schema:
-            algo_strs.append(_fmt_metric(algo_metrics.get(name), fmt, width))
-    else:
-        algo_strs = [_fmt_metric(None, "", w) for _, w, _ in schema]
+    sps_str = _format_sps(global_step, elapsed, dash=dash)
+    algo_strs = _algo_metric_strings(algo_name=algo_name, algo_metrics=algo_metrics, dash=dash)
 
     if step_override is not None:
         parts = [f"{global_step:9,d}", eval_str, heldout_str, best_str]
@@ -162,8 +180,7 @@ def print_iteration_log(
         ]
     parts.extend(algo_strs)
     parts.extend([f"{elapsed:6.1f}s".rjust(7), sps_str])
-    line = " ".join(parts)
-    print(f"{prefix}{line}" if prefix else line, flush=True)
+    _print_line(" ".join(parts), prefix=prefix)
 
 
 def print_iteration_simple(
@@ -177,16 +194,10 @@ def print_iteration_simple(
     prefix: str = "",
 ) -> None:
     """Print a progress-only line (no eval this iteration)."""
-    if step_override is not None:
-        global_step = step_override
-    else:
-        global_step = iteration * frames_per_batch
-    sps = float(global_step / elapsed) if elapsed > 0 else float("nan")
+    global_step = _global_step(iteration, frames_per_batch, step_override)
     dash = "  -  "
-    sps_str = (f"{sps:.0f}" if not (sps != sps) else dash).rjust(6)
-
-    schema = _ALGO_SCHEMAS.get(algo_name, [])
-    algo_strs = [dash.rjust(w) for _, w, _ in schema]
+    sps_str = _format_sps(global_step, elapsed, dash=dash)
+    algo_strs = _algo_metric_strings(algo_name=algo_name, algo_metrics=None, dash=dash)
 
     if step_override is not None:
         parts = [f"{global_step:9,d}", dash.rjust(7), dash.rjust(7), dash.rjust(7)]
@@ -200,8 +211,7 @@ def print_iteration_simple(
         ]
     parts.extend(algo_strs)
     parts.extend([f"{elapsed:6.1f}s".rjust(7), sps_str])
-    line = " ".join(parts)
-    print(f"{prefix}{line}" if prefix else line, flush=True)
+    _print_line(" ".join(parts), prefix=prefix)
 
 
 def print_run_footer(

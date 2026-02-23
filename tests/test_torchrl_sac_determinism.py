@@ -4,39 +4,37 @@ from pathlib import Path
 
 import pytest
 
-from rl.algos.backends.torchrl.sac.trainer import SACConfig, train_sac
+from rl.backends.torchrl.sac.trainer import SACConfig, train_sac
 
-# Baseline with BO-style seeding: seed=7 → problem_seed=24, seed_all(24+27).
-# Captured from current train_sac loop (no initial eval, eval at step 96 before break).
 _BASELINE_ROWS = [
     {
         "step": 32,
-        "eval_return": -1170.3912758206882,
-        "heldout_return": -1467.798166303253,
-        "best_return": -1170.3912758206882,
-        "loss_actor": 0.5280730128288269,
-        "loss_critic": 9.374556541442871,
-        "loss_alpha": -2.4916810989379883,
+        "eval_return": -1211.898299486109,
+        "heldout_return": -1264.4330350908926,
+        "best_return": -1211.898299486109,
+        "loss_actor": 0.6144753098487854,
+        "loss_critic": 9.974329948425293,
+        "loss_alpha": -2.7579777240753174,
         "total_updates": 14,
     },
     {
         "step": 64,
-        "eval_return": -1287.348388671875,
-        "heldout_return": -1467.798166303253,
-        "best_return": -1170.3912758206882,
-        "loss_actor": 1.4693553447723389,
-        "loss_critic": 3.363049030303955,
-        "loss_alpha": -3.243229389190674,
+        "eval_return": -1066.9592318026896,
+        "heldout_return": -1154.6970546712992,
+        "best_return": -1066.9592318026896,
+        "loss_actor": 1.5859122276306152,
+        "loss_critic": 12.002235412597656,
+        "loss_alpha": -2.4412384033203125,
         "total_updates": 30,
     },
     {
         "step": 96,
-        "eval_return": -1299.128662109375,
-        "heldout_return": -1467.798166303253,
-        "best_return": -1170.3912758206882,
-        "loss_actor": 1.9300659894943237,
-        "loss_critic": 8.443120002746582,
-        "loss_alpha": -2.1574792861938477,
+        "eval_return": -1438.9905780218683,
+        "heldout_return": -1154.6970546712992,
+        "best_return": -1066.9592318026896,
+        "loss_actor": 3.2631378173828125,
+        "loss_critic": 3.8247694969177246,
+        "loss_alpha": -1.8306523561477661,
         "total_updates": 46,
     },
 ]

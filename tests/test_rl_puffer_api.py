@@ -5,7 +5,7 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
-from rl.algos.backends.pufferlib.ppo import api as pufferlib_ppo
+from rl.backends.pufferlib.ppo import api as pufferlib_ppo
 
 
 class _FakeVecEnv:
@@ -116,7 +116,7 @@ def test_puffer_register_delegates_to_registry(monkeypatch):
     def fake_register_algo(name, config_cls, train_fn):
         calls.append((name, config_cls, train_fn))
 
-    monkeypatch.setattr("rl.algos.registry.register_algo", fake_register_algo)
+    monkeypatch.setattr("rl.registry.register_algo", fake_register_algo)
     pufferlib_ppo.register()
 
     assert len(calls) == 1

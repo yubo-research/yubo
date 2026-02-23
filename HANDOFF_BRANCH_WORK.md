@@ -30,14 +30,14 @@ Intent:
 RL code moved to backend-first layout and shared infra extracted.
 
 Key structure:
-- `rl/algos/backends/torchrl/...`
-- `rl/algos/backends/pufferlib/...`
-- `rl/algos/registry.py`, `rl/algos/runner.py`, `rl/algos/runner_helpers.py`
-- `common/console.py`, `rl/algos/logger.py`, `rl/algos/checkpointing.py`, `common/video.py`
+- `rl/backends/torchrl/...`
+- `rl/backends/pufferlib/...`
+- `rl/registry.py`, `rl/runner.py`, `rl/runner_helpers.py`
+- `common/console.py`, `rl/logger.py`, `rl/checkpointing.py`, `common/video.py`
 
 Notable decisions:
 - Runner supports `local --config ...` path.
-- PufferLib compatibility uses repo-local `gym` shim (`gym/__init__.py`) + Gymnasium fallback in `rl/algos/pufferlib_compat.py`.
+- PufferLib compatibility uses repo-local `gym` shim (`gym/__init__.py`) + Gymnasium fallback in `rl/pufferlib_compat.py`.
 
 ## RL Configs (Intentionally Scoped)
 Only these new RL TOMLs are staged:

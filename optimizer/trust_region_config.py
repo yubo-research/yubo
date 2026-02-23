@@ -9,6 +9,7 @@ from enn.turbo.config.candidate_rv import CandidateRV
 from enn.turbo.config.tr_length_config import TRLengthConfig
 from enn.turbo.turbo_trust_region import TurboTrustRegion
 
+from optimizer.box_trust_region import FixedLengthTurboTrustRegion
 from optimizer.ellipsoidal_trust_region import ENNTrueEllipsoidalTrustRegion
 from optimizer.metric_trust_region import (
     ENNMetricShapedTrustRegion,
@@ -74,8 +75,6 @@ class MetricShapedTRConfig:
         if self.geometry == "box":
             if self.metric_sampler is not None or self.metric_rank is not None:
                 raise ValueError("metric_* options require non-box geometry")
-            if self.fixed_length is not None:
-                raise ValueError("fixed_length requires non-box geometry")
         if self.fixed_length is not None and float(self.fixed_length) <= 0:
             raise ValueError(f"fixed_length must be > 0, got {self.fixed_length}")
 
@@ -104,7 +103,7 @@ class MetricShapedTRConfig:
         _ = rng
         selector = ScalarIncumbentSelector(noise_aware=self.noise_aware)
         if self.geometry == "box":
-            return TurboTrustRegion(
+            return FixedLengthTurboTrustRegion(
                 config=self,
                 num_dim=num_dim,
                 incumbent_selector=selector,

@@ -1,6 +1,6 @@
 import numpy as np
 
-from rl.algos.backends.torchrl.sac.trainer import (
+from rl.backends.torchrl.sac.trainer import (
     _scale_action_to_env,
     _unscale_action_from_env,
 )

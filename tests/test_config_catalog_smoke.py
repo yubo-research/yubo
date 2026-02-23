@@ -9,8 +9,8 @@ from click.testing import CliRunner
 from common.config_toml import load_toml
 from experiments.experiment import cli as bo_cli
 from experiments.experiment import load_experiment_config
-from rl.algos import builtins as rl_builtins
-from rl.algos import runner as rl_runner
+from rl import builtins as rl_builtins
+from rl import runner as rl_runner
 
 _REPO_ROOT = Path(__file__).resolve().parents[1]
 

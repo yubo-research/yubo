@@ -1,5 +1,5 @@
-from rl.algos import builtins
-from rl.algos.registry import available_algos, available_backend_bindings
+from rl import builtins
+from rl.registry import available_algos, available_backend_bindings
 
 
 def test_register_all():

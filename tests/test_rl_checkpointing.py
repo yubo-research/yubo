@@ -3,7 +3,7 @@ from pathlib import Path
 
 import torch
 
-from rl.algos.checkpointing import (
+from rl.checkpointing import (
     CheckpointManager,
     append_jsonl,
     load_checkpoint,

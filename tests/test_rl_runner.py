@@ -1,6 +1,6 @@
 import pytest
 
-from rl.algos.runner_helpers import parse_runtime_args, parse_seeds, seeded_exp_dir, split_config_and_args
+from rl.runner_helpers import parse_runtime_args, parse_seeds, seeded_exp_dir, split_config_and_args
 
 
 def test_parse_seeds_range():

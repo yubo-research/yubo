@@ -1,6 +1,6 @@
 import copy
 import importlib
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 import gymnasium as gym
@@ -25,33 +25,52 @@ def register_atari_dm(module):
 
 def _get_atari_dm():
     if _atari_dm_module is None:
-        raise RuntimeError("Atari/DM-Control support not loaded. Import problems.env_conf_atari_dm before using atari: or dm: tags.")
+        try:
+            module_name = ".".join(("problems", "env_conf_atari_dm"))
+            __import__(module_name)
+        except Exception as exc:
+            raise RuntimeError("Failed to load Atari/DM-Control support from problems.env_conf_atari_dm.") from exc
+    if _atari_dm_module is None:
+        raise RuntimeError("Atari/DM-Control support did not register correctly.")
     return _atari_dm_module
+
+
+@dataclass(frozen=True)
+class _GaussianPolicyFactory:
+    """Pickle-safe lazy policy factory for multiprocessing runs."""
+
+    variant: str
+    kwargs: dict[str, Any] = field(default_factory=dict)
+
+    def __call__(self, env_conf):
+        from rl.policy_backbone import GaussianActorBackbonePolicyFactory
+
+        return GaussianActorBackbonePolicyFactory(
+            variant=self.variant,
+            deterministic_eval=True,
+            squash_mode="clip",
+            init_log_std=-0.5,
+            **self.kwargs,
+        )(env_conf)
+
+
+@dataclass(frozen=True)
+class _LazyPolicyFactory:
+    module_name: str
+    class_name: str
+
+    def __call__(self, env_conf):
+        cls = getattr(importlib.import_module(self.module_name), self.class_name)
+        return cls(env_conf)
 
 
 def _gauss_policy_factory(variant: str, **kwargs):
     """Lazy factory for GaussianActorBackbonePolicy to avoid pulling rl into env_conf transitive deps."""
-
-    def _factory(env_conf):
-        from rl.policy_backbone import GaussianActorBackbonePolicyFactory
-
-        return GaussianActorBackbonePolicyFactory(
-            variant=variant,
-            deterministic_eval=True,
-            squash_mode="clip",
-            init_log_std=-0.5,
-            **kwargs,
-        )(env_conf)
-
-    return _factory
+    return _GaussianPolicyFactory(variant=variant, kwargs=dict(kwargs))
 
 
 def _lazy_policy(module_name: str, class_name: str):
-    def _factory(env_conf):
-        cls = getattr(importlib.import_module(module_name), class_name)
-        return cls(env_conf)
-
-    return _factory
+    return _LazyPolicyFactory(module_name=module_name, class_name=class_name)
 
 
 def _normalize_dm_control_name(tag: str) -> str:

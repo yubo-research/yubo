@@ -1,6 +1,6 @@
 import torch
 
-from rl.algos.checkpoint_helpers import (
+from rl.checkpoint_helpers import (
     _checkpoint_paths,
     _load_checkpoint,
     _save_checkpoint,
