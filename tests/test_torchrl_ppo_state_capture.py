@@ -3,7 +3,7 @@ from types import SimpleNamespace
 import torch
 import torch.nn as nn
 
-from rl.backends.torchrl.ppo.actor_eval import (
+from rl.torchrl.ppo.actor_eval import (
     capture_actor_snapshot,
     restore_actor_snapshot,
 )

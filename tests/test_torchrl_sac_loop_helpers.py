@@ -6,7 +6,7 @@ from types import SimpleNamespace
 import numpy as np
 import torch
 
-from rl.backends.torchrl.sac import loop as torchrl_sac_loop
+from rl.torchrl.sac import loop as torchrl_sac_loop
 
 
 class _ActionSpaceStub:

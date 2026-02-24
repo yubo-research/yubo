@@ -74,7 +74,7 @@ def test_print_run_header():
 
 
 def test_print_run_header_atari_backbone(capsys):
-    from rl.backends.torchrl.common.env_contract import (
+    from rl.torchrl.common.env_contract import (
         EnvIOContract,
         ObservationContract,
     )

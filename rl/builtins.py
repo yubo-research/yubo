@@ -1,5 +1,5 @@
-import rl.backends.torchrl as _torchrl  # noqa: F401 - keeps torchrl package in dependency graph
-from rl import backends as _backends  # noqa: F401 - keeps backend package in dependency graph
+import rl.pufferlib as _pufferlib  # noqa: F401 - keeps pufferlib package in dependency graph
+import rl.torchrl as _torchrl  # noqa: F401 - keeps torchrl package in dependency graph
 
 
 def register_all() -> None:
@@ -11,15 +11,15 @@ def register_all() -> None:
     )
 
     if "ppo" not in available_algos():
-        register_algo_lazy("ppo", "rl.backends.torchrl.ppo.api")
+        register_algo_lazy("ppo", "rl.torchrl.ppo.api")
     if "sac" not in available_algos():
-        register_algo_lazy("sac", "rl.backends.torchrl.sac.api")
+        register_algo_lazy("sac", "rl.torchrl.sac.api")
     if "ppo_puffer" not in available_algos():
-        register_algo_lazy("ppo_puffer", "rl.backends.pufferlib.ppo.api")
+        register_algo_lazy("ppo_puffer", "rl.pufferlib.ppo.api")
     if "tdmpc2" not in available_algos():
-        register_algo_lazy("tdmpc2", "rl.backends.torchrl.tdmpc2.api")
+        register_algo_lazy("tdmpc2", "rl.torchrl.tdmpc2.api")
     if "r2d2" not in available_algos():
-        register_algo_lazy("r2d2", "rl.backends.pufferlib.r2d2.api")
+        register_algo_lazy("r2d2", "rl.pufferlib.r2d2.api")
 
     register_algo_backend("ppo", "torchrl", "ppo")
     register_algo_backend("ppo", "pufferlib", "ppo_puffer")

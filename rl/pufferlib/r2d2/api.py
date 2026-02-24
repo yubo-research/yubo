@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 from rl import registry
-from rl.backends.pufferlib.r2d2.config import R2D2Config
-from rl.backends.pufferlib.r2d2.engine import TrainResult, train_r2d2
+from rl.pufferlib.r2d2.config import R2D2Config
+from rl.pufferlib.r2d2.engine import TrainResult, train_r2d2
 
 __all__ = [
     "R2D2Config",

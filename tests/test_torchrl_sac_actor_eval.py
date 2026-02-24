@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from rl.backends.torchrl.sac.actor_eval import (
+from rl.torchrl.sac.actor_eval import (
     SacActorEvalPolicy,
     capture_sac_actor_snapshot,
     use_sac_actor_snapshot,

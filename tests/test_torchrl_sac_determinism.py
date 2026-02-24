@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from rl.backends.torchrl.sac.trainer import SACConfig, train_sac
+from rl.torchrl.sac.trainer import SACConfig, train_sac
 
 _BASELINE_ROWS = [
     {

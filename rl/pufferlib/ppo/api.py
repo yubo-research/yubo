@@ -1,26 +1,26 @@
 """PufferLib PPO trainer facade.
 
 This module keeps stable patch points used by tests and callers while delegating
-implementation to ``rl.backends.pufferlib.ppo.engine``.
+implementation to ``rl.pufferlib.ppo.engine``.
 """
 
 from __future__ import annotations
 
 from rl import registry
-from rl.backends.pufferlib.ppo.config import PufferPPOConfig, TrainResult
-from rl.backends.pufferlib.ppo.engine import (
+from rl.pufferlib.ppo.config import PufferPPOConfig, TrainResult
+from rl.pufferlib.ppo.engine import (
     _build_eval_env_conf as _build_eval_env_conf_impl,
 )
-from rl.backends.pufferlib.ppo.engine import (
+from rl.pufferlib.ppo.engine import (
     _make_vector_env as _make_vector_env_impl,
 )
-from rl.backends.pufferlib.ppo.engine import (
+from rl.pufferlib.ppo.engine import (
     _resolve_gym_env_name as _resolve_gym_env_name_impl,
 )
-from rl.backends.pufferlib.ppo.engine import (
+from rl.pufferlib.ppo.engine import (
     _to_puffer_game_name as _to_puffer_game_name_impl,
 )
-from rl.backends.pufferlib.ppo.engine import train_ppo_puffer_impl
+from rl.pufferlib.ppo.engine import train_ppo_puffer_impl
 from rl.pufferlib_compat import import_pufferlib_modules
 
 __all__ = [

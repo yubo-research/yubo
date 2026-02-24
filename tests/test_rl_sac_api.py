@@ -1,4 +1,4 @@
-from rl.backends.torchrl.sac import api as torchrl_sac
+from rl.torchrl.sac import api as torchrl_sac
 
 
 def test_sac_config_from_dict_converts_hidden_sizes():

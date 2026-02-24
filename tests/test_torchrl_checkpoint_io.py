@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from rl.backends.torchrl.ppo.checkpoint_io import (
+from rl.torchrl.ppo.checkpoint_io import (
     build_checkpoint_payload,
     save_final_checkpoint,
     save_periodic_checkpoint,

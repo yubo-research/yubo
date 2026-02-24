@@ -3,7 +3,7 @@
 import torch
 from tensordict import TensorDict
 
-from rl.backends.torchrl.common.pixel_transform import (
+from rl.torchrl.common.pixel_transform import (
     AtariObservationTransform,
     PixelsToObservation,
     ensure_atari_obs_format,

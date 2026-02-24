@@ -17,7 +17,7 @@ import torch.optim as optim
 from analysis.data_io import write_config
 from problems.atari_env import _parse_atari_tag
 from rl.backbone import BackboneSpec, HeadSpec, build_backbone, build_mlp_head
-from rl.backends.torchrl.common.pixel_transform import ensure_pixel_obs_format
+from rl.torchrl.common.pixel_transform import ensure_pixel_obs_format
 
 from . import checkpoint as puffer_ckpt
 from . import eval as puffer_eval

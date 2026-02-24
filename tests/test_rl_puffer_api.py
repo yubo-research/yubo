@@ -5,7 +5,7 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
-from rl.backends.pufferlib.ppo import api as pufferlib_ppo
+from rl.pufferlib.ppo import api as pufferlib_ppo
 
 
 class _FakeVecEnv:

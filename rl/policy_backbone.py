@@ -8,8 +8,8 @@ import torch.nn as nn
 from problems.normalizer import Normalizer
 from problems.policy_mixin import PolicyParamsMixin
 from rl.backbone import BackboneSpec, HeadSpec, build_backbone, build_mlp_head
-from rl.backends.torchrl.common import env_contract as torchrl_env_contract
 from rl.shared_gaussian_actor import SharedGaussianActorModule, get_gaussian_actor_spec
+from rl.torchrl.common import env_contract as torchrl_env_contract
 
 
 def _init_linear(module: nn.Module) -> None:
@@ -155,7 +155,7 @@ class DiscreteActorBackbonePolicy(PolicyParamsMixin, nn.Module):
     def forward(self, obs: torch.Tensor) -> torch.Tensor:
         squeeze_batch_dim = False
         if self._obs_contract.mode == "pixels":
-            from rl.backends.torchrl.common.pixel_transform import (
+            from rl.torchrl.common.pixel_transform import (
                 ensure_pixel_obs_format,
             )
 

@@ -12,30 +12,30 @@ import torch.nn as nn
 
 from rl import logger as rl_logger
 from rl.backbone import BackboneSpec, HeadSpec
-from rl.backends.pufferlib.ppo.eval import (
-    PufferEvalPolicy,
-    resolve_eval_seeds,
-    validate_eval_config,
-)
-from rl.backends.torchrl.common.env_contract import ObservationContract
-from rl.backends.torchrl.common.pixel_transform import ensure_pixel_obs_format
-from rl.backends.torchrl.common.profiler import run_with_profiler
-from rl.backends.torchrl.ppo.models import (
-    ActorNet,
-    CriticNet,
-    DiscreteActorNet,
-    prepare_obs_for_backbone,
-)
 from rl.policy_backbone import (
     AtariMLP16DiscretePolicy,
     DiscreteActorPolicySpec,
     GaussianActorBackbonePolicyFactory,
+)
+from rl.pufferlib.ppo.eval import (
+    PufferEvalPolicy,
+    resolve_eval_seeds,
+    validate_eval_config,
 )
 from rl.pufferlib_compat import import_pufferlib_modules
 from rl.registry import register_algo_backend, resolve_algo_name
 from rl.shared_gaussian_actor import (
     build_shared_gaussian_actor,
     get_gaussian_actor_spec,
+)
+from rl.torchrl.common.env_contract import ObservationContract
+from rl.torchrl.common.pixel_transform import ensure_pixel_obs_format
+from rl.torchrl.common.profiler import run_with_profiler
+from rl.torchrl.ppo.models import (
+    ActorNet,
+    CriticNet,
+    DiscreteActorNet,
+    prepare_obs_for_backbone,
 )
 
 
@@ -225,11 +225,11 @@ def test_torchrl_profiler_run_with_profiler(monkeypatch, tmp_path: Path):
             return False
 
     monkeypatch.setattr(
-        "rl.backends.torchrl.common.profiler.torch.profiler.schedule",
+        "rl.torchrl.common.profiler.torch.profiler.schedule",
         lambda **_kwargs: object(),
     )
     monkeypatch.setattr(
-        "rl.backends.torchrl.common.profiler.torch.profiler.profile",
+        "rl.torchrl.common.profiler.torch.profiler.profile",
         lambda **kwargs: _DummyProfileCtx(kwargs["on_trace_ready"]),
     )
 

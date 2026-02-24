@@ -18,10 +18,10 @@ import torch.optim as optim
 from analysis.data_io import write_config
 from problems.env_conf import get_env_conf
 from rl import logger as rl_logger
-from rl.backends.pufferlib.r2d2.config import R2D2Config
-from rl.backends.torchrl.common.common import select_device
 from rl.checkpointing import CheckpointManager
+from rl.pufferlib.r2d2.config import R2D2Config
 from rl.seed_util import global_seed_for_run, resolve_problem_seed
+from rl.torchrl.common.common import select_device
 
 
 class _SequenceReplay:

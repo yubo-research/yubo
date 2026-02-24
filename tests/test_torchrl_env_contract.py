@@ -2,7 +2,7 @@ from types import SimpleNamespace
 
 import numpy as np
 
-from rl.backends.torchrl.common.env_contract import (
+from rl.torchrl.common.env_contract import (
     ActionContract,
     EnvIOContract,
     ObservationContract,

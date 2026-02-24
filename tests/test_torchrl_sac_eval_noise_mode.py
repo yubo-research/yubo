@@ -2,7 +2,7 @@ import pytest
 
 
 def test_sac_eval_noise_mode_invalid_rejected_before_env_build(monkeypatch):
-    from rl.backends.torchrl.sac import trainer as torchrl_sac
+    from rl.torchrl.sac import trainer as torchrl_sac
 
     monkeypatch.setattr(
         torchrl_sac,

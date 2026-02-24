@@ -1,13 +1,13 @@
 import pytest
 
 from rl import builtins
-from rl.backends.pufferlib.r2d2.config import R2D2Config
-from rl.backends.pufferlib.r2d2.engine import TrainResult as R2D2TrainResult
-from rl.backends.pufferlib.r2d2.engine import train_r2d2
-from rl.backends.torchrl.tdmpc2.config import TDMPC2Config
-from rl.backends.torchrl.tdmpc2.trainer import TrainResult as TDMPC2TrainResult
-from rl.backends.torchrl.tdmpc2.trainer import train_tdmpc2
+from rl.pufferlib.r2d2.config import R2D2Config
+from rl.pufferlib.r2d2.engine import TrainResult as R2D2TrainResult
+from rl.pufferlib.r2d2.engine import train_r2d2
 from rl.registry import get_algo
+from rl.torchrl.tdmpc2.config import TDMPC2Config
+from rl.torchrl.tdmpc2.trainer import TrainResult as TDMPC2TrainResult
+from rl.torchrl.tdmpc2.trainer import train_tdmpc2
 
 
 def test_tdmpc2_config_from_dict_roundtrip():

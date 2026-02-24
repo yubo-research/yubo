@@ -1,8 +1,8 @@
 import pytest
 import torch
 
-from rl.backends.torchrl.common.common import select_device
-from rl.backends.torchrl.common.runtime import (
+from rl.torchrl.common.common import select_device
+from rl.torchrl.common.runtime import (
     TorchRLRuntime,
     TorchRLRuntimeCapabilities,
     TorchRLRuntimeConfig,
@@ -12,19 +12,19 @@ from rl.backends.torchrl.common.runtime import (
 
 
 def test_select_device_auto_prefers_mps_when_cuda_unavailable(monkeypatch):
-    monkeypatch.setattr("rl.backends.torchrl.common.common.torch.cuda.is_available", lambda: False)
-    monkeypatch.setattr("rl.backends.torchrl.common.common._mps_is_available", lambda: True)
+    monkeypatch.setattr("rl.torchrl.common.common.torch.cuda.is_available", lambda: False)
+    monkeypatch.setattr("rl.torchrl.common.common._mps_is_available", lambda: True)
     assert select_device("auto").type == "mps"
 
 
 def test_select_device_cpu_fallback(monkeypatch):
-    monkeypatch.setattr("rl.backends.torchrl.common.common.torch.cuda.is_available", lambda: False)
-    monkeypatch.setattr("rl.backends.torchrl.common.common._mps_is_available", lambda: False)
+    monkeypatch.setattr("rl.torchrl.common.common.torch.cuda.is_available", lambda: False)
+    monkeypatch.setattr("rl.torchrl.common.common._mps_is_available", lambda: False)
     assert select_device("auto").type == "cpu"
 
 
 def test_select_device_explicit_cuda_requires_cuda(monkeypatch):
-    monkeypatch.setattr("rl.backends.torchrl.common.common.torch.cuda.is_available", lambda: False)
+    monkeypatch.setattr("rl.torchrl.common.common.torch.cuda.is_available", lambda: False)
     with pytest.raises(ValueError, match="CUDA is not available"):
         select_device("cuda")
 
@@ -51,8 +51,8 @@ def test_runtime_auto_uses_multi_sync_for_multi_env_cpu():
 
 def test_runtime_auto_falls_back_to_single_on_mps(monkeypatch):
     # Simulate MPS-capable host regardless of actual test machine.
-    monkeypatch.setattr("rl.backends.torchrl.common.common._mps_is_available", lambda: True)
-    monkeypatch.setattr("rl.backends.torchrl.common.common.torch.cuda.is_available", lambda: False)
+    monkeypatch.setattr("rl.torchrl.common.common._mps_is_available", lambda: True)
+    monkeypatch.setattr("rl.torchrl.common.common.torch.cuda.is_available", lambda: False)
     runtime = resolve_torchrl_runtime(
         TorchRLRuntimeRequest(
             num_envs=8,
@@ -67,8 +67,8 @@ def test_runtime_auto_falls_back_to_single_on_mps(monkeypatch):
 
 
 def test_runtime_multi_async_rejects_mps_by_default(monkeypatch):
-    monkeypatch.setattr("rl.backends.torchrl.common.common._mps_is_available", lambda: True)
-    monkeypatch.setattr("rl.backends.torchrl.common.common.torch.cuda.is_available", lambda: False)
+    monkeypatch.setattr("rl.torchrl.common.common._mps_is_available", lambda: True)
+    monkeypatch.setattr("rl.torchrl.common.common.torch.cuda.is_available", lambda: False)
     with pytest.raises(ValueError, match="not supported with device='mps'"):
         resolve_torchrl_runtime(
             TorchRLRuntimeRequest(
@@ -80,8 +80,8 @@ def test_runtime_multi_async_rejects_mps_by_default(monkeypatch):
 
 
 def test_runtime_mps_multi_async_allowed_when_capability_enabled(monkeypatch):
-    monkeypatch.setattr("rl.backends.torchrl.common.common._mps_is_available", lambda: True)
-    monkeypatch.setattr("rl.backends.torchrl.common.common.torch.cuda.is_available", lambda: False)
+    monkeypatch.setattr("rl.torchrl.common.common._mps_is_available", lambda: True)
+    monkeypatch.setattr("rl.torchrl.common.common.torch.cuda.is_available", lambda: False)
     runtime = resolve_torchrl_runtime(
         TorchRLRuntimeRequest(
             num_envs=8,
@@ -95,7 +95,7 @@ def test_runtime_mps_multi_async_allowed_when_capability_enabled(monkeypatch):
 
 
 def test_runtime_explicit_mps_requires_mps_availability(monkeypatch):
-    monkeypatch.setattr("rl.backends.torchrl.common.common._mps_is_available", lambda: False)
+    monkeypatch.setattr("rl.torchrl.common.common._mps_is_available", lambda: False)
     with pytest.raises(ValueError, match="MPS is not available"):
         resolve_torchrl_runtime(
             TorchRLRuntimeRequest(

@@ -1,6 +1,6 @@
-from rl.backends.torchrl.common.env_contract import ObservationContract
-from rl.backends.torchrl.ppo import core as torchrl_on_policy_core
-from rl.backends.torchrl.ppo.core import _TanhNormal as _CoreTanhNormal
+from rl.torchrl.common.env_contract import ObservationContract
+from rl.torchrl.ppo import core as torchrl_on_policy_core
+from rl.torchrl.ppo.core import _TanhNormal as _CoreTanhNormal
 
 
 def test_ppo_tanhnormal_support_property():

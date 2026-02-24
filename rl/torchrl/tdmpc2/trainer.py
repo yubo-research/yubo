@@ -19,11 +19,10 @@ import torch.optim as optim
 from analysis.data_io import write_config
 from problems.env_conf import get_env_conf
 from rl import logger as rl_logger
-from rl.backends.torchrl.common.common import select_device
 from rl.checkpointing import CheckpointManager
 from rl.seed_util import global_seed_for_run, resolve_problem_seed
 
-from .config import TDMPC2Config
+from .config import _TDMPC2_RUNTIME_CAPABILITIES, TDMPC2Config
 
 
 class _ReplayBuffer:
@@ -341,8 +340,9 @@ def _init_tdmpc2_components(
     *,
     obs_dim: int,
     act_dim: int,
+    runtime_device: torch.device,
 ) -> _TDMPC2CoreInit:
-    device = select_device(str(config.device))
+    device = runtime_device
     model = _LatentModel(obs_dim, act_dim, int(config.hidden_dim), int(config.latent_dim)).to(device)
     target_value = nn.Sequential(
         nn.Linear(int(config.latent_dim), int(config.hidden_dim)),
@@ -419,10 +419,12 @@ def _build_tdmpc2_runtime(config: TDMPC2Config, *, exp_dir: Path, run_seed: int,
         problem_seed=int(problem_seed),
         run_seed=int(run_seed),
     )
+    runtime = config.resolve_runtime(capabilities=_TDMPC2_RUNTIME_CAPABILITIES)
     core_init = _init_tdmpc2_components(
         config,
         obs_dim=env_init.obs_dim,
         act_dim=env_init.act_dim,
+        runtime_device=runtime.device,
     )
     ckpt = CheckpointManager(exp_dir=exp_dir)
     _log_tdmpc2_header(config, obs_dim=env_init.obs_dim, act_dim=env_init.act_dim, device=core_init.device)
