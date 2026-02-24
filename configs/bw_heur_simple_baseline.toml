@@ -1,0 +1,6 @@
+[uhd]
+env_tag = "bw-heur:fn"
+num_rounds = 500
+optimizer = "simple"
+log_interval = 10
+noise_seed_0 = 1

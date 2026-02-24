@@ -1,0 +1,14 @@
+[uhd]
+env_tag = "mnist"
+num_rounds = 10000
+
+lr = 0.001
+perturb = "dim:0.5"
+log_interval = 50
+accuracy_interval = 200
+target_accuracy = 0.90
+
+early_reject_mode = "ema"
+early_reject_tau = 0.05
+early_reject_ema_beta = 0.99
+early_reject_warmup_pos = 200

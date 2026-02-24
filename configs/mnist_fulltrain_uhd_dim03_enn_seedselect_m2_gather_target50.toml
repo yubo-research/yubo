@@ -1,0 +1,27 @@
+[uhd]
+env_tag = "mnist_fulltrain"
+num_rounds = 6000
+
+lr = 0.001
+perturb = "dim:0.3"
+
+log_interval = 10
+accuracy_interval = 50
+target_accuracy = 0.50
+
+# ENN candidate filtering: pick among M positive-phase seeds by UCB(mu_plus).
+enn_minus_impute = true
+enn_target = "mu_plus"
+enn_num_candidates = 2
+enn_select_interval = 1
+
+enn_embedder = "gather"
+enn_gather_t = 64
+enn_d = 100
+
+enn_warmup_real_obs = 50
+enn_fit_interval = 25
+enn_k = 25
+
+# No negative-phase imputation.
+enn_se_threshold = 0.0

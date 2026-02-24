@@ -28,8 +28,11 @@ def problems_in(results_path, exp_tag):
     return sorted(os.listdir(f"{results_path}/{exp_tag}"))
 
 
-def optimizers_in(results_path, exp_tag, problem):
+def _optimizers_in(results_path, exp_tag, problem):
     return sorted(os.listdir(f"{results_path}/{exp_tag}/{problem}"))
+
+
+optimizers_in = _optimizers_in
 
 
 def all_in(results_path, exp_tag):
@@ -277,13 +280,13 @@ def _ensure_float_traces(traces):
         return np.asarray(traces, dtype=float, casting="unsafe")
     except (ValueError, TypeError):
 
-        def safe_float(v):
+        def _safe_float(v):
             try:
                 return float(v)
             except (ValueError, TypeError):
                 return np.nan
 
-        return np.array([safe_float(v) for v in traces.flatten()], dtype=float).reshape(traces.shape)
+        return np.array([_safe_float(v) for v in traces.flatten()], dtype=float).reshape(traces.shape)
 
 
 def _validate_trace_path(trace_path, problem_name, opt_name, report_bad):
@@ -316,12 +319,12 @@ def load_multiple_traces(data_locator):
     problems = data_locator.problems()
     opt_names = data_locator.optimizers()
 
-    def report_bad(problem_name, opt_name, msg):
+    def _report_bad(problem_name, opt_name, msg):
         nonlocal num_bad
         print("BAD:", msg, data_locator, problem_name, opt_name)
         num_bad += 1
 
-    def init_traces(trace):
+    def _init_traces(trace):
         return (
             np.nan
             * np.ones(
@@ -336,23 +339,23 @@ def load_multiple_traces(data_locator):
     for i_problem, problem_name in enumerate(problems):
         for i_opt, opt_name in enumerate(opt_names):
             num_tot += 1
-            trace_path = _validate_trace_path(data_locator(problem_name, opt_name), problem_name, opt_name, report_bad)
+            trace_path = _validate_trace_path(data_locator(problem_name, opt_name), problem_name, opt_name, _report_bad)
             if trace_path is None:
                 continue
-            trace = _load_and_validate_trace(trace_path, data_locator, problem_name, opt_name, report_bad)
+            trace = _load_and_validate_trace(trace_path, data_locator, problem_name, opt_name, _report_bad)
             if trace is None:
                 continue
             if traces is None:
-                traces = init_traces(trace)
+                traces = _init_traces(trace)
                 if traces is None:
-                    report_bad(problem_name, opt_name, "Empty trace (B)")
+                    _report_bad(problem_name, opt_name, "Empty trace (B)")
                     continue
             if trace.shape[0] > traces.shape[2]:
-                traces_new = init_traces(trace)
+                traces_new = _init_traces(trace)
                 traces_new[:, :, : traces.shape[2], :] = traces
                 traces = traces_new
             if trace.shape != traces[i_problem, i_opt, ...].shape:
-                report_bad(problem_name, opt_name, f"Wrong shape {trace.shape}")
+                _report_bad(problem_name, opt_name, f"Wrong shape {trace.shape}")
             trace = _ensure_float_trace(trace)
             traces[i_problem, i_opt, : trace.shape[0], : trace.shape[1]] = trace
 

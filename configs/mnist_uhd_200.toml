@@ -1,0 +1,5 @@
+[uhd]
+env_tag = "mnist"
+num_rounds = 200
+lr = 0.001
+perturb = "dim:0.5"

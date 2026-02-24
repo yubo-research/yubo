@@ -27,43 +27,53 @@ class SubmodulePerturbator:
         self._perturbed = False
         self._seed: int | None = None
 
-    def _generate_noise(self, sigma: float) -> list[list[torch.Tensor]]:
-        """Return noise grouped by leaf module.
+    def _device(self) -> torch.device:
+        return next(self._module.parameters()).device
 
-        Each element is a list of tensors (one per parameter in that
-        leaf module).  Unselected modules get zero tensors.
-        """
-        rng = torch.Generator()
-        rng.manual_seed(self._seed)
+    def _rng(self, seed: int) -> torch.Generator:
+        g = torch.Generator(device=str(self._device()))
+        g.manual_seed(int(seed))
+        return g
 
-        # Draw one Bernoulli per leaf module.
+    def _select_mask(self, *, g: torch.Generator) -> torch.Tensor:
+        device = self._device()
         n = len(self._leaf_modules)
-        mask = torch.rand(n, generator=rng) < self._prob
-
-        # Guarantee at least one module is selected.
-        if not mask.any():
-            idx = torch.randint(n, (1,), generator=rng).item()
+        mask = torch.rand((n,), device=device, generator=g) < self._prob
+        if not bool(mask.any().item()):
+            idx = int(torch.randint(n, (1,), device=device, generator=g).item())
             mask[idx] = True
+        return mask
 
-        noise_groups: list[list[torch.Tensor]] = []
+    def _apply(self, *, seed: int, sigma: float, chunk_size: int = 2**16) -> None:
+        g = self._rng(seed)
+        device = self._device()
+        mask = self._select_mask(g=g)
+
         for i, leaf in enumerate(self._leaf_modules):
-            group = []
+            selected = bool(mask[i].item())
+            if not selected:
+                continue
             for p in leaf.parameters(recurse=False):
-                n_tensor = torch.randn(p.shape, generator=rng) * sigma
-                if not mask[i]:
-                    n_tensor = torch.zeros_like(n_tensor)
-                group.append(n_tensor.to(p.device))
-            noise_groups.append(group)
-        return noise_groups
+                assert p.device == device, "SubmodulePerturbator requires all params on one device"
+                flat = p.data.view(-1)
+                n = flat.numel()
+                for start in range(0, n, chunk_size):
+                    end = min(start + chunk_size, n)
+                    noise = torch.randn(
+                        (end - start,),
+                        device=device,
+                        dtype=flat.dtype,
+                        generator=g,
+                    )
+                    noise.mul_(sigma)
+                    flat[start:end].add_(noise)
 
     def perturb(self, seed: int, sigma: float) -> None:
         assert not self._perturbed, "Already perturbed"
         self._seed = seed
         self._sigma = sigma
         self._perturbed = True
-        for leaf, group in zip(self._leaf_modules, self._generate_noise(sigma), strict=True):
-            for p, n in zip(leaf.parameters(recurse=False), group, strict=True):
-                p.data.add_(n)
+        self._apply(seed=seed, sigma=sigma)
 
     def accept(self) -> None:
         assert self._perturbed, "Not perturbed"
@@ -72,11 +82,6 @@ class SubmodulePerturbator:
 
     def unperturb(self) -> None:
         assert self._perturbed, "Not perturbed"
-        for leaf, group in zip(
-            self._leaf_modules,
-            self._generate_noise(self._sigma),
-            strict=True,
-        ):
-            for p, n in zip(leaf.parameters(recurse=False), group, strict=True):
-                p.data.sub_(n)
+        assert self._seed is not None
+        self._apply(seed=self._seed, sigma=-self._sigma)
         self.accept()

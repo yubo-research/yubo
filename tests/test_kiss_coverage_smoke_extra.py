@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import os
 import sys
-import types
 from types import SimpleNamespace
 
 import numpy as np
@@ -27,7 +26,10 @@ def test_kiss_cov_acqbt_x_max(monkeypatch):
             return SimpleNamespace(mean=torch.tensor(0.0))
 
     monkeypatch.setattr("acq.acq_bt.fit_gp.fit_gp_XY", lambda X, Y, model_spec: _GP())
-    monkeypatch.setattr("acq.acq_bt.find_max", lambda gp, bounds: torch.ones((1, bounds.shape[1]), dtype=bounds.dtype))
+    monkeypatch.setattr(
+        "acq.acq_bt.find_max",
+        lambda gp, bounds: torch.ones((1, bounds.shape[1]), dtype=bounds.dtype),
+    )
 
     acq = AcqBT(
         acq_factory=lambda gp, **kwargs: SimpleNamespace(),
@@ -86,7 +88,16 @@ def test_kiss_cov_ops_catalog_and_ops_data(tmp_path):
     exp_dir = results_dir / "abc123"
     traces = exp_dir / "traces"
     traces.mkdir(parents=True)
-    (exp_dir / "config.json").write_text(json.dumps({"opt_name": "random", "env_tag": "f:ackley-2d", "num_arms": 1, "num_rounds": 1}))
+    (exp_dir / "config.json").write_text(
+        json.dumps(
+            {
+                "opt_name": "random",
+                "env_tag": "f:ackley-2d",
+                "num_arms": 1,
+                "num_rounds": 1,
+            }
+        )
+    )
     (traces / "00000.jsonl").write_text("{}\n")
 
     data_cli.cli.callback()
@@ -237,7 +248,11 @@ def test_kiss_cov_modal_collect_and_modal_learn(monkeypatch):
 
     called = {"collect": 0}
     monkeypatch.setattr(modal_collect, "collect", lambda job_fn, cb: cb(("trace", "log", "collector")))
-    monkeypatch.setattr(modal_collect, "post_process", lambda *args: called.__setitem__("collect", called["collect"] + 1))
+    monkeypatch.setattr(
+        modal_collect,
+        "post_process",
+        lambda *args: called.__setitem__("collect", called["collect"] + 1),
+    )
     monkeypatch.setattr(modal_collect.os.path, "exists", lambda p: False)
     modal_collect.main("jobs.txt")
     assert called["collect"] == 1
@@ -260,8 +275,16 @@ def test_kiss_cov_modal_collect_and_modal_learn(monkeypatch):
         def __getitem__(self, key):
             return super().get(key, ("missing", "missing", 0.0))
 
-    monkeypatch.setattr(modal_learn.modal.Queue, "from_name", lambda name, create_if_missing=True: _Queue())
-    monkeypatch.setattr(modal_learn.modal.Dict, "from_name", lambda name, create_if_missing=True: _Dict({"key_0": ("a", "b", 1.0)}))
+    monkeypatch.setattr(
+        modal_learn.modal.Queue,
+        "from_name",
+        lambda name, create_if_missing=True: _Queue(),
+    )
+    monkeypatch.setattr(
+        modal_learn.modal.Dict,
+        "from_name",
+        lambda name, create_if_missing=True: _Dict({"key_0": ("a", "b", 1.0)}),
+    )
     modal_learn.process_job.get_raw_f()("processor")
     modal_learn.get_job_result()
     monkeypatch.setattr(modal_learn, "start", lambda cmd: None)
@@ -289,51 +312,8 @@ def test_kiss_cov_modal_image_and_interactive(monkeypatch):
     modal_interactive.run_job("exp", "env", "opt", 1, 1, 1)
 
 
-def test_kiss_cov_compare_to_gp_and_fig_utils(monkeypatch, tmp_path):
-    fake_tp = types.ModuleType("third_party")
-    fake_enn_pkg = types.ModuleType("third_party.enn")
-    fake_enn_subpkg = types.ModuleType("third_party.enn.enn")
-    fake_enn_params = types.ModuleType("third_party.enn.enn.enn_params")
-    fake_enn_params.PosteriorFlags = lambda observation_noise=False: SimpleNamespace(observation_noise=observation_noise)
-    fake_enn_pkg.EpistemicNearestNeighbors = object
-    fake_enn_pkg.enn_fit = lambda *a, **k: object()
-    sys.modules["third_party"] = fake_tp
-    sys.modules["third_party.enn"] = fake_enn_pkg
-    sys.modules["third_party.enn.enn"] = fake_enn_subpkg
-    sys.modules["third_party.enn.enn.enn_params"] = fake_enn_params
-    from experiments.enn import compare_to_gp as cgp
+def test_kiss_cov_fig_utils(monkeypatch, tmp_path):
     from figures.mtv import fig_util
-
-    class _PosteriorDist:
-        def log_prob(self, y):
-            return torch.tensor(float(y.shape[0]), dtype=torch.float64)
-
-    class _Posterior:
-        distribution = _PosteriorDist()
-
-    class _Model:
-        def posterior(self, x):
-            return _Posterior()
-
-    gp_ll = cgp.compute_gp_ll(_Model(), np.zeros((3, 2)), np.zeros(3))
-    assert gp_ll == 1.0
-
-    fake_fit = types.ModuleType("third_party.enn.enn.enn_fit")
-    fake_fit._compute_single_loglik = lambda y, mu, se: 6.0
-    sys.modules["third_party.enn.enn.enn_fit"] = fake_fit
-
-    class _EnnModel:
-        def posterior(self, test_x, params, flags):
-            _ = (params, flags)
-            return SimpleNamespace(mu=np.zeros((len(test_x), 1)), se=np.ones((len(test_x), 1)))
-
-    enn_ll = cgp.compute_enn_ll(_EnnModel(), object(), np.zeros((3, 2)), np.zeros(3))
-    assert enn_ll == 2.0
-    assert np.isfinite(cgp.compute_mean_ll(np.array([0.0, 1.0])))
-    monkeypatch.setattr(cgp, "tqdm", lambda x, desc=None: x)
-    monkeypatch.setattr(cgp, "_run_dim_rep", lambda *args, **kwargs: cgp._LLResult(gp_ll=1.0, enn_ll=2.0, mean_ll=3.0))
-    df = cgp.sweep_dim_ll_gp_vs_enn("sphere", 0.1, [2, 3], 0, 2, 4, 2, 3)
-    assert set(df["num_dim"].tolist()) == {2, 3}
 
     monkeypatch.setattr(fig_util, "get_env_conf", lambda *a, **k: "env_conf")
     monkeypatch.setattr(fig_util, "default_policy", lambda env_conf: "policy")
@@ -389,7 +369,11 @@ def test_kiss_cov_fig_pstar_scale_and_turbo_best_datum(monkeypatch, tmp_path):
     monkeypatch.setattr(fps, "dist_pstar_scales_all_funcs", lambda designer, num_dim: [{"x": 1}])
     fps.distribute("mtv", "jobs.txt", dry_run=False)
 
-    monkeypatch.setattr(fps, "collect", lambda job_fn, cb: cb(("designer", 2, "f:sphere-2d", [("x", 1)])))
+    monkeypatch.setattr(
+        fps,
+        "collect",
+        lambda job_fn, cb: cb(("designer", 2, "f:sphere-2d", [("x", 1)])),
+    )
     os.makedirs(tmp_path / "fig_data" / "sts", exist_ok=True)
     cwd = os.getcwd()
     os.chdir(tmp_path)

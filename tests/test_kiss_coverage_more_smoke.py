@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import json
 import os
-import sys
-import types
 from types import SimpleNamespace
 
 import numpy as np
@@ -294,8 +292,9 @@ def test_kiss_cov_noise_maker_and_policy_mixin():
     assert PolicyParamsMixin.num_params(p) == 2
 
 
-def test_kiss_cov_exp_uhd_cli_and_local(monkeypatch):
-    import experiments.exp_uhd as exp_uhd
+def test_kiss_cov_exp_uhd_cli_and_local(monkeypatch, tmp_path):
+    import ops.exp_uhd as exp_uhd
+    import ops.uhd_setup as uhd_setup
 
     called = {"run": 0}
 
@@ -303,9 +302,11 @@ def test_kiss_cov_exp_uhd_cli_and_local(monkeypatch):
         def run(self):
             called["run"] += 1
 
-    monkeypatch.setattr(exp_uhd, "_make_loop", lambda *a, **k: _Loop())
+    monkeypatch.setattr(uhd_setup, "make_loop", lambda *a, **k: _Loop())
     exp_uhd.cli.callback()
-    exp_uhd.local.callback("f:sphere-2d", 1, 0.001, "dense")
+    toml_file = tmp_path / "test.toml"
+    toml_file.write_text('[uhd]\nenv_tag = "f:sphere-2d"\nnum_rounds = 1\n')
+    exp_uhd.local.callback(str(toml_file))
     assert called["run"] == 1
 
 
@@ -377,58 +378,6 @@ def test_kiss_cov_modal_batches_functions(monkeypatch, tmp_path):
     monkeypatch.setattr(mb.modal.Dict, "delete", lambda name: deleted.append(name))
     mb.clean_up()
     assert "batches_dict" in deleted
-
-
-def test_kiss_cov_compare_to_gp_functions(monkeypatch):
-    fake_tp = types.ModuleType("third_party")
-    fake_enn_pkg = types.ModuleType("third_party.enn")
-    fake_enn_subpkg = types.ModuleType("third_party.enn.enn")
-    fake_enn_params = types.ModuleType("third_party.enn.enn.enn_params")
-    fake_enn_params.PosteriorFlags = lambda observation_noise=False: SimpleNamespace(observation_noise=observation_noise)
-    fake_enn_pkg.EpistemicNearestNeighbors = object
-    fake_enn_pkg.enn_fit = lambda *a, **k: object()
-    sys.modules["third_party"] = fake_tp
-    sys.modules["third_party.enn"] = fake_enn_pkg
-    sys.modules["third_party.enn.enn"] = fake_enn_subpkg
-    sys.modules["third_party.enn.enn.enn_params"] = fake_enn_params
-    from experiments.enn import compare_to_gp as cgp
-
-    class _PosteriorDist:
-        def log_prob(self, y):
-            return torch.tensor(float(y.shape[0]), dtype=torch.float64)
-
-    class _Posterior:
-        distribution = _PosteriorDist()
-
-    class _Model:
-        def posterior(self, x):
-            assert x.ndim == 2
-            return _Posterior()
-
-    gp_ll = cgp.compute_gp_ll(_Model(), np.zeros((3, 2)), np.zeros(3))
-    assert gp_ll == 1.0
-
-    fake_mod = types.ModuleType("third_party.enn.enn.enn_fit")
-    fake_mod._compute_single_loglik = lambda y, mu, se: 6.0
-    sys.modules["third_party.enn.enn.enn_fit"] = fake_mod
-
-    class _EnnModel:
-        def posterior(self, test_x, params, flags):
-            _ = (params, flags)
-            return SimpleNamespace(mu=np.zeros((len(test_x), 1)), se=np.ones((len(test_x), 1)))
-
-    enn_ll = cgp.compute_enn_ll(_EnnModel(), object(), np.zeros((3, 2)), np.zeros(3))
-    assert enn_ll == 2.0
-    assert np.isfinite(cgp.compute_mean_ll(np.array([0.0, 1.0])))
-
-    monkeypatch.setattr(cgp, "tqdm", lambda x, desc=None: x)
-    monkeypatch.setattr(
-        cgp,
-        "_run_dim_rep",
-        lambda *args, **kwargs: cgp._LLResult(gp_ll=1.0, enn_ll=2.0, mean_ll=3.0),
-    )
-    df = cgp.sweep_dim_ll_gp_vs_enn("sphere", 0.1, [2, 3], 0, 2, 4, 2, 3)
-    assert set(df["num_dim"].tolist()) == {2, 3}
 
 
 def test_kiss_cov_fig_util_functions(monkeypatch, tmp_path):

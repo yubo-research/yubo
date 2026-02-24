@@ -1,0 +1,13 @@
+[uhd]
+env_tag = "stand-mlp2:fn"
+num_rounds = 500
+optimizer = "simple_be"
+perturb = "dense"
+log_interval = 10
+noise_seed_0 = 0
+
+be_num_probes = 10
+be_num_candidates = 100
+be_warmup = 20
+be_fit_interval = 10
+be_enn_k = 10

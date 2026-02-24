@@ -1,0 +1,7 @@
+[uhd]
+env_tag = "stand-mlp2:fn"
+num_rounds = 500
+optimizer = "simple"
+perturb = "dense"
+log_interval = 10
+noise_seed_0 = 0

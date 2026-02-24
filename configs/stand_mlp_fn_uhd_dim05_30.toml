@@ -1,0 +1,14 @@
+[uhd]
+env_tag = "stand-mlp:fn"
+
+# Each eval is a full HumanoidStandup episode (~seconds). Start small.
+num_rounds = 30
+
+# Match experiments/experiment_sampler.py rep0:
+# problem_seed = 18, noise_seed_0 = 10 * problem_seed = 180.
+problem_seed = 18
+noise_seed_0 = 180
+
+lr = 0.001
+perturb = "dim:0.5"   # sparse perturbations only
+log_interval = 1

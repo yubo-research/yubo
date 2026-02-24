@@ -115,7 +115,7 @@ def check_fan_limits(repo_root: Path) -> list[str]:
     return sorted(violations)
 
 
-def main() -> int:
+def _main() -> int:
     repo_root = Path(__file__).resolve().parents[1]
     violations = check_fan_limits(repo_root)
     if not violations:
@@ -124,6 +124,9 @@ def main() -> int:
     for v in violations:
         print(f"  - {v}")
     return 1
+
+
+main = _main
 
 
 if __name__ == "__main__":

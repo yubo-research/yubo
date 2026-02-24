@@ -163,7 +163,7 @@ def single_coordinate_perturbation(x_0: np.ndarray):
     return x_f
 
 
-def raasp(x_0: np.ndarray, num_perturb):
+def _raasp(x_0: np.ndarray, num_perturb):
     _, num_dim = x_0.shape
 
     if num_perturb < num_dim:
@@ -171,6 +171,9 @@ def raasp(x_0: np.ndarray, num_perturb):
         _cgpt_zero_out_k_per_row_(dx, num_dim - num_perturb)
         return x_0 + dx
     return np.random.uniform(size=x_0.shape)
+
+
+raasp = _raasp
 
 
 def clip_to_boundary(x_0: np.ndarray, u: np.ndarray):

@@ -41,17 +41,17 @@ class YTransform(GPyTorchModule):
         ]:
             if prior is not None:
 
-                def the_prior(m, name=name):
+                def _the_prior(m, name=name):
                     return getattr(m, name.split("_")[0])
 
-                def setter(m, v, name=name):
+                def _setter(m, v, name=name):
                     self.initialize(**{name: v})
 
                 self.register_prior(
                     name,
                     prior,
-                    the_prior,
-                    setter,
+                    _the_prior,
+                    _setter,
                 )
 
         self.register_constraint(

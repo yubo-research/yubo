@@ -14,7 +14,7 @@ def _all_pure_functions():
     return all_bf
 
 
-def make(name, problem_seed, distort):
+def _make(name, problem_seed, distort):
     _, name = name.split(":")
     name, num_dim = name.split("-")
     assert num_dim[-1] == "d"
@@ -24,6 +24,9 @@ def make(name, problem_seed, distort):
     if name in all_bf:
         return PureFunctionEnv(all_bf[name](), num_dim, problem_seed, distort=distort)
     assert False, name
+
+
+make = _make
 
 
 # all domains are [-1,1]**num_dim

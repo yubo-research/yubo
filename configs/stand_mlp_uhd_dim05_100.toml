@@ -1,0 +1,13 @@
+[uhd]
+env_tag = "stand-mlp"
+
+# Each eval is a full HumanoidStandup episode; keep modest for first look.
+num_rounds = 100
+
+lr = 0.001
+
+# Sparse perturbations only (dimension-level sparsity).
+perturb = "dim:0.5"
+
+# No ENN / embedding (leave defaults; no enn_* keys).
+log_interval = 1

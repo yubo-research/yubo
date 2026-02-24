@@ -1,0 +1,11 @@
+[uhd]
+# HumanoidStandup-v5 with MLPPolicyFactory((32,16)) from `problems/env_conf.py`.
+env_tag = "stand-mlp"
+
+# Keep small for a first smoke run; each evaluation is a full episode.
+num_rounds = 10
+
+# UHD defaults (explicit for clarity)
+lr = 0.001
+perturb = "dense"
+log_interval = 1

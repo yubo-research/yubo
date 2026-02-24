@@ -1,0 +1,11 @@
+[uhd]
+# Full-train objective: f(x) = loss_on_entire_training_set(x)
+env_tag = "mnist_fulltrain"
+num_rounds = 800
+
+lr = 0.001
+perturb = "dim:0.5"
+
+# Full-train eval is ~0.4s/call on MPS; keep logging reasonably sparse.
+log_interval = 10
+accuracy_interval = 50

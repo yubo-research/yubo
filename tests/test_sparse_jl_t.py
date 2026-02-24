@@ -3,7 +3,10 @@ import torch
 from scipy.stats import spearmanr
 from torch import nn
 
-from sampling.sparse_jl_t import block_sparse_jl_transform_module, block_sparse_jl_transform_t
+from sampling.sparse_jl_t import (
+    block_sparse_jl_transform_module,
+    block_sparse_jl_transform_t,
+)
 
 
 def test_sparse_jl_t_preserves_neighbors_and_correlations():

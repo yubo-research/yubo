@@ -1,0 +1,16 @@
+# UHDSimpleBE: (1+1)-ES with BehavioralEmbedder + ENN seed selection.
+# After warmup, scores 10 candidate perturbation seeds via UCB and picks the best.
+# Everything else matches mnist_simple_baseline.toml for a fair comparison.
+
+env_tag = "mnist_fulltrain_acc"
+num_rounds = 1000
+optimizer = "simple_be"
+perturb = "dense"
+log_interval = 10
+accuracy_interval = 100
+
+be_num_probes = 10
+be_num_candidates = 30
+be_warmup = 20
+be_fit_interval = 10
+be_enn_k = 10
