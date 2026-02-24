@@ -4,7 +4,7 @@ import modal
 from grpclib import GRPCError
 
 
-def collect(job_fn, cb_job):
+def _collect(job_fn, cb_job):
     with open(job_fn) as f:
         num_ids = 0
         for _ in f:
@@ -30,6 +30,9 @@ def collect(job_fn, cb_job):
             cb_job(result)
 
     print(f"STATS: num = {num} num_skipped = {num_skipped}")
+
+
+collect = _collect
 
 
 class DistModal:

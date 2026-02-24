@@ -29,6 +29,4 @@ Intent:
 - `rl/pufferlib/...`
 
 Notes:
-- `rl/backends` is removed from live code paths.
-- `rl/builtins.py` now anchors `rl.torchrl` + `rl.pufferlib` directly.
-- Runner/registry semantics are unchanged.
+- `rl/builtins.py` anchors `rl.torchrl` + `rl.pufferlib`
