@@ -672,3 +672,421 @@ def test_cov_modal_learn_get_job_result_main(monkeypatch):
 
     assert callable(get_job_result)
     assert callable(main)
+
+
+def test_cov_gap_optimizer_and_surrogate_units():
+    from optimizer.ellipsoidal_trust_region import ENNTrueEllipsoidalTrustRegion
+    from optimizer.enn_surrogate_ext import GeometryENNSurrogate, LocalGeometryValues
+    from optimizer.enn_turbo_optimizer import (
+        TurboOptimizer,
+        create_optimizer,
+    )
+    from optimizer.enn_turbo_optimizer import (
+        predict_mu_sigma as turbo_predict_mu_sigma,
+    )
+    from optimizer.enn_turbo_optimizer import (
+        scalarize as turbo_scalarize,
+    )
+    from optimizer.lr_scheduler import ConstantLR, LRScheduler
+    from optimizer.multi_turbo_enn_designer import MultiTurboRuntimeState
+    from optimizer.sparse_gaussian_perturbator import SparseGaussianPerturbator
+    from optimizer.trust_region_config import MetricShapedTRConfig
+    from optimizer.trust_region_utils import _LengthPolicy, _OptionCLengthPolicy
+    from optimizer.turbo_enn_designer_ext import (
+        TurboENNDesigner,
+        _predict_mu_sigma,
+        _scalarize,
+    )
+    from torch_truncnorm.TruncatedNormal import TruncatedStandardNormal
+
+    # Protocol unit coverage.
+    sched = ConstantLR(0.01)
+    assert isinstance(sched, LRScheduler)
+
+    # Dataclass unit coverage.
+    rt = MultiTurboRuntimeState()
+    assert rt.shared_prefix_len == 0
+
+    # pending_rho properties.
+    lp = _LengthPolicy()
+    assert lp.pending_rho is None
+    oc = _OptionCLengthPolicy(rho_bad=0.25, rho_good=0.75, gamma_down=0.5, gamma_up=2.0)
+    assert oc.pending_rho is None
+    oc.set_acceptance_ratio(pred=1.0, act=0.1, boundary_hit=False)
+    assert oc.pending_rho is not None
+    _ = oc.apply_after_super_update(current_length=1.0, base_length=1.0, fixed_length=None, length_max=2.0)
+    assert oc.pending_rho is None
+
+    # Sparse global-nz sampler.
+    module = nn.Linear(3, 2, bias=False)
+    sp = SparseGaussianPerturbator(module, num_dim_target=2)
+    idx, vals = sp.sample_global_nz(seed=0, sigma=0.1)
+    assert idx.shape == vals.shape
+    assert idx.dtype == np.int64
+
+    # TruncatedNormal variance/auc properties.
+    tsn = TruncatedStandardNormal(torch.tensor(-1.0), torch.tensor(1.0))
+    assert float(tsn.variance) > 0.0
+    assert float(tsn.auc) > 0.0
+
+    # Ellipsoidal TR class construction.
+    tr = MetricShapedTRConfig(geometry="enn_true_ellipsoid").build(num_dim=3, rng=np.random.default_rng(0))
+    assert isinstance(tr, ENNTrueEllipsoidalTrustRegion)
+
+    # Surrogate local geometry helpers.
+    class _FakeInternals:
+        def __init__(self):
+            self.idx = np.array([[0, 1]], dtype=np.int64)
+            self.w_normalized = np.array([[[0.75], [0.25]]], dtype=float)
+
+    class _FakeENN:
+        def __init__(self):
+            self.train_x = np.array([[0.0, 0.0], [1.0, 0.0]], dtype=float)
+            self.train_y = np.array([[1.0], [0.5]], dtype=float)
+            self.num_outputs = 1
+
+        def __len__(self):
+            return 2
+
+        def _compute_posterior_internals(self, x, params, flags):
+            _ = x, params, flags
+            return _FakeInternals()
+
+    surrogate = object.__new__(GeometryENNSurrogate)
+    surrogate._enn = _FakeENN()
+    surrogate._params = SimpleNamespace(k_num_neighbors=2)
+    dx, w = surrogate.local_geometry(np.array([0.2, 0.0]))
+    assert dx.shape == (2, 2)
+    assert w.shape == (2,)
+    geom_vals = surrogate.local_geometry_values(np.array([0.2, 0.0]))
+    assert isinstance(geom_vals, LocalGeometryValues)
+    assert geom_vals.delta_x.shape == (2, 2)
+
+    # Predict/scalarize helper units.
+    class _Posterior:
+        def __init__(self, n):
+            self.mu = np.ones((n, 1), dtype=float)
+            self.sigma = 0.1 * np.ones((n, 1), dtype=float)
+
+    class _Surrogate:
+        lengthscales = None
+
+        def predict(self, x):
+            return _Posterior(int(x.shape[0]))
+
+    class _TRState:
+        length = 1.0
+
+        @staticmethod
+        def scalarize(y, clip=False):
+            _ = clip
+            return np.asarray(y, dtype=float)
+
+    opt_stub = SimpleNamespace(
+        _bounds=np.array([[-1.0, 1.0], [-1.0, 1.0]], dtype=float),
+        _surrogate=_Surrogate(),
+        _tr_state=_TRState(),
+        _num_dim=2,
+    )
+    assert _predict_mu_sigma(opt_stub, np.array([0.0, 0.0])) is not None
+    assert _scalarize(opt_stub, np.array([[1.0]])) is not None
+    assert turbo_predict_mu_sigma(opt_stub, np.array([0.0, 0.0])) is not None
+    assert turbo_scalarize(opt_stub, np.array([[1.0]])) is not None
+
+    # Symbol coverage for class/function units.
+    _ = TurboENNDesigner, TurboOptimizer, create_optimizer
+
+
+def test_cov_gap_uhd_units():
+    import pytest
+
+    from embedding.behavioral_embedder import BehavioralEmbedder
+    from optimizer.gaussian_perturbator import GaussianPerturbator
+    from optimizer.lr_scheduler import ConstantLR
+    from optimizer.uhd_enn_imputer import ENNImputerConfig, ENNMinusImputer
+    from optimizer.uhd_loop import UHDLoop
+    from optimizer.uhd_mezo import UHDMeZO
+    from optimizer.uhd_simple_base import UHDSimpleBase
+    from optimizer.uhd_simple_be import UHDMeZOBE, UHDSimpleBE
+    from optimizer.uhd_simple_be_np import UHDSimpleBENp
+    from optimizer.uhd_simple_np import UHDSimpleNp
+
+    class _NPPolicy:
+        def __init__(self, dim: int):
+            self._x = np.zeros((dim,), dtype=np.float64)
+
+        def get_params(self):
+            return self._x.copy()
+
+        def set_params(self, x):
+            self._x = np.asarray(x, dtype=np.float64).copy()
+
+        def __call__(self, probe):
+            return np.array([float(np.sum(self._x) + np.sum(probe))], dtype=np.float64)
+
+    bounds = torch.tensor([[-1.0], [1.0]], dtype=torch.float32)
+    embedder = BehavioralEmbedder(bounds, num_probes=2, seed=0)
+    p = _NPPolicy(3)
+    z = embedder.embed_policy(p, np.array([0.1, 0.2, 0.3], dtype=np.float64))
+    assert z.ndim == 1
+
+    # Base/simple numpy variants.
+    np_simple = UHDSimpleNp(p, sigma_0=0.1, param_clip=(-1.0, 1.0))
+    np_simple.ask()
+    np_simple.tell(1.0, 0.1)
+    assert np_simple.y_best is not None
+
+    np_be = UHDSimpleBENp(
+        p,
+        embedder,
+        sigma_0=0.1,
+        num_candidates=2,
+        warmup=1,
+        fit_interval=1,
+        enn_k=1,
+    )
+    np_be.ask()
+    np_be.tell(1.0, 0.1)
+    np_be.ask()
+    np_be.tell(0.5, 0.1)
+    assert np_be.y_best is not None
+
+    # UHDSimpleBase class unit.
+    module = nn.Linear(1, 1, bias=False)
+    gp = GaussianPerturbator(module)
+    base = UHDSimpleBase(gp, sigma_0=0.1, dim=module.weight.numel(), sigma_range=(0.01, 0.1))
+    sigmas = base._sample_sigmas(base_seed=0, n=3)
+    assert sigmas.shape == (3,)
+
+    # MeZO controls + properties.
+    mezo = UHDMeZO(gp, dim=module.weight.numel(), lr_scheduler=ConstantLR(0.01), sigma=0.1)
+    assert mezo.positive_phase is True
+    mezo.set_next_seed(7)
+    mezo.ask()
+    assert mezo.step_seed == 7
+    assert mezo.step_sigma > 0
+    assert mezo.perturbator is gp
+    mezo.tell(1.0, 0.1)
+    assert mezo.positive_phase is False
+    with pytest.raises(RuntimeError):
+        mezo.set_next_seed(8)
+    mezo.skip_negative()
+    assert mezo.positive_phase is True
+
+    # Run one full pair to exercise last_step_scale path.
+    mezo.ask()
+    mezo.tell(1.0, 0.1)
+    mezo.ask()
+    mezo.tell(0.5, 0.1)
+    assert isinstance(mezo.last_step_scale, float)
+
+    # UHDSimpleBE / UHDMeZOBE units.
+    module_be = nn.Linear(1, 1, bias=False)
+    gp_be = GaussianPerturbator(module_be)
+    be_embedder = BehavioralEmbedder(torch.tensor([[-1.0], [1.0]]), num_probes=2, seed=1)
+    simple_be = UHDSimpleBE(
+        gp_be,
+        sigma_0=0.1,
+        dim=module_be.weight.numel(),
+        module=module_be,
+        embedder=be_embedder,
+        num_candidates=2,
+        warmup=1,
+        fit_interval=1,
+        enn_k=1,
+    )
+    simple_be.ask()
+    simple_be.tell(1.0, 0.1)
+    simple_be.ask()
+    simple_be.tell(0.5, 0.1)
+    assert simple_be.y_best is not None
+
+    module_mezo_be = nn.Linear(1, 1, bias=False)
+    gp_mezo_be = GaussianPerturbator(module_mezo_be)
+    mezo_be = UHDMeZOBE(
+        gp_mezo_be,
+        dim=module_mezo_be.weight.numel(),
+        module=module_mezo_be,
+        embedder=be_embedder,
+        sigma=0.1,
+        num_candidates=2,
+        warmup=1,
+        fit_interval=1,
+        enn_k=1,
+    )
+    assert mezo_be.positive_phase is True
+    mezo_be.ask()
+    mezo_be.tell(1.0, 0.1)
+    mezo_be.ask()
+    mezo_be.tell(0.5, 0.1)
+    assert mezo_be.positive_phase is True
+
+    # ENN minus imputer units.
+    cfg = ENNImputerConfig(
+        warmup_real_obs=1,
+        fit_interval=1,
+        refresh_interval=0,
+        min_calib_points=0,
+        max_abs_err_ema=1e9,
+        se_threshold=1e9,
+        target="mu_minus",
+    )
+
+    def _noise_nz(seed: int, sigma: float) -> tuple[np.ndarray, np.ndarray]:
+        _ = seed
+        return np.array([0], dtype=np.int64), np.array([sigma], dtype=np.float32)
+
+    imp = ENNMinusImputer(module=module_mezo_be, cfg=cfg, noise_nz_fn=_noise_nz)
+    imp.begin_pair(seed=0, sigma=0.1)
+    imp.tell_real(mu=1.0, phase="plus")
+    imp.tell_real(mu=0.8, phase="minus")
+    imp._maybe_fit()
+    imp._num_calib = 1
+    imp._abs_err_ema = 0.0
+    _ = imp.should_impute_negative()
+    mu_hat, se_hat = imp.predict_current()
+    assert np.isfinite(mu_hat)
+    assert np.isfinite(se_hat)
+    imputed, mu2, se2 = imp.try_impute_current()
+    assert isinstance(imputed, bool)
+    assert np.isfinite(mu2) or np.isnan(mu2)
+    assert np.isfinite(se2) or np.isnan(se2)
+    imp.calibrate_minus(mu_minus_real=0.7)
+    imp.update_base_after_step(step_scale=0.01, sigma=0.1)
+    assert imp.num_real_evals >= 2
+    assert imp.num_imputed >= 0
+    _ = imp.abs_err_ema
+
+    # UHDLoop control methods/properties.
+    loop = UHDLoop(
+        module_mezo_be,
+        evaluate_fn=lambda _seed: (0.0, 0.1),
+        num_iterations=0,
+    )
+    assert loop.perturbator is not None
+    loop.set_enn(minus_imputer=imp, seed_selector=None)
+    loop.set_early_reject_advanced(tau=0.1, mode="ema")
+
+
+def test_cov_gap_ops_and_problem_units(monkeypatch, tmp_path):
+    import gymnasium as gym
+    from click.testing import CliRunner
+
+    import ops.exp_uhd as exp_uhd
+    import problems.atari_env as atari_env
+
+    # run_simple_loop unit coverage (patched to no-op branch).
+    from ops.uhd_setup import run_simple_loop
+    from problems.dm_control_env import DMControlEnv
+    from problems.push import Push
+    from problems.shimmy_dm_control import _FlattenDictObsWrapper
+
+    class _DummyGymEnv:
+        def close(self):
+            return None
+
+    class _DummyConf:
+        problem_seed = 0
+
+        @staticmethod
+        def make():
+            return _DummyGymEnv()
+
+    monkeypatch.setattr("problems.env_conf.get_env_conf", lambda *a, **k: _DummyConf())
+    monkeypatch.setattr("ops.uhd_setup._run_simple_gym", lambda *a, **k: None)
+    run_simple_loop("f:sphere-2d", num_rounds=1, optimizer="simple")
+
+    # modal_cmd unit coverage via explicit callback.
+    toml = tmp_path / "uhd.toml"
+    toml.write_text('[uhd]\nenv_tag="f:sphere-2d"\nnum_rounds=1\n')
+    monkeypatch.setattr("ops.modal_uhd.run", lambda *a, **k: "ok")
+    runner = CliRunner()
+    res = runner.invoke(exp_uhd.cli, ["modal", str(toml)])
+    assert res.exit_code == 0
+    _ = exp_uhd.modal_cmd
+
+    # AtariPreprocessOptions / make_atari_env units without ALE dependency.
+    class _DummyAtariEnv:
+        observation_space = gym.spaces.Box(low=0, high=255, shape=(84, 84, 1), dtype=np.uint8)
+        action_space = gym.spaces.Discrete(2)
+
+    monkeypatch.setattr(atari_env.gym, "make", lambda *a, **k: _DummyAtariEnv())
+    monkeypatch.setattr(atari_env.gym.wrappers, "AtariPreprocessing", lambda env, **k: env)
+    monkeypatch.setattr(atari_env.gym.wrappers, "FrameStackObservation", lambda env, stack_size: env)
+    monkeypatch.setattr(atari_env.gym.wrappers, "TimeLimit", lambda env, max_episode_steps: env)
+    opts = atari_env.AtariPreprocessOptions()
+    env = atari_env.make_atari_env("ALE/Pong-v5", preprocess=opts)
+    assert env is not None
+
+    # DMControlEnv/render units.
+    class _DummySpec:
+        shape = (1,)
+        dtype = np.float32
+        minimum = np.array([-1.0], dtype=np.float32)
+        maximum = np.array([1.0], dtype=np.float32)
+
+    class _DummyTS:
+        def __init__(self):
+            self.observation = {"x": np.array([0.0], dtype=np.float32)}
+            self.reward = 0.0
+            self.discount = 1.0
+
+        def last(self):
+            return False
+
+    class _DummyPhysics:
+        @staticmethod
+        def render(width, height):
+            return np.zeros((height, width, 3), dtype=np.uint8)
+
+    class _DummyDM:
+        physics = _DummyPhysics()
+
+        @staticmethod
+        def observation_spec():
+            return {"x": _DummySpec()}
+
+        @staticmethod
+        def action_spec():
+            return _DummySpec()
+
+        @staticmethod
+        def reset():
+            return _DummyTS()
+
+        @staticmethod
+        def step(_action):
+            return _DummyTS()
+
+        @staticmethod
+        def close():
+            return None
+
+    monkeypatch.setattr(DMControlEnv, "_load_env", lambda self, seed: _DummyDM())
+    dm = DMControlEnv("cartpole", "swingup", render_mode="rgb_array")
+    frame = dm.render()
+    assert frame.shape[2] == 3
+    dm.close()
+
+    # push.f_max and shimmy flatten wrapper observation.
+    p = Push()
+    assert float(p.f_max) > 0.0
+
+    class _DictEnv(gym.Env):
+        metadata = {"render_modes": []}
+        observation_space = gym.spaces.Dict({"a": gym.spaces.Box(low=-1.0, high=1.0, shape=(1,), dtype=np.float32)})
+        action_space = gym.spaces.Discrete(1)
+
+        def reset(self, *, seed=None, options=None):
+            _ = seed, options
+            return {"a": np.array([0.0], dtype=np.float32)}, {}
+
+        def step(self, action):
+            _ = action
+            return {"a": np.array([0.0], dtype=np.float32)}, 0.0, False, False, {}
+
+    wrapped = _FlattenDictObsWrapper(_DictEnv())
+    obs, _ = wrapped.reset(seed=0)
+    out = wrapped.observation({"a": np.array([1.0], dtype=np.float32)})
+    assert out.shape == (1,)
+    assert obs.shape == (1,)

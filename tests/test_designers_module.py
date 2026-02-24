@@ -215,6 +215,45 @@ def test_turbo_enn_fit_true_ellipsoid_options(monkeypatch):
     assert captured["boundary_tol"] == 0.05
 
 
+def test_turbo_enn_fit_ext_unknown_option_raises():
+    from optimizer import designer_registry as dr
+    from optimizer.designers import NoSuchDesignerError
+
+    with pytest.raises(NoSuchDesignerError, match="Unknown designer option"):
+        dr._d_turbo_enn_fit_ext_v2(
+            _mk_ctx(MockPolicy()),
+            {
+                "acq_type": "ucb",
+                "typo_option": 1,
+            },
+        )
+
+
+def test_turbo_enn_fit_ext_scale_overrides_counts(monkeypatch):
+    from optimizer import designer_registry as dr
+
+    captured = {}
+
+    def _fake(ctx, **kwargs):
+        captured.update(kwargs)
+        return object()
+
+    monkeypatch.setattr(dr, "_turbo_enn_ext", _fake)
+    _ = dr._d_turbo_enn_fit_ext_v2(
+        _mk_ctx(MockPolicy(num_params=512)),
+        {
+            "acq_type": "ucb",
+            "num_candidates": 1,
+            "num_fit_samples": 1,
+            "num_fit_candidates": 1,
+            "scale": "high",
+        },
+    )
+    assert captured["num_candidates"] > 1
+    assert captured["num_fit_samples"] > 1
+    assert captured["num_fit_candidates"] > 1
+
+
 def test_designers_is_valid_for_multi_turbo_names():
     from optimizer.designers import Designers
 

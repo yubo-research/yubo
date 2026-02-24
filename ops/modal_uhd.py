@@ -1,9 +1,16 @@
+import importlib
 from pathlib import Path
 
 import modal
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
 _PROJECT_DIRS = ("ops", "optimizer", "problems", "common", "sampling")
+
+
+def _load_attr(module_name: str, attr_name: str):
+    module = importlib.import_module(module_name)
+    return getattr(module, attr_name)
+
 
 _image = (
     modal.Image.debian_slim(python_version="3.11.9")
@@ -164,7 +171,7 @@ def _run(
         import io
         import sys
 
-        from ops.uhd_setup import make_loop
+        make_loop = _load_attr("ops.uhd_setup", "make_loop")
 
         loop = make_loop(
             env_tag,

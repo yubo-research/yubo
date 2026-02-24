@@ -311,10 +311,11 @@ class Optimizer:
         cum_time = time.time() - self._t_0
         self._cum_dt_proposing += dt_prop
         algo_metrics = get_designer_algo_metrics(designer)
+        algo_str = ""
         if algo_metrics:
-            algo_str = " " + " ".join(f"{k}={v:.3f}" for k, v in sorted(algo_metrics.items()) if isinstance(v, (int, float)) and v == v)
-        else:
-            algo_str = " " + self._telemetry.format()
+            metrics = [f"{k}={v:.3f}" for k, v in sorted(algo_metrics.items()) if isinstance(v, (int, float)) and v == v]
+            if metrics:
+                algo_str = " " + " ".join(metrics)
         if ret_eval > -1e98:
             self._collector(
                 f"ITER: iter={self._i_iter} elapsed={cum_time:.2f}s eval_dt={dt_eval:.3f}s proposal_dt={dt_prop:.3f}s "

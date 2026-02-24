@@ -701,6 +701,37 @@ def _optional_str_in(opts: dict, key: str, allowed: set[str]) -> str | None:
     return v
 
 
+def _raise_unknown_opts(opts: dict, allowed_keys: set[str]) -> None:
+    unknown = sorted(set(opts.keys()) - set(allowed_keys))
+    if unknown:
+        raise NoSuchDesignerError(f"Unknown designer option(s): {', '.join(unknown)}")
+
+
+def _scale_bucket(scale: str, num_dim: int) -> str:
+    if scale != "auto":
+        return scale
+    if num_dim < 256:
+        return "low"
+    if num_dim < 1024:
+        return "medium"
+    if num_dim < 4096:
+        return "high"
+    return "huge"
+
+
+def _scaled_turbo_fit_counts(ctx: _SimpleContext, scale: str, *, morbo: bool) -> tuple[int | None, int, int, int]:
+    num_dim = max(1, int(ctx.policy.num_params()))
+    arms = max(1, int(ctx.num_arms))
+    bucket = _scale_bucket(scale, num_dim)
+    mult = {"low": 1, "medium": 2, "high": 4, "huge": 8}[bucket]
+    base = max(64, min(512, num_dim))
+    num_candidates = base * mult
+    num_fit_samples = max(100, (base // 2) * mult)
+    num_fit_candidates = num_candidates * (arms if morbo else 1)
+    num_keep = (4 * mult * arms) if ctx.num_keep_val is not None else None
+    return num_keep, num_candidates, num_fit_samples, num_fit_candidates
+
+
 def _turbo_enn_multi(ctx: _SimpleContext, **kw):
     MultiTurboHarnessConfig = _load_symbol("optimizer.multi_turbo_enn_designer", "MultiTurboHarnessConfig")
     TurboENNRegionConfig = _load_symbol("optimizer.multi_turbo_enn_designer", "TurboENNRegionConfig")
@@ -750,102 +781,6 @@ def _turbo_enn_multi(ctx: _SimpleContext, **kw):
         raise NoSuchDesignerError(f"Unknown designer option(s): {keys}")
     config = MultiTurboENNConfig(harness=harness, region=region)
     return MultiTurboENNDesigner(ctx.policy, config=config)
-
-
-def _d_turbo_enn_fit_ext(ctx: _SimpleContext, opts: dict):
-    acq_type = _require_str_in(
-        opts,
-        "acq_type",
-        {"pareto", "thompson", "ucb"},
-        example="turbo-enn-fit/acq_type=ucb",
-    )
-    candidate_rv = _optional_str_in(opts, "candidate_rv", {"sobol", "uniform", "gpu_uniform"})
-    num_candidates = _optional_int(opts, "num_candidates")
-    num_fit_samples = _optional_int(opts, "num_fit_samples")
-    num_fit_candidates = _optional_int(opts, "num_fit_candidates")
-    geometry = _optional_str_in(
-        opts,
-        "geometry",
-        {
-            "box",
-            "enn_metric_shaped",
-            "enn_grad_metric_shaped",
-            "enn_true_ellipsoid",
-            "enn_grad_true_ellipsoid",
-        },
-    )
-    sampler = _optional_str_in(opts, "sampler", {"full", "low_rank"})
-    rank = _optional_int(opts, "rank")
-    tr_length_fixed = _optional_float(opts, "tr_length_fixed")
-    update_option = _optional_str_in(opts, "update_option", {"option_a", "option_b", "option_c"})
-    p_raasp = _optional_float(opts, "p_raasp")
-    radial_mode = _optional_str_in(opts, "radial_mode", {"ball_uniform", "boundary"})
-    shape_period = _optional_int(opts, "shape_period")
-    shape_ema = _optional_float(opts, "shape_ema")
-    rho_bad = _optional_float(opts, "rho_bad")
-    rho_good = _optional_float(opts, "rho_good")
-    gamma_down = _optional_float(opts, "gamma_down")
-    gamma_up = _optional_float(opts, "gamma_up")
-    boundary_tol = _optional_float(opts, "boundary_tol")
-    pc_rotation_mode = _optional_str_in(opts, "pc_rotation_mode", {"full", "low_rank"})
-    pc_rank = _optional_int(opts, "pc_rank")
-    return _turbo_enn(
-        ctx,
-        turbo_mode="turbo-enn",
-        k=10,
-        num_keep=ctx.num_keep_val,
-        num_fit_samples=100 if num_fit_samples is None else num_fit_samples,
-        num_fit_candidates=100 if num_fit_candidates is None else num_fit_candidates,
-        acq_type=acq_type,
-        tr_type=None,
-        tr_geometry=geometry,
-        metric_sampler=sampler,
-        metric_rank=rank,
-        pc_rotation_mode=pc_rotation_mode,
-        pc_rank=pc_rank,
-        tr_length_fixed=tr_length_fixed,
-        update_option="option_a" if update_option is None else update_option,
-        p_raasp=0.2 if p_raasp is None else p_raasp,
-        radial_mode="ball_uniform" if radial_mode is None else radial_mode,
-        shape_period=5 if shape_period is None else shape_period,
-        shape_ema=0.2 if shape_ema is None else shape_ema,
-        rho_bad=0.25 if rho_bad is None else rho_bad,
-        rho_good=0.75 if rho_good is None else rho_good,
-        gamma_down=0.5 if gamma_down is None else gamma_down,
-        gamma_up=2.0 if gamma_up is None else gamma_up,
-        boundary_tol=0.1 if boundary_tol is None else boundary_tol,
-        candidate_rv=candidate_rv,
-        num_candidates=num_candidates,
-    )
-
-
-def _d_morbo_enn_fit_ext(ctx: _SimpleContext, opts: dict):
-    from optimizer.bo_scale import apply_scale_to_opts
-
-    num_dim = ctx.policy.num_params()
-    opts = apply_scale_to_opts(opts, num_dim, merge=True)
-    acq_type = _require_str_in(
-        opts,
-        "acq_type",
-        {"pareto", "thompson", "ucb"},
-        example="morbo-enn-fit/acq_type=ucb",
-    )
-    candidate_rv = _optional_str_in(opts, "candidate_rv", {"sobol", "uniform", "gpu_uniform"})
-    num_candidates = _optional_int(opts, "num_candidates")
-    num_fit_samples = _optional_int(opts, "num_fit_samples")
-    num_fit_candidates = _optional_int(opts, "num_fit_candidates")
-    return _turbo_enn(
-        ctx,
-        turbo_mode="turbo-enn",
-        k=10,
-        num_keep=ctx.num_keep_val,
-        num_fit_samples=100 if num_fit_samples is None else num_fit_samples,
-        num_fit_candidates=(100 * ctx.num_arms) if num_fit_candidates is None else num_fit_candidates,
-        acq_type=acq_type,
-        tr_type="morbo",
-        candidate_rv=candidate_rv,
-        num_candidates=num_candidates,
-    )
 
 
 def _d_turbo_enn_multi_ext(ctx: _SimpleContext, opts: dict):
@@ -1406,8 +1341,6 @@ _DESIGNER_OPTION_SPECS["morbo-enn-multi"] = [
 
 _DESIGNER_DISPATCH.update(
     {
-        "turbo-enn-fit": _d_turbo_enn_fit_ext,
-        "morbo-enn-fit": _d_morbo_enn_fit_ext,
         "turbo-enn-multi": _d_turbo_enn_multi_ext,
         "morbo-enn-multi": _d_morbo_enn_multi_ext,
     }
@@ -1420,6 +1353,33 @@ def _turbo_enn_ext(ctx: _SimpleContext, **kw):
 
 
 def _d_turbo_enn_fit_ext_v2(ctx: _SimpleContext, opts: dict):
+    _raise_unknown_opts(
+        opts,
+        {
+            "acq_type",
+            "candidate_rv",
+            "num_candidates",
+            "num_fit_samples",
+            "num_fit_candidates",
+            "geometry",
+            "sampler",
+            "rank",
+            "tr_length_fixed",
+            "update_option",
+            "p_raasp",
+            "radial_mode",
+            "shape_period",
+            "shape_ema",
+            "rho_bad",
+            "rho_good",
+            "gamma_down",
+            "gamma_up",
+            "boundary_tol",
+            "pc_rotation_mode",
+            "pc_rank",
+            "scale",
+        },
+    )
     acq_type = _require_str_in(
         opts,
         "acq_type",
@@ -1454,11 +1414,19 @@ def _d_turbo_enn_fit_ext_v2(ctx: _SimpleContext, opts: dict):
     gamma_down = _optional_float(opts, "gamma_down")
     gamma_up = _optional_float(opts, "gamma_up")
     boundary_tol = _optional_float(opts, "boundary_tol")
+    scale = _optional_str_in(opts, "scale", {"auto", "low", "medium", "high", "huge"})
+    scaled_num_keep = None
+    if scale is not None:
+        scaled_num_keep, num_candidates, num_fit_samples, num_fit_candidates = _scaled_turbo_fit_counts(
+            ctx,
+            scale,
+            morbo=False,
+        )
     return _turbo_enn_ext(
         ctx,
         turbo_mode="turbo-enn",
         k=10,
-        num_keep=ctx.num_keep_val,
+        num_keep=scaled_num_keep if scale is not None else ctx.num_keep_val,
         num_fit_samples=100 if num_fit_samples is None else num_fit_samples,
         num_fit_candidates=100 if num_fit_candidates is None else num_fit_candidates,
         acq_type=acq_type,
@@ -1483,6 +1451,16 @@ def _d_turbo_enn_fit_ext_v2(ctx: _SimpleContext, opts: dict):
 
 
 def _d_morbo_enn_fit_ext_v2(ctx: _SimpleContext, opts: dict):
+    _raise_unknown_opts(
+        opts,
+        {
+            "acq_type",
+            "candidate_rv",
+            "num_candidates",
+            "num_fit_samples",
+            "num_fit_candidates",
+        },
+    )
     acq_type = _require_str_in(
         opts,
         "acq_type",

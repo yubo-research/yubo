@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 from dataclasses import dataclass
-from typing import Any
 
 import click
 import tomllib
@@ -67,16 +66,21 @@ _ENN_DEFAULTS: dict[str, object] = {
 }
 
 
+def _load_attr(module_name: str, attr_name: str):
+    module = __import__(module_name, fromlist=[attr_name])
+    return getattr(module, attr_name)
+
+
 def _normalize_key(key: str) -> str:
     # Match experiments/experiment.py convention: allow hyphenated keys in TOML.
     return key.replace("-", "_")
 
 
-def _coerce_mapping_keys(raw: dict[str, Any], *, source: str) -> dict[str, Any]:
+def _coerce_mapping_keys(raw: dict[str, object], *, source: str) -> dict[str, object]:
     if not isinstance(raw, dict):
         raise TypeError("TOML config must be a mapping at root or under [uhd].")
 
-    out: dict[str, Any] = {}
+    out: dict[str, object] = {}
     for key, value in raw.items():
         norm = _normalize_key(str(key))
         if norm not in _ALL_TOML_KEYS:
@@ -85,14 +89,14 @@ def _coerce_mapping_keys(raw: dict[str, Any], *, source: str) -> dict[str, Any]:
     return out
 
 
-def _load_toml_config(path: str) -> dict[str, Any]:
+def _load_toml_config(path: str) -> dict[str, object]:
     with open(path, "rb") as f:
         data = tomllib.load(f)
     section = data.get("uhd", data)
     return _coerce_mapping_keys(section, source=f"TOML '{path}'")
 
 
-def _validate_required(cfg: dict[str, Any]) -> None:
+def _validate_required(cfg: dict[str, object]) -> None:
     missing = [k for k in _REQUIRED_TOML_KEYS if k not in cfg]
     if missing:
         raise ValueError(f"Missing required fields: {missing}. Required: {sorted(_REQUIRED_TOML_KEYS)}")
@@ -170,7 +174,7 @@ class _EarlyRejectFields:
     window: int | None
 
 
-def _parse_early_reject_fields(cfg: dict[str, Any]) -> _EarlyRejectFields:
+def _parse_early_reject_fields(cfg: dict[str, object]) -> _EarlyRejectFields:
     early_reject_tau = cfg.get("early_reject_tau", None)
     if early_reject_tau is not None:
         early_reject_tau = float(early_reject_tau)
@@ -217,7 +221,7 @@ class _ENNFields:
     gather_t: int
 
 
-def _parse_enn_fields(cfg: dict[str, Any]) -> _ENNFields:
+def _parse_enn_fields(cfg: dict[str, object]) -> _ENNFields:
     enn_minus_impute = bool(cfg.get("enn_minus_impute", _ENN_DEFAULTS["enn_minus_impute"]))
     enn_d = int(cfg.get("enn_d", _ENN_DEFAULTS["enn_d"]))
     enn_s = int(cfg.get("enn_s", _ENN_DEFAULTS["enn_s"]))
@@ -250,7 +254,7 @@ def _parse_enn_fields(cfg: dict[str, Any]) -> _ENNFields:
     )
 
 
-def _parse_cfg(cfg: dict[str, Any]) -> UHDConfig:
+def _parse_cfg(cfg: dict[str, object]) -> UHDConfig:
     env_tag = str(cfg["env_tag"])
     num_rounds = int(cfg["num_rounds"])
     problem_seed = cfg.get("problem_seed", None)
@@ -337,7 +341,7 @@ def _local(config_toml: str) -> None:
 
 
 def _run_simple(parsed: UHDConfig) -> None:
-    from ops.uhd_setup import run_simple_loop
+    run_simple_loop = _load_attr("ops.uhd_setup", "run_simple_loop")
 
     run_simple_loop(
         parsed.env_tag,
@@ -361,7 +365,7 @@ def _run_simple(parsed: UHDConfig) -> None:
 
 
 def _run_mezo(parsed: UHDConfig) -> None:
-    from ops.uhd_setup import make_loop
+    make_loop = _load_attr("ops.uhd_setup", "make_loop")
 
     loop = make_loop(
         parsed.env_tag,
@@ -418,7 +422,7 @@ local = _local
 )
 @click.option("--gpu", type=str, default="A100", help="Modal GPU type (e.g. T4, A10, A100, H100).")
 def modal_cmd(config_toml: str, log_file: str | None, gpu: str) -> None:
-    from ops.modal_uhd import run as modal_run
+    modal_run = _load_attr("ops.modal_uhd", "run")
 
     try:
         cfg = _load_toml_config(config_toml)
