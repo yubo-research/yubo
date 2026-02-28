@@ -16,10 +16,9 @@ from typing import NamedTuple
 import gpytorch
 import numpy as np
 import torch
-from torch.quasirandom import SobolEngine
 
 from .gp import train_gp
-from .utils import from_unit_cube, to_unit_cube, turbo_adjust_length  # latin_hypercube,
+from .utils import from_unit_cube, make_sobol_candidates, to_unit_cube, turbo_adjust_length
 
 
 class _CandidatesResult(NamedTuple):
@@ -119,22 +118,6 @@ def _trust_region_bounds(self, X, fX, gp, length) -> _TrustRegion:
     lb = np.clip(x_center - weights * length / 2.0, 0.0, 1.0)
     ub = np.clip(x_center + weights * length / 2.0, 0.0, 1.0)
     return _TrustRegion(x_center=x_center, lb=lb, ub=ub)
-
-
-def _make_candidates(self, *, x_center, lb, ub, device, dtype):
-    seed = np.random.randint(int(1e6))
-    sobol = SobolEngine(self.dim, scramble=True, seed=seed)
-    pert = sobol.draw(self.n_cand).to(dtype=dtype, device=device).cpu().detach().numpy()
-    pert = lb + (ub - lb) * pert
-
-    prob_perturb = min(20.0 / self.dim, 1.0)
-    mask = np.random.rand(self.n_cand, self.dim) <= prob_perturb
-    ind = np.where(np.sum(mask, axis=1) == 0)[0]
-    mask[ind, np.random.randint(0, self.dim, size=len(ind))] = 1
-
-    X_cand = x_center.copy() * np.ones((self.n_cand, self.dim))
-    X_cand[mask] = pert[mask]
-    return X_cand
 
 
 def _sample_candidates(gp, X_cand, *, device, dtype, batch_size, max_cholesky_size):
@@ -272,7 +255,7 @@ class Turbo1AskTell:
         gp = _train_gp_model(self, X, z.fX, n_training_steps, hypers, device, dtype)
 
         tr = _trust_region_bounds(self, X, z.fX, gp, length)
-        X_cand = _make_candidates(self, x_center=tr.x_center, lb=tr.lb, ub=tr.ub, device=device, dtype=dtype)
+        X_cand = make_sobol_candidates(dim=self.dim, n_cand=self.n_cand, x_center=tr.x_center, lb=tr.lb, ub=tr.ub, device=device, dtype=dtype)
 
         device2, dtype2 = _device_dtype_for(self, len(X_cand))
         y_cand = _sample_candidates(

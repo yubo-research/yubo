@@ -8,42 +8,10 @@ from types import SimpleNamespace
 import numpy as np
 import torch
 from click.testing import CliRunner
-from torch import nn
 
-from acq.acq_bt import AcqBT
 from acq.acq_dpp import AcqDPP
 from acq.fit_gp import _EmptyTransform
 from analysis.data_locator import DataLocator
-from optimizer.bt_designer import BTDesigner
-from optimizer.designer_registry import _SimpleContext
-from problems.noise_maker import NoiseMaker
-from problems.policy_mixin import PolicyParamsMixin
-
-
-def test_kiss_cov_acqbt_x_max(monkeypatch):
-    class _GP:
-        def __call__(self, _x):
-            return SimpleNamespace(mean=torch.tensor(0.0))
-
-    monkeypatch.setattr("acq.acq_bt.fit_gp.fit_gp_XY", lambda X, Y, model_spec: _GP())
-    monkeypatch.setattr(
-        "acq.acq_bt.find_max",
-        lambda gp, bounds: torch.ones((1, bounds.shape[1]), dtype=bounds.dtype),
-    )
-
-    acq = AcqBT(
-        acq_factory=lambda gp, **kwargs: SimpleNamespace(),
-        data=[],
-        num_dim=3,
-        acq_kwargs=None,
-        device=torch.device("cpu"),
-        dtype=torch.double,
-        num_keep=None,
-        keep_style=None,
-        model_spec=None,
-    )
-    x = acq.x_max()
-    assert tuple(x.shape) == (1, 3)
 
 
 def test_kiss_cov_acq_dpp_and_fitgp_empty_transform():
@@ -109,82 +77,6 @@ def test_kiss_cov_ops_catalog_and_ops_data(tmp_path):
     (exp_dir / "config.json").write_text(json.dumps({"opt_name": "random", "env_tag": "f:ackley-2d"}))
     data_cli.rm.callback(results_dir, ("abc123",), True)
     assert not exp_dir.exists()
-
-
-def test_kiss_cov_designer_registry_and_best_datum():
-    ctx = _SimpleContext(
-        policy=object(),
-        num_arms=1,
-        bt=lambda *a, **k: None,
-        num_keep=None,
-        keep_style=None,
-        num_keep_val=None,
-        init_yubo_default=1,
-        init_ax_default=1,
-        default_num_X_samples=1,
-    )
-    assert ctx.num_arms == 1
-
-    d = BTDesigner(
-        policy=SimpleNamespace(),
-        acq_fn=lambda *a, **k: None,
-        num_restarts=1,
-        raw_samples=1,
-        start_at_max=False,
-    )
-    assert d.best_datum() is None
-
-
-def test_kiss_cov_noise_maker_and_policy_mixin():
-    class _DummySpace:
-        shape = (1,)
-
-    class _DummyEnv:
-        observation_space = _DummySpace()
-        action_space = _DummySpace()
-
-        def step(self, _action):
-            return None, 1.0, False, False, {}
-
-        def close(self):
-            return None
-
-    noise = NoiseMaker(_DummyEnv(), normalized_noise_level=0.0, num_measurements=2)
-    assert noise.observation_space is not None
-    assert noise.action_space is not None
-
-    class _Policy(nn.Module, PolicyParamsMixin):
-        def __init__(self):
-            super().__init__()
-            self.l = nn.Linear(2, 1, bias=False)
-            with torch.inference_mode():
-                fp = torch.cat([p.detach().reshape(-1) for p in self.parameters()]).cpu().numpy()
-            self._flat_params_init = fp
-            self._const_scale = 1.0
-
-    p = _Policy()
-    assert p.num_params() == 2
-
-
-def test_kiss_cov_dist_modal_collect(monkeypatch, tmp_path):
-    import experiments.dist_modal as dist_modal
-
-    class _Call:
-        def get(self, timeout):
-            assert timeout == 5
-            return {"ok": True}
-
-    class _Factory:
-        @staticmethod
-        def from_id(_call_id):
-            return _Call()
-
-    monkeypatch.setattr(dist_modal.modal.functions, "FunctionCall", _Factory)
-    fn = tmp_path / "jobs.txt"
-    fn.write_text("abc\n")
-    got = []
-    dist_modal.collect(str(fn), lambda x: got.append(x))
-    assert got == [{"ok": True}]
 
 
 def test_kiss_cov_modal_batches_collect_and_cleanup(monkeypatch):

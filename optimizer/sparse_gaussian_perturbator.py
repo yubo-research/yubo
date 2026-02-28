@@ -2,8 +2,10 @@ import numpy as np
 import torch
 from torch import nn
 
+from .gaussian_perturbator import PerturbatorBase
 
-class SparseGaussianPerturbator:
+
+class SparseGaussianPerturbator(PerturbatorBase):
     """RAASP-style sparse Gaussian perturbation.
 
     Like GaussianPerturbator but only perturbs a random subset of
@@ -16,7 +18,7 @@ class SparseGaussianPerturbator:
     """
 
     def __init__(self, module: nn.Module, *, num_dim_target: float):
-        self._module = module
+        super().__init__(module)
         dim = sum(p.numel() for p in module.parameters())
         self._k: int | None = None
         if 0 < num_dim_target < 1:
@@ -28,8 +30,6 @@ class SparseGaussianPerturbator:
             else:
                 self._k = max(k, 1)
                 self._prob = float(self._k / dim)
-        self._perturbed = False
-        self._seed: int | None = None
         self._param_numel = [p.numel() for p in module.parameters()]
         self._dim = int(sum(self._param_numel))
         self._param_offsets: list[int] = []
@@ -37,14 +37,6 @@ class SparseGaussianPerturbator:
         for n in self._param_numel:
             self._param_offsets.append(off)
             off += int(n)
-
-    def _device(self) -> torch.device:
-        return next(self._module.parameters()).device
-
-    def _rng(self, seed: int) -> torch.Generator:
-        g = torch.Generator(device=str(self._device()))
-        g.manual_seed(int(seed))
-        return g
 
     def _apply(self, *, seed: int, sigma: float, chunk_size: int = 2**16) -> None:
         device = self._device()
@@ -112,21 +104,3 @@ class SparseGaussianPerturbator:
         idx.sort()
         vals = rng.standard_normal(size=idx.shape).astype(np.float32) * float(sigma)
         return idx.astype(np.int64), vals
-
-    def perturb(self, seed: int, sigma: float) -> None:
-        assert not self._perturbed, "Already perturbed"
-        self._seed = seed
-        self._sigma = sigma
-        self._perturbed = True
-        self._apply(seed=seed, sigma=sigma)
-
-    def accept(self) -> None:
-        assert self._perturbed, "Not perturbed"
-        self._perturbed = False
-        self._seed = None
-
-    def unperturb(self) -> None:
-        assert self._perturbed, "Not perturbed"
-        assert self._seed is not None
-        self._apply(seed=self._seed, sigma=-self._sigma)
-        self.accept()

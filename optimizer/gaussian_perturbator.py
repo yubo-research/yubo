@@ -2,12 +2,8 @@ import torch
 from torch import nn
 
 
-class GaussianPerturbator:
-    """Dense Gaussian perturbation without O(D) allocations.
-
-    Applies iid N(0, sigma^2) noise in-place in fixed-size chunks so peak
-    temporary memory is O(chunk_size) rather than O(D).
-    """
+class PerturbatorBase:
+    """Shared perturb/unperturb/accept state machine for all perturbators."""
 
     def __init__(self, module: nn.Module):
         self._module = module
@@ -23,22 +19,7 @@ class GaussianPerturbator:
         return g
 
     def _apply(self, *, seed: int, sigma: float, chunk_size: int = 2**16) -> None:
-        g = self._rng(seed)
-        device = self._device()
-        for p in self._module.parameters():
-            assert p.device == device, "GaussianPerturbator requires all params on one device"
-            flat = p.data.view(-1)
-            n = flat.numel()
-            for start in range(0, n, chunk_size):
-                end = min(start + chunk_size, n)
-                noise = torch.randn(
-                    (end - start,),
-                    device=device,
-                    dtype=flat.dtype,
-                    generator=g,
-                )
-                noise.mul_(sigma)
-                flat[start:end].add_(noise)
+        raise NotImplementedError
 
     def perturb(self, seed: int, sigma: float) -> None:
         assert not self._perturbed, "Already perturbed"
@@ -57,3 +38,29 @@ class GaussianPerturbator:
         assert self._seed is not None
         self._apply(seed=self._seed, sigma=-self._sigma)
         self.accept()
+
+
+class GaussianPerturbator(PerturbatorBase):
+    """Dense Gaussian perturbation without O(D) allocations.
+
+    Applies iid N(0, sigma^2) noise in-place in fixed-size chunks so peak
+    temporary memory is O(chunk_size) rather than O(D).
+    """
+
+    def _apply(self, *, seed: int, sigma: float, chunk_size: int = 2**16) -> None:
+        g = self._rng(seed)
+        device = self._device()
+        for p in self._module.parameters():
+            assert p.device == device, "GaussianPerturbator requires all params on one device"
+            flat = p.data.view(-1)
+            n = flat.numel()
+            for start in range(0, n, chunk_size):
+                end = min(start + chunk_size, n)
+                noise = torch.randn(
+                    (end - start,),
+                    device=device,
+                    dtype=flat.dtype,
+                    generator=g,
+                )
+                noise.mul_(sigma)
+                flat[start:end].add_(noise)

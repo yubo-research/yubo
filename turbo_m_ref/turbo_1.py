@@ -16,10 +16,9 @@ from typing import NamedTuple
 import gpytorch
 import numpy as np
 import torch
-from torch.quasirandom import SobolEngine
 
 from .gp import train_gp
-from .utils import from_unit_cube, latin_hypercube, to_unit_cube, turbo_adjust_length
+from .utils import from_unit_cube, latin_hypercube, make_sobol_candidates, to_unit_cube, turbo_adjust_length
 
 
 class _CandidatesResult(NamedTuple):
@@ -71,22 +70,6 @@ def _init_counters_and_tr(self, *, batch_size):
     self.length_min = 0.5**7
     self.length_max = 1.6
     self.length_init = 0.8
-
-
-def _make_X_cand(self, *, x_center, lb, ub, device, dtype):
-    seed = np.random.randint(int(1e6))
-    sobol = SobolEngine(self.dim, scramble=True, seed=seed)
-    pert = sobol.draw(self.n_cand).to(dtype=dtype, device=device).cpu().detach().numpy()
-    pert = lb + (ub - lb) * pert
-
-    prob_perturb = min(20.0 / self.dim, 1.0)
-    mask = np.random.rand(self.n_cand, self.dim) <= prob_perturb
-    ind = np.where(np.sum(mask, axis=1) == 0)[0]
-    mask[ind, np.random.randint(0, self.dim, size=len(ind))] = 1
-
-    X_cand = x_center.copy() * np.ones((self.n_cand, self.dim))
-    X_cand[mask] = pert[mask]
-    return X_cand
 
 
 def _compute_y_cand(self, *, X, fX, X_cand, mu, sigma, gp, device, dtype):
@@ -263,7 +246,7 @@ class Turbo1Standard:
         lb = np.clip(x_center - weights * length / 2.0, 0.0, 1.0)
         ub = np.clip(x_center + weights * length / 2.0, 0.0, 1.0)
 
-        X_cand = _make_X_cand(self, x_center=x_center, lb=lb, ub=ub, device=device, dtype=dtype)
+        X_cand = make_sobol_candidates(dim=self.dim, n_cand=self.n_cand, x_center=x_center, lb=lb, ub=ub, device=device, dtype=dtype)
 
         # Figure out what device we are running on
         if len(X_cand) < self.min_cuda:

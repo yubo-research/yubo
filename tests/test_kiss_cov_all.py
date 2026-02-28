@@ -259,6 +259,11 @@ def test_cov_exp_uhd_UHDConfig_local_modal_cmd(monkeypatch, tmp_path):
         enn_select_interval=1,
         enn_embedder="direction",
         enn_gather_t=64,
+        bszo_k=2,
+        bszo_epsilon=1e-4,
+        bszo_sigma_p_sq=1.0,
+        bszo_sigma_e_sq=1.0,
+        bszo_alpha=0.1,
     )
     assert cfg.env_tag == "f:sphere-2d"
 

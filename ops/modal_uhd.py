@@ -3,7 +3,7 @@ from pathlib import Path
 import modal
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
-_PROJECT_DIRS = ("ops", "optimizer", "problems", "common", "sampling")
+_PROJECT_DIRS = ("ops", "optimizer", "problems", "common", "sampling", "embedding")
 
 _image = (
     modal.Image.debian_slim(python_version="3.11.9")

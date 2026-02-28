@@ -49,6 +49,26 @@ def _predict_enn(enn_model, enn_params, posterior_flags, x_cand: np.ndarray):
     return np.asarray(post.mu).reshape(-1), np.asarray(post.se).reshape(-1)
 
 
+def _maybe_fit_enn(obj) -> None:
+    """Shared ENN refit logic for BE optimizers."""
+    if len(obj._zs) < obj._warmup:
+        return
+    if obj._enn_params is not None and obj._num_new_since_fit < obj._fit_interval:
+        return
+    (
+        obj._enn_model,
+        obj._enn_params,
+        obj._posterior_flags,
+        obj._y_mean,
+        obj._y_std,
+    ) = _fit_enn(
+        obj._zs,
+        obj._ys,
+        obj._enn_k,
+    )
+    obj._num_new_since_fit = 0
+
+
 def _fit_enn(zs, ys, enn_k):
     x = np.array(zs, dtype=np.float64)
     y = np.array(ys, dtype=np.float64)
@@ -165,16 +185,7 @@ class UHDSimpleBE(UHDSimpleBase):
         return base + best, zs[best]
 
     def _maybe_fit(self) -> None:
-        if len(self._zs) < self._warmup:
-            return
-        if self._enn_params is not None and self._num_new_since_fit < self._fit_interval:
-            return
-        self._enn_model, self._enn_params, self._posterior_flags, self._y_mean, self._y_std = _fit_enn(
-            self._zs,
-            self._ys,
-            self._enn_k,
-        )
-        self._num_new_since_fit = 0
+        _maybe_fit_enn(self)
 
 
 class UHDMeZOBE:
@@ -315,19 +326,11 @@ class UHDMeZOBE:
         two_sigma = 2.0 * sigma
         g = (mu_plus - mu_minus) / two_sigma
         seg = np.sqrt(se_plus**2 + se_minus**2) / two_sigma
-        ucb = np.abs(g) + seg
+
+        ucb = np.abs(g) - seg
         best = int(np.argmax(ucb))
 
         return base + best, z_plus_list[best], z_minus_list[best]
 
     def _maybe_fit(self) -> None:
-        if len(self._zs) < self._warmup:
-            return
-        if self._enn_params is not None and self._num_new_since_fit < self._fit_interval:
-            return
-        self._enn_model, self._enn_params, self._posterior_flags, self._y_mean, self._y_std = _fit_enn(
-            self._zs,
-            self._ys,
-            self._enn_k,
-        )
-        self._num_new_since_fit = 0
+        _maybe_fit_enn(self)

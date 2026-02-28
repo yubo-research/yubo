@@ -46,6 +46,12 @@ _OPTIONAL_TOML_KEYS = (
     "enn_embedder",
     "enn_gather_t",
     "batch_size",
+    # BSZO settings (used when optimizer = "bszo")
+    "bszo_k",
+    "bszo_epsilon",
+    "bszo_sigma_p_sq",
+    "bszo_sigma_e_sq",
+    "bszo_alpha",
 )
 _ALL_TOML_KEYS = set(_REQUIRED_TOML_KEYS + _OPTIONAL_TOML_KEYS)
 
@@ -158,6 +164,11 @@ class UHDConfig:
     enn_select_interval: int
     enn_embedder: str
     enn_gather_t: int
+    bszo_k: int
+    bszo_epsilon: float
+    bszo_sigma_p_sq: float
+    bszo_sigma_e_sq: float
+    bszo_alpha: float
 
 
 @dataclass(frozen=True)
@@ -275,6 +286,11 @@ def _parse_cfg(cfg: dict[str, Any]) -> UHDConfig:
     be_sigma_range_raw = cfg.get("be_sigma_range", None)
     be_sigma_range = tuple(float(v) for v in be_sigma_range_raw) if be_sigma_range_raw is not None else None
     batch_size = int(cfg.get("batch_size", 4096))
+    bszo_k = int(cfg.get("bszo_k", 2))
+    bszo_epsilon = float(cfg.get("bszo_epsilon", 1e-4))
+    bszo_sigma_p_sq = float(cfg.get("bszo_sigma_p_sq", 1.0))
+    bszo_sigma_e_sq = float(cfg.get("bszo_sigma_e_sq", 1.0))
+    bszo_alpha = float(cfg.get("bszo_alpha", 0.1))
     er = _parse_early_reject_fields(cfg)
     enn = _parse_enn_fields(cfg)
     ndt, nmt = _parse_perturb(perturb)
@@ -317,6 +333,11 @@ def _parse_cfg(cfg: dict[str, Any]) -> UHDConfig:
         enn_select_interval=enn.select_interval,
         enn_embedder=enn.embedder,
         enn_gather_t=enn.gather_t,
+        bszo_k=bszo_k,
+        bszo_epsilon=bszo_epsilon,
+        bszo_sigma_p_sq=bszo_sigma_p_sq,
+        bszo_sigma_e_sq=bszo_sigma_e_sq,
+        bszo_alpha=bszo_alpha,
     )
 
 
@@ -330,10 +351,37 @@ def _local(config_toml: str) -> None:
         raise click.ClickException(str(e)) from e
 
     parsed = _parse_cfg(cfg)
-    if parsed.optimizer in {"simple", "simple_be", "mezo_be"}:
+    _run_parsed(parsed)
+
+
+def _run_parsed(parsed: UHDConfig) -> None:
+    if parsed.optimizer == "bszo":
+        _run_bszo(parsed)
+    elif parsed.optimizer in {"simple", "simple_be", "mezo_be"}:
         _run_simple(parsed)
     else:
         _run_mezo(parsed)
+
+
+def _run_bszo(parsed: UHDConfig) -> None:
+    from ops.uhd_setup import run_bszo_loop
+
+    run_bszo_loop(
+        parsed.env_tag,
+        parsed.num_rounds,
+        lr=parsed.lr,
+        problem_seed=parsed.problem_seed,
+        noise_seed_0=parsed.noise_seed_0,
+        batch_size=parsed.batch_size,
+        log_interval=parsed.log_interval,
+        accuracy_interval=parsed.accuracy_interval,
+        target_accuracy=parsed.target_accuracy,
+        bszo_k=parsed.bszo_k,
+        bszo_epsilon=parsed.bszo_epsilon,
+        bszo_sigma_p_sq=parsed.bszo_sigma_p_sq,
+        bszo_sigma_e_sq=parsed.bszo_sigma_e_sq,
+        bszo_alpha=parsed.bszo_alpha,
+    )
 
 
 def _run_simple(parsed: UHDConfig) -> None:

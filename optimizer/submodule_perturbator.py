@@ -1,8 +1,10 @@
 import torch
 from torch import nn
 
+from .gaussian_perturbator import PerturbatorBase
 
-class SubmodulePerturbator:
+
+class SubmodulePerturbator(PerturbatorBase):
     """RAASP-style perturbation at the submodule level.
 
     Instead of selecting individual dimensions, this perturbator
@@ -17,23 +19,13 @@ class SubmodulePerturbator:
     """
 
     def __init__(self, module: nn.Module, *, num_module_target: float):
-        self._module = module
+        super().__init__(module)
         self._leaf_modules = [m for m in module.modules() if list(m.parameters(recurse=False))]
         n = len(self._leaf_modules)
         if 0 < num_module_target < 1:
             self._prob = num_module_target
         else:
             self._prob = min(num_module_target / n, 1.0)
-        self._perturbed = False
-        self._seed: int | None = None
-
-    def _device(self) -> torch.device:
-        return next(self._module.parameters()).device
-
-    def _rng(self, seed: int) -> torch.Generator:
-        g = torch.Generator(device=str(self._device()))
-        g.manual_seed(int(seed))
-        return g
 
     def _select_mask(self, *, g: torch.Generator) -> torch.Tensor:
         device = self._device()
@@ -67,21 +59,3 @@ class SubmodulePerturbator:
                     )
                     noise.mul_(sigma)
                     flat[start:end].add_(noise)
-
-    def perturb(self, seed: int, sigma: float) -> None:
-        assert not self._perturbed, "Already perturbed"
-        self._seed = seed
-        self._sigma = sigma
-        self._perturbed = True
-        self._apply(seed=seed, sigma=sigma)
-
-    def accept(self) -> None:
-        assert self._perturbed, "Not perturbed"
-        self._perturbed = False
-        self._seed = None
-
-    def unperturb(self) -> None:
-        assert self._perturbed, "Not perturbed"
-        assert self._seed is not None
-        self._apply(seed=self._seed, sigma=-self._sigma)
-        self.accept()
