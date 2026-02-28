@@ -176,7 +176,9 @@ class MLPPolicy(PolicyParamsMixin, nn.Module):
             self._phase_omega = 0.12
 
     def __call__(self, state):
-        state = torch.as_tensor(state, dtype=torch.float32)
+        # Get device from model parameters to ensure tensor is on same device
+        device = next(self.parameters()).device
+        state = torch.as_tensor(state, dtype=torch.float32, device=device)
         if self.in_norm is not None:
             state = self.in_norm(state)
 

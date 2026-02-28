@@ -933,15 +933,14 @@ def run_bszo_loop(
     if env_conf.problem_seed is not None:
         seed_all(int(env_conf.problem_seed))
 
-    env = env_conf.make()
+    # Try to make torch env (for MLP policies or MNIST-style envs)
+    env = env_conf.make_torch_env()
     if not hasattr(env, "torch_env"):
-        raise ValueError(f"BSZO currently supports torch environments only, got: {env_tag}")
+        raise ValueError(f"BSZO requires an environment with torch_env(), got: {env_tag}")
 
     device = _get_device()
     module = env.torch_env().module.to(device)
     module.train()
-    train_images, train_labels = _preload_mnist_train_to_device(device)
-    accuracy_fn = _make_accuracy_fn(module, device)
 
     dim = sum(p.numel() for p in module.parameters())
     perturbator = GaussianPerturbator(module)
@@ -956,16 +955,33 @@ def run_bszo_loop(
         alpha=bszo_alpha,
     )
 
-    def evaluate_fn(eval_seed: int) -> tuple[float, float]:
-        g = torch.Generator()
-        g.manual_seed(int(eval_seed + ns0))
-        idx = torch.randint(train_images.shape[0], (batch_size,), generator=g).to(device)
-        with torch.inference_mode():
-            logits = module(train_images.index_select(0, idx))
-            per_sample = F.cross_entropy(logits, train_labels.index_select(0, idx), reduction="none")
-        mu = -float(per_sample.mean())
-        se = float(per_sample.std() / math.sqrt(len(per_sample)))
-        return mu, se
+    # Check if this is an MNIST environment (has MNIST data)
+    is_mnist = env_tag.startswith("mnist")
+
+    if is_mnist:
+        train_images, train_labels = _preload_mnist_train_to_device(device)
+        accuracy_fn = _make_accuracy_fn(module, device)
+
+        def evaluate_fn(eval_seed: int) -> tuple[float, float]:
+            g = torch.Generator()
+            g.manual_seed(int(eval_seed + ns0))
+            idx = torch.randint(train_images.shape[0], (batch_size,), generator=g).to(device)
+            with torch.inference_mode():
+                logits = module(train_images.index_select(0, idx))
+                per_sample = F.cross_entropy(logits, train_labels.index_select(0, idx), reduction="none")
+            mu = -float(per_sample.mean())
+            se = float(per_sample.std() / math.sqrt(len(per_sample)))
+            return mu, se
+    else:
+        # Gym environment: evaluate by running episodes
+        from optimizer.trajectories import collect_trajectory
+
+        accuracy_fn = None  # No accuracy metric for gym envs
+
+        def evaluate_fn(eval_seed: int) -> tuple[float, float]:
+            ns = noise_seed_0 if getattr(env_conf, "frozen_noise", False) else int(eval_seed) + ns0
+            result = collect_trajectory(env_conf, module, noise_seed=ns)
+            return float(result.rreturn), 0.0
 
     print(f"BSZO: num_params = {dim}, k = {bszo_k}, epsilon = {bszo_epsilon}, lr = {lr}")
     _run_bszo_iterations(

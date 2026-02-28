@@ -223,7 +223,6 @@ class UHDMeZOBENp:
         g = (mu_plus - mu_minus) / two_sigma
         seg = np.sqrt(se_plus**2 + se_minus**2) / two_sigma
         ucb = np.abs(g) + seg
-        print("XX:", g, seg, ucb)
         best = int(np.argmax(ucb))
         return base + best, z_plus_list[best], z_minus_list[best]
 
