@@ -1,23 +1,11 @@
 import math
 
-from .gaussian_perturbator import GaussianPerturbator
+from .gaussian_perturbator import GaussianPerturbator, apply_weight_decay
 from .lr_scheduler import LRScheduler
 from .step_size_adapter import StepSizeAdapter
 
 
 class UHDMeZO:
-    """Gradient ascent via antithetic sampling.
-
-    Each gradient step uses two sequential ask/tell cycles:
-      ask  1: perturb x → x + σε       (positive direction)
-      tell 1: record mu_plus
-      ask  2: perturb x → x − σε       (negative direction)
-      tell 2: apply gradient step  lr · g_norm · ε
-
-    where g_norm = projected_grad / rms(projected_grad) (Adam-style).
-    No dimension-sized storage: noise is replayed from the seed.
-    """
-
     def __init__(
         self,
         perturbator: GaussianPerturbator,
@@ -39,7 +27,6 @@ class UHDMeZO:
         self._mu_prev = 0.0
         self._se_prev = 0.0
 
-        # Alternates between positive and negative phase.
         self._positive_phase = True
         self._mu_plus = 0.0
         self._step_seed = 0
@@ -51,24 +38,13 @@ class UHDMeZO:
         return self._seed
 
     def set_next_seed(self, seed: int) -> None:
-        """Override the next seed used for the upcoming positive phase.
-
-        This is useful for seed-filtering strategies (e.g. ENN-based candidate selection).
-        Only valid at the start of a new antithetic pair (positive phase).
-        """
         if not self._positive_phase:
             raise RuntimeError("set_next_seed is only valid during positive phase")
         self._seed = int(seed)
 
     def skip_negative(self) -> None:
-        """Skip the negative phase for the current pair and advance to the next seed.
-
-        Intended for early-reject strategies: after observing mu_plus, decide to not
-        spend the x- evaluation and also not apply an update.
-        """
         if self._positive_phase:
             raise RuntimeError("skip_negative is only valid after the positive phase")
-        # We're currently at baseline params (positive tell unperturbed). Move on.
         self._positive_phase = True
         self._seed += 1
 
@@ -140,10 +116,7 @@ class UHDMeZO:
             self._perturbator.perturb(self._step_seed, step_scale)
             self._perturbator.accept()
 
-            if self._weight_decay > 0.0:
-                decay = 1.0 - self._lr_scheduler.lr * self._weight_decay
-                for p in self._perturbator._module.parameters():
-                    p.data.mul_(decay)
+            apply_weight_decay(self._perturbator._module, self._lr_scheduler.lr, self._weight_decay)
 
             self._lr_scheduler.step()
             self._seed += 1

@@ -5,8 +5,6 @@ from .uhd_simple_base import UHDSimpleBase
 
 
 class UHDSimple(UHDSimpleBase):
-    """Simplest (1+1)-ES: accept if mu improves, reject otherwise."""
-
     def __init__(
         self,
         perturbator: GaussianPerturbator,

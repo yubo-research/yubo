@@ -1,32 +1,8 @@
-from dataclasses import dataclass
-from typing import NamedTuple
-
 from .designer_errors import NoSuchDesignerError
+from .designer_parse_types import ParsedOptions
+from .designer_types import DesignerSpec
 
 _GENERAL_OPT_KEYS = {"num_keep", "keep_style", "model_spec", "sample_around_best"}
-
-
-@dataclass(frozen=True, slots=True)
-class DesignerOptionSpec:
-    name: str
-    required: bool
-    value_type: str
-    description: str
-    example: str
-    allowed_values: tuple[str, ...] | None = None
-
-
-@dataclass(frozen=True, slots=True)
-class DesignerCatalogEntry:
-    base_name: str
-    options: list[DesignerOptionSpec]
-    dispatch: object
-
-
-class DesignerSpec(NamedTuple):
-    base: str
-    general: dict
-    specific: dict
 
 
 def _parse_opt_value(raw: str):
@@ -86,13 +62,6 @@ def parse_designer_spec(designer_name: str) -> DesignerSpec:
 
 
 def _parse_options(designer_name):
-    class _ParsedOptions(NamedTuple):
-        designer_name: str
-        num_keep: int | None
-        keep_style: str | None
-        model_spec: str | None
-        sample_around_best: bool
-
     if ":" in designer_name:
         designer_name, options_str = designer_name.split(":")
         options = options_str.split("-")
@@ -127,7 +96,7 @@ def _parse_options(designer_name):
         else:
             assert False, ("Unknown option", option)
 
-    return _ParsedOptions(
+    return ParsedOptions(
         designer_name=designer_name,
         num_keep=num_keep,
         keep_style=keep_style,

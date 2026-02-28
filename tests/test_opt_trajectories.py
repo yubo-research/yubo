@@ -1,5 +1,7 @@
 import numpy as np
 
+from optimizer import opt_trajectories
+
 
 class MockTrajectory:
     def __init__(self, rreturn):
@@ -17,8 +19,6 @@ class MockPolicy:
 
 
 def test_collect_trajectory_with_noise(monkeypatch):
-    from optimizer import opt_trajectories
-
     def mock_collect_trajectory(env_conf, policy, noise_seed=0):
         return MockTrajectory(rreturn=1.5 + noise_seed * 0.01)
 
@@ -33,8 +33,6 @@ def test_collect_trajectory_with_noise(monkeypatch):
 
 
 def test_mean_return_over_runs(monkeypatch):
-    from optimizer import opt_trajectories
-
     call_count = [0]
 
     def mock_collect_trajectory(env_conf, policy, noise_seed=0):
@@ -52,8 +50,6 @@ def test_mean_return_over_runs(monkeypatch):
 
 
 def test_collect_denoised_trajectory_single(monkeypatch):
-    from optimizer import opt_trajectories
-
     def mock_collect_trajectory(env_conf, policy, noise_seed=0):
         return MockTrajectory(rreturn=2.0)
 
@@ -67,8 +63,6 @@ def test_collect_denoised_trajectory_single(monkeypatch):
 
 
 def test_collect_denoised_trajectory_multiple(monkeypatch):
-    from optimizer import opt_trajectories
-
     counter = [0]
 
     def mock_collect_trajectory(env_conf, policy, noise_seed=0):
@@ -85,8 +79,6 @@ def test_collect_denoised_trajectory_multiple(monkeypatch):
 
 
 def test_evaluate_for_best(monkeypatch):
-    from optimizer import opt_trajectories
-
     def mock_collect_trajectory(env_conf, policy, noise_seed=0):
         return MockTrajectory(rreturn=5.0)
 

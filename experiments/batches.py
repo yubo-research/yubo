@@ -4,9 +4,6 @@ import multiprocessing
 import os
 import time
 
-import experiments.batch_preps as batch_preps
-from experiments.batch_util import run_in_batches
-
 
 def _worker(cmd):
     return os.system(cmd)
@@ -45,6 +42,8 @@ run_batch = _run_batch
 
 
 def _run(cmds, max_parallel, b_dry_run=False):
+    from experiments.batch_util import run_in_batches
+
     run_in_batches(cmds, max_parallel, run_batch, b_dry_run=b_dry_run, num_threads=16)
 
 
@@ -52,8 +51,9 @@ run = _run
 
 
 def prep_d_argss(batch_tag):
-    results_dir = "results"
+    import experiments.batch_preps as batch_preps
 
+    results_dir = "results"
     preps = {k: v for k, v in batch_preps.__dict__.items() if k.startswith("prep_") and callable(v)}
 
     fn = preps.get(batch_tag)

@@ -1,7 +1,6 @@
 import time
 
-from experiment_sampler import mk_replicates, post_process, sample_1
-
+from experiments.experiment_sampler import mk_replicates, post_process, sample_1
 from experiments.modal_batches import app
 from experiments.modal_image import mk_image
 

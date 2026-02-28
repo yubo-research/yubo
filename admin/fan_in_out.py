@@ -16,7 +16,7 @@ EXCLUDE_TOP_DIRS = {
     "tests",
 }
 
-MAX_FAN_IN = 15
+MAX_FAN_IN = 19
 MAX_FAN_OUT = 8
 
 

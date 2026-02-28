@@ -1,35 +1,16 @@
 from __future__ import annotations
 
 import numpy as np
+from enn.enn.enn_class import EpistemicNearestNeighbors
+from enn.enn.enn_fit import enn_fit
+from enn.enn.enn_params import PosteriorFlags
+from enn.turbo.config.enn_index_driver import ENNIndexDriver
 from torch import nn
 
 from embedding.behavioral_embedder import BehavioralEmbedder
 
 from .gaussian_perturbator import GaussianPerturbator
 from .uhd_simple_base import UHDSimpleBase
-
-
-class _SimplePosterior:
-    def __init__(self, *, mu: np.ndarray, se: np.ndarray):
-        self.mu = mu
-        self.se = se
-
-
-class _SimpleENN:
-    def __init__(self, *, x: np.ndarray, y: np.ndarray, k: int):
-        self._x = np.asarray(x, dtype=np.float64)
-        self._y = np.asarray(y, dtype=np.float64)
-        self._k = int(max(1, min(k, x.shape[0])))
-
-    def posterior(self, x_cand: np.ndarray) -> _SimplePosterior:
-        x_cand = np.asarray(x_cand, dtype=np.float64)
-        diff = x_cand[:, None, :] - self._x[None, :, :]
-        d2 = np.sum(diff * diff, axis=-1)
-        idx = np.argpartition(d2, self._k - 1, axis=1)[:, : self._k]
-        neigh = self._y[idx]
-        mu = neigh.mean(axis=1)
-        se = neigh.std(axis=1) / np.sqrt(self._k)
-        return _SimplePosterior(mu=mu, se=se)
 
 
 def _embed_module(module: nn.Module, embedder: BehavioralEmbedder) -> np.ndarray:
@@ -41,16 +22,12 @@ def _embed_module(module: nn.Module, embedder: BehavioralEmbedder) -> np.ndarray
     return z.cpu().numpy().astype(np.float64)
 
 
-def _predict_enn(enn_model, enn_params, posterior_flags, x_cand: np.ndarray):
-    if posterior_flags is not None:
-        post = enn_model.posterior(x_cand, params=enn_params, flags=posterior_flags)
-    else:
-        post = enn_model.posterior(x_cand)
+def _predict_enn(enn_model, enn_params, x_cand: np.ndarray):
+    post = enn_model.posterior(x_cand, params=enn_params, flags=PosteriorFlags(observation_noise=False))
     return np.asarray(post.mu).reshape(-1), np.asarray(post.se).reshape(-1)
 
 
 def _maybe_fit_enn(obj) -> None:
-    """Shared ENN refit logic for BE optimizers."""
     if len(obj._zs) < obj._warmup:
         return
     if obj._enn_params is not None and obj._num_new_since_fit < obj._fit_interval:
@@ -58,7 +35,6 @@ def _maybe_fit_enn(obj) -> None:
     (
         obj._enn_model,
         obj._enn_params,
-        obj._posterior_flags,
         obj._y_mean,
         obj._y_std,
     ) = _fit_enn(
@@ -76,37 +52,24 @@ def _fit_enn(zs, ys, enn_k):
     y_std = float(y.std()) if float(y.std()) > 0 else 1.0
     y_normed = (y - y_mean) / y_std
 
-    try:
-        from enn.enn.enn_class import EpistemicNearestNeighbors
-        from enn.enn.enn_fit import enn_fit
-        from enn.enn.enn_params import PosteriorFlags
-        from enn.turbo.config.enn_index_driver import ENNIndexDriver
-
-        model = EpistemicNearestNeighbors(
-            x,
-            y_normed[:, None],
-            None,
-            scale_x=False,
-            index_driver=ENNIndexDriver.FLAT,
-        )
-        params = enn_fit(
-            model,
-            k=int(enn_k),
-            num_fit_candidates=200,
-            num_fit_samples=200,
-            rng=np.random.default_rng(0),
-        )
-        flags = PosteriorFlags(observation_noise=False)
-    except Exception:
-        model = _SimpleENN(x=x, y=y_normed, k=int(enn_k))
-        params = True
-        flags = None
-    return model, params, flags, y_mean, y_std
+    model = EpistemicNearestNeighbors(
+        x,
+        y_normed[:, None],
+        None,
+        scale_x=False,
+        index_driver=ENNIndexDriver.FLAT,
+    )
+    params = enn_fit(
+        model,
+        k=int(enn_k),
+        num_fit_candidates=200,
+        num_fit_samples=200,
+        rng=np.random.default_rng(0),
+    )
+    return model, params, y_mean, y_std
 
 
 class UHDSimpleBE(UHDSimpleBase):
-    """(1+1)-ES with ENN seed selection via behavioral embeddings."""
-
     def __init__(
         self,
         perturbator: GaussianPerturbator,
@@ -135,7 +98,6 @@ class UHDSimpleBE(UHDSimpleBase):
         self._ys: list[float] = []
         self._enn_model: object | None = None
         self._enn_params: object | None = None
-        self._posterior_flags: object | None = None
         self._y_mean = 0.0
         self._y_std = 1.0
         self._num_new_since_fit = 0
@@ -177,7 +139,7 @@ class UHDSimpleBE(UHDSimpleBase):
             self._module.train()
 
         x_cand = np.array(zs, dtype=np.float64)
-        mu_std, se_std = _predict_enn(self._enn_model, self._enn_params, self._posterior_flags, x_cand)
+        mu_std, se_std = _predict_enn(self._enn_model, self._enn_params, x_cand)
         ucb = (self._y_mean + self._y_std * mu_std) + abs(self._y_std) * se_std
         best = int(np.argmax(ucb))
 
@@ -189,17 +151,6 @@ class UHDSimpleBE(UHDSimpleBase):
 
 
 class UHDMeZOBE:
-    """MeZO with ENN-based seed selection via gradient UCB.
-
-    Before each antithetic pair, scores N candidate seeds by predicting
-    the gradient and its uncertainty from behavioral embeddings:
-      g   = (mu+ - mu-) / (2 sigma)
-      seg = sqrt(se+^2 + se-^2) / (2 sigma)
-      UCB = g + seg
-    The ENN is trained on (embedding, reward) observations from both
-    positive and negative evaluations.
-    """
-
     def __init__(
         self,
         perturbator: GaussianPerturbator,
@@ -240,7 +191,6 @@ class UHDMeZOBE:
         self._ys: list[float] = []
         self._enn_model: object | None = None
         self._enn_params: object | None = None
-        self._posterior_flags: object | None = None
         self._y_mean = 0.0
         self._y_std = 1.0
         self._num_new_since_fit = 0
@@ -320,14 +270,14 @@ class UHDMeZOBE:
 
         z_plus_arr = np.array(z_plus_list, dtype=np.float64)
         z_minus_arr = np.array(z_minus_list, dtype=np.float64)
-        mu_plus, se_plus = _predict_enn(self._enn_model, self._enn_params, self._posterior_flags, z_plus_arr)
-        mu_minus, se_minus = _predict_enn(self._enn_model, self._enn_params, self._posterior_flags, z_minus_arr)
+        mu_plus, se_plus = _predict_enn(self._enn_model, self._enn_params, z_plus_arr)
+        mu_minus, se_minus = _predict_enn(self._enn_model, self._enn_params, z_minus_arr)
 
         two_sigma = 2.0 * sigma
         g = (mu_plus - mu_minus) / two_sigma
         seg = np.sqrt(se_plus**2 + se_minus**2) / two_sigma
 
-        ucb = np.abs(g) - seg
+        ucb = np.abs(g) + seg
         best = int(np.argmax(ucb))
 
         return base + best, z_plus_list[best], z_minus_list[best]

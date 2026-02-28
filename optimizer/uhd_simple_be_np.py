@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import numpy as np
+from enn.enn.enn_class import EpistemicNearestNeighbors
+from enn.enn.enn_fit import enn_fit
+from enn.enn.enn_params import PosteriorFlags
+from enn.turbo.config.enn_index_driver import ENNIndexDriver
 
 from embedding.behavioral_embedder import BehavioralEmbedder
 
 from .step_size_adapter import StepSizeAdapter
-from .uhd_simple_be import _SimpleENN
 
 
 class UHDSimpleBENp:
@@ -45,7 +48,6 @@ class UHDSimpleBENp:
         self._ys: list[float] = []
         self._enn_model: object | None = None
         self._enn_params: object | None = None
-        self._posterior_flags: object | None = None
         self._y_mean = 0.0
         self._y_std = 1.0
         self._num_new_since_fit = 0
@@ -125,10 +127,7 @@ class UHDSimpleBENp:
         return base + best, candidates[best], embeddings[best]
 
     def _predict(self, x_cand: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-        if self._posterior_flags is not None:
-            post = self._enn_model.posterior(x_cand, params=self._enn_params, flags=self._posterior_flags)
-        else:
-            post = self._enn_model.posterior(x_cand)
+        post = self._enn_model.posterior(x_cand, params=self._enn_params, flags=PosteriorFlags(observation_noise=False))
         return np.asarray(post.mu).reshape(-1), np.asarray(post.se).reshape(-1)
 
     def _maybe_fit(self) -> None:
@@ -143,29 +142,18 @@ class UHDSimpleBENp:
         self._y_std = float(y.std()) if float(y.std()) > 0 else 1.0
         y_normed = (y - self._y_mean) / self._y_std
 
-        try:
-            from enn.enn.enn_class import EpistemicNearestNeighbors
-            from enn.enn.enn_fit import enn_fit
-            from enn.enn.enn_params import PosteriorFlags
-            from enn.turbo.config.enn_index_driver import ENNIndexDriver
-
-            self._enn_model = EpistemicNearestNeighbors(
-                x,
-                y_normed[:, None],
-                None,
-                scale_x=False,
-                index_driver=ENNIndexDriver.FLAT,
-            )
-            self._enn_params = enn_fit(
-                self._enn_model,
-                k=int(self._enn_k),
-                num_fit_candidates=200,
-                num_fit_samples=200,
-                rng=np.random.default_rng(0),
-            )
-            self._posterior_flags = PosteriorFlags(observation_noise=False)
-        except Exception:
-            self._enn_model = _SimpleENN(x=x, y=y_normed, k=int(self._enn_k))
-            self._enn_params = True
-            self._posterior_flags = None
+        self._enn_model = EpistemicNearestNeighbors(
+            x,
+            y_normed[:, None],
+            None,
+            scale_x=False,
+            index_driver=ENNIndexDriver.FLAT,
+        )
+        self._enn_params = enn_fit(
+            self._enn_model,
+            k=int(self._enn_k),
+            num_fit_candidates=200,
+            num_fit_samples=200,
+            rng=np.random.default_rng(0),
+        )
         self._num_new_since_fit = 0

@@ -3,7 +3,7 @@ from torch import nn
 
 from embedding.behavioral_embedder import BehavioralEmbedder
 from optimizer.gaussian_perturbator import GaussianPerturbator
-from optimizer.uhd_simple_be import UHDSimpleBE, _SimpleENN, _SimplePosterior
+from optimizer.uhd_simple_be import UHDSimpleBE
 
 
 def _make_uhd_be(sigma_0=1.0, warmup=5, num_candidates=3, fit_interval=1, sigma_range=None):
@@ -139,26 +139,3 @@ def test_runs_many_steps_with_sigma_range():
         mu = float(torch.randn(1).item())
         uhd.tell(mu, 0.0)
     assert torch.isfinite(module.weight.data).all()
-
-
-def test_simple_enn_posterior():
-    import numpy as np
-
-    rng = np.random.default_rng(0)
-    x = rng.standard_normal((20, 3))
-    y = x[:, 0] + 0.1 * rng.standard_normal(20)
-    enn = _SimpleENN(x=x, y=y, k=5)
-
-    x_cand = rng.standard_normal((4, 3))
-    post = enn.posterior(x_cand)
-    assert post.mu.shape == (4,)
-    assert post.se.shape == (4,)
-    assert np.all(post.se >= 0)
-
-
-def test_simple_posterior():
-    import numpy as np
-
-    post = _SimplePosterior(mu=np.array([1.0, 2.0]), se=np.array([0.1, 0.2]))
-    assert post.mu[0] == 1.0
-    assert post.se[1] == 0.2

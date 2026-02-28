@@ -11,32 +11,16 @@
 
 import sys
 from copy import deepcopy
-from typing import NamedTuple
 
 import gpytorch
 import numpy as np
 import torch
 
 from .gp import train_gp
+from .turbo_types import CandidatesResult as _CandidatesResult
+from .turbo_types import StandardizedFX as _StandardizedFX
+from .turbo_types import TrustRegion as _TrustRegion
 from .utils import from_unit_cube, make_sobol_candidates, to_unit_cube, turbo_adjust_length
-
-
-class _CandidatesResult(NamedTuple):
-    X_cand: np.ndarray
-    y_cand: object
-    hypers: dict
-
-
-class _StandardizedFX(NamedTuple):
-    fX: np.ndarray
-    mu: float
-    sigma: float
-
-
-class _TrustRegion(NamedTuple):
-    x_center: np.ndarray
-    lb: np.ndarray
-    ub: np.ndarray
 
 
 def _validate_init_args(

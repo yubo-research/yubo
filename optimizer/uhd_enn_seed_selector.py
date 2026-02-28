@@ -4,6 +4,10 @@ from dataclasses import dataclass
 
 import numpy as np
 import torch
+from enn.enn.enn_class import EpistemicNearestNeighbors
+from enn.enn.enn_fit import enn_fit
+from enn.enn.enn_params import PosteriorFlags
+from enn.turbo.config.enn_index_driver import ENNIndexDriver
 from torch import nn
 
 from sampling.gather_proj_t import GatherProjSpec, project_module
@@ -11,34 +15,6 @@ from sampling.sparse_jl_t import (
     block_sparse_jl_noise_from_seed_wr,
     block_sparse_jl_transform_module_to_cpu_wr,
 )
-
-
-class _SimplePosterior:
-    def __init__(self, *, mu: np.ndarray, se: np.ndarray):
-        self.mu = mu
-        self.se = se
-
-
-class _SimpleENN:
-    """Minimal kNN posterior: mu=mean(neighbors), se=std(neighbors)/sqrt(k)."""
-
-    def __init__(self, *, x: np.ndarray, y: np.ndarray, k: int):
-        assert x.ndim == 2
-        assert y.ndim == 1 and y.shape[0] == x.shape[0]
-        self._x = np.asarray(x, dtype=np.float64)
-        self._y = np.asarray(y, dtype=np.float64)
-        self._k = int(max(1, min(k, x.shape[0])))
-
-    def posterior(self, x_cand: np.ndarray) -> _SimplePosterior:
-        x_cand = np.asarray(x_cand, dtype=np.float64)
-        assert x_cand.ndim == 2 and x_cand.shape[1] == self._x.shape[1]
-        diff = x_cand[:, None, :] - self._x[None, :, :]
-        d2 = np.sum(diff * diff, axis=-1)
-        idx = np.argpartition(d2, self._k - 1, axis=1)[:, : self._k]
-        neigh = self._y[idx]
-        mu = neigh.mean(axis=1)
-        se = neigh.std(axis=1) / np.sqrt(self._k)
-        return _SimplePosterior(mu=mu, se=se)
 
 
 @dataclass
@@ -76,7 +52,6 @@ class ENNMuPlusSeedSelector:
 
         self._enn_model: object | None = None
         self._enn_params: object | None = None
-        self._posterior_flags: object | None = None
 
         self._y_mean = 0.0
         self._y_std = 1.0
@@ -106,32 +81,21 @@ class ENNMuPlusSeedSelector:
         self._y_std = float(y.std()) if float(y.std()) > 0 else 1.0
         y_std = (y - self._y_mean) / self._y_std
 
-        try:
-            from enn.enn.enn_class import EpistemicNearestNeighbors
-            from enn.enn.enn_fit import enn_fit
-            from enn.enn.enn_params import PosteriorFlags
-            from enn.turbo.config.enn_index_driver import ENNIndexDriver
-
-            self._enn_model = EpistemicNearestNeighbors(
-                x,
-                y_std[:, None],
-                None,
-                scale_x=False,
-                index_driver=ENNIndexDriver.FLAT,
-            )
-            rng = np.random.default_rng(0)
-            self._enn_params = enn_fit(
-                self._enn_model,
-                k=int(self._cfg.k),
-                num_fit_candidates=200,
-                num_fit_samples=200,
-                rng=rng,
-            )
-            self._posterior_flags = PosteriorFlags(observation_noise=False)
-        except Exception:
-            self._enn_model = _SimpleENN(x=x, y=y_std, k=int(self._cfg.k))
-            self._enn_params = True
-            self._posterior_flags = None
+        self._enn_model = EpistemicNearestNeighbors(
+            x,
+            y_std[:, None],
+            None,
+            scale_x=False,
+            index_driver=ENNIndexDriver.FLAT,
+        )
+        rng = np.random.default_rng(0)
+        self._enn_params = enn_fit(
+            self._enn_model,
+            k=int(self._cfg.k),
+            num_fit_candidates=200,
+            num_fit_samples=200,
+            rng=rng,
+        )
 
         self._num_new_since_fit = 0
 
@@ -178,12 +142,7 @@ class ENNMuPlusSeedSelector:
 
     def _posterior_std(self, x_cand: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         assert self._enn_model is not None and self._enn_params is not None
-        if isinstance(self._enn_model, _SimpleENN):
-            post = self._enn_model.posterior(x_cand)
-            mu_std = np.asarray(post.mu).reshape(-1)
-            se_std = np.asarray(post.se).reshape(-1)
-            return mu_std, se_std
-        post = self._enn_model.posterior(x_cand, params=self._enn_params, flags=self._posterior_flags)
+        post = self._enn_model.posterior(x_cand, params=self._enn_params, flags=PosteriorFlags(observation_noise=False))
         mu_std = np.asarray(post.mu).reshape(-1)
         se_std = np.asarray(post.se).reshape(-1)
         return mu_std, se_std

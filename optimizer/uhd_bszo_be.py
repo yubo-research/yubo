@@ -11,17 +11,6 @@ from .uhd_simple_be import _embed_module, _maybe_fit_enn, _predict_enn
 
 
 class UHDBSZOBE:
-    """BSZO with ENN-based perturbation seed selection.
-
-    Before each gradient step, generates N candidate perturbation seed
-    sets, embeds the module under each candidate's first perturbation
-    direction, and selects the candidate with highest gradient-magnitude
-    UCB.
-
-    The ENN is trained on (embedding_under_perturbation, directional_derivative)
-    pairs from all previous gradient steps.
-    """
-
     def __init__(
         self,
         perturbator: GaussianPerturbator,
@@ -66,14 +55,9 @@ class UHDBSZOBE:
         self._ys: list[float] = []
         self._enn_model: object | None = None
         self._enn_params: object | None = None
-        self._posterior_flags: object | None = None
         self._y_mean = 0.0
         self._y_std = 1.0
         self._num_new_since_fit = 0
-
-    # ------------------------------------------------------------------
-    # Delegated properties
-    # ------------------------------------------------------------------
 
     @property
     def eval_seed(self) -> int:
@@ -103,10 +87,6 @@ class UHDBSZOBE:
     def k(self) -> int:
         return self._bszo.k
 
-    # ------------------------------------------------------------------
-    # Ask / Tell
-    # ------------------------------------------------------------------
-
     def ask(self) -> None:
         if self._bszo.phase == 0:
             if self._enn_params is not None and len(self._zs) >= self._warmup:
@@ -134,10 +114,6 @@ class UHDBSZOBE:
         if phase_before >= 1 and self._bszo.phase == 0:
             self._maybe_fit()
 
-    # ------------------------------------------------------------------
-    # ENN seed selection
-    # ------------------------------------------------------------------
-
     def _select_seeds(self) -> None:
         base = self._next_perturb_base
         k = self._bszo.k
@@ -159,7 +135,7 @@ class UHDBSZOBE:
             self._module.train()
 
         x_cand = np.array(embeds, dtype=np.float64)
-        mu_pred, se_pred = _predict_enn(self._enn_model, self._enn_params, self._posterior_flags, x_cand)
+        mu_pred, se_pred = _predict_enn(self._enn_model, self._enn_params, x_cand)
 
         mu_real = self._y_mean + self._y_std * mu_pred
         se_real = abs(self._y_std) * se_pred

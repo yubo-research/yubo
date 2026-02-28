@@ -435,6 +435,7 @@ def test_run_bszo_iterations_loop():
 def test_run_bszo_wiring(monkeypatch):
     """Verify _run_bszo passes all BSZO config fields to run_bszo_loop."""
     import ops.exp_uhd as exp_uhd
+    from ops.uhd_config import BEConfig, EarlyRejectConfig, ENNConfig, UHDConfig
 
     captured = {}
 
@@ -444,7 +445,25 @@ def test_run_bszo_wiring(monkeypatch):
 
     monkeypatch.setattr("ops.uhd_setup.run_bszo_loop", fake_run_bszo_loop)
 
-    cfg = exp_uhd.UHDConfig(
+    early_reject = EarlyRejectConfig(tau=None, mode=None, ema_beta=None, warmup_pos=None, quantile=None, window=None)
+    be = BEConfig(10, 10, 20, 10, 25, None)
+    enn = ENNConfig(
+        minus_impute=False,
+        d=100,
+        s=4,
+        jl_seed=123,
+        k=25,
+        fit_interval=50,
+        warmup_real_obs=200,
+        refresh_interval=50,
+        se_threshold=0.25,
+        target="mu_minus",
+        num_candidates=1,
+        select_interval=1,
+        embedder="direction",
+        gather_t=64,
+    )
+    cfg = UHDConfig(
         env_tag="mnist",
         num_rounds=5,
         problem_seed=42,
@@ -455,34 +474,11 @@ def test_run_bszo_wiring(monkeypatch):
         log_interval=1,
         accuracy_interval=100,
         target_accuracy=0.9,
-        early_reject_tau=None,
-        early_reject_mode=None,
-        early_reject_ema_beta=None,
-        early_reject_warmup_pos=None,
-        early_reject_quantile=None,
-        early_reject_window=None,
         optimizer="bszo",
-        be_num_probes=10,
-        be_num_candidates=10,
-        be_warmup=20,
-        be_fit_interval=10,
-        be_enn_k=25,
-        be_sigma_range=None,
         batch_size=256,
-        enn_minus_impute=False,
-        enn_d=100,
-        enn_s=4,
-        enn_jl_seed=123,
-        enn_k=25,
-        enn_fit_interval=50,
-        enn_warmup_real_obs=200,
-        enn_refresh_interval=50,
-        enn_se_threshold=0.25,
-        enn_target="mu_minus",
-        enn_num_candidates=1,
-        enn_select_interval=1,
-        enn_embedder="direction",
-        enn_gather_t=64,
+        early_reject=early_reject,
+        be=be,
+        enn=enn,
         bszo_k=4,
         bszo_epsilon=1e-3,
         bszo_sigma_p_sq=2.0,

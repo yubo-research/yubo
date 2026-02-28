@@ -5,9 +5,12 @@ from typing import Callable
 
 import numpy as np
 import torch
+from enn.enn.enn_class import EpistemicNearestNeighbors
+from enn.enn.enn_fit import enn_fit
+from enn.enn.enn_params import PosteriorFlags
+from enn.turbo.config.enn_index_driver import ENNIndexDriver
 from torch import nn
 
-from optimizer.uhd_enn_seed_selector import _SimpleENN
 from sampling.gather_proj_t import GatherProjSpec, project_module
 from sampling.sparse_jl_t import _block_sparse_hash_scatter_from_nz_t
 
@@ -77,8 +80,8 @@ class ENNMinusImputer:
         self._y: list[float] = []
         self._num_new_since_fit = 0
 
-        self._enn_model = None
-        self._enn_params = None
+        self._enn_model: object | None = None
+        self._enn_params: object | None = None
 
         self._num_negative_phases = 0
         self._num_real_evals = 0
@@ -218,33 +221,21 @@ class ENNMinusImputer:
         self._y_std = float(y.std()) if float(y.std()) > 0 else 1.0
         y_std = (y - self._y_mean) / self._y_std
 
-        try:
-            from enn.enn.enn_class import EpistemicNearestNeighbors
-            from enn.enn.enn_fit import enn_fit
-            from enn.enn.enn_params import PosteriorFlags
-            from enn.turbo.config.enn_index_driver import ENNIndexDriver
-
-            self._enn_model = EpistemicNearestNeighbors(
-                x,
-                y_std[:, None],
-                None,
-                scale_x=False,
-                index_driver=ENNIndexDriver.FLAT,
-            )
-            rng = np.random.default_rng(0)
-            self._enn_params = enn_fit(
-                self._enn_model,
-                k=int(self._cfg.k),
-                num_fit_candidates=200,
-                num_fit_samples=200,
-                rng=rng,
-            )
-            self._posterior_flags = PosteriorFlags(observation_noise=False)
-        except Exception:
-            # Fallback: lightweight kNN surrogate with empirical mean/std.
-            self._enn_model = _SimpleENN(x=x, y=y_std, k=int(self._cfg.k))
-            self._enn_params = True
-            self._posterior_flags = None
+        self._enn_model = EpistemicNearestNeighbors(
+            x,
+            y_std[:, None],
+            None,
+            scale_x=False,
+            index_driver=ENNIndexDriver.FLAT,
+        )
+        rng = np.random.default_rng(0)
+        self._enn_params = enn_fit(
+            self._enn_model,
+            k=int(self._cfg.k),
+            num_fit_candidates=200,
+            num_fit_samples=200,
+            rng=rng,
+        )
         self._num_new_since_fit = 0
 
     def choose_seed_ucb(self, *, base_seed: int, sigma: float) -> tuple[int, float | None]:
@@ -281,14 +272,9 @@ class ENNMinusImputer:
             xs.append(delta_z.double().numpy())
         x_cand = np.asarray(xs, dtype=np.float64)
 
-        if isinstance(self._enn_model, _SimpleENN):
-            post = self._enn_model.posterior(x_cand)
-            mu_std = np.asarray(post.mu).reshape(-1)
-            se_std = np.asarray(post.se).reshape(-1)
-        else:
-            post = self._enn_model.posterior(x_cand, params=self._enn_params, flags=self._posterior_flags)
-            mu_std = np.asarray(post.mu).reshape(-1)
-            se_std = np.asarray(post.se).reshape(-1)
+        post = self._enn_model.posterior(x_cand, params=self._enn_params, flags=PosteriorFlags(observation_noise=False))
+        mu_std = np.asarray(post.mu).reshape(-1)
+        se_std = np.asarray(post.se).reshape(-1)
 
         mu = self._y_mean + self._y_std * mu_std
         se = abs(self._y_std) * se_std
@@ -307,6 +293,8 @@ class ENNMinusImputer:
             return False
         self._maybe_fit()
         if self._enn_params is None:
+            return False
+        if self._enn_model is None:
             return False
         if self._num_calib < int(self._cfg.min_calib_points):
             return False
@@ -331,14 +319,9 @@ class ENNMinusImputer:
             z = self._delta_x[None, :]
         else:
             z = _compute_z(self._z_base, self._delta_z, -1.0)[None, :]
-        if isinstance(self._enn_model, _SimpleENN):
-            post = self._enn_model.posterior(z)
-            mu_std = float(np.asarray(post.mu).reshape(-1)[0])
-            se_std = float(np.asarray(post.se).reshape(-1)[0])
-        else:
-            post = self._enn_model.posterior(z, params=self._enn_params, flags=self._posterior_flags)
-            mu_std = float(np.asarray(post.mu).reshape(-1)[0])
-            se_std = float(np.asarray(post.se).reshape(-1)[0])
+        post = self._enn_model.posterior(z, params=self._enn_params, flags=PosteriorFlags(observation_noise=False))
+        mu_std = float(np.asarray(post.mu).reshape(-1)[0])
+        se_std = float(np.asarray(post.se).reshape(-1)[0])
         y_hat = self._y_mean + self._y_std * mu_std
         y_se = abs(self._y_std) * se_std
         return float(y_hat), float(y_se)

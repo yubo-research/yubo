@@ -1,7 +1,5 @@
 """Main plotting module for RL experiment visualization."""
 
-from typing import NamedTuple
-
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -29,6 +27,25 @@ from analysis.plotting_2_util import (
     speedup_x_label,
 )
 
+from .plotting_types import (
+    PlotResultsResult as _PlotResultsResult,
+)
+from .plotting_types import (
+    PlotRLComparisonResult as _PlotRLComparisonResult,
+)
+from .plotting_types import (
+    PlotRLExperimentResult as _PlotRLExperimentResult,
+)
+from .plotting_types import (
+    PlotRLExperimentVsTimeResult as _PlotRLExperimentVsTimeResult,
+)
+from .plotting_types import (
+    PlotRLFinalComparisonResult as _PlotRLFinalComparisonResult,
+)
+from .plotting_types import (
+    RLTracesWithCumDtProp as _RLTracesWithCumDtProp,
+)
+
 # Re-export for backward compatibility
 _noise_label = noise_label
 _speedup_x_label = speedup_x_label
@@ -40,48 +57,6 @@ _count_done_reps = None  # Not re-exported
 _print_dataset_summary = print_dataset_summary
 _mean_final_by_optimizer = mean_final_by_optimizer
 _median_final_by_optimizer = median_final_by_optimizer
-
-
-class _PlotRLExperimentResult(NamedTuple):
-    fig: object
-    ax: object
-    data_locator: DataLocator
-    traces: np.ndarray
-
-
-class _PlotRLExperimentVsTimeResult(NamedTuple):
-    fig: object
-    ax: object
-    data_locator: DataLocator
-    traces: np.ndarray
-    t: np.ndarray
-
-
-class _RLTracesWithCumDtProp(NamedTuple):
-    data_locator: DataLocator
-    traces: np.ndarray
-    cum_dt_prop: dict[str, float] | None
-
-
-class _PlotRLComparisonResult(NamedTuple):
-    fig: object
-    axs: object
-    seq: _RLTracesWithCumDtProp
-    batch: _RLTracesWithCumDtProp | None
-
-
-class _PlotRLFinalComparisonResult(NamedTuple):
-    fig: object
-    axs: object
-    seq: _RLTracesWithCumDtProp
-    batch: _RLTracesWithCumDtProp | None
-
-
-class _PlotResultsResult(NamedTuple):
-    curves: tuple[object, object]
-    final: tuple[object, object]
-    seq_data: object
-    batch_data: object
 
 
 def _load_rl_with_cum_dt_prop(results_path, exp_dir, opt_names, *, num_arms, num_rounds, num_reps, problem):

@@ -1,7 +1,5 @@
 import sys
 import time
-from dataclasses import dataclass
-from typing import NamedTuple
 
 import numpy as np
 
@@ -9,16 +7,11 @@ from common.telemetry import Telemetry
 
 from .datum import Datum
 from .opt_trajectories import collect_denoised_trajectory, evaluate_for_best
+from .optimizer_types import IterateResult, ReturnSummary, TraceEntry
 from .trajectories import collect_trajectory
 
 _INTERACTIVE_DEBUG = False
 _SHOW_EVERY_N_ITER = 30
-
-
-class _IterateResult(NamedTuple):
-    data: list[Datum]
-    dt_prop: float
-    dt_eval: float
 
 
 def _pareto_mask_max(y: np.ndarray) -> np.ndarray:
@@ -53,22 +46,6 @@ def _pareto_mask_min(y: np.ndarray) -> np.ndarray:
         dom[i] = False
         keep[dom] = False
     return keep
-
-
-@dataclass
-class _TraceEntry:
-    rreturn: float
-    rreturn_decision: float
-    dt_prop: float
-    dt_eval: float
-
-
-@dataclass(frozen=True)
-class _ReturnSummary:
-    ret_eval: float
-    y_best_s: str
-    ret_best_s: str
-    ret_eval_s: str
 
 
 class Optimizer:
@@ -134,7 +111,7 @@ class Optimizer:
         tf = time.time()
         dt_eval = tf - t_0
 
-        return _IterateResult(data=data, dt_prop=float(dt_prop), dt_eval=float(dt_eval))
+        return IterateResult(data=data, dt_prop=float(dt_prop), dt_eval=float(dt_eval))
 
     def collect_trace(self, designer_name, max_iterations, max_proposal_seconds=np.inf, deadline=None):
         self.initialize(designer_name)
@@ -199,7 +176,7 @@ class Optimizer:
             did_update = self._update_best_from_batch(data)
         self._update_y_best_scalar(ret_batch, did_update)
         ret_eval = float(self.y_best)
-        return _ReturnSummary(
+        return ReturnSummary(
             ret_eval=ret_eval,
             y_best_s=f"{float(self.y_best):.3f}",
             ret_best_s=f"{float(self.r_best_est):.3f}",
@@ -211,7 +188,7 @@ class Optimizer:
             ret_eval = self._handle_hypervolume(num_metrics)
         else:
             ret_eval = self._handle_first_objective(data, ret_batch)
-        return _ReturnSummary(
+        return ReturnSummary(
             ret_eval=float(ret_eval),
             y_best_s=np.array2string(self.y_best, precision=3, floatmode="fixed"),
             ret_best_s=f"{float(self.r_best_est):.6f}",
@@ -324,7 +301,7 @@ class Optimizer:
                 f"y_best={y_best_s} ret_best={ret_best_s} ret_eval={ret_eval_s}"
             )
         sys.stdout.flush()
-        self._trace.append(_TraceEntry(float(ret_eval), float(self.r_best_est), dt_prop, dt_eval))
+        self._trace.append(TraceEntry(float(ret_eval), float(self.r_best_est), dt_prop, dt_eval))
         self._i_iter += 1
         self.last_designer = designer
         return self._trace

@@ -6,17 +6,6 @@ from .gaussian_perturbator import PerturbatorBase
 
 
 class SparseGaussianPerturbator(PerturbatorBase):
-    """RAASP-style sparse Gaussian perturbation.
-
-    Like GaussianPerturbator but only perturbs a random subset of
-    dimensions per step.  The expected number of perturbed dimensions
-    is ``num_dim_target``; each dimension is included independently
-    with probability ``min(num_dim_target / dim, 1)``.
-
-    The mask and noise are both generated deterministically from the
-    seed, so ``unperturb()`` can replay the exact same perturbation.
-    """
-
     def __init__(self, module: nn.Module, *, num_dim_target: float):
         super().__init__(module)
         dim = sum(p.numel() for p in module.parameters())
@@ -93,11 +82,6 @@ class SparseGaussianPerturbator(PerturbatorBase):
                 offset += numel
 
     def sample_global_nz(self, *, seed: int, sigma: float) -> tuple[np.ndarray, np.ndarray]:
-        """Return (global_indices, values) for the k-sparse perturbation.
-
-        Only valid when constructed with num_dim_target >= 1 and < dim.
-        Deterministic given seed.
-        """
         assert self._k is not None, "sample_global_nz only supported for k-sparse mode (num_dim_target >= 1)"
         rng = np.random.default_rng(int(seed))
         idx = rng.choice(self._dim, size=int(self._k), replace=False)

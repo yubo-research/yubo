@@ -190,6 +190,20 @@ def test_uhd_batch_worker():
     assert "EVAL:" in fake_dict["k1"]
 
 
+def test_uhd_batch_worker_fails_on_error():
+    from ops.uhd_batch import uhd_batch_worker
+
+    raw_fn = uhd_batch_worker.get_raw_f()
+    fake_dict = {}
+    failed = SimpleNamespace(stdout="", stderr="IndexError: tuple index out of range", returncode=1)
+
+    with patch("ops.uhd_batch._results_dict", return_value=fake_dict), patch("subprocess.run", return_value=failed):
+        with pytest.raises(RuntimeError, match="Subprocess failed with exit 1"):
+            raw_fn(("k2", {"env_tag": "x", "num_rounds": 1}))
+
+    assert "k2" not in fake_dict
+
+
 def test_uhd_batch_resubmitter():
     from ops.uhd_batch import uhd_batch_resubmitter
 
@@ -324,3 +338,18 @@ def test_cleanup_cmd():
     deleted = {c.args[0] for c in mock_del.call_args_list}
     assert deleted == {"uhd_batch_results", "uhd_batch_submitted"}
     assert "Deleted dict: uhd_batch_results" in result.output
+
+
+def test_batch_cmd(tmp_path):
+    from click.testing import CliRunner
+
+    from ops.uhd_batch import batch_cmd, cli  # noqa: F811
+
+    assert batch_cmd is not None
+
+    with patch("ops.uhd_batch._batch_modal") as mock_batch:
+        result = CliRunner().invoke(cli, ["batch", "experiments.uhd_batch_preps.prep_uhd_batch_tlunar", "--results-dir", str(tmp_path)])
+
+    assert result.exit_code == 0, result.output
+    assert mock_batch.call_count == 4
+    assert "Batch complete: 4 configs" in result.output

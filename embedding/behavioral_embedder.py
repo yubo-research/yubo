@@ -22,5 +22,5 @@ class BehavioralEmbedder:
         if hasattr(policy, "reset_state"):
             policy.reset_state()
         probes_np = self.probes.numpy()
-        outputs = [policy(probe) for probe in probes_np]
+        outputs = [np.atleast_1d(policy(probe)) for probe in probes_np]
         return np.concatenate(outputs).reshape(-1)

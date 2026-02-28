@@ -230,7 +230,7 @@ if _HAS_MODAL:
                 cwd="/root",
             )
             if result.returncode != 0:
-                print(f"WORKER ERROR:\n{result.stderr}")
+                raise RuntimeError(f"Subprocess failed with exit {result.returncode}:\n{result.stderr}")
             _results_dict()[key] = result.stdout
         finally:
             os.unlink(tmp)
@@ -386,6 +386,26 @@ def cleanup_cmd() -> None:
             click.echo(f"Deleted dict: {name}")
         except Exception as e:
             click.echo(f"Delete failed for {name}: {e!r}")
+
+
+@_cli.command(name="batch")
+@click.argument("import_path", type=str)
+@click.option("--results-dir", type=str, default=_DEFAULT_RESULTS, help="Results directory")
+def batch_cmd(import_path: str, results_dir: str) -> None:
+    _require_modal()
+
+    module_path, func_name = import_path.rsplit(".", 1)
+    module = __import__(module_path, fromlist=[func_name])
+    prep_fn = getattr(module, func_name)
+
+    configs = prep_fn(results_dir)
+    total_submitted = 0
+
+    for cfg, num_reps in configs:
+        _batch_modal(cfg, num_reps, results_dir)
+        total_submitted += num_reps
+
+    click.echo(f"Batch complete: {len(configs)} configs, {total_submitted} total reps submitted")
 
 
 if __name__ == "__main__":

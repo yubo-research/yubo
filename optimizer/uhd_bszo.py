@@ -1,10 +1,8 @@
-from .gaussian_perturbator import GaussianPerturbator
+from .gaussian_perturbator import GaussianPerturbator, apply_weight_decay
 from .lr_scheduler import LRScheduler
 
 
 class _KalmanFilter:
-    """Coordinate-axis Kalman filter with adaptive noise for BSZO."""
-
     def __init__(self, k: int, sigma_p_sq: float, sigma_e_sq: float, alpha: float):
         self._k = k
         self._sigma_p_sq = sigma_p_sq
@@ -22,7 +20,6 @@ class _KalmanFilter:
         self.Sigma = [[self._sigma_p_sq if i == j else 0.0 for j in range(k)] for i in range(k)]
 
     def update_coord(self, idx: int, y: float) -> None:
-        """Kalman update for observation along coordinate axis e_{idx}."""
         k = self._k
         S = self.Sigma
         mu = self.mu_post
@@ -42,10 +39,6 @@ class _KalmanFilter:
                 S[i][j] -= K[i] * row_idx[j]
 
     def adaptive_step(self) -> None:
-        """Residual-based adaptive noise + extra Kalman refinement.
-
-        Corresponds to the m = k+1 sampling step in Algorithm 1.
-        """
         r = self.last_y - self.mu_post[self.last_d_idx]
         self.sigma_e_sq = (1.0 - self._alpha) * self.sigma_e_sq + self._alpha * r * r
 
@@ -54,23 +47,6 @@ class _KalmanFilter:
 
 
 class UHDBSZO:
-    """Bayesian Subspace Zeroth-Order optimizer (BSZO).
-
-    Gradient ascent via k one-sided finite differences fused by Kalman
-    filtering with adaptive noise estimation.
-
-    Each gradient step uses (k+1) sequential ask/tell cycles:
-      phase 0:    baseline eval (no perturbation), records f_0
-      phase 1..k: perturb θ → θ + ε·z_i, eval, unperturb, records y_i
-
-    After the k-th tell, runs Kalman filter + adaptive refinement,
-    then applies: θ += η · Σ_i μ_i · z_i  (gradient ascent).
-
-    O(k²) extra memory for the posterior covariance.
-
-    Reference: Feng & Huang 2025, arXiv:2601.01452, Algorithm 1.
-    """
-
     def __init__(
         self,
         perturbator: GaussianPerturbator,
@@ -142,10 +118,6 @@ class UHDBSZO:
         return self._perturb_base + direction
 
     def set_perturb_base(self, base: int) -> None:
-        """Override the perturbation seed base for the current step.
-
-        Only valid during baseline phase (phase 0).
-        """
         if self._phase != 0:
             raise RuntimeError("set_perturb_base only valid during baseline phase")
         self._perturb_base = int(base)
@@ -189,7 +161,6 @@ class UHDBSZO:
             self._phase += 1
 
     def _apply_gradient(self) -> None:
-        """Apply θ += η · Σ_i μ_i · z_i (gradient ascent)."""
         lr = self._lr_scheduler.lr
         for i in range(self._k):
             scale = lr * self._kf.mu_post[i]
@@ -198,10 +169,7 @@ class UHDBSZO:
             self._perturbator.perturb(self.perturb_seed(i), scale)
             self._perturbator.accept()
 
-        if self._weight_decay > 0.0:
-            decay = 1.0 - lr * self._weight_decay
-            for p in self._perturbator._module.parameters():
-                p.data.mul_(decay)
+        apply_weight_decay(self._perturbator._module, lr, self._weight_decay)
 
 
 def _zero_matrix(k: int) -> list[list[float]]:

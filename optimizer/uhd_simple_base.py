@@ -7,8 +7,6 @@ from .step_size_adapter import StepSizeAdapter
 
 
 class UHDSimpleBase:
-    """Shared state and logic for (1+1)-ES optimizers."""
-
     def __init__(
         self,
         perturbator: GaussianPerturbator,

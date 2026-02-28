@@ -2,9 +2,15 @@ import torch
 from torch import nn
 
 
-class PerturbatorBase:
-    """Shared perturb/unperturb/accept state machine for all perturbators."""
+def apply_weight_decay(module, lr: float, weight_decay: float) -> None:
+    if weight_decay <= 0.0:
+        return
+    decay = 1.0 - lr * weight_decay
+    for p in module.parameters():
+        p.data.mul_(decay)
 
+
+class PerturbatorBase:
     def __init__(self, module: nn.Module):
         self._module = module
         self._perturbed = False
@@ -41,12 +47,6 @@ class PerturbatorBase:
 
 
 class GaussianPerturbator(PerturbatorBase):
-    """Dense Gaussian perturbation without O(D) allocations.
-
-    Applies iid N(0, sigma^2) noise in-place in fixed-size chunks so peak
-    temporary memory is O(chunk_size) rather than O(D).
-    """
-
     def _apply(self, *, seed: int, sigma: float, chunk_size: int = 2**16) -> None:
         g = self._rng(seed)
         device = self._device()

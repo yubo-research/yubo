@@ -1,12 +1,9 @@
 #!/usr/bin/env python
 
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import click
 import tomllib
-
-if TYPE_CHECKING:
-    from experiments.experiment_sampler import ExperimentConfig
 
 _REQUIRED_KEYS = (
     "exp_dir",
@@ -63,7 +60,7 @@ def _validate_required(cfg: dict[str, Any]) -> None:
         raise ValueError(f"Missing required fields: {missing}. Required: {sorted(_REQUIRED_KEYS)}")
 
 
-def load_experiment_config(*, config_toml_path: str) -> "ExperimentConfig":
+def load_experiment_config(*, config_toml_path: str):
     from experiments.experiment_sampler import ExperimentConfig
 
     cfg = _load_toml_config(config_toml_path)

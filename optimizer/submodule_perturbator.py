@@ -5,19 +5,6 @@ from .gaussian_perturbator import PerturbatorBase
 
 
 class SubmodulePerturbator(PerturbatorBase):
-    """RAASP-style perturbation at the submodule level.
-
-    Instead of selecting individual dimensions, this perturbator
-    randomly selects entire leaf submodules (those that own parameters)
-    to perturb.  All parameters within a selected submodule are
-    perturbed with iid Gaussian noise; unselected submodules are left
-    untouched.
-
-    ``num_module_target`` controls how many submodules are perturbed on
-    average.  If 0 < num_module_target < 1, it is treated as a fraction
-    of the total leaf-module count.
-    """
-
     def __init__(self, module: nn.Module, *, num_module_target: float):
         super().__init__(module)
         self._leaf_modules = [m for m in module.modules() if list(m.parameters(recurse=False))]

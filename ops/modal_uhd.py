@@ -2,6 +2,8 @@ from pathlib import Path
 
 import modal
 
+from ops.uhd_config import EarlyRejectConfig
+
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
 _PROJECT_DIRS = ("ops", "optimizer", "problems", "common", "sampling", "embedding")
 
@@ -117,12 +119,7 @@ def _run(
     log_interval: int = 10,
     accuracy_interval: int = 1000,
     target_accuracy: float | None = None,
-    early_reject_tau: float | None = None,
-    early_reject_mode: str | None = None,
-    early_reject_ema_beta: float | None = None,
-    early_reject_warmup_pos: int | None = None,
-    early_reject_quantile: float | None = None,
-    early_reject_window: int | None = None,
+    early_reject: EarlyRejectConfig | None = None,
     enn: dict[str, object] | None = None,
 ):
     app = modal.App(name="yubo-uhd")
@@ -161,6 +158,14 @@ def _run(
         enn_embedder,
         enn_gather_t,
     ):
+        er_cfg = EarlyRejectConfig(
+            tau=early_reject_tau,
+            mode=early_reject_mode,
+            ema_beta=early_reject_ema_beta,
+            warmup_pos=early_reject_warmup_pos,
+            quantile=early_reject_quantile,
+            window=early_reject_window,
+        )
         import io
         import sys
 
@@ -178,12 +183,7 @@ def _run(
             log_interval=log_interval,
             accuracy_interval=accuracy_interval,
             target_accuracy=target_accuracy,
-            early_reject_tau=early_reject_tau,
-            early_reject_mode=early_reject_mode,
-            early_reject_ema_beta=early_reject_ema_beta,
-            early_reject_warmup_pos=early_reject_warmup_pos,
-            early_reject_quantile=early_reject_quantile,
-            early_reject_window=early_reject_window,
+            early_reject=er_cfg,
             enn={
                 "enn_minus_impute": enn_minus_impute,
                 "enn_d": enn_d,
@@ -212,6 +212,7 @@ def _run(
 
     enn_f = _parse_enn_fields(enn)
 
+    er = early_reject if early_reject is not None else EarlyRejectConfig()
     with modal.enable_output():
         with app.run():
             return _run_uhd.remote(
@@ -226,12 +227,12 @@ def _run(
                 int(log_interval),
                 int(accuracy_interval),
                 target_accuracy,
-                None if early_reject_tau is None else float(early_reject_tau),
-                None if early_reject_mode is None else str(early_reject_mode),
-                None if early_reject_ema_beta is None else float(early_reject_ema_beta),
-                None if early_reject_warmup_pos is None else int(early_reject_warmup_pos),
-                None if early_reject_quantile is None else float(early_reject_quantile),
-                None if early_reject_window is None else int(early_reject_window),
+                er.tau,
+                er.mode,
+                er.ema_beta,
+                er.warmup_pos,
+                er.quantile,
+                er.window,
                 bool(enn_f.minus_impute),
                 int(enn_f.d),
                 int(enn_f.s),

@@ -15,7 +15,6 @@ def _ensure_repo_root_on_path() -> None:
 
 def _main() -> None:
     _ensure_repo_root_on_path()
-
     from experiments.experiment import cli
 
     cli()
