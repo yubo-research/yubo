@@ -1,88 +1,32 @@
+"""Tests for dm_control envs via Shimmy (problems/shimmy_dm_control)."""
+
+import gymnasium as gym
 import numpy as np
+import pytest
 
-from problems import dm_control_env
-from problems.dm_control_env import DMControlEnv, _configure_headless_render_backend, _parse_env_name, make
-
-
-class _DummySpec:
-    def __init__(self, *, shape, dtype=np.float32, minimum=-1.0, maximum=1.0):
-        self.shape = shape
-        self.dtype = dtype
-        self.minimum = np.full(shape, minimum, dtype=np.float32)
-        self.maximum = np.full(shape, maximum, dtype=np.float32)
+from problems.shimmy_dm_control import (
+    _flatten_obs,
+    _parse_env_name,
+    _PixelObsWrapper,
+    make,
+)
 
 
-class _DummyTimeStep:
-    def __init__(self, observation, reward, discount, is_last):
-        self.observation = observation
-        self.reward = reward
-        self.discount = discount
-        self._is_last = is_last
+def test_get_env_conf_dm_control():
+    """get_env_conf accepts dm: and dm_control/ tags."""
+    import problems.env_conf_atari_dm  # noqa: F401 - register atari/dm handlers
+    from problems.env_conf import get_env_conf
 
-    def last(self):
-        return self._is_last
+    ec = get_env_conf("dm:cheetah-run", problem_seed=42, noise_seed_0=100)
+    assert ec.env_name == "dm_control/cheetah-run-v0"
+    assert ec.problem_seed == 42
+    assert ec.noise_seed_0 == 100
+    assert ec.gym_conf is not None
+    assert ec.gym_conf.transform_state is False
 
-
-class _DummyGlobal:
-    offwidth = 640
-    offheight = 480
-
-
-class _DummyVis:
-    global_ = _DummyGlobal()
-
-
-class _DummyModel:
-    vis = _DummyVis()
-
-    @staticmethod
-    def name2id(name, kind):
-        assert kind == "camera"
-        return 1 if name == "side" else -1
-
-
-class _DummyPhysics:
-    def __init__(self):
-        self.model = _DummyModel()
-        self.render_calls = []
-
-    def render(self, **kwargs):
-        self.render_calls.append(kwargs)
-        return np.zeros((kwargs["height"], kwargs["width"], 3), dtype=np.uint8)
-
-
-class _DummyDMEnv:
-    def __init__(self):
-        self.physics = _DummyPhysics()
-
-    @staticmethod
-    def observation_spec():
-        return {"position": _DummySpec(shape=(2,)), "velocity": _DummySpec(shape=(1,))}
-
-    @staticmethod
-    def action_spec():
-        return _DummySpec(shape=(3,), minimum=-2.0, maximum=2.0)
-
-    @staticmethod
-    def reset():
-        obs = {
-            "position": np.array([0.1, 0.2], dtype=np.float32),
-            "velocity": np.array([0.3], dtype=np.float32),
-        }
-        return _DummyTimeStep(observation=obs, reward=0.0, discount=1.0, is_last=False)
-
-    @staticmethod
-    def step(action):
-        _ = action
-        obs = {
-            "position": np.array([0.4, 0.5], dtype=np.float32),
-            "velocity": np.array([0.6], dtype=np.float32),
-        }
-        return _DummyTimeStep(observation=obs, reward=1.5, discount=0.95, is_last=True)
-
-    @staticmethod
-    def close():
-        return None
+    ec2 = get_env_conf("dm_control/hopper-hop-v0", problem_seed=1)
+    assert ec2.env_name == "dm_control/hopper-hop-v0"
+    assert ec2.problem_seed == 1
 
 
 def test_parse_env_name():
@@ -90,58 +34,88 @@ def test_parse_env_name():
     assert domain == "cheetah"
     assert task == "run"
 
+    domain, task = _parse_env_name("dm_control/hopper-hop-v1")
+    assert domain == "hopper"
+    assert task == "hop"
 
-def test_make_from_name(monkeypatch):
-    monkeypatch.setattr(DMControlEnv, "_load_env", lambda self, seed: _DummyDMEnv())
+
+def test_parse_env_name_invalid_raises():
+    with pytest.raises(ValueError, match="Expected dm_control env name"):
+        _parse_env_name("gymnasium/HalfCheetah-v5")
+    with pytest.raises(ValueError, match="dm_control/cheetah"):
+        _parse_env_name("dm_control/cheetah")
+
+
+def test_flatten_obs():
+    flat = _flatten_obs({"a": np.array([1.0, 2.0]), "b": np.array([3.0])})
+    np.testing.assert_array_equal(flat, np.array([1.0, 2.0, 3.0], dtype=np.float32))
+    flat_scalar = _flatten_obs(np.array(5.0))
+    np.testing.assert_array_equal(flat_scalar, np.array([5.0], dtype=np.float32))
+    flat_empty = _flatten_obs({})
+    assert flat_empty.shape == (0,)
+    assert flat_empty.dtype == np.float32
+
+
+def test_dm_control_cheetah_run_real():
+    """Integration test: make() creates env, reset/step work, seeding is deterministic."""
+    pytest.importorskip("dm_control")
+    pytest.importorskip("shimmy")
     env = make("dm_control/cheetah-run-v0")
-    assert isinstance(env, DMControlEnv)
+    obs, info = env.reset(seed=42)
+    assert isinstance(obs, np.ndarray)
+    assert obs.ndim == 1
+    assert obs.dtype == np.float32
+    assert obs.size == env.observation_space.shape[0]
+
+    action = np.zeros(env.action_space.shape[0], dtype=np.float32)
+    obs2, reward, terminated, truncated, extra = env.step(action)
+    assert isinstance(obs2, np.ndarray)
+    assert isinstance(reward, (int, float))
+
+    env2 = make("dm_control/cheetah-run-v0")
+    obs3, _ = env2.reset(seed=42)
+    env2.close()
+    np.testing.assert_array_equal(obs, obs3)
+
+    env.close()
 
 
-def test_dm_control_env_step_and_render(monkeypatch):
-    monkeypatch.setattr(DMControlEnv, "_load_env", lambda self, seed: _DummyDMEnv())
-    env = DMControlEnv("cheetah", "run", render_mode="rgb_array")
-
-    obs, info = env.reset()
-    assert info == {}
-    assert obs.shape == (3,)
-
-    action = np.array([0.1, 0.2, 0.3], dtype=np.float32)
-    next_obs, reward, terminated, truncated, extra = env.step(action)
-    assert next_obs.shape == (3,)
-    assert reward == 1.5
-    assert terminated is True
-    assert truncated is False
-    assert extra == {"discount": 0.95}
-
-    frame = env.render()
-    assert frame.shape == (720, 1280, 3)
-
-    render_call = env._env.physics.render_calls[-1]
-    assert render_call["width"] == 1280
-    assert render_call["height"] == 720
+def test_dm_control_from_pixels():
+    """Integration test: from_pixels returns pixel obs."""
+    pytest.importorskip("dm_control")
+    pytest.importorskip("shimmy")
+    env = make("dm_control/cheetah-run-v0", from_pixels=True, pixels_only=True)
+    obs, info = env.reset(seed=42)
+    assert isinstance(obs, dict)
+    assert "pixels" in obs
+    assert obs["pixels"].shape == (84, 84, 3)
+    assert obs["pixels"].dtype == np.uint8
+    env.close()
 
 
-def test_configure_headless_render_backend_linux_no_display(monkeypatch):
-    monkeypatch.setattr(dm_control_env.sys, "platform", "linux")
-    monkeypatch.delenv("DISPLAY", raising=False)
-    monkeypatch.delenv("WAYLAND_DISPLAY", raising=False)
-    monkeypatch.delenv("MUJOCO_GL", raising=False)
-    monkeypatch.delenv("PYOPENGL_PLATFORM", raising=False)
+def test_pixel_wrapper_contract_pixels_only_is_dict():
+    class _DummyEnv(gym.Env):
+        metadata = {"render_modes": ["rgb_array"]}
 
-    _configure_headless_render_backend("rgb_array")
+        def __init__(self):
+            self.observation_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(3,), dtype=np.float32)
+            self.action_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(1,), dtype=np.float32)
 
-    assert dm_control_env.os.environ["MUJOCO_GL"] == "egl"
-    assert dm_control_env.os.environ["PYOPENGL_PLATFORM"] == "egl"
+        def reset(self, *, seed=None, options=None):
+            _ = options
+            super().reset(seed=seed)
+            return np.zeros((3,), dtype=np.float32), {}
 
+        def step(self, action):
+            _ = action
+            return np.zeros((3,), dtype=np.float32), 0.0, False, False, {}
 
-def test_configure_headless_render_backend_respects_existing_setting(monkeypatch):
-    monkeypatch.setattr(dm_control_env.sys, "platform", "linux")
-    monkeypatch.delenv("DISPLAY", raising=False)
-    monkeypatch.delenv("WAYLAND_DISPLAY", raising=False)
-    monkeypatch.setenv("MUJOCO_GL", "glfw")
-    monkeypatch.delenv("PYOPENGL_PLATFORM", raising=False)
+        def render(self):
+            return np.zeros((84, 84, 3), dtype=np.uint8)
 
-    _configure_headless_render_backend("rgb_array")
-
-    assert dm_control_env.os.environ["MUJOCO_GL"] == "glfw"
-    assert "PYOPENGL_PLATFORM" not in dm_control_env.os.environ
+    wrapped = _PixelObsWrapper(_DummyEnv(), pixels_only=True, size=84)
+    assert isinstance(wrapped.observation_space, gym.spaces.Dict)
+    assert "pixels" in wrapped.observation_space.spaces
+    obs, _ = wrapped.reset(seed=0)
+    assert isinstance(obs, dict)
+    assert obs["pixels"].shape == (84, 84, 3)
