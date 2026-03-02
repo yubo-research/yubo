@@ -4,12 +4,7 @@ from pathlib import Path
 
 import torch
 
-from rl.checkpointing import (
-    CheckpointManager,
-    append_jsonl,
-    load_checkpoint,
-    save_checkpoint,
-)
+from rl.checkpointing import CheckpointManager, append_jsonl, load_checkpoint, save_checkpoint
 
 
 def _checkpoint_paths(exp_dir: Path, iteration: int) -> tuple[Path, Path]:

@@ -1,5 +1,3 @@
-"""Shared environment-setup helpers for continuous-control RL."""
-
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -48,19 +46,13 @@ def build_continuous_gym_env_setup(
     env_conf.ensure_spaces()
     if not hasattr(env_conf.action_space, "shape") or not hasattr(env_conf.action_space, "low"):
         raise ValueError("SAC expects a continuous Box action space.")
-
-    action_shape = tuple(int(v) for v in env_conf.action_space.shape)
+    action_shape = tuple((int(v) for v in env_conf.action_space.shape))
     act_dim = int(np.prod(action_shape)) if action_shape else 1
-    action_low, action_high = normalize_action_bounds(
-        np.asarray(env_conf.action_space.low),
-        np.asarray(env_conf.action_space.high),
-        dim=act_dim,
-    )
+    action_low, action_high = normalize_action_bounds(np.asarray(env_conf.action_space.low), np.asarray(env_conf.action_space.high), dim=act_dim)
     obs_lb, obs_width = obs_scale_from_env_fn(env_conf)
     if obs_lb is not None and obs_width is not None:
         obs_lb = np.asarray(obs_lb, dtype=np.float32).reshape(-1)
         obs_width = np.asarray(obs_width, dtype=np.float32).reshape(-1)
-
     return ContinuousGymEnvSetup(
         env_conf=env_conf,
         problem_seed=int(resolved_problem_seed),

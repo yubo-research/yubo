@@ -1,5 +1,3 @@
-"""Backend-agnostic SAC math helpers."""
-
 from __future__ import annotations
 
 import torch

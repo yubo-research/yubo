@@ -1,5 +1,3 @@
-"""PufferLib PPO configuration."""
-
 from __future__ import annotations
 
 import dataclasses
@@ -12,9 +10,8 @@ class PufferPPOConfig:
     seed: int = 1
     problem_seed: int | None = None
     noise_seed_0: int | None = None
-
     total_timesteps: int = 1000000
-    learning_rate: float = 2.5e-4
+    learning_rate: float = 0.00025
     num_envs: int = 8
     num_steps: int = 128
     anneal_lr: bool = True
@@ -29,7 +26,6 @@ class PufferPPOConfig:
     vf_coef: float = 0.5
     max_grad_norm: float = 0.5
     target_kl: float | None = None
-
     backbone_name: str = "nature_cnn_atari"
     backbone_hidden_sizes: tuple[int, ...] = ()
     backbone_activation: str = "relu"
@@ -39,15 +35,13 @@ class PufferPPOConfig:
     head_activation: str = "relu"
     share_backbone: bool = True
     log_std_init: float = -0.5
-
     device: str = "auto"
-    vector_backend: str = "serial"  # serial | multiprocessing
+    vector_backend: str = "serial"
     vector_num_workers: int | None = None
     vector_batch_size: int | None = None
     vector_overwork: bool = False
     framestack: int = 4
     pixels_only: bool = True
-
     eval_interval: int = 1
     num_denoise_eval: int | None = None
     num_denoise_passive_eval: int | None = None
@@ -69,13 +63,9 @@ class PufferPPOConfig:
     @classmethod
     def from_dict(cls, raw: dict) -> "PufferPPOConfig":
         data = dict(raw)
-        for key in [
-            "backbone_hidden_sizes",
-            "actor_head_hidden_sizes",
-            "critic_head_hidden_sizes",
-        ]:
+        for key in ["backbone_hidden_sizes", "actor_head_hidden_sizes", "critic_head_hidden_sizes"]:
             if key in data and data[key] is not None:
-                data[key] = tuple(int(x) for x in data[key])
+                data[key] = tuple((int(x) for x in data[key]))
         return cls(**data)
 
 

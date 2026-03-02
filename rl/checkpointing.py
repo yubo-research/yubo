@@ -20,10 +20,8 @@ def save_checkpoint(path: Path, state: dict[str, Any]) -> None:
 
 
 def resolve_checkpoint_path(path: Path) -> Path:
-    """Resolve checkpoint path, trying alternate layout if the given path does not exist."""
     if path.exists():
         return path
-    # Backward compat: old layout saved checkpoint_last.pt in exp_dir; new layout uses exp_dir/checkpoints/
     if path.name == "checkpoint_last.pt":
         if "checkpoints" in path.parts:
             alt = path.parent.parent / path.name
@@ -50,10 +48,10 @@ class CheckpointManager:
         ckpt_dir.mkdir(parents=True, exist_ok=True)
         ckpt_path = ckpt_dir / f"iter_{int(iteration):06d}.pt"
         latest_path = ckpt_dir / self.latest_filename
-        return ckpt_path, latest_path
+        return (ckpt_path, latest_path)
 
     def save_both(self, state: dict[str, Any], *, iteration: int) -> tuple[Path, Path]:
         ckpt_path, latest_path = self.paths(iteration)
         save_checkpoint(ckpt_path, state)
         save_checkpoint(latest_path, state)
-        return ckpt_path, latest_path
+        return (ckpt_path, latest_path)

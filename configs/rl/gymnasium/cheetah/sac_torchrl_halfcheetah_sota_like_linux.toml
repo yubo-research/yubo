@@ -55,7 +55,7 @@ eval_seed_base = 1000
 eval_noise_mode = "frozen"
 checkpoint_interval_steps = 100000
 
-video_enable = false
+video_enable = true
 video_prefix = "sac_torchrl_halfcheetah_linux"
 video_num_episodes = 5
 video_num_video_episodes = 2

@@ -1,5 +1,3 @@
-"""Evaluation/logging helpers for native Puffer SAC."""
-
 from __future__ import annotations
 
 import dataclasses
@@ -11,11 +9,7 @@ from typing import Any
 import numpy as np
 import torch
 
-from rl.core.actor_state import (
-    capture_backbone_head_snapshot,
-    restore_backbone_head_snapshot,
-    use_backbone_head_snapshot,
-)
+from rl.core.actor_state import capture_backbone_head_snapshot, restore_backbone_head_snapshot, use_backbone_head_snapshot
 from rl.core.episode_rollout import collect_denoised_trajectory, evaluate_for_best
 from rl.core.progress import due_mark
 from rl.core.sac_eval import evaluate_heldout_with_best_actor, update_best_actor_if_improved
@@ -28,23 +22,12 @@ from .env_utils import prepare_obs_np
 
 def capture_actor_state(modules):
     return capture_backbone_head_snapshot(
-        modules.actor_backbone,
-        modules.actor_head,
-        log_std=getattr(modules, "log_std", None),
-        state_to_cpu=True,
-        log_std_to_cpu=True,
-        log_std_format="tensor",
+        modules.actor_backbone, modules.actor_head, log_std=getattr(modules, "log_std", None), state_to_cpu=True, log_std_to_cpu=True, log_std_format="tensor"
     )
 
 
 def _restore_actor_state(modules, snapshot, *, device: torch.device) -> None:
-    restore_backbone_head_snapshot(
-        modules.actor_backbone,
-        modules.actor_head,
-        snapshot,
-        log_std=getattr(modules, "log_std", None),
-        device=device,
-    )
+    restore_backbone_head_snapshot(modules.actor_backbone, modules.actor_head, snapshot, log_std=getattr(modules, "log_std", None), device=device)
 
 
 @contextmanager
@@ -93,22 +76,9 @@ class SacEvalPolicy:
         return np.asarray(action.squeeze(0).detach().cpu().numpy(), dtype=np.float32)
 
 
-def evaluate_actor(
-    config: Any,
-    env: Any,
-    modules: Any,
-    obs_spec: Any,
-    *,
-    device: torch.device,
-    eval_seed: int,
-) -> float:
+def evaluate_actor(config: Any, env: Any, modules: Any, obs_spec: Any, *, device: torch.device, eval_seed: int) -> float:
     policy = SacEvalPolicy(modules, obs_spec, device=device)
-    traj, _ = collect_denoised_trajectory(
-        env.env_conf,
-        policy,
-        num_denoise=config.num_denoise_eval,
-        i_noise=int(eval_seed),
-    )
+    traj, _ = collect_denoised_trajectory(env.env_conf, policy, num_denoise=config.num_denoise_eval, i_noise=int(eval_seed))
     return float(traj.rreturn)
 
 
@@ -137,14 +107,7 @@ def evaluate_heldout_if_enabled(
             eval_policy=policy,
         )
     policy = SacEvalPolicy(modules, obs_spec, device=device)
-    return float(
-        evaluate_for_best(
-            env.env_conf,
-            policy,
-            config.num_denoise_passive_eval,
-            i_noise=int(heldout_i_noise),
-        )
-    )
+    return float(evaluate_for_best(env.env_conf, policy, config.num_denoise_passive_eval, i_noise=int(heldout_i_noise)))
 
 
 def append_eval_metric(path, state: TrainState, *, step: int) -> None:
@@ -161,10 +124,7 @@ def append_eval_metric(path, state: TrainState, *, step: int) -> None:
         started_at=float(state.start_time),
         now=now,
     )
-    rl_logger.append_metrics(
-        path,
-        record,
-    )
+    rl_logger.append_metrics(path, record)
 
 
 def log_if_due(config: Any, state: TrainState, *, step: int, frames_per_batch: int) -> None:
@@ -188,15 +148,7 @@ def log_if_due(config: Any, state: TrainState, *, step: int, frames_per_batch: i
     rl_logger.log_eval_iteration(**kwargs)
 
 
-def maybe_eval(
-    config: Any,
-    env: Any,
-    modules: Any,
-    obs_spec: Any,
-    state: TrainState,
-    *,
-    device: torch.device,
-):
+def maybe_eval(config: Any, env: Any, modules: Any, obs_spec: Any, state: TrainState, *, device: torch.device):
     mark = due_mark(state.global_step, config.eval_interval_steps, state.eval_mark)
     if mark is None:
         return
@@ -209,14 +161,7 @@ def maybe_eval(
         eval_seed_base=config.eval_seed_base,
         eval_noise_mode=config.eval_noise_mode,
     )
-    state.last_eval_return = evaluate_actor(
-        config,
-        env,
-        modules,
-        obs_spec,
-        device=device,
-        eval_seed=int(plan.eval_seed),
-    )
+    state.last_eval_return = evaluate_actor(config, env, modules, obs_spec, device=device, eval_seed=int(plan.eval_seed))
     state.best_return, state.best_actor_state, _ = update_best_actor_if_improved(
         eval_return=float(state.last_eval_return),
         best_return=float(state.best_return),
@@ -235,14 +180,7 @@ def maybe_eval(
     )
 
 
-def render_videos_if_enabled(
-    config: Any,
-    env: Any,
-    modules: Any,
-    obs_spec: Any,
-    *,
-    device: torch.device,
-) -> None:
+def render_videos_if_enabled(config: Any, env: Any, modules: Any, obs_spec: Any, *, device: torch.device) -> None:
     if not bool(config.video_enable):
         return
     from common.video import render_policy_videos

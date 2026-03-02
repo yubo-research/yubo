@@ -1,5 +1,3 @@
-"""Shared runtime helpers used across RL backends."""
-
 from __future__ import annotations
 
 import random
@@ -14,8 +12,6 @@ import torch.nn as nn
 class ObsScaler(nn.Module):
     def __init__(self, lb: np.ndarray | None, width: np.ndarray | None):
         super().__init__()
-        # Keep an always-registered anchor so we have a canonical dtype/device
-        # even when observation scaling is disabled.
         self.register_buffer("_anchor", torch.zeros((), dtype=torch.float32))
         if lb is None or width is None:
             self._lb = None
@@ -46,10 +42,7 @@ def mps_is_available() -> bool:
 
 
 def select_device(
-    device: str,
-    *,
-    cuda_is_available_fn: Callable[[], bool] | None = None,
-    mps_is_available_fn: Callable[[], bool] | None = None,
+    device: str, *, cuda_is_available_fn: Callable[[], bool] | None = None, mps_is_available_fn: Callable[[], bool] | None = None
 ) -> torch.device:
     requested = str(device).strip().lower()
     cuda_available = torch.cuda.is_available if cuda_is_available_fn is None else cuda_is_available_fn
@@ -73,12 +66,7 @@ def select_device(
     raise ValueError(f"Unsupported device '{device}'. Use one of: auto, cpu, cuda, mps.")
 
 
-def seed_everything(
-    seed: int,
-    *,
-    cuda_is_available_fn: Callable[[], bool] | None = None,
-    cuda_manual_seed_all_fn: Callable[[int], None] | None = None,
-) -> None:
+def seed_everything(seed: int, *, cuda_is_available_fn: Callable[[], bool] | None = None, cuda_manual_seed_all_fn: Callable[[int], None] | None = None) -> None:
     random.seed(int(seed))
     np.random.seed(int(seed))
     torch.manual_seed(int(seed))
@@ -90,29 +78,21 @@ def seed_everything(
 
 def obs_scale_from_env(env_conf: Any) -> tuple[np.ndarray | None, np.ndarray | None]:
     if env_conf.gym_conf is None or not env_conf.gym_conf.transform_state:
-        return None, None
+        return (None, None)
     env_conf.ensure_spaces()
     lb = np.asarray(env_conf.gym_conf.state_space.low, dtype=np.float32)
-    width = np.asarray(
-        env_conf.gym_conf.state_space.high - env_conf.gym_conf.state_space.low,
-        dtype=np.float32,
-    )
+    width = np.asarray(env_conf.gym_conf.state_space.high - env_conf.gym_conf.state_space.low, dtype=np.float32)
     if np.all(np.isinf(lb)):
         lb = np.zeros(env_conf.gym_conf.state_space.shape, dtype=np.float32)
     if np.all(np.isinf(width)):
         width = np.ones(env_conf.gym_conf.state_space.shape, dtype=np.float32)
     if np.any(np.isinf(lb)) or np.any(np.isinf(width)):
         raise ValueError("Observation bounds must be finite for transform_state.")
-    return lb, width
+    return (lb, width)
 
 
 def collector_device_kwargs(policy_device: torch.device) -> dict[str, torch.device]:
-    # Gym environments step on CPU; explicit routing avoids implicit cross-device behavior.
-    return {
-        "env_device": torch.device("cpu"),
-        "policy_device": policy_device,
-        "storing_device": policy_device,
-    }
+    return {"env_device": torch.device("cpu"), "policy_device": policy_device, "storing_device": policy_device}
 
 
 @contextmanager

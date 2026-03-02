@@ -1,5 +1,3 @@
-"""Metric construction and logging helpers for pufferlib PPO."""
-
 from __future__ import annotations
 
 import time
@@ -37,14 +35,7 @@ def _append_metrics_line(metrics_path: Path, payload: dict) -> None:
     rl_logger.append_metrics(metrics_path, payload)
 
 
-def _metric_payload(
-    iteration: int,
-    plan: _TrainPlan,
-    optimizer: optim.Optimizer,
-    state: _RuntimeState,
-    update_stats: _UpdateStats,
-    batch: _FlatBatch,
-) -> dict:
+def _metric_payload(iteration: int, plan: _TrainPlan, optimizer: optim.Optimizer, state: _RuntimeState, update_stats: _UpdateStats, batch: _FlatBatch) -> dict:
     elapsed = time.time() - state.start_time
     sps = int(max(0.0, steps_per_second(int(state.global_step), float(state.start_time))))
     return {
@@ -75,17 +66,9 @@ def _log_iteration(config, metric: dict) -> None:
     frames_per_batch = int(metric["frames_per_batch"])
     elapsed = float(metric.get("time_seconds", 0.0))
     eval_return = metric.get("eval_return")
-
     if eval_return is None:
-        rl_logger.log_progress_iteration(
-            iteration,
-            num_iterations,
-            frames_per_batch,
-            elapsed,
-            algo_name="ppo",
-        )
+        rl_logger.log_progress_iteration(iteration, num_iterations, frames_per_batch, elapsed, algo_name="ppo")
         return
-
     rl_logger.log_eval_iteration(
         iteration,
         num_iterations,
@@ -93,10 +76,7 @@ def _log_iteration(config, metric: dict) -> None:
         eval_return=eval_return,
         heldout_return=metric.get("heldout_return"),
         best_return=float(metric.get("best_return") or 0.0),
-        algo_metrics={
-            "kl": float(metric["approx_kl"]),
-            "clipfrac": float(metric["clipfrac_mean"]),
-        },
+        algo_metrics={"kl": float(metric["approx_kl"]), "clipfrac": float(metric["clipfrac_mean"])},
         algo_name="ppo",
         elapsed=elapsed,
     )

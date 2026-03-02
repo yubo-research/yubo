@@ -1,5 +1,3 @@
-"""Model and optimization helpers for native Puffer SAC."""
-
 from __future__ import annotations
 
 import copy
@@ -14,27 +12,14 @@ import torch.optim as optim
 from torch.distributions import Normal
 
 from rl.backbone import BackboneSpec, HeadSpec, build_backbone, build_mlp_head
-from rl.core.sac_update import (
-    SACUpdateBatch,
-    SACUpdateHyperParams,
-    SACUpdateModules,
-    SACUpdateOptimizers,
-    sac_update_step,
-)
+from rl.core.sac_update import SACUpdateBatch, SACUpdateHyperParams, SACUpdateModules, SACUpdateOptimizers, sac_update_step
 
 from .config import SACConfig
 from .runtime_utils import ObsScaler
 
 
 class ActorNet(nn.Module):
-    def __init__(
-        self,
-        backbone: nn.Module,
-        head: nn.Module,
-        obs_scaler: ObsScaler,
-        *,
-        act_dim: int,
-    ):
+    def __init__(self, backbone: nn.Module, head: nn.Module, obs_scaler: ObsScaler, *, act_dim: int):
         super().__init__()
         self.backbone = backbone
         self.head = head
@@ -46,21 +31,20 @@ class ActorNet(nn.Module):
         out = self.head(feats)
         mean = out[..., : self.act_dim]
         log_std = out[..., self.act_dim :].clamp(-5.0, 2.0)
-        return mean, log_std
+        return (mean, log_std)
 
     def sample(self, obs: torch.Tensor, *, deterministic: bool = False) -> tuple[torch.Tensor, torch.Tensor]:
         mean, log_std = self._mean_log_std(obs)
         if deterministic:
             action = torch.tanh(mean)
             log_prob = torch.zeros(action.shape[0], dtype=action.dtype, device=action.device)
-            return action, log_prob
-
+            return (action, log_prob)
         std = torch.exp(log_std)
         dist = Normal(mean, std)
         z = dist.rsample()
         action = torch.tanh(z)
-        log_prob = dist.log_prob(z) - torch.log(1.0 - action.pow(2) + 1e-6)
-        return action, log_prob.sum(dim=-1)
+        log_prob = dist.log_prob(z) - torch.log(1.0 - action.pow(2) + 1e-06)
+        return (action, log_prob.sum(dim=-1))
 
     def act(self, obs: torch.Tensor) -> torch.Tensor:
         mean, _ = self._mean_log_std(obs)
@@ -146,24 +130,12 @@ def _build_backbone_specs(config: SACConfig, obs_spec: Any) -> tuple[BackboneSpe
         activation=str(config.backbone_activation),
         layer_norm=bool(config.backbone_layer_norm),
     )
-    actor_head_spec = HeadSpec(
-        hidden_sizes=tuple(config.actor_head_hidden_sizes),
-        activation=str(config.head_activation),
-    )
-    critic_head_spec = HeadSpec(
-        hidden_sizes=tuple(config.critic_head_hidden_sizes),
-        activation=str(config.head_activation),
-    )
-    return backbone_spec, actor_head_spec, critic_head_spec
+    actor_head_spec = HeadSpec(hidden_sizes=tuple(config.actor_head_hidden_sizes), activation=str(config.head_activation))
+    critic_head_spec = HeadSpec(hidden_sizes=tuple(config.critic_head_hidden_sizes), activation=str(config.head_activation))
+    return (backbone_spec, actor_head_spec, critic_head_spec)
 
 
-def _build_q_modules(
-    obs_spec: Any,
-    env: Any,
-    backbone_spec: BackboneSpec,
-    critic_head_spec: HeadSpec,
-    obs_scaler: ObsScaler,
-) -> _QBundle:
+def _build_q_modules(obs_spec: Any, env: Any, backbone_spec: BackboneSpec, critic_head_spec: HeadSpec, obs_scaler: ObsScaler) -> _QBundle:
     obs_dim = int(obs_spec.vector_dim or 64)
     if obs_spec.mode == "pixels":
         q1_backbone, q1_feat_dim = build_backbone(backbone_spec, input_dim=obs_dim)
@@ -172,15 +144,7 @@ def _build_q_modules(
         q2_head = build_mlp_head(critic_head_spec, input_dim=q2_feat_dim + int(env.act_dim), output_dim=1)
         q1 = QNetPixel(q1_backbone, q1_head, obs_scaler)
         q2 = QNetPixel(q2_backbone, q2_head, obs_scaler)
-        return _QBundle(
-            q1_backbone=q1_backbone,
-            q1_head=q1_head,
-            q2_backbone=q2_backbone,
-            q2_head=q2_head,
-            q1=q1,
-            q2=q2,
-        )
-
+        return _QBundle(q1_backbone=q1_backbone, q1_head=q1_head, q2_backbone=q2_backbone, q2_head=q2_head, q1=q1, q2=q2)
     q_input_dim = int(obs_spec.vector_dim or 1) + int(env.act_dim)
     q1_backbone, q1_feat_dim = build_backbone(backbone_spec, input_dim=q_input_dim)
     q2_backbone, q2_feat_dim = build_backbone(backbone_spec, input_dim=q_input_dim)
@@ -188,39 +152,23 @@ def _build_q_modules(
     q2_head = build_mlp_head(critic_head_spec, input_dim=q2_feat_dim, output_dim=1)
     q1 = QNet(q1_backbone, q1_head, obs_scaler)
     q2 = QNet(q2_backbone, q2_head, obs_scaler)
-    return _QBundle(
-        q1_backbone=q1_backbone,
-        q1_head=q1_head,
-        q2_backbone=q2_backbone,
-        q2_head=q2_head,
-        q1=q1,
-        q2=q2,
-    )
+    return _QBundle(q1_backbone=q1_backbone, q1_head=q1_head, q2_backbone=q2_backbone, q2_head=q2_head, q1=q1, q2=q2)
 
 
 def build_modules(config: SACConfig, env: Any, obs_spec: Any, *, device: torch.device) -> SACModules:
     obs_scaler = ObsScaler(env.obs_lb, env.obs_width).to(device)
     backbone_spec, actor_head_spec, critic_head_spec = _build_backbone_specs(config, obs_spec)
-
     obs_dim = int(obs_spec.vector_dim or 64)
     actor_backbone, actor_feat_dim = build_backbone(backbone_spec, input_dim=obs_dim)
     actor_head = build_mlp_head(actor_head_spec, input_dim=actor_feat_dim, output_dim=2 * int(env.act_dim))
     actor = ActorNet(actor_backbone, actor_head, obs_scaler, act_dim=int(env.act_dim))
-
-    q_bundle = _build_q_modules(
-        obs_spec,
-        env,
-        backbone_spec,
-        critic_head_spec,
-        obs_scaler,
-    )
+    q_bundle = _build_q_modules(obs_spec, env, backbone_spec, critic_head_spec, obs_scaler)
     q1_backbone = q_bundle.q1_backbone
     q1_head = q_bundle.q1_head
     q2_backbone = q_bundle.q2_backbone
     q2_head = q_bundle.q2_head
     q1 = q_bundle.q1
     q2 = q_bundle.q2
-
     actor.to(device)
     q1.to(device)
     q2.to(device)
@@ -230,12 +178,10 @@ def build_modules(config: SACConfig, env: Any, obs_spec: Any, *, device: torch.d
         p.requires_grad_(False)
     for p in q2_target.parameters():
         p.requires_grad_(False)
-
-    actor_param_count = sum(p.numel() for p in actor_backbone.parameters()) + sum(p.numel() for p in actor_head.parameters())
+    actor_param_count = sum((p.numel() for p in actor_backbone.parameters())) + sum((p.numel() for p in actor_head.parameters()))
     if config.theta_dim is not None:
         assert int(actor_param_count) == int(config.theta_dim), (actor_param_count, config.theta_dim)
-
-    log_alpha = nn.Parameter(torch.tensor(np.log(float(max(config.alpha_init, 1e-8))), dtype=torch.float32, device=device))
+    log_alpha = nn.Parameter(torch.tensor(np.log(float(max(config.alpha_init, 1e-08))), dtype=torch.float32, device=device))
     return SACModules(
         actor_backbone=actor_backbone,
         actor_head=actor_head,
@@ -267,36 +213,16 @@ def alpha(modules: SACModules) -> torch.Tensor:
     return modules.log_alpha.exp()
 
 
-def sac_update(
-    config: SACConfig,
-    modules: SACModules,
-    optimizers: SACOptimizers,
-    replay,
-    *,
-    device: torch.device,
-) -> tuple[float, float, float]:
+def sac_update(config: SACConfig, modules: SACModules, optimizers: SACOptimizers, replay, *, device: torch.device) -> tuple[float, float, float]:
     obs, act, rew, nxt, done = replay.sample(int(config.batch_size), device=device)
     target_entropy = float(config.target_entropy) if config.target_entropy is not None else -float(act.shape[-1])
     return sac_update_step(
         modules=SACUpdateModules(
-            actor=modules.actor,
-            q1=modules.q1,
-            q2=modules.q2,
-            q1_target=modules.q1_target,
-            q2_target=modules.q2_target,
-            log_alpha=modules.log_alpha,
+            actor=modules.actor, q1=modules.q1, q2=modules.q2, q1_target=modules.q1_target, q2_target=modules.q2_target, log_alpha=modules.log_alpha
         ),
-        optimizers=SACUpdateOptimizers(
-            actor=optimizers.actor_optimizer,
-            critic=optimizers.critic_optimizer,
-            alpha=optimizers.alpha_optimizer,
-        ),
+        optimizers=SACUpdateOptimizers(actor=optimizers.actor_optimizer, critic=optimizers.critic_optimizer, alpha=optimizers.alpha_optimizer),
         batch=SACUpdateBatch(obs=obs, act=act, rew=rew, nxt=nxt, done=done),
-        hyper=SACUpdateHyperParams(
-            gamma=float(config.gamma),
-            tau=float(config.tau),
-            target_entropy=target_entropy,
-        ),
+        hyper=SACUpdateHyperParams(gamma=float(config.gamma), tau=float(config.tau), target_entropy=target_entropy),
     )
 
 

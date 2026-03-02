@@ -52,46 +52,21 @@ class TorchRLRuntimeConfig:
             collector_workers=self.collector_workers,
         )
 
-    def resolve_runtime(
-        self,
-        *,
-        capabilities: TorchRLRuntimeCapabilities | None = None,
-    ) -> TorchRLRuntime:
+    def resolve_runtime(self, *, capabilities: TorchRLRuntimeCapabilities | None = None) -> TorchRLRuntime:
         resolved_capabilities = capabilities if capabilities is not None else TorchRLRuntimeCapabilities()
-        return resolve_torchrl_runtime(
-            self.runtime_request(),
-            capabilities=resolved_capabilities,
-        )
+        return resolve_torchrl_runtime(self.runtime_request(), capabilities=resolved_capabilities)
 
 
-def resolve_torchrl_runtime(
-    request: TorchRLRuntimeRequest,
-    *,
-    capabilities: TorchRLRuntimeCapabilities = TorchRLRuntimeCapabilities(),
-) -> TorchRLRuntime:
+def resolve_torchrl_runtime(request: TorchRLRuntimeRequest, *, capabilities: TorchRLRuntimeCapabilities = TorchRLRuntimeCapabilities()) -> TorchRLRuntime:
     num_envs = int(request.num_envs)
     if num_envs <= 0:
         raise ValueError(f"num_envs must be > 0, got {request.num_envs}.")
-
     resolved_device = select_device(request.device)
-    resolved_collector_backend = _resolve_collector_backend(
-        request.collector_backend,
-        num_envs=num_envs,
-        device=resolved_device,
-        capabilities=capabilities,
-    )
+    resolved_collector_backend = _resolve_collector_backend(request.collector_backend, num_envs=num_envs, device=resolved_device, capabilities=capabilities)
     resolved_single_env_backend = _resolve_single_env_backend(
-        request.single_env_backend,
-        num_envs=num_envs,
-        collector_backend=resolved_collector_backend,
-        device=resolved_device,
-        capabilities=capabilities,
+        request.single_env_backend, num_envs=num_envs, collector_backend=resolved_collector_backend, device=resolved_device, capabilities=capabilities
     )
-    resolved_collector_workers = _resolve_collector_workers(
-        request.collector_workers,
-        num_envs=num_envs,
-        collector_backend=resolved_collector_backend,
-    )
+    resolved_collector_workers = _resolve_collector_workers(request.collector_workers, num_envs=num_envs, collector_backend=resolved_collector_backend)
     return TorchRLRuntime(
         device=resolved_device,
         collector_backend=resolved_collector_backend,
@@ -116,28 +91,21 @@ def _normalize_single_env_backend(single_env_backend: str) -> str:
     return normalized
 
 
-def _resolve_collector_backend(
-    collector_backend: str,
-    *,
-    num_envs: int,
-    device: torch.device,
-    capabilities: TorchRLRuntimeCapabilities,
-) -> str:
+def _resolve_collector_backend(collector_backend: str, *, num_envs: int, device: torch.device, capabilities: TorchRLRuntimeCapabilities) -> str:
     normalized = _normalize_collector_backend(collector_backend)
     if normalized == "auto":
         if num_envs <= 1:
             return "single"
-        if device.type == "mps" and not capabilities.allow_mps_multi_collectors:
+        if device.type == "mps" and (not capabilities.allow_mps_multi_collectors):
             return "single"
         if capabilities.allow_multi_sync_collector:
             return "multi_sync"
         if capabilities.allow_multi_async_collector:
             return "multi_async"
         return "single"
-
-    if normalized == "multi_sync" and not capabilities.allow_multi_sync_collector:
+    if normalized == "multi_sync" and (not capabilities.allow_multi_sync_collector):
         raise ValueError("collector_backend='multi_sync' is disabled for this algorithm.")
-    if normalized == "multi_async" and not capabilities.allow_multi_async_collector:
+    if normalized == "multi_async" and (not capabilities.allow_multi_async_collector):
         raise ValueError("collector_backend='multi_async' is disabled for this algorithm.")
     if normalized in {"multi_sync", "multi_async"} and device.type == "mps":
         if not capabilities.allow_mps_multi_collectors:
@@ -148,12 +116,7 @@ def _resolve_collector_backend(
 
 
 def _resolve_single_env_backend(
-    single_env_backend: str,
-    *,
-    num_envs: int,
-    collector_backend: str,
-    device: torch.device,
-    capabilities: TorchRLRuntimeCapabilities,
+    single_env_backend: str, *, num_envs: int, collector_backend: str, device: torch.device, capabilities: TorchRLRuntimeCapabilities
 ) -> str:
     normalized = _normalize_single_env_backend(single_env_backend)
     if collector_backend != "single":
@@ -163,17 +126,12 @@ def _resolve_single_env_backend(
         if use_parallel:
             return "parallel"
         return "serial"
-    if normalized == "parallel" and not capabilities.allow_parallel_single_env:
+    if normalized == "parallel" and (not capabilities.allow_parallel_single_env):
         raise ValueError("single_env_backend='parallel' is disabled for this algorithm.")
     return normalized
 
 
-def _resolve_collector_workers(
-    collector_workers: int | None,
-    *,
-    num_envs: int,
-    collector_backend: str,
-) -> int | None:
+def _resolve_collector_workers(collector_workers: int | None, *, num_envs: int, collector_backend: str) -> int | None:
     if collector_backend == "single":
         return None
     resolved_workers = int(collector_workers) if collector_workers is not None else int(num_envs)

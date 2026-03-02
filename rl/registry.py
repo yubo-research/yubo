@@ -10,10 +10,9 @@ class AlgoSpec:
     train_fn: Callable
 
 
-# (algo_name, backend_name|None) -> spec/module
 _ALGOS: dict[tuple[str, str | None], AlgoSpec] = {}
 _LAZY: dict[tuple[str, str | None], str] = {}
-_BACKEND_BINDINGS: dict[tuple[str, str], str] = {}  # (algo_name, backend_name) -> implementation algo name
+_BACKEND_BINDINGS: dict[tuple[str, str], str] = {}
 
 
 def _normalize_algo_name(name: str) -> str:
@@ -26,7 +25,7 @@ def _normalize_algo_name(name: str) -> str:
 def _algo_key(name: str, backend: str | None = None) -> tuple[str, str | None]:
     algo_key = _normalize_algo_name(name)
     backend_key = None if backend is None else _normalize_backend_name(backend)
-    return algo_key, backend_key
+    return (algo_key, backend_key)
 
 
 def _normalize_backend_name(backend: str) -> str:
@@ -69,8 +68,8 @@ def register_algo_backend(algo: str, backend: str, implementation: str) -> None:
 
 def _known_backends(algo_key: str) -> list[str]:
     found = {backend for name, backend in _BACKEND_BINDINGS if name == algo_key}
-    found.update(backend for name, backend in _ALGOS if name == algo_key and backend is not None)
-    found.update(backend for name, backend in _LAZY if name == algo_key and backend is not None)
+    found.update((backend for name, backend in _ALGOS if name == algo_key and backend is not None))
+    found.update((backend for name, backend in _LAZY if name == algo_key and backend is not None))
     return sorted(found)
 
 
@@ -87,8 +86,6 @@ def resolve_algo_name(name: str, backend: str | None = None) -> str:
     known_backends = _known_backends(algo_key)
     if known_backends:
         raise ValueError(f"Unknown backend '{backend_key}' for algorithm '{algo_key}'. Available backends: {known_backends}")
-    # Allow pre-registration parse paths (for config catalog checks) to proceed.
-    # Runtime calls that need a real implementation still go through get_algo().
     return algo_key
 
 
@@ -103,26 +100,21 @@ def get_algo(name: str, *, backend: str | None = None) -> AlgoSpec:
         candidate_keys = [(resolved_name, None)]
     else:
         backend_key = _normalize_backend_name(backend)
-        candidate_keys = [
-            (resolved_name, backend_key),
-            (resolved_name, None),
-        ]
-
+        candidate_keys = [(resolved_name, backend_key), (resolved_name, None)]
     for key in candidate_keys:
         _maybe_load_lazy(key)
     for key in candidate_keys:
         spec = _ALGOS.get(key)
         if spec is not None:
             return spec
-
     raise ValueError(f"Unknown algorithm '{resolved_name}'. Available: {available_algos()}")
 
 
 def available_algos() -> list[str]:
     names = {name for name, _backend in _ALGOS}
-    names.update(name for name, _backend in _LAZY)
-    names.update(name for name, _backend in _BACKEND_BINDINGS)
-    names.update(implementation for implementation in _BACKEND_BINDINGS.values())
+    names.update((name for name, _backend in _LAZY))
+    names.update((name for name, _backend in _BACKEND_BINDINGS))
+    names.update((implementation for implementation in _BACKEND_BINDINGS.values()))
     return sorted(names)
 
 

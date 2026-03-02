@@ -62,17 +62,17 @@ def _scale_action_to_space(action: np.ndarray | int, action_space: Any) -> np.nd
 def _unpack_reset_result(reset_out: Any) -> tuple[Any, Any]:
     if isinstance(reset_out, tuple) and len(reset_out) == 2:
         obs, info = reset_out
-        return obs, info
-    return reset_out, {}
+        return (obs, info)
+    return (reset_out, {})
 
 
 def _unpack_step_result(step_out: Any) -> tuple[Any, Any, bool, bool, Any]:
     if len(step_out) == 5:
         state, reward, terminated, truncated, info = step_out
-        return state, reward, _bool_any(terminated), _bool_any(truncated), info
+        return (state, reward, _bool_any(terminated), _bool_any(truncated), info)
     if len(step_out) == 4:
         state, reward, done, info = step_out
-        return state, reward, _bool_any(done), False, info
+        return (state, reward, _bool_any(done), False, info)
     raise ValueError(f"Unsupported env.step return arity: {len(step_out)}")
 
 
@@ -111,16 +111,10 @@ def _resolve_noise_seed(env_conf: Any, *, i_noise: int | None, denoise_seed: int
     return int(base + noise_seed_0_i + int(denoise_seed))
 
 
-def collect_trajectory_with_noise(
-    env_conf: Any,
-    policy: Any,
-    *,
-    i_noise: int | None = None,
-    denoise_seed: int = 0,
-) -> tuple[Trajectory, int]:
+def collect_trajectory_with_noise(env_conf: Any, policy: Any, *, i_noise: int | None = None, denoise_seed: int = 0) -> tuple[Trajectory, int]:
     noise_seed = _resolve_noise_seed(env_conf, i_noise=i_noise, denoise_seed=int(denoise_seed))
     episode_return = collect_episode_return(env_conf, policy, noise_seed=int(noise_seed))
-    return Trajectory(float(episode_return)), int(noise_seed)
+    return (Trajectory(float(episode_return)), int(noise_seed))
 
 
 def mean_return_over_runs(env_conf: Any, policy: Any, num_denoise: int, *, i_noise: int | None = None) -> MeanReturnResult:
@@ -131,29 +125,17 @@ def mean_return_over_runs(env_conf: Any, policy: Any, num_denoise: int, *, i_noi
     std = float(np.std(returns))
     all_same = len(returns) > 1 and std == 0.0
     se = float(std / np.sqrt(len(returns)))
-    return MeanReturnResult(
-        mean=float(np.mean(returns)),
-        se=se,
-        all_same=bool(all_same),
-    )
+    return MeanReturnResult(mean=float(np.mean(returns)), se=se, all_same=bool(all_same))
 
 
-def collect_denoised_trajectory(
-    env_conf: Any,
-    policy: Any,
-    *,
-    num_denoise: int | None,
-    i_noise: int | None = None,
-) -> tuple[Trajectory, int | None]:
+def collect_denoised_trajectory(env_conf: Any, policy: Any, *, num_denoise: int | None, i_noise: int | None = None) -> tuple[Trajectory, int | None]:
     if num_denoise is None:
         return collect_trajectory_with_noise(env_conf, policy, i_noise=i_noise, denoise_seed=0)
-
     if int(num_denoise) == 1:
         return collect_trajectory_with_noise(env_conf, policy, i_noise=i_noise, denoise_seed=0)
-
     mean_ret, se_ret, _ = mean_return_over_runs(env_conf, policy, int(num_denoise), i_noise=i_noise)
     rreturn_se = None if bool(getattr(env_conf, "frozen_noise", False)) else float(se_ret)
-    return Trajectory(float(mean_ret), rreturn_se=rreturn_se), None
+    return (Trajectory(float(mean_ret), rreturn_se=rreturn_se), None)
 
 
 def evaluate_for_best(env_conf: Any, policy: Any, num_denoise_passive_eval: int, *, i_noise: int = 99999) -> float:

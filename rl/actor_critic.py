@@ -8,7 +8,7 @@ from torch.distributions import Normal
 from rl.backbone import BackboneSpec, HeadSpec, build_backbone, build_mlp_head, init_linear_layers
 
 
-def _atanh(x, eps: float = 1e-6):
+def _atanh(x, eps: float = 1e-06):
     x = torch.clamp(x, -1 + eps, 1 - eps)
     return 0.5 * (torch.log1p(x) - torch.log1p(-x))
 
@@ -31,23 +31,15 @@ class ActionValue(NamedTuple):
 
 class ActorCritic(nn.Module):
     def __init__(
-        self,
-        obs_dim: int,
-        act_dim: int,
-        specs: PolicySpecs,
-        *,
-        actor_backbone: BackboneSpec | None = None,
-        critic_backbone: BackboneSpec | None = None,
+        self, obs_dim: int, act_dim: int, specs: PolicySpecs, *, actor_backbone: BackboneSpec | None = None, critic_backbone: BackboneSpec | None = None
     ):
         super().__init__()
         obs_dim = int(obs_dim)
         act_dim = int(act_dim)
-
         if actor_backbone is None:
             actor_backbone = specs.backbone
         if critic_backbone is None:
             critic_backbone = specs.backbone
-
         if specs.share_backbone:
             backbone, feat_dim = build_backbone(actor_backbone, obs_dim)
             self.actor_backbone = backbone
@@ -57,11 +49,9 @@ class ActorCritic(nn.Module):
         else:
             self.actor_backbone, actor_feat_dim = build_backbone(actor_backbone, obs_dim)
             self.critic_backbone, critic_feat_dim = build_backbone(critic_backbone, obs_dim)
-
         self.actor_head = build_mlp_head(specs.actor_head, actor_feat_dim, act_dim)
         self.critic_head = build_mlp_head(specs.critic_head, critic_feat_dim, 1)
         self.log_std = nn.Parameter(torch.full((act_dim,), float(specs.log_std_init)))
-
         init_linear_layers(self.actor_backbone, gain=0.5)
         if not specs.share_backbone:
             init_linear_layers(self.critic_backbone, gain=0.5)
@@ -70,7 +60,7 @@ class ActorCritic(nn.Module):
 
     def actor_num_params(self) -> int:
         params = list(self.actor_backbone.parameters()) + list(self.actor_head.parameters()) + [self.log_std]
-        return sum(p.numel() for p in params)
+        return sum((p.numel() for p in params))
 
     def _distribution(self, obs: torch.Tensor):
         feats = self.actor_backbone(obs)
@@ -95,7 +85,7 @@ class ActorCritic(nn.Module):
             action = torch.tanh(u)
         else:
             u = _atanh(action)
-        log_prob = dist.log_prob(u) - torch.log(1.0 - action.pow(2) + 1e-6)
+        log_prob = dist.log_prob(u) - torch.log(1.0 - action.pow(2) + 1e-06)
         log_prob = log_prob.sum(-1)
         entropy = dist.entropy().sum(-1)
         value = self.get_value(obs)

@@ -1,5 +1,3 @@
-"""PPO configuration and runtime capabilities."""
-
 from __future__ import annotations
 
 import dataclasses
@@ -14,12 +12,10 @@ class PPOConfig(TorchRLRuntimeConfig):
     seed: int = 1
     problem_seed: int | None = None
     noise_seed_0: int | None = None
-
     from_pixels: bool = False
     pixels_only: bool = True
-
     total_timesteps: int = 1000000
-    learning_rate: float = 3e-4
+    learning_rate: float = 0.0003
     num_envs: int = 1
     num_steps: int = 2048
     anneal_lr: bool = True
@@ -34,13 +30,11 @@ class PPOConfig(TorchRLRuntimeConfig):
     vf_coef: float = 0.5
     max_grad_norm: float = 0.5
     target_kl: float | None = None
-
     eval_interval: int = 1
     num_denoise_eval: int | None = None
     num_denoise_passive_eval: int | None = None
     eval_seed_base: int | None = None
     eval_noise_mode: str | None = None
-
     backbone_name: str = "mlp"
     backbone_hidden_sizes: tuple[int, ...] = (64, 64)
     backbone_activation: str = "silu"
@@ -50,7 +44,6 @@ class PPOConfig(TorchRLRuntimeConfig):
     head_activation: str = "silu"
     share_backbone: bool = True
     log_std_init: float = 0.0
-
     theta_dim: int | None = None
     log_interval: int = 1
     checkpoint_interval: int | None = None
@@ -61,7 +54,6 @@ class PPOConfig(TorchRLRuntimeConfig):
     video_num_video_episodes: int = 3
     video_episode_selection: str = "best"
     video_seed_base: int | None = None
-
     profile_enable: bool = False
     profile_wait: int = 0
     profile_warmup: int = 1
@@ -73,13 +65,9 @@ class PPOConfig(TorchRLRuntimeConfig):
     @classmethod
     def from_dict(cls, raw: dict) -> "PPOConfig":
         d = dict(raw)
-        for key in [
-            "backbone_hidden_sizes",
-            "actor_head_hidden_sizes",
-            "critic_head_hidden_sizes",
-        ]:
+        for key in ["backbone_hidden_sizes", "actor_head_hidden_sizes", "critic_head_hidden_sizes"]:
             if key in d and d[key] is not None:
-                d[key] = tuple(int(x) for x in d[key])
+                d[key] = tuple((int(x) for x in d[key]))
         return cls(**d)
 
     def runtime_num_envs(self) -> int:
@@ -87,10 +75,7 @@ class PPOConfig(TorchRLRuntimeConfig):
 
 
 _PPO_RUNTIME_CAPABILITIES = TorchRLRuntimeCapabilities(
-    allow_multi_sync_collector=True,
-    allow_multi_async_collector=True,
-    allow_mps_multi_collectors=False,
-    allow_parallel_single_env=True,
+    allow_multi_sync_collector=True, allow_multi_async_collector=True, allow_mps_multi_collectors=False, allow_parallel_single_env=True
 )
 
 

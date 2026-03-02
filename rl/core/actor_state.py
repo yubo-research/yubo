@@ -1,5 +1,3 @@
-"""Shared actor snapshot/restore helpers."""
-
 from __future__ import annotations
 
 from contextlib import contextmanager
@@ -31,7 +29,6 @@ def capture_backbone_head_snapshot(
     }
     if log_std is None:
         return snapshot
-
     log_std_tensor = _clone_tensor(log_std, to_cpu=bool(log_std_to_cpu))
     fmt = str(log_std_format).strip().lower()
     if fmt == "tensor":
@@ -43,20 +40,8 @@ def capture_backbone_head_snapshot(
     raise ValueError("log_std_format must be one of: tensor, numpy.")
 
 
-def capture_ppo_actor_snapshot(
-    actor_backbone: torch.nn.Module,
-    actor_head: torch.nn.Module,
-    *,
-    log_std: torch.Tensor | None = None,
-) -> dict[str, Any]:
-    return capture_backbone_head_snapshot(
-        actor_backbone,
-        actor_head,
-        log_std=log_std,
-        state_to_cpu=False,
-        log_std_to_cpu=True,
-        log_std_format="tensor",
-    )
+def capture_ppo_actor_snapshot(actor_backbone: torch.nn.Module, actor_head: torch.nn.Module, *, log_std: torch.Tensor | None = None) -> dict[str, Any]:
+    return capture_backbone_head_snapshot(actor_backbone, actor_head, log_std=log_std, state_to_cpu=False, log_std_to_cpu=True, log_std_format="tensor")
 
 
 def restore_backbone_head_snapshot(
@@ -87,30 +72,13 @@ def use_backbone_head_snapshot(
     log_std_format: str = "tensor",
 ):
     previous = capture_backbone_head_snapshot(
-        actor_backbone,
-        actor_head,
-        log_std=log_std,
-        state_to_cpu=state_to_cpu,
-        log_std_to_cpu=log_std_to_cpu,
-        log_std_format=log_std_format,
+        actor_backbone, actor_head, log_std=log_std, state_to_cpu=state_to_cpu, log_std_to_cpu=log_std_to_cpu, log_std_format=log_std_format
     )
-    restore_backbone_head_snapshot(
-        actor_backbone,
-        actor_head,
-        snapshot,
-        log_std=log_std,
-        device=device,
-    )
+    restore_backbone_head_snapshot(actor_backbone, actor_head, snapshot, log_std=log_std, device=device)
     try:
         yield
     finally:
-        restore_backbone_head_snapshot(
-            actor_backbone,
-            actor_head,
-            previous,
-            log_std=log_std,
-            device=device,
-        )
+        restore_backbone_head_snapshot(actor_backbone, actor_head, previous, log_std=log_std, device=device)
 
 
 def rng_state_payload() -> dict[str, Any]:

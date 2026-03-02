@@ -41,12 +41,7 @@ def parse_runtime_args(argv: list[str]) -> _RuntimeArgs:
             continue
         cleaned.append(arg)
         i += 1
-    return _RuntimeArgs(
-        seeds_raw=seeds_raw,
-        workers=workers,
-        workers_cli_set=workers_cli_set,
-        cleaned=cleaned,
-    )
+    return _RuntimeArgs(seeds_raw=seeds_raw, workers=workers, workers_cli_set=workers_cli_set, cleaned=cleaned)
 
 
 def split_config_and_args(argv: list[str]) -> tuple[str, list[str]]:
@@ -57,7 +52,7 @@ def split_config_and_args(argv: list[str]) -> tuple[str, list[str]]:
     idx = argv.index("--config")
     if idx + 1 >= len(argv):
         raise SystemExit("Missing path after --config")
-    return argv[idx + 1], argv[idx + 2 :]
+    return (argv[idx + 1], argv[idx + 2 :])
 
 
 def parse_seeds(raw: str | None) -> list[int]:

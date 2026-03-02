@@ -1,5 +1,3 @@
-"""Shared RL precision helpers (autocast policy + bf16 fallback)."""
-
 from __future__ import annotations
 
 import warnings
@@ -56,7 +54,6 @@ def _supports_bf16(device_type: str) -> bool:
     if key == "mps":
         return _mps_supports_bf16()
     if key == "cpu":
-        # RL mixed precision policy in this repo targets accelerator backends only.
         return False
     return False
 
@@ -76,15 +73,8 @@ def resolve_amp_dtype(mode: str | None, *, device: torch.device) -> torch.dtype 
 
 def _is_bf16_runtime_error(exc: BaseException) -> bool:
     msg = str(exc).lower()
-    patterns = (
-        "bfloat16",
-        "bf16",
-        "not implemented for",
-        "unsupported dtype",
-        "doesn't support float64",
-        "not supported on mps",
-    )
-    return any(p in msg for p in patterns)
+    patterns = ("bfloat16", "bf16", "not implemented for", "unsupported dtype", "doesn't support float64", "not supported on mps")
+    return any((p in msg for p in patterns))
 
 
 @dataclass
@@ -117,15 +107,8 @@ class PrecisionController:
             return False
         self.amp_dtype = None
         self.fallback_used = True
-        print(
-            f"[{component}] precision=auto bf16 path failed; falling back to fp32.",
-            flush=True,
-        )
+        print(f"[{component}] precision=auto bf16 path failed; falling back to fp32.", flush=True)
         return True
 
 
-__all__ = [
-    "PrecisionController",
-    "normalize_precision_mode",
-    "resolve_amp_dtype",
-]
+__all__ = ["PrecisionController", "normalize_precision_mode", "resolve_amp_dtype"]

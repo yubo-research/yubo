@@ -14,23 +14,21 @@ def _extract_algo_cfg(cfg: dict) -> tuple[str, str | None, dict]:
     backend = None if backend_raw is None else str(backend_raw).strip()
     if backend == "":
         raise ValueError("[rl].backend cannot be empty when provided.")
-
-    # Validate backend<->algo compatibility early and keep config keys canonical.
     _ = resolve_algo_name(str(algo), backend=backend) if backend is not None else str(algo)
     algo_cfg = root.get(str(algo))
     if algo_cfg is None:
         algo_cfg = {}
     if not isinstance(algo_cfg, dict):
         raise ValueError(f"Algorithm config for '{algo}' must be a table.")
-    return str(algo), backend, algo_cfg
+    return (str(algo), backend, algo_cfg)
 
 
 def _extract_run_cfg(cfg: dict) -> tuple[list[int], int]:
     if "rl" not in cfg or not isinstance(cfg["rl"], dict):
-        return [], 1
+        return ([], 1)
     run_cfg = cfg["rl"].get("run", {})
     if run_cfg is None:
-        return [], 1
+        return ([], 1)
     if not isinstance(run_cfg, dict):
         raise ValueError("[rl.run] must be a table.")
     seeds_raw = run_cfg.get("seeds")
@@ -38,17 +36,17 @@ def _extract_run_cfg(cfg: dict) -> tuple[list[int], int]:
     workers = int(run_cfg.get("workers", 1))
     if seeds_raw is None:
         if num_reps_raw is None:
-            return [], workers
+            return ([], workers)
         num_reps = int(num_reps_raw)
         if num_reps < 1:
             raise ValueError("[rl.run].num_reps must be >= 1 when provided.")
-        return list(range(num_reps)), workers
+        return (list(range(num_reps)), workers)
     if isinstance(seeds_raw, str):
-        return parse_seeds(seeds_raw), workers
+        return (parse_seeds(seeds_raw), workers)
     if isinstance(seeds_raw, int):
-        return [int(seeds_raw)], workers
+        return ([int(seeds_raw)], workers)
     if isinstance(seeds_raw, list):
-        return [int(x) for x in seeds_raw], workers
+        return ([int(x) for x in seeds_raw], workers)
     raise ValueError("[rl.run].seeds must be a list, int, or comma/range string.")
 
 
@@ -81,12 +79,10 @@ def main(argv: list[str] | None = None):
     if argv is None:
         argv = sys.argv[1:]
     config_path, rest = split_config_and_args(argv)
-
     from rl import builtins
 
     builtins.register_all()
     runtime = parse_runtime_args(rest)
-
     overrides = parse_set_args(runtime.cleaned)
     cfg = load_toml(config_path)
     if overrides:
@@ -96,22 +92,16 @@ def main(argv: list[str] | None = None):
         seeds = parse_seeds(runtime.seeds_raw)
     workers = runtime.workers if runtime.workers_cli_set else cfg_workers
     overrides_keys = sorted(overrides) if overrides else []
-    print(
-        f"[rl] config={config_path} seeds={seeds if seeds else ['default']} workers={workers} overrides={overrides_keys}",
-        flush=True,
-    )
+    print(f"[rl] config={config_path} seeds={(seeds if seeds else ['default'])} workers={workers} overrides={overrides_keys}", flush=True)
     if not seeds:
         _run_from_cfg(cfg, seed=None)
         return
-
     if workers < 1:
         raise SystemExit("--workers must be >= 1")
-
     if workers == 1 or len(seeds) == 1:
         for seed in seeds:
             _run_single(config_path, overrides, seed)
         return
-
     from concurrent.futures import ProcessPoolExecutor, as_completed
 
     results = {}
@@ -120,7 +110,6 @@ def main(argv: list[str] | None = None):
         for fut in as_completed(futures):
             seed = futures[fut]
             results[seed] = fut.result()
-
     print(f"[rl] completed seeds={sorted(results)}", flush=True)
 
 

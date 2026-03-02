@@ -1,12 +1,10 @@
-"""Progress/scheduling helpers shared across RL algorithms and backends."""
-
 from __future__ import annotations
 
 import time
 
 
 def is_due(step: int, interval: int | None) -> bool:
-    return interval is not None and int(interval) > 0 and int(step) % int(interval) == 0
+    return interval is not None and int(interval) > 0 and (int(step) % int(interval) == 0)
 
 
 def due_mark(step: int, interval: int | None, previous_mark: int) -> int | None:

@@ -2,26 +2,12 @@ from __future__ import annotations
 
 from typing import Any
 
-from rl.core.actor_state import (
-    build_ppo_checkpoint_payload as build_shared_payload,
-)
-from rl.core.actor_state import (
-    capture_ppo_actor_snapshot as capture_actor_snapshot,
-)
+from rl.core.actor_state import build_ppo_checkpoint_payload as build_shared_payload
+from rl.core.actor_state import capture_ppo_actor_snapshot as capture_actor_snapshot
 
 
-def build_checkpoint_payload(
-    training_setup: Any,
-    modules: Any,
-    train_state: Any,
-    *,
-    iteration: int,
-) -> dict[str, Any]:
-    actor_snapshot = capture_actor_snapshot(
-        modules.actor_backbone,
-        modules.actor_head,
-        log_std=modules.log_std,
-    )
+def build_checkpoint_payload(training_setup: Any, modules: Any, train_state: Any, *, iteration: int) -> dict[str, Any]:
+    actor_snapshot = capture_actor_snapshot(modules.actor_backbone, modules.actor_head, log_std=modules.log_std)
     return build_shared_payload(
         iteration=iteration,
         global_step=int(iteration * training_setup.frames_per_batch),
@@ -37,32 +23,15 @@ def build_checkpoint_payload(
     )
 
 
-def save_periodic_checkpoint(
-    config: Any,
-    training_setup: Any,
-    modules: Any,
-    train_state: Any,
-    *,
-    iteration: int,
-) -> None:
+def save_periodic_checkpoint(config: Any, training_setup: Any, modules: Any, train_state: Any, *, iteration: int) -> None:
     if not config.checkpoint_interval or iteration % int(config.checkpoint_interval) != 0:
         return
     payload = build_checkpoint_payload(training_setup, modules, train_state, iteration=iteration)
     training_setup.checkpoint_manager.save_both(payload, iteration=iteration)
 
 
-def save_final_checkpoint(
-    config: Any,
-    training_setup: Any,
-    modules: Any,
-    train_state: Any,
-) -> None:
+def save_final_checkpoint(config: Any, training_setup: Any, modules: Any, train_state: Any) -> None:
     if not config.checkpoint_interval:
         return
-    payload = build_checkpoint_payload(
-        training_setup,
-        modules,
-        train_state,
-        iteration=int(training_setup.num_iterations),
-    )
+    payload = build_checkpoint_payload(training_setup, modules, train_state, iteration=int(training_setup.num_iterations))
     training_setup.checkpoint_manager.save_both(payload, iteration=int(training_setup.num_iterations))

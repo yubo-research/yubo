@@ -1,6 +1,1 @@
-"""PufferLib backend algorithms."""
-
-__all__ = [
-    "ppo",
-    "sac",
-]
+__all__ = ["ppo", "sac"]

@@ -1,5 +1,3 @@
-"""Core data/model specs for pufferlib PPO."""
-
 from __future__ import annotations
 
 import dataclasses
@@ -13,12 +11,8 @@ from torch.distributions.categorical import Categorical
 
 from rl.backbone import init_linear_layers as _init_linear_layers_shared
 from rl.core.continuous_actions import normalize_action_bounds as _normalize_action_bounds_shared
-from rl.core.continuous_actions import (
-    scale_action_tensor_to_env as _scale_action_tensor_to_env_shared,
-)
-from rl.core.continuous_actions import (
-    unscale_action_tensor_from_env as _unscale_action_tensor_from_env_shared,
-)
+from rl.core.continuous_actions import scale_action_tensor_to_env as _scale_action_tensor_to_env_shared
+from rl.core.continuous_actions import unscale_action_tensor_from_env as _unscale_action_tensor_from_env_shared
 
 
 def normalize_action_bounds(low: np.ndarray, high: np.ndarray, dim: int) -> tuple[np.ndarray, np.ndarray]:
@@ -27,7 +21,7 @@ def normalize_action_bounds(low: np.ndarray, high: np.ndarray, dim: int) -> tupl
 
 @dataclasses.dataclass(frozen=True)
 class _ObservationSpec:
-    mode: str  # vector | pixels
+    mode: str
     raw_shape: tuple[int, ...]
     vector_dim: int | None = None
     channels: int | None = None
@@ -36,7 +30,7 @@ class _ObservationSpec:
 
 @dataclasses.dataclass(frozen=True)
 class _ActionSpec:
-    kind: str  # discrete | continuous
+    kind: str
     dim: int
     low: np.ndarray | None = None
     high: np.ndarray | None = None
@@ -60,7 +54,6 @@ class _ActorCritic(nn.Module):
         self.critic_head = critic_head
         self.action_spec = action_spec
         self._action_kind = str(action_spec.kind)
-
         if self._action_kind == "continuous":
             dim = int(action_spec.dim)
             low = np.asarray(action_spec.low, dtype=np.float32).reshape(-1)
@@ -68,26 +61,10 @@ class _ActorCritic(nn.Module):
             if low.size != dim or high.size != dim:
                 raise ValueError("Continuous action bounds must match action dimension.")
             self.log_std = nn.Parameter(torch.full((dim,), float(log_std_init), dtype=torch.float32))
-            self.register_buffer(
-                "action_low",
-                torch.as_tensor(low, dtype=torch.float32),
-                persistent=False,
-            )
-            self.register_buffer(
-                "action_high",
-                torch.as_tensor(high, dtype=torch.float32),
-                persistent=False,
-            )
-            self.register_buffer(
-                "action_scale",
-                torch.as_tensor((high - low) / 2.0, dtype=torch.float32),
-                persistent=False,
-            )
-            self.register_buffer(
-                "action_bias",
-                torch.as_tensor((high + low) / 2.0, dtype=torch.float32),
-                persistent=False,
-            )
+            self.register_buffer("action_low", torch.as_tensor(low, dtype=torch.float32), persistent=False)
+            self.register_buffer("action_high", torch.as_tensor(high, dtype=torch.float32), persistent=False)
+            self.register_buffer("action_scale", torch.as_tensor((high - low) / 2.0, dtype=torch.float32), persistent=False)
+            self.register_buffer("action_bias", torch.as_tensor((high + low) / 2.0, dtype=torch.float32), persistent=False)
 
     def _actor_features(self, obs: torch.Tensor) -> torch.Tensor:
         return self.actor_backbone(obs)
@@ -110,7 +87,7 @@ class _ActorCritic(nn.Module):
 
     @staticmethod
     def _atanh(x: torch.Tensor) -> torch.Tensor:
-        x = torch.clamp(x, -1.0 + 1e-6, 1.0 - 1e-6)
+        x = torch.clamp(x, -1.0 + 1e-06, 1.0 - 1e-06)
         return 0.5 * (torch.log1p(x) - torch.log1p(-x))
 
     def _to_env_action(self, action_norm: torch.Tensor) -> torch.Tensor:
@@ -124,25 +101,19 @@ class _ActorCritic(nn.Module):
         low = self.action_low.view(view_shape)
         high = self.action_high.view(view_shape)
         action_norm = _unscale_action_tensor_from_env_shared(action_env, low, high, clip=True)
-        return torch.clamp(action_norm, -1.0 + 1e-6, 1.0 - 1e-6)
+        return torch.clamp(action_norm, -1.0 + 1e-06, 1.0 - 1e-06)
 
-    def _squashed_log_prob(
-        self,
-        dist: Normal,
-        *,
-        action_norm: torch.Tensor,
-        pre_tanh: torch.Tensor,
-    ) -> torch.Tensor:
+    def _squashed_log_prob(self, dist: Normal, *, action_norm: torch.Tensor, pre_tanh: torch.Tensor) -> torch.Tensor:
         view_shape = (1,) * (action_norm.ndim - 1) + (action_norm.shape[-1],)
-        scale = torch.clamp(self.action_scale.view(view_shape), min=1e-8)
+        scale = torch.clamp(self.action_scale.view(view_shape), min=1e-08)
         log_scale = torch.log(scale)
-        squash_correction = torch.log(1.0 - action_norm.pow(2) + 1e-6)
+        squash_correction = torch.log(1.0 - action_norm.pow(2) + 1e-06)
         return (dist.log_prob(pre_tanh) - squash_correction - log_scale).sum(dim=-1)
 
     def forward(self, obs: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         actor_out = self.actor_head(self._actor_features(obs))
         value = self.critic_head(self._critic_features(obs)).squeeze(-1)
-        return actor_out, value
+        return (actor_out, value)
 
     def get_value(self, obs: torch.Tensor) -> torch.Tensor:
         return self.forward(obs)[1]
@@ -154,8 +125,7 @@ class _ActorCritic(nn.Module):
             dist = Categorical(logits=logits)
             if action is None:
                 action = dist.sample()
-            return action, dist.log_prob(action), dist.entropy(), value
-
+            return (action, dist.log_prob(action), dist.entropy(), value)
         mean = actor_out
         std = torch.exp(self._expand_log_std(mean))
         dist = Normal(mean, std)
@@ -170,7 +140,7 @@ class _ActorCritic(nn.Module):
             pre_tanh = self._atanh(action_norm)
         log_prob = self._squashed_log_prob(dist, action_norm=action_norm, pre_tanh=pre_tanh)
         entropy = dist.entropy().sum(dim=-1)
-        return action, log_prob, entropy, value
+        return (action, log_prob, entropy, value)
 
 
 @dataclasses.dataclass(frozen=True)

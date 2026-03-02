@@ -1,5 +1,3 @@
-"""Shared SAC metric/log formatting helpers."""
-
 from __future__ import annotations
 
 from typing import Any
@@ -37,15 +35,10 @@ def build_eval_metric_record(
     }
 
 
-def normalize_returns_for_log(
-    *,
-    eval_return: float,
-    heldout_return: float | None,
-    best_return: float,
-) -> tuple[float | None, float | None, float]:
+def normalize_returns_for_log(*, eval_return: float, heldout_return: float | None, best_return: float) -> tuple[float | None, float | None, float]:
     eval_out = float(eval_return) if np.isfinite(float(eval_return)) else None
     best_out = float(best_return) if np.isfinite(float(best_return)) else 0.0
-    return eval_out, heldout_return, best_out
+    return (eval_out, heldout_return, best_out)
 
 
 def build_log_eval_iteration_kwargs(
@@ -61,11 +54,7 @@ def build_log_eval_iteration_kwargs(
     loss_critic: float,
     loss_alpha: float,
 ) -> dict[str, Any]:
-    eval_out, heldout_out, best_out = normalize_returns_for_log(
-        eval_return=float(eval_return),
-        heldout_return=heldout_return,
-        best_return=float(best_return),
-    )
+    eval_out, heldout_out, best_out = normalize_returns_for_log(eval_return=float(eval_return), heldout_return=heldout_return, best_return=float(best_return))
     return {
         "iteration": 0,
         "num_iterations": 0,
@@ -73,11 +62,7 @@ def build_log_eval_iteration_kwargs(
         "eval_return": eval_out,
         "heldout_return": heldout_out,
         "best_return": best_out,
-        "algo_metrics": {
-            "actor": float(loss_actor),
-            "critic": float(loss_critic),
-            "alpha": float(loss_alpha),
-        },
+        "algo_metrics": {"actor": float(loss_actor), "critic": float(loss_critic), "alpha": float(loss_alpha)},
         "algo_name": "sac",
         "elapsed": float(now - float(started_at)),
         "step_override": int(step),

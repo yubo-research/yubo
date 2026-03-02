@@ -1,5 +1,3 @@
-"""PPO training coordinator. Setup (env, modules, training) inlined to reduce dependency depth."""
-
 from __future__ import annotations
 
 import dataclasses
@@ -25,27 +23,11 @@ from rl.core.profiler import run_with_profiler
 
 from . import deps as op_deps
 from . import models as op_models
-from .actor_eval import (
-    capture_actor_snapshot as _capture_actor_state,
-)
-from .actor_eval import (
-    restore_actor_snapshot as _restore_actor_state,
-)
+from .actor_eval import capture_actor_snapshot as _capture_actor_state
+from .actor_eval import restore_actor_snapshot as _restore_actor_state
 from .config import _PPO_RUNTIME_CAPABILITIES, PPOConfig, TrainResult
 
-__all__ = [
-    "PPOConfig",
-    "TrainResult",
-    "_TanhNormal",
-    "_capture_actor_state",
-    "_restore_actor_state",
-    "register",
-    "torch",
-    "train_ppo",
-]
-
-
-# --- Setup: dataclasses and helpers ---
+__all__ = ["PPOConfig", "TrainResult", "_TanhNormal", "_capture_actor_state", "_restore_actor_state", "register", "torch", "train_ppo"]
 
 
 @dataclasses.dataclass(frozen=True)
@@ -122,7 +104,7 @@ def _count_unique_params(*modules: nn.Module, extra_params: list[torch.nn.Parame
     if extra_params:
         for p in extra_params:
             unique[id(p)] = p
-    return sum(p.numel() for p in unique.values())
+    return sum((p.numel() for p in unique.values()))
 
 
 def _unique_param_list(*modules: nn.Module, extra_params: list[torch.nn.Parameter] | None = None) -> list[torch.nn.Parameter]:
@@ -137,7 +119,7 @@ def _unique_param_list(*modules: nn.Module, extra_params: list[torch.nn.Paramete
 
 
 def _is_due(step: int, interval: int | None) -> bool:
-    return interval is not None and int(interval) > 0 and int(step) % int(interval) == 0
+    return interval is not None and int(interval) > 0 and (int(step) % int(interval) == 0)
 
 
 def _is_dm_control_env(env_conf) -> bool:
@@ -148,45 +130,29 @@ def _is_atari_env(env_conf) -> bool:
     return getattr(env_conf, "env_name", "").startswith("ALE/")
 
 
-def _resolve_observation_contract_for_env(
-    config: PPOConfig,
-    env: _EnvSetup | object,
-) -> op_deps.torchrl_env_contract.ObservationContract:
+def _resolve_observation_contract_for_env(config: PPOConfig, env: _EnvSetup | object) -> op_deps.torchrl_env_contract.ObservationContract:
     io_contract = getattr(env, "io_contract", None)
     observation = getattr(io_contract, "observation", None)
     if observation is not None:
         return observation
-
     env_conf = getattr(env, "env_conf", None)
     if env_conf is not None:
         return op_deps.torchrl_env_contract.resolve_observation_contract(env_conf, default_image_size=84)
-
     if bool(getattr(config, "from_pixels", False)):
-        return op_deps.torchrl_env_contract.ObservationContract(
-            mode="pixels",
-            raw_shape=(),
-            model_channels=3,
-            image_size=84,
-        )
-    return op_deps.torchrl_env_contract.ObservationContract(
-        mode="vector",
-        raw_shape=(),
-        vector_dim=1,
-    )
+        return op_deps.torchrl_env_contract.ObservationContract(mode="pixels", raw_shape=(), model_channels=3, image_size=84)
+    return op_deps.torchrl_env_contract.ObservationContract(mode="vector", raw_shape=(), vector_dim=1)
 
 
 def _make_collect_env_atari(env_conf, env_index: int = 0):
-    import problems.env_conf_atari_dm  # noqa: F401 - required in subprocess
+    import importlib
 
+    importlib.import_module("problems.env_conf_atari_dm")
     base = env_conf.make()
     seed = int(env_conf.problem_seed) + env_index
     base.reset(seed=seed)
     if hasattr(base, "action_space") and hasattr(base.action_space, "seed"):
         base.action_space.seed(seed)
-    transforms = op_deps.tr_transforms.Compose(
-        AtariObservationTransform(size=84),
-        op_deps.tr_transforms.DoubleToFloat(),
-    )
+    transforms = op_deps.tr_transforms.Compose(AtariObservationTransform(size=84), op_deps.tr_transforms.DoubleToFloat())
     return tr_envs.TransformedEnv(tr_envs.GymWrapper(base), transforms)
 
 
@@ -196,21 +162,12 @@ def _make_collect_env_dm_control(env_conf, env_index: int = 0):
     seed = int(env_conf.problem_seed) + env_index
     from_pixels = bool(getattr(env_conf, "from_pixels", False))
     pixels_only = bool(getattr(env_conf, "pixels_only", True))
-
-    base = make_dm_env(
-        env_conf.env_name,
-        from_pixels=from_pixels,
-        pixels_only=pixels_only,
-    )
+    base = make_dm_env(env_conf.env_name, from_pixels=from_pixels, pixels_only=pixels_only)
     base.reset(seed=seed)
     if hasattr(base, "action_space") and hasattr(base.action_space, "seed"):
         base.action_space.seed(seed)
-
     if from_pixels:
-        transforms = op_deps.tr_transforms.Compose(
-            PixelsToObservation(size=84),
-            op_deps.tr_transforms.DoubleToFloat(),
-        )
+        transforms = op_deps.tr_transforms.Compose(PixelsToObservation(size=84), op_deps.tr_transforms.DoubleToFloat())
     else:
         transforms = op_deps.tr_transforms.DoubleToFloat()
     return tr_envs.TransformedEnv(tr_envs.GymWrapper(base), transforms)
@@ -254,7 +211,6 @@ def build_env_setup(config: PPOConfig) -> _EnvSetup:
     if env_conf.gym_conf is None:
         raise ValueError(f"PPO expects a gym env_tag, got {config.env_tag}")
     env_conf.ensure_spaces()
-
     io_contract = op_deps.torchrl_env_contract.resolve_env_io_contract(env_conf, default_image_size=84)
     obs_dim = 64 if io_contract.observation.mode == "pixels" else int(io_contract.observation.vector_dim or 1)
     act_dim = int(io_contract.action.dim)
@@ -310,27 +266,17 @@ def _make_video_context(config: PPOConfig, env: _EnvSetup, *, from_pixels: bool)
         capture_actor_state=op_deps.torchrl_actor_eval.capture_actor_snapshot,
         with_actor_state=op_deps.torchrl_actor_eval.use_actor_snapshot,
     )
-    return video, ctx
+    return (video, ctx)
 
 
 def build_modules(config: PPOConfig, env: _EnvSetup, *, device: torch.device) -> _Modules:
     obs_contract = env.io_contract.observation
     backbone_name = op_deps.torchrl_env_contract.resolve_backbone_name(config.backbone_name, obs_contract)
     backbone_spec = op_deps.backbone.BackboneSpec(
-        name=backbone_name,
-        hidden_sizes=tuple(config.backbone_hidden_sizes),
-        activation=config.backbone_activation,
-        layer_norm=bool(config.backbone_layer_norm),
+        name=backbone_name, hidden_sizes=tuple(config.backbone_hidden_sizes), activation=config.backbone_activation, layer_norm=bool(config.backbone_layer_norm)
     )
-    actor_head_spec = op_deps.backbone.HeadSpec(
-        hidden_sizes=tuple(config.actor_head_hidden_sizes),
-        activation=config.head_activation,
-    )
-    critic_head_spec = op_deps.backbone.HeadSpec(
-        hidden_sizes=tuple(config.critic_head_hidden_sizes),
-        activation=config.head_activation,
-    )
-
+    actor_head_spec = op_deps.backbone.HeadSpec(hidden_sizes=tuple(config.actor_head_hidden_sizes), activation=config.head_activation)
+    critic_head_spec = op_deps.backbone.HeadSpec(hidden_sizes=tuple(config.critic_head_hidden_sizes), activation=config.head_activation)
     if config.share_backbone:
         shared_backbone, feat_dim = op_deps.backbone.build_backbone(backbone_spec, env.obs_dim)
         actor_backbone = shared_backbone
@@ -340,43 +286,22 @@ def build_modules(config: PPOConfig, env: _EnvSetup, *, device: torch.device) ->
     else:
         actor_backbone, actor_feat_dim = op_deps.backbone.build_backbone(backbone_spec, env.obs_dim)
         critic_backbone, critic_feat_dim = op_deps.backbone.build_backbone(backbone_spec, env.obs_dim)
-
     actor_head = op_deps.backbone.build_mlp_head(actor_head_spec, actor_feat_dim, env.act_dim)
     critic_head = op_deps.backbone.build_mlp_head(critic_head_spec, critic_feat_dim, 1)
     obs_scaler = op_deps.torchrl_common.ObsScaler(env.obs_lb, env.obs_width)
-    critic_net = op_models.CriticNet(
-        critic_backbone,
-        critic_head,
-        obs_scaler,
-        obs_contract=obs_contract,
-    )
+    critic_net = op_models.CriticNet(critic_backbone, critic_head, obs_scaler, obs_contract=obs_contract)
     critic = td_nn.TensorDictModule(critic_net, in_keys=["observation"], out_keys=["state_value"])
-
     if env.is_discrete:
         log_std = None
-        actor_net = op_models.DiscreteActorNet(
-            actor_backbone,
-            actor_head,
-            obs_scaler,
-            obs_contract=obs_contract,
-        )
+        actor_net = op_models.DiscreteActorNet(actor_backbone, actor_head, obs_scaler, obs_contract=obs_contract)
         actor_module = td_nn.TensorDictModule(actor_net, in_keys=["observation"], out_keys=["logits"])
         actor = op_deps.tr_modules.ProbabilisticActor(
-            actor_module,
-            in_keys=["logits"],
-            distribution_class=torch.distributions.Categorical,
-            return_log_prob=True,
+            actor_module, in_keys=["logits"], distribution_class=torch.distributions.Categorical, return_log_prob=True
         )
         actor_param_count = _count_unique_params(actor_backbone, actor_head)
     else:
         log_std = nn.Parameter(torch.full((env.act_dim,), float(config.log_std_init)))
-        actor_net = op_models.ActorNet(
-            actor_backbone,
-            actor_head,
-            log_std,
-            obs_scaler,
-            obs_contract=obs_contract,
-        )
+        actor_net = op_models.ActorNet(actor_backbone, actor_head, log_std, obs_scaler, obs_contract=obs_contract)
         actor_module = td_nn.TensorDictModule(actor_net, in_keys=["observation"], out_keys=["loc", "scale"])
         actor = op_deps.tr_modules.ProbabilisticActor(
             actor_module,
@@ -386,16 +311,11 @@ def build_modules(config: PPOConfig, env: _EnvSetup, *, device: torch.device) ->
             return_log_prob=True,
         )
         actor_param_count = _count_unique_params(actor_backbone, actor_head, extra_params=[log_std])
-
     actor.to(device)
     critic.to(device)
     obs_scaler.to(device)
-
     if config.theta_dim is not None:
-        assert actor_param_count == int(config.theta_dim), (
-            actor_param_count,
-            config.theta_dim,
-        )
+        assert actor_param_count == int(config.theta_dim), (actor_param_count, config.theta_dim)
     return _Modules(
         actor_backbone=actor_backbone,
         actor_head=actor_head,
@@ -408,35 +328,19 @@ def build_modules(config: PPOConfig, env: _EnvSetup, *, device: torch.device) ->
     )
 
 
-def build_training(
-    config: PPOConfig,
-    env: _EnvSetup,
-    modules: _Modules,
-    *,
-    runtime: op_deps.torchrl_runtime.TorchRLRuntime,
-) -> _TrainingSetup:
+def build_training(config: PPOConfig, env: _EnvSetup, modules: _Modules, *, runtime: op_deps.torchrl_runtime.TorchRLRuntime) -> _TrainingSetup:
     frames_per_batch = int(config.num_envs * config.num_steps)
     num_iterations = int(config.total_timesteps // frames_per_batch)
     if num_iterations <= 0:
         raise ValueError("total_timesteps too small for num_envs * num_steps.")
-
     env_conf = env.env_conf
     vec_env = None
     if runtime.collector_backend == "single":
         env_factory = _make_collect_env_factory(env_conf, int(config.num_envs))
         if runtime.single_env_backend == "parallel":
-            vec_env = tr_envs.ParallelEnv(
-                int(config.num_envs),
-                env_factory,
-                serial_for_single=True,
-            )
+            vec_env = tr_envs.ParallelEnv(int(config.num_envs), env_factory, serial_for_single=True)
         else:
-            vec_env = tr_envs.SerialEnv(
-                int(config.num_envs),
-                env_factory,
-                serial_for_single=True,
-            )
-
+            vec_env = tr_envs.SerialEnv(int(config.num_envs), env_factory, serial_for_single=True)
     loss_module = op_deps.tr_objectives.ClipPPOLoss(
         modules.actor,
         modules.critic,
@@ -447,19 +351,9 @@ def build_training(
         clip_value=config.clip_vloss,
         functional=False,
     )
-    gae = op_deps.tr_objectives.value.GAE(
-        gamma=config.gamma,
-        lmbda=config.gae_lambda,
-        value_network=modules.critic,
-    )
-
-    train_params = _unique_param_list(
-        modules.actor,
-        modules.critic,
-        extra_params=[modules.log_std] if modules.log_std is not None else None,
-    )
-    optimizer = optim.AdamW(train_params, lr=config.learning_rate, eps=1e-5, weight_decay=0.0)
-
+    gae = op_deps.tr_objectives.value.GAE(gamma=config.gamma, lmbda=config.gae_lambda, value_network=modules.critic)
+    train_params = _unique_param_list(modules.actor, modules.critic, extra_params=[modules.log_std] if modules.log_std is not None else None)
+    optimizer = optim.AdamW(train_params, lr=config.learning_rate, eps=1e-05, weight_decay=0.0)
     exp_dir = Path(config.exp_dir)
     exp_dir.mkdir(parents=True, exist_ok=True)
     op_deps.write_config(str(exp_dir), config.to_dict())
@@ -476,9 +370,6 @@ def build_training(
         metrics_path=metrics_path,
         checkpoint_manager=op_deps.rl_checkpointing.CheckpointManager(exp_dir=exp_dir),
     )
-
-
-# --- Core: training loop ---
 
 
 def _build_collector(
@@ -501,12 +392,10 @@ def _build_collector(
             total_frames=total_frames,
             **op_deps.torchrl_common.collector_device_kwargs(runtime.device),
         )
-
     if runtime.collector_workers is None:
         raise RuntimeError("multi collector backend requires collector_workers")
     num_workers = int(runtime.collector_workers)
-
-    create_env_fns = [(lambda i=i: _make_collect_env(env.env_conf, env_index=i)) for i in range(num_workers)]
+    create_env_fns = [lambda i=i: _make_collect_env(env.env_conf, env_index=i) for i in range(num_workers)]
     frames_per_batch = [int(config.num_steps)] * num_workers
     collector_cls = tr_collectors.MultiAsyncCollector if runtime.collector_backend == "multi_async" else tr_collectors.MultiSyncCollector
     return collector_cls(
@@ -521,22 +410,13 @@ def _build_collector(
     )
 
 
-def _resume_if_requested(
-    config: PPOConfig,
-    modules: _Modules,
-    training: _TrainingSetup,
-    *,
-    device: torch.device,
-) -> _TrainState:
+def _resume_if_requested(config: PPOConfig, modules: _Modules, training: _TrainingSetup, *, device: torch.device) -> _TrainState:
     state = _TrainState()
     if not config.resume_from:
         return state
     resume_path = Path(config.resume_from)
     loaded = op_deps.rl_checkpointing.load_checkpoint(resume_path, device=device)
-    actor_snapshot: dict[str, Any] = {
-        "backbone": loaded["actor_backbone"],
-        "head": loaded["actor_head"],
-    }
+    actor_snapshot: dict[str, Any] = {"backbone": loaded["actor_backbone"], "head": loaded["actor_head"]}
     if "log_std" in loaded:
         actor_snapshot["log_std"] = loaded["log_std"]
     _restore_actor_state(modules, actor_snapshot, device=device)
@@ -559,13 +439,7 @@ def _resume_if_requested(
     return state
 
 
-def _anneal_lr(
-    config: PPOConfig,
-    optimizer: optim.Optimizer,
-    *,
-    iteration: int,
-    num_iterations: int,
-) -> None:
+def _anneal_lr(config: PPOConfig, optimizer: optim.Optimizer, *, iteration: int, num_iterations: int) -> None:
     if not config.anneal_lr:
         return
     frac = 1.0 - (float(iteration) - 1.0) / float(num_iterations)
@@ -574,13 +448,7 @@ def _anneal_lr(
         param_group["lr"] = lr_now
 
 
-def _ppo_update(
-    config: PPOConfig,
-    training: _TrainingSetup,
-    *,
-    batch,
-    device: torch.device,
-) -> tuple[list[float], list[float]]:
+def _ppo_update(config: PPOConfig, training: _TrainingSetup, *, batch, device: torch.device) -> tuple[list[float], list[float]]:
     batch = batch.to(device)
     training.gae(batch)
     flat = batch.reshape(-1)
@@ -605,19 +473,12 @@ def _ppo_update(
                 clipfracs.append(float(loss_td["clip_fraction"]))
             if "kl_approx" in loss_td.keys():
                 approx_kls.append(float(loss_td["kl_approx"]))
-        if config.target_kl is not None and approx_kls and float(np.mean(approx_kls)) > float(config.target_kl):
+        if config.target_kl is not None and approx_kls and (float(np.mean(approx_kls)) > float(config.target_kl)):
             break
-    return approx_kls, clipfracs
+    return (approx_kls, clipfracs)
 
 
-def _evaluate_actor(
-    config: PPOConfig,
-    env: _EnvSetup,
-    modules: _Modules,
-    *,
-    device: torch.device,
-    eval_seed: int,
-) -> float:
+def _evaluate_actor(config: PPOConfig, env: _EnvSetup, modules: _Modules, *, device: torch.device, eval_seed: int) -> float:
     obs_contract = _resolve_observation_contract_for_env(config, env)
     from_pixels = obs_contract.mode == "pixels"
     eval_env = _build_eval_env_conf(config, env, from_pixels=from_pixels)
@@ -629,12 +490,7 @@ def _evaluate_actor(
         obs_contract=obs_contract,
         is_discrete=bool(getattr(env, "is_discrete", False)),
     )
-    traj, _ = episode_rollout.collect_denoised_trajectory(
-        eval_env,
-        eval_policy,
-        num_denoise=config.num_denoise_eval,
-        i_noise=int(eval_seed),
-    )
+    traj, _ = episode_rollout.collect_denoised_trajectory(eval_env, eval_policy, num_denoise=config.num_denoise_eval, i_noise=int(eval_seed))
     return float(traj.rreturn)
 
 
@@ -658,15 +514,8 @@ def _maybe_eval_and_log(
             from rl import logger as rl_logger
 
             elapsed = time.time() - start_time
-            rl_logger.log_progress_iteration(
-                iteration,
-                training.num_iterations,
-                training.frames_per_batch,
-                elapsed,
-                algo_name="ppo",
-            )
+            rl_logger.log_progress_iteration(iteration, training.num_iterations, training.frames_per_batch, elapsed, algo_name="ppo")
         return
-
     plan = op_deps.build_eval_plan(
         current=iteration,
         interval=int(config.eval_interval),
@@ -681,7 +530,6 @@ def _maybe_eval_and_log(
         best_actor_state=state.best_actor_state,
         capture_actor_state=lambda: op_deps.torchrl_actor_eval.capture_actor_snapshot(modules),
     )
-
     state.last_heldout_return = None
     if config.num_denoise_passive_eval is not None and state.best_actor_state is not None:
         obs_contract = _resolve_observation_contract_for_env(config, env)
@@ -698,16 +546,11 @@ def _maybe_eval_and_log(
             best_actor_state=state.best_actor_state,
             num_denoise_passive_eval=config.num_denoise_passive_eval,
             heldout_i_noise=plan.heldout_i_noise,
-            with_actor_state=lambda snapshot: op_deps.torchrl_actor_eval.use_actor_snapshot(
-                modules,
-                snapshot,
-                device=device,
-            ),
+            with_actor_state=lambda snapshot: op_deps.torchrl_actor_eval.use_actor_snapshot(modules, snapshot, device=device),
             evaluate_for_best=episode_rollout.evaluate_for_best,
             eval_env_conf=_build_eval_env_conf(config, env, from_pixels=from_pixels),
             eval_policy=best_eval_policy,
         )
-
     elapsed = time.time() - start_time
     global_step = iteration * training.frames_per_batch
     record = _build_eval_record(
@@ -741,54 +584,20 @@ def _maybe_eval_and_log(
 
 
 def _run_training_loop(
-    config: PPOConfig,
-    env: _EnvSetup,
-    modules: _Modules,
-    training: _TrainingSetup,
-    state: _TrainState,
-    *,
-    collector,
-    device: torch.device,
+    config: PPOConfig, env: _EnvSetup, modules: _Modules, training: _TrainingSetup, state: _TrainState, *, collector, device: torch.device
 ) -> None:
     start_time = time.time()
 
     def run_iteration(iteration: int, batch):
-        _anneal_lr(
-            config,
-            training.optimizer,
-            iteration=iteration,
-            num_iterations=training.num_iterations,
-        )
+        _anneal_lr(config, training.optimizer, iteration=iteration, num_iterations=training.num_iterations)
         approx_kls, clipfracs = _ppo_update(config, training, batch=batch, device=device)
         _maybe_eval_and_log(
-            config,
-            env,
-            modules,
-            training,
-            state,
-            iteration=iteration,
-            approx_kls=approx_kls,
-            clipfracs=clipfracs,
-            device=device,
-            start_time=start_time,
+            config, env, modules, training, state, iteration=iteration, approx_kls=approx_kls, clipfracs=clipfracs, device=device, start_time=start_time
         )
-        op_deps.save_periodic_checkpoint(
-            config=config,
-            training_setup=training,
-            modules=modules,
-            train_state=state,
-            iteration=iteration,
-        )
+        op_deps.save_periodic_checkpoint(config=config, training_setup=training, modules=modules, train_state=state, iteration=iteration)
 
     if getattr(config, "profile_enable", False):
-        run_with_profiler(
-            config,
-            collector,
-            run_iteration,
-            device=device,
-            num_iterations=training.num_iterations,
-            start_iteration=state.start_iteration,
-        )
+        run_with_profiler(config, collector, run_iteration, device=device, num_iterations=training.num_iterations, start_iteration=state.start_iteration)
     else:
         for iteration, batch in enumerate(collector, start=state.start_iteration + 1):
             if iteration > training.num_iterations:
@@ -798,38 +607,11 @@ def _run_training_loop(
 
 def _log_ppo_config(config, env, training, runtime, from_pixels, backbone_info):
     print(
-        "[rl/ppo/torchrl]"
-        f" env_tag={config.env_tag}"
-        f" exp_dir={training.exp_dir}"
-        f" seed={config.seed} problem_seed={env.problem_seed}"
-        f" device={runtime.device.type}"
-        f" obs_dim={env.obs_dim}"
-        f" act_dim={env.act_dim}"
-        f" total_timesteps={config.total_timesteps}"
-        f" num_envs={config.num_envs}"
-        f" num_steps={config.num_steps}"
-        f" frames_per_batch={training.frames_per_batch}"
-        f" num_iterations={training.num_iterations}"
-        f" update_epochs={config.update_epochs}"
-        f" eval_interval={config.eval_interval}"
-        f" collector={runtime.collector_backend}"
-        f" single_env={runtime.single_env_backend}"
-        f" from_pixels={from_pixels}"
-        f"{backbone_info}"
-        f" share_backbone={bool(config.share_backbone)}",
+        f"[rl/ppo/torchrl] env_tag={config.env_tag} exp_dir={training.exp_dir} seed={config.seed} problem_seed={env.problem_seed} device={runtime.device.type} obs_dim={env.obs_dim} act_dim={env.act_dim} total_timesteps={config.total_timesteps} num_envs={config.num_envs} num_steps={config.num_steps} frames_per_batch={training.frames_per_batch} num_iterations={training.num_iterations} update_epochs={config.update_epochs} eval_interval={config.eval_interval} collector={runtime.collector_backend} single_env={runtime.single_env_backend} from_pixels={from_pixels}{backbone_info} share_backbone={bool(config.share_backbone)}",
         flush=True,
     )
     print(
-        "[rl/ppo/torchrl]"
-        f" actor_head={list(config.actor_head_hidden_sizes)}"
-        f" critic_head={list(config.critic_head_hidden_sizes)}"
-        f" log_std_init={config.log_std_init}"
-        f" lr={config.learning_rate}"
-        f" gamma={config.gamma}"
-        f" gae_lambda={config.gae_lambda}"
-        f" clip_coef={config.clip_coef}"
-        f" vf_coef={config.vf_coef}"
-        f" ent_coef={config.ent_coef}",
+        f"[rl/ppo/torchrl] actor_head={list(config.actor_head_hidden_sizes)} critic_head={list(config.critic_head_hidden_sizes)} log_std_init={config.log_std_init} lr={config.learning_rate} gamma={config.gamma} gae_lambda={config.gae_lambda} clip_coef={config.clip_coef} vf_coef={config.vf_coef} ent_coef={config.ent_coef}",
         flush=True,
     )
 
@@ -837,23 +619,13 @@ def _log_ppo_config(config, env, training, runtime, from_pixels, backbone_info):
 def train_ppo(config: PPOConfig) -> TrainResult:
     if config.eval_noise_mode is not None:
         op_deps.normalize_eval_noise_mode(config.eval_noise_mode)
-    resolved = core_env_conf.resolve_run_seeds(
-        seed=int(config.seed),
-        problem_seed=config.problem_seed,
-        noise_seed_0=config.noise_seed_0,
-    )
+    resolved = core_env_conf.resolve_run_seeds(seed=int(config.seed), problem_seed=config.problem_seed, noise_seed_0=config.noise_seed_0)
     op_deps.seed_all(op_deps.seed_util.global_seed_for_run(int(resolved.problem_seed)))
     env = build_env_setup(config)
     runtime = config.resolve_runtime(capabilities=_PPO_RUNTIME_CAPABILITIES)
     modules = build_modules(config, env, device=runtime.device)
-    training = build_training(
-        config,
-        env,
-        modules,
-        runtime=runtime,
-    )
+    training = build_training(config, env, modules, runtime=runtime)
     state = _resume_if_requested(config, modules, training, device=runtime.device)
-
     from_pixels = env.io_contract.observation.mode == "pixels"
     backbone_resolved = op_deps.torchrl_env_contract.resolve_backbone_name(config.backbone_name, env.io_contract.observation)
     is_cnn = backbone_resolved in {"nature_cnn", "nature_cnn_atari"}
@@ -861,7 +633,6 @@ def train_ppo(config: PPOConfig) -> TrainResult:
     if not is_cnn:
         backbone_info += f" hidden={list(config.backbone_hidden_sizes)} act={config.backbone_activation} ln={bool(config.backbone_layer_norm)}"
     _log_ppo_config(config, env, training, runtime, from_pixels, backbone_info)
-
     remaining_iterations = max(0, training.num_iterations - state.start_iteration)
     video, ctx = _make_video_context(config, env, from_pixels=from_pixels)
     if remaining_iterations == 0:
@@ -872,39 +643,18 @@ def train_ppo(config: PPOConfig) -> TrainResult:
             last_heldout_return=state.last_heldout_return,
             num_iterations=training.num_iterations,
         )
-
-    collector = _build_collector(
-        config,
-        env,
-        modules,
-        training,
-        runtime=runtime,
-        remaining_iterations=remaining_iterations,
-    )
+    collector = _build_collector(config, env, modules, training, runtime=runtime, remaining_iterations=remaining_iterations)
     from rl import logger as rl_logger
 
     rl_logger.log_run_header("ppo", config, env, training, runtime)
     train_start = time.time()
     try:
-        _run_training_loop(
-            config,
-            env,
-            modules,
-            training,
-            state,
-            collector=collector,
-            device=runtime.device,
-        )
+        _run_training_loop(config, env, modules, training, state, collector=collector, device=runtime.device)
     finally:
         collector.shutdown()
     total_time = time.time() - train_start
     rl_logger.log_run_footer(state.best_return, training.num_iterations, total_time, algo_name="ppo")
-    op_deps.save_final_checkpoint(
-        config=config,
-        training_setup=training,
-        modules=modules,
-        train_state=state,
-    )
+    op_deps.save_final_checkpoint(config=config, training_setup=training, modules=modules, train_state=state)
     video.render_policy_videos_rl(config, env, modules, training, state, ctx, device=runtime.device)
     return TrainResult(
         best_return=float(state.best_return),

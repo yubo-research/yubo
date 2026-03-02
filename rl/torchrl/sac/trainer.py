@@ -1,5 +1,3 @@
-"""SAC training coordinator. Delegates setup to setup.py and eval/checkpoint to loop.py."""
-
 from __future__ import annotations
 
 import time
@@ -11,10 +9,7 @@ import torchrl.collectors as tr_collectors
 import torchrl.envs as tr_envs
 from tensordict import TensorDict
 
-from rl.core.actor_state import (
-    capture_backbone_head_snapshot,
-    restore_backbone_head_snapshot,
-)
+from rl.core.actor_state import capture_backbone_head_snapshot, restore_backbone_head_snapshot
 from rl.core.continuous_actions import unscale_action_tensor_from_env
 
 from . import deps as sac_deps
@@ -35,19 +30,8 @@ from .setup import (
 )
 
 
-def _checkpoint_payload(
-    modules: _Modules,
-    training: _TrainingSetup,
-    state: _TrainState,
-    *,
-    step: int,
-) -> dict:
-    actor_snapshot = capture_backbone_head_snapshot(
-        modules.actor_backbone,
-        modules.actor_head,
-        log_std=None,
-        state_to_cpu=False,
-    )
+def _checkpoint_payload(modules: _Modules, training: _TrainingSetup, state: _TrainState, *, step: int) -> dict:
+    actor_snapshot = capture_backbone_head_snapshot(modules.actor_backbone, modules.actor_head, log_std=None, state_to_cpu=False)
     return {
         "step": int(step),
         "actor_backbone": actor_snapshot["backbone"],
@@ -84,27 +68,14 @@ def _copy_if_present(loaded: dict, key: str, target: torch.Tensor, *, device: to
         target.copy_(value.to(device=device, dtype=target.dtype))
 
 
-def _resume_if_requested(
-    config: SACConfig,
-    modules: _Modules,
-    training: _TrainingSetup,
-    *,
-    device: torch.device,
-) -> _TrainState:
+def _resume_if_requested(config: SACConfig, modules: _Modules, training: _TrainingSetup, *, device: torch.device) -> _TrainState:
     state = _TrainState()
     if not config.resume_from:
         return state
     loaded = sac_deps.load_checkpoint(Path(config.resume_from), device=device)
     if "actor_backbone" in loaded and "actor_head" in loaded:
         restore_backbone_head_snapshot(
-            modules.actor_backbone,
-            modules.actor_head,
-            {
-                "backbone": loaded["actor_backbone"],
-                "head": loaded["actor_head"],
-            },
-            log_std=None,
-            device=device,
+            modules.actor_backbone, modules.actor_head, {"backbone": loaded["actor_backbone"], "head": loaded["actor_head"]}, log_std=None, device=device
         )
     _load_state_if_present(loaded, "obs_scaler", modules.obs_scaler)
     _load_state_if_present(loaded, "q1", modules.q1)
@@ -132,52 +103,27 @@ def _resume_if_requested(
     return state
 
 
-def _evaluate_actor(
-    config: SACConfig,
-    env: _EnvSetup,
-    modules: _Modules,
-    *,
-    device: torch.device,
-    eval_seed: int,
-) -> float:
+def _evaluate_actor(config: SACConfig, env: _EnvSetup, modules: _Modules, *, device: torch.device, eval_seed: int) -> float:
     from rl.core.episode_rollout import collect_denoised_trajectory
 
     eval_env = env.env_conf
     from_pixels = bool(getattr(eval_env, "from_pixels", False))
     eval_policy = sac_deps.torchrl_sac_actor_eval.SacActorEvalPolicy(
-        modules.actor_backbone,
-        modules.actor_head,
-        modules.obs_scaler,
-        act_dim=env.act_dim,
-        device=device,
-        from_pixels=from_pixels,
+        modules.actor_backbone, modules.actor_head, modules.obs_scaler, act_dim=env.act_dim, device=device, from_pixels=from_pixels
     )
-    traj, _ = collect_denoised_trajectory(
-        eval_env,
-        eval_policy,
-        num_denoise=config.num_denoise_eval,
-        i_noise=int(eval_seed),
-    )
+    traj, _ = collect_denoised_trajectory(eval_env, eval_policy, num_denoise=config.num_denoise_eval, i_noise=int(eval_seed))
     return float(traj.rreturn)
 
 
 def _build_sac_collector(
-    config: SACConfig,
-    env_setup: _EnvSetup,
-    modules: _Modules,
-    *,
-    runtime,
-    total_frames: int,
+    config: SACConfig, env_setup: _EnvSetup, modules: _Modules, *, runtime, total_frames: int
 ) -> tr_collectors.Collector | tr_collectors.MultiSyncCollector | tr_collectors.MultiAsyncCollector:
     frames_per_batch = int(config.frames_per_batch)
     num_envs = int(config.runtime_num_envs())
-    scale_action = sac_deps.td_nn.TensorDictModule(
-        _ScaleActionToEnv(env_setup.action_low, env_setup.action_high),
-        in_keys=["action"],
-        out_keys=["action"],
-    ).to(runtime.device)
+    scale_action = sac_deps.td_nn.TensorDictModule(_ScaleActionToEnv(env_setup.action_low, env_setup.action_high), in_keys=["action"], out_keys=["action"]).to(
+        runtime.device
+    )
     collector_policy = sac_deps.td_nn.TensorDictSequential(modules.actor, scale_action)
-
     if runtime.collector_backend == "single":
         if num_envs == 1:
             vec_env = _make_collect_env_sac(env_setup.env_conf, env_setup, env_index=0)
@@ -197,9 +143,8 @@ def _build_sac_collector(
             reset_at_each_iter=False,
             **sac_deps.torchrl_common.collector_device_kwargs(runtime.device),
         )
-
     num_workers = int(runtime.collector_workers or num_envs)
-    create_env_fns = [(lambda i=i: _make_collect_env_sac(env_setup.env_conf, env_setup, env_index=i)) for i in range(num_workers)]
+    create_env_fns = [lambda i=i: _make_collect_env_sac(env_setup.env_conf, env_setup, env_index=i) for i in range(num_workers)]
     frames_per_batch_per_worker = max(1, frames_per_batch)
     collector_cls = tr_collectors.MultiAsyncCollector if runtime.collector_backend == "multi_async" else tr_collectors.MultiSyncCollector
     return collector_cls(
@@ -216,22 +161,13 @@ def _build_sac_collector(
 
 
 def _flatten_batch_to_transitions(batch: TensorDict) -> TensorDict:
-    """Flatten Collector batch (B, ...) to transitions for replay. Ensure next.done exists.
-    Match our legacy format: next.reward and next.done as (B, 1) for replay compatibility."""
     flat = batch.reshape(-1)
     if "next" in flat.keys():
         next_td = flat["next"]
         if "done" not in next_td.keys():
-            term = next_td.get(
-                "terminated",
-                torch.zeros(*next_td.batch_size, 1, dtype=torch.bool, device=next_td.device),
-            )
-            trunc = next_td.get(
-                "truncated",
-                torch.zeros(*next_td.batch_size, 1, dtype=torch.bool, device=next_td.device),
-            )
+            term = next_td.get("terminated", torch.zeros(*next_td.batch_size, 1, dtype=torch.bool, device=next_td.device))
+            trunc = next_td.get("truncated", torch.zeros(*next_td.batch_size, 1, dtype=torch.bool, device=next_td.device))
             next_td = next_td.set("done", term | trunc)
-        # Ensure reward/done have trailing dim (1) for SAC/replay compatibility
         for key in ("reward", "done", "terminated"):
             if key in next_td.keys() and next_td[key].ndim == 1:
                 next_td = next_td.set(key, next_td[key].unsqueeze(-1))
@@ -249,14 +185,7 @@ def _normalize_actions_for_replay(flat: TensorDict, *, action_low: np.ndarray, a
     return flat.set("action", action_norm)
 
 
-def _update_step(
-    config: SACConfig,
-    modules: _Modules,
-    training: _TrainingSetup,
-    *,
-    device: torch.device,
-    batch_size: int,
-) -> dict[str, float]:
+def _update_step(config: SACConfig, modules: _Modules, training: _TrainingSetup, *, device: torch.device, batch_size: int) -> dict[str, float]:
     batch = training.replay.sample(batch_size).to(device)
     obs = batch["observation"]
     act = batch["action"]
@@ -268,14 +197,7 @@ def _update_step(
     if done.ndim > 1:
         done = done.squeeze(-1)
     actor_loss, critic_loss, alpha_loss = sac_update_shared(
-        config,
-        modules,
-        training,
-        obs=obs,
-        act=act,
-        rew=rew.to(dtype=torch.float32),
-        nxt=nxt,
-        done=done.to(dtype=torch.float32),
+        config, modules, training, obs=obs, act=act, rew=rew.to(dtype=torch.float32), nxt=nxt, done=done.to(dtype=torch.float32)
     )
     return {
         "loss_actor": float(actor_loss),
@@ -286,19 +208,7 @@ def _update_step(
     }
 
 
-def _run_sac_eval_log_checkpoint(
-    config,
-    env,
-    modules,
-    training,
-    state,
-    step,
-    runtime,
-    start_time,
-    latest_losses,
-    total_updates,
-    evaluate_for_best,
-):
+def _run_sac_eval_log_checkpoint(config, env, modules, training, state, step, runtime, start_time, latest_losses, total_updates, evaluate_for_best):
     def _eval_heldout(cfg, env_setup, local_modules, local_state, *, device, heldout_i_noise=99999):
         return sac_deps.torchrl_sac_loop.evaluate_heldout_if_enabled(
             cfg,
@@ -309,15 +219,8 @@ def _run_sac_eval_log_checkpoint(
             heldout_i_noise=heldout_i_noise,
             capture_actor_state=sac_deps.torchrl_sac_actor_eval.capture_sac_actor_snapshot,
             restore_actor_state=sac_deps.torchrl_sac_actor_eval.restore_sac_actor_snapshot,
-            eval_policy_factory=lambda a, e, d: (
-                sac_deps.torchrl_sac_actor_eval.SacActorEvalPolicy(
-                    a.actor_backbone,
-                    a.actor_head,
-                    a.obs_scaler,
-                    act_dim=e.act_dim,
-                    device=d,
-                    from_pixels=bool(getattr(e.env_conf, "from_pixels", False)),
-                )
+            eval_policy_factory=lambda a, e, d: sac_deps.torchrl_sac_actor_eval.SacActorEvalPolicy(
+                a.actor_backbone, a.actor_head, a.obs_scaler, act_dim=e.act_dim, device=d, from_pixels=bool(getattr(e.env_conf, "from_pixels", False))
             ),
             get_env_conf=sac_deps.get_env_conf,
             evaluate_for_best=evaluate_for_best,
@@ -338,52 +241,25 @@ def _run_sac_eval_log_checkpoint(
         capture_actor_state=sac_deps.torchrl_sac_actor_eval.capture_sac_actor_snapshot,
         evaluate_heldout=_eval_heldout,
     )
-    sac_deps.torchrl_sac_loop.log_if_due(
-        config,
-        state,
-        step=step,
-        start_time=start_time,
-        latest_losses=latest_losses,
-        total_updates=total_updates,
-    )
-    sac_deps.torchrl_sac_loop.checkpoint_if_due(
-        config,
-        modules,
-        training,
-        state,
-        step=step,
-        build_checkpoint_payload=_checkpoint_payload,
-    )
+    sac_deps.torchrl_sac_loop.log_if_due(config, state, step=step, start_time=start_time, latest_losses=latest_losses, total_updates=total_updates)
+    sac_deps.torchrl_sac_loop.checkpoint_if_due(config, modules, training, state, step=step, build_checkpoint_payload=_checkpoint_payload)
 
 
 def _process_sac_batch(batch, config, modules, training, runtime, env_setup, latest_losses, total_updates):
     flat = _flatten_batch_to_transitions(batch)
-    flat = _normalize_actions_for_replay(
-        flat,
-        action_low=env_setup.action_low,
-        action_high=env_setup.action_high,
-    )
+    flat = _normalize_actions_for_replay(flat, action_low=env_setup.action_low, action_high=env_setup.action_high)
     n_frames = int(flat.shape[0]) if flat.ndim > 0 else 1
     for i in range(n_frames):
         training.replay.add(flat[i].clone())
     n_update_cycles = max(0, n_frames // int(config.update_every))
     for _ in range(n_update_cycles * int(config.updates_per_step)):
         if training.replay.write_count >= int(config.learning_starts):
-            latest_losses = _update_step(
-                config,
-                modules,
-                training,
-                device=runtime.device,
-                batch_size=int(config.batch_size),
-            )
+            latest_losses = _update_step(config, modules, training, device=runtime.device, batch_size=int(config.batch_size))
             total_updates += 1
-    return latest_losses, total_updates, n_frames
+    return (latest_losses, total_updates, n_frames)
 
 
 def train_sac(config: SACConfig) -> TrainResult:
-    # TorchRL's `ContinuousDistribution.support` currently calls
-    # `torch.distributions.constraints.real()` which fails when `validate_args=True`.
-    # Keep SAC stable regardless of global validation settings.
     with sac_deps.torchrl_common.temporary_distribution_validate_args(False):
         if config.eval_noise_mode is not None:
             sac_deps.eval_noise.normalize_eval_noise_mode(config.eval_noise_mode)
@@ -394,113 +270,49 @@ def train_sac(config: SACConfig) -> TrainResult:
         modules = build_modules(config, env, device=runtime.device)
         training = build_training(config, modules)
         state = _resume_if_requested(config, modules, training, device=runtime.device)
-
         from rl import logger as rl_logger
 
         rl_logger.log_run_header("sac", config, env, training, runtime)
-
         total_frames = int(config.total_timesteps) - state.start_step
         if total_frames <= 0:
             total_frames = 1
-        collector = _build_sac_collector(
-            config,
-            env,
-            modules,
-            runtime=runtime,
-            total_frames=total_frames,
-        )
+        collector = _build_sac_collector(config, env, modules, runtime=runtime, total_frames=total_frames)
         collector.set_seed(int(env.problem_seed))
         if hasattr(collector, "shutdown"):
-            pass  # multi collectors have shutdown; single Collector may not need it
-
+            pass
         start_time = time.time()
-        latest_losses = {
-            "loss_actor": float("nan"),
-            "loss_critic": float("nan"),
-            "loss_alpha": float("nan"),
-        }
+        latest_losses = {"loss_actor": float("nan"), "loss_critic": float("nan"), "loss_alpha": float("nan")}
         total_updates = 0
         step = state.start_step
-
         for batch in collector:
-            latest_losses, total_updates, n_frames = _process_sac_batch(
-                batch,
-                config,
-                modules,
-                training,
-                runtime,
-                env,
-                latest_losses,
-                total_updates,
-            )
+            latest_losses, total_updates, n_frames = _process_sac_batch(batch, config, modules, training, runtime, env, latest_losses, total_updates)
             step += n_frames
             if step >= int(config.total_timesteps):
                 step = int(config.total_timesteps)
                 _run_sac_eval_log_checkpoint(
-                    config,
-                    env,
-                    modules,
-                    training,
-                    state,
-                    step,
-                    runtime,
-                    start_time,
-                    latest_losses,
-                    total_updates,
-                    sac_deps.episode_rollout.evaluate_for_best,
+                    config, env, modules, training, state, step, runtime, start_time, latest_losses, total_updates, sac_deps.episode_rollout.evaluate_for_best
                 )
                 break
             _run_sac_eval_log_checkpoint(
-                config,
-                env,
-                modules,
-                training,
-                state,
-                step,
-                runtime,
-                start_time,
-                latest_losses,
-                total_updates,
-                sac_deps.episode_rollout.evaluate_for_best,
+                config, env, modules, training, state, step, runtime, start_time, latest_losses, total_updates, sac_deps.episode_rollout.evaluate_for_best
             )
-
         try:
             collector.shutdown()
         except Exception:
             pass
         total_time = time.time() - start_time
-        rl_logger.log_run_footer(
-            state.best_return,
-            int(config.total_timesteps),
-            total_time,
-            algo_name="sac",
-            step_label="steps",
-        )
-        sac_deps.torchrl_sac_loop.save_final_checkpoint_if_enabled(
-            config,
-            modules,
-            training,
-            state,
-            build_checkpoint_payload=_checkpoint_payload,
-        )
-
+        rl_logger.log_run_footer(state.best_return, int(config.total_timesteps), total_time, algo_name="sac", step_label="steps")
+        sac_deps.torchrl_sac_loop.save_final_checkpoint_if_enabled(config, modules, training, state, build_checkpoint_payload=_checkpoint_payload)
         if config.video_enable:
             ctx = sac_deps.video.RLVideoContext(
                 build_eval_env_conf=lambda ps, ns: sac_deps.get_env_conf(config.env_tag, problem_seed=ps, noise_seed_0=ns),
-                make_eval_policy=lambda m, d: (
-                    sac_deps.torchrl_sac_actor_eval.SacActorEvalPolicy(
-                        m.actor_backbone,
-                        m.actor_head,
-                        m.obs_scaler,
-                        act_dim=env.act_dim,
-                        device=d,
-                    )
+                make_eval_policy=lambda m, d: sac_deps.torchrl_sac_actor_eval.SacActorEvalPolicy(
+                    m.actor_backbone, m.actor_head, m.obs_scaler, act_dim=env.act_dim, device=d
                 ),
                 capture_actor_state=sac_deps.torchrl_sac_actor_eval.capture_sac_actor_snapshot,
                 with_actor_state=sac_deps.torchrl_sac_actor_eval.use_sac_actor_snapshot,
             )
             sac_deps.video.render_policy_videos_rl(config, env, modules, training, state, ctx, device=runtime.device)
-
         return TrainResult(
             best_return=float(state.best_return),
             last_eval_return=float(state.last_eval_return),
@@ -513,11 +325,4 @@ def register():
     sac_deps.registry.register_algo("sac", SACConfig, train_sac)
 
 
-__all__ = [
-    "SACConfig",
-    "TrainResult",
-    "_scale_action_to_env",
-    "_unscale_action_from_env",
-    "register",
-    "train_sac",
-]
+__all__ = ["SACConfig", "TrainResult", "_scale_action_to_env", "_unscale_action_from_env", "register", "train_sac"]

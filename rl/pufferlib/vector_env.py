@@ -1,5 +1,3 @@
-"""Shared Puffer vector-environment factory for RL backends."""
-
 from __future__ import annotations
 
 import functools
@@ -36,7 +34,6 @@ def _make_gymnasium_env(*, env_name: str, env_kwargs: dict, render_mode="rgb_arr
         env = gym.make(env_name, render_mode=render_mode, **kwargs)
     except TypeError:
         env = gym.make(env_name, **kwargs)
-
     if isinstance(env.action_space, gym.spaces.Box):
         env = pufferlib.ClipAction(env)
     env = pufferlib.EpisodeStats(env)
@@ -52,39 +49,19 @@ def _build_gymnasium_env_creator(env_tag: str, pufferlib, *, resolve_gym_env_nam
 def _resolve_backend(config: Any, puffer_vector):
     backend_cls = _vector_backend_from_name(puffer_vector, config.vector_backend)
     backend_kwargs = _build_vector_kwargs(config, backend_cls, puffer_vector)
-    return backend_cls, backend_kwargs
+    return (backend_cls, backend_kwargs)
 
 
-def _resolve_env_creator(
-    config: Any,
-    *,
-    pufferlib,
-    puffer_atari,
-    is_atari_env_tag_fn,
-    to_puffer_game_name_fn,
-    resolve_gym_env_name_fn,
-):
+def _resolve_env_creator(config: Any, *, pufferlib, puffer_atari, is_atari_env_tag_fn, to_puffer_game_name_fn, resolve_gym_env_name_fn):
     env_tag = str(config.env_tag)
     if is_atari_env_tag_fn(env_tag):
         game_name = to_puffer_game_name_fn(env_tag)
-        return puffer_atari.env_creator(game_name), {"framestack": int(config.framestack)}
-
-    env_creator = _build_gymnasium_env_creator(
-        env_tag,
-        pufferlib,
-        resolve_gym_env_name_fn=resolve_gym_env_name_fn,
-    )
-    return env_creator, {}
+        return (puffer_atari.env_creator(game_name), {"framestack": int(config.framestack)})
+    env_creator = _build_gymnasium_env_creator(env_tag, pufferlib, resolve_gym_env_name_fn=resolve_gym_env_name_fn)
+    return (env_creator, {})
 
 
-def make_vector_env(
-    config: Any,
-    *,
-    import_pufferlib_modules_fn,
-    is_atari_env_tag_fn,
-    to_puffer_game_name_fn,
-    resolve_gym_env_name_fn,
-):
+def make_vector_env(config: Any, *, import_pufferlib_modules_fn, is_atari_env_tag_fn, to_puffer_game_name_fn, resolve_gym_env_name_fn):
     pufferlib, puffer_vector, puffer_atari = import_pufferlib_modules_fn()
     backend_cls, backend_kwargs = _resolve_backend(config, puffer_vector)
     env_creator, env_kwargs = _resolve_env_creator(
@@ -95,12 +72,4 @@ def make_vector_env(
         to_puffer_game_name_fn=to_puffer_game_name_fn,
         resolve_gym_env_name_fn=resolve_gym_env_name_fn,
     )
-
-    return puffer_vector.make(
-        env_creator,
-        env_kwargs=env_kwargs,
-        backend=backend_cls,
-        num_envs=int(config.num_envs),
-        seed=int(config.seed),
-        **backend_kwargs,
-    )
+    return puffer_vector.make(env_creator, env_kwargs=env_kwargs, backend=backend_cls, num_envs=int(config.num_envs), seed=int(config.seed), **backend_kwargs)

@@ -1,5 +1,3 @@
-"""Shared Gaussian actor module for RL and BO. Uses rl/backbone for architecture."""
-
 from __future__ import annotations
 
 import torch
@@ -10,8 +8,6 @@ from rl.backbone import BackboneSpec, HeadSpec, build_backbone, build_mlp_head, 
 
 
 class SharedGaussianActorModule(nn.Module):
-    """Gaussian actor built from BackboneSpec + HeadSpec."""
-
     def __init__(
         self,
         obs_dim: int,
@@ -29,7 +25,6 @@ class SharedGaussianActorModule(nn.Module):
         self.log_std = nn.Parameter(torch.full((act_dim,), float(init_log_std), dtype=torch.float32))
         self._min_log_std = float(min_log_std)
         self._max_log_std = float(max_log_std)
-
         init_linear_layers(self.backbone, gain=0.5)
         init_linear_layers(self.head, gain=0.5)
 
@@ -52,23 +47,13 @@ class SharedGaussianActorModule(nn.Module):
         raw_action = dist.mean if deterministic else dist.rsample()
         log_prob = dist.log_prob(raw_action).sum(dim=-1)
         entropy = dist.entropy().sum(dim=-1)
-        return raw_action, log_prob, entropy
+        return (raw_action, log_prob, entropy)
 
 
-# Registry: variant name -> (BackboneSpec, HeadSpec)
 _GAUSSIAN_ACTOR_SPECS: dict[str, tuple[BackboneSpec, HeadSpec]] = {
-    "rl-gauss": (
-        BackboneSpec("mlp", (64, 64), "silu", layer_norm=True),
-        HeadSpec(),
-    ),
-    "rl-gauss-tanh": (
-        BackboneSpec("mlp", (16, 16), "tanh", layer_norm=False),
-        HeadSpec(),
-    ),
-    "rl-gauss-small": (
-        BackboneSpec("mlp", (32, 16), "silu", layer_norm=True),
-        HeadSpec(),
-    ),
+    "rl-gauss": (BackboneSpec("mlp", (64, 64), "silu", layer_norm=True), HeadSpec()),
+    "rl-gauss-tanh": (BackboneSpec("mlp", (16, 16), "tanh", layer_norm=False), HeadSpec()),
+    "rl-gauss-small": (BackboneSpec("mlp", (32, 16), "silu", layer_norm=True), HeadSpec()),
 }
 
 
@@ -78,18 +63,6 @@ def get_gaussian_actor_spec(variant: str) -> tuple[BackboneSpec, HeadSpec]:
     return _GAUSSIAN_ACTOR_SPECS[variant]
 
 
-def build_shared_gaussian_actor(
-    obs_dim: int,
-    act_dim: int,
-    variant: str = "rl-gauss",
-    *,
-    init_log_std: float = -0.5,
-) -> SharedGaussianActorModule:
+def build_shared_gaussian_actor(obs_dim: int, act_dim: int, variant: str = "rl-gauss", *, init_log_std: float = -0.5) -> SharedGaussianActorModule:
     backbone_spec, head_spec = get_gaussian_actor_spec(variant)
-    return SharedGaussianActorModule(
-        obs_dim,
-        act_dim,
-        backbone_spec,
-        head_spec,
-        init_log_std=init_log_std,
-    )
+    return SharedGaussianActorModule(obs_dim, act_dim, backbone_spec, head_spec, init_log_std=init_log_std)

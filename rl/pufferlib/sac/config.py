@@ -1,5 +1,3 @@
-"""PufferLib SAC configuration."""
-
 from __future__ import annotations
 
 import dataclasses
@@ -12,33 +10,29 @@ class SACConfig:
     seed: int = 1
     problem_seed: int | None = None
     noise_seed_0: int | None = None
-
     from_pixels: bool = False
     pixels_only: bool = True
-
     total_timesteps: int = 1000000
     num_envs: int = 1
     frames_per_batch: int = 4
-    learning_rate_actor: float = 3e-4
-    learning_rate_critic: float = 3e-4
-    learning_rate_alpha: float = 3e-4
+    learning_rate_actor: float = 0.0003
+    learning_rate_critic: float = 0.0003
+    learning_rate_alpha: float = 0.0003
     gamma: float = 0.99
     tau: float = 0.005
     batch_size: int = 256
     replay_size: int = 1000000
-    replay_backend: str = "auto"  # auto | numpy | torchrl
+    replay_backend: str = "auto"
     learning_starts: int = 5000
     update_every: int = 1
     updates_per_step: int = 1
     alpha_init: float = 0.2
     target_entropy: float | None = None
-
     eval_interval_steps: int = 10000
     num_denoise_eval: int | None = None
     num_denoise_passive_eval: int | None = None
     eval_seed_base: int | None = None
     eval_noise_mode: str | None = None
-
     backbone_name: str = "mlp"
     backbone_hidden_sizes: tuple[int, ...] = (256, 256)
     backbone_activation: str = "silu"
@@ -47,24 +41,18 @@ class SACConfig:
     critic_head_hidden_sizes: tuple[int, ...] = ()
     head_activation: str = "silu"
     theta_dim: int | None = None
-
-    # Keep runtime knobs for config compatibility across backends.
     device: str = "auto"
     collector_backend: str = "auto"
     single_env_backend: str = "auto"
     collector_workers: int | None = None
-
-    # Puffer vector controls.
-    vector_backend: str = "serial"  # serial | multiprocessing
+    vector_backend: str = "serial"
     vector_num_workers: int | None = None
     vector_batch_size: int | None = None
     vector_overwork: bool = False
     framestack: int = 1
-
     log_interval_steps: int = 1000
     checkpoint_interval_steps: int | None = None
     resume_from: str | None = None
-
     video_enable: bool = False
     video_prefix: str = "policy"
     video_num_episodes: int = 10
@@ -81,13 +69,9 @@ class SACConfig:
     @classmethod
     def from_dict(cls, raw: dict) -> "SACConfig":
         data = {k: v for k, v in raw.items() if k in {f.name for f in dataclasses.fields(cls)}}
-        for key in [
-            "backbone_hidden_sizes",
-            "actor_head_hidden_sizes",
-            "critic_head_hidden_sizes",
-        ]:
+        for key in ["backbone_hidden_sizes", "actor_head_hidden_sizes", "critic_head_hidden_sizes"]:
             if key in data and data[key] is not None:
-                data[key] = tuple(int(x) for x in data[key])
+                data[key] = tuple((int(x) for x in data[key]))
         return cls(**data)
 
 
@@ -99,7 +83,4 @@ class TrainResult:
     num_steps: int
 
 
-__all__ = [
-    "SACConfig",
-    "TrainResult",
-]
+__all__ = ["SACConfig", "TrainResult"]

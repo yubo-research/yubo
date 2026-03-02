@@ -1,5 +1,3 @@
-"""Shared replay buffers for off-policy RL algorithms."""
-
 from __future__ import annotations
 
 import sys
@@ -20,14 +18,7 @@ class NumpyReplayBuffer:
         self.ptr = 0
         self.size = 0
 
-    def add_batch(
-        self,
-        obs: np.ndarray,
-        act: np.ndarray,
-        rew: np.ndarray,
-        nxt: np.ndarray,
-        done: np.ndarray,
-    ) -> None:
+    def add_batch(self, obs: np.ndarray, act: np.ndarray, rew: np.ndarray, nxt: np.ndarray, done: np.ndarray) -> None:
         n = int(obs.shape[0])
         idx = (np.arange(n) + self.ptr) % self.capacity
         self.obs[idx] = obs
@@ -45,7 +36,7 @@ class NumpyReplayBuffer:
         rew = torch.as_tensor(self.rew[idx], dtype=torch.float32, device=device)
         nxt = torch.as_tensor(self.nxt[idx], dtype=torch.float32, device=device)
         done = torch.as_tensor(self.done[idx], dtype=torch.float32, device=device)
-        return obs, act, rew, nxt, done
+        return (obs, act, rew, nxt, done)
 
     def state_dict(self) -> dict[str, object]:
         return {
@@ -63,13 +54,11 @@ class NumpyReplayBuffer:
         self.ptr = int(state.get("ptr", self.ptr))
         loaded_size = int(state.get("size", self.size))
         self.size = int(max(0, min(loaded_size, self.capacity)))
-
         obs = np.asarray(state["obs"], dtype=np.float32)
         nxt = np.asarray(state["nxt"], dtype=np.float32)
         act = np.asarray(state["act"], dtype=np.float32)
         rew = np.asarray(state["rew"], dtype=np.float32).reshape(-1)
         done = np.asarray(state["done"], dtype=np.float32).reshape(-1)
-
         if obs.shape != self.obs.shape:
             raise ValueError(f"Replay obs shape mismatch: expected {self.obs.shape}, got {obs.shape}")
         if nxt.shape != self.nxt.shape:
@@ -80,7 +69,6 @@ class NumpyReplayBuffer:
             raise ValueError(f"Replay rew shape mismatch: expected {self.rew.shape}, got {rew.shape}")
         if done.shape != self.done.shape:
             raise ValueError(f"Replay done shape mismatch: expected {self.done.shape}, got {done.shape}")
-
         self.obs[...] = obs
         self.nxt[...] = nxt
         self.act[...] = act
@@ -90,13 +78,11 @@ class NumpyReplayBuffer:
 
 class TorchRLReplayBuffer:
     def __init__(self, obs_shape: tuple[int, ...], act_dim: int, capacity: int):
-        _ = obs_shape, act_dim
+        _ = (obs_shape, act_dim)
         tr_data = __import__("torchrl.data", fromlist=["TensorDictReplayBuffer", "LazyTensorStorage"])
         self.capacity = int(capacity)
         self._write_count = 0
-        self._replay = tr_data.TensorDictReplayBuffer(
-            storage=tr_data.LazyTensorStorage(int(capacity)),
-        )
+        self._replay = tr_data.TensorDictReplayBuffer(storage=tr_data.LazyTensorStorage(int(capacity)))
 
     @property
     def size(self) -> int:
@@ -106,14 +92,7 @@ class TorchRLReplayBuffer:
     def ptr(self) -> int:
         return int(int(self._write_count) % int(self.capacity))
 
-    def add_batch(
-        self,
-        obs: np.ndarray,
-        act: np.ndarray,
-        rew: np.ndarray,
-        nxt: np.ndarray,
-        done: np.ndarray,
-    ) -> None:
+    def add_batch(self, obs: np.ndarray, act: np.ndarray, rew: np.ndarray, nxt: np.ndarray, done: np.ndarray) -> None:
         tensordict_mod = __import__("tensordict", fromlist=["TensorDict"])
         tensor_dict = tensordict_mod.TensorDict
         n = int(obs.shape[0])
@@ -123,14 +102,7 @@ class TorchRLReplayBuffer:
             {
                 "observation": torch.as_tensor(obs, dtype=torch.float32),
                 "action": torch.as_tensor(act, dtype=torch.float32),
-                "next": tensor_dict(
-                    {
-                        "observation": torch.as_tensor(nxt, dtype=torch.float32),
-                        "reward": reward,
-                        "done": done_t,
-                    },
-                    batch_size=[n],
-                ),
+                "next": tensor_dict({"observation": torch.as_tensor(nxt, dtype=torch.float32), "reward": reward, "done": done_t}, batch_size=[n]),
             },
             batch_size=[n],
         )
@@ -144,13 +116,10 @@ class TorchRLReplayBuffer:
         rew = batch["next", "reward"].reshape(-1)
         nxt = batch["next", "observation"]
         done = batch["next", "done"].reshape(-1)
-        return obs, act, rew, nxt, done
+        return (obs, act, rew, nxt, done)
 
     def state_dict(self) -> dict[str, Any]:
-        return {
-            "replay_state": self._replay.state_dict(),
-            "write_count": int(self._write_count),
-        }
+        return {"replay_state": self._replay.state_dict(), "write_count": int(self._write_count)}
 
     def load_state_dict(self, state: dict[str, Any]) -> None:
         replay_state = state.get("replay_state") if isinstance(state, dict) else None
@@ -160,13 +129,7 @@ class TorchRLReplayBuffer:
         self._write_count = int(state.get("write_count", int(self._replay.write_count)))
 
 
-def make_replay_buffer(
-    *,
-    obs_shape: tuple[int, ...],
-    act_dim: int,
-    capacity: int,
-    backend: str = "numpy",
-):
+def make_replay_buffer(*, obs_shape: tuple[int, ...], act_dim: int, capacity: int, backend: str = "numpy"):
     backend_name = str(backend).strip().lower()
     if backend_name == "numpy":
         return NumpyReplayBuffer(obs_shape=obs_shape, act_dim=act_dim, capacity=capacity)
@@ -175,12 +138,7 @@ def make_replay_buffer(
     raise ValueError(f"Unsupported replay backend: {backend}")
 
 
-def resolve_replay_backend(
-    backend: str,
-    *,
-    device: torch.device | str,
-    platform_name: str | None = None,
-) -> str:
+def resolve_replay_backend(backend: str, *, device: torch.device | str, platform_name: str | None = None) -> str:
     backend_name = str(backend).strip().lower()
     if backend_name in {"numpy", "torchrl"}:
         return backend_name
@@ -198,9 +156,4 @@ def resolve_replay_backend(
     return "numpy"
 
 
-__all__ = [
-    "NumpyReplayBuffer",
-    "TorchRLReplayBuffer",
-    "make_replay_buffer",
-    "resolve_replay_backend",
-]
+__all__ = ["NumpyReplayBuffer", "TorchRLReplayBuffer", "make_replay_buffer", "resolve_replay_backend"]

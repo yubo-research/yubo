@@ -1,5 +1,3 @@
-"""Environment and observation helpers for native Puffer SAC."""
-
 from __future__ import annotations
 
 import dataclasses
@@ -22,7 +20,7 @@ from .runtime_utils import obs_scale_from_env, select_device
 
 @dataclasses.dataclass(frozen=True)
 class ObservationSpec:
-    mode: str  # vector | pixels
+    mode: str
     raw_shape: tuple[int, ...]
     vector_dim: int | None = None
     channels: int | None = None
@@ -80,15 +78,13 @@ def infer_observation_spec(config: Any, obs_np: np.ndarray) -> ObservationSpec:
     obs_arr = np.asarray(obs_np)
     if obs_arr.ndim == 0:
         raise ValueError("Observation must include at least one dimension.")
-    raw_shape = tuple(int(v) for v in (obs_arr.shape[1:] if obs_arr.ndim >= 2 else obs_arr.shape))
-
+    raw_shape = tuple((int(v) for v in (obs_arr.shape[1:] if obs_arr.ndim >= 2 else obs_arr.shape)))
     backbone_key = str(config.backbone_name).strip().lower()
     looks_like_pixels = bool(config.from_pixels) or obs_arr.ndim >= 4 or "nature_cnn" in backbone_key
     if looks_like_pixels:
         channels = _infer_channels(raw_shape, fallback=max(1, int(config.framestack)))
         image_size = _infer_image_size(raw_shape, default_size=84)
         return ObservationSpec(mode="pixels", raw_shape=raw_shape, channels=channels, image_size=image_size)
-
     vector_dim = int(np.prod(raw_shape)) if raw_shape else 1
     return ObservationSpec(mode="vector", raw_shape=raw_shape, vector_dim=vector_dim)
 
@@ -97,15 +93,11 @@ def prepare_obs_np(obs_np: np.ndarray, *, obs_spec: ObservationSpec) -> np.ndarr
     obs_arr = np.asarray(obs_np)
     if obs_spec.mode == "pixels":
         obs_t = ensure_pixel_obs_format(
-            torch.as_tensor(obs_arr),
-            channels=int(obs_spec.channels or 3),
-            size=int(obs_spec.image_size or 84),
-            scale_float_255=True,
+            torch.as_tensor(obs_arr), channels=int(obs_spec.channels or 3), size=int(obs_spec.image_size or 84), scale_float_255=True
         )
         if obs_t.ndim == 3:
             obs_t = obs_t.unsqueeze(0)
         return np.asarray(obs_t.detach().cpu().numpy(), dtype=np.float32)
-
     vec = np.asarray(obs_arr, dtype=np.float32)
     if vec.ndim == 1:
         vec = vec.reshape(1, -1)
@@ -138,7 +130,6 @@ def build_env_setup(config: Any) -> EnvSetup:
         get_env_conf_fn=get_env_conf,
         obs_scale_from_env_fn=obs_scale_from_env,
     )
-
     return EnvSetup(
         env_conf=shared.env_conf,
         problem_seed=int(shared.problem_seed),

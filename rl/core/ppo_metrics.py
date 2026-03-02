@@ -1,5 +1,3 @@
-"""Shared PPO eval metric record helpers."""
-
 from __future__ import annotations
 
 import time
