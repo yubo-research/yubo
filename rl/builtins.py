@@ -2,27 +2,32 @@ import rl.pufferlib as _pufferlib  # noqa: F401 - keeps pufferlib package in dep
 import rl.torchrl as _torchrl  # noqa: F401 - keeps torchrl package in dependency graph
 
 
+def _register_lazy_once(name: str, module_path: str, *, backend: str | None = None) -> None:
+    from rl.registry import register_algo_lazy
+
+    try:
+        register_algo_lazy(name, module_path, backend=backend)
+    except ValueError:
+        # Idempotent re-registration during repeated CLI invocations.
+        pass
+
+
 def register_all() -> None:
     import problems.env_conf_atari_dm  # noqa: F401 - register atari/dm handlers for env_tag
     from rl.registry import (
-        available_algos,
         register_algo_backend,
-        register_algo_lazy,
     )
 
-    if "ppo" not in available_algos():
-        register_algo_lazy("ppo", "rl.torchrl.ppo.api")
-    if "sac" not in available_algos():
-        register_algo_lazy("sac", "rl.torchrl.sac.api")
-    if "ppo_puffer" not in available_algos():
-        register_algo_lazy("ppo_puffer", "rl.pufferlib.ppo.api")
-    if "tdmpc2" not in available_algos():
-        register_algo_lazy("tdmpc2", "rl.torchrl.tdmpc2.api")
-    if "r2d2" not in available_algos():
-        register_algo_lazy("r2d2", "rl.pufferlib.r2d2.api")
+    _register_lazy_once("ppo", "rl.torchrl.ppo.core")
+    _register_lazy_once("ppo", "rl.pufferlib.ppo.engine", backend="pufferlib")
+    _register_lazy_once("sac", "rl.torchrl.sac.trainer")
+    _register_lazy_once("sac", "rl.pufferlib.sac.engine", backend="pufferlib")
+    _register_lazy_once("tdmpc2", "rl.torchrl.tdmpc2.api")
+    _register_lazy_once("r2d2", "rl.pufferlib.r2d2.api")
 
     register_algo_backend("ppo", "torchrl", "ppo")
-    register_algo_backend("ppo", "pufferlib", "ppo_puffer")
+    register_algo_backend("ppo", "pufferlib", "ppo")
     register_algo_backend("sac", "torchrl", "sac")
+    register_algo_backend("sac", "pufferlib", "sac")
     register_algo_backend("tdmpc2", "torchrl", "tdmpc2")
     register_algo_backend("r2d2", "pufferlib", "r2d2")

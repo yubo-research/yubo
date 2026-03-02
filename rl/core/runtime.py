@@ -1,7 +1,10 @@
+"""Shared runtime helpers used across RL backends."""
+
 from __future__ import annotations
 
+import random
 from contextlib import contextmanager
-from typing import Any
+from typing import Any, Callable
 
 import numpy as np
 import torch
@@ -31,50 +34,61 @@ class ObsScaler(nn.Module):
         if obs.device != target_device:
             raise RuntimeError(f"ObsScaler expected observation on device {target_device}, got {obs.device}.")
         if obs.dtype != target_dtype:
-            raise RuntimeError(
-                f"ObsScaler expected observation dtype {target_dtype}, got {obs.dtype}. Ensure env/collector observation pipeline emits float32."
-            )
+            raise RuntimeError(f"ObsScaler expected observation dtype {target_dtype}, got {obs.dtype}. Ensure observation pipeline emits float32.")
         if self._lb is None or self._width is None:
             return obs
         return (obs - self._lb) / self._width
 
 
-def _mps_is_available() -> bool:
+def mps_is_available() -> bool:
     mps_backend = getattr(torch.backends, "mps", None)
     return bool(mps_backend is not None and mps_backend.is_available())
 
 
-def select_device(device: str) -> torch.device:
+def select_device(
+    device: str,
+    *,
+    cuda_is_available_fn: Callable[[], bool] | None = None,
+    mps_is_available_fn: Callable[[], bool] | None = None,
+) -> torch.device:
     requested = str(device).strip().lower()
+    cuda_available = torch.cuda.is_available if cuda_is_available_fn is None else cuda_is_available_fn
+    mps_available = mps_is_available if mps_is_available_fn is None else mps_is_available_fn
     if requested in {"", "auto"}:
-        if torch.cuda.is_available():
+        if bool(cuda_available()):
             return torch.device("cuda")
-        if _mps_is_available():
+        if bool(mps_available()):
             return torch.device("mps")
         return torch.device("cpu")
     if requested == "cpu":
         return torch.device("cpu")
     if requested == "cuda":
-        if not torch.cuda.is_available():
+        if not bool(cuda_available()):
             raise ValueError("device='cuda' requested but CUDA is not available.")
         return torch.device("cuda")
     if requested == "mps":
-        if not _mps_is_available():
+        if not bool(mps_available()):
             raise ValueError("device='mps' requested but MPS is not available.")
         return torch.device("mps")
     raise ValueError(f"Unsupported device '{device}'. Use one of: auto, cpu, cuda, mps.")
 
 
-def collector_device_kwargs(policy_device: torch.device) -> dict[str, torch.device]:
-    # Gym environments step on CPU; explicit routing avoids implicit cross-device behavior.
-    return {
-        "env_device": torch.device("cpu"),
-        "policy_device": policy_device,
-        "storing_device": policy_device,
-    }
+def seed_everything(
+    seed: int,
+    *,
+    cuda_is_available_fn: Callable[[], bool] | None = None,
+    cuda_manual_seed_all_fn: Callable[[int], None] | None = None,
+) -> None:
+    random.seed(int(seed))
+    np.random.seed(int(seed))
+    torch.manual_seed(int(seed))
+    cuda_available = torch.cuda.is_available if cuda_is_available_fn is None else cuda_is_available_fn
+    cuda_seed_all = torch.cuda.manual_seed_all if cuda_manual_seed_all_fn is None else cuda_manual_seed_all_fn
+    if bool(cuda_available()):
+        cuda_seed_all(int(seed))
 
 
-def obs_scale_from_env(env_conf: Any):
+def obs_scale_from_env(env_conf: Any) -> tuple[np.ndarray | None, np.ndarray | None]:
     if env_conf.gym_conf is None or not env_conf.gym_conf.transform_state:
         return None, None
     env_conf.ensure_spaces()
@@ -90,6 +104,15 @@ def obs_scale_from_env(env_conf: Any):
     if np.any(np.isinf(lb)) or np.any(np.isinf(width)):
         raise ValueError("Observation bounds must be finite for transform_state.")
     return lb, width
+
+
+def collector_device_kwargs(policy_device: torch.device) -> dict[str, torch.device]:
+    # Gym environments step on CPU; explicit routing avoids implicit cross-device behavior.
+    return {
+        "env_device": torch.device("cpu"),
+        "policy_device": policy_device,
+        "storing_device": policy_device,
+    }
 
 
 @contextmanager

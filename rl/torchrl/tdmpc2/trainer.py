@@ -6,7 +6,6 @@ TODO(tdmpc2): align this implementation with full TD-MPC2 training targets.
 from __future__ import annotations
 
 import dataclasses
-import random
 import time
 from pathlib import Path
 from typing import Any
@@ -20,7 +19,9 @@ from analysis.data_io import write_config
 from problems.env_conf import get_env_conf
 from rl import logger as rl_logger
 from rl.checkpointing import CheckpointManager
-from rl.seed_util import global_seed_for_run, resolve_problem_seed
+from rl.core.continuous_actions import scale_action_to_env, unscale_action_from_env
+from rl.core.env_conf import global_seed_for_run, resolve_problem_seed
+from rl.core.runtime import seed_everything as _seed_everything_core
 
 from .config import _TDMPC2_RUNTIME_CAPABILITIES, TDMPC2Config
 
@@ -113,20 +114,15 @@ class TrainResult:
 
 
 def _seed_everything(seed: int) -> None:
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed_all(seed)
+    _seed_everything_core(int(seed))
 
 
 def _to_env_action(a_norm: np.ndarray, *, low: np.ndarray, high: np.ndarray) -> np.ndarray:
-    return np.clip(low + 0.5 * (a_norm + 1.0) * (high - low), low, high)
+    return scale_action_to_env(a_norm, low, high, clip=True)
 
 
 def _to_norm_action(a_env: np.ndarray, *, low: np.ndarray, high: np.ndarray) -> np.ndarray:
-    width = np.maximum(high - low, 1e-6)
-    return np.clip(2.0 * (np.asarray(a_env, dtype=np.float32) - low) / width - 1.0, -1.0, 1.0)
+    return unscale_action_from_env(a_env, low, high, clip=True)
 
 
 def _plan_action(

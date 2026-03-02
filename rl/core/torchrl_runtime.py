@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 import torch
 
-from .common import select_device
+from .runtime import select_device
 
 
 @dataclass(frozen=True)

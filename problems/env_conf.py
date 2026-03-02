@@ -18,7 +18,6 @@ _atari_dm_module = None
 
 
 def register_atari_dm(module):
-    """Register the Atari/DM-Control handler module. Called by env_conf_atari_dm on import."""
     global _atari_dm_module
     _atari_dm_module = module
 
@@ -37,8 +36,6 @@ def _get_atari_dm():
 
 @dataclass(frozen=True)
 class _GaussianPolicyFactory:
-    """Pickle-safe lazy policy factory for multiprocessing runs."""
-
     variant: str
     kwargs: dict[str, Any] = field(default_factory=dict)
 
@@ -65,7 +62,6 @@ class _LazyPolicyFactory:
 
 
 def _gauss_policy_factory(variant: str, **kwargs):
-    """Lazy factory for GaussianActorBackbonePolicy to avoid pulling rl into env_conf transitive deps."""
     return _GaussianPolicyFactory(variant=variant, kwargs=dict(kwargs))
 
 

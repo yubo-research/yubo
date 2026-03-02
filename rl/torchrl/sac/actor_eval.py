@@ -6,7 +6,12 @@ from typing import Any
 import numpy as np
 import torch
 
-from ..common.pixel_transform import ensure_pixel_obs_format
+from rl.core.actor_state import (
+    capture_backbone_head_snapshot,
+    restore_backbone_head_snapshot,
+    use_backbone_head_snapshot,
+)
+from rl.core.pixel_transform import ensure_pixel_obs_format
 
 
 class SacActorEvalPolicy:
@@ -55,23 +60,33 @@ class SacActorEvalPolicy:
 
 
 def capture_sac_actor_snapshot(modules: Any) -> dict:
-    return {
-        "backbone": {name: tensor.detach().clone() for name, tensor in modules.actor_backbone.state_dict().items()},
-        "head": {name: tensor.detach().clone() for name, tensor in modules.actor_head.state_dict().items()},
-    }
+    return capture_backbone_head_snapshot(
+        modules.actor_backbone,
+        modules.actor_head,
+        log_std=None,
+        state_to_cpu=False,
+    )
 
 
 def restore_sac_actor_snapshot(modules: Any, snapshot: dict) -> None:
-    modules.actor_backbone.load_state_dict(snapshot["backbone"])
-    modules.actor_head.load_state_dict(snapshot["head"])
+    restore_backbone_head_snapshot(
+        modules.actor_backbone,
+        modules.actor_head,
+        snapshot,
+        log_std=None,
+        device=None,
+    )
 
 
 @contextmanager
 def use_sac_actor_snapshot(modules: Any, snapshot: dict, *, device: Any):
     """Context manager: temporarily restore snapshot, then restore original on exit."""
-    previous = capture_sac_actor_snapshot(modules)
-    restore_sac_actor_snapshot(modules, snapshot)
-    try:
+    with use_backbone_head_snapshot(
+        modules.actor_backbone,
+        modules.actor_head,
+        snapshot,
+        log_std=None,
+        device=None,
+        state_to_cpu=False,
+    ):
         yield
-    finally:
-        restore_sac_actor_snapshot(modules, previous)

@@ -5,6 +5,8 @@ from typing import Any, Literal
 
 import numpy as np
 
+from rl.core.continuous_actions import normalize_action_bounds
+
 ObsMode = Literal["vector", "pixels"]
 ActionKind = Literal["discrete", "continuous"]
 
@@ -103,11 +105,12 @@ def resolve_action_contract(action_space: Any) -> ActionContract:
 
     shape = _space_shape(action_space)
     dim = int(np.prod(shape)) if shape else 1
+    low, high = normalize_action_bounds(action_space.low, action_space.high, dim)
     return ActionContract(
         kind="continuous",
         dim=dim,
-        low=np.asarray(action_space.low, dtype=np.float32),
-        high=np.asarray(action_space.high, dtype=np.float32),
+        low=low,
+        high=high,
     )
 
 

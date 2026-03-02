@@ -6,8 +6,17 @@ from typing import Any
 import numpy as np
 import torch
 
-from ..common.env_contract import ObservationContract
-from ..common.pixel_transform import ensure_pixel_obs_format
+from rl.core.actor_state import (
+    capture_backbone_head_snapshot,
+    restore_backbone_head_snapshot,
+    use_backbone_head_snapshot,
+)
+from rl.core.env_contract import ObservationContract
+from rl.core.pixel_transform import ensure_pixel_obs_format
+
+
+def _has_state_dict(module: Any) -> bool:
+    return hasattr(module, "state_dict") and callable(getattr(module, "state_dict"))
 
 
 class ActorEvalPolicy:
@@ -29,8 +38,8 @@ class ActorEvalPolicy:
         self._is_discrete = bool(is_discrete)
 
     def __call__(self, state: np.ndarray) -> np.ndarray:
-        state_tensor = torch.as_tensor(state, device=self._device)
         if self._obs_contract.mode == "pixels":
+            state_tensor = torch.as_tensor(state, device=self._device)
             state_tensor = ensure_pixel_obs_format(
                 state_tensor,
                 channels=int(self._obs_contract.model_channels or 3),
@@ -40,9 +49,10 @@ class ActorEvalPolicy:
             if state_tensor.ndim == 3:
                 state_tensor = state_tensor.unsqueeze(0)
         else:
+            # MPS doesn't support float64; force vector eval state to float32.
+            state_tensor = torch.as_tensor(state, device=self._device, dtype=torch.float32)
             if state_tensor.ndim == 1:
                 state_tensor = state_tensor.unsqueeze(0)
-            state_tensor = state_tensor.float()
         with torch.no_grad():
             features = self._actor_backbone(self._obs_scaler(state_tensor))
             head_out = self._actor_head(features)
@@ -54,26 +64,43 @@ class ActorEvalPolicy:
 
 
 def capture_actor_snapshot(modules: Any) -> dict:
-    backbone_state = {name: tensor.detach().clone() for name, tensor in modules.actor_backbone.state_dict().items()}
-    head_state = {name: tensor.detach().clone() for name, tensor in modules.actor_head.state_dict().items()}
-    snapshot = {"backbone": backbone_state, "head": head_state}
-    if modules.log_std is not None:
-        snapshot["log_std"] = modules.log_std.detach().cpu().clone().numpy()
-    return snapshot
+    if not _has_state_dict(modules.actor_backbone) or not _has_state_dict(modules.actor_head):
+        return {}
+    return capture_backbone_head_snapshot(
+        modules.actor_backbone,
+        modules.actor_head,
+        log_std=getattr(modules, "log_std", None),
+        state_to_cpu=False,
+        log_std_to_cpu=True,
+        log_std_format="numpy",
+    )
 
 
 def restore_actor_snapshot(modules: Any, snapshot: dict, *, device: torch.device) -> None:
-    modules.actor_backbone.load_state_dict(snapshot["backbone"])
-    modules.actor_head.load_state_dict(snapshot["head"])
-    if modules.log_std is not None and "log_std" in snapshot:
-        modules.log_std.data.copy_(torch.as_tensor(snapshot["log_std"], device=device))
+    if not _has_state_dict(modules.actor_backbone) or not _has_state_dict(modules.actor_head):
+        return
+    restore_backbone_head_snapshot(
+        modules.actor_backbone,
+        modules.actor_head,
+        snapshot,
+        log_std=getattr(modules, "log_std", None),
+        device=device,
+    )
 
 
 @contextmanager
 def use_actor_snapshot(modules: Any, snapshot: dict, *, device: torch.device):
-    previous_snapshot = capture_actor_snapshot(modules)
-    restore_actor_snapshot(modules, snapshot, device=device)
-    try:
+    if not _has_state_dict(modules.actor_backbone) or not _has_state_dict(modules.actor_head):
         yield
-    finally:
-        restore_actor_snapshot(modules, previous_snapshot, device=device)
+        return
+    with use_backbone_head_snapshot(
+        modules.actor_backbone,
+        modules.actor_head,
+        snapshot,
+        log_std=getattr(modules, "log_std", None),
+        device=device,
+        state_to_cpu=False,
+        log_std_to_cpu=True,
+        log_std_format="numpy",
+    ):
+        yield

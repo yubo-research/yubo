@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import dataclasses
 
-from ..common.runtime import TorchRLRuntimeCapabilities, TorchRLRuntimeConfig
+from rl.core.torchrl_runtime import TorchRLRuntimeCapabilities, TorchRLRuntimeConfig
 
 
 @dataclasses.dataclass

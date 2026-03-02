@@ -5,6 +5,7 @@ import numpy as np
 import torch
 
 from rl.backbone import BackboneSpec, HeadSpec, build_backbone, build_mlp_head
+from rl.core import env_contract as torchrl_env_contract
 from rl.policy_backbone import (
     ActorBackbonePolicy,
     ActorBackbonePolicyFactory,
@@ -14,7 +15,6 @@ from rl.policy_backbone import (
     DiscreteActorPolicySpec,
     GaussianActorBackbonePolicy,
 )
-from rl.torchrl.common import env_contract as torchrl_env_contract
 
 
 def test_actor_policy_spec():
@@ -84,7 +84,15 @@ def test_get_env_conf_gauss_uses_gaussian_actor_backbone():
     from problems.env_conf import default_policy, get_env_conf
 
     ec = get_env_conf("dm:cheetah-run:gauss", problem_seed=0)
-    policy = default_policy(ec)
+    try:
+        policy = default_policy(ec)
+    except Exception as exc:
+        text = str(exc).lower()
+        if "egl" in text or "opengl" in text or "mjr_makecontext" in text:
+            import pytest
+
+            pytest.skip(f"dm_control OpenGL backend unavailable in test environment: {exc}")
+        raise
     assert isinstance(policy, GaussianActorBackbonePolicy)
 
 

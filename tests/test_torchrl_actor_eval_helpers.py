@@ -4,7 +4,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from rl.torchrl.common.env_contract import ObservationContract
+from rl.core.env_contract import ObservationContract
 from rl.torchrl.ppo.actor_eval import (
     ActorEvalPolicy,
     capture_actor_snapshot,

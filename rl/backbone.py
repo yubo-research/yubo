@@ -121,3 +121,11 @@ def build_mlp_head(spec: HeadSpec, input_dim: int, output_dim: int) -> nn.Module
         layers.append(act())
     layers.append(nn.Linear(dims[-2], dims[-1]))
     return nn.Sequential(*layers)
+
+
+def init_linear_layers(module: nn.Module, *, gain: float = 0.5) -> None:
+    for m in module.modules():
+        if isinstance(m, nn.Linear):
+            nn.init.orthogonal_(m.weight, gain=float(gain))
+            if m.bias is not None:
+                nn.init.zeros_(m.bias)

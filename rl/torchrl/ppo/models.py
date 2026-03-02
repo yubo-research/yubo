@@ -5,18 +5,44 @@ from typing import Any
 import torch
 import torch.nn as nn
 
-from ..common.env_contract import ObservationContract
-from ..common.pixel_transform import ensure_pixel_obs_format
+from rl.core.env_contract import ObservationContract
+from rl.core.pixel_transform import ensure_pixel_obs_format
 
 
 def _flatten_pixel_batch(
     obs: torch.Tensor,
 ) -> tuple[torch.Tensor, tuple[int, ...] | None]:
+    batch_shape: tuple[int, ...] | None = None
     if obs.ndim == 5:
         batch_shape = obs.shape[:2]
         obs = obs.flatten(0, 1)
-        return obs, batch_shape
-    return obs, None
+    return obs, batch_shape
+
+
+def _forward_backbone_features(
+    obs: torch.Tensor,
+    *,
+    obs_scaler: Any,
+    obs_contract: ObservationContract,
+    backbone: nn.Module,
+) -> tuple[torch.Tensor, tuple[int, ...] | None, bool]:
+    obs = obs_scaler(obs)
+    obs, batch_shape, squeeze_batch_dim = prepare_obs_for_backbone(obs, obs_contract)
+    feats = backbone(obs)
+    return feats, batch_shape, squeeze_batch_dim
+
+
+def _reshape_head_output(
+    output: torch.Tensor,
+    *,
+    batch_shape: tuple[int, ...] | None,
+    squeeze_batch_dim: bool,
+) -> torch.Tensor:
+    if batch_shape is not None:
+        return output.reshape(*batch_shape, -1)
+    if squeeze_batch_dim:
+        return output.squeeze(0)
+    return output
 
 
 def prepare_obs_for_backbone(
@@ -57,17 +83,16 @@ class ActorNet(nn.Module):
         self.obs_contract = obs_contract
 
     def forward(self, obs: torch.Tensor):
-        obs = self.obs_scaler(obs)
-        obs, batch_shape, squeeze_batch_dim = prepare_obs_for_backbone(obs, self.obs_contract)
-        feats = self.backbone(obs)
+        feats, batch_shape, squeeze_batch_dim = _forward_backbone_features(
+            obs,
+            obs_scaler=self.obs_scaler,
+            obs_contract=self.obs_contract,
+            backbone=self.backbone,
+        )
         loc = self.head(feats)
         scale = self.log_std.exp().expand_as(loc)
-        if batch_shape is not None:
-            loc = loc.reshape(*batch_shape, -1)
-            scale = scale.reshape(*batch_shape, -1)
-        elif squeeze_batch_dim:
-            loc = loc.squeeze(0)
-            scale = scale.squeeze(0)
+        loc = _reshape_head_output(loc, batch_shape=batch_shape, squeeze_batch_dim=squeeze_batch_dim)
+        scale = _reshape_head_output(scale, batch_shape=batch_shape, squeeze_batch_dim=squeeze_batch_dim)
         return loc, scale
 
 
@@ -87,14 +112,14 @@ class DiscreteActorNet(nn.Module):
         self.obs_contract = obs_contract
 
     def forward(self, obs: torch.Tensor):
-        obs = self.obs_scaler(obs)
-        obs, batch_shape, squeeze_batch_dim = prepare_obs_for_backbone(obs, self.obs_contract)
-        feats = self.backbone(obs)
+        feats, batch_shape, squeeze_batch_dim = _forward_backbone_features(
+            obs,
+            obs_scaler=self.obs_scaler,
+            obs_contract=self.obs_contract,
+            backbone=self.backbone,
+        )
         logits = self.head(feats)
-        if batch_shape is not None:
-            logits = logits.reshape(*batch_shape, -1)
-        elif squeeze_batch_dim:
-            logits = logits.squeeze(0)
+        logits = _reshape_head_output(logits, batch_shape=batch_shape, squeeze_batch_dim=squeeze_batch_dim)
         return logits
 
 
@@ -114,12 +139,12 @@ class CriticNet(nn.Module):
         self.obs_contract = obs_contract
 
     def forward(self, obs: torch.Tensor):
-        obs = self.obs_scaler(obs)
-        obs, batch_shape, squeeze_batch_dim = prepare_obs_for_backbone(obs, self.obs_contract)
-        feats = self.backbone(obs)
+        feats, batch_shape, squeeze_batch_dim = _forward_backbone_features(
+            obs,
+            obs_scaler=self.obs_scaler,
+            obs_contract=self.obs_contract,
+            backbone=self.backbone,
+        )
         out = self.head(feats)
-        if batch_shape is not None:
-            out = out.reshape(*batch_shape, -1)
-        elif squeeze_batch_dim:
-            out = out.squeeze(0)
+        out = _reshape_head_output(out, batch_shape=batch_shape, squeeze_batch_dim=squeeze_batch_dim)
         return out

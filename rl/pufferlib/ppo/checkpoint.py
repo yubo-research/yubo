@@ -7,6 +7,17 @@ import numpy as np
 import torch
 import torch.optim as optim
 
+from rl.checkpointing import load_checkpoint
+from rl.core.actor_state import (
+    build_ppo_checkpoint_payload as build_shared_payload,
+)
+from rl.core.actor_state import (
+    capture_ppo_actor_snapshot as capture_actor_snapshot,
+)
+from rl.core.actor_state import (
+    restore_backbone_head_snapshot,
+)
+
 
 def _as_optional_finite(value: float | None) -> float | None:
     if value is None:
@@ -24,26 +35,26 @@ def build_checkpoint_payload(
     *,
     iteration: int,
 ) -> dict[str, Any]:
-    payload: dict[str, Any] = {
-        "iteration": int(iteration),
-        "global_step": int(state.global_step),
-        "actor_backbone": model.actor_backbone.state_dict(),
-        "actor_head": model.actor_head.state_dict(),
-        "critic_backbone": model.critic_backbone.state_dict(),
-        "critic_head": model.critic_head.state_dict(),
-        "optimizer": optimizer.state_dict(),
-        "best_actor_state": state.best_actor_state,
-        "best_return": float(state.best_return),
-        "last_eval_return": float(state.last_eval_return),
-        "last_heldout_return": _as_optional_finite(state.last_heldout_return),
-        "last_episode_return": _as_optional_finite(state.last_episode_return),
-        "rng_torch": torch.get_rng_state(),
-        "rng_numpy": np.random.get_state(),
-        "rng_cuda": torch.cuda.get_rng_state_all() if torch.cuda.is_available() else None,
-    }
-    if hasattr(model, "log_std"):
-        payload["log_std"] = model.log_std.detach().cpu()
-    return payload
+    actor_snapshot = capture_actor_snapshot(
+        model.actor_backbone,
+        model.actor_head,
+        log_std=model.log_std if hasattr(model, "log_std") else None,
+    )
+    return build_shared_payload(
+        iteration=iteration,
+        global_step=int(state.global_step),
+        actor_snapshot=actor_snapshot,
+        critic_backbone=model.critic_backbone.state_dict(),
+        critic_head=model.critic_head.state_dict(),
+        optimizer=optimizer.state_dict(),
+        best_actor_state=state.best_actor_state,
+        best_return=float(state.best_return),
+        last_eval_return=float(state.last_eval_return),
+        last_heldout_return=_as_optional_finite(state.last_heldout_return),
+        extra_payload={
+            "last_episode_return": _as_optional_finite(state.last_episode_return),
+        },
+    )
 
 
 def restore_checkpoint_if_requested(
@@ -57,14 +68,22 @@ def restore_checkpoint_if_requested(
 ) -> None:
     if not config.resume_from:
         return
-    checkpointing = __import__("rl.checkpointing", fromlist=["load_checkpoint"])
-    loaded = checkpointing.load_checkpoint(Path(config.resume_from), device=device)
-    model.actor_backbone.load_state_dict(loaded["actor_backbone"])
-    model.actor_head.load_state_dict(loaded["actor_head"])
+    loaded = load_checkpoint(Path(config.resume_from), device=device)
+    actor_snapshot: dict[str, Any] = {
+        "backbone": loaded["actor_backbone"],
+        "head": loaded["actor_head"],
+    }
+    if hasattr(model, "log_std") and "log_std" in loaded:
+        actor_snapshot["log_std"] = loaded["log_std"]
+    restore_backbone_head_snapshot(
+        model.actor_backbone,
+        model.actor_head,
+        actor_snapshot,
+        log_std=model.log_std if hasattr(model, "log_std") else None,
+        device=device,
+    )
     model.critic_backbone.load_state_dict(loaded["critic_backbone"])
     model.critic_head.load_state_dict(loaded["critic_head"])
-    if hasattr(model, "log_std") and "log_std" in loaded:
-        model.log_std.data.copy_(torch.as_tensor(loaded["log_std"], device=device))
     optimizer.load_state_dict(loaded["optimizer"])
 
     state.start_iteration = int(loaded.get("iteration", 0))

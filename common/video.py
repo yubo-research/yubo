@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from contextlib import AbstractContextManager
+import os
+import sys
+from contextlib import AbstractContextManager, contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
@@ -88,6 +90,73 @@ def select_video_episode_indices(
     return ranked[:count]
 
 
+def _is_headless_video_error(exc: Exception) -> bool:
+    msg = str(exc).lower()
+    name = type(exc).__name__.lower()
+    needles = (
+        "display environment variable is missing",
+        "opengl platform library has not been loaded",
+        "valid opengl context has not been created",
+        "mjr_makecontext",
+        "mjrcontext",
+        "glfw",
+        "x11",
+        "headless",
+    )
+    return ("fatalerror" in name) or any(n in msg for n in needles)
+
+
+def _video_gl_candidates() -> list[str | None]:
+    user_gl = os.environ.get("MUJOCO_GL")
+    if user_gl is not None and str(user_gl).strip() != "":
+        return [str(user_gl).strip()]
+    if not sys.platform.startswith("linux"):
+        return [None]
+    has_display = bool(os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"))
+    if has_display:
+        return [None]
+    return ["egl", "osmesa"]
+
+
+@contextmanager
+def _temporary_mujoco_gl(value: str | None):
+    prev = os.environ.get("MUJOCO_GL")
+    try:
+        if value is None:
+            os.environ.pop("MUJOCO_GL", None)
+        else:
+            os.environ["MUJOCO_GL"] = str(value)
+        yield
+    finally:
+        if prev is None:
+            os.environ.pop("MUJOCO_GL", None)
+        else:
+            os.environ["MUJOCO_GL"] = prev
+
+
+_AUTO_GL = object()
+
+
+def _render_video_episode(
+    env_conf: Any,
+    policy: Any,
+    *,
+    seed: int,
+    video_dir: Path,
+    video_prefix: str,
+    gl_backend: str | None,
+) -> None:
+    with _temporary_mujoco_gl(gl_backend):
+        rollout_episode(
+            env_conf,
+            policy,
+            seed=seed,
+            render_video=True,
+            video_dir=video_dir,
+            video_prefix=video_prefix,
+        )
+
+
 def render_policy_videos(
     env_conf: Any,
     policy: Any,
@@ -128,15 +197,39 @@ def render_policy_videos(
         f"[video] dir={video_dir} episodes={num_episodes} videos={len(selected_indices)} select={selection}",
         flush=True,
     )
+    preferred_gl: str | None | object = _AUTO_GL
+    gl_candidates = _video_gl_candidates()
     for episode_idx in selected_indices:
-        rollout_episode(
-            env_conf,
-            policy,
-            seed=seed_base + episode_idx,
-            render_video=True,
-            video_dir=video_dir,
-            video_prefix=f"{video_prefix}_ep{episode_idx:03d}",
-        )
+        backends = [preferred_gl] if preferred_gl is not _AUTO_GL else gl_candidates
+        last_headless_exc: Exception | None = None
+        rendered = False
+        for gl_backend in backends:
+            try:
+                _render_video_episode(
+                    env_conf,
+                    policy,
+                    seed=seed_base + episode_idx,
+                    video_dir=video_dir,
+                    video_prefix=f"{video_prefix}_ep{episode_idx:03d}",
+                    gl_backend=gl_backend,
+                )
+                if preferred_gl is _AUTO_GL:
+                    preferred_gl = gl_backend
+                    if gl_backend is not None:
+                        print(f"[video] using MUJOCO_GL={gl_backend}", flush=True)
+                rendered = True
+                break
+            except Exception as exc:
+                if _is_headless_video_error(exc):
+                    last_headless_exc = exc
+                    continue
+                raise
+        if not rendered:
+            print(
+                f"[video] skipping video capture: headless/OpenGL context unavailable ({last_headless_exc})",
+                flush=True,
+            )
+            return
 
 
 def policy_for_bo_rollout(env_conf: Any, policy: Any) -> Any:

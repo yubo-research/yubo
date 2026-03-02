@@ -7,17 +7,19 @@ import torch.nn as nn
 
 from problems.normalizer import Normalizer
 from problems.policy_mixin import PolicyParamsMixin
-from rl.backbone import BackboneSpec, HeadSpec, build_backbone, build_mlp_head
+from rl.backbone import (
+    BackboneSpec,
+    HeadSpec,
+    build_backbone,
+    build_mlp_head,
+    init_linear_layers,
+)
+from rl.core import env_contract as torchrl_env_contract
 from rl.shared_gaussian_actor import SharedGaussianActorModule, get_gaussian_actor_spec
-from rl.torchrl.common import env_contract as torchrl_env_contract
 
 
 def _init_linear(module: nn.Module) -> None:
-    for m in module.modules():
-        if isinstance(m, nn.Linear):
-            nn.init.orthogonal_(m.weight, gain=0.5)
-            if m.bias is not None:
-                nn.init.zeros_(m.bias)
+    init_linear_layers(module, gain=0.5)
 
 
 @dataclass
@@ -155,7 +157,7 @@ class DiscreteActorBackbonePolicy(PolicyParamsMixin, nn.Module):
     def forward(self, obs: torch.Tensor) -> torch.Tensor:
         squeeze_batch_dim = False
         if self._obs_contract.mode == "pixels":
-            from rl.torchrl.common.pixel_transform import (
+            from rl.core.pixel_transform import (
                 ensure_pixel_obs_format,
             )
 

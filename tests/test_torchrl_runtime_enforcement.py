@@ -5,8 +5,7 @@ from pathlib import Path
 
 _TORCHRL_BACKEND_DIR = Path(__file__).resolve().parents[1] / "rl" / "torchrl"
 _ALLOWED_SELECT_DEVICE_FILES = {
-    "common.py",
-    "runtime.py",
+    "deps.py",
 }
 
 
@@ -21,9 +20,9 @@ def test_no_direct_select_device_usage_outside_runtime_layer():
             continue
         tree = ast.parse(path.read_text(), filename=str(path))
         for node in ast.walk(tree):
-            if isinstance(node, ast.ImportFrom) and node.module == "rl.torchrl.common.common":
+            if isinstance(node, ast.ImportFrom) and node.module == "rl.core.runtime":
                 if any(alias.name == "select_device" for alias in node.names):
-                    violations.append(f"{path.relative_to(_TORCHRL_BACKEND_DIR)}: imports select_device from torchrl.common.common")
+                    violations.append(f"{path.relative_to(_TORCHRL_BACKEND_DIR)}: imports select_device from rl.core.runtime")
             if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
                 if node.func.id == "select_device":
                     violations.append(f"{path.relative_to(_TORCHRL_BACKEND_DIR)}:{node.lineno}: direct select_device(...) call")

@@ -8,7 +8,7 @@ import torch
 
 
 def test_ppo_eval_noise_mode_natural_advances_eval_and_heldout(monkeypatch, tmp_path):
-    from optimizer import opt_trajectories
+    from rl.core import episode_rollout
     from rl.torchrl.ppo import core as ppo_core
     from rl.torchrl.ppo import deps as op_deps
 
@@ -21,7 +21,7 @@ def test_ppo_eval_noise_mode_natural_advances_eval_and_heldout(monkeypatch, tmp_
         lambda *_args, **kwargs: (eval_seeds.append(int(kwargs["eval_seed"])) or float(kwargs["eval_seed"])),
     )
     monkeypatch.setattr(
-        opt_trajectories,
+        episode_rollout,
         "evaluate_for_best",
         lambda *_args, **kwargs: (heldout_noise_indices.append(int(kwargs["i_noise"])) or 0.0),
     )
@@ -86,7 +86,7 @@ def test_ppo_eval_noise_mode_natural_advances_eval_and_heldout(monkeypatch, tmp_
 
 
 def test_ppo_eval_noise_mode_frozen_uses_fixed_seeds(monkeypatch, tmp_path):
-    from optimizer import opt_trajectories
+    from rl.core import episode_rollout
     from rl.torchrl.ppo import core as ppo_core
     from rl.torchrl.ppo import deps as op_deps
 
@@ -99,7 +99,7 @@ def test_ppo_eval_noise_mode_frozen_uses_fixed_seeds(monkeypatch, tmp_path):
         lambda *_args, **kwargs: (eval_seeds.append(int(kwargs["eval_seed"])) or float(kwargs["eval_seed"])),
     )
     monkeypatch.setattr(
-        opt_trajectories,
+        episode_rollout,
         "evaluate_for_best",
         lambda *_args, **kwargs: (heldout_noise_indices.append(int(kwargs["i_noise"])) or 0.0),
     )

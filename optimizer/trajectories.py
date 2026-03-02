@@ -24,6 +24,17 @@ def _scale_action_to_space(action: np.ndarray | int, action_space: Any) -> np.nd
     return action_space.low + (action_space.high - action_space.low) * (1 + action) / 2
 
 
+def _unpack_step_result(step_out: Any) -> tuple[Any, Any, bool, bool, Any]:
+    # Support both Gymnasium (5-tuple) and older Gym-style (4-tuple) env.step outputs.
+    if len(step_out) == 5:
+        state, reward, terminated, truncated, info = step_out
+        return state, reward, bool(terminated), bool(truncated), info
+    if len(step_out) == 4:
+        state, reward, done, info = step_out
+        return state, reward, bool(done), False, info
+    raise ValueError(f"Unsupported env.step return arity: {len(step_out)}")
+
+
 @dataclass
 class Trajectory:
     rreturn: float
@@ -121,7 +132,7 @@ def collect_trajectory(env_conf, policy, noise_seed=None, show_frames=False):
         action = _scale_action_to_space(action_p, env.action_space)
         traj_states.append(state_p)
         traj_actions.append(action_p)
-        state, reward, terminated, truncated, _ = env.step(action)
+        state, reward, terminated, truncated, _ = _unpack_step_result(env.step(action))
         if recurrent:
             prev_action = int(action) if isinstance(action, (int, np.integer)) else int(np.asarray(action).item())
             prev_reward = float(reward)

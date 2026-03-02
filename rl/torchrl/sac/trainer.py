@@ -11,6 +11,12 @@ import torchrl.collectors as tr_collectors
 import torchrl.envs as tr_envs
 from tensordict import TensorDict
 
+from rl.core.actor_state import (
+    capture_backbone_head_snapshot,
+    restore_backbone_head_snapshot,
+)
+from rl.core.continuous_actions import unscale_action_tensor_from_env
+
 from . import deps as sac_deps
 from .config import _SAC_RUNTIME_CAPABILITIES, SACConfig, TrainResult
 from .setup import (
@@ -25,6 +31,7 @@ from .setup import (
     build_env_setup,
     build_modules,
     build_training,
+    sac_update_shared,
 )
 
 
@@ -35,13 +42,23 @@ def _checkpoint_payload(
     *,
     step: int,
 ) -> dict:
+    actor_snapshot = capture_backbone_head_snapshot(
+        modules.actor_backbone,
+        modules.actor_head,
+        log_std=None,
+        state_to_cpu=False,
+    )
     return {
         "step": int(step),
-        "actor_backbone": modules.actor_backbone.state_dict(),
-        "actor_head": modules.actor_head.state_dict(),
+        "actor_backbone": actor_snapshot["backbone"],
+        "actor_head": actor_snapshot["head"],
         "obs_scaler": modules.obs_scaler.state_dict(),
+        "q1": modules.q1.state_dict(),
+        "q2": modules.q2.state_dict(),
+        "q1_target": modules.q1_target.state_dict(),
+        "q2_target": modules.q2_target.state_dict(),
+        "log_alpha": modules.log_alpha.detach().cpu(),
         "replay_state": training.replay.state_dict(),
-        "loss_module": training.loss_module.state_dict(),
         "actor_optimizer": training.actor_optimizer.state_dict(),
         "critic_optimizer": training.critic_optimizer.state_dict(),
         "alpha_optimizer": training.alpha_optimizer.state_dict(),
@@ -55,6 +72,18 @@ def _checkpoint_payload(
     }
 
 
+def _load_state_if_present(loaded: dict, key: str, module: torch.nn.Module) -> None:
+    state = loaded.get(key)
+    if state is not None:
+        module.load_state_dict(state)
+
+
+def _copy_if_present(loaded: dict, key: str, target: torch.Tensor, *, device: torch.device) -> None:
+    value = loaded.get(key)
+    if value is not None:
+        target.copy_(value.to(device=device, dtype=target.dtype))
+
+
 def _resume_if_requested(
     config: SACConfig,
     modules: _Modules,
@@ -66,14 +95,26 @@ def _resume_if_requested(
     if not config.resume_from:
         return state
     loaded = sac_deps.load_checkpoint(Path(config.resume_from), device=device)
-    modules.actor_backbone.load_state_dict(loaded["actor_backbone"])
-    modules.actor_head.load_state_dict(loaded["actor_head"])
-    if loaded.get("obs_scaler") is not None:
-        modules.obs_scaler.load_state_dict(loaded["obs_scaler"])
-    if loaded.get("replay_state") is not None:
-        training.replay.load_state_dict(loaded["replay_state"])
-    if loaded.get("loss_module") is not None:
-        training.loss_module.load_state_dict(loaded["loss_module"])
+    if "actor_backbone" in loaded and "actor_head" in loaded:
+        restore_backbone_head_snapshot(
+            modules.actor_backbone,
+            modules.actor_head,
+            {
+                "backbone": loaded["actor_backbone"],
+                "head": loaded["actor_head"],
+            },
+            log_std=None,
+            device=device,
+        )
+    _load_state_if_present(loaded, "obs_scaler", modules.obs_scaler)
+    _load_state_if_present(loaded, "q1", modules.q1)
+    _load_state_if_present(loaded, "q2", modules.q2)
+    _load_state_if_present(loaded, "q1_target", modules.q1_target)
+    _load_state_if_present(loaded, "q2_target", modules.q2_target)
+    _copy_if_present(loaded, "log_alpha", modules.log_alpha.data, device=device)
+    replay_state = loaded.get("replay_state")
+    if replay_state is not None:
+        training.replay.load_state_dict(replay_state)
     training.actor_optimizer.load_state_dict(loaded["actor_optimizer"])
     training.critic_optimizer.load_state_dict(loaded["critic_optimizer"])
     training.alpha_optimizer.load_state_dict(loaded["alpha_optimizer"])
@@ -99,7 +140,7 @@ def _evaluate_actor(
     device: torch.device,
     eval_seed: int,
 ) -> float:
-    from optimizer.opt_trajectories import collect_denoised_trajectory
+    from rl.core.episode_rollout import collect_denoised_trajectory
 
     eval_env = env.env_conf
     from_pixels = bool(getattr(eval_env, "from_pixels", False))
@@ -204,36 +245,44 @@ def _normalize_actions_for_replay(flat: TensorDict, *, action_low: np.ndarray, a
     action = flat["action"]
     low = torch.as_tensor(action_low, dtype=action.dtype, device=action.device)
     high = torch.as_tensor(action_high, dtype=action.dtype, device=action.device)
-    width = (high - low).clamp(min=1e-8)
-    action_norm = (2.0 * (action - low) / width - 1.0).clamp(-1.0, 1.0)
+    action_norm = unscale_action_tensor_from_env(action, low, high, clip=True)
     return flat.set("action", action_norm)
 
 
-def _update_step(training: _TrainingSetup, *, device: torch.device, batch_size: int) -> dict[str, float]:
+def _update_step(
+    config: SACConfig,
+    modules: _Modules,
+    training: _TrainingSetup,
+    *,
+    device: torch.device,
+    batch_size: int,
+) -> dict[str, float]:
     batch = training.replay.sample(batch_size).to(device)
-    training.critic_optimizer.zero_grad()
-    critic_loss = training.loss_module(batch)["loss_qvalue"]
-    critic_loss.backward()
-    training.critic_optimizer.step()
-
-    training.actor_optimizer.zero_grad()
-    actor_loss = training.loss_module(batch)["loss_actor"]
-    actor_loss.backward()
-    training.actor_optimizer.step()
-
-    training.alpha_optimizer.zero_grad()
-    alpha_out = training.loss_module(batch)
-    alpha_loss = alpha_out["loss_alpha"]
-    alpha_loss.backward()
-    training.alpha_optimizer.step()
-
-    training.target_updater.step()
+    obs = batch["observation"]
+    act = batch["action"]
+    nxt = batch["next", "observation"]
+    rew = batch["next", "reward"]
+    done = batch["next", "done"]
+    if rew.ndim > 1:
+        rew = rew.squeeze(-1)
+    if done.ndim > 1:
+        done = done.squeeze(-1)
+    actor_loss, critic_loss, alpha_loss = sac_update_shared(
+        config,
+        modules,
+        training,
+        obs=obs,
+        act=act,
+        rew=rew.to(dtype=torch.float32),
+        nxt=nxt,
+        done=done.to(dtype=torch.float32),
+    )
     return {
-        "loss_actor": float(actor_loss.detach().cpu()),
-        "loss_critic": float(critic_loss.detach().cpu()),
-        "loss_alpha": float(alpha_loss.detach().cpu()),
-        "alpha": float(alpha_out["alpha"].detach().cpu()),
-        "entropy": float(alpha_out["entropy"].detach().cpu()),
+        "loss_actor": float(actor_loss),
+        "loss_critic": float(critic_loss),
+        "loss_alpha": float(alpha_loss),
+        "alpha": float(modules.log_alpha.exp().detach().cpu()),
+        "entropy": float("nan"),
     }
 
 
@@ -307,7 +356,7 @@ def _run_sac_eval_log_checkpoint(
     )
 
 
-def _process_sac_batch(batch, config, training, runtime, env_setup, latest_losses, total_updates):
+def _process_sac_batch(batch, config, modules, training, runtime, env_setup, latest_losses, total_updates):
     flat = _flatten_batch_to_transitions(batch)
     flat = _normalize_actions_for_replay(
         flat,
@@ -320,7 +369,13 @@ def _process_sac_batch(batch, config, training, runtime, env_setup, latest_losse
     n_update_cycles = max(0, n_frames // int(config.update_every))
     for _ in range(n_update_cycles * int(config.updates_per_step)):
         if training.replay.write_count >= int(config.learning_starts):
-            latest_losses = _update_step(training, device=runtime.device, batch_size=int(config.batch_size))
+            latest_losses = _update_step(
+                config,
+                modules,
+                training,
+                device=runtime.device,
+                batch_size=int(config.batch_size),
+            )
             total_updates += 1
     return latest_losses, total_updates, n_frames
 
@@ -336,8 +391,8 @@ def train_sac(config: SACConfig) -> TrainResult:
         sac_deps.seed_all(sac_deps.seed_util.global_seed_for_run(problem_seed))
         env = build_env_setup(config)
         runtime = config.resolve_runtime(capabilities=_SAC_RUNTIME_CAPABILITIES)
-        modules, loss_module = build_modules(config, env, device=runtime.device)
-        training = build_training(config, loss_module)
+        modules = build_modules(config, env, device=runtime.device)
+        training = build_training(config, modules)
         state = _resume_if_requested(config, modules, training, device=runtime.device)
 
         from rl import logger as rl_logger
@@ -371,6 +426,7 @@ def train_sac(config: SACConfig) -> TrainResult:
             latest_losses, total_updates, n_frames = _process_sac_batch(
                 batch,
                 config,
+                modules,
                 training,
                 runtime,
                 env,
@@ -391,7 +447,7 @@ def train_sac(config: SACConfig) -> TrainResult:
                     start_time,
                     latest_losses,
                     total_updates,
-                    sac_deps.opt_traj.evaluate_for_best,
+                    sac_deps.episode_rollout.evaluate_for_best,
                 )
                 break
             _run_sac_eval_log_checkpoint(
@@ -405,7 +461,7 @@ def train_sac(config: SACConfig) -> TrainResult:
                 start_time,
                 latest_losses,
                 total_updates,
-                sac_deps.opt_traj.evaluate_for_best,
+                sac_deps.episode_rollout.evaluate_for_best,
             )
 
         try:

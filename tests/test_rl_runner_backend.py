@@ -17,10 +17,10 @@ def test_extract_algo_cfg_with_backend_uses_algo_table():
     assert algo_name == "ppo"
     assert backend == "pufferlib"
     assert algo_cfg["exp_dir"] == "_tmp/test"
-    assert get_algo(algo_name, backend=backend).name == "ppo_puffer"
+    assert get_algo(algo_name, backend=backend).name == "ppo"
 
 
-def test_extract_algo_cfg_with_backend_falls_back_to_resolved_table():
+def test_extract_algo_cfg_with_backend_ignores_legacy_impl_table():
     builtins.register_all()
     cfg = {
         "rl": {
@@ -30,7 +30,7 @@ def test_extract_algo_cfg_with_backend_falls_back_to_resolved_table():
         }
     }
     _, _, algo_cfg = runner._extract_algo_cfg(cfg)
-    assert algo_cfg["exp_dir"] == "_tmp/test_fallback"
+    assert algo_cfg == {}
 
 
 def test_extract_algo_cfg_unknown_backend_raises():

@@ -6,15 +6,7 @@ import torch
 import torch.nn as nn
 from torch.distributions import Normal
 
-from rl.backbone import BackboneSpec, HeadSpec, build_backbone, build_mlp_head
-
-
-def _init_linear(module: nn.Module) -> None:
-    for m in module.modules():
-        if isinstance(m, nn.Linear):
-            nn.init.orthogonal_(m.weight, gain=0.5)
-            if m.bias is not None:
-                nn.init.zeros_(m.bias)
+from rl.backbone import BackboneSpec, HeadSpec, build_backbone, build_mlp_head, init_linear_layers
 
 
 class SharedGaussianActorModule(nn.Module):
@@ -38,8 +30,8 @@ class SharedGaussianActorModule(nn.Module):
         self._min_log_std = float(min_log_std)
         self._max_log_std = float(max_log_std)
 
-        _init_linear(self.backbone)
-        _init_linear(self.head)
+        init_linear_layers(self.backbone, gain=0.5)
+        init_linear_layers(self.head, gain=0.5)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         feats = self.backbone(x)

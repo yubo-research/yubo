@@ -5,7 +5,8 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
-from rl.pufferlib.ppo import api as pufferlib_ppo
+import rl.pufferlib.ppo as pufferlib_ppo
+from rl.pufferlib.ppo import engine as puffer_ppo_engine
 
 
 class _FakeVecEnv:
@@ -113,35 +114,25 @@ def test_puffer_config_from_dict_converts_hidden_sizes():
 def test_puffer_register_delegates_to_registry(monkeypatch):
     calls = []
 
-    def fake_register_algo(name, config_cls, train_fn):
-        calls.append((name, config_cls, train_fn))
+    def fake_register_algo(name, config_cls, train_fn, *, backend=None):
+        calls.append((name, config_cls, train_fn, backend))
 
     monkeypatch.setattr("rl.registry.register_algo", fake_register_algo)
     pufferlib_ppo.register()
 
     assert len(calls) == 1
-    name, config_cls, train_fn = calls[0]
-    assert name == "ppo_puffer"
+    name, config_cls, train_fn, backend = calls[0]
+    assert name == "ppo"
+    assert backend == "pufferlib"
     assert config_cls is pufferlib_ppo.PufferPPOConfig
     assert train_fn is pufferlib_ppo.train_ppo_puffer
-
-
-def test_to_puffer_game_name_from_atari_tag():
-    assert pufferlib_ppo._to_puffer_game_name("atari:Pong") == "pong"
-    assert pufferlib_ppo._to_puffer_game_name("ALE/Breakout-v5") == "breakout"
-
-
-def test_resolve_gym_env_name_from_tag():
-    env_name, env_kwargs = pufferlib_ppo._resolve_gym_env_name("bw-heur")
-    assert env_name == "BipedalWalker-v3"
-    assert isinstance(env_kwargs, dict)
 
 
 def test_train_ppo_puffer_fake_vector_smoke(monkeypatch, tmp_path: Path):
     def _fake_import_modules():
         return object(), _FakeVectorModule, _FakeAtariModule
 
-    monkeypatch.setattr(pufferlib_ppo, "import_pufferlib_modules", _fake_import_modules)
+    monkeypatch.setattr(puffer_ppo_engine, "_import_pufferlib_modules", _fake_import_modules)
 
     cfg = pufferlib_ppo.PufferPPOConfig(
         exp_dir=str(tmp_path / "exp"),
@@ -170,8 +161,8 @@ def test_train_ppo_puffer_fake_vector_smoke(monkeypatch, tmp_path: Path):
 
 def test_train_ppo_puffer_continuous_fake_vector_smoke(monkeypatch, tmp_path: Path):
     monkeypatch.setattr(
-        pufferlib_ppo,
-        "_make_vector_env",
+        puffer_ppo_engine,
+        "make_vector_env",
         lambda _cfg: _FakeVecEnvContinuous(num_envs=2),
     )
 
@@ -213,7 +204,7 @@ def test_train_ppo_puffer_resume_from_checkpoint(monkeypatch, tmp_path: Path):
     def _fake_import_modules():
         return object(), _FakeVectorModule, _FakeAtariModule
 
-    monkeypatch.setattr(pufferlib_ppo, "import_pufferlib_modules", _fake_import_modules)
+    monkeypatch.setattr(puffer_ppo_engine, "_import_pufferlib_modules", _fake_import_modules)
 
     first_dir = tmp_path / "exp_first"
     first_cfg = pufferlib_ppo.PufferPPOConfig(
@@ -299,10 +290,10 @@ def test_train_ppo_puffer_renders_video_when_enabled(monkeypatch, tmp_path: Path
             }
         )
 
-    monkeypatch.setattr(pufferlib_ppo, "import_pufferlib_modules", _fake_import_modules)
+    monkeypatch.setattr(puffer_ppo_engine, "_import_pufferlib_modules", _fake_import_modules)
     monkeypatch.setattr(
-        pufferlib_ppo,
-        "_build_eval_env_conf",
+        puffer_ppo_engine,
+        "build_eval_env_conf",
         lambda *_args, **_kwargs: SimpleNamespace(gym_conf=SimpleNamespace(max_steps=1)),
     )
     monkeypatch.setattr("common.video.render_policy_videos", _fake_render_policy_videos)

@@ -12,6 +12,9 @@ import torch.nn as nn
 
 from rl import logger as rl_logger
 from rl.backbone import BackboneSpec, HeadSpec
+from rl.core.env_contract import ObservationContract
+from rl.core.pixel_transform import ensure_pixel_obs_format
+from rl.core.profiler import run_with_profiler
 from rl.policy_backbone import (
     AtariMLP16DiscretePolicy,
     DiscreteActorPolicySpec,
@@ -28,9 +31,6 @@ from rl.shared_gaussian_actor import (
     build_shared_gaussian_actor,
     get_gaussian_actor_spec,
 )
-from rl.torchrl.common.env_contract import ObservationContract
-from rl.torchrl.common.pixel_transform import ensure_pixel_obs_format
-from rl.torchrl.common.profiler import run_with_profiler
 from rl.torchrl.ppo.models import (
     ActorNet,
     CriticNet,
@@ -225,11 +225,11 @@ def test_torchrl_profiler_run_with_profiler(monkeypatch, tmp_path: Path):
             return False
 
     monkeypatch.setattr(
-        "rl.torchrl.common.profiler.torch.profiler.schedule",
+        "rl.core.profiler.torch.profiler.schedule",
         lambda **_kwargs: object(),
     )
     monkeypatch.setattr(
-        "rl.torchrl.common.profiler.torch.profiler.profile",
+        "rl.core.profiler.torch.profiler.profile",
         lambda **kwargs: _DummyProfileCtx(kwargs["on_trace_ready"]),
     )
 

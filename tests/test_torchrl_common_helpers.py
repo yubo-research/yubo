@@ -3,7 +3,7 @@ from types import SimpleNamespace
 import numpy as np
 import torch
 
-from rl.torchrl.common import common as torchrl_common
+from rl.core import runtime as torchrl_common
 
 
 def test_temporary_distribution_validate_args_restores_after_exception():
@@ -38,7 +38,7 @@ def test_obs_scaler_applies_affine_transform():
 def test_select_device_respects_cpu_and_auto_fallback(monkeypatch):
     assert torchrl_common.select_device("cpu").type == "cpu"
     monkeypatch.setattr(torch.cuda, "is_available", lambda: False)
-    monkeypatch.setattr(torchrl_common, "_mps_is_available", lambda: False)
+    monkeypatch.setattr(torchrl_common, "mps_is_available", lambda: False)
     assert torchrl_common.select_device("auto").type == "cpu"
 
 

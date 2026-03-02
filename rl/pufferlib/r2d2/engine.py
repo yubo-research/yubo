@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import dataclasses
-import random
 import time
 from collections import deque
 from pathlib import Path
@@ -19,9 +18,10 @@ from analysis.data_io import write_config
 from problems.env_conf import get_env_conf
 from rl import logger as rl_logger
 from rl.checkpointing import CheckpointManager
+from rl.core.env_conf import global_seed_for_run, resolve_problem_seed
+from rl.core.runtime import seed_everything as _seed_everything_core
+from rl.core.runtime import select_device
 from rl.pufferlib.r2d2.config import R2D2Config
-from rl.seed_util import global_seed_for_run, resolve_problem_seed
-from rl.torchrl.common.common import select_device
 
 
 class _SequenceReplay:
@@ -163,11 +163,7 @@ class TrainResult:
 
 
 def _seed_everything(seed: int) -> None:
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed_all(seed)
+    _seed_everything_core(int(seed))
 
 
 def _epsilon(step: int, cfg: R2D2Config) -> float:

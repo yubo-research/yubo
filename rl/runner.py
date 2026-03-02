@@ -15,10 +15,9 @@ def _extract_algo_cfg(cfg: dict) -> tuple[str, str | None, dict]:
     if backend == "":
         raise ValueError("[rl].backend cannot be empty when provided.")
 
-    resolved_algo = resolve_algo_name(str(algo), backend=backend) if backend is not None else str(algo)
+    # Validate backend<->algo compatibility early and keep config keys canonical.
+    _ = resolve_algo_name(str(algo), backend=backend) if backend is not None else str(algo)
     algo_cfg = root.get(str(algo))
-    if algo_cfg is None and resolved_algo != str(algo):
-        algo_cfg = root.get(str(resolved_algo))
     if algo_cfg is None:
         algo_cfg = {}
     if not isinstance(algo_cfg, dict):

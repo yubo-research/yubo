@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import os
+import sys
+import types
 from types import SimpleNamespace
 
 import numpy as np
@@ -292,10 +294,8 @@ def test_kiss_cov_noise_maker_and_policy_mixin():
     assert PolicyParamsMixin.num_params(p) == 2
 
 
-def test_kiss_cov_exp_uhd_cli_and_local(monkeypatch, tmp_path):
-    import ops.uhd_setup as uhd_setup
-
-    import ops.exp_uhd as exp_uhd
+def test_kiss_cov_exp_uhd_cli_and_local(monkeypatch):
+    import experiments.exp_uhd as exp_uhd
 
     called = {"run": 0}
 
@@ -303,11 +303,9 @@ def test_kiss_cov_exp_uhd_cli_and_local(monkeypatch, tmp_path):
         def run(self):
             called["run"] += 1
 
-    monkeypatch.setattr(uhd_setup, "make_loop", lambda *a, **k: _Loop())
+    monkeypatch.setattr(exp_uhd, "_make_loop", lambda *a, **k: _Loop())
     exp_uhd.cli.callback()
-    toml_file = tmp_path / "test.toml"
-    toml_file.write_text('[uhd]\nenv_tag = "f:sphere-2d"\nnum_rounds = 1\n')
-    exp_uhd.local.callback(str(toml_file))
+    exp_uhd.local.callback("f:sphere-2d", 1, 0.001, "dense")
     assert called["run"] == 1
 
 
@@ -379,6 +377,58 @@ def test_kiss_cov_modal_batches_functions(monkeypatch, tmp_path):
     monkeypatch.setattr(mb.modal.Dict, "delete", lambda name: deleted.append(name))
     mb.clean_up()
     assert "batches_dict" in deleted
+
+
+def test_kiss_cov_compare_to_gp_functions(monkeypatch):
+    fake_tp = types.ModuleType("third_party")
+    fake_enn_pkg = types.ModuleType("third_party.enn")
+    fake_enn_subpkg = types.ModuleType("third_party.enn.enn")
+    fake_enn_params = types.ModuleType("third_party.enn.enn.enn_params")
+    fake_enn_params.PosteriorFlags = lambda observation_noise=False: SimpleNamespace(observation_noise=observation_noise)
+    fake_enn_pkg.EpistemicNearestNeighbors = object
+    fake_enn_pkg.enn_fit = lambda *a, **k: object()
+    sys.modules["third_party"] = fake_tp
+    sys.modules["third_party.enn"] = fake_enn_pkg
+    sys.modules["third_party.enn.enn"] = fake_enn_subpkg
+    sys.modules["third_party.enn.enn.enn_params"] = fake_enn_params
+    from experiments.enn import compare_to_gp as cgp
+
+    class _PosteriorDist:
+        def log_prob(self, y):
+            return torch.tensor(float(y.shape[0]), dtype=torch.float64)
+
+    class _Posterior:
+        distribution = _PosteriorDist()
+
+    class _Model:
+        def posterior(self, x):
+            assert x.ndim == 2
+            return _Posterior()
+
+    gp_ll = cgp.compute_gp_ll(_Model(), np.zeros((3, 2)), np.zeros(3))
+    assert gp_ll == 1.0
+
+    fake_mod = types.ModuleType("third_party.enn.enn.enn_fit")
+    fake_mod._compute_single_loglik = lambda y, mu, se: 6.0
+    sys.modules["third_party.enn.enn.enn_fit"] = fake_mod
+
+    class _EnnModel:
+        def posterior(self, test_x, params, flags):
+            _ = (params, flags)
+            return SimpleNamespace(mu=np.zeros((len(test_x), 1)), se=np.ones((len(test_x), 1)))
+
+    enn_ll = cgp.compute_enn_ll(_EnnModel(), object(), np.zeros((3, 2)), np.zeros(3))
+    assert enn_ll == 2.0
+    assert np.isfinite(cgp.compute_mean_ll(np.array([0.0, 1.0])))
+
+    monkeypatch.setattr(cgp, "tqdm", lambda x, desc=None: x)
+    monkeypatch.setattr(
+        cgp,
+        "_run_dim_rep",
+        lambda *args, **kwargs: cgp._LLResult(gp_ll=1.0, enn_ll=2.0, mean_ll=3.0),
+    )
+    df = cgp.sweep_dim_ll_gp_vs_enn("sphere", 0.1, [2, 3], 0, 2, 4, 2, 3)
+    assert set(df["num_dim"].tolist()) == {2, 3}
 
 
 def test_kiss_cov_fig_util_functions(monkeypatch, tmp_path):
@@ -471,308 +521,3 @@ def test_kiss_cov_fig_pstar_scale_functions(monkeypatch, tmp_path):
     fps.spawn_all("dist", "jobs.txt", False, "mtv")
     fps.spawn_all("collect", "jobs.txt", False, "mtv")
     assert called["collect"] >= 2
-
-
-def test_kiss_cov_metric_and_multi_turbo_units():
-    from types import SimpleNamespace
-
-    from optimizer.multi_turbo_enn_allocation import allocated_proposal_plan
-    from optimizer.multi_turbo_enn_scoring import score_multi_candidates
-    from optimizer.multi_turbo_enn_state import load_multi_state
-    from optimizer.multi_turbo_enn_utils import call_multi_designer
-    from optimizer.trust_region_config import MetricShapedTRConfig
-
-    cfg_metric = MetricShapedTRConfig(geometry="enn_metric_shaped", metric_sampler="full")
-    assert cfg_metric.length_init > 0.0
-    assert cfg_metric.length_min > 0.0
-    assert cfg_metric.length_max > cfg_metric.length_min
-
-    tr_metric = cfg_metric.build(num_dim=3, rng=np.random.default_rng(10))
-    tr_metric.observe_local_geometry(
-        delta_x=np.eye(3, dtype=float),
-        weights=np.ones((3,), dtype=float),
-    )
-    tr_metric.restart()
-
-    cfg_grad = MetricShapedTRConfig(geometry="enn_grad_metric_shaped")
-    tr_grad = cfg_grad.build(num_dim=3, rng=np.random.default_rng(11))
-    tr_grad.observe_local_geometry(
-        delta_x=np.eye(3, dtype=float),
-        weights=np.ones((3,), dtype=float),
-        delta_y=np.array([1.0, 0.5, -0.25], dtype=float),
-    )
-
-    cfg_ell = MetricShapedTRConfig(geometry="enn_true_ellipsoid", metric_sampler="full")
-    tr_ell = cfg_ell.build(num_dim=3, rng=np.random.default_rng(12))
-    tr_ell.restart()
-    x0 = np.array([0.2, 0.2, 0.2], dtype=float)
-    x1 = np.array([0.3, 0.2, 0.2], dtype=float)
-    tr_ell.observe_incumbent_transition(
-        x_center=x0,
-        y_value=1.0,
-        predict_delta=lambda _prev, _cur: 1.0,
-    )
-    tr_ell.observe_incumbent_transition(
-        x_center=x1,
-        y_value=2.0,
-        predict_delta=lambda _prev, _cur: 1.0,
-    )
-
-    plan = allocated_proposal_plan(
-        num_arms=4,
-        num_regions=2,
-        pool_multiplier=2,
-        allocated_num_arms=None,
-        proposal_per_region=None,
-    )
-    assert plan.allocated_num_arms == 4
-    assert plan.proposal_per_region > 0
-    assert len(plan.per_region) == 2
-
-    class _Child:
-        def predict_mu_sigma(self, x):
-            n = x.shape[0]
-            return np.zeros((n,), dtype=float), np.ones((n,), dtype=float) * 0.1
-
-        def best_datum(self):
-            return None
-
-    x_all = np.array([[0.1, 0.2], [0.3, 0.4]], dtype=float)
-    scores = score_multi_candidates(
-        x_all,
-        [0, 0],
-        child_designers=[_Child()],
-        region_data_lens=[1],
-        region_rngs=[np.random.default_rng(13)],
-        acq_type="ucb",
-        rng=np.random.default_rng(14),
-    )
-    assert scores.shape == (2,)
-
-    class _CallPolicy:
-        def __init__(self, x):
-            self._x = np.asarray(x, dtype=float)
-
-        def get_params(self):
-            return self._x
-
-    class _CallChild:
-        def __call__(self, _data, n):
-            return [_CallPolicy([0.1, 0.2]) for _ in range(int(n))]
-
-    call_state = SimpleNamespace(
-        region_data=[[]],
-        shared_prefix_len=0,
-        region_assignments=[],
-        last_region_indices=None,
-        num_told_global=0,
-        allocated_num_arms=None,
-        proposal_per_region=None,
-    )
-    call_designer = SimpleNamespace(
-        _tr_type="morbo",
-        _arm_mode="split",
-        _num_regions=1,
-        _pool_multiplier=2,
-        _designers=[_CallChild()],
-        _state=call_state,
-        _acq_type="ucb",
-        _rng=np.random.default_rng(15),
-        _region_rngs=[np.random.default_rng(16)],
-        _init_regions=lambda _data, _num_arms: None,
-        _set_telemetry=lambda _telemetry: None,
-    )
-    policies = call_multi_designer(call_designer, [], num_arms=1)
-    assert len(policies) == 1
-
-    load_state = SimpleNamespace(
-        region_data=[],
-        shared_prefix_len=0,
-        region_assignments=[],
-        last_region_indices=None,
-        num_told_global=0,
-        allocated_num_arms=None,
-        proposal_per_region=None,
-    )
-
-    def _init_regions_for_load(_data, _num_arms):
-        load_designer._region_rngs = [np.random.default_rng(17)]
-        load_state.region_data = [[]]
-
-    load_designer = SimpleNamespace(
-        _rng=np.random.default_rng(18),
-        _region_rngs=[],
-        _num_regions=1,
-        _strategy="shared_data",
-        _designers=[],
-        _state=load_state,
-        _init_regions=_init_regions_for_load,
-    )
-    load_multi_state(
-        load_designer,
-        {
-            "shared_prefix_len": 1,
-            "num_told_global": 2,
-            "region_assignments": [],
-            "last_region_indices": [0],
-            "allocated_num_arms": 2,
-            "proposal_per_region": 4,
-            "region_states": [],
-        },
-        data=["a", "b"],
-    )
-    assert load_designer._state.num_told_global == 2
-
-
-def test_kiss_cov_trust_region_internal_units():
-    from enn.turbo.config.candidate_rv import CandidateRV
-    from optimizer.box_trust_region import FixedLengthTurboTrustRegion
-    from optimizer.metric_trust_region import ENNMetricShapedTrustRegion, MetricShapedTrustRegion
-    from optimizer.pc_rotation import PCRotationResult
-    from optimizer.trust_region_config import MetricShapedTRConfig
-    from optimizer.trust_region_utils import (
-        _AxisAlignedStepSampler,
-        _LengthPolicy,
-        _MetricGeometryModel,
-        _OptionCLengthPolicy,
-        _TrueEllipsoidStepSampler,
-    )
-
-    base_policy = _LengthPolicy()
-    assert base_policy.pending_rho is None
-    assert (
-        base_policy.apply_after_super_update(
-            current_length=1.23,
-            base_length=1.0,
-            fixed_length=None,
-            length_max=2.0,
-        )
-        == 1.23
-    )
-
-    option_c = _OptionCLengthPolicy(rho_bad=0.25, rho_good=0.75, gamma_down=0.5, gamma_up=2.0)
-    option_c.set_acceptance_ratio(pred=1.0, act=-1.0, boundary_hit=False)
-    assert option_c.pending_rho is not None
-    shrunk = option_c.apply_after_super_update(
-        current_length=1.0,
-        base_length=1.0,
-        fixed_length=None,
-        length_max=4.0,
-    )
-    assert shrunk < 1.0
-    assert option_c.pending_rho is None
-
-    cfg_box = MetricShapedTRConfig(geometry="box", fixed_length=1.6)
-    tr_box = cfg_box.build(num_dim=3, rng=np.random.default_rng(100))
-    assert isinstance(tr_box, FixedLengthTurboTrustRegion)
-    tr_box.update(np.array([0.0]), np.array([0.0]))
-    assert np.isclose(float(tr_box.length), 1.6)
-    tr_box.restart(rng=np.random.default_rng(101))
-    assert np.isclose(float(tr_box.length), 1.6)
-
-    cfg_metric = MetricShapedTRConfig(geometry="enn_metric_shaped", metric_sampler="full")
-    tr_metric = cfg_metric.build(num_dim=3, rng=np.random.default_rng(102))
-    assert isinstance(tr_metric, MetricShapedTrustRegion)
-    assert isinstance(tr_metric, ENNMetricShapedTrustRegion)
-    tr_metric.set_gradient_geometry(
-        delta_x=np.eye(3, dtype=float),
-        delta_y=np.array([1.0, 0.5, 0.25], dtype=float),
-        weights=np.ones((3,), dtype=float),
-    )
-
-    model = _MetricGeometryModel(
-        num_dim=3,
-        metric_sampler="full",
-        metric_rank=None,
-        pc_rotation_mode="full",
-        pc_rank=None,
-    )
-    delta_x = np.array(
-        [
-            [1.0, 0.0, 0.0],
-            [0.0, 1.0, 0.0],
-            [0.0, 0.0, 1.0],
-        ],
-        dtype=float,
-    )
-    weights = np.array([1.0, 2.0, 1.0], dtype=float)
-    model.set_gradient_geometry(
-        delta_x=delta_x,
-        delta_y=np.array([1.0, 0.5, 0.2], dtype=float),
-        weights=weights,
-    )
-    centered = delta_x - np.mean(delta_x, axis=0, keepdims=True)
-    model.update_from_cov(
-        centered=centered,
-        weights=np.array([0.25, 0.5, 0.25], dtype=float),
-        cov=np.eye(3, dtype=float),
-    )
-    model.update_from_pc_rotation(
-        PCRotationResult(
-            center=np.zeros((3,), dtype=float),
-            basis=np.eye(3, dtype=float),
-            singular_values=np.array([2.0, 1.0, 0.5], dtype=float),
-            has_rotation=True,
-        )
-    )
-    cov = model.covariance_matrix(jitter=1e-6)
-    assert cov.shape == (3, 3)
-    step = model.build_step(np.zeros((4, 3), dtype=float), np.random.default_rng(103))
-    assert step.shape == (4, 3)
-
-    axis_sampler = _AxisAlignedStepSampler(default_candidate_rv=CandidateRV.UNIFORM)
-    axis_candidates = axis_sampler.generate(
-        x_center=np.full((3,), 0.5, dtype=float),
-        length=0.5,
-        num_dim=3,
-        num_candidates=8,
-        rng=np.random.default_rng(104),
-        candidate_rv=CandidateRV.UNIFORM,
-        sobol_engine=None,
-        num_pert=2,
-        build_step=lambda z, _rng: z,
-    )
-    assert axis_candidates.shape == (8, 3)
-
-    ellipsoid_sampler = _TrueEllipsoidStepSampler(
-        default_candidate_rv=CandidateRV.SOBOL,
-        p_raasp=0.4,
-        radial_mode="boundary",
-    )
-    ellipsoid_candidates = ellipsoid_sampler.generate(
-        x_center=np.full((3,), 0.5, dtype=float),
-        num_dim=3,
-        num_candidates=8,
-        length=0.25,
-        rng=np.random.default_rng(105),
-        candidate_rv=CandidateRV.UNIFORM,
-        covariance_matrix=np.eye(3, dtype=float),
-    )
-    assert ellipsoid_candidates.shape == (8, 3)
-    assert np.all(ellipsoid_candidates >= -1e-10)
-    assert np.all(ellipsoid_candidates <= 1.0 + 1e-10)
-
-
-def test_kiss_cov_env_conf_atari_dm():
-    """Cover env_conf_atari_dm lazy-load helpers."""
-    from problems.env_conf_atari_dm import (
-        get_atari_make,
-        get_atari_parsers_and_factories,
-        get_cnn_mlp_policy_factory,
-        get_dm_control_make,
-    )
-
-    cnn_factory = get_cnn_mlp_policy_factory()
-    assert cnn_factory is not None
-
-    parse_fn, agent57_f, cnn_f, gauss_f = get_atari_parsers_and_factories()
-    assert parse_fn is not None
-    assert agent57_f is not None
-    assert cnn_f is not None
-    assert gauss_f is not None
-
-    make_dm = get_dm_control_make()
-    assert callable(make_dm)
-
-    make_atari = get_atari_make()
-    assert callable(make_atari)

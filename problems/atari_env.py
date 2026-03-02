@@ -22,8 +22,6 @@ ATARI_MAX_EPISODE_STEPS = 108000  # 30 min at 60fps, 4 frame skip -> ~27k steps
 
 @dataclass(frozen=True)
 class AtariPreprocessOptions:
-    """Options for Atari preprocessing. Replaces 4 boolean flags."""
-
     terminal_on_life_loss: bool = False
     grayscale_obs: bool = True
     grayscale_newaxis: bool = True

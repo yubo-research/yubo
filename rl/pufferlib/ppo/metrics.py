@@ -8,6 +8,8 @@ from pathlib import Path
 import numpy as np
 import torch.optim as optim
 
+from rl.core.progress import is_due, steps_per_second
+
 from .specs import _FlatBatch, _RuntimeState, _TrainPlan, _UpdateStats
 
 
@@ -44,7 +46,7 @@ def _metric_payload(
     batch: _FlatBatch,
 ) -> dict:
     elapsed = time.time() - state.start_time
-    sps = int(state.global_step / max(1e-6, elapsed))
+    sps = int(max(0.0, steps_per_second(int(state.global_step), float(state.start_time))))
     return {
         "iteration": int(iteration),
         "global_step": int(state.global_step),
@@ -64,9 +66,7 @@ def _metric_payload(
 
 
 def _log_iteration(config, metric: dict) -> None:
-    if int(config.log_interval) <= 0:
-        return
-    if int(metric["iteration"]) % int(config.log_interval) != 0:
+    if not is_due(int(metric["iteration"]), int(config.log_interval)):
         return
     from rl import logger as rl_logger
 

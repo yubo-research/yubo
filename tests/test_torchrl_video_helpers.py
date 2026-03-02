@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from contextlib import contextmanager
 from pathlib import Path
 from types import SimpleNamespace
@@ -316,3 +317,66 @@ def test_render_policy_videos_direct(tmp_path):
         seed_base=0,
     )
     assert video_dir.exists()
+
+
+def test_render_policy_videos_skips_headless_video_error(monkeypatch, tmp_path, capsys):
+    env_conf = _EnvConfStub(max_steps=2, gym_conf=True)
+
+    def policy(_s):
+        return np.array([0.0, 0.0], dtype=np.float32)
+
+    def _fake_rollout(_env_conf, _policy, *, seed, render_video, video_dir, video_prefix):
+        _ = seed, video_dir, video_prefix
+        if render_video:
+            raise RuntimeError("X11: The DISPLAY environment variable is missing")
+        return 1.0
+
+    monkeypatch.setattr("common.video.rollout_episode", _fake_rollout)
+    render_policy_videos(
+        env_conf,
+        policy,
+        video_dir=Path(tmp_path) / "videos",
+        video_prefix="test",
+        num_episodes=2,
+        num_video_episodes=1,
+        episode_selection="best",
+        seed_base=0,
+    )
+    out = capsys.readouterr().out
+    assert "skipping video capture" in out
+
+
+def test_render_policy_videos_retries_with_headless_gl_backend(monkeypatch, tmp_path, capsys):
+    env_conf = _EnvConfStub(max_steps=2, gym_conf=True)
+
+    def policy(_s):
+        return np.array([0.0, 0.0], dtype=np.float32)
+
+    calls = {"render": 0}
+
+    def _fake_rollout(_env_conf, _policy, *, seed, render_video, video_dir, video_prefix):
+        _ = seed, video_dir, video_prefix
+        if not render_video:
+            return 1.0
+        calls["render"] += 1
+        if os.environ.get("MUJOCO_GL") != "egl":
+            raise RuntimeError("X11: The DISPLAY environment variable is missing")
+        return 0.0
+
+    monkeypatch.setattr("common.video._video_gl_candidates", lambda: [None, "egl"])
+    monkeypatch.setattr("common.video.rollout_episode", _fake_rollout)
+
+    render_policy_videos(
+        env_conf,
+        policy,
+        video_dir=Path(tmp_path) / "videos",
+        video_prefix="test",
+        num_episodes=2,
+        num_video_episodes=1,
+        episode_selection="best",
+        seed_base=0,
+    )
+    out = capsys.readouterr().out
+    assert calls["render"] == 2
+    assert "using MUJOCO_GL=egl" in out
+    assert "skipping video capture" not in out

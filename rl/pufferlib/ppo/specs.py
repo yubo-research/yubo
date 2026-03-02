@@ -11,6 +11,19 @@ import torch.nn as nn
 from torch.distributions import Normal
 from torch.distributions.categorical import Categorical
 
+from rl.backbone import init_linear_layers as _init_linear_layers_shared
+from rl.core.continuous_actions import normalize_action_bounds as _normalize_action_bounds_shared
+from rl.core.continuous_actions import (
+    scale_action_tensor_to_env as _scale_action_tensor_to_env_shared,
+)
+from rl.core.continuous_actions import (
+    unscale_action_tensor_from_env as _unscale_action_tensor_from_env_shared,
+)
+
+
+def normalize_action_bounds(low: np.ndarray, high: np.ndarray, dim: int) -> tuple[np.ndarray, np.ndarray]:
+    return _normalize_action_bounds_shared(low, high, dim)
+
 
 @dataclasses.dataclass(frozen=True)
 class _ObservationSpec:
@@ -102,16 +115,15 @@ class _ActorCritic(nn.Module):
 
     def _to_env_action(self, action_norm: torch.Tensor) -> torch.Tensor:
         view_shape = (1,) * (action_norm.ndim - 1) + (action_norm.shape[-1],)
-        scale = self.action_scale.view(view_shape)
-        bias = self.action_bias.view(view_shape)
-        return bias + scale * action_norm
+        low = self.action_low.view(view_shape)
+        high = self.action_high.view(view_shape)
+        return _scale_action_tensor_to_env_shared(action_norm, low, high, clip=True)
 
     def _to_norm_action(self, action_env: torch.Tensor) -> torch.Tensor:
         view_shape = (1,) * (action_env.ndim - 1) + (action_env.shape[-1],)
         low = self.action_low.view(view_shape)
         high = self.action_high.view(view_shape)
-        width = torch.clamp(high - low, min=1e-8)
-        action_norm = 2.0 * (action_env - low) / width - 1.0
+        action_norm = _unscale_action_tensor_from_env_shared(action_env, low, high, clip=True)
         return torch.clamp(action_norm, -1.0 + 1e-6, 1.0 - 1e-6)
 
     def _squashed_log_prob(
@@ -214,8 +226,4 @@ class _UpdateStats:
 
 
 def init_linear(module: nn.Module, gain: float) -> None:
-    for m in module.modules():
-        if isinstance(m, nn.Linear):
-            nn.init.orthogonal_(m.weight, gain=gain)
-            if m.bias is not None:
-                nn.init.zeros_(m.bias)
+    _init_linear_layers_shared(module, gain=float(gain))

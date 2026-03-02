@@ -2,17 +2,14 @@ from __future__ import annotations
 
 import time
 from contextlib import contextmanager
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import torch
 from tensordict import TensorDict
 
 from rl import logger as rl_logger
-
-
-def is_due(step: int, interval: Optional[int]) -> bool:
-    return interval is not None and int(interval) > 0 and step % int(interval) == 0
+from rl.core.progress import is_due
 
 
 def as_float32_observation(observation: np.ndarray) -> np.ndarray:
@@ -127,30 +124,29 @@ def evaluate_heldout_if_enabled(
     evaluate_for_best: Any,
     heldout_i_noise: int = 99999,
 ) -> float | None:
-    if config.num_denoise_passive_eval is None or train_state.best_actor_state is None:
-        return None
-    with temporary_actor_state(
-        modules,
-        train_state.best_actor_state,
-        capture_actor_state=capture_actor_state,
-        restore_actor_state=restore_actor_state,
-    ):
-        best_eval_policy = eval_policy_factory(modules, env_setup, device)
-        env_conf = get_env_conf(
-            config.env_tag,
-            problem_seed=env_setup.problem_seed,
-            noise_seed_0=env_setup.noise_seed_0,
-            from_pixels=bool(getattr(getattr(env_setup, "env_conf", None), "from_pixels", False)),
-            pixels_only=bool(getattr(getattr(env_setup, "env_conf", None), "pixels_only", True)),
-        )
-        return float(
-            evaluate_for_best(
-                env_conf,
-                best_eval_policy,
-                config.num_denoise_passive_eval,
-                i_noise=heldout_i_noise,
-            )
-        )
+    sac_eval = __import__("rl.core.sac_eval", fromlist=["evaluate_heldout_with_best_actor"])
+    best_eval_policy = eval_policy_factory(modules, env_setup, device)
+    env_conf = get_env_conf(
+        config.env_tag,
+        problem_seed=env_setup.problem_seed,
+        noise_seed_0=env_setup.noise_seed_0,
+        from_pixels=bool(getattr(getattr(env_setup, "env_conf", None), "from_pixels", False)),
+        pixels_only=bool(getattr(getattr(env_setup, "env_conf", None), "pixels_only", True)),
+    )
+    return sac_eval.evaluate_heldout_with_best_actor(
+        best_actor_state=train_state.best_actor_state,
+        num_denoise_passive_eval=config.num_denoise_passive_eval,
+        heldout_i_noise=int(heldout_i_noise),
+        with_actor_state=lambda snapshot: temporary_actor_state(
+            modules,
+            snapshot,
+            capture_actor_state=capture_actor_state,
+            restore_actor_state=restore_actor_state,
+        ),
+        evaluate_for_best=evaluate_for_best,
+        eval_env_conf=env_conf,
+        eval_policy=best_eval_policy,
+    )
 
 
 def evaluate_if_due(
@@ -182,9 +178,13 @@ def evaluate_if_due(
         eval_noise_mode=getattr(config, "eval_noise_mode", None),
     )
     train_state.last_eval_return = evaluate_actor(config, env_setup, modules, device=device, eval_seed=plan.eval_seed)
-    if train_state.last_eval_return > train_state.best_return:
-        train_state.best_return = float(train_state.last_eval_return)
-        train_state.best_actor_state = capture_actor_state(modules)
+    sac_eval = __import__("rl.core.sac_eval", fromlist=["update_best_actor_if_improved"])
+    train_state.best_return, train_state.best_actor_state, _ = sac_eval.update_best_actor_if_improved(
+        eval_return=float(train_state.last_eval_return),
+        best_return=float(train_state.best_return),
+        best_actor_state=train_state.best_actor_state,
+        capture_actor_state=lambda: capture_actor_state(modules),
+    )
 
     train_state.last_heldout_return = evaluate_heldout(
         config,
@@ -194,22 +194,23 @@ def evaluate_if_due(
         device=device,
         heldout_i_noise=plan.heldout_i_noise,
     )
-    elapsed = time.time() - start_time
-    steps_per_second = float(step / elapsed) if elapsed > 0 else float("nan")
+    now = float(time.time())
+    sac_metrics = __import__("rl.core.sac_metrics", fromlist=["build_eval_metric_record"])
+    record = sac_metrics.build_eval_metric_record(
+        step=int(step),
+        eval_return=float(train_state.last_eval_return),
+        heldout_return=train_state.last_heldout_return,
+        best_return=float(train_state.best_return),
+        loss_actor=float(latest_losses["loss_actor"]),
+        loss_critic=float(latest_losses["loss_critic"]),
+        loss_alpha=float(latest_losses["loss_alpha"]),
+        total_updates=int(total_updates),
+        started_at=float(start_time),
+        now=now,
+    )
     rl_logger.append_metrics(
         training_setup.metrics_path,
-        {
-            "step": int(step),
-            "eval_return": float(train_state.last_eval_return),
-            "heldout_return": train_state.last_heldout_return,
-            "best_return": float(train_state.best_return),
-            "loss_actor": latest_losses["loss_actor"],
-            "loss_critic": latest_losses["loss_critic"],
-            "loss_alpha": latest_losses["loss_alpha"],
-            "total_updates": int(total_updates),
-            "time_seconds": elapsed,
-            "steps_per_second": steps_per_second,
-        },
+        record,
     )
 
 
@@ -225,26 +226,21 @@ def log_if_due(
     if not is_due(step, config.log_interval_steps):
         return
 
-    elapsed = time.time() - start_time
-    eval_return = train_state.last_eval_return if np.isfinite(train_state.last_eval_return) else None
-    heldout_return = train_state.last_heldout_return
-    best_return = train_state.best_return if np.isfinite(train_state.best_return) else 0.0
-    rl_logger.log_eval_iteration(
-        0,
-        0,
-        1,
-        eval_return=eval_return,
-        heldout_return=heldout_return,
-        best_return=best_return,
-        algo_metrics={
-            "actor": latest_losses["loss_actor"],
-            "critic": latest_losses["loss_critic"],
-            "alpha": latest_losses["loss_alpha"],
-        },
-        algo_name="sac",
-        elapsed=elapsed,
-        step_override=step,
+    now = float(time.time())
+    sac_metrics = __import__("rl.core.sac_metrics", fromlist=["build_log_eval_iteration_kwargs"])
+    kwargs = sac_metrics.build_log_eval_iteration_kwargs(
+        step=int(step),
+        frames_per_batch=1,
+        started_at=float(start_time),
+        now=now,
+        eval_return=float(train_state.last_eval_return),
+        heldout_return=train_state.last_heldout_return,
+        best_return=float(train_state.best_return),
+        loss_actor=float(latest_losses["loss_actor"]),
+        loss_critic=float(latest_losses["loss_critic"]),
+        loss_alpha=float(latest_losses["loss_alpha"]),
     )
+    rl_logger.log_eval_iteration(**kwargs)
 
 
 def checkpoint_if_due(

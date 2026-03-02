@@ -5,20 +5,12 @@ import torch
 import torch.nn as nn
 from torch.distributions import Normal
 
-from rl.backbone import BackboneSpec, HeadSpec, build_backbone, build_mlp_head
+from rl.backbone import BackboneSpec, HeadSpec, build_backbone, build_mlp_head, init_linear_layers
 
 
 def _atanh(x, eps: float = 1e-6):
     x = torch.clamp(x, -1 + eps, 1 - eps)
     return 0.5 * (torch.log1p(x) - torch.log1p(-x))
-
-
-def _init_linear(module: nn.Module) -> None:
-    for m in module.modules():
-        if isinstance(m, nn.Linear):
-            nn.init.orthogonal_(m.weight, gain=0.5)
-            if m.bias is not None:
-                nn.init.zeros_(m.bias)
 
 
 @dataclass
@@ -70,11 +62,11 @@ class ActorCritic(nn.Module):
         self.critic_head = build_mlp_head(specs.critic_head, critic_feat_dim, 1)
         self.log_std = nn.Parameter(torch.full((act_dim,), float(specs.log_std_init)))
 
-        _init_linear(self.actor_backbone)
+        init_linear_layers(self.actor_backbone, gain=0.5)
         if not specs.share_backbone:
-            _init_linear(self.critic_backbone)
-        _init_linear(self.actor_head)
-        _init_linear(self.critic_head)
+            init_linear_layers(self.critic_backbone, gain=0.5)
+        init_linear_layers(self.actor_head, gain=0.5)
+        init_linear_layers(self.critic_head, gain=0.5)
 
     def actor_num_params(self) -> int:
         params = list(self.actor_backbone.parameters()) + list(self.actor_head.parameters()) + [self.log_std]

@@ -2,7 +2,7 @@ from types import SimpleNamespace
 
 import numpy as np
 
-from rl.torchrl.common.env_contract import (
+from rl.core.env_contract import (
     ActionContract,
     EnvIOContract,
     ObservationContract,
@@ -99,3 +99,17 @@ def test_resolve_action_contract_direct_discrete_and_continuous():
     assert continuous.dim == 2
     assert np.allclose(continuous.low, continuous_space.low)
     assert np.allclose(continuous.high, continuous_space.high)
+
+
+def test_resolve_action_contract_normalizes_unbounded_and_scalar_bounds():
+    f32_max = np.finfo(np.float32).max
+    continuous_space = SimpleNamespace(
+        shape=(3,),
+        low=np.array([-f32_max], dtype=np.float32),
+        high=np.array([f32_max], dtype=np.float32),
+    )
+    continuous = resolve_action_contract(continuous_space)
+    assert continuous.kind == "continuous"
+    assert continuous.dim == 3
+    assert np.allclose(continuous.low, np.array([-1.0, -1.0, -1.0], dtype=np.float32))
+    assert np.allclose(continuous.high, np.array([1.0, 1.0, 1.0], dtype=np.float32))
