@@ -6,10 +6,16 @@ from ops.uhd_config import EarlyRejectConfig
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
 _PROJECT_DIRS = ("ops", "optimizer", "problems", "common", "sampling", "embedding")
+_ENN_ROOT = _PROJECT_ROOT.parents[0] / "enn"
 
 _image = (
     modal.Image.debian_slim(python_version="3.11.9")
-    .apt_install("swig")
+    .apt_install("swig", "curl", "build-essential")
+    # Install Rust toolchain for building enn_rust extension
+    .run_commands(
+        "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y",
+        'echo "export PATH=$HOME/.cargo/bin:$PATH" >> ~/.bashrc',
+    )
     .pip_install(
         "torch==2.3.1",
         "torchvision==0.18.1",
@@ -20,11 +26,20 @@ _image = (
         "mujoco==3.3.3",
         "scipy==1.15.3",
         "click==8.3.1",
+        "maturin>=1.0",  # Required to build Rust extension
     )
     .env({"PYTHONPATH": "/root"})
 )
 for _d in _PROJECT_DIRS:
     _image = _image.add_local_dir(str(_PROJECT_ROOT / _d), remote_path=f"/root/{_d}")
+# Add the full enn project and build the Rust extension
+_image = _image.add_local_dir(str(_ENN_ROOT), remote_path="/root/enn")
+# Build enn_rust extension wheel and install both the wheel and the enn Python package
+# maturin build outputs to target/wheels/; use find to locate the wheel
+_image = _image.run_commands(
+    ". $HOME/.cargo/env && cd /root/enn/rust/crates/ennbo-py && maturin build --release",
+    "pip install $(find /root/enn/rust -path '*/wheels/*.whl' | head -1) && pip install -e /root/enn",
+)
 
 
 class _Tee:

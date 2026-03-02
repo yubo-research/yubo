@@ -1,6 +1,5 @@
 from pathlib import Path
 
-import enn
 import modal
 
 
@@ -46,9 +45,11 @@ def mk_image():
     )
 
     image = image.env({"PYTHONPATH": "/root"})
-    ennbo_path = Path(enn.__file__).parent
-    print("ADDING: ", ennbo_path)
-    image = image.add_local_dir(str(ennbo_path), remote_path="/root/enn")
+    image = image.run_commands(
+        "git clone --depth 1 https://github.com/yubo-research/enn.git /root/enn_src",
+        "pip install -e /root/enn_src",
+        "python -c \"import enn; from enn import create_optimizer; print('enn import OK (python backend)')\"",
+    )
 
     project_root = Path(__file__).resolve().parents[1]
     for d in [

@@ -6,10 +6,12 @@ from .designer_registry import (
     _SimpleContext,
 )
 from .designer_spec import (
-    DesignerCatalogEntry,
-    DesignerOptionSpec,
     DesignerSpec,
     parse_designer_spec,
+)
+from .designer_types import (
+    DesignerCatalogEntry,
+    DesignerOptionSpec,
 )
 
 __all__ = [

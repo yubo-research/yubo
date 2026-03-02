@@ -156,7 +156,8 @@ class Turbo1Standard:
 
         # print("TURBO_DEVICE:", device)
 
-        self._surrogate_type = surrogate_type
+        # Backward-compatible alias used by older registry defaults/configs.
+        self._surrogate_type = "original" if surrogate_type == "gp" else surrogate_type
 
         # Save function information
         self.f = f

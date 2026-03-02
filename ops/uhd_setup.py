@@ -118,6 +118,27 @@ def _preload_mnist_train_to_device(
 
 
 def _parse_enn_cfg(enn: dict[str, object] | None) -> tuple[bool, ENNImputerConfig]:
+    # Handle ENNConfig dataclass by converting to dict first
+    if hasattr(enn, "__dataclass_fields__"):
+        from ops.uhd_config_types import ENNConfig
+
+        if isinstance(enn, ENNConfig):
+            enn = {
+                "enn_minus_impute": enn.minus_impute,
+                "enn_d": enn.d,
+                "enn_s": enn.s,
+                "enn_jl_seed": enn.jl_seed,
+                "enn_k": enn.k,
+                "enn_fit_interval": enn.fit_interval,
+                "enn_warmup_real_obs": enn.warmup_real_obs,
+                "enn_refresh_interval": enn.refresh_interval,
+                "enn_se_threshold": enn.se_threshold,
+                "enn_target": enn.target,
+                "enn_num_candidates": enn.num_candidates,
+                "enn_select_interval": enn.select_interval,
+                "enn_embedder": enn.embedder,
+                "enn_gather_t": enn.gather_t,
+            }
     enn = {} if enn is None else dict(enn)
     enabled = bool(enn.get("enn_minus_impute", False))
     cfg = ENNImputerConfig(
@@ -577,6 +598,7 @@ def run_simple_loop(
         _run_simple_gym(
             env,
             env_conf,
+            env_tag,
             num_rounds,
             optimizer=optimizer,
             sigma=sigma,
@@ -668,6 +690,7 @@ def _run_simple_torch(
 def _run_simple_gym(
     env,
     env_conf,
+    env_tag,
     num_rounds,
     *,
     optimizer,
@@ -692,6 +715,23 @@ def _run_simple_gym(
             num_rounds,
             optimizer=optimizer,
             sigma=sigma,
+            log_interval=log_interval,
+            target_accuracy=target_accuracy,
+            num_denoise=num_denoise,
+            be=be,
+        )
+        return
+
+    # Try make_torch_env for MLP policies to enable in-place perturbation
+    torch_env_wrapper = env_conf.make_torch_env()
+    if hasattr(torch_env_wrapper, "torch_env"):
+        _run_simple_gym_torch(
+            env_conf,
+            env_tag,
+            num_rounds,
+            optimizer=optimizer,
+            sigma=sigma,
+            num_dim_target=num_dim_target,
             log_interval=log_interval,
             target_accuracy=target_accuracy,
             num_denoise=num_denoise,
@@ -815,6 +855,81 @@ def _run_simple_gym_np(
         )
 
     print(f"UHD-Np: num_params = {dim}, optimizer = {optimizer}")
+    _run_simple_iterations(
+        uhd, evaluate_fn=evaluate_fn, accuracy_fn=None, num_rounds=num_rounds, log_interval=log_interval, accuracy_interval=0, target_accuracy=target_accuracy
+    )
+
+
+def _run_simple_gym_torch(
+    env_conf,
+    env_tag,
+    num_rounds,
+    *,
+    optimizer,
+    sigma,
+    num_dim_target,
+    log_interval,
+    target_accuracy,
+    num_denoise,
+    be: BEConfig | None = None,
+) -> None:
+    """Run simple loop for gym environments with torch MLP policies using in-place perturbation."""
+    from common.seed_all import seed_all
+
+    if env_conf.problem_seed is not None:
+        seed_all(int(env_conf.problem_seed) + 27)
+
+    device = torch.device("cpu")
+    num_state = env_conf.gym_conf.state_space.shape[0]
+    num_action = _action_dim(env_conf.action_space)
+    noise_seed_0 = env_conf.noise_seed_0 or 0
+
+    # Use make_torch_env to get proper torch env with shared module for in-place perturbation
+    env = env_conf.make_torch_env()
+    torch_env = env.torch_env()
+    module = torch_env.module.to(device)
+    module.train()
+
+    # For MLPPolicy, the module is already a callable policy (returns numpy).
+    # For raw modules, wrap with TorchPolicy.
+    if hasattr(module, "forward"):
+        # Module is a policy class like MLPPolicy - use it directly
+        policy = module
+    else:
+        # Raw nn.Module - wrap with TorchPolicy
+        from problems.torch_policy import TorchPolicy
+
+        policy = TorchPolicy(module, env_conf)
+
+    dim = sum(p.numel() for p in module.parameters())
+    perturbator = _make_perturbator(module, num_dim_target)
+
+    embed_module = getattr(module, "model", module)
+    embed_bounds = _gym_embed_bounds(num_state)
+    uhd = _make_simple_optimizer(
+        module,
+        perturbator,
+        optimizer=optimizer,
+        sigma=sigma,
+        dim=dim,
+        embed_module=embed_module,
+        embed_bounds=embed_bounds,
+        be=be,
+    )
+
+    frozen = bool(getattr(env_conf, "frozen_noise", False))
+
+    def evaluate_fn():
+        return _evaluate_gym_with_denoise(
+            env_conf,
+            policy,
+            eval_seed=uhd.eval_seed,
+            noise_seed_0=noise_seed_0,
+            frozen=frozen,
+            num_denoise=num_denoise,
+        )
+
+    print(f"UHD-Simple: num_params = {dim}, optimizer = {optimizer}, state={num_state}, action={num_action}")
     _run_simple_iterations(
         uhd, evaluate_fn=evaluate_fn, accuracy_fn=None, num_rounds=num_rounds, log_interval=log_interval, accuracy_interval=0, target_accuracy=target_accuracy
     )

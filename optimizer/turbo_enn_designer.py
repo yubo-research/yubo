@@ -21,10 +21,28 @@ from enn.turbo.config.trust_region import (
     TrustRegionConfig,
     TurboTRConfig,
 )
-from enn.turbo.optimizer import create_optimizer
 
 import common.all_bounds as all_bounds
 from optimizer.designer_asserts import assert_scalar_rreturn
+
+
+def _create_optimizer_auto(bounds, config, rng):
+    """Create optimizer using automatic backend selection (Rust preferred)."""
+    try:
+        from enn import create_optimizer
+    except ImportError as exc:
+        # Modal/remote images may not have enn_rust; fall back to Python optimizer.
+        print(f"[TurboENNDesigner] Rust backend unavailable ({exc}); falling back to Python backend")
+        return _create_optimizer_py(bounds=bounds, config=config, rng=rng)
+
+    return create_optimizer(bounds=bounds, config=config, rng=rng)
+
+
+def _create_optimizer_py(bounds, config, rng):
+    """Create optimizer forcing Python backend."""
+    from enn.turbo.optimizer import create_optimizer
+
+    return create_optimizer(bounds=bounds, config=config, rng=rng)
 
 
 class TurboENNDesigner:
@@ -43,6 +61,7 @@ class TurboENNDesigner:
         num_candidates: Optional[int] = None,
         candidate_rv: Optional[str] = None,
         num_metrics: Optional[int] = None,
+        use_python: bool = False,
     ):
         self._policy = policy
         if turbo_mode not in ("turbo-enn", "turbo-zero", "turbo-one", "lhd-only"):
@@ -61,6 +80,7 @@ class TurboENNDesigner:
         self._num_candidates = num_candidates
         self._candidate_rv = candidate_rv
         self._num_metrics = num_metrics
+        self._use_python = use_python
 
         self._turbo = None
         self._num_arms = None
@@ -174,7 +194,12 @@ class TurboENNDesigner:
         bounds = np.array([[all_bounds.x_low, all_bounds.x_high]] * num_dim)
         num_metrics = self._resolve_num_metrics(data)
         config = self._make_config(num_init, num_metrics)
-        self._turbo = create_optimizer(bounds=bounds, config=config, rng=self._rng)
+        create_opt = _create_optimizer_py if self._use_python else _create_optimizer_auto
+        self._turbo = create_opt(bounds=bounds, config=config, rng=self._rng)
+        # Debug: show which backend is being used
+        opt_type = type(self._turbo).__name__
+        backend = "Rust" if hasattr(self._turbo, "_inner") else "Python"
+        print(f"[TurboENNDesigner] Optimizer type: {opt_type} ({backend} backend)")
 
     def _resolve_num_metrics(self, data):
         num_metrics = self._num_metrics

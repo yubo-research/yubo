@@ -2,7 +2,7 @@ import importlib
 from functools import partial
 
 from .designer_errors import NoSuchDesignerError
-from .designer_spec import DesignerOptionSpec
+from .designer_types import DesignerOptionSpec
 
 
 class _SimpleContext:
@@ -62,7 +62,7 @@ def _require_str_in(opts: dict, key: str, allowed: set[str], *, example: str) ->
     return v
 
 
-def _turbo_ref(ctx: _SimpleContext, *, ard: bool, surrogate_type: str = "gp"):
+def _turbo_ref(ctx: _SimpleContext, *, ard: bool, surrogate_type: str = "original"):
     TuRBORefDesigner = _load_symbol("optimizer.turbo_ref_designer", "TuRBORefDesigner")
     return TuRBORefDesigner(
         ctx.policy,
@@ -173,6 +173,33 @@ def _build_turbo_enn(ctx: _SimpleContext, kind: str):
             num_fit_candidates=None,
         )
     return _turbo_enn(ctx, turbo_mode="turbo-enn", k=10, num_keep=ctx.num_keep_val, tr_type="morbo")
+
+
+def _build_turbo_enn_py(ctx: _SimpleContext, kind: str):
+    """Build TurboENNDesigner with Python backend (force Python, no Rust)."""
+    if kind == "turbo_py-enn-p":
+        return _turbo_enn(
+            ctx,
+            turbo_mode="turbo-enn",
+            k=10,
+            num_keep=ctx.num_keep_val,
+            num_fit_samples=None,
+            num_fit_candidates=None,
+            acq_type="pareto",
+            use_python=True,
+        )
+    if kind == "turbo_py-enn-fit-ucb":
+        return _turbo_enn(
+            ctx,
+            turbo_mode="turbo-enn",
+            k=10,
+            num_keep=ctx.num_keep_val,
+            num_fit_samples=100,
+            num_fit_candidates=100,
+            acq_type="ucb",
+            use_python=True,
+        )
+    raise NoSuchDesignerError(f"Unknown turbo_py kind: {kind}")
 
 
 def _build_mts(ctx: _SimpleContext, kind: str):
@@ -366,6 +393,8 @@ _SIMPLE_BUILDERS = {
     "turbo-enn": partial(_build_turbo_enn, kind="turbo-enn"),
     "turbo-enn-p": partial(_build_turbo_enn, kind="turbo-enn-p"),
     "turbo-enn-fit-ucb": partial(_build_turbo_enn, kind="turbo-enn-fit-ucb"),
+    "turbo_py-enn-p": partial(_build_turbo_enn_py, kind="turbo_py-enn-p"),
+    "turbo_py-enn-fit-ucb": partial(_build_turbo_enn_py, kind="turbo_py-enn-fit-ucb"),
     "turbo-zero": partial(_build_turbo_enn, kind="turbo-zero"),
     "turbo-one": partial(_build_turbo_enn, kind="turbo-one"),
     "lhd_only": partial(_build_turbo_enn, kind="lhd_only"),

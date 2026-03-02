@@ -1,5 +1,6 @@
 from .gaussian_perturbator import GaussianPerturbator, apply_weight_decay
 from .lr_scheduler import LRScheduler
+from .step_size_adapter import StepSizeAdapter
 
 
 class _KalmanFilter:
@@ -63,7 +64,7 @@ class UHDBSZO:
         self._perturbator = perturbator
         self._dim = dim
         self._lr_scheduler = lr_scheduler
-        self._epsilon = epsilon
+        self._adapter = StepSizeAdapter(dim=dim, sigma_0=epsilon)
         self._k = k
         self._weight_decay = weight_decay
 
@@ -75,6 +76,7 @@ class UHDBSZO:
         self._f0 = 0.0
 
         self._y_best: float | None = None
+        self._y_best_before: float | None = None  # Track for sigma adaptation
         self._mu_prev = 0.0
         self._se_prev = 0.0
 
@@ -84,7 +86,7 @@ class UHDBSZO:
 
     @property
     def epsilon(self) -> float:
-        return self._epsilon
+        return self._adapter.sigma
 
     @property
     def y_best(self) -> float | None:
@@ -126,11 +128,16 @@ class UHDBSZO:
         if self._phase == 0:
             return
         i = self._phase - 1
-        self._perturbator.perturb(self.perturb_seed(i), self._epsilon)
+        self._perturbator.perturb(self.perturb_seed(i), self._adapter.sigma)
 
     def tell(self, mu: float, se: float) -> None:
         self._mu_prev = mu
         self._se_prev = se
+
+        # Track y_best before potential update (for sigma adaptation)
+        if self._phase == 0:
+            self._y_best_before = self._y_best
+
         if self._y_best is None or mu > self._y_best:
             self._y_best = mu
 
@@ -142,7 +149,7 @@ class UHDBSZO:
 
         kf = self._kf
         i = self._phase - 1
-        y_i = (mu - self._f0) / self._epsilon
+        y_i = (mu - self._f0) / self._adapter.sigma
         kf.Y[i] = y_i
         self._perturbator.unperturb()
 
@@ -153,6 +160,9 @@ class UHDBSZO:
         if self._phase == self._k:
             kf.adaptive_step()
             self._apply_gradient()
+            # Adapt sigma based on whether y_best improved this step
+            improved = self._y_best is not None and self._y_best_before is not None and self._y_best > self._y_best_before
+            self._adapter.update(accepted=improved)
             self._lr_scheduler.step()
             self._eval_seed += 1
             self._perturb_base += self._k
