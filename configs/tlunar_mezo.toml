@@ -1,0 +1,10 @@
+[uhd]
+env_tag = "tlunar:fn"
+num_rounds = 10000
+optimizer = "simple"
+lr = 0.1
+perturb = "dense"
+log_interval = 10
+problem_seed = 42
+noise_seed_0 = 0
+num_denoise = 1
