@@ -7,6 +7,7 @@ import pytest
 from experiments.experiment_sampler import (
     ExperimentConfig,
     RunConfig,
+    _scan_local_parallel,
     extract_trace_fns,
     mk_replicates,
     post_process,
@@ -115,7 +116,7 @@ def test_prep_d_args():
     assert results[0].opt_name == "ucb"
 
 
-@patch("experiments.experiment_sampler.get_env_conf")
+@patch("problems.env_conf.get_env_conf")
 @patch("experiments.experiment_sampler.data_is_done")
 def test_mk_replicates(mock_data_is_done, mock_get_env_conf):
     mock_data_is_done.return_value = False
@@ -145,7 +146,7 @@ def test_mk_replicates(mock_data_is_done, mock_get_env_conf):
     assert results[0].env_conf == mock_env_conf
 
 
-@patch("experiments.experiment_sampler.get_env_conf")
+@patch("problems.env_conf.get_env_conf")
 @patch("experiments.experiment_sampler.data_is_done")
 def test_mk_replicates_skips_done(mock_data_is_done, mock_get_env_conf):
     mock_data_is_done.return_value = True
@@ -169,7 +170,7 @@ def test_mk_replicates_skips_done(mock_data_is_done, mock_get_env_conf):
 
 def test_mk_replicates_creates_out_dir():
     with tempfile.TemporaryDirectory() as tmpdir:
-        with patch("experiments.experiment_sampler.get_env_conf") as mock_get_env_conf:
+        with patch("problems.env_conf.get_env_conf") as mock_get_env_conf:
             with patch("experiments.experiment_sampler.data_is_done") as mock_data_is_done:
                 mock_data_is_done.return_value = False
                 mock_get_env_conf.return_value = MagicMock()
@@ -275,8 +276,8 @@ def test_experiment_config_from_dict_none_denoise():
     assert config.num_denoise is None
 
 
-@patch("experiments.experiment_sampler.Optimizer")
-@patch("experiments.experiment_sampler.default_policy")
+@patch("optimizer.optimizer.Optimizer")
+@patch("problems.env_conf.default_policy")
 @patch("experiments.experiment_sampler.seed_all")
 @patch("experiments.experiment_sampler.torch")
 def test_sample_1(mock_torch, mock_seed_all, mock_default_policy, mock_optimizer_class):
@@ -327,8 +328,8 @@ def test_sample_1(mock_torch, mock_seed_all, mock_default_policy, mock_optimizer
     assert trace_records[0].rreturn == 1.5
 
 
-@patch("experiments.experiment_sampler.Optimizer")
-@patch("experiments.experiment_sampler.default_policy")
+@patch("optimizer.optimizer.Optimizer")
+@patch("problems.env_conf.default_policy")
 @patch("experiments.experiment_sampler.seed_all")
 @patch("experiments.experiment_sampler.torch")
 def test_sample_1_no_trace(mock_torch, mock_seed_all, mock_default_policy, mock_optimizer_class):
@@ -451,6 +452,92 @@ def test_scan_local(mock_sample_1, mock_post_process):
     assert mock_post_process.call_count == 2
     mock_post_process.assert_any_call(mock_collector_log, mock_collector_trace, "/path/a", mock_trace_records)
     mock_post_process.assert_any_call(mock_collector_log, mock_collector_trace, "/path/b", mock_trace_records)
+
+
+@patch("experiments.experiment_sampler.post_process")
+@patch("experiments.experiment_sampler.sample_1")
+def test_scan_local_single_replicate_stays_in_process(mock_sample_1, mock_post_process):
+    mock_sample_1.return_value = (MagicMock(), MagicMock(), MagicMock())
+    run_config = RunConfig(
+        env_conf=MagicMock(),
+        opt_name="ucb",
+        num_rounds=1,
+        num_arms=1,
+        num_denoise=None,
+        num_denoise_passive=None,
+        max_proposal_seconds=None,
+        b_trace=True,
+        trace_fn="/path/one",
+    )
+    run_config.env_conf.env_name = "f:sphere-2d"
+
+    scan_local([run_config], local_workers=8)
+
+    mock_sample_1.assert_called_once()
+    mock_post_process.assert_called_once()
+
+
+def test_scan_local_parallel_closes_pool_on_success(monkeypatch):
+    state = {"close": 0, "terminate": 0, "join": 0}
+
+    class _FakePool:
+        def imap_unordered(self, _fn, items):
+            for _ in items:
+                yield "ok"
+
+        def close(self):
+            state["close"] += 1
+
+        def terminate(self):
+            state["terminate"] += 1
+
+        def join(self):
+            state["join"] += 1
+
+    class _FakeContext:
+        def Pool(self, processes, initializer):
+            assert int(processes) == 2
+            assert initializer is not None
+            return _FakePool()
+
+    monkeypatch.setattr("experiments.experiment_sampler.mp.get_context", lambda *args, **kwargs: _FakeContext())
+    _scan_local_parallel([MagicMock(), MagicMock()], max_workers=2)
+
+    assert state["close"] == 1
+    assert state["terminate"] == 0
+    assert state["join"] == 1
+
+
+def test_scan_local_parallel_terminates_pool_on_keyboard_interrupt(monkeypatch):
+    state = {"close": 0, "terminate": 0, "join": 0}
+
+    class _FakePool:
+        def imap_unordered(self, _fn, _items):
+            raise KeyboardInterrupt
+            yield  # pragma: no cover
+
+        def close(self):
+            state["close"] += 1
+
+        def terminate(self):
+            state["terminate"] += 1
+
+        def join(self):
+            state["join"] += 1
+
+    class _FakeContext:
+        def Pool(self, processes, initializer):
+            assert int(processes) == 2
+            assert initializer is not None
+            return _FakePool()
+
+    monkeypatch.setattr("experiments.experiment_sampler.mp.get_context", lambda *args, **kwargs: _FakeContext())
+    with pytest.raises(KeyboardInterrupt):
+        _scan_local_parallel([MagicMock(), MagicMock()], max_workers=2)
+
+    assert state["close"] == 0
+    assert state["terminate"] == 1
+    assert state["join"] == 1
 
 
 @patch("experiments.experiment_sampler.mk_replicates")
