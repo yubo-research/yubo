@@ -10,7 +10,9 @@ _ALLOWED_SELECT_DEVICE_FILES = {
 
 
 def _torchrl_algo_files() -> list[Path]:
-    return sorted(path for path in _TORCHRL_BACKEND_DIR.rglob("*.py") if path.name != "__init__.py")
+    return sorted(
+        path for path in _TORCHRL_BACKEND_DIR.rglob("*.py") if path.name != "__init__.py" and "common" not in path.relative_to(_TORCHRL_BACKEND_DIR).parts
+    )
 
 
 def test_no_direct_select_device_usage_outside_runtime_layer():

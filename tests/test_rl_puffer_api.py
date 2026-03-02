@@ -129,10 +129,11 @@ def test_puffer_register_delegates_to_registry(monkeypatch):
 
 
 def test_train_ppo_puffer_fake_vector_smoke(monkeypatch, tmp_path: Path):
-    def _fake_import_modules():
-        return object(), _FakeVectorModule, _FakeAtariModule
-
-    monkeypatch.setattr(puffer_ppo_engine, "_import_pufferlib_modules", _fake_import_modules)
+    monkeypatch.setattr(
+        puffer_ppo_engine,
+        "make_vector_env",
+        lambda _cfg: _FakeVecEnv(num_envs=2),
+    )
 
     cfg = pufferlib_ppo.PufferPPOConfig(
         exp_dir=str(tmp_path / "exp"),
@@ -201,10 +202,11 @@ def test_train_ppo_puffer_rejects_invalid_eval_noise_mode():
 
 
 def test_train_ppo_puffer_resume_from_checkpoint(monkeypatch, tmp_path: Path):
-    def _fake_import_modules():
-        return object(), _FakeVectorModule, _FakeAtariModule
-
-    monkeypatch.setattr(puffer_ppo_engine, "_import_pufferlib_modules", _fake_import_modules)
+    monkeypatch.setattr(
+        puffer_ppo_engine,
+        "make_vector_env",
+        lambda _cfg: _FakeVecEnv(num_envs=2),
+    )
 
     first_dir = tmp_path / "exp_first"
     first_cfg = pufferlib_ppo.PufferPPOConfig(
@@ -262,9 +264,6 @@ def test_train_ppo_puffer_resume_from_checkpoint(monkeypatch, tmp_path: Path):
 
 
 def test_train_ppo_puffer_renders_video_when_enabled(monkeypatch, tmp_path: Path):
-    def _fake_import_modules():
-        return object(), _FakeVectorModule, _FakeAtariModule
-
     video_calls: list[dict] = []
 
     def _fake_render_policy_videos(
@@ -290,7 +289,11 @@ def test_train_ppo_puffer_renders_video_when_enabled(monkeypatch, tmp_path: Path
             }
         )
 
-    monkeypatch.setattr(puffer_ppo_engine, "_import_pufferlib_modules", _fake_import_modules)
+    monkeypatch.setattr(
+        puffer_ppo_engine,
+        "make_vector_env",
+        lambda _cfg: _FakeVecEnv(num_envs=2),
+    )
     monkeypatch.setattr(
         puffer_ppo_engine,
         "build_eval_env_conf",

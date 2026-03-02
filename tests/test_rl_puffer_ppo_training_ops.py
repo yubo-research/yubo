@@ -56,12 +56,22 @@ class _OneStepEnv:
 
 
 def test_engine_name_helpers_delegate(monkeypatch):
-    monkeypatch.setattr(ppo_engine, "is_atari_env_tag", lambda tag: tag == "atari:Pong")
-    monkeypatch.setattr(ppo_engine, "to_puffer_game_name", lambda _tag: "pong")
-    monkeypatch.setattr(ppo_engine, "resolve_gym_env_name", lambda _tag: ("Pendulum-v1", {"g": 9.81}))
-    assert ppo_engine.is_atari_env_tag("atari:Pong") is True
-    assert ppo_engine.to_puffer_game_name("atari:Pong") == "pong"
-    assert ppo_engine.resolve_gym_env_name("pendulum") == ("Pendulum-v1", {"g": 9.81})
+    import rl.core.ppo_envs as ppo_envs
+    import rl.pufferlib.vector_env as vector_env
+
+    captured = {}
+
+    def _fake_make_vector_env(config, **kwargs):
+        _ = config
+        captured.update(kwargs)
+        return "vec"
+
+    monkeypatch.setattr(vector_env, "make_vector_env", _fake_make_vector_env)
+    out = ppo_engine.make_vector_env(PufferPPOConfig(env_tag="atari:Pong"))
+    assert out == "vec"
+    assert captured["is_atari_env_tag_fn"] is ppo_envs.is_atari_env_tag
+    assert captured["to_puffer_game_name_fn"] is ppo_envs.to_puffer_game_name
+    assert captured["resolve_gym_env_name_fn"] is ppo_envs.resolve_gym_env_name
 
 
 def test_engine_build_eval_env_conf_wrapper(monkeypatch):
@@ -153,6 +163,8 @@ def test_training_ops_collect_flatten_advantages_update():
 
 
 def test_train_ppo_puffer_impl_calls_run_training(monkeypatch, tmp_path):
+    import rl.pufferlib.ppo.eval as ppo_eval
+
     cfg = PufferPPOConfig(
         exp_dir=str(tmp_path / "exp"),
         env_tag="atari:Pong",
@@ -169,7 +181,7 @@ def test_train_ppo_puffer_impl_calls_run_training(monkeypatch, tmp_path):
     monkeypatch.setattr(ppo_engine, "_build_plan", lambda _cfg: _TrainPlan(2, 2, 4, 2, 2))
     monkeypatch.setattr(ppo_engine, "_prepare_outputs", lambda _cfg: tmp_path / "metrics.jsonl")
     monkeypatch.setattr(ppo_engine, "make_vector_env", lambda _cfg: SimpleNamespace(close=lambda: None))
-    monkeypatch.setattr(ppo_engine.puffer_eval, "validate_eval_config", lambda _cfg: None)
+    monkeypatch.setattr(ppo_eval, "validate_eval_config", lambda _cfg: None)
     monkeypatch.setattr(
         ppo_engine,
         "_run_training",

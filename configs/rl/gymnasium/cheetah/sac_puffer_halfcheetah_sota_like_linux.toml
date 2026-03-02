@@ -1,0 +1,70 @@
+# HalfCheetah-v5 SAC (PufferLib backend) for Linux CUDA.
+# Run:
+#   python -m rl.runner --config configs/rl/gymnasium/cheetah/sac_puffer_halfcheetah_sota_like_linux.toml
+
+[rl]
+algo = "sac"
+backend = "pufferlib"
+
+[rl.sac]
+exp_dir = "_tmp/gymnasium/cheetah/sac_puffer_halfcheetah_sota_like_linux"
+env_tag = "cheetah"
+seed = 2
+device = "cuda"
+
+from_pixels = false
+pixels_only = true
+
+# Shared SAC core hyperparameters.
+total_timesteps = 1000000
+learning_rate_actor = 3e-4
+learning_rate_critic = 3e-4
+learning_rate_alpha = 3e-4
+gamma = 0.99
+tau = 0.005
+batch_size = 256
+replay_size = 1000000
+replay_backend = "auto"
+learning_starts = 10000
+update_every = 1
+updates_per_step = 1
+alpha_init = 0.2
+target_entropy = -6.0
+
+# Platform/runtime tuning (Linux CUDA).
+num_envs = 8
+frames_per_batch = 64
+vector_backend = "multiprocessing"
+vector_num_workers = 8
+vector_batch_size = 8
+vector_overwork = false
+framestack = 1
+
+backbone_name = "mlp"
+backbone_hidden_sizes = [256, 256]
+backbone_activation = "relu"
+backbone_layer_norm = false
+actor_head_hidden_sizes = []
+critic_head_hidden_sizes = []
+head_activation = "relu"
+
+log_interval_steps = 1000
+
+# Eval parity block (kept identical across halfcheetah SAC configs).
+eval_interval_steps = 5000
+num_denoise_eval = 1
+num_denoise_passive_eval = 1
+eval_seed_base = 1000
+eval_noise_mode = "frozen"
+checkpoint_interval_steps = 100000
+
+video_enable = false
+video_prefix = "sac_puffer_halfcheetah_linux"
+video_num_episodes = 5
+video_num_video_episodes = 2
+video_episode_selection = "best"
+video_seed_base = 1000
+
+[rl.run]
+num_reps = 10
+workers = 1
