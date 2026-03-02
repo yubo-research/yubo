@@ -17,16 +17,13 @@ def _resolve_max_episode_steps(env_conf: Any) -> int:
 def _obs_for_policy(observation: Any) -> Any:
     if not isinstance(observation, dict):
         return observation
-    if "observation" in observation:
-        return observation["observation"]
-    if "pixels" in observation:
-        return observation["pixels"]
-    if "state" in observation:
-        return observation["state"]
-    parts = [np.ravel(np.asarray(observation[key], dtype=np.float32)) for key in sorted(observation)]
-    if not parts:
+    for key in ("observation", "pixels", "state"):
+        if key in observation:
+            return observation[key]
+    values = [np.ravel(np.asarray(observation[k], dtype=np.float32)) for k in sorted(observation)]
+    if len(values) == 0:
         return np.zeros((0,), dtype=np.float32)
-    return np.concatenate(parts, axis=0)
+    return np.hstack(values)
 
 
 def _bool_any(value: Any) -> bool:

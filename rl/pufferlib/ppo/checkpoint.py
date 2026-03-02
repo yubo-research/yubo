@@ -11,15 +11,7 @@ from rl.checkpointing import load_checkpoint
 from rl.core.actor_state import build_ppo_checkpoint_payload as build_shared_payload
 from rl.core.actor_state import capture_ppo_actor_snapshot as capture_actor_snapshot
 from rl.core.actor_state import restore_backbone_head_snapshot
-
-
-def _as_optional_finite(value: float | None) -> float | None:
-    if value is None:
-        return None
-    value_f = float(value)
-    if not np.isfinite(value_f):
-        return None
-    return value_f
+from rl.pufferlib.ppo.metrics import _as_optional_finite
 
 
 def build_checkpoint_payload(model, optimizer: optim.Optimizer, state, *, iteration: int) -> dict[str, Any]:

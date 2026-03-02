@@ -108,8 +108,7 @@ class _ActorNet(nn.Module):
 class _QNet(nn.Module):
     def __init__(self, backbone: nn.Module, head: nn.Module, obs_scaler: sac_deps.torchrl_common.ObsScaler):
         super().__init__()
-        self.backbone = backbone
-        self.head = head
+        self.backbone, self.head = backbone, head
         self.obs_scaler = obs_scaler
 
     def forward(self, observation: torch.Tensor, action: torch.Tensor):
@@ -122,8 +121,8 @@ class _QNet(nn.Module):
 class _QNetPixel(nn.Module):
     def __init__(self, obs_encoder: nn.Module, head: nn.Module, obs_scaler: sac_deps.torchrl_common.ObsScaler):
         super().__init__()
-        self.obs_encoder = obs_encoder
-        self.head = head
+        self.obs_encoder, self.head = obs_encoder, head
+        # Keep scaler as a separate assignment for readability.
         self.obs_scaler = obs_scaler
 
     def forward(self, observation: torch.Tensor, action: torch.Tensor):

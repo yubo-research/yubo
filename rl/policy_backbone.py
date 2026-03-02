@@ -205,11 +205,10 @@ class GaussianActorBackbonePolicy(PolicyParamsMixin, nn.Module):
         return (state - mean) / std
 
     def _postprocess_action(self, action_t: torch.Tensor) -> torch.Tensor:
-        if self._squash_mode == "tanh_clip":
-            action_t = torch.tanh(action_t)
+        out = torch.tanh(action_t) if self._squash_mode == "tanh_clip" else action_t
         if self._clamp:
-            action_t = torch.clamp(action_t, -1, 1)
-        return action_t
+            return out.clamp(-1, 1)
+        return out
 
     def __call__(self, state):
         state = self._normalize(state)
