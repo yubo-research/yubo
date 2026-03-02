@@ -2,6 +2,20 @@ import torch
 from torch import nn
 
 
+def apply_noise_inplace(module: nn.Module, noise: list[torch.Tensor], *, sign: int) -> None:
+    for param, n in zip(module.parameters(), noise, strict=True):
+        if sign > 0:
+            param.data.add_(n)
+        else:
+            param.data.sub_(n)
+
+
+def mark_perturbed(state_obj, *, seed: int, sigma: float) -> None:
+    state_obj._seed = seed
+    state_obj._sigma = sigma
+    state_obj._perturbed = True
+
+
 class GaussianPerturbator:
     def __init__(self, module: nn.Module):
         self._module = module
@@ -19,11 +33,8 @@ class GaussianPerturbator:
 
     def perturb(self, seed: int, sigma: float) -> None:
         assert not self._perturbed, "Already perturbed"
-        self._seed = seed
-        self._sigma = sigma
-        self._perturbed = True
-        for param, n in zip(self._module.parameters(), self._generate_noise(sigma), strict=True):
-            param.data.add_(n)
+        mark_perturbed(self, seed=seed, sigma=sigma)
+        apply_noise_inplace(self._module, self._generate_noise(sigma), sign=1)
 
     def accept(self) -> None:
         assert self._perturbed, "Not perturbed"
@@ -32,6 +43,5 @@ class GaussianPerturbator:
 
     def unperturb(self) -> None:
         assert self._perturbed, "Not perturbed"
-        for param, n in zip(self._module.parameters(), self._generate_noise(self._sigma), strict=True):
-            param.data.sub_(n)
+        apply_noise_inplace(self._module, self._generate_noise(self._sigma), sign=-1)
         self.accept()

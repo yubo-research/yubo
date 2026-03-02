@@ -30,18 +30,20 @@ def test_starts_at_lr_0():
     assert sched.lr == pytest.approx(0.1)
 
 
-def test_decays_to_zero():
-    sched = LinearLRScheduler(lr_0=0.1, num_steps=100)
-    for _ in range(100):
+def _step_and_expect(sched, n_steps: int, expected: float):
+    for _ in range(n_steps):
         sched.step()
-    assert sched.lr == pytest.approx(0.0)
+    assert sched.lr == pytest.approx(expected)
 
 
 def test_linear_midpoint():
     sched = LinearLRScheduler(lr_0=0.1, num_steps=100)
-    for _ in range(50):
-        sched.step()
-    assert sched.lr == pytest.approx(0.05)
+    _step_and_expect(sched, 50, 0.05)
+
+
+def test_decays_to_zero():
+    sched = LinearLRScheduler(lr_0=0.1, num_steps=100)
+    _step_and_expect(sched, 100, 0.0)
 
 
 def test_warmup_starts_at_zero():
@@ -49,18 +51,14 @@ def test_warmup_starts_at_zero():
     assert sched.lr == pytest.approx(0.0)
 
 
-def test_warmup_reaches_lr_0():
-    sched = LinearLRScheduler(lr_0=0.1, num_steps=100, warmup_steps=10)
-    for _ in range(10):
-        sched.step()
-    assert sched.lr == pytest.approx(0.1)
-
-
 def test_warmup_midpoint():
     sched = LinearLRScheduler(lr_0=0.1, num_steps=100, warmup_steps=10)
-    for _ in range(5):
-        sched.step()
-    assert sched.lr == pytest.approx(0.05)
+    _step_and_expect(sched, 5, 0.05)
+
+
+def test_warmup_reaches_lr_0():
+    sched = LinearLRScheduler(lr_0=0.1, num_steps=100, warmup_steps=10)
+    _step_and_expect(sched, 10, 0.1)
 
 
 def test_warmup_then_decay():
@@ -75,9 +73,7 @@ def test_warmup_then_decay():
 
 def test_past_end_stays_zero():
     sched = LinearLRScheduler(lr_0=0.1, num_steps=10)
-    for _ in range(20):
-        sched.step()
-    assert sched.lr == pytest.approx(0.0)
+    _step_and_expect(sched, 20, 0.0)
 
 
 def test_monotonically_decreasing_no_warmup():

@@ -9,6 +9,14 @@ import torch.nn as nn
 from problems.policy_mixin import PolicyParamsMixin
 
 
+def _init_linear_and_conv(module: nn.Module, *, gain: float) -> None:
+    for m in module.modules():
+        if isinstance(m, (nn.Linear, nn.Conv2d)):
+            nn.init.orthogonal_(m.weight, gain=gain)
+            if m.bias is not None:
+                nn.init.zeros_(m.bias)
+
+
 def _tiny_atari_cnn_encoder(in_channels: int = 4) -> tuple[nn.Module, int]:
     """Tiny CNN for Atari: ~10k params. 4->4->8->8 convs, small head."""
     encoder = nn.Sequential(
@@ -92,11 +100,7 @@ class CNNMLPPolicy(PolicyParamsMixin, nn.Module):
             self._flat_params_init = np.concatenate([p.data.detach().cpu().numpy().reshape(-1) for p in self.parameters()])
 
     def _init_params(self):
-        for m in self.modules():
-            if isinstance(m, (nn.Linear, nn.Conv2d)):
-                nn.init.orthogonal_(m.weight, gain=0.5)
-                if m.bias is not None:
-                    nn.init.zeros_(m.bias)
+        _init_linear_and_conv(self, gain=0.5)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # x: (..., H, W, C) -> (..., C, H, W)
@@ -188,11 +192,7 @@ class AtariCNNPolicy(PolicyParamsMixin, nn.Module):
             self._flat_params_init = np.concatenate([p.data.detach().cpu().numpy().reshape(-1) for p in self.parameters()])
 
     def _init_params(self):
-        for m in self.modules():
-            if isinstance(m, (nn.Linear, nn.Conv2d)):
-                nn.init.orthogonal_(m.weight, gain=0.01)
-                if m.bias is not None:
-                    nn.init.zeros_(m.bias)
+        _init_linear_and_conv(self, gain=0.01)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # x: (C,H,W), (H,W,C), (4,H,W,1), or (N,4,H,W,1) -> (N,C,H,W)
@@ -297,11 +297,7 @@ class AtariGaussianPolicy(PolicyParamsMixin, nn.Module):
             self._flat_params_init = np.concatenate([p.data.detach().cpu().numpy().reshape(-1) for p in self.parameters()])
 
     def _init_params(self):
-        for m in self.modules():
-            if isinstance(m, (nn.Linear, nn.Conv2d)):
-                nn.init.orthogonal_(m.weight, gain=0.5)
-                if m.bias is not None:
-                    nn.init.zeros_(m.bias)
+        _init_linear_and_conv(self, gain=0.5)
 
     def _to_chw(self, x: torch.Tensor) -> torch.Tensor:
         # Match AtariCNNPolicy: (C,H,W), (H,W,C), (4,H,W,1), (N,4,H,W,1) -> (N,C,H,W)

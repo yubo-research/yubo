@@ -21,8 +21,7 @@ from .runtime_utils import ObsScaler
 class ActorNet(nn.Module):
     def __init__(self, backbone: nn.Module, head: nn.Module, obs_scaler: ObsScaler, *, act_dim: int):
         super().__init__()
-        self.backbone = backbone
-        self.head = head
+        self.backbone, self.head = backbone, head
         self.obs_scaler = obs_scaler
         self.act_dim = int(act_dim)
 

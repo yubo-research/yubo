@@ -45,9 +45,13 @@ def _activation(name: str) -> type[nn.Module]:
 
 @register_backbone("nature_cnn")
 def _build_nature_cnn(spec: BackboneSpec, input_dim: int) -> tuple[nn.Module, int]:
+    return _build_nature_cnn_with_channels(spec, input_dim, in_channels=3)
+
+
+def _build_nature_cnn_with_channels(spec: BackboneSpec, input_dim: int, *, in_channels: int) -> tuple[nn.Module, int]:
     del input_dim
     layers = [
-        nn.Conv2d(3, 32, kernel_size=8, stride=4),
+        nn.Conv2d(in_channels, 32, kernel_size=8, stride=4),
         nn.ReLU(),
         nn.Conv2d(32, 64, kernel_size=4, stride=2),
         nn.ReLU(),
@@ -58,29 +62,14 @@ def _build_nature_cnn(spec: BackboneSpec, input_dim: int) -> tuple[nn.Module, in
     ]
     encoder = nn.Sequential(*layers)
     with torch.inference_mode():
-        dummy = torch.zeros(1, 3, 84, 84)
+        dummy = torch.zeros(1, in_channels, 84, 84)
         out_dim = int(encoder(dummy).shape[-1])
     return (encoder, out_dim)
 
 
 @register_backbone("nature_cnn_atari")
 def _build_nature_cnn_atari(spec: BackboneSpec, input_dim: int) -> tuple[nn.Module, int]:
-    del input_dim
-    layers = [
-        nn.Conv2d(4, 32, kernel_size=8, stride=4),
-        nn.ReLU(),
-        nn.Conv2d(32, 64, kernel_size=4, stride=2),
-        nn.ReLU(),
-        nn.Conv2d(64, 64, kernel_size=3, stride=1),
-        nn.ReLU(),
-        nn.AdaptiveAvgPool2d(1),
-        nn.Flatten(),
-    ]
-    encoder = nn.Sequential(*layers)
-    with torch.inference_mode():
-        dummy = torch.zeros(1, 4, 84, 84)
-        out_dim = int(encoder(dummy).shape[-1])
-    return (encoder, out_dim)
+    return _build_nature_cnn_with_channels(spec, input_dim, in_channels=4)
 
 
 @register_backbone("mlp")
