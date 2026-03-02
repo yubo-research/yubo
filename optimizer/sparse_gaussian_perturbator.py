@@ -1,6 +1,8 @@
 import torch
 from torch import nn
 
+from optimizer.gaussian_perturbator import apply_noise_inplace, mark_perturbed
+
 
 class SparseGaussianPerturbator:
     """RAASP-style sparse Gaussian perturbation.
@@ -56,11 +58,8 @@ class SparseGaussianPerturbator:
 
     def perturb(self, seed: int, sigma: float) -> None:
         assert not self._perturbed, "Already perturbed"
-        self._seed = seed
-        self._sigma = sigma
-        self._perturbed = True
-        for param, n in zip(self._module.parameters(), self._generate_noise(sigma), strict=True):
-            param.data.add_(n)
+        mark_perturbed(self, seed=seed, sigma=sigma)
+        apply_noise_inplace(self._module, self._generate_noise(sigma), sign=1)
 
     def accept(self) -> None:
         assert self._perturbed, "Not perturbed"

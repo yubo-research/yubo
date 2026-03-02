@@ -79,11 +79,12 @@ class GaussianTorchPolicy:
         return (state - mean) / std
 
     def _postprocess_action(self, action_t: torch.Tensor) -> torch.Tensor:
+        if self._squash_mode != "tanh_clip" and not self._clamp:
+            return action_t
+        out = action_t
         if self._squash_mode == "tanh_clip":
-            action_t = torch.tanh(action_t)
-        if self._clamp:
-            action_t = torch.clamp(action_t, -1, 1)
-        return action_t
+            out = torch.tanh(out)
+        return torch.clamp(out, -1, 1) if self._clamp else out
 
     def __call__(self, state, *, deterministic: bool | None = None):
         if deterministic is None:

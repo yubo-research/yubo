@@ -26,26 +26,13 @@ def _resolve_device(device_raw: str) -> torch.device:
 
 
 def _infer_channels(shape: tuple[int, ...], *, fallback: int) -> int:
-    if len(shape) >= 3:
-        if int(shape[0]) in (1, 3, 4):
-            return int(shape[0])
-        if int(shape[-1]) in (1, 3, 4):
-            return int(shape[-1])
-    if len(shape) == 2 and int(fallback) > 1:
-        return int(fallback)
-    return 3
+    env_utils = importlib.import_module("rl.pufferlib.sac.env_utils")
+    return int(env_utils._infer_channels(shape, fallback=int(fallback)))
 
 
 def _infer_image_size(shape: tuple[int, ...], *, default_size: int) -> int:
-    if len(shape) >= 3:
-        if int(shape[0]) in (1, 3, 4):
-            return int(min(shape[1], shape[2]))
-        if int(shape[-1]) in (1, 3, 4):
-            return int(min(shape[0], shape[1]))
-        return int(min(shape[-2], shape[-1]))
-    if len(shape) == 2:
-        return int(min(shape[0], shape[1]))
-    return int(default_size)
+    env_utils = importlib.import_module("rl.pufferlib.sac.env_utils")
+    return int(env_utils._infer_image_size(shape, default_size=int(default_size)))
 
 
 def _infer_observation_spec(config: PufferPPOConfig, obs_np: np.ndarray):

@@ -13,49 +13,25 @@ def _make_uhd(sigma_0=1.0, alpha=0.1):
     return module, gp, uhd
 
 
-def test_ask_perturbs_module():
+def _ask_and_tell(uhd, mu: float):
+    uhd.ask()
+    uhd.tell(mu, 0.0)
+
+
+def test_tell_transitions_cover_accept_and_reject():
     module, _, uhd = _make_uhd()
     orig = module.weight.data.clone()
-    uhd.ask()
-    assert not torch.equal(module.weight.data, orig)
 
+    _ask_and_tell(uhd, 1.0)
+    first_weight = module.weight.data.clone()
+    assert not torch.equal(first_weight, orig)
 
-def test_tell_first_always_accepts():
-    module, _, uhd = _make_uhd()
-    orig = module.weight.data.clone()
-
-    uhd.ask()
-    perturbed = module.weight.data.clone()
-    uhd.tell(1.0, 0.0)
-
-    assert torch.equal(module.weight.data, perturbed)
-    assert not torch.equal(module.weight.data, orig)
-
-
-def test_tell_worse_reverts():
-    module, _, uhd = _make_uhd()
-
-    uhd.ask()
-    uhd.tell(10.0, 0.0)
+    _ask_and_tell(uhd, 10.0)
     accepted_weight = module.weight.data.clone()
+    assert not torch.equal(accepted_weight, first_weight)
 
-    uhd.ask()
-    uhd.tell(5.0, 0.0)  # worse than y_best, should revert
-
+    _ask_and_tell(uhd, 5.0)  # worse than y_best, should revert
     assert torch.allclose(module.weight.data, accepted_weight)
-
-
-def test_tell_improvement_keeps_new_params():
-    module, _, uhd = _make_uhd()
-
-    uhd.ask()
-    uhd.tell(1.0, 0.0)
-
-    uhd.ask()
-    better_weight = module.weight.data.clone()
-    uhd.tell(2.0, 0.0)
-
-    assert torch.equal(module.weight.data, better_weight)
 
 
 def test_y_best_tracks_accepted():

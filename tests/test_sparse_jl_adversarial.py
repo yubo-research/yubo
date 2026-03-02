@@ -58,18 +58,19 @@ def test_inf_input():
 # ---------------------------------------------------------------------------
 
 
-def test_d_equals_1():
-    x = torch.randn(100)
-    y = block_sparse_jl_transform_t(x, d=1, s=1, seed=0)
-    assert y.shape == (1,)
+def _assert_transform_shape_and_finite(*, d: int, s: int):
+    x = torch.randn(50)
+    y = block_sparse_jl_transform_t(x, d=d, s=s, seed=0)
+    assert y.shape == (d,)
     assert torch.all(torch.isfinite(y))
+
+
+def test_d_equals_1():
+    _assert_transform_shape_and_finite(d=1, s=1)
 
 
 def test_s_equals_d():
-    x = torch.randn(50)
-    y = block_sparse_jl_transform_t(x, d=8, s=8, seed=0)
-    assert y.shape == (8,)
-    assert torch.all(torch.isfinite(y))
+    _assert_transform_shape_and_finite(d=8, s=8)
 
 
 def test_s_equals_1():

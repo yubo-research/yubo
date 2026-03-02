@@ -66,7 +66,7 @@ class ActorNet(nn.Module):
         return (loc, scale)
 
 
-class DiscreteActorNet(nn.Module):
+class _BackboneHeadNet(nn.Module):
     def __init__(self, backbone: nn.Module, head: nn.Module, obs_scaler: Any, *, obs_contract: ObservationContract):
         super().__init__()
         self.backbone = backbone
@@ -74,6 +74,8 @@ class DiscreteActorNet(nn.Module):
         self.obs_scaler = obs_scaler
         self.obs_contract = obs_contract
 
+
+class DiscreteActorNet(_BackboneHeadNet):
     def forward(self, obs: torch.Tensor):
         feats, batch_shape, squeeze_batch_dim = _forward_backbone_features(
             obs, obs_scaler=self.obs_scaler, obs_contract=self.obs_contract, backbone=self.backbone
@@ -83,14 +85,7 @@ class DiscreteActorNet(nn.Module):
         return logits
 
 
-class CriticNet(nn.Module):
-    def __init__(self, backbone: nn.Module, head: nn.Module, obs_scaler: Any, *, obs_contract: ObservationContract):
-        super().__init__()
-        self.backbone = backbone
-        self.head = head
-        self.obs_scaler = obs_scaler
-        self.obs_contract = obs_contract
-
+class CriticNet(_BackboneHeadNet):
     def forward(self, obs: torch.Tensor):
         feats, batch_shape, squeeze_batch_dim = _forward_backbone_features(
             obs, obs_scaler=self.obs_scaler, obs_contract=self.obs_contract, backbone=self.backbone

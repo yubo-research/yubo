@@ -1,26 +1,13 @@
+import pytest
+
 from rl.core.env_contract import ObservationContract
 from rl.torchrl.ppo import core as torchrl_on_policy_core
 from rl.torchrl.ppo.core import _TanhNormal as _CoreTanhNormal
 
 
-def test_ppo_tanhnormal_support_property():
-    dist = torchrl_on_policy_core._TanhNormal(
-        loc=torchrl_on_policy_core.torch.zeros(1),
-        scale=torchrl_on_policy_core.torch.ones(1),
-    )
-    assert dist.support is torchrl_on_policy_core.torch.distributions.constraints.real
-
-
-def test_on_policy_core_tanhnormal_support_property():
-    dist = _CoreTanhNormal(
-        loc=torchrl_on_policy_core.torch.zeros(1),
-        scale=torchrl_on_policy_core.torch.ones(1),
-    )
-    assert dist.support is torchrl_on_policy_core.torch.distributions.constraints.real
-
-
-def test_on_policy_core_tanhnormal_support_property_module_path():
-    dist = torchrl_on_policy_core._TanhNormal(
+@pytest.mark.parametrize("dist_cls", [torchrl_on_policy_core._TanhNormal, _CoreTanhNormal])
+def test_tanhnormal_support_property(dist_cls):
+    dist = dist_cls(
         loc=torchrl_on_policy_core.torch.zeros(1),
         scale=torchrl_on_policy_core.torch.ones(1),
     )
