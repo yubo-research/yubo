@@ -24,16 +24,29 @@ def _build_vector_kwargs(config: Any, backend_cls, vector_mod) -> dict[str, Any]
     return kwargs
 
 
+def _make_dm_control_env(*, env_name: str, env_kwargs: dict, render_mode="rgb_array"):
+    from problems.shimmy_dm_control import make as make_dm_control_env
+
+    kwargs = dict(env_kwargs)
+    try:
+        return make_dm_control_env(env_name, render_mode=render_mode, **kwargs)
+    except TypeError:
+        return make_dm_control_env(env_name, **kwargs)
+
+
 def _make_gymnasium_env(*, env_name: str, env_kwargs: dict, render_mode="rgb_array", buf=None, seed=0):
     import gymnasium as gym
     import pufferlib
     import pufferlib.emulation
 
-    kwargs = dict(env_kwargs)
-    try:
-        env = gym.make(env_name, render_mode=render_mode, **kwargs)
-    except TypeError:
-        env = gym.make(env_name, **kwargs)
+    if str(env_name).startswith("dm_control/"):
+        env = _make_dm_control_env(env_name=env_name, env_kwargs=env_kwargs, render_mode=render_mode)
+    else:
+        kwargs = dict(env_kwargs)
+        try:
+            env = gym.make(env_name, render_mode=render_mode, **kwargs)
+        except TypeError:
+            env = gym.make(env_name, **kwargs)
     if isinstance(env.action_space, gym.spaces.Box):
         env = pufferlib.ClipAction(env)
     env = pufferlib.EpisodeStats(env)

@@ -42,6 +42,20 @@ def test_build_mlp_head_shapes():
     assert y.shape == (4, 2)
 
 
+def test_elu_activation_supported_for_backbone_and_head():
+    backbone, out_dim = build_backbone(BackboneSpec(name="mlp", hidden_sizes=(6,), activation="elu", layer_norm=False), input_dim=3)
+    x = torch.zeros((4, 3))
+    y = backbone(x)
+    assert y.shape == (4, 6)
+    assert out_dim == 6
+    assert any((isinstance(module, nn.ELU) for module in backbone.modules()))
+
+    head = build_mlp_head(HeadSpec(hidden_sizes=(5,), activation="elu"), input_dim=6, output_dim=2)
+    z = head(y)
+    assert z.shape == (4, 2)
+    assert any((isinstance(module, nn.ELU) for module in head.modules()))
+
+
 def test_actorcritic_action_bounds():
     specs = PolicySpecs(
         backbone=BackboneSpec(hidden_sizes=(8,)),

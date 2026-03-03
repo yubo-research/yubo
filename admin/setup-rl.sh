@@ -93,6 +93,7 @@ else
   echo "[setup-rl] macOS detected, skipping CUDA toolchain setup"
   echo "[setup-rl] installing ${PUFFERLIB_SPEC} --no-deps"
   python -m pip install --no-deps "${PUFFERLIB_SPEC}"
+  cargo install kiss-ai
 fi
 
 echo "[setup-rl] validating pufferlib import"

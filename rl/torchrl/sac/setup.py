@@ -12,6 +12,7 @@ import torchrl.envs as tr_envs
 from rl.core.continuous_actions import scale_action_to_env, unscale_action_from_env
 from rl.core.env_setup import build_continuous_gym_env_setup
 from rl.core.sac_update import SACUpdateBatch, SACUpdateHyperParams, SACUpdateModules, SACUpdateOptimizers, sac_update_step
+from rl.torchrl.offpolicy import models as offpolicy_models
 
 from . import deps as sac_deps
 from .config import SACConfig
@@ -72,64 +73,9 @@ class _TrainState:
     last_heldout_return: float | None = None
 
 
-class _ActorNet(nn.Module):
-    def __init__(self, backbone: nn.Module, head: nn.Module, obs_scaler: sac_deps.torchrl_common.ObsScaler, act_dim: int):
-        super().__init__()
-        self.backbone = backbone
-        self.head = head
-        self.obs_scaler = obs_scaler
-        self.act_dim = int(act_dim)
-
-    def forward(self, observation: torch.Tensor):
-        obs = self.obs_scaler(observation)
-        feats = self.backbone(obs)
-        out = self.head(feats)
-        loc, log_scale = (out[..., : self.act_dim], out[..., self.act_dim :])
-        scale = log_scale.clamp(-5.0, 2.0).exp()
-        return (loc, scale)
-
-    def sample(self, obs: torch.Tensor, *, deterministic: bool = False) -> tuple[torch.Tensor, torch.Tensor]:
-        loc, scale = self.forward(obs)
-        if deterministic:
-            action = torch.tanh(loc)
-            log_prob = torch.zeros(action.shape[0], dtype=action.dtype, device=action.device)
-            return (action, log_prob)
-        dist = torch.distributions.Normal(loc, scale)
-        z = dist.rsample()
-        action = torch.tanh(z)
-        log_prob = dist.log_prob(z) - torch.log(1.0 - action.pow(2) + 1e-06)
-        return (action, log_prob.sum(dim=-1))
-
-    def act(self, obs: torch.Tensor) -> torch.Tensor:
-        loc, _ = self.forward(obs)
-        return torch.tanh(loc)
-
-
-class _QNet(nn.Module):
-    def __init__(self, backbone: nn.Module, head: nn.Module, obs_scaler: sac_deps.torchrl_common.ObsScaler):
-        super().__init__()
-        self.backbone, self.head = backbone, head
-        self.obs_scaler = obs_scaler
-
-    def forward(self, observation: torch.Tensor, action: torch.Tensor):
-        obs = self.obs_scaler(observation)
-        x = torch.cat([obs, action], dim=-1)
-        feats = self.backbone(x)
-        return self.head(feats).squeeze(-1)
-
-
-class _QNetPixel(nn.Module):
-    def __init__(self, obs_encoder: nn.Module, head: nn.Module, obs_scaler: sac_deps.torchrl_common.ObsScaler):
-        super().__init__()
-        self.obs_encoder, self.head = obs_encoder, head
-        # Keep scaler as a separate assignment for readability.
-        self.obs_scaler = obs_scaler
-
-    def forward(self, observation: torch.Tensor, action: torch.Tensor):
-        obs = self.obs_scaler(observation)
-        latent = self.obs_encoder(obs)
-        x = torch.cat([latent, action], dim=-1)
-        return self.head(x).squeeze(-1)
+_ActorNet = offpolicy_models.ActorNet
+_QNet = offpolicy_models.QNet
+_QNetPixel = offpolicy_models.QNetPixel
 
 
 class _ScaleActionToEnv(nn.Module):

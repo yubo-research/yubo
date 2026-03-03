@@ -56,3 +56,13 @@ class CMAESDesigner:
         if telemetry is not None:
             telemetry.set_dt_select(dt_select)
         return policies
+
+    def get_algo_metrics(self) -> dict[str, float]:
+        out: dict[str, float] = {}
+        es = getattr(self, "_es", None)
+        if es is not None and hasattr(es, "sigma"):
+            try:
+                out["sigma"] = float(es.sigma)
+            except (TypeError, ValueError):
+                pass
+        return out

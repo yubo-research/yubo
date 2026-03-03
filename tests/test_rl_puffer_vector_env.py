@@ -1,5 +1,7 @@
 from types import SimpleNamespace
 
+import gymnasium as gym
+import numpy as np
 import pytest
 
 from rl.pufferlib import vector_env
@@ -110,3 +112,57 @@ def test_make_vector_env_gym_path_uses_empty_env_kwargs():
     assert call["backend"] is fake_vector.Serial
     assert call["kwargs"] == {}
     assert callable(call["env_creator"])
+
+
+class _DummyEnv(gym.Env):
+    observation_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(1,), dtype=np.float32)
+    action_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(1,), dtype=np.float32)
+
+    def reset(self, *, seed=None, options=None):
+        _ = seed, options
+        return np.zeros((1,), dtype=np.float32), {}
+
+    def step(self, action):
+        _ = action
+        return np.zeros((1,), dtype=np.float32), 0.0, False, False, {}
+
+
+def test_make_gymnasium_env_uses_dm_control_shim(monkeypatch):
+    calls = {}
+
+    def _fake_dm_make(*, env_name: str, env_kwargs: dict, render_mode="rgb_array"):
+        calls["env_name"] = env_name
+        calls["env_kwargs"] = dict(env_kwargs)
+        calls["render_mode"] = render_mode
+        return _DummyEnv()
+
+    monkeypatch.setattr(vector_env, "_make_dm_control_env", _fake_dm_make)
+    monkeypatch.setattr(gym, "make", lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("gym.make should not be called")))
+
+    out = vector_env._make_gymnasium_env(
+        env_name="dm_control/cheetah-run-v0",
+        env_kwargs={"from_pixels": False, "pixels_only": True},
+        render_mode="rgb_array",
+    )
+    assert out is not None
+    assert calls["env_name"] == "dm_control/cheetah-run-v0"
+    assert calls["env_kwargs"] == {"from_pixels": False, "pixels_only": True}
+    assert calls["render_mode"] == "rgb_array"
+
+
+def test_resolve_gym_env_name_dm_control_includes_pixel_flags(monkeypatch):
+    import problems.env_conf as env_conf_mod
+    import rl.core.ppo_envs as ppo_envs
+
+    class _DummyEnvConf:
+        gym_conf = object()
+        env_name = "dm_control/cheetah-run-v0"
+        kwargs = {}
+        from_pixels = True
+        pixels_only = False
+
+    monkeypatch.setattr(env_conf_mod, "get_env_conf", lambda _tag: _DummyEnvConf())
+    env_name, kwargs = ppo_envs.resolve_gym_env_name("dm:cheetah-run:pixels")
+    assert env_name == "dm_control/cheetah-run-v0"
+    assert kwargs["from_pixels"] is True
+    assert kwargs["pixels_only"] is False

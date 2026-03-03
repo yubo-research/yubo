@@ -1,12 +1,17 @@
 from __future__ import annotations
 
 import dataclasses
+from typing import ClassVar
 
+from rl.core.config_utils import DataclassFromDictMixin
 from rl.core.torchrl_runtime import TorchRLRuntimeCapabilities, TorchRLRuntimeConfig
 
 
 @dataclasses.dataclass
-class SACConfig(TorchRLRuntimeConfig):
+class SACConfig(DataclassFromDictMixin, TorchRLRuntimeConfig):
+    _tuple_int_keys: ClassVar[tuple[str, ...]] = ("backbone_hidden_sizes", "actor_head_hidden_sizes", "critic_head_hidden_sizes")
+    _int_keys: ClassVar[tuple[str, ...]] = ("num_envs", "frames_per_batch")
+
     exp_dir: str = "_tmp/sac"
     env_tag: str = "pend"
     seed: int = 1
@@ -57,17 +62,6 @@ class SACConfig(TorchRLRuntimeConfig):
 
     def to_dict(self) -> dict:
         return dataclasses.asdict(self)
-
-    @classmethod
-    def from_dict(cls, raw: dict) -> "SACConfig":
-        data = {k: v for k, v in raw.items() if k in {f.name for f in dataclasses.fields(cls)}}
-        for key in ["backbone_hidden_sizes", "actor_head_hidden_sizes", "critic_head_hidden_sizes"]:
-            if key in data and data[key] is not None:
-                data[key] = tuple((int(x) for x in data[key]))
-        for key in ["num_envs", "frames_per_batch"]:
-            if key in data and data[key] is not None:
-                data[key] = int(data[key])
-        return cls(**data)
 
 
 _SAC_RUNTIME_CAPABILITIES = TorchRLRuntimeCapabilities(

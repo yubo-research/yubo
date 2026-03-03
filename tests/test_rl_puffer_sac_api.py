@@ -136,7 +136,7 @@ def test_pixel_utils_formats_images():
 
 
 def test_env_utils_helpers_and_builders(monkeypatch):
-    from rl.pufferlib.sac import env_utils
+    from rl.pufferlib.offpolicy import env_utils
 
     env_utils.seed_everything(123)
     a = float(np.random.rand())
@@ -213,7 +213,8 @@ def test_env_utils_helpers_and_builders(monkeypatch):
 
 
 def _make_small_modules():
-    from rl.pufferlib.sac import env_utils, model_utils
+    from rl.pufferlib.offpolicy import env_utils
+    from rl.pufferlib.sac import model_utils
 
     env_setup = env_utils.EnvSetup(
         env_conf=SimpleNamespace(from_pixels=False, pixels_only=True),
@@ -342,7 +343,7 @@ def test_replay_and_model_utils_update_paths():
 
 
 def test_eval_utils_paths(monkeypatch, tmp_path: Path):
-    from rl.pufferlib.sac import eval_utils
+    from rl.pufferlib.offpolicy import eval_utils
 
     cfg, env_setup, obs_spec, modules, _optimizers = _make_small_modules()
     state = eval_utils.TrainState(start_time=float(time.time()) - 1.0)
@@ -352,7 +353,7 @@ def test_eval_utils_paths(monkeypatch, tmp_path: Path):
         def act(obs: torch.Tensor) -> torch.Tensor:
             return torch.zeros((obs.shape[0], 2), dtype=torch.float32)
 
-    policy = eval_utils.SacEvalPolicy(SimpleNamespace(actor=_Actor()), obs_spec, device=torch.device("cpu"))
+    policy = eval_utils.OffPolicyEvalPolicy(SimpleNamespace(actor=_Actor()), obs_spec, device=torch.device("cpu"))
     out = policy(np.zeros((3,), dtype=np.float32))
     assert out.shape == (2,)
 

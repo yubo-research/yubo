@@ -38,6 +38,8 @@ def _activation(name: str) -> type[nn.Module]:
         return nn.SiLU
     if key in ("relu",):
         return nn.ReLU
+    if key in ("elu",):
+        return nn.ELU
     if key in ("tanh",):
         return nn.Tanh
     raise ValueError(f"Unsupported activation '{name}'.")

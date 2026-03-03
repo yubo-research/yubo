@@ -1,61 +1,47 @@
 from typing import Optional
 
 import numpy as np
-
-try:
-    from enn.turbo.config.acq_type import AcqType
-    from enn.turbo.config.candidate_gen_config import CandidateGenConfig
-    from enn.turbo.config.candidate_rv import CandidateRV
-    from enn.turbo.config.enn_surrogate_config import (
-        ENNFitConfig,
-        ENNSurrogateConfig,
-    )
-    from enn.turbo.config.factory import (
-        lhd_only_config,
-        turbo_enn_config,
-        turbo_one_config,
-        turbo_zero_config,
-    )
-    from enn.turbo.config.raasp_driver import RAASPDriver
-    from enn.turbo.config.trust_region import (
-        MorboTRConfig,
-        NoTRConfig,
-        TrustRegionConfig,
-        TurboTRConfig,
-    )
-    from enn.turbo.optimizer import create_optimizer
-except ModuleNotFoundError:
-    try:
-        # Newer `ennbo` distributions may expose the package as `ennbo.*`.
-        from ennbo.turbo.config.acq_type import AcqType
-        from ennbo.turbo.config.candidate_gen_config import CandidateGenConfig
-        from ennbo.turbo.config.candidate_rv import CandidateRV
-        from ennbo.turbo.config.enn_surrogate_config import (
-            ENNFitConfig,
-            ENNSurrogateConfig,
-        )
-        from ennbo.turbo.config.factory import (
-            lhd_only_config,
-            turbo_enn_config,
-            turbo_one_config,
-            turbo_zero_config,
-        )
-        from ennbo.turbo.config.raasp_driver import RAASPDriver
-        from ennbo.turbo.config.trust_region import (
-            MorboTRConfig,
-            NoTRConfig,
-            TrustRegionConfig,
-            TurboTRConfig,
-        )
-        from ennbo.turbo.optimizer import create_optimizer
-    except ModuleNotFoundError as exc:
-        raise ModuleNotFoundError(
-            "Could not import ENN/TuRBO dependencies. Install either a distribution exposing "
-            "`enn.turbo.*` (e.g. older `ennbo`) or one exposing `ennbo.turbo.*`."
-        ) from exc
+from enn.turbo.config.acq_type import AcqType
+from enn.turbo.config.candidate_gen_config import CandidateGenConfig
+from enn.turbo.config.candidate_rv import CandidateRV
+from enn.turbo.config.enn_surrogate_config import (
+    ENNFitConfig,
+    ENNSurrogateConfig,
+)
+from enn.turbo.config.factory import (
+    lhd_only_config,
+    turbo_enn_config,
+    turbo_one_config,
+    turbo_zero_config,
+)
+from enn.turbo.config.raasp_driver import RAASPDriver
+from enn.turbo.config.trust_region import (
+    MorboTRConfig,
+    NoTRConfig,
+    TrustRegionConfig,
+    TurboTRConfig,
+)
+from enn.turbo.optimizer import create_optimizer
 
 import common.all_bounds as all_bounds
-from optimizer.designer_asserts import assert_scalar_rreturn
+from optimizer.turbo_enn_runtime import (
+    call_designer as _call_designer_runtime,
+)
+from optimizer.turbo_enn_runtime import (
+    get_algo_metrics as _get_algo_metrics_runtime,
+)
+from optimizer.turbo_enn_runtime import (
+    infer_num_metrics as _infer_num_metrics_runtime,
+)
+from optimizer.turbo_enn_runtime import (
+    resolve_num_metrics as _resolve_num_metrics_runtime,
+)
+from optimizer.turbo_enn_runtime import (
+    tell_new_data as _tell_new_data_runtime,
+)
+from optimizer.turbo_enn_runtime import (
+    update_best_estimate as _update_best_estimate_runtime,
+)
 
 
 class TurboENNDesigner:
@@ -127,10 +113,7 @@ class TurboENNDesigner:
         if self._tr_type == "morbo":
             if num_metrics is None:
                 raise ValueError("num_metrics is required for tr_type='morbo'")
-            try:
-                from enn.turbo.config.trust_region import MultiObjectiveConfig
-            except ModuleNotFoundError:
-                from ennbo.turbo.config.trust_region import MultiObjectiveConfig
+            from enn.turbo.config.trust_region import MultiObjectiveConfig
 
             return MorboTRConfig(multi_objective=MultiObjectiveConfig(num_metrics=int(num_metrics)))
         raise ValueError(f"Invalid tr_type: {self._tr_type}")
@@ -211,72 +194,24 @@ class TurboENNDesigner:
         self._turbo = create_optimizer(bounds=bounds, config=config, rng=self._rng)
 
     def _resolve_num_metrics(self, data):
-        num_metrics = self._num_metrics
-        if self._tr_type != "morbo":
-            return num_metrics
-        if num_metrics is None:
-            num_metrics = self._infer_num_metrics(data)
-        if num_metrics < 2:
-            raise ValueError("num_metrics must be >= 2 for tr_type='morbo'")
-        self._num_metrics = num_metrics
-        return num_metrics
+        return _resolve_num_metrics_runtime(self, data)
 
     def _infer_num_metrics(self, data):
-        policy_metrics = getattr(self._policy, "num_metrics", None)
-        if callable(policy_metrics):
-            policy_metrics = policy_metrics()
-        if policy_metrics is not None:
-            return int(policy_metrics)
-        if len(data) > 0:
-            y = np.asarray([d.trajectory.rreturn for d in data])
-            return int(y.shape[1]) if y.ndim == 2 else 1
-        return 2
+        return _infer_num_metrics_runtime(self, data)
 
     def _tell_new_data(self, new_data):
-        if self._tr_type != "morbo":
-            assert_scalar_rreturn(new_data)
-        x_list = [d.policy.get_params() for d in new_data]
-        y_list = [d.trajectory.rreturn for d in new_data]
-        y_se_list = [d.trajectory.rreturn_se for d in new_data] if self._use_y_var else []
-        if self._use_y_var:
-            assert all(se is not None for se in y_se_list)
-        if len(x_list) == 0:
-            return
-        x = np.array(x_list)
-        y_obs = np.array(y_list)
-        y_obs = y_obs[:, None] if y_obs.ndim == 1 else y_obs
-        y_est = self._turbo.tell(x, y_obs, y_var=np.array(y_se_list) ** 2) if y_se_list else self._turbo.tell(x, y_obs)
-        assert y_obs.shape == y_est.shape and y_obs.shape[0] == len(new_data)
-        if y_est.shape[1] == 1:
-            self._update_best_estimate(new_data, y_est[:, 0])
+        _tell_new_data_runtime(self, new_data)
 
     def _update_best_estimate(self, new_data, y_est_0):
-        y_est_0 = np.asarray(y_est_0, dtype=np.float64)
-        for i, d in enumerate(new_data):
-            d.trajectory.rreturn_est = float(y_est_0[i])
-        best_i = int(np.argmax(y_est_0))
-        best_y = float(y_est_0[best_i])
-        if self._y_est_best is None or best_y > float(self._y_est_best):
-            self._y_est_best = best_y
-            self._datum_best = new_data[best_i]
+        _update_best_estimate_runtime(self, new_data, y_est_0)
 
     def __call__(self, data, num_arms, *, telemetry=None):
-        if self._num_arms is None:
-            self._num_arms = num_arms
-            self._init_optimizer(data, num_arms)
-
-        if len(data) > self._num_told:
-            self._tell_new_data(data[self._num_told :])
-            self._num_told = len(data)
-
-        x_new = self._turbo.ask(num_arms)
-        if telemetry is not None:
-            t = self._turbo.telemetry()
-            telemetry.set_dt_fit(t.dt_fit)
-            telemetry.set_dt_select(t.dt_sel)
-        return [self._make_policy(x) for x in x_new]
+        return _call_designer_runtime(self, data, num_arms, telemetry=telemetry)
 
     def _make_policy(self, x):
         policy = self._policy.clone()
         policy.set_params(x)
         return policy
+
+    def get_algo_metrics(self) -> dict[str, float]:
+        return _get_algo_metrics_runtime(self)

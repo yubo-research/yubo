@@ -321,6 +321,10 @@ _gym_env_confs = {
         "HalfCheetah-v5",
         policy_class=MLPPolicyFactory((32, 16)),
     ),
+    "cheetah-256x256": _gym_conf(
+        "HalfCheetah-v5",
+        policy_class=MLPPolicyFactory((256, 256)),
+    ),
     "cheetah-16x16": _gym_conf(
         "HalfCheetah-v5",
         policy_class=MLPPolicyFactory((16, 16)),

@@ -5,7 +5,7 @@ from types import ModuleType
 
 
 def _install_gym_alias() -> ModuleType:
-    import gym as gym_alias
+    import gymnasium as gym_alias
 
     sys.modules["gym"] = gym_alias
     wrappers = getattr(gym_alias, "wrappers", None)

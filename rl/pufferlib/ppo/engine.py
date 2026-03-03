@@ -26,12 +26,12 @@ def _resolve_device(device_raw: str) -> torch.device:
 
 
 def _infer_channels(shape: tuple[int, ...], *, fallback: int) -> int:
-    env_utils = importlib.import_module("rl.pufferlib.sac.env_utils")
+    env_utils = importlib.import_module("rl.pufferlib.offpolicy.env_utils")
     return int(env_utils._infer_channels(shape, fallback=int(fallback)))
 
 
 def _infer_image_size(shape: tuple[int, ...], *, default_size: int) -> int:
-    env_utils = importlib.import_module("rl.pufferlib.sac.env_utils")
+    env_utils = importlib.import_module("rl.pufferlib.offpolicy.env_utils")
     return int(env_utils._infer_image_size(shape, default_size=int(default_size)))
 
 

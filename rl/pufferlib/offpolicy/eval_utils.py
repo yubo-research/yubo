@@ -11,9 +11,9 @@ import torch
 
 from rl.core.actor_state import capture_backbone_head_snapshot, restore_backbone_head_snapshot, use_backbone_head_snapshot
 from rl.core.episode_rollout import collect_denoised_trajectory, evaluate_for_best
+from rl.core.offpolicy_eval import evaluate_heldout_with_best_actor, update_best_actor_if_improved
+from rl.core.offpolicy_metrics import build_eval_metric_record, build_log_eval_iteration_kwargs
 from rl.core.progress import due_mark
-from rl.core.sac_eval import evaluate_heldout_with_best_actor, update_best_actor_if_improved
-from rl.core.sac_metrics import build_eval_metric_record, build_log_eval_iteration_kwargs
 from rl.eval_noise import build_eval_plan
 
 from ... import logger as rl_logger
@@ -62,7 +62,7 @@ class TrainState:
     ckpt_mark: int = 0
 
 
-class SacEvalPolicy:
+class OffPolicyEvalPolicy:
     def __init__(self, modules: Any, obs_spec: Any, *, device: torch.device):
         self._modules = modules
         self._obs_spec = obs_spec
@@ -77,7 +77,7 @@ class SacEvalPolicy:
 
 
 def evaluate_actor(config: Any, env: Any, modules: Any, obs_spec: Any, *, device: torch.device, eval_seed: int) -> float:
-    policy = SacEvalPolicy(modules, obs_spec, device=device)
+    policy = OffPolicyEvalPolicy(modules, obs_spec, device=device)
     traj, _ = collect_denoised_trajectory(env.env_conf, policy, num_denoise=config.num_denoise_eval, i_noise=int(eval_seed))
     return float(traj.rreturn)
 
@@ -96,7 +96,7 @@ def evaluate_heldout_if_enabled(
     if config.num_denoise_passive_eval is None:
         return None
     if best_actor_state is not None and with_actor_state_fn is not None:
-        policy = SacEvalPolicy(modules, obs_spec, device=device)
+        policy = OffPolicyEvalPolicy(modules, obs_spec, device=device)
         return evaluate_heldout_with_best_actor(
             best_actor_state=best_actor_state,
             num_denoise_passive_eval=config.num_denoise_passive_eval,
@@ -106,7 +106,7 @@ def evaluate_heldout_if_enabled(
             eval_env_conf=env.env_conf,
             eval_policy=policy,
         )
-    policy = SacEvalPolicy(modules, obs_spec, device=device)
+    policy = OffPolicyEvalPolicy(modules, obs_spec, device=device)
     return float(evaluate_for_best(env.env_conf, policy, config.num_denoise_passive_eval, i_noise=int(heldout_i_noise)))
 
 
@@ -185,7 +185,7 @@ def render_videos_if_enabled(config: Any, env: Any, modules: Any, obs_spec: Any,
         return
     from common.video import render_policy_videos
 
-    policy = SacEvalPolicy(modules, obs_spec, device=device)
+    policy = OffPolicyEvalPolicy(modules, obs_spec, device=device)
     seed_base = int(config.video_seed_base) if config.video_seed_base is not None else int(env.problem_seed + 10000)
     render_policy_videos(
         env.env_conf,
@@ -197,3 +197,6 @@ def render_videos_if_enabled(config: Any, env: Any, modules: Any, obs_spec: Any,
         episode_selection=str(config.video_episode_selection),
         seed_base=seed_base,
     )
+
+
+SacEvalPolicy = OffPolicyEvalPolicy

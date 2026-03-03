@@ -18,7 +18,12 @@ def resolve_gym_env_name(env_tag: str) -> tuple[str, dict]:
 
     env_conf = get_env_conf(str(env_tag))
     if getattr(env_conf, "gym_conf", None) is not None:
-        return (str(env_conf.env_name), dict(getattr(env_conf, "kwargs", {}) or {}))
+        env_name = str(env_conf.env_name)
+        kwargs = dict(getattr(env_conf, "kwargs", {}) or {})
+        if env_name.startswith("dm_control/"):
+            kwargs.setdefault("from_pixels", bool(getattr(env_conf, "from_pixels", False)))
+            kwargs.setdefault("pixels_only", bool(getattr(env_conf, "pixels_only", True)))
+        return (env_name, kwargs)
     tag = str(env_tag)
     if ":" not in tag and "/" not in tag and ("-v" in tag):
         return (tag, {})

@@ -1,10 +1,15 @@
 from __future__ import annotations
 
 import dataclasses
+from typing import ClassVar
+
+from rl.core.config_utils import DataclassFromDictMixin
 
 
 @dataclasses.dataclass
-class SACConfig:
+class SACConfig(DataclassFromDictMixin):
+    _tuple_int_keys: ClassVar[tuple[str, ...]] = ("backbone_hidden_sizes", "actor_head_hidden_sizes", "critic_head_hidden_sizes")
+
     exp_dir: str = "_tmp/sac_puffer"
     env_tag: str = "pend"
     seed: int = 1
@@ -65,14 +70,6 @@ class SACConfig:
 
     def to_dict(self) -> dict:
         return dataclasses.asdict(self)
-
-    @classmethod
-    def from_dict(cls, raw: dict) -> "SACConfig":
-        data = {k: v for k, v in raw.items() if k in {f.name for f in dataclasses.fields(cls)}}
-        for key in ["backbone_hidden_sizes", "actor_head_hidden_sizes", "critic_head_hidden_sizes"]:
-            if key in data and data[key] is not None:
-                data[key] = tuple((int(x) for x in data[key]))
-        return cls(**data)
 
 
 @dataclasses.dataclass

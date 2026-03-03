@@ -2,11 +2,8 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from rl.torchrl.sac.trainer import (
-    _normalize_actions_for_replay,
-    _scale_action_to_env,
-    _unscale_action_from_env,
-)
+from rl.torchrl.offpolicy.trainer_utils import normalize_actions_for_replay
+from rl.torchrl.sac.trainer import _scale_action_to_env, _unscale_action_from_env
 
 
 def test_scale_action_to_env():
@@ -30,7 +27,7 @@ def test_normalize_actions_for_replay_uses_unit_range():
         {"action": torch.as_tensor([[-2.0], [1.0], [4.0]], dtype=torch.float32)},
         batch_size=[3],
     )
-    out = _normalize_actions_for_replay(
+    out = normalize_actions_for_replay(
         flat,
         action_low=np.array([-2.0], dtype=np.float32),
         action_high=np.array([4.0], dtype=np.float32),
