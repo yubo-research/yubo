@@ -82,11 +82,38 @@ def use_backbone_head_snapshot(
 
 
 def rng_state_payload() -> dict[str, Any]:
+    rng_torch = torch.get_rng_state().detach().cpu().to(dtype=torch.uint8).contiguous()
+    rng_cuda = None
+    if torch.cuda.is_available():
+        rng_cuda = [state.detach().cpu().to(dtype=torch.uint8).contiguous() for state in torch.cuda.get_rng_state_all()]
     return {
-        "rng_torch": torch.get_rng_state(),
+        "rng_torch": rng_torch,
         "rng_numpy": np.random.get_state(),
-        "rng_cuda": torch.cuda.get_rng_state_all() if torch.cuda.is_available() else None,
+        "rng_cuda": rng_cuda,
     }
+
+
+def _validate_rng_tensor(raw: Any, *, key: str) -> torch.Tensor:
+    if not isinstance(raw, torch.Tensor):
+        raise TypeError(f"Checkpoint field '{key}' must be a torch.Tensor, got {type(raw).__name__}.")
+    if raw.dtype != torch.uint8:
+        raise TypeError(f"Checkpoint field '{key}' must have dtype torch.uint8, got {raw.dtype}.")
+    if raw.ndim != 1:
+        raise ValueError(f"Checkpoint field '{key}' must be 1D, got shape {tuple(raw.shape)}.")
+    return raw.detach().to(device="cpu", dtype=torch.uint8).contiguous()
+
+
+def restore_rng_state_payload(payload: dict[str, Any]) -> None:
+    if "rng_torch" in payload:
+        torch.set_rng_state(_validate_rng_tensor(payload["rng_torch"], key="rng_torch"))
+    if "rng_numpy" in payload:
+        np.random.set_state(payload["rng_numpy"])
+    if torch.cuda.is_available() and payload.get("rng_cuda") is not None:
+        rng_cuda = payload["rng_cuda"]
+        if not isinstance(rng_cuda, (list, tuple)):
+            raise TypeError(f"Checkpoint field 'rng_cuda' must be a list/tuple of tensors, got {type(rng_cuda).__name__}.")
+        states = [_validate_rng_tensor(state, key=f"rng_cuda[{idx}]") for idx, state in enumerate(rng_cuda)]
+        torch.cuda.set_rng_state_all(states)
 
 
 def build_ppo_checkpoint_payload(

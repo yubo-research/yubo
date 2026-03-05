@@ -27,6 +27,7 @@ class SACConfig(TorchRLRuntimeConfig):
     learning_starts: int = 5000
     update_every: int = 1
     updates_per_step: int = 1
+    learner_update_chunk_size: int = 1
     alpha_init: float = 0.2
     target_entropy: float | None = None
     eval_interval_steps: int = 10000
