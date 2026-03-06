@@ -7,6 +7,32 @@ import numpy as np
 import torch
 
 
+def _as_torch_device(device: torch.device | str) -> torch.device:
+    if isinstance(device, torch.device):
+        return device
+    return torch.device(str(device))
+
+
+def _move_tensor_to_device(tensor: torch.Tensor, device: torch.device) -> torch.Tensor:
+    if device.type == "cuda":
+        return tensor.pin_memory().to(device, non_blocking=True)
+    return tensor.to(device)
+
+
+def _to_cpu_replay_state(value: Any) -> Any:
+    if isinstance(value, torch.Tensor):
+        return value.detach().to(device="cpu")
+    if isinstance(value, torch.device):
+        return torch.device("cpu")
+    if isinstance(value, dict):
+        return type(value)((k, _to_cpu_replay_state(v)) for k, v in value.items())
+    if isinstance(value, list):
+        return [_to_cpu_replay_state(v) for v in value]
+    if isinstance(value, tuple):
+        return tuple((_to_cpu_replay_state(v) for v in value))
+    return value
+
+
 class NumpyReplayBuffer:
     def __init__(self, obs_shape: tuple[int, ...], act_dim: int, capacity: int):
         self.capacity = int(capacity)
@@ -29,13 +55,14 @@ class NumpyReplayBuffer:
         self.ptr = int((self.ptr + n) % self.capacity)
         self.size = int(min(self.size + n, self.capacity))
 
-    def sample(self, batch_size: int, device: torch.device) -> tuple[torch.Tensor, ...]:
+    def sample(self, batch_size: int, device: torch.device | str) -> tuple[torch.Tensor, ...]:
+        device_t = _as_torch_device(device)
         idx = np.random.randint(0, self.size, size=int(batch_size))
-        obs = torch.as_tensor(self.obs[idx], dtype=torch.float32, device=device)
-        act = torch.as_tensor(self.act[idx], dtype=torch.float32, device=device)
-        rew = torch.as_tensor(self.rew[idx], dtype=torch.float32, device=device)
-        nxt = torch.as_tensor(self.nxt[idx], dtype=torch.float32, device=device)
-        done = torch.as_tensor(self.done[idx], dtype=torch.float32, device=device)
+        obs = _move_tensor_to_device(torch.from_numpy(self.obs[idx]), device_t)
+        act = _move_tensor_to_device(torch.from_numpy(self.act[idx]), device_t)
+        rew = _move_tensor_to_device(torch.from_numpy(self.rew[idx]), device_t)
+        nxt = _move_tensor_to_device(torch.from_numpy(self.nxt[idx]), device_t)
+        done = _move_tensor_to_device(torch.from_numpy(self.done[idx]), device_t)
         return (obs, act, rew, nxt, done)
 
     def state_dict(self) -> dict[str, object]:
@@ -109,8 +136,17 @@ class TorchRLReplayBuffer:
         self._replay.extend(td)
         self._write_count += int(n)
 
-    def sample(self, batch_size: int, device: torch.device) -> tuple[torch.Tensor, ...]:
-        batch = self._replay.sample(int(batch_size)).to(device)
+    def sample(self, batch_size: int, device: torch.device | str) -> tuple[torch.Tensor, ...]:
+        device_t = _as_torch_device(device)
+        batch = self._replay.sample(int(batch_size))
+        if device_t.type == "cuda":
+            try:
+                batch = batch.pin_memory()
+            except Exception:
+                pass
+            batch = batch.to(device_t, non_blocking=True)
+        else:
+            batch = batch.to(device_t)
         obs = batch["observation"]
         act = batch["action"]
         rew = batch["next", "reward"].reshape(-1)
@@ -125,7 +161,7 @@ class TorchRLReplayBuffer:
         replay_state = state.get("replay_state") if isinstance(state, dict) else None
         if replay_state is None:
             replay_state = state
-        self._replay.load_state_dict(replay_state)
+        self._replay.load_state_dict(_to_cpu_replay_state(replay_state))
         self._write_count = int(state.get("write_count", int(self._replay.write_count)))
 
 

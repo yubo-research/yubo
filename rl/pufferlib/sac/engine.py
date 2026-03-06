@@ -9,7 +9,8 @@ from typing import Any
 import numpy as np
 import torch
 
-from rl.core.actor_state import capture_backbone_head_snapshot, restore_backbone_head_snapshot
+from rl.core.actor_state import capture_backbone_head_snapshot, restore_backbone_head_snapshot, restore_rng_state_payload
+from rl.core.update_chunks import run_chunked_updates
 
 from .config import SACConfig, TrainResult
 from .env_utils import build_env_setup, infer_observation_spec, make_vector_env, prepare_obs_np, resolve_device, seed_everything, to_env_action
@@ -126,12 +127,7 @@ def _restore_if_requested(config: SACConfig, modules, optimizers, replay, state:
     state.best_actor_state = loaded.get("best_actor_state")
     state.last_eval_return = float(loaded.get("last_eval_return", state.last_eval_return))
     state.last_heldout_return = loaded.get("last_heldout_return", state.last_heldout_return)
-    if "rng_torch" in loaded:
-        torch.set_rng_state(loaded["rng_torch"])
-    if "rng_numpy" in loaded:
-        np.random.set_state(loaded["rng_numpy"])
-    if torch.cuda.is_available() and loaded.get("rng_cuda") is not None:
-        torch.cuda.set_rng_state_all(loaded["rng_cuda"])
+    restore_rng_state_payload(loaded)
 
 
 def _checkpoint_if_due(config: SACConfig, checkpoint_manager: Any, modules, optimizers, replay, state: Any) -> None:
@@ -176,12 +172,15 @@ def _train_loop(
         state.global_step = int(min(total_steps, state.global_step + num_envs))
         should_update = state.global_step >= int(config.learning_starts) and state.global_step % int(max(1, config.update_every)) < num_envs
         if should_update and replay.size >= int(config.batch_size):
-            for _ in range(int(max(1, config.updates_per_step))):
+
+            def _run_one_update() -> None:
                 actor_loss, critic_loss, alpha_loss = sac_update(config, modules, optimizers, replay, device=device)
                 state.total_updates += 1
                 state.last_loss_actor = float(actor_loss)
                 state.last_loss_critic = float(critic_loss)
                 state.last_loss_alpha = float(alpha_loss)
+
+            run_chunked_updates(int(max(1, config.updates_per_step)), int(config.learner_update_chunk_size), _run_one_update)
         prev_eval_mark = int(state.eval_mark)
         maybe_eval(config, env_setup, modules, obs_spec, state, device=device)
         if int(state.eval_mark) != prev_eval_mark:

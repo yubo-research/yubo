@@ -9,8 +9,9 @@ import torchrl.collectors as tr_collectors
 import torchrl.envs as tr_envs
 from tensordict import TensorDict
 
-from rl.core.actor_state import capture_backbone_head_snapshot, restore_backbone_head_snapshot
+from rl.core.actor_state import capture_backbone_head_snapshot, restore_backbone_head_snapshot, restore_rng_state_payload
 from rl.core.continuous_actions import unscale_action_tensor_from_env
+from rl.core.update_chunks import run_chunked_updates
 
 from . import deps as sac_deps
 from .config import _SAC_RUNTIME_CAPABILITIES, SACConfig, TrainResult
@@ -94,12 +95,7 @@ def _resume_if_requested(config: SACConfig, modules: _Modules, training: _Traini
     state.best_actor_state = loaded.get("best_actor_state")
     state.last_eval_return = float(loaded.get("last_eval_return", state.last_eval_return))
     state.last_heldout_return = loaded.get("last_heldout_return", state.last_heldout_return)
-    if "rng_torch" in loaded:
-        torch.set_rng_state(loaded["rng_torch"])
-    if "rng_numpy" in loaded:
-        np.random.set_state(loaded["rng_numpy"])
-    if torch.cuda.is_available() and loaded.get("rng_cuda") is not None:
-        torch.cuda.set_rng_state_all(loaded["rng_cuda"])
+    restore_rng_state_payload(loaded)
     return state
 
 
@@ -252,10 +248,15 @@ def _process_sac_batch(batch, config, modules, training, runtime, env_setup, lat
     for i in range(n_frames):
         training.replay.add(flat[i].clone())
     n_update_cycles = max(0, n_frames // int(config.update_every))
-    for _ in range(n_update_cycles * int(config.updates_per_step)):
+    target_updates = int(n_update_cycles * int(config.updates_per_step))
+
+    def _run_one_update() -> None:
+        nonlocal latest_losses, total_updates
         if training.replay.write_count >= int(config.learning_starts):
             latest_losses = _update_step(config, modules, training, device=runtime.device, batch_size=int(config.batch_size))
             total_updates += 1
+
+    run_chunked_updates(target_updates, int(config.learner_update_chunk_size), _run_one_update)
     return (latest_losses, total_updates, n_frames)
 
 
