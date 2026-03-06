@@ -72,6 +72,12 @@ def _init_counters_and_tr(self, *, batch_size):
     self.length_init = 0.8
 
 
+def _make_X_cand(self, *, x_center, lb, ub, device, dtype):
+    from .turbo_1_ask_tell import _make_candidates
+
+    return _make_candidates(self, x_center=x_center, lb=lb, ub=ub, device=device, dtype=dtype)
+
+
 def _compute_y_cand(self, *, X, fX, X_cand, mu, sigma, gp, device, dtype):
     if self._surrogate_type == "original":
         gp = gp.to(dtype=dtype, device=device)

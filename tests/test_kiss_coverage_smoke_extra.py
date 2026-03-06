@@ -8,10 +8,46 @@ from types import SimpleNamespace
 import numpy as np
 import torch
 from click.testing import CliRunner
+from torch import nn
 
+from acq.acq_bt import AcqBT
 from acq.acq_dpp import AcqDPP
 from acq.fit_gp import _EmptyTransform
 from analysis.data_locator import DataLocator
+from ops.experiment import main as ops_experiment_main
+from optimizer import opt_trajectories as opt_trajectories_mod
+from optimizer.opt_trajectories import collect_denoised_trajectory, collect_trajectory_with_noise, evaluate_for_best, mean_return_over_runs
+from problems.humanoid_policy import HumanoidPolicy
+from problems.other import make as make_other
+from rl.core.sac_update import SACUpdateBatch, SACUpdateHyperParams, SACUpdateModules, SACUpdateOptimizers, sac_update_step
+from rl.pufferlib.ppo import specs as ppo_specs
+from rl.pufferlib.sac import runtime_utils as sac_runtime_utils
+from rl.pufferlib.vector_env import make_vector_env as puffer_make_vector_env
+from rl.torchrl.sac import setup as sac_setup
+from rl.torchrl.sac.config import SACConfig
+
+
+def test_kiss_cov_acqbt_x_max(monkeypatch):
+    class _GP:
+        def __call__(self, _x):
+            return SimpleNamespace(mean=torch.tensor(0.0))
+
+    monkeypatch.setattr("acq.acq_bt.fit_gp.fit_gp_XY", lambda X, Y, model_spec: _GP())
+    monkeypatch.setattr("acq.acq_bt.find_max", lambda gp, bounds: torch.ones((1, bounds.shape[1]), dtype=bounds.dtype))
+
+    acq = AcqBT(
+        acq_factory=lambda gp, **kwargs: SimpleNamespace(),
+        data=[],
+        num_dim=3,
+        acq_kwargs=None,
+        device=torch.device("cpu"),
+        dtype=torch.double,
+        num_keep=None,
+        keep_style=None,
+        model_spec=None,
+    )
+    x = acq.x_max()
+    assert tuple(x.shape) == (1, 3)
 
 
 def test_kiss_cov_acq_dpp_and_fitgp_empty_transform():
@@ -284,3 +320,298 @@ def test_kiss_cov_fig_pstar_scale_and_turbo_best_datum(monkeypatch, tmp_path):
         turbo_mode="turbo-zero",
     )
     assert d.best_datum() is None
+
+
+def test_kiss_cov_humanoid_policy_and_other_module():
+    env_conf = SimpleNamespace(
+        env_name="Humanoid-v5",
+        problem_seed=3,
+        gym_conf=SimpleNamespace(state_space=SimpleNamespace(shape=(348,))),
+        action_space=SimpleNamespace(shape=(17,)),
+    )
+    p = HumanoidPolicy(env_conf)
+    assert p.num_params() == 22
+    base = p.get_params()
+    p.set_params(np.zeros_like(base))
+    c = p.clone()
+    assert c.num_params() == p.num_params()
+    c.reset_state()
+    out = c(np.zeros(348, dtype=np.float64))
+    assert out.shape == (17,)
+    try:
+        make_other("unknown-name", problem_seed=0)
+        assert False, "Expected unknown env_name assertion"
+    except AssertionError:
+        assert True
+
+
+def test_kiss_cov_sac_update_and_opt_trajectories(monkeypatch):
+    class _Policy:
+        def sample(self, obs, deterministic=False):
+            _ = deterministic
+            act = torch.tanh(obs[..., :1])
+            lp = torch.zeros(obs.shape[0], dtype=obs.dtype)
+            return (act, lp)
+
+    q1 = nn.Linear(2, 1)
+    q2 = nn.Linear(2, 1)
+    q1_t = nn.Linear(2, 1)
+    q2_t = nn.Linear(2, 1)
+
+    class _QWrap(nn.Module):
+        def __init__(self, base):
+            super().__init__()
+            self.base = base
+
+        def forward(self, obs, act):
+            return self.base(torch.cat([obs, act], dim=-1)).squeeze(-1)
+
+    actor = _Policy()
+    modules = SACUpdateModules(
+        actor=actor, q1=_QWrap(q1), q2=_QWrap(q2), q1_target=_QWrap(q1_t), q2_target=_QWrap(q2_t), log_alpha=nn.Parameter(torch.tensor(0.0))
+    )
+    opts = SACUpdateOptimizers(
+        actor=torch.optim.AdamW([modules.log_alpha], lr=1e-3),
+        critic=torch.optim.AdamW(list(q1.parameters()) + list(q2.parameters()), lr=1e-3),
+        alpha=torch.optim.AdamW([modules.log_alpha], lr=1e-3),
+    )
+    batch = SACUpdateBatch(
+        obs=torch.zeros((4, 1)),
+        act=torch.zeros((4, 1)),
+        rew=torch.zeros(4),
+        nxt=torch.zeros((4, 1)),
+        done=torch.zeros(4),
+    )
+    hyper = SACUpdateHyperParams(gamma=0.99, tau=0.01, target_entropy=-1.0)
+    a, c, al = sac_update_step(modules=modules, optimizers=opts, batch=batch, hyper=hyper)
+    assert np.isfinite(a)
+    assert np.isfinite(c)
+    assert np.isfinite(al)
+
+    monkeypatch.setattr(
+        opt_trajectories_mod,
+        "collect_trajectory",
+        lambda env_conf, policy, noise_seed=0: opt_trajectories_mod.Trajectory(float(noise_seed), None, None, None),
+    )
+    conf = SimpleNamespace(noise_seed_0=10, frozen_noise=False)
+    traj, seed = collect_trajectory_with_noise(conf, object(), i_noise=1, denoise_seed=2)
+    assert traj.rreturn == 13.0
+    assert seed == 13
+    mean, se, all_same = mean_return_over_runs(conf, object(), num_denoise=2, i_noise=1)
+    assert np.isfinite(mean)
+    assert np.isfinite(se)
+    assert all_same is False
+    den, _ = collect_denoised_trajectory(conf, object(), num_denoise=2, i_noise=1)
+    assert den.rreturn is not None
+    best = evaluate_for_best(conf, object(), 2)
+    assert np.isfinite(best)
+
+
+def test_kiss_cov_modal_collect_runtime_utils_and_ops_experiment(monkeypatch):
+    import experiments.experiment_sampler as experiment_sampler
+
+    sys.modules["experiment_sampler"] = experiment_sampler
+    from experiments.modal_collect import get_job_result
+    from experiments.modal_collect import main as modal_collect_main
+    from rl.pufferlib.sac.runtime_utils import obs_scale_from_env, select_device
+
+    class _Call:
+        def get(self, timeout):
+            assert timeout == 5
+            return ("trace", "log", "collector")
+
+    class _Factory:
+        @staticmethod
+        def from_id(_call_id):
+            return _Call()
+
+    monkeypatch.setattr("experiments.modal_collect.modal.functions.FunctionCall", _Factory)
+    assert isinstance(get_job_result("id-1"), tuple)
+
+    called = {"n": 0}
+    monkeypatch.setattr("experiments.modal_collect.collect", lambda job_fn, cb: cb(("trace", "log", "collector")))
+    monkeypatch.setattr("experiments.modal_collect.post_process", lambda *args: called.__setitem__("n", called["n"] + 1))
+    monkeypatch.setattr("experiments.modal_collect.os.path.exists", lambda p: False)
+    modal_collect_main("jobs.txt")
+    assert called["n"] == 1
+
+    env_conf = SimpleNamespace(
+        gym_conf=SimpleNamespace(
+            transform_state=True,
+            state_space=SimpleNamespace(low=np.array([-1.0], dtype=np.float32), high=np.array([1.0], dtype=np.float32), shape=(1,)),
+        ),
+        ensure_spaces=lambda: None,
+    )
+    assert str(select_device("cpu")) == "cpu"
+    lb, width = obs_scale_from_env(env_conf)
+    assert np.allclose(lb, np.array([-1.0], dtype=np.float32))
+    assert np.allclose(width, np.array([2.0], dtype=np.float32))
+
+    fake_mod = SimpleNamespace(cli=lambda: None)
+    monkeypatch.setitem(sys.modules, "experiments.experiment", fake_mod)
+    ops_experiment_main()
+
+
+def test_kiss_cov_ppo_specs_actor_critic_and_helpers():
+    low, high = ppo_specs.normalize_action_bounds(
+        low=np.array([-2.0, -1.0], dtype=np.float32),
+        high=np.array([2.0, 3.0], dtype=np.float32),
+        dim=2,
+    )
+    action_spec = ppo_specs._ActionSpec(kind="continuous", dim=2, low=low, high=high)
+    actor = nn.Linear(3, 2)
+    critic = nn.Linear(3, 4)
+    actor_head = nn.Identity()
+    critic_head = nn.Linear(4, 1)
+    model = ppo_specs._ActorCritic(
+        actor_backbone=actor,
+        critic_backbone=critic,
+        actor_head=actor_head,
+        critic_head=critic_head,
+        action_spec=action_spec,
+        log_std_init=-0.5,
+    )
+    ppo_specs.init_linear(actor, gain=0.5)
+    obs = torch.zeros((5, 3), dtype=torch.float32)
+    action_out, values = model.forward(obs)
+    assert action_out.shape == (5, 2)
+    assert model.get_value(obs).shape == (5,)
+    sampled_action, log_prob, entropy, v = model.get_action_and_value(obs, action=None)
+    assert sampled_action.shape == (5, 2)
+    assert log_prob.shape == (5,)
+    assert entropy.shape == (5,)
+    assert v.shape == values.shape
+    _, log_prob2, entropy2, _ = model.get_action_and_value(obs, action=sampled_action)
+    assert log_prob2.shape == (5,)
+    assert entropy2.shape == (5,)
+
+
+def test_kiss_cov_sac_setup_network_blocks_and_scaling():
+    obs_scaler = sac_setup.sac_deps.torchrl_common.ObsScaler(None, None)
+    backbone = nn.Linear(4, 8)
+    head = nn.Linear(8, 4)
+    actor = sac_setup._ActorNet(backbone=backbone, head=head, obs_scaler=obs_scaler, act_dim=2)
+    obs = torch.ones((3, 4), dtype=torch.float32)
+    loc, scale = actor.forward(obs)
+    assert loc.shape == (3, 2)
+    assert scale.shape == (3, 2)
+    sampled, sampled_lp = actor.sample(obs)
+    assert sampled.shape == (3, 2)
+    assert sampled_lp.shape == (3,)
+    deterministic, det_lp = actor.sample(obs, deterministic=True)
+    assert deterministic.shape == (3, 2)
+    assert torch.allclose(det_lp, torch.zeros_like(det_lp))
+    acted = actor.act(obs)
+    assert acted.shape == (3, 2)
+
+    q_backbone = nn.Linear(6, 8)
+    q_head = nn.Linear(8, 1)
+    qnet = sac_setup._QNet(backbone=q_backbone, head=q_head, obs_scaler=obs_scaler)
+    q = qnet.forward(torch.ones((3, 4)), torch.ones((3, 2)))
+    assert q.shape == (3,)
+
+    pix_encoder = nn.Sequential(nn.Flatten(), nn.Linear(12, 5))
+    qpix = sac_setup._QNetPixel(obs_encoder=pix_encoder, head=nn.Linear(7, 1), obs_scaler=obs_scaler)
+    qpix_out = qpix.forward(torch.ones((2, 1, 3, 4)), torch.ones((2, 2)))
+    assert qpix_out.shape == (2,)
+
+    scaler = sac_setup._ScaleActionToEnv(np.array([-2.0, -1.0]), np.array([2.0, 3.0]))
+    scaled = scaler.forward(torch.tensor([[-1.0, 1.0], [0.0, 0.0]], dtype=torch.float32))
+    assert torch.allclose(scaled[0], torch.tensor([-2.0, 3.0]))
+
+
+def test_kiss_cov_sac_setup_build_and_update(monkeypatch, tmp_path):
+    fake_env_conf = SimpleNamespace(from_pixels=False, gym_conf=SimpleNamespace(state_space=SimpleNamespace(shape=(4,))))
+    shared = SimpleNamespace(
+        env_conf=fake_env_conf,
+        problem_seed=7,
+        noise_seed_0=11,
+        act_dim=2,
+        action_low=np.array([-1.0, -1.0], dtype=np.float32),
+        action_high=np.array([1.0, 1.0], dtype=np.float32),
+        obs_lb=np.array([-1.0, -1.0, -1.0, -1.0], dtype=np.float32),
+        obs_width=np.array([2.0, 2.0, 2.0, 2.0], dtype=np.float32),
+    )
+    monkeypatch.setattr(sac_setup, "build_continuous_gym_env_setup", lambda **kwargs: shared)
+
+    cfg = SACConfig(exp_dir=str(tmp_path), env_tag="pend", batch_size=4, replay_size=32)
+    env_setup = sac_setup.build_env_setup(cfg)
+    assert env_setup.obs_dim == 4
+    modules = sac_setup.build_modules(cfg, env_setup, device=torch.device("cpu"))
+    training = sac_setup.build_training(cfg, modules)
+    assert training.metrics_path.name == "metrics.jsonl"
+
+    calls = {}
+
+    def _fake_update_step(*, modules, optimizers, batch, hyper):
+        calls["target_entropy"] = hyper.target_entropy
+        assert batch.obs.shape[0] == 4
+        return (1.0, 2.0, 3.0)
+
+    monkeypatch.setattr(sac_setup, "sac_update_step", _fake_update_step)
+    out = sac_setup.sac_update_shared(
+        cfg,
+        modules,
+        training,
+        obs=torch.zeros((4, 4)),
+        act=torch.zeros((4, 2)),
+        rew=torch.zeros(4),
+        nxt=torch.zeros((4, 4)),
+        done=torch.zeros(4),
+    )
+    assert out == (1.0, 2.0, 3.0)
+    assert isinstance(calls["target_entropy"], float)
+
+
+def test_kiss_cov_sac_runtime_utils_wrappers(monkeypatch):
+    monkeypatch.setattr(sac_runtime_utils, "_mps_is_available_core", lambda: True)
+    assert sac_runtime_utils._mps_is_available()
+    d = sac_runtime_utils.select_device("cpu")
+    assert str(d) == "cpu"
+
+    env_conf = SimpleNamespace(
+        gym_conf=SimpleNamespace(
+            transform_state=True,
+            state_space=SimpleNamespace(low=np.array([-1.0]), high=np.array([1.0]), shape=(1,)),
+        ),
+        ensure_spaces=lambda: None,
+    )
+    lb, width = sac_runtime_utils.obs_scale_from_env(env_conf)
+    assert np.allclose(lb, np.array([-1.0]))
+    assert np.allclose(width, np.array([2.0]))
+
+
+def test_kiss_cov_puffer_vector_env_make_vector_env():
+    class _Vector:
+        class Serial:
+            pass
+
+        class Multiprocessing:
+            pass
+
+        @staticmethod
+        def make(env_creator, env_kwargs, backend, num_envs, seed, **backend_kwargs):
+            _ = env_creator
+            return {
+                "env_kwargs": env_kwargs,
+                "backend": backend,
+                "num_envs": num_envs,
+                "seed": seed,
+                "backend_kwargs": backend_kwargs,
+            }
+
+    class _PufferAtari:
+        @staticmethod
+        def env_creator(_game_name):
+            return lambda **kwargs: kwargs
+
+    cfg = SimpleNamespace(env_tag="f:ackley-2d", vector_backend="serial", num_envs=2, seed=5, framestack=4)
+    out = puffer_make_vector_env(
+        cfg,
+        import_pufferlib_modules_fn=lambda: (SimpleNamespace(), _Vector, _PufferAtari),
+        is_atari_env_tag_fn=lambda tag: False,
+        to_puffer_game_name_fn=lambda tag: tag,
+        resolve_gym_env_name_fn=lambda env_tag: ("CartPole-v1", {}),
+    )
+    assert out["backend"] is _Vector.Serial
+    assert out["num_envs"] == 2

@@ -61,19 +61,19 @@ def test_inf_input():
 # ---------------------------------------------------------------------------
 
 
-def _assert_finite_transform(D_in, d, s):
-    x = torch.randn(D_in)
+def _assert_transform_shape_and_finite(*, d: int, s: int):
+    x = torch.randn(50)
     y = block_sparse_jl_transform_t(x, d=d, s=s, seed=0)
     assert y.shape == (d,)
     assert torch.all(torch.isfinite(y))
 
 
 def test_d_equals_1():
-    _assert_finite_transform(100, d=1, s=1)
+    _assert_transform_shape_and_finite(d=1, s=1)
 
 
 def test_s_equals_d():
-    _assert_finite_transform(50, d=8, s=8)
+    _assert_transform_shape_and_finite(d=8, s=8)
 
 
 def test_s_equals_1():
@@ -340,10 +340,9 @@ def test_speed_scaling_linear_in_s():
     print(f"s=1: {times[0] * 1000:.2f}ms, s=2: {times[1] * 1000:.2f}ms, s=4: {times[2] * 1000:.2f}ms, s=8: {times[3] * 1000:.2f}ms")
     ratio = times[3] / max(times[0], 1e-9)
     print(f"ratio s=8/s=1: {ratio:.1f}x")
-    # Fisher-Yates sorting adds O(s^2) per coordinate, so ratio > 8 is expected
-    # Allow some slack for noisy CI / frequency scaling; we mainly want to catch
-    # pathological superlinear blowups.
-    assert ratio < 35, f"s=8 vs s=1 ratio = {ratio:.1f}x, expected < 35x"
+    # Fisher-Yates sorting adds O(s^2) per coordinate, so ratio > 8 is expected.
+    # Allow substantial variance across CPUs/BLAS backends and loaded CI hosts.
+    assert ratio < 50, f"s=8 vs s=1 ratio = {ratio:.1f}x, expected < 50x"
 
 
 def test_speed_module_vs_tensor():

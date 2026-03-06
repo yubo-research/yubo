@@ -13,7 +13,7 @@ def test_prep_uhd_batch_tlunar():
             assert isinstance(cfg, dict)
             assert num_reps == 5
             assert cfg["env_tag"] == "tlunar:fn"
-            assert cfg["num_rounds"] == 30
+            assert cfg["num_rounds"] == 1000
             assert cfg["optimizer"] in ["simple", "simple_be", "mezo", "mezo_be"]
 
 

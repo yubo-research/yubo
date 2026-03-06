@@ -1,3 +1,5 @@
+import pytest
+
 from optimizer.step_size_adapter import StepSizeAdapter
 
 
@@ -47,23 +49,20 @@ def test_shrink_floored_at_sigma_min():
     assert adapter.sigma == 1e-5
 
 
-def _assert_shrinks_after_n_failures(*, dim, success_tolerance, expected_failures):
+@pytest.mark.parametrize(
+    ("dim", "success_tolerance", "steps_before_shrink"),
+    [
+        (10, 5, 24),  # failure_tolerance=max(10, 25)=25
+        (4, 1, 9),  # failure_tolerance=max(10, 5)=10
+    ],
+)
+def test_failure_tolerance_behavior(dim, success_tolerance, steps_before_shrink):
     adapter = StepSizeAdapter(sigma_0=0.1, dim=dim, success_tolerance=success_tolerance)
-    for _ in range(expected_failures - 1):
+    for _ in range(steps_before_shrink):
         adapter.update(accepted=False)
     assert adapter.sigma == 0.1
     adapter.update(accepted=False)
     assert adapter.sigma == 0.05
-
-
-def test_failure_tolerance_scales_with_success_tolerance():
-    # success_tolerance=5 -> failure_tolerance = max(10, 5*5) = 25
-    _assert_shrinks_after_n_failures(dim=10, success_tolerance=5, expected_failures=25)
-
-
-def test_failure_tolerance_minimum_is_10():
-    # success_tolerance=1 -> 5*1=5 -> max(10, 5) = 10
-    _assert_shrinks_after_n_failures(dim=4, success_tolerance=1, expected_failures=10)
 
 
 def test_success_resets_failure_count():

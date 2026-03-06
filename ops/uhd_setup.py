@@ -378,7 +378,7 @@ def make_loop(
         target_accuracy=target_accuracy,
         print_summary=True,
     )
-    er = early_reject if early_reject is not None else EarlyRejectConfig()
+    er = early_reject if early_reject is not None else EarlyRejectConfig(tau=None, mode=None, ema_beta=None, warmup_pos=None, quantile=None, window=None)
     if er.tau is not None or er.mode is not None:
         loop.set_early_reject_advanced(
             tau=er.tau,

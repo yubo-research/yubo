@@ -35,6 +35,27 @@ def test_tell_improvement_keeps_new_params():
     assert_tell_improvement_keeps_new_params(_make_uhd)
 
 
+def _ask_and_tell(uhd, mu: float):
+    uhd.ask()
+    uhd.tell(mu, 0.0)
+
+
+def test_tell_transitions_cover_accept_and_reject():
+    module, _, uhd = _make_uhd()
+    orig = module.weight.data.clone()
+
+    _ask_and_tell(uhd, 1.0)
+    first_weight = module.weight.data.clone()
+    assert not torch.equal(first_weight, orig)
+
+    _ask_and_tell(uhd, 10.0)
+    accepted_weight = module.weight.data.clone()
+    assert not torch.equal(accepted_weight, first_weight)
+
+    _ask_and_tell(uhd, 5.0)  # worse than y_best, should revert
+    assert torch.allclose(module.weight.data, accepted_weight)
+
+
 def test_y_best_tracks_accepted():
     """y_best should reflect the best accepted average mu."""
     _, _, uhd = _make_uhd(alpha=2.0)

@@ -227,7 +227,7 @@ def _run(
 
     enn_f = _parse_enn_fields(enn)
 
-    er = early_reject if early_reject is not None else EarlyRejectConfig()
+    er = early_reject if early_reject is not None else EarlyRejectConfig(tau=None, mode=None, ema_beta=None, warmup_pos=None, quantile=None, window=None)
     with modal.enable_output():
         with app.run():
             return _run_uhd.remote(

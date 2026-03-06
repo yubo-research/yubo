@@ -134,6 +134,30 @@ def test_cov_report_bad_init_traces(tmp_path):
     assert out is not None
 
 
+def test_cov_plotting_types(tmp_path):
+    from analysis.data_locator import DataLocator
+    from analysis.plotting_trace_types import (
+        PlotRLComparisonResult,
+        PlotRLFinalComparisonResult,
+        RLTracesWithCumDtProp,
+    )
+    from analysis.plotting_types import PlotResultsResult, PlotRLExperimentResult, PlotRLExperimentVsTimeResult
+
+    dl = DataLocator(results_path=str(tmp_path), exp_dir="", opt_names=[])
+    t = RLTracesWithCumDtProp(data_locator=dl, traces=np.zeros((2, 3)), cum_dt_prop=None)
+    assert t.traces.shape == (2, 3)
+    r = PlotRLComparisonResult(fig=None, axs=None, seq=t, batch=None)
+    assert r.seq == t
+    rf = PlotRLFinalComparisonResult(fig=None, axs=None, seq=t, batch=None)
+    assert rf.seq == t
+    pe = PlotRLExperimentResult(fig=None, ax=None, data_locator=dl, traces=np.array([1.0]))
+    assert pe.traces is not None
+    pet = PlotRLExperimentVsTimeResult(fig=None, ax=None, data_locator=dl, traces=np.array([1.0]), t=np.array([0.0]))
+    assert pet.t is not None
+    pr = PlotResultsResult(curves=(None, None), final=(None, None), seq_data=None, batch_data=None)
+    assert pr.curves == (None, None)
+
+
 # ---------------------------------------------------------------------------
 # experiments/
 # ---------------------------------------------------------------------------
@@ -180,7 +204,7 @@ def test_cov_experiment_cli_local_main(monkeypatch, tmp_path):
 
 
 def test_cov_fit_mnist():
-    from experiments.fit_mnist import fit_mnist
+    from ops.fit_mnist import fit_mnist
 
     model = fit_mnist(num_epochs=1, batch_size=512, timeout_seconds=5)
     assert model is not None
@@ -219,8 +243,27 @@ def test_cov_data_cli():
 
 def test_cov_exp_uhd_UHDConfig_local_modal_cmd(monkeypatch, tmp_path):
     import ops.exp_uhd as exp_uhd
+    from ops.uhd_config import BEConfig, EarlyRejectConfig, ENNConfig, UHDConfig
 
-    cfg = exp_uhd.UHDConfig(
+    early_reject = EarlyRejectConfig(tau=None, mode=None, ema_beta=None, warmup_pos=None, quantile=None, window=None)
+    be = BEConfig(num_probes=10, num_candidates=10, warmup=20, fit_interval=10, enn_k=25, sigma_range=None)
+    enn = ENNConfig(
+        minus_impute=False,
+        d=100,
+        s=4,
+        jl_seed=123,
+        k=25,
+        fit_interval=50,
+        warmup_real_obs=200,
+        refresh_interval=50,
+        se_threshold=0.25,
+        target="mu_minus",
+        num_candidates=1,
+        select_interval=1,
+        embedder="direction",
+        gather_t=64,
+    )
+    cfg = UHDConfig(
         env_tag="f:sphere-2d",
         num_rounds=1,
         problem_seed=None,
@@ -231,34 +274,11 @@ def test_cov_exp_uhd_UHDConfig_local_modal_cmd(monkeypatch, tmp_path):
         log_interval=10,
         accuracy_interval=1000,
         target_accuracy=None,
-        early_reject_tau=None,
-        early_reject_mode=None,
-        early_reject_ema_beta=None,
-        early_reject_warmup_pos=None,
-        early_reject_quantile=None,
-        early_reject_window=None,
+        early_reject=early_reject,
+        be=be,
+        enn=enn,
         optimizer="mezo",
-        be_num_probes=10,
-        be_num_candidates=10,
-        be_warmup=20,
-        be_fit_interval=10,
-        be_enn_k=25,
-        be_sigma_range=None,
         batch_size=4096,
-        enn_minus_impute=False,
-        enn_d=100,
-        enn_s=4,
-        enn_jl_seed=123,
-        enn_k=25,
-        enn_fit_interval=50,
-        enn_warmup_real_obs=200,
-        enn_refresh_interval=50,
-        enn_se_threshold=0.25,
-        enn_target="mu_minus",
-        enn_num_candidates=1,
-        enn_select_interval=1,
-        enn_embedder="direction",
-        enn_gather_t=64,
         bszo_k=2,
         bszo_epsilon=1e-4,
         bszo_sigma_p_sq=1.0,
@@ -282,7 +302,7 @@ def test_cov_exp_uhd_UHDConfig_local_modal_cmd(monkeypatch, tmp_path):
     res = runner.invoke(exp_uhd.cli, ["local", str(toml)])
     assert res.exit_code == 0
 
-    monkeypatch.setattr("ops.modal_uhd.run", lambda *a, **k: "log_text")
+    monkeypatch.setattr("ops.modal_uhd.run", lambda *a, **k: None)
     res = runner.invoke(exp_uhd.cli, ["modal", str(toml)])
     assert res.exit_code == 0
 
@@ -389,6 +409,34 @@ def test_cov_make_loop_gym_evaluate_fn(monkeypatch):
 # ---------------------------------------------------------------------------
 # optimizer/
 # ---------------------------------------------------------------------------
+
+
+def test_cov_optimizer_types():
+    from optimizer.datum import Datum
+    from optimizer.optimizer_types import IterateResult, ReturnSummary, TraceEntry
+    from optimizer.trajectories import Trajectory
+
+    tr = Trajectory(rreturn=1.0, states=np.zeros((1, 1)), actions=np.zeros((1, 1)))
+    d = Datum(designer=None, policy=None, expected_acqf=0.5, trajectory=tr)
+    ir = IterateResult(data=[d], dt_prop=0.1, dt_eval=0.2)
+    assert ir.dt_prop == 0.1
+    te = TraceEntry(rreturn=1.0, rreturn_decision=1.0, dt_prop=0.1, dt_eval=0.2)
+    assert te.rreturn == 1.0
+    rs = ReturnSummary(ret_eval=1.0, y_best_s="1", ret_best_s="1", ret_eval_s="1")
+    assert rs.ret_eval == 1.0
+
+
+def test_cov_designer_parse_types():
+    from optimizer.designer_parse_types import ParsedOptions
+
+    po = ParsedOptions(
+        designer_name="turbo-enn-f",
+        num_keep=10,
+        keep_style="best",
+        model_spec=None,
+        sample_around_best=True,
+    )
+    assert po.designer_name == "turbo-enn-f"
 
 
 def test_cov_designer_num_candidates():
