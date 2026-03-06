@@ -1,0 +1,10 @@
+[uhd]
+env_tag = "mnist_fulltrain_acc"
+num_rounds = 6000
+
+lr = 0.001
+perturb = "dim:0.5"
+
+log_interval = 10
+accuracy_interval = 50
+target_accuracy = 0.50

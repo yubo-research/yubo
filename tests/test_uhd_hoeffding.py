@@ -3,6 +3,12 @@ from torch import nn
 
 from optimizer.gaussian_perturbator import GaussianPerturbator
 from optimizer.uhd_hoeffding import UHDHoeffding
+from tests.uhd_ask_tell_helpers import (
+    assert_ask_perturbs_module,
+    assert_tell_first_always_accepts,
+    assert_tell_improvement_keeps_new_params,
+    assert_tell_worse_reverts,
+)
 
 
 def _make_uhd(sigma_0=1.0, alpha=0.1):
@@ -11,6 +17,22 @@ def _make_uhd(sigma_0=1.0, alpha=0.1):
     gp = GaussianPerturbator(module)
     uhd = UHDHoeffding(gp, sigma_0=sigma_0, dim=dim, alpha=alpha)
     return module, gp, uhd
+
+
+def test_ask_perturbs_module():
+    assert_ask_perturbs_module(_make_uhd)
+
+
+def test_tell_first_always_accepts():
+    assert_tell_first_always_accepts(_make_uhd)
+
+
+def test_tell_worse_reverts():
+    assert_tell_worse_reverts(_make_uhd)
+
+
+def test_tell_improvement_keeps_new_params():
+    assert_tell_improvement_keeps_new_params(_make_uhd)
 
 
 def _ask_and_tell(uhd, mu: float):

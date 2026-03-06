@@ -44,8 +44,11 @@ class TurboState:
         return self
 
 
-def cdf(value, mean=0, std=1):
+def _cdf(value, mean=0, std=1):
     return 0.5 * (1 + torch.erf((value - mean) / (std * np.sqrt(2))))
+
+
+cdf = _cdf
 
 
 def get_point_in_tr(x, lb, ub):

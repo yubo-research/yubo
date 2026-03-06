@@ -111,7 +111,7 @@ def modal_batch_deleter(collected_keys):
             pass
 
 
-def collect():
+def _collect():
     res_dict = _results_dict()
     print("DICT_SIZE:", res_dict.len())
 
@@ -139,6 +139,9 @@ def collect():
     func.spawn(collected_keys)
 
     print(f"num_collected = {len(collected_keys)}")
+
+
+collect = _collect
 
 
 def status():

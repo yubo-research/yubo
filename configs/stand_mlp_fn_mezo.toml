@@ -1,0 +1,9 @@
+[uhd]
+env_tag = "stand-mlp:fn"
+num_rounds = 100
+problem_seed = 18
+noise_seed_0 = 180
+
+lr = 0.001
+perturb = "dense"
+log_interval = 10

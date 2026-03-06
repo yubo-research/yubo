@@ -11,8 +11,6 @@ class LRScheduler(Protocol):
 
 
 class ConstantLR:
-    """Constant learning rate (no schedule)."""
-
     def __init__(self, lr: float):
         self._lr = lr
 
@@ -25,15 +23,6 @@ class ConstantLR:
 
 
 class LinearLRScheduler:
-    """Linear warmup then linear decay to zero.
-
-    lr(t) =
-        lr_0 * t / warmup_steps              if t < warmup_steps
-        lr_0 * (num_steps - t) / decay_steps  otherwise
-
-    where decay_steps = num_steps - warmup_steps.
-    """
-
     def __init__(
         self,
         lr_0: float,
@@ -62,17 +51,6 @@ class LinearLRScheduler:
 
 
 class OneCycleLR:
-    """One-cycle LR schedule (Smith 2018).
-
-    Phase 1 (0 .. warmup_steps):
-        Linear ramp from max_lr / div_factor  →  max_lr
-
-    Phase 2 (warmup_steps .. num_steps):
-        Cosine anneal from max_lr  →  max_lr / (div_factor * final_div_factor)
-
-    Matches torch.optim.lr_scheduler.OneCycleLR semantics.
-    """
-
     def __init__(
         self,
         max_lr: float,
@@ -97,10 +75,8 @@ class OneCycleLR:
         if self._t >= self._num_steps:
             return self._min_lr
         if self._t < self._warmup_steps:
-            # Linear warmup.
             frac = self._t / max(1, self._warmup_steps)
             return self._initial_lr + frac * (self._max_lr - self._initial_lr)
-        # Cosine anneal.
         frac = (self._t - self._warmup_steps) / max(1, self._decay_steps)
         cosine = (1.0 + math.cos(math.pi * frac)) / 2.0
         return self._min_lr + cosine * (self._max_lr - self._min_lr)

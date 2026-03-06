@@ -18,7 +18,7 @@ import numpy as np
 import torch
 
 from .gp import train_gp
-from .utils import from_unit_cube, latin_hypercube, to_unit_cube, turbo_adjust_length
+from .utils import from_unit_cube, latin_hypercube, make_sobol_candidates, to_unit_cube, turbo_adjust_length
 
 
 class _CandidatesResult(NamedTuple):
@@ -102,7 +102,7 @@ def _compute_y_cand(self, *, X, fX, X_cand, mu, sigma, gp, device, dtype):
     raise ValueError(f"Unknown surrogate_type: {self._surrogate_type}")
 
 
-class Turbo1:
+class Turbo1Standard:
     """The TuRBO-1 algorithm.
 
     Parameters
@@ -162,7 +162,8 @@ class Turbo1:
 
         # print("TURBO_DEVICE:", device)
 
-        self._surrogate_type = surrogate_type
+        # Backward-compatible alias used by older registry defaults/configs.
+        self._surrogate_type = "original" if surrogate_type == "gp" else surrogate_type
 
         # Save function information
         self.f = f
@@ -252,7 +253,7 @@ class Turbo1:
         lb = np.clip(x_center - weights * length / 2.0, 0.0, 1.0)
         ub = np.clip(x_center + weights * length / 2.0, 0.0, 1.0)
 
-        X_cand = _make_X_cand(self, x_center=x_center, lb=lb, ub=ub, device=device, dtype=dtype)
+        X_cand = make_sobol_candidates(dim=self.dim, n_cand=self.n_cand, x_center=x_center, lb=lb, ub=ub, device=device, dtype=dtype)
 
         # Figure out what device we are running on
         if len(X_cand) < self.min_cuda:
@@ -420,3 +421,6 @@ def arms_from_pareto_fronts(x_cand, mvn, num_arms):
 
     assert len(x_arms) == num_arms, (len(x_arms), num_arms)
     return x_arms
+
+
+Turbo1 = Turbo1Standard

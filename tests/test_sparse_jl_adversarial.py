@@ -9,7 +9,10 @@ import tracemalloc
 import torch
 from torch import nn
 
-from sampling.sparse_jl_t import block_sparse_jl_transform_module, block_sparse_jl_transform_t
+from sampling.sparse_jl_t import (
+    block_sparse_jl_transform_module,
+    block_sparse_jl_transform_t,
+)
 
 # ---------------------------------------------------------------------------
 # Edge-case: extreme parameter values

@@ -1,41 +1,39 @@
-from unittest.mock import patch
+from __future__ import annotations
 
-import numpy as np
-from click.testing import CliRunner
+import os
+import subprocess
+import sys
+from pathlib import Path
 
-from experiments.exp_uhd import cli
-from optimizer.trajectories import Trajectory
 
-
-def _make_trajectory(rreturn):
-    return Trajectory(
-        rreturn=rreturn,
-        states=np.zeros((1, 1)),
-        actions=np.zeros((1, 1)),
+def test_local_smoke(tmp_path: Path):
+    # Use a lightweight gym env (no MNIST download).
+    cfg = tmp_path / "cfg.toml"
+    cfg.write_text(
+        """
+[uhd]
+env_tag = "pend"
+num_rounds = 1
+""".lstrip()
     )
 
+    repo_root = Path(__file__).resolve().parents[1]
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(repo_root)
 
-def test_local_rl_runs():
-    call_count = [0]
-
-    def mock_collect(ec, pol, **kwargs):
-        call_count[0] += 1
-        return _make_trajectory(float(call_count[0]))
-
-    runner = CliRunner()
-    with patch("optimizer.trajectories.collect_trajectory", side_effect=mock_collect):
-        result = runner.invoke(cli, ["local", "--env-tag", "lunar", "--num-rounds", "3"])
-
-    assert result.exit_code == 0, result.output
-    assert call_count[0] == 3
-    assert "EVAL: i_iter = 0" in result.output
-    assert "EVAL: i_iter = 2" in result.output
-
-
-def test_local_mnist_runs():
-    runner = CliRunner()
-    result = runner.invoke(cli, ["local", "--env-tag", "mnist", "--num-rounds", "2"])
-
-    assert result.exit_code == 0, result.output
-    assert "EVAL: i_iter = 0" in result.output
-    assert "EVAL: i_iter = 1" in result.output
+    proc = subprocess.run(
+        [
+            sys.executable,
+            "-u",
+            str(repo_root / "ops" / "exp_uhd.py"),
+            "local",
+            str(cfg),
+        ],
+        cwd=str(repo_root),
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert proc.returncode == 0, proc.stdout + "\n" + proc.stderr
+    assert "EVAL: i_iter = 0" in proc.stdout

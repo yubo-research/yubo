@@ -98,7 +98,7 @@ def collect_trajectory(env_conf, policy, noise_seed=None, show_frames=False):
     return_trajectory = 0
     traj_states, traj_actions = [], []
 
-    def draw():
+    def _draw():
         import matplotlib.pyplot as plt
         from IPython.display import clear_output
 
@@ -138,12 +138,12 @@ def collect_trajectory(env_conf, policy, noise_seed=None, show_frames=False):
             prev_reward = float(reward)
         return_trajectory += reward
         if show_frames and i_iter % max(1, max_steps // num_frames_skip) == 0:
-            draw()
+            _draw()
         if terminated or truncated:
             break
 
     if show_frames:
-        draw()
+        _draw()
     env.close()
     rreturn = _make_return(policy, return_trajectory)
     return Trajectory(rreturn, np.array(traj_states).T, np.array(traj_actions).T, rreturn_se=None)

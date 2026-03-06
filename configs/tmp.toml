@@ -1,0 +1,8 @@
+[experiment]
+exp_dir = "_tmp"
+env_tag = "stand-mlp:fn"
+opt_name = "turbo-enn-fit-ucb"
+num_arms = 10
+num_rounds = 100
+num_reps = 1
+num_denoise = 1

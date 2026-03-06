@@ -1,23 +1,11 @@
 import math
 
-from .gaussian_perturbator import GaussianPerturbator
+from .gaussian_perturbator import GaussianPerturbator, apply_weight_decay
 from .lr_scheduler import LRScheduler
 from .step_size_adapter import StepSizeAdapter
 
 
 class UHDMeZO:
-    """Gradient ascent via antithetic sampling.
-
-    Each gradient step uses two sequential ask/tell cycles:
-      ask  1: perturb x → x + σε       (positive direction)
-      tell 1: record mu_plus
-      ask  2: perturb x → x − σε       (negative direction)
-      tell 2: apply gradient step  lr · g_norm · ε
-
-    where g_norm = projected_grad / rms(projected_grad) (Adam-style).
-    No dimension-sized storage: noise is replayed from the seed.
-    """
-
     def __init__(
         self,
         perturbator: GaussianPerturbator,
@@ -39,15 +27,46 @@ class UHDMeZO:
         self._mu_prev = 0.0
         self._se_prev = 0.0
 
-        # Alternates between positive and negative phase.
         self._positive_phase = True
         self._mu_plus = 0.0
         self._step_seed = 0
         self._step_sigma = 0.0
+        self._last_step_scale = 0.0
 
     @property
     def eval_seed(self) -> int:
         return self._seed
+
+    def set_next_seed(self, seed: int) -> None:
+        if not self._positive_phase:
+            raise RuntimeError("set_next_seed is only valid during positive phase")
+        self._seed = int(seed)
+
+    def skip_negative(self) -> None:
+        if self._positive_phase:
+            raise RuntimeError("skip_negative is only valid after the positive phase")
+        self._positive_phase = True
+        self._seed += 1
+
+    @property
+    def positive_phase(self) -> bool:
+        return self._positive_phase
+
+    @property
+    def step_seed(self) -> int:
+        return self._step_seed
+
+    @property
+    def step_sigma(self) -> float:
+        return self._step_sigma
+
+    @property
+    def last_step_scale(self) -> float:
+        return self._last_step_scale
+
+    @property
+    def perturbator(self) -> GaussianPerturbator:
+        return self._perturbator
 
     @property
     def sigma(self) -> float:
@@ -92,14 +111,12 @@ class UHDMeZO:
             self._grad_sq_ema = self._beta * self._grad_sq_ema + (1.0 - self._beta) * projected_grad**2
             rms = math.sqrt(self._grad_sq_ema) + 1e-8
             step_scale = self._lr_scheduler.lr * projected_grad / rms
+            self._last_step_scale = float(step_scale)
 
             self._perturbator.perturb(self._step_seed, step_scale)
             self._perturbator.accept()
 
-            if self._weight_decay > 0.0:
-                decay = 1.0 - self._lr_scheduler.lr * self._weight_decay
-                for p in self._perturbator._module.parameters():
-                    p.data.mul_(decay)
+            apply_weight_decay(self._perturbator._module, self._lr_scheduler.lr, self._weight_decay)
 
             self._lr_scheduler.step()
             self._seed += 1

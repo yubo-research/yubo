@@ -6,10 +6,12 @@ from .designer_registry import (
     _SimpleContext,
 )
 from .designer_spec import (
-    DesignerCatalogEntry,
-    DesignerOptionSpec,
     DesignerSpec,
     parse_designer_spec,
+)
+from .designer_types import (
+    DesignerCatalogEntry,
+    DesignerOptionSpec,
 )
 
 __all__ = [
@@ -84,7 +86,7 @@ class Designers:
         init_yubo_default = self._num_arms
         default_num_X_samples = max(64, 10 * self._num_arms)
 
-        def bt(*args, **kw):
+        def _bt(*args, **kw):
             return self._bt_designer(
                 *args,
                 num_keep=num_keep,
@@ -98,7 +100,7 @@ class Designers:
         ctx = _SimpleContext(
             self._policy,
             self._num_arms,
-            bt,
+            _bt,
             num_keep=num_keep,
             keep_style=keep_style,
             num_keep_val=num_keep_val,

@@ -1,0 +1,11 @@
+# Baseline: UHDSimple (1+1)-ES on HumanoidStandup-v5 with MLP(32,16).
+# Frozen noise (1 seed) — deterministic episodes.
+# No ENN seed selection — sequential seed evaluation.
+
+[uhd]
+env_tag = "stand-mlp:fn"
+num_rounds = 500
+optimizer = "simple"
+perturb = "dim:0.5"
+log_interval = 10
+noise_seed_0 = 0

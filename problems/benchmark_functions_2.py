@@ -1,5 +1,16 @@
+"""Benchmark functions (group 2)."""
+
 import numpy as np
 
+from .benchmark_functions_2a import (  # noqa: F401
+    Brown,
+    Himmelblau,
+    Matyas,
+    Salomon,
+    Sum_Squares,
+    Whitley,
+    Zettl,
+)
 from .benchmark_functions_3 import Zakharov  # noqa: F401
 from .benchmark_util import mk_2d
 
@@ -37,75 +48,5 @@ class Booth:
         return (x[0] + 2 * x[1] - 7) ** 2 + (2 * x[0] + x[1] - 5) ** 2
 
 
-class Himmelblau:
-    def __call__(self, x):
-        x = 6 * mk_2d(x)
-        return (x[0] ** 2 + x[1] - 11) ** 2 + (x[0] + x[1] ** 2 - 7) ** 2
-
-
-class Matyas:
-    def __call__(self, x):
-        x = 10 * mk_2d(x)
-        return 0.26 * (x[0] ** 2 + x[1] ** 2) - 0.48 * x[0] * x[1]
-
-
-class Zettl:
-    def __call__(self, x):
-        x = 2 + 3 * mk_2d(x)
-        return (x[0] ** 2 + x[1] ** 2 - 2 * x[0]) ** 2 + 0.25 * x[0]
-
-
-class Sum_Squares:
-    def __call__(self, x):
-        x = 10 * np.asarray(x)
-        return np.sum((x**2) * np.arange(1, len(x) + 1))
-
-
-class Salomon:
-    def __call__(self, x):
-        x = 100 * np.asarray(x)
-        r = np.linalg.norm(x)
-        return 1 - np.cos(2 * np.pi * r) + 0.1 * r
-
-
-class Whitley:
-    """
-    See: http://infinity77.net/global_optimization/test_functions_nd_W.html#go_benchmark.Whitley
-    """
-
-    def __call__(self, x):
-        x = 10.24 * np.asarray(x)
-        d = len(x)
-
-        i_indices, j_indices = np.meshgrid(range(d), range(d), indexing="ij")
-        xi_squared = x[i_indices] ** 2
-        xj = x[j_indices]
-
-        term1 = (100 * (xi_squared - xj) ** 2 + (1 - xj) ** 2) ** 2 / 4000
-        term2 = -np.cos(100 * (xi_squared - xj) ** 2 + (1 - xj) ** 2)
-
-        return np.sum(term1 + term2 + 1)
-
-
-class Brown:
-    """
-    See: https://www.indusmic.com/post/brown-function#:~:text=Brown%20Function%20is%20usually%20evaluated,This%20function%20is%20smooth.&text=Brown%20Function%20is%20a%20unimodal,defined%20on%20n%2D%20dimensional%20space.
-    """
-
-    def __call__(self, x):
-        x = 1.5 + 2.5 * np.asarray(x)
-        d = len(x)
-        if d < 2:
-            x = mk_2d(x)
-            d = 2
-
-        xi_squared = x[:-1] ** 2  # x_i^2 for i = 1 to n-1
-        xi_plus_1_squared = x[1:] ** 2  # x_i+1^2 for i = 1 to n-1
-
-        term1 = xi_squared * (xi_plus_1_squared + 1)
-        term2 = xi_plus_1_squared * (xi_squared + 1)
-
-        return np.sum(term1 + term2)
-
-
 # Zakharov moved to benchmark_functions_3.py
+# Other functions moved to benchmark_functions_2a.py

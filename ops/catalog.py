@@ -33,11 +33,14 @@ def _describe(entry) -> str:
 
 
 @click.group()
-def cli():
+def _cli():
     """Print catalogs of registry-like things."""
 
 
-@cli.command()
+cli = _cli
+
+
+@_cli.command()
 def designers():
     """List all designer base names and their options."""
     _add_repo_root_to_syspath()
@@ -48,7 +51,7 @@ def designers():
         click.echo(_describe(entry))
 
 
-@cli.command()
+@_cli.command()
 def environments():
     _add_repo_root_to_syspath()
     from problems.benchmark_functions import all_benchmarks

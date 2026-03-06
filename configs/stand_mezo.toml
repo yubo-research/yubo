@@ -1,0 +1,10 @@
+[uhd]
+env_tag = "stand-mlp:fn"
+num_rounds = 1000
+optimizer = "bszo_be"
+lr = 0.01
+perturb = "dense"
+log_interval = 10
+problem_seed = 42
+noise_seed_0 = 0
+# num_denoise = 1

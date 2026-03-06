@@ -1,5 +1,3 @@
-from typing import NamedTuple
-
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -8,14 +6,9 @@ from torch.utils.data import DataLoader
 
 from problems.mnist_classifier import MnistClassifier
 
+from .mnist_types import StepResult as _StepResult
+
 _MNIST_ROOT = "data/mnist"
-
-
-class _StepResult(NamedTuple):
-    state: object
-    reward: float
-    done: bool
-    info: object | None
 
 
 def _mnist_transform():
