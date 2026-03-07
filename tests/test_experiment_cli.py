@@ -169,6 +169,51 @@ def test_cli_local_runs_with_stubbed_sampler(monkeypatch, tmp_path):
     assert distributor_fn is sys.modules["experiments.experiment_sampler"].scan_local
 
 
+def test_load_experiment_config_overrides(tmp_path):
+    toml_path = _write_toml(
+        tmp_path,
+        """
+        [experiment]
+        exp_dir = "_tmp/exp"
+        env_tag = "f:sphere-2d"
+        opt_name = "random"
+        num_arms = 4
+        num_rounds = 10
+        num_reps = 3
+        """,
+    )
+    cfg = load_experiment_config(
+        config_toml_path=str(toml_path),
+        overrides={"opt_name": "turbo-enn-fit-ucb"},
+    )
+    assert cfg.opt_name == "turbo-enn-fit-ucb"
+    assert cfg.env_tag == "f:sphere-2d"
+
+
+def test_cli_local_override_opt_name(monkeypatch, tmp_path):
+    calls = _install_stub_experiment_sampler(monkeypatch)
+    toml_path = _write_toml(
+        tmp_path,
+        """
+        [experiment]
+        exp_dir = "_tmp/exp"
+        env_tag = "f:sphere-2d"
+        opt_name = "random"
+        num_arms = 4
+        num_rounds = 10
+        num_reps = 3
+        """,
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(cli, ["local", str(toml_path), "--opt", "opt_name=turbo-enn-fit-ucb"])
+    assert result.exit_code == 0, result.output
+
+    assert len(calls) == 1
+    config, _ = calls[0]
+    assert config.opt_name == "turbo-enn-fit-ucb"
+
+
 def test_load_experiment_config_toml_optimizer_table(tmp_path):
     toml_path = _write_toml(
         tmp_path,

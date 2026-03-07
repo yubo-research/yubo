@@ -114,10 +114,31 @@ def _validate_required(cfg: dict[str, Any]) -> None:
         raise ValueError(f"Missing required fields: {missing}. Required: {sorted(_REQUIRED_KEYS)}")
 
 
-def load_experiment_config(*, config_toml_path: str):
+def _parse_override_value(raw: str) -> Any:
+    from common.config_toml import parse_value
+
+    return parse_value(raw)
+
+
+def _parse_overrides(override_strings: tuple[str, ...]) -> dict[str, Any]:
+    out: dict[str, Any] = {}
+    for s in override_strings:
+        if "=" not in s:
+            raise ValueError(f"Override must be key=value, got: {s}")
+        key_raw, value_raw = s.split("=", 1)
+        norm = _normalize_key(key_raw.strip())
+        if norm not in _ALL_EXPERIMENT_KEYS:
+            raise ValueError(f"Unknown override key '{key_raw}'. Valid keys: {sorted(_ALL_EXPERIMENT_KEYS)}")
+        out[norm] = _parse_override_value(value_raw.strip())
+    return out
+
+
+def load_experiment_config(*, config_toml_path: str, overrides: dict[str, Any] | None = None):
     from experiments.experiment_sampler import ExperimentConfig
 
     cfg = _load_toml_config(config_toml_path)
+    if overrides:
+        cfg = {**cfg, **overrides}
     _validate_required(cfg)
     return ExperimentConfig.from_dict(cfg)
 
@@ -132,11 +153,25 @@ cli = _cli
 
 @_cli.command(name="local", help="Run locally (single process) from a config TOML.")
 @click.argument("config_toml", type=click.Path(exists=True, dir_okay=False, path_type=str))
-def _local(config_toml: str) -> None:
+@click.option(
+    "-o",
+    "--opt",
+    "overrides",
+    multiple=True,
+    help="Override config key: --opt key=value (e.g. --opt opt_name=turbo-enn-fit-ucb)",
+)
+def _local(config_toml: str, overrides: tuple[str, ...]) -> None:
     from experiments.experiment_sampler import sampler, scan_local
 
+    override_dict: dict[str, Any] = {}
+    if overrides:
+        try:
+            override_dict = _parse_overrides(overrides)
+        except (TypeError, ValueError) as e:
+            raise click.ClickException(str(e)) from e
+
     try:
-        config = load_experiment_config(config_toml_path=config_toml)
+        config = load_experiment_config(config_toml_path=config_toml, overrides=override_dict or None)
     except (OSError, tomllib.TOMLDecodeError, TypeError, ValueError) as e:
         raise click.ClickException(str(e)) from e
 
