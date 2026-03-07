@@ -23,7 +23,6 @@ class StepSizeAdapter:
         return self._sigma
 
     def update(self, *, accepted: bool) -> None:
-        """Update step size based on acceptance."""
         if accepted:
             self._success_count += 1
             self._failure_count = 0

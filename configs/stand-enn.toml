@@ -1,0 +1,8 @@
+[experiment]
+exp_dir = "_tmp"
+env_tag = "stand-mlp:fn"
+opt_name = "turbo-enn-p"
+num_arms = 10
+num_rounds = 10000
+num_reps = 1
+num_denoise = 1

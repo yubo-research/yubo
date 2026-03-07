@@ -1,6 +1,18 @@
+"""Benchmark functions (group 1a)."""
+
 import numpy as np
 
-from .benchmark_util import mk_2d, mk_4d
+# Re-export from 1e
+from .benchmark_functions_1e import (  # noqa: F401
+    GrLee12,
+    HolderTable,
+    Michalewicz,
+    Powell,
+    Rastrigin,
+    Rosenbrock,
+    Shubert,
+)
+from .benchmark_util import mk_4d
 
 
 class Griewank:
@@ -10,13 +22,6 @@ class Griewank:
         num_dim = len(x)
         part2 = np.prod(np.cos(x / np.sqrt((1 + np.arange(num_dim)))))
         return part1 - part2 + 1
-
-
-class GrLee12:
-    def __call__(self, x):
-        x = mk_2d(x)
-        x = x[0] + 1.5
-        return np.sin(10.0 * np.pi * x) / (2.0 * x) + (x - 1.0) ** 4
 
 
 class Hartmann:
@@ -114,17 +119,6 @@ class Hartmann:
             return -(2.58 + outer) / 1.94
 
 
-class HolderTable:
-    def __call__(self, x):
-        x = mk_2d(x)
-        x = x * 10
-        x0 = x[0]
-        x1 = x[1]
-        part1 = np.sin(x0) * np.cos(x1)
-        part2 = np.exp(np.abs(1 - np.sqrt(x0**2 + x1**2) / np.pi))
-        return -np.abs(part1 * part2)
-
-
 class Levy:
     def __call__(self, x):
         x = 10 * x
@@ -136,63 +130,3 @@ class Levy:
             part2 += (w[i] - 1) ** 2 * (1 + 10 * np.sin(np.pi * w[i] + 1) ** 2)
         part3 = (w[-1] - 1.0) ** 2 * (1.0 + np.sin(2.0 * np.pi * w[-1]) ** 2)
         return part1 + part2 + part3
-
-
-class Michalewicz:
-    m = 10
-
-    def __call__(self, x):
-        x = np.pi * (1 + np.asarray(x)) / 2
-        d = len(x)
-        indices = np.arange(1, d + 1)
-        sine_term1 = np.sin(x)
-        sine_term2 = np.sin(indices * x**2 / np.pi) ** (2 * self.m)
-        return -np.sum(sine_term1 * sine_term2)
-
-
-class Powell:
-    def __call__(self, x):
-        x = 0.5 + 4.5 * np.asarray(x)
-        d = len(x)
-        if d % 4 != 0:
-            x = mk_4d(x)
-            d = len(x)
-        x_grouped = x.reshape(-1, 4)
-        term1 = (x_grouped[:, 0] + 10 * x_grouped[:, 1]) ** 2
-        term2 = 5 * (x_grouped[:, 2] - x_grouped[:, 3]) ** 2
-        term3 = (x_grouped[:, 1] - 2 * x_grouped[:, 2]) ** 4
-        term4 = 10 * (x_grouped[:, 0] - x_grouped[:, 3]) ** 4
-        return np.sum(term1 + term2 + term3 + term4)
-
-
-class Rastrigin:
-    def __call__(self, x):
-        x = x * 5.12
-        num_dim = len(x)
-        return 10 + np.sum(x**2 - 10 * np.cos(np.pi * 2 * x)) / num_dim
-
-
-class Rosenbrock:
-    def __call__(self, x):
-        x = x * 2.048
-        part = 0
-        num_dim = len(x)
-        for i in range(num_dim - 1):
-            part += (x[i + 1] - x[i] ** 2) ** 2 + (x[i] - 1) ** 2
-        return 100.0 * part / num_dim
-
-
-class Shubert:
-    def __call__(self, x):
-        x = mk_2d(x)
-        x = x * 5.12
-        x0 = x[0]
-        x1 = x[1]
-        part1 = 0
-        part2 = 0
-        for i in range(1, 6):
-            new1 = i * np.cos((i + 1) * x0 + i)
-            new2 = i * np.cos((i + 1) * x1 + i)
-            part1 += new1
-            part2 += new2
-        return part1 * part2

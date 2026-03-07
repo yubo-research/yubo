@@ -353,7 +353,7 @@ def prep_push(results_dir):
 
 
 def prep_tlunar(results_dir):
-    exp_dir = "exp_compare_tlunar_refactor"
+    exp_dir = "exp_compare_tlunar_rust"
     # exp_dir = "exp_ennbo_tlunar_3"
 
     opts = [

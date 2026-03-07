@@ -9,7 +9,8 @@ import problems.other as other
 import problems.pure_functions as pure_functions
 from problems.bipedal_walker_policy import BipedalWalkerPolicy
 from problems.linear_policy import LinearPolicy
-from problems.mlp_policy import MLPPolicyFactory
+from problems.mlp_policy import MLPPolicy, MLPPolicyFactory
+from problems.mlp_torch_env import wrap_mlp_env
 from problems.noise_maker import NoiseMaker
 from problems.pure_function_policy import PureFunctionPolicy
 
@@ -287,6 +288,37 @@ class EnvConf:
         self.action_space = env.action_space
         env.close()
 
+    def make_torch_env(self, **kwargs):
+        """Create environment with torch module exposed for direct perturbation.
+
+        For environments with MLP policies, this creates a wrapped environment
+        that exposes the policy module via torch_env().module for use with
+        BSZO and other UHD optimizers requiring direct parameter access.
+        """
+        if self.gym_conf is not None:
+            self.ensure_spaces()
+
+        # Check if this is an MLP policy that can be directly perturbed
+        if self.policy_class is not None:
+            # Create the policy and check if it's an MLPPolicy
+            policy = self.policy_class(self)
+            if isinstance(policy, MLPPolicy):
+                # Create the base gym environment
+                env = self._make(**kwargs)
+                # Wrap with torch env wrapper
+                return wrap_mlp_env(
+                    env=env,
+                    policy=policy,
+                    max_steps=self.gym_conf.max_steps if self.gym_conf else 1000,
+                    num_frames_skip=self.gym_conf.num_frames_skip if self.gym_conf else 1,
+                )
+            # If not MLPPolicy, close any resources and fall through
+            if hasattr(policy, "close"):
+                policy.close()
+
+        # For non-MLP policies, fall back to standard make
+        return self.make(**kwargs)
+
 
 def _gym_conf(env_name, gym_conf=None, policy_class=None, kwargs=None, noise_seed_0=None):
     if gym_conf is None:
@@ -348,6 +380,22 @@ _gym_env_confs = {
         "HumanoidStandup-v5",
         policy_class=MLPPolicyFactory((32, 16)),
     ),
+    "stand-mlp2": _gym_conf(
+        "HumanoidStandup-v5",
+        policy_class=MLPPolicyFactory((256, 128)),
+    ),
+    "stand-mlp3": _gym_conf(
+        "HumanoidStandup-v5",
+        policy_class=MLPPolicyFactory((1024, 600)),
+    ),
+    "stand-mlp4": _gym_conf(
+        "HumanoidStandup-v5",
+        policy_class=MLPPolicyFactory((4096, 2060)),
+    ),
+    "stand-mlp5": _gym_conf(
+        "HumanoidStandup-v5",
+        policy_class=MLPPolicyFactory((32000, 31000)),
+    ),
     "bw": _gym_conf(
         "BipedalWalker-v3",
         gym_conf=GymConf(
@@ -373,7 +421,7 @@ _gym_env_confs = {
             max_steps=1600,
             num_frames_skip=100,
         ),
-        policy_class=MLPPolicyFactory((), rnn_hidden_size=4, use_layer_norm=True, use_prev_action=True),
+        policy_class=MLPPolicyFactory((1024, 512, 256, 128)),
     ),
     "bw-heur": _gym_conf(
         "BipedalWalker-v3",

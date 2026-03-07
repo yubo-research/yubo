@@ -1,7 +1,7 @@
 from .pure_functions import PureFunctionEnv
 
 
-def make(env_name, problem_seed):
+def _make(env_name, problem_seed):
     if env_name == "mopta08":
         from problems.mopta08 import Mopta08
 
@@ -26,4 +26,18 @@ def make(env_name, problem_seed):
         from problems.mnist_env import MnistEnv
 
         return MnistEnv(batch_size=4096)
+    elif env_name == "mnist_fulltrain":
+        from problems.mnist_env import MnistEnv
+
+        # Batch size here is used only for test accuracy / any batch-based code paths.
+        # The UHD fast path can override evaluation to score the full 60k train set.
+        return MnistEnv(batch_size=4096)
+    elif env_name == "mnist_fulltrain_acc":
+        from problems.mnist_env import MnistEnv
+
+        # Same MNIST module/data; uhd_setup switches the objective to full-train accuracy.
+        return MnistEnv(batch_size=4096)
     assert False, ("Unknown env_name", env_name)
+
+
+make = _make

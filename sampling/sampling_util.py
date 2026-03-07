@@ -298,7 +298,7 @@ def sobol_perturb_np(x_center, lb, ub, num_candidates, mask, stagger=False):
     return candidates
 
 
-def raasp(x_center, lb, ub, num_candidates, device, dtype):
+def _raasp(x_center, lb, ub, num_candidates, device, dtype):
     num_dim = x_center.shape[-1]
     prob_perturb = min(20.0 / num_dim, 1.0)
     mask = torch.rand(num_candidates, num_dim, device=device) <= prob_perturb
@@ -322,6 +322,9 @@ def raasp(x_center, lb, ub, num_candidates, device, dtype):
     candidates[mask] = pert[mask]
 
     return candidates
+
+
+raasp = _raasp
 
 
 def raasp_turbo_np(x_center, lb, ub, num_candidates, device, dtype):

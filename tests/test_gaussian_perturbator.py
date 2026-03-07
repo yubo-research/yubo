@@ -2,7 +2,7 @@ import pytest
 import torch
 from torch import nn
 
-from optimizer.gaussian_perturbator import GaussianPerturbator
+from optimizer.gaussian_perturbator import GaussianPerturbator, apply_weight_decay
 
 
 def _make_module():
@@ -74,6 +74,21 @@ def test_accept_allows_next_perturb():
     gp.accept()
     # Should not raise
     gp.perturb(seed=1, sigma=0.1)
+
+
+def test_apply_weight_decay():
+    module = _make_module()
+    orig = module.weight.data.clone()
+    apply_weight_decay(module, lr=0.01, weight_decay=0.1)
+    decay = 1.0 - 0.01 * 0.1
+    assert torch.allclose(module.weight.data, orig * decay)
+
+
+def test_apply_weight_decay_zero_no_op():
+    module = _make_module()
+    orig = module.weight.data.clone()
+    apply_weight_decay(module, lr=0.01, weight_decay=0.0)
+    assert torch.equal(module.weight.data, orig)
 
 
 def test_different_seeds_give_different_perturbations():

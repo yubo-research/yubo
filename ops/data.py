@@ -74,7 +74,7 @@ def _resolve_exp_dirs(results_dir: Path, exp_hashes: tuple[str, ...]) -> list[Pa
 
 
 @click.group()
-def cli():
+def _cli():
     # Ensure this CLI is "integrated" into the repo's import graph for
     # static analysis tools (and allow future internal imports).
     _add_repo_root_to_syspath()
@@ -83,7 +83,10 @@ def cli():
     pass
 
 
-@cli.command()
+cli = _cli
+
+
+@_cli.command()
 @click.argument("results_dir", type=click.Path(exists=True, path_type=Path))
 @click.option("--verbose", "-v", is_flag=True, help="Show full config")
 def ls(results_dir: Path, verbose: bool):
@@ -109,7 +112,7 @@ def ls(results_dir: Path, verbose: bool):
                 click.echo(f"    {k}: {v}")
 
 
-@cli.command()
+@_cli.command()
 @click.argument("exp_path", type=click.Path(exists=True, path_type=Path))
 @click.option("--trace", "-t", type=int, default=0, help="Trace index to show")
 @click.option("--head", "-n", type=int, default=None, help="Show first N lines")
@@ -160,7 +163,7 @@ def cat(exp_path: Path, trace: int, head: int, config_only: bool):
                 click.echo(f"  {i_iter:4d}  ret={rreturn}  dt_prop={dt_prop}  dt_eval={dt_eval}")
 
 
-@cli.command()
+@_cli.command()
 @click.argument("results_dir", type=click.Path(exists=True, path_type=Path))
 @click.argument("exp_hashes", type=str, nargs=-1, required=True)
 @click.option("--force", "-f", is_flag=True, help="Don't prompt for confirmation")

@@ -7,19 +7,22 @@ import random
 from experiments.batch_util import run_in_batches
 
 
-def worker(cmd):
+def _worker(cmd):
     import os
 
     return os.system(cmd)
 
 
-def run_batch(cmds, b_dry_run):
+worker = _worker
+
+
+def _run_batch(cmds, b_dry_run):
     processes = []
 
     for cmd in cmds:
         print("RUN:", cmd)
         if not b_dry_run:
-            process = multiprocessing.Process(target=worker, args=(cmd,))
+            process = multiprocessing.Process(target=_worker, args=(cmd,))
             processes.append(process)
             process.start()
 
@@ -27,6 +30,9 @@ def run_batch(cmds, b_dry_run):
         for process in processes:
             process.join()
     print("DONE_BATCH")
+
+
+run_batch = _run_batch
 
 
 def prep_cmd(
@@ -88,8 +94,11 @@ def prep_cmds(exp_dir, funcs, dims, num_arms, num_replications, opts, noises):
     return cmds
 
 
-def run(cmds, max_parallel, b_dry_run=False):
+def _run(cmds, max_parallel, b_dry_run=False):
     run_in_batches(cmds, max_parallel, run_batch, b_dry_run=b_dry_run, num_threads=32)
+
+
+run = _run
 
 
 if __name__ == "__main__":

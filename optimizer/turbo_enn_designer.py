@@ -1,61 +1,48 @@
 from typing import Optional
 
 import numpy as np
-
-try:
-    from enn.turbo.config.acq_type import AcqType
-    from enn.turbo.config.candidate_gen_config import CandidateGenConfig
-    from enn.turbo.config.candidate_rv import CandidateRV
-    from enn.turbo.config.enn_surrogate_config import (
-        ENNFitConfig,
-        ENNSurrogateConfig,
-    )
-    from enn.turbo.config.factory import (
-        lhd_only_config,
-        turbo_enn_config,
-        turbo_one_config,
-        turbo_zero_config,
-    )
-    from enn.turbo.config.raasp_driver import RAASPDriver
-    from enn.turbo.config.trust_region import (
-        MorboTRConfig,
-        NoTRConfig,
-        TrustRegionConfig,
-        TurboTRConfig,
-    )
-    from enn.turbo.optimizer import create_optimizer
-except ModuleNotFoundError:
-    try:
-        # Newer `ennbo` distributions may expose the package as `ennbo.*`.
-        from ennbo.turbo.config.acq_type import AcqType
-        from ennbo.turbo.config.candidate_gen_config import CandidateGenConfig
-        from ennbo.turbo.config.candidate_rv import CandidateRV
-        from ennbo.turbo.config.enn_surrogate_config import (
-            ENNFitConfig,
-            ENNSurrogateConfig,
-        )
-        from ennbo.turbo.config.factory import (
-            lhd_only_config,
-            turbo_enn_config,
-            turbo_one_config,
-            turbo_zero_config,
-        )
-        from ennbo.turbo.config.raasp_driver import RAASPDriver
-        from ennbo.turbo.config.trust_region import (
-            MorboTRConfig,
-            NoTRConfig,
-            TrustRegionConfig,
-            TurboTRConfig,
-        )
-        from ennbo.turbo.optimizer import create_optimizer
-    except ModuleNotFoundError as exc:
-        raise ModuleNotFoundError(
-            "Could not import ENN/TuRBO dependencies. Install either a distribution exposing "
-            "`enn.turbo.*` (e.g. older `ennbo`) or one exposing `ennbo.turbo.*`."
-        ) from exc
+from enn.turbo.config.acq_type import AcqType
+from enn.turbo.config.candidate_gen_config import CandidateGenConfig
+from enn.turbo.config.candidate_rv import CandidateRV
+from enn.turbo.config.enn_surrogate_config import (
+    ENNFitConfig,
+    ENNSurrogateConfig,
+)
+from enn.turbo.config.factory import (
+    lhd_only_config,
+    turbo_enn_config,
+    turbo_one_config,
+    turbo_zero_config,
+)
+from enn.turbo.config.raasp_driver import RAASPDriver
+from enn.turbo.config.trust_region import (
+    MorboTRConfig,
+    NoTRConfig,
+    TrustRegionConfig,
+    TurboTRConfig,
+)
 
 import common.all_bounds as all_bounds
 from optimizer.designer_asserts import assert_scalar_rreturn
+
+
+def _create_optimizer_auto(bounds, config, rng):
+    """Create optimizer using automatic backend selection (Rust preferred)."""
+    try:
+        from enn import create_optimizer
+    except ImportError as exc:
+        # Modal/remote images may not have enn_rust; fall back to Python optimizer.
+        print(f"[TurboENNDesigner] Rust backend unavailable ({exc}); falling back to Python backend")
+        return _create_optimizer_py(bounds=bounds, config=config, rng=rng)
+
+    return create_optimizer(bounds=bounds, config=config, rng=rng)
+
+
+def _create_optimizer_py(bounds, config, rng):
+    """Create optimizer forcing Python backend."""
+    from enn.turbo.optimizer import create_optimizer
+
+    return create_optimizer(bounds=bounds, config=config, rng=rng)
 
 
 class TurboENNDesigner:
@@ -74,6 +61,7 @@ class TurboENNDesigner:
         num_candidates: Optional[int] = None,
         candidate_rv: Optional[str] = None,
         num_metrics: Optional[int] = None,
+        use_python: bool = False,
     ):
         self._policy = policy
         if turbo_mode not in ("turbo-enn", "turbo-zero", "turbo-one", "lhd-only"):
@@ -92,6 +80,7 @@ class TurboENNDesigner:
         self._num_candidates = num_candidates
         self._candidate_rv = candidate_rv
         self._num_metrics = num_metrics
+        self._use_python = use_python
 
         self._turbo = None
         self._num_arms = None
@@ -127,10 +116,7 @@ class TurboENNDesigner:
         if self._tr_type == "morbo":
             if num_metrics is None:
                 raise ValueError("num_metrics is required for tr_type='morbo'")
-            try:
-                from enn.turbo.config.trust_region import MultiObjectiveConfig
-            except ModuleNotFoundError:
-                from ennbo.turbo.config.trust_region import MultiObjectiveConfig
+            from enn.turbo.config.trust_region import MultiObjectiveConfig
 
             return MorboTRConfig(multi_objective=MultiObjectiveConfig(num_metrics=int(num_metrics)))
         raise ValueError(f"Invalid tr_type: {self._tr_type}")
@@ -208,7 +194,12 @@ class TurboENNDesigner:
         bounds = np.array([[all_bounds.x_low, all_bounds.x_high]] * num_dim)
         num_metrics = self._resolve_num_metrics(data)
         config = self._make_config(num_init, num_metrics)
-        self._turbo = create_optimizer(bounds=bounds, config=config, rng=self._rng)
+        create_opt = _create_optimizer_py if self._use_python else _create_optimizer_auto
+        self._turbo = create_opt(bounds=bounds, config=config, rng=self._rng)
+        # Debug: show which backend is being used
+        opt_type = type(self._turbo).__name__
+        backend = "Rust" if hasattr(self._turbo, "_inner") else "Python"
+        print(f"[TurboENNDesigner] Optimizer type: {opt_type} ({backend} backend)")
 
     def _resolve_num_metrics(self, data):
         num_metrics = self._num_metrics

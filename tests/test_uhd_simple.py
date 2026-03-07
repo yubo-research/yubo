@@ -3,6 +3,12 @@ from torch import nn
 
 from optimizer.gaussian_perturbator import GaussianPerturbator
 from optimizer.uhd_simple import UHDSimple
+from tests.uhd_ask_tell_helpers import (
+    assert_ask_perturbs_module,
+    assert_tell_first_always_accepts,
+    assert_tell_improvement_keeps_new_params,
+    assert_tell_worse_reverts,
+)
 
 
 def _make_uhd(sigma_0=1.0):
@@ -14,48 +20,19 @@ def _make_uhd(sigma_0=1.0):
 
 
 def test_ask_perturbs_module():
-    module, _, uhd = _make_uhd()
-    orig = module.weight.data.clone()
-    uhd.ask()
-    assert not torch.equal(module.weight.data, orig)
+    assert_ask_perturbs_module(_make_uhd)
 
 
 def test_tell_first_always_accepts():
-    module, _, uhd = _make_uhd()
-    orig = module.weight.data.clone()
-
-    uhd.ask()
-    perturbed = module.weight.data.clone()
-    uhd.tell(1.0, 0.0)
-
-    assert torch.equal(module.weight.data, perturbed)
-    assert not torch.equal(module.weight.data, orig)
+    assert_tell_first_always_accepts(_make_uhd)
 
 
 def test_tell_worse_reverts():
-    module, _, uhd = _make_uhd()
-
-    uhd.ask()
-    uhd.tell(10.0, 0.0)
-    accepted_weight = module.weight.data.clone()
-
-    uhd.ask()
-    uhd.tell(5.0, 0.0)  # worse than y_best, should revert
-
-    assert torch.allclose(module.weight.data, accepted_weight)
+    assert_tell_worse_reverts(_make_uhd)
 
 
 def test_tell_improvement_keeps_new_params():
-    module, _, uhd = _make_uhd()
-
-    uhd.ask()
-    uhd.tell(1.0, 0.0)
-
-    uhd.ask()
-    better_weight = module.weight.data.clone()
-    uhd.tell(2.0, 0.0)
-
-    assert torch.equal(module.weight.data, better_weight)
+    assert_tell_improvement_keeps_new_params(_make_uhd)
 
 
 def test_y_best_tracks_maximum():
