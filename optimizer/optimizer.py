@@ -58,6 +58,8 @@ class Optimizer:
         num_arms,
         num_denoise_measurement=None,
         num_denoise_passive=None,
+        opt_name=None,
+        num_rounds=None,
     ):
         self._collector = collector
         self._env_conf = env_conf
@@ -75,7 +77,13 @@ class Optimizer:
         self._i_noise = 0
         self._cum_dt_proposing = 0
 
-        self._collector(f"PROBLEM: env = {env_conf.env_name} num_params = {policy.num_params()}")
+        problem_parts = [f"env_tag = {env_conf.env_name}", f"num_params = {policy.num_params()}"]
+        if opt_name is not None:
+            problem_parts.append(f"opt_name = {opt_name}")
+        if num_rounds is not None:
+            problem_parts.append(f"rounds = {num_rounds}")
+        problem_parts.append(f"num_arms = {num_arms}")
+        self._collector(f"PROBLEM: {' '.join(problem_parts)}")
 
         self._ret_viz = -1e99
         self._telemetry = Telemetry()
@@ -293,12 +301,12 @@ class Optimizer:
                 tr_length = float(turbo.tr_length)
             except (TypeError, ValueError):
                 tr_length = None
-        tr_str = f" tr_length={tr_length:.3f}" if tr_length is not None else ""
+        tr_str = f" tr_length = {tr_length:.3f}" if tr_length is not None else ""
         if ret_eval > -1e98:
             self._collector(
-                f"ITER: iter={self._i_iter} elapsed={cum_time:.2f}s eval_dt={dt_eval:.3f}s proposal_dt={dt_prop:.3f}s "
-                f"{self._telemetry.format()}{tr_str} proposal_elapsed={self._cum_dt_proposing:.3f}s "
-                f"y_best={y_best_s} ret_best={ret_best_s} ret_eval={ret_eval_s}"
+                f"ITER: iter = {self._i_iter} elapsed = {cum_time:.2f}s eval_dt = {dt_eval:.3f}s proposal_dt = {dt_prop:.3f}s "
+                f"{self._telemetry.format()}{tr_str} proposal_elapsed = {self._cum_dt_proposing:.3f}s "
+                f"y_best = {y_best_s} ret_best = {ret_best_s} ret_eval = {ret_eval_s}"
             )
         sys.stdout.flush()
         self._trace.append(TraceEntry(float(ret_eval), float(self.r_best_est), dt_prop, dt_eval))

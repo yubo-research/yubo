@@ -250,12 +250,7 @@ def sample_1(run_config: RunConfig):
         policy = default_policy(env_conf)
 
         if bo_console:
-            collector_log = BOConsoleCollector(
-                env_tag=env_conf.env_name,
-                opt_name=opt_name,
-                num_rounds=num_rounds,
-                num_arms=num_arms,
-            )
+            collector_log = BOConsoleCollector()
         else:
             collector_log = Collector()
         Optimizer = _load_attr(("optimizer", "optimizer"), "Optimizer")
@@ -266,6 +261,8 @@ def sample_1(run_config: RunConfig):
             num_arms=num_arms,
             num_denoise_measurement=num_denoise,
             num_denoise_passive=num_denoise_passive,
+            opt_name=opt_name,
+            num_rounds=num_rounds,
         )
 
         trace_records, collector_trace = _collect_trace_records(opt, opt_name, num_rounds, max_proposal_seconds, deadline, env_conf, b_trace)

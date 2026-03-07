@@ -5,8 +5,6 @@ from types import SimpleNamespace
 from common.console import (
     BOConsoleCollector,
     print_bo_footer,
-    print_bo_header_top,
-    print_bo_round,
     print_iteration_log,
     print_iteration_simple,
     print_run_footer,
@@ -22,43 +20,6 @@ def test_register_algo_metrics():
 
 def test_register_opt_metrics():
     register_opt_metrics("test_opt", [("k", 6, ".2f")])
-
-
-def test_print_bo_header_top():
-    print_bo_header_top(
-        env_tag="dm:cheetah-run:gauss",
-        opt_name="turbo-enn-p",
-        num_rounds=10,
-        num_arms=4,
-    )
-
-
-def test_print_bo_round(capsys):
-    print_bo_round(
-        parsed={"iter": 1, "ret_best": 10.5, "ret_eval": 9.0, "elapsed": 1.2},
-        opt_name="turbo-enn-p",
-    )
-    out = capsys.readouterr().out
-    assert "ret_best=10.5" in out
-    assert "ret_eval=9.0" in out
-    assert "elapsed=1.2s" in out
-
-
-def test_print_bo_round_includes_proposal_timing(capsys):
-    print_bo_round(
-        parsed={
-            "iter": 2,
-            "ret_best": 12.0,
-            "ret_eval": 11.0,
-            "proposal_dt": 0.1234,
-            "proposal_elapsed": 1.2499,
-            "elapsed": 2.0,
-        },
-        opt_name="turbo-enn-p",
-    )
-    out = capsys.readouterr().out
-    assert "proposal_dt=0.123s" in out
-    assert "proposal_elapsed=1.250s" in out
 
 
 def test_print_bo_footer():
@@ -152,11 +113,10 @@ def test_print_run_footer():
     print_run_footer(best_return=10.0, total_iters_or_steps=100, total_time=12.5)
 
 
-def test_bo_console_collector():
-    collector = BOConsoleCollector(
-        env_tag="dm:cheetah-run:gauss",
-        opt_name="turbo-enn-p",
-        num_rounds=2,
-        num_arms=4,
-    )
-    collector("ITER  iter=1  ret_best=5.0  ret_eval=4.0  elapsed=1.0")
+def test_bo_console_collector_echoes_iter_lines(capsys):
+    """BOConsoleCollector echoes ITER: lines to stdout (same format as data file)."""
+    collector = BOConsoleCollector()
+    line = "ITER: iter = 1 elapsed = 1.0s eval_dt = 0.1s proposal_dt = 0.05s fit_dt = 0.000 select_dt = 0.001 tr_length = 0.800 proposal_elapsed = 0.05s y_best = 5.0 ret_best = 5.0 ret_eval = 4.0"
+    collector(line)
+    out = capsys.readouterr().out
+    assert line in out
