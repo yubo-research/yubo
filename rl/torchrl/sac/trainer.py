@@ -107,7 +107,7 @@ def _evaluate_actor(config: SACConfig, env: _EnvSetup, modules: _Modules, *, dev
     eval_policy = sac_deps.torchrl_sac_actor_eval.SacActorEvalPolicy(
         modules.actor_backbone, modules.actor_head, modules.obs_scaler, act_dim=env.act_dim, device=device, from_pixels=from_pixels
     )
-    traj, _ = collect_denoised_trajectory(eval_env, eval_policy, num_denoise=config.num_denoise_eval, i_noise=int(eval_seed))
+    traj, _ = collect_denoised_trajectory(eval_env, eval_policy, num_denoise=config.num_denoise, i_noise=int(eval_seed))
     return float(traj.rreturn)
 
 
@@ -264,8 +264,10 @@ def train_sac(config: SACConfig) -> TrainResult:
     with sac_deps.torchrl_common.temporary_distribution_validate_args(False):
         if config.eval_noise_mode is not None:
             sac_deps.eval_noise.normalize_eval_noise_mode(config.eval_noise_mode)
-        problem_seed = sac_deps.seed_util.resolve_problem_seed(seed=config.seed, problem_seed=config.problem_seed)
-        sac_deps.seed_all(sac_deps.seed_util.global_seed_for_run(problem_seed))
+        resolved = sac_deps.seed_util.resolve_run_seeds(seed=int(config.seed), problem_seed=config.problem_seed, noise_seed_0=config.noise_seed_0)
+        config.problem_seed = int(resolved.problem_seed)
+        config.noise_seed_0 = int(resolved.noise_seed_0)
+        sac_deps.seed_all(sac_deps.seed_util.global_seed_for_run(int(resolved.problem_seed)))
         env = build_env_setup(config)
         runtime = config.resolve_runtime(capabilities=_SAC_RUNTIME_CAPABILITIES)
         modules = build_modules(config, env, device=runtime.device)

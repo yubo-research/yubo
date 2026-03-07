@@ -20,3 +20,8 @@ def test_ppo_config_runtime_num_envs_helper():
     cfg = PPOConfig(num_envs=7)
     assert cfg.runtime_num_envs() == 7
     assert PPOConfig.runtime_num_envs(cfg) == 7
+
+
+def test_ppo_config_from_dict_uses_env_defaults():
+    cfg = PPOConfig.from_dict({"env_tag": "cheetah"})
+    assert cfg.backbone_hidden_sizes == (64, 64)

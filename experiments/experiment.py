@@ -5,14 +5,14 @@ from typing import Any
 import click
 import tomllib
 
-_REQUIRED_KEYS = (
+_BASE_REQUIRED_KEYS = (
     "exp_dir",
     "env_tag",
     "opt_name",
     "num_arms",
-    "num_rounds",
     "num_reps",
 )
+_BUDGET_KEYS = ("num_rounds", "total_timesteps")
 _OPTIONAL_KEYS = (
     "num_denoise",
     "num_denoise_passive",
@@ -23,7 +23,7 @@ _OPTIONAL_KEYS = (
     "runtime_device",
     "local_workers",
 )
-_ALL_EXPERIMENT_KEYS = set(_REQUIRED_KEYS + _OPTIONAL_KEYS)
+_ALL_EXPERIMENT_KEYS = set(_BASE_REQUIRED_KEYS + _BUDGET_KEYS + _OPTIONAL_KEYS)
 _OPTIMIZER_KEYS = {"name", "params"}
 
 
@@ -109,9 +109,12 @@ def _load_toml_config(path: str) -> dict[str, Any]:
 
 
 def _validate_required(cfg: dict[str, Any]) -> None:
-    missing = [k for k in _REQUIRED_KEYS if k not in cfg]
+    missing = [k for k in _BASE_REQUIRED_KEYS if k not in cfg]
     if missing:
-        raise ValueError(f"Missing required fields: {missing}. Required: {sorted(_REQUIRED_KEYS)}")
+        required = sorted(_BASE_REQUIRED_KEYS + _BUDGET_KEYS)
+        raise ValueError(f"Missing required fields: {missing}. Required: {required}")
+    if not any(k in cfg for k in _BUDGET_KEYS):
+        raise ValueError(f"Missing required budget field: one of {list(_BUDGET_KEYS)}")
 
 
 def _parse_override_value(raw: str) -> Any:

@@ -276,6 +276,20 @@ def test_experiment_config_from_dict_none_denoise():
     assert config.num_denoise is None
 
 
+def test_experiment_config_from_dict_total_timesteps_only():
+    d = {
+        "exp_dir": "/results/exp1",
+        "env_tag": "f:ackley-10d",
+        "opt_name": "ucb",
+        "num_arms": 5,
+        "total_timesteps": 123456,
+        "num_reps": 3,
+    }
+    config = ExperimentConfig.from_dict(d)
+    assert config.total_timesteps == 123456
+    assert config.num_rounds is None
+
+
 @patch("optimizer.optimizer.Optimizer")
 @patch("problems.env_conf.default_policy")
 @patch("experiments.experiment_sampler.seed_all")
@@ -316,7 +330,13 @@ def test_sample_1(mock_torch, mock_seed_all, mock_default_policy, mock_optimizer
     mock_seed_all.assert_called_once_with(42 + 27)
     mock_default_policy.assert_called_once_with(mock_env_conf)
     mock_optimizer_class.assert_called_once()
-    mock_optimizer.collect_trace.assert_called_once_with(designer_name="ucb", max_iterations=2, max_proposal_seconds=100.0, deadline=None)
+    mock_optimizer.collect_trace.assert_called_once_with(
+        designer_name="ucb",
+        max_iterations=2,
+        max_proposal_seconds=100.0,
+        deadline=None,
+        max_total_timesteps=None,
+    )
 
     trace_lines = list(collector_trace)
     assert len(trace_lines) == 3
@@ -367,6 +387,49 @@ def test_sample_1_no_trace(mock_torch, mock_seed_all, mock_default_policy, mock_
     assert trace_lines[0] == "DONE"
 
     assert len(trace_records) == 1
+
+
+@patch("optimizer.optimizer.Optimizer")
+@patch("problems.env_conf.default_policy")
+@patch("experiments.experiment_sampler.seed_all")
+@patch("experiments.experiment_sampler.torch")
+def test_sample_1_total_timesteps_budget(mock_torch, mock_seed_all, mock_default_policy, mock_optimizer_class):
+    mock_torch.cuda.is_available.return_value = False
+    mock_torch.empty.return_value.device = "cpu"
+    mock_default_policy.return_value = MagicMock()
+
+    mock_trace_entry = MagicMock()
+    mock_trace_entry.dt_prop = 0.1
+    mock_trace_entry.dt_eval = 0.2
+    mock_trace_entry.rreturn = 1.5
+    mock_trace_entry.env_steps_iter = 17
+    mock_trace_entry.env_steps_total = 17
+
+    mock_optimizer = MagicMock()
+    mock_optimizer.collect_trace.return_value = iter([mock_trace_entry])
+    mock_optimizer_class.return_value = mock_optimizer
+
+    mock_env_conf = MagicMock()
+    mock_env_conf.problem_seed = 0
+    mock_env_conf.env_name = "test_env"
+
+    run_config = RunConfig(
+        env_conf=mock_env_conf,
+        opt_name="random",
+        num_rounds=None,
+        total_timesteps=500,
+        num_arms=1,
+        num_denoise=None,
+        num_denoise_passive=None,
+        max_proposal_seconds=None,
+        b_trace=False,
+        trace_fn="/path/to/trace",
+    )
+    sample_1(run_config)
+
+    call_kwargs = mock_optimizer.collect_trace.call_args.kwargs
+    assert call_kwargs["max_iterations"] > 10**6
+    assert call_kwargs["max_total_timesteps"] == 500
 
 
 def test_post_process_stdout(capsys):

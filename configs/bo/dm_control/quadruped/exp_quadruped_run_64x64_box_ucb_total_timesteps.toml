@@ -1,0 +1,19 @@
+# BO config using timestep budget (no num_rounds).
+# Run:
+#   micromamba run -n yubo-rl python -m experiments.experiment local \
+#     configs/bo/dm_control/quadruped/exp_quadruped_run_64x64_box_ucb_total_timesteps.toml
+
+[experiment]
+exp_dir = "_tmp/bo/dm_control/quadruped/box_ucb_total_timesteps"
+env_tag = "quadruped-run-64x64"
+num_arms = 8
+total_timesteps = 3000000
+num_reps = 10
+num_denoise = 1
+num_denoise_passive = 1
+b_trace = true
+runtime_device = "cpu"
+local_workers = 1
+
+[optimizer]
+name = "turbo-enn-fit-ucb"

@@ -61,6 +61,12 @@ def _resolve_env_creator(config: Any, *, pufferlib, puffer_atari, is_atari_env_t
     return (env_creator, {})
 
 
+def _resolve_vector_seed(config: Any) -> int:
+    if getattr(config, "problem_seed", None) is not None:
+        return int(config.problem_seed)
+    return int(config.seed)
+
+
 def make_vector_env(config: Any, *, import_pufferlib_modules_fn, is_atari_env_tag_fn, to_puffer_game_name_fn, resolve_gym_env_name_fn):
     pufferlib, puffer_vector, puffer_atari = import_pufferlib_modules_fn()
     backend_cls, backend_kwargs = _resolve_backend(config, puffer_vector)
@@ -72,4 +78,11 @@ def make_vector_env(config: Any, *, import_pufferlib_modules_fn, is_atari_env_ta
         to_puffer_game_name_fn=to_puffer_game_name_fn,
         resolve_gym_env_name_fn=resolve_gym_env_name_fn,
     )
-    return puffer_vector.make(env_creator, env_kwargs=env_kwargs, backend=backend_cls, num_envs=int(config.num_envs), seed=int(config.seed), **backend_kwargs)
+    return puffer_vector.make(
+        env_creator,
+        env_kwargs=env_kwargs,
+        backend=backend_cls,
+        num_envs=int(config.num_envs),
+        seed=_resolve_vector_seed(config),
+        **backend_kwargs,
+    )

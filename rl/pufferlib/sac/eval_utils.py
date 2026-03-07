@@ -78,7 +78,7 @@ class SacEvalPolicy:
 
 def evaluate_actor(config: Any, env: Any, modules: Any, obs_spec: Any, *, device: torch.device, eval_seed: int) -> float:
     policy = SacEvalPolicy(modules, obs_spec, device=device)
-    traj, _ = collect_denoised_trajectory(env.env_conf, policy, num_denoise=config.num_denoise_eval, i_noise=int(eval_seed))
+    traj, _ = collect_denoised_trajectory(env.env_conf, policy, num_denoise=config.num_denoise, i_noise=int(eval_seed))
     return float(traj.rreturn)
 
 
@@ -93,13 +93,13 @@ def evaluate_heldout_if_enabled(
     best_actor_state: dict[str, Any] | None = None,
     with_actor_state_fn=None,
 ) -> float | None:
-    if config.num_denoise_passive_eval is None:
+    if config.num_denoise_passive is None:
         return None
     if best_actor_state is not None and with_actor_state_fn is not None:
         policy = SacEvalPolicy(modules, obs_spec, device=device)
         return evaluate_heldout_with_best_actor(
             best_actor_state=best_actor_state,
-            num_denoise_passive_eval=config.num_denoise_passive_eval,
+            num_denoise_passive=config.num_denoise_passive,
             heldout_i_noise=int(heldout_i_noise),
             with_actor_state=with_actor_state_fn,
             evaluate_for_best=evaluate_for_best,
@@ -107,7 +107,7 @@ def evaluate_heldout_if_enabled(
             eval_policy=policy,
         )
     policy = SacEvalPolicy(modules, obs_spec, device=device)
-    return float(evaluate_for_best(env.env_conf, policy, config.num_denoise_passive_eval, i_noise=int(heldout_i_noise)))
+    return float(evaluate_for_best(env.env_conf, policy, config.num_denoise_passive, i_noise=int(heldout_i_noise)))
 
 
 def append_eval_metric(path, state: TrainState, *, step: int) -> None:
@@ -154,10 +154,11 @@ def maybe_eval(config: Any, env: Any, modules: Any, obs_spec: Any, state: TrainS
         return
     state.eval_mark = int(mark)
     due_step = int(mark * int(config.eval_interval_steps))
+    run_problem_seed = int(getattr(env, "problem_seed", config.seed))
     plan = build_eval_plan(
         current=int(due_step),
         interval=int(config.eval_interval_steps),
-        seed=int(config.seed),
+        seed=run_problem_seed,
         eval_seed_base=config.eval_seed_base,
         eval_noise_mode=config.eval_noise_mode,
     )

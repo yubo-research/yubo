@@ -177,7 +177,8 @@ def _seed_everything(seed: int) -> None:
 
 def _init_runtime(config: PufferPPOConfig, plan, device: torch.device, envs):
     specs = importlib.import_module("rl.pufferlib.ppo.specs")
-    next_obs_np, _ = envs.reset(seed=int(config.seed))
+    env_seed = int(config.problem_seed) if config.problem_seed is not None else int(config.seed)
+    next_obs_np, _ = envs.reset(seed=env_seed)
     obs_spec = _infer_observation_spec(config, next_obs_np)
     next_obs = _prepare_obs(next_obs_np, obs_spec=obs_spec, device=device)
     effective_num_envs = int(next_obs.shape[0])
@@ -294,9 +295,13 @@ def _run_training(config: PufferPPOConfig, plan, device: torch.device, metrics_p
 
 def train_ppo_puffer_impl(config: PufferPPOConfig) -> TrainResult:
     puffer_eval = importlib.import_module("rl.pufferlib.ppo.eval")
+    core_env_conf = importlib.import_module("rl.core.env_conf")
     puffer_eval.validate_eval_config(config)
+    resolved = core_env_conf.resolve_run_seeds(seed=int(config.seed), problem_seed=config.problem_seed, noise_seed_0=config.noise_seed_0)
+    config.problem_seed = int(resolved.problem_seed)
+    config.noise_seed_0 = int(resolved.noise_seed_0)
     device = _resolve_device(config.device)
-    _seed_everything(int(config.seed))
+    _seed_everything(int(core_env_conf.global_seed_for_run(int(config.problem_seed))))
     plan = _build_plan(config)
     metrics_path = _prepare_outputs(config)
     with closing(make_vector_env(config)) as envs:

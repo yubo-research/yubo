@@ -205,6 +205,7 @@ class EnvConf:
     # It is fixed for the duration of the optimization (all rounds).
     problem_seed: int = None
     policy_class: Any = None
+    rl_model: dict[str, Any] | None = None
 
     # dm_control pixel observations (RL and BO)
     from_pixels: bool = False
@@ -320,7 +321,7 @@ class EnvConf:
         return self.make(**kwargs)
 
 
-def _gym_conf(env_name, gym_conf=None, policy_class=None, kwargs=None, noise_seed_0=None):
+def _gym_conf(env_name, gym_conf=None, policy_class=None, kwargs=None, noise_seed_0=None, rl_model=None):
     if gym_conf is None:
         gym_conf = GymConf()
 
@@ -330,7 +331,120 @@ def _gym_conf(env_name, gym_conf=None, policy_class=None, kwargs=None, noise_see
         policy_class=policy_class,
         kwargs=kwargs,
         noise_seed_0=noise_seed_0,
+        rl_model=rl_model,
     )
+
+
+_RL_PPO_FALLBACK = {
+    "backbone_name": "mlp",
+    "backbone_hidden_sizes": (64, 64),
+    "backbone_activation": "silu",
+    "backbone_layer_norm": True,
+    "actor_head_hidden_sizes": (),
+    "critic_head_hidden_sizes": (),
+    "head_activation": "silu",
+    "share_backbone": True,
+    "log_std_init": -0.5,
+}
+
+_RL_PPO_ATARI_DEFAULT = {
+    "backbone_name": "nature_cnn_atari",
+    "backbone_hidden_sizes": (),
+    "backbone_activation": "relu",
+    "backbone_layer_norm": False,
+    "actor_head_hidden_sizes": (512,),
+    "critic_head_hidden_sizes": (512,),
+    "head_activation": "relu",
+    "share_backbone": True,
+    "log_std_init": -0.5,
+}
+
+_RL_SAC_FALLBACK = {
+    "backbone_name": "mlp",
+    "backbone_hidden_sizes": (256, 256),
+    "backbone_activation": "silu",
+    "backbone_layer_norm": False,
+    "actor_head_hidden_sizes": (),
+    "critic_head_hidden_sizes": (),
+    "head_activation": "silu",
+}
+
+
+def _normalize_rl_env_key(env_tag: str) -> str:
+    tag, _frozen_noise, _policy_variant, _from_pixels = _parse_tag_options(str(env_tag), None, None)
+    if tag.startswith("dm:") or tag.startswith("dm_control/"):
+        return _normalize_dm_control_name(tag)
+    return tag
+
+
+def _find_rl_env_conf(env_key: str):
+    direct = _gym_env_confs.get(env_key)
+    if direct is not None:
+        return direct
+    for conf in _gym_env_confs.values():
+        if getattr(conf, "env_name", None) == env_key:
+            return conf
+    return None
+
+
+def _infer_rl_from_policy_class(policy_class: Any, *, algo: str) -> dict[str, Any] | None:
+    if not isinstance(policy_class, MLPPolicyFactory):
+        return None
+    hidden = tuple((int(v) for v in policy_class._hidden_sizes))
+    layer_norm = bool(policy_class._use_layer_norm)
+    if algo == "ppo":
+        return {
+            "backbone_name": "mlp",
+            "backbone_hidden_sizes": hidden,
+            "backbone_activation": "silu",
+            "backbone_layer_norm": layer_norm,
+            "actor_head_hidden_sizes": (),
+            "critic_head_hidden_sizes": (),
+            "head_activation": "silu",
+            "share_backbone": True,
+            "log_std_init": -0.5,
+        }
+    if algo == "sac":
+        return {
+            "backbone_name": "mlp",
+            "backbone_hidden_sizes": hidden,
+            "backbone_activation": "silu",
+            "backbone_layer_norm": layer_norm,
+            "actor_head_hidden_sizes": (),
+            "critic_head_hidden_sizes": (),
+            "head_activation": "silu",
+        }
+    raise ValueError(f"Unsupported algo '{algo}' for RL model inference.")
+
+
+def resolve_rl_model_defaults(env_tag: str, *, algo: str) -> dict[str, Any]:
+    algo_key = str(algo).strip().lower()
+    if algo_key not in {"ppo", "sac"}:
+        raise ValueError(f"Unsupported algo '{algo}'. Expected one of: ppo, sac.")
+    env_key = _normalize_rl_env_key(str(env_tag))
+    env_conf = _find_rl_env_conf(env_key)
+    base: dict[str, Any]
+    if env_conf is not None and env_conf.policy_class is not None:
+        inferred = _infer_rl_from_policy_class(env_conf.policy_class, algo=algo_key)
+        if inferred is not None:
+            base = inferred
+        elif env_key.startswith(("atari:", "ALE/")):
+            base = copy.deepcopy(_RL_PPO_ATARI_DEFAULT if algo_key == "ppo" else _RL_SAC_FALLBACK)
+        else:
+            base = copy.deepcopy(_RL_PPO_FALLBACK if algo_key == "ppo" else _RL_SAC_FALLBACK)
+    elif env_key.startswith(("atari:", "ALE/")):
+        base = copy.deepcopy(_RL_PPO_ATARI_DEFAULT if algo_key == "ppo" else _RL_SAC_FALLBACK)
+    else:
+        base = copy.deepcopy(_RL_PPO_FALLBACK if algo_key == "ppo" else _RL_SAC_FALLBACK)
+
+    # Per-env rl_model now acts as lightweight override on top of inferred/fallback defaults.
+    if env_conf is not None and isinstance(env_conf.rl_model, dict):
+        model = env_conf.rl_model.get(algo_key)
+        if isinstance(model, dict):
+            out = copy.deepcopy(base)
+            out.update(copy.deepcopy(model))
+            return out
+    return copy.deepcopy(base)
 
 
 # See https://paperswithcode.com/task/openai-gym
@@ -352,6 +466,20 @@ _gym_env_confs = {
     "cheetah": _gym_conf(
         "HalfCheetah-v5",
         policy_class=MLPPolicyFactory((32, 16)),
+        rl_model={
+            "ppo": {
+                "backbone_hidden_sizes": (64, 64),
+                "backbone_layer_norm": True,
+                "share_backbone": True,
+                "log_std_init": -0.5,
+            },
+            "sac": {
+                "backbone_hidden_sizes": (256, 256),
+                "backbone_activation": "relu",
+                "backbone_layer_norm": False,
+                "head_activation": "relu",
+            },
+        },
     ),
     "quadruped-run-64x64": _gym_conf(
         "dm_control/quadruped-run-v0",

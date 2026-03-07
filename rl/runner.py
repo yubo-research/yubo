@@ -1,6 +1,6 @@
 from common.config_toml import apply_overrides, load_toml, parse_set_args
 from rl.registry import get_algo, resolve_algo_name
-from rl.runner_helpers import parse_runtime_args, parse_seeds, seeded_exp_dir, split_config_and_args
+from rl.runner_helpers import parse_runtime_args, seeded_exp_dir, split_config_and_args
 
 
 def _extract_algo_cfg(cfg: dict) -> tuple[str, str | None, dict]:
@@ -31,23 +31,16 @@ def _extract_run_cfg(cfg: dict) -> tuple[list[int], int]:
         return ([], 1)
     if not isinstance(run_cfg, dict):
         raise ValueError("[rl.run] must be a table.")
-    seeds_raw = run_cfg.get("seeds")
+    if "seeds" in run_cfg:
+        raise ValueError("[rl.run].seeds is removed. Use [rl.run].num_reps (BO-style replicate indexing).")
     num_reps_raw = run_cfg.get("num_reps")
     workers = int(run_cfg.get("workers", 1))
-    if seeds_raw is None:
-        if num_reps_raw is None:
-            return ([], workers)
-        num_reps = int(num_reps_raw)
-        if num_reps < 1:
-            raise ValueError("[rl.run].num_reps must be >= 1 when provided.")
-        return (list(range(num_reps)), workers)
-    if isinstance(seeds_raw, str):
-        return (parse_seeds(seeds_raw), workers)
-    if isinstance(seeds_raw, int):
-        return ([int(seeds_raw)], workers)
-    if isinstance(seeds_raw, list):
-        return ([int(x) for x in seeds_raw], workers)
-    raise ValueError("[rl.run].seeds must be a list, int, or comma/range string.")
+    if num_reps_raw is None:
+        return ([], workers)
+    num_reps = int(num_reps_raw)
+    if num_reps < 1:
+        raise ValueError("[rl.run].num_reps must be >= 1 when provided.")
+    return (list(range(num_reps)), workers)
 
 
 def _run_from_cfg(cfg: dict, seed: int | None = None):
@@ -56,6 +49,17 @@ def _run_from_cfg(cfg: dict, seed: int | None = None):
     config = algo.config_cls.from_dict(algo_cfg)
     if seed is not None and hasattr(config, "seed"):
         config.seed = int(seed)
+    if hasattr(config, "seed") and (hasattr(config, "problem_seed") or hasattr(config, "noise_seed_0")):
+        core_env_conf = __import__("rl.core.env_conf", fromlist=["resolve_run_seeds"])
+        resolved = core_env_conf.resolve_run_seeds(
+            seed=int(getattr(config, "seed")),
+            problem_seed=getattr(config, "problem_seed", None),
+            noise_seed_0=getattr(config, "noise_seed_0", None),
+        )
+        if hasattr(config, "problem_seed"):
+            config.problem_seed = int(resolved.problem_seed)
+        if hasattr(config, "noise_seed_0"):
+            config.noise_seed_0 = int(resolved.noise_seed_0)
     if seed is not None and hasattr(config, "exp_dir"):
         config.exp_dir = seeded_exp_dir(str(config.exp_dir), int(seed))
     return algo.train_fn(config)
@@ -88,8 +92,6 @@ def main(argv: list[str] | None = None):
     if overrides:
         apply_overrides(cfg, overrides)
     seeds, cfg_workers = _extract_run_cfg(cfg)
-    if runtime.seeds_raw is not None:
-        seeds = parse_seeds(runtime.seeds_raw)
     workers = runtime.workers if runtime.workers_cli_set else cfg_workers
     overrides_keys = sorted(overrides) if overrides else []
     print(f"[rl] config={config_path} seeds={(seeds if seeds else ['default'])} workers={workers} overrides={overrides_keys}", flush=True)

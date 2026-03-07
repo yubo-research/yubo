@@ -50,3 +50,43 @@ def test_default_policy():
     env_conf = get_env_conf("f:ackley-3d", problem_seed=0, noise_seed_0=0)
     policy = default_policy(env_conf)
     assert policy is not None
+
+
+def test_resolve_rl_model_defaults_cheetah_sac():
+    from problems.env_conf import resolve_rl_model_defaults
+
+    cfg = resolve_rl_model_defaults("cheetah", algo="sac")
+    assert cfg["backbone_name"] == "mlp"
+    assert cfg["backbone_hidden_sizes"] == (256, 256)
+    assert cfg["backbone_activation"] == "relu"
+    assert cfg["critic_head_hidden_sizes"] == ()
+    # Override is merged on top of inferred base, so base defaults stay available.
+    assert cfg["actor_head_hidden_sizes"] == ()
+
+
+def test_resolve_rl_model_defaults_cheetah_ppo_uses_critic_head():
+    from problems.env_conf import resolve_rl_model_defaults
+
+    cfg = resolve_rl_model_defaults("cheetah", algo="ppo")
+    assert cfg["backbone_name"] == "mlp"
+    assert cfg["backbone_hidden_sizes"] == (64, 64)
+    assert cfg["critic_head_hidden_sizes"] == ()
+    assert cfg["share_backbone"] is True
+
+
+def test_resolve_rl_model_defaults_quadruped_run_infers_from_policy_class():
+    from problems.env_conf import resolve_rl_model_defaults
+
+    ppo_cfg = resolve_rl_model_defaults("quadruped-run-64x64", algo="ppo")
+    assert ppo_cfg["backbone_name"] == "mlp"
+    assert ppo_cfg["backbone_hidden_sizes"] == (64, 64)
+    assert ppo_cfg["backbone_activation"] == "silu"
+    assert ppo_cfg["backbone_layer_norm"] is True
+    assert ppo_cfg["critic_head_hidden_sizes"] == ()
+
+    sac_cfg = resolve_rl_model_defaults("quadruped-run-64x64", algo="sac")
+    assert sac_cfg["backbone_name"] == "mlp"
+    assert sac_cfg["backbone_hidden_sizes"] == (64, 64)
+    assert sac_cfg["backbone_activation"] == "silu"
+    assert sac_cfg["backbone_layer_norm"] is True
+    assert sac_cfg["critic_head_hidden_sizes"] == ()

@@ -101,6 +101,7 @@ class _FakeAtariModule:
 def test_puffer_config_from_dict_converts_hidden_sizes():
     cfg = pufferlib_ppo.PufferPPOConfig.from_dict(
         {
+            "env_tag": "cheetah",
             "actor_head_hidden_sizes": [64, 32],
             "critic_head_hidden_sizes": [64],
             "backbone_hidden_sizes": [],
@@ -109,6 +110,11 @@ def test_puffer_config_from_dict_converts_hidden_sizes():
     assert cfg.actor_head_hidden_sizes == (64, 32)
     assert cfg.critic_head_hidden_sizes == (64,)
     assert cfg.backbone_hidden_sizes == ()
+
+
+def test_puffer_config_from_dict_uses_env_defaults():
+    cfg = pufferlib_ppo.PufferPPOConfig.from_dict({"env_tag": "cheetah"})
+    assert cfg.backbone_hidden_sizes == (64, 64)
 
 
 def test_puffer_register_delegates_to_registry(monkeypatch):
@@ -330,5 +336,7 @@ def test_train_ppo_puffer_renders_video_when_enabled(monkeypatch, tmp_path: Path
     assert call["num_episodes"] == 3
     assert call["num_video_episodes"] == 1
     assert call["episode_selection"] == "best"
-    assert call["seed_base"] == 11
+    from common.experiment_seeds import problem_seed_from_rep_index
+
+    assert call["seed_base"] == problem_seed_from_rep_index(11)
     assert call["video_dir"].endswith("exp_video/videos")

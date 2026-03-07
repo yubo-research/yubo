@@ -60,6 +60,7 @@ class Optimizer:
         num_denoise_passive=None,
         opt_name=None,
         num_rounds=None,
+        total_timesteps=None,
     ):
         self._collector = collector
         self._env_conf = env_conf
@@ -76,12 +77,15 @@ class Optimizer:
         self._i_iter = 0
         self._i_noise = 0
         self._cum_dt_proposing = 0
+        self._cum_env_steps = 0
 
         problem_parts = [f"env_tag = {env_conf.env_name}", f"num_params = {policy.num_params()}"]
         if opt_name is not None:
             problem_parts.append(f"opt_name = {opt_name}")
         if num_rounds is not None:
             problem_parts.append(f"rounds = {num_rounds}")
+        if total_timesteps is not None:
+            problem_parts.append(f"total_timesteps = {int(total_timesteps)}")
         problem_parts.append(f"num_arms = {num_arms}")
         self._collector(f"PROBLEM: {' '.join(problem_parts)}")
 
@@ -121,10 +125,14 @@ class Optimizer:
 
         return IterateResult(data=data, dt_prop=float(dt_prop), dt_eval=float(dt_eval))
 
-    def collect_trace(self, designer_name, max_iterations, max_proposal_seconds=np.inf, deadline=None):
+    def collect_trace(self, designer_name, max_iterations=None, max_proposal_seconds=np.inf, deadline=None, max_total_timesteps=None):
         self.initialize(designer_name)
         num_iterations = 0
-        while num_iterations < max_iterations and self._cum_dt_proposing < max_proposal_seconds:
+        while (
+            (max_iterations is None or num_iterations < int(max_iterations))
+            and self._cum_dt_proposing < max_proposal_seconds
+            and (max_total_timesteps is None or self._cum_env_steps < int(max_total_timesteps))
+        ):
             if deadline is not None and time.time() >= deadline:
                 break
             self.iterate()
@@ -172,24 +180,31 @@ class Optimizer:
         return did_update
 
     def _update_y_best_scalar(self, ret_batch, did_update_best):
+        passive_steps = 0
         if self._num_denoise_passive_eval is None:
             best_raw = float(np.max(ret_batch))
             self.y_best = best_raw if self.y_best is None else max(float(self.y_best), best_raw)
         elif did_update_best or self.y_best is None:
-            self.y_best = float(evaluate_for_best(self._env_conf, self.best_policy, self._num_denoise_passive_eval))
+            self.y_best, passive_steps = evaluate_for_best(
+                self._env_conf,
+                self.best_policy,
+                self._num_denoise_passive_eval,
+                return_steps=True,
+            )
+        return int(passive_steps)
 
     def _handle_scalar_returns(self, designer, data, ret_batch):
         did_update, used_designer = self._update_best_from_designer(designer)
         if not used_designer:
             did_update = self._update_best_from_batch(data)
-        self._update_y_best_scalar(ret_batch, did_update)
+        passive_steps = self._update_y_best_scalar(ret_batch, did_update)
         ret_eval = float(self.y_best)
         return ReturnSummary(
             ret_eval=ret_eval,
             y_best_s=f"{float(self.y_best):.3f}",
             ret_best_s=f"{float(self.r_best_est):.3f}",
             ret_eval_s=f"{ret_eval:.3f}",
-        )
+        ), int(passive_steps)
 
     def _handle_multi_objective_returns(self, data, ret_batch, num_metrics):
         if num_metrics == 2:
@@ -279,12 +294,17 @@ class Optimizer:
                 show_frames=True,
             )
 
+        iter_env_steps = int(sum(int(getattr(d.trajectory, "num_steps", 0)) for d in data))
+        passive_env_steps = 0
+
         if ret_batch.ndim <= 1:
-            ret_s = self._handle_scalar_returns(designer, data, ret_batch)
+            ret_s, passive_env_steps = self._handle_scalar_returns(designer, data, ret_batch)
         else:
             num_metrics = int(ret_batch.shape[1])
             assert num_metrics >= 2 and self._num_denoise_passive_eval is None
             ret_s = self._handle_multi_objective_returns(data, ret_batch, num_metrics)
+        iter_env_steps += int(passive_env_steps)
+
         ret_eval, y_best_s, ret_best_s, ret_eval_s = (
             ret_s.ret_eval,
             ret_s.y_best_s,
@@ -294,6 +314,7 @@ class Optimizer:
 
         cum_time = time.time() - self._t_0
         self._cum_dt_proposing += dt_prop
+        self._cum_env_steps += iter_env_steps
         tr_length = None
         turbo = getattr(designer, "_turbo", None)
         if turbo is not None and hasattr(turbo, "tr_length"):
@@ -306,10 +327,20 @@ class Optimizer:
             self._collector(
                 f"ITER: iter = {self._i_iter} elapsed = {cum_time:.2f}s eval_dt = {dt_eval:.3f}s proposal_dt = {dt_prop:.3f}s "
                 f"{self._telemetry.format()}{tr_str} proposal_elapsed = {self._cum_dt_proposing:.3f}s "
+                f"env_steps_iter = {iter_env_steps} env_steps_total = {self._cum_env_steps} "
                 f"y_best = {y_best_s} ret_best = {ret_best_s} ret_eval = {ret_eval_s}"
             )
         sys.stdout.flush()
-        self._trace.append(TraceEntry(float(ret_eval), float(self.r_best_est), dt_prop, dt_eval))
+        self._trace.append(
+            TraceEntry(
+                float(ret_eval),
+                float(self.r_best_est),
+                dt_prop,
+                dt_eval,
+                env_steps_iter=int(iter_env_steps),
+                env_steps_total=int(self._cum_env_steps),
+            )
+        )
         self._i_iter += 1
         self.last_designer = designer
         return self._trace

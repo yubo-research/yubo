@@ -18,15 +18,9 @@ def parse_runtime_args(argv: list[str]) -> _RuntimeArgs:
     while i < len(argv):
         arg = argv[i]
         if arg == "--seeds":
-            if i + 1 >= len(argv):
-                raise SystemExit("Missing value after --seeds")
-            seeds_raw = argv[i + 1]
-            i += 2
-            continue
+            raise SystemExit("--seeds is removed. Use [rl.run].num_reps (BO-style replicate indexing).")
         if arg.startswith("--seeds="):
-            seeds_raw = arg.split("=", 1)[1]
-            i += 1
-            continue
+            raise SystemExit("--seeds is removed. Use [rl.run].num_reps (BO-style replicate indexing).")
         if arg == "--workers":
             if i + 1 >= len(argv):
                 raise SystemExit("Missing value after --workers")
@@ -53,29 +47,6 @@ def split_config_and_args(argv: list[str]) -> tuple[str, list[str]]:
     if idx + 1 >= len(argv):
         raise SystemExit("Missing path after --config")
     return (argv[idx + 1], argv[idx + 2 :])
-
-
-def parse_seeds(raw: str | None) -> list[int]:
-    if raw is None:
-        return []
-    raw = raw.strip()
-    if not raw:
-        return []
-    seeds = []
-    for token in raw.split(","):
-        token = token.strip()
-        if not token:
-            continue
-        if "-" in token:
-            lo, hi = token.split("-", 1)
-            lo_i = int(lo)
-            hi_i = int(hi)
-            if hi_i < lo_i:
-                raise ValueError(f"Invalid seed range: {token}")
-            seeds.extend(range(lo_i, hi_i + 1))
-        else:
-            seeds.append(int(token))
-    return seeds
 
 
 def seeded_exp_dir(exp_dir: str, seed: int) -> str:

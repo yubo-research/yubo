@@ -397,10 +397,11 @@ def test_kiss_cov_sac_update_and_opt_trajectories(monkeypatch):
     traj, seed = collect_trajectory_with_noise(conf, object(), i_noise=1, denoise_seed=2)
     assert traj.rreturn == 13.0
     assert seed == 13
-    mean, se, all_same = mean_return_over_runs(conf, object(), num_denoise=2, i_noise=1)
+    mean, se, all_same, num_steps_total = mean_return_over_runs(conf, object(), num_denoise=2, i_noise=1)
     assert np.isfinite(mean)
     assert np.isfinite(se)
     assert all_same is False
+    assert num_steps_total >= 0
     den, _ = collect_denoised_trajectory(conf, object(), num_denoise=2, i_noise=1)
     assert den.rreturn is not None
     best = evaluate_for_best(conf, object(), 2)

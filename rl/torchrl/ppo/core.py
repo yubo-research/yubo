@@ -490,7 +490,7 @@ def _evaluate_actor(config: PPOConfig, env: _EnvSetup, modules: _Modules, *, dev
         obs_contract=obs_contract,
         is_discrete=bool(getattr(env, "is_discrete", False)),
     )
-    traj, _ = episode_rollout.collect_denoised_trajectory(eval_env, eval_policy, num_denoise=config.num_denoise_eval, i_noise=int(eval_seed))
+    traj, _ = episode_rollout.collect_denoised_trajectory(eval_env, eval_policy, num_denoise=config.num_denoise, i_noise=int(eval_seed))
     return float(traj.rreturn)
 
 
@@ -519,7 +519,7 @@ def _maybe_eval_and_log(
     plan = op_deps.build_eval_plan(
         current=iteration,
         interval=int(config.eval_interval),
-        seed=int(config.seed),
+        seed=int(env.problem_seed),
         eval_seed_base=config.eval_seed_base,
         eval_noise_mode=config.eval_noise_mode,
     )
@@ -531,7 +531,7 @@ def _maybe_eval_and_log(
         capture_actor_state=lambda: op_deps.torchrl_actor_eval.capture_actor_snapshot(modules),
     )
     state.last_heldout_return = None
-    if config.num_denoise_passive_eval is not None and state.best_actor_state is not None:
+    if config.num_denoise_passive is not None and state.best_actor_state is not None:
         obs_contract = _resolve_observation_contract_for_env(config, env)
         from_pixels = obs_contract.mode == "pixels"
         best_eval_policy = op_deps.torchrl_actor_eval.ActorEvalPolicy(
@@ -544,7 +544,7 @@ def _maybe_eval_and_log(
         )
         state.last_heldout_return = _eval_heldout_with_best_actor(
             best_actor_state=state.best_actor_state,
-            num_denoise_passive_eval=config.num_denoise_passive_eval,
+            num_denoise_passive=config.num_denoise_passive,
             heldout_i_noise=plan.heldout_i_noise,
             with_actor_state=lambda snapshot: op_deps.torchrl_actor_eval.use_actor_snapshot(modules, snapshot, device=device),
             evaluate_for_best=episode_rollout.evaluate_for_best,
@@ -611,7 +611,7 @@ def _log_ppo_config(config, env, training, runtime, from_pixels, backbone_info):
         flush=True,
     )
     print(
-        f"[rl/ppo/torchrl] actor_head={list(config.actor_head_hidden_sizes)} critic_head={list(config.critic_head_hidden_sizes)} log_std_init={config.log_std_init} lr={config.learning_rate} gamma={config.gamma} gae_lambda={config.gae_lambda} clip_coef={config.clip_coef} vf_coef={config.vf_coef} ent_coef={config.ent_coef}",
+        f"[rl/ppo/torchrl] actor_head={list(config.actor_head_hidden_sizes)} value_head={list(config.critic_head_hidden_sizes)} log_std_init={config.log_std_init} lr={config.learning_rate} gamma={config.gamma} gae_lambda={config.gae_lambda} clip_coef={config.clip_coef} vf_coef={config.vf_coef} ent_coef={config.ent_coef}",
         flush=True,
     )
 
@@ -620,6 +620,8 @@ def train_ppo(config: PPOConfig) -> TrainResult:
     if config.eval_noise_mode is not None:
         op_deps.normalize_eval_noise_mode(config.eval_noise_mode)
     resolved = core_env_conf.resolve_run_seeds(seed=int(config.seed), problem_seed=config.problem_seed, noise_seed_0=config.noise_seed_0)
+    config.problem_seed = int(resolved.problem_seed)
+    config.noise_seed_0 = int(resolved.noise_seed_0)
     op_deps.seed_all(op_deps.seed_util.global_seed_for_run(int(resolved.problem_seed)))
     env = build_env_setup(config)
     runtime = config.resolve_runtime(capabilities=_PPO_RUNTIME_CAPABILITIES)

@@ -195,8 +195,14 @@ def train_sac_puffer_impl(config: SACConfig) -> TrainResult:
     normalize_eval_noise_mode(config.eval_noise_mode)
     _exp_dir, metrics_path, checkpoint_manager = _init_run_artifacts(config)
     env_setup, device = _init_runtime(config)
+    config.problem_seed = int(env_setup.problem_seed)
+    noise_seed_0 = getattr(env_setup, "noise_seed_0", config.noise_seed_0)
+    if noise_seed_0 is None:
+        resolve_noise_seed_0 = importlib.import_module("rl.core.env_conf").resolve_noise_seed_0
+        noise_seed_0 = resolve_noise_seed_0(problem_seed=int(config.problem_seed), noise_seed_0=None)
+    config.noise_seed_0 = int(noise_seed_0)
     with closing(make_vector_env(config)) as envs:
-        obs_np, _ = envs.reset(seed=int(config.seed))
+        obs_np, _ = envs.reset(seed=int(env_setup.problem_seed))
         obs_spec = infer_observation_spec(config, obs_np)
         obs_batch = prepare_obs_np(obs_np, obs_spec=obs_spec)
         modules, optimizers, replay, state = _build_training_components(config, env_setup, obs_spec, obs_batch, device=device)

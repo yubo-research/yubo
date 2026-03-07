@@ -54,8 +54,8 @@ def _build_test_config(exp_dir: Path) -> SACConfig:
         updates_per_step=1,
         eval_interval_steps=32,
         log_interval_steps=32,
-        num_denoise_eval=1,
-        num_denoise_passive_eval=1,
+        num_denoise=1,
+        num_denoise_passive=1,
     )
 
 

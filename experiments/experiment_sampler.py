@@ -2,6 +2,7 @@ import hashlib
 import importlib
 import multiprocessing as mp
 import os
+import sys
 import time
 from contextlib import contextmanager
 from dataclasses import asdict, dataclass
@@ -45,8 +46,9 @@ class ExperimentConfig:
     env_tag: str
     opt_name: str
     num_arms: int
-    num_rounds: int
     num_reps: int
+    num_rounds: Optional[int] = None
+    total_timesteps: Optional[int] = None
     num_denoise: Optional[int] = None
     num_denoise_passive: Optional[int] = None
     max_proposal_seconds: Optional[float] = None
@@ -63,9 +65,11 @@ class ExperimentConfig:
     local_workers: int = 1
 
     def to_dir_name(self) -> str:
+        budget_key = "num_rounds" if self.num_rounds is not None else "total_timesteps"
+        budget_val = self.num_rounds if self.num_rounds is not None else self.total_timesteps
         config_str = (
             f"env={self.env_tag}--opt_name={self.opt_name}"
-            f"--num_arms={self.num_arms}--num_rounds={self.num_rounds}"
+            f"--num_arms={self.num_arms}--{budget_key}={budget_val}"
             f"--num_reps={self.num_reps}--num_denoise={self.num_denoise}"
             f"--max_proposal_seconds={self.max_proposal_seconds}"
             f"--video_enable={self.video_enable}"
@@ -74,9 +78,11 @@ class ExperimentConfig:
         return f"{self.exp_dir}/{short_hash}"
 
     def to_dir_name_legacy(self) -> str:
+        budget_key = "num_rounds" if self.num_rounds is not None else "total_timesteps"
+        budget_val = self.num_rounds if self.num_rounds is not None else self.total_timesteps
         return (
             f"{self.exp_dir}/env={self.env_tag}--opt_name={self.opt_name}"
-            f"--num_arms={self.num_arms}--num_rounds={self.num_rounds}"
+            f"--num_arms={self.num_arms}--{budget_key}={budget_val}"
             f"--num_reps={self.num_reps}--num_denoise={self.num_denoise}"
         )
 
@@ -101,13 +107,22 @@ class ExperimentConfig:
         local_workers = int(d.get("local_workers", 1))
         if local_workers < 1:
             raise ValueError(f"local_workers must be >= 1 (got: {local_workers})")
+        num_rounds = None if d.get("num_rounds") in (None, "None") else int(d["num_rounds"])
+        total_timesteps = None if d.get("total_timesteps") in (None, "None") else int(d["total_timesteps"])
+        if num_rounds is None and total_timesteps is None:
+            raise ValueError("Either num_rounds or total_timesteps must be provided.")
+        if num_rounds is not None and num_rounds < 1:
+            raise ValueError(f"num_rounds must be >= 1 (got: {num_rounds})")
+        if total_timesteps is not None and total_timesteps < 1:
+            raise ValueError(f"total_timesteps must be >= 1 (got: {total_timesteps})")
 
         return cls(
             exp_dir=d["exp_dir"],
             env_tag=d["env_tag"],
             opt_name=d["opt_name"],
             num_arms=int(d["num_arms"]),
-            num_rounds=int(d["num_rounds"]),
+            num_rounds=num_rounds,
+            total_timesteps=total_timesteps,
             num_reps=int(d["num_reps"]),
             num_denoise=None if d.get("num_denoise") in (None, "None") else int(d["num_denoise"]),
             num_denoise_passive=None if d.get("num_denoise_passive") in (None, "None") else int(d["num_denoise_passive"]),
@@ -128,13 +143,14 @@ class ExperimentConfig:
 class RunConfig:
     env_conf: object
     opt_name: str
-    num_rounds: int
+    num_rounds: Optional[int]
     num_arms: int
     num_denoise: Optional[int]
     num_denoise_passive: Optional[int]
     max_proposal_seconds: Optional[float]
     b_trace: bool
     trace_fn: str
+    total_timesteps: Optional[int] = None
     bo_console: bool = True
     deadline: Optional[float] = None
     video_enable: bool = False
@@ -162,15 +178,16 @@ def _temporary_default_device(runtime_device: str):
         torch.set_default_device(prev_default_device)
 
 
-def _collect_trace_records(opt, opt_name, num_rounds, max_proposal_seconds, deadline, env_conf, b_trace):
+def _collect_trace_records(opt, opt_name, max_iterations, max_total_timesteps, max_proposal_seconds, deadline, env_conf, b_trace):
     trace_records = []
     collector_trace = Collector()
     for i_iter, te in enumerate(
         opt.collect_trace(
             designer_name=opt_name,
-            max_iterations=num_rounds,
+            max_iterations=max_iterations,
             max_proposal_seconds=max_proposal_seconds,
             deadline=deadline,
+            max_total_timesteps=max_total_timesteps,
         )
     ):
         trace_records.append(
@@ -181,12 +198,15 @@ def _collect_trace_records(opt, opt_name, num_rounds, max_proposal_seconds, dead
                 rreturn=te.rreturn,
                 env_name=env_conf.env_name,
                 opt_name=opt_name,
+                env_steps_iter=int(getattr(te, "env_steps_iter", 0)),
+                env_steps_total=int(getattr(te, "env_steps_total", 0)),
             )
         )
         if b_trace:
             collector_trace(
                 f"TRACE: env={env_conf.env_name} opt_name={opt_name} iter={i_iter} "
-                f"proposal_dt={te.dt_prop:.3e}s eval_dt={te.dt_eval:.3e}s return={te.rreturn:.3e}"
+                f"proposal_dt={te.dt_prop:.3e}s eval_dt={te.dt_eval:.3e}s return={te.rreturn:.3e} "
+                f"env_steps_iter={int(getattr(te, 'env_steps_iter', 0))} env_steps_total={int(getattr(te, 'env_steps_total', 0))}"
             )
     collector_trace("DONE")
     return trace_records, collector_trace
@@ -226,6 +246,7 @@ def sample_1(run_config: RunConfig):
     env_conf = run_config.env_conf
     opt_name = run_config.opt_name
     num_rounds = run_config.num_rounds
+    total_timesteps = run_config.total_timesteps
     num_arms = run_config.num_arms
     num_denoise = run_config.num_denoise
     num_denoise_passive = run_config.num_denoise_passive
@@ -263,9 +284,20 @@ def sample_1(run_config: RunConfig):
             num_denoise_passive=num_denoise_passive,
             opt_name=opt_name,
             num_rounds=num_rounds,
+            total_timesteps=total_timesteps,
         )
 
-        trace_records, collector_trace = _collect_trace_records(opt, opt_name, num_rounds, max_proposal_seconds, deadline, env_conf, b_trace)
+        max_iterations = int(num_rounds) if num_rounds is not None else sys.maxsize
+        trace_records, collector_trace = _collect_trace_records(
+            opt,
+            opt_name,
+            max_iterations,
+            total_timesteps,
+            max_proposal_seconds,
+            deadline,
+            env_conf,
+            b_trace,
+        )
 
         if bo_console:
             t0 = getattr(opt, "_t_0", None)
@@ -468,6 +500,7 @@ def mk_replicates(config: ExperimentConfig) -> list[RunConfig]:
                     env_conf=env_conf,
                     opt_name=config.opt_name,
                     num_rounds=config.num_rounds,
+                    total_timesteps=config.total_timesteps,
                     num_arms=config.num_arms,
                     num_denoise=config.num_denoise,
                     num_denoise_passive=config.num_denoise_passive,
@@ -521,6 +554,7 @@ def prep_args_1(
         num_arms=num_arms,
         num_reps=num_replications,
         num_rounds=num_rounds,
+        total_timesteps=None,
         num_denoise=num_denoise,
         num_denoise_passive=num_denoise_passive,
     )
