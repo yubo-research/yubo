@@ -353,6 +353,10 @@ _gym_env_confs = {
         "HalfCheetah-v5",
         policy_class=MLPPolicyFactory((32, 16)),
     ),
+    "quadruped-run-64x64": _gym_conf(
+        "dm_control/quadruped-run-v0",
+        policy_class=MLPPolicyFactory((64, 64)),
+    ),
     "cheetah-16x16": _gym_conf(
         "HalfCheetah-v5",
         policy_class=MLPPolicyFactory((16, 16)),

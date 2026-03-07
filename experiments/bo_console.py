@@ -8,7 +8,6 @@ from common.console import (
     TURBO_METRICS,
     BOConsoleCollector,
     print_bo_footer,
-    print_bo_header_top,
     register_opt_metrics,
 )
 
@@ -18,6 +17,5 @@ __all__ = [
     "MULTI_TURBO_METRICS",
     "TURBO_METRICS",
     "print_bo_footer",
-    "print_bo_header_top",
     "register_opt_metrics",
 ]

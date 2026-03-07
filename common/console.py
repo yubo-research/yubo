@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import sys
 from collections import deque
 from typing import Any
@@ -266,10 +267,8 @@ def _parse_iter_line(line: str) -> dict[str, Any] | None:
     if not s.startswith("ITER:"):
         return None
     out: dict[str, Any] = {}
-    for part in s[5:].split():
-        if "=" not in part:
-            continue
-        k, v = part.split("=", 1)
+    for m in re.finditer(r"(\w+)\s*=\s*(\S+)", s[5:]):
+        k, v = m.group(1), m.group(2)
         v_clean = v.rstrip("s")
         try:
             out[k] = float(v_clean)
@@ -278,16 +277,6 @@ def _parse_iter_line(line: str) -> dict[str, Any] | None:
     if "iter" not in out:
         return None
     return out
-
-
-def print_bo_header_top(env_tag: str, opt_name: str, num_rounds: int, num_arms: int) -> None:
-    """Print BO run header (above problem description)."""
-    print(_dim("-" * 72), flush=True)
-    print(
-        _bold("BO") + f"  {env_tag}  {opt_name}  rounds={num_rounds}  arms={num_arms}",
-        flush=True,
-    )
-    print(_dim("-" * 72), flush=True)
 
 
 def print_bo_footer(best_return: float, total_time: float) -> None:
@@ -301,39 +290,25 @@ def print_bo_footer(best_return: float, total_time: float) -> None:
 class BOConsoleCollector:
     """Collector that echoes ITER lines to stdout (same format as data file). Implements Collector interface."""
 
-    def __init__(
-        self,
-        env_tag: str,
-        opt_name: str,
-        num_rounds: int,
-        num_arms: int,
-        *,
-        inner: Any = None,
-    ):
+    def __init__(self, *, inner: Any = None):
         self._lines = deque()
-        self._env_tag = env_tag
-        self._opt_name = opt_name
-        self._num_rounds = num_rounds
-        self._num_arms = num_arms
         self._inner = inner
         self._header_printed = False
         self._pre_header_buffer: list[str] = []
         self._best_return = -1e99
 
-    def _flush_pre_header_and_print_header(self) -> None:
-        """Print buffered lines (PROBLEM, algo output) then BO header."""
+    def _flush_pre_header(self) -> None:
+        """Print buffered lines (PROBLEM, algo output)."""
         for buf_line in self._pre_header_buffer:
             print(buf_line, flush=True)
         self._pre_header_buffer.clear()
-        if not self._header_printed:
-            print_bo_header_top(self._env_tag, self._opt_name, self._num_rounds, self._num_arms)
-            self._header_printed = True
+        self._header_printed = True
 
     def __call__(self, line: str) -> None:
         self._lines.append(line)
         parsed = _parse_iter_line(line)
         if parsed is not None:
-            self._flush_pre_header_and_print_header()
+            self._flush_pre_header()
             try:
                 r = float(parsed.get("ret_best", parsed.get("ret_eval", -1e99)))
                 if r > self._best_return:
