@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib
 from dataclasses import dataclass
 from typing import Any, Callable
 
@@ -28,9 +29,7 @@ def load_atari_dm_bindings() -> AtariDMBindings:
     def _get_atari_module():
         nonlocal atari_module
         if atari_module is None:
-            from problems import atari_env
-
-            atari_module = atari_env
+            atari_module = importlib.import_module("problems.atari_env")
         return atari_module
 
     def _make_atari_env(*args, **kwargs):
