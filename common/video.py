@@ -26,29 +26,48 @@ def resolve_max_episode_steps(env_conf: Any) -> int:
     return int(getattr(env_conf, "max_steps", 99999))
 
 
-def rollout_episode(
-    env_conf: Any,
-    policy: Any,
-    *,
-    seed: int,
-    render_video: bool,
-    video_dir: Path | None,
-    video_prefix: str,
-) -> float:
-    render_mode = "rgb_array" if render_video else None
-    env = env_conf.make(render_mode=render_mode)
-    if render_video:
+def _use_gym_record_video(env: Any) -> bool:
+    try:
         import gymnasium as gym
+    except Exception:
+        return False
+    return isinstance(env, gym.Env)
 
-        env = gym.wrappers.RecordVideo(
-            env,
-            video_folder=str(video_dir),
-            name_prefix=video_prefix,
-            episode_trigger=lambda _episode: True,
-            disable_logger=True,
-        )
 
+def _video_output_path(video_dir: Path, video_prefix: str) -> Path:
+    return Path(video_dir) / f"{video_prefix}-episode-0.mp4"
+
+
+def _frame_to_uint8(frame: Any) -> np.ndarray:
+    arr = np.asarray(frame)
+    if arr.ndim != 3:
+        raise ValueError(f"Expected RGB frame with 3 dims, got shape={arr.shape}.")
+    if arr.dtype == np.uint8:
+        return arr
+    if np.issubdtype(arr.dtype, np.floating):
+        max_val = float(np.max(arr)) if arr.size > 0 else 1.0
+        if max_val <= 1.0:
+            arr = arr * 255.0
+    arr = np.clip(arr, 0, 255)
+    return arr.astype(np.uint8)
+
+
+def _open_frame_video_writer(video_path: Path, *, fps: int = 30):
+    try:
+        import imageio.v2 as imageio
+    except Exception as exc:
+        raise RuntimeError("imageio is required for non-gym video capture.") from exc
+    video_path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        return imageio.get_writer(str(video_path), fps=int(fps))
+    except Exception as exc:
+        raise RuntimeError(f"Failed to create video writer for '{video_path}'.") from exc
+
+
+def _rollout_episode_body(env_conf: Any, env: Any, policy: Any, *, seed: int, frame_writer: Any) -> float:
     state, _ = env.reset(seed=seed)
+    if frame_writer is not None:
+        frame_writer.append_data(_frame_to_uint8(env.render()))
     total_return = 0.0
     lb, width = None, None
     if hasattr(env, "observation_space"):
@@ -64,11 +83,48 @@ def rollout_episode(
         action = policy(state_scaled)
         action = scale_action_to_space(action, env.action_space)
         state, reward, terminated, truncated, _ = env.step(action)
+        if frame_writer is not None:
+            frame_writer.append_data(_frame_to_uint8(env.render()))
         total_return += float(reward)
         if terminated or truncated:
             break
-    env.close()
     return float(total_return)
+
+
+def rollout_episode(
+    env_conf: Any,
+    policy: Any,
+    *,
+    seed: int,
+    render_video: bool,
+    video_dir: Path | None,
+    video_prefix: str,
+) -> float:
+    render_mode = "rgb_array" if render_video else None
+    env = env_conf.make(render_mode=render_mode)
+    frame_writer = None
+    if render_video:
+        if _use_gym_record_video(env):
+            import gymnasium as gym
+
+            env = gym.wrappers.RecordVideo(
+                env,
+                video_folder=str(video_dir),
+                name_prefix=video_prefix,
+                episode_trigger=lambda _episode: True,
+                disable_logger=True,
+            )
+        else:
+            if video_dir is None:
+                raise ValueError("video_dir must be provided when render_video=True.")
+            frame_writer = _open_frame_video_writer(_video_output_path(video_dir, video_prefix))
+
+    try:
+        return _rollout_episode_body(env_conf, env, policy, seed=seed, frame_writer=frame_writer)
+    finally:
+        if frame_writer is not None:
+            frame_writer.close()
+        env.close()
 
 
 def select_video_episode_indices(
@@ -168,9 +224,6 @@ def render_policy_videos(
     episode_selection: str,
     seed_base: int,
 ) -> None:
-    if getattr(env_conf, "gym_conf", None) is None:
-        return
-
     selection = str(episode_selection).lower()
     if selection not in ("best", "first", "random"):
         raise ValueError("episode_selection must be one of: best, first, random")

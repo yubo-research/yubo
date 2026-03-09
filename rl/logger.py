@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import dataclasses
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -40,11 +41,24 @@ def log_run_header_basic(
     frames_per_batch: int,
     num_iterations: int,
     device_type: str,
+    config_obj: Any | None = None,
     prefix: str = "",
 ) -> None:
-    config = SimpleNamespace(
-        env_tag=str(env_tag), seed=int(seed), backbone_name=str(backbone_name), total_timesteps=int(frames_per_batch) * int(num_iterations)
+    config_data: dict[str, Any] = {}
+    if config_obj is not None:
+        if dataclasses.is_dataclass(config_obj):
+            config_data.update(dataclasses.asdict(config_obj))
+        elif hasattr(config_obj, "__dict__"):
+            config_data.update(vars(config_obj))
+    config_data.update(
+        {
+            "env_tag": str(env_tag),
+            "seed": int(seed),
+            "backbone_name": str(backbone_name),
+            "total_timesteps": int(frames_per_batch) * int(num_iterations),
+        }
     )
+    config = SimpleNamespace(**config_data)
     env = SimpleNamespace(env_conf=SimpleNamespace(from_pixels=bool(from_pixels)), obs_dim=int(obs_dim), act_dim=int(act_dim))
     training = SimpleNamespace(frames_per_batch=int(frames_per_batch), num_iterations=int(num_iterations))
     runtime = SimpleNamespace(device=SimpleNamespace(type=str(device_type)))

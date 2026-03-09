@@ -7,11 +7,10 @@ import numpy as np
 import torch
 import torchrl.collectors as tr_collectors
 import torchrl.envs as tr_envs
-from tensordict import TensorDict
 
 from rl.core.actor_state import capture_backbone_head_snapshot, restore_backbone_head_snapshot, restore_rng_state_payload
-from rl.core.continuous_actions import unscale_action_tensor_from_env
 from rl.core.update_chunks import run_chunked_updates
+from rl.torchrl.offpolicy import trainer_utils as offpolicy_trainer_utils
 
 from . import deps as sac_deps
 from .config import _SAC_RUNTIME_CAPABILITIES, SACConfig, TrainResult
@@ -99,14 +98,22 @@ def _resume_if_requested(config: SACConfig, modules: _Modules, training: _Traini
     return state
 
 
+def _build_eval_policy(modules: _Modules, env_setup: _EnvSetup, device: torch.device):
+    return sac_deps.torchrl_sac_actor_eval.SacActorEvalPolicy(
+        modules.actor_backbone,
+        modules.actor_head,
+        modules.obs_scaler,
+        act_dim=env_setup.act_dim,
+        device=device,
+        from_pixels=bool(getattr(env_setup.env_conf, "from_pixels", False)),
+    )
+
+
 def _evaluate_actor(config: SACConfig, env: _EnvSetup, modules: _Modules, *, device: torch.device, eval_seed: int) -> float:
     from rl.core.episode_rollout import collect_denoised_trajectory
 
     eval_env = env.env_conf
-    from_pixels = bool(getattr(eval_env, "from_pixels", False))
-    eval_policy = sac_deps.torchrl_sac_actor_eval.SacActorEvalPolicy(
-        modules.actor_backbone, modules.actor_head, modules.obs_scaler, act_dim=env.act_dim, device=device, from_pixels=from_pixels
-    )
+    eval_policy = _build_eval_policy(modules, env, device)
     traj, _ = collect_denoised_trajectory(eval_env, eval_policy, num_denoise=config.num_denoise, i_noise=int(eval_seed))
     return float(traj.rreturn)
 
@@ -156,31 +163,6 @@ def _build_sac_collector(
     )
 
 
-def _flatten_batch_to_transitions(batch: TensorDict) -> TensorDict:
-    flat = batch.reshape(-1)
-    if "next" in flat.keys():
-        next_td = flat["next"]
-        if "done" not in next_td.keys():
-            term = next_td.get("terminated", torch.zeros(*next_td.batch_size, 1, dtype=torch.bool, device=next_td.device))
-            trunc = next_td.get("truncated", torch.zeros(*next_td.batch_size, 1, dtype=torch.bool, device=next_td.device))
-            next_td = next_td.set("done", term | trunc)
-        for key in ("reward", "done", "terminated"):
-            if key in next_td.keys() and next_td[key].ndim == 1:
-                next_td = next_td.set(key, next_td[key].unsqueeze(-1))
-        flat = flat.set("next", next_td)
-    return flat
-
-
-def _normalize_actions_for_replay(flat: TensorDict, *, action_low: np.ndarray, action_high: np.ndarray) -> TensorDict:
-    if "action" not in flat.keys():
-        return flat
-    action = flat["action"]
-    low = torch.as_tensor(action_low, dtype=action.dtype, device=action.device)
-    high = torch.as_tensor(action_high, dtype=action.dtype, device=action.device)
-    action_norm = unscale_action_tensor_from_env(action, low, high, clip=True)
-    return flat.set("action", action_norm)
-
-
 def _update_step(config: SACConfig, modules: _Modules, training: _TrainingSetup, *, device: torch.device, batch_size: int) -> dict[str, float]:
     batch = training.replay.sample(batch_size).to(device)
     obs = batch["observation"]
@@ -204,6 +186,14 @@ def _update_step(config: SACConfig, modules: _Modules, training: _TrainingSetup,
     }
 
 
+def _flatten_batch_to_transitions(batch):
+    return offpolicy_trainer_utils.flatten_batch_to_transitions(batch)
+
+
+def _normalize_actions_for_replay(flat, *, action_low: np.ndarray, action_high: np.ndarray):
+    return offpolicy_trainer_utils.normalize_actions_for_replay(flat, action_low=action_low, action_high=action_high)
+
+
 def _run_sac_eval_log_checkpoint(config, env, modules, training, state, step, runtime, start_time, latest_losses, total_updates, evaluate_for_best):
     def _eval_heldout(cfg, env_setup, local_modules, local_state, *, device, heldout_i_noise=99999):
         return sac_deps.torchrl_sac_loop.evaluate_heldout_if_enabled(
@@ -215,9 +205,7 @@ def _run_sac_eval_log_checkpoint(config, env, modules, training, state, step, ru
             heldout_i_noise=heldout_i_noise,
             capture_actor_state=sac_deps.torchrl_sac_actor_eval.capture_sac_actor_snapshot,
             restore_actor_state=sac_deps.torchrl_sac_actor_eval.restore_sac_actor_snapshot,
-            eval_policy_factory=lambda a, e, d: sac_deps.torchrl_sac_actor_eval.SacActorEvalPolicy(
-                a.actor_backbone, a.actor_head, a.obs_scaler, act_dim=e.act_dim, device=d, from_pixels=bool(getattr(e.env_conf, "from_pixels", False))
-            ),
+            eval_policy_factory=lambda a, e, d: _build_eval_policy(a, e, d),
             get_env_conf=sac_deps.get_env_conf,
             evaluate_for_best=evaluate_for_best,
         )
@@ -242,22 +230,29 @@ def _run_sac_eval_log_checkpoint(config, env, modules, training, state, step, ru
 
 
 def _process_sac_batch(batch, config, modules, training, runtime, env_setup, latest_losses, total_updates):
-    flat = _flatten_batch_to_transitions(batch)
-    flat = _normalize_actions_for_replay(flat, action_low=env_setup.action_low, action_high=env_setup.action_high)
-    n_frames = int(flat.shape[0]) if flat.ndim > 0 else 1
-    for i in range(n_frames):
-        training.replay.add(flat[i].clone())
-    n_update_cycles = max(0, n_frames // int(config.update_every))
-    target_updates = int(n_update_cycles * int(config.updates_per_step))
-
-    def _run_one_update() -> None:
+    def _update_step_with_chunking(device: torch.device, batch_size: int) -> dict[str, float]:
         nonlocal latest_losses, total_updates
-        if training.replay.write_count >= int(config.learning_starts):
-            latest_losses = _update_step(config, modules, training, device=runtime.device, batch_size=int(config.batch_size))
-            total_updates += 1
 
-    run_chunked_updates(target_updates, int(config.learner_update_chunk_size), _run_one_update)
-    return (latest_losses, total_updates, n_frames)
+        def _run_one_update() -> None:
+            nonlocal latest_losses, total_updates
+            if training.replay.write_count >= int(config.learning_starts):
+                latest_losses = _update_step(config, modules, training, device=device, batch_size=batch_size)
+                total_updates += 1
+
+        run_chunked_updates(1, int(config.learner_update_chunk_size), _run_one_update)
+        return latest_losses
+
+    latest_losses, total_updates, n_frames = offpolicy_trainer_utils.process_offpolicy_batch(
+        batch,
+        config=config,
+        training=training,
+        runtime_device=runtime.device,
+        env_setup=env_setup,
+        latest_losses=latest_losses,
+        total_updates=total_updates,
+        update_step_fn=_update_step_with_chunking,
+    )
+    return (latest_losses, total_updates, int(n_frames))
 
 
 def train_sac(config: SACConfig) -> TrainResult:
@@ -309,9 +304,7 @@ def train_sac(config: SACConfig) -> TrainResult:
         if config.video_enable:
             ctx = sac_deps.video.RLVideoContext(
                 build_eval_env_conf=lambda ps, ns: sac_deps.get_env_conf(config.env_tag, problem_seed=ps, noise_seed_0=ns),
-                make_eval_policy=lambda m, d: sac_deps.torchrl_sac_actor_eval.SacActorEvalPolicy(
-                    m.actor_backbone, m.actor_head, m.obs_scaler, act_dim=env.act_dim, device=d
-                ),
+                make_eval_policy=lambda m, d: _build_eval_policy(m, env, d),
                 capture_actor_state=sac_deps.torchrl_sac_actor_eval.capture_sac_actor_snapshot,
                 with_actor_state=sac_deps.torchrl_sac_actor_eval.use_sac_actor_snapshot,
             )

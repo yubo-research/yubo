@@ -22,6 +22,14 @@ def _require_env_tag(data: dict[str, Any], *, algo: str) -> str:
     return str(env_tag)
 
 
+def _maybe_register_atari_dm_backends(env_tag: str) -> None:
+    if not str(env_tag).startswith(("atari:", "ALE/", "dm:", "dm_control/")):
+        return
+    from problems.env_conf_backends import register_with_env_conf
+
+    register_with_env_conf()
+
+
 def _apply_env_model_defaults(
     raw: dict[str, Any],
     *,
@@ -33,6 +41,7 @@ def _apply_env_model_defaults(
     if algo == "ppo" and "value_head_hidden_sizes" in data:
         raise ValueError("PPO config uses canonical key 'critic_head_hidden_sizes' (not 'value_head_hidden_sizes').")
     env_tag = _require_env_tag(data, algo=algo)
+    _maybe_register_atari_dm_backends(env_tag)
     defaults = resolve_rl_model_defaults(env_tag, algo=algo)
     for key, value in defaults.items():
         data.setdefault(key, value)

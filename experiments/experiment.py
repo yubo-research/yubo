@@ -178,9 +178,10 @@ def _local(config_toml: str, overrides: tuple[str, ...]) -> None:
     except (OSError, tomllib.TOMLDecodeError, TypeError, ValueError) as e:
         raise click.ClickException(str(e)) from e
 
-    # Load Atari/DM-Control support when needed (avoids pulling into experiments modal chain).
-    if config.env_tag.startswith(("atari:", "dm:", "dm_control/")):
-        __import__("problems.env_conf_atari_dm")
+    if str(config.env_tag).startswith(("atari:", "ALE/", "dm:", "dm_control/")):
+        from problems.env_conf_backends import register_with_env_conf
+
+        register_with_env_conf()
 
     sampler(config, distributor_fn=scan_local)
 

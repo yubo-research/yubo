@@ -5,7 +5,7 @@
 
 [experiment]
 exp_dir = "_tmp/bo/dm_control/quadruped/box_ucb_total_timesteps"
-env_tag = "quadruped-run-64x64"
+env_tag = "dm_control/quadruped-run-v0"
 num_arms = 8
 total_timesteps = 3000000
 num_reps = 10

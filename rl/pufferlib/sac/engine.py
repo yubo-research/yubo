@@ -11,6 +11,7 @@ import torch
 
 from rl.core.actor_state import capture_backbone_head_snapshot, restore_backbone_head_snapshot, restore_rng_state_payload
 from rl.core.update_chunks import run_chunked_updates
+from rl.pufferlib.offpolicy import engine_utils as offpolicy_engine_utils
 
 from .config import SACConfig, TrainResult
 from .env_utils import build_env_setup, infer_observation_spec, make_vector_env, prepare_obs_np, resolve_device, seed_everything, to_env_action
@@ -35,6 +36,7 @@ def _log_header(config: SACConfig, obs_batch: np.ndarray, env_setup, obs_spec, *
         frames_per_batch=int(max(1, num_envs)),
         num_iterations=int(max(1, int(config.total_timesteps) // max(1, num_envs))),
         device_type=str(device.type),
+        config_obj=config,
     )
 
 
@@ -43,22 +45,19 @@ def _random_actions(num_envs: int, act_dim: int) -> np.ndarray:
 
 
 def _init_run_artifacts(config: SACConfig) -> tuple[Path, Path, Any]:
-    write_config = importlib.import_module("analysis.data_io").write_config
-    checkpoint_manager_cls = importlib.import_module("rl.checkpointing").CheckpointManager
-    exp_dir = Path(config.exp_dir)
-    exp_dir.mkdir(parents=True, exist_ok=True)
-    write_config(str(exp_dir), config.to_dict())
-    metrics_path = exp_dir / "metrics.jsonl"
-    return (exp_dir, metrics_path, checkpoint_manager_cls(exp_dir=exp_dir))
+    return offpolicy_engine_utils.init_run_artifacts(
+        exp_dir=str(config.exp_dir),
+        config_dict=config.to_dict(),
+    )
 
 
 def _init_runtime(config: SACConfig):
-    global_seed_for_run = importlib.import_module("rl.core.env_conf").global_seed_for_run
-    env_setup = build_env_setup(config)
-    run_seed = global_seed_for_run(int(env_setup.problem_seed))
-    seed_everything(int(run_seed))
-    device = resolve_device(str(config.device))
-    return (env_setup, device)
+    return offpolicy_engine_utils.init_runtime(
+        config,
+        build_env_setup_fn=build_env_setup,
+        seed_everything_fn=seed_everything,
+        resolve_device_fn=resolve_device,
+    )
 
 
 def _build_training_components(config: SACConfig, env_setup, obs_spec, obs_batch: np.ndarray, *, device: torch.device):
@@ -131,11 +130,16 @@ def _restore_if_requested(config: SACConfig, modules, optimizers, replay, state:
 
 
 def _checkpoint_if_due(config: SACConfig, checkpoint_manager: Any, modules, optimizers, replay, state: Any) -> None:
-    mark = due_mark(state.global_step, config.checkpoint_interval_steps, state.ckpt_mark)
-    if mark is None:
-        return
-    state.ckpt_mark = int(mark)
-    checkpoint_manager.save_both(_state_payload(modules, optimizers, replay, state), iteration=int(state.global_step))
+    state.ckpt_mark = offpolicy_engine_utils.checkpoint_mark_if_due(
+        global_step=int(state.global_step),
+        checkpoint_interval_steps=config.checkpoint_interval_steps,
+        previous_mark=int(state.ckpt_mark),
+        due_mark_fn=due_mark,
+        save_fn=lambda: checkpoint_manager.save_both(
+            _state_payload(modules, optimizers, replay, state),
+            iteration=int(state.global_step),
+        ),
+    )
 
 
 def _train_loop(

@@ -260,6 +260,7 @@ def _run_training(config: PufferPPOConfig, plan, device: torch.device, metrics_p
         frames_per_batch=int(plan.batch_size),
         num_iterations=int(plan.num_iterations),
         device_type=str(device.type),
+        config_obj=config,
     )
     b_inds = np.arange(plan.batch_size)
     for iteration in range(state.start_iteration + 1, plan.num_iterations + 1):

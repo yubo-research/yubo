@@ -9,13 +9,10 @@ def resolve_eval_seeds(config) -> tuple[int, int]:
 
 
 def build_eval_env_conf(config, *, obs_mode: str, is_atari_env_tag_fn, resolve_gym_env_name_fn):
-    import importlib
-
     from problems.env_conf import EnvConf, GymConf, get_env_conf
 
     tag = str(config.env_tag)
-    if is_atari_env_tag_fn(tag) or tag.startswith("dm:") or tag.startswith("dm_control/"):
-        importlib.import_module("problems.env_conf_atari_dm")
+    _ = is_atari_env_tag_fn
     from_pixels = obs_mode == "pixels"
     resolved = build_seeded_env_conf_from_run(
         env_tag=tag,

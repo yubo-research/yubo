@@ -3,7 +3,7 @@
 import numpy as np
 import torch
 
-from problems.cnn_mlp_policy import CNNMLPPolicy, CNNMLPPolicyFactory
+from problems.pixel_policies import CNNMLPPolicy, CNNMLPPolicyFactory
 
 
 class _FakeGymConf:
@@ -16,6 +16,7 @@ class _FakeEnvConf:
     def __init__(self):
         self.problem_seed = 42
         self.gym_conf = _FakeGymConf()
+        self.state_space = self.gym_conf.state_space
         self.action_space = type("A", (), {"shape": (6,)})()
 
 

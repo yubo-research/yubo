@@ -9,9 +9,9 @@ from rl.torchrl.sac.trainer import SACConfig, train_sac
 _BASELINE_ROWS = [
     {
         "step": 32,
-        "eval_return": -1225.942996711321,
+        "eval_return": -1656.1244724569833,
         "heldout_return": -1273.3617814039442,
-        "best_return": -1225.942996711321,
+        "best_return": -1656.1244724569833,
         "loss_actor": 0.5929603576660156,
         "loss_critic": 83.40846252441406,
         "loss_alpha": -2.7948989868164062,
@@ -19,9 +19,9 @@ _BASELINE_ROWS = [
     },
     {
         "step": 64,
-        "eval_return": -1286.1293195500311,
+        "eval_return": -1701.5715664664842,
         "heldout_return": -1273.3617814039442,
-        "best_return": -1225.942996711321,
+        "best_return": -1656.1244724569833,
         "loss_actor": 1.3357847929000854,
         "loss_critic": 49.38249588012695,
         "loss_alpha": -2.438335418701172,
@@ -29,9 +29,9 @@ _BASELINE_ROWS = [
     },
     {
         "step": 96,
-        "eval_return": -1306.8451731020393,
+        "eval_return": -1704.9907794697826,
         "heldout_return": -1273.3617814039442,
-        "best_return": -1225.942996711321,
+        "best_return": -1656.1244724569833,
         "loss_actor": 2.8664050102233887,
         "loss_critic": 24.738079071044922,
         "loss_alpha": -2.4196784496307373,
