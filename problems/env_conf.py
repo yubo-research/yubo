@@ -322,17 +322,11 @@ def _gym_conf(env_name, gym_conf=None, policy_class=None, kwargs=None, noise_see
 def _normalize_rl_env_key(env_tag: str) -> str:
     tag, _frozen_noise, _from_pixels = _parse_tag_options(str(env_tag), None)
     if tag.startswith("dm:"):
-        try:
-            env_name, _policy_class = _get_atari_dm_bindings().resolve_dm_control_from_tag(tag, False)
-            return str(env_name)
-        except Exception:
-            return tag
+        env_name, _policy_class = _get_atari_dm_bindings().resolve_dm_control_from_tag(tag, False)
+        return str(env_name)
     if tag.startswith("atari:"):
-        try:
-            env_id, _policy_class = _get_atari_dm_bindings().resolve_atari_from_tag(tag)
-            return str(env_id)
-        except Exception:
-            return tag
+        env_id, _policy_class = _get_atari_dm_bindings().resolve_atari_from_tag(tag)
+        return str(env_id)
     return tag
 
 
@@ -379,6 +373,26 @@ def _infer_rl_from_policy_class(policy_class: Any, *, algo: str) -> dict[str, An
     raise ValueError(f"Unsupported algo '{algo}' for RL model inference.")
 
 
+def _explicit_rl_model_for_algo(env_conf: Any, *, algo: str) -> dict[str, Any] | None:
+    rl_model = getattr(env_conf, "rl_model", None)
+    if not isinstance(rl_model, dict):
+        return None
+    model = rl_model.get(algo)
+    if not isinstance(model, dict):
+        return None
+    return copy.deepcopy(model)
+
+
+def _inferred_rl_model_for_algo(env_conf: Any, *, algo: str) -> dict[str, Any] | None:
+    policy_class = getattr(env_conf, "policy_class", None)
+    if policy_class is None:
+        return None
+    inferred = _infer_rl_from_policy_class(policy_class, algo=algo)
+    if inferred is None:
+        return None
+    return copy.deepcopy(inferred)
+
+
 def resolve_rl_model_defaults(env_tag: str, *, algo: str) -> dict[str, Any]:
     algo_key = str(algo).strip().lower()
     if algo_key not in {"ppo", "sac"}:
@@ -387,22 +401,11 @@ def resolve_rl_model_defaults(env_tag: str, *, algo: str) -> dict[str, Any]:
     env_conf = _find_rl_env_conf(env_key)
     if env_conf is None:
         raise ValueError(f"No env preset found for env_tag '{env_tag}'. Add an entry to one of: _gym_env_confs, _dm_control_env_confs, _atari_env_confs.")
-    base: dict[str, Any] = {}
-    if env_conf.policy_class is not None:
-        inferred = _infer_rl_from_policy_class(env_conf.policy_class, algo=algo_key)
-        if inferred is not None:
-            base = copy.deepcopy(inferred)
-    explicit = None
-    if isinstance(env_conf.rl_model, dict):
-        model = env_conf.rl_model.get(algo_key)
-        if isinstance(model, dict):
-            explicit = copy.deepcopy(model)
-    if explicit is not None:
-        out = copy.deepcopy(base)
-        out.update(explicit)
-        return out
-    if base:
-        return copy.deepcopy(base)
+    providers = (_explicit_rl_model_for_algo, _inferred_rl_model_for_algo)
+    for provider in providers:
+        model = provider(env_conf, algo=algo_key)
+        if model is not None:
+            return copy.deepcopy(model)
     raise ValueError(
         f"No RL model defaults for env_tag '{env_tag}' and algo '{algo_key}'. "
         "Provide env_conf.rl_model[algo] or use an inferable MLPPolicyFactory policy_class."
@@ -558,6 +561,20 @@ _dm_control_env_confs = {
         "dm_control/quadruped-run-v0",
         policy_class=MLPPolicyFactory((64, 64)),
         max_steps=_DM_CONTROL_DEFAULT_MAX_STEPS,
+        rl_model={
+            "ppo": {
+                "backbone_hidden_sizes": (64, 64),
+                "backbone_layer_norm": True,
+                "share_backbone": True,
+                "log_std_init": -0.5,
+            },
+            "sac": {
+                "backbone_hidden_sizes": (256, 256),
+                "backbone_activation": "relu",
+                "backbone_layer_norm": True,
+                "head_activation": "relu",
+            },
+        },
     ),
     "dm_control/quadruped-run-v0-small": EnvConf(
         "dm_control/quadruped-run-v0",

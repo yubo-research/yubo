@@ -56,40 +56,35 @@ def test_resolve_rl_model_defaults_cheetah_sac():
     from problems.env_conf import resolve_rl_model_defaults
 
     cfg = resolve_rl_model_defaults("cheetah", algo="sac")
-    assert cfg["backbone_name"] == "mlp"
     assert cfg["backbone_hidden_sizes"] == (256, 256)
     assert cfg["backbone_activation"] == "relu"
-    assert cfg["critic_head_hidden_sizes"] == ()
-    # Override is merged on top of inferred base, so base defaults stay available.
-    assert cfg["actor_head_hidden_sizes"] == ()
+    assert cfg["head_activation"] == "relu"
+    assert "actor_head_hidden_sizes" not in cfg
 
 
-def test_resolve_rl_model_defaults_cheetah_ppo_uses_critic_head():
+def test_resolve_rl_model_defaults_cheetah_ppo_uses_explicit_model():
     from problems.env_conf import resolve_rl_model_defaults
 
     cfg = resolve_rl_model_defaults("cheetah", algo="ppo")
-    assert cfg["backbone_name"] == "mlp"
     assert cfg["backbone_hidden_sizes"] == (64, 64)
-    assert cfg["critic_head_hidden_sizes"] == ()
+    assert cfg["backbone_layer_norm"] is True
     assert cfg["share_backbone"] is True
+    assert cfg["log_std_init"] == -0.5
 
 
-def test_resolve_rl_model_defaults_quadruped_run_infers_from_policy_class():
+def test_resolve_rl_model_defaults_quadruped_run_uses_explicit_model():
     from problems.env_conf import resolve_rl_model_defaults
 
     ppo_cfg = resolve_rl_model_defaults("dm_control/quadruped-run-v0", algo="ppo")
-    assert ppo_cfg["backbone_name"] == "mlp"
     assert ppo_cfg["backbone_hidden_sizes"] == (64, 64)
-    assert ppo_cfg["backbone_activation"] == "silu"
     assert ppo_cfg["backbone_layer_norm"] is True
-    assert ppo_cfg["critic_head_hidden_sizes"] == ()
+    assert ppo_cfg["share_backbone"] is True
 
     sac_cfg = resolve_rl_model_defaults("dm_control/quadruped-run-v0", algo="sac")
-    assert sac_cfg["backbone_name"] == "mlp"
-    assert sac_cfg["backbone_hidden_sizes"] == (64, 64)
-    assert sac_cfg["backbone_activation"] == "silu"
+    assert sac_cfg["backbone_hidden_sizes"] == (256, 256)
+    assert sac_cfg["backbone_activation"] == "relu"
     assert sac_cfg["backbone_layer_norm"] is True
-    assert sac_cfg["critic_head_hidden_sizes"] == ()
+    assert sac_cfg["head_activation"] == "relu"
 
 
 def test_get_env_conf_applies_atari_preprocess_overrides():
