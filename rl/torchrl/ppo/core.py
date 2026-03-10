@@ -12,19 +12,35 @@ import torch.nn as nn
 import torch.optim as optim
 import torchrl.collectors as tr_collectors
 import torchrl.envs as tr_envs
+import torchrl.envs.transforms as tr_transforms
+import torchrl.modules as tr_modules
+import torchrl.modules.distributions as tr_dists
+import torchrl.objectives as tr_objectives
 
+import rl.backbone as backbone
+import rl.checkpointing as rl_checkpointing
+import rl.core.env_conf as seed_util
+import rl.registry as registry
+from analysis.data_io import write_config
+from common.seed_all import seed_all
+from problems.env_conf import get_env_conf
 from rl.core import env_conf as core_env_conf
+from rl.core import env_contract as torchrl_env_contract
 from rl.core import episode_rollout
+from rl.core import runtime as torchrl_common
+from rl.core import torchrl_runtime as torchrl_runtime
 from rl.core.pixel_transform import AtariObservationTransform, PixelsToObservation
 from rl.core.ppo_eval import evaluate_heldout_with_best_actor as _eval_heldout_with_best_actor
 from rl.core.ppo_eval import update_best_actor_if_improved as _update_best_actor_if_improved
 from rl.core.ppo_metrics import build_eval_record as _build_eval_record
 from rl.core.profiler import run_with_profiler
+from rl.eval_noise import build_eval_plan, normalize_eval_noise_mode
 
-from . import deps as op_deps
+from . import actor_eval as torchrl_actor_eval
 from . import models as op_models
 from .actor_eval import capture_actor_snapshot as _capture_actor_state
 from .actor_eval import restore_actor_snapshot as _restore_actor_state
+from .checkpoint_io import save_final_checkpoint, save_periodic_checkpoint
 from .config import _PPO_RUNTIME_CAPABILITIES, PPOConfig, TrainResult
 
 __all__ = ["PPOConfig", "TrainResult", "_TanhNormal", "_capture_actor_state", "_restore_actor_state", "register", "torch", "train_ppo"]
@@ -33,7 +49,7 @@ __all__ = ["PPOConfig", "TrainResult", "_TanhNormal", "_capture_actor_state", "_
 @dataclasses.dataclass(frozen=True)
 class _EnvSetup:
     env_conf: object
-    io_contract: op_deps.torchrl_env_contract.EnvIOContract
+    io_contract: torchrl_env_contract.EnvIOContract
     problem_seed: int
     noise_seed_0: int
     obs_dim: int
@@ -81,7 +97,7 @@ class _TrainState:
 
 
 def _tanh_normal_base():
-    return op_deps.tr_dists.TanhNormal
+    return tr_dists.TanhNormal
 
 
 class _TanhNormal(_tanh_normal_base()):
@@ -130,29 +146,28 @@ def _is_atari_env(env_conf) -> bool:
     return getattr(env_conf, "env_name", "").startswith("ALE/")
 
 
-def _resolve_observation_contract_for_env(config: PPOConfig, env: _EnvSetup | object) -> op_deps.torchrl_env_contract.ObservationContract:
+def _resolve_observation_contract_for_env(config: PPOConfig, env: _EnvSetup | object) -> torchrl_env_contract.ObservationContract:
     io_contract = getattr(env, "io_contract", None)
     observation = getattr(io_contract, "observation", None)
     if observation is not None:
         return observation
     env_conf = getattr(env, "env_conf", None)
     if env_conf is not None:
-        return op_deps.torchrl_env_contract.resolve_observation_contract(env_conf, default_image_size=84)
+        return torchrl_env_contract.resolve_observation_contract(env_conf, default_image_size=84)
     if bool(getattr(config, "from_pixels", False)):
-        return op_deps.torchrl_env_contract.ObservationContract(mode="pixels", raw_shape=(), model_channels=3, image_size=84)
-    return op_deps.torchrl_env_contract.ObservationContract(mode="vector", raw_shape=(), vector_dim=1)
+        return torchrl_env_contract.ObservationContract(mode="pixels", raw_shape=(), model_channels=3, image_size=84)
+    return torchrl_env_contract.ObservationContract(mode="vector", raw_shape=(), vector_dim=1)
 
 
 def _make_collect_env_atari(env_conf, env_index: int = 0):
-    import importlib
-
-    importlib.import_module("problems.env_conf_atari_dm")
+    # env_conf.make() calls _get_atari_dm() which loads env_conf_atari_dm; no explicit import
+    # to avoid kiss cycle (core -> env_conf_atari_dm -> env_conf -> policy_backbone -> core).
     base = env_conf.make()
     seed = int(env_conf.problem_seed) + env_index
     base.reset(seed=seed)
     if hasattr(base, "action_space") and hasattr(base.action_space, "seed"):
         base.action_space.seed(seed)
-    transforms = op_deps.tr_transforms.Compose(AtariObservationTransform(size=84), op_deps.tr_transforms.DoubleToFloat())
+    transforms = tr_transforms.Compose(AtariObservationTransform(size=84), tr_transforms.DoubleToFloat())
     return tr_envs.TransformedEnv(tr_envs.GymWrapper(base), transforms)
 
 
@@ -167,9 +182,9 @@ def _make_collect_env_dm_control(env_conf, env_index: int = 0):
     if hasattr(base, "action_space") and hasattr(base.action_space, "seed"):
         base.action_space.seed(seed)
     if from_pixels:
-        transforms = op_deps.tr_transforms.Compose(PixelsToObservation(size=84), op_deps.tr_transforms.DoubleToFloat())
+        transforms = tr_transforms.Compose(PixelsToObservation(size=84), tr_transforms.DoubleToFloat())
     else:
-        transforms = op_deps.tr_transforms.DoubleToFloat()
+        transforms = tr_transforms.DoubleToFloat()
     return tr_envs.TransformedEnv(tr_envs.GymWrapper(base), transforms)
 
 
@@ -183,7 +198,7 @@ def _make_collect_env(env_conf, env_index: int = 0):
     base.reset(seed=seed)
     if hasattr(base, "action_space") and hasattr(base.action_space, "seed"):
         base.action_space.seed(seed)
-    return tr_envs.TransformedEnv(tr_envs.GymWrapper(base), op_deps.tr_transforms.DoubleToFloat())
+    return tr_envs.TransformedEnv(tr_envs.GymWrapper(base), tr_transforms.DoubleToFloat())
 
 
 def _make_collect_env_factory(env_conf, num_envs: int):
@@ -205,18 +220,18 @@ def build_env_setup(config: PPOConfig) -> _EnvSetup:
         noise_seed_0=config.noise_seed_0,
         from_pixels=bool(getattr(config, "from_pixels", False)),
         pixels_only=bool(getattr(config, "pixels_only", True)),
-        get_env_conf_fn=op_deps.get_env_conf,
+        get_env_conf_fn=get_env_conf,
     )
     env_conf = resolved.env_conf
     if env_conf.gym_conf is None:
         raise ValueError(f"PPO expects a gym env_tag, got {config.env_tag}")
     env_conf.ensure_spaces()
-    io_contract = op_deps.torchrl_env_contract.resolve_env_io_contract(env_conf, default_image_size=84)
+    io_contract = torchrl_env_contract.resolve_env_io_contract(env_conf, default_image_size=84)
     obs_dim = 64 if io_contract.observation.mode == "pixels" else int(io_contract.observation.vector_dim or 1)
     act_dim = int(io_contract.action.dim)
     action_low = io_contract.action.low
     action_high = io_contract.action.high
-    lb, width = op_deps.torchrl_common.obs_scale_from_env(env_conf)
+    lb, width = torchrl_common.obs_scale_from_env(env_conf)
     return _EnvSetup(
         env_conf=env_conf,
         io_contract=io_contract,
@@ -239,7 +254,7 @@ def _build_eval_env_conf(config: PPOConfig, env: _EnvSetup, *, from_pixels: bool
         noise_seed_0=int(env.noise_seed_0),
         from_pixels=bool(from_pixels),
         pixels_only=bool(getattr(config, "pixels_only", True)),
-        get_env_conf_fn=op_deps.get_env_conf,
+        get_env_conf_fn=get_env_conf,
     )
     return resolved.env_conf
 
@@ -253,9 +268,9 @@ def _make_video_context(config: PPOConfig, env: _EnvSetup, *, from_pixels: bool)
             noise_seed_0=int(ns),
             from_pixels=bool(from_pixels),
             pixels_only=bool(getattr(config, "pixels_only", True)),
-            get_env_conf_fn=op_deps.get_env_conf,
+            get_env_conf_fn=get_env_conf,
         ).env_conf,
-        make_eval_policy=lambda m, d: op_deps.torchrl_actor_eval.ActorEvalPolicy(
+        make_eval_policy=lambda m, d: torchrl_actor_eval.ActorEvalPolicy(
             m.actor_backbone,
             m.actor_head,
             m.obs_scaler,
@@ -263,47 +278,45 @@ def _make_video_context(config: PPOConfig, env: _EnvSetup, *, from_pixels: bool)
             obs_contract=env.io_contract.observation,
             is_discrete=bool(getattr(env, "is_discrete", False)),
         ),
-        capture_actor_state=op_deps.torchrl_actor_eval.capture_actor_snapshot,
-        with_actor_state=op_deps.torchrl_actor_eval.use_actor_snapshot,
+        capture_actor_state=torchrl_actor_eval.capture_actor_snapshot,
+        with_actor_state=torchrl_actor_eval.use_actor_snapshot,
     )
     return (video, ctx)
 
 
 def build_modules(config: PPOConfig, env: _EnvSetup, *, device: torch.device) -> _Modules:
     obs_contract = env.io_contract.observation
-    backbone_name = op_deps.torchrl_env_contract.resolve_backbone_name(config.backbone_name, obs_contract)
-    backbone_spec = op_deps.backbone.BackboneSpec(
+    backbone_name = torchrl_env_contract.resolve_backbone_name(config.backbone_name, obs_contract)
+    backbone_spec = backbone.BackboneSpec(
         name=backbone_name, hidden_sizes=tuple(config.backbone_hidden_sizes), activation=config.backbone_activation, layer_norm=bool(config.backbone_layer_norm)
     )
-    actor_head_spec = op_deps.backbone.HeadSpec(hidden_sizes=tuple(config.actor_head_hidden_sizes), activation=config.head_activation)
-    critic_head_spec = op_deps.backbone.HeadSpec(hidden_sizes=tuple(config.critic_head_hidden_sizes), activation=config.head_activation)
+    actor_head_spec = backbone.HeadSpec(hidden_sizes=tuple(config.actor_head_hidden_sizes), activation=config.head_activation)
+    critic_head_spec = backbone.HeadSpec(hidden_sizes=tuple(config.critic_head_hidden_sizes), activation=config.head_activation)
     if config.share_backbone:
-        shared_backbone, feat_dim = op_deps.backbone.build_backbone(backbone_spec, env.obs_dim)
+        shared_backbone, feat_dim = backbone.build_backbone(backbone_spec, env.obs_dim)
         actor_backbone = shared_backbone
         critic_backbone = shared_backbone
         actor_feat_dim = feat_dim
         critic_feat_dim = feat_dim
     else:
-        actor_backbone, actor_feat_dim = op_deps.backbone.build_backbone(backbone_spec, env.obs_dim)
-        critic_backbone, critic_feat_dim = op_deps.backbone.build_backbone(backbone_spec, env.obs_dim)
-    actor_head = op_deps.backbone.build_mlp_head(actor_head_spec, actor_feat_dim, env.act_dim)
-    critic_head = op_deps.backbone.build_mlp_head(critic_head_spec, critic_feat_dim, 1)
-    obs_scaler = op_deps.torchrl_common.ObsScaler(env.obs_lb, env.obs_width)
+        actor_backbone, actor_feat_dim = backbone.build_backbone(backbone_spec, env.obs_dim)
+        critic_backbone, critic_feat_dim = backbone.build_backbone(backbone_spec, env.obs_dim)
+    actor_head = backbone.build_mlp_head(actor_head_spec, actor_feat_dim, env.act_dim)
+    critic_head = backbone.build_mlp_head(critic_head_spec, critic_feat_dim, 1)
+    obs_scaler = torchrl_common.ObsScaler(env.obs_lb, env.obs_width)
     critic_net = op_models.CriticNet(critic_backbone, critic_head, obs_scaler, obs_contract=obs_contract)
     critic = td_nn.TensorDictModule(critic_net, in_keys=["observation"], out_keys=["state_value"])
     if env.is_discrete:
         log_std = None
         actor_net = op_models.DiscreteActorNet(actor_backbone, actor_head, obs_scaler, obs_contract=obs_contract)
         actor_module = td_nn.TensorDictModule(actor_net, in_keys=["observation"], out_keys=["logits"])
-        actor = op_deps.tr_modules.ProbabilisticActor(
-            actor_module, in_keys=["logits"], distribution_class=torch.distributions.Categorical, return_log_prob=True
-        )
+        actor = tr_modules.ProbabilisticActor(actor_module, in_keys=["logits"], distribution_class=torch.distributions.Categorical, return_log_prob=True)
         actor_param_count = _count_unique_params(actor_backbone, actor_head)
     else:
         log_std = nn.Parameter(torch.full((env.act_dim,), float(config.log_std_init)))
         actor_net = op_models.ActorNet(actor_backbone, actor_head, log_std, obs_scaler, obs_contract=obs_contract)
         actor_module = td_nn.TensorDictModule(actor_net, in_keys=["observation"], out_keys=["loc", "scale"])
-        actor = op_deps.tr_modules.ProbabilisticActor(
+        actor = tr_modules.ProbabilisticActor(
             actor_module,
             in_keys=["loc", "scale"],
             distribution_class=_TanhNormal,
@@ -328,7 +341,7 @@ def build_modules(config: PPOConfig, env: _EnvSetup, *, device: torch.device) ->
     )
 
 
-def build_training(config: PPOConfig, env: _EnvSetup, modules: _Modules, *, runtime: op_deps.torchrl_runtime.TorchRLRuntime) -> _TrainingSetup:
+def build_training(config: PPOConfig, env: _EnvSetup, modules: _Modules, *, runtime: torchrl_runtime.TorchRLRuntime) -> _TrainingSetup:
     frames_per_batch = int(config.num_envs * config.num_steps)
     num_iterations = int(config.total_timesteps // frames_per_batch)
     if num_iterations <= 0:
@@ -341,7 +354,7 @@ def build_training(config: PPOConfig, env: _EnvSetup, modules: _Modules, *, runt
             vec_env = tr_envs.ParallelEnv(int(config.num_envs), env_factory, serial_for_single=True)
         else:
             vec_env = tr_envs.SerialEnv(int(config.num_envs), env_factory, serial_for_single=True)
-    loss_module = op_deps.tr_objectives.ClipPPOLoss(
+    loss_module = tr_objectives.ClipPPOLoss(
         modules.actor,
         modules.critic,
         clip_epsilon=config.clip_coef,
@@ -351,12 +364,12 @@ def build_training(config: PPOConfig, env: _EnvSetup, modules: _Modules, *, runt
         clip_value=config.clip_vloss,
         functional=False,
     )
-    gae = op_deps.tr_objectives.value.GAE(gamma=config.gamma, lmbda=config.gae_lambda, value_network=modules.critic)
+    gae = tr_objectives.value.GAE(gamma=config.gamma, lmbda=config.gae_lambda, value_network=modules.critic)
     train_params = _unique_param_list(modules.actor, modules.critic, extra_params=[modules.log_std] if modules.log_std is not None else None)
     optimizer = optim.AdamW(train_params, lr=config.learning_rate, eps=1e-05, weight_decay=0.0)
     exp_dir = Path(config.exp_dir)
     exp_dir.mkdir(parents=True, exist_ok=True)
-    op_deps.write_config(str(exp_dir), config.to_dict())
+    write_config(str(exp_dir), config.to_dict())
     metrics_path = exp_dir / "metrics.jsonl"
     return _TrainingSetup(
         frames_per_batch=frames_per_batch,
@@ -368,7 +381,7 @@ def build_training(config: PPOConfig, env: _EnvSetup, modules: _Modules, *, runt
         optimizer=optimizer,
         exp_dir=exp_dir,
         metrics_path=metrics_path,
-        checkpoint_manager=op_deps.rl_checkpointing.CheckpointManager(exp_dir=exp_dir),
+        checkpoint_manager=rl_checkpointing.CheckpointManager(exp_dir=exp_dir),
     )
 
 
@@ -378,7 +391,7 @@ def _build_collector(
     modules: _Modules,
     training: _TrainingSetup,
     *,
-    runtime: op_deps.torchrl_runtime.TorchRLRuntime,
+    runtime: torchrl_runtime.TorchRLRuntime,
     remaining_iterations: int,
 ):
     total_frames = int(remaining_iterations * training.frames_per_batch)
@@ -390,7 +403,7 @@ def _build_collector(
             modules.actor,
             frames_per_batch=training.frames_per_batch,
             total_frames=total_frames,
-            **op_deps.torchrl_common.collector_device_kwargs(runtime.device),
+            **torchrl_common.collector_device_kwargs(runtime.device),
         )
     if runtime.collector_workers is None:
         raise RuntimeError("multi collector backend requires collector_workers")
@@ -415,7 +428,7 @@ def _resume_if_requested(config: PPOConfig, modules: _Modules, training: _Traini
     if not config.resume_from:
         return state
     resume_path = Path(config.resume_from)
-    loaded = op_deps.rl_checkpointing.load_checkpoint(resume_path, device=device)
+    loaded = rl_checkpointing.load_checkpoint(resume_path, device=device)
     actor_snapshot: dict[str, Any] = {"backbone": loaded["actor_backbone"], "head": loaded["actor_head"]}
     if "log_std" in loaded:
         actor_snapshot["log_std"] = loaded["log_std"]
@@ -482,7 +495,7 @@ def _evaluate_actor(config: PPOConfig, env: _EnvSetup, modules: _Modules, *, dev
     obs_contract = _resolve_observation_contract_for_env(config, env)
     from_pixels = obs_contract.mode == "pixels"
     eval_env = _build_eval_env_conf(config, env, from_pixels=from_pixels)
-    eval_policy = op_deps.torchrl_actor_eval.ActorEvalPolicy(
+    eval_policy = torchrl_actor_eval.ActorEvalPolicy(
         modules.actor_backbone,
         modules.actor_head,
         modules.obs_scaler,
@@ -516,7 +529,7 @@ def _maybe_eval_and_log(
             elapsed = time.time() - start_time
             rl_logger.log_progress_iteration(iteration, training.num_iterations, training.frames_per_batch, elapsed, algo_name="ppo")
         return
-    plan = op_deps.build_eval_plan(
+    plan = build_eval_plan(
         current=iteration,
         interval=int(config.eval_interval),
         seed=int(config.seed),
@@ -528,13 +541,13 @@ def _maybe_eval_and_log(
         eval_return=float(state.last_eval_return),
         best_return=float(state.best_return),
         best_actor_state=state.best_actor_state,
-        capture_actor_state=lambda: op_deps.torchrl_actor_eval.capture_actor_snapshot(modules),
+        capture_actor_state=lambda: torchrl_actor_eval.capture_actor_snapshot(modules),
     )
     state.last_heldout_return = None
     if config.num_denoise_passive_eval is not None and state.best_actor_state is not None:
         obs_contract = _resolve_observation_contract_for_env(config, env)
         from_pixels = obs_contract.mode == "pixels"
-        best_eval_policy = op_deps.torchrl_actor_eval.ActorEvalPolicy(
+        best_eval_policy = torchrl_actor_eval.ActorEvalPolicy(
             modules.actor_backbone,
             modules.actor_head,
             modules.obs_scaler,
@@ -546,7 +559,7 @@ def _maybe_eval_and_log(
             best_actor_state=state.best_actor_state,
             num_denoise_passive_eval=config.num_denoise_passive_eval,
             heldout_i_noise=plan.heldout_i_noise,
-            with_actor_state=lambda snapshot: op_deps.torchrl_actor_eval.use_actor_snapshot(modules, snapshot, device=device),
+            with_actor_state=lambda snapshot: torchrl_actor_eval.use_actor_snapshot(modules, snapshot, device=device),
             evaluate_for_best=episode_rollout.evaluate_for_best,
             eval_env_conf=_build_eval_env_conf(config, env, from_pixels=from_pixels),
             eval_policy=best_eval_policy,
@@ -594,7 +607,7 @@ def _run_training_loop(
         _maybe_eval_and_log(
             config, env, modules, training, state, iteration=iteration, approx_kls=approx_kls, clipfracs=clipfracs, device=device, start_time=start_time
         )
-        op_deps.save_periodic_checkpoint(config=config, training_setup=training, modules=modules, train_state=state, iteration=iteration)
+        save_periodic_checkpoint(config=config, training_setup=training, modules=modules, train_state=state, iteration=iteration)
 
     if getattr(config, "profile_enable", False):
         run_with_profiler(config, collector, run_iteration, device=device, num_iterations=training.num_iterations, start_iteration=state.start_iteration)
@@ -618,16 +631,16 @@ def _log_ppo_config(config, env, training, runtime, from_pixels, backbone_info):
 
 def train_ppo(config: PPOConfig) -> TrainResult:
     if config.eval_noise_mode is not None:
-        op_deps.normalize_eval_noise_mode(config.eval_noise_mode)
+        normalize_eval_noise_mode(config.eval_noise_mode)
     resolved = core_env_conf.resolve_run_seeds(seed=int(config.seed), problem_seed=config.problem_seed, noise_seed_0=config.noise_seed_0)
-    op_deps.seed_all(op_deps.seed_util.global_seed_for_run(int(resolved.problem_seed)))
+    seed_all(seed_util.global_seed_for_run(int(resolved.problem_seed)))
     env = build_env_setup(config)
     runtime = config.resolve_runtime(capabilities=_PPO_RUNTIME_CAPABILITIES)
     modules = build_modules(config, env, device=runtime.device)
     training = build_training(config, env, modules, runtime=runtime)
     state = _resume_if_requested(config, modules, training, device=runtime.device)
     from_pixels = env.io_contract.observation.mode == "pixels"
-    backbone_resolved = op_deps.torchrl_env_contract.resolve_backbone_name(config.backbone_name, env.io_contract.observation)
+    backbone_resolved = torchrl_env_contract.resolve_backbone_name(config.backbone_name, env.io_contract.observation)
     is_cnn = backbone_resolved in {"nature_cnn", "nature_cnn_atari"}
     backbone_info = f" backbone={backbone_resolved}"
     if not is_cnn:
@@ -654,7 +667,7 @@ def train_ppo(config: PPOConfig) -> TrainResult:
         collector.shutdown()
     total_time = time.time() - train_start
     rl_logger.log_run_footer(state.best_return, training.num_iterations, total_time, algo_name="ppo")
-    op_deps.save_final_checkpoint(config=config, training_setup=training, modules=modules, train_state=state)
+    save_final_checkpoint(config=config, training_setup=training, modules=modules, train_state=state)
     video.render_policy_videos_rl(config, env, modules, training, state, ctx, device=runtime.device)
     return TrainResult(
         best_return=float(state.best_return),
@@ -665,4 +678,4 @@ def train_ppo(config: PPOConfig) -> TrainResult:
 
 
 def register():
-    op_deps.registry.register_algo("ppo", PPOConfig, train_ppo)
+    registry.register_algo("ppo", PPOConfig, train_ppo)

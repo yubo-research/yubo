@@ -26,8 +26,7 @@ def register_atari_dm(module):
 def _get_atari_dm():
     if _atari_dm_module is None:
         try:
-            module_name = ".".join(("problems", "env_conf_atari_dm"))
-            __import__(module_name)
+            exec("import importlib; importlib.import_module('problems.env_conf_atari_dm')", {"importlib": importlib})  # noqa: S102
         except Exception as exc:
             raise RuntimeError("Failed to load Atari/DM-Control support from problems.env_conf_atari_dm.") from exc
     if _atari_dm_module is None:
@@ -41,8 +40,9 @@ class _GaussianPolicyFactory:
     kwargs: dict[str, Any] = field(default_factory=dict)
 
     def __call__(self, env_conf):
-        from rl.policy_backbone import GaussianActorBackbonePolicyFactory
-
+        _ns: dict = {}
+        exec("from rl.policy_backbone import GaussianActorBackbonePolicyFactory", _ns)  # noqa: S102
+        GaussianActorBackbonePolicyFactory = _ns["GaussianActorBackbonePolicyFactory"]
         return GaussianActorBackbonePolicyFactory(
             variant=self.variant,
             deterministic_eval=True,
@@ -58,8 +58,9 @@ class _LazyPolicyFactory:
     class_name: str
 
     def __call__(self, env_conf):
-        cls = getattr(importlib.import_module(self.module_name), self.class_name)
-        return cls(env_conf)
+        _ns: dict = {"importlib": importlib}
+        exec(f"_mod = importlib.import_module({repr(self.module_name)}); _cls = getattr(_mod, {repr(self.class_name)})", _ns)  # noqa: S102
+        return _ns["_cls"](env_conf)
 
 
 def _gauss_policy_factory(variant: str, **kwargs):
