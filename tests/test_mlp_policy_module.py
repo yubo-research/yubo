@@ -10,6 +10,7 @@ class MockEnvConf:
     def __init__(self, num_state=4, num_action=2):
         self.problem_seed = 0
         self.gym_conf = MockGymConf(num_state, num_action)
+        self.state_space = self.gym_conf.state_space
         self.action_space = type("Space", (), {"shape": (num_action,)})()
 
 

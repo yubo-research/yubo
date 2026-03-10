@@ -16,14 +16,14 @@ def update_best_actor_if_improved(
 def evaluate_heldout_with_best_actor(
     *,
     best_actor_state: dict[str, Any] | None,
-    num_denoise_passive_eval: int | None,
+    num_denoise_passive: int | None,
     heldout_i_noise: int,
     with_actor_state,
     evaluate_for_best,
     eval_env_conf,
     eval_policy,
 ) -> float | None:
-    if num_denoise_passive_eval is None or best_actor_state is None:
+    if num_denoise_passive is None or best_actor_state is None:
         return None
     with with_actor_state(best_actor_state):
-        return float(evaluate_for_best(eval_env_conf, eval_policy, int(num_denoise_passive_eval), i_noise=int(heldout_i_noise)))
+        return float(evaluate_for_best(eval_env_conf, eval_policy, int(num_denoise_passive), i_noise=int(heldout_i_noise)))

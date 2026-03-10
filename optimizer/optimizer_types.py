@@ -18,6 +18,8 @@ class TraceEntry:
     rreturn_decision: float
     dt_prop: float
     dt_eval: float
+    env_steps_iter: int = 0
+    env_steps_total: int = 0
 
 
 @dataclass(frozen=True)

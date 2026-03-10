@@ -103,7 +103,7 @@ def evaluate_heldout_if_enabled(
     )
     return sac_eval.evaluate_heldout_with_best_actor(
         best_actor_state=train_state.best_actor_state,
-        num_denoise_passive_eval=config.num_denoise_passive_eval,
+        num_denoise_passive=config.num_denoise_passive,
         heldout_i_noise=int(heldout_i_noise),
         with_actor_state=lambda snapshot: temporary_actor_state(
             modules, snapshot, capture_actor_state=capture_actor_state, restore_actor_state=restore_actor_state
@@ -134,10 +134,11 @@ def evaluate_if_due(
         return
     from rl.eval_noise import build_eval_plan
 
+    run_problem_seed = int(getattr(env_setup, "problem_seed", config.seed))
     plan = build_eval_plan(
         current=step,
         interval=int(config.eval_interval_steps),
-        seed=int(config.seed),
+        seed=run_problem_seed,
         eval_seed_base=config.eval_seed_base,
         eval_noise_mode=getattr(config, "eval_noise_mode", None),
     )

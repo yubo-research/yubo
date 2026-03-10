@@ -53,11 +53,10 @@ def test_extract_run_cfg_supports_zero_based_num_reps():
     assert workers == 2
 
 
-def test_extract_run_cfg_prefers_explicit_seeds_over_num_reps():
+def test_extract_run_cfg_rejects_explicit_seeds():
     cfg = {"rl": {"run": {"seeds": [7, 8], "num_reps": 5}}}
-    seeds, workers = runner._extract_run_cfg(cfg)
-    assert seeds == [7, 8]
-    assert workers == 1
+    with pytest.raises(ValueError, match=r"\[rl.run\]\.seeds is removed"):
+        _ = runner._extract_run_cfg(cfg)
 
 
 def test_extract_run_cfg_rejects_non_positive_num_reps():

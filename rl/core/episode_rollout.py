@@ -135,6 +135,6 @@ def collect_denoised_trajectory(env_conf: Any, policy: Any, *, num_denoise: int 
     return (Trajectory(float(mean_ret), rreturn_se=rreturn_se), None)
 
 
-def evaluate_for_best(env_conf: Any, policy: Any, num_denoise_passive_eval: int, *, i_noise: int = 99999) -> float:
-    mean_ret, _, _ = mean_return_over_runs(env_conf, policy, int(num_denoise_passive_eval), i_noise=int(i_noise))
+def evaluate_for_best(env_conf: Any, policy: Any, num_denoise_passive: int, *, i_noise: int = 99999) -> float:
+    mean_ret, _, _ = mean_return_over_runs(env_conf, policy, int(num_denoise_passive), i_noise=int(i_noise))
     return float(mean_ret)

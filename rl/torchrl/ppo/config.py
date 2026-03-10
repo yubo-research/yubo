@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import dataclasses
 
+from rl.config_model_defaults import apply_ppo_env_model_defaults
 from rl.core.torchrl_runtime import TorchRLRuntimeCapabilities, TorchRLRuntimeConfig
 
 
@@ -31,8 +32,8 @@ class PPOConfig(TorchRLRuntimeConfig):
     max_grad_norm: float = 0.5
     target_kl: float | None = None
     eval_interval: int = 1
-    num_denoise_eval: int | None = None
-    num_denoise_passive_eval: int | None = None
+    num_denoise: int | None = None
+    num_denoise_passive: int | None = None
     eval_seed_base: int | None = None
     eval_noise_mode: str | None = None
     backbone_name: str = "mlp"
@@ -64,10 +65,7 @@ class PPOConfig(TorchRLRuntimeConfig):
 
     @classmethod
     def from_dict(cls, raw: dict) -> "PPOConfig":
-        d = dict(raw)
-        for key in ["backbone_hidden_sizes", "actor_head_hidden_sizes", "critic_head_hidden_sizes"]:
-            if key in d and d[key] is not None:
-                d[key] = tuple((int(x) for x in d[key]))
+        d = apply_ppo_env_model_defaults(raw)
         return cls(**d)
 
     def runtime_num_envs(self) -> int:

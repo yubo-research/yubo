@@ -1,7 +1,6 @@
 import copy
-import importlib
-from dataclasses import dataclass, field
-from typing import Any
+from dataclasses import asdict, dataclass, is_dataclass
+from typing import Any, Callable
 
 import gymnasium as gym
 
@@ -13,77 +12,34 @@ from problems.mlp_policy import MLPPolicy, MLPPolicyFactory
 from problems.mlp_torch_env import wrap_mlp_env
 from problems.noise_maker import NoiseMaker
 from problems.pure_function_policy import PureFunctionPolicy
+from problems.turbo_lunar_policy import TurboLunarPolicy
 
-# Registry for Atari/DM-Control support. Only loaded when env_conf_atari_dm is imported.
-_atari_dm_module = None
+_DM_CONTROL_DEFAULT_MAX_STEPS = 1000
+_ATARI_DEFAULT_MAX_STEPS = 108000
+_PURE_FUNCTION_MAX_STEPS = 1
+_DEFAULT_MAX_STEPS = 99999
 
-
-def register_atari_dm(module):
-    global _atari_dm_module
-    _atari_dm_module = module
-
-
-def _get_atari_dm():
-    if _atari_dm_module is None:
-        try:
-            module_name = ".".join(("problems", "env_conf_atari_dm"))
-            __import__(module_name)
-        except Exception as exc:
-            raise RuntimeError("Failed to load Atari/DM-Control support from problems.env_conf_atari_dm.") from exc
-    if _atari_dm_module is None:
-        raise RuntimeError("Atari/DM-Control support did not register correctly.")
-    return _atari_dm_module
+_ATARI_DM_BINDINGS = None
+_ATARI_DM_BINDINGS_LOADER: Callable[[], Any] | None = None
 
 
-@dataclass(frozen=True)
-class _GaussianPolicyFactory:
-    variant: str
-    kwargs: dict[str, Any] = field(default_factory=dict)
-
-    def __call__(self, env_conf):
-        from rl.policy_backbone import GaussianActorBackbonePolicyFactory
-
-        return GaussianActorBackbonePolicyFactory(
-            variant=self.variant,
-            deterministic_eval=True,
-            squash_mode="clip",
-            init_log_std=-0.5,
-            **self.kwargs,
-        )(env_conf)
+def register_atari_dm_bindings_loader(loader: Callable[[], Any]) -> None:
+    global _ATARI_DM_BINDINGS_LOADER
+    _ATARI_DM_BINDINGS_LOADER = loader
 
 
-@dataclass(frozen=True)
-class _LazyPolicyFactory:
-    module_name: str
-    class_name: str
-
-    def __call__(self, env_conf):
-        cls = getattr(importlib.import_module(self.module_name), self.class_name)
-        return cls(env_conf)
-
-
-def _gauss_policy_factory(variant: str, **kwargs):
-    return _GaussianPolicyFactory(variant=variant, kwargs=dict(kwargs))
+def _get_atari_dm_bindings():
+    global _ATARI_DM_BINDINGS
+    if _ATARI_DM_BINDINGS is None:
+        if _ATARI_DM_BINDINGS_LOADER is None:
+            raise RuntimeError("Atari/DM bindings are not registered. Call problems.env_conf_backends.register_with_env_conf() before using Atari/DM env tags.")
+        _ATARI_DM_BINDINGS = _ATARI_DM_BINDINGS_LOADER()
+    return _ATARI_DM_BINDINGS
 
 
-def _lazy_policy(module_name: str, class_name: str):
-    return _LazyPolicyFactory(module_name=module_name, class_name=class_name)
-
-
-def _normalize_dm_control_name(tag: str) -> str:
-    if tag.startswith("dm:"):
-        name = tag.split(":", 1)[1]
-    else:
-        name = tag.split("/", 1)[1]
-    if not name.endswith("-v0") and not name.endswith("-v1"):
-        name = f"{name}-v0"
-    return f"dm_control/{name}"
-
-
-def _parse_tag_options(tag, from_pixels, pixels_only):
-    """Parse :fn, :pixels, :gauss, etc. from tag. Returns (tag, frozen_noise, policy_variant, from_pixels)."""
+def _parse_tag_options(tag, from_pixels):
+    """Parse shared options from tag. Returns (tag, frozen_noise, from_pixels)."""
     frozen_noise = False
-    policy_variant = None
     while ":" in tag:
         x = tag.split(":")
         opt = x[-1]
@@ -91,42 +47,27 @@ def _parse_tag_options(tag, from_pixels, pixels_only):
             frozen_noise = True
         elif opt == "pixels":
             from_pixels = True if from_pixels is None else from_pixels
-        elif opt in ("gauss", "rl-gauss", "mlp16"):
-            policy_variant = opt
         else:
             break
         tag = ":".join(x[:-1])
-    return tag, frozen_noise, policy_variant, from_pixels
+    return tag, frozen_noise, from_pixels
 
 
-def _dm_control_policy_cls(use_pixels, policy_variant):
-    adm = _get_atari_dm()
-    if use_pixels:
-        return adm.get_cnn_mlp_policy_factory()((32, 16))
-    if policy_variant == "gauss":
-        return _gauss_policy_factory(variant="rl-gauss-tanh")
-    if policy_variant == "rl-gauss":
-        return _gauss_policy_factory(variant="rl-gauss")
-    return MLPPolicyFactory((32, 16))
+def _atari_pong_policy(env_conf):
+    bindings = _get_atari_dm_bindings()
+    _env_id, policy_class = bindings.resolve_atari_from_tag("atari:Pong")
+    return policy_class(env_conf)
 
 
-def _atari_policy_cls(policy_variant):
-    adm = _get_atari_dm()
-    parsers = adm.get_atari_parsers_and_factories()
-    _, AtariAgent57LiteFactory, AtariCNNPolicyFactory, AtariGaussianPolicyFactory = parsers
-    if policy_variant == "agent57":
-        return AtariAgent57LiteFactory(lstm_hidden=32, cnn_variant="small")
-    if policy_variant == "gauss":
-        return AtariGaussianPolicyFactory(
-            hidden_sizes=(16, 16),
-            cnn_latent_dim=64,
-            variant="small",
-            deterministic_eval=True,
-            init_log_std=-0.5,
-        )
-    if policy_variant == "mlp16":
-        return _lazy_policy("rl.policy_backbone", "AtariMLP16DiscretePolicy")
-    return AtariCNNPolicyFactory((24,), variant="small")
+def _gaussian_policy_factory(variant: str):
+    from rl.policy_backbone import GaussianActorBackbonePolicyFactory
+
+    return GaussianActorBackbonePolicyFactory(
+        variant=variant,
+        deterministic_eval=True,
+        squash_mode="clip",
+        init_log_std=-0.5,
+    )
 
 
 def get_env_conf(
@@ -136,34 +77,38 @@ def get_env_conf(
     noise_seed_0=None,
     from_pixels=None,
     pixels_only=None,
+    atari_preprocess=None,
 ):
-    tag, frozen_noise, policy_variant, from_pixels = _parse_tag_options(tag, from_pixels, pixels_only)
+    tag, frozen_noise, from_pixels = _parse_tag_options(tag, from_pixels)
     pix_only = pixels_only if pixels_only is not None else True
 
-    if tag.startswith("dm:") or tag.startswith("dm_control/"):
-        env_name = _normalize_dm_control_name(tag)
+    if tag in _gym_env_confs:
+        ec = copy.deepcopy(_gym_env_confs[tag])
+    elif tag in _dm_control_env_confs:
+        ec = copy.deepcopy(_dm_control_env_confs[tag])
+    elif tag in _atari_env_confs:
+        ec = copy.deepcopy(_atari_env_confs[tag])
+    elif tag.startswith("dm:") or tag.startswith("dm_control/"):
         use_pixels = from_pixels if from_pixels is not None else False
-        policy_cls = _dm_control_policy_cls(use_pixels, policy_variant)
+        bindings = _get_atari_dm_bindings()
+        env_name, policy_cls = bindings.resolve_dm_control_from_tag(tag, bool(use_pixels))
         ec = EnvConf(
             env_name,
-            gym_conf=GymConf(max_steps=1000, num_frames_skip=1, transform_state=False),
             policy_class=policy_cls,
             from_pixels=use_pixels,
             pixels_only=pix_only,
+            max_steps=_DM_CONTROL_DEFAULT_MAX_STEPS,
         )
     elif tag.startswith("atari:") or tag.startswith("ALE/"):
-        _parse_atari_tag, _, _, _ = _get_atari_dm().get_atari_parsers_and_factories()
-        env_id = _parse_atari_tag(tag) if "atari:" in tag or tag.startswith("ALE/") else tag
-        policy_cls = _atari_policy_cls(policy_variant)
+        bindings = _get_atari_dm_bindings()
+        env_id, policy_cls = bindings.resolve_atari_from_tag(tag)
         ec = EnvConf(
             env_id,
-            gym_conf=GymConf(max_steps=108000, num_frames_skip=1, transform_state=False),
             policy_class=policy_cls,
             from_pixels=True,
             pixels_only=True,
+            max_steps=_ATARI_DEFAULT_MAX_STEPS,
         )
-    elif tag in _gym_env_confs:
-        ec = copy.deepcopy(_gym_env_confs[tag])
     else:
         ec = EnvConf(
             tag,
@@ -176,11 +121,19 @@ def get_env_conf(
     ec.problem_seed = problem_seed
     ec.noise_seed_0 = noise_seed_0
     ec.frozen_noise = frozen_noise
+    if atari_preprocess is not None:
+        if not isinstance(atari_preprocess, dict):
+            raise TypeError("atari_preprocess must be a dict when provided.")
+        if not str(ec.env_name).startswith("ALE/"):
+            raise ValueError("atari_preprocess is only valid for Atari envs (ALE/*).")
+        ec.atari_preprocess = copy.deepcopy(atari_preprocess)
     return ec
 
 
 def default_policy(env_conf):
-    if env_conf.gym_conf is not None:
+    has_policy_or_gym = env_conf.policy_class is not None or env_conf.gym_conf is not None
+    missing_spaces = getattr(env_conf, "state_space", None) is None or getattr(env_conf, "action_space", None) is None
+    if has_policy_or_gym and missing_spaces:
         env_conf.ensure_spaces()
     if env_conf.policy_class is not None:
         return env_conf.policy_class(env_conf)
@@ -205,10 +158,13 @@ class EnvConf:
     # It is fixed for the duration of the optimization (all rounds).
     problem_seed: int = None
     policy_class: Any = None
+    rl_model: dict[str, Any] | None = None
 
     # dm_control pixel observations (RL and BO)
     from_pixels: bool = False
     pixels_only: bool = True
+    # Optional ALE preprocessing/runtime overrides (applies only to ALE envs).
+    atari_preprocess: dict[str, Any] | None = None
 
     noise_level: float = None
     # The noise seed is changed once per run if num_denoise>0.
@@ -220,6 +176,8 @@ class EnvConf:
     frozen_noise: bool = True
 
     gym_conf: GymConf = None
+    state_space: Any = None
+    max_steps: int | None = None
     action_space: Any = None
     kwargs: dict = None
 
@@ -229,7 +187,7 @@ class EnvConf:
         elif self.env_name[:2] == "g:":
             env = pure_functions.make(self.env_name, problem_seed=self.problem_seed, distort=False)
         elif self.env_name.startswith("dm_control/"):
-            make_dm_control_env = _get_atari_dm().get_dm_control_make()
+            make_dm_control_env = _get_atari_dm_bindings().make_dm_control_env
             env = make_dm_control_env(
                 self.env_name,
                 from_pixels=getattr(self, "from_pixels", False),
@@ -237,13 +195,25 @@ class EnvConf:
                 **kwargs,
             )
         elif self.env_name.startswith("ALE/"):
-            make_atari_env = _get_atari_dm().get_atari_make()
+            bindings = _get_atari_dm_bindings()
+            make_preprocess_options = bindings.make_atari_preprocess_options
+            make_atari_env = bindings.make_atari_env
             render_mode = kwargs.get("render_mode")
-            max_steps = int(self.gym_conf.max_steps) if self.gym_conf else 108000
+            max_steps = self.max_steps
+            if max_steps is None:
+                raise ValueError("EnvConf.max_steps must be set for ALE environments.")
+            preprocess = kwargs.pop("preprocess", None)
+            if preprocess is None:
+                default_preprocess = make_preprocess_options()
+                preprocess_kwargs = asdict(default_preprocess) if is_dataclass(default_preprocess) else dict(vars(default_preprocess))
+                if isinstance(self.atari_preprocess, dict):
+                    preprocess_kwargs.update(self.atari_preprocess)
+                preprocess = make_preprocess_options(**preprocess_kwargs)
             env = make_atari_env(
                 self.env_name,
                 render_mode=render_mode,
-                max_episode_steps=max_steps,
+                max_episode_steps=int(max_steps),
+                preprocess=preprocess,
             )
         elif self.gym_conf is not None:
             env = gym.make(self.env_name, **(kwargs | self.kwargs))
@@ -266,25 +236,38 @@ class EnvConf:
 
     def ensure_spaces(self):
         """Ensure state_space and action_space are populated (no-op if already set)."""
-        if not self.gym_conf:
+        if self.state_space is not None and self.action_space is not None:
             return
-        if self.gym_conf.state_space is not None and self.action_space is not None:
+        if self.gym_conf is not None and self.gym_conf.state_space is not None and self.action_space is not None:
+            self.state_space = self.gym_conf.state_space
             return
         env = self._make()
-        if self.gym_conf:
-            self.gym_conf.state_space = env.observation_space
+        self.state_space = env.observation_space
+        if self.gym_conf is not None:
+            self.gym_conf.state_space = self.state_space
         self.action_space = env.action_space
         env.close()
 
     def __post_init__(self):
         if not self.kwargs:
             self.kwargs = {}
+        if self.env_name[:2] in ("f:", "g:") and self.max_steps is None:
+            self.max_steps = _PURE_FUNCTION_MAX_STEPS
+        if self.max_steps is None and self.gym_conf is None and not self.env_name.startswith(("ALE/", "dm_control/")):
+            self.max_steps = _DEFAULT_MAX_STEPS
         if self.gym_conf:
             # Defer gym.make to avoid eagerly instantiating all envs at import time.
             self.gym_conf.state_space = None
+            self.state_space = None
+            self.action_space = None
+            return
+        if self.env_name.startswith(("ALE/", "dm_control/")):
+            # Defer heavy env creation for Atari/DM control until first use.
+            self.state_space = None
             self.action_space = None
             return
         env = self._make()
+        self.state_space = env.observation_space
         self.action_space = env.action_space
         env.close()
 
@@ -295,7 +278,7 @@ class EnvConf:
         that exposes the policy module via torch_env().module for use with
         BSZO and other UHD optimizers requiring direct parameter access.
         """
-        if self.gym_conf is not None:
+        if self.state_space is None or self.action_space is None:
             self.ensure_spaces()
 
         # Check if this is an MLP policy that can be directly perturbed
@@ -303,6 +286,8 @@ class EnvConf:
             # Create the policy and check if it's an MLPPolicy
             policy = self.policy_class(self)
             if isinstance(policy, MLPPolicy):
+                if self.gym_conf is None:
+                    raise ValueError("make_torch_env for MLPPolicy requires a gym_conf with max_steps and num_frames_skip.")
                 # Create the base gym environment
                 env = self._make(**kwargs)
                 # Wrap with torch env wrapper
@@ -320,7 +305,7 @@ class EnvConf:
         return self.make(**kwargs)
 
 
-def _gym_conf(env_name, gym_conf=None, policy_class=None, kwargs=None, noise_seed_0=None):
+def _gym_conf(env_name, gym_conf=None, policy_class=None, kwargs=None, noise_seed_0=None, rl_model=None):
     if gym_conf is None:
         gym_conf = GymConf()
 
@@ -330,6 +315,100 @@ def _gym_conf(env_name, gym_conf=None, policy_class=None, kwargs=None, noise_see
         policy_class=policy_class,
         kwargs=kwargs,
         noise_seed_0=noise_seed_0,
+        rl_model=rl_model,
+    )
+
+
+def _normalize_rl_env_key(env_tag: str) -> str:
+    tag, _frozen_noise, _from_pixels = _parse_tag_options(str(env_tag), None)
+    if tag.startswith("dm:"):
+        env_name, _policy_class = _get_atari_dm_bindings().resolve_dm_control_from_tag(tag, False)
+        return str(env_name)
+    if tag.startswith("atari:"):
+        env_id, _policy_class = _get_atari_dm_bindings().resolve_atari_from_tag(tag)
+        return str(env_id)
+    return tag
+
+
+def _find_rl_env_conf(env_key: str):
+    registries = (_gym_env_confs, _dm_control_env_confs, _atari_env_confs)
+    for registry in registries:
+        direct = registry.get(env_key)
+        if direct is not None:
+            return direct
+    for registry in registries:
+        for conf in registry.values():
+            if getattr(conf, "env_name", None) == env_key:
+                return conf
+    return None
+
+
+def _infer_rl_from_policy_class(policy_class: Any, *, algo: str) -> dict[str, Any] | None:
+    if not isinstance(policy_class, MLPPolicyFactory):
+        return None
+    hidden = tuple((int(v) for v in policy_class._hidden_sizes))
+    layer_norm = bool(policy_class._use_layer_norm)
+    if algo == "ppo":
+        return {
+            "backbone_name": "mlp",
+            "backbone_hidden_sizes": hidden,
+            "backbone_activation": "silu",
+            "backbone_layer_norm": layer_norm,
+            "actor_head_hidden_sizes": (),
+            "critic_head_hidden_sizes": (),
+            "head_activation": "silu",
+            "share_backbone": True,
+            "log_std_init": -0.5,
+        }
+    if algo == "sac":
+        return {
+            "backbone_name": "mlp",
+            "backbone_hidden_sizes": hidden,
+            "backbone_activation": "silu",
+            "backbone_layer_norm": layer_norm,
+            "actor_head_hidden_sizes": (),
+            "critic_head_hidden_sizes": (),
+            "head_activation": "silu",
+        }
+    raise ValueError(f"Unsupported algo '{algo}' for RL model inference.")
+
+
+def _explicit_rl_model_for_algo(env_conf: Any, *, algo: str) -> dict[str, Any] | None:
+    rl_model = getattr(env_conf, "rl_model", None)
+    if not isinstance(rl_model, dict):
+        return None
+    model = rl_model.get(algo)
+    if not isinstance(model, dict):
+        return None
+    return copy.deepcopy(model)
+
+
+def _inferred_rl_model_for_algo(env_conf: Any, *, algo: str) -> dict[str, Any] | None:
+    policy_class = getattr(env_conf, "policy_class", None)
+    if policy_class is None:
+        return None
+    inferred = _infer_rl_from_policy_class(policy_class, algo=algo)
+    if inferred is None:
+        return None
+    return copy.deepcopy(inferred)
+
+
+def resolve_rl_model_defaults(env_tag: str, *, algo: str) -> dict[str, Any]:
+    algo_key = str(algo).strip().lower()
+    if algo_key not in {"ppo", "sac"}:
+        raise ValueError(f"Unsupported algo '{algo}'. Expected one of: ppo, sac.")
+    env_key = _normalize_rl_env_key(str(env_tag))
+    env_conf = _find_rl_env_conf(env_key)
+    if env_conf is None:
+        raise ValueError(f"No env preset found for env_tag '{env_tag}'. Add an entry to one of: _gym_env_confs, _dm_control_env_confs, _atari_env_confs.")
+    providers = (_explicit_rl_model_for_algo, _inferred_rl_model_for_algo)
+    for provider in providers:
+        model = provider(env_conf, algo=algo_key)
+        if model is not None:
+            return copy.deepcopy(model)
+    raise ValueError(
+        f"No RL model defaults for env_tag '{env_tag}' and algo '{algo_key}'. "
+        "Provide env_conf.rl_model[algo] or use an inferable MLPPolicyFactory policy_class."
     )
 
 
@@ -352,10 +431,20 @@ _gym_env_confs = {
     "cheetah": _gym_conf(
         "HalfCheetah-v5",
         policy_class=MLPPolicyFactory((32, 16)),
-    ),
-    "quadruped-run-64x64": _gym_conf(
-        "dm_control/quadruped-run-v0",
-        policy_class=MLPPolicyFactory((64, 64)),
+        rl_model={
+            "ppo": {
+                "backbone_hidden_sizes": (64, 64),
+                "backbone_layer_norm": True,
+                "share_backbone": True,
+                "log_std_init": -0.5,
+            },
+            "sac": {
+                "backbone_hidden_sizes": (256, 256),
+                "backbone_activation": "relu",
+                "backbone_layer_norm": False,
+                "head_activation": "relu",
+            },
+        },
     ),
     "cheetah-16x16": _gym_conf(
         "HalfCheetah-v5",
@@ -363,18 +452,18 @@ _gym_env_confs = {
     ),
     "cheetah-16x16-gauss": _gym_conf(
         "HalfCheetah-v5",
-        policy_class=_gauss_policy_factory(variant="rl-gauss-tanh"),
+        policy_class=_gaussian_policy_factory(variant="rl-gauss-tanh"),
     ),
     "cheetah-gauss": _gym_conf(
         "HalfCheetah-v5",
-        policy_class=_gauss_policy_factory(variant="rl-gauss-small"),
+        policy_class=_gaussian_policy_factory(variant="rl-gauss-small"),
     ),
     "reach": EnvConf("Reacher-v5", gym_conf=GymConf(max_steps=50)),
     # "push": EnvConf("Pusher-v4",  gym_conf=GymConf(max_steps=100)),
     "hop": _gym_conf("Hopper-v5"),
     "hop-gauss": _gym_conf(
         "Hopper-v5",
-        policy_class=_gauss_policy_factory(variant="rl-gauss-small"),
+        policy_class=_gaussian_policy_factory(variant="rl-gauss-small"),
     ),
     # 6900
     "human": _gym_conf("Humanoid-v5"),
@@ -462,6 +551,58 @@ _gym_env_confs = {
             transform_state=False,
         ),
         kwargs={"continuous": False},
-        policy_class=_lazy_policy("problems.turbo_lunar_policy", "TurboLunarPolicy"),
+        policy_class=TurboLunarPolicy,
+    ),
+}
+
+
+_dm_control_env_confs = {
+    "dm_control/quadruped-run-v0": EnvConf(
+        "dm_control/quadruped-run-v0",
+        policy_class=MLPPolicyFactory((64, 64)),
+        max_steps=_DM_CONTROL_DEFAULT_MAX_STEPS,
+        rl_model={
+            "ppo": {
+                "backbone_hidden_sizes": (64, 64),
+                "backbone_layer_norm": True,
+                "share_backbone": True,
+                "log_std_init": -0.5,
+            },
+            "sac": {
+                "backbone_hidden_sizes": (256, 256),
+                "backbone_activation": "relu",
+                "backbone_layer_norm": True,
+                "head_activation": "relu",
+            },
+        },
+    ),
+    "dm_control/quadruped-run-v0-small": EnvConf(
+        "dm_control/quadruped-run-v0",
+        policy_class=MLPPolicyFactory((4, 4)),
+        max_steps=_DM_CONTROL_DEFAULT_MAX_STEPS,
+    ),
+}
+
+
+_atari_env_confs = {
+    "atari-pong": EnvConf(
+        "ALE/Pong-v5",
+        policy_class=_atari_pong_policy,
+        from_pixels=True,
+        pixels_only=True,
+        max_steps=_ATARI_DEFAULT_MAX_STEPS,
+        rl_model={
+            "ppo": {
+                "backbone_name": "nature_cnn_atari",
+                "backbone_hidden_sizes": (),
+                "backbone_activation": "relu",
+                "backbone_layer_norm": False,
+                "actor_head_hidden_sizes": (512,),
+                "critic_head_hidden_sizes": (512,),
+                "head_activation": "relu",
+                "share_backbone": True,
+                "log_std_init": -0.5,
+            }
+        },
     ),
 }

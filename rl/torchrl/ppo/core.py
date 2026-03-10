@@ -20,6 +20,7 @@ from rl.core.ppo_eval import evaluate_heldout_with_best_actor as _eval_heldout_w
 from rl.core.ppo_eval import update_best_actor_if_improved as _update_best_actor_if_improved
 from rl.core.ppo_metrics import build_eval_record as _build_eval_record
 from rl.core.profiler import run_with_profiler
+from rl.torchrl.dm_control_collect import make_dm_control_collect_env
 
 from . import deps as op_deps
 from . import models as op_models
@@ -144,9 +145,6 @@ def _resolve_observation_contract_for_env(config: PPOConfig, env: _EnvSetup | ob
 
 
 def _make_collect_env_atari(env_conf, env_index: int = 0):
-    import importlib
-
-    importlib.import_module("problems.env_conf_atari_dm")
     base = env_conf.make()
     seed = int(env_conf.problem_seed) + env_index
     base.reset(seed=seed)
@@ -157,20 +155,18 @@ def _make_collect_env_atari(env_conf, env_index: int = 0):
 
 
 def _make_collect_env_dm_control(env_conf, env_index: int = 0):
-    from problems.shimmy_dm_control import make as make_dm_env
-
     seed = int(env_conf.problem_seed) + env_index
     from_pixels = bool(getattr(env_conf, "from_pixels", False))
     pixels_only = bool(getattr(env_conf, "pixels_only", True))
-    base = make_dm_env(env_conf.env_name, from_pixels=from_pixels, pixels_only=pixels_only)
-    base.reset(seed=seed)
-    if hasattr(base, "action_space") and hasattr(base.action_space, "seed"):
-        base.action_space.seed(seed)
-    if from_pixels:
-        transforms = op_deps.tr_transforms.Compose(PixelsToObservation(size=84), op_deps.tr_transforms.DoubleToFloat())
-    else:
-        transforms = op_deps.tr_transforms.DoubleToFloat()
-    return tr_envs.TransformedEnv(tr_envs.GymWrapper(base), transforms)
+    return make_dm_control_collect_env(
+        env_name=str(env_conf.env_name),
+        seed=int(seed),
+        from_pixels=from_pixels,
+        pixels_only=pixels_only,
+        tr_envs_module=tr_envs,
+        tr_transforms_module=op_deps.tr_transforms,
+        pixels_transform_builder=lambda m: m.Compose(PixelsToObservation(size=84), m.DoubleToFloat()),
+    )
 
 
 def _make_collect_env(env_conf, env_index: int = 0):
@@ -208,8 +204,6 @@ def build_env_setup(config: PPOConfig) -> _EnvSetup:
         get_env_conf_fn=op_deps.get_env_conf,
     )
     env_conf = resolved.env_conf
-    if env_conf.gym_conf is None:
-        raise ValueError(f"PPO expects a gym env_tag, got {config.env_tag}")
     env_conf.ensure_spaces()
     io_contract = op_deps.torchrl_env_contract.resolve_env_io_contract(env_conf, default_image_size=84)
     obs_dim = 64 if io_contract.observation.mode == "pixels" else int(io_contract.observation.vector_dim or 1)
@@ -232,11 +226,11 @@ def build_env_setup(config: PPOConfig) -> _EnvSetup:
     )
 
 
-def _build_eval_env_conf(config: PPOConfig, env: _EnvSetup, *, from_pixels: bool):
+def _build_seeded_eval_env_conf(config: PPOConfig, *, problem_seed: int, noise_seed_0: int, from_pixels: bool):
     resolved = core_env_conf.build_seeded_env_conf(
         env_tag=str(config.env_tag),
-        problem_seed=int(env.problem_seed),
-        noise_seed_0=int(env.noise_seed_0),
+        problem_seed=int(problem_seed),
+        noise_seed_0=int(noise_seed_0),
         from_pixels=bool(from_pixels),
         pixels_only=bool(getattr(config, "pixels_only", True)),
         get_env_conf_fn=op_deps.get_env_conf,
@@ -244,17 +238,24 @@ def _build_eval_env_conf(config: PPOConfig, env: _EnvSetup, *, from_pixels: bool
     return resolved.env_conf
 
 
+def _build_eval_env_conf(config: PPOConfig, env: _EnvSetup, *, from_pixels: bool):
+    return _build_seeded_eval_env_conf(
+        config,
+        problem_seed=int(env.problem_seed),
+        noise_seed_0=int(env.noise_seed_0),
+        from_pixels=from_pixels,
+    )
+
+
 def _make_video_context(config: PPOConfig, env: _EnvSetup, *, from_pixels: bool):
     video = __import__("common.video", fromlist=["RLVideoContext", "render_policy_videos_rl"])
     ctx = video.RLVideoContext(
-        build_eval_env_conf=lambda ps, ns: core_env_conf.build_seeded_env_conf(
-            env_tag=str(config.env_tag),
+        build_eval_env_conf=lambda ps, ns: _build_seeded_eval_env_conf(
+            config,
             problem_seed=int(ps),
             noise_seed_0=int(ns),
-            from_pixels=bool(from_pixels),
-            pixels_only=bool(getattr(config, "pixels_only", True)),
-            get_env_conf_fn=op_deps.get_env_conf,
-        ).env_conf,
+            from_pixels=from_pixels,
+        ),
         make_eval_policy=lambda m, d: op_deps.torchrl_actor_eval.ActorEvalPolicy(
             m.actor_backbone,
             m.actor_head,
@@ -490,7 +491,7 @@ def _evaluate_actor(config: PPOConfig, env: _EnvSetup, modules: _Modules, *, dev
         obs_contract=obs_contract,
         is_discrete=bool(getattr(env, "is_discrete", False)),
     )
-    traj, _ = episode_rollout.collect_denoised_trajectory(eval_env, eval_policy, num_denoise=config.num_denoise_eval, i_noise=int(eval_seed))
+    traj, _ = episode_rollout.collect_denoised_trajectory(eval_env, eval_policy, num_denoise=config.num_denoise, i_noise=int(eval_seed))
     return float(traj.rreturn)
 
 
@@ -519,7 +520,7 @@ def _maybe_eval_and_log(
     plan = op_deps.build_eval_plan(
         current=iteration,
         interval=int(config.eval_interval),
-        seed=int(config.seed),
+        seed=int(env.problem_seed),
         eval_seed_base=config.eval_seed_base,
         eval_noise_mode=config.eval_noise_mode,
     )
@@ -531,7 +532,7 @@ def _maybe_eval_and_log(
         capture_actor_state=lambda: op_deps.torchrl_actor_eval.capture_actor_snapshot(modules),
     )
     state.last_heldout_return = None
-    if config.num_denoise_passive_eval is not None and state.best_actor_state is not None:
+    if config.num_denoise_passive is not None and state.best_actor_state is not None:
         obs_contract = _resolve_observation_contract_for_env(config, env)
         from_pixels = obs_contract.mode == "pixels"
         best_eval_policy = op_deps.torchrl_actor_eval.ActorEvalPolicy(
@@ -544,7 +545,7 @@ def _maybe_eval_and_log(
         )
         state.last_heldout_return = _eval_heldout_with_best_actor(
             best_actor_state=state.best_actor_state,
-            num_denoise_passive_eval=config.num_denoise_passive_eval,
+            num_denoise_passive=config.num_denoise_passive,
             heldout_i_noise=plan.heldout_i_noise,
             with_actor_state=lambda snapshot: op_deps.torchrl_actor_eval.use_actor_snapshot(modules, snapshot, device=device),
             evaluate_for_best=episode_rollout.evaluate_for_best,
@@ -611,7 +612,7 @@ def _log_ppo_config(config, env, training, runtime, from_pixels, backbone_info):
         flush=True,
     )
     print(
-        f"[rl/ppo/torchrl] actor_head={list(config.actor_head_hidden_sizes)} critic_head={list(config.critic_head_hidden_sizes)} log_std_init={config.log_std_init} lr={config.learning_rate} gamma={config.gamma} gae_lambda={config.gae_lambda} clip_coef={config.clip_coef} vf_coef={config.vf_coef} ent_coef={config.ent_coef}",
+        f"[rl/ppo/torchrl] actor_head={list(config.actor_head_hidden_sizes)} value_head={list(config.critic_head_hidden_sizes)} log_std_init={config.log_std_init} lr={config.learning_rate} gamma={config.gamma} gae_lambda={config.gae_lambda} clip_coef={config.clip_coef} vf_coef={config.vf_coef} ent_coef={config.ent_coef}",
         flush=True,
     )
 
@@ -620,6 +621,8 @@ def train_ppo(config: PPOConfig) -> TrainResult:
     if config.eval_noise_mode is not None:
         op_deps.normalize_eval_noise_mode(config.eval_noise_mode)
     resolved = core_env_conf.resolve_run_seeds(seed=int(config.seed), problem_seed=config.problem_seed, noise_seed_0=config.noise_seed_0)
+    config.problem_seed = int(resolved.problem_seed)
+    config.noise_seed_0 = int(resolved.noise_seed_0)
     op_deps.seed_all(op_deps.seed_util.global_seed_for_run(int(resolved.problem_seed)))
     env = build_env_setup(config)
     runtime = config.resolve_runtime(capabilities=_PPO_RUNTIME_CAPABILITIES)

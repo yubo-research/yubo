@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import dataclasses
 
+from rl.config_model_defaults import apply_ppo_env_model_defaults
+
 
 @dataclasses.dataclass
 class PufferPPOConfig:
@@ -43,8 +45,8 @@ class PufferPPOConfig:
     framestack: int = 4
     pixels_only: bool = True
     eval_interval: int = 1
-    num_denoise_eval: int | None = None
-    num_denoise_passive_eval: int | None = None
+    num_denoise: int | None = None
+    num_denoise_passive: int | None = None
     eval_seed_base: int | None = None
     eval_noise_mode: str | None = None
     log_interval: int = 1
@@ -62,10 +64,7 @@ class PufferPPOConfig:
 
     @classmethod
     def from_dict(cls, raw: dict) -> "PufferPPOConfig":
-        data = dict(raw)
-        for key in ["backbone_hidden_sizes", "actor_head_hidden_sizes", "critic_head_hidden_sizes"]:
-            if key in data and data[key] is not None:
-                data[key] = tuple((int(x) for x in data[key]))
+        data = apply_ppo_env_model_defaults(raw)
         return cls(**data)
 
 

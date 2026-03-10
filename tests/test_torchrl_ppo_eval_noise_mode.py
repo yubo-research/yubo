@@ -45,7 +45,7 @@ def test_ppo_eval_noise_mode_natural_advances_eval_and_heldout(monkeypatch, tmp_
         eval_interval=1,
         eval_seed_base=100,
         eval_noise_mode="natural",
-        num_denoise_passive_eval=3,
+        num_denoise_passive=3,
     )
     env_setup = SimpleNamespace(problem_seed=7, noise_seed_0=70)
     modules = SimpleNamespace(actor_backbone=object(), actor_head=object(), obs_scaler=object())
@@ -123,7 +123,7 @@ def test_ppo_eval_noise_mode_frozen_uses_fixed_seeds(monkeypatch, tmp_path):
         eval_interval=1,
         eval_seed_base=100,
         eval_noise_mode="frozen",
-        num_denoise_passive_eval=3,
+        num_denoise_passive=3,
     )
     env_setup = SimpleNamespace(problem_seed=7, noise_seed_0=70)
     modules = SimpleNamespace(actor_backbone=object(), actor_head=object(), obs_scaler=object())
