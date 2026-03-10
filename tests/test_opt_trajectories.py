@@ -44,9 +44,10 @@ def test_mean_return_over_runs(monkeypatch):
     env_conf = MockEnvConf()
     policy = MockPolicy()
 
-    mean_ret, se_ret, all_same = opt_trajectories.mean_return_over_runs(env_conf, policy, num_denoise=3, i_noise=0)
+    mean_ret, se_ret, all_same, num_steps_total = opt_trajectories.mean_return_over_runs(env_conf, policy, num_denoise=3, i_noise=0)
     assert np.isfinite(mean_ret)
     assert np.isfinite(se_ret)
+    assert num_steps_total >= 0
 
 
 def test_collect_denoised_trajectory_single(monkeypatch):

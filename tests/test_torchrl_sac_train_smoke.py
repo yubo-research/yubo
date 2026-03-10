@@ -19,8 +19,8 @@ def test_sac_train_smoke(tmp_path):
         updates_per_step=1,
         eval_interval_steps=32,
         log_interval_steps=32,
-        num_denoise_eval=1,
-        num_denoise_passive_eval=1,
+        num_denoise=1,
+        num_denoise_passive=1,
     )
     result = train_sac(cfg)
     metrics_path = exp_dir / "metrics.jsonl"

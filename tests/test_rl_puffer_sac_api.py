@@ -13,6 +13,7 @@ import rl.pufferlib.sac as puffer_sac
 def test_puffer_sac_config_from_dict_converts_hidden_sizes():
     cfg = puffer_sac.SACConfig.from_dict(
         {
+            "env_tag": "cheetah",
             "exp_dir": "_tmp/sac_puffer_test",
             "backbone_hidden_sizes": [128, 64],
             "actor_head_hidden_sizes": [64],
@@ -25,6 +26,11 @@ def test_puffer_sac_config_from_dict_converts_hidden_sizes():
     assert cfg.actor_head_hidden_sizes == (64,)
     assert cfg.critic_head_hidden_sizes == (64, 32)
     assert cfg.vector_num_workers == 4
+
+
+def test_puffer_sac_config_from_dict_uses_env_defaults():
+    cfg = puffer_sac.SACConfig.from_dict({"env_tag": "cheetah"})
+    assert cfg.backbone_hidden_sizes == (256, 256)
 
 
 def test_puffer_sac_register_delegates_to_registry(monkeypatch):
@@ -371,7 +377,7 @@ def test_eval_utils_paths(monkeypatch, tmp_path: Path):
     )
     assert eval_return == 3.5
 
-    cfg_no_heldout = puffer_sac.SACConfig(num_denoise_passive_eval=None)
+    cfg_no_heldout = puffer_sac.SACConfig(num_denoise_passive=None)
     assert (
         eval_utils.evaluate_heldout_if_enabled(
             cfg_no_heldout,
@@ -386,7 +392,7 @@ def test_eval_utils_paths(monkeypatch, tmp_path: Path):
 
     monkeypatch.setattr(eval_utils, "evaluate_for_best", lambda *_args, **_kwargs: 4.2)
     heldout = eval_utils.evaluate_heldout_if_enabled(
-        puffer_sac.SACConfig(num_denoise_passive_eval=2),
+        puffer_sac.SACConfig(num_denoise_passive=2),
         env_setup,
         SimpleNamespace(actor=_Actor()),
         obs_spec,
@@ -418,7 +424,7 @@ def test_eval_utils_paths(monkeypatch, tmp_path: Path):
     monkeypatch.setattr(eval_utils, "build_eval_plan", lambda **_kwargs: SimpleNamespace(eval_seed=1, heldout_i_noise=2))
     monkeypatch.setattr(eval_utils, "evaluate_actor", lambda *_args, **_kwargs: 2.0)
     monkeypatch.setattr(eval_utils, "evaluate_heldout_if_enabled", lambda *_args, **_kwargs: 1.5)
-    eval_cfg = puffer_sac.SACConfig(eval_interval_steps=10, num_denoise_passive_eval=1)
+    eval_cfg = puffer_sac.SACConfig(eval_interval_steps=10, num_denoise_passive=1)
     state2 = eval_utils.TrainState(global_step=10, start_time=float(time.time()) - 1.0)
     eval_utils.maybe_eval(eval_cfg, env_setup, modules, obs_spec, state2, device=torch.device("cpu"))
     assert state2.eval_mark == 1

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import dataclasses
 
+from rl.config_model_defaults import apply_sac_env_model_defaults
+
 
 @dataclasses.dataclass
 class SACConfig:
@@ -30,8 +32,8 @@ class SACConfig:
     alpha_init: float = 0.2
     target_entropy: float | None = None
     eval_interval_steps: int = 10000
-    num_denoise_eval: int | None = None
-    num_denoise_passive_eval: int | None = None
+    num_denoise: int | None = None
+    num_denoise_passive: int | None = None
     eval_seed_base: int | None = None
     eval_noise_mode: str | None = None
     backbone_name: str = "mlp"
@@ -70,9 +72,7 @@ class SACConfig:
     @classmethod
     def from_dict(cls, raw: dict) -> "SACConfig":
         data = {k: v for k, v in raw.items() if k in {f.name for f in dataclasses.fields(cls)}}
-        for key in ["backbone_hidden_sizes", "actor_head_hidden_sizes", "critic_head_hidden_sizes"]:
-            if key in data and data[key] is not None:
-                data[key] = tuple((int(x) for x in data[key]))
+        data = apply_sac_env_model_defaults(data)
         return cls(**data)
 
 

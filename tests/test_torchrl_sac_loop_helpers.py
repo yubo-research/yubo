@@ -207,7 +207,7 @@ def test_run_updates_if_due():
 
 
 def test_evaluate_heldout_if_enabled():
-    config_disabled = SimpleNamespace(num_denoise_passive_eval=None, env_tag="env")
+    config_disabled = SimpleNamespace(num_denoise_passive=None, env_tag="env")
     env_setup = SimpleNamespace(problem_seed=1, noise_seed_0=2)
     modules = SimpleNamespace()
     train_state_disabled = SimpleNamespace(best_actor_state={"best": 1})
@@ -226,7 +226,7 @@ def test_evaluate_heldout_if_enabled():
     assert result is None
 
     restore_calls = []
-    config_enabled = SimpleNamespace(num_denoise_passive_eval=3, env_tag="env")
+    config_enabled = SimpleNamespace(num_denoise_passive=3, env_tag="env")
     train_state_enabled = SimpleNamespace(best_actor_state={"best": 99})
     result = torchrl_sac_loop.evaluate_heldout_if_enabled(
         config_enabled,
@@ -247,7 +247,7 @@ def test_evaluate_heldout_if_enabled():
 
 def test_evaluate_heldout_if_enabled_passes_pixel_flags():
     captured_kwargs = {}
-    config = SimpleNamespace(num_denoise_passive_eval=3, env_tag="dm:cheetah-run")
+    config = SimpleNamespace(num_denoise_passive=3, env_tag="dm:cheetah-run")
     env_setup = SimpleNamespace(
         problem_seed=11,
         noise_seed_0=22,
@@ -277,7 +277,7 @@ def test_evaluate_heldout_if_enabled_passes_pixel_flags():
 
 def test_evaluate_heldout_if_enabled_restores_actor_state_on_exception():
     restore_calls = []
-    config = SimpleNamespace(num_denoise_passive_eval=3, env_tag="env")
+    config = SimpleNamespace(num_denoise_passive=3, env_tag="env")
     env_setup = SimpleNamespace(problem_seed=1, noise_seed_0=2)
     modules = SimpleNamespace()
     train_state = SimpleNamespace(best_actor_state={"best": 99})

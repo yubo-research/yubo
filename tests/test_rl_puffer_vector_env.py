@@ -110,3 +110,44 @@ def test_make_vector_env_gym_path_uses_empty_env_kwargs():
     assert call["backend"] is fake_vector.Serial
     assert call["kwargs"] == {}
     assert callable(call["env_creator"])
+
+
+def test_make_vector_env_dm_control_path_uses_dm_creator(monkeypatch):
+    fake_vector = _FakeVector()
+    fake_atari = _FakeAtari()
+    cfg = SimpleNamespace(
+        env_tag="dm_control/quadruped-run-v0",
+        from_pixels=False,
+        pixels_only=True,
+        framestack=1,
+        vector_backend="serial",
+        vector_num_workers=None,
+        vector_batch_size=None,
+        vector_overwork=False,
+        num_envs=2,
+        seed=7,
+    )
+
+    captured = {}
+
+    def _fake_dm_creator(**kwargs):
+        captured.update(kwargs)
+        return "dm-env"
+
+    monkeypatch.setattr(vector_env, "_make_dm_control_env", _fake_dm_creator)
+
+    out = vector_env.make_vector_env(
+        cfg,
+        import_pufferlib_modules_fn=lambda: (object(), fake_vector, fake_atari),
+        is_atari_env_tag_fn=lambda _tag: False,
+        to_puffer_game_name_fn=lambda _tag: "unused",
+        resolve_gym_env_name_fn=lambda _tag: ("dm_control/quadruped-run-v0", {}),
+    )
+    assert out == "vec-env"
+    call = fake_vector.calls[0]
+    assert call["env_kwargs"] == {}
+    assert callable(call["env_creator"])
+    assert call["env_creator"]() == "dm-env"
+    assert captured["env_name"] == "dm_control/quadruped-run-v0"
+    assert captured["from_pixels"] is False
+    assert captured["pixels_only"] is True

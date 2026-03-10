@@ -43,6 +43,7 @@ class Trajectory:
     actions: np.ndarray
     rreturn_se: float = None
     rreturn_est: float = None
+    num_steps: int = 0
 
     def get_decision_rreturn(self) -> float:
         if self.rreturn_est is None:
@@ -118,6 +119,7 @@ def collect_trajectory(env_conf, policy, noise_seed=None, show_frames=False):
     prev_action, prev_reward = 0, 0.0
     recurrent = getattr(policy, "_recurrent", False)
 
+    step_count = 0
     for i_iter in range(max_steps):
         state_policy = np.asarray(_obs_for_policy(state), dtype=np.float32)
         state_p = (state_policy - lb) / width
@@ -133,6 +135,7 @@ def collect_trajectory(env_conf, policy, noise_seed=None, show_frames=False):
         traj_states.append(state_p)
         traj_actions.append(action_p)
         state, reward, terminated, truncated, _ = _unpack_step_result(env.step(action))
+        step_count += 1
         if recurrent:
             prev_action = int(action) if isinstance(action, (int, np.integer)) else int(np.asarray(action).item())
             prev_reward = float(reward)
@@ -146,4 +149,10 @@ def collect_trajectory(env_conf, policy, noise_seed=None, show_frames=False):
         _draw()
     env.close()
     rreturn = _make_return(policy, return_trajectory)
-    return Trajectory(rreturn, np.array(traj_states).T, np.array(traj_actions).T, rreturn_se=None)
+    return Trajectory(
+        rreturn,
+        np.array(traj_states).T,
+        np.array(traj_actions).T,
+        rreturn_se=None,
+        num_steps=int(step_count),
+    )

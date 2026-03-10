@@ -15,6 +15,8 @@ class TraceRecord:
     rreturn: float
     env_name: Optional[str] = None
     opt_name: Optional[str] = None
+    env_steps_iter: Optional[int] = None
+    env_steps_total: Optional[int] = None
 
 
 @contextmanager

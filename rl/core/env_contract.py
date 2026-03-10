@@ -68,8 +68,12 @@ def _infer_image_size(shape: tuple[int, ...], default_size: int) -> int:
 
 
 def resolve_observation_contract(env_conf: Any, *, default_image_size: int = 84) -> ObservationContract:
-    gym_conf = getattr(env_conf, "gym_conf", None)
-    state_space = getattr(gym_conf, "state_space", None) if gym_conf is not None else None
+    state_space = getattr(env_conf, "state_space", None)
+    if state_space is None:
+        gym_conf = getattr(env_conf, "gym_conf", None)
+        state_space = getattr(gym_conf, "state_space", None)
+    if state_space is None:
+        raise ValueError("Observation space is missing on env_conf. Call env_conf.ensure_spaces() before resolving env contracts.")
     raw_shape = _space_shape(state_space)
     from_pixels = bool(getattr(env_conf, "from_pixels", False))
     if not from_pixels:

@@ -12,7 +12,6 @@ backend = "torchrl"
 [rl.sac]
 exp_dir = "_tmp/gymnasium/cheetah/sac_torchrl_halfcheetah_hf_expert_like_linux"
 env_tag = "cheetah"
-seed = 2
 
 # Linux CUDA runtime.
 device = "cuda"
@@ -41,30 +40,19 @@ learner_update_chunk_size = 8
 alpha_init = 0.2
 target_entropy = -6.0
 
-backbone_name = "mlp"
-backbone_hidden_sizes = [256, 256]
-backbone_activation = "relu"
-backbone_layer_norm = false
-actor_head_hidden_sizes = []
-critic_head_hidden_sizes = []
-head_activation = "relu"
+# Architecture is resolved from problems/env_conf.py for env_tag = "cheetah".
 
 log_interval_steps = 1000
 
 # Eval block.
 eval_interval_steps = 10000
-num_denoise_eval = 1
-num_denoise_passive_eval = 1
+num_denoise = 1
+num_denoise_passive = 1
 eval_seed_base = 1000
 eval_noise_mode = "frozen"
 checkpoint_interval_steps = 200000
 
 video_enable = true
-video_prefix = "sac_torchrl_halfcheetah_hf_expert_like_linux"
-video_num_episodes = 5
-video_num_video_episodes = 2
-video_episode_selection = "best"
-video_seed_base = 1000
 
 [rl.run]
 num_reps = 10

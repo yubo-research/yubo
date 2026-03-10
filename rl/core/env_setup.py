@@ -9,6 +9,14 @@ from rl.core.continuous_actions import normalize_action_bounds
 from rl.core.env_conf import resolve_noise_seed_0, resolve_problem_seed
 
 
+def _maybe_register_atari_dm_backends(env_tag: str) -> None:
+    if not str(env_tag).startswith(("atari:", "ALE/", "dm:", "dm_control/")):
+        return
+    from problems.env_conf_backends import register_with_env_conf
+
+    register_with_env_conf()
+
+
 @dataclass(frozen=True)
 class ContinuousGymEnvSetup:
     env_conf: Any
@@ -34,6 +42,7 @@ def build_continuous_gym_env_setup(
 ) -> ContinuousGymEnvSetup:
     resolved_problem_seed = resolve_problem_seed(seed=int(seed), problem_seed=problem_seed)
     resolved_noise_seed_0 = resolve_noise_seed_0(problem_seed=int(resolved_problem_seed), noise_seed_0=noise_seed_0)
+    _maybe_register_atari_dm_backends(str(env_tag))
     env_conf = get_env_conf_fn(
         str(env_tag),
         problem_seed=int(resolved_problem_seed),
@@ -41,8 +50,6 @@ def build_continuous_gym_env_setup(
         from_pixels=bool(from_pixels),
         pixels_only=bool(pixels_only),
     )
-    if getattr(env_conf, "gym_conf", None) is None:
-        raise ValueError(f"SAC expects a gym env_tag, got {env_tag}")
     env_conf.ensure_spaces()
     if not hasattr(env_conf.action_space, "shape") or not hasattr(env_conf.action_space, "low"):
         raise ValueError("SAC expects a continuous Box action space.")

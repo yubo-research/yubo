@@ -1,8 +1,8 @@
-"""Unified console output for RL and BO runs. Algorithm/optimizer-specific metrics supported."""
-
 from __future__ import annotations
 
+import dataclasses
 import re
+import shutil
 import sys
 from collections import deque
 from typing import Any
@@ -32,6 +32,12 @@ def _green(s: str) -> str:
     return s
 
 
+def _cyan(s: str) -> str:
+    if _is_tty():
+        return f"\033[36m{s}\033[0m"
+    return s
+
+
 def _fmt_metric(val: float | None, fmt: str, width: int) -> str:
     if val is None or (val != val):  # nan
         return "  -  ".rjust(width)
@@ -44,6 +50,149 @@ def _with_prefix(line: str, prefix: str) -> str:
 
 def _print_line(line: str, *, prefix: str = "") -> None:
     print(_with_prefix(line, prefix), flush=True)
+
+
+def _cfg_value(value: Any) -> str:
+    max_len = 20
+    if value is None:
+        return "-"
+    if isinstance(value, float):
+        if value != value:
+            return "-"
+        text = f"{value:g}"
+    else:
+        text = str(value)
+    if len(text) > max_len:
+        return text[: max_len - 3] + "..."
+    return text
+
+
+# Non-identity aliases only; keys not listed fall back to themselves.
+_CFG_KEY_ALIASES = {
+    "noise_seed_0": "noise_seed",
+    "num_envs": "envs",
+    "frames_per_batch": "fpb",
+    "num_iterations": "iters",
+    "batch_size": "batch",
+    "learning_starts": "warmup",
+    "update_every": "upd_every",
+    "updates_per_step": "upd_per_step",
+    "learning_rate": "lr",
+    "learning_rate_actor": "lr_actor",
+    "learning_rate_critic": "lr_critic",
+    "learning_rate_alpha": "lr_alpha",
+    "eval_interval": "eval_int",
+    "eval_interval_steps": "eval_int",
+    "log_interval": "log_int",
+    "log_interval_steps": "log_int",
+    "num_denoise": "denoise",
+    "num_denoise_passive": "denoise_passive",
+    "eval_seed_base": "eval_seed",
+    "eval_noise_mode": "noise_mode",
+    "collector_backend": "collector",
+    "single_env_backend": "single_env",
+    "collector_workers": "workers",
+    "vector_backend": "vector",
+    "vector_num_workers": "v_workers",
+    "vector_batch_size": "v_batch",
+    "replay_backend": "replay",
+}
+
+
+def _cfg_key(key: str) -> str:
+    return _CFG_KEY_ALIASES.get(str(key), str(key))
+
+
+def _print_config_table(items: list[tuple[str, Any]], *, prefix: str = "", cols: int = 2, key_width: int = 16) -> None:
+    _ = key_width
+    filtered = [(_cfg_key(str(k)), _cfg_value(v)) for k, v in items if v is not None]
+    if not filtered:
+        return
+    cells = [f"{k}={v}" for k, v in filtered]
+    term_width = int(shutil.get_terminal_size(fallback=(100, 20)).columns)
+    available = max(52, min(110, term_width - len(prefix)))
+    max_cols = max(1, min(3, int(cols), len(cells)))
+    chosen_cols = 1
+    cell_width = max((len(c) for c in cells), default=1)
+    for cand_cols in range(max_cols, 0, -1):
+        cand_width = max((len(cells[i]) for i in range(0, len(cells))), default=1)
+        line_width = 2 + cand_cols * cand_width + 2 * (cand_cols - 1)
+        if line_width <= available:
+            chosen_cols = cand_cols
+            cell_width = cand_width
+            break
+    _print_line(f"  {_cyan('config')}:", prefix=prefix)
+    row_cells: list[list[str]] = []
+    for i in range(0, len(cells), chosen_cols):
+        row_cells.append(cells[i : i + chosen_cols])
+    for cells in row_cells:
+        padded = list(cells) + [""] * (chosen_cols - len(cells))
+        line = "  " + "  ".join(f"{cell:<{cell_width}}" for cell in padded).rstrip()
+        _print_line(line, prefix=prefix)
+
+
+def _config_to_mapping(config: Any) -> dict[str, Any]:
+    if config is None:
+        return {}
+    if dataclasses.is_dataclass(config):
+        return dataclasses.asdict(config)
+    if hasattr(config, "__dict__"):
+        return dict(vars(config))
+    return {}
+
+
+def _is_displayable_config_value(value: Any) -> bool:
+    if value is None or isinstance(value, (str, int, float, bool)):
+        return True
+    if isinstance(value, (tuple, list)):
+        return all(isinstance(v, (str, int, float, bool)) for v in value)
+    return False
+
+
+def _collect_header_config_items(config: Any, training: Any, runtime: Any) -> list[tuple[str, Any]]:
+    values = _config_to_mapping(config)
+    if not bool(values.get("video_enable", False)):
+        for key in list(values):
+            if str(key).startswith("video_"):
+                values.pop(key, None)
+    if not bool(values.get("profile_enable", False)):
+        for key in list(values):
+            if str(key).startswith("profile_"):
+                values.pop(key, None)
+    if values.get("resume_from") in {None, "", False}:
+        values.pop("resume_from", None)
+    excluded = {
+        "env_tag",
+        "seed",
+        "backbone_name",
+        "total_timesteps",
+        "from_pixels",
+        "pixels_only",
+        "theta_dim",
+        "exp_dir",
+        "device",
+    }
+    # Show resolved runtime settings when available (for torchrl runtime).
+    for key in ("collector_backend", "single_env_backend", "collector_workers"):
+        resolved = getattr(runtime, key, None)
+        if resolved is not None and resolved != "n/a":
+            values[key] = resolved
+    # Ensure loop-shape fields are visible for basic headers.
+    for key in ("frames_per_batch", "num_iterations"):
+        raw = getattr(training, key, None)
+        if raw is not None:
+            values[key] = raw
+    out: list[tuple[str, Any]] = []
+    seen: set[str] = set()
+    for key, value in values.items():
+        if key in excluded or not _is_displayable_config_value(value):
+            continue
+        shown = _cfg_key(str(key))
+        if shown in seen:
+            shown = str(key)
+        seen.add(shown)
+        out.append((shown, value))
+    return out
 
 
 def _global_step(iteration: int, frames_per_batch: int, step_override: int | None) -> int:
@@ -115,7 +264,7 @@ def print_run_header(
     _print_line(_dim("─" * 80), prefix=prefix)
     if algo_name == "ppo":
         title = (
-            _bold("PPO")
+            _bold(_cyan("PPO"))
             + f"  {config.env_tag}  seed={config.seed}  {runtime.device.type}  "
             + f"{training.frames_per_batch} frames/batch  {training.num_iterations} {total_label}"
         )
@@ -123,10 +272,13 @@ def print_run_header(
         first_col = "iter"
     else:
         total = getattr(config, "total_timesteps", 0)
-        title = _bold(algo_name.upper()) + f"  {config.env_tag}  seed={config.seed}  {runtime.device.type}  " + f"total={total:,}"
+        title = _bold(_cyan(algo_name.upper())) + f"  {config.env_tag}  seed={config.seed}  {runtime.device.type}  " + f"total={total:,}"
         _print_line(title, prefix=prefix)
-        first_col = "step"
-    _print_line(_dim(f"  obs={env.obs_dim} act={env.act_dim} backbone={backbone} from_pixels={from_pixels}"), prefix=prefix)
+        first_col = "steps"
+    _print_line(f"  obs={env.obs_dim} act={env.act_dim} backbone={backbone} from_pixels={from_pixels}", prefix=prefix)
+    cfg_items = _collect_header_config_items(config, training, runtime)
+    cfg_cols = 3 if len(cfg_items) >= 18 else 2
+    _print_config_table(cfg_items, prefix=prefix, cols=cfg_cols)
     _print_line(_dim("─" * 80), prefix=prefix)
 
     if algo_name == "ppo":

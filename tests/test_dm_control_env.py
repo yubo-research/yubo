@@ -33,6 +33,7 @@ class _DummyVis:
 
 
 class _DummyModel:
+    ncam = 4
     vis = _DummyVis()
 
     @staticmethod
@@ -44,6 +45,38 @@ class _DummyModel:
 class _DummyPhysics:
     def __init__(self):
         self.model = _DummyModel()
+        self.render_calls = []
+
+    def render(self, **kwargs):
+        self.render_calls.append(kwargs)
+        return np.zeros((kwargs["height"], kwargs["width"], 3), dtype=np.uint8)
+
+
+class _DummyModelNoNames:
+    ncam = 4
+    vis = _DummyVis()
+    cam_pos = np.asarray(
+        [
+            [0.0, 0.0, 10.0],  # far
+            [0.0, 0.0, 2.0],  # closest usable
+            [0.0, 0.0, 0.5],  # mode=0 should be ignored
+            [0.0, 0.0, 5.0],
+        ],
+        dtype=np.float32,
+    )
+    cam_mode = np.asarray([2, 2, 0, 2], dtype=np.int32)
+    cam_fovy = np.asarray([60.0, 45.0, 45.0, 50.0], dtype=np.float32)
+
+    @staticmethod
+    def name2id(name, kind):
+        _ = name
+        assert kind == "camera"
+        return -1
+
+
+class _DummyPhysicsNoNames:
+    def __init__(self):
+        self.model = _DummyModelNoNames()
         self.render_calls = []
 
     def render(self, **kwargs):
@@ -85,6 +118,11 @@ class _DummyDMEnv:
         return None
 
 
+class _DummyDMEnvNoNames(_DummyDMEnv):
+    def __init__(self):
+        self.physics = _DummyPhysicsNoNames()
+
+
 def test_parse_env_name():
     domain, task = _parse_env_name("dm_control/cheetah-run-v0")
     assert domain == "cheetah"
@@ -119,6 +157,15 @@ def test_dm_control_env_step_and_render(monkeypatch):
     render_call = env._env.physics.render_calls[-1]
     assert render_call["width"] == 1280
     assert render_call["height"] == 720
+    assert render_call["camera_id"] == 1
+
+
+def test_dm_control_env_camera_fallback_prefers_balanced_camera(monkeypatch):
+    monkeypatch.setattr(DMControlEnv, "_load_env", lambda self, seed: _DummyDMEnvNoNames())
+    env = DMControlEnv("cheetah", "run", render_mode="rgb_array")
+    _ = env.render()
+    render_call = env._env.physics.render_calls[-1]
+    assert render_call["camera_id"] == 3
 
 
 def test_configure_headless_render_backend_linux_no_display(monkeypatch):

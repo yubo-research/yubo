@@ -72,8 +72,16 @@ class MLPPolicy(PolicyParamsMixin, nn.Module):
         use_phase_features,
         num_phase_harmonics,
     ):
-        num_state = int(env_conf.gym_conf.state_space.shape[0])
-        num_action = int(env_conf.action_space.shape[0])
+        obs_space = getattr(env_conf, "state_space", None)
+        if obs_space is None:
+            gym_conf = getattr(env_conf, "gym_conf", None)
+            obs_space = getattr(gym_conf, "state_space", None) if gym_conf is not None else None
+        action_space = getattr(env_conf, "action_space", None)
+        if obs_space is None or action_space is None:
+            raise ValueError("Observation/action space is missing on env_conf. Call env_conf.ensure_spaces() before building MLPPolicy.")
+
+        num_state = int(obs_space.shape[0])
+        num_action = int(action_space.shape[0])
         self._const_scale = 0.5
         self._use_layer_norm = bool(use_layer_norm)
         self._rnn_hidden_size = None if rnn_hidden_size is None else int(rnn_hidden_size)

@@ -12,6 +12,8 @@ import torchrl.envs as tr_envs
 from rl.core.continuous_actions import scale_action_to_env, unscale_action_from_env
 from rl.core.env_setup import build_continuous_gym_env_setup
 from rl.core.sac_update import SACUpdateBatch, SACUpdateHyperParams, SACUpdateModules, SACUpdateOptimizers, sac_update_step
+from rl.torchrl.dm_control_collect import make_dm_control_collect_env
+from rl.torchrl.offpolicy import models as offpolicy_models
 
 from . import deps as sac_deps
 from .config import SACConfig
@@ -72,64 +74,9 @@ class _TrainState:
     last_heldout_return: float | None = None
 
 
-class _ActorNet(nn.Module):
-    def __init__(self, backbone: nn.Module, head: nn.Module, obs_scaler: sac_deps.torchrl_common.ObsScaler, act_dim: int):
-        super().__init__()
-        self.backbone = backbone
-        self.head = head
-        self.obs_scaler = obs_scaler
-        self.act_dim = int(act_dim)
-
-    def forward(self, observation: torch.Tensor):
-        obs = self.obs_scaler(observation)
-        feats = self.backbone(obs)
-        out = self.head(feats)
-        loc, log_scale = (out[..., : self.act_dim], out[..., self.act_dim :])
-        scale = log_scale.clamp(-5.0, 2.0).exp()
-        return (loc, scale)
-
-    def sample(self, obs: torch.Tensor, *, deterministic: bool = False) -> tuple[torch.Tensor, torch.Tensor]:
-        loc, scale = self.forward(obs)
-        if deterministic:
-            action = torch.tanh(loc)
-            log_prob = torch.zeros(action.shape[0], dtype=action.dtype, device=action.device)
-            return (action, log_prob)
-        dist = torch.distributions.Normal(loc, scale)
-        z = dist.rsample()
-        action = torch.tanh(z)
-        log_prob = dist.log_prob(z) - torch.log(1.0 - action.pow(2) + 1e-06)
-        return (action, log_prob.sum(dim=-1))
-
-    def act(self, obs: torch.Tensor) -> torch.Tensor:
-        loc, _ = self.forward(obs)
-        return torch.tanh(loc)
-
-
-class _QNet(nn.Module):
-    def __init__(self, backbone: nn.Module, head: nn.Module, obs_scaler: sac_deps.torchrl_common.ObsScaler):
-        super().__init__()
-        self.backbone, self.head = backbone, head
-        self.obs_scaler = obs_scaler
-
-    def forward(self, observation: torch.Tensor, action: torch.Tensor):
-        obs = self.obs_scaler(observation)
-        x = torch.cat([obs, action], dim=-1)
-        feats = self.backbone(x)
-        return self.head(feats).squeeze(-1)
-
-
-class _QNetPixel(nn.Module):
-    def __init__(self, obs_encoder: nn.Module, head: nn.Module, obs_scaler: sac_deps.torchrl_common.ObsScaler):
-        super().__init__()
-        self.obs_encoder, self.head = obs_encoder, head
-        # Keep scaler as a separate assignment for readability.
-        self.obs_scaler = obs_scaler
-
-    def forward(self, observation: torch.Tensor, action: torch.Tensor):
-        obs = self.obs_scaler(observation)
-        latent = self.obs_encoder(obs)
-        x = torch.cat([latent, action], dim=-1)
-        return self.head(x).squeeze(-1)
+_ActorNet = offpolicy_models.ActorNet
+_QNet = offpolicy_models.QNet
+_QNetPixel = offpolicy_models.QNetPixel
 
 
 class _ScaleActionToEnv(nn.Module):
@@ -148,22 +95,22 @@ def _is_dm_control_env(env_conf) -> bool:
 
 
 def _make_collect_env_dm_control_sac(env_conf, env_setup: _EnvSetup, env_index: int = 0):
-    from problems.shimmy_dm_control import make as make_dm_env
-
     seed = int(env_setup.problem_seed) + env_index
     from_pixels = getattr(env_conf, "from_pixels", False)
     pixels_only = getattr(env_conf, "pixels_only", True)
-    base = make_dm_env(env_conf.env_name, from_pixels=from_pixels, pixels_only=pixels_only)
-    base.reset(seed=seed)
-    if hasattr(base, "action_space") and hasattr(base.action_space, "seed"):
-        base.action_space.seed(seed)
-    if from_pixels:
-        to_tensor = sac_deps.tr_transforms.ToTensorImage(in_keys=["pixels"], out_keys=["observation"], from_int=True)
-        resize = sac_deps.tr_transforms.Resize(84, 84, in_keys=["observation"])
-        transforms = sac_deps.tr_transforms.Compose(to_tensor, resize, sac_deps.tr_transforms.DoubleToFloat())
-    else:
-        transforms = sac_deps.tr_transforms.DoubleToFloat()
-    return tr_envs.TransformedEnv(tr_envs.GymWrapper(base), transforms)
+    return make_dm_control_collect_env(
+        env_name=str(env_conf.env_name),
+        seed=int(seed),
+        from_pixels=bool(from_pixels),
+        pixels_only=bool(pixels_only),
+        tr_envs_module=tr_envs,
+        tr_transforms_module=sac_deps.tr_transforms,
+        pixels_transform_builder=lambda m: m.Compose(
+            m.ToTensorImage(in_keys=["pixels"], out_keys=["observation"], from_int=True),
+            m.Resize(84, 84, in_keys=["observation"]),
+            m.DoubleToFloat(),
+        ),
+    )
 
 
 def _make_collect_env_sac(env_conf, env_setup: _EnvSetup, env_index: int = 0):
@@ -190,7 +137,16 @@ def build_env_setup(config: SACConfig) -> _EnvSetup:
     )
     env_conf = shared.env_conf
     from_pixels = getattr(env_conf, "from_pixels", False)
-    obs_dim = 64 if from_pixels else int(env_conf.gym_conf.state_space.shape[0])
+    if from_pixels:
+        obs_dim = 64
+    else:
+        obs_space = getattr(env_conf, "state_space", None)
+        if obs_space is None:
+            gym_conf = getattr(env_conf, "gym_conf", None)
+            obs_space = getattr(gym_conf, "state_space", None)
+        if obs_space is None:
+            raise ValueError("Observation space is missing on env_conf. Call env_conf.ensure_spaces() before SAC setup.")
+        obs_dim = int(obs_space.shape[0])
     return _EnvSetup(
         env_conf=env_conf,
         problem_seed=int(shared.problem_seed),

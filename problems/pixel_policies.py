@@ -9,6 +9,13 @@ import torch.nn as nn
 from problems.policy_mixin import PolicyParamsMixin
 
 
+def _obs_space_from_env_conf(env_conf):
+    obs_space = getattr(env_conf, "state_space", None)
+    if obs_space is None:
+        raise ValueError("Observation space is missing on env_conf. Call env_conf.ensure_spaces() before building pixel policies.")
+    return obs_space
+
+
 def _init_linear_and_conv(module: nn.Module, *, gain: float) -> None:
     for m in module.modules():
         if isinstance(m, (nn.Linear, nn.Conv2d)):
@@ -77,7 +84,7 @@ class CNNMLPPolicy(PolicyParamsMixin, nn.Module):
         self._env_conf = env_conf
         self._const_scale = 0.5
 
-        obs_space = env_conf.gym_conf.state_space
+        obs_space = _obs_space_from_env_conf(env_conf)
         assert hasattr(obs_space, "shape"), "Pixel policy expects Box observation space"
         shape = obs_space.shape
         assert len(shape) == 3, f"Expected (H,W,C), got {shape}"
@@ -159,7 +166,7 @@ class AtariCNNPolicy(PolicyParamsMixin, nn.Module):
         self._env_conf = env_conf
         self._const_scale = 0.5
 
-        obs_space = env_conf.gym_conf.state_space
+        obs_space = _obs_space_from_env_conf(env_conf)
         shape = obs_space.shape
         # Atari: (4, 84, 84), (84, 84, 4), or (4, 84, 84, 1) from FrameStack + grayscale
         if len(shape) == 4 and shape[-1] == 1:
@@ -267,7 +274,7 @@ class AtariGaussianPolicy(PolicyParamsMixin, nn.Module):
         self._const_scale = 0.5
         self._deterministic_eval = bool(deterministic_eval)
 
-        obs_space = env_conf.gym_conf.state_space
+        obs_space = _obs_space_from_env_conf(env_conf)
         shape = obs_space.shape
         if len(shape) == 4 and shape[-1] == 1:
             in_channels = int(shape[0])
@@ -364,7 +371,7 @@ class AtariAgent57LitePolicy(PolicyParamsMixin, nn.Module):
         self._env_conf = env_conf
         self._const_scale = 0.5
 
-        obs_space = env_conf.gym_conf.state_space
+        obs_space = _obs_space_from_env_conf(env_conf)
         shape = obs_space.shape
         if len(shape) == 4 and shape[-1] == 1:
             in_channels = int(shape[0])

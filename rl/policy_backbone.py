@@ -16,6 +16,21 @@ def _init_linear(module: nn.Module) -> None:
     init_linear_layers(module, gain=0.5)
 
 
+def _obs_space_from_env_conf(env_conf):
+    obs_space = getattr(env_conf, "state_space", None)
+    if obs_space is None:
+        gym_conf = getattr(env_conf, "gym_conf", None)
+        obs_space = getattr(gym_conf, "state_space", None)
+    if obs_space is None:
+        raise ValueError("Observation space is missing on env_conf. Call env_conf.ensure_spaces() before creating policy_backbone policies.")
+    return obs_space
+
+
+def _ensure_env_spaces(env_conf) -> None:
+    if hasattr(env_conf, "ensure_spaces"):
+        env_conf.ensure_spaces()
+
+
 @dataclass
 class ActorPolicySpec:
     backbone: BackboneSpec
@@ -27,10 +42,8 @@ class ActorPolicySpec:
 class ActorBackbonePolicy(nn.Module):
     def __init__(self, env_conf, spec: ActorPolicySpec):
         super().__init__()
-        if env_conf.gym_conf is None:
-            raise ValueError("ActorBackbonePolicy expects a gym env_conf.")
-        env_conf.ensure_spaces()
-        obs_dim = int(env_conf.gym_conf.state_space.shape[0])
+        _ensure_env_spaces(env_conf)
+        obs_dim = int(_obs_space_from_env_conf(env_conf).shape[0])
         act_dim = int(env_conf.action_space.shape[0])
         self._action_squash = bool(spec.action_squash)
         self._const_scale = float(spec.param_scale)
@@ -99,9 +112,7 @@ class DiscreteActorPolicySpec:
 class DiscreteActorBackbonePolicy(PolicyParamsMixin, nn.Module):
     def __init__(self, env_conf, spec: DiscreteActorPolicySpec):
         super().__init__()
-        if env_conf.gym_conf is None:
-            raise ValueError("DiscreteActorBackbonePolicy expects a gym env_conf.")
-        env_conf.ensure_spaces()
+        _ensure_env_spaces(env_conf)
         self.problem_seed = env_conf.problem_seed
         self._env_conf = env_conf
         self._const_scale = float(spec.param_scale)
@@ -185,7 +196,8 @@ class GaussianActorBackbonePolicy(PolicyParamsMixin, nn.Module):
         if mode not in {"clip", "tanh_clip"}:
             raise ValueError(f"Unsupported squash_mode '{squash_mode}'. Expected: clip, tanh_clip.")
         self._squash_mode = mode
-        num_state = int(env_conf.gym_conf.state_space.shape[0])
+        _ensure_env_spaces(env_conf)
+        num_state = int(_obs_space_from_env_conf(env_conf).shape[0])
         num_action = int(env_conf.action_space.shape[0])
         self._normalizer = Normalizer(shape=(num_state,))
         self._clamp = env_conf.gym_conf is not None

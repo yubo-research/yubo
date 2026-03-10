@@ -21,7 +21,7 @@ def test_evaluate_heldout_with_best_actor_calls_eval_inside_context():
 
     out = evaluate_heldout_with_best_actor(
         best_actor_state={"id": 7},
-        num_denoise_passive_eval=3,
+        num_denoise_passive=3,
         heldout_i_noise=11,
         with_actor_state=_with_actor_state,
         evaluate_for_best=_evaluate_for_best,
@@ -45,7 +45,7 @@ def test_evaluate_heldout_with_best_actor_returns_none_if_disabled():
 
     out = evaluate_heldout_with_best_actor(
         best_actor_state={"id": 1},
-        num_denoise_passive_eval=None,
+        num_denoise_passive=None,
         heldout_i_noise=5,
         with_actor_state=_with_actor_state,
         evaluate_for_best=_evaluate_for_best,

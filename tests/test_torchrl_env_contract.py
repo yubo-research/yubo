@@ -14,9 +14,11 @@ from rl.core.env_contract import (
 
 
 def test_resolve_env_io_contract_vector_continuous():
+    state_space = SimpleNamespace(shape=(17,))
     env_conf = SimpleNamespace(
         from_pixels=False,
-        gym_conf=SimpleNamespace(state_space=SimpleNamespace(shape=(17,))),
+        gym_conf=SimpleNamespace(state_space=state_space),
+        state_space=state_space,
         action_space=SimpleNamespace(shape=(3,), low=np.array([-1.0, -1.0, -1.0]), high=np.array([1.0, 1.0, 1.0])),
     )
     contract = resolve_env_io_contract(env_conf)
@@ -27,9 +29,11 @@ def test_resolve_env_io_contract_vector_continuous():
 
 
 def test_resolve_env_io_contract_pixels_discrete():
+    state_space = SimpleNamespace(shape=(4, 84, 84, 1))
     env_conf = SimpleNamespace(
         from_pixels=True,
-        gym_conf=SimpleNamespace(state_space=SimpleNamespace(shape=(4, 84, 84, 1))),
+        gym_conf=SimpleNamespace(state_space=state_space),
+        state_space=state_space,
         action_space=SimpleNamespace(n=6, shape=()),
     )
     contract = resolve_env_io_contract(env_conf)
@@ -63,17 +67,21 @@ def test_contract_dataclasses_construct():
 
 
 def test_resolve_observation_contract_direct_vector_and_pixels():
+    vec_state_space = SimpleNamespace(shape=(2, 3))
     vec_env = SimpleNamespace(
         from_pixels=False,
-        gym_conf=SimpleNamespace(state_space=SimpleNamespace(shape=(2, 3))),
+        gym_conf=SimpleNamespace(state_space=vec_state_space),
+        state_space=vec_state_space,
     )
     vec_obs = resolve_observation_contract(vec_env)
     assert vec_obs.mode == "vector"
     assert vec_obs.vector_dim == 6
 
+    pix_state_space = SimpleNamespace(shape=(84, 84, 3))
     pix_env = SimpleNamespace(
         from_pixels=True,
-        gym_conf=SimpleNamespace(state_space=SimpleNamespace(shape=(84, 84, 3))),
+        gym_conf=SimpleNamespace(state_space=pix_state_space),
+        state_space=pix_state_space,
     )
     pix_obs = resolve_observation_contract(pix_env)
     assert pix_obs.mode == "pixels"

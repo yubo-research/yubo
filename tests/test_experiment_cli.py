@@ -21,8 +21,9 @@ class _StubExperimentConfig:
     env_tag: str
     opt_name: str
     num_arms: int
-    num_rounds: int
     num_reps: int
+    num_rounds: int | None = None
+    total_timesteps: int | None = None
     num_denoise: int | None = None
     num_denoise_passive: int | None = None
     max_proposal_seconds: float | None = None
@@ -110,6 +111,24 @@ def test_load_experiment_config_toml_root_and_hyphen_keys(tmp_path):
     assert cfg.num_arms == 2
     assert cfg.num_rounds == 4
     assert cfg.num_reps == 1
+
+
+def test_load_experiment_config_total_timesteps_only(tmp_path):
+    toml_path = _write_toml(
+        tmp_path,
+        """
+        [experiment]
+        exp_dir = "_tmp/exp"
+        env_tag = "f:sphere-2d"
+        opt_name = "random"
+        num_arms = 4
+        total_timesteps = 100000
+        num_reps = 1
+        """,
+    )
+    cfg = load_experiment_config(config_toml_path=str(toml_path))
+    assert cfg.total_timesteps == 100000
+    assert cfg.num_rounds is None
 
 
 def test_load_experiment_config_unknown_toml_key_raises(tmp_path):

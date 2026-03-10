@@ -75,7 +75,7 @@ def _get_eval_env_conf(config, state, *, build_eval_env_conf_fn):
 def _evaluate_actor(config, model, state, *, device: torch.device, eval_seed: int, build_eval_env_conf_fn, prepare_obs_fn) -> float:
     eval_env_conf = _get_eval_env_conf(config, state, build_eval_env_conf_fn=build_eval_env_conf_fn)
     eval_policy = PufferEvalPolicy(model=model, obs_spec=state.obs_spec, action_spec=state.action_spec, device=device, prepare_obs_fn=prepare_obs_fn)
-    traj, _ = collect_denoised_trajectory(eval_env_conf, eval_policy, num_denoise=config.num_denoise_eval, i_noise=int(eval_seed))
+    traj, _ = collect_denoised_trajectory(eval_env_conf, eval_policy, num_denoise=config.num_denoise, i_noise=int(eval_seed))
     return float(traj.rreturn)
 
 
@@ -84,7 +84,7 @@ def _evaluate_heldout_if_enabled(config, model, state, *, device: torch.device, 
     eval_policy = PufferEvalPolicy(model=model, obs_spec=state.obs_spec, action_spec=state.action_spec, device=device, prepare_obs_fn=prepare_obs_fn)
     return ppo_eval.evaluate_heldout_with_best_actor(
         best_actor_state=state.best_actor_state,
-        num_denoise_passive_eval=config.num_denoise_passive_eval,
+        num_denoise_passive=config.num_denoise_passive,
         heldout_i_noise=int(heldout_i_noise),
         with_actor_state=lambda snapshot: use_actor_snapshot(model, snapshot, device=device),
         evaluate_for_best=evaluate_for_best,
@@ -97,8 +97,9 @@ def maybe_eval_and_update_state(config, model, state, *, iteration: int, device:
     interval = int(config.eval_interval)
     if not is_due(int(iteration), interval):
         return
+    run_problem_seed = int(config.problem_seed) if config.problem_seed is not None else int(config.seed)
     plan = eval_noise.build_eval_plan(
-        current=iteration, interval=interval, seed=int(config.seed), eval_seed_base=config.eval_seed_base, eval_noise_mode=config.eval_noise_mode
+        current=iteration, interval=interval, seed=run_problem_seed, eval_seed_base=config.eval_seed_base, eval_noise_mode=config.eval_noise_mode
     )
     state.last_eval_return = _evaluate_actor(
         config, model, state, device=device, eval_seed=plan.eval_seed, build_eval_env_conf_fn=build_eval_env_conf_fn, prepare_obs_fn=prepare_obs_fn
@@ -122,8 +123,9 @@ def maybe_render_videos(config, model, state, *, exp_dir: Path, device: torch.de
         print(f"video disabled for non-gym env: {config.env_tag}", flush=True)
         return
     video_dir = exp_dir / "videos"
+    run_problem_seed = int(config.problem_seed) if config.problem_seed is not None else int(config.seed)
     base_seed = int(
-        config.video_seed_base if config.video_seed_base is not None else config.eval_seed_base if config.eval_seed_base is not None else config.seed
+        config.video_seed_base if config.video_seed_base is not None else config.eval_seed_base if config.eval_seed_base is not None else run_problem_seed
     )
     actor_state = state.best_actor_state if state.best_actor_state is not None else capture_actor_snapshot(model)
     eval_policy = PufferEvalPolicy(model=model, obs_spec=state.obs_spec, action_spec=state.action_spec, device=device, prepare_obs_fn=prepare_obs_fn)
@@ -146,10 +148,10 @@ def validate_eval_config(config) -> None:
         raise ValueError("eval_interval must be >= 0.")
     if config.eval_noise_mode is not None:
         eval_noise.normalize_eval_noise_mode(config.eval_noise_mode)
-    if config.num_denoise_eval is not None and int(config.num_denoise_eval) <= 0:
-        raise ValueError("num_denoise_eval must be > 0 when provided.")
-    if config.num_denoise_passive_eval is not None and int(config.num_denoise_passive_eval) <= 0:
-        raise ValueError("num_denoise_passive_eval must be > 0 when provided.")
+    if config.num_denoise is not None and int(config.num_denoise) <= 0:
+        raise ValueError("num_denoise must be > 0 when provided.")
+    if config.num_denoise_passive is not None and int(config.num_denoise_passive) <= 0:
+        raise ValueError("num_denoise_passive must be > 0 when provided.")
     if config.checkpoint_interval is not None and int(config.checkpoint_interval) <= 0:
         raise ValueError("checkpoint_interval must be > 0 when provided.")
     if int(config.video_num_episodes) <= 0:

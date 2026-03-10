@@ -23,7 +23,7 @@ def test_sac_evaluate_heldout_with_best_actor_calls_eval_inside_context():
 
     result = evaluate_heldout_with_best_actor(
         best_actor_state={"id": 5},
-        num_denoise_passive_eval=3,
+        num_denoise_passive=3,
         heldout_i_noise=7,
         with_actor_state=_with_actor_state,
         evaluate_for_best=_evaluate_for_best,

@@ -4,12 +4,18 @@ import rl.torchrl.sac as torchrl_sac
 def test_sac_config_from_dict_converts_hidden_sizes():
     cfg = torchrl_sac.SACConfig.from_dict(
         {
+            "env_tag": "cheetah",
             "exp_dir": "_tmp/sac_test",
             "backbone_hidden_sizes": [128, 64],
         }
     )
     assert cfg.exp_dir == "_tmp/sac_test"
     assert cfg.backbone_hidden_sizes == (128, 64)
+
+
+def test_sac_config_from_dict_uses_env_defaults():
+    cfg = torchrl_sac.SACConfig.from_dict({"env_tag": "cheetah"})
+    assert cfg.backbone_hidden_sizes == (256, 256)
 
 
 def test_sac_register_delegates_to_registry(monkeypatch):

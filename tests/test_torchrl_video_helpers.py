@@ -59,6 +59,41 @@ class _EnvConfStub:
         return env
 
 
+class _NonGymRenderEnv:
+    def __init__(self):
+        self.action_space = _BoxSpaceStub(low=[-1.0, -1.0], high=[1.0, 1.0])
+        self.observation_space = _BoxSpaceStub(low=[-1.0, -1.0], high=[1.0, 1.0])
+        self._step_count = 0
+
+    def reset(self, *, seed=None):
+        _ = seed
+        self._step_count = 0
+        return np.asarray([0.0, 0.0], dtype=np.float32), {}
+
+    def step(self, action):
+        _ = action
+        self._step_count += 1
+        terminated = self._step_count >= 1
+        return np.asarray([0.0, 0.0], dtype=np.float32), 1.0, terminated, False, {}
+
+    def render(self):
+        pixel = np.uint8(min(255, 40 * (self._step_count + 1)))
+        frame = np.full((8, 8, 3), pixel, dtype=np.uint8)
+        return frame
+
+    def close(self):
+        return
+
+
+class _NonGymEnvConfStub:
+    def __init__(self, *, max_steps=2):
+        self.gym_conf = None
+        self.max_steps = int(max_steps)
+
+    def make(self, **_kwargs):
+        return _NonGymRenderEnv()
+
+
 def test_scale_action_to_space_and_resolve_steps():
     action = np.asarray([-1.0, 1.0], dtype=np.float32)
     scaled = scale_action_to_space(action, _BoxSpaceStub(low=[-2.0, -2.0], high=[2.0, 2.0]))
@@ -194,6 +229,35 @@ def test_render_policy_videos_rl_selection_and_guards(monkeypatch, tmp_path):
     )
 
 
+def test_render_policy_videos_non_gym_not_skipped(monkeypatch, tmp_path):
+    env_conf = _NonGymEnvConfStub(max_steps=2)
+
+    calls = []
+
+    def _fake_rollout(_env_conf, _policy, *, seed, render_video, video_dir, video_prefix):
+        calls.append((seed, render_video, video_dir, video_prefix))
+        return 1.0
+
+    monkeypatch.setattr("common.video.rollout_episode", _fake_rollout)
+
+    render_policy_videos(
+        env_conf,
+        lambda _s: np.asarray([0.0, 0.0], dtype=np.float32),
+        video_dir=Path(tmp_path) / "videos",
+        video_prefix="non_gym",
+        num_episodes=2,
+        num_video_episodes=1,
+        episode_selection="best",
+        seed_base=17,
+    )
+
+    assert len(calls) == 3
+    non_video_calls = [entry for entry in calls if entry[1] is False]
+    video_calls = [entry for entry in calls if entry[1] is True]
+    assert len(non_video_calls) == 2
+    assert len(video_calls) == 1
+
+
 def test_policy_for_bo_rollout_no_transform():
     class _EnvConfNoTransform:
         def ensure_spaces(self):
@@ -317,6 +381,45 @@ def test_render_policy_videos_direct(tmp_path):
         seed_base=0,
     )
     assert video_dir.exists()
+
+
+def test_rollout_episode_records_non_gym_video(monkeypatch, tmp_path):
+    env_conf = _NonGymEnvConfStub(max_steps=2)
+
+    frames = []
+    video_path_holder = {}
+
+    def _fake_writer(video_path, *, fps=30):
+        _ = fps
+        path = Path(video_path)
+        video_path_holder["path"] = path
+
+        class _Writer:
+            def append_data(self, frame):
+                frames.append(np.asarray(frame))
+
+            def close(self):
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.touch()
+
+        return _Writer()
+
+    monkeypatch.setattr("common.video._open_frame_video_writer", _fake_writer)
+
+    ret = rollout_episode(
+        env_conf,
+        lambda _s: np.asarray([0.0, 0.0], dtype=np.float32),
+        seed=3,
+        render_video=True,
+        video_dir=Path(tmp_path) / "videos",
+        video_prefix="dm_non_gym",
+    )
+
+    assert ret == 1.0
+    assert video_path_holder["path"].name == "dm_non_gym-episode-0.mp4"
+    assert video_path_holder["path"].exists()
+    assert len(frames) >= 2
+    assert frames[0].dtype == np.uint8
 
 
 def test_render_policy_videos_skips_headless_video_error(monkeypatch, tmp_path, capsys):

@@ -276,8 +276,8 @@ def test_puffer_eval_helpers_and_validation():
     valid_cfg = SimpleNamespace(
         eval_interval=1,
         eval_noise_mode=None,
-        num_denoise_eval=1,
-        num_denoise_passive_eval=1,
+        num_denoise=1,
+        num_denoise_passive=1,
         checkpoint_interval=1,
         video_num_episodes=1,
         video_num_video_episodes=0,
@@ -288,8 +288,8 @@ def test_puffer_eval_helpers_and_validation():
     invalid_cfg = SimpleNamespace(
         eval_interval=1,
         eval_noise_mode=None,
-        num_denoise_eval=1,
-        num_denoise_passive_eval=1,
+        num_denoise=1,
+        num_denoise_passive=1,
         checkpoint_interval=1,
         video_num_episodes=1,
         video_num_video_episodes=0,
