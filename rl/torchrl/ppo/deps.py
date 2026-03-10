@@ -1,3 +1,5 @@
+"""Re-export PPO dependencies from core. Breaks cycle: core no longer imports deps."""
+
 import torchrl.envs.transforms as tr_transforms
 import torchrl.modules as tr_modules
 import torchrl.modules.distributions as tr_dists
@@ -6,7 +8,6 @@ import torchrl.objectives as tr_objectives
 import rl.backbone as backbone
 import rl.checkpointing as rl_checkpointing
 import rl.core.env_conf as seed_util
-import rl.registry as registry
 from analysis.data_io import write_config
 from common.seed_all import seed_all
 from problems.env_conf import get_env_conf
@@ -39,5 +40,4 @@ __all__ = [
     "write_config",
     "seed_all",
     "get_env_conf",
-    "registry",
 ]

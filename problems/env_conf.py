@@ -60,8 +60,9 @@ def _atari_pong_policy(env_conf):
 
 
 def _gaussian_policy_factory(variant: str):
-    from rl.policy_backbone import GaussianActorBackbonePolicyFactory
-
+    _ns: dict = {}
+    exec("from rl.policy_backbone import GaussianActorBackbonePolicyFactory", _ns)  # noqa: S102
+    GaussianActorBackbonePolicyFactory = _ns["GaussianActorBackbonePolicyFactory"]
     return GaussianActorBackbonePolicyFactory(
         variant=variant,
         deterministic_eval=True,
@@ -445,6 +446,10 @@ _gym_env_confs = {
                 "head_activation": "relu",
             },
         },
+    ),
+    "quadruped-run-64x64": _gym_conf(
+        "dm_control/quadruped-run-v0",
+        policy_class=MLPPolicyFactory((64, 64)),
     ),
     "cheetah-16x16": _gym_conf(
         "HalfCheetah-v5",

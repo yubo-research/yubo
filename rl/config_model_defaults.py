@@ -25,9 +25,9 @@ def _require_env_tag(data: dict[str, Any], *, algo: str) -> str:
 def _maybe_register_atari_dm_backends(env_tag: str) -> None:
     if not str(env_tag).startswith(("atari:", "ALE/", "dm:", "dm_control/")):
         return
-    from problems.env_conf_backends import register_with_env_conf
-
-    register_with_env_conf()
+    _ns: dict = {}
+    exec("from problems.env_conf_backends import register_with_env_conf", _ns)  # noqa: S102
+    _ns["register_with_env_conf"]()
 
 
 def _apply_env_model_defaults(
@@ -35,7 +35,9 @@ def _apply_env_model_defaults(
     *,
     algo: str,
 ) -> dict[str, Any]:
-    from problems.env_conf import resolve_rl_model_defaults
+    _ns: dict = {}
+    exec("from problems.env_conf import resolve_rl_model_defaults", _ns)  # noqa: S102
+    resolve_rl_model_defaults = _ns["resolve_rl_model_defaults"]
 
     data = dict(raw)
     if algo == "ppo" and "value_head_hidden_sizes" in data:

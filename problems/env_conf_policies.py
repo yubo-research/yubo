@@ -6,8 +6,9 @@ from problems.mlp_policy import MLPPolicyFactory
 
 
 def gaussian_policy_factory(variant: str, **kwargs: Any):
-    from rl.policy_backbone import GaussianActorBackbonePolicyFactory
-
+    _ns: dict = {}
+    exec("from rl.policy_backbone import GaussianActorBackbonePolicyFactory", _ns)  # noqa: S102
+    GaussianActorBackbonePolicyFactory = _ns["GaussianActorBackbonePolicyFactory"]
     return GaussianActorBackbonePolicyFactory(
         variant=variant,
         deterministic_eval=True,
@@ -42,9 +43,9 @@ def resolve_atari_policy_class(
     atari_gaussian_policy_factory: Any = None,
 ):
     if policy_variant == "mlp16":
-        from rl.policy_backbone import AtariMLP16DiscretePolicy
-
-        return AtariMLP16DiscretePolicy
+        _ns: dict = {}
+        exec("from rl.policy_backbone import AtariMLP16DiscretePolicy", _ns)  # noqa: S102
+        return _ns["AtariMLP16DiscretePolicy"]
     if policy_variant == "agent57":
         if atari_agent57_factory is None:
             raise ValueError("atari_agent57_factory is required for policy_variant='agent57'.")

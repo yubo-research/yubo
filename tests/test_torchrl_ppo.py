@@ -2,6 +2,7 @@ import pytest
 
 from rl.core.env_contract import ObservationContract
 from rl.torchrl.ppo import core as torchrl_on_policy_core
+from rl.torchrl.ppo import deps as op_deps
 from rl.torchrl.ppo.core import _TanhNormal as _CoreTanhNormal
 
 
@@ -25,8 +26,8 @@ def test_on_policy_core_tanhnormal_support_fget_direct_call():
 
 def test_discrete_actor_net_handles_unbatched_atari_obs():
     ppo = torchrl_on_policy_core
-    backbone = ppo.op_deps.backbone.build_backbone(
-        ppo.op_deps.backbone.BackboneSpec(
+    backbone = op_deps.backbone.build_backbone(
+        op_deps.backbone.BackboneSpec(
             name="nature_cnn_atari",
             hidden_sizes=(),
             activation="relu",
@@ -34,15 +35,15 @@ def test_discrete_actor_net_handles_unbatched_atari_obs():
         ),
         input_dim=64,
     )[0]
-    head = ppo.op_deps.backbone.build_mlp_head(
-        ppo.op_deps.backbone.HeadSpec(hidden_sizes=(), activation="relu"),
+    head = op_deps.backbone.build_mlp_head(
+        op_deps.backbone.HeadSpec(hidden_sizes=(), activation="relu"),
         input_dim=64,
         output_dim=6,
     )
     net = ppo._DiscreteActorNet(
         backbone,
         head,
-        ppo.op_deps.torchrl_common.ObsScaler(None, None),
+        op_deps.torchrl_common.ObsScaler(None, None),
         obs_contract=ObservationContract(mode="pixels", raw_shape=(4, 84, 84), model_channels=4, image_size=84),
     )
     obs = ppo.torch.randint(0, 256, (4, 84, 84), dtype=ppo.torch.uint8).float() / 255.0
@@ -51,23 +52,22 @@ def test_discrete_actor_net_handles_unbatched_atari_obs():
 
 
 def test_resolve_backbone_name_for_pixel_contract():
-    ppo = torchrl_on_policy_core
     assert (
-        ppo.op_deps.torchrl_env_contract.resolve_backbone_name(
+        op_deps.torchrl_env_contract.resolve_backbone_name(
             "mlp",
             ObservationContract(mode="pixels", raw_shape=(4, 84, 84, 1), model_channels=4, image_size=84),
         )
         == "nature_cnn_atari"
     )
     assert (
-        ppo.op_deps.torchrl_env_contract.resolve_backbone_name(
+        op_deps.torchrl_env_contract.resolve_backbone_name(
             "mlp",
             ObservationContract(mode="pixels", raw_shape=(84, 84, 3), model_channels=3, image_size=84),
         )
         == "nature_cnn"
     )
     assert (
-        ppo.op_deps.torchrl_env_contract.resolve_backbone_name(
+        op_deps.torchrl_env_contract.resolve_backbone_name(
             "mlp",
             ObservationContract(mode="vector", raw_shape=(17,), vector_dim=17),
         )

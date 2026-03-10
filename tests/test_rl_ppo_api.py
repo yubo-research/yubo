@@ -1,5 +1,6 @@
 def test_ppo_register_delegates_to_registry(monkeypatch):
-    import rl.torchrl.ppo as ppo
+    from rl.torchrl.ppo import PPOConfig
+    from rl.torchrl.ppo.core import register, train_ppo
 
     calls = []
 
@@ -7,13 +8,13 @@ def test_ppo_register_delegates_to_registry(monkeypatch):
         calls.append((name, config_cls, train_fn))
 
     monkeypatch.setattr("rl.registry.register_algo", fake_register_algo)
-    ppo.register()
+    register()
 
     assert len(calls) == 1
     name, config_cls, train_fn = calls[0]
     assert name == "ppo"
-    assert config_cls is ppo.PPOConfig
-    assert train_fn is ppo.train_ppo
+    assert config_cls is PPOConfig
+    assert train_fn is train_ppo
 
 
 def test_tanhnormal_support_property():
