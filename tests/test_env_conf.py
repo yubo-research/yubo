@@ -88,19 +88,19 @@ def test_resolve_rl_model_defaults_quadruped_run_uses_scaffolded_critic():
 
     register_get_env_conf(get_env_conf)
     ppo_cfg = resolve_rl_model_defaults("dm_control/quadruped-run-v0", algo="ppo")
-    assert ppo_cfg["backbone_hidden_sizes"] == (64, 64)
+    assert ppo_cfg["backbone_hidden_sizes"] == (32, 16)
     assert ppo_cfg["backbone_activation"] == "silu"
     assert ppo_cfg["backbone_layer_norm"] is True
-    assert ppo_cfg["critic_backbone_hidden_sizes"] == (256, 256)
-    assert ppo_cfg["critic_backbone_activation"] == "relu"
-    assert ppo_cfg["share_backbone"] is False
+    assert "critic_backbone_hidden_sizes" not in ppo_cfg
+    assert "critic_backbone_activation" not in ppo_cfg
+    assert ppo_cfg["share_backbone"] is True
 
     sac_cfg = resolve_rl_model_defaults("dm_control/quadruped-run-v0", algo="sac")
-    assert sac_cfg["backbone_hidden_sizes"] == (64, 64)
+    assert sac_cfg["backbone_hidden_sizes"] == (32, 16)
     assert sac_cfg["backbone_activation"] == "silu"
     assert sac_cfg["backbone_layer_norm"] is True
-    assert sac_cfg["critic_backbone_hidden_sizes"] == (256, 256)
-    assert sac_cfg["critic_backbone_activation"] == "relu"
+    assert "critic_backbone_hidden_sizes" not in sac_cfg
+    assert "critic_backbone_activation" not in sac_cfg
     assert sac_cfg["head_activation"] == "silu"
 
 
