@@ -2,14 +2,14 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from rl.torchrl.sac.actor_eval import (
-    SacActorEvalPolicy,
-    capture_sac_actor_snapshot,
-    use_sac_actor_snapshot,
+from rl.torchrl.offpolicy.actor_eval import (
+    OffPolicyActorEvalPolicy,
+    capture_actor_snapshot,
+    use_actor_snapshot,
 )
 
 
-def test_use_sac_actor_snapshot_restores_on_exit():
+def test_use_actor_snapshot_restores_on_exit():
     backbone = nn.Linear(2, 3)
     head = nn.Linear(3, 1)
     modules = type("M", (), {"actor_backbone": backbone, "actor_head": head})()
@@ -17,13 +17,13 @@ def test_use_sac_actor_snapshot_restores_on_exit():
     with torch.inference_mode():
         backbone.weight.fill_(1.0)
         head.weight.fill_(2.0)
-    snapshot = capture_sac_actor_snapshot(modules)
+    snapshot = capture_actor_snapshot(modules)
 
     with torch.inference_mode():
         backbone.weight.fill_(99.0)
         head.weight.fill_(88.0)
 
-    with use_sac_actor_snapshot(modules, snapshot, device=torch.device("cpu")):
+    with use_actor_snapshot(modules, snapshot, device=torch.device("cpu")):
         torch.testing.assert_close(backbone.weight, torch.ones_like(backbone.weight))
         torch.testing.assert_close(head.weight, torch.full_like(head.weight, 2.0))
 
@@ -39,7 +39,7 @@ def test_sac_actor_eval_policy_handles_pixel_input():
         nn.Flatten(),
     )
     head = nn.Linear(4, 4)
-    policy = SacActorEvalPolicy(
+    policy = OffPolicyActorEvalPolicy(
         backbone,
         head,
         nn.Identity(),

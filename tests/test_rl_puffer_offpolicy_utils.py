@@ -46,7 +46,7 @@ def test_engine_utils_init_run_artifacts(monkeypatch, tmp_path: Path):
 
 def test_engine_utils_init_runtime(monkeypatch):
     def _fake_import_module(name: str):
-        assert name == "rl.core.env_conf"
+        assert name == "rl.core.envs"
         return SimpleNamespace(global_seed_for_run=lambda seed: seed + 17)
 
     monkeypatch.setattr(engine_utils.importlib, "import_module", _fake_import_module)
@@ -99,7 +99,11 @@ def test_runtime_utils_select_device_and_obs_scale(monkeypatch):
 
     monkeypatch.setattr(runtime_utils, "_select_device_core", _fake_select_device)
     monkeypatch.setattr(runtime_utils, "_mps_is_available_core", lambda: True)
-    monkeypatch.setattr(runtime_utils, "_obs_scale_from_env_core", lambda env_conf: ("lb", "w", env_conf))
+    monkeypatch.setattr(
+        runtime_utils,
+        "_obs_scale_from_env_core",
+        lambda env_conf: ("lb", "w", env_conf),
+    )
 
     out = runtime_utils.select_device("auto")
     assert out.type == "cpu"

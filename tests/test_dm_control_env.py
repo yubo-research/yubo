@@ -1,7 +1,13 @@
 import numpy as np
 
 from problems import dm_control_env
-from problems.dm_control_env import DMControlEnv, _configure_headless_render_backend, _parse_env_name, make
+from problems.dm_control_env import (
+    DMControlEnv,
+    configure_render_backend,
+    load,
+    make,
+    parse_name,
+)
 
 
 class _DummySpec:
@@ -124,7 +130,7 @@ class _DummyDMEnvNoNames(_DummyDMEnv):
 
 
 def test_parse_env_name():
-    domain, task = _parse_env_name("dm_control/cheetah-run-v0")
+    domain, task = parse_name("dm_control/cheetah-run-v0")
     assert domain == "cheetah"
     assert task == "run"
 
@@ -175,7 +181,7 @@ def test_configure_headless_render_backend_linux_no_display(monkeypatch):
     monkeypatch.delenv("MUJOCO_GL", raising=False)
     monkeypatch.delenv("PYOPENGL_PLATFORM", raising=False)
 
-    _configure_headless_render_backend("rgb_array")
+    configure_render_backend("rgb_array")
 
     assert dm_control_env.os.environ["MUJOCO_GL"] == "egl"
     assert dm_control_env.os.environ["PYOPENGL_PLATFORM"] == "egl"
@@ -188,7 +194,37 @@ def test_configure_headless_render_backend_respects_existing_setting(monkeypatch
     monkeypatch.setenv("MUJOCO_GL", "glfw")
     monkeypatch.delenv("PYOPENGL_PLATFORM", raising=False)
 
-    _configure_headless_render_backend("rgb_array")
+    configure_render_backend("rgb_array")
 
     assert dm_control_env.os.environ["MUJOCO_GL"] == "glfw"
     assert "PYOPENGL_PLATFORM" not in dm_control_env.os.environ
+
+
+def test_configure_headless_render_backend_sets_platform_for_existing_egl(monkeypatch):
+    monkeypatch.setattr(dm_control_env.sys, "platform", "linux")
+    monkeypatch.delenv("DISPLAY", raising=False)
+    monkeypatch.delenv("WAYLAND_DISPLAY", raising=False)
+    monkeypatch.setenv("MUJOCO_GL", "egl")
+    monkeypatch.delenv("PYOPENGL_PLATFORM", raising=False)
+
+    configure_render_backend("rgb_array")
+
+    assert dm_control_env.os.environ["MUJOCO_GL"] == "egl"
+    assert dm_control_env.os.environ["PYOPENGL_PLATFORM"] == "egl"
+
+
+def test_load_uses_parsed_name(monkeypatch):
+    captured = {}
+
+    monkeypatch.setattr(
+        dm_control_env,
+        "_suite",
+        lambda: type(
+            "_S",
+            (),
+            {"load": staticmethod(lambda domain, task, task_kwargs=None: captured.setdefault("call", (domain, task, task_kwargs)))},
+        )(),
+    )
+    out = load("dm_control/cheetah-run-v0", seed=7, render_mode="rgb_array")
+    assert out == ("cheetah", "run", {"random": 7})
+    assert captured["call"] == ("cheetah", "run", {"random": 7})

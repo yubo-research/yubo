@@ -24,7 +24,7 @@ def _build_vector_kwargs(config: Any, backend_cls, vector_mod) -> dict[str, Any]
     return kwargs
 
 
-def _make_dm_control_env(*, env_name: str, env_kwargs: dict, from_pixels: bool, pixels_only: bool, buf=None, seed=0):
+def _make_dm_control_env(*, env_name: str, env_kwargs: dict, obs_mode: str, buf=None, seed=0):
     import gymnasium as gym
     import numpy as np
     import pufferlib
@@ -37,8 +37,7 @@ def _make_dm_control_env(*, env_name: str, env_kwargs: dict, from_pixels: bool, 
             self._env = make_dm_control_env(
                 env_name,
                 render_mode="rgb_array",
-                from_pixels=bool(from_pixels),
-                pixels_only=bool(pixels_only),
+                obs_mode=str(obs_mode),
                 **kwargs,
             )
             obs_space = self._env.observation_space
@@ -141,11 +140,22 @@ def _resolve_backend(config: Any, puffer_vector):
     return (backend_cls, backend_kwargs)
 
 
-def _resolve_env_creator(config: Any, *, pufferlib, puffer_atari, is_atari_env_tag_fn, to_puffer_game_name_fn, resolve_gym_env_name_fn):
+def _resolve_env_creator(
+    config: Any,
+    *,
+    pufferlib,
+    puffer_atari,
+    is_atari_env_tag_fn,
+    to_puffer_game_name_fn,
+    resolve_gym_env_name_fn,
+):
     env_tag = str(config.env_tag)
     if is_atari_env_tag_fn(env_tag):
         game_name = to_puffer_game_name_fn(env_tag)
-        return (puffer_atari.env_creator(game_name), {"framestack": int(config.framestack)})
+        return (
+            puffer_atari.env_creator(game_name),
+            {"framestack": int(config.framestack)},
+        )
     env_name, env_kwargs = resolve_gym_env_name_fn(env_tag)
     if str(env_name).startswith("dm_control/"):
         return (
@@ -153,8 +163,7 @@ def _resolve_env_creator(config: Any, *, pufferlib, puffer_atari, is_atari_env_t
                 _make_dm_control_env,
                 env_name=str(env_name),
                 env_kwargs=dict(env_kwargs),
-                from_pixels=bool(getattr(config, "from_pixels", False)),
-                pixels_only=bool(getattr(config, "pixels_only", True)),
+                obs_mode=str(getattr(config, "obs_mode", "vector")),
             ),
             {},
         )
@@ -168,7 +177,14 @@ def _resolve_vector_seed(config: Any) -> int:
     return int(config.seed)
 
 
-def make_vector_env(config: Any, *, import_pufferlib_modules_fn, is_atari_env_tag_fn, to_puffer_game_name_fn, resolve_gym_env_name_fn):
+def make_vector_env(
+    config: Any,
+    *,
+    import_pufferlib_modules_fn,
+    is_atari_env_tag_fn,
+    to_puffer_game_name_fn,
+    resolve_gym_env_name_fn,
+):
     pufferlib, puffer_vector, puffer_atari = import_pufferlib_modules_fn()
     backend_cls, backend_kwargs = _resolve_backend(config, puffer_vector)
     env_creator, env_kwargs = _resolve_env_creator(

@@ -2,6 +2,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
+from problems.activations import activation
 from problems.policy_mixin import PolicyParamsMixin
 
 
@@ -11,6 +12,7 @@ class MLPPolicyFactory:
         hidden_sizes,
         *,
         use_layer_norm=True,
+        activation="silu",
         rnn_hidden_size=None,
         use_prev_action=False,
         use_phase_features=False,
@@ -18,6 +20,7 @@ class MLPPolicyFactory:
     ):
         self._hidden_sizes = hidden_sizes
         self._use_layer_norm = bool(use_layer_norm)
+        self._activation = str(activation)
         self._rnn_hidden_size = rnn_hidden_size
         self._use_prev_action = bool(use_prev_action)
         self._use_phase_features = bool(use_phase_features)
@@ -28,11 +31,29 @@ class MLPPolicyFactory:
             env_conf,
             self._hidden_sizes,
             use_layer_norm=self._use_layer_norm,
+            activation=self._activation,
             rnn_hidden_size=self._rnn_hidden_size,
             use_prev_action=self._use_prev_action,
             use_phase_features=self._use_phase_features,
             num_phase_harmonics=self._num_phase_harmonics,
         )
+
+    def to_rl_schema(self):
+        return {
+            "family": "mlp",
+            "backbone_hidden_sizes": tuple(int(v) for v in self._hidden_sizes),
+            "backbone_activation": str(self._activation),
+            "backbone_layer_norm": bool(self._use_layer_norm),
+            "actor_head_hidden_sizes": (),
+            "critic_head_hidden_sizes": (),
+            "head_activation": str(self._activation),
+            "share_backbone": True,
+            "log_std_init": -0.5,
+            "rnn_hidden_size": None if self._rnn_hidden_size is None else int(self._rnn_hidden_size),
+            "use_prev_action": bool(self._use_prev_action),
+            "use_phase_features": bool(self._use_phase_features),
+            "num_phase_harmonics": int(self._num_phase_harmonics),
+        }
 
 
 class MLPPolicy(PolicyParamsMixin, nn.Module):
@@ -42,6 +63,7 @@ class MLPPolicy(PolicyParamsMixin, nn.Module):
         hidden_sizes,
         *,
         use_layer_norm=True,
+        activation="silu",
         rnn_hidden_size=None,
         use_prev_action=False,
         use_phase_features=False,
@@ -53,6 +75,7 @@ class MLPPolicy(PolicyParamsMixin, nn.Module):
         num_state, num_action = self._init_flags(
             env_conf,
             use_layer_norm=use_layer_norm,
+            activation=activation,
             rnn_hidden_size=rnn_hidden_size,
             use_prev_action=use_prev_action,
             use_phase_features=use_phase_features,
@@ -67,6 +90,7 @@ class MLPPolicy(PolicyParamsMixin, nn.Module):
         env_conf,
         *,
         use_layer_norm,
+        activation,
         rnn_hidden_size,
         use_prev_action,
         use_phase_features,
@@ -84,6 +108,7 @@ class MLPPolicy(PolicyParamsMixin, nn.Module):
         num_action = int(action_space.shape[0])
         self._const_scale = 0.5
         self._use_layer_norm = bool(use_layer_norm)
+        self._activation = str(activation)
         self._rnn_hidden_size = None if rnn_hidden_size is None else int(rnn_hidden_size)
         if self._rnn_hidden_size is not None:
             assert self._rnn_hidden_size >= 1
@@ -96,11 +121,12 @@ class MLPPolicy(PolicyParamsMixin, nn.Module):
 
     def _build_network(self, num_state, num_action, hidden_sizes):
         dims = [num_state] + list(hidden_sizes) + [num_action]
+        act = activation(self._activation)
         if self._rnn_hidden_size is None:
             layers = []
             for i in range(len(dims) - 2):
                 layers.append(nn.Linear(dims[i], dims[i + 1]))
-                layers.append(nn.SiLU())
+                layers.append(act())
             layers.append(nn.Linear(dims[-2], dims[-1]))
             layers.append(nn.Tanh())
             self.model = nn.Sequential(*layers)
@@ -118,10 +144,10 @@ class MLPPolicy(PolicyParamsMixin, nn.Module):
         d_in = in_dim
         for hs in list(hidden_sizes):
             feat_layers.append(nn.Linear(d_in, int(hs)))
-            feat_layers.append(nn.SiLU())
+            feat_layers.append(act())
             d_in = int(hs)
         feat_layers.append(nn.Linear(d_in, self._rnn_hidden_size))
-        feat_layers.append(nn.SiLU())
+        feat_layers.append(act())
         self.embed = nn.Sequential(*feat_layers)
         self.rnn = nn.GRUCell(self._rnn_hidden_size, self._rnn_hidden_size)
         self.head = nn.Sequential(nn.Linear(self._rnn_hidden_size, num_action), nn.Tanh())

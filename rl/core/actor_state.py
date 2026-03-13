@@ -5,6 +5,7 @@ from typing import Any
 
 import numpy as np
 import torch
+import torch.nn as nn
 
 
 def _clone_tensor(tensor: torch.Tensor, *, to_cpu: bool) -> torch.Tensor:
@@ -14,9 +15,9 @@ def _clone_tensor(tensor: torch.Tensor, *, to_cpu: bool) -> torch.Tensor:
     return out.clone()
 
 
-def capture_backbone_head_snapshot(
-    actor_backbone: torch.nn.Module,
-    actor_head: torch.nn.Module,
+def snap(
+    actor_backbone: nn.Module,
+    actor_head: nn.Module,
     *,
     log_std: torch.Tensor | None = None,
     state_to_cpu: bool = False,
@@ -40,13 +41,25 @@ def capture_backbone_head_snapshot(
     raise ValueError("log_std_format must be one of: tensor, numpy.")
 
 
-def capture_ppo_actor_snapshot(actor_backbone: torch.nn.Module, actor_head: torch.nn.Module, *, log_std: torch.Tensor | None = None) -> dict[str, Any]:
-    return capture_backbone_head_snapshot(actor_backbone, actor_head, log_std=log_std, state_to_cpu=False, log_std_to_cpu=True, log_std_format="tensor")
+def ppo_snap(
+    actor_backbone: nn.Module,
+    actor_head: nn.Module,
+    *,
+    log_std: torch.Tensor | None = None,
+) -> dict[str, Any]:
+    return snap(
+        actor_backbone,
+        actor_head,
+        log_std=log_std,
+        state_to_cpu=False,
+        log_std_to_cpu=True,
+        log_std_format="tensor",
+    )
 
 
-def restore_backbone_head_snapshot(
-    actor_backbone: torch.nn.Module,
-    actor_head: torch.nn.Module,
+def load(
+    actor_backbone: nn.Module,
+    actor_head: nn.Module,
     snapshot: dict[str, Any],
     *,
     log_std: torch.Tensor | None = None,
@@ -60,9 +73,9 @@ def restore_backbone_head_snapshot(
 
 
 @contextmanager
-def use_backbone_head_snapshot(
-    actor_backbone: torch.nn.Module,
-    actor_head: torch.nn.Module,
+def using(
+    actor_backbone: nn.Module,
+    actor_head: nn.Module,
     snapshot: dict[str, Any],
     *,
     log_std: torch.Tensor | None = None,
@@ -71,14 +84,19 @@ def use_backbone_head_snapshot(
     log_std_to_cpu: bool = True,
     log_std_format: str = "tensor",
 ):
-    previous = capture_backbone_head_snapshot(
-        actor_backbone, actor_head, log_std=log_std, state_to_cpu=state_to_cpu, log_std_to_cpu=log_std_to_cpu, log_std_format=log_std_format
+    prev = snap(
+        actor_backbone,
+        actor_head,
+        log_std=log_std,
+        state_to_cpu=state_to_cpu,
+        log_std_to_cpu=log_std_to_cpu,
+        log_std_format=log_std_format,
     )
-    restore_backbone_head_snapshot(actor_backbone, actor_head, snapshot, log_std=log_std, device=device)
+    load(actor_backbone, actor_head, snapshot, log_std=log_std, device=device)
     try:
         yield
     finally:
-        restore_backbone_head_snapshot(actor_backbone, actor_head, previous, log_std=log_std, device=device)
+        load(actor_backbone, actor_head, prev, log_std=log_std, device=device)
 
 
 def rng_state_payload() -> dict[str, Any]:

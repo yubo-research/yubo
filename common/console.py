@@ -103,7 +103,13 @@ def _cfg_key(key: str) -> str:
     return _CFG_KEY_ALIASES.get(str(key), str(key))
 
 
-def _print_config_table(items: list[tuple[str, Any]], *, prefix: str = "", cols: int = 2, key_width: int = 16) -> None:
+def _print_config_table(
+    items: list[tuple[str, Any]],
+    *,
+    prefix: str = "",
+    cols: int = 2,
+    key_width: int = 16,
+) -> None:
     _ = key_width
     filtered = [(_cfg_key(str(k)), _cfg_value(v)) for k, v in items if v is not None]
     if not filtered:
@@ -149,6 +155,22 @@ def _is_displayable_config_value(value: Any) -> bool:
     return False
 
 
+def _hide_header_key(key: str) -> bool:
+    key = str(key)
+    if key in {
+        "env_tag",
+        "seed",
+        "backbone_name",
+        "total_timesteps",
+        "obs_mode",
+        "theta_dim",
+        "exp_dir",
+        "device",
+    }:
+        return True
+    return key.endswith("_hidden_sizes") or key.endswith("_activation") or key.endswith("_layer_norm") or key in {"critic_backbone_name", "share_backbone"}
+
+
 def _collect_header_config_items(config: Any, training: Any, runtime: Any) -> list[tuple[str, Any]]:
     values = _config_to_mapping(config)
     if not bool(values.get("video_enable", False)):
@@ -161,17 +183,6 @@ def _collect_header_config_items(config: Any, training: Any, runtime: Any) -> li
                 values.pop(key, None)
     if values.get("resume_from") in {None, "", False}:
         values.pop("resume_from", None)
-    excluded = {
-        "env_tag",
-        "seed",
-        "backbone_name",
-        "total_timesteps",
-        "from_pixels",
-        "pixels_only",
-        "theta_dim",
-        "exp_dir",
-        "device",
-    }
     # Show resolved runtime settings when available (for torchrl runtime).
     for key in ("collector_backend", "single_env_backend", "collector_workers"):
         resolved = getattr(runtime, key, None)
@@ -185,7 +196,7 @@ def _collect_header_config_items(config: Any, training: Any, runtime: Any) -> li
     out: list[tuple[str, Any]] = []
     seen: set[str] = set()
     for key, value in values.items():
-        if key in excluded or not _is_displayable_config_value(value):
+        if _hide_header_key(key) or not _is_displayable_config_value(value):
             continue
         shown = _cfg_key(str(key))
         if shown in seen:
@@ -251,14 +262,14 @@ def print_run_header(
     """Print a compact run header. algo_name selects metric columns (ppo, sac)."""
     obs_contract = getattr(getattr(env, "io_contract", None), "observation", None)
     if obs_contract is not None:
-        from_pixels = obs_contract.mode == "pixels"
-        if from_pixels:
+        obs_mode = str(obs_contract.mode)
+        if obs_mode == "pixels":
             backbone = "nature_cnn_atari" if int(obs_contract.model_channels or 3) == 4 else "nature_cnn"
         else:
             backbone = getattr(config, "backbone_name", "mlp")
     else:
-        from_pixels = bool(getattr(env.env_conf, "from_pixels", False))
-        backbone = "nature_cnn" if from_pixels else getattr(config, "backbone_name", "mlp")
+        obs_mode = str(getattr(env.env_conf, "obs_mode", "vector"))
+        backbone = "nature_cnn" if obs_mode in {"image", "mixed", "pixels", "pixels+state"} else getattr(config, "backbone_name", "mlp")
     algo_metrics = _ALGO_SCHEMAS.get(algo_name, [])
 
     _print_line(_dim("─" * 80), prefix=prefix)
@@ -275,7 +286,10 @@ def print_run_header(
         title = _bold(_cyan(algo_name.upper())) + f"  {config.env_tag}  seed={config.seed}  {runtime.device.type}  " + f"total={total:,}"
         _print_line(title, prefix=prefix)
         first_col = "steps"
-    _print_line(f"  obs={env.obs_dim} act={env.act_dim} backbone={backbone} from_pixels={from_pixels}", prefix=prefix)
+    _print_line(
+        f"  obs={env.obs_dim} act={env.act_dim} backbone={backbone} obs_mode={obs_mode}",
+        prefix=prefix,
+    )
     cfg_items = _collect_header_config_items(config, training, runtime)
     cfg_cols = 3 if len(cfg_items) >= 18 else 2
     _print_config_table(cfg_items, prefix=prefix, cols=cfg_cols)

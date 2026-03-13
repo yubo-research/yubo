@@ -14,6 +14,36 @@ ATARI_FRAME_STACK = 4
 ATARI_MAX_EPISODE_STEPS = 108000  # 30 min at 60fps, 4 frame skip -> ~27k steps
 
 
+def policy_class(
+    *,
+    policy_variant: str | None,
+    atari_agent57_factory: Any = None,
+    atari_cnn_policy_factory: Any = None,
+    atari_gaussian_policy_factory: Any = None,
+):
+    if policy_variant == "mlp16":
+        from rl.policy_backbone import AtariMLP16DiscretePolicy
+
+        return AtariMLP16DiscretePolicy
+    if policy_variant == "agent57":
+        if atari_agent57_factory is None:
+            raise ValueError("atari_agent57_factory is required for policy_variant='agent57'.")
+        return atari_agent57_factory(lstm_hidden=32, cnn_variant="small")
+    if policy_variant == "gauss":
+        if atari_gaussian_policy_factory is None:
+            raise ValueError("atari_gaussian_policy_factory is required for policy_variant='gauss'.")
+        return atari_gaussian_policy_factory(
+            hidden_sizes=(16, 16),
+            cnn_latent_dim=64,
+            variant="small",
+            deterministic_eval=True,
+            init_log_std=-0.5,
+        )
+    if atari_cnn_policy_factory is None:
+        raise ValueError("atari_cnn_policy_factory is required for default Atari policy.")
+    return atari_cnn_policy_factory((24,), variant="small")
+
+
 @dataclass(frozen=True)
 class AtariPreprocessOptions:
     terminal_on_life_loss: bool = False
@@ -25,7 +55,7 @@ class AtariPreprocessOptions:
     color_averaging: bool = False
 
 
-def _parse_atari_tag(tag: str) -> str:
+def parse_tag(tag: str) -> str:
     """Parse atari:Pong or atari:Pong:agent57 -> ALE/Pong-v5."""
     if tag.startswith("atari:"):
         parts = tag.split(":", 1)[1].strip().split(":")
@@ -235,5 +265,5 @@ def make_atari_env(
 
 def make(env_id: str, *, render_mode: str | None = None, **kwargs: Any) -> gym.Env:
     """Create Atari env. env_id can be atari:Pong or ALE/Pong-v5."""
-    resolved = _parse_atari_tag(env_id) if "atari:" in env_id or env_id.startswith("ALE/") else env_id
+    resolved = parse_tag(env_id) if "atari:" in env_id or env_id.startswith("ALE/") else env_id
     return make_atari_env(resolved, render_mode=render_mode, **kwargs)

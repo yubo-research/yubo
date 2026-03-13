@@ -125,7 +125,7 @@ def mean_return_over_runs(env_conf: Any, policy: Any, num_denoise: int, *, i_noi
     return MeanReturnResult(mean=float(np.mean(returns)), se=se, all_same=bool(all_same))
 
 
-def collect_denoised_trajectory(env_conf: Any, policy: Any, *, num_denoise: int | None, i_noise: int | None = None) -> tuple[Trajectory, int | None]:
+def denoise(env_conf: Any, policy: Any, *, num_denoise: int | None, i_noise: int | None = None) -> tuple[Trajectory, int | None]:
     if num_denoise is None:
         return collect_trajectory_with_noise(env_conf, policy, i_noise=i_noise, denoise_seed=0)
     if int(num_denoise) == 1:
@@ -135,6 +135,6 @@ def collect_denoised_trajectory(env_conf: Any, policy: Any, *, num_denoise: int 
     return (Trajectory(float(mean_ret), rreturn_se=rreturn_se), None)
 
 
-def evaluate_for_best(env_conf: Any, policy: Any, num_denoise_passive: int, *, i_noise: int = 99999) -> float:
+def best(env_conf: Any, policy: Any, num_denoise_passive: int, *, i_noise: int = 99999) -> float:
     mean_ret, _, _ = mean_return_over_runs(env_conf, policy, int(num_denoise_passive), i_noise=int(i_noise))
     return float(mean_ret)

@@ -6,7 +6,7 @@ import numpy as np
 from common.telemetry import Telemetry
 
 from .datum import Datum
-from .opt_trajectories import collect_denoised_trajectory, evaluate_for_best
+from .opt_trajectories import best, denoise
 from .optimizer_types import IterateResult, ReturnSummary, TraceEntry
 from .trajectories import collect_trajectory
 
@@ -79,7 +79,10 @@ class Optimizer:
         self._cum_dt_proposing = 0
         self._cum_env_steps = 0
 
-        problem_parts = [f"env_tag = {env_conf.env_name}", f"num_params = {policy.num_params()}"]
+        problem_parts = [
+            f"env_tag = {env_conf.env_name}",
+            f"num_params = {policy.num_params()}",
+        ]
         if opt_name is not None:
             problem_parts.append(f"opt_name = {opt_name}")
         if num_rounds is not None:
@@ -112,7 +115,7 @@ class Optimizer:
                 else:
                     delta = self._num_denoise
                 self._i_noise += delta
-            traj, noise_seed = collect_denoised_trajectory(self._env_conf, policy, self._num_denoise, i_noise)
+            traj, noise_seed = denoise(self._env_conf, policy, self._num_denoise, i_noise)
             if _INTERACTIVE_DEBUG and self._num_denoise == 1:
                 r = np.asarray(traj.rreturn)
                 if r.ndim == 0 and float(r) > self._ret_viz:
@@ -125,7 +128,14 @@ class Optimizer:
 
         return IterateResult(data=data, dt_prop=float(dt_prop), dt_eval=float(dt_eval))
 
-    def collect_trace(self, designer_name, max_iterations=None, max_proposal_seconds=np.inf, deadline=None, max_total_timesteps=None):
+    def collect_trace(
+        self,
+        designer_name,
+        max_iterations=None,
+        max_proposal_seconds=np.inf,
+        deadline=None,
+        max_total_timesteps=None,
+    ):
         self.initialize(designer_name)
         num_iterations = 0
         while (
@@ -185,7 +195,7 @@ class Optimizer:
             best_raw = float(np.max(ret_batch))
             self.y_best = best_raw if self.y_best is None else max(float(self.y_best), best_raw)
         elif did_update_best or self.y_best is None:
-            self.y_best, passive_steps = evaluate_for_best(
+            self.y_best, passive_steps = best(
                 self._env_conf,
                 self.best_policy,
                 self._num_denoise_passive_eval,

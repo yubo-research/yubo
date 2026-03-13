@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import dataclasses
 
-from rl.config_model_defaults import apply_ppo_env_model_defaults
 from rl.core.torchrl_runtime import TorchRLRuntimeCapabilities, TorchRLRuntimeConfig
 
 
@@ -13,8 +12,7 @@ class PPOConfig(TorchRLRuntimeConfig):
     seed: int = 1
     problem_seed: int | None = None
     noise_seed_0: int | None = None
-    from_pixels: bool = False
-    pixels_only: bool = True
+    obs_mode: str = "vector"
     total_timesteps: int = 1000000
     learning_rate: float = 0.0003
     num_envs: int = 1
@@ -23,7 +21,7 @@ class PPOConfig(TorchRLRuntimeConfig):
     gamma: float = 0.99
     gae_lambda: float = 0.95
     num_minibatches: int = 32
-    update_epochs: int = 10
+    epochs: int = 10
     norm_adv: bool = True
     clip_coef: float = 0.2
     clip_vloss: bool = True
@@ -40,8 +38,14 @@ class PPOConfig(TorchRLRuntimeConfig):
     backbone_hidden_sizes: tuple[int, ...] = (64, 64)
     backbone_activation: str = "silu"
     backbone_layer_norm: bool = True
+    critic_backbone_name: str | None = None
+    critic_backbone_hidden_sizes: tuple[int, ...] | None = None
+    critic_backbone_activation: str | None = None
+    critic_backbone_layer_norm: bool | None = None
     actor_head_hidden_sizes: tuple[int, ...] = ()
     critic_head_hidden_sizes: tuple[int, ...] = ()
+    actor_head_activation: str | None = None
+    critic_head_activation: str | None = None
     head_activation: str = "silu"
     share_backbone: bool = True
     log_std_init: float = 0.0
@@ -65,15 +69,19 @@ class PPOConfig(TorchRLRuntimeConfig):
 
     @classmethod
     def from_dict(cls, raw: dict) -> "PPOConfig":
-        d = apply_ppo_env_model_defaults(raw)
-        return cls(**d)
+        allowed = {f.name for f in dataclasses.fields(cls)}
+        data = {k: v for k, v in raw.items() if k in allowed}
+        return cls(**data)
 
     def runtime_num_envs(self) -> int:
         return int(self.num_envs)
 
 
 _PPO_RUNTIME_CAPABILITIES = TorchRLRuntimeCapabilities(
-    allow_multi_sync_collector=True, allow_multi_async_collector=True, allow_mps_multi_collectors=False, allow_parallel_single_env=True
+    allow_multi_sync_collector=True,
+    allow_multi_async_collector=True,
+    allow_mps_multi_collectors=False,
+    allow_parallel_single_env=True,
 )
 
 

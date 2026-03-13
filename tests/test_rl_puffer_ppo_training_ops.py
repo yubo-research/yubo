@@ -5,6 +5,7 @@ import torch
 from torch import nn
 
 from rl.pufferlib.ppo import engine as ppo_engine
+from rl.pufferlib.ppo import eval as ppo_eval
 from rl.pufferlib.ppo import training_ops
 from rl.pufferlib.ppo.config import PufferPPOConfig
 from rl.pufferlib.ppo.specs import (
@@ -74,7 +75,7 @@ def test_engine_name_helpers_delegate(monkeypatch):
     assert captured["resolve_gym_env_name_fn"] is ppo_envs.resolve_gym_env_name
 
 
-def test_engine_build_eval_env_conf_wrapper(monkeypatch):
+def test_engine_env_wrapper(monkeypatch):
     captured = {}
 
     def _fake(config, *, obs_spec):
@@ -82,9 +83,9 @@ def test_engine_build_eval_env_conf_wrapper(monkeypatch):
         captured["mode"] = obs_spec.mode
         return "env-conf"
 
-    monkeypatch.setattr(ppo_engine, "_build_eval_env_conf", _fake)
+    monkeypatch.setattr(ppo_engine, "_env", _fake)
     cfg = PufferPPOConfig(env_tag="Pendulum-v1")
-    out = ppo_engine.build_eval_env_conf(cfg, obs_spec=_ObservationSpec(mode="vector", raw_shape=(3,), vector_dim=3))
+    out = ppo_engine._env(cfg, obs_spec=_ObservationSpec(mode="vector", raw_shape=(3,), vector_dim=3))
     assert out == "env-conf"
     assert captured == {"env_tag": "Pendulum-v1", "mode": "vector"}
 
@@ -163,8 +164,6 @@ def test_training_ops_collect_flatten_advantages_update():
 
 
 def test_train_ppo_puffer_impl_calls_run_training(monkeypatch, tmp_path):
-    import rl.pufferlib.ppo.eval as ppo_eval
-
     cfg = PufferPPOConfig(
         exp_dir=str(tmp_path / "exp"),
         env_tag="atari:Pong",

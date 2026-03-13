@@ -1,12 +1,16 @@
+from types import SimpleNamespace
+
 import torch
 import torch.nn as nn
 
 from rl.actor_critic import ActionValue, ActorCritic, PolicySpecs
 from rl.backbone import (
+    ActorCriticSpec,
     BackboneSpec,
     HeadSpec,
     build_backbone,
     build_mlp_head,
+    build_nature_cnn_encoder,
     register_backbone,
 )
 
@@ -40,6 +44,68 @@ def test_build_mlp_head_shapes():
     x = torch.zeros((4, 3))
     y = head(x)
     assert y.shape == (4, 2)
+
+
+def test_actor_critic_spec_from_config_defaults_and_overrides():
+    cfg_default = SimpleNamespace(
+        backbone_name="mlp",
+        backbone_hidden_sizes=(16, 8),
+        backbone_activation="relu",
+        backbone_layer_norm=True,
+        actor_head_hidden_sizes=(4,),
+        critic_head_hidden_sizes=(5,),
+        head_activation="gelu",
+    )
+    arch = ActorCriticSpec.from_config(
+        cfg_default,
+        actor_backbone_name="mlp",
+    )
+    assert arch.actor.backbone.name == "mlp"
+    assert arch.critic.backbone.name == "mlp"
+    assert arch.actor.backbone.hidden_sizes == (16, 8)
+    assert arch.critic.backbone.hidden_sizes == (16, 8)
+    assert arch.actor.head.activation == "gelu"
+    assert arch.critic.head.activation == "gelu"
+
+    cfg_override = SimpleNamespace(
+        backbone_name="mlp",
+        backbone_hidden_sizes=(16, 8),
+        backbone_activation="relu",
+        backbone_layer_norm=False,
+        critic_backbone_name="nature_cnn",
+        critic_backbone_hidden_sizes=(32,),
+        critic_backbone_activation="tanh",
+        critic_backbone_layer_norm=True,
+        actor_head_hidden_sizes=(4,),
+        critic_head_hidden_sizes=(5,),
+        head_activation="relu",
+        actor_head_activation="silu",
+        critic_head_activation="gelu",
+    )
+    arch2 = ActorCriticSpec.from_config(
+        cfg_override,
+        actor_backbone_name="mlp",
+    )
+    assert arch2.actor.backbone.name == "mlp"
+    assert arch2.critic.backbone.name == "nature_cnn"
+    assert arch2.critic.backbone.hidden_sizes == (32,)
+    assert arch2.critic.backbone.activation == "tanh"
+    assert arch2.critic.backbone.layer_norm is True
+    assert arch2.actor.head.activation == "silu"
+    assert arch2.critic.head.activation == "gelu"
+
+
+def test_build_nature_cnn_encoder_with_optional_projection():
+    encoder, out_dim = build_nature_cnn_encoder(in_channels=3, activation="relu", latent_dim=None)
+    x = torch.zeros((2, 3, 84, 84))
+    y = encoder(x)
+    assert out_dim == 64
+    assert y.shape == (2, 64)
+
+    encoder_proj, out_dim_proj = build_nature_cnn_encoder(in_channels=3, activation="relu", latent_dim=128)
+    y_proj = encoder_proj(x)
+    assert out_dim_proj == 128
+    assert y_proj.shape == (2, 128)
 
 
 def test_actorcritic_action_bounds():

@@ -1,4 +1,5 @@
 import rl.torchrl.sac as torchrl_sac
+from rl.torchrl.sac import setup as torchrl_sac_setup
 
 
 def test_sac_config_from_dict_converts_hidden_sizes():
@@ -32,3 +33,41 @@ def test_sac_register_delegates_to_registry(monkeypatch):
     assert name == "sac"
     assert config_cls is torchrl_sac.SACConfig
     assert train_fn is torchrl_sac.train_sac
+
+
+def test_sac_build_pipeline(monkeypatch, tmp_path):
+    fake_env_conf = type(
+        "EnvConf",
+        (),
+        {
+            "env_name": "pend",
+            "obs_mode": "vector",
+            "state_space": type("S", (), {"shape": (3,)})(),
+        },
+    )()
+    monkeypatch.setattr(
+        torchrl_sac_setup,
+        "build_continuous_env_setup",
+        lambda **_kwargs: type(
+            "Shared",
+            (),
+            {
+                "env_conf": fake_env_conf,
+                "problem_seed": 5,
+                "noise_seed_0": 6,
+                "act_dim": 2,
+                "action_low": torchrl_sac_setup.np.array([-1.0, -1.0], dtype=torchrl_sac_setup.np.float32),
+                "action_high": torchrl_sac_setup.np.array([1.0, 1.0], dtype=torchrl_sac_setup.np.float32),
+                "obs_lb": None,
+                "obs_width": None,
+            },
+        )(),
+    )
+
+    cfg = torchrl_sac.SACConfig(exp_dir=str(tmp_path), env_tag="pend", batch_size=4, replay_size=8)
+    env = torchrl_sac_setup.build_env_setup(cfg)
+    modules = torchrl_sac_setup.build_modules(cfg, env, device=torchrl_sac_setup.torch.device("cpu"))
+    training = torchrl_sac_setup.build_training(cfg, modules)
+    assert env.problem_seed == 5
+    assert training.replay.batch_size == 4
+    assert training.exp_dir == tmp_path

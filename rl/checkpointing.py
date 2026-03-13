@@ -55,3 +55,32 @@ class CheckpointManager:
         save_checkpoint(ckpt_path, state)
         save_checkpoint(latest_path, state)
         return (ckpt_path, latest_path)
+
+
+def save_if_due(
+    checkpoint_manager: CheckpointManager,
+    state: dict[str, Any],
+    *,
+    iteration: int,
+    interval: int | None,
+) -> bool:
+    if not interval:
+        return False
+    interval_i = int(interval)
+    if interval_i <= 0 or int(iteration) % interval_i != 0:
+        return False
+    checkpoint_manager.save_both(state, iteration=int(iteration))
+    return True
+
+
+def save_final_if_enabled(
+    checkpoint_manager: CheckpointManager,
+    state: dict[str, Any],
+    *,
+    iteration: int,
+    interval: int | None,
+) -> bool:
+    if int(interval or 0) <= 0:
+        return False
+    checkpoint_manager.save_both(state, iteration=int(iteration))
+    return True

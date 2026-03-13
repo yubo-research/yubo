@@ -2,10 +2,10 @@ from contextlib import contextmanager
 
 import pytest
 
-from rl.core.sac_eval import evaluate_heldout_with_best_actor, update_best_actor_if_improved
+from rl.core.eval import heldout, update_best
 
 
-def test_sac_evaluate_heldout_with_best_actor_calls_eval_inside_context():
+def test_sac_heldout_calls_eval_inside_context():
     calls: list[tuple[str, int | None]] = []
 
     @contextmanager
@@ -16,17 +16,17 @@ def test_sac_evaluate_heldout_with_best_actor_calls_eval_inside_context():
         finally:
             calls.append(("exit", snapshot.get("id")))
 
-    def _evaluate_for_best(env_conf, policy, num_denoise, *, i_noise):
+    def _best(env_conf, policy, num_denoise, *, i_noise):
         calls.append(("eval", int(i_noise)))
         _ = env_conf, policy
         return float(num_denoise + i_noise)
 
-    result = evaluate_heldout_with_best_actor(
+    result = heldout(
         best_actor_state={"id": 5},
         num_denoise_passive=3,
         heldout_i_noise=7,
         with_actor_state=_with_actor_state,
-        evaluate_for_best=_evaluate_for_best,
+        best=_best,
         eval_env_conf=object(),
         eval_policy=object(),
     )
@@ -38,7 +38,7 @@ def test_sac_evaluate_heldout_with_best_actor_calls_eval_inside_context():
     ("eval_return", "best_return", "expected_improved"),
     [(4.0, 3.0, True), (2.0, 3.0, False)],
 )
-def test_sac_update_best_actor_if_improved_variants(eval_return, best_return, expected_improved):
+def test_sac_update_best_variants(eval_return, best_return, expected_improved):
     calls = {"n": 0}
 
     def _capture():
@@ -46,7 +46,7 @@ def test_sac_update_best_actor_if_improved_variants(eval_return, best_return, ex
         return {"snap": calls["n"]}
 
     prior = {"snap": 9}
-    best_return, best_actor_state, improved = update_best_actor_if_improved(
+    best_return, best_actor_state, improved = update_best(
         eval_return=eval_return,
         best_return=best_return,
         best_actor_state=prior,

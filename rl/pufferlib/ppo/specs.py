@@ -9,14 +9,8 @@ import torch.nn as nn
 from torch.distributions import Normal
 from torch.distributions.categorical import Categorical
 
-from rl.backbone import init_linear_layers as _init_linear_layers_shared
-from rl.core.continuous_actions import normalize_action_bounds as _normalize_action_bounds_shared
-from rl.core.continuous_actions import scale_action_tensor_to_env as _scale_action_tensor_to_env_shared
-from rl.core.continuous_actions import unscale_action_tensor_from_env as _unscale_action_tensor_from_env_shared
-
-
-def normalize_action_bounds(low: np.ndarray, high: np.ndarray, dim: int) -> tuple[np.ndarray, np.ndarray]:
-    return _normalize_action_bounds_shared(low, high, dim)
+from rl import backbone
+from rl.core import continuous_actions
 
 
 @dataclasses.dataclass(frozen=True)
@@ -61,10 +55,26 @@ class _ActorCritic(nn.Module):
             if low.size != dim or high.size != dim:
                 raise ValueError("Continuous action bounds must match action dimension.")
             self.log_std = nn.Parameter(torch.full((dim,), float(log_std_init), dtype=torch.float32))
-            self.register_buffer("action_low", torch.as_tensor(low, dtype=torch.float32), persistent=False)
-            self.register_buffer("action_high", torch.as_tensor(high, dtype=torch.float32), persistent=False)
-            self.register_buffer("action_scale", torch.as_tensor((high - low) / 2.0, dtype=torch.float32), persistent=False)
-            self.register_buffer("action_bias", torch.as_tensor((high + low) / 2.0, dtype=torch.float32), persistent=False)
+            self.register_buffer(
+                "action_low",
+                torch.as_tensor(low, dtype=torch.float32),
+                persistent=False,
+            )
+            self.register_buffer(
+                "action_high",
+                torch.as_tensor(high, dtype=torch.float32),
+                persistent=False,
+            )
+            self.register_buffer(
+                "action_scale",
+                torch.as_tensor((high - low) / 2.0, dtype=torch.float32),
+                persistent=False,
+            )
+            self.register_buffer(
+                "action_bias",
+                torch.as_tensor((high + low) / 2.0, dtype=torch.float32),
+                persistent=False,
+            )
 
     def _actor_features(self, obs: torch.Tensor) -> torch.Tensor:
         return self.actor_backbone(obs)
@@ -94,13 +104,13 @@ class _ActorCritic(nn.Module):
         view_shape = (1,) * (action_norm.ndim - 1) + (action_norm.shape[-1],)
         low = self.action_low.view(view_shape)
         high = self.action_high.view(view_shape)
-        return _scale_action_tensor_to_env_shared(action_norm, low, high, clip=True)
+        return continuous_actions.scale_action_tensor_to_env(action_norm, low, high, clip=True)
 
     def _to_norm_action(self, action_env: torch.Tensor) -> torch.Tensor:
         view_shape = (1,) * (action_env.ndim - 1) + (action_env.shape[-1],)
         low = self.action_low.view(view_shape)
         high = self.action_high.view(view_shape)
-        action_norm = _unscale_action_tensor_from_env_shared(action_env, low, high, clip=True)
+        action_norm = continuous_actions.unscale_action_tensor_from_env(action_env, low, high, clip=True)
         return torch.clamp(action_norm, -1.0 + 1e-06, 1.0 - 1e-06)
 
     def _squashed_log_prob(self, dist: Normal, *, action_norm: torch.Tensor, pre_tanh: torch.Tensor) -> torch.Tensor:
@@ -196,4 +206,4 @@ class _UpdateStats:
 
 
 def init_linear(module: nn.Module, gain: float) -> None:
-    _init_linear_layers_shared(module, gain=float(gain))
+    backbone.init_linear_layers(module, gain=float(gain))

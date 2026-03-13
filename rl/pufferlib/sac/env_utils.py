@@ -1,36 +1,35 @@
 from __future__ import annotations
 
-import importlib
 from typing import Any
 
-from rl.core.env_setup import build_continuous_gym_env_setup
+from rl.core.envs import build_continuous_env_setup
 from rl.core.ppo_envs import is_atari_env_tag, resolve_gym_env_name, to_puffer_game_name
-from rl.pufferlib.offpolicy import env_utils as _impl
+from rl.env_provider import get_env_conf_fn
+from rl.pufferlib.offpolicy.env_utils import (
+    EnvSetup,
+    ObservationSpec,
+    infer_observation_spec,
+    obs_scale_from_env,
+    prepare_obs_np,
+    resolve_backbone_name,
+    resolve_device,
+    seed_everything,
+    to_env_action,
+)
 
 from ...pufferlib_compat import import_pufferlib_modules
 from ..vector_env import make_vector_env as _make_vector_env_common
 
-ObservationSpec = _impl.ObservationSpec
-EnvSetup = _impl.EnvSetup
-seed_everything = _impl.seed_everything
-resolve_device = _impl.resolve_device
-to_env_action = _impl.to_env_action
-infer_observation_spec = _impl.infer_observation_spec
-prepare_obs_np = _impl.prepare_obs_np
-resolve_backbone_name = _impl.resolve_backbone_name
-
 
 def build_env_setup(config: Any) -> EnvSetup:
-    get_env_conf = importlib.import_module("problems.env_conf").get_env_conf
-    shared = build_continuous_gym_env_setup(
+    shared = build_continuous_env_setup(
         env_tag=str(config.env_tag),
         seed=int(config.seed),
         problem_seed=config.problem_seed,
         noise_seed_0=config.noise_seed_0,
-        from_pixels=bool(config.from_pixels),
-        pixels_only=bool(config.pixels_only),
-        get_env_conf_fn=get_env_conf,
-        obs_scale_from_env_fn=_impl.obs_scale_from_env,
+        obs_mode=str(getattr(config, "obs_mode", "state")),
+        get_env_conf_fn=get_env_conf_fn(),
+        obs_scale_from_env_fn=obs_scale_from_env,
     )
     return EnvSetup(
         env_conf=shared.env_conf,
@@ -61,7 +60,7 @@ def make_vector_env(config: Any):
 __all__ = [
     "EnvSetup",
     "ObservationSpec",
-    "build_continuous_gym_env_setup",
+    "build_continuous_env_setup",
     "build_env_setup",
     "infer_observation_spec",
     "is_atari_env_tag",

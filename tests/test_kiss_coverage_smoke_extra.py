@@ -17,12 +17,25 @@ from acq.fit_gp import _EmptyTransform
 from analysis.data_locator import DataLocator
 from ops.experiment import main as ops_experiment_main
 from optimizer import opt_trajectories as opt_trajectories_mod
-from optimizer.opt_trajectories import collect_denoised_trajectory, collect_trajectory_with_noise, evaluate_for_best, mean_return_over_runs
+from optimizer.opt_trajectories import (
+    best,
+    collect_trajectory_with_noise,
+    denoise,
+    mean_return_over_runs,
+)
 from problems.humanoid_policy import HumanoidPolicy
 from problems.other import make as make_other
-from rl.core.sac_update import SACUpdateBatch, SACUpdateHyperParams, SACUpdateModules, SACUpdateOptimizers, sac_update_step
+from rl import backbone
+from rl.core import continuous_actions
+from rl.core.sac_update import (
+    SACUpdateBatch,
+    SACUpdateHyperParams,
+    SACUpdateModules,
+    SACUpdateOptimizers,
+    sac_update_step,
+)
+from rl.pufferlib.offpolicy import runtime_utils
 from rl.pufferlib.ppo import specs as ppo_specs
-from rl.pufferlib.sac import runtime_utils as sac_runtime_utils
 from rl.pufferlib.vector_env import make_vector_env as puffer_make_vector_env
 from rl.torchrl.sac import setup as sac_setup
 from rl.torchrl.sac.config import SACConfig
@@ -34,7 +47,10 @@ def test_kiss_cov_acqbt_x_max(monkeypatch):
             return SimpleNamespace(mean=torch.tensor(0.0))
 
     monkeypatch.setattr("acq.acq_bt.fit_gp.fit_gp_XY", lambda X, Y, model_spec: _GP())
-    monkeypatch.setattr("acq.acq_bt.find_max", lambda gp, bounds: torch.ones((1, bounds.shape[1]), dtype=bounds.dtype))
+    monkeypatch.setattr(
+        "acq.acq_bt.find_max",
+        lambda gp, bounds: torch.ones((1, bounds.shape[1]), dtype=bounds.dtype),
+    )
 
     acq = AcqBT(
         acq_factory=lambda gp, **kwargs: SimpleNamespace(),
@@ -369,7 +385,12 @@ def test_kiss_cov_sac_update_and_opt_trajectories(monkeypatch):
 
     actor = _Policy()
     modules = SACUpdateModules(
-        actor=actor, q1=_QWrap(q1), q2=_QWrap(q2), q1_target=_QWrap(q1_t), q2_target=_QWrap(q2_t), log_alpha=nn.Parameter(torch.tensor(0.0))
+        actor=actor,
+        q1=_QWrap(q1),
+        q2=_QWrap(q2),
+        q1_target=_QWrap(q1_t),
+        q2_target=_QWrap(q2_t),
+        log_alpha=nn.Parameter(torch.tensor(0.0)),
     )
     opts = SACUpdateOptimizers(
         actor=torch.optim.AdamW([modules.log_alpha], lr=1e-3),
@@ -403,10 +424,10 @@ def test_kiss_cov_sac_update_and_opt_trajectories(monkeypatch):
     assert np.isfinite(se)
     assert all_same is False
     assert num_steps_total >= 0
-    den, _ = collect_denoised_trajectory(conf, object(), num_denoise=2, i_noise=1)
+    den, _ = denoise(conf, object(), num_denoise=2, i_noise=1)
     assert den.rreturn is not None
-    best = evaluate_for_best(conf, object(), 2)
-    assert np.isfinite(best)
+    best_ret = best(conf, object(), 2)
+    assert np.isfinite(best_ret)
 
 
 def test_kiss_cov_modal_collect_runtime_utils_and_ops_experiment(monkeypatch):
@@ -415,7 +436,7 @@ def test_kiss_cov_modal_collect_runtime_utils_and_ops_experiment(monkeypatch):
     sys.modules["experiment_sampler"] = experiment_sampler
     from experiments.modal_collect import get_job_result
     from experiments.modal_collect import main as modal_collect_main
-    from rl.pufferlib.sac.runtime_utils import obs_scale_from_env, select_device
+    from rl.pufferlib.offpolicy.runtime_utils import obs_scale_from_env, select_device
 
     class _Call:
         def get(self, timeout):
@@ -431,8 +452,14 @@ def test_kiss_cov_modal_collect_runtime_utils_and_ops_experiment(monkeypatch):
     assert isinstance(get_job_result("id-1"), tuple)
 
     called = {"n": 0}
-    monkeypatch.setattr("experiments.modal_collect.collect", lambda job_fn, cb: cb(("trace", "log", "collector")))
-    monkeypatch.setattr("experiments.modal_collect.post_process", lambda *args: called.__setitem__("n", called["n"] + 1))
+    monkeypatch.setattr(
+        "experiments.modal_collect.collect",
+        lambda job_fn, cb: cb(("trace", "log", "collector")),
+    )
+    monkeypatch.setattr(
+        "experiments.modal_collect.post_process",
+        lambda *args: called.__setitem__("n", called["n"] + 1),
+    )
     monkeypatch.setattr("experiments.modal_collect.os.path.exists", lambda p: False)
     modal_collect_main("jobs.txt")
     assert called["n"] == 1
@@ -440,7 +467,11 @@ def test_kiss_cov_modal_collect_runtime_utils_and_ops_experiment(monkeypatch):
     env_conf = SimpleNamespace(
         gym_conf=SimpleNamespace(
             transform_state=True,
-            state_space=SimpleNamespace(low=np.array([-1.0], dtype=np.float32), high=np.array([1.0], dtype=np.float32), shape=(1,)),
+            state_space=SimpleNamespace(
+                low=np.array([-1.0], dtype=np.float32),
+                high=np.array([1.0], dtype=np.float32),
+                shape=(1,),
+            ),
         ),
         ensure_spaces=lambda: None,
     )
@@ -455,7 +486,7 @@ def test_kiss_cov_modal_collect_runtime_utils_and_ops_experiment(monkeypatch):
 
 
 def test_kiss_cov_ppo_specs_actor_critic_and_helpers():
-    low, high = ppo_specs.normalize_action_bounds(
+    low, high = continuous_actions.normalize_action_bounds(
         low=np.array([-2.0, -1.0], dtype=np.float32),
         high=np.array([2.0, 3.0], dtype=np.float32),
         dim=2,
@@ -473,7 +504,7 @@ def test_kiss_cov_ppo_specs_actor_critic_and_helpers():
         action_spec=action_spec,
         log_std_init=-0.5,
     )
-    ppo_specs.init_linear(actor, gain=0.5)
+    backbone.init_linear_layers(actor, gain=0.5)
     obs = torch.zeros((5, 3), dtype=torch.float32)
     action_out, values = model.forward(obs)
     assert action_out.shape == (5, 2)
@@ -489,7 +520,7 @@ def test_kiss_cov_ppo_specs_actor_critic_and_helpers():
 
 
 def test_kiss_cov_sac_setup_network_blocks_and_scaling():
-    obs_scaler = sac_setup.sac_deps.torchrl_common.ObsScaler(None, None)
+    obs_scaler = sac_setup.ObsScaler(None, None)
     backbone = nn.Linear(4, 8)
     head = nn.Linear(8, 4)
     actor = sac_setup._ActorNet(backbone=backbone, head=head, obs_scaler=obs_scaler, act_dim=2)
@@ -523,7 +554,10 @@ def test_kiss_cov_sac_setup_network_blocks_and_scaling():
 
 
 def test_kiss_cov_sac_setup_build_and_update(monkeypatch, tmp_path):
-    fake_env_conf = SimpleNamespace(from_pixels=False, gym_conf=SimpleNamespace(state_space=SimpleNamespace(shape=(4,))))
+    fake_env_conf = SimpleNamespace(
+        from_pixels=False,
+        gym_conf=SimpleNamespace(state_space=SimpleNamespace(shape=(4,))),
+    )
     shared = SimpleNamespace(
         env_conf=fake_env_conf,
         problem_seed=7,
@@ -534,7 +568,8 @@ def test_kiss_cov_sac_setup_build_and_update(monkeypatch, tmp_path):
         obs_lb=np.array([-1.0, -1.0, -1.0, -1.0], dtype=np.float32),
         obs_width=np.array([2.0, 2.0, 2.0, 2.0], dtype=np.float32),
     )
-    monkeypatch.setattr(sac_setup, "build_continuous_gym_env_setup", lambda **kwargs: shared)
+    monkeypatch.setattr(sac_setup, "build_continuous_env_setup", lambda **kwargs: shared)
+    monkeypatch.setattr(sac_setup, "get_env_conf_fn", lambda: (lambda *_args, **_kwargs: fake_env_conf))
 
     cfg = SACConfig(exp_dir=str(tmp_path), env_tag="pend", batch_size=4, replay_size=32)
     env_setup = sac_setup.build_env_setup(cfg)
@@ -566,9 +601,9 @@ def test_kiss_cov_sac_setup_build_and_update(monkeypatch, tmp_path):
 
 
 def test_kiss_cov_sac_runtime_utils_wrappers(monkeypatch):
-    monkeypatch.setattr(sac_runtime_utils, "_mps_is_available_core", lambda: True)
-    assert sac_runtime_utils._mps_is_available()
-    d = sac_runtime_utils.select_device("cpu")
+    monkeypatch.setattr(runtime_utils, "_mps_is_available_core", lambda: True)
+    assert runtime_utils._mps_is_available()
+    d = runtime_utils.select_device("cpu")
     assert str(d) == "cpu"
 
     env_conf = SimpleNamespace(
@@ -578,7 +613,7 @@ def test_kiss_cov_sac_runtime_utils_wrappers(monkeypatch):
         ),
         ensure_spaces=lambda: None,
     )
-    lb, width = sac_runtime_utils.obs_scale_from_env(env_conf)
+    lb, width = runtime_utils.obs_scale_from_env(env_conf)
     assert np.allclose(lb, np.array([-1.0]))
     assert np.allclose(width, np.array([2.0]))
 
@@ -639,7 +674,7 @@ def test_kiss_cov_offpolicy_and_sac_helper_modules(monkeypatch, tmp_path):
             return SimpleNamespace(write_config=lambda *args, **kwargs: None)
         if name == "rl.checkpointing":
             return SimpleNamespace(CheckpointManager=_CheckpointManager)
-        if name == "rl.core.env_conf":
+        if name == "rl.core.envs":
             return SimpleNamespace(global_seed_for_run=lambda seed: seed + 5)
         return real_import(name)
 
@@ -663,14 +698,18 @@ def test_kiss_cov_offpolicy_and_sac_helper_modules(monkeypatch, tmp_path):
     )
     assert mark == 1
 
-    monkeypatch.setattr(off_runtime_utils, "_select_device_core", lambda *_args, **_kwargs: torch.device("cpu"))
+    monkeypatch.setattr(
+        off_runtime_utils,
+        "_select_device_core",
+        lambda *_args, **_kwargs: torch.device("cpu"),
+    )
     monkeypatch.setattr(off_runtime_utils, "_obs_scale_from_env_core", lambda _env_conf: ("lb", "width"))
     assert str(off_runtime_utils.select_device("cpu")) == "cpu"
     assert off_runtime_utils.obs_scale_from_env(SimpleNamespace()) == ("lb", "width")
 
     monkeypatch.setattr(
         sac_env_utils,
-        "build_continuous_gym_env_setup",
+        "build_continuous_env_setup",
         lambda **_kwargs: SimpleNamespace(
             env_conf=SimpleNamespace(gym_conf=SimpleNamespace(transform_state=True)),
             problem_seed=3,
@@ -682,29 +721,58 @@ def test_kiss_cov_offpolicy_and_sac_helper_modules(monkeypatch, tmp_path):
             action_high=np.array([1.0, 1.0], dtype=np.float32),
         ),
     )
-    built = sac_env_utils.build_env_setup(SimpleNamespace(env_tag="pend", seed=0, problem_seed=None, noise_seed_0=None, from_pixels=False, pixels_only=True))
+    monkeypatch.setattr(
+        sac_env_utils,
+        "get_env_conf_fn",
+        lambda: (lambda *_args, **_kwargs: SimpleNamespace()),
+    )
+    built = sac_env_utils.build_env_setup(
+        SimpleNamespace(
+            env_tag="pend",
+            seed=0,
+            problem_seed=None,
+            noise_seed_0=None,
+            obs_mode="vector",
+        )
+    )
     assert built.act_dim == 2
     monkeypatch.setattr(sac_env_utils, "_make_vector_env_shared", lambda _cfg, **_kwargs: "vec")
     assert sac_env_utils.make_vector_env(SimpleNamespace()) == "vec"
 
     monkeypatch.setattr(
         sac_eval_utils,
-        "collect_denoised_trajectory",
+        "denoise",
         lambda _env_conf, _policy, **_kwargs: (SimpleNamespace(rreturn=2.5), 0),
     )
-    cfg = SimpleNamespace(num_denoise=1, num_denoise_passive=1, eval_interval_steps=1, eval_seed_base=0, eval_noise_mode="frozen", seed=0)
+    cfg = SimpleNamespace(
+        num_denoise=1,
+        num_denoise_passive=1,
+        eval_interval_steps=1,
+        eval_seed_base=0,
+        eval_noise_mode="frozen",
+        seed=0,
+    )
     env_setup = SimpleNamespace(env_conf=SimpleNamespace(), problem_seed=0)
     obs_spec = SimpleNamespace(mode="vector")
-    modules = SimpleNamespace(actor=nn.Identity(), actor_backbone=nn.Linear(2, 2), actor_head=nn.Linear(2, 4), log_std=None)
+    modules = SimpleNamespace(
+        actor=nn.Identity(),
+        actor_backbone=nn.Linear(2, 2),
+        actor_head=nn.Linear(2, 4),
+        obs_scaler=nn.Identity(),
+        log_std=None,
+    )
     train_state = sac_eval_utils.TrainState(global_step=1, start_time=time.time() - 1.0)
-    monkeypatch.setattr(sac_eval_utils, "build_eval_plan", lambda **_kwargs: SimpleNamespace(eval_seed=0, heldout_i_noise=0))
-    monkeypatch.setattr(sac_eval_utils, "evaluate_heldout_if_enabled", lambda *_args, **_kwargs: 1.0)
-    assert sac_eval_utils.evaluate_actor(cfg, env_setup, modules, obs_spec, device=torch.device("cpu"), eval_seed=0) == 2.5
+    monkeypatch.setattr(
+        sac_eval_utils,
+        "build_eval_plan",
+        lambda **_kwargs: SimpleNamespace(eval_seed=0, heldout_i_noise=0),
+    )
+    monkeypatch.setattr(sac_eval_utils, "heldout", lambda *_args, **_kwargs: 1.0)
     sac_eval_utils.maybe_eval(cfg, env_setup, modules, obs_spec, train_state, device=torch.device("cpu"))
     assert train_state.best_return >= 2.5
 
     env = sac_env_utils.EnvSetup(
-        env_conf=SimpleNamespace(from_pixels=False, pixels_only=True),
+        env_conf=SimpleNamespace(obs_mode="state"),
         problem_seed=0,
         noise_seed_0=0,
         obs_lb=np.array([-1.0, -1.0, -1.0], dtype=np.float32),
@@ -731,6 +799,11 @@ def test_kiss_cov_offpolicy_and_sac_helper_modules(monkeypatch, tmp_path):
         tau=0.005,
         target_entropy=-2.0,
         theta_dim=None,
+        eval_interval_steps=1,
+        eval_seed_base=None,
+        eval_noise_mode=None,
+        num_denoise=None,
+        seed=0,
     )
     modules2 = sac_model_utils.build_modules(sac_cfg, env, spec, device=torch.device("cpu"))
     optim2 = sac_model_utils.build_optimizers(sac_cfg, modules2)
@@ -770,7 +843,11 @@ def test_kiss_cov_offpolicy_and_sac_helper_modules(monkeypatch, tmp_path):
             "obs": torch.zeros((2, 3)),
             "action": torch.zeros((2, 2)),
             "next": TensorDict(
-                {"reward": torch.ones(2), "terminated": torch.zeros(2, dtype=torch.bool), "truncated": torch.zeros(2, dtype=torch.bool)},
+                {
+                    "reward": torch.ones(2),
+                    "terminated": torch.zeros(2, dtype=torch.bool),
+                    "truncated": torch.zeros(2, dtype=torch.bool),
+                },
                 batch_size=[2],
             ),
         },
@@ -786,27 +863,29 @@ def test_kiss_cov_offpolicy_and_sac_helper_modules(monkeypatch, tmp_path):
 
 
 def test_kiss_cov_direct_sac_offpolicy_symbols(monkeypatch):
-    from rl.pufferlib.offpolicy.runtime_utils import obs_scale_from_env as off_obs_scale_from_env
+    from rl.pufferlib.offpolicy.runtime_utils import (
+        obs_scale_from_env as off_obs_scale_from_env,
+    )
     from rl.pufferlib.offpolicy.runtime_utils import select_device as off_select_device
     from rl.pufferlib.sac.env_utils import build_env_setup as sac_build_env_setup
     from rl.pufferlib.sac.env_utils import make_vector_env as sac_make_vector_env
-    from rl.pufferlib.sac.eval_utils import evaluate_actor as sac_evaluate_actor
-    from rl.pufferlib.sac.eval_utils import evaluate_heldout_if_enabled as sac_evaluate_heldout_if_enabled
-    from rl.pufferlib.sac.eval_utils import maybe_eval as sac_maybe_eval
     from rl.pufferlib.sac.model_utils import SACModules, SACOptimizers
     from rl.pufferlib.sac.model_utils import build_modules as sac_build_modules
     from rl.pufferlib.sac.model_utils import build_optimizers as sac_build_optimizers
-    from rl.torchrl.offpolicy.actor_eval import capture_actor_snapshot as trl_capture_actor_snapshot
-    from rl.torchrl.offpolicy.actor_eval import restore_actor_snapshot as trl_restore_actor_snapshot
-    from rl.torchrl.offpolicy.actor_eval import use_actor_snapshot as trl_use_actor_snapshot
 
-    monkeypatch.setattr("rl.pufferlib.offpolicy.runtime_utils._select_device_core", lambda *_args, **_kwargs: torch.device("cpu"))
-    monkeypatch.setattr("rl.pufferlib.offpolicy.runtime_utils._obs_scale_from_env_core", lambda _env_conf: (None, None))
+    monkeypatch.setattr(
+        "rl.pufferlib.offpolicy.runtime_utils._select_device_core",
+        lambda *_args, **_kwargs: torch.device("cpu"),
+    )
+    monkeypatch.setattr(
+        "rl.pufferlib.offpolicy.runtime_utils._obs_scale_from_env_core",
+        lambda _env_conf: (None, None),
+    )
     assert str(off_select_device("cpu")) == "cpu"
     assert off_obs_scale_from_env(SimpleNamespace()) == (None, None)
 
     monkeypatch.setattr(
-        "rl.pufferlib.sac.env_utils.build_continuous_gym_env_setup",
+        "rl.pufferlib.sac.env_utils.build_continuous_env_setup",
         lambda **_kwargs: SimpleNamespace(
             env_conf=SimpleNamespace(gym_conf=SimpleNamespace(transform_state=False)),
             problem_seed=1,
@@ -818,8 +897,23 @@ def test_kiss_cov_direct_sac_offpolicy_symbols(monkeypatch):
             action_high=np.array([1.0, 1.0], dtype=np.float32),
         ),
     )
-    env_setup = sac_build_env_setup(SimpleNamespace(env_tag="pend", seed=0, problem_seed=None, noise_seed_0=None, from_pixels=False, pixels_only=True))
-    monkeypatch.setattr("rl.pufferlib.sac.env_utils._make_vector_env_shared", lambda _cfg, **_kwargs: "ok")
+    monkeypatch.setattr(
+        "rl.pufferlib.sac.env_utils.get_env_conf_fn",
+        lambda: (lambda *_args, **_kwargs: SimpleNamespace()),
+    )
+    env_setup = sac_build_env_setup(
+        SimpleNamespace(
+            env_tag="pend",
+            seed=0,
+            problem_seed=None,
+            noise_seed_0=None,
+            obs_mode="vector",
+        )
+    )
+    monkeypatch.setattr(
+        "rl.pufferlib.sac.env_utils._make_vector_env_shared",
+        lambda _cfg, **_kwargs: "ok",
+    )
     assert sac_make_vector_env(SimpleNamespace()) == "ok"
 
     cfg = SimpleNamespace(
@@ -839,11 +933,10 @@ def test_kiss_cov_direct_sac_offpolicy_symbols(monkeypatch):
         tau=0.005,
         target_entropy=-2.0,
         theta_dim=None,
-        num_denoise=1,
-        num_denoise_passive=1,
         eval_interval_steps=1,
-        eval_seed_base=0,
-        eval_noise_mode="frozen",
+        eval_seed_base=None,
+        eval_noise_mode=None,
+        num_denoise=None,
         seed=0,
     )
     obs_spec = SimpleNamespace(mode="vector", raw_shape=(2,), vector_dim=2)
@@ -851,24 +944,36 @@ def test_kiss_cov_direct_sac_offpolicy_symbols(monkeypatch):
     assert isinstance(modules, SACModules)
     optimizers = sac_build_optimizers(cfg, modules)
     assert isinstance(optimizers, SACOptimizers)
-
     monkeypatch.setattr(
-        "rl.pufferlib.sac.eval_utils.collect_denoised_trajectory",
+        "rl.pufferlib.sac.eval_utils.denoise",
         lambda _env_conf, _policy, **_kwargs: (SimpleNamespace(rreturn=1.0), 0),
     )
-    monkeypatch.setattr("rl.pufferlib.sac.eval_utils.evaluate_for_best", lambda *_args, **_kwargs: 0.25)
-    monkeypatch.setattr("rl.pufferlib.sac.eval_utils.build_eval_plan", lambda **_kwargs: SimpleNamespace(eval_seed=0, heldout_i_noise=0))
-    monkeypatch.setattr("rl.pufferlib.sac.eval_utils.evaluate_heldout_if_enabled", lambda *_args, **_kwargs: 0.5)
-    state = SimpleNamespace(global_step=1, eval_mark=0, best_return=-float("inf"), best_actor_state=None, last_eval_return=0.0, last_heldout_return=None)
-    assert sac_evaluate_actor(cfg, env_setup, modules, obs_spec, device=torch.device("cpu"), eval_seed=0) == 1.0
+    monkeypatch.setattr("rl.pufferlib.sac.eval_utils.best", lambda *_args, **_kwargs: 0.25)
+    monkeypatch.setattr(
+        "rl.pufferlib.sac.eval_utils.build_eval_plan",
+        lambda **_kwargs: SimpleNamespace(eval_seed=0, heldout_i_noise=0),
+    )
+    monkeypatch.setattr("rl.pufferlib.sac.eval_utils.heldout", lambda *_args, **_kwargs: 0.5)
+    from rl.pufferlib.sac.eval_utils import heldout as sac_heldout
+    from rl.pufferlib.sac.eval_utils import maybe_eval as sac_maybe_eval
+
+    state = SimpleNamespace(
+        global_step=1,
+        eval_mark=0,
+        best_return=-float("inf"),
+        best_actor_state=None,
+        last_eval_return=0.0,
+        last_heldout_return=None,
+    )
     assert isinstance(
-        sac_evaluate_heldout_if_enabled(cfg, env_setup, modules, obs_spec, device=torch.device("cpu"), heldout_i_noise=0),
+        sac_heldout(
+            cfg,
+            env_setup,
+            modules,
+            obs_spec,
+            device=torch.device("cpu"),
+            heldout_i_noise=0,
+        ),
         float,
     )
     sac_maybe_eval(cfg, env_setup, modules, obs_spec, state, device=torch.device("cpu"))
-
-    snapshot = trl_capture_actor_snapshot(SimpleNamespace(actor_backbone=nn.Linear(2, 2), actor_head=nn.Linear(2, 2)))
-    modules_small = SimpleNamespace(actor_backbone=nn.Linear(2, 2), actor_head=nn.Linear(2, 2))
-    trl_restore_actor_snapshot(modules_small, snapshot)
-    with trl_use_actor_snapshot(modules_small, snapshot, device=torch.device("cpu")):
-        pass

@@ -4,6 +4,8 @@ import gymnasium as gym
 import numpy as np
 import torch
 
+from problems.mlp_policy import MLPPolicyFactory
+from problems.rl_policy_factory import RLPolicyFactory
 from rl.backbone import BackboneSpec, HeadSpec, build_backbone, build_mlp_head
 from rl.core import env_contract as torchrl_env_contract
 from rl.policy_backbone import (
@@ -14,6 +16,7 @@ from rl.policy_backbone import (
     DiscreteActorBackbonePolicyFactory,
     DiscreteActorPolicySpec,
     GaussianActorBackbonePolicy,
+    MLPFactory,
 )
 
 
@@ -84,9 +87,7 @@ def test_gaussian_actor_backbone_policy():
 
 def test_get_env_conf_gauss_uses_gaussian_actor_backbone():
     from problems.env_conf import default_policy, get_env_conf
-    from problems.env_conf_backends import register_with_env_conf
 
-    register_with_env_conf()
     ec = get_env_conf("dm:cheetah-run:gauss", problem_seed=0)
     try:
         policy = default_policy(ec)
@@ -107,7 +108,7 @@ def _fake_atari_env_conf():
         gym_conf=gym_conf,
         state_space=gym_conf.state_space,
         action_space=gym.spaces.Discrete(6),
-        from_pixels=True,
+        obs_mode="image",
         ensure_spaces=lambda: None,
     )
 
@@ -160,21 +161,19 @@ def test_discrete_actor_backbone_policy_param_count_matches_ppo_build_path():
 
 def test_get_env_conf_atari_mlp16_uses_discrete_actor_backbone_policy():
     import problems.env_conf as env_conf_module
+    from rl.policy_backbone import AtariMLP16DiscretePolicy
 
-    class _FakeBindings:
-        @staticmethod
-        def resolve_atari_from_tag(_tag):
-            from rl.policy_backbone import AtariMLP16DiscretePolicy
+    class _FakeAtariEnv:
+        parse_tag = staticmethod(lambda tag: "ALE/Pong-v5" if "Pong" in str(tag) else str(tag))
+        policy_class = staticmethod(lambda **_kwargs: AtariMLP16DiscretePolicy)
 
-            return ("ALE/Pong-v5", AtariMLP16DiscretePolicy)
-
-    old_bindings = env_conf_module._ATARI_DM_BINDINGS
-    env_conf_module._ATARI_DM_BINDINGS = _FakeBindings()
+    old_atari_env = env_conf_module._atari_env
+    env_conf_module._atari_env = lambda: _FakeAtariEnv
     try:
         ec = env_conf_module.get_env_conf("atari:Pong:mlp16", problem_seed=0)
         policy = ec.policy_class(_fake_atari_env_conf())
     finally:
-        env_conf_module._ATARI_DM_BINDINGS = old_bindings
+        env_conf_module._atari_env = old_atari_env
     assert isinstance(policy, DiscreteActorBackbonePolicy)
 
 
@@ -190,3 +189,36 @@ def test_discrete_actor_backbone_policy_factory():
     )
     policy = factory(_fake_atari_env_conf())
     assert isinstance(policy, DiscreteActorBackbonePolicy)
+
+
+def test_rl_policy_factory_from_policy_scaffold():
+    wrapped = RLPolicyFactory(
+        MLPPolicyFactory((8, 4), activation="relu"),
+        critic=MLPFactory((16, 8), activation="tanh", use_layer_norm=True),
+        actor_head=MLPFactory((6,), activation="relu"),
+        critic_head=MLPFactory((5,), activation="gelu"),
+        share_backbone=False,
+        log_std_init=-0.7,
+    )
+    schema = wrapped.to_rl_schema()
+    assert schema["family"] == "mlp"
+    assert schema["backbone_hidden_sizes"] == (8, 4)
+    assert schema["critic_backbone_hidden_sizes"] == (16, 8)
+    assert schema["critic_backbone_activation"] == "tanh"
+    assert schema["critic_backbone_layer_norm"] is True
+    assert schema["actor_head_hidden_sizes"] == (6,)
+    assert schema["critic_head_hidden_sizes"] == (5,)
+    assert schema["actor_head_activation"] == "relu"
+    assert schema["critic_head_activation"] == "gelu"
+    assert schema["share_backbone"] is False
+    assert schema["log_std_init"] == -0.7
+
+    env_conf = SimpleNamespace(
+        problem_seed=0,
+        state_space=SimpleNamespace(shape=(3,)),
+        gym_conf=SimpleNamespace(state_space=SimpleNamespace(shape=(3,))),
+        action_space=SimpleNamespace(shape=(2,)),
+        ensure_spaces=lambda: None,
+    )
+    policy = wrapped(env_conf)
+    assert policy is not None

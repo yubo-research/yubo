@@ -53,48 +53,66 @@ def test_default_policy():
 
 
 def test_resolve_rl_model_defaults_cheetah_sac():
-    from problems.env_conf import resolve_rl_model_defaults
+    from problems.env_conf import get_env_conf
+    from rl.env_provider import register_get_env_conf
+    from rl.model_defaults import resolve_rl_model_defaults
 
+    register_get_env_conf(get_env_conf)
     cfg = resolve_rl_model_defaults("cheetah", algo="sac")
-    assert cfg["backbone_hidden_sizes"] == (256, 256)
-    assert cfg["backbone_activation"] == "relu"
-    assert cfg["head_activation"] == "relu"
-    assert "actor_head_hidden_sizes" not in cfg
+    assert cfg["backbone_hidden_sizes"] == (32, 16)
+    assert cfg["backbone_activation"] == "silu"
+    assert cfg["backbone_layer_norm"] is True
+    assert cfg["head_activation"] == "silu"
+    assert cfg["actor_head_hidden_sizes"] == ()
+    assert cfg["critic_head_hidden_sizes"] == ()
 
 
-def test_resolve_rl_model_defaults_cheetah_ppo_uses_explicit_model():
-    from problems.env_conf import resolve_rl_model_defaults
+def test_resolve_rl_model_defaults_cheetah_ppo_uses_policy_schema():
+    from problems.env_conf import get_env_conf
+    from rl.env_provider import register_get_env_conf
+    from rl.model_defaults import resolve_rl_model_defaults
 
+    register_get_env_conf(get_env_conf)
     cfg = resolve_rl_model_defaults("cheetah", algo="ppo")
-    assert cfg["backbone_hidden_sizes"] == (64, 64)
+    assert cfg["backbone_hidden_sizes"] == (32, 16)
+    assert cfg["backbone_activation"] == "silu"
     assert cfg["backbone_layer_norm"] is True
     assert cfg["share_backbone"] is True
     assert cfg["log_std_init"] == -0.5
 
 
-def test_resolve_rl_model_defaults_quadruped_run_uses_explicit_model():
-    from problems.env_conf import resolve_rl_model_defaults
+def test_resolve_rl_model_defaults_quadruped_run_uses_scaffolded_critic():
+    from problems.env_conf import get_env_conf
+    from rl.env_provider import register_get_env_conf
+    from rl.model_defaults import resolve_rl_model_defaults
 
+    register_get_env_conf(get_env_conf)
     ppo_cfg = resolve_rl_model_defaults("dm_control/quadruped-run-v0", algo="ppo")
     assert ppo_cfg["backbone_hidden_sizes"] == (64, 64)
+    assert ppo_cfg["backbone_activation"] == "silu"
     assert ppo_cfg["backbone_layer_norm"] is True
-    assert ppo_cfg["share_backbone"] is True
+    assert ppo_cfg["critic_backbone_hidden_sizes"] == (256, 256)
+    assert ppo_cfg["critic_backbone_activation"] == "relu"
+    assert ppo_cfg["share_backbone"] is False
 
     sac_cfg = resolve_rl_model_defaults("dm_control/quadruped-run-v0", algo="sac")
-    assert sac_cfg["backbone_hidden_sizes"] == (256, 256)
-    assert sac_cfg["backbone_activation"] == "relu"
+    assert sac_cfg["backbone_hidden_sizes"] == (64, 64)
+    assert sac_cfg["backbone_activation"] == "silu"
     assert sac_cfg["backbone_layer_norm"] is True
-    assert sac_cfg["head_activation"] == "relu"
+    assert sac_cfg["critic_backbone_hidden_sizes"] == (256, 256)
+    assert sac_cfg["critic_backbone_activation"] == "relu"
+    assert sac_cfg["head_activation"] == "silu"
 
 
 def test_get_env_conf_applies_atari_preprocess_overrides():
     import problems.env_conf as env_conf_module
 
-    class _FakeBindings:
-        resolve_atari_from_tag = staticmethod(lambda _tag: ("ALE/Pong-v5", lambda _env_conf: object()))
+    class _FakeAtariEnv:
+        parse_tag = staticmethod(lambda tag: "ALE/Pong-v5" if "Pong" in str(tag) else str(tag))
+        policy_class = staticmethod(lambda **_kwargs: (lambda _env_conf: object()))
 
-    old_bindings = env_conf_module._ATARI_DM_BINDINGS
-    env_conf_module._ATARI_DM_BINDINGS = _FakeBindings()
+    old_atari_env = env_conf_module._atari_env
+    env_conf_module._atari_env = lambda: _FakeAtariEnv
     try:
         conf = env_conf_module.get_env_conf(
             "atari:Pong:mlp16",
@@ -107,7 +125,7 @@ def test_get_env_conf_applies_atari_preprocess_overrides():
             },
         )
     finally:
-        env_conf_module._ATARI_DM_BINDINGS = old_bindings
+        env_conf_module._atari_env = old_atari_env
     assert isinstance(conf.atari_preprocess, dict)
     assert conf.atari_preprocess["repeat_action_probability"] == 0.2
     assert conf.atari_preprocess["use_minimal_action_set"] is False
@@ -157,15 +175,12 @@ def test_env_conf_ale_make_uses_atari_preprocess_options():
             self.use_minimal_action_set = use_minimal_action_set
             self.color_averaging = color_averaging
 
-    class _FakeBindings:
-        resolve_dm_control_from_tag = staticmethod(lambda tag, use_pixels: (str(tag), object()))
-        resolve_atari_from_tag = staticmethod(lambda tag: (str(tag), lambda _env_conf: object()))
-        make_atari_preprocess_options = staticmethod(lambda **kwargs: _FakeAtariPreprocessOptions(**kwargs))
-        make_dm_control_env = staticmethod(lambda *args, **kwargs: _FakeEnv())
+    class _FakeAtariEnv:
+        AtariPreprocessOptions = _FakeAtariPreprocessOptions
         make_atari_env = staticmethod(_fake_make_atari_env)
 
-    old_bindings = env_conf_module._ATARI_DM_BINDINGS
-    env_conf_module._ATARI_DM_BINDINGS = _FakeBindings()
+    old_atari_env = env_conf_module._atari_env
+    env_conf_module._atari_env = lambda: _FakeAtariEnv
     try:
         conf = env_conf_module.EnvConf(
             "ALE/Pong-v5",
@@ -182,7 +197,7 @@ def test_env_conf_ale_make_uses_atari_preprocess_options():
         env = conf.make(render_mode="rgb_array")
         env.close()
     finally:
-        env_conf_module._ATARI_DM_BINDINGS = old_bindings
+        env_conf_module._atari_env = old_atari_env
     preprocess = captured["preprocess"]
     assert captured["env_name"] == "ALE/Pong-v5"
     assert captured["max_episode_steps"] == 321

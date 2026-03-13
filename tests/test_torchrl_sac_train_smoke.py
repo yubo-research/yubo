@@ -2,9 +2,11 @@ from pathlib import Path
 
 
 def test_sac_train_smoke(tmp_path):
-    """BO-style: import inside test to defer heavy deps (matches test_turbo_ackley, test_mcmc_bo)."""
+    from problems.env_conf import get_env_conf
+    from rl.env_provider import register_get_env_conf
     from rl.torchrl.sac.trainer import SACConfig, train_sac
 
+    register_get_env_conf(get_env_conf)
     exp_dir = Path(tmp_path) / "sac_smoke"
     cfg = SACConfig(
         exp_dir=str(exp_dir),

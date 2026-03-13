@@ -4,7 +4,11 @@ from pathlib import Path
 
 import pytest
 
+from problems.env_conf import get_env_conf
+from rl.env_provider import register_get_env_conf
 from rl.torchrl.sac.trainer import SACConfig, train_sac
+
+register_get_env_conf(get_env_conf)
 
 _BASELINE_ROWS = [
     {

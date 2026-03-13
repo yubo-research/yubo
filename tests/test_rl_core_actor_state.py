@@ -4,9 +4,9 @@ import torch
 import torch.nn as nn
 
 from rl.core.actor_state import (
-    capture_backbone_head_snapshot,
-    restore_backbone_head_snapshot,
-    use_backbone_head_snapshot,
+    load,
+    snap,
+    using,
 )
 
 
@@ -19,7 +19,7 @@ def _make_modules():
 
 def test_capture_snapshot_tensor_and_numpy_formats():
     backbone, head, log_std = _make_modules()
-    snap_tensor = capture_backbone_head_snapshot(
+    snap_tensor = snap(
         backbone,
         head,
         log_std=log_std,
@@ -31,7 +31,7 @@ def test_capture_snapshot_tensor_and_numpy_formats():
     assert snap_tensor["head"]["bias"].device.type == "cpu"
     assert isinstance(snap_tensor["log_std"], torch.Tensor)
 
-    snap_numpy = capture_backbone_head_snapshot(
+    snap_numpy = snap(
         backbone,
         head,
         log_std=log_std,
@@ -44,7 +44,7 @@ def test_capture_snapshot_tensor_and_numpy_formats():
 
 def test_restore_snapshot_roundtrip():
     backbone, head, log_std = _make_modules()
-    snapshot = capture_backbone_head_snapshot(
+    snapshot = snap(
         backbone,
         head,
         log_std=log_std,
@@ -55,7 +55,7 @@ def test_restore_snapshot_roundtrip():
         head.bias.sub_(2.0)
         log_std.add_(0.5)
 
-    restore_backbone_head_snapshot(
+    load(
         backbone,
         head,
         snapshot,
@@ -69,13 +69,13 @@ def test_restore_snapshot_roundtrip():
 
 def test_use_snapshot_restores_previous_state():
     backbone, head, log_std = _make_modules()
-    original = capture_backbone_head_snapshot(
+    original = snap(
         backbone,
         head,
         log_std=log_std,
         log_std_format="numpy",
     )
-    replacement = capture_backbone_head_snapshot(
+    replacement = snap(
         backbone,
         head,
         log_std=log_std,
@@ -85,7 +85,7 @@ def test_use_snapshot_restores_previous_state():
     replacement["head"]["bias"] = replacement["head"]["bias"] - 1.0
     replacement["log_std"] = replacement["log_std"] + 0.75
 
-    with use_backbone_head_snapshot(
+    with using(
         backbone,
         head,
         replacement,
@@ -93,7 +93,7 @@ def test_use_snapshot_restores_previous_state():
         device=torch.device("cpu"),
         log_std_format="numpy",
     ):
-        inside = capture_backbone_head_snapshot(
+        inside = snap(
             backbone,
             head,
             log_std=log_std,
@@ -103,7 +103,7 @@ def test_use_snapshot_restores_previous_state():
         assert torch.equal(inside["head"]["bias"], replacement["head"]["bias"])
         assert np.allclose(inside["log_std"], replacement["log_std"])
 
-    after = capture_backbone_head_snapshot(
+    after = snap(
         backbone,
         head,
         log_std=log_std,
@@ -117,7 +117,7 @@ def test_use_snapshot_restores_previous_state():
 def test_capture_snapshot_invalid_log_std_format():
     backbone, head, log_std = _make_modules()
     with pytest.raises(ValueError, match="log_std_format"):
-        capture_backbone_head_snapshot(
+        snap(
             backbone,
             head,
             log_std=log_std,

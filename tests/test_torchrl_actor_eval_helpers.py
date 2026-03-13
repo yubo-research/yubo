@@ -5,16 +5,20 @@ import torch
 import torch.nn as nn
 
 from rl.core.env_contract import ObservationContract
+from rl.torchrl.offpolicy.actor_eval import (
+    OffPolicyActorEvalPolicy,
+)
+from rl.torchrl.offpolicy.actor_eval import (
+    capture_actor_snapshot as capture_offpolicy_actor_snapshot,
+)
+from rl.torchrl.offpolicy.actor_eval import (
+    restore_actor_snapshot as restore_offpolicy_actor_snapshot,
+)
 from rl.torchrl.ppo.actor_eval import (
     ActorEvalPolicy,
     capture_actor_snapshot,
     restore_actor_snapshot,
     use_actor_snapshot,
-)
-from rl.torchrl.sac.actor_eval import (
-    SacActorEvalPolicy,
-    capture_sac_actor_snapshot,
-    restore_sac_actor_snapshot,
 )
 
 
@@ -83,7 +87,7 @@ def test_use_actor_snapshot_temporarily_swaps_state():
 
 def test_sac_actor_eval_policy_and_snapshot_roundtrip():
     modules = _make_actor_modules()
-    policy = SacActorEvalPolicy(
+    policy = OffPolicyActorEvalPolicy(
         modules.actor_backbone,
         modules.actor_head,
         modules.obs_scaler,
@@ -94,12 +98,12 @@ def test_sac_actor_eval_policy_and_snapshot_roundtrip():
     assert isinstance(action, np.ndarray)
     assert action.shape == (2,)
 
-    snapshot = capture_sac_actor_snapshot(modules)
+    snapshot = capture_offpolicy_actor_snapshot(modules)
     with torch.no_grad():
         modules.actor_backbone.weight.mul_(0.0)
         modules.actor_head.bias.add_(5.0)
 
-    restore_sac_actor_snapshot(modules, snapshot)
+    restore_offpolicy_actor_snapshot(modules, snapshot)
     assert torch.equal(modules.actor_backbone.state_dict()["weight"], snapshot["backbone"]["weight"])
     assert torch.equal(modules.actor_head.state_dict()["bias"], snapshot["head"]["bias"])
 

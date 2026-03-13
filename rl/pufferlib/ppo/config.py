@@ -20,7 +20,7 @@ class PufferPPOConfig:
     gamma: float = 0.99
     gae_lambda: float = 0.95
     num_minibatches: int = 4
-    update_epochs: int = 4
+    epochs: int = 4
     norm_adv: bool = True
     clip_coef: float = 0.1
     clip_vloss: bool = True
@@ -32,8 +32,14 @@ class PufferPPOConfig:
     backbone_hidden_sizes: tuple[int, ...] = ()
     backbone_activation: str = "relu"
     backbone_layer_norm: bool = False
+    critic_backbone_name: str | None = None
+    critic_backbone_hidden_sizes: tuple[int, ...] | None = None
+    critic_backbone_activation: str | None = None
+    critic_backbone_layer_norm: bool | None = None
     actor_head_hidden_sizes: tuple[int, ...] = (512,)
     critic_head_hidden_sizes: tuple[int, ...] = (512,)
+    actor_head_activation: str | None = None
+    critic_head_activation: str | None = None
     head_activation: str = "relu"
     share_backbone: bool = True
     log_std_init: float = -0.5
@@ -43,7 +49,7 @@ class PufferPPOConfig:
     vector_batch_size: int | None = None
     vector_overwork: bool = False
     framestack: int = 4
-    pixels_only: bool = True
+    obs_mode: str = "vector"
     eval_interval: int = 1
     num_denoise: int | None = None
     num_denoise_passive: int | None = None
@@ -64,7 +70,8 @@ class PufferPPOConfig:
 
     @classmethod
     def from_dict(cls, raw: dict) -> "PufferPPOConfig":
-        data = apply_ppo_env_model_defaults(raw)
+        allowed = {f.name for f in dataclasses.fields(cls)}
+        data = apply_ppo_env_model_defaults({k: v for k, v in raw.items() if k in allowed})
         return cls(**data)
 
 

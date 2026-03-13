@@ -66,7 +66,7 @@ def test_puffer_sac_train_delegates_to_impl(monkeypatch):
 
 
 def test_runtime_utils_obs_scaler_select_device_and_obs_scale():
-    from rl.pufferlib.sac import runtime_utils as ru
+    from rl.pufferlib.offpolicy import runtime_utils as ru
 
     scaler = ru.ObsScaler(
         np.asarray([1.0, -1.0], dtype=np.float32),
@@ -159,12 +159,12 @@ def test_env_utils_helpers_and_builders(monkeypatch):
     )
     assert np.allclose(mapped, np.asarray([[-2.0, 0.0, 2.0]], dtype=np.float32))
 
-    cfg_vec = puffer_sac.SACConfig(from_pixels=False, backbone_name="mlp")
+    cfg_vec = puffer_sac.SACConfig(obs_mode="vector", backbone_name="mlp")
     spec_vec = env_utils.infer_observation_spec(cfg_vec, np.zeros((2, 5), dtype=np.float32))
     assert spec_vec.mode == "vector"
     assert spec_vec.vector_dim == 5
 
-    cfg_px = puffer_sac.SACConfig(from_pixels=True, backbone_name="mlp", framestack=4)
+    cfg_px = puffer_sac.SACConfig(obs_mode="image", backbone_name="mlp", framestack=4)
     spec_px = env_utils.infer_observation_spec(cfg_px, np.zeros((2, 84, 84, 4), dtype=np.uint8))
     assert spec_px.mode == "pixels"
     assert spec_px.channels == 4
@@ -186,7 +186,7 @@ def test_env_utils_helpers_and_builders(monkeypatch):
     )
     monkeypatch.setattr(
         env_utils,
-        "build_continuous_gym_env_setup",
+        "build_continuous_env_setup",
         lambda **_kwargs: SimpleNamespace(
             env_conf=fake_env_conf,
             problem_seed=11,
@@ -198,8 +198,9 @@ def test_env_utils_helpers_and_builders(monkeypatch):
             action_high=np.asarray([2.0, 1.0], dtype=np.float32),
         ),
     )
+    monkeypatch.setattr(env_utils, "get_env_conf_fn", lambda: (lambda *_args, **_kwargs: fake_env_conf))
 
-    built = env_utils.build_env_setup(puffer_sac.SACConfig(env_tag="pend", seed=7))
+    built = env_utils.build_env_setup(puffer_sac.SACConfig(env_tag="swim", seed=7))
     assert built.problem_seed == 11
     assert built.noise_seed_0 == 22
     assert built.act_dim == 2
@@ -222,7 +223,7 @@ def _make_small_modules():
     from rl.pufferlib.sac import env_utils, model_utils
 
     env_setup = env_utils.EnvSetup(
-        env_conf=SimpleNamespace(from_pixels=False, pixels_only=True),
+        env_conf=SimpleNamespace(obs_mode="vector"),
         problem_seed=0,
         noise_seed_0=0,
         obs_lb=None,
@@ -245,9 +246,9 @@ def _make_small_modules():
 
 
 def test_replay_and_model_utils_update_paths():
+    from rl.pufferlib.offpolicy.runtime_utils import ObsScaler
     from rl.pufferlib.sac import model_utils
     from rl.pufferlib.sac.replay import ReplayBuffer
-    from rl.pufferlib.sac.runtime_utils import ObsScaler
 
     cfg, _env_setup, _obs_spec, modules, optimizers = _make_small_modules()
     obs = torch.randn(4, 3)
@@ -364,22 +365,13 @@ def test_eval_utils_paths(monkeypatch, tmp_path: Path):
 
     monkeypatch.setattr(
         eval_utils,
-        "collect_denoised_trajectory",
+        "denoise",
         lambda _env_conf, _policy, **_kwargs: (SimpleNamespace(rreturn=3.5), 0),
     )
-    eval_return = eval_utils.evaluate_actor(
-        cfg,
-        env_setup,
-        SimpleNamespace(actor=_Actor()),
-        obs_spec,
-        device=torch.device("cpu"),
-        eval_seed=0,
-    )
-    assert eval_return == 3.5
 
     cfg_no_heldout = puffer_sac.SACConfig(num_denoise_passive=None)
     assert (
-        eval_utils.evaluate_heldout_if_enabled(
+        eval_utils.heldout(
             cfg_no_heldout,
             env_setup,
             SimpleNamespace(actor=_Actor()),
@@ -390,8 +382,8 @@ def test_eval_utils_paths(monkeypatch, tmp_path: Path):
         is None
     )
 
-    monkeypatch.setattr(eval_utils, "evaluate_for_best", lambda *_args, **_kwargs: 4.2)
-    heldout = eval_utils.evaluate_heldout_if_enabled(
+    monkeypatch.setattr(eval_utils, "best", lambda *_args, **_kwargs: 4.2)
+    heldout = eval_utils.heldout(
         puffer_sac.SACConfig(num_denoise_passive=2),
         env_setup,
         SimpleNamespace(actor=_Actor()),
@@ -406,7 +398,11 @@ def test_eval_utils_paths(monkeypatch, tmp_path: Path):
     assert eval_utils.due_mark(10, 0, 0) is None
 
     metric_calls = []
-    monkeypatch.setattr(eval_utils.rl_logger, "append_metrics", lambda path, record: metric_calls.append((path, record)))
+    monkeypatch.setattr(
+        eval_utils.rl_logger,
+        "append_metrics",
+        lambda path, record: metric_calls.append((path, record)),
+    )
     state.last_eval_return = 1.25
     state.last_heldout_return = 0.75
     state.best_return = 1.25
@@ -415,15 +411,27 @@ def test_eval_utils_paths(monkeypatch, tmp_path: Path):
     assert metric_calls[0][1]["step"] == 10
 
     log_calls = []
-    monkeypatch.setattr(eval_utils.rl_logger, "log_eval_iteration", lambda **kwargs: log_calls.append(kwargs))
+    monkeypatch.setattr(
+        eval_utils.rl_logger,
+        "log_eval_iteration",
+        lambda **kwargs: log_calls.append(kwargs),
+    )
     log_cfg = puffer_sac.SACConfig(log_interval_steps=5)
     eval_utils.log_if_due(log_cfg, state, step=5, frames_per_batch=8)
     assert len(log_calls) == 1
     assert state.log_mark == 1
 
-    monkeypatch.setattr(eval_utils, "build_eval_plan", lambda **_kwargs: SimpleNamespace(eval_seed=1, heldout_i_noise=2))
-    monkeypatch.setattr(eval_utils, "evaluate_actor", lambda *_args, **_kwargs: 2.0)
-    monkeypatch.setattr(eval_utils, "evaluate_heldout_if_enabled", lambda *_args, **_kwargs: 1.5)
+    monkeypatch.setattr(
+        eval_utils.rl_eval,
+        "plan",
+        lambda **_kwargs: SimpleNamespace(eval_seed=1, heldout_i_noise=2),
+    )
+    monkeypatch.setattr(
+        eval_utils,
+        "denoise",
+        lambda _env_conf, _policy, **_kwargs: (SimpleNamespace(rreturn=2.0), 0),
+    )
+    monkeypatch.setattr(eval_utils, "heldout", lambda *_args, **_kwargs: 1.5)
     eval_cfg = puffer_sac.SACConfig(eval_interval_steps=10, num_denoise_passive=1)
     state2 = eval_utils.TrainState(global_step=10, start_time=float(time.time()) - 1.0)
     eval_utils.maybe_eval(eval_cfg, env_setup, modules, obs_spec, state2, device=torch.device("cpu"))
@@ -433,7 +441,11 @@ def test_eval_utils_paths(monkeypatch, tmp_path: Path):
     assert state2.last_heldout_return == 1.5
 
     state2.global_step = 20
-    monkeypatch.setattr(eval_utils, "evaluate_actor", lambda *_args, **_kwargs: 1.0)
+    monkeypatch.setattr(
+        eval_utils,
+        "denoise",
+        lambda _env_conf, _policy, **_kwargs: (SimpleNamespace(rreturn=1.0), 0),
+    )
     eval_utils.maybe_eval(eval_cfg, env_setup, modules, obs_spec, state2, device=torch.device("cpu"))
     assert state2.best_return == 2.0
 
@@ -491,12 +503,20 @@ def test_train_sac_puffer_impl_smoke_with_patched_loop(monkeypatch, tmp_path: Pa
     monkeypatch.setattr(
         engine,
         "_init_run_artifacts",
-        lambda _cfg: (tmp_path / "exp", tmp_path / "exp" / "metrics.jsonl", SimpleNamespace(save_both=lambda *_args, **_kwargs: None)),
+        lambda _cfg: (
+            tmp_path / "exp",
+            tmp_path / "exp" / "metrics.jsonl",
+            SimpleNamespace(save_both=lambda *_args, **_kwargs: None),
+        ),
     )
     monkeypatch.setattr(engine, "_init_runtime", lambda _cfg: (env_setup, torch.device("cpu")))
     monkeypatch.setattr(engine, "make_vector_env", lambda _cfg: _FakeVecEnv(num_envs=1, obs_dim=3))
     monkeypatch.setattr(engine, "infer_observation_spec", lambda _cfg, _obs: obs_spec)
-    monkeypatch.setattr(engine, "prepare_obs_np", lambda obs_np, **_kwargs: np.asarray(obs_np, dtype=np.float32))
+    monkeypatch.setattr(
+        engine,
+        "prepare_obs_np",
+        lambda obs_np, **_kwargs: np.asarray(obs_np, dtype=np.float32),
+    )
     monkeypatch.setattr(
         engine,
         "_build_training_components",
@@ -511,7 +531,18 @@ def test_train_sac_puffer_impl_smoke_with_patched_loop(monkeypatch, tmp_path: Pa
     monkeypatch.setattr("rl.logger.log_run_footer", lambda **_kwargs: None)
     monkeypatch.setattr(engine, "render_videos_if_enabled", lambda *_args, **_kwargs: None)
 
-    def _fake_train_loop(_config, _env_setup, _modules, _optimizers, _replay, state, _obs_spec, _obs_batch, _envs, **_kwargs):
+    def _fake_train_loop(
+        _config,
+        _env_setup,
+        _modules,
+        _optimizers,
+        _replay,
+        state,
+        _obs_spec,
+        _obs_batch,
+        _envs,
+        **_kwargs,
+    ):
         state.global_step = int(_config.total_timesteps)
         state.best_return = 1.0
         state.last_eval_return = 0.5

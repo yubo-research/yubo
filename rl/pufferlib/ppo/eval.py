@@ -7,17 +7,21 @@ import numpy as np
 import torch
 
 from common import video as common_video
-from rl import eval_noise
-from rl.core import ppo_eval
-from rl.core.actor_state import capture_backbone_head_snapshot, restore_backbone_head_snapshot, use_backbone_head_snapshot
-from rl.core.env_conf import resolve_run_seeds
-from rl.core.episode_rollout import collect_denoised_trajectory, evaluate_for_best
+from rl.core import eval as rl_eval
+from rl.core.actor_state import load, snap, using
+from rl.core.envs import seeds
+from rl.core.episode_rollout import best, denoise
 from rl.core.progress import is_due
+from rl.eval_noise import normalize_eval_noise_mode
 
 
-def resolve_eval_seeds(config) -> tuple[int, int]:
-    resolved = resolve_run_seeds(seed=int(config.seed), problem_seed=config.problem_seed, noise_seed_0=config.noise_seed_0)
-    return (int(resolved.problem_seed), int(resolved.noise_seed_0))
+def seed_pair(config) -> tuple[int, int]:
+    out = seeds(
+        seed=int(config.seed),
+        problem_seed=config.problem_seed,
+        noise_seed_0=config.noise_seed_0,
+    )
+    return (int(out.problem_seed), int(out.noise_seed_0))
 
 
 class PufferEvalPolicy:
@@ -42,18 +46,29 @@ class PufferEvalPolicy:
 
 
 def capture_actor_snapshot(model) -> dict:
-    return capture_backbone_head_snapshot(
-        model.actor_backbone, model.actor_head, log_std=getattr(model, "log_std", None), state_to_cpu=False, log_std_to_cpu=True, log_std_format="tensor"
+    return snap(
+        model.actor_backbone,
+        model.actor_head,
+        log_std=getattr(model, "log_std", None),
+        state_to_cpu=False,
+        log_std_to_cpu=True,
+        log_std_format="tensor",
     )
 
 
 def restore_actor_snapshot(model, snapshot: dict, *, device: torch.device) -> None:
-    restore_backbone_head_snapshot(model.actor_backbone, model.actor_head, snapshot, log_std=getattr(model, "log_std", None), device=device)
+    load(
+        model.actor_backbone,
+        model.actor_head,
+        snapshot,
+        log_std=getattr(model, "log_std", None),
+        device=device,
+    )
 
 
 @contextmanager
 def use_actor_snapshot(model, snapshot: dict, *, device: torch.device):
-    with use_backbone_head_snapshot(
+    with using(
         model.actor_backbone,
         model.actor_head,
         snapshot,
@@ -66,60 +81,111 @@ def use_actor_snapshot(model, snapshot: dict, *, device: torch.device):
         yield
 
 
-def _get_eval_env_conf(config, state, *, build_eval_env_conf_fn):
+def eval_conf(config, state, *, env_fn):
     if state.eval_env_conf is None:
-        state.eval_env_conf = build_eval_env_conf_fn(config, obs_spec=state.obs_spec)
+        state.eval_env_conf = env_fn(config, obs_spec=state.obs_spec)
     return state.eval_env_conf
 
 
-def _evaluate_actor(config, model, state, *, device: torch.device, eval_seed: int, build_eval_env_conf_fn, prepare_obs_fn) -> float:
-    eval_env_conf = _get_eval_env_conf(config, state, build_eval_env_conf_fn=build_eval_env_conf_fn)
-    eval_policy = PufferEvalPolicy(model=model, obs_spec=state.obs_spec, action_spec=state.action_spec, device=device, prepare_obs_fn=prepare_obs_fn)
-    traj, _ = collect_denoised_trajectory(eval_env_conf, eval_policy, num_denoise=config.num_denoise, i_noise=int(eval_seed))
+def score(
+    config,
+    model,
+    state,
+    *,
+    device: torch.device,
+    eval_seed: int,
+    env_fn,
+    prepare_obs_fn,
+) -> float:
+    conf = eval_conf(config, state, env_fn=env_fn)
+    policy = PufferEvalPolicy(
+        model=model,
+        obs_spec=state.obs_spec,
+        action_spec=state.action_spec,
+        device=device,
+        prepare_obs_fn=prepare_obs_fn,
+    )
+    traj, _ = denoise(conf, policy, num_denoise=config.num_denoise, i_noise=int(eval_seed))
     return float(traj.rreturn)
 
 
-def _evaluate_heldout_if_enabled(config, model, state, *, device: torch.device, heldout_i_noise: int, build_eval_env_conf_fn, prepare_obs_fn) -> float | None:
-    eval_env_conf = _get_eval_env_conf(config, state, build_eval_env_conf_fn=build_eval_env_conf_fn)
-    eval_policy = PufferEvalPolicy(model=model, obs_spec=state.obs_spec, action_spec=state.action_spec, device=device, prepare_obs_fn=prepare_obs_fn)
-    return ppo_eval.evaluate_heldout_with_best_actor(
+def heldout(
+    config,
+    model,
+    state,
+    *,
+    device: torch.device,
+    heldout_i_noise: int,
+    env_fn,
+    prepare_obs_fn,
+) -> float | None:
+    conf = eval_conf(config, state, env_fn=env_fn)
+    policy = PufferEvalPolicy(
+        model=model,
+        obs_spec=state.obs_spec,
+        action_spec=state.action_spec,
+        device=device,
+        prepare_obs_fn=prepare_obs_fn,
+    )
+    return rl_eval.heldout(
         best_actor_state=state.best_actor_state,
         num_denoise_passive=config.num_denoise_passive,
         heldout_i_noise=int(heldout_i_noise),
         with_actor_state=lambda snapshot: use_actor_snapshot(model, snapshot, device=device),
-        evaluate_for_best=evaluate_for_best,
-        eval_env_conf=eval_env_conf,
-        eval_policy=eval_policy,
+        best=best,
+        eval_env_conf=conf,
+        eval_policy=policy,
     )
 
 
-def maybe_eval_and_update_state(config, model, state, *, iteration: int, device: torch.device, build_eval_env_conf_fn, prepare_obs_fn) -> None:
+def maybe_eval(
+    config,
+    model,
+    state,
+    *,
+    iteration: int,
+    device: torch.device,
+    env_fn,
+    prepare_obs_fn,
+) -> None:
     interval = int(config.eval_interval)
     if not is_due(int(iteration), interval):
         return
     run_problem_seed = int(config.problem_seed) if config.problem_seed is not None else int(config.seed)
-    plan = eval_noise.build_eval_plan(
-        current=iteration, interval=interval, seed=run_problem_seed, eval_seed_base=config.eval_seed_base, eval_noise_mode=config.eval_noise_mode
-    )
-    state.last_eval_return = _evaluate_actor(
-        config, model, state, device=device, eval_seed=plan.eval_seed, build_eval_env_conf_fn=build_eval_env_conf_fn, prepare_obs_fn=prepare_obs_fn
-    )
-    state.best_return, state.best_actor_state, _ = ppo_eval.update_best_actor_if_improved(
-        eval_return=float(state.last_eval_return),
-        best_return=float(state.best_return),
-        best_actor_state=state.best_actor_state,
+    rl_eval.run(
+        current=iteration,
+        interval=interval,
+        seed=run_problem_seed,
+        eval_seed_base=config.eval_seed_base,
+        eval_noise_mode=config.eval_noise_mode,
+        state=state,
+        evaluate_actor=lambda *, eval_seed: score(
+            config,
+            model,
+            state,
+            device=device,
+            eval_seed=eval_seed,
+            env_fn=env_fn,
+            prepare_obs_fn=prepare_obs_fn,
+        ),
         capture_actor_state=lambda: capture_actor_snapshot(model),
-    )
-    state.last_heldout_return = _evaluate_heldout_if_enabled(
-        config, model, state, device=device, heldout_i_noise=plan.heldout_i_noise, build_eval_env_conf_fn=build_eval_env_conf_fn, prepare_obs_fn=prepare_obs_fn
+        evaluate_heldout=lambda *, best_actor_state, heldout_i_noise: heldout(
+            config,
+            model,
+            state,
+            device=device,
+            heldout_i_noise=heldout_i_noise,
+            env_fn=env_fn,
+            prepare_obs_fn=prepare_obs_fn,
+        ),
     )
 
 
-def maybe_render_videos(config, model, state, *, exp_dir: Path, device: torch.device, build_eval_env_conf_fn, prepare_obs_fn) -> None:
+def render(config, model, state, *, exp_dir: Path, device: torch.device, env_fn, prepare_obs_fn) -> None:
     if not bool(config.video_enable):
         return
-    eval_env_conf = _get_eval_env_conf(config, state, build_eval_env_conf_fn=build_eval_env_conf_fn)
-    if getattr(eval_env_conf, "gym_conf", None) is None:
+    conf = eval_conf(config, state, env_fn=env_fn)
+    if getattr(conf, "gym_conf", None) is None:
         print(f"video disabled for non-gym env: {config.env_tag}", flush=True)
         return
     video_dir = exp_dir / "videos"
@@ -128,11 +194,17 @@ def maybe_render_videos(config, model, state, *, exp_dir: Path, device: torch.de
         config.video_seed_base if config.video_seed_base is not None else config.eval_seed_base if config.eval_seed_base is not None else run_problem_seed
     )
     actor_state = state.best_actor_state if state.best_actor_state is not None else capture_actor_snapshot(model)
-    eval_policy = PufferEvalPolicy(model=model, obs_spec=state.obs_spec, action_spec=state.action_spec, device=device, prepare_obs_fn=prepare_obs_fn)
+    policy = PufferEvalPolicy(
+        model=model,
+        obs_spec=state.obs_spec,
+        action_spec=state.action_spec,
+        device=device,
+        prepare_obs_fn=prepare_obs_fn,
+    )
     with use_actor_snapshot(model, actor_state, device=device):
         common_video.render_policy_videos(
-            eval_env_conf,
-            eval_policy,
+            conf,
+            policy,
             video_dir=video_dir,
             video_prefix=str(config.video_prefix),
             num_episodes=int(config.video_num_episodes),
@@ -147,7 +219,7 @@ def validate_eval_config(config) -> None:
     if interval < 0:
         raise ValueError("eval_interval must be >= 0.")
     if config.eval_noise_mode is not None:
-        eval_noise.normalize_eval_noise_mode(config.eval_noise_mode)
+        normalize_eval_noise_mode(config.eval_noise_mode)
     if config.num_denoise is not None and int(config.num_denoise) <= 0:
         raise ValueError("num_denoise must be > 0 when provided.")
     if config.num_denoise_passive is not None and int(config.num_denoise_passive) <= 0:

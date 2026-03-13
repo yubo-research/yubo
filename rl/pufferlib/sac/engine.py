@@ -9,32 +9,68 @@ from typing import Any
 import numpy as np
 import torch
 
-from rl.core.actor_state import capture_backbone_head_snapshot, restore_backbone_head_snapshot, restore_rng_state_payload
+from rl.core.progress import due_mark
 from rl.core.update_chunks import run_chunked_updates
 from rl.pufferlib.offpolicy import engine_utils as offpolicy_engine_utils
 
 from .config import SACConfig, TrainResult
-from .env_utils import build_env_setup, infer_observation_spec, make_vector_env, prepare_obs_np, resolve_device, seed_everything, to_env_action
-from .eval_utils import TrainState, append_eval_metric, due_mark, log_if_due, maybe_eval, render_videos_if_enabled
-from .model_utils import build_modules, build_optimizers, sac_update, use_actor_state
+from .env_utils import (
+    build_env_setup,
+    infer_observation_spec,
+    make_vector_env,
+    prepare_obs_np,
+    resolve_device,
+    seed_everything,
+    to_env_action,
+)
+from .eval_utils import (
+    TrainState,
+    append_eval_metric,
+    log_if_due,
+    maybe_eval,
+    render_videos_if_enabled,
+)
+from .model_utils import (
+    build_modules,
+    build_optimizers,
+    capture_actor_state,
+    restore_actor_state,
+    sac_update,
+    use_actor_state,
+)
 from .replay import make_replay_buffer, resolve_replay_backend
 
-__all__ = ["SACConfig", "TrainResult", "register", "train_sac_puffer", "train_sac_puffer_impl"]
+__all__ = [
+    "SACConfig",
+    "TrainResult",
+    "register",
+    "train_sac_puffer",
+    "train_sac_puffer_impl",
+]
 
 
-def _log_header(config: SACConfig, obs_batch: np.ndarray, env_setup, obs_spec, *, device: torch.device) -> None:
+def _log_header(
+    config: SACConfig,
+    obs_batch: np.ndarray,
+    env_setup,
+    obs_spec,
+    *,
+    device: torch.device,
+) -> None:
     rl_logger = importlib.import_module("rl.logger")
-    num_envs = int(obs_batch.shape[0])
+    frames_per_batch = int(config.frames_per_batch)
+    if frames_per_batch <= 0:
+        raise ValueError(f"frames_per_batch must be > 0, got {config.frames_per_batch}.")
     rl_logger.log_run_header_basic(
         algo_name="sac",
         env_tag=str(config.env_tag),
         seed=int(config.seed),
         backbone_name=str(config.backbone_name),
-        from_pixels=obs_spec.mode == "pixels",
+        obs_mode=str(obs_spec.mode),
         obs_dim=int(obs_spec.vector_dim or np.prod(obs_spec.raw_shape)),
         act_dim=int(env_setup.act_dim),
-        frames_per_batch=int(max(1, num_envs)),
-        num_iterations=int(max(1, int(config.total_timesteps) // max(1, num_envs))),
+        frames_per_batch=frames_per_batch,
+        num_iterations=int(max(1, int(config.total_timesteps) // frames_per_batch)),
         device_type=str(device.type),
         config_obj=config,
     )
@@ -60,12 +96,22 @@ def _init_runtime(config: SACConfig):
     )
 
 
-def _build_training_components(config: SACConfig, env_setup, obs_spec, obs_batch: np.ndarray, *, device: torch.device):
+def _build_training_components(
+    config: SACConfig,
+    env_setup,
+    obs_spec,
+    obs_batch: np.ndarray,
+    *,
+    device: torch.device,
+):
     modules = build_modules(config, env_setup, obs_spec, device=device)
     optimizers = build_optimizers(config, modules)
     replay_backend = resolve_replay_backend(str(config.replay_backend), device=device)
     replay = make_replay_buffer(
-        obs_shape=tuple((int(v) for v in obs_batch.shape[1:])), act_dim=int(env_setup.act_dim), capacity=int(config.replay_size), backend=replay_backend
+        obs_shape=tuple((int(v) for v in obs_batch.shape[1:])),
+        act_dim=int(env_setup.act_dim),
+        capacity=int(config.replay_size),
+        backend=replay_backend,
     )
     state = TrainState(start_time=float(time.time()))
     _restore_if_requested(config, modules, optimizers, replay, state, device=device)
@@ -73,7 +119,7 @@ def _build_training_components(config: SACConfig, env_setup, obs_spec, obs_batch
 
 
 def _state_payload(modules, optimizers, replay, state: Any) -> dict[str, Any]:
-    actor_snapshot = capture_backbone_head_snapshot(modules.actor_backbone, modules.actor_head, log_std=None, state_to_cpu=False)
+    actor_snapshot = capture_actor_state(modules)
     return {
         "step": int(state.global_step),
         "total_updates": int(state.total_updates),
@@ -104,8 +150,10 @@ def _restore_if_requested(config: SACConfig, modules, optimizers, replay, state:
         return
     load_checkpoint = importlib.import_module("rl.checkpointing").load_checkpoint
     loaded = load_checkpoint(Path(config.resume_from), device=device)
-    restore_backbone_head_snapshot(
-        modules.actor_backbone, modules.actor_head, {"backbone": loaded["actor_backbone"], "head": loaded["actor_head"]}, log_std=None, device=device
+    restore_actor_state(
+        modules,
+        {"backbone": loaded["actor_backbone"], "head": loaded["actor_head"]},
+        device=device,
     )
     modules.q1.load_state_dict(loaded["q1"])
     modules.q2.load_state_dict(loaded["q2"])
@@ -126,7 +174,12 @@ def _restore_if_requested(config: SACConfig, modules, optimizers, replay, state:
     state.best_actor_state = loaded.get("best_actor_state")
     state.last_eval_return = float(loaded.get("last_eval_return", state.last_eval_return))
     state.last_heldout_return = loaded.get("last_heldout_return", state.last_heldout_return)
-    restore_rng_state_payload(loaded)
+    if "rng_torch" in loaded:
+        torch.set_rng_state(loaded["rng_torch"])
+    if "rng_numpy" in loaded:
+        np.random.set_state(loaded["rng_numpy"])
+    if torch.cuda.is_available() and loaded.get("rng_cuda") is not None:
+        torch.cuda.set_rng_state_all(loaded["rng_cuda"])
 
 
 def _checkpoint_if_due(config: SACConfig, checkpoint_manager: Any, modules, optimizers, replay, state: Any) -> None:
@@ -159,6 +212,9 @@ def _train_loop(
 ) -> None:
     total_steps = int(config.total_timesteps)
     num_envs = int(obs_batch.shape[0])
+    frames_per_batch = int(config.frames_per_batch)
+    if frames_per_batch <= 0:
+        raise ValueError(f"frames_per_batch must be > 0, got {config.frames_per_batch}.")
     while state.global_step < total_steps:
         if state.global_step < int(config.learning_starts):
             action_norm = _random_actions(num_envs, int(env_setup.act_dim))
@@ -166,7 +222,10 @@ def _train_loop(
             obs_t = torch.as_tensor(obs_batch, dtype=torch.float32, device=device)
             with torch.no_grad():
                 action_t, _ = modules.actor.sample(obs_t, deterministic=False)
-            action_norm = np.asarray(action_t.detach().cpu().numpy(), dtype=np.float32)
+            action_cpu = action_t.detach()
+            if action_cpu.device.type != "cpu":
+                action_cpu = action_cpu.cpu()
+            action_norm = np.asarray(action_cpu.numpy(), dtype=np.float32)
         action_env = to_env_action(action_norm, low=env_setup.action_low, high=env_setup.action_high)
         nxt_obs_np, reward_np, terminated_np, truncated_np, _ = envs.step(action_env)
         done_np = np.logical_or(terminated_np, truncated_np)
@@ -184,12 +243,21 @@ def _train_loop(
                 state.last_loss_critic = float(critic_loss)
                 state.last_loss_alpha = float(alpha_loss)
 
-            run_chunked_updates(int(max(1, config.updates_per_step)), int(config.learner_update_chunk_size), _run_one_update)
+            run_chunked_updates(
+                int(max(1, config.updates_per_step)),
+                int(config.learner_update_chunk_size),
+                _run_one_update,
+            )
         prev_eval_mark = int(state.eval_mark)
         maybe_eval(config, env_setup, modules, obs_spec, state, device=device)
         if int(state.eval_mark) != prev_eval_mark:
             append_eval_metric(metrics_path, state, step=int(state.global_step))
-        log_if_due(config, state, step=int(state.global_step), frames_per_batch=int(max(1, num_envs)))
+        log_if_due(
+            config,
+            state,
+            step=int(state.global_step),
+            frames_per_batch=frames_per_batch,
+        )
         _checkpoint_if_due(config, checkpoint_manager, modules, optimizers, replay, state)
 
 
@@ -202,8 +270,8 @@ def train_sac_puffer_impl(config: SACConfig) -> TrainResult:
     config.problem_seed = int(env_setup.problem_seed)
     noise_seed_0 = getattr(env_setup, "noise_seed_0", config.noise_seed_0)
     if noise_seed_0 is None:
-        resolve_noise_seed_0 = importlib.import_module("rl.core.env_conf").resolve_noise_seed_0
-        noise_seed_0 = resolve_noise_seed_0(problem_seed=int(config.problem_seed), noise_seed_0=None)
+        noise_seed_0 = importlib.import_module("rl.core.envs").noise_seed_0
+        noise_seed_0 = noise_seed_0(problem_seed=int(config.problem_seed), noise_seed_0=None)
     config.noise_seed_0 = int(noise_seed_0)
     with closing(make_vector_env(config)) as envs:
         obs_np, _ = envs.reset(seed=int(env_setup.problem_seed))
@@ -226,11 +294,13 @@ def train_sac_puffer_impl(config: SACConfig) -> TrainResult:
             checkpoint_manager=checkpoint_manager,
         )
         if int(config.checkpoint_interval_steps or 0) > 0:
-            checkpoint_manager.save_both(_state_payload(modules, optimizers, replay, state), iteration=int(state.global_step))
-        if state.best_return == -float("inf"):
-            state.best_return = float("nan")
+            checkpoint_manager.save_both(
+                _state_payload(modules, optimizers, replay, state),
+                iteration=int(state.global_step),
+            )
+        best_return = float("nan") if state.best_return == -float("inf") else float(state.best_return)
         rl_logger.log_run_footer(
-            best_return=float(state.best_return),
+            best_return=best_return,
             total_iters_or_steps=int(state.global_step),
             total_time=float(time.time() - state.start_time),
             algo_name="sac",
@@ -242,7 +312,7 @@ def train_sac_puffer_impl(config: SACConfig) -> TrainResult:
         else:
             render_videos_if_enabled(config, env_setup, modules, obs_spec, device=device)
     return TrainResult(
-        best_return=float(state.best_return),
+        best_return=float("nan") if state.best_return == -float("inf") else float(state.best_return),
         last_eval_return=float(state.last_eval_return),
         last_heldout_return=None if state.last_heldout_return is None else float(state.last_heldout_return),
         num_steps=int(state.global_step),
