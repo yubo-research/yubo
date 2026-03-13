@@ -111,6 +111,25 @@ def _load_toml_config(path: str) -> dict[str, Any]:
     return _coerce_mapping_keys(section, source=f"TOML '{path}'")
 
 
+def _parse_override_value(raw: str) -> Any:
+    from common.config_toml import parse_value
+
+    return parse_value(raw)
+
+
+def _parse_overrides(override_strings: tuple[str, ...]) -> dict[str, Any]:
+    out: dict[str, Any] = {}
+    for s in override_strings:
+        if "=" not in s:
+            raise ValueError(f"Override must be key=value, got: {s}")
+        key_raw, value_raw = s.split("=", 1)
+        norm = _normalize_key(key_raw.strip())
+        if norm not in _ALL_TOML_KEYS:
+            raise ValueError(f"Unknown override key '{key_raw}'. Valid keys: {sorted(_ALL_TOML_KEYS)}")
+        out[norm] = _parse_override_value(value_raw.strip())
+    return out
+
+
 def _validate_required(cfg: dict[str, Any]) -> None:
     missing = [k for k in _REQUIRED_TOML_KEYS if k not in cfg]
     if missing:
@@ -270,14 +289,30 @@ def _parse_cfg(cfg: dict[str, Any]) -> UHDConfig:
 
 @_cli.command(name="local", help="Run locally (single process) from a config TOML.")
 @click.argument("config_toml", type=click.Path(exists=True, dir_okay=False, path_type=str))
-def _local(config_toml: str) -> None:
+@click.option(
+    "-o",
+    "--opt",
+    "overrides",
+    multiple=True,
+    help="Override config key: --opt key=value (e.g. --opt env_tag=quadruped-run-64x64 --opt optimizer=simple)",
+)
+def _local(config_toml: str, overrides: tuple[str, ...]) -> None:
     try:
         cfg = _load_toml_config(config_toml)
+        if overrides:
+            override_dict = _parse_overrides(overrides)
+            cfg = {**cfg, **override_dict}
         _validate_required(cfg)
     except (OSError, tomllib.TOMLDecodeError, TypeError, ValueError) as e:
         raise click.ClickException(str(e)) from e
 
     parsed = _parse_cfg(cfg)
+    from problems.env_conf import needs_atari_dm_bindings
+
+    if needs_atari_dm_bindings(parsed.env_tag):
+        from problems.env_conf_backends import register_with_env_conf
+
+        register_with_env_conf()
     _run_parsed(parsed)
 
 
@@ -361,17 +396,27 @@ local = _local
 )
 @click.argument("config_toml", type=click.Path(exists=True, dir_okay=False, path_type=str))
 @click.option(
+    "-o",
+    "--opt",
+    "overrides",
+    multiple=True,
+    help="Override config key: --opt key=value (e.g. --opt env_tag=quadruped-run-64x64)",
+)
+@click.option(
     "--log-file",
     type=click.Path(dir_okay=False),
     default=None,
     help="Also save log to this local file.",
 )
 @click.option("--gpu", type=str, default="A100", help="Modal GPU type (e.g. T4, A10, A100, H100).")
-def modal_cmd(config_toml: str, log_file: str | None, gpu: str) -> None:
+def modal_cmd(config_toml: str, overrides: tuple[str, ...], log_file: str | None, gpu: str) -> None:
     from ops.modal_uhd import run as modal_run
 
     try:
         cfg = _load_toml_config(config_toml)
+        if overrides:
+            override_dict = _parse_overrides(overrides)
+            cfg = {**cfg, **override_dict}
         _validate_required(cfg)
     except (OSError, tomllib.TOMLDecodeError, TypeError, ValueError) as e:
         raise click.ClickException(str(e)) from e

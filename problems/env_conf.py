@@ -37,6 +37,19 @@ def _get_atari_dm_bindings():
     return _ATARI_DM_BINDINGS
 
 
+def needs_atari_dm_bindings(env_tag: str) -> bool:
+    """Return True if this env tag requires Atari/DM bindings to be registered."""
+    tag, _, _ = _parse_tag_options(str(env_tag), None)
+    if tag.startswith(("dm:", "dm_control/", "atari:", "ALE/")):
+        return True
+    if tag in _dm_control_env_confs or tag in _atari_env_confs:
+        return True
+    if tag in _gym_env_confs:
+        conf = _gym_env_confs[tag]
+        return str(getattr(conf, "env_name", "")).startswith(("dm_control/", "ALE/"))
+    return False
+
+
 def _parse_tag_options(tag, from_pixels):
     """Parse shared options from tag. Returns (tag, frozen_noise, from_pixels)."""
     frozen_noise = False

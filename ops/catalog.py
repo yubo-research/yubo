@@ -67,5 +67,12 @@ def environments():
         click.echo(name)
 
 
+@_cli.command()
+def uhd():
+    """List all UHD optimizers (for use with optimizer= in [uhd] config)."""
+    for name in ("simple", "simple_be", "mezo", "mezo_be", "bszo"):
+        click.echo(name)
+
+
 if __name__ == "__main__":
     cli()
