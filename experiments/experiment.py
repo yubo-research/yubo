@@ -25,6 +25,8 @@ _OPTIONAL_KEYS = (
 )
 _ALL_EXPERIMENT_KEYS = set(_BASE_REQUIRED_KEYS + _BUDGET_KEYS + _OPTIONAL_KEYS)
 _OPTIMIZER_KEYS = {"name", "params"}
+_RL_ALGO_NAMES = {"ppo", "sac"}
+_RL_HINT_KEYS = {"backend", "device", "num_envs", "num_steps"}
 
 
 def _normalize_key(key: str) -> str:
@@ -34,6 +36,10 @@ def _normalize_key(key: str) -> str:
 def _coerce_mapping_keys(raw: dict[str, Any], *, source: str) -> dict[str, Any]:
     if not isinstance(raw, dict):
         raise TypeError("TOML config must be a mapping at root or under [experiment].")
+
+    keys = {_normalize_key(str(key)) for key in raw}
+    if str(raw.get("opt_name", "")).strip().lower() in _RL_ALGO_NAMES or keys & _RL_HINT_KEYS:
+        raise ValueError(f"{source} looks like an RL config. Use `python -m rl.runner --config ...`, not `python -m experiments.experiment ...`.")
 
     out: dict[str, Any] = {}
     for key, value in raw.items():
@@ -177,11 +183,6 @@ def _local(config_toml: str, overrides: tuple[str, ...]) -> None:
         config = load_experiment_config(config_toml_path=config_toml, overrides=override_dict or None)
     except (OSError, tomllib.TOMLDecodeError, TypeError, ValueError) as e:
         raise click.ClickException(str(e)) from e
-
-    if str(config.env_tag).startswith(("atari:", "ALE/", "dm:", "dm_control/")):
-        from problems.env_conf_backends import register_with_env_conf
-
-        register_with_env_conf()
 
     sampler(config, distributor_fn=scan_local)
 

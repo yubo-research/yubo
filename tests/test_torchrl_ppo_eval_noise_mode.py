@@ -8,38 +8,28 @@ import torch
 
 
 def test_ppo_eval_noise_mode_natural_advances_eval_and_heldout(monkeypatch, tmp_path):
-    from rl.core import episode_rollout
     from rl.torchrl.ppo import core as ppo_core
-    from rl.torchrl.ppo import deps as op_deps
 
     eval_seeds: list[int] = []
     heldout_noise_indices: list[int] = []
 
-    monkeypatch.setattr(
-        ppo_core,
-        "_evaluate_actor",
-        lambda *_args, **kwargs: (eval_seeds.append(int(kwargs["eval_seed"])) or float(kwargs["eval_seed"])),
-    )
-    monkeypatch.setattr(
-        episode_rollout,
-        "evaluate_for_best",
-        lambda *_args, **kwargs: (heldout_noise_indices.append(int(kwargs["i_noise"])) or 0.0),
-    )
-    monkeypatch.setattr(
-        op_deps.torchrl_actor_eval,
-        "capture_actor_snapshot",
-        lambda *_args, **_kwargs: {"snapshot": 1},
-    )
-    monkeypatch.setattr(
-        op_deps.torchrl_actor_eval,
-        "restore_actor_snapshot",
-        lambda *_args, **_kwargs: None,
-    )
-    monkeypatch.setattr(
-        op_deps.torchrl_actor_eval,
-        "ActorEvalPolicy",
-        lambda *_args, **_kwargs: object(),
-    )
+    def _fake_run(**kwargs):
+        ep = ppo_core.rl_eval.plan(
+            current=kwargs["current"],
+            interval=kwargs["interval"],
+            seed=kwargs["seed"],
+            eval_seed_base=kwargs["eval_seed_base"],
+            eval_noise_mode=kwargs["eval_noise_mode"],
+        )
+        state = kwargs["state"]
+        eval_seeds.append(int(ep.eval_seed))
+        heldout_noise_indices.append(int(ep.heldout_i_noise))
+        state.last_eval_return = float(ep.eval_seed)
+        state.last_heldout_return = float(ep.heldout_i_noise)
+        state.best_return = max(float(state.best_return), float(state.last_eval_return))
+        state.best_actor_state = {"snapshot": 1}
+
+    monkeypatch.setattr(ppo_core.rl_eval, "run", _fake_run)
 
     config = ppo_core.PPOConfig(
         eval_interval=1,
@@ -86,38 +76,28 @@ def test_ppo_eval_noise_mode_natural_advances_eval_and_heldout(monkeypatch, tmp_
 
 
 def test_ppo_eval_noise_mode_frozen_uses_fixed_seeds(monkeypatch, tmp_path):
-    from rl.core import episode_rollout
     from rl.torchrl.ppo import core as ppo_core
-    from rl.torchrl.ppo import deps as op_deps
 
     eval_seeds: list[int] = []
     heldout_noise_indices: list[int] = []
 
-    monkeypatch.setattr(
-        ppo_core,
-        "_evaluate_actor",
-        lambda *_args, **kwargs: (eval_seeds.append(int(kwargs["eval_seed"])) or float(kwargs["eval_seed"])),
-    )
-    monkeypatch.setattr(
-        episode_rollout,
-        "evaluate_for_best",
-        lambda *_args, **kwargs: (heldout_noise_indices.append(int(kwargs["i_noise"])) or 0.0),
-    )
-    monkeypatch.setattr(
-        op_deps.torchrl_actor_eval,
-        "capture_actor_snapshot",
-        lambda *_args, **_kwargs: {"snapshot": 1},
-    )
-    monkeypatch.setattr(
-        op_deps.torchrl_actor_eval,
-        "restore_actor_snapshot",
-        lambda *_args, **_kwargs: None,
-    )
-    monkeypatch.setattr(
-        op_deps.torchrl_actor_eval,
-        "ActorEvalPolicy",
-        lambda *_args, **_kwargs: object(),
-    )
+    def _fake_run(**kwargs):
+        ep = ppo_core.rl_eval.plan(
+            current=kwargs["current"],
+            interval=kwargs["interval"],
+            seed=kwargs["seed"],
+            eval_seed_base=kwargs["eval_seed_base"],
+            eval_noise_mode=kwargs["eval_noise_mode"],
+        )
+        state = kwargs["state"]
+        eval_seeds.append(int(ep.eval_seed))
+        heldout_noise_indices.append(int(ep.heldout_i_noise))
+        state.last_eval_return = float(ep.eval_seed)
+        state.last_heldout_return = float(ep.heldout_i_noise)
+        state.best_return = max(float(state.best_return), float(state.last_eval_return))
+        state.best_actor_state = {"snapshot": 1}
+
+    monkeypatch.setattr(ppo_core.rl_eval, "run", _fake_run)
 
     config = ppo_core.PPOConfig(
         eval_interval=1,

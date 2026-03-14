@@ -1,20 +1,23 @@
 from __future__ import annotations
 
+import importlib
 import os
 import sys
 import warnings
 from typing import Any, Tuple
 
 import numpy as np
-from dm_control import suite
 from scipy.ndimage import zoom
 
 
-def _configure_headless_render_backend(render_mode: str | None) -> None:
+def configure_render_backend(render_mode: str | None) -> None:
     if render_mode != "rgb_array":
         return
     if not sys.platform.startswith("linux"):
         return
+    gl_backend = os.environ.get("MUJOCO_GL")
+    if gl_backend in {"egl", "osmesa"}:
+        os.environ.setdefault("PYOPENGL_PLATFORM", gl_backend)
     if "MUJOCO_GL" in os.environ:
         return
     has_display = bool(os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"))
@@ -24,7 +27,11 @@ def _configure_headless_render_backend(render_mode: str | None) -> None:
     os.environ.setdefault("PYOPENGL_PLATFORM", "egl")
 
 
-def _parse_env_name(env_name: str) -> Tuple[str, str]:
+def _suite():
+    return importlib.import_module("dm_control.suite")
+
+
+def parse_name(env_name: str) -> Tuple[str, str]:
     if not env_name.startswith("dm_control/"):
         raise ValueError(f"Expected dm_control env name, got: {env_name}")
     name = env_name.split("/", 1)[1]
@@ -151,7 +158,7 @@ class DMControlEnv:
         self._task = task
         self._seed = seed
         self.render_mode = render_mode
-        _configure_headless_render_backend(render_mode)
+        configure_render_backend(render_mode)
         self._env = self._load_env(seed)
         self._render_width, self._render_height = self._resolve_render_size()
         self._camera_id = self._resolve_camera_id()
@@ -235,7 +242,7 @@ class DMControlEnv:
 
     def _load_env(self, seed: int | None):
         task_kwargs = {"random": seed} if seed is not None else None
-        return suite.load(self._domain, self._task, task_kwargs=task_kwargs)
+        return _suite().load(self._domain, self._task, task_kwargs=task_kwargs)
 
     def reset(self, *, seed: int | None = None, options: dict | None = None):
         _ = options
@@ -273,9 +280,9 @@ class DMControlEnv:
 
 
 class _PixelObsWrapper:
-    def __init__(self, env: DMControlEnv, *, pixels_only: bool = True, size: int = 84):
+    def __init__(self, env: DMControlEnv, *, obs_mode: str = "image", size: int = 84):
         self.env = env
-        self._pixels_only = bool(pixels_only)
+        self._pixels_only = str(obs_mode).strip().lower() in {"image", "pixels"}
         self._size = int(size)
         self._render_disabled = False
 
@@ -323,7 +330,13 @@ class _PixelObsWrapper:
         pixels = self._get_pixels()
         if self._pixels_only:
             return pixels, reward, terminated, truncated, info
-        return {"pixels": pixels, "state": state_obs}, reward, terminated, truncated, info
+        return (
+            {"pixels": pixels, "state": state_obs},
+            reward,
+            terminated,
+            truncated,
+            info,
+        )
 
     def close(self):
         return self.env.close()
@@ -333,15 +346,29 @@ def _make(
     env_name: str,
     *,
     render_mode: str | None = None,
-    from_pixels: bool = False,
-    pixels_only: bool = True,
+    obs_mode: str = "vector",
 ):
-    domain, task = _parse_env_name(env_name)
-    use_render_mode = "rgb_array" if from_pixels else render_mode
+    mode = str(obs_mode).strip().lower()
+    if mode == "state":
+        mode = "vector"
+    elif mode == "pixels":
+        mode = "image"
+    elif mode == "pixels+state":
+        mode = "mixed"
+    use_pixels = mode in {"image", "mixed"}
+    domain, task = parse_name(env_name)
+    use_render_mode = "rgb_array" if use_pixels else render_mode
     base = DMControlEnv(domain, task, render_mode=use_render_mode)
-    if from_pixels:
-        return _PixelObsWrapper(base, pixels_only=bool(pixels_only), size=PIXEL_HEIGHT)
+    if use_pixels:
+        return _PixelObsWrapper(base, obs_mode=mode, size=PIXEL_HEIGHT)
     return base
+
+
+def load(env_name: str, *, seed: int | None = None, render_mode: str | None = None):
+    configure_render_backend(render_mode)
+    domain, task = parse_name(env_name)
+    task_kwargs = {"random": int(seed)} if seed is not None else None
+    return _suite().load(domain, task, task_kwargs=task_kwargs)
 
 
 make = _make

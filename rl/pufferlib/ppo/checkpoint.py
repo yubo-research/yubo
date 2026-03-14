@@ -3,20 +3,21 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-import numpy as np
 import torch
 import torch.optim as optim
 
-from rl.checkpointing import load_checkpoint
-from rl.core.actor_state import build_ppo_checkpoint_payload as build_shared_payload
-from rl.core.actor_state import capture_ppo_actor_snapshot as capture_actor_snapshot
-from rl.core.actor_state import restore_backbone_head_snapshot
+from rl.checkpointing import load_checkpoint, save_final_if_enabled, save_if_due
+from rl.core import actor_state
 from rl.pufferlib.ppo.metrics import _as_optional_finite
 
 
 def build_checkpoint_payload(model, optimizer: optim.Optimizer, state, *, iteration: int) -> dict[str, Any]:
-    actor_snapshot = capture_actor_snapshot(model.actor_backbone, model.actor_head, log_std=model.log_std if hasattr(model, "log_std") else None)
-    return build_shared_payload(
+    actor_snapshot = actor_state.ppo_snap(
+        model.actor_backbone,
+        model.actor_head,
+        log_std=model.log_std if hasattr(model, "log_std") else None,
+    )
+    return actor_state.build_ppo_checkpoint_payload(
         iteration=iteration,
         global_step=int(state.global_step),
         actor_snapshot=actor_snapshot,
@@ -35,11 +36,18 @@ def restore_checkpoint_if_requested(config, plan, model, optimizer: optim.Optimi
     if not config.resume_from:
         return
     loaded = load_checkpoint(Path(config.resume_from), device=device)
-    actor_snapshot: dict[str, Any] = {"backbone": loaded["actor_backbone"], "head": loaded["actor_head"]}
+    actor_snapshot: dict[str, Any] = {
+        "backbone": loaded["actor_backbone"],
+        "head": loaded["actor_head"],
+    }
     if hasattr(model, "log_std") and "log_std" in loaded:
         actor_snapshot["log_std"] = loaded["log_std"]
-    restore_backbone_head_snapshot(
-        model.actor_backbone, model.actor_head, actor_snapshot, log_std=model.log_std if hasattr(model, "log_std") else None, device=device
+    actor_state.load(
+        model.actor_backbone,
+        model.actor_head,
+        actor_snapshot,
+        log_std=model.log_std if hasattr(model, "log_std") else None,
+        device=device,
     )
     model.critic_backbone.load_state_dict(loaded["critic_backbone"])
     model.critic_head.load_state_dict(loaded["critic_head"])
@@ -55,26 +63,38 @@ def restore_checkpoint_if_requested(config, plan, model, optimizer: optim.Optimi
         state.last_heldout_return = _as_optional_finite(loaded["last_heldout_return"])
     if "last_episode_return" in loaded and loaded["last_episode_return"] is not None:
         state.last_episode_return = float(loaded["last_episode_return"])
-    if "rng_torch" in loaded:
-        torch.set_rng_state(loaded["rng_torch"])
-    if "rng_numpy" in loaded:
-        np.random.set_state(loaded["rng_numpy"])
-    if torch.cuda.is_available() and loaded.get("rng_cuda") is not None:
-        torch.cuda.set_rng_state_all(loaded["rng_cuda"])
+    actor_state.restore_rng_state_payload(loaded)
 
 
-def maybe_save_periodic_checkpoint(config, checkpoint_manager: Any, model, optimizer: optim.Optimizer, state, *, iteration: int) -> None:
-    if config.checkpoint_interval is None:
-        return
-    interval = int(config.checkpoint_interval)
-    if interval <= 0 or iteration % interval != 0:
-        return
-    payload = build_checkpoint_payload(model, optimizer, state, iteration=iteration)
-    checkpoint_manager.save_both(payload, iteration=iteration)
+def maybe_save_periodic_checkpoint(
+    config,
+    checkpoint_manager: Any,
+    model,
+    optimizer: optim.Optimizer,
+    state,
+    *,
+    iteration: int,
+) -> None:
+    save_if_due(
+        checkpoint_manager,
+        build_checkpoint_payload(model, optimizer, state, iteration=iteration),
+        iteration=iteration,
+        interval=config.checkpoint_interval,
+    )
 
 
-def save_final_checkpoint(config, checkpoint_manager: Any, model, optimizer: optim.Optimizer, state, *, iteration: int) -> None:
-    if config.checkpoint_interval is None:
-        return
-    payload = build_checkpoint_payload(model, optimizer, state, iteration=iteration)
-    checkpoint_manager.save_both(payload, iteration=iteration)
+def save_final_checkpoint(
+    config,
+    checkpoint_manager: Any,
+    model,
+    optimizer: optim.Optimizer,
+    state,
+    *,
+    iteration: int,
+) -> None:
+    save_final_if_enabled(
+        checkpoint_manager,
+        build_checkpoint_payload(model, optimizer, state, iteration=iteration),
+        iteration=iteration,
+        interval=config.checkpoint_interval,
+    )

@@ -2,9 +2,9 @@ import pytest
 
 from rl.eval_noise import (
     EvalPlan,
-    build_eval_plan,
     eval_index_for_due_step,
     normalize_eval_noise_mode,
+    plan,
     resolve_eval_seed,
     resolve_heldout_noise_index,
 )
@@ -49,12 +49,12 @@ def test_resolve_heldout_noise_index():
 
 
 def test_build_eval_plan():
-    plan = build_eval_plan(
+    out = plan(
         current=32,
         interval=32,
         seed=7,
         eval_seed_base=None,
         eval_noise_mode="frozen",
     )
-    assert plan.eval_seed == 7
-    assert plan.heldout_i_noise == 99999
+    assert out.eval_seed == 7
+    assert out.heldout_i_noise == 99999

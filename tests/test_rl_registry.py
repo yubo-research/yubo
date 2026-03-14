@@ -9,6 +9,7 @@ from rl.registry import (
     register_algo,
     register_algo_backend,
     register_algo_lazy,
+    resolve_algo_name,
 )
 
 
@@ -105,3 +106,9 @@ def test_get_algo_unknown_backend_for_bound_algo_raises():
     register_algo_backend("_canonical_backend_unknown", "torchrl", "_impl_backend_unknown")
     with pytest.raises(ValueError, match="Unknown backend"):
         get_algo("_canonical_backend_unknown", backend="pufferlib")
+
+
+def test_resolve_algo_name_unknown_backend_for_bound_algo_raises():
+    register_algo_backend("_canonical_backend_unknown_name", "torchrl", "_impl_backend_unknown_name")
+    with pytest.raises(ValueError, match="Unknown backend"):
+        resolve_algo_name("_canonical_backend_unknown_name", backend="pufferlib")

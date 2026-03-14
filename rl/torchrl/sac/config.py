@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import dataclasses
 
-from rl.config_model_defaults import apply_sac_env_model_defaults
 from rl.core.torchrl_runtime import TorchRLRuntimeCapabilities, TorchRLRuntimeConfig
 
 
@@ -13,8 +12,7 @@ class SACConfig(TorchRLRuntimeConfig):
     seed: int = 1
     problem_seed: int | None = None
     noise_seed_0: int | None = None
-    from_pixels: bool = False
-    pixels_only: bool = True
+    obs_mode: str = "vector"
     total_timesteps: int = 1000000
     num_envs: int = 1
     frames_per_batch: int = 4
@@ -40,8 +38,14 @@ class SACConfig(TorchRLRuntimeConfig):
     backbone_hidden_sizes: tuple[int, ...] = (256, 256)
     backbone_activation: str = "silu"
     backbone_layer_norm: bool = False
+    critic_backbone_name: str | None = None
+    critic_backbone_hidden_sizes: tuple[int, ...] | None = None
+    critic_backbone_activation: str | None = None
+    critic_backbone_layer_norm: bool | None = None
     actor_head_hidden_sizes: tuple[int, ...] = ()
     critic_head_hidden_sizes: tuple[int, ...] = ()
+    actor_head_activation: str | None = None
+    critic_head_activation: str | None = None
     head_activation: str = "silu"
     theta_dim: int | None = None
     log_interval_steps: int = 1000
@@ -63,15 +67,25 @@ class SACConfig(TorchRLRuntimeConfig):
     @classmethod
     def from_dict(cls, raw: dict) -> "SACConfig":
         data = {k: v for k, v in raw.items() if k in {f.name for f in dataclasses.fields(cls)}}
-        data = apply_sac_env_model_defaults(data)
         for key in ["num_envs", "frames_per_batch"]:
             if key in data and data[key] is not None:
                 data[key] = int(data[key])
+        for key in (
+            "backbone_hidden_sizes",
+            "critic_backbone_hidden_sizes",
+            "actor_head_hidden_sizes",
+            "critic_head_hidden_sizes",
+        ):
+            if key in data and data[key] is not None:
+                data[key] = tuple((int(v) for v in data[key]))
         return cls(**data)
 
 
 _SAC_RUNTIME_CAPABILITIES = TorchRLRuntimeCapabilities(
-    allow_multi_sync_collector=True, allow_multi_async_collector=True, allow_mps_multi_collectors=False, allow_parallel_single_env=True
+    allow_multi_sync_collector=True,
+    allow_multi_async_collector=True,
+    allow_mps_multi_collectors=False,
+    allow_parallel_single_env=True,
 )
 
 

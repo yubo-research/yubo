@@ -1,11 +1,14 @@
 import pytest
 
-from rl.config_model_defaults import apply_ppo_env_model_defaults, apply_sac_env_model_defaults
+from rl.config_model_defaults import (
+    apply_ppo_env_model_defaults,
+    apply_sac_env_model_defaults,
+)
 
 
 def test_apply_ppo_env_model_defaults_uses_env_defaults():
     cfg = apply_ppo_env_model_defaults({"env_tag": "cheetah"})
-    assert cfg["backbone_hidden_sizes"] == (64, 64)
+    assert cfg["backbone_hidden_sizes"] == (32, 16)
     assert cfg["share_backbone"] is True
 
 
@@ -28,5 +31,5 @@ def test_apply_env_model_defaults_requires_env_tag():
 
 def test_apply_sac_env_model_defaults_uses_env_defaults():
     cfg = apply_sac_env_model_defaults({"env_tag": "cheetah"})
-    assert cfg["backbone_hidden_sizes"] == (256, 256)
-    assert cfg["backbone_activation"] == "relu"
+    assert cfg["backbone_hidden_sizes"] == (32, 16)
+    assert cfg["backbone_activation"] == "silu"

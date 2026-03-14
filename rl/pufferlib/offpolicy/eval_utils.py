@@ -9,30 +9,39 @@ from typing import Any
 import numpy as np
 import torch
 
-from rl.core.actor_state import capture_backbone_head_snapshot, restore_backbone_head_snapshot, use_backbone_head_snapshot
-from rl.core.episode_rollout import collect_denoised_trajectory, evaluate_for_best
+from rl.core import eval, sac_metrics
+from rl.core.actor_state import load, snap, using
+from rl.core.episode_rollout import best, denoise
 from rl.core.progress import due_mark
-from rl.core.sac_eval import evaluate_heldout_with_best_actor, update_best_actor_if_improved
-from rl.core.sac_metrics import build_eval_metric_record, build_log_eval_iteration_kwargs
-from rl.eval_noise import build_eval_plan
 
 from ... import logger as rl_logger
 from .env_utils import prepare_obs_np
 
 
 def capture_actor_state(modules):
-    return capture_backbone_head_snapshot(
-        modules.actor_backbone, modules.actor_head, log_std=getattr(modules, "log_std", None), state_to_cpu=True, log_std_to_cpu=True, log_std_format="tensor"
+    return snap(
+        modules.actor_backbone,
+        modules.actor_head,
+        log_std=getattr(modules, "log_std", None),
+        state_to_cpu=True,
+        log_std_to_cpu=True,
+        log_std_format="tensor",
     )
 
 
 def _restore_actor_state(modules, snapshot, *, device: torch.device) -> None:
-    restore_backbone_head_snapshot(modules.actor_backbone, modules.actor_head, snapshot, log_std=getattr(modules, "log_std", None), device=device)
+    load(
+        modules.actor_backbone,
+        modules.actor_head,
+        snapshot,
+        log_std=getattr(modules, "log_std", None),
+        device=device,
+    )
 
 
 @contextmanager
 def use_actor_state(modules, actor_state, *, device: torch.device):
-    with use_backbone_head_snapshot(
+    with using(
         modules.actor_backbone,
         modules.actor_head,
         actor_state,
@@ -76,13 +85,21 @@ class SacEvalPolicy:
         return np.asarray(action.squeeze(0).detach().cpu().numpy(), dtype=np.float32)
 
 
-def evaluate_actor(config: Any, env: Any, modules: Any, obs_spec: Any, *, device: torch.device, eval_seed: int) -> float:
+def evaluate_actor(
+    config: Any,
+    env: Any,
+    modules: Any,
+    obs_spec: Any,
+    *,
+    device: torch.device,
+    eval_seed: int,
+) -> float:
     policy = SacEvalPolicy(modules, obs_spec, device=device)
-    traj, _ = collect_denoised_trajectory(env.env_conf, policy, num_denoise=config.num_denoise, i_noise=int(eval_seed))
+    traj, _ = denoise(env.env_conf, policy, num_denoise=config.num_denoise, i_noise=int(eval_seed))
     return float(traj.rreturn)
 
 
-def evaluate_heldout_if_enabled(
+def heldout(
     config: Any,
     env: Any,
     modules: Any,
@@ -95,24 +112,30 @@ def evaluate_heldout_if_enabled(
 ) -> float | None:
     if config.num_denoise_passive is None:
         return None
+    policy = SacEvalPolicy(modules, obs_spec, device=device)
     if best_actor_state is not None and with_actor_state_fn is not None:
-        policy = SacEvalPolicy(modules, obs_spec, device=device)
-        return evaluate_heldout_with_best_actor(
+        return eval.heldout(
             best_actor_state=best_actor_state,
             num_denoise_passive=config.num_denoise_passive,
             heldout_i_noise=int(heldout_i_noise),
             with_actor_state=with_actor_state_fn,
-            evaluate_for_best=evaluate_for_best,
+            best=best,
             eval_env_conf=env.env_conf,
             eval_policy=policy,
         )
-    policy = SacEvalPolicy(modules, obs_spec, device=device)
-    return float(evaluate_for_best(env.env_conf, policy, config.num_denoise_passive, i_noise=int(heldout_i_noise)))
+    return float(
+        best(
+            env.env_conf,
+            policy,
+            config.num_denoise_passive,
+            i_noise=int(heldout_i_noise),
+        )
+    )
 
 
 def append_eval_metric(path, state: TrainState, *, step: int) -> None:
     now = float(time.time())
-    record = build_eval_metric_record(
+    rec = sac_metrics.record(
         step=int(step),
         eval_return=float(state.last_eval_return),
         heldout_return=state.last_heldout_return,
@@ -124,7 +147,7 @@ def append_eval_metric(path, state: TrainState, *, step: int) -> None:
         started_at=float(state.start_time),
         now=now,
     )
-    rl_logger.append_metrics(path, record)
+    rl_logger.append_metrics(path, rec)
 
 
 def log_if_due(config: Any, state: TrainState, *, step: int, frames_per_batch: int) -> None:
@@ -133,7 +156,7 @@ def log_if_due(config: Any, state: TrainState, *, step: int, frames_per_batch: i
         return
     state.log_mark = int(mark)
     now = float(time.time())
-    kwargs = build_log_eval_iteration_kwargs(
+    line = sac_metrics.log(
         step=int(step),
         frames_per_batch=int(frames_per_batch),
         started_at=float(state.start_time),
@@ -145,37 +168,45 @@ def log_if_due(config: Any, state: TrainState, *, step: int, frames_per_batch: i
         loss_critic=float(state.last_loss_critic),
         loss_alpha=float(state.last_loss_alpha),
     )
-    rl_logger.log_eval_iteration(**kwargs)
+    rl_logger.log_eval_iteration(**line)
 
 
-def maybe_eval(config: Any, env: Any, modules: Any, obs_spec: Any, state: TrainState, *, device: torch.device):
+def maybe_eval(
+    config: Any,
+    env: Any,
+    modules: Any,
+    obs_spec: Any,
+    state: TrainState,
+    *,
+    device: torch.device,
+):
     mark = due_mark(state.global_step, config.eval_interval_steps, state.eval_mark)
     if mark is None:
         return
     state.eval_mark = int(mark)
-    due_step = int(mark * int(config.eval_interval_steps))
-    run_problem_seed = int(getattr(env, "problem_seed", config.seed))
-    plan = build_eval_plan(
-        current=int(due_step),
+    step_i = int(mark * int(config.eval_interval_steps))
+    seed = int(getattr(env, "problem_seed", config.seed))
+    ep = eval.plan(
+        current=step_i,
         interval=int(config.eval_interval_steps),
-        seed=run_problem_seed,
+        seed=seed,
         eval_seed_base=config.eval_seed_base,
         eval_noise_mode=config.eval_noise_mode,
     )
-    state.last_eval_return = evaluate_actor(config, env, modules, obs_spec, device=device, eval_seed=int(plan.eval_seed))
-    state.best_return, state.best_actor_state, _ = update_best_actor_if_improved(
+    state.last_eval_return = evaluate_actor(config, env, modules, obs_spec, device=device, eval_seed=int(ep.eval_seed))
+    state.best_return, state.best_actor_state, _ = eval.update_best(
         eval_return=float(state.last_eval_return),
         best_return=float(state.best_return),
         best_actor_state=state.best_actor_state,
         capture_actor_state=lambda: capture_actor_state(modules),
     )
-    state.last_heldout_return = evaluate_heldout_if_enabled(
+    state.last_heldout_return = heldout(
         config,
         env,
         modules,
         obs_spec,
         device=device,
-        heldout_i_noise=int(plan.heldout_i_noise),
+        heldout_i_noise=int(ep.heldout_i_noise),
         best_actor_state=state.best_actor_state,
         with_actor_state_fn=lambda snapshot: use_actor_state(modules, snapshot, device=device),
     )

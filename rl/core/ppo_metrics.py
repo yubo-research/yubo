@@ -6,7 +6,7 @@ from typing import Any
 from rl.core.progress import steps_per_second
 
 
-def build_eval_record(
+def record(
     *,
     iteration: int,
     global_step: int,

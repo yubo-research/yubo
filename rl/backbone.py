@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable
+from typing import Any, Callable
 
 import torch
 import torch.nn as nn
@@ -19,6 +19,58 @@ class HeadSpec:
     activation: str = "silu"
 
 
+@dataclass(frozen=True)
+class NetworkSpec:
+    backbone: BackboneSpec
+    head: HeadSpec
+
+
+@dataclass(frozen=True)
+class ActorCriticSpec:
+    actor: NetworkSpec
+    critic: NetworkSpec
+
+    @classmethod
+    def from_config(
+        cls,
+        config: Any,
+        *,
+        actor_backbone_name: str,
+        critic_backbone_name: str | None = None,
+    ) -> "ActorCriticSpec":
+        def pick(name, default):
+            value = getattr(config, name, None)
+            return default if value is None else value
+
+        critic_name = str(critic_backbone_name if critic_backbone_name is not None else pick("critic_backbone_name", actor_backbone_name))
+        return cls(
+            actor=NetworkSpec(
+                backbone=BackboneSpec(
+                    name=str(actor_backbone_name),
+                    hidden_sizes=tuple(config.backbone_hidden_sizes),
+                    activation=str(config.backbone_activation),
+                    layer_norm=bool(config.backbone_layer_norm),
+                ),
+                head=HeadSpec(
+                    hidden_sizes=tuple(config.actor_head_hidden_sizes),
+                    activation=str(pick("actor_head_activation", config.head_activation)),
+                ),
+            ),
+            critic=NetworkSpec(
+                backbone=BackboneSpec(
+                    name=critic_name,
+                    hidden_sizes=tuple(pick("critic_backbone_hidden_sizes", config.backbone_hidden_sizes)),
+                    activation=str(pick("critic_backbone_activation", config.backbone_activation)),
+                    layer_norm=bool(pick("critic_backbone_layer_norm", config.backbone_layer_norm)),
+                ),
+                head=HeadSpec(
+                    hidden_sizes=tuple(config.critic_head_hidden_sizes),
+                    activation=str(pick("critic_head_activation", config.head_activation)),
+                ),
+            ),
+        )
+
+
 _BACKBONES: dict[str, Callable[[BackboneSpec, int], tuple[nn.Module, int]]] = {}
 
 
@@ -33,14 +85,20 @@ def register_backbone(name: str):
 
 
 def _activation(name: str) -> type[nn.Module]:
-    key = str(name).strip().lower()
-    if key in ("silu", "swish"):
-        return nn.SiLU
-    if key in ("relu",):
-        return nn.ReLU
-    if key in ("tanh",):
-        return nn.Tanh
-    raise ValueError(f"Unsupported activation '{name}'.")
+    if isinstance(name, type) and issubclass(name, nn.Module):
+        return name
+    key = "".join(ch for ch in str(name).lower() if ch.isalnum())
+    act = next(
+        (
+            mod
+            for raw, mod in vars(nn.modules.activation).items()
+            if isinstance(mod, type) and issubclass(mod, nn.Module) and key == "".join(ch for ch in str(raw).lower() if ch.isalnum())
+        ),
+        None,
+    )
+    if act is None:
+        raise ValueError(f"Unsupported activation '{name}'.")
+    return act
 
 
 @register_backbone("nature_cnn")
@@ -50,13 +108,14 @@ def _build_nature_cnn(spec: BackboneSpec, input_dim: int) -> tuple[nn.Module, in
 
 def _build_nature_cnn_with_channels(spec: BackboneSpec, input_dim: int, *, in_channels: int) -> tuple[nn.Module, int]:
     del input_dim
+    act = _activation(spec.activation)
     layers = [
         nn.Conv2d(in_channels, 32, kernel_size=8, stride=4),
-        nn.ReLU(),
+        act(),
         nn.Conv2d(32, 64, kernel_size=4, stride=2),
-        nn.ReLU(),
+        act(),
         nn.Conv2d(64, 64, kernel_size=3, stride=1),
-        nn.ReLU(),
+        act(),
         nn.AdaptiveAvgPool2d(1),
         nn.Flatten(),
     ]
@@ -65,6 +124,21 @@ def _build_nature_cnn_with_channels(spec: BackboneSpec, input_dim: int, *, in_ch
         dummy = torch.zeros(1, in_channels, 84, 84)
         out_dim = int(encoder(dummy).shape[-1])
     return (encoder, out_dim)
+
+
+def build_nature_cnn_encoder(
+    *,
+    in_channels: int,
+    activation: str = "relu",
+    latent_dim: int | None = None,
+) -> tuple[nn.Module, int]:
+    spec = BackboneSpec(name="nature_cnn", hidden_sizes=(), activation=str(activation), layer_norm=False)
+    encoder, out_dim = _build_nature_cnn_with_channels(spec, 0, in_channels=int(in_channels))
+    if latent_dim is None or int(latent_dim) == int(out_dim):
+        return (encoder, int(out_dim))
+    act = _activation(activation)
+    projected = nn.Sequential(encoder, nn.Linear(int(out_dim), int(latent_dim)), act())
+    return (projected, int(latent_dim))
 
 
 @register_backbone("nature_cnn_atari")

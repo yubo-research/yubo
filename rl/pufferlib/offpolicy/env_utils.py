@@ -1,16 +1,17 @@
 from __future__ import annotations
 
 import dataclasses
-import importlib
 from typing import Any
 
 import numpy as np
 import torch
 
+from common.obs_mode import obs_mode_uses_pixels
 from rl.core.continuous_actions import scale_action_to_env
-from rl.core.env_setup import build_continuous_gym_env_setup
+from rl.core.envs import build_continuous_env_setup
 from rl.core.ppo_envs import is_atari_env_tag, resolve_gym_env_name, to_puffer_game_name
 from rl.core.runtime import seed_everything as _seed_everything_core
+from rl.env_provider import get_env_conf_fn
 
 from ...pufferlib_compat import import_pufferlib_modules
 from ..vector_env import make_vector_env as _make_vector_env_common
@@ -80,7 +81,7 @@ def infer_observation_spec(config: Any, obs_np: np.ndarray) -> ObservationSpec:
         raise ValueError("Observation must include at least one dimension.")
     raw_shape = tuple((int(v) for v in (obs_arr.shape[1:] if obs_arr.ndim >= 2 else obs_arr.shape)))
     backbone_key = str(config.backbone_name).strip().lower()
-    looks_like_pixels = bool(config.from_pixels) or obs_arr.ndim >= 4 or "nature_cnn" in backbone_key
+    looks_like_pixels = obs_mode_uses_pixels(str(getattr(config, "obs_mode", "vector"))) or obs_arr.ndim >= 4 or "nature_cnn" in backbone_key
     if looks_like_pixels:
         channels = _infer_channels(raw_shape, fallback=max(1, int(config.framestack)))
         image_size = _infer_image_size(raw_shape, default_size=84)
@@ -93,7 +94,10 @@ def prepare_obs_np(obs_np: np.ndarray, *, obs_spec: ObservationSpec) -> np.ndarr
     obs_arr = np.asarray(obs_np)
     if obs_spec.mode == "pixels":
         obs_t = ensure_pixel_obs_format(
-            torch.as_tensor(obs_arr), channels=int(obs_spec.channels or 3), size=int(obs_spec.image_size or 84), scale_float_255=True
+            torch.as_tensor(obs_arr),
+            channels=int(obs_spec.channels or 3),
+            size=int(obs_spec.image_size or 84),
+            scale_float_255=True,
         )
         if obs_t.ndim == 3:
             obs_t = obs_t.unsqueeze(0)
@@ -119,15 +123,13 @@ def resolve_backbone_name(config: Any, obs_spec: ObservationSpec) -> str:
 
 
 def build_env_setup(config: Any) -> EnvSetup:
-    get_env_conf = importlib.import_module("problems.env_conf").get_env_conf
-    shared = build_continuous_gym_env_setup(
+    shared = build_continuous_env_setup(
         env_tag=str(config.env_tag),
         seed=int(config.seed),
         problem_seed=config.problem_seed,
         noise_seed_0=config.noise_seed_0,
-        from_pixels=bool(config.from_pixels),
-        pixels_only=bool(config.pixels_only),
-        get_env_conf_fn=get_env_conf,
+        obs_mode=str(getattr(config, "obs_mode", "vector")),
+        get_env_conf_fn=get_env_conf_fn(),
         obs_scale_from_env_fn=obs_scale_from_env,
     )
     return EnvSetup(

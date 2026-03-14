@@ -206,12 +206,12 @@ def test_run_updates_if_due():
     assert updated_losses["loss_actor"] == 3.0
 
 
-def test_evaluate_heldout_if_enabled():
+def test_heldout():
     config_disabled = SimpleNamespace(num_denoise_passive=None, env_tag="env")
     env_setup = SimpleNamespace(problem_seed=1, noise_seed_0=2)
     modules = SimpleNamespace()
     train_state_disabled = SimpleNamespace(best_actor_state={"best": 1})
-    result = torchrl_sac_loop.evaluate_heldout_if_enabled(
+    result = torchrl_sac_loop.heldout(
         config_disabled,
         env_setup,
         modules,
@@ -221,14 +221,14 @@ def test_evaluate_heldout_if_enabled():
         restore_actor_state=lambda *_: None,
         eval_policy_factory=lambda *_: object(),
         get_env_conf=lambda *_args, **_kwargs: object(),
-        evaluate_for_best=lambda *_args, **_kwargs: 1.0,
+        best=lambda *_args, **_kwargs: 1.0,
     )
     assert result is None
 
     restore_calls = []
     config_enabled = SimpleNamespace(num_denoise_passive=3, env_tag="env")
     train_state_enabled = SimpleNamespace(best_actor_state={"best": 99})
-    result = torchrl_sac_loop.evaluate_heldout_if_enabled(
+    result = torchrl_sac_loop.heldout(
         config_enabled,
         env_setup,
         modules,
@@ -238,25 +238,25 @@ def test_evaluate_heldout_if_enabled():
         restore_actor_state=lambda _modules, snapshot: restore_calls.append(snapshot),
         eval_policy_factory=lambda *_: "policy",
         get_env_conf=lambda *_args, **_kwargs: "env_conf",
-        evaluate_for_best=lambda _env_conf, _policy, denoise, **_kwargs: (4.5 if denoise == 3 else -1.0),
+        best=lambda _env_conf, _policy, denoise, **_kwargs: (4.5 if denoise == 3 else -1.0),
     )
     assert result == 4.5
     assert restore_calls[0] == {"best": 99}
     assert restore_calls[1] == {"current": 5}
 
 
-def test_evaluate_heldout_if_enabled_passes_pixel_flags():
+def test_heldout_passes_obs_mode():
     captured_kwargs = {}
     config = SimpleNamespace(num_denoise_passive=3, env_tag="dm:cheetah-run")
     env_setup = SimpleNamespace(
         problem_seed=11,
         noise_seed_0=22,
-        env_conf=SimpleNamespace(from_pixels=True, pixels_only=False),
+        env_conf=SimpleNamespace(obs_mode="pixels+state"),
     )
     modules = SimpleNamespace()
     train_state = SimpleNamespace(best_actor_state={"best": 99})
 
-    result = torchrl_sac_loop.evaluate_heldout_if_enabled(
+    result = torchrl_sac_loop.heldout(
         config,
         env_setup,
         modules,
@@ -266,16 +266,15 @@ def test_evaluate_heldout_if_enabled_passes_pixel_flags():
         restore_actor_state=lambda *_: None,
         eval_policy_factory=lambda *_: "policy",
         get_env_conf=lambda *_args, **kwargs: (captured_kwargs.update(kwargs) or "env_conf"),
-        evaluate_for_best=lambda *_args, **_kwargs: 7.0,
+        best=lambda *_args, **_kwargs: 7.0,
     )
     assert result == 7.0
-    assert captured_kwargs["from_pixels"] is True
-    assert captured_kwargs["pixels_only"] is False
+    assert captured_kwargs["obs_mode"] == "pixels+state"
     assert captured_kwargs["problem_seed"] == 11
     assert captured_kwargs["noise_seed_0"] == 22
 
 
-def test_evaluate_heldout_if_enabled_restores_actor_state_on_exception():
+def test_heldout_restores_actor_state_on_exception():
     restore_calls = []
     config = SimpleNamespace(num_denoise_passive=3, env_tag="env")
     env_setup = SimpleNamespace(problem_seed=1, noise_seed_0=2)
@@ -286,7 +285,7 @@ def test_evaluate_heldout_if_enabled_restores_actor_state_on_exception():
         raise RuntimeError("heldout-failure")
 
     try:
-        torchrl_sac_loop.evaluate_heldout_if_enabled(
+        torchrl_sac_loop.heldout(
             config,
             env_setup,
             modules,
@@ -296,7 +295,7 @@ def test_evaluate_heldout_if_enabled_restores_actor_state_on_exception():
             restore_actor_state=lambda _modules, snapshot: restore_calls.append(snapshot),
             eval_policy_factory=lambda *_: "policy",
             get_env_conf=lambda *_args, **_kwargs: "env_conf",
-            evaluate_for_best=_raise_in_eval,
+            best=_raise_in_eval,
         )
         assert False, "expected RuntimeError"
     except RuntimeError as exc:
@@ -371,7 +370,7 @@ def test_evaluate_if_due_updates_state_and_writes_metrics(monkeypatch):
 def test_log_and_checkpoint_helpers(capsys):
     config = SimpleNamespace(
         log_interval_steps=4,
-        total_timesteps=20,
+        total_timesteps=22,
         checkpoint_interval_steps=5,
     )
     train_state = SimpleNamespace(last_eval_return=3.2, last_heldout_return=None, best_return=3.2)
@@ -406,4 +405,4 @@ def test_log_and_checkpoint_helpers(capsys):
         train_state,
         build_checkpoint_payload=lambda *_args, **kwargs: {"step": kwargs["step"]},
     )
-    assert calls[-1] == ({"step": 20}, 20)
+    assert calls[-1] == ({"step": 22}, 22)

@@ -6,7 +6,7 @@ from typing import Any
 import numpy as np
 import torch
 
-from rl.core.actor_state import capture_backbone_head_snapshot, restore_backbone_head_snapshot, use_backbone_head_snapshot
+from rl.core.actor_state import load, snap, using
 from rl.core.pixel_transform import ensure_pixel_obs_format
 
 
@@ -35,7 +35,12 @@ class OffPolicyActorEvalPolicy:
     def __call__(self, state: np.ndarray) -> np.ndarray:
         state_tensor = torch.as_tensor(state, device=self._device)
         if self._from_pixels:
-            state_tensor = ensure_pixel_obs_format(state_tensor, channels=self._channels, size=self._image_size, scale_float_255=True)
+            state_tensor = ensure_pixel_obs_format(
+                state_tensor,
+                channels=self._channels,
+                size=self._image_size,
+                scale_float_255=True,
+            )
             if state_tensor.ndim == 3:
                 state_tensor = state_tensor.unsqueeze(0)
         else:
@@ -51,20 +56,27 @@ class OffPolicyActorEvalPolicy:
 
 
 def capture_actor_snapshot(modules: Any) -> dict:
-    return capture_backbone_head_snapshot(modules.actor_backbone, modules.actor_head, log_std=None, state_to_cpu=False)
+    return snap(modules.actor_backbone, modules.actor_head, log_std=None, state_to_cpu=False)
 
 
 def restore_actor_snapshot(modules: Any, snapshot: dict) -> None:
-    restore_backbone_head_snapshot(modules.actor_backbone, modules.actor_head, snapshot, log_std=None, device=None)
+    load(modules.actor_backbone, modules.actor_head, snapshot, log_std=None, device=None)
 
 
 @contextmanager
 def use_actor_snapshot(modules: Any, snapshot: dict, *, device: Any):
-    with use_backbone_head_snapshot(modules.actor_backbone, modules.actor_head, snapshot, log_std=None, device=None, state_to_cpu=False):
+    with using(
+        modules.actor_backbone,
+        modules.actor_head,
+        snapshot,
+        log_std=None,
+        device=None,
+        state_to_cpu=False,
+    ):
         yield
 
 
-SacActorEvalPolicy = OffPolicyActorEvalPolicy
-capture_sac_actor_snapshot = capture_actor_snapshot
-restore_sac_actor_snapshot = restore_actor_snapshot
-use_sac_actor_snapshot = use_actor_snapshot
+OffPolicyActorEvalPolicy = OffPolicyActorEvalPolicy
+capture_actor_snapshot = capture_actor_snapshot
+restore_actor_snapshot = restore_actor_snapshot
+use_actor_snapshot = use_actor_snapshot

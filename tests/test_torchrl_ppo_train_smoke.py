@@ -8,12 +8,12 @@ def test_ppo_train_smoke(tmp_path):
     exp_dir = Path(tmp_path) / "ppo_smoke"
     cfg = PPOConfig(
         exp_dir=str(exp_dir),
-        env_tag="pend",
+        env_tag="mcc",
         seed=0,
         total_timesteps=64,
         num_steps=16,
         num_envs=1,
-        update_epochs=1,
+        epochs=1,
         num_minibatches=1,
         eval_interval=1,
         num_denoise=1,

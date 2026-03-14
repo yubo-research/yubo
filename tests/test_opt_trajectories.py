@@ -44,13 +44,18 @@ def test_mean_return_over_runs(monkeypatch):
     env_conf = MockEnvConf()
     policy = MockPolicy()
 
-    mean_ret, se_ret, all_same, num_steps_total = opt_trajectories.mean_return_over_runs(env_conf, policy, num_denoise=3, i_noise=0)
+    (
+        mean_ret,
+        se_ret,
+        all_same,
+        num_steps_total,
+    ) = opt_trajectories.mean_return_over_runs(env_conf, policy, num_denoise=3, i_noise=0)
     assert np.isfinite(mean_ret)
     assert np.isfinite(se_ret)
     assert num_steps_total >= 0
 
 
-def test_collect_denoised_trajectory_single(monkeypatch):
+def test_denoise_single(monkeypatch):
     def mock_collect_trajectory(env_conf, policy, noise_seed=0):
         return MockTrajectory(rreturn=2.0)
 
@@ -63,7 +68,7 @@ def test_collect_denoised_trajectory_single(monkeypatch):
     assert traj.rreturn == 2.0
 
 
-def test_collect_denoised_trajectory_multiple(monkeypatch):
+def test_denoise_multiple(monkeypatch):
     counter = [0]
 
     def mock_collect_trajectory(env_conf, policy, noise_seed=0):
@@ -79,7 +84,7 @@ def test_collect_denoised_trajectory_multiple(monkeypatch):
     assert np.isfinite(traj.rreturn)
 
 
-def test_evaluate_for_best(monkeypatch):
+def test_best(monkeypatch):
     def mock_collect_trajectory(env_conf, policy, noise_seed=0):
         return MockTrajectory(rreturn=5.0)
 

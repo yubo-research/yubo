@@ -102,16 +102,16 @@ class TestExperimentSeeds:
 
     def test_rl_seed_util_alignment(self):
         from common.experiment_seeds import problem_seed_from_rep_index
-        from rl.core.env_conf import resolve_problem_seed
+        from rl.core.envs import problem_seed
 
         for rl_seed, bo_i_rep in [(0, 0), (1, 1), (2, 2)]:
-            assert resolve_problem_seed(seed=rl_seed, problem_seed=None) == problem_seed_from_rep_index(bo_i_rep)
+            assert problem_seed(seed=rl_seed, problem_seed=None) == problem_seed_from_rep_index(bo_i_rep)
 
-    def test_resolve_noise_seed_0(self):
-        from rl.core.env_conf import resolve_noise_seed_0
+    def test_noise_seed_0(self):
+        from rl.core.envs import noise_seed_0
 
-        assert resolve_noise_seed_0(problem_seed=18, noise_seed_0=None) == 180
-        assert resolve_noise_seed_0(problem_seed=18, noise_seed_0=42) == 42
+        assert noise_seed_0(problem_seed=18, noise_seed_0=None) == 180
+        assert noise_seed_0(problem_seed=18, noise_seed_0=42) == 42
 
 
 class TestParseKv:

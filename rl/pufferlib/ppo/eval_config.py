@@ -1,40 +1,45 @@
 from __future__ import annotations
 
-from rl.core.env_conf import build_seeded_env_conf_from_run, resolve_run_seeds
+from types import SimpleNamespace
+
+from common.obs_mode import normalize_obs_mode
+from rl.core.envs import conf_for_run, seeds
+from rl.env_provider import get_env_conf_fn
 
 
-def resolve_eval_seeds(config) -> tuple[int, int]:
-    resolved = resolve_run_seeds(seed=int(config.seed), problem_seed=config.problem_seed, noise_seed_0=config.noise_seed_0)
-    return (int(resolved.problem_seed), int(resolved.noise_seed_0))
+def seed_pair(config) -> tuple[int, int]:
+    out = seeds(
+        seed=int(config.seed),
+        problem_seed=config.problem_seed,
+        noise_seed_0=config.noise_seed_0,
+    )
+    return (int(out.problem_seed), int(out.noise_seed_0))
 
 
-def build_eval_env_conf(config, *, obs_mode: str, is_atari_env_tag_fn, resolve_gym_env_name_fn):
-    from problems.env_conf import EnvConf, GymConf, get_env_conf
-
+def eval_conf(config, *, obs_mode: str, resolve_gym_env_name_fn):
     tag = str(config.env_tag)
-    _ = is_atari_env_tag_fn
-    from_pixels = obs_mode == "pixels"
-    resolved = build_seeded_env_conf_from_run(
+    mode = normalize_obs_mode(getattr(config, "obs_mode", obs_mode))
+    out = conf_for_run(
         env_tag=tag,
         seed=int(config.seed),
         problem_seed=config.problem_seed,
         noise_seed_0=config.noise_seed_0,
-        from_pixels=from_pixels,
-        pixels_only=bool(config.pixels_only),
-        get_env_conf_fn=get_env_conf,
+        obs_mode=mode,
+        get_env_conf_fn=get_env_conf_fn(),
     )
-    env_conf = resolved.env_conf
-    problem_seed = int(resolved.problem_seed)
-    noise_seed_0 = int(resolved.noise_seed_0)
-    if getattr(env_conf, "gym_conf", None) is not None:
-        return env_conf
+    conf = out.env_conf
+    if getattr(conf, "gym_conf", None) is not None:
+        return conf
     env_name, env_kwargs = resolve_gym_env_name_fn(tag)
-    return EnvConf(
-        env_name,
-        problem_seed=problem_seed,
-        noise_seed_0=noise_seed_0,
-        from_pixels=from_pixels,
-        pixels_only=bool(config.pixels_only),
-        gym_conf=GymConf(max_steps=1000, num_frames_skip=1, transform_state=False),
-        kwargs=env_kwargs,
+    conf.env_name = str(env_name)
+    conf.problem_seed = int(out.problem_seed)
+    conf.noise_seed_0 = int(out.noise_seed_0)
+    conf.obs_mode = mode
+    conf.kwargs = dict(env_kwargs)
+    conf.gym_conf = SimpleNamespace(
+        max_steps=1000,
+        num_frames_skip=1,
+        transform_state=False,
+        state_space=getattr(getattr(conf, "gym_conf", None), "state_space", None),
     )
+    return conf

@@ -55,7 +55,7 @@ def test_print_run_header_atari_backbone(capsys):
     print_run_header("ppo", config, env, training, runtime)
     out = capsys.readouterr().out
     assert "backbone=nature_cnn_atari" in out
-    assert "from_pixels=True" in out
+    assert "obs_mode=pixels" in out
 
 
 def test_print_iteration_log():
@@ -120,3 +120,24 @@ def test_bo_console_collector_echoes_iter_lines(capsys):
     collector(line)
     out = capsys.readouterr().out
     assert line in out
+
+
+def test_rl_logger_facade(tmp_path):
+    from rl import logger as rl_logger
+
+    rl_logger.append_metrics(tmp_path / "metrics.jsonl", {"x": 1})
+    rl_logger.log_run_header_basic(
+        algo_name="ppo",
+        env_tag="pend",
+        seed=1,
+        backbone_name="mlp",
+        obs_mode="state",
+        obs_dim=3,
+        act_dim=1,
+        frames_per_batch=8,
+        num_iterations=2,
+        device_type="cpu",
+    )
+    rl_logger.log_eval_iteration(1, 2, 8, eval_return=1.0, best_return=1.0, elapsed=0.1)
+    rl_logger.log_progress_iteration(1, 2, 8, elapsed=0.1)
+    rl_logger.log_run_footer(1.0, 2, 0.2)

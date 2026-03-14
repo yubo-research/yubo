@@ -7,8 +7,14 @@ import torch.nn as nn
 
 from problems.normalizer import Normalizer
 from problems.policy_mixin import PolicyParamsMixin
-from rl.backbone import BackboneSpec, HeadSpec, build_backbone, build_mlp_head, init_linear_layers
-from rl.core import env_contract as torchrl_env_contract
+from rl.backbone import (
+    BackboneSpec,
+    HeadSpec,
+    build_backbone,
+    build_mlp_head,
+    init_linear_layers,
+)
+from rl.core import env_contract
 from rl.shared_gaussian_actor import SharedGaussianActorModule, get_gaussian_actor_spec
 
 
@@ -29,6 +35,28 @@ def _obs_space_from_env_conf(env_conf):
 def _ensure_env_spaces(env_conf) -> None:
     if hasattr(env_conf, "ensure_spaces"):
         env_conf.ensure_spaces()
+
+
+def _tuple_ints(values) -> tuple[int, ...]:
+    return tuple(int(v) for v in values)
+
+
+@dataclass(frozen=True)
+class MLPFactory:
+    hidden_sizes: tuple[int, ...]
+    activation: str | None = None
+    use_layer_norm: bool = False
+
+    def __init__(
+        self,
+        hidden_sizes,
+        *,
+        activation: str | None = None,
+        use_layer_norm: bool = False,
+    ):
+        object.__setattr__(self, "hidden_sizes", _tuple_ints(hidden_sizes))
+        object.__setattr__(self, "activation", None if activation is None else str(activation))
+        object.__setattr__(self, "use_layer_norm", bool(use_layer_norm))
 
 
 @dataclass
@@ -67,7 +95,10 @@ class ActorBackbonePolicy(nn.Module):
 
     def set_params(self, flat_params):
         flat_params = np.asarray(flat_params, dtype=np.float32)
-        assert flat_params.shape == self._flat_params_init.shape, (flat_params.shape, self._flat_params_init.shape)
+        assert flat_params.shape == self._flat_params_init.shape, (
+            flat_params.shape,
+            self._flat_params_init.shape,
+        )
         flat = self._flat_params_init + flat_params * self._const_scale
         with torch.inference_mode():
             torch.nn.utils.vector_to_parameters(torch.from_numpy(flat).float(), list(self.parameters()))
@@ -95,8 +126,20 @@ class ActorBackbonePolicy(nn.Module):
 
 
 class ActorBackbonePolicyFactory:
-    def __init__(self, backbone: BackboneSpec, head: HeadSpec, *, action_squash: bool = True, param_scale: float = 0.5):
-        self._spec = ActorPolicySpec(backbone=backbone, head=head, action_squash=action_squash, param_scale=param_scale)
+    def __init__(
+        self,
+        backbone: BackboneSpec,
+        head: HeadSpec,
+        *,
+        action_squash: bool = True,
+        param_scale: float = 0.5,
+    ):
+        self._spec = ActorPolicySpec(
+            backbone=backbone,
+            head=head,
+            action_squash=action_squash,
+            param_scale=param_scale,
+        )
 
     def __call__(self, env_conf):
         return ActorBackbonePolicy(env_conf, self._spec)
@@ -116,14 +159,17 @@ class DiscreteActorBackbonePolicy(PolicyParamsMixin, nn.Module):
         self.problem_seed = env_conf.problem_seed
         self._env_conf = env_conf
         self._const_scale = float(spec.param_scale)
-        io_contract = torchrl_env_contract.resolve_env_io_contract(env_conf, default_image_size=84)
+        io_contract = env_contract.resolve_env_io_contract(env_conf, default_image_size=84)
         if io_contract.action.kind != "discrete":
             raise ValueError("DiscreteActorBackbonePolicy expects a discrete action space.")
         self._obs_contract = io_contract.observation
         obs_dim = 64 if self._obs_contract.mode == "pixels" else int(self._obs_contract.vector_dim or 1)
-        backbone_name = torchrl_env_contract.resolve_backbone_name(spec.backbone.name, self._obs_contract)
+        backbone_name = env_contract.resolve_backbone_name(spec.backbone.name, self._obs_contract)
         backbone_spec = BackboneSpec(
-            name=backbone_name, hidden_sizes=tuple(spec.backbone.hidden_sizes), activation=spec.backbone.activation, layer_norm=bool(spec.backbone.layer_norm)
+            name=backbone_name,
+            hidden_sizes=tuple(spec.backbone.hidden_sizes),
+            activation=spec.backbone.activation,
+            layer_norm=bool(spec.backbone.layer_norm),
         )
         self.backbone, feat_dim = build_backbone(backbone_spec, obs_dim)
         self.head = build_mlp_head(spec.head, feat_dim, int(io_contract.action.dim))
@@ -138,7 +184,10 @@ class DiscreteActorBackbonePolicy(PolicyParamsMixin, nn.Module):
             from rl.core.pixel_transform import ensure_pixel_obs_format
 
             obs = ensure_pixel_obs_format(
-                obs, channels=int(self._obs_contract.model_channels or 3), size=int(self._obs_contract.image_size or 84), scale_float_255=False
+                obs,
+                channels=int(self._obs_contract.model_channels or 3),
+                size=int(self._obs_contract.image_size or 84),
+                scale_float_255=False,
             )
             if obs.ndim == 3:
                 obs = obs.unsqueeze(0)
@@ -179,7 +228,12 @@ class AtariMLP16DiscretePolicy(DiscreteActorBackbonePolicy):
         super().__init__(
             env_conf,
             DiscreteActorPolicySpec(
-                backbone=BackboneSpec(name="mlp", hidden_sizes=(16, 16), activation="relu", layer_norm=False),
+                backbone=BackboneSpec(
+                    name="mlp",
+                    hidden_sizes=(16, 16),
+                    activation="relu",
+                    layer_norm=False,
+                ),
                 head=HeadSpec(hidden_sizes=(16, 16), activation="relu"),
                 param_scale=0.5,
             ),
@@ -187,7 +241,15 @@ class AtariMLP16DiscretePolicy(DiscreteActorBackbonePolicy):
 
 
 class GaussianActorBackbonePolicy(PolicyParamsMixin, nn.Module):
-    def __init__(self, env_conf, *, variant: str = "rl-gauss-tanh", deterministic_eval: bool = True, squash_mode: str = "clip", init_log_std: float = -0.5):
+    def __init__(
+        self,
+        env_conf,
+        *,
+        variant: str = "rl-gauss-tanh",
+        deterministic_eval: bool = True,
+        squash_mode: str = "clip",
+        init_log_std: float = -0.5,
+    ):
         super().__init__()
         self.problem_seed = env_conf.problem_seed
         self._env_conf = env_conf
@@ -201,7 +263,12 @@ class GaussianActorBackbonePolicy(PolicyParamsMixin, nn.Module):
         num_action = int(env_conf.action_space.shape[0])
         self._normalizer = Normalizer(shape=(num_state,))
         self._clamp = env_conf.gym_conf is not None
-        self.actor = SharedGaussianActorModule(num_state, num_action, *get_gaussian_actor_spec(variant), init_log_std=init_log_std)
+        self.actor = SharedGaussianActorModule(
+            num_state,
+            num_action,
+            *get_gaussian_actor_spec(variant),
+            init_log_std=init_log_std,
+        )
         self._const_scale = 0.5
         self._cache_flat_params_init()
 
@@ -232,7 +299,14 @@ class GaussianActorBackbonePolicy(PolicyParamsMixin, nn.Module):
 
 
 class GaussianActorBackbonePolicyFactory:
-    def __init__(self, variant: str = "rl-gauss-tanh", *, deterministic_eval: bool = True, squash_mode: str = "clip", init_log_std: float = -0.5):
+    def __init__(
+        self,
+        variant: str = "rl-gauss-tanh",
+        *,
+        deterministic_eval: bool = True,
+        squash_mode: str = "clip",
+        init_log_std: float = -0.5,
+    ):
         self._variant = str(variant)
         self._deterministic_eval = bool(deterministic_eval)
         self._squash_mode = str(squash_mode)
@@ -240,5 +314,17 @@ class GaussianActorBackbonePolicyFactory:
 
     def __call__(self, env_conf):
         return GaussianActorBackbonePolicy(
-            env_conf, variant=self._variant, deterministic_eval=self._deterministic_eval, squash_mode=self._squash_mode, init_log_std=self._init_log_std
+            env_conf,
+            variant=self._variant,
+            deterministic_eval=self._deterministic_eval,
+            squash_mode=self._squash_mode,
+            init_log_std=self._init_log_std,
         )
+
+    def to_rl_schema(self):
+        return {
+            "family": "gaussian_backbone",
+            "variant": str(self._variant),
+            "share_backbone": True,
+            "log_std_init": float(self._init_log_std),
+        }

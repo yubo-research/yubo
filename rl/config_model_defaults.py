@@ -2,15 +2,20 @@ from __future__ import annotations
 
 from typing import Any
 
-_HIDDEN_SIZE_KEYS = ("backbone_hidden_sizes", "actor_head_hidden_sizes", "critic_head_hidden_sizes")
+from rl.model_defaults import resolve_rl_model_defaults
+
+_HIDDEN_SIZE_KEYS = (
+    "backbone_hidden_sizes",
+    "critic_backbone_hidden_sizes",
+    "actor_head_hidden_sizes",
+    "critic_head_hidden_sizes",
+)
 
 
 def _as_tuple_ints(value: Any, *, key: str) -> tuple[int, ...]:
     if value is None:
         return ()
-    if isinstance(value, tuple):
-        return tuple((int(x) for x in value))
-    if isinstance(value, list):
+    if isinstance(value, (list, tuple)):
         return tuple((int(x) for x in value))
     raise TypeError(f"'{key}' must be a list or tuple of ints.")
 
@@ -22,28 +27,15 @@ def _require_env_tag(data: dict[str, Any], *, algo: str) -> str:
     return str(env_tag)
 
 
-def _maybe_register_atari_dm_backends(env_tag: str) -> None:
-    if not str(env_tag).startswith(("atari:", "ALE/", "dm:", "dm_control/")):
-        return
-    _ns: dict = {}
-    exec("from problems.env_conf_backends import register_with_env_conf", _ns)  # noqa: S102
-    _ns["register_with_env_conf"]()
-
-
 def _apply_env_model_defaults(
     raw: dict[str, Any],
     *,
     algo: str,
 ) -> dict[str, Any]:
-    _ns: dict = {}
-    exec("from problems.env_conf import resolve_rl_model_defaults", _ns)  # noqa: S102
-    resolve_rl_model_defaults = _ns["resolve_rl_model_defaults"]
-
     data = dict(raw)
     if algo == "ppo" and "value_head_hidden_sizes" in data:
         raise ValueError("PPO config uses canonical key 'critic_head_hidden_sizes' (not 'value_head_hidden_sizes').")
     env_tag = _require_env_tag(data, algo=algo)
-    _maybe_register_atari_dm_backends(env_tag)
     defaults = resolve_rl_model_defaults(env_tag, algo=algo)
     for key, value in defaults.items():
         data.setdefault(key, value)
