@@ -18,9 +18,9 @@ from analysis.data_locator import DataLocator
 from ops.experiment import main as ops_experiment_main
 from optimizer import opt_trajectories as opt_trajectories_mod
 from optimizer.opt_trajectories import (
-    best,
+    collect_denoised_trajectory,
     collect_trajectory_with_noise,
-    denoise,
+    evaluate_for_best,
     mean_return_over_runs,
 )
 from problems.humanoid_policy import HumanoidPolicy
@@ -424,9 +424,9 @@ def test_kiss_cov_sac_update_and_opt_trajectories(monkeypatch):
     assert np.isfinite(se)
     assert all_same is False
     assert num_steps_total >= 0
-    den, _ = denoise(conf, object(), num_denoise=2, i_noise=1)
+    den, _ = collect_denoised_trajectory(conf, object(), num_denoise=2, i_noise=1)
     assert den.rreturn is not None
-    best_ret = best(conf, object(), 2)
+    best_ret = evaluate_for_best(conf, object(), 2)
     assert np.isfinite(best_ret)
 
 

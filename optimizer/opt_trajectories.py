@@ -40,7 +40,7 @@ def mean_return_over_runs(env_conf, policy, num_denoise, i_noise=None):
     )
 
 
-def denoise(env_conf, policy, num_denoise, i_noise=None):
+def collect_denoised_trajectory(env_conf, policy, num_denoise, i_noise=None):
     if num_denoise is None:
         return collect_trajectory_with_noise(env_conf, policy, i_noise=i_noise)
 
@@ -57,7 +57,7 @@ def denoise(env_conf, policy, num_denoise, i_noise=None):
     return Trajectory(rreturn, None, None, rreturn_se, num_steps=int(mean_result.num_steps_total)), None
 
 
-def best(env_conf, policy, num_denoise_passiveuation, *, i_noise=99999, return_steps=False):
+def evaluate_for_best(env_conf, policy, num_denoise_passiveuation, *, i_noise=99999, return_steps=False):
     mean_result = mean_return_over_runs(env_conf, policy, num_denoise_passiveuation, i_noise=i_noise)
     if return_steps:
         return float(mean_result.mean), int(mean_result.num_steps_total)

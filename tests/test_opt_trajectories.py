@@ -64,7 +64,7 @@ def test_denoise_single(monkeypatch):
     env_conf = MockEnvConf()
     policy = MockPolicy()
 
-    traj, _ = opt_trajectories.denoise(env_conf, policy, num_denoise=1)
+    traj, _ = opt_trajectories.collect_denoised_trajectory(env_conf, policy, num_denoise=1)
     assert traj.rreturn == 2.0
 
 
@@ -80,7 +80,7 @@ def test_denoise_multiple(monkeypatch):
     env_conf = MockEnvConf()
     policy = MockPolicy()
 
-    traj, _ = opt_trajectories.denoise(env_conf, policy, num_denoise=3)
+    traj, _ = opt_trajectories.collect_denoised_trajectory(env_conf, policy, num_denoise=3)
     assert np.isfinite(traj.rreturn)
 
 
@@ -93,5 +93,5 @@ def test_best(monkeypatch):
     env_conf = MockEnvConf()
     policy = MockPolicy()
 
-    ret = opt_trajectories.best(env_conf, policy, num_denoise_passiveuation=2)
+    ret = opt_trajectories.evaluate_for_best(env_conf, policy, num_denoise_passiveuation=2)
     assert ret == 5.0
