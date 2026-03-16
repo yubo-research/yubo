@@ -7,7 +7,7 @@ import pytest
 import torch
 import torch.nn as nn
 
-import rl.pufferlib.sac as puffer_sac
+import rl.sac as puffer_sac
 
 
 def test_puffer_sac_config_from_dict_converts_hidden_sizes():
@@ -33,25 +33,32 @@ def test_puffer_sac_config_from_dict_uses_env_defaults():
     assert cfg.backbone_hidden_sizes == (256, 256)
 
 
-def test_puffer_sac_register_delegates_to_registry(monkeypatch):
-    calls = []
+def test_puffer_sac_config_to_header_dict_omits_gac_when_gaussian():
+    cfg = puffer_sac.SACConfig(actor_type="gaussian")
+    d = cfg.to_header_dict()
+    assert "gac_action_radius" not in d
+    assert "gac_adaptive_scale" not in d
 
-    def fake_register_algo(name, config_cls, train_fn, *, backend=None):
-        calls.append((name, config_cls, train_fn, backend))
 
-    monkeypatch.setattr("rl.registry.register_algo", fake_register_algo)
-    puffer_sac.register()
+def test_puffer_sac_config_to_header_dict_includes_gac_when_gac():
+    cfg = puffer_sac.SACConfig(actor_type="gac", gac_action_radius=3.0, gac_adaptive_scale=True)
+    d = cfg.to_header_dict()
+    assert d["gac_action_radius"] == 3.0
+    assert d["gac_adaptive_scale"] is True
 
-    assert len(calls) == 1
-    name, config_cls, train_fn, backend = calls[0]
-    assert name == "sac"
-    assert backend == "pufferlib"
-    assert config_cls is puffer_sac.SACConfig
-    assert train_fn is puffer_sac.train_sac_puffer
+
+def test_puffer_sac_register_delegates_to_registry():
+    from rl import builtins
+    from rl.registry import get_algo
+
+    builtins.register_all()
+    spec = get_algo("sac")
+    assert spec.config_cls is puffer_sac.SACConfig
+    assert spec.train_fn is puffer_sac.train_sac_puffer
 
 
 def test_puffer_sac_train_delegates_to_impl(monkeypatch):
-    from rl.pufferlib.sac import engine
+    from rl.sac import engine
 
     sentinel = puffer_sac.TrainResult(
         best_return=1.0,
@@ -66,7 +73,7 @@ def test_puffer_sac_train_delegates_to_impl(monkeypatch):
 
 
 def test_runtime_utils_obs_scaler_select_device_and_obs_scale():
-    from rl.pufferlib.offpolicy import runtime_utils as ru
+    from rl.offpolicy import runtime_utils as ru
 
     scaler = ru.ObsScaler(
         np.asarray([1.0, -1.0], dtype=np.float32),
@@ -118,7 +125,7 @@ def test_replay_backend_auto_resolution():
     from rl.core.replay import resolve_replay_backend
 
     assert resolve_replay_backend("auto", device=torch.device("cpu"), platform_name="darwin") == "numpy"
-    assert resolve_replay_backend("auto", device=torch.device("cuda"), platform_name="linux") == "torchrl"
+    assert resolve_replay_backend("auto", device=torch.device("cuda"), platform_name="linux") == "cuda"
     assert resolve_replay_backend("auto", device=torch.device("cpu"), platform_name="linux") == "numpy"
     assert resolve_replay_backend("numpy", device=torch.device("cuda"), platform_name="linux") == "numpy"
     with pytest.raises(ValueError, match="Unsupported replay backend"):
@@ -126,7 +133,7 @@ def test_replay_backend_auto_resolution():
 
 
 def test_pixel_utils_formats_images():
-    from rl.pufferlib.sac.pixel_utils import ensure_pixel_obs_format
+    from rl.sac.pixel_utils import ensure_pixel_obs_format
 
     hwc_u8 = torch.randint(0, 255, size=(84, 84, 3), dtype=torch.uint8)
     chw = ensure_pixel_obs_format(hwc_u8, channels=3, size=84, scale_float_255=True)
@@ -142,7 +149,7 @@ def test_pixel_utils_formats_images():
 
 
 def test_env_utils_helpers_and_builders(monkeypatch):
-    from rl.pufferlib.sac import env_utils
+    from rl.sac import env_utils
 
     env_utils.seed_everything(123)
     a = float(np.random.rand())
@@ -220,7 +227,7 @@ def test_env_utils_helpers_and_builders(monkeypatch):
 
 
 def _make_small_modules():
-    from rl.pufferlib.sac import env_utils, model_utils
+    from rl.sac import env_utils, model_utils
 
     env_setup = env_utils.EnvSetup(
         env_conf=SimpleNamespace(obs_mode="vector"),
@@ -246,9 +253,9 @@ def _make_small_modules():
 
 
 def test_replay_and_model_utils_update_paths():
-    from rl.pufferlib.offpolicy.runtime_utils import ObsScaler
-    from rl.pufferlib.sac import model_utils
-    from rl.pufferlib.sac.replay import ReplayBuffer
+    from rl.offpolicy.runtime_utils import ObsScaler
+    from rl.sac import model_utils
+    from rl.sac.replay import ReplayBuffer
 
     cfg, _env_setup, _obs_spec, modules, optimizers = _make_small_modules()
     obs = torch.randn(4, 3)
@@ -305,34 +312,6 @@ def test_replay_and_model_utils_update_paths():
     assert np.array_equal(replay_loaded.rew, replay.rew)
     assert np.array_equal(replay_loaded.done, replay.done)
 
-    from rl.core.replay import make_replay_buffer
-
-    replay_torchrl = make_replay_buffer(
-        obs_shape=(3,),
-        act_dim=2,
-        capacity=32,
-        backend="torchrl",
-    )
-    replay_torchrl.add_batch(
-        obs=np.random.randn(4, 3).astype(np.float32),
-        act=np.random.randn(4, 2).astype(np.float32),
-        rew=np.random.randn(4).astype(np.float32),
-        nxt=np.random.randn(4, 3).astype(np.float32),
-        done=np.random.randint(0, 2, size=(4,), dtype=np.int32).astype(np.float32),
-    )
-    sampled_torchrl = replay_torchrl.sample(batch_size=2, device=torch.device("cpu"))
-    assert len(sampled_torchrl) == 5
-    assert sampled_torchrl[0].shape[1:] == (3,)
-    torchrl_state = replay_torchrl.state_dict()
-    replay_torchrl_loaded = make_replay_buffer(
-        obs_shape=(3,),
-        act_dim=2,
-        capacity=32,
-        backend="torchrl",
-    )
-    replay_torchrl_loaded.load_state_dict(torchrl_state)
-    assert replay_torchrl_loaded.size == replay_torchrl.size
-
     before = [p.detach().clone() for p in modules.q1_target.parameters()]
     actor_loss, critic_loss, alpha_loss = model_utils.sac_update(
         cfg,
@@ -341,15 +320,15 @@ def test_replay_and_model_utils_update_paths():
         replay,
         device=torch.device("cpu"),
     )
-    assert isinstance(actor_loss, float)
-    assert isinstance(critic_loss, float)
-    assert isinstance(alpha_loss, float)
+    assert isinstance(actor_loss, (float, torch.Tensor))
+    assert isinstance(critic_loss, (float, torch.Tensor))
+    assert isinstance(alpha_loss, (float, torch.Tensor))
     after = list(modules.q1_target.parameters())
     assert any(not torch.allclose(b, a) for b, a in zip(before, after, strict=True))
 
 
 def test_eval_utils_paths(monkeypatch, tmp_path: Path):
-    from rl.pufferlib.sac import eval_utils
+    from rl.sac import eval_utils
 
     cfg, env_setup, obs_spec, modules, _optimizers = _make_small_modules()
     state = eval_utils.TrainState(start_time=float(time.time()) - 1.0)
@@ -481,7 +460,7 @@ class _FakeVecEnv:
 
 
 def test_train_sac_puffer_impl_smoke_with_patched_loop(monkeypatch, tmp_path: Path):
-    from rl.pufferlib.sac import engine
+    from rl.sac import engine
 
     cfg = puffer_sac.SACConfig(
         exp_dir=str(tmp_path / "exp"),
@@ -553,3 +532,37 @@ def test_train_sac_puffer_impl_smoke_with_patched_loop(monkeypatch, tmp_path: Pa
     out = puffer_sac.train_sac_puffer(cfg)
     assert out.num_steps == 8
     assert out.best_return == 1.0
+
+
+def test_sac_compile_smoke_kpop(monkeypatch, tmp_path: Path):
+    """Smoke: SAC with SAC_COMPILE=0 vs default; both complete. KPOP exp_dir for remote/local speedup checks."""
+    monkeypatch.setenv("MUJOCO_GL", "disable")  # egl invalid on Darwin; disable for headless test
+    from rl import builtins
+    from rl.env_provider import register_get_env_conf
+
+    builtins.register_all()
+    register_get_env_conf(__import__("problems.env_conf", fromlist=["get_env_conf"]).get_env_conf)
+
+    exp_base = tmp_path / "kpop" / "sac_compile_smoke"
+    exp_base.mkdir(parents=True)
+
+    def _run(mode: str):
+        monkeypatch.setenv("SAC_COMPILE", mode)
+        cfg = puffer_sac.SACConfig(
+            exp_dir=str(exp_base / mode),
+            env_tag="cheetah",
+            total_timesteps=150,
+            num_envs=1,
+            replay_size=256,
+            learning_starts=50,
+            checkpoint_interval_steps=None,
+            video_enable=False,
+            device="cpu",
+        )
+        return puffer_sac.train_sac_puffer(cfg)
+
+    out0 = _run("0")
+    assert out0.num_steps == 150
+
+    out1 = _run("default")
+    assert out1.num_steps == 150

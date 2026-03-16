@@ -42,6 +42,11 @@ def _no_opts(name: str, build, ctx: _SimpleContext, opts: dict):
     return build(ctx)
 
 
+def _rl_redirect(ctx: _SimpleContext, *, algo: str):
+    """RL algorithms (ppo, sac) are run via experiments.experiment local, not the BO designer."""
+    raise NoSuchDesignerError(f"'{algo}' is an RL algorithm. Use experiments.experiment local <config> with opt_name={algo}.")
+
+
 def _require_int(opts: dict, key: str, *, example: str) -> int:
     if key not in opts:
         raise NoSuchDesignerError(f"Designer option '{key}' is required. Example: '{example}'.")
@@ -59,6 +64,15 @@ def _require_str_in(opts: dict, key: str, allowed: set[str], *, example: str) ->
         raise NoSuchDesignerError(f"Designer option '{key}' must be a string.")
     if v not in allowed:
         raise NoSuchDesignerError(f"Designer option '{key}' must be one of: {', '.join(sorted(allowed))}.")
+    return v
+
+
+def _optional_int(opts: dict, key: str, default: int) -> int:
+    if key not in opts:
+        return default
+    v = opts[key]
+    if not isinstance(v, int):
+        raise NoSuchDesignerError(f"Designer option '{key}' must be an int.")
     return v
 
 
@@ -424,6 +438,8 @@ _SIMPLE_BUILDERS = {
     "sobol_ucb": partial(_build_sobol_mc, kind="sobol_ucb"),
     "sobol_ei": partial(_build_sobol_mc, kind="sobol_ei"),
     "sobol_gibbon": partial(_build_sobol_mc, kind="sobol_gibbon"),
+    "ppo": partial(_rl_redirect, algo="ppo"),
+    "sac": partial(_rl_redirect, algo="sac"),
 }
 
 
@@ -510,13 +526,16 @@ def _d_turbo_enn_fit(ctx: _SimpleContext, opts: dict):
         {"pareto", "thompson", "ucb"},
         example="turbo-enn-fit/acq_type=ucb",
     )
+    k = _optional_int(opts, "k", 10)
+    num_fit_samples = _optional_int(opts, "num_fit_samples", 100)
+    num_fit_candidates = _optional_int(opts, "num_fit_candidates", 100)
     return _turbo_enn(
         ctx,
         turbo_mode="turbo-enn",
-        k=10,
+        k=k,
         num_keep=ctx.num_keep_val,
-        num_fit_samples=100,
-        num_fit_candidates=100,
+        num_fit_samples=num_fit_samples,
+        num_fit_candidates=num_fit_candidates,
         acq_type=acq_type,
         tr_type=None,
     )
@@ -662,7 +681,28 @@ _DESIGNER_OPTION_SPECS: dict[str, list[DesignerOptionSpec]] = {
             description="Acquisition type for fit-time candidate generation.",
             example="turbo-enn-fit/acq_type=ucb",
             allowed_values=("pareto", "thompson", "ucb"),
-        )
+        ),
+        DesignerOptionSpec(
+            name="k",
+            required=False,
+            value_type="int",
+            description="Ensemble size (default 10).",
+            example="turbo-enn-fit/acq_type=ucb/k=10",
+        ),
+        DesignerOptionSpec(
+            name="num_fit_samples",
+            required=False,
+            value_type="int",
+            description="Fit-time samples (default 100).",
+            example="turbo-enn-fit/acq_type=ucb/num_fit_samples=100",
+        ),
+        DesignerOptionSpec(
+            name="num_fit_candidates",
+            required=False,
+            value_type="int",
+            description="Fit-time candidates (default 100).",
+            example="turbo-enn-fit/acq_type=ucb/num_fit_candidates=100",
+        ),
     ],
     "morbo-enn-fit": [
         DesignerOptionSpec(
@@ -682,6 +722,38 @@ _DESIGNER_OPTION_SPECS: dict[str, list[DesignerOptionSpec]] = {
             description="Number of accept/reject steps.",
             example="sts-ar/num_acc_rej=10",
         )
+    ],
+    "ppo": [
+        DesignerOptionSpec(
+            name="env_tag",
+            required=True,
+            value_type="str",
+            description="Environment tag",
+            example="ppo/env_tag=cheetah",
+        ),
+        DesignerOptionSpec(
+            name="total_timesteps",
+            required=False,
+            value_type="int",
+            description="Total training timesteps.",
+            example="ppo/total_timesteps=1000000",
+        ),
+    ],
+    "sac": [
+        DesignerOptionSpec(
+            name="env_tag",
+            required=True,
+            value_type="str",
+            description="Environment tag (e.g. cheetah, dm_control/quadruped-run-v0).",
+            example="sac/env_tag=cheetah",
+        ),
+        DesignerOptionSpec(
+            name="total_timesteps",
+            required=False,
+            value_type="int",
+            description="Total training timesteps.",
+            example="sac/total_timesteps=1000000",
+        ),
     ],
 }
 

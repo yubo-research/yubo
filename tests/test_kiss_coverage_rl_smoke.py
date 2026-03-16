@@ -10,7 +10,6 @@ import torch
 import torch.nn as nn
 
 from rl.backbone import BackboneSpec, HeadSpec
-from rl.core.env_contract import ObservationContract
 from rl.core.pixel_transform import ensure_pixel_obs_format
 from rl.core.profiler import run_with_profiler
 from rl.policy_backbone import (
@@ -18,20 +17,14 @@ from rl.policy_backbone import (
     DiscreteActorPolicySpec,
     GaussianActorBackbonePolicyFactory,
 )
-from rl.pufferlib.ppo.eval import (
-    PufferEvalPolicy,
+from rl.ppo.eval import (
+    PPOEvalPolicy,
     validate_eval_config,
 )
 from rl.pufferlib_compat import import_pufferlib_modules
 from rl.shared_gaussian_actor import (
     build_shared_gaussian_actor,
     get_gaussian_actor_spec,
-)
-from rl.torchrl.ppo.models import (
-    ActorNet,
-    CriticNet,
-    DiscreteActorNet,
-    prepare_obs_for_backbone,
 )
 
 
@@ -106,45 +99,172 @@ def test_policy_backbone_factories_and_variants():
     assert action_vec.shape == (2,)
 
 
-def test_torchrl_pixel_and_models_paths():
+def test_pixel_obs_format():
     img = torch.randint(0, 256, (84, 84, 3), dtype=torch.uint8)
     formatted = ensure_pixel_obs_format(img, channels=3, size=84)
     assert formatted.shape == (3, 84, 84)
     assert formatted.dtype == torch.float32
 
-    obs_contract = ObservationContract(mode="pixels", raw_shape=(84, 84, 3), model_channels=3, image_size=84)
-    obs = torch.rand((84, 84, 3), dtype=torch.float32)
-    prepared, batch_shape, squeeze = prepare_obs_for_backbone(obs, obs_contract)
-    assert prepared.shape[-3:] == (3, 84, 84)
-    assert batch_shape is None
-    assert isinstance(squeeze, bool)
 
-    backbone = nn.Sequential(nn.Flatten(), nn.Linear(3 * 84 * 84, 8))
-    actor_head = nn.Linear(8, 2)
-    critic_head = nn.Linear(8, 1)
-    obs_scaler = nn.Identity()
+def test_rl_sac_runtime_utils(monkeypatch):
+    from rl.sac import runtime_utils as sac_rt
 
-    actor = ActorNet(
-        backbone,
-        actor_head,
-        nn.Parameter(torch.zeros(2)),
-        obs_scaler,
-        obs_contract=obs_contract,
+    monkeypatch.setattr(sac_rt, "_mps_is_available", lambda: False)
+    d = sac_rt.select_device("cpu")
+    assert str(d) == "cpu"
+
+    env_conf = SimpleNamespace(
+        gym_conf=SimpleNamespace(
+            transform_state=True,
+            state_space=SimpleNamespace(low=np.array([-1.0]), high=np.array([1.0]), shape=(1,)),
+        ),
+        ensure_spaces=lambda: None,
     )
-    loc, scale = actor(obs)
-    assert loc.shape == (2,)
-    assert scale.shape == (2,)
-
-    discrete_actor = DiscreteActorNet(backbone, nn.Linear(8, 4), obs_scaler, obs_contract=obs_contract)
-    logits = discrete_actor(obs)
-    assert logits.shape == (4,)
-
-    critic = CriticNet(backbone, critic_head, obs_scaler, obs_contract=obs_contract)
-    value = critic(obs)
-    assert value.shape == (1,)
+    lb, width = sac_rt.obs_scale_from_env(env_conf)
+    assert np.allclose(lb, np.array([-1.0]))
+    assert np.allclose(width, np.array([2.0]))
 
 
-def test_torchrl_profiler_run_with_profiler(monkeypatch, tmp_path: Path):
+def test_rl_ppo_eval_helpers():
+    from rl.core import ppo_eval
+
+    out = ppo_eval.update_best_actor_if_improved(
+        eval_return=2.0,
+        best_return=1.0,
+        best_actor_state=None,
+        capture_actor_state=lambda: {"k": "v"},
+    )
+    assert out[0] == 2.0
+    assert out[1] == {"k": "v"}
+    assert out[2] is True
+
+    out2 = ppo_eval.update_best_actor_if_improved(
+        eval_return=0.5,
+        best_return=1.0,
+        best_actor_state={"old": 1},
+        capture_actor_state=lambda: {"new": 2},
+    )
+    assert out2[0] == 1.0
+    assert out2[1] == {"old": 1}
+    assert out2[2] is False
+
+    result = ppo_eval.evaluate_heldout_with_best_actor(
+        best_actor_state=None,
+        num_denoise_passive=1,
+        heldout_i_noise=0,
+        with_actor_state=lambda s: __import__("contextlib").nullcontext(),
+        evaluate_for_best=lambda *a, **k: 3.0,
+        eval_env_conf=None,
+        eval_policy=None,
+    )
+    assert result is None
+
+    calls = []
+
+    class _Ctx:
+        def __enter__(self):
+            calls.append("enter")
+            return self
+
+        def __exit__(self, *a):
+            calls.append("exit")
+            return False
+
+    result2 = ppo_eval.evaluate_heldout_with_best_actor(
+        best_actor_state={"snap": 1},
+        num_denoise_passive=1,
+        heldout_i_noise=0,
+        with_actor_state=lambda s: _Ctx(),
+        evaluate_for_best=lambda *a, **k: 2.5,
+        eval_env_conf=None,
+        eval_policy=None,
+    )
+    assert result2 == 2.5
+    assert calls == ["enter", "exit"]
+
+
+def test_rl_core_runtime_helpers(monkeypatch):
+    from rl.core import runtime
+
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: False)
+    monkeypatch.setattr(torch.backends, "mps", None)
+    d = runtime.select_device("cpu")
+    assert str(d) == "cpu"
+    d_auto = runtime.select_device("auto")
+    assert str(d_auto) == "cpu"
+
+    env_conf = SimpleNamespace(
+        gym_conf=SimpleNamespace(
+            transform_state=True,
+            state_space=SimpleNamespace(low=np.array([-1.0]), high=np.array([1.0]), shape=(1,)),
+        ),
+        ensure_spaces=lambda: None,
+    )
+    lb, width = runtime.obs_scale_from_env(env_conf)
+    assert np.allclose(lb, np.array([-1.0]))
+    assert np.allclose(width, np.array([2.0]))
+
+    runtime.seed_everything(42)
+    kw = runtime.collector_device_kwargs(torch.device("cpu"))
+    assert kw["env_device"].type == "cpu"
+    with runtime.temporary_distribution_validate_args(False):
+        pass
+
+
+def test_rl_core_envs_dataclasses():
+    from rl.core import envs
+
+    rs = envs.ResolvedSeeds(problem_seed=7, noise_seed_0=11)
+    assert rs.problem_seed == 7 and rs.noise_seed_0 == 11
+
+    sec = envs.SeededEnvConf(env_conf=object(), problem_seed=1, noise_seed_0=2)
+    assert sec.problem_seed == 1
+
+    ces = envs.ContinuousEnvSetup(
+        env_conf=object(),
+        problem_seed=0,
+        noise_seed_0=0,
+        act_dim=2,
+        action_low=np.array([-1.0, -1.0]),
+        action_high=np.array([1.0, 1.0]),
+        obs_lb=None,
+        obs_width=None,
+    )
+    assert ces.act_dim == 2
+
+
+def test_rl_core_pixel_transform_atari():
+    from rl.core.pixel_transform import ensure_atari_obs_format
+
+    img = torch.randint(0, 256, (84, 84, 4), dtype=torch.uint8)
+    out = ensure_atari_obs_format(img, size=84)
+    assert out.shape == (4, 84, 84)
+
+
+def test_replay_core_numpy_buffer_and_make():
+    from rl.core.replay import NumpyReplayBuffer, make_replay_buffer, resolve_replay_backend
+
+    buf = make_replay_buffer(obs_shape=(4,), act_dim=2, capacity=16, backend="numpy")
+    assert isinstance(buf, NumpyReplayBuffer)
+    buf.add_batch(
+        obs=np.ones((3, 4), dtype=np.float32),
+        act=np.zeros((3, 2), dtype=np.float32),
+        rew=np.array([1.0, 0.5, 0.0], dtype=np.float32),
+        nxt=np.ones((3, 4), dtype=np.float32),
+        done=np.array([0.0, 0.0, 1.0], dtype=np.float32),
+    )
+    assert buf.size == 3
+    obs, act, rew, nxt, done = buf.sample(batch_size=2, device=torch.device("cpu"))
+    assert obs.shape == (2, 4)
+    assert act.shape == (2, 2)
+    state = buf.state_dict()
+    buf2 = make_replay_buffer(obs_shape=(4,), act_dim=2, capacity=16, backend="numpy")
+    buf2.load_state_dict(state)
+    assert buf2.size == buf.size
+    assert resolve_replay_backend("auto", device=torch.device("cpu"), platform_name="darwin") == "numpy"
+
+
+def test_profiler_run_with_profiler(monkeypatch, tmp_path: Path):
     class _DummyProfiler:
         def __init__(self):
             self.steps = 0
@@ -202,7 +322,7 @@ def test_puffer_eval_helpers_and_validation():
     )
     obs_spec = SimpleNamespace(mode="vector")
     action_spec = SimpleNamespace(kind="continuous")
-    policy = PufferEvalPolicy(
+    policy = PPOEvalPolicy(
         model=model,
         obs_spec=obs_spec,
         action_spec=action_spec,

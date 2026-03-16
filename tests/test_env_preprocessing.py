@@ -101,3 +101,31 @@ def test_clip_reward_wrapper_reward_method():
     env = _DummyEnv()
     wrapper = _ClipRewardWrapper(env, low=-2.0, high=2.0)
     assert wrapper.reward(10.0) == 2.0
+
+
+def test_clip_observation_wrapper_dict_and_tuple_obs():
+    from common.env_preprocessing import _ClipObservationWrapper
+
+    class _DictObsEnv(gym.Env):
+        def __init__(self):
+            super().__init__()
+            self.observation_space = gym.spaces.Dict(
+                a=gym.spaces.Box(-np.inf, np.inf, (1,), dtype=np.float32),
+                b=gym.spaces.Box(-np.inf, np.inf, (1,), dtype=np.float32),
+            )
+            self.action_space = gym.spaces.Box(-1.0, 1.0, (1,), dtype=np.float32)
+
+        def reset(self, *, seed=None, options=None):
+            return {"a": np.array([50.0]), "b": np.array([-50.0])}, {}
+
+        def step(self, action):
+            return {"a": np.array([30.0]), "b": np.array([-30.0])}, 0.0, True, False, {}
+
+    env = _DictObsEnv()
+    wrapped = _ClipObservationWrapper(env, low=-10.0, high=10.0)
+    obs, _ = wrapped.reset(seed=0)
+    assert np.allclose(obs["a"], np.array([10.0]))
+    assert np.allclose(obs["b"], np.array([-10.0]))
+    obs, _, term, trunc, _ = wrapped.step(np.array([0.0]))
+    assert np.allclose(obs["a"], np.array([10.0]))
+    assert term and not trunc

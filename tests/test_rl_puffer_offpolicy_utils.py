@@ -5,7 +5,7 @@ from types import SimpleNamespace
 
 import torch
 
-from rl.pufferlib.offpolicy import engine_utils, runtime_utils
+from rl.offpolicy import engine_utils, runtime_utils
 
 
 class _Recorder:

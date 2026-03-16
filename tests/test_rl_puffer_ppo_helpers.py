@@ -4,13 +4,13 @@ from types import SimpleNamespace
 import torch
 import torch.nn as nn
 
-from rl.pufferlib.ppo.checkpoint import (
+from rl.ppo.checkpoint import (
     build_checkpoint_payload,
     maybe_save_periodic_checkpoint,
     restore_checkpoint_if_requested,
     save_final_checkpoint,
 )
-from rl.pufferlib.ppo.eval import (
+from rl.ppo.eval import (
     capture_actor_snapshot,
     heldout,
     maybe_eval,
@@ -18,7 +18,7 @@ from rl.pufferlib.ppo.eval import (
     restore_actor_snapshot,
     use_actor_snapshot,
 )
-from rl.pufferlib.ppo.eval_config import eval_conf
+from rl.ppo.eval_config import eval_conf
 
 
 class _Model:
@@ -33,10 +33,10 @@ class _Model:
 def test_direct_rl_coverage(monkeypatch, tmp_path: Path):
     ready = SimpleNamespace(gym_conf=SimpleNamespace(max_steps=7), env_name="ready", kwargs={})
     monkeypatch.setattr(
-        "rl.pufferlib.ppo.eval_config.conf_for_run",
+        "rl.ppo.eval_config.conf_for_run",
         lambda **_kw: SimpleNamespace(env_conf=ready, problem_seed=30, noise_seed_0=31),
     )
-    monkeypatch.setattr("rl.pufferlib.ppo.eval_config.get_env_conf_fn", lambda: (lambda *_a, **_k: None))
+    monkeypatch.setattr("rl.ppo.eval_config.get_env_conf_fn", lambda: (lambda *_a, **_k: None))
     assert (
         eval_conf(
             SimpleNamespace(env_tag="cheetah", seed=1, problem_seed=None, noise_seed_0=None),
@@ -78,7 +78,7 @@ def test_direct_rl_coverage(monkeypatch, tmp_path: Path):
     save_final_checkpoint(SimpleNamespace(checkpoint_interval=1), mgr, model, opt, state, iteration=3)
     assert len(mgr.calls) == 2
     monkeypatch.setattr(
-        "rl.pufferlib.ppo.checkpoint.load_checkpoint",
+        "rl.ppo.checkpoint.load_checkpoint",
         lambda _path, device: {
             "actor_backbone": model.actor_backbone.state_dict(),
             "actor_head": model.actor_head.state_dict(),
@@ -105,7 +105,7 @@ def test_direct_rl_coverage(monkeypatch, tmp_path: Path):
     )
     assert state.start_iteration == 3
 
-    monkeypatch.setattr("rl.pufferlib.ppo.eval.rl_eval.heldout", lambda **_kw: 6.0)
+    monkeypatch.setattr("rl.ppo.eval.rl_eval.heldout", lambda **_kw: 6.0)
     assert (
         heldout(
             SimpleNamespace(num_denoise_passive=1),
@@ -119,14 +119,14 @@ def test_direct_rl_coverage(monkeypatch, tmp_path: Path):
         == 6.0
     )
 
-    monkeypatch.setattr("rl.pufferlib.ppo.eval.is_due", lambda *_a, **_k: True)
+    monkeypatch.setattr("rl.ppo.eval.is_due", lambda *_a, **_k: True)
     monkeypatch.setattr(
-        "rl.pufferlib.ppo.eval.rl_eval.plan",
+        "rl.ppo.eval.rl_eval.plan",
         lambda **_kw: SimpleNamespace(eval_seed=7, heldout_i_noise=9),
     )
-    monkeypatch.setattr("rl.pufferlib.ppo.eval.score", lambda *_a, **_k: 5.0)
-    monkeypatch.setattr("rl.pufferlib.ppo.eval.rl_eval.update_best", lambda **_kw: (5.0, snap, True))
-    monkeypatch.setattr("rl.pufferlib.ppo.eval.heldout", lambda *_a, **_k: 6.0)
+    monkeypatch.setattr("rl.ppo.eval.score", lambda *_a, **_k: 5.0)
+    monkeypatch.setattr("rl.ppo.eval.rl_eval.update_best", lambda **_kw: (5.0, snap, True))
+    monkeypatch.setattr("rl.ppo.eval.heldout", lambda *_a, **_k: 6.0)
     maybe_eval(
         SimpleNamespace(
             seed=3,
@@ -147,7 +147,7 @@ def test_direct_rl_coverage(monkeypatch, tmp_path: Path):
 
     calls = []
     monkeypatch.setattr(
-        "rl.pufferlib.ppo.eval.common_video.render_policy_videos",
+        "rl.ppo.eval.common_video.render_policy_videos",
         lambda *_a, **kw: calls.append(kw),
     )
     render(

@@ -54,8 +54,8 @@ def test_default_policy():
 
 def test_resolve_rl_model_defaults_cheetah_sac():
     from problems.env_conf import get_env_conf
+    from rl.config_model_defaults import resolve_rl_model_defaults
     from rl.env_provider import register_get_env_conf
-    from rl.model_defaults import resolve_rl_model_defaults
 
     register_get_env_conf(get_env_conf)
     cfg = resolve_rl_model_defaults("cheetah", algo="sac")
@@ -69,8 +69,8 @@ def test_resolve_rl_model_defaults_cheetah_sac():
 
 def test_resolve_rl_model_defaults_cheetah_ppo_uses_policy_schema():
     from problems.env_conf import get_env_conf
+    from rl.config_model_defaults import resolve_rl_model_defaults
     from rl.env_provider import register_get_env_conf
-    from rl.model_defaults import resolve_rl_model_defaults
 
     register_get_env_conf(get_env_conf)
     cfg = resolve_rl_model_defaults("cheetah", algo="ppo")
@@ -83,8 +83,8 @@ def test_resolve_rl_model_defaults_cheetah_ppo_uses_policy_schema():
 
 def test_resolve_rl_model_defaults_quadruped_run_uses_scaffolded_critic():
     from problems.env_conf import get_env_conf
+    from rl.config_model_defaults import resolve_rl_model_defaults
     from rl.env_provider import register_get_env_conf
-    from rl.model_defaults import resolve_rl_model_defaults
 
     register_get_env_conf(get_env_conf)
     ppo_cfg = resolve_rl_model_defaults("dm_control/quadruped-run-v0", algo="ppo")

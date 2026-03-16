@@ -1,0 +1,446 @@
+from __future__ import annotations
+
+import dataclasses
+import importlib
+import os
+import time
+from contextlib import closing
+from pathlib import Path
+from typing import Any
+
+import numpy as np
+import torch
+import torch.optim as optim
+
+from .config import PPOConfig, TrainResult
+
+
+@dataclasses.dataclass
+class _InitRuntimeResult:
+    model: torch.nn.Module
+    optimizer: torch.optim.Optimizer
+    obs_shape: tuple[int, ...]
+    buffer: Any
+    state: Any
+    use_async: bool
+
+
+__all__ = [
+    "PPOConfig",
+    "TrainResult",
+    "register",
+    "train_ppo_puffer",
+    "train_ppo_puffer_impl",
+]
+
+
+def _ensure_pixel_obs_format(obs_t: torch.Tensor, *, channels: int, size: int, scale_float_255: bool) -> torch.Tensor:
+    ensure_pixel_obs_format = importlib.import_module("rl.core.pixel_transform").ensure_pixel_obs_format
+    return ensure_pixel_obs_format(obs_t, channels=channels, size=size, scale_float_255=scale_float_255)
+
+
+def _resolve_device(device_raw: str) -> torch.device:
+    select_device = importlib.import_module("rl.core.runtime").select_device
+    return select_device(str(device_raw))
+
+
+def _infer_channels(shape: tuple[int, ...], *, fallback: int) -> int:
+    env_utils = importlib.import_module("rl.sac.env_utils")
+    return int(env_utils._infer_channels(shape, fallback=int(fallback)))
+
+
+def _infer_image_size(shape: tuple[int, ...], *, default_size: int) -> int:
+    env_utils = importlib.import_module("rl.sac.env_utils")
+    return int(env_utils._infer_image_size(shape, default_size=int(default_size)))
+
+
+def _infer_observation_spec(config: PPOConfig, obs_np: np.ndarray):
+    specs = importlib.import_module("rl.ppo.specs")
+    ppo_envs = importlib.import_module("rl.core.ppo_envs")
+    obs_arr = np.asarray(obs_np)
+    if obs_arr.ndim == 0:
+        raise ValueError("Observation must include at least one dimension.")
+    raw_shape = tuple((int(v) for v in (obs_arr.shape[1:] if obs_arr.ndim >= 2 else obs_arr.shape)))
+    if ppo_envs.is_atari_env_tag(str(config.env_tag)):
+        return specs._ObservationSpec(mode="pixels", raw_shape=raw_shape, channels=4, image_size=84)
+    backbone_name = str(config.backbone_name).strip().lower()
+    looks_like_pixels = obs_arr.ndim >= 4 or (obs_arr.ndim >= 3 and "nature_cnn" in backbone_name)
+    if looks_like_pixels:
+        channels = _infer_channels(raw_shape, fallback=max(1, int(config.framestack)))
+        image_size = _infer_image_size(raw_shape, default_size=84)
+        return specs._ObservationSpec(mode="pixels", raw_shape=raw_shape, channels=channels, image_size=image_size)
+    vector_dim = int(np.prod(raw_shape)) if raw_shape else 1
+    return specs._ObservationSpec(mode="vector", raw_shape=raw_shape, vector_dim=vector_dim)
+
+
+def _prepare_obs(
+    obs_np: np.ndarray,
+    *,
+    obs_spec,
+    device: torch.device,
+    obs_normalizer=None,
+    update_normalizer: bool = True,
+) -> torch.Tensor:
+    if obs_normalizer is not None:
+        if update_normalizer:
+            obs_normalizer.update(obs_np)
+        obs_np = obs_normalizer.normalize(obs_np)
+    obs_t = torch.as_tensor(obs_np)
+    if obs_spec.mode == "pixels":
+        channels = int(obs_spec.channels or 3)
+        size = int(obs_spec.image_size or 84)
+        obs_t = _ensure_pixel_obs_format(obs_t, channels=channels, size=size, scale_float_255=False)
+    elif obs_t.ndim == 1:
+        obs_t = obs_t.unsqueeze(0)
+    elif obs_t.ndim > 2:
+        obs_t = obs_t.reshape(obs_t.shape[0], -1)
+    obs_t = obs_t.to(dtype=torch.float32)
+    if device.type == "cuda" and os.environ.get("PPO_PIN_MEMORY", "0") in ("1", "true", "yes"):
+        return obs_t.pin_memory().to(device, non_blocking=True)
+    return obs_t.to(device=device)
+
+
+def _action_spec_from_space(action_space):
+    continuous_actions = importlib.import_module("rl.core.continuous_actions")
+    specs = importlib.import_module("rl.ppo.specs")
+    if hasattr(action_space, "nvec"):
+        raise ValueError("MultiDiscrete action spaces are not supported by ppo_puffer yet.")
+    shape = tuple((int(v) for v in getattr(action_space, "shape", ()) or ()))
+    if hasattr(action_space, "n") and len(shape) == 0:
+        return specs._ActionSpec(kind="discrete", dim=int(action_space.n))
+    if not hasattr(action_space, "low") or not hasattr(action_space, "high"):
+        raise ValueError(f"Unsupported action space for ppo_puffer: {type(action_space)!r}")
+    dim = int(np.prod(shape)) if shape else 1
+    low, high = continuous_actions.normalize_action_bounds(np.asarray(action_space.low), np.asarray(action_space.high), dim=dim)
+    return specs._ActionSpec(kind="continuous", dim=dim, low=low, high=high)
+
+
+def _make_vector_env(config: PPOConfig):
+    ppo_envs = importlib.import_module("rl.core.ppo_envs")
+    make_vector_env_shared = importlib.import_module("rl.vector_env").make_vector_env
+    import_pufferlib_modules = importlib.import_module("rl.pufferlib_compat").import_pufferlib_modules
+    return make_vector_env_shared(
+        config,
+        import_pufferlib_modules_fn=import_pufferlib_modules,
+        is_atari_env_tag_fn=ppo_envs.is_atari_env_tag,
+        to_puffer_game_name_fn=ppo_envs.to_puffer_game_name,
+        resolve_gym_env_name_fn=ppo_envs.resolve_gym_env_name,
+    )
+
+
+def _build_plan(config: PPOConfig):
+    specs = importlib.import_module("rl.ppo.specs")
+    num_envs = int(config.num_envs)
+    num_steps = int(config.num_steps)
+    batch_size = num_envs * num_steps
+    if batch_size <= 0:
+        raise ValueError("num_envs * num_steps must be > 0")
+    num_minibatches = int(config.num_minibatches)
+    if batch_size % num_minibatches != 0:
+        raise ValueError("num_envs * num_steps must be divisible by num_minibatches")
+    num_iterations = int(config.total_timesteps) // batch_size
+    if num_iterations <= 0:
+        raise ValueError("total_timesteps is too small for num_envs * num_steps")
+    return specs._TrainPlan(
+        num_envs=num_envs,
+        num_steps=num_steps,
+        batch_size=batch_size,
+        minibatch_size=batch_size // num_minibatches,
+        num_iterations=num_iterations,
+    )
+
+
+def _prepare_outputs(config: PPOConfig) -> Path:
+    write_config = importlib.import_module("analysis.data_io").write_config
+    exp_dir = Path(config.exp_dir)
+    exp_dir.mkdir(parents=True, exist_ok=True)
+    write_config(str(exp_dir), dataclasses.asdict(config))
+    return exp_dir / "metrics.jsonl"
+
+
+def _resolve_backbone_name(backbone_name_raw: str, obs_spec) -> str:
+    backbone_name = str(backbone_name_raw)
+    key = backbone_name.strip().lower()
+    if obs_spec.mode != "pixels":
+        return backbone_name
+    channels = int(obs_spec.channels or 3)
+    if key == "mlp":
+        return "nature_cnn_atari" if channels == 4 else "nature_cnn"
+    if key == "nature_cnn" and channels == 4:
+        return "nature_cnn_atari"
+    if key == "nature_cnn_atari" and channels != 4:
+        return "nature_cnn"
+    return backbone_name
+
+
+def _build_model(config: PPOConfig, obs_spec, action_spec):
+    backbone = importlib.import_module("rl.backbone")
+    specs = importlib.import_module("rl.ppo.specs")
+    input_dim = 64 if obs_spec.mode == "pixels" else int(obs_spec.vector_dim or 1)
+    actor_backbone_name = _resolve_backbone_name(config.backbone_name, obs_spec)
+    critic_backbone_source = config.backbone_name if getattr(config, "critic_backbone_name", None) is None else config.critic_backbone_name
+    critic_backbone_name = _resolve_backbone_name(critic_backbone_source, obs_spec)
+    arch = backbone.ActorCriticSpec.from_config(
+        config,
+        actor_backbone_name=actor_backbone_name,
+        critic_backbone_name=critic_backbone_name,
+    )
+    if bool(config.share_backbone) and arch.critic.backbone != arch.actor.backbone:
+        raise ValueError("share_backbone=True requires actor and critic backbones to match.")
+    if bool(config.share_backbone):
+        shared, feat_dim = backbone.build_backbone(arch.actor.backbone, input_dim=input_dim)
+        actor_backbone, critic_backbone = (shared, shared)
+        actor_feat_dim, critic_feat_dim = (feat_dim, feat_dim)
+    else:
+        actor_backbone, actor_feat_dim = backbone.build_backbone(arch.actor.backbone, input_dim=input_dim)
+        critic_backbone, critic_feat_dim = backbone.build_backbone(arch.critic.backbone, input_dim=input_dim)
+    actor_head = backbone.build_mlp_head(arch.actor.head, input_dim=actor_feat_dim, output_dim=int(action_spec.dim))
+    critic_head = backbone.build_mlp_head(arch.critic.head, input_dim=critic_feat_dim, output_dim=1)
+    backbone.init_linear_layers(actor_backbone, gain=0.5)
+    backbone.init_linear_layers(critic_backbone, gain=0.5)
+    backbone.init_linear_layers(actor_head, gain=0.01)
+    backbone.init_linear_layers(critic_head, gain=1.0)
+    return specs._ActorCritic(
+        actor_backbone=actor_backbone,
+        critic_backbone=critic_backbone,
+        actor_head=actor_head,
+        critic_head=critic_head,
+        action_spec=action_spec,
+        log_std_init=float(getattr(config, "log_std_init", -0.5)),
+    )
+
+
+def _seed_everything(seed: int) -> None:
+    seed_everything = importlib.import_module("rl.core.runtime").seed_everything
+    seed_everything(int(seed))
+
+
+def _init_runtime(config: PPOConfig, plan, device: torch.device, envs):
+    specs = importlib.import_module("rl.ppo.specs")
+    obs_normalizer_mod = importlib.import_module("rl.core.obs_normalizer")
+    env_seed = int(config.problem_seed) if config.problem_seed is not None else int(config.seed)
+    use_async = os.environ.get("PPO_ASYNC_ROLLOUT") in ("1", "true", "yes") and hasattr(envs, "send") and hasattr(envs, "recv")
+    if use_async:
+        envs.async_reset(seed=env_seed)
+        out = envs.recv()
+        next_obs_np = np.asarray(out[0])
+    else:
+        next_obs_np, _ = envs.reset(seed=env_seed)
+    obs_spec = _infer_observation_spec(config, next_obs_np)
+    obs_normalizer = None
+    if "-cleanrl" in str(config.env_tag) and obs_spec.mode == "vector" and obs_spec.vector_dim is not None:
+        obs_normalizer = obs_normalizer_mod.SharedObsNormalizer(obs_dim=int(obs_spec.vector_dim))
+    next_obs = _prepare_obs(
+        next_obs_np,
+        obs_spec=obs_spec,
+        device=device,
+        obs_normalizer=obs_normalizer,
+        update_normalizer=True,
+    )
+    effective_num_envs = int(next_obs.shape[0])
+    if effective_num_envs != plan.num_envs:
+        raise ValueError(
+            f"Runtime num_envs mismatch: config.num_envs={plan.num_envs}, env_batch={effective_num_envs}. For multiprocessing backend, ensure vector_batch_size matches num_envs."
+        )
+    action_spec = _action_spec_from_space(envs.single_action_space)
+    model = _build_model(config, obs_spec=obs_spec, action_spec=action_spec).to(device)
+    # Inductor does not support MPS; skip compile to avoid failures. PPO_SKIP_COMPILE for explicit override.
+    # PPO_COMPILE_MODE: default, reduce-overhead, max-autotune, fullgraph (H15: fused policy forward).
+    # Default reduce-overhead on CPU (~50% faster on Mac); default on CUDA.
+    if not os.environ.get("PPO_SKIP_COMPILE") and device.type != "mps":
+        mode = os.environ.get("PPO_COMPILE_MODE")
+        if mode is None and device.type == "cpu":
+            mode = "reduce-overhead"
+        mode = mode or "default"
+        if mode == "fullgraph":
+            model = torch.compile(model, fullgraph=True)
+        elif mode == "reduce-overhead":
+            model = torch.compile(model, mode="reduce-overhead")
+        elif mode == "max-autotune":
+            model = torch.compile(model, mode="max-autotune")
+        else:
+            model = torch.compile(model)
+    optimizer = optim.Adam(model.parameters(), lr=float(config.learning_rate), eps=1e-05)
+    next_done = torch.zeros(plan.num_envs, dtype=torch.float32, device=device)
+    obs_shape = tuple(next_obs.shape[1:])
+    if action_spec.kind == "discrete":
+        action_buf_shape = (plan.num_steps, plan.num_envs)
+        action_dtype = torch.long
+    else:
+        action_buf_shape = (plan.num_steps, plan.num_envs, int(action_spec.dim))
+        action_dtype = torch.float32
+    buffer = specs._RolloutBuffer(
+        obs=torch.zeros((plan.num_steps, plan.num_envs, *obs_shape), device=device),
+        actions=torch.zeros(action_buf_shape, dtype=action_dtype, device=device),
+        logprobs=torch.zeros((plan.num_steps, plan.num_envs), device=device),
+        rewards=torch.zeros((plan.num_steps, plan.num_envs), device=device),
+        dones=torch.zeros((plan.num_steps, plan.num_envs), device=device),
+        values=torch.zeros((plan.num_steps, plan.num_envs), device=device),
+    )
+    state = specs._RuntimeState(
+        next_obs=next_obs,
+        next_done=next_done,
+        obs_spec=obs_spec,
+        action_spec=action_spec,
+        global_step=0,
+        start_iteration=0,
+        start_time=time.time(),
+        best_actor_state=None,
+        best_return=-float("inf"),
+        last_eval_return=float("nan"),
+        last_heldout_return=None,
+        last_episode_return=float("nan"),
+        eval_env_conf=None,
+        obs_normalizer=obs_normalizer,
+    )
+    return _InitRuntimeResult(
+        model=model,
+        optimizer=optimizer,
+        obs_shape=obs_shape,
+        buffer=buffer,
+        state=state,
+        use_async=use_async,
+    )
+
+
+def _env(config: PPOConfig, *, obs_spec):
+    env_impl = importlib.import_module("rl.ppo.eval_config").eval_conf
+    ppo_envs = importlib.import_module("rl.core.ppo_envs")
+    return env_impl(
+        config,
+        obs_mode=str(getattr(config, "obs_mode", "vector")),
+        resolve_gym_env_name_fn=ppo_envs.resolve_gym_env_name,
+    )
+
+
+def make_vector_env(config: PPOConfig):
+    return _make_vector_env(config)
+
+
+def _run_training(
+    config: PPOConfig,
+    plan,
+    device: torch.device,
+    metrics_path: Path,
+    envs,
+    *,
+    env_fn,
+) -> TrainResult:
+    puffer_train_ops = importlib.import_module("rl.ppo.training_ops")
+    puffer_ckpt = importlib.import_module("rl.ppo.checkpoint")
+    puffer_metrics = importlib.import_module("rl.ppo.metrics")
+    puffer_eval = importlib.import_module("rl.ppo.eval")
+    checkpoint_manager_cls = importlib.import_module("rl.checkpointing").CheckpointManager
+    rl_logger = importlib.import_module("rl.logger")
+    init_result = _init_runtime(config, plan, device, envs)
+    model = init_result.model
+    optimizer = init_result.optimizer
+    obs_shape = init_result.obs_shape
+    buffer = init_result.buffer
+    state = init_result.state
+    use_async = init_result.use_async
+    checkpoint_manager = checkpoint_manager_cls(exp_dir=metrics_path.parent)
+    puffer_ckpt.restore_checkpoint_if_requested(config, plan, model, optimizer, state, device=device)
+    rl_logger.log_run_header_basic(
+        algo_name="ppo",
+        env_tag=str(config.env_tag),
+        seed=int(config.seed),
+        backbone_name=str(config.backbone_name),
+        obs_mode=str(state.obs_spec.mode),
+        obs_dim=64 if state.obs_spec.mode == "pixels" else int(state.obs_spec.vector_dim or 1),
+        act_dim=int(state.action_spec.dim),
+        frames_per_batch=int(plan.batch_size),
+        num_iterations=int(plan.num_iterations),
+        device_type=str(device.type),
+        config_obj=config,
+    )
+
+    def _prepare_obs_train(obs_np, *, obs_spec, device):
+        return _prepare_obs(
+            obs_np,
+            obs_spec=obs_spec,
+            device=device,
+            obs_normalizer=state.obs_normalizer,
+            update_normalizer=True,
+        )
+
+    def _prepare_obs_eval(obs_np, *, obs_spec, device):
+        return _prepare_obs(
+            obs_np,
+            obs_spec=obs_spec,
+            device=device,
+            obs_normalizer=state.obs_normalizer,
+            update_normalizer=False,
+        )
+
+    b_inds = np.arange(plan.batch_size)
+    for iteration in range(state.start_iteration + 1, plan.num_iterations + 1):
+        puffer_metrics._maybe_anneal_lr(config, plan, optimizer, iteration)
+        if use_async:
+            puffer_train_ops.collect_rollout_async(plan, model, envs, buffer, state, device, prepare_obs_fn=_prepare_obs_train)
+        else:
+            puffer_train_ops.collect_rollout(plan, model, envs, buffer, state, device, prepare_obs_fn=_prepare_obs_train)
+        advantages, returns = puffer_train_ops.compute_advantages(plan, config, model, state, buffer, device)
+        batch = puffer_train_ops.flatten_batch(plan, buffer, advantages, returns, obs_shape)
+        update_stats = puffer_train_ops.ppo_update(config, plan, model, optimizer, batch, b_inds)
+        puffer_eval.maybe_eval(
+            config,
+            model,
+            state,
+            iteration=iteration,
+            device=device,
+            env_fn=env_fn,
+            prepare_obs_fn=_prepare_obs_eval,
+        )
+        metric = puffer_metrics._metric_payload(iteration, plan, optimizer, state, update_stats, batch)
+        puffer_metrics._append_metrics_line(metrics_path, metric)
+        puffer_metrics._log_iteration(config, metric)
+        puffer_ckpt.maybe_save_periodic_checkpoint(config, checkpoint_manager, model, optimizer, state, iteration=iteration)
+    best_return = float("nan") if state.best_return == -float("inf") else float(state.best_return)
+    total_time = time.time() - state.start_time
+    rl_logger.log_run_footer(float(best_return), int(plan.num_iterations), float(total_time), algo_name="ppo")
+    final_iteration = int(max(state.start_iteration, plan.num_iterations))
+    puffer_ckpt.save_final_checkpoint(config, checkpoint_manager, model, optimizer, state, iteration=final_iteration)
+    puffer_eval.render(
+        config,
+        model,
+        state,
+        exp_dir=metrics_path.parent,
+        device=device,
+        env_fn=env_fn,
+        prepare_obs_fn=_prepare_obs_eval,
+    )
+    return TrainResult(
+        best_return=best_return,
+        last_eval_return=float(state.last_eval_return),
+        last_heldout_return=puffer_metrics._as_optional_finite(state.last_heldout_return),
+        num_iterations=int(plan.num_iterations),
+    )
+
+
+def train_ppo_puffer_impl(config: PPOConfig) -> TrainResult:
+    puffer_eval = importlib.import_module("rl.ppo.eval")
+    core_envs = importlib.import_module("rl.core.envs")
+    puffer_eval.validate_eval_config(config)
+    resolved = core_envs.seeds(
+        seed=int(config.seed),
+        problem_seed=config.problem_seed,
+        noise_seed_0=config.noise_seed_0,
+    )
+    config.problem_seed = int(resolved.problem_seed)
+    config.noise_seed_0 = int(resolved.noise_seed_0)
+    device = _resolve_device(config.device)
+    _seed_everything(int(core_envs.global_seed_for_run(int(config.problem_seed))))
+    plan = _build_plan(config)
+    metrics_path = _prepare_outputs(config)
+    with closing(make_vector_env(config)) as envs:
+        return _run_training(config, plan, device, metrics_path, envs, env_fn=_env)
+
+
+def train_ppo_puffer(config: PPOConfig) -> TrainResult:
+    return train_ppo_puffer_impl(config)
+
+
+def register() -> None:
+    register_algo = importlib.import_module("rl.registry").register_algo
+    register_algo("ppo", PPOConfig, train_ppo_puffer)

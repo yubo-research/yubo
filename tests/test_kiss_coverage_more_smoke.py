@@ -379,6 +379,36 @@ def test_kiss_cov_modal_batches_functions(monkeypatch, tmp_path):
     mb.clean_up()
     assert "batches_dict" in deleted
 
+    called = {}
+
+    def _fake_submitter(tag, force=False):
+        called["submitter"] = (tag, force)
+
+    def _fake_status():
+        called["status"] = True
+
+    def _fake_collect():
+        called["collect"] = True
+
+    def _fake_clean_up():
+        called["clean_up"] = True
+
+    monkeypatch.setattr(mb, "batches_submitter", _fake_submitter)
+    monkeypatch.setattr(mb, "status", _fake_status)
+    monkeypatch.setattr(mb, "collect", _fake_collect)
+    monkeypatch.setattr(mb, "clean_up", _fake_clean_up)
+
+    mb.batches("submit-missing", batch_tag="bt")
+    assert called.get("submitter") == ("bt", False)
+    mb.batches("submit-missing-force", batch_tag="bt2")
+    assert called.get("submitter") == ("bt2", True)
+    mb.batches("status")
+    assert called.get("status") is True
+    mb.batches("collect")
+    assert called.get("collect") is True
+    mb.batches("clean_up")
+    assert called.get("clean_up") is True
+
 
 def test_kiss_cov_fig_util_functions(monkeypatch, tmp_path):
     from figures.mtv import fig_util

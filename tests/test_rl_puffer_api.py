@@ -5,10 +5,11 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
-from rl.pufferlib.ppo import engine as puffer_ppo_engine
-from rl.pufferlib.ppo.config import PufferPPOConfig
-from rl.pufferlib.ppo.engine import register as register_ppo
-from rl.pufferlib.ppo.engine import train_ppo_puffer
+from rl import builtins
+from rl.ppo import engine as puffer_ppo_engine
+from rl.ppo.config import PPOConfig
+from rl.ppo.engine import train_ppo_puffer
+from rl.registry import get_algo
 
 
 class _FakeVecEnv:
@@ -101,7 +102,7 @@ class _FakeAtariModule:
 
 
 def test_puffer_config_from_dict_converts_hidden_sizes():
-    cfg = PufferPPOConfig.from_dict(
+    cfg = PPOConfig.from_dict(
         {
             "env_tag": "cheetah",
             "actor_head_hidden_sizes": [64, 32],
@@ -115,25 +116,15 @@ def test_puffer_config_from_dict_converts_hidden_sizes():
 
 
 def test_puffer_config_from_dict_uses_env_defaults():
-    cfg = PufferPPOConfig.from_dict({"env_tag": "cheetah"})
+    cfg = PPOConfig.from_dict({"env_tag": "cheetah"})
     assert cfg.backbone_hidden_sizes == (32, 16)
 
 
-def test_puffer_register_delegates_to_registry(monkeypatch):
-    calls = []
-
-    def fake_register_algo(name, config_cls, train_fn, *, backend=None):
-        calls.append((name, config_cls, train_fn, backend))
-
-    monkeypatch.setattr("rl.registry.register_algo", fake_register_algo)
-    register_ppo()
-
-    assert len(calls) == 1
-    name, config_cls, train_fn, backend = calls[0]
-    assert name == "ppo"
-    assert backend == "pufferlib"
-    assert config_cls is PufferPPOConfig
-    assert train_fn is train_ppo_puffer
+def test_puffer_register_delegates_to_registry():
+    builtins.register_all()
+    spec = get_algo("ppo")
+    assert spec.config_cls is PPOConfig
+    assert spec.train_fn is train_ppo_puffer
 
 
 def test_train_ppo_puffer_fake_vector_smoke(monkeypatch, tmp_path: Path):
@@ -143,7 +134,7 @@ def test_train_ppo_puffer_fake_vector_smoke(monkeypatch, tmp_path: Path):
         lambda _cfg: _FakeVecEnv(num_envs=2),
     )
 
-    cfg = PufferPPOConfig(
+    cfg = PPOConfig(
         exp_dir=str(tmp_path / "exp"),
         env_tag="atari:Pong",
         seed=7,
@@ -175,7 +166,7 @@ def test_train_ppo_puffer_continuous_fake_vector_smoke(monkeypatch, tmp_path: Pa
         lambda _cfg: _FakeVecEnvContinuous(num_envs=2),
     )
 
-    cfg = PufferPPOConfig(
+    cfg = PPOConfig(
         exp_dir=str(tmp_path / "exp_cont"),
         env_tag="bw-heur",
         seed=9,
@@ -204,7 +195,7 @@ def test_train_ppo_puffer_continuous_fake_vector_smoke(monkeypatch, tmp_path: Pa
 
 
 def test_train_ppo_puffer_rejects_invalid_eval_noise_mode():
-    cfg = PufferPPOConfig(eval_noise_mode="invalid-mode")
+    cfg = PPOConfig(eval_noise_mode="invalid-mode")
     with pytest.raises(ValueError, match="eval_noise_mode must be one of"):
         train_ppo_puffer(cfg)
 
@@ -217,7 +208,7 @@ def test_train_ppo_puffer_resume_from_checkpoint(monkeypatch, tmp_path: Path):
     )
 
     first_dir = tmp_path / "exp_first"
-    first_cfg = PufferPPOConfig(
+    first_cfg = PPOConfig(
         exp_dir=str(first_dir),
         env_tag="atari:Pong",
         seed=7,
@@ -242,7 +233,7 @@ def test_train_ppo_puffer_resume_from_checkpoint(monkeypatch, tmp_path: Path):
     assert resume_path.exists()
 
     second_dir = tmp_path / "exp_resume"
-    second_cfg = PufferPPOConfig(
+    second_cfg = PPOConfig(
         exp_dir=str(second_dir),
         env_tag="atari:Pong",
         seed=7,
@@ -309,7 +300,7 @@ def test_train_ppo_puffer_renders_video_when_enabled(monkeypatch, tmp_path: Path
     )
     monkeypatch.setattr("common.video.render_policy_videos", _fake_render_policy_videos)
 
-    cfg = PufferPPOConfig(
+    cfg = PPOConfig(
         exp_dir=str(tmp_path / "exp_video"),
         env_tag="atari:Pong",
         seed=11,

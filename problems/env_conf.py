@@ -370,6 +370,66 @@ _gym_env_confs = {
         "HalfCheetah-v5",
         policy_class=MLPPolicyFactory((32, 16)),
     ),
+    "cheetah-small-1k2": _gym_conf(
+        "HalfCheetah-v5",
+        policy_class=MLPPolicyFactory((32, 16), use_layer_norm=False, activation="tanh"),
+    ),
+    "cheetah-cleanrl": _gym_conf(
+        "HalfCheetah-v5",
+        policy_class=_rl(
+            MLPPolicyFactory((64, 64), use_layer_norm=False, activation="tanh"),
+            critic=MLPPolicyFactory((64, 64), use_layer_norm=False, activation="tanh"),
+            share_backbone=False,
+        ),
+    ),
+    # CleanRL-style (separate actor/critic) with 16×16 hidden
+    "cheetah-cleanrl-16x16": _gym_conf(
+        "HalfCheetah-v5",
+        policy_class=_rl(
+            MLPPolicyFactory((16, 16), use_layer_norm=False, activation="tanh"),
+            critic=MLPPolicyFactory((16, 16), use_layer_norm=False, activation="tanh"),
+            share_backbone=False,
+        ),
+    ),
+    # Same as cheetah-cleanrl-16x16 but with layer norm
+    "cheetah-cleanrl-16x16-ln": _gym_conf(
+        "HalfCheetah-v5",
+        policy_class=_rl(
+            MLPPolicyFactory((16, 16), use_layer_norm=True, activation="tanh"),
+            critic=MLPPolicyFactory((16, 16), use_layer_norm=True, activation="tanh"),
+            share_backbone=False,
+        ),
+    ),
+    # CleanRL ppo_continuous_action: HalfCheetah-v4, 64x64 tanh (exact match)
+    "cheetah-v4-cleanrl": _gym_conf(
+        "HalfCheetah-v4",
+        policy_class=_rl(
+            MLPPolicyFactory((64, 64), use_layer_norm=False, activation="tanh"),
+            critic=MLPPolicyFactory((64, 64), use_layer_norm=False, activation="tanh"),
+            share_backbone=False,
+        ),
+    ),
+    "cheetah-v4": _gym_conf(
+        "HalfCheetah-v4",
+        policy_class=MLPPolicyFactory((32, 16)),
+    ),
+    # GAC paper Appendix C.1: 256x256 ReLU backbone
+    "cheetah-v4-gac": _gym_conf(
+        "HalfCheetah-v4",
+        policy_class=_rl(
+            MLPPolicyFactory((256, 256), use_layer_norm=False, activation="relu"),
+            critic=MLPPolicyFactory((256, 256), use_layer_norm=False, activation="relu"),
+            share_backbone=False,
+        ),
+    ),
+    "cheetah-v5-gac": _gym_conf(
+        "HalfCheetah-v5",
+        policy_class=_rl(
+            MLPPolicyFactory((256, 256), use_layer_norm=False, activation="relu"),
+            critic=MLPPolicyFactory((256, 256), use_layer_norm=False, activation="relu"),
+            share_backbone=False,
+        ),
+    ),
     "quadruped-run-64x64": _gym_conf(
         "dm_control/quadruped-run-v0",
         policy_class=MLPPolicyFactory((64, 64)),
@@ -377,6 +437,11 @@ _gym_env_confs = {
     "cheetah-16x16": _gym_conf(
         "HalfCheetah-v5",
         policy_class=MLPPolicyFactory((16, 16)),
+    ),
+    # BO-only: 16x32 LN actor, ~1,064 params
+    "cheetah-16x32-ln": _gym_conf(
+        "HalfCheetah-v5",
+        policy_class=MLPPolicyFactory((16, 32), use_layer_norm=True, activation="tanh"),
     ),
     "cheetah-16x16-gauss": _gym_conf(
         "HalfCheetah-v5",
@@ -511,6 +576,16 @@ _dm_control_env_confs = {
     "dm_control/quadruped-run-v0-small": EnvConf(
         "dm_control/quadruped-run-v0",
         policy_class=MLPPolicyFactory((4, 4)),
+        max_steps=_DM_CONTROL_DEFAULT_MAX_STEPS,
+    ),
+    "dm_control/quadruped-run-v0-100k": EnvConf(
+        "dm_control/quadruped-run-v0",
+        policy_class=MLPPolicyFactory((256, 256), use_layer_norm=True, activation="silu"),
+        max_steps=_DM_CONTROL_DEFAULT_MAX_STEPS,
+    ),
+    "dm_control/quadruped-run-v0-1m": EnvConf(
+        "dm_control/quadruped-run-v0",
+        policy_class=MLPPolicyFactory((1024, 1024), use_layer_norm=True, activation="silu"),
         max_steps=_DM_CONTROL_DEFAULT_MAX_STEPS,
     ),
 }

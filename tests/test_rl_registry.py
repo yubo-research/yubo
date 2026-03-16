@@ -7,9 +7,7 @@ from rl.registry import (
     available_algos,
     get_algo,
     register_algo,
-    register_algo_backend,
     register_algo_lazy,
-    resolve_algo_name,
 )
 
 
@@ -73,42 +71,3 @@ def test_register_algo_lazy_duplicate_raises():
     register_algo_lazy(name, "rl._fake_lazy_dup_1")
     with pytest.raises(ValueError, match="already registered"):
         register_algo_lazy(name, "rl._fake_lazy_dup_2")
-
-
-def test_register_algo_backend_and_resolve_get_algo():
-    def _train():
-        pass
-
-    register_algo("_impl_backend_reg", SimpleNamespace, _train)
-    register_algo_backend("_canonical_backend_reg", "pufferlib", "_impl_backend_reg")
-
-    spec = get_algo("_canonical_backend_reg", backend="pufferlib")
-    assert spec.name == "_impl_backend_reg"
-    assert spec.train_fn is _train
-
-
-def test_register_algo_backend_duplicate_same_target_is_ok():
-    register_algo_backend("_canonical_backend_idem", "torchrl", "_impl_backend_idem")
-    register_algo_backend("_canonical_backend_idem", "torchrl", "_impl_backend_idem")
-
-
-def test_register_algo_backend_conflicting_target_raises():
-    register_algo_backend("_canonical_backend_conflict", "torchrl", "_impl_backend_a")
-    with pytest.raises(ValueError, match="already points to"):
-        register_algo_backend("_canonical_backend_conflict", "torchrl", "_impl_backend_b")
-
-
-def test_get_algo_unknown_backend_for_bound_algo_raises():
-    def _train():
-        pass
-
-    register_algo("_impl_backend_unknown", SimpleNamespace, _train)
-    register_algo_backend("_canonical_backend_unknown", "torchrl", "_impl_backend_unknown")
-    with pytest.raises(ValueError, match="Unknown backend"):
-        get_algo("_canonical_backend_unknown", backend="pufferlib")
-
-
-def test_resolve_algo_name_unknown_backend_for_bound_algo_raises():
-    register_algo_backend("_canonical_backend_unknown_name", "torchrl", "_impl_backend_unknown_name")
-    with pytest.raises(ValueError, match="Unknown backend"):
-        resolve_algo_name("_canonical_backend_unknown_name", backend="pufferlib")

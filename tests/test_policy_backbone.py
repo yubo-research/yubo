@@ -7,7 +7,7 @@ import torch
 from problems.mlp_policy import MLPPolicyFactory
 from problems.rl_policy_factory import RLPolicyFactory
 from rl.backbone import BackboneSpec, HeadSpec, build_backbone, build_mlp_head
-from rl.core import env_contract as torchrl_env_contract
+from rl.core import env_contract
 from rl.policy_backbone import (
     ActorBackbonePolicy,
     ActorBackbonePolicyFactory,
@@ -145,8 +145,8 @@ def test_discrete_actor_backbone_policy_param_count_matches_ppo_build_path():
     spec = _atari_discrete_spec()
     policy = DiscreteActorBackbonePolicy(env_conf, spec)
 
-    obs_contract = torchrl_env_contract.resolve_observation_contract(env_conf, default_image_size=84)
-    backbone_name = torchrl_env_contract.resolve_backbone_name(spec.backbone.name, obs_contract)
+    obs_contract = env_contract.resolve_observation_contract(env_conf, default_image_size=84)
+    backbone_name = env_contract.resolve_backbone_name(spec.backbone.name, obs_contract)
     backbone_spec = BackboneSpec(
         name=backbone_name,
         hidden_sizes=spec.backbone.hidden_sizes,

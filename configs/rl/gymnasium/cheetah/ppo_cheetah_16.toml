@@ -1,0 +1,42 @@
+# HalfCheetah-v5 PPO — 16×16 (θ = 1,245). Mac.
+# Run: PPO_BATCHED_CPU_BUFFER=1 PPO_COMPILE_MODE=reduce-overhead micromamba run -n yubo-rl python -m experiments.experiment local configs/rl/gymnasium/cheetah/ppo_cheetah_16.toml
+
+[experiment]
+opt_name = "ppo"
+env_tag = "cheetah-cleanrl-16x16"
+exp_dir = "_tmp/gymnasium/cheetah/ppo_puffer_halfcheetah_16x16"
+total_timesteps = 3000000
+num_reps = 10
+local_workers = 1
+device = "cpu"
+
+learning_rate = 3e-4
+num_envs = 1
+num_steps = 2048
+anneal_lr = true
+gamma = 0.99
+gae_lambda = 0.95
+num_minibatches = 32
+epochs = 10
+norm_adv = true
+clip_coef = 0.2
+clip_vloss = true
+ent_coef = 0.0
+vf_coef = 0.5
+max_grad_norm = 0.5
+
+vector_backend = "serial"
+vector_num_workers = 1
+vector_batch_size = 1
+vector_overwork = false
+framestack = 1
+
+eval_interval = 10
+num_denoise = 1
+num_denoise_passive = 1
+eval_seed_base = 1000
+eval_noise_mode = "frozen"
+log_interval = 1
+checkpoint_interval = 200
+
+video_enable = false

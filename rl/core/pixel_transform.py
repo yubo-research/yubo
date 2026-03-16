@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import torch
-from torchrl.data import UnboundedContinuous
-from torchrl.envs.transforms import Transform
 
 _INT_IMAGE_DTYPES = (torch.uint8, torch.int8, torch.int16, torch.int32, torch.int64)
 
@@ -61,63 +59,3 @@ def ensure_pixel_obs_format(obs: torch.Tensor, *, channels: int, size: int = 84,
 
 def ensure_atari_obs_format(obs: torch.Tensor, size: int = 84, *, scale_float_255: bool = False) -> torch.Tensor:
     return ensure_pixel_obs_format(obs, channels=4, size=size, scale_float_255=scale_float_255)
-
-
-class PixelsToObservation(Transform):
-    def __init__(self, size: int = 84):
-        super().__init__(in_keys=["pixels", ("next", "pixels")], out_keys=["observation", ("next", "observation")])
-        self._size = int(size)
-
-    def _process_pixels(self, pixels: torch.Tensor) -> torch.Tensor:
-        return ensure_pixel_obs_format(pixels, channels=3, size=self._size, scale_float_255=False)
-
-    def _call(self, tensordict):
-        for in_key, out_key in zip(self.in_keys, self.out_keys):
-            val = tensordict.get(in_key, None)
-            if val is not None:
-                tensordict.set(out_key, self._process_pixels(val))
-        return tensordict
-
-    def _reset(self, tensordict, tensordict_reset):
-        for in_key, out_key in zip(self.in_keys, self.out_keys):
-            val = tensordict_reset.get(in_key, None)
-            if val is not None:
-                tensordict_reset.set(out_key, self._process_pixels(val))
-        return tensordict_reset
-
-    def transform_observation_spec(self, spec):
-        obs_spec = UnboundedContinuous(shape=torch.Size((3, self._size, self._size)), device=spec.device, dtype=torch.float32)
-        if "pixels" in spec.keys(True, True):
-            spec["observation"] = obs_spec
-            spec["next", "observation"] = obs_spec
-        return spec
-
-
-class AtariObservationTransform(Transform):
-    def __init__(self, size: int = 84):
-        super().__init__(in_keys=["observation", ("next", "observation")], out_keys=["observation", ("next", "observation")])
-        self._size = int(size)
-
-    def _process(self, obs: torch.Tensor) -> torch.Tensor:
-        return ensure_pixel_obs_format(obs, channels=4, size=self._size, scale_float_255=False)
-
-    def _call(self, tensordict):
-        for key in self.in_keys:
-            val = tensordict.get(key, None)
-            if val is not None:
-                tensordict.set(key, self._process(val))
-        return tensordict
-
-    def _reset(self, tensordict, tensordict_reset):
-        for key in self.in_keys:
-            val = tensordict_reset.get(key, None)
-            if val is not None:
-                tensordict_reset.set(key, self._process(val))
-        return tensordict_reset
-
-    def transform_observation_spec(self, spec):
-        obs_spec = UnboundedContinuous(shape=torch.Size((4, self._size, self._size)), device=spec.device, dtype=torch.float32)
-        if "observation" in spec.keys(True, True):
-            spec["observation"] = obs_spec
-            spec["next", "observation"] = obs_spec
-        return spec

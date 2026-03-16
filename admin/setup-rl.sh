@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
+# Stable, reproducible RL environment setup.
+# Linux: pip torch+cu124 (single ABI; avoids conda/pip mix that broke pyvecch).
+# macOS: conda pytorch (CPU/MPS), pufferlib from source.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 cd "${PROJECT_ROOT}"
 
+# Pinned versions (match admin/conda-rl.yml)
 ENV_NAME="yubo-rl"
 CUDA_VERSION="12.8"
 PUFFERLIB_SPEC="pufferlib==3.0.0"
@@ -46,6 +50,8 @@ if ! command -v micromamba >/dev/null 2>&1; then
   exit 1
 fi
 
+OS_NAME="$(uname -s)"
+
 if micromamba env list | awk '{print $1}' | grep -qx "${ENV_NAME}"; then
   echo "[setup-rl] env '${ENV_NAME}' already exists, reusing it"
 else
@@ -56,11 +62,30 @@ fi
 eval "$(micromamba shell hook --shell bash)"
 micromamba activate "${ENV_NAME}"
 
+# --- Platform setup (one block; rest of script is linear) ---
+PIP_IDX=""
+if [[ "${OS_NAME}" == "Linux" ]]; then
+  echo "[setup-rl] linux: build deps, pip torch cu124, CUDA toolchain"
+  micromamba install -y -n "${ENV_NAME}" -c conda-forge gxx_linux-64 swig
+  micromamba remove -y -n "${ENV_NAME}" pytorch torchvision --force 2>/dev/null || true
+  python -m pip install --no-cache-dir torch==2.5.1 torchvision==0.20.1 --index-url https://download.pytorch.org/whl/cu124
+  PIP_IDX="--extra-index-url https://download.pytorch.org/whl/cu124"
+  micromamba install -y -n "${ENV_NAME}" -c nvidia -c conda-forge \
+    "cuda-toolkit=${CUDA_VERSION}" "cuda-nvcc=${CUDA_VERSION}" "cuda-cudart-dev=${CUDA_VERSION}" ninja cmake gxx_linux-64
+  export CUDA_HOME="${CONDA_PREFIX}"
+  export CUDACXX="${CONDA_PREFIX}/bin/nvcc"
+  export CPATH="${CONDA_PREFIX}/include:${CPATH:-}"
+  export LIBRARY_PATH="${CONDA_PREFIX}/lib:${LIBRARY_PATH:-}"
+  export LD_LIBRARY_PATH="${CONDA_PREFIX}/lib:${LD_LIBRARY_PATH:-}"
+else
+  micromamba install -y -n "${ENV_NAME}" -c conda-forge cmake ninja
+fi
+
 echo "[setup-rl] installing requirements.txt"
-python -m pip install -r requirements.txt
+python -m pip install --no-cache-dir ${PIP_IDX} -r requirements.txt
 
 echo "[setup-rl] installing torchrl/tensordict pins"
-python -m pip install torchrl==0.11.0 tensordict==0.11.0
+python -m pip install --no-cache-dir ${PIP_IDX} torchrl==0.11.0 tensordict==0.11.0
 
 echo "[setup-rl] installing BO extras (VecchiaBO, LassoBench, ennbo)"
 ENV_LIB="${CONDA_PREFIX}/lib" \
@@ -73,30 +98,21 @@ ENV_LIB="${CONDA_PREFIX}/lib" \
 python -m pip install "LassoBench @ git+https://github.com/ksehic/LassoBench.git" --no-deps
 python -m pip install ennbo --no-deps
 
-OS_NAME="$(uname -s)"
-if [[ "${OS_NAME}" == "Linux" ]]; then
-  echo "[setup-rl] linux detected, installing CUDA toolchain ${CUDA_VERSION} for pufferlib build"
-  micromamba install -y -n "${ENV_NAME}" -c nvidia -c conda-forge \
-    "cuda-toolkit=${CUDA_VERSION}" \
-    "cuda-nvcc=${CUDA_VERSION}" \
-    "cuda-cudart-dev=${CUDA_VERSION}" \
-    ninja cmake gxx_linux-64
-
-  echo "[setup-rl] installing ${PUFFERLIB_SPEC} --no-deps"
-  export CUDA_HOME="${CONDA_PREFIX}"
-  export CUDACXX="${CONDA_PREFIX}/bin/nvcc"
-  export CPATH="${CONDA_PREFIX}/include:${CPATH:-}"
-  export LIBRARY_PATH="${CONDA_PREFIX}/lib:${LIBRARY_PATH:-}"
-  export LD_LIBRARY_PATH="${CONDA_PREFIX}/lib:${LD_LIBRARY_PATH:-}"
-  python -m pip install --no-deps "${PUFFERLIB_SPEC}"
-else
-  echo "[setup-rl] macOS detected, skipping CUDA toolchain setup"
-  echo "[setup-rl] installing ${PUFFERLIB_SPEC} --no-deps"
-  python -m pip install --no-deps "${PUFFERLIB_SPEC}"
-fi
+echo "[setup-rl] building ${PUFFERLIB_SPEC} from source (C extension for ~58% GAE speedup)"
+python -m pip install --no-deps --no-build-isolation --no-cache-dir --no-binary ':all:' --force-reinstall "${PUFFERLIB_SPEC}"
 
 echo "[setup-rl] validating pufferlib import"
 python -c "from rl.pufferlib_compat import import_pufferlib_modules; import_pufferlib_modules(); print('pufferlib ok')"
+
+echo "[setup-rl] validating pufferlib advantage kernel (compute_puff_advantage)"
+python -c "
+import torch
+from pufferlib import _C  # noqa: F401
+_ = torch.ops.pufferlib.compute_puff_advantage
+print('pufferlib C extension ok')
+"
+
+[[ "${OS_NAME}" == "Linux" ]] && python -c "import torch; assert torch.cuda.is_available(), 'torch.cuda.is_available() is False'; print('CUDA ok')"
 
 echo "[setup-rl] done"
 echo "activate with: micromamba activate ${ENV_NAME}"

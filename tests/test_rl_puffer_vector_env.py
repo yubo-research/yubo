@@ -2,7 +2,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from rl.pufferlib import vector_env
+from rl import vector_env
 
 
 class _FakeVector:

@@ -140,6 +140,8 @@ def _print_config_table(
 def _config_to_mapping(config: Any) -> dict[str, Any]:
     if config is None:
         return {}
+    if hasattr(config, "to_header_dict"):
+        return config.to_header_dict()
     if dataclasses.is_dataclass(config):
         return dataclasses.asdict(config)
     if hasattr(config, "__dict__"):
@@ -183,7 +185,7 @@ def _collect_header_config_items(config: Any, training: Any, runtime: Any) -> li
                 values.pop(key, None)
     if values.get("resume_from") in {None, "", False}:
         values.pop("resume_from", None)
-    # Show resolved runtime settings when available (for torchrl runtime).
+    # Show resolved runtime settings when available.
     for key in ("collector_backend", "single_env_backend", "collector_workers"):
         resolved = getattr(runtime, key, None)
         if resolved is not None and resolved != "n/a":

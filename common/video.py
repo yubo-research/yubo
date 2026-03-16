@@ -368,7 +368,7 @@ def render_policy_videos_rl(
     eval_env_conf = context.build_eval_env_conf(int(env_setup.problem_seed), int(env_setup.noise_seed_0))
     if eval_env_conf.gym_conf is None:
         print(
-            f"[rl/ppo/torchrl] video disabled for non-gym env: {config.env_tag}",
+            f"[rl/ppo] video disabled for non-gym env: {config.env_tag}",
             flush=True,
         )
         return

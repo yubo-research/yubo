@@ -20,10 +20,6 @@ def _apply_rl_defaults(opt_name: str, data: dict) -> dict:
     return apply_defaults(data)
 
 
-def _experiment_backend(exp_cfg: dict) -> str:
-    return str(exp_cfg.get("backend", "pufferlib")).strip().lower()
-
-
 def _extract_experiment_cfg(cfg: dict) -> dict:
     if "rl" in cfg:
         raise ValueError("Legacy [rl] schema is removed. Use [experiment] with opt_name/env_tag.")
@@ -31,7 +27,7 @@ def _extract_experiment_cfg(cfg: dict) -> dict:
     if not isinstance(section, dict):
         raise ValueError("Config must be a table at root or under [experiment].")
     opt_name = str(section.get("opt_name", "")).strip().lower()
-    get_algo(opt_name, backend=_experiment_backend(section))
+    get_algo(opt_name)
     env_tag = section.get("env_tag")
     if env_tag is None or str(env_tag).strip() == "":
         raise ValueError("experiment.env_tag must be a non-empty string.")
@@ -65,7 +61,7 @@ def _algo_input_dict(*, exp_cfg: dict, config_cls: type) -> dict:
 def _run_from_cfg(cfg: dict, seed: int | None = None):
     exp_cfg = _extract_experiment_cfg(cfg)
     opt_name = str(exp_cfg["opt_name"]).strip().lower()
-    algo = get_algo(opt_name, backend=_experiment_backend(exp_cfg))
+    algo = get_algo(opt_name)
     algo_input = _algo_input_dict(exp_cfg=exp_cfg, config_cls=algo.config_cls)
     algo_input = _apply_rl_defaults(opt_name, algo_input)
     config = algo.config_cls.from_dict(algo_input)
@@ -92,6 +88,10 @@ def _run_single(path: str, overrides: dict | None, seed: int | None):
 def main(argv: list[str] | None = None):
     import sys
 
+    if not sys.stdout.isatty() and hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(line_buffering=True)
+    if not sys.stderr.isatty() and hasattr(sys.stderr, "reconfigure"):
+        sys.stderr.reconfigure(line_buffering=True)
     if argv is None:
         argv = sys.argv[1:]
     config_path, rest = split_config_and_args(argv)
@@ -134,4 +134,10 @@ def main(argv: list[str] | None = None):
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+
+    print(
+        "RL runs via experiments.experiment. Use: python -m experiments.experiment local <config>",
+        file=sys.stderr,
+    )
+    sys.exit(1)
