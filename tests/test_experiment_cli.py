@@ -316,3 +316,40 @@ def test_load_experiment_config_toml_opt_name_and_optimizer_both_set_raises(tmp_
     )
     with pytest.raises(ValueError, match="both experiment\\.opt_name and \\[optimizer\\]\\.name"):
         load_experiment_config(config_toml_path=str(toml_path))
+
+
+def test_cli_local_routes_rl_configs(monkeypatch, tmp_path):
+    _install_stub_experiment_sampler(monkeypatch)
+    calls: list[list[str]] = []
+
+    mod = types.ModuleType("rl.runner")
+
+    def _main(argv=None):
+        calls.append(list(argv or []))
+
+    mod.main = _main
+    monkeypatch.setitem(sys.modules, "rl.runner", mod)
+
+    toml_path = _write_toml(
+        tmp_path,
+        """
+        [experiment]
+        opt_name = "ppo"
+        env_tag = "dm_control/quadruped-run-v0-10k"
+        exp_dir = "_tmp/exp"
+        total_timesteps = 1000
+        num_reps = 1
+        learning_rate = 3e-4
+        num_envs = 8
+        runtime_device = "cpu"
+        """,
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(cli, ["local", str(toml_path), "--opt", "learning_rate=0.001"])
+    assert result.exit_code == 0, result.output
+    assert len(calls) == 1
+    argv = calls[0]
+    assert argv[0] == "--config"
+    assert argv[1] == str(toml_path)
+    assert any("learning_rate" in a for a in argv)

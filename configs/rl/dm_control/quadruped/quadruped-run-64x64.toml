@@ -1,0 +1,42 @@
+# PPO quadruped-run 64x64 policy. Mirrors the BO 64x64 environment/budget.
+# Run: micromamba run -n yubo-rl python -m experiments.experiment local configs/rl/dm_control/quadruped/quadruped-run-64x64.toml
+
+[experiment]
+opt_name = "ppo"
+env_tag = "quadruped-run-64x64"
+exp_dir = "_tmp/dm_control/quadruped/quadruped-run-64x64"
+total_timesteps = 3000000
+num_reps = 10
+local_workers = 1
+runtime_device = "cpu"
+num_denoise = 1
+num_denoise_passive = 1
+video_enable = false
+
+learning_rate = 3e-4
+num_envs = 8
+num_steps = 1024
+anneal_lr = true
+gamma = 0.99
+gae_lambda = 0.95
+num_minibatches = 16
+epochs = 10
+norm_adv = true
+clip_coef = 0.2
+clip_vloss = true
+ent_coef = 0.0
+vf_coef = 0.5
+max_grad_norm = 0.5
+target_kl = 0.01
+
+vector_backend = "multiprocessing"
+vector_num_workers = 8
+vector_batch_size = 8
+vector_overwork = false
+framestack = 1
+
+eval_interval = 10
+eval_seed_base = 1000
+eval_noise_mode = "frozen"
+log_interval = 1
+checkpoint_interval = 200
