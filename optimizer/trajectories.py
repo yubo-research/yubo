@@ -1,7 +1,10 @@
-from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
+
+from .trajectory import Trajectory
+
+__all__ = ["collect_trajectory"]
 
 
 def _resolve_max_episode_steps(env_conf: Any) -> int:
@@ -33,22 +36,6 @@ def _unpack_step_result(step_out: Any) -> tuple[Any, Any, bool, bool, Any]:
         state, reward, done, info = step_out
         return state, reward, bool(done), False, info
     raise ValueError(f"Unsupported env.step return arity: {len(step_out)}")
-
-
-@dataclass
-class Trajectory:
-    rreturn: float
-
-    states: np.ndarray
-    actions: np.ndarray
-    rreturn_se: float = None
-    rreturn_est: float = None
-    num_steps: int = 0
-
-    def get_decision_rreturn(self) -> float:
-        if self.rreturn_est is None:
-            return float(self.rreturn)
-        return float(self.rreturn_est)
 
 
 def _get_bounds_safe(arr, default_fn):

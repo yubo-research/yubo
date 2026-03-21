@@ -5,7 +5,7 @@ import numpy as np
 
 
 def test_trajectory_dataclass():
-    from optimizer.trajectories import Trajectory
+    from optimizer.trajectory import Trajectory
 
     traj = Trajectory(rreturn=1.5, states=np.array([1, 2]), actions=np.array([0, 1]))
     assert traj.rreturn == 1.5
@@ -14,14 +14,14 @@ def test_trajectory_dataclass():
 
 
 def test_trajectory_get_decision_rreturn_no_est():
-    from optimizer.trajectories import Trajectory
+    from optimizer.trajectory import Trajectory
 
     traj = Trajectory(rreturn=1.5, states=np.array([1, 2]), actions=np.array([0, 1]))
     assert traj.get_decision_rreturn() == 1.5
 
 
 def test_trajectory_get_decision_rreturn_with_est():
-    from optimizer.trajectories import Trajectory
+    from optimizer.trajectory import Trajectory
 
     traj = Trajectory(
         rreturn=1.5,

@@ -406,7 +406,7 @@ def test_cov_make_loop_gym_evaluate_fn(monkeypatch):
 def test_cov_optimizer_types():
     from optimizer.datum import Datum
     from optimizer.optimizer_types import IterateResult, ReturnSummary, TraceEntry
-    from optimizer.trajectories import Trajectory
+    from optimizer.trajectory import Trajectory
 
     tr = Trajectory(rreturn=1.0, states=np.zeros((1, 1)), actions=np.zeros((1, 1)))
     d = Datum(designer=None, policy=None, expected_acqf=0.5, trajectory=tr)
