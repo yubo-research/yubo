@@ -296,7 +296,7 @@ def _parse_cfg(cfg: dict[str, Any]) -> UHDConfig:
     multiple=True,
     help="Override config key: --opt key=value (e.g. --opt env_tag=quadruped-run-64x64 --opt optimizer=simple)",
 )
-def _local(config_toml: str, overrides: tuple[str, ...]) -> None:
+def _local(config_toml: str, overrides: tuple[str, ...] = ()) -> None:
     try:
         cfg = _load_toml_config(config_toml)
         if overrides:
@@ -390,26 +390,12 @@ def _run_mezo(parsed: UHDConfig) -> None:
 local = _local
 
 
-@_cli.command(
-    name="modal",
-    help="Run on Modal. Streams to stdout; optionally saves to --log-file.",
-)
-@click.argument("config_toml", type=click.Path(exists=True, dir_okay=False, path_type=str))
-@click.option(
-    "-o",
-    "--opt",
-    "overrides",
-    multiple=True,
-    help="Override config key: --opt key=value (e.g. --opt env_tag=quadruped-run-64x64)",
-)
-@click.option(
-    "--log-file",
-    type=click.Path(dir_okay=False),
-    default=None,
-    help="Also save log to this local file.",
-)
-@click.option("--gpu", type=str, default="A100", help="Modal GPU type (e.g. T4, A10, A100, H100).")
-def modal_cmd(config_toml: str, overrides: tuple[str, ...], log_file: str | None, gpu: str) -> None:
+def modal_cmd(
+    config_toml: str,
+    overrides: tuple[str, ...] = (),
+    log_file: str | None = None,
+    gpu: str = "A100",
+) -> None:
     from ops.modal_uhd import run as modal_run
 
     try:
@@ -442,6 +428,29 @@ def modal_cmd(config_toml: str, overrides: tuple[str, ...], log_file: str | None
         with open(log_file, "w") as f:
             f.write(log_text)
         click.echo(f"Log saved to {log_file}")
+
+
+@_cli.command(
+    name="modal",
+    help="Run on Modal. Streams to stdout; optionally saves to --log-file.",
+)
+@click.argument("config_toml", type=click.Path(exists=True, dir_okay=False, path_type=str))
+@click.option(
+    "-o",
+    "--opt",
+    "overrides",
+    multiple=True,
+    help="Override config key: --opt key=value (e.g. --opt env_tag=quadruped-run-64x64)",
+)
+@click.option(
+    "--log-file",
+    type=click.Path(dir_okay=False),
+    default=None,
+    help="Also save log to this local file.",
+)
+@click.option("--gpu", type=str, default="A100", help="Modal GPU type (e.g. T4, A10, A100, H100).")
+def _modal_cmd_cli(config_toml: str, overrides: tuple[str, ...], log_file: str | None, gpu: str) -> None:
+    modal_cmd(config_toml, overrides, log_file, gpu)
 
 
 if __name__ == "__main__":
