@@ -82,7 +82,7 @@ def test_policy_params_roundtrip_linear_policy():
 def test_policy_params_roundtrip_mlp_policy():
     from types import SimpleNamespace
 
-    from problems.mlp_policy import MLPPolicy
+    from policies.mlp_policy import MLPPolicy
 
     env_conf = SimpleNamespace(
         problem_seed=0,

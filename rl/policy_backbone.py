@@ -5,8 +5,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 
+from policies.policy_mixin import PolicyParamsMixin
 from problems.normalizer import Normalizer
-from problems.policy_mixin import PolicyParamsMixin
 from rl.backbone import BackboneSpec, HeadSpec, build_backbone, build_mlp_head, init_linear_layers
 from rl.core import env_contract as torchrl_env_contract
 from rl.shared_gaussian_actor import SharedGaussianActorModule, get_gaussian_actor_spec
@@ -129,8 +129,7 @@ class DiscreteActorBackbonePolicy(PolicyParamsMixin, nn.Module):
         self.head = build_mlp_head(spec.head, feat_dim, int(io_contract.action.dim))
         _init_linear(self.backbone)
         _init_linear(self.head)
-        with torch.inference_mode():
-            self._flat_params_init = np.concatenate([p.data.detach().cpu().numpy().reshape(-1) for p in self.parameters()])
+        self._cache_flat_params_init()
 
     def forward(self, obs: torch.Tensor) -> torch.Tensor:
         squeeze_batch_dim = False
@@ -204,10 +203,6 @@ class GaussianActorBackbonePolicy(PolicyParamsMixin, nn.Module):
         self.actor = SharedGaussianActorModule(num_state, num_action, *get_gaussian_actor_spec(variant), init_log_std=init_log_std)
         self._const_scale = 0.5
         self._cache_flat_params_init()
-
-    def _cache_flat_params_init(self):
-        with torch.inference_mode():
-            self._flat_params_init = np.concatenate([p.data.detach().cpu().numpy().reshape(-1) for p in self.parameters()])
 
     def _normalize(self, state):
         state = np.asarray(state, dtype=np.float32)

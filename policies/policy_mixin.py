@@ -8,6 +8,10 @@ class PolicyParamsMixin:
     def num_params(self):
         return sum(p.numel() for p in self.parameters())
 
+    def _cache_flat_params_init(self):
+        with torch.inference_mode():
+            self._flat_params_init = np.concatenate([p.data.detach().cpu().numpy().reshape(-1) for p in self.parameters()])
+
     def get_params(self):
         with torch.inference_mode():
             flat_params = np.concatenate([p.data.detach().cpu().numpy().reshape(-1) for p in self.parameters()])

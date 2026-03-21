@@ -6,9 +6,9 @@ import gymnasium as gym
 
 import problems.other as other
 import problems.pure_functions as pure_functions
+from policies.mlp_policy import MLPPolicy, MLPPolicyFactory
 from problems.bipedal_walker_policy import BipedalWalkerPolicy
 from problems.linear_policy import LinearPolicy
-from problems.mlp_policy import MLPPolicy, MLPPolicyFactory
 from problems.mlp_torch_env import wrap_mlp_env
 from problems.noise_maker import NoiseMaker
 from problems.pure_function_policy import PureFunctionPolicy

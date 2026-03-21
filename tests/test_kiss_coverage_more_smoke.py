@@ -26,8 +26,8 @@ from optimizer.uhd_bgd import UHDBGD
 from optimizer.uhd_hoeffding import UHDHoeffding
 from optimizer.uhd_mezo import UHDMeZO
 from optimizer.uhd_simple import UHDSimple
+from policies.policy_mixin import PolicyParamsMixin
 from problems.noise_maker import NoiseMaker
-from problems.policy_mixin import PolicyParamsMixin
 
 
 def _make_gp():

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from problems.mlp_policy import MLPPolicyFactory
+from policies.mlp_policy import MLPPolicyFactory
 
 
 def gaussian_policy_factory(variant: str, **kwargs: Any):

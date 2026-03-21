@@ -6,11 +6,7 @@ import torch.nn as nn
 from torch.distributions import Normal
 
 from rl.backbone import BackboneSpec, HeadSpec, build_backbone, build_mlp_head, init_linear_layers
-
-
-def _atanh(x, eps: float = 1e-06):
-    x = torch.clamp(x, -1 + eps, 1 - eps)
-    return 0.5 * (torch.log1p(x) - torch.log1p(-x))
+from rl.math_utils import atanh
 
 
 @dataclass
@@ -84,7 +80,7 @@ class ActorCritic(nn.Module):
             u = dist.rsample()
             action = torch.tanh(u)
         else:
-            u = _atanh(action)
+            u = atanh(action)
         log_prob = dist.log_prob(u) - torch.log(1.0 - action.pow(2) + 1e-06)
         log_prob = log_prob.sum(-1)
         entropy = dist.entropy().sum(-1)

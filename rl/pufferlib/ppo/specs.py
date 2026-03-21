@@ -13,6 +13,7 @@ from rl.backbone import init_linear_layers as _init_linear_layers_shared
 from rl.core.continuous_actions import normalize_action_bounds as _normalize_action_bounds_shared
 from rl.core.continuous_actions import scale_action_tensor_to_env as _scale_action_tensor_to_env_shared
 from rl.core.continuous_actions import unscale_action_tensor_from_env as _unscale_action_tensor_from_env_shared
+from rl.math_utils import atanh
 
 
 def normalize_action_bounds(low: np.ndarray, high: np.ndarray, dim: int) -> tuple[np.ndarray, np.ndarray]:
@@ -85,11 +86,6 @@ class _ActorCritic(nn.Module):
         high = self.action_high.view(view_shape)
         return torch.max(torch.min(action, high), low)
 
-    @staticmethod
-    def _atanh(x: torch.Tensor) -> torch.Tensor:
-        x = torch.clamp(x, -1.0 + 1e-06, 1.0 - 1e-06)
-        return 0.5 * (torch.log1p(x) - torch.log1p(-x))
-
     def _to_env_action(self, action_norm: torch.Tensor) -> torch.Tensor:
         view_shape = (1,) * (action_norm.ndim - 1) + (action_norm.shape[-1],)
         low = self.action_low.view(view_shape)
@@ -137,7 +133,7 @@ class _ActorCritic(nn.Module):
         else:
             action = self._clip_action(action)
             action_norm = self._to_norm_action(action)
-            pre_tanh = self._atanh(action_norm)
+            pre_tanh = atanh(action_norm)
         log_prob = self._squashed_log_prob(dist, action_norm=action_norm, pre_tanh=pre_tanh)
         entropy = dist.entropy().sum(dim=-1)
         return (action, log_prob, entropy, value)
