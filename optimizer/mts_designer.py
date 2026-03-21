@@ -6,9 +6,10 @@ import acq.acq_util as acq_util
 import acq.fit_gp as fit_gp
 from acq.acq_mts import AcqMTS
 from optimizer.designer_asserts import assert_scalar_rreturn
+from optimizer.designer_protocol import Designer
 
 
-class MTSDesigner:
+class MTSDesigner(Designer):
     def __init__(
         self,
         policy,

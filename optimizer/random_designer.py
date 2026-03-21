@@ -3,13 +3,14 @@ import time
 import numpy as np
 
 import common.all_bounds as all_bounds
+from optimizer.designer_protocol import Designer
 
 
-class RandomDesigner:
+class RandomDesigner(Designer):
     def __init__(self, policy):
         self._policy = policy
 
-    def __call__(self, data, num_arms, telemetry=None):
+    def __call__(self, data, num_arms, *, telemetry=None):
         t0 = time.time()
         policies = []
         for _ in range(num_arms):

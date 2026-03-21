@@ -5,9 +5,10 @@ import optuna
 
 import common.all_bounds as all_bounds
 from optimizer.designer_asserts import assert_scalar_rreturn
+from optimizer.designer_protocol import Designer
 
 
-class OptunaDesigner:
+class OptunaDesigner(Designer):
     def __init__(self, policy):
         self._policy = policy
         seed = policy.problem_seed + 3141
