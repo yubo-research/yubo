@@ -18,6 +18,7 @@ class _SimpleContext:
         init_yubo_default,
         init_ax_default,
         default_num_X_samples,
+        env_conf=None,
     ):
         self.policy = policy
         self.num_arms = num_arms
@@ -28,6 +29,7 @@ class _SimpleContext:
         self.init_yubo_default = init_yubo_default
         self.init_ax_default = init_ax_default
         self.default_num_X_samples = default_num_X_samples
+        self.env_conf = env_conf
 
 
 def _load_symbol(module: str, name: str):
@@ -599,6 +601,16 @@ def _d_sts_ar(ctx: _SimpleContext, opts: dict):
     )
 
 
+def _ppo(ctx: _SimpleContext, opts: dict):
+    if opts:
+        keys = ", ".join(sorted(opts))
+        raise NoSuchDesignerError(f"Designer 'ppo' does not support options (got: {keys}).")
+    if ctx.env_conf is None:
+        raise NoSuchDesignerError("Designer 'ppo' requires env_conf to be set.")
+    PPODesigner = _load_symbol("optimizer.ppo_designer", "PPODesigner")
+    return PPODesigner(ctx.policy, ctx.env_conf)
+
+
 _DESIGNER_OPTION_SPECS: dict[str, list[DesignerOptionSpec]] = {
     "ts_sweep": [
         DesignerOptionSpec(
@@ -698,4 +710,5 @@ _DESIGNER_DISPATCH = {name: partial(_no_opts, name, builder) for name, builder i
     "turbo-enn-f-p": _d_turbo_enn_f_p,
     "morbo-enn-fit": _d_morbo_enn_fit,
     "sts-ar": _d_sts_ar,
+    "ppo": _ppo,
 }

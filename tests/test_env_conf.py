@@ -87,6 +87,16 @@ def test_resolve_rl_model_defaults_quadruped_run_uses_explicit_model():
     assert sac_cfg["head_activation"] == "relu"
 
 
+def test_resolve_rl_model_defaults_lunar_ac_infers_from_actor_critic_factory():
+    from problems.env_conf import resolve_rl_model_defaults
+
+    cfg = resolve_rl_model_defaults("lunar-ac", algo="ppo")
+    assert cfg["backbone_hidden_sizes"] == (16, 8)
+    assert cfg["backbone_layer_norm"] is True
+    assert cfg["share_backbone"] is True
+    assert cfg["log_std_init"] == 0.0
+
+
 def test_get_env_conf_applies_atari_preprocess_overrides():
     import problems.env_conf as env_conf_module
 

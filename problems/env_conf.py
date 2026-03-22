@@ -84,6 +84,13 @@ def _gaussian_policy_factory(variant: str):
     )
 
 
+def _ac_mlp_policy_factory(hidden_sizes: tuple[int, ...], *, share_backbone: bool = True, log_std_init: float = 0.0):
+    _ns: dict = {}
+    exec("from policies.actor_critic_mlp_policy import ActorCriticMLPPolicyFactory", _ns)  # noqa: S102
+    ActorCriticMLPPolicyFactory = _ns["ActorCriticMLPPolicyFactory"]
+    return ActorCriticMLPPolicyFactory(hidden_sizes, share_backbone=share_backbone, log_std_init=log_std_init)
+
+
 def get_env_conf(
     tag,
     problem_seed=None,
@@ -358,33 +365,60 @@ def _find_rl_env_conf(env_key: str):
 
 
 def _infer_rl_from_policy_class(policy_class: Any, *, algo: str) -> dict[str, Any] | None:
-    if not isinstance(policy_class, MLPPolicyFactory):
-        return None
-    hidden = tuple((int(v) for v in policy_class._hidden_sizes))
-    layer_norm = bool(policy_class._use_layer_norm)
-    if algo == "ppo":
-        return {
-            "backbone_name": "mlp",
-            "backbone_hidden_sizes": hidden,
-            "backbone_activation": "silu",
-            "backbone_layer_norm": layer_norm,
-            "actor_head_hidden_sizes": (),
-            "critic_head_hidden_sizes": (),
-            "head_activation": "silu",
-            "share_backbone": True,
-            "log_std_init": -0.5,
-        }
-    if algo == "sac":
-        return {
-            "backbone_name": "mlp",
-            "backbone_hidden_sizes": hidden,
-            "backbone_activation": "silu",
-            "backbone_layer_norm": layer_norm,
-            "actor_head_hidden_sizes": (),
-            "critic_head_hidden_sizes": (),
-            "head_activation": "silu",
-        }
-    raise ValueError(f"Unsupported algo '{algo}' for RL model inference.")
+    if isinstance(policy_class, MLPPolicyFactory):
+        hidden = tuple((int(v) for v in policy_class._hidden_sizes))
+        layer_norm = bool(policy_class._use_layer_norm)
+        if algo == "ppo":
+            return {
+                "backbone_name": "mlp",
+                "backbone_hidden_sizes": hidden,
+                "backbone_activation": "silu",
+                "backbone_layer_norm": layer_norm,
+                "actor_head_hidden_sizes": (),
+                "critic_head_hidden_sizes": (),
+                "head_activation": "silu",
+                "share_backbone": True,
+                "log_std_init": -0.5,
+            }
+        if algo == "sac":
+            return {
+                "backbone_name": "mlp",
+                "backbone_hidden_sizes": hidden,
+                "backbone_activation": "silu",
+                "backbone_layer_norm": layer_norm,
+                "actor_head_hidden_sizes": (),
+                "critic_head_hidden_sizes": (),
+                "head_activation": "silu",
+            }
+        raise ValueError(f"Unsupported algo '{algo}' for RL model inference.")
+    if hasattr(policy_class, "_hidden_sizes") and hasattr(policy_class, "_share_backbone") and hasattr(policy_class, "_log_std_init"):
+        hidden = tuple((int(v) for v in policy_class._hidden_sizes))
+        share = bool(policy_class._share_backbone)
+        log_std_init = float(policy_class._log_std_init)
+        if algo == "ppo":
+            return {
+                "backbone_name": "mlp",
+                "backbone_hidden_sizes": hidden,
+                "backbone_activation": "silu",
+                "backbone_layer_norm": True,
+                "actor_head_hidden_sizes": (),
+                "critic_head_hidden_sizes": (),
+                "head_activation": "silu",
+                "share_backbone": share,
+                "log_std_init": log_std_init,
+            }
+        if algo == "sac":
+            return {
+                "backbone_name": "mlp",
+                "backbone_hidden_sizes": hidden,
+                "backbone_activation": "silu",
+                "backbone_layer_norm": True,
+                "actor_head_hidden_sizes": (),
+                "critic_head_hidden_sizes": (),
+                "head_activation": "silu",
+            }
+        raise ValueError(f"Unsupported algo '{algo}' for RL model inference.")
+    return None
 
 
 def _explicit_rl_model_for_algo(env_conf: Any, *, algo: str) -> dict[str, Any] | None:
@@ -422,7 +456,7 @@ def resolve_rl_model_defaults(env_tag: str, *, algo: str) -> dict[str, Any]:
             return copy.deepcopy(model)
     raise ValueError(
         f"No RL model defaults for env_tag '{env_tag}' and algo '{algo_key}'. "
-        "Provide env_conf.rl_model[algo] or use an inferable MLPPolicyFactory policy_class."
+        "Provide env_conf.rl_model[algo] or use an inferable MLPPolicyFactory / ActorCriticMLPPolicyFactory policy_class."
     )
 
 
@@ -560,6 +594,14 @@ _gym_env_confs = {
         ),
         kwargs={"continuous": True},
         policy_class=MLPPolicyFactory((16, 8)),
+    ),
+    "lunar-ac": _gym_conf(
+        "LunarLander-v3",
+        gym_conf=GymConf(
+            max_steps=500,
+        ),
+        kwargs={"continuous": True},
+        policy_class=_ac_mlp_policy_factory((16, 8)),
     ),
     "tlunar": EnvConf(
         # TuRBO paper specifies v2, but that raises an exception now

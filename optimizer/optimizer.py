@@ -143,7 +143,7 @@ class Optimizer:
     def initialize(self, designer_name):
         from .designers import Designers
 
-        designers = Designers(self.best_policy, self._num_arms)
+        designers = Designers(self.best_policy, self._num_arms, env_conf=self._env_conf)
         self._opt_designers = designers.create(designer_name)
 
         if not isinstance(self._opt_designers, list):
