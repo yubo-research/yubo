@@ -56,6 +56,7 @@ class Optimizer:
         collector,
         *,
         env_conf,  # EnvironmentRuntime (or duck-typed): .env_name, .make(), .frozen_noise, seeds, spaces, .gym_conf
+        policy_tag: str | None = None,
         policy,
         num_arms,
         num_denoise_measurement=None,
@@ -66,6 +67,7 @@ class Optimizer:
     ):
         self._collector = collector
         self._env_conf = env_conf
+        self._policy_tag = policy_tag
         self.best_policy = policy
         self._num_arms = num_arms
         self._num_denoise = num_denoise_measurement
@@ -253,14 +255,15 @@ class Optimizer:
 
     def _init_ref_point(self):
         from analysis.ref_point import SobolRefPoint
-        from problems.problem import Problem, infer_default_policy_tag
+        from problems.problem import Problem
 
         noise_seed_0 = 0 if self._env_conf.noise_seed_0 is None else int(self._env_conf.noise_seed_0)
         seed = int(self._env_conf.problem_seed) + 99991
         if self._env_conf.env_tag is None:
             raise ValueError("env_tag required for multi-objective optimization")
-        policy_tag = infer_default_policy_tag(str(self._env_conf.env_tag))
-        ref_problem = Problem(self._env_conf, policy_tag)
+        if self._policy_tag is None:
+            raise ValueError("policy_tag required for multi-objective optimization")
+        ref_problem = Problem(self._env_conf, self._policy_tag)
         self._ref_point = SobolRefPoint(
             num_cal=max(128, 10 * int(self._num_arms)),
             seed=seed,

@@ -2,23 +2,7 @@ from __future__ import annotations
 
 from problems.problem import build_problem
 from rl.core.env_conf import build_seeded_env_conf_from_run, resolve_run_seeds
-
-
-def _ensure_atari_dm_backends(env_tag: str) -> None:
-    if not str(env_tag).startswith(("atari:", "ALE/", "dm:", "dm_control/")):
-        return
-    _ns: dict = {}
-    exec("from problems.env_conf_backends import register_with_env_conf", _ns)  # noqa: S102
-    _ns["register_with_env_conf"]()
-
-
-def _env_tag_for_problem_build(env_tag: str, *, from_pixels: bool) -> str:
-    t = str(env_tag)
-    if from_pixels and (t.startswith("dm:") or t.startswith("dm_control/")):
-        parts = t.split(":")
-        if parts[-1] != "pixels":
-            return f"{t}:pixels"
-    return t
+from rl.core.ppo_envs import _env_tag_for_problem_build, _maybe_register_atari_dm_backends
 
 
 def resolve_eval_seeds(config) -> tuple[int, int]:
@@ -41,9 +25,9 @@ def build_eval_env_conf(config, *, obs_mode: str, is_atari_env_tag_fn, resolve_g
         from_pixels: bool,
         pixels_only: bool,
     ):
-        _ensure_atari_dm_backends(env_tag)
+        _maybe_register_atari_dm_backends(env_tag)
         adj = _env_tag_for_problem_build(env_tag, from_pixels=from_pixels)
-        problem = build_problem(adj, None, problem_seed=int(problem_seed), noise_seed_0=int(noise_seed_0))
+        problem = build_problem(adj, "linear", problem_seed=int(problem_seed), noise_seed_0=int(noise_seed_0))
         env = problem.env
         if env.spec.env_name.startswith("dm_control/"):
             env.spec.pixels_only = bool(pixels_only)

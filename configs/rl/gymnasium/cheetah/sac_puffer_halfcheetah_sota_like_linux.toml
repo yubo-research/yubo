@@ -9,6 +9,7 @@ backend = "pufferlib"
 [rl.sac]
 exp_dir = "_tmp/gymnasium/cheetah/sac_puffer_halfcheetah_sota_like_linux"
 env_tag = "cheetah"
+policy_tag = "mlp-32-16"
 device = "cuda"
 
 from_pixels = false

@@ -66,6 +66,7 @@ class TestBatches:
             num_arms=1,
             num_rounds=1,
             num_reps=1,
+            policy_tag="pure-function",
         )
         d_argss = [config.to_dict()]
 

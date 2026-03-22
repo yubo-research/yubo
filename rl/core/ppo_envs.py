@@ -9,6 +9,15 @@ def _maybe_register_atari_dm_backends(env_tag: str) -> None:
     _ns["register_with_env_conf"]()
 
 
+def _env_tag_for_problem_build(env_tag: str, *, from_pixels: bool) -> str:
+    t = str(env_tag)
+    if from_pixels and (t.startswith("dm:") or t.startswith("dm_control/")):
+        parts = t.split(":")
+        if parts[-1] != "pixels":
+            return f"{t}:pixels"
+    return t
+
+
 def is_atari_env_tag(env_tag: str) -> bool:
     return str(env_tag).startswith(("atari:", "ALE/"))
 
@@ -25,7 +34,8 @@ def resolve_gym_env_name(env_tag: str) -> tuple[str, dict]:
     from problems.problem import build_problem
 
     _maybe_register_atari_dm_backends(str(env_tag))
-    problem = build_problem(str(env_tag), policy_tag=None)
+    # policy_tag="linear" is a placeholder; only problem.env is used (policy is never built)
+    problem = build_problem(str(env_tag), policy_tag="linear")
     env = problem.env
     if str(getattr(env, "env_name", "")).startswith("dm_control/"):
         return (str(env.env_name), dict(getattr(env, "kwargs", {}) or {}))

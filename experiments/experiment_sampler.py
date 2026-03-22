@@ -125,6 +125,12 @@ class ExperimentConfig:
         else:
             policy_tag = str(policy_tag)
 
+        if policy_tag is None:
+            raise ValueError(
+                "Missing required field 'policy_tag'. Set [experiment].policy_tag in TOML "
+                "(e.g. policy_tag='actor-critic-mlp-16-8'). Policy inference from env_tag is disabled."
+            )
+
         return cls(
             exp_dir=d["exp_dir"],
             env_tag=d["env_tag"],
@@ -288,6 +294,7 @@ def sample_1(run_config: RunConfig):
         opt = Optimizer(
             collector_log,
             env_conf=env_runtime,
+            policy_tag=problem.policy_tag,
             policy=policy,
             num_arms=num_arms,
             num_denoise_measurement=num_denoise,
@@ -550,6 +557,7 @@ def prep_args_1(
     noise=None,
     num_denoise=None,
     num_denoise_passive=None,
+    policy_tag=None,
 ) -> ExperimentConfig:
     assert noise is None, "NYI"
 
@@ -565,6 +573,7 @@ def prep_args_1(
         total_timesteps=None,
         num_denoise=num_denoise,
         num_denoise_passive=num_denoise_passive,
+        policy_tag=policy_tag,
     )
 
 
@@ -581,6 +590,7 @@ def prep_d_args(
     func_category="f",
     num_denoise=None,
     num_denoise_passive=None,
+    policy_tag=None,
 ) -> list[ExperimentConfig]:
     configs = []
     for dim in dims:
@@ -600,6 +610,7 @@ def prep_d_args(
                             noise,
                             num_denoise=num_denoise,
                             num_denoise_passive=num_denoise_passive,
+                            policy_tag=policy_tag,
                         )
                     )
     return configs

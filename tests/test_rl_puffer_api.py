@@ -102,6 +102,7 @@ def test_puffer_config_from_dict_converts_hidden_sizes():
     cfg = pufferlib_ppo.PufferPPOConfig.from_dict(
         {
             "env_tag": "cheetah",
+            "policy_tag": "mlp-32-16",
             "actor_head_hidden_sizes": [64, 32],
             "critic_head_hidden_sizes": [64],
             "backbone_hidden_sizes": [],
@@ -113,7 +114,7 @@ def test_puffer_config_from_dict_converts_hidden_sizes():
 
 
 def test_puffer_config_from_dict_uses_env_defaults():
-    cfg = pufferlib_ppo.PufferPPOConfig.from_dict({"env_tag": "cheetah"})
+    cfg = pufferlib_ppo.PufferPPOConfig.from_dict({"env_tag": "cheetah", "policy_tag": "mlp-32-16"})
     assert cfg.backbone_hidden_sizes == (64, 64)
 
 

@@ -8,6 +8,7 @@ import tomllib
 _BASE_REQUIRED_KEYS = (
     "exp_dir",
     "env_tag",
+    "policy_tag",
     "opt_name",
     "num_arms",
     "num_reps",

@@ -20,6 +20,7 @@ def test_double_ackley_runs(designer_name, num_arms):
     opt = Optimizer(
         Collector(),
         env_conf=env_conf,
+        policy_tag="pure-function",
         policy=policy,
         num_arms=num_arms,
         num_denoise_measurement=None,

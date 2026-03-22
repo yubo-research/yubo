@@ -1,5 +1,6 @@
 [uhd]
 env_tag = "bw-mlp:fn"
+policy_tag = "mlp-1024-512-256-128"
 num_rounds = 500
 optimizer = "simple_be"
 perturb = "dense"

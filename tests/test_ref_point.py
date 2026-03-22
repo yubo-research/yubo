@@ -5,7 +5,7 @@ def test_sobol_ref_point_reproducible():
     from analysis.ref_point import SobolRefPoint
     from problems.problem import build_problem
 
-    problem = build_problem("f:sphere-5d", problem_seed=0, noise_seed_0=17)
+    problem = build_problem("f:sphere-5d", "pure-function", problem_seed=0, noise_seed_0=17)
     policy = problem.build_policy()
 
     rp = SobolRefPoint(num_cal=64, seed=123, noise_seed_0=999, std_margin_scale=0.1)
@@ -21,7 +21,7 @@ def test_sobol_ref_point_changes_with_seed():
     from analysis.ref_point import SobolRefPoint
     from problems.problem import build_problem
 
-    problem = build_problem("f:sphere-5d", problem_seed=0, noise_seed_0=17)
+    problem = build_problem("f:sphere-5d", "pure-function", problem_seed=0, noise_seed_0=17)
     policy = problem.build_policy()
 
     r_1 = SobolRefPoint(num_cal=64, seed=1, noise_seed_0=999).compute(problem, policy=policy)

@@ -20,7 +20,7 @@ def expository_problem():
     torch.manual_seed(seed + 1)
     np.random.seed(seed + 2)
 
-    problem = build_problem(env_tag, problem_seed=seed, noise_seed_0=seed + 3)
+    problem = build_problem(env_tag, "pure-function", problem_seed=seed, noise_seed_0=seed + 3)
     policy = problem.build_policy()
 
     return _ExpositoryProblem(env_conf=problem.env, policy=policy, opt_name="mtv")

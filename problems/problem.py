@@ -19,28 +19,6 @@ def _get_policy_preset(policy_tag: str):
     return _ns["get_policy_preset"](policy_tag)
 
 
-_ENV_TAG_TO_POLICY_TAG: dict[str, str] = {
-    "cheetah": "mlp-32-16",
-    "cheetah-16x16": "mlp-16-16",
-    "cheetah-16x16-gauss": "gauss-rl-gauss-tanh",
-    "cheetah-gauss": "gauss-rl-gauss-small",
-    "stand-mlp": "mlp-32-16",
-    "stand-mlp2": "mlp-256-128",
-    "stand-mlp3": "mlp-1024-600",
-    "stand-mlp4": "mlp-4096-2060",
-    "stand-mlp5": "mlp-32000-31000",
-    "bw-mlp": "mlp-1024-512-256-128",
-    "bw-heur": "bipedal-heuristic",
-    "lunar-mlp": "mlp-16-8",
-    "lunar-ac": "actor-critic-mlp-16-8",
-    "tlunar": "turbo-lunar",
-    "hop-gauss": "gauss-rl-gauss-small",
-    "quadruped-run-64x64": "mlp-64-64",
-    "dm_control/quadruped-run-v0": "mlp-64-64",
-    "dm_control/quadruped-run-v0-small": "mlp-4-4",
-    "atari-pong": "atari-cnn",
-}
-
 _PROBLEM_RL_MODEL_OVERRIDES: dict[tuple[str, str, str], dict[str, Any]] = {
     ("cheetah", "mlp-32-16", "ppo"): {
         "backbone_hidden_sizes": (64, 64),
@@ -102,16 +80,6 @@ class Problem:
         return preset.factory(self._env)
 
 
-def infer_default_policy_tag(env_tag: str) -> str:
-    """Infer a default policy tag based on environment type."""
-    tag, _, _ = parse_tag_options(env_tag, None)
-    if tag.startswith(("f:", "g:")):
-        return "pure-function"
-    if tag in _ENV_TAG_TO_POLICY_TAG:
-        return _ENV_TAG_TO_POLICY_TAG[tag]
-    return "linear"
-
-
 def resolve_rl_model_defaults(
     env_tag: str,
     policy_tag: str | None = None,
@@ -133,7 +101,7 @@ def resolve_rl_model_defaults(
 
     tag, _, _ = parse_tag_options(env_tag, None)
     if policy_tag is None:
-        policy_tag = infer_default_policy_tag(env_tag)
+        raise ValueError("Missing required argument 'policy_tag'. Policy inference from env_tag is disabled.")
 
     override_key = (tag, policy_tag, algo_key)
     if override_key in _PROBLEM_RL_MODEL_OVERRIDES:
@@ -163,8 +131,8 @@ def build_problem(
 
     Args:
         env_tag: Environment tag (e.g. "cheetah", "f:sphere", "dm:walker-walk").
-        policy_tag: Policy tag (e.g. "mlp-32-16", "pure-function"). If None,
-            infers a default based on env_tag.
+        policy_tag: Policy tag (e.g. "mlp-32-16", "pure-function"). Required;
+            policy inference from env_tag is disabled.
         problem_seed: Seed for problem randomization (fixed per optimization run).
         noise_seed_0: Initial noise seed for denoising runs.
         noise_level: Optional noise level for pure function environments.
@@ -176,7 +144,7 @@ def build_problem(
         A Problem instance with lazy policy construction.
     """
     if policy_tag is None:
-        policy_tag = infer_default_policy_tag(env_tag)
+        raise ValueError("Missing required argument 'policy_tag'. Policy inference from env_tag is disabled.")
 
     spec = get_environment_spec(env_tag)
 

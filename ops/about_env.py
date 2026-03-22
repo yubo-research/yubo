@@ -9,8 +9,12 @@ if __name__ == "__main__":
     from optimizer.trajectories import collect_trajectory
     from problems.problem import build_problem
 
+    if len(sys.argv) < 3:
+        print("usage: about_env.py <env_tag> <policy_tag>", file=sys.stderr)
+        sys.exit(1)
+
     env_tag = sys.argv[1]
-    policy_tag = sys.argv[2] if len(sys.argv) > 2 else None
+    policy_tag = sys.argv[2]
 
     problem = build_problem(env_tag, policy_tag, problem_seed=17)
     env_runtime = problem.env

@@ -4,6 +4,7 @@
 
 [uhd]
 env_tag = "stand-mlp:fn"
+policy_tag = "mlp-32-16"
 num_rounds = 500
 optimizer = "simple"
 perturb = "dim:0.5"

@@ -96,6 +96,7 @@ def test_prep_args_1():
         num_rounds=10,
         noise=None,
         num_denoise=100,
+        policy_tag="pure-function",
     )
     assert isinstance(result, ExperimentConfig)
     assert result.exp_dir == "/results/exp1"
@@ -105,6 +106,7 @@ def test_prep_args_1():
     assert result.num_reps == 3
     assert result.num_rounds == 10
     assert result.num_denoise == 100
+    assert result.policy_tag == "pure-function"
 
 
 def test_prep_d_args():
@@ -120,11 +122,13 @@ def test_prep_d_args():
         num_rounds=5,
         func_category="f",
         num_denoise=None,
+        policy_tag="pure-function",
     )
     assert len(results) == 2 * 2 * 2 * 1
     assert all(isinstance(r, ExperimentConfig) for r in results)
     assert results[0].env_tag == "f:ackley-5d"
     assert results[0].opt_name == "ucb"
+    assert results[0].policy_tag == "pure-function"
 
 
 @patch("experiments.experiment_sampler.build_problem")
@@ -144,6 +148,7 @@ def test_mk_replicates(mock_data_is_done, mock_build_problem):
             num_reps=3,
             num_denoise=100,
             b_trace=True,
+            policy_tag="pure-function",
         )
         results = mk_replicates(config)
 
@@ -173,6 +178,7 @@ def test_mk_replicates_skips_done(mock_data_is_done, mock_build_problem):
             num_rounds=10,
             num_reps=3,
             num_denoise=None,
+            policy_tag="pure-function",
         )
         results = mk_replicates(config)
 
@@ -194,6 +200,7 @@ def test_mk_replicates_creates_out_dir():
                     num_rounds=5,
                     num_reps=1,
                     num_denoise=None,
+                    policy_tag="pure-function",
                 )
                 mk_replicates(config)
 
@@ -211,6 +218,7 @@ def test_experiment_config_to_dir_name():
         num_rounds=10,
         num_reps=3,
         num_denoise=100,
+        policy_tag="pure-function",
     )
     dir_name = config.to_dir_name()
     assert dir_name.startswith("/results/exp1/")
@@ -226,6 +234,7 @@ def test_experiment_config_to_dir_name_legacy():
         num_rounds=10,
         num_reps=3,
         num_denoise=100,
+        policy_tag="pure-function",
     )
     expected = "/results/exp1/env=f:ackley-10d--opt_name=ucb--num_arms=5--num_rounds=10--num_reps=3--num_denoise=100"
     assert config.to_dir_name_legacy() == expected
@@ -240,6 +249,7 @@ def test_experiment_config_to_dict():
         num_rounds=10,
         num_reps=3,
         num_denoise=100,
+        policy_tag="pure-function",
     )
     d = config.to_dict()
     assert d["exp_dir"] == "/results/exp1"
@@ -249,6 +259,7 @@ def test_experiment_config_to_dict():
     assert d["num_rounds"] == 10
     assert d["num_reps"] == 3
     assert d["num_denoise"] == 100
+    assert d["policy_tag"] == "pure-function"
 
 
 def test_experiment_config_from_dict():
@@ -261,6 +272,7 @@ def test_experiment_config_from_dict():
         "num_reps": "3",
         "num_denoise": "100",
         "b_trace": "true",
+        "policy_tag": "pure-function",
     }
     config = ExperimentConfig.from_dict(d)
     assert config.exp_dir == "/results/exp1"
@@ -271,6 +283,7 @@ def test_experiment_config_from_dict():
     assert config.num_reps == 3
     assert config.num_denoise == 100
     assert config.b_trace is True
+    assert config.policy_tag == "pure-function"
 
 
 def test_experiment_config_from_dict_none_denoise():
@@ -282,6 +295,7 @@ def test_experiment_config_from_dict_none_denoise():
         "num_rounds": 10,
         "num_reps": 3,
         "num_denoise": "None",
+        "policy_tag": "pure-function",
     }
     config = ExperimentConfig.from_dict(d)
     assert config.num_denoise is None
@@ -295,6 +309,7 @@ def test_experiment_config_from_dict_total_timesteps_only():
         "num_arms": 5,
         "total_timesteps": 123456,
         "num_reps": 3,
+        "policy_tag": "pure-function",
     }
     config = ExperimentConfig.from_dict(d)
     assert config.total_timesteps == 123456
@@ -635,9 +650,24 @@ def test_sampler(mock_mk_replicates):
         num_arms=5,
         num_rounds=10,
         num_reps=1,
+        policy_tag="pure-function",
     )
 
     sampler(config, mock_distributor)
 
     mock_mk_replicates.assert_called_once_with(config)
     mock_distributor.assert_called_once_with([mock_run_config])
+
+
+def test_experiment_config_from_dict_missing_policy_tag_raises():
+    """ExperimentConfig.from_dict must raise ValueError when policy_tag is missing."""
+    d = {
+        "exp_dir": "/results/exp1",
+        "env_tag": "f:ackley-10d",
+        "opt_name": "ucb",
+        "num_arms": 5,
+        "num_rounds": 10,
+        "num_reps": 3,
+    }
+    with pytest.raises(ValueError, match="Missing required field 'policy_tag'"):
+        ExperimentConfig.from_dict(d)

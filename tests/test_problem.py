@@ -32,38 +32,11 @@ def test_problem_env_property():
 def test_problem_build_policy_pure_function():
     from problems.problem import build_problem
 
-    problem = build_problem("f:sphere-2d", problem_seed=0)
+    problem = build_problem("f:sphere-2d", policy_tag="pure-function", problem_seed=0)
     policy = problem.build_policy()
     assert policy is not None
     assert hasattr(policy, "num_params")
     assert policy.num_params() == 2
-
-
-def test_infer_default_policy_tag_pure_function():
-    from problems.problem import infer_default_policy_tag
-
-    assert infer_default_policy_tag("f:sphere-2d") == "pure-function"
-    assert infer_default_policy_tag("g:ackley-3d") == "pure-function"
-
-
-def test_infer_default_policy_tag_mapped_env():
-    from problems.problem import infer_default_policy_tag
-
-    assert infer_default_policy_tag("cheetah") == "mlp-32-16"
-    assert infer_default_policy_tag("bw-heur") == "bipedal-heuristic"
-    assert infer_default_policy_tag("lunar-mlp") == "mlp-16-8"
-
-
-def test_infer_default_policy_tag_fallback():
-    from problems.problem import infer_default_policy_tag
-
-    assert infer_default_policy_tag("unknown-env") == "linear"
-
-
-def test_infer_default_policy_tag_with_options():
-    from problems.problem import infer_default_policy_tag
-
-    assert infer_default_policy_tag("cheetah:fn") == "mlp-32-16"
 
 
 def test_resolve_rl_model_defaults_explicit_override():
@@ -82,18 +55,18 @@ def test_resolve_rl_model_defaults_from_preset():
     assert cfg["backbone_name"] == "mlp"
 
 
-def test_resolve_rl_model_defaults_inferred_policy():
+def test_resolve_rl_model_defaults_missing_policy_tag_raises():
     from problems.problem import resolve_rl_model_defaults
 
-    cfg = resolve_rl_model_defaults("cheetah", algo="ppo")
-    assert "backbone_hidden_sizes" in cfg
+    with pytest.raises(ValueError, match="Missing required argument 'policy_tag'"):
+        resolve_rl_model_defaults("cheetah", algo="ppo")
 
 
 def test_resolve_rl_model_defaults_invalid_algo():
     from problems.problem import resolve_rl_model_defaults
 
     with pytest.raises(ValueError, match="Unsupported algo"):
-        resolve_rl_model_defaults("cheetah", algo="invalid")
+        resolve_rl_model_defaults("cheetah", policy_tag="mlp-32-16", algo="invalid")
 
 
 def test_resolve_rl_model_defaults_no_defaults_error():
@@ -106,7 +79,7 @@ def test_resolve_rl_model_defaults_no_defaults_error():
 def test_resolve_rl_model_defaults_quadruped():
     from problems.problem import resolve_rl_model_defaults
 
-    cfg = resolve_rl_model_defaults("dm_control/quadruped-run-v0", algo="ppo")
+    cfg = resolve_rl_model_defaults("dm_control/quadruped-run-v0", policy_tag="mlp-64-64", algo="ppo")
     assert cfg["backbone_hidden_sizes"] == (64, 64)
     assert cfg["backbone_layer_norm"] is True
 
@@ -114,7 +87,7 @@ def test_resolve_rl_model_defaults_quadruped():
 def test_build_problem_pure_function():
     from problems.problem import build_problem
 
-    problem = build_problem("f:sphere-2d", problem_seed=123)
+    problem = build_problem("f:sphere-2d", policy_tag="pure-function", problem_seed=123)
     assert problem.policy_tag == "pure-function"
     assert problem.env.problem_seed == 123
 
@@ -131,6 +104,7 @@ def test_build_problem_with_noise():
 
     problem = build_problem(
         "f:sphere-2d",
+        policy_tag="pure-function",
         problem_seed=0,
         noise_level=0.1,
         noise_seed_0=42,
@@ -144,41 +118,32 @@ def test_build_problem_with_noise():
 def test_build_problem_from_pixels_override():
     from problems.problem import build_problem
 
-    problem = build_problem("f:sphere-2d", from_pixels=True, pixels_only=False)
+    problem = build_problem("f:sphere-2d", policy_tag="pure-function", from_pixels=True, pixels_only=False)
     assert problem.env.spec.from_pixels is True
     assert problem.env.spec.pixels_only is False
 
 
-def test_build_problem_infers_policy():
+def test_build_problem_missing_policy_tag_raises():
     from problems.problem import build_problem
 
-    problem = build_problem("lunar-mlp")
-    assert problem.policy_tag == "mlp-16-8"
+    with pytest.raises(ValueError, match="Missing required argument 'policy_tag'"):
+        build_problem("lunar-mlp")
 
 
 def test_build_problem_returns_problem_instance():
     from problems.problem import Problem, build_problem
 
-    problem = build_problem("f:ackley-3d")
+    problem = build_problem("f:ackley-3d", policy_tag="pure-function")
     assert isinstance(problem, Problem)
 
 
 def test_problem_build_policy_ensures_spaces():
     from problems.problem import build_problem
 
-    problem = build_problem("f:sphere-2d", problem_seed=0)
+    problem = build_problem("f:sphere-2d", policy_tag="pure-function", problem_seed=0)
     assert problem.env.state_space is None
     policy = problem.build_policy()
     assert policy is not None
-
-
-def test_env_tag_to_policy_tag_coverage():
-    from problems.problem import _ENV_TAG_TO_POLICY_TAG
-
-    assert "cheetah" in _ENV_TAG_TO_POLICY_TAG
-    assert "stand-mlp" in _ENV_TAG_TO_POLICY_TAG
-    assert "bw-mlp" in _ENV_TAG_TO_POLICY_TAG
-    assert "tlunar" in _ENV_TAG_TO_POLICY_TAG
 
 
 def test_problem_rl_model_overrides_coverage():
@@ -192,7 +157,7 @@ def test_problem_rl_model_overrides_coverage():
 def test_resolve_rl_model_defaults_returns_copy():
     from problems.problem import resolve_rl_model_defaults
 
-    cfg1 = resolve_rl_model_defaults("cheetah", algo="ppo")
-    cfg2 = resolve_rl_model_defaults("cheetah", algo="ppo")
+    cfg1 = resolve_rl_model_defaults("cheetah", policy_tag="mlp-32-16", algo="ppo")
+    cfg2 = resolve_rl_model_defaults("cheetah", policy_tag="mlp-32-16", algo="ppo")
     cfg1["modified"] = True
     assert "modified" not in cfg2

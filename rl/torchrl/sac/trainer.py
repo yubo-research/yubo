@@ -32,7 +32,14 @@ from .setup import (
 
 def _build_env_runtime(env_tag, *, problem_seed=None, noise_seed_0=None, from_pixels=False, pixels_only=True):
     """Wrapper that adapts build_problem to return EnvironmentRuntime for callback-based APIs."""
-    return sac_deps.build_problem(env_tag, problem_seed=problem_seed, noise_seed_0=noise_seed_0, from_pixels=from_pixels, pixels_only=pixels_only).env
+    return sac_deps.build_problem(
+        env_tag,
+        policy_tag="linear",
+        problem_seed=problem_seed,
+        noise_seed_0=noise_seed_0,
+        from_pixels=from_pixels,
+        pixels_only=pixels_only,
+    ).env
 
 
 def _checkpoint_payload(modules: _Modules, training: _TrainingSetup, state: _TrainState, *, step: int) -> dict:

@@ -43,7 +43,7 @@ def calc_pstar_scales(d_args):
     data = []
 
     seed = np.random.randint(999999)
-    problem = build_problem(env_tag, problem_seed=seed, noise_seed_0=seed + 1)
+    problem = build_problem(env_tag, "pure-function", problem_seed=seed, noise_seed_0=seed + 1)
     policy = problem.build_policy()
 
     collector_log = Collector()

@@ -185,7 +185,9 @@ def test_cov_experiment_cli_local_main(monkeypatch, tmp_path):
 
     toml = tmp_path / "exp.toml"
     toml.write_text(
-        '[experiment]\nenv_tag = "f:sphere-2d"\nopt_name = "random"\nnum_arms = 1\nnum_rounds = 1\nnum_reps = 1\nexp_dir = "' + str(tmp_path / "out") + '"\n'
+        '[experiment]\nenv_tag = "f:sphere-2d"\npolicy_tag = "pure-function"\nopt_name = "random"\nnum_arms = 1\nnum_rounds = 1\nnum_reps = 1\nexp_dir = "'
+        + str(tmp_path / "out")
+        + '"\n'
     )
 
     monkeypatch.setattr("experiments.experiment_sampler.sampler", lambda cfg, distributor_fn: None)
@@ -289,7 +291,7 @@ def test_cov_exp_uhd_UHDConfig_local_modal_cmd(monkeypatch, tmp_path):
     monkeypatch.setattr("ops.uhd_setup.make_loop", lambda *a, **k: _Loop())
 
     toml = tmp_path / "cfg.toml"
-    toml.write_text('[uhd]\nenv_tag = "f:sphere-2d"\nnum_rounds = 1\n')
+    toml.write_text('[uhd]\nenv_tag = "f:sphere-2d"\npolicy_tag = "pure-function"\nnum_rounds = 1\n')
 
     runner = CliRunner()
     res = runner.invoke(exp_uhd.cli, ["local", str(toml)])
@@ -373,7 +375,7 @@ def test_cov_modal_run_run_uhd(monkeypatch):
 def test_cov_make_loop_accuracy_fn_evaluate_fn():
     from ops.uhd_setup import make_loop
 
-    loop = make_loop("mnist", num_rounds=1)
+    loop = make_loop("mnist", policy_tag="linear", num_rounds=1)
     assert loop is not None
 
 
@@ -391,7 +393,7 @@ def test_cov_make_loop_gym_evaluate_fn(monkeypatch):
     )
 
     try:
-        loop = make_loop("stand-mlp", num_rounds=1)
+        loop = make_loop("stand-mlp", policy_tag="mlp-32-16", num_rounds=1)
     except RuntimeError as e:
         if "MUJOCO_GL" in str(e):
             pytest.skip("MuJoCo GL not available")
