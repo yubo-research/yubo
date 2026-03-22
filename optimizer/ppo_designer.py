@@ -8,6 +8,7 @@ import torch.nn as nn
 from optimizer.designer_errors import NoSuchDesignerError
 from optimizer.designer_protocol import Designer
 from optimizer.trajectories import collect_trajectory
+from optimizer.trajectory import Trajectory
 
 
 @dataclass
@@ -47,6 +48,40 @@ def compute_gae(
 
     returns = advantages + values
     return advantages.astype(np.float32), returns.astype(np.float32)
+
+
+def merge_trajectories(trajectories: list[Trajectory]) -> Trajectory:
+    """Merge multiple trajectories into a single trajectory for PPO batch update."""
+    if len(trajectories) == 1:
+        return trajectories[0]
+
+    all_states = [traj.states for traj in trajectories]
+    all_actions = [traj.actions for traj in trajectories]
+    all_rewards = [traj.rewards for traj in trajectories]
+    all_log_probs = [traj.log_probs for traj in trajectories]
+    all_values = [traj.values for traj in trajectories]
+    all_dones = [traj.dones for traj in trajectories]
+
+    merged_states = np.concatenate(all_states, axis=1)
+    merged_actions = np.concatenate(all_actions, axis=1)
+    merged_rewards = np.concatenate(all_rewards, axis=0)
+    merged_log_probs = np.concatenate(all_log_probs, axis=0)
+    merged_values = np.concatenate(all_values, axis=0)
+    merged_dones = np.concatenate(all_dones, axis=0)
+
+    total_return = sum(float(traj.rreturn) for traj in trajectories)
+    total_steps = sum(traj.num_steps for traj in trajectories)
+
+    return Trajectory(
+        rreturn=total_return,
+        states=merged_states,
+        actions=merged_actions,
+        num_steps=total_steps,
+        rewards=merged_rewards,
+        log_probs=merged_log_probs,
+        values=merged_values,
+        dones=merged_dones,
+    )
 
 
 @dataclass
@@ -107,26 +142,33 @@ class PPODesigner(Designer):
             )
 
     def __call__(self, data, num_arms, *, telemetry=None):
-        if num_arms != 1:
-            raise NoSuchDesignerError("PPODesigner only supports num_arms=1")
+        if num_arms < 1:
+            raise NoSuchDesignerError("PPODesigner requires num_arms >= 1")
 
         t0 = time.time()
         policy = data[-1].policy.clone() if data else self._policy.clone()
         self._validate_policy(policy)
 
-        traj = collect_trajectory(self._env_conf, policy)
-        if traj.values is None or traj.rewards is None or traj.dones is None or traj.log_probs is None:
-            raise NoSuchDesignerError("Trajectory missing required PPO data (values, rewards, dones, log_probs)")
+        t_rollout_start = time.time()
+        trajectories = []
+        for _ in range(num_arms):
+            traj = collect_trajectory(self._env_conf, policy)
+            if traj.values is None or traj.rewards is None or traj.dones is None or traj.log_probs is None:
+                raise NoSuchDesignerError("Trajectory missing required PPO data (values, rewards, dones, log_probs)")
+            trajectories.append(traj)
+        dt_rollout = time.time() - t_rollout_start
+
+        merged_traj = merge_trajectories(trajectories)
 
         cfg = self._config
-        advantages, returns = compute_gae(traj.rewards, traj.values, traj.dones, cfg.gamma, cfg.gae_lambda)
+        advantages, returns = compute_gae(merged_traj.rewards, merged_traj.values, merged_traj.dones, cfg.gamma, cfg.gae_lambda)
 
         device = next(policy.parameters()).device
         adv_t = torch.as_tensor(advantages, dtype=torch.float32, device=device)
         batch = _PPOBatch(
-            obs=torch.as_tensor(traj.states.T, dtype=torch.float32, device=device),
-            actions=torch.as_tensor(traj.actions.T, dtype=torch.float32, device=device),
-            old_log_probs=torch.as_tensor(traj.log_probs, dtype=torch.float32, device=device),
+            obs=torch.as_tensor(merged_traj.states.T, dtype=torch.float32, device=device),
+            actions=torch.as_tensor(merged_traj.actions.T, dtype=torch.float32, device=device),
+            old_log_probs=torch.as_tensor(merged_traj.log_probs, dtype=torch.float32, device=device),
             advantages=(adv_t - adv_t.mean()) / (adv_t.std() + 1e-8),
             returns=torch.as_tensor(returns, dtype=torch.float32, device=device),
         )
@@ -138,5 +180,9 @@ class PPODesigner(Designer):
         if telemetry is not None:
             telemetry.set_dt_fit(time.time() - t0)
             telemetry.set_dt_select(0.0)
+            if hasattr(telemetry, "set_num_rollout_workers"):
+                telemetry.set_num_rollout_workers(num_arms)
+            if hasattr(telemetry, "set_dt_rollout"):
+                telemetry.set_dt_rollout(dt_rollout)
 
         return [policy]

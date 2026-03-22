@@ -561,9 +561,13 @@ def prep_dna(results_dir):
 
 
 def prep_rl_one(results_dir, name):
-    exp_dir = f"exp_enn_{name}"
+    exp_dir = f"exp_ennbo_{name}"
 
-    opts = ["turbo-f", "turbo-enn-10", "random"]
+    opts = [
+        "ppo",
+        "turbo-enn-fit-ucb",
+        "random",
+    ]
 
     cmds = []
     for opt in opts:
@@ -573,16 +577,21 @@ def prep_rl_one(results_dir, name):
                 exp_dir=exp_dir,
                 problem=f"{name}:fn",
                 opt=opt,
-                num_arms=100,
-                num_replications=30,
-                num_rounds=1000,
+                num_arms=3,  # 100,
+                num_replications=1,  # 30,
+                num_rounds=10,  # 1000,
                 noise=None,
                 num_denoise=1,
-                policy_tag="linear",
+                # policy_tag="linear",
+                policy_tag="actor-critic-mlp-16-8",
             )
         )
 
     return cmds
+
+
+def prep_cheetah(results_dir):
+    return prep_rl_one(results_dir, "cheetah")
 
 
 def prep_ant(results_dir):

@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 
 from optimizer.designer_errors import NoSuchDesignerError
-from optimizer.ppo_designer import PPOConfig, PPODesigner, compute_gae
+from optimizer.ppo_designer import PPOConfig, PPODesigner, compute_gae, merge_trajectories
 from optimizer.trajectory import Trajectory
 from policies.actor_critic_mlp_policy import ActorCriticMLPPolicy
 
@@ -28,6 +28,8 @@ def _make_policy(obs_dim: int = 4, act_dim: int = 2):
 def _make_trajectory(num_steps: int = 10, obs_dim: int = 4, act_dim: int = 2):
     """Create a fake trajectory with PPO data."""
     np.random.seed(42)
+    dones = np.zeros(num_steps, dtype=bool)
+    dones[-1] = True
     return Trajectory(
         rreturn=100.0,
         states=np.random.randn(obs_dim, num_steps).astype(np.float32) * 0.1,
@@ -36,7 +38,7 @@ def _make_trajectory(num_steps: int = 10, obs_dim: int = 4, act_dim: int = 2):
         rewards=np.ones(num_steps, dtype=np.float32),
         log_probs=-np.ones(num_steps, dtype=np.float32),
         values=np.ones(num_steps, dtype=np.float32),
-        dones=np.zeros(num_steps, dtype=bool),
+        dones=dones,
     )
 
 
@@ -95,13 +97,14 @@ def test_ppo_designer_init():
     assert designer._config.epochs == 2
 
 
-def test_ppo_designer_num_arms_not_one_raises():
+def test_ppo_designer_num_arms_zero_raises():
+    """PPODesigner requires num_arms >= 1."""
     policy = _make_policy()
     env_conf = _env_conf()
     designer = PPODesigner(policy, env_conf)
 
-    with pytest.raises(NoSuchDesignerError, match="num_arms=1"):
-        designer([], num_arms=2)
+    with pytest.raises(NoSuchDesignerError, match="num_arms >= 1"):
+        designer([], num_arms=0)
 
 
 def test_ppo_designer_validates_policy_missing_methods():
@@ -246,3 +249,107 @@ def test_ppo_designer_validates_get_action_and_value(mock_collect):
 
     with pytest.raises(NoSuchDesignerError, match="get_action_and_value"):
         designer([], num_arms=1)
+
+
+def test_merge_trajectories_single():
+    """merge_trajectories returns the single trajectory unchanged."""
+    traj = _make_trajectory(num_steps=5)
+    merged = merge_trajectories([traj])
+    assert merged is traj
+
+
+def test_merge_trajectories_multiple():
+    """merge_trajectories correctly concatenates multiple trajectories."""
+    traj1 = _make_trajectory(num_steps=5, obs_dim=4, act_dim=2)
+    traj2 = _make_trajectory(num_steps=7, obs_dim=4, act_dim=2)
+    merged = merge_trajectories([traj1, traj2])
+
+    assert merged.states.shape == (4, 12)
+    assert merged.actions.shape == (2, 12)
+    assert merged.rewards.shape == (12,)
+    assert merged.log_probs.shape == (12,)
+    assert merged.values.shape == (12,)
+    assert merged.dones.shape == (12,)
+    assert merged.num_steps == 12
+
+
+def _make_realistic_trajectory(num_steps: int, seed: int):
+    """Create a trajectory with done=True at last step (like real collection)."""
+    np.random.seed(seed)
+    dones = np.zeros(num_steps, dtype=bool)
+    dones[-1] = True
+    return Trajectory(
+        rreturn=float(num_steps),
+        states=np.random.randn(4, num_steps).astype(np.float32),
+        actions=np.clip(np.random.randn(2, num_steps).astype(np.float32) * 0.3, -0.99, 0.99),
+        num_steps=num_steps,
+        rewards=np.ones(num_steps, dtype=np.float32),
+        log_probs=-np.ones(num_steps, dtype=np.float32),
+        values=np.full(num_steps, 0.5, dtype=np.float32),
+        dones=dones,
+    )
+
+
+def test_merged_gae_matches_separate_gae():
+    """GAE on merged trajectories should match per-trajectory GAE when done flags are set."""
+    traj1 = _make_realistic_trajectory(num_steps=5, seed=42)
+    traj2 = _make_realistic_trajectory(num_steps=7, seed=43)
+
+    adv1, ret1 = compute_gae(traj1.rewards, traj1.values, traj1.dones, gamma=0.99, gae_lambda=0.95)
+    adv2, ret2 = compute_gae(traj2.rewards, traj2.values, traj2.dones, gamma=0.99, gae_lambda=0.95)
+
+    merged = merge_trajectories([traj1, traj2])
+    merged_adv, merged_ret = compute_gae(merged.rewards, merged.values, merged.dones, gamma=0.99, gae_lambda=0.95)
+
+    expected_adv = np.concatenate([adv1, adv2])
+    expected_ret = np.concatenate([ret1, ret2])
+
+    np.testing.assert_allclose(merged_adv, expected_adv, rtol=1e-5)
+    np.testing.assert_allclose(merged_ret, expected_ret, rtol=1e-5)
+
+
+def test_make_trajectory_helper_has_realistic_dones():
+    """Verify that _make_trajectory has done=True at last step like real trajectories.
+
+    Real trajectories from collect_trajectory have done=True at the last step.
+    Without this, GAE computed on merged trajectories incorrectly bleeds
+    advantages across trajectory boundaries.
+    """
+    traj = _make_trajectory(num_steps=5)
+
+    assert traj.dones[-1] is True or traj.dones[-1] == 1, "_make_trajectory should set done=True at last step to match real collection"
+
+
+@patch("optimizer.ppo_designer.collect_trajectory")
+def test_ppo_designer_num_arms_multiple(mock_collect):
+    """PPODesigner accepts num_arms > 1 and returns single updated policy."""
+    mock_collect.return_value = _make_trajectory(num_steps=5)
+
+    policy = _make_policy()
+    env_conf = _env_conf()
+    designer = PPODesigner(policy, env_conf, epochs=1)
+
+    result = designer([], num_arms=3)
+
+    assert len(result) == 1
+    assert isinstance(result[0], ActorCriticMLPPolicy)
+    assert mock_collect.call_count == 3
+
+
+@patch("optimizer.ppo_designer.collect_trajectory")
+def test_ppo_designer_telemetry_rollout_fields(mock_collect):
+    """PPODesigner sets rollout telemetry fields when available."""
+    mock_collect.return_value = _make_trajectory(num_steps=5)
+
+    policy = _make_policy()
+    env_conf = _env_conf()
+    designer = PPODesigner(policy, env_conf, epochs=1)
+
+    telemetry = MagicMock()
+    telemetry.set_num_rollout_workers = MagicMock()
+    telemetry.set_dt_rollout = MagicMock()
+
+    designer([], num_arms=2, telemetry=telemetry)
+
+    telemetry.set_num_rollout_workers.assert_called_once_with(2)
+    telemetry.set_dt_rollout.assert_called_once()
