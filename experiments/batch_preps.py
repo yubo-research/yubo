@@ -346,6 +346,7 @@ def prep_push(results_dir):
                     noise=None,
                     num_denoise=num_denoise,
                     num_denoise_passive=num_denoise_passive,
+                    policy_tag="pure-function",
                 )
             )
 
@@ -388,6 +389,7 @@ def prep_tlunar(results_dir):
                     noise=None,
                     num_denoise=num_denoise,
                     num_denoise_passive=num_denoise_passive,
+                    policy_tag="turbo-lunar",
                 )
             )
 
@@ -428,6 +430,7 @@ def prep_hop(results_dir):
                     noise=None,
                     num_denoise=num_denoise,
                     num_denoise_passive=num_denoise_passive,
+                    policy_tag="linear",
                 )
             )
 
@@ -468,6 +471,7 @@ def prep_bw(results_dir):
                     noise=None,
                     num_denoise=num_denoise,
                     num_denoise_passive=num_denoise_passive,
+                    policy_tag="bipedal-heuristic",
                 )
             )
 
@@ -508,6 +512,7 @@ def prep_leukemia(results_dir):
                     noise=None,
                     num_denoise=num_denoise,
                     num_denoise_passive=num_denoise_passive,
+                    policy_tag="pure-function",
                 )
             )
 
@@ -548,6 +553,7 @@ def prep_dna(results_dir):
                     noise=None,
                     num_denoise=num_denoise,
                     num_denoise_passive=num_denoise_passive,
+                    policy_tag="pure-function",
                 )
             )
 
@@ -572,6 +578,7 @@ def prep_rl_one(results_dir, name):
                 num_rounds=1000,
                 noise=None,
                 num_denoise=1,
+                policy_tag="linear",
             )
         )
 

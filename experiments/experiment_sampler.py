@@ -557,7 +557,7 @@ def prep_args_1(
     noise=None,
     num_denoise=None,
     num_denoise_passive=None,
-    policy_tag=None,
+    policy_tag="pure-function",
 ) -> ExperimentConfig:
     assert noise is None, "NYI"
 
@@ -590,7 +590,7 @@ def prep_d_args(
     func_category="f",
     num_denoise=None,
     num_denoise_passive=None,
-    policy_tag=None,
+    policy_tag="pure-function",
 ) -> list[ExperimentConfig]:
     configs = []
     for dim in dims:
