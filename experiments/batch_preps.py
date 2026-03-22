@@ -120,7 +120,7 @@ def prep_turbo_ackley_repro(results_dir):
     # And again with --opt_name=   cma, pts, random, sobol
     # TuRBO took about four days.
     # PTS took about eight days.
-    pass
+    return []
 
 
 def prep_sweep_q(results_dir):

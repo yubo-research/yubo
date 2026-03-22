@@ -164,7 +164,7 @@ def test_cov_bat_worker_run_batch_run():
 
 
 def test_cov_batches_worker_run_batch_run(tmp_path):
-    from experiments.batches import run, run_batch, worker
+    from experiments.batches_impl import run, run_batch, worker
 
     assert worker("true") == 0
     run_batch(
@@ -233,6 +233,14 @@ def test_cov_data_cli():
 
     cli = data_mod.cli
     assert cli is not None
+
+
+def test_cov_ops_batches_cli(monkeypatch):
+    import ops.batches as batches_mod
+
+    monkeypatch.setattr("experiments.batches_impl.run_from_batch_tag", lambda *args, **kwargs: None)
+    batches_mod.cli.callback("prep_cum_time_dim", 1, True, "results")
+    assert batches_mod.cli is not None
 
 
 def test_cov_exp_uhd_UHDConfig_local_modal_cmd(monkeypatch, tmp_path):
@@ -305,10 +313,14 @@ def test_cov_exp_uhd_UHDConfig_local_modal_cmd(monkeypatch, tmp_path):
 
 
 def test_cov_ops_experiment_main(monkeypatch):
-    from ops.experiment import main
+    from click.testing import CliRunner
+
+    from ops.experiment import cli
 
     monkeypatch.setattr("experiments.experiment.cli", lambda: None)
-    main()
+    runner = CliRunner()
+    result = runner.invoke(cli)
+    assert result.exit_code == 0
 
 
 def test_cov_modal_tee_ENNFields():

@@ -15,7 +15,6 @@ from acq.acq_bt import AcqBT
 from acq.acq_dpp import AcqDPP
 from acq.fit_gp import _EmptyTransform
 from analysis.data_locator import DataLocator
-from ops.experiment import main as ops_experiment_main
 from optimizer import opt_trajectories as opt_trajectories_mod
 from optimizer.opt_trajectories import collect_denoised_trajectory, collect_trajectory_with_noise, evaluate_for_best, mean_return_over_runs
 from problems.humanoid_policy import HumanoidPolicy
@@ -453,8 +452,22 @@ def test_kiss_cov_modal_collect_runtime_utils_and_ops_experiment(monkeypatch):
     assert np.allclose(width, np.array([2.0], dtype=np.float32))
 
     fake_mod = SimpleNamespace(cli=lambda: None)
+    if "experiments.experiment" in sys.modules:
+        monkeypatch.delitem(sys.modules, "experiments.experiment")
     monkeypatch.setitem(sys.modules, "experiments.experiment", fake_mod)
-    ops_experiment_main()
+    import experiments
+
+    monkeypatch.setattr(experiments, "experiment", fake_mod)
+    if "ops.experiment" in sys.modules:
+        monkeypatch.delitem(sys.modules, "ops.experiment")
+
+    from click.testing import CliRunner
+
+    import ops.experiment as ops_experiment_mod
+
+    runner = CliRunner()
+    result = runner.invoke(ops_experiment_mod.cli)
+    assert result.exit_code == 0
 
 
 def test_kiss_cov_ppo_specs_actor_critic_and_helpers():

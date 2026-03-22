@@ -3,7 +3,7 @@ import time
 import modal
 
 from analysis.data_io import data_is_done
-from experiments.batches import prep_d_argss
+from experiments.batches_impl import prep_d_argss
 from experiments.experiment_sampler import mk_replicates, post_process, sample_1
 from experiments.modal_image import mk_image
 
