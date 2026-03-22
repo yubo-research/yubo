@@ -23,7 +23,7 @@ import rl.core.env_conf as seed_util
 import rl.registry as registry
 from analysis.data_io import write_config
 from common.seed_all import seed_all
-from problems.env_conf import get_env_conf
+from problems.problem import build_problem
 from rl.core import env_conf as core_env_conf
 from rl.core import env_contract as torchrl_env_contract
 from rl.core import episode_rollout
@@ -44,6 +44,11 @@ from .checkpoint_io import save_final_checkpoint, save_periodic_checkpoint
 from .config import _PPO_RUNTIME_CAPABILITIES, PPOConfig, TrainResult
 
 __all__ = ["PPOConfig", "TrainResult", "_TanhNormal", "_capture_actor_state", "_restore_actor_state", "register", "torch", "train_ppo"]
+
+
+def _build_env_runtime(env_tag, *, problem_seed=None, noise_seed_0=None, from_pixels=False, pixels_only=True):
+    """Wrapper that adapts build_problem to return EnvironmentRuntime for callback-based APIs."""
+    return build_problem(env_tag, problem_seed=problem_seed, noise_seed_0=noise_seed_0, from_pixels=from_pixels, pixels_only=pixels_only).env
 
 
 @dataclasses.dataclass(frozen=True)
@@ -220,7 +225,7 @@ def build_env_setup(config: PPOConfig) -> _EnvSetup:
         noise_seed_0=config.noise_seed_0,
         from_pixels=bool(getattr(config, "from_pixels", False)),
         pixels_only=bool(getattr(config, "pixels_only", True)),
-        get_env_conf_fn=get_env_conf,
+        get_env_conf_fn=_build_env_runtime,
     )
     env_conf = resolved.env_conf
     env_conf.ensure_spaces()
@@ -252,7 +257,7 @@ def _build_seeded_eval_env_conf(config: PPOConfig, *, problem_seed: int, noise_s
         noise_seed_0=int(noise_seed_0),
         from_pixels=bool(from_pixels),
         pixels_only=bool(getattr(config, "pixels_only", True)),
-        get_env_conf_fn=get_env_conf,
+        get_env_conf_fn=_build_env_runtime,
     )
     return resolved.env_conf
 
@@ -275,7 +280,7 @@ def _make_video_context(config: PPOConfig, env: _EnvSetup, *, from_pixels: bool)
             noise_seed_0=int(ns),
             from_pixels=bool(from_pixels),
             pixels_only=bool(getattr(config, "pixels_only", True)),
-            get_env_conf_fn=get_env_conf,
+            get_env_conf_fn=_build_env_runtime,
         ).env_conf,
         make_eval_policy=lambda m, d: torchrl_actor_eval.ActorEvalPolicy(
             m.actor_backbone,

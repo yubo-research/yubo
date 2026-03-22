@@ -235,7 +235,7 @@ def test_kiss_cov_torchrl_offpolicy_and_sac_loop_units(monkeypatch):
             capture_actor_state=lambda modules: {},
             restore_actor_state=lambda modules, state: None,
             eval_policy_factory=lambda modules, env_setup, device: object(),
-            get_env_conf=lambda *args, **kwargs: object(),
+            build_env_runtime=lambda *args, **kwargs: object(),
             evaluate_for_best=lambda *args, **kwargs: 1.0,
         )
         == 1.0

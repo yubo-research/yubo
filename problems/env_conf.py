@@ -8,6 +8,7 @@ import problems.other as other
 import problems.pure_functions as pure_functions
 from policies.mlp_policy import MLPPolicy, MLPPolicyFactory
 from problems.bipedal_walker_policy import BipedalWalkerPolicy
+from problems.environment_spec import parse_tag_options
 from problems.linear_policy import LinearPolicy
 from problems.mlp_torch_env import wrap_mlp_env
 from problems.noise_maker import NoiseMaker
@@ -39,7 +40,7 @@ def _get_atari_dm_bindings():
 
 def needs_atari_dm_bindings(env_tag: str) -> bool:
     """Return True if this env tag requires Atari/DM bindings to be registered."""
-    tag, _, _ = _parse_tag_options(str(env_tag), None)
+    tag, _, _ = parse_tag_options(str(env_tag), None)
     if tag.startswith(("dm:", "dm_control/", "atari:", "ALE/")):
         return True
     if tag in _dm_control_env_confs or tag in _atari_env_confs:
@@ -48,22 +49,6 @@ def needs_atari_dm_bindings(env_tag: str) -> bool:
         conf = _gym_env_confs[tag]
         return str(getattr(conf, "env_name", "")).startswith(("dm_control/", "ALE/"))
     return False
-
-
-def _parse_tag_options(tag, from_pixels):
-    """Parse shared options from tag. Returns (tag, frozen_noise, from_pixels)."""
-    frozen_noise = False
-    while ":" in tag:
-        x = tag.split(":")
-        opt = x[-1]
-        if opt == "fn":
-            frozen_noise = True
-        elif opt == "pixels":
-            from_pixels = True if from_pixels is None else from_pixels
-        else:
-            break
-        tag = ":".join(x[:-1])
-    return tag, frozen_noise, from_pixels
 
 
 def _atari_pong_policy(env_conf):
@@ -100,7 +85,7 @@ def get_env_conf(
     pixels_only=None,
     atari_preprocess=None,
 ):
-    tag, frozen_noise, from_pixels = _parse_tag_options(tag, from_pixels)
+    tag, frozen_noise, from_pixels = parse_tag_options(tag, from_pixels)
     pix_only = pixels_only if pixels_only is not None else True
 
     if tag in _gym_env_confs:
@@ -142,6 +127,7 @@ def get_env_conf(
     ec.problem_seed = problem_seed
     ec.noise_seed_0 = noise_seed_0
     ec.frozen_noise = frozen_noise
+    ec.env_tag = tag
     if atari_preprocess is not None:
         if not isinstance(atari_preprocess, dict):
             raise TypeError("atari_preprocess must be a dict when provided.")
@@ -201,6 +187,7 @@ class EnvConf:
     max_steps: int | None = None
     action_space: Any = None
     kwargs: dict = None
+    env_tag: str | None = None
 
     def _make(self, **kwargs):
         if self.env_name[:2] == "f:":
@@ -341,7 +328,7 @@ def _gym_conf(env_name, gym_conf=None, policy_class=None, kwargs=None, noise_see
 
 
 def _normalize_rl_env_key(env_tag: str) -> str:
-    tag, _frozen_noise, _from_pixels = _parse_tag_options(str(env_tag), None)
+    tag, _frozen_noise, _from_pixels = parse_tag_options(str(env_tag), None)
     if tag.startswith("dm:"):
         env_name, _policy_class = _get_atari_dm_bindings().resolve_dm_control_from_tag(tag, False)
         return str(env_name)

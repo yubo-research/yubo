@@ -381,10 +381,13 @@ def test_kiss_cov_modal_batches_functions(monkeypatch, tmp_path):
 
 
 def test_kiss_cov_fig_util_functions(monkeypatch, tmp_path):
+    from types import SimpleNamespace
+
     from figures.mtv import fig_util
 
-    monkeypatch.setattr(fig_util, "get_env_conf", lambda *a, **k: "env_conf")
-    monkeypatch.setattr(fig_util, "default_policy", lambda env_conf: "policy")
+    fake_env = SimpleNamespace()
+    fake_problem = SimpleNamespace(env=fake_env, build_policy=lambda: "policy")
+    monkeypatch.setattr(fig_util, "build_problem", lambda *a, **k: fake_problem)
     ep = fig_util.expository_problem()
     assert ep.opt_name == "mtv"
     assert isinstance(fig_util.show(torch.tensor([1.0, 2.0])), str)

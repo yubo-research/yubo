@@ -10,7 +10,7 @@ import rl.checkpointing as rl_checkpointing
 import rl.core.env_conf as seed_util
 from analysis.data_io import write_config
 from common.seed_all import seed_all
-from problems.env_conf import get_env_conf
+from problems.problem import build_problem
 from rl.core import env_contract as torchrl_env_contract
 from rl.core import runtime as torchrl_common
 from rl.core import torchrl_runtime as torchrl_runtime
@@ -39,5 +39,5 @@ __all__ = [
     "save_periodic_checkpoint",
     "write_config",
     "seed_all",
-    "get_env_conf",
+    "build_problem",
 ]

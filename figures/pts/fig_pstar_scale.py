@@ -9,7 +9,7 @@ from common.collector import Collector
 from experiments.dist_modal import DistModal, collect
 from experiments.modal_image import mk_image
 from optimizer.optimizer import Optimizer
-from problems.env_conf import default_policy, get_env_conf
+from problems.problem import build_problem
 
 modal_image = mk_image()
 
@@ -43,13 +43,13 @@ def calc_pstar_scales(d_args):
     data = []
 
     seed = np.random.randint(999999)
-    env_conf = get_env_conf(env_tag, problem_seed=seed, noise_seed_0=seed + 1)
-    policy = default_policy(env_conf)
+    problem = build_problem(env_tag, problem_seed=seed, noise_seed_0=seed + 1)
+    policy = problem.build_policy()
 
     collector_log = Collector()
     opt = Optimizer(
         collector_log,
-        env_conf=env_conf,
+        env_conf=problem.env,
         policy=policy,
         num_arms=num_arms,
         num_denoise_measurement=None,

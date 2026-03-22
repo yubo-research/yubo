@@ -26,6 +26,7 @@ from common.experiment_seeds import (
 from common.seed_all import seed_all
 from experiments.bo_console import BOConsoleCollector, print_bo_footer
 from experiments.experiment_util import ensure_parent
+from problems.problem import Problem, build_problem
 
 
 class _SampleResult(NamedTuple):
@@ -63,6 +64,7 @@ class ExperimentConfig:
     video_prefix: str = "bo"
     runtime_device: str = "auto"
     local_workers: int = 1
+    policy_tag: Optional[str] = None
 
     def to_dir_name(self) -> str:
         budget_key = "num_rounds" if self.num_rounds is not None else "total_timesteps"
@@ -73,6 +75,7 @@ class ExperimentConfig:
             f"--num_reps={self.num_reps}--num_denoise={self.num_denoise}"
             f"--max_proposal_seconds={self.max_proposal_seconds}"
             f"--video_enable={self.video_enable}"
+            f"--policy_tag={self.policy_tag}"
         )
         short_hash = hashlib.md5(config_str.encode()).hexdigest()[:8]
         return f"{self.exp_dir}/{short_hash}"
@@ -116,6 +119,12 @@ class ExperimentConfig:
         if total_timesteps is not None and total_timesteps < 1:
             raise ValueError(f"total_timesteps must be >= 1 (got: {total_timesteps})")
 
+        policy_tag = d.get("policy_tag")
+        if policy_tag in (None, "None", ""):
+            policy_tag = None
+        else:
+            policy_tag = str(policy_tag)
+
         return cls(
             exp_dir=d["exp_dir"],
             env_tag=d["env_tag"],
@@ -136,12 +145,13 @@ class ExperimentConfig:
             video_prefix="bo",
             runtime_device=runtime_device,
             local_workers=local_workers,
+            policy_tag=policy_tag,
         )
 
 
 @dataclass
 class RunConfig:
-    env_conf: object
+    problem: Problem
     opt_name: str
     num_rounds: Optional[int]
     num_arms: int
@@ -178,7 +188,7 @@ def _temporary_default_device(runtime_device: str):
         torch.set_default_device(prev_default_device)
 
 
-def _collect_trace_records(opt, opt_name, max_iterations, max_total_timesteps, max_proposal_seconds, deadline, env_conf, b_trace):
+def _collect_trace_records(opt, opt_name, max_iterations, max_total_timesteps, max_proposal_seconds, deadline, env_runtime, b_trace):
     trace_records = []
     collector_trace = Collector()
     for i_iter, te in enumerate(
@@ -196,7 +206,7 @@ def _collect_trace_records(opt, opt_name, max_iterations, max_total_timesteps, m
                 dt_prop=te.dt_prop,
                 dt_eval=te.dt_eval,
                 rreturn=te.rreturn,
-                env_name=env_conf.env_name,
+                env_name=env_runtime.env_name,
                 opt_name=opt_name,
                 env_steps_iter=int(getattr(te, "env_steps_iter", 0)),
                 env_steps_total=int(getattr(te, "env_steps_total", 0)),
@@ -204,7 +214,7 @@ def _collect_trace_records(opt, opt_name, max_iterations, max_total_timesteps, m
         )
         if b_trace:
             collector_trace(
-                f"TRACE: env={env_conf.env_name} opt_name={opt_name} iter={i_iter} "
+                f"TRACE: env={env_runtime.env_name} opt_name={opt_name} iter={i_iter} "
                 f"proposal_dt={te.dt_prop:.3e}s eval_dt={te.dt_eval:.3e}s return={te.rreturn:.3e} "
                 f"env_steps_iter={int(getattr(te, 'env_steps_iter', 0))} env_steps_total={int(getattr(te, 'env_steps_total', 0))}"
             )
@@ -215,7 +225,7 @@ def _collect_trace_records(opt, opt_name, max_iterations, max_total_timesteps, m
 def _render_sample_video(
     opt,
     run_config,
-    env_conf,
+    env_runtime,
     video_prefix,
     video_num_episodes,
     video_num_video_episodes,
@@ -227,9 +237,9 @@ def _render_sample_video(
     render_policy_videos_bo = _load_attr(("common", "video"), "render_policy_videos_bo")
 
     video_dir = Path(run_config.trace_fn).parent / "videos"
-    seed_base = int(video_seed_base) if video_seed_base is not None else int(env_conf.problem_seed)
+    seed_base = int(video_seed_base) if video_seed_base is not None else int(env_runtime.problem_seed)
     render_policy_videos_bo(
-        env_conf,
+        env_runtime,
         opt.best_policy.clone(),
         video_dir=video_dir,
         video_prefix=str(video_prefix),
@@ -243,7 +253,8 @@ def _render_sample_video(
 def sample_1(run_config: RunConfig):
     import numpy as np
 
-    env_conf = run_config.env_conf
+    problem = run_config.problem
+    env_runtime = problem.env
     opt_name = run_config.opt_name
     num_rounds = run_config.num_rounds
     total_timesteps = run_config.total_timesteps
@@ -264,11 +275,10 @@ def sample_1(run_config: RunConfig):
     if max_proposal_seconds is None:
         max_proposal_seconds = np.inf
 
-    seed_all(global_seed_for_run(env_conf.problem_seed))
+    seed_all(global_seed_for_run(env_runtime.problem_seed))
 
     with _temporary_default_device(getattr(run_config, "runtime_device", "auto")):
-        default_policy = _load_attr(("problems", "env_conf"), "default_policy")
-        policy = default_policy(env_conf)
+        policy = problem.build_policy()
 
         if bo_console:
             collector_log = BOConsoleCollector()
@@ -277,7 +287,7 @@ def sample_1(run_config: RunConfig):
         Optimizer = _load_attr(("optimizer", "optimizer"), "Optimizer")
         opt = Optimizer(
             collector_log,
-            env_conf=env_conf,
+            env_conf=env_runtime,
             policy=policy,
             num_arms=num_arms,
             num_denoise_measurement=num_denoise,
@@ -295,7 +305,7 @@ def sample_1(run_config: RunConfig):
             total_timesteps,
             max_proposal_seconds,
             deadline,
-            env_conf,
+            env_runtime,
             b_trace,
         )
 
@@ -313,7 +323,7 @@ def sample_1(run_config: RunConfig):
             _render_sample_video(
                 opt,
                 run_config,
-                env_conf,
+                env_runtime,
                 video_prefix,
                 video_num_episodes,
                 video_num_video_episodes,
@@ -437,7 +447,7 @@ def scan_local(
     max_workers = min(workers, len(run_configs))
     runtime_device = _resolve_runtime_device(
         requested=getattr(run_configs[0], "runtime_device", "auto"),
-        env_tag=env_tag if env_tag is not None else str(run_configs[0].env_conf.env_name),
+        env_tag=env_tag if env_tag is not None else str(run_configs[0].problem.env.env_name),
         local_workers=max_workers,
     )
     for run_config in run_configs:
@@ -472,8 +482,6 @@ def true_false(string_bool):
 
 
 def mk_replicates(config: ExperimentConfig) -> list[RunConfig]:
-    get_env_conf = _load_attr(("problems", "env_conf"), "get_env_conf")
-
     out_dir = config.to_dir_name()
 
     os.makedirs(out_dir, exist_ok=True)
@@ -488,16 +496,16 @@ def mk_replicates(config: ExperimentConfig) -> list[RunConfig]:
             continue
         else:
             problem_seed = problem_seed_from_rep_index(i_rep)
-            env_conf = get_env_conf(
+            problem = build_problem(
                 config.env_tag,
+                config.policy_tag,
                 problem_seed=problem_seed,
-                noise_level=None,
                 noise_seed_0=noise_seed_0_from_problem_seed(problem_seed),
             )
             run_configs.append(
                 RunConfig(
                     trace_fn=trace_fn,
-                    env_conf=env_conf,
+                    problem=problem,
                     opt_name=config.opt_name,
                     num_rounds=config.num_rounds,
                     total_timesteps=config.total_timesteps,

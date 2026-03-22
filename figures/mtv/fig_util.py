@@ -4,7 +4,7 @@ import numpy as np
 import torch
 
 from acq.acq_util import calc_p_max_from_Y as _calc_p_max_from_Y
-from problems.env_conf import default_policy, get_env_conf
+from problems.problem import build_problem
 
 
 class _ExpositoryProblem(NamedTuple):
@@ -20,10 +20,10 @@ def expository_problem():
     torch.manual_seed(seed + 1)
     np.random.seed(seed + 2)
 
-    env_conf = get_env_conf(env_tag, seed, noise_seed_0=seed + 3)
-    policy = default_policy(env_conf)
+    problem = build_problem(env_tag, problem_seed=seed, noise_seed_0=seed + 3)
+    policy = problem.build_policy()
 
-    return _ExpositoryProblem(env_conf=env_conf, policy=policy, opt_name="mtv")
+    return _ExpositoryProblem(env_conf=problem.env, policy=policy, opt_name="mtv")
 
 
 def show(x):

@@ -5,7 +5,7 @@ import numpy as np
 import torch
 
 from optimizer.trajectories import collect_trajectory
-from problems.env_conf import default_policy
+from problems.problem import Problem
 
 
 def _as_2d(y: np.ndarray) -> np.ndarray:
@@ -19,14 +19,14 @@ def _as_2d(y: np.ndarray) -> np.ndarray:
     assert False, y.shape
 
 
-def _eval_mean_return(env_conf, policy, *, num_denoise: Optional[int], noise_seed_0: int, i_noise: int) -> np.ndarray:
+def _eval_mean_return(env_runtime, policy, *, num_denoise: Optional[int], noise_seed_0: int, i_noise: int) -> np.ndarray:
     if num_denoise is None:
         num_denoise = 1
     assert num_denoise >= 1, num_denoise
 
     rets = []
     for i in range(num_denoise):
-        traj = collect_trajectory(env_conf, policy, noise_seed=noise_seed_0 + i_noise + i)
+        traj = collect_trajectory(env_runtime, policy, noise_seed=noise_seed_0 + i_noise + i)
         rets.append(traj.rreturn)
     y = np.mean(np.asarray(rets), axis=0)
     return np.asarray(y)
@@ -41,12 +41,12 @@ class SobolRefPoint:
     std_margin_scale: float = 0.1
     directions: Optional[np.ndarray] = None
 
-    def compute(self, env_conf, *, policy=None) -> np.ndarray:
+    def compute(self, problem: Problem, *, policy=None) -> np.ndarray:
         assert self.num_cal >= 1, self.num_cal
         assert np.isfinite(self.std_margin_scale), self.std_margin_scale
         assert self.std_margin_scale >= 0.0, self.std_margin_scale
 
-        p = policy if policy is not None else default_policy(env_conf)
+        p = policy if policy is not None else problem.build_policy()
         x_0 = np.asarray(p.get_params()).copy()
 
         d = int(p.num_params())
@@ -58,10 +58,10 @@ class SobolRefPoint:
         stride = 1 if self.num_denoise in (None, 1) else int(self.num_denoise)
         for i in range(self.num_cal):
             p.set_params(x[i])
-            i_noise = 0 if getattr(env_conf, "frozen_noise", True) else int(i) * stride
+            i_noise = 0 if getattr(problem.env, "frozen_noise", True) else int(i) * stride
             ys.append(
                 _eval_mean_return(
-                    env_conf,
+                    problem.env,
                     p,
                     num_denoise=self.num_denoise,
                     noise_seed_0=int(self.noise_seed_0),

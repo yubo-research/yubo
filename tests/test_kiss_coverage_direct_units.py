@@ -147,18 +147,39 @@ def test_kiss_cov_direct_eval_config_and_uhd_setup(monkeypatch):
     got = build_eval_env_conf(cfg, obs_mode="vector", is_atari_env_tag_fn=lambda tag: False, resolve_gym_env_name_fn=lambda tag: ("CartPole-v1", {}))
     assert got.env_name == "CartPole-v1"
 
-    fake_env_conf = SimpleNamespace(
+    fake_env_runtime_simple = SimpleNamespace(
         problem_seed=1,
         noise_seed_0=2,
+        env_name="x",
         make=lambda: SimpleNamespace(torch_env=lambda: None),
-        make_torch_env=lambda: SimpleNamespace(torch_env=lambda: SimpleNamespace(module=torch.nn.Linear(2, 1))),
+    )
+    fake_problem_simple = SimpleNamespace(
+        env=fake_env_runtime_simple,
+        build_policy=lambda: SimpleNamespace(),
     )
     monkeypatch.setattr("common.seed_all.seed_all", lambda *_args, **_kwargs: None)
-    monkeypatch.setattr("problems.env_conf.get_env_conf", lambda *args, **kwargs: fake_env_conf)
+    monkeypatch.setattr("ops.uhd_setup._load_build_problem", lambda: lambda *args, **kwargs: fake_problem_simple)
     called = {"simple": 0, "bszo": 0}
     monkeypatch.setattr("ops.uhd_setup._run_simple_torch", lambda *args, **kwargs: called.__setitem__("simple", called["simple"] + 1))
     monkeypatch.setattr("ops.uhd_setup._run_simple_gym", lambda *args, **kwargs: called.__setitem__("simple", called["simple"] + 1))
     run_simple_loop("x", 1)
+
+    fake_env_runtime_bszo = SimpleNamespace(
+        problem_seed=1,
+        noise_seed_0=2,
+        env_name="x",
+        gym_conf=SimpleNamespace(max_steps=100, num_frames_skip=1),
+        ensure_spaces=lambda: None,
+        make=lambda **kwargs: SimpleNamespace(close=lambda: None),
+    )
+    fake_problem_bszo = SimpleNamespace(
+        env=fake_env_runtime_bszo,
+        build_policy=lambda: torch.nn.Linear(2, 1),
+    )
+    monkeypatch.setattr("ops.uhd_setup._load_build_problem", lambda: lambda *args, **kwargs: fake_problem_bszo)
+    monkeypatch.setattr(
+        "ops.uhd_setup._make_torch_env", lambda problem, **kwargs: SimpleNamespace(torch_env=lambda: SimpleNamespace(module=torch.nn.Linear(2, 1)))
+    )
     monkeypatch.setattr("ops.uhd_setup._run_bszo_iterations", lambda *args, **kwargs: called.__setitem__("bszo", called["bszo"] + 1))
     monkeypatch.setattr(
         "optimizer.uhd_bszo.UHDBSZO", lambda *args, **kwargs: SimpleNamespace(k=1, ask=lambda: None, tell=lambda mu, se: None, eval_seed=0, y_best=None)

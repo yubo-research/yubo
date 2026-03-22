@@ -257,6 +257,7 @@ def test_cov_exp_uhd_UHDConfig_local_modal_cmd(monkeypatch, tmp_path):
     )
     cfg = UHDConfig(
         env_tag="f:sphere-2d",
+        policy_tag=None,
         num_rounds=1,
         problem_seed=None,
         noise_seed_0=None,

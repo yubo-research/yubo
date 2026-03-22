@@ -9,6 +9,7 @@ from ops.uhd_config import BEConfig, EarlyRejectConfig, ENNConfig, UHDConfig
 
 _REQUIRED_TOML_KEYS = ("env_tag", "num_rounds")
 _OPTIONAL_TOML_KEYS = (
+    "policy_tag",
     "problem_seed",
     "noise_seed_0",
     "lr",
@@ -238,6 +239,9 @@ def _parse_enn_fields(cfg: dict[str, Any]) -> ENNConfig:
 
 def _parse_cfg(cfg: dict[str, Any]) -> UHDConfig:
     env_tag = str(cfg["env_tag"])
+    policy_tag = cfg.get("policy_tag", None)
+    if policy_tag is not None:
+        policy_tag = str(policy_tag)
     num_rounds = int(cfg["num_rounds"])
     problem_seed = cfg.get("problem_seed", None)
     if problem_seed is not None:
@@ -265,6 +269,7 @@ def _parse_cfg(cfg: dict[str, Any]) -> UHDConfig:
     ndt, nmt = _parse_perturb(perturb)
     return UHDConfig(
         env_tag=env_tag,
+        policy_tag=policy_tag,
         num_rounds=num_rounds,
         problem_seed=problem_seed,
         noise_seed_0=noise_seed_0,
@@ -307,12 +312,11 @@ def _local(config_toml: str, overrides: tuple[str, ...] = ()) -> None:
         raise click.ClickException(str(e)) from e
 
     parsed = _parse_cfg(cfg)
-    from problems.env_conf import needs_atari_dm_bindings
-
-    if needs_atari_dm_bindings(parsed.env_tag):
-        from problems.env_conf_backends import register_with_env_conf
-
-        register_with_env_conf()
+    _ns: dict = {}
+    exec("from problems.environment_spec import needs_atari_dm_bindings", _ns)  # noqa: S102
+    if _ns["needs_atari_dm_bindings"](parsed.env_tag):
+        exec("from problems.env_conf_backends import register_with_env_conf", _ns)  # noqa: S102
+        _ns["register_with_env_conf"]()
     _run_parsed(parsed)
 
 
@@ -332,6 +336,7 @@ def _run_bszo(parsed: UHDConfig) -> None:
         parsed.env_tag,
         parsed.num_rounds,
         lr=parsed.lr,
+        policy_tag=parsed.policy_tag,
         problem_seed=parsed.problem_seed,
         noise_seed_0=parsed.noise_seed_0,
         batch_size=parsed.batch_size,
@@ -354,6 +359,7 @@ def _run_simple(parsed: UHDConfig) -> None:
         parsed.num_rounds,
         0.001,
         parsed.optimizer,
+        policy_tag=parsed.policy_tag,
         num_dim_target=parsed.num_dim_target,
         problem_seed=parsed.problem_seed,
         noise_seed_0=parsed.noise_seed_0,
@@ -371,6 +377,7 @@ def _run_mezo(parsed: UHDConfig) -> None:
     loop = make_loop(
         parsed.env_tag,
         parsed.num_rounds,
+        policy_tag=parsed.policy_tag,
         problem_seed=parsed.problem_seed,
         noise_seed_0=parsed.noise_seed_0,
         batch_size=parsed.batch_size,
@@ -415,6 +422,7 @@ def modal_cmd(
         parsed.num_dim_target,
         parsed.num_module_target,
         gpu=gpu,
+        policy_tag=parsed.policy_tag,
         problem_seed=parsed.problem_seed,
         noise_seed_0=parsed.noise_seed_0,
         log_interval=parsed.log_interval,

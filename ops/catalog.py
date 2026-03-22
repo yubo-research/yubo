@@ -52,14 +52,28 @@ def designers():
 
 
 @_cli.command()
+def policies():
+    """List all available policy tags."""
+    _add_repo_root_to_syspath()
+    from policies.registry import list_policy_tags
+
+    for tag in list_policy_tags():
+        click.echo(tag)
+
+
+@_cli.command()
 def environments():
     _add_repo_root_to_syspath()
     from problems.benchmark_functions import all_benchmarks
-    from problems.env_conf import _gym_env_confs
+    from problems.environment_spec import (
+        _atari_env_specs,
+        _dm_control_env_specs,
+        _gym_env_specs,
+    )
 
     fn_names = sorted(all_benchmarks().keys())
     other_envs = {"mopta08", "push", "leukemia", "dna", "rcv1"}
-    env_names = sorted(set(_gym_env_confs.keys()) | other_envs)
+    env_names = sorted(set(_gym_env_specs.keys()) | set(_dm_control_env_specs.keys()) | set(_atari_env_specs.keys()) | other_envs)
 
     for name in fn_names:
         click.echo(f"f:{name}")
