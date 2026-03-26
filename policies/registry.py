@@ -55,7 +55,9 @@ def _turbo_lunar_factory(env_runtime: EnvironmentRuntimeProtocol) -> Policy:
     return TurboLunarPolicy(env_runtime)
 
 
-def _mlp_factory(hidden_sizes: tuple[int, ...]) -> Callable[[EnvironmentRuntimeProtocol], Policy]:
+def _mlp_factory(
+    hidden_sizes: tuple[int, ...],
+) -> Callable[[EnvironmentRuntimeProtocol], Policy]:
     def factory(env_runtime: EnvironmentRuntimeProtocol) -> Policy:
         from policies.mlp_policy import MLPPolicyFactory
 
@@ -64,7 +66,9 @@ def _mlp_factory(hidden_sizes: tuple[int, ...]) -> Callable[[EnvironmentRuntimeP
     return factory
 
 
-def _actor_critic_mlp_factory(hidden_sizes: tuple[int, ...]) -> Callable[[EnvironmentRuntimeProtocol], Policy]:
+def _actor_critic_mlp_factory(
+    hidden_sizes: tuple[int, ...],
+) -> Callable[[EnvironmentRuntimeProtocol], Policy]:
     def factory(env_runtime: EnvironmentRuntimeProtocol) -> Policy:
         from policies.actor_critic_mlp_policy import ActorCriticMLPPolicyFactory
 
@@ -73,7 +77,9 @@ def _actor_critic_mlp_factory(hidden_sizes: tuple[int, ...]) -> Callable[[Enviro
     return factory
 
 
-def _gaussian_backbone_factory(variant: str) -> Callable[[EnvironmentRuntimeProtocol], Policy]:
+def _gaussian_backbone_factory(
+    variant: str,
+) -> Callable[[EnvironmentRuntimeProtocol], Policy]:
     def factory(env_runtime: EnvironmentRuntimeProtocol) -> Policy:
         _ns: dict = {}
         exec("from rl.policy_backbone import GaussianActorBackbonePolicyFactory", _ns)  # noqa: S102
@@ -94,7 +100,9 @@ def _atari_cnn_factory(env_runtime: EnvironmentRuntimeProtocol) -> Policy:
     return AtariCNNPolicyFactory(hidden_sizes=(512,), cnn_latent_dim=512, variant="default")(env_runtime)
 
 
-def _infer_rl_model_from_mlp(hidden_sizes: tuple[int, ...]) -> dict[str, dict[str, Any]]:
+def _infer_rl_model_from_mlp(
+    hidden_sizes: tuple[int, ...],
+) -> dict[str, dict[str, Any]]:
     return {
         "ppo": {
             "backbone_name": "mlp",
@@ -119,7 +127,9 @@ def _infer_rl_model_from_mlp(hidden_sizes: tuple[int, ...]) -> dict[str, dict[st
     }
 
 
-def _infer_rl_model_from_actor_critic_mlp(hidden_sizes: tuple[int, ...]) -> dict[str, dict[str, Any]]:
+def _infer_rl_model_from_actor_critic_mlp(
+    hidden_sizes: tuple[int, ...],
+) -> dict[str, dict[str, Any]]:
     return {
         "ppo": {
             "backbone_name": "mlp",
@@ -208,6 +218,10 @@ POLICY_PRESETS: dict[str, PolicyPreset] = {
     "actor-critic-mlp-16-8": PolicyPreset(
         factory=_actor_critic_mlp_factory((16, 8)),
         rl_model=_infer_rl_model_from_actor_critic_mlp((16, 8)),
+    ),
+    "actor-critic-mlp-32-32": PolicyPreset(
+        factory=_actor_critic_mlp_factory((32, 32)),
+        rl_model=_infer_rl_model_from_actor_critic_mlp((32, 32)),
     ),
     "gauss-rl-gauss-tanh": PolicyPreset(factory=_gaussian_backbone_factory("rl-gauss-tanh")),
     "gauss-rl-gauss-small": PolicyPreset(factory=_gaussian_backbone_factory("rl-gauss-small")),

@@ -575,15 +575,16 @@ def prep_rl_one(results_dir, name):
             prep_args_1(
                 results_dir,
                 exp_dir=exp_dir,
-                problem=f"{name}:fn",
+                problem=f"{name}",
                 opt=opt,
-                num_arms=3,  # 100,
-                num_replications=1,  # 30,
-                num_rounds=10,  # 1000,
+                num_arms=10,
+                num_replications=10,
+                num_rounds=100000,
                 noise=None,
-                num_denoise=1,
+                num_denoise=None,
+                num_denoise_passive=10,
                 # policy_tag="linear",
-                policy_tag="actor-critic-mlp-16-8",
+                policy_tag="actor-critic-mlp-32-32",
             )
         )
 
