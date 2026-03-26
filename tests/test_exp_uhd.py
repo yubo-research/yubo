@@ -13,6 +13,7 @@ def test_local_smoke(tmp_path: Path):
         """
 [uhd]
 env_tag = "pend"
+policy_tag = "linear"
 num_rounds = 1
 """.lstrip()
     )

@@ -6,9 +6,10 @@ import gymnasium as gym
 
 import problems.other as other
 import problems.pure_functions as pure_functions
+from policies.mlp_policy import MLPPolicy, MLPPolicyFactory
 from problems.bipedal_walker_policy import BipedalWalkerPolicy
+from problems.environment_spec import parse_tag_options
 from problems.linear_policy import LinearPolicy
-from problems.mlp_policy import MLPPolicy, MLPPolicyFactory
 from problems.mlp_torch_env import wrap_mlp_env
 from problems.noise_maker import NoiseMaker
 from problems.pure_function_policy import PureFunctionPolicy
@@ -37,20 +38,17 @@ def _get_atari_dm_bindings():
     return _ATARI_DM_BINDINGS
 
 
-def _parse_tag_options(tag, from_pixels):
-    """Parse shared options from tag. Returns (tag, frozen_noise, from_pixels)."""
-    frozen_noise = False
-    while ":" in tag:
-        x = tag.split(":")
-        opt = x[-1]
-        if opt == "fn":
-            frozen_noise = True
-        elif opt == "pixels":
-            from_pixels = True if from_pixels is None else from_pixels
-        else:
-            break
-        tag = ":".join(x[:-1])
-    return tag, frozen_noise, from_pixels
+def needs_atari_dm_bindings(env_tag: str) -> bool:
+    """Return True if this env tag requires Atari/DM bindings to be registered."""
+    tag, _, _ = parse_tag_options(str(env_tag), None)
+    if tag.startswith(("dm:", "dm_control/", "atari:", "ALE/")):
+        return True
+    if tag in _dm_control_env_confs or tag in _atari_env_confs:
+        return True
+    if tag in _gym_env_confs:
+        conf = _gym_env_confs[tag]
+        return str(getattr(conf, "env_name", "")).startswith(("dm_control/", "ALE/"))
+    return False
 
 
 def _atari_pong_policy(env_conf):
@@ -71,6 +69,13 @@ def _gaussian_policy_factory(variant: str):
     )
 
 
+def _ac_mlp_policy_factory(hidden_sizes: tuple[int, ...], *, share_backbone: bool = True, log_std_init: float = 0.0):
+    _ns: dict = {}
+    exec("from policies.actor_critic_mlp_policy import ActorCriticMLPPolicyFactory", _ns)  # noqa: S102
+    ActorCriticMLPPolicyFactory = _ns["ActorCriticMLPPolicyFactory"]
+    return ActorCriticMLPPolicyFactory(hidden_sizes, share_backbone=share_backbone, log_std_init=log_std_init)
+
+
 def get_env_conf(
     tag,
     problem_seed=None,
@@ -80,7 +85,7 @@ def get_env_conf(
     pixels_only=None,
     atari_preprocess=None,
 ):
-    tag, frozen_noise, from_pixels = _parse_tag_options(tag, from_pixels)
+    tag, frozen_noise, from_pixels = parse_tag_options(tag, from_pixels)
     pix_only = pixels_only if pixels_only is not None else True
 
     if tag in _gym_env_confs:
@@ -122,6 +127,7 @@ def get_env_conf(
     ec.problem_seed = problem_seed
     ec.noise_seed_0 = noise_seed_0
     ec.frozen_noise = frozen_noise
+    ec.env_tag = tag
     if atari_preprocess is not None:
         if not isinstance(atari_preprocess, dict):
             raise TypeError("atari_preprocess must be a dict when provided.")
@@ -181,6 +187,7 @@ class EnvConf:
     max_steps: int | None = None
     action_space: Any = None
     kwargs: dict = None
+    env_tag: str | None = None
 
     def _make(self, **kwargs):
         if self.env_name[:2] == "f:":
@@ -321,7 +328,7 @@ def _gym_conf(env_name, gym_conf=None, policy_class=None, kwargs=None, noise_see
 
 
 def _normalize_rl_env_key(env_tag: str) -> str:
-    tag, _frozen_noise, _from_pixels = _parse_tag_options(str(env_tag), None)
+    tag, _frozen_noise, _from_pixels = parse_tag_options(str(env_tag), None)
     if tag.startswith("dm:"):
         env_name, _policy_class = _get_atari_dm_bindings().resolve_dm_control_from_tag(tag, False)
         return str(env_name)
@@ -345,33 +352,60 @@ def _find_rl_env_conf(env_key: str):
 
 
 def _infer_rl_from_policy_class(policy_class: Any, *, algo: str) -> dict[str, Any] | None:
-    if not isinstance(policy_class, MLPPolicyFactory):
-        return None
-    hidden = tuple((int(v) for v in policy_class._hidden_sizes))
-    layer_norm = bool(policy_class._use_layer_norm)
-    if algo == "ppo":
-        return {
-            "backbone_name": "mlp",
-            "backbone_hidden_sizes": hidden,
-            "backbone_activation": "silu",
-            "backbone_layer_norm": layer_norm,
-            "actor_head_hidden_sizes": (),
-            "critic_head_hidden_sizes": (),
-            "head_activation": "silu",
-            "share_backbone": True,
-            "log_std_init": -0.5,
-        }
-    if algo == "sac":
-        return {
-            "backbone_name": "mlp",
-            "backbone_hidden_sizes": hidden,
-            "backbone_activation": "silu",
-            "backbone_layer_norm": layer_norm,
-            "actor_head_hidden_sizes": (),
-            "critic_head_hidden_sizes": (),
-            "head_activation": "silu",
-        }
-    raise ValueError(f"Unsupported algo '{algo}' for RL model inference.")
+    if isinstance(policy_class, MLPPolicyFactory):
+        hidden = tuple((int(v) for v in policy_class._hidden_sizes))
+        layer_norm = bool(policy_class._use_layer_norm)
+        if algo == "ppo":
+            return {
+                "backbone_name": "mlp",
+                "backbone_hidden_sizes": hidden,
+                "backbone_activation": "silu",
+                "backbone_layer_norm": layer_norm,
+                "actor_head_hidden_sizes": (),
+                "critic_head_hidden_sizes": (),
+                "head_activation": "silu",
+                "share_backbone": True,
+                "log_std_init": -0.5,
+            }
+        if algo == "sac":
+            return {
+                "backbone_name": "mlp",
+                "backbone_hidden_sizes": hidden,
+                "backbone_activation": "silu",
+                "backbone_layer_norm": layer_norm,
+                "actor_head_hidden_sizes": (),
+                "critic_head_hidden_sizes": (),
+                "head_activation": "silu",
+            }
+        raise ValueError(f"Unsupported algo '{algo}' for RL model inference.")
+    if hasattr(policy_class, "_hidden_sizes") and hasattr(policy_class, "_share_backbone") and hasattr(policy_class, "_log_std_init"):
+        hidden = tuple((int(v) for v in policy_class._hidden_sizes))
+        share = bool(policy_class._share_backbone)
+        log_std_init = float(policy_class._log_std_init)
+        if algo == "ppo":
+            return {
+                "backbone_name": "mlp",
+                "backbone_hidden_sizes": hidden,
+                "backbone_activation": "silu",
+                "backbone_layer_norm": True,
+                "actor_head_hidden_sizes": (),
+                "critic_head_hidden_sizes": (),
+                "head_activation": "silu",
+                "share_backbone": share,
+                "log_std_init": log_std_init,
+            }
+        if algo == "sac":
+            return {
+                "backbone_name": "mlp",
+                "backbone_hidden_sizes": hidden,
+                "backbone_activation": "silu",
+                "backbone_layer_norm": True,
+                "actor_head_hidden_sizes": (),
+                "critic_head_hidden_sizes": (),
+                "head_activation": "silu",
+            }
+        raise ValueError(f"Unsupported algo '{algo}' for RL model inference.")
+    return None
 
 
 def _explicit_rl_model_for_algo(env_conf: Any, *, algo: str) -> dict[str, Any] | None:
@@ -409,7 +443,7 @@ def resolve_rl_model_defaults(env_tag: str, *, algo: str) -> dict[str, Any]:
             return copy.deepcopy(model)
     raise ValueError(
         f"No RL model defaults for env_tag '{env_tag}' and algo '{algo_key}'. "
-        "Provide env_conf.rl_model[algo] or use an inferable MLPPolicyFactory policy_class."
+        "Provide env_conf.rl_model[algo] or use an inferable MLPPolicyFactory / ActorCriticMLPPolicyFactory policy_class."
     )
 
 
@@ -547,6 +581,14 @@ _gym_env_confs = {
         ),
         kwargs={"continuous": True},
         policy_class=MLPPolicyFactory((16, 8)),
+    ),
+    "lunar-ac": _gym_conf(
+        "LunarLander-v3",
+        gym_conf=GymConf(
+            max_steps=500,
+        ),
+        kwargs={"continuous": True},
+        policy_class=_ac_mlp_policy_factory((16, 8)),
     ),
     "tlunar": EnvConf(
         # TuRBO paper specifies v2, but that raises an exception now

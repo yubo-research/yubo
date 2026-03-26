@@ -66,6 +66,7 @@ class PPOConfig(TorchRLRuntimeConfig):
     @classmethod
     def from_dict(cls, raw: dict) -> "PPOConfig":
         d = apply_ppo_env_model_defaults(raw)
+        d.pop("policy_tag", None)
         return cls(**d)
 
     def runtime_num_envs(self) -> int:

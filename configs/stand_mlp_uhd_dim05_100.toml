@@ -1,5 +1,6 @@
 [uhd]
 env_tag = "stand-mlp"
+policy_tag = "mlp-32-16"
 
 # Each eval is a full HumanoidStandup episode; keep modest for first look.
 num_rounds = 100

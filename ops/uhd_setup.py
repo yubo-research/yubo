@@ -12,12 +12,57 @@ from optimizer.uhd_enn_seed_selector import ENNMuPlusSeedSelector, ENNSeedSelect
 from optimizer.uhd_loop import UHDLoop
 
 
+def _load_build_problem():
+    _ns: dict = {}
+    exec("from problems.problem import build_problem", _ns)  # noqa: S102
+    return _ns["build_problem"]
+
+
+def _load_mlp_policy():
+    _ns: dict = {}
+    exec("from policies.mlp_policy import MLPPolicy", _ns)  # noqa: S102
+    return _ns["MLPPolicy"]
+
+
+def _load_wrap_mlp_env():
+    _ns: dict = {}
+    exec("from problems.mlp_torch_env import wrap_mlp_env", _ns)  # noqa: S102
+    return _ns["wrap_mlp_env"]
+
+
 def _action_dim(space):
     if hasattr(space, "shape") and space.shape:
         return int(space.shape[0])
     if hasattr(space, "n"):
         return int(space.n)
     raise ValueError(f"Cannot get action dim from {type(space).__name__}: {space}")
+
+
+def _make_torch_env(problem, **kwargs):
+    """Create environment with torch module exposed for direct perturbation.
+
+    For environments with MLP policies, this creates a wrapped environment
+    that exposes the policy module via torch_env().module for use with
+    BSZO and other UHD optimizers requiring direct parameter access.
+    """
+    env_runtime = problem.env
+    env_runtime.ensure_spaces()
+
+    policy = problem.build_policy()
+    MLPPolicy = _load_mlp_policy()
+    if isinstance(policy, MLPPolicy):
+        if env_runtime.gym_conf is None:
+            raise ValueError("_make_torch_env for MLPPolicy requires a gym_conf with max_steps and num_frames_skip.")
+        base_env = env_runtime.make(**kwargs)
+        wrap_mlp_env = _load_wrap_mlp_env()
+        return wrap_mlp_env(
+            env=base_env,
+            policy=policy,
+            max_steps=env_runtime.gym_conf.max_steps if env_runtime.gym_conf else 1000,
+            num_frames_skip=env_runtime.gym_conf.num_frames_skip if env_runtime.gym_conf else 1,
+        )
+
+    return env_runtime.make(**kwargs)
 
 
 def _maybe_attach_enn(loop: UHDLoop, *, module, env, enabled: bool, cfg: ENNImputerConfig) -> None:
@@ -160,7 +205,7 @@ def _parse_enn_cfg(enn: dict[str, object] | None) -> tuple[bool, ENNImputerConfi
 
 
 def _evaluate_gym_with_denoise(
-    env_conf,
+    env_runtime,
     policy,
     *,
     eval_seed: int,
@@ -174,13 +219,13 @@ def _evaluate_gym_with_denoise(
 
     if num_denoise is None or int(num_denoise) <= 1:
         ns = noise_seed_0 if frozen else int(eval_seed) + noise_seed_0
-        return float(collect_trajectory(env_conf, policy, noise_seed=ns).rreturn), 0.0
+        return float(collect_trajectory(env_runtime, policy, noise_seed=ns).rreturn), 0.0
 
     base_seed = noise_seed_0 if frozen else int(eval_seed) + noise_seed_0
     rets: list[float] = []
     for j in range(int(num_denoise)):
         ns = int(base_seed + j)
-        rets.append(float(collect_trajectory(env_conf, policy, noise_seed=ns).rreturn))
+        rets.append(float(collect_trajectory(env_runtime, policy, noise_seed=ns).rreturn))
     mu = float(np.mean(rets))
     se = float(np.std(rets) / math.sqrt(len(rets)))
     return mu, se
@@ -194,6 +239,7 @@ def make_loop(
     num_dim_target=None,
     num_module_target=None,
     *,
+    policy_tag: str | None = None,
     problem_seed: int | None = None,
     noise_seed_0: int | None = None,
     batch_size: int = 4096,
@@ -205,16 +251,17 @@ def make_loop(
     early_reject: EarlyRejectConfig | None = None,
 ):
     from common.seed_all import seed_all
-    from problems.env_conf import get_env_conf
     from problems.torch_policy import TorchPolicy
 
-    env_conf = get_env_conf(env_tag, problem_seed=problem_seed, noise_seed_0=noise_seed_0)
-    noise_seed_0 = env_conf.noise_seed_0 or 0
+    build_problem = _load_build_problem()
+    problem = build_problem(env_tag, policy_tag, problem_seed=problem_seed, noise_seed_0=noise_seed_0)
+    env_runtime = problem.env
+    noise_seed_0 = env_runtime.noise_seed_0 or 0
 
-    if env_conf.problem_seed is not None:
-        seed_all(int(env_conf.problem_seed))
+    if env_runtime.problem_seed is not None:
+        seed_all(int(env_runtime.problem_seed))
 
-    env = env_conf.make()
+    env = env_runtime.make()
 
     if hasattr(env, "torch_env"):
         device = _get_device()
@@ -311,16 +358,17 @@ def make_loop(
 
         device = torch.device("cpu")
 
-        if env_conf.problem_seed is not None:
-            seed_all(int(env_conf.problem_seed) + 27)
+        if env_runtime.problem_seed is not None:
+            seed_all(int(env_runtime.problem_seed) + 27)
 
-        num_state = env_conf.gym_conf.state_space.shape[0]
-        num_action = _action_dim(env_conf.action_space)
+        env_runtime.ensure_spaces()
+        num_state = env_runtime.gym_conf.state_space.shape[0]
+        num_action = _action_dim(env_runtime.action_space)
 
-        np_policy = _try_make_np_policy(env_conf)
+        np_policy = _try_make_np_policy(problem)
         if np_policy is not None:
             return _make_simple_loop_for_np_policy(
-                env_conf,
+                env_runtime,
                 np_policy,
                 optimizer="mezo",
                 num_rounds=num_rounds,
@@ -329,35 +377,35 @@ def make_loop(
                 log_interval=log_interval,
                 target_accuracy=target_accuracy,
                 num_denoise=num_denoise,
-                be_num_probes=10,
-                be_num_candidates=10,
-                be_warmup=20,
-                be_fit_interval=10,
-                be_enn_k=25,
+                be=BEConfig(
+                    num_probes=10,
+                    num_candidates=10,
+                    warmup=20,
+                    fit_interval=10,
+                    enn_k=25,
+                    sigma_range=None,
+                ),
             )
 
         # Torch-based policy for continuous action spaces
-        policy = None
+        policy = problem.build_policy()
         module = None
-        if env_conf.policy_class is not None:
-            cand = env_conf.policy_class(env_conf)
-            if isinstance(cand, torch.nn.Module):
-                module = cand.to(device)
-                policy = cand
+        if isinstance(policy, torch.nn.Module):
+            module = policy.to(device)
 
-        if policy is None:
+        if module is None:
             module = MLPPolicyModule(num_state, num_action, hidden_sizes=(32, 16)).to(device)
             from problems.torch_policy import TorchPolicy
 
-            policy = TorchPolicy(module, env_conf)
+            policy = TorchPolicy(module, env_runtime)
 
         def _evaluate_fn(eval_seed):
             return _evaluate_gym_with_denoise(
-                env_conf,
+                env_runtime,
                 policy,
                 eval_seed=eval_seed,
                 noise_seed_0=noise_seed_0,
-                frozen=bool(getattr(env_conf, "frozen_noise", False)),
+                frozen=bool(getattr(env_runtime, "frozen_noise", False)),
                 num_denoise=num_denoise,
             )
 
@@ -394,7 +442,7 @@ def make_loop(
 
 
 def _make_simple_loop_for_np_policy(
-    env_conf,
+    env_runtime,
     np_policy,
     optimizer: str,
     num_rounds: int,
@@ -411,18 +459,18 @@ def _make_simple_loop_for_np_policy(
     from optimizer.uhd_simple_be_np import UHDSimpleBENp
     from optimizer.uhd_simple_np import UHDSimpleNp
 
-    if env_conf.problem_seed is not None:
-        seed_all(int(env_conf.problem_seed) + 27)
+    if env_runtime.problem_seed is not None:
+        seed_all(int(env_runtime.problem_seed) + 27)
 
     dim = np_policy.num_params()
-    noise_seed_0 = env_conf.noise_seed_0 or 0
-    frozen = bool(getattr(env_conf, "frozen_noise", False))
+    noise_seed_0 = env_runtime.noise_seed_0 or 0
+    frozen = bool(getattr(env_runtime, "frozen_noise", False))
 
     param_clip = (-1.0, 1.0)
     if optimizer == "simple":
         uhd = UHDSimpleNp(np_policy, sigma_0=sigma, param_clip=param_clip)
     elif optimizer == "simple_be":
-        num_state = env_conf.gym_conf.state_space.shape[0]
+        num_state = env_runtime.gym_conf.state_space.shape[0]
         cfg = be if be is not None else BEConfig()
         embedder = BehavioralEmbedder(_gym_embed_bounds(num_state), num_probes=cfg.num_probes, seed=0)
         uhd = UHDSimpleBENp(
@@ -438,7 +486,7 @@ def _make_simple_loop_for_np_policy(
     elif optimizer == "mezo":
         uhd = UHDMeZONp(np_policy, sigma=sigma, lr=lr, param_clip=param_clip)
     elif optimizer == "mezo_be":
-        num_state = env_conf.gym_conf.state_space.shape[0]
+        num_state = env_runtime.gym_conf.state_space.shape[0]
         cfg = be if be is not None else BEConfig()
         embedder = BehavioralEmbedder(_gym_embed_bounds(num_state), num_probes=cfg.num_probes, seed=0)
         uhd = UHDMeZOBENp(
@@ -457,7 +505,7 @@ def _make_simple_loop_for_np_policy(
 
     def evaluate_fn():
         return _evaluate_gym_with_denoise(
-            env_conf,
+            env_runtime,
             np_policy,
             eval_seed=uhd.eval_seed,
             noise_seed_0=noise_seed_0,
@@ -561,6 +609,7 @@ def run_simple_loop(
     sigma: float = 0.001,
     optimizer: str = "simple",
     *,
+    policy_tag: str | None = None,
     num_dim_target: float | None = None,
     problem_seed: int | None = None,
     noise_seed_0: int | None = None,
@@ -572,16 +621,17 @@ def run_simple_loop(
     be: BEConfig | None = None,
 ) -> None:
     from common.seed_all import seed_all
-    from problems.env_conf import get_env_conf
 
-    env_conf = get_env_conf(env_tag, problem_seed=problem_seed, noise_seed_0=noise_seed_0)
-    if env_conf.problem_seed is not None:
-        seed_all(int(env_conf.problem_seed))
-    env = env_conf.make()
+    build_problem = _load_build_problem()
+    problem = build_problem(env_tag, policy_tag, problem_seed=problem_seed, noise_seed_0=noise_seed_0)
+    env_runtime = problem.env
+    if env_runtime.problem_seed is not None:
+        seed_all(int(env_runtime.problem_seed))
+    env = env_runtime.make()
     if hasattr(env, "torch_env"):
         _run_simple_torch(
             env,
-            env_conf,
+            env_runtime,
             env_tag,
             num_rounds,
             optimizer=optimizer,
@@ -597,7 +647,7 @@ def run_simple_loop(
     else:
         _run_simple_gym(
             env,
-            env_conf,
+            problem,
             env_tag,
             num_rounds,
             optimizer=optimizer,
@@ -612,7 +662,7 @@ def run_simple_loop(
 
 def _run_simple_torch(
     env,
-    env_conf,
+    env_runtime,
     env_tag,
     num_rounds,
     *,
@@ -689,7 +739,7 @@ def _run_simple_torch(
 
 def _run_simple_gym(
     env,
-    env_conf,
+    problem,
     env_tag,
     num_rounds,
     *,
@@ -703,15 +753,16 @@ def _run_simple_gym(
 ) -> None:
     from common.seed_all import seed_all
 
+    env_runtime = problem.env
     env.close()
-    if env_conf.problem_seed is not None:
-        seed_all(int(env_conf.problem_seed) + 27)
+    if env_runtime.problem_seed is not None:
+        seed_all(int(env_runtime.problem_seed) + 27)
 
-    np_policy = _try_make_np_policy(env_conf)
+    np_policy = _try_make_np_policy(problem)
     if np_policy is not None:
         _run_simple_gym_np(
             np_policy,
-            env_conf,
+            env_runtime,
             num_rounds,
             optimizer=optimizer,
             sigma=sigma,
@@ -722,11 +773,11 @@ def _run_simple_gym(
         )
         return
 
-    # Try make_torch_env for MLP policies to enable in-place perturbation
-    torch_env_wrapper = env_conf.make_torch_env()
+    # Try to create torch env wrapper for MLP policies
+    torch_env_wrapper = _make_torch_env(problem)
     if hasattr(torch_env_wrapper, "torch_env"):
         _run_simple_gym_torch(
-            env_conf,
+            problem,
             env_tag,
             num_rounds,
             optimizer=optimizer,
@@ -740,11 +791,12 @@ def _run_simple_gym(
         return
 
     device = torch.device("cpu")
-    num_state = env_conf.gym_conf.state_space.shape[0]
-    num_action = _action_dim(env_conf.action_space)
-    noise_seed_0 = env_conf.noise_seed_0 or 0
+    env_runtime.ensure_spaces()
+    num_state = env_runtime.gym_conf.state_space.shape[0]
+    num_action = _action_dim(env_runtime.action_space)
+    noise_seed_0 = env_runtime.noise_seed_0 or 0
 
-    module, policy = _make_gym_policy(env_conf, device, num_state, num_action)
+    module, policy = _make_gym_policy(problem, device, num_state, num_action)
     dim = sum(p.numel() for p in module.parameters())
     perturbator = _make_perturbator(module, num_dim_target)
 
@@ -761,11 +813,11 @@ def _run_simple_gym(
         be=be,
     )
 
-    frozen = bool(getattr(env_conf, "frozen_noise", False))
+    frozen = bool(getattr(env_runtime, "frozen_noise", False))
 
     def evaluate_fn():
         return _evaluate_gym_with_denoise(
-            env_conf,
+            env_runtime,
             policy,
             eval_seed=uhd.eval_seed,
             noise_seed_0=noise_seed_0,
@@ -779,10 +831,12 @@ def _run_simple_gym(
     )
 
 
-def _try_make_np_policy(env_conf):
-    if env_conf.policy_class is None:
-        return None
-    cand = env_conf.policy_class(env_conf)
+def _try_make_np_policy(problem):
+    """Try to create a numpy-based policy from the problem.
+
+    Returns the policy if it's numpy-based (has get_params method), else None.
+    """
+    cand = problem.build_policy()
     if isinstance(cand, torch.nn.Module):
         return None
     if not hasattr(cand, "get_params"):
@@ -792,7 +846,7 @@ def _try_make_np_policy(env_conf):
 
 def _run_simple_gym_np(
     policy,
-    env_conf,
+    env_runtime,
     num_rounds,
     *,
     optimizer,
@@ -807,14 +861,14 @@ def _run_simple_gym_np(
     from optimizer.uhd_simple_be_np import UHDSimpleBENp
     from optimizer.uhd_simple_np import UHDSimpleNp
 
-    noise_seed_0 = env_conf.noise_seed_0 or 0
-    frozen = bool(getattr(env_conf, "frozen_noise", False))
+    noise_seed_0 = env_runtime.noise_seed_0 or 0
+    frozen = bool(getattr(env_runtime, "frozen_noise", False))
     dim = policy.num_params()
     param_clip = (-1.0, 1.0)
 
     cfg = be if be is not None else BEConfig()
     if optimizer in {"simple_be", "mezo_be"}:
-        num_state = env_conf.gym_conf.state_space.shape[0]
+        num_state = env_runtime.gym_conf.state_space.shape[0]
         embedder = BehavioralEmbedder(_gym_embed_bounds(num_state), num_probes=cfg.num_probes, seed=0)
         if optimizer == "simple_be":
             uhd = UHDSimpleBENp(
@@ -846,7 +900,7 @@ def _run_simple_gym_np(
 
     def evaluate_fn():
         return _evaluate_gym_with_denoise(
-            env_conf,
+            env_runtime,
             policy,
             eval_seed=uhd.eval_seed,
             noise_seed_0=noise_seed_0,
@@ -861,7 +915,7 @@ def _run_simple_gym_np(
 
 
 def _run_simple_gym_torch(
-    env_conf,
+    problem,
     env_tag,
     num_rounds,
     *,
@@ -876,16 +930,18 @@ def _run_simple_gym_torch(
     """Run simple loop for gym environments with torch MLP policies using in-place perturbation."""
     from common.seed_all import seed_all
 
-    if env_conf.problem_seed is not None:
-        seed_all(int(env_conf.problem_seed) + 27)
+    env_runtime = problem.env
+    if env_runtime.problem_seed is not None:
+        seed_all(int(env_runtime.problem_seed) + 27)
 
     device = torch.device("cpu")
-    num_state = env_conf.gym_conf.state_space.shape[0]
-    num_action = _action_dim(env_conf.action_space)
-    noise_seed_0 = env_conf.noise_seed_0 or 0
+    env_runtime.ensure_spaces()
+    num_state = env_runtime.gym_conf.state_space.shape[0]
+    num_action = _action_dim(env_runtime.action_space)
+    noise_seed_0 = env_runtime.noise_seed_0 or 0
 
-    # Use make_torch_env to get proper torch env with shared module for in-place perturbation
-    env = env_conf.make_torch_env()
+    # Use _make_torch_env to get proper torch env with shared module for in-place perturbation
+    env = _make_torch_env(problem)
     torch_env = env.torch_env()
     module = torch_env.module.to(device)
     module.train()
@@ -893,13 +949,11 @@ def _run_simple_gym_torch(
     # For MLPPolicy, the module is already a callable policy (returns numpy).
     # For raw modules, wrap with TorchPolicy.
     if hasattr(module, "forward"):
-        # Module is a policy class like MLPPolicy - use it directly
         policy = module
     else:
-        # Raw nn.Module - wrap with TorchPolicy
         from problems.torch_policy import TorchPolicy
 
-        policy = TorchPolicy(module, env_conf)
+        policy = TorchPolicy(module, env_runtime)
 
     dim = sum(p.numel() for p in module.parameters())
     perturbator = _make_perturbator(module, num_dim_target)
@@ -917,11 +971,11 @@ def _run_simple_gym_torch(
         be=be,
     )
 
-    frozen = bool(getattr(env_conf, "frozen_noise", False))
+    frozen = bool(getattr(env_runtime, "frozen_noise", False))
 
     def evaluate_fn():
         return _evaluate_gym_with_denoise(
-            env_conf,
+            env_runtime,
             policy,
             eval_seed=uhd.eval_seed,
             noise_seed_0=noise_seed_0,
@@ -935,19 +989,20 @@ def _run_simple_gym_torch(
     )
 
 
-def _make_gym_policy(env_conf, device, num_state, num_action):
+def _make_gym_policy(problem, device, num_state, num_action):
     import warnings
 
     from problems.mlp_torch_policy import MLPPolicyModule
     from problems.torch_policy import TorchPolicy
 
-    if env_conf.policy_class is not None:
-        cand = env_conf.policy_class(env_conf)
-        if isinstance(cand, torch.nn.Module):
-            return cand.to(device), cand
-        warnings.warn(f"Non-module policy_class {env_conf.policy_class}; using MLPPolicyModule.", stacklevel=2)
+    env_runtime = problem.env
+    policy = problem.build_policy()
+    if isinstance(policy, torch.nn.Module):
+        return policy.to(device), policy
+    if policy is not None:
+        warnings.warn(f"Non-module policy {type(policy).__name__}; using MLPPolicyModule.", stacklevel=2)
     module = MLPPolicyModule(num_state, num_action, hidden_sizes=(32, 16)).to(device)
-    return module, TorchPolicy(module, env_conf)
+    return module, TorchPolicy(module, env_runtime)
 
 
 def _make_perturbator(module, num_dim_target):
@@ -1026,6 +1081,7 @@ def run_bszo_loop(
     num_steps: int,
     lr: float = 0.001,
     *,
+    policy_tag: str | None = None,
     problem_seed: int | None = None,
     noise_seed_0: int | None = None,
     batch_size: int = 4096,
@@ -1041,15 +1097,16 @@ def run_bszo_loop(
     from common.seed_all import seed_all
     from optimizer.lr_scheduler import ConstantLR
     from optimizer.uhd_bszo import UHDBSZO
-    from problems.env_conf import get_env_conf
 
-    env_conf = get_env_conf(env_tag, problem_seed=problem_seed, noise_seed_0=noise_seed_0)
-    ns0 = env_conf.noise_seed_0 or 0
-    if env_conf.problem_seed is not None:
-        seed_all(int(env_conf.problem_seed))
+    build_problem = _load_build_problem()
+    problem = build_problem(env_tag, policy_tag, problem_seed=problem_seed, noise_seed_0=noise_seed_0)
+    env_runtime = problem.env
+    ns0 = env_runtime.noise_seed_0 or 0
+    if env_runtime.problem_seed is not None:
+        seed_all(int(env_runtime.problem_seed))
 
     # Try to make torch env (for MLP policies or MNIST-style envs)
-    env = env_conf.make_torch_env()
+    env = _make_torch_env(problem)
     if not hasattr(env, "torch_env"):
         raise ValueError(f"BSZO requires an environment with torch_env(), got: {env_tag}")
 
@@ -1094,8 +1151,8 @@ def run_bszo_loop(
         accuracy_fn = None  # No accuracy metric for gym envs
 
         def evaluate_fn(eval_seed: int) -> tuple[float, float]:
-            ns = noise_seed_0 if getattr(env_conf, "frozen_noise", False) else int(eval_seed) + ns0
-            result = collect_trajectory(env_conf, module, noise_seed=ns)
+            ns = noise_seed_0 if getattr(env_runtime, "frozen_noise", False) else int(eval_seed) + ns0
+            result = collect_trajectory(env_runtime, module, noise_seed=ns)
             return float(result.rreturn), 0.0
 
     print(f"BSZO: num_params = {dim}, k = {bszo_k}, epsilon = {bszo_epsilon}, lr = {lr}")

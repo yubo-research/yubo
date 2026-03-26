@@ -36,7 +36,7 @@ def _apply_env_model_defaults(
     algo: str,
 ) -> dict[str, Any]:
     _ns: dict = {}
-    exec("from problems.env_conf import resolve_rl_model_defaults", _ns)  # noqa: S102
+    exec("from problems.problem import resolve_rl_model_defaults", _ns)  # noqa: S102
     resolve_rl_model_defaults = _ns["resolve_rl_model_defaults"]
 
     data = dict(raw)
@@ -44,7 +44,9 @@ def _apply_env_model_defaults(
         raise ValueError("PPO config uses canonical key 'critic_head_hidden_sizes' (not 'value_head_hidden_sizes').")
     env_tag = _require_env_tag(data, algo=algo)
     _maybe_register_atari_dm_backends(env_tag)
-    defaults = resolve_rl_model_defaults(env_tag, algo=algo)
+    pt = data.get("policy_tag")
+    policy_tag: str | None = None if pt is None else (str(pt).strip() or None)
+    defaults = resolve_rl_model_defaults(env_tag, policy_tag, algo=algo)
     for key, value in defaults.items():
         data.setdefault(key, value)
     for key in _HIDDEN_SIZE_KEYS:

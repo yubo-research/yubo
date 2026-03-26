@@ -1,5 +1,6 @@
 [uhd]
 env_tag = "stand-mlp:fn"
+policy_tag = "mlp-32-16"
 num_rounds = 1000
 optimizer = "bszo_be"
 lr = 0.01

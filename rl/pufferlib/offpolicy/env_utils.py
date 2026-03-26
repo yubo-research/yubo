@@ -1,15 +1,21 @@
 from __future__ import annotations
 
 import dataclasses
-import importlib
 from typing import Any
 
 import numpy as np
 import torch
 
+from problems.problem import build_problem
 from rl.core.continuous_actions import scale_action_to_env
 from rl.core.env_setup import build_continuous_gym_env_setup
-from rl.core.ppo_envs import is_atari_env_tag, resolve_gym_env_name, to_puffer_game_name
+from rl.core.ppo_envs import (
+    _env_tag_for_problem_build,
+    _maybe_register_atari_dm_backends,
+    is_atari_env_tag,
+    resolve_gym_env_name,
+    to_puffer_game_name,
+)
 from rl.core.runtime import seed_everything as _seed_everything_core
 
 from ...pufferlib_compat import import_pufferlib_modules
@@ -106,6 +112,24 @@ def prepare_obs_np(obs_np: np.ndarray, *, obs_spec: ObservationSpec) -> np.ndarr
     return vec
 
 
+def continuous_gym_runtime_from_problem(
+    env_tag: str,
+    *,
+    problem_seed: int,
+    noise_seed_0: int,
+    from_pixels: bool,
+    pixels_only: bool,
+):
+    _maybe_register_atari_dm_backends(env_tag)
+    adj = _env_tag_for_problem_build(env_tag, from_pixels=from_pixels)
+    # policy_tag="linear" is a placeholder; only problem.env is used (policy is never built)
+    problem = build_problem(adj, "linear", problem_seed=int(problem_seed), noise_seed_0=int(noise_seed_0))
+    env = problem.env
+    if env.spec.env_name.startswith("dm_control/"):
+        env.spec.pixels_only = bool(pixels_only)
+    return env
+
+
 def resolve_backbone_name(config: Any, obs_spec: ObservationSpec) -> str:
     if obs_spec.mode != "pixels":
         return str(config.backbone_name)
@@ -119,7 +143,6 @@ def resolve_backbone_name(config: Any, obs_spec: ObservationSpec) -> str:
 
 
 def build_env_setup(config: Any) -> EnvSetup:
-    get_env_conf = importlib.import_module("problems.env_conf").get_env_conf
     shared = build_continuous_gym_env_setup(
         env_tag=str(config.env_tag),
         seed=int(config.seed),
@@ -127,7 +150,7 @@ def build_env_setup(config: Any) -> EnvSetup:
         noise_seed_0=config.noise_seed_0,
         from_pixels=bool(config.from_pixels),
         pixels_only=bool(config.pixels_only),
-        get_env_conf_fn=get_env_conf,
+        get_env_conf_fn=continuous_gym_runtime_from_problem,
         obs_scale_from_env_fn=obs_scale_from_env,
     )
     return EnvSetup(

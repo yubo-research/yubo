@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from problems.policy_mixin import PolicyParamsMixin
+from policies.policy_mixin import PolicyParamsMixin
 
 
 class MLPPolicyFactory:
@@ -126,10 +126,6 @@ class MLPPolicy(PolicyParamsMixin, nn.Module):
         self.rnn = nn.GRUCell(self._rnn_hidden_size, self._rnn_hidden_size)
         self.head = nn.Sequential(nn.Linear(self._rnn_hidden_size, num_action), nn.Tanh())
         self.reset_state()
-
-    def _cache_flat_params_init(self):
-        with torch.inference_mode():
-            self._flat_params_init = np.concatenate([p.data.detach().cpu().numpy().reshape(-1) for p in self.parameters()])
 
     def _init_params(self):
         for m in self.modules():

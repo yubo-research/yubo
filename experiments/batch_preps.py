@@ -120,7 +120,7 @@ def prep_turbo_ackley_repro(results_dir):
     # And again with --opt_name=   cma, pts, random, sobol
     # TuRBO took about four days.
     # PTS took about eight days.
-    pass
+    return []
 
 
 def prep_sweep_q(results_dir):
@@ -346,6 +346,7 @@ def prep_push(results_dir):
                     noise=None,
                     num_denoise=num_denoise,
                     num_denoise_passive=num_denoise_passive,
+                    policy_tag="pure-function",
                 )
             )
 
@@ -388,6 +389,7 @@ def prep_tlunar(results_dir):
                     noise=None,
                     num_denoise=num_denoise,
                     num_denoise_passive=num_denoise_passive,
+                    policy_tag="turbo-lunar",
                 )
             )
 
@@ -428,6 +430,7 @@ def prep_hop(results_dir):
                     noise=None,
                     num_denoise=num_denoise,
                     num_denoise_passive=num_denoise_passive,
+                    policy_tag="linear",
                 )
             )
 
@@ -468,6 +471,7 @@ def prep_bw(results_dir):
                     noise=None,
                     num_denoise=num_denoise,
                     num_denoise_passive=num_denoise_passive,
+                    policy_tag="bipedal-heuristic",
                 )
             )
 
@@ -508,6 +512,7 @@ def prep_leukemia(results_dir):
                     noise=None,
                     num_denoise=num_denoise,
                     num_denoise_passive=num_denoise_passive,
+                    policy_tag="pure-function",
                 )
             )
 
@@ -548,6 +553,7 @@ def prep_dna(results_dir):
                     noise=None,
                     num_denoise=num_denoise,
                     num_denoise_passive=num_denoise_passive,
+                    policy_tag="pure-function",
                 )
             )
 
@@ -555,9 +561,13 @@ def prep_dna(results_dir):
 
 
 def prep_rl_one(results_dir, name):
-    exp_dir = f"exp_enn_{name}"
+    exp_dir = f"exp_ennbo_{name}"
 
-    opts = ["turbo-f", "turbo-enn-10", "random"]
+    opts = [
+        "ppo",
+        "turbo-enn-fit-ucb",
+        "random",
+    ]
 
     cmds = []
     for opt in opts:
@@ -565,17 +575,24 @@ def prep_rl_one(results_dir, name):
             prep_args_1(
                 results_dir,
                 exp_dir=exp_dir,
-                problem=f"{name}:fn",
+                problem=f"{name}",
                 opt=opt,
-                num_arms=100,
-                num_replications=30,
-                num_rounds=1000,
+                num_arms=10,
+                num_replications=10,
+                num_rounds=100000,
                 noise=None,
-                num_denoise=1,
+                num_denoise=None,
+                num_denoise_passive=10,
+                # policy_tag="linear",
+                policy_tag="actor-critic-mlp-32-32",
             )
         )
 
     return cmds
+
+
+def prep_cheetah(results_dir):
+    return prep_rl_one(results_dir, "cheetah")
 
 
 def prep_ant(results_dir):

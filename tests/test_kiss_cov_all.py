@@ -164,7 +164,7 @@ def test_cov_bat_worker_run_batch_run():
 
 
 def test_cov_batches_worker_run_batch_run(tmp_path):
-    from experiments.batches import run, run_batch, worker
+    from experiments.batches_impl import run, run_batch, worker
 
     assert worker("true") == 0
     run_batch(
@@ -185,7 +185,9 @@ def test_cov_experiment_cli_local_main(monkeypatch, tmp_path):
 
     toml = tmp_path / "exp.toml"
     toml.write_text(
-        '[experiment]\nenv_tag = "f:sphere-2d"\nopt_name = "random"\nnum_arms = 1\nnum_rounds = 1\nnum_reps = 1\nexp_dir = "' + str(tmp_path / "out") + '"\n'
+        '[experiment]\nenv_tag = "f:sphere-2d"\npolicy_tag = "pure-function"\nopt_name = "random"\nnum_arms = 1\nnum_rounds = 1\nnum_reps = 1\nexp_dir = "'
+        + str(tmp_path / "out")
+        + '"\n'
     )
 
     monkeypatch.setattr("experiments.experiment_sampler.sampler", lambda cfg, distributor_fn: None)
@@ -233,6 +235,14 @@ def test_cov_data_cli():
     assert cli is not None
 
 
+def test_cov_ops_batches_cli(monkeypatch):
+    import ops.batches as batches_mod
+
+    monkeypatch.setattr("experiments.batches_impl.run_from_batch_tag", lambda *args, **kwargs: None)
+    batches_mod.cli.callback("prep_cum_time_dim", 1, True, "results")
+    assert batches_mod.cli is not None
+
+
 def test_cov_exp_uhd_UHDConfig_local_modal_cmd(monkeypatch, tmp_path):
     import ops.exp_uhd as exp_uhd
     from ops.uhd_config import BEConfig, EarlyRejectConfig, ENNConfig, UHDConfig
@@ -257,6 +267,7 @@ def test_cov_exp_uhd_UHDConfig_local_modal_cmd(monkeypatch, tmp_path):
     )
     cfg = UHDConfig(
         env_tag="f:sphere-2d",
+        policy_tag=None,
         num_rounds=1,
         problem_seed=None,
         noise_seed_0=None,
@@ -288,7 +299,7 @@ def test_cov_exp_uhd_UHDConfig_local_modal_cmd(monkeypatch, tmp_path):
     monkeypatch.setattr("ops.uhd_setup.make_loop", lambda *a, **k: _Loop())
 
     toml = tmp_path / "cfg.toml"
-    toml.write_text('[uhd]\nenv_tag = "f:sphere-2d"\nnum_rounds = 1\n')
+    toml.write_text('[uhd]\nenv_tag = "f:sphere-2d"\npolicy_tag = "pure-function"\nnum_rounds = 1\n')
 
     runner = CliRunner()
     res = runner.invoke(exp_uhd.cli, ["local", str(toml)])
@@ -302,10 +313,14 @@ def test_cov_exp_uhd_UHDConfig_local_modal_cmd(monkeypatch, tmp_path):
 
 
 def test_cov_ops_experiment_main(monkeypatch):
-    from ops.experiment import main
+    from click.testing import CliRunner
+
+    from ops.experiment import cli
 
     monkeypatch.setattr("experiments.experiment.cli", lambda: None)
-    main()
+    runner = CliRunner()
+    result = runner.invoke(cli)
+    assert result.exit_code == 0
 
 
 def test_cov_modal_tee_ENNFields():
@@ -372,7 +387,7 @@ def test_cov_modal_run_run_uhd(monkeypatch):
 def test_cov_make_loop_accuracy_fn_evaluate_fn():
     from ops.uhd_setup import make_loop
 
-    loop = make_loop("mnist", num_rounds=1)
+    loop = make_loop("mnist", policy_tag="linear", num_rounds=1)
     assert loop is not None
 
 
@@ -390,7 +405,7 @@ def test_cov_make_loop_gym_evaluate_fn(monkeypatch):
     )
 
     try:
-        loop = make_loop("stand-mlp", num_rounds=1)
+        loop = make_loop("stand-mlp", policy_tag="mlp-32-16", num_rounds=1)
     except RuntimeError as e:
         if "MUJOCO_GL" in str(e):
             pytest.skip("MuJoCo GL not available")
@@ -406,7 +421,7 @@ def test_cov_make_loop_gym_evaluate_fn(monkeypatch):
 def test_cov_optimizer_types():
     from optimizer.datum import Datum
     from optimizer.optimizer_types import IterateResult, ReturnSummary, TraceEntry
-    from optimizer.trajectories import Trajectory
+    from optimizer.trajectory import Trajectory
 
     tr = Trajectory(rreturn=1.0, states=np.zeros((1, 1)), actions=np.zeros((1, 1)))
     d = Datum(designer=None, policy=None, expected_acqf=0.5, trajectory=tr)

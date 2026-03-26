@@ -4,9 +4,10 @@ import numpy as np
 from scipy.stats import qmc
 
 import common.all_bounds as all_bounds
+from optimizer.designer_protocol import Designer
 
 
-class SobolDesigner:
+class SobolDesigner(Designer):
     def __init__(self, policy, max_points=2**12):
         self._policy = policy
         seed = policy.problem_seed + 12345

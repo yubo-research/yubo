@@ -71,8 +71,9 @@ class SACConfig:
 
     @classmethod
     def from_dict(cls, raw: dict) -> "SACConfig":
-        data = {k: v for k, v in raw.items() if k in {f.name for f in dataclasses.fields(cls)}}
-        data = apply_sac_env_model_defaults(data)
+        data = apply_sac_env_model_defaults(raw)
+        data.pop("policy_tag", None)
+        data = {k: v for k, v in data.items() if k in {f.name for f in dataclasses.fields(cls)}}
         return cls(**data)
 
 

@@ -24,6 +24,7 @@ from enn.turbo.config.trust_region import (
 
 import common.all_bounds as all_bounds
 from optimizer.designer_asserts import assert_scalar_rreturn
+from optimizer.designer_protocol import Designer
 
 
 def _create_optimizer_auto(bounds, config, rng):
@@ -45,7 +46,7 @@ def _create_optimizer_py(bounds, config, rng):
     return create_optimizer(bounds=bounds, config=config, rng=rng)
 
 
-class TurboENNDesigner:
+class TurboENNDesigner(Designer):
     def __init__(
         self,
         policy,

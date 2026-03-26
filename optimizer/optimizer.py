@@ -1,3 +1,5 @@
+"""Black-box optimizers; `env_conf` is an `EnvironmentRuntime` (or compatible)."""
+
 import sys
 import time
 
@@ -53,7 +55,8 @@ class Optimizer:
         self,
         collector,
         *,
-        env_conf,
+        env_conf,  # EnvironmentRuntime (or duck-typed): .env_name, .make(), .frozen_noise, seeds, spaces, .gym_conf
+        policy_tag: str | None = None,
         policy,
         num_arms,
         num_denoise_measurement=None,
@@ -64,6 +67,7 @@ class Optimizer:
     ):
         self._collector = collector
         self._env_conf = env_conf
+        self._policy_tag = policy_tag
         self.best_policy = policy
         self._num_arms = num_arms
         self._num_denoise = num_denoise_measurement
@@ -143,7 +147,7 @@ class Optimizer:
     def initialize(self, designer_name):
         from .designers import Designers
 
-        designers = Designers(self.best_policy, self._num_arms)
+        designers = Designers(self.best_policy, self._num_arms, env_conf=self._env_conf)
         self._opt_designers = designers.create(designer_name)
 
         if not isinstance(self._opt_designers, list):
@@ -251,9 +255,15 @@ class Optimizer:
 
     def _init_ref_point(self):
         from analysis.ref_point import SobolRefPoint
+        from problems.problem import Problem
 
         noise_seed_0 = 0 if self._env_conf.noise_seed_0 is None else int(self._env_conf.noise_seed_0)
         seed = int(self._env_conf.problem_seed) + 99991
+        if self._env_conf.env_tag is None:
+            raise ValueError("env_tag required for multi-objective optimization")
+        if self._policy_tag is None:
+            raise ValueError("policy_tag required for multi-objective optimization")
+        ref_problem = Problem(self._env_conf, self._policy_tag)
         self._ref_point = SobolRefPoint(
             num_cal=max(128, 10 * int(self._num_arms)),
             seed=seed,
@@ -261,7 +271,7 @@ class Optimizer:
             noise_seed_0=noise_seed_0,
             std_margin_scale=0.1,
         ).compute(
-            self._env_conf,
+            ref_problem,
             policy=self.best_policy.clone() if self.best_policy is not None else None,
         )
         self._collector(f"REF_POINT: ref = {np.array2string(self._ref_point, precision=6, floatmode='fixed')}")

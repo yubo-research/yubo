@@ -15,7 +15,7 @@ class MockEnvConf:
 
 
 def test_mlp_policy_factory():
-    from problems.mlp_policy import MLPPolicyFactory
+    from policies.mlp_policy import MLPPolicyFactory
 
     factory = MLPPolicyFactory((16, 8))
     env_conf = MockEnvConf()
@@ -24,7 +24,7 @@ def test_mlp_policy_factory():
 
 
 def test_mlp_policy_factory_with_rnn():
-    from problems.mlp_policy import MLPPolicyFactory
+    from policies.mlp_policy import MLPPolicyFactory
 
     factory = MLPPolicyFactory((), rnn_hidden_size=4)
     env_conf = MockEnvConf()
@@ -33,7 +33,7 @@ def test_mlp_policy_factory_with_rnn():
 
 
 def test_mlp_policy_forward():
-    from problems.mlp_policy import MLPPolicy
+    from policies.mlp_policy import MLPPolicy
 
     env_conf = MockEnvConf()
     policy = MLPPolicy(env_conf, (16, 8))
@@ -43,7 +43,7 @@ def test_mlp_policy_forward():
 
 
 def test_mlp_policy_num_params():
-    from problems.mlp_policy import MLPPolicy
+    from policies.mlp_policy import MLPPolicy
 
     env_conf = MockEnvConf()
     policy = MLPPolicy(env_conf, (16, 8))
@@ -51,7 +51,7 @@ def test_mlp_policy_num_params():
 
 
 def test_mlp_policy_clone():
-    from problems.mlp_policy import MLPPolicy
+    from policies.mlp_policy import MLPPolicy
 
     env_conf = MockEnvConf()
     policy = MLPPolicy(env_conf, (16, 8))

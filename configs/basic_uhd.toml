@@ -1,0 +1,5 @@
+[uhd]
+env_tag = "stand-mlp"
+policy_tag = "mlp-32-16"
+num_rounds = 10
+optimizer = "simple"

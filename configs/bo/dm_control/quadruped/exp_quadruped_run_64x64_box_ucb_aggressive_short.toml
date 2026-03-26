@@ -1,6 +1,7 @@
 [experiment]
 exp_dir = "_tmp/bo/dm_control/quadruped/box_ucb_aggressive_short"
 env_tag = "dm_control/quadruped-run-v0-small"
+policy_tag = "mlp-4-4"
 num_arms = 10
 total_timesteps = 120000
 num_reps = 1

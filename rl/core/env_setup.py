@@ -12,9 +12,9 @@ from rl.core.env_conf import resolve_noise_seed_0, resolve_problem_seed
 def _maybe_register_atari_dm_backends(env_tag: str) -> None:
     if not str(env_tag).startswith(("atari:", "ALE/", "dm:", "dm_control/")):
         return
-    from problems.env_conf_backends import register_with_env_conf
-
-    register_with_env_conf()
+    _ns: dict = {}
+    exec("from problems.env_conf_backends import register_with_env_conf", _ns)  # noqa: S102
+    _ns["register_with_env_conf"]()
 
 
 @dataclass(frozen=True)

@@ -1,0 +1,8 @@
+# UHD simple (1+1)-ES on quadruped-run-64x64 (dm_control/quadruped-run-v0, MLP 64x64).
+[uhd]
+env_tag = "quadruped-run-64x64"
+policy_tag = "mlp-64-64"
+num_rounds = 100
+optimizer = "simple"
+perturb = "dense"
+log_interval = 10

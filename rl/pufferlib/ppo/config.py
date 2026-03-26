@@ -65,6 +65,7 @@ class PufferPPOConfig:
     @classmethod
     def from_dict(cls, raw: dict) -> "PufferPPOConfig":
         data = apply_ppo_env_model_defaults(raw)
+        data.pop("policy_tag", None)
         return cls(**data)
 
 

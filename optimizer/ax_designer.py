@@ -2,9 +2,10 @@ import numpy as np
 
 import common.all_bounds as all_bounds
 from optimizer.designer_asserts import assert_scalar_rreturn
+from optimizer.designer_protocol import Designer
 
 
-class AxDesigner:
+class AxDesigner(Designer):
     def __init__(self, policy):
         self._policy = policy
         self._ax_client = None

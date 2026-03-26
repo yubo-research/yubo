@@ -2,7 +2,8 @@ from typing import NamedTuple
 
 import numpy as np
 
-from .trajectories import Trajectory, collect_trajectory
+from .trajectories import collect_trajectory
+from .trajectory import Trajectory
 
 
 class _MeanReturnResult(NamedTuple):

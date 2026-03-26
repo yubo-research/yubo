@@ -14,6 +14,7 @@ def test_puffer_sac_config_from_dict_converts_hidden_sizes():
     cfg = puffer_sac.SACConfig.from_dict(
         {
             "env_tag": "cheetah",
+            "policy_tag": "mlp-32-16",
             "exp_dir": "_tmp/sac_puffer_test",
             "backbone_hidden_sizes": [128, 64],
             "actor_head_hidden_sizes": [64],
@@ -29,7 +30,7 @@ def test_puffer_sac_config_from_dict_converts_hidden_sizes():
 
 
 def test_puffer_sac_config_from_dict_uses_env_defaults():
-    cfg = puffer_sac.SACConfig.from_dict({"env_tag": "cheetah"})
+    cfg = puffer_sac.SACConfig.from_dict({"env_tag": "cheetah", "policy_tag": "mlp-32-16"})
     assert cfg.backbone_hidden_sizes == (256, 256)
 
 

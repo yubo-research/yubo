@@ -88,13 +88,13 @@ def evaluate_heldout_if_enabled(
     capture_actor_state: Any,
     restore_actor_state: Any,
     eval_policy_factory: Any,
-    get_env_conf: Any,
+    build_env_runtime: Any,
     evaluate_for_best: Any,
     heldout_i_noise: int = 99999,
 ) -> float | None:
     sac_eval = __import__("rl.core.sac_eval", fromlist=["evaluate_heldout_with_best_actor"])
     best_eval_policy = eval_policy_factory(modules, env_setup, device)
-    env_conf = get_env_conf(
+    env_conf = build_env_runtime(
         config.env_tag,
         problem_seed=env_setup.problem_seed,
         noise_seed_0=env_setup.noise_seed_0,

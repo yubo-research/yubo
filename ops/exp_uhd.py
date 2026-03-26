@@ -9,6 +9,7 @@ from ops.uhd_config import BEConfig, EarlyRejectConfig, ENNConfig, UHDConfig
 
 _REQUIRED_TOML_KEYS = ("env_tag", "num_rounds")
 _OPTIONAL_TOML_KEYS = (
+    "policy_tag",
     "problem_seed",
     "noise_seed_0",
     "lr",
@@ -109,6 +110,25 @@ def _load_toml_config(path: str) -> dict[str, Any]:
         data = tomllib.load(f)
     section = data.get("uhd", data)
     return _coerce_mapping_keys(section, source=f"TOML '{path}'")
+
+
+def _parse_override_value(raw: str) -> Any:
+    from common.config_toml import parse_value
+
+    return parse_value(raw)
+
+
+def _parse_overrides(override_strings: tuple[str, ...]) -> dict[str, Any]:
+    out: dict[str, Any] = {}
+    for s in override_strings:
+        if "=" not in s:
+            raise ValueError(f"Override must be key=value, got: {s}")
+        key_raw, value_raw = s.split("=", 1)
+        norm = _normalize_key(key_raw.strip())
+        if norm not in _ALL_TOML_KEYS:
+            raise ValueError(f"Unknown override key '{key_raw}'. Valid keys: {sorted(_ALL_TOML_KEYS)}")
+        out[norm] = _parse_override_value(value_raw.strip())
+    return out
 
 
 def _validate_required(cfg: dict[str, Any]) -> None:
@@ -219,6 +239,9 @@ def _parse_enn_fields(cfg: dict[str, Any]) -> ENNConfig:
 
 def _parse_cfg(cfg: dict[str, Any]) -> UHDConfig:
     env_tag = str(cfg["env_tag"])
+    policy_tag = cfg.get("policy_tag", None)
+    if policy_tag is not None:
+        policy_tag = str(policy_tag)
     num_rounds = int(cfg["num_rounds"])
     problem_seed = cfg.get("problem_seed", None)
     if problem_seed is not None:
@@ -246,6 +269,7 @@ def _parse_cfg(cfg: dict[str, Any]) -> UHDConfig:
     ndt, nmt = _parse_perturb(perturb)
     return UHDConfig(
         env_tag=env_tag,
+        policy_tag=policy_tag,
         num_rounds=num_rounds,
         problem_seed=problem_seed,
         noise_seed_0=noise_seed_0,
@@ -270,14 +294,29 @@ def _parse_cfg(cfg: dict[str, Any]) -> UHDConfig:
 
 @_cli.command(name="local", help="Run locally (single process) from a config TOML.")
 @click.argument("config_toml", type=click.Path(exists=True, dir_okay=False, path_type=str))
-def _local(config_toml: str) -> None:
+@click.option(
+    "-o",
+    "--opt",
+    "overrides",
+    multiple=True,
+    help="Override config key: --opt key=value (e.g. --opt env_tag=quadruped-run-64x64 --opt optimizer=simple)",
+)
+def _local(config_toml: str, overrides: tuple[str, ...] = ()) -> None:
     try:
         cfg = _load_toml_config(config_toml)
+        if overrides:
+            override_dict = _parse_overrides(overrides)
+            cfg = {**cfg, **override_dict}
         _validate_required(cfg)
     except (OSError, tomllib.TOMLDecodeError, TypeError, ValueError) as e:
         raise click.ClickException(str(e)) from e
 
     parsed = _parse_cfg(cfg)
+    _ns: dict = {}
+    exec("from problems.environment_spec import needs_atari_dm_bindings", _ns)  # noqa: S102
+    if _ns["needs_atari_dm_bindings"](parsed.env_tag):
+        exec("from problems.env_conf_backends import register_with_env_conf", _ns)  # noqa: S102
+        _ns["register_with_env_conf"]()
     _run_parsed(parsed)
 
 
@@ -297,6 +336,7 @@ def _run_bszo(parsed: UHDConfig) -> None:
         parsed.env_tag,
         parsed.num_rounds,
         lr=parsed.lr,
+        policy_tag=parsed.policy_tag,
         problem_seed=parsed.problem_seed,
         noise_seed_0=parsed.noise_seed_0,
         batch_size=parsed.batch_size,
@@ -319,6 +359,7 @@ def _run_simple(parsed: UHDConfig) -> None:
         parsed.num_rounds,
         0.001,
         parsed.optimizer,
+        policy_tag=parsed.policy_tag,
         num_dim_target=parsed.num_dim_target,
         problem_seed=parsed.problem_seed,
         noise_seed_0=parsed.noise_seed_0,
@@ -336,6 +377,7 @@ def _run_mezo(parsed: UHDConfig) -> None:
     loop = make_loop(
         parsed.env_tag,
         parsed.num_rounds,
+        policy_tag=parsed.policy_tag,
         problem_seed=parsed.problem_seed,
         noise_seed_0=parsed.noise_seed_0,
         batch_size=parsed.batch_size,
@@ -355,23 +397,19 @@ def _run_mezo(parsed: UHDConfig) -> None:
 local = _local
 
 
-@_cli.command(
-    name="modal",
-    help="Run on Modal. Streams to stdout; optionally saves to --log-file.",
-)
-@click.argument("config_toml", type=click.Path(exists=True, dir_okay=False, path_type=str))
-@click.option(
-    "--log-file",
-    type=click.Path(dir_okay=False),
-    default=None,
-    help="Also save log to this local file.",
-)
-@click.option("--gpu", type=str, default="A100", help="Modal GPU type (e.g. T4, A10, A100, H100).")
-def modal_cmd(config_toml: str, log_file: str | None, gpu: str) -> None:
+def modal_cmd(
+    config_toml: str,
+    overrides: tuple[str, ...] = (),
+    log_file: str | None = None,
+    gpu: str = "A100",
+) -> None:
     from ops.modal_uhd import run as modal_run
 
     try:
         cfg = _load_toml_config(config_toml)
+        if overrides:
+            override_dict = _parse_overrides(overrides)
+            cfg = {**cfg, **override_dict}
         _validate_required(cfg)
     except (OSError, tomllib.TOMLDecodeError, TypeError, ValueError) as e:
         raise click.ClickException(str(e)) from e
@@ -384,6 +422,7 @@ def modal_cmd(config_toml: str, log_file: str | None, gpu: str) -> None:
         parsed.num_dim_target,
         parsed.num_module_target,
         gpu=gpu,
+        policy_tag=parsed.policy_tag,
         problem_seed=parsed.problem_seed,
         noise_seed_0=parsed.noise_seed_0,
         log_interval=parsed.log_interval,
@@ -397,6 +436,29 @@ def modal_cmd(config_toml: str, log_file: str | None, gpu: str) -> None:
         with open(log_file, "w") as f:
             f.write(log_text)
         click.echo(f"Log saved to {log_file}")
+
+
+@_cli.command(
+    name="modal",
+    help="Run on Modal. Streams to stdout; optionally saves to --log-file.",
+)
+@click.argument("config_toml", type=click.Path(exists=True, dir_okay=False, path_type=str))
+@click.option(
+    "-o",
+    "--opt",
+    "overrides",
+    multiple=True,
+    help="Override config key: --opt key=value (e.g. --opt env_tag=quadruped-run-64x64)",
+)
+@click.option(
+    "--log-file",
+    type=click.Path(dir_okay=False),
+    default=None,
+    help="Also save log to this local file.",
+)
+@click.option("--gpu", type=str, default="A100", help="Modal GPU type (e.g. T4, A10, A100, H100).")
+def _modal_cmd_cli(config_toml: str, overrides: tuple[str, ...], log_file: str | None, gpu: str) -> None:
+    modal_cmd(config_toml, overrides, log_file, gpu)
 
 
 if __name__ == "__main__":

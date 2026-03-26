@@ -220,7 +220,7 @@ def test_evaluate_heldout_if_enabled():
         capture_actor_state=lambda *_: {"current": 1},
         restore_actor_state=lambda *_: None,
         eval_policy_factory=lambda *_: object(),
-        get_env_conf=lambda *_args, **_kwargs: object(),
+        build_env_runtime=lambda *_args, **_kwargs: object(),
         evaluate_for_best=lambda *_args, **_kwargs: 1.0,
     )
     assert result is None
@@ -237,7 +237,7 @@ def test_evaluate_heldout_if_enabled():
         capture_actor_state=lambda *_: {"current": 5},
         restore_actor_state=lambda _modules, snapshot: restore_calls.append(snapshot),
         eval_policy_factory=lambda *_: "policy",
-        get_env_conf=lambda *_args, **_kwargs: "env_conf",
+        build_env_runtime=lambda *_args, **_kwargs: "env_conf",
         evaluate_for_best=lambda _env_conf, _policy, denoise, **_kwargs: (4.5 if denoise == 3 else -1.0),
     )
     assert result == 4.5
@@ -265,7 +265,7 @@ def test_evaluate_heldout_if_enabled_passes_pixel_flags():
         capture_actor_state=lambda *_: {"current": 1},
         restore_actor_state=lambda *_: None,
         eval_policy_factory=lambda *_: "policy",
-        get_env_conf=lambda *_args, **kwargs: (captured_kwargs.update(kwargs) or "env_conf"),
+        build_env_runtime=lambda *_args, **kwargs: (captured_kwargs.update(kwargs) or "env_conf"),
         evaluate_for_best=lambda *_args, **_kwargs: 7.0,
     )
     assert result == 7.0
@@ -295,7 +295,7 @@ def test_evaluate_heldout_if_enabled_restores_actor_state_on_exception():
             capture_actor_state=lambda *_: {"current": 5},
             restore_actor_state=lambda _modules, snapshot: restore_calls.append(snapshot),
             eval_policy_factory=lambda *_: "policy",
-            get_env_conf=lambda *_args, **_kwargs: "env_conf",
+            build_env_runtime=lambda *_args, **_kwargs: "env_conf",
             evaluate_for_best=_raise_in_eval,
         )
         assert False, "expected RuntimeError"

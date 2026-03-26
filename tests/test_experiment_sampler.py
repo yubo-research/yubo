@@ -44,11 +44,22 @@ def test_true_false_invalid():
         true_false("1")
 
 
-def test_extract_trace_fns():
+def _make_mock_problem():
+    """Create a mock Problem with .env property and .build_policy() method."""
     mock_env = MagicMock()
+    mock_env.env_name = "test_env"
+    mock_env.problem_seed = 42
+    mock_problem = MagicMock()
+    mock_problem.env = mock_env
+    mock_problem.build_policy.return_value = MagicMock()
+    return mock_problem
+
+
+def test_extract_trace_fns():
+    mock_problem = _make_mock_problem()
     run_configs = [
         RunConfig(
-            env_conf=mock_env,
+            problem=mock_problem,
             opt_name="ucb",
             num_rounds=10,
             num_arms=5,
@@ -59,7 +70,7 @@ def test_extract_trace_fns():
             trace_fn="/path/a",
         ),
         RunConfig(
-            env_conf=mock_env,
+            problem=mock_problem,
             opt_name="ei",
             num_rounds=10,
             num_arms=5,
@@ -85,6 +96,7 @@ def test_prep_args_1():
         num_rounds=10,
         noise=None,
         num_denoise=100,
+        policy_tag="pure-function",
     )
     assert isinstance(result, ExperimentConfig)
     assert result.exp_dir == "/results/exp1"
@@ -94,6 +106,7 @@ def test_prep_args_1():
     assert result.num_reps == 3
     assert result.num_rounds == 10
     assert result.num_denoise == 100
+    assert result.policy_tag == "pure-function"
 
 
 def test_prep_d_args():
@@ -109,19 +122,21 @@ def test_prep_d_args():
         num_rounds=5,
         func_category="f",
         num_denoise=None,
+        policy_tag="pure-function",
     )
     assert len(results) == 2 * 2 * 2 * 1
     assert all(isinstance(r, ExperimentConfig) for r in results)
     assert results[0].env_tag == "f:ackley-5d"
     assert results[0].opt_name == "ucb"
+    assert results[0].policy_tag == "pure-function"
 
 
-@patch("problems.env_conf.get_env_conf")
+@patch("experiments.experiment_sampler.build_problem")
 @patch("experiments.experiment_sampler.data_is_done")
-def test_mk_replicates(mock_data_is_done, mock_get_env_conf):
+def test_mk_replicates(mock_data_is_done, mock_build_problem):
     mock_data_is_done.return_value = False
-    mock_env_conf = MagicMock()
-    mock_get_env_conf.return_value = mock_env_conf
+    mock_problem = _make_mock_problem()
+    mock_build_problem.return_value = mock_problem
 
     with tempfile.TemporaryDirectory() as tmpdir:
         config = ExperimentConfig(
@@ -133,6 +148,7 @@ def test_mk_replicates(mock_data_is_done, mock_get_env_conf):
             num_reps=3,
             num_denoise=100,
             b_trace=True,
+            policy_tag="pure-function",
         )
         results = mk_replicates(config)
 
@@ -143,15 +159,15 @@ def test_mk_replicates(mock_data_is_done, mock_get_env_conf):
     assert results[0].num_rounds == 10
     assert results[0].num_denoise == 100
     assert results[0].b_trace is True
-    assert results[0].env_conf == mock_env_conf
+    assert results[0].problem == mock_problem
 
 
-@patch("problems.env_conf.get_env_conf")
+@patch("experiments.experiment_sampler.build_problem")
 @patch("experiments.experiment_sampler.data_is_done")
-def test_mk_replicates_skips_done(mock_data_is_done, mock_get_env_conf):
+def test_mk_replicates_skips_done(mock_data_is_done, mock_build_problem):
     mock_data_is_done.return_value = True
-    mock_env_conf = MagicMock()
-    mock_get_env_conf.return_value = mock_env_conf
+    mock_problem = _make_mock_problem()
+    mock_build_problem.return_value = mock_problem
 
     with tempfile.TemporaryDirectory() as tmpdir:
         config = ExperimentConfig(
@@ -162,6 +178,7 @@ def test_mk_replicates_skips_done(mock_data_is_done, mock_get_env_conf):
             num_rounds=10,
             num_reps=3,
             num_denoise=None,
+            policy_tag="pure-function",
         )
         results = mk_replicates(config)
 
@@ -170,10 +187,10 @@ def test_mk_replicates_skips_done(mock_data_is_done, mock_get_env_conf):
 
 def test_mk_replicates_creates_out_dir():
     with tempfile.TemporaryDirectory() as tmpdir:
-        with patch("problems.env_conf.get_env_conf") as mock_get_env_conf:
+        with patch("experiments.experiment_sampler.build_problem") as mock_build_problem:
             with patch("experiments.experiment_sampler.data_is_done") as mock_data_is_done:
                 mock_data_is_done.return_value = False
-                mock_get_env_conf.return_value = MagicMock()
+                mock_build_problem.return_value = _make_mock_problem()
 
                 config = ExperimentConfig(
                     exp_dir=tmpdir,
@@ -183,6 +200,7 @@ def test_mk_replicates_creates_out_dir():
                     num_rounds=5,
                     num_reps=1,
                     num_denoise=None,
+                    policy_tag="pure-function",
                 )
                 mk_replicates(config)
 
@@ -200,6 +218,7 @@ def test_experiment_config_to_dir_name():
         num_rounds=10,
         num_reps=3,
         num_denoise=100,
+        policy_tag="pure-function",
     )
     dir_name = config.to_dir_name()
     assert dir_name.startswith("/results/exp1/")
@@ -215,6 +234,7 @@ def test_experiment_config_to_dir_name_legacy():
         num_rounds=10,
         num_reps=3,
         num_denoise=100,
+        policy_tag="pure-function",
     )
     expected = "/results/exp1/env=f:ackley-10d--opt_name=ucb--num_arms=5--num_rounds=10--num_reps=3--num_denoise=100"
     assert config.to_dir_name_legacy() == expected
@@ -229,6 +249,7 @@ def test_experiment_config_to_dict():
         num_rounds=10,
         num_reps=3,
         num_denoise=100,
+        policy_tag="pure-function",
     )
     d = config.to_dict()
     assert d["exp_dir"] == "/results/exp1"
@@ -238,6 +259,7 @@ def test_experiment_config_to_dict():
     assert d["num_rounds"] == 10
     assert d["num_reps"] == 3
     assert d["num_denoise"] == 100
+    assert d["policy_tag"] == "pure-function"
 
 
 def test_experiment_config_from_dict():
@@ -250,6 +272,7 @@ def test_experiment_config_from_dict():
         "num_reps": "3",
         "num_denoise": "100",
         "b_trace": "true",
+        "policy_tag": "pure-function",
     }
     config = ExperimentConfig.from_dict(d)
     assert config.exp_dir == "/results/exp1"
@@ -260,6 +283,7 @@ def test_experiment_config_from_dict():
     assert config.num_reps == 3
     assert config.num_denoise == 100
     assert config.b_trace is True
+    assert config.policy_tag == "pure-function"
 
 
 def test_experiment_config_from_dict_none_denoise():
@@ -271,6 +295,7 @@ def test_experiment_config_from_dict_none_denoise():
         "num_rounds": 10,
         "num_reps": 3,
         "num_denoise": "None",
+        "policy_tag": "pure-function",
     }
     config = ExperimentConfig.from_dict(d)
     assert config.num_denoise is None
@@ -284,6 +309,7 @@ def test_experiment_config_from_dict_total_timesteps_only():
         "num_arms": 5,
         "total_timesteps": 123456,
         "num_reps": 3,
+        "policy_tag": "pure-function",
     }
     config = ExperimentConfig.from_dict(d)
     assert config.total_timesteps == 123456
@@ -291,15 +317,13 @@ def test_experiment_config_from_dict_total_timesteps_only():
 
 
 @patch("optimizer.optimizer.Optimizer")
-@patch("problems.env_conf.default_policy")
 @patch("experiments.experiment_sampler.seed_all")
 @patch("experiments.experiment_sampler.torch")
-def test_sample_1(mock_torch, mock_seed_all, mock_default_policy, mock_optimizer_class):
+def test_sample_1(mock_torch, mock_seed_all, mock_optimizer_class):
     mock_torch.cuda.is_available.return_value = False
     mock_torch.empty.return_value.device = "cpu"
 
     mock_policy = MagicMock()
-    mock_default_policy.return_value = mock_policy
 
     mock_trace_entry = MagicMock()
     mock_trace_entry.dt_prop = 0.1
@@ -310,12 +334,16 @@ def test_sample_1(mock_torch, mock_seed_all, mock_default_policy, mock_optimizer
     mock_optimizer.collect_trace.return_value = iter([mock_trace_entry, mock_trace_entry])
     mock_optimizer_class.return_value = mock_optimizer
 
-    mock_env_conf = MagicMock()
-    mock_env_conf.problem_seed = 42
-    mock_env_conf.env_name = "test_env"
+    mock_env_runtime = MagicMock()
+    mock_env_runtime.problem_seed = 42
+    mock_env_runtime.env_name = "test_env"
+
+    mock_problem = MagicMock()
+    mock_problem.env = mock_env_runtime
+    mock_problem.build_policy.return_value = mock_policy
 
     run_config = RunConfig(
-        env_conf=mock_env_conf,
+        problem=mock_problem,
         opt_name="ucb",
         num_rounds=2,
         num_arms=5,
@@ -328,7 +356,7 @@ def test_sample_1(mock_torch, mock_seed_all, mock_default_policy, mock_optimizer
     collector_log, collector_trace, trace_records = sample_1(run_config)
 
     mock_seed_all.assert_called_once_with(42 + 27)
-    mock_default_policy.assert_called_once_with(mock_env_conf)
+    mock_problem.build_policy.assert_called_once()
     mock_optimizer_class.assert_called_once()
     mock_optimizer.collect_trace.assert_called_once_with(
         designer_name="ucb",
@@ -349,13 +377,11 @@ def test_sample_1(mock_torch, mock_seed_all, mock_default_policy, mock_optimizer
 
 
 @patch("optimizer.optimizer.Optimizer")
-@patch("problems.env_conf.default_policy")
 @patch("experiments.experiment_sampler.seed_all")
 @patch("experiments.experiment_sampler.torch")
-def test_sample_1_no_trace(mock_torch, mock_seed_all, mock_default_policy, mock_optimizer_class):
+def test_sample_1_no_trace(mock_torch, mock_seed_all, mock_optimizer_class):
     mock_torch.cuda.is_available.return_value = False
     mock_torch.empty.return_value.device = "cpu"
-    mock_default_policy.return_value = MagicMock()
 
     mock_trace_entry = MagicMock()
     mock_trace_entry.dt_prop = 0.1
@@ -366,11 +392,16 @@ def test_sample_1_no_trace(mock_torch, mock_seed_all, mock_default_policy, mock_
     mock_optimizer.collect_trace.return_value = iter([mock_trace_entry])
     mock_optimizer_class.return_value = mock_optimizer
 
-    mock_env_conf = MagicMock()
-    mock_env_conf.problem_seed = 0
+    mock_env_runtime = MagicMock()
+    mock_env_runtime.problem_seed = 0
+    mock_env_runtime.env_name = "test_env"
+
+    mock_problem = MagicMock()
+    mock_problem.env = mock_env_runtime
+    mock_problem.build_policy.return_value = MagicMock()
 
     run_config = RunConfig(
-        env_conf=mock_env_conf,
+        problem=mock_problem,
         opt_name="random",
         num_rounds=1,
         num_arms=1,
@@ -390,13 +421,11 @@ def test_sample_1_no_trace(mock_torch, mock_seed_all, mock_default_policy, mock_
 
 
 @patch("optimizer.optimizer.Optimizer")
-@patch("problems.env_conf.default_policy")
 @patch("experiments.experiment_sampler.seed_all")
 @patch("experiments.experiment_sampler.torch")
-def test_sample_1_total_timesteps_budget(mock_torch, mock_seed_all, mock_default_policy, mock_optimizer_class):
+def test_sample_1_total_timesteps_budget(mock_torch, mock_seed_all, mock_optimizer_class):
     mock_torch.cuda.is_available.return_value = False
     mock_torch.empty.return_value.device = "cpu"
-    mock_default_policy.return_value = MagicMock()
 
     mock_trace_entry = MagicMock()
     mock_trace_entry.dt_prop = 0.1
@@ -409,12 +438,16 @@ def test_sample_1_total_timesteps_budget(mock_torch, mock_seed_all, mock_default
     mock_optimizer.collect_trace.return_value = iter([mock_trace_entry])
     mock_optimizer_class.return_value = mock_optimizer
 
-    mock_env_conf = MagicMock()
-    mock_env_conf.problem_seed = 0
-    mock_env_conf.env_name = "test_env"
+    mock_env_runtime = MagicMock()
+    mock_env_runtime.problem_seed = 0
+    mock_env_runtime.env_name = "test_env"
+
+    mock_problem = MagicMock()
+    mock_problem.env = mock_env_runtime
+    mock_problem.build_policy.return_value = MagicMock()
 
     run_config = RunConfig(
-        env_conf=mock_env_conf,
+        problem=mock_problem,
         opt_name="random",
         num_rounds=None,
         total_timesteps=500,
@@ -483,10 +516,10 @@ def test_scan_local(mock_sample_1, mock_post_process):
         mock_trace_records,
     )
 
-    mock_env = MagicMock()
+    mock_problem = _make_mock_problem()
     run_configs = [
         RunConfig(
-            env_conf=mock_env,
+            problem=mock_problem,
             opt_name="ucb",
             num_rounds=10,
             num_arms=5,
@@ -497,7 +530,7 @@ def test_scan_local(mock_sample_1, mock_post_process):
             trace_fn="/path/a",
         ),
         RunConfig(
-            env_conf=mock_env,
+            problem=mock_problem,
             opt_name="ei",
             num_rounds=5,
             num_arms=3,
@@ -521,8 +554,10 @@ def test_scan_local(mock_sample_1, mock_post_process):
 @patch("experiments.experiment_sampler.sample_1")
 def test_scan_local_single_replicate_stays_in_process(mock_sample_1, mock_post_process):
     mock_sample_1.return_value = (MagicMock(), MagicMock(), MagicMock())
+    mock_problem = _make_mock_problem()
+    mock_problem.env.env_name = "f:sphere-2d"
     run_config = RunConfig(
-        env_conf=MagicMock(),
+        problem=mock_problem,
         opt_name="ucb",
         num_rounds=1,
         num_arms=1,
@@ -532,7 +567,6 @@ def test_scan_local_single_replicate_stays_in_process(mock_sample_1, mock_post_p
         b_trace=True,
         trace_fn="/path/one",
     )
-    run_config.env_conf.env_name = "f:sphere-2d"
 
     scan_local([run_config], local_workers=8)
 
@@ -616,9 +650,24 @@ def test_sampler(mock_mk_replicates):
         num_arms=5,
         num_rounds=10,
         num_reps=1,
+        policy_tag="pure-function",
     )
 
     sampler(config, mock_distributor)
 
     mock_mk_replicates.assert_called_once_with(config)
     mock_distributor.assert_called_once_with([mock_run_config])
+
+
+def test_experiment_config_from_dict_missing_policy_tag_raises():
+    """ExperimentConfig.from_dict must raise ValueError when policy_tag is missing."""
+    d = {
+        "exp_dir": "/results/exp1",
+        "env_tag": "f:ackley-10d",
+        "opt_name": "ucb",
+        "num_arms": 5,
+        "num_rounds": 10,
+        "num_reps": 3,
+    }
+    with pytest.raises(ValueError, match="Missing required field 'policy_tag'"):
+        ExperimentConfig.from_dict(d)

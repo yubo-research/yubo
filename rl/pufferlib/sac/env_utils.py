@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import importlib
 from typing import Any
 
 from rl.core.env_setup import build_continuous_gym_env_setup
@@ -21,7 +20,6 @@ resolve_backbone_name = _impl.resolve_backbone_name
 
 
 def build_env_setup(config: Any) -> EnvSetup:
-    get_env_conf = importlib.import_module("problems.env_conf").get_env_conf
     shared = build_continuous_gym_env_setup(
         env_tag=str(config.env_tag),
         seed=int(config.seed),
@@ -29,7 +27,7 @@ def build_env_setup(config: Any) -> EnvSetup:
         noise_seed_0=config.noise_seed_0,
         from_pixels=bool(config.from_pixels),
         pixels_only=bool(config.pixels_only),
-        get_env_conf_fn=get_env_conf,
+        get_env_conf_fn=_impl.continuous_gym_runtime_from_problem,
         obs_scale_from_env_fn=_impl.obs_scale_from_env,
     )
     return EnvSetup(

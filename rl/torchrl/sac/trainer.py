@@ -30,6 +30,18 @@ from .setup import (
 )
 
 
+def _build_env_runtime(env_tag, *, problem_seed=None, noise_seed_0=None, from_pixels=False, pixels_only=True):
+    """Wrapper that adapts build_problem to return EnvironmentRuntime for callback-based APIs."""
+    return sac_deps.build_problem(
+        env_tag,
+        policy_tag="linear",
+        problem_seed=problem_seed,
+        noise_seed_0=noise_seed_0,
+        from_pixels=from_pixels,
+        pixels_only=pixels_only,
+    ).env
+
+
 def _checkpoint_payload(modules: _Modules, training: _TrainingSetup, state: _TrainState, *, step: int) -> dict:
     actor_snapshot = capture_backbone_head_snapshot(modules.actor_backbone, modules.actor_head, log_std=None, state_to_cpu=False)
     return {
@@ -206,7 +218,7 @@ def _run_sac_eval_log_checkpoint(config, env, modules, training, state, step, ru
             capture_actor_state=sac_deps.torchrl_sac_actor_eval.capture_sac_actor_snapshot,
             restore_actor_state=sac_deps.torchrl_sac_actor_eval.restore_sac_actor_snapshot,
             eval_policy_factory=lambda a, e, d: _build_eval_policy(a, e, d),
-            get_env_conf=sac_deps.get_env_conf,
+            build_env_runtime=_build_env_runtime,
             evaluate_for_best=evaluate_for_best,
         )
 
@@ -303,7 +315,7 @@ def train_sac(config: SACConfig) -> TrainResult:
         sac_deps.torchrl_sac_loop.save_final_checkpoint_if_enabled(config, modules, training, state, build_checkpoint_payload=_checkpoint_payload)
         if config.video_enable:
             ctx = sac_deps.video.RLVideoContext(
-                build_eval_env_conf=lambda ps, ns: sac_deps.get_env_conf(config.env_tag, problem_seed=ps, noise_seed_0=ns),
+                build_eval_env_conf=lambda ps, ns: _build_env_runtime(config.env_tag, problem_seed=ps, noise_seed_0=ns),
                 make_eval_policy=lambda m, d: _build_eval_policy(m, env, d),
                 capture_actor_state=sac_deps.torchrl_sac_actor_eval.capture_sac_actor_snapshot,
                 with_actor_state=sac_deps.torchrl_sac_actor_eval.use_sac_actor_snapshot,

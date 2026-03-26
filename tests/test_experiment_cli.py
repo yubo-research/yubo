@@ -29,6 +29,7 @@ class _StubExperimentConfig:
     max_proposal_seconds: float | None = None
     max_total_seconds: float | None = None
     b_trace: bool = True
+    policy_tag: str | None = None
 
     @classmethod
     def from_dict(cls, d: dict) -> "_StubExperimentConfig":
@@ -77,6 +78,7 @@ def test_load_experiment_config_toml_experiment_table(tmp_path):
         max_total_seconds = 30.5
         runtime_device = "cpu"
         local_workers = 4
+        policy_tag = "pure-function"
         """,
     )
     cfg = load_experiment_config(config_toml_path=str(toml_path))
@@ -102,6 +104,7 @@ def test_load_experiment_config_toml_root_and_hyphen_keys(tmp_path):
         "num-arms" = 2
         "num-rounds" = 4
         "num-reps" = 1
+        "policy-tag" = "pure-function"
         """,
     )
     cfg = load_experiment_config(config_toml_path=str(toml_path))
@@ -124,6 +127,7 @@ def test_load_experiment_config_total_timesteps_only(tmp_path):
         num_arms = 4
         total_timesteps = 100000
         num_reps = 1
+        policy_tag = "pure-function"
         """,
     )
     cfg = load_experiment_config(config_toml_path=str(toml_path))
@@ -175,6 +179,7 @@ def test_cli_local_runs_with_stubbed_sampler(monkeypatch, tmp_path):
         num_arms = 4
         num_rounds = 10
         num_reps = 3
+        policy_tag = "pure-function"
         """,
     )
 
@@ -199,6 +204,7 @@ def test_load_experiment_config_overrides(tmp_path):
         num_arms = 4
         num_rounds = 10
         num_reps = 3
+        policy_tag = "pure-function"
         """,
     )
     cfg = load_experiment_config(
@@ -221,6 +227,7 @@ def test_cli_local_override_opt_name(monkeypatch, tmp_path):
         num_arms = 4
         num_rounds = 10
         num_reps = 3
+        policy_tag = "pure-function"
         """,
     )
 
@@ -243,6 +250,7 @@ def test_load_experiment_config_toml_optimizer_table(tmp_path):
         num_arms = 2
         num_rounds = 3
         num_reps = 1
+        policy_tag = "pure-function"
 
         [optimizer]
         name = "turbo-enn-fit"

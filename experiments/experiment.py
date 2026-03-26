@@ -8,6 +8,7 @@ import tomllib
 _BASE_REQUIRED_KEYS = (
     "exp_dir",
     "env_tag",
+    "policy_tag",
     "opt_name",
     "num_arms",
     "num_reps",
@@ -178,7 +179,9 @@ def _local(config_toml: str, overrides: tuple[str, ...]) -> None:
     except (OSError, tomllib.TOMLDecodeError, TypeError, ValueError) as e:
         raise click.ClickException(str(e)) from e
 
-    if str(config.env_tag).startswith(("atari:", "ALE/", "dm:", "dm_control/")):
+    from problems.env_conf import needs_atari_dm_bindings
+
+    if needs_atari_dm_bindings(str(config.env_tag)):
         from problems.env_conf_backends import register_with_env_conf
 
         register_with_env_conf()

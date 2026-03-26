@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-import numpy as np
 import torch
 import torch.nn as nn
 
-from problems.policy_mixin import PolicyParamsMixin
+from policies.policy_mixin import PolicyParamsMixin
 
 
 def _obs_space_from_env_conf(env_conf):
@@ -103,8 +102,7 @@ class CNNMLPPolicy(PolicyParamsMixin, nn.Module):
         self.head = nn.Sequential(*layers)
 
         self._init_params()
-        with torch.inference_mode():
-            self._flat_params_init = np.concatenate([p.data.detach().cpu().numpy().reshape(-1) for p in self.parameters()])
+        self._cache_flat_params_init()
 
     def _init_params(self):
         _init_linear_and_conv(self, gain=0.5)
@@ -195,8 +193,7 @@ class AtariCNNPolicy(PolicyParamsMixin, nn.Module):
         self.head = nn.Sequential(*layers)
 
         self._init_params()
-        with torch.inference_mode():
-            self._flat_params_init = np.concatenate([p.data.detach().cpu().numpy().reshape(-1) for p in self.parameters()])
+        self._cache_flat_params_init()
 
     def _init_params(self):
         _init_linear_and_conv(self, gain=0.01)
@@ -300,8 +297,7 @@ class AtariGaussianPolicy(PolicyParamsMixin, nn.Module):
         self._max_log_std = 2.0
 
         self._init_params()
-        with torch.inference_mode():
-            self._flat_params_init = np.concatenate([p.data.detach().cpu().numpy().reshape(-1) for p in self.parameters()])
+        self._cache_flat_params_init()
 
     def _init_params(self):
         _init_linear_and_conv(self, gain=0.5)
@@ -396,8 +392,7 @@ class AtariAgent57LitePolicy(PolicyParamsMixin, nn.Module):
         self._h = self._c = None
 
         self._init_params()
-        with torch.inference_mode():
-            self._flat_params_init = np.concatenate([p.data.detach().cpu().numpy().reshape(-1) for p in self.parameters()])
+        self._cache_flat_params_init()
 
     def _init_params(self):
         for m in self.modules():

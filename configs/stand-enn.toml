@@ -1,6 +1,7 @@
 [experiment]
 exp_dir = "_tmp"
 env_tag = "stand-mlp:fn"
+policy_tag = "mlp-32-16"
 opt_name = "turbo-enn-p"
 num_arms = 10
 num_rounds = 10000

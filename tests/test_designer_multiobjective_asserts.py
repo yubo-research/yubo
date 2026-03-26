@@ -5,7 +5,7 @@ import pytest
 def test_optuna_designer_rejects_vector_returns():
     from optimizer.datum import Datum
     from optimizer.optuna_designer import OptunaDesigner
-    from optimizer.trajectories import Trajectory
+    from optimizer.trajectory import Trajectory
     from problems.env_conf import default_policy, get_env_conf
 
     env_conf = get_env_conf("f:sphere-2d", problem_seed=0, noise_seed_0=17)
