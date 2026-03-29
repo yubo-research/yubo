@@ -54,7 +54,11 @@ def build_log_eval_iteration_kwargs(
     loss_critic: float,
     loss_alpha: float,
 ) -> dict[str, Any]:
-    eval_out, heldout_out, best_out = normalize_returns_for_log(eval_return=float(eval_return), heldout_return=heldout_return, best_return=float(best_return))
+    eval_out, heldout_out, best_out = normalize_returns_for_log(
+        eval_return=float(eval_return),
+        heldout_return=heldout_return,
+        best_return=float(best_return),
+    )
     return {
         "iteration": 0,
         "num_iterations": 0,
@@ -62,7 +66,11 @@ def build_log_eval_iteration_kwargs(
         "eval_return": eval_out,
         "heldout_return": heldout_out,
         "best_return": best_out,
-        "algo_metrics": {"actor": float(loss_actor), "critic": float(loss_critic), "alpha": float(loss_alpha)},
+        "algo_metrics": {
+            "actor": float(loss_actor),
+            "critic": float(loss_critic),
+            "alpha": float(loss_alpha),
+        },
         "algo_name": "sac",
         "elapsed": float(now - float(started_at)),
         "step_override": int(step),

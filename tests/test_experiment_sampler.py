@@ -563,7 +563,10 @@ def test_scan_local_parallel_closes_pool_on_success(monkeypatch):
             assert initializer is not None
             return _FakePool()
 
-    monkeypatch.setattr("experiments.experiment_sampler.mp.get_context", lambda *args, **kwargs: _FakeContext())
+    monkeypatch.setattr(
+        "experiments.experiment_sampler.mp.get_context",
+        lambda *args, **kwargs: _FakeContext(),
+    )
     _scan_local_parallel([MagicMock(), MagicMock()], max_workers=2)
 
     assert state["close"] == 1
@@ -594,7 +597,10 @@ def test_scan_local_parallel_terminates_pool_on_keyboard_interrupt(monkeypatch):
             assert initializer is not None
             return _FakePool()
 
-    monkeypatch.setattr("experiments.experiment_sampler.mp.get_context", lambda *args, **kwargs: _FakeContext())
+    monkeypatch.setattr(
+        "experiments.experiment_sampler.mp.get_context",
+        lambda *args, **kwargs: _FakeContext(),
+    )
     with pytest.raises(KeyboardInterrupt):
         _scan_local_parallel([MagicMock(), MagicMock()], max_workers=2)
 

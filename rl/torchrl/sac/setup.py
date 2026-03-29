@@ -11,7 +11,13 @@ import torchrl.envs as tr_envs
 
 from rl.core.continuous_actions import scale_action_to_env, unscale_action_from_env
 from rl.core.env_setup import build_continuous_gym_env_setup
-from rl.core.sac_update import SACUpdateBatch, SACUpdateHyperParams, SACUpdateModules, SACUpdateOptimizers, sac_update_step
+from rl.core.sac_update import (
+    SACUpdateBatch,
+    SACUpdateHyperParams,
+    SACUpdateModules,
+    SACUpdateOptimizers,
+    sac_update_step,
+)
 from rl.torchrl.dm_control_collect import make_dm_control_collect_env
 from rl.torchrl.offpolicy import models as offpolicy_models
 
@@ -163,15 +169,27 @@ def build_env_setup(config: SACConfig) -> _EnvSetup:
 def _build_specs(config: SACConfig, *, from_pixels: bool) -> tuple[sac_deps.BackboneSpec, sac_deps.HeadSpec, sac_deps.HeadSpec]:
     backbone_name = "nature_cnn" if from_pixels else config.backbone_name
     actor_backbone_spec = sac_deps.BackboneSpec(
-        name=backbone_name, hidden_sizes=tuple(config.backbone_hidden_sizes), activation=config.backbone_activation, layer_norm=bool(config.backbone_layer_norm)
+        name=backbone_name,
+        hidden_sizes=tuple(config.backbone_hidden_sizes),
+        activation=config.backbone_activation,
+        layer_norm=bool(config.backbone_layer_norm),
     )
-    actor_head_spec = sac_deps.HeadSpec(hidden_sizes=tuple(config.actor_head_hidden_sizes), activation=config.head_activation)
-    critic_head_spec = sac_deps.HeadSpec(hidden_sizes=tuple(config.critic_head_hidden_sizes), activation=config.head_activation)
+    actor_head_spec = sac_deps.HeadSpec(
+        hidden_sizes=tuple(config.actor_head_hidden_sizes),
+        activation=config.head_activation,
+    )
+    critic_head_spec = sac_deps.HeadSpec(
+        hidden_sizes=tuple(config.critic_head_hidden_sizes),
+        activation=config.head_activation,
+    )
     return (actor_backbone_spec, actor_head_spec, critic_head_spec)
 
 
 def _build_actor(
-    env: _EnvSetup, obs_scaler: nn.Module, actor_backbone_spec: sac_deps.BackboneSpec, actor_head_spec: sac_deps.HeadSpec
+    env: _EnvSetup,
+    obs_scaler: nn.Module,
+    actor_backbone_spec: sac_deps.BackboneSpec,
+    actor_head_spec: sac_deps.HeadSpec,
 ) -> tuple[nn.Module, nn.Module, _ActorNet, sac_deps.tr_modules.ProbabilisticActor]:
     actor_backbone, actor_feat_dim = sac_deps.build_backbone(actor_backbone_spec, env.obs_dim)
     actor_head = sac_deps.build_mlp_head(actor_head_spec, actor_feat_dim, 2 * env.act_dim)
@@ -186,7 +204,12 @@ def _build_actor(
 
 
 def _build_q_pair(
-    env: _EnvSetup, obs_scaler: nn.Module, actor_backbone_spec: sac_deps.BackboneSpec, critic_head_spec: sac_deps.HeadSpec, *, from_pixels: bool
+    env: _EnvSetup,
+    obs_scaler: nn.Module,
+    actor_backbone_spec: sac_deps.BackboneSpec,
+    critic_head_spec: sac_deps.HeadSpec,
+    *,
+    from_pixels: bool,
 ) -> tuple[nn.Module, nn.Module]:
     if from_pixels:
         q1_obs_encoder, q1_obs_dim = sac_deps.build_backbone(actor_backbone_spec, env.obs_dim)
@@ -224,10 +247,19 @@ def build_modules(config: SACConfig, env: _EnvSetup, *, device: torch.device) ->
         p.requires_grad_(False)
     for p in q2_target.parameters():
         p.requires_grad_(False)
-    log_alpha = nn.Parameter(torch.tensor(np.log(float(max(config.alpha_init, 1e-08))), dtype=torch.float32, device=device))
+    log_alpha = nn.Parameter(
+        torch.tensor(
+            np.log(float(max(config.alpha_init, 1e-08))),
+            dtype=torch.float32,
+            device=device,
+        )
+    )
     actor_param_count = sum((p.numel() for p in actor_backbone.parameters())) + sum((p.numel() for p in actor_head.parameters()))
     if config.theta_dim is not None:
-        assert actor_param_count == int(config.theta_dim), (actor_param_count, config.theta_dim)
+        assert actor_param_count == int(config.theta_dim), (
+            actor_param_count,
+            config.theta_dim,
+        )
     return _Modules(
         actor_backbone=actor_backbone,
         actor_head=actor_head,
@@ -243,7 +275,10 @@ def build_modules(config: SACConfig, env: _EnvSetup, *, device: torch.device) ->
 
 
 def build_training(config: SACConfig, modules: _Modules) -> _TrainingSetup:
-    replay = sac_deps.tr_data.TensorDictReplayBuffer(storage=sac_deps.tr_data.LazyTensorStorage(int(config.replay_size)), batch_size=int(config.batch_size))
+    replay = sac_deps.tr_data.TensorDictReplayBuffer(
+        storage=sac_deps.tr_data.LazyTensorStorage(int(config.replay_size)),
+        batch_size=int(config.batch_size),
+    )
     actor_params = list(modules.actor_backbone.parameters()) + list(modules.actor_head.parameters())
     critic_params = list(modules.q1.parameters()) + list(modules.q2.parameters())
     alpha_params = [modules.log_alpha]
@@ -279,9 +314,22 @@ def sac_update_shared(
     target_entropy = float(config.target_entropy) if config.target_entropy is not None else -float(act.shape[-1])
     return sac_update_step(
         modules=SACUpdateModules(
-            actor=modules.actor_model, q1=modules.q1, q2=modules.q2, q1_target=modules.q1_target, q2_target=modules.q2_target, log_alpha=modules.log_alpha
+            actor=modules.actor_model,
+            q1=modules.q1,
+            q2=modules.q2,
+            q1_target=modules.q1_target,
+            q2_target=modules.q2_target,
+            log_alpha=modules.log_alpha,
         ),
-        optimizers=SACUpdateOptimizers(actor=training.actor_optimizer, critic=training.critic_optimizer, alpha=training.alpha_optimizer),
+        optimizers=SACUpdateOptimizers(
+            actor=training.actor_optimizer,
+            critic=training.critic_optimizer,
+            alpha=training.alpha_optimizer,
+        ),
         batch=SACUpdateBatch(obs=obs, act=act, rew=rew, nxt=nxt, done=done),
-        hyper=SACUpdateHyperParams(gamma=float(config.gamma), tau=float(config.tau), target_entropy=target_entropy),
+        hyper=SACUpdateHyperParams(
+            gamma=float(config.gamma),
+            tau=float(config.tau),
+            target_entropy=target_entropy,
+        ),
     )

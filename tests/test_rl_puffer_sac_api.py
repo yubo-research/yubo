@@ -406,7 +406,11 @@ def test_eval_utils_paths(monkeypatch, tmp_path: Path):
     assert eval_utils.due_mark(10, 0, 0) is None
 
     metric_calls = []
-    monkeypatch.setattr(eval_utils.rl_logger, "append_metrics", lambda path, record: metric_calls.append((path, record)))
+    monkeypatch.setattr(
+        eval_utils.rl_logger,
+        "append_metrics",
+        lambda path, record: metric_calls.append((path, record)),
+    )
     state.last_eval_return = 1.25
     state.last_heldout_return = 0.75
     state.best_return = 1.25
@@ -415,13 +419,21 @@ def test_eval_utils_paths(monkeypatch, tmp_path: Path):
     assert metric_calls[0][1]["step"] == 10
 
     log_calls = []
-    monkeypatch.setattr(eval_utils.rl_logger, "log_eval_iteration", lambda **kwargs: log_calls.append(kwargs))
+    monkeypatch.setattr(
+        eval_utils.rl_logger,
+        "log_eval_iteration",
+        lambda **kwargs: log_calls.append(kwargs),
+    )
     log_cfg = puffer_sac.SACConfig(log_interval_steps=5)
     eval_utils.log_if_due(log_cfg, state, step=5, frames_per_batch=8)
     assert len(log_calls) == 1
     assert state.log_mark == 1
 
-    monkeypatch.setattr(eval_utils, "build_eval_plan", lambda **_kwargs: SimpleNamespace(eval_seed=1, heldout_i_noise=2))
+    monkeypatch.setattr(
+        eval_utils,
+        "build_eval_plan",
+        lambda **_kwargs: SimpleNamespace(eval_seed=1, heldout_i_noise=2),
+    )
     monkeypatch.setattr(eval_utils, "evaluate_actor", lambda *_args, **_kwargs: 2.0)
     monkeypatch.setattr(eval_utils, "evaluate_heldout_if_enabled", lambda *_args, **_kwargs: 1.5)
     eval_cfg = puffer_sac.SACConfig(eval_interval_steps=10, num_denoise_passive=1)
@@ -491,12 +503,20 @@ def test_train_sac_puffer_impl_smoke_with_patched_loop(monkeypatch, tmp_path: Pa
     monkeypatch.setattr(
         engine,
         "_init_run_artifacts",
-        lambda _cfg: (tmp_path / "exp", tmp_path / "exp" / "metrics.jsonl", SimpleNamespace(save_both=lambda *_args, **_kwargs: None)),
+        lambda _cfg: (
+            tmp_path / "exp",
+            tmp_path / "exp" / "metrics.jsonl",
+            SimpleNamespace(save_both=lambda *_args, **_kwargs: None),
+        ),
     )
     monkeypatch.setattr(engine, "_init_runtime", lambda _cfg: (env_setup, torch.device("cpu")))
     monkeypatch.setattr(engine, "make_vector_env", lambda _cfg: _FakeVecEnv(num_envs=1, obs_dim=3))
     monkeypatch.setattr(engine, "infer_observation_spec", lambda _cfg, _obs: obs_spec)
-    monkeypatch.setattr(engine, "prepare_obs_np", lambda obs_np, **_kwargs: np.asarray(obs_np, dtype=np.float32))
+    monkeypatch.setattr(
+        engine,
+        "prepare_obs_np",
+        lambda obs_np, **_kwargs: np.asarray(obs_np, dtype=np.float32),
+    )
     monkeypatch.setattr(
         engine,
         "_build_training_components",
@@ -511,7 +531,18 @@ def test_train_sac_puffer_impl_smoke_with_patched_loop(monkeypatch, tmp_path: Pa
     monkeypatch.setattr("rl.logger.log_run_footer", lambda **_kwargs: None)
     monkeypatch.setattr(engine, "render_videos_if_enabled", lambda *_args, **_kwargs: None)
 
-    def _fake_train_loop(_config, _env_setup, _modules, _optimizers, _replay, state, _obs_spec, _obs_batch, _envs, **_kwargs):
+    def _fake_train_loop(
+        _config,
+        _env_setup,
+        _modules,
+        _optimizers,
+        _replay,
+        state,
+        _obs_spec,
+        _obs_batch,
+        _envs,
+        **_kwargs,
+    ):
         state.global_step = int(_config.total_timesteps)
         state.best_return = 1.0
         state.last_eval_return = 0.5

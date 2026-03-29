@@ -6,7 +6,13 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from rl.core.sac_math import compute_sac_target, sac_actor_loss, sac_alpha_loss, sac_critic_loss, soft_update_module
+from rl.core.sac_math import (
+    compute_sac_target,
+    sac_actor_loss,
+    sac_alpha_loss,
+    sac_critic_loss,
+    soft_update_module,
+)
 
 
 def _set_requires_grad(modules: tuple[nn.Module, ...], enabled: bool) -> None:
@@ -49,14 +55,23 @@ class SACUpdateHyperParams:
 
 
 def sac_update_step(
-    modules: SACUpdateModules, optimizers: SACUpdateOptimizers, batch: SACUpdateBatch, hyper: SACUpdateHyperParams
+    modules: SACUpdateModules,
+    optimizers: SACUpdateOptimizers,
+    batch: SACUpdateBatch,
+    hyper: SACUpdateHyperParams,
 ) -> tuple[float, float, float]:
     with torch.no_grad():
         nxt_action, nxt_log_prob = modules.actor.sample(batch.nxt, deterministic=False)
         q1_t = modules.q1_target(batch.nxt, nxt_action)
         q2_t = modules.q2_target(batch.nxt, nxt_action)
         target = compute_sac_target(
-            batch.rew, batch.done, gamma=float(hyper.gamma), q1_target=q1_t, q2_target=q2_t, alpha=modules.log_alpha.exp(), next_log_prob=nxt_log_prob
+            batch.rew,
+            batch.done,
+            gamma=float(hyper.gamma),
+            q1_target=q1_t,
+            q2_target=q2_t,
+            alpha=modules.log_alpha.exp(),
+            next_log_prob=nxt_log_prob,
         )
     q1_obs = modules.q1(batch.obs, batch.act)
     q2_obs = modules.q2(batch.obs, batch.act)
@@ -78,4 +93,8 @@ def sac_update_step(
     optimizers.alpha.step()
     soft_update_module(modules.q1_target, modules.q1, tau=float(hyper.tau))
     soft_update_module(modules.q2_target, modules.q2, tau=float(hyper.tau))
-    return (float(actor_loss.item()), float(critic_loss.item()), float(alpha_loss.item()))
+    return (
+        float(actor_loss.item()),
+        float(critic_loss.item()),
+        float(alpha_loss.item()),
+    )

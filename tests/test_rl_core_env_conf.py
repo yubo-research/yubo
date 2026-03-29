@@ -1,6 +1,10 @@
 from types import SimpleNamespace
 
-from rl.core.env_conf import build_seeded_env_conf, build_seeded_env_conf_from_run, resolve_run_seeds
+from rl.core.env_conf import (
+    build_seeded_env_conf,
+    build_seeded_env_conf_from_run,
+    resolve_run_seeds,
+)
 
 
 def test_resolve_run_seeds_prefers_explicit_values():

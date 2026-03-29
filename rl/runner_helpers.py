@@ -35,7 +35,12 @@ def parse_runtime_args(argv: list[str]) -> _RuntimeArgs:
             continue
         cleaned.append(arg)
         i += 1
-    return _RuntimeArgs(seeds_raw=seeds_raw, workers=workers, workers_cli_set=workers_cli_set, cleaned=cleaned)
+    return _RuntimeArgs(
+        seeds_raw=seeds_raw,
+        workers=workers,
+        workers_cli_set=workers_cli_set,
+        cleaned=cleaned,
+    )
 
 
 def split_config_and_args(argv: list[str]) -> tuple[str, list[str]]:

@@ -378,7 +378,18 @@ def make_loop(
         target_accuracy=target_accuracy,
         print_summary=True,
     )
-    er = early_reject if early_reject is not None else EarlyRejectConfig(tau=None, mode=None, ema_beta=None, warmup_pos=None, quantile=None, window=None)
+    er = (
+        early_reject
+        if early_reject is not None
+        else EarlyRejectConfig(
+            tau=None,
+            mode=None,
+            ema_beta=None,
+            warmup_pos=None,
+            quantile=None,
+            window=None,
+        )
+    )
     if er.tau is not None or er.mode is not None:
         loop.set_early_reject_advanced(
             tau=er.tau,
@@ -775,7 +786,13 @@ def _run_simple_gym(
 
     print(f"UHD-Simple: num_params = {dim}, optimizer = {optimizer}, state={num_state}, action={num_action}")
     _run_simple_iterations(
-        uhd, evaluate_fn=evaluate_fn, accuracy_fn=None, num_rounds=num_rounds, log_interval=log_interval, accuracy_interval=0, target_accuracy=target_accuracy
+        uhd,
+        evaluate_fn=evaluate_fn,
+        accuracy_fn=None,
+        num_rounds=num_rounds,
+        log_interval=log_interval,
+        accuracy_interval=0,
+        target_accuracy=target_accuracy,
     )
 
 
@@ -856,7 +873,13 @@ def _run_simple_gym_np(
 
     print(f"UHD-Np: num_params = {dim}, optimizer = {optimizer}")
     _run_simple_iterations(
-        uhd, evaluate_fn=evaluate_fn, accuracy_fn=None, num_rounds=num_rounds, log_interval=log_interval, accuracy_interval=0, target_accuracy=target_accuracy
+        uhd,
+        evaluate_fn=evaluate_fn,
+        accuracy_fn=None,
+        num_rounds=num_rounds,
+        log_interval=log_interval,
+        accuracy_interval=0,
+        target_accuracy=target_accuracy,
     )
 
 
@@ -931,7 +954,13 @@ def _run_simple_gym_torch(
 
     print(f"UHD-Simple: num_params = {dim}, optimizer = {optimizer}, state={num_state}, action={num_action}")
     _run_simple_iterations(
-        uhd, evaluate_fn=evaluate_fn, accuracy_fn=None, num_rounds=num_rounds, log_interval=log_interval, accuracy_interval=0, target_accuracy=target_accuracy
+        uhd,
+        evaluate_fn=evaluate_fn,
+        accuracy_fn=None,
+        num_rounds=num_rounds,
+        log_interval=log_interval,
+        accuracy_interval=0,
+        target_accuracy=target_accuracy,
     )
 
 
@@ -945,7 +974,10 @@ def _make_gym_policy(env_conf, device, num_state, num_action):
         cand = env_conf.policy_class(env_conf)
         if isinstance(cand, torch.nn.Module):
             return cand.to(device), cand
-        warnings.warn(f"Non-module policy_class {env_conf.policy_class}; using MLPPolicyModule.", stacklevel=2)
+        warnings.warn(
+            f"Non-module policy_class {env_conf.policy_class}; using MLPPolicyModule.",
+            stacklevel=2,
+        )
     module = MLPPolicyModule(num_state, num_action, hidden_sizes=(32, 16)).to(device)
     return module, TorchPolicy(module, env_conf)
 

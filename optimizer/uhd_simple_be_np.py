@@ -127,7 +127,11 @@ class UHDSimpleBENp:
         return base + best, candidates[best], embeddings[best]
 
     def _predict(self, x_cand: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-        post = self._enn_model.posterior(x_cand, params=self._enn_params, flags=PosteriorFlags(observation_noise=False))
+        post = self._enn_model.posterior(
+            x_cand,
+            params=self._enn_params,
+            flags=PosteriorFlags(observation_noise=False),
+        )
         return np.asarray(post.mu).reshape(-1), np.asarray(post.se).reshape(-1)
 
     def _maybe_fit(self) -> None:

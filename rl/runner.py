@@ -94,7 +94,10 @@ def main(argv: list[str] | None = None):
     seeds, cfg_workers = _extract_run_cfg(cfg)
     workers = runtime.workers if runtime.workers_cli_set else cfg_workers
     overrides_keys = sorted(overrides) if overrides else []
-    print(f"[rl] config={config_path} seeds={(seeds if seeds else ['default'])} workers={workers} overrides={overrides_keys}", flush=True)
+    print(
+        f"[rl] config={config_path} seeds={(seeds if seeds else ['default'])} workers={workers} overrides={overrides_keys}",
+        flush=True,
+    )
     if not seeds:
         _run_from_cfg(cfg, seed=None)
         return

@@ -8,7 +8,13 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from rl.core.sac_update import SACUpdateBatch, SACUpdateHyperParams, SACUpdateModules, SACUpdateOptimizers, sac_update_step
+from rl.core.sac_update import (
+    SACUpdateBatch,
+    SACUpdateHyperParams,
+    SACUpdateModules,
+    SACUpdateOptimizers,
+    sac_update_step,
+)
 from rl.pufferlib.offpolicy import model_utils as offpolicy_model_utils
 
 from .config import SACConfig
@@ -33,7 +39,13 @@ class SACOptimizers(offpolicy_model_utils.OffPolicyOptimizers):
 
 def build_modules(config: SACConfig, env: Any, obs_spec: Any, *, device: torch.device) -> SACModules:
     shared = offpolicy_model_utils.build_modules(config, env, obs_spec, device=device)
-    log_alpha = nn.Parameter(torch.tensor(np.log(float(max(config.alpha_init, 1e-8))), dtype=torch.float32, device=device))
+    log_alpha = nn.Parameter(
+        torch.tensor(
+            np.log(float(max(config.alpha_init, 1e-8))),
+            dtype=torch.float32,
+            device=device,
+        )
+    )
     return SACModules(**shared.__dict__, log_alpha=log_alpha)
 
 
@@ -49,7 +61,14 @@ def alpha(modules: SACModules) -> torch.Tensor:
     return modules.log_alpha.exp()
 
 
-def sac_update(config: SACConfig, modules: SACModules, optimizers: SACOptimizers, replay, *, device: torch.device) -> tuple[float, float, float]:
+def sac_update(
+    config: SACConfig,
+    modules: SACModules,
+    optimizers: SACOptimizers,
+    replay,
+    *,
+    device: torch.device,
+) -> tuple[float, float, float]:
     obs, act, rew, nxt, done = replay.sample(int(config.batch_size), device=device)
     target_entropy = float(config.target_entropy) if config.target_entropy is not None else -float(act.shape[-1])
     return sac_update_step(
@@ -67,7 +86,11 @@ def sac_update(config: SACConfig, modules: SACModules, optimizers: SACOptimizers
             alpha=optimizers.alpha_optimizer,
         ),
         batch=SACUpdateBatch(obs=obs, act=act, rew=rew, nxt=nxt, done=done),
-        hyper=SACUpdateHyperParams(gamma=float(config.gamma), tau=float(config.tau), target_entropy=target_entropy),
+        hyper=SACUpdateHyperParams(
+            gamma=float(config.gamma),
+            tau=float(config.tau),
+            target_entropy=target_entropy,
+        ),
     )
 
 

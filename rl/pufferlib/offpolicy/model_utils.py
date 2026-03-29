@@ -17,7 +17,14 @@ from .runtime_utils import ObsScaler
 
 
 class ActorNet(nn.Module):
-    def __init__(self, backbone: nn.Module, head: nn.Module, obs_scaler: ObsScaler, *, act_dim: int):
+    def __init__(
+        self,
+        backbone: nn.Module,
+        head: nn.Module,
+        obs_scaler: ObsScaler,
+        *,
+        act_dim: int,
+    ):
         super().__init__()
         self.backbone, self.head = backbone, head
         self.obs_scaler = obs_scaler
@@ -111,12 +118,24 @@ def _build_backbone_specs(config: Any, obs_spec: Any) -> tuple[BackboneSpec, Hea
         activation=str(config.backbone_activation),
         layer_norm=bool(config.backbone_layer_norm),
     )
-    actor_head_spec = HeadSpec(hidden_sizes=tuple(config.actor_head_hidden_sizes), activation=str(config.head_activation))
-    critic_head_spec = HeadSpec(hidden_sizes=tuple(config.critic_head_hidden_sizes), activation=str(config.head_activation))
+    actor_head_spec = HeadSpec(
+        hidden_sizes=tuple(config.actor_head_hidden_sizes),
+        activation=str(config.head_activation),
+    )
+    critic_head_spec = HeadSpec(
+        hidden_sizes=tuple(config.critic_head_hidden_sizes),
+        activation=str(config.head_activation),
+    )
     return (backbone_spec, actor_head_spec, critic_head_spec)
 
 
-def _build_q_modules(obs_spec: Any, env: Any, backbone_spec: BackboneSpec, critic_head_spec: HeadSpec, obs_scaler: ObsScaler) -> _QBundle:
+def _build_q_modules(
+    obs_spec: Any,
+    env: Any,
+    backbone_spec: BackboneSpec,
+    critic_head_spec: HeadSpec,
+    obs_scaler: ObsScaler,
+) -> _QBundle:
     obs_dim = int(obs_spec.vector_dim or 64)
     if obs_spec.mode == "pixels":
         q1_backbone, q1_feat_dim = build_backbone(backbone_spec, input_dim=obs_dim)
@@ -125,7 +144,14 @@ def _build_q_modules(obs_spec: Any, env: Any, backbone_spec: BackboneSpec, criti
         q2_head = build_mlp_head(critic_head_spec, input_dim=q2_feat_dim + int(env.act_dim), output_dim=1)
         q1 = QNetPixel(q1_backbone, q1_head, obs_scaler)
         q2 = QNetPixel(q2_backbone, q2_head, obs_scaler)
-        return _QBundle(q1_backbone=q1_backbone, q1_head=q1_head, q2_backbone=q2_backbone, q2_head=q2_head, q1=q1, q2=q2)
+        return _QBundle(
+            q1_backbone=q1_backbone,
+            q1_head=q1_head,
+            q2_backbone=q2_backbone,
+            q2_head=q2_head,
+            q1=q1,
+            q2=q2,
+        )
     q_input_dim = int(obs_spec.vector_dim or 1) + int(env.act_dim)
     q1_backbone, q1_feat_dim = build_backbone(backbone_spec, input_dim=q_input_dim)
     q2_backbone, q2_feat_dim = build_backbone(backbone_spec, input_dim=q_input_dim)
@@ -133,7 +159,14 @@ def _build_q_modules(obs_spec: Any, env: Any, backbone_spec: BackboneSpec, criti
     q2_head = build_mlp_head(critic_head_spec, input_dim=q2_feat_dim, output_dim=1)
     q1 = QNet(q1_backbone, q1_head, obs_scaler)
     q2 = QNet(q2_backbone, q2_head, obs_scaler)
-    return _QBundle(q1_backbone=q1_backbone, q1_head=q1_head, q2_backbone=q2_backbone, q2_head=q2_head, q1=q1, q2=q2)
+    return _QBundle(
+        q1_backbone=q1_backbone,
+        q1_head=q1_head,
+        q2_backbone=q2_backbone,
+        q2_head=q2_head,
+        q1=q1,
+        q2=q2,
+    )
 
 
 def build_modules(config: Any, env: Any, obs_spec: Any, *, device: torch.device) -> OffPolicyModules:
@@ -155,7 +188,10 @@ def build_modules(config: Any, env: Any, obs_spec: Any, *, device: torch.device)
         param.requires_grad_(False)
     actor_param_count = sum((param.numel() for param in actor_backbone.parameters())) + sum((param.numel() for param in actor_head.parameters()))
     if getattr(config, "theta_dim", None) is not None:
-        assert int(actor_param_count) == int(config.theta_dim), (actor_param_count, config.theta_dim)
+        assert int(actor_param_count) == int(config.theta_dim), (
+            actor_param_count,
+            config.theta_dim,
+        )
     return OffPolicyModules(
         actor_backbone=actor_backbone,
         actor_head=actor_head,

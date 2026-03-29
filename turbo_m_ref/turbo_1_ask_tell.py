@@ -20,7 +20,12 @@ from .gp import train_gp
 from .turbo_types import CandidatesResult as _CandidatesResult
 from .turbo_types import StandardizedFX as _StandardizedFX
 from .turbo_types import TrustRegion as _TrustRegion
-from .utils import from_unit_cube, make_sobol_candidates, to_unit_cube, turbo_adjust_length
+from .utils import (
+    from_unit_cube,
+    make_sobol_candidates,
+    to_unit_cube,
+    turbo_adjust_length,
+)
 
 
 def _validate_init_args(
@@ -239,7 +244,15 @@ class Turbo1AskTell:
         gp = _train_gp_model(self, X, z.fX, n_training_steps, hypers, device, dtype)
 
         tr = _trust_region_bounds(self, X, z.fX, gp, length)
-        X_cand = make_sobol_candidates(dim=self.dim, n_cand=self.n_cand, x_center=tr.x_center, lb=tr.lb, ub=tr.ub, device=device, dtype=dtype)
+        X_cand = make_sobol_candidates(
+            dim=self.dim,
+            n_cand=self.n_cand,
+            x_center=tr.x_center,
+            lb=tr.lb,
+            ub=tr.ub,
+            device=device,
+            dtype=dtype,
+        )
 
         device2, dtype2 = _device_dtype_for(self, len(X_cand))
         y_cand = _sample_candidates(

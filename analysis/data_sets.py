@@ -339,7 +339,12 @@ def load_multiple_traces(data_locator):
     for i_problem, problem_name in enumerate(problems):
         for i_opt, opt_name in enumerate(opt_names):
             num_tot += 1
-            trace_path = _validate_trace_path(data_locator(problem_name, opt_name), problem_name, opt_name, _report_bad)
+            trace_path = _validate_trace_path(
+                data_locator(problem_name, opt_name),
+                problem_name,
+                opt_name,
+                _report_bad,
+            )
             if trace_path is None:
                 continue
             trace = _load_and_validate_trace(trace_path, data_locator, problem_name, opt_name, _report_bad)

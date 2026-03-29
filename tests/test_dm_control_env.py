@@ -1,7 +1,12 @@
 import numpy as np
 
 from problems import dm_control_env
-from problems.dm_control_env import DMControlEnv, _configure_headless_render_backend, _parse_env_name, make
+from problems.dm_control_env import (
+    DMControlEnv,
+    _configure_headless_render_backend,
+    _parse_env_name,
+    make,
+)
 
 
 class _DummySpec:

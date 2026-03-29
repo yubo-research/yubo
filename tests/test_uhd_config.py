@@ -109,7 +109,14 @@ class TestBEConfig:
 
     def test_frozen_dataclass(self):
         """Test that BEConfig is frozen (immutable)."""
-        cfg = BEConfig(num_probes=10, num_candidates=10, warmup=20, fit_interval=10, enn_k=25, sigma_range=None)
+        cfg = BEConfig(
+            num_probes=10,
+            num_candidates=10,
+            warmup=20,
+            fit_interval=10,
+            enn_k=25,
+            sigma_range=None,
+        )
         with pytest.raises(FrozenInstanceError):
             cfg.num_probes = 15
 

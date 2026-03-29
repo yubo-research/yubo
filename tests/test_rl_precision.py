@@ -1,7 +1,11 @@
 import pytest
 import torch
 
-from rl.precision import PrecisionController, normalize_precision_mode, resolve_amp_dtype
+from rl.precision import (
+    PrecisionController,
+    normalize_precision_mode,
+    resolve_amp_dtype,
+)
 
 
 def test_normalize_precision_mode_valid_values():

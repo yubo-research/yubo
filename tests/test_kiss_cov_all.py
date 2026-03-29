@@ -133,7 +133,11 @@ def test_cov_plotting_types(tmp_path):
         PlotRLFinalComparisonResult,
         RLTracesWithCumDtProp,
     )
-    from analysis.plotting_types import PlotResultsResult, PlotRLExperimentResult, PlotRLExperimentVsTimeResult
+    from analysis.plotting_types import (
+        PlotResultsResult,
+        PlotRLExperimentResult,
+        PlotRLExperimentVsTimeResult,
+    )
 
     dl = DataLocator(results_path=str(tmp_path), exp_dir="", opt_names=[])
     t = RLTracesWithCumDtProp(data_locator=dl, traces=np.zeros((2, 3)), cum_dt_prop=None)
@@ -238,7 +242,14 @@ def test_cov_exp_uhd_UHDConfig_local_modal_cmd(monkeypatch, tmp_path):
     from ops.uhd_config import BEConfig, EarlyRejectConfig, ENNConfig, UHDConfig
 
     early_reject = EarlyRejectConfig(tau=None, mode=None, ema_beta=None, warmup_pos=None, quantile=None, window=None)
-    be = BEConfig(num_probes=10, num_candidates=10, warmup=20, fit_interval=10, enn_k=25, sigma_range=None)
+    be = BEConfig(
+        num_probes=10,
+        num_candidates=10,
+        warmup=20,
+        fit_interval=10,
+        enn_k=25,
+        sigma_range=None,
+    )
     enn = ENNConfig(
         minus_impute=False,
         d=100,
@@ -432,7 +443,11 @@ def test_cov_designer_parse_types():
 
 
 def test_cov_designer_num_candidates():
-    from optimizer.designer_registry import _d_turbo_enn_f, _d_turbo_enn_f_p, _SimpleContext
+    from optimizer.designer_registry import (
+        _d_turbo_enn_f,
+        _d_turbo_enn_f_p,
+        _SimpleContext,
+    )
 
     ctx = _SimpleContext(
         policy=SimpleNamespace(num_params=lambda: 2),

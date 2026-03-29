@@ -1,6 +1,9 @@
 from contextlib import contextmanager
 
-from rl.core.ppo_eval import evaluate_heldout_with_best_actor, update_best_actor_if_improved
+from rl.core.ppo_eval import (
+    evaluate_heldout_with_best_actor,
+    update_best_actor_if_improved,
+)
 
 
 def test_evaluate_heldout_with_best_actor_calls_eval_inside_context():

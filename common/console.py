@@ -103,7 +103,13 @@ def _cfg_key(key: str) -> str:
     return _CFG_KEY_ALIASES.get(str(key), str(key))
 
 
-def _print_config_table(items: list[tuple[str, Any]], *, prefix: str = "", cols: int = 2, key_width: int = 16) -> None:
+def _print_config_table(
+    items: list[tuple[str, Any]],
+    *,
+    prefix: str = "",
+    cols: int = 2,
+    key_width: int = 16,
+) -> None:
     _ = key_width
     filtered = [(_cfg_key(str(k)), _cfg_value(v)) for k, v in items if v is not None]
     if not filtered:
@@ -275,7 +281,10 @@ def print_run_header(
         title = _bold(_cyan(algo_name.upper())) + f"  {config.env_tag}  seed={config.seed}  {runtime.device.type}  " + f"total={total:,}"
         _print_line(title, prefix=prefix)
         first_col = "steps"
-    _print_line(f"  obs={env.obs_dim} act={env.act_dim} backbone={backbone} from_pixels={from_pixels}", prefix=prefix)
+    _print_line(
+        f"  obs={env.obs_dim} act={env.act_dim} backbone={backbone} from_pixels={from_pixels}",
+        prefix=prefix,
+    )
     cfg_items = _collect_header_config_items(config, training, runtime)
     cfg_cols = 3 if len(cfg_items) >= 18 else 2
     _print_config_table(cfg_items, prefix=prefix, cols=cfg_cols)

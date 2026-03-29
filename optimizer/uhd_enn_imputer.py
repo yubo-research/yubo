@@ -272,7 +272,11 @@ class ENNMinusImputer:
             xs.append(delta_z.double().numpy())
         x_cand = np.asarray(xs, dtype=np.float64)
 
-        post = self._enn_model.posterior(x_cand, params=self._enn_params, flags=PosteriorFlags(observation_noise=False))
+        post = self._enn_model.posterior(
+            x_cand,
+            params=self._enn_params,
+            flags=PosteriorFlags(observation_noise=False),
+        )
         mu_std = np.asarray(post.mu).reshape(-1)
         se_std = np.asarray(post.se).reshape(-1)
 

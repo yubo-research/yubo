@@ -2,7 +2,10 @@ from contextlib import contextmanager
 
 import pytest
 
-from rl.core.sac_eval import evaluate_heldout_with_best_actor, update_best_actor_if_improved
+from rl.core.sac_eval import (
+    evaluate_heldout_with_best_actor,
+    update_best_actor_if_improved,
+)
 
 
 def test_sac_evaluate_heldout_with_best_actor_calls_eval_inside_context():

@@ -8,7 +8,11 @@ import torch
 import torchrl.collectors as tr_collectors
 import torchrl.envs as tr_envs
 
-from rl.core.actor_state import capture_backbone_head_snapshot, restore_backbone_head_snapshot, restore_rng_state_payload
+from rl.core.actor_state import (
+    capture_backbone_head_snapshot,
+    restore_backbone_head_snapshot,
+    restore_rng_state_payload,
+)
 from rl.core.update_chunks import run_chunked_updates
 from rl.torchrl.offpolicy import trainer_utils as offpolicy_trainer_utils
 
@@ -68,14 +72,24 @@ def _copy_if_present(loaded: dict, key: str, target: torch.Tensor, *, device: to
         target.copy_(value.to(device=device, dtype=target.dtype))
 
 
-def _resume_if_requested(config: SACConfig, modules: _Modules, training: _TrainingSetup, *, device: torch.device) -> _TrainState:
+def _resume_if_requested(
+    config: SACConfig,
+    modules: _Modules,
+    training: _TrainingSetup,
+    *,
+    device: torch.device,
+) -> _TrainState:
     state = _TrainState()
     if not config.resume_from:
         return state
     loaded = sac_deps.load_checkpoint(Path(config.resume_from), device=device)
     if "actor_backbone" in loaded and "actor_head" in loaded:
         restore_backbone_head_snapshot(
-            modules.actor_backbone, modules.actor_head, {"backbone": loaded["actor_backbone"], "head": loaded["actor_head"]}, log_std=None, device=device
+            modules.actor_backbone,
+            modules.actor_head,
+            {"backbone": loaded["actor_backbone"], "head": loaded["actor_head"]},
+            log_std=None,
+            device=device,
         )
     _load_state_if_present(loaded, "obs_scaler", modules.obs_scaler)
     _load_state_if_present(loaded, "q1", modules.q1)
@@ -109,7 +123,14 @@ def _build_eval_policy(modules: _Modules, env_setup: _EnvSetup, device: torch.de
     )
 
 
-def _evaluate_actor(config: SACConfig, env: _EnvSetup, modules: _Modules, *, device: torch.device, eval_seed: int) -> float:
+def _evaluate_actor(
+    config: SACConfig,
+    env: _EnvSetup,
+    modules: _Modules,
+    *,
+    device: torch.device,
+    eval_seed: int,
+) -> float:
     from rl.core.episode_rollout import collect_denoised_trajectory
 
     eval_env = env.env_conf
@@ -119,13 +140,20 @@ def _evaluate_actor(config: SACConfig, env: _EnvSetup, modules: _Modules, *, dev
 
 
 def _build_sac_collector(
-    config: SACConfig, env_setup: _EnvSetup, modules: _Modules, *, runtime, total_frames: int
+    config: SACConfig,
+    env_setup: _EnvSetup,
+    modules: _Modules,
+    *,
+    runtime,
+    total_frames: int,
 ) -> tr_collectors.Collector | tr_collectors.MultiSyncCollector | tr_collectors.MultiAsyncCollector:
     frames_per_batch = int(config.frames_per_batch)
     num_envs = int(config.runtime_num_envs())
-    scale_action = sac_deps.td_nn.TensorDictModule(_ScaleActionToEnv(env_setup.action_low, env_setup.action_high), in_keys=["action"], out_keys=["action"]).to(
-        runtime.device
-    )
+    scale_action = sac_deps.td_nn.TensorDictModule(
+        _ScaleActionToEnv(env_setup.action_low, env_setup.action_high),
+        in_keys=["action"],
+        out_keys=["action"],
+    ).to(runtime.device)
     collector_policy = sac_deps.td_nn.TensorDictSequential(modules.actor, scale_action)
     if runtime.collector_backend == "single":
         if num_envs == 1:
@@ -163,7 +191,14 @@ def _build_sac_collector(
     )
 
 
-def _update_step(config: SACConfig, modules: _Modules, training: _TrainingSetup, *, device: torch.device, batch_size: int) -> dict[str, float]:
+def _update_step(
+    config: SACConfig,
+    modules: _Modules,
+    training: _TrainingSetup,
+    *,
+    device: torch.device,
+    batch_size: int,
+) -> dict[str, float]:
     batch = training.replay.sample(batch_size).to(device)
     obs = batch["observation"]
     act = batch["action"]
@@ -175,7 +210,14 @@ def _update_step(config: SACConfig, modules: _Modules, training: _TrainingSetup,
     if done.ndim > 1:
         done = done.squeeze(-1)
     actor_loss, critic_loss, alpha_loss = sac_update_shared(
-        config, modules, training, obs=obs, act=act, rew=rew.to(dtype=torch.float32), nxt=nxt, done=done.to(dtype=torch.float32)
+        config,
+        modules,
+        training,
+        obs=obs,
+        act=act,
+        rew=rew.to(dtype=torch.float32),
+        nxt=nxt,
+        done=done.to(dtype=torch.float32),
     )
     return {
         "loss_actor": float(actor_loss),
@@ -194,7 +236,19 @@ def _normalize_actions_for_replay(flat, *, action_low: np.ndarray, action_high: 
     return offpolicy_trainer_utils.normalize_actions_for_replay(flat, action_low=action_low, action_high=action_high)
 
 
-def _run_sac_eval_log_checkpoint(config, env, modules, training, state, step, runtime, start_time, latest_losses, total_updates, evaluate_for_best):
+def _run_sac_eval_log_checkpoint(
+    config,
+    env,
+    modules,
+    training,
+    state,
+    step,
+    runtime,
+    start_time,
+    latest_losses,
+    total_updates,
+    evaluate_for_best,
+):
     def _eval_heldout(cfg, env_setup, local_modules, local_state, *, device, heldout_i_noise=99999):
         return sac_deps.torchrl_sac_loop.evaluate_heldout_if_enabled(
             cfg,
@@ -225,8 +279,22 @@ def _run_sac_eval_log_checkpoint(config, env, modules, training, state, step, ru
         capture_actor_state=sac_deps.torchrl_sac_actor_eval.capture_sac_actor_snapshot,
         evaluate_heldout=_eval_heldout,
     )
-    sac_deps.torchrl_sac_loop.log_if_due(config, state, step=step, start_time=start_time, latest_losses=latest_losses, total_updates=total_updates)
-    sac_deps.torchrl_sac_loop.checkpoint_if_due(config, modules, training, state, step=step, build_checkpoint_payload=_checkpoint_payload)
+    sac_deps.torchrl_sac_loop.log_if_due(
+        config,
+        state,
+        step=step,
+        start_time=start_time,
+        latest_losses=latest_losses,
+        total_updates=total_updates,
+    )
+    sac_deps.torchrl_sac_loop.checkpoint_if_due(
+        config,
+        modules,
+        training,
+        state,
+        step=step,
+        build_checkpoint_payload=_checkpoint_payload,
+    )
 
 
 def _process_sac_batch(batch, config, modules, training, runtime, env_setup, latest_losses, total_updates):
@@ -259,7 +327,11 @@ def train_sac(config: SACConfig) -> TrainResult:
     with sac_deps.torchrl_common.temporary_distribution_validate_args(False):
         if config.eval_noise_mode is not None:
             sac_deps.eval_noise.normalize_eval_noise_mode(config.eval_noise_mode)
-        resolved = sac_deps.seed_util.resolve_run_seeds(seed=int(config.seed), problem_seed=config.problem_seed, noise_seed_0=config.noise_seed_0)
+        resolved = sac_deps.seed_util.resolve_run_seeds(
+            seed=int(config.seed),
+            problem_seed=config.problem_seed,
+            noise_seed_0=config.noise_seed_0,
+        )
         config.problem_seed = int(resolved.problem_seed)
         config.noise_seed_0 = int(resolved.noise_seed_0)
         sac_deps.seed_all(sac_deps.seed_util.global_seed_for_run(int(resolved.problem_seed)))
@@ -279,28 +351,73 @@ def train_sac(config: SACConfig) -> TrainResult:
         if hasattr(collector, "shutdown"):
             pass
         start_time = time.time()
-        latest_losses = {"loss_actor": float("nan"), "loss_critic": float("nan"), "loss_alpha": float("nan")}
+        latest_losses = {
+            "loss_actor": float("nan"),
+            "loss_critic": float("nan"),
+            "loss_alpha": float("nan"),
+        }
         total_updates = 0
         step = state.start_step
         for batch in collector:
-            latest_losses, total_updates, n_frames = _process_sac_batch(batch, config, modules, training, runtime, env, latest_losses, total_updates)
+            latest_losses, total_updates, n_frames = _process_sac_batch(
+                batch,
+                config,
+                modules,
+                training,
+                runtime,
+                env,
+                latest_losses,
+                total_updates,
+            )
             step += n_frames
             if step >= int(config.total_timesteps):
                 step = int(config.total_timesteps)
                 _run_sac_eval_log_checkpoint(
-                    config, env, modules, training, state, step, runtime, start_time, latest_losses, total_updates, sac_deps.episode_rollout.evaluate_for_best
+                    config,
+                    env,
+                    modules,
+                    training,
+                    state,
+                    step,
+                    runtime,
+                    start_time,
+                    latest_losses,
+                    total_updates,
+                    sac_deps.episode_rollout.evaluate_for_best,
                 )
                 break
             _run_sac_eval_log_checkpoint(
-                config, env, modules, training, state, step, runtime, start_time, latest_losses, total_updates, sac_deps.episode_rollout.evaluate_for_best
+                config,
+                env,
+                modules,
+                training,
+                state,
+                step,
+                runtime,
+                start_time,
+                latest_losses,
+                total_updates,
+                sac_deps.episode_rollout.evaluate_for_best,
             )
         try:
             collector.shutdown()
         except Exception:
             pass
         total_time = time.time() - start_time
-        rl_logger.log_run_footer(state.best_return, int(config.total_timesteps), total_time, algo_name="sac", step_label="steps")
-        sac_deps.torchrl_sac_loop.save_final_checkpoint_if_enabled(config, modules, training, state, build_checkpoint_payload=_checkpoint_payload)
+        rl_logger.log_run_footer(
+            state.best_return,
+            int(config.total_timesteps),
+            total_time,
+            algo_name="sac",
+            step_label="steps",
+        )
+        sac_deps.torchrl_sac_loop.save_final_checkpoint_if_enabled(
+            config,
+            modules,
+            training,
+            state,
+            build_checkpoint_payload=_checkpoint_payload,
+        )
         if config.video_enable:
             ctx = sac_deps.video.RLVideoContext(
                 build_eval_env_conf=lambda ps, ns: sac_deps.get_env_conf(config.env_tag, problem_seed=ps, noise_seed_0=ns),
@@ -321,4 +438,11 @@ def register():
     sac_deps.registry.register_algo("sac", SACConfig, train_sac)
 
 
-__all__ = ["SACConfig", "TrainResult", "_scale_action_to_env", "_unscale_action_from_env", "register", "train_sac"]
+__all__ = [
+    "SACConfig",
+    "TrainResult",
+    "_scale_action_to_env",
+    "_unscale_action_from_env",
+    "register",
+    "train_sac",
+]

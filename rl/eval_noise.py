@@ -30,7 +30,13 @@ def eval_index_for_due_step(*, current: int, interval: int) -> int:
     return int(current_i // interval_i)
 
 
-def resolve_eval_seed(*, seed: int, eval_seed_base: int | None, eval_noise_mode: str | None, eval_index: int) -> int:
+def resolve_eval_seed(
+    *,
+    seed: int,
+    eval_seed_base: int | None,
+    eval_noise_mode: str | None,
+    eval_index: int,
+) -> int:
     eval_index_i = int(eval_index)
     if eval_index_i <= 0:
         raise ValueError(f"eval_index must be > 0, got {eval_index_i}.")
@@ -48,8 +54,20 @@ def resolve_heldout_noise_index(*, eval_noise_mode: str | None, eval_seed: int) 
     return int(eval_seed)
 
 
-def build_eval_plan(*, current: int, interval: int, seed: int, eval_seed_base: int | None, eval_noise_mode: str | None) -> EvalPlan:
+def build_eval_plan(
+    *,
+    current: int,
+    interval: int,
+    seed: int,
+    eval_seed_base: int | None,
+    eval_noise_mode: str | None,
+) -> EvalPlan:
     eval_index = eval_index_for_due_step(current=current, interval=interval)
-    eval_seed = resolve_eval_seed(seed=seed, eval_seed_base=eval_seed_base, eval_noise_mode=eval_noise_mode, eval_index=eval_index)
+    eval_seed = resolve_eval_seed(
+        seed=seed,
+        eval_seed_base=eval_seed_base,
+        eval_noise_mode=eval_noise_mode,
+        eval_index=eval_index,
+    )
     heldout_i_noise = resolve_heldout_noise_index(eval_noise_mode=eval_noise_mode, eval_seed=eval_seed)
     return EvalPlan(eval_seed=int(eval_seed), heldout_i_noise=int(heldout_i_noise))

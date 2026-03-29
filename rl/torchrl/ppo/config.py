@@ -73,7 +73,10 @@ class PPOConfig(TorchRLRuntimeConfig):
 
 
 _PPO_RUNTIME_CAPABILITIES = TorchRLRuntimeCapabilities(
-    allow_multi_sync_collector=True, allow_multi_async_collector=True, allow_mps_multi_collectors=False, allow_parallel_single_env=True
+    allow_multi_sync_collector=True,
+    allow_multi_async_collector=True,
+    allow_mps_multi_collectors=False,
+    allow_parallel_single_env=True,
 )
 
 

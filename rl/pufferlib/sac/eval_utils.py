@@ -47,7 +47,14 @@ def evaluate_heldout_if_enabled(
             eval_policy=policy,
         )
     policy = SacEvalPolicy(modules, obs_spec, device=device)
-    return float(evaluate_for_best(env.env_conf, policy, config.num_denoise_passive, i_noise=int(heldout_i_noise)))
+    return float(
+        evaluate_for_best(
+            env.env_conf,
+            policy,
+            config.num_denoise_passive,
+            i_noise=int(heldout_i_noise),
+        )
+    )
 
 
 def maybe_eval(config: Any, env: Any, modules: Any, obs_spec: Any, state: TrainState, *, device) -> None:

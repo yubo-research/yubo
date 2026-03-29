@@ -79,7 +79,10 @@ class Optimizer:
         self._cum_dt_proposing = 0
         self._cum_env_steps = 0
 
-        problem_parts = [f"env_tag = {env_conf.env_name}", f"num_params = {policy.num_params()}"]
+        problem_parts = [
+            f"env_tag = {env_conf.env_name}",
+            f"num_params = {policy.num_params()}",
+        ]
         if opt_name is not None:
             problem_parts.append(f"opt_name = {opt_name}")
         if num_rounds is not None:
@@ -125,7 +128,14 @@ class Optimizer:
 
         return IterateResult(data=data, dt_prop=float(dt_prop), dt_eval=float(dt_eval))
 
-    def collect_trace(self, designer_name, max_iterations=None, max_proposal_seconds=np.inf, deadline=None, max_total_timesteps=None):
+    def collect_trace(
+        self,
+        designer_name,
+        max_iterations=None,
+        max_proposal_seconds=np.inf,
+        deadline=None,
+        max_total_timesteps=None,
+    ):
         self.initialize(designer_name)
         num_iterations = 0
         while (

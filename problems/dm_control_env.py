@@ -323,7 +323,13 @@ class _PixelObsWrapper:
         pixels = self._get_pixels()
         if self._pixels_only:
             return pixels, reward, terminated, truncated, info
-        return {"pixels": pixels, "state": state_obs}, reward, terminated, truncated, info
+        return (
+            {"pixels": pixels, "state": state_obs},
+            reward,
+            terminated,
+            truncated,
+            info,
+        )
 
     def close(self):
         return self.env.close()

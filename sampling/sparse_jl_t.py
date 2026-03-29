@@ -409,7 +409,12 @@ def block_sparse_jl_transform_module_to_cpu_wr(
         for start in range(0, n, int(chunk_size)):
             end = min(start + int(chunk_size), n)
             sub = flat[start:end].to(device=torch.device("cpu"), dtype=torch.float32)
-            global_idx = torch.arange(offset + start, offset + end, dtype=torch.int64, device=torch.device("cpu"))
+            global_idx = torch.arange(
+                offset + start,
+                offset + end,
+                dtype=torch.int64,
+                device=torch.device("cpu"),
+            )
             rows, signs = _compute_rows_and_signs_wr(global_idx, d, s, seed, torch.device("cpu"))
             contrib = signs * sub.unsqueeze(1) * inv_sqrt_s
             y.scatter_add_(0, rows.reshape(-1), contrib.reshape(-1).to(y.dtype))

@@ -93,7 +93,10 @@ def prepare_obs_np(obs_np: np.ndarray, *, obs_spec: ObservationSpec) -> np.ndarr
     obs_arr = np.asarray(obs_np)
     if obs_spec.mode == "pixels":
         obs_t = ensure_pixel_obs_format(
-            torch.as_tensor(obs_arr), channels=int(obs_spec.channels or 3), size=int(obs_spec.image_size or 84), scale_float_255=True
+            torch.as_tensor(obs_arr),
+            channels=int(obs_spec.channels or 3),
+            size=int(obs_spec.image_size or 84),
+            scale_float_255=True,
         )
         if obs_t.ndim == 3:
             obs_t = obs_t.unsqueeze(0)

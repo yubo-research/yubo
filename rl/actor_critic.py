@@ -5,7 +5,13 @@ import torch
 import torch.nn as nn
 from torch.distributions import Normal
 
-from rl.backbone import BackboneSpec, HeadSpec, build_backbone, build_mlp_head, init_linear_layers
+from rl.backbone import (
+    BackboneSpec,
+    HeadSpec,
+    build_backbone,
+    build_mlp_head,
+    init_linear_layers,
+)
 
 
 def _atanh(x, eps: float = 1e-06):
@@ -31,7 +37,13 @@ class ActionValue(NamedTuple):
 
 class ActorCritic(nn.Module):
     def __init__(
-        self, obs_dim: int, act_dim: int, specs: PolicySpecs, *, actor_backbone: BackboneSpec | None = None, critic_backbone: BackboneSpec | None = None
+        self,
+        obs_dim: int,
+        act_dim: int,
+        specs: PolicySpecs,
+        *,
+        actor_backbone: BackboneSpec | None = None,
+        critic_backbone: BackboneSpec | None = None,
     ):
         super().__init__()
         obs_dim = int(obs_dim)

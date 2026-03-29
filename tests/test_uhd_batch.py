@@ -112,7 +112,12 @@ def test_write_config(tmp_path):
     from ops.uhd_batch import _write_config
 
     exp_dir = tmp_path / "abc123"
-    cfg = {"env_tag": "mnist", "num_rounds": 100, "problem_seed": 42, "optimizer": "mezo"}
+    cfg = {
+        "env_tag": "mnist",
+        "num_rounds": 100,
+        "problem_seed": 42,
+        "optimizer": "mezo",
+    }
     _write_config(exp_dir, cfg)
 
     config_path = exp_dir / "config.json"
@@ -183,7 +188,10 @@ def test_uhd_batch_worker():
     fake_dict = {}
     completed = SimpleNamespace(stdout=_FAKE_EVAL, stderr="", returncode=0)
 
-    with patch("ops.uhd_batch._results_dict", return_value=fake_dict), patch("subprocess.run", return_value=completed):
+    with (
+        patch("ops.uhd_batch._results_dict", return_value=fake_dict),
+        patch("subprocess.run", return_value=completed),
+    ):
         raw_fn(("k1", {"env_tag": "x", "num_rounds": 1}))
 
     assert "k1" in fake_dict
@@ -197,7 +205,10 @@ def test_uhd_batch_worker_fails_on_error():
     fake_dict = {}
     failed = SimpleNamespace(stdout="", stderr="IndexError: tuple index out of range", returncode=1)
 
-    with patch("ops.uhd_batch._results_dict", return_value=fake_dict), patch("subprocess.run", return_value=failed):
+    with (
+        patch("ops.uhd_batch._results_dict", return_value=fake_dict),
+        patch("subprocess.run", return_value=failed),
+    ):
         with pytest.raises(RuntimeError, match="Subprocess failed with exit 1"):
             raw_fn(("k2", {"env_tag": "x", "num_rounds": 1}))
 
@@ -211,7 +222,10 @@ def test_uhd_batch_resubmitter():
     fake_submitted = {}
     mock_worker = MagicMock()
 
-    with patch("ops.uhd_batch._submitted_dict", return_value=fake_submitted), patch("modal.Function.from_name", return_value=mock_worker):
+    with (
+        patch("ops.uhd_batch._submitted_dict", return_value=fake_submitted),
+        patch("modal.Function.from_name", return_value=mock_worker),
+    ):
         raw_fn([("k1", {"a": 1}), ("k2", {"b": 2})])
 
     assert fake_submitted == {"k1": True, "k2": True}
@@ -227,7 +241,10 @@ def test_uhd_batch_resubmitter_skips_submitted():
     fake_submitted = {"k1": True}
     mock_worker = MagicMock()
 
-    with patch("ops.uhd_batch._submitted_dict", return_value=fake_submitted), patch("modal.Function.from_name", return_value=mock_worker):
+    with (
+        patch("ops.uhd_batch._submitted_dict", return_value=fake_submitted),
+        patch("modal.Function.from_name", return_value=mock_worker),
+    ):
         raw_fn([("k1", {"a": 1}), ("k2", {"b": 2})])
 
     spawned = mock_worker.spawn_map.call_args[0][0]
@@ -316,7 +333,10 @@ def test_status_cmd():
     mock_sd = MagicMock()
     mock_sd.len.return_value = 12
 
-    with patch("ops.uhd_batch._results_dict", return_value=mock_rd), patch("ops.uhd_batch._submitted_dict", return_value=mock_sd):
+    with (
+        patch("ops.uhd_batch._results_dict", return_value=mock_rd),
+        patch("ops.uhd_batch._submitted_dict", return_value=mock_sd),
+    ):
         result = CliRunner().invoke(cli, ["status"])
 
     assert result.exit_code == 0, result.output
@@ -348,7 +368,15 @@ def test_batch_cmd(tmp_path):
     assert batch_cmd is not None
 
     with patch("ops.uhd_batch._batch_modal") as mock_batch:
-        result = CliRunner().invoke(cli, ["batch", "experiments.uhd_batch_preps.prep_uhd_batch_tlunar", "--results-dir", str(tmp_path)])
+        result = CliRunner().invoke(
+            cli,
+            [
+                "batch",
+                "experiments.uhd_batch_preps.prep_uhd_batch_tlunar",
+                "--results-dir",
+                str(tmp_path),
+            ],
+        )
 
     assert result.exit_code == 0, result.output
     assert mock_batch.call_count == 4

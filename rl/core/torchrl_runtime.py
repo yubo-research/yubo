@@ -57,16 +57,33 @@ class TorchRLRuntimeConfig:
         return resolve_torchrl_runtime(self.runtime_request(), capabilities=resolved_capabilities)
 
 
-def resolve_torchrl_runtime(request: TorchRLRuntimeRequest, *, capabilities: TorchRLRuntimeCapabilities = TorchRLRuntimeCapabilities()) -> TorchRLRuntime:
+def resolve_torchrl_runtime(
+    request: TorchRLRuntimeRequest,
+    *,
+    capabilities: TorchRLRuntimeCapabilities = TorchRLRuntimeCapabilities(),
+) -> TorchRLRuntime:
     num_envs = int(request.num_envs)
     if num_envs <= 0:
         raise ValueError(f"num_envs must be > 0, got {request.num_envs}.")
     resolved_device = select_device(request.device)
-    resolved_collector_backend = _resolve_collector_backend(request.collector_backend, num_envs=num_envs, device=resolved_device, capabilities=capabilities)
-    resolved_single_env_backend = _resolve_single_env_backend(
-        request.single_env_backend, num_envs=num_envs, collector_backend=resolved_collector_backend, device=resolved_device, capabilities=capabilities
+    resolved_collector_backend = _resolve_collector_backend(
+        request.collector_backend,
+        num_envs=num_envs,
+        device=resolved_device,
+        capabilities=capabilities,
     )
-    resolved_collector_workers = _resolve_collector_workers(request.collector_workers, num_envs=num_envs, collector_backend=resolved_collector_backend)
+    resolved_single_env_backend = _resolve_single_env_backend(
+        request.single_env_backend,
+        num_envs=num_envs,
+        collector_backend=resolved_collector_backend,
+        device=resolved_device,
+        capabilities=capabilities,
+    )
+    resolved_collector_workers = _resolve_collector_workers(
+        request.collector_workers,
+        num_envs=num_envs,
+        collector_backend=resolved_collector_backend,
+    )
     return TorchRLRuntime(
         device=resolved_device,
         collector_backend=resolved_collector_backend,
@@ -91,7 +108,13 @@ def _normalize_single_env_backend(single_env_backend: str) -> str:
     return normalized
 
 
-def _resolve_collector_backend(collector_backend: str, *, num_envs: int, device: torch.device, capabilities: TorchRLRuntimeCapabilities) -> str:
+def _resolve_collector_backend(
+    collector_backend: str,
+    *,
+    num_envs: int,
+    device: torch.device,
+    capabilities: TorchRLRuntimeCapabilities,
+) -> str:
     normalized = _normalize_collector_backend(collector_backend)
     if normalized == "auto":
         if num_envs <= 1:
@@ -116,7 +139,12 @@ def _resolve_collector_backend(collector_backend: str, *, num_envs: int, device:
 
 
 def _resolve_single_env_backend(
-    single_env_backend: str, *, num_envs: int, collector_backend: str, device: torch.device, capabilities: TorchRLRuntimeCapabilities
+    single_env_backend: str,
+    *,
+    num_envs: int,
+    collector_backend: str,
+    device: torch.device,
+    capabilities: TorchRLRuntimeCapabilities,
 ) -> str:
     normalized = _normalize_single_env_backend(single_env_backend)
     if collector_backend != "single":

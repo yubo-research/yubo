@@ -178,7 +178,16 @@ def _temporary_default_device(runtime_device: str):
         torch.set_default_device(prev_default_device)
 
 
-def _collect_trace_records(opt, opt_name, max_iterations, max_total_timesteps, max_proposal_seconds, deadline, env_conf, b_trace):
+def _collect_trace_records(
+    opt,
+    opt_name,
+    max_iterations,
+    max_total_timesteps,
+    max_proposal_seconds,
+    deadline,
+    env_conf,
+    b_trace,
+):
     trace_records = []
     collector_trace = Collector()
     for i_iter, te in enumerate(
@@ -389,7 +398,12 @@ def _resolve_runtime_device(*, requested: str, env_tag: str, local_workers: int)
 
 
 def _limit_worker_threads():
-    for var in ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS", "NUMEXPR_NUM_THREADS"):
+    for var in (
+        "OMP_NUM_THREADS",
+        "MKL_NUM_THREADS",
+        "OPENBLAS_NUM_THREADS",
+        "NUMEXPR_NUM_THREADS",
+    ):
         os.environ.setdefault(var, "1")
     try:
         torch.set_num_threads(1)

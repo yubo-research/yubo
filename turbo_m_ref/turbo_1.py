@@ -18,7 +18,13 @@ import numpy as np
 import torch
 
 from .gp import train_gp
-from .utils import from_unit_cube, latin_hypercube, make_sobol_candidates, to_unit_cube, turbo_adjust_length
+from .utils import (
+    from_unit_cube,
+    latin_hypercube,
+    make_sobol_candidates,
+    to_unit_cube,
+    turbo_adjust_length,
+)
 
 
 class _CandidatesResult(NamedTuple):
@@ -253,7 +259,15 @@ class Turbo1Standard:
         lb = np.clip(x_center - weights * length / 2.0, 0.0, 1.0)
         ub = np.clip(x_center + weights * length / 2.0, 0.0, 1.0)
 
-        X_cand = make_sobol_candidates(dim=self.dim, n_cand=self.n_cand, x_center=x_center, lb=lb, ub=ub, device=device, dtype=dtype)
+        X_cand = make_sobol_candidates(
+            dim=self.dim,
+            n_cand=self.n_cand,
+            x_center=x_center,
+            lb=lb,
+            ub=ub,
+            device=device,
+            dtype=dtype,
+        )
 
         # Figure out what device we are running on
         if len(X_cand) < self.min_cuda:

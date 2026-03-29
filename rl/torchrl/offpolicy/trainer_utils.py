@@ -14,8 +14,14 @@ def flatten_batch_to_transitions(batch: TensorDict) -> TensorDict:
     if "next" in flat.keys():
         next_td = flat["next"]
         if "done" not in next_td.keys():
-            term = next_td.get("terminated", torch.zeros(*next_td.batch_size, 1, dtype=torch.bool, device=next_td.device))
-            trunc = next_td.get("truncated", torch.zeros(*next_td.batch_size, 1, dtype=torch.bool, device=next_td.device))
+            term = next_td.get(
+                "terminated",
+                torch.zeros(*next_td.batch_size, 1, dtype=torch.bool, device=next_td.device),
+            )
+            trunc = next_td.get(
+                "truncated",
+                torch.zeros(*next_td.batch_size, 1, dtype=torch.bool, device=next_td.device),
+            )
             next_td = next_td.set("done", term | trunc)
         for key in ("reward", "done", "terminated"):
             if key in next_td.keys() and next_td[key].ndim == 1:

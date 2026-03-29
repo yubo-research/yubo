@@ -15,7 +15,11 @@ from rl.pufferlib.ppo.metrics import _as_optional_finite
 
 
 def build_checkpoint_payload(model, optimizer: optim.Optimizer, state, *, iteration: int) -> dict[str, Any]:
-    actor_snapshot = capture_actor_snapshot(model.actor_backbone, model.actor_head, log_std=model.log_std if hasattr(model, "log_std") else None)
+    actor_snapshot = capture_actor_snapshot(
+        model.actor_backbone,
+        model.actor_head,
+        log_std=model.log_std if hasattr(model, "log_std") else None,
+    )
     return build_shared_payload(
         iteration=iteration,
         global_step=int(state.global_step),
@@ -35,11 +39,18 @@ def restore_checkpoint_if_requested(config, plan, model, optimizer: optim.Optimi
     if not config.resume_from:
         return
     loaded = load_checkpoint(Path(config.resume_from), device=device)
-    actor_snapshot: dict[str, Any] = {"backbone": loaded["actor_backbone"], "head": loaded["actor_head"]}
+    actor_snapshot: dict[str, Any] = {
+        "backbone": loaded["actor_backbone"],
+        "head": loaded["actor_head"],
+    }
     if hasattr(model, "log_std") and "log_std" in loaded:
         actor_snapshot["log_std"] = loaded["log_std"]
     restore_backbone_head_snapshot(
-        model.actor_backbone, model.actor_head, actor_snapshot, log_std=model.log_std if hasattr(model, "log_std") else None, device=device
+        model.actor_backbone,
+        model.actor_head,
+        actor_snapshot,
+        log_std=model.log_std if hasattr(model, "log_std") else None,
+        device=device,
     )
     model.critic_backbone.load_state_dict(loaded["critic_backbone"])
     model.critic_head.load_state_dict(loaded["critic_head"])
@@ -63,7 +74,15 @@ def restore_checkpoint_if_requested(config, plan, model, optimizer: optim.Optimi
         torch.cuda.set_rng_state_all(loaded["rng_cuda"])
 
 
-def maybe_save_periodic_checkpoint(config, checkpoint_manager: Any, model, optimizer: optim.Optimizer, state, *, iteration: int) -> None:
+def maybe_save_periodic_checkpoint(
+    config,
+    checkpoint_manager: Any,
+    model,
+    optimizer: optim.Optimizer,
+    state,
+    *,
+    iteration: int,
+) -> None:
     if config.checkpoint_interval is None:
         return
     interval = int(config.checkpoint_interval)
@@ -73,7 +92,15 @@ def maybe_save_periodic_checkpoint(config, checkpoint_manager: Any, model, optim
     checkpoint_manager.save_both(payload, iteration=iteration)
 
 
-def save_final_checkpoint(config, checkpoint_manager: Any, model, optimizer: optim.Optimizer, state, *, iteration: int) -> None:
+def save_final_checkpoint(
+    config,
+    checkpoint_manager: Any,
+    model,
+    optimizer: optim.Optimizer,
+    state,
+    *,
+    iteration: int,
+) -> None:
     if config.checkpoint_interval is None:
         return
     payload = build_checkpoint_payload(model, optimizer, state, iteration=iteration)

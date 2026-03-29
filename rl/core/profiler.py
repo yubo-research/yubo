@@ -7,7 +7,13 @@ import torch
 
 
 def run_with_profiler(
-    config: Any, collector: Iterator, run_iteration: Callable[[int, Any], None], *, device: torch.device, num_iterations: int, start_iteration: int
+    config: Any,
+    collector: Iterator,
+    run_iteration: Callable[[int, Any], None],
+    *,
+    device: torch.device,
+    num_iterations: int,
+    start_iteration: int,
 ) -> None:
     profile_wait = int(getattr(config, "profile_wait", 0))
     profile_warmup = int(getattr(config, "profile_warmup", 1))
@@ -21,7 +27,10 @@ def run_with_profiler(
     trace_path = Path(config.exp_dir) / "profile_trace.json"
     Path(config.exp_dir).mkdir(parents=True, exist_ok=True)
     with torch.profiler.profile(
-        activities=activities, schedule=schedule, on_trace_ready=lambda p: p.export_chrome_trace(str(trace_path)), record_shapes=True
+        activities=activities,
+        schedule=schedule,
+        on_trace_ready=lambda p: p.export_chrome_trace(str(trace_path)),
+        record_shapes=True,
     ) as prof:
         for iteration, batch in enumerate(collector, start=start_iteration + 1):
             if iteration > num_iterations:

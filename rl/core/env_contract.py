@@ -82,14 +82,24 @@ def resolve_observation_contract(env_conf: Any, *, default_image_size: int = 84)
     raw_channels = _infer_raw_channels(raw_shape)
     model_channels = 4 if raw_channels == 4 else 3
     image_size = _infer_image_size(raw_shape, int(default_image_size))
-    return ObservationContract(mode="pixels", raw_shape=raw_shape, model_channels=model_channels, image_size=image_size)
+    return ObservationContract(
+        mode="pixels",
+        raw_shape=raw_shape,
+        model_channels=model_channels,
+        image_size=image_size,
+    )
 
 
 def resolve_action_contract(action_space: Any) -> ActionContract:
     is_discrete = hasattr(action_space, "n") and (not hasattr(action_space, "shape") or len(getattr(action_space, "shape", ())) == 0)
     if is_discrete:
         dim = int(action_space.n)
-        return ActionContract(kind="discrete", dim=dim, low=np.array([0.0], dtype=np.float32), high=np.array([float(dim - 1)], dtype=np.float32))
+        return ActionContract(
+            kind="discrete",
+            dim=dim,
+            low=np.array([0.0], dtype=np.float32),
+            high=np.array([float(dim - 1)], dtype=np.float32),
+        )
     shape = _space_shape(action_space)
     dim = int(np.prod(shape)) if shape else 1
     low, high = normalize_action_bounds(action_space.low, action_space.high, dim)
@@ -98,7 +108,8 @@ def resolve_action_contract(action_space: Any) -> ActionContract:
 
 def resolve_env_io_contract(env_conf: Any, *, default_image_size: int = 84) -> EnvIOContract:
     return EnvIOContract(
-        observation=resolve_observation_contract(env_conf, default_image_size=int(default_image_size)), action=resolve_action_contract(env_conf.action_space)
+        observation=resolve_observation_contract(env_conf, default_image_size=int(default_image_size)),
+        action=resolve_action_contract(env_conf.action_space),
     )
 
 

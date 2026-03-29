@@ -9,7 +9,11 @@ from problems import env_conf_policies
 
 
 def test_resolve_dm_control_policy_class_variants(monkeypatch):
-    monkeypatch.setattr(env_conf_policies, "gaussian_policy_factory", lambda variant, **_kw: f"gauss:{variant}")
+    monkeypatch.setattr(
+        env_conf_policies,
+        "gaussian_policy_factory",
+        lambda variant, **_kw: f"gauss:{variant}",
+    )
 
     with pytest.raises(ValueError, match="cnn_mlp_policy_factory is required"):
         env_conf_policies.resolve_dm_control_policy_class(use_pixels=True, policy_variant=None, cnn_mlp_policy_factory=None)
@@ -95,7 +99,7 @@ def test_load_atari_dm_bindings_with_fake_modules(monkeypatch):
         pass
 
     fake_atari_env.AtariPreprocessOptions = _FakeAtariPreprocessOptions
-    fake_atari_env._parse_atari_tag = lambda tag: "ALE/Pong-v5" if "Pong" in str(tag) else str(tag)
+    fake_atari_env._parse_atari_tag = lambda tag: ("ALE/Pong-v5" if "Pong" in str(tag) else str(tag))
     fake_atari_env.make = lambda *args, **kwargs: ("atari-make", args, kwargs)
 
     fake_dm_env = ModuleType("problems.dm_control_env")
@@ -104,7 +108,11 @@ def test_load_atari_dm_bindings_with_fake_modules(monkeypatch):
     fake_pixel_policies = ModuleType("problems.pixel_policies")
     fake_pixel_policies.CNNMLPPolicyFactory = lambda sizes: ("cnn-mlp", tuple(sizes))
     fake_pixel_policies.AtariAgent57LiteFactory = lambda **kwargs: ("a57", kwargs)
-    fake_pixel_policies.AtariCNNPolicyFactory = lambda sizes, **kwargs: ("acnn", tuple(sizes), kwargs)
+    fake_pixel_policies.AtariCNNPolicyFactory = lambda sizes, **kwargs: (
+        "acnn",
+        tuple(sizes),
+        kwargs,
+    )
     fake_pixel_policies.AtariGaussianPolicyFactory = lambda **kwargs: ("agauss", kwargs)
 
     monkeypatch.setitem(sys.modules, "problems.atari_env", fake_atari_env)

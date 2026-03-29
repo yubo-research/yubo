@@ -306,7 +306,14 @@ class EnvConf:
         return self.make(**kwargs)
 
 
-def _gym_conf(env_name, gym_conf=None, policy_class=None, kwargs=None, noise_seed_0=None, rl_model=None):
+def _gym_conf(
+    env_name,
+    gym_conf=None,
+    policy_class=None,
+    kwargs=None,
+    noise_seed_0=None,
+    rl_model=None,
+):
     if gym_conf is None:
         gym_conf = GymConf()
 

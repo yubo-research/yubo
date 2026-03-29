@@ -142,7 +142,11 @@ class ENNMuPlusSeedSelector:
 
     def _posterior_std(self, x_cand: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         assert self._enn_model is not None and self._enn_params is not None
-        post = self._enn_model.posterior(x_cand, params=self._enn_params, flags=PosteriorFlags(observation_noise=False))
+        post = self._enn_model.posterior(
+            x_cand,
+            params=self._enn_params,
+            flags=PosteriorFlags(observation_noise=False),
+        )
         mu_std = np.asarray(post.mu).reshape(-1)
         se_std = np.asarray(post.se).reshape(-1)
         return mu_std, se_std
@@ -160,7 +164,12 @@ class ENNMuPlusSeedSelector:
             num_dim = 0
         else:
             z_base, num_dim = self._embed_base()
-            x_base = self._embed_z_plus_np(z_base=z_base, seed=int(base_seed), sigma=float(sigma), num_dim=int(num_dim))
+            x_base = self._embed_z_plus_np(
+                z_base=z_base,
+                seed=int(base_seed),
+                sigma=float(sigma),
+                num_dim=int(num_dim),
+            )
 
         if m <= 1:
             self._pending_x = x_base
@@ -180,7 +189,15 @@ class ENNMuPlusSeedSelector:
         else:
             assert z_base is not None
             x_cand = np.asarray(
-                [self._embed_z_plus_np(z_base=z_base, seed=int(s), sigma=float(sigma), num_dim=int(num_dim)) for s in seeds.tolist()],
+                [
+                    self._embed_z_plus_np(
+                        z_base=z_base,
+                        seed=int(s),
+                        sigma=float(sigma),
+                        num_dim=int(num_dim),
+                    )
+                    for s in seeds.tolist()
+                ],
                 dtype=np.float64,
             )
         mu_std, se_std = self._posterior_std(x_cand)

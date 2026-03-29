@@ -9,20 +9,52 @@ from typing import Any
 import numpy as np
 import torch
 
-from rl.core.actor_state import capture_backbone_head_snapshot, restore_backbone_head_snapshot, restore_rng_state_payload
+from rl.core.actor_state import (
+    capture_backbone_head_snapshot,
+    restore_backbone_head_snapshot,
+    restore_rng_state_payload,
+)
 from rl.core.update_chunks import run_chunked_updates
 from rl.pufferlib.offpolicy import engine_utils as offpolicy_engine_utils
 
 from .config import SACConfig, TrainResult
-from .env_utils import build_env_setup, infer_observation_spec, make_vector_env, prepare_obs_np, resolve_device, seed_everything, to_env_action
-from .eval_utils import TrainState, append_eval_metric, due_mark, log_if_due, maybe_eval, render_videos_if_enabled
+from .env_utils import (
+    build_env_setup,
+    infer_observation_spec,
+    make_vector_env,
+    prepare_obs_np,
+    resolve_device,
+    seed_everything,
+    to_env_action,
+)
+from .eval_utils import (
+    TrainState,
+    append_eval_metric,
+    due_mark,
+    log_if_due,
+    maybe_eval,
+    render_videos_if_enabled,
+)
 from .model_utils import build_modules, build_optimizers, sac_update, use_actor_state
 from .replay import make_replay_buffer, resolve_replay_backend
 
-__all__ = ["SACConfig", "TrainResult", "register", "train_sac_puffer", "train_sac_puffer_impl"]
+__all__ = [
+    "SACConfig",
+    "TrainResult",
+    "register",
+    "train_sac_puffer",
+    "train_sac_puffer_impl",
+]
 
 
-def _log_header(config: SACConfig, obs_batch: np.ndarray, env_setup, obs_spec, *, device: torch.device) -> None:
+def _log_header(
+    config: SACConfig,
+    obs_batch: np.ndarray,
+    env_setup,
+    obs_spec,
+    *,
+    device: torch.device,
+) -> None:
     rl_logger = importlib.import_module("rl.logger")
     num_envs = int(obs_batch.shape[0])
     rl_logger.log_run_header_basic(
@@ -60,12 +92,22 @@ def _init_runtime(config: SACConfig):
     )
 
 
-def _build_training_components(config: SACConfig, env_setup, obs_spec, obs_batch: np.ndarray, *, device: torch.device):
+def _build_training_components(
+    config: SACConfig,
+    env_setup,
+    obs_spec,
+    obs_batch: np.ndarray,
+    *,
+    device: torch.device,
+):
     modules = build_modules(config, env_setup, obs_spec, device=device)
     optimizers = build_optimizers(config, modules)
     replay_backend = resolve_replay_backend(str(config.replay_backend), device=device)
     replay = make_replay_buffer(
-        obs_shape=tuple((int(v) for v in obs_batch.shape[1:])), act_dim=int(env_setup.act_dim), capacity=int(config.replay_size), backend=replay_backend
+        obs_shape=tuple((int(v) for v in obs_batch.shape[1:])),
+        act_dim=int(env_setup.act_dim),
+        capacity=int(config.replay_size),
+        backend=replay_backend,
     )
     state = TrainState(start_time=float(time.time()))
     _restore_if_requested(config, modules, optimizers, replay, state, device=device)
@@ -105,7 +147,11 @@ def _restore_if_requested(config: SACConfig, modules, optimizers, replay, state:
     load_checkpoint = importlib.import_module("rl.checkpointing").load_checkpoint
     loaded = load_checkpoint(Path(config.resume_from), device=device)
     restore_backbone_head_snapshot(
-        modules.actor_backbone, modules.actor_head, {"backbone": loaded["actor_backbone"], "head": loaded["actor_head"]}, log_std=None, device=device
+        modules.actor_backbone,
+        modules.actor_head,
+        {"backbone": loaded["actor_backbone"], "head": loaded["actor_head"]},
+        log_std=None,
+        device=device,
     )
     modules.q1.load_state_dict(loaded["q1"])
     modules.q2.load_state_dict(loaded["q2"])
@@ -184,12 +230,21 @@ def _train_loop(
                 state.last_loss_critic = float(critic_loss)
                 state.last_loss_alpha = float(alpha_loss)
 
-            run_chunked_updates(int(max(1, config.updates_per_step)), int(config.learner_update_chunk_size), _run_one_update)
+            run_chunked_updates(
+                int(max(1, config.updates_per_step)),
+                int(config.learner_update_chunk_size),
+                _run_one_update,
+            )
         prev_eval_mark = int(state.eval_mark)
         maybe_eval(config, env_setup, modules, obs_spec, state, device=device)
         if int(state.eval_mark) != prev_eval_mark:
             append_eval_metric(metrics_path, state, step=int(state.global_step))
-        log_if_due(config, state, step=int(state.global_step), frames_per_batch=int(max(1, num_envs)))
+        log_if_due(
+            config,
+            state,
+            step=int(state.global_step),
+            frames_per_batch=int(max(1, num_envs)),
+        )
         _checkpoint_if_due(config, checkpoint_manager, modules, optimizers, replay, state)
 
 
@@ -226,7 +281,10 @@ def train_sac_puffer_impl(config: SACConfig) -> TrainResult:
             checkpoint_manager=checkpoint_manager,
         )
         if int(config.checkpoint_interval_steps or 0) > 0:
-            checkpoint_manager.save_both(_state_payload(modules, optimizers, replay, state), iteration=int(state.global_step))
+            checkpoint_manager.save_both(
+                _state_payload(modules, optimizers, replay, state),
+                iteration=int(state.global_step),
+            )
         if state.best_return == -float("inf"):
             state.best_return = float("nan")
         rl_logger.log_run_footer(

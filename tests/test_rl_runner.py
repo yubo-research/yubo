@@ -13,7 +13,15 @@ def test_parse_runtime_args_rejects_seeds_flag():
 
 
 def test_split_config_and_args_accepts_local_prefix():
-    config, rest = split_config_and_args(["local", "--config", "configs/rl/atari/ppo_pong_cpu.toml", "--set", "rl.ppo.seed=2"])
+    config, rest = split_config_and_args(
+        [
+            "local",
+            "--config",
+            "configs/rl/atari/ppo_pong_cpu.toml",
+            "--set",
+            "rl.ppo.seed=2",
+        ]
+    )
     assert config == "configs/rl/atari/ppo_pong_cpu.toml"
     assert rest == ["--set", "rl.ppo.seed=2"]
 

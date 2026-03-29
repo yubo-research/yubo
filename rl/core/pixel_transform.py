@@ -65,7 +65,10 @@ def ensure_atari_obs_format(obs: torch.Tensor, size: int = 84, *, scale_float_25
 
 class PixelsToObservation(Transform):
     def __init__(self, size: int = 84):
-        super().__init__(in_keys=["pixels", ("next", "pixels")], out_keys=["observation", ("next", "observation")])
+        super().__init__(
+            in_keys=["pixels", ("next", "pixels")],
+            out_keys=["observation", ("next", "observation")],
+        )
         self._size = int(size)
 
     def _process_pixels(self, pixels: torch.Tensor) -> torch.Tensor:
@@ -86,7 +89,11 @@ class PixelsToObservation(Transform):
         return tensordict_reset
 
     def transform_observation_spec(self, spec):
-        obs_spec = UnboundedContinuous(shape=torch.Size((3, self._size, self._size)), device=spec.device, dtype=torch.float32)
+        obs_spec = UnboundedContinuous(
+            shape=torch.Size((3, self._size, self._size)),
+            device=spec.device,
+            dtype=torch.float32,
+        )
         if "pixels" in spec.keys(True, True):
             spec["observation"] = obs_spec
             spec["next", "observation"] = obs_spec
@@ -95,7 +102,10 @@ class PixelsToObservation(Transform):
 
 class AtariObservationTransform(Transform):
     def __init__(self, size: int = 84):
-        super().__init__(in_keys=["observation", ("next", "observation")], out_keys=["observation", ("next", "observation")])
+        super().__init__(
+            in_keys=["observation", ("next", "observation")],
+            out_keys=["observation", ("next", "observation")],
+        )
         self._size = int(size)
 
     def _process(self, obs: torch.Tensor) -> torch.Tensor:
@@ -116,7 +126,11 @@ class AtariObservationTransform(Transform):
         return tensordict_reset
 
     def transform_observation_spec(self, spec):
-        obs_spec = UnboundedContinuous(shape=torch.Size((4, self._size, self._size)), device=spec.device, dtype=torch.float32)
+        obs_spec = UnboundedContinuous(
+            shape=torch.Size((4, self._size, self._size)),
+            device=spec.device,
+            dtype=torch.float32,
+        )
         if "observation" in spec.keys(True, True):
             spec["observation"] = obs_spec
             spec["next", "observation"] = obs_spec
