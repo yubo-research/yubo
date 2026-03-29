@@ -29,6 +29,7 @@ __all__ = [
     "META_KEY",
     "build_synthetic_sine_benchmark_remote_payload",
     "load_synthetic_sine_benchmark_jobs",
+    "load_synthetic_sine_benchmark_json_dir",
     "read_synthetic_sine_benchmark_json",
     "run_synthetic_sine_benchmark_modal_to_disk",
     "synthetic_sine_benchmark_config_slug",
@@ -84,6 +85,31 @@ def read_synthetic_sine_benchmark_json(path: Path) -> tuple[SyntheticSineSurroga
     with path.open(encoding="utf-8") as f:
         data = json.load(f)
     return synthetic_sine_benchmark_from_payload(data)
+
+
+def load_synthetic_sine_benchmark_json_dir(
+    directory: str | Path,
+    *,
+    verbose: bool = True,
+) -> tuple[list[dict], list[SyntheticSineSurrogateBenchmark]]:
+    """Load every ``*.json`` under ``directory`` (sorted by filename).
+
+    Each row dict has ``file`` (basename), benchmark metadata (``N``, ``D``,
+    ``function_name``, ``problem_seed``), and all :class:`~analysis.fitting_time.evaluate.SyntheticSineSurrogateBenchmark` fields.
+    """
+    root = Path(directory)
+    rows: list[dict] = []
+    benchmarks: list[SyntheticSineSurrogateBenchmark] = []
+    for path in sorted(root.glob("*.json")):
+        bench, meta = read_synthetic_sine_benchmark_json(path)
+        benchmarks.append(bench)
+        rows.append({"file": path.name, **meta, **asdict(bench)})
+    if verbose:
+        if not rows:
+            print("Warning: no *.json files under", root)
+        else:
+            print(f"loaded {len(rows)} runs from {root}")
+    return rows, benchmarks
 
 
 def load_synthetic_sine_benchmark_jobs(

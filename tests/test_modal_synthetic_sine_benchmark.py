@@ -12,6 +12,7 @@ from experiments.synthetic_sine_benchmark_payload import (
     META_KEY,
     build_synthetic_sine_benchmark_remote_payload,
     load_synthetic_sine_benchmark_jobs,
+    load_synthetic_sine_benchmark_json_dir,
     read_synthetic_sine_benchmark_json,
     run_synthetic_sine_benchmark_modal_to_disk,
     synthetic_sine_benchmark_config_slug,
@@ -50,6 +51,77 @@ def test_synthetic_sine_benchmark_payload_round_trip():
     assert meta == {"N": 10, "D": 3, "function_name": "sphere", "problem_seed": 7}
     assert r2 == r
     assert math.isnan(r2.smac_rf_fit_seconds)
+
+
+def test_load_synthetic_sine_benchmark_json_dir(tmp_path: Path, capsys):
+    r_a = SyntheticSineSurrogateBenchmark(
+        enn_fit_seconds=0.1,
+        enn_normalized_rmse=0.2,
+        enn_log_likelihood=-1.0,
+        smac_rf_fit_seconds=float("nan"),
+        smac_rf_normalized_rmse=float("nan"),
+        smac_rf_log_likelihood=float("nan"),
+        dngo_fit_seconds=0.3,
+        dngo_normalized_rmse=0.4,
+        dngo_log_likelihood=-2.0,
+        exact_gp_fit_seconds=0.5,
+        exact_gp_normalized_rmse=0.6,
+        exact_gp_log_likelihood=-3.0,
+        svgp_default_fit_seconds=0.7,
+        svgp_default_normalized_rmse=0.8,
+        svgp_default_log_likelihood=-4.0,
+        svgp_linear_fit_seconds=0.9,
+        svgp_linear_normalized_rmse=1.0,
+        svgp_linear_log_likelihood=-5.0,
+        vecchia_fit_seconds=1.0,
+        vecchia_normalized_rmse=1.1,
+        vecchia_log_likelihood=-6.0,
+    )
+    r_b = SyntheticSineSurrogateBenchmark(
+        enn_fit_seconds=2.0,
+        enn_normalized_rmse=0.0,
+        enn_log_likelihood=0.0,
+        smac_rf_fit_seconds=0.0,
+        smac_rf_normalized_rmse=0.0,
+        smac_rf_log_likelihood=0.0,
+        dngo_fit_seconds=0.0,
+        dngo_normalized_rmse=0.0,
+        dngo_log_likelihood=0.0,
+        exact_gp_fit_seconds=0.0,
+        exact_gp_normalized_rmse=0.0,
+        exact_gp_log_likelihood=0.0,
+        svgp_default_fit_seconds=0.0,
+        svgp_default_normalized_rmse=0.0,
+        svgp_default_log_likelihood=0.0,
+        svgp_linear_fit_seconds=0.0,
+        svgp_linear_normalized_rmse=0.0,
+        svgp_linear_log_likelihood=0.0,
+        vecchia_fit_seconds=0.0,
+        vecchia_normalized_rmse=0.0,
+        vecchia_log_likelihood=0.0,
+    )
+    sub = tmp_path / "exp"
+    sub.mkdir()
+    write_synthetic_sine_benchmark_json(
+        sub / "b_second.json",
+        synthetic_sine_benchmark_result_to_payload(r_b, n=2, d=2, function_name="ackley", problem_seed=1),
+    )
+    write_synthetic_sine_benchmark_json(
+        sub / "a_first.json",
+        synthetic_sine_benchmark_result_to_payload(r_a, n=10, d=3, function_name="sphere", problem_seed=7),
+    )
+    rows, benches = load_synthetic_sine_benchmark_json_dir(sub, verbose=True)
+    assert [r["file"] for r in rows] == ["a_first.json", "b_second.json"]
+    assert rows[0]["N"] == 10 and rows[0]["function_name"] == "sphere"
+    assert rows[1]["N"] == 2 and rows[1]["function_name"] == "ackley"
+    assert benches[0].enn_fit_seconds == r_a.enn_fit_seconds and math.isnan(benches[0].smac_rf_fit_seconds)
+    assert benches[1].enn_fit_seconds == r_b.enn_fit_seconds
+    assert "loaded 2 runs" in capsys.readouterr().out
+
+    empty_d = tmp_path / "empty"
+    empty_d.mkdir()
+    empty_rows, _ = load_synthetic_sine_benchmark_json_dir(empty_d, verbose=False)
+    assert empty_rows == []
 
 
 def test_synthetic_sine_benchmark_json_file_round_trip(tmp_path: Path):

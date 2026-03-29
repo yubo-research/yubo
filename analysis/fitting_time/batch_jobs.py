@@ -34,3 +34,12 @@ def example_two_targets_n12_d2() -> list[SyntheticBenchJob]:
         SyntheticBenchJob(n=12, d=2, target="sphere", problem_seed=0),
         SyntheticBenchJob(n=12, d=2, target="sine", problem_seed=0),
     ]
+
+
+def job_fit_quality() -> list[SyntheticBenchJob]:
+    jobs = []
+    for n in [3000, 10000]:  # [30, 100, 300, 1000]:
+        for d in [3, 10, 30, 100]:
+            for fn in ["sphere", "ackley", "rosenbrock", "booth"]:
+                jobs.append(SyntheticBenchJob(n=n, d=d, target=fn, problem_seed=17))
+    return jobs

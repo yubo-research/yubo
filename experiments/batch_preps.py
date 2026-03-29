@@ -365,7 +365,8 @@ def prep_tlunar(results_dir):
         # "turbo-1",
         # "turbo-enn-fit-ucb",
         # "turbo-enn-p",
-        "ucb",
+        # "ucb",
+        "lei",
     ]
 
     cmds = []

@@ -715,12 +715,14 @@ def test_cov_batch_jobs_dataclass_and_examples():
         SyntheticBenchJob,
         example_sphere_n12_d2_seed0,
         example_two_targets_n12_d2,
+        job_fit_quality,
     )
 
     j = SyntheticBenchJob(n=3, d=4, target="ackley", problem_seed=7)
     assert j.problem_seed == 7
     assert len(example_sphere_n12_d2_seed0()) == 1
     assert len(example_two_targets_n12_d2()) == 2
+    assert len(job_fit_quality()) > 0
 
 
 # ---------------------------------------------------------------------------
