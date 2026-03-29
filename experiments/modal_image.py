@@ -23,6 +23,7 @@ def mk_image():
     matplotlib==3.10.8
     celer==0.7.4
     hyperopt==0.2.7
+    smac==2.3.1
     """.split("\n")
     sreqs = []
     for req in reqs:

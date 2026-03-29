@@ -14,6 +14,8 @@ import torch
 import torch.nn as nn
 from click.testing import CliRunner
 
+import experiments.modal_synthetic_sine_benchmark as kiss_modal_synthetic_sine  # noqa: F401
+
 
 def test_kiss_bridge_env_preprocessing_clip_observation_wrapper():
     import gymnasium as gym
@@ -1176,3 +1178,78 @@ def test_kiss_bridge_torchrl_sac_setup_loop_ppo_engine_tail(monkeypatch, tmp_pat
     dev = torch.device("cpu")
     mods = tr_sac_setup_build_modules(cfg, env_setup, device=dev)
     tr_sac_setup_build_training(cfg, mods)
+
+
+def test_kiss_bridge_modal_synthetic_sine_disk_and_main_raw(monkeypatch, tmp_path, capsys):
+    import contextlib
+    from pathlib import Path
+
+    from analysis.fitting_time.evaluate import SyntheticSineSurrogateBenchmark
+    from experiments.modal_synthetic_sine_benchmark import (
+        main as modal_ssb_main,
+    )
+    from experiments.modal_synthetic_sine_benchmark import (
+        run_synthetic_sine_benchmark_modal_to_disk as modal_ssb_to_disk,
+    )
+
+    msb = kiss_modal_synthetic_sine
+
+    _z = SyntheticSineSurrogateBenchmark(
+        enn_fit_seconds=0.0,
+        enn_normalized_rmse=0.0,
+        enn_log_likelihood=0.0,
+        smac_rf_fit_seconds=0.0,
+        smac_rf_normalized_rmse=0.0,
+        smac_rf_log_likelihood=0.0,
+        dngo_fit_seconds=0.0,
+        dngo_normalized_rmse=0.0,
+        dngo_log_likelihood=0.0,
+        exact_gp_fit_seconds=0.0,
+        exact_gp_normalized_rmse=0.0,
+        exact_gp_log_likelihood=0.0,
+        svgp_default_fit_seconds=0.0,
+        svgp_default_normalized_rmse=0.0,
+        svgp_default_log_likelihood=0.0,
+        svgp_linear_fit_seconds=0.0,
+        svgp_linear_normalized_rmse=0.0,
+        svgp_linear_log_likelihood=0.0,
+    )
+
+    monkeypatch.setattr(
+        "experiments.synthetic_sine_benchmark_payload.modal.enable_output",
+        lambda: contextlib.nullcontext(),
+    )
+    monkeypatch.setattr(msb.app, "run", lambda: contextlib.nullcontext())
+
+    class _Rem:
+        @staticmethod
+        def remote(n, d, fn, ps):
+            return msb.synthetic_sine_benchmark_result_to_payload(_z, n=n, d=d, function_name=fn, problem_seed=ps)
+
+    dest = modal_ssb_to_disk(2, 2, None, 0, tmp_path, remote_fn=_Rem())
+    assert dest.exists()
+
+    def fake_disk(n, d, fn, ps, od):
+        p = Path(od) / "kiss.json"
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text("{}")
+        return p
+
+    monkeypatch.setattr(msb, "run_synthetic_sine_benchmark_modal_to_disk", fake_disk)
+    modal_ssb_main.info.raw_f(1, 1, "", 0, str(tmp_path))
+    assert "wrote" in capsys.readouterr().out
+
+    from experiments import synthetic_sine_benchmark_payload as pl
+
+    class _PlApp:
+        def run(self):
+            return contextlib.nullcontext()
+
+    class _PlRem:
+        @staticmethod
+        def remote(n, d, fn, ps):
+            return pl.synthetic_sine_benchmark_result_to_payload(_z, n=n, d=d, function_name=fn, problem_seed=ps)
+
+    monkeypatch.setattr(pl.modal, "enable_output", lambda: contextlib.nullcontext())
+    pl_dest = pl.run_synthetic_sine_benchmark_modal_to_disk(1, 1, None, 0, tmp_path / "pl_direct", app=_PlApp(), remote_fn=_PlRem())
+    assert pl_dest.exists()

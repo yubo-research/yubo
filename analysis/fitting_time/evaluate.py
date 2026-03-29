@@ -11,9 +11,25 @@ import torch
 __all__ = [
     "SyntheticSineSurrogateBenchmark",
     "benchmark_synthetic_sine_surrogates",
+    "draw_benchmark_synthetic_xy",
+    "normalize_benchmark_function_name",
     "normalized_rmse",
     "predictive_gaussian_log_likelihood",
 ]
+
+
+def normalize_benchmark_function_name(function_name: str | None) -> str | None:
+    """Map ``None`` and whitespace-only strings to ``None`` (default sine path)."""
+    if function_name is None:
+        return None
+    s = str(function_name).strip()
+    return s or None
+
+
+def _as_float64_1d(x) -> np.ndarray:
+    if isinstance(x, torch.Tensor):
+        x = x.detach().cpu().numpy()
+    return np.asarray(x, dtype=np.float64).reshape(-1)
 
 
 def normalized_rmse(y_test, y_hat_test) -> float:
@@ -21,10 +37,8 @@ def normalized_rmse(y_test, y_hat_test) -> float:
 
     Accepts ``torch.Tensor`` or NumPy arrays; values are raveled to 1D.
     """
-    yt = y_test.detach().cpu().numpy() if isinstance(y_test, torch.Tensor) else np.asarray(y_test, dtype=np.float64)
-    yh = y_hat_test.detach().cpu().numpy() if isinstance(y_hat_test, torch.Tensor) else np.asarray(y_hat_test, dtype=np.float64)
-    yt = np.asarray(yt, dtype=np.float64).reshape(-1)
-    yh = np.asarray(yh, dtype=np.float64).reshape(-1)
+    yt = _as_float64_1d(y_test)
+    yh = _as_float64_1d(y_hat_test)
     if yt.shape != yh.shape:
         raise ValueError(f"y_test and y_hat_test length mismatch: {yt.shape} vs {yh.shape}")
     rmse = float(np.sqrt(np.mean((yt - yh) ** 2)))
@@ -43,12 +57,9 @@ def predictive_gaussian_log_likelihood(y_true, y_hat, pred_var) -> float:
 
     Natural units (nats); larger is better.
     """
-    yt = y_true.detach().cpu().numpy() if isinstance(y_true, torch.Tensor) else np.asarray(y_true, dtype=np.float64)
-    yh = y_hat.detach().cpu().numpy() if isinstance(y_hat, torch.Tensor) else np.asarray(y_hat, dtype=np.float64)
-    pv = pred_var.detach().cpu().numpy() if isinstance(pred_var, torch.Tensor) else np.asarray(pred_var, dtype=np.float64)
-    yt = np.asarray(yt, dtype=np.float64).reshape(-1)
-    yh = np.asarray(yh, dtype=np.float64).reshape(-1)
-    pv = np.asarray(pv, dtype=np.float64).reshape(-1)
+    yt = _as_float64_1d(y_true)
+    yh = _as_float64_1d(y_hat)
+    pv = _as_float64_1d(pred_var)
     if yt.shape != yh.shape or yt.shape != pv.shape:
         raise ValueError(f"Shape mismatch for log-likelihood: y_true {yt.shape}, y_hat {yh.shape}, pred_var {pv.shape}")
     pv = np.maximum(pv, 1e-30)
@@ -66,18 +77,20 @@ def _batch_pure_env_reward(env, actions_np: np.ndarray) -> np.ndarray:
     return y
 
 
-def _draw_benchmark_synthetic_xy(
+def draw_benchmark_synthetic_xy(
     *,
     N: int,
     D: int,
     function_name: str | None,
     problem_seed: int,
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    function_name = normalize_benchmark_function_name(function_name)
     if function_name is None:
-        torch.manual_seed(0)
+        base = int(problem_seed)
+        torch.manual_seed(base)
         x = torch.rand(N, D)
         y = torch.sin(2 * torch.pi * x).mean(dim=1, keepdim=True) + 0.1 * torch.randn(N, 1)
-        torch.manual_seed(1)
+        torch.manual_seed(base + 1)
         x_test = torch.rand(N, D)
         y_test = torch.sin(2 * torch.pi * x_test).mean(dim=1, keepdim=True) + 0.1 * torch.randn(N, 1)
         return x, y, x_test, y_test
@@ -116,7 +129,8 @@ def _benchmark_numpy_surrogate_triples(
         dt_smac, yh_smac, var_smac = fit_smac_rf(train_x, train_y.reshape(-1), x_test_np)
         nrmse_smac = normalized_rmse(y_test, yh_smac)
         ll_smac = predictive_gaussian_log_likelihood(y_test, yh_smac, var_smac)
-    except ImportError:
+    except Exception:  # noqa: BLE001
+        # SMAC is optional: missing deps, bad install, or runtime fit failure → degrade row.
         dt_smac, nrmse_smac, ll_smac = math.nan, math.nan, math.nan
     dt_dngo, yh_dngo, var_dngo = fit_dngo(train_x, train_y, x_test_np)
     nrmse_dngo = normalized_rmse(y_test, yh_dngo)
@@ -187,7 +201,7 @@ class SyntheticSineSurrogateBenchmark:
     svgp_linear_log_likelihood: float
 
     def print_table(self) -> None:
-        """Print fit times (s), speedup vs ENN, NRMSE, and predictive log-likelihood (nats)."""
+        """Print fit times (s), wall-clock ratio vs ENN (``t_surrogate / t_ENN``), NRMSE, log-likelihood (nats)."""
 
         def fmt(x: float) -> str:
             if math.isnan(x):
@@ -196,7 +210,7 @@ class SyntheticSineSurrogateBenchmark:
                 return "inf" if x > 0 else "-inf"
             return f"{x:.6g}"
 
-        def speedup(fit_sec: float) -> float:
+        def time_ratio_vs_enn(fit_sec: float) -> float:
             base = self.enn_fit_seconds
             if math.isnan(base) or math.isnan(fit_sec):
                 return float("nan")
@@ -209,7 +223,7 @@ class SyntheticSineSurrogateBenchmark:
         w_sp = 12
         w_rmse = 12
         w_ll = 14
-        header = f"{'Surrogate':<{w_name}}  {'Fit (s)':>{w_sec}}  {'Speedup':>{w_sp}}  {'NRMSE':>{w_rmse}}  {'LogLik':>{w_ll}}"
+        header = f"{'Surrogate':<{w_name}}  {'Fit (s)':>{w_sec}}  {'t/t_ENN':>{w_sp}}  {'NRMSE':>{w_rmse}}  {'LogLik':>{w_ll}}"
         sep = "-" * len(header)
         rows: list[tuple[str, float, float, float]] = [
             (
@@ -249,7 +263,10 @@ class SyntheticSineSurrogateBenchmark:
                 self.svgp_linear_log_likelihood,
             ),
         ]
-        body = [f"{name:<{w_name}}  {fmt(sec):>{w_sec}}  {fmt(speedup(sec)):>{w_sp}}  {fmt(rmse):>{w_rmse}}  {fmt(ll):>{w_ll}}" for name, sec, rmse, ll in rows]
+        body = [
+            f"{name:<{w_name}}  {fmt(sec):>{w_sec}}  {fmt(time_ratio_vs_enn(sec)):>{w_sp}}  {fmt(rmse):>{w_rmse}}  {fmt(ll):>{w_ll}}"
+            for name, sec, rmse, ll in rows
+        ]
         print("\n".join([header, sep, *body]))
 
 
@@ -262,10 +279,10 @@ def benchmark_synthetic_sine_surrogates(
 ) -> SyntheticSineSurrogateBenchmark:
     """Run ENN, SMAC RF, DNGO, exact GP, and two SVGP variants on synthetic data in ``D`` dims.
 
-    If ``function_name`` is ``None`` (default), uses the FittingTime notebook target:
+    If ``function_name`` is ``None`` or whitespace-only (default), uses the FittingTime notebook target:
     ``x ~ U(0,1)^{N×D}``, ``y = mean(sin(2πx)) + 0.1 ε``.
 
-    If ``function_name`` is set (e.g. ``"sphere"``, ``"ackley"``), builds the tag
+    If a non-empty ``function_name`` is set (e.g. ``"sphere"``, ``"ackley"``), builds the tag
     ``f"f:{function_name}-{D}d"`` as expected by
     :mod:`problems.pure_functions`, instantiates that benchmark via
     :func:`problems.pure_functions.make`, draws ``x ~ U(-1,1)^{N×D}`` as actions,
@@ -273,9 +290,13 @@ def benchmark_synthetic_sine_surrogates(
     sine default). Uses one env (``problem_seed`` for space distortion) for both train
     and test batches.
 
-    Reproducible RNG: ``torch.manual_seed(0)`` for train, ``1`` for test.
+    Reproducible RNG: for the default sine target, ``torch.manual_seed(problem_seed)``
+    before the train draw and ``torch.manual_seed(problem_seed + 1)`` before the test
+    draw. For a named ``f:`` benchmark, the env uses ``problem_seed`` for distortion
+    while train/test ``torch.rand`` still use seeds ``0`` and ``1``.
 
-    If ``smac`` is not installed, SMAC RF fields are set to ``nan``.
+    If the SMAC RF path is unavailable or raises (e.g. missing ``smac``, bad install,
+    runtime fit failure), SMAC RF fields are set to ``nan``.
 
     **LogLik** (nats): ``sum_i log N(y_test_i | y_hat_i, v_i)``. ENN uses **epistemic**
     variance only (``PosteriorFlags(observation_noise=False)``, ``v_i = se_i^2``). SMAC RF
@@ -292,7 +313,7 @@ def benchmark_synthetic_sine_surrogates(
         fit_svgp_linear,
     )
 
-    x, y, x_test, y_test = _draw_benchmark_synthetic_xy(N=N, D=D, function_name=function_name, problem_seed=problem_seed)
+    x, y, x_test, y_test = draw_benchmark_synthetic_xy(N=N, D=D, function_name=function_name, problem_seed=problem_seed)
     train_x = x.detach().cpu().numpy().astype(np.float64)
     train_y = y.detach().cpu().numpy().astype(np.float64)
     x_test_np = x_test.detach().cpu().numpy().astype(np.float64)

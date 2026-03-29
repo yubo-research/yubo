@@ -7,10 +7,20 @@ import torch
 from analysis.fitting_time.evaluate import (
     SyntheticSineSurrogateBenchmark,
     benchmark_synthetic_sine_surrogates,
+    draw_benchmark_synthetic_xy,
+    normalize_benchmark_function_name,
     normalized_rmse,
     predictive_gaussian_log_likelihood,
 )
 from analysis.fitting_time.fitting_time import fit_svgp_default, fit_svgp_linear
+
+
+def test_normalize_benchmark_function_name():
+    assert normalize_benchmark_function_name(None) is None
+    assert normalize_benchmark_function_name("") is None
+    assert normalize_benchmark_function_name("  \t") is None
+    assert normalize_benchmark_function_name("sphere") == "sphere"
+    assert normalize_benchmark_function_name("  ackley  ") == "ackley"
 
 
 def test_normalized_rmse_zero_on_perfect_copy():
@@ -88,17 +98,44 @@ def test_synthetic_sine_surrogate_benchmark_print_table(capsys):
     )
     r.print_table()
     out = capsys.readouterr().out
-    assert "Surrogate" in out and "Speedup" in out and "NRMSE" in out and "LogLik" in out
+    assert "Surrogate" in out and "t/t_ENN" in out and "NRMSE" in out and "LogLik" in out
     assert "ENN" in out and "SMAC RF" in out and "Exact GP" in out
     assert "SVGP_default" in out and "SVGP_linear" in out
     assert "nan" in out
     assert "100" in out  # DNGO 1.0s / ENN 0.01s
 
 
-@pytest.mark.parametrize("function_name", [None, "sphere"])
+def test_draw_benchmark_synthetic_xy_default_sine_respects_problem_seed():
+    """Different problem_seed must change the draw; Modal slugs include pseed."""
+    a = draw_benchmark_synthetic_xy(N=5, D=2, function_name=None, problem_seed=0)
+    b = draw_benchmark_synthetic_xy(N=5, D=2, function_name=None, problem_seed=999)
+    identical = torch.allclose(a[0], b[0]) and torch.allclose(a[1], b[1]) and torch.allclose(a[2], b[2]) and torch.allclose(a[3], b[3])
+    assert not identical
+
+
+def test_benchmark_smac_fit_failure_degrades_to_nan(monkeypatch):
+    """SMAC row becomes nan when fit raises, not only on ImportError."""
+
+    def _boom(*_a, **_k):
+        raise RuntimeError("simulated smac failure")
+
+    monkeypatch.setattr("analysis.fitting_time.fitting_time.fit_smac_rf", _boom)
+    r = benchmark_synthetic_sine_surrogates(N=12, D=2)
+    assert math.isnan(r.smac_rf_fit_seconds)
+    assert math.isnan(r.smac_rf_normalized_rmse)
+    assert math.isnan(r.smac_rf_log_likelihood)
+    assert math.isfinite(r.enn_fit_seconds) and math.isfinite(r.dngo_fit_seconds)
+
+
+def _smac_row_consistent(r: SyntheticSineSurrogateBenchmark) -> bool:
+    triplet = (r.smac_rf_fit_seconds, r.smac_rf_normalized_rmse, r.smac_rf_log_likelihood)
+    return all(math.isnan(x) for x in triplet) or all(math.isfinite(x) for x in triplet)
+
+
+@pytest.mark.parametrize("function_name", [None, "", "   ", "sphere"])
 def test_benchmark_synthetic_sine_surrogates_smoke(function_name):
     kwargs = {"N": 28, "D": 2}
-    if function_name is not None:
+    if function_name not in (None, "", "   "):
         kwargs["function_name"] = function_name
     r = benchmark_synthetic_sine_surrogates(**kwargs)
     assert isinstance(r, SyntheticSineSurrogateBenchmark)
@@ -112,12 +149,13 @@ def test_benchmark_synthetic_sine_surrogates_smoke(function_name):
     assert math.isfinite(r.svgp_default_log_likelihood)
     assert math.isfinite(r.svgp_linear_fit_seconds) and math.isfinite(r.svgp_linear_normalized_rmse)
     assert math.isfinite(r.svgp_linear_log_likelihood)
-    try:
-        import smac  # noqa: F401
-    except ImportError:
-        assert math.isnan(r.smac_rf_fit_seconds) and math.isnan(r.smac_rf_normalized_rmse)
-        assert math.isnan(r.smac_rf_log_likelihood)
-    else:
-        assert math.isfinite(r.smac_rf_fit_seconds)
-        assert math.isfinite(r.smac_rf_normalized_rmse)
-        assert math.isfinite(r.smac_rf_log_likelihood)
+    assert _smac_row_consistent(r)
+
+
+def test_draw_benchmark_synthetic_xy_empty_function_name_matches_default_sine():
+    a = draw_benchmark_synthetic_xy(N=5, D=2, function_name=None, problem_seed=0)
+    b = draw_benchmark_synthetic_xy(N=5, D=2, function_name="", problem_seed=0)
+    c = draw_benchmark_synthetic_xy(N=5, D=2, function_name="  \t", problem_seed=0)
+    for i in range(4):
+        assert torch.allclose(a[i], b[i])
+        assert torch.allclose(a[i], c[i])

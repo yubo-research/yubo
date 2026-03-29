@@ -255,6 +255,55 @@ def test_kiss_cov_modal_image_and_interactive(monkeypatch):
     modal_interactive.run_job("exp", "env", "opt", 1, 1, 1)
 
 
+def test_kiss_cov_modal_synthetic_sine_benchmark_remote_raw_and_local_main(monkeypatch, tmp_path, capsys):
+    from pathlib import Path
+
+    import experiments.modal_synthetic_sine_benchmark as msb
+    from analysis.fitting_time.evaluate import SyntheticSineSurrogateBenchmark
+    from experiments.synthetic_sine_benchmark_payload import META_KEY, synthetic_sine_benchmark_result_to_payload
+
+    z = SyntheticSineSurrogateBenchmark(
+        enn_fit_seconds=0.0,
+        enn_normalized_rmse=0.0,
+        enn_log_likelihood=0.0,
+        smac_rf_fit_seconds=0.0,
+        smac_rf_normalized_rmse=0.0,
+        smac_rf_log_likelihood=0.0,
+        dngo_fit_seconds=0.0,
+        dngo_normalized_rmse=0.0,
+        dngo_log_likelihood=0.0,
+        exact_gp_fit_seconds=0.0,
+        exact_gp_normalized_rmse=0.0,
+        exact_gp_log_likelihood=0.0,
+        svgp_default_fit_seconds=0.0,
+        svgp_default_normalized_rmse=0.0,
+        svgp_default_log_likelihood=0.0,
+        svgp_linear_fit_seconds=0.0,
+        svgp_linear_normalized_rmse=0.0,
+        svgp_linear_log_likelihood=0.0,
+    )
+
+    def fake_build(n, d, fn, ps):
+        return synthetic_sine_benchmark_result_to_payload(z, n=n, d=d, function_name=fn, problem_seed=ps)
+
+    monkeypatch.setattr(
+        "experiments.synthetic_sine_benchmark_payload.build_synthetic_sine_benchmark_remote_payload",
+        fake_build,
+    )
+    out = msb.run_synthetic_sine_benchmark_remote.get_raw_f()(2, 3, None, 4)
+    assert out[META_KEY]["N"] == 2 and out[META_KEY]["problem_seed"] == 4
+
+    def fake_disk(n, d, fn, ps, od):
+        p = Path(od) / "out.json"
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text("{}")
+        return p
+
+    monkeypatch.setattr(msb, "run_synthetic_sine_benchmark_modal_to_disk", fake_disk)
+    msb.main.info.raw_f(1, 1, "", 0, str(tmp_path))
+    assert "wrote" in capsys.readouterr().out
+
+
 def test_kiss_cov_fig_utils(monkeypatch, tmp_path):
     from figures.mtv import fig_util
 
