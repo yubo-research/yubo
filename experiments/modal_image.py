@@ -24,6 +24,7 @@ def mk_image():
     celer==0.7.4
     hyperopt==0.2.7
     smac==2.3.1
+    ennbo==0.2.1
     """.split("\n")
     sreqs = []
     for req in reqs:
@@ -46,10 +47,10 @@ def mk_image():
     )
 
     image = image.env({"PYTHONPATH": "/root"})
+    # GitHub ``enn`` 0.3.x editable install does not ship ``enn._rust``; PyPI ``ennbo`` 0.2.1 matches
+    # ``analysis.fitting_time.fit_enn`` (pure-Python ``enn_fit``).
     image = image.run_commands(
-        "git clone --depth 1 https://github.com/yubo-research/enn.git /root/enn_src",
-        "pip install -e /root/enn_src",
-        "python -c \"import enn; from enn import create_optimizer; print('enn import OK (python backend)')\"",
+        "python -c \"from enn.enn.enn_fit import enn_fit; print('enn import OK')\"",
     )
 
     project_root = Path(__file__).resolve().parents[1]
@@ -61,6 +62,7 @@ def mk_image():
         "model",
         "ops",
         "optimizer",
+        "rl",
         "problems",
         "sampling",
         "torch_truncnorm",

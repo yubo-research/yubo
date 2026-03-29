@@ -1,4 +1,4 @@
-"""Metrics and end-to-end surrogate benchmarks (synthetic sine or ``f:`` pure benchmarks)."""
+"""Metrics and end-to-end surrogate benchmarks (explicit synthetic targets)."""
 
 from __future__ import annotations
 
@@ -8,22 +8,40 @@ from dataclasses import dataclass
 import numpy as np
 import torch
 
+# Explicit name for the FittingTime-style target: ``U(0,1)^D`` and ``mean(sin(2πx))+noise``.
+SYNTHETIC_BENCHMARK_SINE_FUNCTION_NAME = "sine"
+
 __all__ = [
+    "SYNTHETIC_BENCHMARK_SINE_FUNCTION_NAME",
     "SyntheticSineSurrogateBenchmark",
     "benchmark_synthetic_sine_surrogates",
     "draw_benchmark_synthetic_xy",
+    "env_action_coords_to_surrogate_unit_x",
     "normalize_benchmark_function_name",
     "normalized_rmse",
     "predictive_gaussian_log_likelihood",
 ]
 
 
-def normalize_benchmark_function_name(function_name: str | None) -> str | None:
-    """Map ``None`` and whitespace-only strings to ``None`` (default sine path)."""
-    if function_name is None:
-        return None
-    s = str(function_name).strip()
-    return s or None
+def env_action_coords_to_surrogate_unit_x(x: torch.Tensor) -> torch.Tensor:
+    """Map env / benchmark action coordinates from ``[-1, 1]`` to BoTorch-style ``[0, 1]``.
+
+    Pure-function envs and the synthetic sine target expose ``x`` in ``[-1, 1]``; GPs and
+    other surrogates in this stack expect inputs in the unit cube.
+    """
+    return (x + 1.0) * 0.5
+
+
+def normalize_benchmark_function_name(function_name: str) -> str:
+    """Strip ``function_name`` and validate; canonicalize the unit-cube sine target to ``\"sine\"``."""
+    if not isinstance(function_name, str):
+        raise TypeError("function_name must be str")
+    s = function_name.strip()
+    if not s:
+        raise ValueError("function_name must be non-empty (after strip)")
+    if s.lower() == SYNTHETIC_BENCHMARK_SINE_FUNCTION_NAME:
+        return SYNTHETIC_BENCHMARK_SINE_FUNCTION_NAME
+    return s
 
 
 def _as_float64_1d(x) -> np.ndarray:
@@ -81,22 +99,25 @@ def draw_benchmark_synthetic_xy(
     *,
     N: int,
     D: int,
-    function_name: str | None,
+    function_name: str,
     problem_seed: int,
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-    function_name = normalize_benchmark_function_name(function_name)
-    if function_name is None:
+    """Draw train/test batches; ``x`` and ``x_test`` are in ``[-1, 1]`` (env / action scale)."""
+    fn = normalize_benchmark_function_name(function_name)
+    if fn == SYNTHETIC_BENCHMARK_SINE_FUNCTION_NAME:
         base = int(problem_seed)
         torch.manual_seed(base)
-        x = torch.rand(N, D)
-        y = torch.sin(2 * torch.pi * x).mean(dim=1, keepdim=True) + 0.1 * torch.randn(N, 1)
+        x = torch.rand(N, D) * 2.0 - 1.0
+        x_u = env_action_coords_to_surrogate_unit_x(x)
+        y = torch.sin(2 * torch.pi * x_u).mean(dim=1, keepdim=True) + 0.1 * torch.randn(N, 1)
         torch.manual_seed(base + 1)
-        x_test = torch.rand(N, D)
-        y_test = torch.sin(2 * torch.pi * x_test).mean(dim=1, keepdim=True) + 0.1 * torch.randn(N, 1)
+        x_test = torch.rand(N, D) * 2.0 - 1.0
+        x_test_u = env_action_coords_to_surrogate_unit_x(x_test)
+        y_test = torch.sin(2 * torch.pi * x_test_u).mean(dim=1, keepdim=True) + 0.1 * torch.randn(N, 1)
         return x, y, x_test, y_test
     from problems import pure_functions
 
-    env_tag = f"f:{function_name}-{D}d"
+    env_tag = f"f:{fn}-{D}d"
     env = pure_functions.make(env_tag, problem_seed=problem_seed, distort=True)
     torch.manual_seed(0)
     x = torch.rand(N, D) * 2.0 - 1.0
@@ -150,7 +171,9 @@ def _benchmark_torch_gp_triples(
     fit_exact_gp,
     fit_svgp_default,
     fit_svgp_linear,
+    fit_vecchia,
 ) -> tuple[
+    tuple[float, float, float],
     tuple[float, float, float],
     tuple[float, float, float],
     tuple[float, float, float],
@@ -164,10 +187,14 @@ def _benchmark_torch_gp_triples(
     dt_svgp_l, yh_svgp_l, var_svgp_l = fit_svgp_linear(train_x_t, train_y_t, x_test_t)
     nrmse_svgp_l = normalized_rmse(y_test, yh_svgp_l)
     ll_svgp_l = predictive_gaussian_log_likelihood(y_test, yh_svgp_l, var_svgp_l)
+    dt_vc, yh_vc, var_vc = fit_vecchia(train_x_t, train_y_t, x_test_t)
+    nrmse_vc = normalized_rmse(y_test, yh_vc)
+    ll_vc = predictive_gaussian_log_likelihood(y_test, yh_vc, var_vc)
     return (
         (dt_gp, nrmse_gp, ll_gp),
         (dt_svgp_d, nrmse_svgp_d, ll_svgp_d),
         (dt_svgp_l, nrmse_svgp_l, ll_svgp_l),
+        (dt_vc, nrmse_vc, ll_vc),
     )
 
 
@@ -175,10 +202,14 @@ def _benchmark_torch_gp_triples(
 class SyntheticSineSurrogateBenchmark:
     """Fit times (seconds) and normalized RMSE on test for each surrogate.
 
-    Default data matches ``FittingTime.ipynb``: ``x ~ U(0,1)^{N×D}``,
-    ``y = mean(sin(2πx), dim=1) + 0.1 ε``. With ``function_name`` set in
-    :func:`benchmark_synthetic_sine_surrogates`, ``x`` is ``U(-1,1)^{N×D}`` and
-    ``y`` comes from :mod:`problems.pure_functions` (same noise).
+    Data is chosen by the required ``function_name`` passed to
+    :func:`benchmark_synthetic_sine_surrogates`: use
+    :data:`SYNTHETIC_BENCHMARK_SINE_FUNCTION_NAME` for ``FittingTime.ipynb``-style
+    ``x ~ U(-1,1)^{N×D}`` with ``y = mean(sin(2π x_u), dim=1) + 0.1 ε`` where
+    ``x_u = (x+1)/2`` (same distribution for ``x_u`` as the legacy ``U(0,1)`` draw); any
+    other name uses ``f:{name}-{D}d`` from :mod:`problems.pure_functions` on
+    ``U(-1,1)^{N×D}`` (same noise scale). Surrogates receive ``(x+1)/2`` in ``[0,1]`` via
+    :func:`env_action_coords_to_surrogate_unit_x`.
     """
 
     enn_fit_seconds: float
@@ -199,6 +230,9 @@ class SyntheticSineSurrogateBenchmark:
     svgp_linear_fit_seconds: float
     svgp_linear_normalized_rmse: float
     svgp_linear_log_likelihood: float
+    vecchia_fit_seconds: float
+    vecchia_normalized_rmse: float
+    vecchia_log_likelihood: float
 
     def print_table(self) -> None:
         """Print fit times (s), wall-clock ratio vs ENN (``t_surrogate / t_ENN``), NRMSE, log-likelihood (nats)."""
@@ -262,6 +296,12 @@ class SyntheticSineSurrogateBenchmark:
                 self.svgp_linear_normalized_rmse,
                 self.svgp_linear_log_likelihood,
             ),
+            (
+                "Vecchia",
+                self.vecchia_fit_seconds,
+                self.vecchia_normalized_rmse,
+                self.vecchia_log_likelihood,
+            ),
         ]
         body = [
             f"{name:<{w_name}}  {fmt(sec):>{w_sec}}  {fmt(time_ratio_vs_enn(sec)):>{w_sp}}  {fmt(rmse):>{w_rmse}}  {fmt(ll):>{w_ll}}"
@@ -270,65 +310,38 @@ class SyntheticSineSurrogateBenchmark:
         print("\n".join([header, sep, *body]))
 
 
-def benchmark_synthetic_sine_surrogates(
+def _synthetic_surrogate_benchmark_from_tensors(
+    x: torch.Tensor,
+    y: torch.Tensor,
+    x_test: torch.Tensor,
+    y_test: torch.Tensor,
     *,
-    N: int,
-    D: int,
-    function_name: str | None = None,
-    problem_seed: int = 0,
+    fit_enn,
+    fit_smac_rf,
+    fit_dngo,
+    fit_exact_gp,
+    fit_svgp_default,
+    fit_svgp_linear,
+    fit_vecchia,
 ) -> SyntheticSineSurrogateBenchmark:
-    """Run ENN, SMAC RF, DNGO, exact GP, and two SVGP variants on synthetic data in ``D`` dims.
-
-    If ``function_name`` is ``None`` or whitespace-only (default), uses the FittingTime notebook target:
-    ``x ~ U(0,1)^{N×D}``, ``y = mean(sin(2πx)) + 0.1 ε``.
-
-    If a non-empty ``function_name`` is set (e.g. ``"sphere"``, ``"ackley"``), builds the tag
-    ``f"f:{function_name}-{D}d"`` as expected by
-    :mod:`problems.pure_functions`, instantiates that benchmark via
-    :func:`problems.pure_functions.make`, draws ``x ~ U(-1,1)^{N×D}`` as actions,
-    sets ``y`` to the environment step reward plus ``0.1 ε`` (same noise scale as the
-    sine default). Uses one env (``problem_seed`` for space distortion) for both train
-    and test batches.
-
-    Reproducible RNG: for the default sine target, ``torch.manual_seed(problem_seed)``
-    before the train draw and ``torch.manual_seed(problem_seed + 1)`` before the test
-    draw. For a named ``f:`` benchmark, the env uses ``problem_seed`` for distortion
-    while train/test ``torch.rand`` still use seeds ``0`` and ``1``.
-
-    If the SMAC RF path is unavailable or raises (e.g. missing ``smac``, bad install,
-    runtime fit failure), SMAC RF fields are set to ``nan``.
-
-    **LogLik** (nats): ``sum_i log N(y_test_i | y_hat_i, v_i)``. ENN uses **epistemic**
-    variance only (``PosteriorFlags(observation_noise=False)``, ``v_i = se_i^2``). SMAC RF
-    uses forest variance plus ``0.1^2`` (synthetic observation noise).
-    DNGO uses its full BLR predictive variance; exact GP and both SVGP variants use
-    BoTorch posterior predictive variance (includes learned observation noise).
-    """
-    from analysis.fitting_time.fitting_time import (
-        fit_dngo,
-        fit_enn,
-        fit_exact_gp,
-        fit_smac_rf,
-        fit_svgp_default,
-        fit_svgp_linear,
-    )
-
-    x, y, x_test, y_test = draw_benchmark_synthetic_xy(N=N, D=D, function_name=function_name, problem_seed=problem_seed)
-    train_x = x.detach().cpu().numpy().astype(np.float64)
+    x_surr = env_action_coords_to_surrogate_unit_x(x)
+    x_test_surr = env_action_coords_to_surrogate_unit_x(x_test)
+    train_x = x_surr.detach().cpu().numpy().astype(np.float64)
     train_y = y.detach().cpu().numpy().astype(np.float64)
-    x_test_np = x_test.detach().cpu().numpy().astype(np.float64)
+    x_test_np = x_test_surr.detach().cpu().numpy().astype(np.float64)
     (
         (dt_enn, nrmse_enn, ll_enn),
         (dt_smac, nrmse_smac, ll_smac),
         (dt_dngo, nrmse_dngo, ll_dngo),
     ) = _benchmark_numpy_surrogate_triples(train_x, train_y, x_test_np, y_test, fit_enn, fit_smac_rf, fit_dngo)
-    train_x_t = x.to(dtype=torch.float64)
+    train_x_t = x_surr.to(dtype=torch.float64)
     train_y_t = y.to(dtype=torch.float64)
-    x_test_t = x_test.to(dtype=torch.float64)
+    x_test_t = x_test_surr.to(dtype=torch.float64)
     (
         (dt_gp, nrmse_gp, ll_gp),
         (dt_svgp_d, nrmse_svgp_d, ll_svgp_d),
         (dt_svgp_l, nrmse_svgp_l, ll_svgp_l),
+        (dt_vc, nrmse_vc, ll_vc),
     ) = _benchmark_torch_gp_triples(
         train_x_t,
         train_y_t,
@@ -337,8 +350,8 @@ def benchmark_synthetic_sine_surrogates(
         fit_exact_gp,
         fit_svgp_default,
         fit_svgp_linear,
+        fit_vecchia,
     )
-
     return SyntheticSineSurrogateBenchmark(
         enn_fit_seconds=dt_enn,
         enn_normalized_rmse=nrmse_enn,
@@ -358,4 +371,69 @@ def benchmark_synthetic_sine_surrogates(
         svgp_linear_fit_seconds=dt_svgp_l,
         svgp_linear_normalized_rmse=nrmse_svgp_l,
         svgp_linear_log_likelihood=ll_svgp_l,
+        vecchia_fit_seconds=dt_vc,
+        vecchia_normalized_rmse=nrmse_vc,
+        vecchia_log_likelihood=ll_vc,
+    )
+
+
+def benchmark_synthetic_sine_surrogates(
+    *,
+    N: int,
+    D: int,
+    function_name: str,
+    problem_seed: int = 0,
+) -> SyntheticSineSurrogateBenchmark:
+    """Run ENN, SMAC RF, DNGO, exact GP, two SVGP variants, and RF Vecchia on synthetic data in ``D`` dims.
+
+    ``function_name`` is **required** (non-empty after strip). Use
+    :data:`SYNTHETIC_BENCHMARK_SINE_FUNCTION_NAME` (``\"sine\"``) for the FittingTime
+    target: ``x ~ U(-1,1)^{N×D}``, ``y = mean(sin(2π (x+1)/2)) + 0.1 ε`` (equivalently
+    ``x_u ~ U(0,1)`` with ``y = mean(sin(2π x_u)) + noise``).
+
+    Any other name builds ``f"f:{function_name}-{D}d"`` via
+    :mod:`problems.pure_functions`, draws ``x ~ U(-1,1)^{N×D}``, and sets ``y`` to the
+    environment reward plus ``0.1 ε``. All surrogates are fit on ``(x+1)/2`` in
+    ``[0,1]``; metrics still use the original ``y`` / ``y_test`` from the env draw.
+
+    Reproducible RNG: for ``\"sine\"``, ``torch.manual_seed(problem_seed)`` before the
+    train draw and ``torch.manual_seed(problem_seed + 1)`` before the test draw. For
+    other names, the env uses ``problem_seed`` for distortion while train/test
+    ``torch.rand`` use seeds ``0`` and ``1``.
+
+    If the SMAC RF path is unavailable or raises (e.g. missing ``smac``, bad install,
+    runtime fit failure), SMAC RF fields are set to ``nan``.
+
+    **LogLik** (nats): ``sum_i log N(y_test_i | y_hat_i, v_i)``. ENN uses **epistemic**
+    variance only (``PosteriorFlags(observation_noise=False)``, ``v_i = se_i^2``). SMAC RF
+    uses forest variance plus ``0.1^2`` (synthetic observation noise).
+    DNGO uses its full BLR predictive variance; exact GP, both SVGP variants, and
+    Vecchia use GP predictive variance (Vecchia via ``pyvecch`` posterior diagonal).
+    If ``pyvecch`` is missing or fit/predict fails, Vecchia fields are ``nan`` (same pattern as
+    optional SMAC RF). On macOS, set ``YUBO_ALLOW_PYVECCH_ON_DARWIN=0`` to force-disable Vecchia
+    if import still crashes in your environment.
+    """
+    from analysis.fitting_time.fitting_time import (
+        fit_dngo,
+        fit_enn,
+        fit_exact_gp,
+        fit_smac_rf,
+        fit_svgp_default,
+        fit_svgp_linear,
+        fit_vecchia,
+    )
+
+    x, y, x_test, y_test = draw_benchmark_synthetic_xy(N=N, D=D, function_name=function_name, problem_seed=problem_seed)
+    return _synthetic_surrogate_benchmark_from_tensors(
+        x,
+        y,
+        x_test,
+        y_test,
+        fit_enn=fit_enn,
+        fit_smac_rf=fit_smac_rf,
+        fit_dngo=fit_dngo,
+        fit_exact_gp=fit_exact_gp,
+        fit_svgp_default=fit_svgp_default,
+        fit_svgp_linear=fit_svgp_linear,
+        fit_vecchia=fit_vecchia,
     )

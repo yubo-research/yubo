@@ -353,18 +353,19 @@ def prep_push(results_dir):
 
 
 def prep_tlunar(results_dir):
-    exp_dir = "exp_compare_tlunar_rust"
-    # exp_dir = "exp_ennbo_tlunar_3"
+    # exp_dir = "exp_compare_tlunar_rust"
+    exp_dir = "exp_ennbo_rebuttal_tlunar"
 
     opts = [
-        "random",
+        # "random",
         # "optuna",
         # "cma",
-        "turbo-zero",
-        "turbo-one",
-        "turbo-1",
+        # "turbo-zero",
+        # "turbo-one",
+        # "turbo-1",
         # "turbo-enn-fit-ucb",
-        "turbo-enn-p",
+        # "turbo-enn-p",
+        "ucb",
     ]
 
     cmds = []
@@ -395,16 +396,16 @@ def prep_tlunar(results_dir):
 
 
 def prep_hop(results_dir):
-    exp_dir = "exp_ennbo_hop"
+    exp_dir = "exp_ennbo_rebuttal_hop"
 
     opts = [
-        "random",
+        # "random",
         "optuna",
-        "cma",
-        "turbo-zero",
-        "turbo-one",
-        "turbo-enn-fit-ucb",
-        "turbo-enn-p",
+        # "cma",
+        # "turbo-zero",
+        # "turbo-one",
+        # "turbo-enn-fit-ucb",
+        # "turbo-enn-p",
     ]
 
     cmds = []

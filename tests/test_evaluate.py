@@ -5,22 +5,29 @@ import pytest
 import torch
 
 from analysis.fitting_time.evaluate import (
+    SYNTHETIC_BENCHMARK_SINE_FUNCTION_NAME,
     SyntheticSineSurrogateBenchmark,
     benchmark_synthetic_sine_surrogates,
     draw_benchmark_synthetic_xy,
+    env_action_coords_to_surrogate_unit_x,
     normalize_benchmark_function_name,
     normalized_rmse,
     predictive_gaussian_log_likelihood,
 )
-from analysis.fitting_time.fitting_time import fit_svgp_default, fit_svgp_linear
+from analysis.fitting_time.fitting_time import fit_svgp_default, fit_svgp_linear, fit_vecchia
 
 
 def test_normalize_benchmark_function_name():
-    assert normalize_benchmark_function_name(None) is None
-    assert normalize_benchmark_function_name("") is None
-    assert normalize_benchmark_function_name("  \t") is None
     assert normalize_benchmark_function_name("sphere") == "sphere"
     assert normalize_benchmark_function_name("  ackley  ") == "ackley"
+    assert normalize_benchmark_function_name("sine") == SYNTHETIC_BENCHMARK_SINE_FUNCTION_NAME
+    assert normalize_benchmark_function_name("  SiNe  ") == SYNTHETIC_BENCHMARK_SINE_FUNCTION_NAME
+    with pytest.raises(TypeError):
+        normalize_benchmark_function_name(None)  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match="non-empty"):
+        normalize_benchmark_function_name("")
+    with pytest.raises(ValueError, match="non-empty"):
+        normalize_benchmark_function_name("  \t")
 
 
 def test_normalized_rmse_zero_on_perfect_copy():
@@ -55,6 +62,18 @@ def test_fit_svgp_default_posterior_on_original_y_scale():
     _, y_hat, _ = fit_svgp_default(x[:35], y[:35], x[35:])
     m = float(y_hat.mean())
     assert m > 2.0 and m < 12.0, f"expected means near training level ~5–9, got {m}"
+
+
+def test_fit_vecchia_returns_test_shaped_tensors():
+    """Shape contract; values may be NaN (missing pyvecch, fit failure, n<2, or darwin opt-out)."""
+    torch.manual_seed(2)
+    n, d, nt = 30, 2, 8
+    x = torch.rand(n, d, dtype=torch.float64)
+    y = torch.sin(2 * torch.pi * x).mean(dim=1, keepdim=True) + 0.05 * torch.randn(n, 1, dtype=torch.float64)
+    xt = torch.rand(nt, d, dtype=torch.float64)
+    _dt, y_hat, pred_var = fit_vecchia(x[:25], y[:25], xt)
+    assert y_hat.shape == (nt, 1) and pred_var.shape == (nt, 1)
+    assert y_hat.dtype == x.dtype and pred_var.dtype == x.dtype
 
 
 def test_fit_svgp_linear_runs_and_matches_y_scale():
@@ -95,20 +114,38 @@ def test_synthetic_sine_surrogate_benchmark_print_table(capsys):
         svgp_linear_fit_seconds=3.5,
         svgp_linear_normalized_rmse=0.14,
         svgp_linear_log_likelihood=-7.4,
+        vecchia_fit_seconds=4.0,
+        vecchia_normalized_rmse=0.12,
+        vecchia_log_likelihood=-7.2,
     )
     r.print_table()
     out = capsys.readouterr().out
     assert "Surrogate" in out and "t/t_ENN" in out and "NRMSE" in out and "LogLik" in out
     assert "ENN" in out and "SMAC RF" in out and "Exact GP" in out
-    assert "SVGP_default" in out and "SVGP_linear" in out
+    assert "SVGP_default" in out and "SVGP_linear" in out and "Vecchia" in out
     assert "nan" in out
     assert "100" in out  # DNGO 1.0s / ENN 0.01s
 
 
-def test_draw_benchmark_synthetic_xy_default_sine_respects_problem_seed():
+def test_env_action_coords_to_surrogate_unit_x_endpoints():
+    t = torch.tensor([[-1.0, 0.0, 1.0]])
+    got = env_action_coords_to_surrogate_unit_x(t)
+    assert torch.allclose(got, torch.tensor([[0.0, 0.5, 1.0]]))
+
+
+@pytest.mark.parametrize("function_name", ["sine", "sphere"])
+def test_draw_benchmark_synthetic_xy_x_in_minus_one_one(function_name):
+    x, _, x_test, _ = draw_benchmark_synthetic_xy(N=4, D=3, function_name=function_name, problem_seed=0)
+    assert float(x.min()) >= -1.0 - 1e-7
+    assert float(x.max()) <= 1.0 + 1e-7
+    assert float(x_test.min()) >= -1.0 - 1e-7
+    assert float(x_test.max()) <= 1.0 + 1e-7
+
+
+def test_draw_benchmark_synthetic_xy_sine_respects_problem_seed():
     """Different problem_seed must change the draw; Modal slugs include pseed."""
-    a = draw_benchmark_synthetic_xy(N=5, D=2, function_name=None, problem_seed=0)
-    b = draw_benchmark_synthetic_xy(N=5, D=2, function_name=None, problem_seed=999)
+    a = draw_benchmark_synthetic_xy(N=5, D=2, function_name="sine", problem_seed=0)
+    b = draw_benchmark_synthetic_xy(N=5, D=2, function_name="sine", problem_seed=999)
     identical = torch.allclose(a[0], b[0]) and torch.allclose(a[1], b[1]) and torch.allclose(a[2], b[2]) and torch.allclose(a[3], b[3])
     assert not identical
 
@@ -120,7 +157,7 @@ def test_benchmark_smac_fit_failure_degrades_to_nan(monkeypatch):
         raise RuntimeError("simulated smac failure")
 
     monkeypatch.setattr("analysis.fitting_time.fitting_time.fit_smac_rf", _boom)
-    r = benchmark_synthetic_sine_surrogates(N=12, D=2)
+    r = benchmark_synthetic_sine_surrogates(N=12, D=2, function_name="sine")
     assert math.isnan(r.smac_rf_fit_seconds)
     assert math.isnan(r.smac_rf_normalized_rmse)
     assert math.isnan(r.smac_rf_log_likelihood)
@@ -132,12 +169,14 @@ def _smac_row_consistent(r: SyntheticSineSurrogateBenchmark) -> bool:
     return all(math.isnan(x) for x in triplet) or all(math.isfinite(x) for x in triplet)
 
 
-@pytest.mark.parametrize("function_name", [None, "", "   ", "sphere"])
+def _vecchia_row_consistent(r: SyntheticSineSurrogateBenchmark) -> bool:
+    triplet = (r.vecchia_fit_seconds, r.vecchia_normalized_rmse, r.vecchia_log_likelihood)
+    return all(math.isnan(x) for x in triplet) or all(math.isfinite(x) for x in triplet)
+
+
+@pytest.mark.parametrize("function_name", ["sine", "sphere"])
 def test_benchmark_synthetic_sine_surrogates_smoke(function_name):
-    kwargs = {"N": 28, "D": 2}
-    if function_name not in (None, "", "   "):
-        kwargs["function_name"] = function_name
-    r = benchmark_synthetic_sine_surrogates(**kwargs)
+    r = benchmark_synthetic_sine_surrogates(N=28, D=2, function_name=function_name)
     assert isinstance(r, SyntheticSineSurrogateBenchmark)
     assert math.isfinite(r.enn_fit_seconds) and math.isfinite(r.enn_normalized_rmse)
     assert math.isfinite(r.enn_log_likelihood)
@@ -150,12 +189,9 @@ def test_benchmark_synthetic_sine_surrogates_smoke(function_name):
     assert math.isfinite(r.svgp_linear_fit_seconds) and math.isfinite(r.svgp_linear_normalized_rmse)
     assert math.isfinite(r.svgp_linear_log_likelihood)
     assert _smac_row_consistent(r)
+    assert _vecchia_row_consistent(r)
 
 
-def test_draw_benchmark_synthetic_xy_empty_function_name_matches_default_sine():
-    a = draw_benchmark_synthetic_xy(N=5, D=2, function_name=None, problem_seed=0)
-    b = draw_benchmark_synthetic_xy(N=5, D=2, function_name="", problem_seed=0)
-    c = draw_benchmark_synthetic_xy(N=5, D=2, function_name="  \t", problem_seed=0)
-    for i in range(4):
-        assert torch.allclose(a[i], b[i])
-        assert torch.allclose(a[i], c[i])
+def test_draw_benchmark_synthetic_xy_rejects_empty_function_name():
+    with pytest.raises(ValueError, match="non-empty"):
+        draw_benchmark_synthetic_xy(N=5, D=2, function_name="", problem_seed=0)

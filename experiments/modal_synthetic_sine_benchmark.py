@@ -3,6 +3,30 @@
 Each remote invocation runs one ``(N, D, function_name, problem_seed)`` config; the
 local entrypoint writes JSON under ``results/`` (or ``--output-dir``).
 
+**CLI (important):** Modal turns ``local_entrypoint`` parameters into **options** (not
+bare positional tokens). Pass the benchmark tag with ``--target`` **on the same
+``modal run`` line** as the script path—do not insert a lone ``--`` before the options
+(that can strip them and yield "Missing option '--target'"). Example::
+
+    modal run experiments/modal_synthetic_sine_benchmark.py \\
+      --target sphere --n 12 --d 2 --problem-seed 0 --output-dir results/_xxx
+
+**Batch:** define parameterless functions returning ``list[SyntheticBenchJob]`` in
+:mod:`analysis.fitting_time.batch_jobs`, then::
+
+    modal run experiments/modal_synthetic_sine_benchmark.py::batch \\
+      --jobs-fn example_sphere_n12_d2_seed0 --output-dir results/_xxx
+
+You can also loop in the shell (separate Modal cold-starts per job)::
+
+    for t in sphere ackley; do
+      modal run experiments/modal_synthetic_sine_benchmark.py \\
+        --target "$t" --n 12 --d 2 --problem-seed 0 --output-dir results/_xxx
+    done
+
+Use ``--target sine`` for the FittingTime-style target, or ``sphere`` / ``ackley``
+etc. for :mod:`problems.pure_functions`.
+
 Runs **CPU-only**: no ``gpu=`` request, and ``cpu=2.0`` requests two fractional cores
 (Modal API; the benchmark plan referred to this as CPU-only scheduling).
 
@@ -35,37 +59,60 @@ app = modal.App(name=_APP_NAME)
     memory=8192,
     cpu=2.0,
 )
-def run_synthetic_sine_benchmark_remote(n: int, d: int, function_name: str | None, problem_seed: int) -> dict:
+def run_synthetic_sine_benchmark_remote(n: int, d: int, function_name: str, problem_seed: int) -> dict:
     return ssbp.build_synthetic_sine_benchmark_remote_payload(n, d, function_name, problem_seed)
 
 
 def run_synthetic_sine_benchmark_modal_to_disk(
     n: int,
     d: int,
-    function_name: str | None,
+    function_name: str,
     problem_seed: int,
     output_dir: str | Path,
     *,
     remote_fn=run_synthetic_sine_benchmark_remote,
 ) -> Path:
     """Fetch one benchmark payload from Modal and write ``results/<slug>.json``."""
-    return ssbp.run_synthetic_sine_benchmark_modal_to_disk(n, d, function_name, problem_seed, output_dir, app=app, remote_fn=remote_fn)
+    return ssbp.run_synthetic_sine_benchmark_modal_to_disk(
+        n,
+        d,
+        function_name,
+        problem_seed,
+        output_dir,
+        app=app,
+        remote_fn=remote_fn,
+        start_app=False,
+    )
 
 
 @app.local_entrypoint()
 def main(
+    target: str,
     n: int = 28,
     d: int = 2,
-    function_name: str = "",
     problem_seed: int = 0,
     output_dir: str = "results/synthetic_sine_benchmark",
 ):
-    dest = run_synthetic_sine_benchmark_modal_to_disk(n, d, function_name, problem_seed, output_dir)
+    """``target`` is the synthetic benchmark name (same as ``function_name`` in :mod:`evaluate`)."""
+    dest = run_synthetic_sine_benchmark_modal_to_disk(n, d, target, problem_seed, output_dir)
     print(f"wrote {dest.resolve()}")
+
+
+@app.local_entrypoint()
+def batch(
+    jobs_fn: str,
+    output_dir: str = "results/synthetic_sine_benchmark",
+):
+    """Run every job from :func:`analysis.fitting_time.batch_jobs` named ``jobs_fn``."""
+    jobs = ssbp.load_synthetic_sine_benchmark_jobs(jobs_fn)
+    for n, d, fn, problem_seed in jobs:
+        dest = run_synthetic_sine_benchmark_modal_to_disk(n, d, fn, problem_seed, output_dir)
+        print(f"wrote {dest.resolve()}")
 
 
 META_KEY = ssbp.META_KEY
 build_synthetic_sine_benchmark_remote_payload = ssbp.build_synthetic_sine_benchmark_remote_payload
+load_synthetic_sine_benchmark_jobs = ssbp.load_synthetic_sine_benchmark_jobs
 read_synthetic_sine_benchmark_json = ssbp.read_synthetic_sine_benchmark_json
 synthetic_sine_benchmark_config_slug = ssbp.synthetic_sine_benchmark_config_slug
 synthetic_sine_benchmark_from_payload = ssbp.synthetic_sine_benchmark_from_payload
@@ -75,7 +122,9 @@ write_synthetic_sine_benchmark_json = ssbp.write_synthetic_sine_benchmark_json
 __all__ = [
     "META_KEY",
     "app",
+    "batch",
     "build_synthetic_sine_benchmark_remote_payload",
+    "load_synthetic_sine_benchmark_jobs",
     "main",
     "read_synthetic_sine_benchmark_json",
     "run_synthetic_sine_benchmark_modal_to_disk",

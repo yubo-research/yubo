@@ -281,6 +281,9 @@ def test_kiss_cov_modal_synthetic_sine_benchmark_remote_raw_and_local_main(monke
         svgp_linear_fit_seconds=0.0,
         svgp_linear_normalized_rmse=0.0,
         svgp_linear_log_likelihood=0.0,
+        vecchia_fit_seconds=0.0,
+        vecchia_normalized_rmse=0.0,
+        vecchia_log_likelihood=0.0,
     )
 
     def fake_build(n, d, fn, ps):
@@ -290,8 +293,9 @@ def test_kiss_cov_modal_synthetic_sine_benchmark_remote_raw_and_local_main(monke
         "experiments.synthetic_sine_benchmark_payload.build_synthetic_sine_benchmark_remote_payload",
         fake_build,
     )
-    out = msb.run_synthetic_sine_benchmark_remote.get_raw_f()(2, 3, None, 4)
+    out = msb.run_synthetic_sine_benchmark_remote.get_raw_f()(2, 3, "sine", 4)
     assert out[META_KEY]["N"] == 2 and out[META_KEY]["problem_seed"] == 4
+    assert out[META_KEY]["function_name"] == "sine"
 
     def fake_disk(n, d, fn, ps, od):
         p = Path(od) / "out.json"
@@ -300,7 +304,7 @@ def test_kiss_cov_modal_synthetic_sine_benchmark_remote_raw_and_local_main(monke
         return p
 
     monkeypatch.setattr(msb, "run_synthetic_sine_benchmark_modal_to_disk", fake_disk)
-    msb.main.info.raw_f(1, 1, "", 0, str(tmp_path))
+    msb.main.info.raw_f("sine", 1, 1, 0, str(tmp_path))
     assert "wrote" in capsys.readouterr().out
 
 

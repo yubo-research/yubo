@@ -706,6 +706,24 @@ def test_cov_turbo_1_ask_tell_Turbo1AskTell():
 
 
 # ---------------------------------------------------------------------------
+# analysis/fitting_time/batch_jobs
+# ---------------------------------------------------------------------------
+
+
+def test_cov_batch_jobs_dataclass_and_examples():
+    from analysis.fitting_time.batch_jobs import (
+        SyntheticBenchJob,
+        example_sphere_n12_d2_seed0,
+        example_two_targets_n12_d2,
+    )
+
+    j = SyntheticBenchJob(n=3, d=4, target="ackley", problem_seed=7)
+    assert j.problem_seed == 7
+    assert len(example_sphere_n12_d2_seed0()) == 1
+    assert len(example_two_targets_n12_d2()) == 2
+
+
+# ---------------------------------------------------------------------------
 # Nested + modal modules that need special setup
 # ---------------------------------------------------------------------------
 

@@ -1213,6 +1213,9 @@ def test_kiss_bridge_modal_synthetic_sine_disk_and_main_raw(monkeypatch, tmp_pat
         svgp_linear_fit_seconds=0.0,
         svgp_linear_normalized_rmse=0.0,
         svgp_linear_log_likelihood=0.0,
+        vecchia_fit_seconds=0.0,
+        vecchia_normalized_rmse=0.0,
+        vecchia_log_likelihood=0.0,
     )
 
     monkeypatch.setattr(
@@ -1226,7 +1229,7 @@ def test_kiss_bridge_modal_synthetic_sine_disk_and_main_raw(monkeypatch, tmp_pat
         def remote(n, d, fn, ps):
             return msb.synthetic_sine_benchmark_result_to_payload(_z, n=n, d=d, function_name=fn, problem_seed=ps)
 
-    dest = modal_ssb_to_disk(2, 2, None, 0, tmp_path, remote_fn=_Rem())
+    dest = modal_ssb_to_disk(2, 2, "sine", 0, tmp_path, remote_fn=_Rem())
     assert dest.exists()
 
     def fake_disk(n, d, fn, ps, od):
@@ -1236,7 +1239,7 @@ def test_kiss_bridge_modal_synthetic_sine_disk_and_main_raw(monkeypatch, tmp_pat
         return p
 
     monkeypatch.setattr(msb, "run_synthetic_sine_benchmark_modal_to_disk", fake_disk)
-    modal_ssb_main.info.raw_f(1, 1, "", 0, str(tmp_path))
+    modal_ssb_main.info.raw_f("sine", 1, 1, 0, str(tmp_path))
     assert "wrote" in capsys.readouterr().out
 
     from experiments import synthetic_sine_benchmark_payload as pl
@@ -1251,5 +1254,5 @@ def test_kiss_bridge_modal_synthetic_sine_disk_and_main_raw(monkeypatch, tmp_pat
             return pl.synthetic_sine_benchmark_result_to_payload(_z, n=n, d=d, function_name=fn, problem_seed=ps)
 
     monkeypatch.setattr(pl.modal, "enable_output", lambda: contextlib.nullcontext())
-    pl_dest = pl.run_synthetic_sine_benchmark_modal_to_disk(1, 1, None, 0, tmp_path / "pl_direct", app=_PlApp(), remote_fn=_PlRem())
+    pl_dest = pl.run_synthetic_sine_benchmark_modal_to_disk(1, 1, "sine", 0, tmp_path / "pl_direct", app=_PlApp(), remote_fn=_PlRem())
     assert pl_dest.exists()

@@ -9,6 +9,7 @@ from optimizer.designer_asserts import assert_scalar_rreturn
 from optimizer.sobol_designer import SobolDesigner
 
 
+# Adapted from: https://github.com/feji3769/VecchiaBO/blob/master/notebooks/bo_loop.ipynb
 class VecchiaDesigner:
     def __init__(self, policy, *, num_candidates_per_arm=512):
         self._policy = policy
@@ -65,6 +66,9 @@ class VecchiaDesigner:
         mean_module = ZeroMean()
         likelihood = GaussianLikelihood(noise_constraint=Interval(1e-8, 1e-3))
 
+        # Neighbor count from VecchiaBO TuRBO+pyvecch example: ``m = int(7.2 * np.log10(n)**2)``.
+        # https://github.com/feji3769/VecchiaBO/blob/master/notebooks/bo_loop.ipynb
+        # ``max(2, …)`` / ``max(1, …)`` avoid degenerate ``log10`` / zero neighbors for tiny ``n``.
         m = max(1, int(7.2 * np.log10(max(2, len(X))) ** 2))
         neighbor_oracle = ExactOracle(X, z, m)
         prediction_strategy = IndependentRF()

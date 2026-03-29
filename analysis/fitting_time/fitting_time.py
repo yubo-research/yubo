@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import os
+import sys
 import time
 
 import numpy as np
+import torch
 from torch import Tensor
 
 __all__ = [
@@ -14,6 +17,7 @@ __all__ = [
     "fit_smac_rf",
     "fit_svgp_default",
     "fit_svgp_linear",
+    "fit_vecchia",
 ]
 
 # Matches ``0.1 * torch.randn`` observation noise in ``benchmark_synthetic_sine_surrogates``.
@@ -199,3 +203,117 @@ def fit_svgp_linear(train_x: Tensor, train_y: Tensor, x_test: Tensor) -> tuple[f
     n = int(train_x.shape[-2])
     m = min(n, 100)
     return _fit_svgp(train_x, train_y, x_test, inducing_points=m)
+
+
+def _vecchia_nan_out(
+    x_test: Tensor,
+) -> tuple[float, Tensor, Tensor]:
+    nan_t = torch.full(
+        (x_test.shape[0], 1),
+        float("nan"),
+        dtype=x_test.dtype,
+        device=x_test.device,
+    )
+    return float("nan"), nan_t, nan_t
+
+
+def fit_vecchia(train_x: Tensor, train_y: Tensor, x_test: Tensor) -> tuple[float, Tensor, Tensor]:
+    """RF Vecchia GP (``pyvecch``): same recipe as :class:`optimizer.vecchia_designer.VecchiaDesigner`.
+
+    Uses float32 on CPU inside ``pyvecch``; returns ``y_hat`` and ``pred_var`` on ``train_x``'s
+    device/dtype. Unlike :class:`~optimizer.vecchia_designer.VecchiaDesigner` (opt-in on macOS for
+    long-running BO), this analysis helper **attempts** ``pyvecch`` on all platforms so notebooks
+    and benchmarks get real timings when the stack is healthy. On macOS we set
+    ``KMP_DUPLICATE_LIB_OK`` before import to reduce duplicate OpenMP runtime issues with faiss.
+
+    Set ``YUBO_ALLOW_PYVECCH_ON_DARWIN=0`` (or ``false``) to skip on macOS only and return NaNs
+    (e.g. if your environment still crashes on import).
+    """
+    if sys.platform == "darwin" and os.environ.get("YUBO_ALLOW_PYVECCH_ON_DARWIN", "").lower() in {
+        "0",
+        "false",
+        "no",
+    }:
+        return _vecchia_nan_out(x_test)
+
+    if sys.platform == "darwin":
+        os.environ.setdefault("KMP_DUPLICATE_LIB_OK", "TRUE")
+
+    try:
+        from gpytorch.constraints import Interval
+        from gpytorch.kernels import MaternKernel, ScaleKernel
+        from gpytorch.likelihoods import GaussianLikelihood
+        from gpytorch.means import ZeroMean
+        from pyvecch.input_transforms import Identity
+        from pyvecch.models import RFVecchia
+        from pyvecch.nbrs import ExactOracle
+        from pyvecch.prediction import IndependentRF
+        from pyvecch.training import fit_model
+    except Exception:
+        return _vecchia_nan_out(x_test)
+
+    X = train_x.detach().float().cpu().contiguous()
+    Y = train_y.detach().float().cpu().contiguous()
+    if Y.ndim == 1:
+        Y = Y.unsqueeze(-1)
+    n_obs = X.shape[0]
+    if n_obs < 2:
+        return _vecchia_nan_out(x_test)
+
+    y_mean = Y.mean()
+    y_std = Y.std()
+    if float(y_std.item()) <= 0.0:
+        y_std = torch.tensor(1.0, dtype=Y.dtype, device=Y.device)
+    z = ((Y - y_mean) / y_std).squeeze(-1)
+
+    dim = int(X.shape[-1])
+    # Same as VecchiaBO ``bo_loop.ipynb``: ``m = int(7.2 * np.log10(n)**2)``; see
+    # https://github.com/feji3769/VecchiaBO/blob/master/notebooks/bo_loop.ipynb
+    m_nbrs = max(1, int(7.2 * np.log10(max(2, n_obs)) ** 2))
+    covar_module = ScaleKernel(MaternKernel(ard_num_dims=dim))
+    mean_module = ZeroMean()
+    likelihood = GaussianLikelihood(noise_constraint=Interval(1e-8, 1e-3))
+    neighbor_oracle = ExactOracle(X, z, m_nbrs)
+    prediction_strategy = IndependentRF()
+    input_transform = Identity(d=dim)
+
+    model = RFVecchia(
+        covar_module,
+        mean_module,
+        likelihood,
+        neighbor_oracle,
+        prediction_strategy,
+        input_transform,
+    )
+
+    train_batch_size = int(np.minimum(n_obs, 128))
+    try:
+        t_0 = time.perf_counter()
+        fit_model(
+            model,
+            train_batch_size=train_batch_size,
+            n_window=50,
+            maxiter=100,
+            rel_tol=5e-3,
+        )
+        elapsed = time.perf_counter() - t_0
+        model.update_transform()
+        model.eval()
+        model.likelihood.eval()
+    except Exception:
+        return _vecchia_nan_out(x_test)
+
+    X_test = x_test.detach().float().cpu().contiguous()
+    try:
+        with torch.no_grad():
+            mvn_dist = model.posterior(X_test)
+            mu_z = mvn_dist.mean.squeeze(0)
+            var_z = mvn_dist.covariance_matrix.diagonal(dim1=-2, dim2=-1).squeeze(0).clamp_min(1e-30)
+        mu_y = mu_z.unsqueeze(-1) * y_std + y_mean
+        var_y = var_z.unsqueeze(-1) * (y_std**2)
+        y_hat = mu_y.to(device=train_x.device, dtype=train_x.dtype)
+        pred_var = var_y.to(device=train_x.device, dtype=train_x.dtype)
+    except Exception:
+        return _vecchia_nan_out(x_test)
+
+    return elapsed, y_hat, pred_var
