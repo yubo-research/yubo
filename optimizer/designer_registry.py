@@ -145,7 +145,7 @@ def _build_turbo_enn(ctx: _SimpleContext, kind: str):
         )
     if kind == "turbo-zero":
         return _turbo_enn(ctx, turbo_mode="turbo-zero", num_fit_samples=None, num_fit_candidates=None)
-    turbo_one_acq = {"turbo-one": "thompson", "turbo-one-nds": "pareto", "turbo-one-ucb": "ucb"}
+    turbo_one_acq = {"turbo-one": "pareto", "turbo-one-nds": "pareto", "turbo-one-ucb": "ucb"}
     if kind in turbo_one_acq:
         return _turbo_enn(
             ctx,
@@ -607,6 +607,19 @@ def _d_sts_ar(ctx: _SimpleContext, opts: dict):
     )
 
 
+def _d_turbo_enn_fit_ucb_nfs(ctx: _SimpleContext, opts: dict):
+    nfs = _require_int(opts, "nfs", example="turbo-enn-fit-ucb-nfs/nfs=100")
+    return _turbo_enn(
+        ctx,
+        turbo_mode="turbo-enn",
+        k=10,
+        num_keep=ctx.num_keep_val,
+        num_fit_samples=nfs,
+        num_fit_candidates=100,
+        acq_type="ucb",
+    )
+
+
 _DESIGNER_OPTION_SPECS: dict[str, list[DesignerOptionSpec]] = {
     "ts_sweep": [
         DesignerOptionSpec(
@@ -691,6 +704,15 @@ _DESIGNER_OPTION_SPECS: dict[str, list[DesignerOptionSpec]] = {
             example="sts-ar/num_acc_rej=10",
         )
     ],
+    "turbo-enn-fit-ucb-nfs": [
+        DesignerOptionSpec(
+            name="nfs",
+            required=True,
+            value_type="int",
+            description="Number of fit samples for hyperparameter selection.",
+            example="turbo-enn-fit-ucb-nfs/nfs=100",
+        )
+    ],
 }
 
 
@@ -706,4 +728,5 @@ _DESIGNER_DISPATCH = {name: partial(_no_opts, name, builder) for name, builder i
     "turbo-enn-f-p": _d_turbo_enn_f_p,
     "morbo-enn-fit": _d_morbo_enn_fit,
     "sts-ar": _d_sts_ar,
+    "turbo-enn-fit-ucb-nfs": _d_turbo_enn_fit_ucb_nfs,
 }
