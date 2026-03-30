@@ -160,12 +160,14 @@ class TurboENNDesigner:
                 candidate_rv=candidate_rv,
             )
         elif self._turbo_mode == "turbo-one":
+            acq_type = self._parse_acq_type()
             return turbo_one_config(
                 num_candidates=num_candidates,
                 num_init=num_init,
                 trailing_obs=self._num_keep,
                 trust_region=trust_region,
                 candidate_rv=candidate_rv,
+                acq_type=acq_type,
             )
         elif self._turbo_mode == "lhd-only":
             return lhd_only_config(

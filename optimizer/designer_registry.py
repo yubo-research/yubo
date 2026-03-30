@@ -145,13 +145,15 @@ def _build_turbo_enn(ctx: _SimpleContext, kind: str):
         )
     if kind == "turbo-zero":
         return _turbo_enn(ctx, turbo_mode="turbo-zero", num_fit_samples=None, num_fit_candidates=None)
-    if kind == "turbo-one":
+    turbo_one_acq = {"turbo-one": "thompson", "turbo-one-nds": "pareto", "turbo-one-ucb": "ucb"}
+    if kind in turbo_one_acq:
         return _turbo_enn(
             ctx,
             turbo_mode="turbo-one",
             num_init=ctx.init_yubo_default,
             num_fit_samples=None,
             num_fit_candidates=None,
+            acq_type=turbo_one_acq[kind],
         )
     if kind == "lhd_only":
         return _turbo_enn(ctx, turbo_mode="lhd-only", num_fit_samples=None, num_fit_candidates=None)
@@ -401,6 +403,8 @@ _SIMPLE_BUILDERS = {
     "turbo_py-enn-fit-ucb": partial(_build_turbo_enn_py, kind="turbo_py-enn-fit-ucb"),
     "turbo-zero": partial(_build_turbo_enn, kind="turbo-zero"),
     "turbo-one": partial(_build_turbo_enn, kind="turbo-one"),
+    "turbo-one-nds": partial(_build_turbo_enn, kind="turbo-one-nds"),
+    "turbo-one-ucb": partial(_build_turbo_enn, kind="turbo-one-ucb"),
     "lhd_only": partial(_build_turbo_enn, kind="lhd_only"),
     "morbo-zero": partial(_build_turbo_enn, kind="morbo-zero"),
     "morbo-one": partial(_build_turbo_enn, kind="morbo-one"),
