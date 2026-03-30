@@ -172,6 +172,8 @@ def _build_turbo_enn(ctx: _SimpleContext, kind: str):
             num_fit_samples=None,
             num_fit_candidates=None,
         )
+    if kind == "morbo-enn":
+        return _turbo_enn(ctx, turbo_mode="turbo-enn", k=10, num_keep=ctx.num_keep_val, tr_type="morbo")
     assert False, ("Should not be reached", kind)
 
 
@@ -323,6 +325,7 @@ def _build_sobol_mc(ctx: _SimpleContext, kind: str):
 
 _SIMPLE_BUILDERS = {
     "cma": partial(_build_policy_ctor, module="optimizer.cma_designer", name="CMAESDesigner"),
+    "dngo": partial(_build_policy_ctor, module="optimizer.dngo_designer", name="DNGODesigner"),
     "optuna": partial(_build_policy_ctor, module="optimizer.optuna_designer", name="OptunaDesigner"),
     "ax": partial(_build_policy_ctor, module="optimizer.ax_designer", name="AxDesigner"),
     "random": partial(_build_policy_ctor, module="optimizer.random_designer", name="RandomDesigner"),
