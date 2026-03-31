@@ -59,6 +59,47 @@ def test_kiss_bridge_modal_batches_batches(monkeypatch):
     mb.batches("submit-missing", "tag", None)
 
 
+def test_kiss_bridge_modal_batches_batches_all_branches(monkeypatch, capsys):
+    import experiments.modal_batches as mb
+
+    class _FakeDict(dict):
+        def len(self):
+            return len(self)
+
+    monkeypatch.setattr(mb, "_results_dict", lambda: _FakeDict())
+    monkeypatch.setattr(mb, "_submitted_dict", lambda: _FakeDict())
+    monkeypatch.setattr(mb, "batches_submitter", lambda *a, **k: None)
+    monkeypatch.setattr(mb, "collect", lambda: None)
+    monkeypatch.setattr(mb.modal.Dict, "delete", lambda name: None)
+
+    spawn_count = {"count": 0}
+
+    class _Fn:
+        def spawn(self):
+            spawn_count["count"] += 1
+            return None
+
+    class _Func:
+        @staticmethod
+        def lookup(*_a, **_k):
+            return _Fn()
+
+    monkeypatch.setattr(mb, "modal", SimpleNamespace(Function=_Func, Dict=SimpleNamespace(delete=lambda name: None)))
+
+    mb.batches("submit-missing-force", "tag", None)
+
+    mb.batches("status", None, None)
+    captured = capsys.readouterr()
+    assert "results_available" in captured.out
+
+    mb.batches("collect", None, None)
+
+    mb.batches("clean_up", None, None)
+
+    mb.batches("work", None, 2)
+    assert spawn_count["count"] == 2
+
+
 def test_kiss_bridge_exp_uhd_modal_cmd(monkeypatch, tmp_path):
     import ops.exp_uhd as exp_uhd
     import ops.modal_uhd as modal_uhd

@@ -97,3 +97,17 @@ def write_log_jsonl(log_fn: str, lines: list[str]):
     with open(log_fn, "w") as f:
         for line in lines:
             f.write(json.dumps({"log": line}) + "\n")
+
+
+def write_summary_json(
+    trace_fn: str,
+    wall_seconds: float,
+    stop_reason: Optional[str] = None,
+):
+    summary_fn = f"{trace_fn}-summary.json"
+    Path(summary_fn).parent.mkdir(parents=True, exist_ok=True)
+    summary = {"wall_seconds": wall_seconds}
+    if stop_reason is not None:
+        summary["stop_reason"] = stop_reason
+    with open(summary_fn, "w") as f:
+        json.dump(summary, f, indent=2)

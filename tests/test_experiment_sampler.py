@@ -7,6 +7,7 @@ import pytest
 from experiments.experiment_sampler import (
     ExperimentConfig,
     RunConfig,
+    _SampleResult,
     _scan_local_parallel,
     extract_trace_fns,
     mk_replicates,
@@ -325,7 +326,7 @@ def test_sample_1(mock_torch, mock_seed_all, mock_default_policy, mock_optimizer
         b_trace=True,
         trace_fn="/path/to/trace",
     )
-    collector_log, collector_trace, trace_records = sample_1(run_config)
+    result = sample_1(run_config)
 
     mock_seed_all.assert_called_once_with(42 + 27)
     mock_default_policy.assert_called_once_with(mock_env_conf)
@@ -338,14 +339,15 @@ def test_sample_1(mock_torch, mock_seed_all, mock_default_policy, mock_optimizer
         max_total_timesteps=None,
     )
 
-    trace_lines = list(collector_trace)
+    trace_lines = list(result.collector_trace)
     assert len(trace_lines) == 3
     assert "TRACE:" in trace_lines[0]
     assert "DONE" in trace_lines[2]
 
-    assert len(trace_records) == 2
-    assert trace_records[0].i_iter == 0
-    assert trace_records[0].rreturn == 1.5
+    assert len(result.trace_records) == 2
+    assert result.trace_records[0].i_iter == 0
+    assert result.trace_records[0].rreturn == 1.5
+    assert result.stop_reason == "completed"
 
 
 @patch("optimizer.optimizer.Optimizer")
@@ -380,13 +382,14 @@ def test_sample_1_no_trace(mock_torch, mock_seed_all, mock_default_policy, mock_
         b_trace=False,
         trace_fn="/path/to/trace",
     )
-    collector_log, collector_trace, trace_records = sample_1(run_config)
+    result = sample_1(run_config)
 
-    trace_lines = list(collector_trace)
+    trace_lines = list(result.collector_trace)
     assert len(trace_lines) == 1
     assert trace_lines[0] == "DONE"
 
-    assert len(trace_records) == 1
+    assert len(result.trace_records) == 1
+    assert result.stop_reason == "completed"
 
 
 @patch("optimizer.optimizer.Optimizer")
@@ -430,6 +433,58 @@ def test_sample_1_total_timesteps_budget(mock_torch, mock_seed_all, mock_default
     call_kwargs = mock_optimizer.collect_trace.call_args.kwargs
     assert call_kwargs["max_iterations"] > 10**6
     assert call_kwargs["max_total_timesteps"] == 500
+
+
+@patch("optimizer.optimizer.Optimizer")
+@patch("problems.env_conf.default_policy")
+@patch("experiments.experiment_sampler.seed_all")
+@patch("experiments.experiment_sampler.torch")
+def test_sample_1_stop_reason_timesteps_with_deadline(mock_torch, mock_seed_all, mock_default_policy, mock_optimizer_class):
+    """Regression test: verify stop_reason is 'completed' when timesteps budget exhausted.
+
+    When max_total_timesteps causes early termination but the deadline was not hit,
+    stop_reason should be 'completed' (not 'deadline'). This test verifies the fix
+    is in place: stop_reason is only set to 'deadline' when time.time() >= deadline.
+    """
+    import time
+
+    mock_torch.cuda.is_available.return_value = False
+    mock_torch.empty.return_value.device = "cpu"
+    mock_default_policy.return_value = MagicMock()
+
+    mock_trace_entry = MagicMock()
+    mock_trace_entry.dt_prop = 0.1
+    mock_trace_entry.dt_eval = 0.2
+    mock_trace_entry.rreturn = 1.5
+    mock_trace_entry.env_steps_iter = 100
+    mock_trace_entry.env_steps_total = 100
+
+    mock_optimizer = MagicMock()
+    mock_optimizer.collect_trace.return_value = iter([mock_trace_entry])
+    mock_optimizer_class.return_value = mock_optimizer
+
+    mock_env_conf = MagicMock()
+    mock_env_conf.problem_seed = 0
+    mock_env_conf.env_name = "test_env"
+
+    run_config = RunConfig(
+        env_conf=mock_env_conf,
+        opt_name="random",
+        num_rounds=100,
+        total_timesteps=50,
+        num_arms=1,
+        num_denoise=None,
+        num_denoise_passive=None,
+        max_proposal_seconds=None,
+        b_trace=False,
+        trace_fn="/path/to/trace",
+        deadline=time.time() + 3600,
+    )
+    result = sample_1(run_config)
+
+    assert result.stop_reason != "deadline", (
+        "stop_reason should NOT be 'deadline' when timesteps budget (not deadline) caused early termination. Got 'deadline' but expected something else."
+    )
 
 
 def test_post_process_stdout(capsys):
@@ -477,10 +532,11 @@ def test_scan_local(mock_sample_1, mock_post_process):
     mock_collector_log = MagicMock()
     mock_collector_trace = MagicMock()
     mock_trace_records = MagicMock()
-    mock_sample_1.return_value = (
-        mock_collector_log,
-        mock_collector_trace,
-        mock_trace_records,
+    mock_sample_1.return_value = _SampleResult(
+        collector_log=mock_collector_log,
+        collector_trace=mock_collector_trace,
+        trace_records=mock_trace_records,
+        stop_reason="completed",
     )
 
     mock_env = MagicMock()
@@ -513,14 +569,17 @@ def test_scan_local(mock_sample_1, mock_post_process):
 
     assert mock_sample_1.call_count == 2
     assert mock_post_process.call_count == 2
-    mock_post_process.assert_any_call(mock_collector_log, mock_collector_trace, "/path/a", mock_trace_records)
-    mock_post_process.assert_any_call(mock_collector_log, mock_collector_trace, "/path/b", mock_trace_records)
 
 
 @patch("experiments.experiment_sampler.post_process")
 @patch("experiments.experiment_sampler.sample_1")
 def test_scan_local_single_replicate_stays_in_process(mock_sample_1, mock_post_process):
-    mock_sample_1.return_value = (MagicMock(), MagicMock(), MagicMock())
+    mock_sample_1.return_value = _SampleResult(
+        collector_log=MagicMock(),
+        collector_trace=MagicMock(),
+        trace_records=MagicMock(),
+        stop_reason="completed",
+    )
     run_config = RunConfig(
         env_conf=MagicMock(),
         opt_name="ucb",

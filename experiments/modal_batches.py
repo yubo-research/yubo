@@ -39,8 +39,17 @@ def modal_batches_worker(job):
     key, run_config = job
 
     print(f"JOB: key = {key} run_config = {run_config}")
-    collector_log, collector_trace, trace_records = sample_1(run_config)
-    res_dict[key] = (run_config.trace_fn, collector_log, collector_trace, trace_records)
+    t_start = time.perf_counter()
+    result = sample_1(run_config)
+    wall_seconds = time.perf_counter() - t_start
+    res_dict[key] = (
+        run_config.trace_fn,
+        result.collector_log,
+        result.collector_trace,
+        result.trace_records,
+        wall_seconds,
+        result.stop_reason,
+    )
 
 
 @app.function(
@@ -123,7 +132,11 @@ def _collect():
             continue
         print("GETITEM", key)
         t_0 = time.time()
-        if len(value) == 4:
+        wall_seconds = None
+        stop_reason = None
+        if len(value) == 6:
+            (trace_fn, collector_log, collector_trace, trace_records, wall_seconds, stop_reason) = value
+        elif len(value) == 4:
             (trace_fn, collector_log, collector_trace, trace_records) = value
         else:
             (trace_fn, collector_log, collector_trace) = value
@@ -131,7 +144,14 @@ def _collect():
         t_f = time.time()
         print(f"GOTITEM: {key} {t_f - t_0:.1f}")
         if not data_is_done(trace_fn):
-            post_process(collector_log, collector_trace, trace_fn, trace_records)
+            post_process(
+                collector_log,
+                collector_trace,
+                trace_fn,
+                trace_records,
+                wall_seconds=wall_seconds,
+                stop_reason=stop_reason,
+            )
         collected_keys.add(key)
 
     print(f"results_available before del: {res_dict.len()}")

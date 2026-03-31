@@ -1,6 +1,10 @@
-def _get(mod_name, attr):
-    import importlib
+import importlib
 
+import experiments.modal_batches as _modal_batches  # noqa: F401
+import experiments.modal_timing_sweep as _modal_timing_sweep  # noqa: F401
+
+
+def _get(mod_name, attr):
     return getattr(importlib.import_module(mod_name), attr)
 
 

@@ -342,7 +342,11 @@ def test_kiss_cov_modal_batches_functions(monkeypatch, tmp_path):
     submitted = _FakeDict()
     monkeypatch.setattr(mb, "_results_dict", lambda: res_dict)
     monkeypatch.setattr(mb, "_submitted_dict", lambda: submitted)
-    monkeypatch.setattr(mb, "sample_1", lambda run_cfg: ("log", "trace", [{"x": 1}]))
+    monkeypatch.setattr(
+        mb,
+        "sample_1",
+        lambda run_cfg: SimpleNamespace(collector_log="log", collector_trace="trace", trace_records=[{"x": 1}], stop_reason="completed"),
+    )
 
     spawned = {"map": [], "spawn": []}
 
@@ -378,6 +382,20 @@ def test_kiss_cov_modal_batches_functions(monkeypatch, tmp_path):
     monkeypatch.setattr(mb.modal.Dict, "delete", lambda name: deleted.append(name))
     mb.clean_up()
     assert "batches_dict" in deleted
+
+
+def test_kiss_cov_modal_batches_clean_up_exception(monkeypatch, capsys):
+    import experiments.modal_batches as mb
+
+    def _raise_error(name):
+        raise RuntimeError(f"Failed to delete {name}")
+
+    monkeypatch.setattr(mb.modal.Dict, "delete", _raise_error)
+    mb.clean_up()
+
+    captured = capsys.readouterr()
+    assert "CLEANUP: dict delete failed" in captured.out
+    assert "batches_dict" in captured.out
 
 
 def test_kiss_cov_fig_util_functions(monkeypatch, tmp_path):

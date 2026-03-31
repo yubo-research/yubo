@@ -15,6 +15,7 @@ from analysis.data_io import (
     data_is_done,
     data_writer,
     write_config,
+    write_summary_json,
     write_trace_jsonl,
 )
 from common.collector import Collector
@@ -32,6 +33,7 @@ class _SampleResult(NamedTuple):
     collector_log: Collector
     collector_trace: Collector
     trace_records: list[TraceRecord]
+    stop_reason: Optional[str] = None
 
 
 def _load_attr(module_parts: tuple[str, ...], attr_name: str):
@@ -218,7 +220,13 @@ def _collect_trace_records(
                 f"env_steps_iter={int(getattr(te, 'env_steps_iter', 0))} env_steps_total={int(getattr(te, 'env_steps_total', 0))}"
             )
     collector_trace("DONE")
-    return trace_records, collector_trace
+
+    stop_reason = "completed"
+    if deadline is not None and time.time() >= deadline - 1.0:
+        # 1-second buffer accounts for timing jitter between last iteration check and here
+        stop_reason = "deadline"
+
+    return trace_records, collector_trace, stop_reason
 
 
 def _render_sample_video(
@@ -252,63 +260,44 @@ def _render_sample_video(
 def sample_1(run_config: RunConfig):
     import numpy as np
 
-    env_conf = run_config.env_conf
-    opt_name = run_config.opt_name
-    num_rounds = run_config.num_rounds
-    total_timesteps = run_config.total_timesteps
-    num_arms = run_config.num_arms
-    num_denoise = run_config.num_denoise
-    num_denoise_passive = run_config.num_denoise_passive
-    max_proposal_seconds = run_config.max_proposal_seconds
-    b_trace = run_config.b_trace
-    deadline = run_config.deadline
-    video_enable = run_config.video_enable
-    video_num_episodes = run_config.video_num_episodes
-    video_num_video_episodes = run_config.video_num_video_episodes
-    video_episode_selection = run_config.video_episode_selection
-    video_seed_base = run_config.video_seed_base
-    video_prefix = run_config.video_prefix
-    bo_console = getattr(run_config, "bo_console", True)
-
+    rc = run_config
+    max_proposal_seconds = rc.max_proposal_seconds
     if max_proposal_seconds is None:
         max_proposal_seconds = np.inf
 
-    seed_all(global_seed_for_run(env_conf.problem_seed))
+    seed_all(global_seed_for_run(rc.env_conf.problem_seed))
 
-    with _temporary_default_device(getattr(run_config, "runtime_device", "auto")):
+    with _temporary_default_device(getattr(rc, "runtime_device", "auto")):
         default_policy = _load_attr(("problems", "env_conf"), "default_policy")
-        policy = default_policy(env_conf)
+        policy = default_policy(rc.env_conf)
 
-        if bo_console:
-            collector_log = BOConsoleCollector()
-        else:
-            collector_log = Collector()
+        collector_log = BOConsoleCollector() if getattr(rc, "bo_console", True) else Collector()
         Optimizer = _load_attr(("optimizer", "optimizer"), "Optimizer")
         opt = Optimizer(
             collector_log,
-            env_conf=env_conf,
+            env_conf=rc.env_conf,
             policy=policy,
-            num_arms=num_arms,
-            num_denoise_measurement=num_denoise,
-            num_denoise_passive=num_denoise_passive,
-            opt_name=opt_name,
-            num_rounds=num_rounds,
-            total_timesteps=total_timesteps,
+            num_arms=rc.num_arms,
+            num_denoise_measurement=rc.num_denoise,
+            num_denoise_passive=rc.num_denoise_passive,
+            opt_name=rc.opt_name,
+            num_rounds=rc.num_rounds,
+            total_timesteps=rc.total_timesteps,
         )
 
-        max_iterations = int(num_rounds) if num_rounds is not None else sys.maxsize
-        trace_records, collector_trace = _collect_trace_records(
+        max_iterations = int(rc.num_rounds) if rc.num_rounds is not None else sys.maxsize
+        trace_records, collector_trace, stop_reason = _collect_trace_records(
             opt,
-            opt_name,
+            rc.opt_name,
             max_iterations,
-            total_timesteps,
+            rc.total_timesteps,
             max_proposal_seconds,
-            deadline,
-            env_conf,
-            b_trace,
+            rc.deadline,
+            rc.env_conf,
+            rc.b_trace,
         )
 
-        if bo_console:
+        if getattr(rc, "bo_console", True):
             t0 = getattr(opt, "_t_0", None)
             if t0 is not None and isinstance(t0, (int, float)):
                 total_time = time.time() - float(t0)
@@ -318,22 +307,23 @@ def sample_1(run_config: RunConfig):
             best_val = float(best) if best is not None and isinstance(best, (int, float)) else 0.0
             print_bo_footer(best_val, max(0.0, total_time))
 
-        if video_enable and video_num_video_episodes > 0 and opt.best_policy is not None:
+        if rc.video_enable and rc.video_num_video_episodes > 0 and opt.best_policy is not None:
             _render_sample_video(
                 opt,
-                run_config,
-                env_conf,
-                video_prefix,
-                video_num_episodes,
-                video_num_video_episodes,
-                video_episode_selection,
-                video_seed_base,
+                rc,
+                rc.env_conf,
+                rc.video_prefix,
+                rc.video_num_episodes,
+                rc.video_num_video_episodes,
+                rc.video_episode_selection,
+                rc.video_seed_base,
             )
 
         return _SampleResult(
             collector_log=collector_log,
             collector_trace=collector_trace,
             trace_records=trace_records,
+            stop_reason=stop_reason,
         )
 
 
@@ -348,12 +338,22 @@ def post_process_stdout(
         print(line)
 
 
-def post_process(collector_log, collector_trace, trace_fn, trace_records=None):
+def post_process(
+    collector_log,
+    collector_trace,
+    trace_fn,
+    trace_records=None,
+    wall_seconds: Optional[float] = None,
+    stop_reason: Optional[str] = None,
+):
     ensure_parent(trace_fn)
 
     if trace_records is not None:
         jsonl_fn = trace_fn + ".jsonl"
         write_trace_jsonl(jsonl_fn, trace_records)
+
+    if wall_seconds is not None:
+        write_summary_json(trace_fn, wall_seconds, stop_reason)
 
     def _w(f, line):
         f.write(line + "\n")
@@ -413,8 +413,17 @@ def _limit_worker_threads():
 
 def _sample_and_post_process(run_config: RunConfig):
     _limit_worker_threads()
-    collector_log, collector_trace, trace_records = sample_1(run_config)
-    post_process(collector_log, collector_trace, run_config.trace_fn, trace_records)
+    t_start = time.perf_counter()
+    result = sample_1(run_config)
+    wall_seconds = time.perf_counter() - t_start
+    post_process(
+        result.collector_log,
+        result.collector_trace,
+        run_config.trace_fn,
+        result.trace_records,
+        wall_seconds=wall_seconds,
+        stop_reason=result.stop_reason,
+    )
     return run_config.trace_fn
 
 

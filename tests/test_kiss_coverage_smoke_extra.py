@@ -141,7 +141,11 @@ def test_kiss_cov_modal_batches_collect_and_cleanup(monkeypatch):
     submitted = _FakeDict()
     monkeypatch.setattr(mb, "_results_dict", lambda: res_dict)
     monkeypatch.setattr(mb, "_submitted_dict", lambda: submitted)
-    monkeypatch.setattr(mb, "sample_1", lambda run_cfg: ("log", "trace", [{"x": 1}]))
+    monkeypatch.setattr(
+        mb,
+        "sample_1",
+        lambda run_cfg: SimpleNamespace(collector_log="log", collector_trace="trace", trace_records=[{"x": 1}], stop_reason="completed"),
+    )
 
     class _Func:
         def spawn_map(self, _todo):
