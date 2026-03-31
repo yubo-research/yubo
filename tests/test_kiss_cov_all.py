@@ -444,8 +444,7 @@ def test_cov_designer_parse_types():
 
 def test_cov_designer_num_candidates():
     from optimizer.designer_registry import (
-        _d_turbo_enn_f,
-        _d_turbo_enn_f_p,
+        _build_turbo_enn_f,
         _SimpleContext,
     )
 
@@ -460,8 +459,8 @@ def test_cov_designer_num_candidates():
         init_ax_default=1,
         default_num_X_samples=1,
     )
-    d1 = _d_turbo_enn_f(ctx, {})
-    d2 = _d_turbo_enn_f_p(ctx, {})
+    d1 = _build_turbo_enn_f(ctx, acq_type="ucb")
+    d2 = _build_turbo_enn_f(ctx, acq_type="pareto")
     assert d1 is not None
     assert d2 is not None
 

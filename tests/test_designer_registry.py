@@ -62,3 +62,20 @@ def test_d_turbo_enn_fit_ucb_rejects_unknown_option():
     ctx = _make_ctx()
     with pytest.raises(NoSuchDesignerError, match="does not support"):
         _d_turbo_enn_fit_ucb(ctx, {"bogus": 1})
+
+
+def test_turbo_one_and_turbo_one_nds_have_different_acq_types():
+    """Regression: turbo-one should use thompson, turbo-one-nds should use pareto.
+
+    These were originally different acquisition types. Commit 13fd7aae accidentally
+    changed turbo-one from "thompson" to "pareto", making them identical.
+    """
+    from optimizer.designer_registry import _build_turbo_enn
+
+    ctx = _make_ctx()
+    turbo_one = _build_turbo_enn(ctx, "turbo-one")
+    turbo_one_nds = _build_turbo_enn(ctx, "turbo-one-nds")
+
+    assert turbo_one._acq_type == "thompson", "turbo-one should use thompson acquisition"
+    assert turbo_one_nds._acq_type == "pareto", "turbo-one-nds should use pareto acquisition"
+    assert turbo_one._acq_type != turbo_one_nds._acq_type, "turbo-one and turbo-one-nds should differ"

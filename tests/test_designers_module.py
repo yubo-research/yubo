@@ -96,6 +96,7 @@ def test_designers_catalog():
 def test_designers_catalog_dataclasses_are_instantiable():
     # This is intentionally direct: it ensures the catalog-related dataclasses
     # are covered by tests (for `kiss check` coverage gating).
+    from optimizer.designer_types import DesignerDef
     from optimizer.designers import (
         DesignerCatalogEntry,
         DesignerOptionSpec,
@@ -107,12 +108,23 @@ def test_designers_catalog_dataclasses_are_instantiable():
         required=True,
         value_type="int",
         description="dummy",
-        example="x/k=1",
+        example_suffix="k=1",
         allowed_values=None,
     )
+    assert opt.example("x") == "x/k=1"
     entry = DesignerCatalogEntry(base_name="x", options=[opt], dispatch=lambda *_: None)
     spec = DesignerSpec(base="x", general={}, specific={})
 
     assert entry.base_name == "x"
     assert entry.options[0].name == "k"
     assert spec.base == "x"
+
+    def dummy_builder(_ctx, _opts):
+        pass
+
+    def_with_opts = DesignerDef(name="test", builder=dummy_builder, option_specs=(opt,))
+    def_no_opts = DesignerDef(name="test2", builder=dummy_builder, option_specs=())
+
+    assert def_with_opts.name == "test"
+    assert def_with_opts.has_options() is True
+    assert def_no_opts.has_options() is False

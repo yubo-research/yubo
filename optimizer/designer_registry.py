@@ -2,7 +2,7 @@ import importlib
 from functools import partial
 
 from .designer_errors import NoSuchDesignerError
-from .designer_types import DesignerOptionSpec
+from .designer_types import DesignerDef, DesignerOptionSpec
 
 
 class _SimpleContext:
@@ -142,19 +142,9 @@ def _build_turbo_enn(ctx: _SimpleContext, kind: str):
             num_fit_candidates=None,
             acq_type="pareto",
         )
-    if kind == "turbo-enn-fit-ucb":
-        return _turbo_enn(
-            ctx,
-            turbo_mode="turbo-enn",
-            k=10,
-            num_keep=ctx.num_keep_val,
-            num_fit_samples=100,
-            num_fit_candidates=100,
-            acq_type="ucb",
-        )
     if kind == "turbo-zero":
         return _turbo_enn(ctx, turbo_mode="turbo-zero", num_fit_samples=None, num_fit_candidates=None)
-    turbo_one_acq = {"turbo-one": "pareto", "turbo-one-nds": "pareto", "turbo-one-ucb": "ucb"}
+    turbo_one_acq = {"turbo-one": "thompson", "turbo-one-nds": "pareto", "turbo-one-ucb": "ucb"}
     if kind in turbo_one_acq:
         return _turbo_enn(
             ctx,
@@ -443,7 +433,7 @@ _SIMPLE_BUILDERS = {
 }
 
 
-_SIMPLE_DISPATCH = {k: v for k, v in _SIMPLE_BUILDERS.items()}
+_SIMPLE_DISPATCH = _SIMPLE_BUILDERS
 
 
 def _d_ts_sweep(ctx: _SimpleContext, opts: dict):
@@ -538,10 +528,8 @@ def _d_turbo_enn_fit(ctx: _SimpleContext, opts: dict):
     )
 
 
-def _d_turbo_enn_f(ctx: _SimpleContext, opts: dict):
-    if opts:
-        keys = ", ".join(sorted(opts))
-        raise NoSuchDesignerError(f"Designer 'turbo-enn-f' does not support options (got: {keys}).")
+def _build_turbo_enn_f(ctx: _SimpleContext, *, acq_type: str):
+    """Factory for turbo-enn-f variants. acq_type: 'ucb' or 'pareto'."""
 
     def _num_candidates(num_dim, num_arms):
         return 100 * num_arms
@@ -554,29 +542,7 @@ def _d_turbo_enn_f(ctx: _SimpleContext, opts: dict):
         num_keep=ctx.num_keep_val,
         num_fit_samples=100,
         num_fit_candidates=100,
-        acq_type="ucb",
-        num_candidates=_num_candidates,
-        candidate_rv="uniform",
-    )
-
-
-def _d_turbo_enn_f_p(ctx: _SimpleContext, opts: dict):
-    if opts:
-        keys = ", ".join(sorted(opts))
-        raise NoSuchDesignerError(f"Designer 'turbo-enn-f-p' does not support options (got: {keys}).")
-
-    def _num_candidates(num_dim, num_arms):
-        return 100 * num_arms
-
-    TurboENNDesigner = _load_symbol("optimizer.turbo_enn_designer", "TurboENNDesigner")
-    return TurboENNDesigner(
-        ctx.policy,
-        turbo_mode="turbo-enn",
-        k=10,
-        num_keep=ctx.num_keep_val,
-        num_fit_samples=100,
-        num_fit_candidates=100,
-        acq_type="pareto",
+        acq_type=acq_type,
         num_candidates=_num_candidates,
         candidate_rv="uniform",
     )
@@ -634,120 +600,168 @@ def _d_turbo_enn_fit_ucb(ctx: _SimpleContext, opts: dict):
     )
 
 
-_DESIGNER_OPTION_SPECS: dict[str, list[DesignerOptionSpec]] = {
-    "ts_sweep": [
-        DesignerOptionSpec(
-            name="num_candidates",
-            required=True,
-            value_type="int",
-            description="Number of TS candidates (lanczos sampler).",
-            example="ts_sweep/num_candidates=10000",
-        )
-    ],
-    "rff": [
-        DesignerOptionSpec(
-            name="num_candidates",
-            required=True,
-            value_type="int",
-            description="Number of TS candidates (RFF sampler).",
-            example="rff/num_candidates=10000",
-        )
-    ],
-    "pss_sweep_kmcmc": [
-        DesignerOptionSpec(
-            name="k_mcmc",
-            required=True,
-            value_type="int",
-            description="Number of MCMC chains per refinement (PSS).",
-            example="pss_sweep_kmcmc/k_mcmc=8",
-        )
-    ],
-    "pss_sweep_num_mcmc": [
-        DesignerOptionSpec(
-            name="num_mcmc",
-            required=True,
-            value_type="int",
-            description="Total number of MCMC samples per refinement (PSS).",
-            example="pss_sweep_num_mcmc/num_mcmc=16",
-        )
-    ],
-    "sts_sweep": [
-        DesignerOptionSpec(
-            name="num_refinements",
-            required=True,
-            value_type="int",
-            description="Number of STS refinements.",
-            example="sts_sweep/num_refinements=30",
-        )
-    ],
-    "turbo-enn-sweep": [
-        DesignerOptionSpec(
-            name="k",
-            required=True,
-            value_type="int",
-            description="Ensemble size for TuRBO-ENN sweep.",
-            example="turbo-enn-sweep/k=10",
-        )
-    ],
-    "turbo-enn-fit": [
-        DesignerOptionSpec(
-            name="acq_type",
-            required=True,
-            value_type="str",
-            description="Acquisition type for fit-time candidate generation.",
-            example="turbo-enn-fit/acq_type=ucb",
-            allowed_values=("pareto", "thompson", "ucb"),
-        )
-    ],
-    "morbo-enn-fit": [
-        DesignerOptionSpec(
-            name="acq_type",
-            required=True,
-            value_type="str",
-            description="Acquisition type for fit-time candidate generation (MORBO TR).",
-            example="morbo-enn-fit/acq_type=ucb",
-            allowed_values=("pareto", "thompson", "ucb"),
-        )
-    ],
-    "sts-ar": [
-        DesignerOptionSpec(
-            name="num_acc_rej",
-            required=True,
-            value_type="int",
-            description="Number of accept/reject steps.",
-            example="sts-ar/num_acc_rej=10",
-        )
-    ],
-    "turbo-enn-fit-ucb": [
-        DesignerOptionSpec(
-            name="nfs",
-            required=False,
-            value_type="int",
-            description="Number of fit samples for hyperparameter selection (default 100).",
-            example="turbo-enn-fit-ucb/nfs=50",
+_DESIGNER_DEFS: list[DesignerDef] = [
+    DesignerDef(
+        name="ts_sweep",
+        builder=_d_ts_sweep,
+        option_specs=(
+            DesignerOptionSpec(
+                name="num_candidates",
+                required=True,
+                value_type="int",
+                description="Number of TS candidates (lanczos sampler).",
+                example_suffix="num_candidates=10000",
+            ),
         ),
-        DesignerOptionSpec(
-            name="k",
-            required=False,
-            value_type="int",
-            description="ENN ensemble size k (default 10).",
-            example="turbo-enn-fit-ucb/k=20",
+    ),
+    DesignerDef(
+        name="rff",
+        builder=_d_rff,
+        option_specs=(
+            DesignerOptionSpec(
+                name="num_candidates",
+                required=True,
+                value_type="int",
+                description="Number of TS candidates (RFF sampler).",
+                example_suffix="num_candidates=10000",
+            ),
         ),
-    ],
-}
+    ),
+    DesignerDef(
+        name="pss_sweep_kmcmc",
+        builder=_d_pss_sweep_kmcmc,
+        option_specs=(
+            DesignerOptionSpec(
+                name="k_mcmc",
+                required=True,
+                value_type="int",
+                description="Number of MCMC chains per refinement (PSS).",
+                example_suffix="k_mcmc=8",
+            ),
+        ),
+    ),
+    DesignerDef(
+        name="pss_sweep_num_mcmc",
+        builder=_d_pss_sweep_num_mcmc,
+        option_specs=(
+            DesignerOptionSpec(
+                name="num_mcmc",
+                required=True,
+                value_type="int",
+                description="Total number of MCMC samples per refinement (PSS).",
+                example_suffix="num_mcmc=16",
+            ),
+        ),
+    ),
+    DesignerDef(
+        name="sts_sweep",
+        builder=_d_sts_sweep,
+        option_specs=(
+            DesignerOptionSpec(
+                name="num_refinements",
+                required=True,
+                value_type="int",
+                description="Number of STS refinements.",
+                example_suffix="num_refinements=30",
+            ),
+        ),
+    ),
+    DesignerDef(
+        name="turbo-enn-sweep",
+        builder=_d_turbo_enn_sweep,
+        option_specs=(
+            DesignerOptionSpec(
+                name="k",
+                required=True,
+                value_type="int",
+                description="Ensemble size for TuRBO-ENN sweep.",
+                example_suffix="k=10",
+            ),
+        ),
+    ),
+    DesignerDef(
+        name="turbo-enn-fit",
+        builder=_d_turbo_enn_fit,
+        option_specs=(
+            DesignerOptionSpec(
+                name="acq_type",
+                required=True,
+                value_type="str",
+                description="Acquisition type for fit-time candidate generation.",
+                example_suffix="acq_type=ucb",
+                allowed_values=("pareto", "thompson", "ucb"),
+            ),
+        ),
+    ),
+    DesignerDef(
+        name="morbo-enn-fit",
+        builder=_d_morbo_enn_fit,
+        option_specs=(
+            DesignerOptionSpec(
+                name="acq_type",
+                required=True,
+                value_type="str",
+                description="Acquisition type for fit-time candidate generation (MORBO TR).",
+                example_suffix="acq_type=ucb",
+                allowed_values=("pareto", "thompson", "ucb"),
+            ),
+        ),
+    ),
+    DesignerDef(
+        name="sts-ar",
+        builder=_d_sts_ar,
+        option_specs=(
+            DesignerOptionSpec(
+                name="num_acc_rej",
+                required=True,
+                value_type="int",
+                description="Number of accept/reject steps.",
+                example_suffix="num_acc_rej=10",
+            ),
+        ),
+    ),
+    DesignerDef(
+        name="turbo-enn-fit-ucb",
+        builder=_d_turbo_enn_fit_ucb,
+        option_specs=(
+            DesignerOptionSpec(
+                name="nfs",
+                required=False,
+                value_type="int",
+                description="Number of fit samples for hyperparameter selection (default 100).",
+                example_suffix="nfs=50",
+            ),
+            DesignerOptionSpec(
+                name="k",
+                required=False,
+                value_type="int",
+                description="ENN ensemble size k (default 10).",
+                example_suffix="k=20",
+            ),
+        ),
+    ),
+    DesignerDef(
+        name="turbo-enn-f",
+        builder=partial(_build_turbo_enn_f, acq_type="ucb"),
+        option_specs=(),
+    ),
+    DesignerDef(
+        name="turbo-enn-f-p",
+        builder=partial(_build_turbo_enn_f, acq_type="pareto"),
+        option_specs=(),
+    ),
+]
+
+_DESIGNER_OPTION_SPECS: dict[str, list[DesignerOptionSpec]] = {d.name: list(d.option_specs) for d in _DESIGNER_DEFS if d.option_specs}
+
+
+def _wrap_designer_def(d: DesignerDef):
+    """Wrap builder with _no_opts if designer has no option specs."""
+    if d.option_specs:
+        return d.builder
+    return partial(_no_opts, d.name, d.builder)
 
 
 _DESIGNER_DISPATCH = {name: partial(_no_opts, name, builder) for name, builder in _SIMPLE_BUILDERS.items()} | {
-    "ts_sweep": _d_ts_sweep,
-    "rff": _d_rff,
-    "pss_sweep_kmcmc": _d_pss_sweep_kmcmc,
-    "pss_sweep_num_mcmc": _d_pss_sweep_num_mcmc,
-    "sts_sweep": _d_sts_sweep,
-    "turbo-enn-sweep": _d_turbo_enn_sweep,
-    "turbo-enn-fit": _d_turbo_enn_fit,
-    "turbo-enn-f": _d_turbo_enn_f,
-    "turbo-enn-f-p": _d_turbo_enn_f_p,
-    "morbo-enn-fit": _d_morbo_enn_fit,
-    "sts-ar": _d_sts_ar,
-    "turbo-enn-fit-ucb": _d_turbo_enn_fit_ucb,
+    d.name: _wrap_designer_def(d) for d in _DESIGNER_DEFS
 }
