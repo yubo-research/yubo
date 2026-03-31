@@ -51,6 +51,15 @@ def _require_int(opts: dict, key: str, *, example: str) -> int:
     return v
 
 
+def _optional_int(opts: dict, key: str, *, default: int, example: str) -> int:
+    if key not in opts:
+        return default
+    v = opts[key]
+    if not isinstance(v, int):
+        raise NoSuchDesignerError(f"Designer option '{key}' must be an int. Example: '{example}'.")
+    return v
+
+
 def _require_str_in(opts: dict, key: str, allowed: set[str], *, example: str) -> str:
     if key not in opts:
         raise NoSuchDesignerError(f"Designer option '{key}' is required. Example: '{example}'.")
@@ -398,7 +407,6 @@ _SIMPLE_BUILDERS = {
     "turbo-0": partial(_build_turbo_ref, kind="turbo-0"),
     "turbo-enn": partial(_build_turbo_enn, kind="turbo-enn"),
     "turbo-enn-p": partial(_build_turbo_enn, kind="turbo-enn-p"),
-    "turbo-enn-fit-ucb": partial(_build_turbo_enn, kind="turbo-enn-fit-ucb"),
     "turbo_py-enn-p": partial(_build_turbo_enn_py, kind="turbo_py-enn-p"),
     "turbo_py-enn-fit-ucb": partial(_build_turbo_enn_py, kind="turbo_py-enn-fit-ucb"),
     "turbo-zero": partial(_build_turbo_enn, kind="turbo-zero"),
@@ -607,12 +615,18 @@ def _d_sts_ar(ctx: _SimpleContext, opts: dict):
     )
 
 
-def _d_turbo_enn_fit_ucb_nfs(ctx: _SimpleContext, opts: dict):
-    nfs = _require_int(opts, "nfs", example="turbo-enn-fit-ucb-nfs/nfs=100")
+def _d_turbo_enn_fit_ucb(ctx: _SimpleContext, opts: dict):
+    allowed = {"nfs", "k"}
+    unknown = set(opts) - allowed
+    if unknown:
+        u = ", ".join(sorted(unknown))
+        raise NoSuchDesignerError(f"Designer 'turbo-enn-fit-ucb' does not support option(s): {u}. Use nfs and/or k. Example: 'turbo-enn-fit-ucb/nfs=100/k=10'.")
+    nfs = _optional_int(opts, "nfs", default=100, example="turbo-enn-fit-ucb/nfs=50")
+    k = _optional_int(opts, "k", default=10, example="turbo-enn-fit-ucb/k=20")
     return _turbo_enn(
         ctx,
         turbo_mode="turbo-enn",
-        k=10,
+        k=k,
         num_keep=ctx.num_keep_val,
         num_fit_samples=nfs,
         num_fit_candidates=100,
@@ -704,14 +718,21 @@ _DESIGNER_OPTION_SPECS: dict[str, list[DesignerOptionSpec]] = {
             example="sts-ar/num_acc_rej=10",
         )
     ],
-    "turbo-enn-fit-ucb-nfs": [
+    "turbo-enn-fit-ucb": [
         DesignerOptionSpec(
             name="nfs",
-            required=True,
+            required=False,
             value_type="int",
-            description="Number of fit samples for hyperparameter selection.",
-            example="turbo-enn-fit-ucb-nfs/nfs=100",
-        )
+            description="Number of fit samples for hyperparameter selection (default 100).",
+            example="turbo-enn-fit-ucb/nfs=50",
+        ),
+        DesignerOptionSpec(
+            name="k",
+            required=False,
+            value_type="int",
+            description="ENN ensemble size k (default 10).",
+            example="turbo-enn-fit-ucb/k=20",
+        ),
     ],
 }
 
@@ -728,5 +749,5 @@ _DESIGNER_DISPATCH = {name: partial(_no_opts, name, builder) for name, builder i
     "turbo-enn-f-p": _d_turbo_enn_f_p,
     "morbo-enn-fit": _d_morbo_enn_fit,
     "sts-ar": _d_sts_ar,
-    "turbo-enn-fit-ucb-nfs": _d_turbo_enn_fit_ucb_nfs,
+    "turbo-enn-fit-ucb": _d_turbo_enn_fit_ucb,
 }

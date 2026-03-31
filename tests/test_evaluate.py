@@ -5,7 +5,10 @@ import pytest
 import torch
 
 from analysis.fitting_time.evaluate import (
+    SURROGATE_BENCHMARK_KEYS,
     SYNTHETIC_BENCHMARK_SINE_FUNCTION_NAME,
+    BMResult,
+    MuSe,
     SyntheticSineSurrogateBenchmark,
     benchmark_synthetic_sine_surrogates,
     draw_benchmark_synthetic_xy,
@@ -15,6 +18,22 @@ from analysis.fitting_time.evaluate import (
     predictive_gaussian_log_likelihood,
 )
 from analysis.fitting_time.fitting_time import fit_svgp_default, fit_svgp_linear, fit_vecchia
+
+
+def _br(
+    fit_s: float,
+    nrmse: float,
+    ll: float,
+    *,
+    se_f: float = 0.0,
+    se_n: float = 0.0,
+    se_l: float = 0.0,
+) -> BMResult:
+    return BMResult(MuSe(fit_s, se_f), MuSe(nrmse, se_n), MuSe(ll, se_l))
+
+
+def _bench(**kwargs: BMResult) -> SyntheticSineSurrogateBenchmark:
+    return SyntheticSineSurrogateBenchmark(results={k: kwargs[k] for k in SURROGATE_BENCHMARK_KEYS})
 
 
 def test_normalize_benchmark_function_name():
@@ -53,6 +72,27 @@ def test_predictive_gaussian_log_likelihood_matches_independent_normal():
     assert ll == pytest.approx(expected)
 
 
+def test_single_task_gp_posterior_observation_noise_widens_variance():
+    """BoTorch default ``observation_noise=False`` is latent-only; benchmark uses noisy ``y_test``."""
+    import gpytorch
+    from botorch.fit import fit_gpytorch_mll
+    from botorch.models import SingleTaskGP
+    from gpytorch.mlls import ExactMarginalLogLikelihood
+
+    torch.manual_seed(0)
+    x = torch.rand(14, 2, dtype=torch.float64)
+    y = torch.sin(4 * x[:, :1]) + 0.15 * torch.randn(14, 1, dtype=torch.float64)
+    gp = SingleTaskGP(x, y)
+    mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
+    with gpytorch.settings.max_cholesky_size(1000):
+        fit_gpytorch_mll(mll)
+    gp.eval()
+    xt = torch.rand(6, 2, dtype=torch.float64)
+    v0 = gp.posterior(xt, observation_noise=False).variance
+    v1 = gp.posterior(xt, observation_noise=True).variance
+    assert torch.all(v1 >= v0 - 1e-8)
+
+
 def test_fit_svgp_default_posterior_on_original_y_scale():
     """Regression: SVGP means must be in ``train_y`` units (not z-scores)."""
     torch.manual_seed(0)
@@ -65,7 +105,7 @@ def test_fit_svgp_default_posterior_on_original_y_scale():
 
 
 def test_fit_vecchia_returns_test_shaped_tensors():
-    """Shape contract; values may be NaN (missing pyvecch, fit failure, n<2, or darwin opt-out)."""
+    """Shape contract; values may be NaN (missing pyvecch, fit failure, n<2, or YUBO_ALLOW_PYVECCH_ON_DARWIN=0)."""
     torch.manual_seed(2)
     n, d, nt = 30, 2, 8
     x = torch.rand(n, d, dtype=torch.float64)
@@ -95,28 +135,15 @@ def test_predictive_gaussian_log_likelihood_torch():
 
 
 def test_synthetic_sine_surrogate_benchmark_print_table(capsys):
-    r = SyntheticSineSurrogateBenchmark(
-        enn_fit_seconds=0.01,
-        enn_normalized_rmse=0.5,
-        enn_log_likelihood=-10.0,
-        smac_rf_fit_seconds=float("nan"),
-        smac_rf_normalized_rmse=float("nan"),
-        smac_rf_log_likelihood=float("nan"),
-        dngo_fit_seconds=1.0,
-        dngo_normalized_rmse=0.25,
-        dngo_log_likelihood=-8.0,
-        exact_gp_fit_seconds=2.0,
-        exact_gp_normalized_rmse=0.1,
-        exact_gp_log_likelihood=-7.0,
-        svgp_default_fit_seconds=3.0,
-        svgp_default_normalized_rmse=0.15,
-        svgp_default_log_likelihood=-7.5,
-        svgp_linear_fit_seconds=3.5,
-        svgp_linear_normalized_rmse=0.14,
-        svgp_linear_log_likelihood=-7.4,
-        vecchia_fit_seconds=4.0,
-        vecchia_normalized_rmse=0.12,
-        vecchia_log_likelihood=-7.2,
+    nan = float("nan")
+    r = _bench(
+        enn=_br(0.01, 0.5, -10.0),
+        smac_rf=_br(nan, nan, nan),
+        dngo=_br(1.0, 0.25, -8.0),
+        exact_gp=_br(2.0, 0.1, -7.0),
+        svgp_default=_br(3.0, 0.15, -7.5),
+        svgp_linear=_br(3.5, 0.14, -7.4),
+        vecchia=_br(4.0, 0.12, -7.2),
     )
     r.print_table()
     out = capsys.readouterr().out
@@ -158,19 +185,22 @@ def test_benchmark_smac_fit_failure_degrades_to_nan(monkeypatch):
 
     monkeypatch.setattr("analysis.fitting_time.fitting_time.fit_smac_rf", _boom)
     r = benchmark_synthetic_sine_surrogates(N=12, D=2, function_name="sine")
-    assert math.isnan(r.smac_rf_fit_seconds)
-    assert math.isnan(r.smac_rf_normalized_rmse)
-    assert math.isnan(r.smac_rf_log_likelihood)
-    assert math.isfinite(r.enn_fit_seconds) and math.isfinite(r.dngo_fit_seconds)
+    sm = r.results["smac_rf"]
+    assert math.isnan(sm.fit_seconds.mu)
+    assert math.isnan(sm.normalized_rmse.mu)
+    assert math.isnan(sm.log_likelihood.mu)
+    assert math.isfinite(r.results["enn"].fit_seconds.mu) and math.isfinite(r.results["dngo"].fit_seconds.mu)
 
 
 def _smac_row_consistent(r: SyntheticSineSurrogateBenchmark) -> bool:
-    triplet = (r.smac_rf_fit_seconds, r.smac_rf_normalized_rmse, r.smac_rf_log_likelihood)
+    sm = r.results["smac_rf"]
+    triplet = (sm.fit_seconds.mu, sm.normalized_rmse.mu, sm.log_likelihood.mu)
     return all(math.isnan(x) for x in triplet) or all(math.isfinite(x) for x in triplet)
 
 
 def _vecchia_row_consistent(r: SyntheticSineSurrogateBenchmark) -> bool:
-    triplet = (r.vecchia_fit_seconds, r.vecchia_normalized_rmse, r.vecchia_log_likelihood)
+    vc = r.results["vecchia"]
+    triplet = (vc.fit_seconds.mu, vc.normalized_rmse.mu, vc.log_likelihood.mu)
     return all(math.isnan(x) for x in triplet) or all(math.isfinite(x) for x in triplet)
 
 
@@ -178,18 +208,53 @@ def _vecchia_row_consistent(r: SyntheticSineSurrogateBenchmark) -> bool:
 def test_benchmark_synthetic_sine_surrogates_smoke(function_name):
     r = benchmark_synthetic_sine_surrogates(N=28, D=2, function_name=function_name)
     assert isinstance(r, SyntheticSineSurrogateBenchmark)
-    assert math.isfinite(r.enn_fit_seconds) and math.isfinite(r.enn_normalized_rmse)
-    assert math.isfinite(r.enn_log_likelihood)
-    assert math.isfinite(r.dngo_fit_seconds) and math.isfinite(r.dngo_normalized_rmse)
-    assert math.isfinite(r.dngo_log_likelihood)
-    assert math.isfinite(r.exact_gp_fit_seconds) and math.isfinite(r.exact_gp_normalized_rmse)
-    assert math.isfinite(r.exact_gp_log_likelihood)
-    assert math.isfinite(r.svgp_default_fit_seconds) and math.isfinite(r.svgp_default_normalized_rmse)
-    assert math.isfinite(r.svgp_default_log_likelihood)
-    assert math.isfinite(r.svgp_linear_fit_seconds) and math.isfinite(r.svgp_linear_normalized_rmse)
-    assert math.isfinite(r.svgp_linear_log_likelihood)
+    enn = r.results["enn"]
+    assert math.isfinite(enn.fit_seconds.mu) and math.isfinite(enn.normalized_rmse.mu)
+    assert math.isfinite(enn.log_likelihood.mu)
+    dg = r.results["dngo"]
+    assert math.isfinite(dg.fit_seconds.mu) and math.isfinite(dg.normalized_rmse.mu)
+    assert math.isfinite(dg.log_likelihood.mu)
+    gp = r.results["exact_gp"]
+    assert math.isfinite(gp.fit_seconds.mu) and math.isfinite(gp.normalized_rmse.mu)
+    assert math.isfinite(gp.log_likelihood.mu)
+    sd = r.results["svgp_default"]
+    assert math.isfinite(sd.fit_seconds.mu) and math.isfinite(sd.normalized_rmse.mu)
+    assert math.isfinite(sd.log_likelihood.mu)
+    sl = r.results["svgp_linear"]
+    assert math.isfinite(sl.fit_seconds.mu) and math.isfinite(sl.normalized_rmse.mu)
+    assert math.isfinite(sl.log_likelihood.mu)
     assert _smac_row_consistent(r)
     assert _vecchia_row_consistent(r)
+
+
+def test_benchmark_synthetic_sine_surrogates_num_reps_aggregates():
+    r1 = benchmark_synthetic_sine_surrogates(N=14, D=2, function_name="sine", problem_seed=0, num_reps=1)
+    r3 = benchmark_synthetic_sine_surrogates(N=14, D=2, function_name="sine", problem_seed=0, num_reps=3)
+    assert r1.results["enn"].fit_seconds.se == 0.0
+    assert r3.results["enn"].fit_seconds.se >= 0.0
+    assert math.isfinite(r3.results["enn"].fit_seconds.mu)
+
+
+def test_benchmark_synthetic_sine_surrogates_num_reps_rejects_zero():
+    with pytest.raises(ValueError, match="num_reps"):
+        benchmark_synthetic_sine_surrogates(N=8, D=2, function_name="sine", num_reps=0)
+
+
+def test_benchmark_synthetic_sine_surrogates_b_fast_only_skips_slow_fits(monkeypatch):
+    def _boom(*_a, **_k):
+        raise AssertionError("slow surrogate should not run when b_fast_only")
+
+    monkeypatch.setattr("analysis.fitting_time.fitting_time.fit_dngo", _boom)
+    monkeypatch.setattr("analysis.fitting_time.fitting_time.fit_exact_gp", _boom)
+    monkeypatch.setattr("analysis.fitting_time.fitting_time.fit_svgp_default", _boom)
+    monkeypatch.setattr("analysis.fitting_time.fitting_time.fit_svgp_linear", _boom)
+    monkeypatch.setattr("analysis.fitting_time.fitting_time.fit_vecchia", _boom)
+    r = benchmark_synthetic_sine_surrogates(N=18, D=2, function_name="sine", b_fast_only=True)
+    assert math.isfinite(r.results["enn"].fit_seconds.mu)
+    for key in ("dngo", "exact_gp", "svgp_default", "svgp_linear", "vecchia"):
+        assert math.isnan(r.results[key].fit_seconds.mu)
+        assert math.isnan(r.results[key].normalized_rmse.mu)
+        assert math.isnan(r.results[key].log_likelihood.mu)
 
 
 def test_draw_benchmark_synthetic_xy_rejects_empty_function_name():

@@ -276,18 +276,18 @@ def prep_seq(results_dir):
 
 
 def prep_sweep_k(results_dir):
-    exp_dir = "exp_enn_sweep_k"
+    exp_dir = "exp_enn_rebuttal_sweep_k"
 
     opts = [
-        "turbo-enn-sweep-3",
-        "turbo-enn-sweep-10",
-        "turbo-enn-sweep-30",
-        "turbo-enn-sweep-100",
+        "turbo-enn-fit-ucb/k=3",
+        "turbo-enn-fit-ucb/k=10",
+        "turbo-enn-fit-ucb/k=30",
+        "turbo-enn-fit-ucb/k=100",
     ]
 
     cmds = []
 
-    dims = [30, 100, 300]
+    dims = [100]
 
     for num_dim in dims:
         if num_dim <= 100:
@@ -299,13 +299,51 @@ def prep_sweep_k(results_dir):
             prep_d_args(
                 results_dir,
                 exp_dir=exp_dir,
-                funcs=func_brief_2,
+                funcs=["ackley", "booth", "rosenbrock", "sphere"],
                 dims=[num_dim],
                 num_arms=1,
                 num_replications=num_replications,
                 opts=opts,
                 noises=[None],
-                num_rounds=2 * num_dim,
+                num_rounds=1000,
+            )
+        )
+
+    return cmds
+
+
+def prep_sweep_p(results_dir):
+    exp_dir = "exp_enn_rebuttal_sweep_p"
+
+    opts = [
+        "turbo-enn-fit-ucb/nfs=10",
+        "turbo-enn-fit-ucb/nfs=30",
+        "turbo-enn-fit-ucb/nfs=100",
+        "turbo-enn-fit-ucb/nfs=300",
+        "turbo-enn-fit-ucb/nfs=1000",
+    ]
+
+    cmds = []
+
+    dims = [100]
+
+    for num_dim in dims:
+        if num_dim <= 100:
+            num_replications = 30
+        else:
+            num_replications = 10
+
+        cmds.extend(
+            prep_d_args(
+                results_dir,
+                exp_dir=exp_dir,
+                funcs=["ackley", "booth", "rosenbrock", "sphere"],
+                dims=[num_dim],
+                num_arms=1,
+                num_replications=num_replications,
+                opts=opts,
+                noises=[None],
+                num_rounds=1000,
             )
         )
 
@@ -367,6 +405,12 @@ def prep_tlunar(results_dir):
         # "turbo-enn-p",
         # "ucb",
         "lei",
+        "smac",
+        "dngo",
+        "vecchia",
+        "ucb:Msparse",
+        "turbo-one-ucb",
+        "turbo-one-nds",
     ]
 
     cmds = []
@@ -437,22 +481,30 @@ def prep_hop(results_dir):
 
 
 def prep_bw(results_dir):
-    exp_dir = "exp_ennbo_bw_2"
+    exp_dir = "exp_ennbo_rebuttal_bw"
 
     opts = [
-        "random",
-        "optuna",
-        "cma",
-        "turbo-zero",
-        "turbo-one",
-        "turbo-enn-fit-ucb",
-        "turbo-enn-p",
+        # "random",
+        # "optuna",
+        # "cma",
+        # "turbo-zero",
+        # "turbo-one",
+        # "turbo-enn-fit-ucb",
+        # "turbo-enn-p",
+        "ucb",
+        "lei",
+        "smac",
+        "dngo",
+        "vecchia",
+        "ucb:Msparse",
+        "turbo-one-ucb",
+        "turbo-one-nds",
     ]
 
     cmds = []
     for opt in opts:
         for num_arms, num_rounds, num_reps, num_denoise, num_denoise_passive, fn in [
-            (1, 10000, 30, None, 30, False),
+            # (1, 10000, 30, None, 30, False),
             (50, 100, 30, 30, None, True),
         ]:
             # prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None):
@@ -520,13 +572,13 @@ def prep_dna(results_dir):
     exp_dir = "exp_ennbo_dna"
 
     opts = [
-        "random",
-        "optuna",
-        "cma",
-        "turbo-zero",
-        "turbo-one",
-        "turbo-enn-fit-ucb",
-        "turbo-enn-p",
+        # "random",
+        # "optuna",
+        # "cma",
+        # "turbo-zero",
+        # "turbo-one",
+        # "turbo-enn-fit-ucb",
+        # "turbo-enn-p",
     ]
 
     cmds = []
@@ -586,3 +638,79 @@ def prep_ant(results_dir):
 
 def prep_human(results_dir):
     return prep_rl_one(results_dir, "human")
+
+
+def prep_sweep_k_tlunar(results_dir):
+    exp_dir = "exp_ennbo_rebuttal_sweep_k_tlunar"
+
+    opts = [
+        "turbo-enn-fit-ucb/k=3",
+        "turbo-enn-fit-ucb/k=10",
+        "turbo-enn-fit-ucb/k=30",
+        "turbo-enn-fit-ucb/k=100",
+        "turbo-enn-fit-ucb/k=300",
+    ]
+
+    cmds = []
+    for opt in opts:
+        for num_arms, num_rounds, num_denoise, num_denoise_passive, fn in [
+            (1, 10000, 1, 30, False),
+            # (50, 30, 50, None, True),
+        ]:
+            # prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None):
+            if num_arms == 1 and opt == "cma":
+                continue
+            cmds.append(
+                prep_args_1(
+                    results_dir,
+                    exp_dir=exp_dir,
+                    problem="tlunar:fn" if fn else "tlunar",
+                    opt=opt,
+                    num_arms=num_arms,
+                    num_replications=30,
+                    num_rounds=num_rounds,
+                    noise=None,
+                    num_denoise=num_denoise,
+                    num_denoise_passive=num_denoise_passive,
+                )
+            )
+
+    return cmds
+
+
+def prep_sweep_p_tlunar(results_dir):
+    exp_dir = "exp_ennbo_rebuttal_sweep_p_tlunar"
+
+    opts = [
+        "turbo-enn-fit-ucb/nfs=10",
+        "turbo-enn-fit-ucb/nfs=30",
+        "turbo-enn-fit-ucb/nfs=100",
+        "turbo-enn-fit-ucb/nfs=300",
+        "turbo-enn-fit-ucb/nfs=1000",
+    ]
+
+    cmds = []
+    for opt in opts:
+        for num_arms, num_rounds, num_denoise, num_denoise_passive, fn in [
+            (1, 10000, 1, 30, False),
+            # (50, 30, 50, None, True),
+        ]:
+            # prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None):
+            if num_arms == 1 and opt == "cma":
+                continue
+            cmds.append(
+                prep_args_1(
+                    results_dir,
+                    exp_dir=exp_dir,
+                    problem="tlunar:fn" if fn else "tlunar",
+                    opt=opt,
+                    num_arms=num_arms,
+                    num_replications=30,
+                    num_rounds=num_rounds,
+                    noise=None,
+                    num_denoise=num_denoise,
+                    num_denoise_passive=num_denoise_passive,
+                )
+            )
+
+    return cmds

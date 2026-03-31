@@ -59,8 +59,8 @@ app = modal.App(name=_APP_NAME)
     memory=8192,
     cpu=2.0,
 )
-def run_synthetic_sine_benchmark_remote(n: int, d: int, function_name: str, problem_seed: int) -> dict:
-    return ssbp.build_synthetic_sine_benchmark_remote_payload(n, d, function_name, problem_seed)
+def run_synthetic_sine_benchmark_remote(n: int, d: int, function_name: str, problem_seed: int, num_reps: int = 1) -> dict:
+    return ssbp.build_synthetic_sine_benchmark_remote_payload(n, d, function_name, problem_seed, num_reps)
 
 
 def run_synthetic_sine_benchmark_modal_to_disk(
@@ -71,6 +71,7 @@ def run_synthetic_sine_benchmark_modal_to_disk(
     output_dir: str | Path,
     *,
     remote_fn=run_synthetic_sine_benchmark_remote,
+    num_reps: int = 1,
 ) -> Path:
     """Fetch one benchmark payload from Modal and write ``results/<slug>.json``."""
     return ssbp.run_synthetic_sine_benchmark_modal_to_disk(
@@ -82,6 +83,7 @@ def run_synthetic_sine_benchmark_modal_to_disk(
         app=app,
         remote_fn=remote_fn,
         start_app=False,
+        num_reps=num_reps,
     )
 
 
@@ -92,9 +94,10 @@ def main(
     d: int = 2,
     problem_seed: int = 0,
     output_dir: str = "results/synthetic_sine_benchmark",
+    num_reps: int = 1,
 ):
     """``target`` is the synthetic benchmark name (same as ``function_name`` in :mod:`evaluate`)."""
-    dest = run_synthetic_sine_benchmark_modal_to_disk(n, d, target, problem_seed, output_dir)
+    dest = run_synthetic_sine_benchmark_modal_to_disk(n, d, target, problem_seed, output_dir, num_reps=num_reps)
     print(f"wrote {dest.resolve()}")
 
 
@@ -106,7 +109,7 @@ def batch(
     """Run every job from :func:`analysis.fitting_time.batch_jobs` named ``jobs_fn``."""
     jobs = ssbp.load_synthetic_sine_benchmark_jobs(jobs_fn)
     for n, d, fn, problem_seed in jobs:
-        dest = run_synthetic_sine_benchmark_modal_to_disk(n, d, fn, problem_seed, output_dir)
+        dest = run_synthetic_sine_benchmark_modal_to_disk(n, d, fn, problem_seed, output_dir, num_reps=1)
         print(f"wrote {dest.resolve()}")
 
 

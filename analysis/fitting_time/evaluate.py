@@ -12,7 +12,11 @@ import torch
 SYNTHETIC_BENCHMARK_SINE_FUNCTION_NAME = "sine"
 
 __all__ = [
+    "BMResult",
+    "MuSe",
     "SYNTHETIC_BENCHMARK_SINE_FUNCTION_NAME",
+    "SURROGATE_BENCHMARK_ROWS",
+    "SURROGATE_BENCHMARK_KEYS",
     "SyntheticSineSurrogateBenchmark",
     "benchmark_synthetic_sine_surrogates",
     "draw_benchmark_synthetic_xy",
@@ -21,6 +25,55 @@ __all__ = [
     "normalized_rmse",
     "predictive_gaussian_log_likelihood",
 ]
+
+SURROGATE_BENCHMARK_KEYS: tuple[str, ...] = (
+    "enn",
+    "smac_rf",
+    "dngo",
+    "exact_gp",
+    "svgp_default",
+    "svgp_linear",
+    "vecchia",
+)
+
+SURROGATE_BENCHMARK_ROWS: tuple[tuple[str, str], ...] = (
+    ("enn", "ENN"),
+    ("smac_rf", "SMAC RF"),
+    ("dngo", "DNGO"),
+    ("exact_gp", "Exact GP"),
+    ("svgp_default", "SVGP_default"),
+    ("svgp_linear", "SVGP_linear"),
+    ("vecchia", "Vecchia"),
+)
+
+
+@dataclass(frozen=True)
+class MuSe:
+    """Mean and standard error of the mean (``se`` = sample std / sqrt(n), ``ddof=1``; ``se=0`` when ``n<=1``)."""
+
+    mu: float
+    se: float
+
+
+@dataclass(frozen=True)
+class BMResult:
+    fit_seconds: MuSe
+    normalized_rmse: MuSe
+    log_likelihood: MuSe
+
+
+def _mean_and_sem(values: list[float]) -> MuSe:
+    a = np.asarray(values, dtype=np.float64)
+    fin = np.isfinite(a)
+    if int(fin.sum()) == 0:
+        return MuSe(float("nan"), float("nan"))
+    v = a[fin]
+    n = int(v.size)
+    mu = float(np.mean(v))
+    if n <= 1:
+        return MuSe(mu, 0.0)
+    se = float(np.std(v, ddof=1) / np.sqrt(n))
+    return MuSe(mu, se)
 
 
 def env_action_coords_to_surrogate_unit_x(x: torch.Tensor) -> torch.Tensor:
@@ -138,6 +191,8 @@ def _benchmark_numpy_surrogate_triples(
     fit_enn,
     fit_smac_rf,
     fit_dngo,
+    *,
+    b_fast_only: bool = False,
 ) -> tuple[
     tuple[float, float, float],
     tuple[float, float, float],
@@ -153,9 +208,12 @@ def _benchmark_numpy_surrogate_triples(
     except Exception:  # noqa: BLE001
         # SMAC is optional: missing deps, bad install, or runtime fit failure → degrade row.
         dt_smac, nrmse_smac, ll_smac = math.nan, math.nan, math.nan
-    dt_dngo, yh_dngo, var_dngo = fit_dngo(train_x, train_y, x_test_np)
-    nrmse_dngo = normalized_rmse(y_test, yh_dngo)
-    ll_dngo = predictive_gaussian_log_likelihood(y_test, yh_dngo, var_dngo)
+    if b_fast_only:
+        dt_dngo, nrmse_dngo, ll_dngo = math.nan, math.nan, math.nan
+    else:
+        dt_dngo, yh_dngo, var_dngo = fit_dngo(train_x, train_y, x_test_np)
+        nrmse_dngo = normalized_rmse(y_test, yh_dngo)
+        ll_dngo = predictive_gaussian_log_likelihood(y_test, yh_dngo, var_dngo)
     return (
         (dt_enn, nrmse_enn, ll_enn),
         (dt_smac, nrmse_smac, ll_smac),
@@ -172,12 +230,17 @@ def _benchmark_torch_gp_triples(
     fit_svgp_default,
     fit_svgp_linear,
     fit_vecchia,
+    *,
+    b_fast_only: bool = False,
 ) -> tuple[
     tuple[float, float, float],
     tuple[float, float, float],
     tuple[float, float, float],
     tuple[float, float, float],
 ]:
+    if b_fast_only:
+        nan3 = (math.nan, math.nan, math.nan)
+        return (nan3, nan3, nan3, nan3)
     dt_gp, yh_gp, var_gp = fit_exact_gp(train_x_t, train_y_t, x_test_t)
     nrmse_gp = normalized_rmse(y_test, yh_gp)
     ll_gp = predictive_gaussian_log_likelihood(y_test, yh_gp, var_gp)
@@ -200,7 +263,7 @@ def _benchmark_torch_gp_triples(
 
 @dataclass(frozen=True)
 class SyntheticSineSurrogateBenchmark:
-    """Fit times (seconds) and normalized RMSE on test for each surrogate.
+    """Per-surrogate :class:`BMResult` (mean and SEM over replicates).
 
     Data is chosen by the required ``function_name`` passed to
     :func:`benchmark_synthetic_sine_surrogates`: use
@@ -210,107 +273,138 @@ class SyntheticSineSurrogateBenchmark:
     other name uses ``f:{name}-{D}d`` from :mod:`problems.pure_functions` on
     ``U(-1,1)^{N×D}`` (same noise scale). Surrogates receive ``(x+1)/2`` in ``[0,1]`` via
     :func:`env_action_coords_to_surrogate_unit_x`.
+
+    Keys are :data:`SURROGATE_BENCHMARK_KEYS`.
     """
 
-    enn_fit_seconds: float
-    enn_normalized_rmse: float
-    enn_log_likelihood: float
-    smac_rf_fit_seconds: float
-    smac_rf_normalized_rmse: float
-    smac_rf_log_likelihood: float
-    dngo_fit_seconds: float
-    dngo_normalized_rmse: float
-    dngo_log_likelihood: float
-    exact_gp_fit_seconds: float
-    exact_gp_normalized_rmse: float
-    exact_gp_log_likelihood: float
-    svgp_default_fit_seconds: float
-    svgp_default_normalized_rmse: float
-    svgp_default_log_likelihood: float
-    svgp_linear_fit_seconds: float
-    svgp_linear_normalized_rmse: float
-    svgp_linear_log_likelihood: float
-    vecchia_fit_seconds: float
-    vecchia_normalized_rmse: float
-    vecchia_log_likelihood: float
+    results: dict[str, BMResult]
+
+    def __post_init__(self) -> None:
+        got = frozenset(self.results)
+        want = frozenset(SURROGATE_BENCHMARK_KEYS)
+        if got != want:
+            raise ValueError(f"results keys must match SURROGATE_BENCHMARK_KEYS exactly; missing {want - got}, extra {got - want}")
 
     def print_table(self) -> None:
-        """Print fit times (s), wall-clock ratio vs ENN (``t_surrogate / t_ENN``), NRMSE, log-likelihood (nats)."""
+        """Print a compact timing table: ``Fit t (s)``, ``t/t_ENN``, ``NRMSE``, ``LogLik`` as ``μ ± SE``."""
 
-        def fmt(x: float) -> str:
+        def _nonfinite_token(x: float) -> str | None:
             if math.isnan(x):
                 return "nan"
             if math.isinf(x):
                 return "inf" if x > 0 else "-inf"
+            return None
+
+        def _fmt_mu_seconds(x: float) -> str:
+            t = _nonfinite_token(x)
+            if t is not None:
+                return t
+            if x == 0.0:
+                return "0"
+            if abs(x) < 0.1:
+                s = f"{x:.6f}".rstrip("0").rstrip(".")
+                return s if s not in ("", "-") else "0"
             return f"{x:.6g}"
 
-        def time_ratio_vs_enn(fit_sec: float) -> float:
-            base = self.enn_fit_seconds
-            if math.isnan(base) or math.isnan(fit_sec):
+        def _fmt_mu_nrmse(x: float) -> str:
+            t = _nonfinite_token(x)
+            if t is not None:
+                return t
+            return f"{x:.6g}"
+
+        def _fmt_mu_loglik(x: float) -> str:
+            t = _nonfinite_token(x)
+            if t is not None:
+                return t
+            if abs(x) >= 10.0:
+                return f"{x:.2f}"
+            return f"{x:.6g}"
+
+        def _fmt_se(x: float) -> str:
+            t = _nonfinite_token(x)
+            if t is not None:
+                return t
+            return f"{x:.2g}"
+
+        def _fmt_se_loglik(x: float) -> str:
+            t = _nonfinite_token(x)
+            if t is not None:
+                return t
+            if abs(x) >= 1.0:
+                return f"{x:.0f}"
+            return f"{x:.2g}"
+
+        def _fmt_ratio(x: float) -> str:
+            t = _nonfinite_token(x)
+            if t is not None:
+                return t
+            r = round(x)
+            if abs(x - r) < 1e-5:
+                return str(int(r))
+            return f"{x:.1f}"
+
+        def _pm_column(
+            mus: list[float],
+            ses: list[float],
+            fmt_mu,
+            fmt_se_fn=_fmt_se,
+        ) -> list[str]:
+            mu_strs = [fmt_mu(mu) for mu in mus]
+            w_m = max(len(s) for s in mu_strs)
+            out: list[str] = []
+            for mu, mstr, se in zip(mus, mu_strs, ses, strict=True):
+                if math.isnan(mu):
+                    out.append("nan")
+                    continue
+                if math.isinf(mu):
+                    out.append(mstr)
+                    continue
+                if not math.isfinite(se) or se <= 0.0:
+                    out.append(f"{mstr:<{w_m}}")
+                else:
+                    out.append(f"{mstr:<{w_m}} ± {fmt_se_fn(se)}")
+            return out
+
+        def time_ratio_vs_enn(fit_mu: float) -> float:
+            base = self.results["enn"].fit_seconds.mu
+            if math.isnan(base) or math.isnan(fit_mu):
                 return float("nan")
             if base <= 0.0:
-                return 1.0 if fit_sec <= 0.0 else float("inf")
-            return fit_sec / base
+                return 1.0 if fit_mu <= 0.0 else float("inf")
+            return fit_mu / base
 
-        w_name = 16
-        w_sec = 14
-        w_sp = 12
-        w_rmse = 12
-        w_ll = 14
-        header = f"{'Surrogate':<{w_name}}  {'Fit (s)':>{w_sec}}  {'t/t_ENN':>{w_sp}}  {'NRMSE':>{w_rmse}}  {'LogLik':>{w_ll}}"
+        rows = [self.results[k] for k, _ in SURROGATE_BENCHMARK_ROWS]
+        fit_m = [br.fit_seconds.mu for br in rows]
+        fit_s = [br.fit_seconds.se for br in rows]
+        nrm_m = [br.normalized_rmse.mu for br in rows]
+        nrm_s = [br.normalized_rmse.se for br in rows]
+        ll_m = [br.log_likelihood.mu for br in rows]
+        ll_s = [br.log_likelihood.se for br in rows]
+        ratio_m = [time_ratio_vs_enn(br.fit_seconds.mu) for br in rows]
+
+        fit_cells = _pm_column(fit_m, fit_s, _fmt_mu_seconds)
+        nrmse_cells = _pm_column(nrm_m, nrm_s, _fmt_mu_nrmse)
+        ll_cells = _pm_column(ll_m, ll_s, _fmt_mu_loglik, fmt_se_fn=_fmt_se_loglik)
+        ratio_cells = [_fmt_ratio(x) for x in ratio_m]
+
+        w_name = max(len("Surrogate"), max(len(n) for _k, n in SURROGATE_BENCHMARK_ROWS))
+        h_fit = "Fit t (s)"
+        h_nrmse = "NRMSE"
+        h_ll = "LogLik"
+        h_sp = "t/t_ENN"
+        w_fit = max(len(h_fit), max(len(c) for c in fit_cells))
+        w_sp = max(len(h_sp), max(len(c) for c in ratio_cells))
+        w_n = max(len(h_nrmse), max(len(c) for c in nrmse_cells))
+        w_ll = max(len(h_ll), max(len(c) for c in ll_cells))
+        header = f"{'Surrogate':<{w_name}}  {h_fit:>{w_fit}}  {h_sp:>{w_sp}}  {h_nrmse:>{w_n}}  {h_ll:>{w_ll}}"
         sep = "-" * len(header)
-        rows: list[tuple[str, float, float, float]] = [
-            (
-                "ENN",
-                self.enn_fit_seconds,
-                self.enn_normalized_rmse,
-                self.enn_log_likelihood,
-            ),
-            (
-                "SMAC RF",
-                self.smac_rf_fit_seconds,
-                self.smac_rf_normalized_rmse,
-                self.smac_rf_log_likelihood,
-            ),
-            (
-                "DNGO",
-                self.dngo_fit_seconds,
-                self.dngo_normalized_rmse,
-                self.dngo_log_likelihood,
-            ),
-            (
-                "Exact GP",
-                self.exact_gp_fit_seconds,
-                self.exact_gp_normalized_rmse,
-                self.exact_gp_log_likelihood,
-            ),
-            (
-                "SVGP_default",
-                self.svgp_default_fit_seconds,
-                self.svgp_default_normalized_rmse,
-                self.svgp_default_log_likelihood,
-            ),
-            (
-                "SVGP_linear",
-                self.svgp_linear_fit_seconds,
-                self.svgp_linear_normalized_rmse,
-                self.svgp_linear_log_likelihood,
-            ),
-            (
-                "Vecchia",
-                self.vecchia_fit_seconds,
-                self.vecchia_normalized_rmse,
-                self.vecchia_log_likelihood,
-            ),
-        ]
-        body = [
-            f"{name:<{w_name}}  {fmt(sec):>{w_sec}}  {fmt(time_ratio_vs_enn(sec)):>{w_sp}}  {fmt(rmse):>{w_rmse}}  {fmt(ll):>{w_ll}}"
-            for name, sec, rmse, ll in rows
-        ]
+        body: list[str] = []
+        for i, (_key, name) in enumerate(SURROGATE_BENCHMARK_ROWS):
+            body.append(f"{name:<{w_name}}  {fit_cells[i]:>{w_fit}}  {ratio_cells[i]:>{w_sp}}  {nrmse_cells[i]:>{w_n}}  {ll_cells[i]:>{w_ll}}")
         print("\n".join([header, sep, *body]))
 
 
-def _synthetic_surrogate_benchmark_from_tensors(
+def _surrogate_metric_triples_from_tensors(
     x: torch.Tensor,
     y: torch.Tensor,
     x_test: torch.Tensor,
@@ -323,7 +417,8 @@ def _synthetic_surrogate_benchmark_from_tensors(
     fit_svgp_default,
     fit_svgp_linear,
     fit_vecchia,
-) -> SyntheticSineSurrogateBenchmark:
+    b_fast_only: bool = False,
+) -> dict[str, tuple[float, float, float]]:
     x_surr = env_action_coords_to_surrogate_unit_x(x)
     x_test_surr = env_action_coords_to_surrogate_unit_x(x_test)
     train_x = x_surr.detach().cpu().numpy().astype(np.float64)
@@ -333,7 +428,16 @@ def _synthetic_surrogate_benchmark_from_tensors(
         (dt_enn, nrmse_enn, ll_enn),
         (dt_smac, nrmse_smac, ll_smac),
         (dt_dngo, nrmse_dngo, ll_dngo),
-    ) = _benchmark_numpy_surrogate_triples(train_x, train_y, x_test_np, y_test, fit_enn, fit_smac_rf, fit_dngo)
+    ) = _benchmark_numpy_surrogate_triples(
+        train_x,
+        train_y,
+        x_test_np,
+        y_test,
+        fit_enn,
+        fit_smac_rf,
+        fit_dngo,
+        b_fast_only=b_fast_only,
+    )
     train_x_t = x_surr.to(dtype=torch.float64)
     train_y_t = y.to(dtype=torch.float64)
     x_test_t = x_test_surr.to(dtype=torch.float64)
@@ -351,30 +455,31 @@ def _synthetic_surrogate_benchmark_from_tensors(
         fit_svgp_default,
         fit_svgp_linear,
         fit_vecchia,
+        b_fast_only=b_fast_only,
     )
-    return SyntheticSineSurrogateBenchmark(
-        enn_fit_seconds=dt_enn,
-        enn_normalized_rmse=nrmse_enn,
-        enn_log_likelihood=ll_enn,
-        smac_rf_fit_seconds=dt_smac,
-        smac_rf_normalized_rmse=nrmse_smac,
-        smac_rf_log_likelihood=ll_smac,
-        dngo_fit_seconds=dt_dngo,
-        dngo_normalized_rmse=nrmse_dngo,
-        dngo_log_likelihood=ll_dngo,
-        exact_gp_fit_seconds=dt_gp,
-        exact_gp_normalized_rmse=nrmse_gp,
-        exact_gp_log_likelihood=ll_gp,
-        svgp_default_fit_seconds=dt_svgp_d,
-        svgp_default_normalized_rmse=nrmse_svgp_d,
-        svgp_default_log_likelihood=ll_svgp_d,
-        svgp_linear_fit_seconds=dt_svgp_l,
-        svgp_linear_normalized_rmse=nrmse_svgp_l,
-        svgp_linear_log_likelihood=ll_svgp_l,
-        vecchia_fit_seconds=dt_vc,
-        vecchia_normalized_rmse=nrmse_vc,
-        vecchia_log_likelihood=ll_vc,
-    )
+    return {
+        "enn": (dt_enn, nrmse_enn, ll_enn),
+        "smac_rf": (dt_smac, nrmse_smac, ll_smac),
+        "dngo": (dt_dngo, nrmse_dngo, ll_dngo),
+        "exact_gp": (dt_gp, nrmse_gp, ll_gp),
+        "svgp_default": (dt_svgp_d, nrmse_svgp_d, ll_svgp_d),
+        "svgp_linear": (dt_svgp_l, nrmse_svgp_l, ll_svgp_l),
+        "vecchia": (dt_vc, nrmse_vc, ll_vc),
+    }
+
+
+def _aggregate_surrogate_replicates(rows: list[dict[str, tuple[float, float, float]]]) -> SyntheticSineSurrogateBenchmark:
+    out: dict[str, BMResult] = {}
+    for key in SURROGATE_BENCHMARK_KEYS:
+        fs = [r[key][0] for r in rows]
+        nrs = [r[key][1] for r in rows]
+        lls = [r[key][2] for r in rows]
+        out[key] = BMResult(
+            fit_seconds=_mean_and_sem(fs),
+            normalized_rmse=_mean_and_sem(nrs),
+            log_likelihood=_mean_and_sem(lls),
+        )
+    return SyntheticSineSurrogateBenchmark(results=out)
 
 
 def benchmark_synthetic_sine_surrogates(
@@ -383,8 +488,13 @@ def benchmark_synthetic_sine_surrogates(
     D: int,
     function_name: str,
     problem_seed: int = 0,
+    num_reps: int = 1,
+    b_fast_only: bool = False,
 ) -> SyntheticSineSurrogateBenchmark:
     """Run ENN, SMAC RF, DNGO, exact GP, two SVGP variants, and RF Vecchia on synthetic data in ``D`` dims.
+
+    If ``b_fast_only`` is true, only ENN and SMAC RF are fit; DNGO, exact GP, both SVGPs, and Vecchia
+    are skipped and their metrics are set to ``nan`` (same as an unavailable surrogate row).
 
     ``function_name`` is **required** (non-empty after strip). Use
     :data:`SYNTHETIC_BENCHMARK_SINE_FUNCTION_NAME` (``\"sine\"``) for the FittingTime
@@ -393,26 +503,36 @@ def benchmark_synthetic_sine_surrogates(
 
     Any other name builds ``f"f:{function_name}-{D}d"`` via
     :mod:`problems.pure_functions`, draws ``x ~ U(-1,1)^{N×D}``, and sets ``y`` to the
-    environment reward plus ``0.1 ε``. All surrogates are fit on ``(x+1)/2`` in
-    ``[0,1]``; metrics still use the original ``y`` / ``y_test`` from the env draw.
+    environment reward plus ``0.1 ε``. Fitted surrogates use ``(x+1)/2`` in ``[0,1]`` (ENN and SMAC only
+    when ``b_fast_only``); metrics always use the original ``y`` / ``y_test`` from the env draw.
 
-    Reproducible RNG: for ``\"sine\"``, ``torch.manual_seed(problem_seed)`` before the
-    train draw and ``torch.manual_seed(problem_seed + 1)`` before the test draw. For
-    other names, the env uses ``problem_seed`` for distortion while train/test
+    **Replicates:** for ``num_reps`` > 1, the full benchmark is run ``num_reps`` times with
+    ``problem_seed``, ``problem_seed + 1``, … (each replicate gets a fresh synthetic
+    draw). Returned :class:`BMResult` fields are the sample mean and standard error of the
+    mean (finite values only; NaNs omitted from mean/SEM, or all-NaN → NaN mean and SEM).
+
+    Reproducible RNG within one replicate: for ``\"sine\"``, ``torch.manual_seed(problem_seed + rep)``
+    before the train draw and ``+1`` for the test draw inside :func:`draw_benchmark_synthetic_xy`.
+    For other names, the env uses ``problem_seed + rep`` for distortion while train/test
     ``torch.rand`` use seeds ``0`` and ``1``.
 
     If the SMAC RF path is unavailable or raises (e.g. missing ``smac``, bad install,
     runtime fit failure), SMAC RF fields are set to ``nan``.
 
-    **LogLik** (nats): ``sum_i log N(y_test_i | y_hat_i, v_i)``. ENN uses **epistemic**
-    variance only (``PosteriorFlags(observation_noise=False)``, ``v_i = se_i^2``). SMAC RF
-    uses forest variance plus ``0.1^2`` (synthetic observation noise).
-    DNGO uses its full BLR predictive variance; exact GP, both SVGP variants, and
-    Vecchia use GP predictive variance (Vecchia via ``pyvecch`` posterior diagonal).
+    **LogLik** (nats): ``sum_i log N(y_test_i | y_hat_i, v_i)`` with **predictive**
+    variance aligned to noisy ``y_test`` (``0.1^2`` observation noise in the draw).
+    ENN uses epistemic ``se_i^2`` plus ``0.1^2``. SMAC RF uses forest variance plus
+    ``0.1^2``. DNGO uses BLR predictive variance (includes learned ``1/\\beta``).
+    Exact GP and both SVGP variants use ``posterior(..., observation_noise=True)``.
+    Vecchia uses ``pyvecch`` posterior variance on the original ``y`` scale.
     If ``pyvecch`` is missing or fit/predict fails, Vecchia fields are ``nan`` (same pattern as
-    optional SMAC RF). On macOS, set ``YUBO_ALLOW_PYVECCH_ON_DARWIN=0`` to force-disable Vecchia
-    if import still crashes in your environment.
+    optional SMAC RF). For :func:`~analysis.fitting_time.fitting_time.fit_vecchia` only, set
+    ``YUBO_ALLOW_PYVECCH_ON_DARWIN=0`` on macOS to return NaNs if import still crashes in your
+    environment.
     """
+    if num_reps < 1:
+        raise ValueError("num_reps must be >= 1")
+
     from analysis.fitting_time.fitting_time import (
         fit_dngo,
         fit_enn,
@@ -423,17 +543,24 @@ def benchmark_synthetic_sine_surrogates(
         fit_vecchia,
     )
 
-    x, y, x_test, y_test = draw_benchmark_synthetic_xy(N=N, D=D, function_name=function_name, problem_seed=problem_seed)
-    return _synthetic_surrogate_benchmark_from_tensors(
-        x,
-        y,
-        x_test,
-        y_test,
-        fit_enn=fit_enn,
-        fit_smac_rf=fit_smac_rf,
-        fit_dngo=fit_dngo,
-        fit_exact_gp=fit_exact_gp,
-        fit_svgp_default=fit_svgp_default,
-        fit_svgp_linear=fit_svgp_linear,
-        fit_vecchia=fit_vecchia,
-    )
+    rows: list[dict[str, tuple[float, float, float]]] = []
+    for rep in range(num_reps):
+        seed = int(problem_seed) + rep
+        x, y, x_test, y_test = draw_benchmark_synthetic_xy(N=N, D=D, function_name=function_name, problem_seed=seed)
+        rows.append(
+            _surrogate_metric_triples_from_tensors(
+                x,
+                y,
+                x_test,
+                y_test,
+                fit_enn=fit_enn,
+                fit_smac_rf=fit_smac_rf,
+                fit_dngo=fit_dngo,
+                fit_exact_gp=fit_exact_gp,
+                fit_svgp_default=fit_svgp_default,
+                fit_svgp_linear=fit_svgp_linear,
+                fit_vecchia=fit_vecchia,
+                b_fast_only=b_fast_only,
+            )
+        )
+    return _aggregate_surrogate_replicates(rows)

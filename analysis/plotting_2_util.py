@@ -3,6 +3,7 @@
 import json
 from pathlib import Path
 
+import matplotlib.pyplot as plt
 import numpy as np
 
 from analysis.plot_util import (
@@ -46,7 +47,6 @@ def consolidate_bottom_legend(
     fig,
     axs,
     *,
-    fontsize: int = 11,
     ncol: int = 5,
 ) -> None:
     handles: list[object] = []
@@ -82,10 +82,10 @@ def consolidate_bottom_legend(
         handles,
         labels,
         loc="lower center",
-        bbox_to_anchor=(0.5, -0.01),
+        bbox_to_anchor=(0.5, -0.2),
         ncol=int(ncol),
         frameon=False,
-        fontsize=fontsize,
+        fontsize=plt.rcParams["legend.fontsize"],
     )
     for handle in leg.legend_handles:
         handle.set_markersize(10)

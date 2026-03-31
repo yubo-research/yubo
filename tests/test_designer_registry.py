@@ -1,5 +1,7 @@
 import pytest
 
+from optimizer.designer_errors import NoSuchDesignerError
+
 
 def _make_ctx():
     from optimizer.designer_registry import _SimpleContext
@@ -33,3 +35,30 @@ def test_turbo_one_acq_variants_build(kind):
     ctx = _make_ctx()
     designer = _build_turbo_enn(ctx, kind)
     assert designer is not None
+
+
+def test_d_turbo_enn_fit_ucb_defaults():
+    from optimizer.designer_registry import _d_turbo_enn_fit_ucb
+
+    ctx = _make_ctx()
+    d = _d_turbo_enn_fit_ucb(ctx, {})
+    assert d._k == 10
+    assert d._num_fit_samples == 100
+    assert d._num_fit_candidates == 100
+
+
+def test_d_turbo_enn_fit_ucb_nfs_and_k():
+    from optimizer.designer_registry import _d_turbo_enn_fit_ucb
+
+    ctx = _make_ctx()
+    d = _d_turbo_enn_fit_ucb(ctx, {"nfs": 50, "k": 7})
+    assert d._k == 7
+    assert d._num_fit_samples == 50
+
+
+def test_d_turbo_enn_fit_ucb_rejects_unknown_option():
+    from optimizer.designer_registry import _d_turbo_enn_fit_ucb
+
+    ctx = _make_ctx()
+    with pytest.raises(NoSuchDesignerError, match="does not support"):
+        _d_turbo_enn_fit_ucb(ctx, {"bogus": 1})

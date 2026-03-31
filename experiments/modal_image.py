@@ -24,7 +24,7 @@ def mk_image():
     celer==0.7.4
     hyperopt==0.2.7
     smac==2.3.1
-    ennbo==0.2.1
+    maturin>=1.0
     """.split("\n")
     sreqs = []
     for req in reqs:
@@ -41,19 +41,46 @@ def mk_image():
 
     image = (
         modal.Image.debian_slim(python_version="3.11.9")
-        .apt_install("swig", "git", "gcc", "g++")
+        .apt_install("swig", "git", "gcc", "g++", "curl", "build-essential")
+        .run_commands(
+            "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y",
+            'echo "export PATH=$HOME/.cargo/bin:$PATH" >> ~/.bashrc',
+        )
         .pip_install(sreqs)
         .pip_install(sreqs_2, extra_options="--no-deps")
     )
 
     image = image.env({"PYTHONPATH": "/root"})
-    # GitHub ``enn`` 0.3.x editable install does not ship ``enn._rust``; PyPI ``ennbo`` 0.2.1 matches
-    # ``analysis.fitting_time.fit_enn`` (pure-Python ``enn_fit``).
+
+    project_root = Path(__file__).resolve().parents[1]
+    enn_root = project_root.parents[0] / "enn"
+
+    # Patterns to exclude when copying enn (build artifacts, caches, git)
+    enn_ignore = [
+        ".git",
+        "target",
+        "**/debug",
+        "**/release",
+        "**/__pycache__",
+        ".pytest_cache",
+        ".ruff_cache",
+        "*.egg-info",
+        ".mypy_cache",
+        ".venv",
+        "**/*.whl",
+    ]
+
+    # Add the full enn project and build the Rust extension
+    # copy=True required because we run build commands after adding local files
+    image = image.add_local_dir(str(enn_root), remote_path="/root/enn", ignore=enn_ignore, copy=True)
+    image = image.run_commands(
+        ". $HOME/.cargo/env && cd /root/enn/rust/crates/ennbo-py && maturin build --release",
+        "pip install $(find /root/enn/rust -path '*/wheels/*manylinux*.whl' | head -1) && pip install -e /root/enn",
+    )
     image = image.run_commands(
         "python -c \"from enn.enn.enn_fit import enn_fit; print('enn import OK')\"",
     )
 
-    project_root = Path(__file__).resolve().parents[1]
     for d in [
         "acq",
         "analysis",

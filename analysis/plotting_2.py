@@ -178,11 +178,11 @@ def plot_learning_curves(
             markersize=markersize,
         )
 
-    ax.set_xlabel(xlabel, fontsize=16)
-    ax.set_ylabel(ylabel, fontsize=16)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
     if show_title and title:
-        ax.set_title(title, fontsize=16)
-    ax.tick_params(axis="both", labelsize=16)
+        ax.set_title(title)
+    ax.tick_params(axis="both")
     ax.legend(loc="lower right")
     ax.grid(True, alpha=0.3)
 
@@ -212,9 +212,9 @@ def plot_final_performance(
     ax.bar(x_pos, means, yerr=2 * stes, capsize=5, color=colors, alpha=0.8)
     ax.set_xticks(x_pos)
     ax.set_xticklabels(optimizers, rotation=45, ha="right")
-    ax.set_ylabel(ylabel, fontsize=12)
+    ax.set_ylabel(ylabel)
     if show_title and title:
-        ax.set_title(title, fontsize=14)
+        ax.set_title(title)
     ax.grid(True, alpha=0.3, axis="y")
     ax.set_ylim(-0.05, 1.05)
 
@@ -372,10 +372,10 @@ def plot_rl_experiment_vs_time(
             n_grid=n_grid,
         )
 
-    ax.set_xlabel("Cumulative time (s)", fontsize=12)
-    ax.set_ylabel("Return (best so far)", fontsize=12)
+    ax.set_xlabel("Cumulative time (s)")
+    ax.set_ylabel("Return (best so far)")
     if title:
-        ax.set_title(title, fontsize=14)
+        ax.set_title(title)
     ax.legend(loc="lower right")
     ax.grid(True, alpha=0.3)
     plt.tight_layout()
@@ -540,15 +540,15 @@ def plot_rl_comparison(
     else:
         axs[1].axis("off")
 
-    axs[0].set_xlabel("N", fontsize=16)
+    axs[0].set_xlabel("N")
     if axs[1].axison:
-        axs[1].set_xlabel("N", fontsize=16)
+        axs[1].set_xlabel("N")
         axs[1].set_ylabel("")
-        axs[1].tick_params(axis="y", labelleft=False, labelsize=16)
+        axs[1].tick_params(axis="y", labelleft=False)
 
     if suptitle:
-        fig.suptitle(suptitle, fontsize=16, y=1.02)
-    consolidate_bottom_legend(fig, axs, fontsize=16, ncol=6)
+        fig.suptitle(suptitle, y=1.02)
+    consolidate_bottom_legend(fig, axs, ncol=3)
     fig.tight_layout(rect=(0.0, 0.04, 1.0, 1.0))
 
     return _PlotRLComparisonResult(fig=fig, axs=axs, seq=seq, batch=batch)
@@ -641,7 +641,7 @@ def plot_rl_final_comparison(
         axs[1].axis("off")
 
     if suptitle:
-        fig.suptitle(suptitle, fontsize=16, y=1.02)
+        fig.suptitle(suptitle, y=1.02)
     plt.tight_layout()
 
     return _PlotRLFinalComparisonResult(fig=fig, axs=axs, seq=seq, batch=batch)

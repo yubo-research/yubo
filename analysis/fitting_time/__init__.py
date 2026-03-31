@@ -3,12 +3,16 @@
 from __future__ import annotations
 
 __all__ = [
+    "BMResult",
     "DNGOConfig",
     "DNGOSurrogate",
+    "MuSe",
     "SMACRFConfig",
     "SMACRFSurrogate",
     "SyntheticBenchJob",
     "SYNTHETIC_BENCHMARK_SINE_FUNCTION_NAME",
+    "SURROGATE_BENCHMARK_KEYS",
+    "SURROGATE_BENCHMARK_ROWS",
     "SyntheticSineSurrogateBenchmark",
     "benchmark_synthetic_sine_surrogates",
     "draw_benchmark_synthetic_xy",
@@ -60,7 +64,11 @@ def __getattr__(name: str):
 
         return getattr(_ft, name)
     if name in (
+        "BMResult",
+        "MuSe",
         "SYNTHETIC_BENCHMARK_SINE_FUNCTION_NAME",
+        "SURROGATE_BENCHMARK_KEYS",
+        "SURROGATE_BENCHMARK_ROWS",
         "SyntheticSineSurrogateBenchmark",
         "benchmark_synthetic_sine_surrogates",
         "draw_benchmark_synthetic_xy",

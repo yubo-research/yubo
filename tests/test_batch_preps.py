@@ -39,6 +39,24 @@ def test_prep_sweep_k():
         assert isinstance(cmds, list)
 
 
+def test_prep_sweep_p():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        cmds = _bp.prep_sweep_p(tmpdir)
+        assert isinstance(cmds, list)
+
+
+def test_prep_sweep_k_tlunar():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        cmds = _bp.prep_sweep_k_tlunar(tmpdir)
+        assert isinstance(cmds, list)
+
+
+def test_prep_sweep_p_tlunar():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        cmds = _bp.prep_sweep_p_tlunar(tmpdir)
+        assert isinstance(cmds, list)
+
+
 def test_prep_push():
     with tempfile.TemporaryDirectory() as tmpdir:
         cmds = _bp.prep_push(tmpdir)

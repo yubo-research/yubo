@@ -259,35 +259,14 @@ def test_kiss_cov_modal_synthetic_sine_benchmark_remote_raw_and_local_main(monke
     from pathlib import Path
 
     import experiments.modal_synthetic_sine_benchmark as msb
-    from analysis.fitting_time.evaluate import SyntheticSineSurrogateBenchmark
+    from analysis.fitting_time.evaluate import SURROGATE_BENCHMARK_KEYS, BMResult, MuSe, SyntheticSineSurrogateBenchmark
     from experiments.synthetic_sine_benchmark_payload import META_KEY, synthetic_sine_benchmark_result_to_payload
 
-    z = SyntheticSineSurrogateBenchmark(
-        enn_fit_seconds=0.0,
-        enn_normalized_rmse=0.0,
-        enn_log_likelihood=0.0,
-        smac_rf_fit_seconds=0.0,
-        smac_rf_normalized_rmse=0.0,
-        smac_rf_log_likelihood=0.0,
-        dngo_fit_seconds=0.0,
-        dngo_normalized_rmse=0.0,
-        dngo_log_likelihood=0.0,
-        exact_gp_fit_seconds=0.0,
-        exact_gp_normalized_rmse=0.0,
-        exact_gp_log_likelihood=0.0,
-        svgp_default_fit_seconds=0.0,
-        svgp_default_normalized_rmse=0.0,
-        svgp_default_log_likelihood=0.0,
-        svgp_linear_fit_seconds=0.0,
-        svgp_linear_normalized_rmse=0.0,
-        svgp_linear_log_likelihood=0.0,
-        vecchia_fit_seconds=0.0,
-        vecchia_normalized_rmse=0.0,
-        vecchia_log_likelihood=0.0,
-    )
+    _zr = BMResult(MuSe(0.0, 0.0), MuSe(0.0, 0.0), MuSe(0.0, 0.0))
+    z = SyntheticSineSurrogateBenchmark(results={k: _zr for k in SURROGATE_BENCHMARK_KEYS})
 
-    def fake_build(n, d, fn, ps):
-        return synthetic_sine_benchmark_result_to_payload(z, n=n, d=d, function_name=fn, problem_seed=ps)
+    def fake_build(n, d, fn, ps, num_reps=1):
+        return synthetic_sine_benchmark_result_to_payload(z, n=n, d=d, function_name=fn, problem_seed=ps, num_reps=num_reps)
 
     monkeypatch.setattr(
         "experiments.synthetic_sine_benchmark_payload.build_synthetic_sine_benchmark_remote_payload",
@@ -297,7 +276,7 @@ def test_kiss_cov_modal_synthetic_sine_benchmark_remote_raw_and_local_main(monke
     assert out[META_KEY]["N"] == 2 and out[META_KEY]["problem_seed"] == 4
     assert out[META_KEY]["function_name"] == "sine"
 
-    def fake_disk(n, d, fn, ps, od):
+    def fake_disk(n, d, fn, ps, od, **kwargs):
         p = Path(od) / "out.json"
         p.parent.mkdir(parents=True, exist_ok=True)
         p.write_text("{}")

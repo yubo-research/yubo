@@ -24,22 +24,39 @@ __all__ = [
 _SYNTHETIC_OBS_VAR = 0.1**2
 
 
-def fit_enn(train_x: np.ndarray, train_y: np.ndarray, x_test: np.ndarray) -> tuple[float, np.ndarray, np.ndarray]:
+def fit_enn(
+    train_x: np.ndarray,
+    train_y: np.ndarray,
+    x_test: np.ndarray,
+    *,
+    k: int | None = None,
+    num_fit_samples: int | None = None,
+    num_fit_candidates: int = 100,
+    rng: np.random.Generator | None = None,
+) -> tuple[float, np.ndarray, np.ndarray]:
     from enn.enn.enn_class import EpistemicNearestNeighbors
     from enn.enn.enn_fit import enn_fit
     from enn.enn.enn_params import PosteriorFlags
 
     train_yvar = np.full_like(train_y, _SYNTHETIC_OBS_VAR)
     n_obs = train_x.shape[0]
-    k = min(25, max(1, n_obs - 1))
+    k_cap = max(1, n_obs - 1)
+    if k is None:
+        k_eff = min(25, k_cap)
+    else:
+        k_eff = min(max(1, int(k)), k_cap)
+    nfs_default = min(10, n_obs)
+    nfs = num_fit_samples if num_fit_samples is not None else nfs_default
+    nfs = int(min(max(1, nfs), n_obs))
+    gen = rng if rng is not None else np.random.default_rng(0)
     enn_model = EpistemicNearestNeighbors(train_x, train_y, train_yvar)
     t_0 = time.perf_counter()
     enn_params = enn_fit(
         enn_model,
-        k=k,
-        num_fit_candidates=100,
-        num_fit_samples=min(10, n_obs),
-        rng=np.random.default_rng(0),
+        k=k_eff,
+        num_fit_candidates=int(num_fit_candidates),
+        num_fit_samples=nfs,
+        rng=gen,
     )
     elapsed = time.perf_counter() - t_0
 
@@ -47,8 +64,9 @@ def fit_enn(train_x: np.ndarray, train_y: np.ndarray, x_test: np.ndarray) -> tup
     post = enn_model.posterior(x_t, params=enn_params, flags=PosteriorFlags(observation_noise=False))
     y_hat = np.asarray(post.mu, dtype=np.float64).reshape(-1, 1)
     se = np.asarray(post.se, dtype=np.float64).reshape(-1, 1)
-    # Match ``observation_noise=False``: predictive variance for scoring is epistemic only.
-    pred_var = se**2
+    # Epistemic variance plus synthetic observation variance so LogLik matches noisy ``y_test``
+    # (same ``0.1^2`` as :func:`draw_benchmark_synthetic_xy` and SMAC RF scoring).
+    pred_var = se**2 + _SYNTHETIC_OBS_VAR
     return elapsed, y_hat, pred_var
 
 
@@ -134,7 +152,7 @@ def fit_exact_gp(train_x: Tensor, train_y: Tensor, x_test: Tensor) -> tuple[floa
 
     x_e = x_test.to(device=train_x.device, dtype=train_x.dtype)
     with torch.no_grad():
-        post = gp.posterior(x_e)
+        post = gp.posterior(x_e, observation_noise=True)
         y_hat = post.mean
         pred_var = post.variance
     return elapsed, y_hat, pred_var
@@ -187,7 +205,7 @@ def _fit_svgp(
 
     x_e = x_test.to(device=train_x.device, dtype=train_x.dtype)
     with torch.no_grad():
-        post = svgp.posterior(x_e)
+        post = svgp.posterior(x_e, observation_noise=True)
         y_hat = post.mean
         pred_var = post.variance
     return elapsed, y_hat, pred_var
@@ -221,10 +239,9 @@ def fit_vecchia(train_x: Tensor, train_y: Tensor, x_test: Tensor) -> tuple[float
     """RF Vecchia GP (``pyvecch``): same recipe as :class:`optimizer.vecchia_designer.VecchiaDesigner`.
 
     Uses float32 on CPU inside ``pyvecch``; returns ``y_hat`` and ``pred_var`` on ``train_x``'s
-    device/dtype. Unlike :class:`~optimizer.vecchia_designer.VecchiaDesigner` (opt-in on macOS for
-    long-running BO), this analysis helper **attempts** ``pyvecch`` on all platforms so notebooks
-    and benchmarks get real timings when the stack is healthy. On macOS we set
-    ``KMP_DUPLICATE_LIB_OK`` before import to reduce duplicate OpenMP runtime issues with faiss.
+    device/dtype.     Same recipe as :class:`~optimizer.vecchia_designer.VecchiaDesigner`; attempts ``pyvecch`` on
+    all platforms. On macOS we set ``KMP_DUPLICATE_LIB_OK`` before import to reduce duplicate
+    OpenMP runtime issues with faiss.
 
     Set ``YUBO_ALLOW_PYVECCH_ON_DARWIN=0`` (or ``false``) to skip on macOS only and return NaNs
     (e.g. if your environment still crashes on import).
