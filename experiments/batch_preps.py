@@ -714,3 +714,72 @@ def prep_sweep_p_tlunar(results_dir):
             )
 
     return cmds
+
+
+def prep_timing_sweep(results_dir):
+    exp_dir = "exp_ennbo_timing_sweep"
+
+    opts = [
+        "optuna",
+        "cma",
+        "turbo-zero",
+        "turbo-one",
+        "turbo-enn-fit-ucb",
+        "turbo-enn-p",
+        "ucb",
+        "lei",
+        "smac",
+        "dngo",
+        "vecchia",
+        "ucb:Msparse",
+        "turbo-one-ucb",
+        "turbo-one-nds",
+    ]
+    env_tags = [
+        ("tlunar:fn", 50, 30, 1, 50, None, True),
+        ("tlunar", 1, 10000, 1, 1, 30, False),
+        ("push:fn", 50, 300, 1, 50, None, True),
+        ("push", 1, 10000, 1, 1, 30, False),
+        ("hop:fn", 50, 1000, 30, 10, None, True),
+        ("hop", 1, 10000, 30, None, 30, False),
+        ("bw-heur:fn", 50, 100, 30, 30, None, True),
+        ("bw-heur", 1, 10000, 30, None, 30, False),
+        ("dna:fn", 1, 1000, 30, 10, None, True),
+        ("dna", 1, 1000, 30, None, 10, False),
+    ]
+
+    for x in env_tags:
+        assert len(x) == 7, (len(x), x)
+
+    cmds = []
+    for opt in opts:
+        for (
+            env_tag,
+            num_arms,
+            num_rounds,
+            num_reps,
+            num_denoise,
+            num_denoise_passive,
+            fn,
+        ) in env_tags:
+            if fn:
+                assert env_tag.endswith(":fn"), (env_tag, fn)
+            else:
+                assert not env_tag.endswith(":fn"), (env_tag, fn)
+            num_reps = 1
+            cmds.append(
+                prep_args_1(
+                    results_dir,
+                    exp_dir=exp_dir,
+                    problem=env_tag,
+                    opt=opt,
+                    num_arms=num_arms,
+                    num_replications=num_reps,
+                    num_rounds=num_rounds,
+                    noise=None,
+                    num_denoise=num_denoise,
+                    num_denoise_passive=num_denoise_passive,
+                )
+            )
+
+    return cmds
