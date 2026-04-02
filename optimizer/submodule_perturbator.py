@@ -4,6 +4,31 @@ from torch import nn
 from .gaussian_perturbator import PerturbatorBase
 
 
+def leaf_module_param_blocks(module: nn.Module) -> tuple[tuple[int, int], ...]:
+    """Return contiguous flat-parameter blocks matching SubmodulePerturbator leaves."""
+    offset_by_param_id: dict[int, tuple[int, int]] = {}
+    offset = 0
+    for param in module.parameters():
+        size = int(param.numel())
+        offset_by_param_id[id(param)] = (offset, offset + size)
+        offset += size
+
+    blocks: list[tuple[int, int]] = []
+    for leaf in module.modules():
+        params = list(leaf.parameters(recurse=False))
+        if not params:
+            continue
+        spans = sorted(offset_by_param_id[id(param)] for param in params)
+        start = spans[0][0]
+        end = spans[-1][1]
+        total = sum(hi - lo for lo, hi in spans)
+        if end - start == total:
+            blocks.append((start, end))
+        else:
+            blocks.extend(spans)
+    return tuple(blocks)
+
+
 class SubmodulePerturbator(PerturbatorBase):
     def __init__(self, module: nn.Module, *, num_module_target: float):
         super().__init__(module)

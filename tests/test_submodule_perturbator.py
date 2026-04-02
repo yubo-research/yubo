@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 
-from optimizer.submodule_perturbator import SubmodulePerturbator
+from optimizer.submodule_perturbator import SubmodulePerturbator, leaf_module_param_blocks
 
 
 def _make_module():
@@ -131,3 +131,16 @@ def test_fraction_target():
     total = sum(_count_perturbed_leaves(module, sp, seed=s) for s in range(50))
     avg = total / 50
     assert 1.0 < avg < 3.5
+
+
+def test_leaf_module_param_blocks_cover_flat_parameter_order():
+    module = _make_module()
+    blocks = leaf_module_param_blocks(module)
+    flat = _flat_params(module)
+
+    assert len(blocks) == len(_leaf_modules(module))
+    assert blocks[0][0] == 0
+    assert blocks[-1][1] == flat.numel()
+    for (lo, hi), (next_lo, _next_hi) in zip(blocks, blocks[1:]):
+        assert lo < hi
+        assert hi == next_lo
