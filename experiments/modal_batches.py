@@ -188,6 +188,28 @@ def clean_up(tag: str):
             print(f"CLEANUP: dict delete failed name={name} err={e!r}")
 
 
+def stop(tag: str):
+    app_name = _get_app_name(tag)
+    print(f"Stopping all running functions for app: {app_name}")
+    try:
+        for func_name in ["modal_batches_worker", "modal_batches_resubmitter", "modal_batch_deleter"]:
+            try:
+                func = modal.Function.from_name(app_name, func_name)
+                cancelled = 0
+                for fc in func.get_running_calls():
+                    fc.cancel()
+                    cancelled += 1
+                print(f"  {func_name}: cancelled {cancelled} running calls")
+            except Exception as e:
+                print(f"  {func_name}: {e!r}")
+    except modal.exception.NotFoundError:
+        print(f"App '{app_name}' not found")
+    except Exception as e:
+        print(f"Error stopping app: {e!r}")
+
+    clean_up(tag)
+
+
 @app.local_entrypoint()
 def batches(tag: str, cmd: str, batch_tag: str = None, num: int = None):
     if cmd == "work":
@@ -207,5 +229,8 @@ def batches(tag: str, cmd: str, batch_tag: str = None, num: int = None):
     elif cmd == "clean_up":
         assert batch_tag is None
         clean_up(tag)
+    elif cmd == "stop":
+        assert batch_tag is None
+        stop(tag)
     else:
         assert False, cmd
