@@ -39,7 +39,7 @@ def deploy(tag: str):
 def submit(tag: str, batch_tag: str):
     """Submit missing jobs for the batch."""
     impl = _get_impl_path()
-    _run_modal(["run", f"{impl}::batches", tag, "submit-missing", batch_tag], tag)
+    _run_modal(["run", f"{impl}::batches", "--tag", tag, "--cmd", "submit-missing", "--batch-tag", batch_tag], tag)
 
 
 @cli.command("submit-force")
@@ -48,7 +48,7 @@ def submit(tag: str, batch_tag: str):
 def submit_force(tag: str, batch_tag: str):
     """Force resubmit all jobs for the batch."""
     impl = _get_impl_path()
-    _run_modal(["run", f"{impl}::batches", tag, "submit-missing-force", batch_tag], tag)
+    _run_modal(["run", f"{impl}::batches", "--tag", tag, "--cmd", "submit-missing-force", "--batch-tag", batch_tag], tag)
 
 
 @cli.command()
@@ -56,7 +56,7 @@ def submit_force(tag: str, batch_tag: str):
 def collect(tag: str):
     """Collect results from completed jobs."""
     impl = _get_impl_path()
-    _run_modal(["run", f"{impl}::batches", tag, "collect"], tag)
+    _run_modal(["run", f"{impl}::batches", "--tag", tag, "--cmd", "collect"], tag)
 
 
 @cli.command()
@@ -64,15 +64,27 @@ def collect(tag: str):
 def status(tag: str):
     """Show status of jobs."""
     impl = _get_impl_path()
-    _run_modal(["run", f"{impl}::batches", tag, "status"], tag)
+    _run_modal(["run", f"{impl}::batches", "--tag", tag, "--cmd", "status"], tag)
 
 
 @cli.command()
 @click.argument("tag")
 def stop(tag: str):
     """Stop running jobs and clean up dicts."""
+    app_name = f"yubo_{tag}"
+
+    # First stop the app
+    click.echo(f"Stopping app: {app_name}")
+    stop_result = subprocess.run(["modal", "app", "stop", app_name])
+    if stop_result.returncode != 0:
+        click.echo(f"Warning: modal app stop returned {stop_result.returncode}")
+
+    # Then clean up dicts
     impl = _get_impl_path()
-    _run_modal(["run", f"{impl}::batches", tag, "stop"], tag)
+    env = os.environ.copy()
+    env["MODAL_TAG"] = tag
+    click.echo(f"Cleaning up dicts for tag: {tag}")
+    subprocess.run(["modal", "run", f"{impl}::batches", "--tag", tag, "--cmd", "stop"], env=env)
 
 
 @cli.command("clean-up")
@@ -80,7 +92,7 @@ def stop(tag: str):
 def clean_up(tag: str):
     """Clean up dicts without stopping jobs."""
     impl = _get_impl_path()
-    _run_modal(["run", f"{impl}::batches", tag, "clean_up"], tag)
+    _run_modal(["run", f"{impl}::batches", "--tag", tag, "--cmd", "clean_up"], tag)
 
 
 if __name__ == "__main__":

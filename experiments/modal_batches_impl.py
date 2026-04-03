@@ -194,21 +194,7 @@ def clean_up(tag: str):
 
 
 def stop(tag: str):
-    app_name = _get_app_name(tag)
-    print(f"Stopping all running functions for app: {app_name}")
-    for func_name in ["modal_batches_worker", "modal_batches_resubmitter", "modal_batch_deleter"]:
-        try:
-            func = modal.Function.from_name(app_name, func_name)
-            cancelled = 0
-            for fc in func.get_running_calls():
-                fc.cancel()
-                cancelled += 1
-            print(f"  {func_name}: cancelled {cancelled} running calls")
-        except modal.exception.NotFoundError:
-            print(f"  {func_name}: not found")
-        except Exception as e:
-            print(f"  {func_name}: {e!r}")
-
+    """Clean up dicts. App stopping is handled by ops/modal_batches.py via 'modal app stop'."""
     clean_up(tag)
 
 
