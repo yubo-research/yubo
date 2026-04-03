@@ -1,3 +1,4 @@
+import os
 import sys
 import time
 
@@ -14,16 +15,20 @@ _TIMEOUT_HOURS = 24  # was: 5
 _MAX_CONTAINERS = 1000
 
 
-def _extract_tag_from_argv() -> str:
+def _get_tag() -> str:
+    tag = os.environ.get("MODAL_TAG")
+    if tag:
+        return tag
+    # Fallback: extract from sys.argv for direct `modal run` usage
     for i, arg in enumerate(sys.argv):
-        if "modal_batches.py" in arg and i + 1 < len(sys.argv):
+        if "modal_batches" in arg and i + 1 < len(sys.argv):
             candidate = sys.argv[i + 1]
             if not candidate.startswith("-"):
                 return candidate
     return "default"
 
 
-_tag = _extract_tag_from_argv()
+_tag = _get_tag()
 
 
 def _get_app_name(tag: str) -> str:
@@ -191,21 +196,18 @@ def clean_up(tag: str):
 def stop(tag: str):
     app_name = _get_app_name(tag)
     print(f"Stopping all running functions for app: {app_name}")
-    try:
-        for func_name in ["modal_batches_worker", "modal_batches_resubmitter", "modal_batch_deleter"]:
-            try:
-                func = modal.Function.from_name(app_name, func_name)
-                cancelled = 0
-                for fc in func.get_running_calls():
-                    fc.cancel()
-                    cancelled += 1
-                print(f"  {func_name}: cancelled {cancelled} running calls")
-            except Exception as e:
-                print(f"  {func_name}: {e!r}")
-    except modal.exception.NotFoundError:
-        print(f"App '{app_name}' not found")
-    except Exception as e:
-        print(f"Error stopping app: {e!r}")
+    for func_name in ["modal_batches_worker", "modal_batches_resubmitter", "modal_batch_deleter"]:
+        try:
+            func = modal.Function.from_name(app_name, func_name)
+            cancelled = 0
+            for fc in func.get_running_calls():
+                fc.cancel()
+                cancelled += 1
+            print(f"  {func_name}: cancelled {cancelled} running calls")
+        except modal.exception.NotFoundError:
+            print(f"  {func_name}: not found")
+        except Exception as e:
+            print(f"  {func_name}: {e!r}")
 
     clean_up(tag)
 
@@ -233,4 +235,4 @@ def batches(tag: str, cmd: str, batch_tag: str = None, num: int = None):
         assert batch_tag is None
         stop(tag)
     else:
-        assert False, cmd
+        raise ValueError(f"Unknown command: {cmd}")

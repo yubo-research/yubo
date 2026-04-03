@@ -1,4 +1,4 @@
-"""Direct coverage tests for experiments/modal_batches.py.
+"""Direct coverage tests for experiments/modal_batches_impl.py.
 
 This file uses module-level imports to ensure kiss detects the coverage.
 """
@@ -6,8 +6,8 @@ This file uses module-level imports to ensure kiss detects the coverage.
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
-import experiments.modal_batches as mb
-from experiments.modal_batches import batches, clean_up, status
+import experiments.modal_batches_impl as mb
+from experiments.modal_batches_impl import batches, clean_up, status
 
 
 class _FakeDict(dict):
@@ -119,3 +119,45 @@ def test_batches_work_branch(monkeypatch, capsys):
     assert "WORK: 0" in captured.out
     assert "WORK: 1" in captured.out
     assert "WORK: 2" in captured.out
+
+
+def test_batches_stop_branch(monkeypatch, capsys):
+    """Test the stop branch of the batches function."""
+    stopped = []
+    monkeypatch.setattr(mb, "stop", lambda tag: stopped.append(tag))
+
+    batches("test", "stop", None, None)
+
+    assert stopped == ["test"]
+
+
+def test_stop_notfounderror_is_handled_per_function(monkeypatch, capsys):
+    """Test that NotFoundError is handled per-function by stop().
+
+    When a function raises NotFoundError, stop() should print a per-function
+    "not found" message and continue trying remaining functions.
+    """
+    import modal.exception
+
+    class _NotFoundError(Exception):
+        pass
+
+    calls_to_from_name = []
+
+    def _raise_not_found(app_name, func_name):
+        calls_to_from_name.append((app_name, func_name))
+        raise _NotFoundError(f"Function not found: {func_name}")
+
+    monkeypatch.setattr(modal.exception, "NotFoundError", _NotFoundError)
+    monkeypatch.setattr(mb.modal.Function, "from_name", _raise_not_found)
+    monkeypatch.setattr(mb.modal.Dict, "delete", lambda name: None)
+
+    mb.stop("missing_app")
+
+    captured = capsys.readouterr()
+    # Each function should get a "not found" message
+    assert "modal_batches_worker: not found" in captured.out
+    assert "modal_batches_resubmitter: not found" in captured.out
+    assert "modal_batch_deleter: not found" in captured.out
+    # All functions should be attempted
+    assert len(calls_to_from_name) == 3

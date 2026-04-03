@@ -4,7 +4,7 @@ import modal
 
 from experiments.dist_modal import collect
 from experiments.experiment_sampler import post_process
-from experiments.modal_batches import app
+from experiments.modal_batches_impl import app
 
 
 def _get_job_result(call_id):

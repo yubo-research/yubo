@@ -131,7 +131,7 @@ def test_kiss_cov_ops_catalog_and_ops_data(tmp_path):
 
 
 def test_kiss_cov_modal_batches_collect_and_cleanup(monkeypatch):
-    import experiments.modal_batches as mb
+    import experiments.modal_batches_impl as mb
 
     class _FakeDict(dict):
         def len(self):
@@ -251,12 +251,31 @@ def test_kiss_cov_modal_image_and_interactive(monkeypatch):
     img = modal_image.mk_image()
     assert img is not None
 
-    monkeypatch.setattr(modal_interactive, "sample_1", lambda **kwargs: ("log", "trace"))
-    out = modal_interactive.modal_sample_1.get_raw_f()({"a": 1})
+    rc = SimpleNamespace(trace_fn="trace.jsonl")
+    sample_1_return = SimpleNamespace(
+        collector_log=("log",),
+        collector_trace=("trace",),
+        trace_records=[],
+        stop_reason=None,
+    )
+    modal_remote_tuple = (
+        sample_1_return.collector_log,
+        sample_1_return.collector_trace,
+        sample_1_return.trace_records,
+        sample_1_return.stop_reason,
+    )
+
+    def fake_sample_1(run_config):
+        assert run_config is rc
+        return sample_1_return
+
+    monkeypatch.setattr(modal_interactive, "sample_1", fake_sample_1)
+    out = modal_interactive.modal_sample_1.get_raw_f()(rc)
     assert isinstance(out, tuple)
-    monkeypatch.setattr(modal_interactive, "mk_replicates", lambda d: [dict(d, trace_fn="trace.jsonl")])
-    monkeypatch.setattr(modal_interactive, "post_process", lambda *args: None)
-    monkeypatch.setattr(modal_interactive.modal_sample_1, "remote", lambda d: ("log", "trace"))
+    assert out == modal_remote_tuple
+    monkeypatch.setattr(modal_interactive, "mk_replicates", lambda config: [rc])
+    monkeypatch.setattr(modal_interactive, "post_process", lambda *args, **kwargs: None)
+    monkeypatch.setattr(modal_interactive.modal_sample_1, "remote", lambda _run_config: modal_remote_tuple)
     modal_interactive.run_job("exp", "env", "opt", 1, 1, 1)
 
 

@@ -1,6 +1,6 @@
 import importlib
 
-import experiments.modal_batches as _modal_batches  # noqa: F401
+import experiments.modal_batches_impl as _modal_batches  # noqa: F401
 import experiments.modal_timing_sweep as _modal_timing_sweep  # noqa: F401
 
 
@@ -24,7 +24,7 @@ def test_modal_batches_worker_exists():
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            modal_batches_worker = _get("experiments.modal_batches", "modal_batches_worker")
+            modal_batches_worker = _get("experiments.modal_batches_impl", "modal_batches_worker")
 
         assert modal_batches_worker is not None
     except (ImportError, Exception):
@@ -38,7 +38,7 @@ def test_batches_submitter_exists():
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            batches_submitter = _get("experiments.modal_batches", "batches_submitter")
+            batches_submitter = _get("experiments.modal_batches_impl", "batches_submitter")
 
         assert batches_submitter is not None
     except (ImportError, Exception):
@@ -52,7 +52,7 @@ def test_modal_batches_resubmitter_exists():
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            modal_batches_resubmitter = _get("experiments.modal_batches", "modal_batches_resubmitter")
+            modal_batches_resubmitter = _get("experiments.modal_batches_impl", "modal_batches_resubmitter")
 
         assert modal_batches_resubmitter is not None
     except (ImportError, Exception):
@@ -66,7 +66,7 @@ def test_modal_batch_deleter_exists():
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            modal_batch_deleter = _get("experiments.modal_batches", "modal_batch_deleter")
+            modal_batch_deleter = _get("experiments.modal_batches_impl", "modal_batch_deleter")
 
         assert modal_batch_deleter is not None
     except (ImportError, Exception):
@@ -80,7 +80,7 @@ def test_modal_batches_collect_exists():
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            collect = _get("experiments.modal_batches", "collect")
+            collect = _get("experiments.modal_batches_impl", "_collect")
 
         assert collect is not None
     except (ImportError, Exception):
@@ -94,7 +94,7 @@ def test_modal_batches_status_exists():
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            status = _get("experiments.modal_batches", "status")
+            status = _get("experiments.modal_batches_impl", "status")
 
         assert status is not None
     except (ImportError, Exception):
@@ -108,7 +108,7 @@ def test_modal_batches_clean_up_exists():
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            clean_up = _get("experiments.modal_batches", "clean_up")
+            clean_up = _get("experiments.modal_batches_impl", "clean_up")
 
         assert clean_up is not None
     except (ImportError, Exception):

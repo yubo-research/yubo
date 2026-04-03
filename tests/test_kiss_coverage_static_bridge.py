@@ -42,7 +42,7 @@ def test_kiss_bridge_env_preprocessing_clip_observation_wrapper():
 
 
 def test_kiss_bridge_modal_batches_batches(monkeypatch):
-    import experiments.modal_batches as mb
+    import experiments.modal_batches_impl as mb
 
     monkeypatch.setattr(mb, "batches_submitter", lambda *a, **k: None)
 
@@ -60,7 +60,7 @@ def test_kiss_bridge_modal_batches_batches(monkeypatch):
 
 
 def test_kiss_bridge_modal_batches_batches_all_branches(monkeypatch, capsys):
-    import experiments.modal_batches as mb
+    import experiments.modal_batches_impl as mb
 
     class _FakeDict(dict):
         def len(self):

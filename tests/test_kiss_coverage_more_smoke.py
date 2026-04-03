@@ -332,7 +332,7 @@ def test_kiss_cov_dist_modal_collect(monkeypatch, tmp_path):
 
 
 def test_kiss_cov_modal_batches_functions(monkeypatch, tmp_path):
-    import experiments.modal_batches as mb
+    import experiments.modal_batches_impl as mb
 
     tag = "test"
 
@@ -388,7 +388,7 @@ def test_kiss_cov_modal_batches_functions(monkeypatch, tmp_path):
 
 
 def test_kiss_cov_modal_batches_clean_up_exception(monkeypatch, capsys):
-    import experiments.modal_batches as mb
+    import experiments.modal_batches_impl as mb
 
     def _raise_error(name):
         raise RuntimeError(f"Failed to delete {name}")
