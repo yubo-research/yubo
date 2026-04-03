@@ -1,3 +1,5 @@
+from unittest.mock import MagicMock
+
 import numpy as np
 import torch
 
@@ -69,6 +71,26 @@ def test_dngo_model_posterior():
     posterior_batch = model.posterior(X_batch)
     mean = posterior_batch.distribution.mean
     assert mean.shape == torch.Size([3, 4, 1])
+
+
+def test_dngo_model_posterior_sanitizes_nonfinite_predict():
+    from optimizer.dngo_designer import DNGOModel
+
+    train_X = torch.linspace(0, 1, 4, dtype=torch.double).unsqueeze(-1)
+    train_Y = torch.tensor([[0.0], [1.0], [2.0], [3.0]], dtype=torch.double)
+    dngo = MagicMock()
+    dngo.predict = lambda x_flat: (
+        np.full(x_flat.shape[0], np.nan, dtype=np.float64),
+        np.full(x_flat.shape[0], np.nan, dtype=np.float64),
+    )
+    model = DNGOModel(dngo, train_X, train_Y)
+    Xq = torch.rand(7, 2, 1, dtype=torch.double)
+    post = model.posterior(Xq)
+    m = post.distribution.mean
+    s = post.distribution.stddev
+    assert torch.isfinite(m).all()
+    assert torch.isfinite(s).all()
+    assert (s > 0).all()
 
 
 def test_iid_normal_sampler():

@@ -22,6 +22,7 @@ def mk_image():
     nds==0.4.3
     matplotlib==3.10.8
     celer==0.7.4
+    numba==0.60.0
     hyperopt==0.2.7
     smac==2.3.1
     maturin>=1.0

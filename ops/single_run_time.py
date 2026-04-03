@@ -4,6 +4,7 @@
 Examples:
   ./ops/single_run_time.py deploy
   ./ops/single_run_time.py submit mybatch --prep experiments.batch_preps.prep_tlunar
+  ./ops/single_run_time.py progress --prep experiments.batch_preps.prep_timing_sweep
   ./ops/single_run_time.py collect
   ./ops/single_run_time.py stop
 """
@@ -37,8 +38,14 @@ def _load_prep(prep: str):
         raise click.ClickException(f"prep must be 'module.path.function_name' (got {prep!r}). Example: experiments.batch_preps.prep_tlunar")
     module_path, func_name = prep.rsplit(".", 1)
     _add_repo_root_to_syspath()
-    module = __import__(module_path, fromlist=[func_name])
-    return getattr(module, func_name)
+    try:
+        module = __import__(module_path, fromlist=[func_name])
+    except ImportError as e:
+        raise click.ClickException(f"cannot import module {module_path!r}: {e}") from e
+    fn = getattr(module, func_name, None)
+    if fn is None:
+        raise click.ClickException(f"module {module_path!r} has no attribute {func_name!r}")
+    return fn
 
 
 def run_modal_deploy() -> None:
@@ -71,6 +78,21 @@ def run_modal_submit(batch_tag: str, prep: str, results_dir: str, force: bool) -
     from experiments.modal_timing_sweep import submit_configs
 
     submit_configs(batch_tag, configs, force=force)
+
+
+def run_prep_progress(prep: str, results_dir: str) -> None:
+    """Print how many local traces from prep(results_dir) are done vs still missing."""
+    from experiments.experiment_sampler import ExperimentConfig, count_local_trace_jobs
+
+    prep_fn = _load_prep(prep)
+    configs = prep_fn(results_dir)
+    if not isinstance(configs, list):
+        raise click.ClickException(f"prep must return a list of ExperimentConfig, got {type(configs).__name__}")
+    for i, cfg in enumerate(configs):
+        if not isinstance(cfg, ExperimentConfig):
+            raise click.ClickException(f"prep item {i} must be ExperimentConfig, got {type(cfg).__name__}")
+    n_done, n_left, n_total = count_local_trace_jobs(configs)
+    click.echo(f"complete: {n_done}  remaining: {n_left}  total: {n_total}")
 
 
 def run_modal_collect() -> None:
@@ -138,6 +160,25 @@ def deploy_cmd() -> None:
 def submit_cmd(batch_tag: str, prep: str, results_dir: str, force: bool) -> None:
     """Submit jobs from prep(results_dir) under BATCH_TAG."""
     run_modal_submit(batch_tag, prep, results_dir, force)
+
+
+@cli.command("progress")
+@click.option(
+    "--prep",
+    type=str,
+    required=True,
+    help="Prep function import path (same as submit), e.g. experiments.batch_preps.prep_timing_sweep",
+)
+@click.option(
+    "--results-dir",
+    type=str,
+    default="results",
+    show_default=True,
+    help="First argument passed to prep(results_dir)",
+)
+def progress_cmd(prep: str, results_dir: str) -> None:
+    """Count local traces: complete vs remaining (same paths as mk_replicates / submit)."""
+    run_prep_progress(prep, results_dir)
 
 
 @cli.command("collect")

@@ -1,8 +1,8 @@
 """Modal timing sweep for BO experiments.
 
 This script runs timing experiments on Modal with:
-- 5-hour max_total_seconds for graceful deadline-based stopping
-- Modal timeout > 5 hours as safety check
+- 5-hour cumulative proposal-time cap (``max_proposal_seconds`` / ``Optimizer._cum_dt_proposing``)
+- Modal timeout 24h as a hard safety ceiling (wall clock)
 - Wall-time recording in {trace_fn}-summary.json with stop_reason
 """
 
@@ -13,6 +13,7 @@ import modal
 
 from analysis.data_io import data_is_done
 from experiments.experiment_sampler import (
+    TIMING_SWEEP_MAX_CUMULATIVE_PROPOSAL_SECONDS,
     ExperimentConfig,
     mk_replicates,
     post_process,
@@ -24,8 +25,7 @@ from experiments.modal_image import mk_image
 modal_image = mk_image()
 
 _APP_NAME = "yubo_timing_sweep"
-_TIMEOUT_HOURS = 6
-_MAX_TOTAL_SECONDS = 5 * 60 * 60
+_TIMEOUT_HOURS = 24
 _MAX_CONTAINERS = 500
 
 app = modal.App(name=_APP_NAME)
@@ -49,7 +49,7 @@ def timing_sweep_worker(job):
 
     key, run_config = job
 
-    run_config.deadline = time.time() + _MAX_TOTAL_SECONDS
+    run_config.deadline = None
 
     print(f"JOB: key = {key} run_config = {run_config}")
     t_start = time.perf_counter()
@@ -198,7 +198,8 @@ def prep_timing_sweep(
     Each tuple should be:
         (opt_name, env_tag, num_arms, num_rounds, num_denoise, num_denoise_passive)
 
-    All configs use num_reps=1 and max_total_seconds=5*3600.
+    All configs use num_reps=1, no wall-clock deadline, and max_proposal_seconds=5*3600
+    (cumulative ``dt_prop`` budget).
     """
     configs = []
     for t in sweep_tuples:
@@ -215,7 +216,8 @@ def prep_timing_sweep(
             num_denoise=num_denoise,
             num_denoise_passive=num_denoise_passive,
         )
-        config.max_total_seconds = float(_MAX_TOTAL_SECONDS)
+        config.max_total_seconds = None
+        config.max_proposal_seconds = float(TIMING_SWEEP_MAX_CUMULATIVE_PROPOSAL_SECONDS)
         configs.append(config)
     return configs
 

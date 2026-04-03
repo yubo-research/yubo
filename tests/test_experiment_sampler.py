@@ -9,6 +9,7 @@ from experiments.experiment_sampler import (
     RunConfig,
     _SampleResult,
     _scan_local_parallel,
+    count_local_trace_jobs,
     extract_trace_fns,
     mk_replicates,
     post_process,
@@ -145,6 +146,33 @@ def test_mk_replicates(mock_data_is_done, mock_get_env_conf):
     assert results[0].num_denoise == 100
     assert results[0].b_trace is True
     assert results[0].env_conf == mock_env_conf
+
+
+def test_count_local_trace_jobs_empty():
+    assert count_local_trace_jobs([]) == (0, 0, 0)
+
+
+def test_count_local_trace_jobs_one_done_one_missing():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        config = ExperimentConfig(
+            exp_dir=tmpdir,
+            env_tag="f:ackley-10d",
+            opt_name="ucb",
+            num_arms=5,
+            num_rounds=10,
+            num_reps=2,
+            num_denoise=None,
+            b_trace=True,
+        )
+        out_dir = config.to_dir_name()
+        trace0 = os.path.join(out_dir, "traces", "00000")
+        os.makedirs(os.path.dirname(trace0), exist_ok=True)
+        with open(trace0, "wb") as f:
+            f.write(b"x\nDONE\n")
+        done, left, total = count_local_trace_jobs([config])
+        assert total == 2
+        assert done == 1
+        assert left == 1
 
 
 @patch("problems.env_conf.get_env_conf")

@@ -17,6 +17,7 @@ def test_single_run_time_help():
     assert "deploy" in r.output
     assert "submit" in r.output
     assert "collect" in r.output
+    assert "progress" in r.output
     assert "stop" in r.output
 
 
@@ -57,6 +58,37 @@ def test_load_prep_rejects_bare_name():
 
     with pytest.raises(click.ClickException, match="module.path.function_name"):
         _load_prep("nope")
+
+
+def test_load_prep_rejects_missing_attribute():
+    from ops.single_run_time import _load_prep
+
+    with pytest.raises(click.ClickException, match="no attribute"):
+        _load_prep("experiments.batch_preps.does_not_exist")
+
+
+@patch("ops.single_run_time.run_prep_progress")
+def test_progress_cmd_callback(mock_progress):
+    from ops.single_run_time import cli
+
+    cli.get_command(_ctx(cli), "progress").callback(
+        prep="experiments.batch_preps.prep_timing_sweep",
+        results_dir="results",
+    )
+    mock_progress.assert_called_once_with("experiments.batch_preps.prep_timing_sweep", "results")
+
+
+@patch("ops.single_run_time.run_prep_progress")
+def test_progress_via_runner(mock_progress):
+    from ops.single_run_time import cli
+
+    runner = CliRunner()
+    r = runner.invoke(
+        cli,
+        ["progress", "--prep", "experiments.batch_preps.prep_timing_sweep"],
+    )
+    assert r.exit_code == 0
+    mock_progress.assert_called_once()
 
 
 @patch("ops.single_run_time.run_modal_submit")

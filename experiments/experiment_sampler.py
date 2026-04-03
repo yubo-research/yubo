@@ -1,5 +1,6 @@
 import hashlib
 import importlib
+import math
 import multiprocessing as mp
 import os
 import sys
@@ -27,6 +28,9 @@ from common.experiment_seeds import (
 from common.seed_all import seed_all
 from experiments.bo_console import BOConsoleCollector, print_bo_footer
 from experiments.experiment_util import ensure_parent
+
+# Cumulative proposal-time budget for Modal timing sweep (``Optimizer._cum_dt_proposing``).
+TIMING_SWEEP_MAX_CUMULATIVE_PROPOSAL_SECONDS = 5 * 60 * 60
 
 
 class _SampleResult(NamedTuple):
@@ -221,10 +225,23 @@ def _collect_trace_records(
             )
     collector_trace("DONE")
 
+    def _numeric_or(obj, name, default, cast):
+        v = getattr(obj, name, default)
+        if isinstance(v, (int, float)) and not isinstance(v, bool):
+            return cast(v)
+        return default
+
+    i_done = _numeric_or(opt, "_i_iter", 0, int)
+    cum_prop = _numeric_or(opt, "_cum_dt_proposing", 0.0, float)
+
     stop_reason = "completed"
     if deadline is not None and time.time() >= deadline - 1.0:
         # 1-second buffer accounts for timing jitter between last iteration check and here
         stop_reason = "deadline"
+    else:
+        hit_round_cap = max_iterations < sys.maxsize and i_done >= int(max_iterations)
+        if not hit_round_cap and (not math.isinf(float(max_proposal_seconds))) and cum_prop >= float(max_proposal_seconds) - 1e-9:
+            stop_reason = "max_proposal_seconds"
 
     return trace_records, collector_trace, stop_reason
 
@@ -539,6 +556,24 @@ def mk_replicates(config: ExperimentConfig) -> list[RunConfig]:
                 )
             )
     return run_configs
+
+
+def count_local_trace_jobs(configs: list[ExperimentConfig]) -> tuple[int, int, int]:
+    """Count local traces using the same rules as :func:`mk_replicates`.
+
+    Returns ``(n_complete, n_remaining, n_total)`` over every replicate in ``configs``.
+    """
+    n_complete = 0
+    n_total = 0
+    for config in configs:
+        out_dir = config.to_dir_name()
+        for i_rep in range(int(config.num_reps)):
+            n_total += 1
+            trace_fn = f"{out_dir}/traces/{i_rep:05d}"
+            jsonl_fn = trace_fn + ".jsonl"
+            if data_is_done(trace_fn) or data_is_done(jsonl_fn):
+                n_complete += 1
+    return n_complete, n_total - n_complete, n_total
 
 
 def sampler(config: ExperimentConfig, distributor_fn):

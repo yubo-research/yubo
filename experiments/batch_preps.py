@@ -1,4 +1,8 @@
-from experiments.experiment_sampler import prep_args_1, prep_d_args
+from experiments.experiment_sampler import (
+    TIMING_SWEEP_MAX_CUMULATIVE_PROPOSAL_SECONDS,
+    prep_args_1,
+    prep_d_args,
+)
 from experiments.func_names import func_brief_2, funcs_1d, funcs_nd
 
 
@@ -287,7 +291,7 @@ def prep_sweep_k(results_dir):
 
     cmds = []
 
-    dims = [100]
+    dims = [10]
 
     for num_dim in dims:
         if num_dim <= 100:
@@ -301,11 +305,11 @@ def prep_sweep_k(results_dir):
                 exp_dir=exp_dir,
                 funcs=["ackley", "booth", "rosenbrock", "sphere"],
                 dims=[num_dim],
-                num_arms=1,
+                num_arms=10,
                 num_replications=num_replications,
                 opts=opts,
                 noises=[None],
-                num_rounds=1000,
+                num_rounds=100,
             )
         )
 
@@ -325,7 +329,7 @@ def prep_sweep_p(results_dir):
 
     cmds = []
 
-    dims = [100]
+    dims = [10]
 
     for num_dim in dims:
         if num_dim <= 100:
@@ -339,11 +343,11 @@ def prep_sweep_p(results_dir):
                 exp_dir=exp_dir,
                 funcs=["ackley", "booth", "rosenbrock", "sphere"],
                 dims=[num_dim],
-                num_arms=1,
+                num_arms=10,
                 num_replications=num_replications,
                 opts=opts,
                 noises=[None],
-                num_rounds=1000,
+                num_rounds=100,
             )
         )
 
@@ -354,13 +358,15 @@ def prep_push(results_dir):
     exp_dir = "exp_ennbo_push"
 
     opts = [
-        "random",
-        "optuna",
-        "turbo-zero",
-        "turbo-one",
-        "turbo-enn-fit-ucb",
-        "turbo-enn-p",
-        "cma",
+        # "random",
+        # "optuna",
+        # "turbo-zero",
+        # "turbo-one",
+        # "turbo-enn-fit-ucb",
+        # "turbo-enn-p",
+        # "cma",
+        "turbo-one-ucb",
+        "turbo-one-nds",
     ]
 
     cmds = []
@@ -404,13 +410,13 @@ def prep_tlunar(results_dir):
         # "turbo-enn-fit-ucb",
         # "turbo-enn-p",
         # "ucb",
-        "lei",
+        # "lei",
         "smac",
-        "dngo",
-        "vecchia",
-        "ucb:Msparse",
-        "turbo-one-ucb",
-        "turbo-one-nds",
+        # "dngo",
+        # "vecchia",
+        # "ucb:Msparse",
+        # "turbo-one-ucb",
+        # "turbo-one-nds",
     ]
 
     cmds = []
@@ -451,6 +457,8 @@ def prep_hop(results_dir):
         # "turbo-one",
         # "turbo-enn-fit-ucb",
         # "turbo-enn-p",
+        "turbo-one-ucb",
+        "turbo-one-nds",
     ]
 
     cmds = []
@@ -491,12 +499,12 @@ def prep_bw(results_dir):
         # "turbo-one",
         # "turbo-enn-fit-ucb",
         # "turbo-enn-p",
-        "ucb",
-        "lei",
-        "smac",
-        "dngo",
-        "vecchia",
-        "ucb:Msparse",
+        # "ucb",
+        # "lei",
+        # "smac",
+        # "dngo",
+        # "vecchia",
+        # "ucb:Msparse",
         "turbo-one-ucb",
         "turbo-one-nds",
     ]
@@ -532,13 +540,13 @@ def prep_leukemia(results_dir):
     exp_dir = "exp_ennbo_leukemia"
 
     opts = [
-        "random",
-        "optuna",
-        "cma",
-        "turbo-zero-f",
+        # "random",
+        # "optuna",
+        # "cma",
+        # "turbo-zero-f",
         # "turbo-one-f",
-        "turbo-enn-f:Kt100",
-        "turbo-enn-f:Kt300",
+        "turbo-one-ucb",
+        "turbo-one-nds",
     ]
 
     cmds = []
@@ -579,6 +587,8 @@ def prep_dna(results_dir):
         # "turbo-one",
         # "turbo-enn-fit-ucb",
         # "turbo-enn-p",
+        "turbo-one-ucb",
+        "turbo-one-nds",
     ]
 
     cmds = []
@@ -654,8 +664,8 @@ def prep_sweep_k_tlunar(results_dir):
     cmds = []
     for opt in opts:
         for num_arms, num_rounds, num_denoise, num_denoise_passive, fn in [
-            (1, 10000, 1, 30, False),
-            # (50, 30, 50, None, True),
+            # (1, 10000, 1, 30, False),
+            (50, 30, 50, None, True),
         ]:
             # prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None):
             if num_arms == 1 and opt == "cma":
@@ -716,37 +726,69 @@ def prep_sweep_p_tlunar(results_dir):
     return cmds
 
 
+_TIMING_SWEEP_ENV_TAGS = (
+    ("tlunar:fn", 50, 30, 1, 50, None, True),
+    ("tlunar", 1, 10000, 1, 1, 30, False),
+    ("push:fn", 50, 300, 1, 50, None, True),
+    ("push", 1, 10000, 1, 1, 30, False),
+    ("hop:fn", 50, 1000, 30, 10, None, True),
+    ("hop", 1, 10000, 30, None, 30, False),
+    ("bw-heur:fn", 50, 100, 30, 30, None, True),
+    ("bw-heur", 1, 10000, 30, None, 30, False),
+    ("dna:fn", 1, 1000, 30, 10, None, True),
+    ("dna", 1, 1000, 30, None, 10, False),
+)
+
+# Full-matrix cells in timing_sweep.md with numeric cumulative proposal (not FAIL, not blank).
+# Rows turbo-enn-p, turbo-one, cma, optuna are omitted entirely. Update when regenerating the doc.
+_RUN_OTHERS_NONFAIL_CELLS = frozenset(
+    {
+        ("ucb", "tlunar:fn"),
+        ("ucb", "bw-heur:fn"),
+        ("smac", "tlunar:fn"),
+        ("smac", "tlunar"),
+        ("smac", "push:fn"),
+        ("smac", "push"),
+        ("smac", "hop:fn"),
+        ("smac", "bw-heur:fn"),
+        ("smac", "bw-heur"),
+        ("smac", "dna:fn"),
+        ("smac", "dna"),
+        ("dngo", "tlunar:fn"),
+        ("dngo", "push:fn"),
+        ("dngo", "bw-heur:fn"),
+        ("dngo", "dna:fn"),
+        ("dngo", "dna"),
+        ("vecchia", "tlunar:fn"),
+        ("vecchia", "push:fn"),
+        ("vecchia", "hop:fn"),
+        ("vecchia", "bw-heur:fn"),
+        ("vecchia", "dna:fn"),
+        ("vecchia", "dna"),
+    }
+)
+
+
 def prep_timing_sweep(results_dir):
     exp_dir = "exp_ennbo_timing_sweep"
 
     opts = [
-        "optuna",
-        "cma",
-        "turbo-zero",
-        "turbo-one",
-        "turbo-enn-fit-ucb",
-        "turbo-enn-p",
+        # "optuna",
+        # "cma",
+        # "turbo-zero",
+        # "turbo-one",
+        # "turbo-enn-fit-ucb",
+        # "turbo-enn-p",
         "ucb",
         "lei",
         "smac",
         "dngo",
         "vecchia",
         "ucb:Msparse",
-        "turbo-one-ucb",
-        "turbo-one-nds",
+        # "turbo-one-ucb",
+        # "turbo-one-nds",
     ]
-    env_tags = [
-        ("tlunar:fn", 50, 30, 1, 50, None, True),
-        ("tlunar", 1, 10000, 1, 1, 30, False),
-        ("push:fn", 50, 300, 1, 50, None, True),
-        ("push", 1, 10000, 1, 1, 30, False),
-        ("hop:fn", 50, 1000, 30, 10, None, True),
-        ("hop", 1, 10000, 30, None, 30, False),
-        ("bw-heur:fn", 50, 100, 30, 30, None, True),
-        ("bw-heur", 1, 10000, 30, None, 30, False),
-        ("dna:fn", 1, 1000, 30, 10, None, True),
-        ("dna", 1, 1000, 30, None, 10, False),
-    ]
+    env_tags = _TIMING_SWEEP_ENV_TAGS
 
     for x in env_tags:
         assert len(x) == 7, (len(x), x)
@@ -757,7 +799,7 @@ def prep_timing_sweep(results_dir):
             env_tag,
             num_arms,
             num_rounds,
-            num_reps,
+            _,
             num_denoise,
             num_denoise_passive,
             fn,
@@ -766,7 +808,56 @@ def prep_timing_sweep(results_dir):
                 assert env_tag.endswith(":fn"), (env_tag, fn)
             else:
                 assert not env_tag.endswith(":fn"), (env_tag, fn)
-            num_reps = 1
+            cfg = prep_args_1(
+                results_dir,
+                exp_dir=exp_dir,
+                problem=env_tag,
+                opt=opt,
+                num_arms=num_arms,
+                num_replications=1,
+                num_rounds=num_rounds,
+                noise=None,
+                num_denoise=num_denoise,
+                num_denoise_passive=num_denoise_passive,
+            )
+            cfg.max_total_seconds = None
+            cfg.max_proposal_seconds = float(TIMING_SWEEP_MAX_CUMULATIVE_PROPOSAL_SECONDS)
+            cmds.append(cfg)
+
+    return cmds
+
+
+def prep_run_others(results_dir):
+    """Configs for timing-sweep cells that are not FAIL (see timing_sweep.md), new exp_dir.
+
+    Submit with modal_batches: batch_tag ``run_others`` (or ``prep_run_others``).
+    """
+    exp_dir = "exp_ennbo_run_others"
+    opts = [
+        "ucb",
+        "lei",
+        "smac",
+        "dngo",
+        "vecchia",
+        "ucb:Msparse",
+    ]
+    cmds = []
+    for opt in opts:
+        for (
+            env_tag,
+            num_arms,
+            num_rounds,
+            _,
+            num_denoise,
+            num_denoise_passive,
+            fn,
+        ) in _TIMING_SWEEP_ENV_TAGS:
+            if (opt, env_tag) not in _RUN_OTHERS_NONFAIL_CELLS:
+                continue
+            if fn:
+                assert env_tag.endswith(":fn"), (env_tag, fn)
+            else:
+                assert not env_tag.endswith(":fn"), (env_tag, fn)
             cmds.append(
                 prep_args_1(
                     results_dir,
@@ -774,12 +865,50 @@ def prep_timing_sweep(results_dir):
                     problem=env_tag,
                     opt=opt,
                     num_arms=num_arms,
-                    num_replications=num_reps,
+                    num_replications=1,
                     num_rounds=num_rounds,
                     noise=None,
                     num_denoise=num_denoise,
                     num_denoise_passive=num_denoise_passive,
                 )
             )
+    return cmds
 
+
+def prep_turbo_abl(results_dir):
+    """TuRBO ablation: turbo-one-nds & turbo-one-ucb across all 10 env_tags."""
+    exp_dir = "exp_ennbo_turbo_abl"
+    opts = [
+        "turbo-one-nds",
+        "turbo-one-ucb",
+    ]
+    cmds = []
+    for opt in opts:
+        for (
+            env_tag,
+            num_arms,
+            num_rounds,
+            _,
+            num_denoise,
+            num_denoise_passive,
+            fn,
+        ) in _TIMING_SWEEP_ENV_TAGS:
+            if fn:
+                assert env_tag.endswith(":fn"), (env_tag, fn)
+            else:
+                assert not env_tag.endswith(":fn"), (env_tag, fn)
+            cmds.append(
+                prep_args_1(
+                    results_dir,
+                    exp_dir=exp_dir,
+                    problem=env_tag,
+                    opt=opt,
+                    num_arms=num_arms,
+                    num_replications=1,
+                    num_rounds=num_rounds,
+                    noise=None,
+                    num_denoise=num_denoise,
+                    num_denoise_passive=num_denoise_passive,
+                )
+            )
     return cmds

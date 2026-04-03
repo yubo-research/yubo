@@ -1,3 +1,4 @@
+import sys
 import time
 
 import modal
@@ -9,34 +10,46 @@ from experiments.modal_image import mk_image
 
 modal_image = mk_image()
 
-_APP_NAME = "yubo_batches"
 _TIMEOUT_HOURS = 24  # was: 5
 _MAX_CONTAINERS = 1000
 
-_app_name = "yubo"
+
+def _extract_tag_from_argv() -> str:
+    for i, arg in enumerate(sys.argv):
+        if "modal_batches.py" in arg and i + 1 < len(sys.argv):
+            candidate = sys.argv[i + 1]
+            if not candidate.startswith("-"):
+                return candidate
+    return "default"
+
+
+_tag = _extract_tag_from_argv()
+
+
+def _get_app_name(tag: str) -> str:
+    return f"yubo_{tag}"
+
+
+_app_name = _get_app_name(_tag)
 app = modal.App(name=_app_name)
 
 
-# TODO: Make the resubmitter and deleter a single function to save a slot. Or maybe that's not how functions work.
+def _results_dict(tag: str):
+    return modal.Dict.from_name(f"batches_dict_{tag}", create_if_missing=True)
 
 
-def _results_dict():
-    return modal.Dict.from_name("batches_dict", create_if_missing=True)
-
-
-def _submitted_dict():
-    return modal.Dict.from_name("submitted_dict", create_if_missing=True)
+def _submitted_dict(tag: str):
+    return modal.Dict.from_name(f"submitted_dict_{tag}", create_if_missing=True)
 
 
 @app.function(
     image=modal_image,
     max_containers=_MAX_CONTAINERS,
     timeout=_TIMEOUT_HOURS * 60 * 60,
-)  # , gpu="H100")
+)
 def modal_batches_worker(job):
-    res_dict = _results_dict()
-
-    key, run_config = job
+    tag, key, run_config = job
+    res_dict = _results_dict(tag)
 
     print(f"JOB: key = {key} run_config = {run_config}")
     t_start = time.perf_counter()
@@ -57,36 +70,34 @@ def modal_batches_worker(job):
     max_containers=_MAX_CONTAINERS // 10,
     timeout=_TIMEOUT_HOURS * 60 * 60,
 )
-def modal_batches_resubmitter(batch_of_configs):
-    submitted_dict = _submitted_dict()
+def modal_batches_resubmitter(batch_of_configs, tag: str):
+    submitted_dict = _submitted_dict(tag)
     todo = []
     for key, run_config, force in batch_of_configs:
         if (not force) and (key in submitted_dict):
             continue
         submitted_dict[key] = True
-        todo.append((key, run_config))
+        todo.append((tag, key, run_config))
 
     print("TODO:", len(todo))
 
-    worker = modal.Function.from_name(_app_name, "modal_batches_worker")
+    worker = modal.Function.from_name(_get_app_name(tag), "modal_batches_worker")
     worker.spawn_map(todo)
 
 
-def batches_submitter(batch_tag: str, force: bool = False):
+def batches_submitter(tag: str, batch_tag: str, force: bool = False):
     n = 0
     batch = []
     MAX_BATCH = 1000
 
     def _flush():
         nonlocal batch
-        func = modal.Function.from_name(_app_name, "modal_batches_resubmitter")
-        func.spawn(batch)
+        func = modal.Function.from_name(_get_app_name(tag), "modal_batches_resubmitter")
+        func.spawn(batch, tag)
         batch = []
 
     for key, run_config in _gen_jobs(batch_tag):
         print(f"JOB: {key} {run_config}")
-        # process_job = modal.Function.from_name(_app_name, "modal_batches_worker")
-        # process_job.spawn((key, d_args))
         batch.append((key, run_config, force))
         if len(batch) == MAX_BATCH:
             _flush()
@@ -110,8 +121,8 @@ def _job_key(job_name, path):
 
 
 @app.function(image=modal_image, max_containers=1, timeout=_TIMEOUT_HOURS * 60 * 60)
-def modal_batch_deleter(collected_keys):
-    res_dict = _results_dict()
+def modal_batch_deleter(collected_keys, tag: str):
+    res_dict = _results_dict(tag)
     for key in collected_keys:
         print("DEL:", key)
         try:
@@ -120,8 +131,8 @@ def modal_batch_deleter(collected_keys):
             pass
 
 
-def _collect():
-    res_dict = _results_dict()
+def _collect(tag: str):
+    res_dict = _results_dict(tag)
     print("DICT_SIZE:", res_dict.len())
 
     collected_keys = set()
@@ -155,24 +166,21 @@ def _collect():
         collected_keys.add(key)
 
     print(f"results_available before del: {res_dict.len()}")
-    func = modal.Function.from_name(_app_name, "modal_batch_deleter")
-    func.spawn(collected_keys)
+    func = modal.Function.from_name(_get_app_name(tag), "modal_batch_deleter")
+    func.spawn(collected_keys, tag)
 
     print(f"num_collected = {len(collected_keys)}")
 
 
-collect = _collect
-
-
-def status():
-    res_dict = _results_dict()
-    submitted_dict = _submitted_dict()
+def status(tag: str):
+    res_dict = _results_dict(tag)
+    submitted_dict = _submitted_dict(tag)
     print(f"results_available = {res_dict.len()}")
     print(f"submitted = {submitted_dict.len()}")
 
 
-def clean_up():
-    for name in ["batches_dict", "submitted_dict"]:
+def clean_up(tag: str):
+    for name in [f"batches_dict_{tag}", f"submitted_dict_{tag}"]:
         try:
             modal.Dict.delete(name)
             print(f"CLEANUP: deleted dict name={name}")
@@ -181,26 +189,23 @@ def clean_up():
 
 
 @app.local_entrypoint()
-def batches(cmd: str, batch_tag: str = None, num: int = None):
+def batches(tag: str, cmd: str, batch_tag: str = None, num: int = None):
     if cmd == "work":
-        modal_function = modal.Function.lookup("yubo", "modal_batches_worker")
+        modal_function = modal.Function.lookup(_get_app_name(tag), "modal_batches_worker")
         for i in range(num):
             print("WORK:", i)
             modal_function.spawn()
-    # elif cmd == "submit-all":
-    #     submitter = modal.Function.lookup("yubo", "modal_batches_submitter")
-    #     submitter.spawn(batch_tag)
     elif cmd == "submit-missing":
-        batches_submitter(batch_tag)
+        batches_submitter(tag, batch_tag)
     elif cmd == "submit-missing-force":
-        batches_submitter(batch_tag, force=True)
+        batches_submitter(tag, batch_tag, force=True)
     elif cmd == "status":
-        status()
+        status(tag)
     elif cmd == "collect":
         assert batch_tag is None
-        collect()
+        _collect(tag)
     elif cmd == "clean_up":
         assert batch_tag is None
-        clean_up()
+        clean_up(tag)
     else:
         assert False, cmd

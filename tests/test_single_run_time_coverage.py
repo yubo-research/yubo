@@ -30,6 +30,67 @@ def test_run_modal_submit(mock_submit):
     mock_submit.assert_called_once_with("t", [], force=False)
 
 
+def test_run_prep_progress():
+    from experiments.experiment_sampler import ExperimentConfig
+
+    ok = ExperimentConfig(
+        exp_dir="results/x",
+        env_tag="g:sphere-1d",
+        opt_name="random",
+        num_arms=1,
+        num_reps=1,
+        num_rounds=1,
+    )
+    with patch.object(srt, "_load_prep", return_value=lambda _: [ok]):
+        from click.testing import CliRunner
+
+        runner = CliRunner()
+        r = runner.invoke(srt.cli, ["progress", "--prep", "x.y.prep_fn"])
+    assert r.exit_code == 0
+    assert "complete:" in r.output
+    assert "remaining:" in r.output
+    assert "total:" in r.output
+
+
+def test_run_prep_progress_direct(capsys):
+    from experiments.experiment_sampler import ExperimentConfig
+
+    ok = ExperimentConfig(
+        exp_dir="results/x",
+        env_tag="g:sphere-1d",
+        opt_name="random",
+        num_arms=1,
+        num_reps=1,
+        num_rounds=1,
+    )
+    with patch.object(srt, "_load_prep", return_value=lambda _: [ok]):
+        srt.run_prep_progress("x.y.z", "results")
+    out = capsys.readouterr().out
+    assert "complete:" in out
+    assert "remaining:" in out
+    assert "total:" in out
+
+
+def test_run_prep_progress_rejects_non_list():
+    with patch.object(srt, "_load_prep", return_value=lambda _: ()):
+        from click.testing import CliRunner
+
+        runner = CliRunner()
+        r = runner.invoke(srt.cli, ["progress", "--prep", "x.y.z"])
+    assert r.exit_code != 0
+    assert "list of ExperimentConfig" in r.output
+
+
+def test_run_prep_progress_rejects_bad_item():
+    with patch.object(srt, "_load_prep", return_value=lambda _: [object()]):
+        from click.testing import CliRunner
+
+        runner = CliRunner()
+        r = runner.invoke(srt.cli, ["progress", "--prep", "x.y.z"])
+    assert r.exit_code != 0
+    assert "ExperimentConfig" in r.output
+
+
 def test_run_modal_submit_rejects_non_list():
     with (
         patch.object(srt, "_require_modal"),
@@ -131,3 +192,9 @@ def test_stop_cmd_thin_wrapper():
     with patch.object(srt, "run_modal_stop") as m:
         srt.stop_cmd.callback()
     m.assert_called_once()
+
+
+def test_progress_cmd_thin_wrapper():
+    with patch.object(srt, "run_prep_progress") as m:
+        srt.progress_cmd.callback(prep="a.b", results_dir="r")
+    m.assert_called_once_with("a.b", "r")

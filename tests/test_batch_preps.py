@@ -109,3 +109,21 @@ def test_prep_human():
     with tempfile.TemporaryDirectory() as tmpdir:
         cmds = _bp.prep_human(tmpdir)
         assert isinstance(cmds, list)
+
+
+def test_prep_run_others():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        cmds = _bp.prep_run_others(tmpdir)
+        assert len(cmds) == 22
+        pairs = {(c.opt_name, c.env_tag) for c in cmds}
+        assert pairs == _bp._RUN_OTHERS_NONFAIL_CELLS
+        assert all("exp_ennbo_run_others" in c.exp_dir for c in cmds)
+
+
+def test_prep_turbo_abl():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        cmds = _bp.prep_turbo_abl(tmpdir)
+        assert len(cmds) == 20  # 2 opts × 10 envs
+        opts = {c.opt_name for c in cmds}
+        assert opts == {"turbo-one-nds", "turbo-one-ucb"}
+        assert all("exp_ennbo_turbo_abl" in c.exp_dir for c in cmds)

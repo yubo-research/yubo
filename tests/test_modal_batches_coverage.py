@@ -16,10 +16,10 @@ class _FakeDict(dict):
 
 
 def test_status_coverage(monkeypatch, capsys):
-    monkeypatch.setattr(mb, "_results_dict", lambda: _FakeDict({"a": 1, "b": 2}))
-    monkeypatch.setattr(mb, "_submitted_dict", lambda: _FakeDict({"x": 1}))
+    monkeypatch.setattr(mb, "_results_dict", lambda tag: _FakeDict({"a": 1, "b": 2}))
+    monkeypatch.setattr(mb, "_submitted_dict", lambda tag: _FakeDict({"x": 1}))
 
-    status()
+    status("test")
 
     captured = capsys.readouterr()
     assert "results_available = 2" in captured.out
@@ -30,13 +30,13 @@ def test_clean_up_success_coverage(monkeypatch, capsys):
     deleted = []
     monkeypatch.setattr(mb.modal.Dict, "delete", lambda name: deleted.append(name))
 
-    clean_up()
+    clean_up("test")
 
     captured = capsys.readouterr()
-    assert "batches_dict" in deleted
-    assert "submitted_dict" in deleted
-    assert "CLEANUP: deleted dict name=batches_dict" in captured.out
-    assert "CLEANUP: deleted dict name=submitted_dict" in captured.out
+    assert "batches_dict_test" in deleted
+    assert "submitted_dict_test" in deleted
+    assert "CLEANUP: deleted dict name=batches_dict_test" in captured.out
+    assert "CLEANUP: deleted dict name=submitted_dict_test" in captured.out
 
 
 def test_clean_up_exception_coverage(monkeypatch, capsys):
@@ -45,18 +45,18 @@ def test_clean_up_exception_coverage(monkeypatch, capsys):
 
     monkeypatch.setattr(mb.modal.Dict, "delete", _raise)
 
-    clean_up()
+    clean_up("test")
 
     captured = capsys.readouterr()
     assert "CLEANUP: dict delete failed" in captured.out
-    assert "batches_dict" in captured.out
+    assert "batches_dict_test" in captured.out
 
 
 def test_batches_status_branch(monkeypatch, capsys):
-    monkeypatch.setattr(mb, "_results_dict", lambda: _FakeDict())
-    monkeypatch.setattr(mb, "_submitted_dict", lambda: _FakeDict())
+    monkeypatch.setattr(mb, "_results_dict", lambda tag: _FakeDict())
+    monkeypatch.setattr(mb, "_submitted_dict", lambda tag: _FakeDict())
 
-    batches("status", None, None)
+    batches("test", "status", None, None)
 
     captured = capsys.readouterr()
     assert "results_available" in captured.out
@@ -64,38 +64,38 @@ def test_batches_status_branch(monkeypatch, capsys):
 
 def test_batches_collect_branch(monkeypatch):
     collected = []
-    monkeypatch.setattr(mb, "collect", lambda: collected.append(True))
+    monkeypatch.setattr(mb, "_collect", lambda tag: collected.append(tag))
 
-    batches("collect", None, None)
+    batches("test", "collect", None, None)
 
-    assert collected == [True]
+    assert collected == ["test"]
 
 
 def test_batches_clean_up_branch(monkeypatch):
     cleaned = []
-    monkeypatch.setattr(mb, "clean_up", lambda: cleaned.append(True))
+    monkeypatch.setattr(mb, "clean_up", lambda tag: cleaned.append(tag))
 
-    batches("clean_up", None, None)
+    batches("test", "clean_up", None, None)
 
-    assert cleaned == [True]
+    assert cleaned == ["test"]
 
 
 def test_batches_submit_missing_branch(monkeypatch):
     submitted = []
-    monkeypatch.setattr(mb, "batches_submitter", lambda tag, force=False: submitted.append((tag, force)))
+    monkeypatch.setattr(mb, "batches_submitter", lambda tag, batch_tag, force=False: submitted.append((tag, batch_tag, force)))
 
-    batches("submit-missing", "test_tag", None)
+    batches("test", "submit-missing", "test_tag", None)
 
-    assert submitted == [("test_tag", False)]
+    assert submitted == [("test", "test_tag", False)]
 
 
 def test_batches_submit_missing_force_branch(monkeypatch):
     submitted = []
-    monkeypatch.setattr(mb, "batches_submitter", lambda tag, force=False: submitted.append((tag, force)))
+    monkeypatch.setattr(mb, "batches_submitter", lambda tag, batch_tag, force=False: submitted.append((tag, batch_tag, force)))
 
-    batches("submit-missing-force", "test_tag", None)
+    batches("test", "submit-missing-force", "test_tag", None)
 
-    assert submitted == [("test_tag", True)]
+    assert submitted == [("test", "test_tag", True)]
 
 
 def test_batches_work_branch(monkeypatch, capsys):
@@ -112,7 +112,7 @@ def test_batches_work_branch(monkeypatch, capsys):
 
     monkeypatch.setattr(mb, "modal", SimpleNamespace(Function=_Func, Dict=MagicMock()))
 
-    batches("work", None, 3)
+    batches("test", "work", None, 3)
 
     assert len(spawned) == 3
     captured = capsys.readouterr()

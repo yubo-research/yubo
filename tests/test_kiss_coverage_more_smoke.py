@@ -334,14 +334,16 @@ def test_kiss_cov_dist_modal_collect(monkeypatch, tmp_path):
 def test_kiss_cov_modal_batches_functions(monkeypatch, tmp_path):
     import experiments.modal_batches as mb
 
+    tag = "test"
+
     class _FakeDict(dict):
         def len(self):
             return len(self)
 
     res_dict = _FakeDict()
     submitted = _FakeDict()
-    monkeypatch.setattr(mb, "_results_dict", lambda: res_dict)
-    monkeypatch.setattr(mb, "_submitted_dict", lambda: submitted)
+    monkeypatch.setattr(mb, "_results_dict", lambda _tag: res_dict)
+    monkeypatch.setattr(mb, "_submitted_dict", lambda _tag: submitted)
     monkeypatch.setattr(
         mb,
         "sample_1",
@@ -354,34 +356,35 @@ def test_kiss_cov_modal_batches_functions(monkeypatch, tmp_path):
         def spawn_map(self, todo):
             spawned["map"].append(list(todo))
 
-        def spawn(self, payload):
+        def spawn(self, *payload):
             spawned["spawn"].append(payload)
 
     monkeypatch.setattr(mb.modal.Function, "from_name", lambda app_name, name: _Func())
-    monkeypatch.setattr(mb, "_gen_jobs", lambda tag: [("k1", SimpleNamespace(trace_fn="t1"))])
+    monkeypatch.setattr(mb, "_gen_jobs", lambda _batch_tag: [("k1", SimpleNamespace(trace_fn="t1"))])
     monkeypatch.setattr(mb, "data_is_done", lambda trace_fn: False)
     monkeypatch.setattr(mb, "post_process", lambda *args, **kwargs: None)
 
-    mb.modal_batches_worker.get_raw_f()(("k0", SimpleNamespace(trace_fn="trace0")))
+    mb.modal_batches_worker.get_raw_f()((tag, "k0", SimpleNamespace(trace_fn="trace0")))
     assert "k0" in res_dict
 
-    mb.modal_batches_resubmitter.get_raw_f()([("k1", SimpleNamespace(trace_fn="t1"), False)])
+    mb.modal_batches_resubmitter.get_raw_f()([("k1", SimpleNamespace(trace_fn="t1"), False)], tag)
     assert submitted["k1"] is True
 
-    mb.batches_submitter("tag")
+    mb.batches_submitter(tag, "batch_tag")
     assert spawned["spawn"]
 
     res_dict["k2"] = ("trace_fn", "log", "trace", None)
-    mb.collect()
-    mb.status()
+    mb._collect(tag)
+    mb.status(tag)
 
-    mb.modal_batch_deleter.get_raw_f()(["k2"])
+    mb.modal_batch_deleter.get_raw_f()(["k2"], tag)
     assert "k2" not in res_dict
 
     deleted = []
     monkeypatch.setattr(mb.modal.Dict, "delete", lambda name: deleted.append(name))
-    mb.clean_up()
-    assert "batches_dict" in deleted
+    mb.clean_up(tag)
+    assert "batches_dict_test" in deleted
+    assert "submitted_dict_test" in deleted
 
 
 def test_kiss_cov_modal_batches_clean_up_exception(monkeypatch, capsys):
@@ -391,11 +394,12 @@ def test_kiss_cov_modal_batches_clean_up_exception(monkeypatch, capsys):
         raise RuntimeError(f"Failed to delete {name}")
 
     monkeypatch.setattr(mb.modal.Dict, "delete", _raise_error)
-    mb.clean_up()
+    mb.clean_up("test")
 
     captured = capsys.readouterr()
     assert "CLEANUP: dict delete failed" in captured.out
-    assert "batches_dict" in captured.out
+    assert "batches_dict_test" in captured.out
+    assert "submitted_dict_test" in captured.out
 
 
 def test_kiss_cov_fig_util_functions(monkeypatch, tmp_path):

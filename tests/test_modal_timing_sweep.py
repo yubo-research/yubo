@@ -4,6 +4,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 import experiments.modal_timing_sweep as mts
+from experiments.experiment_sampler import TIMING_SWEEP_MAX_CUMULATIVE_PROPOSAL_SECONDS
 from experiments.modal_timing_sweep import clean_up, collect, prep_timing_sweep, run_timing_sweep, status
 
 
@@ -22,11 +23,14 @@ def test_prep_timing_sweep():
     assert configs[0].num_denoise == 50
     assert configs[0].num_denoise_passive is None
     assert configs[0].num_reps == 1
-    assert configs[0].max_total_seconds == 5 * 60 * 60
+    assert configs[0].max_total_seconds is None
+    assert configs[0].max_proposal_seconds == TIMING_SWEEP_MAX_CUMULATIVE_PROPOSAL_SECONDS
 
     assert configs[1].opt_name == "optuna"
     assert configs[1].env_tag == "push:fn"
     assert configs[1].num_denoise_passive == 30
+    assert configs[1].max_total_seconds is None
+    assert configs[1].max_proposal_seconds == TIMING_SWEEP_MAX_CUMULATIVE_PROPOSAL_SECONDS
 
 
 def test_timing_sweep_worker(monkeypatch):
@@ -125,15 +129,8 @@ def test_submit_configs(monkeypatch):
     assert len(spawned) == 1
 
 
-def test_timing_sweep_worker_sets_deadline_at_execution_time(monkeypatch):
-    """Regression test: verify deadline is reset at worker execution time.
-
-    If the worker did NOT reset the deadline, jobs with queue delays would have
-    reduced effective runtime (e.g., 1 hour queue delay = only 4 hours of the
-    5-hour budget). This test verifies the fix is in place: timing_sweep_worker
-    sets run_config.deadline when it starts, not at job submission time.
-    """
-    import time
+def test_timing_sweep_worker_clears_wall_deadline(monkeypatch):
+    """Timing sweep stops on cumulative proposal time, not wall-clock deadline."""
 
     import experiments.modal_timing_sweep as mts
 
@@ -157,25 +154,11 @@ def test_timing_sweep_worker_sets_deadline_at_execution_time(monkeypatch):
 
     monkeypatch.setattr(mts, "sample_1", fake_sample_1)
 
-    submission_time = time.time()
-    stale_deadline = submission_time + mts._MAX_TOTAL_SECONDS
-    run_config = SimpleNamespace(
-        trace_fn="trace0",
-        deadline=stale_deadline,
-    )
-
-    time.sleep(2.0)
-    worker_start_time = time.time()
+    run_config = SimpleNamespace(trace_fn="trace0", deadline=1e12)
     mts.timing_sweep_worker.get_raw_f()(("k0", run_config))
 
     assert len(captured_deadline) == 1
-    actual_deadline = captured_deadline[0]
-
-    assert actual_deadline != stale_deadline, (
-        f"Deadline should be reset when worker starts, not use stale submission-time deadline. "
-        f"Submission deadline was {stale_deadline}, but worker should have reset it to "
-        f"~{worker_start_time + mts._MAX_TOTAL_SECONDS}. Got {actual_deadline}."
-    )
+    assert captured_deadline[0] is None
 
 
 def test_timing_sweep_deleter(monkeypatch):

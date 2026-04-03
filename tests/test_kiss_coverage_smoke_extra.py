@@ -139,8 +139,8 @@ def test_kiss_cov_modal_batches_collect_and_cleanup(monkeypatch):
 
     res_dict = _FakeDict()
     submitted = _FakeDict()
-    monkeypatch.setattr(mb, "_results_dict", lambda: res_dict)
-    monkeypatch.setattr(mb, "_submitted_dict", lambda: submitted)
+    monkeypatch.setattr(mb, "_results_dict", lambda tag: res_dict)
+    monkeypatch.setattr(mb, "_submitted_dict", lambda tag: submitted)
     monkeypatch.setattr(
         mb,
         "sample_1",
@@ -151,7 +151,7 @@ def test_kiss_cov_modal_batches_collect_and_cleanup(monkeypatch):
         def spawn_map(self, _todo):
             return None
 
-        def spawn(self, _payload):
+        def spawn(self, *_args):
             return None
 
     monkeypatch.setattr(mb.modal.Function, "from_name", lambda app_name, name: _Func())
@@ -159,17 +159,18 @@ def test_kiss_cov_modal_batches_collect_and_cleanup(monkeypatch):
     monkeypatch.setattr(mb, "data_is_done", lambda trace_fn: False)
     monkeypatch.setattr(mb, "post_process", lambda *args, **kwargs: None)
 
-    mb.modal_batches_worker.get_raw_f()(("k0", SimpleNamespace(trace_fn="trace0")))
-    mb.modal_batches_resubmitter.get_raw_f()([("k1", SimpleNamespace(trace_fn="t1"), False)])
-    mb.batches_submitter("tag")
+    tag = "tag"
+    mb.modal_batches_worker.get_raw_f()((tag, "k0", SimpleNamespace(trace_fn="trace0")))
+    mb.modal_batches_resubmitter.get_raw_f()([("k1", SimpleNamespace(trace_fn="t1"), False)], tag)
+    mb.batches_submitter(tag, "batch_tag")
 
     res_dict["k2"] = ("trace_fn", "log", "trace", None)
-    mb.collect()
-    mb.status()
-    mb.modal_batch_deleter.get_raw_f()(["k2"])
+    mb._collect(tag)
+    mb.status(tag)
+    mb.modal_batch_deleter.get_raw_f()(["k2"], tag)
 
     monkeypatch.setattr(mb.modal.Dict, "delete", lambda name: None)
-    mb.clean_up()
+    mb.clean_up(tag)
 
 
 def test_kiss_cov_modal_collect_and_modal_learn(monkeypatch):
