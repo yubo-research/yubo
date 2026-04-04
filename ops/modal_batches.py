@@ -16,7 +16,7 @@ def _run_modal(args: list[str], tag: str) -> None:
     env = os.environ.copy()
     env["MODAL_TAG"] = tag
     cmd = ["modal"] + args
-    click.echo(f"Running: {' '.join(cmd)}")
+    click.echo(f"Running: {' '.join(cmd)} (MODAL_TAG={tag})")
     result = subprocess.run(cmd, env=env)
     sys.exit(result.returncode)
 

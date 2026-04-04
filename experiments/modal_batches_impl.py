@@ -9,33 +9,29 @@ from experiments.batches import prep_d_argss
 from experiments.experiment_sampler import mk_replicates, post_process, sample_1
 from experiments.modal_image import mk_image
 
-modal_image = mk_image()
-
-_TIMEOUT_HOURS = 24  # was: 5
-_MAX_CONTAINERS = 1000
-
-
-def _get_tag() -> str:
-    tag = os.environ.get("MODAL_TAG")
-    if tag:
-        return tag
+_TAG = os.environ.get("MODAL_TAG")
+if not _TAG:
     # Fallback: extract from sys.argv for direct `modal run` usage
     for i, arg in enumerate(sys.argv):
         if "modal_batches" in arg and i + 1 < len(sys.argv):
             candidate = sys.argv[i + 1]
             if not candidate.startswith("-"):
-                return candidate
-    return "default"
+                _TAG = candidate
+                break
+    else:
+        _TAG = "default"
 
+modal_image = mk_image(_TAG)
 
-_tag = _get_tag()
+_TIMEOUT_HOURS = 24  # was: 5
+_MAX_CONTAINERS = 1000
 
 
 def _get_app_name(tag: str) -> str:
     return f"yubo_{tag}"
 
 
-_app_name = _get_app_name(_tag)
+_app_name = _get_app_name(_TAG)
 app = modal.App(name=_app_name)
 
 

@@ -726,6 +726,82 @@ def prep_sweep_p_tlunar(results_dir):
     return cmds
 
 
+def prep_sweep_k_bw(results_dir):
+    exp_dir = "exp_ennbo_rebuttal_sweep_k_bw"
+
+    opts = [
+        "turbo-enn-fit-ucb/k=3",
+        "turbo-enn-fit-ucb/k=10",
+        "turbo-enn-fit-ucb/k=30",
+        "turbo-enn-fit-ucb/k=100",
+        "turbo-enn-fit-ucb/k=300",
+    ]
+
+    cmds = []
+    for opt in opts:
+        for num_arms, num_rounds, num_reps, num_denoise, num_denoise_passive, fn in [
+            # (1, 10000, 30, None, 30, False),
+            (50, 100, 30, 30, None, True),
+        ]:
+            # prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None):
+            if num_arms == 1 and opt == "cma":
+                continue
+            cmds.append(
+                prep_args_1(
+                    results_dir,
+                    exp_dir=exp_dir,
+                    problem="bw-heur:fn" if fn else "bw-heur",
+                    opt=opt,
+                    num_arms=num_arms,
+                    num_replications=num_reps,
+                    num_rounds=num_rounds,
+                    noise=None,
+                    num_denoise=num_denoise,
+                    num_denoise_passive=num_denoise_passive,
+                )
+            )
+
+    return cmds
+
+
+def prep_sweep_p_bw(results_dir):
+    exp_dir = "exp_ennbo_rebuttal_sweep_p_bw"
+
+    opts = [
+        "turbo-enn-fit-ucb/nfs=10",
+        "turbo-enn-fit-ucb/nfs=30",
+        "turbo-enn-fit-ucb/nfs=100",
+        "turbo-enn-fit-ucb/nfs=300",
+        "turbo-enn-fit-ucb/nfs=1000",
+    ]
+
+    cmds = []
+    for opt in opts:
+        for num_arms, num_rounds, num_reps, num_denoise, num_denoise_passive, fn in [
+            # (1, 10000, 30, None, 30, False),
+            (50, 100, 30, 30, None, True),
+        ]:
+            # prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None):
+            if num_arms == 1 and opt == "cma":
+                continue
+            cmds.append(
+                prep_args_1(
+                    results_dir,
+                    exp_dir=exp_dir,
+                    problem="bw-heur:fn" if fn else "bw-heur",
+                    opt=opt,
+                    num_arms=num_arms,
+                    num_replications=num_reps,
+                    num_rounds=num_rounds,
+                    noise=None,
+                    num_denoise=num_denoise,
+                    num_denoise_passive=num_denoise_passive,
+                )
+            )
+
+    return cmds
+
+
 _TIMING_SWEEP_ENV_TAGS = (
     ("tlunar:fn", 50, 30, 1, 50, None, True),
     ("tlunar", 1, 10000, 1, 1, 30, False),
