@@ -355,7 +355,7 @@ def prep_sweep_p(results_dir):
 
 
 def prep_push(results_dir):
-    exp_dir = "exp_ennbo_push"
+    exp_dir = "exp_ennbo_rebuttal_push"
 
     opts = [
         # "random",
@@ -365,14 +365,17 @@ def prep_push(results_dir):
         # "turbo-enn-fit-ucb",
         # "turbo-enn-p",
         # "cma",
-        "turbo-one-ucb",
-        "turbo-one-nds",
+        # "smac",
+        "dngo",
+        "vecchia",
+        # "turbo-one-ucb",
+        # "turbo-one-nds",
     ]
 
     cmds = []
     for opt in opts:
         for num_arms, num_rounds, num_denoise, num_denoise_passive, fn in [
-            (1, 10000, 1, 30, False),
+            # (1, 10000, 1, 30, False),
             (50, 300, 50, None, True),
         ]:
             # prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None):
@@ -411,9 +414,9 @@ def prep_tlunar(results_dir):
         # "turbo-enn-p",
         # "ucb",
         # "lei",
-        "smac",
+        # "smac",
         # "dngo",
-        # "vecchia",
+        "vecchia",
         # "ucb:Msparse",
         # "turbo-one-ucb",
         # "turbo-one-nds",
@@ -452,19 +455,21 @@ def prep_hop(results_dir):
     opts = [
         # "random",
         "optuna",
+        # "smac",
+        # "vecchia",
         # "cma",
         # "turbo-zero",
         # "turbo-one",
         # "turbo-enn-fit-ucb",
         # "turbo-enn-p",
-        "turbo-one-ucb",
-        "turbo-one-nds",
+        # "turbo-one-ucb",
+        # "turbo-one-nds",
     ]
 
     cmds = []
     for opt in opts:
         for num_arms, num_rounds, num_reps, num_denoise, num_denoise_passive, fn in [
-            (1, 10000, 30, None, 30, False),
+            # (1, 10000, 30, None, 30, False),
             (50, 1000, 30, 10, None, True),
         ]:
             # prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None):
@@ -501,19 +506,19 @@ def prep_bw(results_dir):
         # "turbo-enn-p",
         # "ucb",
         # "lei",
-        # "smac",
+        "smac",
         # "dngo",
         # "vecchia",
         # "ucb:Msparse",
-        "turbo-one-ucb",
-        "turbo-one-nds",
+        # "turbo-one-ucb",
+        # "turbo-one-nds",
     ]
 
     cmds = []
     for opt in opts:
         for num_arms, num_rounds, num_reps, num_denoise, num_denoise_passive, fn in [
-            # (1, 10000, 30, None, 30, False),
-            (50, 100, 30, 30, None, True),
+            (1, 10000, 30, None, 30, False),
+            # (50, 100, 30, 30, None, True),
         ]:
             # prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None):
             if num_arms == 1 and opt == "cma":
@@ -587,8 +592,11 @@ def prep_dna(results_dir):
         # "turbo-one",
         # "turbo-enn-fit-ucb",
         # "turbo-enn-p",
-        "turbo-one-ucb",
-        "turbo-one-nds",
+        # "turbo-one-ucb",
+        "smac",
+        "vecchia",
+        "dngo",
+        # "turbo-one-nds",
     ]
 
     cmds = []
