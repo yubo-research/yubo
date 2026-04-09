@@ -180,6 +180,8 @@ def test_kiss_cov_modal_collect_and_modal_learn(monkeypatch):
     import experiments.modal_collect as modal_collect
     import experiments.modal_learn as modal_learn
 
+    monkeypatch.setattr(modal_learn, "PERSISTED_KEY_COUNT", 3)
+
     class _Call:
         def get(self, timeout):
             assert timeout == 5

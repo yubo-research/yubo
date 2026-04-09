@@ -131,33 +131,15 @@ def test_batches_stop_branch(monkeypatch, capsys):
     assert stopped == ["test"]
 
 
-def test_stop_notfounderror_is_handled_per_function(monkeypatch, capsys):
-    """Test that NotFoundError is handled per-function by stop().
-
-    When a function raises NotFoundError, stop() should print a per-function
-    "not found" message and continue trying remaining functions.
-    """
-    import modal.exception
-
-    class _NotFoundError(Exception):
-        pass
-
-    calls_to_from_name = []
-
-    def _raise_not_found(app_name, func_name):
-        calls_to_from_name.append((app_name, func_name))
-        raise _NotFoundError(f"Function not found: {func_name}")
-
-    monkeypatch.setattr(modal.exception, "NotFoundError", _NotFoundError)
-    monkeypatch.setattr(mb.modal.Function, "from_name", _raise_not_found)
-    monkeypatch.setattr(mb.modal.Dict, "delete", lambda name: None)
+def test_stop_delegates_to_clean_up(monkeypatch, capsys):
+    """stop() only clears Modal dicts; app stop is done by ops/modal_batches.py CLI."""
+    deleted = []
+    monkeypatch.setattr(mb.modal.Dict, "delete", lambda name: deleted.append(name))
 
     mb.stop("missing_app")
 
     captured = capsys.readouterr()
-    # Each function should get a "not found" message
-    assert "modal_batches_worker: not found" in captured.out
-    assert "modal_batches_resubmitter: not found" in captured.out
-    assert "modal_batch_deleter: not found" in captured.out
-    # All functions should be attempted
-    assert len(calls_to_from_name) == 3
+    assert "batches_dict_missing_app" in deleted
+    assert "submitted_dict_missing_app" in deleted
+    assert "CLEANUP: deleted dict name=batches_dict_missing_app" in captured.out
+    assert "CLEANUP: deleted dict name=submitted_dict_missing_app" in captured.out

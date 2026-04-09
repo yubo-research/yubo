@@ -786,8 +786,8 @@ def prep_sweep_p_bw(results_dir):
     cmds = []
     for opt in opts:
         for num_arms, num_rounds, num_reps, num_denoise, num_denoise_passive, fn in [
-            # (1, 10000, 30, None, 30, False),
-            (50, 100, 30, 30, None, True),
+            (1, 10000, 30, None, 30, False),
+            # (50, 100, 30, 30, None, True),
         ]:
             # prep_args_1(results_dir, exp_dir, problem, opt, num_arms, num_replications, num_rounds, noise=None, num_denoise=None):
             if num_arms == 1 and opt == "cma":
