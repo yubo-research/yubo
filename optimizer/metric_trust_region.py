@@ -7,8 +7,10 @@ import numpy as np
 from enn.turbo.config.candidate_rv import CandidateRV
 from enn.turbo.turbo_trust_region import TurboTrustRegion
 
-import optimizer.trust_region_jax as _jax_tr
+import optimizer.trust_region_accel as _accel
 from optimizer.pc_rotation import compute_labcat_weighted_pca
+from optimizer.trust_region_math import _mahalanobis_sq_from_factor
+from optimizer.trust_region_sampling_utils import _apply_block_raasp_mask
 from optimizer.trust_region_utils import (
     _AxisAlignedStepSampler,
     _LengthPolicy,
@@ -25,6 +27,10 @@ def _apply_fixed_length_to_tr(tr: TurboTrustRegion) -> None:
         tr.length = float(fixed_length)
 
 
+def _metric_fixed_length(tr: TurboTrustRegion) -> float | None:
+    return getattr(tr.config, "fixed_length", None)
+
+
 @dataclass
 class MetricShapedTrustRegion(TurboTrustRegion):
     """TuRBO-derived trust-region state with metric-shaped candidate geometry.
@@ -37,12 +43,14 @@ class MetricShapedTrustRegion(TurboTrustRegion):
     candidate_rv: CandidateRV = CandidateRV.SOBOL
     metric_sampler: str = "full"
     metric_rank: int | None = None
-    use_jax: bool = False
+    use_accel: bool = False
     uses_custom_candidate_gen: bool = field(default=True, init=False)
     _geometry_model: _MetricGeometryModel = field(init=False, repr=False)
     _step_sampler: _AxisAlignedStepSampler = field(init=False, repr=False)
     _length_policy: _LengthPolicy = field(init=False, repr=False)
     has_geometry: bool = field(default=False, init=False)
+    module_block_slices: tuple[tuple[int, int], ...] = field(default=(), init=False, repr=False)
+    module_block_prob: float = field(default=0.0, init=False, repr=False)
 
     def __post_init__(self) -> None:
         super().__post_init__()
@@ -52,11 +60,11 @@ class MetricShapedTrustRegion(TurboTrustRegion):
             metric_rank=self.metric_rank,
             pc_rotation_mode=getattr(self.config, "pc_rotation_mode", None),
             pc_rank=getattr(self.config, "pc_rank", None),
-            use_jax=self.use_jax,
+            use_accel=self.use_accel,
         )
         self._step_sampler = _AxisAlignedStepSampler(
             default_candidate_rv=self.candidate_rv,
-            use_jax=self.use_jax,
+            use_accel=self.use_accel,
         )
         self._length_policy = _LengthPolicy()
         self._sync_geometry_flags()
@@ -64,9 +72,6 @@ class MetricShapedTrustRegion(TurboTrustRegion):
 
     def _sync_geometry_flags(self) -> None:
         self.has_geometry = bool(self._geometry_model.has_geometry)
-
-    def _fixed_length(self) -> float | None:
-        return getattr(self.config, "fixed_length", None)
 
     def restart(self, rng: Any | None = None) -> None:
         super().restart(rng=rng)
@@ -81,15 +86,15 @@ class MetricShapedTrustRegion(TurboTrustRegion):
         adjusted_length = self._length_policy.apply_after_super_update(
             current_length=float(self.length),
             base_length=base_length,
-            fixed_length=self._fixed_length(),
+            fixed_length=_metric_fixed_length(self),
             length_max=float(self.config.length_max),
         )
-        if self._fixed_length() is None:
+        if _metric_fixed_length(self) is None:
             self.length = float(adjusted_length)
         _apply_fixed_length_to_tr(self)
 
     def needs_restart(self) -> bool:
-        if self._fixed_length() is not None:
+        if _metric_fixed_length(self) is not None:
             return False
         return super().needs_restart()
 
@@ -130,6 +135,9 @@ class MetricShapedTrustRegion(TurboTrustRegion):
     def needs_gradient_signal(self) -> bool:
         return False
 
+    def needs_local_geometry(self) -> bool:
+        return True
+
     def observe_local_geometry(
         self,
         *,
@@ -162,7 +170,7 @@ class MetricShapedTrustRegion(TurboTrustRegion):
         x_center = np.asarray(x_center, dtype=float).reshape(-1)
         if x_center.shape != (num_dim,):
             raise ValueError((x_center.shape, num_dim))
-        cov_factor = self._geometry_model.cov_factor if self.use_jax and self._geometry_model.metric_sampler == "full" else None
+        cov_factor = self._geometry_model.cov_factor if self.use_accel and self._geometry_model.metric_sampler == "full" else None
         candidates = self._step_sampler.generate(
             x_center=x_center,
             length=float(self.length),
@@ -173,8 +181,18 @@ class MetricShapedTrustRegion(TurboTrustRegion):
             sobol_engine=sobol_engine,
             num_pert=num_pert,
             build_step=self._geometry_model.build_step,
+            build_candidates=self._geometry_model.build_candidates if self.use_accel else None,
             cov_factor=cov_factor,
         )
+        if self.module_block_slices:
+            candidates = _apply_block_raasp_mask(
+                candidates,
+                rng=rng,
+                candidate_rv=candidate_rv,
+                sobol_engine=sobol_engine,
+                block_slices=self.module_block_slices,
+                block_prob=self.module_block_prob,
+            )
         if candidates.shape != (num_candidates, num_dim):
             raise RuntimeError((candidates.shape, (num_candidates, num_dim)))
         return candidates
@@ -185,8 +203,18 @@ class MetricShapedTrustRegion(TurboTrustRegion):
         )
 
     def _mahalanobis_sq(self, delta: np.ndarray, cov: np.ndarray) -> np.ndarray:
-        if self.use_jax:
-            return _jax_tr.mahalanobis_sq_from_cov(delta, cov)
+        if self._geometry_model.metric_sampler == "low_rank":
+            return self._geometry_model.mahalanobis_sq(
+                delta,
+                jitter=float(getattr(self.config, "shape_jitter", 1e-6)),
+            )
+        factor = np.asarray(self._geometry_model.cov_factor, dtype=float)
+        if factor.ndim == 2 and factor.shape[0] == factor.shape[1]:
+            if self.use_accel:
+                return _accel.mahalanobis_sq_from_factor(delta, factor)
+            return _mahalanobis_sq_from_factor(delta, factor)
+        if self.use_accel:
+            return _accel.mahalanobis_sq_from_cov(delta, cov)
         return _mahalanobis_sq(delta, cov)
 
     def set_acceptance_ratio(self, *, pred: float, act: float, boundary_hit: bool) -> None:
@@ -199,15 +227,6 @@ class MetricShapedTrustRegion(TurboTrustRegion):
 
 @dataclass
 class ENNMetricShapedTrustRegion(MetricShapedTrustRegion):
-    has_enn_geometry: bool = field(default=False, init=False)
-
-    def _sync_geometry_flags(self) -> None:
-        super()._sync_geometry_flags()
-        self.has_enn_geometry = self.has_geometry
-
-    def set_geometry(self, delta_x: np.ndarray | Any, weights: np.ndarray | Any) -> None:
-        super().set_geometry(delta_x=delta_x, weights=weights)
-
     def set_gradient_geometry(
         self,
         delta_x: np.ndarray | Any,
@@ -225,18 +244,8 @@ class ENNMetricShapedTrustRegion(MetricShapedTrustRegion):
         self._sync_geometry_flags()
 
     def set_analytic_gradient_geometry(self, grad: np.ndarray | Any) -> None:
-        """Set geometry from analytic gradient ∇μ(x). Elongates trust region along gradient."""
-        g = np.asarray(grad, dtype=float).reshape(-1)
-        if g.shape[0] != self.num_dim or not np.any(np.isfinite(g)):
-            return
-        g_norm = float(np.linalg.norm(g))
-        if g_norm <= 0.0:
-            return
-        self.set_gradient_geometry(
-            delta_x=g.reshape(1, -1),
-            delta_y=np.array([g_norm]),
-            weights=np.array([1.0]),
-        )
+        self._geometry_model.set_analytic_gradient(grad)
+        self._sync_geometry_flags()
 
     def needs_gradient_signal(self) -> bool:
         geometry = str(getattr(self.config, "geometry", ""))

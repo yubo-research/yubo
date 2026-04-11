@@ -15,6 +15,7 @@ from rl.policy_backbone import (
     DiscreteActorPolicySpec,
     GaussianActorBackbonePolicy,
 )
+from rl.shared_gaussian_actor import get_gaussian_actor_spec
 
 
 def test_actor_policy_spec():
@@ -80,6 +81,131 @@ def test_gaussian_actor_backbone_policy():
     p = policy.get_params()
     policy.set_params(p)
     np.testing.assert_allclose(policy.get_params(), p)
+
+
+def test_gaussian_actor_backbone_policy_reset_state_resets_normalizer():
+    gym_conf = SimpleNamespace(state_space=SimpleNamespace(shape=(4,)))
+    env_conf = SimpleNamespace(
+        problem_seed=0,
+        gym_conf=gym_conf,
+        state_space=gym_conf.state_space,
+        action_space=SimpleNamespace(shape=(2,)),
+        ensure_spaces=lambda: None,
+    )
+    policy = GaussianActorBackbonePolicy(env_conf, variant="rl-gauss-tanh")
+    state = np.ones(4, dtype=np.float32)
+
+    first_action = policy(state)
+    assert policy._normalizer._num > 0
+
+    policy.reset_state()
+    assert policy._normalizer._num == 0.0
+
+    second_action = policy(state)
+    np.testing.assert_allclose(first_action, second_action)
+
+
+def test_gaussian_actor_backbone_policy_deterministic_fast_path_skips_sampling():
+    gym_conf = SimpleNamespace(state_space=SimpleNamespace(shape=(4,)))
+    env_conf = SimpleNamespace(
+        problem_seed=0,
+        gym_conf=gym_conf,
+        state_space=gym_conf.state_space,
+        action_space=SimpleNamespace(shape=(2,)),
+        ensure_spaces=lambda: None,
+    )
+    policy = GaussianActorBackbonePolicy(env_conf, variant="rl-gauss-tanh")
+
+    class _ActorStub(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.forward_calls = 0
+            self.sample_calls = 0
+
+        def forward(self, x):
+            self.forward_calls += 1
+            return torch.ones((2,), dtype=torch.float32) * 0.25
+
+        def sample_action(self, *args, **kwargs):
+            self.sample_calls += 1
+            raise AssertionError("deterministic_eval=True should not call sample_action")
+
+    stub = _ActorStub()
+    policy.actor = stub  # type: ignore[assignment]
+    state = np.ones(4, dtype=np.float32)
+    action = policy(state)
+    assert stub.forward_calls == 1
+    assert stub.sample_calls == 0
+    np.testing.assert_allclose(action, np.array([0.25, 0.25], dtype=np.float32))
+
+
+def test_gaussian_actor_backbone_policy_hardgate_variant():
+    gym_conf = SimpleNamespace(state_space=SimpleNamespace(shape=(4,)))
+    env_conf = SimpleNamespace(
+        problem_seed=0,
+        gym_conf=gym_conf,
+        state_space=gym_conf.state_space,
+        action_space=SimpleNamespace(shape=(2,)),
+        ensure_spaces=lambda: None,
+    )
+    backbone, head = get_gaussian_actor_spec("rl-hardgate")
+    assert backbone.name == "hardgate_residual_mlp"
+    assert backbone.hidden_sizes == (16, 16)
+    assert head.hidden_sizes == ()
+
+    policy = GaussianActorBackbonePolicy(env_conf, variant="rl-hardgate")
+    state = np.ones(4, dtype=np.float32)
+    action = policy(state)
+    assert action.shape == (2,)
+    assert -1.01 <= action.min() <= action.max() <= 1.01
+    assert policy.num_params() > 0
+    p = policy.get_params()
+    policy.set_params(p)
+    np.testing.assert_allclose(policy.get_params(), p)
+
+
+def test_gaussian_actor_backbone_policy_hardgate_small_variant():
+    gym_conf = SimpleNamespace(state_space=SimpleNamespace(shape=(4,)))
+    env_conf = SimpleNamespace(
+        problem_seed=0,
+        gym_conf=gym_conf,
+        state_space=gym_conf.state_space,
+        action_space=SimpleNamespace(shape=(2,)),
+        ensure_spaces=lambda: None,
+    )
+    backbone, head = get_gaussian_actor_spec("rl-hardgate-small")
+    assert backbone.name == "hardgate_residual_mlp"
+    assert backbone.hidden_sizes == (16, 8)
+    assert backbone.activation == "silu"
+    assert head.hidden_sizes == ()
+
+    policy = GaussianActorBackbonePolicy(env_conf, variant="rl-hardgate-small")
+    state = np.ones(4, dtype=np.float32)
+    action = policy(state)
+    assert action.shape == (2,)
+    assert -1.01 <= action.min() <= action.max() <= 1.01
+
+
+def test_gaussian_actor_backbone_policy_hardgate_large_variant():
+    gym_conf = SimpleNamespace(state_space=SimpleNamespace(shape=(4,)))
+    env_conf = SimpleNamespace(
+        problem_seed=0,
+        gym_conf=gym_conf,
+        state_space=gym_conf.state_space,
+        action_space=SimpleNamespace(shape=(2,)),
+        ensure_spaces=lambda: None,
+    )
+    backbone, head = get_gaussian_actor_spec("rl-hardgate-large-tanh")
+    assert backbone.name == "hardgate_residual_mlp"
+    assert backbone.hidden_sizes == (64, 64)
+    assert backbone.activation == "tanh"
+    assert head.hidden_sizes == ()
+
+    policy = GaussianActorBackbonePolicy(env_conf, variant="rl-hardgate-large-tanh")
+    state = np.ones(4, dtype=np.float32)
+    action = policy(state)
+    assert action.shape == (2,)
+    assert -1.01 <= action.min() <= action.max() <= 1.01
 
 
 def test_get_env_conf_gauss_uses_gaussian_actor_backbone():

@@ -52,8 +52,12 @@ class SharedGaussianActorModule(nn.Module):
 
 _GAUSSIAN_ACTOR_SPECS: dict[str, tuple[BackboneSpec, HeadSpec]] = {
     "rl-gauss": (BackboneSpec("mlp", (64, 64), "silu", layer_norm=True), HeadSpec()),
-    "rl-gauss-tanh": (BackboneSpec("mlp", (16, 16), "tanh", layer_norm=False), HeadSpec()),
+    "rl-gauss-tanh": (BackboneSpec("mlp", (16, 16), "tanh", layer_norm=True), HeadSpec()),
     "rl-gauss-small": (BackboneSpec("mlp", (32, 16), "silu", layer_norm=True), HeadSpec()),
+    "rl-gauss-large-tanh": (BackboneSpec("mlp", (256, 256), "tanh", layer_norm=True), HeadSpec()),
+    "rl-hardgate": (BackboneSpec("hardgate_residual_mlp", (16, 16), "tanh", layer_norm=True), HeadSpec()),
+    "rl-hardgate-small": (BackboneSpec("hardgate_residual_mlp", (16, 8), "silu", layer_norm=True), HeadSpec()),
+    "rl-hardgate-large-tanh": (BackboneSpec("hardgate_residual_mlp", (64, 64), "tanh", layer_norm=True), HeadSpec()),
 }
 
 

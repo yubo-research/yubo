@@ -12,7 +12,7 @@ def gaussian_policy_factory(variant: str, **kwargs: Any):
     return GaussianActorBackbonePolicyFactory(
         variant=variant,
         deterministic_eval=True,
-        squash_mode="clip",
+        squash_mode="tanh_clip",
         init_log_std=-0.5,
         **dict(kwargs),
     )

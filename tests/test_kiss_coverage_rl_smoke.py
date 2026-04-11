@@ -136,6 +136,7 @@ def test_import_pufferlib_modules_from_sys_modules(monkeypatch):
 def test_shared_gaussian_actor_factory_and_variant_validation():
     backbone, head = get_gaussian_actor_spec("rl-gauss-tanh")
     assert backbone.name == "mlp"
+    assert backbone.layer_norm is True
     assert isinstance(head.hidden_sizes, tuple)
     actor = build_shared_gaussian_actor(4, 2, variant="rl-gauss-tanh")
     out = actor(torch.zeros((1, 4), dtype=torch.float32))

@@ -217,12 +217,24 @@ class GaussianActorBackbonePolicy(PolicyParamsMixin, nn.Module):
             return out.clamp(-1, 1)
         return out
 
+    def reset_state(self):
+        self._normalizer.reset()
+
     def __call__(self, state):
         state = self._normalize(state)
         state_t = torch.as_tensor(state, dtype=torch.float32)
+        squeeze = False
+        if state_t.ndim == 1:
+            state_t = state_t.unsqueeze(0)
+            squeeze = True
         with torch.inference_mode():
-            raw_action_t, _, _ = self.actor.sample_action(state_t, deterministic=self._deterministic_eval)
-            action_t = self._postprocess_action(raw_action_t)
+            if self._deterministic_eval:
+                action_t = self._postprocess_action(self.actor.forward(state_t))
+            else:
+                raw_action_t, _, _ = self.actor.sample_action(state_t, deterministic=False)
+                action_t = self._postprocess_action(raw_action_t)
+        if squeeze and action_t.ndim > 1:
+            action_t = action_t.squeeze(0)
         return action_t.detach().cpu().numpy()
 
 

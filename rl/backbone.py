@@ -43,6 +43,30 @@ def _activation(name: str) -> type[nn.Module]:
     raise ValueError(f"Unsupported activation '{name}'.")
 
 
+class _HardGateResidualMLP(nn.Module):
+    def __init__(self, spec: BackboneSpec, input_dim: int):
+        super().__init__()
+        hidden_sizes = tuple(int(h) for h in spec.hidden_sizes)
+        if not hidden_sizes:
+            raise ValueError("hardgate_residual_mlp requires at least one hidden size.")
+        branch_spec = BackboneSpec(name="mlp", hidden_sizes=hidden_sizes, activation=spec.activation, layer_norm=False)
+        self._input_norm = nn.LayerNorm(input_dim, elementwise_affine=True) if spec.layer_norm else nn.Identity()
+        self._main, main_dim = _build_mlp(branch_spec, input_dim)
+        self._residual, residual_dim = _build_mlp(branch_spec, input_dim)
+        self._gate = nn.Linear(input_dim, 1)
+        if main_dim != residual_dim:
+            raise ValueError((main_dim, residual_dim))
+        init_linear_layers(self._main, gain=0.5)
+        init_linear_layers(self._residual, gain=0.5)
+        init_linear_layers(self._gate, gain=0.5)
+        self._out_dim = int(main_dim)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self._input_norm(x)
+        gate = (self._gate(x) >= 0).to(dtype=x.dtype)
+        return self._main(x) + gate * self._residual(x)
+
+
 @register_backbone("nature_cnn")
 def _build_nature_cnn(spec: BackboneSpec, input_dim: int) -> tuple[nn.Module, int]:
     return _build_nature_cnn_with_channels(spec, input_dim, in_channels=3)
@@ -86,6 +110,12 @@ def _build_mlp(spec: BackboneSpec, input_dim: int) -> tuple[nn.Module, int]:
         layers.append(nn.Linear(dims[i], dims[i + 1]))
         layers.append(act())
     return (nn.Sequential(*layers), int(dims[-1]))
+
+
+@register_backbone("hardgate_residual_mlp")
+def _build_hardgate_residual_mlp(spec: BackboneSpec, input_dim: int) -> tuple[nn.Module, int]:
+    module = _HardGateResidualMLP(spec, input_dim)
+    return module, int(module._out_dim)
 
 
 def build_backbone(spec: BackboneSpec, input_dim: int) -> tuple[nn.Module, int]:

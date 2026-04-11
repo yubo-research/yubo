@@ -79,6 +79,23 @@ def _mahalanobis_sq(delta: np.ndarray, cov: np.ndarray) -> np.ndarray:
     return np.sum(delta * solved, axis=1)
 
 
+def _mahalanobis_sq_from_factor(delta: np.ndarray, factor: np.ndarray) -> np.ndarray:
+    delta_arr = np.asarray(delta, dtype=float)
+    factor_arr = np.asarray(factor, dtype=float)
+    if factor_arr.ndim != 2 or factor_arr.shape[0] != factor_arr.shape[1]:
+        raise ValueError(f"factor must be square, got {factor_arr.shape}")
+    if delta_arr.ndim != 2 or delta_arr.shape[1] != factor_arr.shape[0]:
+        raise ValueError((delta_arr.shape, factor_arr.shape))
+    solved = np.linalg.solve(factor_arr, delta_arr.T).T
+    return np.sum(solved * solved, axis=1)
+
+
+def _mahalanobis_sq_from_inv(delta: np.ndarray, cov_inv: np.ndarray) -> np.ndarray:
+    delta_array = np.asarray(delta, dtype=float)
+    cov_inv_array = np.asarray(cov_inv, dtype=float)
+    return np.einsum("nd,de,ne->n", delta_array, cov_inv_array, delta_array)
+
+
 def _clip_and_rescale_eigs(
     eigvals: np.ndarray,
     *,
@@ -117,6 +134,48 @@ def _full_factor(
     return eigvecs * np.sqrt(eigvals + eps).reshape(1, -1)
 
 
+def _low_rank_factor_from_cov(
+    cov: np.ndarray,
+    *,
+    dim: int,
+    lam_min: float,
+    lam_max: float,
+    eps: float,
+    rank_cap: int | None,
+) -> _LowRankFactor | None:
+    try:
+        eigvals, eigvecs = np.linalg.eigh(np.asarray(cov, dtype=float))
+    except np.linalg.LinAlgError:
+        return None
+    order = np.argsort(eigvals)[::-1]
+    eigvals = np.maximum(eigvals[order], 0.0)
+    eigvecs = eigvecs[:, order]
+    if eigvals.size == 0 or not np.all(np.isfinite(eigvals)) or not np.all(np.isfinite(eigvecs)):
+        return None
+    r = int(min(dim, eigvals.size))
+    if rank_cap is not None:
+        r = min(r, max(int(rank_cap), 0))
+    if r <= 0:
+        return None
+    if r < eigvals.size:
+        alpha0 = float(np.mean(eigvals[r:]))
+    else:
+        alpha0 = float(np.min(eigvals))
+    alpha0 = float(np.clip(alpha0, lam_min, lam_max))
+    lam = np.maximum(eigvals[:r] - alpha0, 0.0)
+    total = alpha0 * float(dim) + float(np.sum(lam))
+    if not np.isfinite(total) or total <= 0.0:
+        return None
+    scale = float(dim) / total
+    alpha = alpha0 * scale
+    lam = lam * scale
+    return _LowRankFactor(
+        sqrt_alpha=float(np.sqrt(max(alpha, 0.0))),
+        basis=eigvecs[:, :r],
+        sqrt_vals=np.sqrt(lam + eps),
+    )
+
+
 def _low_rank_factor(
     centered: np.ndarray,
     weights: np.ndarray,
@@ -128,21 +187,42 @@ def _low_rank_factor(
     rank_cap: int | None,
 ) -> _LowRankFactor | None:
     b = centered * np.sqrt(weights).reshape(-1, 1)
-    try:
-        _u, svals, vt = np.linalg.svd(b, full_matrices=False)
-    except np.linalg.LinAlgError:
-        return None
-    if svals.size == 0 or not np.all(np.isfinite(svals)):
-        return None
-    lam_all = np.square(svals)
-    if not np.all(np.isfinite(lam_all)):
+    num_samples = int(b.shape[0])
+    num_dim = int(b.shape[1])
+    if num_dim <= num_samples:
+        try:
+            eigvals, eigvecs = np.linalg.eigh(b.T @ b)
+        except np.linalg.LinAlgError:
+            return None
+        order = np.argsort(eigvals)[::-1]
+        lam_all = np.maximum(eigvals[order], 0.0)
+        basis_all = eigvecs[:, order]
+    else:
+        try:
+            eigvals, eigvecs = np.linalg.eigh(b @ b.T)
+        except np.linalg.LinAlgError:
+            return None
+        order = np.argsort(eigvals)[::-1]
+        lam_all = np.maximum(eigvals[order], 0.0)
+        sample_basis = eigvecs[:, order]
+        positive = lam_all > 1e-12
+        lam_all = lam_all[positive]
+        sample_basis = sample_basis[:, positive]
+        if lam_all.size == 0:
+            return None
+        basis_all = (b.T @ sample_basis) / np.sqrt(lam_all).reshape(1, -1)
+        norms = np.linalg.norm(basis_all, axis=0)
+        valid = norms > 1e-12
+        lam_all = lam_all[valid]
+        basis_all = basis_all[:, valid] / norms[valid].reshape(1, -1)
+    if lam_all.size == 0 or not np.all(np.isfinite(lam_all)) or not np.all(np.isfinite(basis_all)):
         return None
     r = int(min(dim, lam_all.size, centered.shape[0]))
     if rank_cap is not None:
         r = min(r, max(int(rank_cap), 0))
     if r <= 0:
         return None
-    v = vt[:r].T
+    basis = basis_all[:, :r]
     lam = lam_all[:r]
     total = float(np.sum(lam))
     if not np.isfinite(total) or total <= 0.0:
@@ -159,7 +239,7 @@ def _low_rank_factor(
     lam = lam * scale
     sqrt_alpha = float(np.sqrt(alpha))
     sqrt_lam = np.sqrt(lam + eps)
-    return _LowRankFactor(sqrt_alpha=sqrt_alpha, basis=v, sqrt_vals=sqrt_lam)
+    return _LowRankFactor(sqrt_alpha=sqrt_alpha, basis=basis, sqrt_vals=sqrt_lam)
 
 
 def _add_sparse_axis(step: np.ndarray, z: np.ndarray, scale: float) -> None:

@@ -15,7 +15,7 @@ import numpy as np
 from enn.turbo.config.candidate_rv import CandidateRV
 from enn.turbo.turbo_utils import generate_raasp_candidates
 
-import optimizer.trust_region_jax as _jax_tr
+import optimizer.trust_region_accel as _accel
 from optimizer.pc_rotation import PCRotationMode, PCRotationResult
 from optimizer.trust_region_math import (
     _add_sparse_axis,
@@ -24,76 +24,32 @@ from optimizer.trust_region_math import (
     _ensure_spd,
     _full_factor,
     _low_rank_factor,
+    _low_rank_factor_from_cov,
     _LowRankFactor,
     _mahalanobis_sq,
+    _mahalanobis_sq_from_factor,
+    _mahalanobis_sq_from_inv,
     _normalize_weights,
     _ray_scale_to_unit_box,
     _trace_normalize,
+)
+from optimizer.trust_region_sampling_utils import (
+    _candidate_rv_name,
+    _draw_sobol_prefix,
+    _full_factor_from_direction,
+    _generate_raasp_candidates_fast_sobol,
+    _generate_raasp_candidates_fast_uniform,
+    _low_rank_factor_from_direction,
+    _low_rank_mahalanobis_sq,
+    _low_rank_symmetric_sqrt_step,
+    _prepare_gradient_geometry_inputs,
+    _sample_whitened_inputs,
+    _whitened_sample_numpy,
 )
 
 SamplerKind = Literal["full", "low_rank"]
 RadialMode = Literal["ball_uniform", "boundary"]
 UpdateMode = Literal["option_a", "option_b", "option_c"]
-
-
-def _sample_box_perturbations(
-    lb: np.ndarray,
-    ub: np.ndarray,
-    num_candidates: int,
-    *,
-    rng: Any,
-    candidate_rv: CandidateRV,
-    sobol_engine: Any | None,
-) -> np.ndarray:
-    lb_array = np.asarray(lb, dtype=float)
-    ub_array = np.asarray(ub, dtype=float)
-    if candidate_rv == CandidateRV.SOBOL:
-        if sobol_engine is None:
-            raise ValueError("sobol_engine required for CandidateRV.SOBOL")
-        n = int(num_candidates)
-        n_sobol = 1 if n <= 0 else 1 << (n - 1).bit_length()
-        samples = sobol_engine.random(n_sobol)[:n]
-        return lb_array + (ub_array - lb_array) * samples
-    return lb_array + (ub_array - lb_array) * rng.uniform(0.0, 1.0, size=(num_candidates, lb_array.size))
-
-
-def _generate_block_raasp_candidates(
-    center: np.ndarray,
-    lb: np.ndarray,
-    ub: np.ndarray,
-    num_candidates: int,
-    *,
-    rng: Any,
-    candidate_rv: CandidateRV,
-    sobol_engine: Any | None,
-    block_slices: tuple[tuple[int, int], ...],
-    block_prob: float,
-) -> np.ndarray:
-    x_center = np.asarray(center, dtype=float).reshape(-1)
-    num_dim = int(x_center.size)
-    num_blocks = int(len(block_slices))
-    if num_blocks <= 0:
-        raise ValueError("block_slices must be non-empty")
-    prob_perturb = float(min(max(block_prob, 0.0), 1.0))
-    ks = np.maximum(rng.binomial(num_blocks, prob_perturb, size=num_candidates), 1)
-    mask = np.zeros((num_candidates, num_dim), dtype=bool)
-    for i in range(int(num_candidates)):
-        block_idx = rng.choice(num_blocks, size=int(ks[i]), replace=False)
-        for j in np.asarray(block_idx, dtype=np.int64):
-            start, end = block_slices[int(j)]
-            mask[i, int(start) : int(end)] = True
-    pert = _sample_box_perturbations(
-        np.asarray(lb, dtype=float),
-        np.asarray(ub, dtype=float),
-        int(num_candidates),
-        rng=rng,
-        candidate_rv=candidate_rv,
-        sobol_engine=sobol_engine,
-    )
-    candidates = np.tile(x_center, (int(num_candidates), 1))
-    if np.any(mask):
-        candidates[mask] = pert[mask]
-    return candidates
 
 
 @dataclass
@@ -103,12 +59,13 @@ class _MetricGeometryModel:
     metric_rank: int | None
     pc_rotation_mode: PCRotationMode | None = None
     pc_rank: int | None = None
-    use_jax: bool = False
+    use_accel: bool = False
     cov_factor: np.ndarray = field(init=False)
     low_rank: _LowRankFactor = field(init=False)
     has_geometry: bool = field(default=False, init=False)
     _cov_gen: int = field(default=0, init=False, repr=False)
     _cached_cov: np.ndarray | None = field(default=None, init=False, repr=False)
+    _cached_cov_inv: np.ndarray | None = field(default=None, init=False, repr=False)
 
     def __post_init__(self) -> None:
         self.reset()
@@ -123,6 +80,7 @@ class _MetricGeometryModel:
         self.has_geometry = False
         self._cov_gen += 1
         self._cached_cov = None
+        self._cached_cov_inv = None
 
     def set_geometry(self, delta_x: np.ndarray | Any, weights: np.ndarray | Any) -> None:
         dx = np.asarray(delta_x, dtype=float)
@@ -135,8 +93,10 @@ class _MetricGeometryModel:
             return
         mean = np.sum(w[:, None] * dx, axis=0)
         centered = dx - mean
-        cov = centered.T @ (w[:, None] * centered)
-        cov = _trace_normalize(cov, self.num_dim)
+        cov = None
+        if self.metric_sampler == "full":
+            cov = centered.T @ (w[:, None] * centered)
+            cov = _trace_normalize(cov, self.num_dim)
         self.update_from_cov(centered=centered, weights=w, cov=cov)
 
     def set_gradient_geometry(
@@ -147,42 +107,69 @@ class _MetricGeometryModel:
         *,
         eps_norm: float = 1e-12,
     ) -> None:
-        dx = np.asarray(delta_x, dtype=float)
-        if dx.ndim != 2 or dx.shape[0] == 0:
+        prepared = _prepare_gradient_geometry_inputs(
+            delta_x=delta_x,
+            delta_y=delta_y,
+            weights=weights,
+            num_dim=self.num_dim,
+            eps_norm=eps_norm,
+        )
+        if prepared is None:
             return
-        if dx.shape[1] != self.num_dim:
-            raise ValueError(f"delta_x has incompatible shape {dx.shape} for num_dim={self.num_dim}")
-        dy = np.asarray(delta_y, dtype=float).reshape(-1)
-        w = np.asarray(weights, dtype=float).reshape(-1)
-        if dy.shape[0] != dx.shape[0] or w.shape[0] != dx.shape[0]:
-            raise ValueError((dy.shape, w.shape, dx.shape))
-        w = _normalize_weights(w)
-        if w is None:
+        scaled_dx, w = prepared
+        cov = None
+        if self.metric_sampler == "full":
+            weighted = scaled_dx * np.sqrt(w).reshape(-1, 1)
+            cov = weighted.T @ weighted
+            cov = _trace_normalize(cov, self.num_dim)
+        self.update_from_cov(centered=scaled_dx, weights=w, cov=cov)
+
+    def set_analytic_gradient(self, grad: np.ndarray | Any) -> None:
+        g = np.asarray(grad, dtype=float).reshape(-1)
+        if g.shape[0] != self.num_dim or not np.any(np.isfinite(g)):
             return
-        norms = np.linalg.norm(dx, axis=1)
-        scale = np.abs(dy) / np.maximum(norms, float(eps_norm))
-        scale = np.where(np.isfinite(scale), scale, 0.0)
-        if not np.any(scale > 0.0):
+        g_norm = float(np.linalg.norm(g))
+        if g_norm <= 0.0:
             return
-        centered = dx * (np.sqrt(w) * scale).reshape(-1, 1)
-        cov = centered.T @ centered
-        cov = _trace_normalize(cov, self.num_dim)
-        self.update_from_cov(centered=centered, weights=w, cov=cov)
+        unit = g / g_norm
+        self._cov_gen += 1
+        self._cached_cov = None
+        self._cached_cov_inv = None
+        self.has_geometry = True
+        if self.metric_sampler == "full":
+            self.cov_factor = _full_factor_from_direction(
+                unit,
+                dim=self.num_dim,
+                lam_min=1e-4,
+                eps=1e-6,
+            )
+            return
+        if self.metric_sampler != "low_rank":
+            raise ValueError(f"Unknown metric_sampler: {self.metric_sampler!r}")
+        self.low_rank = _low_rank_factor_from_direction(
+            unit,
+            dim=self.num_dim,
+            eps=1e-6,
+        )
+        self.cov_factor = self.low_rank.basis * self.low_rank.sqrt_vals.reshape(1, -1)
 
     def update_from_cov(
         self,
         *,
         centered: np.ndarray,
         weights: np.ndarray,
-        cov: np.ndarray,
+        cov: np.ndarray | None,
     ) -> None:
         _ = centered, weights
         self._cov_gen += 1
         self._cached_cov = None
+        self._cached_cov_inv = None
         lam_min = 1e-4
         lam_max = 1e4
         eps = 1e-6
         if self.metric_sampler == "full":
+            if cov is None:
+                raise ValueError("cov is required for metric_sampler='full'")
             factor = _full_factor(cov, dim=self.num_dim, lam_min=lam_min, lam_max=lam_max, eps=eps)
             if factor is None:
                 return
@@ -192,15 +179,26 @@ class _MetricGeometryModel:
         if self.metric_sampler != "low_rank":
             raise ValueError(f"Unknown metric_sampler: {self.metric_sampler!r}")
         rank_cap = int(self.metric_rank) if self.metric_rank is not None else None
-        low_rank = _low_rank_factor(
-            centered,
-            weights,
-            dim=self.num_dim,
-            lam_min=lam_min,
-            lam_max=lam_max,
-            eps=eps,
-            rank_cap=rank_cap,
-        )
+        low_rank = None
+        if cov is not None:
+            low_rank = _low_rank_factor_from_cov(
+                cov,
+                dim=self.num_dim,
+                lam_min=lam_min,
+                lam_max=lam_max,
+                eps=eps,
+                rank_cap=rank_cap,
+            )
+        if low_rank is None:
+            low_rank = _low_rank_factor(
+                centered,
+                weights,
+                dim=self.num_dim,
+                lam_min=lam_min,
+                lam_max=lam_max,
+                eps=eps,
+                rank_cap=rank_cap,
+            )
         if low_rank is None:
             return
         self.low_rank = low_rank
@@ -224,6 +222,7 @@ class _MetricGeometryModel:
             return
         self._cov_gen += 1
         self._cached_cov = None
+        self._cached_cov_inv = None
         basis = np.asarray(rotation_result.basis, dtype=float)
         s = np.asarray(rotation_result.singular_values, dtype=float)
         if basis.shape[0] != self.num_dim or s.size != basis.shape[1]:
@@ -271,8 +270,8 @@ class _MetricGeometryModel:
 
     def build_step(self, z: np.ndarray, rng: Any) -> np.ndarray:
         if self.metric_sampler == "full":
-            if self.use_jax:
-                return _jax_tr.matmul(z, self.cov_factor.T)
+            if self.use_accel:
+                return _accel.matmul(z, self.cov_factor.T)
             return _apply_full_factor(z, self.cov_factor)
         if self.metric_sampler != "low_rank":
             raise ValueError(self.metric_sampler)
@@ -284,15 +283,61 @@ class _MetricGeometryModel:
             raise RuntimeError((basis.shape, sqrt_vals.shape))
         rank = int(sqrt_vals.shape[0])
         if rank == 0:
-            step = np.zeros((z.shape[0], self.num_dim), dtype=float)
+            step = np.asarray(z, dtype=float) * float(self.low_rank.sqrt_alpha)
         else:
             coeff = rng.uniform(-0.5, 0.5, size=(z.shape[0], rank)) * sqrt_vals.reshape(1, -1)
-            if self.use_jax:
-                step = _jax_tr.low_rank_step(coeff, basis)
+            if self.use_accel:
+                step = _accel.low_rank_step_with_sparse(
+                    coeff,
+                    basis,
+                    z,
+                    float(self.low_rank.sqrt_alpha),
+                )
             else:
                 step = coeff @ basis.T
-        _add_sparse_axis(step, z, float(self.low_rank.sqrt_alpha))
+                _add_sparse_axis(step, z, float(self.low_rank.sqrt_alpha))
         return step
+
+    def build_candidates(
+        self,
+        z: np.ndarray,
+        rng: Any,
+        x_center: np.ndarray,
+        length: float,
+    ) -> np.ndarray:
+        if self.metric_sampler == "full":
+            step = self.build_step(z, rng) * float(length)
+            if self.use_accel:
+                return _accel.clip_to_unit_box(np.asarray(x_center, dtype=float), step)
+            return _clip_to_unit_box(np.asarray(x_center, dtype=float), step)
+        if self.metric_sampler != "low_rank":
+            raise ValueError(self.metric_sampler)
+        basis = np.asarray(self.low_rank.basis, dtype=float)
+        sqrt_vals = np.asarray(self.low_rank.sqrt_vals, dtype=float)
+        if basis.ndim != 2 or basis.shape[0] != self.num_dim:
+            raise RuntimeError(basis.shape)
+        if sqrt_vals.ndim != 1 or basis.shape[1] != sqrt_vals.shape[0]:
+            raise RuntimeError((basis.shape, sqrt_vals.shape))
+        rank = int(sqrt_vals.shape[0])
+        sparse_scale = float(self.low_rank.sqrt_alpha)
+        if rank == 0:
+            step = np.asarray(z, dtype=float) * sparse_scale * float(length)
+            if self.use_accel:
+                return _accel.clip_to_unit_box(np.asarray(x_center, dtype=float), step)
+            return _clip_to_unit_box(np.asarray(x_center, dtype=float), step)
+        coeff = rng.uniform(-0.5, 0.5, size=(z.shape[0], rank)) * sqrt_vals.reshape(1, -1)
+        if self.use_accel:
+            return _accel.fused_low_rank_candidates(
+                coeff,
+                basis,
+                z,
+                sparse_scale,
+                np.asarray(x_center, dtype=float),
+                float(length),
+            )
+        step = coeff @ basis.T
+        _add_sparse_axis(step, z, sparse_scale)
+        return _clip_to_unit_box(np.asarray(x_center, dtype=float), step * float(length))
 
     def covariance_matrix(self, *, jitter: float) -> np.ndarray:
         if self._cached_cov is not None:
@@ -311,7 +356,19 @@ class _MetricGeometryModel:
                 cov = cov + (basis * lam.reshape(1, -1)) @ basis.T
             cov = _ensure_spd(cov, jitter=jitter)
         self._cached_cov = cov
+        self._cached_cov_inv = None
         return cov
+
+    def covariance_inverse(self, *, jitter: float) -> np.ndarray:
+        if self._cached_cov_inv is not None:
+            return self._cached_cov_inv
+        self._cached_cov_inv = np.linalg.inv(self.covariance_matrix(jitter=jitter))
+        return self._cached_cov_inv
+
+    def mahalanobis_sq(self, delta: np.ndarray, *, jitter: float) -> np.ndarray:
+        if self.metric_sampler == "low_rank":
+            return _low_rank_mahalanobis_sq(delta, self.low_rank, use_accel=self.use_accel)
+        return _mahalanobis_sq_from_inv(delta, self.covariance_inverse(jitter=jitter))
 
 
 @dataclass
@@ -328,6 +385,21 @@ class _TrueEllipsoidGeometryModel(_MetricGeometryModel):
         super().reset()
         self.shape_tick = 0
         self.ema_cov = None
+
+    def _condition_shape_covariance(self, cov: np.ndarray) -> np.ndarray:
+        mat = _trace_normalize(np.asarray(cov, dtype=float), self.num_dim)
+        mat = _ensure_spd(mat, jitter=float(self.shape_jitter))
+        if self.update_option != "option_b":
+            return mat
+        eigvals, eigvecs = np.linalg.eigh(mat)
+        eigvals = np.maximum(eigvals, 1e-12)
+        eig_max = float(np.max(eigvals))
+        if not np.isfinite(eig_max) or eig_max <= 0.0:
+            return mat
+        eig_min = max(eig_max / float(self.shape_kappa_max), 1e-12)
+        eigvals = np.clip(eigvals, eig_min, eig_max)
+        mat = (eigvecs * eigvals.reshape(1, -1)) @ eigvecs.T
+        return _trace_normalize(mat, self.num_dim)
 
     def set_geometry(self, delta_x: np.ndarray | Any, weights: np.ndarray | Any) -> None:
         super().set_geometry(delta_x=delta_x, weights=weights)
@@ -352,14 +424,7 @@ class _TrueEllipsoidGeometryModel(_MetricGeometryModel):
         mean = np.sum(w[:, None] * dx, axis=0)
         centered = dx - mean
         cov_hat = centered.T @ (w[:, None] * centered)
-        cov_hat = _trace_normalize(cov_hat, self.num_dim)
-        cov_hat = _ensure_spd(cov_hat, jitter=float(self.shape_jitter))
-        if self.update_option == "option_b":
-            eigvals, eigvecs = np.linalg.eigh(cov_hat)
-            eigvals = np.maximum(eigvals, 1e-10)
-            eigvals = np.clip(eigvals, np.max(eigvals) / float(self.shape_kappa_max), np.max(eigvals))
-            cov_hat = (eigvecs * eigvals.reshape(1, -1)) @ eigvecs.T
-            cov_hat = _trace_normalize(cov_hat, self.num_dim)
+        cov_hat = self._condition_shape_covariance(cov_hat)
         eta = float(self.shape_ema)
         if self.ema_cov is None:
             self.ema_cov = cov_hat
@@ -368,13 +433,14 @@ class _TrueEllipsoidGeometryModel(_MetricGeometryModel):
                 (1.0 - eta) * self.ema_cov + eta * cov_hat,
                 jitter=float(self.shape_jitter),
             )
+        self.ema_cov = self._condition_shape_covariance(self.ema_cov)
         self.update_from_cov(centered=centered, weights=w, cov=self.ema_cov)
 
 
 @dataclass(frozen=True)
 class _AxisAlignedStepSampler:
     default_candidate_rv: CandidateRV
-    use_jax: bool = False
+    use_accel: bool = False
 
     def generate(
         self,
@@ -388,6 +454,7 @@ class _AxisAlignedStepSampler:
         sobol_engine: Any | None,
         num_pert: int,
         build_step: Callable[[np.ndarray, Any], np.ndarray],
+        build_candidates: Callable[[np.ndarray, Any, np.ndarray, float], np.ndarray] | None = None,
         cov_factor: np.ndarray | None = None,
     ) -> np.ndarray:
         """Generate TuRBO-style RAASP candidates, then apply geometry transform.
@@ -399,26 +466,56 @@ class _AxisAlignedStepSampler:
         lb = -0.5 * np.ones(num_dim, dtype=float)
         ub = 0.5 * np.ones(num_dim, dtype=float)
         rv = self.default_candidate_rv if candidate_rv is None else candidate_rv
-        z = generate_raasp_candidates(
-            z_center,
-            lb,
-            ub,
-            num_candidates,
-            rng=rng,
-            candidate_rv=rv,
-            sobol_engine=sobol_engine,
-            num_pert=num_pert,
-        )
-        if self.use_jax and cov_factor is not None:
-            return _jax_tr.fused_metric_candidates(
+        rv_name = _candidate_rv_name(rv)
+        if self.use_accel and rv_name in {"uniform", "gpu_uniform"}:
+            z = _generate_raasp_candidates_fast_uniform(
+                z_center,
+                lb,
+                ub,
+                num_candidates,
+                rng=rng,
+                num_pert=num_pert,
+            )
+        elif self.use_accel and rv_name == "sobol":
+            if sobol_engine is None:
+                raise ValueError("sobol_engine required for CandidateRV.SOBOL")
+            z = _generate_raasp_candidates_fast_sobol(
+                z_center,
+                lb,
+                ub,
+                num_candidates,
+                rng=rng,
+                sobol_engine=sobol_engine,
+                num_pert=num_pert,
+            )
+        else:
+            z = generate_raasp_candidates(
+                z_center,
+                lb,
+                ub,
+                num_candidates,
+                rng=rng,
+                candidate_rv=rv,
+                sobol_engine=sobol_engine,
+                num_pert=num_pert,
+            )
+        if self.use_accel and cov_factor is not None:
+            return _accel.fused_metric_candidates(
                 z,
                 np.asarray(x_center, dtype=float),
                 cov_factor,
                 float(length),
             )
+        if self.use_accel and build_candidates is not None:
+            return build_candidates(
+                z,
+                rng,
+                np.asarray(x_center, dtype=float),
+                float(length),
+            )
         step = build_step(z, rng) * float(length)
-        if self.use_jax:
-            return _jax_tr.clip_to_unit_box(np.asarray(x_center, dtype=float), step)
+        if self.use_accel:
+            return _accel.clip_to_unit_box(np.asarray(x_center, dtype=float), step)
         return _clip_to_unit_box(np.asarray(x_center, dtype=float), step)
 
 
@@ -427,11 +524,11 @@ class _TrueEllipsoidStepSampler:
     default_candidate_rv: CandidateRV
     p_raasp: float
     radial_mode: RadialMode
-    use_jax: bool = False
-    _cov_cache: _jax_tr.CovCache = field(init=False, repr=False)
+    use_accel: bool = False
+    _cov_cache: _accel.CovCache = field(init=False, repr=False)
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "_cov_cache", _jax_tr.CovCache())
+        object.__setattr__(self, "_cov_cache", _accel.CovCache())
 
     def _sample_raasp_whitened(
         self,
@@ -441,6 +538,7 @@ class _TrueEllipsoidStepSampler:
         length: float,
         rng: Any,
         candidate_rv: CandidateRV,
+        sobol_engine: Any | None,
     ) -> np.ndarray:
         """Sample directions in whitened space, then draw a radius.
 
@@ -448,21 +546,17 @@ class _TrueEllipsoidStepSampler:
         inside a d-ball. `boundary` is an in-repo boundary-focused heuristic.
         """
         prob = float(self.p_raasp)
-        mask = rng.random((num_candidates, num_dim)) < prob
-        empty = np.where(np.sum(mask, axis=1) == 0)[0]
-        if empty.size > 0:
-            cols = rng.integers(0, num_dim, size=empty.size)
-            mask[empty, cols] = True
-        rv_name = str(getattr(rv, "value", rv)).lower() if (rv := candidate_rv) else "uniform"
-        if rv_name in {"uniform", "gpu_uniform"}:
-            base = rng.uniform(-1.0, 1.0, size=(num_candidates, num_dim))
-        else:
-            base = rng.normal(size=(num_candidates, num_dim))
-        u = rng.random(num_candidates)
-        if self.use_jax and num_candidates * num_dim >= 250_000:
-            result = _jax_tr.whitened_sample(
-                mask,
-                base,
+        z_tilde, u = _sample_whitened_inputs(
+            num_candidates=num_candidates,
+            num_dim=num_dim,
+            rng=rng,
+            candidate_rv=candidate_rv,
+            prob=prob,
+            sobol_engine=sobol_engine,
+        )
+        if self.use_accel and num_candidates * num_dim >= 250_000:
+            result = _accel.whitened_sample(
+                z_tilde,
                 u,
                 float(length),
                 self.radial_mode,
@@ -470,24 +564,16 @@ class _TrueEllipsoidStepSampler:
             )
             if result is not None:
                 return result
-        z_tilde = base * mask
-        norms = np.linalg.norm(z_tilde, axis=1)
-        tiny = norms <= 1e-12
-        if np.any(tiny):
-            idx_rows = np.where(tiny)[0]
-            idx_cols = rng.integers(0, num_dim, size=idx_rows.size)
-            signs = np.where(rng.random(idx_rows.size) < 0.5, -1.0, 1.0)
-            z_tilde[idx_rows] = 0.0
-            z_tilde[idx_rows, idx_cols] = signs
-            norms = np.linalg.norm(z_tilde, axis=1)
-        v = z_tilde / norms.reshape(-1, 1)
-        if self.radial_mode == "boundary":
-            rho = 0.8 + 0.2 * u
-        else:
-            rho = np.power(u, 1.0 / float(max(num_dim, 1)))
-        return float(length) * rho.reshape(-1, 1) * v
+        return _whitened_sample_numpy(
+            z_tilde=z_tilde,
+            u=u,
+            length=length,
+            radial_mode=self.radial_mode,
+            num_dim=num_dim,
+            rng=rng,
+        )
 
-    def generate(
+    def _generate_low_rank(
         self,
         *,
         x_center: np.ndarray,
@@ -495,31 +581,134 @@ class _TrueEllipsoidStepSampler:
         num_candidates: int,
         length: float,
         rng: Any,
-        candidate_rv: CandidateRV | None,
-        covariance_matrix: np.ndarray,
-        cov_gen: int = -1,
+        candidate_rv: CandidateRV,
+        sobol_engine: Any | None,
+        low_rank: _LowRankFactor,
     ) -> np.ndarray:
-        x_center = np.asarray(x_center, dtype=float).reshape(-1)
-        rv = self.default_candidate_rv if candidate_rv is None else candidate_rv
-        rv_name = str(getattr(rv, "value", rv)).lower()
-        if rv_name not in {"sobol", "uniform", "gpu_uniform"}:
-            rv = CandidateRV.SOBOL
         z = self._sample_raasp_whitened(
             num_candidates=num_candidates,
             num_dim=num_dim,
             length=length,
             rng=rng,
-            candidate_rv=rv,
+            candidate_rv=candidate_rv,
+            sobol_engine=sobol_engine,
         )
-        if self.use_jax:
-            return _jax_tr.fused_ellipsoid_generate(
-                z,
+        step = _low_rank_symmetric_sqrt_step(z, low_rank, use_accel=self.use_accel)
+        candidates = _ray_scale_to_unit_box(x_center, x_center.reshape(1, -1) + step)
+        delta = candidates - x_center.reshape(1, -1)
+        dist2 = _low_rank_mahalanobis_sq(delta, low_rank, use_accel=self.use_accel)
+        radius2 = float(length) ** 2
+        bad = np.where(dist2 > radius2 * (1.0 + 1e-8))[0]
+        if bad.size > 0:
+            scale = np.sqrt(radius2 / np.maximum(dist2[bad], 1e-12))
+            delta[bad] *= scale.reshape(-1, 1)
+            candidates = _ray_scale_to_unit_box(x_center, x_center.reshape(1, -1) + delta)
+        return candidates
+
+    def _generate_cov_factor(
+        self,
+        *,
+        x_center: np.ndarray,
+        num_dim: int,
+        num_candidates: int,
+        length: float,
+        rng: Any,
+        candidate_rv: CandidateRV,
+        sobol_engine: Any | None,
+        cov_factor: np.ndarray,
+    ) -> np.ndarray:
+        z = self._sample_raasp_whitened(
+            num_candidates=num_candidates,
+            num_dim=num_dim,
+            length=length,
+            rng=rng,
+            candidate_rv=candidate_rv,
+            sobol_engine=sobol_engine,
+        )
+        step = z @ np.asarray(cov_factor, dtype=float).T
+        candidates = _ray_scale_to_unit_box(x_center, x_center.reshape(1, -1) + step)
+        delta = candidates - x_center.reshape(1, -1)
+        dist2 = _mahalanobis_sq_from_factor(delta, cov_factor)
+        radius2 = float(length) ** 2
+        bad = np.where(dist2 > radius2 * (1.0 + 1e-8))[0]
+        if bad.size > 0:
+            scale = np.sqrt(radius2 / np.maximum(dist2[bad], 1e-12))
+            delta[bad] *= scale.reshape(-1, 1)
+            candidates = _ray_scale_to_unit_box(x_center, x_center.reshape(1, -1) + delta)
+        return candidates
+
+    def _generate_with_jax(
+        self,
+        *,
+        x_center: np.ndarray,
+        num_dim: int,
+        num_candidates: int,
+        length: float,
+        rng: Any,
+        candidate_rv: CandidateRV,
+        sobol_engine: Any | None,
+        covariance_matrix: np.ndarray,
+        cov_gen: int,
+    ) -> np.ndarray | None:
+        rv_name = _candidate_rv_name(candidate_rv)
+        if rv_name == "sobol":
+            if sobol_engine is None:
+                raise ValueError("sobol_engine required for CandidateRV.SOBOL")
+            sobol_samples = np.asarray(_draw_sobol_prefix(sobol_engine, int(num_candidates)), dtype=np.float32)
+            candidates = _accel.fused_sobol_ellipsoid_candidates(
+                sobol_samples,
                 x_center,
                 covariance_matrix,
                 float(length),
+                self.radial_mode,
+                num_dim,
+                float(self.p_raasp),
                 self._cov_cache,
                 gen=cov_gen,
             )
+            if candidates is not None:
+                return candidates
+        z_tilde, u = _sample_whitened_inputs(
+            num_candidates=num_candidates,
+            num_dim=num_dim,
+            rng=rng,
+            candidate_rv=candidate_rv,
+            prob=float(self.p_raasp),
+            sobol_engine=sobol_engine,
+        )
+        candidates = _accel.fused_whitened_ellipsoid_candidates(
+            z_tilde,
+            u,
+            x_center,
+            covariance_matrix,
+            float(length),
+            self.radial_mode,
+            num_dim,
+            self._cov_cache,
+            gen=cov_gen,
+        )
+        return candidates
+
+    def _generate_numpy(
+        self,
+        *,
+        x_center: np.ndarray,
+        num_dim: int,
+        num_candidates: int,
+        length: float,
+        rng: Any,
+        candidate_rv: CandidateRV,
+        sobol_engine: Any | None,
+        covariance_matrix: np.ndarray,
+    ) -> np.ndarray:
+        z = self._sample_raasp_whitened(
+            num_candidates=num_candidates,
+            num_dim=num_dim,
+            length=length,
+            rng=rng,
+            candidate_rv=candidate_rv,
+            sobol_engine=sobol_engine,
+        )
         chol = np.linalg.cholesky(covariance_matrix)
         step = z @ chol.T
         candidates = _ray_scale_to_unit_box(x_center, x_center.reshape(1, -1) + step)
@@ -532,6 +721,70 @@ class _TrueEllipsoidStepSampler:
             delta[bad] *= scale.reshape(-1, 1)
             candidates = _ray_scale_to_unit_box(x_center, x_center.reshape(1, -1) + delta)
         return candidates
+
+    def generate(
+        self,
+        *,
+        x_center: np.ndarray,
+        num_dim: int,
+        num_candidates: int,
+        length: float,
+        rng: Any,
+        candidate_rv: CandidateRV | None,
+        sobol_engine: Any | None,
+        covariance_matrix: np.ndarray | None = None,
+        cov_factor: np.ndarray | None = None,
+        low_rank: _LowRankFactor | None = None,
+        cov_gen: int = -1,
+    ) -> np.ndarray:
+        x_center = np.asarray(x_center, dtype=float).reshape(-1)
+        rv = self.default_candidate_rv if candidate_rv is None else candidate_rv
+        if low_rank is not None:
+            return self._generate_low_rank(
+                x_center=x_center,
+                num_dim=num_dim,
+                num_candidates=num_candidates,
+                length=length,
+                rng=rng,
+                candidate_rv=rv,
+                sobol_engine=sobol_engine,
+                low_rank=low_rank,
+            )
+        if cov_factor is not None:
+            return self._generate_cov_factor(
+                x_center=x_center,
+                num_dim=num_dim,
+                num_candidates=num_candidates,
+                length=length,
+                rng=rng,
+                candidate_rv=rv,
+                sobol_engine=sobol_engine,
+                cov_factor=cov_factor,
+            )
+        if self.use_accel and num_candidates * num_dim >= 250_000:
+            candidates = self._generate_with_jax(
+                x_center=x_center,
+                num_dim=num_dim,
+                num_candidates=num_candidates,
+                length=length,
+                rng=rng,
+                candidate_rv=rv,
+                sobol_engine=sobol_engine,
+                covariance_matrix=covariance_matrix,
+                cov_gen=cov_gen,
+            )
+            if candidates is not None:
+                return candidates
+        return self._generate_numpy(
+            x_center=x_center,
+            num_dim=num_dim,
+            num_candidates=num_candidates,
+            length=length,
+            rng=rng,
+            candidate_rv=rv,
+            sobol_engine=sobol_engine,
+            covariance_matrix=covariance_matrix,
+        )
 
 
 class _LengthPolicy:

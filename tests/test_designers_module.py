@@ -79,6 +79,7 @@ def test_designers_is_valid():
     policy = MockPolicy()
     designers = Designers(policy, num_arms=1)
     assert designers.is_valid("random") is True
+    assert designers.is_valid("turbo-enn-multi/acq_type=ucb/num_regions=4") is True
     assert designers.is_valid("nonexistent_designer") is False
 
 
@@ -91,6 +92,7 @@ def test_designers_catalog():
     assert isinstance(catalog, list)
     names = {entry.base_name for entry in catalog}
     assert "sobol" in names
+    assert "turbo-enn-multi" in names
 
 
 def test_designers_catalog_dataclasses_are_instantiable():

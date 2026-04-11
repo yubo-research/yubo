@@ -14,6 +14,7 @@ from .trajectories import collect_trajectory
 
 _INTERACTIVE_DEBUG = False
 _SHOW_EVERY_N_ITER = 30
+_ANOMALY_EST_CAPTURE_THRESHOLD = 1.0e4
 
 
 def _pareto_mask_max(y: np.ndarray) -> np.ndarray:
@@ -96,6 +97,11 @@ class Optimizer:
         self._ret_viz = -1e99
         self._telemetry = Telemetry()
         self._ref_point = None
+        self._anomaly_policy = None
+        self._anomaly_noise_seed = None
+        self._anomaly_iter = None
+        self._anomaly_raw_return = None
+        self._anomaly_est_return = None
 
     def _iterate(self, designer, num_arms):
         self._telemetry.reset()
@@ -117,6 +123,8 @@ class Optimizer:
                     delta = self._num_denoise
                 self._i_noise += delta
             traj, noise_seed = collect_denoised_trajectory(self._env_conf, policy, self._num_denoise, i_noise)
+            traj.noise_seed = None if noise_seed is None else int(noise_seed)
+            traj.iter_index = int(self._i_iter)
             if _INTERACTIVE_DEBUG and self._num_denoise == 1:
                 r = np.asarray(traj.rreturn)
                 if r.ndim == 0 and float(r) > self._ret_viz:
@@ -128,6 +136,21 @@ class Optimizer:
         dt_eval = tf - t_0
 
         return IterateResult(data=data, dt_prop=float(dt_prop), dt_eval=float(dt_eval))
+
+    def _maybe_capture_anomaly(self, datum, decision_value: float) -> None:
+        if float(decision_value) < _ANOMALY_EST_CAPTURE_THRESHOLD:
+            return
+        best_est = self._anomaly_est_return
+        if best_est is not None and float(decision_value) <= float(best_est):
+            return
+        noise_seed = getattr(datum.trajectory, "noise_seed", None)
+        if noise_seed is None:
+            return
+        self._anomaly_policy = datum.policy.clone()
+        self._anomaly_noise_seed = int(noise_seed)
+        self._anomaly_iter = int(getattr(datum.trajectory, "iter_index", self._i_iter))
+        self._anomaly_raw_return = float(np.asarray(datum.trajectory.rreturn).reshape(-1)[0])
+        self._anomaly_est_return = float(decision_value)
 
     def collect_trace(self, designer_name, max_iterations=None, max_proposal_seconds=np.inf, deadline=None, max_total_timesteps=None):
         self.initialize(designer_name)
@@ -168,6 +191,7 @@ class Optimizer:
             self.r_best_est = decision_best
             self.best_datum = datum_best
             self.best_policy = self.best_datum.policy.clone()
+        self._maybe_capture_anomaly(datum_best, decision_best)
         self.r_best_est = max(self.r_best_est, decision_best)
         return did_update, True
 
@@ -180,6 +204,7 @@ class Optimizer:
             self.r_best_est = decision_best_batch
             self.best_datum = data[best_idx]
             self.best_policy = self.best_datum.policy.clone()
+        self._maybe_capture_anomaly(data[best_idx], decision_best_batch)
         self.r_best_est = max(self.r_best_est, decision_best_batch)
         return did_update
 

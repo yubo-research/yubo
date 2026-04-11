@@ -36,7 +36,7 @@ def test_optioned_designer_names_have_dispatch_entries():
     assert optioned_names <= dispatch_names
 
 
-def test_optioned_designers_are_not_declared_as_simple_builders():
+def test_optioned_designers_only_overlap_simple_builders_when_dual_mode():
     optioned_names = set(_DESIGNER_OPTION_SPECS)
     simple_names = set(_SIMPLE_BUILDERS)
-    assert optioned_names.isdisjoint(simple_names)
+    assert (optioned_names & simple_names) <= {"turbo-enn-p", "turbo_py-enn-p"}

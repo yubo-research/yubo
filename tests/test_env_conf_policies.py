@@ -126,3 +126,25 @@ def test_load_atari_dm_bindings_with_fake_modules(monkeypatch):
 
     assert bindings.make_dm_control_env("dm_control/cheetah-run-v0")[0] == "dm-make"
     assert bindings.make_atari_env("ALE/Pong-v5")[0] == "atari-make"
+
+
+def test_register_with_env_conf_registers_both_env_conf_and_environment_spec(monkeypatch):
+    from problems import env_conf_backends
+
+    calls: list[str] = []
+
+    monkeypatch.setattr(
+        "problems.env_conf.register_atari_dm_bindings_loader",
+        lambda loader: calls.append(f"env_conf:{loader.__name__}"),
+    )
+    monkeypatch.setattr(
+        "problems.environment_spec.register_atari_dm_bindings_loader",
+        lambda loader: calls.append(f"environment_spec:{loader.__name__}"),
+    )
+
+    env_conf_backends.register_with_env_conf()
+
+    assert calls == [
+        "env_conf:load_atari_dm_bindings",
+        "environment_spec:load_atari_dm_bindings",
+    ]

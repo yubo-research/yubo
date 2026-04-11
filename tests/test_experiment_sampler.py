@@ -160,6 +160,31 @@ def test_mk_replicates(mock_data_is_done, mock_build_problem):
     assert results[0].num_denoise == 100
     assert results[0].b_trace is True
     assert results[0].problem == mock_problem
+    assert mock_build_problem.call_count == 3
+    assert all(call.kwargs["frozen_noise"] is False for call in mock_build_problem.call_args_list)
+
+
+@patch("experiments.experiment_sampler.build_problem")
+@patch("experiments.experiment_sampler.data_is_done")
+def test_mk_replicates_threads_fn_suffix_to_build_problem(mock_data_is_done, mock_build_problem):
+    mock_data_is_done.return_value = False
+    mock_build_problem.return_value = _make_mock_problem()
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        config = ExperimentConfig(
+            exp_dir=tmpdir,
+            env_tag="cheetah:fn",
+            opt_name="ucb",
+            num_arms=1,
+            num_rounds=1,
+            num_reps=1,
+            num_denoise=None,
+            policy_tag="mlp-32-16",
+        )
+        mk_replicates(config)
+
+    mock_build_problem.assert_called_once()
+    assert mock_build_problem.call_args.kwargs["frozen_noise"] is True
 
 
 @patch("experiments.experiment_sampler.build_problem")
@@ -207,6 +232,33 @@ def test_mk_replicates_creates_out_dir():
                 expected_dir = config.to_dir_name()
                 assert os.path.isdir(expected_dir)
                 assert os.path.isfile(f"{expected_dir}/config.json")
+
+
+@pytest.mark.parametrize(
+    ("env_tag", "expected_frozen_noise"),
+    [
+        ("f:sphere-2d", False),
+        ("f:sphere-2d:fn", True),
+        ("cheetah", False),
+        ("cheetah:fn", True),
+    ],
+)
+def test_mk_replicates_respects_env_tag_noise_mode(env_tag, expected_frozen_noise):
+    with tempfile.TemporaryDirectory() as tmpdir:
+        config = ExperimentConfig(
+            exp_dir=tmpdir,
+            env_tag=env_tag,
+            opt_name="random",
+            num_arms=1,
+            num_rounds=1,
+            num_reps=1,
+            num_denoise=None,
+            policy_tag="mlp-32-16" if env_tag.startswith("cheetah") else "pure-function",
+        )
+        results = mk_replicates(config)
+
+    assert len(results) == 1
+    assert results[0].problem.env.frozen_noise is expected_frozen_noise
 
 
 def test_experiment_config_to_dir_name():

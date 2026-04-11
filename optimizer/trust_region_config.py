@@ -10,14 +10,18 @@ from enn.turbo.config.tr_length_config import TRLengthConfig
 from enn.turbo.turbo_trust_region import TurboTrustRegion
 
 from optimizer.box_trust_region import FixedLengthTurboTrustRegion
-from optimizer.ellipsoidal_trust_region import ENNTrueEllipsoidalTrustRegion
+from optimizer.ellipsoidal_trust_region import (
+    ENNGradientIsotropicTrustRegion,
+    ENNIsotropicTrustRegion,
+    ENNTrueEllipsoidalTrustRegion,
+)
 from optimizer.metric_trust_region import (
     ENNMetricShapedTrustRegion,
     MetricShapedTrustRegion,
 )
 from optimizer.pc_rotation import PCRotationMode
-from optimizer.trust_region_jax import is_available as _jax_available
-from optimizer.trust_region_jax import set_backend as _set_backend
+from optimizer.trust_region_accel import accel_name as _accel_name
+from optimizer.trust_region_accel import accel_override as _accel_override
 from optimizer.trust_region_utils import (
     RadialMode,
     SamplerKind,
@@ -27,34 +31,19 @@ from optimizer.trust_region_utils import (
 
 GeometryKind = Literal[
     "box",
+    "enn_iso",
+    "grad_iso",
     "enn_metr",
     "grad_metr",
     "enn_ellip",
     "grad_ellip",
-    "enn_metric_shaped",
-    "enn_grad_metric_shaped",
-    "enn_true_ellipsoid",
-    "enn_grad_true_ellipsoid",
 ]
-
-_GEOMETRY_ALIASES = {
-    "box": "box",
-    "enn_metr": "enn_metr",
-    "grad_metr": "grad_metr",
-    "enn_ellip": "enn_ellip",
-    "grad_ellip": "grad_ellip",
-    "enn_metric_shaped": "enn_metr",
-    "enn_grad_metric_shaped": "grad_metr",
-    "enn_true_ellipsoid": "enn_ellip",
-    "enn_grad_true_ellipsoid": "grad_ellip",
-}
-_GEOMETRIES = frozenset(("box", "enn_metr", "grad_metr", "enn_ellip", "grad_ellip"))
+_GEOMETRIES = frozenset(("box", "enn_iso", "grad_iso", "enn_metr", "grad_metr", "enn_ellip", "grad_ellip"))
 _RADIAL = frozenset(("ball_uniform", "boundary"))
 
 
 def normalize_geometry_name(geometry: str) -> str:
-    key = str(geometry).strip()
-    return _GEOMETRY_ALIASES.get(key, key)
+    return str(geometry).strip()
 
 
 @define(frozen=True)
@@ -82,8 +71,8 @@ class MetricShapedTRConfig:
     gamma_down: float = field(default=0.5, validator=v.and_(v.gt(0), v.lt(1)))
     gamma_up: float = field(default=2.0, validator=v.gt(1))
     boundary_tol: float = field(default=0.1, validator=v.and_(v.ge(0), v.le(1)))
-    use_jax_tr: bool = False
-    tr_backend: str | None = None
+    use_accel: bool = False
+    accel: str | None = None
 
     def __attrs_post_init__(self) -> None:
         normalized_geometry = normalize_geometry_name(self.geometry)
@@ -93,6 +82,14 @@ class MetricShapedTRConfig:
         if self.geometry == "box":
             if self.metric_sampler is not None or self.metric_rank is not None:
                 raise ValueError("metric_* options require non-box geometry")
+        if self.geometry in {"enn_iso", "grad_iso"}:
+            if self.metric_sampler not in (None, "low_rank"):
+                raise ValueError(f"{self.geometry} only supports sampler='low_rank' or the default sampler.")
+            if self.metric_rank is not None:
+                raise ValueError(f"{self.geometry} does not use metric_rank.")
+        if self.geometry in {"enn_metr", "grad_metr"}:
+            if self.radial_mode != "ball_uniform":
+                raise ValueError(f"{self.geometry} only supports radial_mode='ball_uniform'; got {self.radial_mode!r}")
         if self.fixed_length is not None and float(self.fixed_length) <= 0:
             raise ValueError(f"fixed_length must be > 0, got {self.fixed_length}")
 
@@ -128,9 +125,34 @@ class MetricShapedTRConfig:
             )
         sampler = self._resolved_sampler()
         candidate_rv = CandidateRV.SOBOL if candidate_rv is None else candidate_rv
-        if self.tr_backend:
-            _set_backend(self.tr_backend)
-        use_jax = (bool(self.use_jax_tr) or bool(self.tr_backend)) and _jax_available()
+        accel_requested = bool(self.use_accel) or bool(self.accel)
+        with _accel_override(self.accel):
+            use_accel = accel_requested and _accel_name() != "none"
+        if self.geometry == "enn_iso":
+            # The identity-metric control is fastest in the empty low-rank
+            # representation: it preserves the isotropic ball geometry while
+            # avoiding dense factor/solve work on the proposal path.
+            sampler = "low_rank"
+            return ENNIsotropicTrustRegion(
+                config=self,
+                num_dim=num_dim,
+                incumbent_selector=selector,
+                candidate_rv=candidate_rv,
+                metric_sampler=sampler,
+                metric_rank=self.metric_rank,
+                use_accel=use_accel,
+            )
+        if self.geometry == "grad_iso":
+            sampler = "low_rank"
+            return ENNGradientIsotropicTrustRegion(
+                config=self,
+                num_dim=num_dim,
+                incumbent_selector=selector,
+                candidate_rv=candidate_rv,
+                metric_sampler=sampler,
+                metric_rank=self.metric_rank,
+                use_accel=use_accel,
+            )
         if self.geometry in ("enn_ellip", "grad_ellip"):
             return ENNTrueEllipsoidalTrustRegion(
                 config=self,
@@ -139,7 +161,7 @@ class MetricShapedTRConfig:
                 candidate_rv=candidate_rv,
                 metric_sampler=sampler,
                 metric_rank=self.metric_rank,
-                use_jax=use_jax,
+                use_accel=use_accel,
             )
         if self.geometry in ("enn_metr", "grad_metr"):
             return ENNMetricShapedTrustRegion(
@@ -149,7 +171,7 @@ class MetricShapedTRConfig:
                 candidate_rv=candidate_rv,
                 metric_sampler=sampler,
                 metric_rank=self.metric_rank,
-                use_jax=use_jax,
+                use_accel=use_accel,
             )
         raise ValueError(f"Unknown geometry={self.geometry!r}")
 
@@ -157,6 +179,8 @@ class MetricShapedTRConfig:
 __all__ = [
     "MetricShapedTRConfig",
     "MetricShapedTrustRegion",
+    "ENNIsotropicTrustRegion",
+    "ENNGradientIsotropicTrustRegion",
     "ENNMetricShapedTrustRegion",
     "ENNTrueEllipsoidalTrustRegion",
     "normalize_geometry_name",

@@ -1,3 +1,5 @@
+import atexit
+import os
 from typing import Any
 
 import numpy as np
@@ -5,6 +7,26 @@ import numpy as np
 from .trajectory import Trajectory
 
 __all__ = ["collect_trajectory"]
+
+_REUSE_EVAL_ENV_ENVVAR = "YUBO_TURBO_ENN_REUSE_ENV"
+_EVAL_ENV_CACHE: dict[tuple[int, str | None], Any] = {}
+
+
+def _reuse_eval_env_enabled() -> bool:
+    value = str(os.getenv(_REUSE_EVAL_ENV_ENVVAR, "")).strip().lower()
+    return value in {"1", "true", "yes", "on"}
+
+
+def _clear_cached_eval_envs() -> None:
+    for env in _EVAL_ENV_CACHE.values():
+        try:
+            env.close()
+        except Exception:
+            pass
+    _EVAL_ENV_CACHE.clear()
+
+
+atexit.register(_clear_cached_eval_envs)
 
 
 def _resolve_max_episode_steps(env_conf: Any) -> int:
@@ -86,12 +108,32 @@ def _collect_ppo_step(policy, ppo, reward, done):
         ppo["values"].append(policy.last_values())
 
 
+def _make_eval_env(env_conf, render_mode: str | None):
+    return env_conf.make(render_mode=render_mode)
+
+
+def _get_eval_env(env_conf, render_mode: str | None, *, allow_reuse: bool):
+    if not allow_reuse:
+        return _make_eval_env(env_conf, render_mode), False
+    cache_key = (id(env_conf), render_mode)
+    env = _EVAL_ENV_CACHE.get(cache_key)
+    if env is None:
+        env = _make_eval_env(env_conf, render_mode)
+        _EVAL_ENV_CACHE[cache_key] = env
+    return env, True
+
+
+def _policy_allows_env_reuse(policy: Any) -> bool:
+    return bool(getattr(policy, "_turbo_enn_eval_reuse_ok", False))
+
+
 def collect_trajectory(env_conf, policy, noise_seed=None, show_frames=False):
     b_gym = env_conf.gym_conf is not None
     num_frames_skip = env_conf.gym_conf.num_frames_skip if b_gym and show_frames else 1
 
     render_mode = "rgb_array" if show_frames else None
-    env = env_conf.make(render_mode=render_mode)
+    reuse_env = _reuse_eval_env_enabled() and not show_frames and _policy_allows_env_reuse(policy)
+    env, keep_open = _get_eval_env(env_conf, render_mode, allow_reuse=reuse_env)
     return_trajectory = 0
     traj_states, traj_actions = [], []
     ppo = {
@@ -154,7 +196,8 @@ def collect_trajectory(env_conf, policy, noise_seed=None, show_frames=False):
 
     if show_frames:
         _draw()
-    env.close()
+    if not keep_open:
+        env.close()
     rreturn = _make_return(policy, return_trajectory)
     return Trajectory(
         rreturn,

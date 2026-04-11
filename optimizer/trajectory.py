@@ -17,6 +17,8 @@ class Trajectory:
     log_probs: np.ndarray | None = None
     values: np.ndarray | None = None
     dones: np.ndarray | None = None
+    noise_seed: int | None = None
+    iter_index: int | None = None
 
     def get_decision_rreturn(self) -> float:
         if self.rreturn_est is None:

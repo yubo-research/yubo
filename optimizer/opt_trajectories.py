@@ -1,9 +1,11 @@
+import os
 from typing import NamedTuple
 
 import numpy as np
 
 from .trajectories import collect_trajectory
 from .trajectory import Trajectory
+from .vectorized_eval import get_vectorized_policy_evaluator
 
 
 class _MeanReturnResult(NamedTuple):
@@ -11,6 +13,14 @@ class _MeanReturnResult(NamedTuple):
     se: float
     all_same: bool
     num_steps_total: int
+
+
+_VECTORIZED_REUSE_ENVVAR = "YUBO_TURBO_ENN_VECTORIZE_EVAL"
+
+
+def _vectorized_eval_enabled() -> bool:
+    value = str(os.getenv(_VECTORIZED_REUSE_ENVVAR, "")).strip().lower()
+    return value in {"1", "true", "yes", "on"}
 
 
 def collect_trajectory_with_noise(env_conf, policy, i_noise=None, denoise_seed=0):
@@ -25,6 +35,26 @@ def collect_trajectory_with_noise(env_conf, policy, i_noise=None, denoise_seed=0
 
 
 def mean_return_over_runs(env_conf, policy, num_denoise, i_noise=None):
+    if (
+        _vectorized_eval_enabled()
+        and num_denoise is not None
+        and int(num_denoise) > 1
+        and getattr(env_conf, "gym_conf", None) is not None
+        and hasattr(policy, "_turbo_enn_eval_reuse_ok")
+        and bool(getattr(policy, "_turbo_enn_eval_reuse_ok", False))
+    ):
+        try:
+            base_seed = (0 if i_noise is None else int(i_noise)) + int(env_conf.noise_seed_0)
+            evaluator = get_vectorized_policy_evaluator(env_conf, num_envs=int(num_denoise))
+            result = evaluator.evaluate(policy, base_seed=base_seed)
+            return _MeanReturnResult(
+                mean=float(result.mean),
+                se=float(result.se),
+                all_same=bool(result.all_same),
+                num_steps_total=int(result.num_steps_total),
+            )
+        except Exception:
+            pass
     rets = []
     num_steps_total = 0
     for i in range(num_denoise):

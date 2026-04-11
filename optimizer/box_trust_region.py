@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -30,13 +29,8 @@ class FixedLengthTurboTrustRegion(TurboTrustRegion):
         self._apply_fixed_length()
 
 
-def _module_tr_enabled_from_env() -> bool:
-    raw = os.environ.get("YUBO_MODULE_TR", "")
-    return raw.strip().lower() in {"1", "true", "yes", "on"}
-
-
 @dataclass
-class ModuleAwareBoxTrustRegion(FixedLengthTurboTrustRegion):
+class ModuleAwareTrustRegion(FixedLengthTurboTrustRegion):
     block_slices: tuple[tuple[int, int], ...] = field(default_factory=tuple)
     block_prob: float = 0.5
     uses_custom_candidate_gen: bool = field(default=True, init=False)
@@ -53,8 +47,8 @@ class ModuleAwareBoxTrustRegion(FixedLengthTurboTrustRegion):
         raasp_driver: Any | None = None,
         num_pert: int = 20,
     ):
-        _ = candidate_rv, raasp_driver, num_pert, sobol_engine
-        rv = CandidateRV.UNIFORM
+        _ = raasp_driver, num_pert
+        rv = CandidateRV.UNIFORM if candidate_rv is None else candidate_rv
         lb, ub = self.compute_bounds_1d(x_center, lengthscales)
         return _generate_block_raasp_candidates(
             x_center,
@@ -69,14 +63,15 @@ class ModuleAwareBoxTrustRegion(FixedLengthTurboTrustRegion):
         )
 
 
-def maybe_enable_module_aware_box_trust_region(
+def maybe_enable_module_masks(
     optimizer: Any,
     policy: Any,
     *,
+    enabled: bool = False,
     min_num_params: int = 10000,
     block_prob: float = 0.5,
 ) -> bool:
-    if not _module_tr_enabled_from_env():
+    if not enabled:
         return False
 
     try:
@@ -91,16 +86,19 @@ def maybe_enable_module_aware_box_trust_region(
         return False
 
     tr_state = getattr(optimizer, "_tr_state", None)
-    if tr_state is None or getattr(tr_state, "uses_custom_candidate_gen", False):
+    if tr_state is None:
         return False
     if not isinstance(tr_state, TurboTrustRegion):
         return False
+
+    if getattr(tr_state, "uses_custom_candidate_gen", False):
+        return bool(getattr(tr_state, "module_block_slices", ()))
 
     block_slices = leaf_module_param_blocks(policy)
     if len(block_slices) < 2:
         return False
 
-    replacement = ModuleAwareBoxTrustRegion(
+    replacement = ModuleAwareTrustRegion(
         config=tr_state.config,
         num_dim=int(tr_state.num_dim),
         incumbent_selector=getattr(tr_state, "incumbent_selector", None),

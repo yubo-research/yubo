@@ -201,9 +201,9 @@ def _render_video_episode(
     video_dir: Path,
     video_prefix: str,
     gl_backend: str | None,
-) -> None:
+) -> float:
     with _temporary_mujoco_gl(gl_backend):
-        rollout_episode(
+        return rollout_episode(
             env_conf,
             policy,
             seed=seed,
@@ -342,6 +342,47 @@ def render_policy_videos_bo(
         episode_selection=str(episode_selection),
         seed_base=int(seed_base),
     )
+
+
+def render_exact_rollout_video_bo(
+    env_conf: Any,
+    policy: Any,
+    *,
+    video_dir: Path | str,
+    video_prefix: str,
+    seed: int,
+) -> float | None:
+    effective_policy = policy_for_bo_rollout(env_conf, policy)
+    video_dir = Path(video_dir)
+    video_dir.mkdir(parents=True, exist_ok=True)
+    preferred_gl: str | None | object = _AUTO_GL
+    gl_candidates = _video_gl_candidates()
+    last_headless_exc: Exception | None = None
+    for gl_backend in gl_candidates if preferred_gl is _AUTO_GL else [preferred_gl]:
+        try:
+            replay_return = _render_video_episode(
+                env_conf,
+                effective_policy,
+                seed=int(seed),
+                video_dir=video_dir,
+                video_prefix=str(video_prefix),
+                gl_backend=gl_backend,
+            )
+            if preferred_gl is _AUTO_GL:
+                preferred_gl = gl_backend
+                if gl_backend is not None:
+                    print(f"[video] using MUJOCO_GL={gl_backend}", flush=True)
+            return float(replay_return)
+        except Exception as exc:
+            if _is_headless_video_error(exc):
+                last_headless_exc = exc
+                continue
+            raise
+    print(
+        f"[video] skipping exact rollout capture: headless/OpenGL context unavailable ({last_headless_exc})",
+        flush=True,
+    )
+    return None
 
 
 @dataclass(frozen=True)

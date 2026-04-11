@@ -1,5 +1,6 @@
 import hashlib
 import importlib
+import json
 import multiprocessing as mp
 import os
 import sys
@@ -26,6 +27,7 @@ from common.experiment_seeds import (
 from common.seed_all import seed_all
 from experiments.bo_console import BOConsoleCollector, print_bo_footer
 from experiments.experiment_util import ensure_parent
+from problems.environment_spec import parse_tag_options
 from problems.problem import Problem, build_problem
 
 
@@ -256,6 +258,37 @@ def _render_sample_video(
     )
 
 
+def _render_exact_rollout_video(opt, run_config, env_runtime, video_prefix):
+    from pathlib import Path
+
+    render_exact_rollout_video_bo = _load_attr(("common", "video"), "render_exact_rollout_video_bo")
+
+    policy = getattr(opt, "_anomaly_policy", None)
+    noise_seed = getattr(opt, "_anomaly_noise_seed", None)
+    if policy is None or noise_seed is None:
+        return
+
+    video_dir = Path(run_config.trace_fn).parent / "videos"
+    iter_idx = int(getattr(opt, "_anomaly_iter", -1))
+    prefix = f"{video_prefix}_exact_iter{iter_idx:03d}_seed{int(noise_seed)}"
+    replay_return = render_exact_rollout_video_bo(
+        env_runtime,
+        policy.clone(),
+        video_dir=video_dir,
+        video_prefix=prefix,
+        seed=int(noise_seed),
+    )
+    meta = {
+        "iter": iter_idx,
+        "noise_seed": int(noise_seed),
+        "raw_return": getattr(opt, "_anomaly_raw_return", None),
+        "estimated_return": getattr(opt, "_anomaly_est_return", None),
+        "replay_return": replay_return,
+    }
+    meta_path = video_dir / f"{prefix}.json"
+    meta_path.write_text(json.dumps(meta, indent=2) + "\n")
+
+
 def sample_1(run_config: RunConfig):
     import numpy as np
 
@@ -337,6 +370,7 @@ def sample_1(run_config: RunConfig):
                 video_episode_selection,
                 video_seed_base,
             )
+            _render_exact_rollout_video(opt, run_config, env_runtime, video_prefix)
 
         return _SampleResult(
             collector_log=collector_log,
@@ -503,11 +537,13 @@ def mk_replicates(config: ExperimentConfig) -> list[RunConfig]:
             continue
         else:
             problem_seed = problem_seed_from_rep_index(i_rep)
+            _tag, frozen_noise, _from_pixels = parse_tag_options(str(config.env_tag), None)
             problem = build_problem(
                 config.env_tag,
                 config.policy_tag,
                 problem_seed=problem_seed,
                 noise_seed_0=noise_seed_0_from_problem_seed(problem_seed),
+                frozen_noise=frozen_noise,
             )
             run_configs.append(
                 RunConfig(

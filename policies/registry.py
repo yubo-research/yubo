@@ -66,6 +66,28 @@ def _mlp_factory(
     return factory
 
 
+def _moe_factory(
+    hidden_sizes: tuple[int, ...],
+    *,
+    num_experts: int = 4,
+    router_hidden_sizes: tuple[int, ...] = (16,),
+    top_k: int | None = 2,
+    temperature: float = 1.0,
+) -> Callable[[EnvironmentRuntimeProtocol], Policy]:
+    def factory(env_runtime: EnvironmentRuntimeProtocol) -> Policy:
+        from policies.moe_policy import MoEPolicyFactory
+
+        return MoEPolicyFactory(
+            hidden_sizes=hidden_sizes,
+            num_experts=num_experts,
+            router_hidden_sizes=router_hidden_sizes,
+            top_k=top_k,
+            temperature=temperature,
+        )(env_runtime)
+
+    return factory
+
+
 def _actor_critic_mlp_factory(
     hidden_sizes: tuple[int, ...],
 ) -> Callable[[EnvironmentRuntimeProtocol], Policy]:
@@ -79,6 +101,9 @@ def _actor_critic_mlp_factory(
 
 def _gaussian_backbone_factory(
     variant: str,
+    *,
+    deterministic_eval: bool = True,
+    squash_mode: str = "tanh_clip",
 ) -> Callable[[EnvironmentRuntimeProtocol], Policy]:
     def factory(env_runtime: EnvironmentRuntimeProtocol) -> Policy:
         _ns: dict = {}
@@ -86,8 +111,8 @@ def _gaussian_backbone_factory(
         GaussianActorBackbonePolicyFactory = _ns["GaussianActorBackbonePolicyFactory"]
         return GaussianActorBackbonePolicyFactory(
             variant=variant,
-            deterministic_eval=True,
-            squash_mode="clip",
+            deterministic_eval=deterministic_eval,
+            squash_mode=squash_mode,
             init_log_std=-0.5,
         )(env_runtime)
 
@@ -213,6 +238,13 @@ POLICY_PRESETS: dict[str, PolicyPreset] = {
         factory=_mlp_factory((4, 4)),
         rl_model=_infer_rl_model_from_mlp((4, 4)),
     ),
+    "mlp-4-4-4-4": PolicyPreset(
+        factory=_mlp_factory((4, 4, 4, 4)),
+        rl_model=_infer_rl_model_from_mlp((4, 4, 4, 4)),
+    ),
+    "moe-16-16-4": PolicyPreset(
+        factory=_moe_factory((16, 16), num_experts=4, router_hidden_sizes=(16,), top_k=2, temperature=1.0),
+    ),
     "bipedal-heuristic": PolicyPreset(factory=_bipedal_heuristic_factory),
     "turbo-lunar": PolicyPreset(factory=_turbo_lunar_factory),
     "actor-critic-mlp-16-8": PolicyPreset(
@@ -224,7 +256,13 @@ POLICY_PRESETS: dict[str, PolicyPreset] = {
         rl_model=_infer_rl_model_from_actor_critic_mlp((32, 32)),
     ),
     "gauss-rl-gauss-tanh": PolicyPreset(factory=_gaussian_backbone_factory("rl-gauss-tanh")),
+    "gauss-rl-gauss-tanh-stoch": PolicyPreset(factory=_gaussian_backbone_factory("rl-gauss-tanh", deterministic_eval=False)),
     "gauss-rl-gauss-small": PolicyPreset(factory=_gaussian_backbone_factory("rl-gauss-small")),
+    "gauss-rl-gauss-large-tanh": PolicyPreset(factory=_gaussian_backbone_factory("rl-gauss-large-tanh")),
+    "gauss-rl-hardgate": PolicyPreset(factory=_gaussian_backbone_factory("rl-hardgate")),
+    "gauss-rl-hardgate-small": PolicyPreset(factory=_gaussian_backbone_factory("rl-hardgate-small")),
+    "gauss-rl-hardgate-large-tanh": PolicyPreset(factory=_gaussian_backbone_factory("rl-hardgate-large-tanh")),
+    "gauss-rl-hardgate-stoch": PolicyPreset(factory=_gaussian_backbone_factory("rl-hardgate", deterministic_eval=False)),
     "atari-cnn": PolicyPreset(
         factory=_atari_cnn_factory,
         rl_model=_infer_rl_model_from_atari_cnn(),

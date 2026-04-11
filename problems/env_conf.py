@@ -64,7 +64,7 @@ def _gaussian_policy_factory(variant: str):
     return GaussianActorBackbonePolicyFactory(
         variant=variant,
         deterministic_eval=True,
-        squash_mode="clip",
+        squash_mode="tanh_clip",
         init_log_std=-0.5,
     )
 
@@ -481,6 +481,10 @@ _gym_env_confs = {
             },
         },
     ),
+    "cheetah-v5": _gym_conf(
+        "HalfCheetah-v5",
+        policy_class=MLPPolicyFactory((256, 256), use_layer_norm=True),
+    ),
     "quadruped-run-64x64": _gym_conf(
         "dm_control/quadruped-run-v0",
         policy_class=MLPPolicyFactory((64, 64)),
@@ -496,6 +500,10 @@ _gym_env_confs = {
     "cheetah-gauss": _gym_conf(
         "HalfCheetah-v5",
         policy_class=_gaussian_policy_factory(variant="rl-gauss-small"),
+    ),
+    "cheetah-v5-gauss": _gym_conf(
+        "HalfCheetah-v5",
+        policy_class=_gaussian_policy_factory(variant="rl-gauss-large-tanh"),
     ),
     "reach": EnvConf("Reacher-v5", gym_conf=GymConf(max_steps=50)),
     # "push": EnvConf("Pusher-v4",  gym_conf=GymConf(max_steps=100)),

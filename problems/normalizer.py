@@ -29,6 +29,11 @@ class Normalizer:
         v = self._x2 / self._num - m**2
         return m, np.sqrt(np.maximum(0.0, v))
 
+    def reset(self):
+        self._x.fill(0.0)
+        self._x2.fill(0.0)
+        self._num = 0.0
+
     def clone(self):
         n = Normalizer(shape=self._x.shape, decay=self._decay)
         n._x = self._x.copy()
