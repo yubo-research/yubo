@@ -405,7 +405,7 @@ def test_weight_decay_shrinks_params():
 
 def test_run_bszo_iterations_loop():
     """Test the loop runner directly with a synthetic evaluate_fn."""
-    from ops.uhd_setup import _run_bszo_iterations
+    from ops.uhd_setup_bszo import _run_bszo_iterations
 
     torch.manual_seed(0)
     module = nn.Linear(3, 1, bias=False)
@@ -443,7 +443,7 @@ def test_run_bszo_wiring(monkeypatch):
         captured["args"] = args
         captured["kwargs"] = kwargs
 
-    monkeypatch.setattr("ops.uhd_setup.run_bszo_loop", fake_run_bszo_loop)
+    monkeypatch.setattr("ops.uhd_setup_bszo.run_bszo_loop", fake_run_bszo_loop)
 
     early_reject = EarlyRejectConfig(tau=None, mode=None, ema_beta=None, warmup_pos=None, quantile=None, window=None)
     be = BEConfig(10, 10, 20, 10, 25, None)

@@ -89,12 +89,13 @@ def test_resolve_rl_model_defaults_quadruped_run_uses_explicit_model():
 
 def test_get_env_conf_applies_atari_preprocess_overrides():
     import problems.env_conf as env_conf_module
+    import problems.env_conf_bindings as env_conf_bindings_module
 
     class _FakeBindings:
         resolve_atari_from_tag = staticmethod(lambda _tag: ("ALE/Pong-v5", lambda _env_conf: object()))
 
-    old_bindings = env_conf_module._ATARI_DM_BINDINGS
-    env_conf_module._ATARI_DM_BINDINGS = _FakeBindings()
+    old_bindings = env_conf_bindings_module._ATARI_DM_BINDINGS
+    env_conf_bindings_module._ATARI_DM_BINDINGS = _FakeBindings()
     try:
         conf = env_conf_module.get_env_conf(
             "atari:Pong:mlp16",
@@ -107,7 +108,7 @@ def test_get_env_conf_applies_atari_preprocess_overrides():
             },
         )
     finally:
-        env_conf_module._ATARI_DM_BINDINGS = old_bindings
+        env_conf_bindings_module._ATARI_DM_BINDINGS = old_bindings
     assert isinstance(conf.atari_preprocess, dict)
     assert conf.atari_preprocess["repeat_action_probability"] == 0.2
     assert conf.atari_preprocess["use_minimal_action_set"] is False
@@ -120,6 +121,7 @@ def test_env_conf_ale_make_uses_atari_preprocess_options():
     from gymnasium import spaces
 
     import problems.env_conf as env_conf_module
+    import problems.env_conf_bindings as env_conf_bindings_module
 
     captured = {}
 
@@ -164,8 +166,8 @@ def test_env_conf_ale_make_uses_atari_preprocess_options():
         make_dm_control_env = staticmethod(lambda *args, **kwargs: _FakeEnv())
         make_atari_env = staticmethod(_fake_make_atari_env)
 
-    old_bindings = env_conf_module._ATARI_DM_BINDINGS
-    env_conf_module._ATARI_DM_BINDINGS = _FakeBindings()
+    old_bindings = env_conf_bindings_module._ATARI_DM_BINDINGS
+    env_conf_bindings_module._ATARI_DM_BINDINGS = _FakeBindings()
     try:
         conf = env_conf_module.EnvConf(
             "ALE/Pong-v5",
@@ -182,7 +184,7 @@ def test_env_conf_ale_make_uses_atari_preprocess_options():
         env = conf.make(render_mode="rgb_array")
         env.close()
     finally:
-        env_conf_module._ATARI_DM_BINDINGS = old_bindings
+        env_conf_bindings_module._ATARI_DM_BINDINGS = old_bindings
     preprocess = captured["preprocess"]
     assert captured["env_name"] == "ALE/Pong-v5"
     assert captured["max_episode_steps"] == 321

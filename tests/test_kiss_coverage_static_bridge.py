@@ -108,14 +108,16 @@ def test_kiss_bridge_exp_uhd_modal_cmd(monkeypatch, tmp_path):
     toml_file = tmp_path / "c.toml"
     toml_file.write_text('[uhd]\nenv_tag = "pend"\nnum_rounds = 1\n')
 
+    import ops.exp_uhd_parse as exp_uhd_parse
+
     monkeypatch.setattr(
-        exp_uhd,
+        exp_uhd_parse,
         "_load_toml_config",
         lambda p: {"uhd": {"env_tag": "pend", "num_rounds": 1}},
     )
-    monkeypatch.setattr(exp_uhd, "_validate_required", lambda c: None)
+    monkeypatch.setattr(exp_uhd_parse, "_validate_required", lambda c: None)
     monkeypatch.setattr(
-        exp_uhd,
+        exp_uhd_parse,
         "_parse_cfg",
         lambda c: SimpleNamespace(
             env_tag="pend",
@@ -140,7 +142,8 @@ def test_kiss_bridge_exp_uhd_modal_cmd(monkeypatch, tmp_path):
 
 
 def test_kiss_bridge_uhd_setup_loop_exports():
-    from ops.uhd_setup import run_bszo_loop, run_simple_loop
+    from ops.uhd_setup_bszo import run_bszo_loop
+    from ops.uhd_setup_simple_gym import run_simple_loop
 
     assert callable(run_simple_loop) and callable(run_bszo_loop)
 
@@ -575,8 +578,8 @@ def test_kiss_bridge_rl_torchrl_ppo_core_symbols():
 def test_kiss_bridge_rl_torchrl_sac_setup_loop_trainer_symbols():
     pytest.importorskip("torchrl")
     from rl.torchrl.sac import loop as sac_loop
+    from rl.torchrl.sac import register as sac_register
     from rl.torchrl.sac import setup as sac_setup
-    from rl.torchrl.sac.trainer import register as sac_register
 
     assert callable(sac_setup.build_env_setup)
     assert callable(sac_setup.build_modules)

@@ -160,6 +160,7 @@ def test_discrete_actor_backbone_policy_param_count_matches_ppo_build_path():
 
 def test_get_env_conf_atari_mlp16_uses_discrete_actor_backbone_policy():
     import problems.env_conf as env_conf_module
+    import problems.env_conf_bindings as env_conf_bindings_module
 
     class _FakeBindings:
         @staticmethod
@@ -168,13 +169,13 @@ def test_get_env_conf_atari_mlp16_uses_discrete_actor_backbone_policy():
 
             return ("ALE/Pong-v5", AtariMLP16DiscretePolicy)
 
-    old_bindings = env_conf_module._ATARI_DM_BINDINGS
-    env_conf_module._ATARI_DM_BINDINGS = _FakeBindings()
+    old_bindings = env_conf_bindings_module._ATARI_DM_BINDINGS
+    env_conf_bindings_module._ATARI_DM_BINDINGS = _FakeBindings()
     try:
         ec = env_conf_module.get_env_conf("atari:Pong:mlp16", problem_seed=0)
         policy = ec.policy_class(_fake_atari_env_conf())
     finally:
-        env_conf_module._ATARI_DM_BINDINGS = old_bindings
+        env_conf_bindings_module._ATARI_DM_BINDINGS = old_bindings
     assert isinstance(policy, DiscreteActorBackbonePolicy)
 
 

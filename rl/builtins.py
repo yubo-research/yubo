@@ -12,7 +12,7 @@ def register_all() -> None:
 
     _register_lazy_once("ppo", "rl.torchrl.ppo.core")
     _register_lazy_once("ppo", "rl.pufferlib.ppo.engine", backend="pufferlib")
-    _register_lazy_once("sac", "rl.torchrl.sac.trainer")
+    _register_lazy_once("sac", "rl.torchrl.sac")
     _register_lazy_once("sac", "rl.pufferlib.sac.engine", backend="pufferlib")
     register_algo_backend("ppo", "torchrl", "ppo")
     register_algo_backend("ppo", "pufferlib", "ppo")

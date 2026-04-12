@@ -6,24 +6,24 @@ from dataclasses import FrozenInstanceError
 
 import pytest
 
-from ops import exp_uhd as _exp_uhd
+import ops.exp_uhd_parse as _exp_uhd_parse
 from ops.uhd_config import BEConfig, EarlyRejectConfig, ENNConfig, UHDConfig
 
-_ALL_TOML_KEYS = _exp_uhd._ALL_TOML_KEYS
-_BE_DEFAULTS = _exp_uhd._BE_DEFAULTS
-_ENN_DEFAULTS = _exp_uhd._ENN_DEFAULTS
-_ER_DEFAULTS = _exp_uhd._ER_DEFAULTS
-_OPTIONAL_TOML_KEYS = _exp_uhd._OPTIONAL_TOML_KEYS
-_REQUIRED_TOML_KEYS = _exp_uhd._REQUIRED_TOML_KEYS
-_coerce_mapping_keys = _exp_uhd._coerce_mapping_keys
-_load_toml_config = _exp_uhd._load_toml_config
-_normalize_key = _exp_uhd._normalize_key
-_parse_be_fields = _exp_uhd._parse_be_fields
-_parse_cfg = _exp_uhd._parse_cfg
-_parse_early_reject_fields = _exp_uhd._parse_early_reject_fields
-_parse_enn_fields = _exp_uhd._parse_enn_fields
-_parse_perturb = _exp_uhd._parse_perturb
-_validate_required = _exp_uhd._validate_required
+_ALL_TOML_KEYS = _exp_uhd_parse._ALL_TOML_KEYS
+_BE_DEFAULTS = _exp_uhd_parse._BE_DEFAULTS
+_ENN_DEFAULTS = _exp_uhd_parse._ENN_DEFAULTS
+_ER_DEFAULTS = _exp_uhd_parse._ER_DEFAULTS
+_OPTIONAL_TOML_KEYS = _exp_uhd_parse._OPTIONAL_TOML_KEYS
+_REQUIRED_TOML_KEYS = _exp_uhd_parse._REQUIRED_TOML_KEYS
+_coerce_mapping_keys = _exp_uhd_parse._coerce_mapping_keys
+_load_toml_config = _exp_uhd_parse._load_toml_config
+_normalize_key = _exp_uhd_parse._normalize_key
+_parse_be_fields = _exp_uhd_parse._parse_be_fields
+_parse_cfg = _exp_uhd_parse._parse_cfg
+_parse_early_reject_fields = _exp_uhd_parse._parse_early_reject_fields
+_parse_enn_fields = _exp_uhd_parse._parse_enn_fields
+_parse_perturb = _exp_uhd_parse._parse_perturb
+_validate_required = _exp_uhd_parse._validate_required
 
 
 class TestEarlyRejectConfig:

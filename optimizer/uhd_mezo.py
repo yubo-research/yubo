@@ -1,6 +1,6 @@
 import math
 
-from .gaussian_perturbator import GaussianPerturbator, apply_weight_decay
+from .gaussian_perturbator import PerturbatorBase, apply_weight_decay
 from .lr_scheduler import LRScheduler
 from .step_size_adapter import StepSizeAdapter
 
@@ -8,7 +8,7 @@ from .step_size_adapter import StepSizeAdapter
 class UHDMeZO:
     def __init__(
         self,
-        perturbator: GaussianPerturbator,
+        perturbator: PerturbatorBase,
         dim: int,
         *,
         lr_scheduler: LRScheduler,
@@ -65,7 +65,7 @@ class UHDMeZO:
         return self._last_step_scale
 
     @property
-    def perturbator(self) -> GaussianPerturbator:
+    def perturbator(self) -> PerturbatorBase:
         return self._perturbator
 
     @property
@@ -116,7 +116,7 @@ class UHDMeZO:
             self._perturbator.perturb(self._step_seed, step_scale)
             self._perturbator.accept()
 
-            apply_weight_decay(self._perturbator._module, self._lr_scheduler.lr, self._weight_decay)
+            apply_weight_decay(self._perturbator.module, self._lr_scheduler.lr, self._weight_decay)
 
             self._lr_scheduler.step()
             self._seed += 1

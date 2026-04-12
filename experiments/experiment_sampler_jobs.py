@@ -1,0 +1,151 @@
+import os
+
+from analysis.data_io import write_config
+from common.experiment_seeds import noise_seed_0_from_problem_seed, problem_seed_from_rep_index
+from experiments import experiment_sampler_shim as shim
+from experiments.experiment_sampler_dispatch import scan_local
+from experiments.experiment_sampler_types import ExperimentConfig, RunConfig, _load_attr
+
+
+def mk_replicates(config: ExperimentConfig) -> list[RunConfig]:
+    get_env_conf = _load_attr(("problems", "env_conf"), "get_env_conf")
+
+    out_dir = config.to_dir_name()
+
+    os.makedirs(out_dir, exist_ok=True)
+    write_config(out_dir, config.to_dict())
+    print(f"PARAMS: {config}")
+    run_configs = []
+    for i_rep in range(config.num_reps):
+        trace_fn = f"{out_dir}/traces/{i_rep:05d}"
+        jsonl_fn = trace_fn + ".jsonl"
+        if shim.data_is_done(trace_fn) or shim.data_is_done(jsonl_fn):
+            print(f"Skipping trace_fn = {trace_fn}. Already done.")
+            continue
+        else:
+            problem_seed = problem_seed_from_rep_index(i_rep)
+            env_conf = get_env_conf(
+                config.env_tag,
+                problem_seed=problem_seed,
+                noise_level=None,
+                noise_seed_0=noise_seed_0_from_problem_seed(problem_seed),
+            )
+            run_configs.append(
+                RunConfig(
+                    trace_fn=trace_fn,
+                    env_conf=env_conf,
+                    opt_name=config.opt_name,
+                    num_rounds=config.num_rounds,
+                    total_timesteps=config.total_timesteps,
+                    num_arms=config.num_arms,
+                    num_denoise=config.num_denoise,
+                    num_denoise_passive=config.num_denoise_passive,
+                    max_proposal_seconds=config.max_proposal_seconds,
+                    b_trace=config.b_trace,
+                    video_enable=config.video_enable,
+                    video_num_episodes=config.video_num_episodes,
+                    video_num_video_episodes=config.video_num_video_episodes,
+                    video_episode_selection=config.video_episode_selection,
+                    video_seed_base=config.video_seed_base,
+                    video_prefix=config.video_prefix,
+                    runtime_device=config.runtime_device,
+                )
+            )
+    return run_configs
+
+
+def count_local_trace_jobs(configs: list[ExperimentConfig]) -> tuple[int, int, int]:
+    """Count local traces using the same rules as :func:`mk_replicates`.
+
+    Returns ``(n_complete, n_remaining, n_total)`` over every replicate in ``configs``.
+    """
+    n_complete = 0
+    n_total = 0
+    for config in configs:
+        out_dir = config.to_dir_name()
+        for i_rep in range(int(config.num_reps)):
+            n_total += 1
+            trace_fn = f"{out_dir}/traces/{i_rep:05d}"
+            jsonl_fn = trace_fn + ".jsonl"
+            if shim.data_is_done(trace_fn) or shim.data_is_done(jsonl_fn):
+                n_complete += 1
+    return n_complete, n_total - n_complete, n_total
+
+
+def sampler(config: ExperimentConfig, distributor_fn):
+    run_configs = shim.mk_replicates(config)
+    if distributor_fn is scan_local:
+        distributor_fn(
+            run_configs,
+            max_total_seconds=config.max_total_seconds,
+            local_workers=config.local_workers,
+            env_tag=config.env_tag,
+        )
+    else:
+        distributor_fn(run_configs)
+
+
+def prep_args_1(
+    results_dir,
+    exp_dir,
+    problem,
+    opt,
+    num_arms,
+    num_replications,
+    num_rounds,
+    noise=None,
+    num_denoise=None,
+    num_denoise_passive=None,
+) -> ExperimentConfig:
+    assert noise is None, "NYI"
+
+    full_exp_dir = f"{results_dir}/{exp_dir}"
+
+    return ExperimentConfig(
+        exp_dir=full_exp_dir,
+        env_tag=problem,
+        opt_name=opt,
+        num_arms=num_arms,
+        num_reps=num_replications,
+        num_rounds=num_rounds,
+        total_timesteps=None,
+        num_denoise=num_denoise,
+        num_denoise_passive=num_denoise_passive,
+    )
+
+
+def prep_d_args(
+    results_dir,
+    exp_dir,
+    funcs,
+    dims,
+    num_arms,
+    num_replications,
+    opts,
+    noises,
+    num_rounds=3,
+    func_category="f",
+    num_denoise=None,
+    num_denoise_passive=None,
+) -> list[ExperimentConfig]:
+    configs = []
+    for dim in dims:
+        for func in funcs:
+            for opt in opts:
+                for noise in noises:
+                    problem = f"{func_category}:{func}-{dim}d"
+                    configs.append(
+                        prep_args_1(
+                            results_dir,
+                            exp_dir,
+                            problem,
+                            opt,
+                            num_arms,
+                            num_replications,
+                            num_rounds,
+                            noise,
+                            num_denoise=num_denoise,
+                            num_denoise_passive=num_denoise_passive,
+                        )
+                    )
+    return configs

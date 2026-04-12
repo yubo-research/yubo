@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+import importlib
 import time
 from types import SimpleNamespace
 
 import numpy as np
 import torch
 
-from rl.torchrl.sac import loop as torchrl_sac_loop
+torchrl_sac_loop = importlib.import_module("rl.torchrl.sac.loop")
 
 
 class _ActionSpaceStub:
@@ -238,7 +239,7 @@ def test_evaluate_heldout_if_enabled():
         restore_actor_state=lambda _modules, snapshot: restore_calls.append(snapshot),
         eval_policy_factory=lambda *_: "policy",
         get_env_conf=lambda *_args, **_kwargs: "env_conf",
-        evaluate_for_best=lambda _env_conf, _policy, denoise, **_kwargs: (4.5 if denoise == 3 else -1.0),
+        evaluate_for_best=lambda _env_conf, _policy, denoise, **_kwargs: 4.5 if denoise == 3 else -1.0,
     )
     assert result == 4.5
     assert restore_calls[0] == {"best": 99}
@@ -265,7 +266,7 @@ def test_evaluate_heldout_if_enabled_passes_pixel_flags():
         capture_actor_state=lambda *_: {"current": 1},
         restore_actor_state=lambda *_: None,
         eval_policy_factory=lambda *_: "policy",
-        get_env_conf=lambda *_args, **kwargs: (captured_kwargs.update(kwargs) or "env_conf"),
+        get_env_conf=lambda *_args, **kwargs: captured_kwargs.update(kwargs) or "env_conf",
         evaluate_for_best=lambda *_args, **_kwargs: 7.0,
     )
     assert result == 7.0
@@ -333,7 +334,7 @@ def test_evaluate_if_due_updates_state_and_writes_metrics(monkeypatch):
         start_time=time.time() - 1.0,
         latest_losses={"loss_actor": 1.1, "loss_critic": 2.2, "loss_alpha": 3.3},
         total_updates=7,
-        evaluate_actor=lambda *_args, **kwargs: (6.0 if kwargs["eval_seed"] == 123 else -1.0),
+        evaluate_actor=lambda *_args, **kwargs: 6.0 if kwargs["eval_seed"] == 123 else -1.0,
         capture_actor_state=lambda *_: {"snapshot": 42},
         evaluate_heldout=lambda *_args, **_kwargs: 5.5,
     )

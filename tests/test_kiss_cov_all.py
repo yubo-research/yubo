@@ -296,7 +296,7 @@ def test_cov_exp_uhd_UHDConfig_local_modal_cmd(monkeypatch, tmp_path):
         def run(self):
             pass
 
-    monkeypatch.setattr("ops.uhd_setup.make_loop", lambda *a, **k: _Loop())
+    monkeypatch.setattr("ops.uhd_setup_make_loop.make_loop", lambda *a, **k: _Loop())
 
     toml = tmp_path / "cfg.toml"
     toml.write_text('[uhd]\nenv_tag = "f:sphere-2d"\nnum_rounds = 1\n')
@@ -381,7 +381,7 @@ def test_cov_modal_run_run_uhd(monkeypatch):
 
 
 def test_cov_make_loop_accuracy_fn_evaluate_fn():
-    from ops.uhd_setup import make_loop
+    from ops.uhd_setup_make_loop import make_loop
 
     loop = make_loop("mnist", num_rounds=1)
     assert loop is not None
@@ -390,7 +390,7 @@ def test_cov_make_loop_accuracy_fn_evaluate_fn():
 def test_cov_make_loop_gym_evaluate_fn(monkeypatch):
     import pytest
 
-    from ops.uhd_setup import make_loop
+    from ops.uhd_setup_make_loop import make_loop
 
     class _FakeTrajectory:
         rreturn = 1.0

@@ -3,14 +3,56 @@ def test_intersect_with_box():
 
     from sampling.sampling_util import intersect_with_box
 
-    # Example usage
     x0 = np.array([0.2, 0.5])
-    x1 = np.array([10, 1.5])
+    x1 = np.array([10.0, 1.5])
     intersection = intersect_with_box(x0, x1)
-    print()
-    print("I:", x0)
-    print("O:", x1)
-    print(intersection)
+    assert intersection is not None
+    assert isinstance(intersection, np.ndarray)
+    assert intersection.shape == x0.shape
+    np.testing.assert_allclose(intersection, np.array([0.2, 0.5]), rtol=0, atol=1e-12)
+    assert np.all(intersection >= -1e-12) and np.all(intersection <= 1.0 + 1e-12)
+
+
+def test_raasp_np_rejects_empty_i_dim_allowed():
+    """Empty i_dim_allowed must not crash with ZeroDivisionError (see sampling_util_raasp_np.raasp_np)."""
+    import numpy as np
+    import pytest
+
+    from sampling.sampling_util import raasp_np
+
+    x_center = np.zeros((1, 4))
+    lb = np.zeros(4)
+    ub = np.ones(4)
+    with pytest.raises(ValueError, match="i_dim_allowed"):
+        raasp_np(x_center, lb, ub, num_candidates=3, i_dim_allowed=[])
+
+
+def test_intersect_with_box_parallel_ray_has_no_invalid_division():
+    """When x_inside and x_outside share a coordinate, denominators are zero; handle without warnings."""
+    import warnings
+
+    import numpy as np
+
+    from sampling.sampling_util import intersect_with_box
+
+    x_inside = np.array([0.2, 0.5])
+    x_outside = np.array([0.2, 1.5])
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        out = intersect_with_box(x_inside, x_outside)
+    assert out is not None
+    np.testing.assert_allclose(out, np.array([0.2, 0.5]), rtol=0, atol=1e-12)
+
+
+def test_intersect_with_box_does_not_print_to_stdout(capsys):
+    import numpy as np
+
+    from sampling.sampling_util import intersect_with_box
+
+    x0 = np.array([0.2, 0.5])
+    x1 = np.array([10.0, 1.5])
+    intersect_with_box(x0, x1)
+    assert capsys.readouterr().out == ""
 
 
 def test_var_of_var():

@@ -5,6 +5,8 @@ import torch
 from torch import nn
 
 from rl.pufferlib.ppo import engine as ppo_engine
+from rl.pufferlib.ppo import engine_helpers as ppo_engine_helpers
+from rl.pufferlib.ppo import engine_train as ppo_engine_train
 from rl.pufferlib.ppo import training_ops
 from rl.pufferlib.ppo.config import PufferPPOConfig
 from rl.pufferlib.ppo.specs import (
@@ -82,7 +84,7 @@ def test_engine_build_eval_env_conf_wrapper(monkeypatch):
         captured["mode"] = obs_spec.mode
         return "env-conf"
 
-    monkeypatch.setattr(ppo_engine, "_build_eval_env_conf", _fake)
+    monkeypatch.setattr(ppo_engine_helpers, "_build_eval_env_conf", _fake)
     cfg = PufferPPOConfig(env_tag="Pendulum-v1")
     out = ppo_engine.build_eval_env_conf(cfg, obs_spec=_ObservationSpec(mode="vector", raw_shape=(3,), vector_dim=3))
     assert out == "env-conf"
@@ -176,15 +178,15 @@ def test_train_ppo_puffer_impl_calls_run_training(monkeypatch, tmp_path):
         device="cpu",
     )
 
-    monkeypatch.setattr(ppo_engine, "_resolve_device", lambda _raw: torch.device("cpu"))
-    monkeypatch.setattr(ppo_engine, "_seed_everything", lambda _seed: None)
-    monkeypatch.setattr(ppo_engine, "_build_plan", lambda _cfg: _TrainPlan(2, 2, 4, 2, 2))
-    monkeypatch.setattr(ppo_engine, "_prepare_outputs", lambda _cfg: tmp_path / "metrics.jsonl")
-    monkeypatch.setattr(ppo_engine, "make_vector_env", lambda _cfg: SimpleNamespace(close=lambda: None))
+    monkeypatch.setattr(ppo_engine_helpers, "_resolve_device", lambda _raw: torch.device("cpu"))
+    monkeypatch.setattr(ppo_engine_helpers, "_seed_everything", lambda _seed: None)
+    monkeypatch.setattr(ppo_engine_helpers, "_build_plan", lambda _cfg: _TrainPlan(2, 2, 4, 2, 2))
+    monkeypatch.setattr(ppo_engine_helpers, "_prepare_outputs", lambda _cfg: tmp_path / "metrics.jsonl")
+    monkeypatch.setattr(ppo_engine_helpers, "make_vector_env", lambda _cfg: SimpleNamespace(close=lambda: None))
     monkeypatch.setattr(ppo_eval, "validate_eval_config", lambda _cfg: None)
     monkeypatch.setattr(
-        ppo_engine,
-        "_run_training",
+        ppo_engine_train,
+        "run_training",
         lambda *args, **kwargs: ppo_engine.TrainResult(
             best_return=1.0,
             last_eval_return=1.0,

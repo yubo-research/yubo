@@ -4,10 +4,7 @@ from dataclasses import dataclass
 
 import numpy as np
 import torch
-from enn.enn.enn_class import EpistemicNearestNeighbors
-from enn.enn.enn_fit import enn_fit
 from enn.enn.enn_params import PosteriorFlags
-from enn.turbo.config.enn_index_driver import ENNIndexDriver
 from torch import nn
 
 from sampling.gather_proj_t import GatherProjSpec, project_module
@@ -15,6 +12,8 @@ from sampling.sparse_jl_t import (
     block_sparse_jl_noise_from_seed_wr,
     block_sparse_jl_transform_module_to_cpu_wr,
 )
+
+from .uhd_enn_fit_helpers import fit_enn_regressor_on_points
 
 
 @dataclass
@@ -75,28 +74,11 @@ class ENNMuPlusSeedSelector:
         if self._enn_params is not None and self._num_new_since_fit < int(self._cfg.fit_interval):
             return
 
-        x = np.asarray(self._x, dtype=np.float64)
-        y = np.asarray(self._y, dtype=np.float64)
-        self._y_mean = float(y.mean())
-        self._y_std = float(y.std()) if float(y.std()) > 0 else 1.0
-        y_std = (y - self._y_mean) / self._y_std
-
-        self._enn_model = EpistemicNearestNeighbors(
-            x,
-            y_std[:, None],
-            None,
-            scale_x=False,
-            index_driver=ENNIndexDriver.FLAT,
-        )
-        rng = np.random.default_rng(0)
-        self._enn_params = enn_fit(
-            self._enn_model,
-            k=int(self._cfg.k),
-            num_fit_candidates=200,
-            num_fit_samples=200,
-            rng=rng,
-        )
-
+        y_mean, y_std, model, params = fit_enn_regressor_on_points(self._x, self._y, k=int(self._cfg.k))
+        self._y_mean = y_mean
+        self._y_std = y_std
+        self._enn_model = model
+        self._enn_params = params
         self._num_new_since_fit = 0
 
     def _embed_base(self) -> tuple[torch.Tensor, int]:

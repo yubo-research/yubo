@@ -55,7 +55,7 @@ def test_dngo_fit_optimize_failure_raises():
         return -1e25, {}
 
     model = DNGOSurrogate(DNGOConfig(num_epochs=5, hidden_width=8, feature_dim=4, seed=0))
-    with patch("analysis.fitting_time.dngo._marginal_log_likelihood", side_effect=bad_mll):
+    with patch("analysis.fitting_time.dngo_model._marginal_log_likelihood", side_effect=bad_mll):
         with pytest.raises(RuntimeError, match="marginal likelihood"):
             model.fit(x, y)
 

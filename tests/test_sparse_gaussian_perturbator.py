@@ -98,3 +98,13 @@ def test_full_density_when_target_exceeds_dim():
     delta = module.weight.data - orig
     assert (delta.abs() > 1e-10).all()
     sp.unperturb()
+
+
+def test_prob_sparse_zero_total_numel_is_noop_roundtrip():
+    """Global dim 0 (e.g. only empty parameters) must not hit randint(0) fallback."""
+    module = nn.Module()
+    module.p = nn.Parameter(torch.empty(0))
+    sp = SparseGaussianPerturbator(module, num_dim_target=0.5)
+    assert sp._dim == 0
+    sp.perturb(seed=0, sigma=0.1)
+    sp.unperturb()

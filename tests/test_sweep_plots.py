@@ -182,6 +182,48 @@ def test_plot_curves_four_sources_smoke(tmp_path: Path, monkeypatch: pytest.Monk
     )
 
 
+def test_plot_curves_four_sources_saves_when_requested(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from analysis import sweep_plots
+
+    exp = "exp_test_four_save"
+    base = tmp_path / exp
+    base.mkdir()
+    for i, tag in enumerate(("env:a", "env:b", "env:c", "env:d")):
+        _write_config_run(
+            base,
+            f"run_{i}",
+            "turbo-enn-fit-ucb/k=10",
+            tag,
+        )
+
+    saved = []
+    monkeypatch.setattr(
+        sweep_plots,
+        "load_traces",
+        lambda path, key="rreturn": np.ones((2, 4)),
+    )
+    monkeypatch.setattr(sweep_plots.plt, "show", lambda *a, **k: None)
+    monkeypatch.setattr(
+        sweep_plots.plt.Figure,
+        "savefig",
+        lambda self, path, **kwargs: saved.append((path, kwargs)),
+    )
+
+    out_path = tmp_path / "four_panel.pdf"
+    sweep_plots.plot_curves_four_sources(
+        panel_sources=(
+            (exp, "env:a"),
+            (exp, "env:b"),
+            (exp, "env:c"),
+            (exp, "env:d"),
+        ),
+        results_dir=tmp_path,
+        save_path=out_path,
+    )
+
+    assert saved == [(out_path, {"bbox_inches": "tight"})]
+
+
 def test_plot_curves_four_sources_mixed_param_smoke(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     from analysis import sweep_plots
 
@@ -241,12 +283,12 @@ def test_plot_curves_four_sources_panel_labels_length_mismatch(
         )
 
 
-def test_final_ybest_mean_sem_per_curve() -> None:
-    from analysis.sweep_plots import _final_ybest_mean_sem_per_curve
+def test_mean_ybest_mean_sem_per_curve() -> None:
+    from analysis.sweep_plots import _mean_ybest_mean_sem_per_curve
 
-    c1 = np.array([[1.0, 2.0, 5.0], [1.0, 3.0, 4.0]])
-    means, sems = _final_ybest_mean_sem_per_curve([c1])
-    assert means[0] == 4.5
+    c1 = np.array([[1.0, 2.0, 3.0], [1.0, 3.0, 5.0]])
+    means, sems = _mean_ybest_mean_sem_per_curve([c1])
+    assert means[0] == 2.5
     assert len(sems) == 1
     assert sems[0] > 0
 
@@ -272,3 +314,24 @@ def test_plot_curves_missing_dir_prints(tmp_path: Path, capsys: pytest.CaptureFi
     )
     err = capsys.readouterr().out
     assert "Directory not found" in err
+
+
+def test_load_traces_or_skip_skips_incomplete_1d_trace(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from analysis import sweep_plots
+
+    monkeypatch.setattr(
+        sweep_plots,
+        "load_traces",
+        lambda path, key="rreturn": np.array([np.nan]),
+    )
+
+    result = sweep_plots._load_traces_or_skip(
+        Path("/tmp/fake"),
+        val=10,
+        trace_key="rreturn",
+        param_name_for_print="P",
+    )
+
+    assert result is None

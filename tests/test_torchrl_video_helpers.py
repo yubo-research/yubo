@@ -165,7 +165,7 @@ def test_render_policy_videos_rl_selection_and_guards(monkeypatch, tmp_path):
             return 0.0
         return returns_by_seed[seed]
 
-    monkeypatch.setattr("common.video.rollout_episode", _fake_rollout)
+    monkeypatch.setattr("common.video_batch.rollout_episode", _fake_rollout)
 
     @contextmanager
     def _with_actor_state(_modules, _snapshot, *, device):
@@ -238,7 +238,7 @@ def test_render_policy_videos_non_gym_not_skipped(monkeypatch, tmp_path):
         calls.append((seed, render_video, video_dir, video_prefix))
         return 1.0
 
-    monkeypatch.setattr("common.video.rollout_episode", _fake_rollout)
+    monkeypatch.setattr("common.video_batch.rollout_episode", _fake_rollout)
 
     render_policy_videos(
         env_conf,
@@ -349,7 +349,7 @@ def test_render_policy_videos_bo_smoke(monkeypatch, tmp_path):
     def policy(s):
         return np.array([-1.0, 1.0], dtype=np.float32)
 
-    monkeypatch.setattr("common.video.render_policy_videos", lambda *a, **kw: None)
+    monkeypatch.setattr("common.video_batch.render_policy_videos", lambda *a, **kw: None)
     render_policy_videos_bo(
         env_conf,
         policy,
@@ -404,7 +404,7 @@ def test_rollout_episode_records_non_gym_video(monkeypatch, tmp_path):
 
         return _Writer()
 
-    monkeypatch.setattr("common.video._open_frame_video_writer", _fake_writer)
+    monkeypatch.setattr("common.video_rollout._open_frame_video_writer", _fake_writer)
 
     ret = rollout_episode(
         env_conf,
@@ -434,7 +434,7 @@ def test_render_policy_videos_skips_headless_video_error(monkeypatch, tmp_path, 
             raise RuntimeError("X11: The DISPLAY environment variable is missing")
         return 1.0
 
-    monkeypatch.setattr("common.video.rollout_episode", _fake_rollout)
+    monkeypatch.setattr("common.video_batch.rollout_episode", _fake_rollout)
     render_policy_videos(
         env_conf,
         policy,
@@ -466,8 +466,8 @@ def test_render_policy_videos_retries_with_headless_gl_backend(monkeypatch, tmp_
             raise RuntimeError("X11: The DISPLAY environment variable is missing")
         return 0.0
 
-    monkeypatch.setattr("common.video._video_gl_candidates", lambda: [None, "egl"])
-    monkeypatch.setattr("common.video.rollout_episode", _fake_rollout)
+    monkeypatch.setattr("common.video_batch._video_gl_candidates", lambda: [None, "egl"])
+    monkeypatch.setattr("common.video_batch.rollout_episode", _fake_rollout)
 
     render_policy_videos(
         env_conf,

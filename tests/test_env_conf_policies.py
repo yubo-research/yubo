@@ -99,7 +99,7 @@ def test_load_atari_dm_bindings_with_fake_modules(monkeypatch):
         pass
 
     fake_atari_env.AtariPreprocessOptions = _FakeAtariPreprocessOptions
-    fake_atari_env._parse_atari_tag = lambda tag: ("ALE/Pong-v5" if "Pong" in str(tag) else str(tag))
+    fake_atari_env._parse_atari_tag = lambda tag: "ALE/Pong-v5" if "Pong" in str(tag) else str(tag)
     fake_atari_env.make = lambda *args, **kwargs: ("atari-make", args, kwargs)
 
     fake_dm_env = ModuleType("problems.dm_control_env")

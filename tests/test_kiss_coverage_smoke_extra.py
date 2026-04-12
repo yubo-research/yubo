@@ -624,7 +624,10 @@ def test_kiss_cov_sac_setup_build_and_update(monkeypatch, tmp_path):
         obs_lb=np.array([-1.0, -1.0, -1.0, -1.0], dtype=np.float32),
         obs_width=np.array([2.0, 2.0, 2.0, 2.0], dtype=np.float32),
     )
-    monkeypatch.setattr(sac_setup, "build_continuous_gym_env_setup", lambda **kwargs: shared)
+    monkeypatch.setattr(
+        "rl.torchrl.sac.sac_setup_build.build_continuous_gym_env_setup",
+        lambda **kwargs: shared,
+    )
 
     cfg = SACConfig(exp_dir=str(tmp_path), env_tag="pend", batch_size=4, replay_size=32)
     env_setup = sac_setup.build_env_setup(cfg)
@@ -640,7 +643,7 @@ def test_kiss_cov_sac_setup_build_and_update(monkeypatch, tmp_path):
         assert batch.obs.shape[0] == 4
         return (1.0, 2.0, 3.0)
 
-    monkeypatch.setattr(sac_setup, "sac_update_step", _fake_update_step)
+    monkeypatch.setattr("rl.core.sac_update.sac_update_step", _fake_update_step)
     out = sac_setup.sac_update_shared(
         cfg,
         modules,
@@ -909,17 +912,13 @@ def test_kiss_cov_offpolicy_and_sac_helper_modules(monkeypatch, tmp_path):
 
 
 def test_kiss_cov_direct_sac_offpolicy_symbols(monkeypatch):
+    import rl.pufferlib.sac.eval_utils as sac_eval_facade
     from rl.pufferlib.offpolicy.runtime_utils import (
         obs_scale_from_env as off_obs_scale_from_env,
     )
     from rl.pufferlib.offpolicy.runtime_utils import select_device as off_select_device
     from rl.pufferlib.sac.env_utils import build_env_setup as sac_build_env_setup
     from rl.pufferlib.sac.env_utils import make_vector_env as sac_make_vector_env
-    from rl.pufferlib.sac.eval_utils import evaluate_actor as sac_evaluate_actor
-    from rl.pufferlib.sac.eval_utils import (
-        evaluate_heldout_if_enabled as sac_evaluate_heldout_if_enabled,
-    )
-    from rl.pufferlib.sac.eval_utils import maybe_eval as sac_maybe_eval
     from rl.pufferlib.sac.model_utils import SACModules, SACOptimizers
     from rl.pufferlib.sac.model_utils import build_modules as sac_build_modules
     from rl.pufferlib.sac.model_utils import build_optimizers as sac_build_optimizers
@@ -1024,9 +1023,9 @@ def test_kiss_cov_direct_sac_offpolicy_symbols(monkeypatch):
         last_eval_return=0.0,
         last_heldout_return=None,
     )
-    assert sac_evaluate_actor(cfg, env_setup, modules, obs_spec, device=torch.device("cpu"), eval_seed=0) == 1.0
+    assert sac_eval_facade.evaluate_actor(cfg, env_setup, modules, obs_spec, device=torch.device("cpu"), eval_seed=0) == 1.0
     assert isinstance(
-        sac_evaluate_heldout_if_enabled(
+        sac_eval_facade.evaluate_heldout_if_enabled(
             cfg,
             env_setup,
             modules,
@@ -1036,7 +1035,7 @@ def test_kiss_cov_direct_sac_offpolicy_symbols(monkeypatch):
         ),
         float,
     )
-    sac_maybe_eval(cfg, env_setup, modules, obs_spec, state, device=torch.device("cpu"))
+    sac_eval_facade.maybe_eval(cfg, env_setup, modules, obs_spec, state, device=torch.device("cpu"))
 
     snapshot = trl_capture_actor_snapshot(SimpleNamespace(actor_backbone=nn.Linear(2, 2), actor_head=nn.Linear(2, 2)))
     modules_small = SimpleNamespace(actor_backbone=nn.Linear(2, 2), actor_head=nn.Linear(2, 2))

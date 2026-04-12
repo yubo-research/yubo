@@ -14,7 +14,7 @@ from acq.acq_dpp import AcqDPP
 from acq.fit_gp import _EmptyTransform
 from analysis.data_locator import DataLocator
 from optimizer.bt_designer import BTDesigner
-from optimizer.designer_registry import _SimpleContext
+from optimizer.designer_registry_context import _SimpleContext
 from optimizer.gaussian_perturbator import GaussianPerturbator
 from optimizer.lr_scheduler import (
     ConstantLR,
@@ -294,7 +294,7 @@ def test_kiss_cov_noise_maker_and_policy_mixin():
 
 def test_kiss_cov_exp_uhd_cli_and_local(monkeypatch, tmp_path):
     import ops.exp_uhd as exp_uhd
-    import ops.uhd_setup as uhd_setup
+    import ops.uhd_setup_make_loop as uhd_setup
 
     called = {"run": 0}
 

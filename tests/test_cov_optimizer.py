@@ -1,4 +1,4 @@
-from optimizer.designer_registry import _SimpleContext
+from optimizer.designer_registry_context import _SimpleContext
 
 
 def test_simple_context_init():

@@ -51,6 +51,7 @@ def test_puffer_sac_register_delegates_to_registry(monkeypatch):
 
 
 def test_puffer_sac_train_delegates_to_impl(monkeypatch):
+    import rl.pufferlib.sac.sac_puffer_train_run as sac_train_run
     from rl.pufferlib.sac import engine
 
     sentinel = puffer_sac.TrainResult(
@@ -59,7 +60,7 @@ def test_puffer_sac_train_delegates_to_impl(monkeypatch):
         last_heldout_return=0.4,
         num_steps=12,
     )
-    monkeypatch.setattr(engine, "train_sac_puffer_impl", lambda _cfg: sentinel)
+    monkeypatch.setattr(sac_train_run, "train_sac_puffer_impl", lambda _cfg: sentinel)
 
     out = engine.train_sac_puffer(puffer_sac.SACConfig())
     assert out is sentinel
@@ -481,7 +482,8 @@ class _FakeVecEnv:
 
 
 def test_train_sac_puffer_impl_smoke_with_patched_loop(monkeypatch, tmp_path: Path):
-    from rl.pufferlib.sac import engine
+    import rl.pufferlib.sac.sac_puffer_train_run_impl as train_impl
+    from rl.pufferlib.sac.eval_utils import TrainState
 
     cfg = puffer_sac.SACConfig(
         exp_dir=str(tmp_path / "exp"),
@@ -501,7 +503,7 @@ def test_train_sac_puffer_impl_smoke_with_patched_loop(monkeypatch, tmp_path: Pa
 
     monkeypatch.setattr("rl.eval_noise.normalize_eval_noise_mode", lambda _mode: None)
     monkeypatch.setattr(
-        engine,
+        train_impl,
         "_init_run_artifacts",
         lambda _cfg: (
             tmp_path / "exp",
@@ -509,27 +511,35 @@ def test_train_sac_puffer_impl_smoke_with_patched_loop(monkeypatch, tmp_path: Pa
             SimpleNamespace(save_both=lambda *_args, **_kwargs: None),
         ),
     )
-    monkeypatch.setattr(engine, "_init_runtime", lambda _cfg: (env_setup, torch.device("cpu")))
-    monkeypatch.setattr(engine, "make_vector_env", lambda _cfg: _FakeVecEnv(num_envs=1, obs_dim=3))
-    monkeypatch.setattr(engine, "infer_observation_spec", lambda _cfg, _obs: obs_spec)
+    monkeypatch.setattr(train_impl, "_init_runtime", lambda _cfg: (env_setup, torch.device("cpu")))
     monkeypatch.setattr(
-        engine,
-        "prepare_obs_np",
+        "rl.pufferlib.sac.env_utils.make_vector_env",
+        lambda _cfg: _FakeVecEnv(num_envs=1, obs_dim=3),
+    )
+    monkeypatch.setattr(
+        "rl.pufferlib.sac.env_utils.infer_observation_spec",
+        lambda _cfg, _obs: obs_spec,
+    )
+    monkeypatch.setattr(
+        "rl.pufferlib.sac.env_utils.prepare_obs_np",
         lambda obs_np, **_kwargs: np.asarray(obs_np, dtype=np.float32),
     )
     monkeypatch.setattr(
-        engine,
+        train_impl,
         "_build_training_components",
         lambda *_args, **_kwargs: (
             SimpleNamespace(),
             SimpleNamespace(),
             SimpleNamespace(),
-            engine.TrainState(start_time=float(time.time()) - 1.0),
+            TrainState(start_time=float(time.time()) - 1.0),
         ),
     )
-    monkeypatch.setattr(engine, "_log_header", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(train_impl, "_log_header", lambda *_args, **_kwargs: None)
     monkeypatch.setattr("rl.logger.log_run_footer", lambda **_kwargs: None)
-    monkeypatch.setattr(engine, "render_videos_if_enabled", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(
+        "rl.pufferlib.sac.eval_utils.render_videos_if_enabled",
+        lambda *_args, **_kwargs: None,
+    )
 
     def _fake_train_loop(
         _config,
@@ -548,7 +558,7 @@ def test_train_sac_puffer_impl_smoke_with_patched_loop(monkeypatch, tmp_path: Pa
         state.last_eval_return = 0.5
         state.last_heldout_return = 0.25
 
-    monkeypatch.setattr(engine, "_train_loop", _fake_train_loop)
+    monkeypatch.setattr("rl.pufferlib.sac.sac_loop_impl._train_loop", _fake_train_loop)
 
     out = puffer_sac.train_sac_puffer(cfg)
     assert out.num_steps == 8

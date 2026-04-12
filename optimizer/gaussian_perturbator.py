@@ -16,6 +16,10 @@ class PerturbatorBase:
         self._perturbed = False
         self._seed: int | None = None
 
+    @property
+    def module(self) -> nn.Module:
+        return self._module
+
     def _device(self) -> torch.device:
         return next(self._module.parameters()).device
 

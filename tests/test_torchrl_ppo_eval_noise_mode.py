@@ -10,20 +10,21 @@ import torch
 def test_ppo_eval_noise_mode_natural_advances_eval_and_heldout(monkeypatch, tmp_path):
     from rl.core import episode_rollout
     from rl.torchrl.ppo import core as ppo_core
+    from rl.torchrl.ppo import core_train as ppo_core_train
     from rl.torchrl.ppo import deps as op_deps
 
     eval_seeds: list[int] = []
     heldout_noise_indices: list[int] = []
 
     monkeypatch.setattr(
-        ppo_core,
+        ppo_core_train,
         "_evaluate_actor",
-        lambda *_args, **kwargs: (eval_seeds.append(int(kwargs["eval_seed"])) or float(kwargs["eval_seed"])),
+        lambda *_args, **kwargs: eval_seeds.append(int(kwargs["eval_seed"])) or float(kwargs["eval_seed"]),
     )
     monkeypatch.setattr(
         episode_rollout,
         "evaluate_for_best",
-        lambda *_args, **kwargs: (heldout_noise_indices.append(int(kwargs["i_noise"])) or 0.0),
+        lambda *_args, **kwargs: heldout_noise_indices.append(int(kwargs["i_noise"])) or 0.0,
     )
     monkeypatch.setattr(
         op_deps.torchrl_actor_eval,
@@ -88,20 +89,21 @@ def test_ppo_eval_noise_mode_natural_advances_eval_and_heldout(monkeypatch, tmp_
 def test_ppo_eval_noise_mode_frozen_uses_fixed_seeds(monkeypatch, tmp_path):
     from rl.core import episode_rollout
     from rl.torchrl.ppo import core as ppo_core
+    from rl.torchrl.ppo import core_train as ppo_core_train
     from rl.torchrl.ppo import deps as op_deps
 
     eval_seeds: list[int] = []
     heldout_noise_indices: list[int] = []
 
     monkeypatch.setattr(
-        ppo_core,
+        ppo_core_train,
         "_evaluate_actor",
-        lambda *_args, **kwargs: (eval_seeds.append(int(kwargs["eval_seed"])) or float(kwargs["eval_seed"])),
+        lambda *_args, **kwargs: eval_seeds.append(int(kwargs["eval_seed"])) or float(kwargs["eval_seed"]),
     )
     monkeypatch.setattr(
         episode_rollout,
         "evaluate_for_best",
-        lambda *_args, **kwargs: (heldout_noise_indices.append(int(kwargs["i_noise"])) or 0.0),
+        lambda *_args, **kwargs: heldout_noise_indices.append(int(kwargs["i_noise"])) or 0.0,
     )
     monkeypatch.setattr(
         op_deps.torchrl_actor_eval,

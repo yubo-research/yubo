@@ -1,15 +1,10 @@
 import json
-from pathlib import Path
+import os
+import tempfile
 from types import SimpleNamespace
 
-import numpy as np
-import pytest
 
-import rl.pufferlib.ppo as pufferlib_ppo
-from rl.pufferlib.ppo import engine as puffer_ppo_engine
-
-
-class _FakeVecEnv:
+class _FakePufferVecEnv:
     def __init__(self, num_envs: int):
         self.num_envs = int(num_envs)
         self.single_action_space = SimpleNamespace(n=6)
@@ -17,6 +12,8 @@ class _FakeVecEnv:
         self._t = 0
 
     def reset(self, seed=None):
+        import numpy as np
+
         _ = seed
         self._t = 0
         obs = np.zeros((self.num_envs, 80, 4, 105), dtype=np.uint8)
@@ -24,6 +21,8 @@ class _FakeVecEnv:
         return obs, infos
 
     def step(self, action):
+        import numpy as np
+
         _ = action
         self._t += 1
         obs = np.zeros((self.num_envs, 80, 4, 105), dtype=np.uint8)
@@ -39,8 +38,10 @@ class _FakeVecEnv:
         return None
 
 
-class _FakeVecEnvContinuous:
+class _FakePufferVecEnvContinuous:
     def __init__(self, num_envs: int):
+        import numpy as np
+
         self.num_envs = int(num_envs)
         self.single_action_space = SimpleNamespace(
             shape=(4,),
@@ -51,6 +52,8 @@ class _FakeVecEnvContinuous:
         self._t = 0
 
     def reset(self, seed=None):
+        import numpy as np
+
         _ = seed
         self._t = 0
         obs = np.zeros((self.num_envs, 24), dtype=np.float32)
@@ -58,6 +61,8 @@ class _FakeVecEnvContinuous:
         return obs, infos
 
     def step(self, action):
+        import numpy as np
+
         action = np.asarray(action)
         assert action.shape == (self.num_envs, 4)
         self._t += 1
@@ -74,31 +79,9 @@ class _FakeVecEnvContinuous:
         return None
 
 
-class _FakeVectorModule:
-    class Serial:
-        pass
-
-    class Multiprocessing:
-        pass
-
-    @staticmethod
-    def make(env_creator, env_kwargs=None, backend=None, num_envs=1, seed=0, **kwargs):
-        _ = env_creator, env_kwargs, backend, seed, kwargs
-        return _FakeVecEnv(num_envs=int(num_envs))
-
-
-class _FakeAtariModule:
-    @staticmethod
-    def env_creator(game_name):
-        _ = game_name
-
-        def _thunk():
-            raise RuntimeError("not used in fake vector backend")
-
-        return _thunk
-
-
 def test_puffer_config_from_dict_converts_hidden_sizes():
+    import rl.pufferlib.ppo as pufferlib_ppo
+
     cfg = pufferlib_ppo.PufferPPOConfig.from_dict(
         {
             "env_tag": "cheetah",
@@ -113,18 +96,27 @@ def test_puffer_config_from_dict_converts_hidden_sizes():
 
 
 def test_puffer_config_from_dict_uses_env_defaults():
+    import rl.pufferlib.ppo as pufferlib_ppo
+
     cfg = pufferlib_ppo.PufferPPOConfig.from_dict({"env_tag": "cheetah"})
     assert cfg.backbone_hidden_sizes == (64, 64)
 
 
-def test_puffer_register_delegates_to_registry(monkeypatch):
+def test_puffer_register_delegates_to_registry():
+    import rl.pufferlib.ppo as pufferlib_ppo
+    import rl.registry as registry
+
     calls = []
 
     def fake_register_algo(name, config_cls, train_fn, *, backend=None):
         calls.append((name, config_cls, train_fn, backend))
 
-    monkeypatch.setattr("rl.registry.register_algo", fake_register_algo)
-    pufferlib_ppo.register()
+    prev = registry.register_algo
+    registry.register_algo = fake_register_algo
+    try:
+        pufferlib_ppo.register()
+    finally:
+        registry.register_algo = prev
 
     assert len(calls) == 1
     name, config_cls, train_fn, backend = calls[0]
@@ -134,142 +126,154 @@ def test_puffer_register_delegates_to_registry(monkeypatch):
     assert train_fn is pufferlib_ppo.train_ppo_puffer
 
 
-def test_train_ppo_puffer_fake_vector_smoke(monkeypatch, tmp_path: Path):
-    monkeypatch.setattr(
-        puffer_ppo_engine,
-        "make_vector_env",
-        lambda _cfg: _FakeVecEnv(num_envs=2),
-    )
+def _train_ppo_with_fake_vec(fake_vec_cls, *, exp_dir: str, extra_cfg: dict):
+    import rl.pufferlib.ppo as pufferlib_ppo
+    import rl.pufferlib.ppo.engine_helpers as engine_helpers
 
-    cfg = pufferlib_ppo.PufferPPOConfig(
-        exp_dir=str(tmp_path / "exp"),
-        env_tag="atari:Pong",
-        seed=7,
-        total_timesteps=8,
-        num_envs=2,
-        num_steps=2,
-        num_minibatches=2,
-        update_epochs=1,
-        learning_rate=1e-3,
-        actor_head_hidden_sizes=(32,),
-        critic_head_hidden_sizes=(32,),
-        share_backbone=True,
-        vector_backend="serial",
-        eval_interval=0,
-        log_interval=1,
-        device="cpu",
-    )
-    result = pufferlib_ppo.train_ppo_puffer(cfg)
-
-    assert result.num_iterations == 2
-    assert (tmp_path / "exp" / "config.json").exists()
-    assert (tmp_path / "exp" / "metrics.jsonl").exists()
+    prev = engine_helpers.make_vector_env
+    engine_helpers.make_vector_env = lambda _cfg: fake_vec_cls(num_envs=2)
+    try:
+        base = dict(
+            exp_dir=exp_dir,
+            total_timesteps=8,
+            num_envs=2,
+            num_steps=2,
+            num_minibatches=2,
+            update_epochs=1,
+            learning_rate=1e-3,
+            actor_head_hidden_sizes=(32,),
+            critic_head_hidden_sizes=(32,),
+            share_backbone=True,
+            vector_backend="serial",
+            eval_interval=0,
+            log_interval=1,
+            device="cpu",
+        )
+        base.update(extra_cfg)
+        cfg = pufferlib_ppo.PufferPPOConfig(**base)
+        return pufferlib_ppo.train_ppo_puffer(cfg)
+    finally:
+        engine_helpers.make_vector_env = prev
 
 
-def test_train_ppo_puffer_continuous_fake_vector_smoke(monkeypatch, tmp_path: Path):
-    monkeypatch.setattr(
-        puffer_ppo_engine,
-        "make_vector_env",
-        lambda _cfg: _FakeVecEnvContinuous(num_envs=2),
-    )
+def test_train_ppo_puffer_fake_vector_smoke():
+    with tempfile.TemporaryDirectory() as tmp:
+        exp_dir = os.path.join(tmp, "exp")
+        result = _train_ppo_with_fake_vec(
+            _FakePufferVecEnv,
+            exp_dir=exp_dir,
+            extra_cfg=dict(
+                env_tag="atari:Pong",
+                seed=7,
+            ),
+        )
+        assert result.num_iterations == 2
+        assert os.path.exists(os.path.join(exp_dir, "config.json"))
+        assert os.path.exists(os.path.join(exp_dir, "metrics.jsonl"))
 
-    cfg = pufferlib_ppo.PufferPPOConfig(
-        exp_dir=str(tmp_path / "exp_cont"),
-        env_tag="bw-heur",
-        seed=9,
-        total_timesteps=8,
-        num_envs=2,
-        num_steps=2,
-        num_minibatches=2,
-        update_epochs=1,
-        learning_rate=1e-3,
-        backbone_name="mlp",
-        backbone_hidden_sizes=(32,),
-        actor_head_hidden_sizes=(32,),
-        critic_head_hidden_sizes=(32,),
-        share_backbone=True,
-        vector_backend="serial",
-        eval_interval=0,
-        log_interval=1,
-        device="cpu",
-        log_std_init=-0.5,
-    )
-    result = pufferlib_ppo.train_ppo_puffer(cfg)
 
-    assert result.num_iterations == 2
-    assert (tmp_path / "exp_cont" / "config.json").exists()
-    assert (tmp_path / "exp_cont" / "metrics.jsonl").exists()
+def test_train_ppo_puffer_continuous_fake_vector_smoke():
+    with tempfile.TemporaryDirectory() as tmp:
+        exp_dir = os.path.join(tmp, "exp_cont")
+        result = _train_ppo_with_fake_vec(
+            _FakePufferVecEnvContinuous,
+            exp_dir=exp_dir,
+            extra_cfg=dict(
+                env_tag="bw-heur",
+                seed=9,
+                backbone_name="mlp",
+                backbone_hidden_sizes=(32,),
+                log_std_init=-0.5,
+            ),
+        )
+        assert result.num_iterations == 2
+        assert os.path.exists(os.path.join(exp_dir, "config.json"))
+        assert os.path.exists(os.path.join(exp_dir, "metrics.jsonl"))
 
 
 def test_train_ppo_puffer_rejects_invalid_eval_noise_mode():
+    import rl.pufferlib.ppo as pufferlib_ppo
+
     cfg = pufferlib_ppo.PufferPPOConfig(eval_noise_mode="invalid-mode")
-    with pytest.raises(ValueError, match="eval_noise_mode must be one of"):
+    try:
         pufferlib_ppo.train_ppo_puffer(cfg)
+    except ValueError as e:
+        assert "eval_noise_mode must be one of" in str(e)
+    else:
+        raise AssertionError("expected ValueError")
 
 
-def test_train_ppo_puffer_resume_from_checkpoint(monkeypatch, tmp_path: Path):
-    monkeypatch.setattr(
-        puffer_ppo_engine,
-        "make_vector_env",
-        lambda _cfg: _FakeVecEnv(num_envs=2),
-    )
+def test_train_ppo_puffer_resume_from_checkpoint():
+    import rl.pufferlib.ppo as pufferlib_ppo
+    import rl.pufferlib.ppo.engine_helpers as engine_helpers
 
-    first_dir = tmp_path / "exp_first"
-    first_cfg = pufferlib_ppo.PufferPPOConfig(
-        exp_dir=str(first_dir),
-        env_tag="atari:Pong",
-        seed=7,
-        total_timesteps=8,
-        num_envs=2,
-        num_steps=2,
-        num_minibatches=2,
-        update_epochs=1,
-        learning_rate=1e-3,
-        actor_head_hidden_sizes=(32,),
-        critic_head_hidden_sizes=(32,),
-        share_backbone=True,
-        vector_backend="serial",
-        eval_interval=0,
-        checkpoint_interval=1,
-        log_interval=0,
-        device="cpu",
-    )
-    first_result = pufferlib_ppo.train_ppo_puffer(first_cfg)
-    assert first_result.num_iterations == 2
-    resume_path = first_dir / "checkpoints" / "checkpoint_last.pt"
-    assert resume_path.exists()
+    prev = engine_helpers.make_vector_env
+    engine_helpers.make_vector_env = lambda _cfg: _FakePufferVecEnv(num_envs=2)
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            first_dir = os.path.join(tmp, "exp_first")
+            first_cfg = pufferlib_ppo.PufferPPOConfig(
+                exp_dir=first_dir,
+                env_tag="atari:Pong",
+                seed=7,
+                total_timesteps=8,
+                num_envs=2,
+                num_steps=2,
+                num_minibatches=2,
+                update_epochs=1,
+                learning_rate=1e-3,
+                actor_head_hidden_sizes=(32,),
+                critic_head_hidden_sizes=(32,),
+                share_backbone=True,
+                vector_backend="serial",
+                eval_interval=0,
+                checkpoint_interval=1,
+                log_interval=0,
+                device="cpu",
+            )
+            first_result = pufferlib_ppo.train_ppo_puffer(first_cfg)
+            assert first_result.num_iterations == 2
+            resume_path = os.path.join(first_dir, "checkpoints", "checkpoint_last.pt")
+            assert os.path.exists(resume_path)
 
-    second_dir = tmp_path / "exp_resume"
-    second_cfg = pufferlib_ppo.PufferPPOConfig(
-        exp_dir=str(second_dir),
-        env_tag="atari:Pong",
-        seed=7,
-        total_timesteps=12,
-        num_envs=2,
-        num_steps=2,
-        num_minibatches=2,
-        update_epochs=1,
-        learning_rate=1e-3,
-        actor_head_hidden_sizes=(32,),
-        critic_head_hidden_sizes=(32,),
-        share_backbone=True,
-        vector_backend="serial",
-        eval_interval=0,
-        checkpoint_interval=1,
-        resume_from=str(resume_path),
-        log_interval=0,
-        device="cpu",
-    )
-    second_result = pufferlib_ppo.train_ppo_puffer(second_cfg)
-    assert second_result.num_iterations == 3
-    metrics_lines = (second_dir / "metrics.jsonl").read_text(encoding="utf-8").strip().splitlines()
-    assert len(metrics_lines) == 1
-    metric = json.loads(metrics_lines[0])
-    assert metric["iteration"] == 3
-    assert (second_dir / "checkpoints" / "checkpoint_last.pt").exists()
+            second_dir = os.path.join(tmp, "exp_resume")
+            second_cfg = pufferlib_ppo.PufferPPOConfig(
+                exp_dir=second_dir,
+                env_tag="atari:Pong",
+                seed=7,
+                total_timesteps=12,
+                num_envs=2,
+                num_steps=2,
+                num_minibatches=2,
+                update_epochs=1,
+                learning_rate=1e-3,
+                actor_head_hidden_sizes=(32,),
+                critic_head_hidden_sizes=(32,),
+                share_backbone=True,
+                vector_backend="serial",
+                eval_interval=0,
+                checkpoint_interval=1,
+                resume_from=str(resume_path),
+                log_interval=0,
+                device="cpu",
+            )
+            second_result = pufferlib_ppo.train_ppo_puffer(second_cfg)
+            assert second_result.num_iterations == 3
+            metrics_path = os.path.join(second_dir, "metrics.jsonl")
+            metrics_lines = open(metrics_path, encoding="utf-8").read().strip().splitlines()
+            assert len(metrics_lines) == 1
+            metric = json.loads(metrics_lines[0])
+            assert metric["iteration"] == 3
+            assert os.path.exists(os.path.join(second_dir, "checkpoints", "checkpoint_last.pt"))
+    finally:
+        engine_helpers.make_vector_env = prev
 
 
-def test_train_ppo_puffer_renders_video_when_enabled(monkeypatch, tmp_path: Path):
+def test_train_ppo_puffer_renders_video_when_enabled():
+    import common.video as video_mod
+    import rl.pufferlib.ppo as pufferlib_ppo
+    import rl.pufferlib.ppo.engine_helpers as engine_helpers
+
     video_calls: list[dict] = []
 
     def _fake_render_policy_videos(
@@ -295,48 +299,53 @@ def test_train_ppo_puffer_renders_video_when_enabled(monkeypatch, tmp_path: Path
             }
         )
 
-    monkeypatch.setattr(
-        puffer_ppo_engine,
-        "make_vector_env",
-        lambda _cfg: _FakeVecEnv(num_envs=2),
-    )
-    monkeypatch.setattr(
-        puffer_ppo_engine,
-        "build_eval_env_conf",
-        lambda *_args, **_kwargs: SimpleNamespace(gym_conf=SimpleNamespace(max_steps=1)),
-    )
-    monkeypatch.setattr("common.video.render_policy_videos", _fake_render_policy_videos)
+    prev_make = engine_helpers.make_vector_env
+    prev_build = engine_helpers.build_eval_env_conf
+    prev_render = video_mod.render_policy_videos
 
-    cfg = pufferlib_ppo.PufferPPOConfig(
-        exp_dir=str(tmp_path / "exp_video"),
-        env_tag="atari:Pong",
-        seed=11,
-        total_timesteps=8,
-        num_envs=2,
-        num_steps=2,
-        num_minibatches=2,
-        update_epochs=1,
-        learning_rate=1e-3,
-        actor_head_hidden_sizes=(32,),
-        critic_head_hidden_sizes=(32,),
-        share_backbone=True,
-        vector_backend="serial",
-        eval_interval=0,
-        log_interval=0,
-        device="cpu",
-        video_enable=True,
-        video_num_episodes=3,
-        video_num_video_episodes=1,
-    )
-    _ = pufferlib_ppo.train_ppo_puffer(cfg)
+    engine_helpers.make_vector_env = lambda _cfg: _FakePufferVecEnv(num_envs=2)
 
-    assert len(video_calls) == 1
-    call = video_calls[0]
-    assert call["video_prefix"] == "policy"
-    assert call["num_episodes"] == 3
-    assert call["num_video_episodes"] == 1
-    assert call["episode_selection"] == "best"
-    from common.experiment_seeds import problem_seed_from_rep_index
+    def _stub_build_eval_env_conf(_config, *, obs_spec):
+        _ = obs_spec
+        return SimpleNamespace(gym_conf=SimpleNamespace(max_steps=1))
 
-    assert call["seed_base"] == problem_seed_from_rep_index(11)
-    assert call["video_dir"].endswith("exp_video/videos")
+    engine_helpers.build_eval_env_conf = _stub_build_eval_env_conf
+    video_mod.render_policy_videos = _fake_render_policy_videos
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            exp_dir = os.path.join(tmp, "exp_video")
+            cfg = pufferlib_ppo.PufferPPOConfig(
+                exp_dir=exp_dir,
+                env_tag="atari:Pong",
+                seed=11,
+                total_timesteps=8,
+                num_envs=2,
+                num_steps=2,
+                num_minibatches=2,
+                update_epochs=1,
+                learning_rate=1e-3,
+                actor_head_hidden_sizes=(32,),
+                critic_head_hidden_sizes=(32,),
+                share_backbone=True,
+                vector_backend="serial",
+                eval_interval=0,
+                log_interval=0,
+                device="cpu",
+                video_enable=True,
+                video_num_episodes=3,
+                video_num_video_episodes=1,
+            )
+            _ = pufferlib_ppo.train_ppo_puffer(cfg)
+
+        assert len(video_calls) == 1
+        call = video_calls[0]
+        assert call["video_prefix"] == "policy"
+        assert call["num_episodes"] == 3
+        assert call["num_video_episodes"] == 1
+        assert call["episode_selection"] == "best"
+        assert call["seed_base"] == 29
+        assert str(call["video_dir"]).endswith(os.path.join("exp_video", "videos"))
+    finally:
+        engine_helpers.make_vector_env = prev_make
+        engine_helpers.build_eval_env_conf = prev_build
+        video_mod.render_policy_videos = prev_render

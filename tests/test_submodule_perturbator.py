@@ -131,3 +131,12 @@ def test_fraction_target():
     total = sum(_count_perturbed_leaves(module, sp, seed=s) for s in range(50))
     avg = total / 50
     assert 1.0 < avg < 3.5
+
+
+def test_no_leaf_modules_does_not_divide_by_zero_and_round_trips():
+    """nn.Module with no direct parameters → no leaf modules; must not crash in __init__ or perturb."""
+    module = nn.Module()
+    sp = SubmodulePerturbator(module, num_module_target=2)
+    assert sp._leaf_modules == []
+    sp.perturb(seed=0, sigma=0.1)
+    sp.unperturb()

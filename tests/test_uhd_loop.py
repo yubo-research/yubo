@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 
 from optimizer.uhd_loop import UHDLoop
@@ -40,3 +41,20 @@ def test_run_num_iterations():
     loop.run()
 
     assert call_count[0] == 5
+
+
+def test_log_param_stats_zero_numel_does_not_divide_by_zero(capsys):
+    """Regression: empty parameter tensors → no stats, no ZeroDivisionError."""
+
+    module = nn.Module()
+    module.p = nn.Parameter(torch.empty(0))
+
+    def evaluate_fn(eval_seed):
+        return 0.0, 0.0
+
+    loop = UHDLoop(module, evaluate_fn, num_iterations=1, log_param_stats=True)
+    loop.run()
+
+    out = capsys.readouterr().out
+    assert "num_params = 0" in out
+    assert "mean_param" not in out

@@ -189,7 +189,7 @@ def test_uhd_batch_worker():
     completed = SimpleNamespace(stdout=_FAKE_EVAL, stderr="", returncode=0)
 
     with (
-        patch("ops.uhd_batch._results_dict", return_value=fake_dict),
+        patch("ops.uhd_batch_modal._results_dict", return_value=fake_dict),
         patch("subprocess.run", return_value=completed),
     ):
         raw_fn(("k1", {"env_tag": "x", "num_rounds": 1}))
@@ -206,7 +206,7 @@ def test_uhd_batch_worker_fails_on_error():
     failed = SimpleNamespace(stdout="", stderr="IndexError: tuple index out of range", returncode=1)
 
     with (
-        patch("ops.uhd_batch._results_dict", return_value=fake_dict),
+        patch("ops.uhd_batch_modal._results_dict", return_value=fake_dict),
         patch("subprocess.run", return_value=failed),
     ):
         with pytest.raises(RuntimeError, match="Subprocess failed with exit 1"):
@@ -223,7 +223,7 @@ def test_uhd_batch_resubmitter():
     mock_worker = MagicMock()
 
     with (
-        patch("ops.uhd_batch._submitted_dict", return_value=fake_submitted),
+        patch("ops.uhd_batch_modal._submitted_dict", return_value=fake_submitted),
         patch("modal.Function.from_name", return_value=mock_worker),
     ):
         raw_fn([("k1", {"a": 1}), ("k2", {"b": 2})])
@@ -242,7 +242,7 @@ def test_uhd_batch_resubmitter_skips_submitted():
     mock_worker = MagicMock()
 
     with (
-        patch("ops.uhd_batch._submitted_dict", return_value=fake_submitted),
+        patch("ops.uhd_batch_modal._submitted_dict", return_value=fake_submitted),
         patch("modal.Function.from_name", return_value=mock_worker),
     ):
         raw_fn([("k1", {"a": 1}), ("k2", {"b": 2})])
@@ -258,7 +258,7 @@ def test_uhd_batch_deleter():
     raw_fn = uhd_batch_deleter.get_raw_f()
     fake_dict = {"k1": "data", "k2": "data", "k3": "data"}
 
-    with patch("ops.uhd_batch._results_dict", return_value=fake_dict):
+    with patch("ops.uhd_batch_modal._results_dict", return_value=fake_dict):
         raw_fn(["k1", "k3", "nonexistent"])
 
     assert "k1" not in fake_dict
@@ -280,7 +280,7 @@ def test_local_cmd(tmp_path):
     toml_path = tmp_path / "test.toml"
     toml_path.write_text('[uhd]\nenv_tag = "mnist"\nnum_rounds = 10\n')
 
-    with patch("ops.uhd_batch._batch_local") as mock_bl:
+    with patch("ops.uhd_batch_cli._batch_local") as mock_bl:
         result = CliRunner().invoke(cli, ["local", str(toml_path), "--num-reps", "3"])
 
     assert result.exit_code == 0, result.output
@@ -299,7 +299,7 @@ def test_modal_cmd(tmp_path):
     toml_path = tmp_path / "test.toml"
     toml_path.write_text('[uhd]\nenv_tag = "mnist"\nnum_rounds = 10\n')
 
-    with patch("ops.uhd_batch._batch_modal") as mock_bm:
+    with patch("ops.uhd_batch_cli._batch_modal") as mock_bm:
         result = CliRunner().invoke(cli, ["modal", str(toml_path), "--num-reps", "5"])
 
     assert result.exit_code == 0, result.output
@@ -315,7 +315,7 @@ def test_collect_cmd():
     from ops.uhd_batch import cli, collect_cmd  # noqa: F811
 
     assert collect_cmd is not None
-    with patch("ops.uhd_batch._collect") as mock_c:
+    with patch("ops.uhd_batch_cli._collect") as mock_c:
         result = CliRunner().invoke(cli, ["collect", "--results-dir", "/tmp/res"])
 
     assert result.exit_code == 0, result.output
@@ -334,8 +334,8 @@ def test_status_cmd():
     mock_sd.len.return_value = 12
 
     with (
-        patch("ops.uhd_batch._results_dict", return_value=mock_rd),
-        patch("ops.uhd_batch._submitted_dict", return_value=mock_sd),
+        patch("ops.uhd_batch_cli._results_dict", return_value=mock_rd),
+        patch("ops.uhd_batch_cli._submitted_dict", return_value=mock_sd),
     ):
         result = CliRunner().invoke(cli, ["status"])
 
@@ -367,7 +367,7 @@ def test_batch_cmd(tmp_path):
 
     assert batch_cmd is not None
 
-    with patch("ops.uhd_batch._batch_modal") as mock_batch:
+    with patch("ops.uhd_batch_cli._batch_modal") as mock_batch:
         result = CliRunner().invoke(
             cli,
             [
