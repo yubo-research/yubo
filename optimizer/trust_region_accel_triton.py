@@ -4,6 +4,46 @@ from __future__ import annotations
 
 import numpy as np
 
+from optimizer.trust_region_ops import (
+    BackendOps,
+)
+from optimizer.trust_region_ops import (
+    clip_step_formula as _clip_step_formula,
+)
+from optimizer.trust_region_ops import (
+    fused_ellipsoid_generate_formula as _fused_ellipsoid_generate_formula,
+)
+from optimizer.trust_region_ops import (
+    fused_low_rank_candidates_formula as _fused_low_rank_candidates_formula,
+)
+from optimizer.trust_region_ops import (
+    fused_metric_candidates_formula as _fused_metric_candidates_formula,
+)
+from optimizer.trust_region_ops import (
+    fused_whitened_ellipsoid_candidates_formula as _fused_whitened_ellipsoid_candidates_formula,
+)
+from optimizer.trust_region_ops import (
+    low_rank_metric_formula as _low_rank_metric_formula,
+)
+from optimizer.trust_region_ops import (
+    low_rank_step_formula as _low_rank_step_formula,
+)
+from optimizer.trust_region_ops import (
+    low_rank_step_with_sparse_formula as _low_rank_step_with_sparse_formula,
+)
+from optimizer.trust_region_ops import (
+    mahalanobis_from_cov_formula as _mahalanobis_from_cov_formula,
+)
+from optimizer.trust_region_ops import (
+    mahalanobis_from_factor_formula as _mahalanobis_from_factor_formula,
+)
+from optimizer.trust_region_ops import (
+    mahalanobis_sq_formula as _mahalanobis_sq_formula,
+)
+from optimizer.trust_region_ops import (
+    whitened_sample_formula as _whitened_sample_formula,
+)
+
 torch_module = None
 triton_device = None
 ellipsoid_needs_inverse = False
@@ -40,6 +80,21 @@ def to_torch(a: np.ndarray):
 
 def from_torch(a) -> np.ndarray:
     return a.detach().cpu().numpy().astype(np.float64)
+
+
+def _ops() -> BackendOps:
+    ensure_loaded()
+    return BackendOps(
+        sum_rows=lambda x: torch_module.sum(x, dim=1),
+        min_rows=lambda x: torch_module.min(x, dim=1).values,
+        norm_rows=lambda x: torch_module.linalg.norm(x, dim=1),
+        where=torch_module.where,
+        power=torch_module.pow,
+        sqrt=torch_module.sqrt,
+        matmul=lambda a, b: a @ b,
+        solve=lambda a, b: torch_module.linalg.solve(a, b),
+        solve_triangular=lambda a, b: torch_module.linalg.solve_triangular(a, b, upper=False),
+    )
 
 
 def matmul_tensor(a, b):
@@ -206,16 +261,7 @@ except ImportError:
 
 
 def clip_step(x_center, step):
-    safe_step = torch_module.where(step == 0, torch_module.tensor(1.0, device=step.device), step)
-    t_pos = (1.0 - x_center) / safe_step
-    t_neg = -x_center / safe_step
-    t = torch_module.where(
-        step > 0,
-        t_pos,
-        torch_module.where(step < 0, t_neg, torch_module.tensor(1e30, device=step.device)),
-    )
-    t_min = torch_module.clamp(t.min(dim=1).values, 0.0, 1.0)
-    return x_center + step * t_min[:, None]
+    return _clip_step_formula(x_center, step, _ops())
 
 
 def factorize_cov(cov: np.ndarray, *, need_inv: bool = True):
@@ -225,24 +271,23 @@ def factorize_cov(cov: np.ndarray, *, need_inv: bool = True):
 
 
 def mahalanobis_sq(delta: np.ndarray, cov_inv: np.ndarray) -> np.ndarray:
-    return from_torch(mahalanobis_sq_tensor(to_torch(delta), to_torch(cov_inv)))
+    out = _mahalanobis_sq_formula(to_torch(delta), to_torch(cov_inv), _ops())
+    return from_torch(out)
 
 
 def mahalanobis_sq_from_factor(delta: np.ndarray, chol: np.ndarray) -> np.ndarray:
-    return from_torch(mahalanobis_sq_from_factor_tensor(to_torch(delta), to_torch(chol)))
+    out = _mahalanobis_from_factor_formula(to_torch(delta), to_torch(chol), _ops())
+    return from_torch(out)
 
 
 def mahalanobis_sq_from_cov(delta: np.ndarray, cov: np.ndarray) -> np.ndarray:
-    cov_torch = to_torch(cov)
-    delta_torch = to_torch(delta)
-    chol = torch_module.linalg.cholesky(cov_torch)
-    return from_torch(mahalanobis_sq_from_factor_tensor(delta_torch, chol))
+    out = _mahalanobis_from_cov_formula(to_torch(delta), to_torch(cov), _ops())
+    return from_torch(out)
 
 
 def low_rank_step(coeff: np.ndarray, basis: np.ndarray) -> np.ndarray:
-    coeff_torch = to_torch(coeff)
-    basis_torch = to_torch(basis)
-    return from_torch(matmul_tensor(coeff_torch, basis_torch.T))
+    out = _low_rank_step_formula(to_torch(coeff), to_torch(basis), _ops())
+    return from_torch(out)
 
 
 def low_rank_step_with_sparse(
@@ -251,9 +296,7 @@ def low_rank_step_with_sparse(
     z: np.ndarray,
     scale: float,
 ) -> np.ndarray:
-    out = matmul_tensor(to_torch(coeff), to_torch(basis).T)
-    if scale != 0.0:
-        out = out + float(scale) * to_torch(z)
+    out = _low_rank_step_with_sparse_formula(to_torch(coeff), to_torch(basis), to_torch(z), scale, _ops())
     return from_torch(out)
 
 
@@ -266,9 +309,12 @@ def low_rank_metric(
     delta_torch = to_torch(delta)
     basis_torch = to_torch(basis)
     beta_torch = to_torch(beta)
+    rank = int(basis_torch.shape[1])
+    if rank == 0:
+        out = float(inv_alpha) * torch_module.sum(delta_torch * delta_torch, dim=1)
+        return from_torch(out)
     if has_triton_kernels:
         n, dim = delta_torch.shape
-        rank = basis_torch.shape[1]
         out = torch_module.empty(n, dtype=torch_module.float32, device=delta_torch.device)
         block_n = min(64, triton_package.next_power_of_2(dim))
         block_r = min(32, triton_package.next_power_of_2(rank))
@@ -285,8 +331,7 @@ def low_rank_metric(
             block_r=block_r,
         )
     else:
-        proj = delta_torch @ basis_torch
-        out = inv_alpha * (delta_torch * delta_torch).sum(dim=1) - (proj * proj * beta_torch).sum(dim=1)
+        out = _low_rank_metric_formula(delta_torch, basis_torch, beta_torch, inv_alpha, _ops())
     return from_torch(out)
 
 
@@ -310,16 +355,8 @@ def whitened_sample(
     radial_mode: str,
     num_dim: int,
 ) -> np.ndarray:
-    z = to_torch(z_tilde)
-    norms = torch_module.linalg.norm(z, dim=1)
-    safe_norms = torch_module.where(norms > 1e-12, norms, torch_module.tensor(1.0, device=z.device))
-    directions = z / safe_norms[:, None]
-    u_torch = to_torch(u)
-    if radial_mode == "boundary":
-        rho = 0.8 + 0.2 * u_torch
-    else:
-        rho = torch_module.pow(u_torch, 1.0 / max(num_dim, 1))
-    return from_torch(float(length) * rho[:, None] * directions)
+    out = _whitened_sample_formula(to_torch(z_tilde), to_torch(u), length, radial_mode, num_dim, _ops())
+    return from_torch(out)
 
 
 def fused_whitened_ellipsoid_candidates(
@@ -332,27 +369,18 @@ def fused_whitened_ellipsoid_candidates(
     num_dim: int,
     radius2: float,
 ) -> np.ndarray:
-    z = to_torch(z_tilde)
-    norms = torch_module.linalg.norm(z, dim=1)
-    safe_norms = torch_module.where(norms > 1e-12, norms, torch_module.tensor(1.0, device=z.device))
-    directions = z / safe_norms[:, None]
-    u_torch = to_torch(u)
-    if radial_mode == "boundary":
-        rho = 0.8 + 0.2 * u_torch
-    else:
-        rho = torch_module.pow(u_torch, 1.0 / max(num_dim, 1))
-    whitened = float(length) * rho[:, None] * directions
-    center = to_torch(x_center).reshape(1, -1)
-    step = matmul_tensor(whitened, chol.T)
-    candidates = clip_step(center, step)
-    delta = candidates - center
-    dist2 = mahalanobis_sq_from_factor_tensor(delta, chol)
-    scale = torch_module.where(
-        dist2 > float(radius2) * (1.0 + 1e-8),
-        torch_module.sqrt(float(radius2) / torch_module.clamp(dist2, min=1e-12)),
-        torch_module.ones_like(dist2),
+    out = _fused_whitened_ellipsoid_candidates_formula(
+        to_torch(z_tilde),
+        to_torch(u),
+        to_torch(x_center).reshape(1, -1),
+        chol,
+        length,
+        radial_mode,
+        num_dim,
+        radius2,
+        _ops(),
     )
-    return from_torch(clip_step(center, delta * scale[:, None]))
+    return from_torch(out)
 
 
 def fused_metric_candidates(
@@ -361,8 +389,14 @@ def fused_metric_candidates(
     cov_factor: np.ndarray,
     length: float,
 ) -> np.ndarray:
-    step = matmul_tensor(to_torch(z), to_torch(cov_factor).T) * float(length)
-    return from_torch(clip_step(to_torch(x_center).reshape(1, -1), step))
+    out = _fused_metric_candidates_formula(
+        to_torch(z),
+        to_torch(x_center).reshape(1, -1),
+        to_torch(cov_factor).T,
+        length,
+        _ops(),
+    )
+    return from_torch(out)
 
 
 def fused_low_rank_candidates(
@@ -373,11 +407,16 @@ def fused_low_rank_candidates(
     x_center: np.ndarray,
     length: float,
 ) -> np.ndarray:
-    step = matmul_tensor(to_torch(coeff), to_torch(basis).T)
-    if sparse_scale != 0.0:
-        step = step + float(sparse_scale) * to_torch(z)
-    step = step * float(length)
-    return from_torch(clip_step(to_torch(x_center).reshape(1, -1), step))
+    out = _fused_low_rank_candidates_formula(
+        to_torch(coeff),
+        to_torch(basis),
+        to_torch(z),
+        sparse_scale,
+        to_torch(x_center).reshape(1, -1),
+        length,
+        _ops(),
+    )
+    return from_torch(out)
 
 
 def fused_ellipsoid_generate(
@@ -386,14 +425,11 @@ def fused_ellipsoid_generate(
     chol,
     radius2: float,
 ) -> np.ndarray:
-    center = to_torch(x_center).reshape(1, -1)
-    step = matmul_tensor(to_torch(z), chol.T)
-    candidates = clip_step(center, step)
-    delta = candidates - center
-    dist2 = mahalanobis_sq_from_factor_tensor(delta, chol)
-    scale = torch_module.where(
-        dist2 > float(radius2) * (1.0 + 1e-8),
-        torch_module.sqrt(float(radius2) / torch_module.clamp(dist2, min=1e-12)),
-        torch_module.ones_like(dist2),
+    out = _fused_ellipsoid_generate_formula(
+        to_torch(z),
+        to_torch(x_center).reshape(1, -1),
+        chol,
+        radius2,
+        _ops(),
     )
-    return from_torch(clip_step(center, delta * scale[:, None]))
+    return from_torch(out)

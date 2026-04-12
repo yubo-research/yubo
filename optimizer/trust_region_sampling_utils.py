@@ -84,17 +84,13 @@ def _generate_block_raasp_candidates(
 ) -> np.ndarray:
     x_center = np.asarray(center, dtype=float).reshape(-1)
     num_dim = int(x_center.size)
-    num_blocks = int(len(block_slices))
-    if num_blocks <= 0:
-        raise ValueError("block_slices must be non-empty")
-    prob_perturb = float(min(max(block_prob, 0.0), 1.0))
-    ks = np.maximum(rng.binomial(num_blocks, prob_perturb, size=num_candidates), 1)
-    mask = np.zeros((num_candidates, num_dim), dtype=bool)
-    for i in range(int(num_candidates)):
-        block_idx = rng.choice(num_blocks, size=int(ks[i]), replace=False)
-        for j in np.asarray(block_idx, dtype=np.int64):
-            start, end = block_slices[int(j)]
-            mask[i, int(start) : int(end)] = True
+    mask = _sample_block_mask(
+        num_candidates=num_candidates,
+        num_dim=num_dim,
+        rng=rng,
+        block_slices=block_slices,
+        block_prob=block_prob,
+    )
     pert = _sample_box_perturbations(
         np.asarray(lb, dtype=float),
         np.asarray(ub, dtype=float),
@@ -122,17 +118,15 @@ def _apply_block_raasp_mask(
     if x.ndim != 2:
         raise ValueError(f"candidates must be 2D, got {x.shape}")
     num_candidates, num_dim = x.shape
-    num_blocks = int(len(block_slices))
-    if num_blocks <= 0:
+    if len(block_slices) <= 0:
         return x
-    prob_perturb = float(min(max(block_prob, 0.0), 1.0))
-    ks = np.maximum(rng.binomial(num_blocks, prob_perturb, size=num_candidates), 1)
-    mask = np.zeros((num_candidates, num_dim), dtype=bool)
-    for i in range(int(num_candidates)):
-        block_idx = rng.choice(num_blocks, size=int(ks[i]), replace=False)
-        for j in np.asarray(block_idx, dtype=np.int64):
-            start, end = block_slices[int(j)]
-            mask[i, int(start) : int(end)] = True
+    mask = _sample_block_mask(
+        num_candidates=num_candidates,
+        num_dim=num_dim,
+        rng=rng,
+        block_slices=block_slices,
+        block_prob=block_prob,
+    )
     pert = _sample_box_perturbations(
         np.zeros(num_dim, dtype=float),
         np.ones(num_dim, dtype=float),
@@ -144,6 +138,28 @@ def _apply_block_raasp_mask(
     if np.any(mask):
         x[mask] = pert[mask]
     return x
+
+
+def _sample_block_mask(
+    *,
+    num_candidates: int,
+    num_dim: int,
+    rng: Any,
+    block_slices: tuple[tuple[int, int], ...],
+    block_prob: float,
+) -> np.ndarray:
+    num_blocks = int(len(block_slices))
+    if num_blocks <= 0:
+        raise ValueError("block_slices must be non-empty")
+    prob_perturb = float(min(max(block_prob, 0.0), 1.0))
+    ks = np.maximum(rng.binomial(num_blocks, prob_perturb, size=num_candidates), 1)
+    mask = np.zeros((num_candidates, num_dim), dtype=bool)
+    for i in range(int(num_candidates)):
+        block_idx = rng.choice(num_blocks, size=int(ks[i]), replace=False)
+        for j in np.asarray(block_idx, dtype=np.int64):
+            start, end = block_slices[int(j)]
+            mask[i, int(start) : int(end)] = True
+    return mask
 
 
 def _generate_raasp_candidates_fast_uniform(
@@ -244,7 +260,7 @@ def _low_rank_symmetric_sqrt_step(
     z: np.ndarray,
     low_rank: _LowRankFactor,
     *,
-    use_accel: bool = False,
+    use_accel: bool = True,
 ) -> np.ndarray:
     """Apply the symmetric square root of a low-rank covariance factor.
 
@@ -274,7 +290,7 @@ def _low_rank_mahalanobis_sq(
     delta: np.ndarray,
     low_rank: _LowRankFactor,
     *,
-    use_accel: bool = False,
+    use_accel: bool = True,
 ) -> np.ndarray:
     """Compute delta^T C^{-1} delta for C = alpha I + V diag(lam) V^T via Woodbury."""
     delta_arr = np.asarray(delta, dtype=float)
@@ -294,7 +310,9 @@ def _low_rank_mahalanobis_sq(
     if use_accel:
         return _accel.low_rank_metric(delta_arr, basis, beta, inv_alpha)
     proj = delta_arr @ basis
-    return inv_alpha * np.sum(delta_arr * delta_arr, axis=1) - np.sum(proj * proj * beta.reshape(1, -1), axis=1)
+    term1 = inv_alpha * np.sum(delta_arr * delta_arr, axis=1)
+    term2 = np.sum((proj * proj) * beta.reshape(1, -1), axis=1)
+    return term1 - term2
 
 
 def _full_factor_from_direction(

@@ -1,6 +1,5 @@
 import hashlib
 import importlib
-import json
 import multiprocessing as mp
 import os
 import sys
@@ -9,6 +8,7 @@ from contextlib import contextmanager
 from dataclasses import asdict, dataclass
 from typing import NamedTuple, Optional
 
+import numpy as np
 import torch
 
 from analysis.data_io import (
@@ -230,85 +230,10 @@ def _collect_trace_records(opt, opt_name, max_iterations, max_total_timesteps, m
     return trace_records, collector_trace
 
 
-def _render_sample_video(
-    opt,
-    run_config,
-    env_runtime,
-    video_prefix,
-    video_num_episodes,
-    video_num_video_episodes,
-    video_episode_selection,
-    video_seed_base,
-):
-    from pathlib import Path
-
-    render_policy_videos_bo = _load_attr(("common", "video"), "render_policy_videos_bo")
-
-    video_dir = Path(run_config.trace_fn).parent / "videos"
-    seed_base = int(video_seed_base) if video_seed_base is not None else int(env_runtime.problem_seed)
-    render_policy_videos_bo(
-        env_runtime,
-        opt.best_policy.clone(),
-        video_dir=video_dir,
-        video_prefix=str(video_prefix),
-        num_episodes=int(video_num_episodes),
-        num_video_episodes=int(video_num_video_episodes),
-        episode_selection=str(video_episode_selection),
-        seed_base=int(seed_base),
-    )
-
-
-def _render_exact_rollout_video(opt, run_config, env_runtime, video_prefix):
-    from pathlib import Path
-
-    render_exact_rollout_video_bo = _load_attr(("common", "video"), "render_exact_rollout_video_bo")
-
-    policy = getattr(opt, "_anomaly_policy", None)
-    noise_seed = getattr(opt, "_anomaly_noise_seed", None)
-    if policy is None or noise_seed is None:
-        return
-
-    video_dir = Path(run_config.trace_fn).parent / "videos"
-    iter_idx = int(getattr(opt, "_anomaly_iter", -1))
-    prefix = f"{video_prefix}_exact_iter{iter_idx:03d}_seed{int(noise_seed)}"
-    replay_return = render_exact_rollout_video_bo(
-        env_runtime,
-        policy.clone(),
-        video_dir=video_dir,
-        video_prefix=prefix,
-        seed=int(noise_seed),
-    )
-    meta = {
-        "iter": iter_idx,
-        "noise_seed": int(noise_seed),
-        "raw_return": getattr(opt, "_anomaly_raw_return", None),
-        "estimated_return": getattr(opt, "_anomaly_est_return", None),
-        "replay_return": replay_return,
-    }
-    meta_path = video_dir / f"{prefix}.json"
-    meta_path.write_text(json.dumps(meta, indent=2) + "\n")
-
-
 def sample_1(run_config: RunConfig):
-    import numpy as np
-
     problem = run_config.problem
     env_runtime = problem.env
-    opt_name = run_config.opt_name
-    num_rounds = run_config.num_rounds
-    total_timesteps = run_config.total_timesteps
-    num_arms = run_config.num_arms
-    num_denoise = run_config.num_denoise
-    num_denoise_passive = run_config.num_denoise_passive
     max_proposal_seconds = run_config.max_proposal_seconds
-    b_trace = run_config.b_trace
-    deadline = run_config.deadline
-    video_enable = run_config.video_enable
-    video_num_episodes = run_config.video_num_episodes
-    video_num_video_episodes = run_config.video_num_video_episodes
-    video_episode_selection = run_config.video_episode_selection
-    video_seed_base = run_config.video_seed_base
-    video_prefix = run_config.video_prefix
     bo_console = getattr(run_config, "bo_console", True)
 
     if max_proposal_seconds is None:
@@ -329,24 +254,24 @@ def sample_1(run_config: RunConfig):
             env_conf=env_runtime,
             policy_tag=problem.policy_tag,
             policy=policy,
-            num_arms=num_arms,
-            num_denoise_measurement=num_denoise,
-            num_denoise_passive=num_denoise_passive,
-            opt_name=opt_name,
-            num_rounds=num_rounds,
-            total_timesteps=total_timesteps,
+            num_arms=run_config.num_arms,
+            num_denoise_measurement=run_config.num_denoise,
+            num_denoise_passive=run_config.num_denoise_passive,
+            opt_name=run_config.opt_name,
+            num_rounds=run_config.num_rounds,
+            total_timesteps=run_config.total_timesteps,
         )
 
-        max_iterations = int(num_rounds) if num_rounds is not None else sys.maxsize
+        max_iterations = int(run_config.num_rounds) if run_config.num_rounds is not None else sys.maxsize
         trace_records, collector_trace = _collect_trace_records(
             opt,
-            opt_name,
+            run_config.opt_name,
             max_iterations,
-            total_timesteps,
+            run_config.total_timesteps,
             max_proposal_seconds,
-            deadline,
+            run_config.deadline,
             env_runtime,
-            b_trace,
+            run_config.b_trace,
         )
 
         if bo_console:
@@ -359,18 +284,22 @@ def sample_1(run_config: RunConfig):
             best_val = float(best) if best is not None and isinstance(best, (int, float)) else 0.0
             print_bo_footer(best_val, max(0.0, total_time))
 
-        if video_enable and video_num_video_episodes > 0 and opt.best_policy is not None:
-            _render_sample_video(
-                opt,
-                run_config,
+        if run_config.video_enable and run_config.video_num_video_episodes > 0 and opt.best_policy is not None:
+            render_bo_videos = _load_attr(("common", "video"), "render_bo_videos")
+            get_video_replay = getattr(opt, "best_video_replay", None)
+            replay = get_video_replay() if callable(get_video_replay) else None
+            seed_base = int(run_config.video_seed_base) if run_config.video_seed_base is not None else int(env_runtime.problem_seed)
+            render_bo_videos(
                 env_runtime,
-                video_prefix,
-                video_num_episodes,
-                video_num_video_episodes,
-                video_episode_selection,
-                video_seed_base,
+                opt.best_policy.clone(),
+                trace_fn=run_config.trace_fn,
+                video_prefix=str(run_config.video_prefix),
+                num_episodes=int(run_config.video_num_episodes),
+                num_video_episodes=int(run_config.video_num_video_episodes),
+                episode_selection=str(run_config.video_episode_selection),
+                seed_base=int(seed_base),
+                replay=replay,
             )
-            _render_exact_rollout_video(opt, run_config, env_runtime, video_prefix)
 
         return _SampleResult(
             collector_log=collector_log,

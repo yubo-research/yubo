@@ -7,8 +7,47 @@ from types import SimpleNamespace
 
 import numpy as np
 
+from optimizer.trust_region_ops import (
+    BackendOps,
+)
+from optimizer.trust_region_ops import (
+    clip_step_formula as _clip_step_formula,
+)
+from optimizer.trust_region_ops import (
+    fused_ellipsoid_generate_formula as _fused_ellipsoid_generate_formula,
+)
+from optimizer.trust_region_ops import (
+    fused_low_rank_candidates_formula as _fused_low_rank_candidates_formula,
+)
+from optimizer.trust_region_ops import (
+    fused_metric_candidates_formula as _fused_metric_candidates_formula,
+)
+from optimizer.trust_region_ops import (
+    fused_whitened_ellipsoid_candidates_formula as _fused_whitened_ellipsoid_candidates_formula,
+)
+from optimizer.trust_region_ops import (
+    low_rank_metric_formula as _low_rank_metric_formula,
+)
+from optimizer.trust_region_ops import (
+    low_rank_step_formula as _low_rank_step_formula,
+)
+from optimizer.trust_region_ops import (
+    low_rank_step_with_sparse_formula as _low_rank_step_with_sparse_formula,
+)
+from optimizer.trust_region_ops import (
+    mahalanobis_from_cov_formula as _mahalanobis_from_cov_formula,
+)
+from optimizer.trust_region_ops import (
+    mahalanobis_from_factor_formula as _mahalanobis_from_factor_formula,
+)
+from optimizer.trust_region_ops import (
+    mahalanobis_sq_formula as _mahalanobis_sq_formula,
+)
+from optimizer.trust_region_ops import (
+    whitened_sample_formula as _whitened_sample_formula,
+)
+
 jnp = None
-lax = None
 jit = None
 jsp_linalg = None
 ellipsoid_needs_inverse = False
@@ -23,91 +62,79 @@ def available() -> bool:
 
 
 def ensure_loaded():
-    global jnp, lax, jit, jsp_linalg
+    global jnp, jit, jsp_linalg
     if jnp is not None:
         return
-    import jax.lax as loaded_lax
     import jax.numpy as loaded_jnp
     import jax.scipy.linalg as loaded_jsp_linalg
     from jax import jit as loaded_jit
 
     jnp = loaded_jnp
-    lax = loaded_lax
     jit = loaded_jit
     jsp_linalg = loaded_jsp_linalg
 
 
+def _ops() -> BackendOps:
+    ensure_loaded()
+    return BackendOps(
+        sum_rows=lambda x: jnp.sum(x, axis=1),
+        min_rows=lambda x: jnp.min(x, axis=1),
+        norm_rows=lambda x: jnp.linalg.norm(x, axis=1),
+        where=jnp.where,
+        power=jnp.power,
+        sqrt=jnp.sqrt,
+        matmul=lambda a, b: a @ b,
+        solve=lambda a, b: jsp_linalg.solve(a, b, assume_a="pos"),
+        solve_triangular=lambda a, b: jsp_linalg.solve_triangular(a, b, lower=True),
+    )
+
+
 def mahalanobis_formula(delta, cov_inv):
-    return jnp.einsum("nd,de,ne->n", delta, cov_inv, delta)
+    return _mahalanobis_sq_formula(delta, cov_inv, _ops())
 
 
 def clip_step(x_center, step):
-    safe_step = jnp.where(step == 0.0, 1.0, step)
-    t_pos = (1.0 - x_center) / safe_step
-    t_neg = -x_center / safe_step
-    t = jnp.where(step > 0.0, t_pos, jnp.where(step < 0.0, t_neg, jnp.float32(1e30)))
-    t_min = jnp.clip(jnp.min(t, axis=1), 0.0, 1.0)
-    return x_center + step * t_min[:, None]
+    return _clip_step_formula(x_center, step, _ops())
 
 
 def mahalanobis_from_cov_formula(delta, cov):
-    solved = jsp_linalg.solve(cov, delta.T, assume_a="pos").T
-    return jnp.sum(delta * solved, axis=1)
+    return _mahalanobis_from_cov_formula(delta, cov, _ops())
 
 
 def mahalanobis_from_factor_formula(delta, chol):
-    solved = jsp_linalg.solve_triangular(chol, delta.T, lower=True).T
-    return jnp.sum(solved * solved, axis=1)
+    return _mahalanobis_from_factor_formula(delta, chol, _ops())
 
 
 def low_rank_step_formula(coeff, basis):
-    return lax.dot(coeff, basis.T)
+    return _low_rank_step_formula(coeff, basis, _ops())
 
 
 def low_rank_step_with_sparse_formula(coeff, basis, z, scale):
-    return low_rank_step_formula(coeff, basis) + scale * z
+    return _low_rank_step_with_sparse_formula(coeff, basis, z, scale, _ops())
 
 
 def low_rank_metric_formula(delta, basis, beta, inv_alpha):
-    proj = delta @ basis
-    term1 = inv_alpha * jnp.sum(delta * delta, axis=1)
-    term2 = jnp.sum(proj * proj * beta, axis=1)
-    return term1 - term2
+    return _low_rank_metric_formula(delta, basis, beta, inv_alpha, _ops())
 
 
 def matmul_formula(a, b):
-    return a @ b
+    return _ops().matmul(a, b)
 
 
 def whitened_sample_formula(z_tilde, u, length, boundary, inv_dim):
-    norms = jnp.linalg.norm(z_tilde, axis=1)
-    safe_norms = jnp.where(norms > 1e-12, norms, 1.0)
-    directions = z_tilde / safe_norms[:, None]
-    rho = jnp.where(boundary, 0.8 + 0.2 * u, jnp.power(u, inv_dim))
-    return length * rho[:, None] * directions
+    return _whitened_sample_formula(z_tilde, u, length, boundary, inv_dim, _ops())
 
 
 def fused_metric_candidates_formula(z, x_center, cov_factor_t, length):
-    step = (z @ cov_factor_t) * length
-    return clip_step(x_center, step)
+    return _fused_metric_candidates_formula(z, x_center, cov_factor_t, length, _ops())
 
 
 def fused_low_rank_candidates_formula(coeff, basis, z, sparse_scale, x_center, length):
-    step = low_rank_step_with_sparse_formula(coeff, basis, z, sparse_scale) * length
-    return clip_step(x_center, step)
+    return _fused_low_rank_candidates_formula(coeff, basis, z, sparse_scale, x_center, length, _ops())
 
 
 def fused_ellipsoid_generate_formula(z, x_center, chol, radius2):
-    step = z @ chol.T
-    candidates = clip_step(x_center, step)
-    delta = candidates - x_center
-    dist2 = mahalanobis_from_factor_formula(delta, chol)
-    scale = jnp.where(
-        dist2 > radius2 * (1.0 + 1e-8),
-        jnp.sqrt(radius2 / jnp.maximum(dist2, 1e-12)),
-        1.0,
-    )
-    return clip_step(x_center, delta * scale[:, None])
+    return _fused_ellipsoid_generate_formula(z, x_center, chol, radius2, _ops())
 
 
 def fused_whitened_ellipsoid_candidates_formula(
@@ -120,8 +147,17 @@ def fused_whitened_ellipsoid_candidates_formula(
     inv_dim,
     radius2,
 ):
-    z = whitened_sample_formula(z_tilde, u, length, boundary, inv_dim)
-    return fused_ellipsoid_generate_formula(z, x_center, chol, radius2)
+    return _fused_whitened_ellipsoid_candidates_formula(
+        z_tilde,
+        u,
+        x_center,
+        chol,
+        length,
+        boundary,
+        inv_dim,
+        radius2,
+        _ops(),
+    )
 
 
 @lru_cache(maxsize=1)

@@ -9,12 +9,10 @@ from enn.turbo.turbo_trust_region import TurboTrustRegion
 
 import optimizer.trust_region_accel as _accel
 from optimizer.pc_rotation import compute_labcat_weighted_pca
-from optimizer.trust_region_math import _mahalanobis_sq_from_factor
 from optimizer.trust_region_sampling_utils import _apply_block_raasp_mask
 from optimizer.trust_region_utils import (
     _AxisAlignedStepSampler,
     _LengthPolicy,
-    _mahalanobis_sq,
     _MetricGeometryModel,
 )
 
@@ -170,7 +168,7 @@ class MetricShapedTrustRegion(TurboTrustRegion):
         x_center = np.asarray(x_center, dtype=float).reshape(-1)
         if x_center.shape != (num_dim,):
             raise ValueError((x_center.shape, num_dim))
-        cov_factor = self._geometry_model.cov_factor if self.use_accel and self._geometry_model.metric_sampler == "full" else None
+        cov_factor = self._geometry_model.cov_factor if self._geometry_model.metric_sampler == "full" else None
         candidates = self._step_sampler.generate(
             x_center=x_center,
             length=float(self.length),
@@ -181,7 +179,7 @@ class MetricShapedTrustRegion(TurboTrustRegion):
             sobol_engine=sobol_engine,
             num_pert=num_pert,
             build_step=self._geometry_model.build_step,
-            build_candidates=self._geometry_model.build_candidates if self.use_accel else None,
+            build_candidates=self._geometry_model.build_candidates,
             cov_factor=cov_factor,
         )
         if self.module_block_slices:
@@ -212,10 +210,12 @@ class MetricShapedTrustRegion(TurboTrustRegion):
         if factor.ndim == 2 and factor.shape[0] == factor.shape[1]:
             if self.use_accel:
                 return _accel.mahalanobis_sq_from_factor(delta, factor)
-            return _mahalanobis_sq_from_factor(delta, factor)
+            solved = np.linalg.solve(factor, np.asarray(delta, dtype=float).T).T
+            return np.sum(solved * solved, axis=1)
         if self.use_accel:
             return _accel.mahalanobis_sq_from_cov(delta, cov)
-        return _mahalanobis_sq(delta, cov)
+        solved = np.linalg.solve(np.asarray(cov, dtype=float), np.asarray(delta, dtype=float).T).T
+        return np.sum(np.asarray(delta, dtype=float) * solved, axis=1)
 
     def set_acceptance_ratio(self, *, pred: float, act: float, boundary_hit: bool) -> None:
         self._length_policy.set_acceptance_ratio(pred=pred, act=act, boundary_hit=boundary_hit)

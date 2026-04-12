@@ -9,12 +9,12 @@ from common.telemetry import Telemetry
 
 from .datum import Datum
 from .opt_trajectories import collect_denoised_trajectory, evaluate_for_best
-from .optimizer_types import IterateResult, ReturnSummary, TraceEntry
+from .optimizer_types import IterateResult, ReturnSummary, TraceEntry, VideoReplaySpec
 from .trajectories import collect_trajectory
 
 _INTERACTIVE_DEBUG = False
 _SHOW_EVERY_N_ITER = 30
-_ANOMALY_EST_CAPTURE_THRESHOLD = 1.0e4
+_VIDEO_REPLAY_EST_CAPTURE_THRESHOLD = 1.0e4
 
 
 def _pareto_mask_max(y: np.ndarray) -> np.ndarray:
@@ -97,11 +97,7 @@ class Optimizer:
         self._ret_viz = -1e99
         self._telemetry = Telemetry()
         self._ref_point = None
-        self._anomaly_policy = None
-        self._anomaly_noise_seed = None
-        self._anomaly_iter = None
-        self._anomaly_raw_return = None
-        self._anomaly_est_return = None
+        self._best_video_replay: VideoReplaySpec | None = None
 
     def _iterate(self, designer, num_arms):
         self._telemetry.reset()
@@ -137,20 +133,25 @@ class Optimizer:
 
         return IterateResult(data=data, dt_prop=float(dt_prop), dt_eval=float(dt_eval))
 
-    def _maybe_capture_anomaly(self, datum, decision_value: float) -> None:
-        if float(decision_value) < _ANOMALY_EST_CAPTURE_THRESHOLD:
+    def _maybe_capture_video_replay(self, datum, decision_value: float) -> None:
+        if float(decision_value) < _VIDEO_REPLAY_EST_CAPTURE_THRESHOLD:
             return
-        best_est = self._anomaly_est_return
+        best_est = None if self._best_video_replay is None else float(self._best_video_replay.estimated_return)
         if best_est is not None and float(decision_value) <= float(best_est):
             return
         noise_seed = getattr(datum.trajectory, "noise_seed", None)
         if noise_seed is None:
             return
-        self._anomaly_policy = datum.policy.clone()
-        self._anomaly_noise_seed = int(noise_seed)
-        self._anomaly_iter = int(getattr(datum.trajectory, "iter_index", self._i_iter))
-        self._anomaly_raw_return = float(np.asarray(datum.trajectory.rreturn).reshape(-1)[0])
-        self._anomaly_est_return = float(decision_value)
+        self._best_video_replay = VideoReplaySpec(
+            policy=datum.policy.clone(),
+            noise_seed=int(noise_seed),
+            iter_index=int(getattr(datum.trajectory, "iter_index", self._i_iter)),
+            raw_return=float(np.asarray(datum.trajectory.rreturn).reshape(-1)[0]),
+            estimated_return=float(decision_value),
+        )
+
+    def best_video_replay(self) -> VideoReplaySpec | None:
+        return self._best_video_replay
 
     def collect_trace(self, designer_name, max_iterations=None, max_proposal_seconds=np.inf, deadline=None, max_total_timesteps=None):
         self.initialize(designer_name)
@@ -191,7 +192,7 @@ class Optimizer:
             self.r_best_est = decision_best
             self.best_datum = datum_best
             self.best_policy = self.best_datum.policy.clone()
-        self._maybe_capture_anomaly(datum_best, decision_best)
+        self._maybe_capture_video_replay(datum_best, decision_best)
         self.r_best_est = max(self.r_best_est, decision_best)
         return did_update, True
 
@@ -204,7 +205,7 @@ class Optimizer:
             self.r_best_est = decision_best_batch
             self.best_datum = data[best_idx]
             self.best_policy = self.best_datum.policy.clone()
-        self._maybe_capture_anomaly(data[best_idx], decision_best_batch)
+        self._maybe_capture_video_replay(data[best_idx], decision_best_batch)
         self.r_best_est = max(self.r_best_est, decision_best_batch)
         return did_update
 
@@ -239,7 +240,15 @@ class Optimizer:
         if num_metrics == 2:
             ret_eval = self._handle_hypervolume(num_metrics)
         else:
-            ret_eval = self._handle_first_objective(data, ret_batch)
+            ret_0 = np.asarray(ret_batch[:, 0], dtype=np.float64)
+            best_idx = int(np.argmax(ret_0))
+            ret_best_batch = float(ret_0[best_idx])
+            if ret_best_batch > float(self.r_best_est):
+                self.r_best_est = ret_best_batch
+                self.y_best = np.asarray(ret_batch[best_idx], dtype=np.float64)
+                self.best_datum = data[best_idx]
+                self.best_policy = self.best_datum.policy.clone()
+            ret_eval = float(self.r_best_est)
         return ReturnSummary(
             ret_eval=float(ret_eval),
             y_best_s=np.array2string(self.y_best, precision=3, floatmode="fixed"),
@@ -300,17 +309,6 @@ class Optimizer:
             policy=self.best_policy.clone() if self.best_policy is not None else None,
         )
         self._collector(f"REF_POINT: ref = {np.array2string(self._ref_point, precision=6, floatmode='fixed')}")
-
-    def _handle_first_objective(self, data, ret_batch):
-        ret_0 = np.asarray(ret_batch[:, 0], dtype=np.float64)
-        best_idx = int(np.argmax(ret_0))
-        ret_best_batch = float(ret_0[best_idx])
-        if ret_best_batch > float(self.r_best_est):
-            self.r_best_est = ret_best_batch
-            self.y_best = np.asarray(ret_batch[best_idx], dtype=np.float64)
-            self.best_datum = data[best_idx]
-            self.best_policy = self.best_datum.policy.clone()
-        return float(self.r_best_est)
 
     def iterate(self):
         designer = self._opt_designers[min(len(self._opt_designers) - 1, self._i_iter)]

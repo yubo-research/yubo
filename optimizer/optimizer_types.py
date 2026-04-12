@@ -1,7 +1,7 @@
 """Types for optimizer module."""
 
 from dataclasses import dataclass
-from typing import NamedTuple
+from typing import Any, NamedTuple
 
 from .datum import Datum
 
@@ -28,3 +28,12 @@ class ReturnSummary:
     y_best_s: str
     ret_best_s: str
     ret_eval_s: str
+
+
+@dataclass(frozen=True)
+class VideoReplaySpec:
+    policy: Any
+    noise_seed: int
+    iter_index: int
+    raw_return: float
+    estimated_return: float

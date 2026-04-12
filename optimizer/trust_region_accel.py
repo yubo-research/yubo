@@ -43,6 +43,10 @@ def accel_override(name: str | None):
         if name is None:
             yield
             return
+        if name == "":
+            _ACCEL = ""
+            yield
+            return
         if name not in ACCEL_MODULES:
             raise ValueError(f"Unknown accel {name!r}, expected one of {sorted(ACCEL_MODULES)}")
         _ACCEL = name if ACCEL_MODULES[name].available() else ""

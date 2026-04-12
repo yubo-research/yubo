@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import sys
 from contextlib import AbstractContextManager, contextmanager
@@ -383,6 +384,51 @@ def render_exact_rollout_video_bo(
         flush=True,
     )
     return None
+
+
+def render_bo_videos(
+    env_conf: Any,
+    policy: Any,
+    *,
+    trace_fn: str | Path,
+    video_prefix: str,
+    num_episodes: int,
+    num_video_episodes: int,
+    episode_selection: str,
+    seed_base: int,
+    replay: Any | None = None,
+) -> None:
+    video_dir = Path(trace_fn).parent / "videos"
+    video_dir.mkdir(parents=True, exist_ok=True)
+    render_policy_videos_bo(
+        env_conf,
+        policy,
+        video_dir=video_dir,
+        video_prefix=video_prefix,
+        num_episodes=num_episodes,
+        num_video_episodes=num_video_episodes,
+        episode_selection=episode_selection,
+        seed_base=seed_base,
+    )
+    if replay is None:
+        return
+    prefix = f"{video_prefix}_exact_iter{int(replay.iter_index):03d}_seed{int(replay.noise_seed)}"
+    replay_return = render_exact_rollout_video_bo(
+        env_conf,
+        replay.policy.clone(),
+        video_dir=video_dir,
+        video_prefix=prefix,
+        seed=int(replay.noise_seed),
+    )
+    meta = {
+        "iter": int(replay.iter_index),
+        "noise_seed": int(replay.noise_seed),
+        "raw_return": float(replay.raw_return),
+        "estimated_return": float(replay.estimated_return),
+        "replay_return": replay_return,
+    }
+    meta_path = video_dir / f"{prefix}.json"
+    meta_path.write_text(json.dumps(meta, indent=2) + "\n")
 
 
 @dataclass(frozen=True)

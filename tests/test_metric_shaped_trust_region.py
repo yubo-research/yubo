@@ -395,7 +395,7 @@ def test_low_rank_mahalanobis_matches_dense():
     lam = np.square(low_rank.sqrt_vals)
     cov = alpha * np.eye(3, dtype=float) + (low_rank.basis * lam.reshape(1, -1)) @ low_rank.basis.T
     dense = np.einsum("nd,de,ne->n", delta, np.linalg.inv(cov), delta)
-    low_rank_sq = _low_rank_mahalanobis_sq(delta, low_rank, use_accel=False)
+    low_rank_sq = _low_rank_mahalanobis_sq(delta, low_rank)
     assert np.allclose(low_rank_sq, dense)
 
 
@@ -415,9 +415,8 @@ def test_low_rank_ellipsoid_transition_avoids_dense_covariance(monkeypatch):
 
     calls = {}
 
-    def _fake_low_rank(delta, low_rank, *, use_accel):
+    def _fake_low_rank(delta, low_rank):
         calls["delta"] = np.asarray(delta, dtype=float)
-        calls["use_accel"] = bool(use_accel)
         return np.array([float(tr.length) ** 2], dtype=float)
 
     monkeypatch.setattr("optimizer.ellipsoidal_trust_region._low_rank_mahalanobis_sq", _fake_low_rank)
@@ -441,7 +440,6 @@ def test_low_rank_ellipsoid_transition_avoids_dense_covariance(monkeypatch):
     )
 
     assert calls["delta"].shape == (1, 3)
-    assert calls["use_accel"] is False
     assert calls["pred"] == pytest.approx(1.0)
     assert calls["act"] == pytest.approx(1.0)
     assert calls["boundary_hit"] is True
@@ -553,12 +551,11 @@ def test_low_rank_metric_mahalanobis_avoids_dense_covariance(monkeypatch):
 
     calls = {}
 
-    def _fake_low_rank(delta, low_rank, *, use_accel):
+    def _fake_low_rank(delta, basis, beta, inv_alpha):
         calls["delta"] = np.asarray(delta, dtype=float)
-        calls["use_accel"] = bool(use_accel)
         return np.array([3.25], dtype=float)
 
-    monkeypatch.setattr(tr_utils, "_low_rank_mahalanobis_sq", _fake_low_rank)
+    monkeypatch.setattr("optimizer.trust_region_accel.low_rank_metric", _fake_low_rank)
     monkeypatch.setattr(
         tr._geometry_model,
         "covariance_matrix",
@@ -569,7 +566,6 @@ def test_low_rank_metric_mahalanobis_avoids_dense_covariance(monkeypatch):
 
     assert np.allclose(out, np.array([3.25], dtype=float))
     assert calls["delta"].shape == (1, 4)
-    assert calls["use_accel"] is False
 
 
 def test_set_analytic_gradient_geometry():

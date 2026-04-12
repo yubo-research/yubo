@@ -11,6 +11,7 @@ import torch
 from common.video import (
     RLVideoContext,
     policy_for_bo_rollout,
+    render_bo_videos,
     render_policy_videos,
     render_policy_videos_bo,
     render_policy_videos_rl,
@@ -360,6 +361,47 @@ def test_render_policy_videos_bo_smoke(monkeypatch, tmp_path):
         episode_selection="first",
         seed_base=0,
     )
+
+
+def test_render_bo_videos_smoke(monkeypatch, tmp_path):
+    env_conf = _EnvConfStub(max_steps=2, gym_conf=True)
+    env_conf.ensure_spaces = lambda: None
+    calls = []
+
+    def _fake_render_policy_videos_bo(*args, **kwargs):
+        _ = args
+        calls.append(("sample", kwargs["video_prefix"], kwargs["num_episodes"]))
+
+    def _fake_render_exact_rollout_video_bo(*args, **kwargs):
+        _ = args
+        calls.append(("replay", kwargs["video_prefix"], kwargs["seed"]))
+        return 7.0
+
+    monkeypatch.setattr("common.video.render_policy_videos_bo", _fake_render_policy_videos_bo)
+    monkeypatch.setattr("common.video.render_exact_rollout_video_bo", _fake_render_exact_rollout_video_bo)
+
+    replay = SimpleNamespace(
+        policy=SimpleNamespace(clone=lambda: "replay-policy"),
+        noise_seed=12,
+        iter_index=9,
+        raw_return=3.5,
+        estimated_return=4.5,
+    )
+    render_bo_videos(
+        env_conf,
+        "policy",
+        trace_fn=tmp_path / "trace.txt",
+        video_prefix="bo",
+        num_episodes=3,
+        num_video_episodes=1,
+        episode_selection="best",
+        seed_base=5,
+        replay=replay,
+    )
+
+    assert calls == [("sample", "bo", 3), ("replay", "bo_exact_iter009_seed12", 12)]
+    meta = (tmp_path / "videos" / "bo_exact_iter009_seed12.json").read_text()
+    assert '"estimated_return": 4.5' in meta
 
 
 def test_render_policy_videos_direct(tmp_path):

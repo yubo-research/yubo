@@ -5,6 +5,7 @@ from typing import Any
 
 import numpy as np
 
+import optimizer.trust_region_accel as _accel
 from optimizer.metric_trust_region import ENNMetricShapedTrustRegion, MetricShapedTrustRegion, _apply_fixed_length_to_tr
 from optimizer.trust_region_math import _mahalanobis_sq_from_factor, _normalize_weights
 from optimizer.trust_region_sampling_utils import _apply_block_raasp_mask, _low_rank_mahalanobis_sq
@@ -97,13 +98,21 @@ class ENNTrueEllipsoidalTrustRegion(ENNMetricShapedTrustRegion):
             return
         delta = curr_x - np.asarray(prev_x, dtype=float).reshape(-1)
         if self._geometry_model.metric_sampler == "low_rank":
-            dist2 = float(
-                _low_rank_mahalanobis_sq(
-                    delta.reshape(1, -1),
-                    self._geometry_model.low_rank,
-                    use_accel=self.use_accel,
-                )[0]
-            )
+            if self.use_accel:
+                dist2 = float(
+                    _low_rank_mahalanobis_sq(
+                        delta.reshape(1, -1),
+                        self._geometry_model.low_rank,
+                    )[0]
+                )
+            else:
+                with _accel.accel_override(""):
+                    dist2 = float(
+                        _low_rank_mahalanobis_sq(
+                            delta.reshape(1, -1),
+                            self._geometry_model.low_rank,
+                        )[0]
+                    )
         elif self._geometry_model.metric_sampler == "full":
             mahal = getattr(self._geometry_model, "mahalanobis_sq")
             if getattr(mahal, "__func__", mahal) is not getattr(type(self._geometry_model), "mahalanobis_sq"):
@@ -156,8 +165,8 @@ class ENNTrueEllipsoidalTrustRegion(ENNMetricShapedTrustRegion):
         if x_center.shape != (num_dim,):
             raise ValueError((x_center.shape, num_dim))
         low_rank = self._geometry_model.low_rank if self._geometry_model.metric_sampler == "low_rank" else None
-        cov = None if low_rank is not None else (self._covariance_matrix() if self.use_accel else None)
-        cov_factor = self._geometry_model.cov_factor if self._geometry_model.metric_sampler == "full" and not self.use_accel else None
+        cov = self._covariance_matrix if low_rank is None else None
+        cov_factor = self._geometry_model.cov_factor if self._geometry_model.metric_sampler == "full" else None
         candidates = self._step_sampler.generate(
             x_center=x_center,
             num_dim=num_dim,

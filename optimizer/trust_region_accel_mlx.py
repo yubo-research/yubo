@@ -4,6 +4,46 @@ from __future__ import annotations
 
 import numpy as np
 
+from optimizer.trust_region_ops import (
+    BackendOps,
+)
+from optimizer.trust_region_ops import (
+    clip_step_formula as _clip_step_formula,
+)
+from optimizer.trust_region_ops import (
+    fused_ellipsoid_generate_formula as _fused_ellipsoid_generate_formula,
+)
+from optimizer.trust_region_ops import (
+    fused_low_rank_candidates_formula as _fused_low_rank_candidates_formula,
+)
+from optimizer.trust_region_ops import (
+    fused_metric_candidates_formula as _fused_metric_candidates_formula,
+)
+from optimizer.trust_region_ops import (
+    fused_whitened_ellipsoid_candidates_formula as _fused_whitened_ellipsoid_candidates_formula,
+)
+from optimizer.trust_region_ops import (
+    low_rank_metric_formula as _low_rank_metric_formula,
+)
+from optimizer.trust_region_ops import (
+    low_rank_step_formula as _low_rank_step_formula,
+)
+from optimizer.trust_region_ops import (
+    low_rank_step_with_sparse_formula as _low_rank_step_with_sparse_formula,
+)
+from optimizer.trust_region_ops import (
+    mahalanobis_from_cov_formula as _mahalanobis_from_cov_formula,
+)
+from optimizer.trust_region_ops import (
+    mahalanobis_from_factor_formula as _mahalanobis_from_factor_formula,
+)
+from optimizer.trust_region_ops import (
+    mahalanobis_sq_formula as _mahalanobis_sq_formula,
+)
+from optimizer.trust_region_ops import (
+    whitened_sample_formula as _whitened_sample_formula,
+)
+
 mx_module = None
 ellipsoid_needs_inverse = False
 
@@ -38,19 +78,23 @@ def from_mlx(a) -> np.ndarray:
     return np.asarray(a)
 
 
-def clip_step(x_center, step):
+def _ops() -> BackendOps:
     mx = mlx_module()
-    zero = np.float32(0.0)
-    one = np.float32(1.0)
-    inf = np.float32(1e30)
-    abs_step = mx.abs(step)
-    safe_abs_step = mx.where(abs_step > zero, abs_step, one)
-    inv_abs_step = one / safe_abs_step
-    upper = (one - x_center) * inv_abs_step
-    lower = x_center * inv_abs_step
-    limits = mx.where(step > zero, upper, mx.where(step < zero, lower, inf))
-    t_min = mx.minimum(mx.maximum(mx.min(limits, axis=1), zero), one)
-    return x_center + step * t_min[:, None]
+    return BackendOps(
+        sum_rows=lambda x: mx.sum(x, axis=1),
+        min_rows=lambda x: mx.min(x, axis=1),
+        norm_rows=lambda x: mx.linalg.norm(x, axis=1),
+        where=mx.where,
+        power=mx.power,
+        sqrt=mx.sqrt,
+        matmul=lambda a, b: a @ b,
+        solve=lambda a, b: mx.linalg.solve(a, b, stream=mx.cpu),
+        solve_triangular=lambda a, b: mx.linalg.solve(a, b, stream=mx.cpu),
+    )
+
+
+def clip_step(x_center, step):
+    return _clip_step_formula(x_center, step, _ops())
 
 
 def factorize_cov(cov: np.ndarray, *, need_inv: bool = True):
@@ -70,32 +114,29 @@ def factorize_cov(cov: np.ndarray, *, need_inv: bool = True):
 
 
 def mahalanobis_sq(delta: np.ndarray, cov_inv: np.ndarray) -> np.ndarray:
+    out = _mahalanobis_sq_formula(to_mlx(delta), to_mlx(cov_inv), _ops())
     mx = mlx_module()
-    delta_mx = to_mlx(delta)
-    cov_inv_mx = to_mlx(cov_inv)
-    out = mx.sum(delta_mx * (delta_mx @ cov_inv_mx), axis=1)
     mx.eval(out)
     return from_mlx(out)
 
 
 def mahalanobis_sq_from_factor(delta: np.ndarray, chol: np.ndarray) -> np.ndarray:
+    out = _mahalanobis_from_factor_formula(to_mlx(delta), to_mlx(chol), _ops())
     mx = mlx_module()
-    delta_mx = to_mlx(delta)
-    chol_mx = to_mlx(chol)
-    solved = mx.linalg.solve(chol_mx, delta_mx.T, stream=mx.cpu).T
-    out = mx.sum(solved * solved, axis=1)
     mx.eval(out)
     return from_mlx(out)
 
 
 def mahalanobis_sq_from_cov(delta: np.ndarray, cov: np.ndarray) -> np.ndarray:
-    chol, _ = factorize_cov(cov, need_inv=False)
-    return mahalanobis_sq_from_factor(delta, chol)
+    out = _mahalanobis_from_cov_formula(to_mlx(delta), to_mlx(cov), _ops())
+    mx = mlx_module()
+    mx.eval(out)
+    return from_mlx(out)
 
 
 def low_rank_step(coeff: np.ndarray, basis: np.ndarray) -> np.ndarray:
+    out = _low_rank_step_formula(to_mlx(coeff), to_mlx(basis), _ops())
     mx = mlx_module()
-    out = to_mlx(coeff) @ to_mlx(basis).T
     mx.eval(out)
     return from_mlx(out)
 
@@ -106,10 +147,8 @@ def low_rank_step_with_sparse(
     z: np.ndarray,
     scale: float,
 ) -> np.ndarray:
+    out = _low_rank_step_with_sparse_formula(to_mlx(coeff), to_mlx(basis), to_mlx(z), scale, _ops())
     mx = mlx_module()
-    out = to_mlx(coeff) @ to_mlx(basis).T
-    if scale != 0.0:
-        out = out + np.float32(scale) * to_mlx(z)
     mx.eval(out)
     return from_mlx(out)
 
@@ -120,14 +159,8 @@ def low_rank_metric(
     beta: np.ndarray,
     inv_alpha: float,
 ) -> np.ndarray:
+    out = _low_rank_metric_formula(to_mlx(delta), to_mlx(basis), to_mlx(beta), inv_alpha, _ops())
     mx = mlx_module()
-    delta_mx = to_mlx(delta)
-    basis_mx = to_mlx(basis)
-    beta_mx = to_mlx(beta)
-    proj = delta_mx @ basis_mx
-    term1 = mx.array(np.float32(inv_alpha)) * mx.sum(delta_mx * delta_mx, axis=1)
-    term2 = mx.sum(proj * proj * beta_mx, axis=1)
-    out = term1 - term2
     mx.eval(out)
     return from_mlx(out)
 
@@ -158,17 +191,8 @@ def whitened_sample(
     radial_mode: str,
     num_dim: int,
 ) -> np.ndarray:
+    out = _whitened_sample_formula(to_mlx(z_tilde), to_mlx(u), length, radial_mode, num_dim, _ops())
     mx = mlx_module()
-    z = to_mlx(z_tilde)
-    norms = mx.linalg.norm(z, axis=1)
-    safe_norms = mx.where(norms > 1e-12, norms, mx.array(1.0))
-    directions = z / safe_norms[:, None]
-    u_mx = to_mlx(u)
-    if radial_mode == "boundary":
-        rho = 0.8 + 0.2 * u_mx
-    else:
-        rho = mx.power(u_mx, 1.0 / max(num_dim, 1))
-    out = np.float32(length) * rho[:, None] * directions
     mx.eval(out)
     return from_mlx(out)
 
@@ -195,26 +219,9 @@ def fused_sobol_ellipsoid_candidates(
     z_pairs = mx.stack((radius * mx.cos(angle), radius * mx.sin(angle)), axis=2)
     z_tilde = z_pairs.reshape(samples.shape[0], 2 * normal_pairs)[:, :num_dim]
     z_tilde = mx.where(samples[:, :num_dim] < np.float32(prob), z_tilde, np.float32(0.0))
-    norms = mx.linalg.norm(z_tilde, axis=1)
-    safe_norms = mx.where(norms > 1e-12, norms, mx.array(1.0))
-    directions = z_tilde / safe_norms[:, None]
     u = samples[:, num_dim + 2 * normal_pairs]
-    if radial_mode == "boundary":
-        rho = 0.8 + 0.2 * u
-    else:
-        rho = mx.power(u, 1.0 / max(num_dim, 1))
-    center = to_mlx(x_center).reshape(1, -1)
-    step = (directions @ chol_mx.T) * (np.float32(length) * rho)[:, None]
-    candidates = clip_step(center, step)
-    delta = candidates - center
-    solved = mx.linalg.solve(chol_mx, delta.T, stream=mx.cpu).T
-    dist2 = mx.sum(solved * solved, axis=1)
-    scale = mx.where(
-        dist2 > np.float32(radius2) * (1.0 + 1e-8),
-        mx.sqrt(np.float32(radius2) / mx.maximum(dist2, np.float32(1e-12))),
-        mx.ones_like(dist2),
-    )
-    out = clip_step(center, delta * scale[:, None])
+    z = _whitened_sample_formula(z_tilde, u, length, radial_mode, num_dim, _ops())
+    out = _fused_ellipsoid_generate_formula(z, to_mlx(x_center).reshape(1, -1), chol_mx, radius2, _ops())
     mx.eval(out)
     return from_mlx(out)
 
@@ -229,29 +236,18 @@ def fused_whitened_ellipsoid_candidates(
     num_dim: int,
     radius2: float,
 ) -> np.ndarray:
-    mx = mlx_module()
-    chol_mx = to_mlx(chol)
-    z = to_mlx(z_tilde)
-    norms = mx.linalg.norm(z, axis=1)
-    safe_norms = mx.where(norms > 1e-12, norms, mx.array(1.0))
-    directions = z / safe_norms[:, None]
-    u_mx = to_mlx(u)
-    if radial_mode == "boundary":
-        rho = 0.8 + 0.2 * u_mx
-    else:
-        rho = mx.power(u_mx, 1.0 / max(num_dim, 1))
-    center = to_mlx(x_center).reshape(1, -1)
-    step = (directions @ chol_mx.T) * (np.float32(length) * rho)[:, None]
-    candidates = clip_step(center, step)
-    delta = candidates - center
-    solved = mx.linalg.solve(chol_mx, delta.T, stream=mx.cpu).T
-    dist2 = mx.sum(solved * solved, axis=1)
-    scale = mx.where(
-        dist2 > np.float32(radius2) * (1.0 + 1e-8),
-        mx.sqrt(np.float32(radius2) / mx.maximum(dist2, np.float32(1e-12))),
-        mx.ones_like(dist2),
+    out = _fused_whitened_ellipsoid_candidates_formula(
+        to_mlx(z_tilde),
+        to_mlx(u),
+        to_mlx(x_center).reshape(1, -1),
+        to_mlx(chol),
+        length,
+        radial_mode,
+        num_dim,
+        radius2,
+        _ops(),
     )
-    out = clip_step(center, delta * scale[:, None])
+    mx = mlx_module()
     mx.eval(out)
     return from_mlx(out)
 
@@ -262,9 +258,8 @@ def fused_metric_candidates(
     cov_factor: np.ndarray,
     length: float,
 ) -> np.ndarray:
+    out = _fused_metric_candidates_formula(to_mlx(z), to_mlx(x_center).reshape(1, -1), to_mlx(cov_factor).T, length, _ops())
     mx = mlx_module()
-    step = (to_mlx(z) @ to_mlx(cov_factor).T) * np.float32(length)
-    out = clip_step(to_mlx(x_center).reshape(1, -1), step)
     mx.eval(out)
     return from_mlx(out)
 
@@ -277,12 +272,16 @@ def fused_low_rank_candidates(
     x_center: np.ndarray,
     length: float,
 ) -> np.ndarray:
+    out = _fused_low_rank_candidates_formula(
+        to_mlx(coeff),
+        to_mlx(basis),
+        to_mlx(z),
+        sparse_scale,
+        to_mlx(x_center).reshape(1, -1),
+        length,
+        _ops(),
+    )
     mx = mlx_module()
-    step = to_mlx(coeff) @ to_mlx(basis).T
-    if sparse_scale != 0.0:
-        step = step + np.float32(sparse_scale) * to_mlx(z)
-    step = step * np.float32(length)
-    out = clip_step(to_mlx(x_center).reshape(1, -1), step)
     mx.eval(out)
     return from_mlx(out)
 
@@ -293,19 +292,7 @@ def fused_ellipsoid_generate(
     chol,
     radius2: float,
 ) -> np.ndarray:
+    out = _fused_ellipsoid_generate_formula(to_mlx(z), to_mlx(x_center).reshape(1, -1), to_mlx(chol), radius2, _ops())
     mx = mlx_module()
-    chol_mx = to_mlx(chol)
-    center = to_mlx(x_center).reshape(1, -1)
-    step = to_mlx(z) @ chol_mx.T
-    candidates = clip_step(center, step)
-    delta = candidates - center
-    solved = mx.linalg.solve(chol_mx, delta.T, stream=mx.cpu).T
-    dist2 = mx.sum(solved * solved, axis=1)
-    scale = mx.where(
-        dist2 > np.float32(radius2) * (1.0 + 1e-8),
-        mx.sqrt(np.float32(radius2) / mx.maximum(dist2, np.float32(1e-12))),
-        mx.ones_like(dist2),
-    )
-    out = clip_step(center, delta * scale[:, None])
     mx.eval(out)
     return from_mlx(out)

@@ -16,11 +16,9 @@ from enn.turbo.config.candidate_rv import CandidateRV
 from enn.turbo.turbo_utils import generate_raasp_candidates
 
 import optimizer.trust_region_accel as _accel
+import optimizer.trust_region_sampling_utils as _sampling
 from optimizer.pc_rotation import PCRotationMode, PCRotationResult
 from optimizer.trust_region_math import (
-    _add_sparse_axis,
-    _apply_full_factor,
-    _clip_to_unit_box,
     _ensure_spd,
     _full_factor,
     _low_rank_factor,
@@ -50,6 +48,14 @@ from optimizer.trust_region_sampling_utils import (
 SamplerKind = Literal["full", "low_rank"]
 RadialMode = Literal["ball_uniform", "boundary"]
 UpdateMode = Literal["option_a", "option_b", "option_c"]
+
+
+def _generate_block_raasp_candidates(*args, **kwargs):
+    return _sampling._generate_block_raasp_candidates(*args, **kwargs)
+
+
+def _whitened_inputs_from_sobol_samples(*args, **kwargs):
+    return _sampling._whitened_inputs_from_sobol_samples(*args, **kwargs)
 
 
 @dataclass
@@ -270,11 +276,13 @@ class _MetricGeometryModel:
 
     def build_step(self, z: np.ndarray, rng: Any) -> np.ndarray:
         if self.metric_sampler == "full":
+            z_arr = np.asarray(z, dtype=float)
             if self.use_accel:
-                return _accel.matmul(z, self.cov_factor.T)
-            return _apply_full_factor(z, self.cov_factor)
+                return _accel.matmul(z_arr, self.cov_factor.T)
+            return z_arr @ np.asarray(self.cov_factor, dtype=float).T
         if self.metric_sampler != "low_rank":
             raise ValueError(self.metric_sampler)
+        z_arr = np.asarray(z, dtype=float)
         basis = np.asarray(self.low_rank.basis, dtype=float)
         sqrt_vals = np.asarray(self.low_rank.sqrt_vals, dtype=float)
         if basis.ndim != 2 or basis.shape[0] != self.num_dim:
@@ -283,19 +291,21 @@ class _MetricGeometryModel:
             raise RuntimeError((basis.shape, sqrt_vals.shape))
         rank = int(sqrt_vals.shape[0])
         if rank == 0:
-            step = np.asarray(z, dtype=float) * float(self.low_rank.sqrt_alpha)
+            step = z_arr * float(self.low_rank.sqrt_alpha)
         else:
             coeff = rng.uniform(-0.5, 0.5, size=(z.shape[0], rank)) * sqrt_vals.reshape(1, -1)
             if self.use_accel:
                 step = _accel.low_rank_step_with_sparse(
                     coeff,
                     basis,
-                    z,
+                    z_arr,
                     float(self.low_rank.sqrt_alpha),
                 )
             else:
                 step = coeff @ basis.T
-                _add_sparse_axis(step, z, float(self.low_rank.sqrt_alpha))
+                sparse_scale = float(self.low_rank.sqrt_alpha)
+                if sparse_scale != 0.0:
+                    step = step + sparse_scale * z_arr
         return step
 
     def build_candidates(
@@ -307,11 +317,14 @@ class _MetricGeometryModel:
     ) -> np.ndarray:
         if self.metric_sampler == "full":
             step = self.build_step(z, rng) * float(length)
+            x_center_arr = np.asarray(x_center, dtype=float)
             if self.use_accel:
-                return _accel.clip_to_unit_box(np.asarray(x_center, dtype=float), step)
-            return _clip_to_unit_box(np.asarray(x_center, dtype=float), step)
+                return _accel.clip_to_unit_box(x_center_arr, step)
+            return _ray_scale_to_unit_box(x_center_arr, x_center_arr.reshape(1, -1) + step)
         if self.metric_sampler != "low_rank":
             raise ValueError(self.metric_sampler)
+        z_arr = np.asarray(z, dtype=float)
+        x_center_arr = np.asarray(x_center, dtype=float)
         basis = np.asarray(self.low_rank.basis, dtype=float)
         sqrt_vals = np.asarray(self.low_rank.sqrt_vals, dtype=float)
         if basis.ndim != 2 or basis.shape[0] != self.num_dim:
@@ -321,23 +334,25 @@ class _MetricGeometryModel:
         rank = int(sqrt_vals.shape[0])
         sparse_scale = float(self.low_rank.sqrt_alpha)
         if rank == 0:
-            step = np.asarray(z, dtype=float) * sparse_scale * float(length)
+            step = z_arr * sparse_scale * float(length)
             if self.use_accel:
-                return _accel.clip_to_unit_box(np.asarray(x_center, dtype=float), step)
-            return _clip_to_unit_box(np.asarray(x_center, dtype=float), step)
+                return _accel.clip_to_unit_box(x_center_arr, step)
+            return _ray_scale_to_unit_box(x_center_arr, x_center_arr.reshape(1, -1) + step)
         coeff = rng.uniform(-0.5, 0.5, size=(z.shape[0], rank)) * sqrt_vals.reshape(1, -1)
         if self.use_accel:
             return _accel.fused_low_rank_candidates(
                 coeff,
                 basis,
-                z,
+                z_arr,
                 sparse_scale,
-                np.asarray(x_center, dtype=float),
+                x_center_arr,
                 float(length),
             )
         step = coeff @ basis.T
-        _add_sparse_axis(step, z, sparse_scale)
-        return _clip_to_unit_box(np.asarray(x_center, dtype=float), step * float(length))
+        if sparse_scale != 0.0:
+            step = step + sparse_scale * z_arr
+        step = step * float(length)
+        return _ray_scale_to_unit_box(x_center_arr, x_center_arr.reshape(1, -1) + step)
 
     def covariance_matrix(self, *, jitter: float) -> np.ndarray:
         if self._cached_cov is not None:
@@ -367,7 +382,15 @@ class _MetricGeometryModel:
 
     def mahalanobis_sq(self, delta: np.ndarray, *, jitter: float) -> np.ndarray:
         if self.metric_sampler == "low_rank":
-            return _low_rank_mahalanobis_sq(delta, self.low_rank, use_accel=self.use_accel)
+            basis = np.asarray(self.low_rank.basis, dtype=float)
+            alpha = max(float(self.low_rank.sqrt_alpha) ** 2, 1e-12)
+            inv_alpha = 1.0 / alpha
+            lam = np.asarray(self.low_rank.sqrt_vals, dtype=float) ** 2
+            beta = inv_alpha * lam / (alpha + lam)
+            if self.use_accel:
+                return _accel.low_rank_metric(delta, basis, beta, inv_alpha)
+            with _accel.accel_override(""):
+                return _accel.low_rank_metric(delta, basis, beta, inv_alpha)
         return _mahalanobis_sq_from_inv(delta, self.covariance_inverse(jitter=jitter))
 
 
@@ -499,14 +522,14 @@ class _AxisAlignedStepSampler:
                 sobol_engine=sobol_engine,
                 num_pert=num_pert,
             )
-        if self.use_accel and cov_factor is not None:
+        if cov_factor is not None and self.use_accel:
             return _accel.fused_metric_candidates(
                 z,
                 np.asarray(x_center, dtype=float),
                 cov_factor,
                 float(length),
             )
-        if self.use_accel and build_candidates is not None:
+        if build_candidates is not None:
             return build_candidates(
                 z,
                 rng,
@@ -514,9 +537,10 @@ class _AxisAlignedStepSampler:
                 float(length),
             )
         step = build_step(z, rng) * float(length)
+        x_center_arr = np.asarray(x_center, dtype=float)
         if self.use_accel:
-            return _accel.clip_to_unit_box(np.asarray(x_center, dtype=float), step)
-        return _clip_to_unit_box(np.asarray(x_center, dtype=float), step)
+            return _accel.clip_to_unit_box(x_center_arr, step)
+        return _ray_scale_to_unit_box(x_center_arr, x_center_arr.reshape(1, -1) + step)
 
 
 @dataclass
@@ -554,7 +578,7 @@ class _TrueEllipsoidStepSampler:
             prob=prob,
             sobol_engine=sobol_engine,
         )
-        if self.use_accel and num_candidates * num_dim >= 250_000:
+        if self.use_accel:
             result = _accel.whitened_sample(
                 z_tilde,
                 u,
@@ -628,7 +652,10 @@ class _TrueEllipsoidStepSampler:
         step = z @ np.asarray(cov_factor, dtype=float).T
         candidates = _ray_scale_to_unit_box(x_center, x_center.reshape(1, -1) + step)
         delta = candidates - x_center.reshape(1, -1)
-        dist2 = _mahalanobis_sq_from_factor(delta, cov_factor)
+        if self.use_accel:
+            dist2 = _accel.mahalanobis_sq_from_factor(delta, cov_factor)
+        else:
+            dist2 = _mahalanobis_sq_from_factor(delta, np.asarray(cov_factor, dtype=float))
         radius2 = float(length) ** 2
         bad = np.where(dist2 > radius2 * (1.0 + 1e-8))[0]
         if bad.size > 0:
@@ -647,10 +674,13 @@ class _TrueEllipsoidStepSampler:
         rng: Any,
         candidate_rv: CandidateRV,
         sobol_engine: Any | None,
-        covariance_matrix: np.ndarray,
+        covariance_matrix: np.ndarray | Callable[[], np.ndarray],
         cov_gen: int,
     ) -> np.ndarray | None:
+        if not self.use_accel:
+            return None
         rv_name = _candidate_rv_name(candidate_rv)
+        cov = covariance_matrix() if callable(covariance_matrix) else covariance_matrix
         if rv_name == "sobol":
             if sobol_engine is None:
                 raise ValueError("sobol_engine required for CandidateRV.SOBOL")
@@ -658,7 +688,7 @@ class _TrueEllipsoidStepSampler:
             candidates = _accel.fused_sobol_ellipsoid_candidates(
                 sobol_samples,
                 x_center,
-                covariance_matrix,
+                cov,
                 float(length),
                 self.radial_mode,
                 num_dim,
@@ -680,7 +710,7 @@ class _TrueEllipsoidStepSampler:
             z_tilde,
             u,
             x_center,
-            covariance_matrix,
+            cov,
             float(length),
             self.radial_mode,
             num_dim,
@@ -699,7 +729,7 @@ class _TrueEllipsoidStepSampler:
         rng: Any,
         candidate_rv: CandidateRV,
         sobol_engine: Any | None,
-        covariance_matrix: np.ndarray,
+        covariance_matrix: np.ndarray | Callable[[], np.ndarray],
     ) -> np.ndarray:
         z = self._sample_raasp_whitened(
             num_candidates=num_candidates,
@@ -709,11 +739,12 @@ class _TrueEllipsoidStepSampler:
             candidate_rv=candidate_rv,
             sobol_engine=sobol_engine,
         )
-        chol = np.linalg.cholesky(covariance_matrix)
+        cov = covariance_matrix() if callable(covariance_matrix) else covariance_matrix
+        chol = np.linalg.cholesky(cov)
         step = z @ chol.T
         candidates = _ray_scale_to_unit_box(x_center, x_center.reshape(1, -1) + step)
         delta = candidates - x_center.reshape(1, -1)
-        dist2 = _mahalanobis_sq(delta, covariance_matrix)
+        dist2 = _mahalanobis_sq(delta, cov)
         radius2 = float(length) ** 2
         bad = np.where(dist2 > radius2 * (1.0 + 1e-8))[0]
         if bad.size > 0:
@@ -732,7 +763,7 @@ class _TrueEllipsoidStepSampler:
         rng: Any,
         candidate_rv: CandidateRV | None,
         sobol_engine: Any | None,
-        covariance_matrix: np.ndarray | None = None,
+        covariance_matrix: np.ndarray | Callable[[], np.ndarray] | None = None,
         cov_factor: np.ndarray | None = None,
         low_rank: _LowRankFactor | None = None,
         cov_gen: int = -1,
@@ -761,7 +792,7 @@ class _TrueEllipsoidStepSampler:
                 sobol_engine=sobol_engine,
                 cov_factor=cov_factor,
             )
-        if self.use_accel and num_candidates * num_dim >= 250_000:
+        if self.use_accel:
             candidates = self._generate_with_jax(
                 x_center=x_center,
                 num_dim=num_dim,
