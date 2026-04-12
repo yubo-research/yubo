@@ -45,7 +45,7 @@ from optimizer.trust_region_sampling_utils import (
     _whitened_sample_numpy,
 )
 
-SamplerKind = Literal["full", "low_rank"]
+SamplerKind = Literal["dense", "low_rank"]
 RadialMode = Literal["ball_uniform", "boundary"]
 UpdateMode = Literal["option_a", "option_b", "option_c"]
 
@@ -100,7 +100,7 @@ class _MetricGeometryModel:
         mean = np.sum(w[:, None] * dx, axis=0)
         centered = dx - mean
         cov = None
-        if self.metric_sampler == "full":
+        if self.metric_sampler == "dense":
             cov = centered.T @ (w[:, None] * centered)
             cov = _trace_normalize(cov, self.num_dim)
         self.update_from_cov(centered=centered, weights=w, cov=cov)
@@ -124,7 +124,7 @@ class _MetricGeometryModel:
             return
         scaled_dx, w = prepared
         cov = None
-        if self.metric_sampler == "full":
+        if self.metric_sampler == "dense":
             weighted = scaled_dx * np.sqrt(w).reshape(-1, 1)
             cov = weighted.T @ weighted
             cov = _trace_normalize(cov, self.num_dim)
@@ -142,7 +142,7 @@ class _MetricGeometryModel:
         self._cached_cov = None
         self._cached_cov_inv = None
         self.has_geometry = True
-        if self.metric_sampler == "full":
+        if self.metric_sampler == "dense":
             self.cov_factor = _full_factor_from_direction(
                 unit,
                 dim=self.num_dim,
@@ -173,9 +173,9 @@ class _MetricGeometryModel:
         lam_min = 1e-4
         lam_max = 1e4
         eps = 1e-6
-        if self.metric_sampler == "full":
+        if self.metric_sampler == "dense":
             if cov is None:
-                raise ValueError("cov is required for metric_sampler='full'")
+                raise ValueError("cov is required for metric_sampler='dense'")
             factor = _full_factor(cov, dim=self.num_dim, lam_min=lam_min, lam_max=lam_max, eps=eps)
             if factor is None:
                 return
@@ -253,7 +253,7 @@ class _MetricGeometryModel:
                     basis=np.zeros((dim, 0), dtype=float),
                     sqrt_vals=np.zeros(0),
                 )
-                self.metric_sampler = "full"
+                self.metric_sampler = "dense"
                 self.has_geometry = True
             return
 
@@ -275,7 +275,7 @@ class _MetricGeometryModel:
         self.has_geometry = True
 
     def build_step(self, z: np.ndarray, rng: Any) -> np.ndarray:
-        if self.metric_sampler == "full":
+        if self.metric_sampler == "dense":
             z_arr = np.asarray(z, dtype=float)
             if self.use_accel:
                 return _accel.matmul(z_arr, self.cov_factor.T)
@@ -315,7 +315,7 @@ class _MetricGeometryModel:
         x_center: np.ndarray,
         length: float,
     ) -> np.ndarray:
-        if self.metric_sampler == "full":
+        if self.metric_sampler == "dense":
             step = self.build_step(z, rng) * float(length)
             x_center_arr = np.asarray(x_center, dtype=float)
             if self.use_accel:
@@ -357,7 +357,7 @@ class _MetricGeometryModel:
     def covariance_matrix(self, *, jitter: float) -> np.ndarray:
         if self._cached_cov is not None:
             return self._cached_cov
-        if self.metric_sampler == "full":
+        if self.metric_sampler == "dense":
             cov = self.cov_factor @ self.cov_factor.T
             cov = 0.5 * (cov + cov.T)
             cov += jitter * max(1.0, float(np.max(np.abs(cov)))) * np.eye(cov.shape[0])

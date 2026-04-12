@@ -9,7 +9,7 @@ from optimizer.pc_rotation import PCRotationResult
 
 
 def test_metric_geometry_model_full_mode_paths():
-    model = tru._MetricGeometryModel(num_dim=3, metric_sampler="full", metric_rank=None)
+    model = tru._MetricGeometryModel(num_dim=3, metric_sampler="dense", metric_rank=None)
     model.reset()
     assert model.has_geometry is False
 
@@ -141,7 +141,7 @@ def test_gradient_geometry_low_rank_uses_single_weighting_pass():
 def test_true_ellipsoid_option_b_reclips_after_ema():
     model = tru._TrueEllipsoidGeometryModel(
         num_dim=3,
-        metric_sampler="full",
+        metric_sampler="dense",
         metric_rank=None,
         update_option="option_b",
         shape_period=1,
@@ -164,7 +164,7 @@ def test_true_ellipsoid_option_b_reclips_after_ema():
     assert float(np.max(eigvals) / np.min(eigvals)) <= 2.0 + 1e-6
 
 
-@pytest.mark.parametrize("metric_sampler", ["full", "low_rank"])
+@pytest.mark.parametrize("metric_sampler", ["dense", "low_rank"])
 def test_analytic_gradient_matches_single_sample_gradient_update(metric_sampler):
     grad = np.array([1.0, -0.5, 0.25, 0.0], dtype=float)
     analytic = tru._MetricGeometryModel(num_dim=4, metric_sampler=metric_sampler, metric_rank=2)
@@ -181,7 +181,7 @@ def test_analytic_gradient_matches_single_sample_gradient_update(metric_sampler)
 
 
 def test_cached_mahalanobis_matches_direct_solve():
-    model = tru._MetricGeometryModel(num_dim=4, metric_sampler="full", metric_rank=None)
+    model = tru._MetricGeometryModel(num_dim=4, metric_sampler="dense", metric_rank=None)
     dx = np.eye(4, dtype=float)
     weights = np.ones((4,), dtype=float)
     model.set_geometry(dx, weights)
@@ -213,7 +213,7 @@ def test_metric_geometry_model_build_step_runtime_checks():
 def test_true_ellipsoid_geometry_model_update_and_reset():
     model = tru._TrueEllipsoidGeometryModel(
         num_dim=3,
-        metric_sampler="full",
+        metric_sampler="dense",
         metric_rank=None,
         update_option="option_b",
         shape_period=1,

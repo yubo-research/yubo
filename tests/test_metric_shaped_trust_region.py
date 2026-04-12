@@ -13,7 +13,6 @@ from optimizer.box_trust_region import (
 )
 from optimizer.metric_trust_region import ENNMetricShapedTrustRegion, MetricShapedTrustRegion
 from optimizer.trust_region_config import (
-    ENNGradientIsotropicTrustRegion,
     ENNIsotropicTrustRegion,
     ENNTrueEllipsoidalTrustRegion,
     MetricShapedTRConfig,
@@ -26,7 +25,7 @@ from optimizer.trust_region_sampling_utils import _low_rank_mahalanobis_sq
 def test_metric_shaped_tr_config_length_properties():
     cfg = MetricShapedTRConfig(
         geometry="enn_ellip",
-        metric_sampler="full",
+        metric_sampler="dense",
     )
     assert cfg.length_init > 0
     assert cfg.length_min > 0
@@ -37,30 +36,29 @@ def test_metric_shaped_tr_config_length_properties():
 
 
 def test_geometry_aliases_canonicalize_to_short_names():
-    cfg_metric = MetricShapedTRConfig(geometry="enn_metr", metric_sampler="full")
+    cfg_metric = MetricShapedTRConfig(geometry="enn_metr", metric_sampler="dense")
     cfg_iso = MetricShapedTRConfig(geometry="enn_iso")
-    cfg_grad_iso = MetricShapedTRConfig(geometry="grad_iso")
-    cfg_ellip = MetricShapedTRConfig(geometry="enn_ellip", metric_sampler="full")
-    cfg_grad_metric = MetricShapedTRConfig(geometry="grad_metr", metric_sampler="full")
-    cfg_grad_ellip = MetricShapedTRConfig(geometry="grad_ellip", metric_sampler="full")
+    cfg_ellip = MetricShapedTRConfig(geometry="enn_ellip", metric_sampler="dense")
+    cfg_grad_metric = MetricShapedTRConfig(geometry="grad_metr", metric_sampler="dense")
+    cfg_grad_ellip = MetricShapedTRConfig(geometry="grad_ellip", metric_sampler="dense")
 
     assert cfg_metric.geometry == "enn_metr"
     assert cfg_iso.geometry == "enn_iso"
-    assert cfg_grad_iso.geometry == "grad_iso"
     assert cfg_ellip.geometry == "enn_ellip"
     assert cfg_grad_metric.geometry == "grad_metr"
     assert cfg_grad_ellip.geometry == "grad_ellip"
 
 
-def test_identity_geometries_reject_full_sampler_and_rank():
+def test_grad_iso_is_not_supported_geometry():
+    with pytest.raises(ValueError, match="Unknown geometry="):
+        MetricShapedTRConfig(geometry="grad_iso")
+
+
+def test_identity_geometry_rejects_full_sampler_and_rank():
     with pytest.raises(ValueError, match="only supports sampler='low_rank'"):
-        MetricShapedTRConfig(geometry="enn_iso", metric_sampler="full")
+        MetricShapedTRConfig(geometry="enn_iso", metric_sampler="dense")
     with pytest.raises(ValueError, match="does not use metric_rank"):
         MetricShapedTRConfig(geometry="enn_iso", metric_rank=2)
-    with pytest.raises(ValueError, match="only supports sampler='low_rank'"):
-        MetricShapedTRConfig(geometry="grad_iso", metric_sampler="full")
-    with pytest.raises(ValueError, match="does not use metric_rank"):
-        MetricShapedTRConfig(geometry="grad_iso", metric_rank=2)
 
 
 def test_identity_metric_geometry_stays_isotropic_and_fixed():
@@ -93,66 +91,10 @@ def test_identity_metric_geometry_stays_isotropic_and_fixed():
     assert np.all(dist2 <= float(tr.length) ** 2 * (1.0 + 1e-6))
 
 
-def test_gradient_identity_geometry_uses_gradient_only_for_sampling(monkeypatch):
-    rng = np.random.default_rng(17)
-    cfg = MetricShapedTRConfig(
-        geometry="grad_iso",
-        p_raasp=0.3,
-        radial_mode="ball_uniform",
-    )
-    tr = cfg.build(num_dim=6, rng=rng)
-    assert isinstance(tr, ENNGradientIsotropicTrustRegion)
-    assert tr.needs_gradient_signal() is True
-    assert tr._geometry_model.metric_sampler == "low_rank"
-    cov0 = tr._covariance_matrix()
-    assert np.allclose(cov0, np.eye(6) * float(cov0[0, 0]))
-
-    captured = {}
-
-    def fake_generate(self, **kwargs):
-        captured["num_pert"] = int(kwargs["num_pert"])
-        x_center = np.asarray(kwargs["x_center"], dtype=float).reshape(1, -1)
-        return np.repeat(x_center, int(kwargs["num_candidates"]), axis=0)
-
-    monkeypatch.setattr(type(tr._step_sampler), "generate", fake_generate)
-
-    x_center = rng.uniform(0.2, 0.8, size=(6,))
-    tr.generate_candidates(
-        x_center=x_center,
-        lengthscales=None,
-        num_candidates=32,
-        rng=rng,
-        candidate_rv=CandidateRV.UNIFORM,
-    )
-    base_num_pert = captured["num_pert"]
-
-    tr.set_analytic_gradient_geometry(np.array([10.0, 0.0, 0.0, 0.0, 0.0, 0.0]))
-    cov1 = tr._covariance_matrix()
-    np.testing.assert_allclose(cov1, cov0)
-    tr.generate_candidates(
-        x_center=x_center,
-        lengthscales=None,
-        num_candidates=32,
-        rng=rng,
-        candidate_rv=CandidateRV.UNIFORM,
-    )
-    assert captured["num_pert"] < base_num_pert
-    reduced_num_pert = captured["num_pert"]
-    assert reduced_num_pert < base_num_pert
-    tr.generate_candidates(
-        x_center=x_center,
-        lengthscales=None,
-        num_candidates=32,
-        rng=rng,
-        candidate_rv=CandidateRV.UNIFORM,
-    )
-    assert captured["num_pert"] == base_num_pert
-
-
 def _build_true_tr(*, num_dim: int, update_option: str = "option_a", rng_seed: int = 0) -> ENNTrueEllipsoidalTrustRegion:
     cfg = MetricShapedTRConfig(
         geometry="enn_ellip",
-        metric_sampler="full",
+        metric_sampler="dense",
         update_option=update_option,
         p_raasp=0.3,
         radial_mode="ball_uniform",
@@ -237,7 +179,7 @@ def test_full_metric_mahalanobis_uses_factor_and_avoids_inverse(monkeypatch):
 def test_use_jax_full_metric_mahalanobis_routes_through_factor_helper(monkeypatch):
     cfg = MetricShapedTRConfig(
         geometry="enn_metr",
-        metric_sampler="full",
+        metric_sampler="dense",
         use_accel=True,
     )
     rng = np.random.default_rng(19)
@@ -329,7 +271,7 @@ def test_boundary_tol_rejects_values_above_one():
     with pytest.raises(ValueError, match=r"'boundary_tol' must be <= 1"):
         MetricShapedTRConfig(
             geometry="enn_ellip",
-            metric_sampler="full",
+            metric_sampler="dense",
             boundary_tol=1.1,
         )
 
@@ -476,7 +418,7 @@ def test_low_rank_ellipsoid_candidates_skip_dense_covariance(monkeypatch):
 def test_full_ellipsoid_path_avoids_dense_covariance(monkeypatch):
     cfg = MetricShapedTRConfig(
         geometry="enn_ellip",
-        metric_sampler="full",
+        metric_sampler="dense",
         update_option="option_a",
     )
     tr = cfg.build(num_dim=4, rng=np.random.default_rng(19))
@@ -571,7 +513,7 @@ def test_low_rank_metric_mahalanobis_avoids_dense_covariance(monkeypatch):
 def test_set_analytic_gradient_geometry():
     cfg = MetricShapedTRConfig(
         geometry="grad_metr",
-        metric_sampler="full",
+        metric_sampler="dense",
         update_option="option_a",
     )
     tr = cfg.build(num_dim=3, rng=np.random.default_rng(31))
@@ -868,7 +810,7 @@ def test_box_trust_region_fixed_length_update_and_restart():
 def test_metric_shaped_generate_candidates_invalid_inputs():
     cfg = MetricShapedTRConfig(
         geometry="enn_metr",
-        metric_sampler="full",
+        metric_sampler="dense",
     )
     tr = cfg.build(num_dim=3, rng=np.random.default_rng(44))
     tr.validate_request(num_arms=1)
@@ -901,7 +843,7 @@ def test_metric_shaped_generate_candidates_invalid_inputs():
 def test_metric_and_box_class_methods_are_directly_covered():
     metric_cfg = MetricShapedTRConfig(
         geometry="enn_metr",
-        metric_sampler="full",
+        metric_sampler="dense",
     )
     metric_tr = metric_cfg.build(num_dim=3, rng=np.random.default_rng(55))
     assert isinstance(metric_tr, ENNMetricShapedTrustRegion)

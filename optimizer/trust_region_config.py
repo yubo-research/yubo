@@ -11,7 +11,6 @@ from enn.turbo.turbo_trust_region import TurboTrustRegion
 
 from optimizer.box_trust_region import FixedLengthTurboTrustRegion
 from optimizer.ellipsoidal_trust_region import (
-    ENNGradientIsotropicTrustRegion,
     ENNIsotropicTrustRegion,
     ENNTrueEllipsoidalTrustRegion,
 )
@@ -32,13 +31,12 @@ from optimizer.trust_region_utils import (
 GeometryKind = Literal[
     "box",
     "enn_iso",
-    "grad_iso",
     "enn_metr",
     "grad_metr",
     "enn_ellip",
     "grad_ellip",
 ]
-_GEOMETRIES = frozenset(("box", "enn_iso", "grad_iso", "enn_metr", "grad_metr", "enn_ellip", "grad_ellip"))
+_GEOMETRIES = frozenset(("box", "enn_iso", "enn_metr", "grad_metr", "enn_ellip", "grad_ellip"))
 _RADIAL = frozenset(("ball_uniform", "boundary"))
 
 
@@ -52,7 +50,7 @@ class MetricShapedTRConfig:
     fixed_length: float | None = None
     noise_aware: bool = False
     geometry: GeometryKind = "box"
-    metric_sampler: SamplerKind | None = None
+    metric_sampler: SamplerKind | None = field(default=None, validator=v.optional(v.in_(["dense", "low_rank"])))
     metric_rank: int | None = field(default=None, validator=v.optional(v.gt(0)))
     pc_rotation_mode: PCRotationMode | None = field(
         default=None,
@@ -82,7 +80,7 @@ class MetricShapedTRConfig:
         if self.geometry == "box":
             if self.metric_sampler is not None or self.metric_rank is not None:
                 raise ValueError("metric_* options require non-box geometry")
-        if self.geometry in {"enn_iso", "grad_iso"}:
+        if self.geometry == "enn_iso":
             if self.metric_sampler not in (None, "low_rank"):
                 raise ValueError(f"{self.geometry} only supports sampler='low_rank' or the default sampler.")
             if self.metric_rank is not None:
@@ -106,7 +104,7 @@ class MetricShapedTRConfig:
         return self.length.length_max
 
     def _resolved_sampler(self) -> SamplerKind:
-        return "full" if self.metric_sampler is None else self.metric_sampler
+        return "dense" if self.metric_sampler is None else self.metric_sampler
 
     def build(
         self,
@@ -142,17 +140,6 @@ class MetricShapedTRConfig:
                 metric_rank=self.metric_rank,
                 use_accel=use_accel,
             )
-        if self.geometry == "grad_iso":
-            sampler = "low_rank"
-            return ENNGradientIsotropicTrustRegion(
-                config=self,
-                num_dim=num_dim,
-                incumbent_selector=selector,
-                candidate_rv=candidate_rv,
-                metric_sampler=sampler,
-                metric_rank=self.metric_rank,
-                use_accel=use_accel,
-            )
         if self.geometry in ("enn_ellip", "grad_ellip"):
             return ENNTrueEllipsoidalTrustRegion(
                 config=self,
@@ -180,7 +167,6 @@ __all__ = [
     "MetricShapedTRConfig",
     "MetricShapedTrustRegion",
     "ENNIsotropicTrustRegion",
-    "ENNGradientIsotropicTrustRegion",
     "ENNMetricShapedTrustRegion",
     "ENNTrueEllipsoidalTrustRegion",
     "normalize_geometry_name",

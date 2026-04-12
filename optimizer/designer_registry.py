@@ -571,7 +571,6 @@ def _build_turbo_enn_p_with_opts(
         "box",
         {
             "enn_iso",
-            "grad_iso",
             "enn_metr",
             "grad_metr",
             "enn_ellip",
@@ -584,9 +583,9 @@ def _build_turbo_enn_p_with_opts(
         sampler = _optional_str_in(
             opts,
             "sampler",
-            "full",
-            {"full", "low_rank"},
-            example=f"{name}/sampler=full",
+            "dense",
+            {"dense", "low_rank"},
+            example=f"{name}/sampler=dense",
         )
     rank = None
     if "rank" in opts:
@@ -664,7 +663,6 @@ def _d_turbo_enn_fit(ctx: _SimpleContext, opts: dict):
         "box",
         {
             "enn_iso",
-            "grad_iso",
             "enn_metr",
             "grad_metr",
             "enn_ellip",
@@ -677,9 +675,9 @@ def _d_turbo_enn_fit(ctx: _SimpleContext, opts: dict):
         sampler = _optional_str_in(
             opts,
             "sampler",
-            "full",
-            {"full", "low_rank"},
-            example="turbo-enn-fit/sampler=full",
+            "dense",
+            {"dense", "low_rank"},
+            example="turbo-enn-fit/sampler=dense",
         )
     rank = None
     if "rank" in opts:
@@ -932,9 +930,9 @@ def _d_turbo_enn_multi_ext(ctx: _SimpleContext, opts: dict):
         sampler = _optional_str_in(
             opts,
             "sampler",
-            "full",
-            {"full", "low_rank"},
-            example="turbo-enn-multi/sampler=full",
+            "dense",
+            {"dense", "low_rank"},
+            example="turbo-enn-multi/sampler=dense",
         )
     rank = None
     if "rank" in opts:
@@ -1111,7 +1109,6 @@ _DESIGNER_OPTION_SPECS: dict[str, list[DesignerOptionSpec]] = {
             example="turbo-enn-p/geometry=enn_metr",
             allowed_values=(
                 "enn_iso",
-                "grad_iso",
                 "enn_metr",
                 "grad_metr",
                 "enn_ellip",
@@ -1123,8 +1120,8 @@ _DESIGNER_OPTION_SPECS: dict[str, list[DesignerOptionSpec]] = {
             required=False,
             value_type="str",
             description="Optional metric/ellipsoidal sampler override.",
-            example="turbo-enn-p/sampler=full",
-            allowed_values=("full", "low_rank"),
+            example="turbo-enn-p/sampler=dense",
+            allowed_values=("dense", "low_rank"),
         ),
         DesignerOptionSpec(
             name="rank",
@@ -1166,7 +1163,6 @@ _DESIGNER_OPTION_SPECS: dict[str, list[DesignerOptionSpec]] = {
             example="turbo_py-enn-p/geometry=enn_metr",
             allowed_values=(
                 "enn_iso",
-                "grad_iso",
                 "enn_metr",
                 "grad_metr",
                 "enn_ellip",
@@ -1178,8 +1174,8 @@ _DESIGNER_OPTION_SPECS: dict[str, list[DesignerOptionSpec]] = {
             required=False,
             value_type="str",
             description="Optional metric/ellipsoidal sampler override.",
-            example="turbo_py-enn-p/sampler=full",
-            allowed_values=("full", "low_rank"),
+            example="turbo_py-enn-p/sampler=dense",
+            allowed_values=("dense", "low_rank"),
         ),
         DesignerOptionSpec(
             name="rank",
@@ -1250,7 +1246,6 @@ _DESIGNER_OPTION_SPECS: dict[str, list[DesignerOptionSpec]] = {
             example="turbo-enn-fit/acq_type=ucb/geometry=enn_metr",
             allowed_values=(
                 "enn_iso",
-                "grad_iso",
                 "enn_metr",
                 "grad_metr",
                 "enn_ellip",
@@ -1262,8 +1257,8 @@ _DESIGNER_OPTION_SPECS: dict[str, list[DesignerOptionSpec]] = {
             required=False,
             value_type="str",
             description="Optional metric/ellipsoidal sampler override.",
-            example="turbo-enn-fit/acq_type=ucb/sampler=full",
-            allowed_values=("full", "low_rank"),
+            example="turbo-enn-fit/acq_type=ucb/sampler=dense",
+            allowed_values=("dense", "low_rank"),
         ),
         DesignerOptionSpec(
             name="rank",
@@ -1379,7 +1374,7 @@ _DESIGNER_OPTION_SPECS: dict[str, list[DesignerOptionSpec]] = {
             value_type="str",
             description="Metric/ellipsoidal sampler for non-box geometry.",
             example="turbo-enn-multi/sampler=low_rank",
-            allowed_values=("full", "low_rank"),
+            allowed_values=("dense", "low_rank"),
         ),
         DesignerOptionSpec(
             name="rank",

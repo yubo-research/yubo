@@ -39,7 +39,7 @@ class MetricShapedTrustRegion(TurboTrustRegion):
     """
 
     candidate_rv: CandidateRV = CandidateRV.SOBOL
-    metric_sampler: str = "full"
+    metric_sampler: str = "dense"
     metric_rank: int | None = None
     use_accel: bool = False
     uses_custom_candidate_gen: bool = field(default=True, init=False)
@@ -168,7 +168,7 @@ class MetricShapedTrustRegion(TurboTrustRegion):
         x_center = np.asarray(x_center, dtype=float).reshape(-1)
         if x_center.shape != (num_dim,):
             raise ValueError((x_center.shape, num_dim))
-        cov_factor = self._geometry_model.cov_factor if self._geometry_model.metric_sampler == "full" else None
+        cov_factor = self._geometry_model.cov_factor if self._geometry_model.metric_sampler == "dense" else None
         candidates = self._step_sampler.generate(
             x_center=x_center,
             length=float(self.length),

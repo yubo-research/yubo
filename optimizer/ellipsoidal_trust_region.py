@@ -7,7 +7,7 @@ import numpy as np
 
 import optimizer.trust_region_accel as _accel
 from optimizer.metric_trust_region import ENNMetricShapedTrustRegion, MetricShapedTrustRegion, _apply_fixed_length_to_tr
-from optimizer.trust_region_math import _mahalanobis_sq_from_factor, _normalize_weights
+from optimizer.trust_region_math import _mahalanobis_sq_from_factor
 from optimizer.trust_region_sampling_utils import _apply_block_raasp_mask, _low_rank_mahalanobis_sq
 from optimizer.trust_region_utils import (
     _LengthPolicy,
@@ -113,7 +113,7 @@ class ENNTrueEllipsoidalTrustRegion(ENNMetricShapedTrustRegion):
                             self._geometry_model.low_rank,
                         )[0]
                     )
-        elif self._geometry_model.metric_sampler == "full":
+        elif self._geometry_model.metric_sampler == "dense":
             mahal = getattr(self._geometry_model, "mahalanobis_sq")
             if getattr(mahal, "__func__", mahal) is not getattr(type(self._geometry_model), "mahalanobis_sq"):
                 dist2 = float(
@@ -166,7 +166,7 @@ class ENNTrueEllipsoidalTrustRegion(ENNMetricShapedTrustRegion):
             raise ValueError((x_center.shape, num_dim))
         low_rank = self._geometry_model.low_rank if self._geometry_model.metric_sampler == "low_rank" else None
         cov = self._covariance_matrix if low_rank is None else None
-        cov_factor = self._geometry_model.cov_factor if self._geometry_model.metric_sampler == "full" else None
+        cov_factor = self._geometry_model.cov_factor if self._geometry_model.metric_sampler == "dense" else None
         candidates = self._step_sampler.generate(
             x_center=x_center,
             num_dim=num_dim,
@@ -238,107 +238,3 @@ class ENNIsotropicTrustRegion(MetricShapedTrustRegion):
         grad: np.ndarray | Any | None = None,
     ) -> None:
         _ = delta_x, weights, delta_y, grad
-
-
-@dataclass
-class ENNGradientIsotropicTrustRegion(ENNIsotropicTrustRegion):
-    """Identity-metric control with gradient-aware sampling.
-
-    Gradient information only modulates the perturbation probability used by
-    candidate generation. The covariance stays fixed at the identity.
-    """
-
-    _pending_grad_norm: float | None = field(default=None, init=False, repr=False)
-
-    def restart(self, rng: Any | None = None) -> None:
-        super().restart(rng=rng)
-        self._pending_grad_norm = None
-
-    def needs_gradient_signal(self) -> bool:
-        return True
-
-    def _store_gradient_strength(self, grad: np.ndarray | Any) -> None:
-        g = np.asarray(grad, dtype=float).reshape(-1)
-        if g.shape[0] != self.num_dim or not np.any(np.isfinite(g)):
-            return
-        g = np.where(np.isfinite(g), g, 0.0)
-        grad_norm = float(np.linalg.norm(g))
-        if np.isfinite(grad_norm) and grad_norm > 0.0:
-            self._pending_grad_norm = grad_norm
-
-    def set_analytic_gradient_geometry(self, grad: np.ndarray | Any) -> None:
-        self._store_gradient_strength(grad)
-
-    def set_gradient_geometry(
-        self,
-        delta_x: np.ndarray | Any,
-        delta_y: np.ndarray | Any,
-        weights: np.ndarray | Any,
-        *,
-        eps_norm: float = 1e-12,
-    ) -> None:
-        dx = np.asarray(delta_x, dtype=float)
-        dy = np.asarray(delta_y, dtype=float).reshape(-1)
-        if dx.ndim != 2 or dx.shape[0] == 0 or dx.shape[0] != dy.shape[0]:
-            return
-        w = _normalize_weights(np.asarray(weights, dtype=float))
-        if w is None or w.shape[0] != dx.shape[0]:
-            return
-        step_scale = float(np.sqrt(np.sum(w * np.sum(dx * dx, axis=1))))
-        if not np.isfinite(step_scale) or step_scale <= eps_norm:
-            return
-        signal_scale = float(np.sqrt(np.sum(w * np.square(dy))))
-        grad_norm = signal_scale / max(step_scale, eps_norm)
-        if np.isfinite(grad_norm) and grad_norm > 0.0:
-            self._pending_grad_norm = grad_norm
-
-    def observe_local_geometry(
-        self,
-        *,
-        delta_x: np.ndarray | Any | None = None,
-        weights: np.ndarray | Any | None = None,
-        delta_y: np.ndarray | Any | None = None,
-        grad: np.ndarray | Any | None = None,
-    ) -> None:
-        if grad is not None:
-            self.set_analytic_gradient_geometry(grad)
-            return
-        if delta_x is None or weights is None or delta_y is None:
-            return
-        self.set_gradient_geometry(delta_x=delta_x, delta_y=delta_y, weights=weights)
-
-    def _effective_num_pert(self, num_pert: int) -> int:
-        num_pert_int = int(num_pert)
-        if num_pert_int <= 0:
-            return num_pert_int
-        grad_norm = self._pending_grad_norm
-        self._pending_grad_norm = None
-        if grad_norm is None or not np.isfinite(grad_norm) or grad_norm <= 0.0:
-            return num_pert_int
-        # Reduce the perturbation rate smoothly as the gradient gets stronger.
-        scale = 1.0 / (1.0 + 0.25 * np.log1p(grad_norm))
-        adjusted = int(round(num_pert_int * scale))
-        return max(1, min(int(self.num_dim), adjusted))
-
-    def generate_candidates(
-        self,
-        x_center: np.ndarray,
-        lengthscales: np.ndarray | None,
-        num_candidates: int,
-        *,
-        rng: Any,
-        candidate_rv: Any | None = None,
-        sobol_engine: Any | None = None,
-        raasp_driver: Any | None = None,
-        num_pert: int = 20,
-    ) -> np.ndarray:
-        return super().generate_candidates(
-            x_center=x_center,
-            lengthscales=lengthscales,
-            num_candidates=num_candidates,
-            rng=rng,
-            candidate_rv=candidate_rv,
-            sobol_engine=sobol_engine,
-            raasp_driver=raasp_driver,
-            num_pert=self._effective_num_pert(num_pert),
-        )

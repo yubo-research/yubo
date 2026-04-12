@@ -71,7 +71,7 @@ def test_metric_turbo_enn_designer_enables_accel_tr_in_config():
         k=10,
         acq_type="pareto",
         tr_geometry="enn_metr",
-        metric_sampler="full",
+        metric_sampler="dense",
     )
 
     tr_cfg = designer._make_trust_region(None)
@@ -194,7 +194,7 @@ def test_turbo_enn_fit_forwards_fit_and_fixed_length_options(monkeypatch):
             "num_fit_samples": 10,
             "num_fit_candidates": 100,
             "geometry": "enn_metr",
-            "sampler": "full",
+            "sampler": "dense",
             "fixed_length": 1.6,
         },
     )
@@ -382,8 +382,9 @@ def test_turbo_enn_fit_accepts_identity_geometry(monkeypatch):
     assert calls[0]["tr_geometry"] == "enn_iso"
 
 
-def test_turbo_enn_fit_accepts_gradient_identity_geometry(monkeypatch):
+def test_turbo_enn_fit_rejects_gradient_identity_geometry(monkeypatch):
     from optimizer import designer_registry as dr
+    from optimizer.designer_errors import NoSuchDesignerError
 
     calls = []
 
@@ -406,9 +407,8 @@ def test_turbo_enn_fit_accepts_gradient_identity_geometry(monkeypatch):
         env_conf=None,
     )
 
-    out = dr._d_turbo_enn_fit(ctx, {"acq_type": "ucb", "geometry": "grad_iso"})
-    assert out["tr_geometry"] == "grad_iso"
-    assert calls[0]["tr_geometry"] == "grad_iso"
+    with pytest.raises(NoSuchDesignerError, match="must be one of"):
+        dr._d_turbo_enn_fit(ctx, {"acq_type": "ucb", "geometry": "grad_iso"})
 
 
 def test_metric_turbo_enn_designer_builds_fixed_length_tr_config():
@@ -420,7 +420,7 @@ def test_metric_turbo_enn_designer_builds_fixed_length_tr_config():
         k=10,
         acq_type="thompson",
         tr_geometry="enn_metr",
-        metric_sampler="full",
+        metric_sampler="dense",
         fixed_length=1.6,
     )
 
