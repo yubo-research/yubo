@@ -58,6 +58,7 @@ def load_multiple_traces(data_locator):
     num_tot = 0
     problems = data_locator.problems()
     opt_names = data_locator.optimizers()
+    requested_num_reps = getattr(data_locator, "num_reps", None)
 
     def _report_bad(problem_name, opt_name, msg):
         nonlocal num_bad
@@ -90,6 +91,8 @@ def load_multiple_traces(data_locator):
             trace = _load_and_validate_trace(trace_path, data_locator, problem_name, opt_name, _report_bad)
             if trace is None:
                 continue
+            if requested_num_reps is not None:
+                trace = trace[:requested_num_reps, :]
             if traces is None:
                 traces = _init_traces(trace)
                 if traces is None:

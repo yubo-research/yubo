@@ -68,6 +68,57 @@ class TestPrintDatasetSummary:
                 pass  # Expected if no matching data
 
 
+class TestLoadRlTraces:
+    def test_accepts_larger_config_num_reps_and_slices(self):
+        from analysis.data_io import TraceRecord, write_trace_jsonl
+        from analysis.plotting_2_trace import load_rl_traces
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir) / "results" / "exp"
+            run_dir = root / "run1"
+            traces_dir = run_dir / "traces"
+            traces_dir.mkdir(parents=True)
+
+            config = {
+                "env_tag": "bw-heur",
+                "opt_name": "random",
+                "num_arms": 1,
+                "num_rounds": 10000,
+                "num_reps": 30,
+            }
+            with open(run_dir / "config.json", "w") as f:
+                json.dump(config, f)
+
+            for i_rep in range(30):
+                write_trace_jsonl(
+                    str(traces_dir / f"{i_rep:05d}.jsonl"),
+                    [
+                        TraceRecord(i_iter=0, dt_prop=0.0, dt_eval=0.0, rreturn=float(i_rep)),
+                        TraceRecord(
+                            i_iter=1,
+                            dt_prop=0.0,
+                            dt_eval=0.0,
+                            rreturn=float(i_rep) + 0.5,
+                        ),
+                    ],
+                )
+
+            data_locator, traces = load_rl_traces(
+                str(Path(tmpdir) / "results"),
+                "exp",
+                ["random"],
+                num_arms=1,
+                num_rounds=10000,
+                num_reps=10,
+                problem="bw-heur",
+            )
+
+            assert data_locator.optimizers() == ["random"]
+            assert traces.shape == (1, 1, 10, 2)
+            np.testing.assert_array_equal(traces[0, 0, :, 0], np.arange(10, dtype=float))
+            np.testing.assert_array_equal(traces[0, 0, :, 1], np.arange(10, dtype=float) + 0.5)
+
+
 class TestMeanFinalByOptimizer:
     def test_computes_mean(self):
         from analysis.plotting_2_trace import mean_final_by_optimizer
