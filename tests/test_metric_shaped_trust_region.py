@@ -565,31 +565,6 @@ def test_needs_gradient_signal_by_geometry():
     assert tr_plain.needs_gradient_signal() is False
 
 
-def test_pc_rotation_geometry_full():
-    rng = np.random.default_rng(99)
-    cfg = MetricShapedTRConfig(
-        geometry="enn_ellip",
-        covmat="low_rank",
-        pc_rotation_mode="full",
-    )
-    tr = cfg.build(num_dim=5, rng=rng)
-    x_center = np.full(5, 0.5)
-    x_obs = x_center + rng.normal(0, 0.05, size=(30, 5))
-    y_obs = rng.uniform(0, 1, size=30)
-    tr.observe_pc_rotation_geometry(x_center=x_center, x_obs=x_obs, y_obs=y_obs, maximize=True)
-    assert tr.has_geometry
-    cov = tr._covariance_matrix()
-    np.linalg.cholesky(cov)
-    candidates = tr.generate_candidates(
-        x_center=x_center,
-        lengthscales=None,
-        num_candidates=32,
-        rng=rng,
-        candidate_rv=CandidateRV.UNIFORM,
-    )
-    assert candidates.shape == (32, 5)
-
-
 def test_module_aware_box_trust_region_uses_leaf_blocks(monkeypatch):
     policy = torch.nn.Sequential(
         torch.nn.LayerNorm(4),
@@ -850,30 +825,6 @@ def test_module_blocks_restrict_dense_ellipsoid_to_selected_subspace(monkeypatch
     assert np.max(np.abs(delta[:, 0])) <= max_expected * (1.0 + 1e-6)
 
 
-def test_pc_rotation_geometry_low_rank():
-    rng = np.random.default_rng(100)
-    cfg = MetricShapedTRConfig(
-        geometry="enn_ellip",
-        covmat="low_rank",
-        pc_rotation_mode="low_rank",
-        pc_rank=3,
-    )
-    tr = cfg.build(num_dim=8, rng=rng)
-    x_center = np.full(8, 0.5)
-    x_obs = x_center + rng.normal(0, 0.03, size=(50, 8))
-    y_obs = rng.uniform(0, 1, size=50)
-    tr.observe_pc_rotation_geometry(x_center=x_center, x_obs=x_obs, y_obs=y_obs, maximize=True)
-    assert tr.has_geometry
-    candidates = tr.generate_candidates(
-        x_center=x_center,
-        lengthscales=None,
-        num_candidates=16,
-        rng=rng,
-        candidate_rv=CandidateRV.UNIFORM,
-    )
-    assert candidates.shape == (16, 8)
-
-
 def test_low_rank_geometry_skips_full_covariance_build(monkeypatch):
     model = tr_utils._MetricGeometryModel(
         num_dim=4,
@@ -921,6 +872,8 @@ def test_box_trust_region_fixed_length_update_and_restart():
 
     tr.update(np.array([0.0]), np.array([0.0]))
     assert float(tr.length) == pytest.approx(0.77, abs=1e-12)
+    tr.failure_counter = 999
+    assert tr.needs_restart() is False
     tr.restart(rng=np.random.default_rng(9))
     assert float(tr.length) == pytest.approx(0.77, abs=1e-12)
 

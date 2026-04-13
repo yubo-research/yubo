@@ -316,8 +316,6 @@ class GeometryENNSurrogate(ENNSurrogate):
         elif _needs_local_geometry(tr_state):
             _observe_local_metric_geometry(self, tr_state, x_center)
 
-        _maybe_observe_pc_rotation(self, tr_state, x_center, y_obs)
-
         if callable(getattr(tr_state, "observe_incumbent_transition", None)):
             self._maybe_update_true_ellipsoid_rho(
                 tr_state=tr_state,
@@ -325,22 +323,6 @@ class GeometryENNSurrogate(ENNSurrogate):
                 y_obs=y_obs,
                 incumbent_idx=int(incumbent_idx),
             )
-
-
-def _maybe_observe_pc_rotation(enn_surrogate, tr_state: Any, x_center: np.ndarray, y_obs: Any) -> None:
-    observe_pc = getattr(tr_state, "observe_pc_rotation_geometry", None)
-    if not callable(observe_pc) or getattr(tr_state.config, "pc_rotation_mode", None) is None:
-        return
-    x_obs = np.asarray(enn_surrogate._enn.train_x, dtype=float)
-    y_obs_arr = np.asarray(y_obs, dtype=float)
-    if y_obs_arr.ndim == 2 and y_obs_arr.shape[1] > 1:
-        scalarize = getattr(tr_state, "scalarize", None)
-        y_scalar = scalarize(y_obs_arr, clip=False) if callable(scalarize) else None
-        y_scalar = np.asarray(y_scalar, dtype=float).reshape(-1) if y_scalar is not None else y_obs_arr[:, 0]
-    else:
-        y_scalar = y_obs_arr.reshape(-1)
-    if x_obs.shape[0] == y_scalar.shape[0] and x_obs.shape[0] >= 2:
-        observe_pc(x_center=x_center, x_obs=x_obs, y_obs=y_scalar, maximize=True)
 
 
 def _observe_grad_metric_geometry(

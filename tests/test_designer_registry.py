@@ -11,6 +11,7 @@ class _MockPolicy:
 
 def test_metric_turbo_enn_designer_forces_python_backend(monkeypatch):
     from optimizer import turbo_enn_designer as ted
+    from optimizer import turbo_enn_designer_ext as ted_ext
 
     calls = []
 
@@ -22,10 +23,10 @@ def test_metric_turbo_enn_designer_forces_python_backend(monkeypatch):
         calls.append(("auto", bounds.shape))
         return object()
 
-    monkeypatch.setattr(ted, "_create_optimizer_py", fake_py)
+    monkeypatch.setattr(ted_ext, "_create_optimizer_py_local", fake_py)
     monkeypatch.setattr(ted, "_create_optimizer_auto", fake_auto)
 
-    designer = ted.TurboENNDesigner(
+    designer = ted_ext.TurboENNDesigner(
         _MockPolicy(num_params=7),
         turbo_mode="turbo-enn",
         k=10,
@@ -44,7 +45,7 @@ def test_metric_turbo_enn_designer_forces_python_backend(monkeypatch):
 
 def test_metric_turbo_enn_designer_builds_local_metric_tr_state():
     from optimizer.metric_trust_region import ENNMetricShapedTrustRegion
-    from optimizer.turbo_enn_designer import TurboENNDesigner
+    from optimizer.turbo_enn_designer_ext import TurboENNDesigner
 
     designer = TurboENNDesigner(
         _MockPolicy(num_params=7),
@@ -63,7 +64,7 @@ def test_metric_turbo_enn_designer_builds_local_metric_tr_state():
 
 
 def test_metric_turbo_enn_designer_enables_accel_tr_in_config():
-    from optimizer.turbo_enn_designer import TurboENNDesigner
+    from optimizer.turbo_enn_designer_ext import TurboENNDesigner
 
     designer = TurboENNDesigner(
         _MockPolicy(num_params=7),
@@ -81,7 +82,7 @@ def test_metric_turbo_enn_designer_enables_accel_tr_in_config():
 
 def test_ellipsoid_turbo_enn_designer_builds_local_ellipsoid_tr_state():
     from optimizer.ellipsoidal_trust_region import ENNTrueEllipsoidalTrustRegion
-    from optimizer.turbo_enn_designer import TurboENNDesigner
+    from optimizer.turbo_enn_designer_ext import TurboENNDesigner
 
     designer = TurboENNDesigner(
         _MockPolicy(num_params=7),
@@ -237,8 +238,6 @@ def test_turbo_enn_fit_forwards_ellipsoid_option_surface(monkeypatch):
             "geometry": "enn_ellip",
             "covmat": "low_rank",
             "rank": 10,
-            "pc_rotation_mode": "low_rank",
-            "pc_rank": 4,
             "p_raasp": 0.3,
             "radial_mode": "boundary",
             "shape_period": 7,
@@ -255,8 +254,6 @@ def test_turbo_enn_fit_forwards_ellipsoid_option_surface(monkeypatch):
 
     assert out["p_raasp"] == pytest.approx(0.3)
     assert out["radial_mode"] == "boundary"
-    assert out["pc_rotation_mode"] == "low_rank"
-    assert out["pc_rank"] == 4
     assert out["shape_period"] == 7
     assert out["shape_ema"] == pytest.approx(0.4)
     assert out["shape_jitter"] == pytest.approx(1e-5)
@@ -268,8 +265,6 @@ def test_turbo_enn_fit_forwards_ellipsoid_option_surface(monkeypatch):
     assert out["boundary_tol"] == pytest.approx(0.05)
     assert calls[0]["shape_jitter"] == pytest.approx(1e-5)
     assert calls[0]["shape_kappa_max"] == pytest.approx(5e3)
-    assert calls[0]["pc_rotation_mode"] == "low_rank"
-    assert calls[0]["pc_rank"] == 4
 
 
 def test_turbo_enn_designer_ext_accepts_multi_region_knobs():
@@ -283,8 +278,6 @@ def test_turbo_enn_designer_ext_accepts_multi_region_knobs():
         tr_geometry="enn_ellip",
         covmat="low_rank",
         metric_rank=3,
-        pc_rotation_mode="full",
-        pc_rank=2,
         tr_length_fixed=1.6,
         p_raasp=0.3,
         radial_mode="boundary",
@@ -292,8 +285,6 @@ def test_turbo_enn_designer_ext_accepts_multi_region_knobs():
         shape_kappa_max=5e3,
     )
 
-    assert designer._pc_rotation_mode == "full"
-    assert designer._pc_rank == 2
     assert designer._tr_length_fixed == pytest.approx(1.6)
     assert designer._p_raasp == pytest.approx(0.3)
     assert designer._radial_mode == "boundary"
@@ -328,8 +319,6 @@ def test_turbo_enn_multi_forwards_region_rng_and_richer_knobs(monkeypatch):
             region=mtd.TurboENNRegionConfig(
                 turbo_mode="turbo-enn",
                 acq_type="ucb",
-                pc_rotation_mode="full",
-                pc_rank=3,
                 tr_length_fixed=1.6,
                 p_raasp=0.3,
                 radial_mode="boundary",
@@ -342,8 +331,6 @@ def test_turbo_enn_multi_forwards_region_rng_and_richer_knobs(monkeypatch):
     assert len(captured) == 2
     for rng, kwargs in captured:
         assert isinstance(rng, np.random.Generator)
-        assert kwargs["pc_rotation_mode"] == "full"
-        assert kwargs["pc_rank"] == 3
         assert kwargs["tr_length_fixed"] == pytest.approx(1.6)
         assert kwargs["p_raasp"] == pytest.approx(0.3)
         assert kwargs["radial_mode"] == "boundary"
@@ -482,7 +469,7 @@ def test_turbo_enn_fit_rejects_gradient_identity_geometry(monkeypatch):
 
 
 def test_metric_turbo_enn_designer_builds_fixed_length_tr_config():
-    from optimizer.turbo_enn_designer import TurboENNDesigner
+    from optimizer.turbo_enn_designer_ext import TurboENNDesigner
 
     designer = TurboENNDesigner(
         _MockPolicy(num_params=7),
@@ -500,7 +487,7 @@ def test_metric_turbo_enn_designer_builds_fixed_length_tr_config():
 
 
 def test_metric_turbo_enn_designer_keeps_fixed_length_on_box_fast_path():
-    from optimizer.turbo_enn_designer import TurboENNDesigner
+    from optimizer.turbo_enn_designer_ext import TurboENNDesigner
 
     designer = TurboENNDesigner(
         _MockPolicy(num_params=7),
@@ -519,7 +506,7 @@ def test_metric_turbo_enn_designer_keeps_fixed_length_on_box_fast_path():
 def test_metric_turbo_enn_designer_box_fast_path_stays_plain_without_fixed_length():
     from enn.turbo.config.trust_region import TurboTRConfig
 
-    from optimizer.turbo_enn_designer import TurboENNDesigner
+    from optimizer.turbo_enn_designer_ext import TurboENNDesigner
 
     designer = TurboENNDesigner(
         _MockPolicy(num_params=7),

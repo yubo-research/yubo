@@ -18,7 +18,6 @@ from optimizer.metric_trust_region import (
     ENNMetricShapedTrustRegion,
     MetricShapedTrustRegion,
 )
-from optimizer.pc_rotation import PCRotationMode
 from optimizer.trust_region_accel import accel_name as _accel_name
 from optimizer.trust_region_accel import accel_override as _accel_override
 from optimizer.trust_region_utils import (
@@ -48,11 +47,6 @@ class MetricShapedTRConfig:
     geometry: GeometryKind = "box"
     covmat: CovmatKind | None = field(default=None, validator=v.optional(v.in_(["dense", "low_rank"])))
     metric_rank: int | None = field(default=None, validator=v.optional(v.gt(0)))
-    pc_rotation_mode: PCRotationMode | None = field(
-        default=None,
-        validator=v.optional(v.in_(["full", "low_rank"])),
-    )
-    pc_rank: int | None = field(default=None, validator=v.optional(v.gt(0)))
     update_option: UpdateMode = "option_a"
     p_raasp: float = field(default=0.2, validator=v.and_(v.gt(0), v.le(1)))
     radial_mode: RadialMode = field(default="ball_uniform", validator=v.in_(_RADIAL))

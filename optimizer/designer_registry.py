@@ -633,8 +633,6 @@ def _d_turbo_enn_fit(ctx: _SimpleContext, opts: dict):
             "geometry",
             "covmat",
             "rank",
-            "pc_rotation_mode",
-            "pc_rank",
             "update_option",
             "p_raasp",
             "radial_mode",
@@ -695,18 +693,6 @@ def _d_turbo_enn_fit(ctx: _SimpleContext, opts: dict):
     rank = None
     if "rank" in opts:
         rank = _optional_int(opts, "rank", 1, example="turbo-enn-fit/rank=10")
-    pc_rotation_mode = None
-    if "pc_rotation_mode" in opts:
-        pc_rotation_mode = _optional_str_in(
-            opts,
-            "pc_rotation_mode",
-            "full",
-            {"full", "low_rank"},
-            example="turbo-enn-fit/pc_rotation_mode=full",
-        )
-    pc_rank = None
-    if "pc_rank" in opts:
-        pc_rank = _optional_int(opts, "pc_rank", 1, example="turbo-enn-fit/pc_rank=5")
     update_option = _optional_str_in(
         opts,
         "update_option",
@@ -785,8 +771,6 @@ def _d_turbo_enn_fit(ctx: _SimpleContext, opts: dict):
         tr_geometry=geometry,
         covmat=covmat,
         metric_rank=rank,
-        pc_rotation_mode=pc_rotation_mode,
-        pc_rank=pc_rank,
         update_option=update_option,
         p_raasp=p_raasp,
         radial_mode=radial_mode,
@@ -904,8 +888,6 @@ def _turbo_enn_multi(ctx: _SimpleContext, **kw):
         tr_geometry=data.pop("tr_geometry", None),
         covmat=data.pop("covmat", None),
         metric_rank=data.pop("metric_rank", None),
-        pc_rotation_mode=data.pop("pc_rotation_mode", None),
-        pc_rank=data.pop("pc_rank", None),
         tr_length_fixed=data.pop("tr_length_fixed", None),
         update_option=data.pop("update_option", "option_a"),
         p_raasp=data.pop("p_raasp", 0.2),
@@ -1020,18 +1002,6 @@ def _d_turbo_enn_multi_ext(ctx: _SimpleContext, opts: dict):
     gamma_down = _optional_number(opts, "gamma_down", 0.5, example="turbo-enn-multi/gamma_down=0.5")
     gamma_up = _optional_number(opts, "gamma_up", 2.0, example="turbo-enn-multi/gamma_up=2.0")
     boundary_tol = _optional_number(opts, "boundary_tol", 0.1, example="turbo-enn-multi/boundary_tol=0.1")
-    pc_rotation_mode = None
-    if "pc_rotation_mode" in opts:
-        pc_rotation_mode = _optional_str_in(
-            opts,
-            "pc_rotation_mode",
-            "full",
-            {"full", "low_rank"},
-            example="turbo-enn-multi/pc_rotation_mode=full",
-        )
-    pc_rank = None
-    if "pc_rank" in opts:
-        pc_rank = _optional_int(opts, "pc_rank", 1, example="turbo-enn-multi/pc_rank=5")
     return _turbo_enn_multi(
         ctx,
         turbo_mode="turbo-enn",
@@ -1048,8 +1018,6 @@ def _d_turbo_enn_multi_ext(ctx: _SimpleContext, opts: dict):
         tr_geometry=geometry,
         covmat=covmat,
         metric_rank=rank,
-        pc_rotation_mode=pc_rotation_mode,
-        pc_rank=pc_rank,
         tr_length_fixed=tr_length_fixed,
         update_option=update_option,
         p_raasp=p_raasp,
@@ -1326,21 +1294,6 @@ _DESIGNER_OPTION_SPECS: dict[str, list[DesignerOptionSpec]] = {
             value_type="int",
             description="Optional low-rank geometry rank.",
             example="turbo-enn-fit/acq_type=ucb/covmat=low_rank/rank=10",
-        ),
-        DesignerOptionSpec(
-            name="pc_rotation_mode",
-            required=False,
-            value_type="str",
-            description="Optional LABCAT-style principal-component rotation mode.",
-            example="turbo-enn-fit/acq_type=ucb/pc_rotation_mode=low_rank",
-            allowed_values=("full", "low_rank"),
-        ),
-        DesignerOptionSpec(
-            name="pc_rank",
-            required=False,
-            value_type="int",
-            description="Optional rank cap for low-rank PC rotation.",
-            example="turbo-enn-fit/acq_type=ucb/pc_rotation_mode=low_rank/pc_rank=10",
         ),
         DesignerOptionSpec(
             name="update_option",

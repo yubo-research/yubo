@@ -28,6 +28,11 @@ class FixedLengthTurboTrustRegion(TurboTrustRegion):
         super().restart(rng=rng)
         self._apply_fixed_length()
 
+    def needs_restart(self) -> bool:
+        if getattr(self.config, "fixed_length", None) is not None:
+            return False
+        return super().needs_restart()
+
 
 @dataclass
 class ModuleAwareTrustRegion(FixedLengthTurboTrustRegion):

@@ -9,7 +9,6 @@ from enn.turbo.config.candidate_rv import CandidateRV
 from enn.turbo.turbo_trust_region import TurboTrustRegion
 
 import optimizer.trust_region_accel as _accel
-from optimizer.pc_rotation import compute_labcat_weighted_pca
 from optimizer.trust_region_math import _ray_scale_to_unit_box
 from optimizer.trust_region_sampling_utils import _block_indices_from_group, _sample_block_groups, _sample_centered_box_points
 from optimizer.trust_region_utils import (
@@ -21,14 +20,18 @@ from optimizer.trust_region_utils import (
 _GRADIENT_GEOMETRIES = {"grad_metr", "grad_ellip"}
 
 
-def _apply_fixed_length_to_tr(tr: TurboTrustRegion) -> None:
-    fixed_length = getattr(tr.config, "fixed_length", None)
+def _fixed_length_value(tr: TurboTrustRegion) -> float | None:
+    return getattr(getattr(tr, "config", None), "fixed_length", None)
+
+
+def _apply_fixed_length(tr: TurboTrustRegion) -> None:
+    fixed_length = _fixed_length_value(tr)
     if fixed_length is not None:
         tr.length = float(fixed_length)
 
 
-def _metric_fixed_length(tr: TurboTrustRegion) -> float | None:
-    return getattr(tr.config, "fixed_length", None)
+def _fixed_length_blocks_restart(tr: TurboTrustRegion) -> bool:
+    return _fixed_length_value(tr) is not None
 
 
 def _generate_metric_module_candidates(
@@ -122,8 +125,6 @@ class MetricShapedTrustRegion(TurboTrustRegion):
             num_dim=self.num_dim,
             covmat=self.covmat,
             metric_rank=self.metric_rank,
-            pc_rotation_mode=getattr(self.config, "pc_rotation_mode", None),
-            pc_rank=getattr(self.config, "pc_rank", None),
             use_accel=self.use_accel,
         )
         self._step_sampler = _AxisAlignedStepSampler(
@@ -132,7 +133,7 @@ class MetricShapedTrustRegion(TurboTrustRegion):
         )
         self._length_policy = _LengthPolicy()
         self._sync_geometry_flags()
-        _apply_fixed_length_to_tr(self)
+        _apply_fixed_length(self)
 
     def _sync_geometry_flags(self) -> None:
         self.has_geometry = bool(self._geometry_model.has_geometry)
@@ -142,62 +143,32 @@ class MetricShapedTrustRegion(TurboTrustRegion):
         self._geometry_model.reset()
         self._length_policy.reset()
         self._sync_geometry_flags()
-        _apply_fixed_length_to_tr(self)
+        _apply_fixed_length(self)
 
     def update(self, y_obs: np.ndarray | Any, y_incumbent: np.ndarray | Any) -> None:
         base_length = float(self.length)
         has_new_obs, improved = _update_metric_bookkeeping_only(self, y_obs, y_incumbent)
         if not has_new_obs:
-            _apply_fixed_length_to_tr(self)
+            _apply_fixed_length(self)
             return
         adjusted_length = self._length_policy.update_length(
             tr=self,
             improved=improved,
             base_length=base_length,
-            fixed_length=_metric_fixed_length(self),
+            fixed_length=_fixed_length_value(self),
             length_max=float(self.config.length_max),
         )
-        if _metric_fixed_length(self) is None:
+        if _fixed_length_value(self) is None:
             self.length = float(adjusted_length)
-        _apply_fixed_length_to_tr(self)
+        _apply_fixed_length(self)
 
     def needs_restart(self) -> bool:
-        if _metric_fixed_length(self) is not None:
+        if _fixed_length_blocks_restart(self):
             return False
         return super().needs_restart()
 
     def set_geometry(self, delta_x: np.ndarray | Any, weights: np.ndarray | Any) -> None:
         self._geometry_model.set_geometry(delta_x=delta_x, weights=weights)
-        self._sync_geometry_flags()
-
-    def observe_pc_rotation_geometry(
-        self,
-        *,
-        x_center: np.ndarray,
-        x_obs: np.ndarray,
-        y_obs: np.ndarray,
-        maximize: bool = True,
-    ) -> None:
-        """Update geometry from LABCAT-style weighted PCA.
-
-        Uses all observations to compute principal-component rotation. Only applies
-        when `pc_rotation_mode` is set.
-
-        Reference: Visser et al., LABCAT (arXiv:2311.11328).
-        """
-        if getattr(self.config, "pc_rotation_mode", None) is None:
-            return
-        mode = str(self.config.pc_rotation_mode)
-        rank = getattr(self.config, "pc_rank", None)
-        result = compute_labcat_weighted_pca(
-            x_center=np.asarray(x_center, dtype=float).reshape(-1),
-            x_obs=np.asarray(x_obs, dtype=float),
-            y_obs=np.asarray(y_obs, dtype=float).reshape(-1),
-            maximize=maximize,
-            mode=mode,
-            rank=rank,
-        )
-        self._geometry_model.update_from_pc_rotation(result)
         self._sync_geometry_flags()
 
     def needs_gradient_signal(self) -> bool:

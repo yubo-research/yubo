@@ -17,7 +17,6 @@ from enn.turbo.turbo_utils import generate_raasp_candidates
 
 import optimizer.trust_region_accel as _accel
 import optimizer.trust_region_sampling_utils as _sampling
-from optimizer.pc_rotation import PCRotationMode, PCRotationResult
 from optimizer.trust_region_math import (
     _ensure_spd,
     _full_factor,
@@ -64,8 +63,6 @@ class _MetricGeometryModel:
     num_dim: int
     covmat: CovmatKind
     metric_rank: int | None
-    pc_rotation_mode: PCRotationMode | None = None
-    pc_rank: int | None = None
     use_accel: bool = False
     cov_factor: np.ndarray = field(init=False)
     low_rank: _LowRankFactor = field(init=False)
@@ -210,69 +207,6 @@ class _MetricGeometryModel:
             return
         self.low_rank = low_rank
         self.cov_factor = low_rank.basis * low_rank.sqrt_vals.reshape(1, -1)
-        self.has_geometry = True
-
-    def update_from_pc_rotation(
-        self,
-        rotation_result: PCRotationResult,
-        *,
-        trace_scale: float = 1.0,
-        null_space_alpha: float = 1e-4,
-    ) -> None:
-        """Update geometry from LABCAT PC rotation (see pc_rotation.LABCAT_CITATION).
-
-        Uses the principal directions and singular values to build an ellipsoidal
-        trust region aligned with the weighted PCs. Full mode uses all PCs;
-        low_rank mode uses top-k PCs with isotropic residual for the null space.
-        """
-        if not rotation_result.has_rotation:
-            return
-        self._cov_gen += 1
-        self._cached_cov = None
-        self._cached_cov_inv = None
-        basis = np.asarray(rotation_result.basis, dtype=float)
-        s = np.asarray(rotation_result.singular_values, dtype=float)
-        if basis.shape[0] != self.num_dim or s.size != basis.shape[1]:
-            return
-        s = np.maximum(s, 1e-10)
-        rank = int(basis.shape[1])
-        dim = self.num_dim
-
-        use_full = self.pc_rotation_mode == "full" and rank >= dim
-        if use_full:
-            # Full: all d PCs, cov = V diag(s^2) V^T
-            factor = basis * s.reshape(1, -1)
-            cov = factor @ factor.T
-            cov = _trace_normalize(cov, dim)
-            cov = _ensure_spd(cov, jitter=1e-8)
-            lam_min, lam_max, eps = 1e-4, 1e4, 1e-6
-            full_f = _full_factor(cov, dim=dim, lam_min=lam_min, lam_max=lam_max, eps=eps)
-            if full_f is not None:
-                self.cov_factor = full_f
-                self.low_rank = _LowRankFactor(
-                    sqrt_alpha=0.0,
-                    basis=np.zeros((dim, 0), dtype=float),
-                    sqrt_vals=np.zeros(0),
-                )
-                self.covmat = "dense"
-                self.has_geometry = True
-            return
-
-        # Full with rank < d, or low_rank: PCs + isotropic null space
-        total = float(np.sum(s**2))
-        if not np.isfinite(total) or total <= 0.0:
-            return
-        scale = trace_scale * float(dim) / (total + null_space_alpha * max(0, dim - rank))
-        sqrt_vals = np.sqrt(s**2 * scale)
-        sqrt_vals = np.clip(sqrt_vals, 1e-4, 1e4)
-        sqrt_alpha = float(np.sqrt(null_space_alpha * scale))
-        self.low_rank = _LowRankFactor(
-            sqrt_alpha=sqrt_alpha,
-            basis=basis,
-            sqrt_vals=sqrt_vals,
-        )
-        self.cov_factor = basis * sqrt_vals.reshape(1, -1)
-        self.covmat = "low_rank"
         self.has_geometry = True
 
     def build_step(self, z: np.ndarray, rng: Any) -> np.ndarray:

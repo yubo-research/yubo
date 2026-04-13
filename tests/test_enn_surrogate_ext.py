@@ -33,7 +33,7 @@ class _FakeENN:
 
 class _GradientTRState:
     def __init__(self):
-        self.config = types.SimpleNamespace(pc_rotation_mode=None)
+        self.config = types.SimpleNamespace()
         self.calls = []
 
     def needs_gradient_signal(self):
@@ -45,7 +45,7 @@ class _GradientTRState:
 
 class _IsoTRState:
     def __init__(self):
-        self.config = types.SimpleNamespace(pc_rotation_mode=None, geometry="enn_iso")
+        self.config = types.SimpleNamespace(geometry="enn_iso")
         self.calls = []
 
     def needs_local_geometry(self):

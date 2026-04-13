@@ -6,7 +6,6 @@ from enn.turbo.config.candidate_rv import CandidateRV
 
 from optimizer import trust_region_sampling_utils as tr_sampling
 from optimizer import trust_region_utils as tru
-from optimizer.pc_rotation import PCRotationResult
 
 
 def test_metric_geometry_model_full_mode_paths():
@@ -28,13 +27,11 @@ def test_metric_geometry_model_full_mode_paths():
     np.linalg.cholesky(cov)
 
 
-def test_metric_geometry_model_low_rank_and_pc_rotation_paths():
+def test_metric_geometry_model_low_rank_paths():
     model = tru._MetricGeometryModel(
         num_dim=4,
         covmat="low_rank",
         metric_rank=2,
-        pc_rotation_mode="full",
-        pc_rank=2,
     )
     dx = np.array(
         [
@@ -52,22 +49,6 @@ def test_metric_geometry_model_low_rank_and_pc_rotation_paths():
 
     with pytest.raises(ValueError):
         model.set_gradient_geometry(dx, np.array([1.0]), w)
-
-    rr_bad = PCRotationResult(
-        center=np.zeros((4,), dtype=float),
-        basis=np.zeros((2, 2), dtype=float),
-        singular_values=np.ones((2,), dtype=float),
-        has_rotation=True,
-    )
-    model.update_from_pc_rotation(rr_bad)
-
-    rr = PCRotationResult(
-        center=np.zeros((4,), dtype=float),
-        basis=np.eye(4, dtype=float),
-        singular_values=np.array([2.0, 1.5, 1.0, 0.5], dtype=float),
-        has_rotation=True,
-    )
-    model.update_from_pc_rotation(rr)
     assert model.has_geometry is True
 
     z = np.array([[1.0, 0.0, 1.0, 0.0]], dtype=float)

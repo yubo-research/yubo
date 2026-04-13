@@ -25,8 +25,6 @@ from enn.turbo.config.trust_region import (
 import common.all_bounds as all_bounds
 from optimizer.designer_asserts import assert_scalar_rreturn
 from optimizer.designer_protocol import Designer
-from optimizer.trust_region_accel import accel_name as _accel_name
-from optimizer.trust_region_config import MetricShapedTRConfig
 
 
 def _create_optimizer_auto(bounds, config, rng):
@@ -34,7 +32,7 @@ def _create_optimizer_auto(bounds, config, rng):
     try:
         from enn import create_optimizer
     except ImportError as exc:
-        # Modal/remote images may not have enn_rust; fall back to Python optimizer.
+        # Modal/remote images may not have enn_rust; fall back to Python backend.
         print(f"[TurboENNDesigner] Rust backend unavailable ({exc}); falling back to Python backend")
         return _create_optimizer_py(bounds=bounds, config=config, rng=rng)
 
@@ -43,7 +41,7 @@ def _create_optimizer_auto(bounds, config, rng):
 
 def _create_optimizer_py(bounds, config, rng):
     """Create optimizer forcing Python backend."""
-    from optimizer.enn_turbo_optimizer import create_optimizer
+    from enn.turbo.optimizer import create_optimizer
 
     return create_optimizer(bounds=bounds, config=config, rng=rng)
 
@@ -58,13 +56,8 @@ class TurboENNDesigner(Designer):
         num_keep: Optional[int] = None,
         num_fit_samples: Optional[int] = None,
         num_fit_candidates: Optional[int] = None,
-        fixed_length: Optional[float] = None,
         acq_type: str = "pareto",
         tr_type: Optional[str] = None,
-        tr_geometry: Optional[str] = None,
-        covmat: Optional[str] = None,
-        metric_rank: Optional[int] = None,
-        update_option: str = "option_a",
         use_y_var: bool = False,
         num_candidates: Optional[int] = None,
         candidate_rv: Optional[str] = None,
@@ -82,13 +75,8 @@ class TurboENNDesigner(Designer):
         self._num_keep = num_keep
         self._num_fit_samples = num_fit_samples
         self._num_fit_candidates = num_fit_candidates
-        self._fixed_length = fixed_length
         self._acq_type = acq_type
         self._tr_type = tr_type if tr_type is not None else "turbo"
-        self._tr_geometry = str(tr_geometry if tr_geometry is not None else "box").strip()
-        self._covmat = covmat
-        self._metric_rank = metric_rank
-        self._update_option = update_option
         self._use_y_var = use_y_var
         self._num_candidates = num_candidates
         self._candidate_rv = candidate_rv
@@ -101,20 +89,6 @@ class TurboENNDesigner(Designer):
         self._num_told = 0
         self._datum_best = None
         self._y_est_best = None
-
-        _validate_tr_options(
-            tr_type=self._tr_type,
-            tr_geometry=self._tr_geometry,
-            covmat=self._covmat,
-            metric_rank=self._metric_rank,
-            fixed_length=self._fixed_length,
-            update_option=self._update_option,
-        )
-
-    def _requires_python_backend(self) -> bool:
-        if self._use_python:
-            return True
-        return self._tr_type == "turbo" and self._tr_geometry != "box"
 
     def _parse_candidate_rv(self) -> CandidateRV:
         if self._candidate_rv is None:
@@ -136,16 +110,17 @@ class TurboENNDesigner(Designer):
             raise ValueError(f"Invalid acq_type: {self._acq_type}") from exc
 
     def _make_trust_region(self, num_metrics: int | None) -> TrustRegionConfig:
-        return _make_trust_region(
-            tr_type=self._tr_type,
-            tr_geometry=self._tr_geometry,
-            covmat=self._covmat,
-            metric_rank=self._metric_rank,
-            fixed_length=self._fixed_length,
-            update_option=self._update_option,
-            num_metrics=num_metrics,
-            use_accel=_uses_accel_tr(self._tr_type, self._tr_geometry),
-        )
+        if self._tr_type == "turbo":
+            return TurboTRConfig()
+        if self._tr_type == "none":
+            return NoTRConfig()
+        if self._tr_type == "morbo":
+            if num_metrics is None:
+                raise ValueError("num_metrics is required for tr_type='morbo'")
+            from enn.turbo.config.trust_region import MultiObjectiveConfig
+
+            return MorboTRConfig(multi_objective=MultiObjectiveConfig(num_metrics=int(num_metrics)))
+        raise ValueError(f"Invalid tr_type: {self._tr_type}")
 
     def _make_config(self, num_init: int, num_metrics: int | None):
         num_candidates = self._num_candidates
@@ -185,7 +160,7 @@ class TurboENNDesigner(Designer):
                 trailing_obs=self._num_keep,
                 acq_type=acq_type,
             )
-        elif self._turbo_mode == "turbo-zero":
+        if self._turbo_mode == "turbo-zero":
             return turbo_zero_config(
                 num_candidates=num_candidates,
                 num_init=num_init,
@@ -193,7 +168,7 @@ class TurboENNDesigner(Designer):
                 trust_region=trust_region,
                 candidate_rv=candidate_rv,
             )
-        elif self._turbo_mode == "turbo-one":
+        if self._turbo_mode == "turbo-one":
             return turbo_one_config(
                 num_candidates=num_candidates,
                 num_init=num_init,
@@ -201,7 +176,7 @@ class TurboENNDesigner(Designer):
                 trust_region=trust_region,
                 candidate_rv=candidate_rv,
             )
-        elif self._turbo_mode == "lhd-only":
+        if self._turbo_mode == "lhd-only":
             return lhd_only_config(
                 num_candidates=num_candidates,
                 num_init=num_init,
@@ -228,17 +203,11 @@ class TurboENNDesigner(Designer):
         bounds = np.array([[all_bounds.x_low, all_bounds.x_high]] * num_dim)
         num_metrics = self._resolve_num_metrics(data)
         config = self._make_config(num_init, num_metrics)
-        create_opt = _create_optimizer_py if self._requires_python_backend() else _create_optimizer_auto
+        create_opt = _create_optimizer_py if self._use_python else _create_optimizer_auto
         self._turbo = create_opt(bounds=bounds, config=config, rng=self._rng)
-        # Debug: show which backend is being used
         opt_type = type(self._turbo).__name__
         backend = "Rust" if hasattr(self._turbo, "_inner") else "Python"
         print(f"[TurboENNDesigner] Optimizer type: {opt_type} ({backend} backend)")
-        tr_state = getattr(self._turbo, "_tr_state", None)
-        if _uses_accel_tr(self._tr_type, self._tr_geometry) and tr_state is not None:
-            accel_enabled = bool(getattr(tr_state, "use_accel", False))
-            accel_kind = _accel_name() if accel_enabled else "none"
-            print(f"[TurboENNDesigner] Trust-region accel: enabled={accel_enabled} accel={accel_kind}")
 
     def _resolve_num_metrics(self, data):
         num_metrics = self._num_metrics
@@ -304,7 +273,6 @@ class TurboENNDesigner(Designer):
             t = self._turbo.telemetry()
             telemetry.set_dt_fit(t.dt_fit)
             telemetry.set_dt_select(t.dt_sel)
-
         return [self._make_policy(x) for x in x_new]
 
     def _make_policy(self, x):
@@ -312,62 +280,3 @@ class TurboENNDesigner(Designer):
         policy.set_params(x)
         setattr(policy, "_turbo_enn_eval_reuse_ok", True)
         return policy
-
-
-def _validate_tr_options(
-    *,
-    tr_type: str,
-    tr_geometry: str,
-    covmat: Optional[str],
-    metric_rank: Optional[int],
-    fixed_length: Optional[float],
-    update_option: str,
-) -> None:
-    if tr_type != "turbo":
-        return
-    _ = MetricShapedTRConfig(
-        geometry=tr_geometry,
-        covmat=covmat,
-        metric_rank=metric_rank,
-        fixed_length=fixed_length,
-        update_option=update_option,
-    )
-
-
-def _make_trust_region(
-    *,
-    tr_type: str,
-    tr_geometry: str,
-    covmat: Optional[str],
-    metric_rank: Optional[int],
-    fixed_length: Optional[float],
-    update_option: str,
-    num_metrics: int | None,
-    use_accel: bool,
-) -> TrustRegionConfig:
-    if tr_type == "turbo":
-        if tr_geometry == "box" and covmat is None and update_option == "option_a" and fixed_length is None:
-            return TurboTRConfig()
-        kwargs = {
-            "geometry": tr_geometry,
-            "covmat": covmat,
-            "metric_rank": metric_rank,
-            "fixed_length": fixed_length,
-            "use_accel": use_accel,
-        }
-        if tr_geometry in {"enn_ellip", "grad_ellip"}:
-            kwargs["update_option"] = update_option
-        return MetricShapedTRConfig(**kwargs)
-    if tr_type == "none":
-        return NoTRConfig()
-    if tr_type == "morbo":
-        if num_metrics is None:
-            raise ValueError("num_metrics is required for tr_type='morbo'")
-        from enn.turbo.config.trust_region import MultiObjectiveConfig
-
-        return MorboTRConfig(multi_objective=MultiObjectiveConfig(num_metrics=int(num_metrics)))
-    raise ValueError(f"Invalid tr_type: {tr_type}")
-
-
-def _uses_accel_tr(tr_type: str, tr_geometry: str) -> bool:
-    return tr_type == "turbo" and tr_geometry != "box"

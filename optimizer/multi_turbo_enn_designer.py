@@ -32,8 +32,6 @@ class TurboENNRegionConfig:
     tr_geometry: str | None = None
     covmat: str | None = None
     metric_rank: int | None = None
-    pc_rotation_mode: str | None = None
-    pc_rank: int | None = None
     tr_length_fixed: float | None = None
     update_option: str = "option_a"
     p_raasp: float = 0.2

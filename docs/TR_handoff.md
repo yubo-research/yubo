@@ -146,7 +146,6 @@ The branch extends the ENN surrogate so the trust region can observe:
 Relevant files:
 
 - [`optimizer/enn_surrogate_ext.py`](/Users/mehulbafna/Desktop/DS/yubo-tr/optimizer/enn_surrogate_ext.py)
-- [`optimizer/pc_rotation.py`](/Users/mehulbafna/Desktop/DS/yubo-tr/optimizer/pc_rotation.py)
 
 ## Main Execution Path
 

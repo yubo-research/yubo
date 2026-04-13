@@ -7,7 +7,7 @@ import numpy as np
 from enn.turbo.config.candidate_rv import CandidateRV
 
 import optimizer.trust_region_accel as _accel
-from optimizer.metric_trust_region import ENNMetricShapedTrustRegion, MetricShapedTrustRegion, _apply_fixed_length_to_tr
+from optimizer.metric_trust_region import ENNMetricShapedTrustRegion, MetricShapedTrustRegion
 from optimizer.trust_region_math import _mahalanobis_sq_from_factor, _ray_scale_to_unit_box
 from optimizer.trust_region_sampling_utils import _block_indices_from_group, _low_rank_mahalanobis_sq, _sample_block_groups
 from optimizer.trust_region_utils import (
@@ -29,8 +29,6 @@ class ENNTrueEllipsoidalTrustRegion(ENNMetricShapedTrustRegion):
             num_dim=self.num_dim,
             covmat=self.covmat,
             metric_rank=self.metric_rank,
-            pc_rotation_mode=getattr(self.config, "pc_rotation_mode", None),
-            pc_rank=getattr(self.config, "pc_rank", None),
             use_accel=self.use_accel,
             update_option=getattr(self.config, "update_option", "option_a"),
             shape_period=int(getattr(self.config, "shape_period", 5)),
@@ -55,7 +53,9 @@ class ENNTrueEllipsoidalTrustRegion(ENNMetricShapedTrustRegion):
             self._length_policy = _LengthPolicy()
         self._reset_true_ellipsoid_state()
         self._sync_geometry_flags()
-        _apply_fixed_length_to_tr(self)
+        fixed_length = getattr(self.config, "fixed_length", None)
+        if fixed_length is not None:
+            self.length = float(fixed_length)
 
     def _reset_true_ellipsoid_state(self) -> None:
         self._prev_incumbent_value = None
@@ -266,16 +266,6 @@ class ENNIsotropicTrustRegion(MetricShapedTrustRegion):
 
     def set_analytic_gradient_geometry(self, grad: np.ndarray | Any) -> None:
         _ = grad
-
-    def observe_pc_rotation_geometry(
-        self,
-        *,
-        x_center: np.ndarray,
-        x_obs: np.ndarray,
-        y_obs: np.ndarray,
-        maximize: bool = True,
-    ) -> None:
-        _ = x_center, x_obs, y_obs, maximize
 
     def observe_local_geometry(
         self,
