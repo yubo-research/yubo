@@ -62,7 +62,7 @@ class TurboENNDesigner(Designer):
         acq_type: str = "pareto",
         tr_type: Optional[str] = None,
         tr_geometry: Optional[str] = None,
-        metric_sampler: Optional[str] = None,
+        covmat: Optional[str] = None,
         metric_rank: Optional[int] = None,
         update_option: str = "option_a",
         use_y_var: bool = False,
@@ -86,7 +86,7 @@ class TurboENNDesigner(Designer):
         self._acq_type = acq_type
         self._tr_type = tr_type if tr_type is not None else "turbo"
         self._tr_geometry = normalize_geometry_name(tr_geometry if tr_geometry is not None else "box")
-        self._metric_sampler = metric_sampler
+        self._covmat = covmat
         self._metric_rank = metric_rank
         self._update_option = update_option
         self._use_y_var = use_y_var
@@ -105,7 +105,7 @@ class TurboENNDesigner(Designer):
         _validate_tr_options(
             tr_type=self._tr_type,
             tr_geometry=self._tr_geometry,
-            metric_sampler=self._metric_sampler,
+            covmat=self._covmat,
             metric_rank=self._metric_rank,
             fixed_length=self._fixed_length,
             update_option=self._update_option,
@@ -139,7 +139,7 @@ class TurboENNDesigner(Designer):
         return _make_trust_region(
             tr_type=self._tr_type,
             tr_geometry=self._tr_geometry,
-            metric_sampler=self._metric_sampler,
+            covmat=self._covmat,
             metric_rank=self._metric_rank,
             fixed_length=self._fixed_length,
             update_option=self._update_option,
@@ -318,7 +318,7 @@ def _validate_tr_options(
     *,
     tr_type: str,
     tr_geometry: str,
-    metric_sampler: Optional[str],
+    covmat: Optional[str],
     metric_rank: Optional[int],
     fixed_length: Optional[float],
     update_option: str,
@@ -327,7 +327,7 @@ def _validate_tr_options(
         return
     _ = MetricShapedTRConfig(
         geometry=tr_geometry,
-        metric_sampler=metric_sampler,
+        covmat=covmat,
         metric_rank=metric_rank,
         fixed_length=fixed_length,
         update_option=update_option,
@@ -338,7 +338,7 @@ def _make_trust_region(
     *,
     tr_type: str,
     tr_geometry: str,
-    metric_sampler: Optional[str],
+    covmat: Optional[str],
     metric_rank: Optional[int],
     fixed_length: Optional[float],
     update_option: str,
@@ -346,11 +346,11 @@ def _make_trust_region(
     use_accel: bool,
 ) -> TrustRegionConfig:
     if tr_type == "turbo":
-        if tr_geometry == "box" and metric_sampler is None and update_option == "option_a" and fixed_length is None:
+        if tr_geometry == "box" and covmat is None and update_option == "option_a" and fixed_length is None:
             return TurboTRConfig()
         kwargs = {
             "geometry": tr_geometry,
-            "metric_sampler": metric_sampler,
+            "covmat": covmat,
             "metric_rank": metric_rank,
             "fixed_length": fixed_length,
             "use_accel": use_accel,

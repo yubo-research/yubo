@@ -77,7 +77,7 @@ class TurboENNDesigner(_TurboENNDesigner):
         acq_type: str = "pareto",
         tr_type: Optional[str] = None,
         tr_geometry: Optional[str] = None,
-        metric_sampler: Optional[str] = None,
+        covmat: Optional[str] = None,
         metric_rank: Optional[int] = None,
         pc_rotation_mode: Optional[str] = None,
         pc_rank: Optional[int] = None,
@@ -116,7 +116,7 @@ class TurboENNDesigner(_TurboENNDesigner):
             acq_type=acq_type,
             tr_type=tr_type,
             tr_geometry=tr_geometry,
-            metric_sampler=metric_sampler,
+            covmat=covmat,
             metric_rank=metric_rank,
             update_option=update_option,
             use_y_var=use_y_var,
@@ -151,7 +151,7 @@ class TurboENNDesigner(_TurboENNDesigner):
         if self._tr_type == "turbo":
             _ = MetricShapedTRConfig(
                 geometry=normalize_geometry_name(self._tr_geometry),
-                metric_sampler=self._metric_sampler,
+                covmat=self._covmat,
                 metric_rank=self._metric_rank,
                 pc_rotation_mode=self._pc_rotation_mode,
                 pc_rank=self._pc_rank,
@@ -173,11 +173,11 @@ class TurboENNDesigner(_TurboENNDesigner):
     def _make_trust_region(self, num_metrics: int | None) -> TrustRegionConfig:
         if self._tr_type == "turbo":
             geometry = normalize_geometry_name(self._tr_geometry)
-            if geometry == "box" and self._metric_sampler is None and self._update_option == "option_a" and self._tr_length_fixed is None:
+            if geometry == "box" and self._covmat is None and self._update_option == "option_a" and self._tr_length_fixed is None:
                 return TurboTRConfig()
             kwargs = dict(
                 geometry=geometry,
-                metric_sampler=self._metric_sampler,
+                covmat=self._covmat,
                 metric_rank=self._metric_rank,
                 pc_rotation_mode=self._pc_rotation_mode,
                 pc_rank=self._pc_rank,

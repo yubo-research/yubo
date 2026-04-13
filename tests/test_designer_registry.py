@@ -31,7 +31,7 @@ def test_metric_turbo_enn_designer_forces_python_backend(monkeypatch):
         k=10,
         acq_type="thompson",
         tr_geometry="enn_metr",
-        metric_sampler="low_rank",
+        covmat="low_rank",
         metric_rank=10,
     )
     monkeypatch.setattr(designer, "_make_config", lambda num_init, num_metrics: object())
@@ -52,7 +52,7 @@ def test_metric_turbo_enn_designer_builds_local_metric_tr_state():
         k=10,
         acq_type="pareto",
         tr_geometry="enn_metr",
-        metric_sampler="low_rank",
+        covmat="low_rank",
         metric_rank=3,
     )
     designer._num_arms = 1
@@ -71,7 +71,7 @@ def test_metric_turbo_enn_designer_enables_accel_tr_in_config():
         k=10,
         acq_type="pareto",
         tr_geometry="enn_metr",
-        metric_sampler="dense",
+        covmat="dense",
     )
 
     tr_cfg = designer._make_trust_region(None)
@@ -89,7 +89,7 @@ def test_ellipsoid_turbo_enn_designer_builds_local_ellipsoid_tr_state():
         k=10,
         acq_type="pareto",
         tr_geometry="enn_ellip",
-        metric_sampler="low_rank",
+        covmat="low_rank",
         update_option="option_c",
     )
     designer._num_arms = 1
@@ -194,7 +194,7 @@ def test_turbo_enn_fit_forwards_fit_and_fixed_length_options(monkeypatch):
             "num_fit_samples": 10,
             "num_fit_candidates": 100,
             "geometry": "enn_metr",
-            "sampler": "dense",
+            "covmat": "dense",
             "fixed_length": 1.6,
         },
     )
@@ -215,7 +215,7 @@ def test_turbo_enn_designer_ext_accepts_multi_region_knobs():
         k=10,
         acq_type="ucb",
         tr_geometry="enn_ellip",
-        metric_sampler="low_rank",
+        covmat="low_rank",
         metric_rank=3,
         pc_rotation_mode="full",
         pc_rank=2,
@@ -347,9 +347,9 @@ def test_turbo_enn_fit_plain_does_not_inject_metric_options(monkeypatch):
 
     out = dr._d_turbo_enn_fit(ctx, {"acq_type": "thompson"})
     assert out["tr_geometry"] == "box"
-    assert out["metric_sampler"] is None
+    assert out["covmat"] is None
     assert out["metric_rank"] is None
-    assert calls[0]["metric_sampler"] is None
+    assert calls[0]["covmat"] is None
     assert calls[0]["metric_rank"] is None
 
 
@@ -420,7 +420,7 @@ def test_metric_turbo_enn_designer_builds_fixed_length_tr_config():
         k=10,
         acq_type="thompson",
         tr_geometry="enn_metr",
-        metric_sampler="dense",
+        covmat="dense",
         fixed_length=1.6,
     )
 
@@ -492,7 +492,7 @@ def test_turbo_enn_p_metric_forwards_geometry_and_disables_fit(monkeypatch):
         ctx,
         {
             "geometry": "enn_metr",
-            "sampler": "low_rank",
+            "covmat": "low_rank",
             "rank": 10,
         },
     )
@@ -500,7 +500,7 @@ def test_turbo_enn_p_metric_forwards_geometry_and_disables_fit(monkeypatch):
     assert out["num_fit_samples"] is None
     assert out["num_fit_candidates"] is None
     assert out["tr_geometry"] == "enn_metr"
-    assert out["metric_sampler"] == "low_rank"
+    assert out["covmat"] == "low_rank"
     assert out["metric_rank"] == 10
     assert calls[0]["num_fit_samples"] is None
     assert calls[0]["num_fit_candidates"] is None
@@ -534,12 +534,12 @@ def test_turbo_enn_p_ellipsoid_forwards_update_option(monkeypatch):
         ctx,
         {
             "geometry": "enn_ellip",
-            "sampler": "low_rank",
+            "covmat": "low_rank",
             "update_option": "option_c",
         },
     )
     assert out["tr_geometry"] == "enn_ellip"
-    assert out["metric_sampler"] == "low_rank"
+    assert out["covmat"] == "low_rank"
     assert out["update_option"] == "option_c"
     assert calls[0]["update_option"] == "option_c"
 
@@ -644,11 +644,11 @@ def test_turbo_enn_fit_metric_forwards_rank(monkeypatch):
         {
             "acq_type": "thompson",
             "geometry": "enn_metr",
-            "sampler": "low_rank",
+            "covmat": "low_rank",
             "rank": 10,
         },
     )
     assert out["tr_geometry"] == "enn_metr"
-    assert out["metric_sampler"] == "low_rank"
+    assert out["covmat"] == "low_rank"
     assert out["metric_rank"] == 10
     assert calls[0]["metric_rank"] == 10

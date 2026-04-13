@@ -30,7 +30,7 @@ class TurboENNRegionConfig:
     acq_type: str = "pareto"
     tr_type: str | None = None
     tr_geometry: str | None = None
-    metric_sampler: str | None = None
+    covmat: str | None = None
     metric_rank: int | None = None
     pc_rotation_mode: str | None = None
     pc_rank: int | None = None

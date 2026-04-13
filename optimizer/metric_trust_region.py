@@ -39,7 +39,7 @@ class MetricShapedTrustRegion(TurboTrustRegion):
     """
 
     candidate_rv: CandidateRV = CandidateRV.SOBOL
-    metric_sampler: str = "dense"
+    covmat: str = "dense"
     metric_rank: int | None = None
     use_accel: bool = False
     uses_custom_candidate_gen: bool = field(default=True, init=False)
@@ -54,7 +54,7 @@ class MetricShapedTrustRegion(TurboTrustRegion):
         super().__post_init__()
         self._geometry_model = _MetricGeometryModel(
             num_dim=self.num_dim,
-            metric_sampler=self.metric_sampler,
+            covmat=self.covmat,
             metric_rank=self.metric_rank,
             pc_rotation_mode=getattr(self.config, "pc_rotation_mode", None),
             pc_rank=getattr(self.config, "pc_rank", None),
@@ -168,7 +168,7 @@ class MetricShapedTrustRegion(TurboTrustRegion):
         x_center = np.asarray(x_center, dtype=float).reshape(-1)
         if x_center.shape != (num_dim,):
             raise ValueError((x_center.shape, num_dim))
-        cov_factor = self._geometry_model.cov_factor if self._geometry_model.metric_sampler == "dense" else None
+        cov_factor = self._geometry_model.cov_factor if self._geometry_model.covmat == "dense" else None
         candidates = self._step_sampler.generate(
             x_center=x_center,
             length=float(self.length),
@@ -201,7 +201,7 @@ class MetricShapedTrustRegion(TurboTrustRegion):
         )
 
     def _mahalanobis_sq(self, delta: np.ndarray, cov: np.ndarray) -> np.ndarray:
-        if self._geometry_model.metric_sampler == "low_rank":
+        if self._geometry_model.covmat == "low_rank":
             return self._geometry_model.mahalanobis_sq(
                 delta,
                 jitter=float(getattr(self.config, "shape_jitter", 1e-6)),

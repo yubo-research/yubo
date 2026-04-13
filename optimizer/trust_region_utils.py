@@ -45,7 +45,7 @@ from optimizer.trust_region_sampling_utils import (
     _whitened_sample_numpy,
 )
 
-SamplerKind = Literal["dense", "low_rank"]
+CovmatKind = Literal["dense", "low_rank"]
 RadialMode = Literal["ball_uniform", "boundary"]
 UpdateMode = Literal["option_a", "option_b", "option_c"]
 
@@ -61,7 +61,7 @@ def _whitened_inputs_from_sobol_samples(*args, **kwargs):
 @dataclass
 class _MetricGeometryModel:
     num_dim: int
-    metric_sampler: SamplerKind
+    covmat: CovmatKind
     metric_rank: int | None
     pc_rotation_mode: PCRotationMode | None = None
     pc_rank: int | None = None
@@ -100,7 +100,7 @@ class _MetricGeometryModel:
         mean = np.sum(w[:, None] * dx, axis=0)
         centered = dx - mean
         cov = None
-        if self.metric_sampler == "dense":
+        if self.covmat == "dense":
             cov = centered.T @ (w[:, None] * centered)
             cov = _trace_normalize(cov, self.num_dim)
         self.update_from_cov(centered=centered, weights=w, cov=cov)
@@ -124,7 +124,7 @@ class _MetricGeometryModel:
             return
         scaled_dx, w = prepared
         cov = None
-        if self.metric_sampler == "dense":
+        if self.covmat == "dense":
             weighted = scaled_dx * np.sqrt(w).reshape(-1, 1)
             cov = weighted.T @ weighted
             cov = _trace_normalize(cov, self.num_dim)
@@ -142,7 +142,7 @@ class _MetricGeometryModel:
         self._cached_cov = None
         self._cached_cov_inv = None
         self.has_geometry = True
-        if self.metric_sampler == "dense":
+        if self.covmat == "dense":
             self.cov_factor = _full_factor_from_direction(
                 unit,
                 dim=self.num_dim,
@@ -150,8 +150,8 @@ class _MetricGeometryModel:
                 eps=1e-6,
             )
             return
-        if self.metric_sampler != "low_rank":
-            raise ValueError(f"Unknown metric_sampler: {self.metric_sampler!r}")
+        if self.covmat != "low_rank":
+            raise ValueError(f"Unknown covmat: {self.covmat!r}")
         self.low_rank = _low_rank_factor_from_direction(
             unit,
             dim=self.num_dim,
@@ -173,17 +173,17 @@ class _MetricGeometryModel:
         lam_min = 1e-4
         lam_max = 1e4
         eps = 1e-6
-        if self.metric_sampler == "dense":
+        if self.covmat == "dense":
             if cov is None:
-                raise ValueError("cov is required for metric_sampler='dense'")
+                raise ValueError("cov is required for covmat='dense'")
             factor = _full_factor(cov, dim=self.num_dim, lam_min=lam_min, lam_max=lam_max, eps=eps)
             if factor is None:
                 return
             self.cov_factor = factor
             self.has_geometry = True
             return
-        if self.metric_sampler != "low_rank":
-            raise ValueError(f"Unknown metric_sampler: {self.metric_sampler!r}")
+        if self.covmat != "low_rank":
+            raise ValueError(f"Unknown covmat: {self.covmat!r}")
         rank_cap = int(self.metric_rank) if self.metric_rank is not None else None
         low_rank = None
         if cov is not None:
@@ -253,7 +253,7 @@ class _MetricGeometryModel:
                     basis=np.zeros((dim, 0), dtype=float),
                     sqrt_vals=np.zeros(0),
                 )
-                self.metric_sampler = "dense"
+                self.covmat = "dense"
                 self.has_geometry = True
             return
 
@@ -271,17 +271,17 @@ class _MetricGeometryModel:
             sqrt_vals=sqrt_vals,
         )
         self.cov_factor = basis * sqrt_vals.reshape(1, -1)
-        self.metric_sampler = "low_rank"
+        self.covmat = "low_rank"
         self.has_geometry = True
 
     def build_step(self, z: np.ndarray, rng: Any) -> np.ndarray:
-        if self.metric_sampler == "dense":
+        if self.covmat == "dense":
             z_arr = np.asarray(z, dtype=float)
             if self.use_accel:
                 return _accel.matmul(z_arr, self.cov_factor.T)
             return z_arr @ np.asarray(self.cov_factor, dtype=float).T
-        if self.metric_sampler != "low_rank":
-            raise ValueError(self.metric_sampler)
+        if self.covmat != "low_rank":
+            raise ValueError(self.covmat)
         z_arr = np.asarray(z, dtype=float)
         basis = np.asarray(self.low_rank.basis, dtype=float)
         sqrt_vals = np.asarray(self.low_rank.sqrt_vals, dtype=float)
@@ -315,14 +315,14 @@ class _MetricGeometryModel:
         x_center: np.ndarray,
         length: float,
     ) -> np.ndarray:
-        if self.metric_sampler == "dense":
+        if self.covmat == "dense":
             step = self.build_step(z, rng) * float(length)
             x_center_arr = np.asarray(x_center, dtype=float)
             if self.use_accel:
                 return _accel.clip_to_unit_box(x_center_arr, step)
             return _ray_scale_to_unit_box(x_center_arr, x_center_arr.reshape(1, -1) + step)
-        if self.metric_sampler != "low_rank":
-            raise ValueError(self.metric_sampler)
+        if self.covmat != "low_rank":
+            raise ValueError(self.covmat)
         z_arr = np.asarray(z, dtype=float)
         x_center_arr = np.asarray(x_center, dtype=float)
         basis = np.asarray(self.low_rank.basis, dtype=float)
@@ -357,7 +357,7 @@ class _MetricGeometryModel:
     def covariance_matrix(self, *, jitter: float) -> np.ndarray:
         if self._cached_cov is not None:
             return self._cached_cov
-        if self.metric_sampler == "dense":
+        if self.covmat == "dense":
             cov = self.cov_factor @ self.cov_factor.T
             cov = 0.5 * (cov + cov.T)
             cov += jitter * max(1.0, float(np.max(np.abs(cov)))) * np.eye(cov.shape[0])
@@ -381,7 +381,7 @@ class _MetricGeometryModel:
         return self._cached_cov_inv
 
     def mahalanobis_sq(self, delta: np.ndarray, *, jitter: float) -> np.ndarray:
-        if self.metric_sampler == "low_rank":
+        if self.covmat == "low_rank":
             basis = np.asarray(self.low_rank.basis, dtype=float)
             alpha = max(float(self.low_rank.sqrt_alpha) ** 2, 1e-12)
             inv_alpha = 1.0 / alpha

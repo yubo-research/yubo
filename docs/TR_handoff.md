@@ -180,12 +180,12 @@ The high-level per-round sequence is:
 - omit `geometry` for default box behavior
 - set `geometry` only for non-box trust-region overrides
 
-### Sampler
+### Covmat
 
 For metric/ellipsoid geometry:
 
-- `sampler = "low_rank"` gives lower proposal-time cost
-- `sampler = "dense"` gives denser geometry and higher cost
+- `covmat = "low_rank"` gives lower proposal-time cost
+- `covmat = "dense"` gives denser geometry and higher cost
 
 ### Ellipsoidal-only parameter
 

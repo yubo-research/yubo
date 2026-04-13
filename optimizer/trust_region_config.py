@@ -22,8 +22,8 @@ from optimizer.pc_rotation import PCRotationMode
 from optimizer.trust_region_accel import accel_name as _accel_name
 from optimizer.trust_region_accel import accel_override as _accel_override
 from optimizer.trust_region_utils import (
+    CovmatKind,
     RadialMode,
-    SamplerKind,
     UpdateMode,
     _ray_scale_to_unit_box,
 )
@@ -50,7 +50,7 @@ class MetricShapedTRConfig:
     fixed_length: float | None = None
     noise_aware: bool = False
     geometry: GeometryKind = "box"
-    metric_sampler: SamplerKind | None = field(default=None, validator=v.optional(v.in_(["dense", "low_rank"])))
+    covmat: CovmatKind | None = field(default=None, validator=v.optional(v.in_(["dense", "low_rank"])))
     metric_rank: int | None = field(default=None, validator=v.optional(v.gt(0)))
     pc_rotation_mode: PCRotationMode | None = field(
         default=None,
@@ -78,11 +78,11 @@ class MetricShapedTRConfig:
         if self.geometry not in _GEOMETRIES:
             raise ValueError(f"Unknown geometry={self.geometry!r}")
         if self.geometry == "box":
-            if self.metric_sampler is not None or self.metric_rank is not None:
+            if self.covmat is not None or self.metric_rank is not None:
                 raise ValueError("metric_* options require non-box geometry")
         if self.geometry == "enn_iso":
-            if self.metric_sampler not in (None, "low_rank"):
-                raise ValueError(f"{self.geometry} only supports sampler='low_rank' or the default sampler.")
+            if self.covmat not in (None, "low_rank"):
+                raise ValueError(f"{self.geometry} only supports covmat='low_rank' or the default covmat.")
             if self.metric_rank is not None:
                 raise ValueError(f"{self.geometry} does not use metric_rank.")
         if self.geometry in {"enn_metr", "grad_metr"}:
@@ -103,8 +103,8 @@ class MetricShapedTRConfig:
     def length_max(self) -> float:
         return self.length.length_max
 
-    def _resolved_sampler(self) -> SamplerKind:
-        return "dense" if self.metric_sampler is None else self.metric_sampler
+    def _resolved_covmat(self) -> CovmatKind:
+        return "dense" if self.covmat is None else self.covmat
 
     def build(
         self,
@@ -121,7 +121,7 @@ class MetricShapedTRConfig:
                 num_dim=num_dim,
                 incumbent_selector=selector,
             )
-        sampler = self._resolved_sampler()
+        covmat = self._resolved_covmat()
         candidate_rv = CandidateRV.SOBOL if candidate_rv is None else candidate_rv
         accel_requested = bool(self.use_accel) or bool(self.accel)
         with _accel_override(self.accel):
@@ -130,13 +130,13 @@ class MetricShapedTRConfig:
             # The identity-metric control is fastest in the empty low-rank
             # representation: it preserves the isotropic ball geometry while
             # avoiding dense factor/solve work on the proposal path.
-            sampler = "low_rank"
+            covmat = "low_rank"
             return ENNIsotropicTrustRegion(
                 config=self,
                 num_dim=num_dim,
                 incumbent_selector=selector,
                 candidate_rv=candidate_rv,
-                metric_sampler=sampler,
+                covmat=covmat,
                 metric_rank=self.metric_rank,
                 use_accel=use_accel,
             )
@@ -146,7 +146,7 @@ class MetricShapedTRConfig:
                 num_dim=num_dim,
                 incumbent_selector=selector,
                 candidate_rv=candidate_rv,
-                metric_sampler=sampler,
+                covmat=covmat,
                 metric_rank=self.metric_rank,
                 use_accel=use_accel,
             )
@@ -156,7 +156,7 @@ class MetricShapedTRConfig:
                 num_dim=num_dim,
                 incumbent_selector=selector,
                 candidate_rv=candidate_rv,
-                metric_sampler=sampler,
+                covmat=covmat,
                 metric_rank=self.metric_rank,
                 use_accel=use_accel,
             )

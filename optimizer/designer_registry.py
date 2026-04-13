@@ -555,7 +555,7 @@ def _build_turbo_enn_p_with_opts(
     _reject_unknown_opts(
         name,
         opts,
-        {"k", "candidate_rv", "geometry", "sampler", "rank", "update_option"},
+        {"k", "candidate_rv", "geometry", "covmat", "rank", "update_option"},
     )
     k = _optional_int(opts, "k", 10, example=f"{name}/k=16")
     candidate_rv = _optional_str_in(
@@ -578,14 +578,14 @@ def _build_turbo_enn_p_with_opts(
         },
         example=f"{name}/geometry=enn_metr",
     )
-    sampler = None
-    if "sampler" in opts:
-        sampler = _optional_str_in(
+    covmat = None
+    if "covmat" in opts:
+        covmat = _optional_str_in(
             opts,
-            "sampler",
+            "covmat",
             "dense",
             {"dense", "low_rank"},
-            example=f"{name}/sampler=dense",
+            example=f"{name}/covmat=dense",
         )
     rank = None
     if "rank" in opts:
@@ -607,7 +607,7 @@ def _build_turbo_enn_p_with_opts(
         acq_type="pareto",
         candidate_rv=candidate_rv,
         tr_geometry=geometry,
-        metric_sampler=sampler,
+        covmat=covmat,
         metric_rank=rank,
         update_option=update_option,
         use_python=use_python,
@@ -631,7 +631,7 @@ def _d_turbo_enn_fit(ctx: _SimpleContext, opts: dict):
             "k",
             "candidate_rv",
             "geometry",
-            "sampler",
+            "covmat",
             "rank",
             "update_option",
             "num_candidates",
@@ -670,14 +670,14 @@ def _d_turbo_enn_fit(ctx: _SimpleContext, opts: dict):
         },
         example="turbo-enn-fit/geometry=enn_metr",
     )
-    sampler = None
-    if "sampler" in opts:
-        sampler = _optional_str_in(
+    covmat = None
+    if "covmat" in opts:
+        covmat = _optional_str_in(
             opts,
-            "sampler",
+            "covmat",
             "dense",
             {"dense", "low_rank"},
-            example="turbo-enn-fit/sampler=dense",
+            example="turbo-enn-fit/covmat=dense",
         )
     rank = None
     if "rank" in opts:
@@ -736,7 +736,7 @@ def _d_turbo_enn_fit(ctx: _SimpleContext, opts: dict):
         num_candidates=num_candidates,
         candidate_rv=candidate_rv,
         tr_geometry=geometry,
-        metric_sampler=sampler,
+        covmat=covmat,
         metric_rank=rank,
         update_option=update_option,
         module_tr=module_tr,
@@ -842,7 +842,7 @@ def _turbo_enn_multi(ctx: _SimpleContext, **kw):
         acq_type=data.pop("acq_type", "pareto"),
         tr_type=data.pop("tr_type", None),
         tr_geometry=data.pop("tr_geometry", None),
-        metric_sampler=data.pop("metric_sampler", None),
+        covmat=data.pop("covmat", None),
         metric_rank=data.pop("metric_rank", None),
         pc_rotation_mode=data.pop("pc_rotation_mode", None),
         pc_rank=data.pop("pc_rank", None),
@@ -925,14 +925,14 @@ def _d_turbo_enn_multi_ext(ctx: _SimpleContext, opts: dict):
         },
         example="turbo-enn-multi/geometry=enn_metr",
     )
-    sampler = None
-    if "sampler" in opts:
-        sampler = _optional_str_in(
+    covmat = None
+    if "covmat" in opts:
+        covmat = _optional_str_in(
             opts,
-            "sampler",
+            "covmat",
             "dense",
             {"dense", "low_rank"},
-            example="turbo-enn-multi/sampler=dense",
+            example="turbo-enn-multi/covmat=dense",
         )
     rank = None
     if "rank" in opts:
@@ -986,7 +986,7 @@ def _d_turbo_enn_multi_ext(ctx: _SimpleContext, opts: dict):
         acq_type=acq_type,
         tr_type="turbo",
         tr_geometry=geometry,
-        metric_sampler=sampler,
+        covmat=covmat,
         metric_rank=rank,
         pc_rotation_mode=pc_rotation_mode,
         pc_rank=pc_rank,
@@ -1116,11 +1116,11 @@ _DESIGNER_OPTION_SPECS: dict[str, list[DesignerOptionSpec]] = {
             ),
         ),
         DesignerOptionSpec(
-            name="sampler",
+            name="covmat",
             required=False,
             value_type="str",
-            description="Optional metric/ellipsoidal sampler override.",
-            example="turbo-enn-p/sampler=dense",
+            description="Optional metric/ellipsoidal covmat override.",
+            example="turbo-enn-p/covmat=dense",
             allowed_values=("dense", "low_rank"),
         ),
         DesignerOptionSpec(
@@ -1128,7 +1128,7 @@ _DESIGNER_OPTION_SPECS: dict[str, list[DesignerOptionSpec]] = {
             required=False,
             value_type="int",
             description="Optional low-rank geometry rank.",
-            example="turbo-enn-p/sampler=low_rank/rank=10",
+            example="turbo-enn-p/covmat=low_rank/rank=10",
         ),
         DesignerOptionSpec(
             name="update_option",
@@ -1170,11 +1170,11 @@ _DESIGNER_OPTION_SPECS: dict[str, list[DesignerOptionSpec]] = {
             ),
         ),
         DesignerOptionSpec(
-            name="sampler",
+            name="covmat",
             required=False,
             value_type="str",
-            description="Optional metric/ellipsoidal sampler override.",
-            example="turbo_py-enn-p/sampler=dense",
+            description="Optional metric/ellipsoidal covmat override.",
+            example="turbo_py-enn-p/covmat=dense",
             allowed_values=("dense", "low_rank"),
         ),
         DesignerOptionSpec(
@@ -1182,7 +1182,7 @@ _DESIGNER_OPTION_SPECS: dict[str, list[DesignerOptionSpec]] = {
             required=False,
             value_type="int",
             description="Optional low-rank geometry rank.",
-            example="turbo_py-enn-p/sampler=low_rank/rank=10",
+            example="turbo_py-enn-p/covmat=low_rank/rank=10",
         ),
         DesignerOptionSpec(
             name="update_option",
@@ -1253,11 +1253,11 @@ _DESIGNER_OPTION_SPECS: dict[str, list[DesignerOptionSpec]] = {
             ),
         ),
         DesignerOptionSpec(
-            name="sampler",
+            name="covmat",
             required=False,
             value_type="str",
-            description="Optional metric/ellipsoidal sampler override.",
-            example="turbo-enn-fit/acq_type=ucb/sampler=dense",
+            description="Optional metric/ellipsoidal covmat override.",
+            example="turbo-enn-fit/acq_type=ucb/covmat=dense",
             allowed_values=("dense", "low_rank"),
         ),
         DesignerOptionSpec(
@@ -1265,7 +1265,7 @@ _DESIGNER_OPTION_SPECS: dict[str, list[DesignerOptionSpec]] = {
             required=False,
             value_type="int",
             description="Optional low-rank geometry rank.",
-            example="turbo-enn-fit/acq_type=ucb/sampler=low_rank/rank=10",
+            example="turbo-enn-fit/acq_type=ucb/covmat=low_rank/rank=10",
         ),
         DesignerOptionSpec(
             name="update_option",
@@ -1369,18 +1369,18 @@ _DESIGNER_OPTION_SPECS: dict[str, list[DesignerOptionSpec]] = {
             ),
         ),
         DesignerOptionSpec(
-            name="sampler",
+            name="covmat",
             required=False,
             value_type="str",
-            description="Metric/ellipsoidal sampler for non-box geometry.",
-            example="turbo-enn-multi/sampler=low_rank",
+            description="Metric/ellipsoidal covmat for non-box geometry.",
+            example="turbo-enn-multi/covmat=low_rank",
             allowed_values=("dense", "low_rank"),
         ),
         DesignerOptionSpec(
             name="rank",
             required=False,
             value_type="int",
-            description="Low-rank sampler rank cap.",
+            description="Low-rank covmat rank cap.",
             example="turbo-enn-multi/rank=5",
         ),
         DesignerOptionSpec(

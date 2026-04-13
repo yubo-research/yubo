@@ -9,7 +9,7 @@ from optimizer.pc_rotation import PCRotationResult
 
 
 def test_metric_geometry_model_full_mode_paths():
-    model = tru._MetricGeometryModel(num_dim=3, metric_sampler="dense", metric_rank=None)
+    model = tru._MetricGeometryModel(num_dim=3, covmat="dense", metric_rank=None)
     model.reset()
     assert model.has_geometry is False
 
@@ -30,7 +30,7 @@ def test_metric_geometry_model_full_mode_paths():
 def test_metric_geometry_model_low_rank_and_pc_rotation_paths():
     model = tru._MetricGeometryModel(
         num_dim=4,
-        metric_sampler="low_rank",
+        covmat="low_rank",
         metric_rank=2,
         pc_rotation_mode="full",
         pc_rank=2,
@@ -75,8 +75,8 @@ def test_metric_geometry_model_low_rank_and_pc_rotation_paths():
     cov = model.covariance_matrix(jitter=1e-8)
     np.linalg.cholesky(cov)
 
-    model.metric_sampler = "bad"
-    with pytest.raises(ValueError, match="Unknown metric_sampler"):
+    model.covmat = "bad"
+    with pytest.raises(ValueError, match="Unknown covmat"):
         model.update_from_cov(centered=dx, weights=np.ones((4,), dtype=float), cov=np.eye(4, dtype=float))
 
 
@@ -99,7 +99,7 @@ def test_low_rank_factor_from_cov_uses_dominant_eigenspace():
 def test_gradient_geometry_low_rank_uses_single_weighting_pass():
     model = tru._MetricGeometryModel(
         num_dim=4,
-        metric_sampler="low_rank",
+        covmat="low_rank",
         metric_rank=2,
     )
     dx = np.array(
@@ -141,7 +141,7 @@ def test_gradient_geometry_low_rank_uses_single_weighting_pass():
 def test_true_ellipsoid_option_b_reclips_after_ema():
     model = tru._TrueEllipsoidGeometryModel(
         num_dim=3,
-        metric_sampler="dense",
+        covmat="dense",
         metric_rank=None,
         update_option="option_b",
         shape_period=1,
@@ -164,11 +164,11 @@ def test_true_ellipsoid_option_b_reclips_after_ema():
     assert float(np.max(eigvals) / np.min(eigvals)) <= 2.0 + 1e-6
 
 
-@pytest.mark.parametrize("metric_sampler", ["dense", "low_rank"])
-def test_analytic_gradient_matches_single_sample_gradient_update(metric_sampler):
+@pytest.mark.parametrize("covmat", ["dense", "low_rank"])
+def test_analytic_gradient_matches_single_sample_gradient_update(covmat):
     grad = np.array([1.0, -0.5, 0.25, 0.0], dtype=float)
-    analytic = tru._MetricGeometryModel(num_dim=4, metric_sampler=metric_sampler, metric_rank=2)
-    generic = tru._MetricGeometryModel(num_dim=4, metric_sampler=metric_sampler, metric_rank=2)
+    analytic = tru._MetricGeometryModel(num_dim=4, covmat=covmat, metric_rank=2)
+    generic = tru._MetricGeometryModel(num_dim=4, covmat=covmat, metric_rank=2)
     analytic.set_analytic_gradient(grad)
     generic.set_gradient_geometry(
         grad.reshape(1, -1),
@@ -181,7 +181,7 @@ def test_analytic_gradient_matches_single_sample_gradient_update(metric_sampler)
 
 
 def test_cached_mahalanobis_matches_direct_solve():
-    model = tru._MetricGeometryModel(num_dim=4, metric_sampler="dense", metric_rank=None)
+    model = tru._MetricGeometryModel(num_dim=4, covmat="dense", metric_rank=None)
     dx = np.eye(4, dtype=float)
     weights = np.ones((4,), dtype=float)
     model.set_geometry(dx, weights)
@@ -192,7 +192,7 @@ def test_cached_mahalanobis_matches_direct_solve():
 
 
 def test_metric_geometry_model_build_step_runtime_checks():
-    model = tru._MetricGeometryModel(num_dim=3, metric_sampler="low_rank", metric_rank=2)
+    model = tru._MetricGeometryModel(num_dim=3, covmat="low_rank", metric_rank=2)
     model.low_rank = types.SimpleNamespace(
         sqrt_alpha=0.1,
         basis=np.zeros((2, 2), dtype=float),
@@ -213,7 +213,7 @@ def test_metric_geometry_model_build_step_runtime_checks():
 def test_true_ellipsoid_geometry_model_update_and_reset():
     model = tru._TrueEllipsoidGeometryModel(
         num_dim=3,
-        metric_sampler="dense",
+        covmat="dense",
         metric_rank=None,
         update_option="option_b",
         shape_period=1,

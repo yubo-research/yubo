@@ -26,7 +26,7 @@ class ENNTrueEllipsoidalTrustRegion(ENNMetricShapedTrustRegion):
         super().__post_init__()
         self._geometry_model = _TrueEllipsoidGeometryModel(
             num_dim=self.num_dim,
-            metric_sampler=self.metric_sampler,
+            covmat=self.covmat,
             metric_rank=self.metric_rank,
             pc_rotation_mode=getattr(self.config, "pc_rotation_mode", None),
             pc_rank=getattr(self.config, "pc_rank", None),
@@ -97,7 +97,7 @@ class ENNTrueEllipsoidalTrustRegion(ENNMetricShapedTrustRegion):
         if pred is None or (not np.isfinite(float(pred))) or abs(float(pred)) < eps:
             return
         delta = curr_x - np.asarray(prev_x, dtype=float).reshape(-1)
-        if self._geometry_model.metric_sampler == "low_rank":
+        if self._geometry_model.covmat == "low_rank":
             if self.use_accel:
                 dist2 = float(
                     _low_rank_mahalanobis_sq(
@@ -113,7 +113,7 @@ class ENNTrueEllipsoidalTrustRegion(ENNMetricShapedTrustRegion):
                             self._geometry_model.low_rank,
                         )[0]
                     )
-        elif self._geometry_model.metric_sampler == "dense":
+        elif self._geometry_model.covmat == "dense":
             mahal = getattr(self._geometry_model, "mahalanobis_sq")
             if getattr(mahal, "__func__", mahal) is not getattr(type(self._geometry_model), "mahalanobis_sq"):
                 dist2 = float(
@@ -164,9 +164,9 @@ class ENNTrueEllipsoidalTrustRegion(ENNMetricShapedTrustRegion):
         x_center = np.asarray(x_center, dtype=float).reshape(-1)
         if x_center.shape != (num_dim,):
             raise ValueError((x_center.shape, num_dim))
-        low_rank = self._geometry_model.low_rank if self._geometry_model.metric_sampler == "low_rank" else None
+        low_rank = self._geometry_model.low_rank if self._geometry_model.covmat == "low_rank" else None
         cov = self._covariance_matrix if low_rank is None else None
-        cov_factor = self._geometry_model.cov_factor if self._geometry_model.metric_sampler == "dense" else None
+        cov_factor = self._geometry_model.cov_factor if self._geometry_model.covmat == "dense" else None
         candidates = self._step_sampler.generate(
             x_center=x_center,
             num_dim=num_dim,
