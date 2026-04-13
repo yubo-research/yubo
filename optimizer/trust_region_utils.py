@@ -839,20 +839,20 @@ class _LengthPolicy:
         _ = pred, act, boundary_hit
         return
 
-    @property
-    def pending_rho(self) -> float | None:
-        return None
-
-    def apply_after_super_update(
+    def update_length(
         self,
         *,
-        current_length: float,
+        tr: Any,
+        improved: bool | None,
         base_length: float,
         fixed_length: float | None,
         length_max: float,
     ) -> float:
         _ = base_length, fixed_length, length_max
-        return float(current_length)
+        if improved is None:
+            return float(tr.length)
+        tr._update_counters_and_length(improved=improved)
+        return float(tr.length)
 
 
 @dataclass
@@ -882,20 +882,18 @@ class _OptionCLengthPolicy(_LengthPolicy):
         self._pending_rho = float(act) / float(denom)
         self._pending_boundary_hit = bool(boundary_hit)
 
-    @property
-    def pending_rho(self) -> float | None:
-        return self._pending_rho
-
-    def apply_after_super_update(
+    def update_length(
         self,
         *,
-        current_length: float,
+        tr: Any,
+        improved: bool | None,
         base_length: float,
         fixed_length: float | None,
         length_max: float,
     ) -> float:
+        _ = tr, improved
         rho = self._pending_rho
-        length = float(current_length if fixed_length is not None else base_length)
+        length = float(base_length if fixed_length is None else tr.length)
         if rho is None:
             return float(length)
         if rho < float(self.rho_bad):

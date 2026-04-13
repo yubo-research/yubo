@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -70,6 +71,30 @@ def _generate_metric_module_candidates(
     return candidates
 
 
+def _update_metric_bookkeeping_only(
+    tr: TurboTrustRegion,
+    y_obs: np.ndarray | Any,
+    y_incumbent: np.ndarray | Any,
+) -> tuple[bool, bool | None]:
+    if tr._failure_tolerance is None:
+        return False, None
+    y_obs = tr._coerce_y_obs_1d(y_obs)
+    n = int(y_obs.size)
+    if n <= 0 or n == tr.prev_num_obs:
+        return False, None
+    if n < tr.prev_num_obs:
+        raise ValueError((n, tr.prev_num_obs))
+    y_incumbent_value = tr._coerce_y_incumbent_value(y_incumbent)
+    if not math.isfinite(tr.best_value):
+        tr.best_value, tr.prev_num_obs = y_incumbent_value, n
+        return True, None
+    prev_values = y_obs[: tr.prev_num_obs]
+    scale = tr._improvement_scale(prev_values)
+    improved = y_incumbent_value > tr.best_value + 1e-3 * scale
+    tr.best_value, tr.prev_num_obs = max(tr.best_value, y_incumbent_value), n
+    return True, bool(improved)
+
+
 @dataclass
 class MetricShapedTrustRegion(TurboTrustRegion):
     """TuRBO-derived trust-region state with metric-shaped candidate geometry.
@@ -121,9 +146,13 @@ class MetricShapedTrustRegion(TurboTrustRegion):
 
     def update(self, y_obs: np.ndarray | Any, y_incumbent: np.ndarray | Any) -> None:
         base_length = float(self.length)
-        super().update(y_obs, y_incumbent)
-        adjusted_length = self._length_policy.apply_after_super_update(
-            current_length=float(self.length),
+        has_new_obs, improved = _update_metric_bookkeeping_only(self, y_obs, y_incumbent)
+        if not has_new_obs:
+            _apply_fixed_length_to_tr(self)
+            return
+        adjusted_length = self._length_policy.update_length(
+            tr=self,
+            improved=improved,
             base_length=base_length,
             fixed_length=_metric_fixed_length(self),
             length_max=float(self.config.length_max),
@@ -261,10 +290,6 @@ class MetricShapedTrustRegion(TurboTrustRegion):
 
     def set_acceptance_ratio(self, *, pred: float, act: float, boundary_hit: bool) -> None:
         self._length_policy.set_acceptance_ratio(pred=pred, act=act, boundary_hit=boundary_hit)
-
-    @property
-    def _pending_rho(self) -> float | None:
-        return self._length_policy.pending_rho
 
 
 @dataclass

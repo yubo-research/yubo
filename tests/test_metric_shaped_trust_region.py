@@ -262,6 +262,17 @@ def test_option_c_keeps_base_turbo_bookkeeping_progressing():
     assert float(tr.best_value) == 2.0
 
 
+def test_option_c_does_not_mutate_turbo_counters():
+    tr = _build_true_tr(num_dim=4, update_option="option_c", rng_seed=60)
+    for i in range(4):
+        if i > 0:
+            tr.set_acceptance_ratio(pred=1.0, act=(-1.0 if i % 2 else 2.0), boundary_hit=True)
+        y_obs = np.arange(i + 1, dtype=float)
+        tr.update(y_obs, np.array([float(i)]))
+    assert tr.success_counter == 0
+    assert tr.failure_counter == 0
+
+
 def test_option_c_bad_rho_can_trigger_restart():
     tr = _build_true_tr(num_dim=4, update_option="option_c", rng_seed=7)
     n = 1

@@ -334,24 +334,36 @@ def test_axis_aligned_step_sampler_jax_sobol_fast_path(monkeypatch):
 
 
 def test_length_policies():
+    class _DummyTR:
+        def __init__(self, length: float) -> None:
+            self.length = float(length)
+            self.calls: list[bool] = []
+
+        def _update_counters_and_length(self, *, improved: bool) -> None:
+            self.calls.append(bool(improved))
+
     base = tru._LengthPolicy()
     base.reset()
     base.set_acceptance_ratio(pred=1.0, act=1.0, boundary_hit=False)
-    assert base.pending_rho is None
+    base_tr = _DummyTR(length=1.2)
+    assert getattr(base, "pending_rho", None) is None
     assert (
-        base.apply_after_super_update(
-            current_length=1.2,
+        base.update_length(
+            tr=base_tr,
+            improved=True,
             base_length=1.0,
             fixed_length=None,
             length_max=2.0,
         )
         == 1.2
     )
+    assert base_tr.calls == [True]
 
     opt = tru._OptionCLengthPolicy(rho_bad=0.25, rho_good=0.75, gamma_down=0.5, gamma_up=2.0)
     opt.set_acceptance_ratio(pred=0.0, act=-1.0, boundary_hit=False)
-    shrunk = opt.apply_after_super_update(
-        current_length=1.0,
+    shrunk = opt.update_length(
+        tr=_DummyTR(length=1.0),
+        improved=False,
         base_length=1.0,
         fixed_length=None,
         length_max=10.0,
@@ -359,12 +371,13 @@ def test_length_policies():
     assert shrunk < 1.0
 
     opt.set_acceptance_ratio(pred=1.0, act=2.0, boundary_hit=True)
-    grown = opt.apply_after_super_update(
-        current_length=1.0,
+    grown = opt.update_length(
+        tr=_DummyTR(length=1.0),
+        improved=True,
         base_length=1.0,
         fixed_length=None,
         length_max=10.0,
     )
     assert grown > 1.0
     opt.reset()
-    assert opt.pending_rho is None
+    assert opt._pending_rho is None
