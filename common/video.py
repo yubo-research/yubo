@@ -11,6 +11,40 @@ from typing import Any, Callable
 import numpy as np
 
 
+@dataclass(frozen=True)
+class VideoReplaySpec:
+    policy: Any
+    noise_seed: int
+    iter_index: int
+    raw_return: float
+    estimated_return: float
+
+
+def build_bo_video_replay(datum: Any | None) -> VideoReplaySpec | None:
+    if datum is None:
+        return None
+    trajectory = getattr(datum, "trajectory", None)
+    policy = getattr(datum, "policy", None)
+    if trajectory is None or policy is None:
+        return None
+    noise_seed = getattr(trajectory, "noise_seed", None)
+    iter_index = getattr(trajectory, "iter_index", None)
+    if noise_seed is None or iter_index is None:
+        return None
+    clone = getattr(policy, "clone", None)
+    replay_policy = clone() if callable(clone) else policy
+    raw_return = float(np.asarray(trajectory.rreturn).reshape(-1)[0])
+    decision_fn = getattr(trajectory, "get_decision_rreturn", None)
+    estimated_return = float(decision_fn()) if callable(decision_fn) else raw_return
+    return VideoReplaySpec(
+        policy=replay_policy,
+        noise_seed=int(noise_seed),
+        iter_index=int(iter_index),
+        raw_return=raw_return,
+        estimated_return=estimated_return,
+    )
+
+
 def scale_action_to_space(action: np.ndarray | int, action_space: Any) -> np.ndarray | int:
     """Map policy output to action space. Discrete: pass through as int. Box: scale from [-1,1]."""
     if not hasattr(action_space, "low"):

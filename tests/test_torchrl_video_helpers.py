@@ -10,6 +10,7 @@ import torch
 
 from common.video import (
     RLVideoContext,
+    build_bo_video_replay,
     policy_for_bo_rollout,
     render_bo_videos,
     render_policy_videos,
@@ -402,6 +403,28 @@ def test_render_bo_videos_smoke(monkeypatch, tmp_path):
     assert calls == [("sample", "bo", 3), ("replay", "bo_exact_iter009_seed12", 12)]
     meta = (tmp_path / "videos" / "bo_exact_iter009_seed12.json").read_text()
     assert '"estimated_return": 4.5' in meta
+
+
+def test_build_bo_video_replay_roundtrips():
+    traj = SimpleNamespace(
+        noise_seed=12,
+        iter_index=9,
+        rreturn=np.array([3.5], dtype=np.float64),
+        get_decision_rreturn=lambda: 4.5,
+    )
+    datum = SimpleNamespace(
+        policy=SimpleNamespace(clone=lambda: "replay-policy"),
+        trajectory=traj,
+    )
+
+    replay = build_bo_video_replay(datum)
+
+    assert replay is not None
+    assert replay.policy == "replay-policy"
+    assert replay.noise_seed == 12
+    assert replay.iter_index == 9
+    assert replay.raw_return == 3.5
+    assert replay.estimated_return == 4.5
 
 
 def test_render_policy_videos_direct(tmp_path):

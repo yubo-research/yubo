@@ -16,24 +16,6 @@ class DesignerWithNullBestDatum:
         return None
 
 
-class _FakeVideoPolicy:
-    def clone(self):
-        return self
-
-
-class _FakeVideoTrajectory:
-    def __init__(self):
-        self.noise_seed = 17
-        self.iter_index = 23
-        self.rreturn = np.array([1.25e5], dtype=np.float64)
-
-
-class _FakeVideoDatum:
-    def __init__(self):
-        self.policy = _FakeVideoPolicy()
-        self.trajectory = _FakeVideoTrajectory()
-
-
 def test_update_best_when_designer_best_datum_returns_none():
     env_conf = get_env_conf("f:ackley-3d", problem_seed=0, noise_seed_0=0)
     policy = default_policy(env_conf)
@@ -83,26 +65,3 @@ def test_update_best_fallback_to_batch_on_iter_zero():
     assert opt.y_best is not None
     assert opt.best_datum is not None
     assert opt.best_policy is not None
-
-
-def test_capture_video_replay_spec_roundtrips():
-    env_conf = get_env_conf("f:ackley-3d", problem_seed=7, noise_seed_0=0)
-    policy = default_policy(env_conf)
-
-    opt = Optimizer(
-        Collector(),
-        env_conf=env_conf,
-        policy=policy,
-        num_arms=1,
-        num_denoise_measurement=None,
-        num_denoise_passive=None,
-    )
-
-    opt._maybe_capture_video_replay(_FakeVideoDatum(), 1.25e5)
-    replay = opt.best_video_replay()
-
-    assert replay is not None
-    assert replay.noise_seed == 17
-    assert replay.iter_index == 23
-    assert replay.raw_return == 1.25e5
-    assert replay.estimated_return == 1.25e5

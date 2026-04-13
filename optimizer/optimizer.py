@@ -9,12 +9,11 @@ from common.telemetry import Telemetry
 
 from .datum import Datum
 from .opt_trajectories import collect_denoised_trajectory, evaluate_for_best
-from .optimizer_types import IterateResult, ReturnSummary, TraceEntry, VideoReplaySpec
+from .optimizer_types import IterateResult, ReturnSummary, TraceEntry
 from .trajectories import collect_trajectory
 
 _INTERACTIVE_DEBUG = False
 _SHOW_EVERY_N_ITER = 30
-_VIDEO_REPLAY_EST_CAPTURE_THRESHOLD = 1.0e4
 
 
 def _pareto_mask_max(y: np.ndarray) -> np.ndarray:
@@ -97,7 +96,6 @@ class Optimizer:
         self._ret_viz = -1e99
         self._telemetry = Telemetry()
         self._ref_point = None
-        self._best_video_replay: VideoReplaySpec | None = None
 
     def _iterate(self, designer, num_arms):
         self._telemetry.reset()
@@ -132,26 +130,6 @@ class Optimizer:
         dt_eval = tf - t_0
 
         return IterateResult(data=data, dt_prop=float(dt_prop), dt_eval=float(dt_eval))
-
-    def _maybe_capture_video_replay(self, datum, decision_value: float) -> None:
-        if float(decision_value) < _VIDEO_REPLAY_EST_CAPTURE_THRESHOLD:
-            return
-        best_est = None if self._best_video_replay is None else float(self._best_video_replay.estimated_return)
-        if best_est is not None and float(decision_value) <= float(best_est):
-            return
-        noise_seed = getattr(datum.trajectory, "noise_seed", None)
-        if noise_seed is None:
-            return
-        self._best_video_replay = VideoReplaySpec(
-            policy=datum.policy.clone(),
-            noise_seed=int(noise_seed),
-            iter_index=int(getattr(datum.trajectory, "iter_index", self._i_iter)),
-            raw_return=float(np.asarray(datum.trajectory.rreturn).reshape(-1)[0]),
-            estimated_return=float(decision_value),
-        )
-
-    def best_video_replay(self) -> VideoReplaySpec | None:
-        return self._best_video_replay
 
     def collect_trace(self, designer_name, max_iterations=None, max_proposal_seconds=np.inf, deadline=None, max_total_timesteps=None):
         self.initialize(designer_name)
@@ -192,7 +170,6 @@ class Optimizer:
             self.r_best_est = decision_best
             self.best_datum = datum_best
             self.best_policy = self.best_datum.policy.clone()
-        self._maybe_capture_video_replay(datum_best, decision_best)
         self.r_best_est = max(self.r_best_est, decision_best)
         return did_update, True
 
@@ -205,7 +182,6 @@ class Optimizer:
             self.r_best_est = decision_best_batch
             self.best_datum = data[best_idx]
             self.best_policy = self.best_datum.policy.clone()
-        self._maybe_capture_video_replay(data[best_idx], decision_best_batch)
         self.r_best_est = max(self.r_best_est, decision_best_batch)
         return did_update
 

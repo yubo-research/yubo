@@ -285,9 +285,9 @@ def sample_1(run_config: RunConfig):
             print_bo_footer(best_val, max(0.0, total_time))
 
         if run_config.video_enable and run_config.video_num_video_episodes > 0 and opt.best_policy is not None:
+            build_bo_video_replay = _load_attr(("common", "video"), "build_bo_video_replay")
             render_bo_videos = _load_attr(("common", "video"), "render_bo_videos")
-            get_video_replay = getattr(opt, "best_video_replay", None)
-            replay = get_video_replay() if callable(get_video_replay) else None
+            replay = build_bo_video_replay(getattr(opt, "best_datum", None))
             seed_base = int(run_config.video_seed_base) if run_config.video_seed_base is not None else int(env_runtime.problem_seed)
             render_bo_videos(
                 env_runtime,
