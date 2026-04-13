@@ -40,10 +40,6 @@ _GEOMETRIES = frozenset(("box", "enn_iso", "enn_metr", "grad_metr", "enn_ellip",
 _RADIAL = frozenset(("ball_uniform", "boundary"))
 
 
-def normalize_geometry_name(geometry: str) -> str:
-    return str(geometry).strip()
-
-
 @define(frozen=True)
 class MetricShapedTRConfig:
     length: TRLengthConfig = field(factory=TRLengthConfig)
@@ -73,8 +69,7 @@ class MetricShapedTRConfig:
     accel: str | None = None
 
     def __attrs_post_init__(self) -> None:
-        normalized_geometry = normalize_geometry_name(self.geometry)
-        object.__setattr__(self, "geometry", normalized_geometry)
+        object.__setattr__(self, "geometry", str(self.geometry).strip())
         if self.geometry not in _GEOMETRIES:
             raise ValueError(f"Unknown geometry={self.geometry!r}")
         if self.geometry == "box":
@@ -103,9 +98,6 @@ class MetricShapedTRConfig:
     def length_max(self) -> float:
         return self.length.length_max
 
-    def _resolved_covmat(self) -> CovmatKind:
-        return "dense" if self.covmat is None else self.covmat
-
     def build(
         self,
         *,
@@ -121,7 +113,7 @@ class MetricShapedTRConfig:
                 num_dim=num_dim,
                 incumbent_selector=selector,
             )
-        covmat = self._resolved_covmat()
+        covmat = "dense" if self.covmat is None else self.covmat
         candidate_rv = CandidateRV.SOBOL if candidate_rv is None else candidate_rv
         accel_requested = bool(self.use_accel) or bool(self.accel)
         with _accel_override(self.accel):
@@ -169,6 +161,5 @@ __all__ = [
     "ENNIsotropicTrustRegion",
     "ENNMetricShapedTrustRegion",
     "ENNTrueEllipsoidalTrustRegion",
-    "normalize_geometry_name",
     "_ray_scale_to_unit_box",
 ]

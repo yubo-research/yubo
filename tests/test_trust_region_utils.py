@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 from enn.turbo.config.candidate_rv import CandidateRV
 
+from optimizer import trust_region_sampling_utils as tr_sampling
 from optimizer import trust_region_utils as tru
 from optimizer.pc_rotation import PCRotationResult
 
@@ -284,6 +285,24 @@ def test_axis_aligned_step_sampler_and_true_ellipsoid_step_sampler(monkeypatch):
     assert sobol.calls == 1
     assert out2.shape == (16, 3)
     assert np.all(out2 >= 0.0) and np.all(out2 <= 1.0)
+
+
+def test_sample_box_perturbations_uses_sobol_prefix_only():
+    class _Sobol:
+        def random(self, n):
+            return np.linspace(0.0, 1.0, n * 8, dtype=float).reshape(n, 8)
+
+    out = tr_sampling._sample_box_perturbations(
+        np.zeros(3, dtype=float),
+        np.ones(3, dtype=float),
+        4,
+        rng=np.random.default_rng(0),
+        candidate_rv=CandidateRV.SOBOL,
+        sobol_engine=_Sobol(),
+    )
+    assert out.shape == (4, 3)
+    expected = np.linspace(0.0, 1.0, 32, dtype=float).reshape(4, 8)[:, :3]
+    np.testing.assert_allclose(out, expected)
 
 
 def test_axis_aligned_step_sampler_jax_sobol_fast_path(monkeypatch):

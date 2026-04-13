@@ -9,7 +9,8 @@ from enn.turbo.turbo_trust_region import TurboTrustRegion
 
 import optimizer.trust_region_accel as _accel
 from optimizer.pc_rotation import compute_labcat_weighted_pca
-from optimizer.trust_region_sampling_utils import _apply_block_raasp_mask
+from optimizer.trust_region_math import _ray_scale_to_unit_box
+from optimizer.trust_region_sampling_utils import _block_indices_from_group, _sample_block_groups, _sample_centered_box_points
 from optimizer.trust_region_utils import (
     _AxisAlignedStepSampler,
     _LengthPolicy,
@@ -27,6 +28,46 @@ def _apply_fixed_length_to_tr(tr: TurboTrustRegion) -> None:
 
 def _metric_fixed_length(tr: TurboTrustRegion) -> float | None:
     return getattr(tr.config, "fixed_length", None)
+
+
+def _generate_metric_module_candidates(
+    tr: Any,
+    *,
+    x_center: np.ndarray,
+    num_candidates: int,
+    rng: Any,
+    candidate_rv: CandidateRV | None,
+    sobol_engine: Any | None,
+) -> np.ndarray:
+    rv = tr.candidate_rv if candidate_rv is None else candidate_rv
+    jitter = float(getattr(tr.config, "shape_jitter", 1e-6))
+    groups = _sample_block_groups(
+        num_candidates=num_candidates,
+        rng=rng,
+        block_slices=tr.module_block_slices,
+        block_prob=tr.module_block_prob,
+    )
+    candidates = np.tile(np.asarray(x_center, dtype=float).reshape(1, -1), (int(num_candidates), 1))
+    for block_group, rows in groups.items():
+        indices = _block_indices_from_group(tr.module_block_slices, block_group)
+        if indices.size <= 0:
+            continue
+        x_sub = np.asarray(x_center, dtype=float)[indices]
+        z_sub = _sample_centered_box_points(
+            int(rows.size),
+            int(indices.size),
+            rng=rng,
+            candidate_rv=rv,
+            sobol_engine=sobol_engine,
+        )
+        factor_sub = tr._geometry_model.restricted_factor(indices, jitter=jitter)
+        step_sub = z_sub @ factor_sub.T
+        cand_sub = _ray_scale_to_unit_box(
+            x_sub,
+            x_sub.reshape(1, -1) + float(tr.length) * step_sub,
+        )
+        candidates[np.ix_(rows, indices)] = cand_sub
+    return candidates
 
 
 @dataclass
@@ -168,28 +209,29 @@ class MetricShapedTrustRegion(TurboTrustRegion):
         x_center = np.asarray(x_center, dtype=float).reshape(-1)
         if x_center.shape != (num_dim,):
             raise ValueError((x_center.shape, num_dim))
-        cov_factor = self._geometry_model.cov_factor if self._geometry_model.covmat == "dense" else None
-        candidates = self._step_sampler.generate(
-            x_center=x_center,
-            length=float(self.length),
-            num_dim=num_dim,
-            num_candidates=num_candidates,
-            rng=rng,
-            candidate_rv=candidate_rv,
-            sobol_engine=sobol_engine,
-            num_pert=num_pert,
-            build_step=self._geometry_model.build_step,
-            build_candidates=self._geometry_model.build_candidates,
-            cov_factor=cov_factor,
-        )
         if self.module_block_slices:
-            candidates = _apply_block_raasp_mask(
-                candidates,
+            candidates = _generate_metric_module_candidates(
+                self,
+                x_center=x_center,
+                num_candidates=num_candidates,
                 rng=rng,
                 candidate_rv=candidate_rv,
                 sobol_engine=sobol_engine,
-                block_slices=self.module_block_slices,
-                block_prob=self.module_block_prob,
+            )
+        else:
+            cov_factor = self._geometry_model.cov_factor if self._geometry_model.covmat == "dense" else None
+            candidates = self._step_sampler.generate(
+                x_center=x_center,
+                length=float(self.length),
+                num_dim=num_dim,
+                num_candidates=num_candidates,
+                rng=rng,
+                candidate_rv=candidate_rv,
+                sobol_engine=sobol_engine,
+                num_pert=num_pert,
+                build_step=self._geometry_model.build_step,
+                build_candidates=self._geometry_model.build_candidates,
+                cov_factor=cov_factor,
             )
         if candidates.shape != (num_candidates, num_dim):
             raise RuntimeError((candidates.shape, (num_candidates, num_dim)))

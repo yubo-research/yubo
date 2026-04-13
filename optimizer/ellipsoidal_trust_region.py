@@ -4,11 +4,12 @@ from dataclasses import dataclass, field
 from typing import Any
 
 import numpy as np
+from enn.turbo.config.candidate_rv import CandidateRV
 
 import optimizer.trust_region_accel as _accel
 from optimizer.metric_trust_region import ENNMetricShapedTrustRegion, MetricShapedTrustRegion, _apply_fixed_length_to_tr
-from optimizer.trust_region_math import _mahalanobis_sq_from_factor
-from optimizer.trust_region_sampling_utils import _apply_block_raasp_mask, _low_rank_mahalanobis_sq
+from optimizer.trust_region_math import _mahalanobis_sq_from_factor, _ray_scale_to_unit_box
+from optimizer.trust_region_sampling_utils import _block_indices_from_group, _low_rank_mahalanobis_sq, _sample_block_groups
 from optimizer.trust_region_utils import (
     _LengthPolicy,
     _OptionCLengthPolicy,
@@ -181,14 +182,61 @@ class ENNTrueEllipsoidalTrustRegion(ENNMetricShapedTrustRegion):
             cov_gen=self._geometry_model._cov_gen,
         )
         if getattr(self, "module_block_slices", ()):
-            candidates = _apply_block_raasp_mask(
-                candidates,
+            return self._generate_module_candidates(
+                x_center=x_center,
+                num_candidates=num_candidates,
                 rng=rng,
                 candidate_rv=candidate_rv,
                 sobol_engine=sobol_engine,
-                block_slices=tuple(getattr(self, "module_block_slices", ())),
-                block_prob=float(getattr(self, "module_block_prob", 0.0)),
             )
+        return candidates
+
+    def _generate_module_candidates(
+        self,
+        *,
+        x_center: np.ndarray,
+        num_candidates: int,
+        rng: Any,
+        candidate_rv: CandidateRV | None,
+        sobol_engine: Any | None,
+    ) -> np.ndarray:
+        rv = self.candidate_rv if candidate_rv is None else candidate_rv
+        jitter = float(getattr(self.config, "shape_jitter", 1e-6))
+        groups = _sample_block_groups(
+            num_candidates=num_candidates,
+            rng=rng,
+            block_slices=tuple(getattr(self, "module_block_slices", ())),
+            block_prob=float(getattr(self, "module_block_prob", 0.0)),
+        )
+        candidates = np.tile(np.asarray(x_center, dtype=float).reshape(1, -1), (int(num_candidates), 1))
+        radius2 = float(self.length) ** 2
+        for block_group, rows in groups.items():
+            indices = _block_indices_from_group(tuple(getattr(self, "module_block_slices", ())), block_group)
+            if indices.size <= 0:
+                continue
+            x_sub = np.asarray(x_center, dtype=float)[indices]
+            factor_sub = self._geometry_model.restricted_factor(indices, jitter=jitter)
+            z_sub = self._step_sampler._sample_raasp_whitened(
+                num_candidates=int(rows.size),
+                num_dim=int(indices.size),
+                length=float(self.length),
+                rng=rng,
+                candidate_rv=rv,
+                sobol_engine=sobol_engine,
+            )
+            cand_sub = _ray_scale_to_unit_box(
+                x_sub,
+                x_sub.reshape(1, -1) + z_sub @ factor_sub.T,
+            )
+            delta_sub = cand_sub - x_sub.reshape(1, -1)
+            dist2 = _mahalanobis_sq_from_factor(delta_sub, factor_sub)
+            bad = np.where(dist2 > radius2 * (1.0 + 1e-8))[0]
+            if bad.size > 0:
+                scale = np.sqrt(radius2 / np.maximum(dist2[bad], 1e-12))
+                delta_sub = delta_sub.copy()
+                delta_sub[bad] *= scale.reshape(-1, 1)
+                cand_sub = _ray_scale_to_unit_box(x_sub, x_sub.reshape(1, -1) + delta_sub)
+            candidates[np.ix_(rows, indices)] = cand_sub
         return candidates
 
 

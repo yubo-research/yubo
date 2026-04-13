@@ -26,7 +26,7 @@ import common.all_bounds as all_bounds
 from optimizer.designer_asserts import assert_scalar_rreturn
 from optimizer.designer_protocol import Designer
 from optimizer.trust_region_accel import accel_name as _accel_name
-from optimizer.trust_region_config import MetricShapedTRConfig, normalize_geometry_name
+from optimizer.trust_region_config import MetricShapedTRConfig
 
 
 def _create_optimizer_auto(bounds, config, rng):
@@ -85,7 +85,7 @@ class TurboENNDesigner(Designer):
         self._fixed_length = fixed_length
         self._acq_type = acq_type
         self._tr_type = tr_type if tr_type is not None else "turbo"
-        self._tr_geometry = normalize_geometry_name(tr_geometry if tr_geometry is not None else "box")
+        self._tr_geometry = str(tr_geometry if tr_geometry is not None else "box").strip()
         self._covmat = covmat
         self._metric_rank = metric_rank
         self._update_option = update_option

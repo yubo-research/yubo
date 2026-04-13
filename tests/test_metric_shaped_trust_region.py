@@ -18,8 +18,17 @@ from optimizer.trust_region_config import (
     MetricShapedTRConfig,
     _ray_scale_to_unit_box,
 )
-from optimizer.trust_region_math import _LowRankFactor
+from optimizer.trust_region_math import _LowRankFactor, _symmetric_spd_factor
 from optimizer.trust_region_sampling_utils import _low_rank_mahalanobis_sq
+
+
+def _set_dense_covariance(tr: MetricShapedTrustRegion, cov: np.ndarray) -> None:
+    tr._geometry_model.cov_factor = _symmetric_spd_factor(np.asarray(cov, dtype=float))
+    tr._geometry_model.has_geometry = True
+    tr._geometry_model._cov_gen += 1
+    tr._geometry_model._cached_cov = None
+    tr._geometry_model._cached_cov_inv = None
+    tr._sync_geometry_flags()
 
 
 def test_metric_shaped_tr_config_length_properties():
@@ -704,32 +713,130 @@ def test_metric_trust_region_rejects_non_default_radial_mode():
         MetricShapedTRConfig(geometry="enn_metr", radial_mode="boundary")
 
 
-def test_module_blocks_apply_to_metric_candidate_generation(monkeypatch):
+def test_module_blocks_restrict_dense_metric_to_selected_subspace(monkeypatch):
     rng = np.random.default_rng(7)
+    cfg = MetricShapedTRConfig(
+        geometry="enn_metr",
+        covmat="dense",
+    )
+    tr = cfg.build(num_dim=2, rng=rng)
+    cov = np.array([[1.0, 0.9], [0.9, 1.0]], dtype=float)
+    _set_dense_covariance(tr, cov)
+    tr.module_block_slices = ((0, 1), (1, 2))
+    tr.module_block_prob = 0.0
+    monkeypatch.setattr(
+        "optimizer.metric_trust_region._sample_block_groups",
+        lambda **kwargs: {(0,): np.arange(32, dtype=np.int64)},
+    )
+    x_center = np.full(2, 0.5)
+    candidates = tr.generate_candidates(
+        x_center=x_center,
+        lengthscales=None,
+        num_candidates=32,
+        rng=rng,
+        candidate_rv=CandidateRV.UNIFORM,
+    )
+    delta = candidates - x_center.reshape(1, -1)
+    assert np.allclose(delta[:, 1], 0.0, atol=1e-12)
+    metric_sub = np.linalg.inv(cov)[np.ix_([0], [0])]
+    cov_sub = np.linalg.inv(metric_sub)
+    max_expected = 0.5 * float(tr.length) * np.sqrt(float(cov_sub[0, 0]))
+    assert np.max(np.abs(delta[:, 0])) <= max_expected * (1.0 + 1e-6)
+
+
+def test_module_blocks_keep_only_selected_metric_blocks_active():
+    rng = np.random.default_rng(17)
     cfg = MetricShapedTRConfig(
         geometry="enn_metr",
         covmat="low_rank",
     )
     tr = cfg.build(num_dim=6, rng=rng)
+    tr.set_geometry(
+        rng.normal(size=(48, 6)),
+        np.abs(rng.normal(size=(48,))),
+    )
     tr.module_block_slices = ((0, 2), (2, 4), (4, 6))
-    tr.module_block_prob = 1.0
-    calls = []
-
-    def fake_apply(candidates, *, rng, candidate_rv, sobol_engine, block_slices, block_prob):
-        calls.append((candidates.shape, tuple(block_slices), block_prob, candidate_rv))
-        return candidates
-
-    monkeypatch.setattr("optimizer.metric_trust_region._apply_block_raasp_mask", fake_apply)
+    tr.module_block_prob = 0.0
     x_center = np.full(6, 0.5)
     candidates = tr.generate_candidates(
         x_center=x_center,
         lengthscales=None,
-        num_candidates=8,
+        num_candidates=32,
         rng=rng,
         candidate_rv=CandidateRV.UNIFORM,
     )
-    assert candidates.shape == (8, 6)
-    assert calls and calls[0][1] == ((0, 2), (2, 4), (4, 6))
+    changed = np.abs(candidates - x_center.reshape(1, -1)) > 1e-12
+    for row in changed:
+        active_blocks = 0
+        for start, end in tr.module_block_slices:
+            if np.any(row[start:end]):
+                active_blocks += 1
+        assert active_blocks <= 1
+
+
+def test_module_blocks_preserve_ellipsoid_membership():
+    rng = np.random.default_rng(18)
+    cfg = MetricShapedTRConfig(
+        geometry="enn_ellip",
+        covmat="low_rank",
+    )
+    tr = cfg.build(num_dim=6, rng=rng)
+    tr.set_geometry(
+        rng.normal(size=(48, 6)),
+        np.abs(rng.normal(size=(48,))),
+    )
+    tr.module_block_slices = ((0, 2), (2, 4), (4, 6))
+    tr.module_block_prob = 0.0
+    x_center = np.full(6, 0.5)
+    candidates = tr.generate_candidates(
+        x_center=x_center,
+        lengthscales=None,
+        num_candidates=64,
+        rng=rng,
+        candidate_rv=CandidateRV.UNIFORM,
+    )
+    changed = np.abs(candidates - x_center.reshape(1, -1)) > 1e-12
+    for row in changed:
+        active_blocks = 0
+        for start, end in tr.module_block_slices:
+            if np.any(row[start:end]):
+                active_blocks += 1
+        assert active_blocks <= 1
+    dist2 = tr._mahalanobis_sq(candidates - x_center.reshape(1, -1), tr._covariance_matrix())
+    assert np.all(dist2 <= float(tr.length) ** 2 * (1.0 + 1e-6))
+
+
+def test_module_blocks_restrict_dense_ellipsoid_to_selected_subspace(monkeypatch):
+    rng = np.random.default_rng(19)
+    cfg = MetricShapedTRConfig(
+        geometry="enn_ellip",
+        covmat="dense",
+    )
+    tr = cfg.build(num_dim=2, rng=rng)
+    cov = np.array([[1.0, 0.9], [0.9, 1.0]], dtype=float)
+    _set_dense_covariance(tr, cov)
+    tr.module_block_slices = ((0, 1), (1, 2))
+    tr.module_block_prob = 0.0
+    monkeypatch.setattr(
+        "optimizer.ellipsoidal_trust_region._sample_block_groups",
+        lambda **kwargs: {(0,): np.arange(64, dtype=np.int64)},
+    )
+    x_center = np.full(2, 0.5)
+    candidates = tr.generate_candidates(
+        x_center=x_center,
+        lengthscales=None,
+        num_candidates=64,
+        rng=rng,
+        candidate_rv=CandidateRV.UNIFORM,
+    )
+    delta = candidates - x_center.reshape(1, -1)
+    assert np.allclose(delta[:, 1], 0.0, atol=1e-12)
+    dist2 = tr._mahalanobis_sq(delta, tr._covariance_matrix())
+    assert np.all(dist2 <= float(tr.length) ** 2 * (1.0 + 1e-6))
+    metric_sub = np.linalg.inv(cov)[np.ix_([0], [0])]
+    cov_sub = np.linalg.inv(metric_sub)
+    max_expected = float(tr.length) * np.sqrt(float(cov_sub[0, 0]))
+    assert np.max(np.abs(delta[:, 0])) <= max_expected * (1.0 + 1e-6)
 
 
 def test_pc_rotation_geometry_low_rank():

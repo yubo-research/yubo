@@ -52,6 +52,18 @@ def _ensure_spd(
     return (eigvecs * eigvals.reshape(1, -1)) @ eigvecs.T
 
 
+def _symmetric_spd_factor(
+    cov: np.ndarray,
+    *,
+    jitter: float = 1e-8,
+) -> np.ndarray:
+    mat = _ensure_spd(np.asarray(cov, dtype=float), jitter=jitter)
+    eigvals, eigvecs = np.linalg.eigh(mat)
+    scale = float(max(1.0, np.max(np.abs(mat))))
+    eigvals = np.maximum(eigvals, max(float(jitter), 1e-12) * scale)
+    return eigvecs * np.sqrt(eigvals).reshape(1, -1)
+
+
 def _clip_to_unit_box(x_center: np.ndarray, step: np.ndarray) -> np.ndarray:
     num_candidates, num_dim = step.shape
     t = np.ones((num_candidates,), dtype=float)

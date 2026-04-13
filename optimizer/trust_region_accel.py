@@ -82,8 +82,7 @@ def detect_accel() -> str | None:
     return None
 
 
-def accel_name(operation: str | None = None) -> str:
-    _ = operation
+def accel_name() -> str:
     accel = detect_accel()
     return accel if accel else "none"
 
@@ -92,8 +91,7 @@ def is_available() -> bool:
     return detect_accel() is not None
 
 
-def current_accel(operation: str | None = None):
-    _ = operation
+def current_accel():
     accel = detect_accel()
     return None if accel is None else ACCEL_MODULES[accel]
 

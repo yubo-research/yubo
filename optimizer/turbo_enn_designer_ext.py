@@ -8,7 +8,7 @@ from enn.turbo.config.trust_region import TrustRegionConfig, TurboTRConfig
 
 from optimizer.box_trust_region import maybe_enable_module_masks
 from optimizer.submodule_perturbator import leaf_module_param_blocks
-from optimizer.trust_region_config import MetricShapedTRConfig, normalize_geometry_name
+from optimizer.trust_region_config import MetricShapedTRConfig
 from optimizer.turbo_enn_designer import TurboENNDesigner as _TurboENNDesigner
 
 
@@ -57,7 +57,7 @@ def _module_tr_summary(
     expected_blocks = max(1.0, float(len(block_slices)) * float(block_prob))
     return (
         "MODULE_TR "
-        f"enabled=True geometry={normalize_geometry_name(geometry)} acq={acq_type} "
+        f"enabled=True geometry={str(geometry).strip()} acq={acq_type} "
         f"params={total_params} blocks={len(block_slices)} expected_blocks={expected_blocks:.2f} "
         f"block_prob={float(block_prob):.3f} block_sizes={block_sizes}"
     )
@@ -87,6 +87,8 @@ class TurboENNDesigner(_TurboENNDesigner):
         radial_mode: str = "ball_uniform",
         shape_period: int = 5,
         shape_ema: float = 0.2,
+        shape_jitter: float = 1e-6,
+        shape_kappa_max: float = 1e4,
         rho_bad: float = 0.25,
         rho_good: float = 0.75,
         gamma_down: float = 0.5,
@@ -133,6 +135,8 @@ class TurboENNDesigner(_TurboENNDesigner):
         self._radial_mode = radial_mode
         self._shape_period = int(shape_period)
         self._shape_ema = float(shape_ema)
+        self._shape_jitter = float(shape_jitter)
+        self._shape_kappa_max = float(shape_kappa_max)
         self._rho_bad = float(rho_bad)
         self._rho_good = float(rho_good)
         self._gamma_down = float(gamma_down)
@@ -150,7 +154,7 @@ class TurboENNDesigner(_TurboENNDesigner):
 
         if self._tr_type == "turbo":
             _ = MetricShapedTRConfig(
-                geometry=normalize_geometry_name(self._tr_geometry),
+                geometry=str(self._tr_geometry).strip(),
                 covmat=self._covmat,
                 metric_rank=self._metric_rank,
                 pc_rotation_mode=self._pc_rotation_mode,
@@ -161,6 +165,8 @@ class TurboENNDesigner(_TurboENNDesigner):
                 radial_mode=self._radial_mode,
                 shape_period=self._shape_period,
                 shape_ema=self._shape_ema,
+                shape_jitter=self._shape_jitter,
+                shape_kappa_max=self._shape_kappa_max,
                 rho_bad=self._rho_bad,
                 rho_good=self._rho_good,
                 gamma_down=self._gamma_down,
@@ -172,7 +178,7 @@ class TurboENNDesigner(_TurboENNDesigner):
 
     def _make_trust_region(self, num_metrics: int | None) -> TrustRegionConfig:
         if self._tr_type == "turbo":
-            geometry = normalize_geometry_name(self._tr_geometry)
+            geometry = str(self._tr_geometry).strip()
             if geometry == "box" and self._covmat is None and self._update_option == "option_a" and self._tr_length_fixed is None:
                 return TurboTRConfig()
             kwargs = dict(
@@ -192,6 +198,8 @@ class TurboENNDesigner(_TurboENNDesigner):
                     radial_mode=self._radial_mode,
                     shape_period=self._shape_period,
                     shape_ema=self._shape_ema,
+                    shape_jitter=self._shape_jitter,
+                    shape_kappa_max=self._shape_kappa_max,
                     rho_bad=self._rho_bad,
                     rho_good=self._rho_good,
                     gamma_down=self._gamma_down,

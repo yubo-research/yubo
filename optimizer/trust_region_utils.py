@@ -29,6 +29,7 @@ from optimizer.trust_region_math import (
     _mahalanobis_sq_from_inv,
     _normalize_weights,
     _ray_scale_to_unit_box,
+    _symmetric_spd_factor,
     _trace_normalize,
 )
 from optimizer.trust_region_sampling_utils import (
@@ -379,6 +380,18 @@ class _MetricGeometryModel:
             return self._cached_cov_inv
         self._cached_cov_inv = np.linalg.inv(self.covariance_matrix(jitter=jitter))
         return self._cached_cov_inv
+
+    def restricted_covariance(self, indices: np.ndarray, *, jitter: float) -> np.ndarray:
+        idx = np.asarray(indices, dtype=np.int64).reshape(-1)
+        if idx.size <= 0:
+            raise ValueError("indices must be non-empty")
+        metric = self.covariance_inverse(jitter=jitter)
+        metric_sub = _ensure_spd(np.asarray(metric[np.ix_(idx, idx)], dtype=float), jitter=jitter)
+        cov_sub = np.linalg.inv(metric_sub)
+        return _ensure_spd(cov_sub, jitter=jitter)
+
+    def restricted_factor(self, indices: np.ndarray, *, jitter: float) -> np.ndarray:
+        return _symmetric_spd_factor(self.restricted_covariance(indices, jitter=jitter), jitter=jitter)
 
     def mahalanobis_sq(self, delta: np.ndarray, *, jitter: float) -> np.ndarray:
         if self.covmat == "low_rank":

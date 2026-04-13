@@ -66,6 +66,9 @@ def _sample_box_perturbations(
         if sobol_engine is None:
             raise ValueError("sobol_engine required for CandidateRV.SOBOL")
         samples = _draw_sobol_prefix(sobol_engine, int(num_candidates))
+        if samples.ndim != 2 or samples.shape[1] < lb_array.size:
+            raise ValueError(f"sobol_engine dimension too small for box perturbations: need {lb_array.size}, got {samples.shape}")
+        samples = np.asarray(samples[:, : lb_array.size], dtype=float)
         return lb_array + (ub_array - lb_array) * samples
     return lb_array + (ub_array - lb_array) * rng.uniform(0.0, 1.0, size=(num_candidates, lb_array.size))
 
@@ -108,16 +111,21 @@ def _generate_block_raasp_candidates(
 def _apply_block_raasp_mask(
     candidates: np.ndarray,
     *,
+    x_center: np.ndarray,
     rng: Any,
     candidate_rv: CandidateRV,
     sobol_engine: Any | None,
     block_slices: tuple[tuple[int, int], ...],
     block_prob: float,
 ) -> np.ndarray:
+    _ = candidate_rv, sobol_engine
     x = np.asarray(candidates, dtype=float).copy()
     if x.ndim != 2:
         raise ValueError(f"candidates must be 2D, got {x.shape}")
     num_candidates, num_dim = x.shape
+    center = np.asarray(x_center, dtype=float).reshape(-1)
+    if center.shape != (num_dim,):
+        raise ValueError((center.shape, num_dim))
     if len(block_slices) <= 0:
         return x
     mask = _sample_block_mask(
@@ -127,17 +135,10 @@ def _apply_block_raasp_mask(
         block_slices=block_slices,
         block_prob=block_prob,
     )
-    pert = _sample_box_perturbations(
-        np.zeros(num_dim, dtype=float),
-        np.ones(num_dim, dtype=float),
-        int(num_candidates),
-        rng=rng,
-        candidate_rv=candidate_rv,
-        sobol_engine=sobol_engine,
-    )
+    masked = np.tile(center, (num_candidates, 1))
     if np.any(mask):
-        x[mask] = pert[mask]
-    return x
+        masked[mask] = x[mask]
+    return masked
 
 
 def _sample_block_mask(
@@ -160,6 +161,55 @@ def _sample_block_mask(
             start, end = block_slices[int(j)]
             mask[i, int(start) : int(end)] = True
     return mask
+
+
+def _sample_block_groups(
+    *,
+    num_candidates: int,
+    rng: Any,
+    block_slices: tuple[tuple[int, int], ...],
+    block_prob: float,
+) -> dict[tuple[int, ...], np.ndarray]:
+    num_blocks = int(len(block_slices))
+    if num_blocks <= 0:
+        raise ValueError("block_slices must be non-empty")
+    prob_perturb = float(min(max(block_prob, 0.0), 1.0))
+    ks = np.maximum(rng.binomial(num_blocks, prob_perturb, size=num_candidates), 1)
+    groups: dict[tuple[int, ...], list[int]] = {}
+    for i in range(int(num_candidates)):
+        block_idx = tuple(sorted(int(j) for j in rng.choice(num_blocks, size=int(ks[i]), replace=False)))
+        groups.setdefault(block_idx, []).append(i)
+    return {key: np.asarray(rows, dtype=np.int64) for key, rows in groups.items()}
+
+
+def _block_indices_from_group(
+    block_slices: tuple[tuple[int, int], ...],
+    block_group: tuple[int, ...],
+) -> np.ndarray:
+    parts = [np.arange(int(block_slices[j][0]), int(block_slices[j][1]), dtype=np.int64) for j in block_group]
+    if not parts:
+        return np.zeros((0,), dtype=np.int64)
+    return np.concatenate(parts)
+
+
+def _sample_centered_box_points(
+    num_candidates: int,
+    num_dim: int,
+    *,
+    rng: Any,
+    candidate_rv: CandidateRV,
+    sobol_engine: Any | None,
+) -> np.ndarray:
+    lb = -0.5 * np.ones(int(num_dim), dtype=float)
+    ub = 0.5 * np.ones(int(num_dim), dtype=float)
+    return _sample_box_perturbations(
+        lb,
+        ub,
+        int(num_candidates),
+        rng=rng,
+        candidate_rv=candidate_rv,
+        sobol_engine=sobol_engine,
+    )
 
 
 def _generate_raasp_candidates_fast_uniform(

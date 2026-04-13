@@ -206,6 +206,72 @@ def test_turbo_enn_fit_forwards_fit_and_fixed_length_options(monkeypatch):
     assert calls[0]["num_keep"] == 8000
 
 
+def test_turbo_enn_fit_forwards_ellipsoid_option_surface(monkeypatch):
+    from optimizer import designer_registry as dr
+
+    calls = []
+
+    def fake_turbo_enn(ctx, **kw):
+        calls.append(kw)
+        return kw
+
+    monkeypatch.setattr(dr, "_turbo_enn", fake_turbo_enn)
+    monkeypatch.setattr(dr, "_turbo_enn_ext", fake_turbo_enn)
+    ctx = dr._SimpleContext(
+        _MockPolicy(),
+        1,
+        None,
+        num_keep=None,
+        keep_style="trailing",
+        num_keep_val=None,
+        init_yubo_default=1,
+        init_ax_default=1,
+        default_num_X_samples=64,
+        env_conf=None,
+    )
+
+    out = dr._d_turbo_enn_fit(
+        ctx,
+        {
+            "acq_type": "thompson",
+            "geometry": "enn_ellip",
+            "covmat": "low_rank",
+            "rank": 10,
+            "pc_rotation_mode": "low_rank",
+            "pc_rank": 4,
+            "p_raasp": 0.3,
+            "radial_mode": "boundary",
+            "shape_period": 7,
+            "shape_ema": 0.4,
+            "shape_jitter": 1e-5,
+            "shape_kappa_max": 5e3,
+            "rho_bad": 0.2,
+            "rho_good": 0.8,
+            "gamma_down": 0.4,
+            "gamma_up": 2.5,
+            "boundary_tol": 0.05,
+        },
+    )
+
+    assert out["p_raasp"] == pytest.approx(0.3)
+    assert out["radial_mode"] == "boundary"
+    assert out["pc_rotation_mode"] == "low_rank"
+    assert out["pc_rank"] == 4
+    assert out["shape_period"] == 7
+    assert out["shape_ema"] == pytest.approx(0.4)
+    assert out["shape_jitter"] == pytest.approx(1e-5)
+    assert out["shape_kappa_max"] == pytest.approx(5e3)
+    assert out["rho_bad"] == pytest.approx(0.2)
+    assert out["rho_good"] == pytest.approx(0.8)
+    assert out["gamma_down"] == pytest.approx(0.4)
+    assert out["gamma_up"] == pytest.approx(2.5)
+    assert out["boundary_tol"] == pytest.approx(0.05)
+    assert calls[0]["shape_jitter"] == pytest.approx(1e-5)
+    assert calls[0]["shape_kappa_max"] == pytest.approx(5e3)
+    assert calls[0]["pc_rotation_mode"] == "low_rank"
+    assert calls[0]["pc_rank"] == 4
+
+
 def test_turbo_enn_designer_ext_accepts_multi_region_knobs():
     from optimizer.turbo_enn_designer_ext import TurboENNDesigner
 
@@ -222,6 +288,8 @@ def test_turbo_enn_designer_ext_accepts_multi_region_knobs():
         tr_length_fixed=1.6,
         p_raasp=0.3,
         radial_mode="boundary",
+        shape_jitter=1e-5,
+        shape_kappa_max=5e3,
     )
 
     assert designer._pc_rotation_mode == "full"
@@ -229,6 +297,8 @@ def test_turbo_enn_designer_ext_accepts_multi_region_knobs():
     assert designer._tr_length_fixed == pytest.approx(1.6)
     assert designer._p_raasp == pytest.approx(0.3)
     assert designer._radial_mode == "boundary"
+    assert designer._shape_jitter == pytest.approx(1e-5)
+    assert designer._shape_kappa_max == pytest.approx(5e3)
 
 
 def test_turbo_enn_multi_forwards_region_rng_and_richer_knobs(monkeypatch):

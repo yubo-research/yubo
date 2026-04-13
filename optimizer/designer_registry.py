@@ -633,7 +633,20 @@ def _d_turbo_enn_fit(ctx: _SimpleContext, opts: dict):
             "geometry",
             "covmat",
             "rank",
+            "pc_rotation_mode",
+            "pc_rank",
             "update_option",
+            "p_raasp",
+            "radial_mode",
+            "shape_period",
+            "shape_ema",
+            "shape_jitter",
+            "shape_kappa_max",
+            "rho_bad",
+            "rho_good",
+            "gamma_down",
+            "gamma_up",
+            "boundary_tol",
             "num_candidates",
             "num_fit_samples",
             "num_fit_candidates",
@@ -682,6 +695,18 @@ def _d_turbo_enn_fit(ctx: _SimpleContext, opts: dict):
     rank = None
     if "rank" in opts:
         rank = _optional_int(opts, "rank", 1, example="turbo-enn-fit/rank=10")
+    pc_rotation_mode = None
+    if "pc_rotation_mode" in opts:
+        pc_rotation_mode = _optional_str_in(
+            opts,
+            "pc_rotation_mode",
+            "full",
+            {"full", "low_rank"},
+            example="turbo-enn-fit/pc_rotation_mode=full",
+        )
+    pc_rank = None
+    if "pc_rank" in opts:
+        pc_rank = _optional_int(opts, "pc_rank", 1, example="turbo-enn-fit/pc_rank=5")
     update_option = _optional_str_in(
         opts,
         "update_option",
@@ -689,6 +714,28 @@ def _d_turbo_enn_fit(ctx: _SimpleContext, opts: dict):
         {"option_a", "option_b", "option_c"},
         example="turbo-enn-fit/update_option=option_c",
     )
+    p_raasp = _optional_number(opts, "p_raasp", 0.2, example="turbo-enn-fit/p_raasp=0.2")
+    radial_mode = _optional_str_in(
+        opts,
+        "radial_mode",
+        "ball_uniform",
+        {"ball_uniform", "boundary"},
+        example="turbo-enn-fit/radial_mode=ball_uniform",
+    )
+    shape_period = _optional_int(opts, "shape_period", 5, example="turbo-enn-fit/shape_period=5")
+    shape_ema = _optional_number(opts, "shape_ema", 0.2, example="turbo-enn-fit/shape_ema=0.2")
+    shape_jitter = _optional_number(opts, "shape_jitter", 1e-6, example="turbo-enn-fit/shape_jitter=1e-6")
+    shape_kappa_max = _optional_number(
+        opts,
+        "shape_kappa_max",
+        1e4,
+        example="turbo-enn-fit/shape_kappa_max=1e4",
+    )
+    rho_bad = _optional_number(opts, "rho_bad", 0.25, example="turbo-enn-fit/rho_bad=0.25")
+    rho_good = _optional_number(opts, "rho_good", 0.75, example="turbo-enn-fit/rho_good=0.75")
+    gamma_down = _optional_number(opts, "gamma_down", 0.5, example="turbo-enn-fit/gamma_down=0.5")
+    gamma_up = _optional_number(opts, "gamma_up", 2.0, example="turbo-enn-fit/gamma_up=2.0")
+    boundary_tol = _optional_number(opts, "boundary_tol", 0.1, example="turbo-enn-fit/boundary_tol=0.1")
     num_candidates = None
     if "num_candidates" in opts:
         num_candidates = _optional_int(opts, "num_candidates", 0, example="turbo-enn-fit/num_candidates=64")
@@ -738,7 +785,20 @@ def _d_turbo_enn_fit(ctx: _SimpleContext, opts: dict):
         tr_geometry=geometry,
         covmat=covmat,
         metric_rank=rank,
+        pc_rotation_mode=pc_rotation_mode,
+        pc_rank=pc_rank,
         update_option=update_option,
+        p_raasp=p_raasp,
+        radial_mode=radial_mode,
+        shape_period=shape_period,
+        shape_ema=shape_ema,
+        shape_jitter=shape_jitter,
+        shape_kappa_max=shape_kappa_max,
+        rho_bad=rho_bad,
+        rho_good=rho_good,
+        gamma_down=gamma_down,
+        gamma_up=gamma_up,
+        boundary_tol=boundary_tol,
         module_tr=module_tr,
         module_tr_block_prob=module_tr_block_prob,
         module_tr_min_num_params=module_tr_min_num_params,
@@ -1268,12 +1328,105 @@ _DESIGNER_OPTION_SPECS: dict[str, list[DesignerOptionSpec]] = {
             example="turbo-enn-fit/acq_type=ucb/covmat=low_rank/rank=10",
         ),
         DesignerOptionSpec(
+            name="pc_rotation_mode",
+            required=False,
+            value_type="str",
+            description="Optional LABCAT-style principal-component rotation mode.",
+            example="turbo-enn-fit/acq_type=ucb/pc_rotation_mode=low_rank",
+            allowed_values=("full", "low_rank"),
+        ),
+        DesignerOptionSpec(
+            name="pc_rank",
+            required=False,
+            value_type="int",
+            description="Optional rank cap for low-rank PC rotation.",
+            example="turbo-enn-fit/acq_type=ucb/pc_rotation_mode=low_rank/pc_rank=10",
+        ),
+        DesignerOptionSpec(
             name="update_option",
             required=False,
             value_type="str",
             description="Optional ellipsoidal length-update policy (default: option_a).",
             example="turbo-enn-fit/acq_type=ucb/update_option=option_c",
             allowed_values=("option_a", "option_b", "option_c"),
+        ),
+        DesignerOptionSpec(
+            name="p_raasp",
+            required=False,
+            value_type="float",
+            description="Optional ellipsoidal RAASP sparsity probability.",
+            example="turbo-enn-fit/acq_type=ucb/p_raasp=0.2",
+        ),
+        DesignerOptionSpec(
+            name="radial_mode",
+            required=False,
+            value_type="str",
+            description="Optional ellipsoidal radial sampling mode.",
+            example="turbo-enn-fit/acq_type=ucb/radial_mode=ball_uniform",
+            allowed_values=("ball_uniform", "boundary"),
+        ),
+        DesignerOptionSpec(
+            name="shape_period",
+            required=False,
+            value_type="int",
+            description="Optional ellipsoidal geometry refresh period.",
+            example="turbo-enn-fit/acq_type=ucb/shape_period=5",
+        ),
+        DesignerOptionSpec(
+            name="shape_ema",
+            required=False,
+            value_type="float",
+            description="Optional ellipsoidal geometry EMA factor.",
+            example="turbo-enn-fit/acq_type=ucb/shape_ema=0.2",
+        ),
+        DesignerOptionSpec(
+            name="shape_jitter",
+            required=False,
+            value_type="float",
+            description="Optional SPD jitter used in ellipsoidal geometry updates.",
+            example="turbo-enn-fit/acq_type=ucb/shape_jitter=1e-6",
+        ),
+        DesignerOptionSpec(
+            name="shape_kappa_max",
+            required=False,
+            value_type="float",
+            description="Optional maximum condition-number cap for ellipsoidal geometry.",
+            example="turbo-enn-fit/acq_type=ucb/shape_kappa_max=1e4",
+        ),
+        DesignerOptionSpec(
+            name="rho_bad",
+            required=False,
+            value_type="float",
+            description="Optional option_c shrink threshold.",
+            example="turbo-enn-fit/acq_type=ucb/rho_bad=0.25",
+        ),
+        DesignerOptionSpec(
+            name="rho_good",
+            required=False,
+            value_type="float",
+            description="Optional option_c grow threshold.",
+            example="turbo-enn-fit/acq_type=ucb/rho_good=0.75",
+        ),
+        DesignerOptionSpec(
+            name="gamma_down",
+            required=False,
+            value_type="float",
+            description="Optional option_c shrink multiplier.",
+            example="turbo-enn-fit/acq_type=ucb/gamma_down=0.5",
+        ),
+        DesignerOptionSpec(
+            name="gamma_up",
+            required=False,
+            value_type="float",
+            description="Optional option_c grow multiplier.",
+            example="turbo-enn-fit/acq_type=ucb/gamma_up=2.0",
+        ),
+        DesignerOptionSpec(
+            name="boundary_tol",
+            required=False,
+            value_type="float",
+            description="Optional ellipsoidal boundary-hit tolerance.",
+            example="turbo-enn-fit/acq_type=ucb/boundary_tol=0.1",
         ),
         DesignerOptionSpec(
             name="fixed_length",
