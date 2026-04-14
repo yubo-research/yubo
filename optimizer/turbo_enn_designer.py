@@ -278,5 +278,4 @@ class TurboENNDesigner(Designer):
     def _make_policy(self, x):
         policy = self._policy.clone()
         policy.set_params(x)
-        setattr(policy, "_turbo_enn_eval_reuse_ok", True)
         return policy
