@@ -27,7 +27,6 @@ from common.experiment_seeds import (
 from common.seed_all import seed_all
 from experiments.bo_console import BOConsoleCollector, print_bo_footer
 from experiments.experiment_util import ensure_parent
-from problems.environment_spec import parse_tag_options
 from problems.problem import Problem, build_problem
 
 
@@ -466,13 +465,11 @@ def mk_replicates(config: ExperimentConfig) -> list[RunConfig]:
             continue
         else:
             problem_seed = problem_seed_from_rep_index(i_rep)
-            _tag, frozen_noise, _from_pixels = parse_tag_options(str(config.env_tag), None)
             problem = build_problem(
                 config.env_tag,
                 config.policy_tag,
                 problem_seed=problem_seed,
                 noise_seed_0=noise_seed_0_from_problem_seed(problem_seed),
-                frozen_noise=frozen_noise,
             )
             run_configs.append(
                 RunConfig(

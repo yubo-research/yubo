@@ -255,6 +255,7 @@ def test_turbo_enn_fit_forwards_ellipsoid_option_surface(monkeypatch):
 
     cfg = out["config"]
     tr = cfg.trust_region
+    assert cfg.candidate_rv is None
     assert tr.p_raasp == pytest.approx(0.3)
     assert tr.radial_mode == "boundary"
     assert tr.shape_period == 7
@@ -641,6 +642,7 @@ def test_turbo_enn_p_metric_forwards_geometry_and_disables_fit(monkeypatch):
         },
     )
     cfg = out["config"]
+    assert cfg.candidate_rv is None
     assert cfg.acq_type == "pareto"
     assert cfg.num_fit_samples is None
     assert cfg.num_fit_candidates is None

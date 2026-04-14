@@ -840,7 +840,7 @@ def _build_turbo_enn_p_with_opts(
         {"k", "candidate_rv", "geometry", "covmat", "rank", "update_option", "use_accel", "accel"},
     )
     k = _optional_int(opts, "k", 10, example=f"{name}/k=16")
-    candidate_rv = _parse_candidate_rv(opts, name=name, default="uniform")
+    candidate_rv = _parse_candidate_rv(opts, name=name, default="sobol") if "candidate_rv" in opts else None
     geometry, covmat, rank, update_option = _parse_tr_core(
         opts,
         name=name,
@@ -933,7 +933,7 @@ def _d_turbo_enn_fit(ctx: _SimpleContext, opts: dict):
         example="turbo-enn-fit/acq_type=ucb",
     )
     k = _optional_int(opts, "k", 10, example="turbo-enn-fit/k=16")
-    candidate_rv = _parse_candidate_rv(opts, name="turbo-enn-fit", default="sobol")
+    candidate_rv = _parse_candidate_rv(opts, name="turbo-enn-fit", default="sobol") if "candidate_rv" in opts else None
     geometry, covmat, rank, update_option = _parse_tr_core(
         opts,
         name="turbo-enn-fit",
@@ -1306,8 +1306,8 @@ _DESIGNER_OPTION_SPECS: dict[str, list[DesignerOptionSpec]] = {
             name="candidate_rv",
             required=False,
             value_type="str",
-            description="Optional candidate sampler override (default: uniform).",
-            example="turbo-enn-p/candidate_rv=uniform",
+            description="Optional candidate sampler override (default: legacy auto, usually sobol for small policies).",
+            example="turbo-enn-p/candidate_rv=sobol",
             allowed_values=("uniform", "sobol", "gpu_uniform"),
         ),
     ]
@@ -1328,8 +1328,8 @@ _DESIGNER_OPTION_SPECS: dict[str, list[DesignerOptionSpec]] = {
             name="candidate_rv",
             required=False,
             value_type="str",
-            description="Optional candidate sampler override (default: uniform).",
-            example="turbo_py-enn-p/candidate_rv=uniform",
+            description="Optional candidate sampler override (default: legacy auto, usually sobol for small policies).",
+            example="turbo_py-enn-p/candidate_rv=sobol",
             allowed_values=("uniform", "sobol", "gpu_uniform"),
         ),
     ]
@@ -1358,7 +1358,7 @@ _DESIGNER_OPTION_SPECS: dict[str, list[DesignerOptionSpec]] = {
             name="candidate_rv",
             required=False,
             value_type="str",
-            description="Optional candidate sampler override (default: sobol).",
+            description="Optional candidate sampler override (default: legacy auto, usually sobol for small policies).",
             example="turbo-enn-fit/acq_type=ucb/candidate_rv=sobol",
             allowed_values=("uniform", "sobol", "gpu_uniform"),
         ),

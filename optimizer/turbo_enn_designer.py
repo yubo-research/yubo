@@ -32,7 +32,7 @@ def _create_optimizer_auto(bounds, config, rng):
     try:
         from enn import create_optimizer
     except ImportError as exc:
-        # Modal/remote images may not have enn_rust; fall back to Python backend.
+        # Modal/remote images may not have enn_rust; fall back to Python optimizer.
         print(f"[TurboENNDesigner] Rust backend unavailable ({exc}); falling back to Python backend")
         return _create_optimizer_py(bounds=bounds, config=config, rng=rng)
 

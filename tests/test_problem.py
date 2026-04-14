@@ -115,6 +115,30 @@ def test_build_problem_with_noise():
     assert problem.env.frozen_noise is True
 
 
+@pytest.mark.parametrize(
+    ("env_tag", "expected_frozen_noise"),
+    [
+        ("f:sphere-2d", False),
+        ("f:sphere-2d:fn", True),
+        ("cheetah", False),
+        ("cheetah:fn", True),
+    ],
+)
+def test_build_problem_derives_noise_mode_from_env_tag(env_tag, expected_frozen_noise):
+    from problems.problem import build_problem
+
+    policy_tag = "mlp-32-16" if env_tag.startswith("cheetah") else "pure-function"
+    problem = build_problem(env_tag, policy_tag=policy_tag)
+    assert problem.env.frozen_noise is expected_frozen_noise
+
+
+def test_build_problem_frozen_noise_override_wins():
+    from problems.problem import build_problem
+
+    problem = build_problem("f:sphere-2d", policy_tag="pure-function", frozen_noise=True)
+    assert problem.env.frozen_noise is True
+
+
 def test_build_problem_from_pixels_override():
     from problems.problem import build_problem
 

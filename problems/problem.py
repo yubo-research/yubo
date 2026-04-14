@@ -123,7 +123,7 @@ def build_problem(
     problem_seed: int | None = None,
     noise_seed_0: int | None = None,
     noise_level: float | None = None,
-    frozen_noise: bool = True,
+    frozen_noise: bool | None = None,
     from_pixels: bool | None = None,
     pixels_only: bool | None = None,
 ) -> Problem:
@@ -136,7 +136,8 @@ def build_problem(
         problem_seed: Seed for problem randomization (fixed per optimization run).
         noise_seed_0: Initial noise seed for denoising runs.
         noise_level: Optional noise level for pure function environments.
-        frozen_noise: Whether noise seeds are frozen across rounds.
+        frozen_noise: Whether noise seeds are frozen across rounds. If omitted,
+            derive it from the env tag suffix, e.g. `:fn`.
         from_pixels: Override spec's from_pixels setting for pixel observations.
         pixels_only: Override spec's pixels_only setting.
 
@@ -145,6 +146,10 @@ def build_problem(
     """
     if policy_tag is None:
         raise ValueError("Missing required argument 'policy_tag'. Policy inference from env_tag is disabled.")
+
+    _tag, parsed_frozen_noise, _from_pixels = parse_tag_options(env_tag, from_pixels)
+    if frozen_noise is None:
+        frozen_noise = parsed_frozen_noise
 
     spec = get_environment_spec(env_tag)
 
