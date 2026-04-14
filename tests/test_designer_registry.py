@@ -155,10 +155,10 @@ def test_turbo_enn_fit_accepts_optional_k(monkeypatch):
     )
 
     out = dr._d_turbo_enn_fit(ctx, {"acq_type": "ucb", "k": 16, "candidate_rv": "sobol"})
-    assert out["k"] == 16
-    assert out["candidate_rv"] == "sobol"
-    assert calls[0]["k"] == 16
-    assert calls[0]["candidate_rv"] == "sobol"
+    assert out["config"].k == 16
+    assert out["config"].candidate_rv == "sobol"
+    assert calls[0]["config"].k == 16
+    assert calls[0]["config"].candidate_rv == "sobol"
 
 
 def test_turbo_enn_fit_forwards_fit_and_fixed_length_options(monkeypatch):
@@ -200,11 +200,12 @@ def test_turbo_enn_fit_forwards_fit_and_fixed_length_options(monkeypatch):
         },
     )
 
-    assert out["num_candidates"] == 64
-    assert out["num_fit_samples"] == 10
-    assert out["num_fit_candidates"] == 100
-    assert out["fixed_length"] == pytest.approx(1.6)
-    assert calls[0]["num_keep"] == 8000
+    cfg = out["config"]
+    assert cfg.num_candidates == 64
+    assert cfg.num_fit_samples == 10
+    assert cfg.num_fit_candidates == 100
+    assert cfg.trust_region.fixed_length == pytest.approx(1.6)
+    assert calls[0]["config"].num_keep == 8000
 
 
 def test_turbo_enn_fit_forwards_ellipsoid_option_surface(monkeypatch):
@@ -252,19 +253,21 @@ def test_turbo_enn_fit_forwards_ellipsoid_option_surface(monkeypatch):
         },
     )
 
-    assert out["p_raasp"] == pytest.approx(0.3)
-    assert out["radial_mode"] == "boundary"
-    assert out["shape_period"] == 7
-    assert out["shape_ema"] == pytest.approx(0.4)
-    assert out["shape_jitter"] == pytest.approx(1e-5)
-    assert out["shape_kappa_max"] == pytest.approx(5e3)
-    assert out["rho_bad"] == pytest.approx(0.2)
-    assert out["rho_good"] == pytest.approx(0.8)
-    assert out["gamma_down"] == pytest.approx(0.4)
-    assert out["gamma_up"] == pytest.approx(2.5)
-    assert out["boundary_tol"] == pytest.approx(0.05)
-    assert calls[0]["shape_jitter"] == pytest.approx(1e-5)
-    assert calls[0]["shape_kappa_max"] == pytest.approx(5e3)
+    cfg = out["config"]
+    tr = cfg.trust_region
+    assert tr.p_raasp == pytest.approx(0.3)
+    assert tr.radial_mode == "boundary"
+    assert tr.shape_period == 7
+    assert tr.shape_ema == pytest.approx(0.4)
+    assert tr.shape_jitter == pytest.approx(1e-5)
+    assert tr.shape_kappa_max == pytest.approx(5e3)
+    assert tr.rho_bad == pytest.approx(0.2)
+    assert tr.rho_good == pytest.approx(0.8)
+    assert tr.gamma_down == pytest.approx(0.4)
+    assert tr.gamma_up == pytest.approx(2.5)
+    assert tr.boundary_tol == pytest.approx(0.05)
+    assert calls[0]["config"].trust_region.shape_jitter == pytest.approx(1e-5)
+    assert calls[0]["config"].trust_region.shape_kappa_max == pytest.approx(5e3)
 
 
 def test_turbo_enn_designer_ext_accepts_multi_region_knobs():
@@ -296,12 +299,13 @@ def test_turbo_enn_multi_forwards_region_rng_and_richer_knobs(monkeypatch):
     import numpy as np
 
     from optimizer import multi_turbo_enn_designer as mtd
+    from optimizer.turbo_enn_designer_ext import TurboENNTrustRegionSpec
 
     captured: list[tuple[np.random.Generator | None, dict]] = []
 
     class _Child:
-        def __init__(self, _policy, *, rng=None, **kwargs):
-            captured.append((rng, kwargs))
+        def __init__(self, _policy, *, config=None, **kwargs):
+            captured.append((config, kwargs))
 
         def best_datum(self):
             return None
@@ -319,9 +323,27 @@ def test_turbo_enn_multi_forwards_region_rng_and_richer_knobs(monkeypatch):
             region=mtd.TurboENNRegionConfig(
                 turbo_mode="turbo-enn",
                 acq_type="ucb",
-                tr_length_fixed=1.6,
-                p_raasp=0.3,
-                radial_mode="boundary",
+                trust_region=TurboENNTrustRegionSpec(
+                    tr_type="turbo",
+                    tr_geometry="box",
+                    covmat=None,
+                    metric_rank=None,
+                    fixed_length=1.6,
+                    update_option="option_a",
+                    p_raasp=0.3,
+                    radial_mode="boundary",
+                    shape_period=5,
+                    shape_ema=0.2,
+                    shape_jitter=1e-6,
+                    shape_kappa_max=1e4,
+                    rho_bad=0.25,
+                    rho_good=0.75,
+                    gamma_down=0.5,
+                    gamma_up=2.0,
+                    boundary_tol=0.1,
+                    use_accel=False,
+                    accel=None,
+                ),
             ),
         ),
         rng=np.random.default_rng(0),
@@ -329,11 +351,12 @@ def test_turbo_enn_multi_forwards_region_rng_and_richer_knobs(monkeypatch):
     designer._init_regions([], 1)
 
     assert len(captured) == 2
-    for rng, kwargs in captured:
-        assert isinstance(rng, np.random.Generator)
-        assert kwargs["tr_length_fixed"] == pytest.approx(1.6)
-        assert kwargs["p_raasp"] == pytest.approx(0.3)
-        assert kwargs["radial_mode"] == "boundary"
+    for config, kwargs in captured:
+        assert isinstance(config.rng, np.random.Generator)
+        assert config.trust_region.fixed_length == pytest.approx(1.6)
+        assert config.trust_region.p_raasp == pytest.approx(0.3)
+        assert config.trust_region.radial_mode == "boundary"
+        assert kwargs == {}
 
 
 def test_turbo_enn_fit_rejects_unknown_option():
@@ -403,11 +426,12 @@ def test_turbo_enn_fit_plain_does_not_inject_metric_options(monkeypatch):
     )
 
     out = dr._d_turbo_enn_fit(ctx, {"acq_type": "thompson"})
-    assert out["tr_geometry"] == "box"
-    assert out["covmat"] is None
-    assert out["metric_rank"] is None
-    assert calls[0]["covmat"] is None
-    assert calls[0]["metric_rank"] is None
+    cfg = out["config"]
+    assert cfg.trust_region.tr_geometry == "box"
+    assert cfg.trust_region.covmat is None
+    assert cfg.trust_region.metric_rank is None
+    assert calls[0]["config"].trust_region.covmat is None
+    assert calls[0]["config"].trust_region.metric_rank is None
 
 
 def test_turbo_enn_fit_accepts_identity_geometry(monkeypatch):
@@ -435,8 +459,71 @@ def test_turbo_enn_fit_accepts_identity_geometry(monkeypatch):
     )
 
     out = dr._d_turbo_enn_fit(ctx, {"acq_type": "ucb", "geometry": "enn_iso"})
-    assert out["tr_geometry"] == "enn_iso"
-    assert calls[0]["tr_geometry"] == "enn_iso"
+    assert out["config"].trust_region.tr_geometry == "enn_iso"
+    assert calls[0]["config"].trust_region.tr_geometry == "enn_iso"
+
+
+def test_turbo_enn_fit_non_box_defaults_to_accel(monkeypatch):
+    from optimizer import designer_registry as dr
+
+    calls = []
+
+    def fake_turbo_enn(ctx, **kw):
+        calls.append(kw)
+        return kw
+
+    monkeypatch.setattr(dr, "_turbo_enn", fake_turbo_enn)
+    monkeypatch.setattr(dr, "_turbo_enn_ext", fake_turbo_enn)
+    ctx = dr._SimpleContext(
+        _MockPolicy(),
+        1,
+        None,
+        num_keep=None,
+        keep_style="trailing",
+        num_keep_val=None,
+        init_yubo_default=1,
+        init_ax_default=1,
+        default_num_X_samples=64,
+        env_conf=None,
+    )
+
+    out = dr._d_turbo_enn_fit(ctx, {"acq_type": "ucb", "geometry": "enn_ellip"})
+    assert out["config"].trust_region.use_accel is True
+    assert out["config"].trust_region.accel is None
+    assert calls[0]["config"].trust_region.use_accel is True
+
+
+def test_turbo_enn_fit_forwards_explicit_accel_override(monkeypatch):
+    from optimizer import designer_registry as dr
+
+    calls = []
+
+    def fake_turbo_enn(ctx, **kw):
+        calls.append(kw)
+        return kw
+
+    monkeypatch.setattr(dr, "_turbo_enn", fake_turbo_enn)
+    monkeypatch.setattr(dr, "_turbo_enn_ext", fake_turbo_enn)
+    ctx = dr._SimpleContext(
+        _MockPolicy(),
+        1,
+        None,
+        num_keep=None,
+        keep_style="trailing",
+        num_keep_val=None,
+        init_yubo_default=1,
+        init_ax_default=1,
+        default_num_X_samples=64,
+        env_conf=None,
+    )
+
+    out = dr._d_turbo_enn_fit(
+        ctx,
+        {"acq_type": "thompson", "geometry": "enn_ellip", "use_accel": True, "accel": "triton"},
+    )
+    assert out["config"].trust_region.use_accel is True
+    assert out["config"].trust_region.accel == "triton"
+    assert calls[0]["config"].trust_region.accel == "triton"
 
 
 def test_turbo_enn_fit_rejects_gradient_identity_geometry(monkeypatch):
@@ -553,14 +640,15 @@ def test_turbo_enn_p_metric_forwards_geometry_and_disables_fit(monkeypatch):
             "rank": 10,
         },
     )
-    assert out["acq_type"] == "pareto"
-    assert out["num_fit_samples"] is None
-    assert out["num_fit_candidates"] is None
-    assert out["tr_geometry"] == "enn_metr"
-    assert out["covmat"] == "low_rank"
-    assert out["metric_rank"] == 10
-    assert calls[0]["num_fit_samples"] is None
-    assert calls[0]["num_fit_candidates"] is None
+    cfg = out["config"]
+    assert cfg.acq_type == "pareto"
+    assert cfg.num_fit_samples is None
+    assert cfg.num_fit_candidates is None
+    assert cfg.trust_region.tr_geometry == "enn_metr"
+    assert cfg.trust_region.covmat == "low_rank"
+    assert cfg.trust_region.metric_rank == 10
+    assert calls[0]["config"].num_fit_samples is None
+    assert calls[0]["config"].num_fit_candidates is None
 
 
 def test_turbo_enn_p_ellipsoid_forwards_update_option(monkeypatch):
@@ -595,10 +683,11 @@ def test_turbo_enn_p_ellipsoid_forwards_update_option(monkeypatch):
             "update_option": "option_c",
         },
     )
-    assert out["tr_geometry"] == "enn_ellip"
-    assert out["covmat"] == "low_rank"
-    assert out["update_option"] == "option_c"
-    assert calls[0]["update_option"] == "option_c"
+    cfg = out["config"]
+    assert cfg.trust_region.tr_geometry == "enn_ellip"
+    assert cfg.trust_region.covmat == "low_rank"
+    assert cfg.trust_region.update_option == "option_c"
+    assert calls[0]["config"].trust_region.update_option == "option_c"
 
 
 def test_turbo_enn_multi_ext_forwards_multi_region_options(monkeypatch):
@@ -667,9 +756,9 @@ def test_turbo_py_enn_p_forces_python(monkeypatch):
     )
 
     out = dr._d_turbo_py_enn_p(ctx, {"geometry": "grad_metr"})
-    assert out["tr_geometry"] == "grad_metr"
-    assert out["use_python"] is True
-    assert calls[0]["use_python"] is True
+    assert out["config"].trust_region.tr_geometry == "grad_metr"
+    assert out["config"].use_python is True
+    assert calls[0]["config"].use_python is True
 
 
 def test_turbo_enn_fit_metric_forwards_rank(monkeypatch):
@@ -705,7 +794,8 @@ def test_turbo_enn_fit_metric_forwards_rank(monkeypatch):
             "rank": 10,
         },
     )
-    assert out["tr_geometry"] == "enn_metr"
-    assert out["covmat"] == "low_rank"
-    assert out["metric_rank"] == 10
-    assert calls[0]["metric_rank"] == 10
+    cfg = out["config"]
+    assert cfg.trust_region.tr_geometry == "enn_metr"
+    assert cfg.trust_region.covmat == "low_rank"
+    assert cfg.trust_region.metric_rank == 10
+    assert calls[0]["config"].trust_region.metric_rank == 10

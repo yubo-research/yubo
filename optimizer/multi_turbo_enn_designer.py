@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field, replace
 
 import numpy as np
 
@@ -8,7 +8,7 @@ from optimizer.multi_turbo_enn_utils import (
     call_multi_designer,
     load_multi_state,
 )
-from optimizer.turbo_enn_designer_ext import TurboENNDesigner
+from optimizer.turbo_enn_designer_ext import TurboENNDesigner, TurboENNExtConfig
 
 
 @dataclass(frozen=True)
@@ -19,40 +19,13 @@ class MultiTurboHarnessConfig:
     pool_multiplier: int = 2
 
 
-@dataclass(frozen=True)
-class TurboENNRegionConfig:
-    turbo_mode: str
-    num_init: int | None = None
-    k: int | None = None
-    num_keep: int | None = None
-    num_fit_samples: int | None = None
-    num_fit_candidates: int | None = None
-    acq_type: str = "pareto"
-    tr_type: str | None = None
-    tr_geometry: str | None = None
-    covmat: str | None = None
-    metric_rank: int | None = None
-    tr_length_fixed: float | None = None
-    update_option: str = "option_a"
-    p_raasp: float = 0.2
-    radial_mode: str = "ball_uniform"
-    shape_period: int = 5
-    shape_ema: float = 0.2
-    rho_bad: float = 0.25
-    rho_good: float = 0.75
-    gamma_down: float = 0.5
-    gamma_up: float = 2.0
-    boundary_tol: float = 0.1
-    use_y_var: bool = False
-    num_candidates: int | None = None
-    candidate_rv: str | None = None
-    num_metrics: int | None = None
+TurboENNRegionConfig = TurboENNExtConfig
 
 
 @dataclass(frozen=True)
 class MultiTurboENNConfig:
     harness: MultiTurboHarnessConfig
-    region: TurboENNRegionConfig
+    region: TurboENNExtConfig
 
 
 @dataclass
@@ -108,10 +81,7 @@ class MultiTurboENNDesigner:
 
     @property
     def _tr_type(self) -> str | None:
-        return self._config.region.tr_type
-
-    def _region_designer_kwargs(self) -> dict:
-        return asdict(self._config.region)
+        return self._config.region.trust_region.tr_type
 
     def _init_regions(self, data, num_arms: int) -> None:
         _ = num_arms
@@ -121,11 +91,12 @@ class MultiTurboENNDesigner:
         self._state.shared_prefix_len = len(data) if data else 0
         self._region_rngs = []
         self._designers = []
-        designer_kwargs = self._region_designer_kwargs()
+        region_config = self._config.region
         for _ in range(self._num_regions):
             seed = int(self._rng.integers(2**31 - 1))
             child_rng = np.random.default_rng(seed)
-            child_designer = TurboENNDesigner(self._policy, rng=child_rng, **designer_kwargs)
+            child_config = replace(region_config, rng=child_rng)
+            child_designer = TurboENNDesigner(self._policy, config=child_config)
             self._designers.append(child_designer)
             self._region_rngs.append(np.random.default_rng(int(self._rng.integers(2**31 - 1))))
 

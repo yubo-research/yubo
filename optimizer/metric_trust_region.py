@@ -9,13 +9,11 @@ from enn.turbo.config.candidate_rv import CandidateRV
 from enn.turbo.turbo_trust_region import TurboTrustRegion
 
 import optimizer.trust_region_accel as _accel
+from optimizer.trust_region_geometry import _MetricGeometryModel
+from optimizer.trust_region_length_policies import _LengthPolicy
 from optimizer.trust_region_math import _ray_scale_to_unit_box
 from optimizer.trust_region_sampling_utils import _block_indices_from_group, _sample_block_groups, _sample_centered_box_points
-from optimizer.trust_region_utils import (
-    _AxisAlignedStepSampler,
-    _LengthPolicy,
-    _MetricGeometryModel,
-)
+from optimizer.trust_region_utils import _AxisAlignedStepSampler
 
 _GRADIENT_GEOMETRIES = {"grad_metr", "grad_ellip"}
 

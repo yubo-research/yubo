@@ -5,11 +5,15 @@ import pytest
 from enn.turbo.config.candidate_rv import CandidateRV
 
 from optimizer import trust_region_sampling_utils as tr_sampling
-from optimizer import trust_region_utils as tru
+from optimizer.trust_region_geometry import _MetricGeometryModel, _TrueEllipsoidGeometryModel
+from optimizer.trust_region_length_policies import _LengthPolicy, _OptionCLengthPolicy
+from optimizer.trust_region_math import _low_rank_factor, _low_rank_factor_from_cov, _mahalanobis_sq
+from optimizer.trust_region_step_samplers import _TrueEllipsoidStepSampler
+from optimizer.trust_region_utils import _AxisAlignedStepSampler
 
 
 def test_metric_geometry_model_full_mode_paths():
-    model = tru._MetricGeometryModel(num_dim=3, covmat="dense", metric_rank=None)
+    model = _MetricGeometryModel(num_dim=3, covmat="dense", metric_rank=None)
     model.reset()
     assert model.has_geometry is False
 
@@ -28,7 +32,7 @@ def test_metric_geometry_model_full_mode_paths():
 
 
 def test_metric_geometry_model_low_rank_paths():
-    model = tru._MetricGeometryModel(
+    model = _MetricGeometryModel(
         num_dim=4,
         covmat="low_rank",
         metric_rank=2,
@@ -64,7 +68,7 @@ def test_metric_geometry_model_low_rank_paths():
 
 def test_low_rank_factor_from_cov_uses_dominant_eigenspace():
     cov = np.diag([9.0, 3.0, 1.0, 0.5]).astype(float)
-    low_rank = tru._low_rank_factor_from_cov(
+    low_rank = _low_rank_factor_from_cov(
         cov,
         dim=4,
         lam_min=1e-4,
@@ -79,7 +83,7 @@ def test_low_rank_factor_from_cov_uses_dominant_eigenspace():
 
 
 def test_gradient_geometry_low_rank_uses_single_weighting_pass():
-    model = tru._MetricGeometryModel(
+    model = _MetricGeometryModel(
         num_dim=4,
         covmat="low_rank",
         metric_rank=2,
@@ -95,7 +99,7 @@ def test_gradient_geometry_low_rank_uses_single_weighting_pass():
     )
     dy = np.array([1.0, 0.5, 0.25, 0.125], dtype=float)
     weights = np.array([1.0, 2.0, 3.0, 4.0], dtype=float)
-    prepared = tru._prepare_gradient_geometry_inputs(
+    prepared = tr_sampling._prepare_gradient_geometry_inputs(
         delta_x=dx,
         delta_y=dy,
         weights=weights,
@@ -104,7 +108,7 @@ def test_gradient_geometry_low_rank_uses_single_weighting_pass():
     )
     assert prepared is not None
     scaled_dx, norm_weights = prepared
-    expected = tru._low_rank_factor(
+    expected = _low_rank_factor(
         scaled_dx,
         norm_weights,
         dim=4,
@@ -121,7 +125,7 @@ def test_gradient_geometry_low_rank_uses_single_weighting_pass():
 
 
 def test_true_ellipsoid_option_b_reclips_after_ema():
-    model = tru._TrueEllipsoidGeometryModel(
+    model = _TrueEllipsoidGeometryModel(
         num_dim=3,
         covmat="dense",
         metric_rank=None,
@@ -149,8 +153,8 @@ def test_true_ellipsoid_option_b_reclips_after_ema():
 @pytest.mark.parametrize("covmat", ["dense", "low_rank"])
 def test_analytic_gradient_matches_single_sample_gradient_update(covmat):
     grad = np.array([1.0, -0.5, 0.25, 0.0], dtype=float)
-    analytic = tru._MetricGeometryModel(num_dim=4, covmat=covmat, metric_rank=2)
-    generic = tru._MetricGeometryModel(num_dim=4, covmat=covmat, metric_rank=2)
+    analytic = _MetricGeometryModel(num_dim=4, covmat=covmat, metric_rank=2)
+    generic = _MetricGeometryModel(num_dim=4, covmat=covmat, metric_rank=2)
     analytic.set_analytic_gradient(grad)
     generic.set_gradient_geometry(
         grad.reshape(1, -1),
@@ -163,18 +167,18 @@ def test_analytic_gradient_matches_single_sample_gradient_update(covmat):
 
 
 def test_cached_mahalanobis_matches_direct_solve():
-    model = tru._MetricGeometryModel(num_dim=4, covmat="dense", metric_rank=None)
+    model = _MetricGeometryModel(num_dim=4, covmat="dense", metric_rank=None)
     dx = np.eye(4, dtype=float)
     weights = np.ones((4,), dtype=float)
     model.set_geometry(dx, weights)
     delta = np.array([[0.2, -0.1, 0.3, 0.0]], dtype=float)
-    direct = tru._mahalanobis_sq(delta, model.covariance_matrix(jitter=1e-8))
+    direct = _mahalanobis_sq(delta, model.covariance_matrix(jitter=1e-8))
     cached = model.mahalanobis_sq(delta, jitter=1e-8)
     np.testing.assert_allclose(cached, direct, rtol=1e-10, atol=1e-12)
 
 
 def test_metric_geometry_model_build_step_runtime_checks():
-    model = tru._MetricGeometryModel(num_dim=3, covmat="low_rank", metric_rank=2)
+    model = _MetricGeometryModel(num_dim=3, covmat="low_rank", metric_rank=2)
     model.low_rank = types.SimpleNamespace(
         sqrt_alpha=0.1,
         basis=np.zeros((2, 2), dtype=float),
@@ -193,7 +197,7 @@ def test_metric_geometry_model_build_step_runtime_checks():
 
 
 def test_true_ellipsoid_geometry_model_update_and_reset():
-    model = tru._TrueEllipsoidGeometryModel(
+    model = _TrueEllipsoidGeometryModel(
         num_dim=3,
         covmat="dense",
         metric_rank=None,
@@ -228,9 +232,9 @@ def test_axis_aligned_step_sampler_and_true_ellipsoid_step_sampler(monkeypatch):
         _ = candidate_rv, sobol_engine, num_pert
         return rng.uniform(-0.5, 0.5, size=(num_candidates, 3))
 
-    monkeypatch.setattr(tru, "generate_raasp_candidates", _fake_raasp)
+    monkeypatch.setattr("optimizer.trust_region_utils.generate_raasp_candidates", _fake_raasp)
 
-    axis_sampler = tru._AxisAlignedStepSampler(default_candidate_rv=CandidateRV.SOBOL)
+    axis_sampler = _AxisAlignedStepSampler(default_candidate_rv=CandidateRV.SOBOL)
     x_center = np.array([0.5, 0.5, 0.5], dtype=float)
     out = axis_sampler.generate(
         x_center=x_center,
@@ -246,7 +250,7 @@ def test_axis_aligned_step_sampler_and_true_ellipsoid_step_sampler(monkeypatch):
     assert out.shape == (8, 3)
     assert np.all(out >= 0.0) and np.all(out <= 1.0)
 
-    ell_sampler = tru._TrueEllipsoidStepSampler(
+    ell_sampler = _TrueEllipsoidStepSampler(
         default_candidate_rv=CandidateRV.SOBOL,
         p_raasp=0.3,
         radial_mode="boundary",
@@ -294,9 +298,9 @@ def test_axis_aligned_step_sampler_jax_sobol_fast_path(monkeypatch):
     def _boom(*args, **kwargs):
         raise AssertionError("slow ENN generate_raasp_candidates should not run")
 
-    monkeypatch.setattr(tru, "generate_raasp_candidates", _boom)
+    monkeypatch.setattr("optimizer.trust_region_utils.generate_raasp_candidates", _boom)
 
-    axis_sampler = tru._AxisAlignedStepSampler(default_candidate_rv=CandidateRV.SOBOL, use_accel=True)
+    axis_sampler = _AxisAlignedStepSampler(default_candidate_rv=CandidateRV.SOBOL, use_accel=True)
     out = axis_sampler.generate(
         x_center=np.array([0.5, 0.5, 0.5], dtype=float),
         length=0.5,
@@ -323,7 +327,7 @@ def test_length_policies():
         def _update_counters_and_length(self, *, improved: bool) -> None:
             self.calls.append(bool(improved))
 
-    base = tru._LengthPolicy()
+    base = _LengthPolicy()
     base.reset()
     base.set_acceptance_ratio(pred=1.0, act=1.0, boundary_hit=False)
     base_tr = _DummyTR(length=1.2)
@@ -340,7 +344,7 @@ def test_length_policies():
     )
     assert base_tr.calls == [True]
 
-    opt = tru._OptionCLengthPolicy(rho_bad=0.25, rho_good=0.75, gamma_down=0.5, gamma_up=2.0)
+    opt = _OptionCLengthPolicy(rho_bad=0.25, rho_good=0.75, gamma_down=0.5, gamma_up=2.0)
     opt.set_acceptance_ratio(pred=0.0, act=-1.0, boundary_hit=False)
     shrunk = opt.update_length(
         tr=_DummyTR(length=1.0),

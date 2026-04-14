@@ -8,14 +8,11 @@ from enn.turbo.config.candidate_rv import CandidateRV
 
 import optimizer.trust_region_accel as _accel
 from optimizer.metric_trust_region import ENNMetricShapedTrustRegion, MetricShapedTrustRegion
+from optimizer.trust_region_geometry import _TrueEllipsoidGeometryModel
+from optimizer.trust_region_length_policies import _LengthPolicy, _OptionCLengthPolicy
 from optimizer.trust_region_math import _mahalanobis_sq_from_factor, _ray_scale_to_unit_box
 from optimizer.trust_region_sampling_utils import _block_indices_from_group, _low_rank_mahalanobis_sq, _sample_block_groups
-from optimizer.trust_region_utils import (
-    _LengthPolicy,
-    _OptionCLengthPolicy,
-    _TrueEllipsoidGeometryModel,
-    _TrueEllipsoidStepSampler,
-)
+from optimizer.trust_region_step_samplers import _TrueEllipsoidStepSampler
 
 
 @dataclass
@@ -61,6 +58,43 @@ class ENNTrueEllipsoidalTrustRegion(ENNMetricShapedTrustRegion):
         self._prev_incumbent_value = None
         self._prev_incumbent_x = None
 
+    def _transition_prediction(
+        self,
+        *,
+        prev_x: np.ndarray,
+        curr_x: np.ndarray,
+        prev_val: float,
+        y_value: float,
+        predict_delta,
+    ) -> tuple[float, float] | None:
+        act = float(y_value - float(prev_val))
+        pred = predict_delta(np.asarray(prev_x, dtype=float).reshape(-1), curr_x)
+        eps = 1e-12
+        if pred is None or (not np.isfinite(float(pred))) or abs(float(pred)) < eps:
+            return None
+        return float(pred), act
+
+    def _transition_mahalanobis_sq(self, delta: np.ndarray) -> float:
+        jitter = float(getattr(self.config, "shape_jitter", 1e-6))
+        if self._geometry_model.covmat == "low_rank":
+            if self.use_accel:
+                return float(_low_rank_mahalanobis_sq(delta, self._geometry_model.low_rank)[0])
+            with _accel.accel_override(""):
+                return float(_low_rank_mahalanobis_sq(delta, self._geometry_model.low_rank)[0])
+        if self._geometry_model.covmat == "dense":
+            mahal = getattr(self._geometry_model, "mahalanobis_sq")
+            base_mahal = getattr(type(self._geometry_model), "mahalanobis_sq")
+            if getattr(mahal, "__func__", mahal) is not base_mahal:
+                return float(mahal(delta, jitter=jitter)[0])
+            return float(_mahalanobis_sq_from_factor(delta, np.asarray(self._geometry_model.cov_factor, dtype=float))[0])
+        return float(self._geometry_model.mahalanobis_sq(delta, jitter=jitter)[0])
+
+    def _boundary_hit_for_sq(self, dist2: float) -> bool:
+        dist = float(np.sqrt(max(0.0, dist2)))
+        length = float(getattr(self, "length", 1.0))
+        tol = float(getattr(self.config, "boundary_tol", 0.1))
+        return dist >= max(0.0, (1.0 - tol) * length)
+
     def restart(self, rng: Any | None = None) -> None:
         super().restart(rng=rng)
         self._reset_true_ellipsoid_state()
@@ -92,55 +126,19 @@ class ENNTrueEllipsoidalTrustRegion(ENNMetricShapedTrustRegion):
         if prev_pair is None:
             return
         prev_val, prev_x = prev_pair
-        act = float(y_value - float(prev_val))
-        pred = predict_delta(np.asarray(prev_x, dtype=float).reshape(-1), curr_x)
-        eps = 1e-12
-        if pred is None or (not np.isfinite(float(pred))) or abs(float(pred)) < eps:
+        pred_pair = self._transition_prediction(
+            prev_x=np.asarray(prev_x, dtype=float).reshape(-1),
+            curr_x=curr_x,
+            prev_val=float(prev_val),
+            y_value=float(y_value),
+            predict_delta=predict_delta,
+        )
+        if pred_pair is None:
             return
+        pred, act = pred_pair
         delta = curr_x - np.asarray(prev_x, dtype=float).reshape(-1)
-        if self._geometry_model.covmat == "low_rank":
-            if self.use_accel:
-                dist2 = float(
-                    _low_rank_mahalanobis_sq(
-                        delta.reshape(1, -1),
-                        self._geometry_model.low_rank,
-                    )[0]
-                )
-            else:
-                with _accel.accel_override(""):
-                    dist2 = float(
-                        _low_rank_mahalanobis_sq(
-                            delta.reshape(1, -1),
-                            self._geometry_model.low_rank,
-                        )[0]
-                    )
-        elif self._geometry_model.covmat == "dense":
-            mahal = getattr(self._geometry_model, "mahalanobis_sq")
-            if getattr(mahal, "__func__", mahal) is not getattr(type(self._geometry_model), "mahalanobis_sq"):
-                dist2 = float(
-                    mahal(
-                        delta.reshape(1, -1),
-                        jitter=float(getattr(self.config, "shape_jitter", 1e-6)),
-                    )[0]
-                )
-            else:
-                dist2 = float(
-                    _mahalanobis_sq_from_factor(
-                        delta.reshape(1, -1),
-                        np.asarray(self._geometry_model.cov_factor, dtype=float),
-                    )[0]
-                )
-        else:
-            dist2 = float(
-                self._geometry_model.mahalanobis_sq(
-                    delta.reshape(1, -1),
-                    jitter=float(getattr(self.config, "shape_jitter", 1e-6)),
-                )[0]
-            )
-        dist = float(np.sqrt(max(0.0, dist2)))
-        length = float(getattr(self, "length", 1.0))
-        tol = float(getattr(self.config, "boundary_tol", 0.1))
-        boundary_hit = dist >= max(0.0, (1.0 - tol) * length)
+        dist2 = self._transition_mahalanobis_sq(delta.reshape(1, -1))
+        boundary_hit = self._boundary_hit_for_sq(dist2)
         self.set_acceptance_ratio(pred=float(pred), act=act, boundary_hit=boundary_hit)
 
     def generate_candidates(
@@ -214,30 +212,54 @@ class ENNTrueEllipsoidalTrustRegion(ENNMetricShapedTrustRegion):
             indices = _block_indices_from_group(tuple(getattr(self, "module_block_slices", ())), block_group)
             if indices.size <= 0:
                 continue
-            x_sub = np.asarray(x_center, dtype=float)[indices]
-            factor_sub = self._geometry_model.restricted_factor(indices, jitter=jitter)
-            z_sub = self._step_sampler._sample_raasp_whitened(
-                num_candidates=int(rows.size),
-                num_dim=int(indices.size),
-                length=float(self.length),
+            cand_sub = self._generate_module_subspace_candidates(
+                x_center=np.asarray(x_center, dtype=float),
+                indices=indices,
+                rows=rows,
+                radius2=radius2,
+                jitter=jitter,
                 rng=rng,
                 candidate_rv=rv,
                 sobol_engine=sobol_engine,
             )
-            cand_sub = _ray_scale_to_unit_box(
-                x_sub,
-                x_sub.reshape(1, -1) + z_sub @ factor_sub.T,
-            )
-            delta_sub = cand_sub - x_sub.reshape(1, -1)
-            dist2 = _mahalanobis_sq_from_factor(delta_sub, factor_sub)
-            bad = np.where(dist2 > radius2 * (1.0 + 1e-8))[0]
-            if bad.size > 0:
-                scale = np.sqrt(radius2 / np.maximum(dist2[bad], 1e-12))
-                delta_sub = delta_sub.copy()
-                delta_sub[bad] *= scale.reshape(-1, 1)
-                cand_sub = _ray_scale_to_unit_box(x_sub, x_sub.reshape(1, -1) + delta_sub)
             candidates[np.ix_(rows, indices)] = cand_sub
         return candidates
+
+    def _generate_module_subspace_candidates(
+        self,
+        *,
+        x_center: np.ndarray,
+        indices: np.ndarray,
+        rows: np.ndarray,
+        radius2: float,
+        jitter: float,
+        rng: Any,
+        candidate_rv: CandidateRV | None,
+        sobol_engine: Any | None,
+    ) -> np.ndarray:
+        x_sub = np.asarray(x_center, dtype=float)[indices]
+        factor_sub = self._geometry_model.restricted_factor(indices, jitter=jitter)
+        z_sub = self._step_sampler._sample_raasp_whitened(
+            num_candidates=int(rows.size),
+            num_dim=int(indices.size),
+            length=float(self.length),
+            rng=rng,
+            candidate_rv=candidate_rv,
+            sobol_engine=sobol_engine,
+        )
+        cand_sub = _ray_scale_to_unit_box(
+            x_sub,
+            x_sub.reshape(1, -1) + z_sub @ factor_sub.T,
+        )
+        delta_sub = cand_sub - x_sub.reshape(1, -1)
+        dist2 = _mahalanobis_sq_from_factor(delta_sub, factor_sub)
+        bad = np.where(dist2 > radius2 * (1.0 + 1e-8))[0]
+        if bad.size <= 0:
+            return cand_sub
+        scale = np.sqrt(radius2 / np.maximum(dist2[bad], 1e-12))
+        delta_sub = delta_sub.copy()
+        delta_sub[bad] *= scale.reshape(-1, 1)
+        return _ray_scale_to_unit_box(x_sub, x_sub.reshape(1, -1) + delta_sub)
 
 
 @dataclass

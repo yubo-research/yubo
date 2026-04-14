@@ -71,6 +71,15 @@ def _optional_number(opts: dict, key: str, default: float | None, *, example: st
     return float(v)
 
 
+def _optional_bool(opts: dict, key: str, default: bool, *, example: str) -> bool:
+    if key not in opts:
+        return bool(default)
+    v = opts[key]
+    if not isinstance(v, bool):
+        raise NoSuchDesignerError(f"Designer option '{key}' must be a bool. Example: '{example}'.")
+    return bool(v)
+
+
 def _optional_str_in(opts: dict, key: str, default: str, allowed: set[str], *, example: str) -> str:
     if key not in opts:
         return default
@@ -97,6 +106,279 @@ def _reject_unknown_opts(name: str, opts: dict, allowed: set[str]) -> None:
     unknown = sorted(set(opts) - set(allowed))
     if unknown:
         raise NoSuchDesignerError(f"Designer '{name}' does not support options (got: {', '.join(unknown)}).")
+
+
+def _parse_tr_core(
+    opts: dict,
+    *,
+    name: str,
+    example_prefix: str,
+) -> tuple[str, str | None, int | None, str]:
+    geometry = _optional_str_in(
+        opts,
+        "geometry",
+        "box",
+        {
+            "enn_iso",
+            "enn_metr",
+            "grad_metr",
+            "enn_ellip",
+            "grad_ellip",
+        },
+        example=f"{example_prefix}/geometry=enn_metr",
+    )
+    covmat = None
+    if "covmat" in opts:
+        covmat = _optional_str_in(
+            opts,
+            "covmat",
+            "dense",
+            {"dense", "low_rank"},
+            example=f"{example_prefix}/covmat=dense",
+        )
+    rank = None
+    if "rank" in opts:
+        rank = _optional_int(opts, "rank", 1, example=f"{example_prefix}/rank=10")
+    update_option = _optional_str_in(
+        opts,
+        "update_option",
+        "option_a",
+        {"option_a", "option_b", "option_c"},
+        example=f"{example_prefix}/update_option=option_c",
+    )
+    return geometry, covmat, rank, update_option
+
+
+def _parse_candidate_rv(opts: dict, *, name: str, default: str) -> str:
+    return _optional_str_in(
+        opts,
+        "candidate_rv",
+        default,
+        {"uniform", "sobol", "gpu_uniform"},
+        example=f"{name}/candidate_rv={default}",
+    )
+
+
+def _parse_optional_num_candidates(opts: dict, *, name: str) -> int | None:
+    if "num_candidates" not in opts:
+        return None
+    return _optional_int(opts, "num_candidates", 0, example=f"{name}/num_candidates=64")
+
+
+def _parse_tr_shape_options(opts: dict, *, name: str) -> dict:
+    return {
+        "p_raasp": _optional_number(opts, "p_raasp", 0.2, example=f"{name}/p_raasp=0.2"),
+        "radial_mode": _optional_str_in(
+            opts,
+            "radial_mode",
+            "ball_uniform",
+            {"ball_uniform", "boundary"},
+            example=f"{name}/radial_mode=ball_uniform",
+        ),
+        "shape_period": _optional_int(opts, "shape_period", 5, example=f"{name}/shape_period=5"),
+        "shape_ema": _optional_number(opts, "shape_ema", 0.2, example=f"{name}/shape_ema=0.2"),
+        "shape_jitter": _optional_number(opts, "shape_jitter", 1e-6, example=f"{name}/shape_jitter=1e-6"),
+        "shape_kappa_max": _optional_number(opts, "shape_kappa_max", 1e4, example=f"{name}/shape_kappa_max=1e4"),
+        "rho_bad": _optional_number(opts, "rho_bad", 0.25, example=f"{name}/rho_bad=0.25"),
+        "rho_good": _optional_number(opts, "rho_good", 0.75, example=f"{name}/rho_good=0.75"),
+        "gamma_down": _optional_number(opts, "gamma_down", 0.5, example=f"{name}/gamma_down=0.5"),
+        "gamma_up": _optional_number(opts, "gamma_up", 2.0, example=f"{name}/gamma_up=2.0"),
+        "boundary_tol": _optional_number(opts, "boundary_tol", 0.1, example=f"{name}/boundary_tol=0.1"),
+    }
+
+
+def _parse_module_tr_options(opts: dict, *, name: str) -> dict:
+    return {
+        "enabled": bool(opts.get("module_tr", False)),
+        "block_prob": _optional_number(opts, "module_tr_block_prob", 0.5, example=f"{name}/module_tr_block_prob=0.5"),
+        "min_num_params": _optional_int(
+            opts,
+            "module_tr_min_num_params",
+            10000,
+            example=f"{name}/module_tr_min_num_params=10000",
+        ),
+    }
+
+
+def _parse_accel_options(
+    opts: dict,
+    *,
+    name: str,
+    default_use_accel: bool,
+) -> dict:
+    return {
+        "use_accel": _optional_bool(opts, "use_accel", default_use_accel, example=f"{name}/use_accel=true"),
+        "accel": _optional_str_in(
+            opts,
+            "accel",
+            "auto",
+            {"auto", "triton", "jax", "mlx"},
+            example=f"{name}/accel=triton",
+        ),
+    }
+
+
+def _tr_geometry_option_specs(*, prefix: str, geometry_desc: str) -> list[DesignerOptionSpec]:
+    return [
+        DesignerOptionSpec(
+            name="geometry",
+            required=False,
+            value_type="str",
+            description=geometry_desc,
+            example=f"{prefix}/geometry=enn_metr",
+            allowed_values=(
+                "enn_iso",
+                "enn_metr",
+                "grad_metr",
+                "enn_ellip",
+                "grad_ellip",
+            ),
+        ),
+        DesignerOptionSpec(
+            name="covmat",
+            required=False,
+            value_type="str",
+            description="Optional metric/ellipsoidal covmat override.",
+            example=f"{prefix}/covmat=dense",
+            allowed_values=("dense", "low_rank"),
+        ),
+        DesignerOptionSpec(
+            name="rank",
+            required=False,
+            value_type="int",
+            description="Optional low-rank geometry rank.",
+            example=f"{prefix}/covmat=low_rank/rank=10",
+        ),
+        DesignerOptionSpec(
+            name="update_option",
+            required=False,
+            value_type="str",
+            description="Optional ellipsoidal length-update policy (default: option_a).",
+            example=f"{prefix}/update_option=option_c",
+            allowed_values=("option_a", "option_b", "option_c"),
+        ),
+    ]
+
+
+def _tr_accel_option_specs(*, prefix: str) -> list[DesignerOptionSpec]:
+    return [
+        DesignerOptionSpec(
+            name="use_accel",
+            required=False,
+            value_type="bool",
+            description="Whether to enable trust-region accel for non-box geometry (default: true for non-box, false for box).",
+            example=f"{prefix}/use_accel=true",
+        ),
+        DesignerOptionSpec(
+            name="accel",
+            required=False,
+            value_type="str",
+            description="Optional trust-region accel backend override.",
+            example=f"{prefix}/accel=triton",
+            allowed_values=("auto", "triton", "jax", "mlx"),
+        ),
+    ]
+
+
+def _ellipsoid_option_specs(*, prefix: str) -> list[DesignerOptionSpec]:
+    return [
+        DesignerOptionSpec(
+            name="p_raasp",
+            required=False,
+            value_type="float",
+            description="Optional ellipsoidal RAASP sparsity probability.",
+            example=f"{prefix}/p_raasp=0.2",
+        ),
+        DesignerOptionSpec(
+            name="radial_mode",
+            required=False,
+            value_type="str",
+            description="Optional ellipsoidal radial sampling mode.",
+            example=f"{prefix}/radial_mode=ball_uniform",
+            allowed_values=("ball_uniform", "boundary"),
+        ),
+        DesignerOptionSpec(
+            name="shape_period",
+            required=False,
+            value_type="int",
+            description="Optional ellipsoidal geometry refresh period.",
+            example=f"{prefix}/shape_period=5",
+        ),
+        DesignerOptionSpec(
+            name="shape_ema",
+            required=False,
+            value_type="float",
+            description="Optional ellipsoidal geometry EMA factor.",
+            example=f"{prefix}/shape_ema=0.2",
+        ),
+        DesignerOptionSpec(
+            name="shape_jitter",
+            required=False,
+            value_type="float",
+            description="Optional SPD jitter used in ellipsoidal geometry updates.",
+            example=f"{prefix}/shape_jitter=1e-6",
+        ),
+        DesignerOptionSpec(
+            name="shape_kappa_max",
+            required=False,
+            value_type="float",
+            description="Optional maximum condition-number cap for ellipsoidal geometry.",
+            example=f"{prefix}/shape_kappa_max=1e4",
+        ),
+        DesignerOptionSpec(
+            name="rho_bad",
+            required=False,
+            value_type="float",
+            description="Optional option_c shrink threshold.",
+            example=f"{prefix}/rho_bad=0.25",
+        ),
+        DesignerOptionSpec(
+            name="rho_good",
+            required=False,
+            value_type="float",
+            description="Optional option_c grow threshold.",
+            example=f"{prefix}/rho_good=0.75",
+        ),
+        DesignerOptionSpec(
+            name="gamma_down",
+            required=False,
+            value_type="float",
+            description="Optional option_c shrink multiplier.",
+            example=f"{prefix}/gamma_down=0.5",
+        ),
+        DesignerOptionSpec(
+            name="gamma_up",
+            required=False,
+            value_type="float",
+            description="Optional option_c grow multiplier.",
+            example=f"{prefix}/gamma_up=2.0",
+        ),
+        DesignerOptionSpec(
+            name="boundary_tol",
+            required=False,
+            value_type="float",
+            description="Optional ellipsoidal boundary-hit tolerance.",
+            example=f"{prefix}/boundary_tol=0.1",
+        ),
+    ]
+
+
+def _build_turbo_enn_trust_region_spec(params: dict):
+    TurboENNTrustRegionSpec = _load_symbol("optimizer.turbo_enn_designer_ext", "TurboENNTrustRegionSpec")
+    data = dict(params)
+    data["tr_type"] = "turbo" if data.get("tr_type") is None else data["tr_type"]
+    data["tr_geometry"] = "box" if data.get("tr_geometry") is None else data["tr_geometry"]
+    return TurboENNTrustRegionSpec(**data)
+
+
+def _build_module_tr_spec(params: dict):
+    ModuleTRSpec = _load_symbol("optimizer.turbo_enn_designer_ext", "ModuleTRSpec")
+    return ModuleTRSpec(**params)
+
+
+def _build_turbo_enn_ext_config(params: dict):
+    TurboENNExtConfig = _load_symbol("optimizer.turbo_enn_designer_ext", "TurboENNExtConfig")
+    return TurboENNExtConfig(**params)
 
 
 def _turbo_ref(ctx: _SimpleContext, *, ard: bool, surrogate_type: str = "original"):
@@ -555,63 +837,51 @@ def _build_turbo_enn_p_with_opts(
     _reject_unknown_opts(
         name,
         opts,
-        {"k", "candidate_rv", "geometry", "covmat", "rank", "update_option"},
+        {"k", "candidate_rv", "geometry", "covmat", "rank", "update_option", "use_accel", "accel"},
     )
     k = _optional_int(opts, "k", 10, example=f"{name}/k=16")
-    candidate_rv = _optional_str_in(
+    candidate_rv = _parse_candidate_rv(opts, name=name, default="uniform")
+    geometry, covmat, rank, update_option = _parse_tr_core(
         opts,
-        "candidate_rv",
-        "uniform",
-        {"uniform", "sobol", "gpu_uniform"},
-        example=f"{name}/candidate_rv=uniform",
+        name=name,
+        example_prefix=name,
     )
-    geometry = _optional_str_in(
-        opts,
-        "geometry",
-        "box",
+    shape = _parse_tr_shape_options(opts, name=name)
+    accel = _parse_accel_options(opts, name=name, default_use_accel=(geometry != "box"))
+    trust_region = _build_turbo_enn_trust_region_spec(
         {
-            "enn_iso",
-            "enn_metr",
-            "grad_metr",
-            "enn_ellip",
-            "grad_ellip",
-        },
-        example=f"{name}/geometry=enn_metr",
+            "tr_type": None,
+            "tr_geometry": geometry,
+            "covmat": covmat,
+            "metric_rank": rank,
+            "fixed_length": None,
+            "update_option": update_option,
+            **shape,
+            "use_accel": accel["use_accel"],
+            "accel": None if accel["accel"] == "auto" else accel["accel"],
+        }
     )
-    covmat = None
-    if "covmat" in opts:
-        covmat = _optional_str_in(
-            opts,
-            "covmat",
-            "dense",
-            {"dense", "low_rank"},
-            example=f"{name}/covmat=dense",
-        )
-    rank = None
-    if "rank" in opts:
-        rank = _optional_int(opts, "rank", 1, example=f"{name}/rank=10")
-    update_option = _optional_str_in(
-        opts,
-        "update_option",
-        "option_a",
-        {"option_a", "option_b", "option_c"},
-        example=f"{name}/update_option=option_c",
+    module_tr = _build_module_tr_spec({"enabled": False, "block_prob": 0.5, "min_num_params": 10000})
+    config = _build_turbo_enn_ext_config(
+        {
+            "turbo_mode": "turbo-enn",
+            "num_init": None,
+            "k": k,
+            "num_keep": ctx.num_keep_val,
+            "num_fit_samples": None,
+            "num_fit_candidates": None,
+            "acq_type": "pareto",
+            "trust_region": trust_region,
+            "use_y_var": False,
+            "num_candidates": None,
+            "candidate_rv": candidate_rv,
+            "num_metrics": None,
+            "use_python": use_python,
+            "module_tr": module_tr,
+            "rng": None,
+        }
     )
-    return _turbo_enn_ext(
-        ctx,
-        turbo_mode="turbo-enn",
-        k=k,
-        num_keep=ctx.num_keep_val,
-        num_fit_samples=None,
-        num_fit_candidates=None,
-        acq_type="pareto",
-        candidate_rv=candidate_rv,
-        tr_geometry=geometry,
-        covmat=covmat,
-        metric_rank=rank,
-        update_option=update_option,
-        use_python=use_python,
-    )
+    return _turbo_enn_ext(ctx, config=config)
 
 
 def _d_turbo_enn_p(ctx: _SimpleContext, opts: dict):
@@ -649,6 +919,8 @@ def _d_turbo_enn_fit(ctx: _SimpleContext, opts: dict):
             "num_fit_samples",
             "num_fit_candidates",
             "fixed_length",
+            "use_accel",
+            "accel",
             "module_tr",
             "module_tr_block_prob",
             "module_tr_min_num_params",
@@ -661,70 +933,15 @@ def _d_turbo_enn_fit(ctx: _SimpleContext, opts: dict):
         example="turbo-enn-fit/acq_type=ucb",
     )
     k = _optional_int(opts, "k", 10, example="turbo-enn-fit/k=16")
-    candidate_rv = _optional_str_in(
+    candidate_rv = _parse_candidate_rv(opts, name="turbo-enn-fit", default="sobol")
+    geometry, covmat, rank, update_option = _parse_tr_core(
         opts,
-        "candidate_rv",
-        "sobol",
-        {"uniform", "sobol", "gpu_uniform"},
-        example="turbo-enn-fit/candidate_rv=sobol",
+        name="turbo-enn-fit",
+        example_prefix="turbo-enn-fit",
     )
-    geometry = _optional_str_in(
-        opts,
-        "geometry",
-        "box",
-        {
-            "enn_iso",
-            "enn_metr",
-            "grad_metr",
-            "enn_ellip",
-            "grad_ellip",
-        },
-        example="turbo-enn-fit/geometry=enn_metr",
-    )
-    covmat = None
-    if "covmat" in opts:
-        covmat = _optional_str_in(
-            opts,
-            "covmat",
-            "dense",
-            {"dense", "low_rank"},
-            example="turbo-enn-fit/covmat=dense",
-        )
-    rank = None
-    if "rank" in opts:
-        rank = _optional_int(opts, "rank", 1, example="turbo-enn-fit/rank=10")
-    update_option = _optional_str_in(
-        opts,
-        "update_option",
-        "option_a",
-        {"option_a", "option_b", "option_c"},
-        example="turbo-enn-fit/update_option=option_c",
-    )
-    p_raasp = _optional_number(opts, "p_raasp", 0.2, example="turbo-enn-fit/p_raasp=0.2")
-    radial_mode = _optional_str_in(
-        opts,
-        "radial_mode",
-        "ball_uniform",
-        {"ball_uniform", "boundary"},
-        example="turbo-enn-fit/radial_mode=ball_uniform",
-    )
-    shape_period = _optional_int(opts, "shape_period", 5, example="turbo-enn-fit/shape_period=5")
-    shape_ema = _optional_number(opts, "shape_ema", 0.2, example="turbo-enn-fit/shape_ema=0.2")
-    shape_jitter = _optional_number(opts, "shape_jitter", 1e-6, example="turbo-enn-fit/shape_jitter=1e-6")
-    shape_kappa_max = _optional_number(
-        opts,
-        "shape_kappa_max",
-        1e4,
-        example="turbo-enn-fit/shape_kappa_max=1e4",
-    )
-    rho_bad = _optional_number(opts, "rho_bad", 0.25, example="turbo-enn-fit/rho_bad=0.25")
-    rho_good = _optional_number(opts, "rho_good", 0.75, example="turbo-enn-fit/rho_good=0.75")
-    gamma_down = _optional_number(opts, "gamma_down", 0.5, example="turbo-enn-fit/gamma_down=0.5")
-    gamma_up = _optional_number(opts, "gamma_up", 2.0, example="turbo-enn-fit/gamma_up=2.0")
-    boundary_tol = _optional_number(opts, "boundary_tol", 0.1, example="turbo-enn-fit/boundary_tol=0.1")
-    num_candidates = None
-    if "num_candidates" in opts:
-        num_candidates = _optional_int(opts, "num_candidates", 0, example="turbo-enn-fit/num_candidates=64")
+    shape = _parse_tr_shape_options(opts, name="turbo-enn-fit")
+    accel = _parse_accel_options(opts, name="turbo-enn-fit", default_use_accel=(geometry != "box"))
+    num_candidates = _parse_optional_num_candidates(opts, name="turbo-enn-fit")
     num_fit_samples = _optional_int(
         opts,
         "num_fit_samples",
@@ -743,50 +960,41 @@ def _d_turbo_enn_fit(ctx: _SimpleContext, opts: dict):
         None,
         example="turbo-enn-fit/fixed_length=1.6",
     )
-    module_tr = bool(opts.pop("module_tr", False))
-    module_tr_block_prob = _optional_number(
-        opts,
-        "module_tr_block_prob",
-        0.5,
-        example="turbo-enn-fit/module_tr_block_prob=0.5",
+    module = _parse_module_tr_options(opts, name="turbo-enn-fit")
+    trust_region = _build_turbo_enn_trust_region_spec(
+        {
+            "tr_type": None,
+            "tr_geometry": geometry,
+            "covmat": covmat,
+            "metric_rank": rank,
+            "fixed_length": fixed_length,
+            "update_option": update_option,
+            **shape,
+            "use_accel": accel["use_accel"],
+            "accel": None if accel["accel"] == "auto" else accel["accel"],
+        }
     )
-    module_tr_min_num_params = _optional_int(
-        opts,
-        "module_tr_min_num_params",
-        10000,
-        example="turbo-enn-fit/module_tr_min_num_params=10000",
+    module = _build_module_tr_spec(module)
+    config = _build_turbo_enn_ext_config(
+        {
+            "turbo_mode": "turbo-enn",
+            "num_init": None,
+            "k": k,
+            "num_keep": ctx.num_keep_val,
+            "num_fit_samples": num_fit_samples,
+            "num_fit_candidates": num_fit_candidates,
+            "acq_type": acq_type,
+            "trust_region": trust_region,
+            "use_y_var": False,
+            "num_candidates": num_candidates,
+            "candidate_rv": candidate_rv,
+            "num_metrics": None,
+            "use_python": False,
+            "module_tr": module,
+            "rng": None,
+        }
     )
-    return _turbo_enn_ext(
-        ctx,
-        turbo_mode="turbo-enn",
-        k=k,
-        num_keep=ctx.num_keep_val,
-        num_fit_samples=num_fit_samples,
-        num_fit_candidates=num_fit_candidates,
-        fixed_length=fixed_length,
-        acq_type=acq_type,
-        tr_type=None,
-        num_candidates=num_candidates,
-        candidate_rv=candidate_rv,
-        tr_geometry=geometry,
-        covmat=covmat,
-        metric_rank=rank,
-        update_option=update_option,
-        p_raasp=p_raasp,
-        radial_mode=radial_mode,
-        shape_period=shape_period,
-        shape_ema=shape_ema,
-        shape_jitter=shape_jitter,
-        shape_kappa_max=shape_kappa_max,
-        rho_bad=rho_bad,
-        rho_good=rho_good,
-        gamma_down=gamma_down,
-        gamma_up=gamma_up,
-        boundary_tol=boundary_tol,
-        module_tr=module_tr,
-        module_tr_block_prob=module_tr_block_prob,
-        module_tr_min_num_params=module_tr_min_num_params,
-    )
+    return _turbo_enn_ext(ctx, config=config)
 
 
 def _d_turbo_enn_f(ctx: _SimpleContext, opts: dict):
@@ -864,7 +1072,6 @@ def _d_morbo_enn_fit(ctx: _SimpleContext, opts: dict):
 
 def _turbo_enn_multi(ctx: _SimpleContext, **kw):
     MultiTurboHarnessConfig = _load_symbol("optimizer.multi_turbo_enn_designer", "MultiTurboHarnessConfig")
-    TurboENNRegionConfig = _load_symbol("optimizer.multi_turbo_enn_designer", "TurboENNRegionConfig")
     MultiTurboENNConfig = _load_symbol("optimizer.multi_turbo_enn_designer", "MultiTurboENNConfig")
     MultiTurboENNDesigner = _load_symbol("optimizer.multi_turbo_enn_designer", "MultiTurboENNDesigner")
     data = dict(kw)
@@ -876,33 +1083,54 @@ def _turbo_enn_multi(ctx: _SimpleContext, **kw):
         arm_mode=data.pop("arm_mode", "split"),
         pool_multiplier=data.pop("pool_multiplier", 2),
     )
-    region = TurboENNRegionConfig(
-        turbo_mode=data.pop("turbo_mode"),
-        num_init=data.pop("num_init", None),
-        k=data.pop("k", None),
-        num_keep=data.pop("num_keep", None),
-        num_fit_samples=data.pop("num_fit_samples", None),
-        num_fit_candidates=data.pop("num_fit_candidates", None),
-        acq_type=data.pop("acq_type", "pareto"),
-        tr_type=data.pop("tr_type", None),
-        tr_geometry=data.pop("tr_geometry", None),
-        covmat=data.pop("covmat", None),
-        metric_rank=data.pop("metric_rank", None),
-        tr_length_fixed=data.pop("tr_length_fixed", None),
-        update_option=data.pop("update_option", "option_a"),
-        p_raasp=data.pop("p_raasp", 0.2),
-        radial_mode=data.pop("radial_mode", "ball_uniform"),
-        shape_period=data.pop("shape_period", 5),
-        shape_ema=data.pop("shape_ema", 0.2),
-        rho_bad=data.pop("rho_bad", 0.25),
-        rho_good=data.pop("rho_good", 0.75),
-        gamma_down=data.pop("gamma_down", 0.5),
-        gamma_up=data.pop("gamma_up", 2.0),
-        boundary_tol=data.pop("boundary_tol", 0.1),
-        use_y_var=data.pop("use_y_var", False),
-        num_candidates=data.pop("num_candidates", None),
-        candidate_rv=data.pop("candidate_rv", None),
-        num_metrics=data.pop("num_metrics", None),
+    trust_region = _build_turbo_enn_trust_region_spec(
+        {
+            "tr_type": data.pop("tr_type", None),
+            "tr_geometry": data.pop("tr_geometry", None),
+            "covmat": data.pop("covmat", None),
+            "metric_rank": data.pop("metric_rank", None),
+            "fixed_length": data.pop("tr_length_fixed", None),
+            "update_option": data.pop("update_option", "option_a"),
+            "p_raasp": data.pop("p_raasp", 0.2),
+            "radial_mode": data.pop("radial_mode", "ball_uniform"),
+            "shape_period": data.pop("shape_period", 5),
+            "shape_ema": data.pop("shape_ema", 0.2),
+            "shape_jitter": data.pop("shape_jitter", 1e-6),
+            "shape_kappa_max": data.pop("shape_kappa_max", 1e4),
+            "rho_bad": data.pop("rho_bad", 0.25),
+            "rho_good": data.pop("rho_good", 0.75),
+            "gamma_down": data.pop("gamma_down", 0.5),
+            "gamma_up": data.pop("gamma_up", 2.0),
+            "boundary_tol": data.pop("boundary_tol", 0.1),
+            "use_accel": data.pop("use_accel", False),
+            "accel": data.pop("accel", None),
+        }
+    )
+    module_tr = _build_module_tr_spec(
+        {
+            "enabled": data.pop("module_tr", False),
+            "block_prob": data.pop("module_tr_block_prob", 0.5),
+            "min_num_params": data.pop("module_tr_min_num_params", 10000),
+        }
+    )
+    region = _build_turbo_enn_ext_config(
+        {
+            "turbo_mode": data.pop("turbo_mode"),
+            "num_init": data.pop("num_init", None),
+            "k": data.pop("k", None),
+            "num_keep": data.pop("num_keep", None),
+            "num_fit_samples": data.pop("num_fit_samples", None),
+            "num_fit_candidates": data.pop("num_fit_candidates", None),
+            "acq_type": data.pop("acq_type", "pareto"),
+            "trust_region": trust_region,
+            "use_y_var": data.pop("use_y_var", False),
+            "num_candidates": data.pop("num_candidates", None),
+            "candidate_rv": data.pop("candidate_rv", None),
+            "num_metrics": data.pop("num_metrics", None),
+            "use_python": data.pop("use_python", False),
+            "module_tr": module_tr,
+            "rng": data.pop("rng", None),
+        }
     )
     if data:
         keys = ", ".join(sorted(data.keys()))
@@ -934,16 +1162,8 @@ def _d_turbo_enn_multi_ext(ctx: _SimpleContext, opts: dict):
         example="turbo-enn-multi/arm_mode=allocated",
     )
     pool_multiplier = _optional_int(opts, "pool_multiplier", 2, example="turbo-enn-multi/pool_multiplier=2")
-    candidate_rv = _optional_str_in(
-        opts,
-        "candidate_rv",
-        "sobol",
-        {"sobol", "uniform", "gpu_uniform"},
-        example="turbo-enn-multi/candidate_rv=uniform",
-    )
-    num_candidates = None
-    if "num_candidates" in opts:
-        num_candidates = _optional_int(opts, "num_candidates", 0, example="turbo-enn-multi/num_candidates=64")
+    candidate_rv = _parse_candidate_rv(opts, name="turbo-enn-multi", default="sobol")
+    num_candidates = _parse_optional_num_candidates(opts, name="turbo-enn-multi")
     num_fit_samples = _optional_int(opts, "num_fit_samples", 100, example="turbo-enn-multi/num_fit_samples=50")
     num_fit_candidates = _optional_int(
         opts,
@@ -951,57 +1171,14 @@ def _d_turbo_enn_multi_ext(ctx: _SimpleContext, opts: dict):
         100,
         example="turbo-enn-multi/num_fit_candidates=50",
     )
-    geometry = _optional_str_in(
+    geometry, covmat, rank, update_option = _parse_tr_core(
         opts,
-        "geometry",
-        "box",
-        {
-            "enn_metr",
-            "grad_metr",
-            "enn_ellip",
-            "grad_ellip",
-            "enn_metric_shaped",
-            "enn_grad_metric_shaped",
-            "enn_true_ellipsoid",
-            "enn_grad_true_ellipsoid",
-        },
-        example="turbo-enn-multi/geometry=enn_metr",
+        name="turbo-enn-multi",
+        example_prefix="turbo-enn-multi",
     )
-    covmat = None
-    if "covmat" in opts:
-        covmat = _optional_str_in(
-            opts,
-            "covmat",
-            "dense",
-            {"dense", "low_rank"},
-            example="turbo-enn-multi/covmat=dense",
-        )
-    rank = None
-    if "rank" in opts:
-        rank = _optional_int(opts, "rank", 1, example="turbo-enn-multi/rank=5")
     tr_length_fixed = _optional_number(opts, "tr_length_fixed", None, example="turbo-enn-multi/tr_length_fixed=1.6")
-    update_option = _optional_str_in(
-        opts,
-        "update_option",
-        "option_a",
-        {"option_a", "option_b", "option_c"},
-        example="turbo-enn-multi/update_option=option_a",
-    )
-    p_raasp = _optional_number(opts, "p_raasp", 0.2, example="turbo-enn-multi/p_raasp=0.2")
-    radial_mode = _optional_str_in(
-        opts,
-        "radial_mode",
-        "ball_uniform",
-        {"ball_uniform", "boundary"},
-        example="turbo-enn-multi/radial_mode=ball_uniform",
-    )
-    shape_period = _optional_int(opts, "shape_period", 5, example="turbo-enn-multi/shape_period=5")
-    shape_ema = _optional_number(opts, "shape_ema", 0.2, example="turbo-enn-multi/shape_ema=0.2")
-    rho_bad = _optional_number(opts, "rho_bad", 0.25, example="turbo-enn-multi/rho_bad=0.25")
-    rho_good = _optional_number(opts, "rho_good", 0.75, example="turbo-enn-multi/rho_good=0.75")
-    gamma_down = _optional_number(opts, "gamma_down", 0.5, example="turbo-enn-multi/gamma_down=0.5")
-    gamma_up = _optional_number(opts, "gamma_up", 2.0, example="turbo-enn-multi/gamma_up=2.0")
-    boundary_tol = _optional_number(opts, "boundary_tol", 0.1, example="turbo-enn-multi/boundary_tol=0.1")
+    shape = _parse_tr_shape_options(opts, name="turbo-enn-multi")
+    accel = _parse_accel_options(opts, name="turbo-enn-multi", default_use_accel=(geometry != "box"))
     return _turbo_enn_multi(
         ctx,
         turbo_mode="turbo-enn",
@@ -1020,15 +1197,19 @@ def _d_turbo_enn_multi_ext(ctx: _SimpleContext, opts: dict):
         metric_rank=rank,
         tr_length_fixed=tr_length_fixed,
         update_option=update_option,
-        p_raasp=p_raasp,
-        radial_mode=radial_mode,
-        shape_period=shape_period,
-        shape_ema=shape_ema,
-        rho_bad=rho_bad,
-        rho_good=rho_good,
-        gamma_down=gamma_down,
-        gamma_up=gamma_up,
-        boundary_tol=boundary_tol,
+        p_raasp=shape["p_raasp"],
+        radial_mode=shape["radial_mode"],
+        shape_period=shape["shape_period"],
+        shape_ema=shape["shape_ema"],
+        shape_jitter=shape["shape_jitter"],
+        shape_kappa_max=shape["shape_kappa_max"],
+        rho_bad=shape["rho_bad"],
+        rho_good=shape["rho_good"],
+        gamma_down=shape["gamma_down"],
+        gamma_up=shape["gamma_up"],
+        boundary_tol=shape["boundary_tol"],
+        use_accel=accel["use_accel"],
+        accel=None if accel["accel"] == "auto" else accel["accel"],
         candidate_rv=candidate_rv,
         num_candidates=num_candidates,
     )
@@ -1129,44 +1310,12 @@ _DESIGNER_OPTION_SPECS: dict[str, list[DesignerOptionSpec]] = {
             example="turbo-enn-p/candidate_rv=uniform",
             allowed_values=("uniform", "sobol", "gpu_uniform"),
         ),
-        DesignerOptionSpec(
-            name="geometry",
-            required=False,
-            value_type="str",
-            description="Optional trust-region geometry override for no-fit Pareto ENN (default: box when omitted).",
-            example="turbo-enn-p/geometry=enn_metr",
-            allowed_values=(
-                "enn_iso",
-                "enn_metr",
-                "grad_metr",
-                "enn_ellip",
-                "grad_ellip",
-            ),
-        ),
-        DesignerOptionSpec(
-            name="covmat",
-            required=False,
-            value_type="str",
-            description="Optional metric/ellipsoidal covmat override.",
-            example="turbo-enn-p/covmat=dense",
-            allowed_values=("dense", "low_rank"),
-        ),
-        DesignerOptionSpec(
-            name="rank",
-            required=False,
-            value_type="int",
-            description="Optional low-rank geometry rank.",
-            example="turbo-enn-p/covmat=low_rank/rank=10",
-        ),
-        DesignerOptionSpec(
-            name="update_option",
-            required=False,
-            value_type="str",
-            description="Optional ellipsoidal length-update policy (default: option_a).",
-            example="turbo-enn-p/update_option=option_c",
-            allowed_values=("option_a", "option_b", "option_c"),
-        ),
-    ],
+    ]
+    + _tr_geometry_option_specs(
+        prefix="turbo-enn-p",
+        geometry_desc="Optional trust-region geometry override for no-fit Pareto ENN (default: box when omitted).",
+    )
+    + _tr_accel_option_specs(prefix="turbo-enn-p"),
     "turbo_py-enn-p": [
         DesignerOptionSpec(
             name="k",
@@ -1183,44 +1332,12 @@ _DESIGNER_OPTION_SPECS: dict[str, list[DesignerOptionSpec]] = {
             example="turbo_py-enn-p/candidate_rv=uniform",
             allowed_values=("uniform", "sobol", "gpu_uniform"),
         ),
-        DesignerOptionSpec(
-            name="geometry",
-            required=False,
-            value_type="str",
-            description="Optional trust-region geometry override for Python no-fit Pareto ENN (default: box when omitted).",
-            example="turbo_py-enn-p/geometry=enn_metr",
-            allowed_values=(
-                "enn_iso",
-                "enn_metr",
-                "grad_metr",
-                "enn_ellip",
-                "grad_ellip",
-            ),
-        ),
-        DesignerOptionSpec(
-            name="covmat",
-            required=False,
-            value_type="str",
-            description="Optional metric/ellipsoidal covmat override.",
-            example="turbo_py-enn-p/covmat=dense",
-            allowed_values=("dense", "low_rank"),
-        ),
-        DesignerOptionSpec(
-            name="rank",
-            required=False,
-            value_type="int",
-            description="Optional low-rank geometry rank.",
-            example="turbo_py-enn-p/covmat=low_rank/rank=10",
-        ),
-        DesignerOptionSpec(
-            name="update_option",
-            required=False,
-            value_type="str",
-            description="Optional ellipsoidal length-update policy (default: option_a).",
-            example="turbo_py-enn-p/update_option=option_c",
-            allowed_values=("option_a", "option_b", "option_c"),
-        ),
-    ],
+    ]
+    + _tr_geometry_option_specs(
+        prefix="turbo_py-enn-p",
+        geometry_desc="Optional trust-region geometry override for Python no-fit Pareto ENN (default: box when omitted).",
+    )
+    + _tr_accel_option_specs(prefix="turbo_py-enn-p"),
     "turbo-enn-fit": [
         DesignerOptionSpec(
             name="acq_type",
@@ -1266,121 +1383,13 @@ _DESIGNER_OPTION_SPECS: dict[str, list[DesignerOptionSpec]] = {
             description="Optional ENN fit-candidate count override (default: 100).",
             example="turbo-enn-fit/acq_type=ucb/num_fit_candidates=100",
         ),
-        DesignerOptionSpec(
-            name="geometry",
-            required=False,
-            value_type="str",
-            description="Optional trust-region geometry override (default: box when omitted).",
-            example="turbo-enn-fit/acq_type=ucb/geometry=enn_metr",
-            allowed_values=(
-                "enn_iso",
-                "enn_metr",
-                "grad_metr",
-                "enn_ellip",
-                "grad_ellip",
-            ),
-        ),
-        DesignerOptionSpec(
-            name="covmat",
-            required=False,
-            value_type="str",
-            description="Optional metric/ellipsoidal covmat override.",
-            example="turbo-enn-fit/acq_type=ucb/covmat=dense",
-            allowed_values=("dense", "low_rank"),
-        ),
-        DesignerOptionSpec(
-            name="rank",
-            required=False,
-            value_type="int",
-            description="Optional low-rank geometry rank.",
-            example="turbo-enn-fit/acq_type=ucb/covmat=low_rank/rank=10",
-        ),
-        DesignerOptionSpec(
-            name="update_option",
-            required=False,
-            value_type="str",
-            description="Optional ellipsoidal length-update policy (default: option_a).",
-            example="turbo-enn-fit/acq_type=ucb/update_option=option_c",
-            allowed_values=("option_a", "option_b", "option_c"),
-        ),
-        DesignerOptionSpec(
-            name="p_raasp",
-            required=False,
-            value_type="float",
-            description="Optional ellipsoidal RAASP sparsity probability.",
-            example="turbo-enn-fit/acq_type=ucb/p_raasp=0.2",
-        ),
-        DesignerOptionSpec(
-            name="radial_mode",
-            required=False,
-            value_type="str",
-            description="Optional ellipsoidal radial sampling mode.",
-            example="turbo-enn-fit/acq_type=ucb/radial_mode=ball_uniform",
-            allowed_values=("ball_uniform", "boundary"),
-        ),
-        DesignerOptionSpec(
-            name="shape_period",
-            required=False,
-            value_type="int",
-            description="Optional ellipsoidal geometry refresh period.",
-            example="turbo-enn-fit/acq_type=ucb/shape_period=5",
-        ),
-        DesignerOptionSpec(
-            name="shape_ema",
-            required=False,
-            value_type="float",
-            description="Optional ellipsoidal geometry EMA factor.",
-            example="turbo-enn-fit/acq_type=ucb/shape_ema=0.2",
-        ),
-        DesignerOptionSpec(
-            name="shape_jitter",
-            required=False,
-            value_type="float",
-            description="Optional SPD jitter used in ellipsoidal geometry updates.",
-            example="turbo-enn-fit/acq_type=ucb/shape_jitter=1e-6",
-        ),
-        DesignerOptionSpec(
-            name="shape_kappa_max",
-            required=False,
-            value_type="float",
-            description="Optional maximum condition-number cap for ellipsoidal geometry.",
-            example="turbo-enn-fit/acq_type=ucb/shape_kappa_max=1e4",
-        ),
-        DesignerOptionSpec(
-            name="rho_bad",
-            required=False,
-            value_type="float",
-            description="Optional option_c shrink threshold.",
-            example="turbo-enn-fit/acq_type=ucb/rho_bad=0.25",
-        ),
-        DesignerOptionSpec(
-            name="rho_good",
-            required=False,
-            value_type="float",
-            description="Optional option_c grow threshold.",
-            example="turbo-enn-fit/acq_type=ucb/rho_good=0.75",
-        ),
-        DesignerOptionSpec(
-            name="gamma_down",
-            required=False,
-            value_type="float",
-            description="Optional option_c shrink multiplier.",
-            example="turbo-enn-fit/acq_type=ucb/gamma_down=0.5",
-        ),
-        DesignerOptionSpec(
-            name="gamma_up",
-            required=False,
-            value_type="float",
-            description="Optional option_c grow multiplier.",
-            example="turbo-enn-fit/acq_type=ucb/gamma_up=2.0",
-        ),
-        DesignerOptionSpec(
-            name="boundary_tol",
-            required=False,
-            value_type="float",
-            description="Optional ellipsoidal boundary-hit tolerance.",
-            example="turbo-enn-fit/acq_type=ucb/boundary_tol=0.1",
-        ),
+    ]
+    + _tr_geometry_option_specs(
+        prefix="turbo-enn-fit/acq_type=ucb",
+        geometry_desc="Optional trust-region geometry override (default: box when omitted).",
+    )
+    + _ellipsoid_option_specs(prefix="turbo-enn-fit/acq_type=ucb")
+    + [
         DesignerOptionSpec(
             name="fixed_length",
             required=False,
@@ -1388,7 +1397,8 @@ _DESIGNER_OPTION_SPECS: dict[str, list[DesignerOptionSpec]] = {
             description="Optional fixed trust-region length override.",
             example="turbo-enn-fit/acq_type=ucb/fixed_length=1.6",
         ),
-    ],
+    ]
+    + _tr_accel_option_specs(prefix="turbo-enn-fit/acq_type=ucb"),
     "turbo-enn-multi": [
         DesignerOptionSpec(
             name="acq_type",
@@ -1457,38 +1467,8 @@ _DESIGNER_OPTION_SPECS: dict[str, list[DesignerOptionSpec]] = {
             description="ENN fit candidates per surrogate step.",
             example="turbo-enn-multi/num_fit_candidates=50",
         ),
-        DesignerOptionSpec(
-            name="geometry",
-            required=False,
-            value_type="str",
-            description="Trust-region geometry (default: box when omitted).",
-            example="turbo-enn-multi/geometry=enn_metr",
-            allowed_values=(
-                "enn_metr",
-                "grad_metr",
-                "enn_ellip",
-                "grad_ellip",
-                "enn_metric_shaped",
-                "enn_grad_metric_shaped",
-                "enn_true_ellipsoid",
-                "enn_grad_true_ellipsoid",
-            ),
-        ),
-        DesignerOptionSpec(
-            name="covmat",
-            required=False,
-            value_type="str",
-            description="Metric/ellipsoidal covmat for non-box geometry.",
-            example="turbo-enn-multi/covmat=low_rank",
-            allowed_values=("dense", "low_rank"),
-        ),
-        DesignerOptionSpec(
-            name="rank",
-            required=False,
-            value_type="int",
-            description="Low-rank covmat rank cap.",
-            example="turbo-enn-multi/rank=5",
-        ),
+    ]
+    + [
         DesignerOptionSpec(
             name="tr_length_fixed",
             required=False,
@@ -1496,79 +1476,13 @@ _DESIGNER_OPTION_SPECS: dict[str, list[DesignerOptionSpec]] = {
             description="Fixed trust-region length.",
             example="turbo-enn-multi/tr_length_fixed=1.6",
         ),
-        DesignerOptionSpec(
-            name="update_option",
-            required=False,
-            value_type="str",
-            description="True-ellipsoid update controller.",
-            example="turbo-enn-multi/update_option=option_a",
-            allowed_values=("option_a", "option_b", "option_c"),
-        ),
-        DesignerOptionSpec(
-            name="p_raasp",
-            required=False,
-            value_type="float",
-            description="RAASP sparsity probability in whitened coordinates.",
-            example="turbo-enn-multi/p_raasp=0.2",
-        ),
-        DesignerOptionSpec(
-            name="radial_mode",
-            required=False,
-            value_type="str",
-            description="Radial sampler for true ellipsoid candidates.",
-            example="turbo-enn-multi/radial_mode=ball_uniform",
-            allowed_values=("ball_uniform", "boundary"),
-        ),
-        DesignerOptionSpec(
-            name="shape_period",
-            required=False,
-            value_type="int",
-            description="Shape update period for option_a/option_b.",
-            example="turbo-enn-multi/shape_period=5",
-        ),
-        DesignerOptionSpec(
-            name="shape_ema",
-            required=False,
-            value_type="float",
-            description="EMA factor for shape updates.",
-            example="turbo-enn-multi/shape_ema=0.2",
-        ),
-        DesignerOptionSpec(
-            name="rho_bad",
-            required=False,
-            value_type="float",
-            description="Lower acceptance-ratio threshold for option_c.",
-            example="turbo-enn-multi/rho_bad=0.25",
-        ),
-        DesignerOptionSpec(
-            name="rho_good",
-            required=False,
-            value_type="float",
-            description="Upper acceptance-ratio threshold for option_c.",
-            example="turbo-enn-multi/rho_good=0.75",
-        ),
-        DesignerOptionSpec(
-            name="gamma_down",
-            required=False,
-            value_type="float",
-            description="Shrink factor for option_c.",
-            example="turbo-enn-multi/gamma_down=0.5",
-        ),
-        DesignerOptionSpec(
-            name="gamma_up",
-            required=False,
-            value_type="float",
-            description="Expand factor for option_c.",
-            example="turbo-enn-multi/gamma_up=2.0",
-        ),
-        DesignerOptionSpec(
-            name="boundary_tol",
-            required=False,
-            value_type="float",
-            description="Boundary threshold to trigger expansion in option_c.",
-            example="turbo-enn-multi/boundary_tol=0.1",
-        ),
-    ],
+    ]
+    + _tr_geometry_option_specs(
+        prefix="turbo-enn-multi",
+        geometry_desc="Trust-region geometry (default: box when omitted).",
+    )
+    + _ellipsoid_option_specs(prefix="turbo-enn-multi")
+    + _tr_accel_option_specs(prefix="turbo-enn-multi"),
     "morbo-enn-fit": [
         DesignerOptionSpec(
             name="acq_type",

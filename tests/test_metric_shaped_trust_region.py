@@ -5,7 +5,6 @@ import pytest
 import torch
 from enn.turbo.config.candidate_rv import CandidateRV
 
-import optimizer.trust_region_utils as tr_utils
 from optimizer.box_trust_region import (
     FixedLengthTurboTrustRegion,
     ModuleAwareTrustRegion,
@@ -18,6 +17,7 @@ from optimizer.trust_region_config import (
     MetricShapedTRConfig,
     _ray_scale_to_unit_box,
 )
+from optimizer.trust_region_geometry import _MetricGeometryModel
 from optimizer.trust_region_math import _LowRankFactor, _symmetric_spd_factor
 from optimizer.trust_region_sampling_utils import _low_rank_mahalanobis_sq
 
@@ -826,7 +826,7 @@ def test_module_blocks_restrict_dense_ellipsoid_to_selected_subspace(monkeypatch
 
 
 def test_low_rank_geometry_skips_full_covariance_build(monkeypatch):
-    model = tr_utils._MetricGeometryModel(
+    model = _MetricGeometryModel(
         num_dim=4,
         covmat="low_rank",
         metric_rank=2,
@@ -845,7 +845,7 @@ def test_low_rank_geometry_skips_full_covariance_build(monkeypatch):
     def _fail_trace_normalize(*args, **kwargs):
         raise AssertionError("low-rank path should not build full covariance")
 
-    monkeypatch.setattr(tr_utils, "_trace_normalize", _fail_trace_normalize)
+    monkeypatch.setattr("optimizer.trust_region_geometry._trace_normalize", _fail_trace_normalize)
 
     model.set_geometry(dx, weights)
     assert model.has_geometry

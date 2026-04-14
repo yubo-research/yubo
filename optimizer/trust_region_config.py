@@ -20,12 +20,10 @@ from optimizer.metric_trust_region import (
 )
 from optimizer.trust_region_accel import accel_name as _accel_name
 from optimizer.trust_region_accel import accel_override as _accel_override
-from optimizer.trust_region_utils import (
-    CovmatKind,
-    RadialMode,
-    UpdateMode,
-    _ray_scale_to_unit_box,
-)
+from optimizer.trust_region_geometry import CovmatKind
+from optimizer.trust_region_length_policies import UpdateMode
+from optimizer.trust_region_math import _ray_scale_to_unit_box
+from optimizer.trust_region_step_samplers import RadialMode
 
 GeometryKind = Literal[
     "box",

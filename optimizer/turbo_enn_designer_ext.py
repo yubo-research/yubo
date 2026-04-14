@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional
 
 import numpy as np
@@ -74,7 +74,7 @@ def _module_tr_summary(
 
 
 @dataclass(frozen=True)
-class _TrustRegionSpec:
+class TurboENNTrustRegionSpec:
     tr_type: str
     tr_geometry: str
     covmat: Optional[str]
@@ -96,7 +96,55 @@ class _TrustRegionSpec:
     accel: Optional[str]
 
 
-def _validate_tr_options(spec: _TrustRegionSpec) -> None:
+@dataclass(frozen=True)
+class ModuleTRSpec:
+    enabled: bool = False
+    block_prob: float = 0.5
+    min_num_params: int = 10000
+
+
+@dataclass(frozen=True)
+class TurboENNExtConfig:
+    turbo_mode: str
+    num_init: Optional[int] = None
+    k: Optional[int] = None
+    num_keep: Optional[int] = None
+    num_fit_samples: Optional[int] = None
+    num_fit_candidates: Optional[int] = None
+    acq_type: str = "pareto"
+    trust_region: TurboENNTrustRegionSpec = field(
+        default_factory=lambda: TurboENNTrustRegionSpec(
+            tr_type="turbo",
+            tr_geometry="box",
+            covmat=None,
+            metric_rank=None,
+            fixed_length=None,
+            update_option="option_a",
+            p_raasp=0.2,
+            radial_mode="ball_uniform",
+            shape_period=5,
+            shape_ema=0.2,
+            shape_jitter=1e-6,
+            shape_kappa_max=1e4,
+            rho_bad=0.25,
+            rho_good=0.75,
+            gamma_down=0.5,
+            gamma_up=2.0,
+            boundary_tol=0.1,
+            use_accel=False,
+            accel=None,
+        )
+    )
+    use_y_var: bool = False
+    num_candidates: Optional[int] = None
+    candidate_rv: Optional[str] = None
+    num_metrics: Optional[int] = None
+    use_python: bool = False
+    module_tr: ModuleTRSpec = field(default_factory=ModuleTRSpec)
+    rng: Optional[np.random.Generator] = None
+
+
+def _validate_tr_options(spec: TurboENNTrustRegionSpec) -> None:
     if spec.tr_type != "turbo":
         return
     _ = MetricShapedTRConfig(
@@ -121,7 +169,7 @@ def _validate_tr_options(spec: _TrustRegionSpec) -> None:
     )
 
 
-def _make_trust_region(spec: _TrustRegionSpec, *, num_metrics: int | None) -> TrustRegionConfig:
+def _make_trust_region(spec: TurboENNTrustRegionSpec, *, num_metrics: int | None) -> TrustRegionConfig:
     if spec.tr_type == "turbo":
         if spec.tr_geometry == "box" and spec.covmat is None and spec.update_option == "option_a" and spec.fixed_length is None:
             return TurboTRConfig()
@@ -164,117 +212,123 @@ def _uses_accel_tr(tr_type: str, tr_geometry: str) -> bool:
     return tr_type == "turbo" and tr_geometry != "box"
 
 
-def _uses_custom_tr(spec: _TrustRegionSpec) -> bool:
+def _uses_custom_tr(spec: TurboENNTrustRegionSpec) -> bool:
     return not (
         spec.tr_type == "turbo" and spec.tr_geometry == "box" and spec.covmat is None and spec.update_option == "option_a" and spec.fixed_length is None
     )
+
+
+def _config_from_legacy_kwargs(kwargs: dict) -> TurboENNExtConfig:
+    data = dict(kwargs)
+    tr_type = data.pop("tr_type", None) or "turbo"
+    tr_geometry = data.pop("tr_geometry", None) or "box"
+    use_accel = data.pop("use_accel", None)
+    trust_region = TurboENNTrustRegionSpec(
+        tr_type=tr_type,
+        tr_geometry=tr_geometry,
+        covmat=data.pop("covmat", None),
+        metric_rank=data.pop("metric_rank", None),
+        fixed_length=data.pop("tr_length_fixed", data.pop("fixed_length", None)),
+        update_option=data.pop("update_option", "option_a"),
+        p_raasp=float(data.pop("p_raasp", 0.2)),
+        radial_mode=data.pop("radial_mode", "ball_uniform"),
+        shape_period=int(data.pop("shape_period", 5)),
+        shape_ema=float(data.pop("shape_ema", 0.2)),
+        shape_jitter=float(data.pop("shape_jitter", 1e-6)),
+        shape_kappa_max=float(data.pop("shape_kappa_max", 1e4)),
+        rho_bad=float(data.pop("rho_bad", 0.25)),
+        rho_good=float(data.pop("rho_good", 0.75)),
+        gamma_down=float(data.pop("gamma_down", 0.5)),
+        gamma_up=float(data.pop("gamma_up", 2.0)),
+        boundary_tol=float(data.pop("boundary_tol", 0.1)),
+        use_accel=bool(tr_type == "turbo" and tr_geometry != "box") if use_accel is None else bool(use_accel),
+        accel=data.pop("accel", None),
+    )
+    module_tr = ModuleTRSpec(
+        enabled=bool(data.pop("module_tr", False)),
+        block_prob=float(data.pop("module_tr_block_prob", 0.5)),
+        min_num_params=int(data.pop("module_tr_min_num_params", 10000)),
+    )
+    config = TurboENNExtConfig(
+        turbo_mode=data.pop("turbo_mode"),
+        num_init=data.pop("num_init", None),
+        k=data.pop("k", None),
+        num_keep=data.pop("num_keep", None),
+        num_fit_samples=data.pop("num_fit_samples", None),
+        num_fit_candidates=data.pop("num_fit_candidates", None),
+        acq_type=data.pop("acq_type", "pareto"),
+        trust_region=trust_region,
+        use_y_var=bool(data.pop("use_y_var", False)),
+        num_candidates=data.pop("num_candidates", None),
+        candidate_rv=data.pop("candidate_rv", None),
+        num_metrics=data.pop("num_metrics", None),
+        use_python=bool(data.pop("use_python", False)),
+        module_tr=module_tr,
+        rng=data.pop("rng", None),
+    )
+    if data:
+        keys = ", ".join(sorted(data))
+        raise TypeError(f"Unexpected TurboENNDesigner keyword(s): {keys}")
+    return config
 
 
 class TurboENNDesigner(_TurboENNDesigner):
     def __init__(
         self,
         policy,
-        turbo_mode: str,
-        num_init: Optional[int] = None,
-        k: Optional[int] = None,
-        num_keep: Optional[int] = None,
-        num_fit_samples: Optional[int] = None,
-        num_fit_candidates: Optional[int] = None,
-        fixed_length: Optional[float] = None,
-        acq_type: str = "pareto",
-        tr_type: Optional[str] = None,
-        tr_geometry: Optional[str] = None,
-        covmat: Optional[str] = None,
-        metric_rank: Optional[int] = None,
-        tr_length_fixed: Optional[float] = None,
-        update_option: str = "option_a",
-        p_raasp: float = 0.2,
-        radial_mode: str = "ball_uniform",
-        shape_period: int = 5,
-        shape_ema: float = 0.2,
-        shape_jitter: float = 1e-6,
-        shape_kappa_max: float = 1e4,
-        rho_bad: float = 0.25,
-        rho_good: float = 0.75,
-        gamma_down: float = 0.5,
-        gamma_up: float = 2.0,
-        boundary_tol: float = 0.1,
-        use_y_var: bool = False,
-        num_candidates: Optional[int] = None,
-        candidate_rv: Optional[str] = None,
-        num_metrics: Optional[int] = None,
-        use_python: bool = False,
-        use_accel: bool | None = None,
-        accel: Optional[str] = None,
-        rng: Optional[np.random.Generator] = None,
-        module_tr: bool = False,
-        module_tr_block_prob: float = 0.5,
-        module_tr_min_num_params: int = 10000,
+        *,
+        config: TurboENNExtConfig | None = None,
+        **legacy_kwargs,
     ):
+        if config is None:
+            config = _config_from_legacy_kwargs(legacy_kwargs)
+        elif legacy_kwargs:
+            keys = ", ".join(sorted(legacy_kwargs))
+            raise TypeError(f"Unexpected TurboENNDesigner keyword(s) with config=: {keys}")
+        trust_region = config.trust_region
+        module = config.module_tr
         super().__init__(
             policy,
-            turbo_mode=turbo_mode,
-            num_init=num_init,
-            k=k,
-            num_keep=num_keep,
-            num_fit_samples=num_fit_samples,
-            num_fit_candidates=num_fit_candidates,
-            acq_type=acq_type,
-            tr_type=tr_type,
-            use_y_var=use_y_var,
-            num_candidates=num_candidates,
-            candidate_rv=candidate_rv,
-            num_metrics=num_metrics,
-            use_python=use_python,
+            turbo_mode=config.turbo_mode,
+            num_init=config.num_init,
+            k=config.k,
+            num_keep=config.num_keep,
+            num_fit_samples=config.num_fit_samples,
+            num_fit_candidates=config.num_fit_candidates,
+            acq_type=config.acq_type,
+            tr_type=trust_region.tr_type,
+            use_y_var=config.use_y_var,
+            num_candidates=config.num_candidates,
+            candidate_rv=config.candidate_rv,
+            num_metrics=config.num_metrics,
+            use_python=config.use_python,
         )
-        self._tr_geometry = str(tr_geometry if tr_geometry is not None else "box").strip()
-        self._covmat = covmat
-        self._metric_rank = metric_rank
-        self._tr_length_fixed = tr_length_fixed if tr_length_fixed is not None else fixed_length
+        self._tr_geometry = str(trust_region.tr_geometry).strip()
+        self._covmat = trust_region.covmat
+        self._metric_rank = trust_region.metric_rank
+        self._tr_length_fixed = trust_region.fixed_length
         self._fixed_length = self._tr_length_fixed
-        self._update_option = update_option
-        self._p_raasp = float(p_raasp)
-        self._radial_mode = radial_mode
-        self._shape_period = int(shape_period)
-        self._shape_ema = float(shape_ema)
-        self._shape_jitter = float(shape_jitter)
-        self._shape_kappa_max = float(shape_kappa_max)
-        self._rho_bad = float(rho_bad)
-        self._rho_good = float(rho_good)
-        self._gamma_down = float(gamma_down)
-        self._gamma_up = float(gamma_up)
-        self._boundary_tol = float(boundary_tol)
-        if use_accel is None:
-            use_accel = self._tr_type == "turbo" and self._tr_geometry != "box"
-        self._use_accel = bool(use_accel)
-        self._accel = accel
-        self._module_tr = bool(module_tr)
-        self._module_tr_block_prob = float(module_tr_block_prob)
-        self._module_tr_min_num_params = int(module_tr_min_num_params)
+        self._update_option = trust_region.update_option
+        self._p_raasp = float(trust_region.p_raasp)
+        self._radial_mode = trust_region.radial_mode
+        self._shape_period = int(trust_region.shape_period)
+        self._shape_ema = float(trust_region.shape_ema)
+        self._shape_jitter = float(trust_region.shape_jitter)
+        self._shape_kappa_max = float(trust_region.shape_kappa_max)
+        self._rho_bad = float(trust_region.rho_bad)
+        self._rho_good = float(trust_region.rho_good)
+        self._gamma_down = float(trust_region.gamma_down)
+        self._gamma_up = float(trust_region.gamma_up)
+        self._boundary_tol = float(trust_region.boundary_tol)
+        self._use_accel = bool(trust_region.use_accel)
+        self._accel = trust_region.accel
+        self._module_tr = bool(module.enabled)
+        self._module_tr_block_prob = float(module.block_prob)
+        self._module_tr_min_num_params = int(module.min_num_params)
         self._use_python = bool(self._use_python or _uses_accel_tr(self._tr_type, self._tr_geometry))
-        if rng is not None:
-            self._rng = rng
-        self._tr_spec = _TrustRegionSpec(
-            tr_type=self._tr_type,
-            tr_geometry=self._tr_geometry,
-            covmat=self._covmat,
-            metric_rank=self._metric_rank,
-            fixed_length=self._tr_length_fixed,
-            update_option=self._update_option,
-            p_raasp=self._p_raasp,
-            radial_mode=self._radial_mode,
-            shape_period=self._shape_period,
-            shape_ema=self._shape_ema,
-            shape_jitter=self._shape_jitter,
-            shape_kappa_max=self._shape_kappa_max,
-            rho_bad=self._rho_bad,
-            rho_good=self._rho_good,
-            gamma_down=self._gamma_down,
-            gamma_up=self._gamma_up,
-            boundary_tol=self._boundary_tol,
-            use_accel=self._use_accel,
-            accel=self._accel,
-        )
+        if config.rng is not None:
+            self._rng = config.rng
+        self._tr_spec = trust_region
         _validate_tr_options(self._tr_spec)
 
     def _make_trust_region(self, num_metrics: int | None) -> TrustRegionConfig:
@@ -350,4 +404,9 @@ class TurboENNDesigner(_TurboENNDesigner):
             return None
 
 
-__all__ = ["TurboENNDesigner"]
+__all__ = [
+    "TurboENNDesigner",
+    "TurboENNTrustRegionSpec",
+    "ModuleTRSpec",
+    "TurboENNExtConfig",
+]
