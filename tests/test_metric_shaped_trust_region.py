@@ -9,6 +9,7 @@ from optimizer.box_trust_region import (
     FixedLengthTurboTrustRegion,
     ModuleAwareTrustRegion,
     maybe_enable_module_masks,
+    module_support_blocks,
 )
 from optimizer.metric_trust_region import ENNMetricShapedTrustRegion, MetricShapedTrustRegion
 from optimizer.trust_region_config import (
@@ -20,6 +21,7 @@ from optimizer.trust_region_config import (
 from optimizer.trust_region_geometry import _MetricGeometryModel
 from optimizer.trust_region_math import _LowRankFactor, _symmetric_spd_factor
 from optimizer.trust_region_sampling_utils import _low_rank_mahalanobis_sq
+from problems.mlp_torch_policy import MLPPolicyModule
 
 
 def _set_dense_covariance(tr: MetricShapedTrustRegion, cov: np.ndarray) -> None:
@@ -567,10 +569,10 @@ def test_needs_gradient_signal_by_geometry():
 
 def test_module_aware_box_trust_region_uses_leaf_blocks(monkeypatch):
     policy = torch.nn.Sequential(
-        torch.nn.LayerNorm(4),
-        torch.nn.Linear(4, 3),
+        torch.nn.LayerNorm(8),
+        torch.nn.Linear(8, 16),
         torch.nn.ReLU(),
-        torch.nn.Linear(3, 2),
+        torch.nn.Linear(16, 8),
     )
     policy.num_params = lambda: sum(p.numel() for p in policy.parameters())
 
@@ -578,7 +580,7 @@ def test_module_aware_box_trust_region_uses_leaf_blocks(monkeypatch):
     base_tr = FixedLengthTurboTrustRegion(config=cfg, num_dim=policy.num_params())
     opt = types.SimpleNamespace(_tr_state=base_tr)
 
-    enabled = maybe_enable_module_masks(opt, policy, enabled=True, min_num_params=0, block_prob=0.5)
+    enabled = maybe_enable_module_masks(opt, policy, enabled=True, min_num_params=0, block_prob=0.0)
     assert enabled is True
     assert isinstance(opt._tr_state, ModuleAwareTrustRegion)
 
@@ -596,11 +598,17 @@ def test_module_aware_box_trust_region_uses_leaf_blocks(monkeypatch):
     assert np.all(candidates >= 0.0) and np.all(candidates <= 1.0)
 
     diff = np.abs(candidates - x_center.reshape(1, -1)) > 1e-12
+    saw_partial_block = False
     for row in diff:
+        active_blocks = 0
         for start, end in tr.block_slices:
             block = row[start:end]
             if block.any():
-                assert block.all()
+                active_blocks += 1
+                if not block.all():
+                    saw_partial_block = True
+        assert active_blocks == 1
+    assert saw_partial_block is True
     assert np.all(candidates >= -1e-10) and np.all(candidates <= 1.0 + 1e-10)
 
 
@@ -622,8 +630,9 @@ def test_module_aware_box_trust_region_preserves_candidate_rv(monkeypatch):
 
     calls = {}
 
-    def fake_generate(center, lb, ub, num_candidates, *, rng, candidate_rv, sobol_engine, block_slices, block_prob):
+    def fake_generate(center, lb, ub, num_candidates, *, rng, candidate_rv, sobol_engine, block_slices, block_prob, num_pert):
         calls["candidate_rv"] = candidate_rv
+        calls["num_pert"] = num_pert
         return np.tile(np.asarray(center, dtype=float).reshape(1, -1), (int(num_candidates), 1))
 
     monkeypatch.setattr("optimizer.box_trust_region._generate_block_raasp_candidates", fake_generate)
@@ -636,6 +645,20 @@ def test_module_aware_box_trust_region_preserves_candidate_rv(monkeypatch):
         candidate_rv=CandidateRV.SOBOL,
     )
     assert calls["candidate_rv"] == CandidateRV.SOBOL
+    assert calls["num_pert"] == 20
+
+
+def test_module_support_blocks_merge_input_norm_for_mlp_policy():
+    policy = MLPPolicyModule(
+        num_state=4,
+        num_action=2,
+        hidden_sizes=(3,),
+        use_layer_norm=True,
+    )
+    policy.num_params = lambda: sum(p.numel() for p in policy.parameters())
+
+    blocks = module_support_blocks(policy)
+    assert blocks == ((0, 23), (23, 31))
 
 
 def test_module_aware_metric_trust_region_reports_enabled_without_replacement():

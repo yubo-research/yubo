@@ -65,7 +65,45 @@ class ModuleAwareTrustRegion(FixedLengthTurboTrustRegion):
             sobol_engine=sobol_engine,
             block_slices=self.block_slices,
             block_prob=float(self.block_prob),
+            num_pert=int(num_pert),
         )
+
+
+def module_support_blocks(policy: Any) -> tuple[tuple[int, int], ...]:
+    """Return module-aware support blocks for policy search.
+
+    The base partition follows leaf modules so it remains aligned with the
+    existing SubmodulePerturbator semantics. For feedforward MLP policies with
+    input LayerNorm, we merge `in_norm` into the first learned block so module
+    selection is not wasted on normalization alone.
+    """
+
+    blocks = list(leaf_module_param_blocks(policy))
+    if len(blocks) < 2:
+        return tuple(blocks)
+
+    try:
+        import torch.nn as nn
+    except ImportError:
+        return tuple(blocks)
+
+    in_norm = getattr(policy, "in_norm", None)
+    model = getattr(policy, "model", None)
+    if not isinstance(in_norm, nn.LayerNorm) or not isinstance(model, nn.Sequential):
+        return tuple(blocks)
+
+    norm_size = 0
+    for name, param in policy.named_parameters():
+        if name.startswith("in_norm."):
+            norm_size += int(param.numel())
+    if norm_size <= 0:
+        return tuple(blocks)
+    if blocks[0] != (0, norm_size):
+        return tuple(blocks)
+
+    merged = [(0, int(blocks[1][1]))]
+    merged.extend(blocks[2:])
+    return tuple(merged)
 
 
 def maybe_enable_module_masks(
@@ -99,7 +137,7 @@ def maybe_enable_module_masks(
     if getattr(tr_state, "uses_custom_candidate_gen", False):
         return bool(getattr(tr_state, "module_block_slices", ()))
 
-    block_slices = leaf_module_param_blocks(policy)
+    block_slices = module_support_blocks(policy)
     if len(block_slices) < 2:
         return False
 

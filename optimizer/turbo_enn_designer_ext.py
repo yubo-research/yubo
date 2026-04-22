@@ -8,8 +8,7 @@ from enn.turbo import turbo_utils
 from enn.turbo.config.trust_region import NoTRConfig, TrustRegionConfig, TurboTRConfig
 
 import common.all_bounds as all_bounds
-from optimizer.box_trust_region import maybe_enable_module_masks
-from optimizer.submodule_perturbator import leaf_module_param_blocks
+from optimizer.box_trust_region import maybe_enable_module_masks, module_support_blocks
 from optimizer.trust_region_accel import accel_name as _accel_name
 from optimizer.trust_region_config import MetricShapedTRConfig
 from optimizer.turbo_enn_designer import TurboENNDesigner as _TurboENNDesigner
@@ -363,7 +362,7 @@ class TurboENNDesigner(_TurboENNDesigner):
         block_slices: tuple[tuple[int, int], ...] = ()
         if tr_state is not None and self._module_tr and hasattr(self._policy, "parameters"):
             try:
-                block_slices = leaf_module_param_blocks(self._policy)
+                block_slices = module_support_blocks(self._policy)
             except Exception:
                 block_slices = ()
             setattr(tr_state, "module_block_slices", block_slices)

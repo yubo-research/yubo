@@ -84,15 +84,17 @@ def _generate_block_raasp_candidates(
     sobol_engine: Any | None,
     block_slices: tuple[tuple[int, int], ...],
     block_prob: float,
+    num_pert: int = 20,
 ) -> np.ndarray:
     x_center = np.asarray(center, dtype=float).reshape(-1)
     num_dim = int(x_center.size)
-    mask = _sample_block_mask(
+    mask = _sample_block_param_mask(
         num_candidates=num_candidates,
         num_dim=num_dim,
         rng=rng,
         block_slices=block_slices,
         block_prob=block_prob,
+        num_pert=num_pert,
     )
     pert = _sample_box_perturbations(
         np.asarray(lb, dtype=float),
@@ -161,6 +163,55 @@ def _sample_block_mask(
             start, end = block_slices[int(j)]
             mask[i, int(start) : int(end)] = True
     return mask
+
+
+def _sample_block_selection(
+    *,
+    num_candidates: int,
+    rng: Any,
+    block_slices: tuple[tuple[int, int], ...],
+    block_prob: float,
+) -> np.ndarray:
+    num_blocks = int(len(block_slices))
+    if num_blocks <= 0:
+        raise ValueError("block_slices must be non-empty")
+    prob_perturb = float(min(max(block_prob, 0.0), 1.0))
+    selection = rng.random((int(num_candidates), num_blocks)) < prob_perturb
+    empty_rows = np.flatnonzero(~selection.any(axis=1))
+    if empty_rows.size > 0:
+        forced = rng.integers(0, num_blocks, size=empty_rows.size)
+        selection[empty_rows, forced] = True
+    return selection
+
+
+def _sample_block_param_mask(
+    *,
+    num_candidates: int,
+    num_dim: int,
+    rng: Any,
+    block_slices: tuple[tuple[int, int], ...],
+    block_prob: float,
+    num_pert: int,
+) -> np.ndarray:
+    block_selection = _sample_block_selection(
+        num_candidates=int(num_candidates),
+        rng=rng,
+        block_slices=block_slices,
+        block_prob=block_prob,
+    )
+    param_mask = np.zeros((int(num_candidates), int(num_dim)), dtype=bool)
+    for row in range(int(num_candidates)):
+        active_parts: list[np.ndarray] = []
+        for block_idx, (start, end) in enumerate(block_slices):
+            if bool(block_selection[row, block_idx]):
+                active_parts.append(np.arange(int(start), int(end), dtype=np.int64))
+        active = np.concatenate(active_parts)
+        active_dim = int(active.size)
+        prob_perturb = min(float(num_pert) / float(active_dim), 1.0)
+        k = max(int(rng.binomial(active_dim, prob_perturb)), 1)
+        chosen = rng.choice(active, size=k, replace=False)
+        param_mask[row, chosen] = True
+    return param_mask
 
 
 def _sample_block_groups(
