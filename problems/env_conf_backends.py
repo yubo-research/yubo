@@ -115,3 +115,9 @@ def register_with_env_conf() -> None:
     from problems.env_conf import register_atari_dm_bindings_loader
 
     register_atari_dm_bindings_loader(load_atari_dm_bindings)
+
+
+def maybe_register_atari_dm_backends(env_tag: str) -> None:
+    if not str(env_tag).startswith(("atari:", "ALE/", "dm:", "dm_control/")):
+        return
+    register_with_env_conf()

@@ -2,12 +2,18 @@
 
 from __future__ import annotations
 
-import math
-from collections.abc import Callable, Sequence
+from collections.abc import Sequence
 
 import numpy as np
 import torch
 
+from analysis.fitting_time.benchmark_table_fmt import (
+    fmt_mu_loglik_sweep,
+    fmt_mu_nrmse,
+    fmt_se_loglik_sweep,
+    fmt_se_nrmse_sweep,
+    pm_plus_minus_column,
+)
 from analysis.fitting_time.evaluate import (
     _mean_and_sem,
     draw_benchmark_synthetic_xy,
@@ -19,69 +25,6 @@ from analysis.fitting_time.evaluate import (
 from analysis.fitting_time.fitting_time import fit_enn
 
 __all__ = ["sweep"]
-
-
-def _nonfinite_token(x: float) -> str | None:
-    if math.isnan(x):
-        return "nan"
-    if math.isinf(x):
-        return "inf" if x > 0 else "-inf"
-    return None
-
-
-def _fmt_mu_nrmse_sweep(x: float) -> str:
-    t = _nonfinite_token(x)
-    if t is not None:
-        return t
-    return f"{x:.6g}"
-
-
-def _fmt_se_nrmse_sweep(x: float) -> str:
-    t = _nonfinite_token(x)
-    if t is not None:
-        return t
-    return f"{x:.2g}"
-
-
-def _fmt_mu_loglik_sweep(x: float) -> str:
-    t = _nonfinite_token(x)
-    if t is not None:
-        return t
-    if abs(x) >= 10.0:
-        return f"{x:.2f}"
-    return f"{x:.6g}"
-
-
-def _fmt_se_loglik_sweep(x: float) -> str:
-    t = _nonfinite_token(x)
-    if t is not None:
-        return t
-    if abs(x) >= 1.0:
-        return f"{x:.0f}"
-    return f"{x:.2g}"
-
-
-def _pm_cells_sweep(
-    mus: list[float],
-    ses: list[float],
-    fmt_mu: Callable[[float], str],
-    fmt_se_fn: Callable[[float], str],
-) -> list[str]:
-    mu_strs = [fmt_mu(mu) for mu in mus]
-    w_m = max(len(s) for s in mu_strs)
-    out: list[str] = []
-    for mu, mstr, se in zip(mus, mu_strs, ses, strict=True):
-        if math.isnan(mu):
-            out.append("nan")
-            continue
-        if math.isinf(mu):
-            out.append(mstr)
-            continue
-        if not math.isfinite(se) or se <= 0.0:
-            out.append(f"{mstr:<{w_m}}")
-        else:
-            out.append(f"{mstr:<{w_m}} ± {fmt_se_fn(se)}")
-    return out
 
 
 def _nrmse_ll_lists_for_kp(
@@ -134,7 +77,7 @@ def sweep(
     """Fit ENN ``num_reps`` times per ``(K, P)`` pair and print NRMSE / LogLik as mean ± SEM.
 
     Each replicate draws ``N`` train and test points via :func:`draw_benchmark_synthetic_xy`
-    (same protocol as the timing benchmark). ``K`` is passed to :func:`enn_fit` as ``k``;
+    (same protocol as the timing benchmark). ``K`` is passed to :func:`fit_enn` as ``k``;
     ``P`` is ``num_fit_samples`` (clamped to ``[1, N]``). Metrics match
     :func:`benchmark_synthetic_sine_surrogates` (noisy ``y_test``, predictive variance with
     ``0.1^2`` observation noise).
@@ -183,8 +126,8 @@ def sweep(
         ll_mus.append(ms_l.mu)
         ll_ses.append(ms_l.se)
 
-    nrm_cells = _pm_cells_sweep(nrm_mus, nrm_ses, _fmt_mu_nrmse_sweep, _fmt_se_nrmse_sweep)
-    ll_cells = _pm_cells_sweep(ll_mus, ll_ses, _fmt_mu_loglik_sweep, _fmt_se_loglik_sweep)
+    nrm_cells = pm_plus_minus_column(nrm_mus, nrm_ses, fmt_mu_nrmse, fmt_se_nrmse_sweep)
+    ll_cells = pm_plus_minus_column(ll_mus, ll_ses, fmt_mu_loglik_sweep, fmt_se_loglik_sweep)
     h_n, h_l = "NRMSE", "LogLik"
     wn = max(len(h_n), max(len(c) for c in nrm_cells))
     wl = max(len(h_l), max(len(c) for c in ll_cells))

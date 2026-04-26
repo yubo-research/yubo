@@ -5,16 +5,9 @@ from typing import Any, Callable
 
 import numpy as np
 
+from problems.env_conf_backends import maybe_register_atari_dm_backends
 from rl.core.continuous_actions import normalize_action_bounds
 from rl.core.env_conf import resolve_noise_seed_0, resolve_problem_seed
-
-
-def _maybe_register_atari_dm_backends(env_tag: str) -> None:
-    if not str(env_tag).startswith(("atari:", "ALE/", "dm:", "dm_control/")):
-        return
-    from problems.env_conf_backends import register_with_env_conf
-
-    register_with_env_conf()
 
 
 @dataclass(frozen=True)
@@ -42,7 +35,7 @@ def build_continuous_gym_env_setup(
 ) -> ContinuousGymEnvSetup:
     resolved_problem_seed = resolve_problem_seed(seed=int(seed), problem_seed=problem_seed)
     resolved_noise_seed_0 = resolve_noise_seed_0(problem_seed=int(resolved_problem_seed), noise_seed_0=noise_seed_0)
-    _maybe_register_atari_dm_backends(str(env_tag))
+    maybe_register_atari_dm_backends(str(env_tag))
     env_conf = get_env_conf_fn(
         str(env_tag),
         problem_seed=int(resolved_problem_seed),

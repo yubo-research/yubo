@@ -1,21 +1,10 @@
 from problems.bipedal_walker_policy import BipedalWalkerPolicy
 from problems.env_conf_bindings import get_atari_dm_bindings
 from problems.env_conf_constants import _ATARI_DEFAULT_MAX_STEPS, _DM_CONTROL_DEFAULT_MAX_STEPS
+from problems.env_conf_policies import gaussian_policy_factory
 from problems.env_conf_types import EnvConf, GymConf, _gym_conf
 from problems.mlp_policy import MLPPolicyFactory
 from problems.turbo_lunar_policy import TurboLunarPolicy
-
-
-def _gaussian_policy_factory(variant: str):
-    _ns: dict = {}
-    exec("from rl.policy_backbone import GaussianActorBackbonePolicyFactory", _ns)  # noqa: S102
-    GaussianActorBackbonePolicyFactory = _ns["GaussianActorBackbonePolicyFactory"]
-    return GaussianActorBackbonePolicyFactory(
-        variant=variant,
-        deterministic_eval=True,
-        squash_mode="clip",
-        init_log_std=-0.5,
-    )
 
 
 def _atari_pong_policy(env_conf):
@@ -68,18 +57,18 @@ _gym_env_confs = {
     ),
     "cheetah-16x16-gauss": _gym_conf(
         "HalfCheetah-v5",
-        policy_class=_gaussian_policy_factory(variant="rl-gauss-tanh"),
+        policy_class=gaussian_policy_factory(variant="rl-gauss-tanh"),
     ),
     "cheetah-gauss": _gym_conf(
         "HalfCheetah-v5",
-        policy_class=_gaussian_policy_factory(variant="rl-gauss-small"),
+        policy_class=gaussian_policy_factory(variant="rl-gauss-small"),
     ),
     "reach": EnvConf("Reacher-v5", gym_conf=GymConf(max_steps=50)),
     # "push": EnvConf("Pusher-v4",  gym_conf=GymConf(max_steps=100)),
     "hop": _gym_conf("Hopper-v5"),
     "hop-gauss": _gym_conf(
         "Hopper-v5",
-        policy_class=_gaussian_policy_factory(variant="rl-gauss-small"),
+        policy_class=gaussian_policy_factory(variant="rl-gauss-small"),
     ),
     # 6900
     "human": _gym_conf("Humanoid-v5"),

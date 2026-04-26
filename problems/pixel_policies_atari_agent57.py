@@ -6,6 +6,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
+from problems.pixel_atari_spatial import atari_in_channels_from_obs_shape, atari_obs_to_nchw
 from problems.pixel_policies_encoders import nature_cnn_encoder, obs_space_from_env_conf, tiny_atari_cnn_encoder
 from problems.policy_mixin import PolicyParamsMixin
 
@@ -43,12 +44,7 @@ class AtariAgent57LitePolicy(PolicyParamsMixin, nn.Module):
 
         obs_space = obs_space_from_env_conf(env_conf)
         shape = obs_space.shape
-        if len(shape) == 4 and shape[-1] == 1:
-            in_channels = int(shape[0])
-        elif len(shape) == 3:
-            in_channels = int(shape[-1]) if shape[0] != 4 else 4
-        else:
-            raise ValueError(f"Expected 3D or 4D obs, got {shape}")
+        in_channels = atari_in_channels_from_obs_shape(shape, require_spatial_84=False)
         num_actions = int(env_conf.action_space.n)
 
         if cnn_variant == "small":
@@ -83,19 +79,6 @@ class AtariAgent57LitePolicy(PolicyParamsMixin, nn.Module):
     def reset_state(self):
         self._h = self._c = None
 
-    def _to_chw(self, x: torch.Tensor) -> torch.Tensor:
-        if x.dim() == 3:
-            x = x.unsqueeze(0)
-        if x.dim() == 4 and x.shape[-1] == 1:
-            x = x.unsqueeze(0)[..., 0]
-        elif x.dim() == 5 and x.shape[-1] == 1:
-            x = x.squeeze(-1)
-        if x.shape[1] in (3, 4) and x.shape[2] == 84:
-            pass
-        elif x.shape[-1] in (3, 4):
-            x = x.permute(0, 3, 1, 2)
-        return x
-
     def forward(
         self,
         x: torch.Tensor,
@@ -104,7 +87,7 @@ class AtariAgent57LitePolicy(PolicyParamsMixin, nn.Module):
         h=None,
         c=None,
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        x = self._to_chw(x)
+        x = atari_obs_to_nchw(x)
         conv_feat = self.encoder(x)
         conv_feat = self.proj(conv_feat)
         prev_action = max(0, min(int(prev_action), self._num_actions - 1))

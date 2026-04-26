@@ -753,6 +753,16 @@ class TestLoadTomlConfig:
         with pytest.raises(OSError):
             _load_toml_config(str(tmp_path / "nonexistent.toml"))
 
+    def test_er_keys_survive_toml_load(self, tmp_path):
+        """Early-reject keys are allowed through TOML coercion (regression: allowlist)."""
+        cfg_file = tmp_path / "config.toml"
+        cfg_file.write_text('[uhd]\nenv_tag = "mnist"\nnum_rounds = 10\ner_tau = 0.1\ner_mode = "ema"\ner-ema-beta = 0.9\n')
+        raw = _load_toml_config(str(cfg_file))
+        parsed = _parse_cfg(raw)
+        assert parsed.early_reject.tau == 0.1
+        assert parsed.early_reject.mode == "ema"
+        assert parsed.early_reject.ema_beta == 0.9
+
 
 class TestDefaultConstants:
     """Tests for default constants."""
@@ -799,3 +809,8 @@ class TestDefaultConstants:
             assert key in _ALL_TOML_KEYS
         for key in _OPTIONAL_TOML_KEYS:
             assert key in _ALL_TOML_KEYS
+
+    def test_er_default_keys_in_allowlist(self):
+        """Early-reject schema keys used by _ER_DEFAULTS must be in TOML allowlist."""
+        for key in _ER_DEFAULTS:
+            assert key in _ALL_TOML_KEYS, key

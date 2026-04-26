@@ -1,12 +1,6 @@
 from __future__ import annotations
 
-
-def _maybe_register_atari_dm_backends(env_tag: str) -> None:
-    if not str(env_tag).startswith(("atari:", "ALE/", "dm:", "dm_control/")):
-        return
-    from problems.env_conf_backends import register_with_env_conf
-
-    register_with_env_conf()
+from problems.env_conf_backends import maybe_register_atari_dm_backends
 
 
 def is_atari_env_tag(env_tag: str) -> bool:
@@ -24,7 +18,7 @@ def to_puffer_game_name(env_tag: str) -> str:
 def resolve_gym_env_name(env_tag: str) -> tuple[str, dict]:
     from problems.env_conf import get_env_conf
 
-    _maybe_register_atari_dm_backends(str(env_tag))
+    maybe_register_atari_dm_backends(str(env_tag))
     env_conf = get_env_conf(str(env_tag))
     if str(getattr(env_conf, "env_name", "")).startswith("dm_control/"):
         return (str(env_conf.env_name), dict(getattr(env_conf, "kwargs", {}) or {}))

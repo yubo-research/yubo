@@ -6,6 +6,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
+from problems.pixel_atari_spatial import atari_in_channels_from_obs_shape, atari_obs_to_nchw
 from problems.pixel_policies_encoders import init_linear_and_conv, nature_cnn_encoder, obs_space_from_env_conf, tiny_atari_cnn_encoder
 from problems.policy_mixin import PolicyParamsMixin
 
@@ -52,16 +53,7 @@ class AtariCNNPolicy(PolicyParamsMixin, nn.Module):
 
         obs_space = obs_space_from_env_conf(env_conf)
         shape = obs_space.shape
-        if len(shape) == 4 and shape[-1] == 1:
-            in_channels = int(shape[0])
-        elif len(shape) == 3:
-            if shape[0] == 4:
-                in_channels = 4
-            else:
-                in_channels = int(shape[-1])
-        else:
-            raise ValueError(f"Expected 3D or 4D obs (4,84,84), (84,84,4), (4,84,84,1), got {shape}")
-        assert 84 in shape[:3], f"Expected 84x84, got {shape}"
+        in_channels = atari_in_channels_from_obs_shape(shape, require_spatial_84=True)
 
         num_actions = int(env_conf.action_space.n)
         if str(variant).lower() == "small":
@@ -85,16 +77,7 @@ class AtariCNNPolicy(PolicyParamsMixin, nn.Module):
         init_linear_and_conv(self, gain=0.01)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        if x.dim() == 3:
-            x = x.unsqueeze(0)
-        if x.dim() == 4 and x.shape[-1] == 1:
-            x = x.unsqueeze(0)[..., 0]
-        elif x.dim() == 5 and x.shape[-1] == 1:
-            x = x.squeeze(-1)
-        if x.shape[1] in (3, 4) and x.shape[2] == 84:
-            pass
-        elif x.shape[-1] in (3, 4):
-            x = x.permute(0, 3, 1, 2)
+        x = atari_obs_to_nchw(x)
         feats = self.encoder(x)
         return self.head(feats)
 

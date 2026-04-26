@@ -39,6 +39,13 @@ _OPTIONAL_TOML_KEYS = (
     "enn_embedder",
     "enn_gather_t",
     "batch_size",
+    # Early-reject
+    "er_tau",
+    "er_mode",
+    "er_ema_beta",
+    "er_warmup_pos",
+    "er_quantile",
+    "er_window",
     # BSZO settings (used when optimizer = "bszo")
     "bszo_k",
     "bszo_epsilon",
