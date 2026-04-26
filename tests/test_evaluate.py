@@ -16,8 +16,13 @@ from analysis.fitting_time.evaluate import (
     normalize_benchmark_function_name,
     normalized_rmse,
     predictive_gaussian_log_likelihood,
+    synthetic_benchmark_data_seed,
 )
-from analysis.fitting_time.fitting_time import fit_svgp_default, fit_svgp_linear, fit_vecchia
+from analysis.fitting_time.fitting_time import (
+    fit_svgp_default,
+    fit_svgp_linear,
+    fit_vecchia,
+)
 
 
 def _br(
@@ -175,6 +180,31 @@ def test_draw_benchmark_synthetic_xy_sine_respects_problem_seed():
     b = draw_benchmark_synthetic_xy(N=5, D=2, function_name="sine", problem_seed=999)
     identical = torch.allclose(a[0], b[0]) and torch.allclose(a[1], b[1]) and torch.allclose(a[2], b[2]) and torch.allclose(a[3], b[3])
     assert not identical
+
+
+def test_synthetic_benchmark_data_seed_varies_by_rep_and_function():
+    s0 = synthetic_benchmark_data_seed(function_name="sphere", problem_seed=17, rep_index=0)
+    s1 = synthetic_benchmark_data_seed(function_name="sphere", problem_seed=17, rep_index=1)
+    a0 = synthetic_benchmark_data_seed(function_name="ackley", problem_seed=17, rep_index=0)
+    assert s0 != s1
+    assert s0 != a0
+
+
+def test_draw_benchmark_synthetic_xy_pure_function_varies_by_function():
+    sphere = draw_benchmark_synthetic_xy(
+        N=5,
+        D=2,
+        function_name="sphere",
+        problem_seed=synthetic_benchmark_data_seed(function_name="sphere", problem_seed=17, rep_index=0),
+    )
+    ackley = draw_benchmark_synthetic_xy(
+        N=5,
+        D=2,
+        function_name="ackley",
+        problem_seed=synthetic_benchmark_data_seed(function_name="ackley", problem_seed=17, rep_index=0),
+    )
+    assert not torch.allclose(sphere[0], ackley[0])
+    assert not torch.allclose(sphere[2], ackley[2])
 
 
 def test_benchmark_smac_fit_failure_degrades_to_nan(monkeypatch):

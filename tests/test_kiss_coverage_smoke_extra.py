@@ -144,7 +144,12 @@ def test_kiss_cov_modal_batches_collect_and_cleanup(monkeypatch):
     monkeypatch.setattr(
         mb,
         "sample_1",
-        lambda run_cfg: SimpleNamespace(collector_log="log", collector_trace="trace", trace_records=[{"x": 1}], stop_reason="completed"),
+        lambda run_cfg: SimpleNamespace(
+            collector_log="log",
+            collector_trace="trace",
+            trace_records=[{"x": 1}],
+            stop_reason="completed",
+        ),
     )
 
     class _Func:
@@ -277,40 +282,12 @@ def test_kiss_cov_modal_image_and_interactive(monkeypatch):
     assert out == modal_remote_tuple
     monkeypatch.setattr(modal_interactive, "mk_replicates", lambda config: [rc])
     monkeypatch.setattr(modal_interactive, "post_process", lambda *args, **kwargs: None)
-    monkeypatch.setattr(modal_interactive.modal_sample_1, "remote", lambda _run_config: modal_remote_tuple)
-    modal_interactive.run_job("exp", "env", "opt", 1, 1, 1)
-
-
-def test_kiss_cov_modal_synthetic_sine_benchmark_remote_raw_and_local_main(monkeypatch, tmp_path, capsys):
-    from pathlib import Path
-
-    import experiments.modal_synthetic_sine_benchmark as msb
-    from analysis.fitting_time.evaluate import SURROGATE_BENCHMARK_KEYS, BMResult, MuSe, SyntheticSineSurrogateBenchmark
-    from experiments.synthetic_sine_benchmark_payload import META_KEY, synthetic_sine_benchmark_result_to_payload
-
-    _zr = BMResult(MuSe(0.0, 0.0), MuSe(0.0, 0.0), MuSe(0.0, 0.0))
-    z = SyntheticSineSurrogateBenchmark(results={k: _zr for k in SURROGATE_BENCHMARK_KEYS})
-
-    def fake_build(n, d, fn, ps, num_reps=1):
-        return synthetic_sine_benchmark_result_to_payload(z, n=n, d=d, function_name=fn, problem_seed=ps, num_reps=num_reps)
-
     monkeypatch.setattr(
-        "experiments.synthetic_sine_benchmark_payload.build_synthetic_sine_benchmark_remote_payload",
-        fake_build,
+        modal_interactive.modal_sample_1,
+        "remote",
+        lambda _run_config: modal_remote_tuple,
     )
-    out = msb.run_synthetic_sine_benchmark_remote.get_raw_f()(2, 3, "sine", 4)
-    assert out[META_KEY]["N"] == 2 and out[META_KEY]["problem_seed"] == 4
-    assert out[META_KEY]["function_name"] == "sine"
-
-    def fake_disk(n, d, fn, ps, od, **kwargs):
-        p = Path(od) / "out.json"
-        p.parent.mkdir(parents=True, exist_ok=True)
-        p.write_text("{}")
-        return p
-
-    monkeypatch.setattr(msb, "run_synthetic_sine_benchmark_modal_to_disk", fake_disk)
-    msb.main.info.raw_f("sine", 1, 1, 0, str(tmp_path))
-    assert "wrote" in capsys.readouterr().out
+    modal_interactive.run_job("exp", "env", "opt", 1, 1, 1)
 
 
 def test_kiss_cov_fig_utils(monkeypatch, tmp_path):

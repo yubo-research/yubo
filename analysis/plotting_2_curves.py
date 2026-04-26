@@ -5,6 +5,7 @@ import numpy as np
 import analysis.plotting as ap
 from analysis.data_locator import DataLocator
 from analysis.plotting_2_trace import mean_normalized_rank_score_by_optimizer
+from analysis.plotting_2_util import display_opt_name
 
 
 def plot_learning_curves(
@@ -19,6 +20,7 @@ def plot_learning_curves(
     cum_dt_prop_final_by_opt: dict[str, float] | None = None,
     x_start: int = 1,
     opt_names_all: list[str] | None = None,
+    renames: dict[str, str] | None = None,
     show_title: bool = True,
 ):
     optimizers = data_locator.optimizers()
@@ -38,9 +40,9 @@ def plot_learning_curves(
             marker = ap.markers[style_idx]
             linewidth = 2.0
             markersize_use = markersize
-        label = opt_name
+        label = display_opt_name(opt_name, renames)
         if cum_dt_prop_final_by_opt is not None and opt_name in cum_dt_prop_final_by_opt:
-            label = f"{opt_name} ({cum_dt_prop_final_by_opt[opt_name]:.1f}s)"
+            label = f"{display_opt_name(opt_name, renames)} ({cum_dt_prop_final_by_opt[opt_name]:.1f}s)"
         ap.filled_err(
             x=x,
             ys=y,
@@ -74,6 +76,7 @@ def plot_final_performance(
     title: str = None,
     ylabel: str = "Mean normalized rank",
     opt_names_all: list[str] | None = None,
+    renames: dict[str, str] | None = None,
     show_title: bool = True,
 ):
     optimizers = data_locator.optimizers()
@@ -91,7 +94,11 @@ def plot_final_performance(
     x_pos = np.arange(len(optimizers))
     ax.bar(x_pos, means, yerr=2 * stes, capsize=5, color=colors, alpha=0.8)
     ax.set_xticks(x_pos)
-    ax.set_xticklabels(optimizers, rotation=45, ha="right")
+    ax.set_xticklabels(
+        [display_opt_name(opt_name, renames) for opt_name in optimizers],
+        rotation=45,
+        ha="right",
+    )
     ax.set_ylabel(ylabel)
     if show_title and title:
         ax.set_title(title)

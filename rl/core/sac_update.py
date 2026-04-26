@@ -14,6 +14,8 @@ from rl.core.sac_math import (
     soft_update_module,
 )
 
+from .sac_update_batch import SACUpdateBatch
+
 
 def _set_requires_grad(modules: tuple[nn.Module, ...], enabled: bool) -> None:
     for module in modules:
@@ -36,15 +38,6 @@ class SACUpdateOptimizers:
     actor: optim.Optimizer
     critic: optim.Optimizer
     alpha: optim.Optimizer
-
-
-@dataclasses.dataclass(frozen=True)
-class SACUpdateBatch:
-    obs: torch.Tensor
-    act: torch.Tensor
-    rew: torch.Tensor
-    nxt: torch.Tensor
-    done: torch.Tensor
 
 
 @dataclasses.dataclass(frozen=True)

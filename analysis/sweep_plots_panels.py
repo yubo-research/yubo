@@ -2,6 +2,7 @@
 
 import numpy as np
 
+import analysis.plotting as ap
 from analysis.sweep_plots_metrics import (
     _bar_heights_shift_if_negative,
     _mean_ybest_mean_sem_per_curve,
@@ -43,15 +44,35 @@ def _plot_curve_series(
     all_curves: list,
     *,
     param_name_for_print: str,
-) -> None:
-    for val, curves in zip(param_values, all_curves, strict=True):
+) -> list[str]:
+    colors: list[str] = []
+    for i, (val, curves) in enumerate(zip(param_values, all_curves, strict=True)):
         n_reps, n_rounds = curves.shape
         rounds = np.arange(1, n_rounds + 1)
         means = np.nanmean(curves, axis=0)
         ses = np.nanstd(curves, axis=0) / np.sqrt(n_reps)
         label = f"{param_name_for_print}={val}"
-        ax_curve.plot(rounds, means, label=label, linewidth=2.2)
-        ax_curve.fill_between(rounds, means - ses, means + ses, alpha=0.16)
+        color = ap.colors[i % len(ap.colors)]
+        marker = ap.markers[i % len(ap.markers)]
+        ax_curve.plot(
+            rounds,
+            means,
+            label=label,
+            linewidth=2.2,
+            color=color,
+            marker=marker,
+            markersize=6,
+            markevery=max(1, n_rounds // 10),
+        )
+        ax_curve.fill_between(
+            rounds,
+            means - ses,
+            means + ses,
+            alpha=0.16,
+            color=color,
+        )
+        colors.append(color)
+    return colors
 
 
 def _style_curve_panel(
@@ -89,6 +110,7 @@ def _draw_final_ybest_bar_panel(
     all_curves: list,
     *,
     param_name_for_print: str,
+    colors: list[str] | None = None,
     show_ylabel: bool = False,
     ylabel: str = "Relative\nmean($y_{best}$)",
 ) -> None:
@@ -96,12 +118,13 @@ def _draw_final_ybest_bar_panel(
     bar_means, bar_sems = _mean_ybest_mean_sem_per_curve(all_curves)
     bar_heights, bar_shift = _bar_heights_shift_if_negative(bar_means)
     x_pos = np.arange(len(param_values))
+    bar_colors = colors if colors is not None else ["steelblue"] * len(param_values)
     ax_bar.bar(
         x_pos,
         bar_heights,
         yerr=bar_sems,
         capsize=4,
-        color="steelblue",
+        color=bar_colors,
         ecolor="black",
         alpha=0.85,
     )
@@ -163,7 +186,7 @@ def _draw_plot_curves_panels(
     _style_publication_axes(ax_curve)
     _style_publication_axes(ax_bar)
 
-    _plot_curve_series(
+    colors = _plot_curve_series(
         ax_curve,
         param_values,
         all_curves,
@@ -184,6 +207,7 @@ def _draw_plot_curves_panels(
         param_values,
         all_curves,
         param_name_for_print=param_name_for_print,
+        colors=colors,
         show_ylabel=show_bar_ylabel,
         ylabel=bar_ylabel,
     )

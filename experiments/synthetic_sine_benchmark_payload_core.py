@@ -115,6 +115,27 @@ def synthetic_sine_benchmark_config_slug(*, n: int, d: int, function_name: str, 
     return stem
 
 
+def synthetic_sine_benchmark_rep_slug(
+    *,
+    n: int,
+    d: int,
+    function_name: str,
+    problem_seed: int,
+    rep_index: int,
+) -> str:
+    """Filesystem-safe filename stem for one replicate payload."""
+    if int(rep_index) < 0:
+        raise ValueError("rep_index must be >= 0")
+    base = synthetic_sine_benchmark_config_slug(
+        n=n,
+        d=d,
+        function_name=function_name,
+        problem_seed=problem_seed,
+        num_reps=1,
+    )
+    return f"{base}_rep{int(rep_index)}"
+
+
 def write_synthetic_sine_benchmark_json(path: Path, payload: dict) -> None:
     """Write JSON with NaN/inf preserved (Python ``json`` non-standard tokens).
 

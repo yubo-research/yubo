@@ -134,6 +134,7 @@ def test_cov_plotting_types(tmp_path):
         RLTracesWithCumDtProp,
     )
     from analysis.plotting_types import (
+        PlotResultsCombinedResult,
         PlotResultsResult,
         PlotRLExperimentResult,
         PlotRLExperimentVsTimeResult,
@@ -152,6 +153,8 @@ def test_cov_plotting_types(tmp_path):
     assert pet.t is not None
     pr = PlotResultsResult(curves=(None, None), final=(None, None), seq_data=None, batch_data=None)
     assert pr.curves == (None, None)
+    prc = PlotResultsCombinedResult(fig=None, axs=None, seq_data=None, batch_data=None)
+    assert prc.fig is None
 
 
 # ---------------------------------------------------------------------------

@@ -40,6 +40,7 @@ def plot_rl_comparison(
     figsize: tuple = (12, 5),
     cum_dt_prop: bool = False,
     opt_names_all: list[str] | None = None,
+    renames: dict[str, str] | None = None,
     show_titles: bool = True,
     print_titles: bool = False,
 ):
@@ -102,6 +103,7 @@ def plot_rl_comparison(
         title=title_seq,
         cum_dt_prop_final_by_opt=cum_dt_prop_seq,
         opt_names_all=opt_names_all or opt_names_seq,
+        renames=renames,
         show_title=show_titles,
     )
 
@@ -123,6 +125,7 @@ def plot_rl_comparison(
             title=title_batch,
             cum_dt_prop_final_by_opt=cum_dt_prop_batch,
             opt_names_all=opt_names_all or opt_names_batch,
+            renames=renames,
             show_title=show_titles,
         )
     else:
@@ -136,7 +139,7 @@ def plot_rl_comparison(
 
     if suptitle:
         fig.suptitle(suptitle, y=1.02)
-    consolidate_bottom_legend(fig, axs, ncol=3)
+    consolidate_bottom_legend(fig, axs, ncol=3, renames=renames)
     fig.tight_layout(rect=(0.0, 0.04, 1.0, 1.0))
 
     return _PlotRLComparisonResult(fig=fig, axs=axs, seq=seq, batch=batch)
@@ -159,6 +162,7 @@ def plot_rl_final_comparison(
     suptitle: str = None,
     figsize: tuple = (14, 5),
     opt_names_all: list[str] | None = None,
+    renames: dict[str, str] | None = None,
     show_titles: bool = True,
     print_titles: bool = False,
 ):
@@ -208,6 +212,7 @@ def plot_rl_final_comparison(
         traces_seq,
         title=title_seq,
         opt_names_all=opt_names_all or opt_names_seq,
+        renames=renames,
         show_title=show_titles,
     )
 
@@ -227,6 +232,7 @@ def plot_rl_final_comparison(
             traces_batch,
             title=title_batch,
             opt_names_all=opt_names_all or opt_names_batch,
+            renames=renames,
             show_title=show_titles,
         )
     else:

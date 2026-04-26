@@ -48,6 +48,7 @@ def consolidate_bottom_legend(
     axs,
     *,
     ncol: int = 5,
+    renames: dict[str, str] | None = None,
 ) -> None:
     handles: list[object] = []
     labels: list[str] = []
@@ -60,6 +61,8 @@ def consolidate_bottom_legend(
                 continue
 
             base = li.split(" (", 1)[0]
+            if renames is not None:
+                base = renames.get(base, base)
             if base.startswith("turbo-enn"):
                 li2 = "turbo-enn"
             else:
@@ -90,6 +93,10 @@ def consolidate_bottom_legend(
     for handle in leg.legend_handles:
         handle.set_markersize(10)
         handle.set_linewidth(3.0)
+
+
+def display_opt_name(opt_name: str, renames: dict[str, str] | None = None) -> str:
+    return renames.get(opt_name, opt_name) if renames is not None else opt_name
 
 
 def get_denoise_value(data_locator, problem: str) -> int:

@@ -3,6 +3,7 @@
 from analysis import plotting_2_trace as _trace
 from analysis import plotting_2_util as _util
 
+from . import plotting_2_combined as _combined
 from . import plotting_2_comparison as _comparison
 from . import plotting_2_curves as _curves
 from . import plotting_2_helpers as _helpers
@@ -31,6 +32,7 @@ speedup_x_label = _util.speedup_x_label
 
 plot_rl_comparison = _comparison.plot_rl_comparison
 plot_rl_final_comparison = _comparison.plot_rl_final_comparison
+plot_rl_combined_comparison = _combined.plot_rl_combined_comparison
 plot_final_performance = _curves.plot_final_performance
 plot_learning_curves = _curves.plot_learning_curves
 _load_rl_with_cum_dt_prop = _helpers._load_rl_with_cum_dt_prop
@@ -38,6 +40,7 @@ _print_cum_dt_props = _helpers._print_cum_dt_props
 _try_load_rl_with_cum_dt_prop = _helpers._try_load_rl_with_cum_dt_prop
 compute_pareto_data = _pareto.compute_pareto_data
 plot_results = _results.plot_results
+plot_results_combined = _results.plot_results_combined
 plot_rl_experiment = _rl.plot_rl_experiment
 plot_rl_experiment_vs_time = _rl.plot_rl_experiment_vs_time
 plot_rl_experiment_vs_time_auto = _rl.plot_rl_experiment_vs_time_auto

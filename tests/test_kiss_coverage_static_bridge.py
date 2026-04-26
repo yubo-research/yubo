@@ -14,8 +14,6 @@ import torch
 import torch.nn as nn
 from click.testing import CliRunner
 
-import experiments.modal_synthetic_sine_benchmark as kiss_modal_synthetic_sine  # noqa: F401
-
 
 def test_kiss_bridge_env_preprocessing_clip_observation_wrapper():
     import gymnasium as gym
@@ -84,7 +82,11 @@ def test_kiss_bridge_modal_batches_batches_all_branches(monkeypatch, capsys):
         def lookup(*_a, **_k):
             return _Fn()
 
-    monkeypatch.setattr(mb, "modal", SimpleNamespace(Function=_Func, Dict=SimpleNamespace(delete=lambda name: None)))
+    monkeypatch.setattr(
+        mb,
+        "modal",
+        SimpleNamespace(Function=_Func, Dict=SimpleNamespace(delete=lambda name: None)),
+    )
 
     mb.batches("tag", "submit-missing-force", None)
 
@@ -1226,17 +1228,14 @@ def test_kiss_bridge_torchrl_sac_setup_loop_ppo_engine_tail(monkeypatch, tmp_pat
 
 def test_kiss_bridge_modal_synthetic_sine_disk_and_main_raw(monkeypatch, tmp_path, capsys):
     import contextlib
-    from pathlib import Path
 
-    from analysis.fitting_time.evaluate import SURROGATE_BENCHMARK_KEYS, BMResult, MuSe, SyntheticSineSurrogateBenchmark
-    from experiments.modal_synthetic_sine_benchmark import (
-        main as modal_ssb_main,
+    from analysis.fitting_time.evaluate import (
+        SURROGATE_BENCHMARK_KEYS,
+        BMResult,
+        MuSe,
+        SyntheticSineSurrogateBenchmark,
     )
-    from experiments.modal_synthetic_sine_benchmark import (
-        run_synthetic_sine_benchmark_modal_to_disk as modal_ssb_to_disk,
-    )
-
-    msb = kiss_modal_synthetic_sine
+    from experiments import synthetic_sine_benchmark_payload as pl
 
     _zr = BMResult(MuSe(0.0, 0.0), MuSe(0.0, 0.0), MuSe(0.0, 0.0))
     _z = SyntheticSineSurrogateBenchmark(results={k: _zr for k in SURROGATE_BENCHMARK_KEYS})
@@ -1245,27 +1244,6 @@ def test_kiss_bridge_modal_synthetic_sine_disk_and_main_raw(monkeypatch, tmp_pat
         "experiments.synthetic_sine_benchmark_payload.modal.enable_output",
         lambda: contextlib.nullcontext(),
     )
-    monkeypatch.setattr(msb.app, "run", lambda: contextlib.nullcontext())
-
-    class _Rem:
-        @staticmethod
-        def remote(n, d, fn, ps, *_args):
-            return msb.synthetic_sine_benchmark_result_to_payload(_z, n=n, d=d, function_name=fn, problem_seed=ps)
-
-    dest = modal_ssb_to_disk(2, 2, "sine", 0, tmp_path, remote_fn=_Rem())
-    assert dest.exists()
-
-    def fake_disk(n, d, fn, ps, od, **kwargs):
-        p = Path(od) / "kiss.json"
-        p.parent.mkdir(parents=True, exist_ok=True)
-        p.write_text("{}")
-        return p
-
-    monkeypatch.setattr(msb, "run_synthetic_sine_benchmark_modal_to_disk", fake_disk)
-    modal_ssb_main.info.raw_f("sine", 1, 1, 0, str(tmp_path))
-    assert "wrote" in capsys.readouterr().out
-
-    from experiments import synthetic_sine_benchmark_payload as pl
 
     class _PlApp:
         def run(self):

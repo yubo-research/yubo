@@ -1,9 +1,9 @@
-"""Python-defined job lists for :func:`experiments.modal_synthetic_sine_benchmark.batch`.
+"""Python-defined job lists for the synthetic surrogate benchmark batch CLI.
 
 Add a parameterless function that returns a list of :class:`SyntheticBenchJob`, then run::
 
-    modal run experiments/modal_synthetic_sine_benchmark.py::batch \\
-      --jobs-fn your_function_name --output-dir results/_xxx
+    ./ops/synthetic_sine_benchmark_batches.py submit <tag> your_function_name \\
+      --output-dir results/_xxx
 
 ``--jobs-fn`` must be a bare identifier (function name in this module).
 """
@@ -38,8 +38,8 @@ def example_two_targets_n12_d2() -> list[SyntheticBenchJob]:
 
 def job_fit_quality() -> list[SyntheticBenchJob]:
     jobs = []
-    for n in [3000, 10000]:  # [30, 100, 300, 1000]:
-        for d in [3, 10, 30, 100]:
+    for n in [1, 3, 10, 30, 100, 300, 1000, 3000, 10000]:
+        for d in [10]:
             for fn in ["sphere", "ackley", "rosenbrock", "booth"]:
                 jobs.append(SyntheticBenchJob(n=n, d=d, target=fn, problem_seed=17))
     return jobs

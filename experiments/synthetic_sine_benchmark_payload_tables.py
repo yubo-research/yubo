@@ -3,7 +3,10 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Mapping
 
-from analysis.fitting_time.evaluate import SURROGATE_BENCHMARK_ROWS, SyntheticSineSurrogateBenchmark
+from analysis.fitting_time.evaluate import (
+    SURROGATE_BENCHMARK_ROWS,
+    SyntheticSineSurrogateBenchmark,
+)
 from experiments.synthetic_sine_benchmark_payload_core import (
     read_synthetic_sine_benchmark_json,
     synthetic_surrogate_benchmark_to_wide_row,
@@ -23,7 +26,9 @@ def _wide_benchmark_row_as_mapping(row: Any) -> dict[str, Any]:
     raise TypeError("row must be a one-row DataFrame, a Series, or a dict-like mapping")
 
 
-def wide_surrogate_benchmark_row_to_comparison_records(row: Any) -> list[dict[str, Any]]:
+def wide_surrogate_benchmark_row_to_comparison_records(
+    row: Any,
+) -> list[dict[str, Any]]:
     """Turn one wide benchmark row into tidy rows for a human-readable table.
 
     ``row`` is typically ``df.loc[i]`` or ``df[mask].iloc[0]`` from
@@ -62,6 +67,51 @@ def wide_surrogate_benchmark_row_to_comparison_records(row: Any) -> list[dict[st
     return out
 
 
+def wide_surrogate_benchmark_row_to_long_records(row: Any) -> list[dict[str, Any]]:
+    """Turn one wide benchmark row into one tidy row per surrogate."""
+    m = _wide_benchmark_row_as_mapping(row)
+    meta = {
+        "file": m.get("file"),
+        "N": m.get("N"),
+        "D": m.get("D"),
+        "function_name": m.get("function_name"),
+        "problem_seed": m.get("problem_seed"),
+        "num_reps": m.get("num_reps"),
+    }
+    out: list[dict[str, Any]] = []
+    for prefix, label in SURROGATE_BENCHMARK_ROWS:
+        fk = f"{prefix}_fit_seconds_mu"
+        if fk in m:
+            out.append(
+                {
+                    **meta,
+                    "surrogate": prefix,
+                    "surrogate_label": label,
+                    "fit_seconds_mu": m[f"{prefix}_fit_seconds_mu"],
+                    "fit_seconds_se": m.get(f"{prefix}_fit_seconds_se", 0.0),
+                    "normalized_rmse_mu": m[f"{prefix}_normalized_rmse_mu"],
+                    "normalized_rmse_se": m.get(f"{prefix}_normalized_rmse_se", 0.0),
+                    "log_likelihood_mu": m[f"{prefix}_log_likelihood_mu"],
+                    "log_likelihood_se": m.get(f"{prefix}_log_likelihood_se", 0.0),
+                }
+            )
+        else:
+            out.append(
+                {
+                    **meta,
+                    "surrogate": prefix,
+                    "surrogate_label": label,
+                    "fit_seconds_mu": m[f"{prefix}_fit_seconds"],
+                    "fit_seconds_se": 0.0,
+                    "normalized_rmse_mu": m[f"{prefix}_normalized_rmse"],
+                    "normalized_rmse_se": 0.0,
+                    "log_likelihood_mu": m[f"{prefix}_log_likelihood"],
+                    "log_likelihood_se": 0.0,
+                }
+            )
+    return out
+
+
 def synthetic_surrogate_benchmark_row_caption(row: Any) -> str:
     """One-line description: ``N``, ``D``, target, ``problem_seed``, optional ``file``."""
     m = _wide_benchmark_row_as_mapping(row)
@@ -93,10 +143,34 @@ def load_synthetic_sine_benchmark_json_dir(
     for path in sorted(root.glob("*.json")):
         bench, meta = read_synthetic_sine_benchmark_json(path)
         benchmarks.append(bench)
-        rows.append({"file": path.name, **meta, **synthetic_surrogate_benchmark_to_wide_row(bench)})
+        rows.append(
+            {
+                "file": path.name,
+                **meta,
+                **synthetic_surrogate_benchmark_to_wide_row(bench),
+            }
+        )
     if verbose:
         if not rows:
             print("Warning: no *.json files under", root)
         else:
             print(f"loaded {len(rows)} runs from {root}")
     return rows, benchmarks
+
+
+def load_synthetic_sine_benchmark_json_dir_long(
+    directory: str | Path,
+    *,
+    verbose: bool = True,
+):
+    """Load every ``*.json`` under ``directory`` into a tidy dataframe."""
+    import pandas as pd
+
+    rows, _ = load_synthetic_sine_benchmark_json_dir(directory, verbose=verbose)
+    long_rows: list[dict[str, Any]] = []
+    for row in rows:
+        long_rows.extend(wide_surrogate_benchmark_row_to_long_records(row))
+    df = pd.DataFrame(long_rows)
+    if df.empty:
+        return df
+    return df.sort_values(["N", "D", "function_name", "problem_seed", "surrogate"]).reset_index(drop=True)

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from .evaluate_class import SyntheticSineSurrogateBenchmark
-from .evaluate_draw import draw_benchmark_synthetic_xy
+from .evaluate_draw import draw_benchmark_synthetic_xy, synthetic_benchmark_data_seed
 from .evaluate_metrics import (
     SURROGATE_BENCHMARK_KEYS,
     SURROGATE_BENCHMARK_ROWS,
@@ -35,6 +35,7 @@ __all__ = [
     "normalize_benchmark_function_name",
     "normalized_rmse",
     "predictive_gaussian_log_likelihood",
+    "synthetic_benchmark_data_seed",
 ]
 
 
@@ -63,14 +64,16 @@ def benchmark_synthetic_sine_surrogates(
     when ``b_fast_only``); metrics always use the original ``y`` / ``y_test`` from the env draw.
 
     **Replicates:** for ``num_reps`` > 1, the full benchmark is run ``num_reps`` times with
-    ``problem_seed``, ``problem_seed + 1``, … (each replicate gets a fresh synthetic
-    draw). Returned :class:`BMResult` fields are the sample mean and standard error of the
-    mean (finite values only; NaNs omitted from mean/SEM, or all-NaN → NaN mean and SEM).
+    a deterministic data seed derived from ``(problem_seed, function_name, rep_index)``.
+    Each replicate gets a fresh synthetic draw, and different functions with the same
+    base ``problem_seed`` also get different draws. Returned :class:`BMResult` fields are
+    the sample mean and standard error of the mean (finite values only; NaNs omitted from
+    mean/SEM, or all-NaN → NaN mean and SEM).
 
-    Reproducible RNG within one replicate: for ``\"sine\"``, ``torch.manual_seed(problem_seed + rep)``
-    before the train draw and ``+1`` for the test draw inside :func:`draw_benchmark_synthetic_xy`.
-    For other names, the env uses ``problem_seed + rep`` for distortion while train/test
-    ``torch.rand`` use seeds ``0`` and ``1``.
+    Reproducible RNG within one replicate: :func:`synthetic_benchmark_data_seed` determines
+    the train draw seed, and ``+1`` is used for the test draw inside
+    :func:`draw_benchmark_synthetic_xy`. The same draw is then shared across all surrogates
+    evaluated for that replicate.
 
     If the SMAC RF path is unavailable or raises (e.g. missing ``smac``, bad install,
     runtime fit failure), SMAC RF fields are set to ``nan``.
@@ -101,7 +104,11 @@ def benchmark_synthetic_sine_surrogates(
 
     rows: list[dict[str, tuple[float, float, float]]] = []
     for rep in range(num_reps):
-        seed = int(problem_seed) + rep
+        seed = synthetic_benchmark_data_seed(
+            function_name=function_name,
+            problem_seed=problem_seed,
+            rep_index=rep,
+        )
         x, y, x_test, y_test = draw_benchmark_synthetic_xy(N=N, D=D, function_name=function_name, problem_seed=seed)
         rows.append(
             _surrogate_metric_triples_from_tensors(

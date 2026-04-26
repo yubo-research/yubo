@@ -1,27 +1,10 @@
 """Types for designer specification and catalog."""
 
-from dataclasses import dataclass
-from typing import Callable, NamedTuple
+from typing import NamedTuple
 
-
-@dataclass(frozen=True, slots=True)
-class DesignerOptionSpec:
-    name: str
-    required: bool
-    value_type: str
-    description: str
-    example_suffix: str
-    allowed_values: tuple[str, ...] | None = None
-
-    def example(self, designer_name: str) -> str:
-        return f"{designer_name}/{self.example_suffix}"
-
-
-@dataclass(frozen=True, slots=True)
-class DesignerCatalogEntry:
-    base_name: str
-    options: list["DesignerOptionSpec"]
-    dispatch: object
+from .designer_catalog_entry import DesignerCatalogEntry
+from .designer_def import DesignerDef
+from .designer_option_spec import DesignerOptionSpec
 
 
 class DesignerSpec(NamedTuple):
@@ -30,11 +13,9 @@ class DesignerSpec(NamedTuple):
     specific: dict
 
 
-@dataclass(frozen=True, slots=True)
-class DesignerDef:
-    name: str
-    builder: Callable
-    option_specs: tuple["DesignerOptionSpec", ...] = ()
-
-    def has_options(self) -> bool:
-        return len(self.option_specs) > 0
+__all__ = [
+    "DesignerCatalogEntry",
+    "DesignerDef",
+    "DesignerOptionSpec",
+    "DesignerSpec",
+]

@@ -34,6 +34,16 @@ def fit_exact_gp(train_x: Tensor, train_y: Tensor, x_test: Tensor) -> tuple[floa
     return elapsed, y_hat, pred_var
 
 
+def _svgp_nan_out(x_test: Tensor) -> tuple[float, Tensor, Tensor]:
+    nan_t = torch.full(
+        (x_test.shape[0], 1),
+        float("nan"),
+        dtype=x_test.dtype,
+        device=x_test.device,
+    )
+    return float("nan"), nan_t, nan_t
+
+
 def _fit_svgp(
     train_x: Tensor,
     train_y: Tensor,
@@ -54,6 +64,8 @@ def _fit_svgp(
         ty = ty.unsqueeze(-1)
 
     n = train_x.shape[-2]
+    if n < 2:
+        return _svgp_nan_out(x_test)
 
     # Standardize inside the model so ``posterior`` untransforms to the original y scale.
     # Passing pre-standardized ``train_y`` without an outcome transform left means in z-space
@@ -69,21 +81,29 @@ def _fit_svgp(
         )
     svgp.to(train_x)
     mll = VariationalELBO(svgp.likelihood, svgp.model, num_data=n)
-    with gpytorch.settings.max_cholesky_size(2000):
-        t_0 = time.perf_counter()
-        fit_gpytorch_mll(
-            mll,
-            optimizer=fit_gpytorch_mll_torch,
-            optimizer_kwargs={"step_limit": 150},
-        )
-        elapsed = time.perf_counter() - t_0
+    try:
+        with gpytorch.settings.max_cholesky_size(2000):
+            t_0 = time.perf_counter()
+            fit_gpytorch_mll(
+                mll,
+                optimizer=fit_gpytorch_mll_torch,
+                optimizer_kwargs={"step_limit": 150},
+            )
+            elapsed = time.perf_counter() - t_0
+    except (RuntimeError, ValueError) as e:
+        if "nan" in str(e).lower() or "invalid" in str(e).lower():
+            return _svgp_nan_out(x_test)
+        raise
     svgp.eval()
 
     x_e = x_test.to(device=train_x.device, dtype=train_x.dtype)
-    with torch.no_grad():
-        post = svgp.posterior(x_e, observation_noise=True)
-        y_hat = post.mean
-        pred_var = post.variance
+    try:
+        with torch.no_grad():
+            post = svgp.posterior(x_e, observation_noise=True)
+            y_hat = post.mean
+            pred_var = post.variance
+    except (RuntimeError, ValueError):
+        return _svgp_nan_out(x_test)
     return elapsed, y_hat, pred_var
 
 

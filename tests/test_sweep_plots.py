@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 import matplotlib
+import matplotlib.colors as mcolors
 
 matplotlib.use("Agg")
 
@@ -123,6 +124,45 @@ def test_plot_curves_respects_env_tag(tmp_path: Path, monkeypatch: pytest.Monkey
 
     assert len(seen) == 1
     assert "r2" in seen[0].replace("\\", "/")
+
+
+def test_draw_plot_curves_panels_matches_bar_colors_and_adds_markers() -> None:
+    import analysis.plotting as ap
+    from analysis.sweep_plots_panels import _draw_plot_curves_panels
+
+    _, (ax_curve, ax_bar) = matplotlib.pyplot.subplots(
+        2,
+        1,
+        figsize=(8, 6),
+        gridspec_kw={"height_ratios": [2.0, 1.0]},
+    )
+    param_values = [3, 10]
+    all_curves = [
+        np.array([[1.0, 2.0, 3.0], [1.5, 2.5, 3.5]]),
+        np.array([[0.5, 1.0, 1.5], [0.75, 1.25, 1.75]]),
+    ]
+
+    _draw_plot_curves_panels(
+        ax_curve,
+        ax_bar,
+        param_values,
+        all_curves,
+        param_name_for_print="K",
+        xlabel="Round",
+        ylabel=r"$y_{\mathrm{best}}$",
+        title="",
+        show_legend=True,
+        show_curve_ylabel=True,
+        show_bar_ylabel=True,
+        show_title=False,
+        panel_label=None,
+        curve_ylabel_fontsize=None,
+    )
+
+    assert [line.get_marker() for line in ax_curve.lines] == ap.markers[:2]
+    expected_colors = [mcolors.to_rgba(c, alpha=0.85) for c in ap.colors[:2]]
+    actual_colors = [patch.get_facecolor() for patch in ax_bar.patches]
+    assert actual_colors == expected_colors
 
 
 def test_plot_curves_four_envs_smoke(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
