@@ -140,8 +140,13 @@ def load_synthetic_sine_benchmark_json_dir(
     root = Path(directory)
     rows: list[dict] = []
     benchmarks: list[SyntheticSineSurrogateBenchmark] = []
+    skipped = 0
     for path in sorted(root.glob("*.json")):
-        bench, meta = read_synthetic_sine_benchmark_json(path)
+        try:
+            bench, meta = read_synthetic_sine_benchmark_json(path)
+        except ValueError:
+            skipped += 1
+            continue
         benchmarks.append(bench)
         rows.append(
             {
@@ -154,7 +159,10 @@ def load_synthetic_sine_benchmark_json_dir(
         if not rows:
             print("Warning: no *.json files under", root)
         else:
-            print(f"loaded {len(rows)} runs from {root}")
+            msg = f"loaded {len(rows)} runs from {root}"
+            if skipped:
+                msg += f" (skipped {skipped} partial/per-surrogate files)"
+            print(msg)
     return rows, benchmarks
 
 
@@ -163,13 +171,83 @@ def load_synthetic_sine_benchmark_json_dir_long(
     *,
     verbose: bool = True,
 ):
-    """Load every ``*.json`` under ``directory`` into a tidy dataframe."""
+    """Load every ``*.json`` under ``directory`` into a tidy dataframe.
+
+    Handles both full-benchmark files (all surrogates) and per-surrogate files.
+    """
+    import json
+
     import pandas as pd
 
-    rows, _ = load_synthetic_sine_benchmark_json_dir(directory, verbose=verbose)
+    from analysis.fitting_time.evaluate import SURROGATE_BENCHMARK_ROWS
+
+    root = Path(directory)
     long_rows: list[dict[str, Any]] = []
-    for row in rows:
-        long_rows.extend(wide_surrogate_benchmark_row_to_long_records(row))
+    full_count = 0
+    partial_count = 0
+
+    for path in sorted(root.glob("*.json")):
+        with path.open() as f:
+            data = json.load(f)
+
+        meta = data.get("_meta", {})
+
+        if "triple" in data:
+            surrogate_key = meta.get("surrogate_key")
+            if not surrogate_key:
+                continue
+            label_map = {k: v for k, v in SURROGATE_BENCHMARK_ROWS}
+            triple = data["triple"]
+            long_rows.append(
+                {
+                    "file": path.name,
+                    "N": meta.get("N"),
+                    "D": meta.get("D"),
+                    "function_name": meta.get("function_name"),
+                    "problem_seed": meta.get("problem_seed"),
+                    "surrogate": surrogate_key,
+                    "surrogate_label": label_map.get(surrogate_key, surrogate_key),
+                    "num_reps": 1,
+                    "fit_seconds_mu": triple[0],
+                    "fit_seconds_se": 0.0,
+                    "normalized_rmse_mu": triple[1],
+                    "normalized_rmse_se": 0.0,
+                    "log_likelihood_mu": triple[2],
+                    "log_likelihood_se": 0.0,
+                }
+            )
+            partial_count += 1
+        elif "results" in data:
+            try:
+                bench, _ = read_synthetic_sine_benchmark_json(path)
+            except ValueError:
+                continue
+            row = {
+                "file": path.name,
+                **meta,
+                **synthetic_surrogate_benchmark_to_wide_row(bench),
+            }
+            long_rows.extend(wide_surrogate_benchmark_row_to_long_records(row))
+            full_count += 1
+        else:
+            try:
+                bench, _ = read_synthetic_sine_benchmark_json(path)
+            except ValueError:
+                continue
+            row = {
+                "file": path.name,
+                **meta,
+                **synthetic_surrogate_benchmark_to_wide_row(bench),
+            }
+            long_rows.extend(wide_surrogate_benchmark_row_to_long_records(row))
+            full_count += 1
+
+    if verbose:
+        if not long_rows:
+            print("Warning: no *.json files under", root)
+        else:
+            print(f"loaded {full_count} full + {partial_count} per-surrogate runs from {root}")
+
     df = pd.DataFrame(long_rows)
     if df.empty:
         return df

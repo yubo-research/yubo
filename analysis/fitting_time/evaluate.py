@@ -19,6 +19,7 @@ from .evaluate_metrics import (
 from .evaluate_triples import (
     _surrogate_metric_triples_from_tensors,
     aggregate_surrogate_replicates,
+    benchmark_single_surrogate,
 )
 
 __all__ = [
@@ -29,6 +30,7 @@ __all__ = [
     "SURROGATE_BENCHMARK_KEYS",
     "SyntheticSineSurrogateBenchmark",
     "_mean_and_sem",
+    "benchmark_single_surrogate_with_data",
     "benchmark_synthetic_sine_surrogates",
     "draw_benchmark_synthetic_xy",
     "env_action_coords_to_surrogate_unit_x",
@@ -127,3 +129,30 @@ def benchmark_synthetic_sine_surrogates(
             )
         )
     return aggregate_surrogate_replicates(rows)
+
+
+def benchmark_single_surrogate_with_data(
+    *,
+    N: int,
+    D: int,
+    function_name: str,
+    surrogate_key: str,
+    data_seed: int,
+) -> tuple[float, float, float]:
+    """Benchmark a single surrogate on synthetic data and return (fit_seconds, normalized_rmse, log_likelihood).
+
+    Unlike :func:`benchmark_synthetic_sine_surrogates`, this runs only ONE surrogate. The caller
+    is responsible for iterating over surrogates and replicates.
+
+    Args:
+        N: Number of training points.
+        D: Dimensionality.
+        function_name: Target function (e.g. "sphere", "rosenbrock").
+        surrogate_key: One of :data:`SURROGATE_BENCHMARK_KEYS` (e.g. "enn", "vecchia").
+        data_seed: Seed for the data draw (use :func:`synthetic_benchmark_data_seed` to compute).
+
+    Returns:
+        Tuple of (fit_seconds, normalized_rmse, log_likelihood).
+    """
+    x, y, x_test, y_test = draw_benchmark_synthetic_xy(N=N, D=D, function_name=function_name, problem_seed=data_seed)
+    return benchmark_single_surrogate(x, y, x_test, y_test, surrogate_key)

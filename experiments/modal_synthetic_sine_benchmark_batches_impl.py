@@ -11,15 +11,20 @@ from pathlib import Path
 
 import modal
 
-from analysis.fitting_time.evaluate import synthetic_benchmark_data_seed
+from analysis.fitting_time.evaluate import (
+    benchmark_single_surrogate_with_data,
+    synthetic_benchmark_data_seed,
+)
 from experiments import synthetic_sine_benchmark_payload as ssbp
 from experiments.modal_image import mk_image
 from experiments.modal_synthetic_sine_benchmark_batches_reps import (
     aggregate_reps_to_dest,
+    aggregate_surrogate_results_to_rep,
     benchmark_json_dest,
-    iter_missing_jobs,
+    iter_missing_surrogate_jobs,
     job_key,
     rep_json_dest,
+    surrogate_rep_json_dest,
 )
 
 _TAG = os.environ.get("MODAL_TAG")
@@ -55,35 +60,54 @@ def _submitted_dict(tag: str):
 _job_key = job_key
 _benchmark_json_dest = benchmark_json_dest
 _rep_json_dest = rep_json_dest
+_surrogate_rep_json_dest = surrogate_rep_json_dest
 _aggregate_reps_to_dest = aggregate_reps_to_dest
-_iter_missing_jobs = iter_missing_jobs
+_aggregate_surrogate_results_to_rep = aggregate_surrogate_results_to_rep
+_iter_missing_surrogate_jobs = iter_missing_surrogate_jobs
 
 
 @app.function(
     image=_modal_image,
     max_containers=1000,
-    timeout=24 * 60 * 60,
+    timeout=5 * 60 * 60,
     memory=2 * 1024,
     cpu=1.0,
 )
 def synthetic_sine_benchmark_batch_worker(job):
-    tag, n, d, function_name, problem_seed, rep_index, num_reps = job
+    """Run a single surrogate for a single replicate."""
+    tag, n, d, function_name, problem_seed, rep_index, num_reps, surrogate_key = job
     key = _job_key(
         n=n,
         d=d,
         function_name=function_name,
         problem_seed=problem_seed,
         num_reps=num_reps,
+        surrogate_key=surrogate_key,
     )
     data_seed = synthetic_benchmark_data_seed(
         function_name=function_name,
         problem_seed=problem_seed,
         rep_index=rep_index,
     )
-    payload = ssbp.build_synthetic_sine_benchmark_remote_payload(n, d, function_name, data_seed, 1)
-    payload[ssbp.META_KEY]["problem_seed"] = int(problem_seed)
-    payload[ssbp.META_KEY]["data_seed"] = int(data_seed)
-    payload[ssbp.META_KEY]["rep_index"] = int(rep_index)
+    triple = benchmark_single_surrogate_with_data(
+        N=n,
+        D=d,
+        function_name=function_name,
+        surrogate_key=surrogate_key,
+        data_seed=data_seed,
+    )
+    payload = {
+        "triple": list(triple),
+        "_meta": {
+            "N": n,
+            "D": d,
+            "function_name": function_name,
+            "problem_seed": int(problem_seed),
+            "data_seed": int(data_seed),
+            "rep_index": int(rep_index),
+            "surrogate_key": surrogate_key,
+        },
+    }
     _results_dict(tag)[f"{key}-rep{rep_index}"] = (
         payload,
         n,
@@ -92,13 +116,14 @@ def synthetic_sine_benchmark_batch_worker(job):
         problem_seed,
         rep_index,
         num_reps,
+        surrogate_key,
     )
 
 
 @app.function(
     image=_modal_image,
     max_containers=20,
-    timeout=24 * 60 * 60,
+    timeout=5 * 60 * 60,
     memory=2 * 1024,
     cpu=1.0,
 )
@@ -133,7 +158,7 @@ def synthetic_sine_benchmark_batch_deleter(keys, tag: str):
 def _submit_missing(tag: str, jobs_fn: str, output_dir: str | Path, num_reps: int):
     batch = []
     submitted = 0
-    submitted_reps: dict[tuple[int, int, str, int, int], list[int]] = {}
+    submitted_surrogates: dict[tuple[int, int, str, int, int], dict[int, set[str]]] = {}
 
     def _flush():
         nonlocal batch
@@ -143,38 +168,33 @@ def _submit_missing(tag: str, jobs_fn: str, output_dir: str | Path, num_reps: in
         func.spawn(batch, tag)
         batch = []
 
-    for key, job in _iter_missing_jobs(jobs_fn, output_dir, int(num_reps)):
+    for key, job in _iter_missing_surrogate_jobs(jobs_fn, output_dir, int(num_reps)):
         batch.append((key, job))
         submitted += 1
-        n, d, function_name, problem_seed, rep_index, reps_total = job
+        n, d, function_name, problem_seed, rep_index, reps_total, surrogate_key = job
         cfg = (n, d, function_name, problem_seed, reps_total)
-        submitted_reps.setdefault(cfg, []).append(int(rep_index))
+        submitted_surrogates.setdefault(cfg, {}).setdefault(int(rep_index), set()).add(surrogate_key)
         if len(batch) >= 1000:
             _flush()
     _flush()
-    for n, d, function_name, problem_seed, reps_total in sorted(submitted_reps):
-        rep_indices = sorted(submitted_reps[(n, d, function_name, problem_seed, reps_total)])
-        data_seeds = [
-            synthetic_benchmark_data_seed(
-                function_name=function_name,
-                problem_seed=problem_seed,
-                rep_index=rep_index,
-            )
-            for rep_index in rep_indices
-        ]
+    for n, d, function_name, problem_seed, reps_total in sorted(submitted_surrogates):
+        rep_info = submitted_surrogates[(n, d, function_name, problem_seed, reps_total)]
+        rep_indices = sorted(rep_info.keys())
+        total_surrogate_jobs = sum(len(s) for s in rep_info.values())
         print(
-            "data_seed range "
             f"N={n} D={d} fn={function_name} pseed={problem_seed} "
             f"reps={rep_indices[0]}-{rep_indices[-1]} ({len(rep_indices)}/{reps_total}) "
-            f"seeds={data_seeds[0]}-{data_seeds[-1]}"
+            f"surrogate_jobs={total_surrogate_jobs}"
         )
-    print(f"submitted {submitted} jobs")
+    print(f"submitted {submitted} jobs (each job = 1 surrogate × 1 rep)")
 
 
 def _collect(tag: str, output_dir: str | Path):
     results = _results_dict(tag)
     collected_keys = []
+    touched_reps: set[tuple[int, int, str, int, int, int]] = set()
     touched_configs: set[tuple[int, int, str, int, int]] = set()
+
     for key, payload in results.items():
         if isinstance(payload, dict):
             dest = Path(output_dir) / f"{key}.json"
@@ -183,16 +203,58 @@ def _collect(tag: str, output_dir: str | Path):
                 print(f"wrote {dest.resolve()}")
             collected_keys.append(key)
             continue
-        (
-            rep_payload,
-            n,
-            d,
-            function_name,
-            problem_seed,
-            rep_index,
-            num_reps,
-        ) = payload
-        dest = _rep_json_dest(
+
+        if len(payload) == 8:
+            (
+                surr_payload,
+                n,
+                d,
+                function_name,
+                problem_seed,
+                rep_index,
+                num_reps,
+                surrogate_key,
+            ) = payload
+            dest = _surrogate_rep_json_dest(
+                output_dir,
+                n=n,
+                d=d,
+                function_name=function_name,
+                problem_seed=problem_seed,
+                rep_index=rep_index,
+                surrogate_key=surrogate_key,
+            )
+            if not dest.exists():
+                ssbp.write_synthetic_sine_benchmark_json(dest, surr_payload)
+                print(f"wrote {dest.resolve()}")
+            touched_reps.add((n, d, function_name, problem_seed, rep_index, num_reps))
+            collected_keys.append(key)
+        else:
+            (
+                rep_payload,
+                n,
+                d,
+                function_name,
+                problem_seed,
+                rep_index,
+                num_reps,
+            ) = payload
+            dest = _rep_json_dest(
+                output_dir,
+                n=n,
+                d=d,
+                function_name=function_name,
+                problem_seed=problem_seed,
+                rep_index=rep_index,
+            )
+            if not dest.exists():
+                ssbp.write_synthetic_sine_benchmark_json(dest, rep_payload)
+                print(f"wrote {dest.resolve()}")
+            touched_configs.add((n, d, function_name, problem_seed, num_reps))
+            collected_keys.append(key)
+
+    for n, d, function_name, problem_seed, rep_index, num_reps in sorted(touched_reps):
+        rep_dest = _aggregate_surrogate_results_to_rep(
             output_dir,
             n=n,
             d=d,
@@ -200,11 +262,10 @@ def _collect(tag: str, output_dir: str | Path):
             problem_seed=problem_seed,
             rep_index=rep_index,
         )
-        if not dest.exists():
-            ssbp.write_synthetic_sine_benchmark_json(dest, rep_payload)
-            print(f"wrote {dest.resolve()}")
-        touched_configs.add((n, d, function_name, problem_seed, num_reps))
-        collected_keys.append(key)
+        if rep_dest is not None:
+            print(f"aggregated surrogates -> {rep_dest.resolve()}")
+            touched_configs.add((n, d, function_name, problem_seed, num_reps))
+
     for n, d, function_name, problem_seed, num_reps in sorted(touched_configs):
         agg_dest = _aggregate_reps_to_dest(
             output_dir,
@@ -215,7 +276,8 @@ def _collect(tag: str, output_dir: str | Path):
             num_reps=num_reps,
         )
         if agg_dest is not None:
-            print(f"aggregated {agg_dest.resolve()}")
+            print(f"aggregated reps -> {agg_dest.resolve()}")
+
     if collected_keys:
         func = modal.Function.from_name(_get_app_name(tag), "synthetic_sine_benchmark_batch_deleter")
         func.spawn(collected_keys, tag)
@@ -268,12 +330,16 @@ def batches(
 
 
 __all__ = [
+    "_aggregate_reps_to_dest",
+    "_aggregate_surrogate_results_to_rep",
     "_benchmark_json_dest",
     "_get_app_name",
-    "_iter_missing_jobs",
+    "_iter_missing_surrogate_jobs",
     "_job_key",
+    "_rep_json_dest",
     "_results_dict",
     "_submitted_dict",
+    "_surrogate_rep_json_dest",
     "app",
     "batches",
     "clean_up",

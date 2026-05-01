@@ -168,3 +168,71 @@ def aggregate_surrogate_replicates(rows: list[dict[str, tuple[float, float, floa
             log_likelihood=_mean_and_sem(lls),
         )
     return SyntheticSineSurrogateBenchmark(results=out)
+
+
+def benchmark_single_surrogate(
+    x: torch.Tensor,
+    y: torch.Tensor,
+    x_test: torch.Tensor,
+    y_test: torch.Tensor,
+    surrogate_key: str,
+) -> tuple[float, float, float]:
+    """Benchmark a single surrogate and return (fit_seconds, normalized_rmse, log_likelihood)."""
+    from .evaluate_metrics import (
+        SURROGATE_BENCHMARK_KEYS,
+        env_action_coords_to_surrogate_unit_x,
+    )
+    from .fitting_time import (
+        fit_dngo,
+        fit_enn,
+        fit_exact_gp,
+        fit_smac_rf,
+        fit_svgp_default,
+        fit_svgp_linear,
+        fit_vecchia,
+    )
+
+    if surrogate_key not in SURROGATE_BENCHMARK_KEYS:
+        raise ValueError(f"Unknown surrogate_key: {surrogate_key}; must be one of {SURROGATE_BENCHMARK_KEYS}")
+
+    x_surr = env_action_coords_to_surrogate_unit_x(x)
+    x_test_surr = env_action_coords_to_surrogate_unit_x(x_test)
+
+    if surrogate_key in ("enn", "smac_rf", "dngo"):
+        train_x = x_surr.detach().cpu().numpy().astype(np.float64)
+        train_y = y.detach().cpu().numpy().astype(np.float64)
+        x_test_np = x_test_surr.detach().cpu().numpy().astype(np.float64)
+
+        if surrogate_key == "enn":
+            dt, yh, var = fit_enn(train_x, train_y, x_test_np)
+        elif surrogate_key == "smac_rf":
+            try:
+                dt, yh, var = fit_smac_rf(train_x, train_y.reshape(-1), x_test_np)
+            except (
+                ImportError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+                ArithmeticError,
+            ):
+                return (math.nan, math.nan, math.nan)
+        else:
+            dt, yh, var = fit_dngo(train_x, train_y, x_test_np)
+    else:
+        train_x_t = x_surr.to(dtype=torch.float64)
+        train_y_t = y.to(dtype=torch.float64)
+        x_test_t = x_test_surr.to(dtype=torch.float64)
+
+        if surrogate_key == "exact_gp":
+            dt, yh, var = fit_exact_gp(train_x_t, train_y_t, x_test_t)
+        elif surrogate_key == "svgp_default":
+            dt, yh, var = fit_svgp_default(train_x_t, train_y_t, x_test_t)
+        elif surrogate_key == "svgp_linear":
+            dt, yh, var = fit_svgp_linear(train_x_t, train_y_t, x_test_t)
+        else:
+            dt, yh, var = fit_vecchia(train_x_t, train_y_t, x_test_t)
+
+    nrmse = normalized_rmse(y_test, yh)
+    ll = predictive_gaussian_log_likelihood(y_test, yh, var)
+    return (dt, nrmse, ll)
