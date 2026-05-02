@@ -32,9 +32,6 @@ def _run_step(bszo, evaluate_fn):
         bszo.tell(mu, se)
 
 
-# ── Test 1: Kalman pre-adaptive math (Corollary 3.6) ────────────────
-
-
 def test_kalman_pre_adaptive_mu_equals_gamma_Y():
     sigma_p_sq, sigma_e_sq = 2.0, 3.0
     gamma = sigma_p_sq / (sigma_p_sq + sigma_e_sq)
@@ -70,9 +67,6 @@ def test_kalman_pre_adaptive_Sigma_equals_gamma_sigma_e_I():
         for j in range(k):
             expected = expected_diag if i == j else 0.0
             assert abs(kf.Sigma[i][j] - expected) < 1e-12
-
-
-# ── Test 2: Kalman post-adaptive ─────────────────────────────────────
 
 
 def test_adaptive_step_modifies_posterior():
@@ -132,9 +126,6 @@ def test_adaptive_step_post_values_numerically():
     assert abs(kf.Sigma[1][1] - diag_pre) < 1e-12
 
 
-# ── Test 3: Gradient direction on quadratic ──────────────────────────
-
-
 def test_gradient_direction_quadratic():
     """On f(θ) = -||θ||² (reward), BSZO moves θ toward the origin."""
     torch.manual_seed(42)
@@ -160,9 +151,6 @@ def test_gradient_direction_quadratic():
 
     norm_after = float((module.weight**2).sum())
     assert norm_after < norm_before
-
-
-# ── Test 4: Adaptive noise σ²_e ──────────────────────────────────────
 
 
 def test_adaptive_noise_residual_formula():
@@ -199,9 +187,6 @@ def test_sigma_e_changes_after_full_step():
         bszo.tell(float(torch.randn(1).item()), 0.0)
 
     assert bszo._kf.sigma_e_sq != sigma_e_before
-
-
-# ── Test 5: Phase state machine ──────────────────────────────────────
 
 
 def test_phase_starts_at_zero():
@@ -272,9 +257,6 @@ def test_perturb_base_advances_by_k():
     assert bszo.perturb_seed(0) == 3
 
 
-# ── Test 6: Integration ──────────────────────────────────────────────
-
-
 def test_y_best_starts_none():
     _, _, bszo = _make_bszo()
     assert bszo.y_best is None
@@ -336,9 +318,6 @@ def test_epsilon_property():
     assert bszo.epsilon == 0.05
 
 
-# ── _apply_gradient magnitude (4.2) ──────────────────────────────────
-
-
 def _get_perturbation_direction(module, seed):
     """Replay perturbator noise to extract the z vector for a given seed."""
     ref = nn.Linear(module.in_features, module.out_features, bias=module.bias is not None)
@@ -381,9 +360,6 @@ def test_apply_gradient_magnitude():
     assert torch.allclose(actual_delta, expected_delta, atol=1e-5)
 
 
-# ── weight_decay (4.3) ───────────────────────────────────────────────
-
-
 def test_weight_decay_shrinks_params():
     """With constant f, gradient is zero; only weight_decay acts: θ *= (1 - lr·wd)."""
     module = nn.Linear(3, 1, bias=False)
@@ -398,9 +374,6 @@ def test_weight_decay_shrinks_params():
     decay = 1.0 - lr * wd
     expected = 4.0 * decay
     assert torch.allclose(module.weight.data, torch.full_like(module.weight, expected), atol=1e-4)
-
-
-# ── Integration: _run_bszo_iterations (4.4) ──────────────────────────
 
 
 def test_run_bszo_iterations_loop():

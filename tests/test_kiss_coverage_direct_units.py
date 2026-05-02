@@ -4,6 +4,9 @@ from types import SimpleNamespace
 
 import numpy as np
 import torch
+from kiss_direct_units_perturb import _P
+from kiss_direct_units_sobol import _SobolConf
+from kiss_gate_runner_cfg import runner_dummy_config_cls
 
 
 def test_kiss_cov_direct_exp_uhd_modal_and_runner_main(monkeypatch, tmp_path):
@@ -31,16 +34,7 @@ def test_kiss_cov_direct_exp_uhd_modal_and_runner_main(monkeypatch, tmp_path):
     monkeypatch.setattr("rl.runner._extract_run_cfg", lambda cfg: ([], 1))
     monkeypatch.setattr("rl.runner.resolve_algo_name", lambda algo, backend=None: algo)
 
-    class _Cfg:
-        seed = 7
-        exp_dir = "tmp"
-        problem_seed = None
-        noise_seed_0 = None
-
-        @classmethod
-        def from_dict(cls, _d):
-            return cls()
-
+    _Cfg = runner_dummy_config_cls()
     monkeypatch.setattr(
         "rl.runner.get_algo",
         lambda _algo_name, backend=None: SimpleNamespace(config_cls=_Cfg, train_fn=lambda _cfg: {"ok": True}),
@@ -50,7 +44,6 @@ def test_kiss_cov_direct_exp_uhd_modal_and_runner_main(monkeypatch, tmp_path):
 
 
 def test_kiss_cov_direct_rl_core_units(monkeypatch):
-    from optimizer.gaussian_perturbator import PerturbatorBase
     from rl.core.actor_state import (
         build_ppo_checkpoint_payload,
         capture_ppo_actor_snapshot,
@@ -67,10 +60,6 @@ def test_kiss_cov_direct_rl_core_units(monkeypatch):
     from rl.core.replay import NumpyReplayBuffer
     from rl.core.runtime import mps_is_available, obs_scale_from_env, seed_everything
     from rl.runner_helpers import _RuntimeArgs
-
-    class _P(PerturbatorBase):
-        def _apply(self, *, seed: int, sigma: float, chunk_size: int = 2**16) -> None:
-            _ = (seed, sigma, chunk_size)
 
     module = torch.nn.Linear(2, 1)
     p = _P(module)
@@ -262,42 +251,18 @@ def test_kiss_cov_direct_fit_main_episode_rollout_backbone_and_turbo(monkeypatch
     lin = torch.nn.Sequential(torch.nn.Linear(3, 4), torch.nn.ReLU(), torch.nn.Linear(4, 2))
     init_linear_layers(lin, gain=0.5)
 
-    class _Conf:
-        noise_seed_0 = 10
-        frozen_noise = False
-        gym_conf = SimpleNamespace(max_steps=2)
-
-        @staticmethod
-        def make():
-            class _Env:
-                action_space = SimpleNamespace(low=np.array([-1.0]), high=np.array([1.0]))
-
-                def __init__(self):
-                    self.n = 0
-
-                def reset(self, seed=None):
-                    return np.zeros(1), {}
-
-                def step(self, action):
-                    self.n += 1
-                    return np.zeros(1), 1.0, self.n > 1, False, {}
-
-                def close(self):
-                    return None
-
-            return _Env()
-
     def policy(_obs):
         return np.array([0.0])
 
-    tr, ns = collect_trajectory_with_noise(_Conf(), policy, i_noise=1, denoise_seed=2)
+    _conf = _SobolConf()
+    tr, ns = collect_trajectory_with_noise(_conf, policy, i_noise=1, denoise_seed=2)
     assert isinstance(tr, Trajectory)
     assert isinstance(ns, int)
-    mr = mean_return_over_runs(_Conf(), policy, 2, i_noise=1)
+    mr = mean_return_over_runs(_conf, policy, 2, i_noise=1)
     assert isinstance(mr, MeanReturnResult)
-    den, _ = collect_denoised_trajectory(_Conf(), policy, num_denoise=2, i_noise=1)
+    den, _ = collect_denoised_trajectory(_conf, policy, num_denoise=2, i_noise=1)
     assert isinstance(den, Trajectory)
-    assert np.isfinite(evaluate_for_best(_Conf(), policy, 2, i_noise=999))
+    assert np.isfinite(evaluate_for_best(_conf, policy, 2, i_noise=999))
 
     x = make_sobol_candidates(
         dim=4,

@@ -1,45 +1,9 @@
 from types import SimpleNamespace
 
 import pytest
+from rl_puffer_vector_env_stubs import _FakeAtari, _FakeVector
 
 from rl.pufferlib import vector_env
-
-
-class _FakeVector:
-    class Serial:
-        pass
-
-    class Multiprocessing:
-        pass
-
-    def __init__(self):
-        self.calls = []
-
-    def make(self, env_creator, *, env_kwargs, backend, num_envs, seed, **kwargs):
-        self.calls.append(
-            {
-                "env_creator": env_creator,
-                "env_kwargs": env_kwargs,
-                "backend": backend,
-                "num_envs": num_envs,
-                "seed": seed,
-                "kwargs": kwargs,
-            }
-        )
-        return "vec-env"
-
-
-class _FakeAtari:
-    def __init__(self):
-        self.games = []
-
-    def env_creator(self, game_name):
-        self.games.append(game_name)
-
-        def _creator():
-            return game_name
-
-        return _creator
 
 
 def test_vector_backend_from_name_invalid():

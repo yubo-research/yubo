@@ -98,14 +98,13 @@ def test_resolve_rl_model_defaults_lunar_ac_infers_from_actor_critic_factory():
 
 
 def test_get_env_conf_applies_atari_preprocess_overrides():
+    from env_conf_atari_test_support import fake_bindings_resolve_atari
+
     import problems.env_conf as env_conf_module
     import problems.env_conf_bindings as env_conf_bindings_module
 
-    class _FakeBindings:
-        resolve_atari_from_tag = staticmethod(lambda _tag: ("ALE/Pong-v5", lambda _env_conf: object()))
-
     old_bindings = env_conf_bindings_module._ATARI_DM_BINDINGS
-    env_conf_bindings_module._ATARI_DM_BINDINGS = _FakeBindings()
+    env_conf_bindings_module._ATARI_DM_BINDINGS = fake_bindings_resolve_atari()
     try:
         conf = env_conf_module.get_env_conf(
             "atari:Pong:mlp16",
@@ -127,57 +126,15 @@ def test_get_env_conf_applies_atari_preprocess_overrides():
 
 
 def test_env_conf_ale_make_uses_atari_preprocess_options():
-    import numpy as np
-    from gymnasium import spaces
+    from env_conf_atari_test_support import fake_bindings_pong_stack
 
     import problems.env_conf as env_conf_module
     import problems.env_conf_bindings as env_conf_bindings_module
 
-    captured = {}
-
-    class _FakeEnv:
-        observation_space = spaces.Box(low=0, high=255, shape=(4, 84, 84), dtype=np.uint8)
-        action_space = spaces.Discrete(6)
-
-        def close(self):
-            return
-
-    def _fake_make_atari_env(env_name, *, render_mode=None, max_episode_steps=0, preprocess=None):
-        captured["env_name"] = env_name
-        captured["render_mode"] = render_mode
-        captured["max_episode_steps"] = max_episode_steps
-        captured["preprocess"] = preprocess
-        return _FakeEnv()
-
-    class _FakeAtariPreprocessOptions:
-        def __init__(
-            self,
-            *,
-            terminal_on_life_loss=False,
-            grayscale_obs=True,
-            grayscale_newaxis=True,
-            scale_obs=False,
-            repeat_action_probability=0.0,
-            use_minimal_action_set=True,
-            color_averaging=False,
-        ):
-            self.terminal_on_life_loss = terminal_on_life_loss
-            self.grayscale_obs = grayscale_obs
-            self.grayscale_newaxis = grayscale_newaxis
-            self.scale_obs = scale_obs
-            self.repeat_action_probability = repeat_action_probability
-            self.use_minimal_action_set = use_minimal_action_set
-            self.color_averaging = color_averaging
-
-    class _FakeBindings:
-        resolve_dm_control_from_tag = staticmethod(lambda tag, use_pixels: (str(tag), object()))
-        resolve_atari_from_tag = staticmethod(lambda tag: (str(tag), lambda _env_conf: object()))
-        make_atari_preprocess_options = staticmethod(lambda **kwargs: _FakeAtariPreprocessOptions(**kwargs))
-        make_dm_control_env = staticmethod(lambda *args, **kwargs: _FakeEnv())
-        make_atari_env = staticmethod(_fake_make_atari_env)
+    fake_bindings, captured = fake_bindings_pong_stack()
 
     old_bindings = env_conf_bindings_module._ATARI_DM_BINDINGS
-    env_conf_bindings_module._ATARI_DM_BINDINGS = _FakeBindings()
+    env_conf_bindings_module._ATARI_DM_BINDINGS = fake_bindings
     try:
         conf = env_conf_module.EnvConf(
             "ALE/Pong-v5",

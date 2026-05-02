@@ -3,6 +3,8 @@
 from types import SimpleNamespace
 from unittest.mock import patch
 
+from modal_timing_sweep_test_support import FakeResultsDict, make_func_spawn, make_func_spawn_map
+
 import experiments.modal_timing_sweep as mts
 from experiments.experiment_sampler import TIMING_SWEEP_MAX_CUMULATIVE_PROPOSAL_SECONDS
 from experiments.modal_timing_sweep import clean_up, collect, prep_timing_sweep, run_timing_sweep, status
@@ -36,11 +38,7 @@ def test_prep_timing_sweep():
 def test_timing_sweep_worker(monkeypatch):
     import experiments.modal_timing_sweep as mts
 
-    class _FakeDict(dict):
-        def len(self):
-            return len(self)
-
-    res_dict = _FakeDict()
+    res_dict = FakeResultsDict()
     monkeypatch.setattr(mts, "_results_dict", lambda: res_dict)
     monkeypatch.setattr(
         mts,
@@ -69,20 +67,12 @@ def test_timing_sweep_worker(monkeypatch):
 def test_timing_sweep_resubmitter(monkeypatch):
     import experiments.modal_timing_sweep as mts
 
-    class _FakeDict(dict):
-        def len(self):
-            return len(self)
-
-    submitted = _FakeDict()
+    submitted = FakeResultsDict()
     monkeypatch.setattr(mts, "_submitted_dict", lambda: submitted)
 
     spawned = []
 
-    class _Func:
-        def spawn_map(self, todo):
-            spawned.extend(list(todo))
-
-    monkeypatch.setattr(mts.modal.Function, "from_name", lambda app_name, name: _Func())
+    monkeypatch.setattr(mts.modal.Function, "from_name", lambda app_name, name: make_func_spawn_map(spawned))
 
     run_config = SimpleNamespace(trace_fn="t1")
     mts.timing_sweep_resubmitter.get_raw_f()([("k1", run_config, False)])
@@ -94,21 +84,13 @@ def test_timing_sweep_resubmitter(monkeypatch):
 def test_submit_configs(monkeypatch):
     import experiments.modal_timing_sweep as mts
 
-    class _FakeDict(dict):
-        def len(self):
-            return len(self)
-
-    monkeypatch.setattr(mts, "_results_dict", lambda: _FakeDict())
-    monkeypatch.setattr(mts, "_submitted_dict", lambda: _FakeDict())
+    monkeypatch.setattr(mts, "_results_dict", lambda: FakeResultsDict())
+    monkeypatch.setattr(mts, "_submitted_dict", lambda: FakeResultsDict())
     monkeypatch.setattr(mts, "data_is_done", lambda trace_fn: False)
 
     spawned = []
 
-    class _Func:
-        def spawn(self, payload):
-            spawned.append(payload)
-
-    monkeypatch.setattr(mts.modal.Function, "from_name", lambda app_name, name: _Func())
+    monkeypatch.setattr(mts.modal.Function, "from_name", lambda app_name, name: make_func_spawn(spawned))
 
     with patch("experiments.modal_timing_sweep.mk_replicates") as mock_mk:
         mock_mk.return_value = [SimpleNamespace(trace_fn="t1", deadline=None)]
@@ -130,15 +112,9 @@ def test_submit_configs(monkeypatch):
 
 
 def test_timing_sweep_worker_clears_wall_deadline(monkeypatch):
-    """Timing sweep stops on cumulative proposal time, not wall-clock deadline."""
-
     import experiments.modal_timing_sweep as mts
 
-    class _FakeDict(dict):
-        def len(self):
-            return len(self)
-
-    res_dict = _FakeDict()
+    res_dict = FakeResultsDict()
     monkeypatch.setattr(mts, "_results_dict", lambda: res_dict)
 
     captured_deadline = []
@@ -164,11 +140,7 @@ def test_timing_sweep_worker_clears_wall_deadline(monkeypatch):
 def test_timing_sweep_deleter(monkeypatch):
     import experiments.modal_timing_sweep as mts
 
-    class _FakeDict(dict):
-        def len(self):
-            return len(self)
-
-    res_dict = _FakeDict({"k1": "val1", "k2": "val2"})
+    res_dict = FakeResultsDict({"k1": "val1", "k2": "val2"})
     monkeypatch.setattr(mts, "_results_dict", lambda: res_dict)
 
     mts.timing_sweep_deleter.get_raw_f()(["k1"])
@@ -177,11 +149,7 @@ def test_timing_sweep_deleter(monkeypatch):
 
 
 def test_collect(monkeypatch):
-    class _FakeDict(dict):
-        def len(self):
-            return len(self)
-
-    res_dict = _FakeDict()
+    res_dict = FakeResultsDict()
     res_dict["k1"] = ("trace_fn", "log", "trace", [{"x": 1}], 10.5, "completed")
     res_dict["k2"] = ("trace_fn2", "log2", "trace2", None)
 
@@ -191,11 +159,7 @@ def test_collect(monkeypatch):
 
     spawned = []
 
-    class _Func:
-        def spawn(self, payload):
-            spawned.append(payload)
-
-    monkeypatch.setattr(mts.modal.Function, "from_name", lambda app_name, name: _Func())
+    monkeypatch.setattr(mts.modal.Function, "from_name", lambda app_name, name: make_func_spawn(spawned))
 
     collect()
 
@@ -205,12 +169,8 @@ def test_collect(monkeypatch):
 
 
 def test_status(monkeypatch, capsys):
-    class _FakeDict(dict):
-        def len(self):
-            return len(self)
-
-    monkeypatch.setattr(mts, "_results_dict", lambda: _FakeDict({"a": 1}))
-    monkeypatch.setattr(mts, "_submitted_dict", lambda: _FakeDict({"b": 1, "c": 1}))
+    monkeypatch.setattr(mts, "_results_dict", lambda: FakeResultsDict({"a": 1}))
+    monkeypatch.setattr(mts, "_submitted_dict", lambda: FakeResultsDict({"b": 1, "c": 1}))
 
     status()
 

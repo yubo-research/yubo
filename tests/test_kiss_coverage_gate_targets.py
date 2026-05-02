@@ -7,6 +7,17 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 import torch
+from kiss_gate_runner_cfg import runner_dummy_config_cls
+from kiss_gate_stubs_dm import _DM
+from kiss_gate_stubs_enn_core import _ENN
+from kiss_gate_stubs_enn_imputer import _ENNImputer
+from kiss_gate_stubs_gym_preproc import _Env as _GymClipEnv
+from kiss_gate_stubs_mlp_env import _Env as _MlpEnv
+from kiss_gate_stubs_mnist import _TinyMNIST
+from kiss_gate_stubs_modal_lookup import _Lookup
+from kiss_gate_stubs_tr import TrEnvModule
+from kiss_gate_stubs_transforms import CatTensors, Compose, DoubleToFloat
+from kiss_gate_stubs_uhd_np import _Embed, _Pert, _Policy
 
 
 def test_kiss_cov_types_and_small_helpers():
@@ -60,16 +71,7 @@ def test_kiss_cov_runner_main_and_eval_config(monkeypatch, tmp_path):
     monkeypatch.setattr(runner, "_extract_run_cfg", lambda cfg: ([], 1))
     monkeypatch.setattr(runner, "resolve_algo_name", lambda algo, backend=None: algo)
 
-    class _Cfg:
-        seed = 7
-        exp_dir = "tmp"
-        problem_seed = None
-        noise_seed_0 = None
-
-        @classmethod
-        def from_dict(cls, _d):
-            return cls()
-
+    _Cfg = runner_dummy_config_cls()
     called = {"train": 0}
 
     def _train_fn(_cfg):
@@ -86,70 +88,23 @@ def test_kiss_cov_dm_control_collect_and_mlp_torch_env(monkeypatch):
     from problems.mlp_torch_env import MLPTorchEnv, MLPTorchEnvWrapper, wrap_mlp_env
     from rl.torchrl import dm_control_collect
 
-    class _DM:
-        pass
-
     monkeypatch.setattr("problems.dm_control_env._configure_headless_render_backend", lambda _mode: None)
     monkeypatch.setattr("problems.dm_control_env._parse_env_name", lambda _name: ("cartpole", "swingup"))
     monkeypatch.setattr("dm_control.suite.load", lambda *_args, **_kwargs: _DM())
 
-    class _TrEnv:
-        class DMControlWrapper:
-            def __init__(self, dm_env, from_pixels, pixels_only):
-                self.dm_env = dm_env
-                self.from_pixels = from_pixels
-                self.pixels_only = pixels_only
-                self.observation_spec = SimpleNamespace(keys=lambda *args: ["state"])
-
-        class TransformedEnv:
-            def __init__(self, base, transforms):
-                self.base = base
-                self.transforms = transforms
-
-    class _TrTf:
-        class CatTensors:
-            def __init__(self, **kwargs):
-                self.kwargs = kwargs
-
-        class DoubleToFloat:
-            pass
-
-        class Compose:
-            def __init__(self, *parts):
-                self.parts = parts
-
+    tr_tf = SimpleNamespace(CatTensors=CatTensors, DoubleToFloat=DoubleToFloat, Compose=Compose)
     out = dm_control_collect.make_dm_control_collect_env(
         env_name="dm_control/cartpole-swingup-v0",
         seed=1,
         from_pixels=False,
         pixels_only=False,
-        tr_envs_module=_TrEnv,
-        tr_transforms_module=_TrTf,
+        tr_envs_module=TrEnvModule,
+        tr_transforms_module=tr_tf,
         pixels_transform_builder=lambda _m: "pix",
     )
-    assert isinstance(out.base, _TrEnv.DMControlWrapper)
+    assert isinstance(out.base, TrEnvModule.DMControlWrapper)
 
-    class _Space:
-        shape = (1,)
-
-    class _Env:
-        observation_space = _Space()
-        action_space = _Space()
-
-        def __init__(self):
-            self.n = 0
-
-        def reset(self, seed=None):
-            return np.zeros(1), {"seed": seed}
-
-        def step(self, action):
-            self.n += 1
-            return np.zeros(1), 1.0, False, self.n > 1, {}
-
-        def close(self):
-            return None
-
-    env = _Env()
+    env = _MlpEnv()
     module = torch.nn.Linear(1, 1)
     tenv = MLPTorchEnv(module=module, env=env, max_steps=1)
     tenv.reset(seed=0)
@@ -164,33 +119,10 @@ def test_kiss_cov_dm_control_collect_and_mlp_torch_env(monkeypatch):
 
 
 def test_kiss_cov_env_preprocessing_and_episode_rollout():
-    import gymnasium as gym
-
     from common.env_preprocessing import _ClipObservationWrapper, apply_gym_preprocessing
     from rl.core.episode_rollout import _unpack_step_result, collect_episode_return
 
-    class _Space:
-        low = np.array([-1.0])
-        high = np.array([1.0])
-
-    class _Env(gym.Env):
-        action_space = _Space()
-        observation_space = _Space()
-
-        def __init__(self):
-            self.k = 0
-
-        def reset(self, seed=None, options=None):
-            return np.array([2.0]), {}
-
-        def step(self, _a):
-            self.k += 1
-            return np.array([3.0]), 1.0, self.k >= 2, False, {}
-
-        def close(self):
-            return None
-
-    env = _Env()
+    env = _GymClipEnv()
     wrapped = _ClipObservationWrapper(env, low=-1.0, high=1.0)
     obs0, _ = wrapped.reset(seed=0)
     obs1, *_ = wrapped.step(np.array([0.0]))
@@ -202,7 +134,7 @@ def test_kiss_cov_env_preprocessing_and_episode_rollout():
     assert _unpack_step_result((np.zeros(1), 1.0, False, {}))[2] is False
 
     env_conf = SimpleNamespace(
-        make=lambda: _Env(),
+        make=lambda: _GymClipEnv(),
         gym_conf=SimpleNamespace(max_steps=3),
     )
     ret = collect_episode_return(env_conf, lambda _obs: np.array([0.0]), noise_seed=0)
@@ -271,29 +203,12 @@ def test_kiss_cov_checkpoint_and_uhd_np(monkeypatch, tmp_path):
     ppo_ckpt.save_final_checkpoint(SimpleNamespace(checkpoint_interval=1), mgr, model, optimizer, state, iteration=2)
     assert called["save"] == 2
 
-    class _Pert:
-        def accept(self):
-            return None
-
-        def unperturb(self):
-            return None
-
     base = UHDSimpleBase(_Pert(), sigma_0=0.1, dim=3)
     assert base.eval_seed == 0
     assert base.sigma > 0
     assert base.y_best is None
     assert base.mu_avg == 0.0
     assert base.se_avg == 0.0
-
-    class _Policy:
-        def __init__(self):
-            self._x = np.zeros(3)
-
-        def get_params(self):
-            return self._x
-
-        def set_params(self, x):
-            self._x = np.asarray(x)
 
     p = _Policy()
     simple = UHDSimpleNp(p, sigma_0=0.1, param_clip=(-1.0, 1.0))
@@ -303,20 +218,6 @@ def test_kiss_cov_checkpoint_and_uhd_np(monkeypatch, tmp_path):
     assert simple.y_best == 1.0
     assert simple.mu_avg == 1.0
     assert simple.se_avg == 0.1
-
-    class _Embed:
-        def embed_policy(self, _policy, x):
-            return np.asarray(x, dtype=np.float64)
-
-    class _Posterior:
-        def __init__(self, n):
-            self.mu = np.zeros((n, 1))
-            self.se = np.ones((n, 1))
-
-    class _ENN:
-        def posterior(self, x, params=None, flags=None):
-            _ = params, flags
-            return _Posterior(len(x))
 
     monkeypatch.setattr("optimizer.uhd_simple_be_np.EpistemicNearestNeighbors", lambda *args, **kwargs: _ENN())
     monkeypatch.setattr("optimizer.uhd_simple_be_np.enn_fit", lambda *args, **kwargs: object())
@@ -335,17 +236,7 @@ def test_kiss_cov_enn_imputer_and_cli_callbacks(monkeypatch, tmp_path):
     from experiments import modal_batches
     from optimizer.uhd_enn_imputer import ENNImputerConfig, ENNMinusImputer
 
-    class _Posterior:
-        def __init__(self, n):
-            self.mu = np.zeros((n, 1))
-            self.se = np.zeros((n, 1))
-
-    class _ENN:
-        def posterior(self, x, params=None, flags=None):
-            _ = params, flags
-            return _Posterior(len(x))
-
-    monkeypatch.setattr("optimizer.uhd_enn_imputer.EpistemicNearestNeighbors", lambda *args, **kwargs: _ENN())
+    monkeypatch.setattr("optimizer.uhd_enn_imputer.EpistemicNearestNeighbors", lambda *args, **kwargs: _ENNImputer())
     monkeypatch.setattr("optimizer.uhd_enn_imputer.enn_fit", lambda *args, **kwargs: object())
 
     module = torch.nn.Linear(2, 1, bias=False)
@@ -372,10 +263,6 @@ def test_kiss_cov_enn_imputer_and_cli_callbacks(monkeypatch, tmp_path):
     toml.write_text('[uhd]\nenv_tag="f:sphere-2d"\nnum_rounds=1\n')
     exp_uhd.modal_cmd(str(toml), (), None, "A100")
 
-    class _Lookup:
-        def spawn(self):
-            return None
-
     monkeypatch.setattr(modal_batches.modal, "Function", SimpleNamespace(lookup=lambda *_args, **_kwargs: _Lookup()))
     monkeypatch.setattr(modal_batches, "batches_submitter", lambda *args, **kwargs: None)
     monkeypatch.setattr(modal_batches, "status", lambda: None)
@@ -387,14 +274,6 @@ def test_kiss_cov_enn_imputer_and_cli_callbacks(monkeypatch, tmp_path):
 
 def test_kiss_cov_fit_mnist_main_entry(monkeypatch):
     import torchvision.datasets as tv_datasets
-    from torch.utils.data import Dataset
-
-    class _TinyMNIST(Dataset):
-        def __len__(self):
-            return 8
-
-        def __getitem__(self, idx):
-            return torch.zeros((1, 28, 28), dtype=torch.float32), torch.tensor(idx % 10, dtype=torch.long)
 
     monkeypatch.setattr(tv_datasets, "MNIST", lambda *args, **kwargs: _TinyMNIST())
     monkeypatch.setattr(sys, "argv", ["ops.fit_mnist"])

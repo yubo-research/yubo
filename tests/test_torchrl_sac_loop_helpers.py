@@ -6,46 +6,10 @@ from types import SimpleNamespace
 
 import numpy as np
 import torch
+from torchrl_sac_loop_actor_stub import _ActorStub
+from torchrl_sac_loop_test_stubs import _ReplayStub, _TrainEnvStub
 
 torchrl_sac_loop = importlib.import_module("rl.torchrl.sac.loop")
-
-
-class _ActionSpaceStub:
-    def __init__(self, sample_value):
-        self._sample_value = np.asarray(sample_value, dtype=np.float32)
-
-    def sample(self):
-        return self._sample_value.copy()
-
-
-class _TrainEnvStub:
-    def __init__(self, *, sample_value, step_result, reset_state):
-        self.action_space = _ActionSpaceStub(sample_value)
-        self._step_result = step_result
-        self._reset_state = np.asarray(reset_state, dtype=np.float32)
-
-    def step(self, action):
-        self.last_action = np.asarray(action, dtype=np.float32)
-        return self._step_result
-
-    def reset(self):
-        return self._reset_state.copy(), {}
-
-
-class _ReplayStub:
-    def __init__(self):
-        self.items = []
-
-    def add(self, value):
-        self.items.append(value)
-
-
-class _ActorStub:
-    def __init__(self, action):
-        self._action = torch.as_tensor(action, dtype=torch.float32).unsqueeze(0)
-
-    def __call__(self, _tensor_dict):
-        return {"action": self._action}
 
 
 def test_as_float32_observation_casts_to_float32():
