@@ -10,6 +10,7 @@ __all__ = [
     "SMACRFConfig",
     "SMACRFSurrogate",
     "SyntheticBenchJob",
+    "SYNTHETIC_BENCHMARK_N_TEST",
     "SYNTHETIC_BENCHMARK_SINE_FUNCTION_NAME",
     "SURROGATE_BENCHMARK_KEYS",
     "SURROGATE_BENCHMARK_ROWS",
@@ -66,6 +67,7 @@ def __getattr__(name: str):
     if name in (
         "BMResult",
         "MuSe",
+        "SYNTHETIC_BENCHMARK_N_TEST",
         "SYNTHETIC_BENCHMARK_SINE_FUNCTION_NAME",
         "SURROGATE_BENCHMARK_KEYS",
         "SURROGATE_BENCHMARK_ROWS",

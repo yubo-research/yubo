@@ -6,6 +6,7 @@ import torch
 
 from analysis.fitting_time.evaluate import (
     SURROGATE_BENCHMARK_KEYS,
+    SYNTHETIC_BENCHMARK_N_TEST,
     SYNTHETIC_BENCHMARK_SINE_FUNCTION_NAME,
     BMResult,
     MuSe,
@@ -172,6 +173,15 @@ def test_draw_benchmark_synthetic_xy_x_in_minus_one_one(function_name):
     assert float(x.max()) <= 1.0 + 1e-7
     assert float(x_test.min()) >= -1.0 - 1e-7
     assert float(x_test.max()) <= 1.0 + 1e-7
+
+
+@pytest.mark.parametrize("function_name", ["sine", "sphere"])
+def test_draw_benchmark_synthetic_xy_train_n_test_fixed(function_name):
+    n_train = 7
+    x, y, x_test, y_test = draw_benchmark_synthetic_xy(N=n_train, D=4, function_name=function_name, problem_seed=0)
+    assert x.shape[0] == n_train and y.shape[0] == n_train
+    assert x_test.shape[0] == SYNTHETIC_BENCHMARK_N_TEST
+    assert y_test.shape[0] == SYNTHETIC_BENCHMARK_N_TEST
 
 
 def test_draw_benchmark_synthetic_xy_sine_respects_problem_seed():

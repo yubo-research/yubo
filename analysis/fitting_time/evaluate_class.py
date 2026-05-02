@@ -18,7 +18,9 @@ class SyntheticSineSurrogateBenchmark:
     ``x ~ U(-1,1)^{N×D}`` with ``y = mean(sin(2π x_u), dim=1) + 0.1 ε`` where
     ``x_u = (x+1)/2`` (same distribution for ``x_u`` as the legacy ``U(0,1)`` draw); any
     other name uses ``f:{name}-{D}d`` from :mod:`problems.pure_functions` on
-    ``U(-1,1)^{N×D}`` (same noise scale). Surrogates receive ``(x+1)/2`` in ``[0,1]`` via
+    ``U(-1,1)^{N×D}`` (same noise scale). The held-out test draw has a fixed row count
+    (see :data:`~analysis.fitting_time.evaluate.SYNTHETIC_BENCHMARK_N_TEST`), not ``N``.
+    Surrogates receive ``(x+1)/2`` in ``[0,1]`` via
     :func:`env_action_coords_to_surrogate_unit_x`.
 
     Keys are :data:`SURROGATE_BENCHMARK_KEYS`.

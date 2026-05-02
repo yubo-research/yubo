@@ -26,6 +26,10 @@ __all__ = [
 # Matches ``0.1 * torch.randn`` observation noise in ``benchmark_synthetic_sine_surrogates``.
 _SYNTHETIC_OBS_VAR = 0.1**2
 
+# Synthetic benchmarks use a fixed small test set; callers may still pass huge ``x_test`` here.
+# Chunk Rust ``posterior`` to cap peak memory for those callers.
+_ENN_POSTERIOR_CHUNK = 65_536
+
 
 def fit_enn(
     train_x: np.ndarray,
@@ -52,8 +56,9 @@ def fit_enn(
     nfs = num_fit_samples if num_fit_samples is not None else nfs_default
     nfs = int(min(max(1, nfs), n_obs))
     gen = rng if rng is not None else np.random.default_rng(0)
-    enn_model = EpistemicNearestNeighbors(train_x, train_y, train_yvar)
+
     t_0 = time.perf_counter()
+    enn_model = EpistemicNearestNeighbors(train_x, train_y, train_yvar)
     enn_params = enn_fit(
         enn_model,
         k=k_eff,
@@ -64,9 +69,26 @@ def fit_enn(
     elapsed = time.perf_counter() - t_0
 
     x_t = np.asarray(x_test, dtype=np.float64)
-    post = enn_model.posterior(x_t, params=enn_params, flags=PosteriorFlags(observation_noise=False))
-    y_hat = np.asarray(post.mu, dtype=np.float64).reshape(-1, 1)
-    se = np.asarray(post.se, dtype=np.float64).reshape(-1, 1)
+    n_test = int(x_t.shape[0])
+    chunk = max(1, int(_ENN_POSTERIOR_CHUNK))
+    if n_test <= chunk:
+        post = enn_model.posterior(x_t, params=enn_params, flags=PosteriorFlags(observation_noise=False))
+        y_hat = np.asarray(post.mu, dtype=np.float64).reshape(-1, 1)
+        se = np.asarray(post.se, dtype=np.float64).reshape(-1, 1)
+    else:
+        mu_parts: list[np.ndarray] = []
+        se_parts: list[np.ndarray] = []
+        for start in range(0, n_test, chunk):
+            sl = slice(start, min(start + chunk, n_test))
+            post_b = enn_model.posterior(
+                x_t[sl],
+                params=enn_params,
+                flags=PosteriorFlags(observation_noise=False),
+            )
+            mu_parts.append(np.asarray(post_b.mu, dtype=np.float64).reshape(-1, 1))
+            se_parts.append(np.asarray(post_b.se, dtype=np.float64).reshape(-1, 1))
+        y_hat = np.concatenate(mu_parts, axis=0)
+        se = np.concatenate(se_parts, axis=0)
     # Epistemic variance plus synthetic observation variance so LogLik matches noisy ``y_test``
     # (same ``0.1^2`` as :func:`draw_benchmark_synthetic_xy` and SMAC RF scoring).
     pred_var = se**2 + _SYNTHETIC_OBS_VAR
@@ -77,6 +99,7 @@ def fit_smac_rf(train_x: np.ndarray, train_y: np.ndarray, x_test: np.ndarray) ->
     from analysis.fitting_time.smac_rf import SMACRFConfig, SMACRFSurrogate
 
     y1 = train_y.reshape(-1)
+    t_0 = time.perf_counter()
     smac_rf = SMACRFSurrogate(
         SMACRFConfig(
             n_trees=10,
@@ -87,7 +110,6 @@ def fit_smac_rf(train_x: np.ndarray, train_y: np.ndarray, x_test: np.ndarray) ->
             seed=0,
         )
     )
-    t_0 = time.perf_counter()
     smac_rf.fit(train_x, y1)
     elapsed = time.perf_counter() - t_0
 
@@ -117,6 +139,7 @@ def fit_dngo(train_x: np.ndarray, train_y: np.ndarray, x_test: np.ndarray) -> tu
     weight_decay = 1e-3 if d_in <= 5 else 5e-4
     num_middle_layers = 4 if d_in >= 8 else 3
 
+    t_0 = time.perf_counter()
     dngo = DNGOSurrogate(
         DNGOConfig(
             hidden_width=width,
@@ -128,7 +151,6 @@ def fit_dngo(train_x: np.ndarray, train_y: np.ndarray, x_test: np.ndarray) -> tu
             seed=0,
         )
     )
-    t_0 = time.perf_counter()
     dngo.fit(train_x, train_y)
     elapsed = time.perf_counter() - t_0
 

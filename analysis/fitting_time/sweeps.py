@@ -76,8 +76,9 @@ def sweep(
 ) -> None:
     """Fit ENN ``num_reps`` times per ``(K, P)`` pair and print NRMSE / LogLik as mean ± SEM.
 
-    Each replicate draws ``N`` train and test points via :func:`draw_benchmark_synthetic_xy`
-    (same protocol as the timing benchmark). ``K`` is passed to :func:`fit_enn` as ``k``;
+    Each replicate draws ``N`` train points and a fixed-size test set via
+    :func:`draw_benchmark_synthetic_xy` (same protocol as the timing benchmark).
+    ``K`` is passed to :func:`fit_enn` as ``k``;
     ``P`` is ``num_fit_samples`` (clamped to ``[1, N]``). Metrics match
     :func:`benchmark_synthetic_sine_surrogates` (noisy ``y_test``, predictive variance with
     ``0.1^2`` observation noise).

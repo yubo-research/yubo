@@ -18,10 +18,10 @@ def fit_exact_gp(train_x: Tensor, train_y: Tensor, x_test: Tensor) -> tuple[floa
     from botorch.models import SingleTaskGP
     from gpytorch.mlls import ExactMarginalLogLikelihood
 
-    gp = SingleTaskGP(train_x, train_y)
-    mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
     with gpytorch.settings.max_cholesky_size(2000):
         t_0 = time.perf_counter()
+        gp = SingleTaskGP(train_x, train_y)
+        mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
         fit_gpytorch_mll(mll)
         elapsed = time.perf_counter() - t_0
     gp.eval()
@@ -70,20 +70,20 @@ def _fit_svgp(
     # Standardize inside the model so ``posterior`` untransforms to the original y scale.
     # Passing pre-standardized ``train_y`` without an outcome transform left means in z-space
     # while metrics use raw ``y_test`` (NRMSE / LogLik were wrong).
-    if ty.shape[0] <= 1:
-        svgp = SingleTaskVariationalGP(train_x, ty, inducing_points=inducing_points)
-    else:
-        svgp = SingleTaskVariationalGP(
-            train_x,
-            ty,
-            outcome_transform=Standardize(m=ty.shape[-1]),
-            inducing_points=inducing_points,
-        )
-    svgp.to(train_x)
-    mll = VariationalELBO(svgp.likelihood, svgp.model, num_data=n)
     try:
         with gpytorch.settings.max_cholesky_size(2000):
             t_0 = time.perf_counter()
+            if ty.shape[0] <= 1:
+                svgp = SingleTaskVariationalGP(train_x, ty, inducing_points=inducing_points)
+            else:
+                svgp = SingleTaskVariationalGP(
+                    train_x,
+                    ty,
+                    outcome_transform=Standardize(m=ty.shape[-1]),
+                    inducing_points=inducing_points,
+                )
+            svgp.to(train_x)
+            mll = VariationalELBO(svgp.likelihood, svgp.model, num_data=n)
             fit_gpytorch_mll(
                 mll,
                 optimizer=fit_gpytorch_mll_torch,
@@ -173,6 +173,8 @@ def fit_vecchia(train_x: Tensor, train_y: Tensor, x_test: Tensor) -> tuple[float
     if n_obs < 2:
         return _vecchia_nan_out(x_test)
 
+    train_batch_size = int(np.minimum(n_obs, 128))
+    t_0 = time.perf_counter()
     y_mean = Y.mean()
     y_std = Y.std()
     if float(y_std.item()) <= 0.0:
@@ -199,9 +201,7 @@ def fit_vecchia(train_x: Tensor, train_y: Tensor, x_test: Tensor) -> tuple[float
         input_transform,
     )
 
-    train_batch_size = int(np.minimum(n_obs, 128))
     try:
-        t_0 = time.perf_counter()
         fit_model(
             model,
             train_batch_size=train_batch_size,
@@ -209,12 +209,12 @@ def fit_vecchia(train_x: Tensor, train_y: Tensor, x_test: Tensor) -> tuple[float
             maxiter=100,
             rel_tol=5e-3,
         )
-        elapsed = time.perf_counter() - t_0
-        model.update_transform()
-        model.eval()
-        model.likelihood.eval()
     except (ImportError, OSError, RuntimeError, ValueError, ArithmeticError):
         return _vecchia_nan_out(x_test)
+    elapsed = time.perf_counter() - t_0
+    model.update_transform()
+    model.eval()
+    model.likelihood.eval()
 
     X_test = x_test.detach().float().cpu().contiguous()
     try:

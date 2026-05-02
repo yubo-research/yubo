@@ -13,6 +13,9 @@ from .evaluate_metrics import (
     normalize_benchmark_function_name,
 )
 
+# Fixed test-set size for surrogate timing benchmarks (train size is ``N``).
+SYNTHETIC_BENCHMARK_N_TEST = 1000
+
 
 def _batch_pure_env_reward(env, actions_np: np.ndarray) -> np.ndarray:
     """Evaluate ``PureFunctionEnv`` rewards for each row of ``actions_np`` (N, D) in [-1, 1]."""
@@ -44,18 +47,23 @@ def draw_benchmark_synthetic_xy(
     function_name: str,
     problem_seed: int,
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-    """Draw train/test batches; ``x`` and ``x_test`` are in ``[-1, 1]`` (env / action scale)."""
+    """Draw train/test batches; ``x`` and ``x_test`` are in ``[-1, 1]`` (env / action scale).
+
+    Training draws have ``N`` rows; the held-out test draw always has
+    :data:`SYNTHETIC_BENCHMARK_N_TEST` rows (independent of ``N``).
+    """
     fn = normalize_benchmark_function_name(function_name)
     base = int(problem_seed)
+    n_test = int(SYNTHETIC_BENCHMARK_N_TEST)
     if fn == SYNTHETIC_BENCHMARK_SINE_FUNCTION_NAME:
         torch.manual_seed(base)
         x = torch.rand(N, D) * 2.0 - 1.0
         x_u = env_action_coords_to_surrogate_unit_x(x)
         y = torch.sin(2 * torch.pi * x_u).mean(dim=1, keepdim=True) + 0.1 * torch.randn(N, 1)
         torch.manual_seed(base + 1)
-        x_test = torch.rand(N, D) * 2.0 - 1.0
+        x_test = torch.rand(n_test, D) * 2.0 - 1.0
         x_test_u = env_action_coords_to_surrogate_unit_x(x_test)
-        y_test = torch.sin(2 * torch.pi * x_test_u).mean(dim=1, keepdim=True) + 0.1 * torch.randn(N, 1)
+        y_test = torch.sin(2 * torch.pi * x_test_u).mean(dim=1, keepdim=True) + 0.1 * torch.randn(n_test, 1)
         return x, y, x_test, y_test
     from problems import pure_functions
 
@@ -66,7 +74,7 @@ def draw_benchmark_synthetic_xy(
     y_body = _batch_pure_env_reward(env, x.detach().cpu().numpy().astype(np.float64))
     y = torch.tensor(y_body, dtype=torch.float64) + 0.1 * torch.randn(N, 1)
     torch.manual_seed(base + 1)
-    x_test = torch.rand(N, D) * 2.0 - 1.0
+    x_test = torch.rand(n_test, D) * 2.0 - 1.0
     y_test_body = _batch_pure_env_reward(env, x_test.detach().cpu().numpy().astype(np.float64))
-    y_test = torch.tensor(y_test_body, dtype=torch.float64) + 0.1 * torch.randn(N, 1)
+    y_test = torch.tensor(y_test_body, dtype=torch.float64) + 0.1 * torch.randn(n_test, 1)
     return x, y, x_test, y_test
