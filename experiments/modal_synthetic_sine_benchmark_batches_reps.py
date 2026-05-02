@@ -307,29 +307,7 @@ def iter_missing_surrogate_jobs(jobs_fn: str, output_dir: str | Path, num_reps: 
         (unique_key, (n, d, function_name, problem_seed, rep_index, num_reps, surrogate_key))
     """
     for n, d, function_name, problem_seed in ssbp.load_synthetic_sine_benchmark_jobs(jobs_fn):
-        final_dest = benchmark_json_dest(
-            output_dir,
-            n=n,
-            d=d,
-            function_name=function_name,
-            problem_seed=problem_seed,
-            num_reps=num_reps,
-        )
-        if final_dest.exists():
-            print(f"skip existing aggregate {final_dest.resolve()}")
-            continue
         for rep_index in range(int(num_reps)):
-            rep_dest = rep_json_dest(
-                output_dir,
-                n=n,
-                d=d,
-                function_name=function_name,
-                problem_seed=problem_seed,
-                rep_index=rep_index,
-            )
-            if rep_dest.exists():
-                print(f"skip existing rep {rep_dest.resolve()}")
-                continue
             for surrogate_key in SURROGATE_BENCHMARK_KEYS:
                 surr_dest = surrogate_rep_json_dest(
                     output_dir,

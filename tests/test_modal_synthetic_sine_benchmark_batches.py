@@ -191,29 +191,30 @@ def test_batches_impl_worker_uses_function_and_rep_specific_data_seed(monkeypatc
     store = {}
     captured = {}
 
-    def fake_build(n, d, function_name, problem_seed, num_reps=1):
-        captured["args"] = (n, d, function_name, problem_seed, num_reps)
-        return {
-            META_KEY: {
-                "N": n,
-                "D": d,
-                "function_name": function_name,
-                "problem_seed": problem_seed,
-                "num_reps": num_reps,
-            }
-        }
+    def fake_single(*, N, D, function_name, surrogate_key, data_seed):
+        captured["args"] = (N, D, function_name, surrogate_key, data_seed)
+        return (0.1, 0.2, 0.3)
 
-    monkeypatch.setattr(impl.ssbp, "build_synthetic_sine_benchmark_remote_payload", fake_build)
+    monkeypatch.setattr(impl, "benchmark_single_surrogate_with_data", fake_single)
     monkeypatch.setattr(impl, "_results_dict", lambda _tag: store)
 
-    impl.synthetic_sine_benchmark_batch_worker.info.raw_f(("tag-x", 12, 2, "sphere", 17, 3, 10))
+    impl.synthetic_sine_benchmark_batch_worker.info.raw_f(("tag-x", 12, 2, "sphere", 17, 3, 10, "enn"))
 
     expected_data_seed = synthetic_benchmark_data_seed(function_name="sphere", problem_seed=17, rep_index=3)
-    assert captured["args"] == (12, 2, "sphere", expected_data_seed, 1)
-    payload, *_rest = store["N12_D2_sphere_pseed17_nrep10-rep3"]
+    assert captured["args"] == (12, 2, "sphere", "enn", expected_data_seed)
+    jk = impl._job_key(
+        n=12,
+        d=2,
+        function_name="sphere",
+        problem_seed=17,
+        num_reps=10,
+        surrogate_key="enn",
+    )
+    payload, *_rest = store[f"{jk}-rep3"]
     assert payload[META_KEY]["problem_seed"] == 17
     assert payload[META_KEY]["data_seed"] == expected_data_seed
     assert payload[META_KEY]["rep_index"] == 3
+    assert payload[META_KEY]["surrogate_key"] == "enn"
 
 
 def test_batches_impl_submit_missing_prints_data_seed_ranges(monkeypatch, capsys):
@@ -233,12 +234,13 @@ def test_batches_impl_submit_missing_prints_data_seed_ranges(monkeypatch, capsys
     )
     monkeypatch.setattr(
         impl,
-        "_iter_missing_jobs",
+        "_iter_missing_surrogate_jobs",
         lambda *_args, **_kwargs: iter(
             [
-                ("k0", (12, 2, "sphere", 17, 0, 4)),
-                ("k2", (12, 2, "sphere", 17, 2, 4)),
-                ("k3", (12, 2, "sphere", 17, 3, 4)),
+                ("k0", (12, 2, "sphere", 17, 0, 4, "enn")),
+                ("k1", (12, 2, "sphere", 17, 0, 4, "smac_rf")),
+                ("k2", (12, 2, "sphere", 17, 2, 4, "enn")),
+                ("k3", (12, 2, "sphere", 17, 3, 4, "dngo")),
             ]
         ),
     )
@@ -251,15 +253,17 @@ def test_batches_impl_submit_missing_prints_data_seed_ranges(monkeypatch, capsys
     assert spawned == [
         (
             [
-                ("k0", (12, 2, "sphere", 17, 0, 4)),
-                ("k2", (12, 2, "sphere", 17, 2, 4)),
-                ("k3", (12, 2, "sphere", 17, 3, 4)),
+                ("k0", (12, 2, "sphere", 17, 0, 4, "enn")),
+                ("k1", (12, 2, "sphere", 17, 0, 4, "smac_rf")),
+                ("k2", (12, 2, "sphere", 17, 2, 4, "enn")),
+                ("k3", (12, 2, "sphere", 17, 3, 4, "dngo")),
             ],
             "tag-x",
         )
     ]
     assert f"data_seed range N=12 D=2 fn=sphere pseed=17 reps=0-3 (3/4) seeds={seed0}-{seed3}" in out
-    assert "submitted 3 jobs" in out
+    assert "surrogate_jobs=4" in out
+    assert "submitted 4 jobs" in out
 
 
 def test_build_synthetic_sine_benchmark_remote_payload_delegates(monkeypatch):
@@ -300,3 +304,71 @@ def test_build_synthetic_sine_benchmark_remote_payload_delegates(monkeypatch):
     }
     assert bench.results["enn"].fit_seconds.mu == 0.1
     assert meta["function_name"] == "ackley"
+
+
+def test_iter_missing_surrogate_jobs_ignores_aggregate_json(tmp_path: Path):
+    from experiments.modal_synthetic_sine_benchmark_batches_reps import (
+        benchmark_json_dest,
+        iter_missing_surrogate_jobs,
+    )
+
+    out_dir = tmp_path / "out"
+    out_dir.mkdir()
+    agg = benchmark_json_dest(
+        out_dir,
+        n=12,
+        d=2,
+        function_name="sphere",
+        problem_seed=0,
+        num_reps=4,
+    )
+    agg.write_text("{}")
+
+    jobs = list(iter_missing_surrogate_jobs("example_two_targets_n12_d2", out_dir, 4))
+    assert len(jobs) == 4 * len(SURROGATE_BENCHMARK_KEYS) * 2
+
+
+def test_batches_impl_collect_writes_only_surrogate_shard(tmp_path: Path, monkeypatch):
+    import experiments.modal_synthetic_sine_benchmark_batches_impl as impl
+
+    surr_payload = {
+        "triple": [1.0, 2.0, 3.0],
+        META_KEY: {
+            "N": 10,
+            "D": 3,
+            "function_name": "sphere",
+            "problem_seed": 7,
+            "data_seed": 0,
+            "rep_index": 0,
+            "surrogate_key": "enn",
+        },
+    }
+    store = {"k0": (surr_payload, 10, 3, "sphere", 7, 0, 2, "enn")}
+    monkeypatch.setattr(impl, "_results_dict", lambda _tag: store)
+    monkeypatch.setattr(
+        impl.modal.Function,
+        "from_name",
+        lambda *_a, **_k: type("_F", (), {"spawn": staticmethod(lambda *_x, **_y: None)})(),
+    )
+    impl._collect("tag-x", tmp_path)
+    dest = impl._surrogate_rep_json_dest(
+        tmp_path,
+        n=10,
+        d=3,
+        function_name="sphere",
+        problem_seed=7,
+        rep_index=0,
+        surrogate_key="enn",
+    )
+    assert dest.exists()
+    rep_path = impl._rep_json_dest(tmp_path, n=10, d=3, function_name="sphere", problem_seed=7, rep_index=0)
+    assert not rep_path.exists()
+    top = impl._benchmark_json_dest(tmp_path, n=10, d=3, function_name="sphere", problem_seed=7, num_reps=2)
+    assert not top.exists()
+
+
+def test_batches_impl_worker_rejects_seven_tuple_job():
+    import experiments.modal_synthetic_sine_benchmark_batches_impl as impl
+
+    with pytest.raises(ValueError, match="expected 8-tuple"):
+        impl.synthetic_sine_benchmark_batch_worker.info.raw_f(("tag-x", 12, 2, "sphere", 17, 3, 10))

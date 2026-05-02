@@ -185,12 +185,12 @@ _LOCAL_SINGLE_PARAMS = [
         type=int,
         default=10,
         show_default=True,
-        help="For --aggregate: expected replicate count when building the top-level aggregate JSON.",
+        help="With --aggregate: replicate count passed to rep- and config-level rollup helpers.",
     ),
     click.Option(
         ("--aggregate/--no-aggregate", "aggregate"),
-        default=True,
-        help="After a successful write, try the same rep- and config-level aggregation as Modal collect.",
+        default=False,
+        help="Optional offline rollup to combined rep / nrep JSON (not part of the Modal batch pipeline).",
     ),
 ]
 

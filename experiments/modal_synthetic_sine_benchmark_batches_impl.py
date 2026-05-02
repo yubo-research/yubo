@@ -77,41 +77,8 @@ _iter_missing_surrogate_jobs = iter_missing_surrogate_jobs
 )
 def synthetic_sine_benchmark_batch_worker(job):
     """Run a single surrogate for a single replicate."""
-    if len(job) == 7:
-        tag, n, d, function_name, problem_seed, rep_index, num_reps = job
-        key = _job_key(
-            n=n,
-            d=d,
-            function_name=function_name,
-            problem_seed=problem_seed,
-            num_reps=num_reps,
-        )
-        data_seed = synthetic_benchmark_data_seed(
-            function_name=function_name,
-            problem_seed=problem_seed,
-            rep_index=rep_index,
-        )
-        payload = ssbp.build_synthetic_sine_benchmark_remote_payload(
-            n,
-            d,
-            function_name,
-            data_seed,
-            num_reps=1,
-        )
-        payload.setdefault(ssbp.META_KEY, {})
-        payload[ssbp.META_KEY]["problem_seed"] = int(problem_seed)
-        payload[ssbp.META_KEY]["data_seed"] = int(data_seed)
-        payload[ssbp.META_KEY]["rep_index"] = int(rep_index)
-        _results_dict(tag)[f"{key}-rep{rep_index}"] = (
-            payload,
-            n,
-            d,
-            function_name,
-            problem_seed,
-            rep_index,
-            num_reps,
-        )
-        return
+    if len(job) != 8:
+        raise ValueError(f"expected 8-tuple job (tag, n, d, function_name, problem_seed, rep_index, num_reps, surrogate_key); got len={len(job)}")
     tag, n, d, function_name, problem_seed, rep_index, num_reps, surrogate_key = job
     key = _job_key(
         n=n,
@@ -205,12 +172,12 @@ def _submit_missing(tag: str, jobs_fn: str, output_dir: str | Path, num_reps: in
         func.spawn(batch, tag)
         batch = []
 
-    for key, job in _iter_missing_jobs(jobs_fn, output_dir, int(num_reps)):
+    for key, job in _iter_missing_surrogate_jobs(jobs_fn, output_dir, int(num_reps)):
         batch.append((key, job))
         submitted += 1
-        n, d, function_name, problem_seed, rep_index, reps_total = job
+        n, d, function_name, problem_seed, rep_index, reps_total, surrogate_key = job
         cfg = (n, d, function_name, problem_seed, reps_total)
-        submitted_surrogates.setdefault(cfg, {}).setdefault(int(rep_index), set()).add("all")
+        submitted_surrogates.setdefault(cfg, {}).setdefault(int(rep_index), set()).add(surrogate_key)
         if len(batch) >= 1000:
             _flush()
     _flush()
@@ -239,8 +206,6 @@ def _submit_missing(tag: str, jobs_fn: str, output_dir: str | Path, num_reps: in
 def _collect(tag: str, output_dir: str | Path):
     results = _results_dict(tag)
     collected_keys = []
-    touched_reps: set[tuple[int, int, str, int, int, int]] = set()
-    touched_configs: set[tuple[int, int, str, int, int]] = set()
 
     for key, payload in results.items():
         if isinstance(payload, dict):
@@ -251,79 +216,34 @@ def _collect(tag: str, output_dir: str | Path):
             collected_keys.append(key)
             continue
 
-        if len(payload) == 8:
-            (
-                surr_payload,
-                n,
-                d,
-                function_name,
-                problem_seed,
-                rep_index,
-                num_reps,
-                surrogate_key,
-            ) = payload
-            dest = _surrogate_rep_json_dest(
-                output_dir,
-                n=n,
-                d=d,
-                function_name=function_name,
-                problem_seed=problem_seed,
-                rep_index=rep_index,
-                surrogate_key=surrogate_key,
+        if len(payload) != 8:
+            raise ValueError(
+                "expected 8-tuple Modal result (surr_payload, n, d, function_name, problem_seed, "
+                f"rep_index, num_reps, surrogate_key); got len={len(payload)} for key={key!r}"
             )
-            if not dest.exists():
-                ssbp.write_synthetic_sine_benchmark_json(dest, surr_payload)
-                print(f"wrote {dest.resolve()}")
-            touched_reps.add((n, d, function_name, problem_seed, rep_index, num_reps))
-            collected_keys.append(key)
-        else:
-            (
-                rep_payload,
-                n,
-                d,
-                function_name,
-                problem_seed,
-                rep_index,
-                num_reps,
-            ) = payload
-            dest = _rep_json_dest(
-                output_dir,
-                n=n,
-                d=d,
-                function_name=function_name,
-                problem_seed=problem_seed,
-                rep_index=rep_index,
-            )
-            if not dest.exists():
-                ssbp.write_synthetic_sine_benchmark_json(dest, rep_payload)
-                print(f"wrote {dest.resolve()}")
-            touched_configs.add((n, d, function_name, problem_seed, num_reps))
-            collected_keys.append(key)
-
-    for n, d, function_name, problem_seed, rep_index, num_reps in sorted(touched_reps):
-        rep_dest = _aggregate_surrogate_results_to_rep(
+        (
+            surr_payload,
+            n,
+            d,
+            function_name,
+            problem_seed,
+            rep_index,
+            num_reps,
+            surrogate_key,
+        ) = payload
+        dest = _surrogate_rep_json_dest(
             output_dir,
             n=n,
             d=d,
             function_name=function_name,
             problem_seed=problem_seed,
             rep_index=rep_index,
+            surrogate_key=surrogate_key,
         )
-        if rep_dest is not None:
-            print(f"aggregated surrogates -> {rep_dest.resolve()}")
-            touched_configs.add((n, d, function_name, problem_seed, num_reps))
-
-    for n, d, function_name, problem_seed, num_reps in sorted(touched_configs):
-        agg_dest = _aggregate_reps_to_dest(
-            output_dir,
-            n=n,
-            d=d,
-            function_name=function_name,
-            problem_seed=problem_seed,
-            num_reps=num_reps,
-        )
-        if agg_dest is not None:
-            print(f"aggregated reps -> {agg_dest.resolve()}")
+        if not dest.exists():
+            ssbp.write_synthetic_sine_benchmark_json(dest, surr_payload)
+            print(f"wrote {dest.resolve()}")
+        collected_keys.append(key)
 
     if collected_keys:
         func = modal.Function.from_name(_get_app_name(tag), "synthetic_sine_benchmark_batch_deleter")
