@@ -62,14 +62,18 @@ def test_resolve_rl_model_defaults_cheetah_sac():
     assert "actor_head_hidden_sizes" not in cfg
 
 
+def _assert_ppo_actor_critic_backbone(cfg, *, hidden_sizes, log_std_init):
+    assert cfg["backbone_hidden_sizes"] == hidden_sizes
+    assert cfg["backbone_layer_norm"] is True
+    assert cfg["share_backbone"] is True
+    assert cfg["log_std_init"] == log_std_init
+
+
 def test_resolve_rl_model_defaults_cheetah_ppo_uses_explicit_model():
     from problems.env_conf import resolve_rl_model_defaults
 
     cfg = resolve_rl_model_defaults("cheetah", algo="ppo")
-    assert cfg["backbone_hidden_sizes"] == (64, 64)
-    assert cfg["backbone_layer_norm"] is True
-    assert cfg["share_backbone"] is True
-    assert cfg["log_std_init"] == -0.5
+    _assert_ppo_actor_critic_backbone(cfg, hidden_sizes=(64, 64), log_std_init=-0.5)
 
 
 def test_resolve_rl_model_defaults_quadruped_run_uses_explicit_model():
@@ -91,10 +95,7 @@ def test_resolve_rl_model_defaults_lunar_ac_infers_from_actor_critic_factory():
     from problems.env_conf import resolve_rl_model_defaults
 
     cfg = resolve_rl_model_defaults("lunar-ac", algo="ppo")
-    assert cfg["backbone_hidden_sizes"] == (16, 8)
-    assert cfg["backbone_layer_norm"] is True
-    assert cfg["share_backbone"] is True
-    assert cfg["log_std_init"] == 0.0
+    _assert_ppo_actor_critic_backbone(cfg, hidden_sizes=(16, 8), log_std_init=0.0)
 
 
 def test_get_env_conf_applies_atari_preprocess_overrides():

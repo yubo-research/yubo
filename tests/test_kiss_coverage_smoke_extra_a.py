@@ -7,7 +7,6 @@ from types import SimpleNamespace
 
 import numpy as np
 import torch
-from click.testing import CliRunner
 
 from acq.acq_bt import AcqBT
 from acq.acq_dpp import AcqDPP
@@ -71,40 +70,9 @@ def test_kiss_cov_data_locator_optimizers(tmp_path):
 
 
 def test_kiss_cov_ops_catalog_and_ops_data(tmp_path):
-    import ops.catalog as catalog
-    import ops.data as data_cli
+    from tests.kiss_ops_catalog_data_shared import run_kiss_ops_catalog_and_data_cli
 
-    runner = CliRunner()
-    catalog.cli.callback()
-    catalog.environments.callback()
-    res = runner.invoke(catalog.cli, ["environments"])
-    assert res.exit_code == 0
-
-    results_dir = tmp_path / "results"
-    exp_dir = results_dir / "abc123"
-    traces = exp_dir / "traces"
-    traces.mkdir(parents=True)
-    (exp_dir / "config.json").write_text(
-        json.dumps(
-            {
-                "opt_name": "random",
-                "env_tag": "f:ackley-2d",
-                "num_arms": 1,
-                "num_rounds": 1,
-            }
-        )
-    )
-    (traces / "00000.jsonl").write_text("{}\n")
-
-    data_cli.cli.callback()
-    data_cli.ls.callback(results_dir, False)
-    res = runner.invoke(data_cli.cli, ["rm", str(results_dir), "abc123", "-f"])
-    assert res.exit_code == 0
-
-    exp_dir.mkdir(parents=True)
-    (exp_dir / "config.json").write_text(json.dumps({"opt_name": "random", "env_tag": "f:ackley-2d"}))
-    data_cli.rm.callback(results_dir, ("abc123",), True)
-    assert not exp_dir.exists()
+    run_kiss_ops_catalog_and_data_cli(tmp_path)
 
 
 def test_kiss_cov_modal_batches_collect_and_cleanup(monkeypatch):

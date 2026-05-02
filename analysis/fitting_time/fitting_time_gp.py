@@ -34,7 +34,7 @@ def fit_exact_gp(train_x: Tensor, train_y: Tensor, x_test: Tensor) -> tuple[floa
     return elapsed, y_hat, pred_var
 
 
-def _svgp_nan_out(x_test: Tensor) -> tuple[float, Tensor, Tensor]:
+def _gp_fit_nan_out(x_test: Tensor) -> tuple[float, Tensor, Tensor]:
     nan_t = torch.full(
         (x_test.shape[0], 1),
         float("nan"),
@@ -65,7 +65,7 @@ def _fit_svgp(
 
     n = train_x.shape[-2]
     if n < 2:
-        return _svgp_nan_out(x_test)
+        return _gp_fit_nan_out(x_test)
 
     # Standardize inside the model so ``posterior`` untransforms to the original y scale.
     # Passing pre-standardized ``train_y`` without an outcome transform left means in z-space
@@ -92,7 +92,7 @@ def _fit_svgp(
             elapsed = time.perf_counter() - t_0
     except (RuntimeError, ValueError) as e:
         if "nan" in str(e).lower() or "invalid" in str(e).lower():
-            return _svgp_nan_out(x_test)
+            return _gp_fit_nan_out(x_test)
         raise
     svgp.eval()
 
@@ -103,7 +103,7 @@ def _fit_svgp(
             y_hat = post.mean
             pred_var = post.variance
     except (RuntimeError, ValueError):
-        return _svgp_nan_out(x_test)
+        return _gp_fit_nan_out(x_test)
     return elapsed, y_hat, pred_var
 
 
@@ -117,18 +117,6 @@ def fit_svgp_linear(train_x: Tensor, train_y: Tensor, x_test: Tensor) -> tuple[f
     n = int(train_x.shape[-2])
     m = min(n, 100)
     return _fit_svgp(train_x, train_y, x_test, inducing_points=m)
-
-
-def _vecchia_nan_out(
-    x_test: Tensor,
-) -> tuple[float, Tensor, Tensor]:
-    nan_t = torch.full(
-        (x_test.shape[0], 1),
-        float("nan"),
-        dtype=x_test.dtype,
-        device=x_test.device,
-    )
-    return float("nan"), nan_t, nan_t
 
 
 def fit_vecchia(train_x: Tensor, train_y: Tensor, x_test: Tensor) -> tuple[float, Tensor, Tensor]:
@@ -147,7 +135,7 @@ def fit_vecchia(train_x: Tensor, train_y: Tensor, x_test: Tensor) -> tuple[float
         "false",
         "no",
     }:
-        return _vecchia_nan_out(x_test)
+        return _gp_fit_nan_out(x_test)
 
     if sys.platform == "darwin":
         os.environ.setdefault("KMP_DUPLICATE_LIB_OK", "TRUE")
@@ -163,7 +151,7 @@ def fit_vecchia(train_x: Tensor, train_y: Tensor, x_test: Tensor) -> tuple[float
         from pyvecch.prediction import IndependentRF
         from pyvecch.training import fit_model
     except (ImportError, OSError, RuntimeError):
-        return _vecchia_nan_out(x_test)
+        return _gp_fit_nan_out(x_test)
 
     X = train_x.detach().float().cpu().contiguous()
     Y = train_y.detach().float().cpu().contiguous()
@@ -171,7 +159,7 @@ def fit_vecchia(train_x: Tensor, train_y: Tensor, x_test: Tensor) -> tuple[float
         Y = Y.unsqueeze(-1)
     n_obs = X.shape[0]
     if n_obs < 2:
-        return _vecchia_nan_out(x_test)
+        return _gp_fit_nan_out(x_test)
 
     train_batch_size = int(np.minimum(n_obs, 128))
     t_0 = time.perf_counter()
@@ -210,7 +198,7 @@ def fit_vecchia(train_x: Tensor, train_y: Tensor, x_test: Tensor) -> tuple[float
             rel_tol=5e-3,
         )
     except (ImportError, OSError, RuntimeError, ValueError, ArithmeticError):
-        return _vecchia_nan_out(x_test)
+        return _gp_fit_nan_out(x_test)
     elapsed = time.perf_counter() - t_0
     model.update_transform()
     model.eval()
@@ -227,6 +215,6 @@ def fit_vecchia(train_x: Tensor, train_y: Tensor, x_test: Tensor) -> tuple[float
         y_hat = mu_y.to(device=train_x.device, dtype=train_x.dtype)
         pred_var = var_y.to(device=train_x.device, dtype=train_x.dtype)
     except (RuntimeError, ValueError, ArithmeticError):
-        return _vecchia_nan_out(x_test)
+        return _gp_fit_nan_out(x_test)
 
     return elapsed, y_hat, pred_var

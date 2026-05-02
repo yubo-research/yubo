@@ -307,7 +307,8 @@ def test_designers_init():
     assert d._num_arms == 5
 
 
-def test_designers_create_random():
+@pytest.mark.parametrize("designer_name", ["random", "sobol"])
+def test_designers_create_known(designer_name):
     from optimizer.designers import Designers
     from problems.env_conf import default_policy, get_env_conf
 
@@ -315,19 +316,7 @@ def test_designers_create_random():
     policy = default_policy(env_conf)
 
     d = Designers(policy, num_arms=5)
-    designer = d.create("random")
-    assert designer is not None
-
-
-def test_designers_create_sobol():
-    from optimizer.designers import Designers
-    from problems.env_conf import default_policy, get_env_conf
-
-    env_conf = get_env_conf("f:sphere-2d", problem_seed=42, noise_seed_0=18)
-    policy = default_policy(env_conf)
-
-    d = Designers(policy, num_arms=5)
-    designer = d.create("sobol")
+    designer = d.create(designer_name)
     assert designer is not None
 
 

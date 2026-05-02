@@ -6,6 +6,7 @@ import numpy as np
 
 from embedding.behavioral_embedder import BehavioralEmbedder
 
+from .uhd_mezo_be_ask_shared import run_mezo_be_ask
 from .uhd_simple_be import _fit_enn, _predict_enn
 
 
@@ -169,22 +170,10 @@ class UHDMeZOBENp:
         return self._mezo.positive_phase
 
     def ask(self) -> None:
-        if self._mezo.positive_phase:
-            if self._enn_params is not None and len(self._zs) >= self._warmup:
-                best_seed, z_plus, z_minus = self._select_seed()
-                self._mezo.set_next_seed(best_seed)
-                self._z_plus = z_plus
-                self._z_minus = z_minus
-                self._selected = True
-            else:
-                self._selected = False
-            self._mezo.ask()
-            if not self._selected:
-                self._z_plus = self._embedder.embed_policy(self._policy, self._policy.get_params()).astype(np.float64)
-        else:
-            self._mezo.ask()
-            if not self._selected:
-                self._z_minus = self._embedder.embed_policy(self._policy, self._policy.get_params()).astype(np.float64)
+        run_mezo_be_ask(
+            self,
+            embed_unselected=lambda: self._embedder.embed_policy(self._policy, self._policy.get_params()).astype(np.float64),
+        )
 
     def tell(self, mu: float, se: float) -> None:
         is_positive = self._mezo.positive_phase

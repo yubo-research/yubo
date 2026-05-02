@@ -49,6 +49,24 @@ def test_early_reject_config_frozen_dataclass():
         cfg.tau = 0.6
 
 
+def _assert_be_config_fields(
+    cfg,
+    *,
+    num_probes,
+    num_candidates,
+    warmup,
+    fit_interval,
+    enn_k,
+    sigma_range,
+):
+    assert cfg.num_probes == num_probes
+    assert cfg.num_candidates == num_candidates
+    assert cfg.warmup == warmup
+    assert cfg.fit_interval == fit_interval
+    assert cfg.enn_k == enn_k
+    assert cfg.sigma_range == sigma_range
+
+
 def test_be_config_default_creation():
     cfg = BEConfig(
         num_probes=10,
@@ -58,12 +76,15 @@ def test_be_config_default_creation():
         enn_k=25,
         sigma_range=None,
     )
-    assert cfg.num_probes == 10
-    assert cfg.num_candidates == 10
-    assert cfg.warmup == 20
-    assert cfg.fit_interval == 10
-    assert cfg.enn_k == 25
-    assert cfg.sigma_range is None
+    _assert_be_config_fields(
+        cfg,
+        num_probes=10,
+        num_candidates=10,
+        warmup=20,
+        fit_interval=10,
+        enn_k=25,
+        sigma_range=None,
+    )
 
 
 def test_be_config_custom_values():
@@ -75,12 +96,15 @@ def test_be_config_custom_values():
         enn_k=50,
         sigma_range=(1e-5, 1e-1),
     )
-    assert cfg.num_probes == 20
-    assert cfg.num_candidates == 5
-    assert cfg.warmup == 50
-    assert cfg.fit_interval == 25
-    assert cfg.enn_k == 50
-    assert cfg.sigma_range == (1e-5, 1e-1)
+    _assert_be_config_fields(
+        cfg,
+        num_probes=20,
+        num_candidates=5,
+        warmup=50,
+        fit_interval=25,
+        enn_k=50,
+        sigma_range=(1e-5, 1e-1),
+    )
 
 
 def test_be_config_frozen_dataclass():

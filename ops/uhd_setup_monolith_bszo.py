@@ -1,9 +1,5 @@
-import math
-
-import torch
-import torch.nn.functional as F
-
-from ops.uhd_setup_monolith_simple_run import _should_log_simple
+from ops.uhd_setup_bszo_core import _run_bszo_iterations
+from ops.uhd_setup_bszo_evaluate import make_bszo_gym_evaluate_fn, make_bszo_mnist_evaluate_fn
 from ops.uhd_setup_monolith_support import (
     _make_accuracy_fn,
     _preload_mnist_train_to_device,
@@ -71,26 +67,10 @@ def run_bszo_loop(
     if is_mnist:
         train_images, train_labels = _preload_mnist_train_to_device(device)
         accuracy_fn = _make_accuracy_fn(module, device)
-
-        def evaluate_fn(eval_seed: int) -> tuple[float, float]:
-            g = torch.Generator()
-            g.manual_seed(int(eval_seed + ns0))
-            idx = torch.randint(train_images.shape[0], (batch_size,), generator=g).to(device)
-            with torch.inference_mode():
-                logits = module(train_images.index_select(0, idx))
-                per_sample = F.cross_entropy(logits, train_labels.index_select(0, idx), reduction="none")
-            mu = -float(per_sample.mean())
-            se = float(per_sample.std() / math.sqrt(len(per_sample)))
-            return mu, se
+        evaluate_fn = make_bszo_mnist_evaluate_fn(module, train_images, train_labels, batch_size, device, ns0)
     else:
-        from optimizer.trajectories import collect_trajectory
-
         accuracy_fn = None
-
-        def evaluate_fn(eval_seed: int) -> tuple[float, float]:
-            ns = noise_seed_0 if getattr(env_runtime, "frozen_noise", False) else int(eval_seed) + ns0
-            result = collect_trajectory(env_runtime, module, noise_seed=ns)
-            return float(result.rreturn), 0.0
+        evaluate_fn = make_bszo_gym_evaluate_fn(env_runtime, module, noise_seed_0_arg=noise_seed_0)
 
     print(f"BSZO: num_params = {dim}, k = {bszo_k}, epsilon = {bszo_epsilon}, lr = {lr}")
     _run_bszo_iterations(
@@ -102,47 +82,6 @@ def run_bszo_loop(
         accuracy_interval=accuracy_interval,
         target_accuracy=target_accuracy,
     )
-
-
-def _run_bszo_iterations(
-    bszo,
-    *,
-    evaluate_fn,
-    accuracy_fn,
-    num_steps: int,
-    log_interval: int,
-    accuracy_interval: int,
-    target_accuracy: float | None,
-) -> None:
-    import time
-
-    k = bszo.k
-    t0 = time.perf_counter()
-    acc = None
-    step = 0
-    for step in range(num_steps):
-        for _ in range(k + 1):
-            bszo.ask()
-            mu, se = evaluate_fn(bszo.eval_seed)
-            bszo.tell(mu, se)
-
-        if not _should_log_simple(step, num_steps, log_interval):
-            continue
-        y_best = bszo.y_best
-        y_str = f"{y_best:.4f}" if y_best is not None else "N/A"
-        if accuracy_fn is not None and (acc is None or step == num_steps - 1 or (accuracy_interval > 0 and step % accuracy_interval == 0)):
-            acc = accuracy_fn()
-        line = f"EVAL: step = {step} mu = {mu:.4f} se = {se:.4f} y_best = {y_str}"
-        if acc is not None:
-            line += f" test_acc = {acc:.4f}"
-        print(line)
-        if target_accuracy is not None and acc is not None and acc >= target_accuracy:
-            elapsed = time.perf_counter() - t0
-            print(f"BSZO: target reached {acc:.4f} >= {target_accuracy:.4f} at step={step} ({elapsed:.2f}s)")
-            break
-
-    elapsed = time.perf_counter() - t0
-    print(f"BSZO: elapsed = {elapsed:.2f}s ({min(step + 1, num_steps)} steps)")
 
 
 __all__ = ["_run_bszo_iterations", "run_bszo_loop"]

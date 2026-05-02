@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from problems.benchmark_functions_1c import Schaffer2, Schaffer4
 from problems.benchmark_util import mk_4d
@@ -13,17 +14,15 @@ from problems.push_utils import (
 )
 
 
-def test_schaffer2():
-    f = Schaffer2()
-    x = np.array([0.5, 0.3, 0.1])
-    y = f(x)
-    assert np.isfinite(y)
-
-
-def test_schaffer4():
-    f = Schaffer4()
-    x = np.array([0.2, 0.4, 0.6, 0.8])
-    y = f(x)
+@pytest.mark.parametrize(
+    "cls,x",
+    [
+        (Schaffer2, np.array([0.5, 0.3, 0.1])),
+        (Schaffer4, np.array([0.2, 0.4, 0.6, 0.8])),
+    ],
+)
+def test_schaffer_finite(cls, x):
+    y = cls()(x)
     assert np.isfinite(y)
 
 

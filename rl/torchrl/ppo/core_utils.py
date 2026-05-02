@@ -9,26 +9,24 @@ from .config import PPOConfig
 from .core_types import _EnvSetup
 
 
-def _count_unique_params(*modules: nn.Module, extra_params: list[torch.nn.Parameter] | None = None) -> int:
-    unique = {}
+def _unique_params_by_id(*modules: nn.Module, extra_params: list[torch.nn.Parameter] | None = None) -> dict[int, torch.nn.Parameter]:
+    unique: dict[int, torch.nn.Parameter] = {}
     for module in modules:
         for p in module.parameters():
             unique[id(p)] = p
     if extra_params:
         for p in extra_params:
             unique[id(p)] = p
+    return unique
+
+
+def _count_unique_params(*modules: nn.Module, extra_params: list[torch.nn.Parameter] | None = None) -> int:
+    unique = _unique_params_by_id(*modules, extra_params=extra_params)
     return sum((p.numel() for p in unique.values()))
 
 
 def _unique_param_list(*modules: nn.Module, extra_params: list[torch.nn.Parameter] | None = None) -> list[torch.nn.Parameter]:
-    unique = {}
-    for module in modules:
-        for p in module.parameters():
-            unique[id(p)] = p
-    if extra_params:
-        for p in extra_params:
-            unique[id(p)] = p
-    return list(unique.values())
+    return list(_unique_params_by_id(*modules, extra_params=extra_params).values())
 
 
 def _is_due(step: int, interval: int | None) -> bool:

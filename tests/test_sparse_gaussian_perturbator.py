@@ -9,15 +9,11 @@ def _make_module():
 
 
 def test_perturb_unperturb_roundtrip():
+    from tests.perturb_named_roundtrip import assert_named_param_perturb_roundtrip
+
     module = _make_module()
     sp = SparseGaussianPerturbator(module, num_dim_target=20)
-    orig = {n: p.data.clone() for n, p in module.named_parameters()}
-
-    sp.perturb(seed=42, sigma=0.1)
-    sp.unperturb()
-
-    for n, p in module.named_parameters():
-        assert torch.allclose(p.data, orig[n], atol=1e-6)
+    assert_named_param_perturb_roundtrip(sp, module)
 
 
 def test_perturbation_is_sparse():

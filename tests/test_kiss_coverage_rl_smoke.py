@@ -22,9 +22,9 @@ from rl.policy_backbone import (
 )
 from rl.pufferlib.ppo.eval import (
     PufferEvalPolicy,
-    resolve_eval_seeds,
     validate_eval_config,
 )
+from rl.pufferlib.ppo.eval_seeds import resolve_eval_seeds
 from rl.pufferlib_compat import import_pufferlib_modules
 from rl.registry import register_algo_backend, resolve_algo_name
 from rl.shared_gaussian_actor import (

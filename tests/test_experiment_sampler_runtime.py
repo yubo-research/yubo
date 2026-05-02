@@ -14,17 +14,7 @@ from experiments.experiment_sampler import (
     sampler,
     scan_local,
 )
-
-
-def _make_mock_problem():
-    """Create a mock Problem with .env property and .build_policy() method."""
-    mock_env = MagicMock()
-    mock_env.env_name = "test_env"
-    mock_env.problem_seed = 42
-    mock_problem = MagicMock()
-    mock_problem.env = mock_env
-    mock_problem.build_policy.return_value = MagicMock()
-    return mock_problem
+from tests.mock_experiment_problem import make_mock_problem_for_sampler
 
 
 @patch("optimizer.optimizer.Optimizer")
@@ -280,7 +270,7 @@ def test_scan_local(mock_sample_1, mock_post_process):
         stop_reason="completed",
     )
 
-    mock_problem = _make_mock_problem()
+    mock_problem = make_mock_problem_for_sampler()
     run_configs = [
         RunConfig(
             problem=mock_problem,
@@ -321,7 +311,7 @@ def test_scan_local_single_replicate_stays_in_process(mock_sample_1, mock_post_p
         trace_records=MagicMock(),
         stop_reason="completed",
     )
-    mock_problem = _make_mock_problem()
+    mock_problem = make_mock_problem_for_sampler()
     mock_problem.env.env_name = "f:sphere-2d"
     run_config = RunConfig(
         problem=mock_problem,
@@ -341,10 +331,12 @@ def test_scan_local_single_replicate_stays_in_process(mock_sample_1, mock_post_p
     mock_post_process.assert_called_once()
 
 
-def test_scan_local_parallel_closes_pool_on_success(monkeypatch):
+def _run_scan_local_parallel_fake(monkeypatch, *, interrupt: bool):
     state = {"close": 0, "terminate": 0, "join": 0}
 
     def imap_unordered(self, _fn, items):
+        if interrupt:
+            raise KeyboardInterrupt
         for _ in items:
             yield "ok"
 
@@ -379,56 +371,25 @@ def test_scan_local_parallel_closes_pool_on_success(monkeypatch):
         "experiments.experiment_sampler.mp.get_context",
         lambda *args, **kwargs: _FakeContext(),
     )
-    _scan_local_parallel([MagicMock(), MagicMock()], max_workers=2)
+    if interrupt:
+        with pytest.raises(KeyboardInterrupt):
+            _scan_local_parallel([MagicMock(), MagicMock()], max_workers=2)
+        assert state["close"] == 0
+        assert state["terminate"] == 1
+        assert state["join"] == 1
+    else:
+        _scan_local_parallel([MagicMock(), MagicMock()], max_workers=2)
+        assert state["close"] == 1
+        assert state["terminate"] == 0
+        assert state["join"] == 1
 
-    assert state["close"] == 1
-    assert state["terminate"] == 0
-    assert state["join"] == 1
+
+def test_scan_local_parallel_closes_pool_on_success(monkeypatch):
+    _run_scan_local_parallel_fake(monkeypatch, interrupt=False)
 
 
 def test_scan_local_parallel_terminates_pool_on_keyboard_interrupt(monkeypatch):
-    state = {"close": 0, "terminate": 0, "join": 0}
-
-    def imap_unordered(self, _fn, _items):
-        raise KeyboardInterrupt
-
-    def close(self):
-        state["close"] += 1
-
-    def terminate(self):
-        state["terminate"] += 1
-
-    def join(self):
-        state["join"] += 1
-
-    _FakePool = type(
-        "_FakePool",
-        (),
-        {
-            "imap_unordered": imap_unordered,
-            "close": close,
-            "terminate": terminate,
-            "join": join,
-        },
-    )
-
-    def pool(self, processes, initializer):
-        assert int(processes) == 2
-        assert initializer is not None
-        return _FakePool()
-
-    _FakeContext = type("_FakeContext", (), {"Pool": pool})
-
-    monkeypatch.setattr(
-        "experiments.experiment_sampler.mp.get_context",
-        lambda *args, **kwargs: _FakeContext(),
-    )
-    with pytest.raises(KeyboardInterrupt):
-        _scan_local_parallel([MagicMock(), MagicMock()], max_workers=2)
-
-    assert state["close"] == 0
-    assert state["terminate"] == 1
-    assert state["join"] == 1
+    _run_scan_local_parallel_fake(monkeypatch, interrupt=True)
 
 
 @patch("experiments.experiment_sampler.mk_replicates")

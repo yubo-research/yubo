@@ -37,3 +37,17 @@ def fit_enn_regressor_on_points(
         rng=rng,
     )
     return y_mean, y_std, model, params
+
+
+def enn_mixin_maybe_fit_inplace(obj) -> None:
+    cfg = obj._cfg
+    if len(obj._x) < max(2, int(cfg.warmup_real_obs)):
+        return
+    if obj._enn_params is not None and obj._num_new_since_fit < int(cfg.fit_interval):
+        return
+    y_mean, y_std, model, params = fit_enn_regressor_on_points(obj._x, obj._y, k=int(cfg.k))
+    obj._y_mean = y_mean
+    obj._y_std = y_std
+    obj._enn_model = model
+    obj._enn_params = params
+    obj._num_new_since_fit = 0

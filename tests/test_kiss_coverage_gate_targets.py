@@ -37,10 +37,12 @@ def test_kiss_cov_types_and_small_helpers():
 
 def test_kiss_cov_runner_main_and_eval_config(monkeypatch, tmp_path):
     import rl.pufferlib.ppo.eval_config as eval_config
+    import rl.pufferlib.ppo.eval_seeds as eval_seeds_mod
     import rl.runner as runner
+    from rl.pufferlib.ppo.eval_seeds import resolve_eval_seeds
 
-    monkeypatch.setattr(eval_config, "resolve_run_seeds", lambda **kwargs: SimpleNamespace(problem_seed=3, noise_seed_0=4))
-    assert eval_config.resolve_eval_seeds(SimpleNamespace(seed=1, problem_seed=None, noise_seed_0=None)) == (3, 4)
+    monkeypatch.setattr(eval_seeds_mod, "resolve_run_seeds", lambda **kwargs: SimpleNamespace(problem_seed=3, noise_seed_0=4))
+    assert resolve_eval_seeds(SimpleNamespace(seed=1, problem_seed=None, noise_seed_0=None)) == (3, 4)
 
     monkeypatch.setattr(
         eval_config,
@@ -51,7 +53,7 @@ def test_kiss_cov_runner_main_and_eval_config(monkeypatch, tmp_path):
             noise_seed_0=kwargs["seed"] + 2,
         ),
     )
-    monkeypatch.setattr(eval_config, "resolve_run_seeds", lambda **kwargs: SimpleNamespace(problem_seed=5, noise_seed_0=6))
+    monkeypatch.setattr(eval_seeds_mod, "resolve_run_seeds", lambda **kwargs: SimpleNamespace(problem_seed=5, noise_seed_0=6))
     fake_env_conf = eval_config.build_eval_env_conf(
         SimpleNamespace(env_tag="x", seed=1, problem_seed=None, noise_seed_0=None, pixels_only=False),
         obs_mode="vector",

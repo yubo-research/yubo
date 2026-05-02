@@ -1,18 +1,12 @@
 import torch
-from torch import nn
 
-from embedding.behavioral_embedder import BehavioralEmbedder
-from optimizer.gaussian_perturbator import GaussianPerturbator
 from optimizer.uhd_simple_be import UHDMeZOBE
 
 
 def _make_mezo_be(sigma=0.1, lr=0.01, warmup=5, num_candidates=3, fit_interval=1):
-    module = nn.Linear(3, 2, bias=True)
-    dim = sum(p.numel() for p in module.parameters())
-    gp = GaussianPerturbator(module)
-    bounds = torch.zeros(2, 3)
-    bounds[1] = 1.0
-    embedder = BehavioralEmbedder(bounds, num_probes=4, seed=0)
+    from tests.uhd_linear_embed_parts import linear_module_gaussian_embedder
+
+    module, dim, gp, embedder = linear_module_gaussian_embedder()
     uhd = UHDMeZOBE(
         gp,
         dim,
@@ -83,12 +77,10 @@ def test_properties():
 
 
 def test_runs_many_steps():
+    from tests.uhd_linear_embed_parts import run_many_random_ask_tell
+
     module, uhd = _make_mezo_be(warmup=6, num_candidates=3, fit_interval=2)
-    for _ in range(40):
-        uhd.ask()
-        mu = float(torch.randn(1).item())
-        uhd.tell(mu, 0.0)
-    assert torch.isfinite(module.weight.data).all()
+    run_many_random_ask_tell(uhd, module, n=40)
 
 
 def test_seed_selection_activates_after_warmup():

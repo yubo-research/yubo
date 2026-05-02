@@ -10,6 +10,8 @@ import pytest
 import torch
 import torch.nn as nn
 
+from tests.kiss_dummy_nn_modules import make_pm_module_type
+
 
 def test_kiss_bridge_pufferlib_offpolicy_direct_symbols(monkeypatch):
     from rl.pufferlib.offpolicy.env_utils import (
@@ -86,9 +88,7 @@ def test_kiss_bridge_pufferlib_offpolicy_direct_symbols(monkeypatch):
     from rl.pufferlib.ppo.eval import (
         capture_actor_snapshot as ppo_capture_actor_snapshot,
     )
-    from rl.pufferlib.ppo.eval import (
-        resolve_eval_seeds as ppo_resolve_eval_seeds,
-    )
+    from rl.pufferlib.ppo.eval_seeds import resolve_eval_seeds as ppo_resolve_eval_seeds
     from rl.pufferlib.sac.config import SACConfig
     from rl.pufferlib.sac.config import TrainResult as PufferSacTrainResult
 
@@ -188,14 +188,7 @@ def test_kiss_bridge_pufferlib_offpolicy_direct_symbols(monkeypatch):
     assert PufActorNet is not None and QNetPixel is not None
     assert OffPolicyModules is not None and OffPolicyOptimizers is not None
 
-    def _pm_init(self):
-        nn.Module.__init__(self)
-        self.actor_backbone = nn.Linear(1, 1)
-        self.actor_head = nn.Linear(1, 1)
-        self.critic_backbone = nn.Linear(1, 1)
-        self.critic_head = nn.Linear(1, 1)
-
-    PM = type("PM", (nn.Module,), {"__init__": _pm_init})
+    PM = make_pm_module_type("PM")
     pm = PM()
     opt = torch.optim.AdamW(pm.parameters(), lr=0.1)
     st3 = SimpleNamespace(

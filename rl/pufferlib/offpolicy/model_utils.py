@@ -13,6 +13,7 @@ from torch.distributions import Normal
 from rl.backbone import BackboneSpec, HeadSpec, build_backbone, build_mlp_head
 from rl.torchrl.offpolicy.models import QNet, QNetPixel
 
+from .backbone_name import resolve_backbone_name as _resolve_backbone_name_core
 from .model_qbundle import _QBundle
 from .runtime_utils import ObsScaler
 
@@ -91,15 +92,7 @@ class OffPolicyOptimizers:
 
 
 def _resolve_backbone_name(config: Any, obs_spec: Any) -> str:
-    if getattr(obs_spec, "mode", "vector") != "pixels":
-        return str(config.backbone_name)
-    channels = int(getattr(obs_spec, "channels", 3) or 3)
-    key = str(config.backbone_name).strip().lower()
-    if key in {"mlp", "nature_cnn"} and channels == 4:
-        return "nature_cnn_atari"
-    if key in {"mlp", "nature_cnn_atari"} and channels != 4:
-        return "nature_cnn"
-    return str(config.backbone_name)
+    return _resolve_backbone_name_core(config, obs_spec)
 
 
 def _build_backbone_specs(config: Any, obs_spec: Any) -> tuple[BackboneSpec, HeadSpec, HeadSpec]:

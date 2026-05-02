@@ -20,6 +20,7 @@ from rl.core.runtime import seed_everything as _seed_everything_core
 
 from ...pufferlib_compat import import_pufferlib_modules
 from ..vector_env import make_vector_env as _make_vector_env_common
+from . import backbone_name
 from .pixel_utils import ensure_pixel_obs_format
 from .runtime_utils import obs_scale_from_env, select_device
 
@@ -134,15 +135,7 @@ def continuous_gym_runtime_from_problem(
 
 
 def resolve_backbone_name(config: Any, obs_spec: ObservationSpec) -> str:
-    if obs_spec.mode != "pixels":
-        return str(config.backbone_name)
-    channels = int(obs_spec.channels or 3)
-    key = str(config.backbone_name).strip().lower()
-    if key in {"mlp", "nature_cnn"} and channels == 4:
-        return "nature_cnn_atari"
-    if key in {"mlp", "nature_cnn_atari"} and channels != 4:
-        return "nature_cnn"
-    return str(config.backbone_name)
+    return backbone_name.resolve_backbone_name(config, obs_spec)
 
 
 def build_env_setup(config: Any) -> EnvSetup:

@@ -28,39 +28,13 @@ def test_designers_init():
     assert designers is not None
 
 
-def test_designers_create_random():
+@pytest.mark.parametrize("name", ["random", "sobol", "lhd", "center"])
+def test_designers_create_named(name):
     from optimizer.designers import Designers
 
     policy = MockPolicy()
     designers = Designers(policy, num_arms=1)
-    designer = designers.create("random")
-    assert designer is not None
-
-
-def test_designers_create_sobol():
-    from optimizer.designers import Designers
-
-    policy = MockPolicy()
-    designers = Designers(policy, num_arms=1)
-    designer = designers.create("sobol")
-    assert designer is not None
-
-
-def test_designers_create_lhd():
-    from optimizer.designers import Designers
-
-    policy = MockPolicy()
-    designers = Designers(policy, num_arms=1)
-    designer = designers.create("lhd")
-    assert designer is not None
-
-
-def test_designers_create_center():
-    from optimizer.designers import Designers
-
-    policy = MockPolicy()
-    designers = Designers(policy, num_arms=1)
-    designer = designers.create("center")
+    designer = designers.create(name)
     assert designer is not None
 
 

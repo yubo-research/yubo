@@ -79,20 +79,20 @@ def test_validate_required_missing_multiple_required_raises():
     assert "num_rounds" in str(exc_info.value)
 
 
-def test_load_toml_config_root_level_config(tmp_path):
+def _assert_mnist_rounds_toml(tmp_path, body: str):
     cfg_file = tmp_path / "config.toml"
-    cfg_file.write_text('env_tag = "mnist"\nnum_rounds = 100\n')
+    cfg_file.write_text(body)
     result = _load_toml_config(str(cfg_file))
     assert result["env_tag"] == "mnist"
     assert result["num_rounds"] == 100
+
+
+def test_load_toml_config_root_level_config(tmp_path):
+    _assert_mnist_rounds_toml(tmp_path, 'env_tag = "mnist"\nnum_rounds = 100\n')
 
 
 def test_load_toml_config_uhd_section_config(tmp_path):
-    cfg_file = tmp_path / "config.toml"
-    cfg_file.write_text('[uhd]\nenv_tag = "mnist"\nnum_rounds = 100\n')
-    result = _load_toml_config(str(cfg_file))
-    assert result["env_tag"] == "mnist"
-    assert result["num_rounds"] == 100
+    _assert_mnist_rounds_toml(tmp_path, '[uhd]\nenv_tag = "mnist"\nnum_rounds = 100\n')
 
 
 def test_load_toml_config_hyphenated_keys_normalized(tmp_path):

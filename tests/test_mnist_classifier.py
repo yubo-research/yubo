@@ -1,22 +1,18 @@
+import pytest
 import torch
 
 from optimizer.gaussian_perturbator import GaussianPerturbator
 from problems.mnist_classifier import MnistClassifier
 
 
-def test_mnist_classifier_output_shape():
+@pytest.mark.parametrize("batch,expected_rows", [(4, 4), (1, 1)])
+def test_mnist_classifier_output_shape(batch, expected_rows):
     model = MnistClassifier()
-    x = torch.randn(4, 1, 28, 28)
+    if batch == 1:
+        model.eval()
+    x = torch.randn(batch, 1, 28, 28)
     out = model(x)
-    assert out.shape == (4, 10)
-
-
-def test_mnist_classifier_eval_single_sample():
-    model = MnistClassifier()
-    model.eval()
-    x = torch.randn(1, 1, 28, 28)
-    out = model(x)
-    assert out.shape == (1, 10)
+    assert out.shape == (expected_rows, 10)
 
 
 def test_mnist_classifier_gradients():

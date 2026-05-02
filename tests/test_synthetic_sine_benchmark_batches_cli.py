@@ -28,71 +28,29 @@ def test_resolve_surrogate_key_bad() -> None:
         _resolve_surrogate_key("not_a_surrogate")
 
 
-def test_local_single_skips_existing(tmp_path) -> None:
+def _assert_local_single_skips_existing(tmp_path, *, dest_kwargs, cli_args) -> None:
     fn = normalize_benchmark_function_name("sphere")
-    dest = surrogate_rep_json_dest(
-        tmp_path,
-        n=1,
-        d=2,
-        function_name=fn,
-        problem_seed=3,
-        rep_index=0,
-        surrogate_key="enn",
-    )
+    dest = surrogate_rep_json_dest(tmp_path, function_name=fn, **dest_kwargs)
     dest.parent.mkdir(parents=True)
     dest.write_text("{}")
 
     runner = CliRunner()
-    result = runner.invoke(
-        cli,
-        [
-            "local-single",
-            "1",
-            "sphere",
-            "0",
-            "enn",
-            "-d",
-            "2",
-            "--problem-seed",
-            "3",
-            "--output-dir",
-            str(tmp_path),
-            "--no-aggregate",
-        ],
-    )
+    result = runner.invoke(cli, cli_args + ["--output-dir", str(tmp_path), "--no-aggregate"])
     assert result.exit_code == 0
     assert "skip existing" in result.output
+
+
+def test_local_single_skips_existing(tmp_path) -> None:
+    _assert_local_single_skips_existing(
+        tmp_path,
+        dest_kwargs=dict(n=1, d=2, problem_seed=3, rep_index=0, surrogate_key="enn"),
+        cli_args=["local-single", "1", "sphere", "0", "enn", "-d", "2", "--problem-seed", "3"],
+    )
 
 
 def test_local_single_skips_existing_default_d10(tmp_path) -> None:
-    fn = normalize_benchmark_function_name("sphere")
-    dest = surrogate_rep_json_dest(
+    _assert_local_single_skips_existing(
         tmp_path,
-        n=5,
-        d=10,
-        function_name=fn,
-        problem_seed=17,
-        rep_index=2,
-        surrogate_key="vecchia",
+        dest_kwargs=dict(n=5, d=10, problem_seed=17, rep_index=2, surrogate_key="vecchia"),
+        cli_args=["local-single", "5", "sphere", "2", "vecchia", "--problem-seed", "17"],
     )
-    dest.parent.mkdir(parents=True)
-    dest.write_text("{}")
-
-    runner = CliRunner()
-    result = runner.invoke(
-        cli,
-        [
-            "local-single",
-            "5",
-            "sphere",
-            "2",
-            "vecchia",
-            "--problem-seed",
-            "17",
-            "--output-dir",
-            str(tmp_path),
-            "--no-aggregate",
-        ],
-    )
-    assert result.exit_code == 0
-    assert "skip existing" in result.output

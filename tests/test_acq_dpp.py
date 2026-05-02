@@ -11,9 +11,6 @@ def test_gp_init():
 
 
 def test_acq_dpp_init():
-    from acq.acq_dpp import AcqDPP
+    from tests.test_util import make_acq_dpp_from_simple_gp
 
-    model = _make_simple_gp()
-    acq = AcqDPP(model, num_X_samples=16)
-    assert acq is not None
-    assert acq._num_dim == 2
+    make_acq_dpp_from_simple_gp()

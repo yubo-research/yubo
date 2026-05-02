@@ -1,6 +1,7 @@
 """Regression tests for ret_eval behavior with different noise types and designer modes."""
 
 import numpy as np
+import pytest
 from ret_eval_monotonicity_fixtures import MockDesignerWithoutRreturnEst, MockDesignerWithRreturnEst
 
 from common.collector import Collector
@@ -52,23 +53,13 @@ def _is_monotonically_increasing(values: list[float]) -> bool:
 
 
 class TestRetEvalFrozenNoise:
-    def test_frozen_noise_with_rreturn_est(self):
+    @pytest.mark.parametrize("designer_provides_rreturn_est", [True, False])
+    def test_frozen_noise_monotone(self, designer_provides_rreturn_est):
         np.random.seed(42)
         ret_eval_values = _run_optimizer(
             num_iterations=5,
             num_denoise_passive=None,
-            designer_provides_rreturn_est=True,
-        )
-
-        assert len(ret_eval_values) == 5
-        assert _is_monotonically_increasing(ret_eval_values), f"ret_eval should be monotonically increasing for frozen noise, but got: {ret_eval_values}"
-
-    def test_frozen_noise_without_rreturn_est(self):
-        np.random.seed(42)
-        ret_eval_values = _run_optimizer(
-            num_iterations=5,
-            num_denoise_passive=None,
-            designer_provides_rreturn_est=False,
+            designer_provides_rreturn_est=designer_provides_rreturn_est,
         )
 
         assert len(ret_eval_values) == 5
@@ -76,23 +67,13 @@ class TestRetEvalFrozenNoise:
 
 
 class TestRetEvalNaturalNoise:
-    def test_natural_noise_with_rreturn_est(self):
+    @pytest.mark.parametrize("designer_provides_rreturn_est", [True, False])
+    def test_natural_noise_finite(self, designer_provides_rreturn_est):
         np.random.seed(42)
         ret_eval_values = _run_optimizer(
             num_iterations=5,
             num_denoise_passive=1,
-            designer_provides_rreturn_est=True,
-        )
-
-        assert len(ret_eval_values) == 5
-        assert all(np.isfinite(v) for v in ret_eval_values)
-
-    def test_natural_noise_without_rreturn_est(self):
-        np.random.seed(42)
-        ret_eval_values = _run_optimizer(
-            num_iterations=5,
-            num_denoise_passive=1,
-            designer_provides_rreturn_est=False,
+            designer_provides_rreturn_est=designer_provides_rreturn_est,
         )
 
         assert len(ret_eval_values) == 5

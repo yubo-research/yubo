@@ -14,18 +14,8 @@ from rl.core.actor_state import (
     restore_backbone_head_snapshot,
     use_backbone_head_snapshot,
 )
-from rl.core.env_conf import resolve_run_seeds
 from rl.core.episode_rollout import collect_denoised_trajectory, evaluate_for_best
 from rl.core.progress import is_due
-
-
-def resolve_eval_seeds(config) -> tuple[int, int]:
-    resolved = resolve_run_seeds(
-        seed=int(config.seed),
-        problem_seed=config.problem_seed,
-        noise_seed_0=config.noise_seed_0,
-    )
-    return (int(resolved.problem_seed), int(resolved.noise_seed_0))
 
 
 class PufferEvalPolicy:

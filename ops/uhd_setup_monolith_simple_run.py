@@ -1,8 +1,6 @@
-import math
 import warnings
 
 import torch
-import torch.nn.functional as F
 
 from ops.uhd_config import BEConfig
 from ops.uhd_setup_monolith_opt import (
@@ -13,10 +11,13 @@ from ops.uhd_setup_monolith_opt import (
 from ops.uhd_setup_monolith_support import (
     _action_dim,
     _evaluate_gym_with_denoise,
-    _get_device,
-    _make_accuracy_fn,
     _make_torch_env,
-    _preload_mnist_train_to_device,
+)
+from ops.uhd_setup_simple_common import (
+    _count_correct,
+    _eval_full_train_acc,
+    _run_simple_iterations,
+    _should_log_simple,
 )
 
 
@@ -36,64 +37,22 @@ def _run_simple_torch(
     num_denoise,
     be: BEConfig | None = None,
 ) -> None:
-    device = _get_device()
-    torch_env = env.torch_env()
-    module = torch_env.module.to(device)
-    module.train()
-    train_images, train_labels = _preload_mnist_train_to_device(device)
+    from ops import uhd_setup_simple_torch as _st
 
-    dim = sum(p.numel() for p in module.parameters())
-    perturbator = _make_perturbator(module, num_dim_target)
-    uhd = _make_simple_optimizer(
-        module,
-        perturbator,
+    _st._run_simple_torch(
+        env,
+        env_runtime,
+        env_tag,
+        num_rounds,
         optimizer=optimizer,
         sigma=sigma,
-        dim=dim,
-        be=be,
-    )
-    accuracy_fn = _make_accuracy_fn(module, device)
-
-    if str(env_tag) == "mnist_fulltrain_acc":
-
-        def evaluate_fn():
-            return _eval_full_train_acc(module, train_images, train_labels, 8192)
-    else:
-
-        def evaluate_fn():
-            if num_denoise is None or int(num_denoise) <= 1:
-                g = torch.Generator()
-                g.manual_seed(int(uhd.eval_seed))
-                idx = torch.randint(train_images.shape[0], (batch_size,), generator=g).to(device)
-                with torch.inference_mode():
-                    logits = module(train_images.index_select(0, idx))
-                    per_sample = F.cross_entropy(logits, train_labels.index_select(0, idx), reduction="none")
-                mu = -float(per_sample.mean())
-                se = float(per_sample.std() / math.sqrt(len(per_sample)))
-                return mu, se
-
-            vals = []
-            for j in range(int(num_denoise)):
-                g = torch.Generator()
-                g.manual_seed(int(uhd.eval_seed + j))
-                idx = torch.randint(train_images.shape[0], (batch_size,), generator=g).to(device)
-                with torch.inference_mode():
-                    logits = module(train_images.index_select(0, idx))
-                    per_sample = F.cross_entropy(logits, train_labels.index_select(0, idx), reduction="none")
-                vals.append(-float(per_sample.mean()))
-            mu = float(sum(vals) / len(vals))
-            se = float((torch.tensor(vals, dtype=torch.float64).std(unbiased=False) / math.sqrt(len(vals))).item())
-            return mu, se
-
-    print(f"UHD-Simple: num_params = {dim}, optimizer = {optimizer}")
-    _run_simple_iterations(
-        uhd,
-        evaluate_fn=evaluate_fn,
-        accuracy_fn=accuracy_fn,
-        num_rounds=num_rounds,
+        num_dim_target=num_dim_target,
+        batch_size=batch_size,
         log_interval=log_interval,
         accuracy_interval=accuracy_interval,
         target_accuracy=target_accuracy,
+        num_denoise=num_denoise,
+        be=be,
     )
 
 
@@ -378,71 +337,6 @@ def _make_gym_policy(problem, device, num_state, num_action):
         )
     module = MLPPolicyModule(num_state, num_action, hidden_sizes=(32, 16)).to(device)
     return module, TorchPolicy(module, env_runtime)
-
-
-def _run_simple_iterations(
-    uhd,
-    *,
-    evaluate_fn,
-    accuracy_fn,
-    num_rounds: int,
-    log_interval: int,
-    accuracy_interval: int,
-    target_accuracy: float | None,
-) -> None:
-    import time
-
-    t0 = time.perf_counter()
-    acc = None
-    for i in range(num_rounds):
-        uhd.ask()
-        mu, se = evaluate_fn()
-        uhd.tell(mu, se)
-
-        if not _should_log_simple(i, num_rounds, log_interval):
-            continue
-        y_best = uhd.y_best
-        y_str = f"{y_best:.4f}" if y_best is not None else "N/A"
-        if accuracy_fn is not None and (acc is None or i == num_rounds - 1 or (accuracy_interval > 0 and i % accuracy_interval == 0)):
-            acc = accuracy_fn()
-        line = f"EVAL: i_iter = {i} sigma = {uhd.sigma:.6f} mu = {mu:.4f} se = {se:.4f} y_best = {y_str}"
-        if acc is not None:
-            line += f" test_acc = {acc:.4f}"
-        print(line)
-        if target_accuracy is not None and mu >= target_accuracy:
-            elapsed = time.perf_counter() - t0
-            print(f"UHD-Simple: target reached {mu:.4f} >= {target_accuracy:.4f} at i_iter={i} ({elapsed:.2f}s)")
-            break
-
-    elapsed = time.perf_counter() - t0
-    print(f"UHD-Simple: elapsed = {elapsed:.2f}s ({min(i + 1, num_rounds)} iterations)")
-
-
-def _eval_full_train_acc(module, images, labels, chunk: int) -> tuple[float, float]:
-    was_training = module.training
-    module.eval()
-    correct = _count_correct(module, images, labels, chunk)
-    if was_training:
-        module.train()
-    n = int(images.shape[0])
-    acc = correct / n
-    se = float((acc * (1.0 - acc) / n) ** 0.5)
-    return float(acc), se
-
-
-def _count_correct(module, images, labels, chunk: int) -> int:
-    n = int(images.shape[0])
-    correct = 0
-    with torch.inference_mode():
-        for start in range(0, n, chunk):
-            end = min(start + chunk, n)
-            pred = module(images[start:end]).argmax(dim=1)
-            correct += int((pred == labels[start:end]).sum())
-    return correct
-
-
-def _should_log_simple(i: int, num_rounds: int, log_interval: int) -> bool:
-    return i == 0 or i == num_rounds - 1 or (log_interval > 0 and i % log_interval == 0)
 
 
 __all__ = [

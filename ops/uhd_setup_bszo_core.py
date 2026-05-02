@@ -18,12 +18,8 @@ def run_bszo_loop(
     bszo_sigma_e_sq: float = 1.0,
     bszo_alpha: float = 0.1,
 ) -> None:
-    import math
-
-    import torch
-    import torch.nn.functional as F
-
     from common.seed_all import seed_all
+    from ops.uhd_setup_bszo_evaluate import make_bszo_gym_evaluate_fn, make_bszo_mnist_evaluate_fn
     from ops.uhd_setup_util import _get_device, _make_accuracy_fn, _preload_mnist_train_to_device
     from optimizer.gaussian_perturbator import GaussianPerturbator
     from optimizer.lr_scheduler import ConstantLR
@@ -63,27 +59,10 @@ def run_bszo_loop(
     if is_mnist:
         train_images, train_labels = _preload_mnist_train_to_device(device)
         accuracy_fn = _make_accuracy_fn(module, device)
-
-        def evaluate_fn(eval_seed: int) -> tuple[float, float]:
-            g = torch.Generator()
-            g.manual_seed(int(eval_seed + ns0))
-            idx = torch.randint(train_images.shape[0], (batch_size,), generator=g).to(device)
-            with torch.inference_mode():
-                logits = module(train_images.index_select(0, idx))
-                per_sample = F.cross_entropy(logits, train_labels.index_select(0, idx), reduction="none")
-            mu = -float(per_sample.mean())
-            se = float(per_sample.std() / math.sqrt(len(per_sample)))
-            return mu, se
+        evaluate_fn = make_bszo_mnist_evaluate_fn(module, train_images, train_labels, batch_size, device, ns0)
     else:
-        # Gym environment: evaluate by running episodes
-        from optimizer.trajectories import collect_trajectory
-
-        accuracy_fn = None  # No accuracy metric for gym envs
-
-        def evaluate_fn(eval_seed: int) -> tuple[float, float]:
-            ns = noise_seed_0 if getattr(env_conf, "frozen_noise", False) else int(eval_seed) + ns0
-            result = collect_trajectory(env_conf, module, noise_seed=ns)
-            return float(result.rreturn), 0.0
+        accuracy_fn = None
+        evaluate_fn = make_bszo_gym_evaluate_fn(env_conf, module, noise_seed_0_arg=noise_seed_0)
 
     print(f"BSZO: num_params = {dim}, k = {bszo_k}, epsilon = {bszo_epsilon}, lr = {lr}")
     _run_bszo_iterations(

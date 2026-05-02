@@ -2,7 +2,7 @@ import numpy as np
 import torch
 from torch import nn
 
-from .normalizer import Normalizer
+from .normalizer import Normalizer, normalize_running_state_array
 
 
 class TorchPolicy:
@@ -72,11 +72,7 @@ class GaussianTorchPolicy:
     def _normalize_state(self, state):
         if self._normalizer is None:
             return state
-        state = np.asarray(state, dtype=np.float32)
-        self._normalizer.update(state)
-        mean, std = self._normalizer.mean_and_std()
-        std = np.where(std == 0, 1.0, std)
-        return (state - mean) / std
+        return normalize_running_state_array(state, self._normalizer)
 
     def _postprocess_action(self, action_t: torch.Tensor) -> torch.Tensor:
         if self._squash_mode != "tanh_clip" and not self._clamp:

@@ -51,9 +51,15 @@ class OptimizerMultiObjectiveMixin:
 
     def _init_ref_point(self):
         from analysis.ref_point import SobolRefPoint
+        from problems.problem import Problem
 
         noise_seed_0 = 0 if self._env_conf.noise_seed_0 is None else int(self._env_conf.noise_seed_0)
         seed = int(self._env_conf.problem_seed) + 99991
+        if self._env_conf.env_tag is None:
+            raise ValueError("env_tag required for multi-objective optimization")
+        if self._policy_tag is None:
+            raise ValueError("policy_tag required for multi-objective optimization")
+        ref_problem = Problem(self._env_conf, self._policy_tag)
         self._ref_point = SobolRefPoint(
             num_cal=max(128, 10 * int(self._num_arms)),
             seed=seed,
@@ -61,7 +67,7 @@ class OptimizerMultiObjectiveMixin:
             noise_seed_0=noise_seed_0,
             std_margin_scale=0.1,
         ).compute(
-            self._env_conf,
+            ref_problem,
             policy=self.best_policy.clone() if self.best_policy is not None else None,
         )
         self._collector(f"REF_POINT: ref = {np.array2string(self._ref_point, precision=6, floatmode='fixed')}")

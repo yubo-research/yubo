@@ -5,15 +5,15 @@ import torch
 from .sparse_jl_t_hash import CHUNK_SIZE, compute_rows_and_signs, compute_rows_and_signs_wr
 
 
-def accumulate_into(
+def _accumulate_into_rows(
     y: torch.Tensor,
     flat_values: torch.Tensor,
     offset: int,
     d: int,
     s: int,
     seed: int,
+    rows_signs_fn,
 ) -> None:
-    """Accumulate JL contributions from flat_values into y (in-place)."""
     n = flat_values.numel()
     if n == 0:
         return
@@ -25,9 +25,21 @@ def accumulate_into(
         end = min(start + CHUNK_SIZE, n)
         sub = flat_values[start:end]
         global_idx = torch.arange(offset + start, offset + end, dtype=torch.int64, device=device)
-        rows, signs = compute_rows_and_signs(global_idx, d, s, seed, device)
+        rows, signs = rows_signs_fn(global_idx, d, s, seed, device)
         contrib = signs * sub.to(dtype).unsqueeze(1) * inv_sqrt_s
         y.scatter_add_(0, rows.reshape(-1), contrib.reshape(-1).to(dtype))
+
+
+def accumulate_into(
+    y: torch.Tensor,
+    flat_values: torch.Tensor,
+    offset: int,
+    d: int,
+    s: int,
+    seed: int,
+) -> None:
+    """Accumulate JL contributions from flat_values into y (in-place)."""
+    _accumulate_into_rows(y, flat_values, offset, d, s, seed, compute_rows_and_signs)
 
 
 def accumulate_into_wr(
@@ -39,20 +51,7 @@ def accumulate_into_wr(
     seed: int,
 ) -> None:
     """Accumulate JL contributions using with-replacement row hashing."""
-    n = flat_values.numel()
-    if n == 0:
-        return
-    device = y.device
-    dtype = y.dtype
-    inv_sqrt_s = 1.0 / math.sqrt(s)
-
-    for start in range(0, n, CHUNK_SIZE):
-        end = min(start + CHUNK_SIZE, n)
-        sub = flat_values[start:end]
-        global_idx = torch.arange(offset + start, offset + end, dtype=torch.int64, device=device)
-        rows, signs = compute_rows_and_signs_wr(global_idx, d, s, seed, device)
-        contrib = signs * sub.to(dtype).unsqueeze(1) * inv_sqrt_s
-        y.scatter_add_(0, rows.reshape(-1), contrib.reshape(-1).to(dtype))
+    _accumulate_into_rows(y, flat_values, offset, d, s, seed, compute_rows_and_signs_wr)
 
 
 def accumulate_noise_into(

@@ -10,22 +10,12 @@ from sampling.gather_proj_t import project_module
 from sampling.sparse_jl_t import _block_sparse_hash_scatter_from_nz_t
 
 from .uhd_enn_config import _compute_z
-from .uhd_enn_fit_helpers import fit_enn_regressor_on_points
+from .uhd_enn_fit_helpers import enn_mixin_maybe_fit_inplace
 
 
 class ENNMinusImputerPredictMixin:
     def _maybe_fit(self) -> None:
-        if len(self._x) < max(2, self._cfg.warmup_real_obs):
-            return
-        if self._enn_params is not None and self._num_new_since_fit < self._cfg.fit_interval:
-            return
-
-        y_mean, y_std, model, params = fit_enn_regressor_on_points(self._x, self._y, k=int(self._cfg.k))
-        self._y_mean = y_mean
-        self._y_std = y_std
-        self._enn_model = model
-        self._enn_params = params
-        self._num_new_since_fit = 0
+        enn_mixin_maybe_fit_inplace(self)
 
     def choose_seed_ucb(self, *, base_seed: int, sigma: float) -> tuple[int, float | None]:
         """Pick a seed among candidates {base_seed..base_seed+num_candidates-1} via UCB.

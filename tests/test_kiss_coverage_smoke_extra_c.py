@@ -122,6 +122,7 @@ def test_kiss_cov_offpolicy_engine_checkpoint_env_vec(monkeypatch, tmp_path):
     from types import SimpleNamespace
 
     from rl.pufferlib.offpolicy import engine_utils as off_engine_utils
+    from rl.pufferlib.offpolicy import env_utils as offpolicy_env_utils
     from rl.pufferlib.offpolicy import runtime_utils as off_runtime_utils
     from rl.pufferlib.sac import env_utils as sac_env_utils
 
@@ -171,7 +172,7 @@ def test_kiss_cov_offpolicy_engine_checkpoint_env_vec(monkeypatch, tmp_path):
     assert off_runtime_utils.obs_scale_from_env(SimpleNamespace()) == ("lb", "width")
 
     monkeypatch.setattr(
-        sac_env_utils,
+        offpolicy_env_utils,
         "build_continuous_gym_env_setup",
         lambda **_kwargs: SimpleNamespace(
             env_conf=SimpleNamespace(gym_conf=SimpleNamespace(transform_state=True)),
@@ -206,6 +207,7 @@ def test_kiss_cov_direct_sac_offpolicy_symbols(monkeypatch):
     import torch
 
     import rl.pufferlib.sac.eval_utils as sac_eval_facade
+    from rl.pufferlib.offpolicy import env_utils as offpolicy_env_utils
     from rl.pufferlib.offpolicy.runtime_utils import (
         obs_scale_from_env as off_obs_scale_from_env,
     )
@@ -237,7 +239,8 @@ def test_kiss_cov_direct_sac_offpolicy_symbols(monkeypatch):
     assert off_obs_scale_from_env(SimpleNamespace()) == (None, None)
 
     monkeypatch.setattr(
-        "rl.pufferlib.sac.env_utils.build_continuous_gym_env_setup",
+        offpolicy_env_utils,
+        "build_continuous_gym_env_setup",
         lambda **_kwargs: SimpleNamespace(
             env_conf=SimpleNamespace(gym_conf=SimpleNamespace(transform_state=False)),
             problem_seed=1,

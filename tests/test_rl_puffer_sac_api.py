@@ -176,6 +176,7 @@ def test_env_utils_helpers_and_builders(monkeypatch):
 
     puffer_sac = import_dotted("rl", "pufferlib", "sac")
     env_utils = import_dotted("rl", "pufferlib", "sac", "env_utils")
+    offpolicy_env_utils = import_dotted("rl", "pufferlib", "offpolicy", "env_utils")
 
     env_utils.seed_everything(123)
     a = float(np.random.rand())
@@ -218,7 +219,7 @@ def test_env_utils_helpers_and_builders(monkeypatch):
         gym_conf=SimpleNamespace(transform_state=True),
     )
     monkeypatch.setattr(
-        env_utils,
+        offpolicy_env_utils,
         "build_continuous_gym_env_setup",
         lambda **_kwargs: SimpleNamespace(
             env_conf=fake_env_conf,

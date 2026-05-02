@@ -8,6 +8,7 @@ from analysis.data_io import data_is_done
 from experiments.batches_impl import prep_d_argss
 from experiments.experiment_sampler import mk_replicates, post_process, sample_1
 from experiments.modal_image import mk_image
+from experiments.modal_result_collect import gen_jobs_from_configs, iter_modal_results_for_collect
 
 _TAG = os.environ.get("MODAL_TAG")
 if not _TAG:
@@ -109,12 +110,7 @@ def batches_submitter(tag: str, batch_tag: str, force: bool = False):
 
 
 def _gen_jobs(batch_tag):
-    configs = prep_d_argss(batch_tag)
-    for config in configs:
-        for run_config in mk_replicates(config):
-            if not data_is_done(run_config.trace_fn):
-                key = _job_key(batch_tag, run_config.trace_fn)
-                yield key, run_config
+    yield from gen_jobs_from_configs(batch_tag, prep_d_argss(batch_tag), mk_replicates, data_is_done, _job_key)
 
 
 def _job_key(job_name, path):
@@ -134,37 +130,12 @@ def modal_batch_deleter(collected_keys, tag: str):
 
 def _collect(tag: str):
     res_dict = _results_dict(tag)
-    print("DICT_SIZE:", res_dict.len())
-
-    collected_keys = set()
-    print("ITEMS")
-    for key, value in res_dict.items():
-        if key.endswith("key_max"):
-            print("SKIP", key)
-            continue
-        print("GETITEM", key)
-        t_0 = time.time()
-        wall_seconds = None
-        stop_reason = None
-        if len(value) == 6:
-            (trace_fn, collector_log, collector_trace, trace_records, wall_seconds, stop_reason) = value
-        elif len(value) == 4:
-            (trace_fn, collector_log, collector_trace, trace_records) = value
-        else:
-            (trace_fn, collector_log, collector_trace) = value
-            trace_records = None
-        t_f = time.time()
-        print(f"GOTITEM: {key} {t_f - t_0:.1f}")
-        if not data_is_done(trace_fn):
-            post_process(
-                collector_log,
-                collector_trace,
-                trace_fn,
-                trace_records,
-                wall_seconds=wall_seconds,
-                stop_reason=stop_reason,
-            )
-        collected_keys.add(key)
+    collected_keys = iter_modal_results_for_collect(
+        res_dict,
+        post_process=post_process,
+        data_is_done=data_is_done,
+        gotitem_log=lambda key, dt, _ws, _sr: print(f"GOTITEM: {key} {dt:.1f}"),
+    )
 
     print(f"results_available before del: {res_dict.len()}")
     func = modal.Function.from_name(_get_app_name(tag), "modal_batch_deleter")

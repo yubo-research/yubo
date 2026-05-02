@@ -135,13 +135,16 @@ def test_sparse_jl_t_timing_sparse_x_prints():
     print(f"D={D}, d={d}, s={s}, k={k}, time_ms={elapsed_ms:.2f}, y_norm={float(torch.linalg.norm(y)):.4f}")
 
 
-def test_module_matches_flattened_tensor():
-    model = nn.Linear(100, 10, bias=True)
-    d, s, seed = 32, 4, 42
+def _assert_module_matches_flat_tensor(model, *, d, s, seed):
     ym = block_sparse_jl_transform_module(model, d=d, s=s, seed=seed)
     params_flat = torch.cat([p.detach().reshape(-1) for p in model.parameters()])
     yt = block_sparse_jl_transform_t(params_flat, d=d, s=s, seed=seed)
     torch.testing.assert_close(ym, yt, atol=0, rtol=0)
+
+
+def test_module_matches_flattened_tensor():
+    model = nn.Linear(100, 10, bias=True)
+    _assert_module_matches_flat_tensor(model, d=32, s=4, seed=42)
 
 
 def test_module_determinism():
@@ -194,8 +197,4 @@ def test_module_multi_layer():
         nn.Linear(32, 16),
         nn.Linear(16, 8),
     )
-    d, s, seed = 64, 4, 42
-    ym = block_sparse_jl_transform_module(model, d=d, s=s, seed=seed)
-    params_flat = torch.cat([p.detach().reshape(-1) for p in model.parameters()])
-    yt = block_sparse_jl_transform_t(params_flat, d=d, s=s, seed=seed)
-    torch.testing.assert_close(ym, yt, atol=0, rtol=0)
+    _assert_module_matches_flat_tensor(model, d=64, s=4, seed=42)

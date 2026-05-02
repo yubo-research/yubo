@@ -1,3 +1,4 @@
+import pytest
 import torch
 import torch.nn as nn
 
@@ -17,20 +18,15 @@ def test_output_length():
     assert result.shape == (5 * 2,)
 
 
-def test_deterministic_with_same_seed():
+@pytest.mark.parametrize("seed_a,seed_b,expect_equal", [(42, 42, True), (0, 1, False)])
+def test_embedder_seed_behavior(seed_a, seed_b, expect_equal):
     bounds = torch.tensor([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
-    be1 = BehavioralEmbedder(bounds, num_probes=4, seed=42)
-    be2 = BehavioralEmbedder(bounds, num_probes=4, seed=42)
+    be1 = BehavioralEmbedder(bounds, num_probes=4, seed=seed_a)
+    be2 = BehavioralEmbedder(bounds, num_probes=4, seed=seed_b)
     module = _make_linear_module()
-    assert torch.equal(be1.embed(module), be2.embed(module))
-
-
-def test_different_seeds_differ():
-    bounds = torch.tensor([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
-    be1 = BehavioralEmbedder(bounds, num_probes=4, seed=0)
-    be2 = BehavioralEmbedder(bounds, num_probes=4, seed=1)
-    module = _make_linear_module()
-    assert not torch.equal(be1.embed(module), be2.embed(module))
+    a = be1.embed(module)
+    b = be2.embed(module)
+    assert torch.equal(a, b) == expect_equal
 
 
 def test_probes_within_bounds():

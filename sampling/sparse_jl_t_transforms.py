@@ -7,6 +7,28 @@ from .sparse_jl_t_accum import accumulate_into, accumulate_into_wr, accumulate_n
 from .sparse_jl_t_hash import compute_rows_and_signs, compute_rows_and_signs_wr
 
 
+def _block_sparse_jl_transform_module_body(module: nn.Module, d: int, s: int, seed: int, accumulate_fn) -> torch.Tensor:
+    if s > d:
+        raise ValueError("s must be <= d")
+    params_iter = module.parameters()
+    first_param = next(params_iter, None)
+    if first_param is None:
+        return torch.zeros(d)
+    dtype = first_param.dtype
+    device = first_param.device
+    y = torch.zeros(d, dtype=dtype, device=device)
+
+    flat = first_param.detach().reshape(-1)
+    accumulate_fn(y, flat, 0, d, s, seed)
+    offset = flat.numel()
+
+    for param in params_iter:
+        flat = param.detach().reshape(-1)
+        accumulate_fn(y, flat, offset, d, s, seed)
+        offset += flat.numel()
+    return y
+
+
 def block_sparse_hash_scatter_from_nz_t(
     nz_indices: torch.Tensor,
     nz_values: torch.Tensor,
@@ -119,48 +141,12 @@ def block_sparse_jl_transform_t(x: torch.Tensor, d: int, s: int = 4, seed: int =
 
 def block_sparse_jl_transform_module(module: nn.Module, d: int, s: int = 4, seed: int = 42) -> torch.Tensor:
     """Sparse JL transform of an nn.Module's flattened parameter vector."""
-    if s > d:
-        raise ValueError("s must be <= d")
-    params_iter = module.parameters()
-    first_param = next(params_iter, None)
-    if first_param is None:
-        return torch.zeros(d)
-    dtype = first_param.dtype
-    device = first_param.device
-    y = torch.zeros(d, dtype=dtype, device=device)
-
-    flat = first_param.detach().reshape(-1)
-    accumulate_into(y, flat, 0, d, s, seed)
-    offset = flat.numel()
-
-    for param in params_iter:
-        flat = param.detach().reshape(-1)
-        accumulate_into(y, flat, offset, d, s, seed)
-        offset += flat.numel()
-    return y
+    return _block_sparse_jl_transform_module_body(module, d, s, seed, accumulate_into)
 
 
 def block_sparse_jl_transform_module_wr(module: nn.Module, d: int, s: int = 4, seed: int = 42) -> torch.Tensor:
     """With-replacement variant of `block_sparse_jl_transform_module`."""
-    if s > d:
-        raise ValueError("s must be <= d")
-    params_iter = module.parameters()
-    first_param = next(params_iter, None)
-    if first_param is None:
-        return torch.zeros(d)
-    dtype = first_param.dtype
-    device = first_param.device
-    y = torch.zeros(d, dtype=dtype, device=device)
-
-    flat = first_param.detach().reshape(-1)
-    accumulate_into_wr(y, flat, 0, d, s, seed)
-    offset = flat.numel()
-
-    for param in params_iter:
-        flat = param.detach().reshape(-1)
-        accumulate_into_wr(y, flat, offset, d, s, seed)
-        offset += flat.numel()
-    return y
+    return _block_sparse_jl_transform_module_body(module, d, s, seed, accumulate_into_wr)
 
 
 def block_sparse_jl_transform_module_to_cpu_wr(

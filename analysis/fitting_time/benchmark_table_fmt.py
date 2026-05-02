@@ -24,6 +24,13 @@ def fmt_nonfinite(x: float) -> str | None:
     return None
 
 
+def _fmt_finite_spec(x: float, spec: str) -> str:
+    t = fmt_nonfinite(x)
+    if t is not None:
+        return t
+    return format(x, spec)
+
+
 def fmt_synthetic_time_mu(x: float) -> str:
     t = fmt_nonfinite(x)
     if t is not None:
@@ -37,42 +44,32 @@ def fmt_synthetic_time_mu(x: float) -> str:
 
 
 def fmt_mu_nrmse(x: float) -> str:
-    t = fmt_nonfinite(x)
-    if t is not None:
-        return t
-    return f"{x:.6g}"
+    return _fmt_finite_spec(x, ".6g")
 
 
 def fmt_se(x: float) -> str:
-    t = fmt_nonfinite(x)
-    if t is not None:
-        return t
-    return f"{x:.2g}"
+    return _fmt_finite_spec(x, ".2g")
 
 
 def fmt_se_nrmse_sweep(x: float) -> str:
+    return fmt_se(x)
+
+
+def _fmt_loglik_sweep(x: float, *, large_abs: float, large_spec: str, small_spec: str) -> str:
     t = fmt_nonfinite(x)
     if t is not None:
         return t
-    return f"{x:.2g}"
+    if abs(x) >= large_abs:
+        return format(x, large_spec)
+    return format(x, small_spec)
 
 
 def fmt_mu_loglik_sweep(x: float) -> str:
-    t = fmt_nonfinite(x)
-    if t is not None:
-        return t
-    if abs(x) >= 10.0:
-        return f"{x:.2f}"
-    return f"{x:.6g}"
+    return _fmt_loglik_sweep(x, large_abs=10.0, large_spec=".2f", small_spec=".6g")
 
 
 def fmt_se_loglik_sweep(x: float) -> str:
-    t = fmt_nonfinite(x)
-    if t is not None:
-        return t
-    if abs(x) >= 1.0:
-        return f"{x:.0f}"
-    return f"{x:.2g}"
+    return _fmt_loglik_sweep(x, large_abs=1.0, large_spec=".0f", small_spec=".2g")
 
 
 def fmt_ratio_vs_base(x: float) -> str:

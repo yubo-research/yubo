@@ -13,6 +13,8 @@ import pytest
 import torch
 import torch.nn as nn
 
+from tests.kiss_dummy_nn_modules import make_pm_module_type
+
 
 def test_kiss_bridge_rl_backbone_init_linear():
     from rl.backbone import HeadSpec, init_linear_layers
@@ -193,16 +195,10 @@ def test_kiss_bridge_pufferlib_ppo_checkpoint_eval_config_specs_engine():
     from rl.pufferlib.ppo.config import TrainResult
     from rl.pufferlib.ppo.engine import make_vector_env
     from rl.pufferlib.ppo.engine import register as ppo_engine_register
-    from rl.pufferlib.ppo.eval_config import build_eval_env_conf, resolve_eval_seeds
+    from rl.pufferlib.ppo.eval_config import build_eval_env_conf
+    from rl.pufferlib.ppo.eval_seeds import resolve_eval_seeds
 
-    def _ppo_m_init(self):
-        nn.Module.__init__(self)
-        self.actor_backbone = nn.Linear(1, 1)
-        self.actor_head = nn.Linear(1, 1)
-        self.critic_backbone = nn.Linear(1, 1)
-        self.critic_head = nn.Linear(1, 1)
-
-    PpoM = type("PpoM", (nn.Module,), {"__init__": _ppo_m_init})
+    PpoM = make_pm_module_type("PpoM")
     model = PpoM()
     opt = optim.AdamW(model.parameters(), lr=0.1)
     state = SimpleNamespace(

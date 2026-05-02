@@ -9,6 +9,14 @@ from rl.backbone import BackboneSpec, HeadSpec, build_backbone, build_mlp_head, 
 from rl.math_utils import atanh
 
 
+def gaussian_policy_normal_from_obs(actor_backbone: nn.Module, actor_head: nn.Module, log_std: nn.Parameter, obs: torch.Tensor) -> Normal:
+    feats = actor_backbone(obs)
+    mean = actor_head(feats)
+    log_std_e = log_std.expand_as(mean)
+    std = torch.exp(log_std_e)
+    return Normal(mean, std)
+
+
 @dataclass
 class PolicySpecs:
     backbone: BackboneSpec
@@ -65,11 +73,7 @@ class ActorCritic(nn.Module):
         return sum((p.numel() for p in params))
 
     def _distribution(self, obs: torch.Tensor):
-        feats = self.actor_backbone(obs)
-        mean = self.actor_head(feats)
-        log_std = self.log_std.expand_as(mean)
-        std = torch.exp(log_std)
-        return Normal(mean, std)
+        return gaussian_policy_normal_from_obs(self.actor_backbone, self.actor_head, self.log_std, obs)
 
     def get_value(self, obs: torch.Tensor) -> torch.Tensor:
         feats = self.critic_backbone(obs)

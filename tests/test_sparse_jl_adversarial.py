@@ -252,24 +252,19 @@ def test_float16_module():
 # ---------------------------------------------------------------------------
 
 
-def test_large_D_100k():
-    D = 100_000
-    d = 128
-    s = 4
+def _assert_large_d_sparse_jl(D, d, s, seed):
     x = torch.randn(D)
-    y = block_sparse_jl_transform_t(x, d=d, s=s, seed=0)
+    y = block_sparse_jl_transform_t(x, d=d, s=s, seed=seed)
     assert y.shape == (d,)
     assert torch.all(torch.isfinite(y))
+
+
+def test_large_D_100k():
+    _assert_large_d_sparse_jl(100_000, 128, 4, 0)
 
 
 def test_large_D_1M():
-    D = 1_000_000
-    d = 256
-    s = 4
-    x = torch.randn(D)
-    y = block_sparse_jl_transform_t(x, d=d, s=s, seed=0)
-    assert y.shape == (d,)
-    assert torch.all(torch.isfinite(y))
+    _assert_large_d_sparse_jl(1_000_000, 256, 4, 0)
 
 
 def test_large_D_module_400k():

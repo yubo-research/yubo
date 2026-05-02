@@ -3,6 +3,7 @@ from typing import Any
 import click
 import tomllib
 
+from common.mapping_keys import coerce_mapping_keys, normalize_toml_key
 from ops.uhd_config import BEConfig, EarlyRejectConfig, ENNConfig, UHDConfig
 
 _REQUIRED_TOML_KEYS = ("env_tag", "num_rounds")
@@ -93,21 +94,16 @@ _BE_DEFAULTS: dict[str, object] = {
 
 
 def _normalize_key(key: str) -> str:
-    # Match experiments/experiment.py convention: allow hyphenated keys in TOML.
-    return key.replace("-", "_")
+    return normalize_toml_key(key)
 
 
 def _coerce_mapping_keys(raw: dict[str, Any], *, source: str) -> dict[str, Any]:
-    if not isinstance(raw, dict):
-        raise TypeError("TOML config must be a mapping at root or under [uhd].")
-
-    out: dict[str, Any] = {}
-    for key, value in raw.items():
-        norm = _normalize_key(str(key))
-        if norm not in _ALL_TOML_KEYS:
-            raise ValueError(f"Unknown key '{key}' in {source}. Valid keys: {sorted(_ALL_TOML_KEYS)}")
-        out[norm] = value
-    return out
+    return coerce_mapping_keys(
+        raw,
+        source=source,
+        valid_keys=_ALL_TOML_KEYS,
+        not_mapping_msg="TOML config must be a mapping at root or under [uhd].",
+    )
 
 
 def _load_toml_config(path: str) -> dict[str, Any]:

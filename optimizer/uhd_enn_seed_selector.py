@@ -13,7 +13,7 @@ from sampling.sparse_jl_t import (
     block_sparse_jl_transform_module_to_cpu_wr,
 )
 
-from .uhd_enn_fit_helpers import fit_enn_regressor_on_points
+from .uhd_enn_fit_helpers import enn_mixin_maybe_fit_inplace
 
 
 @dataclass
@@ -69,17 +69,7 @@ class ENNMuPlusSeedSelector:
             )
 
     def _maybe_fit(self) -> None:
-        if len(self._x) < max(2, int(self._cfg.warmup_real_obs)):
-            return
-        if self._enn_params is not None and self._num_new_since_fit < int(self._cfg.fit_interval):
-            return
-
-        y_mean, y_std, model, params = fit_enn_regressor_on_points(self._x, self._y, k=int(self._cfg.k))
-        self._y_mean = y_mean
-        self._y_std = y_std
-        self._enn_model = model
-        self._enn_params = params
-        self._num_new_since_fit = 0
+        enn_mixin_maybe_fit_inplace(self)
 
     def _embed_base(self) -> tuple[torch.Tensor, int]:
         z_base = block_sparse_jl_transform_module_to_cpu_wr(

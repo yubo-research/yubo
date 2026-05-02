@@ -145,11 +145,14 @@ def test_kiss_cov_direct_rl_core_units(monkeypatch):
 
 
 def test_kiss_cov_direct_eval_config_and_uhd_setup(monkeypatch):
+    import rl.pufferlib.ppo.eval_seeds as eval_seeds_mod
     from ops.uhd_setup import run_bszo_loop, run_simple_loop
-    from rl.pufferlib.ppo.eval_config import build_eval_env_conf, resolve_eval_seeds
+    from rl.pufferlib.ppo.eval_config import build_eval_env_conf
+    from rl.pufferlib.ppo.eval_seeds import resolve_eval_seeds
 
     monkeypatch.setattr(
-        "rl.pufferlib.ppo.eval_config.resolve_run_seeds",
+        eval_seeds_mod,
+        "resolve_run_seeds",
         lambda **kwargs: SimpleNamespace(problem_seed=3, noise_seed_0=4),
     )
     assert resolve_eval_seeds(SimpleNamespace(seed=1, problem_seed=None, noise_seed_0=None)) == (3, 4)

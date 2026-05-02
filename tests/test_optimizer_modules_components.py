@@ -390,24 +390,25 @@ def test_m_t_s_designer_init():
     assert md._init_style == "find"
 
 
-def test_c_m_a_designer_init():
-    from optimizer.cma_designer import CMAESDesigner
+def _sphere_policy_for_cma():
     from problems.env_conf import default_policy, get_env_conf
 
     env_conf = get_env_conf("f:sphere-2d", problem_seed=42, noise_seed_0=18)
-    policy = default_policy(env_conf)
+    return env_conf, default_policy(env_conf)
 
+
+def test_c_m_a_designer_init():
+    from optimizer.cma_designer import CMAESDesigner
+
+    _env_conf, policy = _sphere_policy_for_cma()
     cd = CMAESDesigner(policy)
     assert cd._policy == policy
 
 
 def test_c_m_a_designer_call_asserts_num_arms():
     from optimizer.cma_designer import CMAESDesigner
-    from problems.env_conf import default_policy, get_env_conf
 
-    env_conf = get_env_conf("f:sphere-2d", problem_seed=42, noise_seed_0=18)
-    policy = default_policy(env_conf)
-
+    _env_conf, policy = _sphere_policy_for_cma()
     cd = CMAESDesigner(policy)
     with pytest.raises(AssertionError):
         cd([], num_arms=1)

@@ -28,6 +28,18 @@ class TestConsolidateBottomLegend:
         plt.close(fig)
 
 
+def _get_denoise_from_config_file(config, locator_key):
+    from analysis.plotting_2_util import get_denoise_value
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        config_path = Path(tmpdir) / "config.json"
+        with open(config_path, "w") as f:
+            json.dump(config, f)
+        mock_locator = MagicMock()
+        mock_locator._load.return_value = [("problem", tmpdir)]
+        return get_denoise_value(mock_locator, locator_key)
+
+
 class TestGetDenoiseValue:
     def test_returns_none_when_no_data(self):
         from analysis.plotting_2_util import get_denoise_value
@@ -38,27 +50,7 @@ class TestGetDenoiseValue:
         assert result is None
 
     def test_returns_num_denoise_for_frozen_noise(self):
-        from analysis.plotting_2_util import get_denoise_value
-
-        with tempfile.TemporaryDirectory() as tmpdir:
-            config = {"num_denoise": 5}
-            config_path = Path(tmpdir) / "config.json"
-            with open(config_path, "w") as f:
-                json.dump(config, f)
-            mock_locator = MagicMock()
-            mock_locator._load.return_value = [("problem", tmpdir)]
-            result = get_denoise_value(mock_locator, "problem:fn")
-            assert result == 5
+        assert _get_denoise_from_config_file({"num_denoise": 5}, "problem:fn") == 5
 
     def test_returns_num_denoise_passive_for_natural_noise(self):
-        from analysis.plotting_2_util import get_denoise_value
-
-        with tempfile.TemporaryDirectory() as tmpdir:
-            config = {"num_denoise_passive": 10}
-            config_path = Path(tmpdir) / "config.json"
-            with open(config_path, "w") as f:
-                json.dump(config, f)
-            mock_locator = MagicMock()
-            mock_locator._load.return_value = [("problem", tmpdir)]
-            result = get_denoise_value(mock_locator, "problem")
-            assert result == 10
+        assert _get_denoise_from_config_file({"num_denoise_passive": 10}, "problem") == 10

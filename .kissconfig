@@ -2,9 +2,9 @@
 # Thresholds based on max values of analyzed codebase
 
 [gate]
-test_coverage_threshold = 0
+test_coverage_threshold = 90
 min_similarity = 0.7
-duplication_enabled = false
+duplication_enabled = true
 orphan_module_enabled = true
 
 [python]

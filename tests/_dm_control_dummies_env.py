@@ -48,20 +48,21 @@ class _DummyDMEnv:
         return _DummySpec(shape=(3,), minimum=-2.0, maximum=2.0)
 
     @staticmethod
-    def reset():
-        obs = {
-            "position": np.array([0.1, 0.2], dtype=np.float32),
-            "velocity": np.array([0.3], dtype=np.float32),
+    def _obs(position, velocity):
+        return {
+            "position": np.array(position, dtype=np.float32),
+            "velocity": np.array(velocity, dtype=np.float32),
         }
+
+    @staticmethod
+    def reset():
+        obs = _DummyDMEnv._obs([0.1, 0.2], [0.3])
         return _DummyTimeStep(observation=obs, reward=0.0, discount=1.0, is_last=False)
 
     @staticmethod
     def step(action):
         _ = action
-        obs = {
-            "position": np.array([0.4, 0.5], dtype=np.float32),
-            "velocity": np.array([0.6], dtype=np.float32),
-        }
+        obs = _DummyDMEnv._obs([0.4, 0.5], [0.6])
         return _DummyTimeStep(observation=obs, reward=1.5, discount=0.95, is_last=True)
 
     @staticmethod

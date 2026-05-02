@@ -3,80 +3,7 @@ import os
 import tempfile
 from types import SimpleNamespace
 
-
-class _FakePufferVecEnv:
-    def __init__(self, num_envs: int):
-        self.num_envs = int(num_envs)
-        self.single_action_space = SimpleNamespace(n=6)
-        self.single_observation_space = SimpleNamespace(shape=(80, 4, 105))
-        self._t = 0
-
-    def reset(self, seed=None):
-        import numpy as np
-
-        _ = seed
-        self._t = 0
-        obs = np.zeros((self.num_envs, 80, 4, 105), dtype=np.uint8)
-        infos = [{} for _ in range(self.num_envs)]
-        return obs, infos
-
-    def step(self, action):
-        import numpy as np
-
-        _ = action
-        self._t += 1
-        obs = np.zeros((self.num_envs, 80, 4, 105), dtype=np.uint8)
-        rew = np.ones((self.num_envs,), dtype=np.float32)
-        term = np.zeros((self.num_envs,), dtype=bool)
-        trunc = np.zeros((self.num_envs,), dtype=bool)
-        infos = []
-        if self._t % 2 == 0:
-            infos = [{"episode_return": float(self._t), "episode_length": int(self._t)}]
-        return obs, rew, term, trunc, infos
-
-    def close(self):
-        return None
-
-
-class _FakePufferVecEnvContinuous:
-    def __init__(self, num_envs: int):
-        import numpy as np
-
-        self.num_envs = int(num_envs)
-        self.single_action_space = SimpleNamespace(
-            shape=(4,),
-            low=-np.ones((4,), dtype=np.float32),
-            high=np.ones((4,), dtype=np.float32),
-        )
-        self.single_observation_space = SimpleNamespace(shape=(24,))
-        self._t = 0
-
-    def reset(self, seed=None):
-        import numpy as np
-
-        _ = seed
-        self._t = 0
-        obs = np.zeros((self.num_envs, 24), dtype=np.float32)
-        infos = [{} for _ in range(self.num_envs)]
-        return obs, infos
-
-    def step(self, action):
-        import numpy as np
-
-        action = np.asarray(action)
-        assert action.shape == (self.num_envs, 4)
-        self._t += 1
-        obs = np.zeros((self.num_envs, 24), dtype=np.float32)
-        rew = np.ones((self.num_envs,), dtype=np.float32)
-        term = np.zeros((self.num_envs,), dtype=bool)
-        trunc = np.zeros((self.num_envs,), dtype=bool)
-        infos = []
-        if self._t % 2 == 0:
-            infos = [{"episode_return": float(self._t), "episode_length": int(self._t)}]
-        return obs, rew, term, trunc, infos
-
-    def close(self):
-        return None
+from testing_support.vector_fakes import FakePufferVecEnv, FakePufferVecEnvContinuous
 
 
 def test_puffer_config_from_dict_converts_hidden_sizes():
@@ -161,7 +88,7 @@ def test_train_ppo_puffer_fake_vector_smoke():
     with tempfile.TemporaryDirectory() as tmp:
         exp_dir = os.path.join(tmp, "exp")
         result = _train_ppo_with_fake_vec(
-            _FakePufferVecEnv,
+            FakePufferVecEnv,
             exp_dir=exp_dir,
             extra_cfg=dict(
                 env_tag="atari:Pong",
@@ -177,7 +104,7 @@ def test_train_ppo_puffer_continuous_fake_vector_smoke():
     with tempfile.TemporaryDirectory() as tmp:
         exp_dir = os.path.join(tmp, "exp_cont")
         result = _train_ppo_with_fake_vec(
-            _FakePufferVecEnvContinuous,
+            FakePufferVecEnvContinuous,
             exp_dir=exp_dir,
             extra_cfg=dict(
                 env_tag="bw-heur",
@@ -209,7 +136,7 @@ def test_train_ppo_puffer_resume_from_checkpoint():
     import rl.pufferlib.ppo.engine_helpers as engine_helpers
 
     prev = engine_helpers.make_vector_env
-    engine_helpers.make_vector_env = lambda _cfg: _FakePufferVecEnv(num_envs=2)
+    engine_helpers.make_vector_env = lambda _cfg: FakePufferVecEnv(num_envs=2)
     try:
         with tempfile.TemporaryDirectory() as tmp:
             first_dir = os.path.join(tmp, "exp_first")
@@ -304,7 +231,7 @@ def test_train_ppo_puffer_renders_video_when_enabled():
     prev_build = engine_helpers.build_eval_env_conf
     prev_render = video_mod.render_policy_videos
 
-    engine_helpers.make_vector_env = lambda _cfg: _FakePufferVecEnv(num_envs=2)
+    engine_helpers.make_vector_env = lambda _cfg: FakePufferVecEnv(num_envs=2)
 
     def _stub_build_eval_env_conf(_config, *, obs_spec):
         _ = obs_spec

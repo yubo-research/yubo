@@ -1,6 +1,6 @@
 import os
 import tempfile
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -14,6 +14,7 @@ from experiments.experiment_sampler import (
     prep_d_args,
     true_false,
 )
+from tests.mock_experiment_problem import make_mock_problem_for_sampler
 
 
 def test_true_false_true():
@@ -39,19 +40,8 @@ def test_true_false_invalid():
         true_false("1")
 
 
-def _make_mock_problem():
-    """Create a mock Problem with .env property and .build_policy() method."""
-    mock_env = MagicMock()
-    mock_env.env_name = "test_env"
-    mock_env.problem_seed = 42
-    mock_problem = MagicMock()
-    mock_problem.env = mock_env
-    mock_problem.build_policy.return_value = MagicMock()
-    return mock_problem
-
-
 def test_extract_trace_fns():
-    mock_problem = _make_mock_problem()
+    mock_problem = make_mock_problem_for_sampler()
     run_configs = [
         RunConfig(
             problem=mock_problem,
@@ -130,7 +120,7 @@ def test_prep_d_args():
 @patch("experiments.experiment_sampler.data_is_done")
 def test_mk_replicates(mock_data_is_done, mock_build_problem):
     mock_data_is_done.return_value = False
-    mock_problem = _make_mock_problem()
+    mock_problem = make_mock_problem_for_sampler()
     mock_build_problem.return_value = mock_problem
 
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -188,7 +178,7 @@ def test_count_local_trace_jobs_one_done_one_missing():
 @patch("experiments.experiment_sampler.data_is_done")
 def test_mk_replicates_skips_done(mock_data_is_done, mock_build_problem):
     mock_data_is_done.return_value = True
-    mock_problem = _make_mock_problem()
+    mock_problem = make_mock_problem_for_sampler()
     mock_build_problem.return_value = mock_problem
 
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -212,7 +202,7 @@ def test_mk_replicates_creates_out_dir():
         with patch("experiments.experiment_sampler.build_problem") as mock_build_problem:
             with patch("experiments.experiment_sampler.data_is_done") as mock_data_is_done:
                 mock_data_is_done.return_value = False
-                mock_build_problem.return_value = _make_mock_problem()
+                mock_build_problem.return_value = make_mock_problem_for_sampler()
 
                 config = ExperimentConfig(
                     exp_dir=tmpdir,

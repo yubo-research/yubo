@@ -131,8 +131,12 @@ def print_dataset_summary(
         print(f"PLOT: env={problem} opt={opt} arms={num_arms} rounds={num_rounds} reps_done={reps_done} reps_cfg={cfg_reps} dir={root}")
 
 
-def mean_final_by_optimizer(data_locator: DataLocator, traces: np.ndarray) -> dict[str, float]:
-    """Return {opt_name: mean(final_value_over_reps)} for a single-problem trace tensor."""
+def _aggregate_final_by_optimizer(
+    data_locator: DataLocator,
+    traces: np.ndarray,
+    primary_fn,
+    fallback_fn,
+) -> dict[str, float]:
     optimizers = data_locator.optimizers()
     z = traces.squeeze(0)
     if z.ndim != 3 or z.shape[2] == 0:
@@ -141,26 +145,20 @@ def mean_final_by_optimizer(data_locator: DataLocator, traces: np.ndarray) -> di
     for i_opt, opt_name in enumerate(optimizers):
         y_final = z[i_opt, :, -1]
         try:
-            out[opt_name] = float(np.ma.mean(y_final))
+            out[opt_name] = float(primary_fn(y_final))
         except Exception:
-            out[opt_name] = float(np.mean(np.asarray(y_final, dtype=float)))
+            out[opt_name] = float(fallback_fn(np.asarray(y_final, dtype=float)))
     return out
+
+
+def mean_final_by_optimizer(data_locator: DataLocator, traces: np.ndarray) -> dict[str, float]:
+    """Return {opt_name: mean(final_value_over_reps)} for a single-problem trace tensor."""
+    return _aggregate_final_by_optimizer(data_locator, traces, np.ma.mean, np.mean)
 
 
 def median_final_by_optimizer(data_locator: DataLocator, traces: np.ndarray) -> dict[str, float]:
     """Return {opt_name: median(final_value_over_reps)} for a single-problem trace tensor."""
-    optimizers = data_locator.optimizers()
-    z = traces.squeeze(0)
-    if z.ndim != 3 or z.shape[2] == 0:
-        raise ValueError(f"Empty traces: shape={getattr(z, 'shape', None)} for key={getattr(data_locator, 'key', None)}")
-    out: dict[str, float] = {}
-    for i_opt, opt_name in enumerate(optimizers):
-        y_final = z[i_opt, :, -1]
-        try:
-            out[opt_name] = float(np.ma.median(y_final))
-        except Exception:
-            out[opt_name] = float(np.median(np.asarray(y_final, dtype=float)))
-    return out
+    return _aggregate_final_by_optimizer(data_locator, traces, np.ma.median, np.median)
 
 
 def normalized_ranks_0_1(scores_1d: np.ndarray) -> np.ndarray:

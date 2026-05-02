@@ -1,40 +1,21 @@
-from contextlib import contextmanager
-
 import pytest
 
 from rl.core.sac_eval import (
     evaluate_heldout_with_best_actor,
     update_best_actor_if_improved,
 )
+from tests.rl_core_eval_heldout_helpers import run_evaluate_heldout_with_context
 
 
 def test_sac_evaluate_heldout_with_best_actor_calls_eval_inside_context():
-    calls: list[tuple[str, int | None]] = []
-
-    @contextmanager
-    def _with_actor_state(snapshot):
-        calls.append(("enter", snapshot.get("id")))
-        try:
-            yield
-        finally:
-            calls.append(("exit", snapshot.get("id")))
-
-    def _evaluate_for_best(env_conf, policy, num_denoise, *, i_noise):
-        calls.append(("eval", int(i_noise)))
-        _ = env_conf, policy
-        return float(num_denoise + i_noise)
-
-    result = evaluate_heldout_with_best_actor(
-        best_actor_state={"id": 5},
+    run_evaluate_heldout_with_context(
+        evaluate_heldout_with_best_actor,
+        best_id=5,
         num_denoise_passive=3,
         heldout_i_noise=7,
-        with_actor_state=_with_actor_state,
-        evaluate_for_best=_evaluate_for_best,
-        eval_env_conf=object(),
-        eval_policy=object(),
+        combine_fn=lambda nd, ino: float(nd + ino),
+        expected_out=10.0,
     )
-    assert result == 10.0
-    assert calls == [("enter", 5), ("eval", 7), ("exit", 5)]
 
 
 @pytest.mark.parametrize(
