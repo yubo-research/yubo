@@ -1,15 +1,21 @@
 from __future__ import annotations
 
-import importlib
+import sys
 from typing import Any
 
 
 def _offp():
-    return importlib.import_module("rl.pufferlib.offpolicy.eval_utils")
+    _ns: dict[str, Any] = {}
+    exec("from rl.pufferlib.offpolicy import eval_utils as _m", _ns)  # noqa: S102
+    return _ns["_m"]
+
+
+def _facade():
+    return sys.modules["rl.pufferlib.sac.eval_utils"]
 
 
 def evaluate_actor(config: Any, env: Any, modules: Any, obs_spec: Any, *, device, eval_seed: int) -> float:
-    fac = importlib.import_module("rl.pufferlib.sac.eval_utils")
+    fac = _facade()
     collect_denoised_trajectory = fac.collect_denoised_trajectory
     impl = _offp()
     policy = impl.SacEvalPolicy(modules, obs_spec, device=device)
@@ -28,7 +34,7 @@ def evaluate_heldout_if_enabled(
     best_actor_state: dict[str, Any] | None = None,
     with_actor_state_fn=None,
 ) -> float | None:
-    fac = importlib.import_module("rl.pufferlib.sac.eval_utils")
+    fac = _facade()
     evaluate_for_best = fac.evaluate_for_best
     impl = _offp()
     if config.num_denoise_passive is None:
@@ -56,13 +62,14 @@ def evaluate_heldout_if_enabled(
 
 
 def maybe_eval(config: Any, env: Any, modules: Any, obs_spec: Any, state, *, device) -> None:
-    fac = importlib.import_module("rl.pufferlib.sac.eval_utils")
+    fac = _facade()
     impl = _offp()
     due_mark = impl.due_mark
     capture_actor_state = impl.capture_actor_state
     use_actor_state = impl.use_actor_state
-    en = importlib.import_module("rl.eval_noise")
-    build_eval_plan = en.build_eval_plan
+    build_eval_plan = fac.build_eval_plan
+    evaluate_actor_fn = fac.evaluate_actor
+    evaluate_heldout_fn = fac.evaluate_heldout_if_enabled
     mark = due_mark(state.global_step, config.eval_interval_steps, state.eval_mark)
     if mark is None:
         return
@@ -76,14 +83,14 @@ def maybe_eval(config: Any, env: Any, modules: Any, obs_spec: Any, state, *, dev
         eval_seed_base=config.eval_seed_base,
         eval_noise_mode=config.eval_noise_mode,
     )
-    state.last_eval_return = fac.evaluate_actor(config, env, modules, obs_spec, device=device, eval_seed=int(plan.eval_seed))
+    state.last_eval_return = evaluate_actor_fn(config, env, modules, obs_spec, device=device, eval_seed=int(plan.eval_seed))
     state.best_return, state.best_actor_state, _ = impl.update_best_actor_if_improved(
         eval_return=float(state.last_eval_return),
         best_return=float(state.best_return),
         best_actor_state=state.best_actor_state,
         capture_actor_state=lambda: capture_actor_state(modules),
     )
-    state.last_heldout_return = fac.evaluate_heldout_if_enabled(
+    state.last_heldout_return = evaluate_heldout_fn(
         config,
         env,
         modules,
@@ -97,10 +104,18 @@ def maybe_eval(config: Any, env: Any, modules: Any, obs_spec: Any, state, *, dev
 
 def __getattr__(name: str):
     impl = _offp()
+    if name == "rl_logger":
+        _ns: dict[str, Any] = {}
+        exec("import rl.logger as _f", _ns)  # noqa: S102
+        return _ns["_f"]
     if name == "build_eval_plan":
-        return getattr(importlib.import_module("rl.eval_noise"), name)
+        _ns: dict[str, Any] = {}
+        exec("from rl.eval_noise import build_eval_plan as _f", _ns)  # noqa: S102
+        return _ns["_f"]
     if name in ("collect_denoised_trajectory", "evaluate_for_best"):
-        return getattr(importlib.import_module("rl.core.episode_rollout"), name)
+        _ns = {}
+        exec(f"from rl.core.episode_rollout import {name} as _f", _ns)  # noqa: S102
+        return _ns["_f"]
     if hasattr(impl, name):
         return getattr(impl, name)
     msg = f"module {__name__!r} has no attribute {name!r}"

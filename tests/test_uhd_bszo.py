@@ -465,6 +465,7 @@ def test_run_bszo_wiring(monkeypatch):
     )
     cfg = UHDConfig(
         env_tag="mnist",
+        policy_tag=None,
         num_rounds=5,
         problem_seed=42,
         noise_seed_0=7,
@@ -490,6 +491,7 @@ def test_run_bszo_wiring(monkeypatch):
 
     assert captured["args"] == ("mnist", 5)
     kw = captured["kwargs"]
+    assert kw["policy_tag"] is None
     assert kw["lr"] == 1e-4
     assert kw["problem_seed"] == 42
     assert kw["noise_seed_0"] == 7

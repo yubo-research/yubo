@@ -20,7 +20,7 @@ def sphere_2d_setup():
 
 class TestTrajectory:
     def test_trajectory_dataclass(self):
-        from optimizer.trajectories import Trajectory
+        from optimizer.trajectory import Trajectory
 
         traj = Trajectory(
             rreturn=10.5,
@@ -33,7 +33,7 @@ class TestTrajectory:
         assert traj.rreturn_se is None
 
     def test_trajectory_with_se(self):
-        from optimizer.trajectories import Trajectory
+        from optimizer.trajectory import Trajectory
 
         traj = Trajectory(rreturn=10.5, states=np.array([]), actions=np.array([]), rreturn_se=0.5)
         assert traj.rreturn_se == 0.5
@@ -41,7 +41,8 @@ class TestTrajectory:
 
 class TestCollectTrajectory:
     def test_collect_trajectory(self):
-        from optimizer.trajectories import Trajectory, collect_trajectory
+        from optimizer.trajectories import collect_trajectory
+        from optimizer.trajectory import Trajectory
         from problems.env_conf import default_policy, get_env_conf
 
         env_conf = get_env_conf("f:sphere-2d", problem_seed=42, noise_seed_0=18)
@@ -57,7 +58,7 @@ class TestCollectTrajectory:
 class TestDatum:
     def test_datum_dataclass(self):
         from optimizer.datum import Datum
-        from optimizer.trajectories import Trajectory
+        from optimizer.trajectory import Trajectory
 
         traj = Trajectory(rreturn=5.0, states=np.array([]), actions=np.array([]))
         datum = Datum(designer="test", policy=MagicMock(), expected_acqf=0.5, trajectory=traj)
@@ -128,7 +129,7 @@ class TestArmBestObs:
     def test_call(self):
         from optimizer.arm_best_obs import ArmBestObs
         from optimizer.datum import Datum
-        from optimizer.trajectories import Trajectory
+        from optimizer.trajectory import Trajectory
 
         abo = ArmBestObs()
 
@@ -650,7 +651,7 @@ class TestOptimizer:
         from common.collector import Collector
         from optimizer.datum import Datum
         from optimizer.optimizer import Optimizer
-        from optimizer.trajectories import Trajectory
+        from optimizer.trajectory import Trajectory
         from problems.env_conf import default_policy, get_env_conf
 
         env_conf = get_env_conf("f:sphere-2d", problem_seed=42, noise_seed_0=18)

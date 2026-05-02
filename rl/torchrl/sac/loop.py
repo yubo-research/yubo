@@ -116,19 +116,29 @@ def evaluate_heldout_if_enabled(
     capture_actor_state: Any,
     restore_actor_state: Any,
     eval_policy_factory: Any,
-    get_env_conf: Any,
     evaluate_for_best: Any,
+    build_env_runtime: Any | None = None,
+    get_env_conf: Any | None = None,
     heldout_i_noise: int = 99999,
 ) -> float | None:
     sac_eval = __import__("rl.core.sac_eval", fromlist=["evaluate_heldout_with_best_actor"])
     best_eval_policy = eval_policy_factory(modules, env_setup, device)
-    env_conf = get_env_conf(
-        config.env_tag,
-        problem_seed=env_setup.problem_seed,
-        noise_seed_0=env_setup.noise_seed_0,
-        from_pixels=bool(getattr(getattr(env_setup, "env_conf", None), "from_pixels", False)),
-        pixels_only=bool(getattr(getattr(env_setup, "env_conf", None), "pixels_only", True)),
-    )
+    if build_env_runtime is not None:
+        env_conf = build_env_runtime(
+            config.env_tag,
+            problem_seed=env_setup.problem_seed,
+            noise_seed_0=env_setup.noise_seed_0,
+            from_pixels=bool(getattr(getattr(env_setup, "env_conf", None), "from_pixels", False)),
+            pixels_only=bool(getattr(getattr(env_setup, "env_conf", None), "pixels_only", True)),
+        )
+    elif get_env_conf is not None:
+        env_conf = get_env_conf(
+            config.env_tag,
+            problem_seed=env_setup.problem_seed,
+            noise_seed_0=env_setup.noise_seed_0,
+        )
+    else:
+        raise TypeError("evaluate_heldout_if_enabled requires build_env_runtime or get_env_conf")
     return sac_eval.evaluate_heldout_with_best_actor(
         best_actor_state=train_state.best_actor_state,
         num_denoise_passive=config.num_denoise_passive,

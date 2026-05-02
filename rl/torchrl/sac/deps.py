@@ -11,7 +11,7 @@ import rl.eval_noise as eval_noise
 import rl.registry as registry
 from analysis.data_io import write_config
 from common.rl_helpers import seed_all, video
-from problems.env_conf import get_env_conf
+from problems.problem import build_problem
 from rl.backbone import BackboneSpec, HeadSpec, build_backbone, build_mlp_head
 from rl.checkpointing import CheckpointManager, load_checkpoint
 from rl.core import runtime as torchrl_common
@@ -35,7 +35,7 @@ __all__ = [
     "torchrl_sac_loop",
     "write_config",
     "seed_all",
-    "get_env_conf",
+    "build_problem",
     "CheckpointManager",
     "load_checkpoint",
     "BackboneSpec",

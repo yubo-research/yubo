@@ -21,6 +21,7 @@ from experiments.modal_synthetic_sine_benchmark_batches_reps import (
     aggregate_reps_to_dest,
     aggregate_surrogate_results_to_rep,
     benchmark_json_dest,
+    iter_missing_jobs,
     iter_missing_surrogate_jobs,
     job_key,
     rep_json_dest,
@@ -63,6 +64,7 @@ _rep_json_dest = rep_json_dest
 _surrogate_rep_json_dest = surrogate_rep_json_dest
 _aggregate_reps_to_dest = aggregate_reps_to_dest
 _aggregate_surrogate_results_to_rep = aggregate_surrogate_results_to_rep
+_iter_missing_jobs = iter_missing_jobs
 _iter_missing_surrogate_jobs = iter_missing_surrogate_jobs
 
 
@@ -75,6 +77,41 @@ _iter_missing_surrogate_jobs = iter_missing_surrogate_jobs
 )
 def synthetic_sine_benchmark_batch_worker(job):
     """Run a single surrogate for a single replicate."""
+    if len(job) == 7:
+        tag, n, d, function_name, problem_seed, rep_index, num_reps = job
+        key = _job_key(
+            n=n,
+            d=d,
+            function_name=function_name,
+            problem_seed=problem_seed,
+            num_reps=num_reps,
+        )
+        data_seed = synthetic_benchmark_data_seed(
+            function_name=function_name,
+            problem_seed=problem_seed,
+            rep_index=rep_index,
+        )
+        payload = ssbp.build_synthetic_sine_benchmark_remote_payload(
+            n,
+            d,
+            function_name,
+            data_seed,
+            num_reps=1,
+        )
+        payload.setdefault(ssbp.META_KEY, {})
+        payload[ssbp.META_KEY]["problem_seed"] = int(problem_seed)
+        payload[ssbp.META_KEY]["data_seed"] = int(data_seed)
+        payload[ssbp.META_KEY]["rep_index"] = int(rep_index)
+        _results_dict(tag)[f"{key}-rep{rep_index}"] = (
+            payload,
+            n,
+            d,
+            function_name,
+            problem_seed,
+            rep_index,
+            num_reps,
+        )
+        return
     tag, n, d, function_name, problem_seed, rep_index, num_reps, surrogate_key = job
     key = _job_key(
         n=n,
@@ -168,23 +205,33 @@ def _submit_missing(tag: str, jobs_fn: str, output_dir: str | Path, num_reps: in
         func.spawn(batch, tag)
         batch = []
 
-    for key, job in _iter_missing_surrogate_jobs(jobs_fn, output_dir, int(num_reps)):
+    for key, job in _iter_missing_jobs(jobs_fn, output_dir, int(num_reps)):
         batch.append((key, job))
         submitted += 1
-        n, d, function_name, problem_seed, rep_index, reps_total, surrogate_key = job
+        n, d, function_name, problem_seed, rep_index, reps_total = job
         cfg = (n, d, function_name, problem_seed, reps_total)
-        submitted_surrogates.setdefault(cfg, {}).setdefault(int(rep_index), set()).add(surrogate_key)
+        submitted_surrogates.setdefault(cfg, {}).setdefault(int(rep_index), set()).add("all")
         if len(batch) >= 1000:
             _flush()
     _flush()
     for n, d, function_name, problem_seed, reps_total in sorted(submitted_surrogates):
         rep_info = submitted_surrogates[(n, d, function_name, problem_seed, reps_total)]
         rep_indices = sorted(rep_info.keys())
+        seed_first = synthetic_benchmark_data_seed(
+            function_name=function_name,
+            problem_seed=problem_seed,
+            rep_index=rep_indices[0],
+        )
+        seed_last = synthetic_benchmark_data_seed(
+            function_name=function_name,
+            problem_seed=problem_seed,
+            rep_index=rep_indices[-1],
+        )
         total_surrogate_jobs = sum(len(s) for s in rep_info.values())
         print(
-            f"N={n} D={d} fn={function_name} pseed={problem_seed} "
+            f"data_seed range N={n} D={d} fn={function_name} pseed={problem_seed} "
             f"reps={rep_indices[0]}-{rep_indices[-1]} ({len(rep_indices)}/{reps_total}) "
-            f"surrogate_jobs={total_surrogate_jobs}"
+            f"seeds={seed_first}-{seed_last} surrogate_jobs={total_surrogate_jobs}"
         )
     print(f"submitted {submitted} jobs (each job = 1 surrogate × 1 rep)")
 
@@ -334,6 +381,7 @@ __all__ = [
     "_aggregate_surrogate_results_to_rep",
     "_benchmark_json_dest",
     "_get_app_name",
+    "_iter_missing_jobs",
     "_iter_missing_surrogate_jobs",
     "_job_key",
     "_rep_json_dest",

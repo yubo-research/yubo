@@ -6,6 +6,7 @@ backend = "pufferlib"
 [rl.ppo]
 exp_dir = "_tmp/dm_control/quadruped/ppo_puffer_quadruped_run_linux"
 env_tag = "dm_control/quadruped-run-v0"
+policy_tag = "mlp-64-64"
 
 total_timesteps = 3000000
 learning_rate = 3e-4

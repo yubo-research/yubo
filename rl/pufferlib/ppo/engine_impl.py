@@ -32,6 +32,8 @@ def config_proxy(name: str):
 
 
 def __getattr__(name: str):
+    if name == "_make_vector_env":
+        return engine_helpers_proxy("make_vector_env")
     if name in (
         "make_vector_env",
         "build_eval_env_conf",

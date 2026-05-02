@@ -119,21 +119,37 @@ def sample_1(run_config: RunConfig):
     import numpy as np
 
     rc = run_config
+    problem = getattr(rc, "problem", None)
+    if problem is not None:
+        env_runtime = problem.env
+        build_policy = problem.build_policy
+        policy_tag = getattr(problem, "policy_tag", None)
+    else:
+        env_runtime = rc.env_conf
+        if env_runtime is None:
+            raise ValueError("RunConfig requires either 'problem' or 'env_conf'.")
+        default_policy = _load_attr(("problems", "env_conf"), "default_policy")
+
+        def build_policy():
+            return default_policy(env_runtime)
+
+        policy_tag = None
+
     max_proposal_seconds = rc.max_proposal_seconds
     if max_proposal_seconds is None:
         max_proposal_seconds = np.inf
 
-    shim.seed_all(global_seed_for_run(rc.env_conf.problem_seed))
+    shim.seed_all(global_seed_for_run(env_runtime.problem_seed))
 
     with _temporary_default_device(getattr(rc, "runtime_device", "auto")):
-        default_policy = _load_attr(("problems", "env_conf"), "default_policy")
-        policy = default_policy(rc.env_conf)
+        policy = build_policy()
 
         collector_log = BOConsoleCollector() if getattr(rc, "bo_console", True) else Collector()
         Optimizer = _load_attr(("optimizer", "optimizer"), "Optimizer")
         opt = Optimizer(
             collector_log,
-            env_conf=rc.env_conf,
+            env_conf=env_runtime,
+            policy_tag=policy_tag,
             policy=policy,
             num_arms=rc.num_arms,
             num_denoise_measurement=rc.num_denoise,
@@ -151,7 +167,7 @@ def sample_1(run_config: RunConfig):
             rc.total_timesteps,
             max_proposal_seconds,
             rc.deadline,
-            rc.env_conf,
+            env_runtime,
             rc.b_trace,
         )
 
@@ -169,7 +185,7 @@ def sample_1(run_config: RunConfig):
             _render_sample_video(
                 opt,
                 rc,
-                rc.env_conf,
+                env_runtime,
                 rc.video_prefix,
                 rc.video_num_episodes,
                 rc.video_num_video_episodes,

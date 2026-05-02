@@ -1,5 +1,6 @@
 [uhd]
 env_tag = "stand-mlp:fn"
+policy_tag = "mlp-32-16"
 num_rounds = 100
 problem_seed = 18
 noise_seed_0 = 180

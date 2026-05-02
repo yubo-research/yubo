@@ -17,9 +17,11 @@ def run_parsed_uhd_local(parsed) -> None:
 def _run_bszo(parsed) -> None:
     from ops.uhd_setup_bszo import run_bszo_loop
 
+    policy_tag = getattr(parsed, "policy_tag", None)
     run_bszo_loop(
         parsed.env_tag,
         parsed.num_rounds,
+        policy_tag=policy_tag,
         lr=parsed.lr,
         problem_seed=parsed.problem_seed,
         noise_seed_0=parsed.noise_seed_0,
@@ -38,11 +40,13 @@ def _run_bszo(parsed) -> None:
 def _run_simple(parsed) -> None:
     from ops.uhd_setup_simple_gym import run_simple_loop
 
+    policy_tag = getattr(parsed, "policy_tag", None)
     run_simple_loop(
         parsed.env_tag,
         parsed.num_rounds,
         0.001,
         parsed.optimizer,
+        policy_tag=policy_tag,
         num_dim_target=parsed.num_dim_target,
         problem_seed=parsed.problem_seed,
         noise_seed_0=parsed.noise_seed_0,
@@ -57,9 +61,11 @@ def _run_simple(parsed) -> None:
 def _run_mezo(parsed) -> None:
     from ops.uhd_setup_make_loop import make_loop
 
+    policy_tag = getattr(parsed, "policy_tag", None)
     loop = make_loop(
         parsed.env_tag,
         parsed.num_rounds,
+        policy_tag=policy_tag,
         problem_seed=parsed.problem_seed,
         noise_seed_0=parsed.noise_seed_0,
         batch_size=parsed.batch_size,
@@ -90,6 +96,7 @@ def uhd_config_toml_to_modal_log(
     except (OSError, tomllib.TOMLDecodeError, TypeError, ValueError) as e:
         raise click.ClickException(str(e)) from e
     parsed = exp_uhd_parse._parse_cfg(cfg)
+    policy_tag = getattr(parsed, "policy_tag", None)
     return modal_run(
         parsed.env_tag,
         parsed.num_rounds,
@@ -97,6 +104,7 @@ def uhd_config_toml_to_modal_log(
         parsed.num_dim_target,
         parsed.num_module_target,
         gpu=gpu,
+        policy_tag=policy_tag,
         problem_seed=parsed.problem_seed,
         noise_seed_0=parsed.noise_seed_0,
         log_interval=parsed.log_interval,

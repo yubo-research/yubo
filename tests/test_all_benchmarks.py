@@ -26,6 +26,7 @@ def test_benchmark(bm_name, num_dim):
         num_arms=2,
         num_rounds=3,
         num_reps=1,
+        policy_tag="pure-function",
     )
 
     sampler(config, distributor_fn=scan_local)

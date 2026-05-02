@@ -1,7 +1,7 @@
 import hashlib
 import importlib
 from dataclasses import asdict, dataclass
-from typing import NamedTuple, Optional
+from typing import Any, NamedTuple, Optional
 
 from analysis.data_io import TraceRecord
 from common.collector import Collector
@@ -46,6 +46,7 @@ class ExperimentConfig:
     video_prefix: str = "bo"
     runtime_device: str = "auto"
     local_workers: int = 1
+    policy_tag: Optional[str] = None
 
     def to_dir_name(self) -> str:
         budget_key = "num_rounds" if self.num_rounds is not None else "total_timesteps"
@@ -99,6 +100,14 @@ class ExperimentConfig:
         if total_timesteps is not None and total_timesteps < 1:
             raise ValueError(f"total_timesteps must be >= 1 (got: {total_timesteps})")
 
+        policy_tag = d.get("policy_tag")
+        if policy_tag in (None, "None", ""):
+            raise ValueError(
+                "Missing required field 'policy_tag'. Set [experiment].policy_tag in TOML "
+                "(e.g. policy_tag='pure-function'). Policy inference from env_tag is disabled."
+            )
+        policy_tag = str(policy_tag)
+
         return cls(
             exp_dir=d["exp_dir"],
             env_tag=d["env_tag"],
@@ -119,12 +128,12 @@ class ExperimentConfig:
             video_prefix="bo",
             runtime_device=runtime_device,
             local_workers=local_workers,
+            policy_tag=policy_tag,
         )
 
 
 @dataclass
 class RunConfig:
-    env_conf: object
     opt_name: str
     num_rounds: Optional[int]
     num_arms: int
@@ -143,6 +152,8 @@ class RunConfig:
     video_seed_base: Optional[int] = None
     video_prefix: str = "bo"
     runtime_device: str = "auto"
+    problem: Any | None = None
+    env_conf: Any | None = None
 
     def to_dict(self) -> dict:
         return asdict(self)

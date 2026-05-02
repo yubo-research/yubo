@@ -1,6 +1,7 @@
 [uhd]
 # Full-train objective: f(x) = loss_on_entire_training_set(x)
 env_tag = "mnist_fulltrain"
+policy_tag = "linear"
 num_rounds = 800
 
 lr = 0.001

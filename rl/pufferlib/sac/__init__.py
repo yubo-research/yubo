@@ -1,3 +1,4 @@
+from . import eval_utils_impl as _eval_utils_impl  # noqa: F401
 from .config import SACConfig, TrainResult
 from .engine import register, train_sac_puffer, train_sac_puffer_impl
 from .replay import ReplayBuffer

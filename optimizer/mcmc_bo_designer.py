@@ -12,10 +12,11 @@ import acq.fit_gp as fit_gp
 import common.all_bounds as all_bounds
 from acq.mcmc_bo import TurboState, generate_batch_multiple_tr
 from optimizer.designer_asserts import assert_scalar_rreturn
+from optimizer.designer_protocol import Designer
 from optimizer.sobol_designer import SobolDesigner
 
 
-class MCMCBODesigner:
+class MCMCBODesigner(Designer):
     def __init__(
         self,
         policy,

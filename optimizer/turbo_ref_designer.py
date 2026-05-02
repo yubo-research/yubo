@@ -6,11 +6,12 @@ import torch
 import common.all_bounds as all_bounds
 from optimizer.ask_tell_inverter import AskTellInverter, ATIStopped, ATITimeoutError
 from optimizer.designer_asserts import assert_scalar_rreturn
+from optimizer.designer_protocol import Designer
 from turbo_m_ref.turbo_1 import Turbo1
 from turbo_m_ref.turbo_m import TurboM
 
 
-class TuRBORefDesigner:
+class TuRBORefDesigner(Designer):
     """
     David Eriksson and Matthias Poloczek. Scalable constrained bayesian optimization. In
         Arindam Banerjee and Kenji Fukumizu, editors, Proceedings of The 24th International

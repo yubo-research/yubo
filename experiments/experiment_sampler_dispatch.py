@@ -127,6 +127,16 @@ def _scan_local_parallel(run_configs: list[RunConfig], *, max_workers: int) -> N
         pool.join()
 
 
+def _run_config_env_name(run_config: RunConfig) -> str:
+    env_runtime = getattr(run_config, "env_conf", None)
+    problem = getattr(run_config, "problem", None)
+    if env_runtime is None and problem is not None:
+        env_runtime = problem.env
+    if env_runtime is None:
+        raise ValueError("RunConfig requires either 'problem' or 'env_conf'.")
+    return str(env_runtime.env_name)
+
+
 def scan_local(
     run_configs: list[RunConfig],
     max_total_seconds: Optional[float] = None,
@@ -141,7 +151,7 @@ def scan_local(
     max_workers = min(workers, len(run_configs))
     runtime_device = _resolve_runtime_device(
         requested=getattr(run_configs[0], "runtime_device", "auto"),
-        env_tag=env_tag if env_tag is not None else str(run_configs[0].env_conf.env_name),
+        env_tag=env_tag if env_tag is not None else _run_config_env_name(run_configs[0]),
         local_workers=max_workers,
     )
     for run_config in run_configs:

@@ -11,6 +11,7 @@ class _SimpleContext:
         init_yubo_default,
         init_ax_default,
         default_num_X_samples,
+        env_conf=None,
     ):
         self.policy = policy
         self.num_arms = num_arms
@@ -21,3 +22,4 @@ class _SimpleContext:
         self.init_yubo_default = init_yubo_default
         self.init_ax_default = init_ax_default
         self.default_num_X_samples = default_num_X_samples
+        self.env_conf = env_conf

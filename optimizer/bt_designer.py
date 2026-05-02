@@ -7,10 +7,11 @@ from botorch.optim import optimize_acqf
 import acq.fit_gp as fit_gp
 from acq.acq_bt import AcqBT
 from optimizer.designer_asserts import assert_scalar_rreturn
+from optimizer.designer_protocol import Designer
 from optimizer.sobol_designer import SobolDesigner
 
 
-class BTDesigner:
+class BTDesigner(Designer):
     def __init__(
         self,
         policy,

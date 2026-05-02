@@ -4,6 +4,8 @@ from typing import Callable
 
 import numpy as np
 import torch
+from enn.enn.enn_class import EpistemicNearestNeighbors
+from enn.enn.enn_fit import enn_fit
 from torch import nn
 
 from sampling.gather_proj_t import GatherProjSpec
@@ -12,7 +14,12 @@ from .uhd_enn_config import ENNImputerConfig
 from .uhd_enn_imputer_predict import ENNMinusImputerPredictMixin
 from .uhd_enn_imputer_tell import ENNMinusImputerTellMixin
 
-__all__ = ["ENNImputerConfig", "ENNMinusImputer"]
+__all__ = [
+    "ENNImputerConfig",
+    "ENNMinusImputer",
+    "EpistemicNearestNeighbors",
+    "enn_fit",
+]
 
 
 class ENNMinusImputer(ENNMinusImputerTellMixin, ENNMinusImputerPredictMixin):

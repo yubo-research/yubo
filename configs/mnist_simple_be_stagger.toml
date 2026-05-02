@@ -2,6 +2,7 @@
 # Each candidate draws sigma ~ LogUniform(1e-5, 1e-1); ENN/UCB picks the best.
 
 env_tag = "mnist_fulltrain_acc"
+policy_tag = "linear"
 num_rounds = 1000
 optimizer = "simple_be"
 perturb = "dense"

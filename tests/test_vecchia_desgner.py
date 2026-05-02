@@ -1,7 +1,7 @@
 import numpy as np
 
 from optimizer.datum import Datum
-from optimizer.trajectories import Trajectory
+from optimizer.trajectory import Trajectory
 from optimizer.vecchia_designer import VecchiaDesigner
 from problems.env_conf import default_policy, get_env_conf
 

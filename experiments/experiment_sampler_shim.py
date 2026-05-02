@@ -22,6 +22,10 @@ def ensure_parent(*args: Any, **kwargs: Any) -> Any:
     return _m().ensure_parent(*args, **kwargs)
 
 
+def build_problem(*args: Any, **kwargs: Any) -> Any:
+    return _m().build_problem(*args, **kwargs)
+
+
 def mk_replicates(*args: Any, **kwargs: Any) -> Any:
     return _m().mk_replicates(*args, **kwargs)
 

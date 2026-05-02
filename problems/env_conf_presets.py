@@ -1,9 +1,13 @@
+from policies.actor_critic_mlp_policy import ActorCriticMLPPolicyFactory
+from policies.mlp_policy import MLPPolicyFactory
 from problems.bipedal_walker_policy import BipedalWalkerPolicy
 from problems.env_conf_bindings import get_atari_dm_bindings
-from problems.env_conf_constants import _ATARI_DEFAULT_MAX_STEPS, _DM_CONTROL_DEFAULT_MAX_STEPS
+from problems.env_conf_constants import (
+    _ATARI_DEFAULT_MAX_STEPS,
+    _DM_CONTROL_DEFAULT_MAX_STEPS,
+)
 from problems.env_conf_policies import gaussian_policy_factory
 from problems.env_conf_types import EnvConf, GymConf, _gym_conf
-from problems.mlp_policy import MLPPolicyFactory
 from problems.turbo_lunar_policy import TurboLunarPolicy
 
 
@@ -147,6 +151,14 @@ _gym_env_confs = {
         ),
         kwargs={"continuous": True},
         policy_class=MLPPolicyFactory((16, 8)),
+    ),
+    "lunar-ac": _gym_conf(
+        "LunarLander-v3",
+        gym_conf=GymConf(
+            max_steps=500,
+        ),
+        kwargs={"continuous": True},
+        policy_class=ActorCriticMLPPolicyFactory((16, 8)),
     ),
     "tlunar": EnvConf(
         # TuRBO paper specifies v2, but that raises an exception now

@@ -244,6 +244,7 @@ class TestUHDConfig:
         )
         cfg = UHDConfig(
             env_tag="mnist",
+            policy_tag=None,
             num_rounds=1000,
             problem_seed=42,
             noise_seed_0=123,
@@ -265,6 +266,7 @@ class TestUHDConfig:
             bszo_alpha=0.1,
         )
         assert cfg.env_tag == "mnist"
+        assert cfg.policy_tag is None
         assert cfg.num_rounds == 1000
         assert cfg.problem_seed == 42
         assert cfg.noise_seed_0 == 123
@@ -289,6 +291,7 @@ class TestUHDConfig:
         """Test that UHDConfig is frozen (immutable)."""
         cfg = UHDConfig(
             env_tag="mnist",
+            policy_tag=None,
             num_rounds=100,
             problem_seed=None,
             noise_seed_0=None,
@@ -570,6 +573,7 @@ class TestParseCfg:
         }
         result = _parse_cfg(cfg)
         assert result.env_tag == "mnist"
+        assert result.policy_tag is None
         assert result.num_rounds == 100
         assert result.problem_seed is None
         assert result.noise_seed_0 is None
@@ -582,6 +586,7 @@ class TestParseCfg:
         """Test parsing with all config options."""
         cfg = {
             "env_tag": "pend",
+            "policy_tag": "some-policy",
             "num_rounds": 500,
             "problem_seed": 42,
             "noise_seed_0": 123,
@@ -600,6 +605,7 @@ class TestParseCfg:
         }
         result = _parse_cfg(cfg)
         assert result.env_tag == "pend"
+        assert result.policy_tag == "some-policy"
         assert result.num_rounds == 500
         assert result.problem_seed == 42
         assert result.noise_seed_0 == 123
@@ -651,6 +657,7 @@ class TestNormalizeKey:
     def test_with_hyphen(self):
         """Test key with hyphen gets converted to underscore."""
         assert _normalize_key("env-tag") == "env_tag"
+        assert _normalize_key("policy-tag") == "policy_tag"
         assert _normalize_key("num-rounds") == "num_rounds"
         assert _normalize_key("problem-seed") == "problem_seed"
 

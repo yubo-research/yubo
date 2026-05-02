@@ -9,6 +9,7 @@ def make_loop(
     num_dim_target=None,
     num_module_target=None,
     *,
+    policy_tag=None,
     problem_seed: int | None = None,
     noise_seed_0: int | None = None,
     batch_size: int = 4096,

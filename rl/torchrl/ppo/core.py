@@ -10,6 +10,7 @@ import rl.registry as registry
 from common.seed_all import seed_all
 from rl.core import env_conf as core_env_conf
 from rl.core import env_contract as torchrl_env_contract
+from rl.core import runtime as torchrl_common
 from rl.core import torchrl_runtime as torchrl_runtime
 from rl.eval_noise import normalize_eval_noise_mode
 
@@ -51,6 +52,7 @@ __all__ = [
     "build_training",
     "register",
     "torch",
+    "torchrl_common",
     "train_ppo",
 ]
 

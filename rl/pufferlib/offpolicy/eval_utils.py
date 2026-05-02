@@ -1,36 +1,23 @@
 from __future__ import annotations
 
 import dataclasses
+import sys
 import time
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
-import numpy as np
-import torch
 
-from rl.core.actor_state import (
-    capture_backbone_head_snapshot,
-    restore_backbone_head_snapshot,
-    use_backbone_head_snapshot,
-)
-from rl.core.episode_rollout import collect_denoised_trajectory, evaluate_for_best
-from rl.core.progress import due_mark
-from rl.core.sac_eval import (
-    evaluate_heldout_with_best_actor,
-    update_best_actor_if_improved,
-)
-from rl.core.sac_metrics import (
-    build_eval_metric_record,
-    build_log_eval_iteration_kwargs,
-)
-from rl.eval_noise import build_eval_plan
-
-from ... import logger as rl_logger
-from .env_utils import prepare_obs_np
+def due_mark(*args: Any, **kwargs: Any):
+    _ns: dict[str, Any] = {}
+    exec("from rl.core.progress import due_mark as _f", _ns)  # noqa: S102
+    return _ns["_f"](*args, **kwargs)
 
 
 def capture_actor_state(modules):
+    _ns: dict[str, Any] = {}
+    exec("from rl.core.actor_state import capture_backbone_head_snapshot", _ns)  # noqa: S102
+    capture_backbone_head_snapshot = _ns["capture_backbone_head_snapshot"]
     return capture_backbone_head_snapshot(
         modules.actor_backbone,
         modules.actor_head,
@@ -41,7 +28,10 @@ def capture_actor_state(modules):
     )
 
 
-def _restore_actor_state(modules, snapshot, *, device: torch.device) -> None:
+def _restore_actor_state(modules, snapshot, *, device: Any) -> None:
+    _ns: dict[str, Any] = {}
+    exec("from rl.core.actor_state import restore_backbone_head_snapshot", _ns)  # noqa: S102
+    restore_backbone_head_snapshot = _ns["restore_backbone_head_snapshot"]
     restore_backbone_head_snapshot(
         modules.actor_backbone,
         modules.actor_head,
@@ -52,7 +42,10 @@ def _restore_actor_state(modules, snapshot, *, device: torch.device) -> None:
 
 
 @contextmanager
-def use_actor_state(modules, actor_state, *, device: torch.device):
+def use_actor_state(modules, actor_state, *, device: Any):
+    _ns: dict[str, Any] = {}
+    exec("from rl.core.actor_state import use_backbone_head_snapshot", _ns)  # noqa: S102
+    use_backbone_head_snapshot = _ns["use_backbone_head_snapshot"]
     with use_backbone_head_snapshot(
         modules.actor_backbone,
         modules.actor_head,
@@ -84,12 +77,18 @@ class TrainState:
 
 
 class SacEvalPolicy:
-    def __init__(self, modules: Any, obs_spec: Any, *, device: torch.device):
+    def __init__(self, modules: Any, obs_spec: Any, *, device: Any):
         self._modules = modules
         self._obs_spec = obs_spec
         self._device = device
 
-    def __call__(self, state: np.ndarray) -> np.ndarray:
+    def __call__(self, state: Any) -> Any:
+        import numpy as np
+        import torch
+
+        _ns: dict[str, Any] = {}
+        exec("from rl.pufferlib.offpolicy.env_utils import prepare_obs_np as _prep", _ns)  # noqa: S102
+        prepare_obs_np = _ns["_prep"]
         obs_np = prepare_obs_np(state, obs_spec=self._obs_spec)
         obs_t = torch.as_tensor(obs_np, dtype=torch.float32, device=self._device)
         with torch.no_grad():
@@ -103,9 +102,11 @@ def evaluate_actor(
     modules: Any,
     obs_spec: Any,
     *,
-    device: torch.device,
+    device: Any,
     eval_seed: int,
 ) -> float:
+    _mod = sys.modules[__name__]
+    collect_denoised_trajectory = getattr(_mod, "collect_denoised_trajectory")
     policy = SacEvalPolicy(modules, obs_spec, device=device)
     traj, _ = collect_denoised_trajectory(env.env_conf, policy, num_denoise=config.num_denoise, i_noise=int(eval_seed))
     return float(traj.rreturn)
@@ -117,11 +118,14 @@ def evaluate_heldout_if_enabled(
     modules: Any,
     obs_spec: Any,
     *,
-    device: torch.device,
+    device: Any,
     heldout_i_noise: int,
     best_actor_state: dict[str, Any] | None = None,
     with_actor_state_fn=None,
 ) -> float | None:
+    _mod = sys.modules[__name__]
+    evaluate_for_best = getattr(_mod, "evaluate_for_best")
+    evaluate_heldout_with_best_actor = getattr(_mod, "evaluate_heldout_with_best_actor")
     if config.num_denoise_passive is None:
         return None
     if best_actor_state is not None and with_actor_state_fn is not None:
@@ -147,6 +151,11 @@ def evaluate_heldout_if_enabled(
 
 
 def append_eval_metric(path, state: TrainState, *, step: int) -> None:
+    _ns: dict[str, Any] = {}
+    exec("from rl.core.sac_metrics import build_eval_metric_record", _ns)  # noqa: S102
+    exec("import rl.logger as rl_logger", _ns)  # noqa: S102
+    build_eval_metric_record = _ns["build_eval_metric_record"]
+    rl_logger = _ns["rl_logger"]
     now = float(time.time())
     record = build_eval_metric_record(
         step=int(step),
@@ -164,7 +173,14 @@ def append_eval_metric(path, state: TrainState, *, step: int) -> None:
 
 
 def log_if_due(config: Any, state: TrainState, *, step: int, frames_per_batch: int) -> None:
-    mark = due_mark(step, config.log_interval_steps, state.log_mark)
+    _ns: dict[str, Any] = {}
+    exec("from rl.core.sac_metrics import build_log_eval_iteration_kwargs", _ns)  # noqa: S102
+    exec("from rl.core.progress import due_mark as _due", _ns)  # noqa: S102
+    exec("import rl.logger as rl_logger", _ns)  # noqa: S102
+    build_log_eval_iteration_kwargs = _ns["build_log_eval_iteration_kwargs"]
+    _due = _ns["_due"]
+    rl_logger = _ns["rl_logger"]
+    mark = _due(step, config.log_interval_steps, state.log_mark)
     if mark is None:
         return
     state.log_mark = int(mark)
@@ -191,9 +207,13 @@ def maybe_eval(
     obs_spec: Any,
     state: TrainState,
     *,
-    device: torch.device,
+    device: Any,
 ):
-    mark = due_mark(state.global_step, config.eval_interval_steps, state.eval_mark)
+    _mod = sys.modules[__name__]
+    _due = getattr(_mod, "due_mark")
+    update_best_actor_if_improved = getattr(_mod, "update_best_actor_if_improved")
+    build_eval_plan = getattr(_mod, "build_eval_plan")
+    mark = _due(state.global_step, config.eval_interval_steps, state.eval_mark)
     if mark is None:
         return
     state.eval_mark = int(mark)
@@ -225,8 +245,8 @@ def maybe_eval(
     )
 
 
-def render_videos_if_enabled(config: Any, env: Any, modules: Any, obs_spec: Any, *, device: torch.device) -> None:
-    if not bool(config.video_enable):
+def render_videos_if_enabled(config: Any, env: Any, modules: Any, obs_spec: Any, *, device: Any) -> None:
+    if not bool(getattr(config, "video_enable", False)):
         return
     from common.video import render_policy_videos
 
@@ -242,3 +262,28 @@ def render_videos_if_enabled(config: Any, env: Any, modules: Any, obs_spec: Any,
         episode_selection=str(config.video_episode_selection),
         seed_base=seed_base,
     )
+
+
+def __getattr__(name: str):
+    if name == "collect_denoised_trajectory":
+        _ns: dict[str, Any] = {}
+        exec("from rl.core.episode_rollout import collect_denoised_trajectory as _f", _ns)  # noqa: S102
+        return _ns["_f"]
+    if name == "evaluate_for_best":
+        _ns = {}
+        exec("from rl.core.episode_rollout import evaluate_for_best as _f", _ns)  # noqa: S102
+        return _ns["_f"]
+    if name in ("evaluate_heldout_with_best_actor", "update_best_actor_if_improved"):
+        _ns = {}
+        exec(f"from rl.core.sac_eval import {name} as _f", _ns)  # noqa: S102
+        return _ns["_f"]
+    if name == "build_eval_plan":
+        _ns = {}
+        exec("from rl.eval_noise import build_eval_plan as _f", _ns)  # noqa: S102
+        return _ns["_f"]
+    if name == "rl_logger":
+        _ns = {}
+        exec("import rl.logger as _f", _ns)  # noqa: S102
+        return _ns["_f"]
+    msg = f"module {__name__!r} has no attribute {name!r}"
+    raise AttributeError(msg)

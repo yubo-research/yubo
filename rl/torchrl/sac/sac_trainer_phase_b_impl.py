@@ -136,7 +136,24 @@ def run_sac_eval_log_checkpoint(
     build_eval_policy = pa.build_eval_policy
     checkpoint_payload = pa.checkpoint_payload
     evaluate_actor = pa.evaluate_actor
-    get_env_conf = _im("problems.env_conf").get_env_conf
+    build_problem = _im("problems.problem").build_problem
+
+    def build_env_runtime(
+        env_tag,
+        *,
+        problem_seed=None,
+        noise_seed_0=None,
+        from_pixels=False,
+        pixels_only=True,
+    ):
+        return build_problem(
+            env_tag,
+            policy_tag="linear",
+            problem_seed=problem_seed,
+            noise_seed_0=noise_seed_0,
+            from_pixels=from_pixels,
+            pixels_only=pixels_only,
+        ).env
 
     def _eval_heldout(cfg, env_setup, local_modules, local_state, *, device, heldout_i_noise=99999):
         return torchrl_sac_loop.evaluate_heldout_if_enabled(
@@ -149,7 +166,7 @@ def run_sac_eval_log_checkpoint(
             capture_actor_state=torchrl_sac_actor_eval.capture_sac_actor_snapshot,
             restore_actor_state=torchrl_sac_actor_eval.restore_sac_actor_snapshot,
             eval_policy_factory=lambda a, e, d: build_eval_policy(a, e, d),
-            get_env_conf=get_env_conf,
+            build_env_runtime=build_env_runtime,
             evaluate_for_best=evaluate_for_best,
         )
 

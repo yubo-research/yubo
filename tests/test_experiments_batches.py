@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 import experiments.batch_preps as _batch_preps
-import experiments.batches as _batches
+import experiments.batches_impl as _batches
 import experiments.experiment_sampler as _sampler
 import experiments.experiment_util as _experiment_util
 
@@ -51,8 +51,8 @@ class TestBatches:
         result = worker("false")
         assert result != 0
 
-    @patch("experiments.batches.multiprocessing")
-    @patch("experiments.batches.os")
+    @patch("experiments.batches_impl.multiprocessing")
+    @patch("experiments.batches_impl.os")
     def test_run_batch_dry_run(self, mock_os, mock_mp):
         run_batch = _batches.run_batch
         ExperimentConfig = _sampler.ExperimentConfig
@@ -66,12 +66,29 @@ class TestBatches:
             num_arms=1,
             num_rounds=1,
             num_reps=1,
+            policy_tag="pure-function",
         )
         d_argss = [config.to_dict()]
 
         run_batch(d_argss, b_dry_run=True)
 
         mock_mp.Process.assert_not_called()
+
+    @patch("experiments.batches_impl.run")
+    @patch("experiments.batches_impl.prep_d_argss")
+    def test_run_from_batch_tag(self, mock_prep, mock_run):
+        run_from_batch_tag = _batches.run_from_batch_tag
+
+        mock_prep.return_value = [{"exp_dir": "/tmp", "opt_name": "test"}]
+
+        run_from_batch_tag("test_batch", max_parallel=2, dry_run=True, results_dir="res")
+
+        mock_prep.assert_called_once_with("test_batch", results_dir="res")
+        mock_run.assert_called_once()
+        call_args = mock_run.call_args
+        assert call_args[0][0] == [{"exp_dir": "/tmp", "opt_name": "test"}]
+        assert call_args[1]["max_parallel"] == 2
+        assert call_args[1]["b_dry_run"] is True
 
 
 class TestBatchPreps:
@@ -93,8 +110,14 @@ class TestBatchPreps:
         assert len(result) > 0
         assert all(isinstance(r, ExperimentConfig) for r in result)
 
-    def test_prep_turbo_ackley_repro_returns_none(self):
+    def test_prep_turbo_ackley_repro_returns_empty_list(self):
         prep_turbo_ackley_repro = _batch_preps.prep_turbo_ackley_repro
 
         result = prep_turbo_ackley_repro("results")
-        assert result is None
+        assert result == []
+
+    def test_run_from_batch_tag_with_empty_configs_succeeds(self):
+        """Empty configs should be handled gracefully without crashing."""
+        run_from_batch_tag = _batches.run_from_batch_tag
+
+        run_from_batch_tag("prep_turbo_ackley_repro", max_parallel=1, dry_run=True)

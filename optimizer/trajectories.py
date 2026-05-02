@@ -1,7 +1,10 @@
-from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
+
+from .trajectory import Trajectory
+
+__all__ = ["collect_trajectory"]
 
 
 def _resolve_max_episode_steps(env_conf: Any) -> int:
@@ -33,22 +36,6 @@ def _unpack_step_result(step_out: Any) -> tuple[Any, Any, bool, bool, Any]:
         state, reward, done, info = step_out
         return state, reward, bool(done), False, info
     raise ValueError(f"Unsupported env.step return arity: {len(step_out)}")
-
-
-@dataclass
-class Trajectory:
-    rreturn: float
-
-    states: np.ndarray
-    actions: np.ndarray
-    rreturn_se: float = None
-    rreturn_est: float = None
-    num_steps: int = 0
-
-    def get_decision_rreturn(self) -> float:
-        if self.rreturn_est is None:
-            return float(self.rreturn)
-        return float(self.rreturn_est)
 
 
 def _get_bounds_safe(arr, default_fn):
@@ -90,6 +77,15 @@ def _make_return(policy, return_trajectory):
     return np.concatenate([np.asarray([float(return_trajectory)], dtype=np.float64), mets], axis=0)
 
 
+def _collect_ppo_step(policy, ppo, reward, done):
+    ppo["rewards"].append(reward)
+    ppo["dones"].append(done)
+    if ppo["has_log_probs"]:
+        ppo["log_probs"].append(policy.last_log_probs())
+    if ppo["has_values"]:
+        ppo["values"].append(policy.last_values())
+
+
 def collect_trajectory(env_conf, policy, noise_seed=None, show_frames=False):
     b_gym = env_conf.gym_conf is not None
     num_frames_skip = env_conf.gym_conf.num_frames_skip if b_gym and show_frames else 1
@@ -98,6 +94,14 @@ def collect_trajectory(env_conf, policy, noise_seed=None, show_frames=False):
     env = env_conf.make(render_mode=render_mode)
     return_trajectory = 0
     traj_states, traj_actions = [], []
+    ppo = {
+        "rewards": [],
+        "log_probs": [],
+        "values": [],
+        "dones": [],
+        "has_log_probs": hasattr(policy, "last_log_probs") and callable(policy.last_log_probs),
+        "has_values": hasattr(policy, "last_values") and callable(policy.last_values),
+    }
 
     def _draw():
         import matplotlib.pyplot as plt
@@ -134,8 +138,11 @@ def collect_trajectory(env_conf, policy, noise_seed=None, show_frames=False):
         action = _scale_action_to_space(action_p, env.action_space)
         traj_states.append(state_p)
         traj_actions.append(action_p)
+
         state, reward, terminated, truncated, _ = _unpack_step_result(env.step(action))
         step_count += 1
+        _collect_ppo_step(policy, ppo, reward, terminated or truncated)
+
         if recurrent:
             prev_action = int(action) if isinstance(action, (int, np.integer)) else int(np.asarray(action).item())
             prev_reward = float(reward)
@@ -155,4 +162,8 @@ def collect_trajectory(env_conf, policy, noise_seed=None, show_frames=False):
         np.array(traj_actions).T,
         rreturn_se=None,
         num_steps=int(step_count),
+        rewards=np.array(ppo["rewards"], dtype=np.float32),
+        log_probs=np.array(ppo["log_probs"], dtype=np.float32) if ppo["log_probs"] else None,
+        values=np.array(ppo["values"], dtype=np.float32) if ppo["values"] else None,
+        dones=np.array(ppo["dones"], dtype=bool),
     )

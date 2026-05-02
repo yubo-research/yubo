@@ -12,6 +12,7 @@ backend = "torchrl"
 [rl.sac]
 exp_dir = "_tmp/gymnasium/cheetah/sac_torchrl_halfcheetah_hf_expert_like_macos"
 env_tag = "cheetah"
+policy_tag = "mlp-32-16"
 
 # macOS stability profile.
 device = "cpu"

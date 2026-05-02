@@ -3,6 +3,7 @@
 # Everything else matches mnist_simple_baseline.toml for a fair comparison.
 
 env_tag = "mnist_fulltrain_acc"
+policy_tag = "linear"
 num_rounds = 1000
 optimizer = "simple_be"
 perturb = "dense"

@@ -1,8 +1,9 @@
 import common.all_bounds as all_bounds
+from optimizer.designer_protocol import Designer
 from sampling.lhd import latin_hypercube_design
 
 
-class LHDDesigner:
+class LHDDesigner(Designer):
     def __init__(self, policy, max_points=2**12):
         self._policy = policy
         self._seed = policy.problem_seed + 99

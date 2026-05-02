@@ -1,5 +1,6 @@
 [uhd]
 env_tag = "stand-mlp2:fn"
+policy_tag = "mlp-256-128"
 num_rounds = 500
 optimizer = "simple"
 perturb = "dense"

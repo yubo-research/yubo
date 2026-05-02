@@ -1,11 +1,10 @@
 import math
 
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from problems.policy_mixin import PolicyParamsMixin
+from policies.policy_mixin import PolicyParamsMixin
 
 
 class ControlPolicyFactory:
@@ -56,8 +55,7 @@ class ControlPolicy(PolicyParamsMixin, nn.Module):
 
         self.reset_state()
 
-        with torch.inference_mode():
-            self._flat_params_init = np.concatenate([p.data.detach().cpu().numpy().reshape(-1) for p in self.parameters()])
+        self._cache_flat_params_init()
 
     def reset_state(self):
         num_state = self._env_conf.gym_conf.state_space.shape[0]

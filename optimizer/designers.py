@@ -24,9 +24,10 @@ __all__ = [
 
 
 class Designers:
-    def __init__(self, policy, num_arms):
+    def __init__(self, policy, num_arms, *, env_conf=None):
         self._policy = policy
         self._num_arms = num_arms
+        self._env_conf = env_conf
 
     def is_valid(self, designer_name):
         # Must be cheap: used for validation / CLI help.
@@ -107,6 +108,7 @@ class Designers:
             init_yubo_default=init_yubo_default,
             init_ax_default=init_ax_default,
             default_num_X_samples=default_num_X_samples,
+            env_conf=self._env_conf,
         )
         return handler(ctx, spec.specific)
 

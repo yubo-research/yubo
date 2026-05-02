@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Any
 
-from .trajectories import Trajectory
+from .trajectory import Trajectory
 
 
 @dataclass

@@ -1,5 +1,6 @@
 [uhd]
 env_tag = "tlunar:fn"
+policy_tag = "turbo-lunar"
 num_rounds = 10000
 optimizer = "simple"
 lr = 0.1

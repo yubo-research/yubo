@@ -6,11 +6,11 @@ import torch
 
 import acq.fit_gp as fit_gp
 from optimizer.designer_asserts import assert_scalar_rreturn
+from optimizer.designer_protocol import Designer
 from optimizer.sobol_designer import SobolDesigner
 
 
-# Adapted from: https://github.com/feji3769/VecchiaBO/blob/master/notebooks/bo_loop.ipynb
-class VecchiaDesigner:
+class VecchiaDesigner(Designer):
     def __init__(self, policy, *, num_candidates_per_arm=512):
         self._policy = policy
         self._num_candidates_per_arm = num_candidates_per_arm

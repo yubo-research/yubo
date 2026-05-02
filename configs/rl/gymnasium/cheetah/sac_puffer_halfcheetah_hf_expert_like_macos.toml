@@ -12,6 +12,7 @@ backend = "pufferlib"
 [rl.sac]
 exp_dir = "_tmp/gymnasium/cheetah/sac_puffer_halfcheetah_hf_expert_like_macos"
 env_tag = "cheetah"
+policy_tag = "mlp-32-16"
 device = "auto"
 
 # HF expert-like SAC core hyperparameters.

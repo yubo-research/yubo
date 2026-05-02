@@ -6,8 +6,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 
+from policies.policy_mixin import PolicyParamsMixin
 from problems.pixel_policies_encoders import init_linear_and_conv, nature_cnn_encoder, obs_space_from_env_conf
-from problems.policy_mixin import PolicyParamsMixin
 
 
 class CNNMLPPolicyFactory:

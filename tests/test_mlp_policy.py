@@ -9,7 +9,7 @@ def _flat_params(policy):
 def test_mlp_policy_set_params_is_delta_from_init():
     from types import SimpleNamespace
 
-    from problems.mlp_policy import MLPPolicy
+    from policies.mlp_policy import MLPPolicy
 
     env_conf = SimpleNamespace(
         problem_seed=0,

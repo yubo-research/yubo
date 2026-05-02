@@ -23,5 +23,5 @@ def test_ppo_config_runtime_num_envs_helper():
 
 
 def test_ppo_config_from_dict_uses_env_defaults():
-    cfg = PPOConfig.from_dict({"env_tag": "cheetah"})
+    cfg = PPOConfig.from_dict({"env_tag": "cheetah", "policy_tag": "mlp-32-16"})
     assert cfg.backbone_hidden_sizes == (64, 64)

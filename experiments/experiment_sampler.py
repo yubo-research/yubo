@@ -2,6 +2,7 @@ import multiprocessing as mp
 
 import torch
 
+import problems.env_conf as env_conf_module
 from analysis.data_io import data_is_done, data_writer
 from common.seed_all import seed_all
 from experiments.experiment_sampler_dispatch import (
@@ -27,10 +28,21 @@ from experiments.experiment_sampler_types import (
     true_false,
 )
 from experiments.experiment_util import ensure_parent
+from problems.problem import Problem, build_problem
 
 
 def _register_patch_targets_for_tests() -> None:
-    _ = (mp, torch, data_is_done, data_writer, seed_all, ensure_parent)
+    _ = (
+        mp,
+        torch,
+        data_is_done,
+        data_writer,
+        seed_all,
+        ensure_parent,
+        env_conf_module,
+        Problem,
+        build_problem,
+    )
 
 
 _register_patch_targets_for_tests()

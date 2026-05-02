@@ -8,6 +8,7 @@ from ops.uhd_config_types import BEConfig, EarlyRejectConfig, ENNConfig
 @dataclass(frozen=True)
 class UHDConfig:
     env_tag: str
+    policy_tag: str | None
     num_rounds: int
     problem_seed: int | None
     noise_seed_0: int | None

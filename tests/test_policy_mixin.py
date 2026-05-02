@@ -1,7 +1,7 @@
 import numpy as np
 import torch.nn as nn
 
-from problems.policy_mixin import PolicyParamsMixin
+from policies.policy_mixin import PolicyParamsMixin
 
 
 def test_policy_params_mixin_class_exists():

@@ -1,14 +1,22 @@
 import copy
 
-from problems.env_conf_bindings import get_atari_dm_bindings, register_atari_dm_bindings_loader
+from problems.env_conf_bindings import (
+    get_atari_dm_bindings,
+    register_atari_dm_bindings_loader,
+)
 from problems.env_conf_constants import (
     _ATARI_DEFAULT_MAX_STEPS,
     _DM_CONTROL_DEFAULT_MAX_STEPS,
 )
 from problems.env_conf_parse import parse_tag_options
-from problems.env_conf_presets import _atari_env_confs, _dm_control_env_confs, _gym_env_confs
+from problems.env_conf_presets import (
+    _atari_env_confs,
+    _dm_control_env_confs,
+    _gym_env_confs,
+)
 from problems.env_conf_rl import resolve_rl_model_defaults
 from problems.env_conf_types import EnvConf, GymConf
+from problems.environment_spec import needs_atari_dm_bindings
 from problems.linear_policy import LinearPolicy
 from problems.pure_function_policy import PureFunctionPolicy
 
@@ -17,12 +25,25 @@ __all__ = [
     "GymConf",
     "default_policy",
     "get_env_conf",
+    "needs_atari_dm_bindings",
     "register_atari_dm_bindings_loader",
     "resolve_rl_model_defaults",
     "_atari_env_confs",
     "_dm_control_env_confs",
     "_gym_env_confs",
 ]
+
+
+def _ac_mlp_policy_factory(
+    hidden_sizes: tuple[int, ...],
+    *,
+    share_backbone: bool = True,
+    log_std_init: float = 0.0,
+):
+    _ns: dict = {}
+    exec("from policies.actor_critic_mlp_policy import ActorCriticMLPPolicyFactory", _ns)  # noqa: S102
+    ActorCriticMLPPolicyFactory = _ns["ActorCriticMLPPolicyFactory"]
+    return ActorCriticMLPPolicyFactory(hidden_sizes, share_backbone=share_backbone, log_std_init=log_std_init)
 
 
 def get_env_conf(
@@ -76,6 +97,7 @@ def get_env_conf(
     ec.problem_seed = problem_seed
     ec.noise_seed_0 = noise_seed_0
     ec.frozen_noise = frozen_noise
+    ec.env_tag = tag
     if atari_preprocess is not None:
         if not isinstance(atari_preprocess, dict):
             raise TypeError("atari_preprocess must be a dict when provided.")

@@ -7,7 +7,7 @@ from rl.config_model_defaults import (
 
 
 def test_apply_ppo_env_model_defaults_uses_env_defaults():
-    cfg = apply_ppo_env_model_defaults({"env_tag": "cheetah"})
+    cfg = apply_ppo_env_model_defaults({"env_tag": "cheetah", "policy_tag": "mlp-32-16"})
     assert cfg["backbone_hidden_sizes"] == (64, 64)
     assert cfg["share_backbone"] is True
 
@@ -30,6 +30,6 @@ def test_apply_env_model_defaults_requires_env_tag():
 
 
 def test_apply_sac_env_model_defaults_uses_env_defaults():
-    cfg = apply_sac_env_model_defaults({"env_tag": "cheetah"})
+    cfg = apply_sac_env_model_defaults({"env_tag": "cheetah", "policy_tag": "mlp-32-16"})
     assert cfg["backbone_hidden_sizes"] == (256, 256)
     assert cfg["backbone_activation"] == "relu"

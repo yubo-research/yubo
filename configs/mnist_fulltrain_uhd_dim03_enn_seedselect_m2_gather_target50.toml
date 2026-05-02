@@ -1,5 +1,6 @@
 [uhd]
 env_tag = "mnist_fulltrain"
+policy_tag = "linear"
 num_rounds = 6000
 
 lr = 0.001

@@ -1,9 +1,10 @@
 import numpy as np
 
 import common.all_bounds as all_bounds
+from optimizer.designer_protocol import Designer
 
 
-class CenterDesigner:
+class CenterDesigner(Designer):
     def __init__(self, policy):
         self._policy = policy
 

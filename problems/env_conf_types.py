@@ -5,9 +5,9 @@ import gymnasium as gym
 
 import problems.other as other
 import problems.pure_functions as pure_functions
+from policies.mlp_policy import MLPPolicy
 from problems.env_conf_bindings import get_atari_dm_bindings
 from problems.env_conf_constants import _DEFAULT_MAX_STEPS, _PURE_FUNCTION_MAX_STEPS
-from problems.mlp_policy import MLPPolicy
 from problems.mlp_torch_env import wrap_mlp_env
 from problems.noise_maker import NoiseMaker
 

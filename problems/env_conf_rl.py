@@ -1,10 +1,14 @@
 import copy
 from typing import Any
 
+from policies.mlp_policy import MLPPolicyFactory
 from problems.env_conf_bindings import get_atari_dm_bindings
 from problems.env_conf_parse import parse_tag_options
-from problems.env_conf_presets import _atari_env_confs, _dm_control_env_confs, _gym_env_confs
-from problems.mlp_policy import MLPPolicyFactory
+from problems.env_conf_presets import (
+    _atari_env_confs,
+    _dm_control_env_confs,
+    _gym_env_confs,
+)
 
 
 def _normalize_rl_env_key(env_tag: str) -> str:
@@ -32,10 +36,19 @@ def _find_rl_env_conf(env_key: str):
 
 
 def _infer_rl_from_policy_class(policy_class: Any, *, algo: str) -> dict[str, Any] | None:
-    if not isinstance(policy_class, MLPPolicyFactory):
+    if isinstance(policy_class, MLPPolicyFactory):
+        hidden = tuple((int(v) for v in policy_class._hidden_sizes))
+        layer_norm = bool(policy_class._use_layer_norm)
+        share_backbone = True
+        log_std_init = -0.5
+    elif hasattr(policy_class, "_hidden_sizes") and hasattr(policy_class, "_share_backbone") and hasattr(policy_class, "_log_std_init"):
+        hidden = tuple((int(v) for v in policy_class._hidden_sizes))
+        layer_norm = True
+        share_backbone = bool(policy_class._share_backbone)
+        log_std_init = float(policy_class._log_std_init)
+    else:
         return None
-    hidden = tuple((int(v) for v in policy_class._hidden_sizes))
-    layer_norm = bool(policy_class._use_layer_norm)
+
     if algo == "ppo":
         return {
             "backbone_name": "mlp",
@@ -45,8 +58,8 @@ def _infer_rl_from_policy_class(policy_class: Any, *, algo: str) -> dict[str, An
             "actor_head_hidden_sizes": (),
             "critic_head_hidden_sizes": (),
             "head_activation": "silu",
-            "share_backbone": True,
-            "log_std_init": -0.5,
+            "share_backbone": share_backbone,
+            "log_std_init": log_std_init,
         }
     if algo == "sac":
         return {

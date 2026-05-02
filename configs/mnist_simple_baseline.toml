@@ -2,6 +2,7 @@
 # No ENN seed selection — sequential seed evaluation.
 
 env_tag = "mnist_fulltrain_acc"
+policy_tag = "linear"
 num_rounds = 1000
 optimizer = "simple"
 perturb = "dense"

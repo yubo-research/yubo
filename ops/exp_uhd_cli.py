@@ -6,6 +6,20 @@ from common.im import im
 from ops import exp_uhd_run
 
 
+class _CallableCommand(click.Command):
+    def __call__(self, *args, **kwargs):
+        if args or kwargs:
+            config_toml = args[0] if args else kwargs.get("config_toml")
+            log_file = kwargs.get("log_file", None)
+            gpu = kwargs.get("gpu", "A100")
+            if len(args) >= 3:
+                log_file = args[2]
+            if len(args) >= 4:
+                gpu = args[3]
+            return self.callback(config_toml, log_file, gpu)
+        return super().__call__(*args, **kwargs)
+
+
 @click.group()
 def _cli():
     pass
@@ -39,6 +53,7 @@ local = _local
 
 @_cli.command(
     name="modal",
+    cls=_CallableCommand,
     help="Run on Modal. Streams to stdout; optionally saves to --log-file.",
 )
 @click.argument("config_toml", type=click.Path(exists=True, dir_okay=False, path_type=str))

@@ -1,15 +1,16 @@
 import os
 
 from analysis.data_io import write_config
-from common.experiment_seeds import noise_seed_0_from_problem_seed, problem_seed_from_rep_index
+from common.experiment_seeds import (
+    noise_seed_0_from_problem_seed,
+    problem_seed_from_rep_index,
+)
 from experiments import experiment_sampler_shim as shim
 from experiments.experiment_sampler_dispatch import scan_local
-from experiments.experiment_sampler_types import ExperimentConfig, RunConfig, _load_attr
+from experiments.experiment_sampler_types import ExperimentConfig, RunConfig
 
 
 def mk_replicates(config: ExperimentConfig) -> list[RunConfig]:
-    get_env_conf = _load_attr(("problems", "env_conf"), "get_env_conf")
-
     out_dir = config.to_dir_name()
 
     os.makedirs(out_dir, exist_ok=True)
@@ -24,16 +25,16 @@ def mk_replicates(config: ExperimentConfig) -> list[RunConfig]:
             continue
         else:
             problem_seed = problem_seed_from_rep_index(i_rep)
-            env_conf = get_env_conf(
+            problem = shim.build_problem(
                 config.env_tag,
+                config.policy_tag,
                 problem_seed=problem_seed,
-                noise_level=None,
                 noise_seed_0=noise_seed_0_from_problem_seed(problem_seed),
             )
             run_configs.append(
                 RunConfig(
                     trace_fn=trace_fn,
-                    env_conf=env_conf,
+                    problem=problem,
                     opt_name=config.opt_name,
                     num_rounds=config.num_rounds,
                     total_timesteps=config.total_timesteps,
@@ -96,6 +97,7 @@ def prep_args_1(
     noise=None,
     num_denoise=None,
     num_denoise_passive=None,
+    policy_tag="pure-function",
 ) -> ExperimentConfig:
     assert noise is None, "NYI"
 
@@ -111,6 +113,7 @@ def prep_args_1(
         total_timesteps=None,
         num_denoise=num_denoise,
         num_denoise_passive=num_denoise_passive,
+        policy_tag=policy_tag,
     )
 
 
@@ -127,6 +130,7 @@ def prep_d_args(
     func_category="f",
     num_denoise=None,
     num_denoise_passive=None,
+    policy_tag="pure-function",
 ) -> list[ExperimentConfig]:
     configs = []
     for dim in dims:
@@ -146,6 +150,7 @@ def prep_d_args(
                             noise,
                             num_denoise=num_denoise,
                             num_denoise_passive=num_denoise_passive,
+                            policy_tag=policy_tag,
                         )
                     )
     return configs

@@ -3,7 +3,7 @@ def test_bw_mlp_uses_layernorm_with_affine_and_episode_reset_only_resets_rnn_sta
 
     import torch
 
-    from problems.mlp_policy import MLPPolicy
+    from policies.mlp_policy import MLPPolicy
 
     env_conf = SimpleNamespace(
         problem_seed=0,

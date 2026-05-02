@@ -7,12 +7,18 @@ if __name__ == "__main__":
 
     import common.all_bounds as all_bounds
     from optimizer.trajectories import collect_trajectory
-    from problems.env_conf import default_policy, get_env_conf
+    from problems.problem import build_problem
+
+    if len(sys.argv) < 3:
+        print("usage: about_env.py <env_tag> <policy_tag>", file=sys.stderr)
+        sys.exit(1)
 
     env_tag = sys.argv[1]
+    policy_tag = sys.argv[2]
 
-    env_conf = get_env_conf(env_tag, problem_seed=17)
-    policy = default_policy(env_conf)
+    problem = build_problem(env_tag, policy_tag, problem_seed=17)
+    env_runtime = problem.env
+    policy = problem.build_policy()
 
     noise_levels = []
     abs_returns = []
@@ -21,7 +27,7 @@ if __name__ == "__main__":
         r = []
         for _ in range(10):
             policy.set_params(x)
-            r.append(collect_trajectory(env_conf, policy).rreturn)
+            r.append(collect_trajectory(env_runtime, policy).rreturn)
 
         r = np.array(r)
         noise_levels.append(r.std())
