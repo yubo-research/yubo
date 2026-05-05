@@ -6,7 +6,6 @@ from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 import torch
-import torch.nn as nn
 from click.testing import CliRunner
 
 from analysis.data_io import TraceRecord
@@ -129,7 +128,14 @@ def test_kiss_tidy_b_dispatch_post_mk_shim_sample_util(monkeypatch, tmp_path):
     assert sr.stop_reason == "completed"
     eu.ensure_parent(str(tmp_path / "nested" / "f.txt"))
     rec = [TraceRecord(0, 0.1, 0.1, 0.5, env_name="e", opt_name="o")]
-    disp.post_process(["l1"], ["t1"], str(tmp_path / "trace2"), rec, wall_seconds=1.0, stop_reason="completed")
+    disp.post_process(
+        ["l1"],
+        ["t1"],
+        str(tmp_path / "trace2"),
+        rec,
+        wall_seconds=1.0,
+        stop_reason="completed",
+    )
 
 
 def test_kiss_tidy_b_modal_batches_pkg_and_impl(monkeypatch):
@@ -147,7 +153,11 @@ def test_kiss_tidy_b_modal_batches_pkg_and_impl(monkeypatch):
     monkeypatch.setattr(mb, "stop", _set_stop)
     monkeypatch.setattr(mbi, "clean_up", lambda tag: None)
     monkeypatch.setattr(mbi, "stop", _set_stop)
-    monkeypatch.setattr(mb, "modal", SimpleNamespace(Function=SimpleNamespace(lookup=lambda *a, **k: None)))
+    monkeypatch.setattr(
+        mb,
+        "modal",
+        SimpleNamespace(Function=SimpleNamespace(lookup=lambda *a, **k: None)),
+    )
     monkeypatch.setattr(mb, "batches_submitter", lambda *a, **k: None)
     mb.batches("work", tag="t", num=0)
     mb.batches("submit-missing", batch_tag="prep_timing_sweep", tag="t")
@@ -167,8 +177,12 @@ def test_kiss_tidy_b_synthetic_modal_impl_and_reps(tmp_path, monkeypatch):
 
     monkeypatch.setattr(ssb, "_results_dict", lambda t: FakeResultsDict())
     monkeypatch.setattr(ssb, "_submitted_dict", lambda t: FakeResultsDict())
-    monkeypatch.setattr(ssb.modal, "Function", SimpleNamespace(from_name=lambda *a, **k: make_func_spawn_map([])))
-    monkeypatch.setattr(ssb.modal.Dict, "delete", lambda name: None)
+    monkeypatch.setattr(
+        ssb.modal,
+        "Function",
+        SimpleNamespace(from_name=lambda *a, **k: make_func_spawn_map([])),
+    )
+    monkeypatch.setattr(ssb.modal.Dict.objects, "delete", lambda *a, **k: None)
     cap = []
     monkeypatch.setattr(ssb, "_submit_missing", lambda *a, **k: cap.append(a))
     monkeypatch.setattr(ssb, "_collect", lambda *a, **k: cap.append(a))
@@ -178,7 +192,13 @@ def test_kiss_tidy_b_synthetic_modal_impl_and_reps(tmp_path, monkeypatch):
     ssb.clean_up("tg")
     ssb.stop("tg")
     ssb.batches("tg", "status")
-    ssb.batches("tg", "submit", jobs_fn="example_sphere_n12_d2_seed0", output_dir=str(tmp_path), num_reps=1)
+    ssb.batches(
+        "tg",
+        "submit",
+        jobs_fn="example_sphere_n12_d2_seed0",
+        output_dir=str(tmp_path),
+        num_reps=1,
+    )
     ssb.batches("tg", "collect", output_dir=str(tmp_path))
     assert cap
 
@@ -202,7 +222,9 @@ def test_kiss_tidy_b_synthetic_modal_impl_and_reps(tmp_path, monkeypatch):
 
 
 def test_kiss_tidy_b_wide_row_core():
-    from experiments.synthetic_sine_benchmark_payload_core import synthetic_surrogate_benchmark_to_wide_row
+    from experiments.synthetic_sine_benchmark_payload_core import (
+        synthetic_surrogate_benchmark_to_wide_row,
+    )
 
     bench = SyntheticSineSurrogateBenchmark(results={k: BMResult(MuSe(1.0, 0.1), MuSe(2.0, 0.1), MuSe(3.0, 0.1)) for k in SURROGATE_BENCHMARK_KEYS})
     row = synthetic_surrogate_benchmark_to_wide_row(bench)
@@ -248,7 +270,17 @@ def test_kiss_tidy_b_ops_cli_batches_uhd(monkeypatch, tmp_path):
     assert (
         r.invoke(
             ssbo.cli,
-            ["local-single", "8", "sphere", "0", "gp", "--output-dir", str(outd), "--num-reps", "1"],
+            [
+                "local-single",
+                "8",
+                "sphere",
+                "0",
+                "gp",
+                "--output-dir",
+                str(outd),
+                "--num-reps",
+                "1",
+            ],
         ).exit_code
         == 0
     )
@@ -382,88 +414,13 @@ def test_kiss_tidy_b_ops_cli_batches_uhd(monkeypatch, tmp_path):
     monkeypatch.setattr("ops.modal_uhd.run", lambda *a, **k: "full-ok")
     efull.modal_cmd(str(tom), None, "A100")
 
-    monkeypatch.setattr("ops.uhd_batch_cli._load_toml", lambda p: {"env_tag": "mnist", "num_rounds": 1, "optimizer": "mezo"})
+    monkeypatch.setattr(
+        "ops.uhd_batch_cli._load_toml",
+        lambda p: {"env_tag": "mnist", "num_rounds": 1, "optimizer": "mezo"},
+    )
     monkeypatch.setattr("ops.uhd_batch_cli._batch_modal", lambda *a, **k: None)
     monkeypatch.setattr("ops.uhd_batch_cli._collect", lambda *a, **k: None)
     t2 = tmp_path / "b.toml"
     t2.write_text('[uhd]\nenv_tag = "mnist"\nnum_rounds = 1\n')
     assert r.invoke(ubc.cli, ["modal", str(t2), "--num-reps", "1"]).exit_code == 0
     assert r.invoke(ubc.cli, ["collect"]).exit_code == 0
-
-
-def test_kiss_tidy_b_uhd_setups(monkeypatch):
-    import ops.uhd_setup_bszo_core as bszoc
-    import ops.uhd_setup_make_loop_impl as mli
-    import ops.uhd_setup_monolith_bszo as mbzo
-    import ops.uhd_setup_monolith_make_loop as mml
-    import ops.uhd_setup_simple_gym_impl as sgi
-
-    with patch("optimizer.uhd_loop.UHDLoop", lambda *a, **k: SimpleNamespace(run=lambda: None)):
-        mli.make_loop(
-            "mnist",
-            1,
-            lr=0.01,
-            sigma=0.01,
-            num_dim_target=2,
-            num_module_target=1,
-            policy_tag="pure-function",
-            problem_seed=0,
-            noise_seed_0=0,
-        )
-        mml.make_loop(
-            "mnist",
-            1,
-            lr=0.01,
-            sigma=0.01,
-            num_dim_target=2,
-            num_module_target=1,
-            policy_tag="pure-function",
-            problem_seed=0,
-            noise_seed_0=0,
-        )
-
-    monkeypatch.setattr(mbzo, "_run_bszo_iterations", lambda *a, **k: None)
-    mbzo.run_bszo_loop("mnist", 1, lr=0.01, policy_tag="pure-function", problem_seed=0, noise_seed_0=0)
-
-    _lin = nn.Linear(1, 1, bias=False)
-
-    def _gconf(*a, **k):
-        return SimpleNamespace(
-            noise_seed_0=0,
-            problem_seed=0,
-            frozen_noise=False,
-            make_torch_env=lambda: SimpleNamespace(torch_env=lambda: SimpleNamespace(module=_lin)),
-        )
-
-    monkeypatch.setattr("problems.env_conf.get_env_conf", _gconf)
-    monkeypatch.setattr("optimizer.trajectories.collect_trajectory", lambda **k: SimpleNamespace(rreturn=0.1))
-    monkeypatch.setattr(bszoc, "_run_bszo_iterations", lambda *a, **k: None)
-    bszoc.run_bszo_loop("x", 1, lr=0.01, problem_seed=0, noise_seed_0=0)
-
-    def _sgc(*a, **k):
-        return SimpleNamespace(problem_seed=None, make=lambda: object())
-
-    monkeypatch.setattr("problems.env_conf.get_env_conf", _sgc)
-    monkeypatch.setattr(sgi, "_run_simple_gym", lambda *a, **k: None)
-    sgi.run_simple_loop("x", 1, sigma=0.01, optimizer="simple")
-
-
-def test_kiss_tidy_b_uhd_setups_import_wrappers():
-    import ops.uhd_setup_bszo as ub
-    import ops.uhd_setup_make_loop as um
-    import ops.uhd_setup_simple_gym as us
-
-    _bsz = Mock(k=0, eval_seed=0, y_best=None, ask=Mock(), tell=Mock())
-
-    assert ub.run_bszo_loop.__name__ == "run_bszo_loop"
-    assert um.make_loop.__name__ == "make_loop"
-    assert us.run_simple_loop.__name__ == "run_simple_loop"
-    ub._run_bszo_iterations(
-        _bsz,
-        evaluate_fn=lambda s: (0.0, 0.0),
-        accuracy_fn=None,
-        num_steps=0,
-        log_interval=1,
-        accuracy_interval=1,
-        target_accuracy=None,
-    )

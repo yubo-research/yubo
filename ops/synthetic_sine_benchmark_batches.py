@@ -54,6 +54,13 @@ def _get_app_name(tag: str) -> str:
     return f"yubo-synth-sine-batch-{tag}"
 
 
+def _benchmark_modal_dict_names(tag: str) -> tuple[str, str]:
+    return (
+        f"synthetic_sine_benchmark_results_{tag}",
+        f"synthetic_sine_benchmark_submitted_{tag}",
+    )
+
+
 def _run_modal(args: list[str], tag: str) -> None:
     env = os.environ.copy()
     env["MODAL_TAG"] = tag
@@ -143,17 +150,25 @@ def status(tag: str):
 @click.argument("tag")
 def stop(tag: str):
     """Stop the app and clean up the backing Modal dicts."""
+    exit_code = 0
     app_name = _get_app_name(tag)
     click.echo(f"Stopping app: {app_name}")
     stop_result = subprocess.run(["modal", "app", "stop", app_name])
     if stop_result.returncode != 0:
         click.echo(f"Warning: modal app stop returned {stop_result.returncode}")
+        exit_code = 1
 
-    impl = _get_impl_path()
-    env = os.environ.copy()
-    env["MODAL_TAG"] = tag
-    click.echo(f"Cleaning up dicts for tag: {tag}")
-    subprocess.run(["modal", "run", f"{impl}::batches", "--tag", tag, "--cmd", "stop"], env=env)
+    for name in _benchmark_modal_dict_names(tag):
+        click.echo(f"Deleting Modal dict: {name}")
+        del_result = subprocess.run(
+            ["modal", "dict", "delete", "--yes", "--allow-missing", name],
+        )
+        if del_result.returncode != 0:
+            click.echo(f"Warning: modal dict delete returned {del_result.returncode} for {name!r}")
+            exit_code = 1
+
+    if exit_code != 0:
+        sys.exit(exit_code)
 
 
 _LOCAL_SINGLE_PARAMS = [

@@ -262,7 +262,7 @@ def clean_up(tag: str):
         f"synthetic_sine_benchmark_submitted_{tag}",
     ):
         try:
-            modal.Dict.delete(name)
+            modal.Dict.objects.delete(name, allow_missing=True)
             print(f"CLEANUP: deleted dict name={name}")
         except Exception as e:
             print(f"CLEANUP: dict delete failed name={name} err={e!r}")

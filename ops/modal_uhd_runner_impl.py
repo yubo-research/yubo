@@ -14,7 +14,7 @@ _ENN_ROOT = _PROJECT_ROOT.parents[0] / "enn"
 
 _image = (
     modal.Image.debian_slim(python_version="3.11.9")
-    .apt_install("swig", "curl", "build-essential")
+    .apt_install("swig", "curl", "build-essential", "libopenblas-dev", "patchelf")
     .run_commands(
         "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y",
         'echo "export PATH=$HOME/.cargo/bin:$PATH" >> ~/.bashrc',
@@ -37,7 +37,9 @@ for _d in _PROJECT_DIRS:
     _image = _image.add_local_dir(str(_PROJECT_ROOT / _d), remote_path=f"/root/{_d}")
 _image = _image.add_local_dir(str(_ENN_ROOT), remote_path="/root/enn")
 _image = _image.run_commands(
-    ". $HOME/.cargo/env && cd /root/enn/rust/crates/ennbo-py && maturin build --release",
+    ". $HOME/.cargo/env && "
+    "export RUSTFLAGS='-C link-arg=-Wl,--no-as-needed -C link-arg=-lopenblas' && "
+    "cd /root/enn/rust/crates/enn-py && maturin build --release",
     "pip install $(find /root/enn/rust -path '*/wheels/*.whl' | head -1) && pip install -e /root/enn",
 )
 
