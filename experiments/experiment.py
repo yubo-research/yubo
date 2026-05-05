@@ -188,14 +188,3 @@ def _local(config_toml: str, overrides: tuple[str, ...]) -> None:
 
 
 local = _local
-
-
-def _main() -> None:
-    cli()
-
-
-main = _main
-
-
-if __name__ == "__main__":
-    main()

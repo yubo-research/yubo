@@ -55,6 +55,8 @@ def assert_telemetry_reset_clears_dt_fields():
     t = Telemetry()
     t.set_dt_fit(1.0)
     t.set_dt_select(2.0)
+    t.set_dt_rollout(0.5)
     t.reset()
     assert t._dt_fit is None
     assert t._dt_select is None
+    assert t._dt_rollout is None

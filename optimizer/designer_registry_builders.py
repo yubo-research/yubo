@@ -70,6 +70,14 @@ def _build_policy_ctor(ctx: _SimpleContext, module: str, name: str, **kwargs):
     return Ctor(ctx.policy, **kwargs)
 
 
+def _build_ppo(ctx: _SimpleContext):
+    """On-policy PPO as a Designer (see optimizer/ppo_designer.py). Requires env_conf + actor-critic policy."""
+    PPODesigner = _load_symbol("optimizer.ppo_designer", "PPODesigner")
+    if ctx.env_conf is None:
+        raise NoSuchDesignerError("Designer 'ppo' requires env_conf (use a Gym-style env_tag so the Optimizer has an environment runtime).")
+    return PPODesigner(ctx.policy, ctx.env_conf)
+
+
 def _build_maximin(ctx: _SimpleContext, *, toroidal: bool):
     AcqMinDist = _load_symbol("acq.acq_min_dist", "AcqMinDist")
     return ctx.bt(lambda m: AcqMinDist(m, toroidal=toroidal))
@@ -118,7 +126,11 @@ def _build_turbo_enn(ctx: _SimpleContext, kind: str):
         )
     if kind == "turbo-zero":
         return _turbo_enn(ctx, turbo_mode="turbo-zero", num_fit_samples=None, num_fit_candidates=None)
-    turbo_one_acq = {"turbo-one": "thompson", "turbo-one-nds": "pareto", "turbo-one-ucb": "ucb"}
+    turbo_one_acq = {
+        "turbo-one": "thompson",
+        "turbo-one-nds": "pareto",
+        "turbo-one-ucb": "ucb",
+    }
     if kind in turbo_one_acq:
         return _turbo_enn(
             ctx,
@@ -148,7 +160,13 @@ def _build_turbo_enn(ctx: _SimpleContext, kind: str):
             num_fit_candidates=None,
         )
     if kind == "morbo-enn":
-        return _turbo_enn(ctx, turbo_mode="turbo-enn", k=10, num_keep=ctx.num_keep_val, tr_type="morbo")
+        return _turbo_enn(
+            ctx,
+            turbo_mode="turbo-enn",
+            k=10,
+            num_keep=ctx.num_keep_val,
+            tr_type="morbo",
+        )
     assert False, ("Should not be reached", kind)
 
 

@@ -75,7 +75,9 @@ class Optimizer(OptimizerMultiObjectiveMixin):
         t_0 = time.time()
         policies = designer(self._data, num_arms, telemetry=self._telemetry)
         t_f = time.time()
-        dt_prop = t_f - t_0
+        dt_designer = t_f - t_0
+        dt_rollout_sim = self._telemetry.rollout_seconds()
+        dt_prop = max(0.0, dt_designer - dt_rollout_sim)
 
         data = []
         t_0 = time.time()
@@ -98,7 +100,7 @@ class Optimizer(OptimizerMultiObjectiveMixin):
                     self._noise_seed_viz = noise_seed
             data.append(Datum(designer, policy, None, traj))
         tf = time.time()
-        dt_eval = tf - t_0
+        dt_eval = (tf - t_0) + dt_rollout_sim
 
         return IterateResult(data=data, dt_prop=float(dt_prop), dt_eval=float(dt_eval))
 

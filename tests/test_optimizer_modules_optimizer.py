@@ -217,6 +217,33 @@ def test_optimizer_iterate_internal():
     mock_designer.assert_called_once()
 
 
+def test_optimizer_iterate_subtracts_rollout_from_dt_prop():
+    """Simulation time reported via Telemetry.set_dt_rollout must not count as proposal_dt."""
+    from unittest.mock import MagicMock
+
+    from common.collector import Collector
+    from optimizer.optimizer import Optimizer
+    from problems.env_conf import default_policy, get_env_conf
+
+    env_conf = get_env_conf("f:sphere-2d", problem_seed=42, noise_seed_0=18)
+    policy = default_policy(env_conf)
+    collector = Collector()
+    opt = Optimizer(collector, env_conf=env_conf, policy=policy, num_arms=1)
+
+    def _designer(data, num_arms, *, telemetry=None):
+        telemetry.set_dt_rollout(0.05)
+        return [policy]
+
+    mock_designer = MagicMock(side_effect=_designer)
+
+    data, dt_prop, dt_eval = opt._iterate(mock_designer, num_arms=1)
+
+    assert len(data) == 1
+    assert dt_prop < 0.2
+    assert dt_eval >= 0.05
+    mock_designer.assert_called_once()
+
+
 def test_optimizer_iterate_multiobjective():
     from unittest.mock import MagicMock
 

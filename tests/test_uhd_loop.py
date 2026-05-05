@@ -22,6 +22,8 @@ def test_run_prints_eval(capsys):
     assert len(lines) == 4
     assert "num_params = 10" in lines[0]
     assert "i_iter = 0" in lines[1]
+    assert "proposal_dt =" in lines[1]
+    assert "eval_dt =" in lines[1]
     assert "mu =" in lines[1]
     assert "se =" in lines[1]
     assert "y_best =" in lines[1]

@@ -113,13 +113,17 @@ class UHDLoop(UHDLoopSupportMixin):
         t0 = time.perf_counter()
         num_done = 0
         for i_iter in range(self._num_iterations):
+            t_prop0 = time.perf_counter()
             self._maybe_select_seed()
             self._uhd.ask()
+            proposal_dt = time.perf_counter() - t_prop0
             if self._enn_minus_imputer is not None and self._uhd.positive_phase:
                 # The perturbation for this pair is fully defined by (seed, sigma).
                 self._enn_minus_imputer.begin_pair(seed=self._uhd.step_seed, sigma=self._uhd.step_sigma)
             phase_is_pos = self._uhd.positive_phase
+            t_eval0 = time.perf_counter()
             mu, se = self._eval_phase(phase_is_pos=phase_is_pos)
+            eval_dt = time.perf_counter() - t_eval0
             self._uhd.tell(mu, se)
             if phase_is_pos and self._enn_seed_selector is not None:
                 self._enn_seed_selector.tell_mu_plus(mu_plus=float(mu))
@@ -144,6 +148,8 @@ class UHDLoop(UHDLoopSupportMixin):
                 self._print_log_block(
                     i_iter=i_iter,
                     last_iter=last_iter,
+                    proposal_dt=proposal_dt,
+                    eval_dt=eval_dt,
                     y_best_str=y_best_str,
                     acc=acc,
                     mean_param=mean_param,

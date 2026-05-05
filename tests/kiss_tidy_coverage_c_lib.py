@@ -25,7 +25,7 @@ def _botorch_modules(monkeypatch, *, empty_front: bool):
         def compute(self, front):
             return 0.0 if empty_front else float(torch.sum(front).item())
 
-    pareto_mod.is_non_dominated = lambda y: torch.zeros(y.shape[0], dtype=torch.bool) if empty_front else torch.ones(y.shape[0], dtype=torch.bool)
+    pareto_mod.is_non_dominated = lambda y: (torch.zeros(y.shape[0], dtype=torch.bool) if empty_front else torch.ones(y.shape[0], dtype=torch.bool))
     hv_mod.Hypervolume = Hypervolume
     mo.hypervolume = hv_mod
     mo.pareto = pareto_mod
@@ -144,7 +144,16 @@ def run_uhd_enn_mixins(_monkeypatch):
     def _nz(_s, _sig):
         return np.array([0], dtype=np.int64), np.array([1.0], dtype=np.float32)
 
-    cfg = ENNImputerConfig(d=8, s=2, warmup_real_obs=1, fit_interval=10**9, k=3, embedder="gather", target="mu_minus", min_calib_points=0)
+    cfg = ENNImputerConfig(
+        d=8,
+        s=2,
+        warmup_real_obs=1,
+        fit_interval=10**9,
+        k=3,
+        embedder="gather",
+        target="mu_minus",
+        min_calib_points=0,
+    )
     imp = Comb()
     imp._module = m
     imp._cfg = cfg
@@ -173,7 +182,17 @@ def run_uhd_enn_mixins(_monkeypatch):
     imp.tell_real(mu=0.25, phase="minus")
     imp.choose_seed_ucb(base_seed=0, sigma=0.1)
     imp.update_base_after_step(step_scale=1.0, sigma=0.1)
-    cfgd = ENNImputerConfig(d=16, s=2, warmup_real_obs=0, fit_interval=1, k=3, num_candidates=3, target="delta", min_calib_points=0, embedder="direction")
+    cfgd = ENNImputerConfig(
+        d=16,
+        s=2,
+        warmup_real_obs=0,
+        fit_interval=1,
+        k=3,
+        num_candidates=3,
+        target="delta",
+        min_calib_points=0,
+        embedder="direction",
+    )
     imp2 = Comb()
     imp2._module = m
     imp2._cfg = cfgd
@@ -254,8 +273,27 @@ def run_uhd_loop_support(capsys):
     m1, s1 = lo._maybe_compute_param_stats()
     assert m1 is not None
     assert lo._maybe_update_accuracy(i_iter=4, last_iter=5, acc=None) is not None
-    assert "EVAL" in lo._format_eval_line(i_iter=0, y_best_str="1", mu=0.0, se=0.1, acc=0.2, mean_param=m1, std_param=s1)
-    lo._print_log_block(i_iter=0, last_iter=5, y_best_str="1", acc=0.1, mean_param=m1, std_param=s1)
+    assert "EVAL" in lo._format_eval_line(
+        i_iter=0,
+        proposal_dt=0.0001,
+        eval_dt=0.0002,
+        y_best_str="1",
+        mu=0.0,
+        se=0.1,
+        acc=0.2,
+        mean_param=m1,
+        std_param=s1,
+    )
+    lo._print_log_block(
+        i_iter=0,
+        last_iter=5,
+        proposal_dt=0.0001,
+        eval_dt=0.0002,
+        y_best_str="1",
+        acc=0.1,
+        mean_param=m1,
+        std_param=s1,
+    )
     assert not lo._should_early_reject(mu_plus=2.0)
     lo._early_reject_mode = "ema"
     assert not lo._should_early_reject(mu_plus=2.0)
@@ -263,7 +301,16 @@ def run_uhd_loop_support(capsys):
     assert lo._should_early_reject(mu_plus=-1.0) in (True, False)
     lo._update_early_reject_state(mu_plus=0.5)
     lo._enn_minus_imputer = None
-    lo._print_log_block(i_iter=0, last_iter=1, y_best_str="1", acc=None, mean_param=None, std_param=None)
+    lo._print_log_block(
+        i_iter=0,
+        last_iter=1,
+        proposal_dt=0.0,
+        eval_dt=0.0,
+        y_best_str="1",
+        acc=None,
+        mean_param=None,
+        std_param=None,
+    )
     lo._early_reject_mode = "bad"
     with pytest.raises(ValueError):
         lo._should_early_reject(mu_plus=0.0)
@@ -311,7 +358,15 @@ def run_dm_pixel_env_conf(monkeypatch):
     env.step(np.zeros((2,), dtype=np.float32))
     env.close()
     from problems.dm_control_pixel_wrapper import PixelObsWrapper, make_dm_control
-    from problems.dm_control_spaces import BoxSpace, DictSpace, flatten_obs, is_gl_init_error, resize_pixels, spec_bounds, spec_to_space
+    from problems.dm_control_spaces import (
+        BoxSpace,
+        DictSpace,
+        flatten_obs,
+        is_gl_init_error,
+        resize_pixels,
+        spec_bounds,
+        spec_to_space,
+    )
 
     fe = dce.DMControlEnv("cheetah", "run", render_mode="rgb_array", seed=0)
     monkeypatch.setattr(fe, "_env", _FakeDM())
@@ -338,8 +393,14 @@ def run_dm_pixel_env_conf(monkeypatch):
     assert resize_pixels(img, 10, 10).shape == (10, 10, 3)
     assert resize_pixels(img, 5, 5).shape == (5, 5, 3)
     assert is_gl_init_error(Exception("gladLoadGL failed")) and not is_gl_init_error(Exception("other"))
-    from problems.env_conf_backends import maybe_register_atari_dm_backends, register_with_env_conf
-    from problems.env_conf_bindings import get_atari_dm_bindings, register_atari_dm_bindings_loader
+    from problems.env_conf_backends import (
+        maybe_register_atari_dm_backends,
+        register_with_env_conf,
+    )
+    from problems.env_conf_bindings import (
+        get_atari_dm_bindings,
+        register_atari_dm_bindings_loader,
+    )
     from problems.env_conf_parse import parse_tag_options
     from problems.env_conf_rl import resolve_rl_model_defaults
     from problems.env_conf_types import GymConf
@@ -355,7 +416,12 @@ def run_dm_pixel_env_conf(monkeypatch):
     assert pend == "pend" and not fn2
     assert isinstance(resolve_rl_model_defaults("cheetah", algo="ppo"), dict)
     assert GymConf(max_steps=10).max_steps == 10
-    from problems.pixel_policies_encoders import init_linear_and_conv, nature_cnn_encoder, obs_space_from_env_conf, tiny_atari_cnn_encoder
+    from problems.pixel_policies_encoders import (
+        init_linear_and_conv,
+        nature_cnn_encoder,
+        obs_space_from_env_conf,
+        tiny_atari_cnn_encoder,
+    )
 
     with pytest.raises(ValueError):
         obs_space_from_env_conf(SimpleNamespace(state_space=None))
@@ -389,8 +455,22 @@ def run_reactor_policy_params():
         contact_idx=np.array([0, 1], dtype=np.int64),
         hazard_idx=np.array([0], dtype=np.int64),
     )
-    q = SimpleNamespace(_num_fsm_states=1, _obs_dim=1, _memory_dim=1, _action_dim=1, _delta_hidden_dim=1, _delta_feat_dim=1, _target_feat_dim=1)
-    rpp.init_indices(q, joint_angle_idx=None, joint_vel_idx=None, contact_idx=np.array([0, 1], dtype=np.int64), hazard_idx=np.array([0], dtype=np.int64))
+    q = SimpleNamespace(
+        _num_fsm_states=1,
+        _obs_dim=1,
+        _memory_dim=1,
+        _action_dim=1,
+        _delta_hidden_dim=1,
+        _delta_feat_dim=1,
+        _target_feat_dim=1,
+    )
+    rpp.init_indices(
+        q,
+        joint_angle_idx=None,
+        joint_vel_idx=None,
+        contact_idx=np.array([0, 1], dtype=np.int64),
+        hazard_idx=np.array([0], dtype=np.int64),
+    )
     n = rpp.compute_num_params(q)
     q._num_params = n
     rpp.set_derived(q, np.zeros(n, dtype=np.float64))

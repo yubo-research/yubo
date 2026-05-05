@@ -178,7 +178,7 @@ def test_cov_batches_worker_run_batch_run(tmp_path):
 
 
 def test_cov_experiment_cli_local_main(monkeypatch, tmp_path):
-    from experiments.experiment import cli, local, main
+    from experiments.experiment import cli, local
 
     runner = CliRunner()
 
@@ -193,7 +193,7 @@ def test_cov_experiment_cli_local_main(monkeypatch, tmp_path):
     res = runner.invoke(cli, ["local", str(toml)])
     assert res.exit_code == 0
 
-    _ = local, main
+    _ = local
 
 
 def test_cov_fit_mnist():

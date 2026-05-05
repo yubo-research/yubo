@@ -44,6 +44,8 @@ class UHDLoopSupportMixin:
         self,
         *,
         i_iter: int,
+        proposal_dt: float,
+        eval_dt: float,
         y_best_str: str,
         mu: float,
         se: float,
@@ -51,7 +53,10 @@ class UHDLoopSupportMixin:
         mean_param: float | None,
         std_param: float | None,
     ) -> str:
-        line = f"EVAL: i_iter = {i_iter} sigma = {self._uhd.sigma:.6f} mu = {mu:.4f} se = {se:.4f} y_best = {y_best_str}"
+        line = (
+            f"EVAL: i_iter = {i_iter} proposal_dt = {proposal_dt:.6f} eval_dt = {eval_dt:.6f} "
+            f"sigma = {self._uhd.sigma:.6f} mu = {mu:.4f} se = {se:.4f} y_best = {y_best_str}"
+        )
         if mean_param is not None and std_param is not None:
             line += f" mean_param = {mean_param:.6f} std_param = {std_param:.4f}"
         if acc is not None:
@@ -63,6 +68,8 @@ class UHDLoopSupportMixin:
         *,
         i_iter: int,
         last_iter: int,
+        proposal_dt: float,
+        eval_dt: float,
         y_best_str: str,
         acc: float | None,
         mean_param: float | None,
@@ -71,6 +78,8 @@ class UHDLoopSupportMixin:
         print(
             self._format_eval_line(
                 i_iter=i_iter,
+                proposal_dt=proposal_dt,
+                eval_dt=eval_dt,
                 y_best_str=y_best_str,
                 mu=self._uhd.mu_avg,
                 se=self._uhd.se_avg,

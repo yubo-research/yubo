@@ -66,12 +66,14 @@ def _parse_eval_lines(log_text: str) -> list[dict]:
             else:
                 i += 1
         if "i_iter" in d and "mu" in d:
+            dt_prop = float(d["proposal_dt"]) if "proposal_dt" in d else 0.0
+            dt_eval = float(d["eval_dt"]) if "eval_dt" in d else 0.0
             records.append(
                 {
                     "i_iter": int(d["i_iter"]),
                     "rreturn": float(d["mu"]),
-                    "dt_prop": 0.0,
-                    "dt_eval": 0.0,
+                    "dt_prop": dt_prop,
+                    "dt_eval": dt_eval,
                 }
             )
     return records

@@ -8,6 +8,7 @@ _SIMPLE_BUILDERS = {
     "optuna": partial(_b._build_policy_ctor, module="optimizer.optuna_designer", name="OptunaDesigner"),
     "ax": partial(_b._build_policy_ctor, module="optimizer.ax_designer", name="AxDesigner"),
     "random": partial(_b._build_policy_ctor, module="optimizer.random_designer", name="RandomDesigner"),
+    "ppo": _b._build_ppo,
     "smac": partial(_b._build_policy_ctor, module="optimizer.smac_designer", name="SMACDesigner"),
     "sobol": partial(_b._build_policy_ctor, module="optimizer.sobol_designer", name="SobolDesigner"),
     "lhd": partial(_b._build_policy_ctor, module="optimizer.lhd_designer", name="LHDDesigner"),

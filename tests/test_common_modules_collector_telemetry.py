@@ -49,6 +49,8 @@ class TestTelemetry:
         t = Telemetry()
         assert t._dt_fit is None
         assert t._dt_select is None
+        assert t._dt_rollout is None
+        assert t.rollout_seconds() == 0.0
 
     def test_set_dt_fit(self):
         from common.telemetry import Telemetry

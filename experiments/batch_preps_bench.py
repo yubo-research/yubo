@@ -115,7 +115,7 @@ def prep_turbo_ackley_repro(results_dir):
     # )
 
     # Ran manually with:
-    # ./experiments/experiment.py --exp-dir=result-repro --env-tag=g:ackley-200d --num-arms=100 --num-rounds=100 --num-reps=10 --opt-name=turbo
+    # ./ops/experiment.py local <config.toml>  # BO experiment CLI lives under ops/
     # And again with --opt_name=   cma, pts, random, sobol
     # TuRBO took about four days.
     # PTS took about eight days.

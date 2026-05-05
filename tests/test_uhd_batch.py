@@ -71,15 +71,19 @@ def test_parse_eval_lines_basic():
 
     log = textwrap.dedent("""\
         UHD-Simple: num_params = 455306, optimizer = mezo
-        EVAL: i_iter = 0 sigma = 0.001000 mu = -2.3270 se = 0.0037 y_best = -2.3270
-        EVAL: i_iter = 50 sigma = 0.001000 mu = -2.3024 se = 0.0039 y_best = -2.2976 test_acc = 0.0972
+        EVAL: i_iter = 0 proposal_dt = 0.000012 eval_dt = 0.000020 sigma = 0.001000 mu = -2.3270 se = 0.0037 y_best = -2.3270
+        EVAL: i_iter = 50 proposal_dt = 0.000015 eval_dt = 0.000025 sigma = 0.001000 mu = -2.3024 se = 0.0039 y_best = -2.2976 test_acc = 0.0972
     """)
     records = _parse_eval_lines(log)
     assert len(records) == 2
     assert records[0]["i_iter"] == 0
     assert records[0]["rreturn"] == pytest.approx(-2.3270)
+    assert records[0]["dt_prop"] == pytest.approx(1.2e-5)
+    assert records[0]["dt_eval"] == pytest.approx(2.0e-5)
     assert records[1]["i_iter"] == 50
     assert records[1]["rreturn"] == pytest.approx(-2.3024)
+    assert records[1]["dt_prop"] == pytest.approx(1.5e-5)
+    assert records[1]["dt_eval"] == pytest.approx(2.5e-5)
 
 
 def test_parse_eval_lines_empty():
@@ -87,6 +91,29 @@ def test_parse_eval_lines_empty():
 
     assert _parse_eval_lines("no eval lines here\n") == []
     assert _parse_eval_lines("") == []
+
+
+def test_parse_eval_lines_legacy_missing_timing_fields():
+    """Older logs omit proposal_dt and/or eval_dt; missing keys default to 0."""
+    from ops.uhd_batch import _parse_eval_lines
+
+    cases = [
+        (
+            "EVAL: i_iter = 0 sigma = 0.001000 mu = -1.0 se = 0.0 y_best = -1.0\n",
+            0.0,
+            0.0,
+        ),
+        (
+            "EVAL: i_iter = 0 proposal_dt = 0.00001 sigma = 0.001000 mu = -1.0 se = 0.0 y_best = -1.0\n",
+            1e-5,
+            0.0,
+        ),
+    ]
+    for log, exp_prop, exp_eval in cases:
+        records = _parse_eval_lines(log)
+        assert len(records) == 1
+        assert records[0]["dt_prop"] == pytest.approx(exp_prop)
+        assert records[0]["dt_eval"] == pytest.approx(exp_eval)
 
 
 def test_write_trace(tmp_path):
@@ -178,7 +205,7 @@ def test_experiment_dir_deterministic(tmp_path):
 # Modal function tests (mocked)
 # ---------------------------------------------------------------------------
 
-_FAKE_EVAL = "EVAL: i_iter = 0 sigma = 0.001 mu = -2.33 se = 0.01 y_best = -2.33\n"
+_FAKE_EVAL = "EVAL: i_iter = 0 proposal_dt = 0.000001 eval_dt = 0.000002 sigma = 0.001 mu = -2.33 se = 0.01 y_best = -2.33\n"
 
 
 def test_uhd_batch_worker():

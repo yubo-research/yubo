@@ -126,8 +126,12 @@ def _run_simple_iterations(
     t0 = time.perf_counter()
     acc = None
     for i in range(num_rounds):
+        t_prop0 = time.perf_counter()
         uhd.ask()
+        proposal_dt = time.perf_counter() - t_prop0
+        t_eval0 = time.perf_counter()
         mu, se = evaluate_fn()
+        eval_dt = time.perf_counter() - t_eval0
         uhd.tell(mu, se)
 
         if not _should_log_simple(i, num_rounds, log_interval):
@@ -136,7 +140,9 @@ def _run_simple_iterations(
         y_str = f"{y_best:.4f}" if y_best is not None else "N/A"
         if accuracy_fn is not None and (acc is None or i == num_rounds - 1 or (accuracy_interval > 0 and i % accuracy_interval == 0)):
             acc = accuracy_fn()
-        line = f"EVAL: i_iter = {i} sigma = {uhd.sigma:.6f} mu = {mu:.4f} se = {se:.4f} y_best = {y_str}"
+        line = (
+            f"EVAL: i_iter = {i} proposal_dt = {proposal_dt:.6f} eval_dt = {eval_dt:.6f} sigma = {uhd.sigma:.6f} mu = {mu:.4f} se = {se:.4f} y_best = {y_str}"
+        )
         if acc is not None:
             line += f" test_acc = {acc:.4f}"
         print(line)

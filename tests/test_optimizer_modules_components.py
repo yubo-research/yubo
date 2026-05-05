@@ -378,6 +378,17 @@ def test_turbo_e_n_n_designer_init():
     assert ted._k == 10
 
 
+def test_ppo_designer_registered_under_opt_name_ppo():
+    from optimizer.designers import Designers
+    from optimizer.ppo_designer import PPODesigner
+    from problems.problem import build_problem
+
+    problem = build_problem("pend", "actor-critic-mlp-16-8", problem_seed=0, noise_seed_0=0)
+    policy = problem.build_policy()
+    designer = Designers(policy, num_arms=1, env_conf=problem.env).create("ppo")
+    assert isinstance(designer, PPODesigner)
+
+
 def test_m_t_s_designer_init():
     from optimizer.mts_designer import MTSDesigner
     from problems.env_conf import default_policy, get_env_conf

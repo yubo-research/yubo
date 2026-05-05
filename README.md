@@ -36,3 +36,15 @@ export KMP_DUPLICATE_LIB_OK=TRUE
 export OMP_NUM_THREADS=1
 ```
 I don't recommend this, however, as it may slow things down.
+
+---
+
+## Examples
+
+From the repository root (with `PYTHONPATH` set to the repo so imports resolve):
+
+```bash
+./ops/experiment.py local configs/demo/turbo_enn.toml
+./ops/experiment.py local configs/demo/ppo.toml
+./ops/exp_uhd.py local configs/demo/mezo.toml
+```
