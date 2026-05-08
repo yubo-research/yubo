@@ -3,7 +3,10 @@
 from typing import Any
 
 _EXPORTS: dict[str, tuple[str, str]] = {
-    "_RUN_OTHERS_NONFAIL_CELLS": ("experiments.batch_preps_timing", "_RUN_OTHERS_NONFAIL_CELLS"),
+    "_RUN_OTHERS_NONFAIL_CELLS": (
+        "experiments.batch_preps_timing",
+        "_RUN_OTHERS_NONFAIL_CELLS",
+    ),
     "prep_ant": ("experiments.batch_preps_rl_sweeps", "prep_ant"),
     "prep_bw": ("experiments.batch_preps_rebuttal", "prep_bw"),
     "prep_cum_time_dim": ("experiments.batch_preps_bench", "prep_cum_time_dim"),
@@ -26,10 +29,14 @@ _EXPORTS: dict[str, tuple[str, str]] = {
     "prep_sweep_q": ("experiments.batch_preps_bench", "prep_sweep_q"),
     "prep_timing_sweep": ("experiments.batch_preps_timing", "prep_timing_sweep"),
     "prep_tlunar": ("experiments.batch_preps_rebuttal", "prep_tlunar"),
+    "prep_validate": ("experiments.batch_preps_rebuttal", "prep_validate"),
     "prep_ts_hd": ("experiments.batch_preps_bench", "prep_ts_hd"),
     "prep_ts_sweep": ("experiments.batch_preps_bench", "prep_ts_sweep"),
     "prep_turbo_abl": ("experiments.batch_preps_timing", "prep_turbo_abl"),
-    "prep_turbo_ackley_repro": ("experiments.batch_preps_bench", "prep_turbo_ackley_repro"),
+    "prep_turbo_ackley_repro": (
+        "experiments.batch_preps_bench",
+        "prep_turbo_ackley_repro",
+    ),
 }
 __all__ = list(_EXPORTS.keys())
 

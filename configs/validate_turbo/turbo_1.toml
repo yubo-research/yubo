@@ -1,0 +1,9 @@
+[experiment]
+exp_dir = "results/validate_turbo"
+env_tag = "tlunar:fn"
+policy_tag = "turbo-lunar"
+opt_name = "turbo-1"
+num_arms = 50
+num_rounds = 30
+num_denoise = 50
+num_reps = 10

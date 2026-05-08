@@ -76,6 +76,19 @@ def test_prep_tlunar():
         _assert_policy_tag_present(cmds)
 
 
+def test_prep_validate():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        cmds = _bp.prep_validate(tmpdir)
+        _assert_policy_tag_present(cmds)
+        assert len(cmds) == 3
+        assert {c.opt_name for c in cmds} == {"random", "turbo-one", "turbo-1"}
+        assert all(c.env_tag == "tlunar:fn" for c in cmds)
+        assert all(c.policy_tag == "turbo-lunar" for c in cmds)
+        assert all(c.num_arms == 50 and c.num_rounds == 30 and c.num_reps == 10 for c in cmds)
+        assert all(c.num_denoise == 50 for c in cmds)
+        assert all(f"{tmpdir}/validate_turbo" in c.exp_dir for c in cmds)
+
+
 def test_prep_hop():
     with tempfile.TemporaryDirectory() as tmpdir:
         cmds = _bp.prep_hop(tmpdir)

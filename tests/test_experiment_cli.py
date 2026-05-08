@@ -215,6 +215,51 @@ def test_load_experiment_config_overrides(tmp_path):
     assert cfg.env_tag == "f:sphere-2d"
 
 
+@pytest.mark.parametrize(
+    "opt_in_toml, overrides",
+    [
+        ("turbo-enn", None),
+        ("random", {"opt_name": "turbo-enn"}),
+    ],
+)
+def test_load_experiment_config_opt_name_turbo_enn_forbidden(tmp_path, opt_in_toml, overrides):
+    toml_path = _write_toml(
+        tmp_path,
+        f"""
+        [experiment]
+        exp_dir = "_tmp/exp"
+        env_tag = "f:sphere-2d"
+        opt_name = "{opt_in_toml}"
+        num_arms = 4
+        num_rounds = 10
+        num_reps = 3
+        policy_tag = "pure-function"
+        """,
+    )
+    with pytest.raises(ValueError, match="opt_name 'turbo-enn'"):
+        load_experiment_config(config_toml_path=str(toml_path), overrides=overrides)
+
+
+def test_load_experiment_config_optimizer_table_name_turbo_enn_forbidden(tmp_path):
+    toml_path = _write_toml(
+        tmp_path,
+        """
+        [experiment]
+        exp_dir = "_tmp/exp"
+        env_tag = "f:sphere-2d"
+        num_arms = 4
+        num_rounds = 10
+        num_reps = 3
+        policy_tag = "pure-function"
+
+        [optimizer]
+        name = "turbo-enn"
+        """,
+    )
+    with pytest.raises(ValueError, match="opt_name 'turbo-enn'"):
+        load_experiment_config(config_toml_path=str(toml_path))
+
+
 def test_cli_local_override_opt_name(monkeypatch, tmp_path):
     calls = _install_stub_experiment_sampler(monkeypatch)
     toml_path = _write_toml(

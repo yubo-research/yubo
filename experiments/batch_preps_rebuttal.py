@@ -4,7 +4,14 @@ from experiments.batch_preps_core import prep_args_1
 def _rebuttal_prep_cmds(results_dir, exp_dir, opts, loops, problem_base):
     cmds = []
     for opt in opts:
-        for num_arms, num_rounds, num_reps, num_denoise, num_denoise_passive, fn in loops:
+        for (
+            num_arms,
+            num_rounds,
+            num_reps,
+            num_denoise,
+            num_denoise_passive,
+            fn,
+        ) in loops:
             if num_arms == 1 and opt == "cma":
                 continue
             cmds.append(
@@ -168,3 +175,27 @@ def prep_dna(results_dir):
         ],
         "dna",
     )
+
+
+def prep_validate(results_dir):
+    """Matches ``configs/validate_turbo/*.toml`` (tlunar:fn, turbo-lunar policy)."""
+    exp_dir = "validate_turbo"
+    opts = ["random", "turbo-one", "turbo-1"]
+    cmds = []
+    for opt in opts:
+        cmds.append(
+            prep_args_1(
+                results_dir,
+                exp_dir=exp_dir,
+                problem="tlunar:fn",
+                opt=opt,
+                num_arms=50,
+                num_replications=10,
+                num_rounds=30,
+                noise=None,
+                num_denoise=50,
+                num_denoise_passive=None,
+                policy_tag="turbo-lunar",
+            )
+        )
+    return cmds

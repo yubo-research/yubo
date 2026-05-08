@@ -9,6 +9,9 @@ from common.collector import Collector
 # Cumulative proposal-time budget for Modal timing sweep (``Optimizer._cum_dt_proposing``).
 TIMING_SWEEP_MAX_CUMULATIVE_PROPOSAL_SECONDS = 5 * 60 * 60
 
+# Legacy ambiguous designer label; use turbo-enn-p, turbo-enn-fit-ucb, etc.
+_DISALLOWED_EXPERIMENT_OPT_NAMES = frozenset({"turbo-enn"})
+
 
 class _SampleResult(NamedTuple):
     collector_log: Collector
@@ -108,10 +111,16 @@ class ExperimentConfig:
             )
         policy_tag = str(policy_tag)
 
+        opt_name = d["opt_name"]
+        if opt_name in _DISALLOWED_EXPERIMENT_OPT_NAMES:
+            raise ValueError(
+                "opt_name 'turbo-enn' is not supported; use a named variant such as turbo-enn-p, turbo-enn-fit-ucb, or turbo-enn-fit/acq_type=ucb."
+            )
+
         return cls(
             exp_dir=d["exp_dir"],
             env_tag=d["env_tag"],
-            opt_name=d["opt_name"],
+            opt_name=opt_name,
             num_arms=int(d["num_arms"]),
             num_rounds=num_rounds,
             total_timesteps=total_timesteps,

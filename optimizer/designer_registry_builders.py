@@ -112,8 +112,6 @@ def _build_turbo_ref(ctx: _SimpleContext, kind: str):
 
 
 def _build_turbo_enn(ctx: _SimpleContext, kind: str):
-    if kind == "turbo-enn":
-        return _turbo_enn(ctx, turbo_mode="turbo-enn", k=10, num_keep=ctx.num_keep_val)
     if kind == "turbo-enn-p":
         return _turbo_enn(
             ctx,
