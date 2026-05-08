@@ -183,6 +183,9 @@ def _parse_enn_cfg(enn: dict[str, object] | None) -> tuple[bool, ENNImputerConfi
                 "enn_select_interval": enn.select_interval,
                 "enn_embedder": enn.embedder,
                 "enn_gather_t": enn.gather_t,
+                "enn_err_ema_beta": enn.err_ema_beta,
+                "enn_max_abs_err_ema": enn.max_abs_err_ema,
+                "enn_min_calib_points": enn.min_calib_points,
             }
     enn = {} if enn is None else dict(enn)
     enabled = bool(enn.get("enn_minus_impute", False))
@@ -200,6 +203,9 @@ def _parse_enn_cfg(enn: dict[str, object] | None) -> tuple[bool, ENNImputerConfi
         select_interval=int(enn.get("enn_select_interval", 1)),
         embedder=str(enn.get("enn_embedder", "direction")),
         gather_t=int(enn.get("enn_gather_t", 64)),
+        err_ema_beta=float(enn.get("enn_err_ema_beta", 0.95)),
+        max_abs_err_ema=float(enn.get("enn_max_abs_err_ema", 0.25)),
+        min_calib_points=int(enn.get("enn_min_calib_points", 10)),
     )
     return enabled, cfg
 

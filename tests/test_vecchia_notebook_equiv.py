@@ -15,6 +15,7 @@ from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.means import ZeroMean
 from torch.quasirandom import SobolEngine
 
+
 if sys.platform == "darwin" and os.environ.get("YUBO_ALLOW_PYVECCH_ON_DARWIN") not in {
     "1",
     "true",

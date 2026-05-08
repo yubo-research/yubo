@@ -33,5 +33,16 @@ bash admin/setup-rl.sh --env-name my-env
 ## Quick verification
 
 ```bash
-micromamba run -n yubo-rl python -c "from rl.pufferlib_compat import import_pufferlib_modules; import_pufferlib_modules(); print('pufferlib ok')"
+python -c "from rl.pufferlib_compat import import_pufferlib_modules; import_pufferlib_modules(); print('pufferlib ok')"
 ```
+
+## HyperscaleES
+
+HyperscaleES-backed experiments use a separate CUDA-only environment so their
+JAX/LLM dependencies do not mutate `yubo-rl`.
+
+```bash
+bash admin/setup-hyperscalees.sh
+```
+
+See `admin/README-hyperscalees.md`.

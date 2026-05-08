@@ -1,0 +1,25 @@
+# Run: python -m experiments.experiment local configs/bo/eggroll/smoke/cartpole_v1_eggroll_smoke.toml
+
+[experiment]
+exp_dir = "runs/yubo_eggroll/smoke/cartpole_v1_eggroll"
+env_tag = "gymnax:CartPole-v1"
+policy_tag = "eggroll-ac-mlp-64x2-pqn"
+population = 4
+num_epochs = 1
+num_reps = 1
+runtime_device = "cuda"
+local_workers = 1
+b_trace = true
+
+[optimizer]
+name = "eggroll"
+
+[optimizer.params]
+noiser = "eggroll"
+sigma = 0.2
+rank = 1
+lr = 0.1
+optax = "sgd"
+steps = 10
+eval_episodes = 1
+use_batched_update = true

@@ -9,6 +9,7 @@ import pytest
 from ops import exp_uhd as _exp_uhd
 from ops.uhd_config import BEConfig, EarlyRejectConfig, ENNConfig, UHDConfig
 
+
 _ALL_TOML_KEYS = _exp_uhd._ALL_TOML_KEYS
 _BE_DEFAULTS = _exp_uhd._BE_DEFAULTS
 _ENN_DEFAULTS = _exp_uhd._ENN_DEFAULTS
@@ -23,6 +24,7 @@ _parse_cfg = _exp_uhd._parse_cfg
 _parse_early_reject_fields = _exp_uhd._parse_early_reject_fields
 _parse_enn_fields = _exp_uhd._parse_enn_fields
 _parse_perturb = _exp_uhd._parse_perturb
+_parse_perturb_spec = _exp_uhd._parse_perturb_spec
 _validate_required = _exp_uhd._validate_required
 
 
@@ -149,6 +151,9 @@ class TestENNConfig:
         assert cfg.select_interval == 1
         assert cfg.embedder == "direction"
         assert cfg.gather_t == 64
+        assert cfg.err_ema_beta == 0.95
+        assert cfg.max_abs_err_ema == 0.25
+        assert cfg.min_calib_points == 10
 
     def test_custom_values(self):
         """Test creating ENNConfig with custom values."""
@@ -167,6 +172,9 @@ class TestENNConfig:
             select_interval=10,
             embedder="probes",
             gather_t=128,
+            err_ema_beta=0.9,
+            max_abs_err_ema=0.75,
+            min_calib_points=3,
         )
         assert cfg.minus_impute is True
         assert cfg.d == 200
@@ -182,6 +190,9 @@ class TestENNConfig:
         assert cfg.select_interval == 10
         assert cfg.embedder == "probes"
         assert cfg.gather_t == 128
+        assert cfg.err_ema_beta == 0.9
+        assert cfg.max_abs_err_ema == 0.75
+        assert cfg.min_calib_points == 3
 
     def test_frozen_dataclass(self):
         """Test that ENNConfig is frozen (immutable)."""
@@ -261,6 +272,8 @@ class TestUHDConfig:
         assert cfg.env_tag == "mnist"
         assert cfg.policy_tag is None
         assert cfg.num_rounds == 1000
+        assert cfg.num_reps == 1
+        assert cfg.total_timesteps is None
         assert cfg.problem_seed == 42
         assert cfg.noise_seed_0 == 123
         assert cfg.lr == 0.001
@@ -463,6 +476,9 @@ class TestParseENNFields:
         assert result.select_interval == 1
         assert result.embedder == "direction"
         assert result.gather_t == 64
+        assert result.err_ema_beta == 0.95
+        assert result.max_abs_err_ema == 0.25
+        assert result.min_calib_points == 10
 
     def test_custom_values(self):
         """Test parsing with custom values."""
@@ -481,6 +497,9 @@ class TestParseENNFields:
             "enn_select_interval": 10,
             "enn_embedder": "probes",
             "enn_gather_t": 128,
+            "enn_err_ema_beta": 0.9,
+            "enn_max_abs_err_ema": 0.75,
+            "enn_min_calib_points": 3,
         }
         result = _parse_enn_fields(cfg)
         assert result.minus_impute is True
@@ -497,6 +516,9 @@ class TestParseENNFields:
         assert result.select_interval == 10
         assert result.embedder == "probes"
         assert result.gather_t == 128
+        assert result.err_ema_beta == 0.9
+        assert result.max_abs_err_ema == 0.75
+        assert result.min_calib_points == 3
 
     def test_partial_values(self):
         """Test parsing with some values set and others default."""
@@ -534,6 +556,14 @@ class TestParsePerturb:
         ndt, nmt = _parse_perturb("dense")
         assert ndt is None
         assert nmt is None
+        assert _parse_perturb_spec("dense") == ("flat", None, None)
+
+    def test_eggroll(self):
+        """Test parsing upstream EggRoll perturb materialization."""
+        ndt, nmt = _parse_perturb("eggroll")
+        assert ndt is None
+        assert nmt is None
+        assert _parse_perturb_spec("eggroll") == ("eggroll", None, None)
 
     def test_dim(self):
         """Test parsing 'dim:<n>' perturb."""
@@ -568,9 +598,12 @@ class TestParseCfg:
         assert result.env_tag == "mnist"
         assert result.policy_tag is None
         assert result.num_rounds == 100
+        assert result.num_reps == 1
+        assert result.total_timesteps is None
         assert result.problem_seed is None
         assert result.noise_seed_0 is None
         assert result.lr == 0.001  # default
+        assert result.perturb_backend == "flat"
         assert result.num_dim_target == 0.5  # default from "dim:0.5"
         assert result.num_module_target is None
         assert result.optimizer == "mezo"  # default
@@ -581,6 +614,7 @@ class TestParseCfg:
             "env_tag": "pend",
             "policy_tag": "some-policy",
             "num_rounds": 500,
+            "num_reps": 30,
             "problem_seed": 42,
             "noise_seed_0": 123,
             "lr": 0.01,
@@ -600,9 +634,12 @@ class TestParseCfg:
         assert result.env_tag == "pend"
         assert result.policy_tag == "some-policy"
         assert result.num_rounds == 500
+        assert result.num_reps == 30
+        assert result.total_timesteps is None
         assert result.problem_seed == 42
         assert result.noise_seed_0 == 123
         assert result.lr == 0.01
+        assert result.perturb_backend == "flat"
         assert result.num_dim_target is None
         assert result.num_module_target == 0.3
         assert result.log_interval == 10
@@ -616,6 +653,28 @@ class TestParseCfg:
         assert result.be.num_probes == 20
         assert result.enn.d == 200
         assert result.bszo_k == 4
+
+    def test_eggroll_perturb_config(self):
+        """Test parsing perturb='eggroll' with noiser materialization options."""
+        result = _parse_cfg(
+            {
+                "env_tag": "gymnax:CartPole-v1",
+                "policy_tag": "eggroll-ac-mlp-8x1-pqn",
+                "num_rounds": 10,
+                "perturb": "eggroll",
+                "eggroll_noiser": "eggroll",
+                "eggroll_rank": 2,
+                "eggroll_group_size": 4,
+                "eggroll_freeze_nonlora": True,
+            }
+        )
+        assert result.perturb_backend == "eggroll"
+        assert result.num_dim_target is None
+        assert result.num_module_target is None
+        assert result.eggroll_noiser == "eggroll"
+        assert result.eggroll_rank == 2
+        assert result.eggroll_group_size == 4
+        assert result.eggroll_freeze_nonlora is True
 
     def test_none_seeds_stay_none(self):
         """Test that None seeds stay None (not converted to int)."""
@@ -638,6 +697,78 @@ class TestParseCfg:
         }
         result = _parse_cfg(cfg)
         assert result.target_accuracy is None
+
+    def test_total_timesteps_derives_num_rounds_for_eggroll_mezo(self):
+        """Test deriving UHD eval rounds from an EggRoll total timestep budget."""
+        cfg = {
+            "env_tag": "gymnax:CartPole-v1",
+            "total_timesteps": 500_000_000,
+            "steps_per_episode": 500,
+            "eval_episodes": 8,
+            "optimizer": "mezo",
+        }
+        result = _parse_cfg(cfg)
+        assert result.total_timesteps == 500_000_000
+        assert result.num_rounds == 125_000
+
+    def test_total_timesteps_derives_num_rounds_for_eggroll_bszo(self):
+        """Test BSZO total timestep derivation accounts for base plus directions."""
+        cfg = {
+            "env_tag": "gymnax:CartPole-v1",
+            "total_timesteps": 1_000,
+            "steps_per_episode": 10,
+            "eval_episodes": 5,
+            "optimizer": "bszo",
+            "bszo_k": 4,
+        }
+        result = _parse_cfg(cfg)
+        assert result.num_rounds == 4
+
+    def test_total_timesteps_derives_num_rounds_for_pretrain_vector_objective(self):
+        """Test UHD accepts pretraining tags through the vector objective path."""
+        cfg = {
+            "env_tag": "pretrain:hyperscalees:gsm8k-7w3b",
+            "policy_tag": "hyperscalees-rwkv-7w3b-lora-r1",
+            "total_timesteps": 819_200,
+            "steps_per_episode": 1,
+            "eval_episodes": 1,
+            "optimizer": "mezo_be",
+        }
+        result = _parse_cfg(cfg)
+        assert result.num_rounds == 819_200
+        assert result.policy_tag == "hyperscalees-rwkv-7w3b-lora-r1"
+        assert result.pretrain_lora_only is True
+        assert result.pretrain_basis_max_leaves == 32
+
+    def test_pretrain_hyperscalees_overrides_parse(self):
+        """Test real HyperscaleES UHD-only knobs parse and validate."""
+        cfg = {
+            "env_tag": "pretrain:hyperscalees:gsm8k-7w3b",
+            "policy_tag": "hyperscalees-rwkv-7w3b-lora-r1",
+            "num_rounds": 1,
+            "pretrain_search_dim": 128,
+            "pretrain_delta_scale": 0.01,
+            "pretrain_generation_length": 64,
+            "pretrain_rwkv_type": "ScanRWKV",
+            "pretrain_lora_only": False,
+            "pretrain_basis_max_leaves": 0,
+        }
+        result = _parse_cfg(cfg)
+        assert result.pretrain_search_dim == 128
+        assert result.pretrain_delta_scale == 0.01
+        assert result.pretrain_generation_length == 64
+        assert result.pretrain_rwkv_type == "ScanRWKV"
+        assert result.pretrain_lora_only is False
+        assert result.pretrain_basis_max_leaves is None
+
+    def test_total_timesteps_only_rejects_non_eggroll_env(self):
+        """Test total_timesteps is not accepted when UHD cannot infer env-step cost."""
+        cfg = {
+            "env_tag": "mnist",
+            "total_timesteps": 1_000,
+        }
+        with pytest.raises(ValueError, match="UHD vector objective"):
+            _parse_cfg(cfg)
 
 
 class TestNormalizeKey:
@@ -697,11 +828,12 @@ class TestValidateRequired:
         _validate_required(cfg)  # Should not raise
 
     def test_missing_required_raises(self):
-        """Test validation raises when required keys are missing."""
-        cfg = {"env_tag": "mnist"}  # missing num_rounds
+        """Test validation raises when budget keys are missing."""
+        cfg = {"env_tag": "mnist"}  # missing num_rounds or total_timesteps
         with pytest.raises(ValueError) as exc_info:
             _validate_required(cfg)
         assert "num_rounds" in str(exc_info.value)
+        assert "total_timesteps" in str(exc_info.value)
 
     def test_missing_multiple_required_raises(self):
         """Test validation raises when multiple required keys are missing."""
@@ -709,7 +841,11 @@ class TestValidateRequired:
         with pytest.raises(ValueError) as exc_info:
             _validate_required(cfg)
         assert "env_tag" in str(exc_info.value)
-        assert "num_rounds" in str(exc_info.value)
+
+    def test_total_timesteps_budget_present(self):
+        """Test validation accepts total_timesteps instead of num_rounds."""
+        cfg = {"env_tag": "gymnax:CartPole-v1", "total_timesteps": 100}
+        _validate_required(cfg)
 
 
 class TestLoadTomlConfig:
@@ -722,6 +858,59 @@ class TestLoadTomlConfig:
         result = _load_toml_config(str(cfg_file))
         assert result["env_tag"] == "mnist"
         assert result["num_rounds"] == 100
+
+
+def test_exp_uhd_local_uses_config_num_reps(monkeypatch, tmp_path):
+    from click.testing import CliRunner
+
+    from ops.exp_uhd import cli
+
+    called = {}
+
+    def fake_batch_local(cfg, num_reps, results_dir, workers):
+        called.update(cfg=cfg, num_reps=num_reps, results_dir=results_dir, workers=workers)
+
+    monkeypatch.setattr("ops.uhd_batch._batch_local", fake_batch_local)
+    cfg_file = tmp_path / "cfg.toml"
+    cfg_file.write_text('[uhd]\nenv_tag = "f:sphere-2d"\nnum_rounds = 1\nnum_reps = 30\n')
+
+    result = CliRunner().invoke(cli, ["local", str(cfg_file), "--workers", "2", "--results-dir", str(tmp_path / "out")])
+
+    assert result.exit_code == 0, result.output
+    assert called["num_reps"] == 30
+    assert called["workers"] == 2
+
+
+def test_exp_uhd_local_batches_total_timesteps_budget(monkeypatch, tmp_path):
+    from click.testing import CliRunner
+
+    from ops.exp_uhd import cli
+
+    called = {}
+
+    def fake_batch_local(cfg, num_reps, results_dir, workers):
+        called.update(cfg=cfg, num_reps=num_reps, results_dir=results_dir, workers=workers)
+
+    monkeypatch.setattr("ops.uhd_batch._batch_local", fake_batch_local)
+    cfg_file = tmp_path / "cfg.toml"
+    cfg_file.write_text(
+        """
+[uhd]
+env_tag = "gymnax:CartPole-v1"
+policy_tag = "eggroll-ac-mlp-8x1-pqn"
+total_timesteps = 8000
+num_reps = 2
+steps_per_episode = 500
+eval_episodes = 8
+""".lstrip()
+    )
+
+    result = CliRunner().invoke(cli, ["local", str(cfg_file)])
+
+    assert result.exit_code == 0, result.output
+    assert called["num_reps"] == 2
+    assert called["cfg"]["total_timesteps"] == 8000
+    assert called["cfg"]["num_rounds"] == 2
 
     def test_uhd_section_config(self, tmp_path):
         """Test loading TOML config from [uhd] section."""
@@ -788,10 +977,13 @@ class TestDefaultConstants:
         assert isinstance(_ENN_DEFAULTS["enn_select_interval"], int)
         assert isinstance(_ENN_DEFAULTS["enn_embedder"], str)
         assert isinstance(_ENN_DEFAULTS["enn_gather_t"], int)
+        assert isinstance(_ENN_DEFAULTS["enn_err_ema_beta"], float)
+        assert isinstance(_ENN_DEFAULTS["enn_max_abs_err_ema"], float)
+        assert isinstance(_ENN_DEFAULTS["enn_min_calib_points"], int)
 
     def test_required_keys(self):
         """Test required keys are correct."""
-        assert _REQUIRED_TOML_KEYS == ("env_tag", "num_rounds")
+        assert _REQUIRED_TOML_KEYS == ("env_tag",)
 
     def test_all_toml_keys_completeness(self):
         """Test that _ALL_TOML_KEYS contains all required and optional keys."""

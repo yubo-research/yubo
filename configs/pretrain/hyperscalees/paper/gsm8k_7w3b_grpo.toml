@@ -1,0 +1,30 @@
+# Run: ./ops/hyperscalees_llm.py local configs/pretrain/hyperscalees/paper/gsm8k_7w3b_grpo.toml
+
+[experiment]
+exp_dir = "runs/yubo_hyperscalees/paper/gsm8k_7w3b_grpo"
+repo_dir = ".external/HyperscaleES"
+log_file = "hyperscalees.log"
+dry_run = false
+
+[hyperscalees]
+script = "do_grpo"
+
+[args]
+seed = 0
+model_choice = "7w3B"
+task = "gsm8k"
+num_epochs = 100
+parallel_generations_per_gpu = 1024
+generations_per_prompt = 4
+generation_length = 512
+validate_every = 10
+parallel_validations = 128
+validation_iterations = 10
+num_minibatches = 4
+wandb_directory = "runs/yubo_hyperscalees/paper/gsm8k_7w3b_grpo"
+wandb_mode = "offline"
+wandb_name = "gsm8k_7w3b_grpo"
+track = false
+
+[env.vars]
+XLA_PYTHON_CLIENT_PREALLOCATE = "false"

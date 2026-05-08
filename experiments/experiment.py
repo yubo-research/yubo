@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
+import tomllib
 from typing import Any
 
 import click
-import tomllib
 
 _BASE_REQUIRED_KEYS = (
     "exp_dir",
@@ -24,12 +24,16 @@ _OPTIONAL_KEYS = (
     "runtime_device",
     "local_workers",
 )
-_ALL_EXPERIMENT_KEYS = set(_BASE_REQUIRED_KEYS + _BUDGET_KEYS + _OPTIONAL_KEYS)
+_ALL_EXPERIMENT_KEYS = set(_BASE_REQUIRED_KEYS + _BUDGET_KEYS + _OPTIONAL_KEYS) | {"population", "num_epochs"}
 _OPTIMIZER_KEYS = {"name", "params"}
 
 
 def _normalize_key(key: str) -> str:
     return key.replace("-", "_")
+
+
+def _is_eggroll_optimizer(opt_name: Any) -> bool:
+    return str(opt_name or "").strip().split("/", 1)[0] == "eggroll"
 
 
 def _coerce_mapping_keys(raw: dict[str, Any], *, source: str) -> dict[str, Any]:
@@ -85,6 +89,18 @@ def _compose_opt_name_from_optimizer(raw_opt: dict[str, Any], *, source: str) ->
         value_text = _format_opt_value(value, key=norm_key)
         parts.append(f"{norm_key}={value_text}")
     return "/".join(parts)
+
+
+def _apply_eggroll_experiment_fields(cfg: dict[str, Any]) -> dict[str, Any]:
+    if not _is_eggroll_optimizer(cfg.get("opt_name")):
+        return cfg
+
+    out = dict(cfg)
+    if "population" in out:
+        out["num_arms"] = out.pop("population")
+    if "num_epochs" in out:
+        out["num_rounds"] = out.pop("num_epochs")
+    return out
 
 
 def _load_toml_config(path: str) -> dict[str, Any]:
@@ -143,6 +159,7 @@ def load_experiment_config(*, config_toml_path: str, overrides: dict[str, Any] |
     cfg = _load_toml_config(config_toml_path)
     if overrides:
         cfg = {**cfg, **overrides}
+    cfg = _apply_eggroll_experiment_fields(cfg)
     _validate_required(cfg)
     return ExperimentConfig.from_dict(cfg)
 

@@ -7,6 +7,7 @@ from functools import lru_cache
 
 import torch
 
+
 _VALID_PRECISION_MODES = {"auto", "fp32", "bf16"}
 
 

@@ -13,6 +13,7 @@ from rl.pufferlib.offpolicy import model_utils as offpolicy_model_utils
 
 from .config import SACConfig
 
+
 ActorNet = offpolicy_model_utils.ActorNet
 QNet = offpolicy_model_utils.QNet
 QNetPixel = offpolicy_model_utils.QNetPixel

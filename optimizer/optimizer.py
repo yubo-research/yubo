@@ -1,5 +1,6 @@
 """Black-box optimizers; `env_conf` is an `EnvironmentRuntime` (or compatible)."""
 
+import inspect
 import sys
 import time
 
@@ -11,6 +12,7 @@ from .datum import Datum
 from .opt_trajectories import collect_denoised_trajectory, evaluate_for_best
 from .optimizer_types import IterateResult, ReturnSummary, TraceEntry
 from .trajectories import collect_trajectory
+
 
 _INTERACTIVE_DEBUG = False
 _SHOW_EVERY_N_ITER = 30
@@ -99,6 +101,11 @@ class Optimizer:
 
     def _iterate(self, designer, num_arms):
         self._telemetry.reset()
+        custom_iterate_declared = inspect.getattr_static(designer, "iterate", None)
+        custom_iterate = getattr(designer, "iterate", None) if custom_iterate_declared is not None else None
+        if callable(custom_iterate):
+            return custom_iterate(self._data, num_arms, telemetry=self._telemetry)
+
         t_0 = time.time()
         policies = designer(self._data, num_arms, telemetry=self._telemetry)
         t_f = time.time()

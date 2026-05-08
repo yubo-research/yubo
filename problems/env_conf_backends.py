@@ -6,6 +6,7 @@ from typing import Any, Callable
 
 from problems.env_conf_policies import resolve_atari_policy_class, resolve_dm_control_policy_class
 
+
 _DM_POLICY_VARIANTS = frozenset({"gauss", "rl-gauss"})
 _ATARI_POLICY_VARIANTS = frozenset({"agent57", "gauss", "mlp16"})
 
@@ -110,5 +111,9 @@ def load_atari_dm_bindings() -> AtariDMBindings:
 
 def register_with_env_conf() -> None:
     from problems.env_conf import register_atari_dm_bindings_loader
+    from problems.environment_spec import (
+        register_atari_dm_bindings_loader as register_environment_spec_bindings_loader,
+    )
 
     register_atari_dm_bindings_loader(load_atari_dm_bindings)
+    register_environment_spec_bindings_loader(load_atari_dm_bindings)

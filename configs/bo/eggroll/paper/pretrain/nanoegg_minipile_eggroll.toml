@@ -1,0 +1,27 @@
+# Run: python -m experiments.experiment local configs/bo/eggroll/paper/pretrain/nanoegg_minipile_eggroll.toml
+# Paper companion to configs/pretrain/nanoegg/paper/minipile_pop8192_batch16.toml.
+# Runtime: requires the real NanoEgg pretraining objective surface.
+
+[experiment]
+exp_dir = "runs/yubo_eggroll/paper/pretrain/nanoegg_minipile_eggroll"
+env_tag = "pretrain:nanoegg:minipile-int8-6l256d"
+policy_tag = "nanoegg-int8-6l-256d"
+population = 8192
+num_epochs = 5000
+num_reps = 30
+runtime_device = "cuda"
+local_workers = 1
+b_trace = true
+
+[optimizer]
+name = "eggroll"
+
+[optimizer.params]
+noiser = "eggroll"
+sigma = 0.001
+rank = 1
+lr = 0.001
+optax = "adamw"
+steps = 1
+eval_episodes = 1
+use_batched_update = true

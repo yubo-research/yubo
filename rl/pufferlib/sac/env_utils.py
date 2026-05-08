@@ -9,6 +9,7 @@ from rl.pufferlib.offpolicy import env_utils as _impl
 from ...pufferlib_compat import import_pufferlib_modules
 from ..vector_env import make_vector_env as _make_vector_env_common
 
+
 ObservationSpec = _impl.ObservationSpec
 EnvSetup = _impl.EnvSetup
 seed_everything = _impl.seed_everything

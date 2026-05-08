@@ -1,0 +1,24 @@
+# Run: python -m experiments.experiment local configs/bo/eggroll/paper/rl/navix_fourrooms_eggroll.toml
+# Paper: Table 32, navix/Navix-FourRooms-v0 EGGROLL.
+
+[experiment]
+exp_dir = "runs/yubo_eggroll/paper/rl/navix_fourrooms_eggroll"
+env_tag = "navix:Navix-FourRooms-v0"
+policy_tag = "eggroll-ac-mlp-256x3-pqn"
+population = 2048
+num_epochs = 1216
+num_reps = 10
+runtime_device = "cuda"
+local_workers = 1
+b_trace = true
+
+[optimizer]
+name = "eggroll"
+
+[optimizer.params]
+noiser = "eggroll"
+sigma = 0.05
+rank = 4
+lr = 0.01
+optax = "sgd"
+use_batched_update = true

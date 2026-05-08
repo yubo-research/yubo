@@ -3,6 +3,7 @@ from typing import NamedTuple
 import numpy as np
 from scipy.stats import truncnorm
 
+
 _exactly_match_old_way = True
 
 

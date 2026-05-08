@@ -4,6 +4,7 @@ import modal
 
 from ops.uhd_config import EarlyRejectConfig
 
+
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
 _PROJECT_DIRS = ("ops", "optimizer", "problems", "common", "sampling", "embedding")
 _ENN_ROOT = _PROJECT_ROOT.parents[0] / "enn"

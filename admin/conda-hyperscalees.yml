@@ -1,0 +1,10 @@
+channels:
+  - conda-forge
+  - pkgs/main
+dependencies:
+  - python=3.12
+  - pip
+  - git
+  - git-lfs
+  - c-compiler
+  - cxx-compiler

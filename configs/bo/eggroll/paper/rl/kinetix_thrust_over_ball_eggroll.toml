@@ -1,0 +1,24 @@
+# Run: python -m experiments.experiment local configs/bo/eggroll/paper/rl/kinetix_thrust_over_ball_eggroll.toml
+# Paper: Table 29, kinetix/s/h1_thrust_over_ball EGGROLL.
+
+[experiment]
+exp_dir = "runs/yubo_eggroll/paper/rl/kinetix_thrust_over_ball_eggroll"
+env_tag = "kinetix:s/h1_thrust_over_ball"
+policy_tag = "eggroll-ac-mlp-256x3-pqn"
+population = 512
+num_epochs = 4808
+num_reps = 10
+runtime_device = "cuda"
+local_workers = 1
+b_trace = true
+
+[optimizer]
+name = "eggroll"
+
+[optimizer.params]
+noiser = "eggroll"
+sigma = 0.5
+rank = 1
+lr = 0.1
+optax = "adamw"
+use_batched_update = true

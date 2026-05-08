@@ -10,6 +10,9 @@ from typing import Any, Callable
 
 import gymnasium as gym
 
+from problems.eggroll_env_adapters import EGGROLL_ADAPTER_ENV_PREFIXES, EGGROLL_ENV_PREFIXES
+
+
 _DM_CONTROL_DEFAULT_MAX_STEPS = 1000
 _ATARI_DEFAULT_MAX_STEPS = 108000
 _PURE_FUNCTION_MAX_STEPS = 1
@@ -36,6 +39,8 @@ def _get_atari_dm_bindings():
 def needs_atari_dm_bindings(env_tag: str) -> bool:
     """Return True if this env tag requires Atari/DM bindings to be registered."""
     tag, _, _ = parse_tag_options(str(env_tag), None)
+    if tag.startswith(EGGROLL_ENV_PREFIXES):
+        return False
     if tag.startswith(("dm:", "dm_control/", "atari:", "ALE/")):
         return True
     if tag in _dm_control_env_specs or tag in _atari_env_specs:
@@ -163,6 +168,10 @@ class EnvironmentRuntime:
                 max_episode_steps=int(max_steps),
                 preprocess=preprocess,
             )
+        elif _is_pretrain_uhd_objective(env_name):
+            raise RuntimeError("Pretraining UHD objective tags are evaluated by ops.exp_uhd, not by env.make().")
+        elif env_name.startswith(EGGROLL_ENV_PREFIXES):
+            raise RuntimeError("JAX environments are evaluated by JAX-backed designers such as 'eggroll', not by env.make().")
         elif spec.gym_conf is not None:
             env = gym.make(env_name, **(kwargs | spec.kwargs))
         else:
@@ -191,6 +200,18 @@ class EnvironmentRuntime:
         if self.state_space is not None and self.action_space is not None:
             return
         spec = self.spec
+        if spec.env_name.startswith(EGGROLL_ADAPTER_ENV_PREFIXES):
+            try:
+                from problems.eggroll_env_adapters import resolve_eggroll_env_spaces
+            except ImportError as exc:
+                raise ImportError(
+                    "EggRoll JAX env tags require the separate HyperscaleES environment. "
+                    "Run admin/setup-hyperscalees.sh first, then use the plain python CLI from that environment."
+                ) from exc
+            spaces = resolve_eggroll_env_spaces(spec.env_name)
+            self.state_space = spaces.observation_space
+            self.action_space = spaces.action_space
+            return
         if spec.gym_conf is not None and spec.gym_conf.state_space is not None and self.action_space is not None:
             self.state_space = spec.gym_conf.state_space
             return
@@ -200,6 +221,12 @@ class EnvironmentRuntime:
             spec.gym_conf.state_space = self.state_space
         self.action_space = env.action_space
         env.close()
+
+
+def _is_pretrain_uhd_objective(env_name: str) -> bool:
+    from problems.pre_obj import is_hyperscalees_pretrain_env, is_nanoegg_pretrain_env
+
+    return is_hyperscalees_pretrain_env(env_name) or is_nanoegg_pretrain_env(env_name)
 
 
 def _gym_spec(
@@ -226,6 +253,9 @@ def get_environment_spec(env_tag: str) -> EnvironmentSpec:
         return copy.deepcopy(_dm_control_env_specs[tag])
     if tag in _atari_env_specs:
         return copy.deepcopy(_atari_env_specs[tag])
+
+    if tag.startswith(EGGROLL_ENV_PREFIXES):
+        return EnvironmentSpec(tag, max_steps=_DEFAULT_MAX_STEPS)
 
     pix_only = True
     if tag.startswith("dm:") or tag.startswith("dm_control/"):

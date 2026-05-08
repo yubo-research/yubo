@@ -12,6 +12,7 @@ import torch.optim as optim
 
 from .config import PufferPPOConfig, TrainResult
 
+
 __all__ = ["PufferPPOConfig", "TrainResult", "register", "train_ppo_puffer", "train_ppo_puffer_impl"]
 
 

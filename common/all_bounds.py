@@ -1,6 +1,7 @@
 import numpy as np
 from gymnasium.spaces import Box
 
+
 x_low = -1.0
 x_high = 1.0
 x_width = x_high - x_low

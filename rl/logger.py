@@ -8,6 +8,7 @@ from typing import Any
 from common.console import PPO_METRICS, SAC_METRICS, print_iteration_log, print_iteration_simple, print_run_footer, print_run_header, register_algo_metrics
 from rl.checkpointing import append_jsonl
 
+
 __all__ = [
     "PPO_METRICS",
     "SAC_METRICS",

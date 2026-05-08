@@ -44,3 +44,7 @@ unfixable = []
 # Allow unused variables when underscore-prefixed.
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 extend-select = ["I"]
+
+[lint.isort]
+lines-after-imports = 2
+extra-standard-library = ["tomllib"]

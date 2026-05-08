@@ -7,6 +7,7 @@ import numpy as np
 
 from rl.core.continuous_actions import normalize_action_bounds
 
+
 ObsMode = Literal["vector", "pixels"]
 ActionKind = Literal["discrete", "continuous"]
 

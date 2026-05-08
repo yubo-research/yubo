@@ -23,6 +23,15 @@ def _init_linear_and_conv(module: nn.Module, *, gain: float) -> None:
                 nn.init.zeros_(m.bias)
 
 
+def _to_float_pixels(x: torch.Tensor) -> torch.Tensor:
+    if not torch.is_floating_point(x):
+        return x.to(dtype=torch.float32).div(255.0)
+    x = x.to(dtype=torch.float32)
+    if x.numel() > 0 and float(x.detach().amax().cpu()) > 1.0:
+        return x.div(255.0)
+    return x
+
+
 def _tiny_atari_cnn_encoder(in_channels: int = 4) -> tuple[nn.Module, int]:
     """Tiny CNN for Atari: ~10k params. 4->4->8->8 convs, small head."""
     encoder = nn.Sequential(
@@ -109,13 +118,14 @@ class CNNMLPPolicy(PolicyParamsMixin, nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # x: (..., H, W, C) -> (..., C, H, W)
+        x = _to_float_pixels(x)
         if x.shape[-1] == 3:
             x = x.permute(*range(x.dim() - 3), -1, -3, -2)
         feats = self.encoder(x)
         return self.head(feats)
 
     def __call__(self, state):
-        # state: (H, W, C) numpy, float in [0,1] from collect_trajectory normalization
+        # state: (H, W, C) pixels, either uint8 [0,255] or float [0,1].
         state = torch.as_tensor(state, dtype=torch.float32)
         if state.dim() == 3:
             state = state.unsqueeze(0)

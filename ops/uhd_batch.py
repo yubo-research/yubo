@@ -2,8 +2,8 @@
 """Batch UHD runs: local multiprocessing or Modal.
 
 Usage:
-  ./ops/uhd_batch.py local  <config.toml> --num-reps N [--workers W] [--results-dir DIR]
-  ./ops/uhd_batch.py modal  <config.toml> --num-reps N [--results-dir DIR]
+  ./ops/uhd_batch.py local  <config.toml> [--num-reps N] [--workers W] [--results-dir DIR]
+  ./ops/uhd_batch.py modal  <config.toml> [--num-reps N] [--results-dir DIR]
   ./ops/uhd_batch.py collect [--results-dir DIR]
   ./ops/uhd_batch.py status
   ./ops/uhd_batch.py cleanup
@@ -19,7 +19,8 @@ from pathlib import Path
 
 import click
 
-_HASH_EXCLUDE = frozenset({"problem_seed", "noise_seed_0"})
+
+_HASH_EXCLUDE = frozenset({"problem_seed", "noise_seed_0", "num_reps"})
 _DEFAULT_RESULTS = "results/uhd"
 _APP_NAME = "yubo_uhd_batch"
 
@@ -78,10 +79,11 @@ def _parse_eval_lines(log_text: str) -> list[dict]:
                 i += 3
             else:
                 i += 1
-        if "i_iter" in d and "mu" in d:
+        iter_key = "i_iter" if "i_iter" in d else "step" if "step" in d else None
+        if iter_key is not None and "mu" in d:
             records.append(
                 {
-                    "i_iter": int(d["i_iter"]),
+                    "i_iter": int(d[iter_key]),
                     "rreturn": float(d["mu"]),
                     "dt_prop": 0.0,
                     "dt_eval": 0.0,
@@ -94,16 +96,25 @@ def _run_subprocess(cfg: dict) -> tuple[str, int]:
     """Run exp_uhd.py local with a temp TOML. Returns (stdout, returncode)."""
     fd, tmp = tempfile.mkstemp(suffix=".toml")
     try:
+        cfg = {k: v for k, v in cfg.items() if k != "num_reps"}
         with os.fdopen(fd, "w") as f:
             f.write(_dict_to_toml(cfg))
-        result = subprocess.run(
-            [sys.executable, "-u", "ops/exp_uhd.py", "local", tmp],
-            capture_output=True,
+        proc = subprocess.Popen(
+            [sys.executable, "-u", "-m", "ops.exp_uhd", "local", tmp],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             text=True,
         )
-        if result.returncode != 0:
-            print(f"SUBPROCESS ERROR:\n{result.stderr}", file=sys.stderr)
-        return result.stdout, result.returncode
+        stdout_lines: list[str] = []
+        assert proc.stdout is not None
+        for line in proc.stdout:
+            stdout_lines.append(line)
+            print(line, end="", flush=True)
+        stderr = proc.stderr.read() if proc.stderr is not None else ""
+        rc = proc.wait()
+        if rc != 0:
+            print(f"SUBPROCESS ERROR:\n{stderr}", file=sys.stderr)
+        return "".join(stdout_lines), rc
     finally:
         os.unlink(tmp)
 
@@ -132,6 +143,14 @@ def _load_toml(path: str) -> dict:
         data = tomllib.load(f)
     section = data.get("uhd", data)
     return {k.replace("-", "_"): v for k, v in section.items()}
+
+
+def _resolve_num_reps(cfg: dict, cli_num_reps: int | None) -> int:
+    value = cfg.get("num_reps", 1) if cli_num_reps is None else cli_num_reps
+    num_reps = int(value)
+    if num_reps < 1:
+        raise click.BadParameter("num_reps must be >= 1")
+    return num_reps
 
 
 # ---- Local batch ----
@@ -345,21 +364,21 @@ cli = _cli
 
 @_cli.command(name="local")
 @click.argument("config_toml", type=click.Path(exists=True, dir_okay=False, path_type=str))
-@click.option("--num-reps", type=int, required=True, help="Number of replications")
+@click.option("--num-reps", type=int, default=None, help="Number of replications; overrides [uhd].num_reps")
 @click.option("--workers", type=int, default=1, help="Parallel workers")
 @click.option("--results-dir", type=str, default=_DEFAULT_RESULTS, help="Results directory")
-def local_cmd(config_toml: str, num_reps: int, workers: int, results_dir: str) -> None:
+def local_cmd(config_toml: str, num_reps: int | None, workers: int, results_dir: str) -> None:
     cfg = _load_toml(config_toml)
-    _batch_local(cfg, num_reps, results_dir, workers)
+    _batch_local(cfg, _resolve_num_reps(cfg, num_reps), results_dir, workers)
 
 
 @_cli.command(name="modal")
 @click.argument("config_toml", type=click.Path(exists=True, dir_okay=False, path_type=str))
-@click.option("--num-reps", type=int, required=True, help="Number of replications")
+@click.option("--num-reps", type=int, default=None, help="Number of replications; overrides [uhd].num_reps")
 @click.option("--results-dir", type=str, default=_DEFAULT_RESULTS, help="Results directory")
-def modal_cmd(config_toml: str, num_reps: int, results_dir: str) -> None:
+def modal_cmd(config_toml: str, num_reps: int | None, results_dir: str) -> None:
     cfg = _load_toml(config_toml)
-    _batch_modal(cfg, num_reps, results_dir)
+    _batch_modal(cfg, _resolve_num_reps(cfg, num_reps), results_dir)
 
 
 @_cli.command(name="collect")

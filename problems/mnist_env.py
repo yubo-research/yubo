@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -8,7 +10,8 @@ from problems.mnist_classifier import MnistClassifier
 
 from .mnist_types import StepResult as _StepResult
 
-_MNIST_ROOT = "data/mnist"
+
+_MNIST_ROOT = str(Path(__file__).resolve().parents[1] / "data" / "mnist")
 
 
 def _mnist_transform():

@@ -1,0 +1,40 @@
+# Run:
+# ./ops/exp_uhd.py local configs/uhd/text/deepscaler_qwen3_4b_mezo_be.toml
+
+[uhd]
+env_tag = "llm:math:deepscaler40k"
+policy_tag = "qwen3-4b-base-lora-r1"
+num_rounds = 600
+num_reps = 1
+
+optimizer = "mezo_be"
+lr = 0.00015
+sigma = 0.0007
+perturb = "dim:0.25"
+
+text_search_dim = 768
+text_delta_scale = 0.35
+text_basis_max_tensors = 96
+
+max_tokens = 1024
+temperature = 0.0
+samples_per_prompt = 1
+prompt_batch_size = 8
+pass_at_k = false
+
+tensor_parallel_size = 1
+num_engines = 1
+sub_dataset_size = 4096
+problem_seed = 1
+noise_seed_0 = 1
+seed_offset = 0
+
+be_num_probes = 96
+be_num_candidates = 16
+be_warmup = 50
+be_fit_interval = 10
+be_enn_k = 35
+be_sigma_range = [0.0001, 0.0012]
+
+enn_minus_impute = false
+log_interval = 1

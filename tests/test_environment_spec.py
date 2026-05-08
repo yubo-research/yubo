@@ -111,6 +111,44 @@ def test_get_environment_spec_unknown_returns_direct():
     assert spec.env_name == "custom-unknown-env"
 
 
+def test_get_environment_spec_pretrain_eggroll_tag():
+    from problems.pre_obj import resolve_hyperscalees_pretrain_spec
+    from problems.uhd_obj import supports_uhd_vector_objective
+    from problems.eggroll_env_adapters import supports_eggroll_env
+    from problems.environment_spec import get_environment_spec
+
+    env_tag = "pretrain:hyperscalees:gsm8k-7w3b"
+    spec = get_environment_spec(env_tag)
+    pretrain = resolve_hyperscalees_pretrain_spec(env_tag)
+
+    assert supports_eggroll_env(env_tag) is False
+    assert supports_uhd_vector_objective(env_tag) is True
+    assert spec.env_name == env_tag
+    assert pretrain.task == "gsm8k"
+    assert pretrain.model_choice == "7w3B"
+
+    dynamic_env_tag = "pretrain:hyperscalees:zebra_puzzles-7g0p4b"
+    dynamic_spec = get_environment_spec(dynamic_env_tag)
+    dynamic_pretrain = resolve_hyperscalees_pretrain_spec(dynamic_env_tag)
+
+    assert supports_eggroll_env(dynamic_env_tag) is False
+    assert supports_uhd_vector_objective(dynamic_env_tag) is True
+    assert dynamic_spec.env_name == dynamic_env_tag
+    assert dynamic_pretrain.task == "zebra_puzzles"
+    assert dynamic_pretrain.model_choice == "7g0.4B"
+
+
+def test_pretrain_uhd_objective_tags_do_not_materialize_envs():
+    import pytest
+
+    from problems.environment_spec import get_environment_spec, materialize_env
+
+    runtime = materialize_env(get_environment_spec("pretrain:nanoegg:minipile-int8-6l256d"))
+
+    with pytest.raises(RuntimeError, match="evaluated by ops.exp_uhd"):
+        runtime.make()
+
+
 def test_materialize_env():
     from problems.environment_spec import EnvironmentSpec, materialize_env
 

@@ -1,0 +1,38 @@
+# Run:
+# python -m ops.exp_uhd local configs/uhd/eggroll/paper/rl/cartpole_v1_mezo_be.toml
+#
+# Behavior-embedding ENN MeZO companion to:
+# configs/bo/eggroll/paper/rl/cartpole_v1_eggroll.toml
+#
+# Budget matches the CartPole EggRoll paper config by real policy-evaluation
+# env steps:
+#   num_rounds is derived as total_timesteps / (8 eval episodes * 500 steps)
+#
+# This is the BE-ENN seed-selection variant, not ENN minus-imputation.
+
+[uhd]
+env_tag = "gymnax:CartPole-v1"
+policy_tag = "eggroll-ac-mlp-256x3-pqn"
+total_timesteps = 1e6
+num_reps = 30
+optimizer = "mezo_be"
+lr = 0.1
+sigma = 0.2
+perturb = "dense"
+steps_per_episode = 500
+eval_episodes = 8
+deterministic_policy = false
+problem_seed = 0
+noise_seed_0 = 0
+seed_offset = 0
+log_interval = 100
+
+# Behavior probes define the embedding. The BE optimizer fits an ENN on these
+# embeddings and uses the fitted model to select candidate MeZO directions.
+be_num_probes = 64
+be_num_candidates = 32
+be_warmup = 512
+be_fit_interval = 100
+be_enn_k = 32
+
+enn_minus_impute = false

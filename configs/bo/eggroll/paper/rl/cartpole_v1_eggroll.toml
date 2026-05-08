@@ -1,0 +1,30 @@
+# Run: python -m experiments.experiment local configs/bo/eggroll/paper/rl/cartpole_v1_eggroll.toml
+# Paper: Table 17, CartPole-v1 EGGROLL.
+
+[experiment]
+exp_dir = "runs/yubo_eggroll/paper/rl/cartpole_v1_eggroll"
+env_tag = "gymnax:CartPole-v1"
+policy_tag = "eggroll-ac-mlp-256x3-pqn"
+population = 2048
+num_epochs = 487
+num_reps = 30
+runtime_device = "cuda"
+local_workers = 1
+b_trace = true
+
+[optimizer]
+name = "eggroll"
+
+[optimizer.params]
+noiser = "eggroll"
+sigma = 0.2
+sigma_decay = 0.999
+rank = 4
+lr = 0.1
+lr_decay = 0.9995
+optax = "sgd"
+rank_transform = false
+deterministic_policy = false
+steps = 500
+eval_episodes = 8
+use_batched_update = true

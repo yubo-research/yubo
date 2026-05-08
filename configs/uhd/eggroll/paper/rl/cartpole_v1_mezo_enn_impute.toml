@@ -1,0 +1,53 @@
+# Run:
+# python -m ops.exp_uhd local configs/uhd/eggroll/paper/rl/cartpole_v1_mezo_enn_impute.toml
+#
+# Compute-matched UHD companion to:
+# configs/bo/eggroll/paper/rl/cartpole_v1_eggroll.toml
+#
+# EggRoll paper budget:
+#   num_arms = 2048
+#   eval_episodes = 8
+#   steps_per_episode = 500
+#   total_timesteps = 500000000
+#   one EggRoll optimizer round costs (2048 + 8) * 500 = 1028000 env steps
+#
+# UHD budget:
+#   one UHD policy evaluation costs 8 * 500 = 4000 env steps
+#   total_timesteps / 4000 env steps = 125000 derived UHD eval rounds
+#
+# ENN minus-imputation can reduce real environment evaluations below this cap.
+# This config is compute-comparable by the proposed policy-evaluation budget.
+
+[uhd]
+env_tag = "gymnax:CartPole-v1"
+policy_tag = "eggroll-ac-mlp-256x3-pqn"
+total_timesteps = 500000000
+num_reps = 30
+optimizer = "mezo"
+lr = 0.1
+sigma = 0.2
+perturb = "dense"
+steps_per_episode = 500
+eval_episodes = 8
+deterministic_policy = false
+problem_seed = 0
+noise_seed_0 = 0
+seed_offset = 0
+log_interval = 100
+
+# Behavior probes feed the JAX behavior embedding used by ENN minus-imputation.
+be_num_probes = 64
+
+enn_minus_impute = true
+enn_target = "delta"
+enn_d = 512
+enn_s = 4
+enn_jl_seed = 123
+enn_k = 32
+enn_fit_interval = 100
+enn_warmup_real_obs = 512
+enn_refresh_interval = 100
+enn_se_threshold = 0.5
+enn_err_ema_beta = 0.95
+enn_max_abs_err_ema = 1.0
+enn_min_calib_points = 64

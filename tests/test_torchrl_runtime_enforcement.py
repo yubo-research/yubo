@@ -3,6 +3,7 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
+
 _TORCHRL_BACKEND_DIR = Path(__file__).resolve().parents[1] / "rl" / "torchrl"
 _ALLOWED_SELECT_DEVICE_FILES = {
     "deps.py",

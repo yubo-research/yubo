@@ -2,6 +2,7 @@ from .designer_errors import NoSuchDesignerError
 from .designer_parse_types import ParsedOptions
 from .designer_types import DesignerSpec
 
+
 _GENERAL_OPT_KEYS = {"num_keep", "keep_style", "model_spec", "sample_around_best"}
 
 

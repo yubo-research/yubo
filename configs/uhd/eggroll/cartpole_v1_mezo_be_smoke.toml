@@ -1,0 +1,20 @@
+# Run: python -m ops.exp_uhd local configs/uhd/eggroll/cartpole_v1_mezo_be_smoke.toml
+
+[uhd]
+env_tag = "gymnax:CartPole-v1"
+policy_tag = "eggroll-ac-mlp-8x1-pqn"
+num_rounds = 4
+optimizer = "mezo_be"
+lr = 0.001
+sigma = 0.001
+perturb = "dense"
+steps_per_episode = 10
+eval_episodes = 1
+deterministic_policy = false
+log_interval = 1
+
+be_num_probes = 4
+be_num_candidates = 3
+be_warmup = 2
+be_fit_interval = 2
+be_enn_k = 2

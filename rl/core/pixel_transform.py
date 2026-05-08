@@ -4,6 +4,7 @@ import torch
 from torchrl.data import UnboundedContinuous
 from torchrl.envs.transforms import Transform
 
+
 _INT_IMAGE_DTYPES = (torch.uint8, torch.int8, torch.int16, torch.int32, torch.int64)
 
 

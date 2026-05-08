@@ -46,6 +46,21 @@ def _create_optimizer_py(bounds, config, rng):
     return create_optimizer(bounds=bounds, config=config, rng=rng)
 
 
+def _coerce_num_candidates(num_candidates):
+    if num_candidates is None or callable(num_candidates):
+        return num_candidates
+    if isinstance(num_candidates, bool):
+        raise ValueError("num_candidates must be an int or callable")
+    n = int(num_candidates)
+    if n <= 0:
+        raise ValueError(f"num_candidates must be positive, got {num_candidates}")
+
+    def _constant_num_candidates(*, num_dim, num_arms):
+        return n
+
+    return _constant_num_candidates
+
+
 class TurboENNDesigner(Designer):
     def __init__(
         self,
@@ -123,7 +138,7 @@ class TurboENNDesigner(Designer):
         raise ValueError(f"Invalid tr_type: {self._tr_type}")
 
     def _make_config(self, num_init: int, num_metrics: int | None):
-        num_candidates = self._num_candidates
+        num_candidates = _coerce_num_candidates(self._num_candidates)
         candidate_rv = self._parse_candidate_rv()
         trust_region = self._make_trust_region(num_metrics)
 
@@ -200,7 +215,7 @@ class TurboENNDesigner(Designer):
         # Debug: show which backend is being used
         opt_type = type(self._turbo).__name__
         backend = "Rust" if hasattr(self._turbo, "_inner") else "Python"
-        print(f"[TurboENNDesigner] Optimizer type: {opt_type} ({backend} backend)")
+        print(f"[{self.__class__.__name__}] Optimizer type: {opt_type} ({backend} backend)")
 
     def _resolve_num_metrics(self, data):
         num_metrics = self._num_metrics

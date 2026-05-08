@@ -1,0 +1,591 @@
+\documentclass[10pt]{article}
+
+\usepackage[margin=0.95in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage[scaled=0.95]{inconsolata}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage[colorlinks=true,linkcolor=blue!55!black,citecolor=blue!55!black,urlcolor=blue!55!black]{hyperref}
+\usepackage[nameinlink,noabbrev]{cleveref}
+
+\numberwithin{equation}{section}
+\setlength{\abovedisplayskip}{6pt}
+\setlength{\belowdisplayskip}{6pt}
+\setlength{\abovedisplayshortskip}{4pt}
+\setlength{\belowdisplayshortskip}{4pt}
+
+\newcommand{\TuRBO}{\textnormal{\texttt{TuRBO}}}
+\newcommand{\TurboOne}{\textnormal{\texttt{Turbo1}}}
+\newcommand{\TurboM}{\textnormal{\texttt{TurboM}}}
+\newcommand{\X}{\mathcal{X}}
+\newcommand{\OmegaD}{\X_D}
+\newcommand{\Dpos}{\mathcal{D}_{++}^{D}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\TR}{\mathcal{T}}
+\newcommand{\failtol}{\tau_{\mathrm{fail}}}
+\newcommand{\best}{f_{\mathrm{best}}}
+\newcommand{\indic}[1]{\mathbf{1}\!\left\{#1\right\}}
+\DeclareMathOperator{\diag}{diag}
+\DeclareMathOperator{\supp}{supp}
+\DeclareMathOperator{\Bern}{Bernoulli}
+\DeclareMathOperator{\Bin}{Binomial}
+\DeclareMathOperator{\Unif}{Unif}
+\DeclareMathOperator{\Vol}{Vol}
+\DeclareMathOperator{\GM}{GM}
+\DeclarePairedDelimiter{\norm}{\lVert}{\rVert}
+\DeclarePairedDelimiter{\abs}{\lvert}{\rvert}
+\DeclarePairedDelimiter{\card}{\lvert}{\rvert}
+\DeclarePairedDelimiter{\floor}{\lfloor}{\rfloor}
+\DeclarePairedDelimiter{\ceil}{\lceil}{\rceil}
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{corollary}{Corollary}
+
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\newtheorem{example}{Example}
+
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+
+\title{\vspace{-2.2em}Failure Tolerance in High-Dimensional \TuRBO{}}
+\author{}
+\date{\vspace{-1.2em}\today\vspace{-1.2em}}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Trust-region Bayesian optimization methods maintain a center \(x_k\), a local
+region \(\TR_k\), and a length parameter \(\Delta_k\).  The length parameter is
+shrunk when the local failure counter reaches a prescribed tolerance.  In the
+reference implementation of \TuRBO{} \cite{eriksson2019turbo,turboCode}, the
+number \(K_{k,c}\) of active RAASP mask coordinates satisfies
+\[
+  \mathbb{E}_D\!\left[K_{k,c}\right]=20+e^{-20}+O(D^{-1}),
+  \qquad D\to\infty .
+\]
+The failure tolerance is ambient-dimensional: a shrink can be triggered only
+after at least \(D\) evaluations are assigned through unsuccessful updates in
+the same region.  We formulate this scale separation in trust-region notation
+and prove
+\[
+  N_{\downarrow}(T)\le \floor*{\frac{T}{D}},
+\]
+where \(N_{\downarrow}(T)\) is the number of possible shrink events after
+\(T\) assigned evaluations.  Hence \(T<D\) implies
+\(N_{\downarrow}(T)=0\), even along an all-failure trajectory.
+\end{abstract}
+
+\section{Trust-Region State}
+
+Let
+\[
+  \OmegaD=[0,1]^D,
+  \qquad
+  \Dpos=\{\,\diag(w_1,\ldots,w_D):w_j>0\,\}.
+\]
+At local iteration \(k\), write the trust-region state as
+\begin{equation}
+  \mathsf S_k=(x_k,\Delta_k,W_k)
+  \in
+  \OmegaD\times(0,\infty)\times\Dpos .
+  \label{eq:tr-state}
+\end{equation}
+The scalar \(\Delta_k\) is the update variable; \(W_k\) fixes relative
+coordinate scales.  The induced weighted \(\ell_\infty\) region is
+\begin{equation}
+  \TR_k
+  =
+  \TR(\mathsf S_k)
+  =
+  \left\{
+    x\in\OmegaD:
+    \norm*{W_k^{-1}(x-x_k)}_\infty
+    \le
+    \frac{\Delta_k}{2}
+  \right\}.
+  \label{eq:trust-region}
+\end{equation}
+This is the standard trust-region object, specialized to the axis-aligned
+hyperrectangles used by \TuRBO{} \cite{conn2000trust,eriksson2019turbo}.
+
+In \TuRBO{}, \(W_k\) is determined by local GP lengthscales.  For
+\(\ell_k^{\mathrm{GP}}\in(0,\infty)^D\), define
+\begin{equation}
+  g_k
+  =
+  \left(\prod_{h=1}^{D}\ell_{k,h}^{\mathrm{GP}}\right)^{\frac{1}{D}},
+  \qquad
+  w_{k,j}
+  =
+  \frac{\ell_{k,j}^{\mathrm{GP}}}{g_k},
+  \qquad
+  W_k=\diag(w_{k,1},\ldots,w_{k,D}).
+  \label{eq:shape-matrix}
+\end{equation}
+Then
+\begin{equation}
+  \det W_k=1,
+  \qquad
+  L_{k,j}=\Delta_k w_{k,j},
+  \qquad
+  \GM(L_{k,1},\ldots,L_{k,D})=\Delta_k .
+  \label{eq:side-lengths}
+\end{equation}
+Away from boundary clipping, \(\Vol(\TR_k)=\prod_{j=1}^{D}L_{k,j}=\Delta_k^D\).
+ENN-surrogate \TuRBO{} uses the isotropic specialization \(W_k=I_D\).  Hence
+\(L_{k,j}=\Delta_k\) for every coordinate.
+
+\section{RAASP Candidate Support}
+
+\TuRBO{} generates a candidate cloud inside \(\TR_k\) by applying a random
+axis-aligned subspace perturbation (RAASP) to a base trust-region displacement.
+Write
+\[
+  [D]=\{1,\ldots,D\},
+  \qquad
+  e_j=(0,\ldots,0,1,0,\ldots,0)\in\{0,1\}^{D}.
+\]
+For candidate \(c\), let
+\begin{align}
+  u_{k,c}
+  &\in
+  \left[-\frac{\Delta_k}{2},\frac{\Delta_k}{2}\right]^D,
+  \label{eq:base-displacement}
+  \\
+  \bar b_{k,c,j}
+  &\stackrel{\mathrm{ind}}{\sim}\Bern(p_D),
+  \qquad j\in[D],
+  \label{eq:raw-mask}
+  \\
+  p_D
+  &=
+  \min\left\{\frac{20}{D},1\right\}.
+  \label{eq:mask-prob}
+\end{align}
+Set
+\begin{equation}
+  \bar Z_{k,c}=\sum_{j=1}^{D}\bar b_{k,c,j}.
+  \label{eq:raw-mask-size}
+\end{equation}
+The reference implementation then enforces a nonzero mask.  Equivalently, for
+an independent \(J_{k,c}\sim\Unif([D])\),
+\begin{equation}
+  b_{k,c}
+  =
+  \begin{cases}
+    \bar b_{k,c}, & \bar Z_{k,c}>0,\\
+    e_{J_{k,c}}, & \bar Z_{k,c}=0.
+  \end{cases}
+  \label{eq:corrected-mask}
+\end{equation}
+This is the RAASP correction used in the reference code \cite{turboOne}.
+Let \(\mathbb{P}_D\) denote the joint law of \((\bar b_{k,c},J_{k,c})\), and let
+\(\mathbb{E}_D\) denote expectation under \(\mathbb{P}_D\).  The proposed and realized steps
+below are conditional on the trust-region state \(\mathsf S_k\).
+The proposed and realized steps are
+\begin{align}
+  \tilde s_{k,c}
+  &=
+  W_k(b_{k,c}\odot u_{k,c}),
+  \label{eq:proposed-step}
+  \\
+  x_{k,c}
+  &=
+  \Pi_{\OmegaD}(x_k+\tilde s_{k,c}),
+  \qquad
+  s_{k,c}=x_{k,c}-x_k .
+  \label{eq:realized-step}
+\end{align}
+Thus \(\tilde s_{k,c}\) is the proposed step before clipping, and
+\(s_{k,c}\) is the realized step after projection onto \(\OmegaD\).  Boundary
+clipping can only remove active coordinates:
+\begin{equation}
+  \supp(s_{k,c})\subseteq\supp(\tilde s_{k,c}),
+  \qquad
+  \norm{s_{k,c}}_0\le\norm{\tilde s_{k,c}}_0 .
+  \label{eq:clipping-support}
+\end{equation}
+
+For \(s\in\R^D\), define
+\begin{equation}
+  A(s)=\supp(s)=\{j:s_j\ne0\},
+  \qquad
+  \norm{s}_0=\card{A(s)}.
+  \label{eq:active-set}
+\end{equation}
+The mask support and its scale are
+\begin{equation}
+  K_{k,c}=\norm{b_{k,c}}_0,
+  \qquad
+  \kappa_D=\mathbb{E}_D\!\left[K_{k,c}\right].
+  \label{eq:kappa-def}
+\end{equation}
+If \(u_{k,c,j}\ne0\) almost surely for every \(j\), then
+\begin{equation}
+  A(\tilde s_{k,c})=\{j:b_{k,c,j}=1\},
+  \qquad
+  \norm{\tilde s_{k,c}}_0=K_{k,c},
+  \label{eq:mask-step-support}
+\end{equation}
+because \(W_k\) has strictly positive diagonal entries.
+The generator is coordinate-sparse when \(\kappa_D=o(D)\), and
+constant-coordinate when \(\kappa_D=O(1)\).
+
+\begin{lemma}[Sparse-coordinate scale]
+Let \(K_D\) denote a generic draw from the distribution of \(K_{k,c}\).  Then
+\begin{equation}
+  K_D\stackrel{d}{=}\max\{1,Z_D\},
+  \qquad
+  Z_D\sim\Bin(D,p_D),
+  \label{eq:mask-dist}
+\end{equation}
+and
+\begin{equation}
+  \mathbb{E}_D\!\left[K_D\right] = Dp_D+(1-p_D)^D.
+  \label{eq:mask-mean}
+\end{equation}
+For \(D>20\),
+\begin{equation}
+  \mathbb{E}_D\!\left[K_D\right]
+  =
+  20+\left(1-\frac{20}{D}\right)^D
+  =
+  20+e^{-20}+O(D^{-1}).
+  \label{eq:mask-large-d}
+\end{equation}
+Equivalently,
+\[
+  \kappa_D=20+e^{-20}+O(D^{-1}),
+  \qquad
+  \frac{\kappa_D}{D}\to0 .
+\]
+\end{lemma}
+
+\begin{proof}
+Before correction,
+\[
+  Z_D=\sum_{j=1}^{D}\bar b_{k,c,j}\sim\Bin(D,p_D).
+\]
+The correction changes the cardinality only on \(\{Z_D=0\}\),
+where it sets the cardinality to one.  Therefore \(K_D=\max\{1,Z_D\}\), and
+\[
+  \mathbb{E}_D\!\left[K_D\right]
+  =
+  \mathbb{E}_D\!\left[Z_D\right]
+  +
+  \mathbb{P}_D\!\left\{Z_D=0\right\}
+  =
+  Dp_D+(1-p_D)^D.
+\]
+Substituting \(p_D=\frac{20}{D}\) gives \eqref{eq:mask-large-d}.
+\end{proof}
+
+ENN-surrogate \TuRBO{} uses the equivalent support-size representation: draw
+\(K_D=\max\{1,Z_D\}\), then choose \(K_D\) coordinates uniformly without
+replacement.  The support-cardinality law is the same as in
+\eqref{eq:corrected-mask}.
+
+Thus the candidate generator has active-coordinate scale
+\(\kappa_D=20+e^{-20}+O(D^{-1})=o(D)\).  The next section shows that the
+failure tolerance has scale at least \(D\).
+
+\section{Failure Counter and Shrink Rule}
+
+Now separate the trust-region update rule from the particular surrogate.  The
+surrogate and acquisition function decide which evaluations are successes; the
+following counting argument only uses the resulting success/failure sequence.
+Fix one region.  Let
+\[
+  C_k\in\N_0,
+  \qquad
+  a_k\in\N,
+  \qquad
+  \eta_k\in\{0,\ldots,a_k\},
+  \qquad
+  I_k\in\{0,1\},
+\]
+where \(C_k\) is the failure counter before update \(k\), \(a_k\) is the number
+of evaluations assigned to the region at update \(k\), \(\eta_k\) is the
+evaluation-normalized failure increment used by the implementation, and
+\(I_k=1\) denotes a successful update.  Define the pre-shrink counter
+\begin{equation}
+  C_{k+1}^{-}
+  =
+  (1-I_k)(C_k+\eta_k).
+  \label{eq:pre-shrink-counter}
+\end{equation}
+Given a failure tolerance \(\tau_D\), the shrink indicator is
+\begin{equation}
+  H_k
+  =
+  \indic{C_{k+1}^{-}\ge\tau_D}.
+  \label{eq:shrink-indicator}
+\end{equation}
+For a shrink factor \(\gamma_{\downarrow}\in(0,1)\), the length update is
+\begin{equation}
+  \Delta_{k+1}=\gamma_{\downarrow}^{H_k}\Delta_k .
+  \label{eq:shrink-update}
+\end{equation}
+Thus \(H_k=1\) shrinks the region and \(H_k=0\) leaves \(\Delta_k\) unchanged.
+The counter reset is
+\begin{equation}
+  C_{k+1}=(1-H_k)C_{k+1}^{-}.
+  \label{eq:post-shrink-counter}
+\end{equation}
+Thus \(\tau_D\) is the failure tolerance, measured in evaluations assigned to
+the region.  This is the scale to compare against \(\kappa_D\).
+
+\begin{theorem}[Shrink-count bound]
+Consider any counter-based trust-region method satisfying
+\(\tau_D\ge D\).  Let \(T\) be the number of evaluations assigned to a fixed
+region after initialization.  Put
+\begin{equation}
+  A_0=0,
+  \qquad
+  A_K=\sum_{k=1}^{K} a_k,
+  \qquad
+  K(T)=\max\{K\in\N_0:A_K\le T\},
+  \qquad
+  N_{\downarrow}(T)=\sum_{k=1}^{K(T)}H_k .
+  \label{eq:shrink-count}
+\end{equation}
+Then
+\begin{equation}
+  N_{\downarrow}(T)
+  \le
+  \floor*{\frac{T}{\tau_D}}
+  \le
+  \floor*{\frac{T}{D}} .
+  \label{eq:main-bound}
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+Let
+\[
+  F_T=\sum_{k=1}^{K(T)}(1-I_k)\eta_k .
+\]
+Then
+\[
+  F_T
+  \le
+  \sum_{k=1}^{K(T)}a_k
+  =
+  A_{K(T)}
+  \le
+  T .
+\]
+Every shrink event requires failure increments with total mass at least
+\(\tau_D\).  By \eqref{eq:post-shrink-counter}, the counter is reset after each
+shrink, so the increments certifying distinct shrink events are disjoint.  Hence
+\[
+  N_{\downarrow}(T)\tau_D\le F_T\le T.
+\]
+The first inequality in \eqref{eq:main-bound} follows.  The second follows from
+\(\tau_D\ge D\).
+\end{proof}
+
+\begin{corollary}[No shrink below ambient budget]
+If \(T<D\), then \(N_{\downarrow}(T)=0\).  Thus no failure-driven shrink
+can occur, even if every update is unsuccessful.
+\end{corollary}
+
+\section{\TuRBO{} Failure Tolerance}
+
+We now identify \(\tau_D\) for the reference \TuRBO{} rules.  This is the only
+place where implementation details enter the argument.  The official code uses
+the minimization convention: a batch is successful if it improves the local
+incumbent by the implementation tolerance
+\begin{equation}
+  y_k^{\min}=\min_{1\le i\le q} f(x_{k,i}),
+  \qquad
+  I_k=1
+  \quad\Longleftrightarrow\quad
+  y_k^{\min}
+  <
+  \best
+  -
+  10^{-3}\abs{\best}.
+  \label{eq:success}
+\end{equation}
+The exact success criterion only determines when the counter resets; the bound
+above holds for every success/failure sequence.
+
+\paragraph{\TurboOne.}
+With batch size \(q\), the reference single-region code uses the batch-level
+failure tolerance \cite{turboOne}
+\begin{equation}
+  \widehat{\tau}^{(1)}_D(q)
+  =
+  \ceil*{
+    \max\left\{\frac{4}{q},\frac{D}{q}\right\}
+  } .
+  \label{eq:turbo-one-failure-tolerance}
+\end{equation}
+In evaluation units this is
+\begin{equation}
+  \tau_D^{(1)}(q)
+  =
+  q\widehat{\tau}^{(1)}_D(q)
+  \ge D
+  \label{eq:turbo-one-evaluation-threshold}
+\end{equation}
+Thus one shrink requires at least \(\tau_D^{(1)}(q)\) evaluations assigned
+through unsuccessful batches.
+
+\paragraph{ENN-surrogate \TuRBO.}
+In ENN-surrogate \TuRBO{} with batch size \(q\), the trust-region failure
+clock is batch-level:
+\begin{equation}
+  \widehat{\tau}^{(\mathrm{ENN})}_D(q)
+  =
+  \ceil*{
+    \max\left\{\frac{4}{q},\frac{D}{q}\right\}
+  } .
+  \label{eq:turbo-enn-failure-tolerance}
+\end{equation}
+Under full-batch updates, each unsuccessful update assigns \(q\) evaluations to
+the region.  The evaluation threshold is
+\begin{equation}
+  \tau_D^{(\mathrm{ENN})}(q)
+  =
+  q\widehat{\tau}^{(\mathrm{ENN})}_D(q)
+  \ge D .
+  \label{eq:turbo-enn-evaluation-threshold}
+\end{equation}
+The shrink-count bound therefore applies unchanged to ENN-surrogate \TuRBO{} in
+the full-batch regime.
+
+\paragraph{\TurboM.}
+The reference multi-region code counts failures by evaluations assigned to each
+region and uses \cite{turboM}
+\begin{equation}
+  \tau_D^{(m)}=\max\{5,D\}.
+  \label{eq:turbo-m-failure-tolerance}
+\end{equation}
+Therefore \(\tau_D^{(m)}=D\) for \(D\ge5\).
+
+\begin{corollary}[\TuRBO{} shrink bound]
+For \TurboOne{}, ENN-surrogate \TuRBO{} under full-batch updates, and
+\TurboM{}, in dimensions \(D\ge5\), a trust region receiving \(T\)
+post-initialization evaluations satisfies
+\begin{equation}
+  N_{\downarrow}(T)
+  \le
+  \floor*{\frac{T}{D}} .
+  \label{eq:turbo-bound}
+\end{equation}
+\end{corollary}
+
+\section{Consequences}
+
+The reference rule shrinks by \(\gamma_{\downarrow}=\frac{1}{2}\).  If a region
+starts at \(\Delta_0\) and restarts once \(\Delta_k<\Delta_{\min}\), then the
+number of shrink events required for one restart is
+\begin{equation}
+  h_{\mathrm{restart}}
+  =
+  \min\{h\in\N:\Delta_0 2^{-h}<\Delta_{\min}\}
+  =
+  \floor*{\log_2\!\left(\frac{\Delta_0}{\Delta_{\min}}\right)}+1.
+  \label{eq:restart-height}
+\end{equation}
+With the reference defaults \(\Delta_0=0.8\) and \(\Delta_{\min}=2^{-7}\),
+\[
+  h_{\mathrm{restart}}=7,
+  \qquad
+  T_{\mathrm{restart}}
+  \ge
+  h_{\mathrm{restart}}\tau_D
+  \ge
+  7D .
+\]
+Thus a default restart requires at least \(7D\) evaluations assigned through
+unsuccessful updates in the same region.
+
+The mathematical point is the scale separation
+\begin{equation}
+  \kappa_D
+  =
+  \mathbb{E}_D\!\left[K_{k,c}\right]
+  =
+  20+e^{-20}+O(D^{-1}),
+  \qquad
+  \tau_D\ge D.
+  \label{eq:scale-separation}
+\end{equation}
+Equivalently,
+\begin{equation}
+  \frac{\kappa_D}{D}\to0,
+  \qquad
+  \frac{\tau_D}{D}\ge1,
+  \qquad
+  \frac{\tau_D}{\kappa_D}\to\infty .
+  \label{eq:normalized-separation}
+\end{equation}
+The proposed candidate step is low-support in ambient coordinates; the realized
+step after clipping has no larger support by \eqref{eq:clipping-support}.  The
+length update, however, waits for an ambient-dimensional number of assigned
+evaluations in unsuccessful updates.  Hence the failure-driven length update
+cannot be triggered whenever the per-region budget \(T\) is below \(D\).  This
+is not a claim that \TuRBO{} is ineffective in all high-dimensional problems;
+it is a statement about the ambient-dimensional failure tolerance in the regime
+\(T<D\).
+
+\begin{example}
+If \(D=100{,}000\) and a region receives \(T=10{,}000\) evaluations, then
+\(N_{\downarrow}(T)=0\) under the reference rule, even along an all-failure
+trajectory.  A default restart requires on the order of \(700{,}000\) assigned
+evaluations in unsuccessful updates in that same region.
+\end{example}
+
+\begin{remark}
+The ENN surrogate changes the local model and candidate ranking, but not the two
+scales isolated above: the RAASP support remains constant-coordinate, and under
+full-batch updates the failure-driven length update remains ambient-dimensional.
+\end{remark}
+
+\begin{thebibliography}{9}
+\raggedright
+\small
+
+\bibitem{conn2000trust}
+Andrew R. Conn, Nicholas I. M. Gould, and Philippe L. Toint.
+\newblock \emph{Trust Region Methods}.
+\newblock SIAM, 2000.
+
+\bibitem{eriksson2019turbo}
+David Eriksson, Michael Pearce, Jacob R. Gardner, Ryan Turner, and Matthias
+Poloczek.
+\newblock Scalable global optimization via local Bayesian optimization.
+\newblock In \emph{Advances in Neural Information Processing Systems}, 2019.
+\newblock \url{https://papers.nips.cc/paper/8788-scalable-global-optimization-via-local-bayesian-optimization}
+
+\bibitem{turboCode}
+David Eriksson, Michael Pearce, Jacob R. Gardner, Ryan Turner, and Matthias
+Poloczek.
+\newblock \TuRBO: Trust Region Bayesian Optimization, official code release.
+\newblock \url{https://github.com/uber-research/TuRBO}
+
+\bibitem{turboOne}
+David Eriksson, Michael Pearce, Jacob R. Gardner, Ryan Turner, and Matthias
+Poloczek.
+\newblock Reference implementation of \TurboOne.
+\newblock \url{https://github.com/uber-research/TuRBO/blob/master/turbo/turbo_1.py}
+
+\bibitem{turboM}
+David Eriksson, Michael Pearce, Jacob R. Gardner, Ryan Turner, and Matthias
+Poloczek.
+\newblock Reference implementation of \TurboM.
+\newblock \url{https://github.com/uber-research/TuRBO/blob/master/turbo/turbo_m.py}
+
+\end{thebibliography}
+
+\end{document}

@@ -1,0 +1,36 @@
+# Run:
+# ./ops/hyperscalees_llm.py local configs/pretrain/hyperscalees/llm_bandits/zebra_puzzles_7w1p5b_eggroll.toml
+#
+# Upstream HyperscaleES EggRoll run matching the EggRoll UHD zebra_puzzles task/model.
+
+[experiment]
+exp_dir = "runs/yubo_hyperscalees/llm_bandits/zebra_puzzles_7w1p5b_eggroll"
+repo_dir = ".external/HyperscaleES"
+log_file = "hyperscalees.log"
+dry_run = false
+
+[hyperscalees]
+script = "general_do_evolution"
+
+[args]
+seed = 0
+model_choice = "7w1.5B"
+task = "zebra_puzzles"
+noiser = "eggroll"
+num_epochs = 1000
+parallel_generations_per_gpu = 32
+generations_per_prompt = 2
+thinking_length = 100
+answer_length = 100
+validate_every = 10
+parallel_validations = 8
+validation_iterations = 1
+log_output_every = 1
+output_directory = "runs/yubo_hyperscalees/llm_bandits/zebra_puzzles_7w1p5b_eggroll/outputs"
+wandb_directory = "runs/yubo_hyperscalees/llm_bandits/zebra_puzzles_7w1p5b_eggroll"
+wandb_mode = "offline"
+wandb_name = "zebra_puzzles_7w1p5b_eggroll"
+track = false
+
+[env.vars]
+XLA_PYTHON_CLIENT_PREALLOCATE = "false"

@@ -1,0 +1,31 @@
+# Run:
+# ./ops/exp_uhd.py local configs/uhd/text/gsm8k_qwen3_1p7b_mezo.toml
+
+[uhd]
+env_tag = "llm:math:gsm8k"
+policy_tag = "qwen3-1p7b-lora-r1"
+num_rounds = 1
+num_reps = 1
+
+optimizer = "mezo"
+lr = 0.001
+sigma = 0.001
+perturb = "dim:0.5"
+
+text_search_dim = 128
+text_delta_scale = 1.0
+text_basis_max_tensors = 16
+
+max_tokens = 384
+temperature = 0.0
+samples_per_prompt = 1
+prompt_batch_size = 2
+pass_at_k = false
+
+tensor_parallel_size = 1
+num_engines = 1
+problem_seed = 0
+noise_seed_0 = 0
+seed_offset = 0
+log_interval = 1
+enn_minus_impute = false

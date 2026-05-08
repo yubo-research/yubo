@@ -1,0 +1,27 @@
+# Run: python -m experiments.experiment local configs/bo/eggroll/paper/hft/lobs5_360m_goog_2023_pnl_eggroll.toml
+# Paper: Appendix M / Table 4, LOBS5-360M high-frequency trading PnL fine-tuning.
+# Runtime: uses the EggRoll Jax-LOB external-objective adapter surface.
+
+[experiment]
+exp_dir = "runs/yubo_eggroll/paper/hft/lobs5_360m_goog_2023_pnl_eggroll"
+env_tag = "jaxlob:goog-2023-sell-q30-t10"
+policy_tag = "lobs5-360m-lora-r4"
+population = 65536
+num_epochs = 6500
+num_reps = 30
+runtime_device = "cuda"
+local_workers = 1
+b_trace = true
+
+[optimizer]
+name = "eggroll"
+
+[optimizer.params]
+noiser = "eggroll"
+sigma = 0.01
+rank = 4
+lr = 0.001
+optax = "adamw"
+steps = 1
+eval_episodes = 1
+use_batched_update = true

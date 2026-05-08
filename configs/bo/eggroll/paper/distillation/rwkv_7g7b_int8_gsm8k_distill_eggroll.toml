@@ -1,0 +1,27 @@
+# Run: python -m experiments.experiment local configs/bo/eggroll/paper/distillation/rwkv_7g7b_int8_gsm8k_distill_eggroll.toml
+# Paper: Section 6.4 / Table 14, quantised RWKV 7g7B GSM8K teacher-forced distillation.
+# Runtime: uses the EggRoll RWKV int8 distillation external-objective adapter surface.
+
+[experiment]
+exp_dir = "runs/yubo_eggroll/paper/distillation/rwkv_7g7b_int8_gsm8k_distill_eggroll"
+env_tag = "rwkv-int8-distill:gsm8k-teacher-forced"
+policy_tag = "rwkv-7g7b-int8-lora-r1"
+population = 8192
+num_epochs = 100
+num_reps = 3
+runtime_device = "cuda"
+local_workers = 1
+b_trace = true
+
+[optimizer]
+name = "eggroll"
+
+[optimizer.params]
+noiser = "eggroll"
+sigma = 0.4
+rank = 1
+lr = 3e-7
+optax = "adam"
+steps = 1
+eval_episodes = 1
+use_batched_update = true

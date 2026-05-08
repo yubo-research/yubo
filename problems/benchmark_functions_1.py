@@ -47,6 +47,7 @@ from .benchmark_functions_1d import (  # noqa: F401
     EggHolder,
 )
 
+
 # Requirements:
 # - x in [-1,1]**num_dim
 # - have *minima* [not maxima]

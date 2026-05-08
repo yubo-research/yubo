@@ -14,6 +14,7 @@ from .benchmark_functions_2a import (  # noqa: F401
 from .benchmark_functions_3 import Zakharov  # noqa: F401
 from .benchmark_util import mk_2d
 
+
 # Requirements:
 # - x in [-1,1]**num_dim
 # - have *minima* [not maxima]

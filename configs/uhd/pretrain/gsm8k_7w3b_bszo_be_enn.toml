@@ -1,0 +1,57 @@
+# Run:
+# ./ops/exp_uhd.py local configs/uhd/pretrain/gsm8k_7w3b_bszo_be_enn.toml
+#
+# Clean UHD pretraining config: real HyperscaleES GSM8K objective,
+# BSZO + behavior embedding + ENN minus-imputation.
+
+[uhd]
+env_tag = "pretrain:hyperscalees:gsm8k-7w3b"
+policy_tag = "hyperscalees-rwkv-7w3b-lora-r1"
+
+num_rounds = 20
+num_reps = 1
+optimizer = "bszo_be"
+
+lr = 0.001
+sigma = 0.001
+perturb = "dense"
+log_interval = 1
+
+steps_per_episode = 1
+eval_episodes = 2
+deterministic_policy = false
+problem_seed = 0
+noise_seed_0 = 0
+seed_offset = 0
+
+pretrain_search_dim = 256
+pretrain_delta_scale = 1.0
+pretrain_generation_length = 64
+pretrain_lora_only = true
+pretrain_basis_max_leaves = 8
+
+bszo_k = 2
+bszo_epsilon = 1e-4
+bszo_sigma_p_sq = 1.0
+bszo_sigma_e_sq = 1.0
+bszo_alpha = 0.1
+
+be_num_probes = 64
+be_num_candidates = 16
+be_warmup = 8
+be_fit_interval = 4
+be_enn_k = 16
+
+enn_minus_impute = true
+enn_target = "delta"
+enn_d = 256
+enn_s = 4
+enn_jl_seed = 123
+enn_k = 16
+enn_fit_interval = 4
+enn_warmup_real_obs = 8
+enn_refresh_interval = 4
+enn_se_threshold = 0.5
+enn_err_ema_beta = 0.95
+enn_max_abs_err_ema = 1.0
+enn_min_calib_points = 8

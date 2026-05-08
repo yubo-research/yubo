@@ -1,0 +1,26 @@
+# Run: python -m experiments.experiment local configs/bo/eggroll/paper/qwen/qwen3_1p7b_deepscaler_passk4_muon.toml
+# Paper-adjacent variant of the Qwen3-1.7B pass@k EggRoll config using Muon.
+
+[experiment]
+exp_dir = "runs/yubo_eggroll/paper/qwen/qwen3_1p7b_deepscaler_passk4_muon"
+env_tag = "passk:qwen3-1p7b-deepscaler-k4"
+policy_tag = "qwen3-1p7b-lora-r1"
+population = 256
+num_epochs = 5000
+num_reps = 1
+runtime_device = "cuda"
+local_workers = 1
+b_trace = true
+
+[optimizer]
+name = "eggroll"
+
+[optimizer.params]
+noiser = "eggroll"
+sigma = 0.001
+rank = 1
+lr = 0.001
+optax = "muon"
+noise_reuse = 4
+steps = 1
+eval_episodes = 1

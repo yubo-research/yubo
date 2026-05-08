@@ -40,6 +40,15 @@ def test_cnn_mlp_policy_forward():
     assert out.min() >= -1.0 and out.max() <= 1.0
 
 
+def test_cnn_mlp_policy_normalizes_uint8_pixels():
+    """CNNMLPPolicy treats uint8 [0,255] pixels like float [0,1] pixels."""
+    env_conf = _FakeEnvConf()
+    policy = CNNMLPPolicy(env_conf, (32, 16))
+    out_float = policy.forward(torch.ones(1, 84, 84, 3, dtype=torch.float32))
+    out_uint8 = policy.forward(torch.full((1, 84, 84, 3), 255, dtype=torch.uint8))
+    torch.testing.assert_close(out_float, out_uint8)
+
+
 def test_cnn_mlp_policy_call():
     """CNNMLPPolicy __call__ accepts numpy HWC and returns action."""
     env_conf = _FakeEnvConf()

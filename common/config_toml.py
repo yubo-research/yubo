@@ -1,6 +1,7 @@
 import os
 from typing import Any, Dict
 
+
 try:
     import tomllib
 except ModuleNotFoundError:  # pragma: no cover - py<3.11 fallback

@@ -1,0 +1,48 @@
+# Run:
+# python -m ops.exp_uhd local configs/uhd/eggroll/paper/hft/lobs5_360m_goog_2023_pnl_bszo_be_enn_impute.toml
+#
+# UHD BSZO + BE + ENN minus-imputation companion to:
+# configs/bo/eggroll/paper/hft/lobs5_360m_goog_2023_pnl_eggroll.toml
+
+[uhd]
+env_tag = "jaxlob:goog-2023-sell-q30-t10"
+policy_tag = "lobs5-360m-lora-r4"
+total_timesteps = 500000000
+num_reps = 1
+optimizer = "bszo_be"
+lr = 0.001
+sigma = 0.01
+perturb = "dense"
+steps_per_episode = 1
+eval_episodes = 1
+deterministic_policy = false
+problem_seed = 0
+noise_seed_0 = 0
+seed_offset = 0
+log_interval = 1
+
+bszo_k = 2
+bszo_epsilon = 1e-4
+bszo_sigma_p_sq = 1.0
+bszo_sigma_e_sq = 1.0
+bszo_alpha = 0.1
+
+be_num_probes = 64
+be_num_candidates = 32
+be_warmup = 512
+be_fit_interval = 100
+be_enn_k = 32
+
+enn_minus_impute = true
+enn_target = "delta"
+enn_d = 512
+enn_s = 4
+enn_jl_seed = 123
+enn_k = 32
+enn_fit_interval = 100
+enn_warmup_real_obs = 512
+enn_refresh_interval = 100
+enn_se_threshold = 0.5
+enn_err_ema_beta = 0.95
+enn_max_abs_err_ema = 1.0
+enn_min_calib_points = 64

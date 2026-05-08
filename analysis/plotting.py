@@ -6,6 +6,7 @@ import scipy.stats as ss
 
 import analysis.data_sets as ads
 
+
 linestyles = ["-", ":", "--", "-."] * 10
 markers = ["o", "x", "v", ".", "s"] * 10
 colors = [

@@ -1,0 +1,24 @@
+# Run: python -m experiments.experiment local configs/bo/eggroll/paper/rl/jumanji_game2048_eggroll.toml
+# Paper: Table 24, jumanji/Game2048-v1 EGGROLL.
+
+[experiment]
+exp_dir = "runs/yubo_eggroll/paper/rl/jumanji_game2048_eggroll"
+env_tag = "jumanji:Game2048-v1"
+policy_tag = "eggroll-ac-mlp-256x3-pqn"
+population = 1024
+num_epochs = 2423
+num_reps = 10
+runtime_device = "cuda"
+local_workers = 1
+b_trace = true
+
+[optimizer]
+name = "eggroll"
+
+[optimizer.params]
+noiser = "eggroll"
+sigma = 0.5
+rank = 1
+lr = 0.1
+optax = "adamw"
+use_batched_update = true

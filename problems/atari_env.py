@@ -9,6 +9,7 @@ import numpy as np
 from ale_py import ALEInterface, roms
 from scipy.ndimage import zoom
 
+
 ATARI_FRAME_SIZE = 84
 ATARI_FRAME_STACK = 4
 ATARI_MAX_EPISODE_STEPS = 108000  # 30 min at 60fps, 4 frame skip -> ~27k steps

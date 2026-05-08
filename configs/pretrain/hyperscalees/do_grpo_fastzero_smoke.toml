@@ -1,0 +1,30 @@
+# Run: ./ops/hyperscalees_llm.py local configs/pretrain/hyperscalees/do_grpo_fastzero_smoke.toml
+
+[experiment]
+exp_dir = "runs/yubo_hyperscalees/do_grpo_fastzero_smoke"
+repo_dir = ".external/HyperscaleES"
+log_file = "hyperscalees.log"
+dry_run = false
+
+[hyperscalees]
+script = "do_grpo"
+
+[args]
+seed = 0
+model_choice = "7w0.1B"
+task = "fastzero"
+num_epochs = 1
+parallel_generations_per_gpu = 4
+generations_per_prompt = 2
+generation_length = 16
+validate_every = 1
+parallel_validations = 4
+validation_iterations = 1
+num_minibatches = 1
+wandb_directory = "runs/yubo_hyperscalees/do_grpo_fastzero_smoke"
+wandb_mode = "offline"
+wandb_name = "smoke"
+track = false
+
+[env.vars]
+XLA_PYTHON_CLIENT_PREALLOCATE = "false"

@@ -5,6 +5,7 @@ import modal
 
 from experiments.modal_image import mk_image
 
+
 modal_image = mk_image()
 
 app = modal.App(name="my-job")

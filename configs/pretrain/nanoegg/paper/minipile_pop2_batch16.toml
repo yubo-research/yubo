@@ -1,0 +1,36 @@
+# Run: python -m experiments.nanoegg_pretrain local configs/pretrain/nanoegg/paper/minipile_pop2_batch16.toml
+# Paper: Figure 2b / Section 6.1, MiniPile int8 EGG 6L-256D population scaling.
+
+[experiment]
+exp_dir = "runs/yubo_nanoegg/paper/minipile_pop2_batch16"
+repo_dir = ".external/nano-egg"
+log_file = "nanoegg.log"
+dry_run = false
+
+[nanoegg]
+seed = 0
+dtype = "int8"
+batch_size = 16
+population_size = 2
+num_epochs = 1000
+alpha = 4.0
+sigma_shift = 4
+use_clt = true
+fast_fitness = true
+alpha_decay_timestep = 1000
+n_layer = 6
+n_embd = 256
+vocab_size = 256
+noise_reuse = 1
+tokens_per_update = 100
+regenerate_model = false
+track = false
+validate_every = 10
+validation_batch_size = 1024
+tag = "paper_minipile_pop2_batch16"
+
+[data]
+synthetic = false
+
+[env.vars]
+XLA_PYTHON_CLIENT_PREALLOCATE = "false"

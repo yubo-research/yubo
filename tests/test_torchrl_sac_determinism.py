@@ -6,6 +6,7 @@ import pytest
 
 from rl.torchrl.sac.trainer import SACConfig, train_sac
 
+
 _BASELINE_ROWS = [
     {
         "step": 32,

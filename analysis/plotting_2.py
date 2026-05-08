@@ -46,6 +46,7 @@ from .plotting_types import (
     RLTracesWithCumDtProp as _RLTracesWithCumDtProp,
 )
 
+
 # Re-export for backward compatibility
 _noise_label = noise_label
 _speedup_x_label = speedup_x_label

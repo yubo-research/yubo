@@ -1,0 +1,25 @@
+# Run: python -m experiments.experiment local configs/bo/eggroll/paper/marl/mpe_simple_reference_v3_eggroll.toml
+# Paper: Appendix N.1 / Table 9, MPE Simple Reference v3 EGGROLL.
+# Runtime: uses the EggRoll JaxMARL adapter.
+
+[experiment]
+exp_dir = "runs/yubo_eggroll/paper/marl/mpe_simple_reference_v3_eggroll"
+env_tag = "jaxmarl:mpe-simple-reference-v3"
+policy_tag = "eggroll-marl-mlp-64x3-pqn"
+population = 4096
+num_epochs = 610
+num_reps = 10
+runtime_device = "cuda"
+local_workers = 1
+b_trace = true
+
+[optimizer]
+name = "eggroll"
+
+[optimizer.params]
+noiser = "eggroll"
+sigma = 0.1
+rank = 1
+lr = 0.01
+optax = "adamw"
+use_batched_update = true

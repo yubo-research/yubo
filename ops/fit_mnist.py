@@ -11,6 +11,7 @@ from torchvision import datasets, transforms
 
 from problems.mnist_classifier import MnistClassifier
 
+
 TIMEOUT_SECONDS = 3 * 60
 
 

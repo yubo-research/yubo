@@ -1,0 +1,38 @@
+# Run: ./ops/hyperscalees_llm.py local configs/pretrain/hyperscalees/paper/exact_asset_blocked/countdownn_7g1p5b_eggroll.toml
+# Paper: Table 10, EGGROLL on Countdown with FastRWKV-7g1.5B.
+# Blocked: pinned upstream registry does not expose known-live 7g1.5B assets.
+
+[experiment]
+exp_dir = "runs/yubo_hyperscalees/paper/exact_asset_blocked/countdownn_7g1p5b_eggroll"
+repo_dir = ".external/HyperscaleES"
+log_file = "hyperscalees.log"
+dry_run = true
+
+[hyperscalees]
+script = "general_do_evolution"
+
+[args]
+seed = 0
+model_choice = "7g1.5B"
+task = "countdownn"
+noiser = "eggroll"
+sigma = 0.0007
+rank = 1
+learning_rate_scale = 0.125
+num_epochs = 100
+parallel_generations_per_gpu = 1536
+generations_per_prompt = 8
+thinking_length = 1000
+answer_length = 1000
+validate_every = 10
+parallel_validations = 128
+validation_iterations = 10
+log_output_every = 10
+output_directory = "runs/yubo_hyperscalees/paper/exact_asset_blocked/countdownn_7g1p5b_eggroll/outputs"
+wandb_directory = "runs/yubo_hyperscalees/paper/exact_asset_blocked/countdownn_7g1p5b_eggroll"
+wandb_mode = "offline"
+wandb_name = "countdownn_7g1p5b_eggroll"
+track = false
+
+[env.vars]
+XLA_PYTHON_CLIENT_PREALLOCATE = "false"

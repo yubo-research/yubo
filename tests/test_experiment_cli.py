@@ -264,6 +264,32 @@ def test_load_experiment_config_toml_optimizer_table(tmp_path):
     assert cfg.opt_name == "turbo-enn-fit/acq_type=ucb/num_candidates=64"
 
 
+def test_load_experiment_config_eggroll_uses_upstream_schema(tmp_path):
+    toml_path = _write_toml(
+        tmp_path,
+        """
+        [experiment]
+        exp_dir = "_tmp/eggroll"
+        env_tag = "gymnax:CartPole-v1"
+        policy_tag = "eggroll-ac-mlp-8x1-pqn"
+        population = 4
+        num_epochs = 3
+        num_reps = 1
+
+        [optimizer]
+        name = "eggroll"
+
+        [optimizer.params]
+        noiser = "eggroll"
+        steps = 10
+        """,
+    )
+    cfg = load_experiment_config(config_toml_path=str(toml_path))
+    assert cfg.env_tag == "gymnax:CartPole-v1"
+    assert cfg.policy_tag == "eggroll-ac-mlp-8x1-pqn"
+    assert cfg.opt_name == "eggroll/noiser=eggroll/steps=10"
+
+
 def test_load_experiment_config_toml_optimizer_unknown_key_raises(tmp_path):
     toml_path = _write_toml(
         tmp_path,

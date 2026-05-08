@@ -1,0 +1,35 @@
+# Run: python -m experiments.nanoegg_pretrain local configs/pretrain/nanoegg/ablations/minipile_pop65536.toml
+
+[experiment]
+exp_dir = "runs/yubo_nanoegg/ablations/minipile_pop65536"
+repo_dir = ".external/nano-egg"
+log_file = "nanoegg.log"
+dry_run = false
+
+[nanoegg]
+seed = 0
+dtype = "int8"
+batch_size = 4
+population_size = 65536
+num_epochs = 1000
+alpha = 4.0
+sigma_shift = 4
+use_clt = true
+fast_fitness = true
+alpha_decay_timestep = 1000
+n_layer = 6
+n_embd = 256
+vocab_size = 256
+noise_reuse = 1
+tokens_per_update = 100
+regenerate_model = false
+track = false
+validate_every = 10
+validation_batch_size = 1024
+tag = "minipile_pop65536"
+
+[data]
+synthetic = false
+
+[env.vars]
+XLA_PYTHON_CLIENT_PREALLOCATE = "false"

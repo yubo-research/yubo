@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
+
 _HIDDEN_SIZE_KEYS = ("backbone_hidden_sizes", "actor_head_hidden_sizes", "critic_head_hidden_sizes")
 
 
