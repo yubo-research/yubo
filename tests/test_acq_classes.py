@@ -1,3 +1,4 @@
+import pytest
 import torch
 
 from tests.test_util import make_simple_gp as _make_simple_gp
@@ -11,21 +12,12 @@ def test_acq_min_dist_init():
     assert acq is not None
 
 
-def test_acq_min_dist_forward():
+@pytest.mark.parametrize("toroidal", [False, True])
+def test_acq_min_dist_forward_variants(toroidal):
     from acq.acq_min_dist import AcqMinDist
 
     model = _make_simple_gp()
-    acq = AcqMinDist(model, toroidal=False)
-    X = torch.tensor([[[0.3, 0.3]]], dtype=torch.float64)
-    result = acq(X)
-    assert torch.isfinite(result).all()
-
-
-def test_acq_min_dist_toroidal():
-    from acq.acq_min_dist import AcqMinDist
-
-    model = _make_simple_gp()
-    acq = AcqMinDist(model, toroidal=True)
+    acq = AcqMinDist(model, toroidal=toroidal)
     X = torch.tensor([[[0.3, 0.3]]], dtype=torch.float64)
     result = acq(X)
     assert torch.isfinite(result).all()
@@ -103,12 +95,9 @@ def test_acq_pstar_init():
 
 
 def test_acq_dpp_init():
-    from acq.acq_dpp import AcqDPP
+    from tests.test_util import make_acq_dpp_from_simple_gp
 
-    model = _make_simple_gp()
-    acq = AcqDPP(model, num_X_samples=16)
-    assert acq is not None
-    assert acq._num_dim == 2
+    acq = make_acq_dpp_from_simple_gp()
     assert acq._num_runs == 50
 
 

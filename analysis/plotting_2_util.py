@@ -3,6 +3,7 @@
 import json
 from pathlib import Path
 
+import matplotlib.pyplot as plt
 import numpy as np
 
 from analysis.plot_util import (
@@ -46,8 +47,8 @@ def consolidate_bottom_legend(
     fig,
     axs,
     *,
-    fontsize: int = 11,
     ncol: int = 5,
+    renames: dict[str, str] | None = None,
 ) -> None:
     handles: list[object] = []
     labels: list[str] = []
@@ -60,6 +61,8 @@ def consolidate_bottom_legend(
                 continue
 
             base = li.split(" (", 1)[0]
+            if renames is not None:
+                base = renames.get(base, base)
             if base.startswith("turbo-enn"):
                 li2 = "turbo-enn"
             else:
@@ -82,14 +85,18 @@ def consolidate_bottom_legend(
         handles,
         labels,
         loc="lower center",
-        bbox_to_anchor=(0.5, -0.01),
+        bbox_to_anchor=(0.5, -0.2),
         ncol=int(ncol),
         frameon=False,
-        fontsize=fontsize,
+        fontsize=plt.rcParams["legend.fontsize"],
     )
     for handle in leg.legend_handles:
         handle.set_markersize(10)
         handle.set_linewidth(3.0)
+
+
+def display_opt_name(opt_name: str, renames: dict[str, str] | None = None) -> str:
+    return renames.get(opt_name, opt_name) if renames is not None else opt_name
 
 
 def get_denoise_value(data_locator, problem: str) -> int:

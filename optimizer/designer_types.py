@@ -1,27 +1,21 @@
 """Types for designer specification and catalog."""
 
-from dataclasses import dataclass
 from typing import NamedTuple
 
-
-@dataclass(frozen=True, slots=True)
-class DesignerOptionSpec:
-    name: str
-    required: bool
-    value_type: str
-    description: str
-    example: str
-    allowed_values: tuple[str, ...] | None = None
-
-
-@dataclass(frozen=True, slots=True)
-class DesignerCatalogEntry:
-    base_name: str
-    options: list[DesignerOptionSpec]
-    dispatch: object
+from .designer_catalog_entry import DesignerCatalogEntry
+from .designer_def import DesignerDef
+from .designer_option_spec import DesignerOptionSpec
 
 
 class DesignerSpec(NamedTuple):
     base: str
     general: dict
     specific: dict
+
+
+__all__ = [
+    "DesignerCatalogEntry",
+    "DesignerDef",
+    "DesignerOptionSpec",
+    "DesignerSpec",
+]

@@ -6,7 +6,13 @@ from types import SimpleNamespace
 
 import numpy as np
 import torch
-from click.testing import CliRunner
+from kiss_more_smoke_acq_gp import _AcqBTGP, _AcqDPPModel
+from kiss_more_smoke_exp_dist import _DistFactory
+from kiss_more_smoke_fig_env import _FigEnvConf
+from kiss_more_smoke_fig_gp import _FigGP
+from kiss_more_smoke_modal_func import ModalBatchesSpawnFunc
+from kiss_more_smoke_noise_policy import _DummyEnv, _NoisePolicy
+from kiss_more_smoke_pstar_dm import _PstarDistModal
 from torch import nn
 
 from acq.acq_bt import AcqBT
@@ -14,7 +20,7 @@ from acq.acq_dpp import AcqDPP
 from acq.fit_gp import _EmptyTransform
 from analysis.data_locator import DataLocator
 from optimizer.bt_designer import BTDesigner
-from optimizer.designer_registry import _SimpleContext
+from optimizer.designer_registry_context import _SimpleContext
 from optimizer.gaussian_perturbator import GaussianPerturbator
 from optimizer.lr_scheduler import (
     ConstantLR,
@@ -129,11 +135,7 @@ def test_kiss_cov_uhd_hoeffding_properties():
 
 
 def test_kiss_cov_acqbt_x_max(monkeypatch):
-    class _GP:
-        def __call__(self, _x):
-            return SimpleNamespace(mean=torch.tensor(0.0))
-
-    monkeypatch.setattr("acq.acq_bt.fit_gp.fit_gp_XY", lambda X, Y, model_spec: _GP())
+    monkeypatch.setattr("acq.acq_bt.fit_gp.fit_gp_XY", lambda X, Y, model_spec: _AcqBTGP())
     monkeypatch.setattr(
         "acq.acq_bt.find_max",
         lambda gp, bounds: torch.ones((1, bounds.shape[1]), dtype=bounds.dtype),
@@ -155,15 +157,7 @@ def test_kiss_cov_acqbt_x_max(monkeypatch):
 
 
 def test_kiss_cov_acq_dpp_init():
-    class _Model:
-        def __init__(self):
-            self.train_inputs = (torch.zeros(2, 3, dtype=torch.double),)
-            self.likelihood = SimpleNamespace(noise=torch.tensor(1.0, dtype=torch.double))
-
-        def eval(self):
-            return None
-
-    acq = AcqDPP(_Model(), num_X_samples=8, num_runs=1)
+    acq = AcqDPP(_AcqDPPModel(), num_X_samples=8, num_runs=1)
     assert acq._num_dim == 3
 
 
@@ -193,45 +187,9 @@ def test_kiss_cov_data_locator_optimizers(tmp_path):
 
 
 def test_kiss_cov_ops_catalog_and_data_cli(tmp_path):
-    import ops.catalog as catalog
-    import ops.data as data_cli
+    from tests.kiss_ops_catalog_data_shared import run_kiss_ops_catalog_and_data_cli
 
-    runner = CliRunner()
-    catalog.cli.callback()
-    catalog.environments.callback()
-    res = runner.invoke(catalog.cli, ["environments"])
-    assert res.exit_code == 0
-
-    results_dir = tmp_path / "results"
-    exp_dir = results_dir / "abc123"
-    traces = exp_dir / "traces"
-    traces.mkdir(parents=True)
-    (exp_dir / "config.json").write_text(
-        json.dumps(
-            {
-                "opt_name": "random",
-                "env_tag": "f:ackley-2d",
-                "num_arms": 1,
-                "num_rounds": 1,
-            }
-        )
-    )
-    (traces / "00000.jsonl").write_text("{}\n")
-
-    res = runner.invoke(data_cli.cli, ["ls", str(results_dir)])
-    assert res.exit_code == 0
-    assert "abc123" in res.output
-    data_cli.cli.callback()
-    data_cli.ls.callback(results_dir, False)
-
-    res = runner.invoke(data_cli.cli, ["rm", str(results_dir), "abc123", "-f"])
-    assert res.exit_code == 0
-    assert not exp_dir.exists()
-
-    exp_dir.mkdir(parents=True)
-    (exp_dir / "config.json").write_text(json.dumps({"opt_name": "random", "env_tag": "f:ackley-2d"}))
-    data_cli.rm.callback(results_dir, ("abc123",), True)
-    assert not exp_dir.exists()
+    run_kiss_ops_catalog_and_data_cli(tmp_path)
 
 
 def test_kiss_cov_context_and_best_datum():
@@ -259,50 +217,28 @@ def test_kiss_cov_context_and_best_datum():
 
 
 def test_kiss_cov_noise_maker_and_policy_mixin():
-    class _DummySpace:
-        shape = (1,)
-
-    class _DummyEnv:
-        observation_space = _DummySpace()
-        action_space = _DummySpace()
-
-        def step(self, _action):
-            return None, 1.0, False, False, {}
-
-        def close(self):
-            return None
-
     noise = NoiseMaker(_DummyEnv(), normalized_noise_level=0.0, num_measurements=2)
     assert noise.observation_space is not None
     assert noise.action_space is not None
     assert NoiseMaker.observation_space.fget(noise) is not None
     assert NoiseMaker.action_space.fget(noise) is not None
 
-    class _Policy(nn.Module, PolicyParamsMixin):
-        def __init__(self):
-            super().__init__()
-            self.l = nn.Linear(2, 1, bias=False)
-            with torch.inference_mode():
-                fp = torch.cat([p.detach().reshape(-1) for p in self.parameters()]).cpu().numpy()
-            self._flat_params_init = fp
-            self._const_scale = 1.0
-
-    p = _Policy()
+    p = _NoisePolicy()
     assert p.num_params() == 2
     assert PolicyParamsMixin.num_params(p) == 2
 
 
 def test_kiss_cov_exp_uhd_cli_and_local(monkeypatch, tmp_path):
     import ops.exp_uhd as exp_uhd
-    import ops.uhd_setup as uhd_setup
+    import ops.uhd_setup_make_loop as uhd_setup
 
     called = {"run": 0}
 
-    class _Loop:
-        def run(self):
-            called["run"] += 1
-
-    monkeypatch.setattr(uhd_setup, "make_loop", lambda *a, **k: _Loop())
+    monkeypatch.setattr(
+        uhd_setup,
+        "make_loop",
+        lambda *a, **k: SimpleNamespace(run=lambda: called.__setitem__("run", called["run"] + 1)),
+    )
     exp_uhd.cli.callback()
     toml_file = tmp_path / "test.toml"
     toml_file.write_text('[uhd]\nenv_tag = "f:sphere-2d"\nnum_rounds = 1\n')
@@ -313,17 +249,7 @@ def test_kiss_cov_exp_uhd_cli_and_local(monkeypatch, tmp_path):
 def test_kiss_cov_dist_modal_collect(monkeypatch, tmp_path):
     import experiments.dist_modal as dist_modal
 
-    class _Call:
-        def get(self, timeout):
-            assert timeout == 5
-            return {"ok": True}
-
-    class _Factory:
-        @staticmethod
-        def from_id(_call_id):
-            return _Call()
-
-    monkeypatch.setattr(dist_modal.modal.functions, "FunctionCall", _Factory)
+    monkeypatch.setattr(dist_modal.modal.functions, "FunctionCall", _DistFactory)
     fn = tmp_path / "jobs.txt"
     fn.write_text("abc\n")
     got = []
@@ -332,52 +258,65 @@ def test_kiss_cov_dist_modal_collect(monkeypatch, tmp_path):
 
 
 def test_kiss_cov_modal_batches_functions(monkeypatch, tmp_path):
-    import experiments.modal_batches as mb
+    from modal_timing_sweep_test_support import FakeResultsDict
 
-    class _FakeDict(dict):
-        def len(self):
-            return len(self)
+    import experiments.modal_batches_impl as mb
 
-    res_dict = _FakeDict()
-    submitted = _FakeDict()
-    monkeypatch.setattr(mb, "_results_dict", lambda: res_dict)
-    monkeypatch.setattr(mb, "_submitted_dict", lambda: submitted)
-    monkeypatch.setattr(mb, "sample_1", lambda run_cfg: ("log", "trace", [{"x": 1}]))
+    tag = "test"
+
+    res_dict = FakeResultsDict()
+    submitted = FakeResultsDict()
+    monkeypatch.setattr(mb, "_results_dict", lambda _tag: res_dict)
+    monkeypatch.setattr(mb, "_submitted_dict", lambda _tag: submitted)
+    monkeypatch.setattr(
+        mb,
+        "sample_1",
+        lambda run_cfg: SimpleNamespace(collector_log="log", collector_trace="trace", trace_records=[{"x": 1}], stop_reason="completed"),
+    )
 
     spawned = {"map": [], "spawn": []}
 
-    class _Func:
-        def spawn_map(self, todo):
-            spawned["map"].append(list(todo))
-
-        def spawn(self, payload):
-            spawned["spawn"].append(payload)
-
-    monkeypatch.setattr(mb.modal.Function, "from_name", lambda app_name, name: _Func())
-    monkeypatch.setattr(mb, "_gen_jobs", lambda tag: [("k1", SimpleNamespace(trace_fn="t1"))])
+    monkeypatch.setattr(mb.modal.Function, "from_name", lambda app_name, name: ModalBatchesSpawnFunc(spawned))
+    monkeypatch.setattr(mb, "_gen_jobs", lambda _batch_tag: [("k1", SimpleNamespace(trace_fn="t1"))])
     monkeypatch.setattr(mb, "data_is_done", lambda trace_fn: False)
     monkeypatch.setattr(mb, "post_process", lambda *args, **kwargs: None)
 
-    mb.modal_batches_worker.get_raw_f()(("k0", SimpleNamespace(trace_fn="trace0")))
+    mb.modal_batches_worker.get_raw_f()((tag, "k0", SimpleNamespace(trace_fn="trace0")))
     assert "k0" in res_dict
 
-    mb.modal_batches_resubmitter.get_raw_f()([("k1", SimpleNamespace(trace_fn="t1"), False)])
+    mb.modal_batches_resubmitter.get_raw_f()([("k1", SimpleNamespace(trace_fn="t1"), False)], tag)
     assert submitted["k1"] is True
 
-    mb.batches_submitter("tag")
+    mb.batches_submitter(tag, "batch_tag")
     assert spawned["spawn"]
 
     res_dict["k2"] = ("trace_fn", "log", "trace", None)
-    mb.collect()
-    mb.status()
+    mb._collect(tag)
+    mb.status(tag)
 
-    mb.modal_batch_deleter.get_raw_f()(["k2"])
+    mb.modal_batch_deleter.get_raw_f()(["k2"], tag)
     assert "k2" not in res_dict
 
     deleted = []
     monkeypatch.setattr(mb.modal.Dict, "delete", lambda name: deleted.append(name))
-    mb.clean_up()
-    assert "batches_dict" in deleted
+    mb.clean_up(tag)
+    assert "batches_dict_test" in deleted
+    assert "submitted_dict_test" in deleted
+
+
+def test_kiss_cov_modal_batches_clean_up_exception(monkeypatch, capsys):
+    import experiments.modal_batches_impl as mb
+
+    def _raise_error(name):
+        raise RuntimeError(f"Failed to delete {name}")
+
+    monkeypatch.setattr(mb.modal.Dict, "delete", _raise_error)
+    mb.clean_up("test")
+
+    captured = capsys.readouterr()
+    assert "CLEANUP: dict delete failed" in captured.out
+    assert "batches_dict_test" in captured.out
+    assert "submitted_dict_test" in captured.out
 
 
 def test_kiss_cov_fig_util_functions(monkeypatch, tmp_path):
@@ -397,31 +336,10 @@ def test_kiss_cov_fig_util_functions(monkeypatch, tmp_path):
     fig_util.dump_mesh(str(tmp_path), "mesh.txt", mesh.x_1, mesh.x_2, np.zeros_like(mesh.x_1))
     assert (tmp_path / "mesh.txt").exists()
 
-    class _Env:
-        def step(self, x):
-            return None, float(np.sum(x)), False, False
-
-    class _EnvConf:
-        def make(self):
-            return _Env()
-
-    class _Post:
-        def __init__(self, n):
-            self.mean = torch.zeros((n, 1))
-            self.variance = torch.ones((n, 1))
-            self._n = n
-
-        def sample(self, size):
-            return torch.zeros(size + torch.Size([self._n]))
-
-    class _GP:
-        def posterior(self, xs):
-            return _Post(len(xs))
-
-    fig_util.mean_func_contours(str(tmp_path), _EnvConf())
-    fig_util.mean_gp_contours(str(tmp_path), _GP())
-    fig_util.var_contours(str(tmp_path), _GP())
-    fig_util.pmax_contours(str(tmp_path), _GP())
+    fig_util.mean_func_contours(str(tmp_path), _FigEnvConf())
+    fig_util.mean_gp_contours(str(tmp_path), _FigGP())
+    fig_util.var_contours(str(tmp_path), _FigGP())
+    fig_util.pmax_contours(str(tmp_path), _FigGP())
     assert (tmp_path / "mean_func").exists()
 
 
@@ -434,14 +352,8 @@ def test_kiss_cov_fig_pstar_scale_functions(monkeypatch, tmp_path):
 
     called = {"dist": 0, "collect": 0}
 
-    class _DM:
-        def __init__(self, app_name, fn_name, job_fn):
-            _ = (app_name, fn_name, job_fn)
-
-        def __call__(self, all_args):
-            called["dist"] += len(all_args)
-
-    monkeypatch.setattr(fps, "DistModal", _DM)
+    _PstarDistModal.hook(called)
+    monkeypatch.setattr(fps, "DistModal", _PstarDistModal)
     monkeypatch.setattr(fps, "dist_pstar_scales_all_funcs", lambda designer, num_dim: [{"x": 1}])
     fps.distribute("mtv", "jobs.txt", dry_run=False)
     assert called["dist"] == 1

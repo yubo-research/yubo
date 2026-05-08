@@ -5,16 +5,9 @@ from typing import Any, Callable
 
 import numpy as np
 
+from problems.env_conf_backends import maybe_register_atari_dm_backends
 from rl.core.continuous_actions import normalize_action_bounds
 from rl.core.env_conf import resolve_noise_seed_0, resolve_problem_seed
-
-
-def _maybe_register_atari_dm_backends(env_tag: str) -> None:
-    if not str(env_tag).startswith(("atari:", "ALE/", "dm:", "dm_control/")):
-        return
-    _ns: dict = {}
-    exec("from problems.env_conf_backends import register_with_env_conf", _ns)  # noqa: S102
-    _ns["register_with_env_conf"]()
 
 
 @dataclass(frozen=True)
@@ -42,7 +35,7 @@ def build_continuous_gym_env_setup(
 ) -> ContinuousGymEnvSetup:
     resolved_problem_seed = resolve_problem_seed(seed=int(seed), problem_seed=problem_seed)
     resolved_noise_seed_0 = resolve_noise_seed_0(problem_seed=int(resolved_problem_seed), noise_seed_0=noise_seed_0)
-    _maybe_register_atari_dm_backends(str(env_tag))
+    maybe_register_atari_dm_backends(str(env_tag))
     env_conf = get_env_conf_fn(
         str(env_tag),
         problem_seed=int(resolved_problem_seed),
@@ -55,7 +48,11 @@ def build_continuous_gym_env_setup(
         raise ValueError("SAC expects a continuous Box action space.")
     action_shape = tuple((int(v) for v in env_conf.action_space.shape))
     act_dim = int(np.prod(action_shape)) if action_shape else 1
-    action_low, action_high = normalize_action_bounds(np.asarray(env_conf.action_space.low), np.asarray(env_conf.action_space.high), dim=act_dim)
+    action_low, action_high = normalize_action_bounds(
+        np.asarray(env_conf.action_space.low),
+        np.asarray(env_conf.action_space.high),
+        dim=act_dim,
+    )
     obs_lb, obs_width = obs_scale_from_env_fn(env_conf)
     if obs_lb is not None and obs_width is not None:
         obs_lb = np.asarray(obs_lb, dtype=np.float32).reshape(-1)

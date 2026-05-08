@@ -4,7 +4,10 @@ import importlib
 from dataclasses import dataclass
 from typing import Any, Callable
 
-from problems.env_conf_policies import resolve_atari_policy_class, resolve_dm_control_policy_class
+from problems.env_conf_policies import (
+    resolve_atari_policy_class,
+    resolve_dm_control_policy_class,
+)
 
 _DM_POLICY_VARIANTS = frozenset({"gauss", "rl-gauss"})
 _ATARI_POLICY_VARIANTS = frozenset({"agent57", "gauss", "mlp16"})
@@ -112,3 +115,9 @@ def register_with_env_conf() -> None:
     from problems.env_conf import register_atari_dm_bindings_loader
 
     register_atari_dm_bindings_loader(load_atari_dm_bindings)
+
+
+def maybe_register_atari_dm_backends(env_tag: str) -> None:
+    if not str(env_tag).startswith(("atari:", "ALE/", "dm:", "dm_control/")):
+        return
+    register_with_env_conf()

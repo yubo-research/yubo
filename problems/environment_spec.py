@@ -6,31 +6,24 @@ separate from policy concerns.
 
 import copy
 from dataclasses import asdict, dataclass, is_dataclass
-from typing import Any, Callable
+from typing import Any
 
 import gymnasium as gym
+
+from problems import env_conf_bindings
+from problems.env_conf_parse import parse_tag_options
+
+
+def _get_atari_dm_bindings():
+    return env_conf_bindings.get_atari_dm_bindings()
+
+
+register_atari_dm_bindings_loader = env_conf_bindings.register_atari_dm_bindings_loader
 
 _DM_CONTROL_DEFAULT_MAX_STEPS = 1000
 _ATARI_DEFAULT_MAX_STEPS = 108000
 _PURE_FUNCTION_MAX_STEPS = 1
 _DEFAULT_MAX_STEPS = 99999
-
-_ATARI_DM_BINDINGS = None
-_ATARI_DM_BINDINGS_LOADER: Callable[[], Any] | None = None
-
-
-def register_atari_dm_bindings_loader(loader: Callable[[], Any]) -> None:
-    global _ATARI_DM_BINDINGS_LOADER
-    _ATARI_DM_BINDINGS_LOADER = loader
-
-
-def _get_atari_dm_bindings():
-    global _ATARI_DM_BINDINGS
-    if _ATARI_DM_BINDINGS is None:
-        if _ATARI_DM_BINDINGS_LOADER is None:
-            raise RuntimeError("Atari/DM bindings are not registered. Call problems.env_conf_backends.register_with_env_conf() before using Atari/DM env tags.")
-        _ATARI_DM_BINDINGS = _ATARI_DM_BINDINGS_LOADER()
-    return _ATARI_DM_BINDINGS
 
 
 def needs_atari_dm_bindings(env_tag: str) -> bool:
@@ -44,22 +37,6 @@ def needs_atari_dm_bindings(env_tag: str) -> bool:
         spec = _gym_env_specs[tag]
         return str(getattr(spec, "env_name", "")).startswith(("dm_control/", "ALE/"))
     return False
-
-
-def parse_tag_options(tag, from_pixels):
-    """Parse shared options from tag. Returns (tag, frozen_noise, from_pixels)."""
-    frozen_noise = False
-    while ":" in tag:
-        x = tag.split(":")
-        opt = x[-1]
-        if opt == "fn":
-            frozen_noise = True
-        elif opt == "pixels":
-            from_pixels = True if from_pixels is None else from_pixels
-        else:
-            break
-        tag = ":".join(x[:-1])
-    return tag, frozen_noise, from_pixels
 
 
 @dataclass

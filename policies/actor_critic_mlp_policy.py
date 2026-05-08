@@ -4,6 +4,7 @@ from torch.distributions import Normal
 
 from policies.env_utils import get_obs_act_dims
 from policies.policy_mixin import PolicyParamsMixin
+from rl.actor_critic import gaussian_policy_normal_from_obs
 from rl.backbone import BackboneSpec, HeadSpec, build_backbone, build_mlp_head, init_linear_layers
 from rl.math_utils import atanh
 
@@ -87,11 +88,7 @@ class ActorCriticMLPPolicy(PolicyParamsMixin, nn.Module):
         self._cache_flat_params_init()
 
     def _distribution(self, obs: torch.Tensor) -> Normal:
-        feats = self.actor_backbone(obs)
-        mean = self.actor_head(feats)
-        log_std = self.log_std.expand_as(mean)
-        std = torch.exp(log_std)
-        return Normal(mean, std)
+        return gaussian_policy_normal_from_obs(self.actor_backbone, self.actor_head, self.log_std, obs)
 
     def forward(self, obs: torch.Tensor) -> torch.Tensor:
         dist = self._distribution(obs)

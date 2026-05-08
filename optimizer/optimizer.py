@@ -9,48 +9,18 @@ from common.telemetry import Telemetry
 
 from .datum import Datum
 from .opt_trajectories import collect_denoised_trajectory, evaluate_for_best
+from .optimizer_mo import OptimizerMultiObjectiveMixin
+from .optimizer_pareto import _pareto_mask_max, _pareto_mask_min
 from .optimizer_types import IterateResult, ReturnSummary, TraceEntry
 from .trajectories import collect_trajectory
 
 _INTERACTIVE_DEBUG = False
 _SHOW_EVERY_N_ITER = 30
 
-
-def _pareto_mask_max(y: np.ndarray) -> np.ndarray:
-    y = np.asarray(y, dtype=np.float64)
-    assert y.ndim == 2, y.shape
-    n = y.shape[0]
-    keep = np.ones(n, dtype=bool)
-    for i in range(n):
-        if not keep[i]:
-            continue
-        yi = y[i]
-        ge = np.all(yi >= y, axis=1)
-        gt = np.any(yi > y, axis=1)
-        dom = ge & gt
-        dom[i] = False
-        keep[dom] = False
-    return keep
+__all__ = ["Optimizer", "_pareto_mask_max", "_pareto_mask_min"]
 
 
-def _pareto_mask_min(y: np.ndarray) -> np.ndarray:
-    y = np.asarray(y, dtype=np.float64)
-    assert y.ndim == 2, y.shape
-    n = y.shape[0]
-    keep = np.ones(n, dtype=bool)
-    for i in range(n):
-        if not keep[i]:
-            continue
-        yi = y[i]
-        le = np.all(yi <= y, axis=1)
-        lt = np.any(yi < y, axis=1)
-        dom = le & lt
-        dom[i] = False
-        keep[dom] = False
-    return keep
-
-
-class Optimizer:
+class Optimizer(OptimizerMultiObjectiveMixin):
     def __init__(
         self,
         collector,
@@ -83,7 +53,10 @@ class Optimizer:
         self._cum_dt_proposing = 0
         self._cum_env_steps = 0
 
-        problem_parts = [f"env_tag = {env_conf.env_name}", f"num_params = {policy.num_params()}"]
+        problem_parts = [
+            f"env_tag = {env_conf.env_name}",
+            f"num_params = {policy.num_params()}",
+        ]
         if opt_name is not None:
             problem_parts.append(f"opt_name = {opt_name}")
         if num_rounds is not None:
@@ -102,7 +75,9 @@ class Optimizer:
         t_0 = time.time()
         policies = designer(self._data, num_arms, telemetry=self._telemetry)
         t_f = time.time()
-        dt_prop = t_f - t_0
+        dt_designer = t_f - t_0
+        dt_rollout_sim = self._telemetry.rollout_seconds()
+        dt_prop = max(0.0, dt_designer - dt_rollout_sim)
 
         data = []
         t_0 = time.time()
@@ -125,11 +100,18 @@ class Optimizer:
                     self._noise_seed_viz = noise_seed
             data.append(Datum(designer, policy, None, traj))
         tf = time.time()
-        dt_eval = tf - t_0
+        dt_eval = (tf - t_0) + dt_rollout_sim
 
         return IterateResult(data=data, dt_prop=float(dt_prop), dt_eval=float(dt_eval))
 
-    def collect_trace(self, designer_name, max_iterations=None, max_proposal_seconds=np.inf, deadline=None, max_total_timesteps=None):
+    def collect_trace(
+        self,
+        designer_name,
+        max_iterations=None,
+        max_proposal_seconds=np.inf,
+        deadline=None,
+        max_total_timesteps=None,
+    ):
         self.initialize(designer_name)
         num_iterations = 0
         while (
@@ -209,83 +191,6 @@ class Optimizer:
             ret_best_s=f"{float(self.r_best_est):.3f}",
             ret_eval_s=f"{ret_eval:.3f}",
         ), int(passive_steps)
-
-    def _handle_multi_objective_returns(self, data, ret_batch, num_metrics):
-        if num_metrics == 2:
-            ret_eval = self._handle_hypervolume(num_metrics)
-        else:
-            ret_eval = self._handle_first_objective(data, ret_batch)
-        return ReturnSummary(
-            ret_eval=float(ret_eval),
-            y_best_s=np.array2string(self.y_best, precision=3, floatmode="fixed"),
-            ret_best_s=f"{float(self.r_best_est):.6f}",
-            ret_eval_s=f"{float(ret_eval):.6f}",
-        )
-
-    def _handle_hypervolume(self, num_metrics):
-        if self._ref_point is None:
-            self._init_ref_point()
-        import torch
-        from botorch.utils.multi_objective.hypervolume import Hypervolume
-        from botorch.utils.multi_objective.pareto import is_non_dominated
-
-        all_y = np.asarray(
-            [np.asarray(d.trajectory.rreturn, dtype=np.float64) for d in self._data],
-            dtype=np.float64,
-        )
-        y_t = torch.as_tensor(all_y, dtype=torch.double)
-        nd_mask = is_non_dominated(y_t)
-        front = y_t[nd_mask]
-        if front.numel() == 0:
-            hv = 0.0
-            self.y_best = np.full(num_metrics, np.nan)
-            self.best_datum = self.best_policy = None
-        else:
-            ref_t = torch.as_tensor(self._ref_point, dtype=torch.double)
-            hv = float(Hypervolume(ref_t).compute(front))
-            front_np = front.cpu().numpy()
-            scores = ((front_np - self._ref_point) / np.abs(self._ref_point + 1e-9)).sum(axis=1)
-            best_idx = int(np.argmax(scores))
-            self.y_best = front_np[best_idx]
-            nd_idx = torch.nonzero(nd_mask, as_tuple=False).reshape(-1)
-            self.best_datum = self._data[int(nd_idx[best_idx].item())]
-            self.best_policy = self.best_datum.policy.clone()
-        self.r_best_est = max(self.r_best_est, float(hv))
-        return float(hv)
-
-    def _init_ref_point(self):
-        from analysis.ref_point import SobolRefPoint
-        from problems.problem import Problem
-
-        noise_seed_0 = 0 if self._env_conf.noise_seed_0 is None else int(self._env_conf.noise_seed_0)
-        seed = int(self._env_conf.problem_seed) + 99991
-        if self._env_conf.env_tag is None:
-            raise ValueError("env_tag required for multi-objective optimization")
-        if self._policy_tag is None:
-            raise ValueError("policy_tag required for multi-objective optimization")
-        ref_problem = Problem(self._env_conf, self._policy_tag)
-        self._ref_point = SobolRefPoint(
-            num_cal=max(128, 10 * int(self._num_arms)),
-            seed=seed,
-            num_denoise=self._num_denoise,
-            noise_seed_0=noise_seed_0,
-            std_margin_scale=0.1,
-        ).compute(
-            ref_problem,
-            policy=self.best_policy.clone() if self.best_policy is not None else None,
-        )
-        self._collector(f"REF_POINT: ref = {np.array2string(self._ref_point, precision=6, floatmode='fixed')}")
-
-    def _handle_first_objective(self, data, ret_batch):
-        ret_0 = np.asarray(ret_batch[:, 0], dtype=np.float64)
-        best_idx = int(np.argmax(ret_0))
-        ret_best_batch = float(ret_0[best_idx])
-        if ret_best_batch > float(self.r_best_est):
-            self.r_best_est = ret_best_batch
-            self.y_best = np.asarray(ret_batch[best_idx], dtype=np.float64)
-            self.best_datum = data[best_idx]
-            self.best_policy = self.best_datum.policy.clone()
-        return float(self.r_best_est)
 
     def iterate(self):
         designer = self._opt_designers[min(len(self._opt_designers) - 1, self._i_iter)]

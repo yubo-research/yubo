@@ -84,7 +84,7 @@ def test_gaussian_policy_stochastic_shape_and_bounds():
     assert action.max() <= 1.0
 
 
-def test_gaussian_policy_deterministic_eval_uses_mean_with_clip():
+def _gaussian_policy_action_for_bias_squash(bias, squash_mode):
     import torch
 
     from problems.torch_policy import GaussianTorchPolicy
@@ -100,33 +100,19 @@ def test_gaussian_policy_deterministic_eval_uses_mean_with_clip():
     with torch.no_grad():
         for p in module.parameters():
             p.zero_()
-        module.head.bias.copy_(torch.tensor([2.0, -2.0]))
-    policy = GaussianTorchPolicy(module, _FakeEnvConf(4), deterministic_eval=True, squash_mode="clip")
+        module.head.bias.copy_(torch.tensor(bias))
+    policy = GaussianTorchPolicy(module, _FakeEnvConf(4), deterministic_eval=True, squash_mode=squash_mode)
     state = np.ones(4, dtype=np.float32)
-    action = policy(state)
+    return policy(state)
+
+
+def test_gaussian_policy_deterministic_eval_uses_mean_with_clip():
+    action = _gaussian_policy_action_for_bias_squash([2.0, -2.0], "clip")
     np.testing.assert_allclose(action, np.array([1.0, -1.0], dtype=np.float32), atol=1e-6)
 
 
 def test_gaussian_policy_tanh_clip_mode():
-    import torch
-
-    from problems.torch_policy import GaussianTorchPolicy
-    from rl.backbone import BackboneSpec, HeadSpec
-    from rl.shared_gaussian_actor import SharedGaussianActorModule
-
-    module = SharedGaussianActorModule(
-        4,
-        2,
-        BackboneSpec("mlp", (), "tanh", layer_norm=False),
-        HeadSpec(),
-    )
-    with torch.no_grad():
-        for p in module.parameters():
-            p.zero_()
-        module.head.bias.copy_(torch.tensor([4.0, -4.0]))
-    policy = GaussianTorchPolicy(module, _FakeEnvConf(4), deterministic_eval=True, squash_mode="tanh_clip")
-    state = np.ones(4, dtype=np.float32)
-    action = policy(state)
+    action = _gaussian_policy_action_for_bias_squash([4.0, -4.0], "tanh_clip")
     assert action[0] > 0.99
     assert action[1] < -0.99
 

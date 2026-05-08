@@ -40,8 +40,20 @@ def capture_backbone_head_snapshot(
     raise ValueError("log_std_format must be one of: tensor, numpy.")
 
 
-def capture_ppo_actor_snapshot(actor_backbone: torch.nn.Module, actor_head: torch.nn.Module, *, log_std: torch.Tensor | None = None) -> dict[str, Any]:
-    return capture_backbone_head_snapshot(actor_backbone, actor_head, log_std=log_std, state_to_cpu=False, log_std_to_cpu=True, log_std_format="tensor")
+def capture_ppo_actor_snapshot(
+    actor_backbone: torch.nn.Module,
+    actor_head: torch.nn.Module,
+    *,
+    log_std: torch.Tensor | None = None,
+) -> dict[str, Any]:
+    return capture_backbone_head_snapshot(
+        actor_backbone,
+        actor_head,
+        log_std=log_std,
+        state_to_cpu=False,
+        log_std_to_cpu=True,
+        log_std_format="tensor",
+    )
 
 
 def restore_backbone_head_snapshot(
@@ -72,7 +84,12 @@ def use_backbone_head_snapshot(
     log_std_format: str = "tensor",
 ):
     previous = capture_backbone_head_snapshot(
-        actor_backbone, actor_head, log_std=log_std, state_to_cpu=state_to_cpu, log_std_to_cpu=log_std_to_cpu, log_std_format=log_std_format
+        actor_backbone,
+        actor_head,
+        log_std=log_std,
+        state_to_cpu=state_to_cpu,
+        log_std_to_cpu=log_std_to_cpu,
+        log_std_format=log_std_format,
     )
     restore_backbone_head_snapshot(actor_backbone, actor_head, snapshot, log_std=log_std, device=device)
     try:

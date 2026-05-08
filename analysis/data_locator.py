@@ -103,7 +103,7 @@ class DataLocator:
             ),
             (
                 self.num_reps is not None and d.get("num_reps") is not None,
-                lambda: int(d["num_reps"]) == self.num_reps,
+                lambda: int(d["num_reps"]) >= self.num_reps,
             ),
             (self.num_dim is not None and env_key, lambda: self._check_dim(env_key)),
         ]

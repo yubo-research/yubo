@@ -53,6 +53,8 @@ class SparseGaussianPerturbator(PerturbatorBase):
             p.data.view(-1).index_add_(0, local_t, v_t)
 
     def _apply_prob_sparse(self, *, device: torch.device, seed: int, sigma: float, chunk_size: int) -> None:
+        if self._dim <= 0:
+            return
         g = self._rng(seed)
         num_perturbed = torch.zeros((), device=device, dtype=torch.int64)
         for p in self._module.parameters():

@@ -65,7 +65,13 @@ def run(configs, max_parallel, b_dry_run=False):
 def prep_d_argss(batch_tag: str, *, results_dir: str = "results"):
     import experiments.batch_preps as batch_preps
 
-    preps = {k: v for k, v in batch_preps.__dict__.items() if k.startswith("prep_") and callable(v)}
+    preps: dict[str, Any] = {}
+    for k in batch_preps.__all__:
+        if not k.startswith("prep_"):
+            continue
+        v = getattr(batch_preps, k)
+        if callable(v):
+            preps[k] = v
 
     fn = preps.get(batch_tag)
     if fn is None and not batch_tag.startswith("prep_"):
@@ -75,7 +81,13 @@ def prep_d_argss(batch_tag: str, *, results_dir: str = "results"):
     return fn(results_dir)
 
 
-def run_from_batch_tag(batch_tag: str, *, max_parallel: int = 5, dry_run: bool = False, results_dir: str = "results") -> None:
+def run_from_batch_tag(
+    batch_tag: str,
+    *,
+    max_parallel: int = 5,
+    dry_run: bool = False,
+    results_dir: str = "results",
+) -> None:
     configs = prep_d_argss(batch_tag, results_dir=results_dir)
     t_0 = time.time()
     run(configs, max_parallel=max_parallel, b_dry_run=dry_run)

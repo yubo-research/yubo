@@ -62,14 +62,18 @@ def test_resolve_rl_model_defaults_cheetah_sac():
     assert "actor_head_hidden_sizes" not in cfg
 
 
+def _assert_ppo_actor_critic_backbone(cfg, *, hidden_sizes, log_std_init):
+    assert cfg["backbone_hidden_sizes"] == hidden_sizes
+    assert cfg["backbone_layer_norm"] is True
+    assert cfg["share_backbone"] is True
+    assert cfg["log_std_init"] == log_std_init
+
+
 def test_resolve_rl_model_defaults_cheetah_ppo_uses_explicit_model():
     from problems.env_conf import resolve_rl_model_defaults
 
     cfg = resolve_rl_model_defaults("cheetah", algo="ppo")
-    assert cfg["backbone_hidden_sizes"] == (64, 64)
-    assert cfg["backbone_layer_norm"] is True
-    assert cfg["share_backbone"] is True
-    assert cfg["log_std_init"] == -0.5
+    _assert_ppo_actor_critic_backbone(cfg, hidden_sizes=(64, 64), log_std_init=-0.5)
 
 
 def test_resolve_rl_model_defaults_quadruped_run_uses_explicit_model():
@@ -91,20 +95,17 @@ def test_resolve_rl_model_defaults_lunar_ac_infers_from_actor_critic_factory():
     from problems.env_conf import resolve_rl_model_defaults
 
     cfg = resolve_rl_model_defaults("lunar-ac", algo="ppo")
-    assert cfg["backbone_hidden_sizes"] == (16, 8)
-    assert cfg["backbone_layer_norm"] is True
-    assert cfg["share_backbone"] is True
-    assert cfg["log_std_init"] == 0.0
+    _assert_ppo_actor_critic_backbone(cfg, hidden_sizes=(16, 8), log_std_init=0.0)
 
 
 def test_get_env_conf_applies_atari_preprocess_overrides():
+    from env_conf_atari_test_support import fake_bindings_resolve_atari
+
     import problems.env_conf as env_conf_module
+    import problems.env_conf_bindings as env_conf_bindings_module
 
-    class _FakeBindings:
-        resolve_atari_from_tag = staticmethod(lambda _tag: ("ALE/Pong-v5", lambda _env_conf: object()))
-
-    old_bindings = env_conf_module._ATARI_DM_BINDINGS
-    env_conf_module._ATARI_DM_BINDINGS = _FakeBindings()
+    old_bindings = env_conf_bindings_module._ATARI_DM_BINDINGS
+    env_conf_bindings_module._ATARI_DM_BINDINGS = fake_bindings_resolve_atari()
     try:
         conf = env_conf_module.get_env_conf(
             "atari:Pong:mlp16",
@@ -117,7 +118,7 @@ def test_get_env_conf_applies_atari_preprocess_overrides():
             },
         )
     finally:
-        env_conf_module._ATARI_DM_BINDINGS = old_bindings
+        env_conf_bindings_module._ATARI_DM_BINDINGS = old_bindings
     assert isinstance(conf.atari_preprocess, dict)
     assert conf.atari_preprocess["repeat_action_probability"] == 0.2
     assert conf.atari_preprocess["use_minimal_action_set"] is False
@@ -126,56 +127,15 @@ def test_get_env_conf_applies_atari_preprocess_overrides():
 
 
 def test_env_conf_ale_make_uses_atari_preprocess_options():
-    import numpy as np
-    from gymnasium import spaces
+    from env_conf_atari_test_support import fake_bindings_pong_stack
 
     import problems.env_conf as env_conf_module
+    import problems.env_conf_bindings as env_conf_bindings_module
 
-    captured = {}
+    fake_bindings, captured = fake_bindings_pong_stack()
 
-    class _FakeEnv:
-        observation_space = spaces.Box(low=0, high=255, shape=(4, 84, 84), dtype=np.uint8)
-        action_space = spaces.Discrete(6)
-
-        def close(self):
-            return
-
-    def _fake_make_atari_env(env_name, *, render_mode=None, max_episode_steps=0, preprocess=None):
-        captured["env_name"] = env_name
-        captured["render_mode"] = render_mode
-        captured["max_episode_steps"] = max_episode_steps
-        captured["preprocess"] = preprocess
-        return _FakeEnv()
-
-    class _FakeAtariPreprocessOptions:
-        def __init__(
-            self,
-            *,
-            terminal_on_life_loss=False,
-            grayscale_obs=True,
-            grayscale_newaxis=True,
-            scale_obs=False,
-            repeat_action_probability=0.0,
-            use_minimal_action_set=True,
-            color_averaging=False,
-        ):
-            self.terminal_on_life_loss = terminal_on_life_loss
-            self.grayscale_obs = grayscale_obs
-            self.grayscale_newaxis = grayscale_newaxis
-            self.scale_obs = scale_obs
-            self.repeat_action_probability = repeat_action_probability
-            self.use_minimal_action_set = use_minimal_action_set
-            self.color_averaging = color_averaging
-
-    class _FakeBindings:
-        resolve_dm_control_from_tag = staticmethod(lambda tag, use_pixels: (str(tag), object()))
-        resolve_atari_from_tag = staticmethod(lambda tag: (str(tag), lambda _env_conf: object()))
-        make_atari_preprocess_options = staticmethod(lambda **kwargs: _FakeAtariPreprocessOptions(**kwargs))
-        make_dm_control_env = staticmethod(lambda *args, **kwargs: _FakeEnv())
-        make_atari_env = staticmethod(_fake_make_atari_env)
-
-    old_bindings = env_conf_module._ATARI_DM_BINDINGS
-    env_conf_module._ATARI_DM_BINDINGS = _FakeBindings()
+    old_bindings = env_conf_bindings_module._ATARI_DM_BINDINGS
+    env_conf_bindings_module._ATARI_DM_BINDINGS = fake_bindings
     try:
         conf = env_conf_module.EnvConf(
             "ALE/Pong-v5",
@@ -192,7 +152,7 @@ def test_env_conf_ale_make_uses_atari_preprocess_options():
         env = conf.make(render_mode="rgb_array")
         env.close()
     finally:
-        env_conf_module._ATARI_DM_BINDINGS = old_bindings
+        env_conf_bindings_module._ATARI_DM_BINDINGS = old_bindings
     preprocess = captured["preprocess"]
     assert captured["env_name"] == "ALE/Pong-v5"
     assert captured["max_episode_steps"] == 321

@@ -9,15 +9,15 @@ def _get(mod_name, attr):
 
 class TestModalBatches:
     def test_job_key(self):
-        _job_key = _get("experiments.modal_batches", "_job_key")
+        _job_key = _get("experiments.modal_batches_impl", "_job_key")
         key = _job_key("test_batch", 42)
         assert key == "test_batch-42"
 
-    @patch("experiments.modal_batches.prep_d_argss")
-    @patch("experiments.modal_batches.mk_replicates")
-    @patch("experiments.modal_batches.data_is_done")
+    @patch("experiments.modal_batches_impl.prep_d_argss")
+    @patch("experiments.modal_batches_impl.mk_replicates")
+    @patch("experiments.modal_batches_impl.data_is_done")
     def test_gen_jobs(self, mock_data_is_done, mock_mk_replicates, mock_prep_d_argss):
-        _gen_jobs = _get("experiments.modal_batches", "_gen_jobs")
+        _gen_jobs = _get("experiments.modal_batches_impl", "_gen_jobs")
         mock_data_is_done.return_value = False
         mock_run_config = MagicMock()
         mock_run_config.trace_fn = "/path/to/trace"
@@ -32,11 +32,11 @@ class TestModalBatches:
         assert key == "test_batch-/path/to/trace"
         assert run_config == mock_run_config
 
-    @patch("experiments.modal_batches.prep_d_argss")
-    @patch("experiments.modal_batches.mk_replicates")
-    @patch("experiments.modal_batches.data_is_done")
+    @patch("experiments.modal_batches_impl.prep_d_argss")
+    @patch("experiments.modal_batches_impl.mk_replicates")
+    @patch("experiments.modal_batches_impl.data_is_done")
     def test_gen_jobs_skips_done(self, mock_data_is_done, mock_mk_replicates, mock_prep_d_argss):
-        _gen_jobs = _get("experiments.modal_batches", "_gen_jobs")
+        _gen_jobs = _get("experiments.modal_batches_impl", "_gen_jobs")
         mock_data_is_done.return_value = True
         mock_run_config = MagicMock()
         mock_run_config.trace_fn = "/path/to/trace"

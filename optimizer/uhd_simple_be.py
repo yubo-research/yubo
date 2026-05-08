@@ -10,6 +10,7 @@ from torch import nn
 from embedding.behavioral_embedder import BehavioralEmbedder
 
 from .gaussian_perturbator import GaussianPerturbator
+from .uhd_mezo_be_ask_shared import run_mezo_be_ask
 from .uhd_simple_base import UHDSimpleBase
 
 
@@ -220,22 +221,7 @@ class UHDMeZOBE:
         return self._mezo.positive_phase
 
     def ask(self) -> None:
-        if self._mezo.positive_phase:
-            if self._enn_params is not None and len(self._zs) >= self._warmup:
-                best_seed, z_plus, z_minus = self._select_seed()
-                self._mezo.set_next_seed(best_seed)
-                self._z_plus = z_plus
-                self._z_minus = z_minus
-                self._selected = True
-            else:
-                self._selected = False
-            self._mezo.ask()
-            if not self._selected:
-                self._z_plus = _embed_module(self._module, self._embedder)
-        else:
-            self._mezo.ask()
-            if not self._selected:
-                self._z_minus = _embed_module(self._module, self._embedder)
+        run_mezo_be_ask(self, embed_unselected=lambda: _embed_module(self._module, self._embedder))
 
     def tell(self, mu: float, se: float) -> None:
         is_positive = self._mezo.positive_phase

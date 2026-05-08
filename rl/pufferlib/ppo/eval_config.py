@@ -1,13 +1,8 @@
 from __future__ import annotations
 
 from problems.problem import build_problem
-from rl.core.env_conf import build_seeded_env_conf_from_run, resolve_run_seeds
+from rl.core.env_conf import build_seeded_env_conf_from_run
 from rl.core.ppo_envs import _env_tag_for_problem_build, _maybe_register_atari_dm_backends
-
-
-def resolve_eval_seeds(config) -> tuple[int, int]:
-    resolved = resolve_run_seeds(seed=int(config.seed), problem_seed=config.problem_seed, noise_seed_0=config.noise_seed_0)
-    return (int(resolved.problem_seed), int(resolved.noise_seed_0))
 
 
 def build_eval_env_conf(config, *, obs_mode: str, is_atari_env_tag_fn, resolve_gym_env_name_fn):

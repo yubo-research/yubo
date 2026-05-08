@@ -15,7 +15,11 @@ def _mps_is_available() -> bool:
 
 
 def select_device(device: str) -> torch.device:
-    return _select_device_core(device, cuda_is_available_fn=torch.cuda.is_available, mps_is_available_fn=_mps_is_available)
+    return _select_device_core(
+        device,
+        cuda_is_available_fn=torch.cuda.is_available,
+        mps_is_available_fn=_mps_is_available,
+    )
 
 
 def obs_scale_from_env(env_conf):

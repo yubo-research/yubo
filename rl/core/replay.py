@@ -44,7 +44,14 @@ class NumpyReplayBuffer:
         self.ptr = 0
         self.size = 0
 
-    def add_batch(self, obs: np.ndarray, act: np.ndarray, rew: np.ndarray, nxt: np.ndarray, done: np.ndarray) -> None:
+    def add_batch(
+        self,
+        obs: np.ndarray,
+        act: np.ndarray,
+        rew: np.ndarray,
+        nxt: np.ndarray,
+        done: np.ndarray,
+    ) -> None:
         n = int(obs.shape[0])
         idx = (np.arange(n) + self.ptr) % self.capacity
         self.obs[idx] = obs
@@ -119,7 +126,14 @@ class TorchRLReplayBuffer:
     def ptr(self) -> int:
         return int(int(self._write_count) % int(self.capacity))
 
-    def add_batch(self, obs: np.ndarray, act: np.ndarray, rew: np.ndarray, nxt: np.ndarray, done: np.ndarray) -> None:
+    def add_batch(
+        self,
+        obs: np.ndarray,
+        act: np.ndarray,
+        rew: np.ndarray,
+        nxt: np.ndarray,
+        done: np.ndarray,
+    ) -> None:
         tensordict_mod = __import__("tensordict", fromlist=["TensorDict"])
         tensor_dict = tensordict_mod.TensorDict
         n = int(obs.shape[0])
@@ -129,7 +143,14 @@ class TorchRLReplayBuffer:
             {
                 "observation": torch.as_tensor(obs, dtype=torch.float32),
                 "action": torch.as_tensor(act, dtype=torch.float32),
-                "next": tensor_dict({"observation": torch.as_tensor(nxt, dtype=torch.float32), "reward": reward, "done": done_t}, batch_size=[n]),
+                "next": tensor_dict(
+                    {
+                        "observation": torch.as_tensor(nxt, dtype=torch.float32),
+                        "reward": reward,
+                        "done": done_t,
+                    },
+                    batch_size=[n],
+                ),
             },
             batch_size=[n],
         )
@@ -155,7 +176,10 @@ class TorchRLReplayBuffer:
         return (obs, act, rew, nxt, done)
 
     def state_dict(self) -> dict[str, Any]:
-        return {"replay_state": self._replay.state_dict(), "write_count": int(self._write_count)}
+        return {
+            "replay_state": self._replay.state_dict(),
+            "write_count": int(self._write_count),
+        }
 
     def load_state_dict(self, state: dict[str, Any]) -> None:
         replay_state = state.get("replay_state") if isinstance(state, dict) else None
@@ -192,4 +216,9 @@ def resolve_replay_backend(backend: str, *, device: torch.device | str, platform
     return "numpy"
 
 
-__all__ = ["NumpyReplayBuffer", "TorchRLReplayBuffer", "make_replay_buffer", "resolve_replay_backend"]
+__all__ = [
+    "NumpyReplayBuffer",
+    "TorchRLReplayBuffer",
+    "make_replay_buffer",
+    "resolve_replay_backend",
+]

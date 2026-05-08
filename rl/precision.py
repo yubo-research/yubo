@@ -73,7 +73,14 @@ def resolve_amp_dtype(mode: str | None, *, device: torch.device) -> torch.dtype 
 
 def _is_bf16_runtime_error(exc: BaseException) -> bool:
     msg = str(exc).lower()
-    patterns = ("bfloat16", "bf16", "not implemented for", "unsupported dtype", "doesn't support float64", "not supported on mps")
+    patterns = (
+        "bfloat16",
+        "bf16",
+        "not implemented for",
+        "unsupported dtype",
+        "doesn't support float64",
+        "not supported on mps",
+    )
     return any((p in msg for p in patterns))
 
 
@@ -107,7 +114,10 @@ class PrecisionController:
             return False
         self.amp_dtype = None
         self.fallback_used = True
-        print(f"[{component}] precision=auto bf16 path failed; falling back to fp32.", flush=True)
+        print(
+            f"[{component}] precision=auto bf16 path failed; falling back to fp32.",
+            flush=True,
+        )
         return True
 
 

@@ -7,6 +7,9 @@ from experiments.modal_image import mk_image
 
 modal_image = mk_image()
 
+# Queue/dict size for submit/get; tests patch to a small value to avoid huge stdout.
+PERSISTED_KEY_COUNT = 10000
+
 app = modal.App(name="my-job")
 
 
@@ -14,7 +17,7 @@ app = modal.App(name="my-job")
 def process_job(cmd):
     my_queue = modal.Queue.from_name("my-persisted-queue-b", create_if_missing=True)
     if cmd == "submit":
-        for i in range(10000):
+        for i in range(PERSISTED_KEY_COUNT):
             print("PUT:", i)
             my_queue.put(f"key_{i}")
         return
@@ -37,7 +40,7 @@ def start(cmd):
 
 def _get_job_result():
     my_dict = modal.Dict.from_name("my-persisted-dict", create_if_missing=True)
-    for i in range(10000):
+    for i in range(PERSISTED_KEY_COUNT):
         key = f"key_{i}"
         print(key, my_dict[key])
 

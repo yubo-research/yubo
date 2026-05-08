@@ -7,6 +7,9 @@ from types import SimpleNamespace
 
 import numpy as np
 import torch
+from torchrl_video_helper_stubs import _BoxSpaceStub, _EnvConfStub
+from torchrl_video_helper_stubs_non_gym import _NonGymEnvConfStub
+from torchrl_video_type_support import env_conf_no_transform_instance, env_conf_transform_with_space, patch_rollout_video_writer
 
 from common.video import (
     RLVideoContext,
@@ -19,79 +22,6 @@ from common.video import (
     scale_action_to_space,
     select_video_episode_indices,
 )
-
-
-class _BoxSpaceStub:
-    def __init__(self, low, high):
-        self.low = np.asarray(low, dtype=np.float32)
-        self.high = np.asarray(high, dtype=np.float32)
-
-
-class _EnvStub:
-    def __init__(self):
-        self.action_space = _BoxSpaceStub(low=[-2.0, -2.0], high=[2.0, 2.0])
-        self.actions = []
-        self.step_count = 0
-
-    def reset(self, *, seed=None):
-        _ = seed
-        return np.asarray([0.0, 0.0], dtype=np.float32), {}
-
-    def step(self, action):
-        self.actions.append(np.asarray(action, dtype=np.float32))
-        self.step_count += 1
-        terminated = self.step_count >= 1
-        truncated = False
-        return np.asarray([0.0, 0.0], dtype=np.float32), 1.0, terminated, truncated, {}
-
-    def close(self):
-        return
-
-
-class _EnvConfStub:
-    def __init__(self, *, max_steps=5, gym_conf=True):
-        self.gym_conf = SimpleNamespace(max_steps=max_steps) if gym_conf else None
-        self.made_envs = []
-
-    def make(self, **_kwargs):
-        env = _EnvStub()
-        self.made_envs.append(env)
-        return env
-
-
-class _NonGymRenderEnv:
-    def __init__(self):
-        self.action_space = _BoxSpaceStub(low=[-1.0, -1.0], high=[1.0, 1.0])
-        self.observation_space = _BoxSpaceStub(low=[-1.0, -1.0], high=[1.0, 1.0])
-        self._step_count = 0
-
-    def reset(self, *, seed=None):
-        _ = seed
-        self._step_count = 0
-        return np.asarray([0.0, 0.0], dtype=np.float32), {}
-
-    def step(self, action):
-        _ = action
-        self._step_count += 1
-        terminated = self._step_count >= 1
-        return np.asarray([0.0, 0.0], dtype=np.float32), 1.0, terminated, False, {}
-
-    def render(self):
-        pixel = np.uint8(min(255, 40 * (self._step_count + 1)))
-        frame = np.full((8, 8, 3), pixel, dtype=np.uint8)
-        return frame
-
-    def close(self):
-        return
-
-
-class _NonGymEnvConfStub:
-    def __init__(self, *, max_steps=2):
-        self.gym_conf = None
-        self.max_steps = int(max_steps)
-
-    def make(self, **_kwargs):
-        return _NonGymRenderEnv()
 
 
 def test_scale_action_to_space_and_resolve_steps():
@@ -165,7 +95,7 @@ def test_render_policy_videos_rl_selection_and_guards(monkeypatch, tmp_path):
             return 0.0
         return returns_by_seed[seed]
 
-    monkeypatch.setattr("common.video.rollout_episode", _fake_rollout)
+    monkeypatch.setattr("common.video_batch.rollout_episode", _fake_rollout)
 
     @contextmanager
     def _with_actor_state(_modules, _snapshot, *, device):
@@ -238,7 +168,7 @@ def test_render_policy_videos_non_gym_not_skipped(monkeypatch, tmp_path):
         calls.append((seed, render_video, video_dir, video_prefix))
         return 1.0
 
-    monkeypatch.setattr("common.video.rollout_episode", _fake_rollout)
+    monkeypatch.setattr("common.video_batch.rollout_episode", _fake_rollout)
 
     render_policy_videos(
         env_conf,
@@ -259,11 +189,7 @@ def test_render_policy_videos_non_gym_not_skipped(monkeypatch, tmp_path):
 
 
 def test_policy_for_bo_rollout_no_transform():
-    class _EnvConfNoTransform:
-        def ensure_spaces(self):
-            self.gym_conf = None
-
-    env_conf = _EnvConfNoTransform()
+    env_conf = env_conf_no_transform_instance()
     env_conf.ensure_spaces()
 
     def policy(s):
@@ -275,36 +201,22 @@ def test_policy_for_bo_rollout_no_transform():
 
 
 def test_policy_for_bo_rollout_with_transform():
-    class _SpaceStub:
-        low = np.array([0.0, 0.0])
-        high = np.array([2.0, 4.0])
-
-    class _EnvConfTransform:
-        def ensure_spaces(self):
-            self.gym_conf = SimpleNamespace(transform_state=True, state_space=_SpaceStub())
-
-    env_conf = _EnvConfTransform()
+    env_conf = env_conf_transform_with_space(np.array([0.0, 0.0]), np.array([2.0, 4.0]))
     env_conf.ensure_spaces()
 
     def policy(s):
-        return np.array([s[0] + s[1]], dtype=np.float32)  # pass-through sum
+        return np.array([s[0] + s[1]], dtype=np.float32)
 
     wrapped = policy_for_bo_rollout(env_conf, policy)
-    # state [1, 2] -> norm (1-0)/2, (2-0)/4 = [0.5, 0.5] -> policy returns [1.0]
     out = wrapped(np.array([1.0, 2.0]))
     assert np.allclose(out, [1.0])
 
 
 def test_policy_for_bo_rollout_with_partial_infinite_bounds():
-    class _SpaceStub:
-        low = np.array([0.0, -np.inf], dtype=np.float32)
-        high = np.array([2.0, np.inf], dtype=np.float32)
-
-    class _EnvConfTransform:
-        def ensure_spaces(self):
-            self.gym_conf = SimpleNamespace(transform_state=True, state_space=_SpaceStub())
-
-    env_conf = _EnvConfTransform()
+    env_conf = env_conf_transform_with_space(
+        np.array([0.0, -np.inf], dtype=np.float32),
+        np.array([2.0, np.inf], dtype=np.float32),
+    )
     env_conf.ensure_spaces()
 
     captured = {}
@@ -319,15 +231,10 @@ def test_policy_for_bo_rollout_with_partial_infinite_bounds():
 
 
 def test_policy_for_bo_rollout_with_all_infinite_bounds_sanitizes_nan_input():
-    class _SpaceStub:
-        low = np.array([-np.inf, -np.inf], dtype=np.float32)
-        high = np.array([np.inf, np.inf], dtype=np.float32)
-
-    class _EnvConfTransform:
-        def ensure_spaces(self):
-            self.gym_conf = SimpleNamespace(transform_state=True, state_space=_SpaceStub())
-
-    env_conf = _EnvConfTransform()
+    env_conf = env_conf_transform_with_space(
+        np.array([-np.inf, -np.inf], dtype=np.float32),
+        np.array([np.inf, np.inf], dtype=np.float32),
+    )
     env_conf.ensure_spaces()
 
     captured = {}
@@ -349,7 +256,7 @@ def test_render_policy_videos_bo_smoke(monkeypatch, tmp_path):
     def policy(s):
         return np.array([-1.0, 1.0], dtype=np.float32)
 
-    monkeypatch.setattr("common.video.render_policy_videos", lambda *a, **kw: None)
+    monkeypatch.setattr("common.video_batch.render_policy_videos", lambda *a, **kw: None)
     render_policy_videos_bo(
         env_conf,
         policy,
@@ -363,7 +270,6 @@ def test_render_policy_videos_bo_smoke(monkeypatch, tmp_path):
 
 
 def test_render_policy_videos_direct(tmp_path):
-    """Exercise render_policy_videos with a stub env (no video recording)."""
     env_conf = _EnvConfStub(max_steps=2, gym_conf=True)
 
     def policy(s):
@@ -388,23 +294,7 @@ def test_rollout_episode_records_non_gym_video(monkeypatch, tmp_path):
 
     frames = []
     video_path_holder = {}
-
-    def _fake_writer(video_path, *, fps=30):
-        _ = fps
-        path = Path(video_path)
-        video_path_holder["path"] = path
-
-        class _Writer:
-            def append_data(self, frame):
-                frames.append(np.asarray(frame))
-
-            def close(self):
-                path.parent.mkdir(parents=True, exist_ok=True)
-                path.touch()
-
-        return _Writer()
-
-    monkeypatch.setattr("common.video._open_frame_video_writer", _fake_writer)
+    patch_rollout_video_writer(monkeypatch, frames, video_path_holder)
 
     ret = rollout_episode(
         env_conf,
@@ -434,7 +324,7 @@ def test_render_policy_videos_skips_headless_video_error(monkeypatch, tmp_path, 
             raise RuntimeError("X11: The DISPLAY environment variable is missing")
         return 1.0
 
-    monkeypatch.setattr("common.video.rollout_episode", _fake_rollout)
+    monkeypatch.setattr("common.video_batch.rollout_episode", _fake_rollout)
     render_policy_videos(
         env_conf,
         policy,
@@ -466,8 +356,8 @@ def test_render_policy_videos_retries_with_headless_gl_backend(monkeypatch, tmp_
             raise RuntimeError("X11: The DISPLAY environment variable is missing")
         return 0.0
 
-    monkeypatch.setattr("common.video._video_gl_candidates", lambda: [None, "egl"])
-    monkeypatch.setattr("common.video.rollout_episode", _fake_rollout)
+    monkeypatch.setattr("common.video_batch._video_gl_candidates", lambda: [None, "egl"])
+    monkeypatch.setattr("common.video_batch.rollout_episode", _fake_rollout)
 
     render_policy_videos(
         env_conf,

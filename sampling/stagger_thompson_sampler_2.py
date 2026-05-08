@@ -2,6 +2,7 @@ import torch
 from botorch.utils.sampling import draw_sobol_normal_samples
 
 from sampling.ray_boundary import ray_boundary
+from sampling.stagger_thompson_sampler import _init_stagger_sampler_layout
 
 # Maybe perturbing toward a target is better than perturbing in a random direction
 #  b/c targets can pull you toward any spot in the space, whereas a random
@@ -11,14 +12,7 @@ from sampling.ray_boundary import ray_boundary
 
 class StaggerThompsonSampler2:
     def __init__(self, model, X_control, num_samples, no_stagger=False):
-        assert len(X_control) == 1, "NYI: multiple control points"
-        self._model = model
-        self._num_samples = num_samples
-        self._no_stagger = no_stagger
-        self._X_samples = torch.tile(X_control, dims=(self._num_samples, 1))
-        self._num_dim = self._X_samples.shape[-1]
-        self.device = self._X_samples.device
-        self.dtype = self._X_samples.dtype
+        _init_stagger_sampler_layout(self, model, X_control, num_samples, no_stagger)
 
     def samples(self):
         return self._X_samples

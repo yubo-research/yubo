@@ -24,16 +24,20 @@ Draw from a proposal distribution defined this way:
 """
 
 
+def _init_stagger_sampler_layout(obj, model, X_control, num_samples, no_stagger):
+    assert len(X_control) == 1, "NYI: multiple control points"
+    obj._model = model
+    obj._num_samples = num_samples
+    obj._no_stagger = no_stagger
+    obj._X_samples = torch.tile(X_control, dims=(obj._num_samples, 1))
+    obj._num_dim = obj._X_samples.shape[-1]
+    obj.device = obj._X_samples.device
+    obj.dtype = obj._X_samples.dtype
+
+
 class StaggerThompsonSampler:
     def __init__(self, model, X_control, num_samples, no_stagger=False):
-        assert len(X_control) == 1, "NYI: multiple control points"
-        self._model = model
-        self._num_samples = num_samples
-        self._no_stagger = no_stagger
-        self._X_samples = torch.tile(X_control, dims=(self._num_samples, 1))
-        self._num_dim = self._X_samples.shape[-1]
-        self.device = self._X_samples.device
-        self.dtype = self._X_samples.dtype
+        _init_stagger_sampler_layout(self, model, X_control, num_samples, no_stagger)
         self._bounds = torch.tensor(
             [[0.0] * self._num_dim, [1.0] * self._num_dim],
             device=self.device,

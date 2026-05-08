@@ -9,14 +9,18 @@ class SubmodulePerturbator(PerturbatorBase):
         super().__init__(module)
         self._leaf_modules = [m for m in module.modules() if list(m.parameters(recurse=False))]
         n = len(self._leaf_modules)
-        if 0 < num_module_target < 1:
+        if n == 0:
+            self._prob = 1.0
+        elif 0 < num_module_target < 1:
             self._prob = num_module_target
         else:
             self._prob = min(num_module_target / n, 1.0)
 
     def _select_mask(self, *, g: torch.Generator) -> torch.Tensor:
-        device = self._device()
         n = len(self._leaf_modules)
+        if n == 0:
+            return torch.empty(0, dtype=torch.bool, device=torch.device("cpu"))
+        device = self._device()
         mask = torch.rand((n,), device=device, generator=g) < self._prob
         if not bool(mask.any().item()):
             idx = int(torch.randint(n, (1,), device=device, generator=g).item())
@@ -24,6 +28,8 @@ class SubmodulePerturbator(PerturbatorBase):
         return mask
 
     def _apply(self, *, seed: int, sigma: float, chunk_size: int = 2**16) -> None:
+        if not self._leaf_modules:
+            return
         g = self._rng(seed)
         device = self._device()
         mask = self._select_mask(g=g)

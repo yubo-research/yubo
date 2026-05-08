@@ -138,19 +138,17 @@ def test_device_dtype_gpu_paths():
     assert y.dtype == dtype
 
 
-def test_delta_sparse_jl_t_timing_prints():
+def _delta_sparse_jl_timing_print_case(*, D, d, s, k, gen_seed, jl_seed, zero_x0, val_scale):
     import time
 
-    gen = torch.Generator().manual_seed(3033)
-    D = 5000
-    d = 256
-    s = 4
-    k = 50
-    x0 = torch.randn(D, generator=gen)
+    gen = torch.Generator().manual_seed(gen_seed)
+    x0 = torch.zeros(D) if zero_x0 else torch.randn(D, generator=gen)
     idx = torch.randperm(D, generator=gen)[:k]
-    vals = torch.randn(k, generator=gen) * 0.05
+    vals = torch.randn(k, generator=gen)
+    if val_scale is not None:
+        vals = vals * val_scale
     dx = make_sparse_vector(idx.tolist(), vals.tolist(), D, dtype=x0.dtype, device=x0.device)
-    dut = DeltaSparseJL_T(num_dim_ambient=D, num_dim_embedding=d, s=s, seed=0)
+    dut = DeltaSparseJL_T(num_dim_ambient=D, num_dim_embedding=d, s=s, seed=jl_seed)
     dut.initialize(x0)
     times_ms = []
     y = None
@@ -161,28 +159,29 @@ def test_delta_sparse_jl_t_timing_prints():
         times_ms.append((t1 - t0) * 1000.0)
     mean_ms = sum(times_ms) / len(times_ms)
     print(f"D={D}, d={d}, s={s}, k={k}, time_ms_mean={mean_ms:.2f}, y_norm={float(torch.linalg.norm(y)):.4f}")
+
+
+def test_delta_sparse_jl_t_timing_prints():
+    _delta_sparse_jl_timing_print_case(
+        D=5000,
+        d=256,
+        s=4,
+        k=50,
+        gen_seed=3033,
+        jl_seed=0,
+        zero_x0=False,
+        val_scale=0.05,
+    )
 
 
 def test_delta_sparse_jl_t_timing_sparse_dx_prints():
-    import time
-
-    gen = torch.Generator().manual_seed(3034)
-    D = 20000
-    d = 512
-    s = 4
-    k = 100
-    x0 = torch.zeros(D)
-    idx = torch.randperm(D, generator=gen)[:k]
-    vals = torch.randn(k, generator=gen)
-    dx = make_sparse_vector(idx.tolist(), vals.tolist(), D, dtype=x0.dtype, device=x0.device)
-    dut = DeltaSparseJL_T(num_dim_ambient=D, num_dim_embedding=d, s=s, seed=1)
-    dut.initialize(x0)
-    times_ms = []
-    y = None
-    for _ in range(3):
-        t0 = time.perf_counter()
-        y = dut.transform(dx)
-        t1 = time.perf_counter()
-        times_ms.append((t1 - t0) * 1000.0)
-    mean_ms = sum(times_ms) / len(times_ms)
-    print(f"D={D}, d={d}, s={s}, k={k}, time_ms_mean={mean_ms:.2f}, y_norm={float(torch.linalg.norm(y)):.4f}")
+    _delta_sparse_jl_timing_print_case(
+        D=20000,
+        d=512,
+        s=4,
+        k=100,
+        gen_seed=3034,
+        jl_seed=1,
+        zero_x0=True,
+        val_scale=None,
+    )

@@ -6,7 +6,11 @@ from typing import Any
 import numpy as np
 import torch
 
-from rl.core.actor_state import capture_backbone_head_snapshot, restore_backbone_head_snapshot, use_backbone_head_snapshot
+from rl.core.actor_state import (
+    capture_backbone_head_snapshot,
+    restore_backbone_head_snapshot,
+    use_backbone_head_snapshot,
+)
 from rl.core.env_contract import ObservationContract
 from rl.core.pixel_transform import ensure_pixel_obs_format
 
@@ -37,7 +41,10 @@ class ActorEvalPolicy:
         if self._obs_contract.mode == "pixels":
             state_tensor = torch.as_tensor(state, device=self._device)
             state_tensor = ensure_pixel_obs_format(
-                state_tensor, channels=int(self._obs_contract.model_channels or 3), size=int(self._obs_contract.image_size or 84), scale_float_255=True
+                state_tensor,
+                channels=int(self._obs_contract.model_channels or 3),
+                size=int(self._obs_contract.image_size or 84),
+                scale_float_255=True,
             )
             if state_tensor.ndim == 3:
                 state_tensor = state_tensor.unsqueeze(0)
@@ -59,14 +66,25 @@ def capture_actor_snapshot(modules: Any) -> dict:
     if not _has_state_dict(modules.actor_backbone) or not _has_state_dict(modules.actor_head):
         return {}
     return capture_backbone_head_snapshot(
-        modules.actor_backbone, modules.actor_head, log_std=getattr(modules, "log_std", None), state_to_cpu=False, log_std_to_cpu=True, log_std_format="numpy"
+        modules.actor_backbone,
+        modules.actor_head,
+        log_std=getattr(modules, "log_std", None),
+        state_to_cpu=False,
+        log_std_to_cpu=True,
+        log_std_format="numpy",
     )
 
 
 def restore_actor_snapshot(modules: Any, snapshot: dict, *, device: torch.device) -> None:
     if not _has_state_dict(modules.actor_backbone) or not _has_state_dict(modules.actor_head):
         return
-    restore_backbone_head_snapshot(modules.actor_backbone, modules.actor_head, snapshot, log_std=getattr(modules, "log_std", None), device=device)
+    restore_backbone_head_snapshot(
+        modules.actor_backbone,
+        modules.actor_head,
+        snapshot,
+        log_std=getattr(modules, "log_std", None),
+        device=device,
+    )
 
 
 @contextmanager

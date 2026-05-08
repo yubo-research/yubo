@@ -145,7 +145,6 @@ class PPODesigner(Designer):
         if num_arms < 1:
             raise NoSuchDesignerError("PPODesigner requires num_arms >= 1")
 
-        t0 = time.time()
         policy = data[-1].policy.clone() if data else self._policy.clone()
         self._validate_policy(policy)
 
@@ -161,7 +160,13 @@ class PPODesigner(Designer):
         merged_traj = merge_trajectories(trajectories)
 
         cfg = self._config
-        advantages, returns = compute_gae(merged_traj.rewards, merged_traj.values, merged_traj.dones, cfg.gamma, cfg.gae_lambda)
+        advantages, returns = compute_gae(
+            merged_traj.rewards,
+            merged_traj.values,
+            merged_traj.dones,
+            cfg.gamma,
+            cfg.gae_lambda,
+        )
 
         device = next(policy.parameters()).device
         adv_t = torch.as_tensor(advantages, dtype=torch.float32, device=device)
@@ -173,16 +178,16 @@ class PPODesigner(Designer):
             returns=torch.as_tensor(returns, dtype=torch.float32, device=device),
         )
 
+        t_update0 = time.time()
         optimizer = torch.optim.Adam(policy.parameters(), lr=cfg.lr)
         for _ in range(cfg.epochs):
             _ppo_update_epoch(policy, optimizer, batch, cfg)
+        dt_update = time.time() - t_update0
 
         if telemetry is not None:
-            telemetry.set_dt_fit(time.time() - t0)
+            telemetry.set_dt_rollout(dt_rollout)
+            telemetry.set_dt_fit(dt_update)
             telemetry.set_dt_select(0.0)
-            if hasattr(telemetry, "set_num_rollout_workers"):
-                telemetry.set_num_rollout_workers(num_arms)
-            if hasattr(telemetry, "set_dt_rollout"):
-                telemetry.set_dt_rollout(dt_rollout)
+            telemetry.set_num_rollout_workers(num_arms)
 
         return [policy]

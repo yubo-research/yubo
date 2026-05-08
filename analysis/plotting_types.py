@@ -12,6 +12,7 @@ from .plotting_trace_types import (  # noqa: F401
     PlotRLFinalComparisonResult,
     RLTracesWithCumDtProp,
 )
+from .plotting_types_combined import PlotResultsCombinedResult  # noqa: F401
 
 
 class PlotRLExperimentResult(NamedTuple):
