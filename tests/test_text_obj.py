@@ -19,15 +19,15 @@ def test_text_uhd_config_file_loads():
 
 
 def test_text_tags_route_to_uhd_vector_objective(monkeypatch):
-    from ops.exp_uhd import _parse_cfg
     import problems.text_obj as text_obj
+    from ops.exp_uhd import _parse_cfg
     from problems.uhd_obj import build_uhd_vector_objective, supports_uhd_vector_objective
 
     class FakeTextObjective:
         dim = 5
         x0 = np.zeros(5, dtype=np.float64)
         steps_per_episode = 2
-        eval_episodes = 1
+        num_envs = 1
 
         def __init__(self, cfg):
             self.cfg = cfg

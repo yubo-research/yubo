@@ -32,7 +32,11 @@ def scale_action_to_env(action: np.ndarray, low: np.ndarray, high: np.ndarray, *
         np.asarray(high, dtype=np.float32) - np.asarray(low, dtype=np.float32)
     )
     if clip:
-        return np.clip(mapped, np.asarray(low, dtype=np.float32), np.asarray(high, dtype=np.float32))
+        return np.clip(
+            mapped,
+            np.asarray(low, dtype=np.float32),
+            np.asarray(high, dtype=np.float32),
+        )
     return mapped
 
 

@@ -1,4 +1,4 @@
-# Run: python -m ops.exp_uhd local configs/uhd/eggroll/cartpole_v1_bszo_enn_impute_smoke.toml
+# Run: ./ops/exp_uhd.py local configs/uhd/eggroll/cartpole_v1_bszo_enn_impute_smoke.toml
 
 [uhd]
 env_tag = "gymnax:CartPole-v1"
@@ -6,9 +6,9 @@ policy_tag = "eggroll-ac-mlp-8x1-pqn"
 num_rounds = 100000
 optimizer = "bszo"
 lr = 0.001
-perturb = "dense"
+perturb = "eggroll"
 steps_per_episode = 4
-eval_episodes = 1
+num_envs = 1
 deterministic_policy = false
 log_interval = 1
 

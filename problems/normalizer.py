@@ -35,3 +35,11 @@ class Normalizer:
         n._x2 = self._x2.copy()
         n._num = self._num
         return n
+
+
+def normalize_running_state_array(state, normalizer: Normalizer) -> np.ndarray:
+    state = np.asarray(state, dtype=np.float32)
+    normalizer.update(state)
+    mean, std = normalizer.mean_and_std()
+    std = np.where(std == 0, 1.0, std)
+    return (state - mean) / std

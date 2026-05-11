@@ -46,6 +46,24 @@ def test_prep_sweep_k():
         _assert_policy_tag_present(cmds)
 
 
+def test_prep_sweep_p():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        cmds = _bp.prep_sweep_p(tmpdir)
+        assert isinstance(cmds, list)
+
+
+def test_prep_sweep_k_tlunar():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        cmds = _bp.prep_sweep_k_tlunar(tmpdir)
+        assert isinstance(cmds, list)
+
+
+def test_prep_sweep_p_tlunar():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        cmds = _bp.prep_sweep_p_tlunar(tmpdir)
+        assert isinstance(cmds, list)
+
+
 def test_prep_push():
     with tempfile.TemporaryDirectory() as tmpdir:
         cmds = _bp.prep_push(tmpdir)
@@ -56,6 +74,19 @@ def test_prep_tlunar():
     with tempfile.TemporaryDirectory() as tmpdir:
         cmds = _bp.prep_tlunar(tmpdir)
         _assert_policy_tag_present(cmds)
+
+
+def test_prep_validate():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        cmds = _bp.prep_validate(tmpdir)
+        _assert_policy_tag_present(cmds)
+        assert len(cmds) == 3
+        assert {c.opt_name for c in cmds} == {"random", "turbo-one", "turbo-1"}
+        assert all(c.env_tag == "tlunar:fn" for c in cmds)
+        assert all(c.policy_tag == "turbo-lunar" for c in cmds)
+        assert all(c.num_arms == 50 and c.num_rounds == 30 and c.num_reps == 10 for c in cmds)
+        assert all(c.num_denoise == 50 for c in cmds)
+        assert all(f"{tmpdir}/validate_turbo" in c.exp_dir for c in cmds)
 
 
 def test_prep_hop():
@@ -98,6 +129,24 @@ def test_prep_human():
     with tempfile.TemporaryDirectory() as tmpdir:
         cmds = _bp.prep_human(tmpdir)
         _assert_policy_tag_present(cmds)
+
+
+def test_prep_run_others():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        cmds = _bp.prep_run_others(tmpdir)
+        assert len(cmds) == 22
+        pairs = {(c.opt_name, c.env_tag) for c in cmds}
+        assert pairs == _bp._RUN_OTHERS_NONFAIL_CELLS
+        assert all("exp_ennbo_run_others" in c.exp_dir for c in cmds)
+
+
+def test_prep_turbo_abl():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        cmds = _bp.prep_turbo_abl(tmpdir)
+        assert len(cmds) == 20  # 2 opts × 10 envs
+        opts = {c.opt_name for c in cmds}
+        assert opts == {"turbo-one-nds", "turbo-one-ucb"}
+        assert all("exp_ennbo_turbo_abl" in c.exp_dir for c in cmds)
 
 
 @patch("experiments.experiment_sampler.build_problem")

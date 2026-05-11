@@ -14,7 +14,7 @@ class EggRollJAXVectorObjective:
         env_conf,
         *,
         steps_per_episode: int = 200,
-        eval_episodes: int = 1,
+        num_envs: int = 1,
         deterministic_policy: bool = False,
         seed_offset: int = 0,
         embed_num_probes: int = 0,
@@ -23,7 +23,7 @@ class EggRollJAXVectorObjective:
             policy,
             env_conf,
             steps_per_episode=steps_per_episode,
-            eval_episodes=eval_episodes,
+            num_envs=num_envs,
             deterministic_policy=deterministic_policy,
             seed_offset=seed_offset,
             embed_num_probes=embed_num_probes,
@@ -48,8 +48,8 @@ class EggRollJAXVectorObjective:
         return self._runtime.steps_per_episode
 
     @property
-    def eval_episodes(self) -> int:
-        return self._runtime.eval_episodes
+    def num_envs(self) -> int:
+        return self._runtime.num_envs
 
     def flatten_params(self, params) -> np.ndarray:
         return self._runtime.codec.flatten(params)

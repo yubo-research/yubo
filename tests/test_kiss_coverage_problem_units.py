@@ -4,6 +4,9 @@ from types import SimpleNamespace
 
 import numpy as np
 import torch
+from kiss_problem_atari_ale import _ALE
+from kiss_problem_dm_fake import _FakeDM
+from kiss_problem_pixel_gym_env import make_boxed_gym_env_for_pixel_wrap
 
 
 def test_kiss_cov_problem_env_conf_backends_and_env_conf(monkeypatch):
@@ -32,48 +35,6 @@ def test_kiss_cov_problem_env_conf_backends_and_env_conf(monkeypatch):
 
 
 def test_kiss_cov_problem_atari_env(monkeypatch):
-    class _ALE:
-        def __init__(self):
-            self._n = 0
-            self._lives = 3
-
-        def setInt(self, *_args):
-            return None
-
-        def setFloat(self, *_args):
-            return None
-
-        def setBool(self, *_args):
-            return None
-
-        def loadROM(self, *_args):
-            return None
-
-        def getMinimalActionSet(self):
-            return [0, 1]
-
-        def getLegalActionSet(self):
-            return [0, 1]
-
-        def getScreenGrayscale(self):
-            return np.zeros((84, 84), dtype=np.uint8)
-
-        def getScreenRGB(self):
-            return np.zeros((84, 84, 3), dtype=np.uint8)
-
-        def act(self, _a):
-            self._n += 1
-            return 1.0
-
-        def game_over(self):
-            return self._n > 3
-
-        def reset_game(self):
-            self._n = 0
-
-        def lives(self):
-            return self._lives
-
     fake_ale_py = SimpleNamespace(
         ALEInterface=_ALE,
         roms=SimpleNamespace(get_rom_path=lambda _rom_id: "/tmp/fake"),
@@ -97,64 +58,6 @@ def test_kiss_cov_problem_atari_env(monkeypatch):
 def test_kiss_cov_problem_dm_control_and_pixel_policies(monkeypatch):
     import problems.dm_control_env as dm_env
     from problems.pixel_policies import AtariAgent57LitePolicy, AtariCNNPolicy, AtariGaussianPolicy
-
-    class _TS:
-        def __init__(self, last=False):
-            self.observation = {"state": np.zeros((4,), dtype=np.float32)}
-            self.reward = 1.0
-            self._last = last
-            self.discount = 1.0
-
-        def last(self):
-            return self._last
-
-    class _Spec:
-        def __init__(self, shape, minimum=None, maximum=None, dtype=np.float32):
-            self.shape = shape
-            self.minimum = minimum
-            self.maximum = maximum
-            self.dtype = dtype
-
-    class _Physics:
-        class _Model:
-            vis = SimpleNamespace(global_=SimpleNamespace(offwidth=1280, offheight=720))
-            ncam = 1
-            cam_pos = np.array([[0.0, 0.0, 1.0]], dtype=np.float32)
-            cam_mode = np.array([1], dtype=np.int32)
-            cam_fovy = np.array([45.0], dtype=np.float32)
-
-            @staticmethod
-            def name2id(_name, _kind):
-                return 0
-
-        model = _Model()
-
-        @staticmethod
-        def render(width, height, camera_id):
-            return np.zeros((height, width, 3), dtype=np.uint8)
-
-    class _FakeDM:
-        physics = _Physics()
-
-        @staticmethod
-        def observation_spec():
-            return {"state": _Spec((4,), minimum=-np.ones(4), maximum=np.ones(4))}
-
-        @staticmethod
-        def action_spec():
-            return _Spec((2,), minimum=-np.ones(2), maximum=np.ones(2))
-
-        @staticmethod
-        def reset():
-            return _TS(last=False)
-
-        def step(self, action):
-            _ = action
-            return _TS(last=False)
-
-        @staticmethod
-        def close():
-            return None
 
     monkeypatch.setattr(dm_env.suite, "load", lambda *args, **kwargs: _FakeDM())
     env = dm_env.make("dm_control/cartpole-swingup-v0")
@@ -202,31 +105,7 @@ def test_kiss_cov_problem_dm_control_direct_units():
     out = dct.sample()
     assert "x" in out
 
-    class _E:
-        action_space = box
-        metadata = {}
-        render_mode = "rgb_array"
-        observation_space = box
-
-        @staticmethod
-        def reset(seed=None, options=None):
-            _ = (seed, options)
-            return np.zeros((2,), dtype=np.float32), {}
-
-        @staticmethod
-        def step(action):
-            _ = action
-            return np.zeros((2,), dtype=np.float32), 0.0, False, False, {}
-
-        @staticmethod
-        def render():
-            return np.zeros((84, 84, 3), dtype=np.uint8)
-
-        @staticmethod
-        def close():
-            return None
-
-    wrapped = _PixelObsWrapper(_E(), pixels_only=True, size=84)
+    wrapped = _PixelObsWrapper(make_boxed_gym_env_for_pixel_wrap(box), pixels_only=True, size=84)
     obs, _ = wrapped.reset(seed=0)
     assert obs.shape == (84, 84, 3)
     _ = wrapped.step(np.zeros((2,), dtype=np.float32))

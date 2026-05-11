@@ -1,4 +1,4 @@
-# Run: python -m experiments.experiment local configs/bo/eggroll/paper/rl/navix_dynamic_obstacles_6x6_random_eggroll.toml
+# Run: ./ops/experiment.py local configs/bo/eggroll/paper/rl/navix_dynamic_obstacles_6x6_random_eggroll.toml
 # Paper: Table 31, navix/Navix-Dynamic-Obstacles-6x6-Random-v0 EGGROLL.
 
 [experiment]

@@ -46,11 +46,23 @@ def test_get_policy_preset_invalid_tag():
 def test_get_policy_preset_pretrain_external_tags():
     from policies.registry import get_policy_preset, list_policy_tags
 
-    for tag in ("hyperscalees-rwkv-7w3b-lora-r1", "nanoegg-int8-6l-256d"):
+    for tag in ("hyperscalees-rwkv-7w3b-lora-r1", "nanoegg:int8:6l:256d"):
         preset = get_policy_preset(tag)
         assert preset is not None
         assert callable(preset.factory)
         assert tag in list_policy_tags()
+
+
+def test_nanoegg_policy_tag_builds_nanoegg_policy_without_env_spaces():
+    from problems.problem import build_problem
+
+    problem = build_problem("pretrain:nanoegg:synthetic", "nanoegg:int8:1l:8d", problem_seed=0)
+    policy = problem.build_policy()
+
+    assert policy.is_nanoegg_pretrain_policy is True
+    assert policy.env_name == "pretrain:nanoegg:synthetic"
+    assert policy.policy_tag == "nanoegg:int8:1l:8d"
+    assert policy.num_params() == 4096
 
 
 def test_list_policy_tags_returns_sorted():

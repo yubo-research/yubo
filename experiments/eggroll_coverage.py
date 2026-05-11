@@ -2,10 +2,12 @@
 from __future__ import annotations
 
 import json
+import tomllib
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
 import click
+
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
@@ -168,6 +170,29 @@ def _validate_experiment(path: Path) -> CoverageValidation:
     return CoverageValidation(_rel(path), "tag_experiment", "ok", detail)
 
 
+def _validate_uhd(path: Path) -> CoverageValidation:
+    try:
+        from ops.exp_uhd import _load_toml_config, _parse_cfg
+
+        cfg = _parse_cfg(_load_toml_config(str(path)))
+    except Exception as exc:  # noqa: BLE001
+        return CoverageValidation(_rel(path), "uhd", "invalid", str(exc))
+
+    detail = f"env_tag={cfg.env_tag} policy_tag={cfg.policy_tag} optimizer={cfg.optimizer} num_rounds={cfg.num_rounds} total_timesteps={cfg.total_timesteps}"
+    return CoverageValidation(_rel(path), "uhd", "ok", detail)
+
+
+def _toml_kind(path: Path, default: str) -> str:
+    try:
+        with open(path, "rb") as f:
+            raw = tomllib.load(f)
+    except Exception:  # noqa: BLE001 - validation will report the parse error later.
+        return default
+    if "uhd" in raw:
+        return "uhd"
+    return default
+
+
 def _adapter_block_reason(env_tag: str) -> str | None:
     if env_tag in _ADAPTER_BLOCKED_GYMNAX_ENVS:
         return _ADAPTER_BLOCKED_GYMNAX_ENVS[env_tag]
@@ -184,9 +209,9 @@ def _default_paths() -> list[tuple[str, Path]]:
     for path in sorted((_PROJECT_ROOT / "configs" / "pretrain" / "nanoegg").glob("**/*.toml")):
         paths.append(("nanoegg", path))
     for path in sorted((_PROJECT_ROOT / "configs" / "bo" / "eggroll").glob("**/*.toml")):
-        paths.append(("experiment", path))
+        paths.append((_toml_kind(path, "experiment"), path))
     for path in sorted((_PROJECT_ROOT / "configs" / "bo" / "gymnax").glob("**/*.toml")):
-        paths.append(("experiment", path))
+        paths.append((_toml_kind(path, "experiment"), path))
     return paths
 
 
@@ -197,6 +222,8 @@ def _validate_all(*, require_live_assets: bool) -> list[CoverageValidation]:
             results.append(_validate_hyperscalees(path, require_live_assets=require_live_assets))
         elif kind == "nanoegg":
             results.append(_validate_nanoegg(path))
+        elif kind == "uhd":
+            results.append(_validate_uhd(path))
         elif kind == "experiment":
             results.append(_validate_experiment(path))
         else:
@@ -219,14 +246,15 @@ def _paper_coverage() -> PaperCoverage:
 
 def _launch_command(kind: str, rel_path: str) -> str:
     if kind == "hyperscalees_llm":
-        module = "experiments.hyperscalees_llm"
+        return f"./ops/hyperscalees_llm.py local {rel_path}"
     elif kind == "nanoegg":
-        module = "experiments.nanoegg_pretrain"
+        return f"./ops/nanoegg_pretrain.py local {rel_path}"
+    elif kind == "uhd":
+        return f"./ops/exp_uhd.py local {rel_path}"
     elif kind == "tag_experiment":
-        module = "experiments.experiment"
+        return f"./ops/experiment.py local {rel_path}"
     else:
         raise AssertionError(kind)
-    return f"python -m {module} local {rel_path}"
 
 
 def _setup_requirement(kind: str) -> str | None:

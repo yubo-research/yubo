@@ -42,7 +42,10 @@ def mps_is_available() -> bool:
 
 
 def select_device(
-    device: str, *, cuda_is_available_fn: Callable[[], bool] | None = None, mps_is_available_fn: Callable[[], bool] | None = None
+    device: str,
+    *,
+    cuda_is_available_fn: Callable[[], bool] | None = None,
+    mps_is_available_fn: Callable[[], bool] | None = None,
 ) -> torch.device:
     requested = str(device).strip().lower()
     cuda_available = torch.cuda.is_available if cuda_is_available_fn is None else cuda_is_available_fn
@@ -66,7 +69,12 @@ def select_device(
     raise ValueError(f"Unsupported device '{device}'. Use one of: auto, cpu, cuda, mps.")
 
 
-def seed_everything(seed: int, *, cuda_is_available_fn: Callable[[], bool] | None = None, cuda_manual_seed_all_fn: Callable[[int], None] | None = None) -> None:
+def seed_everything(
+    seed: int,
+    *,
+    cuda_is_available_fn: Callable[[], bool] | None = None,
+    cuda_manual_seed_all_fn: Callable[[int], None] | None = None,
+) -> None:
     random.seed(int(seed))
     np.random.seed(int(seed))
     torch.manual_seed(int(seed))
@@ -81,7 +89,10 @@ def obs_scale_from_env(env_conf: Any) -> tuple[np.ndarray | None, np.ndarray | N
         return (None, None)
     env_conf.ensure_spaces()
     lb = np.asarray(env_conf.gym_conf.state_space.low, dtype=np.float32)
-    width = np.asarray(env_conf.gym_conf.state_space.high - env_conf.gym_conf.state_space.low, dtype=np.float32)
+    width = np.asarray(
+        env_conf.gym_conf.state_space.high - env_conf.gym_conf.state_space.low,
+        dtype=np.float32,
+    )
     if np.all(np.isinf(lb)):
         lb = np.zeros(env_conf.gym_conf.state_space.shape, dtype=np.float32)
     if np.all(np.isinf(width)):
@@ -92,7 +103,11 @@ def obs_scale_from_env(env_conf: Any) -> tuple[np.ndarray | None, np.ndarray | N
 
 
 def collector_device_kwargs(policy_device: torch.device) -> dict[str, torch.device]:
-    return {"env_device": torch.device("cpu"), "policy_device": policy_device, "storing_device": policy_device}
+    return {
+        "env_device": torch.device("cpu"),
+        "policy_device": policy_device,
+        "storing_device": policy_device,
+    }
 
 
 @contextmanager

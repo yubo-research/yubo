@@ -5,9 +5,11 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+
 os.environ.setdefault("MPLCONFIGDIR", "/private/tmp/yubo-matplotlib-cache")
 
 import matplotlib
+
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -96,7 +98,7 @@ def main() -> None:
     ax.set_xscale("log")
     ax.set_yscale("log", base=2)
     ax.set_xlim(1_000, 10_000_000_000)
-    ax.set_ylim(2 ** -7.35, 1.18)
+    ax.set_ylim(2**-7.35, 1.18)
 
     y_ticks = [2.0 ** (-k) for k in range(NUM_SHRINKS + 1)]
     y_labels = [r"$1$"] + [rf"$2^{{-{k}}}$" for k in range(1, NUM_SHRINKS + 1)]

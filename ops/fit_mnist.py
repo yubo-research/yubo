@@ -15,6 +15,13 @@ from problems.mnist_classifier import MnistClassifier
 TIMEOUT_SECONDS = 3 * 60
 
 
+class _CallableCommand(click.Command):
+    def __call__(self, *args, **kwargs):
+        if args or kwargs:
+            return _main_impl(*args, **kwargs)
+        return super().__call__(*args, **kwargs)
+
+
 def _train_one_epoch(model, train_loader, optimizer, loss_fn, device, *, deadline, scheduler=None):
     model.train()
     total_loss = 0.0
@@ -91,18 +98,21 @@ def fit_mnist(
     return model
 
 
-def main(epochs, batch_size, lr, timeout):
+def _main_impl(epochs, batch_size, lr, timeout):
     fit_mnist(num_epochs=epochs, batch_size=batch_size, lr=lr, timeout_seconds=timeout)
 
 
-@click.command()
+@click.command(cls=_CallableCommand)
 @click.option("--epochs", default=4, help="Number of training epochs.")
 @click.option("--batch-size", default=1024, help="Batch size (use 60000 for full training set).")
 @click.option("--lr", default=1.2e-2, help="Learning rate.")
 @click.option("--timeout", default=TIMEOUT_SECONDS, help="Timeout in seconds.")
-def cli(epochs, batch_size, lr, timeout):
-    main(epochs=epochs, batch_size=batch_size, lr=lr, timeout=timeout)
+def main(epochs, batch_size, lr, timeout):
+    _main_impl(epochs=epochs, batch_size=batch_size, lr=lr, timeout=timeout)
+
+
+cli = main
 
 
 if __name__ == "__main__":
-    cli()
+    main()

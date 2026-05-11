@@ -1,12 +1,12 @@
 # Run:
-# python -m ops.exp_uhd local configs/uhd/eggroll/paper/rl/cartpole_v1_mezo_enn_impute.toml
+# ./ops/exp_uhd.py local configs/uhd/eggroll/paper/rl/cartpole_v1_mezo_enn_impute.toml
 #
 # Compute-matched UHD companion to:
 # configs/bo/eggroll/paper/rl/cartpole_v1_eggroll.toml
 #
 # EggRoll paper budget:
 #   num_arms = 2048
-#   eval_episodes = 8
+#   num_envs = 8
 #   steps_per_episode = 500
 #   total_timesteps = 500000000
 #   one EggRoll optimizer round costs (2048 + 8) * 500 = 1028000 env steps
@@ -26,14 +26,14 @@ num_reps = 30
 optimizer = "mezo"
 lr = 0.1
 sigma = 0.2
-perturb = "dense"
+perturb = "eggroll"
 steps_per_episode = 500
-eval_episodes = 8
+num_envs = 8
 deterministic_policy = false
 problem_seed = 0
 noise_seed_0 = 0
 seed_offset = 0
-log_interval = 100
+log_interval = 1
 
 # Behavior probes feed the JAX behavior embedding used by ENN minus-imputation.
 be_num_probes = 64

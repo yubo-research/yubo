@@ -7,6 +7,7 @@ from botorch.fit import fit_gpytorch_mll
 from botorch.models import SingleTaskGP
 from botorch.models.approximate_gp import SingleTaskVariationalGP
 from botorch.models.transforms.input import Warp
+from botorch.models.transforms.outcome import OutcomeTransform
 from botorch.optim.closures.core import ForwardBackwardClosure
 from botorch.optim.fit import fit_gpytorch_mll_scipy, fit_gpytorch_mll_torch
 from botorch.optim.utils import get_parameters
@@ -19,7 +20,6 @@ from gpytorch.mlls import (
 )
 from gpytorch.priors.torch_priors import LogNormalPrior, NormalPrior
 from torch import Tensor
-from torch.nn import Module
 
 import common.all_bounds as all_bounds
 from acq.sal_transform import SALTransform
@@ -38,14 +38,14 @@ class _FitGpResult(NamedTuple):
     X: Tensor
 
 
-class _EmptyTransform(Module):
+class _EmptyTransform(OutcomeTransform):
     def __init__(self):
         super().__init__()
 
-    def forward(self, Y, Yvar=None):
+    def forward(self, Y, Yvar=None, X=None):
         return Y, Yvar
 
-    def untransform(self, Y, Yvar=None):
+    def untransform(self, Y, Yvar=None, X=None):
         return Y, Yvar
 
     def untransform_posterior(self, posterior):
@@ -137,10 +137,7 @@ def get_closure(mll, outcome_warp):
 
     return ForwardBackwardClosure(
         forward=_closure_warping,
-        backward=Tensor.backward,
         parameters=get_parameters(mll, requires_grad=True),
-        reducer=Tensor.sum,
-        context_manager=None,
     )
 
 

@@ -24,7 +24,15 @@ def _build_vector_kwargs(config: Any, backend_cls, vector_mod) -> dict[str, Any]
     return kwargs
 
 
-def _make_dm_control_env(*, env_name: str, env_kwargs: dict, from_pixels: bool, pixels_only: bool, buf=None, seed=0):
+def _make_dm_control_env(
+    *,
+    env_name: str,
+    env_kwargs: dict,
+    from_pixels: bool,
+    pixels_only: bool,
+    buf=None,
+    seed=0,
+):
     import gymnasium as gym
     import numpy as np
     import pufferlib
@@ -141,11 +149,22 @@ def _resolve_backend(config: Any, puffer_vector):
     return (backend_cls, backend_kwargs)
 
 
-def _resolve_env_creator(config: Any, *, pufferlib, puffer_atari, is_atari_env_tag_fn, to_puffer_game_name_fn, resolve_gym_env_name_fn):
+def _resolve_env_creator(
+    config: Any,
+    *,
+    pufferlib,
+    puffer_atari,
+    is_atari_env_tag_fn,
+    to_puffer_game_name_fn,
+    resolve_gym_env_name_fn,
+):
     env_tag = str(config.env_tag)
     if is_atari_env_tag_fn(env_tag):
         game_name = to_puffer_game_name_fn(env_tag)
-        return (puffer_atari.env_creator(game_name), {"framestack": int(config.framestack)})
+        return (
+            puffer_atari.env_creator(game_name),
+            {"framestack": int(config.framestack)},
+        )
     env_name, env_kwargs = resolve_gym_env_name_fn(env_tag)
     if str(env_name).startswith("dm_control/"):
         return (
@@ -168,7 +187,14 @@ def _resolve_vector_seed(config: Any) -> int:
     return int(config.seed)
 
 
-def make_vector_env(config: Any, *, import_pufferlib_modules_fn, is_atari_env_tag_fn, to_puffer_game_name_fn, resolve_gym_env_name_fn):
+def make_vector_env(
+    config: Any,
+    *,
+    import_pufferlib_modules_fn,
+    is_atari_env_tag_fn,
+    to_puffer_game_name_fn,
+    resolve_gym_env_name_fn,
+):
     pufferlib, puffer_vector, puffer_atari = import_pufferlib_modules_fn()
     backend_cls, backend_kwargs = _resolve_backend(config, puffer_vector)
     env_creator, env_kwargs = _resolve_env_creator(

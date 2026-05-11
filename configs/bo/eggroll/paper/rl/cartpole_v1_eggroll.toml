@@ -1,4 +1,4 @@
-# Run: python -m experiments.experiment local configs/bo/eggroll/paper/rl/cartpole_v1_eggroll.toml
+# Run: ./ops/experiment.py local configs/bo/eggroll/paper/rl/cartpole_v1_eggroll.toml
 # Paper: Table 17, CartPole-v1 EGGROLL.
 
 [experiment]
@@ -26,5 +26,5 @@ optax = "sgd"
 rank_transform = false
 deterministic_policy = false
 steps = 500
-eval_episodes = 8
+num_envs = 8
 use_batched_update = true

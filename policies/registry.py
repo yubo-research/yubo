@@ -81,16 +81,10 @@ def _actor_critic_mlp_factory(
 def _gaussian_backbone_factory(
     variant: str,
 ) -> Callable[[EnvironmentRuntimeProtocol], Policy]:
+    from problems.env_conf_policies import gaussian_policy_factory
+
     def factory(env_runtime: EnvironmentRuntimeProtocol) -> Policy:
-        _ns: dict = {}
-        exec("from rl.policy_backbone import GaussianActorBackbonePolicyFactory", _ns)  # noqa: S102
-        GaussianActorBackbonePolicyFactory = _ns["GaussianActorBackbonePolicyFactory"]
-        return GaussianActorBackbonePolicyFactory(
-            variant=variant,
-            deterministic_eval=True,
-            squash_mode="clip",
-            init_log_std=-0.5,
-        )(env_runtime)
+        return gaussian_policy_factory(variant)(env_runtime)
 
     return factory
 
@@ -127,6 +121,7 @@ _EGGROLL_EXTERNAL_POLICY_SPECS = {
     "hyperscalees-rwkv-7g1p5b-lora-r1": (128, 2, "silu"),
     "hyperscalees-rwkv-7g7b-lora-r1": (128, 2, "silu"),
     "hyperscalees-rwkv-7g14b-lora-r1": (128, 2, "silu"),
+    "nanoegg:int8:6l:256d": (256, 1, "silu"),
     "nanoegg-int8-6l-256d": (256, 1, "silu"),
 }
 
@@ -152,6 +147,11 @@ def _eggroll_actor_critic_mlp_factory(
 
 
 def _dynamic_policy_preset(policy_tag: str) -> PolicyPreset | None:
+    if policy_tag.startswith("nanoegg:") or policy_tag.startswith("nanoegg-"):
+        from policies.nanoegg_policy import NanoEggPretrainPolicyFactory
+
+        return PolicyPreset(factory=NanoEggPretrainPolicyFactory(policy_tag))
+
     match = _EGGROLL_AC_MLP_RE.match(policy_tag)
     if match is None:
         match = _EGGROLL_MARL_MLP_RE.match(policy_tag)
@@ -175,9 +175,7 @@ def _dynamic_policy_preset(policy_tag: str) -> PolicyPreset | None:
     )
 
 
-def _infer_rl_model_from_mlp(
-    hidden_sizes: tuple[int, ...],
-) -> dict[str, dict[str, Any]]:
+def _infer_rl_model_from_mlp_like(hidden_sizes: tuple[int, ...], *, ppo_log_std_init: float) -> dict[str, dict[str, Any]]:
     return {
         "ppo": {
             "backbone_name": "mlp",
@@ -188,7 +186,7 @@ def _infer_rl_model_from_mlp(
             "critic_head_hidden_sizes": (),
             "head_activation": "silu",
             "share_backbone": True,
-            "log_std_init": -0.5,
+            "log_std_init": ppo_log_std_init,
         },
         "sac": {
             "backbone_name": "mlp",
@@ -200,33 +198,18 @@ def _infer_rl_model_from_mlp(
             "head_activation": "silu",
         },
     }
+
+
+def _infer_rl_model_from_mlp(
+    hidden_sizes: tuple[int, ...],
+) -> dict[str, dict[str, Any]]:
+    return _infer_rl_model_from_mlp_like(hidden_sizes, ppo_log_std_init=-0.5)
 
 
 def _infer_rl_model_from_actor_critic_mlp(
     hidden_sizes: tuple[int, ...],
 ) -> dict[str, dict[str, Any]]:
-    return {
-        "ppo": {
-            "backbone_name": "mlp",
-            "backbone_hidden_sizes": hidden_sizes,
-            "backbone_activation": "silu",
-            "backbone_layer_norm": True,
-            "actor_head_hidden_sizes": (),
-            "critic_head_hidden_sizes": (),
-            "head_activation": "silu",
-            "share_backbone": True,
-            "log_std_init": 0.0,
-        },
-        "sac": {
-            "backbone_name": "mlp",
-            "backbone_hidden_sizes": hidden_sizes,
-            "backbone_activation": "silu",
-            "backbone_layer_norm": True,
-            "actor_head_hidden_sizes": (),
-            "critic_head_hidden_sizes": (),
-            "head_activation": "silu",
-        },
-    }
+    return _infer_rl_model_from_mlp_like(hidden_sizes, ppo_log_std_init=0.0)
 
 
 def _infer_rl_model_from_atari_cnn() -> dict[str, dict[str, Any]]:
@@ -261,6 +244,10 @@ POLICY_PRESETS: dict[str, PolicyPreset] = {
         rl_model=_infer_rl_model_from_mlp((32, 16)),
     ),
     "mlp-64-64": PolicyPreset(
+        factory=_mlp_factory((64, 64)),
+        rl_model=_infer_rl_model_from_mlp((64, 64)),
+    ),
+    "isaaclab-random-mlp-64-64": PolicyPreset(
         factory=_mlp_factory((64, 64)),
         rl_model=_infer_rl_model_from_mlp((64, 64)),
     ),

@@ -4,10 +4,7 @@ from dataclasses import dataclass
 
 import numpy as np
 import torch
-from enn.enn.enn_class import EpistemicNearestNeighbors
-from enn.enn.enn_fit import enn_fit
 from enn.enn.enn_params import PosteriorFlags
-from enn.turbo.config.enn_index_driver import ENNIndexDriver
 from torch import nn
 
 from sampling.gather_proj_t import GatherProjSpec, project_module
@@ -15,6 +12,8 @@ from sampling.sparse_jl_t import (
     block_sparse_jl_noise_from_seed_wr,
     block_sparse_jl_transform_module_to_cpu_wr,
 )
+
+from .uhd_enn_fit_helpers import enn_mixin_maybe_fit_inplace
 
 
 @dataclass
@@ -70,34 +69,7 @@ class ENNMuPlusSeedSelector:
             )
 
     def _maybe_fit(self) -> None:
-        if len(self._x) < max(2, int(self._cfg.warmup_real_obs)):
-            return
-        if self._enn_params is not None and self._num_new_since_fit < int(self._cfg.fit_interval):
-            return
-
-        x = np.asarray(self._x, dtype=np.float64)
-        y = np.asarray(self._y, dtype=np.float64)
-        self._y_mean = float(y.mean())
-        self._y_std = float(y.std()) if float(y.std()) > 0 else 1.0
-        y_std = (y - self._y_mean) / self._y_std
-
-        self._enn_model = EpistemicNearestNeighbors(
-            x,
-            y_std[:, None],
-            None,
-            scale_x=False,
-            index_driver=ENNIndexDriver.FLAT,
-        )
-        rng = np.random.default_rng(0)
-        self._enn_params = enn_fit(
-            self._enn_model,
-            k=int(self._cfg.k),
-            num_fit_candidates=200,
-            num_fit_samples=200,
-            rng=rng,
-        )
-
-        self._num_new_since_fit = 0
+        enn_mixin_maybe_fit_inplace(self)
 
     def _embed_base(self) -> tuple[torch.Tensor, int]:
         z_base = block_sparse_jl_transform_module_to_cpu_wr(
@@ -142,7 +114,11 @@ class ENNMuPlusSeedSelector:
 
     def _posterior_std(self, x_cand: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         assert self._enn_model is not None and self._enn_params is not None
-        post = self._enn_model.posterior(x_cand, params=self._enn_params, flags=PosteriorFlags(observation_noise=False))
+        post = self._enn_model.posterior(
+            x_cand,
+            params=self._enn_params,
+            flags=PosteriorFlags(observation_noise=False),
+        )
         mu_std = np.asarray(post.mu).reshape(-1)
         se_std = np.asarray(post.se).reshape(-1)
         return mu_std, se_std
@@ -160,7 +136,12 @@ class ENNMuPlusSeedSelector:
             num_dim = 0
         else:
             z_base, num_dim = self._embed_base()
-            x_base = self._embed_z_plus_np(z_base=z_base, seed=int(base_seed), sigma=float(sigma), num_dim=int(num_dim))
+            x_base = self._embed_z_plus_np(
+                z_base=z_base,
+                seed=int(base_seed),
+                sigma=float(sigma),
+                num_dim=int(num_dim),
+            )
 
         if m <= 1:
             self._pending_x = x_base
@@ -180,7 +161,15 @@ class ENNMuPlusSeedSelector:
         else:
             assert z_base is not None
             x_cand = np.asarray(
-                [self._embed_z_plus_np(z_base=z_base, seed=int(s), sigma=float(sigma), num_dim=int(num_dim)) for s in seeds.tolist()],
+                [
+                    self._embed_z_plus_np(
+                        z_base=z_base,
+                        seed=int(s),
+                        sigma=float(sigma),
+                        num_dim=int(num_dim),
+                    )
+                    for s in seeds.tolist()
+                ],
                 dtype=np.float64,
             )
         mu_std, se_std = self._posterior_std(x_cand)

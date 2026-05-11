@@ -2,8 +2,8 @@ from optimizer.designer_registry import (
     _DESIGNER_DISPATCH,
     _DESIGNER_OPTION_SPECS,
     _SIMPLE_BUILDERS,
-    _SimpleContext,
 )
+from optimizer.designer_registry_context import _SimpleContext
 
 
 def test_simple_context_init():

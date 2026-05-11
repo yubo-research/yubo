@@ -20,27 +20,7 @@ prepare_obs_np = _impl.prepare_obs_np
 resolve_backbone_name = _impl.resolve_backbone_name
 
 
-def build_env_setup(config: Any) -> EnvSetup:
-    shared = build_continuous_gym_env_setup(
-        env_tag=str(config.env_tag),
-        seed=int(config.seed),
-        problem_seed=config.problem_seed,
-        noise_seed_0=config.noise_seed_0,
-        from_pixels=bool(config.from_pixels),
-        pixels_only=bool(config.pixels_only),
-        get_env_conf_fn=_impl.continuous_gym_runtime_from_problem,
-        obs_scale_from_env_fn=_impl.obs_scale_from_env,
-    )
-    return EnvSetup(
-        env_conf=shared.env_conf,
-        problem_seed=int(shared.problem_seed),
-        noise_seed_0=int(shared.noise_seed_0),
-        obs_lb=shared.obs_lb,
-        obs_width=shared.obs_width,
-        act_dim=int(shared.act_dim),
-        action_low=shared.action_low,
-        action_high=shared.action_high,
-    )
+build_env_setup = _impl.build_env_setup
 
 
 def _make_vector_env_shared(config, **kwargs):

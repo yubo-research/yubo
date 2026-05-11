@@ -1,20 +1,24 @@
 # Run:
-# python -m ops.exp_uhd local configs/uhd/eggroll/paper/pretrain/nanoegg_minipile_bszo.toml
+# ./ops/exp_uhd.py local configs/uhd/eggroll/paper/pretrain/nanoegg_minipile_bszo.toml
 #
-# UHD BSZO companion to:
-# configs/pretrain/nanoegg/paper/minipile_pop8192_batch16.toml
+# Compute-matched UHD BSZO companion to:
+# configs/bo/eggroll/paper/pretrain/nanoegg_minipile_eggroll.toml
+#
+# Budget matches the EggRoll paper config by candidate-evaluation count:
+#   5000 epochs * (8192 population + 1 eval episode) * 1 step = 40,965,000
 
 [uhd]
-env_tag = "pretrain:nanoegg:minipile-int8-6l256d"
-policy_tag = "nanoegg-int8-6l-256d"
-total_timesteps = 819200
+env_tag = "pretrain:nanoegg:minipile"
+policy_tag = "nanoegg:int8:6l:256d"
+pretrain_delta_scale = 10000.0
+total_timesteps = 40965000
 num_reps = 1
 optimizer = "bszo"
 lr = 0.001
 sigma = 0.001
 perturb = "dense"
 steps_per_episode = 1
-eval_episodes = 1
+num_envs = 1
 deterministic_policy = false
 problem_seed = 0
 noise_seed_0 = 0

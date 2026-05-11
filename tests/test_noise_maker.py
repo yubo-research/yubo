@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 
 class MockEnv:
@@ -18,20 +19,13 @@ class MockEnv:
         pass
 
 
-def test_noise_maker_observation_space():
+@pytest.mark.parametrize("attr", ["observation_space", "action_space"])
+def test_noise_maker_spaces(attr):
     from problems.noise_maker import NoiseMaker
 
     env = MockEnv()
     nm = NoiseMaker(env, 0.1, num_measurements=10)
-    assert nm.observation_space is not None
-
-
-def test_noise_maker_action_space():
-    from problems.noise_maker import NoiseMaker
-
-    env = MockEnv()
-    nm = NoiseMaker(env, 0.1, num_measurements=10)
-    assert nm.action_space is not None
+    assert getattr(nm, attr) is not None
 
 
 def test_noise_maker_step():

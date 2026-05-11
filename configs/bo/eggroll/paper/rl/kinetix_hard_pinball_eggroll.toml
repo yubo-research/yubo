@@ -1,4 +1,4 @@
-# Run: python -m experiments.experiment local configs/bo/eggroll/paper/rl/kinetix_hard_pinball_eggroll.toml
+# Run: ./ops/experiment.py local configs/bo/eggroll/paper/rl/kinetix_hard_pinball_eggroll.toml
 # Paper: Table 27, kinetix/l/hard_pinball EGGROLL.
 
 [experiment]

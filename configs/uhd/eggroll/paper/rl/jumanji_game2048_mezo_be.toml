@@ -1,12 +1,12 @@
 # Run:
-# python -m ops.exp_uhd local configs/uhd/eggroll/paper/rl/jumanji_game2048_mezo_be.toml
+# ./ops/exp_uhd.py local configs/uhd/eggroll/paper/rl/jumanji_game2048_mezo_be.toml
 #
 # Behavior-embedding ENN MeZO companion to:
 # configs/bo/eggroll/paper/rl/jumanji_game2048_eggroll.toml
 #
 # Budget matches the Game2048 EggRoll paper config by real policy-evaluation
 # env steps:
-#   total_timesteps / (8 eval episodes * 200 steps) = 312500 derived eval rounds
+#   total_timesteps / (8 envs * 200 steps) = 312500 derived eval rounds
 #
 # This is the BE-ENN seed-selection variant, not ENN minus-imputation.
 
@@ -18,9 +18,9 @@ num_reps = 30
 optimizer = "mezo_be"
 lr = 0.1
 sigma = 0.5
-perturb = "dense"
+perturb = "eggroll"
 steps_per_episode = 200
-eval_episodes = 8
+num_envs = 8
 deterministic_policy = false
 problem_seed = 0
 noise_seed_0 = 0

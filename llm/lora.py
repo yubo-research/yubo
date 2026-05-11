@@ -11,6 +11,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from llm.runtime_messages import missing_runtime_message
+
 
 LORA_TARGET_MODULES = (
     "q_proj",
@@ -31,11 +33,7 @@ class LoraTemplate:
 
 
 def build_peft_lora_template(*, model_name: str, rank: int, alpha: int) -> LoraTemplate:
-    missing = [
-        module
-        for module in ("accelerate", "peft", "torch", "transformers")
-        if importlib.util.find_spec(module) is None
-    ]
+    missing = [module for module in ("accelerate", "peft", "torch", "transformers") if importlib.util.find_spec(module) is None]
     if missing:
         raise RuntimeError(_missing_runtime_message(missing))
     try:
@@ -68,11 +66,7 @@ def build_peft_lora_template(*, model_name: str, rank: int, alpha: int) -> LoraT
             torch.nn.init.kaiming_uniform_(tensor, a=math.sqrt(5))
         state_dict[name] = tensor
 
-    base_shapes = {
-        name: tuple(int(dim) for dim in param.shape)
-        for name, param in peft_model.named_parameters()
-        if name.endswith(".base_layer.weight")
-    }
+    base_shapes = {name: tuple(int(dim) for dim in param.shape) for name, param in peft_model.named_parameters() if name.endswith(".base_layer.weight")}
     return LoraTemplate(
         state_dict=state_dict,
         base_shapes=base_shapes,
@@ -92,7 +86,6 @@ def materialize_lora_adapters(
     lora_config_dict: dict[str, Any],
 ) -> list[str]:
     try:
-        import torch
         from safetensors.torch import save_file
     except ImportError as exc:
         raise RuntimeError("LoRA adapter materialization requires torch and safetensors.") from exc
@@ -219,7 +212,9 @@ def vllm_dense_update_target(
         return _require_param(vllm_params, target_name, peft_name), slice(start, start + int(weight_shape[0]))
 
     if "experts" in vllm_name:
-        return _vllm_moe_update_target(vllm_name=vllm_name, peft_name=peft_name, weight_shape=weight_shape, peft_shapes_dict=peft_shapes_dict, vllm_params=vllm_params)
+        return _vllm_moe_update_target(
+            vllm_name=vllm_name, peft_name=peft_name, weight_shape=weight_shape, peft_shapes_dict=peft_shapes_dict, vllm_params=vllm_params
+        )
 
     raise RuntimeError(f"Unrecognised PEFT layer for vLLM update: {peft_name!r}")
 
@@ -308,12 +303,7 @@ def _jsonable_lora_config(config: dict[str, Any]) -> dict[str, Any]:
 
 
 def _missing_runtime_message(missing: list[str]) -> str:
-    packages = ", ".join(sorted(set(missing)))
-    return (
-        f"The LLM LoRA runtime is missing {packages}. "
-        "Run `bash admin/setup-hyperscalees.sh` on the CUDA machine, then run "
-        "`micromamba activate yubo-hyperscalees` before launching `./ops/llm.py`."
-    )
+    return missing_runtime_message("LoRA", missing, "./ops/llm.py")
 
 
 __all__ = [

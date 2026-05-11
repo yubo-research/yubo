@@ -179,7 +179,7 @@ class UHDBSZO:
             self._perturbator.perturb(self.perturb_seed(i), scale)
             self._perturbator.accept()
 
-        apply_weight_decay(self._perturbator._module, lr, self._weight_decay)
+        apply_weight_decay(self._perturbator.module, lr, self._weight_decay)
 
 
 def _zero_matrix(k: int) -> list[list[float]]:

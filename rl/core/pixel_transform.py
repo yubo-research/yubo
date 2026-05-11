@@ -1,8 +1,17 @@
 from __future__ import annotations
 
 import torch
-from torchrl.data import UnboundedContinuous
-from torchrl.envs.transforms import Transform
+
+
+try:
+    from torchrl.data import UnboundedContinuous
+    from torchrl.envs.transforms import Transform
+except ImportError:  # pragma: no cover - optional dependency in non-TorchRL envs.
+    UnboundedContinuous = None
+
+    class Transform:  # type: ignore[no-redef]
+        def __init__(self, *args, **kwargs) -> None:
+            pass
 
 
 _INT_IMAGE_DTYPES = (torch.uint8, torch.int8, torch.int16, torch.int32, torch.int64)
@@ -64,9 +73,26 @@ def ensure_atari_obs_format(obs: torch.Tensor, size: int = 84, *, scale_float_25
     return ensure_pixel_obs_format(obs, channels=4, size=size, scale_float_255=scale_float_255)
 
 
+def apply_pixel_observation_spec(spec, *, channels: int, size: int, keys_contain_fn) -> object:
+    if UnboundedContinuous is None:
+        raise ImportError("apply_pixel_observation_spec requires torchrl to be installed.")
+    obs_spec = UnboundedContinuous(
+        shape=torch.Size((channels, size, size)),
+        device=spec.device,
+        dtype=torch.float32,
+    )
+    if keys_contain_fn(spec):
+        spec["observation"] = obs_spec
+        spec["next", "observation"] = obs_spec
+    return spec
+
+
 class PixelsToObservation(Transform):
     def __init__(self, size: int = 84):
-        super().__init__(in_keys=["pixels", ("next", "pixels")], out_keys=["observation", ("next", "observation")])
+        super().__init__(
+            in_keys=["pixels", ("next", "pixels")],
+            out_keys=["observation", ("next", "observation")],
+        )
         self._size = int(size)
 
     def _process_pixels(self, pixels: torch.Tensor) -> torch.Tensor:
@@ -87,16 +113,20 @@ class PixelsToObservation(Transform):
         return tensordict_reset
 
     def transform_observation_spec(self, spec):
-        obs_spec = UnboundedContinuous(shape=torch.Size((3, self._size, self._size)), device=spec.device, dtype=torch.float32)
-        if "pixels" in spec.keys(True, True):
-            spec["observation"] = obs_spec
-            spec["next", "observation"] = obs_spec
-        return spec
+        return apply_pixel_observation_spec(
+            spec,
+            channels=3,
+            size=self._size,
+            keys_contain_fn=lambda s: "pixels" in s.keys(True, True),
+        )
 
 
 class AtariObservationTransform(Transform):
     def __init__(self, size: int = 84):
-        super().__init__(in_keys=["observation", ("next", "observation")], out_keys=["observation", ("next", "observation")])
+        super().__init__(
+            in_keys=["observation", ("next", "observation")],
+            out_keys=["observation", ("next", "observation")],
+        )
         self._size = int(size)
 
     def _process(self, obs: torch.Tensor) -> torch.Tensor:
@@ -117,8 +147,9 @@ class AtariObservationTransform(Transform):
         return tensordict_reset
 
     def transform_observation_spec(self, spec):
-        obs_spec = UnboundedContinuous(shape=torch.Size((4, self._size, self._size)), device=spec.device, dtype=torch.float32)
-        if "observation" in spec.keys(True, True):
-            spec["observation"] = obs_spec
-            spec["next", "observation"] = obs_spec
-        return spec
+        return apply_pixel_observation_spec(
+            spec,
+            channels=4,
+            size=self._size,
+            keys_contain_fn=lambda s: "observation" in s.keys(True, True),
+        )

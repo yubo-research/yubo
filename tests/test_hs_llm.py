@@ -119,78 +119,79 @@ def test_nanoegg_pretrain_is_real_uhd_objective_not_eggroll_surrogate():
     from problems.pre_obj import resolve_nanoegg_pretrain_spec
     from problems.uhd_obj import supports_uhd_vector_objective
 
-    env_tag = "pretrain:nanoegg:minipile-int8-6l256d"
-    spec = resolve_nanoegg_pretrain_spec(env_tag)
+    env_tag = "pretrain:nanoegg:minipile"
+    spec = resolve_nanoegg_pretrain_spec(env_tag, "nanoegg:int8:6l:256d")
 
     assert supports_eggroll_env_adapter(env_tag) is False
     assert supports_uhd_vector_objective(env_tag) is True
     assert spec.dataset == "minipile"
+    assert spec.policy_tag == "nanoegg:int8:6l:256d"
     assert spec.dtype == "int8"
     assert spec.n_layer == 6
     assert spec.n_embd == 256
 
 
-def test_nanoegg_pretrain_loads_installed_uhd_objective(monkeypatch):
-    import sys
-    import types
+def test_nanoegg_env_tag_and_policy_tag_are_separate():
+    from problems.pre_obj import resolve_nanoegg_pretrain_spec
 
+    spec = resolve_nanoegg_pretrain_spec("pretrain:nanoegg:synthetic", "nanoegg:int8:1l:8d")
+    assert spec.dataset == "synthetic"
+    assert spec.policy_tag == "nanoegg:int8:1l:8d"
+    assert spec.dtype == "int8"
+    assert spec.n_layer == 1
+    assert spec.n_embd == 8
+
+    legacy = resolve_nanoegg_pretrain_spec("pretrain:nanoegg:minipile-int8-6l256d")
+    assert legacy.dataset == "minipile"
+    assert legacy.dtype == "int8"
+    assert legacy.n_layer == 6
+    assert legacy.n_embd == 256
+
+    with pytest.raises(ValueError, match="but policy_tag"):
+        resolve_nanoegg_pretrain_spec("pretrain:nanoegg:minipile-int8-6l256d", "nanoegg:int8:1l:8d")
+
+
+def test_nanoegg_pretrain_builds_local_uhd_objective():
+    pytest.importorskip("jax")
     from ops.exp_uhd import _parse_cfg
     from problems.uhd_obj import build_uhd_vector_objective
 
-    class Obj:
-        dim = 3
-        x0 = np.zeros(3, dtype=np.float64)
-        steps_per_episode = 1
-        eval_episodes = 1
-
-        def evaluate(self, x, *, seed):
-            return float(np.sum(x) + seed), 0.25
-
-        def evaluate_many(self, x_batch, *, seed):
-            mus = np.asarray([np.sum(x) + seed + i for i, x in enumerate(x_batch)], dtype=np.float64)
-            return mus, np.full(len(mus), 0.25, dtype=np.float64)
-
-    package = types.ModuleType("nanoegg")
-    package.__path__ = []
-    module = types.ModuleType("nanoegg.uhd")
-
-    def build_uhd_objective(*, cfg, spec):
-        assert spec.dataset == "minipile"
-        return Obj()
-
-    module.build_uhd_objective = build_uhd_objective
-    monkeypatch.setitem(sys.modules, "nanoegg", package)
-    monkeypatch.setitem(sys.modules, "nanoegg.uhd", module)
-
     cfg = _parse_cfg(
         {
-            "env_tag": "pretrain:nanoegg:minipile-int8-6l256d",
-            "policy_tag": "nanoegg-int8-6l-256d",
+            "env_tag": "pretrain:nanoegg:synthetic",
+            "policy_tag": "nanoegg:int8:1l:8d",
             "num_rounds": 1,
+            "pretrain_search_dim": 3,
+            "pretrain_generation_length": 8,
+            "sub_dataset_size": 128,
         }
     )
     built = build_uhd_vector_objective(cfg)
 
     assert built.source == "nanoegg-pretrain"
     assert built.objective.dim == 3
-    assert built.objective.evaluate(np.asarray([1.0, 2.0, 3.0]), seed=4) == (10.0, 0.25)
+    mu, se = built.objective.evaluate(built.objective.x0, seed=4)
+    assert np.isfinite(mu)
+    assert np.isfinite(se)
+    mus, ses = built.objective.evaluate_many(np.asarray([built.objective.x0, built.objective.x0]), seed=4)
+    assert mus.shape == (2,)
+    assert ses.shape == (2,)
+    assert np.all(np.isfinite(mus))
+    noise = built.objective.sample_eggroll_noiser_noise(built.objective.x0, seed=5)
+    assert noise.shape == (3,)
 
 
-def test_nanoegg_pretrain_requires_real_runtime(monkeypatch):
-    import sys
-
+def test_nanoegg_pretrain_rejects_unsupported_dtype():
     from ops.exp_uhd import _parse_cfg
     from problems.uhd_obj import build_uhd_vector_objective
 
-    monkeypatch.delitem(sys.modules, "nanoegg", raising=False)
-    monkeypatch.delitem(sys.modules, "nanoegg.uhd", raising=False)
     cfg = _parse_cfg(
         {
-            "env_tag": "pretrain:nanoegg:minipile-int8-6l256d",
-            "policy_tag": "nanoegg-int8-6l-256d",
+            "env_tag": "pretrain:nanoegg:synthetic",
+            "policy_tag": "nanoegg:bfloat16:1l:8d",
             "num_rounds": 1,
         }
     )
 
-    with pytest.raises(ImportError, match="Real NanoEgg pretraining UHD requires"):
+    with pytest.raises(ValueError, match="dtype='int8'"):
         build_uhd_vector_objective(cfg)

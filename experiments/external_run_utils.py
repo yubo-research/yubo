@@ -7,22 +7,15 @@ import subprocess
 from pathlib import Path
 from typing import Any, Callable
 
+from common.mapping_keys import coerce_mapping_keys, normalize_toml_key
+
 
 def normalize_key(key: str) -> str:
-    return key.replace("-", "_")
+    return normalize_toml_key(key)
 
 
 def normalize_mapping(raw: dict[str, Any], *, source: str, valid_keys: set[str]) -> dict[str, Any]:
-    if not isinstance(raw, dict):
-        raise TypeError(f"{source} must be a mapping.")
-
-    out: dict[str, Any] = {}
-    for key, value in raw.items():
-        norm = normalize_key(str(key))
-        if norm not in valid_keys:
-            raise ValueError(f"Unknown key '{key}' in {source}. Valid keys: {sorted(valid_keys)}")
-        out[norm] = value
-    return out
+    return coerce_mapping_keys(raw, source=source, valid_keys=valid_keys, not_mapping_msg=f"{source} must be a mapping.")
 
 
 def deep_update(dst: dict[str, Any], src: dict[str, Any]) -> dict[str, Any]:

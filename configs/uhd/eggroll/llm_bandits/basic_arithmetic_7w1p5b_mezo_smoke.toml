@@ -1,5 +1,5 @@
 # Run:
-# python -m ops.exp_uhd local configs/uhd/eggroll/llm_bandits/basic_arithmetic_7w1p5b_mezo_smoke.toml
+# ./ops/exp_uhd.py local configs/uhd/eggroll/llm_bandits/basic_arithmetic_7w1p5b_mezo_smoke.toml
 #
 # UHD MeZO smoke config for an upstream HyperscaleES LLM bandit task.
 
@@ -13,7 +13,7 @@ lr = 0.001
 sigma = 0.001
 perturb = "dense"
 steps_per_episode = 1
-eval_episodes = 4
+num_envs = 4
 deterministic_policy = false
 problem_seed = 0
 noise_seed_0 = 0

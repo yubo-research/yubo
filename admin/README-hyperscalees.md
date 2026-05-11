@@ -15,8 +15,19 @@ The setup script creates `yubo-hyperscalees`, builds HyperscaleES from a
 pinned git ref as a normal wheel, installs upstream-compatible CUDA JAX, and
 installs the runtime packages needed by the Yubo EggRoll path. This is also the
 environment for the owned Qwen/vLLM/LoRA runner behind `ops/llm.py`.
+It now also installs the broader repo BO/RL extras that are exercised by the
+test suite, including `smac`/`pyrfr`, `VecchiaBO`/`pyvecch`, `LassoBench`,
+`cma`, `torchrl`, `tensordict`, and `pufferlib`. For Brax/MuJoCo GPU simulator
+support it also installs NVIDIA Warp via `warp-lang` plus `mujoco-warp`.
+Full NVIDIA Isaac Sim / Isaac Lab / Newton support installs into this same
+`yubo-hyperscalees` environment.
 Activating the env also sets `HF_HOME`, `HF_HUB_CACHE`, and
 `XLA_PYTHON_CLIENT_PREALLOCATE=false`.
+
+The script is intentionally conservative on reruns: if the env already exists,
+it reuses it, refreshes activation hooks, and ensures the Isaac Lab stack is
+present. Use `--recreate-env` when you want the current package set from
+scratch.
 
 Useful options:
 
@@ -27,7 +38,8 @@ bash admin/setup-hyperscalees.sh --jax-spec 'jax[cuda12]==0.8.1'
 ```
 
 Use `--recreate-env` when replacing an older Python 3.13/JAX-pinned env with
-the current Python 3.12 CUDA env. The default JAX pin is
+the current Python 3.12 CUDA env, or when you want to rebuild an existing env
+instead of reusing it unchanged. The default JAX pin is
 `jax[cuda12]==0.8.1` for the current HyperscaleES/JAX script stack. The owned
 math reward path uses `math-verify[antlr4_9_3]` directly so the grader stays
 compatible with HyperscaleES/Hydra's `antlr4-python3-runtime==4.9.*`
@@ -39,17 +51,60 @@ top-level imports are removed so LLM/pretrain modules do not pull RL-only
 installed `hyperscalees` package. The runtime imports `hyperscalees` normally;
 there is no editable install, `.pth`, or source checkout on `PYTHONPATH`.
 
+## Isaac Lab / Isaac Sim / Newton Support
+
+The normal install path installs Isaac Sim 6 for Python 3.12 from NVIDIA's
+package index and then installs Isaac Lab / Newton into `yubo-hyperscalees`. If
+a Python 3.12 Isaac Lab wheel is not visible to pip, the script falls back to
+the Isaac Lab `v3.0.0-beta` source tag under
+`~/.cache/yubo/isaaclab/IsaacLab` and runs its installer inside the same
+environment.
+
+The script does not create a separate Isaac env. Isaac Lab's source installer
+may reconcile Torch to its documented CUDA build (`torch==2.10.0`) while
+installing Isaac modules.
+
+By default it uses `--isaaclab-install minimal` to avoid pulling in optional
+IsaacLab extras (e.g. mimic/robomimic stacks) that can require extra system
+build dependencies. Use `--isaaclab-install all` only when you actually need
+those components.
+
 ## Check Installed Dependencies
 
 ```bash
 python - <<'PY'
 import hyperscalees
+import mujoco_warp
+import pyvecch
 import ray
 import vllm
+import warp
 from hyperscalees.environments import llm_bandits
 print(hyperscalees.__name__, len(llm_bandits.all_tasks))
+print("pyvecch", getattr(pyvecch, "__file__", "unknown"))
+print("warp", getattr(warp, "__version__", "unknown"), "mujoco_warp", getattr(mujoco_warp, "__version__", "unknown"))
 print("vllm", vllm.__version__, "ray", ray.__version__)
 PY
+```
+
+Verify the extra simulator surface without launching the GUI:
+
+```bash
+python - <<'PY'
+import isaaclab
+import isaaclab_newton
+import importlib.util
+print("isaacsim", importlib.util.find_spec("isaacsim").origin)
+print("isaaclab", getattr(isaaclab, "__file__", "unknown"))
+print("isaaclab_newton", getattr(isaaclab_newton, "__file__", "unknown"))
+PY
+```
+
+Isaac Lab environments enter the repo through `isaaclab:<task-id>` tags, e.g.
+`isaaclab:Isaac-Cartpole-v0`. List installed task ids on the CUDA remote with:
+
+```bash
+python -m problems.isaaclab_env_adapters --keyword Cartpole
 ```
 
 `HF_HOME` and `HF_HUB_CACHE` default to `~/.cache/yubo/hyperscalees` so model
@@ -161,5 +216,6 @@ validation run should fail on those.
 
 Do not install the HyperscaleES CUDA/JAX/vLLM stack into `yubo-rl`. It pulls
 broad GPU dependencies including JAX, JAXLIB, Torch, vLLM, Ray, PEFT,
-datasets, transformers, reasoning-gym, and math-verify. Keeping this single
+datasets, transformers, reasoning-gym, math-verify, the repo's BO/RL test
+extras, and Isaac Sim / Isaac Lab / Newton. Keeping this single
 heavy stack in `yubo-hyperscalees` is the intended boundary.

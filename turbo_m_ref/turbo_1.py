@@ -11,95 +11,13 @@
 
 import sys
 from copy import deepcopy
-from typing import NamedTuple
 
-import gpytorch
 import numpy as np
 import torch
 
-from .gp import train_gp
-from .utils import from_unit_cube, latin_hypercube, make_sobol_candidates, to_unit_cube, turbo_adjust_length
-
-
-class _CandidatesResult(NamedTuple):
-    X_cand: np.ndarray
-    y_cand: object
-    hypers: dict
-
-
-def _validate_init_args(
-    lb,
-    ub,
-    *,
-    n_init,
-    max_evals,
-    batch_size,
-    verbose,
-    use_ard,
-    max_cholesky_size,
-    n_training_steps,
-    dtype,
-):
-    assert lb.ndim == 1 and ub.ndim == 1
-    assert len(lb) == len(ub)
-    assert np.all(ub > lb)
-    assert max_evals > 0 and isinstance(max_evals, int)
-    assert n_init > 0 and isinstance(n_init, int), n_init
-    assert batch_size > 0 and isinstance(batch_size, int)
-    assert isinstance(verbose, bool) and isinstance(use_ard, bool)
-    assert max_cholesky_size >= 0 and isinstance(batch_size, int)
-    assert n_training_steps >= 30 and isinstance(n_training_steps, int)
-    assert max_evals > n_init and max_evals > batch_size
-    assert dtype == "float32" or dtype == "float64"
-
-
-def _init_hypers(self):
-    self.mean = np.zeros((0, 1))
-    self.signal_var = np.zeros((0, 1))
-    self.noise_var = np.zeros((0, 1))
-    self.lengthscales = np.zeros((0, self.dim)) if self.use_ard else np.zeros((0, 1))
-
-
-def _init_counters_and_tr(self, *, batch_size):
-    self.n_cand = min(100 * self.dim, 5000)
-    if self._surrogate_type.startswith("enn-"):
-        self.n_cand = max(self.n_cand, 10 * self.batch_size)
-    self.failtol = np.ceil(np.max([4.0 / batch_size, self.dim / batch_size]))
-    self.succtol = 3
-    self.n_evals = 0
-    self.length_min = 0.5**7
-    self.length_max = 1.6
-    self.length_init = 0.8
-
-
-def _make_X_cand(self, *, x_center, lb, ub, device, dtype):
-    from .turbo_1_ask_tell import _make_candidates
-
-    return _make_candidates(self, x_center=x_center, lb=lb, ub=ub, device=device, dtype=dtype)
-
-
-def _compute_y_cand(self, *, X, fX, X_cand, mu, sigma, gp, device, dtype):
-    if self._surrogate_type == "original":
-        gp = gp.to(dtype=dtype, device=device)
-        with (
-            torch.no_grad(),
-            gpytorch.settings.max_cholesky_size(self.max_cholesky_size),
-        ):
-            X_cand_torch = torch.tensor(X_cand).to(device=device, dtype=dtype)
-            y_cand = gp.likelihood(gp(X_cand_torch)).sample(torch.Size([self.batch_size])).t().cpu().detach().numpy()
-        y_cand = mu + sigma * y_cand
-        del X_cand_torch, gp
-        return y_cand
-    if self._surrogate_type == "none":
-        return None
-    if self._surrogate_type.startswith("enn-"):
-        from model.enn import EpistemicNearestNeighbors
-
-        k = int(self._surrogate_type.split("-")[-1])
-        enn = EpistemicNearestNeighbors(k=k)
-        enn.add(X, fX[:, None])
-        return enn.posterior(X_cand)
-    raise ValueError(f"Unknown surrogate_type: {self._surrogate_type}")
+from .turbo_1_candidates import create_candidates, select_candidates
+from .turbo_1_core import init_counters_and_tr, init_hypers, validate_init_args
+from .utils import from_unit_cube, latin_hypercube, to_unit_cube, turbo_adjust_length
 
 
 class Turbo1Standard:
@@ -145,7 +63,7 @@ class Turbo1Standard:
         *,
         surrogate_type="original",
     ):
-        _validate_init_args(
+        validate_init_args(
             lb,
             ub,
             n_init=n_init,
@@ -157,21 +75,14 @@ class Turbo1Standard:
             n_training_steps=n_training_steps,
             dtype=dtype,
         )
-        # if device == "cuda":
-        #     assert torch.cuda.is_available(), "can't use cuda if it's not available"
 
-        # print("TURBO_DEVICE:", device)
-
-        # Backward-compatible alias used by older registry defaults/configs.
         self._surrogate_type = "original" if surrogate_type == "gp" else surrogate_type
 
-        # Save function information
         self.f = f
         self.dim = len(lb)
         self.lb = lb
         self.ub = ub
 
-        # Settings
         self.n_init = n_init
         self.max_evals = max_evals
         self.batch_size = batch_size
@@ -180,22 +91,19 @@ class Turbo1Standard:
         self.max_cholesky_size = max_cholesky_size
         self.n_training_steps = n_training_steps
 
-        _init_hypers(self)
-        _init_counters_and_tr(self, batch_size=batch_size)
+        init_hypers(self)
+        init_counters_and_tr(self, batch_size=batch_size)
 
-        # Save the full history
         self.X = np.zeros((0, self.dim))
         self.fX = np.zeros((0, 1))
 
-        # Device and dtype for GPyTorch
         self.min_cuda = min_cuda
         self.dtype = torch.float32 if dtype == "float32" else torch.float64
-        self.device = torch.device(device)  # "cuda") if device == "cuda" else torch.device("cpu")
+        self.device = torch.device(device)
         if self.verbose:
             print("Using dtype = %s \nUsing device = %s" % (self.dtype, self.device))
             sys.stdout.flush()
 
-        # Initialize parameters
         self._restart()
 
     def _restart(self):
@@ -209,105 +117,13 @@ class Turbo1Standard:
         turbo_adjust_length(self, fX_next)
 
     def _create_candidates(self, X, fX, length, n_training_steps, hypers):
-        """Generate candidates assuming X has been scaled to [0,1]^d."""
-        # Pick the center as the point with the smallest function values
-        # NOTE: This may not be robust to noise, in which case the posterior mean of the GP can be used instead
-        assert X.min() >= 0.0 and X.max() <= 1.0
-
-        # Standardize function values.
-        mu, sigma = np.median(fX), fX.std()
-        sigma = 1.0 if sigma < 1e-6 else sigma
-        fX = (deepcopy(fX) - mu) / sigma
-
-        # Figure out what device we are running on
-        if len(X) < self.min_cuda:
-            device, dtype = torch.device("cpu"), torch.float64
-        else:
-            device, dtype = self.device, self.dtype
-        # print("TURBO_DEVICE:", device, len(X), self.min_cuda, self.device)
-
-        # We use CG + Lanczos for training if we have enough data
-        with gpytorch.settings.max_cholesky_size(self.max_cholesky_size):
-            X_torch = torch.tensor(X).to(device=device, dtype=dtype)
-            y_torch = torch.tensor(fX).to(device=device, dtype=dtype)
-            if self._surrogate_type == "original":
-                gp = train_gp(
-                    train_x=X_torch,
-                    train_y=y_torch,
-                    use_ard=self.use_ard,
-                    num_steps=n_training_steps,
-                    hypers=hypers,
-                )
-                # Save state dict
-                hypers = gp.state_dict()
-
-        # Create the trust region boundaries
-        x_center = X[fX.argmin().item(), :][None, :]
-        if self._surrogate_type == "original":
-            weights = gp.covar_module.base_kernel.lengthscale.cpu().detach().numpy().ravel()
-        else:
-            weights = np.ones(shape=x_center.shape)
-
-        weights = weights / weights.mean()  # This will make the next line more stable
-        weights = weights / np.prod(np.power(weights, 1.0 / len(weights)))  # We now have weights.prod() = 1
-        lb = np.clip(x_center - weights * length / 2.0, 0.0, 1.0)
-        ub = np.clip(x_center + weights * length / 2.0, 0.0, 1.0)
-
-        X_cand = make_sobol_candidates(dim=self.dim, n_cand=self.n_cand, x_center=x_center, lb=lb, ub=ub, device=device, dtype=dtype)
-
-        # Figure out what device we are running on
-        if len(X_cand) < self.min_cuda:
-            device, dtype = torch.device("cpu"), torch.float64
-        else:
-            device, dtype = self.device, self.dtype
-
-        y_cand = _compute_y_cand(
-            self,
-            X=X,
-            fX=fX,
-            X_cand=X_cand,
-            mu=mu,
-            sigma=sigma,
-            gp=gp if self._surrogate_type == "original" else None,
-            device=device,
-            dtype=dtype,
-        )
-
-        del X_torch, y_torch
-
-        return _CandidatesResult(X_cand=X_cand, y_cand=y_cand, hypers=hypers)
+        return create_candidates(self, X, fX, length, n_training_steps, hypers)
 
     def _select_candidates(self, X_cand, y_cand):
-        """Select candidates."""
-        if self._surrogate_type.startswith("enn-mu-"):
-            assert self.batch_size == 1, self.batch_size
-            i = np.argmin(y_cand.mu)
-            X_next = X_cand[[i], :]
-        elif self._surrogate_type.startswith("enn-se-"):
-            assert self.batch_size == 1, self.batch_size
-            i = np.argmax(y_cand.se)
-            X_next = X_cand[[i], :]
-        elif self._surrogate_type.startswith("enn-rand-"):
-            y_cand.se = np.random.uniform(size=y_cand.se.shape)
-            X_next = arms_from_pareto_fronts(X_cand, y_cand, self.batch_size)
-        elif self._surrogate_type.startswith("enn-"):
-            X_next = arms_from_pareto_fronts(X_cand, y_cand, self.batch_size)
-        elif self._surrogate_type == "none":
-            from acq.acq_util import torch_random_choice
-
-            X_next = torch_random_choice(X_cand, self.batch_size, replace=False)
-        else:
-            X_next = np.ones((self.batch_size, self.dim))
-            for i in range(self.batch_size):
-                # Pick the best point and make sure we never pick it again
-                indbest = np.argmin(y_cand[:, i])
-                X_next[i, :] = deepcopy(X_cand[indbest, :])
-                y_cand[indbest, :] = np.inf
-        return X_next
+        return select_candidates(self, X_cand, y_cand)
 
     def _evaluate(self, X):
         assert len(X) % self.batch_size == 0, (len(X), self.batch_size)
-        # return np.array([[self.f(x)] for x in X])
         Y = []
         while len(Y) < len(X):
             x = X[len(Y) : len(Y) + self.batch_size]
@@ -324,21 +140,16 @@ class Turbo1Standard:
                 print(f"{n_evals}) Restarting with fbest = {fbest:.4}")
                 sys.stdout.flush()
 
-            # Initialize parameters
             self._restart()
 
-            # Generate and evalute initial design points
             X_init = latin_hypercube(self.n_init, self.dim)
             X_init = from_unit_cube(X_init, self.lb, self.ub)
-            # fX_init = np.array([[self.f(x)] for x in X_init])
             fX_init = self._evaluate(X_init)
 
-            # Update budget and set as initial data for this TR
             self.n_evals += self.n_init
             self._X = deepcopy(X_init)
             self._fX = deepcopy(fX_init)
 
-            # Append data to the global history
             self.X = np.vstack((self.X, deepcopy(X_init)))
             self.fX = np.vstack((self.fX, deepcopy(fX_init)))
 
@@ -347,15 +158,10 @@ class Turbo1Standard:
                 print(f"Starting from fbest = {fbest:.4}")
                 sys.stdout.flush()
 
-            # Thompson sample to get next suggestions
             while self.n_evals < self.max_evals and self.length >= self.length_min:
-                # Warp inputs
                 X = to_unit_cube(deepcopy(self._X), self.lb, self.ub)
-
-                # Standardize values
                 fX = deepcopy(self._fX).ravel()
 
-                # Create th next batch
                 X_cand, y_cand, _ = self._create_candidates(
                     X,
                     fX,
@@ -366,19 +172,12 @@ class Turbo1Standard:
                 X_next = self._select_candidates(X_cand, y_cand)
                 del y_cand
 
-                # No timing print
-
-                # Undo the warping
                 X_next = from_unit_cube(X_next, self.lb, self.ub)
 
-                # Evaluate batch
-                # fX_next = np.array([[self.f(x)] for x in X_next])
                 fX_next = self._evaluate(X_next)
 
-                # Update trust region
                 self._adjust_length(fX_next)
 
-                # Update budget and append data
                 self.n_evals += self.batch_size
                 self._X = np.vstack((self._X, X_next))
                 self._fX = np.vstack((self._fX, fX_next))
@@ -388,39 +187,8 @@ class Turbo1Standard:
                     print(f"{n_evals}) New best: {fbest:.4}")
                     sys.stdout.flush()
 
-                # Append data to the global history
                 self.X = np.vstack((self.X, deepcopy(X_next)))
                 self.fX = np.vstack((self.fX, deepcopy(fX_next)))
-
-
-def arms_from_pareto_fronts(x_cand, mvn, num_arms):
-    # minimize mu (b/c TuRBO-1 is written as a minimization)
-    i = np.argsort(mvn.mu, axis=0).flatten()
-    x_cand = x_cand[i]
-    se = mvn.se[i]
-
-    i_all = list(range(len(se)))
-    i_keep = []
-
-    while len(i_keep) < num_arms:
-        se_max = -1e99
-        i_front = []
-        for i in i_all:
-            # .. but still maximize se
-            if se[i] >= se_max:
-                i_front.append(i)
-                se_max = se[i]
-        if len(i_keep) + len(i_front) <= num_arms:
-            i_keep.extend(i_front)
-        else:
-            i_keep.extend(np.random.choice(i_front, size=num_arms - len(i_keep), replace=False))
-        i_all = sorted(set(i_all) - set(i_front))
-
-    i_keep = np.array(i_keep)
-    x_arms = x_cand[i_keep]
-
-    assert len(x_arms) == num_arms, (len(x_arms), num_arms)
-    return x_arms
 
 
 Turbo1 = Turbo1Standard

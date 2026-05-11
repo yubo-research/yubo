@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import dataclasses
-import hashlib
 import importlib.util
 import json
 import os
@@ -13,6 +12,12 @@ from typing import Any
 import numpy as np
 
 from llm.config import LLMConfig
+from llm.eggroll_support import adapter_root_for as _adapter_root_for
+from llm.eggroll_support import base_seed as _base_seed
+from llm.eggroll_support import eggroll_missing_runtime_message as _missing_runtime_message
+from llm.eggroll_support import write_run_config as _write_run_config
+from llm.engine_pool import ensure_ray as _init_ray
+from llm.engine_pool import sampling_kwargs as _sampling_kwargs
 from llm.es import num_iterations_from_budget, summarize_fitness, validate_eggroll_population
 from llm.lora import LoraTemplate, build_peft_lora_template
 from llm.tasks import MathTask, build_task
@@ -51,11 +56,7 @@ def run_eggroll(cfg: LLMConfig) -> dict[str, Any]:
     if cfg.hf_home:
         os.environ["HF_HOME"] = cfg.hf_home
 
-    missing = [
-        module
-        for module in ("ray", "transformers")
-        if importlib.util.find_spec(module) is None
-    ]
+    missing = [module for module in ("ray", "transformers") if importlib.util.find_spec(module) is None]
     if missing:
         raise RuntimeError(_missing_runtime_message(missing))
     try:
@@ -167,24 +168,7 @@ def run_eggroll(cfg: LLMConfig) -> dict[str, Any]:
             wandb_run.finish()
         return result
     finally:
-        try:
-            ray.get([engine.shutdown.remote() for engine in engines], timeout=60)
-        except Exception:
-            pass
-        try:
-            terminate_refs = [engine.__ray_terminate__.remote() for engine in engines]
-            ray.wait(terminate_refs, timeout=30, num_returns=len(terminate_refs))
-        except Exception:
-            for engine in engines:
-                try:
-                    ray.kill(engine, no_restart=True)
-                except Exception:
-                    pass
-        for pg in placement_groups:
-            try:
-                ray.util.remove_placement_group(pg)
-            except Exception:
-                pass
+        _shutdown_engines(ray, engines=engines, placement_groups=placement_groups)
 
 
 def _train_loop(
@@ -200,10 +184,7 @@ def _train_loop(
     wandb_run: Any | None,
 ) -> dict[str, Any]:
     loras_per_engine = args.population_size // args.num_engines
-    engine_pop_indices = [
-        list(range(i * loras_per_engine, (i + 1) * loras_per_engine))
-        for i in range(args.num_engines)
-    ]
+    engine_pop_indices = [list(range(i * loras_per_engine, (i + 1) * loras_per_engine)) for i in range(args.num_engines)]
     engine_paths: list[list[str]] | None = None
     last_summary = None
     start_time = time.time()
@@ -211,12 +192,7 @@ def _train_loop(
     for es_step in range(args.num_iterations):
         iter_start = time.time()
         if es_step % args.steps_per_adapter == 0 or engine_paths is None:
-            engine_paths = ray.get(
-                [
-                    engines[i].generate_local_adapters.remote(engine_pop_indices[i], es_step, args)
-                    for i in range(args.num_engines)
-                ]
-            )
+            engine_paths = ray.get([engines[i].generate_local_adapters.remote(engine_pop_indices[i], es_step, args) for i in range(args.num_engines)])
 
         eval_info = _run_eval(
             ray,
@@ -333,9 +309,10 @@ def _run_eval(
 
 
 def _launch_engines(ray: Any, *, cfg: LLMConfig, args: EggrollArgs) -> tuple[list[Any], list[Any]]:
-    from llm.vllm import EggrollVLLMActor
     from ray.util.placement_group import placement_group
     from ray.util.scheduling_strategies import PlacementGroupSchedulingStrategy
+
+    from llm.vllm import EggrollVLLMActor
 
     placement_groups = []
     strategies = []
@@ -345,16 +322,20 @@ def _launch_engines(ray: Any, *, cfg: LLMConfig, args: EggrollArgs) -> tuple[lis
         ray.get(pg.ready())
         placement_groups.append(pg)
         if args.tensor_parallel_size == 1:
-            strategies.append(PlacementGroupSchedulingStrategy(
-                placement_group=pg,
-                placement_group_capture_child_tasks=True,
-                placement_group_bundle_index=0,
-            ))
+            strategies.append(
+                PlacementGroupSchedulingStrategy(
+                    placement_group=pg,
+                    placement_group_capture_child_tasks=True,
+                    placement_group_bundle_index=0,
+                )
+            )
         else:
-            strategies.append(PlacementGroupSchedulingStrategy(
-                placement_group=pg,
-                placement_group_capture_child_tasks=True,
-            ))
+            strategies.append(
+                PlacementGroupSchedulingStrategy(
+                    placement_group=pg,
+                    placement_group_capture_child_tasks=True,
+                )
+            )
 
     loras_per_engine = args.population_size // args.num_engines
     enforce_eager = args.tensor_parallel_size > 1
@@ -373,23 +354,32 @@ def _launch_engines(ray: Any, *, cfg: LLMConfig, args: EggrollArgs) -> tuple[lis
     return actors, placement_groups
 
 
-def _init_ray(ray: Any) -> None:
-    if ray.is_initialized():
-        return
+def _shutdown_engines(ray: Any, *, engines: list[Any], placement_groups: list[Any]) -> None:
     try:
-        ray.init(address="auto", include_dashboard=False, ignore_reinit_error=True)
+        ray.get([engine.shutdown.remote() for engine in engines], timeout=60)
     except Exception:
-        ray.init(include_dashboard=False, ignore_reinit_error=True)
+        pass
+    try:
+        terminate_refs = [engine.__ray_terminate__.remote() for engine in engines]
+        ray.wait(terminate_refs, timeout=30, num_returns=len(terminate_refs))
+    except Exception:
+        for engine in engines:
+            try:
+                ray.kill(engine, no_restart=True)
+            except Exception:
+                pass
+    for pg in placement_groups:
+        try:
+            ray.util.remove_placement_group(pg)
+        except Exception:
+            pass
 
 
 def _init_worker_groups(ray: Any, engines: list[Any], *, args: EggrollArgs) -> None:
     master_info = ray.get(engines[0].collective_rpc.remote("get_transport_info", args=()))[0]
     master_address, master_port = master_info
     results = ray.get(
-        [
-            engines[i].collective_rpc.remote("init_inter_engine_group", args=(master_address, master_port, i, args.num_engines))
-            for i in range(args.num_engines)
-        ]
+        [engines[i].collective_rpc.remote("init_inter_engine_group", args=(master_address, master_port, i, args.num_engines)) for i in range(args.num_engines)]
     )
     if not all(result[0] for result in results):
         raise RuntimeError("Failed to initialize at least one vLLM worker group.")
@@ -399,12 +389,7 @@ def _setup_lora_generation(ray: Any, engines: list[Any], *, template: LoraTempla
     state_ref = ray.put(template.state_dict)
     shapes_ref = ray.put(template.base_shapes)
     config_ref = ray.put(template.config)
-    ray.get(
-        [
-            engines[i].setup_local_lora_generation.remote(state_ref, shapes_ref, config_ref, i)
-            for i in range(len(engines))
-        ]
-    )
+    ray.get([engines[i].setup_local_lora_generation.remote(state_ref, shapes_ref, config_ref, i) for i in range(len(engines))])
 
 
 def _broadcast_weights(ray: Any, engines: list[Any]) -> None:
@@ -429,17 +414,6 @@ def _engine_lora_specs(pop_indices: list[int], adapter_paths: list[str], es_step
         spec = (f"adapter_{pop_idx}", int(pop_idx) + 1 + int(es_step) * 10000, path)
         specs.extend([spec] * int(num_prompts))
     return specs
-
-
-def _sampling_kwargs(*, tokenizer: Any, temperature: float, seed: int, max_tokens: int, n: int) -> dict[str, Any]:
-    stops = [token for token in (getattr(tokenizer, "eos_token", None), "<|im_end|>", "<|endoftext|>") if token]
-    return {
-        "temperature": float(temperature),
-        "seed": int(seed),
-        "max_tokens": int(max_tokens),
-        "n": int(n),
-        "stop": stops,
-    }
 
 
 def _build_eval_task(cfg: LLMConfig, *, tokenizer: Any, args: EggrollArgs) -> MathTask | None:
@@ -498,34 +472,6 @@ def _maybe_save_checkpoint(ray: Any, engines: list[Any], *, args: EggrollArgs, t
             indent=2,
             sort_keys=True,
         )
-
-
-def _write_run_config(exp_dir: Path, cfg: LLMConfig) -> None:
-    with open(exp_dir / "config.json", "w", encoding="utf-8") as f:
-        json.dump(dataclasses.asdict(cfg), f, indent=2, sort_keys=True)
-
-
-def _adapter_root_for(exp_dir: Path) -> str:
-    digest = hashlib.sha1(str(exp_dir.resolve()).encode("utf-8")).hexdigest()[:12]
-    return str(Path("/dev/shm") / f"yubo_llm_lora_{digest}")
-
-
-def _base_seed(cfg: LLMConfig) -> int:
-    seed = cfg.noise_seed_0
-    if seed is None:
-        seed = cfg.problem_seed
-    if seed is None:
-        seed = 0
-    return int(seed) + int(cfg.seed_offset)
-
-
-def _missing_runtime_message(missing: list[str]) -> str:
-    packages = ", ".join(sorted(set(missing)))
-    return (
-        f"The LLM EggRoll runtime is missing {packages}. "
-        "Run `bash admin/setup-hyperscalees.sh` on the CUDA machine, then run "
-        "`micromamba activate yubo-hyperscalees` before launching `./ops/llm.py`."
-    )
 
 
 __all__ = ["EggrollArgs", "run_eggroll"]

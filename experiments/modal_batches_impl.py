@@ -1,0 +1,192 @@
+import os
+import sys
+import time
+
+import modal
+
+from analysis.data_io import data_is_done
+from experiments.batches_impl import prep_d_argss
+from experiments.experiment_sampler import mk_replicates, post_process, sample_1
+from experiments.modal_image import mk_image
+from experiments.modal_result_collect import gen_jobs_from_configs, iter_modal_results_for_collect
+
+
+_TAG = os.environ.get("MODAL_TAG")
+if not _TAG:
+    # Fallback: extract from sys.argv for direct `modal run` usage
+    for i, arg in enumerate(sys.argv):
+        if "modal_batches" in arg and i + 1 < len(sys.argv):
+            candidate = sys.argv[i + 1]
+            if not candidate.startswith("-"):
+                _TAG = candidate
+                break
+    else:
+        _TAG = "default"
+
+modal_image = mk_image(_TAG)
+
+_TIMEOUT_HOURS = 24  # was: 5
+_MAX_CONTAINERS = 1000
+
+
+def _get_app_name(tag: str) -> str:
+    return f"yubo_{tag}"
+
+
+_app_name = _get_app_name(_TAG)
+app = modal.App(name=_app_name)
+
+
+def _results_dict(tag: str):
+    return modal.Dict.from_name(f"batches_dict_{tag}", create_if_missing=True)
+
+
+def _submitted_dict(tag: str):
+    return modal.Dict.from_name(f"submitted_dict_{tag}", create_if_missing=True)
+
+
+@app.function(
+    image=modal_image,
+    max_containers=_MAX_CONTAINERS,
+    timeout=_TIMEOUT_HOURS * 60 * 60,
+)
+def modal_batches_worker(job):
+    tag, key, run_config = job
+    res_dict = _results_dict(tag)
+
+    print(f"JOB: key = {key} run_config = {run_config}")
+    t_start = time.perf_counter()
+    result = sample_1(run_config)
+    wall_seconds = time.perf_counter() - t_start
+    res_dict[key] = (
+        run_config.trace_fn,
+        result.collector_log,
+        result.collector_trace,
+        result.trace_records,
+        wall_seconds,
+        result.stop_reason,
+    )
+
+
+@app.function(
+    image=modal_image,
+    max_containers=_MAX_CONTAINERS // 10,
+    timeout=_TIMEOUT_HOURS * 60 * 60,
+)
+def modal_batches_resubmitter(batch_of_configs, tag: str):
+    submitted_dict = _submitted_dict(tag)
+    todo = []
+    for key, run_config, force in batch_of_configs:
+        if (not force) and (key in submitted_dict):
+            continue
+        submitted_dict[key] = True
+        todo.append((tag, key, run_config))
+
+    print("TODO:", len(todo))
+
+    worker = modal.Function.from_name(_get_app_name(tag), "modal_batches_worker")
+    worker.spawn_map(todo)
+
+
+def batches_submitter(tag: str, batch_tag: str, force: bool = False):
+    n = 0
+    batch = []
+    MAX_BATCH = 1000
+
+    def _flush():
+        nonlocal batch
+        func = modal.Function.from_name(_get_app_name(tag), "modal_batches_resubmitter")
+        func.spawn(batch, tag)
+        batch = []
+
+    for key, run_config in _gen_jobs(batch_tag):
+        print(f"JOB: {key} {run_config}")
+        batch.append((key, run_config, force))
+        if len(batch) == MAX_BATCH:
+            _flush()
+        n += 1
+
+    _flush()
+    print("TOTAL:", n)
+
+
+def _gen_jobs(batch_tag):
+    yield from gen_jobs_from_configs(batch_tag, prep_d_argss(batch_tag), mk_replicates, data_is_done, _job_key)
+
+
+def _job_key(job_name, path):
+    return f"{job_name}-{path}"
+
+
+@app.function(image=modal_image, max_containers=1, timeout=_TIMEOUT_HOURS * 60 * 60)
+def modal_batch_deleter(collected_keys, tag: str):
+    res_dict = _results_dict(tag)
+    for key in collected_keys:
+        print("DEL:", key)
+        try:
+            del res_dict[key]
+        except KeyError:
+            pass
+
+
+def _collect(tag: str):
+    res_dict = _results_dict(tag)
+    collected_keys = iter_modal_results_for_collect(
+        res_dict,
+        post_process=post_process,
+        data_is_done=data_is_done,
+        gotitem_log=lambda key, dt, _ws, _sr: print(f"GOTITEM: {key} {dt:.1f}"),
+    )
+
+    print(f"results_available before del: {res_dict.len()}")
+    func = modal.Function.from_name(_get_app_name(tag), "modal_batch_deleter")
+    func.spawn(collected_keys, tag)
+
+    print(f"num_collected = {len(collected_keys)}")
+
+
+def status(tag: str):
+    res_dict = _results_dict(tag)
+    submitted_dict = _submitted_dict(tag)
+    print(f"results_available = {res_dict.len()}")
+    print(f"submitted = {submitted_dict.len()}")
+
+
+def clean_up(tag: str):
+    for name in [f"batches_dict_{tag}", f"submitted_dict_{tag}"]:
+        try:
+            modal.Dict.delete(name)
+            print(f"CLEANUP: deleted dict name={name}")
+        except Exception as e:
+            print(f"CLEANUP: dict delete failed name={name} err={e!r}")
+
+
+def stop(tag: str):
+    """Clean up dicts. App stopping is handled by ops/modal_batches.py via 'modal app stop'."""
+    clean_up(tag)
+
+
+@app.local_entrypoint()
+def batches(tag: str, cmd: str, batch_tag: str = None, num: int = None):
+    if cmd == "work":
+        modal_function = modal.Function.lookup(_get_app_name(tag), "modal_batches_worker")
+        for i in range(num):
+            print("WORK:", i)
+            modal_function.spawn()
+    elif cmd == "submit-missing":
+        batches_submitter(tag, batch_tag)
+    elif cmd == "submit-missing-force":
+        batches_submitter(tag, batch_tag, force=True)
+    elif cmd == "status":
+        status(tag)
+    elif cmd == "collect":
+        assert batch_tag is None
+        _collect(tag)
+    elif cmd == "clean_up":
+        assert batch_tag is None
+        clean_up(tag)
+    elif cmd == "stop":
+        assert batch_tag is None
+        stop(tag)
+    else:
+        raise ValueError(f"Unknown command: {cmd}")

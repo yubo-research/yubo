@@ -65,9 +65,7 @@ class SparseEvidenceTrustRegion(TurboTrustRegion):
             self._num_arms = num_arms
             self._failure_tolerance = int(math.ceil(tolerance))
         elif num_arms != self._num_arms:
-            raise ValueError(
-                f"num_arms changed from {self._num_arms} to {num_arms}; must be consistent across ask() calls"
-            )
+            raise ValueError(f"num_arms changed from {self._num_arms} to {num_arms}; must be consistent across ask() calls")
         assert self._failure_tolerance is not None
 
 

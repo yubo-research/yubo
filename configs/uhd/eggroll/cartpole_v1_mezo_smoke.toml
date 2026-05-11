@@ -1,4 +1,4 @@
-# Run: python -m ops.exp_uhd local configs/uhd/eggroll/cartpole_v1_mezo_smoke.toml
+# Run: ./ops/exp_uhd.py local configs/uhd/eggroll/cartpole_v1_mezo_smoke.toml
 
 [uhd]
 env_tag = "gymnax:CartPole-v1"
@@ -9,6 +9,6 @@ lr = 0.001
 sigma = 0.001
 perturb = "dense"
 steps_per_episode = 10
-eval_episodes = 1
+num_envs = 1
 deterministic_policy = false
 log_interval = 1

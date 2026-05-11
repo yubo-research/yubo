@@ -1,4 +1,4 @@
-# Run: python -m experiments.experiment local configs/bo/eggroll/paper/marl/mpe_simple_speaker_listener_v4_eggroll.toml
+# Run: ./ops/experiment.py local configs/bo/eggroll/paper/marl/mpe_simple_speaker_listener_v4_eggroll.toml
 # Paper: Appendix N.1 / Table 8, MPE Simple Speaker Listener v4 EGGROLL.
 # Runtime: uses the EggRoll JaxMARL adapter.
 

@@ -1,7 +1,7 @@
 # Sparse-ENN HalfCheetah large-policy smoke config.
 #
 # Run:
-#   python -m experiments.experiment local \
+#   ./ops/experiment.py local \
 #     configs/bo/gymnasium/cheetah/halfcheetah_sparse_enn.toml
 
 [experiment]

@@ -1,4 +1,4 @@
-# Run: python -m experiments.experiment local configs/bo/eggroll/paper/qwen/qwen3_1p7b_deepscaler_passk4_muon.toml
+# Run: ./ops/experiment.py local configs/bo/eggroll/paper/qwen/qwen3_1p7b_deepscaler_passk4_muon.toml
 # Paper-adjacent variant of the Qwen3-1.7B pass@k EggRoll config using Muon.
 
 [experiment]
@@ -23,4 +23,4 @@ lr = 0.001
 optax = "muon"
 noise_reuse = 4
 steps = 1
-eval_episodes = 1
+num_envs = 1

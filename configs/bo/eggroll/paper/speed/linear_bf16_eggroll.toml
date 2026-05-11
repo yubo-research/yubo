@@ -1,4 +1,4 @@
-# Run: python -m experiments.experiment local configs/bo/eggroll/paper/speed/linear_bf16_eggroll.toml
+# Run: ./ops/experiment.py local configs/bo/eggroll/paper/speed/linear_bf16_eggroll.toml
 # Paper: Figure 2a, linear-model speed benchmark for EGGROLL throughput.
 # Runtime: uses the EggRoll synthetic linear-speed objective adapter.
 
@@ -23,5 +23,5 @@ rank = 1
 lr = 0.001
 optax = "adamw"
 steps = 1
-eval_episodes = 1
+num_envs = 1
 use_batched_update = true

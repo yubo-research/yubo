@@ -99,7 +99,11 @@ def test_runtime_utils_select_device_and_obs_scale(monkeypatch):
 
     monkeypatch.setattr(runtime_utils, "_select_device_core", _fake_select_device)
     monkeypatch.setattr(runtime_utils, "_mps_is_available_core", lambda: True)
-    monkeypatch.setattr(runtime_utils, "_obs_scale_from_env_core", lambda env_conf: ("lb", "w", env_conf))
+    monkeypatch.setattr(
+        runtime_utils,
+        "_obs_scale_from_env_core",
+        lambda env_conf: ("lb", "w", env_conf),
+    )
 
     out = runtime_utils.select_device("auto")
     assert out.type == "cpu"

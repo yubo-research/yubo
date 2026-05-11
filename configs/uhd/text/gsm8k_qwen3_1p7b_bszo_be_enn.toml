@@ -29,7 +29,7 @@ prompt_batch_size = 8
 pass_at_k = false
 
 tensor_parallel_size = 1
-num_engines = 1
+num_engines = 8
 sub_dataset_size = 2048
 problem_seed = 0
 noise_seed_0 = 0

@@ -4,7 +4,13 @@ import torch
 import torch.nn as nn
 from torch.distributions import Normal
 
-from rl.backbone import BackboneSpec, HeadSpec, build_backbone, build_mlp_head, init_linear_layers
+from rl.backbone import (
+    BackboneSpec,
+    HeadSpec,
+    build_backbone,
+    build_mlp_head,
+    init_linear_layers,
+)
 
 
 class SharedGaussianActorModule(nn.Module):
@@ -52,8 +58,14 @@ class SharedGaussianActorModule(nn.Module):
 
 _GAUSSIAN_ACTOR_SPECS: dict[str, tuple[BackboneSpec, HeadSpec]] = {
     "rl-gauss": (BackboneSpec("mlp", (64, 64), "silu", layer_norm=True), HeadSpec()),
-    "rl-gauss-tanh": (BackboneSpec("mlp", (16, 16), "tanh", layer_norm=False), HeadSpec()),
-    "rl-gauss-small": (BackboneSpec("mlp", (32, 16), "silu", layer_norm=True), HeadSpec()),
+    "rl-gauss-tanh": (
+        BackboneSpec("mlp", (16, 16), "tanh", layer_norm=False),
+        HeadSpec(),
+    ),
+    "rl-gauss-small": (
+        BackboneSpec("mlp", (32, 16), "silu", layer_norm=True),
+        HeadSpec(),
+    ),
 }
 
 

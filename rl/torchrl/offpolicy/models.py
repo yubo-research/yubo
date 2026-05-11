@@ -4,12 +4,16 @@ import torch
 import torch.nn as nn
 
 
+def _assign_backbone_head_scaler(module: nn.Module, backbone: nn.Module, head: nn.Module, obs_scaler: nn.Module) -> None:
+    module.backbone = backbone
+    module.head = head
+    module.obs_scaler = obs_scaler
+
+
 class ActorNet(nn.Module):
     def __init__(self, backbone: nn.Module, head: nn.Module, obs_scaler: nn.Module, act_dim: int):
         super().__init__()
-        self.backbone = backbone
-        self.head = head
-        self.obs_scaler = obs_scaler
+        _assign_backbone_head_scaler(self, backbone, head, obs_scaler)
         self.act_dim = int(act_dim)
 
     def forward(self, observation: torch.Tensor):
@@ -52,9 +56,7 @@ class ActorNet(nn.Module):
 class QNet(nn.Module):
     def __init__(self, backbone: nn.Module, head: nn.Module, obs_scaler: nn.Module):
         super().__init__()
-        self.backbone = backbone
-        self.head = head
-        self.obs_scaler = obs_scaler
+        _assign_backbone_head_scaler(self, backbone, head, obs_scaler)
 
     def forward(self, observation: torch.Tensor, action: torch.Tensor):
         obs = self.obs_scaler(observation)

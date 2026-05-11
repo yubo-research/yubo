@@ -5,6 +5,9 @@ from typing import Any
 
 import click
 
+from common.mapping_keys import coerce_mapping_keys, normalize_toml_key
+
+
 _BASE_REQUIRED_KEYS = (
     "exp_dir",
     "env_tag",
@@ -29,7 +32,7 @@ _OPTIMIZER_KEYS = {"name", "params"}
 
 
 def _normalize_key(key: str) -> str:
-    return key.replace("-", "_")
+    return normalize_toml_key(key)
 
 
 def _is_eggroll_optimizer(opt_name: Any) -> bool:
@@ -37,16 +40,12 @@ def _is_eggroll_optimizer(opt_name: Any) -> bool:
 
 
 def _coerce_mapping_keys(raw: dict[str, Any], *, source: str) -> dict[str, Any]:
-    if not isinstance(raw, dict):
-        raise TypeError("TOML config must be a mapping at root or under [experiment].")
-
-    out: dict[str, Any] = {}
-    for key, value in raw.items():
-        norm = _normalize_key(str(key))
-        if norm not in _ALL_EXPERIMENT_KEYS:
-            raise ValueError(f"Unknown key '{key}' in {source}. Valid keys: {sorted(_ALL_EXPERIMENT_KEYS)}")
-        out[norm] = value
-    return out
+    return coerce_mapping_keys(
+        raw,
+        source=source,
+        valid_keys=_ALL_EXPERIMENT_KEYS,
+        not_mapping_msg="TOML config must be a mapping at root or under [experiment].",
+    )
 
 
 def _format_opt_value(value: Any, *, key: str) -> str:
@@ -196,7 +195,7 @@ def _local(config_toml: str, overrides: tuple[str, ...]) -> None:
     except (OSError, tomllib.TOMLDecodeError, TypeError, ValueError) as e:
         raise click.ClickException(str(e)) from e
 
-    from problems.env_conf import needs_atari_dm_bindings
+    from problems.environment_spec import needs_atari_dm_bindings
 
     if needs_atari_dm_bindings(str(config.env_tag)):
         from problems.env_conf_backends import register_with_env_conf
@@ -207,14 +206,3 @@ def _local(config_toml: str, overrides: tuple[str, ...]) -> None:
 
 
 local = _local
-
-
-def _main() -> None:
-    cli()
-
-
-main = _main
-
-
-if __name__ == "__main__":
-    main()

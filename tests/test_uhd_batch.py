@@ -96,15 +96,19 @@ def test_parse_eval_lines_basic():
 
     log = textwrap.dedent("""\
         UHD-Simple: num_params = 455306, optimizer = mezo
-        EVAL: i_iter = 0 sigma = 0.001000 mu = -2.3270 se = 0.0037 y_best = -2.3270
-        EVAL: i_iter = 50 sigma = 0.001000 mu = -2.3024 se = 0.0039 y_best = -2.2976 test_acc = 0.0972
+        EVAL: i_iter = 0 proposal_dt = 0.000012 eval_dt = 0.000020 sigma = 0.001000 mu = -2.3270 se = 0.0037 y_best = -2.3270
+        EVAL: i_iter = 50 proposal_dt = 0.000015 eval_dt = 0.000025 sigma = 0.001000 mu = -2.3024 se = 0.0039 y_best = -2.2976 test_acc = 0.0972
     """)
     records = _parse_eval_lines(log)
     assert len(records) == 2
     assert records[0]["i_iter"] == 0
     assert records[0]["rreturn"] == pytest.approx(-2.3270)
+    assert records[0]["dt_prop"] == pytest.approx(1.2e-5)
+    assert records[0]["dt_eval"] == pytest.approx(2.0e-5)
     assert records[1]["i_iter"] == 50
     assert records[1]["rreturn"] == pytest.approx(-2.3024)
+    assert records[1]["dt_prop"] == pytest.approx(1.5e-5)
+    assert records[1]["dt_eval"] == pytest.approx(2.5e-5)
 
 
 def test_parse_eval_lines_step_logs():
@@ -120,6 +124,29 @@ def test_parse_eval_lines_empty():
 
     assert _parse_eval_lines("no eval lines here\n") == []
     assert _parse_eval_lines("") == []
+
+
+def test_parse_eval_lines_legacy_missing_timing_fields():
+    """Older logs omit proposal_dt and/or eval_dt; missing keys default to 0."""
+    from ops.uhd_batch import _parse_eval_lines
+
+    cases = [
+        (
+            "EVAL: i_iter = 0 sigma = 0.001000 mu = -1.0 se = 0.0 y_best = -1.0\n",
+            0.0,
+            0.0,
+        ),
+        (
+            "EVAL: i_iter = 0 proposal_dt = 0.00001 sigma = 0.001000 mu = -1.0 se = 0.0 y_best = -1.0\n",
+            1e-5,
+            0.0,
+        ),
+    ]
+    for log, exp_prop, exp_eval in cases:
+        records = _parse_eval_lines(log)
+        assert len(records) == 1
+        assert records[0]["dt_prop"] == pytest.approx(exp_prop)
+        assert records[0]["dt_eval"] == pytest.approx(exp_eval)
 
 
 def test_write_trace(tmp_path):
@@ -145,7 +172,12 @@ def test_write_config(tmp_path):
     from ops.uhd_batch import _write_config
 
     exp_dir = tmp_path / "abc123"
-    cfg = {"env_tag": "mnist", "num_rounds": 100, "problem_seed": 42, "optimizer": "mezo"}
+    cfg = {
+        "env_tag": "mnist",
+        "num_rounds": 100,
+        "problem_seed": 42,
+        "optimizer": "mezo",
+    }
     _write_config(exp_dir, cfg)
 
     config_path = exp_dir / "config.json"
@@ -223,7 +255,7 @@ def test_experiment_dir_deterministic(tmp_path):
 # Modal function tests (mocked)
 # ---------------------------------------------------------------------------
 
-_FAKE_EVAL = "EVAL: i_iter = 0 sigma = 0.001 mu = -2.33 se = 0.01 y_best = -2.33\n"
+_FAKE_EVAL = "EVAL: i_iter = 0 proposal_dt = 0.000001 eval_dt = 0.000002 sigma = 0.001 mu = -2.33 se = 0.01 y_best = -2.33\n"
 
 
 def test_uhd_batch_worker():
@@ -233,7 +265,10 @@ def test_uhd_batch_worker():
     fake_dict = {}
     completed = SimpleNamespace(stdout=_FAKE_EVAL, stderr="", returncode=0)
 
-    with patch("ops.uhd_batch._results_dict", return_value=fake_dict), patch("subprocess.run", return_value=completed):
+    with (
+        patch("ops.uhd_batch_modal._results_dict", return_value=fake_dict),
+        patch("subprocess.run", return_value=completed),
+    ):
         raw_fn(("k1", {"env_tag": "x", "num_rounds": 1}))
 
     assert "k1" in fake_dict
@@ -247,7 +282,10 @@ def test_uhd_batch_worker_fails_on_error():
     fake_dict = {}
     failed = SimpleNamespace(stdout="", stderr="IndexError: tuple index out of range", returncode=1)
 
-    with patch("ops.uhd_batch._results_dict", return_value=fake_dict), patch("subprocess.run", return_value=failed):
+    with (
+        patch("ops.uhd_batch_modal._results_dict", return_value=fake_dict),
+        patch("subprocess.run", return_value=failed),
+    ):
         with pytest.raises(RuntimeError, match="Subprocess failed with exit 1"):
             raw_fn(("k2", {"env_tag": "x", "num_rounds": 1}))
 
@@ -261,7 +299,10 @@ def test_uhd_batch_resubmitter():
     fake_submitted = {}
     mock_worker = MagicMock()
 
-    with patch("ops.uhd_batch._submitted_dict", return_value=fake_submitted), patch("modal.Function.from_name", return_value=mock_worker):
+    with (
+        patch("ops.uhd_batch_modal._submitted_dict", return_value=fake_submitted),
+        patch("modal.Function.from_name", return_value=mock_worker),
+    ):
         raw_fn([("k1", {"a": 1}), ("k2", {"b": 2})])
 
     assert fake_submitted == {"k1": True, "k2": True}
@@ -277,7 +318,10 @@ def test_uhd_batch_resubmitter_skips_submitted():
     fake_submitted = {"k1": True}
     mock_worker = MagicMock()
 
-    with patch("ops.uhd_batch._submitted_dict", return_value=fake_submitted), patch("modal.Function.from_name", return_value=mock_worker):
+    with (
+        patch("ops.uhd_batch_modal._submitted_dict", return_value=fake_submitted),
+        patch("modal.Function.from_name", return_value=mock_worker),
+    ):
         raw_fn([("k1", {"a": 1}), ("k2", {"b": 2})])
 
     spawned = mock_worker.spawn_map.call_args[0][0]
@@ -291,7 +335,7 @@ def test_uhd_batch_deleter():
     raw_fn = uhd_batch_deleter.get_raw_f()
     fake_dict = {"k1": "data", "k2": "data", "k3": "data"}
 
-    with patch("ops.uhd_batch._results_dict", return_value=fake_dict):
+    with patch("ops.uhd_batch_modal._results_dict", return_value=fake_dict):
         raw_fn(["k1", "k3", "nonexistent"])
 
     assert "k1" not in fake_dict
@@ -313,7 +357,7 @@ def test_local_cmd(tmp_path):
     toml_path = tmp_path / "test.toml"
     toml_path.write_text('[uhd]\nenv_tag = "mnist"\nnum_rounds = 10\n')
 
-    with patch("ops.uhd_batch._batch_local") as mock_bl:
+    with patch("ops.uhd_batch_cli._batch_local") as mock_bl:
         result = CliRunner().invoke(cli, ["local", str(toml_path), "--num-reps", "3"])
 
     assert result.exit_code == 0, result.output
@@ -347,7 +391,7 @@ def test_modal_cmd(tmp_path):
     toml_path = tmp_path / "test.toml"
     toml_path.write_text('[uhd]\nenv_tag = "mnist"\nnum_rounds = 10\n')
 
-    with patch("ops.uhd_batch._batch_modal") as mock_bm:
+    with patch("ops.uhd_batch_cli._batch_modal") as mock_bm:
         result = CliRunner().invoke(cli, ["modal", str(toml_path), "--num-reps", "5"])
 
     assert result.exit_code == 0, result.output
@@ -378,7 +422,7 @@ def test_collect_cmd():
     from ops.uhd_batch import cli, collect_cmd  # noqa: F811
 
     assert collect_cmd is not None
-    with patch("ops.uhd_batch._collect") as mock_c:
+    with patch("ops.uhd_batch_cli._collect") as mock_c:
         result = CliRunner().invoke(cli, ["collect", "--results-dir", "/tmp/res"])
 
     assert result.exit_code == 0, result.output
@@ -396,7 +440,10 @@ def test_status_cmd():
     mock_sd = MagicMock()
     mock_sd.len.return_value = 12
 
-    with patch("ops.uhd_batch._results_dict", return_value=mock_rd), patch("ops.uhd_batch._submitted_dict", return_value=mock_sd):
+    with (
+        patch("ops.uhd_batch_cli._results_dict", return_value=mock_rd),
+        patch("ops.uhd_batch_cli._submitted_dict", return_value=mock_sd),
+    ):
         result = CliRunner().invoke(cli, ["status"])
 
     assert result.exit_code == 0, result.output
@@ -427,8 +474,16 @@ def test_batch_cmd(tmp_path):
 
     assert batch_cmd is not None
 
-    with patch("ops.uhd_batch._batch_modal") as mock_batch:
-        result = CliRunner().invoke(cli, ["batch", "experiments.uhd_batch_preps.prep_uhd_batch_tlunar", "--results-dir", str(tmp_path)])
+    with patch("ops.uhd_batch_cli._batch_modal") as mock_batch:
+        result = CliRunner().invoke(
+            cli,
+            [
+                "batch",
+                "experiments.uhd_batch_preps.prep_uhd_batch_tlunar",
+                "--results-dir",
+                str(tmp_path),
+            ],
+        )
 
     assert result.exit_code == 0, result.output
     assert mock_batch.call_count == 4

@@ -5,9 +5,11 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+
 os.environ.setdefault("MPLCONFIGDIR", "/private/tmp/yubo-matplotlib-cache")
 
 import matplotlib
+
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt

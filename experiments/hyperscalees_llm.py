@@ -24,6 +24,7 @@ from experiments.external_run_utils import (
     write_metadata,
 )
 
+
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 _SCRIPT_MODULES = {
@@ -246,19 +247,30 @@ def tasks() -> None:
         print(task)
 
 
+_TEMPLATE_OPTIONS = [
+    click.option("--task", required=True, help="HyperscaleES LLM bandit task, e.g. basic_arithmetic or zebra_puzzles."),
+    click.option("--model-choice", default="7w1.5B", show_default=True, help="Upstream HyperscaleES model_choice value."),
+    click.option("--script", default="general_do_evolution", show_default=True, help="Upstream script name."),
+    click.option("--noiser", default="eggroll", show_default=True, help="Upstream HyperscaleES noiser."),
+    click.option("--exp-dir", default=None, help="Run directory to write into."),
+    click.option("--repo-dir", default=".external/HyperscaleES", show_default=True, help="HyperscaleES repo path."),
+    click.option("--num-epochs", default=1000, show_default=True, type=int),
+    click.option("--parallel-generations-per-gpu", default=32, show_default=True, type=int),
+    click.option("--generations-per-prompt", default=2, show_default=True, type=int),
+    click.option("--thinking-length", default=100, show_default=True, type=int),
+    click.option("--answer-length", default=100, show_default=True, type=int),
+    click.option("--track/--no-track", default=False, show_default=True),
+]
+
+
+def _template_options(func):
+    for option in reversed(_TEMPLATE_OPTIONS):
+        func = option(func)
+    return func
+
+
 @cli.command(name="template", help="Print a runnable TOML template for any supported HyperscaleES LLM bandit task.")
-@click.option("--task", required=True, help="HyperscaleES LLM bandit task, e.g. basic_arithmetic or zebra_puzzles.")
-@click.option("--model-choice", default="7w1.5B", show_default=True, help="Upstream HyperscaleES model_choice value.")
-@click.option("--script", default="general_do_evolution", show_default=True, help="Upstream script name.")
-@click.option("--noiser", default="eggroll", show_default=True, help="Upstream HyperscaleES noiser.")
-@click.option("--exp-dir", default=None, help="Run directory to write into.")
-@click.option("--repo-dir", default=".external/HyperscaleES", show_default=True, help="HyperscaleES repo path.")
-@click.option("--num-epochs", default=1000, show_default=True, type=int)
-@click.option("--parallel-generations-per-gpu", default=32, show_default=True, type=int)
-@click.option("--generations-per-prompt", default=2, show_default=True, type=int)
-@click.option("--thinking-length", default=100, show_default=True, type=int)
-@click.option("--answer-length", default=100, show_default=True, type=int)
-@click.option("--track/--no-track", default=False, show_default=True)
+@_template_options
 def template(
     task: str,
     model_choice: str,

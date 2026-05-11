@@ -1,4 +1,4 @@
-# Run: python -m experiments.experiment local configs/bo/eggroll/paper/rl/navix_fourrooms_eggroll.toml
+# Run: ./ops/experiment.py local configs/bo/eggroll/paper/rl/navix_fourrooms_eggroll.toml
 # Paper: Table 32, navix/Navix-FourRooms-v0 EGGROLL.
 
 [experiment]

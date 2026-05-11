@@ -1,4 +1,4 @@
-# Run: python -m experiments.experiment local configs/bo/eggroll/paper/qwen/qwen3_4b_deepscaler_rlvr_eggroll.toml
+# Run: ./ops/experiment.py local configs/bo/eggroll/paper/qwen/qwen3_4b_deepscaler_rlvr_eggroll.toml
 # Paper: Appendix L / Table 1 and Table 3, Qwen3-4B-Base RLVR on DeepScaleR.
 # Runtime: uses the EggRoll Qwen external-objective adapter surface.
 
@@ -24,4 +24,4 @@ lr = 0.001
 optax = "adamw"
 noise_reuse = 4
 steps = 1
-eval_episodes = 1
+num_envs = 1

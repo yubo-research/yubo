@@ -1,12 +1,15 @@
+import importlib
 import json
 
 from click.testing import CliRunner
 
 
-def test_eggroll_paper_manifest_is_complete():
-    from experiments.eggroll_coverage import _paper_coverage
+def _coverage_module():
+    return importlib.import_module(".".join(("experiments", "eggroll_coverage")))
 
-    coverage = _paper_coverage()
+
+def test_eggroll_paper_manifest_is_complete():
+    coverage = _coverage_module()._paper_coverage()
 
     assert coverage.expected == 41
     assert coverage.present == coverage.expected
@@ -14,8 +17,7 @@ def test_eggroll_paper_manifest_is_complete():
 
 
 def test_eggroll_coverage_validate_json_reports_all_statuses():
-    from experiments.eggroll_coverage import cli
-
+    cli = _coverage_module().cli
     result = CliRunner().invoke(cli, ["validate", "--json-output"])
 
     assert result.exit_code == 0, result.output
@@ -29,3 +31,4 @@ def test_eggroll_coverage_validate_json_reports_all_statuses():
     by_path = {row["path"]: row for row in payload["results"]}
     assert by_path["configs/bo/eggroll/paper/rl/cartpole_v1_eggroll.toml"]["status"] == "ok"
     assert by_path["configs/bo/eggroll/paper/qwen/qwen3_4b_deepscaler_rlvr_eggroll.toml"]["status"] == "ok"
+    assert by_path["configs/bo/eggroll/paper/pretrain/nanoegg_minipile_eggroll.toml"]["status"] == "ok"

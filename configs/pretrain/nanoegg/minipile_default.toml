@@ -1,4 +1,4 @@
-# Run: python -m experiments.nanoegg_pretrain local configs/pretrain/nanoegg/minipile_default.toml
+# Run: ./ops/nanoegg_pretrain.py local configs/pretrain/nanoegg/minipile_default.toml
 
 [experiment]
 exp_dir = "runs/yubo_nanoegg/minipile_default"

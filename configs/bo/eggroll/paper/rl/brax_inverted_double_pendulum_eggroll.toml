@@ -1,4 +1,4 @@
-# Run: python -m experiments.experiment local configs/bo/eggroll/paper/rl/brax_inverted_double_pendulum_eggroll.toml
+# Run: ./ops/experiment.py local configs/bo/eggroll/paper/rl/brax_inverted_double_pendulum_eggroll.toml
 # Paper: Table 21, brax/inverted_double_pendulum EGGROLL.
 
 [experiment]

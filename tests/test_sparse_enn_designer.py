@@ -26,6 +26,7 @@ class MockPolicy:
 
 def test_sparse_evidence_expected_support_large_dim():
     from enn.turbo.config.trust_region import TurboTRConfig
+
     from optimizer.sparse_enn_designer import SparseEvidenceTrustRegion
 
     tr = SparseEvidenceTrustRegion(TurboTRConfig(), 1_000_000_000, num_pert=20)
@@ -35,6 +36,7 @@ def test_sparse_evidence_expected_support_large_dim():
 
 def test_sparse_evidence_failure_tolerance_uses_support_not_ambient_dim():
     from enn.turbo.config.trust_region import TurboTRConfig
+
     from optimizer.sparse_enn_designer import SparseEvidenceTrustRegion
 
     tr = SparseEvidenceTrustRegion(
@@ -53,6 +55,7 @@ def test_sparse_evidence_failure_tolerance_uses_support_not_ambient_dim():
 
 def test_sparse_evidence_failure_tolerance_batches():
     from enn.turbo.config.trust_region import TurboTRConfig
+
     from optimizer.sparse_enn_designer import SparseEvidenceTrustRegion
 
     tr = SparseEvidenceTrustRegion(
@@ -91,9 +94,7 @@ def test_sparse_enn_registry_create_with_options():
     from optimizer.sparse_enn_designer import SparseENNDesigner
 
     designers = Designers(MockPolicy(num_params=32), num_arms=1)
-    designer = designers.create(
-        "sparse-enn/clock_scale=2.5/num_pert=20/min_failures=4/num_candidates=8/candidate_rv=uniform"
-    )
+    designer = designers.create("sparse-enn/clock_scale=2.5/num_pert=20/min_failures=4/num_candidates=8/candidate_rv=uniform")
 
     assert isinstance(designer, SparseENNDesigner)
     assert designer._clock_scale == 2.5

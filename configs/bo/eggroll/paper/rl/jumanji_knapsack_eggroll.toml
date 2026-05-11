@@ -1,4 +1,4 @@
-# Run: python -m experiments.experiment local configs/bo/eggroll/paper/rl/jumanji_knapsack_eggroll.toml
+# Run: ./ops/experiment.py local configs/bo/eggroll/paper/rl/jumanji_knapsack_eggroll.toml
 # Paper: Table 25, jumanji/Knapsack-v1 EGGROLL.
 
 [experiment]

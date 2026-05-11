@@ -1,4 +1,4 @@
-# Run: python -m experiments.experiment local configs/bo/eggroll/paper/rl/brax_ant_eggroll.toml
+# Run: ./ops/experiment.py local configs/bo/eggroll/paper/rl/brax_ant_eggroll.toml
 # Paper: Table 19, brax/ant EGGROLL.
 
 [experiment]

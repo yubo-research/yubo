@@ -38,15 +38,11 @@ def _count_perturbed_leaves(module, sp, seed, sigma=0.1):
 
 
 def test_perturb_unperturb_roundtrip():
+    from tests.perturb_named_roundtrip import assert_named_param_perturb_roundtrip
+
     module = _make_module()
     sp = SubmodulePerturbator(module, num_module_target=2)
-    orig = {n: p.data.clone() for n, p in module.named_parameters()}
-
-    sp.perturb(seed=42, sigma=0.1)
-    sp.unperturb()
-
-    for n, p in module.named_parameters():
-        assert torch.allclose(p.data, orig[n], atol=1e-6)
+    assert_named_param_perturb_roundtrip(sp, module)
 
 
 def test_perturbation_is_submodule_sparse():
@@ -131,3 +127,12 @@ def test_fraction_target():
     total = sum(_count_perturbed_leaves(module, sp, seed=s) for s in range(50))
     avg = total / 50
     assert 1.0 < avg < 3.5
+
+
+def test_no_leaf_modules_does_not_divide_by_zero_and_round_trips():
+    """nn.Module with no direct parameters → no leaf modules; must not crash in __init__ or perturb."""
+    module = nn.Module()
+    sp = SubmodulePerturbator(module, num_module_target=2)
+    assert sp._leaf_modules == []
+    sp.perturb(seed=0, sigma=0.1)
+    sp.unperturb()

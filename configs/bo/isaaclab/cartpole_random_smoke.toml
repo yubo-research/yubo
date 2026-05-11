@@ -1,0 +1,16 @@
+# Run on the CUDA remote:
+# ./ops/experiment.py local configs/bo/isaaclab/cartpole_random_smoke.toml
+
+[experiment]
+exp_dir = "runs/isaaclab/smoke/cartpole_random"
+env_tag = "isaaclab:Isaac-Cartpole-v0"
+policy_tag = "isaaclab-random-mlp-64-64"
+opt_name = "random"
+num_arms = 1
+num_rounds = 1
+num_reps = 1
+num_denoise = 1
+num_denoise_passive = 1
+b_trace = true
+runtime_device = "cuda"
+local_workers = 1

@@ -18,7 +18,7 @@ perturb = "dense"
 log_interval = 1
 
 steps_per_episode = 1
-eval_episodes = 2
+num_envs = 2
 deterministic_policy = false
 problem_seed = 0
 noise_seed_0 = 0

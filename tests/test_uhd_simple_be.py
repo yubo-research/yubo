@@ -105,12 +105,10 @@ def test_after_warmup_seeds_advance_by_num_candidates():
 
 
 def test_runs_many_steps():
+    from tests.uhd_linear_embed_parts import run_many_random_ask_tell
+
     module, uhd = _make_uhd_be(warmup=5, num_candidates=3, fit_interval=2)
-    for _ in range(20):
-        uhd.ask()
-        mu = float(torch.randn(1).item())
-        uhd.tell(mu, 0.0)
-    assert torch.isfinite(module.weight.data).all()
+    run_many_random_ask_tell(uhd, module, n=20)
 
 
 def test_sample_sigmas_log_uniform():

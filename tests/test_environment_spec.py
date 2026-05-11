@@ -112,10 +112,10 @@ def test_get_environment_spec_unknown_returns_direct():
 
 
 def test_get_environment_spec_pretrain_eggroll_tag():
-    from problems.pre_obj import resolve_hyperscalees_pretrain_spec
-    from problems.uhd_obj import supports_uhd_vector_objective
     from problems.eggroll_env_adapters import supports_eggroll_env
     from problems.environment_spec import get_environment_spec
+    from problems.pre_obj import resolve_hyperscalees_pretrain_spec
+    from problems.uhd_obj import supports_uhd_vector_objective
 
     env_tag = "pretrain:hyperscalees:gsm8k-7w3b"
     spec = get_environment_spec(env_tag)
@@ -143,7 +143,7 @@ def test_pretrain_uhd_objective_tags_do_not_materialize_envs():
 
     from problems.environment_spec import get_environment_spec, materialize_env
 
-    runtime = materialize_env(get_environment_spec("pretrain:nanoegg:minipile-int8-6l256d"))
+    runtime = materialize_env(get_environment_spec("pretrain:nanoegg:minipile"))
 
     with pytest.raises(RuntimeError, match="evaluated by ops.exp_uhd"):
         runtime.make()

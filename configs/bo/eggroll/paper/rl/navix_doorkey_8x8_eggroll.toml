@@ -1,4 +1,4 @@
-# Run: python -m experiments.experiment local configs/bo/eggroll/paper/rl/navix_doorkey_8x8_eggroll.toml
+# Run: ./ops/experiment.py local configs/bo/eggroll/paper/rl/navix_doorkey_8x8_eggroll.toml
 # Paper: Table 30, navix/Navix-DoorKey-8x8-v0 EGGROLL.
 
 [experiment]

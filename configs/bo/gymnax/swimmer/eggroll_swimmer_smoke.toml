@@ -1,4 +1,4 @@
-# Run: python -m experiments.experiment local configs/bo/gymnax/swimmer/eggroll_swimmer_smoke.toml
+# Run: ./ops/experiment.py local configs/bo/gymnax/swimmer/eggroll_swimmer_smoke.toml
 
 [experiment]
 exp_dir = "runs/yubo_eggroll/swimmer_smoke"
@@ -20,6 +20,6 @@ sigma = 0.05
 rank = 8
 lr = 0.02
 steps = 10
-eval_episodes = 2
+num_envs = 2
 optax = "adamw"
 use_batched_update = true

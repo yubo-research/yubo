@@ -1,4 +1,4 @@
-# Run: python -m experiments.experiment local configs/bo/eggroll/paper/rl/kinetix_thrustcontrol_left_eggroll.toml
+# Run: ./ops/experiment.py local configs/bo/eggroll/paper/rl/kinetix_thrustcontrol_left_eggroll.toml
 # Paper: Table 28, kinetix/m/h17_thrustcontrol_left EGGROLL.
 
 [experiment]

@@ -6,34 +6,31 @@ separate from policy concerns.
 
 import copy
 from dataclasses import asdict, dataclass, is_dataclass
-from typing import Any, Callable
+from typing import Any
 
 import gymnasium as gym
 
+from problems import env_conf_bindings
 from problems.eggroll_env_adapters import EGGROLL_ADAPTER_ENV_PREFIXES, EGGROLL_ENV_PREFIXES
+from problems.env_conf_parse import parse_tag_options
+from problems.isaaclab_env_adapters import (
+    DEFAULT_ISAACLAB_MAX_STEPS,
+    is_isaaclab_env_tag,
+    make_isaaclab_env,
+    resolve_isaaclab_env_spaces,
+)
 
+
+def _get_atari_dm_bindings():
+    return env_conf_bindings.get_atari_dm_bindings()
+
+
+register_atari_dm_bindings_loader = env_conf_bindings.register_atari_dm_bindings_loader
 
 _DM_CONTROL_DEFAULT_MAX_STEPS = 1000
 _ATARI_DEFAULT_MAX_STEPS = 108000
 _PURE_FUNCTION_MAX_STEPS = 1
 _DEFAULT_MAX_STEPS = 99999
-
-_ATARI_DM_BINDINGS = None
-_ATARI_DM_BINDINGS_LOADER: Callable[[], Any] | None = None
-
-
-def register_atari_dm_bindings_loader(loader: Callable[[], Any]) -> None:
-    global _ATARI_DM_BINDINGS_LOADER
-    _ATARI_DM_BINDINGS_LOADER = loader
-
-
-def _get_atari_dm_bindings():
-    global _ATARI_DM_BINDINGS
-    if _ATARI_DM_BINDINGS is None:
-        if _ATARI_DM_BINDINGS_LOADER is None:
-            raise RuntimeError("Atari/DM bindings are not registered. Call problems.env_conf_backends.register_with_env_conf() before using Atari/DM env tags.")
-        _ATARI_DM_BINDINGS = _ATARI_DM_BINDINGS_LOADER()
-    return _ATARI_DM_BINDINGS
 
 
 def needs_atari_dm_bindings(env_tag: str) -> bool:
@@ -49,22 +46,6 @@ def needs_atari_dm_bindings(env_tag: str) -> bool:
         spec = _gym_env_specs[tag]
         return str(getattr(spec, "env_name", "")).startswith(("dm_control/", "ALE/"))
     return False
-
-
-def parse_tag_options(tag, from_pixels):
-    """Parse shared options from tag. Returns (tag, frozen_noise, from_pixels)."""
-    frozen_noise = False
-    while ":" in tag:
-        x = tag.split(":")
-        opt = x[-1]
-        if opt == "fn":
-            frozen_noise = True
-        elif opt == "pixels":
-            from_pixels = True if from_pixels is None else from_pixels
-        else:
-            break
-        tag = ":".join(x[:-1])
-    return tag, frozen_noise, from_pixels
 
 
 @dataclass
@@ -131,14 +112,10 @@ class EnvironmentRuntime:
         spec = self.spec
         env_name = spec.env_name
 
-        if env_name[:2] == "f:":
+        if env_name[:2] in ("f:", "g:"):
             _ns: dict = {}
             exec("import problems.pure_functions as pf", _ns)  # noqa: S102
-            env = _ns["pf"].make(env_name, problem_seed=self.problem_seed, distort=True)
-        elif env_name[:2] == "g:":
-            _ns: dict = {}
-            exec("import problems.pure_functions as pf", _ns)  # noqa: S102
-            env = _ns["pf"].make(env_name, problem_seed=self.problem_seed, distort=False)
+            env = _ns["pf"].make(env_name, problem_seed=self.problem_seed, distort=env_name[:2] == "f:")
         elif env_name.startswith("dm_control/"):
             make_dm_control_env = _get_atari_dm_bindings().make_dm_control_env
             env = make_dm_control_env(
@@ -168,10 +145,10 @@ class EnvironmentRuntime:
                 max_episode_steps=int(max_steps),
                 preprocess=preprocess,
             )
-        elif _is_pretrain_uhd_objective(env_name):
-            raise RuntimeError("Pretraining UHD objective tags are evaluated by ops.exp_uhd, not by env.make().")
-        elif env_name.startswith(EGGROLL_ENV_PREFIXES):
-            raise RuntimeError("JAX environments are evaluated by JAX-backed designers such as 'eggroll', not by env.make().")
+        elif (unsupported_msg := _unsupported_make_message(env_name)) is not None:
+            raise RuntimeError(unsupported_msg)
+        elif is_isaaclab_env_tag(env_name):
+            env = make_isaaclab_env(env_name, **(kwargs | spec.kwargs))
         elif spec.gym_conf is not None:
             env = gym.make(env_name, **(kwargs | spec.kwargs))
         else:
@@ -212,6 +189,11 @@ class EnvironmentRuntime:
             self.state_space = spaces.observation_space
             self.action_space = spaces.action_space
             return
+        if is_isaaclab_env_tag(spec.env_name):
+            self.state_space, self.action_space = resolve_isaaclab_env_spaces(spec.env_name)
+            if spec.gym_conf is not None:
+                spec.gym_conf.state_space = self.state_space
+            return
         if spec.gym_conf is not None and spec.gym_conf.state_space is not None and self.action_space is not None:
             self.state_space = spec.gym_conf.state_space
             return
@@ -227,6 +209,14 @@ def _is_pretrain_uhd_objective(env_name: str) -> bool:
     from problems.pre_obj import is_hyperscalees_pretrain_env, is_nanoegg_pretrain_env
 
     return is_hyperscalees_pretrain_env(env_name) or is_nanoegg_pretrain_env(env_name)
+
+
+def _unsupported_make_message(env_name: str) -> str | None:
+    if _is_pretrain_uhd_objective(env_name):
+        return "Pretraining UHD objective tags are evaluated by ops.exp_uhd, not by env.make()."
+    if env_name.startswith(EGGROLL_ENV_PREFIXES):
+        return "JAX environments are evaluated by JAX-backed designers such as 'eggroll', not by env.make()."
+    return None
 
 
 def _gym_spec(
@@ -256,6 +246,13 @@ def get_environment_spec(env_tag: str) -> EnvironmentSpec:
 
     if tag.startswith(EGGROLL_ENV_PREFIXES):
         return EnvironmentSpec(tag, max_steps=_DEFAULT_MAX_STEPS)
+
+    if is_isaaclab_env_tag(tag):
+        return EnvironmentSpec(
+            tag,
+            gym_conf=GymConf(max_steps=DEFAULT_ISAACLAB_MAX_STEPS, num_frames_skip=1, transform_state=False),
+            max_steps=DEFAULT_ISAACLAB_MAX_STEPS,
+        )
 
     pix_only = True
     if tag.startswith("dm:") or tag.startswith("dm_control/"):

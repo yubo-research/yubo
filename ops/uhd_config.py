@@ -30,7 +30,7 @@ class UHDConfig:
     bszo_alpha: float
     sigma: float = 0.001
     steps_per_episode: int = 200
-    eval_episodes: int = 1
+    num_envs: int = 1
     deterministic_policy: bool = False
     seed_offset: int = 0
     num_reps: int = 1

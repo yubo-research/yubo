@@ -25,15 +25,8 @@ class VecchiaDesigner(Designer):
     def _ensure_pyvecch(self):
         if self._pyvecch_ready is not None:
             return self._pyvecch_ready
-        # On macOS, pyvecch's faiss dependency is prone to OpenMP/runtime issues
-        # and even segfaults in some environments. Default to a safe fallback
-        # unless explicitly opted in.
-        if sys.platform == "darwin" and os.environ.get("YUBO_ALLOW_PYVECCH_ON_DARWIN") not in {"1", "true", "TRUE"}:
-            self._pyvecch_ready = False
-            return self._pyvecch_ready
         try:
             # macOS + faiss can load multiple OpenMP runtimes (libomp) and abort.
-            # Setting this env var is the standard workaround so tests can run.
             if sys.platform == "darwin":
                 os.environ.setdefault("KMP_DUPLICATE_LIB_OK", "TRUE")
             import pyvecch  # noqa: F401
@@ -66,6 +59,9 @@ class VecchiaDesigner(Designer):
         mean_module = ZeroMean()
         likelihood = GaussianLikelihood(noise_constraint=Interval(1e-8, 1e-3))
 
+        # Neighbor count from VecchiaBO TuRBO+pyvecch example: ``m = int(7.2 * np.log10(n)**2)``.
+        # https://github.com/feji3769/VecchiaBO/blob/master/notebooks/bo_loop.ipynb
+        # ``max(2, …)`` / ``max(1, …)`` avoid degenerate ``log10`` / zero neighbors for tiny ``n``.
         m = max(1, int(7.2 * np.log10(max(2, len(X))) ** 2))
         neighbor_oracle = ExactOracle(X, z, m)
         prediction_strategy = IndependentRF()
@@ -81,13 +77,16 @@ class VecchiaDesigner(Designer):
         )
 
         train_batch_size = int(np.minimum(len(X), 128))
-        fit_model(
-            model,
-            train_batch_size=train_batch_size,
-            n_window=50,
-            maxiter=100,
-            rel_tol=5e-3,
-        )
+        try:
+            fit_model(
+                model,
+                train_batch_size=train_batch_size,
+                n_window=50,
+                maxiter=100,
+                rel_tol=5e-3,
+            )
+        except Exception:
+            return None
         model.update_transform()
         model.eval()
         model.likelihood.eval()
@@ -95,17 +94,20 @@ class VecchiaDesigner(Designer):
 
     def _select_candidates(self, model, X_cand, num_arms):
         assert model is not None
-        with torch.no_grad():
-            posterior = model.posterior(X_cand)
-            mu = posterior.mean
+        try:
+            with torch.no_grad():
+                posterior = model.posterior(X_cand)
+                mu = posterior.mean
 
-            while mu.dim() > 1:
-                mu = mu.mean(dim=0)
+                while mu.dim() > 1:
+                    mu = mu.mean(dim=0)
 
-            mu = mu.reshape(-1)
-            k = min(num_arms, mu.shape[0])
-            topk = torch.topk(mu, k=k, largest=True).indices
-            X_next = X_cand[topk]
+                mu = mu.reshape(-1)
+                k = min(num_arms, mu.shape[0])
+                topk = torch.topk(mu, k=k, largest=True).indices
+                X_next = X_cand[topk]
+        except Exception:
+            return X_cand[:num_arms]
 
         if X_next.shape[-2] < num_arms:
             need = num_arms - X_next.shape[-2]

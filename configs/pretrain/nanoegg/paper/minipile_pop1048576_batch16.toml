@@ -1,4 +1,4 @@
-# Run: python -m experiments.nanoegg_pretrain local configs/pretrain/nanoegg/paper/minipile_pop1048576_batch16.toml
+# Run: ./ops/nanoegg_pretrain.py local configs/pretrain/nanoegg/paper/minipile_pop1048576_batch16.toml
 # Paper: Figure 2b / Section 6.1, MiniPile int8 EGG 6L-256D population scaling.
 
 [experiment]

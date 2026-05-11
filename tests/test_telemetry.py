@@ -1,22 +1,13 @@
-from common.telemetry import Telemetry
+from tests.test_util import assert_telemetry_format_all_na, assert_telemetry_format_fit_select_values, assert_telemetry_reset_clears_dt_fields
 
 
 def test_telemetry_format():
-    t = Telemetry()
-    t.set_dt_fit(1.234)
-    t.set_dt_select(5.6789)
-    assert t.format() == "fit_dt = 1.234 select_dt = 5.679"
+    assert_telemetry_format_fit_select_values()
 
 
 def test_telemetry_format_unset():
-    t = Telemetry()
-    assert t.format() == "fit_dt = N/A select_dt = N/A"
+    assert_telemetry_format_all_na()
 
 
 def test_telemetry_reset():
-    t = Telemetry()
-    t.set_dt_fit(1.0)
-    t.set_dt_select(2.0)
-    t.reset()
-    assert t._dt_fit is None
-    assert t._dt_select is None
+    assert_telemetry_reset_clears_dt_fields()

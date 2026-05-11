@@ -1,12 +1,10 @@
 from __future__ import annotations
 
+from problems.env_conf_backends import maybe_register_atari_dm_backends
+
 
 def _maybe_register_atari_dm_backends(env_tag: str) -> None:
-    if not str(env_tag).startswith(("atari:", "ALE/", "dm:", "dm_control/")):
-        return
-    _ns: dict = {}
-    exec("from problems.env_conf_backends import register_with_env_conf", _ns)  # noqa: S102
-    _ns["register_with_env_conf"]()
+    maybe_register_atari_dm_backends(str(env_tag))
 
 
 def _env_tag_for_problem_build(env_tag: str, *, from_pixels: bool) -> str:
@@ -33,7 +31,7 @@ def to_puffer_game_name(env_tag: str) -> str:
 def resolve_gym_env_name(env_tag: str) -> tuple[str, dict]:
     from problems.problem import build_problem
 
-    _maybe_register_atari_dm_backends(str(env_tag))
+    maybe_register_atari_dm_backends(str(env_tag))
     # policy_tag="linear" is a placeholder; only problem.env is used (policy is never built)
     problem = build_problem(str(env_tag), policy_tag="linear")
     env = problem.env

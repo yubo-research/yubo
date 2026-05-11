@@ -1,4 +1,4 @@
-# Run: python -m experiments.experiment local configs/bo/eggroll/paper/rl/craftax_classic_symbolic_eggroll.toml
+# Run: ./ops/experiment.py local configs/bo/eggroll/paper/rl/craftax_classic_symbolic_eggroll.toml
 # Paper: Table 22, craftax/Craftax-Classic-Symbolic-AutoReset-v1 EGGROLL.
 
 [experiment]

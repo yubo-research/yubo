@@ -1,4 +1,4 @@
-# Run: python -m experiments.experiment local configs/bo/eggroll/paper/rl/pendulum_v1_eggroll.toml
+# Run: ./ops/experiment.py local configs/bo/eggroll/paper/rl/pendulum_v1_eggroll.toml
 # Paper: Table 18, Pendulum-v1 EGGROLL.
 
 [experiment]
@@ -22,5 +22,5 @@ rank = 4
 lr = 0.01
 optax = "adam"
 steps = 200
-eval_episodes = 8
+num_envs = 8
 use_batched_update = true

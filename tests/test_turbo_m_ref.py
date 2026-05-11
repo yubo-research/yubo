@@ -1,10 +1,90 @@
 import numpy as np
+import pytest
+
+
+def test_validate_init_args_rejects_nonintegral_max_cholesky_size():
+    """max_cholesky_size must be integral; a float must not slip through."""
+    from turbo_m_ref.turbo_1_core import validate_init_args
+
+    lb = np.array([0.0])
+    ub = np.array([1.0])
+    with pytest.raises(AssertionError):
+        validate_init_args(
+            lb,
+            ub,
+            n_init=2,
+            max_evals=10,
+            batch_size=1,
+            verbose=True,
+            use_ard=True,
+            max_cholesky_size=2000.5,
+            n_training_steps=50,
+            dtype="float64",
+        )
+
+
+def test_validate_init_args_accepts_numpy_integer_max_cholesky_size():
+    from turbo_m_ref.turbo_1_core import validate_init_args
+
+    lb = np.array([0.0])
+    ub = np.array([1.0])
+    validate_init_args(
+        lb,
+        ub,
+        n_init=2,
+        max_evals=10,
+        batch_size=1,
+        verbose=True,
+        use_ard=True,
+        max_cholesky_size=np.int64(2000),
+        n_training_steps=50,
+        dtype="float64",
+    )
+
+
+def test_ask_tell_validate_init_args_rejects_nonintegral_max_cholesky_size():
+    from turbo_m_ref.turbo_1_ask_tell_core import validate_init_args
+
+    lb = np.array([0.0])
+    ub = np.array([1.0])
+    with pytest.raises(AssertionError):
+        validate_init_args(
+            lb,
+            ub,
+            n_init=2,
+            batch_size=1,
+            verbose=True,
+            use_ard=True,
+            max_cholesky_size=2000.5,
+            n_training_steps=50,
+            device="cpu",
+            dtype="float64",
+        )
+
+
+def test_ask_tell_validate_init_args_accepts_numpy_integer_max_cholesky_size():
+    from turbo_m_ref.turbo_1_ask_tell_core import validate_init_args
+
+    lb = np.array([0.0])
+    ub = np.array([1.0])
+    validate_init_args(
+        lb,
+        ub,
+        n_init=2,
+        batch_size=1,
+        verbose=True,
+        use_ard=True,
+        max_cholesky_size=np.int64(2000),
+        n_training_steps=50,
+        device="cpu",
+        dtype="float64",
+    )
 
 
 def test_arms_from_pareto_fronts():
     from types import SimpleNamespace
 
-    from turbo_m_ref.turbo_1 import arms_from_pareto_fronts
+    from turbo_m_ref.turbo_1_candidates import arms_from_pareto_fronts
 
     x_cand = np.array([[0.1, 0.1], [0.5, 0.5], [0.9, 0.9], [0.3, 0.3]])
     mvn = SimpleNamespace(

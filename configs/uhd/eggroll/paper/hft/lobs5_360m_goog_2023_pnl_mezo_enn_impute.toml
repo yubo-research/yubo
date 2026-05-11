@@ -1,5 +1,5 @@
 # Run:
-# python -m ops.exp_uhd local configs/uhd/eggroll/paper/hft/lobs5_360m_goog_2023_pnl_mezo_enn_impute.toml
+# ./ops/exp_uhd.py local configs/uhd/eggroll/paper/hft/lobs5_360m_goog_2023_pnl_mezo_enn_impute.toml
 #
 # UHD MeZO + ENN minus-imputation companion to:
 # configs/bo/eggroll/paper/hft/lobs5_360m_goog_2023_pnl_eggroll.toml
@@ -14,7 +14,7 @@ lr = 0.001
 sigma = 0.01
 perturb = "dense"
 steps_per_episode = 1
-eval_episodes = 1
+num_envs = 1
 deterministic_policy = false
 problem_seed = 0
 noise_seed_0 = 0

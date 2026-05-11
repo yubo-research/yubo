@@ -11,10 +11,20 @@ def init_run_artifacts(*, exp_dir: str, config_dict: dict[str, Any]) -> tuple[Pa
     exp_path = Path(exp_dir)
     exp_path.mkdir(parents=True, exist_ok=True)
     write_config(str(exp_path), config_dict)
-    return (exp_path, exp_path / "metrics.jsonl", checkpoint_manager_cls(exp_dir=exp_path))
+    return (
+        exp_path,
+        exp_path / "metrics.jsonl",
+        checkpoint_manager_cls(exp_dir=exp_path),
+    )
 
 
-def init_runtime(config: Any, *, build_env_setup_fn: Callable[[Any], Any], seed_everything_fn: Callable[[int], None], resolve_device_fn: Callable[[str], Any]):
+def init_runtime(
+    config: Any,
+    *,
+    build_env_setup_fn: Callable[[Any], Any],
+    seed_everything_fn: Callable[[int], None],
+    resolve_device_fn: Callable[[str], Any],
+):
     global_seed_for_run = importlib.import_module("rl.core.env_conf").global_seed_for_run
     env_setup = build_env_setup_fn(config)
     run_seed = global_seed_for_run(int(env_setup.problem_seed))

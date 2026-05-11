@@ -176,8 +176,8 @@ def test_llm_eggroll_lora_specs_repeat_per_prompt():
 
 
 def test_ops_llm_dispatches_eggroll_runtime(tmp_path, monkeypatch):
-    from experiments.llm import cli
     import llm.eggroll as eggroll
+    from experiments.llm import cli
 
     config = tmp_path / "llm.toml"
     config.write_text(

@@ -24,8 +24,16 @@ def _patch_step_mdp_grab_and_place():
                 if isinstance(val, LazyStackedTensorDict):
                     val = LazyStackedTensorDict.lazy_stack(
                         [
-                            cls._grab_and_place(subdict, _val, _val_out, _allow_absent_keys=_allow_absent_keys)
-                            for _val, _val_out in zip(val.unbind(val.stack_dim), val_out.unbind(val_out.stack_dim))
+                            cls._grab_and_place(
+                                subdict,
+                                _val,
+                                _val_out,
+                                _allow_absent_keys=_allow_absent_keys,
+                            )
+                            for _val, _val_out in zip(
+                                val.unbind(val.stack_dim),
+                                val_out.unbind(val_out.stack_dim),
+                            )
                         ],
                         dim=val.stack_dim,
                     )

@@ -44,7 +44,7 @@ Interpretation:
 | Owned LLM config surface | Initial port | `ops/llm.py`, `experiments/llm.py`, `llm/registry.py`, `llm/tasks.py`, `configs/llm/gsm8k_qwen3_1p7b_eggroll_smoke.toml` |
 | UHD text objective | Runtime-gated | `problems/text_obj.py`, `llm/engine_pool.py`, `configs/uhd/text/gsm8k_qwen3_1p7b_mezo.toml` |
 | Upstream LLM TOML wrapper | Legacy source-checkout path | `experiments/hyperscalees_llm.py`, `configs/pretrain/hyperscalees/*.toml`; requires an explicit HyperscaleES source checkout because upstream `llm_experiments` is not packaged |
-| nano-egg TOML wrapper | Legacy source-checkout path | `experiments/nanoegg_pretrain.py`, `configs/pretrain/nanoegg/*.toml`; requires an explicit `nano-egg` source checkout |
+| nano-egg TOML wrapper | Legacy source-checkout path | `./ops/nanoegg_pretrain.py`, `experiments/nanoegg_pretrain.py`, `configs/pretrain/nanoegg/*.toml`; requires an explicit `nano-egg` source checkout |
 | EggRoll config validation | Supported | `python -m experiments.eggroll_coverage validate` |
 | Gymnax EggRoll smoke | Supported | `optimizer/eggroll_designer.py`, `policies/eggroll_policy.py`, `configs/bo/gymnax/swimmer/eggroll_swimmer_smoke.toml` |
 | Full EggRoll paper coverage | Config-covered, launch-checked | Paper-intent TOMLs exist; adapter-backed families validate through `experiments.eggroll_coverage` |
@@ -54,8 +54,8 @@ Interpretation:
 | Experiment family | Paper surface | Best Yubo route | Status | Work needed |
 | --- | --- | --- | --- | --- |
 | Speed microbenchmark | Linear model, large dimension, bf16, EggRoll vs PPO/OpenES throughput | `env_tag = "synthetic:linear-speed"` plus EggRoll objective adapter | Adapter wired | Replace surrogate scoring with exact paper throughput measurement if needed |
-| Integer LM pretraining | nano-egg int8 EGG on MiniPile | Real NanoEgg UHD objective via `pretrain:nanoegg:*`; legacy source-script configs remain for reference | UHD route added, runtime-gated | Install a `nanoegg.uhd` module exposing `build_uhd_objective` |
-| Integer pretraining ablations | Population size and data batch size sweeps | Same Yubo-owned `intlm` runner | Reference configs added | Port paper batch-16 population grid under the owned runner |
+| Integer LM pretraining | nano-egg-style int8 EGG on MiniPile | Standard `[experiment]` EggRoll route plus source-script runner for exact NanoEgg paper runs; Yubo-owned JAX NanoEgg UHD objective with task in `env_tag` and model in `policy_tag` for UHD variants | EggRoll route, source runner, and UHD route added | Add parity harness against the reference script |
+| Integer pretraining ablations | Population size and data batch size sweeps | Same Yubo-owned NanoEgg UHD objective | Reference configs added | Port paper batch-16 population grid under the owned runner |
 | RWKV LLM evolution | Countdown/GSM8K/math with `general_do_evolution` | Package-backed UHD LLM objective for clean runs; optional source-script wrapper for exact upstream script runs | Config added, asset gated | Live `7w*` substitutes and exact `7g*` asset-blocked configs exist |
 | RWKV GRPO baseline | `do_grpo`, `do_grpo_multi_gpu` | Optional source-script wrapper | Config added, asset gated | Live `7w*` substitutes and exact `7g*` asset-blocked configs exist |
 | RWKV SFT/evolution | `sft_evolution` | Optional source-script wrapper | Partial | Smoke config exists; add real configs |
@@ -172,7 +172,7 @@ Important known issue:
 ## Execution Priority
 
 1. Harden the package-backed HyperscaleES UHD objective for real runs.
-2. Port nano-egg MiniPile behavior into a Yubo-owned integer-LM runner.
+2. Add parity checks for NanoEgg MiniPile behavior against the reference script.
 3. Split current Gymnax EggRoll path into reusable env adapter boundaries.
 4. Add RL env families in this order: Brax, Jumanji, Navix, Craftax, Kinetix.
 5. Add JaxMARL multi-agent coverage.

@@ -1,4 +1,4 @@
-# Run: python -m experiments.experiment local configs/bo/eggroll/paper/hft/lobs5_360m_goog_2023_pnl_eggroll.toml
+# Run: ./ops/experiment.py local configs/bo/eggroll/paper/hft/lobs5_360m_goog_2023_pnl_eggroll.toml
 # Paper: Appendix M / Table 4, LOBS5-360M high-frequency trading PnL fine-tuning.
 # Runtime: uses the EggRoll Jax-LOB external-objective adapter surface.
 
@@ -23,5 +23,5 @@ rank = 4
 lr = 0.001
 optax = "adamw"
 steps = 1
-eval_episodes = 1
+num_envs = 1
 use_batched_update = true

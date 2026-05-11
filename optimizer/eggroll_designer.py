@@ -1,17 +1,17 @@
 from __future__ import annotations
 
-import time
-from contextlib import nullcontext, redirect_stdout
-from dataclasses import dataclass
-from io import StringIO
 from typing import Any
 
 import numpy as np
 
-from optimizer.datum import Datum
+import optimizer.eggroll_designer_iter as jax_iter_helpers
+import optimizer.eggroll_designer_jit as jit_helpers
+import optimizer.eggroll_designer_nanoegg as nanoegg_helpers
 from optimizer.designer_errors import NoSuchDesignerError
+from optimizer.eggroll_designer_config import _EggRollDesignerConfig
+from optimizer.eggroll_designer_types import _EggRollStack, _NoiserBundle, _SeedState
+from optimizer.eggroll_runtime import as_bool as _runtime_as_bool
 from optimizer.optimizer_types import IterateResult
-from optimizer.trajectory import Trajectory
 
 
 def _require_stack():
@@ -26,19 +26,11 @@ def _require_stack():
             "EggRollDesigner requires the separate HyperscaleES environment. "
             "Run admin/setup-hyperscalees.sh first, then use the plain python CLI from that environment."
         ) from exc
-    return jax, jnp, optax, simple_es_tree_key, all_noisers
+    return _EggRollStack(jax=jax, jnp=jnp, optax=optax, simple_es_tree_key=simple_es_tree_key, all_noisers=all_noisers)
 
 
 def _as_bool(value: Any, *, name: str) -> bool:
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, str):
-        lower = value.strip().lower()
-        if lower in {"true", "t", "1", "yes"}:
-            return True
-        if lower in {"false", "f", "0", "no"}:
-            return False
-    raise NoSuchDesignerError(f"EggRoll option '{name}' must be a bool.")
+    return _runtime_as_bool(value, name=name, error_cls=NoSuchDesignerError, option_label="EggRoll option")
 
 
 def _as_unit_decay(value: Any, *, name: str) -> float:
@@ -46,30 +38,6 @@ def _as_unit_decay(value: Any, *, name: str) -> float:
     if parsed <= 0.0 or parsed > 1.0:
         raise NoSuchDesignerError(f"EggRoll option '{name}' must be in the interval (0, 1].")
     return parsed
-
-
-@dataclass(frozen=True)
-class _EggRollDesignerConfig:
-    noiser: str = "eggroll"
-    sigma: float = 0.05
-    lr: float = 0.02
-    lr_decay: float = 1.0
-    sigma_decay: float = 1.0
-    rank: int = 8
-    rank_transform: bool = False
-    deterministic_policy: bool = False
-    steps: int = 200
-    eval_episodes: int = 8
-    optax: str = "adamw"
-    b1: float = 0.9
-    b2: float = 0.999
-    weight_decay: float = 0.0
-    group_size: int = 0
-    freeze_nonlora: bool = False
-    noise_reuse: int = 0
-    use_batched_update: bool = True
-    suppress_noiser_stdout: bool = True
-    seed_offset: int = 0
 
 
 def _designer_config(options: dict[str, Any]) -> _EggRollDesignerConfig:
@@ -113,6 +81,57 @@ def _solver_kwargs(name: str, *, b1: float, b2: float, weight_decay: float) -> d
     return kwargs
 
 
+def _scheduled_lr(jnp, lr: float, lr_decay: float):
+    return _learning_rate_schedule(jnp, base_lr=lr, lr_decay=lr_decay) if lr_decay != 1.0 else lr
+
+
+def _seed_state(jax, policy, seed_offset: int) -> _SeedState:
+    seed = (0 if getattr(policy, "problem_seed", None) is None else int(policy.problem_seed)) + int(seed_offset)
+    key = jax.random.key(seed & 0xFFFFFFFF)
+    return _SeedState(
+        es_key=jax.random.fold_in(key, 1),
+        train_key=jax.random.fold_in(key, 2),
+        eval_key=jax.random.fold_in(key, 3),
+    )
+
+
+def _validate_positive_jax_options(sigma: float, lr: float, steps: int, num_envs: int, rank: int) -> None:
+    if sigma <= 0.0:
+        raise NoSuchDesignerError("EggRoll option 'sigma' must be > 0.")
+    if lr <= 0.0:
+        raise NoSuchDesignerError("EggRoll option 'lr' must be > 0.")
+    if steps < 1:
+        raise NoSuchDesignerError("EggRoll option 'steps' must be >= 1.")
+    if num_envs < 1:
+        raise NoSuchDesignerError("EggRoll option 'num_envs' must be >= 1.")
+    if rank < 1:
+        raise NoSuchDesignerError("EggRoll option 'rank' must be >= 1.")
+
+
+def _load_nanoegg_optax():
+    try:
+        import optax as optax_mod
+    except ImportError as exc:
+        raise ImportError("NanoEgg EggRoll requires optax. Run admin/setup-hyperscalees.sh first.") from exc
+    return optax_mod
+
+
+def _validate_nanoegg_options(designer, cfg: _EggRollDesignerConfig) -> None:
+    _validate_positive_jax_options(
+        designer._sigma,
+        float(cfg.lr),
+        designer._steps_per_episode,
+        designer._num_envs,
+        designer._rank,
+    )
+    if designer._nanoegg_batch_size < 1:
+        raise NoSuchDesignerError("NanoEgg EggRoll option 'batch_size' must be >= 1.")
+    if int(cfg.search_dim) < 1:
+        raise NoSuchDesignerError("NanoEgg EggRoll option 'search_dim' must be >= 1.")
+    if float(cfg.delta_scale) <= 0.0:
+        raise NoSuchDesignerError("NanoEgg EggRoll option 'delta_scale' must be > 0.")
+
+
 class EggRollDesigner:
     """JAX HyperscaleES optimizer integrated into the experiment runner."""
 
@@ -123,61 +142,71 @@ class EggRollDesigner:
         **options,
     ) -> None:
         cfg = _designer_config(options)
+        if bool(getattr(policy, "is_nanoegg_pretrain_policy", False)):
+            self._init_nanoegg(policy, cfg)
+            return
+        self._init_jax(policy, env_conf, cfg)
+
+    def _init_jax(self, policy, env_conf, cfg: _EggRollDesignerConfig) -> None:
         if not hasattr(policy, "model_cls") or not hasattr(policy, "params"):
             raise NoSuchDesignerError("Designer 'eggroll' requires an EggRoll policy tag, e.g. policy_tag='eggroll-ac-mlp-64x2-silu'.")
         if env_conf is None:
             raise NoSuchDesignerError("Designer 'eggroll' requires env_conf.")
         env_name = str(getattr(env_conf, "env_name", ""))
-        from problems.eggroll_env_adapters import make_eggroll_env_adapter, supports_eggroll_env_adapter
+        stack = _require_stack()
+        self._validate_eggroll_env(env_name)
+        self._assign_jax_state(policy, stack, cfg)
+        seed_state = _seed_state(stack.jax, policy, int(cfg.seed_offset))
+        self._train_key = seed_state.train_key
+        self._eval_key = seed_state.eval_key
+        env_adapter = self._make_env_adapter(env_name)
+        noiser_bundle = self._init_jax_noiser(stack, cfg)
+        es_tree_key = stack.simple_es_tree_key(self._params, seed_state.es_key, policy.scan_map)
+        self._evaluate_population, self._evaluate_policy, self._update_params = jit_helpers.build_jitted_fns(
+            self,
+            jit_helpers.JittedFnConfig(
+                env_adapter=env_adapter,
+                noiser=noiser_bundle.noiser,
+                frozen_noiser_params=noiser_bundle.frozen_params,
+                frozen_params=policy.frozen_params,
+                es_tree_key=es_tree_key,
+                es_map=policy.es_map,
+                rank_transform=_as_bool(cfg.rank_transform, name="rank_transform"),
+                deterministic_policy=_as_bool(cfg.deterministic_policy, name="deterministic_policy"),
+            ),
+        )
+
+    def _validate_eggroll_env(self, env_name: str) -> None:
+        from problems.eggroll_env_adapters import supports_eggroll_env_adapter
 
         if not supports_eggroll_env_adapter(env_name):
             raise NoSuchDesignerError(f"Designer 'eggroll' requires a supported EggRoll adapter env tag (got {env_name!r}).")
 
-        jax, jnp, optax_mod, simple_es_tree_key, all_noisers = _require_stack()
-        if cfg.noiser not in all_noisers:
-            raise NoSuchDesignerError(f"Unknown HyperscaleES noiser '{cfg.noiser}'. Available: {sorted(all_noisers)}")
-        solver = _solver(optax_mod, str(cfg.optax), b1=float(cfg.b1), b2=float(cfg.b2), weight_decay=float(cfg.weight_decay))
-
+    def _assign_jax_state(self, policy, stack: _EggRollStack, cfg: _EggRollDesignerConfig) -> None:
         self._policy = policy
-        self._jax = jax
-        self._jnp = jnp
+        self._jax = stack.jax
+        self._jnp = stack.jnp
         self._steps_per_episode = int(cfg.steps)
-        self._eval_episodes = int(cfg.eval_episodes)
+        self._num_envs = int(cfg.num_envs)
         self._sigma = float(cfg.sigma)
         self._sigma_decay = _as_unit_decay(cfg.sigma_decay, name="sigma_decay")
         self._suppress_noiser_stdout = _as_bool(cfg.suppress_noiser_stdout, name="suppress_noiser_stdout")
         self._best_datum = None
         self._epoch = 0
-
-        if self._sigma <= 0.0:
-            raise NoSuchDesignerError("EggRoll option 'sigma' must be > 0.")
-        lr = float(cfg.lr)
-        if lr <= 0.0:
-            raise NoSuchDesignerError("EggRoll option 'lr' must be > 0.")
-        if self._steps_per_episode < 1:
-            raise NoSuchDesignerError("EggRoll option 'steps' must be >= 1.")
-        if self._eval_episodes < 1:
-            raise NoSuchDesignerError("EggRoll option 'eval_episodes' must be >= 1.")
-        rank = int(cfg.rank)
-        if rank < 1:
-            raise NoSuchDesignerError("EggRoll option 'rank' must be >= 1.")
-
-        noiser = all_noisers[cfg.noiser]
-        lr_decay = _as_unit_decay(cfg.lr_decay, name="lr_decay")
-        rank_transform = _as_bool(cfg.rank_transform, name="rank_transform")
-        deterministic_policy = _as_bool(cfg.deterministic_policy, name="deterministic_policy")
-        seed = (0 if getattr(policy, "problem_seed", None) is None else int(policy.problem_seed)) + int(cfg.seed_offset)
-        key = jax.random.key(seed & 0xFFFFFFFF)
-        es_key = jax.random.fold_in(key, 1)
-        self._train_key = jax.random.fold_in(key, 2)
-        self._eval_key = jax.random.fold_in(key, 3)
-
-        env_adapter = make_eggroll_env_adapter(env_name, jax=jax, jnp=jnp)
-        frozen_params = policy.frozen_params
         self._params = policy.params
-        es_tree_key = simple_es_tree_key(self._params, es_key, policy.scan_map)
+        _validate_positive_jax_options(self._sigma, float(cfg.lr), self._steps_per_episode, self._num_envs, int(cfg.rank))
 
-        scheduled_lr = _learning_rate_schedule(jnp, base_lr=lr, lr_decay=lr_decay) if lr_decay != 1.0 else lr
+    def _make_env_adapter(self, env_name: str):
+        from problems.eggroll_env_adapters import make_eggroll_env_adapter
+
+        return make_eggroll_env_adapter(env_name, jax=self._jax, jnp=self._jnp)
+
+    def _init_jax_noiser(self, stack: _EggRollStack, cfg: _EggRollDesignerConfig) -> _NoiserBundle:
+        if cfg.noiser not in stack.all_noisers:
+            raise NoSuchDesignerError(f"Unknown HyperscaleES noiser '{cfg.noiser}'. Available: {sorted(stack.all_noisers)}")
+        solver = _solver(stack.optax, str(cfg.optax), b1=float(cfg.b1), b2=float(cfg.b2), weight_decay=float(cfg.weight_decay))
+        noiser = stack.all_noisers[cfg.noiser]
+        scheduled_lr = _scheduled_lr(self._jnp, float(cfg.lr), _as_unit_decay(cfg.lr_decay, name="lr_decay"))
         frozen_noiser_params, noiser_params = noiser.init_noiser(
             self._params,
             self._sigma,
@@ -187,171 +216,83 @@ class EggRollDesigner:
             group_size=int(cfg.group_size),
             freeze_nonlora=_as_bool(cfg.freeze_nonlora, name="freeze_nonlora"),
             noise_reuse=int(cfg.noise_reuse),
-            rank=rank,
+            rank=int(cfg.rank),
             use_batched_update=_as_bool(cfg.use_batched_update, name="use_batched_update"),
         )
         self._noiser_params = noiser_params
-        self._evaluate_population, self._evaluate_policy, self._update_params = self._build_jitted_fns(
-            env_adapter=env_adapter,
-            noiser=noiser,
-            frozen_noiser_params=frozen_noiser_params,
-            frozen_params=frozen_params,
-            es_tree_key=es_tree_key,
-            es_map=policy.es_map,
-            rank_transform=rank_transform,
-            deterministic_policy=deterministic_policy,
+        return _NoiserBundle(noiser=noiser, frozen_params=frozen_noiser_params, params=noiser_params)
+
+    def _init_nanoegg(self, policy, cfg: _EggRollDesignerConfig) -> None:
+        if cfg.noiser != "eggroll":
+            raise NoSuchDesignerError("NanoEgg pretraining currently supports EggRoll option noiser='eggroll' only.")
+        optax_mod = _load_nanoegg_optax()
+        solver = _solver(optax_mod, str(cfg.optax), b1=float(cfg.b1), b2=float(cfg.b2), weight_decay=float(cfg.weight_decay))
+        self._assign_nanoegg_state(policy, cfg)
+        self._objective = self._build_nanoegg_objective(policy, cfg)
+        self._x = np.asarray(self._objective.x0, dtype=np.float64).copy()
+        self._init_nanoegg_optimizer(optax_mod, solver, cfg)
+
+    def _assign_nanoegg_state(self, policy, cfg: _EggRollDesignerConfig) -> None:
+        self._policy = policy
+        self._is_nanoegg = True
+        self._sigma = float(cfg.sigma)
+        self._sigma_decay = _as_unit_decay(cfg.sigma_decay, name="sigma_decay")
+        self._rank = int(cfg.rank)
+        self._rank_transform = _as_bool(cfg.rank_transform, name="rank_transform")
+        self._group_size = int(cfg.group_size)
+        self._freeze_nonlora = _as_bool(cfg.freeze_nonlora, name="freeze_nonlora")
+        self._noise_reuse = int(cfg.noise_reuse)
+        self._nanoegg_batch_size = int(cfg.batch_size)
+        self._steps_per_episode = int(cfg.steps)
+        self._num_envs = int(cfg.num_envs)
+        self._best_datum = None
+        self._epoch = 0
+        _validate_nanoegg_options(self, cfg)
+
+    def _build_nanoegg_objective(self, policy, cfg: _EggRollDesignerConfig):
+        self._nanoegg_log(
+            f"building objective env={getattr(policy, 'env_name', 'unknown')} policy={getattr(policy, 'policy_tag', 'unknown')} "
+            f"search_dim={int(cfg.search_dim)}"
+        )
+        return policy.make_objective(
+            search_dim=int(cfg.search_dim),
+            delta_scale=float(cfg.delta_scale),
+            generation_length=None if cfg.generation_length is None else int(cfg.generation_length),
+            num_envs=self._num_envs,
+            lora_only=_as_bool(cfg.lora_only, name="lora_only"),
+            basis_max_leaves=None if cfg.basis_max_leaves is None else int(cfg.basis_max_leaves),
+            sub_dataset_size=None if cfg.sub_dataset_size is None else int(cfg.sub_dataset_size),
+            hf_home=cfg.hf_home,
         )
 
-    def _build_jitted_fns(
-        self,
-        *,
-        env_adapter,
-        noiser,
-        frozen_noiser_params,
-        frozen_params,
-        es_tree_key,
-        es_map,
-        rank_transform: bool,
-        deterministic_policy: bool,
-    ):
-        jax = self._jax
-        jnp = self._jnp
-        model_cls = self._policy.model_cls
-        steps_per_episode = int(self._steps_per_episode)
+    def _nanoegg_log(self, message: str) -> None:
+        print(f"NANOEGG_EGGROLL: {message}", flush=True)
 
-        def select_action(policy_dist, action_key):
-            if not deterministic_policy:
-                return policy_dist.sample(seed=action_key)
-            mode = getattr(policy_dist, "mode", None)
-            if callable(mode):
-                return mode()
-            mean = getattr(policy_dist, "mean", None)
-            if callable(mean):
-                return mean()
-            if mean is not None:
-                return mean
-            return policy_dist.sample(seed=action_key)
-
-        def rollout(params, noiser_params, thread_info, rollout_key):
-            reset_key, loop_key = jax.random.split(rollout_key)
-            obs, state = env_adapter.reset(reset_key)
-            total_reward = jnp.array(0.0, dtype=jnp.float32)
-            done = jnp.array(False)
-
-            def step(carry, _unused):
-                obs_t, state_t, total_t, done_t, key_t = carry
-                key_t, action_key, env_key = jax.random.split(key_t, 3)
-                policy_dist = model_cls.forward(
-                    noiser,
-                    frozen_noiser_params,
-                    noiser_params,
-                    frozen_params,
-                    params,
-                    es_tree_key,
-                    thread_info,
-                    obs_t,
-                )
-                action = select_action(policy_dist, action_key)
-                action = env_adapter.clip_action(action)
-                next_obs, next_state, reward, next_done, _info = env_adapter.step(env_key, state_t, action)
-                active = jnp.logical_not(done_t)
-                obs_out = jax.tree.map(lambda new, old: jnp.where(active, new, old), next_obs, obs_t)
-                state_out = jax.tree.map(lambda new, old: jnp.where(active, new, old), next_state, state_t)
-                total_out = total_t + jnp.where(active, reward, 0.0)
-                done_out = jnp.logical_or(done_t, next_done)
-                return (obs_out, state_out, total_out, done_out, key_t), None
-
-            (_, _, total_reward, _, _), _ = jax.lax.scan(step, (obs, state, total_reward, done, loop_key), None, length=steps_per_episode)
-            return total_reward
-
-        @jax.jit
-        def evaluate_population(params, noiser_params, epoch, keys):
-            thread_ids = jnp.arange(keys.shape[0], dtype=jnp.int32)
-            return jax.vmap(lambda thread_id, k: rollout(params, noiser_params, (epoch, thread_id), k))(thread_ids, keys)
-
-        @jax.jit
-        def evaluate_policy(params, noiser_params, keys):
-            return jax.vmap(lambda k: rollout(params, noiser_params, None, k))(keys)
-
-        @jax.jit
-        def update_params(noiser_params, params, raw_scores, epoch):
-            population = raw_scores.shape[0]
-            iterinfo = (jnp.full((population,), epoch, dtype=jnp.int32), jnp.arange(population, dtype=jnp.int32))
-            if rank_transform:
-                ranks = jnp.argsort(jnp.argsort(raw_scores)).astype(jnp.float32)
-                raw_scores = ranks / jnp.maximum(float(population - 1), 1.0)
-            fitnesses = noiser.convert_fitnesses(frozen_noiser_params, noiser_params, raw_scores)
-            return noiser.do_updates(frozen_noiser_params, noiser_params, params, es_tree_key, fitnesses, iterinfo, es_map)
-
-        return evaluate_population, evaluate_policy, update_params
+    def _init_nanoegg_optimizer(self, optax_mod, solver, cfg: _EggRollDesignerConfig) -> None:
+        scheduled_lr = _scheduled_lr(self._objective.jnp, float(cfg.lr), _as_unit_decay(cfg.lr_decay, name="lr_decay"))
+        self._nanoegg_tx = solver(
+            scheduled_lr,
+            **_solver_kwargs(str(cfg.optax), b1=float(cfg.b1), b2=float(cfg.b2), weight_decay=float(cfg.weight_decay)),
+        )
+        self._nanoegg_apply_updates = optax_mod.apply_updates
+        self._nanoegg_opt_state = self._nanoegg_tx.init(self._objective.jnp.asarray(self._x, dtype=self._objective.jnp.float32))
 
     def best_datum(self):
         return self._best_datum
 
-    def _block_tree(self, tree):
-        for leaf in self._jax.tree_util.tree_leaves(tree):
-            leaf.block_until_ready()
-        return tree
-
     def _current_sigma(self) -> float:
         return self._sigma * (self._sigma_decay**self._epoch)
 
-    def _scheduled_noiser_params(self):
-        if not isinstance(self._noiser_params, dict) or "sigma" not in self._noiser_params:
-            if self._sigma_decay != 1.0:
-                raise NoSuchDesignerError("EggRoll sigma_decay requires noiser_params to expose a 'sigma' field.")
-            return self._noiser_params
-        return self._noiser_params | {"sigma": self._current_sigma()}
+    def _iterate_nanoegg(self, _data, num_arms: int, *, telemetry=None) -> IterateResult:
+        return nanoegg_helpers.iterate_nanoegg(self, _data, num_arms, telemetry=telemetry)
 
     def iterate(self, _data, num_arms: int, *, telemetry=None) -> IterateResult:
-        if int(num_arms) < 2 or int(num_arms) % 2 != 0:
-            raise NoSuchDesignerError("EggRoll requires an even population >= 2 because HyperscaleES noisers use mirrored thread pairs.")
+        if bool(getattr(self, "_is_nanoegg", False)):
+            return self._iterate_nanoegg(_data, num_arms, telemetry=telemetry)
 
-        jax = self._jax
-        jnp = self._jnp
-        epoch = jnp.asarray(self._epoch, dtype=jnp.int32)
-        self._noiser_params = self._scheduled_noiser_params()
+        return jax_iter_helpers.iterate_jax(self, _data, num_arms, telemetry=telemetry)
 
-        t_eval = time.time()
-        self._train_key, batch_key = jax.random.split(self._train_key)
-        batch_keys = jax.random.split(batch_key, int(num_arms))
-        raw_scores = self._evaluate_population(self._params, self._noiser_params, epoch, batch_keys)
-        raw_scores = jax.block_until_ready(raw_scores)
-        train_eval_dt = time.time() - t_eval
-
-        t_prop = time.time()
-        stdout_ctx = redirect_stdout(StringIO()) if self._suppress_noiser_stdout else nullcontext()
-        with stdout_ctx:
-            self._noiser_params, self._params = self._update_params(self._noiser_params, self._params, raw_scores, epoch)
-        self._block_tree(self._params)
-        prop_dt = time.time() - t_prop
-
-        t_eval = time.time()
-        self._eval_key, eval_batch_key = jax.random.split(self._eval_key)
-        eval_scores = self._evaluate_policy(self._params, self._noiser_params, jax.random.split(eval_batch_key, self._eval_episodes))
-        eval_scores = jax.block_until_ready(eval_scores)
-        policy_eval_dt = time.time() - t_eval
-
-        eval_mean = float(jnp.mean(eval_scores))
-        policy = self._policy.with_params(self._params)
-        num_steps = int((int(num_arms) + self._eval_episodes) * self._steps_per_episode)
-        datum = Datum(
-            self,
-            policy,
-            None,
-            Trajectory(
-                rreturn=eval_mean,
-                states=np.empty((0,)),
-                actions=np.empty((0,)),
-                num_steps=num_steps,
-            ),
-        )
-        if self._best_datum is None or datum.trajectory.get_decision_rreturn() > self._best_datum.trajectory.get_decision_rreturn():
-            self._best_datum = datum
-
-        if telemetry is not None:
-            telemetry.set_dt_fit(prop_dt)
-            telemetry.set_dt_select(0.0)
-
-        self._epoch += 1
-        return IterateResult(data=[datum], dt_prop=float(prop_dt), dt_eval=float(train_eval_dt + policy_eval_dt))
+    def stop(self):
+        objective = getattr(self, "_objective", None)
+        if objective is not None and hasattr(objective, "close"):
+            objective.close()

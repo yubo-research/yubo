@@ -1,4 +1,4 @@
-# Run: python -m experiments.experiment local configs/bo/eggroll/paper/marl/mpe_simple_reference_v3_eggroll.toml
+# Run: ./ops/experiment.py local configs/bo/eggroll/paper/marl/mpe_simple_reference_v3_eggroll.toml
 # Paper: Appendix N.1 / Table 9, MPE Simple Reference v3 EGGROLL.
 # Runtime: uses the EggRoll JaxMARL adapter.
 

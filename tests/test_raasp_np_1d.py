@@ -6,6 +6,32 @@ def _assert_basic_properties(x_candidates, num_candidates, num_dim, lb, ub):
     assert np.all(x_candidates <= ub)
 
 
+def _raasp_basic_candidates(num_centers, num_dim, num_candidates, *, seed=42):
+    import numpy as np
+
+    from sampling.sampling_util import raasp_np_1d
+
+    np.random.seed(seed)
+    x_centers = np.random.uniform(0.2, 0.8, size=(num_centers, num_dim))
+    lb = np.array([[0.0] * num_dim])
+    ub = np.array([[1.0] * num_dim])
+    x_candidates = raasp_np_1d(x_centers, lb, ub, num_candidates)
+    _assert_basic_properties(x_candidates, num_candidates, num_dim, lb, ub)
+    return x_candidates, x_centers
+
+
+def _assert_raasp_bounds(x_centers, lb, ub, num_candidates):
+    import numpy as np
+
+    from sampling.sampling_util import raasp_np_1d
+
+    assert np.all(x_centers >= lb)
+    assert np.all(x_centers <= ub)
+    x_candidates = raasp_np_1d(x_centers, lb, ub, num_candidates)
+    assert np.all(x_candidates >= lb)
+    assert np.all(x_candidates <= ub)
+
+
 def _assert_single_dimension_perturbation(x_candidates, x_centers):
     import numpy as np
 
@@ -22,22 +48,7 @@ def _assert_single_dimension_perturbation(x_candidates, x_centers):
 
 
 def test_raasp_np_1d_basic_functionality():
-    import numpy as np
-
-    from sampling.sampling_util import raasp_np_1d
-
-    np.random.seed(42)
-
-    num_centers = 3
-    num_dim = 4
-    num_candidates = 10
-
-    x_centers = np.random.uniform(0.2, 0.8, size=(num_centers, num_dim))
-    lb = np.array([[0.0, 0.0, 0.0, 0.0]])
-    ub = np.array([[1.0, 1.0, 1.0, 1.0]])
-
-    x_candidates = raasp_np_1d(x_centers, lb, ub, num_candidates)
-    _assert_basic_properties(x_candidates, num_candidates, num_dim, lb, ub)
+    _raasp_basic_candidates(3, 4, 10)
 
 
 def test_raasp_np_1d_shape_validation():
@@ -62,20 +73,11 @@ def test_raasp_np_1d_shape_validation():
 def test_raasp_np_1d_bounds_validation():
     import numpy as np
 
-    from sampling.sampling_util import raasp_np_1d
-
     np.random.seed(42)
-
     x_centers = np.random.uniform(0.2, 0.8, size=(4, 2))
     lb = np.array([[0.1, 0.1]])
     ub = np.array([[0.9, 0.9]])
-
-    assert np.all(x_centers >= lb)
-    assert np.all(x_centers <= ub)
-
-    x_candidates = raasp_np_1d(x_centers, lb, ub, 8)
-    assert np.all(x_candidates >= lb)
-    assert np.all(x_candidates <= ub)
+    _assert_raasp_bounds(x_centers, lb, ub, 8)
 
 
 def test_raasp_np_1d_single_dimension_perturbation():
@@ -130,37 +132,13 @@ def test_raasp_np_1d_high_dimensions():
 def test_raasp_np_1d_tight_bounds():
     import numpy as np
 
-    from sampling.sampling_util import raasp_np_1d
-
     np.random.seed(42)
-
     x_centers = np.array([[0.5, 0.5], [0.6, 0.4]])
     lb = np.array([[0.4, 0.3]])
     ub = np.array([[0.7, 0.6]])
-
-    assert np.all(x_centers >= lb)
-    assert np.all(x_centers <= ub)
-
-    x_candidates = raasp_np_1d(x_centers, lb, ub, 5)
-    assert np.all(x_candidates >= lb)
-    assert np.all(x_candidates <= ub)
+    _assert_raasp_bounds(x_centers, lb, ub, 5)
 
 
 def test_raasp_np_1d_multiple_centers():
-    import numpy as np
-
-    from sampling.sampling_util import raasp_np_1d
-
-    np.random.seed(42)
-
-    num_centers = 5
-    num_dim = 3
-    num_candidates = 12
-
-    x_centers = np.random.uniform(0.2, 0.8, size=(num_centers, num_dim))
-    lb = np.array([[0.0, 0.0, 0.0]])
-    ub = np.array([[1.0, 1.0, 1.0]])
-
-    x_candidates = raasp_np_1d(x_centers, lb, ub, num_candidates)
-    _assert_basic_properties(x_candidates, num_candidates, num_dim, lb, ub)
+    x_candidates, x_centers = _raasp_basic_candidates(5, 3, 12)
     _assert_single_dimension_perturbation(x_candidates, x_centers)

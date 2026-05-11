@@ -1,4 +1,4 @@
-# Run: python -m experiments.experiment local configs/bo/eggroll/paper/qwen/qwen3_1p7b_deepscaler_passk4_eggroll.toml
+# Run: ./ops/experiment.py local configs/bo/eggroll/paper/qwen/qwen3_1p7b_deepscaler_passk4_eggroll.toml
 # Paper: Appendix L / Figure 10 and Table 3, Qwen3-1.7B pass@k optimisation with K=4.
 # Runtime: uses the EggRoll pass@k external-objective adapter surface.
 
@@ -24,4 +24,4 @@ lr = 0.001
 optax = "adamw"
 noise_reuse = 4
 steps = 1
-eval_episodes = 1
+num_envs = 1

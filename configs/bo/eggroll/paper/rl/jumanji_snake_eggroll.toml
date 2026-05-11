@@ -1,4 +1,4 @@
-# Run: python -m experiments.experiment local configs/bo/eggroll/paper/rl/jumanji_snake_eggroll.toml
+# Run: ./ops/experiment.py local configs/bo/eggroll/paper/rl/jumanji_snake_eggroll.toml
 # Paper: Table 26, jumanji/Snake-v1 EGGROLL.
 
 [experiment]

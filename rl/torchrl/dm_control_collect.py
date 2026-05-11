@@ -15,7 +15,10 @@ def make_dm_control_collect_env(
 ):
     from dm_control import suite
 
-    from problems.dm_control_env import _configure_headless_render_backend, _parse_env_name
+    from problems.dm_control_env import (
+        _configure_headless_render_backend,
+        _parse_env_name,
+    )
 
     _configure_headless_render_backend("rgb_array" if bool(from_pixels) else None)
     domain, task = _parse_env_name(str(env_name))

@@ -83,3 +83,35 @@ def test_ops_hyperscalees_llm_forwards_to_experiments_cli():
     assert "general_do_evolution\n" in result.output
     assert "do_grpo\n" in result.output
 
+
+def test_ops_nanoegg_pretrain_forwards_to_experiments_cli(tmp_path):
+    from ops.nanoegg_pretrain import cli
+
+    exp_dir = tmp_path / "nanoegg"
+    config = tmp_path / "nanoegg.toml"
+    config.write_text(
+        f"""
+[experiment]
+exp_dir = "{exp_dir.as_posix()}"
+repo_dir = ".external/nano-egg"
+dry_run = true
+
+[nanoegg]
+num_epochs = 1
+population_size = 2
+batch_size = 1
+regenerate_model = true
+track = false
+
+[data]
+synthetic = true
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+
+    result = CliRunner().invoke(cli, ["local", str(config)])
+
+    assert result.exit_code == 0, result.output
+    assert "NANOEGG_REPO:" in result.output
+    assert "DRY_RUN: true" in result.output

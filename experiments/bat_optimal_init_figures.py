@@ -67,8 +67,8 @@ def prep_cmd(
     else:
         noise = f"noise={noise}"
 
-    # python experiments/experiment.py num_rounds=30 num_arms=5 env_tag=tlunar opt_name=gibbon num_reps=1 exp_dir=y_test num_denoise=100
-    return f"python experiments/experiment.py env_tag={problem} opt_name={opt} num_arms={num_arms} num_reps={num_replications} num_rounds={num_rounds} {num_obs} {num_denoise} {noise} exp_dir={exp_dir} > {logs_dir}/{opt} 2>&1"
+    # Historical one-liner (not valid for current Click CLI). Prefer: `python ops/experiment.py local <config.toml>`.
+    return f"python ops/experiment.py env_tag={problem} opt_name={opt} num_arms={num_arms} num_reps={num_replications} num_rounds={num_rounds} {num_obs} {num_denoise} {noise} exp_dir={exp_dir} > {logs_dir}/{opt} 2>&1"
 
 
 def prep_cmds(exp_dir, funcs, dims, num_arms, num_replications, opts, noises):

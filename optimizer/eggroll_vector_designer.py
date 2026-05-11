@@ -22,19 +22,19 @@ class EggRollJAXVectorDesigner(TurboENNDesigner):
         env_conf,
         *,
         steps_per_episode: int = 200,
-        eval_episodes: int = 1,
+        num_envs: int = 1,
         deterministic_policy: bool = False,
         param_scale: float = 0.5,
         seed_offset: int = 0,
         **turbo_kwargs,
     ) -> None:
         steps_per_episode = int(steps_per_episode)
-        eval_episodes = int(eval_episodes)
+        num_envs = int(num_envs)
         param_scale = float(param_scale)
         if steps_per_episode < 1:
             raise NoSuchDesignerError("EggRoll Turbo-ENN option 'steps_per_episode' must be >= 1.")
-        if eval_episodes < 1:
-            raise NoSuchDesignerError("EggRoll Turbo-ENN option 'eval_episodes' must be >= 1.")
+        if num_envs < 1:
+            raise NoSuchDesignerError("EggRoll Turbo-ENN option 'num_envs' must be >= 1.")
         if param_scale <= 0.0:
             raise NoSuchDesignerError("EggRoll Turbo-ENN option 'param_scale' must be > 0.")
 
@@ -46,7 +46,7 @@ class EggRollJAXVectorDesigner(TurboENNDesigner):
             policy,
             env_conf,
             steps_per_episode=steps_per_episode,
-            eval_episodes=eval_episodes,
+            num_envs=num_envs,
             deterministic_policy=deterministic_policy,
             seed_offset=seed_offset,
             vector_mode="offset",
@@ -104,7 +104,7 @@ class EggRollJAXVectorDesigner(TurboENNDesigner):
         dt_eval = time.time() - t_eval
 
         out = []
-        num_steps = int(self._runtime.steps_per_episode * self._runtime.eval_episodes)
+        num_steps = int(self._runtime.steps_per_episode * self._runtime.num_envs)
         for x, score in zip(x_new, scores, strict=True):
             policy = self._runtime.make_policy(x, attr_name="_eggroll_bo_x")
             out.append(

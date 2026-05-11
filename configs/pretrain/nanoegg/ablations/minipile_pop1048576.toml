@@ -1,14 +1,14 @@
-# Run: python -m experiments.nanoegg_pretrain local configs/pretrain/nanoegg/ablations/minipile_pop1048576.toml
+# Run: ./ops/nanoegg_pretrain.py local configs/pretrain/nanoegg/ablations/minipile_pop1048576.toml
 
 [experiment]
 exp_dir = "runs/yubo_nanoegg/ablations/minipile_pop1048576"
-repo_dir = ".external/nano-egg"
-log_file = "nanoegg.log"
-dry_run = true
+# repo_dir = ".external/nano-egg"
+# log_file = "nanoegg.log"
+# dry_run =
 
 [nanoegg]
 seed = 0
-dtype = "int8"
+dtype = "int4"
 batch_size = 4
 population_size = 1048576
 num_epochs = 1000

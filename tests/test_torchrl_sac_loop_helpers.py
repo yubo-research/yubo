@@ -1,50 +1,16 @@
 from __future__ import annotations
 
+import importlib
 import time
 from types import SimpleNamespace
 
 import numpy as np
 import torch
-
-from rl.torchrl.sac import loop as torchrl_sac_loop
-
-
-class _ActionSpaceStub:
-    def __init__(self, sample_value):
-        self._sample_value = np.asarray(sample_value, dtype=np.float32)
-
-    def sample(self):
-        return self._sample_value.copy()
+from torchrl_sac_loop_actor_stub import _ActorStub
+from torchrl_sac_loop_test_stubs import _ReplayStub, _TrainEnvStub
 
 
-class _TrainEnvStub:
-    def __init__(self, *, sample_value, step_result, reset_state):
-        self.action_space = _ActionSpaceStub(sample_value)
-        self._step_result = step_result
-        self._reset_state = np.asarray(reset_state, dtype=np.float32)
-
-    def step(self, action):
-        self.last_action = np.asarray(action, dtype=np.float32)
-        return self._step_result
-
-    def reset(self):
-        return self._reset_state.copy(), {}
-
-
-class _ReplayStub:
-    def __init__(self):
-        self.items = []
-
-    def add(self, value):
-        self.items.append(value)
-
-
-class _ActorStub:
-    def __init__(self, action):
-        self._action = torch.as_tensor(action, dtype=torch.float32).unsqueeze(0)
-
-    def __call__(self, _tensor_dict):
-        return {"action": self._action}
+torchrl_sac_loop = importlib.import_module("rl.torchrl.sac.loop")
 
 
 def test_as_float32_observation_casts_to_float32():
@@ -238,7 +204,7 @@ def test_evaluate_heldout_if_enabled():
         restore_actor_state=lambda _modules, snapshot: restore_calls.append(snapshot),
         eval_policy_factory=lambda *_: "policy",
         build_env_runtime=lambda *_args, **_kwargs: "env_conf",
-        evaluate_for_best=lambda _env_conf, _policy, denoise, **_kwargs: (4.5 if denoise == 3 else -1.0),
+        evaluate_for_best=lambda _env_conf, _policy, denoise, **_kwargs: 4.5 if denoise == 3 else -1.0,
     )
     assert result == 4.5
     assert restore_calls[0] == {"best": 99}
@@ -265,7 +231,7 @@ def test_evaluate_heldout_if_enabled_passes_pixel_flags():
         capture_actor_state=lambda *_: {"current": 1},
         restore_actor_state=lambda *_: None,
         eval_policy_factory=lambda *_: "policy",
-        build_env_runtime=lambda *_args, **kwargs: (captured_kwargs.update(kwargs) or "env_conf"),
+        build_env_runtime=lambda *_args, **kwargs: captured_kwargs.update(kwargs) or "env_conf",
         evaluate_for_best=lambda *_args, **_kwargs: 7.0,
     )
     assert result == 7.0
@@ -333,7 +299,7 @@ def test_evaluate_if_due_updates_state_and_writes_metrics(monkeypatch):
         start_time=time.time() - 1.0,
         latest_losses={"loss_actor": 1.1, "loss_critic": 2.2, "loss_alpha": 3.3},
         total_updates=7,
-        evaluate_actor=lambda *_args, **kwargs: (6.0 if kwargs["eval_seed"] == 123 else -1.0),
+        evaluate_actor=lambda *_args, **kwargs: 6.0 if kwargs["eval_seed"] == 123 else -1.0,
         capture_actor_state=lambda *_: {"snapshot": 42},
         evaluate_heldout=lambda *_args, **_kwargs: 5.5,
     )

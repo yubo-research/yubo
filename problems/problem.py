@@ -76,7 +76,10 @@ class Problem:
 
     def build_policy(self) -> Any:
         """Build and return the policy, ensuring spaces are populated first."""
-        self._env.ensure_spaces()
+        from problems.pre_obj import is_nanoegg_pretrain_env
+
+        if not is_nanoegg_pretrain_env(str(self._env.env_name)):
+            self._env.ensure_spaces()
         preset: PolicyPreset = _get_policy_preset(self._policy_tag)
         return preset.factory(self._env)
 
