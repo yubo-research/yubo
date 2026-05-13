@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from problems.problem import build_problem
 from rl.core.env_conf import build_seeded_env_conf_from_run
-from rl.core.ppo_envs import _env_tag_for_problem_build, _maybe_register_atari_dm_backends
+from rl.core.ppo_envs import (
+    _env_tag_for_problem_build,
+    _maybe_register_atari_dm_backends,
+)
 
 
 def build_eval_env_conf(config, *, obs_mode: str, is_atari_env_tag_fn, resolve_gym_env_name_fn):
@@ -22,7 +25,12 @@ def build_eval_env_conf(config, *, obs_mode: str, is_atari_env_tag_fn, resolve_g
     ):
         _maybe_register_atari_dm_backends(env_tag)
         adj = _env_tag_for_problem_build(env_tag, from_pixels=from_pixels)
-        problem = build_problem(adj, "linear", problem_seed=int(problem_seed), noise_seed_0=int(noise_seed_0))
+        problem = build_problem(
+            adj,
+            "linear",
+            problem_seed=int(problem_seed),
+            noise_seed_0=int(noise_seed_0),
+        )
         env = problem.env
         if env.spec.env_name.startswith("dm_control/"):
             env.spec.pixels_only = bool(pixels_only)

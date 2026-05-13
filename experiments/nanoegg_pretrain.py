@@ -236,7 +236,13 @@ def cli() -> None:
 
 @cli.command(name="local", help="Run nano-egg pretraining from a TOML config.")
 @click.argument("config_toml", type=click.Path(exists=True, dir_okay=False, path_type=str))
-@click.option("-o", "--opt", "overrides", multiple=True, help="Override section.key=value, e.g. -o nanoegg.num_epochs=1")
+@click.option(
+    "-o",
+    "--opt",
+    "overrides",
+    multiple=True,
+    help="Override section.key=value, e.g. -o nanoegg.num_epochs=1",
+)
 @click.option("--dry-run", is_flag=True, help="Print the command but do not execute nano-egg.")
 def local(config_toml: str, overrides: tuple[str, ...], dry_run: bool) -> None:
     try:

@@ -27,7 +27,11 @@ def test_kiss_bridge_env_preprocessing_clip_observation_wrapper():
     def _e_step(self, _action):
         return np.zeros(2, dtype=np.float32), 0.0, True, False, {}
 
-    E = type("E", (gym.Env,), {"metadata": {}, "__init__": _e_init, "reset": _e_reset, "step": _e_step})
+    E = type(
+        "E",
+        (gym.Env,),
+        {"metadata": {}, "__init__": _e_init, "reset": _e_reset, "step": _e_step},
+    )
     w = _ClipObservationWrapper(E(), low=-1.0, high=1.0)
     w.reset(seed=0)
     w.step(np.zeros(1, dtype=np.float32))
@@ -56,7 +60,11 @@ def test_kiss_bridge_modal_batches_batches_all_branches(monkeypatch, capsys):
 
     spawn_count = {"count": 0}
 
-    Fn = type("Fn", (), {"spawn": lambda self: spawn_count.__setitem__("count", spawn_count["count"] + 1) or None})
+    Fn = type(
+        "Fn",
+        (),
+        {"spawn": lambda self: spawn_count.__setitem__("count", spawn_count["count"] + 1) or None},
+    )
     Func = type("Func", (), {"lookup": staticmethod(lambda *_a, **_k: Fn())})
     monkeypatch.setattr(
         mb,
@@ -334,7 +342,13 @@ def test_kiss_bridge_mnist_types_and_mlp_torch_env():
     ME = type(
         "ME",
         (gym.Env,),
-        {"metadata": {}, "__init__": _me_init, "reset": _me_reset, "step": _me_step, "close": _me_close},
+        {
+            "metadata": {},
+            "__init__": _me_init,
+            "reset": _me_reset,
+            "step": _me_step,
+            "close": _me_close,
+        },
     )
     mod = nn.Linear(2, 1)
     env = ME()
@@ -454,33 +468,3 @@ def test_kiss_bridge_rl_core_replay_buffers():
     )
     b.sample(1, torch.device("cpu"))
     TorchRLReplayBuffer((2,), 1, 10)
-
-
-def test_kiss_bridge_rl_core_runtime():
-    from rl.core.runtime import mps_is_available, obs_scale_from_env, seed_everything
-
-    seed_everything(0)
-    _ = mps_is_available()
-
-    Gym = type(
-        "Gym",
-        (),
-        {
-            "transform_state": True,
-            "state_space": SimpleNamespace(
-                low=np.zeros(3, dtype=np.float32),
-                high=np.ones(3, dtype=np.float32),
-                shape=(3,),
-            ),
-        },
-    )
-    E = type(
-        "E",
-        (),
-        {
-            "gym_conf": Gym(),
-            "observation_space": SimpleNamespace(shape=(3,)),
-            "ensure_spaces": lambda self: None,
-        },
-    )
-    obs_scale_from_env(E())

@@ -39,6 +39,7 @@ VLLM_STACK_PACKAGES=(
   "safetensors==0.6.2"
   "datasets==4.4.1"
   "pylatexenc==2.10"
+  "nest-asyncio"
   "wandb==0.23.0"
   "weave==0.52.33"
 )
@@ -116,6 +117,8 @@ YUBO_OPTIONAL_TEST_CONDA_PACKAGES=(
 VECCHIABO_SPEC="git+https://github.com/feji3769/VecchiaBO.git#subdirectory=code"
 MATH_VERIFY_SPEC="math-verify[antlr4_9_3]==0.9.0"
 ANTLR_SPEC="antlr4-python3-runtime==4.9.3"
+PRIME_VERIFIERS_SPEC="verifiers @ git+https://github.com/PrimeIntellect-ai/verifiers.git"
+PRIME_VERIFIERS_GSM8K_SPEC="gsm8k @ git+https://github.com/PrimeIntellect-ai/verifiers.git#subdirectory=environments/gsm8k"
 
 log() {
   echo "[setup-hyperscalees] $*"
@@ -710,6 +713,9 @@ if [[ "${ENV_WAS_CREATED}" -eq 1 ]]; then
   log "installing math verifier compatible with HyperscaleES/Hydra"
   pip_install "${MATH_VERIFY_SPEC}" "${ANTLR_SPEC}"
 
+  log "installing Prime Intellect verifiers library and GSM8K environment"
+  pip_install "${PRIME_VERIFIERS_SPEC}" "${PRIME_VERIFIERS_GSM8K_SPEC}"
+
   log "installing owned Qwen/vLLM LoRA runtime dependencies"
   pip_install "${VLLM_STACK_PACKAGES[@]}"
 
@@ -721,8 +727,9 @@ if [[ "${ENV_WAS_CREATED}" -eq 1 ]]; then
   install_pufferlib_package
   install_isaaclab_stack
 else
-  log "env '${ENV_NAME}' already exists; installing only the Isaac Lab stack"
+  log "env '${ENV_NAME}' already exists; installing incremental verifier dependency and Isaac Lab stack"
   log "use --recreate-env to rebuild the full environment from scratch with the current package set"
+  pip_install "${PRIME_VERIFIERS_SPEC}" "${PRIME_VERIFIERS_GSM8K_SPEC}"
   install_isaaclab_stack
 fi
 
@@ -791,6 +798,15 @@ print(f"[setup-hyperscalees] math_verify import OK: {math_verify.__name__}")
 print(f"[setup-hyperscalees] antlr runtime OK: {antlr_version}")
 print(f"[setup-hyperscalees] scipy import OK: {scipy.__version__}")
 print(f"[setup-hyperscalees] jax import OK after vLLM install: {jax.__version__}")
+PY
+  log "checking Prime Intellect verifiers import"
+  run_in_env python - <<'PY'
+import importlib.metadata
+import gsm8k
+import verifiers
+
+print(f"[setup-hyperscalees] verifiers import OK: {importlib.metadata.version('verifiers')}")
+print(f"[setup-hyperscalees] verifiers gsm8k environment import OK: {gsm8k.__name__}")
 PY
   log "checking BO/RL optional extras expected by repo tests"
   run_in_env python - <<'PY'

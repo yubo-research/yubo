@@ -16,7 +16,13 @@ def _format_y(y: float | None) -> str:
     return "N/A" if y is None else f"{float(y):.4f}"
 
 
-def _sample_sigmas(adapter: StepSizeAdapter, sigma_range: tuple[float, float] | None, *, seed: int, n: int) -> np.ndarray:
+def _sample_sigmas(
+    adapter: StepSizeAdapter,
+    sigma_range: tuple[float, float] | None,
+    *,
+    seed: int,
+    n: int,
+) -> np.ndarray:
     if sigma_range is None:
         return np.full(int(n), adapter.sigma, dtype=np.float64)
     lo, hi = np.log(float(sigma_range[0])), np.log(float(sigma_range[1]))

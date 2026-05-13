@@ -27,7 +27,10 @@ _OPTIONAL_KEYS = (
     "runtime_device",
     "local_workers",
 )
-_ALL_EXPERIMENT_KEYS = set(_BASE_REQUIRED_KEYS + _BUDGET_KEYS + _OPTIONAL_KEYS) | {"population", "num_epochs"}
+_ALL_EXPERIMENT_KEYS = set(_BASE_REQUIRED_KEYS + _BUDGET_KEYS + _OPTIONAL_KEYS) | {
+    "population",
+    "num_epochs",
+}
 _OPTIMIZER_KEYS = {"name", "params"}
 
 

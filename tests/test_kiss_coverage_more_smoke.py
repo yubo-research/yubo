@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import os
 from types import SimpleNamespace
 
@@ -18,7 +17,6 @@ from torch import nn
 from acq.acq_bt import AcqBT
 from acq.acq_dpp import AcqDPP
 from acq.fit_gp import _EmptyTransform
-from analysis.data_locator import DataLocator
 from optimizer.bt_designer import BTDesigner
 from optimizer.designer_registry_context import _SimpleContext
 from optimizer.gaussian_perturbator import GaussianPerturbator
@@ -174,16 +172,9 @@ def test_kiss_cov_empty_transform_init():
 
 
 def test_kiss_cov_data_locator_optimizers(tmp_path):
-    results_dir = tmp_path / "results"
-    exp_dir = results_dir / "exp_a"
-    exp_dir.mkdir(parents=True)
-    (exp_dir / "config.json").write_text(json.dumps({"opt_name": "random", "env_tag": "f:ackley-2d"}))
-    dl = DataLocator(
-        results_path=str(results_dir),
-        exp_dir="",
-        opt_names=["random", "sobol"],
-    )
-    assert dl.optimizers() == ["random"]
+    from tests.kiss_ops_catalog_data_shared import run_kiss_data_locator_optimizers
+
+    run_kiss_data_locator_optimizers(tmp_path)
 
 
 def test_kiss_cov_ops_catalog_and_data_cli(tmp_path):
@@ -271,12 +262,21 @@ def test_kiss_cov_modal_batches_functions(monkeypatch, tmp_path):
     monkeypatch.setattr(
         mb,
         "sample_1",
-        lambda run_cfg: SimpleNamespace(collector_log="log", collector_trace="trace", trace_records=[{"x": 1}], stop_reason="completed"),
+        lambda run_cfg: SimpleNamespace(
+            collector_log="log",
+            collector_trace="trace",
+            trace_records=[{"x": 1}],
+            stop_reason="completed",
+        ),
     )
 
     spawned = {"map": [], "spawn": []}
 
-    monkeypatch.setattr(mb.modal.Function, "from_name", lambda app_name, name: ModalBatchesSpawnFunc(spawned))
+    monkeypatch.setattr(
+        mb.modal.Function,
+        "from_name",
+        lambda app_name, name: ModalBatchesSpawnFunc(spawned),
+    )
     monkeypatch.setattr(mb, "_gen_jobs", lambda _batch_tag: [("k1", SimpleNamespace(trace_fn="t1"))])
     monkeypatch.setattr(mb, "data_is_done", lambda trace_fn: False)
     monkeypatch.setattr(mb, "post_process", lambda *args, **kwargs: None)

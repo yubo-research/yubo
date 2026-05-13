@@ -44,7 +44,10 @@ class _LoraSubspaceCodec:
         rng = np.random.default_rng(int(seed))
         self._names = tuple(name for name, _ in leaves)
         self._basis_tensor = rng.choice(valid, size=self.dim, replace=True, p=probs).astype(np.int64)
-        self._basis_index = np.asarray([rng.integers(sizes[tensor_idx]) for tensor_idx in self._basis_tensor], dtype=np.int64)
+        self._basis_index = np.asarray(
+            [rng.integers(sizes[tensor_idx]) for tensor_idx in self._basis_tensor],
+            dtype=np.int64,
+        )
         self._basis_sign = rng.choice(np.asarray([-1.0, 1.0], dtype=np.float32), size=self.dim).astype(np.float32)
         self.num_total_tensors = int(len(leaves))
         self.num_candidate_tensors = int(valid.size)
@@ -91,7 +94,10 @@ def _write_lora_adapter(adapter_path: Path, state: dict[str, Any], config: dict[
 
     with open(adapter_path / "adapter_config.json", "w", encoding="utf-8") as f:
         json.dump(config, f)
-    save_file({_adapter_tensor_name(name): tensor for name, tensor in state.items()}, str(adapter_path / "adapter_model.safetensors"))
+    save_file(
+        {_adapter_tensor_name(name): tensor for name, tensor in state.items()},
+        str(adapter_path / "adapter_model.safetensors"),
+    )
 
 
 def _adapter_tensor_name(name: str) -> str:

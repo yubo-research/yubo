@@ -74,7 +74,10 @@ class _SubspaceParamCodec:
             leaf = leaves[int(leaf_idx)]
             flat = self._jnp.reshape(leaf, (-1,))
             idx = self._jnp.asarray(self._basis_index[positions], dtype=self._jnp.int32)
-            values = self._jnp.asarray(coeffs[positions] * self._basis_sign[positions] * self.delta_scale, dtype=flat.dtype)
+            values = self._jnp.asarray(
+                coeffs[positions] * self._basis_sign[positions] * self.delta_scale,
+                dtype=flat.dtype,
+            )
             leaves[int(leaf_idx)] = flat.at[idx].add(values).reshape(leaf.shape)
         return leaves
 

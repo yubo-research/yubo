@@ -15,7 +15,7 @@ from .evaluate_metrics import (
 
 
 # Fixed test-set size for surrogate timing benchmarks (train size is ``N``).
-SYNTHETIC_BENCHMARK_N_TEST = 1000
+SYNTHETIC_BENCHMARK_N_EVAL = 1000
 
 
 def _batch_pure_env_reward(env, actions_np: np.ndarray) -> np.ndarray:
@@ -51,11 +51,11 @@ def draw_benchmark_synthetic_xy(
     """Draw train/test batches; ``x`` and ``x_test`` are in ``[-1, 1]`` (env / action scale).
 
     Training draws have ``N`` rows; the held-out test draw always has
-    :data:`SYNTHETIC_BENCHMARK_N_TEST` rows (independent of ``N``).
+    :data:`SYNTHETIC_BENCHMARK_N_EVAL` rows (independent of ``N``).
     """
     fn = normalize_benchmark_function_name(function_name)
     base = int(problem_seed)
-    n_test = int(SYNTHETIC_BENCHMARK_N_TEST)
+    n_test = int(SYNTHETIC_BENCHMARK_N_EVAL)
     if fn == SYNTHETIC_BENCHMARK_SINE_FUNCTION_NAME:
         torch.manual_seed(base)
         x = torch.rand(N, D) * 2.0 - 1.0

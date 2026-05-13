@@ -216,6 +216,6 @@ validation run should fail on those.
 
 Do not install the HyperscaleES CUDA/JAX/vLLM stack into `yubo-rl`. It pulls
 broad GPU dependencies including JAX, JAXLIB, Torch, vLLM, Ray, PEFT,
-datasets, transformers, reasoning-gym, math-verify, the repo's BO/RL test
-extras, and Isaac Sim / Isaac Lab / Newton. Keeping this single
+datasets, transformers, reasoning-gym, math-verify, Prime Intellect verifiers
+plus its GSM8K environment, the repo's BO/RL test extras, and Isaac Sim / Isaac Lab / Newton. Keeping this single
 heavy stack in `yubo-hyperscalees` is the intended boundary.

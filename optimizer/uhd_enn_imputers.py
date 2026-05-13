@@ -214,7 +214,15 @@ class JAXPointImputer(_JAXImputerBase):
             self._add_observation(np.asarray(z_base, dtype=np.float64), float(mu0))
         self._num_real_evals += 1
 
-    def tell_real_eval(self, *, z_eval: np.ndarray, z_base: np.ndarray, mu_eval: float, mu0: float, epsilon: float) -> None:
+    def tell_real_eval(
+        self,
+        *,
+        z_eval: np.ndarray,
+        z_base: np.ndarray,
+        mu_eval: float,
+        mu0: float,
+        epsilon: float,
+    ) -> None:
         z = self._feature(z_eval=z_eval, z_base=z_base)
         y = self._target_value(mu_eval=float(mu_eval), mu0=float(mu0), epsilon=float(epsilon))
         self._add_observation(z, y)
@@ -230,7 +238,15 @@ class JAXPointImputer(_JAXImputerBase):
             return float(mu0) + float(epsilon) * float(y_hat), abs(float(epsilon)) * float(y_se)
         return float(y_hat), float(y_se)
 
-    def calibrate_eval(self, *, z_eval: np.ndarray, z_base: np.ndarray, mu_eval_real: float, mu0: float, epsilon: float) -> None:
+    def calibrate_eval(
+        self,
+        *,
+        z_eval: np.ndarray,
+        z_base: np.ndarray,
+        mu_eval_real: float,
+        mu0: float,
+        epsilon: float,
+    ) -> None:
         if self._model is None or self._params is None:
             return
         try:

@@ -33,7 +33,12 @@ def _finite_normal_params(mean_np: np.ndarray, var_np: np.ndarray, train_Y: torc
     mean_np = np.clip(mean_np, -clip_abs, clip_abs)
     if not np.isfinite(std_np).all():
         _logger.warning("DNGO posterior std had non-finite values; imputing train_Y spread")
-    std_np = np.nan_to_num(std_np, nan=max(y_spread, 1e-9), posinf=max(y_spread, 1e-9), neginf=max(y_spread, 1e-9))
+    std_np = np.nan_to_num(
+        std_np,
+        nan=max(y_spread, 1e-9),
+        posinf=max(y_spread, 1e-9),
+        neginf=max(y_spread, 1e-9),
+    )
     std_np = np.maximum(std_np, 1e-9)
     return mean_np, std_np
 

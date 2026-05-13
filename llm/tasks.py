@@ -5,6 +5,7 @@ import llm.tasks_countdown as _countdown
 import llm.tasks_factory as _factory
 import llm.tasks_math as _math
 import llm.tasks_static as _static
+import llm.tasks_verifiers as _verifiers
 
 
 CountdownTask = _countdown.CountdownTask
@@ -12,6 +13,8 @@ LLMTask = _base.LLMTask
 MathTask = _math.MathTask
 MathTaskConfig = _math.MathTaskConfig
 RandomTask = _static.RandomTask
+VerifiersTask = _verifiers.VerifiersTask
+VerifiersTaskConfig = _verifiers.VerifiersTaskConfig
 ZerosTask = _static.ZerosTask
 _extract_math_answer = _math._extract_math_answer
 _first_nonempty_match = _base._first_nonempty_match
@@ -38,6 +41,8 @@ __all__ = [
     "MathTask",
     "MathTaskConfig",
     "RandomTask",
+    "VerifiersTask",
+    "VerifiersTaskConfig",
     "ZerosTask",
     "_extract_math_answer",
     "_first_nonempty_match",

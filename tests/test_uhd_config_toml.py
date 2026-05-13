@@ -198,7 +198,17 @@ def test_exp_uhd_local_uses_config_num_reps(monkeypatch, tmp_path):
     cfg_file = tmp_path / "cfg.toml"
     cfg_file.write_text('[uhd]\nenv_tag = "f:sphere-2d"\nnum_rounds = 1\nnum_reps = 30\n')
 
-    result = CliRunner().invoke(cli, ["local", str(cfg_file), "--workers", "2", "--results-dir", str(tmp_path / "out")])
+    result = CliRunner().invoke(
+        cli,
+        [
+            "local",
+            str(cfg_file),
+            "--workers",
+            "2",
+            "--results-dir",
+            str(tmp_path / "out"),
+        ],
+    )
 
     assert result.exit_code == 0, result.output
     assert called["num_reps"] == 30

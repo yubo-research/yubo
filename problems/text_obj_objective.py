@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import os
 import shutil
+import threading
 import time
 from pathlib import Path
 from types import SimpleNamespace
@@ -10,6 +11,7 @@ from typing import Any
 
 import numpy as np
 
+from common.bf8 import bf8_decode_tree, bf8_encode_tree
 from problems import pre_obj_vector_helpers as vector_helpers
 from problems import text_obj_lora as lora
 from problems import text_obj_runtime as runtime
@@ -29,11 +31,14 @@ class TextObjective:
         self._pool = None
         self._tokenizer = None
         self._task = None
+        self._console = None
         self._adapter_root: Path | None = None
         self._sampling_kwargs = None
         self._batch_cache = _PromptBatchCache()
         self._embed_indices: np.ndarray | None = None
         self._eval_count = 0
+        self._lock = threading.Lock()
+        self._adapter_cache = {}
 
     @property
     def dim(self) -> int:
@@ -56,20 +61,43 @@ class TextObjective:
 
     def evaluate(self, x: np.ndarray, *, seed: int) -> tuple[float, float]:
         runtime = _ensure_runtime(self)
-        prompts, answers = _batch_for_seed(self, int(seed))
-        adapter_path = _materialize_adapter(self, np.asarray(x, dtype=np.float64), seed=int(seed))
+        with self._lock:
+            prompts, answers = _batch_for_seed(self, int(seed))
+
+        # Use a hash of x to potentially reuse the adapter
+        x_hash = hashlib.sha1(x.tobytes()).hexdigest()[:16]
+        adapter_path = _materialize_adapter_cached(self, np.asarray(x, dtype=np.float64), x_hash=x_hash)
+
         try:
-            fitnesses = _generate_fitnesses(self, runtime, prompts, answers, adapter_path, int(seed))
+            fitnesses, logs = _generate_fitnesses(self, runtime, prompts, answers, adapter_path, int(seed), x_hash=x_hash)
+            self.last_logs = logs
         finally:
-            self._eval_count += 1
-            shutil.rmtree(adapter_path, ignore_errors=True)
+            with self._lock:
+                self._eval_count += 1
+            # We don't delete immediately if we want to reuse it, but we should
+            # keep an eye on disk space. For now, let's keep it until next eval.
+            pass
         values = np.asarray(fitnesses, dtype=np.float64)
         if values.size == 0:
             return 0.0, 0.0
         return float(np.mean(values)), _standard_error(values)
 
     def evaluate_many(self, x_batch: np.ndarray, *, seed: int) -> tuple[np.ndarray, np.ndarray]:
-        return vector_helpers.evaluate_many_serial(self.evaluate, x_batch, seed=seed)
+        import concurrent.futures
+
+        # Ensure runtime is initialized before starting threads to avoid race in _ensure_runtime
+        _ensure_runtime(self)
+
+        # Parallelize candidate evaluation across multiple threads.
+        # Each thread will call evaluate, which independently uses the VLLMEnginePool.
+        num_candidates = len(x_batch)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=num_candidates) as executor:
+            futures = [executor.submit(self.evaluate, x_batch[i], seed=int(seed)) for i in range(num_candidates)]
+            results = [f.result() for f in futures]
+
+        mus = np.asarray([r[0] for r in results], dtype=np.float64)
+        ses = np.asarray([r[1] for r in results], dtype=np.float64)
+        return mus, ses
 
     def configure_embedding(self, num_probes: int) -> None:
         self._embed_indices = vector_helpers.configure_embedding_indices(self.dim, num_probes)
@@ -112,6 +140,7 @@ def _ensure_runtime(obj: TextObjective):
     runtime.require_runtime()
     from transformers import AutoTokenizer
 
+    from llm.console_observer import TerminalConsoleObserver, UnifiedConsoleManager
     from llm.engine_pool import sampling_kwargs
     from llm.lora import build_peft_lora_template
     from llm.tasks import build_task
@@ -136,6 +165,9 @@ def _ensure_runtime(obj: TextObjective):
         seed=seed,
         basis_max_tensors=obj.cfg.text_basis_max_tensors,
     )
+    obj._console = UnifiedConsoleManager()
+    obj._console.attach(TerminalConsoleObserver())
+
     obj._task = build_task(
         obj.spec.env,
         batch_size=int(obj.cfg.prompt_batch_size),
@@ -144,9 +176,13 @@ def _ensure_runtime(obj: TextObjective):
         dataset_size=obj.cfg.sub_dataset_size,
         tokenizer=obj._tokenizer,
         apply_chat_template=False,
+        console=obj._console,
     )
     obj._pool = _launch_pool(obj.cfg, obj.spec.policy)
     obj._adapter_root = Path(runtime.make_adapter_root())
+    # Add a simple cache dictionary to obj
+    obj._adapter_cache = {}
+
     print(
         "UHD-Text: runtime ready "
         f"dt={time.perf_counter() - t0:.2f}s basis_tensors={obj._codec.num_basis_tensors}/"
@@ -163,19 +199,42 @@ def _batch_for_seed(obj: TextObjective, seed: int) -> tuple[list[str], list[Any]
     return obj._batch_cache.get_or_create(int(seed), obj._task.get_batch)
 
 
-def _materialize_adapter(obj: TextObjective, x: np.ndarray, *, seed: int) -> Path:
+def _materialize_adapter_cached(obj: TextObjective, x: np.ndarray, *, x_hash: str) -> Path:
     if obj._codec is None or obj._adapter_root is None:
         raise RuntimeError("Text runtime has not been initialized.")
-    adapter_path = obj._adapter_root / f"eval_{obj._eval_count}_{int(seed)}"
-    if adapter_path.exists():
-        shutil.rmtree(adapter_path)
-    adapter_path.mkdir(parents=True, exist_ok=True)
-    state = obj._codec.decode(x)
-    lora._write_lora_adapter(adapter_path, state, obj._codec.template.config)
-    return adapter_path
+
+    with obj._lock:
+        # Check if this hash is already materialized
+        adapter_path = obj._adapter_root / f"lora_{x_hash}"
+        if adapter_path.exists():
+            return adapter_path
+
+        # Clean up old adapters if the cache gets too large (e.g. > 5)
+        if len(obj._adapter_cache) > 5:
+            oldest_hash = next(iter(obj._adapter_cache))
+            old_path = obj._adapter_cache.pop(oldest_hash)
+            shutil.rmtree(old_path, ignore_errors=True)
+
+        adapter_path.mkdir(parents=True, exist_ok=True)
+        state = obj._codec.decode(x)
+        if bool(getattr(obj.cfg, "bf8_storage", False)):
+            state = bf8_decode_tree(bf8_encode_tree(state))
+        lora._write_lora_adapter(adapter_path, state, obj._codec.template.config)
+
+        obj._adapter_cache[x_hash] = adapter_path
+        return adapter_path
 
 
-def _generate_fitnesses(obj: TextObjective, runtime, prompts: list[str], answers: list[Any], adapter_path: Path, seed: int) -> list[float]:
+def _generate_fitnesses(
+    obj: TextObjective,
+    runtime,
+    prompts: list[str],
+    answers: list[Any],
+    adapter_path: Path,
+    seed: int,
+    *,
+    x_hash: str,
+) -> tuple[list[float], list[str]]:
     sampling = runtime.sampling_kwargs(
         tokenizer=obj._tokenizer,
         temperature=float(obj.cfg.temperature),
@@ -184,8 +243,8 @@ def _generate_fitnesses(obj: TextObjective, runtime, prompts: list[str], answers
         n=int(obj.cfg.samples_per_prompt),
     )
     args = SimpleNamespace(pass_at_k=bool(obj.cfg.pass_at_k))
-    lora_specs = _lora_specs(prompts, adapter_path, seed, obj._eval_count)
-    fitnesses, _info, _logs = runtime.pool.generate_and_score(
+    lora_specs = _lora_specs(prompts, adapter_path, seed, obj._eval_count, x_hash=x_hash)
+    fitnesses, _info, logs = runtime.pool.generate_and_score(
         prompts=prompts,
         sampling_params_kwargs=sampling,
         lora_request_specs=lora_specs,
@@ -193,7 +252,7 @@ def _generate_fitnesses(obj: TextObjective, runtime, prompts: list[str], answers
         answers=answers,
         args=args,
     )
-    return fitnesses
+    return fitnesses, logs
 
 
 def _embedding_indices(obj: TextObjective) -> np.ndarray:
@@ -225,13 +284,15 @@ def _launch_pool(cfg: Any, policy: Any):
             max_loras_per_engine=1,
             max_tokens=int(cfg.max_tokens),
             prompt_batch_size=int(cfg.prompt_batch_size),
+            use_async=bool(getattr(cfg, "use_async", False)),
         )
     )
 
 
-def _lora_specs(prompts: list[str], adapter_path: Path, seed: int, eval_count: int) -> list[tuple[str, int, str]]:
-    lora_name = f"text_{eval_count}"
-    lora_id = 1 + int(hashlib.sha1(f"{seed}:{eval_count}".encode("utf-8")).hexdigest()[:8], 16) % 2_000_000_000
+def _lora_specs(prompts: list[str], adapter_path: Path, seed: int, eval_count: int, *, x_hash: str) -> list[tuple[str, int, str]]:
+    lora_name = f"text_{x_hash}"
+    # Deterministic lora_id based on hash
+    lora_id = 1 + int(hashlib.sha1(x_hash.encode("utf-8")).hexdigest()[:8], 16) % 2_000_000_000
     return [(lora_name, lora_id, str(adapter_path)) for _ in prompts]
 
 

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import os
 import sys
 from types import SimpleNamespace
@@ -11,7 +10,6 @@ import torch
 from acq.acq_bt import AcqBT
 from acq.acq_dpp import AcqDPP
 from acq.fit_gp import _EmptyTransform
-from analysis.data_locator import DataLocator
 
 
 def test_kiss_cov_acqbt_x_max(monkeypatch):
@@ -61,12 +59,9 @@ def test_kiss_cov_acq_dpp_and_fitgp_empty_transform():
 
 
 def test_kiss_cov_data_locator_optimizers(tmp_path):
-    results_dir = tmp_path / "results"
-    exp_dir = results_dir / "exp_a"
-    exp_dir.mkdir(parents=True)
-    (exp_dir / "config.json").write_text(json.dumps({"opt_name": "random", "env_tag": "f:ackley-2d"}))
-    dl = DataLocator(results_path=str(results_dir), exp_dir="", opt_names=["random", "sobol"])
-    assert dl.optimizers() == ["random"]
+    from tests.kiss_ops_catalog_data_shared import run_kiss_data_locator_optimizers
+
+    run_kiss_data_locator_optimizers(tmp_path)
 
 
 def test_kiss_cov_ops_catalog_and_ops_data(tmp_path):

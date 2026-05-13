@@ -21,7 +21,13 @@ def require_eggroll_jax_stack(message: str | None = None):
     return jax, jnp, simple_es_tree_key
 
 
-def as_bool(value: Any, *, name: str, error_cls=ValueError, option_label: str = "EggRoll JAX option") -> bool:
+def as_bool(
+    value: Any,
+    *,
+    name: str,
+    error_cls=ValueError,
+    option_label: str = "EggRoll JAX option",
+) -> bool:
     if isinstance(value, bool):
         return value
     if isinstance(value, str):

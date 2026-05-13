@@ -40,7 +40,11 @@ class JaxMARLEggRollAdapter:
         self._jax = jax
         self._jnp = jnp
         raw_name = env_name.split(":", 1)[1]
-        candidates = [raw_name, self._NAME_ALIASES.get(raw_name, raw_name), raw_name.replace("-", "_")]
+        candidates = [
+            raw_name,
+            self._NAME_ALIASES.get(raw_name, raw_name),
+            raw_name.replace("-", "_"),
+        ]
         last_exc = None
         for candidate in dict.fromkeys(candidates):
             try:
@@ -95,13 +99,23 @@ class JaxMARLEggRollAdapter:
         if done is None:
             done_values = [self._jnp.asarray(dones[agent]) for agent in self.agents]
             done = self._jnp.all(self._jnp.stack(done_values))
-        result = (core._flat_obs(self._ordered_obs(obs), self._jax, self._jnp), next_state, reward, done, infos)
+        result = (
+            core._flat_obs(self._ordered_obs(obs), self._jax, self._jnp),
+            next_state,
+            reward,
+            done,
+            infos,
+        )
         return result
 
     def clip_action(self, action):
         if isinstance(action, dict):
             return {
-                agent: self._jnp.clip(self._jnp.rint(action[agent]).astype(self._jnp.int32), 0, int(size) - 1)
+                agent: self._jnp.clip(
+                    self._jnp.rint(action[agent]).astype(self._jnp.int32),
+                    0,
+                    int(size) - 1,
+                )
                 for agent, size in zip(self.agents, self._action_sizes, strict=True)
             }
         action = self._jnp.ravel(self._jnp.asarray(action))

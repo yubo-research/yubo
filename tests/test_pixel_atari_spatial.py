@@ -1,7 +1,10 @@
 import pytest
 import torch
 
-from problems.pixel_atari_spatial import atari_in_channels_from_obs_shape, atari_obs_to_nchw
+from problems.pixel_atari_spatial import (
+    atari_in_channels_from_obs_shape,
+    atari_obs_to_nchw,
+)
 
 
 def test_atari_in_channels_from_obs_shape_nhwc_84():

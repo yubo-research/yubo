@@ -16,9 +16,21 @@ def _ensure_repo_root_on_path() -> None:
 
 @click.command()
 @click.argument("batch_tag", type=str)
-@click.option("--max-parallel", default=5, show_default=True, type=int, help="Max concurrent configs per batch.")
+@click.option(
+    "--max-parallel",
+    default=5,
+    show_default=True,
+    type=int,
+    help="Max concurrent configs per batch.",
+)
 @click.option("--dry-run", is_flag=True, help="Print scheduled runs without executing.")
-@click.option("--results-dir", default="results", show_default=True, type=str, help="Results root passed to prep_* functions.")
+@click.option(
+    "--results-dir",
+    default="results",
+    show_default=True,
+    type=str,
+    help="Results root passed to prep_* functions.",
+)
 def _cli(batch_tag: str, max_parallel: int, dry_run: bool, results_dir: str) -> None:
     _ensure_repo_root_on_path()
     from experiments.batches_impl import run_from_batch_tag

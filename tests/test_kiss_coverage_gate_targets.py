@@ -41,7 +41,11 @@ def test_kiss_cov_runner_main_and_eval_config(monkeypatch, tmp_path):
     import rl.runner as runner
     from rl.pufferlib.ppo.eval_seeds import resolve_eval_seeds
 
-    monkeypatch.setattr(eval_seeds_mod, "resolve_run_seeds", lambda **kwargs: SimpleNamespace(problem_seed=3, noise_seed_0=4))
+    monkeypatch.setattr(
+        eval_seeds_mod,
+        "resolve_run_seeds",
+        lambda **kwargs: SimpleNamespace(problem_seed=3, noise_seed_0=4),
+    )
     assert resolve_eval_seeds(SimpleNamespace(seed=1, problem_seed=None, noise_seed_0=None)) == (3, 4)
 
     monkeypatch.setattr(
@@ -53,7 +57,11 @@ def test_kiss_cov_runner_main_and_eval_config(monkeypatch, tmp_path):
             noise_seed_0=kwargs["seed"] + 2,
         ),
     )
-    monkeypatch.setattr(eval_seeds_mod, "resolve_run_seeds", lambda **kwargs: SimpleNamespace(problem_seed=5, noise_seed_0=6))
+    monkeypatch.setattr(
+        eval_seeds_mod,
+        "resolve_run_seeds",
+        lambda **kwargs: SimpleNamespace(problem_seed=5, noise_seed_0=6),
+    )
     fake_env_conf = eval_config.build_eval_env_conf(
         SimpleNamespace(env_tag="x", seed=1, problem_seed=None, noise_seed_0=None, pixels_only=False),
         obs_mode="vector",
@@ -66,9 +74,17 @@ def test_kiss_cov_runner_main_and_eval_config(monkeypatch, tmp_path):
     cfg_path.write_text('[rl]\nalgo="dummy"\n[rl.dummy]\nseed=7\nexp_dir="tmp"\n')
 
     monkeypatch.setattr(runner, "split_config_and_args", lambda argv: (str(cfg_path), argv[1:]))
-    monkeypatch.setattr(runner, "parse_runtime_args", lambda rest: SimpleNamespace(workers=1, workers_cli_set=False, cleaned=rest))
+    monkeypatch.setattr(
+        runner,
+        "parse_runtime_args",
+        lambda rest: SimpleNamespace(workers=1, workers_cli_set=False, cleaned=rest),
+    )
     monkeypatch.setattr(runner, "parse_set_args", lambda cleaned: {})
-    monkeypatch.setattr(runner, "load_toml", lambda _path: {"rl": {"algo": "dummy", "dummy": {"seed": 7, "exp_dir": "tmp"}}})
+    monkeypatch.setattr(
+        runner,
+        "load_toml",
+        lambda _path: {"rl": {"algo": "dummy", "dummy": {"seed": 7, "exp_dir": "tmp"}}},
+    )
     monkeypatch.setattr(runner, "apply_overrides", lambda cfg, overrides: None)
     monkeypatch.setattr(runner, "_extract_run_cfg", lambda cfg: ([], 1))
     monkeypatch.setattr(runner, "resolve_algo_name", lambda algo, backend=None: algo)
@@ -80,7 +96,11 @@ def test_kiss_cov_runner_main_and_eval_config(monkeypatch, tmp_path):
         called["train"] += 1
         return {"ok": True}
 
-    monkeypatch.setattr(runner, "get_algo", lambda _algo_name, backend=None: SimpleNamespace(config_cls=_Cfg, train_fn=_train_fn))
+    monkeypatch.setattr(
+        runner,
+        "get_algo",
+        lambda _algo_name, backend=None: SimpleNamespace(config_cls=_Cfg, train_fn=_train_fn),
+    )
     monkeypatch.setattr("rl.builtins.register_all", lambda: None)
     runner.main(["config.toml"])
     assert called["train"] == 1
@@ -121,7 +141,10 @@ def test_kiss_cov_dm_control_collect_and_mlp_torch_env(monkeypatch):
 
 
 def test_kiss_cov_env_preprocessing_and_episode_rollout():
-    from common.env_preprocessing import _ClipObservationWrapper, apply_gym_preprocessing
+    from common.env_preprocessing import (
+        _ClipObservationWrapper,
+        apply_gym_preprocessing,
+    )
     from rl.core.episode_rollout import _unpack_step_result, collect_episode_return
 
     env = _GymClipEnv()
@@ -194,15 +217,40 @@ def test_kiss_cov_checkpoint_and_uhd_np(monkeypatch, tmp_path):
     )
     monkeypatch.setattr(ppo_ckpt, "restore_backbone_head_snapshot", lambda *args, **kwargs: None)
     state = SimpleNamespace(
-        start_iteration=0, global_step=0, best_actor_state=None, best_return=0.0, last_eval_return=0.0, last_heldout_return=None, last_episode_return=0.0
+        start_iteration=0,
+        global_step=0,
+        best_actor_state=None,
+        best_return=0.0,
+        last_eval_return=0.0,
+        last_heldout_return=None,
+        last_episode_return=0.0,
     )
     ppo_ckpt.restore_checkpoint_if_requested(
-        SimpleNamespace(resume_from=str(tmp_path / "x.ckpt")), SimpleNamespace(batch_size=1), model, optimizer, state, device=torch.device("cpu")
+        SimpleNamespace(resume_from=str(tmp_path / "x.ckpt")),
+        SimpleNamespace(batch_size=1),
+        model,
+        optimizer,
+        state,
+        device=torch.device("cpu"),
     )
     called = {"save": 0}
     mgr = SimpleNamespace(save_both=lambda payload, iteration: called.__setitem__("save", called["save"] + 1))
-    ppo_ckpt.maybe_save_periodic_checkpoint(SimpleNamespace(checkpoint_interval=1), mgr, model, optimizer, state, iteration=1)
-    ppo_ckpt.save_final_checkpoint(SimpleNamespace(checkpoint_interval=1), mgr, model, optimizer, state, iteration=2)
+    ppo_ckpt.maybe_save_periodic_checkpoint(
+        SimpleNamespace(checkpoint_interval=1),
+        mgr,
+        model,
+        optimizer,
+        state,
+        iteration=1,
+    )
+    ppo_ckpt.save_final_checkpoint(
+        SimpleNamespace(checkpoint_interval=1),
+        mgr,
+        model,
+        optimizer,
+        state,
+        iteration=2,
+    )
     assert called["save"] == 2
 
     base = UHDSimpleBase(_Pert(), sigma_0=0.1, dim=3)
@@ -221,7 +269,10 @@ def test_kiss_cov_checkpoint_and_uhd_np(monkeypatch, tmp_path):
     assert simple.mu_avg == 1.0
     assert simple.se_avg == 0.1
 
-    monkeypatch.setattr("optimizer.uhd_simple_be_np.EpistemicNearestNeighbors", lambda *args, **kwargs: _ENN())
+    monkeypatch.setattr(
+        "optimizer.uhd_simple_be_np.EpistemicNearestNeighbors",
+        lambda *args, **kwargs: _ENN(),
+    )
     monkeypatch.setattr("optimizer.uhd_simple_be_np.enn_fit", lambda *args, **kwargs: object())
     be = UHDSimpleBENp(p, _Embed(), sigma_0=0.1, warmup=1, fit_interval=1, num_candidates=2)
     be.ask()
@@ -238,15 +289,28 @@ def test_kiss_cov_enn_imputer_and_cli_callbacks(monkeypatch, tmp_path):
     from experiments import modal_batches
     from optimizer.uhd_enn_imputer import ENNImputerConfig, ENNMinusImputer
 
-    monkeypatch.setattr("optimizer.uhd_enn_imputer.EpistemicNearestNeighbors", lambda *args, **kwargs: _ENNImputer())
+    monkeypatch.setattr(
+        "optimizer.uhd_enn_imputer.EpistemicNearestNeighbors",
+        lambda *args, **kwargs: _ENNImputer(),
+    )
     monkeypatch.setattr("optimizer.uhd_enn_imputer.enn_fit", lambda *args, **kwargs: object())
 
     module = torch.nn.Linear(2, 1, bias=False)
-    cfg = ENNImputerConfig(warmup_real_obs=1, fit_interval=1, min_calib_points=0, max_abs_err_ema=1.0, se_threshold=1.0, refresh_interval=1000)
+    cfg = ENNImputerConfig(
+        warmup_real_obs=1,
+        fit_interval=1,
+        min_calib_points=0,
+        max_abs_err_ema=1.0,
+        se_threshold=1.0,
+        refresh_interval=1000,
+    )
     imputer = ENNMinusImputer(
         module=module,
         cfg=cfg,
-        noise_nz_fn=lambda seed, sigma: (np.array([0, 1], dtype=np.int64), np.array([sigma, -sigma], dtype=np.float32)),
+        noise_nz_fn=lambda seed, sigma: (
+            np.array([0, 1], dtype=np.int64),
+            np.array([sigma, -sigma], dtype=np.float32),
+        ),
     )
     imputer.begin_pair(seed=1, sigma=0.1)
     imputer.tell_real(mu=1.0, phase="plus")
@@ -265,7 +329,11 @@ def test_kiss_cov_enn_imputer_and_cli_callbacks(monkeypatch, tmp_path):
     toml.write_text('[uhd]\nenv_tag="f:sphere-2d"\nnum_rounds=1\n')
     exp_uhd.modal_cmd(str(toml), (), None, "A100")
 
-    monkeypatch.setattr(modal_batches.modal, "Function", SimpleNamespace(lookup=lambda *_args, **_kwargs: _Lookup()))
+    monkeypatch.setattr(
+        modal_batches.modal,
+        "Function",
+        SimpleNamespace(lookup=lambda *_args, **_kwargs: _Lookup()),
+    )
     monkeypatch.setattr(modal_batches, "batches_submitter", lambda *args, **kwargs: None)
     monkeypatch.setattr(modal_batches, "status", lambda: None)
     monkeypatch.setattr(modal_batches, "collect", lambda: None)

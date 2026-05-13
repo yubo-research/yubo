@@ -3,7 +3,11 @@ import math
 import torch
 from torch import nn
 
-from .sparse_jl_t_accum import accumulate_into, accumulate_into_wr, accumulate_noise_into
+from .sparse_jl_t_accum import (
+    accumulate_into,
+    accumulate_into_wr,
+    accumulate_noise_into,
+)
 from .sparse_jl_t_hash import compute_rows_and_signs, compute_rows_and_signs_wr
 
 

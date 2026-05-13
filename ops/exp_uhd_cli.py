@@ -38,7 +38,12 @@ cli = _cli
 @_cli.command(name="local", help="Run locally (single process) from a config TOML.")
 @click.argument("config_toml", type=click.Path(exists=True, dir_okay=False, path_type=str))
 @click.option("--workers", type=int, default=1, help="Parallel workers when [uhd].num_reps > 1.")
-@click.option("--results-dir", type=str, default="results/uhd", help="Results directory when [uhd].num_reps > 1.")
+@click.option(
+    "--results-dir",
+    type=str,
+    default="results/uhd",
+    help="Results directory when [uhd].num_reps > 1.",
+)
 def _local(config_toml: str, workers: int = 1, results_dir: str = "results/uhd") -> None:
     tomllib = _im("tomllib")
     p = _im("ops.exp_uhd_parse")

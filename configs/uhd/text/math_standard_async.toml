@@ -1,0 +1,15 @@
+# Demonstrates the 'Universal Async Bridge'
+# routes: Actor -> async batch generate -> task.score (sync)
+
+[uhd]
+env_tag = "llm:math:gsm8k"
+policy_tag = "qwen3-1p7b-lora-r1"
+num_rounds = 10
+optimizer = "mezo"
+use_async = true      # Enables the AsyncLLMEngine and the actor bridge
+num_engines = 1
+max_tokens = 256
+prompt_batch_size = 4
+samples_per_prompt = 2
+pass_at_k = true
+log_interval = 1

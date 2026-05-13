@@ -114,7 +114,10 @@ def evaluate_actor(
     device: torch.device,
     eval_seed: int,
 ) -> float:
-    collect_denoised_trajectory = getattr(importlib.import_module("rl.core.episode_rollout"), "collect_denoised_trajectory")
+    collect_denoised_trajectory = getattr(
+        importlib.import_module("rl.core.episode_rollout"),
+        "collect_denoised_trajectory",
+    )
 
     eval_env = env.env_conf
     eval_policy = build_eval_policy(modules, env, device)

@@ -9,7 +9,11 @@ import numpy as np
 import torch
 from torchrl_video_helper_stubs import _BoxSpaceStub, _EnvConfStub
 from torchrl_video_helper_stubs_non_gym import _NonGymEnvConfStub
-from torchrl_video_type_support import env_conf_no_transform_instance, env_conf_transform_with_space, patch_rollout_video_writer
+from torchrl_video_type_support import (
+    env_conf_no_transform_instance,
+    env_conf_transform_with_space,
+    patch_rollout_video_writer,
+)
 
 from common.video import (
     RLVideoContext,

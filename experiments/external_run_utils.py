@@ -15,7 +15,12 @@ def normalize_key(key: str) -> str:
 
 
 def normalize_mapping(raw: dict[str, Any], *, source: str, valid_keys: set[str]) -> dict[str, Any]:
-    return coerce_mapping_keys(raw, source=source, valid_keys=valid_keys, not_mapping_msg=f"{source} must be a mapping.")
+    return coerce_mapping_keys(
+        raw,
+        source=source,
+        valid_keys=valid_keys,
+        not_mapping_msg=f"{source} must be a mapping.",
+    )
 
 
 def deep_update(dst: dict[str, Any], src: dict[str, Any]) -> dict[str, Any]:

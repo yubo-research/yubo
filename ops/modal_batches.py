@@ -39,7 +39,19 @@ def deploy(tag: str):
 def submit(tag: str, batch_tag: str):
     """Submit missing jobs for the batch."""
     impl = _get_impl_path()
-    _run_modal(["run", f"{impl}::batches", "--tag", tag, "--cmd", "submit-missing", "--batch-tag", batch_tag], tag)
+    _run_modal(
+        [
+            "run",
+            f"{impl}::batches",
+            "--tag",
+            tag,
+            "--cmd",
+            "submit-missing",
+            "--batch-tag",
+            batch_tag,
+        ],
+        tag,
+    )
 
 
 @cli.command("submit-force")
@@ -48,7 +60,19 @@ def submit(tag: str, batch_tag: str):
 def submit_force(tag: str, batch_tag: str):
     """Force resubmit all jobs for the batch."""
     impl = _get_impl_path()
-    _run_modal(["run", f"{impl}::batches", "--tag", tag, "--cmd", "submit-missing-force", "--batch-tag", batch_tag], tag)
+    _run_modal(
+        [
+            "run",
+            f"{impl}::batches",
+            "--tag",
+            tag,
+            "--cmd",
+            "submit-missing-force",
+            "--batch-tag",
+            batch_tag,
+        ],
+        tag,
+    )
 
 
 @cli.command()

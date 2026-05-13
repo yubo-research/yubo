@@ -31,6 +31,17 @@ _MATH_DATASETS = frozenset(
         "deepscaler40k",
     }
 )
+_VERIFIERS_ENVS = frozenset(
+    {
+        "gsm8k",
+        "math_python",
+        "bfcl_v3",
+        "livecodebench",
+        "simpleqa",
+        "logic",
+        "minichef",
+    }
+)
 
 _STATIC_ENVS: dict[str, LLMEnvSpec] = {
     "llm:zeros": LLMEnvSpec(
@@ -103,13 +114,40 @@ def resolve_llm_env(env_tag: str) -> LLMEnvSpec:
             answer_format="none",
         )
 
+    verifiers_prefix = "llm:verifiers:"
+    if tag.startswith(verifiers_prefix):
+        env_id = tag[len(verifiers_prefix) :]
+        _validate_verifiers_env(env_id, env_tag=tag)
+        return LLMEnvSpec(
+            env_tag=tag,
+            task_name=f"verifiers:{env_id}",
+            task_kind="verifiers",
+            dataset_name=env_id,
+            answer_format="verifiers",
+        )
+
+    thm_prefix = "llm:thm:"
+    if tag.startswith(thm_prefix):
+        parts = tag[len(thm_prefix) :].split(":")
+        if len(parts) < 2:
+            raise ValueError(f"Invalid thm env_tag '{tag}'. Expected format: llm:thm:{{language}}:{{dataset}}")
+        lang, dataset = parts[0], ":".join(parts[1:])
+        return LLMEnvSpec(
+            env_tag=tag,
+            task_name=f"thm:{lang}:{dataset}",
+            task_kind="thm",
+            dataset_name=dataset,
+            answer_format="formal",
+        )
+
     raise KeyError(f"Unknown LLM env_tag '{env_tag}'. Available examples: {supported_llm_env_tags()[:8]}")
 
 
 def supported_llm_env_tags() -> tuple[str, ...]:
     math_tags = [f"llm:math:{name}" for name in sorted(_MATH_DATASETS)]
     answer_tag_math = [f"llm:math:answer-tags:{name}" for name in sorted(_MATH_DATASETS)]
-    return tuple(sorted([*_STATIC_ENVS, *math_tags, *answer_tag_math]))
+    verifiers_tags = [f"llm:verifiers:{name}" for name in sorted(_VERIFIERS_ENVS)]
+    return tuple(sorted([*_STATIC_ENVS, *math_tags, *answer_tag_math, *verifiers_tags]))
 
 
 def resolve_llm_policy(policy_tag: str) -> LLMPolicySpec:
@@ -143,3 +181,8 @@ def supported_llm_policy_tags() -> tuple[str, ...]:
 def _validate_math_dataset(dataset_name: str, *, env_tag: str) -> None:
     if dataset_name not in _MATH_DATASETS:
         raise KeyError(f"Unknown math dataset in env_tag '{env_tag}'. Supported datasets: {sorted(_MATH_DATASETS)}")
+
+
+def _validate_verifiers_env(env_id: str, *, env_tag: str) -> None:
+    if env_id not in _VERIFIERS_ENVS:
+        raise KeyError(f"Unknown verifiers env in env_tag '{env_tag}'. Supported environments: {sorted(_VERIFIERS_ENVS)}")

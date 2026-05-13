@@ -92,7 +92,11 @@ class NanoEggPretrainVectorObjective:
         sample_noise = getattr(self._objective, "sample_noise", None)
         if callable(sample_noise):
             return np.asarray(
-                sample_noise(seed=int(seed), num_dim_target=num_dim_target, num_module_target=num_module_target),
+                sample_noise(
+                    seed=int(seed),
+                    num_dim_target=num_dim_target,
+                    num_module_target=num_module_target,
+                ),
                 dtype=np.float64,
             )
         target = num_module_target if num_module_target is not None else num_dim_target

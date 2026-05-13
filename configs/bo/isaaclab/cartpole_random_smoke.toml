@@ -1,16 +1,41 @@
 # Run on the CUDA remote:
 # ./ops/experiment.py local configs/bo/isaaclab/cartpole_random_smoke.toml
 
+# [experiment]
+# exp_dir = "runs/isaaclab/smoke/cartpole_random"
+# env_tag = "isaaclab:Isaac-Velocity-Rough-Anymal-C-Direct-v0"
+# policy_tag = "isaaclab-random-mlp-64-64"
+# opt_name = "random"
+# num_arms = 1
+# num_rounds = 1
+# num_reps = 1
+# num_denoise = 1
+# num_denoise_passive = 1
+# b_trace = true
+# runtime_device = "cuda"
+# local_workers = 1
+
+
+
 [experiment]
-exp_dir = "runs/isaaclab/smoke/cartpole_random"
-env_tag = "isaaclab:Isaac-Cartpole-v0"
-policy_tag = "isaaclab-random-mlp-64-64"
-opt_name = "random"
-num_arms = 1
-num_rounds = 1
-num_reps = 1
-num_denoise = 1
-num_denoise_passive = 1
-b_trace = true
+exp_dir = "runs/issaclab"
+# env_tag = "brax:ant"
+env_tag = "isaaclab:Isaac-Velocity-Rough-Anymal-C-Direct-v0"
+policy_tag = "eggroll-ac-mlp-256x3-pqn"
+population = 2048
+num_epochs = 1216
+num_reps = 10
 runtime_device = "cuda"
 local_workers = 1
+b_trace = true
+
+[optimizer]
+name = "eggroll"
+
+[optimizer.params]
+noiser = "eggroll"
+sigma = 0.05
+rank = 1
+lr = 0.01
+optax = "adam"
+use_batched_update = true

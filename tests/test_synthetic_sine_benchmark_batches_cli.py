@@ -44,7 +44,17 @@ def test_local_single_skips_existing(tmp_path) -> None:
     _assert_local_single_skips_existing(
         tmp_path,
         dest_kwargs=dict(n=1, d=2, problem_seed=3, rep_index=0, surrogate_key="enn"),
-        cli_args=["local-single", "1", "sphere", "0", "enn", "-d", "2", "--problem-seed", "3"],
+        cli_args=[
+            "local-single",
+            "1",
+            "sphere",
+            "0",
+            "enn",
+            "-d",
+            "2",
+            "--problem-seed",
+            "3",
+        ],
     )
 
 
@@ -52,5 +62,13 @@ def test_local_single_skips_existing_default_d10(tmp_path) -> None:
     _assert_local_single_skips_existing(
         tmp_path,
         dest_kwargs=dict(n=5, d=10, problem_seed=17, rep_index=2, surrogate_key="vecchia"),
-        cli_args=["local-single", "5", "sphere", "2", "vecchia", "--problem-seed", "17"],
+        cli_args=[
+            "local-single",
+            "5",
+            "sphere",
+            "2",
+            "vecchia",
+            "--problem-seed",
+            "17",
+        ],
     )

@@ -26,7 +26,11 @@ def iterate_nanoegg(designer, _data, num_arms: int, *, telemetry=None) -> Iterat
     datum, policy_eval_dt = _evaluate_updated_policy(designer, population)
     update_best_and_telemetry(designer, datum, prop_dt, telemetry)
     designer._epoch += 1
-    return IterateResult(data=[datum], dt_prop=float(prop_dt), dt_eval=float(result.dt_eval + policy_eval_dt))
+    return IterateResult(
+        data=[datum],
+        dt_prop=float(prop_dt),
+        dt_eval=float(result.dt_eval + policy_eval_dt),
+    )
 
 
 def direction_seed(designer, pair_idx: int) -> int:
@@ -59,7 +63,10 @@ def _collect_population(designer, population: int) -> _PopulationResult:
     pending_x: list[np.ndarray] = []
     pending_start = 0
     next_log_at = max(256, int(designer._nanoegg_batch_size))
-    _log(designer, f"iter={designer._epoch} evaluating population={population} dim={designer._x.size} batch_size={designer._nanoegg_batch_size}")
+    _log(
+        designer,
+        f"iter={designer._epoch} evaluating population={population} dim={designer._x.size} batch_size={designer._nanoegg_batch_size}",
+    )
 
     for pair_idx in range(population // 2):
         direction = _sample_direction(designer, pair_idx)
@@ -161,7 +168,10 @@ def _flush_pending(
 def _maybe_log_progress(designer, done: int, next_log_at: int, population: int, t_eval: float) -> int:
     if done < next_log_at and done != population:
         return next_log_at
-    _log(designer, f"iter={designer._epoch} evaluated={done}/{population} elapsed={time.time() - t_eval:.1f}s")
+    _log(
+        designer,
+        f"iter={designer._epoch} evaluated={done}/{population} elapsed={time.time() - t_eval:.1f}s",
+    )
     while next_log_at <= done:
         next_log_at += max(256, int(designer._nanoegg_batch_size))
     return next_log_at

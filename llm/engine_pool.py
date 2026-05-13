@@ -13,6 +13,8 @@ class EnginePoolConfig:
     max_loras_per_engine: int
     max_tokens: int
     prompt_batch_size: int
+    use_async: bool = False
+    vllm_max_model_len: int | None = None
 
 
 class VLLMEnginePool:
@@ -27,7 +29,7 @@ class VLLMEnginePool:
         from ray.util.placement_group import placement_group
         from ray.util.scheduling_strategies import PlacementGroupSchedulingStrategy
 
-        from llm.vllm import TextVLLMActor
+        from llm.vllm_actor import AsyncTextVLLMActor, TextVLLMActor
 
         ensure_ray(ray)
         placement_groups = []
@@ -54,8 +56,17 @@ class VLLMEnginePool:
                 )
 
         enforce_eager = int(cfg.tensor_parallel_size) > 1
+
+        actor_cls = AsyncTextVLLMActor if cfg.use_async else TextVLLMActor
+        concurrency = 1000 if cfg.use_async else 1
+
         actors = [
-            ray.remote(num_cpus=0, num_gpus=0, scheduling_strategy=strategy)(TextVLLMActor).remote(
+            ray.remote(
+                num_cpus=0,
+                num_gpus=0,
+                scheduling_strategy=strategy,
+                max_concurrency=concurrency,
+            )(actor_cls).remote(
                 model_name=str(cfg.model_name),
                 tensor_parallel_size=int(cfg.tensor_parallel_size),
                 max_loras=int(cfg.max_loras_per_engine),
@@ -63,6 +74,7 @@ class VLLMEnginePool:
                 max_tokens=int(cfg.max_tokens),
                 prompt_batch_size=int(cfg.prompt_batch_size),
                 enforce_eager=enforce_eager,
+                vllm_max_model_len=cfg.vllm_max_model_len,
             )
             for strategy in strategies
         ]
@@ -77,7 +89,10 @@ class VLLMEnginePool:
         master_address, master_port = master_info
         results = self._ray.get(
             [
-                self.engines[i].collective_rpc.remote("init_inter_engine_group", args=(master_address, master_port, i, len(self.engines)))
+                self.engines[i].collective_rpc.remote(
+                    "init_inter_engine_group",
+                    args=(master_address, master_port, i, len(self.engines)),
+                )
                 for i in range(len(self.engines))
             ]
         )
@@ -106,8 +121,9 @@ class VLLMEnginePool:
             stop = min(start + requests_per_engine, len(prompts))
             if start >= stop:
                 continue
+            method = engine.generate_and_score_async if hasattr(engine, "generate_and_score_async") else engine.generate_and_score
             refs.append(
-                engine.generate_and_score.remote(
+                method.remote(
                     prompts[start:stop],
                     sampling_params_kwargs,
                     None if lora_request_specs is None else lora_request_specs[start:stop],
@@ -160,7 +176,15 @@ def ensure_ray(ray: Any) -> None:
 
 
 def sampling_kwargs(*, tokenizer: Any, temperature: float, seed: int, max_tokens: int, n: int) -> dict[str, Any]:
-    stops = [token for token in (getattr(tokenizer, "eos_token", None), "<|im_end|>", "<|endoftext|>") if token]
+    stops = [
+        token
+        for token in (
+            getattr(tokenizer, "eos_token", None),
+            "<|im_end|>",
+            "<|endoftext|>",
+        )
+        if token
+    ]
     return {
         "temperature": float(temperature),
         "seed": int(seed),

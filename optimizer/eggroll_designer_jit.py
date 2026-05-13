@@ -47,7 +47,17 @@ def build_jitted_fns(designer, cfg: JittedFnConfig):
             action = action_selector.select_action(policy_dist, action_key)
             action = cfg.env_adapter.clip_action(action)
             next_obs, next_state, reward, next_done, _info = cfg.env_adapter.step(env_key, state_t, action)
-            transition = (obs_t, state_t, total_t, done_t, key_t, next_obs, next_state, reward, next_done)
+            transition = (
+                obs_t,
+                state_t,
+                total_t,
+                done_t,
+                key_t,
+                next_obs,
+                next_state,
+                reward,
+                next_done,
+            )
             return rollout_step_out(jax, jnp, transition)
 
         (_, _, total_reward, _, _), _ = jax.lax.scan(
@@ -70,9 +80,24 @@ def build_jitted_fns(designer, cfg: JittedFnConfig):
     @jax.jit
     def update_params(noiser_params, params, raw_scores, epoch):
         population = raw_scores.shape[0]
-        iterinfo = (jnp.full((population,), epoch, dtype=jnp.int32), jnp.arange(population, dtype=jnp.int32))
-        fitnesses = cfg.noiser.convert_fitnesses(cfg.frozen_noiser_params, noiser_params, _rank_scores(jnp, raw_scores, cfg.rank_transform))
-        return cfg.noiser.do_updates(cfg.frozen_noiser_params, noiser_params, params, cfg.es_tree_key, fitnesses, iterinfo, cfg.es_map)
+        iterinfo = (
+            jnp.full((population,), epoch, dtype=jnp.int32),
+            jnp.arange(population, dtype=jnp.int32),
+        )
+        fitnesses = cfg.noiser.convert_fitnesses(
+            cfg.frozen_noiser_params,
+            noiser_params,
+            _rank_scores(jnp, raw_scores, cfg.rank_transform),
+        )
+        return cfg.noiser.do_updates(
+            cfg.frozen_noiser_params,
+            noiser_params,
+            params,
+            cfg.es_tree_key,
+            fitnesses,
+            iterinfo,
+            cfg.es_map,
+        )
 
     return evaluate_population, evaluate_policy, update_params
 

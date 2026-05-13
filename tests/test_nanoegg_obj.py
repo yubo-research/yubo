@@ -80,7 +80,11 @@ def test_nanoegg_decode_scale_moves_int8_params_for_small_bszo_epsilon():
     from problems.nanoegg_obj import NanoEggObjectiveSpec, NanoEggUHDObjective
 
     obj = NanoEggUHDObjective(
-        _cfg(policy_tag="nanoegg:int8:1l:16d", pretrain_search_dim=64, pretrain_delta_scale=10000.0),
+        _cfg(
+            policy_tag="nanoegg:int8:1l:16d",
+            pretrain_search_dim=64,
+            pretrain_delta_scale=10000.0,
+        ),
         NanoEggObjectiveSpec(
             env_tag="pretrain:nanoegg:synthetic",
             dataset="synthetic",

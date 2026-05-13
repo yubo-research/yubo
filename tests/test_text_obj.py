@@ -21,7 +21,10 @@ def test_text_uhd_config_file_loads():
 def test_text_tags_route_to_uhd_vector_objective(monkeypatch):
     import problems.text_obj as text_obj
     from ops.exp_uhd import _parse_cfg
-    from problems.uhd_obj import build_uhd_vector_objective, supports_uhd_vector_objective
+    from problems.uhd_obj import (
+        build_uhd_vector_objective,
+        supports_uhd_vector_objective,
+    )
 
     class FakeTextObjective:
         dim = 5

@@ -170,7 +170,13 @@ def _d_sts_ar(ctx: _SimpleContext, opts: dict):
 
 def _d_turbo_enn_fit_ucb(ctx: _SimpleContext, opts: dict):
     opts = dict(opts)
-    eggroll_allowed = {"steps_per_episode", "num_envs", "deterministic_policy", "param_scale", "seed_offset"}
+    eggroll_allowed = {
+        "steps_per_episode",
+        "num_envs",
+        "deterministic_policy",
+        "param_scale",
+        "seed_offset",
+    }
     allowed = {"nfs", "k"} | eggroll_allowed
     unknown = set(opts) - allowed
     if unknown:

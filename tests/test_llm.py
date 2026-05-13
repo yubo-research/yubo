@@ -1,16 +1,27 @@
 from __future__ import annotations
 
+import pickle
+import sys
+import types
+
 from click.testing import CliRunner
+
+from tests.llm_test_mocks_env import FakeEnv
+from tests.llm_test_mocks_state import FakeState
+from tests.llm_test_mocks_vllm import FakeAsyncEngine, FakeOutput
 
 
 def test_llm_registry_resolves_env_and_policy_tags():
     from llm.registry import resolve_llm_env, resolve_llm_policy
 
     env = resolve_llm_env("llm:math:answer-tags:gsm8k")
+    verifiers_env = resolve_llm_env("llm:verifiers:gsm8k")
     policy = resolve_llm_policy("qwen3-1p7b-lora-r4")
 
     assert env.task_name == "math:answer-tags:gsm8k"
     assert env.answer_format == "answer_tags"
+    assert verifiers_env.task_kind == "verifiers"
+    assert verifiers_env.dataset_name == "gsm8k"
     assert policy.model_name == "Qwen/Qwen3-1.7B"
     assert policy.lora_rank == 4
     assert policy.lora_alpha == 4
@@ -59,7 +70,10 @@ population_size = 2
     )
 
     raw = llm._load_toml_config(str(config))
-    raw = {**raw, **llm._parse_overrides(("population_size=4", "pass_at_k=true", "samples_per_prompt=2"))}
+    raw = {
+        **raw,
+        **llm._parse_overrides(("population_size=4", "pass_at_k=true", "samples_per_prompt=2")),
+    }
     cfg = llm._parse_cfg(raw)
 
     assert cfg.env_tag == "llm:math:gsm8k"
@@ -162,6 +176,48 @@ def test_llm_countdown_task_builds_owned_synthetic_batches():
     assert "<answer>" in prompts[0]
 
 
+def test_verifiers_task_uses_lazy_environment_adapter(monkeypatch):
+    from llm.tasks_verifiers import _ENV_CACHE, VerifiersTask
+
+    _ENV_CACHE.clear()
+    calls = []
+
+    def load_environment(env_id, **env_args):
+        calls.append((env_id, env_args))
+        return FakeEnv()
+
+    verifiers_mod = types.ModuleType("verifiers")
+    verifiers_utils_mod = types.ModuleType("verifiers.utils")
+    verifiers_env_utils_mod = types.ModuleType("verifiers.utils.env_utils")
+    verifiers_types_mod = types.ModuleType("verifiers.types")
+    verifiers_utils_mod.__path__ = []
+    verifiers_env_utils_mod.load_environment = load_environment
+    verifiers_types_mod.State = FakeState
+    monkeypatch.setitem(sys.modules, "verifiers", verifiers_mod)
+    monkeypatch.setitem(sys.modules, "verifiers.utils", verifiers_utils_mod)
+    monkeypatch.setitem(sys.modules, "verifiers.utils.env_utils", verifiers_env_utils_mod)
+    monkeypatch.setitem(sys.modules, "verifiers.types", verifiers_types_mod)
+
+    task = VerifiersTask(batch_size=2, env_id="gsm8k", seed=0, dataset_size=2)
+    prompts, answers = task.get_batch()
+    fitness, model_answers, sample_fitnesses = task.score(
+        ["reasoning \\boxed{4}", "reasoning \\boxed{5}"],
+        [False, False],
+        answers[0],
+        pass_at_k=True,
+    )
+    restored = pickle.loads(pickle.dumps(task))
+
+    assert calls == [("gsm8k", {"num_train_examples": 2})]
+    assert prompts[0] == "System: Use boxes.\nUser: 2+2?\nAssistant:"
+    assert fitness == 1.0
+    assert model_answers == ("4", "5")
+    assert sample_fitnesses.tolist() == [1.0, 0.0]
+    assert restored._env is None
+    assert restored._dataset is None
+    _ENV_CACHE.clear()
+
+
 def test_llm_eggroll_lora_specs_repeat_per_prompt():
     from llm.eggroll import _engine_lora_specs
 
@@ -198,3 +254,106 @@ population_size = 2
 
     assert result.exit_code == 0, result.output
     assert 'RESULT: {"best": 0.0, "iterations": 1}' in result.output
+
+
+def test_vllm_actor_defaults_disable_plugin_autoload(monkeypatch):
+    from llm.vllm_actor_config import set_vllm_env_defaults
+
+    monkeypatch.delenv("VLLM_PLUGINS", raising=False)
+
+    set_vllm_env_defaults()
+
+    assert "VLLM_PLUGINS" in __import__("os").environ
+    assert __import__("os").environ["VLLM_PLUGINS"] == ""
+
+
+def test_async_vllm_actor_universal_bridge(monkeypatch):
+    import asyncio
+
+    from llm.tasks import RandomTask
+    from llm.vllm_actor import AsyncTextVLLMActor, VLLMActorConfig
+
+    # Mock dependencies to avoid real vLLM/Ray initialization
+    vllm_mod = types.ModuleType("vllm")
+    vllm_engine_mod = types.ModuleType("vllm.engine")
+    vllm_async_mod = types.ModuleType("vllm.engine.async_llm_engine")
+    vllm_arg_mod = types.ModuleType("vllm.engine.arg_utils")
+    vllm_output_mod = types.ModuleType("vllm.outputs")
+
+    vllm_async_mod.AsyncLLMEngine = FakeAsyncEngine
+    vllm_arg_mod.AsyncEngineArgs = lambda **kwargs: kwargs
+    vllm_output_mod.RequestOutput = FakeOutput
+    vllm_mod.SamplingParams = lambda **kwargs: kwargs
+
+    monkeypatch.setitem(sys.modules, "vllm", vllm_mod)
+    monkeypatch.setitem(sys.modules, "vllm.engine", vllm_engine_mod)
+    monkeypatch.setitem(sys.modules, "vllm.engine.async_llm_engine", vllm_async_mod)
+    monkeypatch.setitem(sys.modules, "vllm.engine.arg_utils", vllm_arg_mod)
+    monkeypatch.setitem(sys.modules, "vllm.outputs", vllm_output_mod)
+
+    config = VLLMActorConfig(
+        model_name="test",
+        tensor_parallel_size=1,
+        max_loras=1,
+        lora_rank=8,
+        max_tokens=10,
+        prompt_batch_size=1,
+        enforce_eager=True,
+    )
+
+    actor = AsyncTextVLLMActor(config=config)
+    task = RandomTask(batch_size=1, max_random_number=4, seed=0)
+
+    # Run the async bridge
+    fitnesses, info, logs = asyncio.run(
+        actor.generate_and_score_async(
+            prompts=["2+2?"],
+            sampling_params_kwargs={"temperature": 0.0},
+            lora_request_specs=None,
+            task_obj=task,
+            answers=[4],
+            args=types.SimpleNamespace(pass_at_k=False),
+        )
+    )
+
+    assert fitnesses == [1.0]
+    assert "final answer is 4" in logs[0]
+
+
+def test_async_vllm_actor_collective_rpc_is_async(monkeypatch):
+    import asyncio
+
+    from llm.vllm_actor import AsyncTextVLLMActor, VLLMActorConfig
+
+    vllm_mod = types.ModuleType("vllm")
+    vllm_engine_mod = types.ModuleType("vllm.engine")
+    vllm_async_mod = types.ModuleType("vllm.engine.async_llm_engine")
+    vllm_arg_mod = types.ModuleType("vllm.engine.arg_utils")
+
+    vllm_async_mod.AsyncLLMEngine = FakeAsyncEngine
+    vllm_arg_mod.AsyncEngineArgs = lambda **kwargs: kwargs
+
+    monkeypatch.setitem(sys.modules, "vllm", vllm_mod)
+
+    monkeypatch.setitem(sys.modules, "vllm.engine", vllm_engine_mod)
+    monkeypatch.setitem(sys.modules, "vllm.engine.async_llm_engine", vllm_async_mod)
+    monkeypatch.setitem(sys.modules, "vllm.engine.arg_utils", vllm_arg_mod)
+
+    config = VLLMActorConfig(
+        model_name="test",
+        tensor_parallel_size=1,
+        max_loras=1,
+        lora_rank=8,
+        max_tokens=10,
+        prompt_batch_size=1,
+        enforce_eager=True,
+    )
+
+    actor = AsyncTextVLLMActor(config=config)
+
+    # Check that it is a coroutine and returns the right value
+    res = actor.collective_rpc("test_method")
+    assert asyncio.iscoroutine(res)
+
+    final_res = asyncio.run(res)
+    assert final_res == "rpc_res_test_method"

@@ -189,7 +189,10 @@ def vllm_dense_update_target(
         return _require_param(vllm_params, target_name, peft_name), slice(start, start + int(weight_shape[0]))
 
     if "self_attn.o_proj" in vllm_name or "mlp.down_proj" in vllm_name or "shared_expert.down_proj" in vllm_name:
-        return _require_param(vllm_params, vllm_name, peft_name), (slice(None), slice(None))
+        return _require_param(vllm_params, vllm_name, peft_name), (
+            slice(None),
+            slice(None),
+        )
 
     if "mlp.gate_proj" in vllm_name:
         target_name = vllm_name.replace("mlp.gate_proj", "mlp.gate_up_proj")
@@ -213,7 +216,11 @@ def vllm_dense_update_target(
 
     if "experts" in vllm_name:
         return _vllm_moe_update_target(
-            vllm_name=vllm_name, peft_name=peft_name, weight_shape=weight_shape, peft_shapes_dict=peft_shapes_dict, vllm_params=vllm_params
+            vllm_name=vllm_name,
+            peft_name=peft_name,
+            weight_shape=weight_shape,
+            peft_shapes_dict=peft_shapes_dict,
+            vllm_params=vllm_params,
         )
 
     raise RuntimeError(f"Unrecognised PEFT layer for vLLM update: {peft_name!r}")
@@ -267,17 +274,29 @@ def _vllm_moe_update_target(
 
     if "gate_proj" in vllm_name_moe:
         target_name = re.sub(r"experts\.\d+\.gate_proj", "experts.base_layer.w13_weight", vllm_name_moe)
-        return _require_param(vllm_params, target_name, peft_name), (expert_idx, slice(0, weight_shape[0]), slice(None))
+        return _require_param(vllm_params, target_name, peft_name), (
+            expert_idx,
+            slice(0, weight_shape[0]),
+            slice(None),
+        )
 
     if "up_proj" in vllm_name_moe:
         target_name = re.sub(r"experts\.\d+\.up_proj", "experts.base_layer.w13_weight", vllm_name_moe)
         gate_name = peft_name.replace("up_proj", "gate_proj")
         start = int(peft_shapes_dict[gate_name][0])
-        return _require_param(vllm_params, target_name, peft_name), (expert_idx, slice(start, start + int(weight_shape[0])), slice(None))
+        return _require_param(vllm_params, target_name, peft_name), (
+            expert_idx,
+            slice(start, start + int(weight_shape[0])),
+            slice(None),
+        )
 
     if "down_proj" in vllm_name_moe:
         target_name = re.sub(r"experts\.\d+\.down_proj", "experts.base_layer.w2_weight", vllm_name_moe)
-        return _require_param(vllm_params, target_name, peft_name), (expert_idx, slice(None), slice(None))
+        return _require_param(vllm_params, target_name, peft_name), (
+            expert_idx,
+            slice(None),
+            slice(None),
+        )
 
     raise RuntimeError(f"Unrecognised MoE PEFT layer for vLLM update: {peft_name!r}")
 

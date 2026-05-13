@@ -1,6 +1,11 @@
 import time
 
-from experiments.experiment_sampler import ExperimentConfig, mk_replicates, post_process, sample_1
+from experiments.experiment_sampler import (
+    ExperimentConfig,
+    mk_replicates,
+    post_process,
+    sample_1,
+)
 from experiments.modal_batches_impl import app
 from experiments.modal_image import mk_image
 
@@ -8,7 +13,12 @@ from experiments.modal_image import mk_image
 @app.function(image=mk_image(), max_containers=1, timeout=60 * 60)
 def modal_sample_1(run_config):
     result = sample_1(run_config)
-    return result.collector_log, result.collector_trace, result.trace_records, result.stop_reason
+    return (
+        result.collector_log,
+        result.collector_trace,
+        result.trace_records,
+        result.stop_reason,
+    )
 
 
 @app.local_entrypoint()

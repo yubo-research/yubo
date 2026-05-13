@@ -44,11 +44,19 @@ def test_kiss_bridge_rl_torchrl_dm_control_collect(monkeypatch):
         {"__init__": lambda self, *a, **k: setattr(self, "observation_spec", ObsSpec())},
     )
     TransformedEnv = type("TransformedEnv", (), {"__init__": lambda self, *a, **k: None})
-    TR = type("TR", (), {"DMControlWrapper": DMControlWrapper, "TransformedEnv": TransformedEnv})
+    TR = type(
+        "TR",
+        (),
+        {"DMControlWrapper": DMControlWrapper, "TransformedEnv": TransformedEnv},
+    )
     CatTensors = type("CatTensors", (), {"__init__": lambda self, **kwargs: None})
     Compose = type("Compose", (), {"__init__": lambda self, *a, **k: None})
     DoubleToFloat = type("DoubleToFloat", (), {})
-    TT = type("TT", (), {"CatTensors": CatTensors, "Compose": Compose, "DoubleToFloat": DoubleToFloat})
+    TT = type(
+        "TT",
+        (),
+        {"CatTensors": CatTensors, "Compose": Compose, "DoubleToFloat": DoubleToFloat},
+    )
     fake_suite = types.ModuleType("dm_control.suite")
     fake_suite.load = lambda *a, **k: object()
     fake_dm_control = types.ModuleType("dm_control")

@@ -80,22 +80,25 @@ def test_batches_clean_up_branch(monkeypatch):
     assert cleaned == ["test"]
 
 
-def test_batches_submit_missing_branch(monkeypatch):
+def _assert_batches_submit_missing(monkeypatch, action, force):
     submitted = []
-    monkeypatch.setattr(mb, "batches_submitter", lambda tag, batch_tag, force=False: submitted.append((tag, batch_tag, force)))
+    monkeypatch.setattr(
+        mb,
+        "batches_submitter",
+        lambda tag, batch_tag, force=False: submitted.append((tag, batch_tag, force)),
+    )
 
-    batches("test", "submit-missing", "test_tag", None)
+    batches("test", action, "test_tag", None)
 
-    assert submitted == [("test", "test_tag", False)]
+    assert submitted == [("test", "test_tag", force)]
+
+
+def test_batches_submit_missing_branch(monkeypatch):
+    _assert_batches_submit_missing(monkeypatch, "submit-missing", False)
 
 
 def test_batches_submit_missing_force_branch(monkeypatch):
-    submitted = []
-    monkeypatch.setattr(mb, "batches_submitter", lambda tag, batch_tag, force=False: submitted.append((tag, batch_tag, force)))
-
-    batches("test", "submit-missing-force", "test_tag", None)
-
-    assert submitted == [("test", "test_tag", True)]
+    _assert_batches_submit_missing(monkeypatch, "submit-missing-force", True)
 
 
 def test_batches_work_branch(monkeypatch, capsys):

@@ -8,7 +8,11 @@ import torch
 def patch_puffer_sac_engine_for_kiss(monkeypatch, tmp_path):
     monkeypatch.setattr(
         "rl.pufferlib.sac.engine._init_run_artifacts",
-        lambda config: (Path(tmp_path), Path(tmp_path) / "metrics.jsonl", SimpleNamespace(save_both=lambda payload, iteration: None)),
+        lambda config: (
+            Path(tmp_path),
+            Path(tmp_path) / "metrics.jsonl",
+            SimpleNamespace(save_both=lambda payload, iteration: None),
+        ),
     )
     monkeypatch.setattr(
         "rl.pufferlib.sac.engine._init_runtime",
@@ -25,18 +29,29 @@ def patch_puffer_sac_engine_for_kiss(monkeypatch, tmp_path):
     )
     monkeypatch.setattr(
         "rl.pufferlib.sac.engine.make_vector_env",
-        lambda config: SimpleNamespace(reset=lambda seed=None: (np.zeros((1, 3), dtype=np.float32), {}), close=lambda: None),
+        lambda config: SimpleNamespace(
+            reset=lambda seed=None: (np.zeros((1, 3), dtype=np.float32), {}),
+            close=lambda: None,
+        ),
     )
     monkeypatch.setattr(
         "rl.pufferlib.sac.engine.infer_observation_spec",
         lambda config, obs_np: SimpleNamespace(mode="vector", vector_dim=3, raw_shape=(3,)),
     )
-    monkeypatch.setattr("rl.pufferlib.sac.engine.prepare_obs_np", lambda obs_np, obs_spec: np.asarray(obs_np, dtype=np.float32))
+    monkeypatch.setattr(
+        "rl.pufferlib.sac.engine.prepare_obs_np",
+        lambda obs_np, obs_spec: np.asarray(obs_np, dtype=np.float32),
+    )
     monkeypatch.setattr(
         "rl.pufferlib.sac.engine._build_training_components",
         lambda config, env_setup, obs_spec, obs_batch, device: (
             SimpleNamespace(
-                actor=SimpleNamespace(sample=lambda obs_t, deterministic=False: (torch.zeros((obs_t.shape[0], 2)), None)),
+                actor=SimpleNamespace(
+                    sample=lambda obs_t, deterministic=False: (
+                        torch.zeros((obs_t.shape[0], 2)),
+                        None,
+                    )
+                ),
                 actor_backbone=torch.nn.Linear(3, 4),
                 actor_head=torch.nn.Linear(4, 2),
                 q1=torch.nn.Linear(5, 1),
@@ -71,7 +86,10 @@ def patch_puffer_sac_engine_for_kiss(monkeypatch, tmp_path):
     monkeypatch.setattr("rl.pufferlib.sac.engine.render_videos_if_enabled", lambda *args, **kwargs: None)
     monkeypatch.setattr(
         "importlib.import_module",
-        lambda name: SimpleNamespace(normalize_eval_noise_mode=lambda mode: None, log_run_footer=lambda **kwargs: None),
+        lambda name: SimpleNamespace(
+            normalize_eval_noise_mode=lambda mode: None,
+            log_run_footer=lambda **kwargs: None,
+        ),
     )
 
 
@@ -96,7 +114,10 @@ def patch_torchrl_ppo_core_for_kiss(monkeypatch):
             ),
         ),
     )
-    monkeypatch.setattr("rl.torchrl.ppo.core.torchrl_common.obs_scale_from_env", lambda env_conf: (None, None))
+    monkeypatch.setattr(
+        "rl.torchrl.ppo.core.torchrl_common.obs_scale_from_env",
+        lambda env_conf: (None, None),
+    )
 
 
 def patch_torchrl_sac_setup_for_kiss(monkeypatch):
@@ -105,7 +126,10 @@ def patch_torchrl_sac_setup_for_kiss(monkeypatch):
         lambda **kwargs: SimpleNamespace(
             env_conf=SimpleNamespace(
                 from_pixels=False,
-                make=lambda: SimpleNamespace(reset=lambda seed=None: (None, {}), action_space=SimpleNamespace(seed=lambda seed: None)),
+                make=lambda: SimpleNamespace(
+                    reset=lambda seed=None: (None, {}),
+                    action_space=SimpleNamespace(seed=lambda seed: None),
+                ),
                 state_space=SimpleNamespace(shape=(3,)),
             ),
             problem_seed=1,
@@ -117,4 +141,7 @@ def patch_torchrl_sac_setup_for_kiss(monkeypatch):
             obs_width=None,
         ),
     )
-    monkeypatch.setattr("rl.torchrl.sac.setup.sac_deps.torchrl_common.obs_scale_from_env", lambda env_conf: (None, None))
+    monkeypatch.setattr(
+        "rl.torchrl.sac.setup.sac_deps.torchrl_common.obs_scale_from_env",
+        lambda env_conf: (None, None),
+    )

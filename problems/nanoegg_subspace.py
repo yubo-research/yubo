@@ -38,7 +38,10 @@ class _NanoEggSubspaceCodec:
         sizes = np.asarray([int(leaf.size) for leaf in leaves], dtype=np.int64)
         self._leaf_kind = np.asarray([int(np.max(np.asarray(leaf))) for leaf in map_leaves], dtype=np.int64)
         eligible = (
-            np.asarray([bool(np.any(np.isin(np.asarray(leaf), (_PARAM_MM, _PARAM_EMB)))) for leaf in map_leaves], dtype=bool)
+            np.asarray(
+                [bool(np.any(np.isin(np.asarray(leaf), (_PARAM_MM, _PARAM_EMB)))) for leaf in map_leaves],
+                dtype=bool,
+            )
             if lora_only
             else np.ones(len(leaves), dtype=bool)
         )
@@ -73,9 +76,12 @@ class _NanoEggSubspaceCodec:
             leaf = leaves[int(leaf_idx)]
             flat = self._jnp.reshape(leaf, (-1,))
             idx = self._jnp.asarray(self._basis_index[positions], dtype=self._jnp.int32)
-            values = self._jnp.rint(self._jnp.asarray(coeffs[positions] * self._basis_sign[positions] * self.delta_scale, dtype=self._jnp.float32)).astype(
-                self._jnp.int32
-            )
+            values = self._jnp.rint(
+                self._jnp.asarray(
+                    coeffs[positions] * self._basis_sign[positions] * self.delta_scale,
+                    dtype=self._jnp.float32,
+                )
+            ).astype(self._jnp.int32)
             updated = self._jnp.clip(flat.astype(self._jnp.int32).at[idx].add(values), -_MAX_INT8, _MAX_INT8).astype(leaf.dtype)
             leaves[int(leaf_idx)] = updated.reshape(leaf.shape)
         return self._jax.tree_util.tree_unflatten(self._treedef, leaves)
@@ -139,7 +145,10 @@ def _eggroll_low_rank_values(jax, jnp, *, seed: int, flat_indices: np.ndarray, s
     lora_params = jax.random.normal(key, (rows_count + cols, int(rank)), dtype=jnp.float32)
     b = lora_params[:cols]
     a = lora_params[cols:]
-    values = jnp.sum(a[jnp.asarray(rows, dtype=jnp.int32)] * b[jnp.asarray(col_ids, dtype=jnp.int32)], axis=1)
+    values = jnp.sum(
+        a[jnp.asarray(rows, dtype=jnp.int32)] * b[jnp.asarray(col_ids, dtype=jnp.int32)],
+        axis=1,
+    )
     return np.asarray(values / np.sqrt(float(rank)), dtype=np.float64)
 
 

@@ -29,6 +29,10 @@ def assert_short_optimizer_trace_finite(
     if policy_tag is not None:
         kw["policy_tag"] = policy_tag
     opt = Optimizer(Collector(), **kw)
-    trace = opt.collect_trace(designer_name=designer_name, max_iterations=max_iterations, max_proposal_seconds=np.inf)
+    trace = opt.collect_trace(
+        designer_name=designer_name,
+        max_iterations=max_iterations,
+        max_proposal_seconds=np.inf,
+    )
     assert len(trace) == max_iterations
     assert np.isfinite(trace[-1].rreturn)

@@ -32,7 +32,13 @@ class WorkerExtension:
             self.inter_pg = PyNcclCommunicator(pg, device=self.device)
         return True
 
-    def apply_lora_es_update(self, normalized_fitnesses: list[float], peft_shapes_dict: dict[str, tuple[int, ...]], es_step: int, args: Any) -> bool:
+    def apply_lora_es_update(
+        self,
+        normalized_fitnesses: list[float],
+        peft_shapes_dict: dict[str, tuple[int, ...]],
+        es_step: int,
+        args: Any,
+    ) -> bool:
         return _apply_lora_es_update(self, normalized_fitnesses, peft_shapes_dict, es_step, args)
 
     def broadcast_all_weights(self, src_rank: int) -> bool:

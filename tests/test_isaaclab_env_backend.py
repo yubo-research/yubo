@@ -27,7 +27,10 @@ class _FakeIsaacEnv:
         self.last_action = None
 
     def reset(self, *args, **kwargs):
-        return {"policy": np.array([[1.0, 2.0, 3.0]], dtype=np.float32)}, {"reset": True, "kwargs": kwargs}
+        return {"policy": np.array([[1.0, 2.0, 3.0]], dtype=np.float32)}, {
+            "reset": True,
+            "kwargs": kwargs,
+        }
 
     def step(self, action):
         self.last_action = action
@@ -85,7 +88,10 @@ def test_get_isaaclab_session_and_list_isaaclab_tasks(monkeypatch):
     assert session.app.name == "fake-app"
     assert session.gym is fake_gym
     assert list_isaaclab_tasks(keyword="cart", headless=True) == ["Isaac-Cartpole-v0"]
-    assert list_isaaclab_tasks(keyword=None, headless=True) == ["Isaac-Ant-v0", "Isaac-Cartpole-v0"]
+    assert list_isaaclab_tasks(keyword=None, headless=True) == [
+        "Isaac-Ant-v0",
+        "Isaac-Cartpole-v0",
+    ]
 
 
 def test_isaaclab_gym_env_adapter_reset_step_render_close():
@@ -104,7 +110,10 @@ def test_isaaclab_gym_env_adapter_reset_step_render_close():
     assert truncated is True
     assert step_info == {"step": True}
     assert action.shape == (1, 2)
-    assert adapter.render(mode="rgb_array") == {"frame": True, "kwargs": {"mode": "rgb_array"}}
+    assert adapter.render(mode="rgb_array") == {
+        "frame": True,
+        "kwargs": {"mode": "rgb_array"},
+    }
 
     adapter.close()
     assert env.closed is True
@@ -114,7 +123,11 @@ def test_make_isaaclab_env_and_resolve_isaaclab_env_spaces(monkeypatch):
     import problems.isaaclab_env_adapters as mod
 
     fake_gym = _FakeGym()
-    monkeypatch.setattr(mod, "get_isaaclab_session", lambda **_kwargs: IsaacLabSession(app=None, gym=fake_gym))
+    monkeypatch.setattr(
+        mod,
+        "get_isaaclab_session",
+        lambda **_kwargs: IsaacLabSession(app=None, gym=fake_gym),
+    )
     monkeypatch.setattr(mod, "_parse_env_cfg", lambda task_id, **kwargs: {"task_id": task_id, **kwargs})
 
     env = make_isaaclab_env(
@@ -129,7 +142,11 @@ def test_make_isaaclab_env_and_resolve_isaaclab_env_spaces(monkeypatch):
     assert isinstance(env, IsaacLabGymEnvAdapter)
     task_id, kwargs = fake_gym.calls[-1]
     assert task_id == "Isaac-Cartpole-v0"
-    assert kwargs["cfg"] == {"task_id": "Isaac-Cartpole-v0", "num_envs": 1, "device": "cuda:0"}
+    assert kwargs["cfg"] == {
+        "task_id": "Isaac-Cartpole-v0",
+        "num_envs": 1,
+        "device": "cuda:0",
+    }
     assert kwargs["render_mode"] == "rgb_array"
     assert kwargs["custom_option"] == 3
 
@@ -142,7 +159,11 @@ def test_make_isaaclab_env_and_resolve_isaaclab_env_spaces(monkeypatch):
 def test_isaaclab_task_list_main(monkeypatch, capsys):
     import problems.isaaclab_env_adapters as mod
 
-    monkeypatch.setattr(mod, "list_isaaclab_tasks", lambda **kwargs: [f"task:{kwargs['keyword']}:{kwargs['headless']}"])
+    monkeypatch.setattr(
+        mod,
+        "list_isaaclab_tasks",
+        lambda **kwargs: [f"task:{kwargs['keyword']}:{kwargs['headless']}"],
+    )
 
     assert main(["--keyword", "cart", "--no-headless"]) == 0
     assert capsys.readouterr().out == "task:cart:False\n"

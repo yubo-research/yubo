@@ -182,7 +182,11 @@ def test_train_ppo_puffer_impl_calls_run_training(monkeypatch, tmp_path):
     monkeypatch.setattr(ppo_engine_helpers, "_seed_everything", lambda _seed: None)
     monkeypatch.setattr(ppo_engine_helpers, "_build_plan", lambda _cfg: _TrainPlan(2, 2, 4, 2, 2))
     monkeypatch.setattr(ppo_engine_helpers, "_prepare_outputs", lambda _cfg: tmp_path / "metrics.jsonl")
-    monkeypatch.setattr(ppo_engine_helpers, "make_vector_env", lambda _cfg: SimpleNamespace(close=lambda: None))
+    monkeypatch.setattr(
+        ppo_engine_helpers,
+        "make_vector_env",
+        lambda _cfg: SimpleNamespace(close=lambda: None),
+    )
     monkeypatch.setattr(ppo_eval, "validate_eval_config", lambda _cfg: None)
     monkeypatch.setattr(
         ppo_engine_train,

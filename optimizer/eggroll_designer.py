@@ -26,7 +26,13 @@ def _require_stack():
             "EggRollDesigner requires the separate HyperscaleES environment. "
             "Run admin/setup-hyperscalees.sh first, then use the plain python CLI from that environment."
         ) from exc
-    return _EggRollStack(jax=jax, jnp=jnp, optax=optax, simple_es_tree_key=simple_es_tree_key, all_noisers=all_noisers)
+    return _EggRollStack(
+        jax=jax,
+        jnp=jnp,
+        optax=optax,
+        simple_es_tree_key=simple_es_tree_key,
+        all_noisers=all_noisers,
+    )
 
 
 def _as_bool(value: Any, *, name: str) -> bool:
@@ -194,7 +200,13 @@ class EggRollDesigner:
         self._best_datum = None
         self._epoch = 0
         self._params = policy.params
-        _validate_positive_jax_options(self._sigma, float(cfg.lr), self._steps_per_episode, self._num_envs, int(cfg.rank))
+        _validate_positive_jax_options(
+            self._sigma,
+            float(cfg.lr),
+            self._steps_per_episode,
+            self._num_envs,
+            int(cfg.rank),
+        )
 
     def _make_env_adapter(self, env_name: str):
         from problems.eggroll_env_adapters import make_eggroll_env_adapter
@@ -204,7 +216,13 @@ class EggRollDesigner:
     def _init_jax_noiser(self, stack: _EggRollStack, cfg: _EggRollDesignerConfig) -> _NoiserBundle:
         if cfg.noiser not in stack.all_noisers:
             raise NoSuchDesignerError(f"Unknown HyperscaleES noiser '{cfg.noiser}'. Available: {sorted(stack.all_noisers)}")
-        solver = _solver(stack.optax, str(cfg.optax), b1=float(cfg.b1), b2=float(cfg.b2), weight_decay=float(cfg.weight_decay))
+        solver = _solver(
+            stack.optax,
+            str(cfg.optax),
+            b1=float(cfg.b1),
+            b2=float(cfg.b2),
+            weight_decay=float(cfg.weight_decay),
+        )
         noiser = stack.all_noisers[cfg.noiser]
         scheduled_lr = _scheduled_lr(self._jnp, float(cfg.lr), _as_unit_decay(cfg.lr_decay, name="lr_decay"))
         frozen_noiser_params, noiser_params = noiser.init_noiser(
@@ -212,7 +230,12 @@ class EggRollDesigner:
             self._sigma,
             scheduled_lr,
             solver=solver,
-            solver_kwargs=_solver_kwargs(str(cfg.optax), b1=float(cfg.b1), b2=float(cfg.b2), weight_decay=float(cfg.weight_decay)),
+            solver_kwargs=_solver_kwargs(
+                str(cfg.optax),
+                b1=float(cfg.b1),
+                b2=float(cfg.b2),
+                weight_decay=float(cfg.weight_decay),
+            ),
             group_size=int(cfg.group_size),
             freeze_nonlora=_as_bool(cfg.freeze_nonlora, name="freeze_nonlora"),
             noise_reuse=int(cfg.noise_reuse),
@@ -226,7 +249,13 @@ class EggRollDesigner:
         if cfg.noiser != "eggroll":
             raise NoSuchDesignerError("NanoEgg pretraining currently supports EggRoll option noiser='eggroll' only.")
         optax_mod = _load_nanoegg_optax()
-        solver = _solver(optax_mod, str(cfg.optax), b1=float(cfg.b1), b2=float(cfg.b2), weight_decay=float(cfg.weight_decay))
+        solver = _solver(
+            optax_mod,
+            str(cfg.optax),
+            b1=float(cfg.b1),
+            b2=float(cfg.b2),
+            weight_decay=float(cfg.weight_decay),
+        )
         self._assign_nanoegg_state(policy, cfg)
         self._objective = self._build_nanoegg_objective(policy, cfg)
         self._x = np.asarray(self._objective.x0, dtype=np.float64).copy()
@@ -269,10 +298,19 @@ class EggRollDesigner:
         print(f"NANOEGG_EGGROLL: {message}", flush=True)
 
     def _init_nanoegg_optimizer(self, optax_mod, solver, cfg: _EggRollDesignerConfig) -> None:
-        scheduled_lr = _scheduled_lr(self._objective.jnp, float(cfg.lr), _as_unit_decay(cfg.lr_decay, name="lr_decay"))
+        scheduled_lr = _scheduled_lr(
+            self._objective.jnp,
+            float(cfg.lr),
+            _as_unit_decay(cfg.lr_decay, name="lr_decay"),
+        )
         self._nanoegg_tx = solver(
             scheduled_lr,
-            **_solver_kwargs(str(cfg.optax), b1=float(cfg.b1), b2=float(cfg.b2), weight_decay=float(cfg.weight_decay)),
+            **_solver_kwargs(
+                str(cfg.optax),
+                b1=float(cfg.b1),
+                b2=float(cfg.b2),
+                weight_decay=float(cfg.weight_decay),
+            ),
         )
         self._nanoegg_apply_updates = optax_mod.apply_updates
         self._nanoegg_opt_state = self._nanoegg_tx.init(self._objective.jnp.asarray(self._x, dtype=self._objective.jnp.float32))

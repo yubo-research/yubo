@@ -7,7 +7,13 @@ import click
 from common.im import im
 
 
-def run_parsed_uhd_local(parsed, *, cfg: dict[str, Any] | None = None, results_dir: str = "results/uhd", workers: int = 1) -> None:
+def run_parsed_uhd_local(
+    parsed,
+    *,
+    cfg: dict[str, Any] | None = None,
+    results_dir: str = "results/uhd",
+    workers: int = 1,
+) -> None:
     if getattr(parsed, "num_reps", 1) > 1:
         batch_cfg = dict(cfg or {})
         batch_cfg["num_rounds"] = parsed.num_rounds

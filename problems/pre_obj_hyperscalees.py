@@ -6,7 +6,10 @@ from typing import Any
 
 import numpy as np
 
-from problems.pre_obj_specs import HyperscaleESPretrainSpec, resolve_hyperscalees_pretrain_spec
+from problems.pre_obj_specs import (
+    HyperscaleESPretrainSpec,
+    resolve_hyperscalees_pretrain_spec,
+)
 from problems.pre_obj_stack import _load_hyperscalees_model, _log, _require_stack
 from problems.pre_obj_subspace import _SubspaceParamCodec
 from problems.pre_obj_validate import _build_validate, _ValidateContext

@@ -51,7 +51,9 @@ from problems.eggroll_env_jax import (
 from problems.eggroll_env_jax import (
     NavixEggRollAdapter as NavixEggRollAdapter,
 )
-from problems.eggroll_env_surrogate import SurrogateObjectiveEggRollAdapter as SurrogateObjectiveEggRollAdapter
+from problems.eggroll_env_surrogate import (
+    SurrogateObjectiveEggRollAdapter as SurrogateObjectiveEggRollAdapter,
+)
 
 
 __all__ = [

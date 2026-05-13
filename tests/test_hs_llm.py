@@ -33,7 +33,11 @@ def test_load_hyperscalees_model_retries_corrupt_cache():
         answer_length=256,
     )
 
-    assert _load_hyperscalees_model(fake_get_model, spec) == ("rwkv", "params", "tokenizer")
+    assert _load_hyperscalees_model(fake_get_model, spec) == (
+        "rwkv",
+        "params",
+        "tokenizer",
+    )
     assert [call["reload_cache"] for call in calls] == [False, True]
 
 
@@ -42,7 +46,10 @@ def test_subspace_codec_zero_decode_returns_base_params_and_respects_lora_map():
     jnp = pytest.importorskip("jax.numpy")
     from problems.pre_obj import _SubspaceParamCodec
 
-    params = {"lora": jnp.ones((8,), dtype=jnp.float32), "full": jnp.ones((8,), dtype=jnp.float32)}
+    params = {
+        "lora": jnp.ones((8,), dtype=jnp.float32),
+        "full": jnp.ones((8,), dtype=jnp.float32),
+    }
     es_map = {"lora": 1, "full": 0}
     codec = _SubspaceParamCodec(
         jax,
@@ -63,7 +70,10 @@ def test_subspace_codec_zero_decode_returns_base_params_and_respects_lora_map():
 
 
 def test_resolve_hyperscalees_pretrain_spec_supports_all_upstream_task_families():
-    from problems.pre_obj import resolve_hyperscalees_pretrain_spec, supported_hyperscalees_llm_bandit_tasks
+    from problems.pre_obj import (
+        resolve_hyperscalees_pretrain_spec,
+        supported_hyperscalees_llm_bandit_tasks,
+    )
 
     tasks = supported_hyperscalees_llm_bandit_tasks()
     assert "fastzero" in tasks

@@ -11,7 +11,10 @@ from typing import Any
 import gymnasium as gym
 
 from problems import env_conf_bindings
-from problems.eggroll_env_adapters import EGGROLL_ADAPTER_ENV_PREFIXES, EGGROLL_ENV_PREFIXES
+from problems.eggroll_env_adapters import (
+    EGGROLL_ADAPTER_ENV_PREFIXES,
+    EGGROLL_ENV_PREFIXES,
+)
 from problems.env_conf_parse import parse_tag_options
 from problems.isaaclab_env_adapters import (
     DEFAULT_ISAACLAB_MAX_STEPS,
@@ -250,7 +253,11 @@ def get_environment_spec(env_tag: str) -> EnvironmentSpec:
     if is_isaaclab_env_tag(tag):
         return EnvironmentSpec(
             tag,
-            gym_conf=GymConf(max_steps=DEFAULT_ISAACLAB_MAX_STEPS, num_frames_skip=1, transform_state=False),
+            gym_conf=GymConf(
+                max_steps=DEFAULT_ISAACLAB_MAX_STEPS,
+                num_frames_skip=1,
+                transform_state=False,
+            ),
             max_steps=DEFAULT_ISAACLAB_MAX_STEPS,
         )
 

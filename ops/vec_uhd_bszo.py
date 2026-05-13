@@ -16,7 +16,13 @@ from ops.vec_uhd_common import (
     _track_source_best,
 )
 from optimizer.step_size_adapter import StepSizeAdapter
-from optimizer.uhd_enn import JAXPointImputer, fit_if_due, format_enn_stats, new_be_state, predict_enn
+from optimizer.uhd_enn import (
+    JAXPointImputer,
+    fit_if_due,
+    format_enn_stats,
+    new_be_state,
+    predict_enn,
+)
 from problems.uhd_obj import UHDVectorObjective
 
 
@@ -51,7 +57,12 @@ def _run_bszo(objective: UHDVectorObjective, cfg: UHDConfig) -> None:
         y_best_before = state.y_best
         mu0, z_base = _bszo_eval_base(objective, state, use_be=use_be, imputer=imputer)
         perturb_base = _bszo_perturb_base(objective, cfg, state, use_be=use_be, epsilon=epsilon)
-        kf = _KalmanFilter(int(cfg.bszo_k), float(cfg.bszo_sigma_p_sq), float(cfg.bszo_sigma_e_sq), float(cfg.bszo_alpha))
+        kf = _KalmanFilter(
+            int(cfg.bszo_k),
+            float(cfg.bszo_sigma_p_sq),
+            float(cfg.bszo_sigma_e_sq),
+            float(cfg.bszo_alpha),
+        )
         kf.init_step()
         noises = _bszo_eval_directions(
             objective,
@@ -120,6 +131,12 @@ def _bszo_eval_base(
     imputer: JAXPointImputer | None,
 ) -> tuple[float, np.ndarray | None]:
     mu0, se0 = objective.evaluate(state.x, seed=state.eval_seed)
+
+    # Print logs if available in the side-channel
+    logs = getattr(objective, "last_logs", [])
+    for log in logs:
+        print(log)
+
     state.last_mu, state.last_se = float(mu0), float(se0)
     state.last_imputed = False
     state.num_imputed_step = 0

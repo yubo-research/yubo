@@ -151,7 +151,11 @@ def test_problem_rl_model_overrides_coverage():
 
     assert ("cheetah", "mlp-32-16", "ppo") in _PROBLEM_RL_MODEL_OVERRIDES
     assert ("cheetah", "mlp-32-16", "sac") in _PROBLEM_RL_MODEL_OVERRIDES
-    assert ("dm_control/quadruped-run-v0", "mlp-64-64", "ppo") in _PROBLEM_RL_MODEL_OVERRIDES
+    assert (
+        "dm_control/quadruped-run-v0",
+        "mlp-64-64",
+        "ppo",
+    ) in _PROBLEM_RL_MODEL_OVERRIDES
 
 
 def test_resolve_rl_model_defaults_returns_copy():

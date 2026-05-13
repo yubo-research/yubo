@@ -72,7 +72,10 @@ def test_sparse_evidence_failure_tolerance_batches():
 
 
 def test_sparse_enn_designer_installs_sparse_trust_region():
-    from optimizer.sparse_enn_designer import SparseENNDesigner, SparseEvidenceTrustRegion
+    from optimizer.sparse_enn_designer import (
+        SparseENNDesigner,
+        SparseEvidenceTrustRegion,
+    )
 
     designer = SparseENNDesigner(
         MockPolicy(num_params=32),

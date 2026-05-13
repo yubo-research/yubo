@@ -3,7 +3,10 @@ from types import SimpleNamespace
 import numpy as np
 import torch
 
-from policies.actor_critic_mlp_policy import ActorCriticMLPPolicy, ActorCriticMLPPolicyFactory
+from policies.actor_critic_mlp_policy import (
+    ActorCriticMLPPolicy,
+    ActorCriticMLPPolicyFactory,
+)
 
 
 def _env_conf(obs_dim: int = 4, act_dim: int = 2):

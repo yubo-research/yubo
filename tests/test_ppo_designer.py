@@ -5,7 +5,12 @@ import numpy as np
 import pytest
 
 from optimizer.designer_errors import NoSuchDesignerError
-from optimizer.ppo_designer import PPOConfig, PPODesigner, compute_gae, merge_trajectories
+from optimizer.ppo_designer import (
+    PPOConfig,
+    PPODesigner,
+    compute_gae,
+    merge_trajectories,
+)
 from optimizer.trajectory import Trajectory
 from policies.actor_critic_mlp_policy import ActorCriticMLPPolicy
 

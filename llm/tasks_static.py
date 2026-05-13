@@ -12,7 +12,11 @@ class ZerosTask:
     max_tokens: int
 
     def get_batch(self) -> tuple[list[str], list[None]]:
-        prompts = ("Hello, my name is", "Write some random numbers:", "Output 3 numbers and then stop:")
+        prompts = (
+            "Hello, my name is",
+            "Write some random numbers:",
+            "Output 3 numbers and then stop:",
+        )
         return [prompts[i % len(prompts)] for i in range(self.batch_size)], [None for _ in range(self.batch_size)]
 
     def score(
@@ -33,7 +37,14 @@ class ZerosTask:
 
 
 class RandomTask:
-    def __init__(self, *, batch_size: int, max_random_number: int, seed: int, answer_format: str = "none") -> None:
+    def __init__(
+        self,
+        *,
+        batch_size: int,
+        max_random_number: int,
+        seed: int,
+        answer_format: str = "none",
+    ) -> None:
         import numpy as np
 
         self.batch_size = int(batch_size)

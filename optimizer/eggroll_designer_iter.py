@@ -21,7 +21,11 @@ def iterate_jax(designer, _data, num_arms: int, *, telemetry=None) -> IterateRes
     datum, policy_eval_dt = _evaluate_current_policy(designer, int(num_arms))
     update_best_and_telemetry(designer, datum, prop_dt, telemetry)
     designer._epoch += 1
-    return IterateResult(data=[datum], dt_prop=float(prop_dt), dt_eval=float(train_eval_dt + policy_eval_dt))
+    return IterateResult(
+        data=[datum],
+        dt_prop=float(prop_dt),
+        dt_eval=float(train_eval_dt + policy_eval_dt),
+    )
 
 
 def _validate_population(num_arms: int) -> None:

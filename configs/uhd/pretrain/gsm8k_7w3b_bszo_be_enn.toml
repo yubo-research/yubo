@@ -8,7 +8,7 @@
 env_tag = "pretrain:hyperscalees:gsm8k-7w3b"
 policy_tag = "hyperscalees-rwkv-7w3b-lora-r1"
 
-num_rounds = 20
+num_rounds = 1e4
 num_reps = 1
 optimizer = "bszo_be"
 

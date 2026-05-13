@@ -98,7 +98,15 @@ def score_request_outputs(
     return accumulator.final()
 
 
-def _score_one_output(index: int, output: Any, *, prompts: list[str], task_obj: Any, answers: list[Any], pass_at_k: bool) -> ScoredOutput:
+def _score_one_output(
+    index: int,
+    output: Any,
+    *,
+    prompts: list[str],
+    task_obj: Any,
+    answers: list[Any],
+    pass_at_k: bool,
+) -> ScoredOutput:
     num_prompts = len(answers)
     prompt_idx = index % num_prompts
     pop_idx = index // num_prompts
@@ -128,7 +136,15 @@ def _score_one_output(index: int, output: Any, *, prompts: list[str], task_obj: 
     )
 
 
-def _prompt_log(pop_idx: int, prompt_idx: int, *, prompt: str, samples: list[Any], sample_fitnesses: np.ndarray, fit: float) -> str:
+def _prompt_log(
+    pop_idx: int,
+    prompt_idx: int,
+    *,
+    prompt: str,
+    samples: list[Any],
+    sample_fitnesses: np.ndarray,
+    fit: float,
+) -> str:
     if pop_idx >= 2 or prompt_idx >= 3:
         return ""
     chunks = [f"\n[PROMPT {prompt_idx}]: {prompt}\n"]

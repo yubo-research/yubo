@@ -115,8 +115,16 @@ class EggRollNoiserMaterializer:
             raise ValueError("EggRoll noiser perturbations require EggRollJAXRuntime vector_mode='absolute'.")
         x_arr = np.asarray(x, dtype=np.float64)
         params = rt.decode_vector_params(rt.jnp.asarray(x_arr, dtype=rt.jnp.float32))
-        iterinfo = (rt.jnp.asarray(0, dtype=rt.jnp.int32), rt.jnp.asarray(2 * int(seed), dtype=rt.jnp.int32))
-        noised = rt.jax.tree.map(lambda p, k, m: self._materialize_leaf(p, k, m, iterinfo), params, rt.es_tree_key, rt.policy.es_map)
+        iterinfo = (
+            rt.jnp.asarray(0, dtype=rt.jnp.int32),
+            rt.jnp.asarray(2 * int(seed), dtype=rt.jnp.int32),
+        )
+        noised = rt.jax.tree.map(
+            lambda p, k, m: self._materialize_leaf(p, k, m, iterinfo),
+            params,
+            rt.es_tree_key,
+            rt.policy.es_map,
+        )
         noised_x = rt.codec.flatten(noised)
         return np.asarray(noised_x - x_arr, dtype=np.float64)
 

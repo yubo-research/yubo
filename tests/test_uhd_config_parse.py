@@ -214,6 +214,29 @@ def test_parse_enn_fields_type_coercion():
     assert result.num_candidates == 5
 
 
+def test_parse_text_fields_bf8_storage_default_off():
+    result = _parse_cfg(
+        {
+            "env_tag": "llm:math:gsm8k",
+            "policy_tag": "qwen3-1p7b-lora-r1",
+            "num_rounds": 1,
+        }
+    )
+    assert result.bf8_storage is False
+
+
+def test_parse_text_fields_bf8_storage_enabled():
+    result = _parse_cfg(
+        {
+            "env_tag": "llm:math:gsm8k",
+            "policy_tag": "qwen3-1p7b-lora-r1",
+            "num_rounds": 1,
+            "bf8_storage": True,
+        }
+    )
+    assert result.bf8_storage is True
+
+
 def test_parse_perturb_dense():
     ndt, nmt = _parse_perturb("dense")
     assert ndt is None

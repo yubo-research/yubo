@@ -211,13 +211,19 @@ def _load_minipile_bytes(cfg: UHDConfig) -> np.ndarray:
     cache_path = _minipile_cache_path(cfg)
     if cache_path.is_file():
         data = np.asarray(np.load(cache_path), dtype=np.uint8)
-        print(f"NANOEGG: loaded cached MiniPile bytes path={cache_path} bytes={data.size}", flush=True)
+        print(
+            f"NANOEGG: loaded cached MiniPile bytes path={cache_path} bytes={data.size}",
+            flush=True,
+        )
         return data
     try:
         from datasets import load_dataset
     except ImportError as exc:
         raise ImportError("NanoEgg MiniPile objective requires the 'datasets' package.") from exc
-    print(f"NANOEGG: loading MiniPile validation split cache_path={cache_path}", flush=True)
+    print(
+        f"NANOEGG: loading MiniPile validation split cache_path={cache_path}",
+        flush=True,
+    )
     ds = load_dataset("JeanKaddour/minipile", split="validation")
     arrays = []
     limit = cfg.sub_dataset_size
@@ -237,14 +243,23 @@ def _load_minipile_bytes(cfg: UHDConfig) -> np.ndarray:
         data = data[: int(limit)]
     cache_path.parent.mkdir(parents=True, exist_ok=True)
     np.save(cache_path, data)
-    print(f"NANOEGG: cached MiniPile bytes path={cache_path} bytes={data.size}", flush=True)
+    print(
+        f"NANOEGG: cached MiniPile bytes path={cache_path} bytes={data.size}",
+        flush=True,
+    )
     return data
 
 
 def _load_objective_bytes(cfg: UHDConfig, spec: NanoEggObjectiveSpec, *, tokens_per_eval: int) -> np.ndarray:
-    min_size = max(_DEFAULT_SYNTHETIC_BYTES, int(tokens_per_eval) * max(2, int(cfg.num_envs) + 1) + 1)
+    min_size = max(
+        _DEFAULT_SYNTHETIC_BYTES,
+        int(tokens_per_eval) * max(2, int(cfg.num_envs) + 1) + 1,
+    )
     if spec.dataset == "synthetic":
-        return _synthetic_bytes(seed=0 if cfg.problem_seed is None else int(cfg.problem_seed), size=max(min_size, _as_int(cfg.sub_dataset_size, min_size)))
+        return _synthetic_bytes(
+            seed=0 if cfg.problem_seed is None else int(cfg.problem_seed),
+            size=max(min_size, _as_int(cfg.sub_dataset_size, min_size)),
+        )
     if spec.dataset == "minipile":
         data = _load_minipile_bytes(cfg)
         if data.size < min_size:

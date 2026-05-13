@@ -29,7 +29,9 @@ _LEGACY_TRIPLE_KEYS: frozenset[str] = frozenset(
 )
 
 
-def _legacy_flat_payload_to_bench(d: Mapping[str, Any]) -> SyntheticSineSurrogateBenchmark:
+def _legacy_flat_payload_to_bench(
+    d: Mapping[str, Any],
+) -> SyntheticSineSurrogateBenchmark:
     results: dict[str, BMResult] = {}
     for prefix in SURROGATE_BENCHMARK_KEYS:
         results[prefix] = BMResult(
@@ -48,13 +50,21 @@ def _bench_from_nested_results(obj: Any) -> SyntheticSineSurrogateBenchmark:
         block = obj[prefix]
         results[prefix] = BMResult(
             fit_seconds=MuSe(float(block["fit_seconds"]["mu"]), float(block["fit_seconds"]["se"])),
-            normalized_rmse=MuSe(float(block["normalized_rmse"]["mu"]), float(block["normalized_rmse"]["se"])),
-            log_likelihood=MuSe(float(block["log_likelihood"]["mu"]), float(block["log_likelihood"]["se"])),
+            normalized_rmse=MuSe(
+                float(block["normalized_rmse"]["mu"]),
+                float(block["normalized_rmse"]["se"]),
+            ),
+            log_likelihood=MuSe(
+                float(block["log_likelihood"]["mu"]),
+                float(block["log_likelihood"]["se"]),
+            ),
         )
     return SyntheticSineSurrogateBenchmark(results=results)
 
 
-def synthetic_surrogate_benchmark_to_wide_row(bench: SyntheticSineSurrogateBenchmark) -> dict[str, Any]:
+def synthetic_surrogate_benchmark_to_wide_row(
+    bench: SyntheticSineSurrogateBenchmark,
+) -> dict[str, Any]:
     """Flatten :class:`~analysis.fitting_time.evaluate.SyntheticSineSurrogateBenchmark` for tabular rows."""
     flat: dict[str, Any] = {}
     for prefix in SURROGATE_BENCHMARK_KEYS:
@@ -90,7 +100,9 @@ def synthetic_sine_benchmark_result_to_payload(
     return out
 
 
-def synthetic_sine_benchmark_from_payload(data: dict) -> tuple[SyntheticSineSurrogateBenchmark, dict]:
+def synthetic_sine_benchmark_from_payload(
+    data: dict,
+) -> tuple[SyntheticSineSurrogateBenchmark, dict]:
     """Load a benchmark dataclass and metadata dict written by :func:`synthetic_sine_benchmark_result_to_payload`."""
     d = dict(data)
     meta = dict(d.pop(META_KEY, {}))
@@ -148,7 +160,9 @@ def write_synthetic_sine_benchmark_json(path: Path, payload: dict) -> None:
         json.dump(payload, f, indent=2, allow_nan=True)
 
 
-def read_synthetic_sine_benchmark_json(path: Path) -> tuple[SyntheticSineSurrogateBenchmark, dict]:
+def read_synthetic_sine_benchmark_json(
+    path: Path,
+) -> tuple[SyntheticSineSurrogateBenchmark, dict]:
     with path.open(encoding="utf-8") as f:
         data = json.load(f)
     return synthetic_sine_benchmark_from_payload(data)

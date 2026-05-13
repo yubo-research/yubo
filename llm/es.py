@@ -18,7 +18,14 @@ class FitnessSummary:
     normalized_std: float
 
 
-def validate_eggroll_population(*, population_size: int, num_engines: int, samples_per_prompt: int, temperature: float, pass_at_k: bool) -> None:
+def validate_eggroll_population(
+    *,
+    population_size: int,
+    num_engines: int,
+    samples_per_prompt: int,
+    temperature: float,
+    pass_at_k: bool,
+) -> None:
     if int(population_size) < 2:
         raise ValueError("population_size must be >= 2.")
     if int(population_size) % 2 != 0:
@@ -33,7 +40,13 @@ def validate_eggroll_population(*, population_size: int, num_engines: int, sampl
         raise ValueError("pass_at_k=true requires samples_per_prompt > 1.")
 
 
-def num_iterations_from_budget(*, num_rounds: int | None, total_timesteps: int | None, population_size: int, prompt_batch_size: int) -> int:
+def num_iterations_from_budget(
+    *,
+    num_rounds: int | None,
+    total_timesteps: int | None,
+    population_size: int,
+    prompt_batch_size: int,
+) -> int:
     if num_rounds is not None:
         return int(num_rounds)
     if total_timesteps is None:

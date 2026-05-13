@@ -14,7 +14,10 @@ from optimizer.eggroll_runtime_core import (
 )
 from optimizer.eggroll_runtime_embed import EggRollRuntimeEmbedder
 from optimizer.eggroll_runtime_eval import EggRollRuntimeEvaluator
-from optimizer.eggroll_runtime_noise import EggRollNoiserMaterializer, EggRollNoiseSampler
+from optimizer.eggroll_runtime_noise import (
+    EggRollNoiserMaterializer,
+    EggRollNoiseSampler,
+)
 
 
 @dataclass(frozen=True)
@@ -41,7 +44,13 @@ class EggRollRuntimeConfig:
 class EggRollJAXRuntime:
     """Shared flat-vector EggRoll evaluator for UHD and BO-style vector optimizers."""
 
-    def __init__(self, policy, env_conf, config: EggRollRuntimeConfig | None = None, **kwargs: Any) -> None:
+    def __init__(
+        self,
+        policy,
+        env_conf,
+        config: EggRollRuntimeConfig | None = None,
+        **kwargs: Any,
+    ) -> None:
         cfg = config if config is not None else EggRollRuntimeConfig.from_kwargs(**kwargs)
         _validate_policy_env(policy, env_conf, cfg)
         self._assign_core(policy, env_conf, cfg)

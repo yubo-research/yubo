@@ -19,7 +19,14 @@ def unpack_modal_result_value(value) -> ModalResultParts:
     wall_seconds = None
     stop_reason = None
     if len(value) == 6:
-        (trace_fn, collector_log, collector_trace, trace_records, wall_seconds, stop_reason) = value
+        (
+            trace_fn,
+            collector_log,
+            collector_trace,
+            trace_records,
+            wall_seconds,
+            stop_reason,
+        ) = value
     elif len(value) == 4:
         (trace_fn, collector_log, collector_trace, trace_records) = value
     else:

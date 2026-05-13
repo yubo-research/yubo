@@ -7,8 +7,15 @@ import torch
 import torch.nn as nn
 
 from policies.policy_mixin import PolicyParamsMixin
-from problems.pixel_atari_spatial import atari_in_channels_from_obs_shape, atari_obs_to_nchw
-from problems.pixel_policies_encoders import nature_cnn_encoder, obs_space_from_env_conf, tiny_atari_cnn_encoder
+from problems.pixel_atari_spatial import (
+    atari_in_channels_from_obs_shape,
+    atari_obs_to_nchw,
+)
+from problems.pixel_policies_encoders import (
+    nature_cnn_encoder,
+    obs_space_from_env_conf,
+    tiny_atari_cnn_encoder,
+)
 
 
 class AtariAgent57LiteFactory:

@@ -248,12 +248,36 @@ def tasks() -> None:
 
 
 _TEMPLATE_OPTIONS = [
-    click.option("--task", required=True, help="HyperscaleES LLM bandit task, e.g. basic_arithmetic or zebra_puzzles."),
-    click.option("--model-choice", default="7w1.5B", show_default=True, help="Upstream HyperscaleES model_choice value."),
-    click.option("--script", default="general_do_evolution", show_default=True, help="Upstream script name."),
-    click.option("--noiser", default="eggroll", show_default=True, help="Upstream HyperscaleES noiser."),
+    click.option(
+        "--task",
+        required=True,
+        help="HyperscaleES LLM bandit task, e.g. basic_arithmetic or zebra_puzzles.",
+    ),
+    click.option(
+        "--model-choice",
+        default="7w1.5B",
+        show_default=True,
+        help="Upstream HyperscaleES model_choice value.",
+    ),
+    click.option(
+        "--script",
+        default="general_do_evolution",
+        show_default=True,
+        help="Upstream script name.",
+    ),
+    click.option(
+        "--noiser",
+        default="eggroll",
+        show_default=True,
+        help="Upstream HyperscaleES noiser.",
+    ),
     click.option("--exp-dir", default=None, help="Run directory to write into."),
-    click.option("--repo-dir", default=".external/HyperscaleES", show_default=True, help="HyperscaleES repo path."),
+    click.option(
+        "--repo-dir",
+        default=".external/HyperscaleES",
+        show_default=True,
+        help="HyperscaleES repo path.",
+    ),
     click.option("--num-epochs", default=1000, show_default=True, type=int),
     click.option("--parallel-generations-per-gpu", default=32, show_default=True, type=int),
     click.option("--generations-per-prompt", default=2, show_default=True, type=int),
@@ -269,7 +293,10 @@ def _template_options(func):
     return func
 
 
-@cli.command(name="template", help="Print a runnable TOML template for any supported HyperscaleES LLM bandit task.")
+@cli.command(
+    name="template",
+    help="Print a runnable TOML template for any supported HyperscaleES LLM bandit task.",
+)
 @_template_options
 def template(
     task: str,
@@ -312,7 +339,13 @@ def template(
 
 @cli.command(name="local", help="Run an upstream HyperscaleES LLM experiment from TOML.")
 @click.argument("config_toml", type=click.Path(exists=True, dir_okay=False, path_type=str))
-@click.option("-o", "--opt", "overrides", multiple=True, help="Override section.key=value, e.g. -o args.num_epochs=1")
+@click.option(
+    "-o",
+    "--opt",
+    "overrides",
+    multiple=True,
+    help="Override section.key=value, e.g. -o args.num_epochs=1",
+)
 @click.option("--dry-run", is_flag=True, help="Print the command but do not execute HyperscaleES.")
 def local(config_toml: str, overrides: tuple[str, ...], dry_run: bool) -> None:
     try:

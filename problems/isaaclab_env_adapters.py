@@ -166,7 +166,13 @@ class IsaacLabGymEnvAdapter:
         if len(step_out) != 5:
             raise ValueError(f"Unsupported Isaac Lab step return arity: {len(step_out)}")
         obs, reward, terminated, truncated, info = step_out
-        result = (_flatten_obs(obs), _scalar_float(reward), _scalar_bool(terminated), _scalar_bool(truncated), info)
+        result = (
+            _flatten_obs(obs),
+            _scalar_float(reward),
+            _scalar_bool(terminated),
+            _scalar_bool(truncated),
+            info,
+        )
         return result
 
     def render(self, *args, **kwargs):
@@ -237,7 +243,11 @@ def resolve_isaaclab_env_spaces(env_tag: str):
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="List Isaac Lab Gymnasium task ids.")
     parser.add_argument("--keyword", default=None, help="Optional case-insensitive substring filter.")
-    parser.add_argument("--no-headless", action="store_true", help="Launch Isaac Lab with headless=False.")
+    parser.add_argument(
+        "--no-headless",
+        action="store_true",
+        help="Launch Isaac Lab with headless=False.",
+    )
     args = parser.parse_args(argv)
     for task_id in list_isaaclab_tasks(keyword=args.keyword, headless=not args.no_headless):
         print(task_id)

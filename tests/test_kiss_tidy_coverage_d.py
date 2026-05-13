@@ -12,7 +12,10 @@ from kiss_rl_puffer_remaining_helpers import patch_torchrl_ppo_core_for_kiss
 
 def _patch_ppo_train_noops(monkeypatch):
     monkeypatch.setattr("rl.pufferlib.ppo.training_ops.collect_rollout", lambda *a, **k: None)
-    monkeypatch.setattr("rl.pufferlib.ppo.training_ops.compute_advantages", lambda *a, **k: (torch.zeros(1), torch.zeros(1)))
+    monkeypatch.setattr(
+        "rl.pufferlib.ppo.training_ops.compute_advantages",
+        lambda *a, **k: (torch.zeros(1), torch.zeros(1)),
+    )
     monkeypatch.setattr("rl.pufferlib.ppo.training_ops.flatten_batch", lambda *a, **k: {})
     monkeypatch.setattr("rl.pufferlib.ppo.training_ops.ppo_update", lambda *a, **k: {})
     monkeypatch.setattr("rl.pufferlib.ppo.eval.maybe_eval_and_update_state", lambda *a, **k: None)
@@ -21,21 +24,43 @@ def _patch_ppo_train_noops(monkeypatch):
     monkeypatch.setattr("rl.pufferlib.ppo.metrics._metric_payload", lambda *a, **k: {})
     monkeypatch.setattr("rl.pufferlib.ppo.metrics._append_metrics_line", lambda *a, **k: None)
     monkeypatch.setattr("rl.pufferlib.ppo.metrics._log_iteration", lambda *a, **k: None)
-    monkeypatch.setattr("rl.pufferlib.ppo.checkpoint.restore_checkpoint_if_requested", lambda *a, **k: None)
-    monkeypatch.setattr("rl.pufferlib.ppo.checkpoint.maybe_save_periodic_checkpoint", lambda *a, **k: None)
+    monkeypatch.setattr(
+        "rl.pufferlib.ppo.checkpoint.restore_checkpoint_if_requested",
+        lambda *a, **k: None,
+    )
+    monkeypatch.setattr(
+        "rl.pufferlib.ppo.checkpoint.maybe_save_periodic_checkpoint",
+        lambda *a, **k: None,
+    )
     monkeypatch.setattr("rl.pufferlib.ppo.checkpoint.save_final_checkpoint", lambda *a, **k: None)
     monkeypatch.setattr("rl.logger.log_run_header_basic", lambda *a, **k: None)
     monkeypatch.setattr("rl.logger.log_run_footer", lambda *a, **k: None)
 
 
 def test_kiss_tidy_d_progress_policy_backbone(monkeypatch):
+    from rl.policy_backbone_actor import (
+        ActorBackbonePolicy,
+        ActorBackbonePolicyFactory,
+        ActorPolicySpec,
+    )
+    from rl.policy_backbone_atari import AtariMLP16DiscretePolicy
+    from rl.policy_backbone_discrete import (
+        DiscreteActorBackbonePolicy,
+        DiscreteActorBackbonePolicyFactory,
+        DiscreteActorPolicySpec,
+    )
+    from rl.policy_backbone_gaussian import (
+        GaussianActorBackbonePolicy,
+        GaussianActorBackbonePolicyFactory,
+    )
+    from rl.policy_backbone_utils import (
+        ensure_env_spaces,
+        init_linear,
+        obs_space_from_env_conf,
+    )
+
     from rl.backbone import BackboneSpec, HeadSpec
     from rl.core.progress import due_mark
-    from rl.policy_backbone_actor import ActorBackbonePolicy, ActorBackbonePolicyFactory, ActorPolicySpec
-    from rl.policy_backbone_atari import AtariMLP16DiscretePolicy
-    from rl.policy_backbone_discrete import DiscreteActorBackbonePolicy, DiscreteActorBackbonePolicyFactory, DiscreteActorPolicySpec
-    from rl.policy_backbone_gaussian import GaussianActorBackbonePolicy, GaussianActorBackbonePolicyFactory
-    from rl.policy_backbone_utils import ensure_env_spaces, init_linear, obs_space_from_env_conf
 
     assert due_mark(10, 5, 0) == 2
     assert due_mark(4, 5, 1) is None
@@ -48,7 +73,10 @@ def test_kiss_tidy_d_progress_policy_backbone(monkeypatch):
     ec.ensure_spaces = _boom
     with pytest.raises(AssertionError):
         ensure_env_spaces(ec)
-    ec2 = SimpleNamespace(state_space=None, gym_conf=SimpleNamespace(state_space=SimpleNamespace(shape=(4,))))
+    ec2 = SimpleNamespace(
+        state_space=None,
+        gym_conf=SimpleNamespace(state_space=SimpleNamespace(shape=(4,))),
+    )
     ec2.ensure_spaces = lambda: None
     ensure_env_spaces(ec2)
     assert obs_space_from_env_conf(ec2).shape == (4,)
@@ -76,8 +104,19 @@ def test_kiss_tidy_d_progress_policy_backbone(monkeypatch):
     monkeypatch.setattr(
         "rl.core.env_contract.resolve_env_io_contract",
         lambda env_conf, default_image_size=84: SimpleNamespace(
-            observation=SimpleNamespace(mode="vector", vector_dim=4, raw_shape=(4,), model_channels=None, image_size=None),
-            action=SimpleNamespace(kind="discrete", dim=3, low=np.zeros(1, dtype=np.float32), high=np.ones(1, dtype=np.float32)),
+            observation=SimpleNamespace(
+                mode="vector",
+                vector_dim=4,
+                raw_shape=(4,),
+                model_channels=None,
+                image_size=None,
+            ),
+            action=SimpleNamespace(
+                kind="discrete",
+                dim=3,
+                low=np.zeros(1, dtype=np.float32),
+                high=np.ones(1, dtype=np.float32),
+            ),
         ),
     )
     d_env = SimpleNamespace(problem_seed=1, ensure_spaces=lambda: None)
@@ -124,17 +163,32 @@ def test_kiss_tidy_d_puffer_ppo_engine(monkeypatch, tmp_path):
         share_backbone=False,
     )
     fake_vec = SimpleNamespace(
-        single_action_space=SimpleNamespace(shape=(2,), low=-np.ones(2, dtype=np.float32), high=np.ones(2, dtype=np.float32)),
-        reset=lambda seed=None: (np.zeros((int(cfg.num_envs), 5), dtype=np.float32), {}),
+        single_action_space=SimpleNamespace(
+            shape=(2,),
+            low=-np.ones(2, dtype=np.float32),
+            high=np.ones(2, dtype=np.float32),
+        ),
+        reset=lambda seed=None: (
+            np.zeros((int(cfg.num_envs), 5), dtype=np.float32),
+            {},
+        ),
         close=lambda: None,
     )
     monkeypatch.setattr("rl.pufferlib.ppo.engine_helpers._make_vector_env", lambda c: fake_vec)
     assert make_vector_env(cfg) is not None
-    monkeypatch.setattr("rl.pufferlib.ppo.eval_config.build_eval_env_conf", lambda *a, **k: SimpleNamespace(ok=True))
+    monkeypatch.setattr(
+        "rl.pufferlib.ppo.eval_config.build_eval_env_conf",
+        lambda *a, **k: SimpleNamespace(ok=True),
+    )
     assert build_eval_env_conf(cfg, obs_spec=SimpleNamespace(mode="vector", vector_dim=3)).ok is True
 
     def _quick_train(*a, **k):
-        return TrainResult(best_return=0.0, last_eval_return=0.0, last_heldout_return=None, num_iterations=1)
+        return TrainResult(
+            best_return=0.0,
+            last_eval_return=0.0,
+            last_heldout_return=None,
+            num_iterations=1,
+        )
 
     monkeypatch.setattr("rl.pufferlib.ppo.engine_train.run_training", _quick_train)
     assert ppo_engine_impl.train_ppo_puffer_impl(cfg).num_iterations == 1
@@ -205,14 +259,29 @@ def test_kiss_tidy_d_sac_eval_utils_impl(monkeypatch):
     from rl.pufferlib.sac import eval_utils_impl as sac_eval_impl
 
     device = torch.device("cpu")
-    monkeypatch.setattr("rl.core.episode_rollout.collect_denoised_trajectory", lambda *a, **k: (SimpleNamespace(rreturn=0.5), None))
+    monkeypatch.setattr(
+        "rl.core.episode_rollout.collect_denoised_trajectory",
+        lambda *a, **k: (SimpleNamespace(rreturn=0.5), None),
+    )
     monkeypatch.setattr("rl.core.episode_rollout.evaluate_for_best", lambda *a, **k: 0.25)
-    monkeypatch.setattr("rl.pufferlib.offpolicy.eval_utils.evaluate_heldout_with_best_actor", lambda **k: 0.1)
-    monkeypatch.setattr("rl.eval_noise.build_eval_plan", lambda **k: SimpleNamespace(eval_seed=1, heldout_i_noise=2))
-    monkeypatch.setattr("rl.pufferlib.offpolicy.eval_utils.update_best_actor_if_improved", lambda **k: (0.5, {}, True))
+    monkeypatch.setattr(
+        "rl.pufferlib.offpolicy.eval_utils.evaluate_heldout_with_best_actor",
+        lambda **k: 0.1,
+    )
+    monkeypatch.setattr(
+        "rl.eval_noise.build_eval_plan",
+        lambda **k: SimpleNamespace(eval_seed=1, heldout_i_noise=2),
+    )
+    monkeypatch.setattr(
+        "rl.pufferlib.offpolicy.eval_utils.update_best_actor_if_improved",
+        lambda **k: (0.5, {}, True),
+    )
     monkeypatch.setattr("rl.pufferlib.offpolicy.eval_utils.due_mark", lambda *a, **k: 1)
     monkeypatch.setattr("rl.pufferlib.offpolicy.eval_utils.capture_actor_state", lambda m: {"x": 1})
-    monkeypatch.setattr("rl.pufferlib.offpolicy.eval_utils.use_actor_state", lambda m, s, device=None: __import__("contextlib").nullcontext())
+    monkeypatch.setattr(
+        "rl.pufferlib.offpolicy.eval_utils.use_actor_state",
+        lambda m, s, device=None: __import__("contextlib").nullcontext(),
+    )
     mods = SimpleNamespace()
     ev = SimpleNamespace(env_conf=SimpleNamespace())
     ob = SimpleNamespace(mode="vector")
@@ -242,8 +311,25 @@ def test_kiss_tidy_d_sac_eval_utils_impl(monkeypatch):
         )
         == 0.1
     )
-    assert sac_eval_impl.evaluate_heldout_if_enabled(SimpleNamespace(num_denoise_passive=None), ev, mods, ob, device=device, heldout_i_noise=0) is None
-    tr = SimpleNamespace(global_step=10, eval_mark=0, best_return=0.0, best_actor_state=None, last_eval_return=0.0, last_heldout_return=None)
+    assert (
+        sac_eval_impl.evaluate_heldout_if_enabled(
+            SimpleNamespace(num_denoise_passive=None),
+            ev,
+            mods,
+            ob,
+            device=device,
+            heldout_i_noise=0,
+        )
+        is None
+    )
+    tr = SimpleNamespace(
+        global_step=10,
+        eval_mark=0,
+        best_return=0.0,
+        best_actor_state=None,
+        last_eval_return=0.0,
+        last_heldout_return=None,
+    )
     ev2 = SimpleNamespace(env_conf=SimpleNamespace(), problem_seed=7)
     sac_eval_impl.maybe_eval(
         SimpleNamespace(
@@ -264,120 +350,12 @@ def test_kiss_tidy_d_sac_eval_utils_impl(monkeypatch):
     assert getattr(sac_eval_impl, "rl_logger") is not None
 
 
-def test_kiss_tidy_d_turbo_refs(monkeypatch):
-    import turbo_m_ref.turbo_1_ask_tell_core as atc
-    import turbo_m_ref.turbo_1_candidates as tc
-    import turbo_m_ref.turbo_1_core as t1c
-
-    atc.validate_init_args(
-        np.zeros(2),
-        np.ones(2),
-        n_init=2,
-        batch_size=1,
-        verbose=False,
-        use_ard=False,
-        max_cholesky_size=0,
-        n_training_steps=30,
-        device="cpu",
-        dtype="float32",
-    )
-    assert atc.standardize_fX(np.array([1.0, 2.0, 9.0])).sigma > 0
-    xc = np.random.default_rng(0).random((6, 2)).astype(np.float64)
-    yc = np.random.default_rng(1).standard_normal((6, 2)).astype(np.float64)
-    assert atc.select_candidates(2, 2, xc, yc).shape == (2, 2)
-    self_at = SimpleNamespace(
-        dim=2,
-        n_cand=20,
-        min_cuda=10**9,
-        device=torch.device("cpu"),
-        dtype=torch.float64,
-        max_cholesky_size=0,
-        use_ard=False,
-        batch_size=1,
-    )
-
-    def _gp_fwd(x):
-        import gpytorch.distributions as gd
-        from gpytorch.lazy import lazify
-
-        n = int(x.shape[0])
-        m = torch.zeros(n, dtype=x.dtype, device=x.device)
-        c = torch.eye(n, dtype=x.dtype, device=x.device) * 0.1 + torch.eye(n, dtype=x.dtype, device=x.device) * 1e-4
-        return gd.MultivariateNormal(m, lazify(c))
-
-    gp = SimpleNamespace(
-        covar_module=SimpleNamespace(base_kernel=SimpleNamespace(lengthscale=torch.ones(1, 2, dtype=torch.float64))),
-        likelihood=SimpleNamespace(__call__=lambda mv: mv),
-    )
-    gp.to = lambda dtype=None, device=None: gp
-    gp.__call__ = _gp_fwd
-    monkeypatch.setattr(atc, "train_gp_model", lambda self, X, fX, n_training_steps, hypers, device, dtype: gp)
-    monkeypatch.setattr(atc, "sample_candidates", lambda gp, X_cand, device, dtype, batch_size, max_cholesky_size: np.zeros((len(X_cand), batch_size)))
-    atc.init_hypers(self_at)
-    atc.init_counters_and_tr(self_at, batch_size=1, length_fixed=False)
-    atc.device_dtype_for(self_at, 1)
-    atc.trust_region_bounds(self_at, np.random.random((4, 2)), np.random.random(4), gp, 0.5)
-    assert atc.create_candidates(self_at, np.random.random((4, 2)), np.random.random(4), 0.5, 30, {}).X_cand is not None
-
-    t1c.validate_init_args(
-        np.zeros(2),
-        np.ones(2),
-        n_init=2,
-        max_evals=100,
-        batch_size=1,
-        verbose=False,
-        use_ard=False,
-        max_cholesky_size=0,
-        n_training_steps=30,
-        dtype="float32",
-    )
-    self_c = SimpleNamespace(dim=2, use_ard=False, _surrogate_type="none", batch_size=1)
-    t1c.init_hypers(self_c)
-    t1c.init_counters_and_tr(self_c, batch_size=1)
-    t1c.CandidatesResult(X_cand=np.zeros((1, 2)), y_cand=None, hypers={})
-    t1c.make_X_cand(self_at, x_center=np.zeros((1, 2)), lb=np.zeros(2), ub=np.ones(2), device=torch.device("cpu"), dtype=torch.float64)
-    assert (
-        t1c.compute_y_cand(
-            self_c,
-            X=np.zeros((3, 2)),
-            fX=np.zeros((3, 1)),
-            X_cand=np.zeros((2, 2)),
-            mu=0.0,
-            sigma=1.0,
-            gp=None,
-            device=torch.device("cpu"),
-            dtype=torch.float64,
-        )
-        is None
-    )
-
-    self_tc = SimpleNamespace(
-        dim=2,
-        min_cuda=10**9,
-        max_cholesky_size=0,
-        use_ard=False,
-        batch_size=1,
-        n_cand=32,
-        device=torch.device("cpu"),
-        dtype=torch.float64,
-        _surrogate_type="none",
-    )
-    monkeypatch.setattr(tc, "train_gp", lambda train_x, train_y, use_ard, num_steps, hypers=None: gp)
-    acq = SimpleNamespace(torch_random_choice=lambda x, k, replace=False: x[: int(k)])
-    monkeypatch.setitem(__import__("sys").modules, "acq.acq_util", acq)
-    X = np.linspace(0.1, 0.9, 8)[:, None]
-    X = np.hstack([X, 1.0 - X])
-    fX = (X[:, 0] ** 2).reshape(-1, 1)
-    cr2 = tc.create_candidates(self_tc, X, fX, 0.5, 30, {})
-    assert cr2.X_cand is not None
-    sel = tc.select_candidates(self_tc, cr2.X_cand, SimpleNamespace(mu=np.arange(len(cr2.X_cand)), se=np.ones(len(cr2.X_cand))))
-    assert sel.shape[0] == 1
-
-
 def test_kiss_tidy_d_sac_puffer_torchrl_ppo_core(monkeypatch, tmp_path):
     from rl.pufferlib.sac import sac_puffer_engine_impl, sac_puffer_train_run
     from rl.pufferlib.sac.config import SACConfig
-    from rl.pufferlib.sac.sac_puffer_train_run_orchestrate import train_sac_puffer_impl as orch_impl
+    from rl.pufferlib.sac.sac_puffer_train_run_orchestrate import (
+        train_sac_puffer_impl as orch_impl,
+    )
     from rl.torchrl.offpolicy import trainer_utils as tu
     from rl.torchrl.ppo import core_build as ppo_cb
     from rl.torchrl.ppo import core_env_setup as ppo_ce
@@ -385,7 +363,13 @@ def test_kiss_tidy_d_sac_puffer_torchrl_ppo_core(monkeypatch, tmp_path):
     from rl.torchrl.ppo.config import PPOConfig
     from rl.torchrl.ppo.ppo_nets_base import _BackboneHeadNet
 
-    sac_cfg = SACConfig(exp_dir=str(tmp_path), env_tag="pend", device="cpu", total_timesteps=0, replay_backend="auto")
+    sac_cfg = SACConfig(
+        exp_dir=str(tmp_path),
+        env_tag="pend",
+        device="cpu",
+        total_timesteps=0,
+        replay_backend="auto",
+    )
     assert sac_puffer_train_run.train_sac_puffer_impl(sac_cfg).num_steps == 0
     assert sac_puffer_train_run.train_sac_puffer(sac_cfg).num_steps == 0
     assert orch_impl(sac_cfg).num_steps == 0
@@ -398,7 +382,11 @@ def test_kiss_tidy_d_sac_puffer_torchrl_ppo_core(monkeypatch, tmp_path):
             "observation": torch.zeros(2, 3),
             "action": torch.zeros(2, 1),
             "next": __import__("tensordict").TensorDict(
-                {"observation": torch.zeros(2, 3), "reward": torch.zeros(2), "terminated": torch.zeros(2, dtype=torch.bool)},
+                {
+                    "observation": torch.zeros(2, 3),
+                    "reward": torch.zeros(2),
+                    "terminated": torch.zeros(2, dtype=torch.bool),
+                },
                 batch_size=[2],
             ),
         },
@@ -406,20 +394,47 @@ def test_kiss_tidy_d_sac_puffer_torchrl_ppo_core(monkeypatch, tmp_path):
     )
     flat = tu.flatten_batch_to_transitions(td)
     assert flat.batch_size[0] == 2
-    tu.normalize_actions_for_replay(flat, action_low=np.array([-1.0], dtype=np.float32), action_high=np.array([1.0], dtype=np.float32))
+    tu.normalize_actions_for_replay(
+        flat,
+        action_low=np.array([-1.0], dtype=np.float32),
+        action_high=np.array([1.0], dtype=np.float32),
+    )
 
     patch_torchrl_ppo_core_for_kiss(monkeypatch)
-    pcfg = PPOConfig(env_tag="x", exp_dir=str(tmp_path), total_timesteps=4, num_envs=1, num_steps=2, num_minibatches=1)
+    pcfg = PPOConfig(
+        env_tag="x",
+        exp_dir=str(tmp_path),
+        total_timesteps=4,
+        num_envs=1,
+        num_steps=2,
+        num_minibatches=1,
+    )
     env_setup = ppo_ce.build_env_setup(pcfg)
     mods = ppo_cb.build_modules(pcfg, env_setup, device=torch.device("cpu"))
-    rt = SimpleNamespace(collector_backend="multi_sync", single_env_backend="serial", device=torch.device("cpu"), collector_workers=1)
+    rt = SimpleNamespace(
+        collector_backend="multi_sync",
+        single_env_backend="serial",
+        device=torch.device("cpu"),
+        collector_workers=1,
+    )
     trn = ppo_cb.build_training(pcfg, env_setup, mods, runtime=rt)
     assert trn.frames_per_batch == 2
     oc = __import__("rl.core.env_contract", fromlist=["ObservationContract"]).ObservationContract
     c = oc(mode="vector", raw_shape=(3,), vector_dim=3)
     log_std = torch.nn.Parameter(torch.zeros(2))
-    an = ActorNet(torch.nn.Linear(3, 4), torch.nn.Linear(4, 2), log_std, torch.nn.Identity(), obs_contract=c)
+    an = ActorNet(
+        torch.nn.Linear(3, 4),
+        torch.nn.Linear(4, 2),
+        log_std,
+        torch.nn.Identity(),
+        obs_contract=c,
+    )
     loc, _ = an.forward(torch.zeros(1, 3))
     assert loc.shape[-1] == 2
-    bhn = _BackboneHeadNet(torch.nn.Linear(3, 4), torch.nn.Linear(4, 2), torch.nn.Identity(), obs_contract=c)
+    bhn = _BackboneHeadNet(
+        torch.nn.Linear(3, 4),
+        torch.nn.Linear(4, 2),
+        torch.nn.Identity(),
+        obs_contract=c,
+    )
     assert bhn.backbone is not None

@@ -208,6 +208,7 @@ def test_kiss_dep_sentinels_figures_and_sitecustomize() -> None:
         import figures.turbo_failure_budget_multiple  # noqa: F401
         import figures.turbo_failure_clock_empirical  # noqa: F401
         import figures.turbo_failure_clock_schedule  # noqa: F401
+
         import sitecustomize  # noqa: F401
 
     assert True

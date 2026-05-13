@@ -166,7 +166,12 @@ def _validate_experiment(path: Path) -> CoverageValidation:
     detail = f"env_tag={cfg.env_tag} policy_tag={cfg.policy_tag} opt_name={cfg.opt_name}"
     adapter_reason = _adapter_block_reason(str(cfg.env_tag))
     if adapter_reason is not None:
-        return CoverageValidation(_rel(path), "tag_experiment", "adapter_blocked", f"{detail}; {adapter_reason}")
+        return CoverageValidation(
+            _rel(path),
+            "tag_experiment",
+            "adapter_blocked",
+            f"{detail}; {adapter_reason}",
+        )
     return CoverageValidation(_rel(path), "tag_experiment", "ok", detail)
 
 
@@ -301,10 +306,22 @@ def _readiness_from_validation(result: CoverageValidation) -> LaunchReadiness:
 
     setup = _setup_requirement(result.kind)
     if setup is not None:
-        return LaunchReadiness(result.path, result.kind, "setup_required", command, f"{result.detail}; {setup}")
+        return LaunchReadiness(
+            result.path,
+            result.kind,
+            "setup_required",
+            command,
+            f"{result.detail}; {setup}",
+        )
     dependency = _dependency_requirement(result)
     if dependency is not None:
-        return LaunchReadiness(result.path, result.kind, "dependency_missing", command, f"{result.detail}; {dependency}")
+        return LaunchReadiness(
+            result.path,
+            result.kind,
+            "dependency_missing",
+            command,
+            f"{result.detail}; {dependency}",
+        )
     return LaunchReadiness(result.path, result.kind, "ready", command, result.detail)
 
 
@@ -330,10 +347,23 @@ def validate(json_output: bool, require_live_assets: bool) -> None:
     paper = _paper_coverage()
 
     if json_output:
-        print(json.dumps({"counts": counts, "paper": asdict(paper), "results": [asdict(r) for r in results]}, indent=2, sort_keys=True))
+        print(
+            json.dumps(
+                {
+                    "counts": counts,
+                    "paper": asdict(paper),
+                    "results": [asdict(r) for r in results],
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        )
     else:
         print("EggRoll coverage config validation")
-        print("counts:", ", ".join(f"{key}={value}" for key, value in sorted(counts.items())))
+        print(
+            "counts:",
+            ", ".join(f"{key}={value}" for key, value in sorted(counts.items())),
+        )
         print(f"paper coverage: present={paper.present}/{paper.expected}")
         for missing in paper.missing:
             print(f"MISSING       paper_config       {missing}")
@@ -361,10 +391,19 @@ def readiness(json_output: bool, require_live_assets: bool) -> None:
         counts[result.status] = counts.get(result.status, 0) + 1
 
     if json_output:
-        print(json.dumps({"counts": counts, "results": [asdict(r) for r in results]}, indent=2, sort_keys=True))
+        print(
+            json.dumps(
+                {"counts": counts, "results": [asdict(r) for r in results]},
+                indent=2,
+                sort_keys=True,
+            )
+        )
     else:
         print("EggRoll launch readiness")
-        print("counts:", ", ".join(f"{key}={value}" for key, value in sorted(counts.items())))
+        print(
+            "counts:",
+            ", ".join(f"{key}={value}" for key, value in sorted(counts.items())),
+        )
         for result in results:
             print(f"{result.status.upper():14} {result.kind:18} {result.path}")
             print(f"  command: {result.command}")

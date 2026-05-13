@@ -133,7 +133,10 @@ def _eggroll_actor_critic_mlp_factory(
     activation: str,
 ) -> Callable[[EnvironmentRuntimeProtocol], Policy]:
     def factory(env_runtime: EnvironmentRuntimeProtocol) -> Policy:
-        from policies.eggroll_policy import EggRollActorCriticMLPPolicyFactory, EggRollActorCriticMLPSpec
+        from policies.eggroll_policy import (
+            EggRollActorCriticMLPPolicyFactory,
+            EggRollActorCriticMLPSpec,
+        )
 
         return EggRollActorCriticMLPPolicyFactory(
             EggRollActorCriticMLPSpec(

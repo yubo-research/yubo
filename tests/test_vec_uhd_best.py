@@ -48,7 +48,11 @@ def test_bszo_tracks_real_best_after_predicted_best():
 
 
 def test_best_source_suffix_only_when_enabled():
-    from ops.vec_uhd import _format_source_best_suffix, _new_mezo_state, _track_mezo_best
+    from ops.vec_uhd import (
+        _format_source_best_suffix,
+        _new_mezo_state,
+        _track_mezo_best,
+    )
 
     objective = _Objective(dim=1)
     state = _new_mezo_state(objective)
@@ -105,12 +109,36 @@ def test_noise_can_replace_dense_with_eggroll_backend():
     np.testing.assert_allclose(noise, np.asarray([-11.0, -12.0, -13.0]))
 
 
+def test_simple_minus_impute_runs_with_point_imputer():
+    from ops.exp_uhd import _parse_cfg
+    from ops.vec_uhd import _run_simple
+
+    cfg = _parse_cfg(
+        {
+            "env_tag": "f:sphere-2d",
+            "num_rounds": 2,
+            "optimizer": "simple",
+            "enn_minus_impute": True,
+            "be_num_probes": 1,
+            "enn_warmup_real_obs": 100,
+        }
+    )
+    objective = _Objective(dim=2)
+
+    _run_simple(objective, cfg)
+
+    assert len(objective.evals) >= 2
+    assert objective.policies
+
+
 class _Objective:
     def __init__(self, dim: int) -> None:
         self.dim = int(dim)
         self.x0 = np.zeros(self.dim, dtype=np.float64)
         self.dense_calls = []
         self.eggroll_calls = []
+        self.evals = []
+        self.policies = []
 
     def sample_noise(
         self,
@@ -143,3 +171,17 @@ class _Objective:
             }
         )
         return -np.arange(int(seed), int(seed) + self.dim, dtype=np.float64)
+
+    def embed(self, x: np.ndarray) -> np.ndarray:
+        return np.asarray(x, dtype=np.float64)
+
+    def embed_many(self, xs: np.ndarray) -> np.ndarray:
+        return np.asarray(xs, dtype=np.float64)
+
+    def evaluate(self, x: np.ndarray, *, seed: int) -> tuple[float, float]:
+        self.evals.append((np.asarray(x, dtype=np.float64).copy(), int(seed)))
+        return -float(np.linalg.norm(x)), 0.0
+
+    def make_policy(self, x: np.ndarray) -> np.ndarray:
+        self.policies.append(np.asarray(x, dtype=np.float64).copy())
+        return np.asarray(x, dtype=np.float64)

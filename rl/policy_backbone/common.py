@@ -3,11 +3,11 @@ import torch.nn as nn
 from rl.backbone import init_linear_layers
 
 
-def _init_linear(module: nn.Module) -> None:
+def init_linear(module: nn.Module) -> None:
     init_linear_layers(module, gain=0.5)
 
 
-def _obs_space_from_env_conf(env_conf):
+def obs_space_from_env_conf(env_conf):
     obs_space = getattr(env_conf, "state_space", None)
     if obs_space is None:
         gym_conf = getattr(env_conf, "gym_conf", None)
@@ -17,6 +17,6 @@ def _obs_space_from_env_conf(env_conf):
     return obs_space
 
 
-def _ensure_env_spaces(env_conf) -> None:
+def ensure_env_spaces(env_conf) -> None:
     if hasattr(env_conf, "ensure_spaces"):
         env_conf.ensure_spaces()

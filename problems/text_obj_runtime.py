@@ -14,7 +14,19 @@ _RUNTIME_ERROR = (
 
 
 def require_runtime() -> None:
-    missing = [module for module in ("accelerate", "peft", "ray", "safetensors", "torch", "transformers", "vllm") if importlib.util.find_spec(module) is None]
+    missing = [
+        module
+        for module in (
+            "accelerate",
+            "peft",
+            "ray",
+            "safetensors",
+            "torch",
+            "transformers",
+            "vllm",
+        )
+        if importlib.util.find_spec(module) is None
+    ]
     if missing:
         raise RuntimeError(f"{_RUNTIME_ERROR} Missing: {', '.join(sorted(missing))}.")
 
@@ -25,5 +37,8 @@ def make_adapter_root() -> str:
 
 
 def base_seed(cfg: Any) -> int:
-    seed = next((candidate for candidate in (cfg.noise_seed_0, cfg.problem_seed, 0) if candidate is not None), 0)
+    seed = next(
+        (candidate for candidate in (cfg.noise_seed_0, cfg.problem_seed, 0) if candidate is not None),
+        0,
+    )
     return int(seed) + int(cfg.seed_offset)

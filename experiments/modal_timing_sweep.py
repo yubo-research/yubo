@@ -21,7 +21,10 @@ from experiments.experiment_sampler import (
     sample_1,
 )
 from experiments.modal_image import mk_image
-from experiments.modal_result_collect import gen_jobs_from_configs, iter_modal_results_for_collect
+from experiments.modal_result_collect import (
+    gen_jobs_from_configs,
+    iter_modal_results_for_collect,
+)
 
 
 modal_image = mk_image()

@@ -26,7 +26,9 @@ class CraftaxEggRollAdapter(GymnaxLikeEggRollAdapter):
                 return made, core._default_env_params(made)
 
         if "Classic" in raw_name:
-            from craftax.craftax.envs.craftax_classic_symbolic_env import CraftaxClassicSymbolicEnv
+            from craftax.craftax.envs.craftax_classic_symbolic_env import (
+                CraftaxClassicSymbolicEnv,
+            )
 
             env = CraftaxClassicSymbolicEnv()
         else:
@@ -57,7 +59,13 @@ class JumanjiEggRollAdapter:
     def step(self, _key, state, action):
         next_state, timestep = self.env.step(state, action)
         done = timestep.last()
-        result = (core._flat_obs(timestep.observation, self._jax, self._jnp), next_state, timestep.reward, done, {})
+        result = (
+            core._flat_obs(timestep.observation, self._jax, self._jnp),
+            next_state,
+            timestep.reward,
+            done,
+            {},
+        )
         return result
 
     def clip_action(self, action):
@@ -74,7 +82,11 @@ class KinetixEggRollAdapter(GymnaxLikeEggRollAdapter):
     def _make_kinetix(raw_name: str):
         import kinetix
 
-        for factory_name in ("make", "make_kinetix_env_from_name", "make_env_from_name"):
+        for factory_name in (
+            "make",
+            "make_kinetix_env_from_name",
+            "make_env_from_name",
+        ):
             factory = getattr(kinetix, factory_name, None)
             if callable(factory):
                 made = factory(raw_name)

@@ -34,7 +34,17 @@ class EggRollRuntimeEvaluator:
                 policy_dist = model_cls.forward(noiser, None, None, frozen_params, params, es_tree_key, None, obs_t)
                 action = rt.action_selector.select_action(policy_dist, action_key)
                 next_obs, next_state, reward, next_done, _info = env_adapter.step(env_key, state_t, env_adapter.clip_action(action))
-                transition = (obs_t, state_t, total_t, done_t, key_t, next_obs, next_state, reward, next_done)
+                transition = (
+                    obs_t,
+                    state_t,
+                    total_t,
+                    done_t,
+                    key_t,
+                    next_obs,
+                    next_state,
+                    reward,
+                    next_done,
+                )
                 return rollout_step_out(jax, jnp, transition)
 
             (_, _, total_reward, _, _), _ = jax.lax.scan(
@@ -49,7 +59,11 @@ class EggRollRuntimeEvaluator:
             params = rt.decode_vector_params(x)
             scores = jax.vmap(lambda k: rollout_one(params, k))(keys)
             mean = jnp.mean(scores)
-            se = jnp.where(scores.shape[0] > 1, jnp.std(scores) / jnp.sqrt(scores.shape[0]), jnp.array(0.0, dtype=jnp.float32))
+            se = jnp.where(
+                scores.shape[0] > 1,
+                jnp.std(scores) / jnp.sqrt(scores.shape[0]),
+                jnp.array(0.0, dtype=jnp.float32),
+            )
             return mean, se
 
         @jax.jit

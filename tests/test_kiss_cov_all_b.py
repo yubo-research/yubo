@@ -114,7 +114,11 @@ def test_cov_trajectory_draw():
     def _envconf_make(self, render_mode=None):
         return _Env()
 
-    _EnvConf = type("_EnvConf", (), {"gym_conf": gym_conf, "env_name": "test", "make": _envconf_make})
+    _EnvConf = type(
+        "_EnvConf",
+        (),
+        {"gym_conf": gym_conf, "env_name": "test", "make": _envconf_make},
+    )
 
     traj = collect_trajectory(_EnvConf(), lambda s: np.zeros(3), noise_seed=0)
     assert traj.rreturn > 0

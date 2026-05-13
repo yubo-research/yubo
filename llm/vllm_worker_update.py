@@ -24,7 +24,13 @@ class LoraUpdateContext:
         return int(self.args.population_size) // 2
 
 
-def apply_lora_es_update(worker: Any, normalized_fitnesses: list[float], peft_shapes_dict: dict[str, tuple[int, ...]], es_step: int, args: Any) -> bool:
+def apply_lora_es_update(
+    worker: Any,
+    normalized_fitnesses: list[float],
+    peft_shapes_dict: dict[str, tuple[int, ...]],
+    es_step: int,
+    args: Any,
+) -> bool:
     import torch
 
     if getattr(worker, "gpu_rank", 0) != 0:

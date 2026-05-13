@@ -13,7 +13,11 @@ def test_kiss_tidy_e_torchrl_sac_sampling_vector(monkeypatch, tmp_path):
     from rl.torchrl.sac import sac_trainer_phase_a as pha
     from rl.torchrl.sac import sac_trainer_phase_b_impl as phb
     from rl.torchrl.sac.config import SACConfig
-    from rl.torchrl.sac.sac_setup_build import build_env_setup, build_modules, build_training
+    from rl.torchrl.sac.sac_setup_build import (
+        build_env_setup,
+        build_modules,
+        build_training,
+    )
     from rl.torchrl.sac.sac_setup_types import _TrainState
 
     assert callable(sac_train_loop.train_sac)
@@ -23,7 +27,10 @@ def test_kiss_tidy_e_torchrl_sac_sampling_vector(monkeypatch, tmp_path):
             env_conf=SimpleNamespace(
                 from_pixels=False,
                 ensure_spaces=lambda: None,
-                make=lambda: SimpleNamespace(reset=lambda seed=None: (None, {}), action_space=SimpleNamespace(seed=lambda seed: None)),
+                make=lambda: SimpleNamespace(
+                    reset=lambda seed=None: (None, {}),
+                    action_space=SimpleNamespace(seed=lambda seed: None),
+                ),
                 state_space=SimpleNamespace(shape=(3,)),
             ),
             problem_seed=1,
@@ -35,8 +42,18 @@ def test_kiss_tidy_e_torchrl_sac_sampling_vector(monkeypatch, tmp_path):
             obs_width=None,
         ),
     )
-    monkeypatch.setattr("rl.torchrl.sac.sac_setup_build.torchrl_common.obs_scale_from_env", lambda env_conf: (None, None))
-    sc = SACConfig(env_tag="pend", exp_dir=str(tmp_path), device="cpu", replay_size=64, batch_size=4, total_timesteps=1)
+    monkeypatch.setattr(
+        "rl.torchrl.sac.sac_setup_build.torchrl_common.obs_scale_from_env",
+        lambda env_conf: (None, None),
+    )
+    sc = SACConfig(
+        env_tag="pend",
+        exp_dir=str(tmp_path),
+        device="cpu",
+        replay_size=64,
+        batch_size=4,
+        total_timesteps=1,
+    )
     env = build_env_setup(sc)
     mods = build_modules(sc, env, device=torch.device("cpu"))
     tr = build_training(sc, mods)
@@ -48,7 +65,10 @@ def test_kiss_tidy_e_torchrl_sac_sampling_vector(monkeypatch, tmp_path):
     st = pha.resume_if_requested(sc, mods, tr, device=torch.device("cpu"))
     assert st.start_step == 0
     _ = pha.build_eval_policy(mods, env, torch.device("cpu"))
-    monkeypatch.setattr("rl.core.episode_rollout.collect_denoised_trajectory", lambda *a, **k: (SimpleNamespace(rreturn=0.3), None))
+    monkeypatch.setattr(
+        "rl.core.episode_rollout.collect_denoised_trajectory",
+        lambda *a, **k: (SimpleNamespace(rreturn=0.3), None),
+    )
     assert pha.evaluate_actor(sc, env, mods, device=torch.device("cpu"), eval_seed=0) == 0.3
     td = __import__("tensordict").TensorDict(
         {
@@ -103,7 +123,16 @@ def test_kiss_tidy_e_torchrl_sac_sampling_vector(monkeypatch, tmp_path):
         learner_update_chunk_size=1,
         total_timesteps=4,
     )
-    out = phb.process_sac_batch(td, sc2, mods, tr, rt, env, {"loss_actor": 0.0, "loss_critic": 0.0, "loss_alpha": 0.0}, 0)
+    out = phb.process_sac_batch(
+        td,
+        sc2,
+        mods,
+        tr,
+        rt,
+        env,
+        {"loss_actor": 0.0, "loss_critic": 0.0, "loss_alpha": 0.0},
+        0,
+    )
     assert len(out) == 3
     losses = phb.update_step(sc2, mods, tr, device=torch.device("cpu"), batch_size=4)
     assert "loss_actor" in losses
@@ -120,7 +149,11 @@ def test_kiss_tidy_e_torchrl_sac_sampling_vector(monkeypatch, tmp_path):
 
 
 def test_kiss_tidy_e_sparse_jl_and_vector_fakes():
-    from sampling.sparse_jl_t_accum import accumulate_into, accumulate_into_wr, accumulate_noise_into
+    from sampling.sparse_jl_t_accum import (
+        accumulate_into,
+        accumulate_into_wr,
+        accumulate_noise_into,
+    )
     from sampling.sparse_jl_t_hash import (
         CHUNK_SIZE,
         compute_rows_and_signs,
@@ -130,7 +163,10 @@ def test_kiss_tidy_e_sparse_jl_and_vector_fakes():
         wrap_int64,
     )
     from sampling.sparse_jl_t_transforms import block_sparse_hash_scatter_from_nz_t
-    from testing_support.vector_fakes import FakePufferVecEnv, FakePufferVecEnvContinuous
+    from testing_support.vector_fakes import (
+        FakePufferVecEnv,
+        FakePufferVecEnvContinuous,
+    )
 
     dvc = torch.device("cpu")
     y = torch.zeros(8, dtype=torch.float32)
@@ -147,7 +183,15 @@ def test_kiss_tidy_e_sparse_jl_and_vector_fakes():
     r2, _s2 = compute_rows_and_signs_wr(torch.tensor([0], dtype=torch.int64), 8, 2, 7, dvc)
     assert r2.shape[0] == 1
     _ = CHUNK_SIZE > 0
-    out2 = block_sparse_hash_scatter_from_nz_t(torch.tensor([0, 1], dtype=torch.int64), torch.ones(2), 16, 2, 9, torch.float32, dvc)
+    out2 = block_sparse_hash_scatter_from_nz_t(
+        torch.tensor([0, 1], dtype=torch.int64),
+        torch.ones(2),
+        16,
+        2,
+        9,
+        torch.float32,
+        dvc,
+    )
     assert out2.shape[0] == 16
     fv = FakePufferVecEnv(2)
     o, _ = fv.reset(seed=0)

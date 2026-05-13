@@ -72,7 +72,13 @@ def _synthetic_countdown_dataset(*, seed: int, dataset_size: int | None) -> list
     for _ in range(int(dataset_size or 1024)):
         numbers = rng.integers(2, 10, size=3).astype(int).tolist()
         target = int(numbers[0] * (numbers[1] + numbers[2]))
-        examples.append({"context": _countdown_context(numbers, target), "numbers": numbers, "target": target})
+        examples.append(
+            {
+                "context": _countdown_context(numbers, target),
+                "numbers": numbers,
+                "target": target,
+            }
+        )
     return examples
 
 

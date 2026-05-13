@@ -2,7 +2,11 @@ import math
 
 import torch
 
-from .sparse_jl_t_hash import CHUNK_SIZE, compute_rows_and_signs, compute_rows_and_signs_wr
+from .sparse_jl_t_hash import (
+    CHUNK_SIZE,
+    compute_rows_and_signs,
+    compute_rows_and_signs_wr,
+)
 
 
 def _accumulate_into_rows(

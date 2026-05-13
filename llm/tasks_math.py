@@ -102,7 +102,11 @@ def _load_math_dataset(dataset_name: str, *, seed: int, dataset_size: int | None
         "math12k": ("axon-rl/MATH-12k", "train", True),
         "orz57k": ("axon-rl/ORZ-57k", "train", True),
         "deepscaler40k": ("axon-rl/DeepScaleR-40K", "train", True),
-        "math-eval": ("axon-rl/math-eval", ["math", "amc", "olympiad_bench", "minerva", "aime24"], False),
+        "math-eval": (
+            "axon-rl/math-eval",
+            ["math", "amc", "olympiad_bench", "minerva", "aime24"],
+            False,
+        ),
     }
     if dataset_name not in dataset_names:
         raise ValueError(f"Unknown math dataset {dataset_name!r}. Supported: {sorted(dataset_names)}")
@@ -164,7 +168,12 @@ def _last_boxed_answer(text: str) -> str | None:
 
 def _grade_math_answer_with_math_verify(model_answer: str, correct_answer: str) -> bool:
     try:
-        from math_verify import ExprExtractionConfig, LatexExtractionConfig, parse, verify
+        from math_verify import (
+            ExprExtractionConfig,
+            LatexExtractionConfig,
+            parse,
+            verify,
+        )
     except ImportError:
         return False
 
@@ -189,7 +198,14 @@ def _load_train_math_dataset(load_dataset: Any, hf_name: str, split: str, *, see
     return dataset, True, []
 
 
-def _load_eval_math_dataset(load_dataset: Any, hf_name: str, split_names: list[str], *, seed: int, dataset_size: int | None):
+def _load_eval_math_dataset(
+    load_dataset: Any,
+    hf_name: str,
+    split_names: list[str],
+    *,
+    seed: int,
+    dataset_size: int | None,
+):
     raw = dict(load_dataset(hf_name))
     raw["gsm8k"] = load_dataset("axon-rl/GSM-8k", split="train").shuffle(seed=seed).select(range(500))
     raw["asdiv"] = load_dataset("axon-rl/ASDIV-2k", split="train").shuffle(seed=seed).select(range(500))
@@ -198,7 +214,11 @@ def _load_eval_math_dataset(load_dataset: Any, hf_name: str, split_names: list[s
     if dataset_size is not None:
         limit = int(dataset_size)
         raw = {name: data.select(range(min(limit, len(data)))) for name, data in raw.items()}
-    return {name: data.shuffle(seed=seed) for name, data in raw.items()}, False, split_names
+    return (
+        {name: data.shuffle(seed=seed) for name, data in raw.items()},
+        False,
+        split_names,
+    )
 
 
 def _math_instruction(answer_format: str) -> str:

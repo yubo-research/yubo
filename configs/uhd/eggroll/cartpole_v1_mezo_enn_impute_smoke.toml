@@ -3,11 +3,11 @@
 [uhd]
 env_tag = "gymnax:CartPole-v1"
 policy_tag = "eggroll-ac-mlp-8x1-pqn"
-num_rounds = 10
+num_rounds = 1e4
 optimizer = "mezo"
 lr = 0.001
 sigma = 0.001
-perturb = "dense"
+perturb = "eggroll"
 steps_per_episode = 4
 num_envs = 1
 deterministic_policy = false

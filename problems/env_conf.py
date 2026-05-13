@@ -18,7 +18,10 @@ from problems.env_conf_presets import (
 from problems.env_conf_rl import resolve_rl_model_defaults
 from problems.env_conf_types import EnvConf, GymConf
 from problems.environment_spec import needs_atari_dm_bindings
-from problems.isaaclab_env_adapters import DEFAULT_ISAACLAB_MAX_STEPS, is_isaaclab_env_tag
+from problems.isaaclab_env_adapters import (
+    DEFAULT_ISAACLAB_MAX_STEPS,
+    is_isaaclab_env_tag,
+)
 from problems.linear_policy import LinearPolicy
 from problems.pure_function_policy import PureFunctionPolicy
 
@@ -92,7 +95,11 @@ def get_env_conf(
         ec = EnvConf(
             tag,
             policy_class=MLPPolicyFactory((64, 64)),
-            gym_conf=GymConf(max_steps=DEFAULT_ISAACLAB_MAX_STEPS, num_frames_skip=1, transform_state=False),
+            gym_conf=GymConf(
+                max_steps=DEFAULT_ISAACLAB_MAX_STEPS,
+                num_frames_skip=1,
+                transform_state=False,
+            ),
             max_steps=DEFAULT_ISAACLAB_MAX_STEPS,
             problem_seed=problem_seed,
             noise_level=noise_level,

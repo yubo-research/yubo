@@ -51,7 +51,12 @@ cli = _cli
 
 @_cli.command(name="local")
 @click.argument("config_toml", type=click.Path(exists=True, dir_okay=False, path_type=str))
-@click.option("--num-reps", type=int, default=None, help="Number of replications; overrides [uhd].num_reps")
+@click.option(
+    "--num-reps",
+    type=int,
+    default=None,
+    help="Number of replications; overrides [uhd].num_reps",
+)
 @click.option("--workers", type=int, default=1, help="Parallel workers")
 @click.option("--results-dir", type=str, default=_DEFAULT_RESULTS, help="Results directory")
 def local_cmd(config_toml: str, num_reps: int | None, workers: int, results_dir: str) -> None:
@@ -61,7 +66,12 @@ def local_cmd(config_toml: str, num_reps: int | None, workers: int, results_dir:
 
 @_cli.command(name="modal")
 @click.argument("config_toml", type=click.Path(exists=True, dir_okay=False, path_type=str))
-@click.option("--num-reps", type=int, default=None, help="Number of replications; overrides [uhd].num_reps")
+@click.option(
+    "--num-reps",
+    type=int,
+    default=None,
+    help="Number of replications; overrides [uhd].num_reps",
+)
 @click.option("--results-dir", type=str, default=_DEFAULT_RESULTS, help="Results directory")
 def modal_cmd(config_toml: str, num_reps: int | None, results_dir: str) -> None:
     cfg = _load_toml(config_toml)

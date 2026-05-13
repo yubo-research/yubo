@@ -59,7 +59,10 @@ def test_added_external_run_utils_helpers(tmp_path):
     )
 
     assert normalize_mapping({"foo-bar": 1}, source="cfg", valid_keys={"foo_bar"}) == {"foo_bar": 1}
-    assert deep_update({"a": {"b": 1}, "c": 0}, {"a": {"d": 2}}) == {"a": {"b": 1, "d": 2}, "c": 0}
+    assert deep_update({"a": {"b": 1}, "c": 0}, {"a": {"d": 2}}) == {
+        "a": {"b": 1, "d": 2},
+        "c": 0,
+    }
     assert parse_toml_value("true") is True
     assert parse_section_overrides(("llm.population-size=4",), valid_by_section={"llm": {"population_size"}}) == {"llm": {"population_size": 4}}
 
@@ -118,7 +121,13 @@ def test_added_llm_task_modules_are_connected():
 
 
 def test_added_text_and_pretrain_objective_modules_are_connected():
-    from problems import pre_obj_hyperscalees, pre_obj_nanoegg, text_obj_cache, text_obj_lora, text_obj_objective
+    from problems import (
+        pre_obj_hyperscalees,
+        pre_obj_nanoegg,
+        text_obj_cache,
+        text_obj_lora,
+        text_obj_objective,
+    )
 
     assert callable(pre_obj_hyperscalees.HyperscaleESLLMVectorObjective)
     assert callable(pre_obj_nanoegg.NanoEggPretrainVectorObjective)

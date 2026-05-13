@@ -131,9 +131,17 @@ def _parse_cfg(cfg: dict[str, Any]) -> LLMConfig:
         raise ValueError(f"total_timesteps must be >= 1 (got: {total_timesteps})")
     if num_epochs is not None and num_epochs < 1:
         raise ValueError(f"num_epochs must be >= 1 (got: {num_epochs})")
-    _validate_optimizer_budget(optimizer, num_rounds=num_rounds, total_timesteps=total_timesteps, num_epochs=num_epochs)
+    _validate_optimizer_budget(
+        optimizer,
+        num_rounds=num_rounds,
+        total_timesteps=total_timesteps,
+        num_epochs=num_epochs,
+    )
 
-    exp_dir = abs_path(str(cfg.get("exp_dir", _default_exp_dir(env_tag, policy_tag, optimizer))), base=_PROJECT_ROOT)
+    exp_dir = abs_path(
+        str(cfg.get("exp_dir", _default_exp_dir(env_tag, policy_tag, optimizer))),
+        base=_PROJECT_ROOT,
+    )
     hf_home = cfg.get("hf_home")
     hf_home_resolved = None if hf_home in (None, "") else str(abs_path(str(hf_home), base=_PROJECT_ROOT))
     samples_per_prompt = int(cfg.get("samples_per_prompt", 1))
@@ -194,7 +202,13 @@ def _default_exp_dir(env_tag: str, policy_tag: str, optimizer: str) -> str:
     return f"runs/llm/{_slug(env_tag)}_{_slug(policy_tag)}_{_slug(optimizer)}"
 
 
-def _validate_optimizer_budget(optimizer: str, *, num_rounds: int | None, total_timesteps: int | None, num_epochs: int | None) -> None:
+def _validate_optimizer_budget(
+    optimizer: str,
+    *,
+    num_rounds: int | None,
+    total_timesteps: int | None,
+    num_epochs: int | None,
+) -> None:
     if optimizer == "eggroll" and num_rounds is None and total_timesteps is None:
         raise ValueError("optimizer='eggroll' requires one budget field: num_rounds or total_timesteps.")
     if optimizer in {"sft", "rkl"} and num_epochs is None:
@@ -316,7 +330,13 @@ def template(env_tag: str, policy_tag: str, optimizer: str, num_rounds: int) -> 
 
 @cli.command(name="validate", help="Validate an [llm] config without running it.")
 @click.argument("config_toml", type=click.Path(exists=True, dir_okay=False, path_type=str))
-@click.option("-o", "--opt", "overrides", multiple=True, help="Override config key: --opt key=value")
+@click.option(
+    "-o",
+    "--opt",
+    "overrides",
+    multiple=True,
+    help="Override config key: --opt key=value",
+)
 def validate(config_toml: str, overrides: tuple[str, ...]) -> None:
     cfg = _load_and_parse(config_toml, overrides)
     print(json.dumps(_cfg_summary(cfg), indent=2, sort_keys=True))
@@ -324,8 +344,18 @@ def validate(config_toml: str, overrides: tuple[str, ...]) -> None:
 
 @cli.command(name="local", help="Run locally from an [llm] config.")
 @click.argument("config_toml", type=click.Path(exists=True, dir_okay=False, path_type=str))
-@click.option("-o", "--opt", "overrides", multiple=True, help="Override config key: --opt key=value")
-@click.option("--dry-run", is_flag=True, help="Validate and print the resolved run, but do not execute.")
+@click.option(
+    "-o",
+    "--opt",
+    "overrides",
+    multiple=True,
+    help="Override config key: --opt key=value",
+)
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    help="Validate and print the resolved run, but do not execute.",
+)
 def local(config_toml: str, overrides: tuple[str, ...], dry_run: bool) -> None:
     cfg = _load_and_parse(config_toml, overrides)
     print(f"EXP_DIR: {cfg.exp_dir}")
