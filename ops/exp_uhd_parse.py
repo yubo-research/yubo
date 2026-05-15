@@ -295,9 +295,7 @@ def _parse_budget_fields(cfg: dict[str, Any]) -> tuple[int, int | None]:
 
         num_envs = int(cfg.get("num_envs", 1))
         steps_per_episode = int(cfg.get("steps_per_episode", 200))
-        optimizer = str(cfg.get("optimizer", "mezo"))
-        if optimizer not in _ALLOWED_OPTIMIZERS:
-            raise ValueError(f"Unsupported UHD optimizer {optimizer!r}. Valid optimizers: {sorted(_ALLOWED_OPTIMIZERS)}")
+        optimizer = _validate_optimizer(str(cfg.get("optimizer", "mezo")))
 
         if optimizer in ("bszo", "bszo_be"):
             k = int(cfg.get("bszo_k", 2))
@@ -316,6 +314,13 @@ def _parse_budget_fields(cfg: dict[str, Any]) -> tuple[int, int | None]:
         return 0, total_timesteps
 
     return num_rounds, total_timesteps
+
+
+def _validate_optimizer(name: str) -> str:
+    optimizer = str(name)
+    if optimizer not in _ALLOWED_OPTIMIZERS:
+        raise ValueError(f"Unsupported UHD optimizer {optimizer!r}. Valid optimizers: {sorted(_ALLOWED_OPTIMIZERS)}")
+    return optimizer
 
 
 def _parse_cfg(cfg: dict[str, Any]) -> UHDConfig:
@@ -341,9 +346,7 @@ def _parse_cfg(cfg: dict[str, Any]) -> UHDConfig:
     if target_accuracy is not None:
         target_accuracy = float(target_accuracy)
 
-    optimizer = str(cfg.get("optimizer", "mezo"))
-    if optimizer not in _ALLOWED_OPTIMIZERS:
-        raise ValueError(f"Unsupported UHD optimizer {optimizer!r}. Valid optimizers: {sorted(_ALLOWED_OPTIMIZERS)}")
+    optimizer = _validate_optimizer(str(cfg.get("optimizer", "mezo")))
     batch_size = int(cfg.get("batch_size", 4096))
 
     bszo_k = int(cfg.get("bszo_k", 2))

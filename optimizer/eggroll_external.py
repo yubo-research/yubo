@@ -55,7 +55,7 @@ def init_external(designer, policy, env_conf, cfg) -> None:
     designer._is_external = True
     designer._policy = policy
     designer._objective = objective
-    designer._x = objective.x0
+    designer._state.x = objective.x0
     designer._sigma = float(cfg.sigma)
     designer._sigma_decay = _as_unit_decay(cfg.sigma_decay, name="sigma_decay")
     designer._lr = float(cfg.lr)
@@ -68,8 +68,8 @@ def init_external(designer, policy, env_conf, cfg) -> None:
     designer._external_batch_size = int(cfg.batch_size)
     designer._steps_per_episode = int(cfg.steps)
     designer._num_envs = int(cfg.num_envs)
-    designer._best_datum = None
-    designer._epoch = 0
+    designer._state.best_datum = None
+    designer._state.epoch = 0
     if str(cfg.optax) not in {"adam", "adamw"}:
         raise NoSuchDesignerError("EggRoll external scoring currently supports optax='adam' or optax='adamw'.")
     designer._adam = _AdamMax(
@@ -81,14 +81,14 @@ def init_external(designer, policy, env_conf, cfg) -> None:
     _validate_external(designer)
 
 
-def iterate_external(designer, _data, num_arms: int, *, telemetry=None) -> IterateResult:
+def iterate_external(designer, state, _data, num_arms: int, *, telemetry=None) -> IterateResult:
     _ = _data
     population = _check_population(designer, int(num_arms))
-    result = _evaluate_population(designer, population)
-    prop_dt = _apply_update(designer, result.directions, result.scores, population)
-    datum, eval_dt, eval_steps = _evaluate_current(designer, population)
-    update_best_and_telemetry(designer, datum, prop_dt, telemetry)
-    designer._epoch += 1
+    result = _evaluate_population(designer, state, population)
+    prop_dt = _apply_update(designer, state, result.directions, result.scores, population)
+    datum, eval_dt, eval_steps = _evaluate_current(designer, state, population)
+    update_best_and_telemetry(designer, state, datum, prop_dt, telemetry)
+    state.epoch += 1
     return IterateResult(
         data=[datum],
         dt_prop=float(prop_dt),
@@ -109,59 +109,59 @@ def _validate_external(designer) -> None:
         raise NoSuchDesignerError("EggRoll option 'batch_size' must be >= 1.")
 
 
-def _evaluate_population(designer, population: int) -> _ExternalPopulation:
+def _evaluate_population(designer, state, population: int) -> _ExternalPopulation:
     t0 = time.time()
     directions: list[np.ndarray] = []
     scores: list[float] = []
     total_steps = 0
     pending: list[np.ndarray] = []
     next_log_at = max(16, int(designer._external_batch_size))
-    _log(designer, f"iter={designer._epoch} evaluating population={population} dim={designer._x.size}")
+    _log(designer, f"iter={state.epoch} evaluating population={population} dim={state.x.size}")
     for pair_idx in range(population // 2):
-        direction = _sample_direction(designer, pair_idx)
+        direction = _sample_direction(designer, state, pair_idx)
         directions.append(direction)
         sigma = designer._current_sigma()
-        pending.append(designer._x + sigma * direction)
-        pending.append(designer._x - sigma * direction)
+        pending.append(state.x + sigma * direction)
+        pending.append(state.x - sigma * direction)
         if len(pending) >= int(designer._external_batch_size):
-            next_log_at, total_steps = _flush(designer, pending, scores, population, next_log_at, total_steps, t0)
-    next_log_at, total_steps = _flush(designer, pending, scores, population, next_log_at, total_steps, t0)
+            next_log_at, total_steps = _flush(designer, state, pending, scores, population, next_log_at, total_steps, t0)
+    next_log_at, total_steps = _flush(designer, state, pending, scores, population, next_log_at, total_steps, t0)
     _ = next_log_at
     return _ExternalPopulation(directions=directions, scores=scores, num_steps=int(total_steps), dt_eval=time.time() - t0)
 
 
-def _flush(designer, pending: list[np.ndarray], scores: list[float], population: int, next_log_at: int, total_steps: int, t0: float):
+def _flush(designer, state, pending: list[np.ndarray], scores: list[float], population: int, next_log_at: int, total_steps: int, t0: float):
     if not pending:
         return next_log_at, total_steps
     start = len(scores)
-    _log(designer, f"iter={designer._epoch} scoring candidates {start + 1}-{start + len(pending)}/{population}")
-    mus, _ses = designer._objective.evaluate_many(np.asarray(pending, dtype=np.float64), seed=int(designer._epoch * population) + start)
+    _log(designer, f"iter={state.epoch} scoring candidates {start + 1}-{start + len(pending)}/{population}")
+    mus, _ses = designer._objective.evaluate_many(np.asarray(pending, dtype=np.float64), seed=int(state.epoch * population) + start)
     scores.extend(float(v) for v in np.asarray(mus, dtype=np.float64).reshape(-1))
     total_steps += int(getattr(designer._objective, "last_num_steps", 0))
     pending.clear()
     done = len(scores)
     if done >= next_log_at or done == population:
-        _log(designer, f"iter={designer._epoch} evaluated={done}/{population} elapsed={time.time() - t0:.1f}s")
+        _log(designer, f"iter={state.epoch} evaluated={done}/{population} elapsed={time.time() - t0:.1f}s")
         while next_log_at <= done:
             next_log_at += max(16, int(designer._external_batch_size))
     return next_log_at, total_steps
 
 
-def _apply_update(designer, directions: list[np.ndarray], raw_scores: list[float], population: int) -> float:
+def _apply_update(designer, state, directions: list[np.ndarray], raw_scores: list[float], population: int) -> float:
     t0 = time.time()
-    grad = _mirrored_gradient(designer, directions, raw_scores, population)
-    lr = designer._lr * (designer._lr_decay**designer._epoch)
-    designer._x = np.clip(designer._adam.step(designer._x, grad, lr=lr), -1.0, 1.0)
+    grad = _mirrored_gradient(designer, state, directions, raw_scores, population)
+    lr = designer._lr * (designer._lr_decay**state.epoch)
+    state.x = np.clip(designer._adam.step(state.x, grad, lr=lr), -1.0, 1.0)
     return time.time() - t0
 
 
-def _evaluate_current(designer, population: int):
+def _evaluate_current(designer, state, population: int):
     t0 = time.time()
-    mu, se = designer._objective.evaluate(designer._x, seed=(designer._epoch + 1) * 1_000_003)
+    mu, se = designer._objective.evaluate(state.x, seed=(state.epoch + 1) * 1_000_003)
     steps = int(getattr(designer._objective, "last_num_steps", 0))
     datum = Datum(
         designer,
-        designer._objective.make_policy(designer._x),
+        designer._objective.make_policy(state.x),
         None,
         Trajectory(
             rreturn=float(mu),
@@ -179,23 +179,23 @@ def _with_steps(datum: Datum, num_steps: int) -> Datum:
     return datum
 
 
-def _sample_direction(designer, pair_idx: int) -> np.ndarray:
+def _sample_direction(designer, state, pair_idx: int) -> np.ndarray:
     base_seed = 0 if getattr(designer._policy, "problem_seed", None) is None else int(designer._policy.problem_seed)
-    seed = (int(designer._epoch) << 16) ^ (base_seed + int(pair_idx))
+    seed = (int(state.epoch) << 16) ^ (base_seed + int(pair_idx))
     direction = designer._objective.sample_eggroll_noiser_noise(
-        designer._x,
+        state.x,
         seed=seed,
         noiser_name="eggroll",
         rank=int(designer._rank),
         group_size=int(designer._group_size),
         freeze_nonlora=bool(designer._freeze_nonlora),
     )
-    return np.asarray(direction, dtype=np.float64).reshape(designer._x.shape)
+    return np.asarray(direction, dtype=np.float64).reshape(state.x.shape)
 
 
-def _mirrored_gradient(designer, directions: list[np.ndarray], raw_scores: list[float], population: int) -> np.ndarray:
+def _mirrored_gradient(designer, state, directions: list[np.ndarray], raw_scores: list[float], population: int) -> np.ndarray:
     scores = _standardize_scores(designer, np.asarray(raw_scores, dtype=np.float64))
-    grad = np.zeros_like(designer._x, dtype=np.float64)
+    grad = np.zeros_like(state.x, dtype=np.float64)
     for pair_idx, direction in enumerate(directions):
         grad += (float(scores[2 * pair_idx]) - float(scores[(2 * pair_idx) + 1])) * direction
     return grad / math.sqrt(float(max(population, 1)))

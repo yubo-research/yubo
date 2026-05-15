@@ -13,14 +13,14 @@
 [uhd]
 env_tag = "jumanji:Game2048-v1"
 policy_tag = "eggroll-ac-mlp-256x3-pqn"
-total_timesteps = 500000000
-num_reps = 30
+num_rounds = 100
+num_reps = 1
 optimizer = "mezo_be"
 lr = 0.1
 sigma = 0.5
 perturb = "eggroll"
 steps_per_episode = 200
-num_envs = 2048
+num_envs = 4096
 deterministic_policy = false
 problem_seed = 0
 noise_seed_0 = 0

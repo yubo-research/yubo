@@ -9,9 +9,14 @@ import optimizer.eggroll_designer_jit as jit_helpers
 import optimizer.eggroll_designer_nanoegg as nanoegg_helpers
 from optimizer.designer_errors import NoSuchDesignerError
 from optimizer.eggroll_designer_config import _EggRollDesignerConfig
-from optimizer.eggroll_designer_types import _EggRollStack, _NoiserBundle, _SeedState
+from optimizer.eggroll_designer_types import (
+    EggRollState,
+    _NoiserBundle,
+    _SeedState,
+)
 from optimizer.eggroll_options import eggroll_bool as _as_bool
 from optimizer.eggroll_options import unit_decay as _as_unit_decay
+from optimizer.eggroll_runtime_types import _EggRollStack
 from optimizer.optimizer_types import IterateResult
 
 
@@ -138,6 +143,7 @@ class EggRollDesigner:
         **options,
     ) -> None:
         cfg = _designer_config(options)
+        self._state = EggRollState()
         if bool(getattr(policy, "is_nanoegg_pretrain_policy", False)):
             self._init_nanoegg(policy, cfg)
             return
@@ -158,11 +164,11 @@ class EggRollDesigner:
         self._validate_eggroll_env(env_name)
         self._assign_jax_state(policy, stack, cfg)
         seed_state = _seed_state(stack.jax, policy, int(cfg.seed_offset))
-        self._train_key = seed_state.train_key
-        self._eval_key = seed_state.eval_key
+        self._state.train_key = seed_state.train_key
+        self._state.eval_key = seed_state.eval_key
         env_adapter = self._make_env_adapter(env_name)
         noiser_bundle = self._init_jax_noiser(stack, cfg)
-        es_tree_key = stack.simple_es_tree_key(self._params, seed_state.es_key, policy.scan_map)
+        es_tree_key = stack.simple_es_tree_key(self._state.params, seed_state.es_key, policy.scan_map)
         self._evaluate_population, self._evaluate_policy, self._update_params = jit_helpers.build_jitted_fns(
             self,
             jit_helpers.JittedFnConfig(
@@ -192,9 +198,9 @@ class EggRollDesigner:
         self._sigma = float(cfg.sigma)
         self._sigma_decay = _as_unit_decay(cfg.sigma_decay, name="sigma_decay")
         self._suppress_noiser_stdout = _as_bool(cfg.suppress_noiser_stdout, name="suppress_noiser_stdout")
-        self._best_datum = None
-        self._epoch = 0
-        self._params = policy.params
+        self._state.best_datum = None
+        self._state.epoch = 0
+        self._state.params = policy.params
         _validate_positive_jax_options(
             self._sigma,
             float(cfg.lr),
@@ -221,7 +227,7 @@ class EggRollDesigner:
         noiser = stack.all_noisers[cfg.noiser]
         scheduled_lr = _scheduled_lr(self._jnp, float(cfg.lr), _as_unit_decay(cfg.lr_decay, name="lr_decay"))
         frozen_noiser_params, noiser_params = noiser.init_noiser(
-            self._params,
+            self._state.params,
             self._sigma,
             scheduled_lr,
             solver=solver,
@@ -237,7 +243,7 @@ class EggRollDesigner:
             rank=int(cfg.rank),
             use_batched_update=_as_bool(cfg.use_batched_update, name="use_batched_update"),
         )
-        self._noiser_params = noiser_params
+        self._state.noiser_params = noiser_params
         return _NoiserBundle(noiser=noiser, frozen_params=frozen_noiser_params, params=noiser_params)
 
     def _init_nanoegg(self, policy, cfg: _EggRollDesignerConfig) -> None:
@@ -253,7 +259,7 @@ class EggRollDesigner:
         )
         self._assign_nanoegg_state(policy, cfg)
         self._objective = self._build_nanoegg_objective(policy, cfg)
-        self._x = np.asarray(self._objective.x0, dtype=np.float64).copy()
+        self._state.x = np.asarray(self._objective.x0, dtype=np.float64).copy()
         self._init_nanoegg_optimizer(optax_mod, solver, cfg)
 
     def _assign_nanoegg_state(self, policy, cfg: _EggRollDesignerConfig) -> None:
@@ -269,8 +275,8 @@ class EggRollDesigner:
         self._nanoegg_batch_size = int(cfg.batch_size)
         self._steps_per_episode = int(cfg.steps)
         self._num_envs = int(cfg.num_envs)
-        self._best_datum = None
-        self._epoch = 0
+        self._state.best_datum = None
+        self._state.epoch = 0
         _validate_nanoegg_options(self, cfg)
 
     def _build_nanoegg_objective(self, policy, cfg: _EggRollDesignerConfig):
@@ -308,26 +314,26 @@ class EggRollDesigner:
             ),
         )
         self._nanoegg_apply_updates = optax_mod.apply_updates
-        self._nanoegg_opt_state = self._nanoegg_tx.init(self._objective.jnp.asarray(self._x, dtype=self._objective.jnp.float32))
+        self._state.opt_state = self._nanoegg_tx.init(self._objective.jnp.asarray(self._state.x, dtype=self._objective.jnp.float32))
 
     def best_datum(self):
-        return self._best_datum
+        return self._state.best_datum
 
     def _current_sigma(self) -> float:
-        return self._sigma * (self._sigma_decay**self._epoch)
+        return self._sigma * (self._sigma_decay**self._state.epoch)
 
     def _iterate_nanoegg(self, _data, num_arms: int, *, telemetry=None) -> IterateResult:
-        return nanoegg_helpers.iterate_nanoegg(self, _data, num_arms, telemetry=telemetry)
+        return nanoegg_helpers.iterate_nanoegg(self, self._state, _data, num_arms, telemetry=telemetry)
 
     def iterate(self, _data, num_arms: int, *, telemetry=None) -> IterateResult:
         if bool(getattr(self, "_is_external", False)):
             from optimizer.eggroll_external import iterate_external
 
-            return iterate_external(self, _data, num_arms, telemetry=telemetry)
+            return iterate_external(self, self._state, _data, num_arms, telemetry=telemetry)
         if bool(getattr(self, "_is_nanoegg", False)):
             return self._iterate_nanoegg(_data, num_arms, telemetry=telemetry)
 
-        return jax_iter_helpers.iterate_jax(self, _data, num_arms, telemetry=telemetry)
+        return jax_iter_helpers.iterate_jax(self, self._state, _data, num_arms, telemetry=telemetry)
 
     def stop(self):
         objective = getattr(self, "_objective", None)
