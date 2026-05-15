@@ -144,8 +144,7 @@ def _make_gymnasium_env(*, env_conf: Any, render_mode="rgb_array", buf=None, see
     import pufferlib
     import pufferlib.emulation
 
-    # Use the unified creation path on EnvConf
-    env = env_conf.make_gym_env(render_mode=render_mode)
+    env = _make_runtime_env(env_conf, render_mode=render_mode)
 
     # We still need PufferLib-specific EpisodeStats for some backends
     env = pufferlib.EpisodeStats(env)
@@ -153,9 +152,28 @@ def _make_gymnasium_env(*, env_conf: Any, render_mode="rgb_array", buf=None, see
     return pufferlib.emulation.GymnasiumPufferEnv(env=env, buf=buf, seed=seed)
 
 
+def _make_runtime_env(env_conf: Any, *, render_mode: str | None):
+    if hasattr(env_conf, "make") and callable(env_conf.make):
+        return env_conf.make(render_mode=render_mode)
+    if hasattr(env_conf, "make_gym_env") and callable(env_conf.make_gym_env):
+        return env_conf.make_gym_env(render_mode=render_mode)
+    raise TypeError(f"env_conf must expose make() or make_gym_env(), got {type(env_conf).__name__}.")
+
+
 def _build_gymnasium_env_creator(*, env_conf: Any, pufferlib):
     _ = pufferlib
     return functools.partial(_make_gymnasium_env, env_conf=env_conf)
+
+
+def _parse_dm_control_env_tag(env_name: str) -> tuple[str, str]:
+    if not env_name.startswith("dm_control/"):
+        raise ValueError(f"Expected dm_control env name, got: {env_name}")
+    name = env_name.split("/", 1)[1]
+    if name.endswith(("-v0", "-v1")):
+        name = name.rsplit("-", 1)[0]
+    if "-" not in name:
+        raise ValueError(f"Expected dm_control/<domain>-<task>-v0, got: {env_name}")
+    return tuple(name.split("-", 1))
 
 
 def _resolve_backend(config: Any, puffer_vector):
@@ -182,9 +200,7 @@ def _resolve_env_creator(
         )
 
     if env_tag.startswith("dm_control/"):
-        from problems.dm_control_env import parse_env_name
-
-        domain, task = parse_env_name(env_tag)
+        domain, task = _parse_dm_control_env_tag(env_tag)
         return (
             functools.partial(
                 _make_dm_control_env,

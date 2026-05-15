@@ -77,6 +77,26 @@ def test_make_vector_env_gym_path_uses_empty_env_kwargs():
     assert callable(call["env_creator"])
 
 
+def test_make_gymnasium_env_accepts_environment_runtime_make(monkeypatch):
+    calls = {}
+
+    class FakeRuntime:
+        def make(self, **kwargs):
+            calls.update(kwargs)
+            return "gym-env"
+
+    fake_puffer = SimpleNamespace(EpisodeStats=lambda env: ("stats", env))
+    fake_emulation = SimpleNamespace(GymnasiumPufferEnv=lambda **kwargs: ("puffer", kwargs))
+    monkeypatch.setitem(__import__("sys").modules, "pufferlib", fake_puffer)
+    monkeypatch.setitem(__import__("sys").modules, "pufferlib.emulation", fake_emulation)
+    fake_puffer.emulation = fake_emulation
+
+    out = vector_env._make_gymnasium_env(env_conf=FakeRuntime(), render_mode="rgb_array", buf="buf", seed=3)
+
+    assert calls == {"render_mode": "rgb_array"}
+    assert out == ("puffer", {"env": ("stats", "gym-env"), "buf": "buf", "seed": 3})
+
+
 def test_make_vector_env_dm_control_path_uses_dm_creator(monkeypatch):
     fake_vector = _FakeVector()
     fake_atari = _FakeAtari()
