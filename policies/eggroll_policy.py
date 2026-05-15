@@ -57,10 +57,10 @@ class EggRollActorCriticMLPPolicy:
     def __init__(self, env_runtime: Any, spec: EggRollActorCriticMLPSpec) -> None:
         jax, jnp, actor_critic_mlp = _require_hyperscalees()
         env_name = str(getattr(env_runtime, "env_name", ""))
-        from problems.eggroll_env_adapters import supports_eggroll_env_adapter
+        from problems.jax_env_core import supports_jax_objective_tag
 
-        if not supports_eggroll_env_adapter(env_name):
-            raise ValueError(f"EggRoll policies require a supported EggRoll adapter env tag (got env_name={env_name!r}).")
+        if not supports_jax_objective_tag(env_name):
+            raise ValueError(f"EggRoll policies require a supported JAX objective env tag (got env_name={env_name!r}).")
 
         self.problem_seed = getattr(env_runtime, "problem_seed", None)
         self.env_name = env_name

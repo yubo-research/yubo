@@ -112,8 +112,8 @@ def test_get_environment_spec_unknown_returns_direct():
 
 
 def test_get_environment_spec_pretrain_eggroll_tag():
-    from problems.eggroll_env_adapters import supports_eggroll_env
     from problems.environment_spec import get_environment_spec
+    from problems.jax_env_core import supports_jax_objective_tag
     from problems.pre_obj import resolve_hyperscalees_pretrain_spec
     from problems.uhd_obj import supports_uhd_vector_objective
 
@@ -121,7 +121,7 @@ def test_get_environment_spec_pretrain_eggroll_tag():
     spec = get_environment_spec(env_tag)
     pretrain = resolve_hyperscalees_pretrain_spec(env_tag)
 
-    assert supports_eggroll_env(env_tag) is False
+    assert supports_jax_objective_tag(env_tag) is False
     assert supports_uhd_vector_objective(env_tag) is True
     assert spec.env_name == env_tag
     assert pretrain.task == "gsm8k"
@@ -131,7 +131,7 @@ def test_get_environment_spec_pretrain_eggroll_tag():
     dynamic_spec = get_environment_spec(dynamic_env_tag)
     dynamic_pretrain = resolve_hyperscalees_pretrain_spec(dynamic_env_tag)
 
-    assert supports_eggroll_env(dynamic_env_tag) is False
+    assert supports_jax_objective_tag(dynamic_env_tag) is False
     assert supports_uhd_vector_objective(dynamic_env_tag) is True
     assert dynamic_spec.env_name == dynamic_env_tag
     assert dynamic_pretrain.task == "zebra_puzzles"

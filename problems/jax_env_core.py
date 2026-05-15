@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-EGGROLL_JAX_ENV_PREFIXES = (
+JAX_ENV_PREFIXES = (
     "gymnax:",
     "brax:",
     "craftax:",
@@ -12,29 +12,54 @@ EGGROLL_JAX_ENV_PREFIXES = (
     "kinetix:",
     "navix:",
 )
-EGGROLL_SURROGATE_ENV_PREFIXES = (
+SURROGATE_OBJECTIVE_PREFIXES = (
     "passk:",
     "qwen:",
     "rwkv-int8-distill:",
     "jaxlob:",
     "synthetic:linear-speed",
 )
-EGGROLL_ADAPTER_ENV_PREFIXES = EGGROLL_JAX_ENV_PREFIXES + EGGROLL_SURROGATE_ENV_PREFIXES
-EGGROLL_ENV_PREFIXES = EGGROLL_ADAPTER_ENV_PREFIXES
+JAX_OBJECTIVE_PREFIXES = JAX_ENV_PREFIXES + SURROGATE_OBJECTIVE_PREFIXES
+
+_SUPPORTED_JAX_ENV_EXAMPLES = (
+    "gymnax:CartPole-v1",
+    "gymnax:Swimmer-misc",
+    "brax:ant",
+    "brax:humanoid",
+    "brax:inverted_double_pendulum",
+    "craftax:Craftax-Classic-Symbolic-v1",
+    "craftax:Craftax-Symbolic-AutoReset-v1",
+    "jaxmarl:mpe-simple-reference-v3",
+    "jaxmarl:mpe-simple-speaker-listener-v4",
+    "jaxmarl:mpe-simple-spread-v3",
+    "jumanji:Game2048-v1",
+    "jumanji:Knapsack-v1",
+    "jumanji:Snake-v1",
+    "kinetix:s/h1_thrust_over_ball",
+    "kinetix:s/hard_pinball",
+    "kinetix:s/thrustcontrol_left",
+    "navix:Navix-DoorKey-8x8-v0",
+    "navix:Navix-Dynamic-Obstacles-6x6-Random-v0",
+    "navix:Navix-FourRooms-v0",
+)
 
 
 @dataclass(frozen=True)
-class EggRollEnvSpaces:
+class JaxEnvSpaces:
     observation_space: Any
     action_space: Any
 
 
-def supports_eggroll_env_adapter(env_name: str) -> bool:
-    return str(env_name).startswith(EGGROLL_ADAPTER_ENV_PREFIXES)
+def supports_jax_env_tag(env_name: str) -> bool:
+    return str(env_name).startswith(JAX_ENV_PREFIXES)
 
 
-def supports_eggroll_env(env_name: str) -> bool:
-    return str(env_name).startswith(EGGROLL_ENV_PREFIXES)
+def supports_jax_objective_tag(env_name: str) -> bool:
+    return str(env_name).startswith(JAX_OBJECTIVE_PREFIXES)
+
+
+def supported_jax_env_tags() -> tuple[str, ...]:
+    return tuple(sorted(_SUPPORTED_JAX_ENV_EXAMPLES))
 
 
 def _stable_scale(text: str) -> float:
@@ -96,7 +121,7 @@ def _spec_to_space(spec: Any, spaces, jnp):
             shape=shape,
             dtype=jnp.float32,
         )
-    raise TypeError(f"Unsupported action spec type for EggRoll adapter: {type(spec).__name__}")
+    raise TypeError(f"Unsupported action spec type for JAX env adapter: {type(spec).__name__}")
 
 
 def _action_spec(env: Any):

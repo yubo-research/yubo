@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from problems.eggroll_env_core import _gymnax_box_from_shape, _stable_scale
+from problems.jax_env_core import _gymnax_box_from_shape, _stable_scale
 
 
-class SurrogateObjectiveEggRollAdapter:
+class SurrogateObjectiveAdapter:
     _SPECS = {
         "synthetic:linear-speed": (256, 256, 1.0),
         "passk:": (64, 64, 4.0),

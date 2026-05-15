@@ -125,14 +125,14 @@ def test_resolve_hyperscalees_pretrain_spec_rejects_unknown_dynamic_task_and_mod
 
 
 def test_nanoegg_pretrain_is_real_uhd_objective_not_eggroll_surrogate():
-    from problems.eggroll_env_adapters import supports_eggroll_env_adapter
+    from problems.jax_env_core import supports_jax_objective_tag
     from problems.pre_obj import resolve_nanoegg_pretrain_spec
     from problems.uhd_obj import supports_uhd_vector_objective
 
     env_tag = "pretrain:nanoegg:minipile"
     spec = resolve_nanoegg_pretrain_spec(env_tag, "nanoegg:int8:6l:256d")
 
-    assert supports_eggroll_env_adapter(env_tag) is False
+    assert supports_jax_objective_tag(env_tag) is False
     assert supports_uhd_vector_objective(env_tag) is True
     assert spec.dataset == "minipile"
     assert spec.policy_tag == "nanoegg:int8:6l:256d"

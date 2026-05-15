@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from problems import eggroll_env_core as core
+from problems import jax_env_core as core
 
 
-class GymnaxEggRollAdapter:
+class GymnaxAdapter:
     def __init__(self, env_name: str, *, jax, jnp, gymnax=None) -> None:
         if gymnax is None:
             import gymnax
@@ -25,7 +25,7 @@ class GymnaxEggRollAdapter:
         return core._clip_box_action(self.action_space, self._jnp, action)
 
 
-class GymnaxLikeEggRollAdapter:
+class GymnaxLikeAdapter:
     def __init__(self, env_name: str, *, jax, jnp, env: Any, env_params: Any | None = None) -> None:
         self._jnp = jnp
         self.env = env
@@ -51,7 +51,7 @@ class GymnaxLikeEggRollAdapter:
         return core._clip_box_action(self.action_space, self._jnp, action)
 
 
-class BraxEggRollAdapter:
+class BraxAdapter:
     def __init__(self, env_name: str, *, jax, jnp) -> None:
         from brax import envs
         from gymnax.environments import spaces
@@ -82,6 +82,3 @@ class BraxEggRollAdapter:
 
     def clip_action(self, action):
         return core._clip_box_action(self.action_space, self._jnp, action)
-
-
-__all__ = ["BraxEggRollAdapter", "GymnaxEggRollAdapter", "GymnaxLikeEggRollAdapter"]

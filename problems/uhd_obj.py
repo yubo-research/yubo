@@ -49,13 +49,13 @@ class BuiltUHDVectorObjective:
 
 
 def supports_uhd_vector_objective(env_tag: str) -> bool:
-    from problems.eggroll_env_adapters import supports_eggroll_env_adapter
     from problems.isaaclab_env_adapters import is_isaaclab_env_tag
+    from problems.jax_env_core import supports_jax_objective_tag
     from problems.pre_obj import is_hyperscalees_pretrain_env, is_nanoegg_pretrain_env
     from problems.text_obj import is_text_env
 
     return (
-        supports_eggroll_env_adapter(env_tag)
+        supports_jax_objective_tag(env_tag)
         or is_isaaclab_env_tag(env_tag)
         or is_hyperscalees_pretrain_env(env_tag)
         or is_nanoegg_pretrain_env(env_tag)
@@ -64,8 +64,8 @@ def supports_uhd_vector_objective(env_tag: str) -> bool:
 
 
 def build_uhd_vector_objective(cfg: UHDConfig, *, embed_num_probes: int = 0) -> BuiltUHDVectorObjective:
-    from problems.eggroll_env_adapters import supports_eggroll_env_adapter
     from problems.isaaclab_env_adapters import is_isaaclab_env_tag
+    from problems.jax_env_core import supports_jax_objective_tag
     from problems.pre_obj import (
         HyperscaleESLLMVectorObjective,
         NanoEggPretrainVectorObjective,
@@ -87,7 +87,7 @@ def build_uhd_vector_objective(cfg: UHDConfig, *, embed_num_probes: int = 0) -> 
             objective.configure_embedding(int(embed_num_probes))
         return BuiltUHDVectorObjective(objective=objective, source="nanoegg-pretrain")
 
-    if supports_eggroll_env_adapter(env_tag):
+    if supports_jax_objective_tag(env_tag):
         if cfg.policy_tag is None:
             raise ValueError("UHD vector JAX env objectives require policy_tag.")
         from problems.jax_obj import EggRollJAXVectorObjective

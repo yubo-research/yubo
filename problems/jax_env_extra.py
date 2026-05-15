@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from problems import eggroll_env_core as core
-from problems.eggroll_env_jax_base import GymnaxLikeEggRollAdapter
+from problems import jax_env_core as core
+from problems.jax_env_base import GymnaxLikeAdapter
 
 
-class CraftaxEggRollAdapter(GymnaxLikeEggRollAdapter):
+class CraftaxAdapter(GymnaxLikeAdapter):
     def __init__(self, env_name: str, *, jax, jnp) -> None:
         raw_name = env_name.split(":", 1)[1]
         try:
@@ -38,7 +38,7 @@ class CraftaxEggRollAdapter(GymnaxLikeEggRollAdapter):
         return env, core._default_env_params(env)
 
 
-class JumanjiEggRollAdapter:
+class JumanjiAdapter:
     def __init__(self, env_name: str, *, jax, jnp) -> None:
         import jumanji
         from gymnax.environments import spaces
@@ -72,7 +72,7 @@ class JumanjiEggRollAdapter:
         return core._clip_box_action(self.action_space, self._jnp, action)
 
 
-class KinetixEggRollAdapter(GymnaxLikeEggRollAdapter):
+class KinetixAdapter(GymnaxLikeAdapter):
     def __init__(self, env_name: str, *, jax, jnp) -> None:
         raw_name = env_name.split(":", 1)[1]
         env, params = self._make_kinetix(raw_name)
@@ -101,6 +101,3 @@ class KinetixEggRollAdapter(GymnaxLikeEggRollAdapter):
         if isinstance(made, tuple) and len(made) == 2:
             return made
         return made, core._default_env_params(made)
-
-
-__all__ = ["CraftaxEggRollAdapter", "JumanjiEggRollAdapter", "KinetixEggRollAdapter"]

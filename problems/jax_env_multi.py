@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import math
 
-from problems import eggroll_env_core as core
-from problems.eggroll_env_jax_base import GymnaxLikeEggRollAdapter
+from problems import jax_env_core as core
+from problems.jax_env_base import GymnaxLikeAdapter
 
 
-class NavixEggRollAdapter(GymnaxLikeEggRollAdapter):
+class NavixAdapter(GymnaxLikeAdapter):
     def __init__(self, env_name: str, *, jax, jnp) -> None:
         raw_name = env_name.split(":", 1)[1]
         env, params = self._make_navix(raw_name)
@@ -26,7 +26,7 @@ class NavixEggRollAdapter(GymnaxLikeEggRollAdapter):
         raise ImportError("Navix is installed, but no supported environment factory was found.")
 
 
-class JaxMARLEggRollAdapter:
+class JaxMARLAdapter:
     _NAME_ALIASES = {
         "mpe-simple-reference-v3": "MPE_simple_reference_v3",
         "mpe-simple-speaker-listener-v4": "MPE_simple_speaker_listener_v4",
@@ -124,6 +124,3 @@ class JaxMARLEggRollAdapter:
         for idx, (agent, size) in enumerate(zip(self.agents, self._action_sizes, strict=True)):
             out[agent] = self._jnp.clip(action[idx], 0, int(size) - 1)
         return out
-
-
-__all__ = ["JaxMARLEggRollAdapter", "NavixEggRollAdapter"]

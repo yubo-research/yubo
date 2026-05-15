@@ -184,10 +184,9 @@ class EggRollDesigner:
         )
 
     def _validate_eggroll_env(self, env_name: str) -> None:
-        from problems.eggroll_env_adapters import supports_eggroll_env_adapter
+        from optimizer.eggroll_env_validation import validate_eggroll_jax_objective_env
 
-        if not supports_eggroll_env_adapter(env_name):
-            raise NoSuchDesignerError(f"Designer 'eggroll' requires a supported EggRoll adapter env tag (got {env_name!r}).")
+        validate_eggroll_jax_objective_env(env_name, NoSuchDesignerError)
 
     def _assign_jax_state(self, policy, stack: _EggRollStack, cfg: _EggRollDesignerConfig) -> None:
         self._policy = policy
@@ -210,9 +209,9 @@ class EggRollDesigner:
         )
 
     def _make_env_adapter(self, env_name: str):
-        from problems.eggroll_env_adapters import make_eggroll_env_adapter
+        from problems.jax_env_factory import make_jax_env_adapter
 
-        return make_eggroll_env_adapter(env_name, jax=self._jax, jnp=self._jnp)
+        return make_jax_env_adapter(env_name, jax=self._jax, jnp=self._jnp)
 
     def _init_jax_noiser(self, stack: _EggRollStack, cfg: _EggRollDesignerConfig) -> _NoiserBundle:
         if cfg.noiser not in stack.all_noisers:

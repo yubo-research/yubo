@@ -113,11 +113,11 @@ class EggRollJAXRuntime:
 
     def _assign_core(self, policy, env_conf, cfg: EggRollRuntimeConfig) -> None:
         env_name = str(getattr(env_conf, "env_name", ""))
-        from problems.eggroll_env_adapters import make_eggroll_env_adapter
+        from problems.jax_env_factory import make_jax_env_adapter
 
         self.jax, self.jnp, self._simple_es_tree_key = require_eggroll_jax_stack(cfg.stack_error_message)
         self.policy = policy
-        self.env_adapter = make_eggroll_env_adapter(env_name, jax=self.jax, jnp=self.jnp)
+        self.env_adapter = make_jax_env_adapter(env_name, jax=self.jax, jnp=self.jnp)
         self.steps_per_episode = int(cfg.steps_per_episode)
         self.num_envs = int(cfg.num_envs)
         self.identity_noiser = IdentityNoiser()
@@ -191,10 +191,9 @@ def _validate_policy_env(policy, env_conf, cfg: EggRollRuntimeConfig) -> None:
 
 
 def _validate_env_name(env_name: str, cfg: EggRollRuntimeConfig) -> None:
-    from problems.eggroll_env_adapters import supports_eggroll_env_adapter
+    from optimizer.eggroll_env_validation import validate_eggroll_jax_objective_env
 
-    if not supports_eggroll_env_adapter(env_name):
-        raise cfg.error_cls(f"EggRollJAXRuntime requires a supported EggRoll env tag (got {env_name!r}).")
+    validate_eggroll_jax_objective_env(env_name, cfg.error_cls)
 
 
 def _validate_config_values(cfg: EggRollRuntimeConfig) -> None:

@@ -11,16 +11,15 @@ from typing import Any
 import gymnasium as gym
 
 from problems import env_conf_bindings
-from problems.eggroll_env_adapters import (
-    EGGROLL_ADAPTER_ENV_PREFIXES,
-    EGGROLL_ENV_PREFIXES,
-)
 from problems.env_conf_parse import parse_tag_options
 from problems.isaaclab_env_adapters import (
     DEFAULT_ISAACLAB_MAX_STEPS,
     is_isaaclab_env_tag,
     make_isaaclab_env,
     resolve_isaaclab_env_spaces,
+)
+from problems.jax_env_core import (
+    JAX_OBJECTIVE_PREFIXES,
 )
 
 
@@ -39,7 +38,7 @@ _DEFAULT_MAX_STEPS = 99999
 def needs_atari_dm_bindings(env_tag: str) -> bool:
     """Return True if this env tag requires Atari/DM bindings to be registered."""
     tag, _, _ = parse_tag_options(str(env_tag), None)
-    if tag.startswith(EGGROLL_ENV_PREFIXES):
+    if tag.startswith(JAX_OBJECTIVE_PREFIXES):
         return False
     if tag.startswith(("dm:", "dm_control/", "atari:", "ALE/")):
         return True
@@ -180,15 +179,15 @@ class EnvironmentRuntime:
         if self.state_space is not None and self.action_space is not None:
             return
         spec = self.spec
-        if spec.env_name.startswith(EGGROLL_ADAPTER_ENV_PREFIXES):
+        if spec.env_name.startswith(JAX_OBJECTIVE_PREFIXES):
             try:
-                from problems.eggroll_env_adapters import resolve_eggroll_env_spaces
+                from problems.jax_env_factory import resolve_jax_env_spaces
             except ImportError as exc:
                 raise ImportError(
-                    "EggRoll JAX env tags require the separate HyperscaleES environment. "
+                    "JAX env tags require the separate HyperscaleES environment. "
                     "Run admin/setup-hyperscalees.sh first, then use the plain python CLI from that environment."
                 ) from exc
-            spaces = resolve_eggroll_env_spaces(spec.env_name)
+            spaces = resolve_jax_env_spaces(spec.env_name)
             self.state_space = spaces.observation_space
             self.action_space = spaces.action_space
             return
@@ -217,8 +216,8 @@ def _is_pretrain_uhd_objective(env_name: str) -> bool:
 def _unsupported_make_message(env_name: str) -> str | None:
     if _is_pretrain_uhd_objective(env_name):
         return "Pretraining UHD objective tags are evaluated by ops.exp_uhd, not by env.make()."
-    if env_name.startswith(EGGROLL_ENV_PREFIXES):
-        return "JAX environments are evaluated by JAX-backed designers such as 'eggroll', not by env.make()."
+    if env_name.startswith(JAX_OBJECTIVE_PREFIXES):
+        return "JAX environments are evaluated by JAX-backed designers, not by env.make()."
     return None
 
 
@@ -247,7 +246,7 @@ def get_environment_spec(env_tag: str) -> EnvironmentSpec:
     if tag in _atari_env_specs:
         return copy.deepcopy(_atari_env_specs[tag])
 
-    if tag.startswith(EGGROLL_ENV_PREFIXES):
+    if tag.startswith(JAX_OBJECTIVE_PREFIXES):
         return EnvironmentSpec(tag, max_steps=_DEFAULT_MAX_STEPS)
 
     if is_isaaclab_env_tag(tag):

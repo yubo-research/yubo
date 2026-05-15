@@ -225,6 +225,17 @@ def supported_hyperscalees_llm_bandit_tasks() -> tuple[str, ...]:
     return tuple(sorted(_hyperscalees_llm_bandit_tasks()))
 
 
+def supported_hyperscalees_pretrain_env_tags() -> tuple[str, ...]:
+    return tuple(sorted(_PRETRAIN_SPECS))
+
+
+def supported_nanoegg_pretrain_examples() -> tuple[tuple[str, str], ...]:
+    return (
+        ("pretrain:nanoegg:minipile", "nanoegg:int8:6l:256d"),
+        ("pretrain:nanoegg:minipile-int8-6l256d", "nanoegg:int8:6l:256d"),
+    )
+
+
 def is_hyperscalees_pretrain_env(env_tag: str) -> bool:
     return str(env_tag).startswith(_PRETRAIN_TAG_PREFIX)
 

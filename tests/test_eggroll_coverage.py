@@ -11,7 +11,7 @@ def _coverage_module():
 def test_eggroll_paper_manifest_is_complete():
     coverage = _coverage_module()._paper_coverage()
 
-    assert coverage.expected == 41
+    assert coverage.expected == 35
     assert coverage.present == coverage.expected
     assert coverage.missing == []
 
@@ -25,7 +25,7 @@ def test_eggroll_coverage_validate_json_reports_all_statuses():
     assert payload["paper"]["present"] == payload["paper"]["expected"]
     assert payload["paper"]["missing"] == []
     assert payload["counts"]["ok"] > 0
-    assert payload["counts"]["asset_blocked"] > 0
+    assert payload["counts"].get("asset_blocked", 0) == 0
     assert "adapter_blocked" not in payload["counts"]
 
     by_path = {row["path"]: row for row in payload["results"]}

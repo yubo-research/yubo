@@ -12,6 +12,8 @@ from problems.pre_obj_specs import (
     resolve_nanoegg_policy_spec,
     resolve_nanoegg_pretrain_spec,
     supported_hyperscalees_llm_bandit_tasks,
+    supported_hyperscalees_pretrain_env_tags,
+    supported_nanoegg_pretrain_examples,
 )
 from problems.pre_obj_stack import _load_hyperscalees_model
 from problems.pre_obj_subspace import _SubspaceParamCodec
@@ -30,4 +32,6 @@ __all__ = [
     "resolve_nanoegg_policy_spec",
     "resolve_nanoegg_pretrain_spec",
     "supported_hyperscalees_llm_bandit_tasks",
+    "supported_hyperscalees_pretrain_env_tags",
+    "supported_nanoegg_pretrain_examples",
 ]

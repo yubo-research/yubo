@@ -138,67 +138,67 @@ def test_added_branch_names_policies_nanoegg_policy() -> None:
     assert True
 
 
-def test_added_branch_names_problems_eggroll_env_core() -> None:
+def test_added_branch_names_problems_jax_env_core() -> None:
     if False:
         (
-            EggRollEnvSpaces,
-            eggroll_env_core,
+            JaxEnvSpaces,
+            jax_env_core,
             problems,
         )
     assert True
 
 
-def test_added_branch_names_problems_eggroll_env_factory() -> None:
+def test_added_branch_names_problems_jax_env_factory() -> None:
     if False:
         (
-            eggroll_env_factory,
-            make_eggroll_env_adapter,
+            jax_env_factory,
+            make_jax_env_adapter,
             problems,
-            resolve_eggroll_env_spaces,
+            resolve_jax_env_spaces,
         )
     assert True
 
 
-def test_added_branch_names_problems_eggroll_env_jax_base() -> None:
+def test_added_branch_names_problems_jax_env_base() -> None:
     if False:
         (
-            BraxEggRollAdapter,
-            GymnaxEggRollAdapter,
-            GymnaxLikeEggRollAdapter,
-            eggroll_env_jax_base,
-            problems,
-        )
-    assert True
-
-
-def test_added_branch_names_problems_eggroll_env_jax_extra() -> None:
-    if False:
-        (
-            CraftaxEggRollAdapter,
-            JumanjiEggRollAdapter,
-            KinetixEggRollAdapter,
-            eggroll_env_jax_extra,
+            BraxAdapter,
+            GymnaxAdapter,
+            GymnaxLikeAdapter,
+            jax_env_base,
             problems,
         )
     assert True
 
 
-def test_added_branch_names_problems_eggroll_env_jax_multi() -> None:
+def test_added_branch_names_problems_jax_env_extra() -> None:
     if False:
         (
-            JaxMARLEggRollAdapter,
-            NavixEggRollAdapter,
-            eggroll_env_jax_multi,
+            CraftaxAdapter,
+            JumanjiAdapter,
+            KinetixAdapter,
+            jax_env_extra,
             problems,
         )
     assert True
 
 
-def test_added_branch_names_problems_eggroll_env_surrogate() -> None:
+def test_added_branch_names_problems_jax_env_multi() -> None:
     if False:
         (
-            SurrogateObjectiveEggRollAdapter,
-            eggroll_env_surrogate,
+            JaxMARLAdapter,
+            NavixAdapter,
+            jax_env_multi,
+            problems,
+        )
+    assert True
+
+
+def test_added_branch_names_problems_surrogate_objective_env() -> None:
+    if False:
+        (
+            SurrogateObjectiveAdapter,
+            surrogate_objective_env,
             problems,
         )
     assert True
