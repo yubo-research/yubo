@@ -7,6 +7,7 @@ from common.mapping_keys import coerce_mapping_keys, normalize_toml_key
 from ops.uhd_config import BEConfig, EarlyRejectConfig, ENNConfig, UHDConfig
 
 _REQUIRED_TOML_KEYS = ("env_tag",)
+_ALLOWED_OPTIMIZERS = {"simple", "simple_be", "mezo", "mezo_be", "bszo"}
 _OPTIONAL_TOML_KEYS = (
     "num_rounds",
     "policy_tag",
@@ -295,6 +296,8 @@ def _parse_budget_fields(cfg: dict[str, Any]) -> tuple[int, int | None]:
         num_envs = int(cfg.get("num_envs", 1))
         steps_per_episode = int(cfg.get("steps_per_episode", 200))
         optimizer = str(cfg.get("optimizer", "mezo"))
+        if optimizer not in _ALLOWED_OPTIMIZERS:
+            raise ValueError(f"Unsupported UHD optimizer {optimizer!r}. Valid optimizers: {sorted(_ALLOWED_OPTIMIZERS)}")
 
         if optimizer in ("bszo", "bszo_be"):
             k = int(cfg.get("bszo_k", 2))
@@ -339,6 +342,8 @@ def _parse_cfg(cfg: dict[str, Any]) -> UHDConfig:
         target_accuracy = float(target_accuracy)
 
     optimizer = str(cfg.get("optimizer", "mezo"))
+    if optimizer not in _ALLOWED_OPTIMIZERS:
+        raise ValueError(f"Unsupported UHD optimizer {optimizer!r}. Valid optimizers: {sorted(_ALLOWED_OPTIMIZERS)}")
     batch_size = int(cfg.get("batch_size", 4096))
 
     bszo_k = int(cfg.get("bszo_k", 2))
