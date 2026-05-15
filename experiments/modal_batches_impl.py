@@ -13,7 +13,6 @@ from experiments.modal_result_collect import (
     iter_modal_results_for_collect,
 )
 
-
 _TAG = os.environ.get("MODAL_TAG")
 if not _TAG:
     # Fallback: extract from sys.argv for direct `modal run` usage

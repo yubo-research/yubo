@@ -34,6 +34,8 @@ class FakeOutput:
 
 
 class FakeAsyncEngine:
+    add_request = True
+
     async def generate(self, prompt, sampling_params, request_id, lora_request=None):
         yield FakeOutput("final answer is 4")
 

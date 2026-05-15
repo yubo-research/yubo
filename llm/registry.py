@@ -42,6 +42,8 @@ _VERIFIERS_ENVS = frozenset(
         "minichef",
     }
 )
+_THM_LANGUAGES = frozenset({"lean4", "coq", "isabelle"})
+_THM_ENV_EXAMPLES = ("llm:thm:lean4:cat-searcher/minif2f-lean4",)
 
 _STATIC_ENVS: dict[str, LLMEnvSpec] = {
     "llm:zeros": LLMEnvSpec(
@@ -69,6 +71,7 @@ _STATIC_ENVS: dict[str, LLMEnvSpec] = {
 }
 
 _QWEN_POLICY_RE = re.compile(r"^qwen3-(?P<size>1p7b|4b|8b|30b|32b)(?P<base>-base)?-lora-r(?P<rank>[1-9][0-9]*)$")
+_KIMINA_POLICY_RE = re.compile(r"^kimina-prover-1p5b-lora-r(?P<rank>[1-9][0-9]*)$")
 _QWEN_SIZE_TO_MODEL = {
     "1p7b": "1.7B",
     "4b": "4B",
@@ -132,6 +135,7 @@ def resolve_llm_env(env_tag: str) -> LLMEnvSpec:
         if len(parts) < 2:
             raise ValueError(f"Invalid thm env_tag '{tag}'. Expected format: llm:thm:{{language}}:{{dataset}}")
         lang, dataset = parts[0], ":".join(parts[1:])
+        _validate_thm_language(lang, env_tag=tag)
         return LLMEnvSpec(
             env_tag=tag,
             task_name=f"thm:{lang}:{dataset}",
@@ -147,14 +151,24 @@ def supported_llm_env_tags() -> tuple[str, ...]:
     math_tags = [f"llm:math:{name}" for name in sorted(_MATH_DATASETS)]
     answer_tag_math = [f"llm:math:answer-tags:{name}" for name in sorted(_MATH_DATASETS)]
     verifiers_tags = [f"llm:verifiers:{name}" for name in sorted(_VERIFIERS_ENVS)]
-    return tuple(sorted([*_STATIC_ENVS, *math_tags, *answer_tag_math, *verifiers_tags]))
+    return tuple(sorted([*_STATIC_ENVS, *math_tags, *answer_tag_math, *verifiers_tags, *_THM_ENV_EXAMPLES]))
 
 
 def resolve_llm_policy(policy_tag: str) -> LLMPolicySpec:
     tag = str(policy_tag)
     match = _QWEN_POLICY_RE.match(tag)
     if match is None:
-        raise KeyError(f"Unknown LLM policy_tag '{policy_tag}'. Available examples: {supported_llm_policy_tags()[:8]}")
+        kimina_match = _KIMINA_POLICY_RE.match(tag)
+        if kimina_match is None:
+            raise KeyError(f"Unknown LLM policy_tag '{policy_tag}'. Available examples: {supported_llm_policy_tags()[:8]}")
+        rank = int(kimina_match.group("rank"))
+        return LLMPolicySpec(
+            policy_tag=tag,
+            model_name="AI-MO/Kimina-Prover-Preview-Distill-1.5B",
+            lora_rank=rank,
+            lora_alpha=rank,
+            tensor_parallel_size=1,
+        )
 
     size = match.group("size")
     rank = int(match.group("rank"))
@@ -175,7 +189,16 @@ def supported_llm_policy_tags() -> tuple[str, ...]:
         for rank in (1, 4):
             tags.append(f"qwen3-{size}-lora-r{rank}")
             tags.append(f"qwen3-{size}-base-lora-r{rank}")
+    for rank in (1, 4, 8):
+        tags.append(f"kimina-prover-1p5b-lora-r{rank}")
     return tuple(sorted(tags))
+
+
+def policy_uses_chat_template(policy: LLMPolicySpec) -> bool:
+    model_name = str(policy.model_name)
+    if model_name.startswith("Qwen/Qwen3-"):
+        return not model_name.endswith("-Base")
+    return False
 
 
 def _validate_math_dataset(dataset_name: str, *, env_tag: str) -> None:
@@ -186,3 +209,8 @@ def _validate_math_dataset(dataset_name: str, *, env_tag: str) -> None:
 def _validate_verifiers_env(env_id: str, *, env_tag: str) -> None:
     if env_id not in _VERIFIERS_ENVS:
         raise KeyError(f"Unknown verifiers env in env_tag '{env_tag}'. Supported environments: {sorted(_VERIFIERS_ENVS)}")
+
+
+def _validate_thm_language(language: str, *, env_tag: str) -> None:
+    if language not in _THM_LANGUAGES:
+        raise KeyError(f"Unknown theorem language in env_tag '{env_tag}'. Supported languages: {sorted(_THM_LANGUAGES)}")

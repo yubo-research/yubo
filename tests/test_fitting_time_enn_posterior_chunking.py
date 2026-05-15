@@ -1,7 +1,6 @@
 import numpy as np
 import pytest
 
-
 pytest.importorskip("enn")
 
 from analysis.fitting_time import fitting_time as ft

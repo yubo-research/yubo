@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from common import video as common_video
+from common import video
 from rl import eval_noise
 from rl.core import ppo_eval
 from rl.core.actor_state import (
@@ -214,7 +214,7 @@ def maybe_render_videos(
         prepare_obs_fn=prepare_obs_fn,
     )
     with use_actor_snapshot(model, actor_state, device=device):
-        common_video.render_policy_videos(
+        video.render_policy_videos(
             eval_env_conf,
             eval_policy,
             video_dir=video_dir,

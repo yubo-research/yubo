@@ -1,34 +1,16 @@
 from __future__ import annotations
 
-import importlib
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Callable
 
 import numpy as np
 import torch
 
-
 if TYPE_CHECKING:
     from .config import SACConfig
 
-_sac = "rl.pufferlib.sac"
 
-
-def _eval_utils():
-    return importlib.import_module(f"{_sac}.eval_utils")
-
-
-def _env_utils():
-    return importlib.import_module(f"{_sac}.env_utils")
-
-
-def _model_utils():
-    return importlib.import_module(f"{_sac}.model_utils")
-
-
-def _state_payload(modules, optimizers, replay, state: Any) -> dict[str, Any]:
-    actor_state_mod = importlib.import_module("rl.core.actor_state")
-    capture_backbone_head_snapshot = getattr(actor_state_mod, "capture_backbone_head_snapshot")
+def _state_payload(modules, optimizers, replay, state: Any, *, capture_backbone_head_snapshot: Callable[..., dict[str, Any]]) -> dict[str, Any]:
     actor_snapshot = capture_backbone_head_snapshot(modules.actor_backbone, modules.actor_head, log_std=None, state_to_cpu=False)
     return {
         "step": int(state.global_step),
@@ -55,13 +37,20 @@ def _state_payload(modules, optimizers, replay, state: Any) -> dict[str, Any]:
     }
 
 
-def _restore_if_requested(config, modules, optimizers, replay, state: Any, *, device) -> None:
+def _restore_if_requested(
+    config,
+    modules,
+    optimizers,
+    replay,
+    state: Any,
+    *,
+    device,
+    load_checkpoint: Callable[..., dict[str, Any]],
+    restore_backbone_head_snapshot: Callable[..., None],
+    restore_rng_state_payload: Callable[..., None],
+) -> None:
     if not config.resume_from:
         return
-    actor_state_mod = importlib.import_module("rl.core.actor_state")
-    load_checkpoint = importlib.import_module("rl.checkpointing").load_checkpoint
-    restore_backbone_head_snapshot = getattr(actor_state_mod, "restore_backbone_head_snapshot")
-    restore_rng_state_payload = getattr(actor_state_mod, "restore_rng_state_payload")
     loaded = load_checkpoint(Path(config.resume_from), device=device)
     restore_backbone_head_snapshot(
         modules.actor_backbone,
@@ -92,17 +81,25 @@ def _restore_if_requested(config, modules, optimizers, replay, state: Any, *, de
     restore_rng_state_payload(loaded)
 
 
-def _checkpoint_if_due(config, checkpoint_manager: Any, modules, optimizers, replay, state: Any) -> None:
-    eu = _eval_utils()
-    due_mark = eu.due_mark
-    offpolicy_engine_utils = importlib.import_module("rl.pufferlib.offpolicy.engine_utils")
-    state.ckpt_mark = offpolicy_engine_utils.checkpoint_mark_if_due(
+def _checkpoint_if_due(
+    config,
+    checkpoint_manager: Any,
+    modules,
+    optimizers,
+    replay,
+    state: Any,
+    *,
+    due_mark_fn: Callable[[int, int | None, int], int | None],
+    checkpoint_mark_if_due: Callable[..., int],
+    capture_backbone_head_snapshot: Callable[..., dict[str, Any]],
+) -> None:
+    state.ckpt_mark = checkpoint_mark_if_due(
         global_step=int(state.global_step),
         checkpoint_interval_steps=config.checkpoint_interval_steps,
         previous_mark=int(state.ckpt_mark),
-        due_mark_fn=due_mark,
+        due_mark_fn=due_mark_fn,
         save_fn=lambda: checkpoint_manager.save_both(
-            _state_payload(modules, optimizers, replay, state),
+            _state_payload(modules, optimizers, replay, state, capture_backbone_head_snapshot=capture_backbone_head_snapshot),
             iteration=int(state.global_step),
         ),
     )
@@ -126,16 +123,17 @@ def _train_loop(
     device: torch.device,
     metrics_path: Path,
     checkpoint_manager: Any,
+    prepare_obs_np: Callable[..., np.ndarray],
+    to_env_action: Callable[..., np.ndarray],
+    append_eval_metric: Callable[..., None],
+    log_if_due: Callable[..., None],
+    maybe_eval: Callable[..., None],
+    sac_update: Callable[..., tuple[float, float, float]],
+    run_chunked_updates: Callable[..., None],
+    due_mark_fn: Callable[[int, int | None, int], int | None],
+    checkpoint_mark_if_due: Callable[..., int],
+    capture_backbone_head_snapshot: Callable[..., dict[str, Any]],
 ) -> None:
-    envu = _env_utils()
-    prepare_obs_np = envu.prepare_obs_np
-    to_env_action = envu.to_env_action
-    ev = _eval_utils()
-    append_eval_metric = ev.append_eval_metric
-    log_if_due = ev.log_if_due
-    maybe_eval = ev.maybe_eval
-    sac_update = _model_utils().sac_update
-    run_chunked_updates = importlib.import_module("rl.core.update_chunks").run_chunked_updates
     total_steps = int(config.total_timesteps)
     num_envs = int(obs_batch.shape[0])
     while state.global_step < total_steps:
@@ -178,4 +176,14 @@ def _train_loop(
             step=int(state.global_step),
             frames_per_batch=int(max(1, num_envs)),
         )
-        _checkpoint_if_due(config, checkpoint_manager, modules, optimizers, replay, state)
+        _checkpoint_if_due(
+            config,
+            checkpoint_manager,
+            modules,
+            optimizers,
+            replay,
+            state,
+            due_mark_fn=due_mark_fn,
+            checkpoint_mark_if_due=checkpoint_mark_if_due,
+            capture_backbone_head_snapshot=capture_backbone_head_snapshot,
+        )

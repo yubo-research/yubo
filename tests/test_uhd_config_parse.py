@@ -6,7 +6,6 @@ import pytest
 
 import ops.exp_uhd_parse as _exp_uhd_parse
 
-
 _parse_be_fields = _exp_uhd_parse._parse_be_fields
 _parse_cfg = _exp_uhd_parse._parse_cfg
 _parse_early_reject_fields = _exp_uhd_parse._parse_early_reject_fields
@@ -24,6 +23,32 @@ def test_parse_early_reject_fields_all_defaults():
     assert result.warmup_pos is None
     assert result.quantile is None
     assert result.window is None
+
+
+def test_parse_llm_sampling_rejects_multi_sample_greedy():
+    with pytest.raises(ValueError, match="samples_per_prompt > 1 require temperature > 0"):
+        _parse_cfg(
+            {
+                "env_tag": "llm:math:gsm8k",
+                "policy_tag": "qwen3-1p7b-lora-r1",
+                "num_rounds": 1,
+                "samples_per_prompt": 2,
+                "temperature": 0.0,
+            }
+        )
+
+
+def test_parse_llm_sampling_rejects_pass_at_k_without_multiple_samples():
+    with pytest.raises(ValueError, match="pass_at_k=true require samples_per_prompt > 1"):
+        _parse_cfg(
+            {
+                "env_tag": "llm:math:gsm8k",
+                "policy_tag": "qwen3-1p7b-lora-r1",
+                "num_rounds": 1,
+                "samples_per_prompt": 1,
+                "pass_at_k": True,
+            }
+        )
 
 
 def test_parse_early_reject_fields_custom_values():
@@ -421,6 +446,17 @@ def test_total_timesteps_derives_num_rounds_for_pretrain_vector_objective():
     assert result.pretrain_basis_max_leaves == 32
 
 
+def test_pretrain_basis_max_leaves_override_is_preserved():
+    cfg = {
+        "env_tag": "pretrain:hyperscalees:gsm8k-7w3b",
+        "policy_tag": "hyperscalees-rwkv-7w3b-lora-r1",
+        "num_rounds": 1,
+        "pretrain_basis_max_leaves": 8,
+    }
+    result = _parse_cfg(cfg)
+    assert result.pretrain_basis_max_leaves == 8
+
+
 def test_pretrain_hyperscalees_overrides_parse():
     cfg = {
         "env_tag": "pretrain:hyperscalees:gsm8k-7w3b",
@@ -448,4 +484,16 @@ def test_total_timesteps_only_rejects_non_vector_objective():
         "total_timesteps": 1_000,
     }
     with pytest.raises(ValueError, match="UHD vector objective"):
+        _parse_cfg(cfg)
+
+
+def test_total_timesteps_requires_exact_round_budget():
+    cfg = {
+        "env_tag": "gymnax:CartPole-v1",
+        "total_timesteps": 11,
+        "steps_per_episode": 5,
+        "num_envs": 2,
+        "optimizer": "mezo",
+    }
+    with pytest.raises(ValueError, match="must be divisible"):
         _parse_cfg(cfg)

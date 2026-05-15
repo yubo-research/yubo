@@ -1,6 +1,5 @@
 from typing import TYPE_CHECKING, Optional, Protocol
 
-
 if TYPE_CHECKING:
     from common.telemetry import Telemetry
     from optimizer.datum import Datum

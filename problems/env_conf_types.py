@@ -2,6 +2,7 @@ from dataclasses import asdict, dataclass, is_dataclass
 from typing import Any
 
 import gymnasium as gym
+import numpy as np
 
 import problems.other as other
 import problems.pure_functions as pure_functions
@@ -90,7 +91,7 @@ class EnvConf:
                 preprocess=preprocess,
             )
         elif is_isaaclab_env_tag(self.env_name):
-            env = make_isaaclab_env(self.env_name, **(kwargs | self.kwargs))
+            env = make_isaaclab_env(self.env_name, seed=self.problem_seed, **(kwargs | self.kwargs))
         elif self.gym_conf is not None:
             env = gym.make(self.env_name, **(kwargs | self.kwargs))
         else:
@@ -108,6 +109,76 @@ class EnvConf:
                 self.env_name,
             )
             env = NoiseMaker(env, self.noise_level)
+        return env
+
+    def make_gym_env(self, *, seed: int | None = None, render_mode: str | None = "rgb_array", **kwargs) -> gym.Env:
+        """Unified creation path for Gymnasium-compatible environments.
+
+        Handles:
+        1. Base environment creation (via _make) with seeding
+        2. Pixel formatting (Resize, Grayscale, Transpose)
+        3. Frame stacking (if specified)
+        4. Action clipping (if Box action space)
+        5. Standard preprocessing (via common.env_preprocessing)
+        """
+        from gymnasium.wrappers import (
+            ClipAction,
+            FrameStackObservation,
+            GrayscaleObservation,
+            ResizeObservation,
+            TransformObservation,
+        )
+
+        import common.env_preprocessing as env_pre
+
+        env_kwargs = (self.kwargs or {}).copy()
+        env_kwargs.update(kwargs)
+
+        # 1. Base creation
+        try:
+            env = self._make(render_mode=render_mode, **env_kwargs)
+        except TypeError:
+            env = self._make(**env_kwargs)
+
+        if seed is not None:
+            env.reset(seed=seed)
+            if hasattr(env.action_space, "seed"):
+                env.action_space.seed(seed)
+
+        # 2. Pixel mode processing (if from_pixels=True)
+        if getattr(self, "from_pixels", False):
+            # Atari (ALE/*) environments already handle resizing/grayscale if configured via atari_preprocess.
+            # For others (DM Control, Generic Gym), we apply standard wrappers.
+            if not self.env_name.startswith("ALE/"):
+                # If it's a Dict obs (like DM Control), we might need to select the 'pixels' key first
+                # (but our DM Control wrapper already returns pixels as the main obs if pixels_only=True)
+
+                # Resize to standard 84x84
+                env = ResizeObservation(env, (84, 84))
+
+                # Optional Grayscale (Atari usually wants this, but DM Control usually keeps RGB)
+                if "atari" in self.env_name.lower():
+                    env = GrayscaleObservation(env, keep_dim=True)
+
+                # Transpose to (C, H, W) for PyTorch/NatureCNN compatibility
+                # (standard Gym ResizeObservation returns (H, W, C))
+                env = TransformObservation(env, lambda o: np.moveaxis(o, -1, -3))
+
+        # 3. Frame skip/stack
+        # Note: ALEAtariEnv handles skip natively.
+        if self.gym_conf and self.gym_conf.num_frames_skip > 1:
+            # For RL, we usually stack frames if skipping
+            num_stack = 4 if "atari" in self.env_name.lower() else 1
+            if num_stack > 1:
+                env = FrameStackObservation(env, stack_size=num_stack)
+
+        # 4. Action clipping
+        if isinstance(env.action_space, gym.spaces.Box):
+            env = ClipAction(env)
+
+        # 5. Preprocessing (Normalization, Clipping)
+        env = env_pre.apply_gym_preprocessing(env, env_conf=self)
+
         return env
 
     def ensure_spaces(self):

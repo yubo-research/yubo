@@ -13,7 +13,6 @@ import acq.fit_gp as fit_gp
 from analysis.fitting_time.dngo import DNGOConfig, DNGOSurrogate
 from optimizer.sobol_designer import SobolDesigner
 
-
 _logger = logging.getLogger(__name__)
 
 

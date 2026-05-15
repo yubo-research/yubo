@@ -3,10 +3,8 @@ from __future__ import annotations
 import numpy as np
 import torch.nn as nn
 
-from rl.backbone import init_linear_layers as _init_linear_layers_shared
-from rl.core.continuous_actions import (
-    normalize_action_bounds as _normalize_action_bounds_shared,
-)
+from rl import backbone
+from rl.core import continuous_actions
 
 from .specs_combined_model import (  # noqa: F401
     _ActorCritic,
@@ -25,8 +23,8 @@ from .specs_dataclasses_buffer import (  # noqa: F401
 
 
 def normalize_action_bounds(low: np.ndarray, high: np.ndarray, dim: int) -> tuple[np.ndarray, np.ndarray]:
-    return _normalize_action_bounds_shared(low, high, dim)
+    return continuous_actions.normalize_action_bounds(low, high, dim)
 
 
 def init_linear(module: nn.Module, gain: float) -> None:
-    _init_linear_layers_shared(module, gain=float(gain))
+    backbone.init_linear_layers(module, gain=float(gain))

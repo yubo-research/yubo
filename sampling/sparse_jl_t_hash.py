@@ -1,6 +1,5 @@
 import torch
 
-
 # Splitmix64 constants (signed int64 for PyTorch compatibility)
 _GOLDEN = 0x9E3779B97F4A7C15 - (1 << 64)
 _MIX_M1 = 0xBF58476D1CE4E5B9 - (1 << 64)

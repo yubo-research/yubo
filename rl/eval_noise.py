@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-
 FROZEN_HELDOUT_NOISE_INDEX = 99999
 
 

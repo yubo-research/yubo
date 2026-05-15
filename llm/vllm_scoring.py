@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from types import SimpleNamespace
 from typing import Any
 
 import numpy as np
+
+from llm.model_client import SampleBatch
 
 
 @dataclass
@@ -96,6 +99,24 @@ def score_request_outputs(
             )
         )
     return accumulator.final()
+
+
+def score_completions(
+    responses: list[SampleBatch],
+    *,
+    prompts: list[str],
+    task_obj: Any,
+    answers: list[Any],
+    pass_at_k: bool,
+) -> tuple[list[float], dict[str, float], list[str]]:
+    request_outputs = [SimpleNamespace(outputs=response.completions) for response in responses]
+    return score_request_outputs(
+        request_outputs,
+        prompts=prompts,
+        task_obj=task_obj,
+        answers=answers,
+        pass_at_k=pass_at_k,
+    )
 
 
 def _score_one_output(

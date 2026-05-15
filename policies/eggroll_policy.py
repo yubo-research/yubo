@@ -117,4 +117,11 @@ class EggRollActorCriticMLPPolicyFactory:
         self._spec = spec
 
     def __call__(self, env_runtime: Any) -> EggRollActorCriticMLPPolicy:
+        from problems.isaaclab_env_adapters import is_isaaclab_env_tag
+
+        if is_isaaclab_env_tag(str(getattr(env_runtime, "env_name", ""))):
+            from policies.mlp_policy import MLPPolicyFactory
+
+            hidden_sizes = tuple(int(self._spec.hidden_dim) for _ in range(int(self._spec.layers)))
+            return MLPPolicyFactory(hidden_sizes)(env_runtime)
         return EggRollActorCriticMLPPolicy(env_runtime, self._spec)

@@ -12,7 +12,6 @@ from problems.env_conf_presets import (
 )
 from problems.isaaclab_env_adapters import is_isaaclab_env_tag
 
-
 _ISAACLAB_RL_MODEL = {
     "ppo": {
         "backbone_name": "mlp",

@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING, Any
 
 from common.im import im
 
-
 _IMPL = "rl.pufferlib.sac.eval_utils_impl"
 
 if TYPE_CHECKING:

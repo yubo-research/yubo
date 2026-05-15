@@ -6,8 +6,8 @@ import numpy as np
 import torch
 
 
-def _mod(parts, names):
-    return __import__(".".join(parts), fromlist=names)
+def _mod(parts, names=None, *, fromlist=None):
+    return __import__(".".join(parts), fromlist=names if fromlist is None else fromlist)
 
 
 def test_kiss_cov_puffer_offpolicy_env_model_eval_units(monkeypatch, tmp_path):
@@ -48,7 +48,7 @@ def test_kiss_cov_puffer_offpolicy_env_model_eval_units(monkeypatch, tmp_path):
     assert env_utils.resolve_backbone_name(cfg, obs_spec) == "nature_cnn_atari"
 
     monkeypatch.setattr(
-        "rl.pufferlib.offpolicy.env_utils.build_continuous_gym_env_setup",
+        "rl.pufferlib.offpolicy.env_utils.env_setup.build_env_setup",
         lambda **kwargs: SimpleNamespace(
             env_conf=SimpleNamespace(),
             problem_seed=1,
@@ -247,7 +247,7 @@ def test_kiss_cov_torchrl_offpolicy_and_sac_loop_units(monkeypatch):
     )
 
     monkeypatch.setattr(
-        "rl.torchrl.sac.trainer.sac_deps.registry.register_algo",
+        "rl.torchrl.sac.trainer.deps.registry.register_algo",
         lambda *args, **kwargs: None,
     )
     trainer.register()

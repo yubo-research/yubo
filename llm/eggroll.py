@@ -16,6 +16,7 @@ from llm.eggroll_engine import (
     shutdown_engines,
     train_loop,
 )
+from llm.eggroll_engine import _engine_lora_specs as _engine_lora_specs
 from llm.eggroll_support import adapter_root_for as _adapter_root_for
 from llm.eggroll_support import base_seed as _base_seed
 from llm.eggroll_support import write_run_config as _write_run_config
@@ -25,7 +26,7 @@ from llm.es import (
     num_iterations_from_budget,
     validate_eggroll_population,
 )
-from llm.lora import build_peft_lora_template
+from llm.registry import policy_uses_chat_template
 from llm.tasks import MathTask, build_task
 
 
@@ -88,6 +89,12 @@ def run_eggroll(cfg: LLMConfig) -> dict[str, Any]:
         use_wandb=bool(cfg.use_wandb),
         wandb_project=cfg.wandb_project,
         wandb_name=cfg.wandb_name,
+        pretrain_lora_only=bool(cfg.pretrain_lora_only),
+        pretrain_search_dim=int(cfg.pretrain_search_dim),
+        vllm_max_model_len=cfg.vllm_max_model_len,
+        vllm_gpu_memory_utilization=cfg.vllm_gpu_memory_utilization,
+        vllm_max_num_seqs=cfg.vllm_max_num_seqs,
+        vllm_max_num_batched_tokens=cfg.vllm_max_num_batched_tokens,
     )
     validate_eggroll_population(
         population_size=args.population_size,
@@ -98,11 +105,18 @@ def run_eggroll(cfg: LLMConfig) -> dict[str, Any]:
     )
 
     print(f"LLM_EGGROLL: model={cfg.policy.model_name} task={cfg.env.task_name} engines={args.num_engines} tp={args.tensor_parallel_size}")
-    template = build_peft_lora_template(
-        model_name=cfg.policy.model_name,
-        rank=args.lora_r,
-        alpha=args.lora_alpha,
-    )
+
+    if args.pretrain_lora_only:
+        from llm.lora import build_peft_lora_template
+
+        template = build_peft_lora_template(
+            model_name=cfg.policy.model_name,
+            rank=args.lora_r,
+            alpha=args.lora_alpha,
+        )
+    else:
+        template = None  # Will build after launching engines
+
     tokenizer = AutoTokenizer.from_pretrained(cfg.policy.model_name, trust_remote_code=True)
     console = UnifiedConsoleManager()
     task = build_task(
@@ -112,7 +126,7 @@ def run_eggroll(cfg: LLMConfig) -> dict[str, Any]:
         max_tokens=args.max_tokens,
         dataset_size=cfg.sub_dataset_size,
         tokenizer=tokenizer,
-        apply_chat_template=False,
+        apply_chat_template=policy_uses_chat_template(cfg.policy),
         console=console,
     )
     sampling_kwargs = _sampling_kwargs(
@@ -134,7 +148,22 @@ def run_eggroll(cfg: LLMConfig) -> dict[str, Any]:
     engines, placement_groups = launch_engines(ray, cfg=cfg, args=args)
     try:
         init_worker_groups(ray, engines, args=args)
-        setup_lora_generation(ray, engines, template=template)
+
+        if args.pretrain_lora_only:
+            setup_lora_generation(ray, engines, template=template)
+        else:
+            # Architecture-agnostic discovery for universal subspace
+            from llm.lora import build_universal_subspace_template
+
+            params_meta = ray.get(engines[0].get_parameter_metadata.remote())[0]
+            template = build_universal_subspace_template(
+                parameters=params_meta,
+                search_dim=args.pretrain_search_dim,
+                seed=args.base_seed,
+                lora_only=False,
+            )
+            print(f"UNIVERSAL: discovered {len(params_meta)} parameters, search_dim={args.pretrain_search_dim}")
+
         wandb_run = _maybe_init_wandb(args=args, cfg=cfg)
         result = train_loop(
             ray,
@@ -175,8 +204,8 @@ def _build_eval_task(cfg: LLMConfig, *, tokenizer: Any, args: EggrollArgs) -> Ma
         seed=args.base_seed + 12345,
         answer_format=answer_format,
         tokenizer=tokenizer,
-        apply_chat_template=False,
+        apply_chat_template=policy_uses_chat_template(cfg.policy),
     )
 
 
-__all__ = ["EggrollArgs", "run_eggroll"]
+__all__ = ["EggrollArgs", "run_eggroll", "_engine_lora_specs"]

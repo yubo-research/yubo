@@ -5,9 +5,9 @@ from typing import Any
 
 
 def _offp():
-    _ns: dict[str, Any] = {}
-    exec("from rl.pufferlib.offpolicy import eval_utils as _m", _ns)  # noqa: S102
-    return _ns["_m"]
+    namespace: dict[str, Any] = {}
+    exec("from rl.pufferlib.offpolicy import eval_utils", namespace)  # noqa: S102
+    return namespace["eval_utils"]
 
 
 def _facade():
@@ -105,17 +105,17 @@ def maybe_eval(config: Any, env: Any, modules: Any, obs_spec: Any, state, *, dev
 def __getattr__(name: str):
     impl = _offp()
     if name == "rl_logger":
-        _ns: dict[str, Any] = {}
-        exec("import rl.logger as _f", _ns)  # noqa: S102
-        return _ns["_f"]
+        namespace: dict[str, Any] = {}
+        exec("from rl import logger", namespace)  # noqa: S102
+        return namespace["logger"]
     if name == "build_eval_plan":
-        _ns: dict[str, Any] = {}
-        exec("from rl.eval_noise import build_eval_plan as _f", _ns)  # noqa: S102
-        return _ns["_f"]
+        namespace = {}
+        exec("from rl import eval_noise", namespace)  # noqa: S102
+        return namespace["eval_noise"].build_eval_plan
     if name in ("collect_denoised_trajectory", "evaluate_for_best"):
-        _ns = {}
-        exec(f"from rl.core.episode_rollout import {name} as _f", _ns)  # noqa: S102
-        return _ns["_f"]
+        namespace = {}
+        exec("from rl.core import episode_rollout", namespace)  # noqa: S102
+        return getattr(namespace["episode_rollout"], name)
     if hasattr(impl, name):
         return getattr(impl, name)
     msg = f"module {__name__!r} has no attribute {name!r}"

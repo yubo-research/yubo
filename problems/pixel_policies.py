@@ -26,7 +26,6 @@ from problems.pixel_policies_encoders import (
     tiny_atari_cnn_encoder,
 )
 
-
 __all__ = [
     "AtariAgent57LiteFactory",
     "AtariAgent57LitePolicy",

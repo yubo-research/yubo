@@ -18,7 +18,6 @@ from sampling.sampling_util_variance import (
     var_of_var_dev,
 )
 
-
 __all__ = [
     "_raasp",
     "_sobol_random_n",

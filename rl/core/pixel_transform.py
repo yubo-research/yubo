@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import torch
 
-
 try:
     from torchrl.data import UnboundedContinuous
     from torchrl.envs.transforms import Transform
@@ -87,6 +86,9 @@ def apply_pixel_observation_spec(spec, *, channels: int, size: int, keys_contain
     return spec
 
 
+# TODO: REMOVE TRANSFORM CLASSES. PixelsToObservation and AtariObservationTransform are now redundant
+# for the main collection paths, which use unified environment wrapping via EnvConf.make_gym_env().
+# These should be removed once evaluation pipelines are also updated.
 class PixelsToObservation(Transform):
     def __init__(self, size: int = 84):
         super().__init__(

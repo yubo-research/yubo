@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-
 if TYPE_CHECKING:
     from experiments.enn_turbo_scale_check import (
         ScaleRow,
@@ -111,7 +110,7 @@ def test_added_uhd_enn_shims_are_connected(monkeypatch):
 
 
 def test_added_llm_task_modules_are_connected():
-    from llm.tasks_base import LLMTask
+    from llm.task_protocols import LLMTask
     from llm.tasks_countdown import CountdownTask
     from llm.tasks_factory import build_task
     from llm.tasks_math import MathTask

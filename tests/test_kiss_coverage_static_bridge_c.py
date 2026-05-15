@@ -111,9 +111,10 @@ def test_kiss_bridge_pufferlib_offpolicy_direct_symbols(monkeypatch):
         lambda: (object(), object(), object()),
     )
     monkeypatch.setattr(
-        "rl.pufferlib.offpolicy.env_utils._make_vector_env_common",
+        "rl.pufferlib.offpolicy.env_utils._make_vector_env_shared",
         lambda *a, **k: object(),
     )
+
     es = build_env_setup(cfg)
     assert es is not None
     arr = np.zeros((1, 2), dtype=np.float32)
@@ -316,7 +317,7 @@ def test_kiss_bridge_torchrl_sac_setup_loop_ppo_engine_tail(monkeypatch, tmp_pat
         evaluate_for_best=lambda *a, **k: 0.0,
     )
 
-    monkeypatch.setattr("rl.torchrl.sac.loop.rl_logger.log_eval_iteration", lambda **k: None)
+    monkeypatch.setattr("rl.logger.log_eval_iteration", lambda **k: None)
     tr_sac_log_if_due(
         SimpleNamespace(log_interval_steps=1),
         SimpleNamespace(last_eval_return=0.0, last_heldout_return=None, best_return=0.0),
@@ -344,7 +345,7 @@ def test_kiss_bridge_torchrl_sac_setup_loop_ppo_engine_tail(monkeypatch, tmp_pat
 
     import rl.torchrl.sac.setup as tr_sac_setup_mod
 
-    monkeypatch.setattr(tr_sac_setup_mod, "build_continuous_gym_env_setup", _fake_bcges)
+    monkeypatch.setattr(tr_sac_setup_mod, "build_env_setup", _fake_bcges)
     cfg = SACConfig(exp_dir=str(tmp_path / "sac_exp"), replay_size=100, batch_size=4)
     env_setup = tr_sac_setup_build_env_setup(cfg)
     dev = torch.device("cpu")

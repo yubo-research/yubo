@@ -21,6 +21,7 @@ def test_kiss_cov_sac_setup_build_and_update(monkeypatch, tmp_path):
         env_conf=fake_env_conf,
         problem_seed=7,
         noise_seed_0=11,
+        obs_dim=4,
         act_dim=2,
         action_low=np.array([-1.0, -1.0], dtype=np.float32),
         action_high=np.array([1.0, 1.0], dtype=np.float32),
@@ -28,8 +29,8 @@ def test_kiss_cov_sac_setup_build_and_update(monkeypatch, tmp_path):
         obs_width=np.array([2.0, 2.0, 2.0, 2.0], dtype=np.float32),
     )
     monkeypatch.setattr(
-        "rl.torchrl.sac.sac_setup_build.build_continuous_gym_env_setup",
-        lambda **kwargs: shared,
+        "rl.torchrl.sac.sac_setup_build.build_env_setup",
+        lambda _config, **kwargs: shared,
     )
 
     cfg = SACConfig(exp_dir=str(tmp_path), env_tag="pend", batch_size=4, replay_size=32)
@@ -62,7 +63,7 @@ def test_kiss_cov_sac_setup_build_and_update(monkeypatch, tmp_path):
 
 
 def test_kiss_cov_sac_runtime_utils_wrappers(monkeypatch):
-    monkeypatch.setattr(sac_runtime_utils, "_mps_is_available_core", lambda: True)
+    monkeypatch.setattr(sac_runtime_utils.runtime, "mps_is_available", lambda: True)
     assert sac_runtime_utils._mps_is_available()
     d = sac_runtime_utils.select_device("cpu")
     assert str(d) == "cpu"
@@ -106,7 +107,14 @@ def test_kiss_cov_puffer_vector_env_make_vector_env():
         return lambda **kwargs: kwargs
 
     _PufferAtari = type("_PufferAtari", (), {"env_creator": staticmethod(_puffer_env_creator)})
-    cfg = SimpleNamespace(env_tag="f:ackley-2d", vector_backend="serial", num_envs=2, seed=5, framestack=4)
+    cfg = SimpleNamespace(
+        env_tag="f:ackley-2d",
+        vector_backend="serial",
+        num_envs=2,
+        seed=5,
+        framestack=4,
+        env_conf=SimpleNamespace(),
+    )
     out = puffer_make_vector_env(
         cfg,
         import_pufferlib_modules_fn=lambda: (SimpleNamespace(), _Vector, _PufferAtari),
@@ -122,7 +130,6 @@ def test_kiss_cov_offpolicy_engine_checkpoint_env_vec(monkeypatch, tmp_path):
     from types import SimpleNamespace
 
     from rl.pufferlib.offpolicy import engine_utils as off_engine_utils
-    from rl.pufferlib.offpolicy import env_utils as offpolicy_env_utils
     from rl.pufferlib.offpolicy import runtime_utils as off_runtime_utils
     from rl.pufferlib.sac import env_utils as sac_env_utils
 
@@ -138,8 +145,6 @@ def test_kiss_cov_offpolicy_engine_checkpoint_env_vec(monkeypatch, tmp_path):
             return SimpleNamespace(write_config=lambda *args, **kwargs: None)
         if name == "rl.checkpointing":
             return SimpleNamespace(CheckpointManager=_CheckpointManager)
-        if name == "rl.core.env_conf":
-            return SimpleNamespace(global_seed_for_run=lambda seed: seed + 5)
         return real_import(name)
 
     monkeypatch.setattr(off_engine_utils.importlib, "import_module", _fake_engine_import)
@@ -163,18 +168,26 @@ def test_kiss_cov_offpolicy_engine_checkpoint_env_vec(monkeypatch, tmp_path):
     assert mark == 1
 
     monkeypatch.setattr(
-        off_runtime_utils,
-        "_select_device_core",
+        off_runtime_utils.runtime,
+        "select_device",
         lambda *_args, **_kwargs: torch.device("cpu"),
     )
-    monkeypatch.setattr(off_runtime_utils, "_obs_scale_from_env_core", lambda _env_conf: ("lb", "width"))
+    monkeypatch.setattr(
+        off_runtime_utils.runtime,
+        "obs_scale_from_env",
+        lambda _env_conf: (
+            np.array([-1.0, -1.0], dtype=np.float32),
+            np.array([2.0, 2.0], dtype=np.float32),
+        ),
+    )
     assert str(off_runtime_utils.select_device("cpu")) == "cpu"
-    assert off_runtime_utils.obs_scale_from_env(SimpleNamespace()) == ("lb", "width")
+    lb, width = off_runtime_utils.obs_scale_from_env(SimpleNamespace())
+    assert lb.shape == (2,) and width.shape == (2,)
 
     monkeypatch.setattr(
-        offpolicy_env_utils,
-        "build_continuous_gym_env_setup",
-        lambda **_kwargs: SimpleNamespace(
+        sac_env_utils,
+        "build_env_setup",
+        lambda _cfg, **_kwargs: SimpleNamespace(
             env_conf=SimpleNamespace(gym_conf=SimpleNamespace(transform_state=True)),
             problem_seed=3,
             noise_seed_0=4,
@@ -228,11 +241,11 @@ def test_kiss_cov_direct_sac_offpolicy_symbols(monkeypatch):
     )
 
     monkeypatch.setattr(
-        "rl.pufferlib.offpolicy.runtime_utils._select_device_core",
+        "rl.core.runtime.select_device",
         lambda *_args, **_kwargs: torch.device("cpu"),
     )
     monkeypatch.setattr(
-        "rl.pufferlib.offpolicy.runtime_utils._obs_scale_from_env_core",
+        "rl.core.runtime.obs_scale_from_env",
         lambda _env_conf: (None, None),
     )
     assert str(off_select_device("cpu")) == "cpu"
@@ -240,7 +253,7 @@ def test_kiss_cov_direct_sac_offpolicy_symbols(monkeypatch):
 
     monkeypatch.setattr(
         offpolicy_env_utils,
-        "build_continuous_gym_env_setup",
+        "build_env_setup",
         lambda **_kwargs: SimpleNamespace(
             env_conf=SimpleNamespace(gym_conf=SimpleNamespace(transform_state=False)),
             problem_seed=1,

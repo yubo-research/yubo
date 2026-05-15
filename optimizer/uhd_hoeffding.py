@@ -3,7 +3,6 @@ import numpy as np
 from .gaussian_perturbator import GaussianPerturbator
 from .step_size_adapter import StepSizeAdapter
 
-
 _SE_FLOOR = 1e-10
 
 

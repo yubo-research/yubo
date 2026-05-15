@@ -7,7 +7,6 @@ from ops.uhd_setup_simple_common import (
     _mnist_embed_bounds,
 )
 
-
 __all__ = [
     "_gym_embed_bounds",
     "_make_perturbator",

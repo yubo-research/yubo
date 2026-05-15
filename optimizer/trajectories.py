@@ -4,7 +4,6 @@ import numpy as np
 
 from .trajectory import Trajectory
 
-
 __all__ = ["collect_trajectory"]
 
 
@@ -25,7 +24,11 @@ def _scale_action_to_space(action: np.ndarray | int, action_space: Any) -> np.nd
             return int(arr.item()) if arr.size == 1 else int(arr[0])
         return action
     action = np.asarray(action, dtype=np.float64)
-    return action_space.low + (action_space.high - action_space.low) * (1 + action) / 2
+    low = np.asarray(action_space.low, dtype=np.float64)
+    high = np.asarray(action_space.high, dtype=np.float64)
+    if not np.all(np.isfinite(low)) or not np.all(np.isfinite(high)):
+        return np.clip(action, -1.0, 1.0).astype(np.float32)
+    return low + (high - low) * (1 + action) / 2
 
 
 def _unpack_step_result(step_out: Any) -> tuple[Any, Any, bool, bool, Any]:

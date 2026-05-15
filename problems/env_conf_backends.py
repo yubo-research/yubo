@@ -9,7 +9,6 @@ from problems.env_conf_policies import (
     resolve_dm_control_policy_class,
 )
 
-
 _DM_POLICY_VARIANTS = frozenset({"gauss", "rl-gauss"})
 _ATARI_POLICY_VARIANTS = frozenset({"agent57", "gauss", "mlp16"})
 

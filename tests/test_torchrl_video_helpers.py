@@ -343,6 +343,30 @@ def test_render_policy_videos_skips_headless_video_error(monkeypatch, tmp_path, 
     assert "skipping video capture" in out
 
 
+def test_render_policy_videos_skips_isaaclab_when_renderer_missing(monkeypatch, tmp_path, capsys):
+    env_conf = _EnvConfStub(max_steps=2, gym_conf=True)
+    env_conf.env_name = "isaaclab:Fake-v0"
+
+    def _fail_rollout(*_args, **_kwargs):
+        raise AssertionError("IsaacLab video should skip before rollout.")
+
+    monkeypatch.setattr("common.video_batch.rollout_episode", _fail_rollout)
+    monkeypatch.setattr("problems.isaaclab_env_adapters.isaaclab_rendering_available", lambda: (False, "No module named omni.replicator"))
+    render_policy_videos(
+        env_conf,
+        lambda _s: np.array([0.0, 0.0], dtype=np.float32),
+        video_dir=Path(tmp_path) / "videos",
+        video_prefix="isaac",
+        num_episodes=2,
+        num_video_episodes=1,
+        episode_selection="best",
+        seed_base=0,
+    )
+    out = capsys.readouterr().out
+    assert "skipping IsaacLab video capture" in out
+    assert "omni.replicator" in out
+
+
 def test_render_policy_videos_retries_with_headless_gl_backend(monkeypatch, tmp_path, capsys):
     env_conf = _EnvConfStub(max_steps=2, gym_conf=True)
 

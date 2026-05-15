@@ -13,7 +13,6 @@ from problems.text_obj_specs import TextSpec as TextSpec
 from problems.text_obj_specs import is_text_env as is_text_env
 from problems.text_obj_specs import resolve_text_spec as resolve_text_spec
 
-
 __all__ = [
     "TextObjective",
     "TextSpec",

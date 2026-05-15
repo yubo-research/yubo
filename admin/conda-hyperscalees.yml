@@ -8,3 +8,12 @@ dependencies:
   - git-lfs
   - c-compiler
   - cxx-compiler
+  - swig
+  - numpy>=2.2,<2.3
+  - scipy>=1.17,<1.18
+  - h5py
+  - numba
+  - scikit-learn
+  - matplotlib
+  - pandas
+  - faiss-cpu

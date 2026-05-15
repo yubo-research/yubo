@@ -11,7 +11,6 @@ import torch.optim as optim
 
 from .config import PufferPPOConfig
 
-
 __all__ = [
     "build_eval_env_conf",
     "make_vector_env",
@@ -28,6 +27,9 @@ def _resolve_device(device_raw: str) -> torch.device:
     return select_device(str(device_raw))
 
 
+# TODO: UNIFY HEURISTICS. The functions _infer_channels and _infer_image_size below are duplicates of logic
+# that was recently cleaned up in rl.core.env_contract. During the next sweep, these should be removed
+# in favor of resolve_observation_contract() and the shared tag utils in common.env_tags.
 def _infer_channels(shape: tuple[int, ...], *, fallback: int) -> int:
     env_utils = importlib.import_module("rl.pufferlib.sac.env_utils")
     return int(env_utils._infer_channels(shape, fallback=int(fallback)))

@@ -201,19 +201,6 @@ def test_added_branch_names_figures_turbo_failure_clock_schedule() -> None:
     assert True
 
 
-def test_kiss_dep_sentinels_figures_and_sitecustomize() -> None:
-    # Keep imports behind `if False` so they never execute at runtime, but still
-    # register dependency edges for `kiss check`.
-    if False:
-        import figures.turbo_failure_budget_multiple  # noqa: F401
-        import figures.turbo_failure_clock_empirical  # noqa: F401
-        import figures.turbo_failure_clock_schedule  # noqa: F401
-
-        import sitecustomize  # noqa: F401
-
-    assert True
-
-
 def test_added_branch_names_llm_config() -> None:
     if False:
         (
@@ -222,3 +209,9 @@ def test_added_branch_names_llm_config() -> None:
             llm,
         )
     assert True
+
+
+def test_kiss_dep_sentinels_shared() -> None:
+    from .kiss_booster_helpers import booster_dep_sentinels
+
+    booster_dep_sentinels()

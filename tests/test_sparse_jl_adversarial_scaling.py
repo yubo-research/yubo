@@ -11,7 +11,6 @@ from sampling.sparse_jl_t import (
     block_sparse_jl_transform_t,
 )
 
-
 # ---------------------------------------------------------------------------
 # Speed scaling: verify O(D*s) time (not worse)
 # ---------------------------------------------------------------------------

@@ -15,8 +15,7 @@ from analysis.data_io import write_config
 from problems.env_conf import get_env_conf
 from rl.backbone import BackboneSpec, HeadSpec, build_backbone, build_mlp_head
 from rl.checkpointing import CheckpointManager
-from rl.core import runtime as torchrl_common
-from rl.core.env_setup import build_continuous_gym_env_setup
+from rl.core import env_setup, runtime
 
 from .config import SACConfig
 from .sac_setup_models import _ActorNet, _QNet, _QNetPixel
@@ -24,7 +23,7 @@ from .sac_setup_types import _EnvSetup, _Modules, _TrainingSetup
 
 
 def build_env_setup(config: SACConfig) -> _EnvSetup:
-    shared = build_continuous_gym_env_setup(
+    shared = env_setup.build_env_setup(
         env_tag=str(config.env_tag),
         seed=int(config.seed),
         problem_seed=config.problem_seed,
@@ -32,7 +31,8 @@ def build_env_setup(config: SACConfig) -> _EnvSetup:
         from_pixels=bool(getattr(config, "from_pixels", False)),
         pixels_only=bool(getattr(config, "pixels_only", True)),
         get_env_conf_fn=get_env_conf,
-        obs_scale_from_env_fn=torchrl_common.obs_scale_from_env,
+        include_continuous_info=True,
+        obs_scale_from_env_fn=runtime.obs_scale_from_env,
     )
     env_conf = shared.env_conf
     from_pixels = getattr(env_conf, "from_pixels", False)
@@ -123,7 +123,7 @@ def _build_q_pair(
 
 
 def build_modules(config: SACConfig, env: _EnvSetup, *, device: torch.device) -> _Modules:
-    obs_scaler = torchrl_common.ObsScaler(env.obs_lb, env.obs_width)
+    obs_scaler = runtime.ObsScaler(env.obs_lb, env.obs_width)
     from_pixels = bool(getattr(env.env_conf, "from_pixels", False))
     actor_backbone_spec, actor_head_spec, critic_head_spec = _build_specs(config, from_pixels=from_pixels)
     actor_backbone, actor_head, actor_net, actor = _build_actor(env, obs_scaler, actor_backbone_spec, actor_head_spec)

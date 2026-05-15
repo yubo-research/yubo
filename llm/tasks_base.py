@@ -1,22 +1,35 @@
 from __future__ import annotations
 
 import re
-from typing import Any, Protocol
+from typing import Any, ClassVar
 
 import numpy as np
 
+from llm.task_modes import TaskMode
 
-class LLMTask(Protocol):
-    def get_batch(self) -> tuple[list[str], list[Any]]: ...
 
-    def score(
-        self,
-        generations: list[str],
-        truncateds: list[bool],
-        answer: Any,
-        *,
-        pass_at_k: bool = False,
-    ) -> tuple[float, tuple[Any, ...], np.ndarray]: ...
+class BatchScoringTaskMixin:
+    execution_mode: ClassVar[TaskMode] = TaskMode.SCORE
+
+
+class RolloutTaskMixin:
+    execution_mode: ClassVar[TaskMode] = TaskMode.ROLLOUT
+
+
+def task_mode(task: Any) -> TaskMode:
+    mode = getattr(task, "execution_mode", None)
+    if isinstance(mode, TaskMode):
+        return mode
+    if isinstance(mode, str):
+        try:
+            return TaskMode(mode)
+        except ValueError:
+            pass
+    raise TypeError(f"{type(task).__name__} must declare execution_mode as {TaskMode.SCORE.value!r} or {TaskMode.ROLLOUT.value!r}.")
+
+
+def is_rollout_task(task: Any) -> bool:
+    return task_mode(task) is TaskMode.ROLLOUT
 
 
 def extract_model_answer(text: str, answer_format: str = "none") -> tuple[str | None, str]:

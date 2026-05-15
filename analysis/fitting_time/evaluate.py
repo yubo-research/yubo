@@ -26,11 +26,13 @@ from .evaluate_triples import (
     benchmark_single_surrogate,
 )
 
+SYNTHETIC_BENCHMARK_N_TEST = SYNTHETIC_BENCHMARK_N_EVAL
 
 __all__ = [
     "BMResult",
     "MuSe",
     "SYNTHETIC_BENCHMARK_SINE_FUNCTION_NAME",
+    "SYNTHETIC_BENCHMARK_N_TEST",
     "SURROGATE_BENCHMARK_ROWS",
     "SURROGATE_BENCHMARK_KEYS",
     "SyntheticSineSurrogateBenchmark",

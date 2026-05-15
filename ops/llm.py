@@ -7,7 +7,6 @@ from pathlib import Path
 
 import click
 
-
 if sys.version_info < (3, 11):
     sys.stderr.write(
         "ops/llm.py requires Python >= 3.11. "

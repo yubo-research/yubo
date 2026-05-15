@@ -15,7 +15,6 @@ from .optimizer_pareto import _pareto_mask_max, _pareto_mask_min
 from .optimizer_types import IterateResult, ReturnSummary, TraceEntry
 from .trajectories import collect_trajectory
 
-
 _INTERACTIVE_DEBUG = False
 _SHOW_EVERY_N_ITER = 30
 

@@ -14,7 +14,6 @@ from .sparse_jl_t_transforms import (
     block_sparse_jl_transform_t,
 )
 
-
 __all__ = [
     "_CHUNK_SIZE",
     "_MASK64",

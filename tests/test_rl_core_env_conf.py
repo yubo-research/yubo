@@ -1,10 +1,7 @@
 from types import SimpleNamespace
 
-from rl.core.env_conf import (
-    build_seeded_env_conf,
-    build_seeded_env_conf_from_run,
-    resolve_run_seeds,
-)
+from common.experiment_seeds import resolve_run_seeds
+from rl.core.env_setup import build_env_setup
 
 
 def test_resolve_run_seeds_prefers_explicit_values():
@@ -13,7 +10,7 @@ def test_resolve_run_seeds_prefers_explicit_values():
     assert out.noise_seed_0 == 22
 
 
-def test_build_seeded_env_conf_forwards_parameters():
+def test_build_env_setup_forwards_parameters(monkeypatch):
     captured = {}
 
     def _fake_get_env_conf(*args, **kwargs):
@@ -21,8 +18,10 @@ def test_build_seeded_env_conf_forwards_parameters():
         captured["kwargs"] = kwargs
         return SimpleNamespace(gym_conf=SimpleNamespace(), ensure_spaces=lambda: None)
 
-    out = build_seeded_env_conf(
+    monkeypatch.setattr("rl.core.env_setup.maybe_register_atari_dm_backends", lambda *_args, **_kwargs: None)
+    out = build_env_setup(
         env_tag="pend",
+        seed=0,
         problem_seed=5,
         noise_seed_0=9,
         from_pixels=True,
@@ -39,16 +38,7 @@ def test_build_seeded_env_conf_forwards_parameters():
     assert out.env_conf is not None
 
 
-def test_build_seeded_env_conf_from_run_uses_seed_resolution():
-    out = build_seeded_env_conf_from_run(
-        env_tag="pend",
-        seed=3,
-        problem_seed=None,
-        noise_seed_0=None,
-        from_pixels=False,
-        pixels_only=True,
-        get_env_conf_fn=lambda *_args, **_kwargs: SimpleNamespace(gym_conf=SimpleNamespace(), ensure_spaces=lambda: None),
-    )
+def test_resolve_run_seeds_from_seed_is_int():
+    out = resolve_run_seeds(seed=3, problem_seed=None, noise_seed_0=None)
     assert isinstance(out.problem_seed, int)
     assert isinstance(out.noise_seed_0, int)
-    assert out.env_conf is not None

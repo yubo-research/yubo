@@ -9,7 +9,6 @@ from problems.environment_spec import (
     parse_tag_options,
 )
 
-
 if TYPE_CHECKING:
     from policies.registry import PolicyPreset
 

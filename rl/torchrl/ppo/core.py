@@ -6,17 +6,13 @@ import time
 
 import torch
 
-import rl.registry as registry
+from common import experiment_seeds
 from common.seed_all import seed_all
-from rl.core import env_conf as core_env_conf
-from rl.core import env_contract as torchrl_env_contract
-from rl.core import runtime as torchrl_common
-from rl.core import torchrl_runtime as torchrl_runtime
+from rl import registry
+from rl.core import env_contract, runtime
 from rl.eval_noise import normalize_eval_noise_mode
 
-from . import models as op_models
-from .actor_eval import capture_actor_snapshot as _capture_actor_state
-from .actor_eval import restore_actor_snapshot as _restore_actor_state
+from . import actor_eval, models
 from .checkpoint_io import save_final_checkpoint
 from .config import _PPO_RUNTIME_CAPABILITIES, PPOConfig, TrainResult
 from .core_build import _build_collector, build_modules, build_training
@@ -29,11 +25,12 @@ from .core_train import (
 )
 from .core_types import _TanhNormal, _TrainState
 
-
-_ActorNet = op_models.ActorNet
-_CriticNet = op_models.CriticNet
-_DiscreteActorNet = op_models.DiscreteActorNet
-_prepare_obs_for_backbone = op_models.prepare_obs_for_backbone
+_ActorNet = models.ActorNet
+_CriticNet = models.CriticNet
+_DiscreteActorNet = models.DiscreteActorNet
+_capture_actor_state = actor_eval.capture_actor_snapshot
+_prepare_obs_for_backbone = models.prepare_obs_for_backbone
+_restore_actor_state = actor_eval.restore_actor_snapshot
 
 __all__ = [
     "PPOConfig",
@@ -53,7 +50,7 @@ __all__ = [
     "build_training",
     "register",
     "torch",
-    "torchrl_common",
+    "runtime",
     "train_ppo",
 ]
 
@@ -72,21 +69,21 @@ def _log_ppo_config(config, env, training, runtime, from_pixels, backbone_info):
 def train_ppo(config: PPOConfig) -> TrainResult:
     if config.eval_noise_mode is not None:
         normalize_eval_noise_mode(config.eval_noise_mode)
-    resolved = core_env_conf.resolve_run_seeds(
+    resolved = experiment_seeds.resolve_run_seeds(
         seed=int(config.seed),
         problem_seed=config.problem_seed,
         noise_seed_0=config.noise_seed_0,
     )
     config.problem_seed = int(resolved.problem_seed)
     config.noise_seed_0 = int(resolved.noise_seed_0)
-    seed_all(core_env_conf.global_seed_for_run(int(resolved.problem_seed)))
+    seed_all(experiment_seeds.global_seed_for_run(int(resolved.problem_seed)))
     env = build_env_setup(config)
     runtime = config.resolve_runtime(capabilities=_PPO_RUNTIME_CAPABILITIES)
     modules = build_modules(config, env, device=runtime.device)
     training = build_training(config, env, modules, runtime=runtime)
     state = _resume_if_requested(config, modules, training, device=runtime.device)
     from_pixels = env.io_contract.observation.mode == "pixels"
-    backbone_resolved = torchrl_env_contract.resolve_backbone_name(config.backbone_name, env.io_contract.observation)
+    backbone_resolved = env_contract.resolve_backbone_name(config.backbone_name, env.io_contract.observation)
     is_cnn = backbone_resolved in {"nature_cnn", "nature_cnn_atari"}
     backbone_info = f" backbone={backbone_resolved}"
     if not is_cnn:
@@ -110,9 +107,9 @@ def train_ppo(config: PPOConfig) -> TrainResult:
         runtime=runtime,
         remaining_iterations=remaining_iterations,
     )
-    from rl import logger as rl_logger
+    from rl import logger
 
-    rl_logger.log_run_header("ppo", config, env, training, runtime)
+    logger.log_run_header("ppo", config, env, training, runtime)
     train_start = time.time()
     try:
         _run_training_loop(
@@ -127,7 +124,7 @@ def train_ppo(config: PPOConfig) -> TrainResult:
     finally:
         collector.shutdown()
     total_time = time.time() - train_start
-    rl_logger.log_run_footer(state.best_return, training.num_iterations, total_time, algo_name="ppo")
+    logger.log_run_footer(state.best_return, training.num_iterations, total_time, algo_name="ppo")
     save_final_checkpoint(config=config, training_setup=training, modules=modules, train_state=state)
     video.render_policy_videos_rl(config, env, modules, training, state, ctx, device=runtime.device)
     return TrainResult(

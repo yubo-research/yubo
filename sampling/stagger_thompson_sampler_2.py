@@ -4,7 +4,6 @@ from botorch.utils.sampling import draw_sobol_normal_samples
 from sampling.ray_boundary import ray_boundary
 from sampling.stagger_thompson_sampler import _init_stagger_sampler_layout
 
-
 # Maybe perturbing toward a target is better than perturbing in a random direction
 #  b/c targets can pull you toward any spot in the space, whereas a random
 #  direction can get you stuck in a corner.

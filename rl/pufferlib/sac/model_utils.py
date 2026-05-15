@@ -15,31 +15,30 @@ from rl.core.sac_update import (
     SACUpdateOptimizers,
     sac_update_step,
 )
-from rl.pufferlib.offpolicy import model_utils as offpolicy_model_utils
+from rl.pufferlib.offpolicy import model_utils
 
 from .config import SACConfig
 
-
-ActorNet = offpolicy_model_utils.ActorNet
-QNet = offpolicy_model_utils.QNet
-QNetPixel = offpolicy_model_utils.QNetPixel
-capture_actor_state = offpolicy_model_utils.capture_actor_state
-restore_actor_state = offpolicy_model_utils.restore_actor_state
-use_actor_state = offpolicy_model_utils.use_actor_state
+ActorNet = model_utils.ActorNet
+QNet = model_utils.QNet
+QNetPixel = model_utils.QNetPixel
+capture_actor_state = model_utils.capture_actor_state
+restore_actor_state = model_utils.restore_actor_state
+use_actor_state = model_utils.use_actor_state
 
 
 @dataclasses.dataclass
-class SACModules(offpolicy_model_utils.OffPolicyModules):
+class SACModules(model_utils.OffPolicyModules):
     log_alpha: nn.Parameter
 
 
 @dataclasses.dataclass
-class SACOptimizers(offpolicy_model_utils.OffPolicyOptimizers):
+class SACOptimizers(model_utils.OffPolicyOptimizers):
     alpha_optimizer: optim.Optimizer
 
 
 def build_modules(config: SACConfig, env: Any, obs_spec: Any, *, device: torch.device) -> SACModules:
-    shared = offpolicy_model_utils.build_modules(config, env, obs_spec, device=device)
+    shared = model_utils.build_modules(config, env, obs_spec, device=device)
     log_alpha = nn.Parameter(
         torch.tensor(
             np.log(float(max(config.alpha_init, 1e-8))),
@@ -51,7 +50,7 @@ def build_modules(config: SACConfig, env: Any, obs_spec: Any, *, device: torch.d
 
 
 def build_optimizers(config: SACConfig, modules: SACModules) -> SACOptimizers:
-    shared = offpolicy_model_utils.build_optimizers(config, modules)
+    shared = model_utils.build_optimizers(config, modules)
     return SACOptimizers(
         **shared.__dict__,
         alpha_optimizer=optim.AdamW([modules.log_alpha], lr=float(config.learning_rate_alpha), weight_decay=0.0),

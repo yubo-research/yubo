@@ -10,7 +10,6 @@ from ops.uhd_config import UHDConfig
 from problems import pre_obj_vector_helpers as vector_helpers
 from problems.nanoegg_subspace import _NanoEggSubspaceCodec
 
-
 _DEFAULT_TOKENS_PER_EVAL = 100
 _DEFAULT_SYNTHETIC_BYTES = 4096
 _FIXED_POINT = 4

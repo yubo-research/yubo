@@ -16,7 +16,6 @@ import numpy as np
 from enn.turbo.config.turbo_tr_config import TurboTRConfig
 from enn.turbo.turbo_trust_region import TurboTrustRegion
 
-
 DEFAULT_DIMS = (10_000, 500_000, 10_000_000, 1_000_000_000)
 DEFAULT_QS = (1, 16, 256)
 

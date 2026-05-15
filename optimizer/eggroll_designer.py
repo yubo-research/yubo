@@ -10,7 +10,8 @@ import optimizer.eggroll_designer_nanoegg as nanoegg_helpers
 from optimizer.designer_errors import NoSuchDesignerError
 from optimizer.eggroll_designer_config import _EggRollDesignerConfig
 from optimizer.eggroll_designer_types import _EggRollStack, _NoiserBundle, _SeedState
-from optimizer.eggroll_runtime import as_bool as _runtime_as_bool
+from optimizer.eggroll_options import eggroll_bool as _as_bool
+from optimizer.eggroll_options import unit_decay as _as_unit_decay
 from optimizer.optimizer_types import IterateResult
 
 
@@ -33,17 +34,6 @@ def _require_stack():
         simple_es_tree_key=simple_es_tree_key,
         all_noisers=all_noisers,
     )
-
-
-def _as_bool(value: Any, *, name: str) -> bool:
-    return _runtime_as_bool(value, name=name, error_cls=NoSuchDesignerError, option_label="EggRoll option")
-
-
-def _as_unit_decay(value: Any, *, name: str) -> float:
-    parsed = float(value)
-    if parsed <= 0.0 or parsed > 1.0:
-        raise NoSuchDesignerError(f"EggRoll option '{name}' must be in the interval (0, 1].")
-    return parsed
 
 
 def _designer_config(options: dict[str, Any]) -> _EggRollDesignerConfig:
@@ -150,6 +140,11 @@ class EggRollDesigner:
         cfg = _designer_config(options)
         if bool(getattr(policy, "is_nanoegg_pretrain_policy", False)):
             self._init_nanoegg(policy, cfg)
+            return
+        if _should_use_external_scoring(env_conf):
+            from optimizer.eggroll_external import init_external
+
+            init_external(self, policy, env_conf, cfg)
             return
         self._init_jax(policy, env_conf, cfg)
 
@@ -325,6 +320,10 @@ class EggRollDesigner:
         return nanoegg_helpers.iterate_nanoegg(self, _data, num_arms, telemetry=telemetry)
 
     def iterate(self, _data, num_arms: int, *, telemetry=None) -> IterateResult:
+        if bool(getattr(self, "_is_external", False)):
+            from optimizer.eggroll_external import iterate_external
+
+            return iterate_external(self, _data, num_arms, telemetry=telemetry)
         if bool(getattr(self, "_is_nanoegg", False)):
             return self._iterate_nanoegg(_data, num_arms, telemetry=telemetry)
 
@@ -334,3 +333,11 @@ class EggRollDesigner:
         objective = getattr(self, "_objective", None)
         if objective is not None and hasattr(objective, "close"):
             objective.close()
+
+
+def _should_use_external_scoring(env_conf) -> bool:
+    if env_conf is None:
+        return False
+    from problems.isaaclab_env_adapters import is_isaaclab_env_tag
+
+    return is_isaaclab_env_tag(str(getattr(env_conf, "env_name", "")))

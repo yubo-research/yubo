@@ -25,7 +25,6 @@ from problems.isaaclab_env_adapters import (
 from problems.linear_policy import LinearPolicy
 from problems.pure_function_policy import PureFunctionPolicy
 
-
 __all__ = [
     "EnvConf",
     "GymConf",

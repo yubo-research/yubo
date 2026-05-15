@@ -12,8 +12,14 @@ from experiments.experiment_sampler_types import RunConfig, _load_attr, _SampleR
 
 
 @contextmanager
-def _temporary_default_device(runtime_device: str):
+def _temporary_default_device(runtime_device: str, *, env_name: str | None = None):
     torch = shim.torch_module()
+    if env_name is not None:
+        from problems.isaaclab_env_adapters import is_isaaclab_env_tag
+
+        if is_isaaclab_env_tag(str(env_name)):
+            yield
+            return
     if str(runtime_device).strip().lower() != "cuda" or not torch.cuda.is_available():
         yield
         return
@@ -141,7 +147,7 @@ def sample_1(run_config: RunConfig):
 
     shim.seed_all(global_seed_for_run(env_runtime.problem_seed))
 
-    with _temporary_default_device(getattr(rc, "runtime_device", "auto")):
+    with _temporary_default_device(getattr(rc, "runtime_device", "auto"), env_name=getattr(env_runtime, "env_name", None)):
         policy = build_policy()
 
         collector_log = BOConsoleCollector() if getattr(rc, "bo_console", True) else Collector()

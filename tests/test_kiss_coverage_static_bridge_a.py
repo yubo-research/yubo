@@ -405,20 +405,21 @@ def test_kiss_bridge_rl_core_actor_state_extras():
     assert cp["iteration"] == 1
 
 
-def test_kiss_bridge_rl_core_env_conf_dataclasses():
-    from rl.core.env_conf import ResolvedSeeds, SeededEnvConf
+def test_kiss_bridge_rl_core_seed_and_env_setup_dataclasses():
+    from common.experiment_seeds import ResolvedSeeds
+    from rl.core.env_setup import EnvSetup
 
     r = ResolvedSeeds(problem_seed=1, noise_seed_0=2)
     assert r.problem_seed == 1
-    s = SeededEnvConf(env_conf=object(), problem_seed=1, noise_seed_0=2)
+    s = EnvSetup(env_conf=object(), problem_seed=1, noise_seed_0=2)
     assert s.env_conf is not None
 
 
 def test_kiss_bridge_rl_core_env_setup_dataclass():
-    from rl.core.env_setup import ContinuousGymEnvSetup
+    from rl.core.env_setup import EnvSetup
 
     z = np.zeros(1, dtype=np.float32)
-    o = ContinuousGymEnvSetup(
+    o = EnvSetup(
         env_conf=object(),
         problem_seed=0,
         noise_seed_0=0,

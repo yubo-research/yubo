@@ -1,10 +1,15 @@
 from __future__ import annotations
 
+import io
+import sys
+from contextlib import redirect_stderr, redirect_stdout
 from typing import Any
 
 import click
 
 from common.im import im
+from llm.console_observer import SplitConsoleObserver
+from llm.line_tee import LineRoutingTee, MultiStreamTee
 
 
 def run_parsed_uhd_local(
@@ -22,6 +27,88 @@ def run_parsed_uhd_local(
             batch_cfg["total_timesteps"] = total_timesteps
         im("ops.uhd_batch")._batch_local(batch_cfg, parsed.num_reps, results_dir, workers)
         return
+    if getattr(parsed, "num_reps", 1) == 1:
+        _run_and_save_single_rep(parsed, cfg=cfg, results_dir=results_dir)
+        return
+    _run_parsed_uhd_direct(parsed)
+
+
+def _run_and_save_single_rep(parsed, *, cfg: dict[str, Any] | None, results_dir: str) -> None:
+    batch_core = im("ops.uhd_batch_core")
+
+    batch_cfg = dict(cfg or {})
+    batch_cfg["num_rounds"] = parsed.num_rounds
+    total_timesteps = getattr(parsed, "total_timesteps", None)
+    if total_timesteps is not None:
+        batch_cfg["total_timesteps"] = total_timesteps
+
+    exp_dir = batch_core._experiment_dir(results_dir, batch_cfg)
+    batch_core._write_config(exp_dir, batch_cfg)
+    base_seed = int(batch_cfg.get("problem_seed", 18))
+    jobs = list(batch_core._gen_missing_reps(exp_dir, 1, base_seed))
+    if not jobs:
+        click.echo(f"All 1 reps done in {exp_dir}")
+        return
+
+    _, problem_seed, noise_seed_0, tp = jobs[0]
+
+    buf = io.StringIO()
+    if sys.stdout.isatty():
+        observer = SplitConsoleObserver(stream=sys.stdout, log_dir=exp_dir)
+        tee = _run_capture_stream(sys.stdout, buf, observer.route_line)
+        with observer, redirect_stdout(tee), redirect_stderr(sys.stderr):
+            _run_parsed_uhd_direct(parsed)
+    else:
+        tee = MultiStreamTee(sys.stdout, buf)
+        with redirect_stdout(tee), redirect_stderr(sys.stderr):
+            _run_parsed_uhd_direct(parsed)
+
+    records = im("ops.uhd_batch")._parse_eval_lines(buf.getvalue())
+    if not records:
+        if not buf.getvalue().strip():
+            click.echo(f"Single-rep run produced no EVAL records; no trace saved in {exp_dir}")
+            return
+        raise click.ClickException("Single-rep run completed but produced no EVAL records.")
+    batch_core._write_trace(tp, records)
+    click.echo(f"Single-rep run saved to {exp_dir}")
+
+
+def _run_capture_stream(proxy_stream, raw_stream, route_line):
+    class _Capture:
+        def __init__(self):
+            self._router = LineRoutingTee(proxy_stream, route_line, echo=True)
+
+        def write(self, data):
+            raw_stream.write(data)
+            raw_stream.flush()
+            self._router.write(data)
+
+        def flush(self):
+            self._router.flush()
+            raw_stream.flush()
+
+        def fileno(self):
+            return proxy_stream.fileno()
+
+        def isatty(self):
+            return proxy_stream.isatty()
+
+        def writable(self):
+            method = getattr(proxy_stream, "writable", None)
+            return bool(method()) if method is not None else True
+
+        @property
+        def encoding(self):
+            return getattr(proxy_stream, "encoding", None)
+
+        @property
+        def errors(self):
+            return getattr(proxy_stream, "errors", None)
+
+    return _Capture()
+
+
+def _run_parsed_uhd_direct(parsed) -> None:
     _register_runtime_backends(parsed.env_tag)
     supports_uhd_vector_objective = im("problems.uhd_obj").supports_uhd_vector_objective
 

@@ -48,7 +48,6 @@ from ops.uhd_batch_modal import (
     uhd_batch_worker,
 )
 
-
 __all__ = [
     "_APP_NAME",
     "_DEFAULT_RESULTS",

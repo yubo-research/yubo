@@ -12,7 +12,11 @@ def scale_action_to_space(action: np.ndarray | int, action_space: Any) -> np.nda
             return int(action) if isinstance(action, (int, float, np.integer)) else int(np.asarray(action).item())
         return action
     action = np.asarray(action, dtype=np.float64)
-    return action_space.low + (action_space.high - action_space.low) * (1 + action) / 2
+    low = np.asarray(action_space.low, dtype=np.float64)
+    high = np.asarray(action_space.high, dtype=np.float64)
+    if not np.all(np.isfinite(low)) or not np.all(np.isfinite(high)):
+        return np.clip(action, -1.0, 1.0).astype(np.float32)
+    return low + (high - low) * (1 + action) / 2
 
 
 def resolve_max_episode_steps(env_conf: Any) -> int:

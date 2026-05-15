@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from rl.core.env_conf import resolve_run_seeds
+from common.experiment_seeds import resolve_run_seeds
 
 
 def resolve_eval_seeds(config) -> tuple[int, int]:

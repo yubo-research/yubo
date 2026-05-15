@@ -3,11 +3,11 @@ from __future__ import annotations
 
 import os
 import sys
-import tomllib
 from pathlib import Path
 from typing import Any
 
 import click
+import tomllib
 
 from experiments.external_run_utils import (
     abs_path,
@@ -23,7 +23,7 @@ from experiments.external_run_utils import (
     string_env_vars,
     write_metadata,
 )
-
+from llm.console_observer import SplitConsoleObserver
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
@@ -384,7 +384,13 @@ def local(config_toml: str, overrides: tuple[str, ...], dry_run: bool) -> None:
     if not repo_dir.exists():
         raise click.ClickException(f"HyperscaleES repo not found: {repo_dir}")
 
-    return_code = run_with_log(cmd, cwd=repo_dir, log_path=log_path, env=env)
+    observer = SplitConsoleObserver(log_dir=exp_dir)
+    line_router = observer.route_line if sys.stdout.isatty() else None
+    if line_router is not None:
+        with observer:
+            return_code = run_with_log(cmd, cwd=repo_dir, log_path=log_path, env=env, line_router=line_router)
+    else:
+        return_code = run_with_log(cmd, cwd=repo_dir, log_path=log_path, env=env)
     if return_code != 0:
         raise click.ClickException(f"HyperscaleES command failed with exit code {return_code}. Log: {log_path}")
     print(f"LOG: {log_path}")

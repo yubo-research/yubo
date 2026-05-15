@@ -11,7 +11,6 @@ from . import plotting_2_pareto as _pareto
 from . import plotting_2_results as _results
 from . import plotting_2_rl as _rl
 
-
 best_so_far = _trace.best_so_far
 cum_dt_prop_from_dt_prop_traces = _trace.cum_dt_prop_from_dt_prop_traces
 cum_time_from_dt = _trace.cum_time_from_dt

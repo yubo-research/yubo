@@ -55,7 +55,6 @@ from problems.eggroll_env_surrogate import (
     SurrogateObjectiveEggRollAdapter as SurrogateObjectiveEggRollAdapter,
 )
 
-
 __all__ = [
     "BraxEggRollAdapter",
     "CraftaxEggRollAdapter",

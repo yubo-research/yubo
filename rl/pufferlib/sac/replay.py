@@ -5,7 +5,6 @@ from rl.pufferlib.offpolicy.replay import (
     resolve_replay_backend,
 )
 
-
 __all__ = [
     "ReplayBuffer",
     "TorchRLReplayBuffer",

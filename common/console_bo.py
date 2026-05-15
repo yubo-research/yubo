@@ -6,7 +6,6 @@ from typing import Any
 
 from common.console_core import _dim, _green
 
-
 # ---- BO (opt) metrics ----
 
 TURBO_METRICS = [

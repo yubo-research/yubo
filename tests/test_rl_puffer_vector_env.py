@@ -50,6 +50,7 @@ def test_make_vector_env_gym_path_uses_empty_env_kwargs():
     fake_atari = _FakeAtari()
     cfg = SimpleNamespace(
         env_tag="Pendulum-v1",
+        env_conf=SimpleNamespace(env_tag="Pendulum-v1"),
         framestack=4,
         vector_backend="serial",
         vector_num_workers=None,
@@ -81,6 +82,7 @@ def test_make_vector_env_dm_control_path_uses_dm_creator(monkeypatch):
     fake_atari = _FakeAtari()
     cfg = SimpleNamespace(
         env_tag="dm_control/quadruped-run-v0",
+        env_conf=SimpleNamespace(env_tag="dm_control/quadruped-run-v0"),
         from_pixels=False,
         pixels_only=True,
         framestack=1,
@@ -112,6 +114,7 @@ def test_make_vector_env_dm_control_path_uses_dm_creator(monkeypatch):
     assert call["env_kwargs"] == {}
     assert callable(call["env_creator"])
     assert call["env_creator"]() == "dm-env"
-    assert captured["env_name"] == "dm_control/quadruped-run-v0"
+    assert captured["domain"] == "quadruped"
+    assert captured["task"] == "run"
     assert captured["from_pixels"] is False
     assert captured["pixels_only"] is True

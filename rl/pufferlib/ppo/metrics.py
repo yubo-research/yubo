@@ -30,9 +30,9 @@ def _as_optional_finite(value: float | None) -> float | None:
 
 
 def _append_metrics_line(metrics_path: Path, payload: dict) -> None:
-    from rl import logger as rl_logger
+    from rl import logger
 
-    rl_logger.append_metrics(metrics_path, payload)
+    logger.append_metrics(metrics_path, payload)
 
 
 def _metric_payload(
@@ -66,7 +66,7 @@ def _metric_payload(
 def _log_iteration(config, metric: dict) -> None:
     if not is_due(int(metric["iteration"]), int(config.log_interval)):
         return
-    from rl import logger as rl_logger
+    from rl import logger
 
     iteration = int(metric["iteration"])
     num_iterations = int(metric["num_iterations"])
@@ -74,9 +74,9 @@ def _log_iteration(config, metric: dict) -> None:
     elapsed = float(metric.get("time_seconds", 0.0))
     eval_return = metric.get("eval_return")
     if eval_return is None:
-        rl_logger.log_progress_iteration(iteration, num_iterations, frames_per_batch, elapsed, algo_name="ppo")
+        logger.log_progress_iteration(iteration, num_iterations, frames_per_batch, elapsed, algo_name="ppo")
         return
-    rl_logger.log_eval_iteration(
+    logger.log_eval_iteration(
         iteration,
         num_iterations,
         frames_per_batch,

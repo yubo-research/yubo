@@ -8,7 +8,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from rl import logger as rl_logger
+from rl import logger
 from rl.core.progress import is_due
 
 
@@ -213,7 +213,7 @@ def evaluate_if_due(
         started_at=float(start_time),
         now=now,
     )
-    rl_logger.append_metrics(training_setup.metrics_path, record)
+    logger.append_metrics(training_setup.metrics_path, record)
 
 
 def log_if_due(
@@ -241,7 +241,7 @@ def log_if_due(
         loss_critic=float(latest_losses["loss_critic"]),
         loss_alpha=float(latest_losses["loss_alpha"]),
     )
-    rl_logger.log_eval_iteration(**kwargs)
+    logger.log_eval_iteration(**kwargs)
 
 
 def checkpoint_if_due(

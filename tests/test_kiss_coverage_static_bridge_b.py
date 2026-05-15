@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 import importlib.util
-import sys
-import types
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
@@ -35,43 +33,16 @@ def test_kiss_bridge_rl_torchrl_sac_package():
 
 def test_kiss_bridge_rl_torchrl_dm_control_collect(monkeypatch):
     pytest.importorskip("torchrl")
-    from rl.torchrl import dm_control_collect as dcc
+    import rl.torchrl.collect_utils as cu
 
-    ObsSpec = type("ObsSpec", (), {"keys": lambda self, *_a, **_k: ["observation"]})
-    DMControlWrapper = type(
-        "DMControlWrapper",
-        (),
-        {"__init__": lambda self, *a, **k: setattr(self, "observation_spec", ObsSpec())},
+    monkeypatch.setattr(cu, "_gym_wrapper_without_isaaclab_probe", lambda base: SimpleNamespace(base=base))
+    monkeypatch.setattr(cu.tr_envs, "TransformedEnv", lambda wrapped, *a, **k: SimpleNamespace(wrapped=wrapped, base=wrapped.base))
+
+    fake_env_conf = SimpleNamespace(
+        make_gym_env=lambda seed=0: SimpleNamespace(reset=lambda seed=None: (None, {}), is_discrete=False),
+        problem_seed=1,
     )
-    TransformedEnv = type("TransformedEnv", (), {"__init__": lambda self, *a, **k: None})
-    TR = type(
-        "TR",
-        (),
-        {"DMControlWrapper": DMControlWrapper, "TransformedEnv": TransformedEnv},
-    )
-    CatTensors = type("CatTensors", (), {"__init__": lambda self, **kwargs: None})
-    Compose = type("Compose", (), {"__init__": lambda self, *a, **k: None})
-    DoubleToFloat = type("DoubleToFloat", (), {})
-    TT = type(
-        "TT",
-        (),
-        {"CatTensors": CatTensors, "Compose": Compose, "DoubleToFloat": DoubleToFloat},
-    )
-    fake_suite = types.ModuleType("dm_control.suite")
-    fake_suite.load = lambda *a, **k: object()
-    fake_dm_control = types.ModuleType("dm_control")
-    fake_dm_control.suite = fake_suite
-    monkeypatch.setitem(sys.modules, "dm_control", fake_dm_control)
-    monkeypatch.setitem(sys.modules, "dm_control.suite", fake_suite)
-    out = dcc.make_dm_control_collect_env(
-        env_name="dm_control/cheetah-run-v0",
-        seed=0,
-        from_pixels=False,
-        pixels_only=True,
-        tr_envs_module=TR,
-        tr_transforms_module=TT,
-        pixels_transform_builder=lambda tt: TT.Compose(),
-    )
+    out = cu.make_collect_env(fake_env_conf, env_index=0)
     assert out is not None
 
 
@@ -122,7 +93,7 @@ def test_kiss_bridge_pufferlib_offpolicy_utils(monkeypatch):
     cfg = SimpleNamespace(backbone_name="mlp", from_pixels=False, framestack=1)
     puf_env.resolve_backbone_name(cfg, obs_sp)
     monkeypatch.setattr(puf_env, "import_pufferlib_modules", lambda: (object(), object(), object()))
-    monkeypatch.setattr(puf_env, "_make_vector_env_common", lambda *a, **k: object())
+    monkeypatch.setattr(puf_env, "_make_vector_env_shared", lambda *a, **k: object())
     puf_env.make_vector_env(
         SimpleNamespace(
             env_tag="pend",
@@ -132,6 +103,7 @@ def test_kiss_bridge_pufferlib_offpolicy_utils(monkeypatch):
             noise_seed_0=None,
             from_pixels=False,
             pixels_only=True,
+            env_conf=SimpleNamespace(),
         )
     )
 

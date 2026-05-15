@@ -20,6 +20,7 @@ def patch_puffer_sac_engine_for_kiss(monkeypatch, tmp_path):
             SimpleNamespace(
                 problem_seed=1,
                 noise_seed_0=2,
+                obs_dim=3,
                 act_dim=2,
                 action_low=np.array([-1.0, -1.0]),
                 action_high=np.array([1.0, 1.0]),
@@ -84,46 +85,59 @@ def patch_puffer_sac_engine_for_kiss(monkeypatch, tmp_path):
     monkeypatch.setattr("rl.pufferlib.sac.engine._log_header", lambda *args, **kwargs: None)
     monkeypatch.setattr("rl.pufferlib.sac.engine._train_loop", lambda *args, **kwargs: None)
     monkeypatch.setattr("rl.pufferlib.sac.engine.render_videos_if_enabled", lambda *args, **kwargs: None)
-    monkeypatch.setattr(
-        "importlib.import_module",
-        lambda name: SimpleNamespace(
-            normalize_eval_noise_mode=lambda mode: None,
-            log_run_footer=lambda **kwargs: None,
-        ),
-    )
 
 
 def patch_torchrl_ppo_core_for_kiss(monkeypatch):
-    monkeypatch.setattr(
-        "rl.torchrl.ppo.core.core_env_conf.build_seeded_env_conf_from_run",
-        lambda **kwargs: SimpleNamespace(
-            env_conf=SimpleNamespace(ensure_spaces=lambda: None),
+    from rl.core.env_contract import ActionContract, ObservationContract
+
+    mock_env_setup = SimpleNamespace(
+        env_conf=SimpleNamespace(
+            ensure_spaces=lambda: None,
+            gym_conf=None,
             problem_seed=1,
-            noise_seed_0=2,
-        ),
-    )
-    monkeypatch.setattr(
-        "rl.torchrl.ppo.core.torchrl_env_contract.resolve_env_io_contract",
-        lambda env_conf, default_image_size=84: SimpleNamespace(
-            observation=SimpleNamespace(mode="vector", vector_dim=3),
-            action=SimpleNamespace(
-                kind="continuous",
-                dim=2,
-                low=np.array([-1.0, -1.0]),
-                high=np.array([1.0, 1.0]),
+            make_gym_env=lambda seed=0, **k: SimpleNamespace(
+                reset=lambda seed=None: (None, {}),
+                observation_space=SimpleNamespace(shape=(3,), dtype=np.float32),
+                action_space=SimpleNamespace(shape=(2,), dtype=np.float32),
             ),
         ),
+        problem_seed=1,
+        noise_seed_0=2,
+        obs_dim=3,
+        act_dim=2,
+        action_low=np.array([-1.0, -1.0]),
+        action_high=np.array([1.0, 1.0]),
+        obs_lb=np.array([-1.0, -1.0, -1.0]),
+        obs_width=np.array([2.0, 2.0, 2.0]),
+        is_discrete=False,
+        io_contract=SimpleNamespace(
+            observation=ObservationContract(mode="vector", raw_shape=(3,), vector_dim=3),
+            action=ActionContract(kind="continuous", dim=2, low=np.array([-1.0, -1.0]), high=np.array([1.0, 1.0])),
+        ),
     )
+    monkeypatch.setattr("rl.torchrl.ppo.core_env_setup.build_env_setup", lambda **kwargs: mock_env_setup)
+    monkeypatch.setattr("rl.torchrl.ppo.core.build_env_setup", lambda **kwargs: mock_env_setup)
+    monkeypatch.setattr("rl.torchrl.ppo.core_build.env_contract.resolve_env_io_contract", lambda env_conf, **k: mock_env_setup.io_contract)
+    monkeypatch.setattr("rl.torchrl.ppo.core_build.ObsScaler", lambda *a, **k: torch.nn.Identity())
+
+    # Mock collect_env to avoid real construction
     monkeypatch.setattr(
-        "rl.torchrl.ppo.core.torchrl_common.obs_scale_from_env",
-        lambda env_conf: (None, None),
+        "rl.torchrl.ppo.core_build.tr_envs.SerialEnv",
+        lambda *a, **k: SimpleNamespace(
+            set_seed=lambda *a: None,
+            num_envs=1,
+            specs=SimpleNamespace(
+                observation_spec=SimpleNamespace(get=lambda k: SimpleNamespace(shape=(3,))),
+                action_spec=SimpleNamespace(shape=(2,), low=torch.ones(2), high=torch.ones(2)),
+            ),
+        ),
     )
 
 
 def patch_torchrl_sac_setup_for_kiss(monkeypatch):
     monkeypatch.setattr(
-        "rl.torchrl.sac.setup.build_continuous_gym_env_setup",
-        lambda **kwargs: SimpleNamespace(
+        "rl.torchrl.sac.sac_setup_build.build_env_setup",
+        lambda config, **kwargs: SimpleNamespace(
             env_conf=SimpleNamespace(
                 from_pixels=False,
                 make=lambda: SimpleNamespace(
@@ -131,17 +145,15 @@ def patch_torchrl_sac_setup_for_kiss(monkeypatch):
                     action_space=SimpleNamespace(seed=lambda seed: None),
                 ),
                 state_space=SimpleNamespace(shape=(3,)),
+                gym_conf=None,
             ),
             problem_seed=1,
             noise_seed_0=2,
+            obs_dim=3,
             act_dim=2,
             action_low=np.array([-1.0, -1.0], dtype=np.float32),
             action_high=np.array([1.0, 1.0], dtype=np.float32),
-            obs_lb=None,
-            obs_width=None,
+            obs_lb=np.array([-1.0, -1.0, -1.0], dtype=np.float32),
+            obs_width=np.array([2.0, 2.0, 2.0], dtype=np.float32),
         ),
-    )
-    monkeypatch.setattr(
-        "rl.torchrl.sac.setup.sac_deps.torchrl_common.obs_scale_from_env",
-        lambda env_conf: (None, None),
     )

@@ -5,7 +5,6 @@ from rl.pufferlib.offpolicy.pixel_utils import (
     ensure_pixel_obs_format,
 )
 
-
 __all__ = [
     "_to_float_image",
     "_canonicalize_pixel_layout",

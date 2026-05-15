@@ -8,20 +8,12 @@ import numpy as np
 import torch
 import torch.optim as optim
 
-import rl.checkpointing as rl_checkpointing
-from rl.core import episode_rollout
-from rl.core.ppo_eval import (
-    evaluate_heldout_with_best_actor as _eval_heldout_with_best_actor,
-)
-from rl.core.ppo_eval import (
-    update_best_actor_if_improved as _update_best_actor_if_improved,
-)
-from rl.core.ppo_metrics import build_eval_record as _build_eval_record
+from rl import checkpointing
+from rl.core import episode_rollout, ppo_eval, ppo_metrics
 from rl.core.profiler import run_with_profiler
 from rl.eval_noise import build_eval_plan
 
-from . import actor_eval as torchrl_actor_eval
-from .actor_eval import restore_actor_snapshot as _restore_actor_state
+from . import actor_eval
 from .checkpoint_io import save_periodic_checkpoint
 from .config import PPOConfig
 from .core_env_setup import _build_eval_env_conf
@@ -40,14 +32,14 @@ def _resume_if_requested(
     if not config.resume_from:
         return state
     resume_path = Path(config.resume_from)
-    loaded = rl_checkpointing.load_checkpoint(resume_path, device=device)
+    loaded = checkpointing.load_checkpoint(resume_path, device=device)
     actor_snapshot: dict[str, Any] = {
         "backbone": loaded["actor_backbone"],
         "head": loaded["actor_head"],
     }
     if "log_std" in loaded:
         actor_snapshot["log_std"] = loaded["log_std"]
-    _restore_actor_state(modules, actor_snapshot, device=device)
+    actor_eval.restore_actor_snapshot(modules, actor_snapshot, device=device)
     modules.critic_backbone.load_state_dict(loaded["critic_backbone"])
     modules.critic_head.load_state_dict(loaded["critic_head"])
     if loaded.get("obs_scaler") is not None:
@@ -123,7 +115,7 @@ def _evaluate_actor(
     obs_contract = _resolve_observation_contract_for_env(config, env)
     from_pixels = obs_contract.mode == "pixels"
     eval_env = _build_eval_env_conf(config, env, from_pixels=from_pixels)
-    eval_policy = torchrl_actor_eval.ActorEvalPolicy(
+    eval_policy = actor_eval.ActorEvalPolicy(
         modules.actor_backbone,
         modules.actor_head,
         modules.obs_scaler,
@@ -152,10 +144,10 @@ def _maybe_eval_and_log(
     do_log = _is_due(int(iteration), int(config.log_interval))
     if not do_eval:
         if do_log:
-            from rl import logger as rl_logger
+            from rl import logger
 
             elapsed = time.time() - start_time
-            rl_logger.log_progress_iteration(
+            logger.log_progress_iteration(
                 iteration,
                 training.num_iterations,
                 training.frames_per_batch,
@@ -171,17 +163,17 @@ def _maybe_eval_and_log(
         eval_noise_mode=config.eval_noise_mode,
     )
     state.last_eval_return = _evaluate_actor(config, env, modules, device=device, eval_seed=plan.eval_seed)
-    state.best_return, state.best_actor_state, _ = _update_best_actor_if_improved(
+    state.best_return, state.best_actor_state, _ = ppo_eval.update_best_actor_if_improved(
         eval_return=float(state.last_eval_return),
         best_return=float(state.best_return),
         best_actor_state=state.best_actor_state,
-        capture_actor_state=lambda: torchrl_actor_eval.capture_actor_snapshot(modules),
+        capture_actor_state=lambda: actor_eval.capture_actor_snapshot(modules),
     )
     state.last_heldout_return = None
     if config.num_denoise_passive is not None and state.best_actor_state is not None:
         obs_contract = _resolve_observation_contract_for_env(config, env)
         from_pixels = obs_contract.mode == "pixels"
-        best_eval_policy = torchrl_actor_eval.ActorEvalPolicy(
+        best_eval_policy = actor_eval.ActorEvalPolicy(
             modules.actor_backbone,
             modules.actor_head,
             modules.obs_scaler,
@@ -189,18 +181,18 @@ def _maybe_eval_and_log(
             obs_contract=obs_contract,
             is_discrete=bool(getattr(env, "is_discrete", False)),
         )
-        state.last_heldout_return = _eval_heldout_with_best_actor(
+        state.last_heldout_return = ppo_eval.evaluate_heldout_with_best_actor(
             best_actor_state=state.best_actor_state,
             num_denoise_passive=config.num_denoise_passive,
             heldout_i_noise=plan.heldout_i_noise,
-            with_actor_state=lambda snapshot: torchrl_actor_eval.use_actor_snapshot(modules, snapshot, device=device),
+            with_actor_state=lambda snapshot: actor_eval.use_actor_snapshot(modules, snapshot, device=device),
             evaluate_for_best=episode_rollout.evaluate_for_best,
             eval_env_conf=_build_eval_env_conf(config, env, from_pixels=from_pixels),
             eval_policy=best_eval_policy,
         )
     elapsed = time.time() - start_time
     global_step = iteration * training.frames_per_batch
-    record = _build_eval_record(
+    record = ppo_metrics.build_eval_record(
         iteration=int(iteration),
         global_step=int(global_step),
         eval_return=float(state.last_eval_return),
@@ -211,13 +203,13 @@ def _maybe_eval_and_log(
         started_at=float(start_time),
         now=float(start_time + elapsed),
     )
-    from rl import logger as rl_logger
+    from rl import logger
 
-    rl_logger.append_metrics(training.metrics_path, record)
+    logger.append_metrics(training.metrics_path, record)
     if do_log:
-        from rl import logger as rl_logger
+        from rl import logger
 
-        rl_logger.log_eval_iteration(
+        logger.log_eval_iteration(
             iteration,
             training.num_iterations,
             training.frames_per_batch,

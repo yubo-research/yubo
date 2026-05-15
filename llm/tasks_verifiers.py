@@ -1,12 +1,14 @@
 from __future__ import annotations
 
-import asyncio
 from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
 
-from llm.tasks_base import score_generations
+from llm.episode_runner import EpisodeRunner
+from llm.episode_verifiers import VerifiersEpisode
+from llm.episodes import Case, RuntimeConfig, signal_log, summarize_signals
+from llm.tasks_base import RolloutTaskMixin, score_generations
 from llm.tasks_verifiers_utils import (
     answer_payload,
     ensure_supported_env,
@@ -16,87 +18,12 @@ from llm.tasks_verifiers_utils import (
     parse_model_answer,
     row_at,
     run_async,
-    text_to_assistant_message,
 )
-
+from llm.verifiers_client import VLLMChatAdapter
 
 _ENV_CACHE: dict[tuple[str, tuple[tuple[str, Any], ...]], Any] = {}
 
-
-class _VLLMRLMClient:
-    """Bridges our vLLM engine to the OpenAI-style client expected by verifiers.v1.RLM."""
-
-    def __init__(
-        self,
-        llm: Any,
-        lora_spec: tuple[str, int, str] | None,
-        sampling_params_kwargs: dict[str, Any],
-        *,
-        tokenizer: Any | None = None,
-        apply_chat_template: bool = False,
-        env: Any = None,
-    ):
-        self.llm = llm
-        self.lora_spec = lora_spec
-        self.sampling_params_kwargs = sampling_params_kwargs
-        self.tokenizer = tokenizer
-        self.apply_chat_template = apply_chat_template
-        self.env = env
-        self.chat = self  # For client.chat.completions.create
-
-    @property
-    def completions(self):
-        return self
-
-    async def create(self, messages: list[dict[str, Any]], **kwargs) -> Any:
-        import uuid
-        from types import SimpleNamespace
-
-        from llm.vllm_actor_config import lora_requests, sampling_params
-
-        # Convert chat messages back to a prompt string
-        if self.apply_chat_template and self.tokenizer is not None:
-            prompt = self.tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
-        else:
-            prompt = ""
-            for m in messages:
-                role = str(m.get("role", "user")).title()
-                content = m.get("content", "")
-                prompt += f"{role}: {content}\n"
-            if not prompt.endswith("Assistant:\n"):
-                prompt += "Assistant:"
-
-        lora_req = lora_requests([self.lora_spec])[0] if self.lora_spec else None
-        sampling_params_obj = sampling_params(self.sampling_params_kwargs)
-
-        # Detect if we are using the AsyncEngine or the synchronous LLM engine
-        is_async_engine = hasattr(self.llm, "add_request")
-
-        final_output = None
-        if is_async_engine:
-            request_id = str(uuid.uuid4())
-            async for request_output in self.llm.generate(prompt, sampling_params_obj, request_id, lora_request=lora_req):
-                final_output = request_output
-        else:
-            # Synchronous vllm.LLM. Note: LLM.generate expects a list of prompts.
-            outputs = self.llm.generate([prompt], sampling_params_obj, lora_request=lora_req, use_tqdm=False)
-            if outputs:
-                final_output = outputs[0]
-
-        if final_output is None or not final_output.outputs:
-            raise RuntimeError("vLLM generation returned no output.")
-
-        # If multiple samples were requested (n > 1), vLLM returns multiple outputs.
-        # Currently, the verifiers RLM expectation is a single trajectory, so we
-        # provide the first completion.
-        best_output = final_output.outputs[0]
-        text = best_output.text
-        # Use helper to parse Markdown code blocks into ToolCalls if present
-        assistant_message = text_to_assistant_message(text, self.env)
-
-        # Return a mock OpenAI response object
-        choice = SimpleNamespace(message=assistant_message)
-        return SimpleNamespace(choices=[choice], usage=SimpleNamespace(total_tokens=0))
+_VLLMRLMClient = VLLMChatAdapter
 
 
 @dataclass(frozen=True)
@@ -113,7 +40,7 @@ class VerifiersTaskConfig:
         return cls(**kwargs)
 
 
-class VerifiersTask:
+class VerifiersTask(RolloutTaskMixin):
     """Adapter from Prime Intellect verifiers environments to the repo LLMTask API.
 
     The live verifiers environment is intentionally not pickled. UHD sends task
@@ -174,41 +101,26 @@ class VerifiersTask:
         answers: list[Any],
         args: Any,
     ) -> tuple[list[float], dict[str, float], list[str]]:
-        from verifiers.v1 import RLM
-
         env = self._get_env()
-        # Initialize the verifiers Reinforcement Learning Model (RLM)
-        client = _VLLMRLMClient(
-            llm,
-            lora_request_specs[0] if lora_request_specs else None,
-            sampling_params_kwargs,
+        episode = VerifiersEpisode(
+            env,
             tokenizer=self.tokenizer,
             apply_chat_template=self.apply_chat_template,
-            env=env,
         )
-        rlm = RLM(env=env, client=client)
-
-        async def _rollout_and_log(idx: int, payload: Any, prompt: str):
-            state = await rlm.rollout(payload)
-            reward = float(state.get("reward", 0.0) or 0.0)
-
-            # Format a log string for the trajectory
-            traj = state.get("trajectory", [])
-            log_parts = [f"PROMPT: {prompt}", f"REWARD: {reward}", "TRAJECTORY:"]
-            for step in traj:
-                role = getattr(step, "role", "unknown")
-                content = getattr(step, "content", "")
-                log_parts.append(f"{role.upper()}: {content}")
-            return reward, "\n".join(log_parts)
-
-        # Parallelize rollouts using asyncio.gather
-        tasks = [_rollout_and_log(i, answers[i], prompts[i]) for i in range(len(prompts))]
-        results = await asyncio.gather(*tasks)
-
-        fitnesses = [r[0] for r in results]
-        logs = [r[1] for r in results]
-
-        return fitnesses, {}, logs
+        cases = [
+            Case(
+                id=f"{self.env_id}:{idx}",
+                prompt=prompts[idx],
+                target=answers[idx],
+                metadata={"lora_spec": None if lora_request_specs is None else lora_request_specs[idx]},
+            )
+            for idx in range(len(prompts))
+        ]
+        runtime = RuntimeConfig(concurrency=max(1, int(getattr(args, "rollout_concurrency", len(cases) or 1))))
+        signals = await EpisodeRunner(runtime).run_batch(episode, cases, llm, dict(sampling_params_kwargs))
+        fitnesses = [float(signal.reward) for signal in signals]
+        logs = [signal_log(case, signal) for case, signal in zip(cases, signals, strict=True)]
+        return fitnesses, summarize_signals(signals), logs
 
     def get_batch(self) -> tuple[list[str], list[Any]]:
         dataset = self._get_dataset()

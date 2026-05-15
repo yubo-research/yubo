@@ -6,7 +6,6 @@ import numpy as np
 
 from optimizer.uhd_enn_regression import fit_enn, predict_enn, sample_objective_noise
 
-
 _VALID_TARGETS = {"mu_minus", "delta", "mu_plus"}
 
 

@@ -5,7 +5,6 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
-
 try:
     import modal
 except ModuleNotFoundError:

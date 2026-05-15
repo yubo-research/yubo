@@ -5,7 +5,6 @@ from __future__ import annotations
 import importlib
 from typing import TYPE_CHECKING
 
-
 if TYPE_CHECKING:
     from optimizer.turbo_enn_designer_impl import TurboENNDesigner
 

@@ -28,7 +28,6 @@ from problems.pre_obj_specs import (
 from problems.pre_obj_stack import _load_hyperscalees_model as _load_hyperscalees_model
 from problems.pre_obj_subspace import _SubspaceParamCodec as _SubspaceParamCodec
 
-
 __all__ = [
     "HyperscaleESLLMVectorObjective",
     "HyperscaleESPretrainSpec",

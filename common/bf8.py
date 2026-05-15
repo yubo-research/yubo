@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import numpy as np
 
-
 _BF8_MANT_BITS = 3
 _BF8_EXP_BITS = 4
 _BF8_EXP_BIAS = (1 << (_BF8_EXP_BITS - 1)) - 1

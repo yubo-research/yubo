@@ -13,7 +13,7 @@ from torch.distributions import Normal
 from rl.backbone import BackboneSpec, HeadSpec, build_backbone, build_mlp_head
 from rl.torchrl.offpolicy.models import QNet, QNetPixel
 
-from .backbone_name import resolve_backbone_name as _resolve_backbone_name_core
+from . import backbone_name
 from .model_qbundle import _QBundle
 from .runtime_utils import ObsScaler
 
@@ -92,7 +92,7 @@ class OffPolicyOptimizers:
 
 
 def _resolve_backbone_name(config: Any, obs_spec: Any) -> str:
-    return _resolve_backbone_name_core(config, obs_spec)
+    return backbone_name.resolve_backbone_name(config, obs_spec)
 
 
 def _build_backbone_specs(config: Any, obs_spec: Any) -> tuple[BackboneSpec, HeadSpec, HeadSpec]:

@@ -10,14 +10,12 @@ import torchrl.collectors as tr_collectors
 import torchrl.envs as tr_envs
 import torchrl.modules as tr_modules
 
-import rl.backbone as backbone
-import rl.checkpointing as rl_checkpointing
-import rl.core.env_contract as torchrl_env_contract
-import rl.core.runtime as torchrl_common
 from analysis.data_io import write_config
-from rl.core import torchrl_runtime as torchrl_runtime
+from rl import backbone, checkpointing
+from rl.core import env_contract, torchrl_runtime
+from rl.core.runtime import ObsScaler, collector_device_kwargs
 
-from . import models as op_models
+from . import models
 from .config import PPOConfig
 from .core_collect_env import _make_collect_env, _make_collect_env_factory
 from .core_types import _EnvSetup, _Modules, _TanhNormal, _TrainingSetup
@@ -26,7 +24,7 @@ from .core_utils import _count_unique_params, _unique_param_list
 
 def build_modules(config: PPOConfig, env: _EnvSetup, *, device: torch.device) -> _Modules:
     obs_contract = env.io_contract.observation
-    backbone_name = torchrl_env_contract.resolve_backbone_name(config.backbone_name, obs_contract)
+    backbone_name = env_contract.resolve_backbone_name(config.backbone_name, obs_contract)
     backbone_spec = backbone.BackboneSpec(
         name=backbone_name,
         hidden_sizes=tuple(config.backbone_hidden_sizes),
@@ -52,12 +50,12 @@ def build_modules(config: PPOConfig, env: _EnvSetup, *, device: torch.device) ->
         critic_backbone, critic_feat_dim = backbone.build_backbone(backbone_spec, env.obs_dim)
     actor_head = backbone.build_mlp_head(actor_head_spec, actor_feat_dim, env.act_dim)
     critic_head = backbone.build_mlp_head(critic_head_spec, critic_feat_dim, 1)
-    obs_scaler = torchrl_common.ObsScaler(env.obs_lb, env.obs_width)
-    critic_net = op_models.CriticNet(critic_backbone, critic_head, obs_scaler, obs_contract=obs_contract)
+    obs_scaler = ObsScaler(env.obs_lb, env.obs_width)
+    critic_net = models.CriticNet(critic_backbone, critic_head, obs_scaler, obs_contract=obs_contract)
     critic = td_nn.TensorDictModule(critic_net, in_keys=["observation"], out_keys=["state_value"])
     if env.is_discrete:
         log_std = None
-        actor_net = op_models.DiscreteActorNet(actor_backbone, actor_head, obs_scaler, obs_contract=obs_contract)
+        actor_net = models.DiscreteActorNet(actor_backbone, actor_head, obs_scaler, obs_contract=obs_contract)
         actor_module = td_nn.TensorDictModule(actor_net, in_keys=["observation"], out_keys=["logits"])
         actor = tr_modules.ProbabilisticActor(
             actor_module,
@@ -68,7 +66,7 @@ def build_modules(config: PPOConfig, env: _EnvSetup, *, device: torch.device) ->
         actor_param_count = _count_unique_params(actor_backbone, actor_head)
     else:
         log_std = nn.Parameter(torch.full((env.act_dim,), float(config.log_std_init)))
-        actor_net = op_models.ActorNet(actor_backbone, actor_head, log_std, obs_scaler, obs_contract=obs_contract)
+        actor_net = models.ActorNet(actor_backbone, actor_head, log_std, obs_scaler, obs_contract=obs_contract)
         actor_module = td_nn.TensorDictModule(actor_net, in_keys=["observation"], out_keys=["loc", "scale"])
         actor = tr_modules.ProbabilisticActor(
             actor_module,
@@ -150,7 +148,7 @@ def build_training(
         optimizer=optimizer,
         exp_dir=exp_dir,
         metrics_path=metrics_path,
-        checkpoint_manager=rl_checkpointing.CheckpointManager(exp_dir=exp_dir),
+        checkpoint_manager=checkpointing.CheckpointManager(exp_dir=exp_dir),
     )
 
 
@@ -172,7 +170,7 @@ def _build_collector(
             modules.actor,
             frames_per_batch=training.frames_per_batch,
             total_frames=total_frames,
-            **torchrl_common.collector_device_kwargs(runtime.device),
+            **collector_device_kwargs(runtime.device),
         )
     if runtime.collector_workers is None:
         raise RuntimeError("multi collector backend requires collector_workers")

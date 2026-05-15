@@ -6,7 +6,6 @@ import sys
 
 import gymnasium as _gymnasium
 
-
 wrappers = getattr(_gymnasium, "wrappers", None)
 if wrappers is not None and not hasattr(wrappers, "FrameStack"):
     frame_stack_obs = getattr(wrappers, "FrameStackObservation", None)

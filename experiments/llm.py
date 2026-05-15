@@ -3,22 +3,23 @@ from __future__ import annotations
 
 import json
 import re
-import tomllib
+import sys
 from pathlib import Path
 from typing import Any
 
 import click
+import tomllib
 
 from common.config_toml import parse_value
 from experiments.external_run_utils import abs_path, log_path
 from llm.config import LLMConfig
+from llm.console_observer import SplitConsoleObserver, tee_stdout_to_exp
 from llm.registry import (
     resolve_llm_env,
     resolve_llm_policy,
     supported_llm_env_tags,
     supported_llm_policy_tags,
 )
-
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
@@ -63,6 +64,12 @@ _OPTIONAL_TOML_KEYS = (
     "sub_dataset_size",
     "kl_beta",
     "reference_policy_tag",
+    "pretrain_lora_only",
+    "pretrain_search_dim",
+    "vllm_max_model_len",
+    "vllm_gpu_memory_utilization",
+    "vllm_max_num_seqs",
+    "vllm_max_num_batched_tokens",
 )
 _ALL_TOML_KEYS = set(_REQUIRED_TOML_KEYS + _OPTIONAL_TOML_KEYS)
 _DIRECT_LLM_OPTIMIZERS = {"eggroll", "sft", "rkl"}
@@ -193,6 +200,12 @@ def _parse_cfg(cfg: dict[str, Any]) -> LLMConfig:
         sub_dataset_size=_optional_int(cfg, "sub_dataset_size"),
         kl_beta=_optional_float(cfg, "kl_beta"),
         reference_policy_tag=_optional_str(cfg, "reference_policy_tag"),
+        pretrain_lora_only=bool(cfg.get("pretrain_lora_only", True)),
+        pretrain_search_dim=int(cfg.get("pretrain_search_dim", 4096)),
+        vllm_max_model_len=_optional_int(cfg, "vllm_max_model_len"),
+        vllm_gpu_memory_utilization=_optional_float(cfg, "vllm_gpu_memory_utilization"),
+        vllm_max_num_seqs=_optional_int(cfg, "vllm_max_num_seqs"),
+        vllm_max_num_batched_tokens=_optional_int(cfg, "vllm_max_num_batched_tokens"),
         env=env,
         policy=policy,
     )
@@ -367,7 +380,12 @@ def local(config_toml: str, overrides: tuple[str, ...], dry_run: bool) -> None:
         try:
             from llm.eggroll import run_eggroll
 
-            result = run_eggroll(cfg)
+            observer = SplitConsoleObserver(log_dir=cfg.exp_dir)
+            if sys.stdout.isatty():
+                with observer, tee_stdout_to_exp(observer):
+                    result = run_eggroll(cfg)
+            else:
+                result = run_eggroll(cfg)
         except RuntimeError as exc:
             raise click.ClickException(str(exc)) from exc
         print("RESULT:", json.dumps(result, sort_keys=True))

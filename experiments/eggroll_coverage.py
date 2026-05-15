@@ -2,12 +2,11 @@
 from __future__ import annotations
 
 import json
-import tomllib
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
 import click
-
+import tomllib
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
 

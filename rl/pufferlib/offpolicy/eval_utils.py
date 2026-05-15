@@ -9,16 +9,16 @@ from typing import Any
 
 
 def due_mark(*args: Any, **kwargs: Any):
-    _ns: dict[str, Any] = {}
-    exec("from rl.core.progress import due_mark as _f", _ns)  # noqa: S102
-    return _ns["_f"](*args, **kwargs)
+    namespace: dict[str, Any] = {}
+    exec("from rl.core import progress", namespace)  # noqa: S102
+    return namespace["progress"].due_mark(*args, **kwargs)
 
 
 def capture_actor_state(modules):
-    _ns: dict[str, Any] = {}
-    exec("from rl.core.actor_state import capture_backbone_head_snapshot", _ns)  # noqa: S102
-    capture_backbone_head_snapshot = _ns["capture_backbone_head_snapshot"]
-    return capture_backbone_head_snapshot(
+    namespace: dict[str, Any] = {}
+    exec("from rl.core import actor_state", namespace)  # noqa: S102
+    actor_state = namespace["actor_state"]
+    return actor_state.capture_backbone_head_snapshot(
         modules.actor_backbone,
         modules.actor_head,
         log_std=getattr(modules, "log_std", None),
@@ -29,10 +29,10 @@ def capture_actor_state(modules):
 
 
 def _restore_actor_state(modules, snapshot, *, device: Any) -> None:
-    _ns: dict[str, Any] = {}
-    exec("from rl.core.actor_state import restore_backbone_head_snapshot", _ns)  # noqa: S102
-    restore_backbone_head_snapshot = _ns["restore_backbone_head_snapshot"]
-    restore_backbone_head_snapshot(
+    namespace: dict[str, Any] = {}
+    exec("from rl.core import actor_state", namespace)  # noqa: S102
+    actor_state = namespace["actor_state"]
+    actor_state.restore_backbone_head_snapshot(
         modules.actor_backbone,
         modules.actor_head,
         snapshot,
@@ -43,10 +43,10 @@ def _restore_actor_state(modules, snapshot, *, device: Any) -> None:
 
 @contextmanager
 def use_actor_state(modules, actor_state, *, device: Any):
-    _ns: dict[str, Any] = {}
-    exec("from rl.core.actor_state import use_backbone_head_snapshot", _ns)  # noqa: S102
-    use_backbone_head_snapshot = _ns["use_backbone_head_snapshot"]
-    with use_backbone_head_snapshot(
+    namespace: dict[str, Any] = {}
+    exec("from rl.core import actor_state", namespace)  # noqa: S102
+    actor_state_mod = namespace["actor_state"]
+    with actor_state_mod.use_backbone_head_snapshot(
         modules.actor_backbone,
         modules.actor_head,
         actor_state,
@@ -86,10 +86,10 @@ class SacEvalPolicy:
         import numpy as np
         import torch
 
-        _ns: dict[str, Any] = {}
-        exec("from rl.pufferlib.offpolicy.env_utils import prepare_obs_np as _prep", _ns)  # noqa: S102
-        prepare_obs_np = _ns["_prep"]
-        obs_np = prepare_obs_np(state, obs_spec=self._obs_spec)
+        namespace: dict[str, Any] = {}
+        exec("from rl.pufferlib.offpolicy import env_utils", namespace)  # noqa: S102
+        env_utils = namespace["env_utils"]
+        obs_np = env_utils.prepare_obs_np(state, obs_spec=self._obs_spec)
         obs_t = torch.as_tensor(obs_np, dtype=torch.float32, device=self._device)
         with torch.no_grad():
             action = self._modules.actor.act(obs_t)
@@ -151,13 +151,13 @@ def evaluate_heldout_if_enabled(
 
 
 def append_eval_metric(path, state: TrainState, *, step: int) -> None:
-    _ns: dict[str, Any] = {}
-    exec("from rl.core.sac_metrics import build_eval_metric_record", _ns)  # noqa: S102
-    exec("import rl.logger as rl_logger", _ns)  # noqa: S102
-    build_eval_metric_record = _ns["build_eval_metric_record"]
-    rl_logger = _ns["rl_logger"]
+    namespace: dict[str, Any] = {}
+    exec("from rl.core import sac_metrics", namespace)  # noqa: S102
+    exec("from rl import logger", namespace)  # noqa: S102
+    sac_metrics = namespace["sac_metrics"]
+    logger = namespace["logger"]
     now = float(time.time())
-    record = build_eval_metric_record(
+    record = sac_metrics.build_eval_metric_record(
         step=int(step),
         eval_return=float(state.last_eval_return),
         heldout_return=state.last_heldout_return,
@@ -169,23 +169,21 @@ def append_eval_metric(path, state: TrainState, *, step: int) -> None:
         started_at=float(state.start_time),
         now=now,
     )
-    rl_logger.append_metrics(path, record)
+    logger.append_metrics(path, record)
 
 
 def log_if_due(config: Any, state: TrainState, *, step: int, frames_per_batch: int) -> None:
-    _ns: dict[str, Any] = {}
-    exec("from rl.core.sac_metrics import build_log_eval_iteration_kwargs", _ns)  # noqa: S102
-    exec("from rl.core.progress import due_mark as _due", _ns)  # noqa: S102
-    exec("import rl.logger as rl_logger", _ns)  # noqa: S102
-    build_log_eval_iteration_kwargs = _ns["build_log_eval_iteration_kwargs"]
-    _due = _ns["_due"]
-    rl_logger = _ns["rl_logger"]
-    mark = _due(step, config.log_interval_steps, state.log_mark)
+    namespace: dict[str, Any] = {}
+    exec("from rl.core import sac_metrics", namespace)  # noqa: S102
+    exec("from rl import logger", namespace)  # noqa: S102
+    sac_metrics = namespace["sac_metrics"]
+    logger = namespace["logger"]
+    mark = due_mark(step, config.log_interval_steps, state.log_mark)
     if mark is None:
         return
     state.log_mark = int(mark)
     now = float(time.time())
-    kwargs = build_log_eval_iteration_kwargs(
+    kwargs = sac_metrics.build_log_eval_iteration_kwargs(
         step=int(step),
         frames_per_batch=int(frames_per_batch),
         started_at=float(state.start_time),
@@ -197,7 +195,7 @@ def log_if_due(config: Any, state: TrainState, *, step: int, frames_per_batch: i
         loss_critic=float(state.last_loss_critic),
         loss_alpha=float(state.last_loss_alpha),
     )
-    rl_logger.log_eval_iteration(**kwargs)
+    logger.log_eval_iteration(**kwargs)
 
 
 def maybe_eval(
@@ -266,24 +264,24 @@ def render_videos_if_enabled(config: Any, env: Any, modules: Any, obs_spec: Any,
 
 def __getattr__(name: str):
     if name == "collect_denoised_trajectory":
-        _ns: dict[str, Any] = {}
-        exec("from rl.core.episode_rollout import collect_denoised_trajectory as _f", _ns)  # noqa: S102
-        return _ns["_f"]
+        namespace: dict[str, Any] = {}
+        exec("from rl.core import episode_rollout", namespace)  # noqa: S102
+        return namespace["episode_rollout"].collect_denoised_trajectory
     if name == "evaluate_for_best":
-        _ns = {}
-        exec("from rl.core.episode_rollout import evaluate_for_best as _f", _ns)  # noqa: S102
-        return _ns["_f"]
+        namespace = {}
+        exec("from rl.core import episode_rollout", namespace)  # noqa: S102
+        return namespace["episode_rollout"].evaluate_for_best
     if name in ("evaluate_heldout_with_best_actor", "update_best_actor_if_improved"):
-        _ns = {}
-        exec(f"from rl.core.sac_eval import {name} as _f", _ns)  # noqa: S102
-        return _ns["_f"]
+        namespace = {}
+        exec("from rl.core import sac_eval", namespace)  # noqa: S102
+        return getattr(namespace["sac_eval"], name)
     if name == "build_eval_plan":
-        _ns = {}
-        exec("from rl.eval_noise import build_eval_plan as _f", _ns)  # noqa: S102
-        return _ns["_f"]
+        namespace = {}
+        exec("from rl import eval_noise", namespace)  # noqa: S102
+        return namespace["eval_noise"].build_eval_plan
     if name == "rl_logger":
-        _ns = {}
-        exec("import rl.logger as _f", _ns)  # noqa: S102
-        return _ns["_f"]
+        namespace = {}
+        exec("from rl import logger", namespace)  # noqa: S102
+        return namespace["logger"]
     msg = f"module {__name__!r} has no attribute {name!r}"
     raise AttributeError(msg)

@@ -3,7 +3,6 @@ from __future__ import annotations
 import math
 from collections.abc import Callable
 
-
 __all__ = [
     "fmt_mu_nrmse",
     "fmt_mu_loglik_sweep",

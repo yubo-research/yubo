@@ -21,7 +21,6 @@ from analysis.fitting_time.evaluate import (
     normalize_benchmark_function_name,
 )
 
-
 META_KEY = "_meta"
 
 _LEGACY_TRIPLE_KEYS: frozenset[str] = frozenset(

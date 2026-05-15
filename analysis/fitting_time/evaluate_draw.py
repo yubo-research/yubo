@@ -13,7 +13,6 @@ from .evaluate_metrics import (
     normalize_benchmark_function_name,
 )
 
-
 # Fixed test-set size for surrogate timing benchmarks (train size is ``N``).
 SYNTHETIC_BENCHMARK_N_EVAL = 1000
 

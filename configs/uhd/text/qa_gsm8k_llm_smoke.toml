@@ -1,0 +1,43 @@
+# QA smoke for the plain UHD LLM text path.
+#
+# Exercises:
+# - llm:math:gsm8k task construction
+# - vLLM sampling through Ray actor
+# - local math answer scorer
+# - model response logging without verifiers/theorem rollout
+#
+# Run:
+# micromamba run -n yubo-hyperscalees ./ops/exp_uhd.py local configs/uhd/text/qa_gsm8k_llm_smoke.toml
+
+[uhd]
+env_tag = "llm:math:gsm8k"
+policy_tag = "qwen3-1p7b-lora-r1"
+
+optimizer = "mezo"
+num_rounds = 1
+num_reps = 1
+problem_seed = 0
+noise_seed_0 = 0
+
+lr = 0.001
+sigma = 0.001
+perturb = "dim:0.10"
+
+text_search_dim = 16
+text_delta_scale = 0.25
+text_basis_max_tensors = 4
+
+max_tokens = 96
+temperature = 0.0
+samples_per_prompt = 1
+prompt_batch_size = 1
+batch_size = 1
+pass_at_k = false
+sub_dataset_size = 8
+
+tensor_parallel_size = 1
+num_engines = 1
+use_async = false
+
+log_interval = 1
+enn_minus_impute = false

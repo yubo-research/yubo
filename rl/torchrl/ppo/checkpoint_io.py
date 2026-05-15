@@ -2,13 +2,12 @@ from __future__ import annotations
 
 from typing import Any
 
-from rl.core.actor_state import build_ppo_checkpoint_payload as build_shared_payload
-from rl.core.actor_state import capture_ppo_actor_snapshot as capture_actor_snapshot
+from rl.core import actor_state
 
 
 def build_checkpoint_payload(training_setup: Any, modules: Any, train_state: Any, *, iteration: int) -> dict[str, Any]:
-    actor_snapshot = capture_actor_snapshot(modules.actor_backbone, modules.actor_head, log_std=modules.log_std)
-    return build_shared_payload(
+    actor_snapshot = actor_state.capture_ppo_actor_snapshot(modules.actor_backbone, modules.actor_head, log_std=modules.log_std)
+    return actor_state.build_ppo_checkpoint_payload(
         iteration=iteration,
         global_step=int(iteration * training_setup.frames_per_batch),
         actor_snapshot=actor_snapshot,

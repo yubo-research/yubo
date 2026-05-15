@@ -158,3 +158,158 @@ def _empty_cuda_cache(torch) -> None:
 def _sync_cuda(torch) -> None:
     if torch.cuda.is_available():
         torch.cuda.synchronize()
+
+
+def apply_subspace_perturbation(
+    worker: Any,
+    template: Any | None,
+    seed: int,
+    scale: float,
+) -> bool:
+    """Applies a random coordinate-based perturbation to model parameters."""
+    import torch
+
+    if template is None:
+        template = getattr(worker, "_universal_subspace_template", None)
+    if template is None:
+        raise RuntimeError("Universal subspace template not set on vLLM worker.")
+
+    device = worker.device
+    search_dim = int(template.search_dim)
+
+    # 1. Sample subspace noise
+    g = torch.Generator(device=str(device))
+    g.manual_seed(seed)
+    noise = torch.randn((search_dim,), device=device, generator=g)
+    noise.mul_(scale)
+
+    # 2. Apply to coordinates
+    vllm_params = getattr(worker, "_universal_named_parameters", None)
+    if not isinstance(vllm_params, dict):
+        vllm_params = dict(worker.model_runner.model.named_parameters())
+
+    groups = getattr(worker, "_universal_update_groups", None)
+    if groups is not None:
+        for name, g_info in groups.items():
+            param = vllm_params.get(name)
+            if param is None:
+                continue
+            # Vectorized update: avoids .item() and sequential .add_ calls
+            updates = noise[g_info["subspace_indices"]]
+            updates.mul_(g_info["signs"])
+            if scale != 1.0:
+                updates.mul_(scale)
+            param.data.view(-1).index_add_(0, g_info["param_indices"], updates)
+        return True
+
+    # Fallback slow path (triggers thousands of host-device syncs)
+    for i in range(search_dim):
+        delta = noise[i].item() * template.basis_sign[i]
+        if abs(delta) < 1e-15:
+            continue
+
+        param_meta = template.parameters[template.basis_leaf[i]]
+        param = vllm_params.get(param_meta.name)
+        if param is None:
+            continue
+
+        flat_idx = template.basis_index[i]
+        param.data.view(-1)[flat_idx].add_(delta)
+
+    return True
+
+
+def apply_universal_es_update(
+    worker: Any,
+    normalized_fitnesses: list[float],
+    template: Any | None,
+    es_step: int,
+    args: Any,
+) -> bool:
+    """Applies a global coordinate-based subspace update to all model parameters."""
+    import torch
+
+    from llm.universal_subspace import universal_subspace_seed
+
+    if getattr(worker, "gpu_rank", 0) != 0:
+        return False
+
+    if template is None:
+        template = getattr(worker, "_universal_subspace_template", None)
+    if template is None:
+        raise RuntimeError("Universal subspace template not set on vLLM worker.")
+
+    device = worker.device
+    num_pop_pairs = int(args.population_size) // 2
+    pop_step = int(es_step) // int(args.steps_per_adapter)
+
+    # 1. Reconstruct the update in subspace (size search_dim)
+    search_dim = int(template.search_dim)
+    z_grad = torch.zeros((search_dim,), device=device, dtype=torch.float32)
+
+    # ES summation in subspace
+    for pop_pair_idx in range(num_pop_pairs):
+        diff = normalized_fitnesses[pop_pair_idx * 2] - normalized_fitnesses[pop_pair_idx * 2 + 1]
+        if abs(diff) < 1e-8:
+            continue
+
+        # Sample subspace noise for this population pair
+        # (Mirroring the RNG logic from optimizer side)
+        seed = universal_subspace_seed(
+            base_seed=int(args.base_seed),
+            num_pop_pairs=num_pop_pairs,
+            search_dim=search_dim,
+            pop_step=pop_step,
+            pop_pair_idx=pop_pair_idx,
+        )
+        g = torch.Generator(device=str(device))
+        g.manual_seed(seed)
+        noise = torch.randn((search_dim,), device=device, generator=g)
+
+        z_grad.add_(noise, alpha=diff)
+
+    # 2. Scale gradient
+    scale = float(args.learning_rate) / (int(args.population_size) * float(args.sigma) + 1e-8)
+    if bool(args.scale_lr_in_grad):
+        scale *= math.sqrt(int(args.population_size))
+    z_grad.mul_(scale)
+
+    # 3. Project subspace gradient to model parameters
+    vllm_params = getattr(worker, "_universal_named_parameters", None)
+    if not isinstance(vllm_params, dict):
+        vllm_params = dict(worker.model_runner.model.named_parameters())
+
+    groups = getattr(worker, "_universal_update_groups", None)
+    if groups is not None:
+        for name, g_info in groups.items():
+            param = vllm_params.get(name)
+            if param is None:
+                continue
+
+            # Vectorized projection: maps subspace grad back to chooses indices
+            updates = z_grad[g_info["subspace_indices"]]
+            updates.mul_(g_info["signs"])
+            param.data.view(-1).index_add_(0, g_info["param_indices"], updates)
+    else:
+        _apply_universal_es_update_fallback(z_grad, template, vllm_params)
+
+    _sync_cuda(torch)
+    gc.collect()
+    return True
+
+
+def _apply_universal_es_update_fallback(z_grad, template, vllm_params) -> None:
+    search_dim = int(template.search_dim)
+    for i in range(search_dim):
+        grad_val = z_grad[i].item() * template.basis_sign[i]
+        if abs(grad_val) < 1e-15:
+            continue
+
+        param_meta = template.parameters[template.basis_leaf[i]]
+        param = vllm_params.get(param_meta.name)
+        if param is None:
+            continue
+
+        # Apply coordinate update
+        flat_idx = template.basis_index[i]
+        param.data.view(-1)[flat_idx].add_(grad_val)

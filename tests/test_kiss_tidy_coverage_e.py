@@ -22,8 +22,8 @@ def test_kiss_tidy_e_torchrl_sac_sampling_vector(monkeypatch, tmp_path):
 
     assert callable(sac_train_loop.train_sac)
     monkeypatch.setattr(
-        "rl.torchrl.sac.sac_setup_build.build_continuous_gym_env_setup",
-        lambda **kwargs: SimpleNamespace(
+        "rl.torchrl.sac.sac_setup_build.build_env_setup",
+        lambda _config, **kwargs: SimpleNamespace(
             env_conf=SimpleNamespace(
                 from_pixels=False,
                 ensure_spaces=lambda: None,
@@ -35,15 +35,15 @@ def test_kiss_tidy_e_torchrl_sac_sampling_vector(monkeypatch, tmp_path):
             ),
             problem_seed=1,
             noise_seed_0=2,
-            act_dim=2,
-            action_low=np.array([-1.0, -1.0], dtype=np.float32),
-            action_high=np.array([1.0, 1.0], dtype=np.float32),
+            act_dim=1,
+            action_low=np.array([-1.0], dtype=np.float32),
+            action_high=np.array([1.0], dtype=np.float32),
             obs_lb=None,
             obs_width=None,
         ),
     )
     monkeypatch.setattr(
-        "rl.torchrl.sac.sac_setup_build.torchrl_common.obs_scale_from_env",
+        "rl.torchrl.sac.sac_setup_build.runtime.obs_scale_from_env",
         lambda env_conf: (None, None),
     )
     sc = SACConfig(
@@ -73,7 +73,7 @@ def test_kiss_tidy_e_torchrl_sac_sampling_vector(monkeypatch, tmp_path):
     td = __import__("tensordict").TensorDict(
         {
             "observation": torch.zeros(2, 3),
-            "action": torch.zeros(2, 2),
+            "action": torch.zeros(2, 1),
             "next": __import__("tensordict").TensorDict(
                 {
                     "observation": torch.zeros(2, 3),

@@ -15,7 +15,6 @@ from . import sweep_plots_metrics as _metrics
 from . import sweep_plots_panels as _panels
 from . import sweep_plots_style as _style
 
-
 plot_curves = _curves.plot_curves
 plot_param_sweep = _curves.plot_param_sweep
 _collect_plot_curves_data = _data._collect_plot_curves_data

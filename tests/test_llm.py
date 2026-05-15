@@ -12,19 +12,84 @@ from tests.llm_test_mocks_vllm import FakeAsyncEngine, FakeOutput
 
 
 def test_llm_registry_resolves_env_and_policy_tags():
-    from llm.registry import resolve_llm_env, resolve_llm_policy
+    from llm.registry import policy_uses_chat_template, resolve_llm_env, resolve_llm_policy
 
     env = resolve_llm_env("llm:math:answer-tags:gsm8k")
     verifiers_env = resolve_llm_env("llm:verifiers:gsm8k")
+    theorem_env = resolve_llm_env("llm:thm:lean4:cat-searcher/minif2f-lean4")
     policy = resolve_llm_policy("qwen3-1p7b-lora-r4")
+    base_policy = resolve_llm_policy("qwen3-1p7b-base-lora-r4")
 
     assert env.task_name == "math:answer-tags:gsm8k"
     assert env.answer_format == "answer_tags"
     assert verifiers_env.task_kind == "verifiers"
     assert verifiers_env.dataset_name == "gsm8k"
+    assert theorem_env.task_kind == "thm"
+    assert theorem_env.dataset_name == "cat-searcher/minif2f-lean4"
     assert policy.model_name == "Qwen/Qwen3-1.7B"
     assert policy.lora_rank == 4
     assert policy.lora_alpha == 4
+    assert policy_uses_chat_template(policy) is True
+    assert policy_uses_chat_template(base_policy) is False
+
+    kimina_policy = resolve_llm_policy("kimina-prover-1p5b-lora-r8")
+    assert kimina_policy.model_name == "AI-MO/Kimina-Prover-Preview-Distill-1.5B"
+    assert kimina_policy.lora_rank == 8
+    assert kimina_policy.lora_alpha == 8
+
+
+def test_llm_task_execution_mode_is_explicit():
+    from llm.tasks import RandomTask, TaskMode, VerifiersTask, task_mode
+
+    assert task_mode(RandomTask(batch_size=1, max_random_number=4, seed=0)) is TaskMode.SCORE
+    assert task_mode(VerifiersTask(batch_size=1, env_id="gsm8k")) is TaskMode.ROLLOUT
+
+    class AccidentalRollout:
+        def generate_and_score(self):
+            return None
+
+    try:
+        task_mode(AccidentalRollout())
+    except TypeError as exc:
+        assert "execution_mode" in str(exc)
+    else:
+        raise AssertionError("task_mode should reject tasks without an explicit execution_mode")
+
+
+def test_engine_pool_normalizes_transport_info_by_tensor_rank():
+    from llm.engine_pool import transport_info_by_tensor_rank
+
+    infos = [
+        {"tensor_rank": 1, "host": "10.0.0.1", "port": 10001},
+        {"tensor_rank": 0, "host": "10.0.0.1", "port": 10000},
+    ]
+
+    assert transport_info_by_tensor_rank(infos) == {
+        0: ("10.0.0.1", 10000),
+        1: ("10.0.0.1", 10001),
+    }
+
+
+def test_engine_pool_checks_all_collective_worker_results():
+    from llm.engine_pool import collective_results_ok
+
+    assert collective_results_ok([[True, True], [True]])
+    assert not collective_results_ok([[True, False], [True]])
+    assert not collective_results_ok([])
+
+
+def test_ray_runtime_env_includes_theorem_image_overrides(monkeypatch):
+    from llm.engine_pool import ray_env_vars
+
+    monkeypatch.setenv("THM_LEAN4_DOCKER_IMAGE", "lean-img")
+    monkeypatch.setenv("THM_COQ_DOCKER_IMAGE", "coq-img")
+    monkeypatch.setenv("THM_ISABELLE_DOCKER_IMAGE", "isabelle-img")
+
+    env = ray_env_vars()
+
+    assert env["THM_LEAN4_DOCKER_IMAGE"] == "lean-img"
+    assert env["THM_COQ_DOCKER_IMAGE"] == "coq-img"
+    assert env["THM_ISABELLE_DOCKER_IMAGE"] == "isabelle-img"
 
 
 def test_llm_random_boxed_reward_pass_at_k():
@@ -41,6 +106,27 @@ def test_llm_random_boxed_reward_pass_at_k():
     assert fitness == 1.0
     assert model_answers == (None, 2)
     assert sample_fitnesses.tolist() == [0.0, 1.0]
+
+
+def test_vllm_rlm_client_truncates_prompt_to_leave_generation_room():
+    from llm.tasks_verifiers import _VLLMRLMClient
+
+    class FakeTokenizer:
+        def encode(self, text, add_special_tokens=False):
+            return [int(x) for x in text.split()]
+
+        def decode(self, token_ids, skip_special_tokens=False):
+            return " ".join(str(x) for x in token_ids)
+
+    llm = types.SimpleNamespace(llm_engine=types.SimpleNamespace(model_config=types.SimpleNamespace(max_model_len=13)))
+    client = _VLLMRLMClient(
+        llm,
+        None,
+        {"max_tokens": 3},
+        tokenizer=FakeTokenizer(),
+    )
+
+    assert client._truncate_prompt_to_context("0 1 2 3 4 5 6 7 8 9 10 11") == "10 11"
 
 
 def test_llm_countdown_reward_uses_safe_arithmetic():
@@ -270,6 +356,7 @@ def test_vllm_actor_defaults_disable_plugin_autoload(monkeypatch):
 def test_async_vllm_actor_universal_bridge(monkeypatch):
     import asyncio
 
+    from llm.model_client import SampleCall
     from llm.tasks import RandomTask
     from llm.vllm_actor import AsyncTextVLLMActor, VLLMActorConfig
 
@@ -318,6 +405,19 @@ def test_async_vllm_actor_universal_bridge(monkeypatch):
 
     assert fitnesses == [1.0]
     assert "final answer is 4" in logs[0]
+
+    responses = asyncio.run(
+        actor.sample(
+            [
+                SampleCall(
+                    prompt="2+2?",
+                    sampling={"temperature": 0.0, "max_tokens": 10},
+                )
+            ]
+        )
+    )
+
+    assert responses[0].samples[0].text == "final answer is 4"
 
 
 def test_async_vllm_actor_collective_rpc_is_async(monkeypatch):

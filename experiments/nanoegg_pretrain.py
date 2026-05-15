@@ -3,11 +3,11 @@ from __future__ import annotations
 
 import os
 import sys
-import tomllib
 from pathlib import Path
 from typing import Any
 
 import click
+import tomllib
 
 from experiments.external_run_utils import (
     abs_path,
@@ -23,7 +23,6 @@ from experiments.external_run_utils import (
     string_env_vars,
     write_metadata,
 )
-
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
 

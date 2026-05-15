@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 
-import tomllib
 from typing import Any
 
 import click
+import tomllib
 
 from common.mapping_keys import coerce_mapping_keys, normalize_toml_key
-
 
 _BASE_REQUIRED_KEYS = (
     "exp_dir",
@@ -24,6 +23,11 @@ _OPTIONAL_KEYS = (
     "max_total_seconds",
     "b_trace",
     "video_enable",
+    "video_num_episodes",
+    "video_num_video_episodes",
+    "video_episode_selection",
+    "video_seed_base",
+    "video_prefix",
     "runtime_device",
     "local_workers",
 )

@@ -8,12 +8,7 @@ import torch.nn as nn
 from torch.distributions import Normal
 from torch.distributions.categorical import Categorical
 
-from rl.core.continuous_actions import (
-    scale_action_tensor_to_env as _scale_action_tensor_to_env_shared,
-)
-from rl.core.continuous_actions import (
-    unscale_action_tensor_from_env as _unscale_action_tensor_from_env_shared,
-)
+from rl.core import continuous_actions
 
 from .specs_dataclasses_basic import _ActionSpec
 
@@ -98,13 +93,13 @@ class _ActorCritic(nn.Module):
         view_shape = (1,) * (action_norm.ndim - 1) + (action_norm.shape[-1],)
         low = self.action_low.view(view_shape)
         high = self.action_high.view(view_shape)
-        return _scale_action_tensor_to_env_shared(action_norm, low, high, clip=True)
+        return continuous_actions.scale_action_tensor_to_env(action_norm, low, high, clip=True)
 
     def _to_norm_action(self, action_env: torch.Tensor) -> torch.Tensor:
         view_shape = (1,) * (action_env.ndim - 1) + (action_env.shape[-1],)
         low = self.action_low.view(view_shape)
         high = self.action_high.view(view_shape)
-        action_norm = _unscale_action_tensor_from_env_shared(action_env, low, high, clip=True)
+        action_norm = continuous_actions.unscale_action_tensor_from_env(action_env, low, high, clip=True)
         return torch.clamp(action_norm, -1.0 + 1e-06, 1.0 - 1e-06)
 
     def _squashed_log_prob(self, dist: Normal, *, action_norm: torch.Tensor, pre_tanh: torch.Tensor) -> torch.Tensor:

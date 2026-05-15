@@ -10,10 +10,12 @@ from typing import Any
 import numpy as np
 
 from llm.config import LLMConfig
+from llm.engine_pool import collective_results_ok, ray_runtime_env, transport_info_by_tensor_rank
 from llm.es import (
     summarize_fitness,
 )
 from llm.lora import LoraTemplate
+from llm.ray_cleanup import cleanup_ray_launch, kill_ray_actors
 from llm.tasks import MathTask
 
 
@@ -44,6 +46,12 @@ class EggrollArgs:
     use_wandb: bool
     wandb_project: str
     wandb_name: str | None
+    pretrain_lora_only: bool = True
+    pretrain_search_dim: int = 4096
+    vllm_max_model_len: int | None = None
+    vllm_gpu_memory_utilization: float | None = None
+    vllm_max_num_seqs: int | None = None
+    vllm_max_num_batched_tokens: int | None = None
 
 
 def train_loop(
@@ -51,7 +59,7 @@ def train_loop(
     *,
     engines: list[Any],
     args: EggrollArgs,
-    template: LoraTemplate,
+    template: Any,
     task: Any,
     eval_task: MathTask | None,
     sampling_kwargs: dict[str, Any],
@@ -64,9 +72,14 @@ def train_loop(
     last_summary = None
     start_time = time.time()
 
+    if not args.pretrain_lora_only:
+        # Upload once to each engine+its vLLM worker processes to avoid sending
+        # the template on every perturb/unperturb call.
+        ray.get([engine.set_universal_subspace_template.remote(template) for engine in engines])
+
     for es_step in range(args.num_iterations):
         iter_start = time.time()
-        if es_step % args.steps_per_adapter == 0 or engine_paths is None:
+        if args.pretrain_lora_only and (es_step % args.steps_per_adapter == 0 or engine_paths is None):
             engine_paths = ray.get([engines[i].generate_local_adapters.remote(engine_pop_indices[i], es_step, args) for i in range(args.num_engines)])
 
         eval_info = run_eval(
@@ -78,15 +91,27 @@ def train_loop(
             eval_sampling_kwargs=eval_sampling_kwargs,
         )
         prompts, answers = task.get_batch()
+
+        # Decide specs for generation
+        if args.pretrain_lora_only:
+            specs_per_engine = [_engine_lora_specs(engine_pop_indices[i], engine_paths[i], es_step, len(prompts)) for i in range(args.num_engines)]
+            current_prompts = [_engine_prompts(prompts, engine_paths[i]) for i in range(args.num_engines)]
+        else:
+            # Universal mode: use random coordinate perturbations instead of LoRA
+            # We pass None for specs, and let the worker generate noise based on the template
+            specs_per_engine = [None] * args.num_engines
+            current_prompts = [prompts] * args.num_engines
+
         results = ray.get(
             [
                 engines[i].generate_and_score.remote(
-                    _engine_prompts(prompts, engine_paths[i]),
+                    current_prompts[i],
                     sampling_kwargs,
-                    _engine_lora_specs(engine_pop_indices[i], engine_paths[i], es_step, len(prompts)),
+                    specs_per_engine[i],
                     task,
                     answers,
                     args,
+                    es_step=es_step,
                 )
                 for i in range(args.num_engines)
             ]
@@ -104,12 +129,24 @@ def train_loop(
         summary = summarize_fitness(fitnesses_shaped, normalize_with_std=args.normalize_with_std)
         last_summary = summary
         normalized = summary.normalized.astype(float).tolist()
-        ray.get(
-            engines[0].collective_rpc.remote(
-                "apply_lora_es_update",
-                args=(normalized, template.base_shapes, es_step, args),
+
+        if args.pretrain_lora_only:
+            ray.get(
+                engines[0].collective_rpc.remote(
+                    "apply_lora_es_update",
+                    args=(normalized, template.base_shapes, es_step, args),
+                )
             )
-        )
+        else:
+            ray.get(
+                engines[0].apply_universal_update.remote(
+                    normalized,
+                    None,
+                    es_step,
+                    args,
+                )
+            )
+
         if args.num_engines > 1:
             broadcast_weights(ray, engines)
 
@@ -199,42 +236,58 @@ def launch_engines(ray: Any, *, cfg: LLMConfig, args: EggrollArgs) -> tuple[list
 
     placement_groups = []
     strategies = []
-    for _ in range(args.num_engines):
-        bundles = [{"GPU": 1, "CPU": 2} for _ in range(args.tensor_parallel_size)]
-        pg = placement_group(bundles, lifetime="detached", strategy="STRICT_PACK")
-        ray.get(pg.ready())
-        placement_groups.append(pg)
-        if args.tensor_parallel_size == 1:
-            strategies.append(
-                PlacementGroupSchedulingStrategy(
-                    placement_group=pg,
-                    placement_group_capture_child_tasks=True,
-                    placement_group_bundle_index=0,
+    actors = []
+    try:
+        for _ in range(args.num_engines):
+            bundles = [{"GPU": 1, "CPU": 2} for _ in range(args.tensor_parallel_size)]
+            pg = placement_group(bundles, lifetime="detached", strategy="STRICT_PACK")
+            ray.get(pg.ready())
+            placement_groups.append(pg)
+            if args.tensor_parallel_size == 1:
+                strategies.append(
+                    PlacementGroupSchedulingStrategy(
+                        placement_group=pg,
+                        placement_group_capture_child_tasks=True,
+                        placement_group_bundle_index=0,
+                    )
                 )
-            )
-        else:
-            strategies.append(
-                PlacementGroupSchedulingStrategy(
-                    placement_group=pg,
-                    placement_group_capture_child_tasks=True,
+            else:
+                strategies.append(
+                    PlacementGroupSchedulingStrategy(
+                        placement_group=pg,
+                        placement_group_capture_child_tasks=True,
+                    )
                 )
-            )
 
-    loras_per_engine = args.population_size // args.num_engines
-    enforce_eager = args.tensor_parallel_size > 1
-    actors = [
-        ray.remote(num_cpus=0, num_gpus=0, scheduling_strategy=strategy)(EggrollVLLMActor).remote(
-            model_name=cfg.policy.model_name,
-            tensor_parallel_size=args.tensor_parallel_size,
-            max_loras=loras_per_engine,
-            lora_rank=args.lora_r,
-            max_tokens=args.max_tokens,
-            prompt_batch_size=args.prompt_batch_size,
-            enforce_eager=enforce_eager,
-        )
-        for strategy in strategies
-    ]
-    return actors, placement_groups
+        loras_per_engine = args.population_size // args.num_engines
+        enforce_eager = args.tensor_parallel_size > 1
+        actors = [
+            ray.remote(
+                num_cpus=0,
+                num_gpus=0,
+                scheduling_strategy=strategy,
+                max_concurrency=1,
+                runtime_env=ray_runtime_env(),
+            )(EggrollVLLMActor).remote(
+                model_name=cfg.policy.model_name,
+                tensor_parallel_size=args.tensor_parallel_size,
+                max_loras=loras_per_engine,
+                lora_rank=args.lora_r,
+                max_tokens=args.max_tokens,
+                prompt_batch_size=args.prompt_batch_size,
+                samples_per_prompt=args.samples_per_prompt,
+                enforce_eager=enforce_eager,
+                vllm_max_model_len=args.vllm_max_model_len,
+                vllm_gpu_memory_utilization=args.vllm_gpu_memory_utilization,
+                vllm_max_num_seqs=args.vllm_max_num_seqs,
+                vllm_max_num_batched_tokens=args.vllm_max_num_batched_tokens,
+            )
+            for strategy in strategies
+        ]
+        return actors, placement_groups
+    except Exception:
+        cleanup_ray_launch(ray, actors, placement_groups)
+        raise
 
 
 def shutdown_engines(ray: Any, *, engines: list[Any], placement_groups: list[Any]) -> None:
@@ -244,13 +297,11 @@ def shutdown_engines(ray: Any, *, engines: list[Any], placement_groups: list[Any
         pass
     try:
         terminate_refs = [engine.__ray_terminate__.remote() for engine in engines]
-        ray.wait(terminate_refs, timeout=30, num_returns=len(terminate_refs))
+        _, pending = ray.wait(terminate_refs, timeout=30, num_returns=len(terminate_refs))
+        if pending:
+            kill_ray_actors(ray, engines)
     except Exception:
-        for engine in engines:
-            try:
-                ray.kill(engine, no_restart=True)
-            except Exception:
-                pass
+        kill_ray_actors(ray, engines)
     for pg in placement_groups:
         try:
             ray.util.remove_placement_group(pg)
@@ -259,19 +310,22 @@ def shutdown_engines(ray: Any, *, engines: list[Any], placement_groups: list[Any
 
 
 def init_worker_groups(ray: Any, engines: list[Any], *, args: EggrollArgs) -> None:
-    master_info = ray.get(engines[0].collective_rpc.remote("get_transport_info", args=()))[0]
-    master_address, master_port = master_info
+    master_info = ray.get(engines[0].collective_rpc.remote("get_transport_info", args=()))
+    master_by_tensor_rank = transport_info_by_tensor_rank(master_info)
     results = ray.get(
         [
             engines[i].collective_rpc.remote(
                 "init_inter_engine_group",
-                args=(master_address, master_port, i, args.num_engines),
+                args=(master_by_tensor_rank, i, args.num_engines),
             )
             for i in range(args.num_engines)
         ]
     )
-    if not all(result[0] for result in results):
+    if not collective_results_ok(results):
         raise RuntimeError("Failed to initialize at least one vLLM worker group.")
+    # Also set an engine rank on the Ray actor itself (separate from the vLLM
+    # worker ranks) so universal-subspace seeding can shard population pairs.
+    ray.get([engines[i].set_engine_rank.remote(i) for i in range(args.num_engines)])
 
 
 def setup_lora_generation(ray: Any, engines: list[Any], *, template: LoraTemplate) -> None:
@@ -283,9 +337,9 @@ def setup_lora_generation(ray: Any, engines: list[Any], *, template: LoraTemplat
 
 def broadcast_weights(ray: Any, engines: list[Any]) -> None:
     results = ray.get([engine.collective_rpc.remote("broadcast_all_weights", args=(0,)) for engine in engines])
-    if all(result[0] for result in results):
+    if collective_results_ok(results):
         return
-    state = ray.get(engines[0].collective_rpc.remote("get_model_state_dict", args=()))[0]
+    state = ray.get(engines[0].collective_rpc.remote("get_model_state_dict", args=()))
     state_ref = ray.put(state)
     ray.get([engine.collective_rpc.remote("set_model_state_dict", args=(state_ref,)) for engine in engines[1:]])
 

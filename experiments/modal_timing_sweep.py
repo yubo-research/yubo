@@ -26,7 +26,6 @@ from experiments.modal_result_collect import (
     iter_modal_results_for_collect,
 )
 
-
 modal_image = mk_image()
 
 _APP_NAME = "yubo_timing_sweep"

@@ -7,7 +7,6 @@ from analysis.plotting_types import (
 )
 from analysis.plotting_types import PlotResultsResult as _PlotResultsResult
 
-
 _LONG_NAMES = {
     "tlunar": "LunarLander-v3",
     "push": "Push-v3",

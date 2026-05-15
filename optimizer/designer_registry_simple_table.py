@@ -2,7 +2,6 @@ from functools import partial
 
 from . import designer_registry_builders as _b
 
-
 _SIMPLE_BUILDERS = {
     "cma": partial(_b._build_policy_ctor, module="optimizer.cma_designer", name="CMAESDesigner"),
     "dngo": partial(_b._build_policy_ctor, module="optimizer.dngo_designer", name="DNGODesigner"),

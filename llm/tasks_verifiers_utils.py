@@ -1,12 +1,43 @@
 from __future__ import annotations
 
 import asyncio
+import importlib.metadata as metadata
 import json
 import re
 import uuid
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from verifiers.types import State
+if TYPE_CHECKING:  # Optional dependency; imported lazily at runtime.
+    from verifiers.types import State
+
+
+def require_verifiers_runtime() -> None:
+    """Fail fast on known verifiers dependency drift before vLLM startup."""
+    missing: list[str] = []
+    for dist_name in ("verifiers", "openai-agents", "openai"):
+        try:
+            metadata.version(dist_name)
+        except metadata.PackageNotFoundError:
+            missing.append(dist_name)
+    if missing:
+        raise RuntimeError(
+            "Prime Intellect verifiers runtime is not installed correctly. "
+            f"Missing package(s): {', '.join(missing)}. "
+            "Run `admin/setup-hyperscalees.sh` for the yubo-hyperscalees env."
+        )
+
+    problems = _dependency_problems("openai-agents", only={"openai"})
+    try:
+        metadata.version("vllm")
+    except metadata.PackageNotFoundError:
+        pass
+    else:
+        problems.extend(_dependency_problems("vllm", only={"openai"}))
+    if problems:
+        raise RuntimeError(
+            "Prime Intellect verifiers runtime dependency mismatch: " + "; ".join(problems) + ". Fix the yubo-hyperscalees env with "
+            "`python -m pip install 'openai==2.24.0' 'openai-agents==0.10.5'`."
+        )
 
 
 def get_environment(env_id: str, dataset_size: int | None, env_cache: dict) -> Any:
@@ -40,7 +71,8 @@ def get_environment(env_id: str, dataset_size: int | None, env_cache: dict) -> A
 def default_env_args(env_id: str, dataset_size: int | None) -> dict[str, Any]:
     args: dict[str, Any] = {}
     if env_id == "gsm8k":
-        args["config_type"] = "simple"
+        if dataset_size is not None:
+            args["num_train_examples"] = int(dataset_size)
     return args
 
 
@@ -51,10 +83,42 @@ def ensure_supported_env(env: Any, env_id: str) -> None:
 
 def format_prompt(raw_prompt: str, tokenizer: Any, apply_chat_template: bool) -> str:
     if not apply_chat_template or tokenizer is None:
+        if isinstance(raw_prompt, list):
+            lines: list[str] = []
+            for msg in raw_prompt:
+                if not isinstance(msg, dict):
+                    lines.append(str(msg))
+                    continue
+                role = str(msg.get("role", "user")).title()
+                content = msg.get("content", "")
+                lines.append(f"{role}: {content}")
+            if not lines or not lines[-1].startswith("Assistant:"):
+                lines.append("Assistant:")
+            return "\n".join(lines)
         return str(raw_prompt)
 
-    messages = [{"role": "user", "content": str(raw_prompt)}]
-    return tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+    messages = prompt_messages(raw_prompt)
+    return tokenizer.apply_chat_template(
+        messages,
+        tokenize=False,
+        add_generation_prompt=not _ends_with_assistant(messages),
+    )
+
+
+def prompt_messages(raw_prompt: Any) -> list[dict[str, Any]]:
+    if isinstance(raw_prompt, list):
+        messages = []
+        for msg in raw_prompt:
+            if isinstance(msg, dict):
+                messages.append({"role": str(msg.get("role", "user")), "content": str(msg.get("content", ""))})
+            else:
+                messages.append({"role": "user", "content": str(msg)})
+        return messages
+    return [{"role": "user", "content": str(raw_prompt)}]
+
+
+def _ends_with_assistant(messages: list[dict[str, Any]]) -> bool:
+    return bool(messages) and str(messages[-1].get("role", "")).lower() == "assistant"
 
 
 def answer_payload(row: dict[str, Any]) -> dict[str, Any]:
@@ -66,10 +130,18 @@ def answer_payload(row: dict[str, Any]) -> dict[str, Any]:
 
 
 def make_state(answer: Any, completion: list[dict[str, str]], truncated: bool) -> State:
-    # Construct a minimal verifiers State object
+    # Optional dependency: only needed when actually scoring verifiers tasks.
+    from verifiers.types import State
+
+    # verifiers rubrics commonly expect `state["input"]` to contain the dataset
+    # payload (including the reference answer), plus `state["completion"]`.
+    if isinstance(answer, dict) and bool(answer.get("__verifiers_payload__")):
+        payload = dict(answer)
+    else:
+        payload = raw_answer_payload(answer)
+
     state_dict = {
-        "prompt": "",  # Not used by the formal rubrics in score_rollout
-        "answer": str(answer),
+        "input": payload,
         "completion": completion,
         "truncated": bool(truncated),
         "reward": 0.0,
@@ -92,7 +164,11 @@ def raw_answer_payload(answer: Any) -> dict[str, Any]:
 def parse_model_answer(env: Any, completion: list[dict[str, str]]) -> Any:
     # Best-effort attempt to parse the final answer using the environment's parser
     if not hasattr(env, "parser") or not hasattr(env.parser, "parse_answer"):
-        return completion[-1]["content"] if completion else ""
+        rubric = getattr(env, "rubric", None)
+        parser = getattr(rubric, "parser", None)
+        if parser is None or not hasattr(parser, "parse_answer"):
+            return completion[-1]["content"] if completion else ""
+        return parser.parse_answer(completion)
     return env.parser.parse_answer(completion)
 
 
@@ -135,6 +211,33 @@ def text_to_assistant_message(text: str, env: Any = None) -> Any:
         )
 
     return AssistantMessage(content=text, tool_calls=tool_calls)
+
+
+def _dependency_problems(dist_name: str, *, only: set[str]) -> list[str]:
+    try:
+        from packaging.requirements import Requirement
+        from packaging.version import Version
+    except Exception:
+        return []
+
+    problems: list[str] = []
+    for raw_req in metadata.requires(dist_name) or []:
+        try:
+            req = Requirement(raw_req)
+        except Exception:
+            continue
+        if req.name not in only:
+            continue
+        if req.marker is not None and not req.marker.evaluate():
+            continue
+        try:
+            installed = metadata.version(req.name)
+        except metadata.PackageNotFoundError:
+            problems.append(f"{dist_name} requires {req}, but {req.name} is not installed")
+            continue
+        if req.specifier and Version(installed) not in req.specifier:
+            problems.append(f"{dist_name} requires {req}, but {req.name}=={installed} is installed")
+    return problems
 
 
 def _run_async(awaitable: Any) -> Any:

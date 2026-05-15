@@ -11,7 +11,6 @@ from experiments.modal_image import mk_image
 from optimizer.optimizer import Optimizer
 from problems.problem import build_problem
 
-
 modal_image = mk_image()
 
 

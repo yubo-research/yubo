@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-
 FakeResultsDict = type("FakeResultsDict", (dict,), {"len": lambda self: len(self)})
 
 

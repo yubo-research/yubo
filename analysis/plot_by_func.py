@@ -11,7 +11,6 @@ from analysis.plot_by_func_core import (
 )
 from analysis.plotting import subplots
 
-
 __all__ = ["plot_by_func", "plot_by_func_grouped", "plot_by_func_publication"]
 
 

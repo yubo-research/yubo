@@ -6,7 +6,6 @@ from common.video_rl_render import RLVideoContext, render_policy_videos_rl
 from common.video_rollout import rollout_episode
 from common.video_spaces import resolve_max_episode_steps, scale_action_to_space
 
-
 __all__ = [
     "RLVideoContext",
     "policy_for_bo_rollout",

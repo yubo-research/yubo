@@ -34,6 +34,12 @@ def validate_eggroll_population(
         raise ValueError("num_engines must be >= 1.")
     if int(population_size) % int(num_engines) != 0:
         raise ValueError(f"population_size={population_size} must be divisible by num_engines={num_engines}.")
+    loras_per_engine = int(population_size) // int(num_engines)
+    if int(loras_per_engine) % 2 != 0:
+        raise ValueError(
+            "population_size/num_engines must be even so each engine gets antithetic (+/-) pairs. "
+            f"Got population_size={population_size}, num_engines={num_engines} -> {loras_per_engine} arms/engine."
+        )
     if int(samples_per_prompt) > 1 and float(temperature) <= 0.0:
         raise ValueError("samples_per_prompt > 1 requires temperature > 0.")
     if bool(pass_at_k) and int(samples_per_prompt) <= 1:

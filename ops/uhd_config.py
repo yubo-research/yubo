@@ -62,6 +62,9 @@ class UHDConfig:
     eggroll_freeze_nonlora: bool = False
     use_async: bool = False
     vllm_max_model_len: int | None = None
+    vllm_gpu_memory_utilization: float | None = None
+    vllm_max_num_seqs: int | None = None
+    vllm_max_num_batched_tokens: int | None = None
 
 
 __all__ = ["BEConfig", "EarlyRejectConfig", "ENNConfig", "UHDConfig"]

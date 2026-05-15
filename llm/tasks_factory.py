@@ -4,7 +4,7 @@ from typing import Any
 
 from llm.console_observer import UnifiedConsoleManager
 from llm.registry import LLMEnvSpec
-from llm.tasks_base import LLMTask
+from llm.task_protocols import LLMTask
 from llm.tasks_countdown import CountdownTask
 from llm.tasks_math import MathTask
 from llm.tasks_static import RandomTask, ZerosTask

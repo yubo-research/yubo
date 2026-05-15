@@ -5,8 +5,8 @@ from typing import Any, Literal
 
 import numpy as np
 
+from common.env_tags import is_atari_env_tag
 from rl.core.continuous_actions import normalize_action_bounds
-
 
 ObsMode = Literal["vector", "pixels"]
 ActionKind = Literal["discrete", "continuous"]
@@ -42,32 +42,6 @@ def _space_shape(space: Any) -> tuple[int, ...]:
     return tuple((int(v) for v in shape))
 
 
-def _infer_raw_channels(shape: tuple[int, ...]) -> int | None:
-    if not shape:
-        return None
-    dims = [int(v) for v in shape]
-    if 4 in dims:
-        return 4
-    if 3 in dims:
-        return 3
-    if 1 in dims:
-        return 1
-    return None
-
-
-def _infer_image_size(shape: tuple[int, ...], default_size: int) -> int:
-    if len(shape) >= 2:
-        for i in range(len(shape) - 1):
-            if int(shape[i]) == int(shape[i + 1]) and int(shape[i]) >= 16:
-                return int(shape[i])
-    large_dims = [int(v) for v in shape if int(v) >= 16]
-    if len(large_dims) >= 2:
-        return int(min(large_dims[-2], large_dims[-1]))
-    if len(large_dims) == 1:
-        return int(large_dims[0])
-    return int(default_size)
-
-
 def resolve_observation_contract(env_conf: Any, *, default_image_size: int = 84) -> ObservationContract:
     state_space = getattr(env_conf, "state_space", None)
     if state_space is None:
@@ -75,14 +49,30 @@ def resolve_observation_contract(env_conf: Any, *, default_image_size: int = 84)
         state_space = getattr(gym_conf, "state_space", None)
     if state_space is None:
         raise ValueError("Observation space is missing on env_conf. Call env_conf.ensure_spaces() before resolving env contracts.")
+
     raw_shape = _space_shape(state_space)
     from_pixels = bool(getattr(env_conf, "from_pixels", False))
+
     if not from_pixels:
         vector_dim = int(np.prod(raw_shape)) if raw_shape else 1
         return ObservationContract(mode="vector", raw_shape=raw_shape, vector_dim=vector_dim)
-    raw_channels = _infer_raw_channels(raw_shape)
-    model_channels = 4 if raw_channels == 4 else 3
-    image_size = _infer_image_size(raw_shape, int(default_image_size))
+
+    # Pixel mode: avoid fragile heuristics. Assume 84x84 and 3 channels unless tagged/specified.
+    image_size = int(getattr(env_conf, "image_size", default_image_size))
+
+    # Most RL CNNs (Nature CNN) expect 3 channels (RGB) or 4 channels (Atari FrameStack).
+    # We check the tag if available on env_conf, but also look at the shape directly.
+    env_tag = str(getattr(env_conf, "env_tag", ""))
+    model_channels = 4 if is_atari_env_tag(env_tag) else 3
+
+    # If the shape clearly indicates 4 channels, use it (handles FrameStack without Atari tag)
+    if len(raw_shape) >= 3:
+        if int(raw_shape[0]) == 4 or int(raw_shape[-1]) == 4:
+            model_channels = 4
+
+    # Allow explicit override on env_conf
+    model_channels = int(getattr(env_conf, "model_channels", model_channels))
+
     return ObservationContract(
         mode="pixels",
         raw_shape=raw_shape,

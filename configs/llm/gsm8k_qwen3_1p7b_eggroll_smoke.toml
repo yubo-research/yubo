@@ -13,7 +13,7 @@ env_tag = "llm:math:gsm8k"
 policy_tag = "qwen3-1p7b-lora-r1"
 optimizer = "eggroll"
 
-num_rounds = 1
+num_rounds = 1e5
 num_reps = 1
 lr = 0.001
 sigma = 0.001

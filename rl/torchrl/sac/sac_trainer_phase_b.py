@@ -11,7 +11,6 @@ from .sac_trainer_phase_b_impl import (
     update_step,
 )
 
-
 __all__ = [
     "build_sac_collector",
     "flatten_batch_to_transitions",

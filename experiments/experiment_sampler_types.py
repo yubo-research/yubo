@@ -6,7 +6,6 @@ from typing import Any, NamedTuple, Optional
 from analysis.data_io import TraceRecord
 from common.collector import Collector
 
-
 # Cumulative proposal-time budget for Modal timing sweep (``Optimizer._cum_dt_proposing``).
 TIMING_SWEEP_MAX_CUMULATIVE_PROPOSAL_SECONDS = 5 * 60 * 60
 
@@ -132,10 +131,11 @@ class ExperimentConfig:
             max_total_seconds=max_total,
             b_trace=true_false(d.get("b_trace", True)),
             video_enable=true_false(d.get("video_enable", False)),
-            video_num_video_episodes=3,
-            video_episode_selection="best",
-            video_seed_base=None,
-            video_prefix="bo",
+            video_num_episodes=int(d.get("video_num_episodes", 8)),
+            video_num_video_episodes=int(d.get("video_num_video_episodes", 3)),
+            video_episode_selection=str(d.get("video_episode_selection", "best")).lower(),
+            video_seed_base=None if d.get("video_seed_base") in (None, "None") else int(d["video_seed_base"]),
+            video_prefix=str(d.get("video_prefix", "bo")),
             runtime_device=runtime_device,
             local_workers=local_workers,
             policy_tag=policy_tag,

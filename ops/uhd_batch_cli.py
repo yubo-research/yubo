@@ -12,7 +12,6 @@ from ops.uhd_batch_modal import (
     _submitted_dict,
 )
 
-
 _ORIG_BATCH_LOCAL = _batch_local
 _ORIG_BATCH_MODAL = _batch_modal
 

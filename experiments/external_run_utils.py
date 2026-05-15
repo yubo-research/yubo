@@ -133,7 +133,14 @@ def write_metadata(exp_dir: Path, cfg: dict[str, Any], cmd: list[str]) -> None:
         f.write("\n")
 
 
-def run_with_log(cmd: list[str], *, cwd: Path, log_path: Path, env: dict[str, str]) -> int:
+def run_with_log(
+    cmd: list[str],
+    *,
+    cwd: Path,
+    log_path: Path,
+    env: dict[str, str],
+    line_router: Callable[[str], None] | None = None,
+) -> int:
     log_path.parent.mkdir(parents=True, exist_ok=True)
     with open(log_path, "w", encoding="utf-8") as log:
         proc = subprocess.Popen(
@@ -147,6 +154,9 @@ def run_with_log(cmd: list[str], *, cwd: Path, log_path: Path, env: dict[str, st
         )
         assert proc.stdout is not None
         for line in proc.stdout:
-            print(line, end="")
             log.write(line)
+            if line_router is not None:
+                line_router(line.rstrip("\n"))
+            else:
+                print(line, end="")
         return proc.wait()

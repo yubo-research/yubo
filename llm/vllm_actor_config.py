@@ -19,7 +19,11 @@ class VLLMActorConfig:
     max_tokens: int
     prompt_batch_size: int
     enforce_eager: bool
+    samples_per_prompt: int = 1
     vllm_max_model_len: int | None = None
+    vllm_gpu_memory_utilization: float | None = None
+    vllm_max_num_seqs: int | None = None
+    vllm_max_num_batched_tokens: int | None = None
 
     @classmethod
     def from_kwargs(cls, **kwargs) -> "VLLMActorConfig":
@@ -37,25 +41,56 @@ def set_vllm_env_defaults() -> None:
 
 
 def get_llm_kwargs(cfg: VLLMActorConfig) -> dict[str, Any]:
+    max_model_len = _max_model_len(cfg)
+    max_num_seqs = _max_num_seqs(cfg)
     return {
         "model": cfg.model_name,
         "tensor_parallel_size": int(cfg.tensor_parallel_size),
         "distributed_executor_backend": "ray",
         "worker_extension_cls": "llm.vllm_worker.WorkerExtension",
         "dtype": "auto",
-        "enable_prefix_caching": True,
+        "enable_prefix_caching": False,
         "enforce_eager": bool(cfg.enforce_eager),
         "enable_lora": True,
         "max_loras": int(cfg.max_loras),
         "max_lora_rank": max(int(cfg.lora_rank), 8),
-        "gpu_memory_utilization": 0.90,
+        "gpu_memory_utilization": _gpu_memory_utilization(cfg),
         "trust_remote_code": True,
-        "max_num_seqs": 512,
-        "max_model_len": int(cfg.vllm_max_model_len) if cfg.vllm_max_model_len is not None else max(8192, 512 + int(cfg.max_tokens)),
-        "max_num_batched_tokens": max(1, int(cfg.prompt_batch_size)) * 2048,
+        "max_num_seqs": max_num_seqs,
+        "max_model_len": max_model_len,
+        "max_num_batched_tokens": _max_num_batched_tokens(cfg, max_model_len=max_model_len, max_num_seqs=max_num_seqs),
         "enable_chunked_prefill": True,
         "load_format": "auto",
     }
+
+
+def _max_model_len(cfg: VLLMActorConfig) -> int:
+    if cfg.vllm_max_model_len is not None:
+        return max(1, int(cfg.vllm_max_model_len))
+    return max(8192, 512 + int(cfg.max_tokens))
+
+
+def _active_sequences(cfg: VLLMActorConfig) -> int:
+    return max(1, int(cfg.prompt_batch_size)) * max(1, int(cfg.samples_per_prompt))
+
+
+def _max_num_seqs(cfg: VLLMActorConfig) -> int:
+    if cfg.vllm_max_num_seqs is not None:
+        return max(1, int(cfg.vllm_max_num_seqs))
+    return max(8, min(64, _active_sequences(cfg)))
+
+
+def _gpu_memory_utilization(cfg: VLLMActorConfig) -> float:
+    if cfg.vllm_gpu_memory_utilization is not None:
+        return max(0.01, min(0.99, float(cfg.vllm_gpu_memory_utilization)))
+    return 0.85
+
+
+def _max_num_batched_tokens(cfg: VLLMActorConfig, *, max_model_len: int, max_num_seqs: int) -> int:
+    if cfg.vllm_max_num_batched_tokens is not None:
+        return max(1, int(cfg.vllm_max_num_batched_tokens))
+    active = min(max_num_seqs, _active_sequences(cfg))
+    return max(1, active) * min(max_model_len, 2048)
 
 
 def sampling_params(kwargs: dict[str, Any]):

@@ -6,20 +6,18 @@ from typing import Any
 import numpy as np
 import torch
 
+from common.env_tags import is_atari_env_tag, normalize_dm_control_tag
 from problems.problem import build_problem
+from rl.core import env_setup, runtime
 from rl.core.continuous_actions import scale_action_to_env
-from rl.core.env_setup import build_continuous_gym_env_setup
 from rl.core.ppo_envs import (
-    _env_tag_for_problem_build,
     _maybe_register_atari_dm_backends,
-    is_atari_env_tag,
     resolve_gym_env_name,
     to_puffer_game_name,
 )
-from rl.core.runtime import seed_everything as _seed_everything_core
 
 from ...pufferlib_compat import import_pufferlib_modules
-from ..vector_env import make_vector_env as _make_vector_env_common
+from .. import vector_env
 from . import backbone_name
 from .pixel_utils import ensure_pixel_obs_format
 from .runtime_utils import obs_scale_from_env, select_device
@@ -47,7 +45,7 @@ class EnvSetup:
 
 
 def seed_everything(seed: int) -> None:
-    _seed_everything_core(int(seed))
+    runtime.seed_everything(int(seed))
 
 
 def resolve_device(device: str) -> torch.device:
@@ -58,6 +56,9 @@ def to_env_action(action_norm: np.ndarray, *, low: np.ndarray, high: np.ndarray)
     return scale_action_to_env(action_norm, low, high, clip=True)
 
 
+# TODO: UNIFY HEURISTICS. The functions _infer_channels and _infer_image_size below are duplicates of logic
+# that was recently cleaned up in rl.core.env_contract. During the next sweep, these should be removed
+# in favor of resolve_observation_contract() and the shared tag utils in common.env_tags.
 def _infer_channels(shape: tuple[int, ...], *, fallback: int) -> int:
     if len(shape) >= 3:
         if int(shape[0]) in (1, 3, 4):
@@ -125,7 +126,7 @@ def continuous_gym_runtime_from_problem(
     pixels_only: bool,
 ):
     _maybe_register_atari_dm_backends(env_tag)
-    adj = _env_tag_for_problem_build(env_tag, from_pixels=from_pixels)
+    adj = normalize_dm_control_tag(env_tag, from_pixels=from_pixels)
     # policy_tag="linear" is a placeholder; only problem.env is used (policy is never built)
     problem = build_problem(adj, "linear", problem_seed=int(problem_seed), noise_seed_0=int(noise_seed_0))
     env = problem.env
@@ -139,7 +140,7 @@ def resolve_backbone_name(config: Any, obs_spec: ObservationSpec) -> str:
 
 
 def build_env_setup(config: Any) -> EnvSetup:
-    shared = build_continuous_gym_env_setup(
+    shared = env_setup.build_env_setup(
         env_tag=str(config.env_tag),
         seed=int(config.seed),
         problem_seed=config.problem_seed,
@@ -147,6 +148,7 @@ def build_env_setup(config: Any) -> EnvSetup:
         from_pixels=bool(config.from_pixels),
         pixels_only=bool(config.pixels_only),
         get_env_conf_fn=continuous_gym_runtime_from_problem,
+        include_continuous_info=True,
         obs_scale_from_env_fn=obs_scale_from_env,
     )
     return EnvSetup(
@@ -162,7 +164,7 @@ def build_env_setup(config: Any) -> EnvSetup:
 
 
 def _make_vector_env_shared(config, **kwargs):
-    return _make_vector_env_common(config, **kwargs)
+    return vector_env.make_vector_env(config, **kwargs)
 
 
 def make_vector_env(config: Any):

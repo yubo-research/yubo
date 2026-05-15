@@ -2,5 +2,4 @@
 
 from testing_support.vector_fakes import FakePufferVecEnv, FakePufferVecEnvContinuous
 
-
 __all__ = ["FakePufferVecEnv", "FakePufferVecEnvContinuous"]

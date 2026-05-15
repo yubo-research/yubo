@@ -1,6 +1,6 @@
 from functools import partial
 
-from .designer_registry_builders import _build_eggroll, _build_sparse_enn
+from .designer_registry_extra_builders import _build_eggroll, _build_sparse_enn
 from .designer_registry_option_handlers import (
     _build_turbo_enn_f,
     _d_morbo_enn_fit,
@@ -15,7 +15,6 @@ from .designer_registry_option_handlers import (
     _d_turbo_enn_sweep,
 )
 from .designer_types import DesignerDef, DesignerOptionSpec
-
 
 _DESIGNER_DEFS: list[DesignerDef] = [
     DesignerDef(
@@ -318,6 +317,13 @@ _DESIGNER_DEFS: list[DesignerDef] = [
                 value_type="int",
                 description="Held-out center-policy evaluation episodes per generation.",
                 example_suffix="num_envs=8",
+            ),
+            DesignerOptionSpec(
+                name="batch_size",
+                required=False,
+                value_type="int",
+                description="External scorer candidate batch size.",
+                example_suffix="batch_size=4",
             ),
             DesignerOptionSpec(
                 name="suppress_noiser_stdout",

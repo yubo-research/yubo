@@ -210,3 +210,9 @@ def test_added_branch_names_rl_pufferlib_ppo_engine_impl() -> None:
             train_ppo_puffer_impl,
         )
     assert True
+
+
+def test_kiss_dep_sentinels_shared() -> None:
+    from .kiss_booster_helpers import booster_dep_sentinels
+
+    booster_dep_sentinels()

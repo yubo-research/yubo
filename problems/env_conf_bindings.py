@@ -1,6 +1,5 @@
 from typing import Any, Callable
 
-
 _ATARI_DM_BINDINGS = None
 _ATARI_DM_BINDINGS_LOADER: Callable[[], Any] | None = None
 

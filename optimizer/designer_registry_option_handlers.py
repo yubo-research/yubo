@@ -1,13 +1,57 @@
 from .designer_errors import NoSuchDesignerError
 from .designer_registry_builders import (
     _build_bt_acq,
+    _load_symbol,
     _mtv,
     _optional_int,
     _require_int,
     _require_str_in,
-    _turbo_enn,
+)
+from .designer_registry_builders import (
+    _turbo_enn as _base_turbo_enn,
 )
 from .designer_registry_context import _SimpleContext
+
+_TURBO_OPTION_KEYS = {
+    "acq_type",
+    "candidate_rv",
+    "k",
+    "num_candidates",
+    "num_fit_candidates",
+    "num_fit_samples",
+    "num_init",
+    "num_keep",
+    "num_metrics",
+    "tr_type",
+    "use_python",
+    "use_y_var",
+}
+_EGGROLL_TURBO_OPTION_KEYS = {
+    "deterministic_policy",
+    "num_envs",
+    "param_scale",
+    "seed_offset",
+    "steps_per_episode",
+}
+
+
+def _turbo_enn(ctx: _SimpleContext, *, opts: dict | None = None, designer_name: str = "turbo-enn", **kw):
+    opts = dict(opts or {})
+    allowed = _TURBO_OPTION_KEYS | _EGGROLL_TURBO_OPTION_KEYS
+    unknown = set(opts) - allowed
+    if unknown:
+        raise NoSuchDesignerError(f"Designer '{designer_name}' does not support option(s): {', '.join(sorted(unknown))}.")
+    conflicts = set(opts) & set(kw)
+    if conflicts:
+        raise NoSuchDesignerError(f"Designer '{designer_name}' got duplicate option(s): {', '.join(sorted(conflicts))}.")
+    kw.update(opts)
+    eggroll_opts = {k: kw.pop(k) for k in list(kw) if k in _EGGROLL_TURBO_OPTION_KEYS}
+    if eggroll_opts:
+        if ctx.env_conf is None:
+            raise NoSuchDesignerError(f"Designer '{designer_name}' EggRoll options require env_conf.")
+        EggRollJAXVectorDesigner = _load_symbol("optimizer.eggroll_vector_designer", "EggRollJAXVectorDesigner")
+        return EggRollJAXVectorDesigner(ctx.policy, ctx.env_conf, **eggroll_opts, **kw)
+    return _base_turbo_enn(ctx, **kw)
 
 
 def _d_ts_sweep(ctx: _SimpleContext, opts: dict):

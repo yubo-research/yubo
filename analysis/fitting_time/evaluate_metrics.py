@@ -8,7 +8,6 @@ from dataclasses import dataclass
 import numpy as np
 import torch
 
-
 SYNTHETIC_BENCHMARK_SINE_FUNCTION_NAME = "sine"
 
 SURROGATE_BENCHMARK_KEYS: tuple[str, ...] = (

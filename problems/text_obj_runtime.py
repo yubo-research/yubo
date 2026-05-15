@@ -5,7 +5,6 @@ import os
 import tempfile
 from typing import Any
 
-
 _RUNTIME_ERROR = (
     "Real UHD text runs require the CUDA text runtime: ray, vllm, transformers, "
     "torch, peft, accelerate, and safetensors. Run admin/setup-hyperscalees.sh on "

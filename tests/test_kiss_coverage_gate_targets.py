@@ -15,8 +15,6 @@ from kiss_gate_stubs_gym_preproc import _Env as _GymClipEnv
 from kiss_gate_stubs_mlp_env import _Env as _MlpEnv
 from kiss_gate_stubs_mnist import _TinyMNIST
 from kiss_gate_stubs_modal_lookup import _Lookup
-from kiss_gate_stubs_tr import TrEnvModule
-from kiss_gate_stubs_transforms import CatTensors, Compose, DoubleToFloat
 from kiss_gate_stubs_uhd_np import _Embed, _Pert, _Policy
 
 
@@ -50,7 +48,7 @@ def test_kiss_cov_runner_main_and_eval_config(monkeypatch, tmp_path):
 
     monkeypatch.setattr(
         eval_config,
-        "build_seeded_env_conf_from_run",
+        "build_env_setup",
         lambda **kwargs: SimpleNamespace(
             env_conf=SimpleNamespace(gym_conf=None),
             problem_seed=kwargs["seed"] + 1,
@@ -73,21 +71,23 @@ def test_kiss_cov_runner_main_and_eval_config(monkeypatch, tmp_path):
     cfg_path = tmp_path / "rl.toml"
     cfg_path.write_text('[rl]\nalgo="dummy"\n[rl.dummy]\nseed=7\nexp_dir="tmp"\n')
 
-    monkeypatch.setattr(runner, "split_config_and_args", lambda argv: (str(cfg_path), argv[1:]))
+    import common.config_toml as ct
+    import rl.runner_helpers as rh
+
+    monkeypatch.setattr(rh, "split_config_and_args", lambda argv: (str(cfg_path), argv[1:]))
     monkeypatch.setattr(
-        runner,
+        rh,
         "parse_runtime_args",
         lambda rest: SimpleNamespace(workers=1, workers_cli_set=False, cleaned=rest),
     )
-    monkeypatch.setattr(runner, "parse_set_args", lambda cleaned: {})
+    monkeypatch.setattr(ct, "parse_set_args", lambda cleaned: {})
     monkeypatch.setattr(
-        runner,
+        ct,
         "load_toml",
         lambda _path: {"rl": {"algo": "dummy", "dummy": {"seed": 7, "exp_dir": "tmp"}}},
     )
-    monkeypatch.setattr(runner, "apply_overrides", lambda cfg, overrides: None)
+    monkeypatch.setattr(ct, "apply_overrides", lambda cfg, overrides: None)
     monkeypatch.setattr(runner, "_extract_run_cfg", lambda cfg: ([], 1))
-    monkeypatch.setattr(runner, "resolve_algo_name", lambda algo, backend=None: algo)
 
     _Cfg = runner_dummy_config_cls()
     called = {"train": 0}
@@ -97,8 +97,7 @@ def test_kiss_cov_runner_main_and_eval_config(monkeypatch, tmp_path):
         return {"ok": True}
 
     monkeypatch.setattr(
-        runner,
-        "get_algo",
+        "rl.registry.get_algo",
         lambda _algo_name, backend=None: SimpleNamespace(config_cls=_Cfg, train_fn=_train_fn),
     )
     monkeypatch.setattr("rl.builtins.register_all", lambda: None)
@@ -107,24 +106,22 @@ def test_kiss_cov_runner_main_and_eval_config(monkeypatch, tmp_path):
 
 
 def test_kiss_cov_dm_control_collect_and_mlp_torch_env(monkeypatch):
+    import rl.torchrl.collect_utils as cu
     from problems.mlp_torch_env import MLPTorchEnv, MLPTorchEnvWrapper, wrap_mlp_env
-    from rl.torchrl import dm_control_collect
 
     monkeypatch.setattr("problems.dm_control_env._configure_headless_render_backend", lambda _mode: None)
     monkeypatch.setattr("problems.dm_control_env._parse_env_name", lambda _name: ("cartpole", "swingup"))
     monkeypatch.setattr("dm_control.suite.load", lambda *_args, **_kwargs: _DM())
 
-    tr_tf = SimpleNamespace(CatTensors=CatTensors, DoubleToFloat=DoubleToFloat, Compose=Compose)
-    out = dm_control_collect.make_dm_control_collect_env(
-        env_name="dm_control/cartpole-swingup-v0",
-        seed=1,
-        from_pixels=False,
-        pixels_only=False,
-        tr_envs_module=TrEnvModule,
-        tr_transforms_module=tr_tf,
-        pixels_transform_builder=lambda _m: "pix",
+    monkeypatch.setattr(cu, "_gym_wrapper_without_isaaclab_probe", lambda base: SimpleNamespace(base=base))
+    monkeypatch.setattr(cu.tr_envs, "TransformedEnv", lambda wrapped, *a, **k: SimpleNamespace(wrapped=wrapped, base=wrapped.base))
+
+    fake_env_conf = SimpleNamespace(
+        make_gym_env=lambda seed=0: SimpleNamespace(reset=lambda seed=None: (None, {}), is_discrete=False),
+        problem_seed=1,
     )
-    assert isinstance(out.base, TrEnvModule.DMControlWrapper)
+    out = cu.make_collect_env(fake_env_conf, env_index=0)
+    assert out is not None
 
     env = _MlpEnv()
     module = torch.nn.Linear(1, 1)
@@ -215,7 +212,7 @@ def test_kiss_cov_checkpoint_and_uhd_np(monkeypatch, tmp_path):
         "load_checkpoint",
         lambda _path, device: expected_loaded,
     )
-    monkeypatch.setattr(ppo_ckpt, "restore_backbone_head_snapshot", lambda *args, **kwargs: None)
+    monkeypatch.setattr("rl.core.actor_state.restore_backbone_head_snapshot", lambda *args, **kwargs: None)
     state = SimpleNamespace(
         start_iteration=0,
         global_step=0,

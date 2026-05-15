@@ -16,7 +16,6 @@ from common.console_rl import (
     print_run_header,
 )
 
-
 __all__ = [
     "BOConsoleCollector",
     "CMA_METRICS",

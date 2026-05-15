@@ -1,0 +1,17 @@
+# Run on the CUDA remote:
+# ./ops/exp_uhd.py local configs/uhd/isaaclab/anymal_rough_mezo_smoke.toml
+
+[uhd]
+env_tag = "isaaclab:Isaac-Velocity-Rough-Anymal-C-Direct-v0"
+policy_tag = "eggroll-ac-mlp-64x2-pqn"
+optimizer = "mezo"
+num_rounds = 1000
+num_reps = 1
+problem_seed = 0
+noise_seed_0 = 0
+sigma = 0.001
+lr = 0.01
+perturb = "eggroll"
+num_envs = 1
+steps_per_episode = 200
+log_interval = 1

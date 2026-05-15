@@ -4,6 +4,8 @@ import importlib
 from pathlib import Path
 from typing import Any, Callable
 
+from common.experiment_seeds import global_seed_for_run
+
 
 def init_run_artifacts(*, exp_dir: str, config_dict: dict[str, Any]) -> tuple[Path, Path, Any]:
     write_config = importlib.import_module("analysis.data_io").write_config
@@ -25,7 +27,6 @@ def init_runtime(
     seed_everything_fn: Callable[[int], None],
     resolve_device_fn: Callable[[str], Any],
 ):
-    global_seed_for_run = importlib.import_module("rl.core.env_conf").global_seed_for_run
     env_setup = build_env_setup_fn(config)
     run_seed = global_seed_for_run(int(env_setup.problem_seed))
     seed_everything_fn(int(run_seed))

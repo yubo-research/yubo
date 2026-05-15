@@ -26,8 +26,8 @@ def _build_vector_kwargs(config: Any, backend_cls, vector_mod) -> dict[str, Any]
 
 def _make_dm_control_env(
     *,
-    env_name: str,
-    env_kwargs: dict,
+    domain: str,
+    task: str,
     from_pixels: bool,
     pixels_only: bool,
     buf=None,
@@ -36,21 +36,28 @@ def _make_dm_control_env(
     import gymnasium as gym
     import numpy as np
     import pufferlib
+    from dm_control import suite
 
-    from problems.dm_control_env import make as make_dm_control_env
+    from problems.dm_control_spaces import flatten_obs, spec_to_space
 
     class _DMControlPufferEnv(pufferlib.PufferEnv):
         def __init__(self, *, buf=None, seed=0):
-            kwargs = dict(env_kwargs)
-            self._env = make_dm_control_env(
-                env_name,
-                render_mode="rgb_array",
-                from_pixels=bool(from_pixels),
-                pixels_only=bool(pixels_only),
-                **kwargs,
-            )
-            obs_space = self._env.observation_space
-            act_space = self._env.action_space
+            self._domain = domain
+            self._task = task
+            self._from_pixels = from_pixels
+            self._pixels_only = pixels_only
+            self._env = suite.load(domain, task, task_kwargs={"random": seed})
+            obs_spec = self._env.observation_spec()
+            act_spec = self._env.action_spec()
+            obs_space = spec_to_space(obs_spec)
+            act_space = spec_to_space(act_spec)
+
+            if from_pixels:
+                # Placeholder for pixel support: in a real implementation we would
+                # wrap self._env with a pixel wrapper similar to the one in problems.
+                # For now, we assume vector observations as per the native suite.
+                pass
+
             self.single_observation_space = gym.spaces.Box(
                 low=np.asarray(obs_space.low),
                 high=np.asarray(obs_space.high),
@@ -73,7 +80,10 @@ def _make_dm_control_env(
                 self.reset(seed=int(seed))
 
         def reset(self, seed=None):
-            obs, info = self._env.reset(seed=seed)
+            if seed is not None:
+                self._env = suite.load(self._domain, self._task, task_kwargs={"random": int(seed)})
+            time_step = self._env.reset()
+            obs = flatten_obs(time_step.observation)
             obs_arr = np.asarray(obs, dtype=self.single_observation_space.dtype)
             self.observations[0] = obs_arr
             self.rewards[0] = 0.0
@@ -84,7 +94,7 @@ def _make_dm_control_env(
             self._initialized = True
             self._episode_return = 0.0
             self._episode_length = 0
-            return self.observations, info
+            return self.observations, {}
 
         def step(self, actions):
             if not self._initialized:
@@ -92,28 +102,36 @@ def _make_dm_control_env(
             if self._done:
                 self.reset()
                 return self.observations, float(self.rewards[0]), False, False, {}
+
             action = np.asarray(actions, dtype=self.single_action_space.dtype)
             action = np.ravel(action).reshape(self.single_action_space.shape)
             action = np.clip(action, self.single_action_space.low, self.single_action_space.high)
-            obs, reward, done, truncated, info = self._env.step(action)
+
+            time_step = self._env.step(action)
+            obs = flatten_obs(time_step.observation)
             obs_arr = np.asarray(obs, dtype=self.single_observation_space.dtype)
-            reward_f = float(reward)
-            done_b = bool(done)
-            trunc_b = bool(truncated)
+
+            reward_f = float(time_step.reward) if time_step.reward is not None else 0.0
+            done_b = bool(time_step.last())
+            trunc_b = False  # dm_env doesn't distinguish truncation by default
+
             self.observations[0] = obs_arr
             self.rewards[0] = reward_f
             self.terminals[0] = done_b
             self.truncations[0] = trunc_b
             self.masks[0] = True
+
             self._episode_return += reward_f
             self._episode_length += 1
+
+            info = {}
             if done_b or trunc_b:
-                info = dict(info)
                 info["episode_return"] = float(self._episode_return)
                 info["episode_length"] = int(self._episode_length)
                 self._episode_return = 0.0
                 self._episode_length = 0
             self._done = bool(done_b or trunc_b)
+
             return self.observations, reward_f, done_b, trunc_b, info
 
         def close(self):
@@ -122,25 +140,22 @@ def _make_dm_control_env(
     return _DMControlPufferEnv(buf=buf, seed=seed)
 
 
-def _make_gymnasium_env(*, env_name: str, env_kwargs: dict, render_mode="rgb_array", buf=None, seed=0):
-    import gymnasium as gym
+def _make_gymnasium_env(*, env_conf: Any, render_mode="rgb_array", buf=None, seed=0):
     import pufferlib
     import pufferlib.emulation
 
-    kwargs = dict(env_kwargs)
-    try:
-        env = gym.make(env_name, render_mode=render_mode, **kwargs)
-    except TypeError:
-        env = gym.make(env_name, **kwargs)
-    if isinstance(env.action_space, gym.spaces.Box):
-        env = pufferlib.ClipAction(env)
+    # Use the unified creation path on EnvConf
+    env = env_conf.make_gym_env(render_mode=render_mode)
+
+    # We still need PufferLib-specific EpisodeStats for some backends
     env = pufferlib.EpisodeStats(env)
+
     return pufferlib.emulation.GymnasiumPufferEnv(env=env, buf=buf, seed=seed)
 
 
-def _build_gymnasium_env_creator(*, env_name: str, env_kwargs: dict, pufferlib):
+def _build_gymnasium_env_creator(*, env_conf: Any, pufferlib):
     _ = pufferlib
-    return functools.partial(_make_gymnasium_env, env_name=env_name, env_kwargs=env_kwargs)
+    return functools.partial(_make_gymnasium_env, env_conf=env_conf)
 
 
 def _resolve_backend(config: Any, puffer_vector):
@@ -165,19 +180,23 @@ def _resolve_env_creator(
             puffer_atari.env_creator(game_name),
             {"framestack": int(config.framestack)},
         )
-    env_name, env_kwargs = resolve_gym_env_name_fn(env_tag)
-    if str(env_name).startswith("dm_control/"):
+
+    if env_tag.startswith("dm_control/"):
+        from problems.dm_control_env import parse_env_name
+
+        domain, task = parse_env_name(env_tag)
         return (
             functools.partial(
                 _make_dm_control_env,
-                env_name=str(env_name),
-                env_kwargs=dict(env_kwargs),
+                domain=domain,
+                task=task,
                 from_pixels=bool(getattr(config, "from_pixels", False)),
                 pixels_only=bool(getattr(config, "pixels_only", True)),
             ),
             {},
         )
-    env_creator = _build_gymnasium_env_creator(env_name=str(env_name), env_kwargs=dict(env_kwargs), pufferlib=pufferlib)
+
+    env_creator = _build_gymnasium_env_creator(env_conf=config.env_conf, pufferlib=pufferlib)
     return (env_creator, {})
 
 

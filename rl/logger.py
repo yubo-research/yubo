@@ -16,7 +16,6 @@ from common.console import (
 )
 from rl.checkpointing import append_jsonl
 
-
 __all__ = [
     "PPO_METRICS",
     "SAC_METRICS",

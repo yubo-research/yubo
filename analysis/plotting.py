@@ -7,7 +7,6 @@ import analysis.data_sets as ads
 
 from .plotting_filled import filled_err
 
-
 linestyles = ["-", ":", "--", "-."] * 10
 markers = ["o", "x", "v", ".", "s"] * 10
 colors = [

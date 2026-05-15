@@ -4,7 +4,6 @@ from pathlib import Path
 import matplotlib
 import matplotlib.colors as mcolors
 
-
 matplotlib.use("Agg")
 
 import numpy as np

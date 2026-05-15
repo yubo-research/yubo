@@ -151,7 +151,7 @@ class EnvironmentRuntime:
         elif (unsupported_msg := _unsupported_make_message(env_name)) is not None:
             raise RuntimeError(unsupported_msg)
         elif is_isaaclab_env_tag(env_name):
-            env = make_isaaclab_env(env_name, **(kwargs | spec.kwargs))
+            env = make_isaaclab_env(env_name, seed=self.problem_seed, **(kwargs | spec.kwargs))
         elif spec.gym_conf is not None:
             env = gym.make(env_name, **(kwargs | spec.kwargs))
         else:

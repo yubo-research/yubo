@@ -76,6 +76,12 @@ def test_load_experiment_config_toml_experiment_table(tmp_path):
         num_reps = 5
         b_trace = false
         max_total_seconds = 30.5
+        video_enable = true
+        video_num_episodes = 1
+        video_num_video_episodes = 1
+        video_episode_selection = "first"
+        video_seed_base = 17
+        video_prefix = "smoke"
         runtime_device = "cpu"
         local_workers = 4
         policy_tag = "pure-function"
@@ -90,6 +96,12 @@ def test_load_experiment_config_toml_experiment_table(tmp_path):
     assert cfg.num_reps == 5
     assert cfg.b_trace is False
     assert cfg.max_total_seconds == 30.5
+    assert cfg.video_enable is True
+    assert cfg.video_num_episodes == 1
+    assert cfg.video_num_video_episodes == 1
+    assert cfg.video_episode_selection == "first"
+    assert cfg.video_seed_base == 17
+    assert cfg.video_prefix == "smoke"
     assert cfg.runtime_device == "cpu"
     assert cfg.local_workers == 4
 

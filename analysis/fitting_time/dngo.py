@@ -33,7 +33,6 @@ from .dngo_model import (
     _normalize_y,
 )
 
-
 __all__ = [
     "DNGOConfig",
     "DNGOSurrogate",

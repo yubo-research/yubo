@@ -50,14 +50,22 @@ class BuiltUHDVectorObjective:
 
 def supports_uhd_vector_objective(env_tag: str) -> bool:
     from problems.eggroll_env_adapters import supports_eggroll_env_adapter
+    from problems.isaaclab_env_adapters import is_isaaclab_env_tag
     from problems.pre_obj import is_hyperscalees_pretrain_env, is_nanoegg_pretrain_env
     from problems.text_obj import is_text_env
 
-    return supports_eggroll_env_adapter(env_tag) or is_hyperscalees_pretrain_env(env_tag) or is_nanoegg_pretrain_env(env_tag) or is_text_env(env_tag)
+    return (
+        supports_eggroll_env_adapter(env_tag)
+        or is_isaaclab_env_tag(env_tag)
+        or is_hyperscalees_pretrain_env(env_tag)
+        or is_nanoegg_pretrain_env(env_tag)
+        or is_text_env(env_tag)
+    )
 
 
 def build_uhd_vector_objective(cfg: UHDConfig, *, embed_num_probes: int = 0) -> BuiltUHDVectorObjective:
     from problems.eggroll_env_adapters import supports_eggroll_env_adapter
+    from problems.isaaclab_env_adapters import is_isaaclab_env_tag
     from problems.pre_obj import (
         HyperscaleESLLMVectorObjective,
         NanoEggPretrainVectorObjective,
@@ -101,6 +109,12 @@ def build_uhd_vector_objective(cfg: UHDConfig, *, embed_num_probes: int = 0) -> 
             embed_num_probes=embed_num_probes,
         )
         return BuiltUHDVectorObjective(objective=objective, source="jax-env")
+
+    if is_isaaclab_env_tag(env_tag):
+        from problems.isaaclab_score import build_isaaclab_evaluator
+
+        objective = build_isaaclab_evaluator(cfg, embed_num_probes=embed_num_probes)
+        return BuiltUHDVectorObjective(objective=objective, source="isaaclab")
 
     if is_hyperscalees_pretrain_env(env_tag):
         objective = HyperscaleESLLMVectorObjective(cfg)

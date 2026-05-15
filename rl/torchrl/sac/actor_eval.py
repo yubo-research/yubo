@@ -5,7 +5,6 @@ from rl.torchrl.offpolicy.actor_eval import (
     use_sac_actor_snapshot,
 )
 
-
 SacActorEvalPolicy = OffPolicyActorEvalPolicy
 
 __all__ = [

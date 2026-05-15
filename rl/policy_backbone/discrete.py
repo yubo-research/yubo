@@ -6,7 +6,7 @@ import torch.nn as nn
 
 from policies.policy_mixin import PolicyParamsMixin
 from rl.backbone import BackboneSpec, HeadSpec, build_backbone, build_mlp_head
-from rl.core import env_contract as torchrl_env_contract
+from rl.core import env_contract
 
 from .common import ensure_env_spaces, init_linear
 
@@ -26,12 +26,12 @@ class DiscreteActorBackbonePolicy(PolicyParamsMixin, nn.Module):
         self.problem_seed = env_conf.problem_seed
         self._env_conf = env_conf
         self._const_scale = float(spec.param_scale)
-        io_contract = torchrl_env_contract.resolve_env_io_contract(env_conf, default_image_size=84)
+        io_contract = env_contract.resolve_env_io_contract(env_conf, default_image_size=84)
         if io_contract.action.kind != "discrete":
             raise ValueError("DiscreteActorBackbonePolicy expects a discrete action space.")
         self._obs_contract = io_contract.observation
         obs_dim = 64 if self._obs_contract.mode == "pixels" else int(self._obs_contract.vector_dim or 1)
-        backbone_name = torchrl_env_contract.resolve_backbone_name(spec.backbone.name, self._obs_contract)
+        backbone_name = env_contract.resolve_backbone_name(spec.backbone.name, self._obs_contract)
         backbone_spec = BackboneSpec(
             name=backbone_name,
             hidden_sizes=tuple(spec.backbone.hidden_sizes),

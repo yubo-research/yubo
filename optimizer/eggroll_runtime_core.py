@@ -4,7 +4,6 @@ from typing import Any
 
 import numpy as np
 
-
 _DEFAULT_STACK_ERROR = (
     "EggRoll JAX vector evaluation requires the separate HyperscaleES environment. "
     "Run admin/setup-hyperscalees.sh first, then use the plain python CLI from that environment."

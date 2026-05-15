@@ -28,7 +28,6 @@ from experiments.modal_synthetic_sine_benchmark_batches_reps import (
     surrogate_rep_json_dest,
 )
 
-
 _TAG = os.environ.get("MODAL_TAG")
 if not _TAG:
     for i, arg in enumerate(sys.argv):

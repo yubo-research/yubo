@@ -8,10 +8,10 @@ from typing import Any
 
 import numpy as np
 
-from llm.tasks_base import score_generations
+from llm.tasks_base import BatchScoringTaskMixin, score_generations
 
 
-class CountdownTask:
+class CountdownTask(BatchScoringTaskMixin):
     def __init__(
         self,
         *,

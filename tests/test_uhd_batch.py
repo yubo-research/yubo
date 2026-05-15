@@ -69,6 +69,7 @@ def test_dict_to_toml_bool():
 
 def test_run_subprocess_strips_num_reps(monkeypatch):
     import io
+
     import tomllib
 
     from ops.uhd_batch import _run_subprocess

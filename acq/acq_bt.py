@@ -5,7 +5,6 @@ import torch
 import acq.fit_gp as fit_gp
 from acq.acq_util import find_max, keep_best, keep_some, keep_trailing
 
-
 _KEEP_STYLE_FNS = {
     "some": keep_some,
     "best": keep_best,

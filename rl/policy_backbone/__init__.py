@@ -10,7 +10,6 @@ from .discrete import (
 )
 from .gaussian import GaussianActorBackbonePolicy, GaussianActorBackbonePolicyFactory
 
-
 __all__ = [
     "ActorBackbonePolicy",
     "ActorBackbonePolicyFactory",

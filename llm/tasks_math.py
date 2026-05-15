@@ -6,7 +6,7 @@ from typing import Any
 
 import numpy as np
 
-from llm.tasks_base import extract_model_answer, score_generations
+from llm.tasks_base import BatchScoringTaskMixin, extract_model_answer, score_generations
 
 
 @dataclass(frozen=True)
@@ -24,7 +24,7 @@ class MathTaskConfig:
         return cls(**kwargs)
 
 
-class MathTask:
+class MathTask(BatchScoringTaskMixin):
     def __init__(self, config: MathTaskConfig | None = None, **kwargs: Any) -> None:
         cfg = config if config is not None else MathTaskConfig.from_kwargs(**kwargs)
         self.batch_size = int(cfg.batch_size)

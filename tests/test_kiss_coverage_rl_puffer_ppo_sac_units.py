@@ -7,8 +7,8 @@ import numpy as np
 import torch
 
 
-def _mod(parts, names):
-    return __import__(".".join(parts), fromlist=names)
+def _mod(parts, names=None, *, fromlist=None):
+    return __import__(".".join(parts), fromlist=names if fromlist is None else fromlist)
 
 
 def test_kiss_cov_puffer_ppo_and_sac_units(monkeypatch, tmp_path):
@@ -110,7 +110,7 @@ def test_kiss_cov_puffer_ppo_and_sac_units(monkeypatch, tmp_path):
         lambda **kwargs: 1.0,
     )
     monkeypatch.setattr(
-        "rl.pufferlib.ppo.eval.common_video.render_policy_videos",
+        "rl.pufferlib.ppo.eval.video.render_policy_videos",
         lambda *args, **kwargs: None,
     )
     ppo_state = SimpleNamespace(

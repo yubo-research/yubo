@@ -23,14 +23,14 @@ def train_sac(config):
     with t.torchrl_common.temporary_distribution_validate_args(False):
         if config.eval_noise_mode is not None:
             t.eval_noise.normalize_eval_noise_mode(config.eval_noise_mode)
-        resolved = t.seed_util.resolve_run_seeds(
+        resolved = t.experiment_seeds.resolve_run_seeds(
             seed=int(config.seed),
             problem_seed=config.problem_seed,
             noise_seed_0=config.noise_seed_0,
         )
         config.problem_seed = int(resolved.problem_seed)
         config.noise_seed_0 = int(resolved.noise_seed_0)
-        t.seed_all(t.seed_util.global_seed_for_run(int(resolved.problem_seed)))
+        t.seed_all(t.experiment_seeds.global_seed_for_run(int(resolved.problem_seed)))
         env = build_env_setup(config)
         runtime = config.resolve_runtime(capabilities=_SAC_RUNTIME_CAPABILITIES)
         modules = build_modules(config, env, device=runtime.device)

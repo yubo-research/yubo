@@ -5,7 +5,6 @@ from ops.vec_uhd_bszo import _run_bszo
 from ops.vec_uhd_mezo import _run_mezo
 from ops.vec_uhd_simple import _run_simple
 
-
 _BE_OPTIMIZERS = {"simple_be", "mezo_be", "bszo_be"}
 
 

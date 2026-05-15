@@ -5,7 +5,6 @@ from experiments.experiment_sampler import (
 )
 from experiments.func_names import func_brief_2, funcs_1d, funcs_nd
 
-
 __all__ = [
     "TIMING_SWEEP_MAX_CUMULATIVE_PROPOSAL_SECONDS",
     "func_brief_2",

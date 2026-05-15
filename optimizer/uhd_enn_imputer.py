@@ -14,7 +14,6 @@ from .uhd_enn_config import ENNImputerConfig
 from .uhd_enn_imputer_predict import ENNMinusImputerPredictMixin
 from .uhd_enn_imputer_tell import ENNMinusImputerTellMixin
 
-
 __all__ = [
     "ENNImputerConfig",
     "ENNMinusImputer",

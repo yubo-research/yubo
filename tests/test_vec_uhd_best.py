@@ -4,7 +4,7 @@ import numpy as np
 
 
 def test_mezo_tracks_legacy_real_and_predicted_bests_separately():
-    from ops.vec_uhd import _new_mezo_state, _track_mezo_best
+    from ops.vec_uhd_mezo import _new_mezo_state, _track_mezo_best
 
     objective = _Objective(dim=2)
     state = _new_mezo_state(objective)
@@ -27,7 +27,7 @@ def test_mezo_tracks_legacy_real_and_predicted_bests_separately():
 
 
 def test_bszo_tracks_real_best_after_predicted_best():
-    from ops.vec_uhd import _new_bszo_state, _track_bszo_best
+    from ops.vec_uhd_bszo import _new_bszo_state, _track_bszo_best
 
     objective = _Objective(dim=2)
     state = _new_bszo_state(objective)
@@ -48,11 +48,8 @@ def test_bszo_tracks_real_best_after_predicted_best():
 
 
 def test_best_source_suffix_only_when_enabled():
-    from ops.vec_uhd import (
-        _format_source_best_suffix,
-        _new_mezo_state,
-        _track_mezo_best,
-    )
+    from ops.vec_uhd_common import _format_source_best_suffix
+    from ops.vec_uhd_mezo import _new_mezo_state, _track_mezo_best
 
     objective = _Objective(dim=1)
     state = _new_mezo_state(objective)
@@ -65,7 +62,7 @@ def test_best_source_suffix_only_when_enabled():
 
 def test_noise_uses_dense_uhd_backend_by_default():
     from ops.exp_uhd import _parse_cfg
-    from ops.vec_uhd import _noise
+    from ops.vec_uhd_common import _noise
 
     cfg = _parse_cfg({"env_tag": "f:sphere-2d", "num_rounds": 1, "perturb": "dense"})
     objective = _Objective(dim=3)
@@ -79,7 +76,7 @@ def test_noise_uses_dense_uhd_backend_by_default():
 
 def test_noise_can_replace_dense_with_eggroll_backend():
     from ops.exp_uhd import _parse_cfg
-    from ops.vec_uhd import _noise
+    from ops.vec_uhd_common import _noise
 
     cfg = _parse_cfg(
         {
@@ -111,7 +108,7 @@ def test_noise_can_replace_dense_with_eggroll_backend():
 
 def test_simple_minus_impute_runs_with_point_imputer():
     from ops.exp_uhd import _parse_cfg
-    from ops.vec_uhd import _run_simple
+    from ops.vec_uhd_simple import _run_simple
 
     cfg = _parse_cfg(
         {

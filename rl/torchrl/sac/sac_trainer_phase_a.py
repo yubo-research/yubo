@@ -8,7 +8,7 @@ import torch
 
 from rl.checkpointing import load_checkpoint
 
-from . import actor_eval as torchrl_sac_actor_eval
+from . import actor_eval
 from .config import SACConfig
 from .setup import _EnvSetup, _Modules, _TrainingSetup, _TrainState
 
@@ -96,7 +96,7 @@ def resume_if_requested(
 
 
 def build_eval_policy(modules: _Modules, env_setup: _EnvSetup, device: torch.device):
-    return torchrl_sac_actor_eval.SacActorEvalPolicy(
+    return actor_eval.SacActorEvalPolicy(
         modules.actor_backbone,
         modules.actor_head,
         modules.obs_scaler,

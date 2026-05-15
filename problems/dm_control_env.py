@@ -16,7 +16,6 @@ from problems.dm_control_env_core import (
 from problems.dm_control_pixel_wrapper import PixelObsWrapper, make_dm_control
 from problems.dm_control_spaces import BoxSpace, DictSpace
 
-
 try:
     from dm_control import suite
 except Exception:

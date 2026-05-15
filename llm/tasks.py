@@ -1,64 +1,65 @@
 from __future__ import annotations
 
-import llm.tasks_base as _base
-import llm.tasks_countdown as _countdown
-import llm.tasks_factory as _factory
-import llm.tasks_math as _math
-import llm.tasks_static as _static
-import llm.tasks_verifiers as _verifiers
+from typing import TYPE_CHECKING, Any
+
+from . import task_protocols as _protocols
+from .tasks_base import (
+    BatchScoringTaskMixin,
+    RolloutTaskMixin,
+    TaskMode,
+    extract_model_answer,
+    is_rollout_task,
+    score_generations,
+    task_mode,
+)
+from .tasks_countdown import (
+    CountdownTask,
+    countdown_answer_reward,
+    countdown_format_reward,
+)
+from .tasks_factory import build_task
+from .tasks_math import MathTask, MathTaskConfig, check_math_correct
+from .tasks_static import RandomTask, ZerosTask
+
+if TYPE_CHECKING:
+    from .tasks_verifiers import VerifiersTask, VerifiersTaskConfig
+
+# Explicitly re-export protocols
+AsyncRolloutTask = _protocols.AsyncRolloutTask
+BatchScoringTask = _protocols.BatchScoringTask
+LLMTask = _protocols.LLMTask
+RolloutTask = _protocols.RolloutTask
 
 
-CountdownTask = _countdown.CountdownTask
-LLMTask = _base.LLMTask
-MathTask = _math.MathTask
-MathTaskConfig = _math.MathTaskConfig
-RandomTask = _static.RandomTask
-VerifiersTask = _verifiers.VerifiersTask
-VerifiersTaskConfig = _verifiers.VerifiersTaskConfig
-ZerosTask = _static.ZerosTask
-_extract_math_answer = _math._extract_math_answer
-_first_nonempty_match = _base._first_nonempty_match
-_grade_math_answer = _math._grade_math_answer
-_grade_math_answer_with_math_verify = _math._grade_math_answer_with_math_verify
-_has_explicit_math_answer = _math._has_explicit_math_answer
-_last_boxed_answer = _math._last_boxed_answer
-_load_countdown_dataset = _countdown._load_countdown_dataset
-_load_math_dataset = _math._load_math_dataset
-_normalize_answer = _math._normalize_answer
-_safe_arithmetic_eval = _countdown._safe_arithmetic_eval
-_synthetic_countdown_dataset = _countdown._synthetic_countdown_dataset
-build_task = _factory.build_task
-check_math_correct = _math.check_math_correct
-countdown_answer_reward = _countdown.countdown_answer_reward
-countdown_format_reward = _countdown.countdown_format_reward
-extract_model_answer = _base.extract_model_answer
-score_generations = _base.score_generations
+def __getattr__(name: str) -> Any:
+    if name in ("VerifiersTask", "VerifiersTaskConfig"):
+        from . import tasks_verifiers
+
+        return getattr(tasks_verifiers, name)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 __all__ = [
+    "AsyncRolloutTask",
+    "BatchScoringTask",
+    "BatchScoringTaskMixin",
     "CountdownTask",
     "LLMTask",
     "MathTask",
     "MathTaskConfig",
     "RandomTask",
+    "RolloutTask",
+    "RolloutTaskMixin",
+    "TaskMode",
     "VerifiersTask",
     "VerifiersTaskConfig",
     "ZerosTask",
-    "_extract_math_answer",
-    "_first_nonempty_match",
-    "_grade_math_answer",
-    "_grade_math_answer_with_math_verify",
-    "_has_explicit_math_answer",
-    "_last_boxed_answer",
-    "_load_countdown_dataset",
-    "_load_math_dataset",
-    "_normalize_answer",
-    "_safe_arithmetic_eval",
-    "_synthetic_countdown_dataset",
     "build_task",
     "check_math_correct",
     "countdown_answer_reward",
     "countdown_format_reward",
     "extract_model_answer",
+    "is_rollout_task",
     "score_generations",
+    "task_mode",
 ]

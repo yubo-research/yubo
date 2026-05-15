@@ -2,6 +2,7 @@
 
 from functools import partial
 
+from .designer_errors import NoSuchDesignerError
 from .designer_registry_builders import _build_turbo_enn, _build_turbo_enn_py, _no_opts
 from .designer_registry_context import _SimpleContext
 from .designer_registry_defs import _DESIGNER_DEFS, _DESIGNER_OPTION_SPECS
@@ -18,11 +19,15 @@ def _wrap_designer_def(d: DesignerDef):
 
 
 def _d_turbo_enn_simple(ctx, opts: dict, *, kind: str):
-    return _build_turbo_enn(ctx, kind, opts=opts)
+    if opts:
+        raise NoSuchDesignerError(f"Designer '{kind}' does not support option(s): {', '.join(sorted(opts))}.")
+    return _build_turbo_enn(ctx, "turbo-enn-p" if kind == "turbo-enn" else kind)
 
 
 def _d_turbo_enn_py_simple(ctx, opts: dict, *, kind: str):
-    return _build_turbo_enn_py(ctx, kind, opts=opts)
+    if opts:
+        raise NoSuchDesignerError(f"Designer '{kind}' does not support option(s): {', '.join(sorted(opts))}.")
+    return _build_turbo_enn_py(ctx, kind)
 
 
 _TURBO_OPTION_DISPATCH = {

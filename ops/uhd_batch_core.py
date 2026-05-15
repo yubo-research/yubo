@@ -6,7 +6,6 @@ import sys
 import tempfile
 from pathlib import Path
 
-
 _HASH_EXCLUDE = frozenset({"problem_seed", "noise_seed_0", "num_reps"})
 _DEFAULT_RESULTS = "results/uhd"
 _APP_NAME = "yubo_uhd_batch"

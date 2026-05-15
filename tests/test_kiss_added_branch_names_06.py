@@ -32,9 +32,11 @@ def test_added_branch_names_rl_pufferlib_sac_engine() -> None:
         (
             engine,
             pufferlib,
+            register,
             rl,
             sac,
             train_sac_puffer,
+            train_sac_puffer_impl,
         )
     assert True
 
@@ -103,6 +105,10 @@ def test_added_branch_names_rl_torchrl_ppo_core_build() -> None:
             ppo,
             rl,
             torchrl,
+            _build_actor_critic,
+            _build_optimizer,
+            _build_replay_buffer,
+            _build_collector,
         )
     assert True
 
@@ -115,6 +121,24 @@ def test_added_branch_names_rl_torchrl_ppo_core_env_setup() -> None:
             ppo,
             rl,
             torchrl,
+            _build_seeded_eval_env_conf,
+            _build_eval_env_conf,
+            _make_video_context,
+        )
+    assert True
+
+
+def test_added_branch_names_rl_torchrl_sac_sac_setup_build() -> None:
+    if False:
+        (
+            build_env_setup,
+            build_modules,
+            build_training,
+            sac_setup_build,
+            sac_update_shared,
+            _build_specs,
+            _build_actor,
+            _build_q_pair,
         )
     assert True
 
@@ -169,40 +193,156 @@ def test_added_branch_names_rl_torchrl_sac_trainer() -> None:
     assert True
 
 
-def test_added_branch_names_turbo_m_ref_turbo_1_ask_tell_core() -> None:
+def test_added_branch_names_rl_pufferlib_ppo_engine_helpers() -> None:
     if False:
         (
-            create_candidates,
-            init_counters_and_tr,
-            init_hypers,
-            sample_candidates,
-            select_candidates,
-            tell_impl,
-            train_gp_model,
-            turbo_1_ask_tell_core,
-            turbo_m_ref,
+            engine_helpers,
+            make_vector_env,
+            build_eval_env_conf,
+            ppo,
+            pufferlib,
+            rl,
         )
     assert True
 
 
-def test_added_branch_names_turbo_m_ref_turbo_1_candidates() -> None:
+def test_added_branch_names_rl_pufferlib_ppo_engine_impl() -> None:
     if False:
         (
-            create_candidates,
-            select_candidates,
-            turbo_1_candidates,
-            turbo_m_ref,
+            engine_impl,
+            register,
+            train_ppo_puffer,
+            train_ppo_puffer_impl,
+            config_proxy,
+            engine_helpers_proxy,
+            ppo,
+            pufferlib,
+            rl,
         )
     assert True
 
 
-def test_added_branch_names_turbo_m_ref_turbo_1_core() -> None:
+def test_added_branch_names_rl_pufferlib_ppo_engine_train() -> None:
     if False:
         (
-            CandidatesResult,
-            init_counters_and_tr,
-            init_hypers,
-            turbo_1_core,
-            turbo_m_ref,
+            engine_train,
+            run_training,
+            ppo,
+            pufferlib,
+            rl,
         )
     assert True
+
+
+def test_added_branch_names_rl_pufferlib_sac_types() -> None:
+    if False:
+        (
+            SACConfig,
+            TrainResult,
+            from_dict,
+            runtime_num_envs,
+            to_dict,
+            pufferlib,
+            rl,
+            sac,
+            types,
+        )
+    assert True
+
+
+def test_added_branch_names_rl_torchrl_sac_setup() -> None:
+    if False:
+        (
+            build_env_setup,
+            build_modules,
+            build_training,
+            rl,
+            sac,
+            setup,
+            torchrl,
+        )
+    assert True
+
+
+def test_added_branch_names_rl_torchrl_ppo_core_train() -> None:
+    if False:
+        (
+            _evaluate_actor,
+            _maybe_eval_and_log,
+            _resume_if_requested,
+            _run_training_loop,
+            core_train,
+            ppo,
+            rl,
+            torchrl,
+        )
+    assert True
+
+
+def test_added_branch_names_rl_torchrl_ppo_core_collect_env() -> None:
+    if False:
+        (
+            _build_collector,
+            core_collect_env,
+            ppo,
+            rl,
+            torchrl,
+        )
+    assert True
+
+
+def test_added_branch_names_rl_torchrl_ppo_core() -> None:
+    if False:
+        (
+            _log_ppo_config,
+            core,
+            ppo,
+            register,
+            rl,
+            torchrl,
+            train_ppo,
+        )
+    assert True
+
+
+def test_added_branch_names_rl_torchrl_ppo_core_utils() -> None:
+    if False:
+        (
+            core_utils,
+            ppo,
+            rl,
+            torchrl,
+        )
+    assert True
+
+
+def test_added_branch_names_rl_torchrl_ppo_core_types() -> None:
+    if False:
+        (
+            _TanhNormal,
+            _TrainState,
+            core_types,
+            ppo,
+            rl,
+            torchrl,
+        )
+    assert True
+
+
+def test_added_branch_names_rl_torchrl_ppo_core_types_env() -> None:
+    if False:
+        (
+            _EnvSetup,
+            _Modules,
+            core_types_env,
+            ppo,
+            rl,
+            torchrl,
+        )
+    assert True
+
+
+def test_kiss_dep_sentinels_shared() -> None:
+    from .kiss_booster_helpers import booster_dep_sentinels
+
+    booster_dep_sentinels()

@@ -13,7 +13,6 @@ from optimizer.uhd_enn_regression import (
     predict_real_ucb,
 )
 
-
 __all__ = [
     "JAXMinusImputer",
     "JAXPointImputer",

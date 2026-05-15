@@ -3,9 +3,8 @@
 import importlib
 from typing import TYPE_CHECKING
 
-from rl.pufferlib.ppo import engine_helpers as _helpers
+from rl.pufferlib.ppo import engine_helpers
 from rl.pufferlib.ppo.config import PufferPPOConfig
-
 
 if TYPE_CHECKING:
     from rl.pufferlib.ppo.config import PufferPPOConfig, TrainResult
@@ -17,8 +16,8 @@ if TYPE_CHECKING:
     )
 
 _IMPL = "rl.pufferlib.ppo.engine_impl"
-_make_vector_env = _helpers.make_vector_env
-_build_eval_env_conf = _helpers.build_eval_env_conf
+_make_vector_env = engine_helpers.make_vector_env
+_build_eval_env_conf = engine_helpers.build_eval_env_conf
 
 
 def make_vector_env(config):

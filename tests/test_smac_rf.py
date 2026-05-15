@@ -1,7 +1,6 @@
 import numpy as np
 import pytest
 
-
 pytest.importorskip("smac")
 pytest.importorskip("ConfigSpace")
 pytest.importorskip("pyrfr")
@@ -26,7 +25,11 @@ def test_smac_rf_fit_predict_1d():
     model = SMACRFSurrogate(SMACRFConfig(n_trees=10, seed=1))
     info = model.fit(x, y)
     assert "meta" in info
-    assert info["meta"]["n_trees"] == 10
+    # Support both SMAC 1.x (n_trees) and 2.x (n_estimators) metadata
+    meta = info["meta"]
+    n_trees = meta.get("n_trees") or meta.get("n_estimators")
+    if n_trees is not None:
+        assert n_trees == 10
 
     x_test = np.linspace(0.0, 1.0, 20, dtype=np.float64).reshape(-1, 1)
     mean, var = model.predict(x_test)

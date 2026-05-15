@@ -1,9 +1,9 @@
 from __future__ import annotations
 
+from common.env_tags import normalize_dm_control_tag
 from problems.problem import build_problem
-from rl.core.env_conf import build_seeded_env_conf_from_run
+from rl.core.env_setup import build_env_setup
 from rl.core.ppo_envs import (
-    _env_tag_for_problem_build,
     _maybe_register_atari_dm_backends,
 )
 
@@ -24,7 +24,7 @@ def build_eval_env_conf(config, *, obs_mode: str, is_atari_env_tag_fn, resolve_g
         pixels_only: bool,
     ):
         _maybe_register_atari_dm_backends(env_tag)
-        adj = _env_tag_for_problem_build(env_tag, from_pixels=from_pixels)
+        adj = normalize_dm_control_tag(env_tag, from_pixels=from_pixels)
         problem = build_problem(
             adj,
             "linear",
@@ -36,7 +36,7 @@ def build_eval_env_conf(config, *, obs_mode: str, is_atari_env_tag_fn, resolve_g
             env.spec.pixels_only = bool(pixels_only)
         return env
 
-    resolved = build_seeded_env_conf_from_run(
+    resolved = build_env_setup(
         env_tag=tag,
         seed=int(config.seed),
         problem_seed=config.problem_seed,

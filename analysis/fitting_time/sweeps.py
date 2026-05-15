@@ -24,7 +24,6 @@ from analysis.fitting_time.evaluate import (
 )
 from analysis.fitting_time.fitting_time import fit_enn
 
-
 __all__ = ["sweep"]
 
 

@@ -20,3 +20,7 @@ def obs_space_from_env_conf(env_conf):
 def ensure_env_spaces(env_conf) -> None:
     if hasattr(env_conf, "ensure_spaces"):
         env_conf.ensure_spaces()
+
+
+_obs_space_from_env_conf = obs_space_from_env_conf
+_ensure_env_spaces = ensure_env_spaces

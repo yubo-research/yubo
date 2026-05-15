@@ -17,7 +17,6 @@ from pathlib import Path
 
 import click
 
-
 _REPO_ROOT = Path(__file__).resolve().parents[1]
 _MODAL_APP_REL = Path("experiments") / "modal_timing_sweep.py"
 

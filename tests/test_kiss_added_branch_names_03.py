@@ -198,3 +198,9 @@ def test_added_branch_names_optimizer_eggroll_rollout_helpers() -> None:
             rollout_step_out,
         )
     assert True
+
+
+def test_kiss_dep_sentinels_shared() -> None:
+    from .kiss_booster_helpers import booster_dep_sentinels
+
+    booster_dep_sentinels()

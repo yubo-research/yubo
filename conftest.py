@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import numpy as np
 
-
 if not hasattr(np, "NaN"):
     np.NaN = np.nan
 

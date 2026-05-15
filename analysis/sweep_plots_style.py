@@ -4,7 +4,6 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 
-
 DEFAULT_SYNTH_10D_ENV_TAGS = (
     "f:sphere-10d",
     "f:ackley-10d",

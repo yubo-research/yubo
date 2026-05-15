@@ -3,11 +3,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from llm.tasks_base import extract_model_answer, score_generations
+from llm.tasks_base import BatchScoringTaskMixin, extract_model_answer, score_generations
 
 
 @dataclass
-class ZerosTask:
+class ZerosTask(BatchScoringTaskMixin):
     batch_size: int
     max_tokens: int
 
@@ -36,7 +36,7 @@ class ZerosTask:
         return float(sum(c == "0" for c in generation)) / float(max(self.max_tokens, 1)), None
 
 
-class RandomTask:
+class RandomTask(BatchScoringTaskMixin):
     def __init__(
         self,
         *,

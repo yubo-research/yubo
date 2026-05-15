@@ -261,8 +261,8 @@ def test_kiss_cov_sac_eval_model_td_trainer(monkeypatch):
 
     monkeypatch.setattr(
         sac_env_utils,
-        "build_continuous_gym_env_setup",
-        lambda **_kwargs: SimpleNamespace(
+        "build_env_setup",
+        lambda _cfg, **_kwargs: SimpleNamespace(
             env_conf=SimpleNamespace(gym_conf=SimpleNamespace(transform_state=True)),
             problem_seed=3,
             noise_seed_0=4,

@@ -12,7 +12,6 @@ from problems.eggroll_env_jax_extra import (
 )
 from problems.eggroll_env_jax_multi import JaxMARLEggRollAdapter, NavixEggRollAdapter
 
-
 __all__ = [
     "BraxEggRollAdapter",
     "CraftaxEggRollAdapter",

@@ -207,3 +207,9 @@ def test_added_branch_names_ops_exp_uhd_cli() -> None:
             ops,
         )
     assert True
+
+
+def test_kiss_dep_sentinels_shared() -> None:
+    from .kiss_booster_helpers import booster_dep_sentinels
+
+    booster_dep_sentinels()

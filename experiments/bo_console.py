@@ -11,7 +11,6 @@ from common.console import (
     register_opt_metrics,
 )
 
-
 __all__ = [
     "BOConsoleCollector",
     "CMA_METRICS",

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import numpy as np
 
-
 _MAX_INT8 = 127
 _PARAM_STANDARD = 0
 _PARAM_MM = 1

@@ -5,7 +5,6 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-
 _TESTS_DIR = Path(__file__).resolve().parent
 _p = str(_TESTS_DIR)
 if _p not in sys.path:

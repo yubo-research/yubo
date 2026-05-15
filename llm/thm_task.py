@@ -1,111 +1,59 @@
 from __future__ import annotations
 
 import asyncio
-import base64
-import logging
-from dataclasses import dataclass
-from typing import Any
+import hashlib
+import os
+from pathlib import Path
+from typing import Any, Mapping
 
 import numpy as np
 
 from llm.console_observer import UnifiedConsoleManager
-from llm.tasks_verifiers import _VLLMRLMClient
+from llm.episode_proof import ProofEpisode
+from llm.episode_runner import EpisodeRunner
+from llm.episodes import Case, RuntimeConfig, signal_log, summarize_signals
+from llm.tasks_base import RolloutTaskMixin
+from llm.thm_sandbox import (
+    build_sandbox_client,
+)
+from llm.thm_verifiers_env import LANGUAGES, FormalRubric, LanguageConfig, TheoremVerifierEnv
+
+_VLLMRLMClient: Any | None = None
 
 
-logger = logging.getLogger(__name__)
+def _vllm_rlm_client_cls() -> Any:
+    global _VLLMRLMClient
+    if _VLLMRLMClient is None:
+        from llm.tasks_verifiers import _VLLMRLMClient as client_cls
+
+        _VLLMRLMClient = client_cls
+    return _VLLMRLMClient
 
 
-@dataclass(frozen=True)
-class LanguageConfig:
-    name: str
-    extension: str
-    docker_image: str
-    compile_cmd: str
-    guard_begin: str
-    guard_end: str
-    workdir: str
-    proof_path: str = "/tmp/proof"
-
-    def full_proof_path(self) -> str:
-        return f"{self.workdir}/{self.proof_path}.{self.extension}"
+def prime_sandbox_auth_configured(
+    *,
+    environ: Mapping[str, str] | None = None,
+    home: str | Path | None = None,
+) -> bool:
+    env = os.environ if environ is None else environ
+    if env.get("PRIME_API_KEY"):
+        return True
+    home_path = Path.home() if home is None else Path(home)
+    return (home_path / ".prime" / "config.json").is_file()
 
 
-LANGUAGES = {
-    "lean4": LanguageConfig(
-        name="lean4",
-        extension="lean",
-        docker_image="leanprover/lean4:v4.7.0",
-        compile_cmd="lake env lean {path}",
-        guard_begin="-- guard begin",
-        guard_end="-- guard end",
-        workdir="/workspace",
-    ),
-    "coq": LanguageConfig(
-        name="coq",
-        extension="v",
-        docker_image="coqorg/coq:8.19",
-        compile_cmd="coqc {path}",
-        guard_begin="(* guard begin *)",
-        guard_end="(* guard end *)",
-        workdir="/home/coq",
-    ),
-    "isabelle": LanguageConfig(
-        name="isabelle",
-        extension="thy",
-        docker_image="makarius/isabelle:latest",
-        compile_cmd="isabelle build -D .",
-        guard_begin="(* guard begin *)",
-        guard_end="(* guard end *)",
-        workdir="/home/isabelle",
-    ),
-}
+def prime_sandbox_auth_summary() -> str:
+    key = os.environ.get("PRIME_API_KEY")
+    if key:
+        digest = hashlib.sha256(key.encode("utf-8")).hexdigest()[:10]
+        return f"PRIME_API_KEY set len={len(key)} sha256={digest}"
+    config_path = Path.home() / ".prime" / "config.json"
+    if config_path.is_file():
+        return f"Prime config present at {config_path}"
+    return "no PRIME_API_KEY and no ~/.prime/config.json"
 
 
-class FormalRubric:
-    """Judge that uses a formal compiler (Lean, Coq, Isabelle) to verify proofs."""
-
-    def __init__(self, lang_cfg: LanguageConfig):
-        self.lang_cfg = lang_cfg
-
-    async def score_state(self, state: dict[str, Any]) -> float:
-        sandbox_client = state.get("sandbox_client")
-        sandbox_id = state.get("sandbox_id")
-        if not sandbox_client or not sandbox_id:
-            return 0.0
-
-        proof_path = self.lang_cfg.full_proof_path()
-
-        # 1. Verification of the Guard (Anti-Cheating)
-        try:
-            res = await sandbox_client.execute_command(sandbox_id, f"cat {proof_path}")
-            content = res.stdout or ""
-            expected_stmt = state.get("expected_statement", "")
-
-            # Simple check: Is the original theorem statement still there?
-            if expected_stmt and expected_stmt not in content:
-                logger.warning("Theorem statement was tampered with!")
-                return 0.0
-        except Exception:
-            pass
-
-        # 2. Compilation check
-        try:
-            cmd = self.lang_cfg.compile_cmd.format(path=proof_path, path_no_ext=proof_path.rsplit(".", 1)[0])
-            res = await sandbox_client.execute_command(sandbox_id, f"cd {self.lang_cfg.workdir} && {cmd}", timeout=60)
-
-            # Success is usually exit code 0 and no 'sorry' / 'admit'
-            output = (res.stdout or "") + (res.stderr or "")
-            has_sorry = any(s in output.lower() for s in ["sorry", "admit", "axiom"])
-
-            if res.exit_code == 0 and not has_sorry:
-                return 1.0
-        except Exception:
-            pass
-
-        return 0.0
-
-
-class TheoremProvingTask:
+class TheoremProvingTask(RolloutTaskMixin):
     """Universal task for formal theorem proving (Lean, Coq, Isabelle)."""
 
     def __init__(
@@ -121,6 +69,7 @@ class TheoremProvingTask:
         self.lang_cfg = LANGUAGES.get(language)
         if not self.lang_cfg:
             raise ValueError(f"Unsupported language: {language}")
+        self.env = TheoremVerifierEnv(self.lang_cfg)
 
         self.dataset_name = dataset_name
         self.dataset_split = dataset_split
@@ -143,6 +92,7 @@ class TheoremProvingTask:
 
     def __setstate__(self, state: dict[str, Any]) -> None:
         self.lang_cfg = LANGUAGES[state["lang_name"]]
+        self.env = TheoremVerifierEnv(self.lang_cfg)
         self.dataset_name = state["dataset_name"]
         self.dataset_split = state["dataset_split"]
         self.batch_size = state["batch_size"]
@@ -181,150 +131,81 @@ class TheoremProvingTask:
         answers: list[Any],
         args: Any,
     ) -> tuple[list[float], dict[str, float], list[str]]:
-        from prime_sandboxes import AsyncSandboxClient
-
-        sandbox_client = AsyncSandboxClient()
-        tasks = []
-        for i in range(len(prompts)):
-            tasks.append(
-                self._run_single(
-                    llm,
-                    prompts[i],
-                    sampling_params_kwargs,
-                    lora_request_specs[i] if lora_request_specs else None,
-                    answers[i],
-                    sandbox_client,
-                )
+        sandbox_client = await build_sandbox_client()
+        env = self._active_env()
+        episode = ProofEpisode(
+            env,
+            sandbox_client,
+            tokenizer=self.tokenizer,
+            console=self.console,
+            client_factory=_vllm_rlm_client_cls(),
+        )
+        cases = [
+            Case(
+                id=f"{self.lang_cfg.name}:{idx}",
+                prompt=prompts[idx],
+                target=answers[idx],
+                metadata={"lora_spec": None if lora_request_specs is None else lora_request_specs[idx]},
             )
+            for idx in range(len(prompts))
+        ]
+        runtime = RuntimeConfig(concurrency=max(1, int(getattr(args, "rollout_concurrency", len(cases) or 1))))
+        signals = await EpisodeRunner(runtime).run_batch(episode, cases, llm, dict(sampling_params_kwargs))
+        fitnesses = [float(signal.reward) for signal in signals]
+        logs = [signal_log(case, signal) for case, signal in zip(cases, signals, strict=True)]
+        self.last_logs = logs[:3]
 
-        results = await asyncio.gather(*tasks)
-        fitnesses = [r[0] for r in results]
-        logs = [r[1] for r in results]
-        self.last_logs = logs[:3]  # Store first few for observation
+        return fitnesses, summarize_signals(signals), logs
 
-        return fitnesses, {}, logs
+    def generate_and_score(
+        self,
+        llm: Any,
+        prompts: list[str],
+        sampling_params_kwargs: dict[str, Any],
+        lora_request_specs: list[tuple[str, int, str]] | None,
+        answers: list[Any],
+        args: Any,
+    ) -> tuple[list[float], dict[str, float], list[str]]:
+        return _run_async(
+            self.generate_and_score_async(
+                llm=llm,
+                prompts=prompts,
+                sampling_params_kwargs=sampling_params_kwargs,
+                lora_request_specs=lora_request_specs,
+                answers=answers,
+                args=args,
+            )
+        )
 
     async def _run_single(self, llm, prompt, sampling, lora_spec, answer, sandbox_client):
-        from prime_sandboxes import CreateSandboxRequest
-
-        # 1. Create Sandbox
-        req = CreateSandboxRequest(
-            docker_image=self.lang_cfg.docker_image,
-            name=f"thm-{self.lang_cfg.name}-{base64.b32encode(np.random.bytes(5)).decode().lower()}",
+        env = self._active_env()
+        case = Case(
+            id=f"{self.lang_cfg.name}:single",
+            prompt=prompt,
+            target=answer,
+            metadata={"lora_spec": lora_spec},
         )
-        sandbox = await sandbox_client.create(req)
-        sandbox_id = sandbox.id
-
-        try:
-            await sandbox_client.wait_for_creation(sandbox_id)
-            await self._setup_initial_proof(sandbox_id, answer, sandbox_client)
-
-            # 3. ReAct Loop
-            trajectory = await self._react_loop(llm, prompt, sampling, lora_spec, sandbox_id, sandbox_client)
-
-            # 4. Final Scoring
-            rubric = FormalRubric(self.lang_cfg)
-            state = {
-                "sandbox_client": sandbox_client,
-                "sandbox_id": sandbox_id,
-                "expected_statement": answer["statement"],
-            }
-            reward = await rubric.score_state(state)
-
-            if self.console:
-                await self.console.broadcast_reward(reward, {"status": "success" if reward > 0 else "failure"})
-
-            log_str = f"PROMPT: {prompt}\nREWARD: {reward}\nTRAJECTORY:\n" + "\n".join(trajectory)
-            return reward, log_str
-
-        finally:
-            await sandbox_client.delete(sandbox_id)
+        signal = await ProofEpisode(
+            env,
+            sandbox_client,
+            tokenizer=self.tokenizer,
+            console=self.console,
+            client_factory=_vllm_rlm_client_cls(),
+        ).run(
+            case,
+            llm,
+            dict(sampling),
+            RuntimeConfig(),
+        )
+        if self.console:
+            await self.console.broadcast_reward(signal.reward, {"status": signal.status})
+        return signal.reward, signal_log(case, signal)
 
     async def _setup_initial_proof(self, sandbox_id, answer, sandbox_client):
-        stmt = answer["statement"]
-        proof_path = self.lang_cfg.full_proof_path()
-        initial_content = f"{self.lang_cfg.guard_begin}\n{stmt}\n{self.lang_cfg.guard_end}\n  sorry"
-
-        # Use base64 to avoid quoting issues in bash
-        b64_content = base64.b64encode(initial_content.encode()).decode()
-        await sandbox_client.execute_command(sandbox_id, f"echo {b64_content} | base64 -d > {proof_path}")
-
-    async def _react_loop(self, llm, prompt, sampling, lora_spec, sandbox_id, sandbox_client):
-        proof_path = self.lang_cfg.full_proof_path()
-        client = _VLLMRLMClient(llm, lora_spec, sampling, tokenizer=self.tokenizer)
-        system_msg = (
-            f"You are a formal theorem prover for {self.lang_cfg.name}. Follow the ReAct pattern.\n"
-            "You can interact with the system using markdown code blocks:\n"
-            f"1. ```{self.lang_cfg.name}\n<code>\n```: Writes code to the proof file and runs the compiler.\n"
-            "2. ```bash\n<command>\n```: Runs a bash command in the sandbox.\n"
-            "Always start with a thought block, then use a tool call if needed. "
-            "The output of the tool will be provided in the next turn. "
-            "When you have finished the proof and verified it with the compiler, write 'QED'."
-        )
-
-        messages = [
-            {"role": "system", "content": system_msg},
-            {"role": "user", "content": prompt},
-        ]
-        trajectory = []
-        max_turns = 10
-
-        for turn_idx in range(max_turns):
-            # 1. Assistant Turn
-            res = await client.create(messages)
-            msg = res.choices[0].message
-            trajectory.append(f"Model: {msg.content}")
-
-            if self.console:
-                await self.console.broadcast_step(turn_idx, {"role": "assistant", "content": msg.content})
-
-            if "QED" in msg.content:
-                break
-
-            messages.append({"role": "assistant", "content": msg.content})
-
-            # 2. Tool Turn
-            if not msg.tool_calls:
-                break
-
-            for tool_call in msg.tool_calls:
-                output = await self._execute_tool(tool_call, sandbox_id, sandbox_client, proof_path)
-                trajectory.append(f"Tool [{tool_call.name}]: {output}")
-                messages.append({"role": "tool", "content": output, "tool_call_id": tool_call.id})
-
-                if self.console:
-                    await self.console.broadcast_step(
-                        turn_idx,
-                        {"role": "tool", "name": tool_call.name, "output": output},
-                    )
-
-        return trajectory
+        await self._active_env().setup_initial_proof(sandbox_id, answer, sandbox_client)
 
     async def _execute_tool(self, tool_call, sandbox_id, sandbox_client, proof_path):
-        import json
-
-        t_name = tool_call.name
-        try:
-            args = json.loads(tool_call.arguments)
-            code = args.get("code", "")
-
-            if t_name == self.lang_cfg.name or t_name == self.lang_cfg.extension:
-                # Write content to file
-                b64_c = base64.b64encode(code.encode()).decode()
-                await sandbox_client.execute_command(sandbox_id, f"echo {b64_c} | base64 -d > {proof_path}")
-
-                # Run compiler
-                cmd = self.lang_cfg.compile_cmd.format(path=proof_path, path_no_ext=proof_path.rsplit(".", 1)[0])
-                res = await sandbox_client.execute_command(sandbox_id, f"cd {self.lang_cfg.workdir} && {cmd}", timeout=60)
-                output = (res.stdout or "") + (res.stderr or "")
-            elif t_name == "bash":
-                res = await sandbox_client.execute_command(sandbox_id, code, timeout=60)
-                output = (res.stdout or "") + (res.stderr or "")
-            else:
-                output = f"Unknown tool: {t_name}. Please use ```{self.lang_cfg.name}``` or ```bash```."
-        except Exception as e:
-            output = f"Error executing tool: {str(e)}"
-        return output
+        return await self._active_env().execute_tool(tool_call, sandbox_id, sandbox_client)
 
     def score(self, generations, truncateds, answer, *, pass_at_k=False) -> tuple[float, tuple[Any, ...], np.ndarray]:
         # This task primarily uses generate_and_score_async
@@ -334,5 +215,34 @@ class TheoremProvingTask:
     def task_name(self) -> str:
         return f"thm:{self.lang_cfg.name}"
 
+    def _active_env(self) -> TheoremVerifierEnv:
+        if self.env.lang_cfg != self.lang_cfg:
+            self.env = TheoremVerifierEnv(self.lang_cfg)
+        return self.env
 
-__all__ = ["TheoremProvingTask", "LanguageConfig", "LANGUAGES", "FormalRubric"]
+
+def _run_async(awaitable: Any) -> Any:
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(awaitable)
+
+    if loop.is_running():
+        try:
+            import nest_asyncio
+
+            nest_asyncio.apply(loop)
+        except ImportError:
+            pass
+
+    return loop.run_until_complete(awaitable)
+
+
+__all__ = [
+    "TheoremProvingTask",
+    "LanguageConfig",
+    "LANGUAGES",
+    "FormalRubric",
+    "prime_sandbox_auth_configured",
+    "prime_sandbox_auth_summary",
+]

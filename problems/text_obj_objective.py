@@ -138,11 +138,20 @@ def _ensure_runtime(obj: TextObjective):
     if obj.cfg.hf_home:
         os.environ["HF_HOME"] = str(obj.cfg.hf_home)
     runtime.require_runtime()
+    if obj.spec.env.task_kind == "thm":
+        from llm.thm_sandbox import require_sandbox_backend_ready
+
+        require_sandbox_backend_ready(obj.spec.env.task_name)
+    if obj.spec.env.task_kind == "verifiers":
+        from llm.tasks_verifiers_utils import require_verifiers_runtime
+
+        require_verifiers_runtime()
     from transformers import AutoTokenizer
 
     from llm.console_observer import TerminalConsoleObserver, UnifiedConsoleManager
     from llm.engine_pool import sampling_kwargs
     from llm.lora import build_peft_lora_template
+    from llm.registry import policy_uses_chat_template
     from llm.tasks import build_task
 
     obj._sampling_kwargs = sampling_kwargs
@@ -175,7 +184,7 @@ def _ensure_runtime(obj: TextObjective):
         max_tokens=int(obj.cfg.max_tokens),
         dataset_size=obj.cfg.sub_dataset_size,
         tokenizer=obj._tokenizer,
-        apply_chat_template=False,
+        apply_chat_template=policy_uses_chat_template(obj.spec.policy),
         console=obj._console,
     )
     obj._pool = _launch_pool(obj.cfg, obj.spec.policy)
@@ -284,7 +293,12 @@ def _launch_pool(cfg: Any, policy: Any):
             max_loras_per_engine=1,
             max_tokens=int(cfg.max_tokens),
             prompt_batch_size=int(cfg.prompt_batch_size),
+            samples_per_prompt=int(cfg.samples_per_prompt),
             use_async=bool(getattr(cfg, "use_async", False)),
+            vllm_max_model_len=getattr(cfg, "vllm_max_model_len", None),
+            vllm_gpu_memory_utilization=getattr(cfg, "vllm_gpu_memory_utilization", None),
+            vllm_max_num_seqs=getattr(cfg, "vllm_max_num_seqs", None),
+            vllm_max_num_batched_tokens=getattr(cfg, "vllm_max_num_batched_tokens", None),
         )
     )
 

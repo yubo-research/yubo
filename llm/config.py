@@ -51,6 +51,12 @@ class LLMConfig:
     reference_policy_tag: str | None
     env: LLMEnvSpec
     policy: LLMPolicySpec
+    pretrain_lora_only: bool = True
+    pretrain_search_dim: int = 4096
+    vllm_max_model_len: int | None = None
+    vllm_gpu_memory_utilization: float | None = None
+    vllm_max_num_seqs: int | None = None
+    vllm_max_num_batched_tokens: int | None = None
 
 
 __all__ = ["LLMConfig"]

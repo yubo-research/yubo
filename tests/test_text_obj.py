@@ -88,6 +88,10 @@ def test_uhd_text_config_fields_parse():
             "text_search_dim": 7,
             "text_delta_scale": 0.5,
             "text_basis_max_tensors": 4,
+            "vllm_max_model_len": 4096,
+            "vllm_gpu_memory_utilization": 0.82,
+            "vllm_max_num_seqs": 8,
+            "vllm_max_num_batched_tokens": 4096,
         }
     )
 
@@ -104,6 +108,10 @@ def test_uhd_text_config_fields_parse():
     assert cfg.text_search_dim == 7
     assert cfg.text_delta_scale == 0.5
     assert cfg.text_basis_max_tensors == 4
+    assert cfg.vllm_max_model_len == 4096
+    assert cfg.vllm_gpu_memory_utilization == 0.82
+    assert cfg.vllm_max_num_seqs == 8
+    assert cfg.vllm_max_num_batched_tokens == 4096
 
 
 def test_lora_subspace_codec_searches_b_matrices_only():

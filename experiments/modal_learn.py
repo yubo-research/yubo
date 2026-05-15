@@ -5,7 +5,6 @@ import modal
 
 from experiments.modal_image import mk_image
 
-
 modal_image = mk_image()
 
 # Queue/dict size for submit/get; tests patch to a small value to avoid huge stdout.

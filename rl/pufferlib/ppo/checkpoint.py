@@ -8,19 +8,17 @@ import torch
 import torch.optim as optim
 
 from rl.checkpointing import load_checkpoint
-from rl.core.actor_state import build_ppo_checkpoint_payload as build_shared_payload
-from rl.core.actor_state import capture_ppo_actor_snapshot as capture_actor_snapshot
-from rl.core.actor_state import restore_backbone_head_snapshot
+from rl.core import actor_state
 from rl.pufferlib.ppo.metrics import _as_optional_finite
 
 
 def build_checkpoint_payload(model, optimizer: optim.Optimizer, state, *, iteration: int) -> dict[str, Any]:
-    actor_snapshot = capture_actor_snapshot(
+    actor_snapshot = actor_state.capture_ppo_actor_snapshot(
         model.actor_backbone,
         model.actor_head,
         log_std=model.log_std if hasattr(model, "log_std") else None,
     )
-    return build_shared_payload(
+    return actor_state.build_ppo_checkpoint_payload(
         iteration=iteration,
         global_step=int(state.global_step),
         actor_snapshot=actor_snapshot,
@@ -45,7 +43,7 @@ def restore_checkpoint_if_requested(config, plan, model, optimizer: optim.Optimi
     }
     if hasattr(model, "log_std") and "log_std" in loaded:
         actor_snapshot["log_std"] = loaded["log_std"]
-    restore_backbone_head_snapshot(
+    actor_state.restore_backbone_head_snapshot(
         model.actor_backbone,
         model.actor_head,
         actor_snapshot,

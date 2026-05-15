@@ -17,7 +17,6 @@ from ops.uhd_batch_core import (
     _write_trace,
 )
 
-
 try:
     import modal
 

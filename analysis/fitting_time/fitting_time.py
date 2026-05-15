@@ -13,7 +13,6 @@ from .fitting_time_gp import (
     fit_vecchia,
 )
 
-
 __all__ = [
     "fit_dngo",
     "fit_enn",
