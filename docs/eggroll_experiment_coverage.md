@@ -150,7 +150,6 @@ Optional source-script wrapper:
 Paper-intent configs currently live under:
 
 - `configs/pretrain/hyperscalees/paper/`
-- `configs/pretrain/hyperscalees/paper/exact_asset_blocked/`
 - `configs/pretrain/nanoegg/paper/`
 - `configs/bo/eggroll/paper/`
 
@@ -187,9 +186,6 @@ Run config validation without launching training:
 ```bash
 python -m experiments.eggroll_coverage validate
 ```
-
-Known-stale upstream `7g*` checkpoint configs are reported as `ASSET_BLOCKED`.
-Use `--require-live-assets` to make those fail validation.
 
 ## Definition Of Covered
 
