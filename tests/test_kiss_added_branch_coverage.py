@@ -1,33 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import numpy as np
-
-if TYPE_CHECKING:
-    from experiments.enn_turbo_scale_check import (
-        ScaleRow,
-        build_rows,
-        check_coordinate_sampling,
-        check_failure_clock,
-        print_table,
-        raasp_mean_theory,
-        sample_raasp_support,
-    )
-    from experiments.enn_turbo_scale_check import (
-        main as enn_turbo_main,
-    )
-
-    _ENN_TURBO_REFS = (
-        ScaleRow,
-        raasp_mean_theory,
-        sample_raasp_support,
-        check_coordinate_sampling,
-        check_failure_clock,
-        build_rows,
-        print_table,
-        enn_turbo_main,
-    )
 
 
 def test_added_mapping_key_helpers():
