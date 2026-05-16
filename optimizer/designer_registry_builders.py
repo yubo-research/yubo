@@ -72,10 +72,17 @@ def _build_policy_ctor(ctx: _SimpleContext, module: str, name: str, **kwargs):
 
 def _build_ppo(ctx: _SimpleContext):
     """On-policy PPO as a Designer (see optimizer/ppo_designer.py). Requires env_conf + actor-critic policy."""
-    PPODesigner = _load_symbol("optimizer.ppo_designer", "PPODesigner")
+    PPOACDesigner = _load_symbol("optimizer.ppo_designer", "PPOACDesigner")
     if ctx.env_conf is None:
-        raise NoSuchDesignerError("Designer 'ppo' requires env_conf (use a Gym-style env_tag so the Optimizer has an environment runtime).")
-    return PPODesigner(ctx.policy, ctx.env_conf)
+        raise NoSuchDesignerError("Designer 'ppo-ac' requires env_conf (use a Gym-style env_tag so the Optimizer has an environment runtime).")
+    return PPOACDesigner(ctx.policy, ctx.env_conf)
+
+
+def _build_ppo_pg(ctx: _SimpleContext):
+    PPOPGDesigner = _load_symbol("optimizer.ppo_designer", "PPOPGDesigner")
+    if ctx.env_conf is None:
+        raise NoSuchDesignerError("Designer 'ppo-pg' requires env_conf (use a Gym-style env_tag so the Optimizer has an environment runtime).")
+    return PPOPGDesigner(ctx.policy, ctx.env_conf)
 
 
 def _build_maximin(ctx: _SimpleContext, *, toroidal: bool):

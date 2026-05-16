@@ -378,15 +378,47 @@ def test_turbo_e_n_n_designer_init():
     assert ted._k == 10
 
 
-def test_ppo_designer_registered_under_opt_name_ppo():
+def test_ppo_ac_designer_registered_under_opt_name_ppo_ac():
     from optimizer.designers import Designers
-    from optimizer.ppo_designer import PPODesigner
+    from optimizer.ppo_designer import PPOACDesigner
     from problems.problem import build_problem
 
     problem = build_problem("pend", "actor-critic-mlp-16-8", problem_seed=0, noise_seed_0=0)
     policy = problem.build_policy()
-    designer = Designers(policy, num_arms=1, env_conf=problem.env).create("ppo")
-    assert isinstance(designer, PPODesigner)
+    designer = Designers(policy, num_arms=1, env_conf=problem.env).create("ppo-ac")
+    assert isinstance(designer, PPOACDesigner)
+
+
+def test_ppo_pg_designer_registered_under_opt_name_ppo_pg():
+    from optimizer.designers import Designers
+    from optimizer.ppo_designer import PPOPGDesigner
+    from problems.problem import build_problem
+
+    problem = build_problem("pend", "actor-mlp-16-8", problem_seed=0, noise_seed_0=0)
+    policy = problem.build_policy()
+    designer = Designers(policy, num_arms=1, env_conf=problem.env).create("ppo-pg")
+    assert isinstance(designer, PPOPGDesigner)
+
+
+def test_ppo_pg_build_requires_env_conf():
+    from optimizer.designer_errors import NoSuchDesignerError
+    from optimizer.designer_registry_builders import _build_ppo_pg
+    from optimizer.designer_registry_context import _SimpleContext
+
+    ctx = _SimpleContext(
+        policy=object(),
+        num_arms=1,
+        bt=lambda *a, **k: None,
+        num_keep=None,
+        keep_style=None,
+        num_keep_val=None,
+        init_yubo_default=0,
+        init_ax_default=0,
+        default_num_X_samples=1,
+        env_conf=None,
+    )
+    with pytest.raises(NoSuchDesignerError, match="env_conf"):
+        _build_ppo_pg(ctx)
 
 
 def test_m_t_s_designer_init():
