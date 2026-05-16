@@ -9,6 +9,7 @@ from optimizer.ppo_common import (
     _ppo_ac_update_epoch,
     _PPOACBatch,
     apply_ppo_telemetry,
+    clear_policy_ppo_cache,
     compute_episode_return_advantages,
     compute_gae,
     merge_trajectories,
@@ -110,4 +111,5 @@ class PPOACDesigner(Designer):
         if telemetry is not None:
             apply_ppo_telemetry(telemetry, dt_rollout, dt_update, num_arms)
 
+        clear_policy_ppo_cache(policy)
         return [policy]

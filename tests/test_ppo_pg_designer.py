@@ -271,6 +271,19 @@ def test_ppopg_designer_modifies_policy_params(mock_collect):
 
 
 @patch("optimizer.ppo_pg_designer.collect_trajectory")
+def test_ppopg_designer_returned_policy_is_cloneable(mock_collect):
+    mock_collect.return_value = _make_trajectory(num_steps=5, with_values=False)
+
+    policy = _make_actor_policy()
+    designer = PPOPGDesigner(policy, _env_conf(), epochs=1)
+
+    result = designer([], num_arms=1)
+
+    cloned = result[0].clone()
+    np.testing.assert_allclose(cloned.get_params(), result[0].get_params())
+
+
+@patch("optimizer.ppo_pg_designer.collect_trajectory")
 def test_ppopg_designer_telemetry_rollout_fields(mock_collect):
     mock_collect.return_value = _make_trajectory(5, with_values=False)
 

@@ -5,11 +5,8 @@ import pytest
 import torch
 
 from analysis.fitting_time.evaluate import (
-    SURROGATE_BENCHMARK_KEYS,
     SYNTHETIC_BENCHMARK_N_TEST,
     SYNTHETIC_BENCHMARK_SINE_FUNCTION_NAME,
-    BMResult,
-    MuSe,
     SyntheticSineSurrogateBenchmark,
     benchmark_synthetic_sine_surrogates,
     draw_benchmark_synthetic_xy,
@@ -24,22 +21,13 @@ from analysis.fitting_time.fitting_time import (
     fit_svgp_linear,
     fit_vecchia,
 )
+from tests.synthetic_sine_benchmark_helpers import bench_result, make_surrogate_benchmark
 
 
-def _br(
-    fit_s: float,
-    nrmse: float,
-    ll: float,
-    *,
-    se_f: float = 0.0,
-    se_n: float = 0.0,
-    se_l: float = 0.0,
-) -> BMResult:
-    return BMResult(MuSe(fit_s, se_f), MuSe(nrmse, se_n), MuSe(ll, se_l))
+def test_fit_enn_hnsw_importable_from_package():
+    from analysis.fitting_time import fit_enn_hnsw
 
-
-def _bench(**kwargs: BMResult) -> SyntheticSineSurrogateBenchmark:
-    return SyntheticSineSurrogateBenchmark(results={k: kwargs[k] for k in SURROGATE_BENCHMARK_KEYS})
+    assert callable(fit_enn_hnsw)
 
 
 def test_normalize_benchmark_function_name():
@@ -142,19 +130,19 @@ def test_predictive_gaussian_log_likelihood_torch():
 
 def test_synthetic_sine_surrogate_benchmark_print_table(capsys):
     nan = float("nan")
-    r = _bench(
-        enn=_br(0.01, 0.5, -10.0),
-        smac_rf=_br(nan, nan, nan),
-        dngo=_br(1.0, 0.25, -8.0),
-        exact_gp=_br(2.0, 0.1, -7.0),
-        svgp_default=_br(3.0, 0.15, -7.5),
-        svgp_linear=_br(3.5, 0.14, -7.4),
-        vecchia=_br(4.0, 0.12, -7.2),
+    r = make_surrogate_benchmark(
+        enn=bench_result(0.01, 0.5, -10.0),
+        smac_rf=bench_result(nan, nan, nan),
+        dngo=bench_result(1.0, 0.25, -8.0),
+        exact_gp=bench_result(2.0, 0.1, -7.0),
+        svgp_default=bench_result(3.0, 0.15, -7.5),
+        svgp_linear=bench_result(3.5, 0.14, -7.4),
+        vecchia=bench_result(4.0, 0.12, -7.2),
     )
     r.print_table()
     out = capsys.readouterr().out
     assert "Surrogate" in out and "t/t_ENN" in out and "NRMSE" in out and "LogLik" in out
-    assert "ENN" in out and "SMAC RF" in out and "Exact GP" in out
+    assert "ENN" in out and "ENN+HNSW" in out and "SMAC RF" in out and "Exact GP" in out
     assert "SVGP_default" in out and "SVGP_linear" in out and "Vecchia" in out
     assert "nan" in out
     assert "100" in out  # DNGO 1.0s / ENN 0.01s
@@ -251,6 +239,9 @@ def test_benchmark_synthetic_sine_surrogates_smoke(function_name):
     enn = r.results["enn"]
     assert math.isfinite(enn.fit_seconds.mu) and math.isfinite(enn.normalized_rmse.mu)
     assert math.isfinite(enn.log_likelihood.mu)
+    enn_hnsw = r.results["enn_hnsw"]
+    assert math.isfinite(enn_hnsw.fit_seconds.mu) and math.isfinite(enn_hnsw.normalized_rmse.mu)
+    assert math.isfinite(enn_hnsw.log_likelihood.mu)
     dg = r.results["dngo"]
     assert math.isfinite(dg.fit_seconds.mu) and math.isfinite(dg.normalized_rmse.mu)
     assert math.isfinite(dg.log_likelihood.mu)

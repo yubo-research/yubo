@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 
 from optimizer.designer_errors import NoSuchDesignerError
+from optimizer.ppo_common import clear_policy_ppo_cache
 from optimizer.ppo_designer import (
     PPOACDesigner,
     PPOConfig,
@@ -133,6 +134,25 @@ def test_ppo_ac_designer_init_with_config():
     assert designer._config is cfg
 
 
+def test_clear_policy_ppo_cache_clears_rollout_attrs():
+    policy = _make_policy()
+    policy._last_log_prob = object()
+    policy._last_value = object()
+    clear_policy_ppo_cache(policy)
+    assert policy._last_log_prob is None
+    assert policy._last_value is None
+
+
+@patch("optimizer.ppo_designer.collect_trajectory")
+def test_ppo_ac_designer_clears_rollout_cache_after_update(mock_collect):
+    mock_collect.return_value = _make_trajectory(num_steps=5)
+    policy = _make_policy()
+    designer = PPOACDesigner(policy, _env_conf(), epochs=1)
+    (updated,) = designer([], num_arms=1)
+    assert updated._last_log_prob is None
+    assert updated._last_value is None
+
+
 @patch("optimizer.ppo_designer.collect_trajectory")
 def test_ppo_ac_designer_call_returns_updated_policy(mock_collect):
     mock_collect.return_value = _make_trajectory(num_steps=5)
@@ -201,6 +221,19 @@ def test_ppo_ac_designer_modifies_policy_params(mock_collect):
     new_params = result[0].get_params()
 
     assert not np.allclose(original_params, new_params)
+
+
+@patch("optimizer.ppo_designer.collect_trajectory")
+def test_ppo_ac_designer_returned_policy_is_cloneable(mock_collect):
+    mock_collect.return_value = _make_trajectory(num_steps=5)
+
+    policy = _make_policy()
+    designer = PPOACDesigner(policy, _env_conf(), epochs=1)
+
+    result = designer([], num_arms=1)
+
+    cloned = result[0].clone()
+    np.testing.assert_allclose(cloned.get_params(), result[0].get_params())
 
 
 @pytest.mark.parametrize(

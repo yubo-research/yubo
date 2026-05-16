@@ -21,6 +21,7 @@ __all__ = [
     "normalize_benchmark_function_name",
     "fit_dngo",
     "fit_enn",
+    "fit_enn_hnsw",
     "fit_exact_gp",
     "fit_smac_rf",
     "fit_svgp_default",
@@ -55,6 +56,7 @@ def __getattr__(name: str):
     if name in (
         "fit_dngo",
         "fit_enn",
+        "fit_enn_hnsw",
         "fit_exact_gp",
         "fit_smac_rf",
         "fit_svgp_default",

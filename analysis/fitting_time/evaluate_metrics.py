@@ -12,6 +12,7 @@ SYNTHETIC_BENCHMARK_SINE_FUNCTION_NAME = "sine"
 
 SURROGATE_BENCHMARK_KEYS: tuple[str, ...] = (
     "enn",
+    "enn_hnsw",
     "smac_rf",
     "dngo",
     "exact_gp",
@@ -22,6 +23,7 @@ SURROGATE_BENCHMARK_KEYS: tuple[str, ...] = (
 
 SURROGATE_BENCHMARK_ROWS: tuple[tuple[str, str], ...] = (
     ("enn", "ENN"),
+    ("enn_hnsw", "ENN+HNSW"),
     ("smac_rf", "SMAC RF"),
     ("dngo", "DNGO"),
     ("exact_gp", "Exact GP"),

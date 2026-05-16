@@ -133,6 +133,12 @@ def apply_ppo_telemetry(telemetry, dt_rollout: float, dt_update: float, num_arms
     telemetry.set_num_rollout_workers(num_arms)
 
 
+def clear_policy_ppo_cache(policy) -> None:
+    for attr in ("_last_log_prob", "_last_value"):
+        if hasattr(policy, attr):
+            setattr(policy, attr, None)
+
+
 def trajectory_tensors(merged_traj: Trajectory, device: torch.device) -> tuple:
     return (
         torch.as_tensor(merged_traj.states.T, dtype=torch.float32, device=device),

@@ -16,6 +16,7 @@ from .fitting_time_gp import (
 __all__ = [
     "fit_dngo",
     "fit_enn",
+    "fit_enn_hnsw",
     "fit_exact_gp",
     "fit_smac_rf",
     "fit_svgp_default",
@@ -40,12 +41,15 @@ def fit_enn(
     num_fit_samples: int | None = None,
     num_fit_candidates: int = 100,
     rng: np.random.Generator | None = None,
+    index_driver=None,
 ) -> tuple[float, np.ndarray, np.ndarray]:
     from enn.enn.enn_class import EpistemicNearestNeighbors
     from enn.enn.enn_fit import enn_fit
     from enn.enn.enn_params import PosteriorFlags
+    from enn.turbo.config.enn_index_driver import ENNIndexDriver
 
     train_yvar = np.full_like(train_y, _SYNTHETIC_OBS_VAR)
+    driver = ENNIndexDriver.FLAT if index_driver is None else index_driver
     n_obs = train_x.shape[0]
     k_cap = max(1, n_obs - 1)
     if k is None:
@@ -58,7 +62,12 @@ def fit_enn(
     gen = rng if rng is not None else np.random.default_rng(0)
 
     t_0 = time.perf_counter()
-    enn_model = EpistemicNearestNeighbors(train_x, train_y, train_yvar)
+    enn_model = EpistemicNearestNeighbors(
+        train_x,
+        train_y,
+        train_yvar,
+        index_driver=driver,
+    )
     enn_params = enn_fit(
         enn_model,
         k=k_eff,
@@ -93,6 +102,23 @@ def fit_enn(
     # (same ``0.1^2`` as :func:`draw_benchmark_synthetic_xy` and SMAC RF scoring).
     pred_var = se**2 + _SYNTHETIC_OBS_VAR
     return elapsed, y_hat, pred_var
+
+
+def fit_enn_hnsw(
+    train_x: np.ndarray,
+    train_y: np.ndarray,
+    x_test: np.ndarray,
+    **kwargs,
+) -> tuple[float, np.ndarray, np.ndarray]:
+    from enn.turbo.config.enn_index_driver import ENNIndexDriver
+
+    return fit_enn(
+        train_x,
+        train_y,
+        x_test,
+        index_driver=ENNIndexDriver.HNSW,
+        **kwargs,
+    )
 
 
 def fit_smac_rf(train_x: np.ndarray, train_y: np.ndarray, x_test: np.ndarray) -> tuple[float, np.ndarray, np.ndarray]:
