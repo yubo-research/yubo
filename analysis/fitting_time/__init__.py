@@ -15,8 +15,12 @@ __all__ = [
     "SURROGATE_BENCHMARK_KEYS",
     "SURROGATE_BENCHMARK_ROWS",
     "SyntheticSineSurrogateBenchmark",
+    "EnnIncrementalIndexDriver",
+    "EnnIncrementalTimingResult",
+    "benchmark_enn_incremental_add_timing",
     "benchmark_synthetic_sine_surrogates",
     "draw_benchmark_synthetic_xy",
+    "enn_incremental_checkpoint_ns",
     "env_action_coords_to_surrogate_unit_x",
     "normalize_benchmark_function_name",
     "fit_dngo",
@@ -53,6 +57,15 @@ def __getattr__(name: str):
         from analysis.fitting_time.batch_jobs import SyntheticBenchJob
 
         return SyntheticBenchJob
+    if name in (
+        "EnnIncrementalIndexDriver",
+        "EnnIncrementalTimingResult",
+        "benchmark_enn_incremental_add_timing",
+        "enn_incremental_checkpoint_ns",
+    ):
+        from analysis.fitting_time import fitting_time_enn_incremental as _inc
+
+        return getattr(_inc, name)
     if name in (
         "fit_dngo",
         "fit_enn",
