@@ -6,8 +6,13 @@ import json
 from pathlib import Path
 from typing import Callable, Iterable
 
-from analysis.fitting_time.fitting_time_enn_fit import EnnFitTimingResult, enn_fit_quality_ns
+from analysis.fitting_time.fitting_time_enn_fit import EnnFitTimingResult
 from analysis.fitting_time.fitting_time_enn_incremental import EnnIncrementalIndexDriver
+from experiments.enn_batch_job_params import (
+    enn_batch_rep_meta_matches,
+    enn_batch_shared_params,
+    normalize_index_driver,
+)
 
 _FIT_META_REQUIRED: tuple[str, ...] = (
     "D",
@@ -18,19 +23,6 @@ _FIT_META_REQUIRED: tuple[str, ...] = (
     "num_reps",
     "index_driver",
 )
-
-
-def _normalize_index_driver(
-    index_driver: str | EnnIncrementalIndexDriver,
-) -> EnnIncrementalIndexDriver:
-    if isinstance(index_driver, EnnIncrementalIndexDriver):
-        return index_driver
-    raw = str(index_driver).strip().lower().replace("-", "_")
-    try:
-        return EnnIncrementalIndexDriver(raw)
-    except ValueError as exc:
-        valid = ", ".join(d.value for d in EnnIncrementalIndexDriver)
-        raise ValueError(f"unknown index_driver={index_driver!r}; expected one of {valid}") from exc
 
 
 def fit_job_key(
@@ -44,7 +36,7 @@ def fit_job_key(
     index_driver: str | EnnIncrementalIndexDriver,
     normalize_function_name: Callable[[str], str],
 ) -> str:
-    drv = _normalize_index_driver(index_driver).value
+    drv = normalize_index_driver(index_driver).value
     fn = normalize_function_name(function_name)
     return f"enn_fit_D{int(d)}_{fn}_N{int(n)}_pseed{int(problem_seed)}_nrep{int(num_reps)}_rep{int(rep_index)}_{drv}"
 
@@ -100,17 +92,16 @@ def _fit_meta_matches(
     index_driver: str | EnnIncrementalIndexDriver,
     normalize_function_name: Callable[[str], str],
 ) -> bool:
-    drv = _normalize_index_driver(index_driver).value
-    fn = normalize_function_name(function_name)
-    checks = (
-        int(meta["D"]) == int(d),
-        normalize_function_name(str(meta["function_name"])) == fn,
-        int(meta["problem_seed"]) == int(problem_seed),
-        int(meta["rep_index"]) == int(rep_index),
-        int(meta["num_reps"]) == int(num_reps),
-        str(meta["index_driver"]).strip().lower() == drv,
+    return enn_batch_rep_meta_matches(
+        meta,
+        d=d,
+        function_name=function_name,
+        problem_seed=problem_seed,
+        rep_index=rep_index,
+        num_reps=num_reps,
+        index_driver=index_driver,
+        normalize_function_name=normalize_function_name,
     )
-    return all(checks)
 
 
 def fit_result_json_complete(
@@ -162,18 +153,14 @@ def iter_fit_jobs(
     d: int,
     problem_seed: int,
     *,
-    benchmark_functions: tuple[str, ...],
     iter_index_drivers: Callable[[str], tuple[EnnIncrementalIndexDriver, ...]],
     normalize_function_name: Callable[[str], str],
 ) -> Iterable[tuple[str, tuple[int, str, int, int, int, int, str]]]:
-    if int(num_reps) < 1:
-        raise ValueError("num_reps must be >= 1")
-    if int(d) < 1:
-        raise ValueError("D must be positive")
-    drvs, d_i = iter_index_drivers(index_driver), int(d)
-    ps_i, nr = int(problem_seed), int(num_reps)
-    for fm in map(normalize_function_name, benchmark_functions):
-        for n in enn_fit_quality_ns():
+    shared = enn_batch_shared_params(num_reps=num_reps, d=d, problem_seed=problem_seed)
+    d_i, nr, ps_i = shared.d, shared.num_reps, shared.problem_seed
+    drvs = iter_index_drivers(index_driver)
+    for fm in map(normalize_function_name, shared.benchmark_functions):
+        for n in shared.checkpoint_ns:
             ni = int(n)
             for drv in drvs:
                 for ri in range(nr):

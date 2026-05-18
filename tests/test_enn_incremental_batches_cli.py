@@ -15,6 +15,15 @@ def captured_modal(monkeypatch):
     return capture_subprocess_run(batches_mod, monkeypatch)
 
 
+def test_local_default_checkpoints_match_batch_checkpoint_grid():
+    from analysis.fitting_time.fitting_time_enn_incremental import (
+        enn_incremental_checkpoint_ns,
+    )
+
+    assert batches_mod._resolve_checkpoints(None) == enn_incremental_checkpoint_ns()
+    assert batches_mod._resolve_checkpoints("") == enn_incremental_checkpoint_ns()
+
+
 def test_enn_incremental_batches_get_impl_path():
     assert batches_mod._get_impl_path() == "experiments/modal_enn_incremental_batches_impl.py"
 

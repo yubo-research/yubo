@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import os
-import sys
 from pathlib import Path
 from typing import Iterable
 
@@ -14,23 +13,17 @@ from analysis.fitting_time import benchmark_enn_incremental_add_timing
 from analysis.fitting_time.evaluate import synthetic_benchmark_data_seed
 from analysis.fitting_time.evaluate_metrics import normalize_benchmark_function_name
 from analysis.fitting_time.fitting_time_enn_fit import benchmark_enn_fit_timing
-from analysis.fitting_time.fitting_time_enn_incremental import EnnIncrementalIndexDriver, EnnIncrementalTimingResult, enn_incremental_checkpoint_ns
+from analysis.fitting_time.fitting_time_enn_incremental import EnnIncrementalIndexDriver, EnnIncrementalTimingResult
 from experiments import modal_enn_fit_batches as _fit_batches
 from experiments import modal_enn_incremental_batches_json as _add_json
+from experiments.enn_batch_job_params import (
+    enn_batch_shared_params,
+    normalize_index_driver,
+)
 from experiments.modal_dict_utils import delete_keys_from_dicts
 from experiments.modal_image import mk_image
 
-_BENCHMARK_FUNCTIONS: tuple[str, ...] = ("sphere", "ackley", "rosenbrock", "booth")
-_TAG = os.environ.get("MODAL_TAG")
-if not _TAG:
-    for i, arg in enumerate(sys.argv):
-        if "modal_enn_incremental_batches_impl" in arg and i + 1 < len(sys.argv):
-            candidate = sys.argv[i + 1]
-            if not candidate.startswith("-"):
-                _TAG = candidate
-                break
-    else:
-        _TAG = "add_method-default"
+_TAG = os.environ.get("MODAL_TAG", "add_method-default")
 _modal_image = mk_image(_TAG)
 
 
@@ -56,12 +49,9 @@ def _submitted_dict(tag: str):
     return modal.Dict.from_name(f"enn_incremental_submitted_{tag}", create_if_missing=True)
 
 
-_normalize_index_driver = _fit_batches._normalize_index_driver
-
-
 def _iter_index_drivers(index_driver: str) -> tuple[EnnIncrementalIndexDriver, ...]:
     raw = str(index_driver).strip().lower().replace("-", "_")
-    return tuple(EnnIncrementalIndexDriver) if raw == "all" else (_normalize_index_driver(raw),)
+    return tuple(EnnIncrementalIndexDriver) if raw == "all" else (normalize_index_driver(raw),)
 
 
 def _job_key(
@@ -73,7 +63,7 @@ def _job_key(
     num_reps: int,
     index_driver: str | EnnIncrementalIndexDriver,
 ) -> str:
-    drv = _normalize_index_driver(index_driver).value
+    drv = normalize_index_driver(index_driver).value
     fn = normalize_benchmark_function_name(function_name)
     return f"enn_incremental_D{int(d)}_{fn}_pseed{int(problem_seed)}_nrep{int(num_reps)}_rep{int(rep_index)}_{drv}"
 
@@ -151,15 +141,11 @@ def _result_json_complete(
 
 
 def _pending_jobs(kind: str, output_dir: str | Path, index_driver: str, num_reps: int, d: int, ps: int):
-    if int(num_reps) < 1:
-        raise ValueError("num_reps must be >= 1")
-    if int(d) < 1:
-        raise ValueError("D must be positive")
-    drvs, d_i = _iter_index_drivers(index_driver), int(d)
-    ps_i, nr = int(ps), int(num_reps)
+    shared = enn_batch_shared_params(num_reps=num_reps, d=d, problem_seed=ps)
+    drvs = _iter_index_drivers(index_driver)
+    d_i, ps_i, nr, chk = shared.d, shared.problem_seed, shared.num_reps, shared.checkpoint_ns
     if kind == "add_method":
-        chk = enn_incremental_checkpoint_ns()
-        for fm in map(normalize_benchmark_function_name, _BENCHMARK_FUNCTIONS):
+        for fm in map(normalize_benchmark_function_name, shared.benchmark_functions):
             for drv in drvs:
                 for ri in range(nr):
                     dest = result_json_dest(
@@ -194,7 +180,7 @@ def _pending_jobs(kind: str, output_dir: str | Path, index_driver: str, num_reps
                         (d_i, fm, ps_i, ri, nr, drv.value),
                     )
         return
-    raise ValueError(f"unknown job kind {kind!r}; expected add_method or fit_method")
+    raise ValueError(f"unknown job kind {kind!r}; expected add_method")
 
 
 def _iter_incremental_jobs(
@@ -220,7 +206,6 @@ def _iter_fit_jobs(
         num_reps,
         d,
         problem_seed,
-        benchmark_functions=_BENCHMARK_FUNCTIONS,
         iter_index_drivers=_iter_index_drivers,
         normalize_function_name=normalize_benchmark_function_name,
     )
@@ -237,7 +222,7 @@ def enn_incremental_batch_worker(job):
         if lj != 7:
             raise ValueError(f"add_method job expected 7 fields after tag; got len={lj}")
         _, d, function_name, problem_seed, rep_index, num_reps, index_driver = job
-        drv = _normalize_index_driver(index_driver)
+        drv = normalize_index_driver(index_driver)
         ds = synthetic_benchmark_data_seed(
             function_name=function_name,
             problem_seed=int(problem_seed),
@@ -279,7 +264,7 @@ def enn_incremental_batch_worker(job):
     if lj != 8:
         raise ValueError(f"fit_method job expected 8 fields after tag; got len={lj}")
     _, d, function_name, n, problem_seed, rep_index, num_reps, index_driver = job
-    drv = _normalize_index_driver(index_driver)
+    drv = normalize_index_driver(index_driver)
     ds = synthetic_benchmark_data_seed(
         function_name=function_name,
         problem_seed=int(problem_seed),
@@ -472,7 +457,7 @@ __all__ = [
     "_iter_fit_jobs",
     "_iter_incremental_jobs",
     "_job_key",
-    "_normalize_index_driver",
+    "normalize_index_driver",
     "_results_dict",
     "_submitted_dict",
     "_submit_missing",

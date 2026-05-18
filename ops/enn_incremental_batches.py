@@ -55,6 +55,17 @@ def _run_modal(args: list[str], tag: str) -> None:
     run_modal(args, tag, run=subprocess.run)
 
 
+def _resolve_checkpoints(raw: str | None) -> tuple[int, ...]:
+    from experiments.enn_batch_job_params import enn_batch_checkpoint_ns
+
+    if raw is not None and not str(raw).strip():
+        raw = None
+    parsed = _parse_checkpoint_csv(raw)
+    if parsed is None:
+        return enn_batch_checkpoint_ns()
+    return parsed
+
+
 def _parse_checkpoint_csv(raw: str | None) -> tuple[int, ...] | None:
     if raw is None:
         return None
@@ -236,9 +247,9 @@ def submit_force(
         ),
         click.Option(
             ("--checkpoints", "checkpoint_csv"),
-            default="1,3,10",
+            default="",
             show_default=True,
-            help="Comma-separated checkpoint Ns; use --checkpoints '' for all defaults.",
+            help="Comma-separated checkpoint Ns; default uses the batch checkpoint grid.",
         ),
         click.Option(("--force/--no-force", "force"), default=False, show_default=True),
     ],
@@ -276,7 +287,7 @@ def local(
 
     fn = normalize_benchmark_function_name(function_name)
     driver = EnnIncrementalIndexDriver(index_driver.lower())
-    checkpoints = _parse_checkpoint_csv(checkpoint_csv or None)
+    checkpoints = _resolve_checkpoints(checkpoint_csv or None)
     dest = result_json_dest(
         output_dir,
         d=d_dims,

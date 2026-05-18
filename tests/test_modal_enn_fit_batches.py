@@ -60,9 +60,12 @@ def test_fit_payload_and_dest(tmp_path: Path):
 def test_iter_fit_jobs_skips_complete(monkeypatch, tmp_path: Path):
     import experiments.modal_enn_incremental_batches_impl as impl
 
-    monkeypatch.setattr(impl, "_BENCHMARK_FUNCTIONS", ("sphere", "ackley"))
     monkeypatch.setattr(
-        "experiments.modal_enn_fit_batches.enn_fit_quality_ns",
+        "experiments.enn_batch_job_params.ENN_BATCH_BENCHMARK_FUNCTIONS",
+        ("sphere", "ackley"),
+    )
+    monkeypatch.setattr(
+        "experiments.enn_batch_job_params.enn_batch_checkpoint_ns",
         lambda: (3,),
     )
     ack0 = fit_batches.fit_result_json_dest(
@@ -77,6 +80,7 @@ def test_iter_fit_jobs_skips_complete(monkeypatch, tmp_path: Path):
         normalize_function_name=normalize_benchmark_function_name,
     )
     ack0.parent.mkdir(parents=True, exist_ok=True)
+    ack0_seed = synthetic_benchmark_data_seed(function_name="ackley", problem_seed=17, rep_index=0)
     ack0.write_text(
         json.dumps(
             {
@@ -86,7 +90,7 @@ def test_iter_fit_jobs_skips_complete(monkeypatch, tmp_path: Path):
                     "D": 2,
                     "function_name": "ackley",
                     "problem_seed": 17,
-                    "data_seed": 1,
+                    "data_seed": ack0_seed,
                     "rep_index": 0,
                     "num_reps": 2,
                     "index_driver": "flat",
@@ -105,6 +109,7 @@ def test_iter_fit_jobs_skips_complete(monkeypatch, tmp_path: Path):
         index_driver="flat",
         normalize_function_name=normalize_benchmark_function_name,
     )
+    ack1_seed = synthetic_benchmark_data_seed(function_name="ackley", problem_seed=17, rep_index=1)
     ack1.write_text(
         json.dumps(
             {
@@ -114,7 +119,7 @@ def test_iter_fit_jobs_skips_complete(monkeypatch, tmp_path: Path):
                     "D": 2,
                     "function_name": "ackley",
                     "problem_seed": 17,
-                    "data_seed": 2,
+                    "data_seed": ack1_seed,
                     "rep_index": 1,
                     "num_reps": 2,
                     "index_driver": "flat",
@@ -140,9 +145,12 @@ def test_iter_fit_jobs_skips_complete(monkeypatch, tmp_path: Path):
 def test_iter_fit_jobs_index_driver_all_yields_flat_and_hnsw(monkeypatch, tmp_path: Path):
     import experiments.modal_enn_incremental_batches_impl as impl
 
-    monkeypatch.setattr(impl, "_BENCHMARK_FUNCTIONS", ("sphere",))
     monkeypatch.setattr(
-        "experiments.modal_enn_fit_batches.enn_fit_quality_ns",
+        "experiments.enn_batch_job_params.ENN_BATCH_BENCHMARK_FUNCTIONS",
+        ("sphere",),
+    )
+    monkeypatch.setattr(
+        "experiments.enn_batch_job_params.enn_batch_checkpoint_ns",
         lambda: (3,),
     )
     jobs = list(impl._iter_fit_jobs(tmp_path, "all", 1, 2, 17))
@@ -154,9 +162,12 @@ def test_iter_fit_jobs_index_driver_all_yields_flat_and_hnsw(monkeypatch, tmp_pa
 def test_iter_fit_jobs_resubmits_when_json_incomplete(monkeypatch, tmp_path: Path):
     import experiments.modal_enn_incremental_batches_impl as impl
 
-    monkeypatch.setattr(impl, "_BENCHMARK_FUNCTIONS", ("sphere",))
     monkeypatch.setattr(
-        "experiments.modal_enn_fit_batches.enn_fit_quality_ns",
+        "experiments.enn_batch_job_params.ENN_BATCH_BENCHMARK_FUNCTIONS",
+        ("sphere",),
+    )
+    monkeypatch.setattr(
+        "experiments.enn_batch_job_params.enn_batch_checkpoint_ns",
         lambda: (10,),
     )
     existing = fit_batches.fit_result_json_dest(

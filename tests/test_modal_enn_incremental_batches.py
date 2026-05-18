@@ -47,11 +47,41 @@ def test_enn_incremental_payload_and_dest(tmp_path: Path):
     ).name == ("enn_incremental_D2_sphere_pseed17_nrep10_rep3_flat.json")
 
 
+def test_pending_jobs_uses_shared_benchmark_functions(monkeypatch, tmp_path: Path):
+    import dataclasses
+
+    import experiments.enn_batch_job_params as batch_params
+    import experiments.modal_enn_incremental_batches_impl as impl
+
+    original_shared = batch_params.enn_batch_shared_params
+
+    def shared_sphere_only(**kwargs):
+        shared = original_shared(**kwargs)
+        return dataclasses.replace(shared, benchmark_functions=("sphere",))
+
+    monkeypatch.setattr(impl, "enn_batch_shared_params", shared_sphere_only)
+    monkeypatch.setattr(
+        "experiments.enn_batch_job_params.ENN_BATCH_BENCHMARK_FUNCTIONS",
+        ("sphere", "ackley"),
+    )
+
+    jobs = list(impl._pending_jobs("add_method", tmp_path, "flat", 1, 2, 17))
+    function_names = {job[1][1] for job in jobs}
+
+    assert function_names == {"sphere"}
+
+
 def test_iter_incremental_jobs_deduplicates_n_grid_and_skips_existing(monkeypatch, tmp_path: Path):
     import experiments.modal_enn_incremental_batches_impl as impl
 
-    monkeypatch.setattr(impl, "_BENCHMARK_FUNCTIONS", ("sphere", "ackley"))
-    monkeypatch.setattr(impl, "enn_incremental_checkpoint_ns", lambda: (1, 3))
+    monkeypatch.setattr(
+        "experiments.enn_batch_job_params.ENN_BATCH_BENCHMARK_FUNCTIONS",
+        ("sphere", "ackley"),
+    )
+    monkeypatch.setattr(
+        "experiments.enn_batch_job_params.enn_batch_checkpoint_ns",
+        lambda: (1, 3),
+    )
     existing = impl.result_json_dest(
         tmp_path,
         d=2,
@@ -64,6 +94,11 @@ def test_iter_incremental_jobs_deduplicates_n_grid_and_skips_existing(monkeypatc
     existing.parent.mkdir(parents=True, exist_ok=True)
 
     def _complete_payload(*, function_name: str, rep_index: int, num_reps: int) -> dict:
+        data_seed = synthetic_benchmark_data_seed(
+            function_name=function_name,
+            problem_seed=17,
+            rep_index=rep_index,
+        )
         return {
             "N": [1, 3],
             "add_seconds": [0.01, 0.02],
@@ -72,6 +107,7 @@ def test_iter_incremental_jobs_deduplicates_n_grid_and_skips_existing(monkeypatc
                 "D": 2,
                 "function_name": function_name,
                 "problem_seed": 17,
+                "data_seed": data_seed,
                 "rep_index": rep_index,
                 "num_reps": num_reps,
                 "index_driver": "flat",
@@ -107,8 +143,14 @@ def test_iter_incremental_jobs_deduplicates_n_grid_and_skips_existing(monkeypatc
 def test_iter_incremental_jobs_resubmits_incomplete_existing_json(monkeypatch, tmp_path: Path):
     import experiments.modal_enn_incremental_batches_impl as impl
 
-    monkeypatch.setattr(impl, "_BENCHMARK_FUNCTIONS", ("sphere",))
-    monkeypatch.setattr(impl, "enn_incremental_checkpoint_ns", lambda: (1, 3, 10))
+    monkeypatch.setattr(
+        "experiments.enn_batch_job_params.ENN_BATCH_BENCHMARK_FUNCTIONS",
+        ("sphere",),
+    )
+    monkeypatch.setattr(
+        "experiments.enn_batch_job_params.enn_batch_checkpoint_ns",
+        lambda: (1, 3, 10),
+    )
     existing = impl.result_json_dest(
         tmp_path,
         d=2,
@@ -222,6 +264,7 @@ def test_add_collect_should_overwrite_stale_complete_incremental_json(monkeypatc
     )
 
     chk = enn_incremental_checkpoint_ns()
+    data_seed = synthetic_benchmark_data_seed(function_name="sphere", problem_seed=17, rep_index=3)
     dest = impl.result_json_dest(
         tmp_path,
         d=2,
@@ -242,6 +285,7 @@ def test_add_collect_should_overwrite_stale_complete_incremental_json(monkeypatc
                     "D": 2,
                     "function_name": "sphere",
                     "problem_seed": 17,
+                    "data_seed": data_seed,
                     "rep_index": 3,
                     "num_reps": 10,
                     "index_driver": "flat",
@@ -257,6 +301,7 @@ def test_add_collect_should_overwrite_stale_complete_incremental_json(monkeypatc
             "D": 2,
             "function_name": "sphere",
             "problem_seed": 17,
+            "data_seed": data_seed,
             "rep_index": 3,
             "num_reps": 10,
             "index_driver": "flat",

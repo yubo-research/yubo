@@ -4,7 +4,10 @@ import json
 from pathlib import Path
 from types import SimpleNamespace
 
+import pytest
+
 import experiments.modal_enn_fit_batches as fit_batches
+from analysis.fitting_time.evaluate import synthetic_benchmark_data_seed
 from analysis.fitting_time.evaluate_metrics import normalize_benchmark_function_name
 
 
@@ -115,7 +118,7 @@ def test_submit_missing_reported_count_matches_spawned_jobs(monkeypatch, tmp_pat
     submitted: dict[str, bool] = {"enn_fit_D2_sphere_N3_pseed17_nrep10_rep0_flat": True}
     spawned_todos: list[tuple] = []
 
-    submitter = SimpleNamespace(spawn=lambda batch, tag, force=False: impl.enn_incremental_batch_submitter.info.raw_f(batch, tag, force))
+    submitter = SimpleNamespace(spawn=lambda batch, tag, force=False: (impl.enn_incremental_batch_submitter.info.raw_f(batch, tag, force)))
     worker = SimpleNamespace(spawn_map=spawned_todos.extend)
 
     def _from_name(_app, name):
@@ -151,7 +154,7 @@ def test_submit_missing_reported_count_matches_spawned_jobs(monkeypatch, tmp_pat
     assert "submitted 1 ENN batch jobs" in out
 
 
-def test_fit_result_json_complete_rejects_wrong_meta_rep_index(tmp_path: Path):
+def _fit_json_dest_with_meta(tmp_path: Path, meta: dict) -> Path:
     dest = fit_batches.fit_result_json_dest(
         tmp_path,
         d=2,
@@ -164,24 +167,11 @@ def test_fit_result_json_complete_rejects_wrong_meta_rep_index(tmp_path: Path):
         normalize_function_name=normalize_benchmark_function_name,
     )
     dest.parent.mkdir(parents=True, exist_ok=True)
-    dest.write_text(
-        json.dumps(
-            {
-                "N": 3,
-                "fit_seconds": 0.01,
-                "_meta": {
-                    "D": 2,
-                    "function_name": "sphere",
-                    "problem_seed": 17,
-                    "data_seed": 99,
-                    "rep_index": 99,
-                    "num_reps": 10,
-                    "index_driver": "flat",
-                },
-            }
-        )
-    )
+    dest.write_text(json.dumps({"N": 3, "fit_seconds": 0.01, "_meta": meta}))
+    return dest
 
+
+def _assert_fit_json_incomplete(dest: Path) -> None:
     assert not fit_batches.fit_result_json_complete(
         dest,
         3,
@@ -193,3 +183,25 @@ def test_fit_result_json_complete_rejects_wrong_meta_rep_index(tmp_path: Path):
         index_driver="flat",
         normalize_function_name=normalize_benchmark_function_name,
     )
+
+
+@pytest.mark.parametrize(
+    "meta_patch",
+    [
+        {"rep_index": 99},
+        {"data_seed_offset": 1},
+    ],
+)
+def test_fit_result_json_complete_rejects_bad_meta(tmp_path: Path, meta_patch: dict):
+    expected_data_seed = synthetic_benchmark_data_seed(function_name="sphere", problem_seed=17, rep_index=0)
+    meta = {
+        "D": 2,
+        "function_name": "sphere",
+        "problem_seed": 17,
+        "data_seed": expected_data_seed + int(meta_patch.get("data_seed_offset", 0)),
+        "rep_index": int(meta_patch.get("rep_index", 0)),
+        "num_reps": 10,
+        "index_driver": "flat",
+    }
+    dest = _fit_json_dest_with_meta(tmp_path, meta)
+    _assert_fit_json_incomplete(dest)

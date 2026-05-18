@@ -7,24 +7,17 @@ from pathlib import Path
 
 from analysis.fitting_time.evaluate_metrics import normalize_benchmark_function_name
 from analysis.fitting_time.fitting_time_enn_incremental import EnnIncrementalIndexDriver
+from experiments.enn_batch_job_params import enn_batch_rep_meta_matches
 
 _ADD_META_REQUIRED: tuple[str, ...] = (
     "D",
     "function_name",
     "problem_seed",
+    "data_seed",
     "rep_index",
     "num_reps",
     "index_driver",
 )
-
-
-def _normalize_index_driver(
-    index_driver: str | EnnIncrementalIndexDriver,
-) -> EnnIncrementalIndexDriver:
-    if isinstance(index_driver, EnnIncrementalIndexDriver):
-        return index_driver
-    raw = str(index_driver).strip().lower().replace("-", "_")
-    return EnnIncrementalIndexDriver(raw)
 
 
 def add_meta_matches(
@@ -37,17 +30,16 @@ def add_meta_matches(
     num_reps: int,
     index_driver: str | EnnIncrementalIndexDriver,
 ) -> bool:
-    drv = _normalize_index_driver(index_driver).value
-    fn = normalize_benchmark_function_name(function_name)
-    checks = (
-        int(meta["D"]) == int(d),
-        normalize_benchmark_function_name(str(meta["function_name"])) == fn,
-        int(meta["problem_seed"]) == int(problem_seed),
-        int(meta["rep_index"]) == int(rep_index),
-        int(meta["num_reps"]) == int(num_reps),
-        str(meta["index_driver"]).strip().lower() == drv,
+    return enn_batch_rep_meta_matches(
+        meta,
+        d=d,
+        function_name=function_name,
+        problem_seed=problem_seed,
+        rep_index=rep_index,
+        num_reps=num_reps,
+        index_driver=index_driver,
+        normalize_function_name=normalize_benchmark_function_name,
     )
-    return all(checks)
 
 
 def result_json_complete(
