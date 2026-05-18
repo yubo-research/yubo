@@ -27,9 +27,9 @@ ENN_INCREMENTAL_CHECKPOINT_NS: tuple[int, ...] = (
     3000,
     10000,
     30000,
-    100000,
-    300000,
-    1000000,
+    # 100000,
+    # 300000,
+    # 1000000,
 )
 
 
@@ -57,20 +57,15 @@ class EnnIncrementalTimingResult:
 
 
 def enn_incremental_checkpoint_ns() -> tuple[int, ...]:
-    from .batch_jobs import job_fit_quality
-
-    seen: list[int] = []
-    for job in job_fit_quality():
-        if job.n not in seen:
-            seen.append(job.n)
-    return tuple(seen)
+    return ENN_INCREMENTAL_CHECKPOINT_NS
 
 
 def _checkpoint_enn_params(n_obs: int):
     from enn.enn.enn_params import ENNParams
 
-    k_cap = max(1, n_obs - 1)
-    k_eff = min(25, k_cap)
+    from .fitting_time import enn_fit_k_and_num_fit_samples
+
+    k_eff, _ = enn_fit_k_and_num_fit_samples(n_obs)
     return ENNParams(
         k_num_neighbors=k_eff,
         epistemic_variance_scale=1.0,
@@ -115,7 +110,7 @@ def benchmark_enn_incremental_add_timing(
     target = normalize_benchmark_function_name(function_name)
     d = int(D)
     seed = int(problem_seed)
-    ckpts = tuple(checkpoints) if checkpoints is not None else ENN_INCREMENTAL_CHECKPOINT_NS
+    ckpts = tuple(checkpoints) if checkpoints is not None else enn_incremental_checkpoint_ns()
     if len(ckpts) == 0:
         raise ValueError("checkpoints must be non-empty")
     prev_n = 0

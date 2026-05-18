@@ -23,7 +23,7 @@ def test_benchmark_enn_incremental_importable_from_package():
     assert callable(benchmark_enn_incremental_add_timing)
 
 
-def test_enn_incremental_checkpoint_ns_matches_job_fit_quality():
+def test_enn_incremental_checkpoint_ns_matches_constant():
     assert enn_incremental_checkpoint_ns() == ENN_INCREMENTAL_CHECKPOINT_NS
 
 

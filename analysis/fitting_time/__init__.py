@@ -2,6 +2,12 @@
 
 from __future__ import annotations
 
+from .fitting_time_enn_fit import (
+    EnnFitTimingResult,
+    benchmark_enn_fit_timing,
+    enn_fit_quality_ns,
+)
+
 __all__ = [
     "BMResult",
     "DNGOConfig",
@@ -18,8 +24,11 @@ __all__ = [
     "EnnIncrementalIndexDriver",
     "EnnIncrementalTimingResult",
     "benchmark_enn_incremental_add_timing",
+    "benchmark_enn_fit_timing",
     "benchmark_synthetic_sine_surrogates",
     "draw_benchmark_synthetic_xy",
+    "EnnFitTimingResult",
+    "enn_fit_quality_ns",
     "enn_incremental_checkpoint_ns",
     "env_action_coords_to_surrogate_unit_x",
     "normalize_benchmark_function_name",

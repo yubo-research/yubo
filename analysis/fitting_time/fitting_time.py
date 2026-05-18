@@ -32,6 +32,14 @@ _SYNTHETIC_OBS_VAR = 0.1**2
 _ENN_POSTERIOR_CHUNK = 65_536
 
 
+def enn_fit_k_and_num_fit_samples(n_obs: int) -> tuple[int, int]:
+    n = int(n_obs)
+    k_cap = max(1, n - 1)
+    k_eff = min(25, k_cap)
+    nfs = int(min(max(1, min(10, n)), n))
+    return k_eff, nfs
+
+
 def fit_enn(
     train_x: np.ndarray,
     train_y: np.ndarray,
@@ -51,12 +59,12 @@ def fit_enn(
     train_yvar = np.full_like(train_y, _SYNTHETIC_OBS_VAR)
     driver = ENNIndexDriver.FLAT if index_driver is None else index_driver
     n_obs = train_x.shape[0]
-    k_cap = max(1, n_obs - 1)
+    k_default, nfs_default = enn_fit_k_and_num_fit_samples(n_obs)
     if k is None:
-        k_eff = min(25, k_cap)
+        k_eff = k_default
     else:
+        k_cap = max(1, n_obs - 1)
         k_eff = min(max(1, int(k)), k_cap)
-    nfs_default = min(10, n_obs)
     nfs = num_fit_samples if num_fit_samples is not None else nfs_default
     nfs = int(min(max(1, nfs), n_obs))
     gen = rng if rng is not None else np.random.default_rng(0)

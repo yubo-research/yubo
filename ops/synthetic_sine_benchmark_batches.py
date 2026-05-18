@@ -3,12 +3,17 @@
 
 from __future__ import annotations
 
-import os
 import subprocess
 import sys
 from pathlib import Path
 
 import click
+
+from ops.modal_cli_common import (
+    collect_to_output_dir,
+    run_modal,
+    stop_app_and_delete_dicts,
+)
 
 
 def _repo_root() -> Path:
@@ -62,12 +67,7 @@ def _benchmark_modal_dict_names(tag: str) -> tuple[str, str]:
 
 
 def _run_modal(args: list[str], tag: str) -> None:
-    env = os.environ.copy()
-    env["MODAL_TAG"] = tag
-    cmd = ["modal", *args]
-    click.echo(f"Running: {' '.join(cmd)} (MODAL_TAG={tag})")
-    result = subprocess.run(cmd, env=env)
-    sys.exit(result.returncode)
+    run_modal(args, tag, run=subprocess.run)
 
 
 @click.group()
@@ -122,20 +122,7 @@ def submit(tag: str, jobs_fn: str, output_dir: str, num_reps: int):
 )
 def collect(tag: str, output_dir: str):
     """Collect completed results to the local output directory."""
-    impl = _get_impl_path()
-    _run_modal(
-        [
-            "run",
-            f"{impl}::batches",
-            "--tag",
-            tag,
-            "--cmd",
-            "collect",
-            "--output-dir",
-            output_dir,
-        ],
-        tag,
-    )
+    collect_to_output_dir(_get_impl_path(), tag, output_dir, run=subprocess.run)
 
 
 @cli.command()
@@ -150,25 +137,11 @@ def status(tag: str):
 @click.argument("tag")
 def stop(tag: str):
     """Stop the app and clean up the backing Modal dicts."""
-    exit_code = 0
-    app_name = _get_app_name(tag)
-    click.echo(f"Stopping app: {app_name}")
-    stop_result = subprocess.run(["modal", "app", "stop", app_name])
-    if stop_result.returncode != 0:
-        click.echo(f"Warning: modal app stop returned {stop_result.returncode}")
-        exit_code = 1
-
-    for name in _benchmark_modal_dict_names(tag):
-        click.echo(f"Deleting Modal dict: {name}")
-        del_result = subprocess.run(
-            ["modal", "dict", "delete", "--yes", "--allow-missing", name],
-        )
-        if del_result.returncode != 0:
-            click.echo(f"Warning: modal dict delete returned {del_result.returncode} for {name!r}")
-            exit_code = 1
-
-    if exit_code != 0:
-        sys.exit(exit_code)
+    stop_app_and_delete_dicts(
+        app_name=_get_app_name(tag),
+        dict_names=_benchmark_modal_dict_names(tag),
+        run=subprocess.run,
+    )
 
 
 _LOCAL_SINGLE_PARAMS = [
