@@ -59,6 +59,12 @@ def test_benchmark_enn_fit_timing_passes_hyperparams_to_enn_fit(monkeypatch):
 
     monkeypatch.setattr(fit_mod, "EpistemicNearestNeighbors", ctor, raising=False)
     monkeypatch.setattr(fit_mod, "enn_fit", enn_fit_capture, raising=False)
+    monkeypatch.setattr(
+        fit_mod,
+        "enn_test_log_likelihood",
+        lambda *_args, **_kwargs: -1.0,
+        raising=False,
+    )
 
     fit_mod.benchmark_enn_fit_timing(
         D=2,
@@ -85,6 +91,7 @@ def test_benchmark_enn_fit_timing_small_run():
     )
     assert isinstance(res, EnnFitTimingResult)
     assert res.fit_seconds > 0.0
+    assert isinstance(res.log_likelihood, float)
     assert res.n == 3
     assert res.target == "sphere"
     assert res.d == 2
@@ -118,6 +125,12 @@ def test_benchmark_enn_fit_timing_perf_only_wraps_enn_fit(monkeypatch):
     )
     monkeypatch.setattr(fit_mod, "EpistemicNearestNeighbors", ctor, raising=False)
     monkeypatch.setattr(fit_mod, "enn_fit", enn_fit_nop, raising=False)
+    monkeypatch.setattr(
+        fit_mod,
+        "enn_test_log_likelihood",
+        lambda *_args, **_kwargs: -1.0,
+        raising=False,
+    )
 
     res = benchmark_enn_fit_timing(
         D=2,
@@ -131,6 +144,7 @@ def test_benchmark_enn_fit_timing_perf_only_wraps_enn_fit(monkeypatch):
     assert log[-3:] == ["perf", "enn_fit", "perf"]
     assert log.count("perf") == 2
     assert res.fit_seconds >= 0.0
+    assert res.log_likelihood == -1.0
 
 
 @pytest.mark.parametrize(
@@ -183,6 +197,12 @@ def test_enn_fit_timing_enn_fit_rng_varies_with_data_seed(monkeypatch):
 
     monkeypatch.setattr(fit_mod, "EpistemicNearestNeighbors", ctor, raising=False)
     monkeypatch.setattr(fit_mod, "enn_fit", enn_fit_capture, raising=False)
+    monkeypatch.setattr(
+        fit_mod,
+        "enn_test_log_likelihood",
+        lambda *_args, **_kwargs: -1.0,
+        raising=False,
+    )
     from analysis.fitting_time.evaluate import synthetic_benchmark_data_seed
 
     seeds = [

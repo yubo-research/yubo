@@ -61,6 +61,7 @@ def test_collect_overwrites_stale_complete_fit_json(monkeypatch, tmp_path: Path)
             {
                 "N": 3,
                 "fit_seconds": 0.01,
+                "log_likelihood": -1.0,
                 "_meta": {
                     "D": 2,
                     "function_name": "sphere",
@@ -76,6 +77,7 @@ def test_collect_overwrites_stale_complete_fit_json(monkeypatch, tmp_path: Path)
     fresh_payload = {
         "N": 3,
         "fit_seconds": 0.99,
+        "log_likelihood": -0.9,
         "_meta": {
             "D": 2,
             "function_name": "sphere",
@@ -167,7 +169,7 @@ def _fit_json_dest_with_meta(tmp_path: Path, meta: dict) -> Path:
         normalize_function_name=normalize_benchmark_function_name,
     )
     dest.parent.mkdir(parents=True, exist_ok=True)
-    dest.write_text(json.dumps({"N": 3, "fit_seconds": 0.01, "_meta": meta}))
+    dest.write_text(json.dumps({"N": 3, "fit_seconds": 0.01, "log_likelihood": -1.0, "_meta": meta}))
     return dest
 
 

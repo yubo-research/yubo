@@ -17,6 +17,7 @@ def test_fit_payload_and_dest(tmp_path: Path):
     result = EnnFitTimingResult(
         n=3,
         fit_seconds=0.2,
+        log_likelihood=-4.2,
         target="sphere",
         d=2,
         problem_seed=17,
@@ -33,6 +34,7 @@ def test_fit_payload_and_dest(tmp_path: Path):
     assert payload == {
         "N": 3,
         "fit_seconds": 0.2,
+        "log_likelihood": -4.2,
         "_meta": {
             "D": 2,
             "function_name": "sphere",
@@ -86,6 +88,7 @@ def test_iter_fit_jobs_skips_complete(monkeypatch, tmp_path: Path):
             {
                 "N": 3,
                 "fit_seconds": 0.03,
+                "log_likelihood": -3.0,
                 "_meta": {
                     "D": 2,
                     "function_name": "ackley",
@@ -115,6 +118,7 @@ def test_iter_fit_jobs_skips_complete(monkeypatch, tmp_path: Path):
             {
                 "N": 3,
                 "fit_seconds": 0.04,
+                "log_likelihood": -4.0,
                 "_meta": {
                     "D": 2,
                     "function_name": "ackley",
@@ -205,6 +209,7 @@ def test_fit_worker_writes_result_via_incremental_modal_fn(monkeypatch):
         return EnnFitTimingResult(
             n=int(kwargs["n"]),
             fit_seconds=0.5,
+            log_likelihood=-5.0,
             target=kwargs["function_name"],
             d=int(kwargs["D"]),
             problem_seed=int(kwargs["problem_seed"]),
@@ -240,6 +245,7 @@ def test_fit_worker_writes_result_via_incremental_modal_fn(monkeypatch):
     assert payload["_meta"]["index_driver"] == "hnsw"
     assert payload["_meta"]["data_seed"] == ds
     assert payload["N"] == 3
+    assert payload["log_likelihood"] == -5.0
 
 
 def test_pending_jobs_rejects_unknown_kind(tmp_path: Path):
@@ -278,6 +284,7 @@ def test_enn_fit_collect_dict_payload_writes(monkeypatch, tmp_path: Path):
     payload = {
         "N": 3,
         "fit_seconds": 0.42,
+        "log_likelihood": -4.2,
         "_meta": {
             "D": 2,
             "function_name": "sphere",
@@ -332,6 +339,7 @@ def test_fit_worker_writes_result_real_benchmark(monkeypatch):
     )
     assert payload["N"] == 1
     assert payload["fit_seconds"] > 0.0
+    assert isinstance(payload["log_likelihood"], float)
     assert payload["_meta"]["data_seed"] == synthetic_benchmark_data_seed(function_name="sphere", problem_seed=17, rep_index=0)
 
 
@@ -363,6 +371,51 @@ def test_fit_result_json_complete_requires_meta(tmp_path: Path):
     )
 
 
+def test_fit_result_json_complete_requires_log_likelihood(tmp_path: Path):
+    data_seed = synthetic_benchmark_data_seed(function_name="sphere", problem_seed=17, rep_index=0)
+    dest = fit_batches.fit_result_json_dest(
+        tmp_path,
+        d=2,
+        function_name="sphere",
+        n=3,
+        problem_seed=17,
+        rep_index=0,
+        num_reps=1,
+        index_driver="flat",
+        normalize_function_name=normalize_benchmark_function_name,
+    )
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_text(
+        json.dumps(
+            {
+                "N": 3,
+                "fit_seconds": 0.01,
+                "_meta": {
+                    "D": 2,
+                    "function_name": "sphere",
+                    "problem_seed": 17,
+                    "data_seed": data_seed,
+                    "rep_index": 0,
+                    "num_reps": 1,
+                    "index_driver": "flat",
+                },
+            }
+        )
+    )
+
+    assert not fit_batches.fit_result_json_complete(
+        dest,
+        3,
+        d=2,
+        function_name="sphere",
+        problem_seed=17,
+        rep_index=0,
+        num_reps=1,
+        index_driver="flat",
+        normalize_function_name=normalize_benchmark_function_name,
+    )
+
+
 def test_enn_fit_collect_writes_and_deletes(monkeypatch, tmp_path: Path):
     import experiments.modal_enn_incremental_batches_impl as impl
 
@@ -371,6 +424,7 @@ def test_enn_fit_collect_writes_and_deletes(monkeypatch, tmp_path: Path):
             {
                 "N": 3,
                 "fit_seconds": 0.42,
+                "log_likelihood": -4.2,
                 "_meta": {
                     "D": 2,
                     "function_name": "sphere",

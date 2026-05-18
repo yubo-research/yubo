@@ -69,6 +69,7 @@ def fit_result_to_payload(
     return {
         "N": int(result.n),
         "fit_seconds": float(result.fit_seconds),
+        "log_likelihood": float(result.log_likelihood),
         "_meta": {
             "D": int(result.d),
             "function_name": result.target,
@@ -128,7 +129,8 @@ def fit_result_json_complete(
         return False
     try:
         float(payload["fit_seconds"])
-    except (TypeError, ValueError):
+        float(payload["log_likelihood"])
+    except (KeyError, TypeError, ValueError):
         return False
     if not isinstance(meta, dict):
         return False

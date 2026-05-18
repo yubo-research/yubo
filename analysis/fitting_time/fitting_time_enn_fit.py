@@ -12,7 +12,10 @@ from enn.enn.enn_fit import enn_fit
 from .batch_jobs import job_fit_quality
 from .evaluate_metrics import normalize_benchmark_function_name
 from .fitting_time import _SYNTHETIC_OBS_VAR, enn_fit_k_and_num_fit_samples
-from .fitting_time_enn_incremental import EnnIncrementalIndexDriver
+from .fitting_time_enn_incremental import (
+    EnnIncrementalIndexDriver,
+    enn_test_log_likelihood,
+)
 from .fitting_time_enn_incremental_draw import _train_xy_unit_cube_segment
 
 
@@ -20,6 +23,7 @@ from .fitting_time_enn_incremental_draw import _train_xy_unit_cube_segment
 class EnnFitTimingResult:
     n: int
     fit_seconds: float
+    log_likelihood: float
     target: str
     d: int
     problem_seed: int
@@ -80,10 +84,18 @@ def benchmark_enn_fit_timing(
         rng=gen,
     )
     fit_seconds = time.perf_counter() - t_0
+    log_likelihood = enn_test_log_likelihood(
+        enn_model,
+        D=d,
+        function_name=target,
+        problem_seed=draw_seed,
+        n_obs=n_obs,
+    )
 
     return EnnFitTimingResult(
         n=n_obs,
         fit_seconds=float(fit_seconds),
+        log_likelihood=float(log_likelihood),
         target=target,
         d=d,
         problem_seed=base_seed,

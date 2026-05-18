@@ -9,7 +9,10 @@ from typing import Sequence
 
 import numpy as np
 
-from .evaluate_metrics import predictive_gaussian_log_likelihood
+from .evaluate_metrics import (
+    normalize_benchmark_function_name,
+    predictive_gaussian_log_likelihood,
+)
 from .fitting_time import _ENN_POSTERIOR_CHUNK, _SYNTHETIC_OBS_VAR
 from .fitting_time_enn_incremental_draw import (
     _train_xy_unit_cube_segment,
@@ -95,6 +98,22 @@ def _enn_posterior_mu_se(enn_model, x_test: np.ndarray, enn_params) -> tuple[np.
     return np.concatenate(mu_parts, axis=0), np.concatenate(se_parts, axis=0)
 
 
+def enn_test_log_likelihood(
+    enn_model,
+    *,
+    D: int,
+    function_name: str,
+    problem_seed: int,
+    n_obs: int,
+) -> float:
+    target = normalize_benchmark_function_name(function_name)
+    x_test, y_test = draw_benchmark_test_xy_unit_cube(D=int(D), function_name=target, problem_seed=int(problem_seed))
+    params = _checkpoint_enn_params(int(n_obs))
+    y_hat, se = _enn_posterior_mu_se(enn_model, x_test, params)
+    pred_var = se**2 + _SYNTHETIC_OBS_VAR
+    return predictive_gaussian_log_likelihood(y_test, y_hat, pred_var)
+
+
 def benchmark_enn_incremental_add_timing(
     *,
     D: int,
@@ -104,8 +123,6 @@ def benchmark_enn_incremental_add_timing(
     checkpoints: Sequence[int] | None = None,
 ) -> EnnIncrementalTimingResult:
     from enn.enn.enn_class import EpistemicNearestNeighbors
-
-    from .evaluate_metrics import normalize_benchmark_function_name
 
     target = normalize_benchmark_function_name(function_name)
     d = int(D)
@@ -118,7 +135,6 @@ def benchmark_enn_incremental_add_timing(
         if int(n_chk) <= prev_n:
             raise ValueError(f"checkpoints must be strictly increasing, got {ckpts}")
 
-    x_test, y_test = draw_benchmark_test_xy_unit_cube(D=d, function_name=target, problem_seed=seed)
     driver = index_driver.to_enn_index_driver()
     enn_model = EpistemicNearestNeighbors(
         np.zeros((0, d), dtype=np.float64),
@@ -145,10 +161,15 @@ def benchmark_enn_incremental_add_timing(
             enn_model.add(x_seg[i : i + 1], y_seg[i : i + 1], yvar_row)
         add_seconds.append(time.perf_counter() - t_0)
         prev_n = n_target
-        params = _checkpoint_enn_params(n_target)
-        y_hat, se = _enn_posterior_mu_se(enn_model, x_test, params)
-        pred_var = se**2 + _SYNTHETIC_OBS_VAR
-        log_likelihood.append(predictive_gaussian_log_likelihood(y_test, y_hat, pred_var))
+        log_likelihood.append(
+            enn_test_log_likelihood(
+                enn_model,
+                D=d,
+                function_name=target,
+                problem_seed=seed,
+                n_obs=n_target,
+            )
+        )
         ns.append(n_target)
 
     return EnnIncrementalTimingResult(
