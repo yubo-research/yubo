@@ -66,10 +66,14 @@ _OPTIONAL_TOML_KEYS = (
     "reference_policy_tag",
     "pretrain_lora_only",
     "pretrain_search_dim",
+    "vllm_enforce_eager",
     "vllm_max_model_len",
     "vllm_gpu_memory_utilization",
     "vllm_max_num_seqs",
     "vllm_max_num_batched_tokens",
+    "vllm_speculative_method",
+    "vllm_speculative_model",
+    "vllm_num_speculative_tokens",
 )
 _ALL_TOML_KEYS = set(_REQUIRED_TOML_KEYS + _OPTIONAL_TOML_KEYS)
 _DIRECT_LLM_OPTIMIZERS = {"eggroll", "sft", "rkl"}
@@ -157,6 +161,7 @@ def _parse_cfg(cfg: dict[str, Any]) -> LLMConfig:
         raise ValueError("pass_at_k=true requires samples_per_prompt > 1.")
 
     tensor_parallel_size = _optional_int(cfg, "tensor_parallel_size")
+    vllm_options = _parse_vllm_options(cfg)
     return LLMConfig(
         env_tag=env_tag,
         policy_tag=policy_tag,
@@ -202,12 +207,9 @@ def _parse_cfg(cfg: dict[str, Any]) -> LLMConfig:
         reference_policy_tag=_optional_str(cfg, "reference_policy_tag"),
         pretrain_lora_only=bool(cfg.get("pretrain_lora_only", True)),
         pretrain_search_dim=int(cfg.get("pretrain_search_dim", 4096)),
-        vllm_max_model_len=_optional_int(cfg, "vllm_max_model_len"),
-        vllm_gpu_memory_utilization=_optional_float(cfg, "vllm_gpu_memory_utilization"),
-        vllm_max_num_seqs=_optional_int(cfg, "vllm_max_num_seqs"),
-        vllm_max_num_batched_tokens=_optional_int(cfg, "vllm_max_num_batched_tokens"),
         env=env,
         policy=policy,
+        **vllm_options,
     )
 
 
@@ -252,6 +254,19 @@ def _optional_path(cfg: dict[str, Any], key: str, *, base: Path) -> str | None:
     return None if value in (None, "") else str(abs_path(str(value), base=base))
 
 
+def _parse_vllm_options(cfg: dict[str, Any]) -> dict[str, int | float | str | None]:
+    return {
+        "vllm_enforce_eager": bool(cfg.get("vllm_enforce_eager", False)),
+        "vllm_max_model_len": _optional_int(cfg, "vllm_max_model_len"),
+        "vllm_gpu_memory_utilization": _optional_float(cfg, "vllm_gpu_memory_utilization"),
+        "vllm_max_num_seqs": _optional_int(cfg, "vllm_max_num_seqs"),
+        "vllm_max_num_batched_tokens": _optional_int(cfg, "vllm_max_num_batched_tokens"),
+        "vllm_speculative_method": _optional_str(cfg, "vllm_speculative_method"),
+        "vllm_speculative_model": _optional_str(cfg, "vllm_speculative_model"),
+        "vllm_num_speculative_tokens": _optional_int(cfg, "vllm_num_speculative_tokens"),
+    }
+
+
 def _cfg_summary(cfg: LLMConfig) -> dict[str, Any]:
     tensor_parallel_size = cfg.tensor_parallel_size or cfg.policy.tensor_parallel_size
     return {
@@ -270,6 +285,10 @@ def _cfg_summary(cfg: LLMConfig) -> dict[str, Any]:
         "prompt_batch_size": cfg.prompt_batch_size,
         "samples_per_prompt": cfg.samples_per_prompt,
         "pass_at_k": cfg.pass_at_k,
+        "vllm_speculative_method": cfg.vllm_speculative_method,
+        "vllm_speculative_model": cfg.vllm_speculative_model,
+        "vllm_num_speculative_tokens": cfg.vllm_num_speculative_tokens,
+        "vllm_enforce_eager": cfg.vllm_enforce_eager,
     }
 
 

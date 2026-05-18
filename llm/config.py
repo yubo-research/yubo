@@ -53,10 +53,14 @@ class LLMConfig:
     policy: LLMPolicySpec
     pretrain_lora_only: bool = True
     pretrain_search_dim: int = 4096
+    vllm_enforce_eager: bool = False
     vllm_max_model_len: int | None = None
     vllm_gpu_memory_utilization: float | None = None
     vllm_max_num_seqs: int | None = None
     vllm_max_num_batched_tokens: int | None = None
+    vllm_speculative_method: str | None = None
+    vllm_speculative_model: str | None = None
+    vllm_num_speculative_tokens: int | None = None
 
 
 __all__ = ["LLMConfig"]

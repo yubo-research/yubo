@@ -299,6 +299,9 @@ def _launch_pool(cfg: Any, policy: Any):
             vllm_gpu_memory_utilization=getattr(cfg, "vllm_gpu_memory_utilization", None),
             vllm_max_num_seqs=getattr(cfg, "vllm_max_num_seqs", None),
             vllm_max_num_batched_tokens=getattr(cfg, "vllm_max_num_batched_tokens", None),
+            vllm_speculative_method=getattr(cfg, "vllm_speculative_method", None),
+            vllm_speculative_model=getattr(cfg, "vllm_speculative_model", None),
+            vllm_num_speculative_tokens=getattr(cfg, "vllm_num_speculative_tokens", None),
         )
     )
 

@@ -100,6 +100,9 @@ _OPTIONAL_TOML_KEYS = (
     "vllm_gpu_memory_utilization",
     "vllm_max_num_seqs",
     "vllm_max_num_batched_tokens",
+    "vllm_speculative_method",
+    "vllm_speculative_model",
+    "vllm_num_speculative_tokens",
 )
 _ALL_TOML_KEYS = set(_REQUIRED_TOML_KEYS + _OPTIONAL_TOML_KEYS)
 
@@ -426,6 +429,9 @@ def _parse_cfg(cfg: dict[str, Any]) -> UHDConfig:
         "vllm_gpu_memory_utilization",
         "vllm_max_num_seqs",
         "vllm_max_num_batched_tokens",
+        "vllm_speculative_method",
+        "vllm_speculative_model",
+        "vllm_num_speculative_tokens",
     ):
         if key in cfg:
             val = cfg[key]

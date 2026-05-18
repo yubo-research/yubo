@@ -97,10 +97,14 @@ def run_eggroll(cfg: LLMConfig) -> dict[str, Any]:
         wandb_name=cfg.wandb_name,
         pretrain_lora_only=bool(cfg.pretrain_lora_only),
         pretrain_search_dim=int(cfg.pretrain_search_dim),
+        vllm_enforce_eager=bool(cfg.vllm_enforce_eager),
         vllm_max_model_len=cfg.vllm_max_model_len,
         vllm_gpu_memory_utilization=cfg.vllm_gpu_memory_utilization,
         vllm_max_num_seqs=cfg.vllm_max_num_seqs,
         vllm_max_num_batched_tokens=cfg.vllm_max_num_batched_tokens,
+        vllm_speculative_method=cfg.vllm_speculative_method,
+        vllm_speculative_model=cfg.vllm_speculative_model,
+        vllm_num_speculative_tokens=cfg.vllm_num_speculative_tokens,
     )
     validate_eggroll_population(
         population_size=args.population_size,

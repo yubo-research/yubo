@@ -21,10 +21,14 @@ class EnginePoolConfig:
     prompt_batch_size: int
     samples_per_prompt: int = 1
     use_async: bool = False
+    vllm_enforce_eager: bool = False
     vllm_max_model_len: int | None = None
     vllm_gpu_memory_utilization: float | None = None
     vllm_max_num_seqs: int | None = None
     vllm_max_num_batched_tokens: int | None = None
+    vllm_speculative_method: str | None = None
+    vllm_speculative_model: str | None = None
+    vllm_num_speculative_tokens: int | None = None
 
 
 class VLLMEnginePool:
@@ -68,7 +72,7 @@ class VLLMEnginePool:
                         )
                     )
 
-            enforce_eager = int(cfg.tensor_parallel_size) > 1
+            enforce_eager = bool(cfg.vllm_enforce_eager) or int(cfg.tensor_parallel_size) > 1
 
             actor_cls = AsyncTextVLLMActor if cfg.use_async else TextVLLMActor
             concurrency = 1
@@ -93,6 +97,9 @@ class VLLMEnginePool:
                     vllm_gpu_memory_utilization=cfg.vllm_gpu_memory_utilization,
                     vllm_max_num_seqs=cfg.vllm_max_num_seqs,
                     vllm_max_num_batched_tokens=cfg.vllm_max_num_batched_tokens,
+                    vllm_speculative_method=cfg.vllm_speculative_method,
+                    vllm_speculative_model=cfg.vllm_speculative_model,
+                    vllm_num_speculative_tokens=cfg.vllm_num_speculative_tokens,
                 )
                 for strategy in strategies
             ]

@@ -48,10 +48,14 @@ class EggrollArgs:
     wandb_name: str | None
     pretrain_lora_only: bool = True
     pretrain_search_dim: int = 4096
+    vllm_enforce_eager: bool = False
     vllm_max_model_len: int | None = None
     vllm_gpu_memory_utilization: float | None = None
     vllm_max_num_seqs: int | None = None
     vllm_max_num_batched_tokens: int | None = None
+    vllm_speculative_method: str | None = None
+    vllm_speculative_model: str | None = None
+    vllm_num_speculative_tokens: int | None = None
 
 
 def train_loop(
@@ -260,7 +264,7 @@ def launch_engines(ray: Any, *, cfg: LLMConfig, args: EggrollArgs) -> tuple[list
                 )
 
         loras_per_engine = args.population_size // args.num_engines
-        enforce_eager = args.tensor_parallel_size > 1
+        enforce_eager = bool(args.vllm_enforce_eager) or args.tensor_parallel_size > 1
         actors = [
             ray.remote(
                 num_cpus=0,
@@ -281,6 +285,9 @@ def launch_engines(ray: Any, *, cfg: LLMConfig, args: EggrollArgs) -> tuple[list
                 vllm_gpu_memory_utilization=args.vllm_gpu_memory_utilization,
                 vllm_max_num_seqs=args.vllm_max_num_seqs,
                 vllm_max_num_batched_tokens=args.vllm_max_num_batched_tokens,
+                vllm_speculative_method=args.vllm_speculative_method,
+                vllm_speculative_model=args.vllm_speculative_model,
+                vllm_num_speculative_tokens=args.vllm_num_speculative_tokens,
             )
             for strategy in strategies
         ]

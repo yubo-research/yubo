@@ -37,6 +37,12 @@ def test_llm_registry_resolves_env_and_policy_tags():
     assert kimina_policy.lora_rank == 8
     assert kimina_policy.lora_alpha == 8
 
+    gemma4_policy = resolve_llm_policy("gemma4-e2b-it-lora-r1")
+    assert gemma4_policy.model_name == "google/gemma-4-E2B-it"
+    assert gemma4_policy.lora_rank == 1
+    assert gemma4_policy.tensor_parallel_size == 1
+    assert policy_uses_chat_template(gemma4_policy) is True
+
 
 def test_llm_task_execution_mode_is_explicit():
     from llm.tasks import RandomTask, TaskMode, VerifiersTask, task_mode
@@ -166,6 +172,24 @@ population_size = 2
     assert cfg.policy.model_name == "Qwen/Qwen3-1.7B"
     assert cfg.population_size == 4
     assert cfg.pass_at_k is True
+
+
+def test_llm_gemma4_mtp_config_parses():
+    from pathlib import Path
+
+    from experiments import llm
+
+    repo_root = Path(__file__).resolve().parents[1]
+    cfg = llm._parse_cfg(llm._load_toml_config(str(repo_root / "configs/llm/gsm8k_gemma4_e2b_eggroll_mtp_smoke.toml")))
+    summary = llm._cfg_summary(cfg)
+
+    assert cfg.policy.model_name == "google/gemma-4-E2B-it"
+    assert cfg.vllm_enforce_eager is True
+    assert cfg.vllm_max_model_len == 1024
+    assert cfg.vllm_speculative_model == "google/gemma-4-E2B-it-assistant"
+    assert cfg.vllm_num_speculative_tokens == 2
+    assert summary["vllm_enforce_eager"] is True
+    assert summary["vllm_speculative_model"] == "google/gemma-4-E2B-it-assistant"
 
 
 def test_llm_sft_uses_num_epochs_budget(tmp_path):

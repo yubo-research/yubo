@@ -92,6 +92,8 @@ def test_uhd_text_config_fields_parse():
             "vllm_gpu_memory_utilization": 0.82,
             "vllm_max_num_seqs": 8,
             "vllm_max_num_batched_tokens": 4096,
+            "vllm_speculative_model": "google/gemma-4-E2B-it-assistant",
+            "vllm_num_speculative_tokens": 2,
         }
     )
 
@@ -112,6 +114,8 @@ def test_uhd_text_config_fields_parse():
     assert cfg.vllm_gpu_memory_utilization == 0.82
     assert cfg.vllm_max_num_seqs == 8
     assert cfg.vllm_max_num_batched_tokens == 4096
+    assert cfg.vllm_speculative_model == "google/gemma-4-E2B-it-assistant"
+    assert cfg.vllm_num_speculative_tokens == 2
 
 
 def test_lora_subspace_codec_searches_b_matrices_only():

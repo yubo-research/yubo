@@ -24,6 +24,9 @@ class VLLMActorConfig:
     vllm_gpu_memory_utilization: float | None = None
     vllm_max_num_seqs: int | None = None
     vllm_max_num_batched_tokens: int | None = None
+    vllm_speculative_method: str | None = None
+    vllm_speculative_model: str | None = None
+    vllm_num_speculative_tokens: int | None = None
 
     @classmethod
     def from_kwargs(cls, **kwargs) -> "VLLMActorConfig":
@@ -43,7 +46,7 @@ def set_vllm_env_defaults() -> None:
 def get_llm_kwargs(cfg: VLLMActorConfig) -> dict[str, Any]:
     max_model_len = _max_model_len(cfg)
     max_num_seqs = _max_num_seqs(cfg)
-    return {
+    kwargs = {
         "model": cfg.model_name,
         "tensor_parallel_size": int(cfg.tensor_parallel_size),
         "distributed_executor_backend": "ray",
@@ -62,6 +65,12 @@ def get_llm_kwargs(cfg: VLLMActorConfig) -> dict[str, Any]:
         "enable_chunked_prefill": True,
         "load_format": "auto",
     }
+    speculative_config = _speculative_config(cfg)
+    if speculative_config is not None:
+        kwargs["speculative_config"] = speculative_config
+    if str(cfg.model_name).startswith("google/gemma-4-"):
+        kwargs["limit_mm_per_prompt"] = {"image": 0, "audio": 0, "video": 0}
+    return kwargs
 
 
 def _max_model_len(cfg: VLLMActorConfig) -> int:
@@ -91,6 +100,19 @@ def _max_num_batched_tokens(cfg: VLLMActorConfig, *, max_model_len: int, max_num
         return max(1, int(cfg.vllm_max_num_batched_tokens))
     active = min(max_num_seqs, _active_sequences(cfg))
     return max(1, active) * min(max_model_len, 2048)
+
+
+def _speculative_config(cfg: VLLMActorConfig) -> dict[str, Any] | None:
+    if cfg.vllm_speculative_method in (None, "") and cfg.vllm_speculative_model in (None, "") and cfg.vllm_num_speculative_tokens is None:
+        return None
+    out: dict[str, Any] = {}
+    if cfg.vllm_speculative_method not in (None, ""):
+        out["method"] = str(cfg.vllm_speculative_method)
+    if cfg.vllm_speculative_model not in (None, ""):
+        out["model"] = str(cfg.vllm_speculative_model)
+    if cfg.vllm_num_speculative_tokens is not None:
+        out["num_speculative_tokens"] = max(1, int(cfg.vllm_num_speculative_tokens))
+    return out
 
 
 def sampling_params(kwargs: dict[str, Any]):

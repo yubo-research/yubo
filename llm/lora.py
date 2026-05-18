@@ -12,6 +12,12 @@ from pathlib import Path
 from typing import Any
 
 from llm.runtime_messages import missing_runtime_message
+from llm.universal_subspace import (
+    ParameterMetadata,
+    UniversalSubspaceTemplate,
+    build_universal_subspace_template,
+    discover_vllm_parameters,
+)
 
 LORA_TARGET_MODULES = (
     "q_proj",
@@ -22,6 +28,10 @@ LORA_TARGET_MODULES = (
     "up_proj",
     "down_proj",
 )
+_GEMMA4_LANGUAGE_LORA_TARGETS = (
+    r".*language_model\.(model\.)?layers\.\d+\."
+    r"(self_attn\.(q_proj|k_proj|v_proj|o_proj)|mlp\.(gate_proj|up_proj|down_proj))(\.linear)?$"
+)
 
 
 @dataclass(frozen=True)
@@ -29,143 +39,6 @@ class LoraTemplate:
     state_dict: dict[str, Any]
     base_shapes: dict[str, tuple[int, ...]]
     config: dict[str, Any]
-
-
-@dataclass(frozen=True)
-class ParameterMetadata:
-    name: str
-    shape: tuple[int, ...]
-    kind: str  # "MM", "EMB", "CONV", "NORM", "BIAS", "GATE", "OTHER"
-
-
-@dataclass(frozen=True)
-class UniversalSubspaceTemplate:
-    parameters: list[ParameterMetadata]
-    search_dim: int
-    seed: int
-    basis_leaf: list[int]
-    basis_index: list[int]
-    basis_sign: list[float]
-
-
-def discover_vllm_parameters(model: Any) -> list[ParameterMetadata]:
-    """Principled architecture discovery by traversing the module tree."""
-    from torch import nn
-
-    norm_types: list[type[nn.Module]] = [nn.LayerNorm, nn.GroupNorm]
-    rms_norm = getattr(nn, "RMSNorm", None)
-    if rms_norm is not None:
-        norm_types.append(rms_norm)
-
-    # We use a mapping of module types to their semantic kinds
-    # This can be extended as new vLLM / PyTorch layers are supported
-    TYPE_MAP = {
-        # Matrix Multiplications / Linear
-        (nn.Linear,): "MM",
-        # Embeddings
-        (nn.Embedding,): "EMB",
-        # Normalization
-        tuple(norm_types): "NORM",
-        # Convolutional
-        (nn.Conv1d, nn.Conv2d, nn.Conv3d): "CONV",
-    }
-
-    metadata = []
-    seen_params = set()
-
-    # Traverse all modules in the model
-    for module_name, module in model.named_modules():
-        kind = "OTHER"
-        for types, k in TYPE_MAP.items():
-            if isinstance(module, types):
-                kind = k
-                break
-
-        # Check specific MoE gate logic if classes are available
-        if "Gate" in module.__class__.__name__:
-            kind = "GATE"
-
-        # Capture parameters owned by this module
-        for param_name, param in module.named_parameters(recurse=False):
-            # For Universal UHD, we often want to perturb frozen weights (inference-time)
-            # so we do not strictly enforce requires_grad here if we are in discovery mode.
-            p_full_name = f"{module_name}.{param_name}" if module_name else param_name
-            if p_full_name in seen_params:
-                continue
-            p_kind = kind
-            if "bias" in param_name.lower():
-                p_kind = "BIAS"
-
-            metadata.append(
-                ParameterMetadata(
-                    name=p_full_name,
-                    shape=tuple(int(d) for d in param.shape),
-                    kind=p_kind,
-                )
-            )
-            seen_params.add(p_full_name)
-
-    # Catch any remaining parameters not associated with identified modules
-    for name, param in model.named_parameters():
-        if name not in seen_params and param.requires_grad:
-            metadata.append(
-                ParameterMetadata(
-                    name=name,
-                    shape=tuple(int(d) for d in param.shape),
-                    kind="OTHER",
-                )
-            )
-
-    return metadata
-
-
-def build_universal_subspace_template(
-    *,
-    parameters: list[ParameterMetadata],
-    search_dim: int,
-    seed: int,
-    lora_only: bool = False,
-    basis_max_leaves: int | None = None,
-) -> UniversalSubspaceTemplate:
-    """Builds a coordinate-based subspace template over all model parameters."""
-    import numpy as np
-
-    # 1. Identify eligible parameters
-    indices = []
-    sizes = []
-    for i, p in enumerate(parameters):
-        size = int(np.prod(p.shape))
-        if size <= 0:
-            continue
-        if lora_only and p.kind not in ("MM", "EMB"):
-            continue
-        indices.append(i)
-        sizes.append(size)
-
-    indices = np.array(indices)
-    sizes = np.array(sizes)
-
-    if indices.size == 0:
-        raise ValueError("No eligible parameters found for universal subspace.")
-
-    # 2. Randomly select basis coordinates (NanoEgg style)
-    rng = np.random.default_rng(int(seed))
-    probs = sizes.astype(np.float64) / sizes.sum()
-
-    basis_leaf_idx = rng.choice(indices.size, size=int(search_dim), replace=True, p=probs)
-    basis_leaf = indices[basis_leaf_idx].tolist()
-
-    basis_index = [int(rng.integers(sizes[idx])) for idx in basis_leaf_idx]
-    basis_sign = rng.choice([-1.0, 1.0], size=int(search_dim)).astype(float).tolist()
-
-    return UniversalSubspaceTemplate(
-        parameters=parameters,
-        search_dim=int(search_dim),
-        seed=int(seed),
-        basis_leaf=basis_leaf,
-        basis_index=basis_index,
-        basis_sign=basis_sign,
-    )
 
 
 def build_peft_lora_template(*, model_name: str, rank: int, alpha: int) -> LoraTemplate:
@@ -180,17 +53,17 @@ def build_peft_lora_template(*, model_name: str, rank: int, alpha: int) -> LoraT
     except ImportError as exc:
         raise RuntimeError(_missing_runtime_message(["accelerate", "peft", "torch", "transformers"])) from exc
 
+    config = AutoConfig.from_pretrained(model_name, trust_remote_code=True)
+    with init_empty_weights():
+        base_model = AutoModelForCausalLM.from_config(config, trust_remote_code=True)
     lora_config = LoraConfig(
         r=int(rank),
         lora_alpha=int(alpha),
-        target_modules=list(LORA_TARGET_MODULES),
+        target_modules=_lora_target_modules(model_name, base_model=base_model),
         lora_dropout=0.0,
         bias="none",
         task_type="CAUSAL_LM",
     )
-    config = AutoConfig.from_pretrained(model_name, trust_remote_code=True)
-    with init_empty_weights():
-        base_model = AutoModelForCausalLM.from_config(config, trust_remote_code=True)
     peft_model = get_peft_model(base_model, lora_config)
 
     state_dict: dict[str, Any] = {}
@@ -438,10 +311,73 @@ def _vllm_moe_update_target(
 
 
 def _require_param(vllm_params: dict[str, Any], target_name: str, peft_name: str) -> Any:
-    if target_name not in vllm_params:
-        sample = list(vllm_params)[:8]
-        raise RuntimeError(f"Expected vLLM parameter {target_name!r} for PEFT layer {peft_name!r}; sample keys: {sample}")
-    return vllm_params[target_name]
+    for name in _vllm_param_name_candidates(target_name):
+        if name in vllm_params:
+            return vllm_params[name]
+    sample = list(vllm_params)[:8]
+    raise RuntimeError(f"Expected vLLM parameter {target_name!r} for PEFT layer {peft_name!r}; sample keys: {sample}")
+
+
+def _vllm_param_name_candidates(target_name: str) -> tuple[str, ...]:
+    candidates: list[str] = []
+    _append_unique(candidates, str(target_name))
+    without_linear = str(target_name).replace(".linear.base_layer.weight", ".base_layer.weight")
+    without_linear = without_linear.replace(".linear.weight", ".weight")
+    _append_unique(candidates, without_linear)
+
+    for prefix, replacement in (
+        ("model.language_model.model.layers.", "language_model.model.layers."),
+        ("model.language_model.layers.", "language_model.model.layers."),
+        ("model.language_model.layers.", "language_model.layers."),
+        ("language_model.layers.", "language_model.model.layers."),
+        ("model.layers.", "language_model.model.layers."),
+    ):
+        if without_linear.startswith(prefix):
+            _append_unique(candidates, replacement + without_linear[len(prefix) :])
+    return tuple(candidates)
+
+
+def _lora_target_modules(model_name: str, base_model: Any | None = None) -> list[str] | str:
+    if str(model_name).startswith("google/gemma-4-"):
+        if base_model is not None:
+            return _discover_gemma4_lora_targets(base_model)
+        return _GEMMA4_LANGUAGE_LORA_TARGETS
+    return list(LORA_TARGET_MODULES)
+
+
+def _discover_gemma4_lora_targets(base_model: Any) -> list[str]:
+    targets = [name for name, module in base_model.named_modules() if _is_linear_module(module) and _is_gemma4_text_lora_name(str(name))]
+    if not targets:
+        sample = [name for name, _module in list(base_model.named_modules())[:12]]
+        raise ValueError(f"No Gemma 4 text LoRA target modules discovered. Sample modules: {sample}")
+    return targets
+
+
+def _is_linear_module(module: Any) -> bool:
+    return module.__class__.__name__ == "Linear"
+
+
+def _is_gemma4_text_lora_name(name: str) -> bool:
+    if _is_gemma4_non_language_path(name):
+        return False
+    if not _is_lora_projection_leaf(name):
+        return False
+    return ".layers." in str(name)
+
+
+def _is_gemma4_non_language_path(name: str) -> bool:
+    parts = str(name).split(".")
+    return any(part in {"audio_tower", "vision_tower", "multi_modal_projector"} for part in parts)
+
+
+def _is_lora_projection_leaf(name: str) -> bool:
+    value = str(name)
+    return any(value.endswith(f".{target}") or value.endswith(f".{target}.linear") for target in LORA_TARGET_MODULES)
+
+
+def _append_unique(values: list[str], value: str) -> None:
+    if value not in values:
+        values.append(value)
 
 
 def _jsonable_lora_config(config: dict[str, Any]) -> dict[str, Any]:
@@ -464,8 +400,12 @@ def _missing_runtime_message(missing: list[str]) -> str:
 __all__ = [
     "LORA_TARGET_MODULES",
     "LoraTemplate",
+    "ParameterMetadata",
+    "UniversalSubspaceTemplate",
     "add_dense_update",
     "build_peft_lora_template",
+    "build_universal_subspace_template",
+    "discover_vllm_parameters",
     "get_rng_noise",
     "materialize_lora_adapters",
     "vllm_dense_update_target",
