@@ -251,12 +251,12 @@ PY
 }
 
 install_vecchiabo_package() {
-  if run_in_env python -c 'import importlib.util; sys.exit(0 if importlib.util.find_spec("pyvecch") else 1)'; then
+  if run_in_env python -c 'import importlib.util, sys; sys.exit(0 if importlib.util.find_spec("pyvecch") else 1)'; then
     log "pyvecch already importable"
     return
   fi
   log "installing VecchiaBO / pyvecch"
-  run_in_env bash -lc '
+  run_in_env bash -c '
     LDFLAGS="-L${CONDA_PREFIX}/lib" \
     LIBRARY_PATH="${CONDA_PREFIX}/lib" \
     CPATH="$(python -c "import pybind11; print(pybind11.get_include())")" \
@@ -265,7 +265,7 @@ install_vecchiabo_package() {
 }
 
 install_lassobench_package() {
-  if run_in_env python -c 'import importlib.util; sys.exit(0 if importlib.util.find_spec("LassoBench") else 1)'; then
+  if run_in_env python -c 'import importlib.util, sys; sys.exit(0 if importlib.util.find_spec("LassoBench") else 1)'; then
     log "LassoBench already importable"
     return
   fi
@@ -274,7 +274,7 @@ install_lassobench_package() {
 }
 
 install_pufferlib_package() {
-  if run_in_env python -c 'import importlib.util; sys.exit(0 if importlib.util.find_spec("pufferlib") else 1)'; then
+  if run_in_env python -c 'import importlib.util, sys; sys.exit(0 if importlib.util.find_spec("pufferlib") else 1)'; then
     log "pufferlib already importable"
     return
   fi
@@ -284,7 +284,7 @@ install_pufferlib_package() {
     "cuda-toolkit=${cuda_version}" "cuda-nvcc=${cuda_version}" "cuda-cudart-dev=${cuda_version}" \
     ninja cmake gxx_linux-64
   log "installing ${PUFFERLIB_SPEC} without build isolation"
-  run_in_env bash -lc '
+  run_in_env bash -c '
     export CUDA_HOME="${CONDA_PREFIX}"
     export CUDACXX="${CONDA_PREFIX}/bin/nvcc"
     python -m pip install --disable-pip-version-check --no-build-isolation --no-deps "'"${PUFFERLIB_SPEC}"'"
@@ -292,7 +292,7 @@ install_pufferlib_package() {
 }
 
 install_isaaclab_stack() {
-  if run_in_env python -c 'import importlib.util; sys.exit(0 if all(importlib.util.find_spec(m) for m in ("isaacsim", "isaaclab")) else 1)'; then
+  if run_in_env python -c 'import importlib.util, sys; sys.exit(0 if all(importlib.util.find_spec(m) for m in ("isaacsim", "isaaclab")) else 1)'; then
     log "Isaac Lab already importable"
     return
   fi
@@ -304,7 +304,7 @@ install_isaaclab_stack() {
   mkdir -p "$(dirname "${ISAACLAB_SOURCE_DIR}")"
   if [[ -d "${ISAACLAB_SOURCE_DIR}/.git" ]]; then git -C "${ISAACLAB_SOURCE_DIR}" fetch --tags origin; else git clone "${ISAACLAB_SOURCE_URL}" "${ISAACLAB_SOURCE_DIR}"; fi
   git -C "${ISAACLAB_SOURCE_DIR}" checkout -q "${ISAACLAB_SOURCE_REF}"
-  run_in_env bash -lc "cd ${ISAACLAB_SOURCE_DIR} && ./isaaclab.sh --install ${ISAACLAB_SOURCE_INSTALL_TARGET}"
+  run_in_env bash -c "cd ${ISAACLAB_SOURCE_DIR} && ./isaaclab.sh --install ${ISAACLAB_SOURCE_INSTALL_TARGET}"
 }
 
 install_env_activation_hooks() {
