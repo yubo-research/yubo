@@ -6,13 +6,17 @@ This file is imported automatically by Python when the repo root is on
 
 from __future__ import annotations
 
-import numpy as np
+try:
+    import numpy as np
+except ImportError:
+    np = None
 
-if not hasattr(np, "NaN"):
-    np.NaN = np.nan
+if np is not None:
+    if not hasattr(np, "NaN"):
+        np.NaN = np.nan
 
-if not hasattr(np, "Inf"):
-    np.Inf = np.inf
+    if not hasattr(np, "Inf"):
+        np.Inf = np.inf
 
 
 try:

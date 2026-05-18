@@ -85,15 +85,9 @@ def get_isaaclab_session(*, headless: bool = True, launcher_kwargs: dict[str, An
             raise RuntimeError(f"IsaacLab app is already running with incompatible settings: {reason}.")
         return _SESSION
 
-    # Ask Kit for the renderer extension, but still probe after launch because
-    # some IsaacLab/Isaac Sim installs do not ship the Python module.
     effective_launcher_kwargs = dict(launcher_kwargs)
-    kit_args = str(effective_launcher_kwargs.get("kit_args", ""))
-    exts_to_enable = ["omni.replicator.core"]
-    for ext in exts_to_enable:
-        if ext not in kit_args:
-            kit_args += f" --enable {ext}"
-    effective_launcher_kwargs["kit_args"] = kit_args.strip()
+    kit_args = str(effective_launcher_kwargs.get("kit_args", "")).strip()
+    effective_launcher_kwargs["kit_args"] = kit_args
 
     kwargs = {"headless": bool(headless)}
     kwargs.update(effective_launcher_kwargs)
@@ -107,7 +101,10 @@ def get_isaaclab_session(*, headless: bool = True, launcher_kwargs: dict[str, An
     import gymnasium as gym
     import isaaclab_tasks  # noqa: F401
 
-    render_available, render_error = _render_probe()
+    if "omni.replicator.core" in kit_args:
+        render_available, render_error = _render_probe()
+    else:
+        render_available, render_error = False, "omni.replicator.core not enabled"
     _SESSION = IsaacLabSession(
         app=launcher.app,
         gym=gym,

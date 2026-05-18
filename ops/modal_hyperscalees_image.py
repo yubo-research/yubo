@@ -3,31 +3,35 @@ from pathlib import Path
 
 _SETUP_TIMEOUT_SECONDS = 24 * 60 * 60
 
-_SOURCE_DIRS = (
-    "acq",
-    "analysis",
-    "common",
-    "configs",
-    "experiments",
-    "llm",
-    "model",
-    "ops",
-    "optimizer",
-    "policies",
-    "problems",
-    "rl",
-    "sampling",
-    "torch_truncnorm",
-    "turbo_m_ref",
-    "gym",
-    "testing_support",
-    "tests",
+_REPO_MOUNT_IGNORE = (
+    ".git",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".venv",
+    "__pycache__",
+    "_tmp",
+    "build",
+    "dist",
+    "node_modules",
+    "results",
+    "runs",
+    "target",
+    "venv",
+    "**/.DS_Store",
+    "**/.ipynb_checkpoints",
+    "**/*.egg-info",
+    "**/*.pyc",
+    "**/__pycache__",
+    "**/enn_wasm",
+    "**/target",
 )
-_ROOT_FILES = (
-    "sitecustomize.py",
-    "pyproject.toml",
-    "requirements.txt",
-)
+_MODAL_ENV = {
+    "NVIDIA_DRIVER_CAPABILITIES": "all",
+    "OMNI_KIT_ACCEPT_EULA": "YES",
+    "PYTHONPATH": "/root",
+    "PYTHONUNBUFFERED": "1",
+}
 
 
 def _run_hyperscalees_setup():
@@ -44,14 +48,24 @@ def mk_image(modal):
         modal.Image.micromamba(python_version="3.12")
         .apt_install(
             "bash",
+            "build-essential",
             "bzip2",
             "ca-certificates",
             "curl",
             "git",
+            "libegl1",
+            "libgl1",
+            "libglu1-mesa",
+            "libvulkan1",
+            "libxcursor1",
+            "libxi6",
+            "libxinerama1",
+            "libxrandr2",
+            "libxt6",
             "tar",
-            "build-essential",
+            "vulkan-tools",
         )
-        .env({"PYTHONPATH": "/root"})
+        .env(_MODAL_ENV)
         .pip_install("modal", "grpclib")  # Required for Modal worker stability
     )
 
@@ -62,12 +76,12 @@ def mk_image(modal):
         timeout=_SETUP_TIMEOUT_SECONDS,
     )
 
-    return _add_source_mounts(image, project_root)
+    return _add_repo_mount(image, project_root)
 
 
-def _add_source_mounts(image, project_root: Path):
-    for d in _SOURCE_DIRS:
-        image = image.add_local_dir(str(project_root / d), remote_path=f"/root/{d}")
-    for f in _ROOT_FILES:
-        image = image.add_local_file(str(project_root / f), remote_path=f"/root/{f}")
-    return image
+def _add_repo_mount(image, project_root: Path):
+    return image.add_local_dir(
+        str(project_root),
+        remote_path="/root",
+        ignore=list(_REPO_MOUNT_IGNORE),
+    )

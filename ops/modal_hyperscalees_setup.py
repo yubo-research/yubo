@@ -14,12 +14,15 @@ app = modal.App(name="yubo-hyperscalees")
 image = mk_image(modal)
 
 _TIMEOUT_SECONDS = 24 * 60 * 60
+_GPU = os.environ.get("YUBO_MODAL_GPU", "L40S")
 
 
 def _logged_command(cmd: list[str], *, cwd: str = "/root") -> int:
     printable = " ".join(shlex.quote(part) for part in cmd)
     print(f"[modal-hyperscalees] $ {printable}", flush=True)
     env = os.environ.copy()
+    env["NVIDIA_DRIVER_CAPABILITIES"] = "all"
+    env["OMNI_KIT_ACCEPT_EULA"] = "YES"
     env["PYTHONUNBUFFERED"] = "1"
     proc = subprocess.Popen(
         cmd,
@@ -40,7 +43,7 @@ def _logged_command(cmd: list[str], *, cwd: str = "/root") -> int:
     return return_code
 
 
-@app.function(image=image, gpu="L4", timeout=_TIMEOUT_SECONDS)
+@app.function(image=image, gpu=_GPU, timeout=_TIMEOUT_SECONDS)
 def run_hyperscalees_command(command: str) -> str:
     _logged_command(["bash", "-lc", command])
     return "ok"
@@ -54,9 +57,8 @@ def _preflight_command() -> str:
 
 @app.local_entrypoint()
 def main(command: str = "preflight") -> None:
-    # Normalize command to handle multi-line inputs from CLI/copy-paste
-    command = " ".join(command.split())
-    if command == "preflight":
+    if command.strip() == "preflight":
         command = _preflight_command()
+    print(f"[modal-hyperscalees] gpu={_GPU!r}", flush=True)
     print(f"[modal-hyperscalees] command={command!r}", flush=True)
     run_hyperscalees_command.remote(command)

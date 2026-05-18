@@ -105,13 +105,8 @@ class IsaacLabScore:
         return int(self._episodes)
 
     def close(self) -> None:
-        env = self._env
-        self._env = None
-        if env is not None:
-            env.close()
-        for vector_env in self._vector_envs.values():
-            vector_env.close()
-        self._vector_envs.clear()
+        _close_single_env(self)
+        _close_vector_envs(self)
 
     def make_policy(self, x: np.ndarray):
         return self._make_loaded_policy(x)
@@ -125,10 +120,12 @@ class IsaacLabScore:
         xs = np.asarray(x_batch, dtype=np.float64)
         if xs.ndim != 2:
             raise ValueError(f"x_batch must be rank-2, got shape {xs.shape}.")
-        if self._vectorize and xs.shape[0] > 1:
+        if self._vectorize and (xs.shape[0] > 1 or self._episodes > 1):
             vector_result = _try_evaluate_many_vectorized(self, xs, seed=int(seed))
             if vector_result is not None:
-                return vector_result
+                means, ses, num_steps = vector_result
+                self.last_num_steps = int(num_steps)
+                return means, ses
         scores = [_score_candidate(self, x, seed=int(seed) + idx * self._episodes) for idx, x in enumerate(xs)]
         self.last_num_steps = int(sum(int(s.num_steps) for s in scores))
         return (
@@ -213,6 +210,7 @@ class IsaacLabScore:
 def _get_single_env(scorer: IsaacLabScore):
     if scorer._env is not None:
         return scorer._env
+    _close_vector_envs(scorer)
     kwargs = {}
     if scorer._device is not None:
         kwargs["device"] = scorer._device
@@ -231,6 +229,8 @@ def _get_vector_env(scorer: IsaacLabScore, slots: int):
     env = scorer._vector_envs.get(slots)
     if env is not None:
         return env
+    _close_vector_envs(scorer)
+    _close_single_env(scorer)
     kwargs = {"num_envs": slots, "batched": True}
     if scorer._device is not None:
         kwargs["device"] = scorer._device
@@ -248,13 +248,34 @@ def _get_vector_env(scorer: IsaacLabScore, slots: int):
     return env
 
 
+def _close_env(env: Any) -> None:
+    try:
+        env.close()
+    except Exception:
+        pass
+
+
+def _close_single_env(scorer: IsaacLabScore) -> None:
+    env = scorer._env
+    scorer._env = None
+    if env is not None:
+        _close_env(env)
+
+
+def _close_vector_envs(scorer: IsaacLabScore) -> None:
+    envs = list(scorer._vector_envs.values())
+    scorer._vector_envs.clear()
+    for env in envs:
+        _close_env(env)
+
+
 def _policy_supports_vector_eval(policy: Any) -> bool:
     if bool(getattr(policy, "_recurrent", False)):
         return False
     return getattr(policy, "_rnn_hidden_size", None) is None
 
 
-def _try_evaluate_many_vectorized(scorer: IsaacLabScore, xs: np.ndarray, *, seed: int) -> tuple[np.ndarray, np.ndarray] | None:
+def _try_evaluate_many_vectorized(scorer: IsaacLabScore, xs: np.ndarray, *, seed: int) -> tuple[np.ndarray, np.ndarray, int] | None:
     if not _policy_supports_vector_eval(scorer._policy):
         return None
     num_candidates = int(xs.shape[0])
@@ -288,9 +309,7 @@ def _try_evaluate_many_vectorized(scorer: IsaacLabScore, xs: np.ndarray, *, seed
         if not np.any(active):
             break
 
-    means, ses = _summarize_vector_returns(returns, scorer._episodes, num_candidates)
-    scorer.last_num_steps = int(np.sum(steps))
-    return means, ses
+    return (*_summarize_vector_returns(returns, scorer._episodes, num_candidates), int(np.sum(steps)))
 
 
 def _vector_policy_actions(policies: list[Any], candidate_idx: np.ndarray, obs: np.ndarray, active: np.ndarray, zero_action: np.ndarray) -> list[np.ndarray]:
@@ -347,6 +366,11 @@ def build_isaaclab_evaluator(
 
 
 def _score_candidate(scorer: IsaacLabScore, x: np.ndarray, *, seed: int) -> Score:
+    if scorer._vectorize and scorer._episodes > 1:
+        vector_result = _try_evaluate_many_vectorized(scorer, np.asarray(x, dtype=np.float64).reshape(1, -1), seed=int(seed))
+        if vector_result is not None:
+            means, ses, num_steps = vector_result
+            return Score(value=float(means[0]), stderr=float(ses[0]), episodes=int(scorer._episodes), num_steps=int(num_steps))
     scorer._codec.load(scorer._policy, np.asarray(x, dtype=np.float64))
     returns: list[float] = []
     total_steps = 0

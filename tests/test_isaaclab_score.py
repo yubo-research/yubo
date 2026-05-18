@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 from gymnasium import spaces
-from isaaclab_score_fakes import make_fake_runtime, make_fake_vector_runtime
+from isaaclab_score_fakes import FakeIsaacEnv, FakeVectorIsaacEnv, make_fake_runtime, make_fake_vector_runtime
 
 
 def test_isaaclab_score_evaluates_flat_policy_batch():
@@ -38,6 +38,55 @@ def test_isaaclab_score_uses_vector_env_for_batches():
         assert means.shape == (2,)
         assert ses.shape == (2,)
         assert score.last_num_steps == 12
+    finally:
+        score.close()
+
+
+def test_isaaclab_score_switches_vector_env_to_single_env():
+    from policies.mlp_policy import MLPPolicyFactory
+    from problems.isaaclab_score import IsaacLabScore
+
+    runtime = make_fake_runtime()
+    active = {"value": False}
+    closed = []
+
+    def _claim_context() -> None:
+        if active["value"]:
+            raise RuntimeError("Simulation context already exists")
+        active["value"] = True
+
+    def _release_context(label: str) -> None:
+        active["value"] = False
+        closed.append(label)
+
+    class GuardedSingleEnv(FakeIsaacEnv):
+        def __init__(self) -> None:
+            _claim_context()
+            super().__init__()
+
+        def close(self):
+            _release_context("single")
+
+    class GuardedVectorEnv(FakeVectorIsaacEnv):
+        def __init__(self, num_envs: int) -> None:
+            _claim_context()
+            super().__init__(num_envs)
+
+        def close(self):
+            _release_context(f"vector:{self.num_envs}")
+
+    def _make(**kwargs):
+        if kwargs.get("batched"):
+            return GuardedVectorEnv(int(kwargs["num_envs"]))
+        return GuardedSingleEnv()
+
+    runtime.make = _make
+    policy = MLPPolicyFactory((4,))(runtime)
+    score = IsaacLabScore(runtime, policy, episodes=2)
+    try:
+        score.evaluate_many(np.stack([score.x0, score.x0]), seed=11)
+        score.evaluate(score.x0, seed=17)
+        assert closed == ["vector:4"]
     finally:
         score.close()
 
