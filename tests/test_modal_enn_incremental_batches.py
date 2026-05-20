@@ -5,6 +5,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from analysis.fitting_time.evaluate import synthetic_benchmark_data_seed
+from analysis.fitting_time.fitting_time_enn_fit_ind import EnnFitIndTimingResult
 from analysis.fitting_time.fitting_time_enn_incremental import (
     EnnIncrementalIndexDriver,
     EnnIncrementalTimingResult,
@@ -191,7 +192,9 @@ def test_enn_incremental_worker_writes_result(monkeypatch):
             index_driver=index_driver,
         )
 
-    monkeypatch.setattr(impl, "benchmark_enn_incremental_add_timing", fake_benchmark)
+    import experiments.modal_enn_incremental_batch_worker as worker_mod
+
+    monkeypatch.setattr(worker_mod, "benchmark_enn_incremental_add_timing", fake_benchmark)
     monkeypatch.setattr(impl, "_results_dict", lambda _tag: store)
 
     impl.enn_incremental_batch_worker.info.raw_f(("add_method-tag-x", 2, "sphere", 17, 3, 10, "hnsw"))
@@ -209,6 +212,80 @@ def test_enn_incremental_worker_writes_result(monkeypatch):
     )
     assert payload["_meta"]["index_driver"] == "hnsw"
     assert payload["_meta"]["data_seed"] == data_seed
+
+
+def test_fit_ind_payload_and_dest(tmp_path: Path):
+    import experiments.modal_enn_fit_ind_batches as fit_ind_batches
+
+    result = EnnFitIndTimingResult(
+        n=(1, 3),
+        fit_seconds=(0.1, 0.2),
+        log_likelihood=(-1.0, -0.5),
+        target="sphere",
+        d=2,
+        problem_seed=17,
+        index_driver=EnnIncrementalIndexDriver.FLAT,
+    )
+    payload = fit_ind_batches.fit_ind_result_to_payload(
+        result,
+        problem_seed=17,
+        data_seed=99,
+        rep_index=3,
+        num_reps=10,
+    )
+    assert payload["N"] == [1, 3]
+    assert payload["fit_seconds"] == [0.1, 0.2]
+    assert payload["_meta"]["data_seed"] == 99
+    dest = fit_ind_batches.fit_ind_result_json_dest(
+        tmp_path,
+        d=2,
+        function_name="sphere",
+        problem_seed=17,
+        rep_index=3,
+        num_reps=10,
+        index_driver="flat",
+        normalize_function_name=lambda x: x,
+    )
+    assert dest.name == "enn_fit_ind_D2_sphere_pseed17_nrep10_rep3_flat.json"
+
+
+def test_experiment_type_from_tag_accepts_fit_ind():
+    import experiments.modal_enn_incremental_batches_impl as impl
+
+    assert impl._experiment_type_from_tag("fit_ind-tag-x") == "fit_ind"
+
+
+def test_fit_ind_worker_writes_result(monkeypatch):
+    import experiments.modal_enn_incremental_batches_impl as impl
+
+    store = {}
+    captured = {}
+
+    def fake_benchmark(*, D, function_name, problem_seed, index_driver):
+        captured["args"] = (D, function_name, problem_seed, index_driver)
+        return EnnFitIndTimingResult(
+            n=(1,),
+            fit_seconds=(0.01,),
+            log_likelihood=(-2.0,),
+            target=function_name,
+            d=D,
+            problem_seed=problem_seed,
+            index_driver=index_driver,
+        )
+
+    import experiments.modal_enn_incremental_batch_worker as worker_mod
+
+    monkeypatch.setattr(worker_mod, "benchmark_enn_fit_ind_timing", fake_benchmark)
+    monkeypatch.setattr(impl, "_results_dict", lambda _tag: store)
+
+    impl.enn_incremental_batch_worker.info.raw_f(("fit_ind-tag-x", 2, "sphere", 17, 3, 10, "hnsw"))
+
+    data_seed = synthetic_benchmark_data_seed(function_name="sphere", problem_seed=17, rep_index=3)
+    assert captured["args"] == (2, "sphere", data_seed, EnnIncrementalIndexDriver.HNSW)
+    key = "enn_fit_ind_D2_sphere_pseed17_nrep10_rep3_hnsw"
+    payload, d, fn, problem_seed, rep_index, num_reps, driver = store[key]
+    assert payload["fit_seconds"] == [0.01]
+    assert (d, fn, problem_seed, rep_index, num_reps, driver) == (2, "sphere", 17, 3, 10, "hnsw")
 
 
 def test_enn_incremental_collect_writes_and_deletes(monkeypatch, tmp_path: Path):

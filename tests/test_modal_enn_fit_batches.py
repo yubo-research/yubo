@@ -217,7 +217,9 @@ def test_fit_worker_writes_result_via_incremental_modal_fn(monkeypatch):
             index_driver=kwargs["index_driver"],
         )
 
-    monkeypatch.setattr(impl, "benchmark_enn_fit_timing", fake_bm)
+    import experiments.modal_enn_incremental_batch_worker as worker_mod
+
+    monkeypatch.setattr(worker_mod, "benchmark_enn_fit_timing", fake_bm)
     monkeypatch.setattr(impl, "_results_dict", lambda _tag: store)
 
     impl.enn_incremental_batch_worker.info.raw_f(("fit_method-tag-fit", 2, "sphere", 3, 17, 1, 10, "hnsw"))

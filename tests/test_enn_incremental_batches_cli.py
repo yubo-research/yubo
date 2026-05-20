@@ -51,6 +51,11 @@ def test_enn_incremental_batches_help_shows_exp_type_metavar():
             "fit_method-t1",
         ),
         (
+            ["deploy", "fit_ind", "t1"],
+            [["modal", "deploy", "experiments/modal_enn_incremental_batches_impl.py"]],
+            "fit_ind-t1",
+        ),
+        (
             ["submit", "add_method", "t1"],
             [
                 [
@@ -334,6 +339,34 @@ def test_enn_incremental_batches_local_fit_writes_json(tmp_path, monkeypatch):
     )
     assert res.exit_code == 0, res.output
     dest = out / "enn_fit_D2_sphere_N3_pseed17_nrep1_rep0_flat.json"
+    assert dest.exists()
+
+
+def test_enn_incremental_batches_local_fit_ind_writes_json(tmp_path):
+    pytest.importorskip("enn")
+    runner = CliRunner()
+    out = tmp_path / "out"
+    res = runner.invoke(
+        batches_mod.cli,
+        [
+            "local-fit-ind",
+            "sphere",
+            "0",
+            "flat",
+            "--d",
+            "2",
+            "--problem-seed",
+            "17",
+            "--num-reps",
+            "1",
+            "--output-dir",
+            str(out),
+            "--checkpoints",
+            "1,3",
+        ],
+    )
+    assert res.exit_code == 0, res.output
+    dest = out / "enn_fit_ind_D2_sphere_pseed17_nrep1_rep0_flat.json"
     assert dest.exists()
 
 

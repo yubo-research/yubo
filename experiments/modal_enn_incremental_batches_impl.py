@@ -9,12 +9,11 @@ from typing import Iterable
 
 import modal
 
-from analysis.fitting_time import benchmark_enn_incremental_add_timing
-from analysis.fitting_time.evaluate import synthetic_benchmark_data_seed
 from analysis.fitting_time.evaluate_metrics import normalize_benchmark_function_name
-from analysis.fitting_time.fitting_time_enn_fit import benchmark_enn_fit_timing
 from analysis.fitting_time.fitting_time_enn_incremental import EnnIncrementalIndexDriver, EnnIncrementalTimingResult
 from experiments import modal_enn_fit_batches as _fit_batches
+from experiments import modal_enn_fit_ind_batches as _fit_ind_batches
+from experiments import modal_enn_incremental_batch_worker as _batch_worker
 from experiments import modal_enn_incremental_batches_json as _add_json
 from experiments.enn_batch_job_params import (
     enn_batch_shared_params,
@@ -33,8 +32,8 @@ def _get_app_name(tag: str) -> str:
 
 def _experiment_type_from_tag(tag: str) -> str:
     prefix = tag.split("-", 1)[0]
-    if prefix not in {"add_method", "fit_method"}:
-        raise ValueError(f"unknown experiment prefix {prefix!r} in tag {tag!r}; expected add_method-* or fit_method-*")
+    if prefix not in {"add_method", "fit_method", "fit_ind"}:
+        raise ValueError(f"unknown experiment prefix {prefix!r} in tag {tag!r}; expected add_method-*, fit_method-*, or fit_ind-*")
     return prefix
 
 
@@ -211,100 +210,33 @@ def _iter_fit_jobs(
     )
 
 
-@app.function(image=_modal_image, max_containers=100, timeout=12 * 60 * 60, memory=4 * 1024, cpu=1.0)
-def enn_incremental_batch_worker(job):
-    lj = len(job)
-    if lj < 2:
-        raise ValueError(f"expected job with tag; got len={lj}")
-    tag = job[0]
-    exp = _experiment_type_from_tag(tag)
-    if exp == "add_method":
-        if lj != 7:
-            raise ValueError(f"add_method job expected 7 fields after tag; got len={lj}")
-        _, d, function_name, problem_seed, rep_index, num_reps, index_driver = job
-        drv = normalize_index_driver(index_driver)
-        ds = synthetic_benchmark_data_seed(
-            function_name=function_name,
-            problem_seed=int(problem_seed),
-            rep_index=int(rep_index),
-        )
-        result = benchmark_enn_incremental_add_timing(
-            D=int(d),
-            function_name=function_name,
-            problem_seed=ds,
-            index_driver=drv,
-        )
-        ky = _job_key(
-            d=int(d),
-            function_name=function_name,
-            problem_seed=int(problem_seed),
-            rep_index=int(rep_index),
-            num_reps=int(num_reps),
-            index_driver=drv,
-        )
-        val = (
-            result_to_payload(
-                result,
-                problem_seed=int(problem_seed),
-                data_seed=ds,
-                rep_index=int(rep_index),
-                num_reps=int(num_reps),
-            ),
-            int(d),
-            result.target,
-            int(problem_seed),
-            int(rep_index),
-            int(num_reps),
-            drv.value,
-        )
-        _results_dict(tag)[ky] = val
-        return
-    if exp != "fit_method":
-        raise ValueError(f"unknown experiment {exp!r} in tag {tag!r}")
-    if lj != 8:
-        raise ValueError(f"fit_method job expected 8 fields after tag; got len={lj}")
-    _, d, function_name, n, problem_seed, rep_index, num_reps, index_driver = job
-    drv = normalize_index_driver(index_driver)
-    ds = synthetic_benchmark_data_seed(
-        function_name=function_name,
-        problem_seed=int(problem_seed),
-        rep_index=int(rep_index),
-    )
-    result = benchmark_enn_fit_timing(
-        D=int(d),
-        function_name=function_name,
-        data_seed=int(ds),
-        problem_seed=int(problem_seed),
-        n=int(n),
-        index_driver=drv,
-    )
-    ky = _fit_batches.fit_job_key(
-        d=int(d),
-        function_name=function_name,
-        n=int(n),
-        problem_seed=int(problem_seed),
-        rep_index=int(rep_index),
-        num_reps=int(num_reps),
-        index_driver=drv,
+def _iter_fit_ind_jobs(
+    output_dir: str | Path,
+    index_driver: str,
+    num_reps: int,
+    d: int,
+    problem_seed: int,
+) -> Iterable[tuple[str, tuple[int, str, int, int, int, str]]]:
+    yield from _fit_ind_batches.iter_fit_ind_jobs(
+        output_dir,
+        index_driver,
+        num_reps,
+        d,
+        problem_seed,
+        iter_index_drivers=_iter_index_drivers,
         normalize_function_name=normalize_benchmark_function_name,
     )
-    val = (
-        _fit_batches.fit_result_to_payload(
-            result,
-            problem_seed=int(problem_seed),
-            data_seed=int(ds),
-            rep_index=int(rep_index),
-            num_reps=int(num_reps),
-        ),
-        int(d),
-        result.target,
-        int(n),
-        int(problem_seed),
-        int(rep_index),
-        int(num_reps),
-        drv.value,
+
+
+@app.function(image=_modal_image, max_containers=100, timeout=12 * 60 * 60, memory=4 * 1024, cpu=1.0)
+def enn_incremental_batch_worker(job):
+    _batch_worker.dispatch_enn_incremental_batch_worker(
+        job,
+        experiment_type_from_tag=_experiment_type_from_tag,
+        job_key=_job_key,
+        result_to_payload=result_to_payload,
+        results_dict=_results_dict,
     )
-    _results_dict(tag)[ky] = val
 
 
 @app.function(image=_modal_image, max_containers=10, timeout=60 * 60)
@@ -336,7 +268,13 @@ def _submit_missing(
     *,
     force: bool = False,
 ):
-    it = _iter_fit_jobs if _experiment_type_from_tag(tag) == "fit_method" else _iter_incremental_jobs
+    exp = _experiment_type_from_tag(tag)
+    if exp == "fit_method":
+        it = _iter_fit_jobs
+    elif exp == "fit_ind":
+        it = _iter_fit_ind_jobs
+    else:
+        it = _iter_incremental_jobs
     submitted = _submitted_dict(tag)
     batch, count = [], 0
 
@@ -358,7 +296,7 @@ def _submit_missing(
 
 
 def _collect(tag: str, output_dir: str | Path):
-    fit = _experiment_type_from_tag(tag) == "fit_method"
+    exp = _experiment_type_from_tag(tag)
     results = _results_dict(tag)
     keys_out = []
     outp = Path(output_dir)
@@ -370,7 +308,7 @@ def _collect(tag: str, output_dir: str | Path):
             print(f"wrote {dest.resolve()}")
             keys_out.append(key)
             continue
-        if fit:
+        if exp == "fit_method":
             if len(payload) != 8:
                 raise ValueError(f"bad fit Modal payload len={len(payload)} key={key!r}")
             rp, d, fm, n, pseed, ri, nr, idrv = payload
@@ -379,6 +317,20 @@ def _collect(tag: str, output_dir: str | Path):
                 d=d,
                 function_name=fm,
                 n=int(n),
+                problem_seed=pseed,
+                rep_index=ri,
+                num_reps=nr,
+                index_driver=idrv,
+                normalize_function_name=normalize_benchmark_function_name,
+            )
+        elif exp == "fit_ind":
+            if len(payload) != 7:
+                raise ValueError(f"bad fit_ind Modal payload len={len(payload)} key={key!r}")
+            rp, d, fm, pseed, ri, nr, idrv = payload
+            dest = _fit_ind_batches.fit_ind_result_json_dest(
+                outp,
+                d=d,
+                function_name=fm,
                 problem_seed=pseed,
                 rep_index=ri,
                 num_reps=nr,
@@ -454,6 +406,7 @@ __all__ = [
     "_collect",
     "_experiment_type_from_tag",
     "_get_app_name",
+    "_iter_fit_ind_jobs",
     "_iter_fit_jobs",
     "_iter_incremental_jobs",
     "_job_key",

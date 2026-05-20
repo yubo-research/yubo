@@ -7,6 +7,10 @@ from .fitting_time_enn_fit import (
     benchmark_enn_fit_timing,
     enn_fit_quality_ns,
 )
+from .fitting_time_enn_fit_ind import (
+    EnnFitIndTimingResult,
+    benchmark_enn_fit_ind_timing,
+)
 
 __all__ = [
     "BMResult",
@@ -21,8 +25,10 @@ __all__ = [
     "SURROGATE_BENCHMARK_KEYS",
     "SURROGATE_BENCHMARK_ROWS",
     "SyntheticSineSurrogateBenchmark",
+    "EnnFitIndTimingResult",
     "EnnIncrementalIndexDriver",
     "EnnIncrementalTimingResult",
+    "benchmark_enn_fit_ind_timing",
     "benchmark_enn_incremental_add_timing",
     "benchmark_enn_fit_timing",
     "benchmark_synthetic_sine_surrogates",
