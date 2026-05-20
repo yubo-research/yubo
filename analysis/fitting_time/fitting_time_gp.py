@@ -197,7 +197,7 @@ def fit_vecchia(train_x: Tensor, train_y: Tensor, x_test: Tensor) -> tuple[float
             maxiter=100,
             rel_tol=5e-3,
         )
-    except Exception:
+    except (ImportError, OSError, RuntimeError, ValueError, ArithmeticError):
         return _gp_fit_nan_out(x_test)
     elapsed = time.perf_counter() - t_0
     model.update_transform()
@@ -214,7 +214,7 @@ def fit_vecchia(train_x: Tensor, train_y: Tensor, x_test: Tensor) -> tuple[float
         var_y = var_z.unsqueeze(-1) * (y_std**2)
         y_hat = mu_y.to(device=train_x.device, dtype=train_x.dtype)
         pred_var = var_y.to(device=train_x.device, dtype=train_x.dtype)
-    except Exception:
+    except (RuntimeError, ValueError, ArithmeticError):
         return _gp_fit_nan_out(x_test)
 
     return elapsed, y_hat, pred_var

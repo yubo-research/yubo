@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from .evaluate_class import SyntheticSineSurrogateBenchmark
 from .evaluate_draw import (
-    SYNTHETIC_BENCHMARK_N_EVAL,
+    SYNTHETIC_BENCHMARK_N_TEST,
     draw_benchmark_synthetic_xy,
     synthetic_benchmark_data_seed,
 )
@@ -26,20 +26,17 @@ from .evaluate_triples import (
     benchmark_single_surrogate,
 )
 
-SYNTHETIC_BENCHMARK_N_TEST = SYNTHETIC_BENCHMARK_N_EVAL
-
 __all__ = [
     "BMResult",
     "MuSe",
     "SYNTHETIC_BENCHMARK_SINE_FUNCTION_NAME",
-    "SYNTHETIC_BENCHMARK_N_TEST",
     "SURROGATE_BENCHMARK_ROWS",
     "SURROGATE_BENCHMARK_KEYS",
     "SyntheticSineSurrogateBenchmark",
     "_mean_and_sem",
     "benchmark_single_surrogate_with_data",
     "benchmark_synthetic_sine_surrogates",
-    "SYNTHETIC_BENCHMARK_N_EVAL",
+    "SYNTHETIC_BENCHMARK_N_TEST",
     "draw_benchmark_synthetic_xy",
     "env_action_coords_to_surrogate_unit_x",
     "normalize_benchmark_function_name",
@@ -71,7 +68,7 @@ def benchmark_synthetic_sine_surrogates(
     Any other name builds ``f"f:{function_name}-{D}d"`` via
     :mod:`problems.pure_functions`, draws ``x ~ U(-1,1)^{N×D}``, and sets ``y`` to the
     environment reward plus ``0.1 ε``. The test draw has a fixed size
-    :data:`SYNTHETIC_BENCHMARK_N_EVAL` (not ``N``).
+    :data:`SYNTHETIC_BENCHMARK_N_TEST` (not ``N``).
     Fitted surrogates use ``(x+1)/2`` in ``[0,1]`` (ENN and SMAC only
     when ``b_fast_only``); metrics always use the original ``y`` / ``y_test`` from the env draw.
 
