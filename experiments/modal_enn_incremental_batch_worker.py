@@ -9,9 +9,61 @@ from analysis.fitting_time.evaluate import synthetic_benchmark_data_seed
 from analysis.fitting_time.evaluate_metrics import normalize_benchmark_function_name
 from analysis.fitting_time.fitting_time_enn_fit import benchmark_enn_fit_timing
 from analysis.fitting_time.fitting_time_enn_fit_ind import benchmark_enn_fit_ind_timing
+from analysis.fitting_time.fitting_time_enn_query import benchmark_enn_query_timing
 from experiments import modal_enn_fit_batches as _fit_batches
 from experiments import modal_enn_fit_ind_batches as _fit_ind_batches
+from experiments import modal_enn_query_batches as _query_batches
 from experiments.enn_batch_job_params import normalize_index_driver
+
+
+def _write_query_result(
+    *,
+    tag: str,
+    d: int,
+    function_name: str,
+    problem_seed: int,
+    rep_index: int,
+    num_reps: int,
+    index_driver,
+    results_dict: Callable[[str], object],
+) -> None:
+    drv = normalize_index_driver(index_driver)
+    ds = synthetic_benchmark_data_seed(
+        function_name=function_name,
+        problem_seed=int(problem_seed),
+        rep_index=int(rep_index),
+    )
+    result = benchmark_enn_query_timing(
+        D=int(d),
+        function_name=function_name,
+        problem_seed=ds,
+        index_driver=drv,
+    )
+    ky = _query_batches.query_job_key(
+        d=int(d),
+        function_name=function_name,
+        problem_seed=int(problem_seed),
+        rep_index=int(rep_index),
+        num_reps=int(num_reps),
+        index_driver=drv,
+        normalize_function_name=normalize_benchmark_function_name,
+    )
+    val = (
+        _query_batches.query_result_to_payload(
+            result,
+            problem_seed=int(problem_seed),
+            data_seed=ds,
+            rep_index=int(rep_index),
+            num_reps=int(num_reps),
+        ),
+        int(d),
+        result.target,
+        int(problem_seed),
+        int(rep_index),
+        int(num_reps),
+        drv.value,
+    )
+    results_dict(tag)[ky] = val
 
 
 def dispatch_enn_incremental_batch_worker(
@@ -109,6 +161,21 @@ def dispatch_enn_incremental_batch_worker(
             drv.value,
         )
         results_dict(tag)[ky] = val
+        return
+    if exp == "query":
+        if lj != 7:
+            raise ValueError(f"query job expected 7 fields after tag; got len={lj}")
+        _, d, function_name, problem_seed, rep_index, num_reps, index_driver = job
+        _write_query_result(
+            tag=tag,
+            d=d,
+            function_name=function_name,
+            problem_seed=problem_seed,
+            rep_index=rep_index,
+            num_reps=num_reps,
+            index_driver=index_driver,
+            results_dict=results_dict,
+        )
         return
     if exp != "fit_method":
         raise ValueError(f"unknown experiment {exp!r} in tag {tag!r}")

@@ -56,6 +56,11 @@ def test_enn_incremental_batches_help_shows_exp_type_metavar():
             "fit_ind-t1",
         ),
         (
+            ["deploy", "query", "t1"],
+            [["modal", "deploy", "experiments/modal_enn_incremental_batches_impl.py"]],
+            "query-t1",
+        ),
+        (
             ["stop", "add_method", "t1"],
             [
                 ["modal", "app", "stop", "yubo-enn-incremental-add_method-t1"],
@@ -128,6 +133,18 @@ def test_enn_incremental_batches_subprocess_commands(captured_modal, invoke_args
         (
             ["submit", "fit_method", "t1"],
             "fit_method-t1",
+            "submit",
+            {
+                "output_dir": "results/enn_incremental",
+                "index_driver": "all",
+                "num_reps": 10,
+                "d_dims": 10,
+                "problem_seed": 17,
+            },
+        ),
+        (
+            ["submit", "query", "t1"],
+            "query-t1",
             "submit",
             {
                 "output_dir": "results/enn_incremental",
@@ -215,7 +232,14 @@ def test_enn_incremental_batches_subprocess_commands(captured_modal, invoke_args
         ),
     ],
 )
-def test_enn_incremental_batches_client_commands(monkeypatch, captured_modal, invoke_args, expected_tag, expected_cmd, expected_kwargs):
+def test_enn_incremental_batches_client_commands(
+    monkeypatch,
+    captured_modal,
+    invoke_args,
+    expected_tag,
+    expected_cmd,
+    expected_kwargs,
+):
     calls: list[tuple] = []
 
     def _record(tag, cmd, **kwargs):

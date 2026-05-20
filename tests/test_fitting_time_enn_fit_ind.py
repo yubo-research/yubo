@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 import numpy as np
 import pytest
 
@@ -19,6 +21,9 @@ def test_benchmark_enn_fit_ind_passes_hyperparams_to_enn_fit(monkeypatch):
     captured: list[dict] = []
 
     class _FakeModel:
+        def sync_index(self):
+            pass
+
         def add(self, *_args, **_kwargs):
             pass
 
@@ -68,12 +73,8 @@ def test_benchmark_enn_fit_ind_passes_hyperparams_to_enn_fit(monkeypatch):
     assert len(res.fit_seconds) == 2
     assert len(res.log_likelihood) == 2
     assert captured[0]["num_fit_candidates"] == 1
-    assert captured[0]["params_warm_start"] is None
-    assert captured[1]["params_warm_start"] is None
-    assert captured[2]["params_warm_start"] is not None
-    assert captured[3]["params_warm_start"] is not None
     assert all(c["num_fit_candidates"] == 1 for c in captured)
-    assert len(captured) == 6
+    assert len(captured) == 1
 
 
 def test_add_segment_fits_with_probability(monkeypatch):
@@ -113,7 +114,7 @@ def test_add_segment_fits_with_probability(monkeypatch):
         y_seg=np.zeros((3, 1), dtype=np.float64),
         yvar_row=np.ones((1, 1), dtype=np.float64),
         start_n=10,
-        rng=_FakeRng([0.95, 0.1, 0.9]),
+        rng=_FakeRng([0.95, 0.01, 0.9]),
         params_warm_start=None,
     )
 
@@ -123,14 +124,19 @@ def test_add_segment_fits_with_probability(monkeypatch):
     assert fit_total == 0.5
 
 
-def test_timed_fit_discards_warmup_result(monkeypatch):
+def test_timed_fit_syncs_index_before_timer(monkeypatch):
     import analysis.fitting_time.fitting_time_enn_fit_ind as fit_ind_mod
 
     calls: list[object] = []
+    synced = False
 
     def fake_enn_fit(_model, **kwargs):
         calls.append(kwargs["params_warm_start"])
-        return "warmup-params" if len(calls) == 1 else "timed-params"
+        return "timed-params"
+
+    def sync_index():
+        nonlocal synced
+        synced = True
 
     tick = iter([10.0, 12.5])
 
@@ -138,13 +144,14 @@ def test_timed_fit_discards_warmup_result(monkeypatch):
     monkeypatch.setattr(fit_ind_mod.time, "perf_counter", lambda: next(tick))
 
     params, elapsed = fit_ind_mod._enn_fit_timed_after_add(
-        object(),
+        SimpleNamespace(sync_index=sync_index),
         current_n=30,
         rng=np.random.default_rng(0),
         params_warm_start="previous-params",
     )
 
-    assert calls == ["previous-params", "previous-params"]
+    assert synced
+    assert calls == ["previous-params"]
     assert params == "timed-params"
     assert elapsed == 2.5
 

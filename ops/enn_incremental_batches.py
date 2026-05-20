@@ -12,7 +12,7 @@ import click
 from ops.enn_incremental_batches_local import register_local_commands
 from ops.modal_cli_common import run_modal
 
-_EXP_TYPE = click.Choice(["add_method", "fit_method", "fit_ind"], case_sensitive=False)
+_EXP_TYPE = click.Choice(["add_method", "fit_method", "fit_ind", "query"], case_sensitive=False)
 
 
 def _exp_type_argument() -> click.Argument:

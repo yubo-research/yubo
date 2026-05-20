@@ -69,6 +69,49 @@ def test_benchmark_enn_incremental_add_timing_small_checkpoints():
     assert result.index_driver is EnnIncrementalIndexDriver.FLAT
 
 
+def test_benchmark_enn_incremental_add_timing_syncs_before_stopping_timer(monkeypatch):
+    import analysis.fitting_time.fitting_time_enn_incremental as inc_mod
+
+    calls: list[str] = []
+
+    def add(*_args, **_kwargs):
+        calls.append("add")
+
+    def sync_index():
+        calls.append("sync")
+
+    def ctor(*_args, **_kwargs):
+        from types import SimpleNamespace
+
+        return SimpleNamespace(add=add, sync_index=sync_index)
+
+    tick = iter([10.0, 11.5, 20.0, 23.0])
+
+    monkeypatch.setattr(
+        "enn.enn.enn_class.EpistemicNearestNeighbors",
+        ctor,
+        raising=False,
+    )
+    monkeypatch.setattr(inc_mod.time, "perf_counter", lambda: next(tick))
+    monkeypatch.setattr(
+        inc_mod,
+        "enn_test_log_likelihood",
+        lambda *_args, **_kwargs: -1.0,
+        raising=False,
+    )
+
+    result = benchmark_enn_incremental_add_timing(
+        D=2,
+        function_name="sphere",
+        problem_seed=0,
+        checkpoints=(1, 3),
+        index_driver=EnnIncrementalIndexDriver.FLAT,
+    )
+
+    assert calls == ["add", "sync", "add", "add", "sync"]
+    assert result.add_seconds == (1.5, 3.0)
+
+
 def test_benchmark_enn_incremental_hnsw_driver():
     result = benchmark_enn_incremental_add_timing(
         D=2,

@@ -27,6 +27,7 @@ _pending_jobs = common.pending_jobs
 _iter_incremental_jobs = common.iter_incremental_jobs
 _iter_fit_jobs = common.iter_fit_jobs
 _iter_fit_ind_jobs = common.iter_fit_ind_jobs
+_iter_query_jobs = common.iter_query_jobs
 _submit_missing = common.submit_missing
 _collect = common.collect
 status = common.status
@@ -36,7 +37,13 @@ stop = common.stop
 app = modal.App(name=_get_app_name(_TAG))
 
 
-@app.function(image=_modal_image, max_containers=100, timeout=12 * 60 * 60, memory=4 * 1024, cpu=1.0)
+@app.function(
+    image=_modal_image,
+    max_containers=100,
+    timeout=12 * 60 * 60,
+    memory=4 * 1024,
+    cpu=1.0,
+)
 def enn_incremental_batch_worker(job):
     _batch_worker.dispatch_enn_incremental_batch_worker(
         job,
@@ -94,6 +101,7 @@ __all__ = [
     "_iter_fit_ind_jobs",
     "_iter_fit_jobs",
     "_iter_incremental_jobs",
+    "_iter_query_jobs",
     "_job_key",
     "normalize_index_driver",
     "_results_dict",

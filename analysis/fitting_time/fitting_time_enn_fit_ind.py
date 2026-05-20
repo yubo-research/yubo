@@ -17,6 +17,8 @@ from .fitting_time_enn_incremental import (
 )
 from .fitting_time_enn_incremental_draw import _train_xy_unit_cube_segment
 
+_FIT_IND_NUM_FIT_CANDIDATES = 1
+
 
 @dataclass(frozen=True)
 class EnnFitIndTimingResult:
@@ -33,19 +35,12 @@ def _enn_fit_timed_after_add(enn_model, *, current_n: int, rng, params_warm_star
     from enn.enn.enn_fit import enn_fit
 
     k_eff, nfs = enn_fit_k_and_num_fit_samples(int(current_n))
-    enn_fit(
-        enn_model,
-        k=k_eff,
-        num_fit_candidates=1,
-        num_fit_samples=nfs,
-        rng=rng,
-        params_warm_start=params_warm_start,
-    )
+    enn_model.sync_index()
     t_0 = time.perf_counter()
     params = enn_fit(
         enn_model,
         k=k_eff,
-        num_fit_candidates=1,
+        num_fit_candidates=_FIT_IND_NUM_FIT_CANDIDATES,
         num_fit_samples=nfs,
         rng=rng,
         params_warm_start=params_warm_start,
@@ -54,8 +49,8 @@ def _enn_fit_timed_after_add(enn_model, *, current_n: int, rng, params_warm_star
 
 
 def _fit_probability_after_add(current_n: int) -> float:
-    _, nfs = enn_fit_k_and_num_fit_samples(int(current_n))
-    return min(1.0, float(nfs) / float(current_n))
+    n_fit = float(_FIT_IND_NUM_FIT_CANDIDATES)
+    return min(1.0, n_fit / (n_fit + float(current_n)))
 
 
 def _add_segment_with_per_point_fit(

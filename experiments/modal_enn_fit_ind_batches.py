@@ -8,10 +8,8 @@ from typing import Callable, Iterable
 from analysis.fitting_time.fitting_time_enn_fit_ind import EnnFitIndTimingResult
 from analysis.fitting_time.fitting_time_enn_incremental import EnnIncrementalIndexDriver
 from experiments import modal_enn_fit_ind_batches_json as _fit_ind_json
-from experiments.enn_batch_job_params import (
-    enn_batch_shared_params,
-    normalize_index_driver,
-)
+from experiments.enn_batch_job_params import normalize_index_driver
+from experiments.modal_enn_series_batches import iter_replicate_series_jobs
 
 
 def fit_ind_job_key(
@@ -79,42 +77,15 @@ def iter_fit_ind_jobs(
     iter_index_drivers: Callable[[str], tuple[EnnIncrementalIndexDriver, ...]],
     normalize_function_name: Callable[[str], str],
 ) -> Iterable[tuple[str, tuple[int, str, int, int, int, str]]]:
-    shared = enn_batch_shared_params(num_reps=num_reps, d=d, problem_seed=problem_seed)
-    d_i, ps_i, nr, chk = shared.d, shared.problem_seed, shared.num_reps, shared.checkpoint_ns
-    drvs = iter_index_drivers(index_driver)
-    for fm in map(normalize_function_name, shared.benchmark_functions):
-        for drv in drvs:
-            for ri in range(nr):
-                dest = fit_ind_result_json_dest(
-                    output_dir,
-                    d=d_i,
-                    function_name=fm,
-                    problem_seed=ps_i,
-                    rep_index=ri,
-                    num_reps=nr,
-                    index_driver=drv,
-                    normalize_function_name=normalize_function_name,
-                )
-                if _fit_ind_json.fit_ind_result_json_complete(
-                    dest,
-                    chk,
-                    d=d_i,
-                    function_name=fm,
-                    problem_seed=ps_i,
-                    rep_index=ri,
-                    num_reps=nr,
-                    index_driver=drv,
-                ):
-                    continue
-                yield (
-                    fit_ind_job_key(
-                        d=d_i,
-                        function_name=fm,
-                        problem_seed=ps_i,
-                        rep_index=ri,
-                        num_reps=nr,
-                        index_driver=drv,
-                        normalize_function_name=normalize_function_name,
-                    ),
-                    (d_i, fm, ps_i, ri, nr, drv.value),
-                )
+    yield from iter_replicate_series_jobs(
+        output_dir,
+        index_driver,
+        num_reps,
+        d,
+        problem_seed,
+        iter_index_drivers=iter_index_drivers,
+        normalize_function_name=normalize_function_name,
+        result_json_dest=fit_ind_result_json_dest,
+        result_json_complete=_fit_ind_json.fit_ind_result_json_complete,
+        job_key=fit_ind_job_key,
+    )

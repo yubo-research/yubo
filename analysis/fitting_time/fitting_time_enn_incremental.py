@@ -1,4 +1,4 @@
-"""Incremental ENN ``add()`` timing on synthetic benchmark draws."""
+"""Incremental ENN ``add()`` plus index sync timing on synthetic benchmark draws."""
 
 from __future__ import annotations
 
@@ -27,12 +27,12 @@ ENN_INCREMENTAL_CHECKPOINT_NS: tuple[int, ...] = (
     100,
     300,
     1000,
-    # 3000,
-    # 10000,
-    # 30000,
-    # 100000,
-    # 300000,
-    # 1000000,
+    3000,
+    10000,
+    30000,
+    100000,
+    300000,
+    1000000,
 )
 
 
@@ -159,6 +159,7 @@ def benchmark_enn_incremental_add_timing(
         t_0 = time.perf_counter()
         for i in range(x_seg.shape[0]):
             enn_model.add(x_seg[i : i + 1], y_seg[i : i + 1], yvar_row)
+        enn_model.sync_index()
         add_seconds.append(time.perf_counter() - t_0)
         prev_n = n_target
         log_likelihood.append(

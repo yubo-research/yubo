@@ -19,6 +19,7 @@ from analysis.fitting_time.fitting_time_enn_incremental import (
 from experiments import modal_enn_fit_batches as _fit_batches
 from experiments import modal_enn_fit_ind_batches as _fit_ind_batches
 from experiments import modal_enn_incremental_batches_json as _add_json
+from experiments import modal_enn_query_batches as _query_batches
 from experiments.enn_batch_job_params import (
     enn_batch_shared_params,
     normalize_index_driver,
@@ -40,8 +41,8 @@ def dict_names_for_tag(tag: str) -> tuple[str, str]:
 
 def experiment_type_from_tag(tag: str) -> str:
     prefix = tag.split("-", 1)[0]
-    if prefix not in {"add_method", "fit_method", "fit_ind"}:
-        raise ValueError(f"unknown experiment prefix {prefix!r} in tag {tag!r}; expected add_method-*, fit_method-*, or fit_ind-*")
+    if prefix not in {"add_method", "fit_method", "fit_ind", "query"}:
+        raise ValueError(f"unknown experiment prefix {prefix!r} in tag {tag!r}; expected add_method-*, fit_method-*, fit_ind-*, or query-*")
     return prefix
 
 
@@ -238,6 +239,24 @@ def iter_fit_ind_jobs(
     )
 
 
+def iter_query_jobs(
+    output_dir: str | Path,
+    index_driver: str,
+    num_reps: int,
+    d: int,
+    problem_seed: int,
+) -> Iterable[tuple[str, tuple[int, str, int, int, int, str]]]:
+    yield from _query_batches.iter_query_jobs(
+        output_dir,
+        index_driver,
+        num_reps,
+        d,
+        problem_seed,
+        iter_index_drivers=iter_index_drivers,
+        normalize_function_name=normalize_benchmark_function_name,
+    )
+
+
 def submit_missing(
     tag: str,
     output_dir: str | Path,
@@ -253,6 +272,8 @@ def submit_missing(
         it = iter_fit_jobs
     elif exp == "fit_ind":
         it = iter_fit_ind_jobs
+    elif exp == "query":
+        it = iter_query_jobs
     else:
         it = iter_incremental_jobs
     submitted = submitted_dict(tag)
@@ -308,6 +329,20 @@ def collect(tag: str, output_dir: str | Path):
                 raise ValueError(f"bad fit_ind Modal payload len={len(payload)} key={key!r}")
             rp, d, fm, pseed, ri, nr, idrv = payload
             dest = _fit_ind_batches.fit_ind_result_json_dest(
+                outp,
+                d=d,
+                function_name=fm,
+                problem_seed=pseed,
+                rep_index=ri,
+                num_reps=nr,
+                index_driver=idrv,
+                normalize_function_name=normalize_benchmark_function_name,
+            )
+        elif exp == "query":
+            if len(payload) != 7:
+                raise ValueError(f"bad query Modal payload len={len(payload)} key={key!r}")
+            rp, d, fm, pseed, ri, nr, idrv = payload
+            dest = _query_batches.query_result_json_dest(
                 outp,
                 d=d,
                 function_name=fm,
