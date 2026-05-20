@@ -37,6 +37,8 @@ _PARSE_EXPORTS = frozenset(
         "_parse_enn_fields",
         "_parse_perturb",
         "_parse_perturb_spec",
+        "_parse_override_value",
+        "_parse_overrides",
         "_parse_cfg",
         "_parse_budget_fields",
     }

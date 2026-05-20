@@ -45,3 +45,7 @@ def test_modal_hyperscalees_setup_exposes_isaac_preflight() -> None:
     assert "problems.isaaclab_env_adapters" in setup._isaaclab_preflight_command()
     assert "isaacsim" in setup._isaaclab_preflight_command()
     assert "isaaclab_default_launcher_kwargs" in setup._isaaclab_preflight_command()
+    assert setup._uses_brax_stack("configs/bo/eggroll/paper/rl/brax_ant_10k_eggroll.toml")
+    assert not setup._uses_brax_stack("configs/bo/isaaclab/g1_flat_eggroll_dev.toml")
+    assert "mujoco-warp==3.8.0.3" in setup._brax_compat_script()
+    assert "yubo_brax_compat_check.py" in setup._runtime_command_script("echo brax:ant")

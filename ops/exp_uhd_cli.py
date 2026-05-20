@@ -44,11 +44,25 @@ cli = _cli
     default="results/uhd",
     help="Results directory when [uhd].num_reps > 1.",
 )
-def _local(config_toml: str, workers: int = 1, results_dir: str = "results/uhd") -> None:
+@click.option(
+    "-o",
+    "--opt",
+    "overrides",
+    multiple=True,
+    help="Override config key: --opt key=value (e.g. --opt total_timesteps=1000).",
+)
+def _local(
+    config_toml: str,
+    workers: int = 1,
+    results_dir: str = "results/uhd",
+    overrides: tuple[str, ...] = (),
+) -> None:
     tomllib = _im("tomllib")
     p = _im("ops.exp_uhd_parse")
     try:
         cfg = p._load_toml_config(config_toml)
+        if overrides:
+            cfg = {**cfg, **p._parse_overrides(overrides)}
         p._validate_required(cfg)
     except (OSError, tomllib.TOMLDecodeError, TypeError, ValueError) as e:
         raise click.ClickException(str(e)) from e

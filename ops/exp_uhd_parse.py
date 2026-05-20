@@ -4,6 +4,8 @@ import click
 import tomllib
 
 from common.mapping_keys import coerce_mapping_keys, normalize_toml_key
+from ops.config_overrides import parse_override_value
+from ops.config_overrides import parse_overrides as _parse_overrides_raw
 from ops.uhd_config import BEConfig, EarlyRejectConfig, ENNConfig, UHDConfig
 
 _REQUIRED_TOML_KEYS = ("env_tag",)
@@ -163,6 +165,18 @@ def _load_toml_config(path: str) -> dict[str, Any]:
         data = tomllib.load(f)
     section = data.get("uhd", data)
     return _coerce_mapping_keys(section, source=f"TOML '{path}'")
+
+
+def _parse_override_value(raw: str) -> Any:
+    return parse_override_value(raw)
+
+
+def _parse_overrides(override_strings: tuple[str, ...]) -> dict[str, Any]:
+    return _parse_overrides_raw(
+        override_strings,
+        valid_keys=_ALL_TOML_KEYS,
+        normalize_key=_normalize_key,
+    )
 
 
 def _validate_required(cfg: dict[str, Any]) -> None:

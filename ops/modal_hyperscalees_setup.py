@@ -19,6 +19,13 @@ _TIMEOUT_SECONDS = 24 * 60 * 60
 _GPU = os.environ.get("GPU_TYPE", "L40S")
 _DEFAULT_VIDEO_GLOB = "runs/**/traces/videos/*.mp4"
 _MAX_ARTIFACT_BYTES = 512 * 1024 * 1024
+_BRAX_COMPAT_PACKAGES = {
+    "brax": "0.14.2",
+    "mujoco": "3.8.0",
+    "mujoco-mjx": "3.8.0",
+    "mujoco-warp": "3.8.0.3",
+    "warp-lang": "1.13.0",
+}
 
 
 def _logged_command(cmd: list[str], *, cwd: str = "/root") -> int:
@@ -49,7 +56,7 @@ def _logged_command(cmd: list[str], *, cwd: str = "/root") -> int:
 
 @app.function(image=image, gpu=_GPU, timeout=_TIMEOUT_SECONDS)
 def run_hyperscalees_command(command: str) -> str:
-    _logged_command(["bash", "-lc", f"{nvidia_vulkan_icd_script()}\n{command}"])
+    _logged_command(["bash", "-lc", _runtime_command_script(command)])
     return "ok"
 
 
@@ -87,8 +94,44 @@ def _collect_artifacts(patterns: list[str], *, root: str = "/root") -> list[tupl
 
 @app.function(image=image, gpu=_GPU, timeout=_TIMEOUT_SECONDS)
 def run_hyperscalees_command_export(command: str, artifact_globs: list[str]) -> list[tuple[str, bytes]]:
-    _logged_command(["bash", "-lc", f"{nvidia_vulkan_icd_script()}\n{command}"])
+    _logged_command(["bash", "-lc", _runtime_command_script(command)])
     return _collect_artifacts(artifact_globs)
+
+
+def _runtime_command_script(command: str) -> str:
+    parts = [nvidia_vulkan_icd_script()]
+    if _uses_brax_stack(command):
+        parts.append(_brax_compat_script())
+    parts.append(command)
+    return "\n".join(parts)
+
+
+def _uses_brax_stack(command: str) -> bool:
+    return "brax" in command.lower()
+
+
+def _brax_compat_script() -> str:
+    packages = " ".join(shlex.quote(f"{name}=={version}") for name, version in _BRAX_COMPAT_PACKAGES.items())
+    required = repr(_BRAX_COMPAT_PACKAGES)
+    return f"""cat > /tmp/yubo_brax_compat_check.py <<'PY'
+import importlib.metadata as md
+
+required = {required}
+for package, expected in required.items():
+    actual = md.version(package)
+    if actual != expected:
+        raise SystemExit(f"{{package}}=={{actual}}; expected {{expected}}")
+
+from brax import envs
+
+envs.get_environment("ant")
+print("[modal-hyperscalees] brax_compat_ok", required, flush=True)
+PY
+if ! micromamba run -n yubo-hyperscalees python /tmp/yubo_brax_compat_check.py; then
+  echo "[modal-hyperscalees] repairing Brax/MuJoCo compatibility pins" >&2
+  micromamba run -n yubo-hyperscalees python -m pip install --disable-pip-version-check --no-deps --force-reinstall {packages}
+  micromamba run -n yubo-hyperscalees python /tmp/yubo_brax_compat_check.py
+fi"""
 
 
 def _preflight_command() -> str:

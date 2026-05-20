@@ -19,6 +19,43 @@ _parse_cfg = _exp_uhd_parse._parse_cfg
 _validate_required = _exp_uhd_parse._validate_required
 
 
+def _capture_batch_local(monkeypatch):
+    called = {}
+
+    def fake_batch_local(cfg, num_reps, results_dir, workers):
+        called.update(cfg=cfg, num_reps=num_reps, results_dir=results_dir, workers=workers)
+
+    monkeypatch.setattr("ops.uhd_batch._batch_local", fake_batch_local)
+    return called
+
+
+def _write_cartpole_budget_config(tmp_path):
+    cfg_file = tmp_path / "cfg.toml"
+    cfg_file.write_text(
+        """
+[uhd]
+env_tag = "gymnax:CartPole-v1"
+policy_tag = "eggroll-ac-mlp-8x1-pqn"
+total_timesteps = 8000
+num_reps = 2
+steps_per_episode = 500
+num_envs = 8
+""".lstrip()
+    )
+    return cfg_file
+
+
+def _invoke_cartpole_local(monkeypatch, tmp_path, extra_args):
+    from click.testing import CliRunner
+
+    from ops.exp_uhd import cli
+
+    called = _capture_batch_local(monkeypatch)
+    cfg_file = _write_cartpole_budget_config(tmp_path)
+    result = CliRunner().invoke(cli, ["local", str(cfg_file), *extra_args])
+    return result, called
+
+
 def test_normalize_key_no_hyphen():
     assert _normalize_key("env_tag") == "env_tag"
 
@@ -215,32 +252,22 @@ def test_exp_uhd_local_uses_config_num_reps(monkeypatch, tmp_path):
 
 
 def test_exp_uhd_local_batches_total_timesteps_budget(monkeypatch, tmp_path):
-    from click.testing import CliRunner
-
-    from ops.exp_uhd import cli
-
-    called = {}
-
-    def fake_batch_local(cfg, num_reps, results_dir, workers):
-        called.update(cfg=cfg, num_reps=num_reps, results_dir=results_dir, workers=workers)
-
-    monkeypatch.setattr("ops.uhd_batch._batch_local", fake_batch_local)
-    cfg_file = tmp_path / "cfg.toml"
-    cfg_file.write_text(
-        """
-[uhd]
-env_tag = "gymnax:CartPole-v1"
-policy_tag = "eggroll-ac-mlp-8x1-pqn"
-total_timesteps = 8000
-num_reps = 2
-steps_per_episode = 500
-num_envs = 8
-""".lstrip()
-    )
-
-    result = CliRunner().invoke(cli, ["local", str(cfg_file)])
+    result, called = _invoke_cartpole_local(monkeypatch, tmp_path, [])
 
     assert result.exit_code == 0, result.output
     assert called["num_reps"] == 2
     assert called["cfg"]["total_timesteps"] == 8000
     assert called["cfg"]["num_rounds"] == 2
+
+
+def test_exp_uhd_local_applies_cli_overrides(monkeypatch, tmp_path):
+    result, called = _invoke_cartpole_local(
+        monkeypatch,
+        tmp_path,
+        ["--opt", "total_timesteps=4000", "--opt", "num_reps=3"],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert called["num_reps"] == 3
+    assert called["cfg"]["total_timesteps"] == 4000
+    assert called["cfg"]["num_rounds"] == 1
