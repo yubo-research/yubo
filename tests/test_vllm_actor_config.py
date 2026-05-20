@@ -133,26 +133,6 @@ def test_gemma4_vllm_update_target_normalizes_language_model_path():
         assert rows == slice(0, 768)
 
 
-def test_modal_runtime_selection_defaults_to_hyperscalees():
-    from ops.modal_hyperscalees_image import DEFAULT_RUNTIME, selected_modal_runtime
-
-    assert selected_modal_runtime(["modal", "run"]) == DEFAULT_RUNTIME
-
-
-def test_modal_runtime_selection_accepts_isaaclab():
-    from ops.modal_hyperscalees_image import RUNTIME_ISAACLAB, selected_modal_runtime
-
-    assert selected_modal_runtime(["modal", "run", "--runtime", RUNTIME_ISAACLAB]) == RUNTIME_ISAACLAB
-    assert selected_modal_runtime(["modal", "run", f"--runtime={RUNTIME_ISAACLAB}"]) == RUNTIME_ISAACLAB
-
-
-def test_modal_runtime_selection_rejects_unknown_runtime():
-    from ops.modal_hyperscalees_image import selected_modal_runtime
-
-    with pytest.raises(ValueError, match="Unsupported Modal runtime"):
-        selected_modal_runtime(["modal", "run", "--runtime", "other"])
-
-
 def _add_fake_gemma4_text_lora_layer(layer, torch):
     layer.self_attn = torch.nn.Module()
     for name in ("q_proj", "k_proj", "v_proj", "o_proj"):

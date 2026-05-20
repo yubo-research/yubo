@@ -16,4 +16,9 @@ dependencies:
   - scikit-learn
   - matplotlib
   - pandas
-  - faiss-cpu
+  - nomkl
+  - libblas=*=*openblas
+  - openblas
+  - libfaiss=1.10.0=cpu_openblas*
+  - faiss=1.10.0=cpu_openblas_py312*
+  - faiss-cpu=1.10.0

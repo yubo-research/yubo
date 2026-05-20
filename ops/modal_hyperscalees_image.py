@@ -1,7 +1,6 @@
 from pathlib import Path
 
 from ops.modal_hyperscalees_base_image import mk_hyperscalees_base_image
-from ops.modal_nvidia_vulkan import nvidia_vulkan_icd_script
 
 _HTTP_RUNTIME_DEPS = (
     "aiohappyeyeballs>=2.5.0",
@@ -17,6 +16,7 @@ _HTTP_RUNTIME_DEPS = (
     "charset-normalizer>=2,<4",
     "chardet>=3,<6",
     "certifi",
+    "grpclib>=0.4.7,<0.5",
 )
 
 _REPO_MOUNT_IGNORE = (
@@ -43,29 +43,12 @@ _REPO_MOUNT_IGNORE = (
     "**/target",
 )
 _MODAL_ENV = {
+    "LD_LIBRARY_PATH": "/opt/conda/envs/yubo-hyperscalees/lib",
     "NVIDIA_DRIVER_CAPABILITIES": "all",
     "OMNI_KIT_ACCEPT_EULA": "YES",
     "PYTHONPATH": "/root",
     "PYTHONUNBUFFERED": "1",
 }
-
-DEFAULT_RUNTIME = "hyperscalees"
-RUNTIME_ISAACLAB = "isaaclab"
-
-
-_nvidia_vulkan_icd_script = nvidia_vulkan_icd_script
-
-
-def selected_modal_runtime(argv: list[str]) -> str:
-    runtime = DEFAULT_RUNTIME
-    for idx, arg in enumerate(list(argv)):
-        if arg == "--runtime" and idx + 1 < len(argv):
-            runtime = str(argv[idx + 1]).strip()
-        elif arg.startswith("--runtime="):
-            runtime = str(arg.split("=", 1)[1]).strip()
-    if runtime not in {DEFAULT_RUNTIME, RUNTIME_ISAACLAB}:
-        raise ValueError(f"Unsupported Modal runtime: {runtime}")
-    return runtime
 
 
 def mk_image(modal):

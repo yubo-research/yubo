@@ -171,9 +171,11 @@ else
   "${MICROMAMBA}" env create -y -n "${ENV_NAME}" -f admin/conda-hyperscalees.yml
   ENV_WAS_CREATED=1
 fi
+ENV_PREFIX="$("${MICROMAMBA}" run -n "${ENV_NAME}" python -c 'import sys; print(sys.prefix)')"
 
 run_in_env() {
-  "${MICROMAMBA}" run -n "${ENV_NAME}" "$@"
+  local env_ld_library_path="${ENV_PREFIX}/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
+  "${MICROMAMBA}" run -n "${ENV_NAME}" env "LD_LIBRARY_PATH=${env_ld_library_path}" "$@"
 }
 
 pip_install() {
@@ -251,17 +253,44 @@ PY
 }
 
 install_vecchiabo_package() {
-  if run_in_env python -c 'import importlib.util, sys; sys.exit(0 if importlib.util.find_spec("pyvecch") else 1)'; then
+  if run_in_env python - <<'PY'
+import faiss
+from pyvecch.input_transforms import Identity
+
+print(f"pyvecch/faiss imports OK: {faiss.__version__} {Identity.__name__}")
+PY
+  then
     log "pyvecch already importable"
     return
   fi
+  log "refreshing conda faiss-cpu OpenBLAS runtime"
+  "${MICROMAMBA}" remove -y -n "${ENV_NAME}" faiss-cpu faiss libfaiss >/dev/null 2>&1 || true
+  run_in_env python -m pip uninstall -y faiss-cpu faiss >/dev/null 2>&1 || true
+  "${MICROMAMBA}" install -y -n "${ENV_NAME}" -c conda-forge \
+    nomkl \
+    "libblas=*=*openblas" \
+    openblas \
+    "libfaiss=1.10.0=cpu_openblas*" \
+    "faiss=1.10.0=cpu_openblas_py312*" \
+    "faiss-cpu=1.10.0"
+  run_in_env python - <<'PY'
+import faiss
+
+print(f"faiss import OK: {faiss.__version__}")
+PY
   log "installing VecchiaBO / pyvecch"
   run_in_env bash -c '
     LDFLAGS="-L${CONDA_PREFIX}/lib" \
     LIBRARY_PATH="${CONDA_PREFIX}/lib" \
     CPATH="$(python -c "import pybind11; print(pybind11.get_include())")" \
-    python -m pip install --disable-pip-version-check --no-build-isolation "'"${VECCHIABO_SPEC}"'"
+    python -m pip install --disable-pip-version-check --no-build-isolation --no-deps "'"${VECCHIABO_SPEC}"'"
   '
+  run_in_env python - <<'PY'
+import faiss
+from pyvecch.input_transforms import Identity
+
+print(f"pyvecch/faiss imports OK: {faiss.__version__} {Identity.__name__}")
+PY
 }
 
 install_lassobench_package() {
@@ -307,6 +336,43 @@ install_isaaclab_stack() {
   run_in_env bash -c "cd ${ISAACLAB_SOURCE_DIR} && ./isaaclab.sh --install ${ISAACLAB_SOURCE_INSTALL_TARGET}"
 }
 
+install_brax_compat_stack() {
+  local specs=()
+  local package spec
+  for package in brax mujoco mujoco-mjx mujoco-warp warp-lang; do
+    spec="$(grep -E "^${package}==" admin/requirements-hyperscalees-nodeps.txt)"
+    specs+=("${spec}")
+  done
+  log "ensuring Brax/MuJoCo compatibility pins: ${specs[*]}"
+  pip_install --no-deps --force-reinstall "${specs[@]}"
+  run_in_env python - <<'PY'
+from brax import envs
+
+envs.get_environment("ant")
+print("BRAX_COMPAT_OK")
+PY
+}
+
+install_repo_test_compat_stack() {
+  log "ensuring repo test runtime pins"
+  pip_install --force-reinstall \
+    "setuptools>=77.0.3,<81.0.0" \
+    "numpy>=2.2,<2.3" \
+    "numba==0.61.2" \
+    "llvmlite==0.44.0" \
+    "dm-control>=1.0.40"
+  run_in_env python - <<'PY'
+import numpy
+import numba
+from dm_control import suite
+
+assert numpy.__version__.startswith("2.2"), numpy.__version__
+env = suite.load("cartpole", "swingup")
+env.close()
+print(f"REPO_TEST_COMPAT_OK numpy={numpy.__version__} numba={numba.__version__}")
+PY
+}
+
 install_env_activation_hooks() {
   local hf_home="$1"
   run_in_env python - "${hf_home}" <<'PY'
@@ -341,8 +407,11 @@ if [[ "${ENV_WAS_CREATED}" -eq 1 ]]; then
 else
   log "env '${ENV_NAME}' already exists; performing incremental update"
   pip_install -r admin/requirements-hyperscalees.txt
+  install_vecchiabo_package
   install_isaaclab_stack
 fi
+install_brax_compat_stack
+install_repo_test_compat_stack
 
 mkdir -p "${HF_HOME_DIR}"
 install_env_activation_hooks "${HF_HOME_DIR}"

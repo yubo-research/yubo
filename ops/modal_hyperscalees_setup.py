@@ -9,7 +9,7 @@ from pathlib import Path
 
 import modal
 
-from ops.modal_hyperscalees_image import RUNTIME_ISAACLAB, mk_image
+from ops.modal_hyperscalees_image import mk_image
 from ops.modal_nvidia_vulkan import nvidia_vulkan_icd_script
 
 app = modal.App(name="yubo-hyperscalees")
@@ -19,13 +19,6 @@ _TIMEOUT_SECONDS = 24 * 60 * 60
 _GPU = os.environ.get("GPU_TYPE", "L40S")
 _DEFAULT_VIDEO_GLOB = "runs/**/traces/videos/*.mp4"
 _MAX_ARTIFACT_BYTES = 512 * 1024 * 1024
-_BRAX_COMPAT_PACKAGES = {
-    "brax": "0.14.2",
-    "mujoco": "3.8.0",
-    "mujoco-mjx": "3.8.0",
-    "mujoco-warp": "3.8.0.3",
-    "warp-lang": "1.13.0",
-}
 
 
 def _logged_command(cmd: list[str], *, cwd: str = "/root") -> int:
@@ -99,39 +92,13 @@ def run_hyperscalees_command_export(command: str, artifact_globs: list[str]) -> 
 
 
 def _runtime_command_script(command: str) -> str:
-    parts = [nvidia_vulkan_icd_script()]
-    if _uses_brax_stack(command):
-        parts.append(_brax_compat_script())
-    parts.append(command)
-    return "\n".join(parts)
-
-
-def _uses_brax_stack(command: str) -> bool:
-    return "brax" in command.lower()
-
-
-def _brax_compat_script() -> str:
-    packages = " ".join(shlex.quote(f"{name}=={version}") for name, version in _BRAX_COMPAT_PACKAGES.items())
-    required = repr(_BRAX_COMPAT_PACKAGES)
-    return f"""cat > /tmp/yubo_brax_compat_check.py <<'PY'
-import importlib.metadata as md
-
-required = {required}
-for package, expected in required.items():
-    actual = md.version(package)
-    if actual != expected:
-        raise SystemExit(f"{{package}}=={{actual}}; expected {{expected}}")
-
-from brax import envs
-
-envs.get_environment("ant")
-print("[modal-hyperscalees] brax_compat_ok", required, flush=True)
-PY
-if ! micromamba run -n yubo-hyperscalees python /tmp/yubo_brax_compat_check.py; then
-  echo "[modal-hyperscalees] repairing Brax/MuJoCo compatibility pins" >&2
-  micromamba run -n yubo-hyperscalees python -m pip install --disable-pip-version-check --no-deps --force-reinstall {packages}
-  micromamba run -n yubo-hyperscalees python /tmp/yubo_brax_compat_check.py
-fi"""
+    return "\n".join(
+        [
+            nvidia_vulkan_icd_script(),
+            "export LD_LIBRARY_PATH=/opt/conda/envs/yubo-hyperscalees/lib:${LD_LIBRARY_PATH:-}",
+            command,
+        ]
+    )
 
 
 def _preflight_command() -> str:
@@ -174,14 +141,11 @@ def main(
     export_glob: str = "",
     export_dir: str = "artifacts/modal_hyperscalees",
 ) -> None:
-    runtime = RUNTIME_ISAACLAB if command.strip() == "isaaclab-preflight" else None
     if command.strip() == "preflight":
         command = _preflight_command()
     elif command.strip() == "isaaclab-preflight":
         command = _isaaclab_preflight_command()
     print(f"[modal-hyperscalees] gpu={_GPU!r}", flush=True)
-    if runtime is not None:
-        print(f"[modal-hyperscalees] runtime={runtime!r}", flush=True)
     print(f"[modal-hyperscalees] command={command!r}", flush=True)
     artifact_globs = _parse_export_globs(export_glob, export_videos=export_videos)
     if artifact_globs:

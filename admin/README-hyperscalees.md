@@ -21,6 +21,9 @@ test suite, including `smac`/`pyrfr`, `VecchiaBO`/`pyvecch`, `LassoBench`,
 support it also installs NVIDIA Warp via `warp-lang` plus `mujoco-warp`.
 Full NVIDIA Isaac Sim / Isaac Lab / Newton support installs into this same
 `yubo-hyperscalees` environment.
+Because Isaac Lab may reconcile MuJoCo/Warp packages during its installer, the
+setup script re-applies the Brax-compatible MuJoCo/Warp pins after Isaac Lab is
+present and smoke-checks `brax:ant`.
 Activating the env also sets `HF_HOME`, `HF_HUB_CACHE`, and
 `XLA_PYTHON_CLIENT_PREALLOCATE=false`.
 
