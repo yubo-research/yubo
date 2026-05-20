@@ -33,6 +33,14 @@ def _enn_fit_timed_after_add(enn_model, *, current_n: int, rng, params_warm_star
     from enn.enn.enn_fit import enn_fit
 
     k_eff, nfs = enn_fit_k_and_num_fit_samples(int(current_n))
+    enn_fit(
+        enn_model,
+        k=k_eff,
+        num_fit_candidates=1,
+        num_fit_samples=nfs,
+        rng=rng,
+        params_warm_start=params_warm_start,
+    )
     t_0 = time.perf_counter()
     params = enn_fit(
         enn_model,
@@ -43,6 +51,11 @@ def _enn_fit_timed_after_add(enn_model, *, current_n: int, rng, params_warm_star
         params_warm_start=params_warm_start,
     )
     return params, time.perf_counter() - t_0
+
+
+def _fit_probability_after_add(current_n: int) -> float:
+    _, nfs = enn_fit_k_and_num_fit_samples(int(current_n))
+    return min(1.0, float(nfs) / float(current_n))
 
 
 def _add_segment_with_per_point_fit(
@@ -61,6 +74,9 @@ def _add_segment_with_per_point_fit(
     for i in range(n_rows):
         enn_model.add(x_seg[i : i + 1], y_seg[i : i + 1], yvar_row)
         current_n = int(start_n) + i + 1
+        fit_p = _fit_probability_after_add(current_n)
+        if fit_p < 1.0 and float(rng.random()) >= fit_p:
+            continue
         params, dt = _enn_fit_timed_after_add(
             enn_model,
             current_n=current_n,
