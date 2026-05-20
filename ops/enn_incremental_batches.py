@@ -10,11 +10,7 @@ from pathlib import Path
 import click
 
 from ops.enn_incremental_batches_local import register_local_commands
-from ops.modal_cli_common import (
-    collect_to_output_dir,
-    run_modal,
-    stop_app_and_delete_dicts,
-)
+from ops.modal_cli_common import run_modal
 
 _EXP_TYPE = click.Choice(["add_method", "fit_method", "fit_ind"], case_sensitive=False)
 
@@ -37,19 +33,31 @@ def _get_impl_path() -> str:
     return "experiments/modal_enn_incremental_batches_impl.py"
 
 
+def _run_client_command(
+    tag: str,
+    cmd: str,
+    *,
+    output_dir: str = "results/enn_incremental",
+    index_driver: str = "all",
+    num_reps: int = 10,
+    d_dims: int = 10,
+    problem_seed: int = 17,
+) -> None:
+    from experiments.modal_enn_incremental_batches_client import run_command
+
+    run_command(
+        tag,
+        cmd,
+        output_dir=output_dir,
+        index_driver=index_driver,
+        num_reps=num_reps,
+        d=d_dims,
+        problem_seed=problem_seed,
+    )
+
+
 def _modal_tag(exp_type: str, tag: str) -> str:
     return f"{exp_type.lower()}-{tag}"
-
-
-def _get_app_name(tag: str) -> str:
-    return f"yubo-enn-incremental-{tag}"
-
-
-def _modal_dict_names(tag: str) -> tuple[str, str]:
-    return (
-        f"enn_incremental_results_{tag}",
-        f"enn_incremental_submitted_{tag}",
-    )
 
 
 def _run_modal(args: list[str], tag: str) -> None:
@@ -133,28 +141,15 @@ def submit(
         raise click.BadParameter("D must be positive")
     if num_reps < 1:
         raise click.BadParameter("num-reps must be >= 1")
-    impl = _get_impl_path()
     modal_tag = _modal_tag(exp_type, tag)
-    _run_modal(
-        [
-            "run",
-            f"{impl}::batches",
-            "--tag",
-            modal_tag,
-            "--cmd",
-            "submit",
-            "--output-dir",
-            output_dir,
-            "--index-driver",
-            index_driver.lower(),
-            "--num-reps",
-            str(num_reps),
-            "--d",
-            str(d_dims),
-            "--problem-seed",
-            str(problem_seed),
-        ],
+    _run_client_command(
         modal_tag,
+        "submit",
+        output_dir=output_dir,
+        index_driver=index_driver.lower(),
+        num_reps=num_reps,
+        d_dims=d_dims,
+        problem_seed=problem_seed,
     )
 
 
@@ -194,28 +189,15 @@ def submit_force(
         raise click.BadParameter("D must be positive")
     if num_reps < 1:
         raise click.BadParameter("num-reps must be >= 1")
-    impl = _get_impl_path()
     modal_tag = _modal_tag(exp_type, tag)
-    _run_modal(
-        [
-            "run",
-            f"{impl}::batches",
-            "--tag",
-            modal_tag,
-            "--cmd",
-            "submit-force",
-            "--output-dir",
-            output_dir,
-            "--index-driver",
-            index_driver.lower(),
-            "--num-reps",
-            str(num_reps),
-            "--d",
-            str(d_dims),
-            "--problem-seed",
-            str(problem_seed),
-        ],
+    _run_client_command(
         modal_tag,
+        "submit-force",
+        output_dir=output_dir,
+        index_driver=index_driver.lower(),
+        num_reps=num_reps,
+        d_dims=d_dims,
+        problem_seed=problem_seed,
     )
 
 
@@ -229,7 +211,7 @@ def submit_force(
 )
 def collect(exp_type: str, tag: str, output_dir: str):
     """Collect completed results to the local output directory."""
-    collect_to_output_dir(_get_impl_path(), _modal_tag(exp_type, tag), output_dir, run=subprocess.run)
+    _run_client_command(_modal_tag(exp_type, tag), "collect", output_dir=output_dir)
 
 
 @cli.command()
@@ -237,9 +219,8 @@ def collect(exp_type: str, tag: str, output_dir: str):
 @click.argument("tag")
 def status(exp_type: str, tag: str):
     """Show submitted/result dict sizes for this tag."""
-    impl = _get_impl_path()
     modal_tag = _modal_tag(exp_type, tag)
-    _run_modal(["run", f"{impl}::batches", "--tag", modal_tag, "--cmd", "status"], modal_tag)
+    _run_client_command(modal_tag, "status")
 
 
 @cli.command()
@@ -247,12 +228,9 @@ def status(exp_type: str, tag: str):
 @click.argument("tag")
 def stop(exp_type: str, tag: str):
     """Stop the app and clean up the backing Modal dicts."""
-    modal_tag = _modal_tag(exp_type, tag)
-    stop_app_and_delete_dicts(
-        app_name=_get_app_name(modal_tag),
-        dict_names=_modal_dict_names(modal_tag),
-        run=subprocess.run,
-    )
+    from experiments.modal_enn_incremental_batches_client import stop as enn_stop
+
+    enn_stop(_modal_tag(exp_type, tag), run=subprocess.run)
 
 
 register_local_commands(

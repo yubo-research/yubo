@@ -281,6 +281,7 @@ def test_worker_rejects_fit_method_job_with_wrong_len():
 
 
 def test_enn_fit_collect_dict_payload_writes(monkeypatch, tmp_path: Path):
+    import experiments.modal_enn_incremental_batches_common as common
     import experiments.modal_enn_incremental_batches_impl as impl
 
     payload = {
@@ -304,9 +305,9 @@ def test_enn_fit_collect_dict_payload_writes(monkeypatch, tmp_path: Path):
         def spawn(self, keys, tag):
             deleted.append((list(keys), tag))
 
-    monkeypatch.setattr(impl, "_results_dict", lambda _tag: results)
+    monkeypatch.setattr(common, "results_dict", lambda _tag: results)
     monkeypatch.setattr(
-        impl.modal,
+        common.modal,
         "Function",
         SimpleNamespace(from_name=lambda *_args, **_kwargs: _Func()),
     )
@@ -419,6 +420,7 @@ def test_fit_result_json_complete_requires_log_likelihood(tmp_path: Path):
 
 
 def test_enn_fit_collect_writes_and_deletes(monkeypatch, tmp_path: Path):
+    import experiments.modal_enn_incremental_batches_common as common
     import experiments.modal_enn_incremental_batches_impl as impl
 
     results = {
@@ -451,9 +453,9 @@ def test_enn_fit_collect_writes_and_deletes(monkeypatch, tmp_path: Path):
         def spawn(self, keys, tag):
             deleted.append((list(keys), tag))
 
-    monkeypatch.setattr(impl, "_results_dict", lambda _tag: results)
+    monkeypatch.setattr(common, "results_dict", lambda _tag: results)
     monkeypatch.setattr(
-        impl.modal,
+        common.modal,
         "Function",
         SimpleNamespace(from_name=lambda *_args, **_kwargs: _Func()),
     )

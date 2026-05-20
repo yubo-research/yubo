@@ -48,10 +48,44 @@ def test_enn_incremental_payload_and_dest(tmp_path: Path):
     ).name == ("enn_incremental_D2_sphere_pseed17_nrep10_rep3_flat.json")
 
 
+def test_client_reexports_match_impl_payload_and_dest(tmp_path: Path):
+    import experiments.modal_enn_incremental_batches_client as client
+    import experiments.modal_enn_incremental_batches_impl as impl
+
+    result = EnnIncrementalTimingResult(
+        n=(1, 3),
+        add_seconds=(0.1, 0.2),
+        log_likelihood=(-1.0, -0.5),
+        target="sphere",
+        d=2,
+        problem_seed=17,
+        index_driver=EnnIncrementalIndexDriver.FLAT,
+    )
+    assert client.result_to_payload(result) == impl.result_to_payload(result)
+    assert client.result_json_dest(
+        tmp_path,
+        d=2,
+        function_name="sphere",
+        problem_seed=17,
+        rep_index=3,
+        num_reps=10,
+        index_driver="flat",
+    ) == impl.result_json_dest(
+        tmp_path,
+        d=2,
+        function_name="sphere",
+        problem_seed=17,
+        rep_index=3,
+        num_reps=10,
+        index_driver="flat",
+    )
+
+
 def test_pending_jobs_uses_shared_benchmark_functions(monkeypatch, tmp_path: Path):
     import dataclasses
 
     import experiments.enn_batch_job_params as batch_params
+    import experiments.modal_enn_incremental_batches_common as common
     import experiments.modal_enn_incremental_batches_impl as impl
 
     original_shared = batch_params.enn_batch_shared_params
@@ -60,7 +94,7 @@ def test_pending_jobs_uses_shared_benchmark_functions(monkeypatch, tmp_path: Pat
         shared = original_shared(**kwargs)
         return dataclasses.replace(shared, benchmark_functions=("sphere",))
 
-    monkeypatch.setattr(impl, "enn_batch_shared_params", shared_sphere_only)
+    monkeypatch.setattr(common, "enn_batch_shared_params", shared_sphere_only)
     monkeypatch.setattr(
         "experiments.enn_batch_job_params.ENN_BATCH_BENCHMARK_FUNCTIONS",
         ("sphere", "ackley"),
@@ -289,6 +323,7 @@ def test_fit_ind_worker_writes_result(monkeypatch):
 
 
 def test_enn_incremental_collect_writes_and_deletes(monkeypatch, tmp_path: Path):
+    import experiments.modal_enn_incremental_batches_common as common
     import experiments.modal_enn_incremental_batches_impl as impl
 
     results = {
@@ -320,9 +355,9 @@ def test_enn_incremental_collect_writes_and_deletes(monkeypatch, tmp_path: Path)
         def spawn(self, keys, tag):
             deleted.append((list(keys), tag))
 
-    monkeypatch.setattr(impl, "_results_dict", lambda _tag: results)
+    monkeypatch.setattr(common, "results_dict", lambda _tag: results)
     monkeypatch.setattr(
-        impl.modal,
+        common.modal,
         "Function",
         SimpleNamespace(from_name=lambda *_args, **_kwargs: _Func()),
     )
@@ -335,6 +370,7 @@ def test_enn_incremental_collect_writes_and_deletes(monkeypatch, tmp_path: Path)
 
 
 def test_add_collect_should_overwrite_stale_complete_incremental_json(monkeypatch, tmp_path: Path):
+    import experiments.modal_enn_incremental_batches_common as common
     import experiments.modal_enn_incremental_batches_impl as impl
     from analysis.fitting_time.fitting_time_enn_incremental import (
         enn_incremental_checkpoint_ns,
@@ -396,9 +432,9 @@ def test_add_collect_should_overwrite_stale_complete_incremental_json(monkeypatc
         ),
     }
 
-    monkeypatch.setattr(impl, "_results_dict", lambda _tag: results)
+    monkeypatch.setattr(common, "results_dict", lambda _tag: results)
     monkeypatch.setattr(
-        impl.modal,
+        common.modal,
         "Function",
         SimpleNamespace(from_name=lambda *_a, **_k: SimpleNamespace(spawn=lambda *a, **k: None)),
     )

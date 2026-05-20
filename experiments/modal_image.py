@@ -101,7 +101,6 @@ def mk_image(tag: str = "default"):
     )
     image = image.run_commands(
         "python -c \"from enn.enn.enn_fit import enn_fit; print('enn import OK')\"",
-        f"echo 'IMAGE_TAG={tag}' > /root/image_tag.txt",
     )
 
     for d in [

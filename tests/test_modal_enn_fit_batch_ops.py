@@ -42,6 +42,7 @@ def test_submitter_skips_submitted_without_force(monkeypatch):
 
 
 def test_collect_overwrites_stale_complete_fit_json(monkeypatch, tmp_path: Path):
+    import experiments.modal_enn_incremental_batches_common as common
     import experiments.modal_enn_incremental_batches_impl as impl
 
     dest = fit_batches.fit_result_json_dest(
@@ -101,9 +102,9 @@ def test_collect_overwrites_stale_complete_fit_json(monkeypatch, tmp_path: Path)
         ),
     }
 
-    monkeypatch.setattr(impl, "_results_dict", lambda _tag: results)
+    monkeypatch.setattr(common, "results_dict", lambda _tag: results)
     monkeypatch.setattr(
-        impl.modal,
+        common.modal,
         "Function",
         SimpleNamespace(from_name=lambda *_args, **_kwargs: SimpleNamespace(spawn=lambda *a, **k: None)),
     )
@@ -115,28 +116,28 @@ def test_collect_overwrites_stale_complete_fit_json(monkeypatch, tmp_path: Path)
 
 
 def test_submit_missing_reported_count_matches_spawned_jobs(monkeypatch, tmp_path: Path, capsys):
+    import experiments.modal_enn_incremental_batches_common as common
     import experiments.modal_enn_incremental_batches_impl as impl
 
     submitted: dict[str, bool] = {"enn_fit_D2_sphere_N3_pseed17_nrep10_rep0_flat": True}
     spawned_todos: list[tuple] = []
 
-    submitter = SimpleNamespace(spawn=lambda batch, tag, force=False: (impl.enn_incremental_batch_submitter.info.raw_f(batch, tag, force)))
-    worker = SimpleNamespace(spawn_map=spawned_todos.extend)
+    def _spawn(batch, tag, force=False):
+        spawned_todos.append((list(batch), tag, force))
 
-    def _from_name(_app, name):
-        if name == "enn_incremental_batch_submitter":
-            return submitter
-        return worker
+    submitter = SimpleNamespace(spawn=_spawn)
 
-    monkeypatch.setattr(impl, "_submitted_dict", lambda _tag: submitted)
+    monkeypatch.setattr(common, "submitted_dict", lambda _tag: submitted)
     monkeypatch.setattr(
-        impl.modal,
+        common.modal,
         "Function",
-        SimpleNamespace(from_name=_from_name),
+        SimpleNamespace(
+            from_name=lambda _app, name, **_k: submitter if name == "enn_incremental_batch_submitter" else SimpleNamespace(spawn_map=lambda *_a, **_k: None)
+        ),
     )
     monkeypatch.setattr(
-        impl,
-        "_iter_fit_jobs",
+        common,
+        "iter_fit_jobs",
         lambda *_a, **_k: [
             (
                 "enn_fit_D2_sphere_N3_pseed17_nrep10_rep0_flat",
@@ -153,6 +154,7 @@ def test_submit_missing_reported_count_matches_spawned_jobs(monkeypatch, tmp_pat
 
     out = capsys.readouterr().out
     assert len(spawned_todos) == 1
+    assert len(spawned_todos[0][0]) == 1
     assert "submitted 1 ENN batch jobs" in out
 
 

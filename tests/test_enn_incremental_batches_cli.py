@@ -56,179 +56,6 @@ def test_enn_incremental_batches_help_shows_exp_type_metavar():
             "fit_ind-t1",
         ),
         (
-            ["submit", "add_method", "t1"],
-            [
-                [
-                    "modal",
-                    "run",
-                    "experiments/modal_enn_incremental_batches_impl.py::batches",
-                    "--tag",
-                    "add_method-t1",
-                    "--cmd",
-                    "submit",
-                    "--output-dir",
-                    "results/enn_incremental",
-                    "--index-driver",
-                    "all",
-                    "--num-reps",
-                    "10",
-                    "--d",
-                    "10",
-                    "--problem-seed",
-                    "17",
-                ],
-            ],
-            "add_method-t1",
-        ),
-        (
-            ["submit", "fit_method", "t1"],
-            [
-                [
-                    "modal",
-                    "run",
-                    "experiments/modal_enn_incremental_batches_impl.py::batches",
-                    "--tag",
-                    "fit_method-t1",
-                    "--cmd",
-                    "submit",
-                    "--output-dir",
-                    "results/enn_incremental",
-                    "--index-driver",
-                    "all",
-                    "--num-reps",
-                    "10",
-                    "--d",
-                    "10",
-                    "--problem-seed",
-                    "17",
-                ],
-            ],
-            "fit_method-t1",
-        ),
-        (
-            ["submit-force", "fit_method", "t1"],
-            [
-                [
-                    "modal",
-                    "run",
-                    "experiments/modal_enn_incremental_batches_impl.py::batches",
-                    "--tag",
-                    "fit_method-t1",
-                    "--cmd",
-                    "submit-force",
-                    "--output-dir",
-                    "results/enn_incremental",
-                    "--index-driver",
-                    "all",
-                    "--num-reps",
-                    "10",
-                    "--d",
-                    "10",
-                    "--problem-seed",
-                    "17",
-                ],
-            ],
-            "fit_method-t1",
-        ),
-        (
-            [
-                "submit",
-                "add_method",
-                "t1",
-                "--index-driver",
-                "HNSW",
-                "--d",
-                "7",
-            ],
-            [
-                [
-                    "modal",
-                    "run",
-                    "experiments/modal_enn_incremental_batches_impl.py::batches",
-                    "--tag",
-                    "add_method-t1",
-                    "--cmd",
-                    "submit",
-                    "--output-dir",
-                    "results/enn_incremental",
-                    "--index-driver",
-                    "hnsw",
-                    "--num-reps",
-                    "10",
-                    "--d",
-                    "7",
-                    "--problem-seed",
-                    "17",
-                ],
-            ],
-            "add_method-t1",
-        ),
-        (
-            [
-                "submit",
-                "add_method",
-                "t1",
-                "--num-reps",
-                "3",
-                "--problem-seed",
-                "23",
-            ],
-            [
-                [
-                    "modal",
-                    "run",
-                    "experiments/modal_enn_incremental_batches_impl.py::batches",
-                    "--tag",
-                    "add_method-t1",
-                    "--cmd",
-                    "submit",
-                    "--output-dir",
-                    "results/enn_incremental",
-                    "--index-driver",
-                    "all",
-                    "--num-reps",
-                    "3",
-                    "--d",
-                    "10",
-                    "--problem-seed",
-                    "23",
-                ],
-            ],
-            "add_method-t1",
-        ),
-        (
-            ["collect", "add_method", "t1"],
-            [
-                [
-                    "modal",
-                    "run",
-                    "experiments/modal_enn_incremental_batches_impl.py::batches",
-                    "--tag",
-                    "add_method-t1",
-                    "--cmd",
-                    "collect",
-                    "--output-dir",
-                    "results/enn_incremental",
-                ],
-            ],
-            "add_method-t1",
-        ),
-        (
-            ["status", "add_method", "t1"],
-            [
-                [
-                    "modal",
-                    "run",
-                    "experiments/modal_enn_incremental_batches_impl.py::batches",
-                    "--tag",
-                    "add_method-t1",
-                    "--cmd",
-                    "status",
-                ]
-            ],
-            "add_method-t1",
-        ),
-        (
             ["stop", "add_method", "t1"],
             [
                 ["modal", "app", "stop", "yubo-enn-incremental-add_method-t1"],
@@ -250,38 +77,6 @@ def test_enn_incremental_batches_help_shows_exp_type_metavar():
                 ],
             ],
             "add_method-t1",
-        ),
-        (
-            ["collect", "fit_method", "t1"],
-            [
-                [
-                    "modal",
-                    "run",
-                    "experiments/modal_enn_incremental_batches_impl.py::batches",
-                    "--tag",
-                    "fit_method-t1",
-                    "--cmd",
-                    "collect",
-                    "--output-dir",
-                    "results/enn_incremental",
-                ],
-            ],
-            "fit_method-t1",
-        ),
-        (
-            ["status", "fit_method", "t1"],
-            [
-                [
-                    "modal",
-                    "run",
-                    "experiments/modal_enn_incremental_batches_impl.py::batches",
-                    "--tag",
-                    "fit_method-t1",
-                    "--cmd",
-                    "status",
-                ]
-            ],
-            "fit_method-t1",
         ),
         (
             ["stop", "fit_method", "t1"],
@@ -308,11 +103,135 @@ def test_enn_incremental_batches_help_shows_exp_type_metavar():
         ),
     ],
 )
-def test_enn_incremental_batches_commands_set_modal_tag_and_args(captured_modal, invoke_args, expected_modal_cmds, modal_tag):
+def test_enn_incremental_batches_subprocess_commands(captured_modal, invoke_args, expected_modal_cmds, modal_tag):
     runner = CliRunner()
     res = runner.invoke(batches_mod.cli, invoke_args)
     assert res.exit_code == 0, res.output
     assert_modal_command_calls(captured_modal, expected_modal_cmds, modal_tag=modal_tag)
+
+
+@pytest.mark.parametrize(
+    ("invoke_args", "expected_tag", "expected_cmd", "expected_kwargs"),
+    [
+        (
+            ["submit", "add_method", "t1"],
+            "add_method-t1",
+            "submit",
+            {
+                "output_dir": "results/enn_incremental",
+                "index_driver": "all",
+                "num_reps": 10,
+                "d_dims": 10,
+                "problem_seed": 17,
+            },
+        ),
+        (
+            ["submit", "fit_method", "t1"],
+            "fit_method-t1",
+            "submit",
+            {
+                "output_dir": "results/enn_incremental",
+                "index_driver": "all",
+                "num_reps": 10,
+                "d_dims": 10,
+                "problem_seed": 17,
+            },
+        ),
+        (
+            ["submit-force", "fit_method", "t1"],
+            "fit_method-t1",
+            "submit-force",
+            {
+                "output_dir": "results/enn_incremental",
+                "index_driver": "all",
+                "num_reps": 10,
+                "d_dims": 10,
+                "problem_seed": 17,
+            },
+        ),
+        (
+            [
+                "submit",
+                "add_method",
+                "t1",
+                "--index-driver",
+                "HNSW",
+                "--d",
+                "7",
+            ],
+            "add_method-t1",
+            "submit",
+            {
+                "output_dir": "results/enn_incremental",
+                "index_driver": "hnsw",
+                "num_reps": 10,
+                "d_dims": 7,
+                "problem_seed": 17,
+            },
+        ),
+        (
+            [
+                "submit",
+                "add_method",
+                "t1",
+                "--num-reps",
+                "3",
+                "--problem-seed",
+                "23",
+            ],
+            "add_method-t1",
+            "submit",
+            {
+                "output_dir": "results/enn_incremental",
+                "index_driver": "all",
+                "num_reps": 3,
+                "d_dims": 10,
+                "problem_seed": 23,
+            },
+        ),
+        (
+            ["collect", "add_method", "t1"],
+            "add_method-t1",
+            "collect",
+            {"output_dir": "results/enn_incremental"},
+        ),
+        (
+            ["status", "add_method", "t1"],
+            "add_method-t1",
+            "status",
+            {},
+        ),
+        (
+            ["collect", "fit_method", "t1"],
+            "fit_method-t1",
+            "collect",
+            {"output_dir": "results/enn_incremental"},
+        ),
+        (
+            ["status", "fit_method", "t1"],
+            "fit_method-t1",
+            "status",
+            {},
+        ),
+    ],
+)
+def test_enn_incremental_batches_client_commands(monkeypatch, captured_modal, invoke_args, expected_tag, expected_cmd, expected_kwargs):
+    calls: list[tuple] = []
+
+    def _record(tag, cmd, **kwargs):
+        calls.append((tag, cmd, kwargs))
+
+    monkeypatch.setattr(batches_mod, "_run_client_command", _record)
+    runner = CliRunner()
+    res = runner.invoke(batches_mod.cli, invoke_args)
+    assert res.exit_code == 0, res.output
+    assert captured_modal == []
+    assert len(calls) == 1
+    tag, cmd, kwargs = calls[0]
+    assert tag == expected_tag
+    assert cmd == expected_cmd
+    for key, val in expected_kwargs.items():
+        assert kwargs[key] == val
 
 
 def test_enn_incremental_batches_local_fit_writes_json(tmp_path, monkeypatch):
@@ -370,11 +289,13 @@ def test_enn_incremental_batches_local_fit_ind_writes_json(tmp_path):
     assert dest.exists()
 
 
-def test_enn_incremental_batches_propagates_subprocess_exit_code(monkeypatch):
-    class _Bad:
-        returncode = 7
+def test_enn_incremental_batches_propagates_client_exit_code(monkeypatch):
+    import sys
 
-    monkeypatch.setattr(batches_mod.subprocess, "run", lambda *a, **k: _Bad())
+    def _exit(_tag, _cmd, **_kwargs):
+        sys.exit(7)
+
+    monkeypatch.setattr(batches_mod, "_run_client_command", _exit)
 
     runner = CliRunner()
     res = runner.invoke(batches_mod.cli, ["status", "add_method", "x"])
