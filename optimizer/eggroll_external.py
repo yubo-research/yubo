@@ -46,7 +46,7 @@ class _AdamMax:
 
 def init_external(designer, policy, env_conf, cfg) -> None:
     from problems.isaaclab_env_adapters import is_isaaclab_env_tag
-    from problems.isaaclab_score import IsaacLabScore
+    from problems.isaaclab_score import IsaacLabScore, active_vector_slots
 
     env_name = str(getattr(env_conf, "env_name", ""))
     if not is_isaaclab_env_tag(env_name):
@@ -55,6 +55,7 @@ def init_external(designer, policy, env_conf, cfg) -> None:
     designer._is_external = True
     designer._policy = policy
     designer._objective = objective
+    designer._active_vector_slots = active_vector_slots
     designer._state.x = objective.x0
     designer._sigma = float(cfg.sigma)
     designer._sigma_decay = _as_unit_decay(cfg.sigma_decay, name="sigma_decay")
@@ -157,7 +158,7 @@ def _apply_update(designer, state, directions: list[np.ndarray], raw_scores: lis
 
 def _evaluate_current(designer, state, population: int):
     t0 = time.time()
-    mu, se = designer._objective.evaluate(state.x, seed=(state.epoch + 1) * 1_000_003)
+    mu, se = _evaluate_current_reusing_active_vector_env(designer, state)
     steps = int(getattr(designer._objective, "last_num_steps", 0))
     datum = Datum(
         designer,
@@ -172,6 +173,18 @@ def _evaluate_current(designer, state, population: int):
         ),
     )
     return datum, time.time() - t0, steps
+
+
+def _evaluate_current_reusing_active_vector_env(designer, state) -> tuple[float, float]:
+    active_slots = designer._active_vector_slots(designer._objective)
+    episodes = max(1, int(designer._objective.num_envs))
+    repeat = 1 if active_slots is None else max(1, int(active_slots) // episodes)
+    seed = (state.epoch + 1) * 1_000_003
+    if repeat <= 1:
+        return designer._objective.evaluate(state.x, seed=seed)
+    xs = np.repeat(np.asarray(state.x, dtype=np.float64).reshape(1, -1), repeat, axis=0)
+    mus, ses = designer._objective.evaluate_many(xs, seed=seed)
+    return float(np.mean(mus)), float(np.sqrt(np.mean(np.square(ses))))
 
 
 def _with_steps(datum: Datum, num_steps: int) -> Datum:

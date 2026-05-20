@@ -7,7 +7,7 @@ from common.mapping_keys import coerce_mapping_keys, normalize_toml_key
 from ops.uhd_config import BEConfig, EarlyRejectConfig, ENNConfig, UHDConfig
 
 _REQUIRED_TOML_KEYS = ("env_tag",)
-_ALLOWED_OPTIMIZERS = {"simple", "simple_be", "mezo", "mezo_be", "bszo"}
+_ALLOWED_OPTIMIZERS = {"simple", "simple_be", "mezo", "mezo_be", "bszo", "bszo_be"}
 _OPTIONAL_TOML_KEYS = (
     "num_rounds",
     "policy_tag",

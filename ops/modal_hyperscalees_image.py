@@ -1,7 +1,23 @@
-import subprocess
 from pathlib import Path
 
-_SETUP_TIMEOUT_SECONDS = 24 * 60 * 60
+from ops.modal_hyperscalees_base_image import mk_hyperscalees_base_image
+from ops.modal_nvidia_vulkan import nvidia_vulkan_icd_script
+
+_HTTP_RUNTIME_DEPS = (
+    "aiohappyeyeballs>=2.5.0",
+    "aiosignal>=1.1.2",
+    "attrs>=17.3.0",
+    "frozenlist>=1.1.1",
+    "multidict>=4.5,<7",
+    "propcache>=0.2.0",
+    "yarl>=1.17,<2",
+    "requests>=2.32,<3",
+    "idna>=2.5,<4",
+    "urllib3>=1.21.1,<3",
+    "charset-normalizer>=2,<4",
+    "chardet>=3,<6",
+    "certifi",
+)
 
 _REPO_MOUNT_IGNORE = (
     ".git",
@@ -33,50 +49,34 @@ _MODAL_ENV = {
     "PYTHONUNBUFFERED": "1",
 }
 
+DEFAULT_RUNTIME = "hyperscalees"
+RUNTIME_ISAACLAB = "isaaclab"
 
-def _run_hyperscalees_setup():
-    subprocess.run(
-        ["bash", "admin/setup-hyperscalees.sh", "--skip-verify"],
-        cwd="/root",
-        check=True,
-    )
+
+_nvidia_vulkan_icd_script = nvidia_vulkan_icd_script
+
+
+def selected_modal_runtime(argv: list[str]) -> str:
+    runtime = DEFAULT_RUNTIME
+    for idx, arg in enumerate(list(argv)):
+        if arg == "--runtime" and idx + 1 < len(argv):
+            runtime = str(argv[idx + 1]).strip()
+        elif arg.startswith("--runtime="):
+            runtime = str(arg.split("=", 1)[1]).strip()
+    if runtime not in {DEFAULT_RUNTIME, RUNTIME_ISAACLAB}:
+        raise ValueError(f"Unsupported Modal runtime: {runtime}")
+    return runtime
 
 
 def mk_image(modal):
     project_root = Path(__file__).resolve().parents[1]
-    image = (
-        modal.Image.micromamba(python_version="3.12")
-        .apt_install(
-            "bash",
-            "build-essential",
-            "bzip2",
-            "ca-certificates",
-            "curl",
-            "git",
-            "libegl1",
-            "libgl1",
-            "libglu1-mesa",
-            "libvulkan1",
-            "libxcursor1",
-            "libxi6",
-            "libxinerama1",
-            "libxrandr2",
-            "libxt6",
-            "tar",
-            "vulkan-tools",
-        )
-        .env(_MODAL_ENV)
-        .pip_install("modal", "grpclib")  # Required for Modal worker stability
-    )
-
-    image = image.add_local_dir(str(project_root / "admin"), remote_path="/root/admin", copy=True)
-    image = image.run_function(
-        _run_hyperscalees_setup,
-        gpu="L4",
-        timeout=_SETUP_TIMEOUT_SECONDS,
-    )
-
+    image = mk_hyperscalees_base_image(modal, project_root).run_commands(_http_runtime_repair_command()).env(_MODAL_ENV)
     return _add_repo_mount(image, project_root)
+
+
+def _http_runtime_repair_command() -> str:
+    deps = " ".join(f"'{dep}'" for dep in _HTTP_RUNTIME_DEPS)
+    return f"micromamba run -n yubo-hyperscalees python -m pip install --disable-pip-version-check {deps}"
 
 
 def _add_repo_mount(image, project_root: Path):

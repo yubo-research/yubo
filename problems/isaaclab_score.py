@@ -14,6 +14,8 @@ from optimizer.trajectories import (
     _scale_action_to_space,
     _unpack_step_result,
 )
+from problems.isaaclab_tensor_score import try_evaluate_many_tensor_vectorized
+from problems.torch_policy_batch import try_functional_policy_actions
 
 
 @dataclass(frozen=True)
@@ -31,6 +33,7 @@ class _PolicyCodec:
         self.dim = int(policy.num_params())
         offsets: list[int] = []
         sizes: list[int] = []
+        shapes: list[tuple[int, ...]] = []
         start = 0
         params = list(policy.parameters()) if hasattr(policy, "parameters") else []
         if params:
@@ -38,12 +41,15 @@ class _PolicyCodec:
                 size = int(param.numel())
                 offsets.append(start)
                 sizes.append(size)
+                shapes.append(tuple(int(v) for v in param.shape))
                 start += size
         else:
             offsets.append(0)
             sizes.append(self.dim)
+            shapes.append((self.dim,))
         self.offsets = tuple(offsets)
         self.sizes = tuple(sizes)
+        self.shapes = tuple(shapes)
 
     def initial(self, policy: Any) -> np.ndarray:
         x = np.asarray(policy.get_params(), dtype=np.float64).reshape(-1)
@@ -152,10 +158,15 @@ class IsaacLabScore:
         group_size: int = 0,
         freeze_nonlora: bool = False,
     ) -> np.ndarray:
-        _ = rank, group_size, freeze_nonlora
         if str(noiser_name) != "eggroll":
             raise ValueError(f"IsaacLab scoring supports noiser='eggroll' only, got {noiser_name!r}.")
-        return self.sample_noise(seed=int(seed))
+        return _sample_isaaclab_eggroll_noise(
+            self._codec,
+            seed=int(seed),
+            rank=int(rank),
+            group_size=int(group_size),
+            freeze_nonlora=bool(freeze_nonlora),
+        )
 
     def configure_embedding(self, num_probes: int) -> None:
         n = max(0, int(num_probes))
@@ -222,6 +233,54 @@ def _get_single_env(scorer: IsaacLabScore):
     return scorer._env
 
 
+def active_vector_slots(scorer: IsaacLabScore) -> int | None:
+    return next(iter(scorer._vector_envs), None)
+
+
+def _sample_isaaclab_eggroll_noise(
+    codec: _PolicyCodec,
+    *,
+    seed: int,
+    rank: int,
+    group_size: int,
+    freeze_nonlora: bool,
+) -> np.ndarray:
+    if int(rank) < 1:
+        raise ValueError("IsaacLab EggRoll rank must be >= 1.")
+    if int(group_size) < 0:
+        raise ValueError("IsaacLab EggRoll group_size must be >= 0.")
+    noise = np.zeros(int(codec.dim), dtype=np.float64)
+    leaf_seeds = np.random.SeedSequence(int(seed)).spawn(len(codec.sizes))
+    leaves = zip(codec.offsets, codec.sizes, codec.shapes, leaf_seeds, strict=True)
+    for start, size, shape, leaf_seed in leaves:
+        end = int(start) + int(size)
+        noise[int(start) : end] = _sample_param_eggroll_noise(
+            np.random.default_rng(leaf_seed),
+            shape=tuple(shape),
+            rank=int(rank),
+            freeze_nonlora=bool(freeze_nonlora),
+        ).reshape(-1)
+    return noise
+
+
+def _sample_param_eggroll_noise(
+    rng: np.random.Generator,
+    *,
+    shape: tuple[int, ...],
+    rank: int,
+    freeze_nonlora: bool,
+) -> np.ndarray:
+    if len(shape) < 2:
+        if freeze_nonlora:
+            return np.zeros(shape, dtype=np.float64)
+        return rng.standard_normal(shape).astype(np.float64)
+    rows = int(shape[0])
+    cols = int(np.prod(shape[1:], dtype=np.int64))
+    left = rng.standard_normal((rows, int(rank)))
+    right = rng.standard_normal((cols, int(rank)))
+    return (left @ right.T / math.sqrt(float(rank))).reshape(shape).astype(np.float64)
+
+
 def _get_vector_env(scorer: IsaacLabScore, slots: int):
     slots = int(slots)
     if slots < 1:
@@ -283,12 +342,14 @@ def _try_evaluate_many_vectorized(scorer: IsaacLabScore, xs: np.ndarray, *, seed
     env = _get_vector_env(scorer, slots)
     if env is None:
         return None
+    tensor_result = try_evaluate_many_tensor_vectorized(scorer, xs, env, seed=int(seed))
+    if tensor_result is not None:
+        return tensor_result
     obs, _info = env.reset_batch(seed=int(seed))
     obs = np.asarray(obs, dtype=np.float32)
     if obs.ndim != 2 or obs.shape[0] != slots:
         return None
 
-    policies = [scorer._make_loaded_policy(xs[i]) for i in range(num_candidates)]
     candidate_idx = np.repeat(np.arange(num_candidates, dtype=np.int64), scorer._episodes)
     returns = np.zeros(slots, dtype=np.float64)
     steps = np.zeros(slots, dtype=np.int64)
@@ -296,8 +357,8 @@ def _try_evaluate_many_vectorized(scorer: IsaacLabScore, xs: np.ndarray, *, seed
     zero_action = np.zeros(tuple(int(v) for v in env.action_space.shape), dtype=np.float32)
 
     for _ in range(scorer.steps_per_episode):
-        raw_actions = _vector_policy_actions(policies, candidate_idx, obs, active, zero_action)
-        actions = np.stack([_scale_action_to_space(action, env.action_space) for action in raw_actions], axis=0)
+        raw_actions = _vector_policy_actions(scorer, xs, candidate_idx, obs, active, zero_action)
+        actions = _scale_action_batch_to_space(raw_actions, env.action_space)
         next_obs, reward, terminated, truncated, _info = env.step_batch(actions)
         reward = np.asarray(reward, dtype=np.float64).reshape(slots)
         done = np.asarray(terminated, dtype=bool).reshape(slots) | np.asarray(truncated, dtype=bool).reshape(slots)
@@ -312,7 +373,19 @@ def _try_evaluate_many_vectorized(scorer: IsaacLabScore, xs: np.ndarray, *, seed
     return (*_summarize_vector_returns(returns, scorer._episodes, num_candidates), int(np.sum(steps)))
 
 
-def _vector_policy_actions(policies: list[Any], candidate_idx: np.ndarray, obs: np.ndarray, active: np.ndarray, zero_action: np.ndarray) -> list[np.ndarray]:
+def _vector_policy_actions(
+    scorer: IsaacLabScore, xs: np.ndarray, candidate_idx: np.ndarray, obs: np.ndarray, active: np.ndarray, zero_action: np.ndarray
+) -> np.ndarray:
+    actions = try_functional_policy_actions(scorer._policy, scorer._codec, xs, candidate_idx, obs, active, zero_action)
+    if actions is not None:
+        return actions
+    return _clone_policy_actions(scorer, xs, candidate_idx, obs, active, zero_action)
+
+
+def _clone_policy_actions(
+    scorer: IsaacLabScore, xs: np.ndarray, candidate_idx: np.ndarray, obs: np.ndarray, active: np.ndarray, zero_action: np.ndarray
+) -> np.ndarray:
+    policies = [scorer._make_loaded_policy(xs[i]) for i in range(int(xs.shape[0]))]
     raw_actions = np.zeros((int(candidate_idx.size), *tuple(zero_action.shape)), dtype=np.float32)
     for cand_idx, policy in enumerate(policies):
         slots = np.flatnonzero(active & (candidate_idx == int(cand_idx)))
@@ -320,7 +393,18 @@ def _vector_policy_actions(policies: list[Any], candidate_idx: np.ndarray, obs: 
             continue
         actions = np.asarray(policy(obs[slots]), dtype=np.float32)
         raw_actions[slots] = actions.reshape((slots.size, *tuple(zero_action.shape)))
-    return [raw_actions[slot] if active[slot] else zero_action for slot in range(int(candidate_idx.size))]
+    return raw_actions
+
+
+def _scale_action_batch_to_space(actions: np.ndarray, action_space: Any) -> np.ndarray:
+    if not hasattr(action_space, "low"):
+        return np.asarray(actions, dtype=np.float32)
+    actions = np.asarray(actions, dtype=np.float32)
+    low = np.asarray(action_space.low, dtype=np.float32)
+    high = np.asarray(action_space.high, dtype=np.float32)
+    if not np.all(np.isfinite(low)) or not np.all(np.isfinite(high)):
+        return np.clip(actions, -1.0, 1.0).astype(np.float32)
+    return (low + (high - low) * (1.0 + actions) / 2.0).astype(np.float32)
 
 
 def _summarize_vector_returns(returns: np.ndarray, episodes: int, num_candidates: int) -> tuple[np.ndarray, np.ndarray]:

@@ -5,6 +5,17 @@ from typing import Any
 from problems import jax_env_core as core
 
 
+def _set_headless_mujoco_gl_default() -> None:
+    import os
+    import sys
+
+    if not sys.platform.startswith("linux"):
+        return
+    if os.environ.get("MUJOCO_GL") or os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"):
+        return
+    os.environ["MUJOCO_GL"] = "egl"
+
+
 class GymnaxAdapter:
     def __init__(self, env_name: str, *, jax, jnp, gymnax=None) -> None:
         if gymnax is None:
@@ -53,6 +64,7 @@ class GymnaxLikeAdapter:
 
 class BraxAdapter:
     def __init__(self, env_name: str, *, jax, jnp) -> None:
+        _set_headless_mujoco_gl_default()
         from brax import envs
         from gymnax.environments import spaces
 

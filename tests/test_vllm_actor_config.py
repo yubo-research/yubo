@@ -139,11 +139,11 @@ def test_modal_runtime_selection_defaults_to_hyperscalees():
     assert selected_modal_runtime(["modal", "run"]) == DEFAULT_RUNTIME
 
 
-def test_modal_runtime_selection_reads_cli_forms():
-    from ops.modal_hyperscalees_image import RUNTIME_GEMMA4_MTP, selected_modal_runtime
+def test_modal_runtime_selection_accepts_isaaclab():
+    from ops.modal_hyperscalees_image import RUNTIME_ISAACLAB, selected_modal_runtime
 
-    assert selected_modal_runtime(["modal", "run", "--runtime", RUNTIME_GEMMA4_MTP]) == RUNTIME_GEMMA4_MTP
-    assert selected_modal_runtime(["modal", "run", f"--runtime={RUNTIME_GEMMA4_MTP}"]) == RUNTIME_GEMMA4_MTP
+    assert selected_modal_runtime(["modal", "run", "--runtime", RUNTIME_ISAACLAB]) == RUNTIME_ISAACLAB
+    assert selected_modal_runtime(["modal", "run", f"--runtime={RUNTIME_ISAACLAB}"]) == RUNTIME_ISAACLAB
 
 
 def test_modal_runtime_selection_rejects_unknown_runtime():

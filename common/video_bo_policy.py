@@ -6,6 +6,7 @@ from typing import Any
 import numpy as np
 
 from common.video_batch import render_policy_videos
+from common.video_brax import render_brax_policy_videos
 
 
 def policy_for_bo_rollout(env_conf: Any, policy: Any) -> Any:
@@ -54,6 +55,18 @@ def render_policy_videos_bo(
     episode_selection: str,
     seed_base: int,
 ) -> None:
+    handled = render_brax_policy_videos(
+        env_conf,
+        policy,
+        video_dir=Path(video_dir),
+        video_prefix=str(video_prefix),
+        num_episodes=int(num_episodes),
+        num_video_episodes=int(num_video_episodes),
+        episode_selection=str(episode_selection),
+        seed_base=int(seed_base),
+    )
+    if handled:
+        return
     effective_policy = policy_for_bo_rollout(env_conf, policy)
     render_policy_videos(
         env_conf,

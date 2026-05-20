@@ -1,0 +1,37 @@
+# Run on Modal:
+# modal run ops/modal_hyperscalees_setup.py --command 'micromamba run -n yubo-hyperscalees ./ops/experiment.py local configs/bo/isaaclab/g1_flat_eggroll_video.toml'
+#
+# Video-enabled sibling of g1_flat_eggroll_dev.toml.
+# The training/evaluation pressure is intentionally the same:
+# active IsaacLab sim slots per flush = batch_size * num_envs = 2048.
+
+[experiment]
+exp_dir = "runs/isaaclab/g1_flat_eggroll_video"
+env_tag = "isaaclab:Isaac-Velocity-Flat-G1-v0"
+policy_tag = "eggroll-ac-mlp-256x3-pqn"
+population = 2048
+num_epochs = 512
+num_reps = 1
+runtime_device = "cuda"
+local_workers = 1
+b_trace = true
+video_enable = true
+video_num_episodes = 4
+video_num_video_episodes = 2
+video_episode_selection = "best"
+video_prefix = "g1-flat-eggroll"
+max_total_seconds = 7200
+
+[optimizer]
+name = "eggroll"
+
+[optimizer.params]
+noiser = "eggroll"
+sigma = 0.05
+rank = 4
+lr = 0.01
+optax = "adam"
+batch_size = 512
+num_envs = 4
+steps = 96
+use_batched_update = true

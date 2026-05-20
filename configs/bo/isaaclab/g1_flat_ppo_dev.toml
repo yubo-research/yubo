@@ -1,0 +1,27 @@
+# BO-style PPO designer run for the Unitree G1 flat velocity task.
+#
+# Run on Modal:
+# modal run ops/modal_hyperscalees_setup.py --command 'micromamba run -n yubo-hyperscalees ./ops/experiment.py local configs/bo/isaaclab/g1_flat_ppo_dev.toml'
+#
+# This uses optimizer.name="ppo" inside the BO experiment runner. It is not the
+# separate TorchRL PPO trainer config format under configs/rl/.
+
+[experiment]
+exp_dir = "runs/isaaclab/g1_flat_ppo_dev"
+env_tag = "isaaclab:Isaac-Velocity-Flat-G1-v0"
+policy_tag = "actor-critic-mlp-32-32"
+num_arms = 2
+num_rounds = 64
+num_reps = 1
+runtime_device = "cuda"
+local_workers = 1
+b_trace = true
+video_enable = true
+video_num_episodes = 4
+video_num_video_episodes = 2
+video_episode_selection = "best"
+video_prefix = "g1-flat-ppo"
+max_total_seconds = 7200
+
+[optimizer]
+name = "ppo"

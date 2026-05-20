@@ -1,0 +1,39 @@
+# Run: ./ops/experiment.py local configs/bo/eggroll/paper/rl/brax_ant_eggroll_video.toml
+# Paper: arXiv 2511.16652, Appendix Table 19, brax/ant EGGROLL.
+# Source checked from /tmp/eggroll-paper-2511.16652/Sections/env_hparam_tables.tex.
+#
+# Note: this enables the repo BO video path for the paper Brax Ant run. The
+# JAX/Brax EggRoll evaluator is separate from Gym-style video rendering, so
+# actual MP4 export may still require a Brax-specific video bridge.
+
+[experiment]
+exp_dir = "runs/yubo_eggroll/paper/rl/brax_ant_eggroll_video"
+env_tag = "brax:ant"
+policy_tag = "eggroll-ac-mlp-256x3-pqn"
+population = 2048
+num_epochs = 1216
+num_reps = 10
+runtime_device = "cuda"
+local_workers = 1
+b_trace = true
+video_enable = true
+video_num_episodes = 4
+video_num_video_episodes = 2
+video_episode_selection = "best"
+video_prefix = "brax-ant-eggroll"
+
+[optimizer]
+name = "eggroll"
+
+[optimizer.params]
+noiser = "eggroll"
+sigma = 0.05
+sigma_decay = 0.9995
+rank = 1
+lr = 0.01
+lr_decay = 0.9995
+optax = "adam"
+rank_transform = false
+deterministic_policy = false
+num_envs = 1
+use_batched_update = true

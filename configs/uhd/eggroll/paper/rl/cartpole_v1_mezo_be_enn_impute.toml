@@ -1,20 +1,19 @@
 # Run:
-# ./ops/exp_uhd.py local configs/uhd/eggroll/paper/rl/cartpole_v1_mezo_enn_impute.toml
+# ./ops/exp_uhd.py local configs/uhd/eggroll/paper/rl/cartpole_v1_mezo_be_enn_impute.toml
 #
-# UHD MeZO + ENN minus-imputation companion to:
+# UHD MeZO + BE seed-selection + ENN minus-imputation companion to:
 # configs/bo/eggroll/paper/rl/cartpole_v1_eggroll.toml
 #
-# This keeps the same Gymnax CartPole env, policy family, 500-step horizon, and
-# EggRoll rank-4 perturbation surface. ENN minus-imputation predicts some
-# negative-phase evaluations from behavior embeddings instead of always rolling
-# them out.
+# This is the combined variant: BE selects promising MeZO directions after
+# warmup, while ENN minus-imputation can replace some negative-phase rollouts.
+# The perturbation surface matches the EggRoll config: noiser=eggroll, rank=4.
 
 [uhd]
 env_tag = "gymnax:CartPole-v1"
 policy_tag = "eggroll-ac-mlp-256x3-pqn"
 total_timesteps = 500000000
 num_reps = 30
-optimizer = "mezo"
+optimizer = "mezo_be"
 lr = 0.1
 sigma = 0.2
 perturb = "eggroll"
@@ -24,15 +23,18 @@ deterministic_policy = false
 problem_seed = 0
 noise_seed_0 = 0
 seed_offset = 0
-log_interval = 100
+log_interval = 1
 
 eggroll_noiser = "eggroll"
 eggroll_rank = 4
 eggroll_group_size = 0
 eggroll_freeze_nonlora = false
 
-# Behavior probes feed the JAX behavior embedding used by ENN minus-imputation.
 be_num_probes = 64
+be_num_candidates = 32
+be_warmup = 512
+be_fit_interval = 100
+be_enn_k = 32
 
 enn_minus_impute = true
 enn_target = "delta"

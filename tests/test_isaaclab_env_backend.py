@@ -1,13 +1,18 @@
+import os
 import sys
 from types import SimpleNamespace
 
 import numpy as np
+import pytest
 
+from problems.isaaclab_config import disable_command_debug_visualizers
 from problems.isaaclab_env_adapters import (
     IsaacLabGymEnvAdapter,
     IsaacLabSession,
+    IsaacLabVectorEnvAdapter,
     get_isaaclab_session,
     is_isaaclab_env_tag,
+    isaaclab_default_launcher_kwargs,
     list_isaaclab_tasks,
     main,
     make_isaaclab_env,
@@ -59,6 +64,9 @@ class _FakeGym:
         self.calls = []
 
     def make(self, task_id, **kwargs):
+        print("        Environment device    : cuda:0")
+        print("        Number of environments: 1")
+        os.write(2, b"native setup detail\n")
         self.calls.append((task_id, kwargs))
         return _FakeIsaacEnv()
 
@@ -94,6 +102,12 @@ def test_get_isaaclab_session_and_list_isaaclab_tasks(monkeypatch):
     ]
 
 
+def test_isaaclab_default_launcher_kwargs_provide_headless_kit_args():
+    preset = isaaclab_default_launcher_kwargs()
+    assert "--no-window" in preset["kit_args"]
+    assert "--/renderer/multiGpu/enabled=false" in preset["kit_args"]
+
+
 def test_isaaclab_gym_env_adapter_reset_step_render_close():
     env = _FakeIsaacEnv()
     adapter = IsaacLabGymEnvAdapter(env, num_envs=1)
@@ -117,6 +131,44 @@ def test_isaaclab_gym_env_adapter_reset_step_render_close():
 
     adapter.close()
     assert env.closed is True
+
+
+def test_isaaclab_tensor_batch_io_keeps_torch_actions():
+    torch = pytest.importorskip("torch")
+    from gymnasium import spaces
+
+    from problems.isaaclab_tensor_io import reset_tensor_batch, step_tensor_batch
+
+    env = SimpleNamespace(
+        device="cpu",
+        single_observation_space=spaces.Box(low=-1.0, high=1.0, shape=(3,), dtype=np.float32),
+        single_action_space=spaces.Box(low=-1.0, high=1.0, shape=(2,), dtype=np.float32),
+    )
+    env.reset = lambda *args, **kwargs: ({"policy": torch.ones((2, 3), dtype=torch.float32)}, {"kwargs": kwargs})
+
+    def _step(action):
+        env.last_action = action
+        return (
+            {"policy": torch.full((2, 3), 2.0, dtype=torch.float32)},
+            torch.ones((2,), dtype=torch.float32),
+            torch.tensor([False, True]),
+            torch.tensor([False, False]),
+            {},
+        )
+
+    env.step = _step
+    adapter = IsaacLabVectorEnvAdapter(env, num_envs=2)
+    obs, info = reset_tensor_batch(adapter, seed=9)
+    next_obs, reward, terminated, truncated, _info = step_tensor_batch(adapter, torch.zeros((2, 2), dtype=torch.float32))
+
+    assert info["kwargs"]["seed"] == 9
+    assert tuple(obs.shape) == (2, 3)
+    assert tuple(next_obs.shape) == (2, 3)
+    assert tuple(reward.shape) == (2,)
+    assert terminated.tolist() == [False, True]
+    assert truncated.tolist() == [False, False]
+    assert hasattr(env.last_action, "detach")
+    assert tuple(env.last_action.shape) == (2, 2)
 
 
 def test_make_isaaclab_env_and_resolve_isaaclab_env_spaces(monkeypatch):
@@ -154,6 +206,55 @@ def test_make_isaaclab_env_and_resolve_isaaclab_env_spaces(monkeypatch):
 
     assert obs_space.shape == (3,)
     assert action_space.shape == (2,)
+
+
+def test_disable_command_debug_visualizers():
+    term = SimpleNamespace(debug_vis=True)
+    cfg = SimpleNamespace(commands=SimpleNamespace(base_velocity=term))
+
+    disable_command_debug_visualizers(cfg)
+
+    assert term.debug_vis is False
+
+
+def test_make_isaaclab_env_suppresses_setup_output(monkeypatch, capfd):
+    import problems.isaaclab_env_adapters as mod
+
+    fake_gym = _FakeGym()
+    monkeypatch.setattr(
+        mod,
+        "get_isaaclab_session",
+        lambda **_kwargs: IsaacLabSession(app=None, gym=fake_gym),
+    )
+    monkeypatch.setattr(mod, "_parse_env_cfg", lambda task_id, **kwargs: {"task_id": task_id, **kwargs})
+
+    env = make_isaaclab_env("isaaclab:Isaac-Cartpole-v0", headless=True, num_envs=1)
+    env.close()
+
+    captured = capfd.readouterr()
+    output = captured.out + captured.err
+    assert "Environment device" not in output
+    assert "Number of environments" not in output
+    assert "native setup detail" not in output
+
+
+def test_capture_isaaclab_setup_output_replays_on_failure(capfd):
+    import problems.isaaclab_env_adapters as mod
+
+    try:
+        with mod._capture_isaaclab_setup_output():
+            print("setup detail")
+            print("stderr setup detail", file=sys.stderr)
+            os.write(2, b"native setup detail\n")
+            raise RuntimeError("setup failed")
+    except RuntimeError:
+        pass
+
+    captured = capfd.readouterr()
+    assert captured.out == ""
+    assert "setup detail" in captured.err
+    assert "stderr setup detail" in captured.err
+    assert "native setup detail" in captured.err
 
 
 def test_isaaclab_task_list_main(monkeypatch, capsys):

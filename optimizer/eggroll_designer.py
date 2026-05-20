@@ -96,6 +96,12 @@ def _seed_state(jax, policy, seed_offset: int) -> _SeedState:
     )
 
 
+def _attach_policy_runtime_metadata(policy, cfg: _EggRollDesignerConfig, *, steps_per_episode: int, num_envs: int) -> None:
+    policy._eggroll_steps_per_episode = int(steps_per_episode)
+    policy._eggroll_num_envs = int(num_envs)
+    policy._eggroll_deterministic_policy = _as_bool(cfg.deterministic_policy, name="deterministic_policy")
+
+
 def _validate_positive_jax_options(sigma: float, lr: float, steps: int, num_envs: int, rank: int) -> None:
     if sigma <= 0.0:
         raise NoSuchDesignerError("EggRoll option 'sigma' must be > 0.")
@@ -197,6 +203,7 @@ class EggRollDesigner:
         self._sigma = float(cfg.sigma)
         self._sigma_decay = _as_unit_decay(cfg.sigma_decay, name="sigma_decay")
         self._suppress_noiser_stdout = _as_bool(cfg.suppress_noiser_stdout, name="suppress_noiser_stdout")
+        _attach_policy_runtime_metadata(policy, cfg, steps_per_episode=self._steps_per_episode, num_envs=self._num_envs)
         self._state.best_datum = None
         self._state.epoch = 0
         self._state.params = policy.params

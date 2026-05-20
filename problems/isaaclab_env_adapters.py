@@ -1,11 +1,17 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
+import os
+import sys
+import tempfile
 from dataclasses import dataclass
 from importlib import import_module
 from typing import Any
 
 import numpy as np
+
+from problems.isaaclab_config import ISAACLAB_DEFAULT_KIT_ARGS, disable_command_debug_visualizers
 
 ISAACLAB_ENV_PREFIX = "isaaclab:"
 DEFAULT_ISAACLAB_MAX_STEPS = 1000
@@ -37,6 +43,54 @@ class IsaacLabSession:
 
 _SESSION: IsaacLabSession | None = None
 _SPACE_CACHE: dict[str, tuple[Any, Any]] = {}
+MAX_ISAACLAB_SETUP_REPLAY_CHARS = 20_000
+
+
+def _flush_standard_streams() -> None:
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.flush()
+        except Exception:
+            pass
+
+
+def _tail_text(text: str, *, max_chars: int = MAX_ISAACLAB_SETUP_REPLAY_CHARS) -> str:
+    if len(text) <= int(max_chars):
+        return text
+    return f"[isaaclab setup output truncated to last {max_chars} chars]\n{text[-int(max_chars) :]}"
+
+
+def _replay_captured_setup_output(captured) -> None:
+    captured.flush()
+    captured.seek(0)
+    text = captured.read()
+    if text:
+        print(_tail_text(text), end="", file=sys.stderr, flush=True)
+
+
+@contextlib.contextmanager
+def _capture_isaaclab_setup_output():
+    _flush_standard_streams()
+    saved_stdout_fd = os.dup(1)
+    saved_stderr_fd = os.dup(2)
+    failed = False
+    with tempfile.TemporaryFile(mode="w+", encoding="utf-8", errors="replace") as captured:
+        os.dup2(captured.fileno(), 1)
+        os.dup2(captured.fileno(), 2)
+        try:
+            with contextlib.redirect_stdout(captured), contextlib.redirect_stderr(captured):
+                yield
+        except Exception:
+            failed = True
+            raise
+        finally:
+            captured.flush()
+            os.dup2(saved_stdout_fd, 1)
+            os.dup2(saved_stderr_fd, 2)
+            os.close(saved_stdout_fd)
+            os.close(saved_stderr_fd)
+            if failed:
+                _replay_captured_setup_output(captured)
 
 
 def _import_isaac_app_launcher():
@@ -51,6 +105,10 @@ def _import_isaac_app_launcher():
 
 def _copy_launcher_kwargs(launcher_kwargs: dict[str, Any] | None) -> dict[str, Any]:
     return {} if launcher_kwargs is None else dict(launcher_kwargs)
+
+
+def isaaclab_default_launcher_kwargs() -> dict[str, Any]:
+    return {"kit_args": ISAACLAB_DEFAULT_KIT_ARGS}
 
 
 def _render_probe() -> tuple[bool, str | None]:
@@ -78,12 +136,18 @@ def _session_can_reuse(session: IsaacLabSession, *, headless: bool, launcher_kwa
 
 def get_isaaclab_session(*, headless: bool = True, launcher_kwargs: dict[str, Any] | None = None) -> IsaacLabSession:
     global _SESSION
-    launcher_kwargs = _copy_launcher_kwargs(launcher_kwargs)
     if _SESSION is not None:
+        if launcher_kwargs is None:
+            return _SESSION
+        launcher_kwargs = _copy_launcher_kwargs(launcher_kwargs)
         ok, reason = _session_can_reuse(_SESSION, headless=bool(headless), launcher_kwargs=launcher_kwargs)
         if not ok:
             raise RuntimeError(f"IsaacLab app is already running with incompatible settings: {reason}.")
         return _SESSION
+
+    launcher_kwargs = _copy_launcher_kwargs(launcher_kwargs)
+    if not launcher_kwargs:
+        launcher_kwargs = isaaclab_default_launcher_kwargs()
 
     effective_launcher_kwargs = dict(launcher_kwargs)
     kit_args = str(effective_launcher_kwargs.get("kit_args", "")).strip()
@@ -93,13 +157,14 @@ def get_isaaclab_session(*, headless: bool = True, launcher_kwargs: dict[str, An
     kwargs.update(effective_launcher_kwargs)
 
     AppLauncher = _import_isaac_app_launcher()
-    try:
-        launcher = AppLauncher(**kwargs)
-    except TypeError:
-        launcher = AppLauncher(kwargs)
+    with _capture_isaaclab_setup_output():
+        try:
+            launcher = AppLauncher(**kwargs)
+        except TypeError:
+            launcher = AppLauncher(kwargs)
 
-    import gymnasium as gym
-    import isaaclab_tasks  # noqa: F401
+        import gymnasium as gym
+        import isaaclab_tasks  # noqa: F401
 
     if "omni.replicator.core" in kit_args:
         render_available, render_error = _render_probe()
@@ -370,18 +435,20 @@ def make_isaaclab_env(
     make_kwargs = dict(kwargs)
     batched = bool(make_kwargs.pop("batched", False))
     seed = make_kwargs.pop("seed", None)
-    if "cfg" not in make_kwargs:
-        cfg = _parse_env_cfg(task_id, num_envs=int(num_envs), device=device)
-        make_kwargs["cfg"] = cfg
-    if seed is not None and hasattr(make_kwargs["cfg"], "seed"):
-        try:
-            make_kwargs["cfg"].seed = int(seed)
-        except Exception:
-            pass
-    if render_mode is not None:
-        make_kwargs["render_mode"] = render_mode
+    with _capture_isaaclab_setup_output():
+        if "cfg" not in make_kwargs:
+            cfg = _parse_env_cfg(task_id, num_envs=int(num_envs), device=device)
+            make_kwargs["cfg"] = cfg
+        if seed is not None and hasattr(make_kwargs["cfg"], "seed"):
+            try:
+                make_kwargs["cfg"].seed = int(seed)
+            except Exception:
+                pass
+        if render_mode is not None:
+            make_kwargs["render_mode"] = render_mode
 
-    env = session.gym.make(task_id, **make_kwargs)
+        disable_command_debug_visualizers(make_kwargs["cfg"])
+        env = session.gym.make(task_id, **make_kwargs)
     adapter = IsaacLabVectorEnvAdapter(env, num_envs=int(num_envs)) if batched else IsaacLabGymEnvAdapter(env, num_envs=int(num_envs))
     _SPACE_CACHE[str(env_tag)] = (adapter.observation_space, adapter.action_space)
     return adapter

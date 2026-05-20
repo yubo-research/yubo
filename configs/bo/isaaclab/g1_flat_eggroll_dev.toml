@@ -11,7 +11,7 @@
 exp_dir = "runs/isaaclab/g1_flat_eggroll_dev"
 env_tag = "isaaclab:Isaac-Velocity-Flat-G1-v0"
 policy_tag = "eggroll-ac-mlp-256x3-pqn"
-population = 8
+population = 2048
 num_epochs = 512
 num_reps = 1
 runtime_device = "cuda"
@@ -29,7 +29,8 @@ sigma = 0.05
 rank = 4
 lr = 0.01
 optax = "adam"
-batch_size = 1
-num_envs = 512
+batch_size = 512
+# Active IsaacLab sim slots per flush are batch_size * num_envs.
+num_envs = 4
 steps = 96
 use_batched_update = true

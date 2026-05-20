@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 from gymnasium import spaces
 from isaaclab_score_fakes import FakeIsaacEnv, FakeVectorIsaacEnv, make_fake_runtime, make_fake_vector_runtime
 
@@ -38,6 +39,135 @@ def test_isaaclab_score_uses_vector_env_for_batches():
         assert means.shape == (2,)
         assert ses.shape == (2,)
         assert score.last_num_steps == 12
+    finally:
+        score.close()
+
+
+def test_functional_policy_actions_match_clone_path():
+    from policies.mlp_policy import MLPPolicyFactory
+    from problems.isaaclab_score import IsaacLabScore
+    from problems.torch_policy_batch import try_functional_policy_actions
+
+    runtime = make_fake_runtime()
+    policy = MLPPolicyFactory((4,))(runtime)
+    score = IsaacLabScore(runtime, policy)
+    xs = np.stack([score.x0, score.x0 + 0.01])
+    candidate_idx = np.asarray([0, 0, 1, 1], dtype=np.int64)
+    obs = np.asarray([[0.0, 1.0], [1.0, 1.0], [0.0, 1.0], [1.0, 1.0]], dtype=np.float32)
+    active = np.asarray([True, False, True, True])
+    zero_action = np.zeros((1,), dtype=np.float32)
+    try:
+        actions = try_functional_policy_actions(policy, score._codec, xs, candidate_idx, obs, active, zero_action)
+        expected = _clone_reference_actions(score, xs, candidate_idx, obs, active, zero_action)
+        assert actions is not None
+        np.testing.assert_allclose(actions, expected, atol=1e-6)
+    finally:
+        score.close()
+
+
+def _clone_reference_actions(score, xs, candidate_idx, obs, active, zero_action):
+    raw = np.zeros((int(candidate_idx.size), *tuple(zero_action.shape)), dtype=np.float32)
+    for cand_idx in range(int(xs.shape[0])):
+        slots = np.flatnonzero(active & (candidate_idx == int(cand_idx)))
+        if slots.size == 0:
+            continue
+        policy = score._make_loaded_policy(xs[cand_idx])
+        raw[slots] = np.asarray(policy(obs[slots]), dtype=np.float32).reshape((int(slots.size), *tuple(zero_action.shape)))
+    return raw
+
+
+def test_isaaclab_vector_eval_prefers_functional_policy_path():
+    from policies.mlp_policy import MLPPolicyFactory
+    from problems.isaaclab_score import IsaacLabScore
+
+    runtime = make_fake_vector_runtime()
+    policy = MLPPolicyFactory((4,))(runtime)
+    score = IsaacLabScore(runtime, policy, episodes=2)
+    score._make_loaded_policy = lambda _x: (_ for _ in ()).throw(AssertionError("clone fallback used"))
+    try:
+        means, ses = score.evaluate_many(np.stack([score.x0, score.x0]), seed=11)
+        assert means.shape == (2,)
+        assert ses.shape == (2,)
+    finally:
+        score.close()
+
+
+def test_tensor_vectorized_scoring_path_returns_scores():
+    from policies.mlp_policy import MLPPolicyFactory
+    from problems.isaaclab_score import IsaacLabScore
+    from problems.isaaclab_tensor_score import try_evaluate_many_tensor_vectorized
+
+    runtime = make_fake_vector_runtime()
+    policy = MLPPolicyFactory((4,))(runtime)
+    score = IsaacLabScore(runtime, policy, episodes=2)
+    env = runtime.make(batched=True, num_envs=4)
+    try:
+        result = try_evaluate_many_tensor_vectorized(score, np.stack([score.x0, score.x0]), env, seed=11)
+        assert result is not None
+        means, ses, num_steps = result
+        assert means.shape == (2,)
+        assert ses.shape == (2,)
+        assert num_steps == 12
+    finally:
+        env.close()
+        score.close()
+
+
+def test_isaaclab_eggroll_noiser_uses_ranked_matrix_noise():
+    from policies.mlp_policy import MLPPolicyFactory
+    from problems.isaaclab_score import IsaacLabScore
+
+    runtime = make_fake_runtime()
+    policy = MLPPolicyFactory((4,))(runtime)
+    score = IsaacLabScore(runtime, policy)
+    try:
+        rank1 = score.sample_eggroll_noiser_noise(score.x0, seed=3, rank=1)
+        rank1_again = score.sample_eggroll_noiser_noise(score.x0, seed=3, rank=1)
+        rank4 = score.sample_eggroll_noiser_noise(score.x0, seed=3, rank=4)
+
+        assert rank1.shape == (score.dim,)
+        np.testing.assert_allclose(rank1, rank1_again)
+        assert not np.allclose(rank1, rank4)
+    finally:
+        score.close()
+
+
+def test_isaaclab_eggroll_noiser_freezes_nonlora_params():
+    from policies.mlp_policy import MLPPolicyFactory
+    from problems.isaaclab_score import IsaacLabScore
+
+    runtime = make_fake_runtime()
+    policy = MLPPolicyFactory((4,))(runtime)
+    score = IsaacLabScore(runtime, policy)
+    nonlora = np.zeros(score.dim, dtype=bool)
+    for start, size, shape in zip(score._codec.offsets, score._codec.sizes, score._codec.shapes, strict=True):
+        if len(shape) < 2:
+            nonlora[int(start) : int(start) + int(size)] = True
+    try:
+        dense = score.sample_eggroll_noiser_noise(score.x0, seed=5, rank=2, freeze_nonlora=False)
+        frozen = score.sample_eggroll_noiser_noise(score.x0, seed=5, rank=2, freeze_nonlora=True)
+
+        assert np.any(nonlora)
+        assert np.any(np.abs(dense[nonlora]) > 0.0)
+        assert np.allclose(frozen[nonlora], 0.0)
+        np.testing.assert_allclose(frozen[~nonlora], dense[~nonlora])
+        assert np.any(np.abs(frozen[~nonlora]) > 0.0)
+    finally:
+        score.close()
+
+
+def test_isaaclab_eggroll_noiser_rejects_invalid_options():
+    from policies.mlp_policy import MLPPolicyFactory
+    from problems.isaaclab_score import IsaacLabScore
+
+    runtime = make_fake_runtime()
+    policy = MLPPolicyFactory((4,))(runtime)
+    score = IsaacLabScore(runtime, policy)
+    try:
+        with pytest.raises(ValueError, match="rank"):
+            score.sample_eggroll_noiser_noise(score.x0, seed=3, rank=0)
+        with pytest.raises(ValueError, match="group_size"):
+            score.sample_eggroll_noiser_noise(score.x0, seed=3, group_size=-1)
     finally:
         score.close()
 
@@ -119,6 +249,30 @@ def test_eggroll_external_designer_iterates_without_jax_env_adapter():
     assert len(result.data) == 1
     assert np.isfinite(float(result.data[0].trajectory.rreturn))
     assert result.data[0].trajectory.num_steps > 0
+
+
+def test_eggroll_external_reuses_training_vector_env_for_current_eval():
+    from optimizer.eggroll_designer import EggRollDesigner
+    from policies.mlp_policy import MLPPolicyFactory
+
+    runtime = make_fake_vector_runtime()
+    policy = MLPPolicyFactory((4,))(runtime)
+    designer = EggRollDesigner(
+        policy,
+        runtime,
+        sigma=0.01,
+        lr=0.01,
+        num_envs=2,
+        steps=3,
+        batch_size=2,
+        optax="adam",
+    )
+    try:
+        result = designer.iterate([], 2)
+        assert len(result.data) == 1
+        assert runtime.vector_slots == [4]
+    finally:
+        designer.stop()
 
 
 def test_uhd_supports_isaaclab_vector_objective_tag():
