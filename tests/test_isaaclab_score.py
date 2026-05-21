@@ -313,7 +313,7 @@ def test_unbounded_action_space_is_not_rescaled_to_nan():
 
 
 def test_video_action_scaling_handles_unbounded_spaces():
-    from common.video_spaces import scale_action_to_space
+    from video.spaces import scale_action_to_space
 
     action_space = spaces.Box(low=-np.inf, high=np.inf, shape=(12,), dtype=np.float32)
     action = scale_action_to_space(np.zeros((12,), dtype=np.float32), action_space)

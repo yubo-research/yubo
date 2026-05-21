@@ -1,10 +1,10 @@
 # Run: ./ops/experiment.py local configs/bo/eggroll/paper/qwen/qwen3_4b_deepscaler_rlvr_eggroll.toml
 # Paper: Appendix L / Table 1 and Table 3, Qwen3-4B-Base RLVR on DeepScaleR.
-# Runtime: uses the EggRoll Qwen external-objective adapter surface.
+# Runtime: uses the EggRoll DeepScaleR RLVR objective surface.
 
 [experiment]
 exp_dir = "runs/yubo_eggroll/paper/qwen/qwen3_4b_deepscaler_rlvr_eggroll"
-env_tag = "qwen:deepscaler-rlvr"
+env_tag = "llm:deepscaler:rlvr"
 policy_tag = "qwen3-4b-base-lora-r1"
 population = 2048
 num_epochs = 500

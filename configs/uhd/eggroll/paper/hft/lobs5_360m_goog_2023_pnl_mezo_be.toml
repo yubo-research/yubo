@@ -8,7 +8,7 @@
 # derives num_rounds from the total-timesteps budget.
 
 [uhd]
-env_tag = "jaxlob:goog-2023-sell-q30-t10"
+env_tag = "hft:goog-2023-sell-q30-t10"
 policy_tag = "lobs5-360m-lora-r4"
 total_timesteps = 500000000
 num_reps = 1

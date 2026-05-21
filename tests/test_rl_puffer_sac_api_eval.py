@@ -133,7 +133,7 @@ def test_eval_utils_paths(monkeypatch, tmp_path):
 
     video_calls = []
     monkeypatch.setattr(
-        "common.video.render_policy_videos",
+        "video.batch.render_policy_videos",
         lambda *args, **kwargs: video_calls.append((args, kwargs)),
     )
     video_cfg = puffer_sac.SACConfig(

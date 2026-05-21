@@ -68,6 +68,14 @@ class UHDConfig:
     vllm_speculative_method: str | None = None
     vllm_speculative_model: str | None = None
     vllm_num_speculative_tokens: int | None = None
+    distill_teacher_model_choice: str | None = None
+    distill_student_model_choice: str | None = None
+    distill_dtype: str | None = None
+    distill_generation_length: int | None = None
+    distill_search_dim: int | None = None
+    distill_delta_scale: float | None = None
+    distill_lora_only: bool | None = None
+    distill_basis_max_leaves: int | None = None
 
 
 __all__ = ["BEConfig", "EarlyRejectConfig", "ENNConfig", "UHDConfig"]

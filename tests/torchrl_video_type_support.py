@@ -39,4 +39,4 @@ def patch_rollout_video_writer(monkeypatch, frames: list, video_path_holder: dic
 
         return type("_Writer", (), {"append_data": append_data, "close": close})()
 
-    monkeypatch.setattr("common.video_rollout._open_frame_video_writer", _fake_writer)
+    monkeypatch.setattr("video.rollout._open_frame_video_writer", _fake_writer)

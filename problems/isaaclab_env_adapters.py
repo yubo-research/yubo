@@ -11,7 +11,9 @@ from typing import Any
 
 import numpy as np
 
-from problems.isaaclab_config import ISAACLAB_DEFAULT_KIT_ARGS, disable_command_debug_visualizers
+from problems.isaaclab_config import ISAACLAB_DEFAULT_KIT_ARGS, ISAACLAB_VIDEO_KIT_ARGS, disable_command_debug_visualizers
+from problems.isaaclab_replicator import patch_replicator_seed_without_graph
+from video.isaaclab_viewport import prepare_isaaclab_video_view
 
 ISAACLAB_ENV_PREFIX = "isaaclab:"
 DEFAULT_ISAACLAB_MAX_STEPS = 1000
@@ -111,9 +113,13 @@ def isaaclab_default_launcher_kwargs() -> dict[str, Any]:
     return {"kit_args": ISAACLAB_DEFAULT_KIT_ARGS}
 
 
+def isaaclab_video_launcher_kwargs() -> dict[str, Any]:
+    return {"kit_args": ISAACLAB_VIDEO_KIT_ARGS, "video": True}
+
+
 def _render_probe() -> tuple[bool, str | None]:
     try:
-        import_module("omni.replicator.core")
+        import_module("omni.kit.viewport.utility")
     except Exception as exc:
         return False, f"{type(exc).__name__}: {exc}"
     return True, None
@@ -166,10 +172,13 @@ def get_isaaclab_session(*, headless: bool = True, launcher_kwargs: dict[str, An
         import gymnasium as gym
         import isaaclab_tasks  # noqa: F401
 
-    if "omni.replicator.core" in kit_args:
+    if "omni.kit.viewport.utility" in kit_args:
+        render_available, render_error = _render_probe()
+    elif "omni.replicator.core" in kit_args:
+        patch_replicator_seed_without_graph()
         render_available, render_error = _render_probe()
     else:
-        render_available, render_error = False, "omni.replicator.core not enabled"
+        render_available, render_error = False, "omni.kit.viewport.utility not enabled"
     _SESSION = IsaacLabSession(
         app=launcher.app,
         gym=gym,
@@ -430,6 +439,8 @@ def make_isaaclab_env(
     **kwargs,
 ):
     task_id = parse_isaaclab_task_id(env_tag)
+    if launcher_kwargs is None and render_mode == "rgb_array":
+        launcher_kwargs = isaaclab_video_launcher_kwargs()
     session = get_isaaclab_session(headless=headless, launcher_kwargs=launcher_kwargs)
 
     make_kwargs = dict(kwargs)
@@ -449,16 +460,20 @@ def make_isaaclab_env(
 
         disable_command_debug_visualizers(make_kwargs["cfg"])
         env = session.gym.make(task_id, **make_kwargs)
+        if render_mode == "rgb_array":
+            prepare_isaaclab_video_view(session.app, env)
     adapter = IsaacLabVectorEnvAdapter(env, num_envs=int(num_envs)) if batched else IsaacLabGymEnvAdapter(env, num_envs=int(num_envs))
     _SPACE_CACHE[str(env_tag)] = (adapter.observation_space, adapter.action_space)
     return adapter
 
 
-def resolve_isaaclab_env_spaces(env_tag: str):
+def resolve_isaaclab_env_spaces(env_tag: str, *, launcher_kwargs: dict[str, Any] | None = None):
     cached = _SPACE_CACHE.get(str(env_tag))
     if cached is not None:
+        if launcher_kwargs is not None:
+            get_isaaclab_session(launcher_kwargs=launcher_kwargs)
         return cached
-    env = make_isaaclab_env(env_tag, num_envs=1)
+    env = make_isaaclab_env(env_tag, num_envs=1, launcher_kwargs=launcher_kwargs)
     try:
         spaces = (env.observation_space, env.action_space)
         _SPACE_CACHE[str(env_tag)] = spaces

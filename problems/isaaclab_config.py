@@ -6,6 +6,7 @@ ISAACLAB_DEFAULT_KIT_ARGS = (
     "--no-window "
     "--/app/window/hideUi=true "
     "--/app/file/ignoreUnsavedOnExit=true "
+    "--/app/usd/maxUsdDiagnosticsLogged=20 "
     "--/app/asyncRendering=false "
     "--/app/asyncRenderingLowLatency=false "
     "--/app/hydraEngine/waitIdle=true "
@@ -15,6 +16,17 @@ ISAACLAB_DEFAULT_KIT_ARGS = (
     "--/rtx-transient/dlssg/enabled=false "
     "--/rtx-transient/resourcemanager/enableTextureStreaming=false "
     "--/rtx-transient/resourcemanager/enableGeometryStreaming=false"
+)
+
+ISAACLAB_VIDEO_KIT_ARGS = (
+    ISAACLAB_DEFAULT_KIT_ARGS
+    + " "
+    + "--enable omni.kit.renderer.capture "
+    + "--enable omni.kit.viewport.pxr "
+    + "--enable omni.kit.viewport.window "
+    + "--enable omni.kit.viewport.utility "
+    + "--/renderer/enabled='pxr' "
+    + "--/renderer/active='pxr'"
 )
 
 

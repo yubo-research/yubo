@@ -291,7 +291,7 @@ python - <<'PY'
 from pathlib import Path
 import numpy as np
 
-from common.video_rollout import rollout_episode
+from video.rollout import rollout_episode
 from problems.isaaclab_env_adapters import make_isaaclab_env
 
 class ZeroPolicy:

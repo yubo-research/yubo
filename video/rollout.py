@@ -5,7 +5,7 @@ from typing import Any
 
 import numpy as np
 
-from common.video_spaces import resolve_max_episode_steps, scale_action_to_space
+from video.spaces import resolve_max_episode_steps, scale_action_to_space
 
 
 def _use_gym_record_video(env: Any) -> bool:

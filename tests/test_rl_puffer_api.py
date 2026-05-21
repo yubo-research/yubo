@@ -198,9 +198,9 @@ def test_train_ppo_puffer_resume_from_checkpoint():
 
 
 def test_train_ppo_puffer_renders_video_when_enabled():
-    import common.video as video_mod
     import rl.pufferlib.ppo as pufferlib_ppo
     import rl.pufferlib.ppo.engine_helpers as engine_helpers
+    import video.batch as video_mod
 
     video_calls: list[dict] = []
 

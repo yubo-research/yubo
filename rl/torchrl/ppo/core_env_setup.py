@@ -64,7 +64,8 @@ def _build_eval_env_conf(config: PPOConfig, env: _EnvSetup, *, from_pixels: bool
 
 
 def _make_video_context(config: PPOConfig, env: _EnvSetup, *, from_pixels: bool):
-    video = __import__("common.video", fromlist=["RLVideoContext", "render_policy_videos_rl"])
+    import video.rl_render as video
+
     ctx = video.RLVideoContext(
         build_eval_env_conf=lambda ps, ns: (
             _build_seeded_eval_env_conf(

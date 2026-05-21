@@ -24,12 +24,19 @@ def embed_many_with_indices(x_batch: np.ndarray, indices: np.ndarray) -> np.ndar
     return np.asarray(x_batch, dtype=np.float64)[:, indices]
 
 
-def sample_vector_noise(*, dim: int, seed: int, num_dim_target: float | None = None) -> np.ndarray:
+def sample_vector_noise(
+    *,
+    dim: int,
+    seed: int,
+    num_dim_target: float | None = None,
+    num_module_target: float | None = None,
+) -> np.ndarray:
+    target = num_module_target if num_module_target is not None else num_dim_target
     rng = np.random.default_rng(int(seed))
     dim = int(dim)
-    if num_dim_target is None:
+    if target is None:
         return rng.standard_normal(dim).astype(np.float64)
-    target = float(num_dim_target)
+    target = float(target)
     if target <= 0:
         raise ValueError("perturb target must be > 0.")
     noise = rng.standard_normal(dim).astype(np.float64)

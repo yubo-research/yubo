@@ -8,14 +8,12 @@ __all__ = ["collect_trajectory"]
 
 
 def _resolve_max_episode_steps(env_conf: Any) -> int:
-    """Inlined from common.video to avoid pulling common.video into optimizer transitive deps."""
     if getattr(env_conf, "gym_conf", None) is not None:
         return int(env_conf.gym_conf.max_steps)
     return int(getattr(env_conf, "max_steps", 99999))
 
 
 def _scale_action_to_space(action: np.ndarray | int, action_space: Any) -> np.ndarray | int:
-    """Inlined from common.video to avoid pulling common.video into optimizer transitive deps."""
     if not hasattr(action_space, "low"):
         if hasattr(action_space, "n"):
             if isinstance(action, (int, float, np.integer)):

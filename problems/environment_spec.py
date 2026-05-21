@@ -192,7 +192,10 @@ class EnvironmentRuntime:
             self.action_space = spaces.action_space
             return
         if is_isaaclab_env_tag(spec.env_name):
-            self.state_space, self.action_space = resolve_isaaclab_env_spaces(spec.env_name)
+            self.state_space, self.action_space = resolve_isaaclab_env_spaces(
+                spec.env_name,
+                launcher_kwargs=self.kwargs.get("launcher_kwargs"),
+            )
             if spec.gym_conf is not None:
                 spec.gym_conf.state_space = self.state_space
             return

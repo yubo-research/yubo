@@ -30,6 +30,7 @@ def mk_replicates(config: ExperimentConfig) -> list[RunConfig]:
                 config.policy_tag,
                 problem_seed=problem_seed,
                 noise_seed_0=noise_seed_0_from_problem_seed(problem_seed),
+                isaaclab_video=bool(config.video_enable and config.video_num_video_episodes > 0),
             )
             run_configs.append(
                 RunConfig(

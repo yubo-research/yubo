@@ -10,7 +10,6 @@ from pathlib import Path
 import modal
 
 from ops.modal_hyperscalees_image import mk_image
-from ops.modal_nvidia_vulkan import nvidia_vulkan_icd_script
 
 app = modal.App(name="yubo-hyperscalees")
 image = mk_image(modal)
@@ -94,8 +93,8 @@ def run_hyperscalees_command_export(command: str, artifact_globs: list[str]) -> 
 def _runtime_command_script(command: str) -> str:
     return "\n".join(
         [
-            nvidia_vulkan_icd_script(),
             "export LD_LIBRARY_PATH=/opt/conda/envs/yubo-hyperscalees/lib:${LD_LIBRARY_PATH:-}",
+            "export VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/nvidia_icd.json",
             command,
         ]
     )
@@ -107,13 +106,30 @@ def _preflight_command() -> str:
     )
 
 
+def _vllm_probe_command() -> str:
+    return "set -euxo pipefail; nvidia-smi; micromamba run -n yubo-hyperscalees python -c " + shlex.quote(
+        "import inspect, vllm; "
+        "from llm.vllm_actor_config import sampling_params; "
+        "print('vllm', vllm.__version__); "
+        "print('SamplingParams', inspect.signature(vllm.SamplingParams)); "
+        "print('LLM.generate', inspect.signature(vllm.LLM.generate)); "
+        "sp = sampling_params({'temperature': 0.0, 'max_tokens': 1}); "
+        "print(type(sp)); "
+        "print('has logprobs arg', 'logprobs' in str(inspect.signature(vllm.SamplingParams))); "
+        "print('sampling params repr', sp)"
+    )
+
+
 def _isaaclab_preflight_command() -> str:
-    return "set -euxo pipefail; nvidia-smi || true; micromamba run -n yubo-hyperscalees python -c " + shlex.quote(
-        "from problems.isaaclab_env_adapters import isaaclab_default_launcher_kwargs; "
-        "import importlib.util; "
-        "mods = ['problems.isaaclab_env_adapters', 'isaacsim']; "
-        "print({name: importlib.util.find_spec(name) is not None for name in mods}); "
-        "print(isaaclab_default_launcher_kwargs())"
+    return (
+        "set -euxo pipefail; nvidia-smi || true; micromamba run -n yubo-isaaclab env LD_LIBRARY_PATH=/opt/conda/envs/yubo-isaaclab/lib python -c "
+        + shlex.quote(
+            "from problems.isaaclab_env_adapters import isaaclab_default_launcher_kwargs; "
+            "import importlib.util; "
+            "mods = ['problems.isaaclab_env_adapters', 'isaacsim']; "
+            "print({name: importlib.util.find_spec(name) is not None for name in mods}); "
+            "print(isaaclab_default_launcher_kwargs())"
+        )
     )
 
 
@@ -143,6 +159,8 @@ def main(
 ) -> None:
     if command.strip() == "preflight":
         command = _preflight_command()
+    elif command.strip() == "vllm-probe":
+        command = _vllm_probe_command()
     elif command.strip() == "isaaclab-preflight":
         command = _isaaclab_preflight_command()
     print(f"[modal-hyperscalees] gpu={_GPU!r}", flush=True)

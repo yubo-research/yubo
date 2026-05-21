@@ -189,7 +189,10 @@ class EnvConf:
             self.state_space = self.gym_conf.state_space
             return
         if is_isaaclab_env_tag(self.env_name):
-            self.state_space, self.action_space = resolve_isaaclab_env_spaces(self.env_name)
+            self.state_space, self.action_space = resolve_isaaclab_env_spaces(
+                self.env_name,
+                launcher_kwargs=self.kwargs.get("launcher_kwargs"),
+            )
             if self.gym_conf is not None:
                 self.gym_conf.state_space = self.state_space
             return

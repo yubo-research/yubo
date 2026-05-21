@@ -5,15 +5,15 @@ from typing import Any
 
 import numpy as np
 
-from common.video_batch import (
+from optimizer.eggroll_runtime_core import EggRollActionSelector, IdentityNoiser, require_eggroll_jax_stack
+from video.batch import (
     _is_headless_video_error,
     _temporary_mujoco_gl,
     _video_gl_candidates,
     select_video_episode_indices,
 )
-from common.video_rollout import _frame_to_uint8, _open_frame_video_writer
-from common.video_spaces import resolve_max_episode_steps
-from optimizer.eggroll_runtime_core import EggRollActionSelector, IdentityNoiser, require_eggroll_jax_stack
+from video.rollout import _frame_to_uint8, _open_frame_video_writer
+from video.spaces import resolve_max_episode_steps
 
 
 def is_brax_env_conf(env_conf: Any) -> bool:

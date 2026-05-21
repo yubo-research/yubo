@@ -1,7 +1,11 @@
 # Core JAX & Numerical stack (pinned for HyperscaleES upstream compatibility)
 jax[cuda12]==0.8.1
+setuptools>=77.0.3,<81.0.0
 numpy>=2.2,<2.3
 scipy>=1.17,<1.18
+numba==0.61.2
+llvmlite==0.44.0
+protobuf>=6.31.1,<7
 
 # Yubo runtime core
 click
@@ -59,7 +63,8 @@ grpclib>=0.4.7,<0.5
 torchrl==0.11.0
 tensordict==0.11.0
 gymnasium[box2d]==1.2.1
-dm-control>=1.0.40
+dm-control>=1.0.41
+mujoco>=3.8.1,<3.9
 pybind11==3.0.1
 
 # LassoBench runtime dependencies

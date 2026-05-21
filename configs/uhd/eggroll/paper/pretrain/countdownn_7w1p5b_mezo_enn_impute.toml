@@ -1,8 +1,7 @@
 # Run:
 # ./ops/exp_uhd.py local configs/uhd/eggroll/paper/pretrain/countdownn_7w1p5b_mezo_enn_impute.toml
 #
-# UHD MeZO + ENN minus-imputation companion to:
-# configs/pretrain/hyperscalees/paper/countdownn_7w1p5b_eggroll.toml
+# UHD MeZO + ENN minus-imputation companion to the HyperscaleES CountdownN paper config.
 
 [uhd]
 env_tag = "pretrain:hyperscalees:countdownn-7w1p5b"

@@ -5,8 +5,8 @@ from typing import Any
 
 import numpy as np
 
-from common.video_batch import render_policy_videos
-from common.video_brax import render_brax_policy_videos
+from video.batch import render_policy_videos
+from video.brax_policy import render_brax_policy_videos
 
 
 def policy_for_bo_rollout(env_conf: Any, policy: Any) -> Any:

@@ -15,17 +15,11 @@ from torchrl_video_type_support import (
     patch_rollout_video_writer,
 )
 
-from common.video import (
-    RLVideoContext,
-    policy_for_bo_rollout,
-    render_policy_videos,
-    render_policy_videos_bo,
-    render_policy_videos_rl,
-    resolve_max_episode_steps,
-    rollout_episode,
-    scale_action_to_space,
-    select_video_episode_indices,
-)
+from video.batch import render_policy_videos, select_video_episode_indices
+from video.bo_policy import policy_for_bo_rollout, render_policy_videos_bo
+from video.rl_render import RLVideoContext, render_policy_videos_rl
+from video.rollout import rollout_episode
+from video.spaces import resolve_max_episode_steps, scale_action_to_space
 
 
 def test_scale_action_to_space_and_resolve_steps():
@@ -99,7 +93,7 @@ def test_render_policy_videos_rl_selection_and_guards(monkeypatch, tmp_path):
             return 0.0
         return returns_by_seed[seed]
 
-    monkeypatch.setattr("common.video_batch.rollout_episode", _fake_rollout)
+    monkeypatch.setattr("video.batch.rollout_episode", _fake_rollout)
 
     @contextmanager
     def _with_actor_state(_modules, _snapshot, *, device):
@@ -172,7 +166,7 @@ def test_render_policy_videos_non_gym_not_skipped(monkeypatch, tmp_path):
         calls.append((seed, render_video, video_dir, video_prefix))
         return 1.0
 
-    monkeypatch.setattr("common.video_batch.rollout_episode", _fake_rollout)
+    monkeypatch.setattr("video.batch.rollout_episode", _fake_rollout)
 
     render_policy_videos(
         env_conf,
@@ -260,7 +254,7 @@ def test_render_policy_videos_bo_smoke(monkeypatch, tmp_path):
     def policy(s):
         return np.array([-1.0, 1.0], dtype=np.float32)
 
-    monkeypatch.setattr("common.video_batch.render_policy_videos", lambda *a, **kw: None)
+    monkeypatch.setattr("video.batch.render_policy_videos", lambda *a, **kw: None)
     render_policy_videos_bo(
         env_conf,
         policy,
@@ -328,7 +322,7 @@ def test_render_policy_videos_skips_headless_video_error(monkeypatch, tmp_path, 
             raise RuntimeError("X11: The DISPLAY environment variable is missing")
         return 1.0
 
-    monkeypatch.setattr("common.video_batch.rollout_episode", _fake_rollout)
+    monkeypatch.setattr("video.batch.rollout_episode", _fake_rollout)
     render_policy_videos(
         env_conf,
         policy,
@@ -347,11 +341,10 @@ def test_render_policy_videos_skips_isaaclab_when_renderer_missing(monkeypatch, 
     env_conf = _EnvConfStub(max_steps=2, gym_conf=True)
     env_conf.env_name = "isaaclab:Fake-v0"
 
-    def _fail_rollout(*_args, **_kwargs):
-        raise AssertionError("IsaacLab video should skip before rollout.")
+    def _fail_render(*_args, **_kwargs):
+        raise RuntimeError("No module named omni.kit.viewport.utility")
 
-    monkeypatch.setattr("common.video_batch.rollout_episode", _fail_rollout)
-    monkeypatch.setattr("problems.isaaclab_env_adapters.isaaclab_rendering_available", lambda: (False, "No module named omni.replicator"))
+    monkeypatch.setattr("video.isaaclab.render_isaaclab_video_episode", _fail_render)
     render_policy_videos(
         env_conf,
         lambda _s: np.array([0.0, 0.0], dtype=np.float32),
@@ -359,12 +352,43 @@ def test_render_policy_videos_skips_isaaclab_when_renderer_missing(monkeypatch, 
         video_prefix="isaac",
         num_episodes=2,
         num_video_episodes=1,
-        episode_selection="best",
+        episode_selection="first",
         seed_base=0,
     )
     out = capsys.readouterr().out
     assert "skipping IsaacLab video capture" in out
-    assert "omni.replicator" in out
+    assert "omni.kit.viewport.utility" in out
+
+
+def test_render_policy_videos_uses_isaaclab_viewport_renderer(monkeypatch, tmp_path):
+    env_conf = _EnvConfStub(max_steps=2, gym_conf=True)
+    env_conf.env_name = "isaaclab:Fake-v0"
+    env_conf.kwargs = {}
+    calls = []
+
+    def _fake_rollout(_env_conf, _policy, *, seed, render_video, video_dir, video_prefix):
+        assert render_video is False
+        return float(seed)
+
+    def _fake_render(_env_conf, _policy, *, seed, video_dir, video_prefix):
+        calls.append((seed, Path(video_dir), video_prefix))
+        return 0.0
+
+    monkeypatch.setattr("video.batch.rollout_episode", _fake_rollout)
+    monkeypatch.setattr("video.isaaclab.render_isaaclab_video_episode", _fake_render)
+    render_policy_videos(
+        env_conf,
+        lambda _s: np.array([0.0, 0.0], dtype=np.float32),
+        video_dir=Path(tmp_path) / "videos",
+        video_prefix="isaac",
+        num_episodes=3,
+        num_video_episodes=1,
+        episode_selection="best",
+        seed_base=10,
+    )
+
+    assert calls == [(12, Path(tmp_path) / "videos", "isaac_ep002")]
+    assert "launcher_kwargs" in env_conf.kwargs
 
 
 def test_render_policy_videos_retries_with_headless_gl_backend(monkeypatch, tmp_path, capsys):
@@ -384,8 +408,8 @@ def test_render_policy_videos_retries_with_headless_gl_backend(monkeypatch, tmp_
             raise RuntimeError("X11: The DISPLAY environment variable is missing")
         return 0.0
 
-    monkeypatch.setattr("common.video_batch._video_gl_candidates", lambda: [None, "egl"])
-    monkeypatch.setattr("common.video_batch.rollout_episode", _fake_rollout)
+    monkeypatch.setattr("video.batch._video_gl_candidates", lambda: [None, "egl"])
+    monkeypatch.setattr("video.batch.rollout_episode", _fake_rollout)
 
     render_policy_videos(
         env_conf,

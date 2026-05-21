@@ -1,0 +1,30 @@
+# Run:
+# ./ops/exp_uhd.py local configs/uhd/eggroll/paper/distillation/rwkv_7g7b_int8_gsm8k_distill_mezo.toml
+#
+# UHD MeZO version of the RWKV distillation experiment.
+
+[uhd]
+env_tag = "rwkv:distill:gsm8k"
+policy_tag = "rwkv-7g7b-int8-lora-r1"
+total_timesteps = 81920
+num_reps = 1
+optimizer = "mezo"
+lr = 3e-7
+sigma = 0.4
+perturb = "dense"
+steps_per_episode = 1
+num_envs = 8
+deterministic_policy = false
+problem_seed = 0
+noise_seed_0 = 0
+seed_offset = 0
+log_interval = 1
+
+# Pretrain / Distillation settings supported by the UHD parser
+pretrain_rwkv_type = "BaseRWKV"
+pretrain_lora_only = true
+pretrain_search_dim = 4096
+pretrain_generation_length = 256
+
+distill_teacher_model_choice = "7w3B"
+distill_student_model_choice = "7w3B"

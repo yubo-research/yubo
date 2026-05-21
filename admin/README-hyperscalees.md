@@ -135,9 +135,6 @@ python -m experiments.experiment local configs/bo/gymnax/swimmer/eggroll_swimmer
 The policy architecture belongs in `policy_tag`. The optimizer/noiser knobs
 belong in `[optimizer.params]`.
 
-The broader coverage inventory for EggRoll paper experiments is tracked in
-`docs/eggroll_experiment_coverage.md`.
-
 ## Source-Repo Boundary
 
 `hyperscalees` is the only upstream research repo installed and imported as
@@ -174,46 +171,6 @@ Run it from the same `yubo-hyperscalees` env on a CUDA machine:
 
 If the same LLM task/model is run with UHD, use the existing `[uhd]` schema and
 `ops.exp_uhd`, not `[llm]`.
-
-## Run Upstream HyperscaleES LLM Script Experiments From TOML
-
-The clean Yubo/UHD path uses the installed `hyperscalees` package directly.
-The older upstream script wrapper is only for running un-packaged upstream
-`llm_experiments` scripts from an explicit source checkout. It is not required
-for UHD pretraining objectives.
-
-```bash
-./ops/hyperscalees_llm.py local configs/pretrain/hyperscalees/general_do_evolution_fastzero_smoke.toml
-./ops/hyperscalees_llm.py local configs/pretrain/hyperscalees/general_do_evolution_multi_gpu_fastzero_smoke.toml
-./ops/hyperscalees_llm.py local configs/pretrain/hyperscalees/sft_evolution_fastzero_smoke.toml
-./ops/hyperscalees_llm.py local configs/pretrain/hyperscalees/do_grpo_fastzero_smoke.toml
-./ops/hyperscalees_llm.py local configs/pretrain/hyperscalees/do_grpo_multi_gpu_fastzero_smoke.toml
-```
-
-Use `--dry-run` to validate command generation without downloading models or
-starting compilation:
-
-```bash
-./ops/hyperscalees_llm.py local configs/pretrain/hyperscalees/general_do_evolution_fastzero_smoke.toml --dry-run
-```
-
-The selected upstream script is declared in `[hyperscalees].script`; upstream
-CLI flags belong in `[args]`, using TOML keys like `model_choice`, `num_epochs`,
-and `parallel_generations_per_gpu`. These script configs require
-`[experiment].repo_dir` to point at a real HyperscaleES source checkout.
-
-## Validate EggRoll Coverage Configs
-
-Validate the currently wired EggRoll-related TOML configs without launching
-training:
-
-```bash
-python -m experiments.eggroll_coverage validate
-```
-
-Configs that point at known stale upstream `7g*` checkpoint names are reported
-as `ASSET_BLOCKED` rather than invalid. Use `--require-live-assets` when a
-validation run should fail on those.
 
 ## Dependency Boundary
 

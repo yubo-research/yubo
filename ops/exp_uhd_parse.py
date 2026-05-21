@@ -105,6 +105,15 @@ _OPTIONAL_TOML_KEYS = (
     "vllm_speculative_method",
     "vllm_speculative_model",
     "vllm_num_speculative_tokens",
+    # Distillation settings
+    "distill_teacher_model_choice",
+    "distill_student_model_choice",
+    "distill_dtype",
+    "distill_generation_length",
+    "distill_search_dim",
+    "distill_delta_scale",
+    "distill_lora_only",
+    "distill_basis_max_leaves",
 )
 _ALL_TOML_KEYS = set(_REQUIRED_TOML_KEYS + _OPTIONAL_TOML_KEYS)
 
@@ -446,6 +455,14 @@ def _parse_cfg(cfg: dict[str, Any]) -> UHDConfig:
         "vllm_speculative_method",
         "vllm_speculative_model",
         "vllm_num_speculative_tokens",
+        "distill_teacher_model_choice",
+        "distill_student_model_choice",
+        "distill_dtype",
+        "distill_generation_length",
+        "distill_search_dim",
+        "distill_delta_scale",
+        "distill_lora_only",
+        "distill_basis_max_leaves",
     ):
         if key in cfg:
             val = cfg[key]

@@ -4,7 +4,7 @@ from contextlib import AbstractContextManager
 from dataclasses import dataclass
 from typing import Any, Callable
 
-from common.video_batch import render_policy_videos
+from video.batch import render_policy_videos
 
 
 @dataclass(frozen=True)

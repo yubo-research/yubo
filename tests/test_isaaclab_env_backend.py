@@ -13,6 +13,7 @@ from problems.isaaclab_env_adapters import (
     get_isaaclab_session,
     is_isaaclab_env_tag,
     isaaclab_default_launcher_kwargs,
+    isaaclab_video_launcher_kwargs,
     list_isaaclab_tasks,
     main,
     make_isaaclab_env,
@@ -106,6 +107,64 @@ def test_isaaclab_default_launcher_kwargs_provide_headless_kit_args():
     preset = isaaclab_default_launcher_kwargs()
     assert "--no-window" in preset["kit_args"]
     assert "--/renderer/multiGpu/enabled=false" in preset["kit_args"]
+
+
+def test_isaaclab_replicator_seed_patch_only_swallows_missing_graph(monkeypatch):
+    from problems.isaaclab_replicator import patch_replicator_seed_without_graph
+
+    def install_rep(set_global_seed):
+        rep = SimpleNamespace(set_global_seed=set_global_seed)
+        monkeypatch.setitem(sys.modules, "omni", SimpleNamespace())
+        monkeypatch.setitem(sys.modules, "omni.replicator", SimpleNamespace(core=rep))
+        monkeypatch.setitem(sys.modules, "omni.replicator.core", rep)
+        return rep
+
+    calls = []
+
+    def raise_missing_graph(seed):
+        calls.append(seed)
+        raise ValueError("Unable to retrieve replicator graph")
+
+    rep = install_rep(raise_missing_graph)
+    patch_replicator_seed_without_graph()
+
+    assert rep.set_global_seed(11) is None
+    assert calls == [11]
+    patched_set_global_seed = rep.set_global_seed
+    patch_replicator_seed_without_graph()
+    assert rep.set_global_seed is patched_set_global_seed
+
+    def raise_different(_seed):
+        raise ValueError("different failure")
+
+    rep = install_rep(raise_different)
+    patch_replicator_seed_without_graph()
+    with pytest.raises(ValueError, match="different failure"):
+        rep.set_global_seed(12)
+
+
+def test_isaaclab_video_build_problem_reaches_space_resolution(monkeypatch):
+    import problems.isaaclab_env_adapters as mod
+    from problems.problem import build_problem
+
+    calls = []
+    fake_gym = _FakeGym()
+    monkeypatch.setattr(mod, "_SPACE_CACHE", {})
+    monkeypatch.setattr(mod, "get_isaaclab_session", lambda **kwargs: calls.append(kwargs) or IsaacLabSession(app=None, gym=fake_gym))
+    monkeypatch.setattr(mod, "_parse_env_cfg", lambda task_id, **kwargs: SimpleNamespace(task_id=task_id, **kwargs))
+
+    problem = build_problem(
+        "isaaclab:Isaac-Cartpole-v0",
+        policy_tag="actor-critic-mlp-32-32",
+        problem_seed=3,
+        isaaclab_video=True,
+    )
+    problem.env.ensure_spaces()
+
+    assert calls[0]["launcher_kwargs"] == isaaclab_video_launcher_kwargs()
+    assert calls[0]["launcher_kwargs"]["video"] is True
+    assert "omni.kit.viewport.utility" in calls[0]["launcher_kwargs"]["kit_args"]
+    assert "omni.replicator.core" not in calls[0]["launcher_kwargs"]["kit_args"]
 
 
 def test_isaaclab_gym_env_adapter_reset_step_render_close():

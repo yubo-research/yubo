@@ -246,7 +246,7 @@ def maybe_eval(
 def render_videos_if_enabled(config: Any, env: Any, modules: Any, obs_spec: Any, *, device: Any) -> None:
     if not bool(getattr(config, "video_enable", False)):
         return
-    from common.video import render_policy_videos
+    from video.batch import render_policy_videos
 
     policy = SacEvalPolicy(modules, obs_spec, device=device)
     seed_base = int(config.video_seed_base) if config.video_seed_base is not None else int(env.problem_seed + 10000)

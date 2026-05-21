@@ -2,22 +2,6 @@
 from __future__ import annotations
 
 
-def test_added_branch_names_experiments_eggroll_coverage() -> None:
-    if False:
-        (
-            CoverageValidation,
-            LaunchReadiness,
-            PaperCoverage,
-            cli,
-            eggroll_coverage,
-            experiments,
-            main,
-            readiness,
-            validate,
-        )
-    assert True
-
-
 def test_added_branch_names_experiments_experiment_sampler_dispatch() -> None:
     if False:
         (

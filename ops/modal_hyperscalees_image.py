@@ -43,7 +43,6 @@ _REPO_MOUNT_IGNORE = (
     "**/target",
 )
 _MODAL_ENV = {
-    "LD_LIBRARY_PATH": "/opt/conda/envs/yubo-hyperscalees/lib",
     "NVIDIA_DRIVER_CAPABILITIES": "all",
     "OMNI_KIT_ACCEPT_EULA": "YES",
     "PYTHONPATH": "/root",

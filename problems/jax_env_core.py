@@ -13,11 +13,10 @@ JAX_ENV_PREFIXES = (
     "navix:",
 )
 SURROGATE_OBJECTIVE_PREFIXES = (
-    "passk:",
-    "qwen:",
-    "rwkv-int8-distill:",
-    "jaxlob:",
-    "synthetic:linear-speed",
+    "llm:deepscaler:passk4",
+    "llm:deepscaler:rlvr",
+    "rwkv:distill:",
+    "hft:",
 )
 JAX_OBJECTIVE_PREFIXES = JAX_ENV_PREFIXES + SURROGATE_OBJECTIVE_PREFIXES
 

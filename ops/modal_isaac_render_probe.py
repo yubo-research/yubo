@@ -137,7 +137,6 @@ official_isaacsim_image = (
     .entrypoint([])
     .apt_install("binutils", "mesa-utils", "vulkan-tools")
     .pip_install("modal", "grpclib", "numpy", "scipy")
-    .run_commands("python -m pip install --disable-pip-version-check --extra-index-url https://pypi.nvidia.com --pre 'isaaclab[isaacsim,all]'")
     .env(_ENV)
 )
 official_isaacsim_image = _with_repo_mount(_with_ops_mount(official_isaacsim_image))

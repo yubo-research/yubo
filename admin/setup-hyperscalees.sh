@@ -340,7 +340,8 @@ install_brax_compat_stack() {
   local specs=()
   local package spec
   for package in brax mujoco mujoco-mjx mujoco-warp warp-lang; do
-    spec="$(grep -E "^${package}==" admin/requirements-hyperscalees-nodeps.txt)"
+    spec="$(grep -E "^${package}([<>=!~]|\\[|$)" admin/requirements-hyperscalees-nodeps.txt | head -n 1)"
+    [[ -n "${spec}" ]] || die "missing ${package} pin in admin/requirements-hyperscalees-nodeps.txt"
     specs+=("${spec}")
   done
   log "ensuring Brax/MuJoCo compatibility pins: ${specs[*]}"
@@ -415,11 +416,6 @@ install_repo_test_compat_stack
 
 mkdir -p "${HF_HOME_DIR}"
 install_env_activation_hooks "${HF_HOME_DIR}"
-
-if [[ "${RUN_VERIFY}" -eq 1 ]]; then
-  log "running verification script"
-  run_in_env python admin/verify_hyperscalees.py
-fi
 
 log "done"
 echo "HyperscaleES stack is ready in '${ENV_NAME}'."

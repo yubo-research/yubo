@@ -7,7 +7,9 @@ from pathlib import Path
 ISAAC_SIM_BASE_IMAGE = "nvcr.io/nvidia/isaac-sim:6.0.0-dev2"
 PYTHON_VERSION = "3.12"
 MAMBA_ROOT_PREFIX = "/opt/conda"
-ENV_NAME = "yubo-hyperscalees"
+HYPERSCALEES_ENV_NAME = "yubo-hyperscalees"
+ISAACLAB_ENV_NAME = "yubo-isaaclab"
+ENV_NAME = HYPERSCALEES_ENV_NAME
 HF_HOME_DIR = "/root/.cache/yubo/hyperscalees"
 
 HYPERSCALEES_REPO_URL = "https://github.com/ESHyperscale/HyperscaleES.git"
@@ -16,30 +18,14 @@ VECCHIABO_SPEC = "git+https://github.com/feji3769/VecchiaBO.git#subdirectory=cod
 LASSOBENCH_SPEC = "LassoBench @ git+https://github.com/ksehic/LassoBench.git"
 PUFFERLIB_SPEC = "pufferlib==3.0.0"
 
-NVIDIA_PYPI_URL = "https://pypi.nvidia.com"
 PYTORCH_CU128_INDEX_URL = "https://download.pytorch.org/whl/cu128"
-ISAACSIM_SPEC = "isaacsim[all,extscache]==6.0.0.0"
-ISAACLAB_PIP_SPEC = "isaaclab[isaacsim,all]"
 ISAACLAB_SOURCE_URL = "https://github.com/isaac-sim/IsaacLab.git"
 ISAACLAB_SOURCE_REF = "v3.0.0-beta"
 ISAACLAB_SOURCE_DIR = "/root/.cache/yubo/isaaclab/IsaacLab"
-ISAACLAB_SOURCE_INSTALL_TARGET = "minimal"
+ISAACLAB_SOURCE_INSTALL_TARGET = "assets,tasks,newton"
 
-FINAL_REPO_RUNTIME_SPECS = (
-    "setuptools>=77.0.3,<81.0.0",
-    "numpy>=2.2,<2.3",
-    "numba==0.61.2",
-    "llvmlite==0.44.0",
-    "protobuf>=6.31.1,<7",
-    "dm-control>=1.0.41",
-    "mujoco>=3.8.1,<3.9",
-)
-FINAL_BRAX_SPECS = (
-    "brax==0.14.2",
-    "mujoco-mjx==3.8.0",
-    "mujoco-warp==3.8.0.3",
-    "warp-lang==1.13.0",
-)
+HYPERSCALEES_FINAL_REQUIREMENT_NAMES = ("setuptools", "numpy", "numba", "llvmlite", "protobuf", "dm-control", "mujoco")
+HYPERSCALEES_FINAL_NODEPS_REQUIREMENT_NAMES = ("brax", "mujoco-mjx", "mujoco-warp", "warp-lang")
 FAISS_OPENBLAS_CONDA_SPECS = (
     "nomkl",
     "libblas=*=*openblas",
@@ -60,9 +46,11 @@ def install_micromamba_command() -> str:
 
 
 def mk_hyperscalees_base_image(modal, project_root: Path):
-    conda_yml = _read_project_file(project_root, "admin/conda-hyperscalees.yml")
-    requirements = _read_project_file(project_root, "admin/requirements-hyperscalees.txt")
-    no_deps_requirements = _read_project_file(project_root, "admin/requirements-hyperscalees-nodeps.txt")
+    conda_isaaclab_yml = _read_project_file(project_root, "admin/conda-isaaclab.yml")
+    conda_hyperscalees_yml = _read_project_file(project_root, "admin/conda-hyperscalees.yml")
+    isaaclab_requirements = _read_project_file(project_root, "admin/requirements-isaaclab.txt")
+    hyperscalees_requirements = _read_project_file(project_root, "admin/requirements-hyperscalees.txt")
+    hyperscalees_no_deps_requirements = _read_project_file(project_root, "admin/requirements-hyperscalees-nodeps.txt")
     image = (
         modal.Image.from_registry(ISAAC_SIM_BASE_IMAGE, add_python=PYTHON_VERSION)
         .entrypoint([])
@@ -94,11 +82,22 @@ def mk_hyperscalees_base_image(modal, project_root: Path):
         )
         .run_commands(install_micromamba_command())
         .pip_install("modal", "grpclib")  # Required for Modal worker stability.
-        .run_commands(_create_conda_env_command(conda_yml))
-        .run_commands(_install_python_requirements_command(requirements, no_deps_requirements))
-        .run_commands(_install_isaac_stack_command())
+        .run_commands(_create_conda_env_command(conda_isaaclab_yml, env_name=ISAACLAB_ENV_NAME))
+        .run_commands(_install_requirements_command(ISAACLAB_ENV_NAME, isaaclab_requirements, "yubo-requirements-isaaclab.txt"))
+        .run_commands(_install_isaaclab_source_command())
+        .run_commands(
+            _install_requirements_command(
+                ISAACLAB_ENV_NAME,
+                isaaclab_requirements,
+                "yubo-requirements-isaaclab.txt",
+                pip_args="--no-deps",
+            )
+        )
+        .run_commands(_validate_isaaclab_runtime_command())
+        .run_commands(_create_conda_env_command(conda_hyperscalees_yml))
+        .run_commands(_install_python_requirements_command(hyperscalees_requirements, hyperscalees_no_deps_requirements))
         .run_commands(_install_source_extras_command())
-        .run_commands(_finalize_runtime_compat_command())
+        .run_commands(_finalize_runtime_compat_command(hyperscalees_requirements, hyperscalees_no_deps_requirements))
     )
     return image
 
@@ -107,13 +106,14 @@ def _read_project_file(project_root: Path, relpath: str) -> str:
     return (project_root / relpath).read_text(encoding="utf-8")
 
 
-def _create_conda_env_command(conda_yml: str) -> str:
+def _create_conda_env_command(conda_yml: str, *, env_name: str = ENV_NAME) -> str:
+    tmp_name = f"/tmp/yubo-conda-{env_name.removeprefix('yubo-')}.yml"
     return _bash(
         "\n".join(
             [
-                _write_heredoc("/tmp/yubo-conda-hyperscalees.yml", conda_yml),
-                f"micromamba env create -y -n {shlex.quote(ENV_NAME)} -f /tmp/yubo-conda-hyperscalees.yml",
-                _env_helpers(),
+                _write_heredoc(tmp_name, conda_yml),
+                f"micromamba env create -y -n {shlex.quote(env_name)} -f {shlex.quote(tmp_name)}",
+                _env_helpers(env_name),
                 "run_in_env python -c 'import sys; print(sys.prefix)'",
             ]
         )
@@ -126,7 +126,7 @@ def _install_python_requirements_command(requirements: str, no_deps_requirements
             [
                 _write_heredoc("/tmp/yubo-requirements-hyperscalees.txt", requirements),
                 _write_heredoc("/tmp/yubo-requirements-hyperscalees-nodeps.txt", no_deps_requirements),
-                _env_helpers(),
+                _env_helpers(ENV_NAME),
                 "pip_install -r /tmp/yubo-requirements-hyperscalees.txt",
                 "pip_install --no-deps -r /tmp/yubo-requirements-hyperscalees-nodeps.txt",
             ]
@@ -134,14 +134,23 @@ def _install_python_requirements_command(requirements: str, no_deps_requirements
     )
 
 
-def _install_isaac_stack_command() -> str:
+def _install_requirements_command(env_name: str, requirements: str, tmp_name: str, *, pip_args: str = "") -> str:
+    pip_prefix = f"{pip_args.strip()} " if pip_args.strip() else ""
+    return _bash(
+        "\n".join(
+            [
+                _write_heredoc(f"/tmp/{tmp_name}", requirements),
+                _env_helpers(env_name),
+                f"pip_install {pip_prefix}-r /tmp/{shlex.quote(tmp_name)}",
+            ]
+        )
+    )
+
+
+def _install_isaaclab_source_command() -> str:
     return _bash(
         f"""
-{_env_helpers()}
-pip_install --extra-index-url {shlex.quote(NVIDIA_PYPI_URL)} --pre {shlex.quote(ISAACSIM_SPEC)}
-if pip_install --extra-index-url {shlex.quote(NVIDIA_PYPI_URL)} --pre {shlex.quote(ISAACLAB_PIP_SPEC)}; then
-  exit 0
-fi
+{_env_helpers(ISAACLAB_ENV_NAME)}
 mkdir -p {shlex.quote(str(Path(ISAACLAB_SOURCE_DIR).parent))}
 if [ -d {shlex.quote(ISAACLAB_SOURCE_DIR)}/.git ]; then
   git -C {shlex.quote(ISAACLAB_SOURCE_DIR)} fetch --tags origin
@@ -157,7 +166,7 @@ run_in_env bash -c 'cd {shlex.quote(ISAACLAB_SOURCE_DIR)} && ./isaaclab.sh --ins
 def _install_source_extras_command() -> str:
     return _bash(
         f"""
-{_env_helpers()}
+{_env_helpers(ENV_NAME)}
 
 build_root="$(mktemp -d)"
 source_dir="${{build_root}}/HyperscaleES"
@@ -195,7 +204,7 @@ run_in_env python -m pip wheel --disable-pip-version-check --no-deps --wheel-dir
 wheel="$(find "${{wheel_dir}}" -maxdepth 1 -name 'hyperscalees-*.whl' -print -quit)"
 pip_install --no-deps "${{wheel}}"
 
-{_faiss_openblas_repair_command()}
+{_faiss_openblas_repair_command(ENV_NAME)}
 run_in_env bash -c '
   LDFLAGS="-L${{CONDA_PREFIX}}/lib" \\
   LIBRARY_PATH="${{CONDA_PREFIX}}/lib" \\
@@ -226,18 +235,35 @@ run_in_env bash -c '
     )
 
 
-def _finalize_runtime_compat_command() -> str:
-    final_repo_specs = _quoted_specs(FINAL_REPO_RUNTIME_SPECS)
-    final_brax_specs = _quoted_specs(FINAL_BRAX_SPECS)
+def _finalize_runtime_compat_command(requirements: str | None = None, no_deps_requirements: str | None = None) -> str:
+    requirements = requirements if requirements is not None else _read_repo_file("admin/requirements-hyperscalees.txt")
+    no_deps_requirements = no_deps_requirements if no_deps_requirements is not None else _read_repo_file("admin/requirements-hyperscalees-nodeps.txt")
     return _bash(
-        f"""
-{_env_helpers()}
-{_faiss_openblas_repair_command()}
-pip_install --force-reinstall {final_repo_specs}
-pip_install --no-deps --force-reinstall {final_brax_specs}
-pip_install --index-url {shlex.quote(PYTORCH_CU128_INDEX_URL)} --extra-index-url {shlex.quote(NVIDIA_PYPI_URL)} --no-deps --force-reinstall 'torchaudio==2.10.0'
-mkdir -p {shlex.quote(HF_HOME_DIR)}
-run_in_env python - <<'PY'
+        "\n".join(
+            [
+                _write_heredoc("/tmp/yubo-requirements-hyperscalees.txt", requirements),
+                _write_heredoc("/tmp/yubo-requirements-hyperscalees-nodeps.txt", no_deps_requirements),
+                _env_helpers(ENV_NAME),
+                _select_requirements_command(
+                    "/tmp/yubo-requirements-hyperscalees.txt",
+                    "/tmp/yubo-requirements-hyperscalees-final.txt",
+                    HYPERSCALEES_FINAL_REQUIREMENT_NAMES,
+                ),
+                _select_requirements_command(
+                    "/tmp/yubo-requirements-hyperscalees-nodeps.txt",
+                    "/tmp/yubo-requirements-hyperscalees-final-nodeps.txt",
+                    HYPERSCALEES_FINAL_NODEPS_REQUIREMENT_NAMES,
+                ),
+                _faiss_openblas_repair_command(ENV_NAME),
+                "pip_install --force-reinstall -r /tmp/yubo-requirements-hyperscalees-final.txt",
+                "pip_install --no-deps --force-reinstall -r /tmp/yubo-requirements-hyperscalees-final-nodeps.txt",
+                (
+                    "pip_install --index-url "
+                    f"{shlex.quote(PYTORCH_CU128_INDEX_URL)} --extra-index-url https://pypi.nvidia.com "
+                    "--no-deps --force-reinstall 'torchaudio==2.10.0'"
+                ),
+                f"mkdir -p {shlex.quote(HF_HOME_DIR)}",
+                f"""run_in_env python - <<'PY'
 from pathlib import Path
 import importlib.util
 import os
@@ -264,8 +290,6 @@ def _plus_one(x):
 assert _plus_one(1) == 2
 assert numpy.__version__.startswith("2.2"), numpy.__version__
 assert importlib.util.find_spec("vllm") is not None
-assert importlib.util.find_spec("isaacsim") is not None
-assert importlib.util.find_spec("isaaclab") is not None
 envs.get_environment("ant")
 env = suite.load("cartpole", "swingup")
 env.close()
@@ -285,17 +309,56 @@ print(
     f"torchaudio={{torchaudio.__version__}}",
     f"modal={{getattr(modal, '__version__', 'unknown')}}",
 )
+PY""",
+            ]
+        )
+    )
+
+
+def _validate_isaaclab_runtime_command() -> str:
+    return _bash(
+        f"""
+{_env_helpers(ISAACLAB_ENV_NAME)}
+run_in_env python - <<'PY'
+import importlib.util
+
+import gymnasium
+import imageio
+import numpy
+import torch
+import torchaudio
+
+assert importlib.util.find_spec("isaacsim") is not None
+assert importlib.util.find_spec("isaaclab") is not None
+assert importlib.util.find_spec("isaaclab_assets") is not None
+assert importlib.util.find_spec("isaaclab_newton") is not None
+assert importlib.util.find_spec("isaaclab_physx") is not None
+assert importlib.util.find_spec("isaaclab_tasks") is not None
+import isaaclab_tasks  # noqa: F401
+from isaaclab_tasks.utils import parse_env_cfg
+
+gymnasium.spec("Isaac-Velocity-Flat-G1-v0")
+parse_env_cfg("Isaac-Velocity-Flat-G1-v0", num_envs=1, device="cpu")
+print(
+    "MODAL_ISAACLAB_RUNTIME_OK",
+    f"gymnasium={{gymnasium.__version__}}",
+    f"imageio={{imageio.__version__}}",
+    f"numpy={{numpy.__version__}}",
+    f"torch={{torch.__version__}}",
+    f"torchaudio={{torchaudio.__version__}}",
+)
 PY
 """
     )
 
 
-def _faiss_openblas_repair_command() -> str:
+def _faiss_openblas_repair_command(env_name: str = ENV_NAME) -> str:
     specs = " ".join(shlex.quote(spec) for spec in FAISS_OPENBLAS_CONDA_SPECS)
+    quoted_env = shlex.quote(env_name)
     return f"""
-micromamba remove -y -n {shlex.quote(ENV_NAME)} faiss-cpu faiss libfaiss >/dev/null 2>&1 || true
+micromamba remove -y -n {quoted_env} faiss-cpu faiss libfaiss >/dev/null 2>&1 || true
 run_in_env python -m pip uninstall -y faiss-cpu faiss >/dev/null 2>&1 || true
-micromamba install -y -n {shlex.quote(ENV_NAME)} -c conda-forge {specs}
+micromamba install -y -n {quoted_env} -c conda-forge {specs}
 run_in_env python - <<'PY'
 import faiss
 
@@ -304,12 +367,13 @@ PY
 """
 
 
-def _env_helpers() -> str:
+def _env_helpers(env_name: str = ENV_NAME) -> str:
+    quoted_env = shlex.quote(env_name)
     return f"""
-ENV_PREFIX="$(micromamba run -n {shlex.quote(ENV_NAME)} python -c 'import sys; print(sys.prefix)')"
+ENV_PREFIX="$(micromamba run -n {quoted_env} python -c 'import sys; print(sys.prefix)')"
 run_in_env() {{
   local env_ld_library_path="${{ENV_PREFIX}}/lib${{LD_LIBRARY_PATH:+:${{LD_LIBRARY_PATH}}}}"
-  micromamba run -n {shlex.quote(ENV_NAME)} env "LD_LIBRARY_PATH=${{env_ld_library_path}}" "$@"
+  micromamba run -n {quoted_env} env "LD_LIBRARY_PATH=${{env_ld_library_path}}" "$@"
 }}
 pip_install() {{
   run_in_env python -m pip install --disable-pip-version-check "$@"
@@ -321,8 +385,18 @@ def _write_heredoc(path: str, content: str) -> str:
     return f"cat > {shlex.quote(path)} <<'EOF'\n{content.rstrip()}\nEOF"
 
 
-def _quoted_specs(specs: tuple[str, ...]) -> str:
-    return " ".join(shlex.quote(spec) for spec in specs)
+def _read_repo_file(relpath: str) -> str:
+    return (Path(__file__).resolve().parents[1] / relpath).read_text(encoding="utf-8")
+
+
+def _select_requirements_command(source_path: str, output_path: str, package_names: tuple[str, ...]) -> str:
+    pattern = "|".join(name.replace("-", "[-_]") for name in package_names)
+    return "\n".join(
+        [
+            f"grep -E '^({pattern})(\\[|[<>=!~; ]|$)' {shlex.quote(source_path)} > {shlex.quote(output_path)}",
+            f"test -s {shlex.quote(output_path)}",
+        ]
+    )
 
 
 def _bash(command: str) -> str:

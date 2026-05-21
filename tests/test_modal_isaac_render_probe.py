@@ -19,6 +19,9 @@ def test_modal_hyperscalees_base_image_uses_cacheable_layers() -> None:
     assert "add_local_dir" not in source
     assert "setup-hyperscalees.sh" not in source
     assert "run_hyperscalees_install" not in source
+    assert "requirements-isaaclab.txt" in source
+    assert source.index("conda_isaaclab_yml") < source.index("conda_hyperscalees_yml")
+    assert source.index("_validate_isaaclab_runtime_command") < source.index("_install_python_requirements_command")
 
     conda_command = base._create_conda_env_command("channels: []\ndependencies: []\n")
     assert "\n" not in conda_command

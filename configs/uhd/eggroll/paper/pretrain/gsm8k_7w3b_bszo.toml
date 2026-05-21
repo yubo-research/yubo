@@ -1,8 +1,7 @@
 # Run:
 # ./ops/exp_uhd.py local configs/uhd/eggroll/paper/pretrain/gsm8k_7w3b_bszo.toml
 #
-# UHD BSZO companion to:
-# configs/pretrain/hyperscalees/paper/gsm8k_7w3b_eggroll.toml
+# UHD BSZO companion to the HyperscaleES GSM8K paper config.
 
 [uhd]
 env_tag = "pretrain:hyperscalees:gsm8k-7w3b"

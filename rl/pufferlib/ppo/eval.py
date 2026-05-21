@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from common import video
+import video.batch as video
 from rl import eval_noise
 from rl.core import ppo_eval
 from rl.core.actor_state import (

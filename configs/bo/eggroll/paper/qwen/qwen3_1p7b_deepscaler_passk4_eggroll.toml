@@ -1,10 +1,10 @@
 # Run: ./ops/experiment.py local configs/bo/eggroll/paper/qwen/qwen3_1p7b_deepscaler_passk4_eggroll.toml
 # Paper: Appendix L / Figure 10 and Table 3, Qwen3-1.7B pass@k optimisation with K=4.
-# Runtime: uses the EggRoll pass@k external-objective adapter surface.
+# Runtime: uses the EggRoll DeepScaleR pass@k objective surface.
 
 [experiment]
 exp_dir = "runs/yubo_eggroll/paper/qwen/qwen3_1p7b_deepscaler_passk4_eggroll"
-env_tag = "passk:qwen3-1p7b-deepscaler-k4"
+env_tag = "llm:deepscaler:passk4"
 policy_tag = "qwen3-1p7b-lora-r1"
 population = 256
 num_epochs = 500

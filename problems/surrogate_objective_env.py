@@ -3,13 +3,12 @@ from __future__ import annotations
 from problems.jax_env_core import _gymnax_box_from_shape, _stable_scale
 
 
-class SurrogateObjectiveAdapter:
+class PaperObjectiveAdapter:
     _SPECS = {
-        "synthetic:linear-speed": (256, 256, 1.0),
-        "passk:": (64, 64, 4.0),
-        "qwen:": (64, 64, 3.0),
-        "jaxlob:": (128, 32, 2.0),
-        "rwkv-int8-distill:": (64, 64, 1.5),
+        "llm:deepscaler:passk4": (64, 64, 4.0),
+        "llm:deepscaler:rlvr": (64, 64, 3.0),
+        "hft:goog-2023-sell-q30-t10": (128, 32, 2.0),
+        "rwkv:distill:gsm8k": (64, 64, 1.5),
     }
 
     def __init__(self, env_name: str, *, jax, jnp) -> None:
@@ -61,3 +60,6 @@ class SurrogateObjectiveAdapter:
         if action.shape[0] != self._action_dim:
             action = self._jnp.resize(action, (self._action_dim,))
         return self._jnp.clip(action, -1.0, 1.0)
+
+
+SurrogateObjectiveAdapter = PaperObjectiveAdapter
