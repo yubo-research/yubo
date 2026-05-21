@@ -1,0 +1,3 @@
+kiss check
+ruff check .
+pytest -sv tests
