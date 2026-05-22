@@ -4,6 +4,6 @@ env_tag = "tlunar:fn"
 policy_tag = "turbo-lunar"
 opt_name = "turbo-1"
 num_arms = 10
-num_rounds = 100
+num_rounds = 10000
 num_reps = 1
 num_denoise = 1
