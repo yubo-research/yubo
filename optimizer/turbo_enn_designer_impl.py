@@ -42,6 +42,7 @@ class TurboENNDesigner:
         candidate_rv: str | None = None,
         num_metrics: int | None = None,
         use_python: bool = False,
+        index_driver: str | None = None,
     ):
         self._policy = policy
         if turbo_mode not in ("turbo-enn", "turbo-zero", "turbo-one", "lhd-only"):
@@ -61,6 +62,7 @@ class TurboENNDesigner:
         self._candidate_rv = candidate_rv
         self._num_metrics = num_metrics
         self._use_python = use_python
+        self._index_driver = index_driver
 
         self._turbo = None
         self._num_arms = None
@@ -90,6 +92,17 @@ class TurboENNDesigner:
             return AcqType(self._acq_type.lower())
         except ValueError as exc:
             raise ValueError(f"Invalid acq_type: {self._acq_type}") from exc
+
+    def _resolve_index_driver(self):
+        ENNIndexDriver = _im("enn.turbo.config.enn_index_driver").ENNIndexDriver
+        if self._index_driver is None:
+            return ENNIndexDriver.FLAT
+        v = self._index_driver.lower()
+        if v in ("flat", "exact"):
+            return ENNIndexDriver.FLAT
+        if v == "hnsw":
+            return ENNIndexDriver.HNSW
+        raise ValueError(f"Invalid index_driver: {self._index_driver}")
 
     def _make_trust_region(self, num_metrics: int | None):
         tr = _im("enn.turbo.config.trust_region")
@@ -129,6 +142,7 @@ class TurboENNDesigner:
                     num_fit_samples=self._num_fit_samples,
                     num_fit_candidates=self._num_fit_candidates,
                 ),
+                index_driver=self._resolve_index_driver(),
             )
             if num_candidates is None:
                 candidates = CandidateGenConfig(candidate_rv=candidate_rv, raasp_driver=RAASPDriver.FAST)
@@ -143,14 +157,12 @@ class TurboENNDesigner:
                 trust_region=trust_region,
                 candidates=candidates,
                 num_init=num_init,
-                trailing_obs=self._num_keep,
                 acq_type=acq_type,
             )
         if self._turbo_mode == "turbo-zero":
             return factory.turbo_zero_config(
                 num_candidates=num_candidates,
                 num_init=num_init,
-                trailing_obs=self._num_keep,
                 trust_region=trust_region,
                 candidate_rv=candidate_rv,
             )
@@ -159,7 +171,6 @@ class TurboENNDesigner:
             return factory.turbo_one_config(
                 num_candidates=num_candidates,
                 num_init=num_init,
-                trailing_obs=self._num_keep,
                 trust_region=trust_region,
                 candidate_rv=candidate_rv,
                 acq_type=acq_type,
@@ -168,7 +179,6 @@ class TurboENNDesigner:
             return factory.lhd_only_config(
                 num_candidates=num_candidates,
                 num_init=num_init,
-                trailing_obs=self._num_keep,
                 trust_region=trust_region,
                 candidate_rv=candidate_rv,
             )

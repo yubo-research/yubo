@@ -11,6 +11,7 @@ from .designer_registry_option_handlers import (
     _d_ts_sweep,
     _d_turbo_enn_fit,
     _d_turbo_enn_fit_ucb,
+    _d_turbo_enn_p,
     _d_turbo_enn_sweep,
 )
 from .designer_types import DesignerDef, DesignerOptionSpec
@@ -92,6 +93,14 @@ _DESIGNER_DEFS: list[DesignerDef] = [
                 description="Ensemble size for TuRBO-ENN sweep.",
                 example_suffix="k=10",
             ),
+            DesignerOptionSpec(
+                name="idx",
+                required=False,
+                value_type="str",
+                description="ENN index driver: flat (default) or hnsw.",
+                example_suffix="idx=hnsw",
+                allowed_values=("flat", "hnsw", "exact"),
+            ),
         ),
     ),
     DesignerDef(
@@ -105,6 +114,14 @@ _DESIGNER_DEFS: list[DesignerDef] = [
                 description="Acquisition type for fit-time candidate generation.",
                 example_suffix="acq_type=ucb",
                 allowed_values=("pareto", "thompson", "ucb"),
+            ),
+            DesignerOptionSpec(
+                name="idx",
+                required=False,
+                value_type="str",
+                description="ENN index driver: flat (default) or hnsw.",
+                example_suffix="idx=hnsw",
+                allowed_values=("flat", "hnsw", "exact"),
             ),
         ),
     ),
@@ -120,6 +137,14 @@ _DESIGNER_DEFS: list[DesignerDef] = [
                 example_suffix="acq_type=ucb",
                 allowed_values=("pareto", "thompson", "ucb"),
             ),
+            DesignerOptionSpec(
+                name="idx",
+                required=False,
+                value_type="str",
+                description="ENN index driver: flat (default) or hnsw.",
+                example_suffix="idx=hnsw",
+                allowed_values=("flat", "hnsw", "exact"),
+            ),
         ),
     ),
     DesignerDef(
@@ -132,6 +157,20 @@ _DESIGNER_DEFS: list[DesignerDef] = [
                 value_type="int",
                 description="Number of accept/reject steps.",
                 example_suffix="num_acc_rej=10",
+            ),
+        ),
+    ),
+    DesignerDef(
+        name="turbo-enn-p",
+        builder=_d_turbo_enn_p,
+        option_specs=(
+            DesignerOptionSpec(
+                name="idx",
+                required=False,
+                value_type="str",
+                description="ENN index driver: flat (default) or hnsw.",
+                example_suffix="idx=hnsw",
+                allowed_values=("flat", "hnsw", "exact"),
             ),
         ),
     ),
@@ -152,6 +191,14 @@ _DESIGNER_DEFS: list[DesignerDef] = [
                 value_type="int",
                 description="ENN ensemble size k (default 10).",
                 example_suffix="k=20",
+            ),
+            DesignerOptionSpec(
+                name="idx",
+                required=False,
+                value_type="str",
+                description="ENN index driver: flat (default) or hnsw.",
+                example_suffix="idx=hnsw",
+                allowed_values=("flat", "hnsw", "exact"),
             ),
         ),
     ),

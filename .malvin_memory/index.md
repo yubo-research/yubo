@@ -4,6 +4,7 @@
 - `yubo_kiss_and_tests.md` — kiss limits, pytest layout, Puffer/SAC test-stub targets (includes session tail).
 - `yubo_ppo_bo_designers.md` — BO `ppo-ac` / `ppo-pg` designers, merge/normalize pitfalls, registry layout.
 - `yubo_fitting_time_benchmark.md` — `enn_hnsw`, synthetic benchmark helpers, modal rep JSON meta, lazy exports, incremental ENN `add()` / `fit_ind` timing, `enn_fit` warm-start, `draw_benchmark_synthetic_xy` RNG order.
+- `yubo_turbo_enn_designers.md` — turbo-enn registry layout, HNSW `idx`/`index_driver`, `DesignerDef` vs simple table, kiss import-cycle constraint.
 
 ## Session learnings (tidy / quality gates)
 
@@ -29,7 +30,7 @@ CONFIDENCE: 3
 
 TRIGGER: malvin review scope, review_prep, LGTM
 ADVICE: Post-impl malvin review scope is plan fidelity + quality-gate blockers only. Strip plan-consistent design, test gaps, duplication, and unconfirmed risks from `review_prep.md` before `review.md`. Write exactly `LGTM` if nothing remains; add failing regression tests only for confirmed in-scope bugs.
-CONFIDENCE: 0
+CONFIDENCE: 1
 
 TRIGGER: Puffer SAC build_env_setup stub
 ADVICE: `rl.pufferlib.sac.env_utils.build_env_setup` delegates to `rl.pufferlib.offpolicy.env_utils.build_env_setup`, which calls `build_continuous_gym_env_setup` from the name bound in `rl.pufferlib.offpolicy.env_utils` (from `rl.core.env_setup`). Patch `rl.pufferlib.offpolicy.env_utils.build_continuous_gym_env_setup`, not `rl.pufferlib.sac.env_utils.build_continuous_gym_env_setup`.

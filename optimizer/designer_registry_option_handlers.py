@@ -1,9 +1,10 @@
-from .designer_errors import NoSuchDesignerError
 from .designer_registry_builders import (
     _build_bt_acq,
+    _index_driver_from_opts,
     _load_symbol,
     _mtv,
     _optional_int,
+    _reject_unknown_opts,
     _require_int,
     _require_str_in,
     _turbo_enn,
@@ -72,7 +73,9 @@ def _d_sts_sweep(ctx: _SimpleContext, opts: dict):
 
 
 def _d_turbo_enn_sweep(ctx: _SimpleContext, opts: dict):
+    _reject_unknown_opts("turbo-enn-sweep", opts, {"k", "idx"})
     k = _require_int(opts, "k", example="turbo-enn-sweep/k=10")
+    index_driver = _index_driver_from_opts(opts, example="turbo-enn-sweep/k=10/idx=hnsw")
     return _turbo_enn(
         ctx,
         turbo_mode="turbo-enn",
@@ -81,16 +84,34 @@ def _d_turbo_enn_sweep(ctx: _SimpleContext, opts: dict):
         num_fit_samples=None,
         num_fit_candidates=None,
         acq_type="pareto",
+        index_driver=index_driver,
+    )
+
+
+def _d_turbo_enn_p(ctx: _SimpleContext, opts: dict):
+    _reject_unknown_opts("turbo-enn-p", opts, {"idx"})
+    index_driver = _index_driver_from_opts(opts, example="turbo-enn-p/idx=hnsw")
+    return _turbo_enn(
+        ctx,
+        turbo_mode="turbo-enn",
+        k=10,
+        num_keep=ctx.num_keep_val,
+        num_fit_samples=None,
+        num_fit_candidates=None,
+        acq_type="pareto",
+        index_driver=index_driver,
     )
 
 
 def _d_turbo_enn_fit(ctx: _SimpleContext, opts: dict):
+    _reject_unknown_opts("turbo-enn-fit", opts, {"acq_type", "idx"})
     acq_type = _require_str_in(
         opts,
         "acq_type",
         {"pareto", "thompson", "ucb"},
         example="turbo-enn-fit/acq_type=ucb",
     )
+    index_driver = _index_driver_from_opts(opts, example="turbo-enn-fit/acq_type=ucb/idx=hnsw")
     return _turbo_enn(
         ctx,
         turbo_mode="turbo-enn",
@@ -100,6 +121,7 @@ def _d_turbo_enn_fit(ctx: _SimpleContext, opts: dict):
         num_fit_candidates=100,
         acq_type=acq_type,
         tr_type=None,
+        index_driver=index_driver,
     )
 
 
@@ -124,12 +146,14 @@ def _build_turbo_enn_f(ctx: _SimpleContext, *, acq_type: str):
 
 
 def _d_morbo_enn_fit(ctx: _SimpleContext, opts: dict):
+    _reject_unknown_opts("morbo-enn-fit", opts, {"acq_type", "idx"})
     acq_type = _require_str_in(
         opts,
         "acq_type",
         {"pareto", "thompson", "ucb"},
         example="morbo-enn-fit/acq_type=ucb",
     )
+    index_driver = _index_driver_from_opts(opts, example="morbo-enn-fit/acq_type=ucb/idx=hnsw")
     return _turbo_enn(
         ctx,
         turbo_mode="turbo-enn",
@@ -139,6 +163,7 @@ def _d_morbo_enn_fit(ctx: _SimpleContext, opts: dict):
         num_fit_candidates=100 * ctx.num_arms,
         acq_type=acq_type,
         tr_type="morbo",
+        index_driver=index_driver,
     )
 
 
@@ -157,13 +182,10 @@ def _d_sts_ar(ctx: _SimpleContext, opts: dict):
 
 
 def _d_turbo_enn_fit_ucb(ctx: _SimpleContext, opts: dict):
-    allowed = {"nfs", "k"}
-    unknown = set(opts) - allowed
-    if unknown:
-        u = ", ".join(sorted(unknown))
-        raise NoSuchDesignerError(f"Designer 'turbo-enn-fit-ucb' does not support option(s): {u}. Use nfs and/or k. Example: 'turbo-enn-fit-ucb/nfs=100/k=10'.")
+    _reject_unknown_opts("turbo-enn-fit-ucb", opts, {"nfs", "k", "idx"})
     nfs = _optional_int(opts, "nfs", default=100, example="turbo-enn-fit-ucb/nfs=50")
     k = _optional_int(opts, "k", default=10, example="turbo-enn-fit-ucb/k=20")
+    index_driver = _index_driver_from_opts(opts, example="turbo-enn-fit-ucb/idx=hnsw/nfs=100/k=10")
     return _turbo_enn(
         ctx,
         turbo_mode="turbo-enn",
@@ -172,4 +194,5 @@ def _d_turbo_enn_fit_ucb(ctx: _SimpleContext, opts: dict):
         num_fit_samples=nfs,
         num_fit_candidates=100,
         acq_type="ucb",
+        index_driver=index_driver,
     )
