@@ -98,6 +98,7 @@ def mk_hyperscalees_base_image(modal, project_root: Path):
         .run_commands(_install_python_requirements_command(hyperscalees_requirements, hyperscalees_no_deps_requirements))
         .run_commands(_install_source_extras_command())
         .run_commands(_finalize_runtime_compat_command(hyperscalees_requirements, hyperscalees_no_deps_requirements))
+        .run_commands("micromamba run -n yubo-hyperscalees pip install tiktoken rustbpe kernels 'huggingface-hub<1.0'")
     )
     return image
 

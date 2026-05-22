@@ -1,0 +1,24 @@
+# Run:
+# ./ops/exp_uhd.py local configs/uhd/nanochat/synthetic_d12_mezo.toml
+#
+# UHD MeZO experiment for nanochat (Vendored).
+
+[uhd]
+env_tag = "nanochat:synthetic"
+policy_tag = "nanochat:d12"
+total_timesteps = 1000
+num_reps = 1
+optimizer = "mezo"
+lr = 1e-4
+sigma = 0.01
+perturb = "dense"
+steps_per_episode = 1
+num_envs = 4
+deterministic_policy = false
+problem_seed = 0
+noise_seed_0 = 0
+seed_offset = 0
+log_interval = 1
+
+text_search_dim = 1024
+max_tokens = 128

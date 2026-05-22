@@ -24,7 +24,7 @@ from optimizer.uhd_enn import (
     new_be_state,
     predict_real_ucb,
 )
-from problems.uhd_obj import UHDVectorObjective
+from problems.uhd_obj_types import UHDVectorObjective
 
 
 @dataclass

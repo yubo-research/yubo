@@ -1,56 +1,13 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Protocol
-
-import numpy as np
-
 from ops.uhd_config import UHDConfig
-
-
-class UHDVectorObjective(Protocol):
-    @property
-    def dim(self) -> int: ...
-
-    @property
-    def x0(self) -> np.ndarray: ...
-
-    @property
-    def steps_per_episode(self) -> int: ...
-
-    @property
-    def num_envs(self) -> int: ...
-
-    def make_policy(self, x: np.ndarray): ...
-
-    def evaluate(self, x: np.ndarray, *, seed: int) -> tuple[float, float]: ...
-
-    def evaluate_many(self, x_batch: np.ndarray, *, seed: int) -> tuple[np.ndarray, np.ndarray]: ...
-
-    def configure_embedding(self, num_probes: int) -> None: ...
-
-    def embed_many(self, x_batch: np.ndarray) -> np.ndarray: ...
-
-    def embed(self, x: np.ndarray) -> np.ndarray: ...
-
-    def sample_noise(
-        self,
-        *,
-        seed: int,
-        num_dim_target: float | None = None,
-        num_module_target: float | None = None,
-    ) -> np.ndarray: ...
-
-
-@dataclass(frozen=True)
-class BuiltUHDVectorObjective:
-    objective: UHDVectorObjective
-    source: str
+from problems.uhd_obj_types import BuiltUHDVectorObjective
 
 
 def supports_uhd_vector_objective(env_tag: str) -> bool:
     from problems.isaaclab_env_adapters import is_isaaclab_env_tag
     from problems.jax_env_core import supports_jax_objective_tag
+    from problems.nanochat_obj import is_nanochat_env
     from problems.pre_obj import is_hyperscalees_pretrain_env, is_nanoegg_pretrain_env
     from problems.text_obj import is_text_env
 
@@ -58,6 +15,7 @@ def supports_uhd_vector_objective(env_tag: str) -> bool:
         str(env_tag).startswith("rwkv:distill:")
         or supports_jax_objective_tag(env_tag)
         or is_isaaclab_env_tag(env_tag)
+        or is_nanochat_env(env_tag)
         or is_hyperscalees_pretrain_env(env_tag)
         or is_nanoegg_pretrain_env(env_tag)
         or is_text_env(env_tag)
@@ -65,6 +23,7 @@ def supports_uhd_vector_objective(env_tag: str) -> bool:
 
 
 def build_uhd_vector_objective(cfg: UHDConfig, *, embed_num_probes: int = 0) -> BuiltUHDVectorObjective:
+    from problems.nanochat_obj import NanochatUHDVectorObjective
     from problems.pre_obj import (
         HyperscaleESLLMVectorObjective,
         NanoEggPretrainVectorObjective,
@@ -74,6 +33,7 @@ def build_uhd_vector_objective(cfg: UHDConfig, *, embed_num_probes: int = 0) -> 
 
     env_tag = str(cfg.env_tag)
     builders = (
+        ("nanochat", lambda: _build_nanochat_objective(cfg, embed_num_probes, NanochatUHDVectorObjective)),
         ("rwkv-distill", lambda: _build_rwkv_distill_objective(cfg, embed_num_probes, RWKVDistillObjective)),
         ("text", lambda: _build_text_objective(cfg, embed_num_probes, TextObjective)),
         ("nanoegg-pretrain", lambda: _build_nanoegg_objective(cfg, embed_num_probes, NanoEggPretrainVectorObjective)),
@@ -87,6 +47,18 @@ def build_uhd_vector_objective(cfg: UHDConfig, *, embed_num_probes: int = 0) -> 
             return result
 
     raise ValueError(f"Unsupported UHD vector objective env_tag: {env_tag!r}.")
+
+
+def _build_nanochat_objective(cfg: UHDConfig, embed_num_probes: int, cls):
+    from problems.nanochat_obj import is_nanochat_env
+
+    env_tag = str(cfg.env_tag)
+    if not is_nanochat_env(env_tag):
+        return None
+    objective = cls(cfg)
+    if int(embed_num_probes) > 0:
+        objective.configure_embedding(int(embed_num_probes))
+    return BuiltUHDVectorObjective(objective=objective, source="nanochat")
 
 
 def _build_rwkv_distill_objective(cfg: UHDConfig, embed_num_probes: int, cls):
