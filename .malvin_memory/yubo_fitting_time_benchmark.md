@@ -70,7 +70,7 @@ CONFIDENCE: 2
 
 TRIGGER: full optimization modal, 5h worker, batch submitter
 ADVICE: Modal `full_optimization` uses `enn_full_optimization_batch_worker` (5h) not the 12h `enn_incremental_batch_worker`; `enn_incremental_batch_submitter` in `modal_enn_incremental_batches_impl.py` picks worker from `experiment_type_from_tag(tag)`. Worker unit tests monkeypatch `experiments.modal_enn_incremental_batch_worker`, not impl.
-CONFIDENCE: 0
+CONFIDENCE: 1
 
 TRIGGER: full_opt Q3 Q5, problem_seed rep_index
 ADVICE: `benchmark_enn_full_optimization_proposal_timing` enforces Q3 (`_validate_problem_seed_for_rep_index`: `problem_seed == 18 + rep_index`) and Q5 (`_validate_q5_hyperparameters`: arms/denoise/policy fixed). Submit warns `--problem-seed` and `-d` are ignored for `full_optimization`; seeds come from `problem_seed_from_rep_index(rep_index)` in `iter_full_opt_jobs`.

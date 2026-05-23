@@ -4,6 +4,7 @@
 - `yubo_kiss_and_tests.md` — kiss limits, pytest layout, Puffer/SAC test-stub targets (includes session tail).
 - `yubo_ppo_bo_designers.md` — BO `ppo-ac` / `ppo-pg` designers, merge/normalize pitfalls, registry layout.
 - `yubo_fitting_time_benchmark.md` — `enn_hnsw`, synthetic benchmark helpers, modal rep JSON meta, lazy exports, incremental ENN `add()` / `fit_ind` / `full_optimization` timing, `enn_fit` warm-start, `draw_benchmark_synthetic_xy` RNG order.
+- `yubo_modal_enn.md` — `enn_incremental_batches deploy`, `modal_image.mk_image`, sibling `../enn`, sccache/Cargo wrapper vs Modal, testmon vs full pytest.
 - `yubo_turbo_enn_designers.md` — turbo-enn registry layout, HNSW `idx`/`index_driver`, `DesignerDef` vs simple table, kiss import-cycle constraint.
 
 ## Session learnings (tidy / quality gates)
