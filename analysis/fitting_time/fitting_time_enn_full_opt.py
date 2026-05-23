@@ -7,8 +7,8 @@ from dataclasses import dataclass
 from typing import Sequence
 
 from analysis.fitting_time.fitting_time_enn_incremental import (
+    ENN_INCREMENTAL_CHECKPOINT_NS,
     EnnIncrementalIndexDriver,
-    enn_incremental_checkpoint_ns,
 )
 from common.experiment_seeds import (
     global_seed_for_run,
@@ -19,12 +19,18 @@ from common.seed_all import seed_all
 from optimizer.optimizer import Optimizer
 from problems.problem import build_problem
 
-FULL_OPT_NUM_ROUNDS = 1_000_000
+FULL_OPT_MAX_N = 100_000
+FULL_OPT_NUM_ROUNDS = FULL_OPT_MAX_N
+FULL_OPT_CHECKPOINT_NS: tuple[int, ...] = tuple(n for n in ENN_INCREMENTAL_CHECKPOINT_NS if n <= FULL_OPT_MAX_N)
 FULL_OPT_NUM_ARMS = 1
 FULL_OPT_NUM_DENOISE = 1
 FULL_OPT_POLICY_TAG = "pure-function"
 _OPT_NAME_FLAT = "turbo-enn-fit-ucb"
 _OPT_NAME_HNSW = "turbo-enn-fit-ucb/idx=hnsw"
+
+
+def enn_full_opt_checkpoint_ns() -> tuple[int, ...]:
+    return FULL_OPT_CHECKPOINT_NS
 
 
 @dataclass(frozen=True)
@@ -107,6 +113,32 @@ def _validate_checkpoints(ckpts: tuple[int, ...]) -> None:
         prev_n = int(n_chk)
 
 
+def _validate_full_opt_checkpoints(ckpts: tuple[int, ...]) -> None:
+    _validate_checkpoints(ckpts)
+    for n_chk in ckpts:
+        n_i = int(n_chk)
+        if n_i > FULL_OPT_MAX_N:
+            raise ValueError(f"full_optimization checkpoint N must be <= {FULL_OPT_MAX_N}, got {n_i}")
+
+
+def _parse_full_opt_checkpoint_csv(raw: str) -> tuple[int, ...]:
+    parts = [part.strip() for part in raw.split(",") if part.strip()]
+    if not parts:
+        raise ValueError("checkpoints must be a comma-separated list of ints")
+    try:
+        ckpts = tuple(int(part) for part in parts)
+    except ValueError as exc:
+        raise ValueError("checkpoints must be a comma-separated list of ints") from exc
+    _validate_full_opt_checkpoints(ckpts)
+    return ckpts
+
+
+def resolve_full_opt_checkpoints(raw: str | None) -> tuple[int, ...]:
+    if raw is None or not str(raw).strip():
+        return enn_full_opt_checkpoint_ns()
+    return _parse_full_opt_checkpoint_csv(str(raw))
+
+
 def _snapshots_from_iter_counts(
     i_iter: int,
     cum_dt_proposing: float,
@@ -137,8 +169,8 @@ def benchmark_enn_full_optimization_proposal_timing(
 ) -> EnnFullOptTimingResult:
     from common.collector import Collector
 
-    ckpts = tuple(checkpoints) if checkpoints is not None else enn_incremental_checkpoint_ns()
-    _validate_checkpoints(ckpts)
+    ckpts = tuple(checkpoints) if checkpoints is not None else enn_full_opt_checkpoint_ns()
+    _validate_full_opt_checkpoints(ckpts)
     ri = int(rep_index)
     ps = _validate_problem_seed_for_rep_index(problem_seed, ri)
     nr = int(num_rounds)
@@ -228,7 +260,7 @@ def collect_full_opt_snapshots_from_optimizer(
     max_iterations: int,
 ) -> tuple[tuple[int, ...], tuple[float, ...], str]:
     ckpts = tuple(int(n) for n in checkpoints)
-    _validate_checkpoints(ckpts)
+    _validate_full_opt_checkpoints(ckpts)
     _wall_clock_stop_requested[0] = False
     nr = int(max_iterations)
     if nr < 1:

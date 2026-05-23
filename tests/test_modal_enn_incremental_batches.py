@@ -346,7 +346,7 @@ def test_full_optimization_worker_writes_result(monkeypatch):
             index_driver=index_driver,
             problem_seed=problem_seed,
             rep_index=rep_index,
-            num_rounds=1_000_000,
+            num_rounds=100_000,
             stop_reason="completed",
         )
 

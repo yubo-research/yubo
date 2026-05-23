@@ -53,8 +53,20 @@ ADVICE: Fifth `enn_incremental_batches` exp type `full_optimization`: core `anal
 CONFIDENCE: 0
 
 TRIGGER: full opt checkpoint, proposal_elapsed, _cum_dt_proposing
-ADVICE: After each `Optimizer.iterate()`, when `_i_iter == N` for N in `enn_incremental_checkpoint_ns()`, append `(N, Optimizer._cum_dt_proposing)`—same quantity as ITER log `proposal_elapsed`. Plan Q1 uses iteration index, not `env_steps_total`; Q5 fixed arms/denoise/policy so N iterations equals N env steps.
-CONFIDENCE: 0
+ADVICE: After each `Optimizer.iterate()`, when `_i_iter == N`, append `(N, Optimizer._cum_dt_proposing)`. Full-opt defaults: `enn_full_opt_checkpoint_ns()` through `FULL_OPT_MAX_N=100_000`; other incremental exp types use `enn_incremental_checkpoint_ns()` / `enn_batch_checkpoint_ns()`. Snapshot on iteration index (Q1); Q5 fixed arms/denoise/policy.
+CONFIDENCE: 3
+
+TRIGGER: full_opt 100k, resolve_full_opt_checkpoints
+ADVICE: Cap `full_optimization` only: `FULL_OPT_NUM_ROUNDS`, `enn_full_opt_checkpoint_ns()`, `_validate_full_opt_checkpoints`, and `resolve_full_opt_checkpoints` for benchmark + `local-full-opt`. Never use `resolve_checkpoints` / `enn_batch_checkpoint_ns()` on full-opt paths (those include 300k/1M). Do not mutate global `ENN_INCREMENTAL_CHECKPOINT_NS`.
+CONFIDENCE: 3
+
+TRIGGER: full_opt validation test, num_rounds
+ADVICE: Tests that benchmark rejects checkpoint N > `FULL_OPT_MAX_N` should use `checkpoints=(FULL_OPT_MAX_N + 1,)` and `num_rounds=1`, not `num_rounds=FULL_OPT_MAX_N` (~100k slow BO iterations).
+CONFIDENCE: 3
+
+TRIGGER: full_opt legacy JSON, 1M grid
+ADVICE: After lowering full-opt from 1M to 100k, existing JSON with the old 13-checkpoint `N` list fails `full_opt_result_json_complete(..., enn_full_opt_checkpoint_ns())`; `iter_full_opt_jobs` re-queues those jobs (expected).
+CONFIDENCE: 2
 
 TRIGGER: full optimization modal, 5h worker, batch submitter
 ADVICE: Modal `full_optimization` uses `enn_full_optimization_batch_worker` (5h) not the 12h `enn_incremental_batch_worker`; `enn_incremental_batch_submitter` in `modal_enn_incremental_batches_impl.py` picks worker from `experiment_type_from_tag(tag)`. Worker unit tests monkeypatch `experiments.modal_enn_incremental_batch_worker`, not impl.

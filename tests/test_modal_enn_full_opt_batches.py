@@ -65,7 +65,7 @@ def test_full_opt_result_json_complete_roundtrip(tmp_path: Path):
             "num_reps": 10,
             "num_arms": 1,
             "num_denoise": 1,
-            "num_rounds": 1_000_000,
+            "num_rounds": 100_000,
             "stop_reason": "completed",
         },
     }

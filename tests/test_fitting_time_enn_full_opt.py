@@ -7,10 +7,12 @@ from analysis.fitting_time import (
     benchmark_enn_full_optimization_proposal_timing,
 )
 from analysis.fitting_time.fitting_time_enn_full_opt import (
+    FULL_OPT_NUM_ROUNDS,
     _finalize_stop_reason,
     _snapshots_from_iter_counts,
     _wall_clock_stop_requested,
     collect_full_opt_snapshots_from_optimizer,
+    enn_full_opt_checkpoint_ns,
     opt_name_for_index_driver,
 )
 from analysis.fitting_time.fitting_time_enn_incremental import EnnIncrementalIndexDriver
@@ -20,6 +22,14 @@ def test_benchmark_enn_full_optimization_importable_from_package():
     from analysis.fitting_time import benchmark_enn_full_optimization_proposal_timing as exported
 
     assert exported is benchmark_enn_full_optimization_proposal_timing
+
+
+def test_enn_full_opt_checkpoint_ns_caps_at_100k():
+    ns = enn_full_opt_checkpoint_ns()
+    assert ns[-1] == 100_000
+    assert 300_000 not in ns
+    assert 1_000_000 not in ns
+    assert FULL_OPT_NUM_ROUNDS == 100_000
 
 
 def test_opt_name_for_index_driver():
@@ -85,6 +95,19 @@ def test_benchmark_stop_reason_num_rounds_when_checkpoints_incomplete():
     )
     assert result.n == (1,)
     assert result.stop_reason == "num_rounds"
+
+
+def test_benchmark_rejects_checkpoints_above_full_opt_max_n():
+    from analysis.fitting_time.fitting_time_enn_full_opt import FULL_OPT_MAX_N
+
+    with pytest.raises(ValueError, match="checkpoint"):
+        benchmark_enn_full_optimization_proposal_timing(
+            env_tag="f:ackley-3d",
+            problem_seed=18,
+            rep_index=0,
+            checkpoints=(FULL_OPT_MAX_N + 1,),
+            num_rounds=1,
+        )
 
 
 def test_snapshots_from_iter_counts():

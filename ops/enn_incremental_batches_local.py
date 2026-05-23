@@ -389,13 +389,13 @@ def register_local_commands(
                 ("--checkpoints", "checkpoint_csv"),
                 default="",
                 show_default=True,
-                help="Comma-separated checkpoint Ns; default uses the batch checkpoint grid.",
+                help="Comma-separated checkpoint Ns; default uses the full-opt grid (through 100k).",
             ),
             click.Option(
                 ("--num-rounds", "num_rounds"),
                 type=int,
                 default=None,
-                help="BO iteration cap; default is 1_000_000.",
+                help="BO iteration cap; default is 100_000.",
             ),
             click.Option(("--force/--no-force", "force"), default=False, show_default=True),
         ],
@@ -421,6 +421,7 @@ def register_local_commands(
             FULL_OPT_NUM_ROUNDS,
             benchmark_enn_full_optimization_proposal_timing,
             opt_name_for_index_driver,
+            resolve_full_opt_checkpoints,
         )
         from analysis.fitting_time.fitting_time_enn_incremental import EnnIncrementalIndexDriver
         from common.experiment_seeds import problem_seed_from_rep_index
@@ -428,7 +429,11 @@ def register_local_commands(
         from experiments import modal_enn_full_opt_batches_json as full_opt_json
 
         driver = EnnIncrementalIndexDriver(index_driver.lower())
-        checkpoints = resolve_checkpoints(checkpoint_csv or None)
+        rounds = FULL_OPT_NUM_ROUNDS if num_rounds is None else int(num_rounds)
+        try:
+            checkpoints = resolve_full_opt_checkpoints(checkpoint_csv or None)
+        except ValueError as exc:
+            raise click.BadParameter(str(exc)) from exc
         ps = problem_seed_from_rep_index(rep_index)
         opt_name = opt_name_for_index_driver(driver)
         dest = full_opt_batches.full_opt_result_json_dest(
@@ -456,7 +461,6 @@ def register_local_commands(
             click.echo(f"skip existing {dest.resolve()}")
             return
 
-        rounds = FULL_OPT_NUM_ROUNDS if num_rounds is None else int(num_rounds)
         click.echo(
             f"running full-opt ENN env_tag={env_tag} problem_seed={ps} rep_index={rep_index} "
             f"index_driver={driver.value} checkpoints={checkpoints or 'default'} num_rounds={rounds}",

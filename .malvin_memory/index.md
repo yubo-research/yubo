@@ -30,7 +30,7 @@ CONFIDENCE: 3
 
 TRIGGER: malvin review scope, review_prep, LGTM
 ADVICE: Post-impl malvin review scope is plan fidelity + quality-gate blockers only. Strip plan-consistent design, test gaps, duplication, pre-existing Modal batch patterns, and unconfirmed risks from `review_prep.md` before `review.md`. Write exactly `LGTM` if nothing remains; add failing regression tests only for confirmed in-scope bugs (e.g. plan Q5/Q3 validation), not for local-debug knobs or test-coverage gaps.
-CONFIDENCE: 2
+CONFIDENCE: 3
 
 TRIGGER: Puffer SAC build_env_setup stub
 ADVICE: `rl.pufferlib.sac.env_utils.build_env_setup` delegates to `rl.pufferlib.offpolicy.env_utils.build_env_setup`, which calls `build_continuous_gym_env_setup` from the name bound in `rl.pufferlib.offpolicy.env_utils` (from `rl.core.env_setup`). Patch `rl.pufferlib.offpolicy.env_utils.build_continuous_gym_env_setup`, not `rl.pufferlib.sac.env_utils.build_continuous_gym_env_setup`.

@@ -10,6 +10,7 @@ from analysis.fitting_time.fitting_time_enn_full_opt import (
     FULL_OPT_NUM_DENOISE,
     FULL_OPT_POLICY_TAG,
     EnnFullOptTimingResult,
+    enn_full_opt_checkpoint_ns,
     opt_name_for_index_driver,
 )
 from analysis.fitting_time.fitting_time_enn_incremental import EnnIncrementalIndexDriver
@@ -17,7 +18,6 @@ from analysis.sweep_plots_style import DEFAULT_SYNTH_10D_ENV_TAGS
 from common.experiment_seeds import problem_seed_from_rep_index
 from experiments import modal_enn_full_opt_batches_json as _full_opt_json
 from experiments.enn_batch_job_params import (
-    enn_batch_checkpoint_ns,
     normalize_index_driver,
     validate_enn_batch_scalars,
 )
@@ -87,7 +87,7 @@ def iter_full_opt_jobs(
     env_tags: tuple[str, ...] = DEFAULT_SYNTH_10D_ENV_TAGS,
 ) -> Iterable[tuple[str, tuple[str, int, int, int, str]]]:
     _, nr = validate_enn_batch_scalars(num_reps=num_reps, d=10)
-    chk = enn_batch_checkpoint_ns()
+    chk = enn_full_opt_checkpoint_ns()
     for env_tag in env_tags:
         for drv in iter_index_drivers(index_driver):
             opt_name = opt_name_for_index_driver(drv)
