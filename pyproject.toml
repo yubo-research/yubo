@@ -1,2 +1,4 @@
 [tool.pytest.ini_options]
 # Intentionally minimal: ruff lives in admin/ruff.toml (see .pre-commit-config.yaml).
+testpaths = ["tests"]
+addopts = "--testmon"
