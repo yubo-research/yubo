@@ -47,3 +47,27 @@ CONFIDENCE: 3
 TRIGGER: malvin review blocking
 ADVICE: Read `_malvin/<run_id>/review.md` before closing; fix export gaps, slug/meta mismatches, doc drift; run `kiss check`, `ruff check .`, `PYTHONPATH=. pytest -sv tests`; write exactly `LGTM` to `review.md` only when all gates pass.
 CONFIDENCE: 3
+
+TRIGGER: full_optimization, full_opt, enn full opt
+ADVICE: Fifth `enn_incremental_batches` exp type `full_optimization`: core `analysis/fitting_time/fitting_time_enn_full_opt.py`; batch keys/JSON in `experiments/modal_enn_full_opt_batches.py` + `modal_enn_full_opt_batches_json.py`. Jobs are `(env_tag, problem_seed, rep_index, num_reps, index_driver)`—not `(d, function_name, ...)`. CLI `local-full-opt ENV_TAG REP INDEX_DRIVER`. Default grid: four `DEFAULT_SYNTH_10D_ENV_TAGS` × flat/hnsw × `num_reps` (80 jobs when `index_driver=all`, `num_reps=10`).
+CONFIDENCE: 0
+
+TRIGGER: full opt checkpoint, proposal_elapsed, _cum_dt_proposing
+ADVICE: After each `Optimizer.iterate()`, when `_i_iter == N` for N in `enn_incremental_checkpoint_ns()`, append `(N, Optimizer._cum_dt_proposing)`—same quantity as ITER log `proposal_elapsed`. Plan Q1 uses iteration index, not `env_steps_total`; Q5 fixed arms/denoise/policy so N iterations equals N env steps.
+CONFIDENCE: 0
+
+TRIGGER: full optimization modal, 5h worker, batch submitter
+ADVICE: Modal `full_optimization` uses `enn_full_optimization_batch_worker` (5h) not the 12h `enn_incremental_batch_worker`; `enn_incremental_batch_submitter` in `modal_enn_incremental_batches_impl.py` picks worker from `experiment_type_from_tag(tag)`. Worker unit tests monkeypatch `experiments.modal_enn_incremental_batch_worker`, not impl.
+CONFIDENCE: 0
+
+TRIGGER: full_opt Q3 Q5, problem_seed rep_index
+ADVICE: `benchmark_enn_full_optimization_proposal_timing` enforces Q3 (`_validate_problem_seed_for_rep_index`: `problem_seed == 18 + rep_index`) and Q5 (`_validate_q5_hyperparameters`: arms/denoise/policy fixed). Submit warns `--problem-seed` and `-d` are ignored for `full_optimization`; seeds come from `problem_seed_from_rep_index(rep_index)` in `iter_full_opt_jobs`.
+CONFIDENCE: 0
+
+TRIGGER: full_opt wall_clock, partial JSON, submitted dict
+ADVICE: `SIGTERM` sets `_wall_clock_stop_requested` → `stop_reason=wall_clock_limit` and partial checkpoints in `finally`. Partial runs retry after collect: deleter removes keys from results and `submitted`; incomplete files fail `full_opt_result_json_complete` (full checkpoint grid required). Stuck in `submitted` only when worker writes no result (hard kill)—pre-existing batch pattern.
+CONFIDENCE: 0
+
+TRIGGER: full_opt eager import, fitting_time __init__
+ADVICE: `EnnFullOptTimingResult` / `benchmark_enn_full_optimization_proposal_timing` are eagerly imported in `analysis/fitting_time/__init__.py` (unlike lazy `__getattr__` branches for some other fitting_time exports). New symbols still need `__all__` + tests; do not assume all fitting_time exports are lazy.
+CONFIDENCE: 0

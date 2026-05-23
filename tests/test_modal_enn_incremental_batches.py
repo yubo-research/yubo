@@ -289,6 +289,12 @@ def test_experiment_type_from_tag_accepts_fit_ind():
     assert impl._experiment_type_from_tag("fit_ind-tag-x") == "fit_ind"
 
 
+def test_experiment_type_from_tag_accepts_full_optimization():
+    import experiments.modal_enn_incremental_batches_impl as impl
+
+    assert impl._experiment_type_from_tag("full_optimization-tag-x") == "full_optimization"
+
+
 def test_fit_ind_worker_writes_result(monkeypatch):
     import experiments.modal_enn_incremental_batches_impl as impl
 
@@ -320,6 +326,43 @@ def test_fit_ind_worker_writes_result(monkeypatch):
     payload, d, fn, problem_seed, rep_index, num_reps, driver = store[key]
     assert payload["fit_seconds"] == [0.01]
     assert (d, fn, problem_seed, rep_index, num_reps, driver) == (2, "sphere", 17, 3, 10, "hnsw")
+
+
+def test_full_optimization_worker_writes_result(monkeypatch):
+    import experiments.modal_enn_incremental_batches_impl as impl
+    from analysis.fitting_time.fitting_time_enn_full_opt import EnnFullOptTimingResult
+    from analysis.fitting_time.fitting_time_enn_incremental import EnnIncrementalIndexDriver
+
+    store = {}
+    captured = {}
+
+    def fake_benchmark(*, env_tag, problem_seed, rep_index, index_driver):
+        captured["args"] = (env_tag, problem_seed, rep_index, index_driver)
+        return EnnFullOptTimingResult(
+            n=(1, 3),
+            proposal_elapsed_seconds=(0.01, 0.05),
+            env_tag=env_tag,
+            opt_name="turbo-enn-fit-ucb",
+            index_driver=index_driver,
+            problem_seed=problem_seed,
+            rep_index=rep_index,
+            num_rounds=1_000_000,
+            stop_reason="completed",
+        )
+
+    import experiments.modal_enn_incremental_batch_worker as worker_mod
+
+    monkeypatch.setattr(worker_mod, "benchmark_enn_full_optimization_proposal_timing", fake_benchmark)
+    monkeypatch.setattr(impl, "_results_dict", lambda _tag: store)
+
+    impl.enn_full_optimization_batch_worker.info.raw_f(("full_optimization-tag-x", "f:ackley-10d", 18, 0, 10, "flat"))
+
+    assert captured["args"] == ("f:ackley-10d", 18, 0, EnnIncrementalIndexDriver.FLAT)
+    key = "enn_full_opt_f_ackley-10d_pseed18_nrep10_rep0_flat"
+    payload = store[key]
+    assert payload["N"] == [1, 3]
+    assert payload["proposal_elapsed_seconds"] == [0.01, 0.05]
+    assert payload["_meta"]["env_tag"] == "f:ackley-10d"
 
 
 def test_enn_incremental_collect_writes_and_deletes(monkeypatch, tmp_path: Path):

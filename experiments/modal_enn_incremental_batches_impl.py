@@ -28,6 +28,7 @@ _iter_incremental_jobs = common.iter_incremental_jobs
 _iter_fit_jobs = common.iter_fit_jobs
 _iter_fit_ind_jobs = common.iter_fit_ind_jobs
 _iter_query_jobs = common.iter_query_jobs
+_iter_full_opt_jobs = common.iter_full_opt_jobs
 _submit_missing = common.submit_missing
 _collect = common.collect
 status = common.status
@@ -54,6 +55,23 @@ def enn_incremental_batch_worker(job):
     )
 
 
+@app.function(
+    image=_modal_image,
+    max_containers=100,
+    timeout=5 * 60 * 60,
+    memory=4 * 1024,
+    cpu=1.0,
+)
+def enn_full_optimization_batch_worker(job):
+    _batch_worker.dispatch_enn_incremental_batch_worker(
+        job,
+        experiment_type_from_tag=_experiment_type_from_tag,
+        job_key=_job_key,
+        result_to_payload=result_to_payload,
+        results_dict=_results_dict,
+    )
+
+
 @app.function(image=_modal_image, max_containers=10, timeout=60 * 60)
 def enn_incremental_batch_submitter(batch_of_jobs, tag: str, force: bool = False):
     submitted = _submitted_dict(tag)
@@ -65,7 +83,8 @@ def enn_incremental_batch_submitter(batch_of_jobs, tag: str, force: bool = False
         todo.append((tag, *job))
     print(f"TODO: {len(todo)}")
     if todo:
-        modal.Function.from_name(_get_app_name(tag), "enn_incremental_batch_worker").spawn_map(todo)
+        worker_fn = "enn_full_optimization_batch_worker" if _experiment_type_from_tag(tag) == "full_optimization" else "enn_incremental_batch_worker"
+        modal.Function.from_name(_get_app_name(tag), worker_fn).spawn_map(todo)
 
 
 @app.function(image=_modal_image, max_containers=1, timeout=60 * 60)
@@ -102,6 +121,8 @@ __all__ = [
     "_iter_fit_jobs",
     "_iter_incremental_jobs",
     "_iter_query_jobs",
+    "_iter_full_opt_jobs",
+    "enn_full_optimization_batch_worker",
     "_job_key",
     "normalize_index_driver",
     "_results_dict",

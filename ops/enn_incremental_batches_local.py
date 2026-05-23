@@ -363,3 +363,114 @@ def register_local_commands(
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
         click.echo(f"wrote {dest.resolve()}")
+
+    @cli.command(
+        "local-full-opt",
+        params=[
+            click.Argument(["env_tag"]),
+            click.Argument(["rep_index"], type=int),
+            click.Argument(
+                ["index_driver"],
+                type=click.Choice(["flat", "hnsw"], case_sensitive=False),
+            ),
+            click.Option(
+                ("--num-reps", "num_reps"),
+                type=int,
+                default=10,
+                show_default=True,
+            ),
+            click.Option(
+                ("--output-dir", "output_dir"),
+                type=click.Path(),
+                default="results/enn_incremental",
+                show_default=True,
+            ),
+            click.Option(
+                ("--checkpoints", "checkpoint_csv"),
+                default="",
+                show_default=True,
+                help="Comma-separated checkpoint Ns; default uses the batch checkpoint grid.",
+            ),
+            click.Option(
+                ("--num-rounds", "num_rounds"),
+                type=int,
+                default=None,
+                help="BO iteration cap; default is 1_000_000.",
+            ),
+            click.Option(("--force/--no-force", "force"), default=False, show_default=True),
+        ],
+    )
+    def local_full_opt(
+        env_tag: str,
+        rep_index: int,
+        index_driver: str,
+        num_reps: int,
+        output_dir: str,
+        checkpoint_csv: str,
+        num_rounds: int | None,
+        force: bool,
+    ):
+        """Run one full-optimization ENN job locally and write checkpoint proposal-time JSON."""
+        if rep_index < 0:
+            raise click.BadParameter("REP_INDEX must be >= 0")
+        if num_reps < 1:
+            raise click.BadParameter("num-reps must be >= 1")
+
+        ensure_repo_imports()
+        from analysis.fitting_time.fitting_time_enn_full_opt import (
+            FULL_OPT_NUM_ROUNDS,
+            benchmark_enn_full_optimization_proposal_timing,
+            opt_name_for_index_driver,
+        )
+        from analysis.fitting_time.fitting_time_enn_incremental import EnnIncrementalIndexDriver
+        from common.experiment_seeds import problem_seed_from_rep_index
+        from experiments import modal_enn_full_opt_batches as full_opt_batches
+        from experiments import modal_enn_full_opt_batches_json as full_opt_json
+
+        driver = EnnIncrementalIndexDriver(index_driver.lower())
+        checkpoints = resolve_checkpoints(checkpoint_csv or None)
+        ps = problem_seed_from_rep_index(rep_index)
+        opt_name = opt_name_for_index_driver(driver)
+        dest = full_opt_batches.full_opt_result_json_dest(
+            output_dir,
+            env_tag=env_tag,
+            problem_seed=ps,
+            rep_index=rep_index,
+            num_reps=num_reps,
+            index_driver=driver,
+        )
+        if (
+            dest.exists()
+            and not force
+            and full_opt_json.full_opt_result_json_complete(
+                dest,
+                checkpoints,
+                env_tag=env_tag,
+                problem_seed=ps,
+                rep_index=rep_index,
+                num_reps=num_reps,
+                index_driver=driver,
+                opt_name=opt_name,
+            )
+        ):
+            click.echo(f"skip existing {dest.resolve()}")
+            return
+
+        rounds = FULL_OPT_NUM_ROUNDS if num_rounds is None else int(num_rounds)
+        click.echo(
+            f"running full-opt ENN env_tag={env_tag} problem_seed={ps} rep_index={rep_index} "
+            f"index_driver={driver.value} checkpoints={checkpoints or 'default'} num_rounds={rounds}",
+            err=True,
+        )
+        result = benchmark_enn_full_optimization_proposal_timing(
+            env_tag=env_tag,
+            problem_seed=ps,
+            rep_index=rep_index,
+            index_driver=driver,
+            checkpoints=checkpoints,
+            num_rounds=rounds,
+        )
+        payload = full_opt_batches.full_opt_result_to_payload(result, num_reps=num_reps)
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+        click.echo(f"wrote {dest.resolve()}")

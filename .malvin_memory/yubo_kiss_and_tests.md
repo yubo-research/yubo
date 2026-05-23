@@ -8,6 +8,10 @@ TRIGGER: enn incremental kiss split, batch_worker
 ADVICE: If `ops/enn_incremental_batches.py` or `experiments/modal_enn_incremental_batches_impl.py` hit `lines_per_file`, extract local CLI to `ops/enn_incremental_batches_local.py` (`register_local_commands`) and Modal worker body to `experiments/modal_enn_incremental_batch_worker.py` (`dispatch_enn_incremental_batch_worker`); keep thin `@app.function` wrapper in impl.
 CONFIDENCE: 0
 
+TRIGGER: kiss branches, _JOB_HANDLERS, dispatch_enn_incremental
+ADVICE: If `dispatch_enn_incremental_batch_worker` exceeds kiss `branches_per_function` (limit 9), refactor to `_JOB_HANDLERS` plus per-exp `_handle_*` helpers (each ≤9 branches). Uniform handler signatures may need `del job_key, result_to_payload`; refactor affects all experiment types in the worker file, not only the new one.
+CONFIDENCE: 0
+
 TRIGGER: incremental batch worker test, monkeypatch worker_mod
 ADVICE: Worker unit tests must `monkeypatch.setattr` on `experiments.modal_enn_incremental_batch_worker` (e.g. `benchmark_enn_fit_ind_timing`), not `modal_enn_incremental_batches_impl`, after the worker dispatch split.
 CONFIDENCE: 0

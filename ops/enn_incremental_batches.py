@@ -9,10 +9,14 @@ from pathlib import Path
 
 import click
 
+from common.experiment_seeds import REP_INDEX_BASE
 from ops.enn_incremental_batches_local import register_local_commands
 from ops.modal_cli_common import run_modal
 
-_EXP_TYPE = click.Choice(["add_method", "fit_method", "fit_ind", "query"], case_sensitive=False)
+_EXP_TYPE = click.Choice(
+    ["add_method", "fit_method", "fit_ind", "query", "full_optimization"],
+    case_sensitive=False,
+)
 
 
 def _exp_type_argument() -> click.Argument:
@@ -58,6 +62,17 @@ def _run_client_command(
 
 def _modal_tag(exp_type: str, tag: str) -> str:
     return f"{exp_type.lower()}-{tag}"
+
+
+def _submit_problem_seed(exp_type: str, problem_seed: int) -> int:
+    if exp_type.lower() != "full_optimization":
+        return int(problem_seed)
+    if int(problem_seed) != int(REP_INDEX_BASE):
+        click.echo(
+            f"warning: --problem-seed is ignored for full_optimization (using 18+rep_index, not {int(problem_seed)})",
+            err=True,
+        )
+    return int(REP_INDEX_BASE)
 
 
 def _run_modal(args: list[str], tag: str) -> None:
@@ -124,6 +139,7 @@ def deploy(exp_type: str, tag: str):
             type=int,
             default=17,
             show_default=True,
+            help="Ignored for full_optimization (seeds are 18+rep_index).",
         ),
     ],
 )
@@ -142,6 +158,7 @@ def submit(
     if num_reps < 1:
         raise click.BadParameter("num-reps must be >= 1")
     modal_tag = _modal_tag(exp_type, tag)
+    seed_arg = _submit_problem_seed(exp_type, problem_seed)
     _run_client_command(
         modal_tag,
         "submit",
@@ -149,7 +166,7 @@ def submit(
         index_driver=index_driver.lower(),
         num_reps=num_reps,
         d_dims=d_dims,
-        problem_seed=problem_seed,
+        problem_seed=seed_arg,
     )
 
 
@@ -172,6 +189,7 @@ def submit(
             type=int,
             default=17,
             show_default=True,
+            help="Ignored for full_optimization (seeds are 18+rep_index).",
         ),
     ],
 )
@@ -190,6 +208,7 @@ def submit_force(
     if num_reps < 1:
         raise click.BadParameter("num-reps must be >= 1")
     modal_tag = _modal_tag(exp_type, tag)
+    seed_arg = _submit_problem_seed(exp_type, problem_seed)
     _run_client_command(
         modal_tag,
         "submit-force",
@@ -197,7 +216,7 @@ def submit_force(
         index_driver=index_driver.lower(),
         num_reps=num_reps,
         d_dims=d_dims,
-        problem_seed=problem_seed,
+        problem_seed=seed_arg,
     )
 
 

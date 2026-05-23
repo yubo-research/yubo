@@ -18,6 +18,7 @@ from analysis.fitting_time.fitting_time_enn_incremental import (
 )
 from experiments import modal_enn_fit_batches as _fit_batches
 from experiments import modal_enn_fit_ind_batches as _fit_ind_batches
+from experiments import modal_enn_full_opt_batches as _full_opt_batches
 from experiments import modal_enn_incremental_batches_json as _add_json
 from experiments import modal_enn_query_batches as _query_batches
 from experiments.enn_batch_job_params import (
@@ -41,8 +42,10 @@ def dict_names_for_tag(tag: str) -> tuple[str, str]:
 
 def experiment_type_from_tag(tag: str) -> str:
     prefix = tag.split("-", 1)[0]
-    if prefix not in {"add_method", "fit_method", "fit_ind", "query"}:
-        raise ValueError(f"unknown experiment prefix {prefix!r} in tag {tag!r}; expected add_method-*, fit_method-*, fit_ind-*, or query-*")
+    if prefix not in {"add_method", "fit_method", "fit_ind", "query", "full_optimization"}:
+        raise ValueError(
+            f"unknown experiment prefix {prefix!r} in tag {tag!r}; expected add_method-*, fit_method-*, fit_ind-*, query-*, or full_optimization-*"
+        )
     return prefix
 
 
@@ -257,6 +260,22 @@ def iter_query_jobs(
     )
 
 
+def iter_full_opt_jobs(
+    output_dir: str | Path,
+    index_driver: str,
+    num_reps: int,
+    d: int,
+    problem_seed: int,
+) -> Iterable[tuple[str, tuple[str, int, int, int, str]]]:
+    del d, problem_seed
+    yield from _full_opt_batches.iter_full_opt_jobs(
+        output_dir,
+        index_driver,
+        num_reps,
+        iter_index_drivers=iter_index_drivers,
+    )
+
+
 def submit_missing(
     tag: str,
     output_dir: str | Path,
@@ -274,6 +293,9 @@ def submit_missing(
         it = iter_fit_ind_jobs
     elif exp == "query":
         it = iter_query_jobs
+    elif exp == "full_optimization":
+        it = iter_full_opt_jobs
+        print("full_optimization: problem_seed=18+rep_index per replicate; --problem-seed and -d are ignored")
     else:
         it = iter_incremental_jobs
     submitted = submitted_dict(tag)

@@ -61,6 +61,11 @@ def test_enn_incremental_batches_help_shows_exp_type_metavar():
             "query-t1",
         ),
         (
+            ["deploy", "full_optimization", "t1"],
+            [["modal", "deploy", "experiments/modal_enn_incremental_batches_impl.py"]],
+            "full_optimization-t1",
+        ),
+        (
             ["stop", "add_method", "t1"],
             [
                 ["modal", "app", "stop", "yubo-enn-incremental-add_method-t1"],
@@ -153,6 +158,24 @@ def test_enn_incremental_batches_subprocess_commands(captured_modal, invoke_args
                 "d_dims": 10,
                 "problem_seed": 17,
             },
+        ),
+        (
+            ["submit", "full_optimization", "t1"],
+            "full_optimization-t1",
+            "submit",
+            {
+                "output_dir": "results/enn_incremental",
+                "index_driver": "all",
+                "num_reps": 10,
+                "d_dims": 10,
+                "problem_seed": 18,
+            },
+        ),
+        (
+            ["collect", "full_optimization", "t1"],
+            "full_optimization-t1",
+            "collect",
+            {"output_dir": "results/enn_incremental"},
         ),
         (
             ["submit-force", "fit_method", "t1"],

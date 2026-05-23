@@ -11,6 +11,10 @@ from .fitting_time_enn_fit_ind import (
     EnnFitIndTimingResult,
     benchmark_enn_fit_ind_timing,
 )
+from .fitting_time_enn_full_opt import (
+    EnnFullOptTimingResult,
+    benchmark_enn_full_optimization_proposal_timing,
+)
 from .fitting_time_enn_query import (
     EnnQueryTimingResult,
     benchmark_enn_query_timing,
@@ -30,10 +34,12 @@ __all__ = [
     "SURROGATE_BENCHMARK_ROWS",
     "SyntheticSineSurrogateBenchmark",
     "EnnFitIndTimingResult",
+    "EnnFullOptTimingResult",
     "EnnQueryTimingResult",
     "EnnIncrementalIndexDriver",
     "EnnIncrementalTimingResult",
     "benchmark_enn_fit_ind_timing",
+    "benchmark_enn_full_optimization_proposal_timing",
     "benchmark_enn_incremental_add_timing",
     "benchmark_enn_query_timing",
     "benchmark_enn_fit_timing",
