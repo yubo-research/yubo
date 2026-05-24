@@ -5,7 +5,6 @@
 Install Modal locally and authenticate once:
 
 ```bash
-pipx install modal
 modal setup
 ```
 
