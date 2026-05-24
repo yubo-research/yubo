@@ -1,8 +1,11 @@
 import time
+from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
 
+from experiments import experiment_sampler_sampling
 from experiments.experiment_sampler import (
     ExperimentConfig,
     RunConfig,
@@ -15,6 +18,40 @@ from experiments.experiment_sampler import (
     scan_local,
 )
 from tests.mock_experiment_problem import make_mock_problem_for_sampler
+
+
+def test_render_sample_video_uses_video_package(monkeypatch, tmp_path):
+    calls = []
+
+    def fake_render_policy_videos_bo(*args, **kwargs):
+        calls.append((args, kwargs))
+
+    monkeypatch.setattr("video.bo_policy.render_policy_videos_bo", fake_render_policy_videos_bo)
+
+    best_policy = MagicMock()
+    cloned_policy = object()
+    best_policy.clone.return_value = cloned_policy
+    opt = SimpleNamespace(best_policy=best_policy)
+    env_conf = SimpleNamespace(problem_seed=123)
+    run_config = SimpleNamespace(trace_fn=str(Path(tmp_path) / "trace.txt"))
+
+    experiment_sampler_sampling._render_sample_video(
+        opt,
+        run_config,
+        env_conf,
+        video_prefix="bo",
+        video_num_episodes=4,
+        video_num_video_episodes=2,
+        video_episode_selection="best",
+        video_seed_base=None,
+    )
+
+    assert calls
+    args, kwargs = calls[0]
+    assert args == (env_conf, cloned_policy)
+    assert kwargs["video_dir"] == Path(tmp_path) / "videos"
+    assert kwargs["seed_base"] == 123
+    best_policy.clone.assert_called_once_with()
 
 
 @patch("optimizer.optimizer.Optimizer")

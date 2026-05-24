@@ -49,8 +49,8 @@ def init_external(designer, policy, env_conf, cfg) -> None:
     from problems.isaaclab_score import IsaacLabScore, active_vector_slots
 
     env_name = str(getattr(env_conf, "env_name", ""))
-    if not is_isaaclab_env_tag(env_name):
-        raise NoSuchDesignerError(f"Designer 'eggroll' external scoring only supports isaaclab: envs, got {env_name!r}.")
+    if not (is_isaaclab_env_tag(env_name) or env_name.startswith("dm_control/")):
+        raise NoSuchDesignerError(f"Designer 'eggroll' external scoring only supports isaaclab: and dm_control/ envs, got {env_name!r}.")
     objective = IsaacLabScore(env_conf, policy, episodes=int(cfg.num_envs), steps_per_episode=int(cfg.steps))
     designer._is_external = True
     designer._policy = policy

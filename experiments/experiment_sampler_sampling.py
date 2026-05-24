@@ -105,7 +105,7 @@ def _render_sample_video(
 ):
     from pathlib import Path
 
-    render_policy_videos_bo = _load_attr(("common", "video"), "render_policy_videos_bo")
+    render_policy_videos_bo = _load_attr(("video", "bo_policy"), "render_policy_videos_bo")
 
     video_dir = Path(run_config.trace_fn).parent / "videos"
     seed_base = int(video_seed_base) if video_seed_base is not None else int(env_conf.problem_seed)

@@ -1,0 +1,25 @@
+# BO-style PPO designer run for DM Control quadruped.
+#
+# Run on Modal:
+# modal run ops/modal_hyperscalees_pixi_setup.py --config configs/bo/dm_control/quadruped/quadruped_run_ppo_designer_aggressive_short.toml
+#
+# This uses optimizer.name="ppo" inside the BO experiment runner. It is not the
+# separate RL trainer config format under configs/rl/.
+
+[experiment]
+exp_dir = "_tmp/bo/dm_control/quadruped/ppo_designer_aggressive_short"
+env_tag = "dm_control/quadruped-run-v0"
+policy_tag = "actor-critic-mlp-32-32"
+num_arms = 4
+num_rounds = 30
+num_reps = 1
+num_denoise = 1
+num_denoise_passive = 1
+b_trace = true
+video_enable = false
+runtime_device = "cpu"
+local_workers = 1
+max_total_seconds = 7200
+
+[optimizer]
+name = "ppo"

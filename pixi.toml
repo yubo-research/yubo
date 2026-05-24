@@ -1,0 +1,142 @@
+[workspace]
+name = "yubo-modal"
+channels = ["conda-forge", "nvidia"]
+platforms = ["linux-64", "osx-arm64"]
+
+[feature.hyperscalees.dependencies]
+python = "3.12.*"
+pip = "*"
+git = "*"
+git-lfs = "*"
+setuptools = ">=77.0.3,<81.0.0"
+numpy = ">=2.2,<2.3"
+scipy = ">=1.17,<1.18"
+h5py = "*"
+numba = "==0.61.2"
+llvmlite = "==0.44.0"
+protobuf = ">=6.31.1,<7"
+scikit-learn = "*"
+matplotlib = "*"
+pandas = "*"
+pybind11 = "==3.0.1"
+nomkl = "*"
+libblas = { version = "*", build = "*openblas" }
+openblas = "*"
+libfaiss = { version = "==1.10.0", build = "cpu_openblas*" }
+faiss = { version = "==1.10.0", build = "cpu_openblas_py312*" }
+faiss-cpu = "==1.10.0"
+
+[feature.hyperscalees.target.linux-64.dependencies]
+c-compiler = "*"
+cxx-compiler = "*"
+swig = "*"
+cuda-toolkit = "12.8.*"
+cuda-nvcc = "12.8.*"
+cuda-cudart-dev = "12.8.*"
+ninja = "*"
+cmake = "*"
+gxx_linux-64 = "*"
+
+[feature.hyperscalees.activation.env]
+HF_HOME = "/root/.cache/yubo/hyperscalees"
+HF_HUB_CACHE = "/root/.cache/yubo/hyperscalees"
+XLA_PYTHON_CLIENT_PREALLOCATE = "false"
+CUDA_HOME = "/opt/yubo-pixi/.pixi/envs/hyperscalees"
+CUDACXX = "/opt/yubo-pixi/.pixi/envs/hyperscalees/bin/nvcc"
+TORCH_CUDA_ARCH_LIST = "8.9"
+
+[feature.hyperscalees.target.linux-64.pypi-dependencies]
+jax = { version = "==0.8.1", extras = ["cuda12"] }
+click = "*"
+gymnasium = { version = "==1.2.1", extras = ["box2d"] }
+tyro = "*"
+tqdm = "*"
+huggingface-hub = "==0.36.2"
+tokenizers = "*"
+einops = "*"
+importlib-resources = "*"
+pyrwkv-tokenizer = "*"
+hydra-core = "*"
+fire = "*"
+jupyter = "*"
+reasoning-gym = "*"
+math-verify = { version = "==0.9.0", extras = ["antlr4_9_3"] }
+antlr4-python3-runtime = "==4.9.3"
+verifiers = { git = "https://github.com/PrimeIntellect-ai/verifiers.git" }
+gsm8k = { git = "https://github.com/PrimeIntellect-ai/verifiers.git", subdirectory = "environments/gsm8k" }
+ray = "==2.51.1"
+peft = "==0.18.0"
+transformers = "==4.57.1"
+accelerate = "==1.11.0"
+safetensors = "==0.6.2"
+datasets = "==4.4.1"
+pylatexenc = "==2.10"
+nest-asyncio = "*"
+wandb = "==0.23.0"
+weave = "==0.52.33"
+openai = "==2.24.0"
+openai-agents = "==0.10.5"
+pydantic = ">=2.12.2,<3"
+aiohttp = ">=3.13.3"
+jinja2 = ">=3.1.6"
+botorch = "==0.12.0"
+gpytorch = "==1.13"
+linear-operator = "==0.5.3"
+cma = "==4.0.0"
+celer = "*"
+optuna = "==4.0.0"
+smac = ">=2.4.0"
+modal = "==1.3.0.post1"
+grpclib = ">=0.4.7,<0.5"
+torchrl = "==0.11.0"
+tensordict = "==0.11.0"
+dm-control = ">=1.0.41"
+mujoco = ">=3.8.1,<3.9"
+ax-platform = "*"
+pyDOE = ">=0.3.8"
+sparse-ho = { url = "https://github.com/QB3/sparse-ho/archive/master.zip" }
+craftax = "*"
+jaxmarl = "*"
+kinetix = "*"
+navix = "*"
+hyperscalees = { git = "https://github.com/ESHyperscale/HyperscaleES.git", rev = "b77f7d6f91238fd575313e946b9cad21e0a74b32" }
+tiktoken = "*"
+rustbpe = "*"
+kernels = "*"
+
+[feature.hyperscalees.tasks]
+install-vllm = "python -m pip install --disable-pip-version-check --only-binary=:all: vllm==0.17.0"
+install-nodeps = "python -m pip install --disable-pip-version-check --no-deps ennbo==0.2.1 joblib threadpoolctl absl-py==2.4.0 chex==0.1.91 dm-env==1.6 esquilax==2.1.0 etils==1.14.0 flask==3.1.3 flask-cors==6.0.2 flax==0.12.7 huggingface-hub==0.36.2 jaxopt==0.8.5 ml-collections==1.1.0 'mujoco>=3.8.1,<3.9' mujoco-mjx==3.8.0 optax==0.2.8 orbax-checkpoint==0.11.39 pillow==12.2.0 tensorboardx==2.6.5 trimesh==4.12.2 brax==0.14.2 jumanji==1.1.1 warp-lang==1.13.0 mujoco-warp==3.8.0.3 imageio==2.37.3 networkx==3.6.1 pygame==2.6.1 rlax==0.1.8 seaborn==0.13.2"
+install-pufferlib = "CUDA_HOME=/opt/yubo-pixi/.pixi/envs/hyperscalees CUDACXX=/opt/yubo-pixi/.pixi/envs/hyperscalees/bin/nvcc TORCH_CUDA_ARCH_LIST=8.9 python -m pip install --disable-pip-version-check --no-build-isolation --no-deps pufferlib==3.0.0"
+setup = { depends-on = ["install-vllm", "install-nodeps", "install-pufferlib"] }
+check = "python -c 'import faiss, torch, vllm, hyperscalees; print(\"hyperscalees ok\")'"
+
+[feature.isaaclab.dependencies]
+python = "3.12.*"
+pip = "*"
+git = "*"
+git-lfs = "*"
+
+[feature.isaaclab.pypi-options]
+extra-index-urls = ["https://pypi.nvidia.com"]
+index-strategy = "unsafe-best-match"
+
+[feature.isaaclab.target.linux-64.pypi-dependencies]
+warp-lang = "==1.12.0"
+click = "*"
+antlr4-python3-runtime = "==4.9.3"
+gymnasium = "==1.2.1"
+h5py = "*"
+hydra-core = "*"
+imageio = "==2.37.2"
+imageio-ffmpeg = "*"
+omegaconf = "*"
+torchaudio = "==2.10.0"
+
+[feature.isaaclab.tasks]
+install = "bash -lc 'set -euo pipefail; python -m pip install --disable-pip-version-check --extra-index-url https://pypi.nvidia.com \"isaacsim[all,extscache]==6.0.0.0\"; mkdir -p /opt/yubo-pixi/src; if [ -d /opt/yubo-pixi/src/IsaacLab/.git ]; then git -C /opt/yubo-pixi/src/IsaacLab fetch --tags origin; else git clone https://github.com/isaac-sim/IsaacLab.git /opt/yubo-pixi/src/IsaacLab; fi; git -C /opt/yubo-pixi/src/IsaacLab checkout -q v3.0.0-beta; cd /opt/yubo-pixi/src/IsaacLab; ./isaaclab.sh --install assets,tasks,newton,physx,visualizers; python -m pip install --disable-pip-version-check --index-url https://download.pytorch.org/whl/cu128 torchaudio==2.10.0'"
+check = "python -c 'import importlib.util, gymnasium; mods=(\"isaacsim\", \"isaaclab\", \"isaaclab_assets\", \"isaaclab_newton\", \"isaaclab_physx\", \"isaaclab_tasks\"); missing=[m for m in mods if importlib.util.find_spec(m) is None]; assert not missing, missing; import isaaclab_tasks; from isaaclab_tasks.utils import parse_env_cfg; gymnasium.spec(\"Isaac-Velocity-Flat-G1-v0\"); parse_env_cfg(\"Isaac-Velocity-Flat-G1-v0\", num_envs=1, device=\"cpu\"); print(\"isaaclab ok\")'"
+
+[environments]
+hyperscalees = { features = ["hyperscalees"], no-default-feature = true }
+isaaclab = { features = ["isaaclab"], no-default-feature = true }

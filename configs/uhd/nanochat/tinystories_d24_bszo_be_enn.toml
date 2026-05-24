@@ -1,8 +1,5 @@
 # Run:
 # ./ops/exp_uhd.py local configs/uhd/nanochat/tinystories_d24_bszo_be_enn.toml
-#
-# ADVANCED experiment (Refactored): 24-layer nanochat on TinyStories.
-# Focus: Improved surrogate sensitivity and optimization stability.
 
 [uhd]
 env_tag = "nanochat:tinystories"

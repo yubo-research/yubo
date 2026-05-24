@@ -57,10 +57,8 @@ class EnvConf:
     kwargs: dict = None
 
     def _make(self, **kwargs):
-        if self.env_name[:2] == "f:":
-            env = pure_functions.make(self.env_name, problem_seed=self.problem_seed, distort=True)
-        elif self.env_name[:2] == "g:":
-            env = pure_functions.make(self.env_name, problem_seed=self.problem_seed, distort=False)
+        if self.env_name[:2] in ("f:", "g:"):
+            env = pure_functions.make(self.env_name, problem_seed=self.problem_seed, distort=self.env_name[:2] == "f:")
         elif self.env_name.startswith("dm_control/"):
             make_dm_control_env = get_atari_dm_bindings().make_dm_control_env
             env = make_dm_control_env(
@@ -208,7 +206,8 @@ class EnvConf:
             self.kwargs = {}
         if self.env_name[:2] in ("f:", "g:") and self.max_steps is None:
             self.max_steps = _PURE_FUNCTION_MAX_STEPS
-        if self.max_steps is None and self.gym_conf is None and not self.env_name.startswith(("ALE/", "dm_control/")):
+        is_deferred = self.env_name.startswith(("ALE/", "dm_control/")) or is_isaaclab_env_tag(self.env_name)
+        if self.max_steps is None and self.gym_conf is None and not is_deferred:
             self.max_steps = _DEFAULT_MAX_STEPS
         if self.gym_conf:
             # Defer gym.make to avoid eagerly instantiating all envs at import time.
@@ -216,7 +215,7 @@ class EnvConf:
             self.state_space = None
             self.action_space = None
             return
-        if self.env_name.startswith(("ALE/", "dm_control/")) or is_isaaclab_env_tag(self.env_name):
+        if is_deferred:
             # Defer heavy env creation for Atari/DM/Isaac Lab until first use.
             self.state_space = None
             self.action_space = None

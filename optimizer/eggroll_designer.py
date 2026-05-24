@@ -352,4 +352,5 @@ def _should_use_external_scoring(env_conf) -> bool:
         return False
     from problems.isaaclab_env_adapters import is_isaaclab_env_tag
 
-    return is_isaaclab_env_tag(str(getattr(env_conf, "env_name", "")))
+    env_name = str(getattr(env_conf, "env_name", ""))
+    return is_isaaclab_env_tag(env_name) or env_name.startswith("dm_control/")

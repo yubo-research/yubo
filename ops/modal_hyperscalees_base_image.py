@@ -122,12 +122,20 @@ def _create_conda_env_command(conda_yml: str, *, env_name: str = ENV_NAME) -> st
 
 
 def _install_python_requirements_command(requirements: str, no_deps_requirements: str) -> str:
+    return _install_python_requirements_command_with_helpers(_env_helpers(ENV_NAME), requirements, no_deps_requirements)
+
+
+def _install_requirements_command(env_name: str, requirements: str, tmp_name: str, *, pip_args: str = "") -> str:
+    return _install_requirements_command_with_helpers(_env_helpers(env_name), requirements, tmp_name, pip_args=pip_args)
+
+
+def _install_python_requirements_command_with_helpers(env_helpers: str, requirements: str, no_deps_requirements: str) -> str:
     return _bash(
         "\n".join(
             [
                 _write_heredoc("/tmp/yubo-requirements-hyperscalees.txt", requirements),
                 _write_heredoc("/tmp/yubo-requirements-hyperscalees-nodeps.txt", no_deps_requirements),
-                _env_helpers(ENV_NAME),
+                env_helpers,
                 "pip_install -r /tmp/yubo-requirements-hyperscalees.txt",
                 "pip_install --no-deps -r /tmp/yubo-requirements-hyperscalees-nodeps.txt",
             ]
@@ -135,13 +143,13 @@ def _install_python_requirements_command(requirements: str, no_deps_requirements
     )
 
 
-def _install_requirements_command(env_name: str, requirements: str, tmp_name: str, *, pip_args: str = "") -> str:
+def _install_requirements_command_with_helpers(env_helpers: str, requirements: str, tmp_name: str, *, pip_args: str = "") -> str:
     pip_prefix = f"{pip_args.strip()} " if pip_args.strip() else ""
     return _bash(
         "\n".join(
             [
                 _write_heredoc(f"/tmp/{tmp_name}", requirements),
-                _env_helpers(env_name),
+                env_helpers,
                 f"pip_install {pip_prefix}-r /tmp/{shlex.quote(tmp_name)}",
             ]
         )
@@ -149,9 +157,13 @@ def _install_requirements_command(env_name: str, requirements: str, tmp_name: st
 
 
 def _install_isaaclab_source_command() -> str:
+    return _install_isaaclab_source_command_with_helpers(_env_helpers(ISAACLAB_ENV_NAME))
+
+
+def _install_isaaclab_source_command_with_helpers(env_helpers: str) -> str:
     return _bash(
         f"""
-{_env_helpers(ISAACLAB_ENV_NAME)}
+{env_helpers}
 mkdir -p {shlex.quote(str(Path(ISAACLAB_SOURCE_DIR).parent))}
 if [ -d {shlex.quote(ISAACLAB_SOURCE_DIR)}/.git ]; then
   git -C {shlex.quote(ISAACLAB_SOURCE_DIR)} fetch --tags origin
@@ -165,9 +177,17 @@ run_in_env bash -c 'cd {shlex.quote(ISAACLAB_SOURCE_DIR)} && ./isaaclab.sh --ins
 
 
 def _install_source_extras_command() -> str:
+    return _install_source_extras_command_with_helpers(
+        _env_helpers(ENV_NAME),
+        _faiss_openblas_repair_command(ENV_NAME),
+        _micromamba_cuda_toolkit_install_command(),
+    )
+
+
+def _install_source_extras_command_with_helpers(env_helpers: str, faiss_command: str, cuda_toolkit_command: str) -> str:
     return _bash(
         f"""
-{_env_helpers(ENV_NAME)}
+{env_helpers}
 
 build_root="$(mktemp -d)"
 source_dir="${{build_root}}/HyperscaleES"
@@ -205,7 +225,7 @@ run_in_env python -m pip wheel --disable-pip-version-check --no-deps --wheel-dir
 wheel="$(find "${{wheel_dir}}" -maxdepth 1 -name 'hyperscalees-*.whl' -print -quit)"
 pip_install --no-deps "${{wheel}}"
 
-{_faiss_openblas_repair_command(ENV_NAME)}
+{faiss_command}
 run_in_env bash -c '
   LDFLAGS="-L${{CONDA_PREFIX}}/lib" \\
   LIBRARY_PATH="${{CONDA_PREFIX}}/lib" \\
@@ -214,6 +234,19 @@ run_in_env bash -c '
 '
 pip_install --no-deps {shlex.quote(LASSOBENCH_SPEC)}
 
+{cuda_toolkit_command}
+run_in_env bash -c '
+  export CUDA_HOME="${{CONDA_PREFIX}}"
+  export CUDACXX="${{CONDA_PREFIX}}/bin/nvcc"
+  export TORCH_CUDA_ARCH_LIST="${{TORCH_CUDA_ARCH_LIST:-8.9}}"
+  python -m pip install --disable-pip-version-check --no-build-isolation --no-deps "{PUFFERLIB_SPEC}"
+'
+"""
+    )
+
+
+def _micromamba_cuda_toolkit_install_command() -> str:
+    return f"""
 cuda_version="$(run_in_env python - <<'PY'
 import torch
 
@@ -226,14 +259,7 @@ PY
 micromamba install -y -n {shlex.quote(ENV_NAME)} -c nvidia -c conda-forge \\
   "cuda-toolkit=${{cuda_version}}" "cuda-nvcc=${{cuda_version}}" "cuda-cudart-dev=${{cuda_version}}" \\
   ninja cmake gxx_linux-64
-run_in_env bash -c '
-  export CUDA_HOME="${{CONDA_PREFIX}}"
-  export CUDACXX="${{CONDA_PREFIX}}/bin/nvcc"
-  export TORCH_CUDA_ARCH_LIST="${{TORCH_CUDA_ARCH_LIST:-8.9}}"
-  python -m pip install --disable-pip-version-check --no-build-isolation --no-deps "{PUFFERLIB_SPEC}"
-'
 """
-    )
 
 
 def _finalize_runtime_compat_command(requirements: str | None = None, no_deps_requirements: str | None = None) -> str:
@@ -317,9 +343,13 @@ PY""",
 
 
 def _validate_isaaclab_runtime_command() -> str:
+    return _validate_isaaclab_runtime_command_with_helpers(_env_helpers(ISAACLAB_ENV_NAME), "MODAL_ISAACLAB_RUNTIME_OK")
+
+
+def _validate_isaaclab_runtime_command_with_helpers(env_helpers: str, ok_marker: str) -> str:
     return _bash(
         f"""
-{_env_helpers(ISAACLAB_ENV_NAME)}
+{env_helpers}
 run_in_env python - <<'PY'
 import importlib.util
 
@@ -341,7 +371,7 @@ from isaaclab_tasks.utils import parse_env_cfg
 gymnasium.spec("Isaac-Velocity-Flat-G1-v0")
 parse_env_cfg("Isaac-Velocity-Flat-G1-v0", num_envs=1, device="cpu")
 print(
-    "MODAL_ISAACLAB_RUNTIME_OK",
+    {ok_marker!r},
     f"gymnasium={{gymnasium.__version__}}",
     f"imageio={{imageio.__version__}}",
     f"numpy={{numpy.__version__}}",

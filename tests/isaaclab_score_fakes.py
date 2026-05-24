@@ -77,6 +77,13 @@ def make_fake_runtime():
     return runtime
 
 
+def make_fake_dm_control_runtime():
+    runtime = make_fake_runtime()
+    runtime.env_name = "dm_control/quadruped-run-v0"
+    runtime.env_tag = "dm_control/quadruped-run-v0"
+    return runtime
+
+
 def make_fake_vector_runtime():
     runtime = make_fake_runtime()
     runtime.vector_slots = []

@@ -170,14 +170,15 @@ class TurboENNDesigner:
                 candidate_rv=candidate_rv,
             )
         if self._turbo_mode == "turbo-one":
-            acq_type = self._parse_acq_type()
+            self._parse_acq_type()
+            # TODO: enn.turbo.factory.turbo_one_config does not accept acq_type.
+            # Add a real factory path before relying on turbo-one-nds/ucb.
             return factory.turbo_one_config(
                 num_candidates=num_candidates,
                 num_init=num_init,
                 trailing_obs=self._num_keep,
                 trust_region=trust_region,
                 candidate_rv=candidate_rv,
-                acq_type=acq_type,
             )
         if self._turbo_mode == "lhd-only":
             return factory.lhd_only_config(

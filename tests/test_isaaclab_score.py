@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 from gymnasium import spaces
-from isaaclab_score_fakes import FakeIsaacEnv, FakeVectorIsaacEnv, make_fake_runtime, make_fake_vector_runtime
+from isaaclab_score_fakes import FakeIsaacEnv, FakeVectorIsaacEnv, make_fake_dm_control_runtime, make_fake_runtime, make_fake_vector_runtime
 
 
 def test_isaaclab_score_evaluates_flat_policy_batch():
@@ -229,11 +229,18 @@ def test_eggroll_policy_tag_builds_torch_policy_for_isaaclab():
     assert isinstance(policy, MLPPolicy)
 
 
-def test_eggroll_external_designer_iterates_without_jax_env_adapter():
+def test_eggroll_policy_tag_builds_torch_policy_for_dm_control():
+    from policies.eggroll_policy import EggRollActorCriticMLPPolicyFactory, EggRollActorCriticMLPSpec
+    from policies.mlp_policy import MLPPolicy
+
+    policy = EggRollActorCriticMLPPolicyFactory(EggRollActorCriticMLPSpec(hidden_dim=4, layers=2))(make_fake_dm_control_runtime())
+    assert isinstance(policy, MLPPolicy)
+
+
+def _run_external_eggroll_once(runtime):
     from optimizer.eggroll_designer import EggRollDesigner
     from policies.mlp_policy import MLPPolicyFactory
 
-    runtime = make_fake_runtime()
     policy = MLPPolicyFactory((4,))(runtime)
     designer = EggRollDesigner(
         policy,
@@ -245,10 +252,30 @@ def test_eggroll_external_designer_iterates_without_jax_env_adapter():
         batch_size=2,
         optax="adam",
     )
-    result = designer.iterate([], 2)
-    assert len(result.data) == 1
-    assert np.isfinite(float(result.data[0].trajectory.rreturn))
-    assert result.data[0].trajectory.num_steps > 0
+    try:
+        return designer, designer.iterate([], 2)
+    except Exception:
+        designer.stop()
+        raise
+
+
+def test_eggroll_external_designer_iterates_without_jax_env_adapter():
+    designer, result = _run_external_eggroll_once(make_fake_runtime())
+    try:
+        assert len(result.data) == 1
+        assert np.isfinite(float(result.data[0].trajectory.rreturn))
+        assert result.data[0].trajectory.num_steps > 0
+    finally:
+        designer.stop()
+
+
+def test_eggroll_external_designer_supports_dm_control():
+    designer, result = _run_external_eggroll_once(make_fake_dm_control_runtime())
+    try:
+        assert len(result.data) == 1
+        assert np.isfinite(float(result.data[0].trajectory.rreturn))
+    finally:
+        designer.stop()
 
 
 def test_eggroll_external_reuses_training_vector_env_for_current_eval():
