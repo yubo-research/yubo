@@ -8,13 +8,21 @@ import torch.nn as nn
 
 def test_kiss_tidy_b_uhd_setups(monkeypatch):
     import ops.uhd_setup_bszo_core as bszoc
-    import ops.uhd_setup_make_loop_impl as mli
     import ops.uhd_setup_monolith_bszo as mbzo
-    import ops.uhd_setup_monolith_make_loop as mml
     import ops.uhd_setup_simple_gym_impl as sgi
+    from ops.uhd_setup_bszo_core import run_bszo_loop as bszo_core_run_bszo_loop
+    from ops.uhd_setup_bszo_evaluate import make_bszo_gym_evaluate_fn, make_bszo_mnist_evaluate_fn
+    from ops.uhd_setup_make_loop_impl import make_loop as make_loop_impl
+    from ops.uhd_setup_mnist_loop_eval import make_uhd_mnist_torch_evaluate_fn
+    from ops.uhd_setup_monolith_bszo import run_bszo_loop as monolith_bszo_run_bszo_loop
+    from ops.uhd_setup_monolith_make_loop import make_loop as monolith_make_loop
+    from ops.uhd_setup_simple_gym_impl import run_simple_loop as simple_gym_run_simple_loop
+
+    assert callable(make_bszo_mnist_evaluate_fn) and callable(make_bszo_gym_evaluate_fn)
+    assert callable(make_uhd_mnist_torch_evaluate_fn)
 
     with patch("optimizer.uhd_loop.UHDLoop", lambda *a, **k: SimpleNamespace(run=lambda: None)):
-        mli.make_loop(
+        make_loop_impl(
             "mnist",
             1,
             lr=0.01,
@@ -25,7 +33,7 @@ def test_kiss_tidy_b_uhd_setups(monkeypatch):
             problem_seed=0,
             noise_seed_0=0,
         )
-        mml.make_loop(
+        monolith_make_loop(
             "mnist",
             1,
             lr=0.01,
@@ -38,7 +46,7 @@ def test_kiss_tidy_b_uhd_setups(monkeypatch):
         )
 
     monkeypatch.setattr(mbzo, "_run_bszo_iterations", lambda *a, **k: None)
-    mbzo.run_bszo_loop("mnist", 1, lr=0.01, policy_tag="pure-function", problem_seed=0, noise_seed_0=0)
+    monolith_bszo_run_bszo_loop("mnist", 1, lr=0.01, policy_tag="pure-function", problem_seed=0, noise_seed_0=0)
 
     _lin = nn.Linear(1, 1, bias=False)
 
@@ -56,14 +64,14 @@ def test_kiss_tidy_b_uhd_setups(monkeypatch):
         lambda **k: SimpleNamespace(rreturn=0.1),
     )
     monkeypatch.setattr(bszoc, "_run_bszo_iterations", lambda *a, **k: None)
-    bszoc.run_bszo_loop("x", 1, lr=0.01, problem_seed=0, noise_seed_0=0)
+    bszo_core_run_bszo_loop("x", 1, lr=0.01, problem_seed=0, noise_seed_0=0)
 
     def _sgc(*a, **k):
         return SimpleNamespace(problem_seed=None, make=lambda: object())
 
     monkeypatch.setattr("problems.env_conf.get_env_conf", _sgc)
     monkeypatch.setattr(sgi, "_run_simple_gym", lambda *a, **k: None)
-    sgi.run_simple_loop("x", 1, sigma=0.01, optimizer="simple")
+    simple_gym_run_simple_loop("x", 1, sigma=0.01, optimizer="simple")
 
 
 def test_kiss_tidy_b_uhd_setups_import_wrappers():

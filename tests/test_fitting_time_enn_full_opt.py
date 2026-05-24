@@ -24,12 +24,11 @@ def test_benchmark_enn_full_optimization_importable_from_package():
     assert exported is benchmark_enn_full_optimization_proposal_timing
 
 
-def test_enn_full_opt_checkpoint_ns_caps_at_100k():
+def test_enn_full_opt_checkpoint_ns_caps_at_1m():
     ns = enn_full_opt_checkpoint_ns()
-    assert ns[-1] == 100_000
-    assert 300_000 not in ns
-    assert 1_000_000 not in ns
-    assert FULL_OPT_NUM_ROUNDS == 100_000
+    assert ns[-1] == 1_000_000
+    assert 300_000 in ns
+    assert FULL_OPT_NUM_ROUNDS == 1_000_000
 
 
 def test_opt_name_for_index_driver():

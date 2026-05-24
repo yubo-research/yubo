@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 
 import ops.exp_uhd_parse as _exp_uhd_parse
+from common.mapping_keys import coerce_mapping_keys, normalize_toml_key
 
 _ALL_TOML_KEYS = _exp_uhd_parse._ALL_TOML_KEYS
 _BE_DEFAULTS = _exp_uhd_parse._BE_DEFAULTS
@@ -17,6 +18,20 @@ _load_toml_config = _exp_uhd_parse._load_toml_config
 _normalize_key = _exp_uhd_parse._normalize_key
 _parse_cfg = _exp_uhd_parse._parse_cfg
 _validate_required = _exp_uhd_parse._validate_required
+
+
+def test_mapping_keys_module_normalize_toml_key():
+    assert normalize_toml_key("num-arms") == "num_arms"
+
+
+def test_mapping_keys_module_coerce_mapping_keys():
+    out = coerce_mapping_keys(
+        {"num-arms": 1},
+        source="test",
+        valid_keys={"num_arms"},
+        not_mapping_msg="expected dict",
+    )
+    assert out["num_arms"] == 1
 
 
 def test_normalize_key_no_hyphen():

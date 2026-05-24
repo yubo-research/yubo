@@ -12,6 +12,7 @@ from analysis.fitting_time import (
 from analysis.fitting_time.fitting_time_enn_incremental import (
     ENN_INCREMENTAL_CHECKPOINT_NS,
     EnnIncrementalIndexDriver,
+    enn_test_log_likelihood,
 )
 from analysis.fitting_time.fitting_time_enn_incremental_draw import (
     _train_xy_unit_cube_segment,
@@ -110,6 +111,34 @@ def test_benchmark_enn_incremental_add_timing_syncs_before_stopping_timer(monkey
 
     assert calls == ["add", "sync", "add", "add", "sync"]
     assert result.add_seconds == (1.5, 3.0)
+
+
+def test_enn_test_log_likelihood_smoke(monkeypatch):
+    import numpy as np
+
+    class _FakeEnn:
+        def posterior(self, x, *, params, flags):
+            from types import SimpleNamespace
+
+            n = int(np.asarray(x).shape[0])
+            return SimpleNamespace(mu=np.zeros((n, 1)), se=np.ones((n, 1)))
+
+    monkeypatch.setattr(
+        "analysis.fitting_time.fitting_time_enn_incremental.draw_benchmark_test_xy_unit_cube",
+        lambda **kwargs: (np.zeros((4, 2)), np.zeros((4, 1))),
+    )
+    monkeypatch.setattr(
+        "analysis.fitting_time.fitting_time_enn_incremental._checkpoint_enn_params",
+        lambda n_obs: object(),
+    )
+    ll = enn_test_log_likelihood(
+        _FakeEnn(),
+        D=2,
+        function_name="sphere",
+        problem_seed=0,
+        n_obs=5,
+    )
+    assert np.isfinite(ll)
 
 
 def test_benchmark_enn_incremental_hnsw_driver():

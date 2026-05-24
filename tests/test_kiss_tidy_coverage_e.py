@@ -6,17 +6,33 @@ from unittest.mock import MagicMock
 import numpy as np
 import torch
 
+from rl.torchrl.offpolicy.trainer_utils import (
+    flatten_batch_to_transitions as trainer_utils_flatten_batch_to_transitions,
+)
+from rl.torchrl.offpolicy.trainer_utils import (
+    normalize_actions_for_replay as trainer_utils_normalize_actions_for_replay,
+)
+from rl.torchrl.sac.sac_train_loop import register as sac_train_loop_register
+from rl.torchrl.sac.sac_train_loop import train_sac
+from rl.torchrl.sac.sac_trainer_phase_a import evaluate_actor as sac_trainer_phase_a_evaluate_actor
+from rl.torchrl.sac.sac_trainer_phase_b_impl import (
+    flatten_batch_to_transitions as sac_trainer_phase_b_impl_flatten_batch_to_transitions,
+)
+from rl.torchrl.sac.sac_trainer_phase_b_impl import (
+    normalize_actions_for_replay as sac_trainer_phase_b_impl_normalize_actions_for_replay,
+)
+from rl.torchrl.sac.trainer import train_sac as trainer_train_sac
+
 
 def test_kiss_tidy_e_torchrl_sac_sampling_vector(monkeypatch, tmp_path):
     monkeypatch.setattr("rl.core.runtime.select_device", lambda d: torch.device("cpu"))
-    from rl.torchrl.sac import sac_train_loop
     from rl.torchrl.sac import sac_trainer_phase_a as pha
     from rl.torchrl.sac import sac_trainer_phase_b_impl as phb
     from rl.torchrl.sac.config import SACConfig
     from rl.torchrl.sac.sac_setup_build import build_env_setup, build_modules, build_training
     from rl.torchrl.sac.sac_setup_types import _TrainState
 
-    assert callable(sac_train_loop.train_sac)
+    assert callable(train_sac)
     monkeypatch.setattr(
         "rl.torchrl.sac.sac_setup_build.build_continuous_gym_env_setup",
         lambda **kwargs: SimpleNamespace(
@@ -42,14 +58,14 @@ def test_kiss_tidy_e_torchrl_sac_sampling_vector(monkeypatch, tmp_path):
     tr = build_training(sc, mods)
     assert tr.replay is not None
     monkeypatch.setattr("rl.registry.register_algo", lambda *a, **k: None)
-    sac_train_loop.register()
+    sac_train_loop_register()
     payload = pha.checkpoint_payload(mods, tr, _TrainState(), step=1)
     assert "step" in payload
     st = pha.resume_if_requested(sc, mods, tr, device=torch.device("cpu"))
     assert st.start_step == 0
     _ = pha.build_eval_policy(mods, env, torch.device("cpu"))
     monkeypatch.setattr("rl.core.episode_rollout.collect_denoised_trajectory", lambda *a, **k: (SimpleNamespace(rreturn=0.3), None))
-    assert pha.evaluate_actor(sc, env, mods, device=torch.device("cpu"), eval_seed=0) == 0.3
+    assert sac_trainer_phase_a_evaluate_actor(sc, env, mods, device=torch.device("cpu"), eval_seed=0) == 0.3
     td = __import__("tensordict").TensorDict(
         {
             "observation": torch.zeros(2, 3),
@@ -65,8 +81,10 @@ def test_kiss_tidy_e_torchrl_sac_sampling_vector(monkeypatch, tmp_path):
         },
         batch_size=[2],
     )
-    flat = phb.flatten_batch_to_transitions(td)
-    phb.normalize_actions_for_replay(flat, action_low=env.action_low, action_high=env.action_high)
+    flat = sac_trainer_phase_b_impl_flatten_batch_to_transitions(td)
+    sac_trainer_phase_b_impl_normalize_actions_for_replay(flat, action_low=env.action_low, action_high=env.action_high)
+    _ = trainer_utils_flatten_batch_to_transitions(td)
+    trainer_utils_normalize_actions_for_replay(flat, action_low=env.action_low, action_high=env.action_high)
     monkeypatch.setattr("rl.torchrl.sac.loop.evaluate_if_due", lambda *a, **k: None)
     monkeypatch.setattr("rl.torchrl.sac.loop.log_if_due", lambda *a, **k: None)
     monkeypatch.setattr("rl.torchrl.sac.loop.checkpoint_if_due", lambda *a, **k: None)
@@ -117,6 +135,7 @@ def test_kiss_tidy_e_torchrl_sac_sampling_vector(monkeypatch, tmp_path):
     stub_env.step = MagicMock(return_value=(td["observation"][0:1].numpy(), 0.0, True, False, {}))
     monkeypatch.setattr("rl.torchrl.sac.setup._make_collect_env_sac", lambda *a, **k: stub_env)
     assert phb.build_sac_collector(sc, env, mods, runtime=rt, total_frames=4) is not None
+    assert callable(trainer_train_sac)
 
 
 def test_kiss_tidy_e_sparse_jl_and_vector_fakes():
