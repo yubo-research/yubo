@@ -7,7 +7,8 @@ from dataclasses import dataclass
 
 import numpy as np
 from enn.enn.enn_class import EpistemicNearestNeighbors
-from enn.enn.enn_fit import enn_fit
+
+from optimizer.uhd_enn_fit_helpers import fit_enn_params
 
 from .batch_jobs import job_fit_quality
 from .evaluate_metrics import normalize_benchmark_function_name
@@ -76,12 +77,15 @@ def benchmark_enn_fit_timing(
         index_driver=driver,
     )
     t_0 = time.perf_counter()
-    enn_fit(
+    fit_enn_params(
         enn_model,
+        train_x,
+        train_y,
         k=k_eff,
         num_fit_candidates=100,
         num_fit_samples=nfs,
         rng=gen,
+        yvar=train_yvar,
     )
     fit_seconds = time.perf_counter() - t_0
     log_likelihood = enn_test_log_likelihood(

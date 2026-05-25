@@ -49,7 +49,7 @@ def test_benchmark_enn_fit_timing_passes_hyperparams_to_enn_fit(monkeypatch):
     def ctor(*args, **kwargs):
         return sentinel.model
 
-    def enn_fit_capture(model, *, k, num_fit_candidates, num_fit_samples, rng, **kwargs):
+    def fit_enn_params_capture(model, x, y, *, k, num_fit_candidates, num_fit_samples, rng, **kwargs):
         captured.update(
             k=k,
             num_fit_candidates=num_fit_candidates,
@@ -58,7 +58,7 @@ def test_benchmark_enn_fit_timing_passes_hyperparams_to_enn_fit(monkeypatch):
         )
 
     monkeypatch.setattr(fit_mod, "EpistemicNearestNeighbors", ctor, raising=False)
-    monkeypatch.setattr(fit_mod, "enn_fit", enn_fit_capture, raising=False)
+    monkeypatch.setattr(fit_mod, "fit_enn_params", fit_enn_params_capture, raising=False)
     monkeypatch.setattr(
         fit_mod,
         "enn_test_log_likelihood",
@@ -109,7 +109,7 @@ def test_benchmark_enn_fit_timing_perf_only_wraps_enn_fit(monkeypatch):
         log.append("ctor")
         return sentinel.model
 
-    def enn_fit_nop(*args, **kwargs):
+    def fit_enn_params_nop(model, x, y, *args, **kwargs):
         log.append("enn_fit")
 
     def perf():
@@ -124,7 +124,7 @@ def test_benchmark_enn_fit_timing_perf_only_wraps_enn_fit(monkeypatch):
         raising=False,
     )
     monkeypatch.setattr(fit_mod, "EpistemicNearestNeighbors", ctor, raising=False)
-    monkeypatch.setattr(fit_mod, "enn_fit", enn_fit_nop, raising=False)
+    monkeypatch.setattr(fit_mod, "fit_enn_params", fit_enn_params_nop, raising=False)
     monkeypatch.setattr(
         fit_mod,
         "enn_test_log_likelihood",
@@ -192,11 +192,11 @@ def test_enn_fit_timing_enn_fit_rng_varies_with_data_seed(monkeypatch):
     def ctor(*args, **kwargs):
         return sentinel.model
 
-    def enn_fit_capture(model, *, rng, **kwargs):
+    def fit_enn_params_capture(model, x, y, *, rng, **kwargs):
         captured.append(rng)
 
     monkeypatch.setattr(fit_mod, "EpistemicNearestNeighbors", ctor, raising=False)
-    monkeypatch.setattr(fit_mod, "enn_fit", enn_fit_capture, raising=False)
+    monkeypatch.setattr(fit_mod, "fit_enn_params", fit_enn_params_capture, raising=False)
     monkeypatch.setattr(
         fit_mod,
         "enn_test_log_likelihood",

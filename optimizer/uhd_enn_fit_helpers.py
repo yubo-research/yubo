@@ -4,8 +4,38 @@ from __future__ import annotations
 
 import numpy as np
 from enn.enn.enn_class import EpistemicNearestNeighbors
-from enn.enn.enn_fit import enn_fit
+from enn.enn.enn_fitter import ENNStatefulFitter
 from enn.turbo.config.enn_index_driver import ENNIndexDriver
+
+
+def fit_enn_params(
+    model: EpistemicNearestNeighbors,
+    x: np.ndarray,
+    y: np.ndarray,
+    *,
+    k: int,
+    num_fit_candidates: int = 200,
+    num_fit_samples: int = 200,
+    rng: np.random.Generator | None = None,
+    yvar: np.ndarray | None = None,
+    infer_aleatoric_variance_scale: bool = True,
+    params_warm_start=None,
+):
+    fitter = ENNStatefulFitter(
+        k=int(k),
+        rng=rng if rng is not None else np.random.default_rng(0),
+        infer_aleatoric_variance_scale=infer_aleatoric_variance_scale,
+    )
+    y_arr = np.asarray(y, dtype=np.float64)
+    if y_arr.ndim == 1:
+        y_arr = y_arr.reshape(-1, 1)
+    fitter.tell(np.asarray(x, dtype=np.float64), y_arr, yvar)
+    return fitter.ask(
+        model,
+        num_fit_candidates=num_fit_candidates,
+        num_fit_samples=num_fit_samples,
+        params_warm_start=params_warm_start,
+    )
 
 
 def fit_enn_regressor_on_points(
@@ -14,7 +44,6 @@ def fit_enn_regressor_on_points(
     *,
     k: int,
 ) -> tuple[float, float, EpistemicNearestNeighbors, object]:
-    """Fit EpistemicNearestNeighbors + hyperparameters on (x, y) observations."""
     x = np.asarray(x_list, dtype=np.float64)
     y = np.asarray(y_list, dtype=np.float64)
     y_mean = float(y.mean())
@@ -28,13 +57,14 @@ def fit_enn_regressor_on_points(
         scale_x=False,
         index_driver=ENNIndexDriver.FLAT,
     )
-    rng = np.random.default_rng(0)
-    params = enn_fit(
+    params = fit_enn_params(
         model,
+        x,
+        y_norm,
         k=int(k),
         num_fit_candidates=200,
         num_fit_samples=200,
-        rng=rng,
+        rng=np.random.default_rng(0),
     )
     return y_mean, y_std, model, params
 

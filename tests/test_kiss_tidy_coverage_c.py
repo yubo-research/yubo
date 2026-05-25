@@ -22,7 +22,7 @@ import problems.env_conf_types
 import problems.pixel_policies_encoders
 import problems.reactor_policy_params
 from optimizer.ppo_common import apply_ppo_telemetry, resolve_designer_config, trajectory_tensors
-from optimizer.uhd_enn_fit_helpers import enn_mixin_maybe_fit_inplace
+from optimizer.uhd_enn_fit_helpers import enn_mixin_maybe_fit_inplace, fit_enn_params
 from optimizer.uhd_mezo_be_ask_shared import run_mezo_be_ask
 from policies.actor_mlp_policy import ActorMLPPolicyFactory
 from problems.normalizer import Normalizer, normalize_running_state_array
@@ -37,10 +37,10 @@ from problems.reactor_policy_params import (
 )
 from rl.math_utils import tanh_gaussian_action_log_prob_entropy
 from rl.pufferlib.offpolicy.backbone_name import resolve_backbone_name
-from tests.kiss_tidy_coverage_c_lib import (
+from tests.kiss_tidy_coverage_c_lib import run_reactor_policy_params
+from tests.kiss_tidy_coverage_c_mo_lib import run_optimizer_mo_and_fit
+from tests.kiss_tidy_coverage_c_support_lib import (
     run_dm_pixel_env_conf,
-    run_optimizer_mo_and_fit,
-    run_reactor_policy_params,
     run_uhd_enn_mixins,
     run_uhd_loop_support,
 )
@@ -50,6 +50,7 @@ def test_kiss_tidy_optimizer_mo_and_uhd_fit_helpers(monkeypatch):
     _ = (
         optimizer.optimizer_mo,
         optimizer.uhd_enn_fit_helpers,
+        fit_enn_params,
     )
     run_optimizer_mo_and_fit(monkeypatch)
 

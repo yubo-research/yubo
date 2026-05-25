@@ -52,9 +52,10 @@ def fit_enn(
     index_driver=None,
 ) -> tuple[float, np.ndarray, np.ndarray]:
     from enn.enn.enn_class import EpistemicNearestNeighbors
-    from enn.enn.enn_fit import enn_fit
     from enn.enn.enn_params import PosteriorFlags
     from enn.turbo.config.enn_index_driver import ENNIndexDriver
+
+    from optimizer.uhd_enn_fit_helpers import fit_enn_params
 
     train_yvar = np.full_like(train_y, _SYNTHETIC_OBS_VAR)
     driver = ENNIndexDriver.FLAT if index_driver is None else index_driver
@@ -76,12 +77,15 @@ def fit_enn(
         train_yvar,
         index_driver=driver,
     )
-    enn_params = enn_fit(
+    enn_params = fit_enn_params(
         enn_model,
+        train_x,
+        train_y,
         k=k_eff,
         num_fit_candidates=int(num_fit_candidates),
         num_fit_samples=nfs,
         rng=gen,
+        yvar=train_yvar,
     )
     elapsed = time.perf_counter() - t_0
 

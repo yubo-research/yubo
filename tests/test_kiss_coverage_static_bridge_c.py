@@ -13,7 +13,7 @@ import torch.nn as nn
 from tests.kiss_dummy_nn_modules import make_pm_module_type
 
 
-def test_kiss_bridge_pufferlib_offpolicy_direct_symbols(monkeypatch):
+def test_kiss_bridge_pufferlib_offpolicy_env_eval(monkeypatch):
     from rl.pufferlib.offpolicy.env_utils import (
         EnvSetup,
         ObservationSpec,
@@ -52,6 +52,55 @@ def test_kiss_bridge_pufferlib_offpolicy_direct_symbols(monkeypatch):
     from rl.pufferlib.offpolicy.eval_utils import (
         use_actor_state as eval_use_actor_state,
     )
+
+    puf_seed_everything(0)
+    assert ObservationSpec is not None and EnvSetup is not None
+    assert callable(resolve_device) and callable(to_env_action)
+    cfg = SimpleNamespace(
+        env_tag="pend",
+        seed=0,
+        num_envs=1,
+        problem_seed=None,
+        noise_seed_0=None,
+        from_pixels=False,
+        pixels_only=True,
+        backbone_name="mlp",
+        framestack=1,
+    )
+    monkeypatch.setattr("rl.pufferlib.offpolicy.env_utils.import_pufferlib_modules", lambda: (object(), object(), object()))
+    monkeypatch.setattr("rl.pufferlib.offpolicy.env_utils._make_vector_env_common", lambda *a, **k: object())
+    assert build_env_setup(cfg) is not None
+    arr = np.zeros((1, 2), dtype=np.float32)
+    osp = infer_observation_spec(cfg, arr)
+    resolve_backbone_name(cfg, osp)
+    prepare_obs_np(arr, obs_spec=osp)
+    make_vector_env(cfg)
+    dev = torch.device("cpu")
+    mods = SimpleNamespace(
+        actor_backbone=nn.Linear(2, 2),
+        actor_head=nn.Linear(2, 2),
+        log_std=None,
+        actor=SimpleNamespace(act=lambda x: x),
+    )
+    st = eval_capture_actor_state(mods)
+    with eval_use_actor_state(mods, st, device=dev):
+        pass
+    monkeypatch.setattr("rl.pufferlib.offpolicy.eval_utils.collect_denoised_trajectory", lambda *a, **k: (SimpleNamespace(rreturn=0.0), None))
+    monkeypatch.setattr("rl.pufferlib.offpolicy.eval_utils.evaluate_for_best", lambda *a, **k: 0.0)
+    monkeypatch.setattr("rl.pufferlib.offpolicy.eval_utils.evaluate_heldout_with_best_actor", lambda *a, **k: 0.0)
+    obs_s = ObservationSpec(mode="vector", raw_shape=(2,), vector_dim=2)
+    env = SimpleNamespace(env_conf=SimpleNamespace(), problem_seed=0)
+    eval_evaluate_actor(SimpleNamespace(num_denoise=1), env, mods, obs_s, device=dev, eval_seed=0)
+    eval_evaluate_heldout_if_enabled(SimpleNamespace(num_denoise_passive=1), env, mods, obs_s, device=dev, heldout_i_noise=0)
+    eval_log_if_due(SimpleNamespace(log_interval_steps=1), TrainState(start_time=0.0), step=1, frames_per_batch=1)
+    append_eval_metric(MagicMock(), TrainState(start_time=0.0), step=1)
+    SacEvalPolicy(modules=mods, obs_spec=obs_s, device=dev)(np.zeros(2, dtype=np.float32))
+    render_videos_if_enabled(SimpleNamespace(video_enable=False), env, mods, obs_s, device=dev)
+    assert callable(eval_maybe_eval)
+
+
+def test_kiss_bridge_pufferlib_offpolicy_model_ppo(monkeypatch):
+    from rl.pufferlib.offpolicy.env_utils import ObservationSpec
     from rl.pufferlib.offpolicy.model_utils import (
         ActorNet as PufActorNet,
     )
@@ -81,90 +130,14 @@ def test_kiss_bridge_pufferlib_offpolicy_direct_symbols(monkeypatch):
         restore_checkpoint_if_requested,
         save_final_checkpoint,
     )
-    from rl.pufferlib.ppo.eval import (
-        PufferEvalPolicy,
-        validate_eval_config,
-    )
-    from rl.pufferlib.ppo.eval import (
-        capture_actor_snapshot as ppo_capture_actor_snapshot,
-    )
+    from rl.pufferlib.ppo.eval import PufferEvalPolicy, validate_eval_config
+    from rl.pufferlib.ppo.eval import capture_actor_snapshot as ppo_capture_actor_snapshot
     from rl.pufferlib.ppo.eval_seeds import resolve_eval_seeds as ppo_resolve_eval_seeds
     from rl.pufferlib.sac.config import SACConfig
     from rl.pufferlib.sac.config import TrainResult as PufferSacTrainResult
 
-    puf_seed_everything(0)
-    assert ObservationSpec is not None and EnvSetup is not None
-    assert callable(resolve_device) and callable(to_env_action)
-    cfg = SimpleNamespace(
-        env_tag="pend",
-        seed=0,
-        num_envs=1,
-        problem_seed=None,
-        noise_seed_0=None,
-        from_pixels=False,
-        pixels_only=True,
-        backbone_name="mlp",
-        framestack=1,
-    )
-    monkeypatch.setattr(
-        "rl.pufferlib.offpolicy.env_utils.import_pufferlib_modules",
-        lambda: (object(), object(), object()),
-    )
-    monkeypatch.setattr(
-        "rl.pufferlib.offpolicy.env_utils._make_vector_env_common",
-        lambda *a, **k: object(),
-    )
-    es = build_env_setup(cfg)
-    assert es is not None
-    arr = np.zeros((1, 2), dtype=np.float32)
-    osp = infer_observation_spec(cfg, arr)
-    resolve_backbone_name(cfg, osp)
-    prepare_obs_np(arr, obs_spec=osp)
-    make_vector_env(cfg)
-
     dev = torch.device("cpu")
-
-    mods = SimpleNamespace(
-        actor_backbone=nn.Linear(2, 2),
-        actor_head=nn.Linear(2, 2),
-        log_std=None,
-        actor=SimpleNamespace(act=lambda x: x),
-    )
-    st = eval_capture_actor_state(mods)
-    with eval_use_actor_state(mods, st, device=dev):
-        pass
-    monkeypatch.setattr(
-        "rl.pufferlib.offpolicy.eval_utils.collect_denoised_trajectory",
-        lambda *a, **k: (SimpleNamespace(rreturn=0.0), None),
-    )
-    monkeypatch.setattr("rl.pufferlib.offpolicy.eval_utils.evaluate_for_best", lambda *a, **k: 0.0)
-    monkeypatch.setattr(
-        "rl.pufferlib.offpolicy.eval_utils.evaluate_heldout_with_best_actor",
-        lambda *a, **k: 0.0,
-    )
-    obs_s = ObservationSpec(mode="vector", raw_shape=(2,), vector_dim=2)
-    env = SimpleNamespace(env_conf=SimpleNamespace(), problem_seed=0)
-    eval_evaluate_actor(SimpleNamespace(num_denoise=1), env, mods, obs_s, device=dev, eval_seed=0)
-    eval_evaluate_heldout_if_enabled(
-        SimpleNamespace(num_denoise_passive=1),
-        env,
-        mods,
-        obs_s,
-        device=dev,
-        heldout_i_noise=0,
-    )
-    eval_log_if_due(
-        SimpleNamespace(log_interval_steps=1),
-        TrainState(start_time=0.0),
-        step=1,
-        frames_per_batch=1,
-    )
-    append_eval_metric(MagicMock(), TrainState(start_time=0.0), step=1)
-    pol = SacEvalPolicy(modules=mods, obs_spec=obs_s, device=dev)
-    pol(np.zeros(2, dtype=np.float32))
-    render_videos_if_enabled(SimpleNamespace(video_enable=False), env, mods, obs_s, device=dev)
-    assert callable(eval_maybe_eval)
-
+    osp = ObservationSpec(mode="vector", raw_shape=(2,), vector_dim=2)
     built = puf_build_modules(
         SimpleNamespace(
             backbone_name="mlp",
@@ -176,7 +149,7 @@ def test_kiss_bridge_pufferlib_offpolicy_direct_symbols(monkeypatch):
             head_activation="tanh",
         ),
         SimpleNamespace(obs_lb=None, obs_width=None, act_dim=2),
-        ObservationSpec(mode="vector", raw_shape=(2,), vector_dim=2),
+        osp,
         device=dev,
     )
     opts = puf_build_optimizers(SimpleNamespace(learning_rate_actor=1e-3, learning_rate_critic=1e-3), built)
@@ -187,44 +160,13 @@ def test_kiss_bridge_pufferlib_offpolicy_direct_symbols(monkeypatch):
     _ = opts
     assert PufActorNet is not None and QNetPixel is not None
     assert OffPolicyModules is not None and OffPolicyOptimizers is not None
-
-    PM = make_pm_module_type("PM")
-    pm = PM()
+    pm = make_pm_module_type("PM")()
     opt = torch.optim.AdamW(pm.parameters(), lr=0.1)
-    st3 = SimpleNamespace(
-        global_step=1,
-        best_actor_state=None,
-        best_return=0.0,
-        last_eval_return=0.0,
-        last_heldout_return=None,
-        last_episode_return=None,
-    )
+    st3 = SimpleNamespace(global_step=1, best_actor_state=None, best_return=0.0, last_eval_return=0.0, last_heldout_return=None, last_episode_return=None)
     ppo_ck_build_checkpoint_payload(pm, opt, st3, iteration=1)
-    restore_checkpoint_if_requested(
-        SimpleNamespace(resume_from=None),
-        SimpleNamespace(batch_size=1),
-        pm,
-        opt,
-        st3,
-        device=dev,
-    )
-    maybe_save_periodic_checkpoint(
-        SimpleNamespace(checkpoint_interval=None),
-        MagicMock(),
-        pm,
-        opt,
-        st3,
-        iteration=1,
-    )
-    save_final_checkpoint(
-        SimpleNamespace(checkpoint_interval=None),
-        MagicMock(),
-        pm,
-        opt,
-        st3,
-        iteration=1,
-    )
-
+    restore_checkpoint_if_requested(SimpleNamespace(resume_from=None), SimpleNamespace(batch_size=1), pm, opt, st3, device=dev)
+    maybe_save_periodic_checkpoint(SimpleNamespace(checkpoint_interval=None), MagicMock(), pm, opt, st3, iteration=1)
+    save_final_checkpoint(SimpleNamespace(checkpoint_interval=None), MagicMock(), pm, opt, st3, iteration=1)
     validate_eval_config(
         SimpleNamespace(
             eval_interval=1,
@@ -238,16 +180,14 @@ def test_kiss_bridge_pufferlib_offpolicy_direct_symbols(monkeypatch):
         )
     )
     ppo_resolve_eval_seeds(SimpleNamespace(seed=0, problem_seed=0, noise_seed_0=0))
-    pe = PufferEvalPolicy(
+    PufferEvalPolicy(
         model=pm,
         obs_spec=osp,
         action_spec=SimpleNamespace(kind="continuous", dim=1),
         device=dev,
         prepare_obs_fn=lambda *a, **k: torch.zeros(1, 1),
-    )
-    pe(np.zeros(1, dtype=np.float32))
+    )(np.zeros(1, dtype=np.float32))
     ppo_capture_actor_snapshot(pm)
-
     assert SACConfig is not None and PufferSacTrainResult is not None
 
 

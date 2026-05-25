@@ -21,6 +21,10 @@ def test_benchmark_enn_fit_ind_passes_hyperparams_to_enn_fit(monkeypatch):
     captured: list[dict] = []
 
     class _FakeModel:
+        train_x = np.zeros((0, 2), dtype=np.float64)
+        train_y = np.zeros((0, 1), dtype=np.float64)
+        train_yvar = None
+
         def sync_index(self):
             pass
 
@@ -30,7 +34,7 @@ def test_benchmark_enn_fit_ind_passes_hyperparams_to_enn_fit(monkeypatch):
     def ctor(*_args, **_kwargs):
         return _FakeModel()
 
-    def enn_fit_capture(_model, *, k, num_fit_candidates, num_fit_samples, rng, **kwargs):
+    def fit_enn_params_capture(_model, _x, _y, *, k, num_fit_candidates, num_fit_samples, rng, **kwargs):
         captured.append(
             {
                 "k": k,
@@ -52,7 +56,7 @@ def test_benchmark_enn_fit_ind_passes_hyperparams_to_enn_fit(monkeypatch):
         ctor,
         raising=False,
     )
-    monkeypatch.setattr("enn.enn.enn_fit.enn_fit", enn_fit_capture, raising=False)
+    monkeypatch.setattr("optimizer.uhd_enn_fit_helpers.fit_enn_params", fit_enn_params_capture, raising=False)
     monkeypatch.setattr(
         fit_ind_mod,
         "enn_test_log_likelihood",
@@ -130,7 +134,7 @@ def test_timed_fit_syncs_index_before_timer(monkeypatch):
     calls: list[object] = []
     synced = False
 
-    def fake_enn_fit(_model, **kwargs):
+    def fake_fit_enn_params(_model, _x, _y, **kwargs):
         calls.append(kwargs["params_warm_start"])
         return "timed-params"
 
@@ -140,11 +144,16 @@ def test_timed_fit_syncs_index_before_timer(monkeypatch):
 
     tick = iter([10.0, 12.5])
 
-    monkeypatch.setattr("enn.enn.enn_fit.enn_fit", fake_enn_fit, raising=False)
+    monkeypatch.setattr("optimizer.uhd_enn_fit_helpers.fit_enn_params", fake_fit_enn_params, raising=False)
     monkeypatch.setattr(fit_ind_mod.time, "perf_counter", lambda: next(tick))
 
     params, elapsed = fit_ind_mod._enn_fit_timed_after_add(
-        SimpleNamespace(sync_index=sync_index),
+        SimpleNamespace(
+            sync_index=sync_index,
+            train_x=np.zeros((1, 2), dtype=np.float64),
+            train_y=np.zeros((1, 1), dtype=np.float64),
+            train_yvar=None,
+        ),
         current_n=30,
         rng=np.random.default_rng(0),
         params_warm_start="previous-params",

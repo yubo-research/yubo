@@ -8,7 +8,7 @@ duplication_enabled = true
 orphan_module_enabled = true
 
 [python]
-statements_per_function = 69
+statements_per_function = 50
 positional_args = 31
 keyword_only_args = 13
 max_indentation = 7

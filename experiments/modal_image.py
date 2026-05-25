@@ -101,7 +101,7 @@ def mk_image(tag: str = "default"):
         "pip install $(find /root/enn/rust -path '*/wheels/*manylinux*.whl' | head -1) && pip install -e /root/enn",
     )
     image = image.run_commands(
-        "python -c \"from enn.enn.enn_fit import enn_fit; print('enn import OK')\"",
+        "python -c \"from optimizer.uhd_enn_fit_helpers import fit_enn_params; print('enn import OK')\"",
     )
 
     for d in [
