@@ -8,7 +8,7 @@ from ops.modal_hyperscalees_base_image import (
     _bash,
 )
 
-PIXI_BASE_IMAGE = "nvidia/cuda:12.8.1-devel-ubuntu24.04"
+PIXI_BASE_IMAGE = "nvcr.io/nvidia/isaac-sim:6.0.0-dev2"
 PIXI_HOME = "/opt/pixi"
 PIXI_BIN = "/usr/local/bin/pixi"
 PIXI_WORKSPACE_DIR = "/opt/yubo-pixi"

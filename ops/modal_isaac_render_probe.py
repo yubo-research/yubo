@@ -56,14 +56,15 @@ _APT_PACKAGES = (
 )
 
 _NVIDIA_VULKAN_PACKAGES = (
-    "nvidia-vulkan-icd",
-    "libnvidia-glvkspirv",
+    "libnvidia-cfg1",
+    "libnvidia-common",
+    "libnvidia-compute",
+    "libnvidia-decode",
+    "libnvidia-encode",
+    "libnvidia-extra",
+    "libnvidia-fbc1",
+    "libnvidia-gl",
     "libnvidia-gpucomp",
-    "libnvidia-ml1",
-    "libnvidia-eglcore",
-    "libnvidia-glcore",
-    "libglx-nvidia0",
-    "libnvidia-rtcore",
 )
 
 _ENV = {
@@ -90,7 +91,7 @@ def _base_image() -> modal.Image:
 
 def _nvidia_repo_install_command() -> str:
     version = shlex.quote(_NVIDIA_DRIVER_VERSION)
-    package_specs = " ".join(f"{name}={version}-1" for name in _NVIDIA_VULKAN_PACKAGES)
+    package_names = " ".join(shlex.quote(name) for name in _NVIDIA_VULKAN_PACKAGES)
     script = (
         "set -euxo pipefail; "
         ". /etc/os-release; "
@@ -107,7 +108,18 @@ def _nvidia_repo_install_command() -> str:
         'https://developer.download.nvidia.com/compute/cuda/repos/${repo}/x86_64/ /" '
         "> /etc/apt/sources.list.d/nvidia-cuda.list; "
         "apt-get update; "
-        f"DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends {package_specs}; "
+        f"driver_version={version}; "
+        'driver_branch="${driver_version%%.*}"; '
+        "install_specs=; "
+        f"for base_name in {package_names}; do "
+        'package_name="${base_name}-${driver_branch}"; '
+        'package_version="$(apt-cache madison "${package_name}" | awk \'{print $3}\' | grep -E "^${driver_version}([-.]|$)" | head -1 || true)"; '
+        'if [ -n "${package_version}" ]; then install_specs="${install_specs} ${package_name}=${package_version}"; fi; '
+        "done; "
+        'nscq_version="$(apt-cache madison libnvidia-nscq | awk \'{print $3}\' | grep -E "^${driver_version}([-.]|$)" | head -1 || true)"; '
+        'if [ -n "${nscq_version}" ]; then install_specs="${install_specs} libnvidia-nscq=${nscq_version}"; fi; '
+        'echo "NVIDIA_GRAPHICS_INSTALL_SPECS=${install_specs}"; '
+        'if [ -n "${install_specs}" ]; then DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ${install_specs}; fi; '
         "rm -rf /var/lib/apt/lists/*"
     )
     return "bash -lc " + shlex.quote(script)
@@ -140,6 +152,16 @@ official_isaacsim_image = (
     .env(_ENV)
 )
 official_isaacsim_image = _with_repo_mount(_with_ops_mount(official_isaacsim_image))
+
+official_isaacsim_nvidia_image = (
+    modal.Image.from_registry(_ISAAC_SIM_IMAGE, add_python="3.12")
+    .entrypoint([])
+    .apt_install("binutils", "ca-certificates", "curl", "gnupg", "mesa-utils", "vulkan-tools")
+    .run_commands(_nvidia_repo_install_command())
+    .pip_install("modal", "grpclib", "numpy", "scipy")
+    .env(_ENV)
+)
+official_isaacsim_nvidia_image = _with_repo_mount(_with_ops_mount(official_isaacsim_nvidia_image))
 
 
 def _logged_command(cmd: list[str], *, cwd: str = "/root") -> int:
@@ -201,6 +223,20 @@ def run_official_render_probe(command: str) -> str:
     return "ok"
 
 
+@app.function(image=official_isaacsim_nvidia_image, gpu=_GPU, timeout=_TIMEOUT_SECONDS)
+def run_official_nvidia_render_probe(command: str) -> str:
+    commands = {
+        "official-nvidia-probe": _official_probe_command(),
+        "official-nvidia-device-caps": _official_device_caps_command(),
+        "official-nvidia-kit-bare-render-capture": _official_kit_bare_render_capture_command(),
+        "official-nvidia-kit-storm-render-capture": _official_kit_storm_render_capture_command(),
+        "official-nvidia-isaacsim-minimal": _official_isaacsim_minimal_command(),
+    }
+    resolved = commands.get(command.strip(), command)
+    _logged_command(["bash", "-lc", resolved])
+    return "ok"
+
+
 @app.local_entrypoint()
 def main(command: str = "probe") -> None:
     print(f"[isaac-render-probe] gpu={_GPU!r}", flush=True)
@@ -208,7 +244,9 @@ def main(command: str = "probe") -> None:
     print(f"[isaac-render-probe] isaac_sim_image={_ISAAC_SIM_IMAGE!r}", flush=True)
     print(f"[isaac-render-probe] nvidia_driver_version={_NVIDIA_DRIVER_VERSION!r}", flush=True)
     print(f"[isaac-render-probe] command={command!r}", flush=True)
-    if command.strip().startswith("official-"):
+    if command.strip().startswith("official-nvidia-"):
+        run_official_nvidia_render_probe.remote(command)
+    elif command.strip().startswith("official-"):
         run_official_render_probe.remote(command)
     else:
         run_render_probe.remote(command)
