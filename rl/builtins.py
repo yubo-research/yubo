@@ -8,5 +8,7 @@ def _register_lazy_once(name: str, module_path: str) -> None:
 
 
 def register_all() -> None:
+    _register_lazy_once("mjx_ppo", "rl.mjx_ppo")
+    _register_lazy_once("mjx_sac", "rl.mjx_sac")
     _register_lazy_once("ppo", "rl.torchrl.ppo.core")
     _register_lazy_once("sac", "rl.torchrl.sac")

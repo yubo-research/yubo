@@ -17,6 +17,7 @@ from problems.isaaclab_env_adapters import (
     list_isaaclab_tasks,
     main,
     make_isaaclab_env,
+    make_raw_isaaclab_env,
     parse_isaaclab_task_id,
     resolve_isaaclab_env_spaces,
 )
@@ -151,7 +152,7 @@ def test_isaaclab_video_build_problem_reaches_space_resolution(monkeypatch):
     fake_gym = _FakeGym()
     monkeypatch.setattr(mod, "_SPACE_CACHE", {})
     monkeypatch.setattr(mod, "get_isaaclab_session", lambda **kwargs: calls.append(kwargs) or IsaacLabSession(app=None, gym=fake_gym))
-    monkeypatch.setattr(mod, "_parse_env_cfg", lambda task_id, **kwargs: SimpleNamespace(task_id=task_id, **kwargs))
+    monkeypatch.setattr(mod, "_parse_env_cfg", lambda task_id, **kwargs: SimpleNamespace(task_id=task_id, seed=None, **kwargs))
 
     problem = build_problem(
         "isaaclab:Isaac-Cartpole-v0",
@@ -265,6 +266,34 @@ def test_make_isaaclab_env_and_resolve_isaaclab_env_spaces(monkeypatch):
 
     assert obs_space.shape == (3,)
     assert action_space.shape == (2,)
+
+
+def test_make_raw_isaaclab_env_returns_unadapted_env(monkeypatch):
+    import problems.isaaclab_env_adapters as mod
+
+    fake_gym = _FakeGym()
+    monkeypatch.setattr(
+        mod,
+        "get_isaaclab_session",
+        lambda **_kwargs: IsaacLabSession(app=None, gym=fake_gym),
+    )
+    monkeypatch.setattr(mod, "_parse_env_cfg", lambda task_id, **kwargs: SimpleNamespace(task_id=task_id, seed=None, **kwargs))
+
+    env = make_raw_isaaclab_env(
+        "isaaclab:Isaac-Cartpole-v0",
+        num_envs=4,
+        device="cuda:0",
+        seed=11,
+        batched=True,
+    )
+
+    task_id, kwargs = fake_gym.calls[-1]
+    assert isinstance(env, _FakeIsaacEnv)
+    assert task_id == "Isaac-Cartpole-v0"
+    assert kwargs["cfg"].num_envs == 4
+    assert kwargs["cfg"].device == "cuda:0"
+    assert kwargs["cfg"].seed == 11
+    assert "batched" not in kwargs
 
 
 def test_disable_command_debug_visualizers():

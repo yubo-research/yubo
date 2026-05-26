@@ -1,0 +1,62 @@
+# Native TorchRL IsaacLab PPO batched-env smoke.
+#
+# Modal:
+#   modal run ops/modal_hyperscalees_pixi_setup.py --config configs/rl/isaaclab/g1_flat_ppo_batched_smoke.toml
+#
+# This is the RL runner path, not the BO optimizer path. For isaaclab:* envs the
+# runtime forces one native TorchRL IsaacLabWrapper collector, so num_envs below
+# means IsaacLab's internal vectorized env count, not num_envs Python workers.
+
+[rl]
+algo = "ppo"
+
+[rl.ppo]
+exp_dir = "_tmp/rl/isaaclab/g1_flat_ppo_batched_smoke"
+env_tag = "isaaclab:Isaac-Velocity-Flat-G1-v0"
+policy_tag = "actor-critic-mlp-32-32"
+device = "cuda"
+from_pixels = false
+pixels_only = true
+log_interval = 1
+
+[rl.ppo.collector]
+total_frames = 65536
+frames_per_batch = 16384
+num_envs = 1024
+backend = "auto"
+single_env_backend = "auto"
+
+[rl.ppo.optim]
+lr = 3e-4
+anneal_lr = true
+minibatch_size = 4096
+num_epochs = 4
+max_grad_norm = 0.5
+
+[rl.ppo.loss]
+gamma = 0.99
+gae_lambda = 0.95
+normalize_advantage = true
+clip_epsilon = 0.2
+clip_value_loss = true
+entropy_coeff = 0.0
+critic_coeff = 0.5
+
+[rl.ppo.eval]
+# IsaacLab allows one active SimulationContext per process. Keep this smoke
+# train-only; eval needs a same-env implementation for native IsaacLab runs.
+interval = 1000000
+num_denoise = 1
+num_denoise_passive = 1
+seed_base = 1000
+noise_mode = "frozen"
+
+[rl.ppo.checkpoint]
+interval = 4
+
+[rl.run]
+num_reps = 1
+workers = 1
+
+[rl.run.artifacts.video]
+enable = false

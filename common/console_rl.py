@@ -126,6 +126,9 @@ def print_iteration_simple(
     frames_per_batch: int,
     elapsed: float,
     *,
+    eval_return: float | None = None,
+    best_return: float | None = None,
+    algo_metrics: dict[str, float] | None = None,
     algo_name: str = "ppo",
     step_override: int | None = None,
     prefix: str = "",
@@ -133,18 +136,20 @@ def print_iteration_simple(
     """Print a progress-only line (no eval this iteration)."""
     global_step = _global_step(iteration, frames_per_batch, step_override)
     dash = "  -  "
+    eval_str = (f"{eval_return:.1f}" if eval_return is not None else dash).rjust(7)
+    best_str = (f"{best_return:.1f}" if best_return is not None else dash).rjust(7)
     sps_str = _format_sps(global_step, elapsed, dash=dash)
-    algo_strs = _algo_metric_strings(algo_name=algo_name, algo_metrics=None, dash=dash)
+    algo_strs = _algo_metric_strings(algo_name=algo_name, algo_metrics=algo_metrics, dash=dash)
 
     if step_override is not None:
-        parts = [f"{global_step:9,d}", dash.rjust(7), dash.rjust(7), dash.rjust(7)]
+        parts = [f"{global_step:9,d}", eval_str, dash.rjust(7), best_str]
     else:
         parts = [
             f"{iteration:5d}",
             f"{global_step:9,d}",
+            eval_str,
             dash.rjust(7),
-            dash.rjust(7),
-            dash.rjust(7),
+            best_str,
         ]
     parts.extend(algo_strs)
     parts.extend([f"{elapsed:6.1f}s".rjust(7), sps_str])

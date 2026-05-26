@@ -233,3 +233,57 @@ def test_video_settings_pop_and_attach_keep_video_out_of_public_config():
 def test_collector_lookup_handles_torchrl_export_layout():
     assert collector_class("SyncDataCollector").__name__ == "SyncDataCollector"
     assert collector_class("MultiSyncDataCollector").__name__ == "MultiSyncDataCollector"
+
+
+@pytest.mark.parametrize("config_cls", [PPOConfig, SACConfig])
+def test_isaaclab_configs_use_native_batched_single_collector(config_cls):
+    cfg = config_cls.from_dict(
+        {
+            "env_tag": "isaaclab:Isaac-Fake-v0",
+            "policy_tag": "mlp-32-16",
+            "collector": {"num_envs": 2048, "backend": "auto"},
+        }
+    )
+
+    request = cfg.runtime_request()
+
+    assert request.collector_backend == "single"
+    assert request.single_env_backend == "serial"
+    assert request.num_envs == 2048
+
+
+def test_collect_env_uses_torchrl_isaaclab_wrapper_for_isaaclab(monkeypatch):
+    import rl.torchrl.collect_utils as cu
+
+    calls = {}
+    raw_env = object()
+
+    def _make_raw(env_tag, **kwargs):
+        calls["raw"] = (env_tag, kwargs)
+        return raw_env
+
+    class _Wrapper:
+        def __init__(self, env, **kwargs):
+            calls["wrapper"] = (env, kwargs)
+
+    monkeypatch.setattr(cu, "make_raw_isaaclab_env", _make_raw)
+    monkeypatch.setattr(cu.tr_envs, "IsaacLabWrapper", _Wrapper, raising=False)
+    monkeypatch.setattr(
+        cu.tr_envs,
+        "TransformedEnv",
+        lambda wrapped, transform: SimpleNamespace(wrapped=wrapped, transform=transform),
+    )
+    monkeypatch.setattr(cu.tr_transforms, "RenameTransform", lambda *a, **k: ("rename", a, k))
+    monkeypatch.setattr(cu.tr_transforms, "DoubleToFloat", lambda: "double_to_float")
+    monkeypatch.setattr(cu.tr_transforms, "Compose", lambda *items: ("compose", items))
+
+    env_conf = SimpleNamespace(env_name="isaaclab:Isaac-Fake-v0", problem_seed=10, kwargs={"custom": 3})
+    out = cu.make_collect_env(env_conf, env_index=2, num_envs=128, device="cuda:0")
+
+    assert calls["raw"] == (
+        "isaaclab:Isaac-Fake-v0",
+        {"seed": 12, "num_envs": 128, "device": "cuda:0", "custom": 3},
+    )
+    assert calls["wrapper"][0] is raw_env
+    assert str(calls["wrapper"][1]["device"]) == "cuda:0"
+    assert out.transform[0] == "compose"

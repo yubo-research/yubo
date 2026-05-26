@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import argparse
 import contextlib
 import os
 import sys
@@ -9,14 +8,16 @@ from dataclasses import dataclass
 from importlib import import_module
 from typing import Any
 
-import numpy as np
-
-from problems.isaaclab_config import ISAACLAB_DEFAULT_KIT_ARGS, ISAACLAB_VIDEO_KIT_ARGS, disable_command_debug_visualizers
+from problems.isaaclab_config import ISAACLAB_DEFAULT_KIT_ARGS, ISAACLAB_VIDEO_KIT_ARGS
+from problems.isaaclab_gym_adapters import (
+    IsaacLabGymEnvAdapter,
+    IsaacLabVectorEnvAdapter,
+)
 from problems.isaaclab_replicator import patch_replicator_seed_without_graph
-from video.isaaclab_viewport import prepare_isaaclab_video_view
 
 ISAACLAB_ENV_PREFIX = "isaaclab:"
 DEFAULT_ISAACLAB_MAX_STEPS = 1000
+MAX_ISAACLAB_SETUP_REPLAY_CHARS = 20_000
 
 
 def is_isaaclab_env_tag(env_tag: str) -> bool:
@@ -45,7 +46,6 @@ class IsaacLabSession:
 
 _SESSION: IsaacLabSession | None = None
 _SPACE_CACHE: dict[str, tuple[Any, Any]] = {}
-MAX_ISAACLAB_SETUP_REPLAY_CHARS = 20_000
 
 
 def _flush_standard_streams() -> None:
@@ -80,7 +80,10 @@ def _capture_isaaclab_setup_output():
         os.dup2(captured.fileno(), 1)
         os.dup2(captured.fileno(), 2)
         try:
-            with contextlib.redirect_stdout(captured), contextlib.redirect_stderr(captured):
+            with (
+                contextlib.redirect_stdout(captured),
+                contextlib.redirect_stderr(captured),
+            ):
                 yield
         except Exception:
             failed = True
@@ -133,10 +136,16 @@ def isaaclab_rendering_available() -> tuple[bool, str | None]:
 
 def _session_can_reuse(session: IsaacLabSession, *, headless: bool, launcher_kwargs: dict[str, Any]) -> tuple[bool, str | None]:
     if bool(session.headless) and not bool(headless):
-        return False, "existing IsaacLab app is headless; it cannot be upgraded to headless=False in the same process"
+        return (
+            False,
+            "existing IsaacLab app is headless; it cannot be upgraded to headless=False in the same process",
+        )
     existing_kwargs = dict(session.launcher_kwargs or {})
     if launcher_kwargs and existing_kwargs != dict(launcher_kwargs):
-        return False, f"existing IsaacLab app launcher_kwargs={existing_kwargs!r}, requested launcher_kwargs={launcher_kwargs!r}"
+        return (
+            False,
+            f"existing IsaacLab app launcher_kwargs={existing_kwargs!r}, requested launcher_kwargs={launcher_kwargs!r}",
+        )
     return True, None
 
 
@@ -154,11 +163,9 @@ def get_isaaclab_session(*, headless: bool = True, launcher_kwargs: dict[str, An
     launcher_kwargs = _copy_launcher_kwargs(launcher_kwargs)
     if not launcher_kwargs:
         launcher_kwargs = isaaclab_default_launcher_kwargs()
-
     effective_launcher_kwargs = dict(launcher_kwargs)
     kit_args = str(effective_launcher_kwargs.get("kit_args", "")).strip()
     effective_launcher_kwargs["kit_args"] = kit_args
-
     kwargs = {"headless": bool(headless)}
     kwargs.update(effective_launcher_kwargs)
 
@@ -168,17 +175,10 @@ def get_isaaclab_session(*, headless: bool = True, launcher_kwargs: dict[str, An
             launcher = AppLauncher(**kwargs)
         except TypeError:
             launcher = AppLauncher(kwargs)
-
         import gymnasium as gym
         import isaaclab_tasks  # noqa: F401
 
-    if "omni.kit.viewport.utility" in kit_args:
-        render_available, render_error = _render_probe()
-    elif "omni.replicator.core" in kit_args:
-        patch_replicator_seed_without_graph()
-        render_available, render_error = _render_probe()
-    else:
-        render_available, render_error = False, "omni.kit.viewport.utility not enabled"
+    render_available, render_error = _session_render_state(kit_args)
     _SESSION = IsaacLabSession(
         app=launcher.app,
         gym=gym,
@@ -188,6 +188,15 @@ def get_isaaclab_session(*, headless: bool = True, launcher_kwargs: dict[str, An
         render_error=render_error,
     )
     return _SESSION
+
+
+def _session_render_state(kit_args: str) -> tuple[bool, str | None]:
+    if "omni.kit.viewport.utility" in kit_args:
+        return _render_probe()
+    if "omni.replicator.core" in kit_args:
+        patch_replicator_seed_without_graph()
+        return _render_probe()
+    return False, "omni.kit.viewport.utility not enabled"
 
 
 def list_isaaclab_tasks(*, keyword: str | None = None, headless: bool = True) -> list[str]:
@@ -204,217 +213,6 @@ def list_isaaclab_tasks(*, keyword: str | None = None, headless: bool = True) ->
     return sorted(set(tasks))
 
 
-def _as_numpy(value: Any) -> np.ndarray:
-    if hasattr(value, "detach"):
-        value = value.detach()
-    if hasattr(value, "cpu"):
-        value = value.cpu()
-    return np.asarray(value)
-
-
-def _flatten_obs(obs: Any) -> np.ndarray:
-    if isinstance(obs, dict):
-        if "policy" in obs:
-            return _flatten_obs(obs["policy"])
-        if "observation" in obs:
-            return _flatten_obs(obs["observation"])
-        parts = [_flatten_obs(obs[key]).ravel() for key in sorted(obs)]
-        return np.concatenate(parts, axis=0) if parts else np.zeros((0,), dtype=np.float32)
-
-    arr = _as_numpy(obs).astype(np.float32, copy=False)
-    if arr.ndim >= 2 and arr.shape[0] == 1:
-        arr = arr[0]
-    return np.ravel(arr).astype(np.float32, copy=False)
-
-
-def _flatten_obs_batch(obs: Any, *, num_envs: int) -> np.ndarray:
-    if isinstance(obs, dict):
-        if "policy" in obs:
-            return _flatten_obs_batch(obs["policy"], num_envs=num_envs)
-        if "observation" in obs:
-            return _flatten_obs_batch(obs["observation"], num_envs=num_envs)
-        parts = [_flatten_obs_batch(obs[key], num_envs=num_envs) for key in sorted(obs)]
-        return np.concatenate(parts, axis=1) if parts else np.zeros((int(num_envs), 0), dtype=np.float32)
-
-    arr = _as_numpy(obs).astype(np.float32, copy=False)
-    if arr.ndim == 0:
-        return np.full((int(num_envs), 1), float(arr), dtype=np.float32)
-    if arr.ndim == 1:
-        if int(num_envs) == 1:
-            arr = arr.reshape(1, -1)
-        else:
-            arr = arr.reshape(int(num_envs), -1)
-    elif arr.shape[0] != int(num_envs):
-        arr = np.reshape(arr, (int(num_envs), -1))
-    else:
-        arr = arr.reshape(int(num_envs), -1)
-    return arr.astype(np.float32, copy=False)
-
-
-def _flat_box_from_space(space: Any):
-    from gymnasium import spaces
-
-    if hasattr(space, "spaces"):
-        if "policy" in space.spaces:
-            return _flat_box_from_space(space.spaces["policy"])
-        if "observation" in space.spaces:
-            return _flat_box_from_space(space.spaces["observation"])
-        boxes = [_flat_box_from_space(space.spaces[key]) for key in sorted(space.spaces)]
-        low = np.concatenate([np.ravel(np.asarray(box.low, dtype=np.float32)) for box in boxes], axis=0)
-        high = np.concatenate([np.ravel(np.asarray(box.high, dtype=np.float32)) for box in boxes], axis=0)
-        return spaces.Box(low=low, high=high, dtype=np.float32)
-
-    if hasattr(space, "low") and hasattr(space, "high"):
-        low = np.ravel(np.asarray(space.low, dtype=np.float32))
-        high = np.ravel(np.asarray(space.high, dtype=np.float32))
-        return spaces.Box(low=low, high=high, dtype=np.float32)
-
-    if hasattr(space, "shape"):
-        size = int(np.prod(tuple(int(v) for v in space.shape)))
-        return spaces.Box(low=-np.inf, high=np.inf, shape=(size,), dtype=np.float32)
-
-    raise TypeError(f"Unsupported Isaac Lab observation space type: {type(space).__name__}")
-
-
-def _single_box_space(space: Any, *, num_envs: int):
-    if not hasattr(space, "low") or not hasattr(space, "high") or not hasattr(space, "shape"):
-        return space
-    shape = tuple(int(v) for v in space.shape)
-    if len(shape) <= 1 or shape[0] != int(num_envs):
-        return space
-    from gymnasium import spaces
-
-    low = np.asarray(space.low, dtype=np.float32)[0]
-    high = np.asarray(space.high, dtype=np.float32)[0]
-    return spaces.Box(low=low, high=high, dtype=np.float32)
-
-
-def _single_action_space(env: Any, *, num_envs: int):
-    space = getattr(env, "single_action_space", None) or getattr(env, "action_space")
-    return _single_box_space(space, num_envs=int(num_envs))
-
-
-def _single_observation_space(env: Any, *, num_envs: int):
-    space = getattr(env, "single_observation_space", None) or getattr(env, "observation_space")
-    return _single_box_space(space, num_envs=int(num_envs))
-
-
-def _scalar_bool(value: Any) -> bool:
-    arr = _as_numpy(value)
-    if arr.size == 0:
-        return False
-    return bool(np.ravel(arr)[0])
-
-
-def _scalar_float(value: Any) -> float:
-    arr = _as_numpy(value)
-    if arr.size == 0:
-        return 0.0
-    return float(np.ravel(arr)[0])
-
-
-def _adapter_spaces(env: Any, *, num_envs: int):
-    observation_space = _flat_box_from_space(_single_observation_space(env, num_envs=int(num_envs)))
-    action_space = _single_action_space(env, num_envs=int(num_envs))
-    return observation_space, action_space
-
-
-class IsaacLabGymEnvAdapter:
-    def __init__(self, env: Any, *, num_envs: int = 1) -> None:
-        self._env = env
-        self._num_envs = int(num_envs)
-        self.observation_space, self.action_space = _adapter_spaces(env, num_envs=self._num_envs)
-
-    def reset(self, *args, **kwargs):
-        obs, info = self._env.reset(*args, **kwargs)
-        return _flatten_obs(obs), info
-
-    def step(self, action):
-        step_out = self._env.step(self._format_action(action))
-        if len(step_out) != 5:
-            raise ValueError(f"Unsupported Isaac Lab step return arity: {len(step_out)}")
-        obs, reward, terminated, truncated, info = step_out
-        result = (
-            _flatten_obs(obs),
-            _scalar_float(reward),
-            _scalar_bool(terminated),
-            _scalar_bool(truncated),
-            info,
-        )
-        return result
-
-    def render(self, *args, **kwargs):
-        return self._env.render(*args, **kwargs)
-
-    def close(self):
-        return self._env.close()
-
-    def _format_action(self, action):
-        arr = np.asarray(action, dtype=np.float32)
-        single_shape = tuple(int(v) for v in getattr(self.action_space, "shape", ()))
-        if single_shape and tuple(arr.shape) == (self._num_envs, *single_shape):
-            pass
-        elif single_shape and tuple(arr.shape) != single_shape:
-            arr = np.reshape(arr, single_shape)
-        if self._num_envs == 1 and single_shape and tuple(arr.shape) == single_shape:
-            arr = np.expand_dims(arr, axis=0)
-        try:
-            import torch
-
-            device = getattr(self._env, "device", None)
-            return torch.as_tensor(arr, dtype=torch.float32, device=device)
-        except Exception:
-            return arr
-
-
-class IsaacLabVectorEnvAdapter:
-    def __init__(self, env: Any, *, num_envs: int) -> None:
-        self._env = env
-        self._num_envs = int(num_envs)
-        self.observation_space, self.action_space = _adapter_spaces(env, num_envs=self._num_envs)
-
-    @property
-    def num_envs(self) -> int:
-        return self._num_envs
-
-    def reset_batch(self, *args, **kwargs):
-        obs, info = self._env.reset(*args, **kwargs)
-        return _flatten_obs_batch(obs, num_envs=self._num_envs), info
-
-    def step_batch(self, actions):
-        step_out = self._env.step(self._format_actions(actions))
-        if len(step_out) != 5:
-            raise ValueError(f"Unsupported Isaac Lab step return arity: {len(step_out)}")
-        obs, reward, terminated, truncated, info = step_out
-        return (
-            _flatten_obs_batch(obs, num_envs=self._num_envs),
-            np.ravel(_as_numpy(reward).astype(np.float32, copy=False)),
-            np.ravel(_as_numpy(terminated).astype(bool, copy=False)),
-            np.ravel(_as_numpy(truncated).astype(bool, copy=False)),
-            info,
-        )
-
-    def render(self, *args, **kwargs):
-        return self._env.render(*args, **kwargs)
-
-    def close(self):
-        return self._env.close()
-
-    def _format_actions(self, actions):
-        arr = np.asarray(actions, dtype=np.float32)
-        single_shape = tuple(int(v) for v in getattr(self.action_space, "shape", ()))
-        target_shape = (self._num_envs, *single_shape)
-        if single_shape and tuple(arr.shape) != target_shape:
-            arr = np.reshape(arr, target_shape)
-        try:
-            import torch
-
-            device = getattr(self._env, "device", None)
-            return torch.as_tensor(arr, dtype=torch.float32, device=device)
-        except Exception:
-            return arr
-
-
 def _parse_env_cfg(task_id: str, *, num_envs: int, device: str | None):
     from isaaclab_tasks.utils import parse_env_cfg
 
@@ -428,6 +226,32 @@ def _parse_env_cfg(task_id: str, *, num_envs: int, device: str | None):
         return parse_env_cfg(task_id, **kwargs)
 
 
+def make_raw_isaaclab_env(
+    env_tag: str,
+    *,
+    headless: bool = True,
+    num_envs: int = 1,
+    device: str | None = None,
+    render_mode: str | None = None,
+    launcher_kwargs: dict[str, Any] | None = None,
+    **kwargs,
+):
+    from problems.isaaclab_env_make import (
+        make_raw_isaaclab_env as _make_raw_isaaclab_env,
+    )
+
+    return _make_raw_isaaclab_env(
+        sys.modules[__name__],
+        env_tag,
+        headless=headless,
+        num_envs=int(num_envs),
+        device=device,
+        render_mode=render_mode,
+        launcher_kwargs=launcher_kwargs,
+        **kwargs,
+    )
+
+
 def make_isaaclab_env(
     env_tag: str,
     *,
@@ -438,30 +262,17 @@ def make_isaaclab_env(
     launcher_kwargs: dict[str, Any] | None = None,
     **kwargs,
 ):
-    task_id = parse_isaaclab_task_id(env_tag)
-    if launcher_kwargs is None and render_mode == "rgb_array":
-        launcher_kwargs = isaaclab_video_launcher_kwargs()
-    session = get_isaaclab_session(headless=headless, launcher_kwargs=launcher_kwargs)
-
     make_kwargs = dict(kwargs)
     batched = bool(make_kwargs.pop("batched", False))
-    seed = make_kwargs.pop("seed", None)
-    with _capture_isaaclab_setup_output():
-        if "cfg" not in make_kwargs:
-            cfg = _parse_env_cfg(task_id, num_envs=int(num_envs), device=device)
-            make_kwargs["cfg"] = cfg
-        if seed is not None and hasattr(make_kwargs["cfg"], "seed"):
-            try:
-                make_kwargs["cfg"].seed = int(seed)
-            except Exception:
-                pass
-        if render_mode is not None:
-            make_kwargs["render_mode"] = render_mode
-
-        disable_command_debug_visualizers(make_kwargs["cfg"])
-        env = session.gym.make(task_id, **make_kwargs)
-        if render_mode == "rgb_array":
-            prepare_isaaclab_video_view(session.app, env)
+    env = make_raw_isaaclab_env(
+        env_tag,
+        headless=headless,
+        num_envs=int(num_envs),
+        device=device,
+        render_mode=render_mode,
+        launcher_kwargs=launcher_kwargs,
+        **make_kwargs,
+    )
     adapter = IsaacLabVectorEnvAdapter(env, num_envs=int(num_envs)) if batched else IsaacLabGymEnvAdapter(env, num_envs=int(num_envs))
     _SPACE_CACHE[str(env_tag)] = (adapter.observation_space, adapter.action_space)
     return adapter
@@ -483,6 +294,8 @@ def resolve_isaaclab_env_spaces(env_tag: str, *, launcher_kwargs: dict[str, Any]
 
 
 def main(argv: list[str] | None = None) -> int:
+    import argparse
+
     parser = argparse.ArgumentParser(description="List Isaac Lab Gymnasium task ids.")
     parser.add_argument("--keyword", default=None, help="Optional case-insensitive substring filter.")
     parser.add_argument(

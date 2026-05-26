@@ -14,6 +14,7 @@ from rl import backbone, checkpointing
 from rl.config_model_defaults import resolve_ppo_model_settings
 from rl.core import env_contract, torchrl_collectors, torchrl_runtime
 from rl.core.runtime import ObsScaler, collector_device_kwargs
+from rl.torchrl.collect_utils import uses_native_isaaclab_collect_env
 
 from . import models
 from .config import PPOConfig
@@ -106,11 +107,19 @@ def build_training(
     env_conf = env.env_conf
     vec_env = None
     if runtime.collector_backend == "single":
-        env_factory = _make_collect_env_factory(env_conf, int(config.collector.num_envs))
-        if runtime.single_env_backend == "parallel":
-            vec_env = tr_envs.ParallelEnv(int(config.collector.num_envs), env_factory, serial_for_single=True)
+        if uses_native_isaaclab_collect_env(env_conf):
+            vec_env = _make_collect_env(
+                env_conf,
+                env_index=0,
+                num_envs=int(config.collector.num_envs),
+                device=runtime.device,
+            )
         else:
-            vec_env = tr_envs.SerialEnv(int(config.collector.num_envs), env_factory, serial_for_single=True)
+            env_factory = _make_collect_env_factory(env_conf, int(config.collector.num_envs))
+            if runtime.single_env_backend == "parallel":
+                vec_env = tr_envs.ParallelEnv(int(config.collector.num_envs), env_factory, serial_for_single=True)
+            else:
+                vec_env = tr_envs.SerialEnv(int(config.collector.num_envs), env_factory, serial_for_single=True)
     loss_module = tr_objectives.ClipPPOLoss(
         modules.actor,
         modules.critic,

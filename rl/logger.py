@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import dataclasses
+import logging
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -20,6 +21,7 @@ __all__ = [
     "PPO_METRICS",
     "SAC_METRICS",
     "append_metrics",
+    "configure_logging",
     "log_eval_iteration",
     "log_progress_iteration",
     "log_run_footer",
@@ -27,6 +29,21 @@ __all__ = [
     "log_run_header_basic",
     "register_algo_metrics",
 ]
+
+
+_LOG_FORMAT = "%(levelname)s %(name)s: %(message)s"
+
+
+def configure_logging(level: int | str = logging.INFO) -> None:
+    """Install a minimal RL-friendly stdlib logging handler once."""
+    rl_log = logging.getLogger("rl")
+    if not any(handler.get_name() == "yubo.rl" for handler in rl_log.handlers):
+        handler = logging.StreamHandler()
+        handler.set_name("yubo.rl")
+        handler.setFormatter(logging.Formatter(_LOG_FORMAT))
+        rl_log.addHandler(handler)
+    rl_log.setLevel(level)
+    rl_log.propagate = False
 
 
 def append_metrics(path: Path, record: dict[str, Any]) -> None:
@@ -120,6 +137,9 @@ def log_progress_iteration(
     frames_per_batch: int,
     elapsed: float,
     *,
+    eval_return: float | None = None,
+    best_return: float | None = None,
+    algo_metrics: dict[str, float] | None = None,
     algo_name: str = "ppo",
     step_override: int | None = None,
     prefix: str = "",
@@ -129,6 +149,9 @@ def log_progress_iteration(
         num_iterations,
         frames_per_batch,
         elapsed,
+        eval_return=eval_return,
+        best_return=best_return,
+        algo_metrics=algo_metrics,
         algo_name=algo_name,
         step_override=step_override,
         prefix=prefix,

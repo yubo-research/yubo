@@ -22,6 +22,7 @@ def build_sac_collector(
     tr_envs = _im("torchrl.envs")
     torchrl_collector_class = _im("rl.core.torchrl_collectors").collector_class
     torchrl_common = _im("rl.core.runtime")
+    uses_native_isaaclab_collect_env = _im("rl.torchrl.collect_utils").uses_native_isaaclab_collect_env
 
     frames_per_batch = int(config.collector.frames_per_batch)
     num_envs = int(config.runtime_num_envs())
@@ -32,7 +33,9 @@ def build_sac_collector(
     ).to(runtime.device)
     collector_policy = td_nn.TensorDictSequential(modules.actor, scale_action)
     if runtime.collector_backend == "single":
-        if num_envs == 1:
+        if uses_native_isaaclab_collect_env(env_setup.env_conf):
+            vec_env = _make_collect_env_sac(env_setup.env_conf, env_setup, env_index=0, num_envs=num_envs, device=runtime.device)
+        elif num_envs == 1:
             vec_env = _make_collect_env_sac(env_setup.env_conf, env_setup, env_index=0)
         else:
             env_makers = [lambda i=i: _make_collect_env_sac(env_setup.env_conf, env_setup, env_index=i) for i in range(num_envs)]

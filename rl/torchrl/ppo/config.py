@@ -6,6 +6,7 @@ from rl.config_model_defaults import apply_ppo_env_model_defaults, reject_model_
 from rl.core.grouped_config import dataclass_field_names, parse_dataclass_section
 from rl.core.torchrl_runtime import TorchRLRuntimeCapabilities, resolve_torchrl_runtime
 from rl.core.torchrl_runtime_dtos import TorchRLRuntime, TorchRLRuntimeRequest
+from rl.core.torchrl_runtime_request import make_torchrl_runtime_request
 
 from .config_collector import PPOCollectorConfig, PPOLossConfig, PPOOptimConfig
 from .config_run import PPOCheckpointConfig, PPOEvalConfig, PPOProfileConfig
@@ -57,7 +58,8 @@ class PPOConfig:
         return int(self.collector.num_envs)
 
     def runtime_request(self) -> TorchRLRuntimeRequest:
-        return TorchRLRuntimeRequest(
+        return make_torchrl_runtime_request(
+            env_tag=self.env_tag,
             device=self.device,
             collector_backend=str(self.collector.backend),
             single_env_backend=str(self.collector.single_env_backend),

@@ -64,6 +64,7 @@ Tests:
 ```bash
 modal run ops/modal_hyperscalees_pixi_setup.py --pytest
 modal run ops/modal_hyperscalees_pixi_setup.py --pytest --pytest-args '-sv tests/test_experiment_sampler_runtime.py -rs'
+modal run ops/modal_hyperscalees_pixi_setup.py --command 'set -euxo pipefail; cd /root; /usr/local/bin/pixi run --manifest-path /opt/yubo-pixi/pixi.toml --locked -e hyperscalees pytest-testmon'
 ```
 
 ## Routing

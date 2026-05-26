@@ -108,6 +108,10 @@ def _run_single(path: str, overrides: dict | None, seed: int | None):
 def main(argv: list[str] | None = None):
     import sys
 
+    from rl import logger as rl_logger
+
+    rl_logger.configure_logging()
+
     config_toml = __import__("common.config_toml", fromlist=["apply_overrides", "load_toml", "parse_set_args"])
     apply_overrides = config_toml.apply_overrides
     load_toml = config_toml.load_toml

@@ -16,6 +16,9 @@ def build_eval_record(
     approx_kl: float | None,
     clipfrac: float | None,
     started_at: float,
+    rollout_reward: float | None = None,
+    rollout_return: float | None = None,
+    rollout_length: float | None = None,
     now: float | None = None,
 ) -> dict[str, Any]:
     t_now = float(time.time()) if now is None else float(now)
@@ -26,6 +29,9 @@ def build_eval_record(
         "eval_return": eval_return,
         "heldout_return": heldout_return,
         "best_return": best_return,
+        "rollout_reward": rollout_reward,
+        "rollout_return": rollout_return,
+        "rollout_length": rollout_length,
         "approx_kl": approx_kl,
         "clipfrac": clipfrac,
         "time_seconds": elapsed,
