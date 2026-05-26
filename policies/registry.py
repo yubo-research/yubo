@@ -258,6 +258,10 @@ POLICY_PRESETS: dict[str, PolicyPreset] = {
         factory=_mlp_factory((256, 128)),
         rl_model=_infer_rl_model_from_mlp((256, 128)),
     ),
+    "mlp-256-256": PolicyPreset(
+        factory=_mlp_factory((256, 256)),
+        rl_model=_infer_rl_model_from_mlp((256, 256)),
+    ),
     "mlp-1024-512-256-128": PolicyPreset(
         factory=_mlp_factory((1024, 512, 256, 128)),
         rl_model=_infer_rl_model_from_mlp((1024, 512, 256, 128)),

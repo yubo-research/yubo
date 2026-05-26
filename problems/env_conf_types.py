@@ -57,6 +57,11 @@ class EnvConf:
     kwargs: dict = None
 
     def _make(self, **kwargs):
+        if self.env_name.startswith("warp:"):
+            from problems.unified_mj_env import UnifiedMJXWarpAdapter
+
+            num_envs = kwargs.get("num_envs", 1)
+            return UnifiedMJXWarpAdapter(self.env_name[5:], backend="warp", num_envs=num_envs)
         if self.env_name[:2] in ("f:", "g:"):
             env = pure_functions.make(self.env_name, problem_seed=self.problem_seed, distort=self.env_name[:2] == "f:")
         elif self.env_name.startswith("dm_control/"):
@@ -206,7 +211,7 @@ class EnvConf:
             self.kwargs = {}
         if self.env_name[:2] in ("f:", "g:") and self.max_steps is None:
             self.max_steps = _PURE_FUNCTION_MAX_STEPS
-        is_deferred = self.env_name.startswith(("ALE/", "dm_control/")) or is_isaaclab_env_tag(self.env_name)
+        is_deferred = self.env_name.startswith(("ALE/", "dm_control/", "warp:")) or is_isaaclab_env_tag(self.env_name)
         if self.max_steps is None and self.gym_conf is None and not is_deferred:
             self.max_steps = _DEFAULT_MAX_STEPS
         if self.gym_conf:

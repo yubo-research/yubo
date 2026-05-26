@@ -111,54 +111,67 @@ class EnvironmentRuntime:
         return self.spec.kwargs or {}
 
     def _make(self, **kwargs):
-        spec = self.spec
-        env_name = spec.env_name
+        env_name = self.spec.env_name
 
+        if env_name.startswith("warp:"):
+            return self._make_warp_env(env_name)
         if env_name[:2] in ("f:", "g:"):
-            _ns: dict = {}
-            exec("import problems.pure_functions as pf", _ns)  # noqa: S102
-            env = _ns["pf"].make(env_name, problem_seed=self.problem_seed, distort=env_name[:2] == "f:")
-        elif env_name.startswith("dm_control/"):
-            make_dm_control_env = _get_atari_dm_bindings().make_dm_control_env
-            env = make_dm_control_env(
-                env_name,
-                from_pixels=spec.from_pixels,
-                pixels_only=spec.pixels_only,
-                **kwargs,
-            )
-        elif env_name.startswith("ALE/"):
-            bindings = _get_atari_dm_bindings()
-            make_preprocess_options = bindings.make_atari_preprocess_options
-            make_atari_env = bindings.make_atari_env
-            render_mode = kwargs.get("render_mode")
-            max_steps = spec.max_steps
-            if max_steps is None:
-                raise ValueError("EnvironmentSpec.max_steps must be set for ALE environments.")
-            preprocess = kwargs.pop("preprocess", None)
-            if preprocess is None:
-                default_preprocess = make_preprocess_options()
-                preprocess_kwargs = asdict(default_preprocess) if is_dataclass(default_preprocess) else dict(vars(default_preprocess))
-                if isinstance(spec.atari_preprocess, dict):
-                    preprocess_kwargs.update(spec.atari_preprocess)
-                preprocess = make_preprocess_options(**preprocess_kwargs)
-            env = make_atari_env(
-                env_name,
-                render_mode=render_mode,
-                max_episode_steps=int(max_steps),
-                preprocess=preprocess,
-            )
-        elif (unsupported_msg := _unsupported_make_message(env_name)) is not None:
+            return self._make_pure_func_env(env_name)
+        if env_name.startswith("dm_control/"):
+            return self._make_dm_control_env(**kwargs)
+        if env_name.startswith("ALE/"):
+            return self._make_atari_env(**kwargs)
+        if (unsupported_msg := _unsupported_make_message(env_name)) is not None:
             raise RuntimeError(unsupported_msg)
-        elif is_isaaclab_env_tag(env_name):
-            env = make_isaaclab_env(env_name, seed=self.problem_seed, **(kwargs | spec.kwargs))
-        elif spec.gym_conf is not None:
-            env = gym.make(env_name, **(kwargs | spec.kwargs))
-        else:
-            _ns: dict = {}
-            exec("import problems.other as other", _ns)  # noqa: S102
-            env = _ns["other"].make(env_name, problem_seed=self.problem_seed)
+        if is_isaaclab_env_tag(env_name):
+            return make_isaaclab_env(env_name, seed=self.problem_seed, **(kwargs | self.spec.kwargs))
+        if self.spec.gym_conf is not None:
+            return gym.make(env_name, **(kwargs | self.spec.kwargs))
 
-        return env
+        _ns: dict = {}
+        exec("import problems.other as other", _ns)  # noqa: S102
+        return _ns["other"].make(env_name, problem_seed=self.problem_seed)
+
+    def _make_warp_env(self, env_name: str):
+        from problems.unified_mj_env import UnifiedMJXWarpAdapter
+
+        return UnifiedMJXWarpAdapter(env_name[5:], backend="warp")
+
+    def _make_pure_func_env(self, env_name: str):
+        _ns: dict = {}
+        exec("import problems.pure_functions as pf", _ns)  # noqa: S102
+        return _ns["pf"].make(env_name, problem_seed=self.problem_seed, distort=env_name[:2] == "f:")
+
+    def _make_dm_control_env(self, **kwargs):
+        make_dm_control_env = _get_atari_dm_bindings().make_dm_control_env
+        return make_dm_control_env(
+            self.spec.env_name,
+            from_pixels=self.spec.from_pixels,
+            pixels_only=self.spec.pixels_only,
+            **kwargs,
+        )
+
+    def _make_atari_env(self, **kwargs):
+        bindings = _get_atari_dm_bindings()
+        make_preprocess_options = bindings.make_atari_preprocess_options
+        make_atari_env = bindings.make_atari_env
+        render_mode = kwargs.get("render_mode")
+        max_steps = self.spec.max_steps
+        if max_steps is None:
+            raise ValueError("EnvironmentSpec.max_steps must be set for ALE environments.")
+        preprocess = kwargs.pop("preprocess", None)
+        if preprocess is None:
+            default_preprocess = make_preprocess_options()
+            preprocess_kwargs = asdict(default_preprocess) if is_dataclass(default_preprocess) else dict(vars(default_preprocess))
+            if isinstance(self.spec.atari_preprocess, dict):
+                preprocess_kwargs.update(self.spec.atari_preprocess)
+            preprocess = make_preprocess_options(**preprocess_kwargs)
+        return make_atari_env(
+            self.spec.env_name,
+            render_mode=render_mode,
+            max_episode_steps=int(max_steps),
+            preprocess=preprocess,
+        )
 
     def make(self, **kwargs):
         if self.spec.gym_conf:
@@ -249,7 +262,7 @@ def get_environment_spec(env_tag: str) -> EnvironmentSpec:
     if tag in _atari_env_specs:
         return copy.deepcopy(_atari_env_specs[tag])
 
-    if tag.startswith(JAX_OBJECTIVE_PREFIXES):
+    if tag.startswith(JAX_OBJECTIVE_PREFIXES) or tag.startswith("warp:"):
         return EnvironmentSpec(tag, max_steps=_DEFAULT_MAX_STEPS)
 
     if is_isaaclab_env_tag(tag):

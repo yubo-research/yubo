@@ -66,11 +66,17 @@ class BraxAdapter:
     def __init__(self, env_name: str, *, jax, jnp) -> None:
         _set_headless_mujoco_gl_default()
         from brax import envs
+        from brax.envs.wrappers.training import AutoResetWrapper, EpisodeWrapper
         from gymnax.environments import spaces
 
         self._jnp = jnp
         brax_name = env_name.split(":", 1)[1]
-        self.env = envs.get_environment(brax_name)
+        raw_env = envs.get_environment(brax_name, backend="mjx")
+
+        # Apply wrappers for episode length and auto-reset
+        env = EpisodeWrapper(raw_env, episode_length=1000, action_repeat=1)
+        self.env = AutoResetWrapper(env)
+
         obs_shape = tuple(int(v) for v in jax.eval_shape(self.env.reset, jax.random.key(0)).obs.shape)
         act_shape = (int(self.env.action_size),)
         self.observation_space = core._gymnax_box_from_shape(spaces, jnp, obs_shape)
