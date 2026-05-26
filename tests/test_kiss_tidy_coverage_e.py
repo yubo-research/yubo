@@ -48,6 +48,7 @@ def test_kiss_tidy_e_torchrl_sac_sampling_vector(monkeypatch, tmp_path):
     )
     sc = SACConfig(
         env_tag="pend",
+        policy_tag="mlp-16-8",
         exp_dir=str(tmp_path),
         device="cpu",
         replay_size=64,
@@ -113,6 +114,7 @@ def test_kiss_tidy_e_torchrl_sac_sampling_vector(monkeypatch, tmp_path):
     )
     sc2 = SACConfig(
         env_tag="pend",
+        policy_tag="mlp-16-8",
         exp_dir=str(tmp_path),
         device="cpu",
         replay_size=128,
@@ -140,7 +142,7 @@ def test_kiss_tidy_e_torchrl_sac_sampling_vector(monkeypatch, tmp_path):
     col.set_seed = MagicMock()
     col.shutdown = MagicMock()
     col.__iter__ = MagicMock(return_value=iter(()))
-    monkeypatch.setattr("torchrl.collectors.Collector", lambda *a, **kw: col)
+    monkeypatch.setattr("rl.core.torchrl_collectors.collector_class", lambda _name: (lambda *a, **kw: col))
     stub_env = MagicMock()
     stub_env.reset = MagicMock(return_value=(td["observation"][0:1].numpy(), {}))
     stub_env.step = MagicMock(return_value=(td["observation"][0:1].numpy(), 0.0, True, False, {}))

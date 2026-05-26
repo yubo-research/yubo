@@ -15,6 +15,7 @@ from analysis.data_io import write_config
 from problems.env_conf import get_env_conf
 from rl.backbone import BackboneSpec, HeadSpec, build_backbone, build_mlp_head
 from rl.checkpointing import CheckpointManager
+from rl.config_model_defaults import resolve_sac_model_settings
 from rl.core import env_setup, runtime
 
 from .config import SACConfig
@@ -60,20 +61,21 @@ def build_env_setup(config: SACConfig) -> _EnvSetup:
 
 
 def _build_specs(config: SACConfig, *, from_pixels: bool) -> tuple[BackboneSpec, HeadSpec, HeadSpec]:
-    backbone_name = "nature_cnn" if from_pixels else config.backbone_name
+    model = resolve_sac_model_settings(config)
+    backbone_name = "nature_cnn" if from_pixels else model.backbone_name
     actor_backbone_spec = BackboneSpec(
         name=backbone_name,
-        hidden_sizes=tuple(config.backbone_hidden_sizes),
-        activation=config.backbone_activation,
-        layer_norm=bool(config.backbone_layer_norm),
+        hidden_sizes=tuple(model.backbone_hidden_sizes),
+        activation=model.backbone_activation,
+        layer_norm=bool(model.backbone_layer_norm),
     )
     actor_head_spec = HeadSpec(
-        hidden_sizes=tuple(config.actor_head_hidden_sizes),
-        activation=config.head_activation,
+        hidden_sizes=tuple(model.actor_head_hidden_sizes),
+        activation=model.head_activation,
     )
     critic_head_spec = HeadSpec(
-        hidden_sizes=tuple(config.critic_head_hidden_sizes),
-        activation=config.head_activation,
+        hidden_sizes=tuple(model.critic_head_hidden_sizes),
+        activation=model.head_activation,
     )
     return (actor_backbone_spec, actor_head_spec, critic_head_spec)
 
@@ -146,12 +148,6 @@ def build_modules(config: SACConfig, env: _EnvSetup, *, device: torch.device) ->
             device=device,
         )
     )
-    actor_param_count = sum((p.numel() for p in actor_backbone.parameters())) + sum((p.numel() for p in actor_head.parameters()))
-    if config.theta_dim is not None:
-        assert actor_param_count == int(config.theta_dim), (
-            actor_param_count,
-            config.theta_dim,
-        )
     return _Modules(
         actor_backbone=actor_backbone,
         actor_head=actor_head,
@@ -167,9 +163,12 @@ def build_modules(config: SACConfig, env: _EnvSetup, *, device: torch.device) ->
 
 
 def build_training(config: SACConfig, modules: _Modules) -> _TrainingSetup:
+    replay_prefetch = int(config.replay_prefetch) if config.replay_prefetch is not None and int(config.replay_prefetch) > 0 else None
     replay = tr_data.TensorDictReplayBuffer(
         storage=tr_data.LazyTensorStorage(int(config.replay_size)),
         batch_size=int(config.batch_size),
+        pin_memory=bool(config.replay_pin_memory),
+        prefetch=replay_prefetch,
     )
     actor_params = list(modules.actor_backbone.parameters()) + list(modules.actor_head.parameters())
     critic_params = list(modules.q1.parameters()) + list(modules.q2.parameters())

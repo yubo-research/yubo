@@ -19,8 +19,8 @@ def build_sac_collector(
 
     td_nn = _im("tensordict.nn")
     torch = _im("torch")
-    tr_collectors = _im("torchrl.collectors")
     tr_envs = _im("torchrl.envs")
+    torchrl_collector_class = _im("rl.core.torchrl_collectors").collector_class
     torchrl_common = _im("rl.core.runtime")
 
     frames_per_batch = int(config.frames_per_batch)
@@ -41,7 +41,7 @@ def build_sac_collector(
                 if runtime.single_env_backend == "parallel"
                 else tr_envs.SerialEnv(num_envs, env_makers, serial_for_single=True)
             )
-        return tr_collectors.Collector(
+        return torchrl_collector_class("Collector")(
             vec_env,
             collector_policy,
             frames_per_batch=frames_per_batch * num_envs,
@@ -53,7 +53,7 @@ def build_sac_collector(
     num_workers = int(runtime.collector_workers or num_envs)
     create_env_fns = [lambda i=i: _make_collect_env_sac(env_setup.env_conf, env_setup, env_index=i) for i in range(num_workers)]
     frames_per_batch_per_worker = max(1, frames_per_batch)
-    collector_cls = tr_collectors.MultiAsyncCollector if runtime.collector_backend == "multi_async" else tr_collectors.MultiSyncCollector
+    collector_cls = torchrl_collector_class("MultiAsyncCollector" if runtime.collector_backend == "multi_async" else "MultiSyncCollector")
     return collector_cls(
         create_env_fn=create_env_fns,
         policy=collector_policy,
@@ -78,7 +78,7 @@ def update_step(
     st = _im("rl.torchrl.sac.setup")
     sac_update_shared = st.sac_update_shared
     torch = _im("torch")
-    batch = training.replay.sample(batch_size).to(device)
+    batch = training.replay.sample().to(device, non_blocking=device.type == "cuda")
     obs = batch["observation"]
     act = batch["action"]
     nxt = batch["next", "observation"]
@@ -206,30 +206,26 @@ def run_sac_eval_log_checkpoint(
 def process_sac_batch(batch, config, modules, training, runtime, env_setup, latest_losses, total_updates):
     offpolicy_trainer_utils = _im("rl.torchrl.offpolicy.trainer_utils")
     run_chunked_updates = _im("rl.core.update_chunks").run_chunked_updates
+    n_frames = offpolicy_trainer_utils.store_offpolicy_batch(batch, training=training, env_setup=env_setup)
+    if not offpolicy_trainer_utils.replay_ready_for_updates(training.replay, config):
+        return (latest_losses, total_updates, int(n_frames))
+    n_updates_due = offpolicy_trainer_utils.num_offpolicy_updates_for_batch(n_frames, config)
 
-    def _update_step_with_chunking(device, batch_size: int) -> dict[str, float]:
+    def _run_one_update() -> None:
         nonlocal latest_losses, total_updates
+        latest_losses = update_step(config, modules, training, device=runtime.device, batch_size=int(config.batch_size))
+        total_updates += 1
 
-        def _run_one_update() -> None:
-            nonlocal latest_losses, total_updates
-            if training.replay.write_count >= int(config.learning_starts):
-                latest_losses = update_step(config, modules, training, device=device, batch_size=batch_size)
-                total_updates += 1
-
-        run_chunked_updates(1, int(config.learner_update_chunk_size), _run_one_update)
-        return latest_losses
-
-    latest_losses, total_updates, n_frames = offpolicy_trainer_utils.process_offpolicy_batch(
-        batch,
-        config=config,
-        training=training,
-        runtime_device=runtime.device,
-        env_setup=env_setup,
-        latest_losses=latest_losses,
-        total_updates=total_updates,
-        update_step_fn=_update_step_with_chunking,
-    )
+    run_chunked_updates(n_updates_due, int(config.learner_update_chunk_size), _run_one_update)
     return (latest_losses, total_updates, int(n_frames))
+
+
+def sync_collector_policy_if_needed(collector, runtime) -> None:
+    if runtime.collector_backend == "single":
+        return
+    update_policy_weights = getattr(collector, "update_policy_weights_", None)
+    if callable(update_policy_weights):
+        update_policy_weights()
 
 
 __all__ = [
@@ -238,5 +234,6 @@ __all__ = [
     "normalize_actions_for_replay",
     "process_sac_batch",
     "run_sac_eval_log_checkpoint",
+    "sync_collector_policy_if_needed",
     "update_step",
 ]

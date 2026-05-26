@@ -10,6 +10,7 @@ def test_sac_train_smoke(tmp_path):
     cfg = SACConfig(
         exp_dir=str(exp_dir),
         env_tag="pend",
+        policy_tag="mlp-16-8",
         seed=0,
         device="cpu",  # MPS can crash with LazyTensorStorage; use CPU for tests
         total_timesteps=96,

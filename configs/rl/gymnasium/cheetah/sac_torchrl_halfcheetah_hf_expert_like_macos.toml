@@ -51,8 +51,9 @@ eval_seed_base = 1000
 eval_noise_mode = "frozen"
 checkpoint_interval_steps = 200000
 
-video_enable = true
-
 [rl.run]
 num_reps = 10
 workers = 1
+
+[rl.run.video]
+enable = true

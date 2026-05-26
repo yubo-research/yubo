@@ -9,7 +9,7 @@ import torch
 from tensordict import TensorDict
 
 from rl import logger
-from rl.core.progress import is_due
+from rl.core.progress import due_mark, is_due
 
 
 def as_float32_observation(observation: np.ndarray) -> np.ndarray:
@@ -171,14 +171,16 @@ def evaluate_if_due(
     capture_actor_state: Any,
     evaluate_heldout: Any,
 ) -> None:
-    if not is_due(step, config.eval_interval_steps):
+    mark = _advance_due_mark(train_state, "_last_eval_mark", step, config.eval_interval_steps)
+    if mark is None:
         return
     from rl.eval_noise import build_eval_plan
 
+    eval_interval = int(config.eval_interval_steps)
     run_problem_seed = int(getattr(env_setup, "problem_seed", config.seed))
     plan = build_eval_plan(
-        current=step,
-        interval=int(config.eval_interval_steps),
+        current=int(mark * eval_interval),
+        interval=eval_interval,
         seed=run_problem_seed,
         eval_seed_base=config.eval_seed_base,
         eval_noise_mode=getattr(config, "eval_noise_mode", None),
@@ -225,7 +227,7 @@ def log_if_due(
     latest_losses: dict[str, float],
     total_updates: int,
 ) -> None:
-    if not is_due(step, config.log_interval_steps):
+    if _advance_due_mark(train_state, "_last_log_mark", step, config.log_interval_steps) is None:
         return
     now = float(time.time())
     sac_metrics = __import__("rl.core.sac_metrics", fromlist=["build_log_eval_iteration_kwargs"])
@@ -253,10 +255,18 @@ def checkpoint_if_due(
     step: int,
     build_checkpoint_payload: Any,
 ) -> None:
-    if not is_due(step, config.checkpoint_interval_steps):
+    if _advance_due_mark(train_state, "_last_checkpoint_mark", step, config.checkpoint_interval_steps) is None:
         return
     payload = build_checkpoint_payload(modules, training_setup, train_state, step=step)
     training_setup.checkpoint_manager.save_both(payload, iteration=step)
+
+
+def _advance_due_mark(train_state: Any, attr: str, step: int, interval: int | None) -> int | None:
+    mark = due_mark(int(step), interval, int(getattr(train_state, attr, 0)))
+    if mark is None:
+        return None
+    setattr(train_state, attr, int(mark))
+    return int(mark)
 
 
 def save_final_checkpoint_if_enabled(

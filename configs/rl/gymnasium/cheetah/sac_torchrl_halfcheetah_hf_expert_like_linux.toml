@@ -33,6 +33,8 @@ gamma = 0.99
 tau = 0.005
 batch_size = 256
 replay_size = 1000000
+replay_pin_memory = true
+replay_prefetch = 2
 learning_starts = 10000
 update_every = 1
 updates_per_step = 8
@@ -52,8 +54,9 @@ eval_seed_base = 1000
 eval_noise_mode = "frozen"
 checkpoint_interval_steps = 200000
 
-video_enable = true
-
 [rl.run]
 num_reps = 10
 workers = 1
+
+[rl.run.video]
+enable = true

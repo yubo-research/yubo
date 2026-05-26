@@ -30,7 +30,7 @@ def test_kiss_cov_sac_setup_build_and_update(monkeypatch, tmp_path):
         lambda _config, **kwargs: shared,
     )
 
-    cfg = SACConfig(exp_dir=str(tmp_path), env_tag="pend", batch_size=4, replay_size=32)
+    cfg = SACConfig(exp_dir=str(tmp_path), env_tag="pend", policy_tag="mlp-16-8", batch_size=4, replay_size=32)
     env_setup = sac_setup.build_env_setup(cfg)
     assert env_setup.obs_dim == 4
     modules = sac_setup.build_modules(cfg, env_setup, device=torch.device("cpu"))

@@ -68,7 +68,7 @@ def test_kiss_bridge_torchrl_sac_setup_loop_ppo_engine_tail(monkeypatch, tmp_pat
     import rl.torchrl.sac.setup as tr_sac_setup_mod
 
     monkeypatch.setattr(tr_sac_setup_mod, "build_env_setup", _fake_bcges)
-    cfg = SACConfig(exp_dir=str(tmp_path / "sac_exp"), replay_size=100, batch_size=4)
+    cfg = SACConfig(exp_dir=str(tmp_path / "sac_exp"), env_tag="pend", policy_tag="mlp-16-8", replay_size=100, batch_size=4)
     env_setup = tr_sac_setup_build_env_setup(cfg)
     dev = torch.device("cpu")
     mods = tr_sac_setup_build_modules(cfg, env_setup, device=dev)

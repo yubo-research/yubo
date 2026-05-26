@@ -4,6 +4,7 @@ from contextlib import AbstractContextManager
 from dataclasses import dataclass
 from typing import Any, Callable
 
+from rl.core.rl_video_settings import get_video_settings
 from video.batch import render_policy_videos
 
 
@@ -25,7 +26,8 @@ def render_policy_videos_rl(
     *,
     device: Any,
 ) -> None:
-    if not config.video_enable:
+    video_settings = get_video_settings(config)
+    if not video_settings.enable:
         return
 
     eval_env_conf = context.build_eval_env_conf(int(env_setup.problem_seed), int(env_setup.noise_seed_0))
@@ -38,9 +40,8 @@ def render_policy_videos_rl(
 
     video_dir = training_setup.exp_dir / "videos"
 
-    base_seed = int(
-        config.video_seed_base if config.video_seed_base is not None else (config.eval_seed_base if config.eval_seed_base is not None else config.seed)
-    )
+    seed_base = video_settings.seed_base if video_settings.seed_base is not None else getattr(config, "eval_seed_base", None)
+    base_seed = int(seed_base if seed_base is not None else config.seed)
     actor_state = train_state.best_actor_state if train_state.best_actor_state is not None else context.capture_actor_state(modules)
     with context.with_actor_state(modules, actor_state, device=device):
         eval_policy = context.make_eval_policy(modules, device)
@@ -48,9 +49,9 @@ def render_policy_videos_rl(
             eval_env_conf,
             eval_policy,
             video_dir=video_dir,
-            video_prefix=str(config.video_prefix),
-            num_episodes=int(config.video_num_episodes),
-            num_video_episodes=int(config.video_num_video_episodes),
-            episode_selection=str(config.video_episode_selection or "best"),
+            video_prefix=str(video_settings.prefix),
+            num_episodes=int(video_settings.num_episodes),
+            num_video_episodes=int(video_settings.num_video_episodes),
+            episode_selection=str(video_settings.episode_selection or "best"),
             seed_base=base_seed,
         )

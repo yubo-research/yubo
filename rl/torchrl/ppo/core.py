@@ -9,6 +9,7 @@ import torch
 from common import experiment_seeds
 from common.seed_all import seed_all
 from rl import registry
+from rl.config_model_defaults import resolve_ppo_model_settings
 from rl.core import env_contract, runtime
 from rl.eval_noise import normalize_eval_noise_mode
 
@@ -56,12 +57,13 @@ __all__ = [
 
 
 def _log_ppo_config(config, env, training, runtime, from_pixels, backbone_info):
+    model = resolve_ppo_model_settings(config)
     print(
-        f"[rl/ppo/torchrl] env_tag={config.env_tag} exp_dir={training.exp_dir} seed={config.seed} problem_seed={env.problem_seed} device={runtime.device.type} obs_dim={env.obs_dim} act_dim={env.act_dim} total_timesteps={config.total_timesteps} num_envs={config.num_envs} num_steps={config.num_steps} frames_per_batch={training.frames_per_batch} num_iterations={training.num_iterations} update_epochs={config.update_epochs} eval_interval={config.eval_interval} collector={runtime.collector_backend} single_env={runtime.single_env_backend} from_pixels={from_pixels}{backbone_info} share_backbone={bool(config.share_backbone)}",
+        f"[rl/ppo/torchrl] env_tag={config.env_tag} exp_dir={training.exp_dir} seed={config.seed} problem_seed={env.problem_seed} device={runtime.device.type} obs_dim={env.obs_dim} act_dim={env.act_dim} total_timesteps={config.total_timesteps} num_envs={config.num_envs} num_steps={config.num_steps} frames_per_batch={training.frames_per_batch} num_iterations={training.num_iterations} update_epochs={config.update_epochs} eval_interval={config.eval_interval} collector={runtime.collector_backend} single_env={runtime.single_env_backend} from_pixels={from_pixels}{backbone_info} share_backbone={bool(model.share_backbone)}",
         flush=True,
     )
     print(
-        f"[rl/ppo/torchrl] actor_head={list(config.actor_head_hidden_sizes)} value_head={list(config.critic_head_hidden_sizes)} log_std_init={config.log_std_init} lr={config.learning_rate} gamma={config.gamma} gae_lambda={config.gae_lambda} clip_coef={config.clip_coef} vf_coef={config.vf_coef} ent_coef={config.ent_coef}",
+        f"[rl/ppo/torchrl] actor_head={list(model.actor_head_hidden_sizes)} value_head={list(model.critic_head_hidden_sizes)} log_std_init={model.log_std_init} lr={config.learning_rate} gamma={config.gamma} gae_lambda={config.gae_lambda} clip_coef={config.clip_coef} vf_coef={config.vf_coef} ent_coef={config.ent_coef}",
         flush=True,
     )
 
@@ -83,11 +85,12 @@ def train_ppo(config: PPOConfig) -> TrainResult:
     training = build_training(config, env, modules, runtime=runtime)
     state = _resume_if_requested(config, modules, training, device=runtime.device)
     from_pixels = env.io_contract.observation.mode == "pixels"
-    backbone_resolved = env_contract.resolve_backbone_name(config.backbone_name, env.io_contract.observation)
+    model = resolve_ppo_model_settings(config)
+    backbone_resolved = env_contract.resolve_backbone_name(model.backbone_name, env.io_contract.observation)
     is_cnn = backbone_resolved in {"nature_cnn", "nature_cnn_atari"}
     backbone_info = f" backbone={backbone_resolved}"
     if not is_cnn:
-        backbone_info += f" hidden={list(config.backbone_hidden_sizes)} act={config.backbone_activation} ln={bool(config.backbone_layer_norm)}"
+        backbone_info += f" hidden={list(model.backbone_hidden_sizes)} act={model.backbone_activation} ln={bool(model.backbone_layer_norm)}"
     _log_ppo_config(config, env, training, runtime, from_pixels, backbone_info)
     remaining_iterations = max(0, training.num_iterations - state.start_iteration)
     video, ctx = _make_video_context(config, env, from_pixels=from_pixels)

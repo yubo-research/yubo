@@ -9,6 +9,7 @@ def test_ppo_train_smoke(tmp_path):
     cfg = PPOConfig(
         exp_dir=str(exp_dir),
         env_tag="pend",
+        policy_tag="mlp-16-8",
         seed=0,
         total_timesteps=64,
         num_steps=16,
@@ -18,9 +19,6 @@ def test_ppo_train_smoke(tmp_path):
         eval_interval=1,
         num_denoise=1,
         num_denoise_passive=1,
-        backbone_hidden_sizes=(8,),
-        actor_head_hidden_sizes=(),
-        critic_head_hidden_sizes=(),
     )
     result = train_ppo(cfg)
     metrics_path = exp_dir / "metrics.jsonl"

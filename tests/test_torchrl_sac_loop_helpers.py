@@ -320,7 +320,7 @@ def test_evaluate_if_due_updates_state_and_writes_metrics(monkeypatch):
         modules,
         training_setup,
         train_state_unchanged,
-        step=3,
+        step=4,
         device=torch.device("cpu"),
         start_time=time.time() - 1.0,
         latest_losses={"loss_actor": 0.0, "loss_critic": 0.0, "loss_alpha": 0.0},
@@ -331,6 +331,24 @@ def test_evaluate_if_due_updates_state_and_writes_metrics(monkeypatch):
     )
     assert train_state_unchanged.best_return == 10.0
     assert len(appended_records) == 1
+
+    torchrl_sac_loop.evaluate_if_due(
+        config,
+        env_setup,
+        modules,
+        training_setup,
+        train_state_unchanged,
+        step=6,
+        device=torch.device("cpu"),
+        start_time=time.time() - 1.0,
+        latest_losses={"loss_actor": 0.0, "loss_critic": 0.0, "loss_alpha": 0.0},
+        total_updates=0,
+        evaluate_actor=lambda *_args, **_kwargs: 11.0,
+        capture_actor_state=lambda *_: {"snapshot": 11},
+        evaluate_heldout=lambda *_args, **_kwargs: 10.5,
+    )
+    assert train_state_unchanged.best_return == 11.0
+    assert len(appended_records) == 2
 
 
 def test_log_and_checkpoint_helpers(capsys):
@@ -343,7 +361,7 @@ def test_log_and_checkpoint_helpers(capsys):
     torchrl_sac_loop.log_if_due(
         config,
         train_state,
-        step=4,
+        step=6,
         start_time=time.time() - 1.0,
         latest_losses={"loss_actor": 1.0, "loss_critic": 2.0, "loss_alpha": 3.0},
         total_updates=9,
@@ -359,10 +377,10 @@ def test_log_and_checkpoint_helpers(capsys):
         modules,
         training_setup,
         train_state,
-        step=5,
+        step=6,
         build_checkpoint_payload=lambda *_args, **kwargs: {"step": kwargs["step"]},
     )
-    assert calls == [({"step": 5}, 5)]
+    assert calls == [({"step": 6}, 6)]
 
     torchrl_sac_loop.save_final_checkpoint_if_enabled(
         config,

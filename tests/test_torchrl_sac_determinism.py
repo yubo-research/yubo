@@ -45,6 +45,7 @@ def _build_test_config(exp_dir: Path) -> SACConfig:
     return SACConfig(
         exp_dir=str(exp_dir),
         env_tag="pend",
+        policy_tag="mlp-16-8",
         seed=7,
         device="cpu",
         total_timesteps=96,

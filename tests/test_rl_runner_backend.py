@@ -59,3 +59,53 @@ def test_extract_run_cfg_rejects_non_positive_num_reps():
     cfg = {"rl": {"run": {"num_reps": 0}}}
     with pytest.raises(ValueError, match=r"\[rl.run\]\.num_reps must be >= 1"):
         runner._extract_run_cfg(cfg)
+
+
+def test_extract_video_cfg_maps_run_video_to_algorithm_keys():
+    cfg = {
+        "rl": {
+            "run": {
+                "video": {
+                    "enable": True,
+                    "num_episodes": 4,
+                    "prefix": "policy",
+                }
+            }
+        }
+    }
+    assert runner._extract_video_cfg(cfg) == {
+        "video_enable": True,
+        "video_num_episodes": 4,
+        "video_prefix": "policy",
+    }
+
+
+def test_extract_video_cfg_rejects_non_table():
+    cfg = {"rl": {"run": {"video": True}}}
+    with pytest.raises(ValueError, match=r"\[rl.run.video\] must be a table"):
+        runner._extract_video_cfg(cfg)
+
+
+def test_run_from_cfg_applies_run_video_to_algorithm_config(monkeypatch):
+    captured = {}
+
+    class _Config:
+        @classmethod
+        def from_dict(cls, raw):
+            captured.update(raw)
+            return raw
+
+    monkeypatch.setattr(
+        "rl.registry.get_algo",
+        lambda _algo_name: type("_Algo", (), {"config_cls": _Config, "train_fn": staticmethod(lambda cfg: cfg)})(),
+    )
+    cfg = {
+        "rl": {
+            "algo": "sac",
+            "sac": {"env_tag": "cheetah"},
+            "run": {"video": {"enable": True, "num_video_episodes": 2}},
+        }
+    }
+    runner._run_from_cfg(cfg)
+    assert captured["video_enable"] is True
+    assert captured["video_num_video_episodes"] == 2

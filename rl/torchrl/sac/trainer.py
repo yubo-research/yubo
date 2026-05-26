@@ -212,6 +212,10 @@ def _process_sac_batch(batch, config, modules, training, runtime, env_setup, lat
     )
 
 
+def _sync_collector_policy_if_needed(collector, runtime) -> None:
+    sac_trainer_phase_b_impl.sync_collector_policy_if_needed(collector, runtime)
+
+
 def train_sac(config: SACConfig) -> TrainResult:
     build_env_setup = _setup_attr("build_env_setup")
     build_modules = _setup_attr("build_modules")
@@ -253,6 +257,7 @@ def train_sac(config: SACConfig) -> TrainResult:
         total_updates = 0
         step = state.start_step
         for batch in collector:
+            updates_before_batch = int(total_updates)
             latest_losses, total_updates, n_frames = _process_sac_batch(
                 batch,
                 config,
@@ -263,6 +268,8 @@ def train_sac(config: SACConfig) -> TrainResult:
                 latest_losses,
                 total_updates,
             )
+            if int(total_updates) > updates_before_batch:
+                _sync_collector_policy_if_needed(collector, runtime)
             step += n_frames
             if step >= int(config.total_timesteps):
                 step = int(config.total_timesteps)
@@ -312,7 +319,7 @@ def train_sac(config: SACConfig) -> TrainResult:
             state,
             build_checkpoint_payload=_phase_a_attr("checkpoint_payload"),
         )
-        if config.video_enable:
+        if deps.video.get_video_settings(config).enable:
             ctx = deps.video.RLVideoContext(
                 build_eval_env_conf=lambda ps, ns: _build_env_runtime(config.env_tag, problem_seed=ps, noise_seed_0=ns),
                 make_eval_policy=lambda m, d: _build_eval_policy(m, env, d),

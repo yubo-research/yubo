@@ -109,9 +109,18 @@ def test_trainer_utils_flatten_normalize_and_process():
         def __init__(self):
             self.items = []
             self.write_count = 10
+            self.add_calls = 0
+            self.extend_calls = 0
 
         def add(self, item):
+            self.add_calls += 1
             self.items.append(item)
+
+        def extend(self, items):
+            self.extend_calls += 1
+            n_items = int(items.shape[0]) if items.ndim > 0 else 1
+            self.items.extend(items[i] for i in range(n_items))
+            self.write_count += n_items
 
     replay = _Replay()
     training = SimpleNamespace(replay=replay)
@@ -138,6 +147,9 @@ def test_trainer_utils_flatten_normalize_and_process():
 
     assert n_frames == 2
     assert len(replay.items) == 2
+    assert replay.add_calls == 0
+    assert replay.extend_calls == 1
+    assert replay.write_count == 12
     assert calls["n"] == 4
     assert total_updates == 7
     assert out_losses["loss_actor"] == 4.0

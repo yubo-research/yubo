@@ -1,12 +1,12 @@
-# HalfCheetah-v5 SAC (TorchRL) for Linux CUDA.
+# HalfCheetah-v5 SAC (TorchRL) for Linux CUDA, short test run.
 # Run:
-#   ./ops/rl.py local configs/rl/gymnasium/cheetah/sac_torchrl_halfcheetah_sota_like_linux.toml
+#   ./ops/rl.py local configs/rl/gymnasium/cheetah/sac_torchrl_halfcheetah_sota_like_linux_test.toml
 
 [rl]
 algo = "sac"
 
 [rl.sac]
-exp_dir = "_tmp/gymnasium/cheetah/sac_torchrl_halfcheetah_sota_like_linux"
+exp_dir = "_tmp/gymnasium/cheetah/sac_torchrl_halfcheetah_sota_like_linux_test"
 env_tag = "cheetah"
 policy_tag = "mlp-32-16"
 
@@ -19,8 +19,8 @@ collector_workers = 8
 from_pixels = false
 pixels_only = true
 
-# Shared SAC core hyperparameters.
-total_timesteps = 1000448
+# Short smoke profile for replay/update validation.
+total_timesteps = 2048
 num_envs = 8
 frames_per_batch = 64
 learning_rate_actor = 3e-4
@@ -29,10 +29,10 @@ learning_rate_alpha = 3e-4
 gamma = 0.99
 tau = 0.005
 batch_size = 256
-replay_size = 1000000
+replay_size = 100000
 replay_pin_memory = true
 replay_prefetch = 2
-learning_starts = 10240
+learning_starts = 512
 update_every = 1
 updates_per_step = 1
 learner_update_chunk_size = 64
@@ -41,19 +41,18 @@ target_entropy = -6.0
 
 # Architecture is resolved from problems/env_conf.py for env_tag = "cheetah".
 
-log_interval_steps = 1024
+log_interval_steps = 512
 
-# Eval parity block (kept identical across halfcheetah SAC configs).
-eval_interval_steps = 5120
+eval_interval_steps = 1024
 num_denoise = 1
 num_denoise_passive = 1
 eval_seed_base = 1000
 eval_noise_mode = "frozen"
-checkpoint_interval_steps = 102400
+checkpoint_interval_steps = 1024
 
 [rl.run]
-num_reps = 10
+num_reps = 1
 workers = 1
 
 [rl.run.video]
-enable = true
+enable = false

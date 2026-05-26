@@ -38,8 +38,27 @@ def _extract_run_cfg(cfg: dict) -> tuple[list[int], int]:
     return (list(range(num_reps)), workers)
 
 
+def _extract_video_cfg(cfg: dict) -> dict:
+    if "rl" not in cfg or not isinstance(cfg["rl"], dict):
+        return {}
+    run_cfg = cfg["rl"].get("run", {})
+    if run_cfg is None:
+        return {}
+    if not isinstance(run_cfg, dict):
+        raise ValueError("[rl.run] must be a table.")
+    video_cfg = run_cfg.get("video", {})
+    if video_cfg is None:
+        return {}
+    if not isinstance(video_cfg, dict):
+        raise ValueError("[rl.run.video] must be a table.")
+    return {f"video_{key}": value for key, value in video_cfg.items()}
+
+
 def _run_from_cfg(cfg: dict, seed: int | None = None):
     algo_name, algo_cfg = _extract_algo_cfg(cfg)
+    video_cfg = _extract_video_cfg(cfg)
+    if video_cfg:
+        algo_cfg = {**algo_cfg, **video_cfg}
     registry = __import__("rl.registry", fromlist=["get_algo"])
     algo = registry.get_algo(algo_name)
     config = algo.config_cls.from_dict(algo_cfg)

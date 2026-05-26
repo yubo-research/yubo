@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import dataclasses
 
-from rl.config_model_defaults import apply_ppo_env_model_defaults
+from rl.config_model_defaults import apply_ppo_env_model_defaults, reject_model_config_keys
+from rl.core.rl_video_settings import attach_video_settings, pop_video_settings
 from rl.core.torchrl_runtime import TorchRLRuntimeCapabilities, TorchRLRuntimeConfig
 
 
@@ -10,6 +11,7 @@ from rl.core.torchrl_runtime import TorchRLRuntimeCapabilities, TorchRLRuntimeCo
 class PPOConfig(TorchRLRuntimeConfig):
     exp_dir: str = "_tmp/ppo"
     env_tag: str = "pend"
+    policy_tag: str | None = None
     seed: int = 1
     problem_seed: int | None = None
     noise_seed_0: int | None = None
@@ -36,25 +38,9 @@ class PPOConfig(TorchRLRuntimeConfig):
     num_denoise_passive: int | None = None
     eval_seed_base: int | None = None
     eval_noise_mode: str | None = None
-    backbone_name: str = "mlp"
-    backbone_hidden_sizes: tuple[int, ...] = (64, 64)
-    backbone_activation: str = "silu"
-    backbone_layer_norm: bool = True
-    actor_head_hidden_sizes: tuple[int, ...] = ()
-    critic_head_hidden_sizes: tuple[int, ...] = ()
-    head_activation: str = "silu"
-    share_backbone: bool = True
-    log_std_init: float = 0.0
-    theta_dim: int | None = None
     log_interval: int = 1
     checkpoint_interval: int | None = None
     resume_from: str | None = None
-    video_enable: bool = False
-    video_prefix: str = "policy"
-    video_num_episodes: int = 10
-    video_num_video_episodes: int = 3
-    video_episode_selection: str = "best"
-    video_seed_base: int | None = None
     profile_enable: bool = False
     profile_wait: int = 0
     profile_warmup: int = 1
@@ -65,9 +51,11 @@ class PPOConfig(TorchRLRuntimeConfig):
 
     @classmethod
     def from_dict(cls, raw: dict) -> "PPOConfig":
+        reject_model_config_keys(raw, algo="ppo")
         d = apply_ppo_env_model_defaults(raw)
-        d.pop("policy_tag", None)
-        return cls(**d)
+        video_settings = pop_video_settings(d)
+        d = {k: v for k, v in d.items() if k in {f.name for f in dataclasses.fields(cls)}}
+        return attach_video_settings(cls(**d), video_settings)
 
     def runtime_num_envs(self) -> int:
         return int(self.num_envs)

@@ -9,6 +9,9 @@ algo = "sac"
 num_reps = 10
 workers = 1
 
+[rl.run.video]
+enable = true
+
 
 [rl.sac]
 exp_dir = "_tmp/gymnasium/cheetah/sac_torchrl_halfcheetah_sota_like_macos"
@@ -49,5 +52,3 @@ eval_interval_steps = 5000
 eval_seed_base = 1000
 eval_noise_mode = "frozen"
 checkpoint_interval_steps = 100000
-
-video_enable = true

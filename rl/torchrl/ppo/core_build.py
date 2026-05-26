@@ -6,40 +6,41 @@ import tensordict.nn as td_nn
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import torchrl.collectors as tr_collectors
 import torchrl.envs as tr_envs
 import torchrl.modules as tr_modules
 
 from analysis.data_io import write_config
 from rl import backbone, checkpointing
-from rl.core import env_contract, torchrl_runtime
+from rl.config_model_defaults import resolve_ppo_model_settings
+from rl.core import env_contract, torchrl_collectors, torchrl_runtime
 from rl.core.runtime import ObsScaler, collector_device_kwargs
 
 from . import models
 from .config import PPOConfig
 from .core_collect_env import _make_collect_env, _make_collect_env_factory
 from .core_types import _EnvSetup, _Modules, _TanhNormal, _TrainingSetup
-from .core_utils import _count_unique_params, _unique_param_list
+from .core_utils import _unique_param_list
 
 
 def build_modules(config: PPOConfig, env: _EnvSetup, *, device: torch.device) -> _Modules:
     obs_contract = env.io_contract.observation
-    backbone_name = env_contract.resolve_backbone_name(config.backbone_name, obs_contract)
+    model = resolve_ppo_model_settings(config)
+    backbone_name = env_contract.resolve_backbone_name(model.backbone_name, obs_contract)
     backbone_spec = backbone.BackboneSpec(
         name=backbone_name,
-        hidden_sizes=tuple(config.backbone_hidden_sizes),
-        activation=config.backbone_activation,
-        layer_norm=bool(config.backbone_layer_norm),
+        hidden_sizes=tuple(model.backbone_hidden_sizes),
+        activation=model.backbone_activation,
+        layer_norm=bool(model.backbone_layer_norm),
     )
     actor_head_spec = backbone.HeadSpec(
-        hidden_sizes=tuple(config.actor_head_hidden_sizes),
-        activation=config.head_activation,
+        hidden_sizes=tuple(model.actor_head_hidden_sizes),
+        activation=model.head_activation,
     )
     critic_head_spec = backbone.HeadSpec(
-        hidden_sizes=tuple(config.critic_head_hidden_sizes),
-        activation=config.head_activation,
+        hidden_sizes=tuple(model.critic_head_hidden_sizes),
+        activation=model.head_activation,
     )
-    if config.share_backbone:
+    if model.share_backbone:
         shared_backbone, feat_dim = backbone.build_backbone(backbone_spec, env.obs_dim)
         actor_backbone = shared_backbone
         critic_backbone = shared_backbone
@@ -63,9 +64,8 @@ def build_modules(config: PPOConfig, env: _EnvSetup, *, device: torch.device) ->
             distribution_class=torch.distributions.Categorical,
             return_log_prob=True,
         )
-        actor_param_count = _count_unique_params(actor_backbone, actor_head)
     else:
-        log_std = nn.Parameter(torch.full((env.act_dim,), float(config.log_std_init)))
+        log_std = nn.Parameter(torch.full((env.act_dim,), float(model.log_std_init)))
         actor_net = models.ActorNet(actor_backbone, actor_head, log_std, obs_scaler, obs_contract=obs_contract)
         actor_module = td_nn.TensorDictModule(actor_net, in_keys=["observation"], out_keys=["loc", "scale"])
         actor = tr_modules.ProbabilisticActor(
@@ -75,15 +75,9 @@ def build_modules(config: PPOConfig, env: _EnvSetup, *, device: torch.device) ->
             distribution_kwargs={"low": env.action_low, "high": env.action_high},
             return_log_prob=True,
         )
-        actor_param_count = _count_unique_params(actor_backbone, actor_head, extra_params=[log_std])
     actor.to(device)
     critic.to(device)
     obs_scaler.to(device)
-    if config.theta_dim is not None:
-        assert actor_param_count == int(config.theta_dim), (
-            actor_param_count,
-            config.theta_dim,
-        )
     return _Modules(
         actor_backbone=actor_backbone,
         actor_head=actor_head,
@@ -165,7 +159,7 @@ def _build_collector(
     if runtime.collector_backend == "single":
         if training.env is None:
             raise RuntimeError("single collector backend requires training.env")
-        return tr_collectors.Collector(
+        return torchrl_collectors.collector_class("Collector")(
             training.env,
             modules.actor,
             frames_per_batch=training.frames_per_batch,
@@ -177,7 +171,7 @@ def _build_collector(
     num_workers = int(runtime.collector_workers)
     create_env_fns = [lambda i=i: _make_collect_env(env.env_conf, env_index=i) for i in range(num_workers)]
     frames_per_batch = [int(config.num_steps)] * num_workers
-    collector_cls = tr_collectors.MultiAsyncCollector if runtime.collector_backend == "multi_async" else tr_collectors.MultiSyncCollector
+    collector_cls = torchrl_collectors.collector_class("MultiAsyncCollector" if runtime.collector_backend == "multi_async" else "MultiSyncCollector")
     return collector_cls(
         create_env_fns,
         modules.actor,
