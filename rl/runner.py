@@ -38,30 +38,40 @@ def _extract_run_cfg(cfg: dict) -> tuple[list[int], int]:
     return (list(range(num_reps)), workers)
 
 
+def _optional_table(parent: dict, key: str, label: str) -> dict:
+    value = parent.get(key, {})
+    if value is None:
+        return {}
+    if not isinstance(value, dict):
+        raise ValueError(f"{label} must be a table.")
+    return value
+
+
 def _extract_video_cfg(cfg: dict) -> dict:
     if "rl" not in cfg or not isinstance(cfg["rl"], dict):
         return {}
-    run_cfg = cfg["rl"].get("run", {})
-    if run_cfg is None:
-        return {}
-    if not isinstance(run_cfg, dict):
-        raise ValueError("[rl.run] must be a table.")
-    video_cfg = run_cfg.get("video", {})
-    if video_cfg is None:
-        return {}
-    if not isinstance(video_cfg, dict):
-        raise ValueError("[rl.run.video] must be a table.")
+    run_cfg = _optional_table(cfg["rl"], "run", "[rl.run]")
+    artifacts_cfg = _optional_table(run_cfg, "artifacts", "[rl.run.artifacts]")
+    video_cfg = _optional_table(artifacts_cfg, "video", "[rl.run.artifacts.video]")
     return {f"video_{key}": value for key, value in video_cfg.items()}
+
+
+def _attach_run_artifacts(config, *, video_cfg: dict):
+    if not video_cfg:
+        return config
+    video_settings_mod = __import__("rl.core.rl_video_settings", fromlist=["attach_video_settings", "pop_video_settings"])
+    video_data = dict(video_cfg)
+    settings = video_settings_mod.pop_video_settings(video_data)
+    return video_settings_mod.attach_video_settings(config, settings)
 
 
 def _run_from_cfg(cfg: dict, seed: int | None = None):
     algo_name, algo_cfg = _extract_algo_cfg(cfg)
     video_cfg = _extract_video_cfg(cfg)
-    if video_cfg:
-        algo_cfg = {**algo_cfg, **video_cfg}
     registry = __import__("rl.registry", fromlist=["get_algo"])
     algo = registry.get_algo(algo_name)
     config = algo.config_cls.from_dict(algo_cfg)
+    config = _attach_run_artifacts(config, video_cfg=video_cfg)
     if seed is not None and hasattr(config, "seed"):
         config.seed = int(seed)
     if hasattr(config, "seed") and (hasattr(config, "problem_seed") or hasattr(config, "noise_seed_0")):

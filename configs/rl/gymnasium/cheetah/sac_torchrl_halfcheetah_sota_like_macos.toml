@@ -9,7 +9,7 @@ algo = "sac"
 num_reps = 10
 workers = 1
 
-[rl.run.video]
+[rl.run.artifacts.video]
 enable = true
 
 

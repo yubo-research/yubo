@@ -54,5 +54,5 @@ checkpoint_interval_steps = 1024
 num_reps = 1
 workers = 1
 
-[rl.run.video]
+[rl.run.artifacts.video]
 enable = false

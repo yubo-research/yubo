@@ -3,7 +3,6 @@ from __future__ import annotations
 import dataclasses
 
 from rl.config_model_defaults import apply_ppo_env_model_defaults, reject_model_config_keys
-from rl.core.rl_video_settings import attach_video_settings, pop_video_settings
 from rl.core.torchrl_runtime import TorchRLRuntimeCapabilities, TorchRLRuntimeConfig
 
 
@@ -53,9 +52,8 @@ class PPOConfig(TorchRLRuntimeConfig):
     def from_dict(cls, raw: dict) -> "PPOConfig":
         reject_model_config_keys(raw, algo="ppo")
         d = apply_ppo_env_model_defaults(raw)
-        video_settings = pop_video_settings(d)
         d = {k: v for k, v in d.items() if k in {f.name for f in dataclasses.fields(cls)}}
-        return attach_video_settings(cls(**d), video_settings)
+        return cls(**d)
 
     def runtime_num_envs(self) -> int:
         return int(self.num_envs)

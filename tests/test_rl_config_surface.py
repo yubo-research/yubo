@@ -61,7 +61,7 @@ def test_policy_tag_still_resolves_internal_model_settings():
     assert resolve_sac_model_settings(sac).backbone_hidden_sizes == (256, 256)
 
 
-def test_run_video_table_becomes_internal_video_settings(monkeypatch):
+def test_run_artifact_video_table_becomes_internal_video_settings(monkeypatch):
     captured = {}
 
     class _AlgoConfig(SACConfig):
@@ -81,7 +81,15 @@ def test_run_video_table_becomes_internal_video_settings(monkeypatch):
             "rl": {
                 "algo": "sac",
                 "sac": {"env_tag": "cheetah", "policy_tag": "mlp-32-16"},
-                "run": {"video": {"enable": True, "prefix": "policy-check", "num_video_episodes": 2}},
+                "run": {
+                    "artifacts": {
+                        "video": {
+                            "enable": True,
+                            "prefix": "policy-check",
+                            "num_video_episodes": 2,
+                        }
+                    }
+                },
             }
         }
     )

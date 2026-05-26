@@ -61,15 +61,17 @@ def test_extract_run_cfg_rejects_non_positive_num_reps():
         runner._extract_run_cfg(cfg)
 
 
-def test_extract_video_cfg_maps_run_video_to_algorithm_keys():
+def test_extract_video_cfg_maps_artifact_video_to_algorithm_keys():
     cfg = {
         "rl": {
             "run": {
-                "video": {
-                    "enable": True,
-                    "num_episodes": 4,
-                    "prefix": "policy",
-                }
+                "artifacts": {
+                    "video": {
+                        "enable": True,
+                        "num_episodes": 4,
+                        "prefix": "policy",
+                    }
+                },
             }
         }
     }
@@ -81,19 +83,19 @@ def test_extract_video_cfg_maps_run_video_to_algorithm_keys():
 
 
 def test_extract_video_cfg_rejects_non_table():
-    cfg = {"rl": {"run": {"video": True}}}
-    with pytest.raises(ValueError, match=r"\[rl.run.video\] must be a table"):
+    cfg = {"rl": {"run": {"artifacts": {"video": True}}}}
+    with pytest.raises(ValueError, match=r"\[rl.run.artifacts.video\] must be a table"):
         runner._extract_video_cfg(cfg)
 
 
-def test_run_from_cfg_applies_run_video_to_algorithm_config(monkeypatch):
+def test_run_from_cfg_attaches_video_artifact_settings(monkeypatch):
     captured = {}
 
     class _Config:
         @classmethod
         def from_dict(cls, raw):
-            captured.update(raw)
-            return raw
+            captured["raw"] = dict(raw)
+            return type("_Cfg", (), {})()
 
     monkeypatch.setattr(
         "rl.registry.get_algo",
@@ -103,9 +105,10 @@ def test_run_from_cfg_applies_run_video_to_algorithm_config(monkeypatch):
         "rl": {
             "algo": "sac",
             "sac": {"env_tag": "cheetah"},
-            "run": {"video": {"enable": True, "num_video_episodes": 2}},
+            "run": {"artifacts": {"video": {"enable": True, "num_video_episodes": 2}}},
         }
     }
-    runner._run_from_cfg(cfg)
-    assert captured["video_enable"] is True
-    assert captured["video_num_video_episodes"] == 2
+    result = runner._run_from_cfg(cfg)
+    assert captured["raw"] == {"env_tag": "cheetah"}
+    assert result._video_settings.enable is True
+    assert result._video_settings.num_video_episodes == 2
