@@ -3,6 +3,7 @@ from __future__ import annotations
 from problems.jax_env import (
     BraxAdapter,
     CraftaxAdapter,
+    GymnasiumMJXAdapter,
     GymnaxAdapter,
     JaxMARLAdapter,
     JumanjiAdapter,
@@ -10,6 +11,7 @@ from problems.jax_env import (
     NavixAdapter,
 )
 from problems.jax_env_core import SURROGATE_OBJECTIVE_PREFIXES, JaxEnvSpaces
+from problems.mjx_env import is_gymnasium_env_tag
 from problems.surrogate_objective_env import SurrogateObjectiveAdapter
 
 
@@ -19,6 +21,8 @@ def make_jax_env_adapter(env_name: str, *, jax, jnp):
         return GymnaxAdapter(env_name, jax=jax, jnp=jnp)
     if env_name.startswith("brax:"):
         return BraxAdapter(env_name, jax=jax, jnp=jnp)
+    if is_gymnasium_env_tag(env_name):
+        return GymnasiumMJXAdapter(env_name, jax=jax, jnp=jnp)
     if env_name.startswith("craftax:"):
         return CraftaxAdapter(env_name, jax=jax, jnp=jnp)
     if env_name.startswith("jaxmarl:"):

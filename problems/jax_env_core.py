@@ -6,6 +6,7 @@ from typing import Any
 JAX_ENV_PREFIXES = (
     "gymnax:",
     "brax:",
+    "gymnasium:",
     "craftax:",
     "jaxmarl:",
     "jumanji:",
@@ -26,6 +27,7 @@ _SUPPORTED_JAX_ENV_EXAMPLES = (
     "brax:ant",
     "brax:humanoid",
     "brax:inverted_double_pendulum",
+    "gymnasium:HalfCheetah-v5",
     "craftax:Craftax-Classic-Symbolic-v1",
     "craftax:Craftax-Symbolic-AutoReset-v1",
     "jaxmarl:mpe-simple-reference-v3",
