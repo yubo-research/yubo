@@ -33,7 +33,8 @@ def test_modal_hyperscalees_base_image_uses_cacheable_layers() -> None:
     source_command = _decoded_modal_build_command(base._install_source_extras_command())
     assert "HyperscaleES.git" in source_command
     assert "VecchiaBO.git" in source_command
-    assert "TORCH_CUDA_ARCH_LIST" in source_command
+    assert "LassoBench.git" in source_command
+    assert "--no-build-isolation --no-deps" in source_command
     assert "setup-hyperscalees.sh" not in source_command
 
     final_command = _decoded_modal_build_command(base._finalize_runtime_compat_command())

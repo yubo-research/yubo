@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 
 import click
+import tomllib
 
 
 def _add_repo_root_to_syspath():
@@ -121,6 +122,24 @@ def uhd():
     """List all UHD optimizers (for use with optimizer= in [uhd] config)."""
     for name in ("simple", "simple_be", "mezo", "mezo_be", "bszo"):
         click.echo(name)
+
+
+@_cli.command(name="rl-algos")
+def rl_algos():
+    """List supported RL algorithms."""
+    for name in ("ppo", "sac"):
+        click.echo(name)
+
+
+@_cli.command(name="rl-configs")
+def rl_configs():
+    """List supported RL config files."""
+    root = Path(__file__).resolve().parents[1]
+    for path in sorted((root / "configs" / "rl").rglob("*.toml")):
+        with path.open("rb") as f:
+            data = tomllib.load(f)
+        if "rl" in data:
+            click.echo(path.relative_to(root).as_posix())
 
 
 if __name__ == "__main__":

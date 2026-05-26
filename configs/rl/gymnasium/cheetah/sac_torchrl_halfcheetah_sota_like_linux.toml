@@ -1,10 +1,9 @@
-# HalfCheetah-v5 SAC (TorchRL backend) for Linux CUDA.
+# HalfCheetah-v5 SAC (TorchRL) for Linux CUDA.
 # Run:
-#   python -m rl.runner --config configs/rl/gymnasium/cheetah/sac_torchrl_halfcheetah_sota_like_linux.toml
+#   ./ops/rl.py local configs/rl/gymnasium/cheetah/sac_torchrl_halfcheetah_sota_like_linux.toml
 
 [rl]
 algo = "sac"
-backend = "torchrl"
 
 [rl.sac]
 exp_dir = "_tmp/gymnasium/cheetah/sac_torchrl_halfcheetah_sota_like_linux"

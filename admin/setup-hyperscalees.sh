@@ -19,7 +19,6 @@ ISAACLAB_SOURCE_DIR="${HOME}/.cache/yubo/isaaclab/IsaacLab"
 ISAACLAB_SOURCE_INSTALL_TARGET="minimal"
 LASSOBENCH_SPEC="LassoBench @ git+https://github.com/ksehic/LassoBench.git"
 VECCHIABO_SPEC="git+https://github.com/feji3769/VecchiaBO.git#subdirectory=code"
-PUFFERLIB_SPEC="pufferlib==3.0.0"
 
 RUN_VERIFY=1
 RECREATE_ENV=0
@@ -182,23 +181,6 @@ pip_install() {
   run_in_env python -m pip install --disable-pip-version-check "$@"
 }
 
-detect_torch_cuda_version() {
-  local cuda_version
-  cuda_version="$(run_in_env python - <<'PY'
-import sys
-try:
-    import torch
-except Exception as exc:
-    raise SystemExit(f"failed to import torch while detecting CUDA version: {exc}")
-cuda_version = torch.version.cuda
-if not cuda_version:
-    raise SystemExit("torch.version.cuda is empty")
-print(".".join(cuda_version.split(".")[:2]))
-PY
-)"
-  echo "${cuda_version}"
-}
-
 normalize_path_in_env() {
   run_in_env python - "$1" <<'PY'
 import sys
@@ -302,24 +284,6 @@ install_lassobench_package() {
   pip_install --no-deps "${LASSOBENCH_SPEC}"
 }
 
-install_pufferlib_package() {
-  if run_in_env python -c 'import importlib.util, sys; sys.exit(0 if importlib.util.find_spec("pufferlib") else 1)'; then
-    log "pufferlib already importable"
-    return
-  fi
-  local cuda_version="$(detect_torch_cuda_version)"
-  log "installing CUDA toolchain ${cuda_version} for pufferlib"
-  "${MICROMAMBA}" install -y -n "${ENV_NAME}" -c nvidia -c conda-forge \
-    "cuda-toolkit=${cuda_version}" "cuda-nvcc=${cuda_version}" "cuda-cudart-dev=${cuda_version}" \
-    ninja cmake gxx_linux-64
-  log "installing ${PUFFERLIB_SPEC} without build isolation"
-  run_in_env bash -c '
-    export CUDA_HOME="${CONDA_PREFIX}"
-    export CUDACXX="${CONDA_PREFIX}/bin/nvcc"
-    python -m pip install --disable-pip-version-check --no-build-isolation --no-deps "'"${PUFFERLIB_SPEC}"'"
-  '
-}
-
 install_isaaclab_stack() {
   if run_in_env python -c 'import importlib.util, sys; sys.exit(0 if all(importlib.util.find_spec(m) for m in ("isaacsim", "isaaclab")) else 1)'; then
     log "Isaac Lab already importable"
@@ -403,7 +367,6 @@ if [[ "${ENV_WAS_CREATED}" -eq 1 ]]; then
   install_hyperscalees_package
   install_vecchiabo_package
   install_lassobench_package
-  install_pufferlib_package
   install_isaaclab_stack
 else
   log "env '${ENV_NAME}' already exists; performing incremental update"

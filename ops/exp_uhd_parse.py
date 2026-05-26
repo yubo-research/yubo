@@ -90,6 +90,7 @@ _OPTIONAL_TOML_KEYS = (
     "text_search_dim",
     "text_delta_scale",
     "text_basis_max_tensors",
+    "text_score_mode",
     # Other settings
     "bf8_storage",
     "perturb_backend",
@@ -98,6 +99,7 @@ _OPTIONAL_TOML_KEYS = (
     "eggroll_group_size",
     "eggroll_freeze_nonlora",
     "use_async",
+    "vllm_enforce_eager",
     "vllm_max_model_len",
     "vllm_gpu_memory_utilization",
     "vllm_max_num_seqs",
@@ -441,6 +443,7 @@ def _parse_cfg(cfg: dict[str, Any]) -> UHDConfig:
         "text_search_dim",
         "text_delta_scale",
         "text_basis_max_tensors",
+        "text_score_mode",
         "bf8_storage",
         "pretrain_basis_max_leaves",
         "eggroll_noiser",
@@ -448,6 +451,7 @@ def _parse_cfg(cfg: dict[str, Any]) -> UHDConfig:
         "eggroll_group_size",
         "eggroll_freeze_nonlora",
         "use_async",
+        "vllm_enforce_eager",
         "vllm_max_model_len",
         "vllm_gpu_memory_utilization",
         "vllm_max_num_seqs",
@@ -477,6 +481,13 @@ def _parse_cfg(cfg: dict[str, Any]) -> UHDConfig:
 
 def _validate_llm_sampling_config(cfg: UHDConfig) -> None:
     if not str(cfg.env_tag).startswith("llm:"):
+        return
+    text_score_mode = str(cfg.text_score_mode)
+    if text_score_mode not in {"generation", "nll"}:
+        raise ValueError("UHD text configs require text_score_mode='generation' or text_score_mode='nll'.")
+    if text_score_mode == "nll":
+        if int(cfg.samples_per_prompt) != 1 or bool(cfg.pass_at_k):
+            raise ValueError("UHD text NLL scoring requires samples_per_prompt=1 and pass_at_k=false.")
         return
     if int(cfg.samples_per_prompt) > 1 and float(cfg.temperature) <= 0.0:
         raise ValueError(

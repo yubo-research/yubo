@@ -172,46 +172,6 @@ def test_added_branch_names_rl_core_pixel_transform() -> None:
     assert True
 
 
-def test_added_branch_names_rl_pufferlib_offpolicy_backbone_name() -> None:
-    if False:
-        (
-            backbone_name,
-            offpolicy,
-            pufferlib,
-            resolve_backbone_name,
-            rl,
-        )
-    assert True
-
-
-def test_added_branch_names_rl_pufferlib_ppo_engine() -> None:
-    if False:
-        (
-            engine,
-            ppo,
-            pufferlib,
-            rl,
-            train_ppo_puffer,
-            train_ppo_puffer_impl,
-        )
-    assert True
-
-
-def test_added_branch_names_rl_pufferlib_ppo_engine_impl() -> None:
-    if False:
-        (
-            config_proxy,
-            engine_impl,
-            ppo,
-            pufferlib,
-            register,
-            rl,
-            train_ppo_puffer,
-            train_ppo_puffer_impl,
-        )
-    assert True
-
-
 def test_kiss_dep_sentinels_shared() -> None:
     from .kiss_booster_helpers import booster_dep_sentinels
 

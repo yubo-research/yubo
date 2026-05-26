@@ -37,9 +37,6 @@ def test_kiss_cov_direct_exp_uhd_modal_and_runner_main(monkeypatch, tmp_path):
     monkeypatch.setattr(ct, "apply_overrides", lambda cfg, overrides: None)
     monkeypatch.setattr(runner, "_extract_run_cfg", lambda cfg: ([], 1))
 
-    # Use real registry or mock it correctly
-    monkeypatch.setattr("rl.registry.resolve_algo_name", lambda algo, backend=None: algo)
-
     # Use a real config class that matches the expected structure
     from rl.torchrl.sac.config import SACConfig as _Cfg
 
@@ -48,7 +45,7 @@ def test_kiss_cov_direct_exp_uhd_modal_and_runner_main(monkeypatch, tmp_path):
 
     monkeypatch.setattr(
         "rl.registry.get_algo",
-        lambda _algo_name, backend=None: SimpleNamespace(config_cls=_Cfg, train_fn=_train_fn),
+        lambda _algo_name: SimpleNamespace(config_cls=_Cfg, train_fn=_train_fn),
     )
     monkeypatch.setattr("rl.builtins.register_all", lambda: None)
 

@@ -112,6 +112,19 @@ def test_llm_random_boxed_reward_pass_at_k():
     assert fitness == 1.0
     assert model_answers == (None, 2)
     assert sample_fitnesses.tolist() == [0.0, 1.0]
+    assert task.target_text(2) == " \\boxed{2}"
+
+
+def test_llm_math_target_text_without_dataset_load():
+    from llm.tasks_math import MathTask
+
+    task = MathTask.__new__(MathTask)
+    task.answer_format = "none"
+    answer_tags_task = MathTask.__new__(MathTask)
+    answer_tags_task.answer_format = "answer_tags"
+
+    assert task.target_text("reasoning #### 42") == " \\boxed{42}"
+    assert answer_tags_task.target_text("42") == " <answer>42</answer>"
 
 
 def test_vllm_rlm_client_truncates_prompt_to_leave_generation_room():

@@ -107,10 +107,10 @@ kernels = "*"
 [feature.hyperscalees.tasks]
 install-vllm = "python -m pip install --disable-pip-version-check --only-binary=:all: vllm==0.17.0"
 install-nodeps = "python -m pip install --disable-pip-version-check --no-deps ennbo==0.2.1 joblib threadpoolctl absl-py==2.4.0 chex==0.1.91 dm-env==1.6 esquilax==2.1.0 etils==1.14.0 flask==3.1.3 flask-cors==6.0.2 flax==0.12.7 huggingface-hub==0.36.2 jaxopt==0.8.5 ml-collections==1.1.0 'mujoco>=3.8.1,<3.9' mujoco-mjx==3.8.0 optax==0.2.8 orbax-checkpoint==0.11.39 pillow==12.2.0 tensorboardx==2.6.5 trimesh==4.12.2 brax==0.14.2 jumanji==1.1.1 warp-lang==1.13.0 mujoco-warp==3.8.0.3 imageio==2.37.3 networkx==3.6.1 pygame==2.6.1 rlax==0.1.8 seaborn==0.13.2"
+install-lassobench = "python -m pip install --disable-pip-version-check --no-deps 'LassoBench @ git+https://github.com/ksehic/LassoBench.git'"
 install-vecchiabo = 'env_prefix="$(python -c "import sys; print(sys.prefix)")" && LDFLAGS="-L${env_prefix}/lib" LIBRARY_PATH="${env_prefix}/lib" CPATH="$(python -c "import pybind11; print(pybind11.get_include())")" python -m pip install --disable-pip-version-check --no-build-isolation --no-deps "git+https://github.com/feji3769/VecchiaBO.git#subdirectory=code"'
-install-pufferlib = "CUDA_HOME=/opt/yubo-pixi/.pixi/envs/hyperscalees CUDACXX=/opt/yubo-pixi/.pixi/envs/hyperscalees/bin/nvcc TORCH_CUDA_ARCH_LIST=8.9 python -m pip install --disable-pip-version-check --no-build-isolation --no-deps pufferlib==3.0.0"
-setup = { depends-on = ["install-vllm", "install-nodeps", "install-vecchiabo", "install-pufferlib"] }
-check = "python -c 'import faiss, torch, vllm, hyperscalees; from pyvecch.input_transforms import Identity; print(\"hyperscalees ok\", Identity.__name__)'"
+setup = { depends-on = ["install-vllm", "install-nodeps", "install-lassobench", "install-vecchiabo"] }
+check = "python -c 'import faiss, torch, vllm, hyperscalees, LassoBench; from pyvecch.input_transforms import Identity; print(\"hyperscalees ok\", Identity.__name__)'"
 
 [feature.isaaclab.dependencies]
 python = "3.12.*"

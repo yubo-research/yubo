@@ -54,6 +54,7 @@ class UHDConfig:
     text_search_dim: int = 256
     text_delta_scale: float = 1.0
     text_basis_max_tensors: int | None = 32
+    text_score_mode: str = "generation"
     bf8_storage: bool = False
     perturb_backend: str = "flat"
     eggroll_noiser: str = "eggroll"
@@ -61,6 +62,7 @@ class UHDConfig:
     eggroll_group_size: int = 0
     eggroll_freeze_nonlora: bool = False
     use_async: bool = False
+    vllm_enforce_eager: bool = False
     vllm_max_model_len: int | None = None
     vllm_gpu_memory_utilization: float | None = None
     vllm_max_num_seqs: int | None = None

@@ -8,7 +8,7 @@ Install Modal locally and authenticate once:
 modal setup
 ```
 
-Build or refresh the Modal image:
+Build the image and run preflight:
 
 ```bash
 modal run ops/modal_hyperscalees_pixi_setup.py --command preflight
@@ -28,6 +28,10 @@ pixi.lock
 ops/modal_hyperscalees_pixi_base_image.py
 ops/modal_hyperscalees_pixi_image.py
 ```
+
+The image carries OS packages, Pixi, `pixi.toml`, `pixi.lock`, and both Pixi
+envs. Changing `pixi.toml`, `pixi.lock`, or setup tasks rebuilds the env image.
+Source/config edits do not rebuild the Pixi envs.
 
 ## Run
 
@@ -52,7 +56,7 @@ modal run ops/modal_hyperscalees_pixi_setup.py --config configs/llm/gsm8k_qwen3_
 RL:
 
 ```bash
-modal run ops/modal_hyperscalees_pixi_setup.py --config configs/rl/dm_control/quadruped/sac_puffer_quadruped_run_aggressive_short.toml
+modal run ops/modal_hyperscalees_pixi_setup.py --config configs/rl/gymnasium/cheetah/sac_torchrl_halfcheetah_sota_like_linux.toml
 ```
 
 Tests:
@@ -70,7 +74,7 @@ modal run ops/modal_hyperscalees_pixi_setup.py --pytest --pytest-args '-sv tests
 [experiment] -> ./ops/experiment.py local
 [uhd]        -> ./ops/exp_uhd.py local
 [llm]        -> ./ops/llm.py local
-[rl]         -> python -m rl.runner --config
+[rl]         -> ./ops/rl.py local
 ```
 
 IsaacLab configs run in the `isaaclab` Pixi env. Everything else runs in
@@ -105,7 +109,7 @@ modal run ops/modal_hyperscalees_pixi_setup.py --pixi-env isaaclab --command 'py
 ## Notes
 
 - Do not mount `.pixi/`.
+- `hyperscalees` setup installs vLLM, VecchiaBO, and LassoBench.
 - Do not switch Isaac/Torch to CUDA 13; the stack uses CUDA 12.8 wheels.
-- Source/config edits do not rebuild the Pixi envs.
 - `admin/setup-hyperscalees.sh` is legacy local CUDA setup, not the main
   collaborator path.

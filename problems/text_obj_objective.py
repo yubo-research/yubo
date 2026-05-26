@@ -244,6 +244,8 @@ def _generate_fitnesses(
     *,
     x_hash: str,
 ) -> tuple[list[float], list[str]]:
+    if _text_score_mode(obj) == "nll":
+        return _generate_nll_fitnesses(obj, runtime, prompts, answers, adapter_path, int(seed), x_hash=x_hash)
     sampling = runtime.sampling_kwargs(
         tokenizer=obj._tokenizer,
         temperature=float(obj.cfg.temperature),
@@ -262,6 +264,38 @@ def _generate_fitnesses(
         args=args,
     )
     return fitnesses, logs
+
+
+def _generate_nll_fitnesses(
+    obj: TextObjective,
+    runtime,
+    prompts: list[str],
+    answers: list[Any],
+    adapter_path: Path,
+    seed: int,
+    *,
+    x_hash: str,
+) -> tuple[list[float], list[str]]:
+    from llm.vllm_nll_scoring import build_nll_calls, score_nll_responses
+
+    calls, items = build_nll_calls(
+        tokenizer=obj._tokenizer,
+        prompts=prompts,
+        answers=answers,
+        task_obj=obj._task,
+        lora_request_specs=_lora_specs(prompts, adapter_path, seed, obj._eval_count, x_hash=x_hash),
+        seed=int(seed),
+    )
+    responses = runtime.pool.sample(calls)
+    fitnesses, _info, logs = score_nll_responses(responses, items)
+    return fitnesses, logs
+
+
+def _text_score_mode(obj: TextObjective) -> str:
+    mode = str(getattr(obj.cfg, "text_score_mode", "generation"))
+    if mode not in {"generation", "nll"}:
+        raise ValueError("text_score_mode must be 'generation' or 'nll'.")
+    return mode
 
 
 def _embedding_indices(obj: TextObjective) -> np.ndarray:
@@ -295,6 +329,7 @@ def _launch_pool(cfg: Any, policy: Any):
             prompt_batch_size=int(cfg.prompt_batch_size),
             samples_per_prompt=int(cfg.samples_per_prompt),
             use_async=bool(getattr(cfg, "use_async", False)),
+            vllm_enforce_eager=bool(getattr(cfg, "vllm_enforce_eager", False)),
             vllm_max_model_len=getattr(cfg, "vllm_max_model_len", None),
             vllm_gpu_memory_utilization=getattr(cfg, "vllm_gpu_memory_utilization", None),
             vllm_max_num_seqs=getattr(cfg, "vllm_max_num_seqs", None),

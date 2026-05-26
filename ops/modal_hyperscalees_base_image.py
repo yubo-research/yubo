@@ -16,7 +16,6 @@ HYPERSCALEES_REPO_URL = "https://github.com/ESHyperscale/HyperscaleES.git"
 HYPERSCALEES_REPO_COMMIT = "b77f7d6f91238fd575313e946b9cad21e0a74b32"
 VECCHIABO_SPEC = "git+https://github.com/feji3769/VecchiaBO.git#subdirectory=code"
 LASSOBENCH_SPEC = "LassoBench @ git+https://github.com/ksehic/LassoBench.git"
-PUFFERLIB_SPEC = "pufferlib==3.0.0"
 
 PYTORCH_CU128_INDEX_URL = "https://download.pytorch.org/whl/cu128"
 ISAACLAB_SOURCE_URL = "https://github.com/isaac-sim/IsaacLab.git"
@@ -180,11 +179,10 @@ def _install_source_extras_command() -> str:
     return _install_source_extras_command_with_helpers(
         _env_helpers(ENV_NAME),
         _faiss_openblas_repair_command(ENV_NAME),
-        _micromamba_cuda_toolkit_install_command(),
     )
 
 
-def _install_source_extras_command_with_helpers(env_helpers: str, faiss_command: str, cuda_toolkit_command: str) -> str:
+def _install_source_extras_command_with_helpers(env_helpers: str, faiss_command: str) -> str:
     return _bash(
         f"""
 {env_helpers}
@@ -233,33 +231,8 @@ run_in_env bash -c '
   python -m pip install --disable-pip-version-check --no-build-isolation --no-deps "{VECCHIABO_SPEC}"
 '
 pip_install --no-deps {shlex.quote(LASSOBENCH_SPEC)}
-
-{cuda_toolkit_command}
-run_in_env bash -c '
-  export CUDA_HOME="${{CONDA_PREFIX}}"
-  export CUDACXX="${{CONDA_PREFIX}}/bin/nvcc"
-  export TORCH_CUDA_ARCH_LIST="${{TORCH_CUDA_ARCH_LIST:-8.9}}"
-  python -m pip install --disable-pip-version-check --no-build-isolation --no-deps "{PUFFERLIB_SPEC}"
-'
 """
     )
-
-
-def _micromamba_cuda_toolkit_install_command() -> str:
-    return f"""
-cuda_version="$(run_in_env python - <<'PY'
-import torch
-
-cuda_version = torch.version.cuda
-if not cuda_version:
-    raise SystemExit("torch.version.cuda is empty")
-print(".".join(cuda_version.split(".")[:2]))
-PY
-)"
-micromamba install -y -n {shlex.quote(ENV_NAME)} -c nvidia -c conda-forge \\
-  "cuda-toolkit=${{cuda_version}}" "cuda-nvcc=${{cuda_version}}" "cuda-cudart-dev=${{cuda_version}}" \\
-  ninja cmake gxx_linux-64
-"""
 
 
 def _finalize_runtime_compat_command(requirements: str | None = None, no_deps_requirements: str | None = None) -> str:

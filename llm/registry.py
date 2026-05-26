@@ -36,7 +36,6 @@ _VERIFIERS_ENVS = frozenset(
         "gsm8k",
         "math_python",
         "bfcl_v3",
-        "livecodebench",
         "simpleqa",
         "logic",
         "minichef",

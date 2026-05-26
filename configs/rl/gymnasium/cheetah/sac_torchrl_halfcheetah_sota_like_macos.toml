@@ -1,10 +1,9 @@
-# HalfCheetah-v5 SAC (TorchRL backend) for macOS.
+# HalfCheetah-v5 SAC (TorchRL) for macOS.
 # Run:
-#   python -m rl.runner --config configs/rl/gymnasium/cheetah/sac_torchrl_halfcheetah_sota_like_macos.toml
+#   ./ops/rl.py local configs/rl/gymnasium/cheetah/sac_torchrl_halfcheetah_sota_like_macos.toml
 
 [rl]
 algo = "sac"
-backend = "torchrl"
 
 [rl.run]
 num_reps = 10

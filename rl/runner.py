@@ -1,25 +1,21 @@
 from __future__ import annotations
 
 
-def _extract_algo_cfg(cfg: dict) -> tuple[str, str | None, dict]:
+def _extract_algo_cfg(cfg: dict) -> tuple[str, dict]:
     if "rl" not in cfg or not isinstance(cfg["rl"], dict):
         raise ValueError("Config must contain [rl] table.")
     root = cfg["rl"]
     algo = root.get("algo")
     if not algo:
         raise ValueError('[rl] must set algo (for example "ppo" or "sac").')
-    backend_raw = root.get("backend")
-    backend = None if backend_raw is None else str(backend_raw).strip()
-    if backend == "":
-        raise ValueError("[rl].backend cannot be empty when provided.")
-    registry = __import__("rl.registry", fromlist=["resolve_algo_name"])
-    _ = registry.resolve_algo_name(str(algo), backend=backend) if backend is not None else str(algo)
+    if "backend" in root:
+        raise ValueError("[rl].backend is no longer supported; RL configs use the TorchRL implementation directly.")
     algo_cfg = root.get(str(algo))
     if algo_cfg is None:
         algo_cfg = {}
     if not isinstance(algo_cfg, dict):
         raise ValueError(f"Algorithm config for '{algo}' must be a table.")
-    return (str(algo), backend, algo_cfg)
+    return (str(algo), algo_cfg)
 
 
 def _extract_run_cfg(cfg: dict) -> tuple[list[int], int]:
@@ -43,9 +39,9 @@ def _extract_run_cfg(cfg: dict) -> tuple[list[int], int]:
 
 
 def _run_from_cfg(cfg: dict, seed: int | None = None):
-    algo_name, backend, algo_cfg = _extract_algo_cfg(cfg)
+    algo_name, algo_cfg = _extract_algo_cfg(cfg)
     registry = __import__("rl.registry", fromlist=["get_algo"])
-    algo = registry.get_algo(algo_name, backend=backend)
+    algo = registry.get_algo(algo_name)
     config = algo.config_cls.from_dict(algo_cfg)
     if seed is not None and hasattr(config, "seed"):
         config.seed = int(seed)

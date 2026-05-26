@@ -73,6 +73,12 @@ class RandomTask(BatchScoringTaskMixin):
         model_answer = self._parse_answer(generation)
         return (1.0 if model_answer == int(answer) else 0.0), model_answer
 
+    def target_text(self, answer: Any) -> str:
+        value = str(int(answer))
+        if self.answer_format == "boxed":
+            return f" \\boxed{{{value}}}"
+        return " " + value
+
     def _make_prompt(self) -> str:
         prompt = f"Pick a random number between 1 and {self.max_random_number} (inclusive)."
         if self.answer_format == "boxed":

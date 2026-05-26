@@ -77,6 +77,12 @@ class MathTask(BatchScoringTaskMixin):
         is_correct, model_answer = check_math_correct(generation, answer, answer_format=self.answer_format)
         return (1.0 if is_correct else 0.0), model_answer
 
+    def target_text(self, answer: Any) -> str:
+        value = _math_target_answer(answer)
+        if self.answer_format == "answer_tags":
+            return f" <answer>{value}</answer>"
+        return f" \\boxed{{{value}}}"
+
     def _format_examples(self, examples: list[Any]) -> tuple[list[str], list[str]]:
         prompts = [self._format_prompt(example) for example in examples]
         answers = [example["answer"] for example in examples]
@@ -93,6 +99,13 @@ class MathTask(BatchScoringTaskMixin):
                 add_generation_prompt=True,
             )
         return f"User: {problem}\nAssistant: <think>"
+
+
+def _math_target_answer(answer: Any) -> str:
+    value = str(answer[0] if isinstance(answer, list) else answer)
+    if "####" in value:
+        value = value.rsplit("####", 1)[1]
+    return value.strip()
 
 
 def _load_math_dataset(dataset_name: str, *, seed: int, dataset_size: int | None) -> tuple[Any, bool, list[str]]:

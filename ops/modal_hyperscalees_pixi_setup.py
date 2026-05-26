@@ -10,9 +10,22 @@ import modal
 import tomllib
 
 from ops.modal_command_helpers import collect_artifacts, logged_command, parse_export_globs, write_artifacts
-from ops.modal_hyperscalees_pixi_base_image import HYPERSCALEES_PIXI_ENV, ISAACLAB_PIXI_ENV, PIXI_BIN, PIXI_MANIFEST_PATH
+from ops.modal_hyperscalees_pixi_base_image import HYPERSCALEES_PIXI_ENV, ISAACLAB_PIXI_ENV, PIXI_BIN, PIXI_HOME, PIXI_MANIFEST_PATH
 from ops.modal_hyperscalees_pixi_image import mk_image
 from ops.modal_nvidia_vulkan import nvidia_vulkan_icd_script
+
+
+def _project_root() -> Path:
+    candidates = [
+        Path(__file__).resolve().parents[1],
+        Path("/root"),
+        Path.cwd(),
+    ]
+    for candidate in candidates:
+        if (candidate / "pixi.toml").exists():
+            return candidate
+    return Path(__file__).resolve().parents[1]
+
 
 app = modal.App(name="yubo-hyperscalees-pixi")
 image = mk_image(modal)
@@ -22,7 +35,7 @@ _GPU = os.environ.get("GPU_TYPE", "L40S")
 _LOG_PREFIX = "modal-hyperscalees-pixi"
 _VALID_PIXI_ENVS = {HYPERSCALEES_PIXI_ENV, ISAACLAB_PIXI_ENV}
 _AUTO_PIXI_ENV = "auto"
-_REPO_ROOT = Path(__file__).resolve().parents[1]
+_REPO_ROOT = _project_root()
 _ROOT_EXPERIMENT_KEYS = {"opt_name"}
 _ROOT_UHD_KEYS = {"env_tag", "num_rounds", "optimizer", "perturb"}
 
@@ -47,14 +60,14 @@ def _run_command(command: str, env_name: str) -> None:
     logged_command(
         ["bash", "-lc", _runtime_command_script(command, env_name)],
         log_prefix=_LOG_PREFIX,
-        extra_env={"PIXI_HOME": "/opt/pixi"},
+        extra_env={"PIXI_HOME": PIXI_HOME},
     )
 
 
 def _runtime_command_script(command: str, env_name: str) -> str:
     return "\n".join(
         [
-            "export PIXI_HOME=/opt/pixi",
+            f"export PIXI_HOME={shlex.quote(PIXI_HOME)}",
             _env_prefix_export(env_name, "YUBO_PIXI_PREFIX"),
             "export LD_LIBRARY_PATH=${YUBO_PIXI_PREFIX}/lib:${LD_LIBRARY_PATH:-}",
             nvidia_vulkan_icd_script(),
@@ -64,7 +77,7 @@ def _runtime_command_script(command: str, env_name: str) -> str:
 
 
 def _pixi_run(env_name: str, command: str) -> str:
-    return f"{shlex.quote(PIXI_BIN)} run --manifest-path {shlex.quote(PIXI_MANIFEST_PATH)} -e {shlex.quote(env_name)} {command}"
+    return f"{shlex.quote(PIXI_BIN)} run --manifest-path {shlex.quote(PIXI_MANIFEST_PATH)} --locked -e {shlex.quote(env_name)} {command}"
 
 
 def _env_prefix_export(env_name: str, var_name: str) -> str:
@@ -202,7 +215,7 @@ def _config_runner(config_path: str, mode: str) -> str:
     if schema == "llm":
         return f"./ops/llm.py {shlex.quote(mode)} {shlex.quote(config_path)}"
     if schema == "rl":
-        return f"python -m rl.runner --config {shlex.quote(config_path)}"
+        return f"./ops/rl.py {shlex.quote(mode)} {shlex.quote(config_path)}"
     raise ValueError(f"Unsupported config schema {schema!r} in {config_path!r}.")
 
 
