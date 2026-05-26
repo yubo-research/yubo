@@ -69,7 +69,7 @@ def test_save_periodic_checkpoint_due_and_not_due():
     training_setup = _make_training_setup()
     modules = _make_modules()
     train_state = _make_train_state()
-    config = SimpleNamespace(checkpoint_interval=5)
+    config = SimpleNamespace(checkpoint=SimpleNamespace(interval=5))
 
     save_periodic_checkpoint(config, training_setup, modules, train_state, iteration=4)
     assert training_setup.checkpoint_manager.calls == []
@@ -85,11 +85,11 @@ def test_save_final_checkpoint_respects_interval():
     modules = _make_modules()
     train_state = _make_train_state()
 
-    disabled_config = SimpleNamespace(checkpoint_interval=None)
+    disabled_config = SimpleNamespace(checkpoint=SimpleNamespace(interval=None))
     save_final_checkpoint(disabled_config, training_setup, modules, train_state)
     assert training_setup.checkpoint_manager.calls == []
 
-    enabled_config = SimpleNamespace(checkpoint_interval=2)
+    enabled_config = SimpleNamespace(checkpoint=SimpleNamespace(interval=2))
     save_final_checkpoint(enabled_config, training_setup, modules, train_state)
     assert len(training_setup.checkpoint_manager.calls) == 1
     _, saved_iteration = training_setup.checkpoint_manager.calls[0]

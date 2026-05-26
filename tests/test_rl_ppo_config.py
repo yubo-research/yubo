@@ -1,6 +1,6 @@
 """Tests for PPO config types. Uses shallow imports to keep dependency depth low."""
 
-from rl.torchrl.ppo.config import PPOConfig, TrainResult
+from rl.torchrl.ppo.config import PPOCollectorConfig, PPOConfig, TrainResult
 
 
 def test_train_result_dataclass_fields():
@@ -17,7 +17,7 @@ def test_train_result_dataclass_fields():
 
 
 def test_ppo_config_runtime_num_envs_helper():
-    cfg = PPOConfig(num_envs=7)
+    cfg = PPOConfig(collector=PPOCollectorConfig(num_envs=7))
     assert cfg.runtime_num_envs() == 7
     assert PPOConfig.runtime_num_envs(cfg) == 7
 

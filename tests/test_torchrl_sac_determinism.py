@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from rl.torchrl.sac import train_sac
-from rl.torchrl.sac.config import SACConfig
+from rl.torchrl.sac.config import SACCollectorConfig, SACConfig, SACEvalConfig, SACOptimConfig, SACReplayBufferConfig
 
 _BASELINE_ROWS = [
     {
@@ -48,16 +48,11 @@ def _build_test_config(exp_dir: Path) -> SACConfig:
         policy_tag="mlp-16-8",
         seed=7,
         device="cpu",
-        total_timesteps=96,
-        learning_starts=8,
-        batch_size=8,
-        replay_size=2000,
-        update_every=2,
-        updates_per_step=1,
-        eval_interval_steps=32,
         log_interval_steps=32,
-        num_denoise=1,
-        num_denoise_passive=1,
+        collector=SACCollectorConfig(total_frames=96, init_random_frames=8),
+        replay_buffer=SACReplayBufferConfig(batch_size=8, size=2000),
+        optim=SACOptimConfig(update_every=2, optim_steps_per_batch=1),
+        eval=SACEvalConfig(interval_steps=32, num_denoise=1, num_denoise_passive=1),
     )
 
 

@@ -133,7 +133,11 @@ def test_trainer_utils_flatten_normalize_and_process():
 
     out_losses, total_updates, n_frames = trainer_utils.process_offpolicy_batch(
         batch,
-        config=SimpleNamespace(update_every=1, updates_per_step=2, learning_starts=0, batch_size=4),
+        config=SimpleNamespace(
+            collector=SimpleNamespace(init_random_frames=0),
+            optim=SimpleNamespace(update_every=1, optim_steps_per_batch=2),
+            replay_buffer=SimpleNamespace(batch_size=4),
+        ),
         training=training,
         runtime_device=torch.device("cpu"),
         env_setup=SimpleNamespace(

@@ -143,7 +143,7 @@ def build_modules(config: SACConfig, env: _EnvSetup, *, device: torch.device) ->
         p.requires_grad_(False)
     log_alpha = nn.Parameter(
         torch.tensor(
-            np.log(float(max(config.alpha_init, 1e-08))),
+            np.log(float(max(config.loss.alpha_init, 1e-08))),
             dtype=torch.float32,
             device=device,
         )
@@ -163,19 +163,19 @@ def build_modules(config: SACConfig, env: _EnvSetup, *, device: torch.device) ->
 
 
 def build_training(config: SACConfig, modules: _Modules) -> _TrainingSetup:
-    replay_prefetch = int(config.replay_prefetch) if config.replay_prefetch is not None and int(config.replay_prefetch) > 0 else None
+    replay_prefetch = int(config.replay_buffer.prefetch) if config.replay_buffer.prefetch is not None and int(config.replay_buffer.prefetch) > 0 else None
     replay = tr_data.TensorDictReplayBuffer(
-        storage=tr_data.LazyTensorStorage(int(config.replay_size)),
-        batch_size=int(config.batch_size),
-        pin_memory=bool(config.replay_pin_memory),
+        storage=tr_data.LazyTensorStorage(int(config.replay_buffer.size)),
+        batch_size=int(config.replay_buffer.batch_size),
+        pin_memory=bool(config.replay_buffer.pin_memory),
         prefetch=replay_prefetch,
     )
     actor_params = list(modules.actor_backbone.parameters()) + list(modules.actor_head.parameters())
     critic_params = list(modules.q1.parameters()) + list(modules.q2.parameters())
     alpha_params = [modules.log_alpha]
-    actor_optimizer = torch.optim.AdamW(actor_params, lr=float(config.learning_rate_actor), weight_decay=0.0)
-    critic_optimizer = torch.optim.AdamW(critic_params, lr=float(config.learning_rate_critic), weight_decay=0.0)
-    alpha_optimizer = torch.optim.AdamW(alpha_params, lr=float(config.learning_rate_alpha), weight_decay=0.0)
+    actor_optimizer = torch.optim.AdamW(actor_params, lr=float(config.optim.actor_lr), weight_decay=0.0)
+    critic_optimizer = torch.optim.AdamW(critic_params, lr=float(config.optim.qvalue_lr), weight_decay=0.0)
+    alpha_optimizer = torch.optim.AdamW(alpha_params, lr=float(config.optim.alpha_lr), weight_decay=0.0)
     exp_dir = Path(config.exp_dir)
     exp_dir.mkdir(parents=True, exist_ok=True)
     write_config(str(exp_dir), config.to_dict())
@@ -210,7 +210,7 @@ def sac_update_shared(
         sac_update_step,
     )
 
-    target_entropy = float(config.target_entropy) if config.target_entropy is not None else -float(act.shape[-1])
+    target_entropy = float(config.loss.target_entropy) if config.loss.target_entropy is not None else -float(act.shape[-1])
     return sac_update_step(
         modules=SACUpdateModules(
             actor=modules.actor_model,
@@ -227,8 +227,8 @@ def sac_update_shared(
         ),
         batch=SACUpdateBatch(obs=obs, act=act, rew=rew, nxt=nxt, done=done),
         hyper=SACUpdateHyperParams(
-            gamma=float(config.gamma),
-            tau=float(config.tau),
+            gamma=float(config.loss.gamma),
+            tau=float(config.target_net_updater.tau),
             target_entropy=target_entropy,
         ),
     )

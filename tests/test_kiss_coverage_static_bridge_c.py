@@ -12,7 +12,7 @@ import torch
 def test_kiss_bridge_torchrl_sac_setup_loop_ppo_engine_tail(monkeypatch, tmp_path):
     pytest.importorskip("torchrl")
     import rl.core.sac_eval as sac_eval_mod
-    from rl.torchrl.sac.config import SACConfig
+    from rl.torchrl.sac.config import SACConfig, SACReplayBufferConfig
     from rl.torchrl.sac.loop import (
         evaluate_heldout_if_enabled as tr_sac_evaluate_heldout_if_enabled,
     )
@@ -23,7 +23,7 @@ def test_kiss_bridge_torchrl_sac_setup_loop_ppo_engine_tail(monkeypatch, tmp_pat
 
     monkeypatch.setattr(sac_eval_mod, "evaluate_heldout_with_best_actor", lambda **k: 0.0)
     tr_sac_evaluate_heldout_if_enabled(
-        SimpleNamespace(env_tag="pend", num_denoise_passive=1),
+        SimpleNamespace(env_tag="pend", eval=SimpleNamespace(num_denoise_passive=1)),
         SimpleNamespace(
             problem_seed=0,
             noise_seed_0=0,
@@ -68,7 +68,12 @@ def test_kiss_bridge_torchrl_sac_setup_loop_ppo_engine_tail(monkeypatch, tmp_pat
     import rl.torchrl.sac.setup as tr_sac_setup_mod
 
     monkeypatch.setattr(tr_sac_setup_mod, "build_env_setup", _fake_bcges)
-    cfg = SACConfig(exp_dir=str(tmp_path / "sac_exp"), env_tag="pend", policy_tag="mlp-16-8", replay_size=100, batch_size=4)
+    cfg = SACConfig(
+        exp_dir=str(tmp_path / "sac_exp"),
+        env_tag="pend",
+        policy_tag="mlp-16-8",
+        replay_buffer=SACReplayBufferConfig(size=100, batch_size=4),
+    )
     env_setup = tr_sac_setup_build_env_setup(cfg)
     dev = torch.device("cpu")
     mods = tr_sac_setup_build_modules(cfg, env_setup, device=dev)

@@ -12,47 +12,52 @@ algo = "sac"
 exp_dir = "_tmp/gymnasium/cheetah/sac_torchrl_halfcheetah_hf_expert_like_linux"
 env_tag = "cheetah"
 policy_tag = "mlp-32-16"
-
-# Linux CUDA runtime.
 device = "cuda"
-collector_backend = "multi_sync"
-single_env_backend = "auto"
-collector_workers = 8
-
 from_pixels = false
 pixels_only = true
+log_interval_steps = 1000
 
 # HF expert-like SAC core hyperparameters.
-total_timesteps = 3000000
+[rl.sac.collector]
+total_frames = 3000000
 num_envs = 8
 frames_per_batch = 64
-learning_rate_actor = 3e-4
-learning_rate_critic = 3e-4
-learning_rate_alpha = 3e-4
-gamma = 0.99
-tau = 0.005
+init_random_frames = 10000
+backend = "multi_sync"
+single_env_backend = "auto"
+workers = 8
+
+[rl.sac.replay_buffer]
+size = 1000000
 batch_size = 256
-replay_size = 1000000
-replay_pin_memory = true
-replay_prefetch = 2
-learning_starts = 10000
+pin_memory = true
+prefetch = 2
+
+[rl.sac.optim]
+actor_lr = 3e-4
+qvalue_lr = 3e-4
+alpha_lr = 3e-4
 update_every = 1
-updates_per_step = 8
+optim_steps_per_batch = 8
 learner_update_chunk_size = 8
+
+[rl.sac.loss]
+gamma = 0.99
 alpha_init = 0.2
 target_entropy = -6.0
 
-# Architecture is resolved from problems/env_conf.py for env_tag = "cheetah".
+[rl.sac.target_net_updater]
+tau = 0.005
 
-log_interval_steps = 1000
-
-# Eval block.
-eval_interval_steps = 10000
+[rl.sac.eval]
+interval_steps = 10000
 num_denoise = 1
 num_denoise_passive = 1
-eval_seed_base = 1000
-eval_noise_mode = "frozen"
-checkpoint_interval_steps = 200000
+seed_base = 1000
+noise_mode = "frozen"
+
+[rl.sac.checkpoint]
+interval_steps = 200000
 
 [rl.run]
 num_reps = 10

@@ -29,9 +29,9 @@ def _resume_if_requested(
     device: torch.device,
 ) -> _TrainState:
     state = _TrainState()
-    if not config.resume_from:
+    if not config.checkpoint.resume_from:
         return state
-    resume_path = Path(config.resume_from)
+    resume_path = Path(config.checkpoint.resume_from)
     loaded = checkpointing.load_checkpoint(resume_path, device=device)
     actor_snapshot: dict[str, Any] = {
         "backbone": loaded["actor_backbone"],
@@ -66,10 +66,10 @@ def _anneal_lr(
     iteration: int,
     num_iterations: int,
 ) -> None:
-    if not config.anneal_lr:
+    if not config.optim.anneal_lr:
         return
     frac = 1.0 - (float(iteration) - 1.0) / float(num_iterations)
-    lr_now = float(frac) * float(config.learning_rate)
+    lr_now = float(frac) * float(config.optim.lr)
     for param_group in optimizer.param_groups:
         param_group["lr"] = lr_now
 
@@ -79,12 +79,14 @@ def _ppo_update(config: PPOConfig, training: _TrainingSetup, *, batch, device: t
     training.gae(batch)
     flat = batch.reshape(-1)
     batch_size = int(flat.batch_size[0])
-    minibatch_size = int(batch_size // config.num_minibatches)
+    minibatch_size = int(config.optim.minibatch_size)
     if minibatch_size <= 0:
-        raise ValueError("num_minibatches too large for batch_size.")
+        raise ValueError("optim.minibatch_size must be > 0.")
+    if minibatch_size > batch_size:
+        raise ValueError("optim.minibatch_size too large for batch_size.")
     clipfracs: list[float] = []
     approx_kls: list[float] = []
-    for _ in range(int(config.update_epochs)):
+    for _ in range(int(config.optim.num_epochs)):
         indices = torch.randperm(batch_size, device=device)
         for start in range(0, batch_size, minibatch_size):
             mb_idx = indices[start : start + minibatch_size]
@@ -93,13 +95,13 @@ def _ppo_update(config: PPOConfig, training: _TrainingSetup, *, batch, device: t
             loss = loss_td["loss_objective"] + loss_td["loss_critic"] + loss_td["loss_entropy"]
             training.optimizer.zero_grad()
             loss.backward()
-            torch.nn.utils.clip_grad_norm_(training.train_params, config.max_grad_norm)
+            torch.nn.utils.clip_grad_norm_(training.train_params, config.optim.max_grad_norm)
             training.optimizer.step()
             if "clip_fraction" in loss_td.keys():
                 clipfracs.append(float(loss_td["clip_fraction"]))
             if "kl_approx" in loss_td.keys():
                 approx_kls.append(float(loss_td["kl_approx"]))
-        if config.target_kl is not None and approx_kls and (float(np.mean(approx_kls)) > float(config.target_kl)):
+        if config.loss.target_kl is not None and approx_kls and (float(np.mean(approx_kls)) > float(config.loss.target_kl)):
             break
     return (approx_kls, clipfracs)
 
@@ -123,7 +125,7 @@ def _evaluate_actor(
         obs_contract=obs_contract,
         is_discrete=bool(getattr(env, "is_discrete", False)),
     )
-    traj, _ = episode_rollout.collect_denoised_trajectory(eval_env, eval_policy, num_denoise=config.num_denoise, i_noise=int(eval_seed))
+    traj, _ = episode_rollout.collect_denoised_trajectory(eval_env, eval_policy, num_denoise=config.eval.num_denoise, i_noise=int(eval_seed))
     return float(traj.rreturn)
 
 
@@ -140,7 +142,7 @@ def _maybe_eval_and_log(
     device: torch.device,
     start_time: float,
 ) -> None:
-    do_eval = _is_due(int(iteration), int(config.eval_interval))
+    do_eval = _is_due(int(iteration), int(config.eval.interval))
     do_log = _is_due(int(iteration), int(config.log_interval))
     if not do_eval:
         if do_log:
@@ -157,10 +159,10 @@ def _maybe_eval_and_log(
         return
     plan = build_eval_plan(
         current=iteration,
-        interval=int(config.eval_interval),
+        interval=int(config.eval.interval),
         seed=int(env.problem_seed),
-        eval_seed_base=config.eval_seed_base,
-        eval_noise_mode=config.eval_noise_mode,
+        eval_seed_base=config.eval.seed_base,
+        eval_noise_mode=config.eval.noise_mode,
     )
     state.last_eval_return = _evaluate_actor(config, env, modules, device=device, eval_seed=plan.eval_seed)
     state.best_return, state.best_actor_state, _ = ppo_eval.update_best_actor_if_improved(
@@ -170,7 +172,7 @@ def _maybe_eval_and_log(
         capture_actor_state=lambda: actor_eval.capture_actor_snapshot(modules),
     )
     state.last_heldout_return = None
-    if config.num_denoise_passive is not None and state.best_actor_state is not None:
+    if config.eval.num_denoise_passive is not None and state.best_actor_state is not None:
         obs_contract = _resolve_observation_contract_for_env(config, env)
         from_pixels = obs_contract.mode == "pixels"
         best_eval_policy = actor_eval.ActorEvalPolicy(
@@ -183,7 +185,7 @@ def _maybe_eval_and_log(
         )
         state.last_heldout_return = ppo_eval.evaluate_heldout_with_best_actor(
             best_actor_state=state.best_actor_state,
-            num_denoise_passive=config.num_denoise_passive,
+            num_denoise_passive=config.eval.num_denoise_passive,
             heldout_i_noise=plan.heldout_i_noise,
             with_actor_state=lambda snapshot: actor_eval.use_actor_snapshot(modules, snapshot, device=device),
             evaluate_for_best=episode_rollout.evaluate_for_best,
@@ -262,7 +264,7 @@ def _run_training_loop(
             iteration=iteration,
         )
 
-    if getattr(config, "profile_enable", False):
+    if config.profile.enable:
         run_with_profiler(
             config,
             collector,

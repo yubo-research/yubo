@@ -11,13 +11,20 @@ def test_sac_config_from_dict_rejects_explicit_model_fields():
         SACConfig.from_dict({"env_tag": "cheetah", "policy_tag": "mlp-32-16", "backbone_hidden_sizes": [128, 64]})
 
 
-def test_sac_config_from_dict_keeps_public_runtime_fields():
+def test_sac_config_from_dict_keeps_grouped_replay_settings():
     cfg_mod = importlib.import_module("rl.torchrl.sac.config")
     SACConfig = cfg_mod.SACConfig
-    cfg = SACConfig.from_dict({"env_tag": "cheetah", "policy_tag": "mlp-32-16", "exp_dir": "_tmp/sac_test", "replay_pin_memory": True, "replay_prefetch": 2})
+    cfg = SACConfig.from_dict(
+        {
+            "env_tag": "cheetah",
+            "policy_tag": "mlp-32-16",
+            "exp_dir": "_tmp/sac_test",
+            "replay_buffer": {"pin_memory": True, "prefetch": 2},
+        }
+    )
     assert cfg.exp_dir == "_tmp/sac_test"
-    assert cfg.replay_pin_memory is True
-    assert cfg.replay_prefetch == 2
+    assert cfg.replay_buffer.pin_memory is True
+    assert cfg.replay_buffer.prefetch == 2
 
 
 def test_sac_config_from_dict_uses_env_defaults():

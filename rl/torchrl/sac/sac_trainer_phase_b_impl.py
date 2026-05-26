@@ -23,7 +23,7 @@ def build_sac_collector(
     torchrl_collector_class = _im("rl.core.torchrl_collectors").collector_class
     torchrl_common = _im("rl.core.runtime")
 
-    frames_per_batch = int(config.frames_per_batch)
+    frames_per_batch = int(config.collector.frames_per_batch)
     num_envs = int(config.runtime_num_envs())
     scale_action = td_nn.TensorDictModule(
         _ScaleActionToEnv(env_setup.action_low, env_setup.action_high),
@@ -46,7 +46,7 @@ def build_sac_collector(
             collector_policy,
             frames_per_batch=frames_per_batch * num_envs,
             total_frames=total_frames,
-            init_random_frames=int(config.learning_starts),
+            init_random_frames=int(config.collector.init_random_frames),
             reset_at_each_iter=False,
             **torchrl_common.collector_device_kwargs(runtime.device),
         )
@@ -59,7 +59,7 @@ def build_sac_collector(
         policy=collector_policy,
         frames_per_batch=[int(frames_per_batch_per_worker)] * num_workers,
         total_frames=total_frames,
-        init_random_frames=int(config.learning_starts),
+        init_random_frames=int(config.collector.init_random_frames),
         reset_at_each_iter=False,
         env_device=torch.device("cpu"),
         policy_device=runtime.device,
@@ -213,10 +213,10 @@ def process_sac_batch(batch, config, modules, training, runtime, env_setup, late
 
     def _run_one_update() -> None:
         nonlocal latest_losses, total_updates
-        latest_losses = update_step(config, modules, training, device=runtime.device, batch_size=int(config.batch_size))
+        latest_losses = update_step(config, modules, training, device=runtime.device, batch_size=int(config.replay_buffer.batch_size))
         total_updates += 1
 
-    run_chunked_updates(n_updates_due, int(config.learner_update_chunk_size), _run_one_update)
+    run_chunked_updates(n_updates_due, int(config.optim.learner_update_chunk_size), _run_one_update)
     return (latest_losses, total_updates, int(n_frames))
 
 

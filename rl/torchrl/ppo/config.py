@@ -3,47 +3,32 @@ from __future__ import annotations
 import dataclasses
 
 from rl.config_model_defaults import apply_ppo_env_model_defaults, reject_model_config_keys
-from rl.core.torchrl_runtime import TorchRLRuntimeCapabilities, TorchRLRuntimeConfig
+from rl.core.grouped_config import dataclass_field_names, parse_dataclass_section
+from rl.core.torchrl_runtime import TorchRLRuntimeCapabilities, resolve_torchrl_runtime
+from rl.core.torchrl_runtime_dtos import TorchRLRuntime, TorchRLRuntimeRequest
+
+from .config_collector import PPOCollectorConfig, PPOLossConfig, PPOOptimConfig
+from .config_run import PPOCheckpointConfig, PPOEvalConfig, PPOProfileConfig
 
 
 @dataclasses.dataclass
-class PPOConfig(TorchRLRuntimeConfig):
+class PPOConfig:
     exp_dir: str = "_tmp/ppo"
     env_tag: str = "pend"
     policy_tag: str | None = None
     seed: int = 1
     problem_seed: int | None = None
     noise_seed_0: int | None = None
+    device: str = "auto"
     from_pixels: bool = False
     pixels_only: bool = True
-    total_timesteps: int = 1000000
-    learning_rate: float = 0.0003
-    num_envs: int = 1
-    num_steps: int = 2048
-    anneal_lr: bool = True
-    gamma: float = 0.99
-    gae_lambda: float = 0.95
-    num_minibatches: int = 32
-    update_epochs: int = 10
-    norm_adv: bool = True
-    clip_coef: float = 0.2
-    clip_vloss: bool = True
-    ent_coef: float = 0.0
-    vf_coef: float = 0.5
-    max_grad_norm: float = 0.5
-    target_kl: float | None = None
-    eval_interval: int = 1
-    num_denoise: int | None = None
-    num_denoise_passive: int | None = None
-    eval_seed_base: int | None = None
-    eval_noise_mode: str | None = None
     log_interval: int = 1
-    checkpoint_interval: int | None = None
-    resume_from: str | None = None
-    profile_enable: bool = False
-    profile_wait: int = 0
-    profile_warmup: int = 1
-    profile_active: int = 3
+    collector: PPOCollectorConfig = dataclasses.field(default_factory=PPOCollectorConfig)
+    optim: PPOOptimConfig = dataclasses.field(default_factory=PPOOptimConfig)
+    loss: PPOLossConfig = dataclasses.field(default_factory=PPOLossConfig)
+    eval: PPOEvalConfig = dataclasses.field(default_factory=PPOEvalConfig)
+    checkpoint: PPOCheckpointConfig = dataclasses.field(default_factory=PPOCheckpointConfig)
+    profile: PPOProfileConfig = dataclasses.field(default_factory=PPOProfileConfig)
 
     def to_dict(self) -> dict:
         return dataclasses.asdict(self)
@@ -51,12 +36,38 @@ class PPOConfig(TorchRLRuntimeConfig):
     @classmethod
     def from_dict(cls, raw: dict) -> "PPOConfig":
         reject_model_config_keys(raw, algo="ppo")
-        d = apply_ppo_env_model_defaults(raw)
-        d = {k: v for k, v in d.items() if k in {f.name for f in dataclasses.fields(cls)}}
-        return cls(**d)
+        apply_ppo_env_model_defaults(raw)
+        sections = {"collector", "optim", "loss", "eval", "checkpoint", "profile"}
+        root_fields = dataclass_field_names(cls) - sections
+        unknown = sorted(set(raw) - root_fields - sections)
+        if unknown:
+            raise ValueError(f"Unknown PPO config fields: {', '.join(unknown)}. Use grouped PPO tables.")
+        data = {key: raw[key] for key in root_fields if key in raw}
+        data.update(
+            collector=parse_dataclass_section(raw, "collector", PPOCollectorConfig, label="PPO"),
+            optim=parse_dataclass_section(raw, "optim", PPOOptimConfig, label="PPO"),
+            loss=parse_dataclass_section(raw, "loss", PPOLossConfig, label="PPO"),
+            eval=parse_dataclass_section(raw, "eval", PPOEvalConfig, label="PPO"),
+            checkpoint=parse_dataclass_section(raw, "checkpoint", PPOCheckpointConfig, label="PPO"),
+            profile=parse_dataclass_section(raw, "profile", PPOProfileConfig, label="PPO"),
+        )
+        return cls(**data)
 
     def runtime_num_envs(self) -> int:
-        return int(self.num_envs)
+        return int(self.collector.num_envs)
+
+    def runtime_request(self) -> TorchRLRuntimeRequest:
+        return TorchRLRuntimeRequest(
+            device=self.device,
+            collector_backend=str(self.collector.backend),
+            single_env_backend=str(self.collector.single_env_backend),
+            num_envs=int(self.runtime_num_envs()),
+            collector_workers=self.collector.workers,
+        )
+
+    def resolve_runtime(self, *, capabilities: TorchRLRuntimeCapabilities | None = None) -> TorchRLRuntime:
+        resolved_capabilities = capabilities if capabilities is not None else TorchRLRuntimeCapabilities()
+        return resolve_torchrl_runtime(self.runtime_request(), capabilities=resolved_capabilities)
 
 
 _PPO_RUNTIME_CAPABILITIES = TorchRLRuntimeCapabilities(

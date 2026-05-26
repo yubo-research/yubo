@@ -60,12 +60,12 @@ def resume_if_requested(
     device: torch.device,
 ) -> _TrainState:
     state = _TrainState()
-    if not config.resume_from:
+    if not config.checkpoint.resume_from:
         return state
     _actor = importlib.import_module("rl.core.actor_state")
     restore_backbone_head_snapshot = getattr(_actor, "restore_backbone_head_snapshot")
     restore_rng_state_payload = getattr(_actor, "restore_rng_state_payload")
-    loaded = load_checkpoint(Path(config.resume_from), device=device)
+    loaded = load_checkpoint(Path(config.checkpoint.resume_from), device=device)
     if "actor_backbone" in loaded and "actor_head" in loaded:
         restore_backbone_head_snapshot(
             modules.actor_backbone,
@@ -121,5 +121,5 @@ def evaluate_actor(
 
     eval_env = env.env_conf
     eval_policy = build_eval_policy(modules, env, device)
-    traj, _ = collect_denoised_trajectory(eval_env, eval_policy, num_denoise=config.num_denoise, i_noise=int(eval_seed))
+    traj, _ = collect_denoised_trajectory(eval_env, eval_policy, num_denoise=config.eval.num_denoise, i_noise=int(eval_seed))
     return float(traj.rreturn)

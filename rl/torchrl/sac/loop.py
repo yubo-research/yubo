@@ -33,7 +33,7 @@ def select_training_action(
         raise RuntimeError(
             f"Expected float32 observation from env pipeline, got {obs_np.dtype}. Ensure observations are normalized to float32 before policy calls."
         )
-    if step < int(config.learning_starts):
+    if step < int(config.collector.init_random_frames):
         action_env = train_env.action_space.sample()
         action_norm = unscale_action_from_env(action_env, env_setup.action_low, env_setup.action_high)
         return (action_env, action_norm)
@@ -82,10 +82,10 @@ def run_updates_if_due(
     total_updates: int,
     update_step: Any,
 ) -> tuple[dict[str, float], int]:
-    if step < int(config.learning_starts) or step % int(config.update_every) != 0:
+    if step < int(config.collector.init_random_frames) or step % int(config.optim.update_every) != 0:
         return (latest_losses, total_updates)
-    for _ in range(int(config.updates_per_step)):
-        latest_losses = update_step(training_setup, device=device, batch_size=int(config.batch_size))
+    for _ in range(int(config.optim.optim_steps_per_batch)):
+        latest_losses = update_step(training_setup, device=device, batch_size=int(config.replay_buffer.batch_size))
         total_updates += 1
     return (latest_losses, total_updates)
 
@@ -141,7 +141,7 @@ def evaluate_heldout_if_enabled(
         raise TypeError("evaluate_heldout_if_enabled requires build_env_runtime or get_env_conf")
     return sac_eval.evaluate_heldout_with_best_actor(
         best_actor_state=train_state.best_actor_state,
-        num_denoise_passive=config.num_denoise_passive,
+        num_denoise_passive=config.eval.num_denoise_passive,
         heldout_i_noise=int(heldout_i_noise),
         with_actor_state=lambda snapshot: temporary_actor_state(
             modules,
@@ -171,19 +171,19 @@ def evaluate_if_due(
     capture_actor_state: Any,
     evaluate_heldout: Any,
 ) -> None:
-    mark = _advance_due_mark(train_state, "_last_eval_mark", step, config.eval_interval_steps)
+    mark = _advance_due_mark(train_state, "_last_eval_mark", step, config.eval.interval_steps)
     if mark is None:
         return
     from rl.eval_noise import build_eval_plan
 
-    eval_interval = int(config.eval_interval_steps)
+    eval_interval = int(config.eval.interval_steps)
     run_problem_seed = int(getattr(env_setup, "problem_seed", config.seed))
     plan = build_eval_plan(
         current=int(mark * eval_interval),
         interval=eval_interval,
         seed=run_problem_seed,
-        eval_seed_base=config.eval_seed_base,
-        eval_noise_mode=getattr(config, "eval_noise_mode", None),
+        eval_seed_base=config.eval.seed_base,
+        eval_noise_mode=config.eval.noise_mode,
     )
     train_state.last_eval_return = evaluate_actor(config, env_setup, modules, device=device, eval_seed=plan.eval_seed)
     sac_eval = __import__("rl.core.sac_eval", fromlist=["update_best_actor_if_improved"])
@@ -255,7 +255,7 @@ def checkpoint_if_due(
     step: int,
     build_checkpoint_payload: Any,
 ) -> None:
-    if _advance_due_mark(train_state, "_last_checkpoint_mark", step, config.checkpoint_interval_steps) is None:
+    if _advance_due_mark(train_state, "_last_checkpoint_mark", step, config.checkpoint.interval_steps) is None:
         return
     payload = build_checkpoint_payload(modules, training_setup, train_state, step=step)
     training_setup.checkpoint_manager.save_both(payload, iteration=step)
@@ -277,7 +277,7 @@ def save_final_checkpoint_if_enabled(
     *,
     build_checkpoint_payload: Any,
 ) -> None:
-    if not is_due(int(config.total_timesteps), config.checkpoint_interval_steps):
+    if not is_due(int(config.collector.total_frames), config.checkpoint.interval_steps):
         return
-    payload = build_checkpoint_payload(modules, training_setup, train_state, step=int(config.total_timesteps))
-    training_setup.checkpoint_manager.save_both(payload, iteration=int(config.total_timesteps))
+    payload = build_checkpoint_payload(modules, training_setup, train_state, step=int(config.collector.total_frames))
+    training_setup.checkpoint_manager.save_both(payload, iteration=int(config.collector.total_frames))

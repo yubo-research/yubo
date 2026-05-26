@@ -23,14 +23,14 @@ def build_checkpoint_payload(training_setup: Any, modules: Any, train_state: Any
 
 
 def save_periodic_checkpoint(config: Any, training_setup: Any, modules: Any, train_state: Any, *, iteration: int) -> None:
-    if not config.checkpoint_interval or iteration % int(config.checkpoint_interval) != 0:
+    if not config.checkpoint.interval or iteration % int(config.checkpoint.interval) != 0:
         return
     payload = build_checkpoint_payload(training_setup, modules, train_state, iteration=iteration)
     training_setup.checkpoint_manager.save_both(payload, iteration=iteration)
 
 
 def save_final_checkpoint(config: Any, training_setup: Any, modules: Any, train_state: Any) -> None:
-    if not config.checkpoint_interval:
+    if not config.checkpoint.interval:
         return
     payload = build_checkpoint_payload(
         training_setup,

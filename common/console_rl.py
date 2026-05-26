@@ -51,7 +51,8 @@ def print_run_header(
         _print_line(title, prefix=prefix)
         first_col = "iter"
     else:
-        total = getattr(config, "total_timesteps", 0)
+        collector = getattr(config, "collector", None)
+        total = getattr(collector, "total_frames", getattr(config, "total_timesteps", 0))
         title = _bold(_cyan(algo_name.upper())) + f"  {config.env_tag}  seed={config.seed}  {runtime.device.type}  " + f"total={total:,}"
         _print_line(title, prefix=prefix)
         first_col = "steps"

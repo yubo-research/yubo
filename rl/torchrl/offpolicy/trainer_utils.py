@@ -59,12 +59,12 @@ def store_offpolicy_batch(batch: TensorDict, *, training: Any, env_setup: Any) -
 
 
 def num_offpolicy_updates_for_batch(n_frames: int, config: Any) -> int:
-    n_update_cycles = max(0, int(n_frames) // int(config.update_every))
-    return int(n_update_cycles * int(config.updates_per_step))
+    n_update_cycles = max(0, int(n_frames) // int(config.optim.update_every))
+    return int(n_update_cycles * int(config.optim.optim_steps_per_batch))
 
 
 def replay_ready_for_updates(replay: Any, config: Any) -> bool:
-    return int(replay.write_count) >= int(config.learning_starts)
+    return int(replay.write_count) >= int(config.collector.init_random_frames)
 
 
 def process_offpolicy_batch(
@@ -82,6 +82,6 @@ def process_offpolicy_batch(
     if not replay_ready_for_updates(training.replay, config):
         return (latest_losses, total_updates, n_frames)
     for _ in range(num_offpolicy_updates_for_batch(n_frames, config)):
-        latest_losses = update_step_fn(runtime_device, int(config.batch_size))
+        latest_losses = update_step_fn(runtime_device, int(config.replay_buffer.batch_size))
         total_updates += 1
     return (latest_losses, total_updates, n_frames)

@@ -3,6 +3,7 @@ from pathlib import Path
 
 def test_ppo_train_smoke(tmp_path):
     """BO-style: import inside test to defer heavy deps (matches test_ackley_3d_runs_with_optimizer)."""
+    from rl.torchrl.ppo.config import PPOCollectorConfig, PPOEvalConfig, PPOOptimConfig
     from rl.torchrl.ppo.core import PPOConfig, train_ppo
 
     exp_dir = Path(tmp_path) / "ppo_smoke"
@@ -11,14 +12,9 @@ def test_ppo_train_smoke(tmp_path):
         env_tag="pend",
         policy_tag="mlp-16-8",
         seed=0,
-        total_timesteps=64,
-        num_steps=16,
-        num_envs=1,
-        update_epochs=1,
-        num_minibatches=1,
-        eval_interval=1,
-        num_denoise=1,
-        num_denoise_passive=1,
+        collector=PPOCollectorConfig(total_frames=64, frames_per_batch=16, num_envs=1),
+        optim=PPOOptimConfig(num_epochs=1, minibatch_size=16),
+        eval=PPOEvalConfig(interval=1, num_denoise=1, num_denoise_passive=1),
     )
     result = train_ppo(cfg)
     metrics_path = exp_dir / "metrics.jsonl"

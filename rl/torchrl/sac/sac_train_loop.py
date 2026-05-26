@@ -22,8 +22,8 @@ def train_sac(config):
     build_training = t.setup.build_training
 
     with t.torchrl_common.temporary_distribution_validate_args(False):
-        if config.eval_noise_mode is not None:
-            t.eval_noise.normalize_eval_noise_mode(config.eval_noise_mode)
+        if config.eval.noise_mode is not None:
+            t.eval_noise.normalize_eval_noise_mode(config.eval.noise_mode)
         resolved = t.experiment_seeds.resolve_run_seeds(
             seed=int(config.seed),
             problem_seed=config.problem_seed,
@@ -39,7 +39,7 @@ def train_sac(config):
         state = _resume_if_requested(config, modules, training, device=runtime.device)
 
         t.rl_logger.log_run_header("sac", config, env, training, runtime)
-        total_frames = int(config.total_timesteps) - state.start_step
+        total_frames = int(config.collector.total_frames) - state.start_step
         if total_frames <= 0:
             total_frames = 1
         collector = _build_sac_collector(config, env, modules, runtime=runtime, total_frames=total_frames)
@@ -69,8 +69,8 @@ def train_sac(config):
             if int(total_updates) > updates_before_batch:
                 _sync_collector_policy_if_needed(collector, runtime)
             step += n_frames
-            if step >= int(config.total_timesteps):
-                step = int(config.total_timesteps)
+            if step >= int(config.collector.total_frames):
+                step = int(config.collector.total_frames)
                 _run_sac_eval_log_checkpoint(
                     config,
                     env,
@@ -105,7 +105,7 @@ def train_sac(config):
         total_time = time.time() - start_time
         t.rl_logger.log_run_footer(
             state.best_return,
-            int(config.total_timesteps),
+            int(config.collector.total_frames),
             total_time,
             algo_name="sac",
             step_label="steps",
@@ -129,7 +129,7 @@ def train_sac(config):
             best_return=float(state.best_return),
             last_eval_return=float(state.last_eval_return),
             last_heldout_return=state.last_heldout_return,
-            num_steps=int(config.total_timesteps),
+            num_steps=int(config.collector.total_frames),
         )
 
 

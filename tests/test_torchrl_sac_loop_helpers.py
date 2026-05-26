@@ -12,6 +12,26 @@ from torchrl_sac_loop_test_stubs import _ReplayStub, _TrainEnvStub
 torchrl_sac_loop = importlib.import_module("rl.torchrl.sac.loop")
 
 
+def _sac_loop_config(**overrides):
+    config = SimpleNamespace(
+        env_tag="env",
+        seed=1,
+        log_interval_steps=4,
+        collector=SimpleNamespace(init_random_frames=0, total_frames=20),
+        optim=SimpleNamespace(update_every=1, optim_steps_per_batch=1),
+        replay_buffer=SimpleNamespace(batch_size=32),
+        eval=SimpleNamespace(interval_steps=5, num_denoise_passive=None, seed_base=None, noise_mode=None),
+        checkpoint=SimpleNamespace(interval_steps=5),
+    )
+    for key, value in overrides.items():
+        if "." in key:
+            section, attr = key.split(".", 1)
+            setattr(getattr(config, section), attr, value)
+        else:
+            setattr(config, key, value)
+    return config
+
+
 def test_as_float32_observation_casts_to_float32():
     observation = np.array([1.0, 2.0], dtype=np.float64)
     cast_observation = torchrl_sac_loop.as_float32_observation(observation)
@@ -52,7 +72,7 @@ def test_is_due():
 
 
 def test_select_training_action_uses_random_before_learning_starts():
-    config = SimpleNamespace(learning_starts=10)
+    config = _sac_loop_config(**{"collector.init_random_frames": 10})
     env_setup = SimpleNamespace(action_low=np.array([-1.0, -1.0]), action_high=np.array([1.0, 1.0]))
     modules = SimpleNamespace(actor=_ActorStub([0.1, -0.2]))
     train_env = _TrainEnvStub(
@@ -77,7 +97,7 @@ def test_select_training_action_uses_random_before_learning_starts():
 
 
 def test_select_training_action_uses_actor_after_learning_starts():
-    config = SimpleNamespace(learning_starts=2)
+    config = _sac_loop_config(**{"collector.init_random_frames": 2})
     env_setup = SimpleNamespace(action_low=np.array([-1.0, -1.0]), action_high=np.array([1.0, 1.0]))
     modules = SimpleNamespace(actor=_ActorStub([0.2, -0.1]))
     train_env = _TrainEnvStub(sample_value=[0.0, 0.0], step_result=None, reset_state=[0.0, 0.0])
@@ -135,7 +155,14 @@ def test_advance_env_and_store_handles_done_and_continue():
 
 
 def test_run_updates_if_due():
-    config = SimpleNamespace(learning_starts=3, update_every=2, updates_per_step=3, batch_size=32)
+    config = _sac_loop_config(
+        **{
+            "collector.init_random_frames": 3,
+            "optim.update_every": 2,
+            "optim.optim_steps_per_batch": 3,
+            "replay_buffer.batch_size": 32,
+        }
+    )
     training_setup = SimpleNamespace()
     updated_losses, total_updates = torchrl_sac_loop.run_updates_if_due(
         config,
@@ -172,7 +199,7 @@ def test_run_updates_if_due():
 
 
 def test_evaluate_heldout_if_enabled():
-    config_disabled = SimpleNamespace(num_denoise_passive=None, env_tag="env")
+    config_disabled = _sac_loop_config(**{"eval.num_denoise_passive": None})
     env_setup = SimpleNamespace(problem_seed=1, noise_seed_0=2)
     modules = SimpleNamespace()
     train_state_disabled = SimpleNamespace(best_actor_state={"best": 1})
@@ -191,7 +218,7 @@ def test_evaluate_heldout_if_enabled():
     assert result is None
 
     restore_calls = []
-    config_enabled = SimpleNamespace(num_denoise_passive=3, env_tag="env")
+    config_enabled = _sac_loop_config(**{"eval.num_denoise_passive": 3})
     train_state_enabled = SimpleNamespace(best_actor_state={"best": 99})
     result = torchrl_sac_loop.evaluate_heldout_if_enabled(
         config_enabled,
@@ -212,7 +239,7 @@ def test_evaluate_heldout_if_enabled():
 
 def test_evaluate_heldout_if_enabled_passes_pixel_flags():
     captured_kwargs = {}
-    config = SimpleNamespace(num_denoise_passive=3, env_tag="dm:cheetah-run")
+    config = _sac_loop_config(env_tag="dm:cheetah-run", **{"eval.num_denoise_passive": 3})
     env_setup = SimpleNamespace(
         problem_seed=11,
         noise_seed_0=22,
@@ -242,7 +269,7 @@ def test_evaluate_heldout_if_enabled_passes_pixel_flags():
 
 def test_evaluate_heldout_if_enabled_restores_actor_state_on_exception():
     restore_calls = []
-    config = SimpleNamespace(num_denoise_passive=3, env_tag="env")
+    config = _sac_loop_config(**{"eval.num_denoise_passive": 3})
     env_setup = SimpleNamespace(problem_seed=1, noise_seed_0=2)
     modules = SimpleNamespace()
     train_state = SimpleNamespace(best_actor_state={"best": 99})
@@ -277,7 +304,7 @@ def test_evaluate_if_due_updates_state_and_writes_metrics(monkeypatch):
         lambda path, payload: appended_records.append((path, payload)),
     )
 
-    config = SimpleNamespace(eval_interval_steps=5, eval_seed_base=123, seed=1)
+    config = _sac_loop_config(**{"eval.interval_steps": 5, "eval.seed_base": 123})
     env_setup = SimpleNamespace()
     modules = SimpleNamespace()
     training_setup = SimpleNamespace(metrics_path="metrics.jsonl")
@@ -352,10 +379,12 @@ def test_evaluate_if_due_updates_state_and_writes_metrics(monkeypatch):
 
 
 def test_log_and_checkpoint_helpers(capsys):
-    config = SimpleNamespace(
+    config = _sac_loop_config(
         log_interval_steps=4,
-        total_timesteps=20,
-        checkpoint_interval_steps=5,
+        **{
+            "collector.total_frames": 20,
+            "checkpoint.interval_steps": 5,
+        },
     )
     train_state = SimpleNamespace(last_eval_return=3.2, last_heldout_return=None, best_return=3.2)
     torchrl_sac_loop.log_if_due(

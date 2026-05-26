@@ -69,7 +69,7 @@ def _evaluate_actor(
 
     eval_env = env.env_conf
     eval_policy = _build_eval_policy(modules, env, device)
-    traj, _ = collect_denoised_trajectory(eval_env, eval_policy, num_denoise=config.num_denoise, i_noise=int(eval_seed))
+    traj, _ = collect_denoised_trajectory(eval_env, eval_policy, num_denoise=config.eval.num_denoise, i_noise=int(eval_seed))
     return float(traj.rreturn)
 
 
@@ -86,7 +86,7 @@ def _build_sac_collector(
 
     _make_collect_env_sac = _setup_attr("_make_collect_env_sac")
     _ScaleActionToEnv = _setup_attr("_ScaleActionToEnv")
-    frames_per_batch = int(config.frames_per_batch)
+    frames_per_batch = int(config.collector.frames_per_batch)
     num_envs = int(config.runtime_num_envs())
     scale_action = deps.td_nn.TensorDictModule(
         _ScaleActionToEnv(env_setup.action_low, env_setup.action_high),
@@ -109,7 +109,7 @@ def _build_sac_collector(
             collector_policy,
             frames_per_batch=frames_per_batch * num_envs,
             total_frames=total_frames,
-            init_random_frames=int(config.learning_starts),
+            init_random_frames=int(config.collector.init_random_frames),
             reset_at_each_iter=False,
             **deps.torchrl_common.collector_device_kwargs(runtime.device),
         )
@@ -122,7 +122,7 @@ def _build_sac_collector(
         policy=collector_policy,
         frames_per_batch=[int(frames_per_batch_per_worker)] * num_workers,
         total_frames=total_frames,
-        init_random_frames=int(config.learning_starts),
+        init_random_frames=int(config.collector.init_random_frames),
         reset_at_each_iter=False,
         env_device=torch.device("cpu"),
         policy_device=runtime.device,
@@ -223,8 +223,8 @@ def train_sac(config: SACConfig) -> TrainResult:
     sac_resume_if_requested = _phase_a_attr("resume_if_requested")
 
     with deps.torchrl_common.temporary_distribution_validate_args(False):
-        if config.eval_noise_mode is not None:
-            deps.eval_noise.normalize_eval_noise_mode(config.eval_noise_mode)
+        if config.eval.noise_mode is not None:
+            deps.eval_noise.normalize_eval_noise_mode(config.eval.noise_mode)
         resolved = deps.experiment_seeds.resolve_run_seeds(
             seed=int(config.seed),
             problem_seed=config.problem_seed,
@@ -241,7 +241,7 @@ def train_sac(config: SACConfig) -> TrainResult:
         from rl import logger
 
         logger.log_run_header("sac", config, env, training, runtime)
-        total_frames = int(config.total_timesteps) - state.start_step
+        total_frames = int(config.collector.total_frames) - state.start_step
         if total_frames <= 0:
             total_frames = 1
         collector = _build_sac_collector(config, env, modules, runtime=runtime, total_frames=total_frames)
@@ -271,8 +271,8 @@ def train_sac(config: SACConfig) -> TrainResult:
             if int(total_updates) > updates_before_batch:
                 _sync_collector_policy_if_needed(collector, runtime)
             step += n_frames
-            if step >= int(config.total_timesteps):
-                step = int(config.total_timesteps)
+            if step >= int(config.collector.total_frames):
+                step = int(config.collector.total_frames)
                 _run_sac_eval_log_checkpoint(
                     config,
                     env,
@@ -307,7 +307,7 @@ def train_sac(config: SACConfig) -> TrainResult:
         total_time = time.time() - start_time
         logger.log_run_footer(
             state.best_return,
-            int(config.total_timesteps),
+            int(config.collector.total_frames),
             total_time,
             algo_name="sac",
             step_label="steps",
@@ -331,7 +331,7 @@ def train_sac(config: SACConfig) -> TrainResult:
             best_return=float(state.best_return),
             last_eval_return=float(state.last_eval_return),
             last_heldout_return=state.last_heldout_return,
-            num_steps=int(config.total_timesteps),
+            num_steps=int(config.collector.total_frames),
         )
 
 

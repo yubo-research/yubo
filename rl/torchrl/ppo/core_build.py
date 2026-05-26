@@ -99,35 +99,35 @@ def build_training(
 ) -> _TrainingSetup:
     import torchrl.objectives as tr_objectives
 
-    frames_per_batch = int(config.num_envs * config.num_steps)
-    num_iterations = int(config.total_timesteps // frames_per_batch)
+    frames_per_batch = int(config.collector.frames_per_batch)
+    num_iterations = int(config.collector.total_frames // frames_per_batch)
     if num_iterations <= 0:
-        raise ValueError("total_timesteps too small for num_envs * num_steps.")
+        raise ValueError("collector.total_frames too small for collector.frames_per_batch.")
     env_conf = env.env_conf
     vec_env = None
     if runtime.collector_backend == "single":
-        env_factory = _make_collect_env_factory(env_conf, int(config.num_envs))
+        env_factory = _make_collect_env_factory(env_conf, int(config.collector.num_envs))
         if runtime.single_env_backend == "parallel":
-            vec_env = tr_envs.ParallelEnv(int(config.num_envs), env_factory, serial_for_single=True)
+            vec_env = tr_envs.ParallelEnv(int(config.collector.num_envs), env_factory, serial_for_single=True)
         else:
-            vec_env = tr_envs.SerialEnv(int(config.num_envs), env_factory, serial_for_single=True)
+            vec_env = tr_envs.SerialEnv(int(config.collector.num_envs), env_factory, serial_for_single=True)
     loss_module = tr_objectives.ClipPPOLoss(
         modules.actor,
         modules.critic,
-        clip_epsilon=config.clip_coef,
-        entropy_coeff=config.ent_coef,
-        critic_coeff=config.vf_coef,
-        normalize_advantage=config.norm_adv,
-        clip_value=config.clip_vloss,
+        clip_epsilon=config.loss.clip_epsilon,
+        entropy_coeff=config.loss.entropy_coeff,
+        critic_coeff=config.loss.critic_coeff,
+        normalize_advantage=config.loss.normalize_advantage,
+        clip_value=config.loss.clip_value_loss,
         functional=False,
     )
-    gae = tr_objectives.value.GAE(gamma=config.gamma, lmbda=config.gae_lambda, value_network=modules.critic)
+    gae = tr_objectives.value.GAE(gamma=config.loss.gamma, lmbda=config.loss.gae_lambda, value_network=modules.critic)
     train_params = _unique_param_list(
         modules.actor,
         modules.critic,
         extra_params=[modules.log_std] if modules.log_std is not None else None,
     )
-    optimizer = optim.AdamW(train_params, lr=config.learning_rate, eps=1e-05, weight_decay=0.0)
+    optimizer = optim.AdamW(train_params, lr=config.optim.lr, eps=1e-05, weight_decay=0.0)
     exp_dir = Path(config.exp_dir)
     exp_dir.mkdir(parents=True, exist_ok=True)
     write_config(str(exp_dir), config.to_dict())
@@ -170,7 +170,9 @@ def _build_collector(
         raise RuntimeError("multi collector backend requires collector_workers")
     num_workers = int(runtime.collector_workers)
     create_env_fns = [lambda i=i: _make_collect_env(env.env_conf, env_index=i) for i in range(num_workers)]
-    frames_per_batch = [int(config.num_steps)] * num_workers
+    if int(config.collector.frames_per_batch) % num_workers != 0:
+        raise ValueError("collector.frames_per_batch must be divisible by collector.workers for multi collectors.")
+    frames_per_batch = [int(config.collector.frames_per_batch) // num_workers] * num_workers
     collector_cls = torchrl_collectors.collector_class("MultiAsyncCollector" if runtime.collector_backend == "multi_async" else "MultiSyncCollector")
     return collector_cls(
         create_env_fns,

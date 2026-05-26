@@ -12,7 +12,7 @@ def test_kiss_tidy_e_torchrl_sac_sampling_vector(monkeypatch, tmp_path):
     from rl.torchrl.sac import sac_train_loop
     from rl.torchrl.sac import sac_trainer_phase_a as pha
     from rl.torchrl.sac import sac_trainer_phase_b_impl as phb
-    from rl.torchrl.sac.config import SACConfig
+    from rl.torchrl.sac.config import SACCollectorConfig, SACConfig, SACOptimConfig, SACReplayBufferConfig
     from rl.torchrl.sac.sac_setup_build import (
         build_env_setup,
         build_modules,
@@ -51,9 +51,8 @@ def test_kiss_tidy_e_torchrl_sac_sampling_vector(monkeypatch, tmp_path):
         policy_tag="mlp-16-8",
         exp_dir=str(tmp_path),
         device="cpu",
-        replay_size=64,
-        batch_size=4,
-        total_timesteps=1,
+        collector=SACCollectorConfig(total_frames=1),
+        replay_buffer=SACReplayBufferConfig(size=64, batch_size=4),
     )
     env = build_env_setup(sc)
     mods = build_modules(sc, env, device=torch.device("cpu"))
@@ -117,13 +116,9 @@ def test_kiss_tidy_e_torchrl_sac_sampling_vector(monkeypatch, tmp_path):
         policy_tag="mlp-16-8",
         exp_dir=str(tmp_path),
         device="cpu",
-        replay_size=128,
-        batch_size=4,
-        learning_starts=0,
-        update_every=1,
-        updates_per_step=1,
-        learner_update_chunk_size=1,
-        total_timesteps=4,
+        collector=SACCollectorConfig(total_frames=4, init_random_frames=0),
+        replay_buffer=SACReplayBufferConfig(size=128, batch_size=4),
+        optim=SACOptimConfig(update_every=1, optim_steps_per_batch=1, learner_update_chunk_size=1),
     )
     out = phb.process_sac_batch(
         td,

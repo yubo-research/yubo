@@ -59,18 +59,18 @@ __all__ = [
 def _log_ppo_config(config, env, training, runtime, from_pixels, backbone_info):
     model = resolve_ppo_model_settings(config)
     print(
-        f"[rl/ppo/torchrl] env_tag={config.env_tag} exp_dir={training.exp_dir} seed={config.seed} problem_seed={env.problem_seed} device={runtime.device.type} obs_dim={env.obs_dim} act_dim={env.act_dim} total_timesteps={config.total_timesteps} num_envs={config.num_envs} num_steps={config.num_steps} frames_per_batch={training.frames_per_batch} num_iterations={training.num_iterations} update_epochs={config.update_epochs} eval_interval={config.eval_interval} collector={runtime.collector_backend} single_env={runtime.single_env_backend} from_pixels={from_pixels}{backbone_info} share_backbone={bool(model.share_backbone)}",
+        f"[rl/ppo/torchrl] env_tag={config.env_tag} exp_dir={training.exp_dir} seed={config.seed} problem_seed={env.problem_seed} device={runtime.device.type} obs_dim={env.obs_dim} act_dim={env.act_dim} total_frames={config.collector.total_frames} num_envs={config.collector.num_envs} frames_per_batch={training.frames_per_batch} num_iterations={training.num_iterations} update_epochs={config.optim.num_epochs} eval_interval={config.eval.interval} collector={runtime.collector_backend} single_env={runtime.single_env_backend} from_pixels={from_pixels}{backbone_info} share_backbone={bool(model.share_backbone)}",
         flush=True,
     )
     print(
-        f"[rl/ppo/torchrl] actor_head={list(model.actor_head_hidden_sizes)} value_head={list(model.critic_head_hidden_sizes)} log_std_init={model.log_std_init} lr={config.learning_rate} gamma={config.gamma} gae_lambda={config.gae_lambda} clip_coef={config.clip_coef} vf_coef={config.vf_coef} ent_coef={config.ent_coef}",
+        f"[rl/ppo/torchrl] actor_head={list(model.actor_head_hidden_sizes)} value_head={list(model.critic_head_hidden_sizes)} log_std_init={model.log_std_init} lr={config.optim.lr} gamma={config.loss.gamma} gae_lambda={config.loss.gae_lambda} clip_epsilon={config.loss.clip_epsilon} critic_coeff={config.loss.critic_coeff} entropy_coeff={config.loss.entropy_coeff}",
         flush=True,
     )
 
 
 def train_ppo(config: PPOConfig) -> TrainResult:
-    if config.eval_noise_mode is not None:
-        normalize_eval_noise_mode(config.eval_noise_mode)
+    if config.eval.noise_mode is not None:
+        normalize_eval_noise_mode(config.eval.noise_mode)
     resolved = experiment_seeds.resolve_run_seeds(
         seed=int(config.seed),
         problem_seed=config.problem_seed,
