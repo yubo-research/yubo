@@ -16,15 +16,8 @@ def _ensure_repo_root_on_path() -> Path:
     return repo_root
 
 
-def _route_modal_runtime_if_needed(extra_args: list[str]) -> None:
-    from ops.modal_runtime_env import maybe_reexec_for_experiment_args
-
-    maybe_reexec_for_experiment_args(extra_args, script_path=Path(__file__).resolve())
-
-
 def _forward_to_experiments_cli(extra_args: list[str]) -> None:
     _ensure_repo_root_on_path()
-    _route_modal_runtime_if_needed(extra_args)
     import experiments.experiment as experiment_mod
 
     target = experiment_mod.cli

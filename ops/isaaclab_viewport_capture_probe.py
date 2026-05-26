@@ -2,25 +2,13 @@
 
 from __future__ import annotations
 
-import os
 import time
 from pathlib import Path
 
 import numpy as np
 
-from ops.modal_runtime_env import ISAACLAB_ENV_NAME, current_micromamba_env, reexec_command, reexec_environ
-
-
-def _reexec_if_needed() -> None:
-    if current_micromamba_env() == ISAACLAB_ENV_NAME:
-        return
-    cmd = reexec_command(target_env=ISAACLAB_ENV_NAME, script_path=Path(__file__).resolve(), args=[])
-    os.execvpe(cmd[0], cmd, reexec_environ(ISAACLAB_ENV_NAME))
-
 
 def main() -> None:
-    _reexec_if_needed()
-
     from problems.isaaclab_env_adapters import isaaclab_video_launcher_kwargs, make_isaaclab_env
     from video.isaaclab_viewport import prepare_isaaclab_video_view
 

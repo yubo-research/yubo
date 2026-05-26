@@ -1,14 +1,11 @@
 from __future__ import annotations
 
+import base64
 import shlex
 from pathlib import Path
 
-from ops.modal_hyperscalees_base_image import (
-    PYTHON_VERSION,
-    _bash,
-)
-
 PIXI_BASE_IMAGE = "nvcr.io/nvidia/isaac-sim:6.0.0-dev2"
+PYTHON_VERSION = "3.12"
 PIXI_HOME = "/opt/pixi"
 PIXI_BIN = "/usr/local/bin/pixi"
 PIXI_WORKSPACE_DIR = "/opt/yubo-pixi"
@@ -104,3 +101,9 @@ def _pixi_task_command(env_name: str, task_name: str) -> str:
 
 def _pixi_workspace_command(command: str) -> str:
     return _bash(f"cd {shlex.quote(PIXI_WORKSPACE_DIR)} && {shlex.quote(PIXI_BIN)} {command}")
+
+
+def _bash(command: str) -> str:
+    payload = "set -euxo pipefail\n" + command.strip()
+    encoded = base64.b64encode(payload.encode("utf-8")).decode("ascii")
+    return f'bash -lc "$(printf %s {shlex.quote(encoded)} | base64 -d)"'

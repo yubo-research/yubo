@@ -1,5 +1,5 @@
 # Run on Modal:
-# modal run ops/modal_hyperscalees_setup.py --runtime gemma4-mtp --command 'python ./ops/llm.py local configs/llm/gsm8k_gemma4_e2b_eggroll_baseline_smoke.toml'
+# modal run ops/modal_hyperscalees_pixi_setup.py --config configs/llm/gsm8k_gemma4_e2b_eggroll_baseline_smoke.toml
 #
 # Baseline Gemma 4 E2B EggRoll smoke without vLLM speculative decoding.
 

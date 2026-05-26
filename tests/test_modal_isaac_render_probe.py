@@ -10,41 +10,29 @@ def _decoded_modal_build_command(command: str) -> str:
     return base64.b64decode(match.group("payload")).decode("utf-8")
 
 
-def test_modal_hyperscalees_base_image_uses_cacheable_layers() -> None:
+def test_modal_hyperscalees_pixi_base_image_uses_cacheable_layers() -> None:
     import inspect
 
-    import ops.modal_hyperscalees_base_image as base
+    import ops.modal_hyperscalees_pixi_base_image as base
 
-    source = inspect.getsource(base.mk_hyperscalees_base_image)
+    source = inspect.getsource(base.mk_hyperscalees_pixi_base_image)
     assert "add_local_dir" not in source
-    assert "setup-hyperscalees.sh" not in source
-    assert "run_hyperscalees_install" not in source
-    assert "requirements-isaaclab.txt" in source
-    assert source.index("conda_isaaclab_yml") < source.index("conda_hyperscalees_yml")
-    assert source.index("_validate_isaaclab_runtime_command") < source.index("_install_python_requirements_command")
+    assert "micromamba" not in source
+    assert source.index("_pixi_install_env_command(ISAACLAB_PIXI_ENV)") < source.index("_pixi_install_env_command(HYPERSCALEES_PIXI_ENV)")
+    assert base.PIXI_MANIFEST_PATH.endswith("/pixi.toml")
+    assert base.PIXI_LOCK_PATH.endswith("/pixi.lock")
 
-    conda_command = base._create_conda_env_command("channels: []\ndependencies: []\n")
-    assert "\n" not in conda_command
-    decoded_conda_command = _decoded_modal_build_command(conda_command)
-    assert "cat > /tmp/yubo-conda-hyperscalees.yml" in decoded_conda_command
-    assert "micromamba env create" in decoded_conda_command
-    assert "/root/admin" not in decoded_conda_command
+    info_command = _decoded_modal_build_command(base._pixi_info_command())
+    assert "pixi info" in info_command
+    assert base.PIXI_MANIFEST_PATH in info_command
 
-    source_command = _decoded_modal_build_command(base._install_source_extras_command())
-    assert "HyperscaleES.git" in source_command
-    assert "VecchiaBO.git" in source_command
-    assert "LassoBench.git" in source_command
-    assert "--no-build-isolation --no-deps" in source_command
-    assert "setup-hyperscalees.sh" not in source_command
+    install_command = _decoded_modal_build_command(base._pixi_install_env_command(base.HYPERSCALEES_PIXI_ENV))
+    assert "pixi install" in install_command
+    assert "--locked -e hyperscalees" in install_command
 
-    final_command = _decoded_modal_build_command(base._finalize_runtime_compat_command())
-    assert "libfaiss=1.10.0=cpu_openblas*" in final_command
-    assert "faiss=1.10.0=cpu_openblas_py312*" in final_command
-    assert "setuptools>=77.0.3,<81.0.0" in final_command
-    assert "pkg_resources" in final_command
-    assert "numba==0.61.2" in final_command
-    assert "llvmlite==0.44.0" in final_command
-    assert "MODAL_HYPERSCALEES_FINAL_OK" in final_command
+    setup_command = _decoded_modal_build_command(base._pixi_task_command(base.HYPERSCALEES_PIXI_ENV, "setup"))
+    assert "pixi run" in setup_command
+    assert "--locked -e hyperscalees setup" in setup_command
 
 
 def test_nvidia_vulkan_icd_script_prefers_real_icd() -> None:
@@ -79,10 +67,10 @@ def test_modal_isaac_render_probe_helpers_importable() -> None:
     assert "OFFICIAL_KIT_STORM_RENDER_CAPTURE_OK" in probe._official_kit_storm_render_capture_command()
 
 
-def test_modal_hyperscalees_setup_exposes_isaac_preflight() -> None:
+def test_modal_hyperscalees_pixi_setup_exposes_isaac_preflight() -> None:
     pytest = __import__("pytest")
     try:
-        import ops.modal_hyperscalees_setup as setup
+        import ops.modal_hyperscalees_pixi_setup as setup
     except ImportError as exc:
         if exc.name == "modal":
             pytest.skip("modal package is not installed")
@@ -91,8 +79,9 @@ def test_modal_hyperscalees_setup_exposes_isaac_preflight() -> None:
     assert "problems.isaaclab_env_adapters" in setup._isaaclab_preflight_command()
     assert "isaacsim" in setup._isaaclab_preflight_command()
     assert "isaaclab_default_launcher_kwargs" in setup._isaaclab_preflight_command()
-    command_script = setup._runtime_command_script("echo brax:ant")
+    command_script = setup._runtime_command_script("echo brax:ant", setup.HYPERSCALEES_PIXI_ENV)
     assert "VK_ICD_FILENAMES" in command_script
-    assert "LD_LIBRARY_PATH=/opt/conda/envs/yubo-hyperscalees/lib" in command_script
+    assert "PIXI_HOME=/opt/pixi" in command_script
+    assert "YUBO_PIXI_PREFIX" in command_script
     assert "echo brax:ant" in command_script
-    assert "yubo_brax_compat_check.py" not in command_script
+    assert "micromamba" not in command_script

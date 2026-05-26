@@ -1,7 +1,49 @@
 from pathlib import Path
 
-from ops.modal_hyperscalees_image import _MODAL_ENV, _REPO_MOUNT_IGNORE
 from ops.modal_hyperscalees_pixi_base_image import mk_hyperscalees_pixi_base_image
+
+_REPO_MOUNT_IGNORE = (
+    ".cache",
+    ".git",
+    ".hypothesis",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".pixi",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".venv",
+    "__pycache__",
+    "_tmp",
+    "artifacts",
+    "build",
+    "dist",
+    "node_modules",
+    "results",
+    "runs",
+    "target",
+    "venv",
+    "videos",
+    "wandb",
+    "**/.DS_Store",
+    "**/.ipynb_checkpoints",
+    "**/*.ckpt",
+    "**/*.egg-info",
+    "**/*.log",
+    "**/*.mp4",
+    "**/*.pt",
+    "**/*.pth",
+    "**/*.pyc",
+    "**/*.safetensors",
+    "**/__pycache__",
+    "**/enn_wasm",
+    "**/target",
+)
+_MODAL_ENV = {
+    "NVIDIA_DRIVER_CAPABILITIES": "all",
+    "OMNI_KIT_ACCEPT_EULA": "YES",
+    "PYTHONPATH": "/root",
+    "PYTHONUNBUFFERED": "1",
+}
 
 
 def mk_image(modal):
