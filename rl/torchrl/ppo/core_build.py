@@ -130,7 +130,11 @@ def build_training(
         clip_value=config.loss.clip_value_loss,
         functional=False,
     )
-    gae = tr_objectives.value.GAE(gamma=config.loss.gamma, lmbda=config.loss.gae_lambda, value_network=modules.critic)
+    gae = tr_objectives.value.GAE(
+        gamma=config.loss.gamma,
+        lmbda=config.loss.gae_lambda,
+        value_network=modules.critic,
+    )
     train_params = _unique_param_list(
         modules.actor,
         modules.critic,

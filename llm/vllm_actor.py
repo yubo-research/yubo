@@ -230,7 +230,10 @@ class EggrollVLLMActor:
                 # If we've already uploaded the template into the worker
                 # processes, avoid re-sending it on each perturbation call.
                 template_arg = None if self._universal_template_uploaded and template is self._universal_template else template
-                self.llm.collective_rpc("apply_subspace_perturbation", args=(template_arg, seed, float(args.sigma) * sign))
+                self.llm.collective_rpc(
+                    "apply_subspace_perturbation",
+                    args=(template_arg, seed, float(args.sigma) * sign),
+                )
 
                 # 2. Generate
                 request_outputs = self.llm.generate(
@@ -253,7 +256,10 @@ class EggrollVLLMActor:
                     all_info_lists.setdefault(k, []).append(v)
 
                 # 4. Unperturb
-                self.llm.collective_rpc("apply_subspace_perturbation", args=(template_arg, seed, -float(args.sigma) * sign))
+                self.llm.collective_rpc(
+                    "apply_subspace_perturbation",
+                    args=(template_arg, seed, -float(args.sigma) * sign),
+                )
 
         # Aggregate info
         final_info = {k: float(np.mean(v)) for k, v in all_info_lists.items()}

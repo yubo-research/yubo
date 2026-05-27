@@ -51,4 +51,9 @@ _TRAIN_PREFIXES = (
 )
 
 
-__all__ = ["channel_for_step", "classify_console_line", "clean_text", "is_attention_diagnostic"]
+__all__ = [
+    "channel_for_step",
+    "classify_console_line",
+    "clean_text",
+    "is_attention_diagnostic",
+]

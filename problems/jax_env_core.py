@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, NamedTuple
 
 JAX_ENV_PREFIXES = (
     "gymnax:",
-    "brax:",
     "gymnasium:",
+    "mujoco_playground:",
     "craftax:",
     "jaxmarl:",
     "jumanji:",
@@ -24,10 +24,9 @@ JAX_OBJECTIVE_PREFIXES = JAX_ENV_PREFIXES + SURROGATE_OBJECTIVE_PREFIXES
 _SUPPORTED_JAX_ENV_EXAMPLES = (
     "gymnax:CartPole-v1",
     "gymnax:Swimmer-misc",
-    "brax:ant",
-    "brax:humanoid",
-    "brax:inverted_double_pendulum",
     "gymnasium:HalfCheetah-v5",
+    "mujoco_playground:CheetahRun",
+    "mujoco_playground:HumanoidRun",
     "craftax:Craftax-Classic-Symbolic-v1",
     "craftax:Craftax-Symbolic-AutoReset-v1",
     "jaxmarl:mpe-simple-reference-v3",
@@ -169,3 +168,69 @@ def _make_gymnax_env(env_id: str):
     import gymnax
 
     return gymnax.make(env_id)
+
+
+class _RunningMeanStd(NamedTuple):
+    mean: Any
+    var: Any
+    count: Any
+
+
+def _init_rms(jnp, shape: tuple[int, ...]) -> _RunningMeanStd:
+    return _RunningMeanStd(
+        mean=jnp.zeros(shape, dtype=jnp.float32),
+        var=jnp.ones(shape, dtype=jnp.float32),
+        count=jnp.array(1e-4, dtype=jnp.float32),
+    )
+
+
+def _update_rms(rms: _RunningMeanStd, batch: Any, jnp) -> _RunningMeanStd:
+    batch_mean = jnp.mean(batch, axis=0)
+    batch_var = jnp.var(batch, axis=0)
+    batch_count = batch.shape[0]
+
+    delta = batch_mean - rms.mean
+    tot_count = rms.count + batch_count
+
+    new_mean = rms.mean + delta * (batch_count / tot_count)
+    m_a = rms.var * rms.count
+    m_b = batch_var * batch_count
+    m2 = m_a + m_b + jnp.square(delta) * rms.count * (batch_count / tot_count)
+    new_var = m2 / tot_count
+
+    return _RunningMeanStd(new_mean, new_var, tot_count)
+
+
+def _normalize_obs(obs: Any, rms: _RunningMeanStd, jnp, epsilon: float = 1e-8) -> Any:
+    return jnp.clip((obs - rms.mean) / jnp.sqrt(rms.var + epsilon), -10.0, 10.0)
+
+
+class _RewardRunningMeanStd(NamedTuple):
+    var: Any
+    count: Any
+
+
+def _init_reward_rms(jnp) -> _RewardRunningMeanStd:
+    return _RewardRunningMeanStd(
+        var=jnp.ones((), dtype=jnp.float32),
+        count=jnp.array(1e-4, dtype=jnp.float32),
+    )
+
+
+def _update_reward_rms(rms: _RewardRunningMeanStd, batch_rewards: Any, jnp) -> _RewardRunningMeanStd:
+    # batch_rewards is [num_envs]
+    batch_var = jnp.var(batch_rewards)
+    batch_count = batch_rewards.shape[0]
+    tot_count = rms.count + batch_count
+
+    # Simplified variance update for scalar rewards
+    m_a = rms.var * rms.count
+    m_b = batch_var * batch_count
+    # Note: For rewards, we typically only care about scaling by std, so we skip mean subtraction
+    new_var = (m_a + m_b) / tot_count
+
+    return _RewardRunningMeanStd(new_var, tot_count)
+
+
+def _normalize_reward(reward: Any, rms: _RewardRunningMeanStd, jnp, epsilon: float = 1e-8) -> Any:
+    return reward / jnp.sqrt(rms.var + epsilon)

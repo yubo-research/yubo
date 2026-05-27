@@ -16,7 +16,11 @@ class ConsoleLogFiles:
         self.session_dir: Path | None = None
         self.event_log: TextIO | None = None
         self.combined_log: TextIO | None = None
-        self.channel_logs: dict[str, TextIO | None] = {"train": None, "inference": None, "diagnostics": None}
+        self.channel_logs: dict[str, TextIO | None] = {
+            "train": None,
+            "inference": None,
+            "diagnostics": None,
+        }
 
     def open(self) -> None:
         if self.root is None:

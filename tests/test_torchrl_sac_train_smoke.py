@@ -4,7 +4,13 @@ from pathlib import Path
 def test_sac_train_smoke(tmp_path):
     """BO-style: import inside test to defer heavy deps (matches test_turbo_ackley, test_mcmc_bo)."""
     from rl.torchrl.sac import train_sac
-    from rl.torchrl.sac.config import SACCollectorConfig, SACConfig, SACEvalConfig, SACOptimConfig, SACReplayBufferConfig
+    from rl.torchrl.sac.config import (
+        SACCollectorConfig,
+        SACConfig,
+        SACEvalConfig,
+        SACOptimConfig,
+        SACReplayBufferConfig,
+    )
 
     exp_dir = Path(tmp_path) / "sac_smoke"
     cfg = SACConfig(

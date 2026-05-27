@@ -44,7 +44,11 @@ async def test_proof_episode_cleanup_failure_does_not_mask_result():
 
 
 async def _run_cleanup_failure_case():
-    episode, _sandbox = _proof_episode(["theorem test : True := by\n  trivial"], sandbox=_DeleteFailSandbox(), max_turns=1)
+    episode, _sandbox = _proof_episode(
+        ["theorem test : True := by\n  trivial"],
+        sandbox=_DeleteFailSandbox(),
+        max_turns=1,
+    )
     return await episode.run(_proof_case(), MagicMock(), {}, RuntimeConfig())
 
 

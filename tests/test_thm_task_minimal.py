@@ -103,7 +103,11 @@ class _ProofSandbox:
         if "lean /workspace/tmp/proof.lean" in command:
             self.compile_calls += 1
             ok = "trivial" in self.content or "by rfl" in self.content
-            return MagicMock(stdout="", stderr="" if ok else "error: failed", exit_code=0 if ok else 1)
+            return MagicMock(
+                stdout="",
+                stderr="" if ok else "error: failed",
+                exit_code=0 if ok else 1,
+            )
         return MagicMock(stdout="", stderr="", exit_code=0)
 
 
@@ -153,7 +157,13 @@ async def test_proof_episode_verified_first_turn():
     assert signal.reward == 1.0
     assert signal.status == "ok"
     assert signal.metrics["compile_calls"] == 1
-    assert [turn.kind for turn in signal.turns] == ["system", "user", "model", "tool", "system"]
+    assert [turn.kind for turn in signal.turns] == [
+        "system",
+        "user",
+        "model",
+        "tool",
+        "system",
+    ]
     assert sandbox.deleted == ["sandbox-id"]
 
 

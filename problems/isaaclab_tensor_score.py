@@ -38,7 +38,10 @@ def _evaluate_many_tensor(torch, scorer: Any, xs: np.ndarray, env: Any, *, seed:
         raw_actions = try_functional_policy_actions_tensor(scorer._policy, scorer._codec, xs, candidate_idx, obs, active, zero_action)
         if raw_actions is None:
             return None
-        step_out = step_tensor_batch(env, _scale_action_tensor_to_space(raw_actions, getattr(env, "action_space", None)))
+        step_out = step_tensor_batch(
+            env,
+            _scale_action_tensor_to_space(raw_actions, getattr(env, "action_space", None)),
+        )
         if step_out is None:
             return None
         obs, reward, terminated, truncated, _info = step_out
@@ -48,7 +51,10 @@ def _evaluate_many_tensor(torch, scorer: Any, xs: np.ndarray, env: Any, *, seed:
         active &= ~done
         if not bool(torch.any(active).item()):
             break
-    return (*_summarize_tensor_returns(returns, int(scorer._episodes), num_candidates), int(steps.sum().item()))
+    return (
+        *_summarize_tensor_returns(returns, int(scorer._episodes), num_candidates),
+        int(steps.sum().item()),
+    )
 
 
 def _scale_action_tensor_to_space(actions, action_space: Any):

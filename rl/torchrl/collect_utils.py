@@ -62,7 +62,13 @@ def _make_native_isaaclab_collect_env(env_conf: Any, *, env_index: int, num_envs
     )
 
 
-def make_collect_env(env_conf: Any, *, env_index: int = 0, num_envs: int = 1, device: torch.device | str | None = None):
+def make_collect_env(
+    env_conf: Any,
+    *,
+    env_index: int = 0,
+    num_envs: int = 1,
+    device: torch.device | str | None = None,
+):
     """Unified creation of a TorchRL-compatible collection environment."""
     env_name = str(getattr(env_conf, "env_name", ""))
     if is_isaaclab_env_tag(env_name):
@@ -104,14 +110,23 @@ def _make_native_warp_collect_env(env_conf: Any, *, env_index: int, num_envs: in
             low = low.unsqueeze(0).expand(num_envs, *low.shape)
             high = high.unsqueeze(0).expand(num_envs, *high.shape)
 
-            self.action_spec = Bounded(low=low, high=high, shape=(num_envs, *adapter.action_space.shape), device=device)
+            self.action_spec = Bounded(
+                low=low,
+                high=high,
+                shape=(num_envs, *adapter.action_space.shape),
+                device=device,
+            )
             self.reward_spec = UnboundedContinuous(shape=(num_envs, 1), device=device)
             self.done_spec = Bounded(low=0, high=1, shape=(num_envs, 1), dtype=torch.bool, device=device)
 
         def _reset(self, tensordict=None, **kwargs):
             obs_dict, data = self.adapter.reset()
             self._data = data  # Store simulation state
-            return TensorDict({"observation": obs_dict["obs"]}, batch_size=self.batch_size, device=self.device)
+            return TensorDict(
+                {"observation": obs_dict["obs"]},
+                batch_size=self.batch_size,
+                device=self.device,
+            )
 
         def _step(self, tensordict):
             action = tensordict["action"]

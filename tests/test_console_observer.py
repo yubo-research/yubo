@@ -28,7 +28,12 @@ def test_console_observer_routes_and_saves_split_logs(tmp_path):
     assert "train       EVAL: step = 0" in (session_dir / "combined.log").read_text(encoding="utf-8")
 
     events = [json.loads(line) for line in (session_dir / "events.jsonl").read_text(encoding="utf-8").splitlines()]
-    assert [event["channel"] for event in events] == ["train", "inference", "inference", "diagnostics"]
+    assert [event["channel"] for event in events] == [
+        "train",
+        "inference",
+        "inference",
+        "diagnostics",
+    ]
 
 
 def test_unified_console_manager_attaches_active_observer(tmp_path):
@@ -53,7 +58,10 @@ def test_unified_console_manager_attaches_active_observer(tmp_path):
 
 
 def test_console_observer_has_scrollable_viewport(tmp_path, monkeypatch):
-    monkeypatch.setattr("llm.console_observer.shutil.get_terminal_size", lambda fallback: type("Size", (), {"columns": 120, "lines": 12})())
+    monkeypatch.setattr(
+        "llm.console_observer.shutil.get_terminal_size",
+        lambda fallback: type("Size", (), {"columns": 120, "lines": 12})(),
+    )
     observer = SplitConsoleObserver(stream=io.StringIO(), log_dir=tmp_path, enable_tui=False)
 
     with observer:

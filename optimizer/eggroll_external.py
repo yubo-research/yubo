@@ -8,7 +8,10 @@ import numpy as np
 
 from optimizer.datum import Datum
 from optimizer.designer_errors import NoSuchDesignerError
-from optimizer.eggroll_designer_nanoegg import _check_population, update_best_and_telemetry
+from optimizer.eggroll_designer_nanoegg import (
+    _check_population,
+    update_best_and_telemetry,
+)
 from optimizer.eggroll_options import eggroll_bool as _as_bool
 from optimizer.eggroll_options import unit_decay as _as_unit_decay
 from optimizer.optimizer_types import IterateResult
@@ -117,7 +120,10 @@ def _evaluate_population(designer, state, population: int) -> _ExternalPopulatio
     total_steps = 0
     pending: list[np.ndarray] = []
     next_log_at = max(16, int(designer._external_batch_size))
-    _log(designer, f"iter={state.epoch} evaluating population={population} dim={state.x.size}")
+    _log(
+        designer,
+        f"iter={state.epoch} evaluating population={population} dim={state.x.size}",
+    )
     for pair_idx in range(population // 2):
         direction = _sample_direction(designer, state, pair_idx)
         directions.append(direction)
@@ -125,30 +131,68 @@ def _evaluate_population(designer, state, population: int) -> _ExternalPopulatio
         pending.append(state.x + sigma * direction)
         pending.append(state.x - sigma * direction)
         if len(pending) >= int(designer._external_batch_size):
-            next_log_at, total_steps = _flush(designer, state, pending, scores, population, next_log_at, total_steps, t0)
+            next_log_at, total_steps = _flush(
+                designer,
+                state,
+                pending,
+                scores,
+                population,
+                next_log_at,
+                total_steps,
+                t0,
+            )
     next_log_at, total_steps = _flush(designer, state, pending, scores, population, next_log_at, total_steps, t0)
     _ = next_log_at
-    return _ExternalPopulation(directions=directions, scores=scores, num_steps=int(total_steps), dt_eval=time.time() - t0)
+    return _ExternalPopulation(
+        directions=directions,
+        scores=scores,
+        num_steps=int(total_steps),
+        dt_eval=time.time() - t0,
+    )
 
 
-def _flush(designer, state, pending: list[np.ndarray], scores: list[float], population: int, next_log_at: int, total_steps: int, t0: float):
+def _flush(
+    designer,
+    state,
+    pending: list[np.ndarray],
+    scores: list[float],
+    population: int,
+    next_log_at: int,
+    total_steps: int,
+    t0: float,
+):
     if not pending:
         return next_log_at, total_steps
     start = len(scores)
-    _log(designer, f"iter={state.epoch} scoring candidates {start + 1}-{start + len(pending)}/{population}")
-    mus, _ses = designer._objective.evaluate_many(np.asarray(pending, dtype=np.float64), seed=int(state.epoch * population) + start)
+    _log(
+        designer,
+        f"iter={state.epoch} scoring candidates {start + 1}-{start + len(pending)}/{population}",
+    )
+    mus, _ses = designer._objective.evaluate_many(
+        np.asarray(pending, dtype=np.float64),
+        seed=int(state.epoch * population) + start,
+    )
     scores.extend(float(v) for v in np.asarray(mus, dtype=np.float64).reshape(-1))
     total_steps += int(getattr(designer._objective, "last_num_steps", 0))
     pending.clear()
     done = len(scores)
     if done >= next_log_at or done == population:
-        _log(designer, f"iter={state.epoch} evaluated={done}/{population} elapsed={time.time() - t0:.1f}s")
+        _log(
+            designer,
+            f"iter={state.epoch} evaluated={done}/{population} elapsed={time.time() - t0:.1f}s",
+        )
         while next_log_at <= done:
             next_log_at += max(16, int(designer._external_batch_size))
     return next_log_at, total_steps
 
 
-def _apply_update(designer, state, directions: list[np.ndarray], raw_scores: list[float], population: int) -> float:
+def _apply_update(
+    designer,
+    state,
+    directions: list[np.ndarray],
+    raw_scores: list[float],
+    population: int,
+) -> float:
     t0 = time.time()
     grad = _mirrored_gradient(designer, state, directions, raw_scores, population)
     lr = designer._lr * (designer._lr_decay**state.epoch)
@@ -206,7 +250,13 @@ def _sample_direction(designer, state, pair_idx: int) -> np.ndarray:
     return np.asarray(direction, dtype=np.float64).reshape(state.x.shape)
 
 
-def _mirrored_gradient(designer, state, directions: list[np.ndarray], raw_scores: list[float], population: int) -> np.ndarray:
+def _mirrored_gradient(
+    designer,
+    state,
+    directions: list[np.ndarray],
+    raw_scores: list[float],
+    population: int,
+) -> np.ndarray:
     scores = _standardize_scores(designer, np.asarray(raw_scores, dtype=np.float64))
     grad = np.zeros_like(state.x, dtype=np.float64)
     for pair_idx, direction in enumerate(directions):

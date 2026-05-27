@@ -8,7 +8,11 @@ from llm.vllm_worker_update import apply_lora_es_update as _apply_lora_es_update
 
 class WorkerExtension:
     def get_transport_info(self) -> dict[str, int | str]:
-        return {"tensor_rank": _tensor_parallel_rank(), "host": get_ip(), "port": get_open_port()}
+        return {
+            "tensor_rank": _tensor_parallel_rank(),
+            "host": get_ip(),
+            "port": get_open_port(),
+        }
 
     def init_inter_engine_group(
         self,
@@ -59,7 +63,9 @@ class WorkerExtension:
         es_step: int,
         args: Any,
     ) -> bool:
-        from llm.vllm_worker_update import apply_universal_es_update as _apply_universal_es_update
+        from llm.vllm_worker_update import (
+            apply_universal_es_update as _apply_universal_es_update,
+        )
 
         return _apply_universal_es_update(self, normalized_fitnesses, template_ref, es_step, args)
 
@@ -69,7 +75,9 @@ class WorkerExtension:
         seed: int,
         scale: float,
     ) -> bool:
-        from llm.vllm_worker_update import apply_subspace_perturbation as _apply_subspace_perturbation
+        from llm.vllm_worker_update import (
+            apply_subspace_perturbation as _apply_subspace_perturbation,
+        )
 
         return _apply_subspace_perturbation(self, template, seed, scale)
 
@@ -95,8 +103,16 @@ class WorkerExtension:
         self._universal_update_groups = {
             name: {
                 "subspace_indices": torch.tensor(indices, device=self.device, dtype=torch.long),
-                "param_indices": torch.tensor([template.basis_index[i] for i in indices], device=self.device, dtype=torch.long),
-                "signs": torch.tensor([template.basis_sign[i] for i in indices], device=self.device, dtype=torch.float32),
+                "param_indices": torch.tensor(
+                    [template.basis_index[i] for i in indices],
+                    device=self.device,
+                    dtype=torch.long,
+                ),
+                "signs": torch.tensor(
+                    [template.basis_sign[i] for i in indices],
+                    device=self.device,
+                    dtype=torch.float32,
+                ),
             }
             for name, indices in groups.items()
         }

@@ -162,7 +162,6 @@ def test_added_branch_names_problems_jax_env_factory() -> None:
 def test_added_branch_names_problems_jax_env_base() -> None:
     if False:
         (
-            BraxAdapter,
             GymnaxAdapter,
             GymnaxLikeAdapter,
             jax_env_base,

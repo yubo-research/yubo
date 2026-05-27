@@ -3,11 +3,27 @@ from types import SimpleNamespace
 import pytest
 
 from rl import runner
-from rl.config_model_defaults import resolve_ppo_model_settings, resolve_sac_model_settings
+from rl.config_model_defaults import (
+    resolve_ppo_model_settings,
+    resolve_sac_model_settings,
+)
 from rl.core.grouped_config import dataclass_field_names, parse_dataclass_section
-from rl.core.rl_video_settings import RLVideoSettings, attach_video_settings, get_video_settings, pop_video_settings
+from rl.core.rl_video_settings import (
+    RLVideoSettings,
+    attach_video_settings,
+    get_video_settings,
+    pop_video_settings,
+)
 from rl.core.torchrl_collectors import collector_class
-from rl.torchrl.ppo.config import PPOCheckpointConfig, PPOCollectorConfig, PPOConfig, PPOEvalConfig, PPOLossConfig, PPOOptimConfig, PPOProfileConfig
+from rl.torchrl.ppo.config import (
+    PPOCheckpointConfig,
+    PPOCollectorConfig,
+    PPOConfig,
+    PPOEvalConfig,
+    PPOLossConfig,
+    PPOOptimConfig,
+    PPOProfileConfig,
+)
 from rl.torchrl.sac.config import (
     SACCheckpointConfig,
     SACCollectorConfig,

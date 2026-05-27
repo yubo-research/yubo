@@ -12,12 +12,12 @@ import scripts.prepare_tinystories  # noqa: F401
 import third_party.nanochat.core_eval  # noqa: F401
 from ops.uhd_config import UHDConfig
 from problems.nanochat_lora import _NanochatSubspaceCodec
-from problems.uhd_obj_types import UHDVectorObjective
+from problems.uhd_obj_types import UHDVectorObjectiveMixin
 
 _log = logging.getLogger(__name__).info
 
 
-class NanochatUHDVectorObjective(UHDVectorObjective):
+class NanochatUHDVectorObjective(UHDVectorObjectiveMixin):
     """Bridge for nanochat GPT models as a UHD vector objective."""
 
     def __init__(self, cfg: UHDConfig) -> None:
@@ -162,11 +162,6 @@ class NanochatUHDVectorObjective(UHDVectorObjective):
         # Fallback to synthetic if bin not found
         return self._get_synthetic_iterator(b, t, seed, device)
 
-    def evaluate_many(self, x_batch: np.ndarray, *, seed: int) -> tuple[np.ndarray, np.ndarray]:
-        from problems.pre_obj_vector_helpers import evaluate_many_serial
-
-        return evaluate_many_serial(self.evaluate, x_batch, seed=seed)
-
     def configure_embedding(self, num_probes: int) -> None:
         self._embed_num_probes = int(num_probes)
 
@@ -196,17 +191,6 @@ class NanochatUHDVectorObjective(UHDVectorObjective):
         if not zs:
             return np.zeros((0, 0), dtype=np.float32)
         return np.stack(zs).astype(np.float32)
-
-    def sample_noise(
-        self,
-        *,
-        seed: int,
-        num_dim_target: float | None = None,
-        num_module_target: float | None = None,
-    ) -> np.ndarray:
-        from problems.pre_obj_vector_helpers import sample_vector_noise
-
-        return sample_vector_noise(dim=self.dim, seed=int(seed), num_dim_target=num_dim_target, num_module_target=num_module_target)
 
     def sample_eggroll_noiser_noise(
         self,

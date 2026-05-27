@@ -151,8 +151,16 @@ def test_isaaclab_video_build_problem_reaches_space_resolution(monkeypatch):
     calls = []
     fake_gym = _FakeGym()
     monkeypatch.setattr(mod, "_SPACE_CACHE", {})
-    monkeypatch.setattr(mod, "get_isaaclab_session", lambda **kwargs: calls.append(kwargs) or IsaacLabSession(app=None, gym=fake_gym))
-    monkeypatch.setattr(mod, "_parse_env_cfg", lambda task_id, **kwargs: SimpleNamespace(task_id=task_id, seed=None, **kwargs))
+    monkeypatch.setattr(
+        mod,
+        "get_isaaclab_session",
+        lambda **kwargs: (calls.append(kwargs) or IsaacLabSession(app=None, gym=fake_gym)),
+    )
+    monkeypatch.setattr(
+        mod,
+        "_parse_env_cfg",
+        lambda task_id, **kwargs: SimpleNamespace(task_id=task_id, seed=None, **kwargs),
+    )
 
     problem = build_problem(
         "isaaclab:Isaac-Cartpole-v0",
@@ -204,7 +212,10 @@ def test_isaaclab_tensor_batch_io_keeps_torch_actions():
         single_observation_space=spaces.Box(low=-1.0, high=1.0, shape=(3,), dtype=np.float32),
         single_action_space=spaces.Box(low=-1.0, high=1.0, shape=(2,), dtype=np.float32),
     )
-    env.reset = lambda *args, **kwargs: ({"policy": torch.ones((2, 3), dtype=torch.float32)}, {"kwargs": kwargs})
+    env.reset = lambda *args, **kwargs: (
+        {"policy": torch.ones((2, 3), dtype=torch.float32)},
+        {"kwargs": kwargs},
+    )
 
     def _step(action):
         env.last_action = action
@@ -277,7 +288,11 @@ def test_make_raw_isaaclab_env_returns_unadapted_env(monkeypatch):
         "get_isaaclab_session",
         lambda **_kwargs: IsaacLabSession(app=None, gym=fake_gym),
     )
-    monkeypatch.setattr(mod, "_parse_env_cfg", lambda task_id, **kwargs: SimpleNamespace(task_id=task_id, seed=None, **kwargs))
+    monkeypatch.setattr(
+        mod,
+        "_parse_env_cfg",
+        lambda task_id, **kwargs: SimpleNamespace(task_id=task_id, seed=None, **kwargs),
+    )
 
     env = make_raw_isaaclab_env(
         "isaaclab:Isaac-Cartpole-v0",

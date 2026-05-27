@@ -74,7 +74,10 @@ def test_verifiers_turn_logging_keeps_model_response():
         }
     )
     fallback_turns = _turns_from_state(fallback_state)
-    log = signal_log(Case(id="case-0", prompt="2+2?", target="4"), Signal(reward=1.0, status="ok", turns=tuple(fallback_turns)))
+    log = signal_log(
+        Case(id="case-0", prompt="2+2?", target="4"),
+        Signal(reward=1.0, status="ok", turns=tuple(fallback_turns)),
+    )
 
     assert "ASSISTANT: Fallback response \\boxed{4}." in log
 
@@ -94,7 +97,11 @@ def test_verifiers_runtime_preflight_reports_openai_agents_mismatch(monkeypatch)
         return versions[name]
 
     monkeypatch.setattr(utils.metadata, "version", version)
-    monkeypatch.setattr(utils.metadata, "requires", lambda name: ["openai<3,>=2.26.0"] if name == "openai-agents" else [])
+    monkeypatch.setattr(
+        utils.metadata,
+        "requires",
+        lambda name: ["openai<3,>=2.26.0"] if name == "openai-agents" else [],
+    )
 
     with pytest.raises(RuntimeError, match="openai==2.24.0"):
         require_verifiers_runtime()

@@ -121,5 +121,10 @@ def evaluate_actor(
 
     eval_env = env.env_conf
     eval_policy = build_eval_policy(modules, env, device)
-    traj, _ = collect_denoised_trajectory(eval_env, eval_policy, num_denoise=config.eval.num_denoise, i_noise=int(eval_seed))
+    traj, _ = collect_denoised_trajectory(
+        eval_env,
+        eval_policy,
+        num_denoise=config.eval.num_denoise,
+        i_noise=int(eval_seed),
+    )
     return float(traj.rreturn)

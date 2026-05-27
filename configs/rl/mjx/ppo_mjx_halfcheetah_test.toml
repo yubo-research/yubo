@@ -3,7 +3,7 @@ algo = "mjx_ppo"
 
 [rl.mjx_ppo]
 exp_dir = "runs/rl/mjx/ppo_mjx_halfcheetah_test"
-env_tag = "brax:halfcheetah"
+env_tag = "gymnasium:HalfCheetah-v5"
 seed = 0
 hidden_size = 256
 log_interval = 10

@@ -9,7 +9,10 @@ import numpy as np
 
 
 def main() -> None:
-    from problems.isaaclab_env_adapters import isaaclab_video_launcher_kwargs, make_isaaclab_env
+    from problems.isaaclab_env_adapters import (
+        isaaclab_video_launcher_kwargs,
+        make_isaaclab_env,
+    )
     from video.isaaclab_viewport import prepare_isaaclab_video_view
 
     env = make_isaaclab_env(
@@ -26,7 +29,10 @@ def main() -> None:
         from problems.isaaclab_env_adapters import get_isaaclab_session
 
         prepare_isaaclab_video_view(get_isaaclab_session().app, raw_env)
-        from omni.kit.viewport.utility import capture_viewport_to_file, get_active_viewport
+        from omni.kit.viewport.utility import (
+            capture_viewport_to_file,
+            get_active_viewport,
+        )
 
         viewport = get_active_viewport()
         if viewport is None:

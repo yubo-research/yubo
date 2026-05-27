@@ -120,16 +120,31 @@ def _slots_by_candidate(candidate_idx: np.ndarray, num_candidates: int) -> list[
 
 def _candidate_obs_tensor(torch, obs: np.ndarray, slots_by_candidate: list[np.ndarray], template):
     if hasattr(obs, "detach"):
-        return torch.stack([obs[slots].to(dtype=template.dtype, device=template.device) for slots in slots_by_candidate], dim=0)
-    obs_batch = np.stack([np.asarray(obs[slots], dtype=np.float32) for slots in slots_by_candidate], axis=0)
+        return torch.stack(
+            [obs[slots].to(dtype=template.dtype, device=template.device) for slots in slots_by_candidate],
+            dim=0,
+        )
+    obs_batch = np.stack(
+        [np.asarray(obs[slots], dtype=np.float32) for slots in slots_by_candidate],
+        axis=0,
+    )
     return torch.as_tensor(obs_batch, dtype=template.dtype, device=template.device)
 
 
-def _scatter_actions(actions, slots_by_candidate: list[np.ndarray], active: np.ndarray, zero_action: np.ndarray) -> np.ndarray:
+def _scatter_actions(
+    actions,
+    slots_by_candidate: list[np.ndarray],
+    active: np.ndarray,
+    zero_action: np.ndarray,
+) -> np.ndarray:
     torch = _torch_from(actions)
     active_tensor = torch.as_tensor(active, dtype=torch.bool, device=actions.device).reshape(-1)
     zero = torch.as_tensor(zero_action, dtype=actions.dtype, device=actions.device)
-    raw = torch.zeros((int(active_tensor.numel()), *tuple(zero.shape)), dtype=actions.dtype, device=actions.device)
+    raw = torch.zeros(
+        (int(active_tensor.numel()), *tuple(zero.shape)),
+        dtype=actions.dtype,
+        device=actions.device,
+    )
     for cand_idx, slots in enumerate(slots_by_candidate):
         raw[torch.as_tensor(slots, dtype=torch.long, device=actions.device)] = actions[int(cand_idx)].reshape((int(slots.size), *tuple(zero.shape)))
     raw[~active_tensor] = zero

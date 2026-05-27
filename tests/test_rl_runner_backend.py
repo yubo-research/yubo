@@ -99,7 +99,11 @@ def test_run_from_cfg_attaches_video_artifact_settings(monkeypatch):
 
     monkeypatch.setattr(
         "rl.registry.get_algo",
-        lambda _algo_name: type("_Algo", (), {"config_cls": _Config, "train_fn": staticmethod(lambda cfg: cfg)})(),
+        lambda _algo_name: type(
+            "_Algo",
+            (),
+            {"config_cls": _Config, "train_fn": staticmethod(lambda cfg: cfg)},
+        )(),
     )
     cfg = {
         "rl": {

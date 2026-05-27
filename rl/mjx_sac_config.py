@@ -3,7 +3,11 @@ from __future__ import annotations
 import dataclasses
 
 from rl.core.grouped_config import dataclass_field_names, parse_dataclass_section
-from rl.mjx_sac_config_sections import MJXSACCollectorConfig, MJXSACLossConfig, MJXSACOptimConfig
+from rl.mjx_sac_config_sections import (
+    MJXSACCollectorConfig,
+    MJXSACLossConfig,
+    MJXSACOptimConfig,
+)
 
 
 @dataclasses.dataclass
@@ -16,7 +20,7 @@ class MJXSACSections:
 @dataclasses.dataclass
 class MJXSACConfig:
     exp_dir: str = "runs/rl/mjx_sac"
-    env_tag: str = "brax:ant"
+    env_tag: str = "mujoco_playground:CheetahRun"
     seed: int = 0
     hidden_size: int = 256
     log_interval: int = 10

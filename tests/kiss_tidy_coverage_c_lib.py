@@ -25,7 +25,7 @@ def _botorch_modules(monkeypatch, *, empty_front: bool):
         def compute(self, front):
             return 0.0 if empty_front else float(torch.sum(front).item())
 
-    pareto_mod.is_non_dominated = lambda y: torch.zeros(y.shape[0], dtype=torch.bool) if empty_front else torch.ones(y.shape[0], dtype=torch.bool)
+    pareto_mod.is_non_dominated = lambda y: (torch.zeros(y.shape[0], dtype=torch.bool) if empty_front else torch.ones(y.shape[0], dtype=torch.bool))
     hv_mod.Hypervolume = Hypervolume
     mo.hypervolume = hv_mod
     mo.pareto = pareto_mod

@@ -7,8 +7,8 @@ def test_jax_env_examples_are_first_class() -> None:
     tags = supported_jax_env_tags()
 
     assert "jumanji:Game2048-v1" in tags
-    assert "brax:ant" in tags
     assert "gymnasium:HalfCheetah-v5" in tags
+    assert "mujoco_playground:CheetahRun" in tags
     assert "mjx:xml:/path/to/model.xml" not in tags
     assert "synthetic:linear-speed" not in tags
     assert all(supports_jax_env_tag(tag) for tag in tags)

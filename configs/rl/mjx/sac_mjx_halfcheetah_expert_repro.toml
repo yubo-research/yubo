@@ -9,8 +9,7 @@ algo = "mjx_sac"
 
 [rl.mjx_sac]
 exp_dir = "runs/rl/mjx/sac_mjx_halfcheetah_expert_repro"
-# Brax environment which internally uses the MJX backend with the correct task logic
-env_tag = "brax:halfcheetah"
+env_tag = "gymnasium:HalfCheetah-v5"
 seed = 0
 # Standard SAC hidden size [256, 256]
 hidden_size = 256

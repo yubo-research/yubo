@@ -103,7 +103,7 @@ def test_kiss_bridge_modal_synthetic_sine_disk_and_main_raw(monkeypatch, tmp_pat
     PlRem = type(
         "PlRem",
         (),
-        {"remote": staticmethod(lambda n, d, fn, ps, *_args: pl.synthetic_sine_benchmark_result_to_payload(_z, n=n, d=d, function_name=fn, problem_seed=ps))},
+        {"remote": staticmethod(lambda n, d, fn, ps, *_args: (pl.synthetic_sine_benchmark_result_to_payload(_z, n=n, d=d, function_name=fn, problem_seed=ps)))},
     )
     monkeypatch.setattr(pl.modal, "enable_output", lambda: contextlib.nullcontext())
     pl_dest = pl.run_synthetic_sine_benchmark_modal_to_disk(1, 1, "sine", 0, tmp_path / "pl_direct", app=PlApp(), remote_fn=PlRem())

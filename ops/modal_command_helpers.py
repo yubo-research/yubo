@@ -9,7 +9,13 @@ DEFAULT_VIDEO_GLOB = "runs/**/traces/videos/*.mp4"
 MAX_ARTIFACT_BYTES = 512 * 1024 * 1024
 
 
-def logged_command(cmd: list[str], *, cwd: str = "/root", log_prefix: str, extra_env: dict[str, str] | None = None) -> int:
+def logged_command(
+    cmd: list[str],
+    *,
+    cwd: str = "/root",
+    log_prefix: str,
+    extra_env: dict[str, str] | None = None,
+) -> int:
     printable = " ".join(shlex.quote(part) for part in cmd)
     print(f"[{log_prefix}] $ {printable}", flush=True)
     env = os.environ.copy()

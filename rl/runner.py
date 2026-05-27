@@ -59,7 +59,10 @@ def _extract_video_cfg(cfg: dict) -> dict:
 def _attach_run_artifacts(config, *, video_cfg: dict):
     if not video_cfg:
         return config
-    video_settings_mod = __import__("rl.core.rl_video_settings", fromlist=["attach_video_settings", "pop_video_settings"])
+    video_settings_mod = __import__(
+        "rl.core.rl_video_settings",
+        fromlist=["attach_video_settings", "pop_video_settings"],
+    )
     video_data = dict(video_cfg)
     settings = video_settings_mod.pop_video_settings(video_data)
     return video_settings_mod.attach_video_settings(config, settings)
@@ -112,12 +115,18 @@ def main(argv: list[str] | None = None):
 
     rl_logger.configure_logging()
 
-    config_toml = __import__("common.config_toml", fromlist=["apply_overrides", "load_toml", "parse_set_args"])
+    config_toml = __import__(
+        "common.config_toml",
+        fromlist=["apply_overrides", "load_toml", "parse_set_args"],
+    )
     apply_overrides = config_toml.apply_overrides
     load_toml = config_toml.load_toml
     parse_set_args = config_toml.parse_set_args
 
-    runner_helpers = __import__("rl.runner_helpers", fromlist=["parse_runtime_args", "seeded_exp_dir", "split_config_and_args"])
+    runner_helpers = __import__(
+        "rl.runner_helpers",
+        fromlist=["parse_runtime_args", "seeded_exp_dir", "split_config_and_args"],
+    )
     parse_runtime_args = runner_helpers.parse_runtime_args
     split_config_and_args = runner_helpers.split_config_and_args
 

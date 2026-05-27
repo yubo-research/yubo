@@ -99,7 +99,12 @@ def _build_sparse_enn(ctx: _SimpleContext, opts: dict[str, Any]):
             example="sparse-enn/num_fit_candidates=100",
         ),
         acq_type=acq_type,
-        num_candidates=_optional_int_or_none(opts, "num_candidates", default=None, example="sparse-enn/num_candidates=1000"),
+        num_candidates=_optional_int_or_none(
+            opts,
+            "num_candidates",
+            default=None,
+            example="sparse-enn/num_candidates=1000",
+        ),
         candidate_rv=_optional_str_in(
             opts,
             "candidate_rv",

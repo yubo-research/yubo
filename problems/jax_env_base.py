@@ -5,17 +5,6 @@ from typing import Any
 from problems import jax_env_core as core
 
 
-def _set_headless_mujoco_gl_default() -> None:
-    import os
-    import sys
-
-    if not sys.platform.startswith("linux"):
-        return
-    if os.environ.get("MUJOCO_GL") or os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"):
-        return
-    os.environ["MUJOCO_GL"] = "egl"
-
-
 class GymnaxAdapter:
     def __init__(self, env_name: str, *, jax, jnp, gymnax=None) -> None:
         if gymnax is None:
@@ -57,46 +46,6 @@ class GymnaxLikeAdapter:
         if self.env_params is None:
             return self.env.step(key, state, action)
         return self.env.step(key, state, action, self.env_params)
-
-    def clip_action(self, action):
-        return core._clip_box_action(self.action_space, self._jnp, action)
-
-
-class BraxAdapter:
-    def __init__(self, env_name: str, *, jax, jnp) -> None:
-        _set_headless_mujoco_gl_default()
-        from brax import envs
-        from brax.envs.wrappers.training import AutoResetWrapper, EpisodeWrapper
-        from gymnax.environments import spaces
-
-        self._jnp = jnp
-        brax_name = env_name.split(":", 1)[1]
-        raw_env = envs.get_environment(brax_name, backend="mjx")
-
-        # Apply wrappers for episode length and auto-reset
-        env = EpisodeWrapper(raw_env, episode_length=1000, action_repeat=1)
-        self.env = AutoResetWrapper(env)
-
-        obs_shape = tuple(int(v) for v in jax.eval_shape(self.env.reset, jax.random.key(0)).obs.shape)
-        act_shape = (int(self.env.action_size),)
-        self.observation_space = core._gymnax_box_from_shape(spaces, jnp, obs_shape)
-        self.action_space = core._gymnax_box_from_shape(spaces, jnp, act_shape, low=-1.0, high=1.0)
-
-    def reset(self, key):
-        state = self.env.reset(key)
-        return self._jnp.asarray(state.obs, dtype=self._jnp.float32), state
-
-    def step(self, _key, state, action):
-        action = self.clip_action(action)
-        next_state = self.env.step(state, action)
-        result = (
-            self._jnp.asarray(next_state.obs, dtype=self._jnp.float32),
-            next_state,
-            next_state.reward,
-            next_state.done,
-            {},
-        )
-        return result
 
     def clip_action(self, action):
         return core._clip_box_action(self.action_space, self._jnp, action)

@@ -79,9 +79,9 @@ def test_modal_hyperscalees_pixi_setup_exposes_isaac_preflight() -> None:
     assert "problems.isaaclab_env_adapters" in setup._isaaclab_preflight_command()
     assert "isaacsim" in setup._isaaclab_preflight_command()
     assert "isaaclab_default_launcher_kwargs" in setup._isaaclab_preflight_command()
-    command_script = setup._runtime_command_script("echo brax:ant", setup.HYPERSCALEES_PIXI_ENV)
+    command_script = setup._runtime_command_script("echo mujoco_playground:CheetahRun", setup.HYPERSCALEES_PIXI_ENV)
     assert "VK_ICD_FILENAMES" in command_script
     assert "PIXI_HOME=/opt/pixi" in command_script
     assert "YUBO_PIXI_PREFIX" in command_script
-    assert "echo brax:ant" in command_script
+    assert "echo mujoco_playground:CheetahRun" in command_script
     assert "micromamba" not in command_script

@@ -30,7 +30,11 @@ def build_nll_calls(
     calls: list[SampleCall] = []
     items: list[NLLScoringItem] = []
     for prompt, answer, lora_spec in zip(prompts, answers, specs, strict=True):
-        item = nll_scoring_item(tokenizer=tokenizer, prompt=str(prompt), target_text=target_text(task_obj, answer))
+        item = nll_scoring_item(
+            tokenizer=tokenizer,
+            prompt=str(prompt),
+            target_text=target_text(task_obj, answer),
+        )
         calls.append(
             SampleCall(
                 prompt=item.full_prompt,
@@ -49,7 +53,11 @@ def nll_scoring_item(*, tokenizer: Any, prompt: str, target_text: str) -> NLLSco
     if len(full_ids) <= len(prompt_ids) or full_ids[: len(prompt_ids)] != prompt_ids:
         raise ValueError("NLL scoring requires stable prompt+target tokenization; include a target boundary such as a leading space.")
     target_token_ids = full_ids[len(prompt_ids) :]
-    return NLLScoringItem(full_prompt=full_prompt, target_token_ids=target_token_ids, target_start=len(prompt_ids))
+    return NLLScoringItem(
+        full_prompt=full_prompt,
+        target_token_ids=target_token_ids,
+        target_start=len(prompt_ids),
+    )
 
 
 def nll_sampling_kwargs(*, seed: int) -> dict[str, Any]:

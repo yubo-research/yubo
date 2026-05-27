@@ -32,8 +32,16 @@ def test_kiss_bridge_rl_torchrl_dm_control_collect(monkeypatch):
     pytest.importorskip("torchrl")
     import rl.torchrl.collect_utils as cu
 
-    monkeypatch.setattr(cu, "_gym_wrapper_without_isaaclab_probe", lambda base: SimpleNamespace(base=base))
-    monkeypatch.setattr(cu.tr_envs, "TransformedEnv", lambda wrapped, *a, **k: SimpleNamespace(wrapped=wrapped, base=wrapped.base))
+    monkeypatch.setattr(
+        cu,
+        "_gym_wrapper_without_isaaclab_probe",
+        lambda base: SimpleNamespace(base=base),
+    )
+    monkeypatch.setattr(
+        cu.tr_envs,
+        "TransformedEnv",
+        lambda wrapped, *a, **k: SimpleNamespace(wrapped=wrapped, base=wrapped.base),
+    )
 
     fake_env_conf = SimpleNamespace(
         make_gym_env=lambda seed=0: SimpleNamespace(reset=lambda seed=None: (None, {}), is_discrete=False),

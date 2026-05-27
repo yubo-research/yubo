@@ -97,7 +97,13 @@ def _collect_population(designer, state, population: int) -> _PopulationResult:
     return _PopulationResult(directions=directions, raw_scores=raw_scores, dt_eval=time.time() - t_eval)
 
 
-def _apply_update(designer, state, directions: list[np.ndarray], raw_scores: list[float], population: int) -> float:
+def _apply_update(
+    designer,
+    state,
+    directions: list[np.ndarray],
+    raw_scores: list[float],
+    population: int,
+) -> float:
     t_prop = time.time()
     grad = _mirrored_gradient(designer, state, directions, raw_scores, population)
     x_j = designer._objective.jnp.asarray(state.x, dtype=designer._objective.jnp.float32)
@@ -180,7 +186,13 @@ def _maybe_log_progress(designer, state, done: int, next_log_at: int, population
     return next_log_at
 
 
-def _mirrored_gradient(designer, state, directions: list[np.ndarray], raw_scores: list[float], population: int) -> np.ndarray:
+def _mirrored_gradient(
+    designer,
+    state,
+    directions: list[np.ndarray],
+    raw_scores: list[float],
+    population: int,
+) -> np.ndarray:
     fitnesses = standardize_scores(designer, np.asarray(raw_scores, dtype=np.float64))
     grad = np.zeros_like(state.x, dtype=np.float64)
     for pair_idx, direction in enumerate(directions):

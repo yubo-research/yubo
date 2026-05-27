@@ -203,7 +203,12 @@ class EggRollDesigner:
         self._sigma = float(cfg.sigma)
         self._sigma_decay = _as_unit_decay(cfg.sigma_decay, name="sigma_decay")
         self._suppress_noiser_stdout = _as_bool(cfg.suppress_noiser_stdout, name="suppress_noiser_stdout")
-        _attach_policy_runtime_metadata(policy, cfg, steps_per_episode=self._steps_per_episode, num_envs=self._num_envs)
+        _attach_policy_runtime_metadata(
+            policy,
+            cfg,
+            steps_per_episode=self._steps_per_episode,
+            num_envs=self._num_envs,
+        )
         self._state.best_datum = None
         self._state.epoch = 0
         self._state.params = policy.params

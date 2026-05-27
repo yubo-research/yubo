@@ -124,7 +124,11 @@ def _turn_from_message(message: Any, *, default_role: str) -> Turn:
     role = _field(source, "role", _field(message, "role", default_role))
     content = _content_text(source)
     name = _field(source, "name", _field(message, "name", None))
-    return Turn(kind=str(role or default_role), text=content, name=None if name is None else str(name))
+    return Turn(
+        kind=str(role or default_role),
+        text=content,
+        name=None if name is None else str(name),
+    )
 
 
 def _content_text(message: Any) -> str:

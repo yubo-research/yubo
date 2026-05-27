@@ -8,7 +8,10 @@ from problems.environment_spec import (
     materialize_env,
     parse_tag_options,
 )
-from problems.isaaclab_env_adapters import is_isaaclab_env_tag, isaaclab_video_launcher_kwargs
+from problems.isaaclab_env_adapters import (
+    is_isaaclab_env_tag,
+    isaaclab_video_launcher_kwargs,
+)
 
 if TYPE_CHECKING:
     from policies.registry import PolicyPreset

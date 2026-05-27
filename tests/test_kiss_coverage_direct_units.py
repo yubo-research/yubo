@@ -32,7 +32,17 @@ def test_kiss_cov_direct_exp_uhd_modal_and_runner_main(monkeypatch, tmp_path):
     monkeypatch.setattr(
         ct,
         "load_toml",
-        lambda _path: {"rl": {"algo": "dummy", "dummy": {"env_tag": "pend", "policy_tag": "mlp-16-8", "seed": 7, "exp_dir": "tmp"}}},
+        lambda _path: {
+            "rl": {
+                "algo": "dummy",
+                "dummy": {
+                    "env_tag": "pend",
+                    "policy_tag": "mlp-16-8",
+                    "seed": 7,
+                    "exp_dir": "tmp",
+                },
+            }
+        },
     )
     monkeypatch.setattr(ct, "apply_overrides", lambda cfg, overrides: None)
     monkeypatch.setattr(runner, "_extract_run_cfg", lambda cfg: ([], 1))

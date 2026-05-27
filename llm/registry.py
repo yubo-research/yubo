@@ -151,7 +151,17 @@ def supported_llm_env_tags() -> tuple[str, ...]:
     math_tags = [f"llm:math:{name}" for name in sorted(_MATH_DATASETS)]
     answer_tag_math = [f"llm:math:answer-tags:{name}" for name in sorted(_MATH_DATASETS)]
     verifiers_tags = [f"llm:verifiers:{name}" for name in sorted(_VERIFIERS_ENVS)]
-    return tuple(sorted([*_STATIC_ENVS, *math_tags, *answer_tag_math, *verifiers_tags, *_THM_ENV_EXAMPLES]))
+    return tuple(
+        sorted(
+            [
+                *_STATIC_ENVS,
+                *math_tags,
+                *answer_tag_math,
+                *verifiers_tags,
+                *_THM_ENV_EXAMPLES,
+            ]
+        )
+    )
 
 
 def resolve_llm_policy(policy_tag: str) -> LLMPolicySpec:

@@ -10,6 +10,7 @@ import numpy as np
 from problems.pre_obj_stack import _log, _require_stack
 from problems.pre_obj_subspace import _SubspaceParamCodec
 from problems.pre_obj_validate import _build_validate, _ValidateContext
+from problems.uhd_obj_types import UHDVectorObjectiveMixin
 
 
 @dataclass(frozen=True)
@@ -22,7 +23,7 @@ class RWKVDistillObjectiveSpec:
     generation_length: int = 256
 
 
-class RWKVDistillObjective:
+class RWKVDistillObjective(UHDVectorObjectiveMixin):
     """Teacher-forced KL distillation objective for quantized RWKV models."""
 
     def __init__(self, cfg: Any) -> None:
@@ -50,8 +51,18 @@ class RWKVDistillObjective:
             f"student={self.spec.student_model_choice} generation_length={self.spec.generation_length}"
         )
         t0 = time.perf_counter()
-        teacher = _load_model(stack.get_model, self.spec.teacher_model_choice, rwkv_type=self.spec.rwkv_type, dtype=self.spec.dtype)
-        student = _load_model(stack.get_model, self.spec.student_model_choice, rwkv_type=self.spec.rwkv_type, dtype=self.spec.dtype)
+        teacher = _load_model(
+            stack.get_model,
+            self.spec.teacher_model_choice,
+            rwkv_type=self.spec.rwkv_type,
+            dtype=self.spec.dtype,
+        )
+        student = _load_model(
+            stack.get_model,
+            self.spec.student_model_choice,
+            rwkv_type=self.spec.rwkv_type,
+            dtype=self.spec.dtype,
+        )
         _log(f"teacher/student models ready dt={time.perf_counter() - t0:.2f}s")
         teacher_model, teacher_full, teacher_tokenizer = teacher
         teacher_config, teacher_params, teacher_scan_map, teacher_es_map = teacher_full
@@ -131,11 +142,6 @@ class RWKVDistillObjective:
         self._eval_count += 1
         return score, se
 
-    def evaluate_many(self, x_batch: np.ndarray, *, seed: int) -> tuple[np.ndarray, np.ndarray]:
-        from problems.pre_obj_vector_helpers import evaluate_many_serial
-
-        return evaluate_many_serial(self.evaluate, x_batch, seed=seed)
-
     def configure_embedding(self, num_probes: int) -> None:
         from problems.pre_obj_vector_helpers import configure_embedding_indices
 
@@ -150,17 +156,6 @@ class RWKVDistillObjective:
 
     def embed(self, x: np.ndarray) -> np.ndarray:
         return self.embed_many(np.asarray([x], dtype=np.float64))[0]
-
-    def sample_noise(
-        self,
-        *,
-        seed: int,
-        num_dim_target: float | None = None,
-        num_module_target: float | None = None,
-    ) -> np.ndarray:
-        from problems.pre_obj_vector_helpers import sample_vector_noise
-
-        return sample_vector_noise(dim=self.dim, seed=int(seed), num_dim_target=num_dim_target, num_module_target=num_module_target)
 
 
 def _load_model(get_model, model_choice: str, *, rwkv_type: str, dtype: str | None):

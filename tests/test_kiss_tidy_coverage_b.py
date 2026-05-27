@@ -85,12 +85,24 @@ def test_kiss_tidy_b_dispatch_post_mk_shim_sample_util(monkeypatch, tmp_path):
     assert isinstance(rcs, list)
 
     build_kwargs = []
-    fake_m.build_problem = lambda *a, **k: build_kwargs.append(k) or SimpleNamespace(
-        env=SimpleNamespace(env_name="isaaclab:Fake-v0", problem_seed=0),
-        build_policy=lambda: object(),
+    fake_m.build_problem = lambda *a, **k: (
+        build_kwargs.append(k)
+        or SimpleNamespace(
+            env=SimpleNamespace(env_name="isaaclab:Fake-v0", problem_seed=0),
+            build_policy=lambda: object(),
+            policy_tag="actor-critic-mlp-32-32",
+        )
+    )
+    isaac_cfg = jobs.prep_args_1(
+        str(tmp_path),
+        "isaac",
+        "isaaclab:Fake-v0",
+        "ppo",
+        1,
+        1,
+        1,
         policy_tag="actor-critic-mlp-32-32",
     )
-    isaac_cfg = jobs.prep_args_1(str(tmp_path), "isaac", "isaaclab:Fake-v0", "ppo", 1, 1, 1, policy_tag="actor-critic-mlp-32-32")
     isaac_cfg.video_enable = True
     isaac_cfg.video_num_video_episodes = 1
     jobs.mk_replicates(isaac_cfg)

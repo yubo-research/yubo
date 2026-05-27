@@ -3,7 +3,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from llm.tasks_base import BatchScoringTaskMixin, extract_model_answer, score_generations
+from llm.tasks_base import (
+    BatchScoringTaskMixin,
+    extract_model_answer,
+    score_generations,
+)
 
 
 @dataclass

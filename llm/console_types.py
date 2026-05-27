@@ -45,4 +45,10 @@ def use_console_observer(observer: ConsoleObserver):
         _ACTIVE_OBSERVER.reset(token)
 
 
-__all__ = ["ConsoleEvent", "ConsoleObserver", "_ACTIVE_OBSERVER", "active_console_observer", "use_console_observer"]
+__all__ = [
+    "ConsoleEvent",
+    "ConsoleObserver",
+    "_ACTIVE_OBSERVER",
+    "active_console_observer",
+    "use_console_observer",
+]

@@ -57,9 +57,10 @@ def log_run_header(
     training: Any,
     runtime: Any,
     *,
+    eval_label: str = "eval",
     prefix: str = "",
 ) -> None:
-    print_run_header(algo_name, config, env, training, runtime, prefix=prefix)
+    print_run_header(algo_name, config, env, training, runtime, eval_label=eval_label, prefix=prefix)
 
 
 def log_run_header_basic(
@@ -75,6 +76,7 @@ def log_run_header_basic(
     num_iterations: int,
     device_type: str,
     config_obj: Any | None = None,
+    eval_label: str = "eval",
     prefix: str = "",
 ) -> None:
     config_data: dict[str, Any] = {}
@@ -99,7 +101,7 @@ def log_run_header_basic(
     )
     training = SimpleNamespace(frames_per_batch=int(frames_per_batch), num_iterations=int(num_iterations))
     runtime = SimpleNamespace(device=SimpleNamespace(type=str(device_type)))
-    print_run_header(algo_name, config, env, training, runtime, prefix=prefix)
+    print_run_header(algo_name, config, env, training, runtime, eval_label=eval_label, prefix=prefix)
 
 
 def log_eval_iteration(

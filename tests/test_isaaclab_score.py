@@ -3,7 +3,13 @@ from __future__ import annotations
 import numpy as np
 import pytest
 from gymnasium import spaces
-from isaaclab_score_fakes import FakeIsaacEnv, FakeVectorIsaacEnv, make_fake_dm_control_runtime, make_fake_runtime, make_fake_vector_runtime
+from isaaclab_score_fakes import (
+    FakeIsaacEnv,
+    FakeVectorIsaacEnv,
+    make_fake_dm_control_runtime,
+    make_fake_runtime,
+    make_fake_vector_runtime,
+)
 
 
 def test_isaaclab_score_evaluates_flat_policy_batch():
@@ -221,19 +227,21 @@ def test_isaaclab_score_switches_vector_env_to_single_env():
         score.close()
 
 
-def test_eggroll_policy_tag_builds_torch_policy_for_isaaclab():
-    from policies.eggroll_policy import EggRollActorCriticMLPPolicyFactory, EggRollActorCriticMLPSpec
+@pytest.mark.parametrize(
+    "runtime_factory",
+    [
+        lambda: make_fake_runtime(),
+        lambda: make_fake_dm_control_runtime(),
+    ],
+)
+def test_eggroll_policy_tag_builds_torch_policy(runtime_factory):
+    from policies.eggroll_policy import (
+        EggRollActorCriticMLPPolicyFactory,
+        EggRollActorCriticMLPSpec,
+    )
     from policies.mlp_policy import MLPPolicy
 
-    policy = EggRollActorCriticMLPPolicyFactory(EggRollActorCriticMLPSpec(hidden_dim=4, layers=2))(make_fake_runtime())
-    assert isinstance(policy, MLPPolicy)
-
-
-def test_eggroll_policy_tag_builds_torch_policy_for_dm_control():
-    from policies.eggroll_policy import EggRollActorCriticMLPPolicyFactory, EggRollActorCriticMLPSpec
-    from policies.mlp_policy import MLPPolicy
-
-    policy = EggRollActorCriticMLPPolicyFactory(EggRollActorCriticMLPSpec(hidden_dim=4, layers=2))(make_fake_dm_control_runtime())
+    policy = EggRollActorCriticMLPPolicyFactory(EggRollActorCriticMLPSpec(hidden_dim=4, layers=2))(runtime_factory())
     assert isinstance(policy, MLPPolicy)
 
 
@@ -320,7 +328,13 @@ def test_isaaclab_adapter_unwraps_vector_env_action_space():
 
         def step(self, action):
             assert tuple(action.shape) == (1, 12)
-            return np.zeros((1, 3), dtype=np.float32), np.asarray([0.0]), np.asarray([True]), np.asarray([False]), {}
+            return (
+                np.zeros((1, 3), dtype=np.float32),
+                np.asarray([0.0]),
+                np.asarray([True]),
+                np.asarray([False]),
+                {},
+            )
 
         def close(self):
             return None

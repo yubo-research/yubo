@@ -85,7 +85,11 @@ def run_updates_if_due(
     if step < int(config.collector.init_random_frames) or step % int(config.optim.update_every) != 0:
         return (latest_losses, total_updates)
     for _ in range(int(config.optim.optim_steps_per_batch)):
-        latest_losses = update_step(training_setup, device=device, batch_size=int(config.replay_buffer.batch_size))
+        latest_losses = update_step(
+            training_setup,
+            device=device,
+            batch_size=int(config.replay_buffer.batch_size),
+        )
         total_updates += 1
     return (latest_losses, total_updates)
 

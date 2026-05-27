@@ -246,7 +246,12 @@ def _run_checked(cmd: list[str], *, timeout: int | float) -> subprocess.Complete
     try:
         return subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=timeout)
     except subprocess.TimeoutExpired as exc:
-        return subprocess.CompletedProcess(cmd, 124, stdout=_process_text(exc.stdout), stderr=f"timed out after {timeout}s")
+        return subprocess.CompletedProcess(
+            cmd,
+            124,
+            stdout=_process_text(exc.stdout),
+            stderr=f"timed out after {timeout}s",
+        )
 
 
 def _subprocess_output(result: subprocess.CompletedProcess[str]) -> str:

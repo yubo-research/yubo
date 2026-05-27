@@ -16,8 +16,19 @@ from llm.console_log_files import ConsoleLogFiles
 from llm.console_logging import ConsoleLoggingContext
 from llm.console_pane import PaneState
 from llm.console_tee import tee_stdout_to_exp
-from llm.console_text import channel_for_step, classify_console_line, clean_text, is_attention_diagnostic
-from llm.console_types import _ACTIVE_OBSERVER, ConsoleEvent, ConsoleObserver, active_console_observer, use_console_observer
+from llm.console_text import (
+    channel_for_step,
+    classify_console_line,
+    clean_text,
+    is_attention_diagnostic,
+)
+from llm.console_types import (
+    _ACTIVE_OBSERVER,
+    ConsoleEvent,
+    ConsoleObserver,
+    active_console_observer,
+    use_console_observer,
+)
 
 
 class UnifiedConsoleManager:
@@ -34,13 +45,31 @@ class UnifiedConsoleManager:
             self.observers.append(observer)
 
     async def broadcast_step(self, turn_idx: int, step_data: dict[str, Any]) -> None:
-        await self.broadcast_event(ConsoleEvent(kind="step", channel=channel_for_step(step_data), payload={"turn_idx": turn_idx, **step_data}))
+        await self.broadcast_event(
+            ConsoleEvent(
+                kind="step",
+                channel=channel_for_step(step_data),
+                payload={"turn_idx": turn_idx, **step_data},
+            )
+        )
 
     async def broadcast_tool_call(self, tool_name: str, args: dict[str, Any]) -> None:
-        await self.broadcast_event(ConsoleEvent(kind="tool_call", channel="inference", payload={"tool_name": tool_name, "args": args}))
+        await self.broadcast_event(
+            ConsoleEvent(
+                kind="tool_call",
+                channel="inference",
+                payload={"tool_name": tool_name, "args": args},
+            )
+        )
 
     async def broadcast_reward(self, reward: float, metrics: dict[str, Any]) -> None:
-        await self.broadcast_event(ConsoleEvent(kind="reward", channel="inference", payload={"reward": reward, **metrics}))
+        await self.broadcast_event(
+            ConsoleEvent(
+                kind="reward",
+                channel="inference",
+                payload={"reward": reward, **metrics},
+            )
+        )
 
     async def broadcast_event(self, event: ConsoleEvent) -> None:
         for observer in list(self.observers):
@@ -103,22 +132,51 @@ class SplitConsoleObserver:
         await _on_step(self, turn_idx, step_data)
 
     async def on_tool_call(self, tool_name: str, args: dict[str, Any]) -> None:
-        self.append_inference(f"tool call: {tool_name} args={args}", kind="tool_call", payload={"tool_name": tool_name, "args": args})
+        self.append_inference(
+            f"tool call: {tool_name} args={args}",
+            kind="tool_call",
+            payload={"tool_name": tool_name, "args": args},
+        )
 
     async def on_reward(self, reward: float, metrics: dict[str, Any]) -> None:
         status = metrics.get("status", "unknown")
-        self.append_inference(f"REWARD: {reward:.4f} status={status}", kind="reward", payload={"reward": reward, **metrics})
+        self.append_inference(
+            f"REWARD: {reward:.4f} status={status}",
+            kind="reward",
+            payload={"reward": reward, **metrics},
+        )
 
     async def on_event(self, event: ConsoleEvent) -> None:
         await _on_event(self, event)
 
-    def append_train(self, text: str, *, kind: str = "line", payload: dict[str, Any] | None = None, record: bool = True) -> None:
+    def append_train(
+        self,
+        text: str,
+        *,
+        kind: str = "line",
+        payload: dict[str, Any] | None = None,
+        record: bool = True,
+    ) -> None:
         _append(self, "train", text, kind=kind, payload=payload, record=record)
 
-    def append_inference(self, text: str, *, kind: str = "line", payload: dict[str, Any] | None = None, record: bool = True) -> None:
+    def append_inference(
+        self,
+        text: str,
+        *,
+        kind: str = "line",
+        payload: dict[str, Any] | None = None,
+        record: bool = True,
+    ) -> None:
         _append(self, "inference", text, kind=kind, payload=payload, record=record)
 
-    def append_diagnostics(self, text: str, *, kind: str = "line", payload: dict[str, Any] | None = None, record: bool = True) -> None:
+    def append_diagnostics(
+        self,
+        text: str,
+        *,
+        kind: str = "line",
+        payload: dict[str, Any] | None = None,
+        record: bool = True,
+    ) -> None:
         _append(self, "diagnostics", text, kind=kind, payload=payload, record=record)
 
     def route_line(self, line: str) -> None:
@@ -149,11 +207,25 @@ def _new_panes(max_lines: int) -> dict[str, PaneState]:
     }
 
 
-def _append_exp(observer: SplitConsoleObserver, text: str, *, kind: str = "line", payload: dict[str, Any] | None = None, record: bool = True) -> None:
+def _append_exp(
+    observer: SplitConsoleObserver,
+    text: str,
+    *,
+    kind: str = "line",
+    payload: dict[str, Any] | None = None,
+    record: bool = True,
+) -> None:
     observer.append_train(text, kind=kind, payload=payload, record=record)
 
 
-def _append_model(observer: SplitConsoleObserver, text: str, *, kind: str = "line", payload: dict[str, Any] | None = None, record: bool = True) -> None:
+def _append_model(
+    observer: SplitConsoleObserver,
+    text: str,
+    *,
+    kind: str = "line",
+    payload: dict[str, Any] | None = None,
+    record: bool = True,
+) -> None:
     observer.append_inference(text, kind=kind, payload=payload, record=record)
 
 
@@ -171,16 +243,28 @@ def _close_observer(observer: SplitConsoleObserver) -> None:
 async def _on_step(observer: SplitConsoleObserver, turn_idx: int, step_data: dict[str, Any]) -> None:
     role = str(step_data.get("role", ""))
     if role == "assistant":
-        observer.append_inference(f"[turn {turn_idx}] assistant", kind="assistant", payload={"turn_idx": turn_idx, **step_data})
+        observer.append_inference(
+            f"[turn {turn_idx}] assistant",
+            kind="assistant",
+            payload={"turn_idx": turn_idx, **step_data},
+        )
         observer.append_inference(str(step_data.get("content", "")), record=False)
         return
     if role == "tool":
         name = str(step_data.get("name", "tool"))
-        observer.append_inference(f"[turn {turn_idx}] tool[{name}]", kind="tool", payload={"turn_idx": turn_idx, **step_data})
+        observer.append_inference(
+            f"[turn {turn_idx}] tool[{name}]",
+            kind="tool",
+            payload={"turn_idx": turn_idx, **step_data},
+        )
         observer.append_inference(str(step_data.get("output", step_data.get("content", ""))), record=False)
         return
     content = str(step_data.get("content", step_data.get("output", "")))
-    observer.append_train(f"[turn {turn_idx}] {role}: {content}", kind="step", payload={"turn_idx": turn_idx, **step_data})
+    observer.append_train(
+        f"[turn {turn_idx}] {role}: {content}",
+        kind="step",
+        payload={"turn_idx": turn_idx, **step_data},
+    )
 
 
 async def _on_event(observer: SplitConsoleObserver, event: ConsoleEvent) -> None:
@@ -194,7 +278,14 @@ async def _on_event(observer: SplitConsoleObserver, event: ConsoleEvent) -> None
     _append_by_channel(observer, event.channel, text, kind=event.kind, payload=event.payload)
 
 
-def _append_by_channel(observer: SplitConsoleObserver, channel: str, text: str, *, kind: str, payload: dict[str, Any]) -> None:
+def _append_by_channel(
+    observer: SplitConsoleObserver,
+    channel: str,
+    text: str,
+    *,
+    kind: str,
+    payload: dict[str, Any],
+) -> None:
     if channel == "inference":
         observer.append_inference(text, kind=kind, payload=payload)
     elif channel == "diagnostics":

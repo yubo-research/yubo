@@ -81,8 +81,16 @@ def test_kiss_cov_dm_control_collect_and_mlp_torch_env(monkeypatch):
     monkeypatch.setattr("problems.dm_control_env._parse_env_name", lambda _name: ("cartpole", "swingup"))
     monkeypatch.setattr("dm_control.suite.load", lambda *_args, **_kwargs: _DM())
 
-    monkeypatch.setattr(cu, "_gym_wrapper_without_isaaclab_probe", lambda base: SimpleNamespace(base=base))
-    monkeypatch.setattr(cu.tr_envs, "TransformedEnv", lambda wrapped, *a, **k: SimpleNamespace(wrapped=wrapped, base=wrapped.base))
+    monkeypatch.setattr(
+        cu,
+        "_gym_wrapper_without_isaaclab_probe",
+        lambda base: SimpleNamespace(base=base),
+    )
+    monkeypatch.setattr(
+        cu.tr_envs,
+        "TransformedEnv",
+        lambda wrapped, *a, **k: SimpleNamespace(wrapped=wrapped, base=wrapped.base),
+    )
 
     fake_env_conf = SimpleNamespace(
         make_gym_env=lambda seed=0: SimpleNamespace(reset=lambda seed=None: (None, {}), is_discrete=False),

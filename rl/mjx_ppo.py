@@ -6,6 +6,12 @@ from typing import Any, NamedTuple
 
 import numpy as np
 
+from problems.jax_env_core import (
+    _init_rms,
+    _normalize_obs,
+    _RunningMeanStd,
+    _update_rms,
+)
 from rl import registry
 from rl.mjx_ppo_config import MJXPPOConfig
 
@@ -13,6 +19,7 @@ from rl.mjx_ppo_config import MJXPPOConfig
 class _TrainState(NamedTuple):
     params: dict[str, Any]
     opt_state: Any
+    obs_rms: _RunningMeanStd
     obs: Any
     env_state: Any
     key: Any
@@ -20,7 +27,7 @@ class _TrainState(NamedTuple):
 
 class MJXPPOResult(NamedTuple):
     best_return: float
-    last_eval_return: float
+    last_rollout_return: float
     num_iterations: int
 
 
@@ -44,7 +51,10 @@ def _require_stack():
 def _init_layer(jax, jnp, key, in_dim: int, out_dim: int):
     w_key, _b_key = jax.random.split(key)
     scale = np.sqrt(2.0 / float(in_dim))
-    return {"w": jax.random.normal(w_key, (in_dim, out_dim)) * scale, "b": jnp.zeros((out_dim,))}
+    return {
+        "w": jax.random.normal(w_key, (in_dim, out_dim)) * scale,
+        "b": jnp.zeros((out_dim,)),
+    }
 
 
 def _init_params(jax, jnp, key, obs_dim: int, act_dim: int, hidden: int):
@@ -106,27 +116,36 @@ def _make_train_step(config: MJXPPOConfig, adapter, optimizer):
     minibatch_size = int(config.optim.minibatch_size)
     num_epochs = int(config.optim.num_epochs)
 
-    def rollout(params, obs, env_state, key):
+    def rollout(params, obs, env_state, key, rms):
         def step(carry, _):
-            obs_t, state_t, key_t = carry
+            obs_t, state_t, key_t, rms_t = carry
             key_t, act_key, env_key = jax.random.split(key_t, 3)
-            action, log_prob, raw_action = _sample_action(jax, jnp, params, obs_t, act_key)
+
+            # Normalize observation
+            norm_obs = _normalize_obs(obs_t, rms_t, jnp)
+            action, log_prob, raw_action = _sample_action(jax, jnp, params, norm_obs, act_key)
+
             keys = jax.random.split(env_key, num_envs)
             next_obs, next_state, reward, done, _info = jax.vmap(adapter.step)(keys, state_t, action)
+
+            # Update RMS
+            rms_t = _update_rms(rms_t, next_obs, jnp)
+
             transition = {
                 "obs": obs_t,
                 "raw_action": raw_action,
                 "log_prob": log_prob,
                 "reward": reward,
                 "done": done,
-                "value": _value(params, jnp, obs_t),
+                "value": _value(params, jnp, norm_obs),
             }
-            return (next_obs, next_state, key_t), transition
+            return (next_obs, next_state, key_t, rms_t), transition
 
-        return jax.lax.scan(step, (obs, env_state, key), None, length=num_steps)
+        return jax.lax.scan(step, (obs, env_state, key, rms), None, length=num_steps)
 
-    def advantages(params, last_obs, data):
-        last_value = _value(params, jnp, last_obs)
+    def advantages(params, last_obs, data, rms):
+        norm_last_obs = _normalize_obs(last_obs, rms, jnp)
+        last_value = _value(params, jnp, norm_last_obs)
 
         def step(carry, transition):
             gae, next_value = carry
@@ -138,13 +157,15 @@ def _make_train_step(config: MJXPPOConfig, adapter, optimizer):
         _carry, adv = jax.lax.scan(step, (jnp.zeros_like(last_value), last_value), data, reverse=True)
         return adv, adv + data["value"]
 
-    def loss_fn(params, batch):
-        mean, std = _policy(params, jnp, batch["obs"])
+    def loss_fn(params, batch, rms):
+        # Normalize on-the-fly during update
+        obs = _normalize_obs(batch["obs"], rms, jnp)
+        mean, std = _policy(params, jnp, obs)
         log_prob = _normal_log_prob(jnp, batch["raw_action"], mean, std)
         ratio = jnp.exp(log_prob - batch["log_prob"])
         clipped = jnp.clip(ratio, 1.0 - config.loss.clip_epsilon, 1.0 + config.loss.clip_epsilon)
         policy_loss = -jnp.mean(jnp.minimum(ratio * batch["adv"], clipped * batch["adv"]))
-        value_loss = jnp.mean((_value(params, jnp, batch["obs"]) - batch["target"]) ** 2)
+        value_loss = jnp.mean((_value(params, jnp, obs) - batch["target"]) ** 2)
         entropy = jnp.mean(jnp.sum(jnp.log(std) + 0.5 * jnp.log(2.0 * jnp.pi * jnp.e), axis=-1))
         loss = policy_loss + config.loss.critic_coeff * value_loss - config.loss.entropy_coeff * entropy
         approx_kl = jnp.mean(batch["log_prob"] - log_prob)
@@ -152,15 +173,15 @@ def _make_train_step(config: MJXPPOConfig, adapter, optimizer):
         return loss, (policy_loss, value_loss, entropy, approx_kl, clipfrac)
 
     def update_minibatch(carry, mb):
-        params, opt_state = carry
-        (loss, aux), grads = jax.value_and_grad(loss_fn, has_aux=True)(params, mb)
+        params, opt_state, rms = carry
+        (loss, aux), grads = jax.value_and_grad(loss_fn, has_aux=True)(params, mb, rms)
         updates, opt_state = optimizer.update(grads, opt_state, params)
         params = _optax.apply_updates(params, updates)
-        return (params, opt_state), (loss, *aux)
+        return (params, opt_state, rms), (loss, *aux)
 
     def train_step(state: _TrainState):
-        (next_obs, next_env_state, key), data = rollout(state.params, state.obs, state.env_state, state.key)
-        adv, target = advantages(state.params, next_obs, data)
+        (next_obs, next_env_state, key, next_rms), data = rollout(state.params, state.obs, state.env_state, state.key, state.obs_rms)
+        adv, target = advantages(state.params, next_obs, data, next_rms)
         flat = {key: value.reshape((-1,) + value.shape[2:]) for key, value in data.items()}
         flat["adv"] = ((adv - adv.mean()) / (adv.std() + 1e-8)).reshape(-1)
         flat["target"] = target.reshape(-1)
@@ -168,17 +189,24 @@ def _make_train_step(config: MJXPPOConfig, adapter, optimizer):
         next_key = key
 
         def update_epoch(carry, _):
-            params, opt_state, epoch_key = carry
+            params, opt_state, rms, epoch_key = carry
             epoch_key, perm_key = jax.random.split(epoch_key)
             order = jax.random.permutation(perm_key, flat["adv"].shape[0])
             ordered = {key: value[order] for key, value in flat.items()}
             batches = {key: value[:usable].reshape((-1, minibatch_size) + value.shape[1:]) for key, value in ordered.items()}
-            (params, opt_state), losses = jax.lax.scan(update_minibatch, (params, opt_state), batches)
-            return (params, opt_state, epoch_key), losses
+            (params, opt_state, rms), losses = jax.lax.scan(update_minibatch, (params, opt_state, rms), batches)
+            return (params, opt_state, rms, epoch_key), losses
 
-        (params, opt_state, next_key), losses = jax.lax.scan(update_epoch, (state.params, state.opt_state, next_key), None, length=num_epochs)
+        (params, opt_state, final_rms, next_key), losses = jax.lax.scan(
+            update_epoch,
+            (state.params, state.opt_state, next_rms, next_key),
+            None,
+            length=num_epochs,
+        )
         metrics = {
-            "eval_return": jnp.mean(jnp.sum(data["reward"], axis=0)),
+            "rollout_return": jnp.mean(jnp.sum(data["reward"], axis=0)),
+            "rollout_reward": jnp.mean(data["reward"]),
+            "done_fraction": jnp.mean(data["done"]),
             "loss": jnp.mean(losses[0]),
             "loss_objective": jnp.mean(losses[1]),
             "loss_critic": jnp.mean(losses[2]),
@@ -186,7 +214,7 @@ def _make_train_step(config: MJXPPOConfig, adapter, optimizer):
             "approx_kl": jnp.mean(losses[4]),
             "clipfrac": jnp.mean(losses[5]),
         }
-        return _TrainState(params, opt_state, next_obs, next_env_state, next_key), metrics
+        return _TrainState(params, opt_state, final_rms, next_obs, next_env_state, next_key), metrics
 
     return jax.jit(train_step)
 
@@ -200,8 +228,15 @@ def train_mjx_ppo(config: MJXPPOConfig) -> MJXPPOResult:
     reset_keys = jax.random.split(reset_key, int(config.collector.num_envs))
     obs, env_state = jax.vmap(adapter.reset)(reset_keys)
     params = _init_params(jax, jnp, param_key, obs_dim, act_dim, int(config.hidden_size))
-    optimizer = optax.chain(optax.clip_by_global_norm(float(config.optim.max_grad_norm)), optax.adam(float(config.optim.lr)))
-    state = _TrainState(params, optimizer.init(params), obs, env_state, key)
+
+    # Initialize RMS
+    obs_rms = _init_rms(jnp, (obs_dim,))
+
+    optimizer = optax.chain(
+        optax.clip_by_global_norm(float(config.optim.max_grad_norm)),
+        optax.adam(float(config.optim.lr)),
+    )
+    state = _TrainState(params, optimizer.init(params), obs_rms, obs, env_state, key)
     train_step = _make_train_step(config, adapter, optimizer)
     iterations = int(config.collector.total_frames) // (int(config.collector.num_envs) * int(config.collector.num_steps))
     exp_dir = Path(config.exp_dir) / f"seed_{int(config.seed)}"
@@ -212,7 +247,6 @@ def train_mjx_ppo(config: MJXPPOConfig) -> MJXPPOResult:
 
     start = time.time()
     best_return = float("-inf")
-    last_return = float("nan")
     print(
         f"[rl/ppo/mjx] env_tag={config.env_tag} seed={config.seed} obs_dim={obs_dim} act_dim={act_dim} num_envs={config.collector.num_envs} num_steps={config.collector.num_steps} iters={iterations}",
         flush=True,
@@ -229,19 +263,24 @@ def train_mjx_ppo(config: MJXPPOConfig) -> MJXPPOResult:
         num_iterations=iterations,
         device_type=str(jax.default_backend()),
         config_obj=config,
+        eval_label="rollout",
     )
+    last_rollout_return = float("nan")
     for iteration in range(1, iterations + 1):
         state, metrics = train_step(state)
         metrics_host = {key: float(value) for key, value in jax.device_get(metrics).items()}
-        last_return = metrics_host["eval_return"]
-        best_return = max(best_return, last_return)
+        last_rollout_return = metrics_host["rollout_return"]
+        best_return = max(best_return, last_rollout_return)
         if iteration % int(config.log_interval) == 0 or iteration == iterations:
             elapsed = time.time() - start
             global_step = iteration * int(config.collector.num_envs) * int(config.collector.num_steps)
             record = {
                 "iteration": iteration,
                 "global_step": global_step,
-                "eval_return": last_return,
+                "eval_return": None,
+                "rollout_return": last_rollout_return,
+                "rollout_reward": metrics_host["rollout_reward"],
+                "done_fraction": metrics_host["done_fraction"],
                 "best_return": best_return,
                 "approx_kl": metrics_host["approx_kl"],
                 "clipfrac": metrics_host["clipfrac"],
@@ -257,13 +296,20 @@ def train_mjx_ppo(config: MJXPPOConfig) -> MJXPPOResult:
                 iterations,
                 int(config.collector.num_envs) * int(config.collector.num_steps),
                 elapsed,
-                eval_return=last_return,
+                eval_return=last_rollout_return,
                 best_return=best_return,
-                algo_metrics={"kl": metrics_host["approx_kl"], "clipfrac": metrics_host["clipfrac"]},
+                algo_metrics={
+                    "kl": metrics_host["approx_kl"],
+                    "clipfrac": metrics_host["clipfrac"],
+                },
                 algo_name="ppo",
             )
     logger.log_run_footer(best_return, iterations, time.time() - start, algo_name="ppo")
-    return MJXPPOResult(best_return=best_return, last_eval_return=last_return, num_iterations=iterations)
+    return MJXPPOResult(
+        best_return=best_return,
+        last_rollout_return=last_rollout_return,
+        num_iterations=iterations,
+    )
 
 
 def register() -> None:

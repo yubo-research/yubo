@@ -35,7 +35,13 @@ _EGGROLL_TURBO_OPTION_KEYS = {
 }
 
 
-def _turbo_enn(ctx: _SimpleContext, *, opts: dict | None = None, designer_name: str = "turbo-enn", **kw):
+def _turbo_enn(
+    ctx: _SimpleContext,
+    *,
+    opts: dict | None = None,
+    designer_name: str = "turbo-enn",
+    **kw,
+):
     opts = dict(opts or {})
     allowed = _TURBO_OPTION_KEYS | _EGGROLL_TURBO_OPTION_KEYS
     unknown = set(opts) - allowed

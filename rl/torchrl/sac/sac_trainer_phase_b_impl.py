@@ -34,7 +34,13 @@ def build_sac_collector(
     collector_policy = td_nn.TensorDictSequential(modules.actor, scale_action)
     if runtime.collector_backend == "single":
         if uses_native_isaaclab_collect_env(env_setup.env_conf):
-            vec_env = _make_collect_env_sac(env_setup.env_conf, env_setup, env_index=0, num_envs=num_envs, device=runtime.device)
+            vec_env = _make_collect_env_sac(
+                env_setup.env_conf,
+                env_setup,
+                env_index=0,
+                num_envs=num_envs,
+                device=runtime.device,
+            )
         elif num_envs == 1:
             vec_env = _make_collect_env_sac(env_setup.env_conf, env_setup, env_index=0)
         else:
@@ -216,7 +222,13 @@ def process_sac_batch(batch, config, modules, training, runtime, env_setup, late
 
     def _run_one_update() -> None:
         nonlocal latest_losses, total_updates
-        latest_losses = update_step(config, modules, training, device=runtime.device, batch_size=int(config.replay_buffer.batch_size))
+        latest_losses = update_step(
+            config,
+            modules,
+            training,
+            device=runtime.device,
+            batch_size=int(config.replay_buffer.batch_size),
+        )
         total_updates += 1
 
     run_chunked_updates(n_updates_due, int(config.optim.learner_update_chunk_size), _run_one_update)

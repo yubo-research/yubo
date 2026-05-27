@@ -5,7 +5,13 @@ from pathlib import Path
 import pytest
 
 from rl.torchrl.sac import train_sac
-from rl.torchrl.sac.config import SACCollectorConfig, SACConfig, SACEvalConfig, SACOptimConfig, SACReplayBufferConfig
+from rl.torchrl.sac.config import (
+    SACCollectorConfig,
+    SACConfig,
+    SACEvalConfig,
+    SACOptimConfig,
+    SACReplayBufferConfig,
+)
 
 _EXPECTED_STEPS = [32, 64, 96]
 _EXPECTED_TOTAL_UPDATES = [14, 30, 46]

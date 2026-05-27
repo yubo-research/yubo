@@ -63,7 +63,11 @@ class EnvConf:
             num_envs = kwargs.get("num_envs", 1)
             return UnifiedMJXWarpAdapter(self.env_name[5:], backend="warp", num_envs=num_envs)
         if self.env_name[:2] in ("f:", "g:"):
-            env = pure_functions.make(self.env_name, problem_seed=self.problem_seed, distort=self.env_name[:2] == "f:")
+            env = pure_functions.make(
+                self.env_name,
+                problem_seed=self.problem_seed,
+                distort=self.env_name[:2] == "f:",
+            )
         elif self.env_name.startswith("dm_control/"):
             make_dm_control_env = get_atari_dm_bindings().make_dm_control_env
             env = make_dm_control_env(
@@ -114,7 +118,13 @@ class EnvConf:
             env = NoiseMaker(env, self.noise_level)
         return env
 
-    def make_gym_env(self, *, seed: int | None = None, render_mode: str | None = "rgb_array", **kwargs) -> gym.Env:
+    def make_gym_env(
+        self,
+        *,
+        seed: int | None = None,
+        render_mode: str | None = "rgb_array",
+        **kwargs,
+    ) -> gym.Env:
         """Unified creation path for Gymnasium-compatible environments.
 
         Handles:

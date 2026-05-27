@@ -53,7 +53,15 @@ def test_require_sandbox_backend_ready_checks_lean_image_offline(monkeypatch):
 
     assert calls[0] == ["docker", "version"]
     assert calls[1] == ["docker", "image", "inspect", "lean-img"]
-    assert calls[2][:7] == ["docker", "run", "--rm", "--network", "none", "--entrypoint", "/bin/sh"]
+    assert calls[2][:7] == [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--entrypoint",
+        "/bin/sh",
+    ]
     assert calls[2][7] == "lean-img"
     assert "yubo-lean /tmp/yubo_preflight.lean" in calls[2][-1]
 
@@ -129,7 +137,11 @@ async def test_local_docker_sandbox_client_supports_sudo_runtime(monkeypatch):
 async def test_prime_backend_requires_auth_before_import(monkeypatch):
     monkeypatch.setenv("THM_SANDBOX_BACKEND", "prime")
     monkeypatch.delenv("PRIME_API_KEY", raising=False)
-    monkeypatch.setattr(thm_sandbox.Path, "home", lambda *args: thm_sandbox.Path("/tmp/yubo-no-prime-config"))
+    monkeypatch.setattr(
+        thm_sandbox.Path,
+        "home",
+        lambda *args: thm_sandbox.Path("/tmp/yubo-no-prime-config"),
+    )
 
     with pytest.raises(RuntimeError, match="configured for Prime"):
         await thm_sandbox.build_sandbox_client()

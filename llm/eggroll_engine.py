@@ -10,7 +10,11 @@ from typing import Any
 import numpy as np
 
 from llm.config import LLMConfig
-from llm.engine_pool import collective_results_ok, ray_runtime_env, transport_info_by_tensor_rank
+from llm.engine_pool import (
+    collective_results_ok,
+    ray_runtime_env,
+    transport_info_by_tensor_rank,
+)
 from llm.es import (
     summarize_fitness,
 )

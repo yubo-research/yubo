@@ -138,7 +138,11 @@ class ProofEpisode:
             )
         )
         messages.append({"role": "tool", "content": output, "tool_call_id": tool_call.id})
-        await _broadcast(self.console, turn_idx, {"role": "tool", "name": tool_call.name, "output": output})
+        await _broadcast(
+            self.console,
+            turn_idx,
+            {"role": "tool", "name": tool_call.name, "output": output},
+        )
 
     async def _score_state(self, case: Case, sandbox_id: str, state: "_ProofState") -> None:
         state.reward = await self.env.rubric.score_state(
@@ -247,7 +251,14 @@ async def _broadcast(console: Any | None, turn_idx: int, step: dict[str, Any]) -
 def _final_signal(case: Case, turns: list[Turn], state: _ProofState, latency_s: float) -> Signal:
     if state.status == "wrong" and state.placeholder:
         state.status = "placeholder"
-    turns.append(Turn(kind="system", name="final", text=state.status, data={"status": state.status}))
+    turns.append(
+        Turn(
+            kind="system",
+            name="final",
+            text=state.status,
+            data={"status": state.status},
+        )
+    )
     return Signal(
         reward=float(state.reward),
         status=state.status,

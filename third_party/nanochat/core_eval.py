@@ -26,7 +26,11 @@ def render_prompts_mc(item, continuation_delimiter, fewshot_examples=None):
 {{ item.query }}{{ continuation_delimiter }}{{ choice }}""".strip()
     template = Template(template_str)
     fewshot_examples = fewshot_examples or []
-    context = {"fewshot_examples": fewshot_examples, "continuation_delimiter": continuation_delimiter, "item": item}
+    context = {
+        "fewshot_examples": fewshot_examples,
+        "continuation_delimiter": continuation_delimiter,
+        "item": item,
+    }
     prompts = [template.render(choice=choice, **context) for choice in item["choices"]]
     return prompts
 
@@ -41,7 +45,11 @@ def render_prompts_schema(item, continuation_delimiter, fewshot_examples=None):
 {{ context }}{{ continuation_delimiter }}{{ item.continuation }}""".strip()
     template = Template(template_str)
     fewshot_examples = fewshot_examples or []
-    context = {"fewshot_examples": fewshot_examples, "continuation_delimiter": continuation_delimiter, "item": item}
+    context = {
+        "fewshot_examples": fewshot_examples,
+        "continuation_delimiter": continuation_delimiter,
+        "item": item,
+    }
     prompts = [template.render(context=context_option, **context) for context_option in item["context_options"]]
     return prompts
 
@@ -60,7 +68,11 @@ def render_prompts_lm(item, continuation_delimiter, fewshot_examples=None):
 {{ item.context | trim }}{{ continuation_delimiter }}{% if include_continuation %}{{ item.continuation }}{% endif %}""".strip()
     template = Template(template_str)
     fewshot_examples = fewshot_examples or []
-    context = {"fewshot_examples": fewshot_examples, "continuation_delimiter": continuation_delimiter, "item": item}
+    context = {
+        "fewshot_examples": fewshot_examples,
+        "continuation_delimiter": continuation_delimiter,
+        "item": item,
+    }
     # Return two prompts: without and with the continuation
     # Use stripped prompts to avoid trailing whitespace tokenization issues
     prompt_without = template.render(include_continuation=False, **context).strip()
@@ -140,9 +152,11 @@ def forward_model(model, input_ids):
     # Roll the tensor to the left by one position to get the (autoregressive) target ids
     target_ids = torch.roll(input_ids, shifts=-1, dims=1)
     # Calculate cross entropy at all positions
-    losses = torch.nn.functional.cross_entropy(outputs.view(batch_size * seq_len, -1), target_ids.view(batch_size * seq_len), reduction="none").view(
-        batch_size, seq_len
-    )
+    losses = torch.nn.functional.cross_entropy(
+        outputs.view(batch_size * seq_len, -1),
+        target_ids.view(batch_size * seq_len),
+        reduction="none",
+    ).view(batch_size, seq_len)
     # Set the last column to be nan because there is no autoregressive loss there
     losses[:, -1] = float("nan")
     # Get the argmax predictions at each position

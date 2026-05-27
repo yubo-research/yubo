@@ -1,0 +1,38 @@
+# HalfCheetah-v5 SAC Expert (MJX/JAX).
+# Optimized for high-throughput training on JAX/MJX.
+#
+# Run:
+#   ./ops/rl.py local configs/rl/mjx/halfcheetah_sac_expert.toml
+
+[rl]
+algo = "mjx_sac"
+
+[rl.mjx_sac]
+exp_dir = "runs/rl/mjx/halfcheetah_sac_expert"
+env_tag = "gymnasium:HalfCheetah-v5"
+seed = 2
+hidden_size = 256
+log_interval = 10
+
+[rl.mjx_sac.collector]
+total_frames = 3000000
+num_envs = 1024
+num_steps = 1
+replay_size = 1000000
+batch_size = 1024
+updates_per_iter = 128
+
+[rl.mjx_sac.optim]
+lr_actor = 3e-4
+lr_critic = 3e-4
+lr_alpha = 3e-4
+
+[rl.mjx_sac.loss]
+gamma = 0.99
+tau = 0.005
+alpha_init = 0.2
+target_entropy = -6.0
+
+[rl.run]
+num_reps = 1
+workers = 1

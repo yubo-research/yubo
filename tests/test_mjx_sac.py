@@ -5,11 +5,15 @@ from types import SimpleNamespace
 
 def test_mjx_sac_config_sections_parse() -> None:
     from rl.mjx_sac_config import MJXSACConfig, MJXSACSections
-    from rl.mjx_sac_config_sections import MJXSACCollectorConfig, MJXSACLossConfig, MJXSACOptimConfig
+    from rl.mjx_sac_config_sections import (
+        MJXSACCollectorConfig,
+        MJXSACLossConfig,
+        MJXSACOptimConfig,
+    )
 
     cfg = MJXSACConfig.from_dict(
         {
-            "env_tag": "brax:ant",
+            "env_tag": "mujoco_playground:CheetahRun",
             "hidden_size": 32,
             "collector": {"num_envs": 8, "num_steps": 2, "batch_size": 16},
             "optim": {"lr_actor": 1e-4},
@@ -20,14 +24,14 @@ def test_mjx_sac_config_sections_parse() -> None:
     assert isinstance(cfg.collector, MJXSACCollectorConfig)
     assert isinstance(cfg.optim, MJXSACOptimConfig)
     assert isinstance(cfg.loss, MJXSACLossConfig)
-    assert cfg.env_tag == "brax:ant"
+    assert cfg.env_tag == "mujoco_playground:CheetahRun"
     assert cfg.hidden_size == 32
     assert cfg.collector.num_envs == 8
     assert cfg.collector.num_steps == 2
     assert cfg.collector.batch_size == 16
     assert cfg.optim.lr_actor == 1e-4
     assert cfg.loss.tau == 0.01
-    assert cfg.to_dict()["env_tag"] == "brax:ant"
+    assert cfg.to_dict()["env_tag"] == "mujoco_playground:CheetahRun"
 
 
 def test_register_mjx_sac() -> None:
@@ -46,9 +50,9 @@ def test_register_mjx_sac() -> None:
 def test_MJXSACResult() -> None:
     from rl.mjx_sac import MJXSACResult
 
-    result = MJXSACResult(best_return=1.0, last_eval_return=0.5, num_steps=4)
+    result = MJXSACResult(best_return=1.0, last_rollout_return=0.5, num_steps=4)
     assert result.best_return == 1.0
-    assert result.last_eval_return == 0.5
+    assert result.last_rollout_return == 0.5
     assert result.num_steps == 4
 
 
@@ -85,10 +89,13 @@ def test_train_mjx_sac_orchestrates_with_mock_runtime(monkeypatch, tmp_path) -> 
     def fake_train_step(state):
         calls["step"] += 1
         return state, {
-            "eval_return": float(calls["step"]),
+            "rollout_return": float(calls["step"]),
+            "rollout_reward": 0.25,
+            "done_fraction": 0.5,
             "loss_actor": 0.1,
             "loss_critic": 0.2,
             "loss_alpha": 0.3,
+            "alpha_value": 0.4,
         }
 
     monkeypatch.setattr(mjx_sac, "_make_runtime", lambda _cfg: runtime)
@@ -98,7 +105,7 @@ def test_train_mjx_sac_orchestrates_with_mock_runtime(monkeypatch, tmp_path) -> 
     result = mjx_sac.train_mjx_sac(cfg)
 
     assert result.best_return == 2.0
-    assert result.last_eval_return == 2.0
+    assert result.last_rollout_return == 2.0
     assert result.num_steps == 4
     assert calls["step"] == 2
     assert (tmp_path / "seed_0" / "metrics.jsonl").exists()

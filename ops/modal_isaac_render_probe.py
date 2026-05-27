@@ -242,7 +242,10 @@ def main(command: str = "probe") -> None:
     print(f"[isaac-render-probe] gpu={_GPU!r}", flush=True)
     print(f"[isaac-render-probe] base_image={_BASE_IMAGE!r}", flush=True)
     print(f"[isaac-render-probe] isaac_sim_image={_ISAAC_SIM_IMAGE!r}", flush=True)
-    print(f"[isaac-render-probe] nvidia_driver_version={_NVIDIA_DRIVER_VERSION!r}", flush=True)
+    print(
+        f"[isaac-render-probe] nvidia_driver_version={_NVIDIA_DRIVER_VERSION!r}",
+        flush=True,
+    )
     print(f"[isaac-render-probe] command={command!r}", flush=True)
     if command.strip().startswith("official-nvidia-"):
         run_official_nvidia_render_probe.remote(command)

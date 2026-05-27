@@ -19,12 +19,12 @@ def run_ppo_eval_noise_mode_twice(monkeypatch, tmp_path, *, eval_noise_mode: str
     monkeypatch.setattr(
         ppo_core_train,
         "_evaluate_actor",
-        lambda *_args, **kwargs: eval_seeds.append(int(kwargs["eval_seed"])) or float(kwargs["eval_seed"]),
+        lambda *_args, **kwargs: (eval_seeds.append(int(kwargs["eval_seed"])) or float(kwargs["eval_seed"])),
     )
     monkeypatch.setattr(
         episode_rollout,
         "evaluate_for_best",
-        lambda *_args, **kwargs: heldout_noise_indices.append(int(kwargs["i_noise"])) or 0.0,
+        lambda *_args, **kwargs: (heldout_noise_indices.append(int(kwargs["i_noise"])) or 0.0),
     )
     monkeypatch.setattr(
         op_deps.torchrl_actor_eval,

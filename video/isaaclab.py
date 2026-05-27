@@ -4,7 +4,11 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-from problems.isaaclab_env_adapters import get_isaaclab_session, is_isaaclab_env_tag, isaaclab_video_launcher_kwargs
+from problems.isaaclab_env_adapters import (
+    get_isaaclab_session,
+    is_isaaclab_env_tag,
+    isaaclab_video_launcher_kwargs,
+)
 from video.isaaclab_viewport import capture_isaaclab_viewport_frame
 from video.rollout import _open_frame_video_writer, _rollout_episode_body
 

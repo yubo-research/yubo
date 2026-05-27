@@ -29,7 +29,10 @@ if TYPE_CHECKING:
     import rl.torchrl.ppo.actor_eval as torchrl_actor_eval
     from analysis.data_io import write_config
     from problems.problem import build_problem
-    from rl.torchrl.ppo.checkpoint_io import save_final_checkpoint, save_periodic_checkpoint
+    from rl.torchrl.ppo.checkpoint_io import (
+        save_final_checkpoint,
+        save_periodic_checkpoint,
+    )
 
     build_eval_plan = eval_noise.build_eval_plan
     normalize_eval_noise_mode = eval_noise.normalize_eval_noise_mode
@@ -54,7 +57,10 @@ _EXPORTS: dict[str, tuple[str, str | None]] = {
     "normalize_eval_noise_mode": ("rl.eval_noise", "normalize_eval_noise_mode"),
     "torchrl_actor_eval": ("rl.torchrl.ppo.actor_eval", None),
     "save_final_checkpoint": ("rl.torchrl.ppo.checkpoint_io", "save_final_checkpoint"),
-    "save_periodic_checkpoint": ("rl.torchrl.ppo.checkpoint_io", "save_periodic_checkpoint"),
+    "save_periodic_checkpoint": (
+        "rl.torchrl.ppo.checkpoint_io",
+        "save_periodic_checkpoint",
+    ),
 }
 
 

@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import dataclasses
 
-from rl.config_model_defaults import apply_sac_env_model_defaults, reject_model_config_keys
+from rl.config_model_defaults import (
+    apply_sac_env_model_defaults,
+    reject_model_config_keys,
+)
 from rl.core.grouped_config import dataclass_field_names, parse_dataclass_section
 from rl.core.torchrl_runtime import TorchRLRuntimeCapabilities, resolve_torchrl_runtime
 from rl.core.torchrl_runtime_dtos import TorchRLRuntime, TorchRLRuntimeRequest
@@ -57,7 +60,15 @@ class SACConfig:
     def from_dict(cls, raw: dict) -> "SACConfig":
         reject_model_config_keys(raw, algo="sac")
         apply_sac_env_model_defaults(raw)
-        sections = {"collector", "replay_buffer", "optim", "loss", "target_net_updater", "eval", "checkpoint"}
+        sections = {
+            "collector",
+            "replay_buffer",
+            "optim",
+            "loss",
+            "target_net_updater",
+            "eval",
+            "checkpoint",
+        }
         root_fields = dataclass_field_names(cls) - sections
         unknown = sorted(set(raw) - root_fields - sections)
         if unknown:

@@ -32,7 +32,14 @@ class EnginePoolConfig:
 
 
 class VLLMEnginePool:
-    def __init__(self, *, ray: Any, engines: list[Any], placement_groups: list[Any], use_async: bool = False) -> None:
+    def __init__(
+        self,
+        *,
+        ray: Any,
+        engines: list[Any],
+        placement_groups: list[Any],
+        use_async: bool = False,
+    ) -> None:
         self._ray = ray
         self.engines = engines
         self._placement_groups = placement_groups
@@ -103,7 +110,12 @@ class VLLMEnginePool:
                 )
                 for strategy in strategies
             ]
-            pool = cls(ray=ray, engines=actors, placement_groups=placement_groups, use_async=cfg.use_async)
+            pool = cls(
+                ray=ray,
+                engines=actors,
+                placement_groups=placement_groups,
+                use_async=cfg.use_async,
+            )
             pool.init_worker_groups()
             return pool
         except Exception:
@@ -251,7 +263,12 @@ def ensure_ray(ray: Any) -> None:
         return
     runtime_env = ray_runtime_env()
     try:
-        ray.init(address="auto", include_dashboard=False, ignore_reinit_error=True, runtime_env=runtime_env)
+        ray.init(
+            address="auto",
+            include_dashboard=False,
+            ignore_reinit_error=True,
+            runtime_env=runtime_env,
+        )
     except Exception:
         ray.init(include_dashboard=False, ignore_reinit_error=True, runtime_env=runtime_env)
 

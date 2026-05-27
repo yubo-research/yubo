@@ -53,7 +53,10 @@ def _is_isaaclab_video_error(exc: Exception) -> bool:
 
 def _isaaclab_video_skip_reason(env_conf: Any) -> str | None:
     try:
-        from problems.isaaclab_env_adapters import is_isaaclab_env_tag, isaaclab_rendering_available
+        from problems.isaaclab_env_adapters import (
+            is_isaaclab_env_tag,
+            isaaclab_rendering_available,
+        )
     except Exception:
         return None
     env_name = str(getattr(env_conf, "env_name", ""))
@@ -78,7 +81,10 @@ def _is_isaaclab_video_env(env_conf: Any) -> bool:
 def _isaaclab_episode_renderer(env_conf: Any):
     if not _is_isaaclab_video_env(env_conf):
         return None
-    from video.isaaclab import ensure_isaaclab_video_launcher, render_isaaclab_video_episode
+    from video.isaaclab import (
+        ensure_isaaclab_video_launcher,
+        render_isaaclab_video_episode,
+    )
 
     ensure_isaaclab_video_launcher(env_conf)
     return render_isaaclab_video_episode
@@ -215,7 +221,10 @@ def render_policy_videos(
     isaaclab_renderer = _isaaclab_episode_renderer(env_conf)
     isaaclab_skip_reason = None if isaaclab_renderer is not None else _isaaclab_video_skip_reason(env_conf)
     if isaaclab_skip_reason is not None:
-        print(f"[video] skipping IsaacLab video capture: {isaaclab_skip_reason}", flush=True)
+        print(
+            f"[video] skipping IsaacLab video capture: {isaaclab_skip_reason}",
+            flush=True,
+        )
         return
     if selection == "best":
         episode_returns = [

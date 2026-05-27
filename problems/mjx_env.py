@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+from typing import Any, NamedTuple
+
 from problems import jax_env_core as core
+from problems.gymnasium_mujoco_specs import resolve_gymnasium_mujoco_spec
 
 GYMNASIUM_ENV_PREFIX = "gymnasium:"
 
@@ -19,7 +22,12 @@ def parse_gymnasium_env_id(env_name: str) -> str:
     return env_id
 
 
-def _load_gymnasium_model(env_id: str):
+class GymnasiumMJXState(NamedTuple):
+    data: Any
+    steps: Any
+
+
+def _load_gymnasium_env_spec(env_id: str):
     import gymnasium as gym
 
     env = gym.make(env_id)
@@ -27,29 +35,12 @@ def _load_gymnasium_model(env_id: str):
         model = getattr(env.unwrapped, "model", None)
         if model is None:
             raise TypeError(f"Gymnasium env {env_id!r} does not expose an unwrapped MuJoCo model.")
-        return model
+        spec = resolve_gymnasium_mujoco_spec(env.unwrapped)
+        if spec is None:
+            raise ValueError(f"Gymnasium MJX adapter has no verified MuJoCo semantics for {env_id!r}. Add a spec before routing this env through MJX.")
+        return model, spec
     finally:
         env.close()
-
-
-def _qpos_obs(qpos, *, nq: int, qpos0, jnp):
-    if int(nq) <= 1:
-        return qpos
-    # Gymnasium MuJoCo tasks commonly hide absolute x position.
-    return qpos[1:] if qpos0.shape[0] == int(nq) else qpos
-
-
-def _flat_obs(data, model, jnp):
-    qpos = _qpos_obs(data.qpos, nq=int(model.nq), qpos0=jnp.asarray(model.qpos0), jnp=jnp)
-    parts = [jnp.ravel(qpos), jnp.ravel(data.qvel)]
-    if int(model.nsensor) > 0:
-        parts.append(jnp.ravel(data.sensordata))
-    return jnp.concatenate(parts, axis=0).astype(jnp.float32)
-
-
-def _obs_dim(model) -> int:
-    qpos_dim = max(int(model.nq) - 1, 0)
-    return int(qpos_dim + int(model.nv) + int(model.nsensordata))
 
 
 def _action_bounds(model, jnp):
@@ -73,49 +64,82 @@ class GymnasiumMJXAdapter:
         self._jnp = jnp
         self._mjx = mjx
         self.env_id = parse_gymnasium_env_id(env_name)
-        self.model = _load_gymnasium_model(self.env_id)
+        self.model, self.spec = _load_gymnasium_env_spec(self.env_id)
         self.mjx_model = mjx.put_model(self.model)
-        obs_shape = (_obs_dim(self.model),)
+        obs_shape = (self.spec.obs_dim(self.model),)
         low, high = _action_bounds(self.model, jnp)
         self.observation_space = core._gymnax_box_from_shape(spaces, jnp, obs_shape)
         self.action_space = spaces.Box(low=low, high=high, shape=low.shape, dtype=jnp.float32)
 
     def reset(self, key):
+        data = self._reset_data(key)
+        return self.spec.obs(data, self.model, self._jnp), GymnasiumMJXState(
+            data=data,
+            steps=self._jnp.asarray(0, dtype=self._jnp.int32),
+        )
+
+    def step(self, key, state, action):
+        step_key, reset_key = self._jax.random.split(key)
+        del step_key
+        action = self.clip_action(action)
+        next_data = self._step_data(state.data, action)
+        next_obs = self.spec.obs(next_data, self.model, self._jnp)
+        reward, info = self.spec.reward_info(state.data, next_data, action, self.model, self._jnp)
+        next_steps = state.steps + self._jnp.asarray(1, dtype=self._jnp.int32)
+        terminated = self.spec.terminated(next_data, self._jnp)
+        truncated = next_steps >= self._jnp.asarray(int(self.spec.max_episode_steps), dtype=self._jnp.int32)
+        done_bool = self._jnp.logical_or(terminated, truncated)
+        reset_data = self._reset_data(reset_key)
+        reset_obs = self.spec.obs(reset_data, self.model, self._jnp)
+        keep_state = GymnasiumMJXState(data=next_data, steps=next_steps)
+        reset_state = GymnasiumMJXState(
+            data=reset_data,
+            steps=self._jnp.asarray(0, dtype=self._jnp.int32),
+        )
+        out_state = self._where_state(done_bool, reset_state, keep_state)
+        obs = self._jnp.where(done_bool, reset_obs, next_obs)
+        done = done_bool.astype(self._jnp.float32)
+        return obs, out_state, reward, done, info
+
+    def clip_action(self, action):
+        return core._clip_box_action(self.action_space, self._jnp, action)
+
+    def _reset_data(self, key):
         data = self._mjx.make_data(self.mjx_model)
         qpos_noise, qvel_noise = self._reset_noise(key)
         data = data.replace(
             qpos=self._jnp.asarray(self.model.qpos0, dtype=self._jnp.float32) + qpos_noise,
             qvel=self._jnp.zeros((int(self.model.nv),), dtype=self._jnp.float32) + qvel_noise,
         )
-        return _flat_obs(data, self.model, self._jnp), data
+        return self._mjx.forward(self.mjx_model, data)
 
-    def step(self, _key, state, action):
-        action = self.clip_action(action)
-        next_state = self._mjx.step(self.mjx_model, state.replace(ctrl=action))
-        obs = _flat_obs(next_state, self.model, self._jnp)
-        reward = self._generic_reward(state, next_state)
-        done = self._jnp.asarray(False, dtype=self._jnp.float32)
-        return obs, next_state, reward, done, {}
+    def _step_data(self, data, action):
+        data = data.replace(ctrl=action)
 
-    def clip_action(self, action):
-        return core._clip_box_action(self.action_space, self._jnp, action)
+        def step_once(carry, _):
+            return self._mjx.step(self.mjx_model, carry), None
+
+        next_data, _ = self._jax.lax.scan(step_once, data, xs=None, length=int(self.spec.frame_skip))
+        return next_data
+
+    def _where_state(self, condition, reset_state, keep_state):
+        data = self._jax.tree_util.tree_map(
+            lambda reset_value, keep_value: self._jnp.where(condition, reset_value, keep_value),
+            reset_state.data,
+            keep_state.data,
+        )
+        steps = self._jnp.where(condition, reset_state.steps, keep_state.steps)
+        return GymnasiumMJXState(data=data, steps=steps)
 
     def _reset_noise(self, key):
         qpos_key, qvel_key = self._jax.random.split(key)
+        reset_noise_scale = float(self.spec.reset_noise_scale)
         qpos_noise = self._jax.random.uniform(
             qpos_key,
             (int(self.model.nq),),
-            minval=-0.01,
-            maxval=0.01,
+            minval=-reset_noise_scale,
+            maxval=reset_noise_scale,
             dtype=self._jnp.float32,
         )
-        qvel_noise = self._jax.random.normal(qvel_key, (int(self.model.nv),), dtype=self._jnp.float32) * 0.01
+        qvel_noise = self._jax.random.normal(qvel_key, (int(self.model.nv),), dtype=self._jnp.float32) * reset_noise_scale
         return qpos_noise, qvel_noise
-
-    def _generic_reward(self, state, next_state):
-        if int(self.model.nq) <= 0:
-            return self._jnp.asarray(0.0, dtype=self._jnp.float32)
-        dt = self._jnp.asarray(float(self.model.opt.timestep), dtype=self._jnp.float32)
-        forward = (next_state.qpos[0] - state.qpos[0]) / self._jnp.maximum(dt, 1e-6)
-        ctrl_cost = 1e-3 * self._jnp.sum(next_state.ctrl * next_state.ctrl)
-        return self._jnp.asarray(forward - ctrl_cost, dtype=self._jnp.float32)

@@ -8,7 +8,13 @@ def test_sac_config_from_dict_rejects_explicit_model_fields():
     cfg_mod = importlib.import_module("rl.torchrl.sac.config")
     SACConfig = cfg_mod.SACConfig
     with pytest.raises(ValueError, match="policy_tag for model architecture"):
-        SACConfig.from_dict({"env_tag": "cheetah", "policy_tag": "mlp-32-16", "backbone_hidden_sizes": [128, 64]})
+        SACConfig.from_dict(
+            {
+                "env_tag": "cheetah",
+                "policy_tag": "mlp-32-16",
+                "backbone_hidden_sizes": [128, 64],
+            }
+        )
 
 
 def test_sac_config_from_dict_keeps_grouped_replay_settings():

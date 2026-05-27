@@ -18,7 +18,10 @@ def test_build_env_setup_forwards_parameters(monkeypatch):
         captured["kwargs"] = kwargs
         return SimpleNamespace(gym_conf=SimpleNamespace(), ensure_spaces=lambda: None)
 
-    monkeypatch.setattr("rl.core.env_setup.maybe_register_atari_dm_backends", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(
+        "rl.core.env_setup.maybe_register_atari_dm_backends",
+        lambda *_args, **_kwargs: None,
+    )
     out = build_env_setup(
         env_tag="pend",
         seed=0,

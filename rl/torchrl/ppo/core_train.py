@@ -269,7 +269,12 @@ def _evaluate_actor(
         obs_contract=obs_contract,
         is_discrete=bool(getattr(env, "is_discrete", False)),
     )
-    traj, _ = episode_rollout.collect_denoised_trajectory(eval_env, eval_policy, num_denoise=config.eval.num_denoise, i_noise=int(eval_seed))
+    traj, _ = episode_rollout.collect_denoised_trajectory(
+        eval_env,
+        eval_policy,
+        num_denoise=config.eval.num_denoise,
+        i_noise=int(eval_seed),
+    )
     return float(traj.rreturn)
 
 

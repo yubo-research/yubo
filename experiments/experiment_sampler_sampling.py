@@ -147,7 +147,10 @@ def sample_1(run_config: RunConfig):
 
     shim.seed_all(global_seed_for_run(env_runtime.problem_seed))
 
-    with _temporary_default_device(getattr(rc, "runtime_device", "auto"), env_name=getattr(env_runtime, "env_name", None)):
+    with _temporary_default_device(
+        getattr(rc, "runtime_device", "auto"),
+        env_name=getattr(env_runtime, "env_name", None),
+    ):
         policy = build_policy()
 
         collector_log = BOConsoleCollector() if getattr(rc, "bo_console", True) else Collector()

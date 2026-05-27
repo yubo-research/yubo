@@ -40,6 +40,29 @@ class UHDVectorObjective(Protocol):
     ) -> np.ndarray: ...
 
 
+class UHDVectorObjectiveMixin:
+    def evaluate_many(self, x_batch: np.ndarray, *, seed: int) -> tuple[np.ndarray, np.ndarray]:
+        from problems.pre_obj_vector_helpers import evaluate_many_serial
+
+        return evaluate_many_serial(self.evaluate, x_batch, seed=seed)
+
+    def sample_noise(
+        self,
+        *,
+        seed: int,
+        num_dim_target: float | None = None,
+        num_module_target: float | None = None,
+    ) -> np.ndarray:
+        from problems.pre_obj_vector_helpers import sample_vector_noise
+
+        return sample_vector_noise(
+            dim=self.dim,
+            seed=int(seed),
+            num_dim_target=num_dim_target,
+            num_module_target=num_module_target,
+        )
+
+
 @dataclass(frozen=True)
 class BuiltUHDVectorObjective:
     objective: UHDVectorObjective

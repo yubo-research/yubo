@@ -12,7 +12,11 @@ from tests.llm_test_mocks_vllm import FakeAsyncEngine, FakeOutput
 
 
 def test_llm_registry_resolves_env_and_policy_tags():
-    from llm.registry import policy_uses_chat_template, resolve_llm_env, resolve_llm_policy
+    from llm.registry import (
+        policy_uses_chat_template,
+        resolve_llm_env,
+        resolve_llm_policy,
+    )
 
     env = resolve_llm_env("llm:math:answer-tags:gsm8k")
     verifiers_env = resolve_llm_env("llm:verifiers:gsm8k")

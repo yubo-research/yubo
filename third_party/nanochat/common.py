@@ -14,7 +14,11 @@ from filelock import FileLock
 # The dtype used for compute (matmuls, activations). Master weights stay fp32 for optimizer precision.
 # Linear layers cast their weights to this dtype in forward, replacing torch.amp.autocast.
 # Override with NANOCHAT_DTYPE env var: "bfloat16", "float16", "float32"
-_DTYPE_MAP = {"bfloat16": torch.bfloat16, "float16": torch.float16, "float32": torch.float32}
+_DTYPE_MAP = {
+    "bfloat16": torch.bfloat16,
+    "float16": torch.float16,
+    "float32": torch.float32,
+}
 
 
 def _detect_compute_dtype():
@@ -26,10 +30,16 @@ def _detect_compute_dtype():
         # Older GPUs like V100 (SM 70) and T4 (SM 75) only have fp16 tensor cores
         capability = torch.cuda.get_device_capability()
         if capability >= (8, 0):
-            return torch.bfloat16, f"auto-detected: CUDA SM {capability[0]}{capability[1]} (bf16 supported)"
+            return (
+                torch.bfloat16,
+                f"auto-detected: CUDA SM {capability[0]}{capability[1]} (bf16 supported)",
+            )
         # fp16 training requires GradScaler (not yet implemented), so fall back to fp32.
         # Users can still force fp16 via NANOCHAT_DTYPE=float16 if they know what they're doing.
-        return torch.float32, f"auto-detected: CUDA SM {capability[0]}{capability[1]} (pre-Ampere, bf16 not supported, using fp32)"
+        return (
+            torch.float32,
+            f"auto-detected: CUDA SM {capability[0]}{capability[1]} (pre-Ampere, bf16 not supported, using fp32)",
+        )
     return torch.float32, "auto-detected: no CUDA (CPU/MPS)"
 
 
@@ -60,8 +70,16 @@ class ColoredFormatter(logging.Formatter):
         # Add color to specific parts of the message
         if levelname == "INFO":
             # Highlight numbers and percentages
-            message = re.sub(r"(\d+\.?\d*\s*(?:GB|MB|%|docs))", rf"{self.BOLD}\1{self.RESET}", message)
-            message = re.sub(r"(Shard \d+)", rf"{self.COLORS['INFO']}{self.BOLD}\1{self.RESET}", message)
+            message = re.sub(
+                r"(\d+\.?\d*\s*(?:GB|MB|%|docs))",
+                rf"{self.BOLD}\1{self.RESET}",
+                message,
+            )
+            message = re.sub(
+                r"(Shard \d+)",
+                rf"{self.COLORS['INFO']}{self.BOLD}\1{self.RESET}",
+                message,
+            )
         return message
 
 

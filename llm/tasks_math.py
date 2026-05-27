@@ -6,7 +6,11 @@ from typing import Any
 
 import numpy as np
 
-from llm.tasks_base import BatchScoringTaskMixin, extract_model_answer, score_generations
+from llm.tasks_base import (
+    BatchScoringTaskMixin,
+    extract_model_answer,
+    score_generations,
+)
 
 
 @dataclass(frozen=True)

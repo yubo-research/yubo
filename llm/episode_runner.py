@@ -31,7 +31,12 @@ class EpisodeRunner:
                 except asyncio.TimeoutError as exc:
                     if not self.runtime.convert_exceptions:
                         raise
-                    return failure_signal(case, status="timeout", error=exc, reward=self.runtime.fail_reward)
+                    return failure_signal(
+                        case,
+                        status="timeout",
+                        error=exc,
+                        reward=self.runtime.fail_reward,
+                    )
                 except Exception as exc:
                     if not self.runtime.convert_exceptions:
                         raise

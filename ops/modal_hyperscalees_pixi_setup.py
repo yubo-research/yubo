@@ -9,8 +9,19 @@ from pathlib import Path
 import modal
 import tomllib
 
-from ops.modal_command_helpers import collect_artifacts, logged_command, parse_export_globs, write_artifacts
-from ops.modal_hyperscalees_pixi_base_image import HYPERSCALEES_PIXI_ENV, ISAACLAB_PIXI_ENV, PIXI_BIN, PIXI_HOME, PIXI_MANIFEST_PATH
+from ops.modal_command_helpers import (
+    collect_artifacts,
+    logged_command,
+    parse_export_globs,
+    write_artifacts,
+)
+from ops.modal_hyperscalees_pixi_base_image import (
+    HYPERSCALEES_PIXI_ENV,
+    ISAACLAB_PIXI_ENV,
+    PIXI_BIN,
+    PIXI_HOME,
+    PIXI_MANIFEST_PATH,
+)
 from ops.modal_hyperscalees_pixi_image import mk_image
 from ops.modal_nvidia_vulkan import nvidia_vulkan_icd_script
 

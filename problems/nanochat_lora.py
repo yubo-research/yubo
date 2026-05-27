@@ -143,7 +143,13 @@ class _NanochatSubspaceCodec:
         return direction.astype(np.float64)
 
 
-def _numpy_targeted_low_rank_values(rng: np.random.Generator, *, flat_indices: np.ndarray, shape: tuple[int, ...], rank: int) -> np.ndarray:
+def _numpy_targeted_low_rank_values(
+    rng: np.random.Generator,
+    *,
+    flat_indices: np.ndarray,
+    shape: tuple[int, ...],
+    rank: int,
+) -> np.ndarray:
     """Efficiently generate low-rank values using NumPy."""
     cols = int(shape[-1])
     rows_count = int(np.prod(shape[:-1]))

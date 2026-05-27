@@ -139,7 +139,10 @@ def test_uhd_text_nll_config_fields_parse():
 def test_uhd_text_nll_config_rejects_pass_at_k():
     from ops.exp_uhd import _parse_cfg
 
-    with pytest.raises(ValueError, match="NLL scoring requires samples_per_prompt=1 and pass_at_k=false"):
+    with pytest.raises(
+        ValueError,
+        match="NLL scoring requires samples_per_prompt=1 and pass_at_k=false",
+    ):
         _parse_cfg(
             {
                 "env_tag": "llm:math:gsm8k",
@@ -178,7 +181,12 @@ def test_lora_subspace_codec_searches_b_matrices_only():
 
 def test_vllm_nll_scoring_build_nll_calls_score_nll_responses_nll_sampling_kwargs_nll_scoring_item_target_text():
     from llm.sample_batch import SampleBatch
-    from llm.vllm_nll_scoring import build_nll_calls, nll_scoring_item, score_nll_responses, target_text
+    from llm.vllm_nll_scoring import (
+        build_nll_calls,
+        nll_scoring_item,
+        score_nll_responses,
+        target_text,
+    )
 
     tokenizer = SimpleNamespace(encode=_char_encode)
     task = SimpleNamespace(target_text=_target_text)
@@ -232,7 +240,10 @@ def test_text_objective_generate_nll_fitnesses_text_score_mode(tmp_path):
             {ord("A"): -0.75},
         ]
     )
-    runtime = SimpleNamespace(pool=SimpleNamespace(sample=lambda calls: _sample_batches(raw)), sampling_kwargs=None)
+    runtime = SimpleNamespace(
+        pool=SimpleNamespace(sample=lambda calls: _sample_batches(raw)),
+        sampling_kwargs=None,
+    )
 
     fitnesses, logs = _generate_fitnesses(obj, runtime, ["Q:"], ["A"], tmp_path, seed=3, x_hash="abc")
 

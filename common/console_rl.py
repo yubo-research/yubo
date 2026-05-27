@@ -26,6 +26,7 @@ def print_run_header(
     *,
     step_label: str = "step",
     total_label: str = "iters",
+    eval_label: str = "eval",
     prefix: str = "",
 ) -> None:
     """Print a compact run header. algo_name selects metric columns (ppo, sac)."""
@@ -69,12 +70,17 @@ def print_run_header(
         parts = [
             f"{first_col:>5}",
             f"{step_label:>9}",
-            f"{'eval':>7}",
+            f"{eval_label:>7}",
             f"{'heldout':>7}",
             f"{'best':>7}",
         ]
     else:
-        parts = [f"{first_col:>9}", f"{'eval':>7}", f"{'heldout':>7}", f"{'best':>7}"]
+        parts = [
+            f"{first_col:>9}",
+            f"{eval_label:>7}",
+            f"{'heldout':>7}",
+            f"{'best':>7}",
+        ]
     for name, width, _ in algo_metrics:
         parts.append(name.rjust(width))
     parts.extend([f"{'time':>7}", f"{'sps':>6}"])

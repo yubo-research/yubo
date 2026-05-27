@@ -2,14 +2,20 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
+import numpy as np
+
 
 def test_mjx_ppo_config_sections_parse() -> None:
     from rl.mjx_ppo_config import MJXPPOConfig, MJXPPOSections
-    from rl.mjx_ppo_config_sections import MJXPPOCollectorConfig, MJXPPOLossConfig, MJXPPOOptimConfig
+    from rl.mjx_ppo_config_sections import (
+        MJXPPOCollectorConfig,
+        MJXPPOLossConfig,
+        MJXPPOOptimConfig,
+    )
 
     cfg = MJXPPOConfig.from_dict(
         {
-            "env_tag": "brax:ant",
+            "env_tag": "mujoco_playground:CheetahRun",
             "hidden_size": 32,
             "collector": {"num_envs": 8, "num_steps": 2},
             "optim": {"lr": 1e-4},
@@ -20,13 +26,13 @@ def test_mjx_ppo_config_sections_parse() -> None:
     assert isinstance(cfg.collector, MJXPPOCollectorConfig)
     assert isinstance(cfg.optim, MJXPPOOptimConfig)
     assert isinstance(cfg.loss, MJXPPOLossConfig)
-    assert cfg.env_tag == "brax:ant"
+    assert cfg.env_tag == "mujoco_playground:CheetahRun"
     assert cfg.hidden_size == 32
     assert cfg.collector.num_envs == 8
     assert cfg.collector.num_steps == 2
     assert cfg.optim.lr == 1e-4
     assert cfg.loss.clip_epsilon == 0.1
-    assert cfg.to_dict()["env_tag"] == "brax:ant"
+    assert cfg.to_dict()["env_tag"] == "mujoco_playground:CheetahRun"
 
 
 def test_register_mjx_ppo() -> None:
@@ -45,9 +51,9 @@ def test_register_mjx_ppo() -> None:
 def test_MJXPPOResult() -> None:
     from rl.mjx_ppo import MJXPPOResult
 
-    result = MJXPPOResult(best_return=1.0, last_eval_return=0.5, num_iterations=4)
+    result = MJXPPOResult(best_return=1.0, last_rollout_return=0.5, num_iterations=4)
     assert result.best_return == 1.0
-    assert result.last_eval_return == 0.5
+    assert result.last_rollout_return == 0.5
     assert result.num_iterations == 4
 
 
@@ -72,7 +78,10 @@ def test_train_mjx_ppo_orchestrates_with_mock_runtime(monkeypatch, tmp_path) -> 
 
         @staticmethod
         def vmap(fn):
-            return lambda keys: ([fn(key)[0] for key in keys], [fn(key)[1] for key in keys])
+            return lambda keys: (
+                [fn(key)[0] for key in keys],
+                [fn(key)[1] for key in keys],
+            )
 
     class FakeOptimizer:
         @staticmethod
@@ -93,13 +102,22 @@ def test_train_mjx_ppo_orchestrates_with_mock_runtime(monkeypatch, tmp_path) -> 
             "log_interval": 1,
         }
     )
-    runtime = _Runtime(FakeJax(), None, fake_optax, SimpleNamespace(reset=lambda _key: ("obs", "env_state")), 3, 2)
+    runtime = _Runtime(
+        FakeJax(),
+        np,
+        fake_optax,
+        SimpleNamespace(reset=lambda _key: ("obs", "env_state")),
+        3,
+        2,
+    )
     calls = {"step": 0}
 
     def fake_train_step(state):
         calls["step"] += 1
         return state, {
-            "eval_return": float(calls["step"]),
+            "rollout_return": float(calls["step"]),
+            "rollout_reward": 0.25,
+            "done_fraction": 0.5,
             "loss": 0.0,
             "loss_objective": 0.1,
             "loss_critic": 0.2,
@@ -116,7 +134,7 @@ def test_train_mjx_ppo_orchestrates_with_mock_runtime(monkeypatch, tmp_path) -> 
     result = mjx_ppo.train_mjx_ppo(cfg)
 
     assert result.best_return == 2.0
-    assert result.last_eval_return == 2.0
+    assert result.last_rollout_return == 2.0
     assert result.num_iterations == 2
     assert calls["step"] == 2
     assert (tmp_path / "seed_0" / "metrics.jsonl").exists()

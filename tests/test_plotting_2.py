@@ -32,11 +32,11 @@ def test_plot_results_allows_distinct_seq_and_batch_reps(monkeypatch):
     )
     monkeypatch.setattr(
         "analysis.plotting_2_comparison.plot_rl_comparison",
-        lambda *args, **kwargs: comparison_calls.append(kwargs) or ("fig_c", "axs_c", "seq_data", "batch_data"),
+        lambda *args, **kwargs: (comparison_calls.append(kwargs) or ("fig_c", "axs_c", "seq_data", "batch_data")),
     )
     monkeypatch.setattr(
         "analysis.plotting_2_comparison.plot_rl_final_comparison",
-        lambda *args, **kwargs: final_calls.append(kwargs) or ("fig_f", "axs_f", "seq_data_f", "batch_data_f"),
+        lambda *args, **kwargs: (final_calls.append(kwargs) or ("fig_f", "axs_f", "seq_data_f", "batch_data_f")),
     )
 
     result = ap2.plot_results(
@@ -249,11 +249,11 @@ def test_plot_results_forwards_renames(monkeypatch):
     )
     monkeypatch.setattr(
         "analysis.plotting_2_comparison.plot_rl_comparison",
-        lambda *args, **kwargs: comparison_calls.append(kwargs) or ("fig_c", "axs_c", "seq_data", "batch_data"),
+        lambda *args, **kwargs: (comparison_calls.append(kwargs) or ("fig_c", "axs_c", "seq_data", "batch_data")),
     )
     monkeypatch.setattr(
         "analysis.plotting_2_comparison.plot_rl_final_comparison",
-        lambda *args, **kwargs: final_calls.append(kwargs) or ("fig_f", "axs_f", "seq_data_f", "batch_data_f"),
+        lambda *args, **kwargs: (final_calls.append(kwargs) or ("fig_f", "axs_f", "seq_data_f", "batch_data_f")),
     )
 
     ap2.plot_results(

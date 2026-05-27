@@ -3,7 +3,11 @@ from __future__ import annotations
 import dataclasses
 
 from rl.core.grouped_config import dataclass_field_names, parse_dataclass_section
-from rl.mjx_ppo_config_sections import MJXPPOCollectorConfig, MJXPPOLossConfig, MJXPPOOptimConfig
+from rl.mjx_ppo_config_sections import (
+    MJXPPOCollectorConfig,
+    MJXPPOLossConfig,
+    MJXPPOOptimConfig,
+)
 
 
 @dataclasses.dataclass
@@ -16,7 +20,7 @@ class MJXPPOSections:
 @dataclasses.dataclass
 class MJXPPOConfig:
     exp_dir: str = "runs/rl/mjx_ppo"
-    env_tag: str = "brax:ant"
+    env_tag: str = "mujoco_playground:CheetahRun"
     seed: int = 0
     hidden_size: int = 64
     log_interval: int = 10

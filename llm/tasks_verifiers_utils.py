@@ -110,7 +110,12 @@ def prompt_messages(raw_prompt: Any) -> list[dict[str, Any]]:
         messages = []
         for msg in raw_prompt:
             if isinstance(msg, dict):
-                messages.append({"role": str(msg.get("role", "user")), "content": str(msg.get("content", ""))})
+                messages.append(
+                    {
+                        "role": str(msg.get("role", "user")),
+                        "content": str(msg.get("content", "")),
+                    }
+                )
             else:
                 messages.append({"role": "user", "content": str(msg)})
         return messages

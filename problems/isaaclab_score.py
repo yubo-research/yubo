@@ -146,7 +146,11 @@ class IsaacLabScore:
         num_dim_target: float | None = None,
         num_module_target: float | None = None,
     ) -> np.ndarray:
-        return self._noise.sample(seed=int(seed), num_dim_target=num_dim_target, num_module_target=num_module_target)
+        return self._noise.sample(
+            seed=int(seed),
+            num_dim_target=num_dim_target,
+            num_module_target=num_module_target,
+        )
 
     def sample_eggroll_noiser_noise(
         self,
@@ -370,11 +374,19 @@ def _try_evaluate_many_vectorized(scorer: IsaacLabScore, xs: np.ndarray, *, seed
         if not np.any(active):
             break
 
-    return (*_summarize_vector_returns(returns, scorer._episodes, num_candidates), int(np.sum(steps)))
+    return (
+        *_summarize_vector_returns(returns, scorer._episodes, num_candidates),
+        int(np.sum(steps)),
+    )
 
 
 def _vector_policy_actions(
-    scorer: IsaacLabScore, xs: np.ndarray, candidate_idx: np.ndarray, obs: np.ndarray, active: np.ndarray, zero_action: np.ndarray
+    scorer: IsaacLabScore,
+    xs: np.ndarray,
+    candidate_idx: np.ndarray,
+    obs: np.ndarray,
+    active: np.ndarray,
+    zero_action: np.ndarray,
 ) -> np.ndarray:
     actions = try_functional_policy_actions(scorer._policy, scorer._codec, xs, candidate_idx, obs, active, zero_action)
     if actions is not None:
@@ -383,7 +395,12 @@ def _vector_policy_actions(
 
 
 def _clone_policy_actions(
-    scorer: IsaacLabScore, xs: np.ndarray, candidate_idx: np.ndarray, obs: np.ndarray, active: np.ndarray, zero_action: np.ndarray
+    scorer: IsaacLabScore,
+    xs: np.ndarray,
+    candidate_idx: np.ndarray,
+    obs: np.ndarray,
+    active: np.ndarray,
+    zero_action: np.ndarray,
 ) -> np.ndarray:
     policies = [scorer._make_loaded_policy(xs[i]) for i in range(int(xs.shape[0]))]
     raw_actions = np.zeros((int(candidate_idx.size), *tuple(zero_action.shape)), dtype=np.float32)
@@ -454,7 +471,12 @@ def _score_candidate(scorer: IsaacLabScore, x: np.ndarray, *, seed: int) -> Scor
         vector_result = _try_evaluate_many_vectorized(scorer, np.asarray(x, dtype=np.float64).reshape(1, -1), seed=int(seed))
         if vector_result is not None:
             means, ses, num_steps = vector_result
-            return Score(value=float(means[0]), stderr=float(ses[0]), episodes=int(scorer._episodes), num_steps=int(num_steps))
+            return Score(
+                value=float(means[0]),
+                stderr=float(ses[0]),
+                episodes=int(scorer._episodes),
+                num_steps=int(num_steps),
+            )
     scorer._codec.load(scorer._policy, np.asarray(x, dtype=np.float64))
     returns: list[float] = []
     total_steps = 0
@@ -464,4 +486,9 @@ def _score_candidate(scorer: IsaacLabScore, x: np.ndarray, *, seed: int) -> Scor
         total_steps += int(num_steps)
     arr = np.asarray(returns, dtype=np.float64)
     stderr = 0.0 if arr.size <= 1 else float(np.std(arr, ddof=0) / math.sqrt(float(arr.size)))
-    return Score(value=float(np.mean(arr)), stderr=stderr, episodes=int(arr.size), num_steps=int(total_steps))
+    return Score(
+        value=float(np.mean(arr)),
+        stderr=stderr,
+        episodes=int(arr.size),
+        num_steps=int(total_steps),
+    )

@@ -33,13 +33,25 @@ def build_uhd_vector_objective(cfg: UHDConfig, *, embed_num_probes: int = 0) -> 
 
     env_tag = str(cfg.env_tag)
     builders = (
-        ("nanochat", lambda: _build_nanochat_objective(cfg, embed_num_probes, NanochatUHDVectorObjective)),
-        ("rwkv-distill", lambda: _build_rwkv_distill_objective(cfg, embed_num_probes, RWKVDistillObjective)),
+        (
+            "nanochat",
+            lambda: _build_nanochat_objective(cfg, embed_num_probes, NanochatUHDVectorObjective),
+        ),
+        (
+            "rwkv-distill",
+            lambda: _build_rwkv_distill_objective(cfg, embed_num_probes, RWKVDistillObjective),
+        ),
         ("text", lambda: _build_text_objective(cfg, embed_num_probes, TextObjective)),
-        ("nanoegg-pretrain", lambda: _build_nanoegg_objective(cfg, embed_num_probes, NanoEggPretrainVectorObjective)),
+        (
+            "nanoegg-pretrain",
+            lambda: _build_nanoegg_objective(cfg, embed_num_probes, NanoEggPretrainVectorObjective),
+        ),
         ("jax-env", lambda: _build_jax_objective(cfg, embed_num_probes)),
         ("isaaclab", lambda: _build_isaaclab_objective(cfg, embed_num_probes)),
-        ("hyperscalees-pretrain", lambda: _build_hyperscalees_objective(cfg, embed_num_probes, HyperscaleESLLMVectorObjective)),
+        (
+            "hyperscalees-pretrain",
+            lambda: _build_hyperscalees_objective(cfg, embed_num_probes, HyperscaleESLLMVectorObjective),
+        ),
     )
     for _name, builder in builders:
         result = builder()
