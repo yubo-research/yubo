@@ -129,6 +129,72 @@ class GymnasiumMujocoSpec:
         return jnp.asarray(self.oracle.terminated(), dtype=bool)
 
 
+@dataclass(frozen=True)
+class _HalfCheetahJaxSemantics:
+    env_id: str
+    family: str
+    frame_skip: int
+    max_episode_steps: int
+    reset_noise_scale: float
+    qvel_noise_type: str
+    obs_dim_value: int
+    obs_qpos_start: int
+    dt: float
+    forward_reward_weight: float
+    ctrl_cost_weight: float
+    bindings: dict[str, Any] = field(default_factory=dict)
+
+    def obs(self, data, model, jnp):
+        del model
+        return jnp.concatenate(
+            [
+                jnp.ravel(data.qpos[self.obs_qpos_start :]),
+                jnp.ravel(data.qvel),
+            ],
+            axis=0,
+        ).astype(jnp.float32)
+
+    def obs_dim(self, model) -> int:
+        del model
+        return int(self.obs_dim_value)
+
+    def reward_info(self, data_before, data_after, action, model, jnp):
+        del model
+        x_position = data_after.qpos[0]
+        x_velocity = (x_position - data_before.qpos[0]) / jnp.asarray(
+            self.dt,
+            dtype=jnp.float32,
+        )
+        reward_forward = self.forward_reward_weight * x_velocity
+        ctrl_cost = self.ctrl_cost_weight * jnp.sum(action * action)
+        reward_ctrl = -ctrl_cost
+        return jnp.asarray(reward_forward + reward_ctrl, dtype=jnp.float32), {
+            "x_position": x_position.astype(jnp.float32),
+            "x_velocity": x_velocity.astype(jnp.float32),
+            "reward_forward": reward_forward.astype(jnp.float32),
+            "reward_ctrl": reward_ctrl.astype(jnp.float32),
+        }
+
+    def step_semantics(self, data_before, data_after, action, model, jnp):
+        obs = self.obs(data_after, model, jnp)
+        reward, info = self.reward_info(data_before, data_after, action, model, jnp)
+        return (
+            obs,
+            reward,
+            jnp.asarray(False, dtype=bool),
+            jnp.asarray(False, dtype=bool),
+            info,
+        )
+
+    def terminated(self, data, jnp):
+        del data
+        return jnp.asarray(False, dtype=bool)
+
+    @property
+    def oracle(self):
+        return None
+
+
 class _HalfCheetahGymnasiumOracle:
     def __init__(self, env) -> None:
         self._env = env
@@ -201,8 +267,36 @@ def _require_halfcheetah_oracle(env):
     return _HalfCheetahGymnasiumOracle(env)
 
 
-def _bind_halfcheetah(env) -> GymnasiumMujocoSpec:
+def _halfcheetah_fast_spec(env) -> _HalfCheetahJaxSemantics:
     unwrapped = env.unwrapped
+    env_id = str(getattr(getattr(unwrapped, "spec", None), "id", "HalfCheetah-v5"))
+    max_episode_steps = int(getattr(getattr(unwrapped, "spec", None), "max_episode_steps", 1000) or 1000)
+    obs_dim = int(np.prod(tuple(int(v) for v in env.observation_space.shape)))
+    exclude_current_positions = bool(getattr(unwrapped, "_exclude_current_positions_from_observation", True))
+    return _HalfCheetahJaxSemantics(
+        env_id=env_id,
+        family="gymnasium_mujoco",
+        frame_skip=int(getattr(unwrapped, "frame_skip", 5)),
+        max_episode_steps=max_episode_steps,
+        reset_noise_scale=float(getattr(unwrapped, "_reset_noise_scale", 0.1)),
+        qvel_noise_type="normal",
+        obs_dim_value=obs_dim,
+        obs_qpos_start=1 if exclude_current_positions else 0,
+        dt=float(unwrapped.dt),
+        forward_reward_weight=float(getattr(unwrapped, "_forward_reward_weight", 1.0)),
+        ctrl_cost_weight=float(getattr(unwrapped, "_ctrl_cost_weight", 0.1)),
+        bindings={
+            "semantics_owner": "yubo_jax_fast",
+            "obs_owner": "problems.gymnasium_mujoco_specs._HalfCheetahJaxSemantics.obs",
+            "reward_owner": "problems.gymnasium_mujoco_specs._HalfCheetahJaxSemantics.reward_info",
+        },
+    )
+
+
+def _bind_halfcheetah(env, *, fast: bool) -> GymnasiumMujocoSpec | _HalfCheetahJaxSemantics:
+    unwrapped = env.unwrapped
+    if fast:
+        return _halfcheetah_fast_spec(env)
     env_id = str(getattr(getattr(unwrapped, "spec", None), "id", "HalfCheetah-v5"))
     max_episode_steps = int(getattr(getattr(unwrapped, "spec", None), "max_episode_steps", 1000) or 1000)
     oracle = _require_halfcheetah_oracle(env)
@@ -223,7 +317,7 @@ def _bind_halfcheetah(env) -> GymnasiumMujocoSpec:
     )
 
 
-def resolve_gymnasium_mujoco_spec(env) -> GymnasiumMujocoSpec | None:
+def resolve_gymnasium_mujoco_spec(env, *, fast: bool = False):
     root_env = env if hasattr(env, "unwrapped") else None
     unwrapped = getattr(env, "unwrapped", env)
     env_id = str(getattr(getattr(unwrapped, "spec", None), "id", ""))
@@ -232,7 +326,7 @@ def resolve_gymnasium_mujoco_spec(env) -> GymnasiumMujocoSpec | None:
             import gymnasium as gym
 
             root_env = gym.make(env_id)
-        return _bind_halfcheetah(root_env)
+        return _bind_halfcheetah(root_env, fast=fast)
     return None
 
 

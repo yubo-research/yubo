@@ -65,9 +65,13 @@ def test_gymnasium_tag_parse_and_registry_surface() -> None:
     from problems.mjx_env import is_gymnasium_env_tag, parse_gymnasium_env_id
 
     assert parse_gymnasium_env_id("gymnasium:HalfCheetah-v5") == "HalfCheetah-v5"
+    assert parse_gymnasium_env_id("gymnasium_fast:HalfCheetah-v5") == "HalfCheetah-v5"
     assert is_gymnasium_env_tag("gymnasium:Ant-v5")
+    assert is_gymnasium_env_tag("gymnasium_fast:Ant-v5")
     assert supports_jax_env_tag("gymnasium:HalfCheetah-v5")
+    assert supports_jax_env_tag("gymnasium_fast:HalfCheetah-v5")
     assert "gymnasium:HalfCheetah-v5" in supported_jax_env_tags()
+    assert "gymnasium_fast:HalfCheetah-v5" in supported_jax_env_tags()
     assert "mjx:xml:/path/to/model.xml" not in supported_jax_env_tags()
 
 
@@ -95,7 +99,14 @@ def test_jax_env_factory_routes_gymnasium_to_mjx(monkeypatch) -> None:
     assert calls == [("gymnasium:HalfCheetah-v5", "jax", "jnp")]
 
 
-def test_mjx_adapter_loads_verified_gymnasium_model(monkeypatch) -> None:
+@pytest.mark.parametrize(
+    ("fast", "semantics_owner", "oracle_is_none"),
+    [
+        (False, "gymnasium", False),
+        (True, "yubo_jax_fast", True),
+    ],
+)
+def test_mjx_adapter_loads_verified_gymnasium_model(monkeypatch, fast, semantics_owner, oracle_is_none) -> None:
     import problems.mjx_env as mjx_env
 
     model = SimpleNamespace(nq=2, nv=1)
@@ -105,11 +116,12 @@ def test_mjx_adapter_loads_verified_gymnasium_model(monkeypatch) -> None:
     gymnasium.make = lambda _env_id: env
     monkeypatch.setitem(sys.modules, "gymnasium", gymnasium)
 
-    loaded_model, spec = mjx_env._load_gymnasium_env_spec("HalfCheetah-v5")
+    loaded_model, spec = mjx_env._load_gymnasium_env_spec("HalfCheetah-v5", fast=fast)
     assert loaded_model is model
     assert spec.env_id == "HalfCheetah-v5"
     assert spec.frame_skip == 5
-    assert spec.bindings["semantics_owner"] == "gymnasium"
+    assert (spec.oracle is None) is oracle_is_none
+    assert spec.bindings["semantics_owner"] == semantics_owner
 
 
 def test_mjx_adapter_rejects_unverified_gymnasium_semantics(monkeypatch) -> None:
@@ -188,6 +200,54 @@ def test_halfcheetah_mjx_reward_delegates_to_gymnasium_oracle() -> None:
     assert calls[0][0] == pytest.approx(10.0)
     np.testing.assert_array_equal(calls[0][1], action)
     assert supported_gymnasium_mujoco_specs() == ("HalfCheetah-v5",)
+
+
+def test_halfcheetah_fast_spec_has_no_gymnasium_oracle_callback() -> None:
+    from problems.gymnasium_mujoco_specs import resolve_gymnasium_mujoco_spec
+
+    env = _fake_halfcheetah_env()
+    spec = resolve_gymnasium_mujoco_spec(env, fast=True)
+
+    assert spec.oracle is None
+    assert spec.obs_dim(SimpleNamespace()) == 2
+
+
+def test_halfcheetah_fast_spec_computes_jax_native_semantics() -> None:
+    from problems.gymnasium_mujoco_specs import resolve_gymnasium_mujoco_spec
+
+    env = _fake_halfcheetah_env()
+    spec = resolve_gymnasium_mujoco_spec(env, fast=True)
+    state = SimpleNamespace(
+        qpos=np.array([1.0, 2.0], dtype=np.float32),
+        qvel=np.array([3.0], dtype=np.float32),
+    )
+    next_state = SimpleNamespace(
+        qpos=np.array([1.5, 2.5], dtype=np.float32),
+        qvel=np.array([3.5], dtype=np.float32),
+    )
+    action = np.array([1.0, -2.0], dtype=np.float32)
+
+    obs, reward, terminated, truncated, info = spec.step_semantics(state, next_state, action, SimpleNamespace(), np)
+
+    np.testing.assert_array_equal(obs, np.asarray([2.5, 3.5], dtype=np.float32))
+    assert reward == pytest.approx(9.5)
+    assert terminated == np.asarray(False, dtype=bool)
+    assert truncated == np.asarray(False, dtype=bool)
+    assert info["x_position"] == pytest.approx(1.5)
+    assert info["x_velocity"] == pytest.approx(10.0)
+    assert info["reward_forward"] == pytest.approx(10.0)
+    assert info["reward_ctrl"] == pytest.approx(-0.5)
+    assert spec.terminated(next_state, np) == np.asarray(False, dtype=bool)
+
+
+def test_halfcheetah_oracle_spec_requires_gymnasium_owned_methods() -> None:
+    from problems.gymnasium_mujoco_specs import resolve_gymnasium_mujoco_spec
+
+    env = _fake_halfcheetah_env()
+    del env.unwrapped._get_rew
+
+    with pytest.raises(ValueError, match="missing: _get_rew"):
+        resolve_gymnasium_mujoco_spec(env)
 
 
 def test_gymnasium_mujoco_spec_wrapper_methods() -> None:

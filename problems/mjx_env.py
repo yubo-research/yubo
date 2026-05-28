@@ -8,16 +8,21 @@ from problems import jax_env_core as core
 from problems.gymnasium_mujoco_specs import resolve_gymnasium_mujoco_spec
 
 GYMNASIUM_ENV_PREFIX = "gymnasium:"
+GYMNASIUM_FAST_ENV_PREFIX = "gymnasium_fast:"
 
 
 def is_gymnasium_env_tag(env_name: str) -> bool:
-    return str(env_name).startswith(GYMNASIUM_ENV_PREFIX)
+    return str(env_name).startswith((GYMNASIUM_ENV_PREFIX, GYMNASIUM_FAST_ENV_PREFIX))
+
+
+def is_gymnasium_fast_env_tag(env_name: str) -> bool:
+    return str(env_name).startswith(GYMNASIUM_FAST_ENV_PREFIX)
 
 
 def parse_gymnasium_env_id(env_name: str) -> str:
     tag = str(env_name)
     if not is_gymnasium_env_tag(tag):
-        raise ValueError(f"Unsupported Gymnasium env tag {tag!r}. Expected 'gymnasium:<EnvId>'.")
+        raise ValueError(f"Unsupported Gymnasium env tag {tag!r}. Expected 'gymnasium:<EnvId>' or 'gymnasium_fast:<EnvId>'.")
     env_id = tag.split(":", 1)[1].strip()
     if not env_id:
         raise ValueError(f"Gymnasium env tag {tag!r} is missing an env id.")
@@ -34,7 +39,7 @@ State: TypeAlias = Any
 Action: TypeAlias = Any
 
 
-def _load_gymnasium_env_spec(env_id: str):
+def _load_gymnasium_env_spec(env_id: str, *, fast: bool = False):
     import gymnasium as gym
 
     env = gym.make(env_id)
@@ -42,7 +47,7 @@ def _load_gymnasium_env_spec(env_id: str):
         model = getattr(env.unwrapped, "model", None)
         if model is None:
             raise TypeError(f"Gymnasium env {env_id!r} does not expose an unwrapped MuJoCo model.")
-        spec = resolve_gymnasium_mujoco_spec(env)
+        spec = resolve_gymnasium_mujoco_spec(env, fast=fast)
         if spec is None:
             raise ValueError(f"Gymnasium MJX adapter has no verified MuJoCo semantics for {env_id!r}. Add a spec before routing this env through MJX.")
         return model, spec
@@ -71,8 +76,9 @@ class GymnasiumMJXAdapter:
         self._jax = jax
         self._jnp = jnp
         self._mjx = mjx
+        self.fast = is_gymnasium_fast_env_tag(env_name)
         self.env_id = parse_gymnasium_env_id(env_name)
-        self.model, self.spec = _load_gymnasium_env_spec(self.env_id)
+        self.model, self.spec = _load_gymnasium_env_spec(self.env_id, fast=self.fast)
         self.mjx_model = mjx.put_model(self.model)
         obs_shape = (self.spec.obs_dim(self.model),)
         low, high = _action_bounds(self.model, jnp)

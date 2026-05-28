@@ -13,6 +13,7 @@ __all__ = [
 JAX_ENV_PREFIXES = (
     "gymnax:",
     "gymnasium:",
+    "gymnasium_fast:",
     "mujoco_playground:",
     "craftax:",
     "jaxmarl:",
@@ -32,6 +33,7 @@ _SUPPORTED_JAX_ENV_EXAMPLES = (
     "gymnax:CartPole-v1",
     "gymnax:Swimmer-misc",
     "gymnasium:HalfCheetah-v5",
+    "gymnasium_fast:HalfCheetah-v5",
     "mujoco_playground:CheetahRun",
     "mujoco_playground:HumanoidRun",
     "craftax:Craftax-Classic-Symbolic-v1",

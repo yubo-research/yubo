@@ -2,14 +2,14 @@
 algo = "mjx_ppo"
 
 [rl.mjx_ppo]
-exp_dir = "runs/rl/mjx/ppo_halfcheetah_paper_baseline"
+exp_dir = "_tmp/rl_speed_sweep/mjx_ppo_50"
 env_tag = "gymnasium_fast:HalfCheetah-v5"
 seed = 0
 hidden_size = 256
-log_interval = 10
+log_interval = 1
 
 [rl.mjx_ppo.collector]
-total_frames = 1000000
+total_frames = 50000
 # To match the 5000 frames_per_batch from the paper baseline
 num_envs = 50
 num_steps = 100
