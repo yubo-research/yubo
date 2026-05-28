@@ -9,23 +9,15 @@ import pytest
 from click.testing import CliRunner
 
 import ops.modal_batches as mb_mod
-
-
-class _OkResult:
-    returncode = 0
+from tests.modal_cli_test_helpers import (
+    assert_modal_command_calls,
+    capture_subprocess_run,
+)
 
 
 @pytest.fixture
 def captured_modal(monkeypatch):
-    calls: list[tuple[list[str], dict[str, str]]] = []
-
-    def fake_run(cmd, env=None, **_kwargs):
-        e = {k: v for k, v in (env or {}).items() if isinstance(v, str)}
-        calls.append((list(cmd), e))
-        return _OkResult()
-
-    monkeypatch.setattr(mb_mod.subprocess, "run", fake_run)
-    return calls
+    return capture_subprocess_run(mb_mod, monkeypatch)
 
 
 def test_modal_batches_get_impl_path():
@@ -131,12 +123,7 @@ def test_modal_batches_commands_set_modal_tag_and_args(captured_modal, invoke_ar
     runner = CliRunner()
     res = runner.invoke(mb_mod.cli, invoke_args)
     assert res.exit_code == 0, res.output
-    assert len(captured_modal) == len(expected_modal_cmds)
-    for i, exp_cmd in enumerate(expected_modal_cmds):
-        cmd, env = captured_modal[i]
-        assert cmd == exp_cmd
-        if exp_cmd[1] == "deploy" or (len(exp_cmd) > 2 and "batches" in exp_cmd[2]):
-            assert env.get("MODAL_TAG") == "t1"
+    assert_modal_command_calls(captured_modal, expected_modal_cmds, modal_tag="t1")
 
 
 def test_modal_batches_propagates_subprocess_exit_code(captured_modal, monkeypatch):

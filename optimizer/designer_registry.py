@@ -5,7 +5,7 @@ from functools import partial
 from .designer_registry_builders import _build_turbo_enn, _no_opts
 from .designer_registry_context import _SimpleContext
 from .designer_registry_defs import _DESIGNER_DEFS, _DESIGNER_OPTION_SPECS
-from .designer_registry_option_handlers import _build_turbo_enn_f, _d_turbo_enn_fit_ucb
+from .designer_registry_option_handlers import _build_turbo_enn_f, _d_turbo_enn_fit_ucb, _d_turbo_enn_p
 from .designer_registry_simple_table import _SIMPLE_BUILDERS, _SIMPLE_DISPATCH
 from .designer_types import DesignerDef
 
@@ -29,4 +29,5 @@ __all__ = [
     "_build_turbo_enn",
     "_build_turbo_enn_f",
     "_d_turbo_enn_fit_ucb",
+    "_d_turbo_enn_p",
 ]

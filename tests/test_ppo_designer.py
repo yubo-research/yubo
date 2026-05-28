@@ -5,7 +5,13 @@ import numpy as np
 import pytest
 
 from optimizer.designer_errors import NoSuchDesignerError
-from optimizer.ppo_designer import PPOConfig, PPODesigner, compute_gae, merge_trajectories
+from optimizer.ppo_common import clear_policy_ppo_cache
+from optimizer.ppo_designer import (
+    PPOACDesigner,
+    PPOConfig,
+    compute_gae,
+    merge_trajectories,
+)
 from optimizer.trajectory import Trajectory
 from policies.actor_critic_mlp_policy import ActorCriticMLPPolicy
 
@@ -88,53 +94,72 @@ def test_compute_gae_with_bootstrap():
     assert not np.allclose(adv1, adv2)
 
 
-def test_ppo_designer_init():
+def test_ppo_ac_designer_init():
     policy = _make_policy()
     env_conf = _env_conf()
-    designer = PPODesigner(policy, env_conf, lr=1e-3, epochs=2)
+    designer = PPOACDesigner(policy, env_conf, lr=1e-3, epochs=2)
 
     assert designer._config.lr == 1e-3
     assert designer._config.epochs == 2
 
 
-def test_ppo_designer_num_arms_zero_raises():
-    """PPODesigner requires num_arms >= 1."""
+def test_ppo_ac_designer_num_arms_zero_raises():
+    """PPOACDesigner requires num_arms >= 1."""
     policy = _make_policy()
     env_conf = _env_conf()
-    designer = PPODesigner(policy, env_conf)
+    designer = PPOACDesigner(policy, env_conf)
 
     with pytest.raises(NoSuchDesignerError, match="num_arms >= 1"):
         designer([], num_arms=0)
 
 
-def test_ppo_designer_validates_policy_missing_methods():
+def test_ppo_ac_designer_validates_policy_missing_methods():
     class BadPolicy:
         def clone(self):
             return self
 
-    designer = PPODesigner(BadPolicy(), _env_conf())
+    designer = PPOACDesigner(BadPolicy(), _env_conf())
     with pytest.raises(NoSuchDesignerError, match="ActorCriticMLPPolicy"):
         designer([], num_arms=1)
 
 
-def test_ppo_designer_init_with_config():
+def test_ppo_ac_designer_init_with_config():
     policy = _make_policy()
     env_conf = _env_conf()
     cfg = PPOConfig(lr=1e-2, epochs=8)
-    designer = PPODesigner(policy, env_conf, config=cfg)
+    designer = PPOACDesigner(policy, env_conf, config=cfg)
 
     assert designer._config.lr == 1e-2
     assert designer._config.epochs == 8
     assert designer._config is cfg
 
 
+def test_clear_policy_ppo_cache_clears_rollout_attrs():
+    policy = _make_policy()
+    policy._last_log_prob = object()
+    policy._last_value = object()
+    clear_policy_ppo_cache(policy)
+    assert policy._last_log_prob is None
+    assert policy._last_value is None
+
+
 @patch("optimizer.ppo_designer.collect_trajectory")
-def test_ppo_designer_call_returns_updated_policy(mock_collect):
+def test_ppo_ac_designer_clears_rollout_cache_after_update(mock_collect):
+    mock_collect.return_value = _make_trajectory(num_steps=5)
+    policy = _make_policy()
+    designer = PPOACDesigner(policy, _env_conf(), epochs=1)
+    (updated,) = designer([], num_arms=1)
+    assert updated._last_log_prob is None
+    assert updated._last_value is None
+
+
+@patch("optimizer.ppo_designer.collect_trajectory")
+def test_ppo_ac_designer_call_returns_updated_policy(mock_collect):
     mock_collect.return_value = _make_trajectory(num_steps=5)
 
     policy = _make_policy()
     env_conf = _env_conf()
-    designer = PPODesigner(policy, env_conf, epochs=1)
+    designer = PPOACDesigner(policy, env_conf, epochs=1)
 
     result = designer([], num_arms=1)
 
@@ -144,27 +169,37 @@ def test_ppo_designer_call_returns_updated_policy(mock_collect):
 
 
 @patch("optimizer.ppo_designer.collect_trajectory")
-def test_ppo_designer_uses_parent_policy_from_data(mock_collect):
-    mock_collect.return_value = _make_trajectory(num_steps=5)
+def test_ppo_ac_designer_uses_parent_policy_from_data(mock_collect):
+    rollout_params = []
+
+    def _capture_rollout(env, pol):
+        rollout_params.append(pol.get_params().copy())
+        return _make_trajectory(num_steps=5)
+
+    mock_collect.side_effect = _capture_rollout
 
     policy = _make_policy()
     parent_policy = _make_policy()
     env_conf = _env_conf()
-    designer = PPODesigner(policy, env_conf, epochs=1)
+    designer = PPOACDesigner(policy, env_conf, epochs=1)
 
     datum = SimpleNamespace(policy=parent_policy)
     result = designer([datum], num_arms=1)
 
     assert len(result) == 1
+    mock_collect.assert_called_once()
+    assert len(rollout_params) == 1
+    np.testing.assert_allclose(rollout_params[0], parent_policy.get_params())
+    assert result[0] is mock_collect.call_args[0][1]
 
 
 @patch("optimizer.ppo_designer.collect_trajectory")
-def test_ppo_designer_with_telemetry(mock_collect):
+def test_ppo_ac_designer_with_telemetry(mock_collect):
     mock_collect.return_value = _make_trajectory(num_steps=5)
 
     policy = _make_policy()
     env_conf = _env_conf()
-    designer = PPODesigner(policy, env_conf, epochs=1)
+    designer = PPOACDesigner(policy, env_conf, epochs=1)
 
     telemetry = MagicMock()
     designer([], num_arms=1, telemetry=telemetry)
@@ -174,13 +209,13 @@ def test_ppo_designer_with_telemetry(mock_collect):
 
 
 @patch("optimizer.ppo_designer.collect_trajectory")
-def test_ppo_designer_modifies_policy_params(mock_collect):
+def test_ppo_ac_designer_modifies_policy_params(mock_collect):
     mock_collect.return_value = _make_trajectory(num_steps=5)
 
     policy = _make_policy()
     original_params = policy.get_params().copy()
     env_conf = _env_conf()
-    designer = PPODesigner(policy, env_conf, epochs=2)
+    designer = PPOACDesigner(policy, env_conf, epochs=2)
 
     result = designer([], num_arms=1)
     new_params = result[0].get_params()
@@ -188,13 +223,26 @@ def test_ppo_designer_modifies_policy_params(mock_collect):
     assert not np.allclose(original_params, new_params)
 
 
+@patch("optimizer.ppo_designer.collect_trajectory")
+def test_ppo_ac_designer_returned_policy_is_cloneable(mock_collect):
+    mock_collect.return_value = _make_trajectory(num_steps=5)
+
+    policy = _make_policy()
+    designer = PPOACDesigner(policy, _env_conf(), epochs=1)
+
+    result = designer([], num_arms=1)
+
+    cloned = result[0].clone()
+    np.testing.assert_allclose(cloned.get_params(), result[0].get_params())
+
+
 @pytest.mark.parametrize(
     "missing_field",
     ["log_probs", "values", "rewards", "dones"],
 )
 @patch("optimizer.ppo_designer.collect_trajectory")
-def test_ppo_designer_raises_if_trajectory_field_missing(mock_collect, missing_field):
-    """PPODesigner validates all required trajectory fields."""
+def test_ppo_ac_designer_raises_if_trajectory_field_missing(mock_collect, missing_field):
+    """PPOACDesigner validates all required trajectory fields."""
     field_values = {
         "rewards": np.ones(10, dtype=np.float32),
         "log_probs": -np.ones(10, dtype=np.float32),
@@ -213,15 +261,15 @@ def test_ppo_designer_raises_if_trajectory_field_missing(mock_collect, missing_f
     mock_collect.return_value = traj
 
     policy = _make_policy()
-    designer = PPODesigner(policy, _env_conf(), epochs=1)
+    designer = PPOACDesigner(policy, _env_conf(), epochs=1)
 
     with pytest.raises(NoSuchDesignerError, match=missing_field):
         designer([], num_arms=1)
 
 
 @patch("optimizer.ppo_designer.collect_trajectory")
-def test_ppo_designer_validates_get_action_and_value(mock_collect):
-    """Verify PPODesigner validates get_action_and_value method exists.
+def test_ppo_ac_designer_validates_get_action_and_value(mock_collect):
+    """Verify PPOACDesigner validates get_action_and_value method exists.
 
     This test ensures that a policy without get_action_and_value() is rejected
     at validation time, rather than causing an AttributeError in _ppo_update_epoch.
@@ -245,7 +293,7 @@ def test_ppo_designer_validates_get_action_and_value(mock_collect):
             return None
 
     policy = PolicyWithLastButNoGetActionAndValue()
-    designer = PPODesigner(policy, _env_conf(), epochs=1)
+    designer = PPOACDesigner(policy, _env_conf(), epochs=1)
 
     with pytest.raises(NoSuchDesignerError, match="get_action_and_value"):
         designer([], num_arms=1)
@@ -321,13 +369,13 @@ def test_make_trajectory_helper_has_realistic_dones():
 
 
 @patch("optimizer.ppo_designer.collect_trajectory")
-def test_ppo_designer_num_arms_multiple(mock_collect):
-    """PPODesigner accepts num_arms > 1 and returns single updated policy."""
+def test_ppo_ac_designer_num_arms_multiple(mock_collect):
+    """PPOACDesigner accepts num_arms > 1 and returns single updated policy."""
     mock_collect.return_value = _make_trajectory(num_steps=5)
 
     policy = _make_policy()
     env_conf = _env_conf()
-    designer = PPODesigner(policy, env_conf, epochs=1)
+    designer = PPOACDesigner(policy, env_conf, epochs=1)
 
     result = designer([], num_arms=3)
 
@@ -337,13 +385,13 @@ def test_ppo_designer_num_arms_multiple(mock_collect):
 
 
 @patch("optimizer.ppo_designer.collect_trajectory")
-def test_ppo_designer_telemetry_rollout_fields(mock_collect):
-    """PPODesigner sets rollout telemetry fields when available."""
+def test_ppo_ac_designer_telemetry_rollout_fields(mock_collect):
+    """PPOACDesigner sets rollout telemetry fields when available."""
     mock_collect.return_value = _make_trajectory(num_steps=5)
 
     policy = _make_policy()
     env_conf = _env_conf()
-    designer = PPODesigner(policy, env_conf, epochs=1)
+    designer = PPOACDesigner(policy, env_conf, epochs=1)
 
     telemetry = MagicMock()
     telemetry.set_num_rollout_workers = MagicMock()

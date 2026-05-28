@@ -6,7 +6,7 @@ import torch.nn as nn
 from torch.distributions import Normal
 
 from rl.backbone import BackboneSpec, HeadSpec, build_backbone, build_mlp_head, init_linear_layers
-from rl.math_utils import atanh
+from rl.math_utils import tanh_gaussian_action_log_prob_entropy
 
 
 def gaussian_policy_normal_from_obs(actor_backbone: nn.Module, actor_head: nn.Module, log_std: nn.Parameter, obs: torch.Tensor) -> Normal:
@@ -86,13 +86,6 @@ class ActorCritic(nn.Module):
 
     def get_action_and_value(self, obs: torch.Tensor, action: torch.Tensor | None = None):
         dist = self._distribution(obs)
-        if action is None:
-            u = dist.rsample()
-            action = torch.tanh(u)
-        else:
-            u = atanh(action)
-        log_prob = dist.log_prob(u) - torch.log(1.0 - action.pow(2) + 1e-06)
-        log_prob = log_prob.sum(-1)
-        entropy = dist.entropy().sum(-1)
+        action, log_prob, entropy = tanh_gaussian_action_log_prob_entropy(dist, action)
         value = self.get_value(obs)
         return ActionValue(action=action, log_prob=log_prob, entropy=entropy, value=value)

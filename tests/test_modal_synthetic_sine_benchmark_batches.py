@@ -15,9 +15,6 @@ from analysis.fitting_time.batch_jobs import (
 )
 from analysis.fitting_time.evaluate import (
     SURROGATE_BENCHMARK_KEYS,
-    BMResult,
-    MuSe,
-    SyntheticSineSurrogateBenchmark,
     synthetic_benchmark_data_seed,
 )
 from experiments.synthetic_sine_benchmark_payload import (
@@ -30,29 +27,14 @@ from experiments.synthetic_sine_benchmark_payload import (
     synthetic_sine_benchmark_result_to_payload,
     write_synthetic_sine_benchmark_json,
 )
-
-
-def _br(
-    fit_s: float,
-    nrmse: float,
-    ll: float,
-    *,
-    se_f: float = 0.0,
-    se_n: float = 0.0,
-    se_l: float = 0.0,
-) -> BMResult:
-    return BMResult(MuSe(fit_s, se_f), MuSe(nrmse, se_n), MuSe(ll, se_l))
-
-
-def _bench(**kwargs: BMResult) -> SyntheticSineSurrogateBenchmark:
-    return SyntheticSineSurrogateBenchmark(results={k: kwargs[k] for k in SURROGATE_BENCHMARK_KEYS})
+from tests.synthetic_sine_benchmark_helpers import bench_result, make_surrogate_benchmark
 
 
 def test_payload_run_synthetic_sine_benchmark_modal_to_disk(monkeypatch, tmp_path: Path):
     import experiments.synthetic_sine_benchmark_payload as pl
 
-    z = _br(0.0, 0.0, 0.0)
-    zero = _bench(enn=z, smac_rf=z, dngo=z, exact_gp=z, svgp_default=z, svgp_linear=z, vecchia=z)
+    z = bench_result(0.0, 0.0, 0.0)
+    zero = make_surrogate_benchmark(enn=z, smac_rf=z, dngo=z, exact_gp=z, svgp_default=z, svgp_linear=z, vecchia=z)
 
     _App = type("_App", (), {"run": lambda self: contextlib.nullcontext()})
 
@@ -140,23 +122,23 @@ def test_batches_impl_aggregate_reps_to_dest(tmp_path: Path):
     import experiments.modal_synthetic_sine_benchmark_batches_impl as impl
 
     out_dir = tmp_path / "out"
-    rep0 = _bench(
-        enn=_br(1.0, 2.0, 3.0),
-        smac_rf=_br(2.0, 3.0, 4.0),
-        dngo=_br(3.0, 4.0, 5.0),
-        exact_gp=_br(4.0, 5.0, 6.0),
-        svgp_default=_br(5.0, 6.0, 7.0),
-        svgp_linear=_br(6.0, 7.0, 8.0),
-        vecchia=_br(7.0, 8.0, 9.0),
+    rep0 = make_surrogate_benchmark(
+        enn=bench_result(1.0, 2.0, 3.0),
+        smac_rf=bench_result(2.0, 3.0, 4.0),
+        dngo=bench_result(3.0, 4.0, 5.0),
+        exact_gp=bench_result(4.0, 5.0, 6.0),
+        svgp_default=bench_result(5.0, 6.0, 7.0),
+        svgp_linear=bench_result(6.0, 7.0, 8.0),
+        vecchia=bench_result(7.0, 8.0, 9.0),
     )
-    rep1 = _bench(
-        enn=_br(3.0, 4.0, 5.0),
-        smac_rf=_br(4.0, 5.0, 6.0),
-        dngo=_br(5.0, 6.0, 7.0),
-        exact_gp=_br(6.0, 7.0, 8.0),
-        svgp_default=_br(7.0, 8.0, 9.0),
-        svgp_linear=_br(8.0, 9.0, 10.0),
-        vecchia=_br(9.0, 10.0, 11.0),
+    rep1 = make_surrogate_benchmark(
+        enn=bench_result(3.0, 4.0, 5.0),
+        smac_rf=bench_result(4.0, 5.0, 6.0),
+        dngo=bench_result(5.0, 6.0, 7.0),
+        exact_gp=bench_result(6.0, 7.0, 8.0),
+        svgp_default=bench_result(7.0, 8.0, 9.0),
+        svgp_linear=bench_result(8.0, 9.0, 10.0),
+        vecchia=bench_result(9.0, 10.0, 11.0),
     )
     rep0_path = impl._rep_json_dest(out_dir, n=10, d=3, function_name="sphere", problem_seed=7, rep_index=0)
     rep1_path = impl._rep_json_dest(out_dir, n=10, d=3, function_name="sphere", problem_seed=7, rep_index=1)
@@ -166,8 +148,10 @@ def test_batches_impl_aggregate_reps_to_dest(tmp_path: Path):
     )
     write_synthetic_sine_benchmark_json(
         rep1_path,
-        synthetic_sine_benchmark_result_to_payload(rep1, n=10, d=3, function_name="sphere", problem_seed=8, num_reps=1),
+        synthetic_sine_benchmark_result_to_payload(rep1, n=10, d=3, function_name="sphere", problem_seed=7, num_reps=1),
     )
+    _, rep1_meta = read_synthetic_sine_benchmark_json(rep1_path)
+    assert rep1_meta["problem_seed"] == 7
 
     dest = impl._aggregate_reps_to_dest(out_dir, n=10, d=3, function_name="sphere", problem_seed=7, num_reps=2)
 
@@ -278,14 +262,14 @@ def test_build_synthetic_sine_benchmark_remote_payload_delegates(monkeypatch):
         captured["num_reps"] = num_reps
         captured["b_fast_only"] = b_fast_only
         nan = float("nan")
-        return _bench(
-            enn=_br(0.1, 0.2, -1.0),
-            smac_rf=_br(nan, nan, nan),
-            dngo=_br(0.3, 0.4, -2.0),
-            exact_gp=_br(0.5, 0.6, -3.0),
-            svgp_default=_br(0.7, 0.8, -4.0),
-            svgp_linear=_br(0.9, 1.0, -5.0),
-            vecchia=_br(nan, nan, nan),
+        return make_surrogate_benchmark(
+            enn=bench_result(0.1, 0.2, -1.0),
+            smac_rf=bench_result(nan, nan, nan),
+            dngo=bench_result(0.3, 0.4, -2.0),
+            exact_gp=bench_result(0.5, 0.6, -3.0),
+            svgp_default=bench_result(0.7, 0.8, -4.0),
+            svgp_linear=bench_result(0.9, 1.0, -5.0),
+            vecchia=bench_result(nan, nan, nan),
         )
 
     monkeypatch.setattr(

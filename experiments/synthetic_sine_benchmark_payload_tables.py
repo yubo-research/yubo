@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -52,6 +53,18 @@ def wide_surrogate_benchmark_row_to_comparison_records(
                     "LogLik (nats) SE": m.get(f"{prefix}_log_likelihood_se", 0.0),
                 }
             )
+        elif f"{prefix}_fit_seconds" not in m:
+            out.append(
+                {
+                    "Surrogate": label,
+                    "Fit (s) μ": math.nan,
+                    "Fit (s) SE": math.nan,
+                    "NRMSE μ": math.nan,
+                    "NRMSE SE": math.nan,
+                    "LogLik (nats) μ": math.nan,
+                    "LogLik (nats) SE": math.nan,
+                }
+            )
         else:
             out.append(
                 {
@@ -93,6 +106,20 @@ def wide_surrogate_benchmark_row_to_long_records(row: Any) -> list[dict[str, Any
                     "normalized_rmse_se": m.get(f"{prefix}_normalized_rmse_se", 0.0),
                     "log_likelihood_mu": m[f"{prefix}_log_likelihood_mu"],
                     "log_likelihood_se": m.get(f"{prefix}_log_likelihood_se", 0.0),
+                }
+            )
+        elif f"{prefix}_fit_seconds" not in m:
+            out.append(
+                {
+                    **meta,
+                    "surrogate": prefix,
+                    "surrogate_label": label,
+                    "fit_seconds_mu": math.nan,
+                    "fit_seconds_se": math.nan,
+                    "normalized_rmse_mu": math.nan,
+                    "normalized_rmse_se": math.nan,
+                    "log_likelihood_mu": math.nan,
+                    "log_likelihood_se": math.nan,
                 }
             )
         else:

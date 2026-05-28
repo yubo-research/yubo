@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from rl.actor_critic import ActionValue, ActorCritic, PolicySpecs
+from rl.actor_critic import ActionValue, ActorCritic, PolicySpecs, gaussian_policy_normal_from_obs
 from rl.backbone import (
     BackboneSpec,
     HeadSpec,
@@ -43,6 +43,14 @@ def test_build_mlp_head_shapes():
 
 
 def test_actorcritic_action_bounds():
+    backbone = torch.nn.Sequential(torch.nn.Linear(3, 8), torch.nn.ReLU())
+    head = torch.nn.Linear(8, 2)
+    log_std = nn.Parameter(torch.full((2,), 0.5))
+    obs = torch.zeros((4, 3))
+    dist = gaussian_policy_normal_from_obs(backbone, head, log_std, obs)
+    expected_std = torch.exp(log_std).expand(4, 2)
+    assert torch.allclose(dist.stddev, expected_std)
+
     specs = PolicySpecs(
         backbone=BackboneSpec(hidden_sizes=(8,)),
         actor_head=HeadSpec(hidden_sizes=()),

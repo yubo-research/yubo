@@ -222,7 +222,7 @@ def test_kiss_cov_checkpoint_and_uhd_np(monkeypatch, tmp_path):
     assert simple.se_avg == 0.1
 
     monkeypatch.setattr("optimizer.uhd_simple_be_np.EpistemicNearestNeighbors", lambda *args, **kwargs: _ENN())
-    monkeypatch.setattr("optimizer.uhd_simple_be_np.enn_fit", lambda *args, **kwargs: object())
+    monkeypatch.setattr("optimizer.uhd_simple_be_np.fit_enn_params", lambda *args, **kwargs: object())
     be = UHDSimpleBENp(p, _Embed(), sigma_0=0.1, warmup=1, fit_interval=1, num_candidates=2)
     be.ask()
     be.tell(1.0, 0.1)
@@ -239,7 +239,7 @@ def test_kiss_cov_enn_imputer_and_cli_callbacks(monkeypatch, tmp_path):
     from optimizer.uhd_enn_imputer import ENNImputerConfig, ENNMinusImputer
 
     monkeypatch.setattr("optimizer.uhd_enn_imputer.EpistemicNearestNeighbors", lambda *args, **kwargs: _ENNImputer())
-    monkeypatch.setattr("optimizer.uhd_enn_imputer.enn_fit", lambda *args, **kwargs: object())
+    monkeypatch.setattr("optimizer.uhd_enn_imputer.fit_enn_params", lambda *args, **kwargs: object())
 
     module = torch.nn.Linear(2, 1, bias=False)
     cfg = ENNImputerConfig(warmup_real_obs=1, fit_interval=1, min_calib_points=0, max_abs_err_ema=1.0, se_threshold=1.0, refresh_interval=1000)

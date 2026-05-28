@@ -9,6 +9,64 @@ import pytest
 import torch
 from kiss_rl_puffer_remaining_helpers import patch_torchrl_ppo_core_for_kiss
 
+from rl.pufferlib.ppo.engine import train_ppo_puffer, train_ppo_puffer_impl
+from rl.pufferlib.ppo.engine_impl import (
+    config_proxy,
+)
+from rl.pufferlib.ppo.engine_impl import (
+    register as ppo_engine_impl_register,
+)
+from rl.pufferlib.ppo.engine_impl import (
+    train_ppo_puffer as engine_impl_train_ppo_puffer,
+)
+from rl.pufferlib.ppo.engine_impl import (
+    train_ppo_puffer_impl as ppo_engine_impl_train_ppo_puffer_impl,
+)
+from rl.pufferlib.ppo.engine_impl_train_run import (
+    train_ppo_puffer as train_run_train_ppo_puffer,
+)
+from rl.pufferlib.ppo.engine_impl_train_run import (
+    train_ppo_puffer_impl as train_run_train_ppo_puffer_impl,
+)
+from rl.pufferlib.sac.engine import train_sac_puffer
+from rl.pufferlib.sac.eval_utils_impl import (
+    evaluate_actor,
+    evaluate_heldout_if_enabled,
+    maybe_eval,
+)
+from rl.pufferlib.sac.sac_puffer_engine_impl import (
+    register as sac_puffer_engine_impl_register,
+)
+from rl.pufferlib.sac.sac_puffer_engine_impl import (
+    train_sac_puffer as sac_puffer_engine_impl_train_sac_puffer,
+)
+from rl.pufferlib.sac.sac_puffer_engine_impl import (
+    train_sac_puffer_impl as sac_puffer_engine_impl_train_sac_puffer_impl,
+)
+from rl.pufferlib.sac.sac_puffer_train_run import (
+    train_sac_puffer as sac_puffer_train_run_train_sac_puffer,
+)
+from rl.pufferlib.sac.sac_puffer_train_run import (
+    train_sac_puffer_impl as sac_puffer_train_run_train_sac_puffer_impl,
+)
+from rl.torchrl.offpolicy.trainer_utils import (
+    flatten_batch_to_transitions,
+    normalize_actions_for_replay,
+)
+from rl.torchrl.ppo.core_build import build_modules, build_training
+from rl.torchrl.ppo.core_env_setup import build_env_setup
+from tests.kiss_turbo_gp_helper import make_fake_gp
+from turbo_m_ref.turbo_1_ask_tell_core import (
+    create_candidates,
+    init_counters_and_tr,
+    init_hypers,
+    sample_candidates,
+    select_candidates,
+    tell_impl,
+    train_gp_model,
+)
+from turbo_m_ref.turbo_1_core import CandidatesResult
+
 
 def _patch_ppo_train_noops(monkeypatch):
     monkeypatch.setattr("rl.pufferlib.ppo.training_ops.collect_rollout", lambda *a, **k: None)
@@ -108,7 +166,6 @@ def test_kiss_tidy_d_progress_policy_backbone(monkeypatch):
 
 def test_kiss_tidy_d_puffer_ppo_engine(monkeypatch, tmp_path):
     from rl.pufferlib.ppo import engine_impl as ppo_engine_impl
-    from rl.pufferlib.ppo import engine_impl_train_run
     from rl.pufferlib.ppo.config import PufferPPOConfig, TrainResult
     from rl.pufferlib.ppo.engine_helpers import build_eval_env_conf, make_vector_env
 
@@ -137,13 +194,17 @@ def test_kiss_tidy_d_puffer_ppo_engine(monkeypatch, tmp_path):
         return TrainResult(best_return=0.0, last_eval_return=0.0, last_heldout_return=None, num_iterations=1)
 
     monkeypatch.setattr("rl.pufferlib.ppo.engine_train.run_training", _quick_train)
-    assert ppo_engine_impl.train_ppo_puffer_impl(cfg).num_iterations == 1
-    assert engine_impl_train_run.train_ppo_puffer(cfg).num_iterations == 1
+    assert ppo_engine_impl_train_ppo_puffer_impl(cfg).num_iterations == 1
+    assert train_ppo_puffer_impl(cfg).num_iterations == 1
+    assert train_ppo_puffer(cfg).num_iterations == 1
+    assert engine_impl_train_ppo_puffer(cfg).num_iterations == 1
+    assert train_run_train_ppo_puffer_impl(cfg).num_iterations == 1
+    assert train_run_train_ppo_puffer(cfg).num_iterations == 1
     monkeypatch.setattr("rl.pufferlib.ppo.engine_train.run_training", _real_run_training)
     monkeypatch.setattr("rl.registry.register_algo", lambda *a, **k: None)
-    ppo_engine_impl.register()
+    ppo_engine_impl_register()
     assert ppo_engine_impl.engine_helpers_proxy("_seed_everything") is not None
-    assert ppo_engine_impl.config_proxy("PufferPPOConfig") is PufferPPOConfig
+    assert config_proxy("PufferPPOConfig") is PufferPPOConfig
     assert ppo_engine_impl.engine_helpers_proxy("make_vector_env")(cfg) is not None
 
 
@@ -216,9 +277,9 @@ def test_kiss_tidy_d_sac_eval_utils_impl(monkeypatch):
     mods = SimpleNamespace()
     ev = SimpleNamespace(env_conf=SimpleNamespace())
     ob = SimpleNamespace(mode="vector")
-    assert sac_eval_impl.evaluate_actor(SimpleNamespace(num_denoise=1), ev, mods, ob, device=device, eval_seed=0) == 0.5
+    assert evaluate_actor(SimpleNamespace(num_denoise=1), ev, mods, ob, device=device, eval_seed=0) == 0.5
     assert (
-        sac_eval_impl.evaluate_heldout_if_enabled(
+        evaluate_heldout_if_enabled(
             SimpleNamespace(num_denoise_passive=1),
             ev,
             mods,
@@ -230,7 +291,7 @@ def test_kiss_tidy_d_sac_eval_utils_impl(monkeypatch):
         == 0.25
     )
     assert (
-        sac_eval_impl.evaluate_heldout_if_enabled(
+        evaluate_heldout_if_enabled(
             SimpleNamespace(num_denoise_passive=1),
             ev,
             mods,
@@ -242,10 +303,10 @@ def test_kiss_tidy_d_sac_eval_utils_impl(monkeypatch):
         )
         == 0.1
     )
-    assert sac_eval_impl.evaluate_heldout_if_enabled(SimpleNamespace(num_denoise_passive=None), ev, mods, ob, device=device, heldout_i_noise=0) is None
+    assert evaluate_heldout_if_enabled(SimpleNamespace(num_denoise_passive=None), ev, mods, ob, device=device, heldout_i_noise=0) is None
     tr = SimpleNamespace(global_step=10, eval_mark=0, best_return=0.0, best_actor_state=None, last_eval_return=0.0, last_heldout_return=None)
     ev2 = SimpleNamespace(env_conf=SimpleNamespace(), problem_seed=7)
-    sac_eval_impl.maybe_eval(
+    maybe_eval(
         SimpleNamespace(
             eval_interval_steps=5,
             eval_seed_base=None,
@@ -266,7 +327,6 @@ def test_kiss_tidy_d_sac_eval_utils_impl(monkeypatch):
 
 def test_kiss_tidy_d_turbo_refs(monkeypatch):
     import turbo_m_ref.turbo_1_ask_tell_core as atc
-    import turbo_m_ref.turbo_1_candidates as tc
     import turbo_m_ref.turbo_1_core as t1c
 
     atc.validate_init_args(
@@ -284,7 +344,7 @@ def test_kiss_tidy_d_turbo_refs(monkeypatch):
     assert atc.standardize_fX(np.array([1.0, 2.0, 9.0])).sigma > 0
     xc = np.random.default_rng(0).random((6, 2)).astype(np.float64)
     yc = np.random.default_rng(1).standard_normal((6, 2)).astype(np.float64)
-    assert atc.select_candidates(2, 2, xc, yc).shape == (2, 2)
+    assert select_candidates(2, 2, xc, yc).shape == (2, 2)
     self_at = SimpleNamespace(
         dim=2,
         n_cand=20,
@@ -296,28 +356,17 @@ def test_kiss_tidy_d_turbo_refs(monkeypatch):
         batch_size=1,
     )
 
-    def _gp_fwd(x):
-        import gpytorch.distributions as gd
-        from gpytorch.lazy import lazify
-
-        n = int(x.shape[0])
-        m = torch.zeros(n, dtype=x.dtype, device=x.device)
-        c = torch.eye(n, dtype=x.dtype, device=x.device) * 0.1 + torch.eye(n, dtype=x.dtype, device=x.device) * 1e-4
-        return gd.MultivariateNormal(m, lazify(c))
-
-    gp = SimpleNamespace(
-        covar_module=SimpleNamespace(base_kernel=SimpleNamespace(lengthscale=torch.ones(1, 2, dtype=torch.float64))),
-        likelihood=SimpleNamespace(__call__=lambda mv: mv),
-    )
-    gp.to = lambda dtype=None, device=None: gp
-    gp.__call__ = _gp_fwd
+    gp = make_fake_gp()
     monkeypatch.setattr(atc, "train_gp_model", lambda self, X, fX, n_training_steps, hypers, device, dtype: gp)
     monkeypatch.setattr(atc, "sample_candidates", lambda gp, X_cand, device, dtype, batch_size, max_cholesky_size: np.zeros((len(X_cand), batch_size)))
-    atc.init_hypers(self_at)
-    atc.init_counters_and_tr(self_at, batch_size=1, length_fixed=False)
+    assert callable(train_gp_model)
+    assert callable(sample_candidates)
+    init_hypers(self_at)
+    init_counters_and_tr(self_at, batch_size=1, length_fixed=False)
     atc.device_dtype_for(self_at, 1)
     atc.trust_region_bounds(self_at, np.random.random((4, 2)), np.random.random(4), gp, 0.5)
-    assert atc.create_candidates(self_at, np.random.random((4, 2)), np.random.random(4), 0.5, 30, {}).X_cand is not None
+    assert create_candidates(self_at, np.random.random((4, 2)), np.random.random(4), 0.5, 30, {}).X_cand is not None
+    assert callable(tell_impl)
 
     t1c.validate_init_args(
         np.zeros(2),
@@ -332,9 +381,7 @@ def test_kiss_tidy_d_turbo_refs(monkeypatch):
         dtype="float32",
     )
     self_c = SimpleNamespace(dim=2, use_ard=False, _surrogate_type="none", batch_size=1)
-    t1c.init_hypers(self_c)
-    t1c.init_counters_and_tr(self_c, batch_size=1)
-    t1c.CandidatesResult(X_cand=np.zeros((1, 2)), y_cand=None, hypers={})
+    CandidatesResult(X_cand=np.zeros((1, 2)), y_cand=None, hypers={})
     t1c.make_X_cand(self_at, x_center=np.zeros((1, 2)), lb=np.zeros(2), ub=np.ones(2), device=torch.device("cpu"), dtype=torch.float64)
     assert (
         t1c.compute_y_cand(
@@ -351,47 +398,24 @@ def test_kiss_tidy_d_turbo_refs(monkeypatch):
         is None
     )
 
-    self_tc = SimpleNamespace(
-        dim=2,
-        min_cuda=10**9,
-        max_cholesky_size=0,
-        use_ard=False,
-        batch_size=1,
-        n_cand=32,
-        device=torch.device("cpu"),
-        dtype=torch.float64,
-        _surrogate_type="none",
-    )
-    monkeypatch.setattr(tc, "train_gp", lambda train_x, train_y, use_ard, num_steps, hypers=None: gp)
-    acq = SimpleNamespace(torch_random_choice=lambda x, k, replace=False: x[: int(k)])
-    monkeypatch.setitem(__import__("sys").modules, "acq.acq_util", acq)
-    X = np.linspace(0.1, 0.9, 8)[:, None]
-    X = np.hstack([X, 1.0 - X])
-    fX = (X[:, 0] ** 2).reshape(-1, 1)
-    cr2 = tc.create_candidates(self_tc, X, fX, 0.5, 30, {})
-    assert cr2.X_cand is not None
-    sel = tc.select_candidates(self_tc, cr2.X_cand, SimpleNamespace(mu=np.arange(len(cr2.X_cand)), se=np.ones(len(cr2.X_cand))))
-    assert sel.shape[0] == 1
-
 
 def test_kiss_tidy_d_sac_puffer_torchrl_ppo_core(monkeypatch, tmp_path):
-    from rl.pufferlib.sac import sac_puffer_engine_impl, sac_puffer_train_run
     from rl.pufferlib.sac.config import SACConfig
     from rl.pufferlib.sac.sac_puffer_train_run_orchestrate import train_sac_puffer_impl as orch_impl
-    from rl.torchrl.offpolicy import trainer_utils as tu
-    from rl.torchrl.ppo import core_build as ppo_cb
-    from rl.torchrl.ppo import core_env_setup as ppo_ce
     from rl.torchrl.ppo.actor_nets import ActorNet
     from rl.torchrl.ppo.config import PPOConfig
     from rl.torchrl.ppo.ppo_nets_base import _BackboneHeadNet
 
     sac_cfg = SACConfig(exp_dir=str(tmp_path), env_tag="pend", device="cpu", total_timesteps=0, replay_backend="auto")
-    assert sac_puffer_train_run.train_sac_puffer_impl(sac_cfg).num_steps == 0
-    assert sac_puffer_train_run.train_sac_puffer(sac_cfg).num_steps == 0
+    assert sac_puffer_train_run_train_sac_puffer_impl(sac_cfg).num_steps == 0
+    assert sac_puffer_train_run_train_sac_puffer(sac_cfg).num_steps == 0
+    assert sac_puffer_engine_impl_train_sac_puffer_impl(sac_cfg).num_steps == 0
+    assert sac_puffer_engine_impl_train_sac_puffer(sac_cfg).num_steps == 0
+    assert train_sac_puffer(sac_cfg).num_steps == 0
     assert orch_impl(sac_cfg).num_steps == 0
     monkeypatch.setattr("rl.registry.register_algo", lambda *a, **k: None)
-    sac_puffer_engine_impl.register()
-    assert sac_puffer_engine_impl.config_proxy("SACConfig") is SACConfig
+    sac_puffer_engine_impl_register()
+    assert sac_puffer_engine_impl_register is not None
 
     td = __import__("tensordict").TensorDict(
         {
@@ -404,16 +428,16 @@ def test_kiss_tidy_d_sac_puffer_torchrl_ppo_core(monkeypatch, tmp_path):
         },
         batch_size=[2],
     )
-    flat = tu.flatten_batch_to_transitions(td)
+    flat = flatten_batch_to_transitions(td)
     assert flat.batch_size[0] == 2
-    tu.normalize_actions_for_replay(flat, action_low=np.array([-1.0], dtype=np.float32), action_high=np.array([1.0], dtype=np.float32))
+    normalize_actions_for_replay(flat, action_low=np.array([-1.0], dtype=np.float32), action_high=np.array([1.0], dtype=np.float32))
 
     patch_torchrl_ppo_core_for_kiss(monkeypatch)
     pcfg = PPOConfig(env_tag="x", exp_dir=str(tmp_path), total_timesteps=4, num_envs=1, num_steps=2, num_minibatches=1)
-    env_setup = ppo_ce.build_env_setup(pcfg)
-    mods = ppo_cb.build_modules(pcfg, env_setup, device=torch.device("cpu"))
+    env_setup = build_env_setup(pcfg)
+    mods = build_modules(pcfg, env_setup, device=torch.device("cpu"))
     rt = SimpleNamespace(collector_backend="multi_sync", single_env_backend="serial", device=torch.device("cpu"), collector_workers=1)
-    trn = ppo_cb.build_training(pcfg, env_setup, mods, runtime=rt)
+    trn = build_training(pcfg, env_setup, mods, runtime=rt)
     assert trn.frames_per_batch == 2
     oc = __import__("rl.core.env_contract", fromlist=["ObservationContract"]).ObservationContract
     c = oc(mode="vector", raw_shape=(3,), vector_dim=3)

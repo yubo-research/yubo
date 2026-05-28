@@ -2,6 +2,24 @@
 
 from __future__ import annotations
 
+from .fitting_time_enn_fit import (
+    EnnFitTimingResult,
+    benchmark_enn_fit_timing,
+    enn_fit_quality_ns,
+)
+from .fitting_time_enn_fit_ind import (
+    EnnFitIndTimingResult,
+    benchmark_enn_fit_ind_timing,
+)
+from .fitting_time_enn_full_opt import (
+    EnnFullOptTimingResult,
+    benchmark_enn_full_optimization_proposal_timing,
+)
+from .fitting_time_enn_query import (
+    EnnQueryTimingResult,
+    benchmark_enn_query_timing,
+)
+
 __all__ = [
     "BMResult",
     "DNGOConfig",
@@ -15,12 +33,26 @@ __all__ = [
     "SURROGATE_BENCHMARK_KEYS",
     "SURROGATE_BENCHMARK_ROWS",
     "SyntheticSineSurrogateBenchmark",
+    "EnnFitIndTimingResult",
+    "EnnFullOptTimingResult",
+    "EnnQueryTimingResult",
+    "EnnIncrementalIndexDriver",
+    "EnnIncrementalTimingResult",
+    "benchmark_enn_fit_ind_timing",
+    "benchmark_enn_full_optimization_proposal_timing",
+    "benchmark_enn_incremental_add_timing",
+    "benchmark_enn_query_timing",
+    "benchmark_enn_fit_timing",
     "benchmark_synthetic_sine_surrogates",
     "draw_benchmark_synthetic_xy",
+    "EnnFitTimingResult",
+    "enn_fit_quality_ns",
+    "enn_incremental_checkpoint_ns",
     "env_action_coords_to_surrogate_unit_x",
     "normalize_benchmark_function_name",
     "fit_dngo",
     "fit_enn",
+    "fit_enn_hnsw",
     "fit_exact_gp",
     "fit_smac_rf",
     "fit_svgp_default",
@@ -53,8 +85,18 @@ def __getattr__(name: str):
 
         return SyntheticBenchJob
     if name in (
+        "EnnIncrementalIndexDriver",
+        "EnnIncrementalTimingResult",
+        "benchmark_enn_incremental_add_timing",
+        "enn_incremental_checkpoint_ns",
+    ):
+        from analysis.fitting_time import fitting_time_enn_incremental as _inc
+
+        return getattr(_inc, name)
+    if name in (
         "fit_dngo",
         "fit_enn",
+        "fit_enn_hnsw",
         "fit_exact_gp",
         "fit_smac_rf",
         "fit_svgp_default",

@@ -16,6 +16,7 @@ from analysis.fitting_time.evaluate import (
     synthetic_benchmark_data_seed,
 )
 from experiments import synthetic_sine_benchmark_payload as ssbp
+from experiments.modal_dict_utils import delete_keys_from_dicts
 from experiments.modal_image import mk_image
 from experiments.modal_synthetic_sine_benchmark_batches_reps import (
     aggregate_reps_to_dest,
@@ -148,15 +149,7 @@ def synthetic_sine_benchmark_batch_resubmitter(batch_of_jobs, tag: str):
 def synthetic_sine_benchmark_batch_deleter(keys, tag: str):
     results = _results_dict(tag)
     submitted = _submitted_dict(tag)
-    for key in keys:
-        try:
-            del results[key]
-        except KeyError:
-            pass
-        try:
-            del submitted[key]
-        except KeyError:
-            pass
+    delete_keys_from_dicts(keys, results, submitted)
 
 
 def _submit_missing(tag: str, jobs_fn: str, output_dir: str | Path, num_reps: int):
