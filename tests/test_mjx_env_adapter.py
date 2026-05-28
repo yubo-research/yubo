@@ -167,8 +167,14 @@ def test_halfcheetah_mjx_reward_delegates_to_gymnasium_oracle() -> None:
 
     env.unwrapped._get_rew = fake_get_rew
     spec = resolve_gymnasium_mujoco_spec(env)
-    state = SimpleNamespace(qpos=np.array([1.0], dtype=np.float32))
-    next_state = SimpleNamespace(qpos=np.array([1.5], dtype=np.float32))
+    state = SimpleNamespace(
+        qpos=np.array([1.0, 0.0], dtype=np.float32),
+        qvel=np.array([0.0], dtype=np.float32),
+    )
+    next_state = SimpleNamespace(
+        qpos=np.array([1.5, 0.0], dtype=np.float32),
+        qvel=np.array([0.0], dtype=np.float32),
+    )
     action = np.array([1.0, -2.0], dtype=np.float32)
 
     reward, info = spec.reward_info(state, next_state, action, SimpleNamespace(), np)
