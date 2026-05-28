@@ -322,16 +322,16 @@ install_repo_test_compat_stack() {
   log "ensuring repo test runtime pins"
   pip_install --force-reinstall \
     "setuptools>=77.0.3,<81.0.0" \
-    "numpy>=2.2,<2.3" \
-    "numba==0.61.2" \
-    "llvmlite==0.44.0" \
+    "numpy>=2.3,<2.4" \
+    "numba==0.62.1" \
+    "llvmlite==0.45.1" \
     "dm-control>=1.0.40"
   run_in_env python - <<'PY'
 import numpy
 import numba
 from dm_control import suite
 
-assert numpy.__version__.startswith("2.2"), numpy.__version__
+assert tuple(int(x) for x in numpy.__version__.split(".")[:2]) >= (2, 3), numpy.__version__
 env = suite.load("cartpole", "swingup")
 env.close()
 print(f"REPO_TEST_COMPAT_OK numpy={numpy.__version__} numba={numba.__version__}")

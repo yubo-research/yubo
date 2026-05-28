@@ -9,10 +9,11 @@ dependencies:
   - c-compiler
   - cxx-compiler
   - swig
-  - numpy>=2.2,<2.3
+  - numpy>=2.3,<2.4
+  - numba==0.62.1
+  - llvmlite==0.45.1
   - scipy>=1.17,<1.18
   - h5py
-  - numba
   - scikit-learn
   - matplotlib
   - pandas

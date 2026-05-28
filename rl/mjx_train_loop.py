@@ -66,6 +66,32 @@ def _log_iteration(
     )
 
 
+def _restore_mjx_state_if_requested(
+    *,
+    config,
+    state,
+    mngr,
+    checkpoint_fn,
+    restore_fn,
+    prefix: str,
+):
+    if not config.checkpoint.resume_from:
+        return state
+    from rl import logger
+
+    resume_path = Path(config.checkpoint.resume_from)
+    if not resume_path.is_absolute():
+        resume_path = Path.cwd() / resume_path
+    restore_items = checkpoint_fn(state) if checkpoint_fn else state
+    restored = mngr.restore(mngr.latest_step(), items=restore_items)
+    if restore_fn:
+        state = restore_fn(state, restored)
+    else:
+        state = restored
+    logger.log_rl_status(f"{prefix}Resumed from {resume_path} at step {mngr.latest_step()}")
+    return state
+
+
 def run_mjx_training_loop(
     *,
     config,
@@ -91,19 +117,14 @@ def run_mjx_training_loop(
     exp_dir.mkdir(parents=True, exist_ok=True)
 
     mngr = _checkpoint_manager(ckpt_dir)
-    if config.checkpoint.resume_from:
-        resume_path = Path(config.checkpoint.resume_from)
-        if not resume_path.is_absolute():
-            resume_path = Path.cwd() / resume_path
-
-        restore_items = checkpoint_fn(state) if checkpoint_fn else state
-        restored = mngr.restore(mngr.latest_step(), items=restore_items)
-        if restore_fn:
-            state = restore_fn(state, restored)
-        else:
-            state = restored
-
-        logger.log_rl_status(f"{prefix}Resumed from {resume_path} at step {mngr.latest_step()}")
+    state = _restore_mjx_state_if_requested(
+        config=config,
+        state=state,
+        mngr=mngr,
+        checkpoint_fn=checkpoint_fn,
+        restore_fn=restore_fn,
+        prefix=prefix,
+    )
 
     start = time.time()
     best_return = float("-inf")

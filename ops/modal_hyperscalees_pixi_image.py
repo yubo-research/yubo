@@ -40,7 +40,6 @@ _REPO_MOUNT_IGNORE = (
 )
 _MODAL_ENV = {
     "NVIDIA_DRIVER_CAPABILITIES": "all",
-    "OMNI_KIT_ACCEPT_EULA": "YES",
     "PYTHONPATH": "/root",
     "PYTHONUNBUFFERED": "1",
 }
@@ -49,12 +48,6 @@ _MODAL_ENV = {
 def mk_image(modal):
     project_root = Path(__file__).resolve().parents[1]
     image = mk_hyperscalees_pixi_base_image(modal, project_root).env(_MODAL_ENV)
-    # Fast layer: Install mujoco_playground and its specific missing dependencies without invalidating JAX/CUDA
-    pixi_run = "/usr/local/bin/pixi run --manifest-path /opt/yubo-pixi/pixi.toml --locked -e hyperscalees"
-    image = image.run_commands(
-        f"{pixi_run} pip install --no-deps mediapy warp-lang git+https://github.com/google-deepmind/mujoco_playground.git",
-        f'{pixi_run} python -c "from mujoco_playground._src import mjx_env; mjx_env.ensure_menagerie_exists()"',
-    )
     return _add_repo_mount(image, project_root)
 
 

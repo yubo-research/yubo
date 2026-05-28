@@ -20,18 +20,24 @@ Check IsaacLab too:
 modal run ops/modal_hyperscalees_pixi_setup.py --command isaaclab-preflight
 ```
 
-The image is built from:
+## Image layers
 
 ```text
-pixi.toml
-pixi.lock
-ops/modal_hyperscalees_pixi_base_image.py
-ops/modal_hyperscalees_pixi_image.py
+1. debian_slim + apt + pixi binary        # rarely changes
+2. pixi.toml + pixi.lock (copied in)       # changes on dep edits
+3. pixi install + setup + patchelf + check # the expensive solve/build
+4. repo mount at /root                     # remounts without rebuild
 ```
 
-The image carries OS packages, Pixi, `pixi.toml`, `pixi.lock`, and both Pixi
-envs. Changing `pixi.toml`, `pixi.lock`, or setup tasks rebuilds the env image.
-Source/config edits do not rebuild the Pixi envs.
+The cached image carries OS packages, Pixi, `pixi.toml`, `pixi.lock`, and the
+**hyperscalees** Pixi env. Changing `pixi.toml`, `pixi.lock`, or setup tasks
+rebuilds layer 3. Source/config edits remount the repo without rebuilding Pixi.
+
+`pixi run setup` installs vLLM, ennbo, VecchiaBO, LassoBench, mujoco_playground,
+and pins numpy/numba/llvmlite last (so vLLM cannot leave numpy < 2.3).
+
+IsaacLab configs resolve to the `isaaclab` Pixi env, installed on first use at
+runtime (not baked into the image).
 
 ## Run
 
@@ -59,12 +65,17 @@ RL:
 modal run ops/modal_hyperscalees_pixi_setup.py --config configs/rl/gymnasium/cheetah/sac_torchrl_halfcheetah_sota_like_linux.toml
 ```
 
-Tests:
+Tests (CPU worker; pytest + pytest-testmon come from the Pixi env):
 
 ```bash
 modal run ops/modal_hyperscalees_pixi_setup.py --pytest
-modal run ops/modal_hyperscalees_pixi_setup.py --pytest --pytest-args '-sv tests/test_experiment_sampler_runtime.py -rs'
-modal run ops/modal_hyperscalees_pixi_setup.py --command 'set -euxo pipefail; cd /root; /usr/local/bin/pixi run --manifest-path /opt/yubo-pixi/pixi.toml --locked -e hyperscalees pytest-testmon'
+modal run ops/modal_hyperscalees_pixi_setup.py --pytest --pytest-args '-sv tests/test_fitting_time_enn_fit.py -rs'
+```
+
+Run detached so the job survives a local disconnect:
+
+```bash
+modal run -d ops/modal_hyperscalees_pixi_setup.py --pytest
 ```
 
 ## Routing
@@ -110,7 +121,6 @@ modal run ops/modal_hyperscalees_pixi_setup.py --pixi-env isaaclab --command 'py
 ## Notes
 
 - Do not mount `.pixi/`.
-- `hyperscalees` setup installs vLLM, VecchiaBO, and LassoBench.
+- IsaacLab is bootstrapped on demand for `isaaclab` configs / `--command isaaclab-preflight`.
 - Do not switch Isaac/Torch to CUDA 13; the stack uses CUDA 12.8 wheels.
-- `admin/setup-hyperscalees.sh` is legacy local CUDA setup, not the main
-  collaborator path.
+- `admin/setup-hyperscalees.sh` is the micromamba equivalent for bare-metal Linux GPUs.

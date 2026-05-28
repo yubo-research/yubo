@@ -21,7 +21,7 @@ def _create_optimizer_auto(bounds, config, rng):
 
 def _create_optimizer_py(bounds, config, rng):
     """Create optimizer forcing Python backend."""
-    m = _im("enn.turbo.optimizer")
+    m = _im("enn.turbo.python_fallback.optimizer")
     return m.create_optimizer(bounds=bounds, config=config, rng=rng)
 
 
@@ -33,11 +33,7 @@ def _coerce_num_candidates(num_candidates):
     n = int(num_candidates)
     if n <= 0:
         raise ValueError(f"num_candidates must be positive, got {num_candidates}")
-
-    def _constant_num_candidates(*, num_dim, num_arms):
-        return n
-
-    return _constant_num_candidates
+    return n
 
 
 class TurboENNDesigner:

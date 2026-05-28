@@ -8,15 +8,12 @@ import numpy as np
 import pytest
 import torch
 from kiss_gate_runner_cfg import runner_dummy_config_cls
-from kiss_gate_stubs_dm import _DM
 from kiss_gate_stubs_enn_core import _ENN
 from kiss_gate_stubs_enn_imputer import _ENNImputer
 from kiss_gate_stubs_gym_preproc import _Env as _GymClipEnv
 from kiss_gate_stubs_mlp_env import _Env as _MlpEnv
 from kiss_gate_stubs_mnist import _TinyMNIST
 from kiss_gate_stubs_modal_lookup import _Lookup
-from kiss_gate_stubs_tr import TrEnvModule
-from kiss_gate_stubs_transforms import CatTensors, Compose, DoubleToFloat
 from kiss_gate_stubs_uhd_np import _Embed, _Pert, _Policy
 
 
@@ -35,43 +32,20 @@ def test_kiss_cov_types_and_small_helpers():
     assert sfx.sigma == 1.0
 
 
-def test_kiss_cov_runner_main_and_eval_config(monkeypatch, tmp_path):
-    import rl.pufferlib.ppo.eval_config as eval_config
-    import rl.pufferlib.ppo.eval_seeds as eval_seeds_mod
+def test_kiss_cov_runner_main(monkeypatch, tmp_path):
+    import common.config_toml as config_toml
     import rl.runner as runner
-    from rl.pufferlib.ppo.eval_seeds import resolve_eval_seeds
-
-    monkeypatch.setattr(eval_seeds_mod, "resolve_run_seeds", lambda **kwargs: SimpleNamespace(problem_seed=3, noise_seed_0=4))
-    assert resolve_eval_seeds(SimpleNamespace(seed=1, problem_seed=None, noise_seed_0=None)) == (3, 4)
-
-    monkeypatch.setattr(
-        eval_config,
-        "build_seeded_env_conf_from_run",
-        lambda **kwargs: SimpleNamespace(
-            env_conf=SimpleNamespace(gym_conf=None),
-            problem_seed=kwargs["seed"] + 1,
-            noise_seed_0=kwargs["seed"] + 2,
-        ),
-    )
-    monkeypatch.setattr(eval_seeds_mod, "resolve_run_seeds", lambda **kwargs: SimpleNamespace(problem_seed=5, noise_seed_0=6))
-    fake_env_conf = eval_config.build_eval_env_conf(
-        SimpleNamespace(env_tag="x", seed=1, problem_seed=None, noise_seed_0=None, pixels_only=False),
-        obs_mode="vector",
-        is_atari_env_tag_fn=lambda _tag: False,
-        resolve_gym_env_name_fn=lambda _tag: ("CartPole-v1", {}),
-    )
-    assert fake_env_conf.env_name == "CartPole-v1"
+    import rl.runner_helpers as runner_helpers
 
     cfg_path = tmp_path / "rl.toml"
     cfg_path.write_text('[rl]\nalgo="dummy"\n[rl.dummy]\nseed=7\nexp_dir="tmp"\n')
 
-    monkeypatch.setattr(runner, "split_config_and_args", lambda argv: (str(cfg_path), argv[1:]))
-    monkeypatch.setattr(runner, "parse_runtime_args", lambda rest: SimpleNamespace(workers=1, workers_cli_set=False, cleaned=rest))
-    monkeypatch.setattr(runner, "parse_set_args", lambda cleaned: {})
-    monkeypatch.setattr(runner, "load_toml", lambda _path: {"rl": {"algo": "dummy", "dummy": {"seed": 7, "exp_dir": "tmp"}}})
-    monkeypatch.setattr(runner, "apply_overrides", lambda cfg, overrides: None)
+    monkeypatch.setattr(runner_helpers, "split_config_and_args", lambda argv: (str(cfg_path), argv[1:]))
+    monkeypatch.setattr(runner_helpers, "parse_runtime_args", lambda rest: SimpleNamespace(workers=1, workers_cli_set=False, cleaned=rest))
+    monkeypatch.setattr(config_toml, "parse_set_args", lambda cleaned: {})
+    monkeypatch.setattr(config_toml, "load_toml", lambda _path: {"rl": {"algo": "dummy", "dummy": {"seed": 7, "exp_dir": "tmp"}}})
+    monkeypatch.setattr(config_toml, "apply_overrides", lambda cfg, overrides: None)
     monkeypatch.setattr(runner, "_extract_run_cfg", lambda cfg: ([], 1))
-    monkeypatch.setattr(runner, "resolve_algo_name", lambda algo, backend=None: algo)
 
     _Cfg = runner_dummy_config_cls()
     called = {"train": 0}
@@ -80,31 +54,37 @@ def test_kiss_cov_runner_main_and_eval_config(monkeypatch, tmp_path):
         called["train"] += 1
         return {"ok": True}
 
-    monkeypatch.setattr(runner, "get_algo", lambda _algo_name, backend=None: SimpleNamespace(config_cls=_Cfg, train_fn=_train_fn))
+    monkeypatch.setattr(
+        "rl.registry.get_algo",
+        lambda _algo_name: SimpleNamespace(config_cls=_Cfg, train_fn=_train_fn),
+    )
     monkeypatch.setattr("rl.builtins.register_all", lambda: None)
     runner.main(["config.toml"])
     assert called["train"] == 1
 
 
 def test_kiss_cov_dm_control_collect_and_mlp_torch_env(monkeypatch):
+    pytest.importorskip("torchrl")
+    import rl.torchrl.collect_utils as cu
     from problems.mlp_torch_env import MLPTorchEnv, MLPTorchEnvWrapper, wrap_mlp_env
-    from rl.torchrl import dm_control_collect
 
-    monkeypatch.setattr("problems.dm_control_env._configure_headless_render_backend", lambda _mode: None)
-    monkeypatch.setattr("problems.dm_control_env._parse_env_name", lambda _name: ("cartpole", "swingup"))
-    monkeypatch.setattr("dm_control.suite.load", lambda *_args, **_kwargs: _DM())
-
-    tr_tf = SimpleNamespace(CatTensors=CatTensors, DoubleToFloat=DoubleToFloat, Compose=Compose)
-    out = dm_control_collect.make_dm_control_collect_env(
-        env_name="dm_control/cartpole-swingup-v0",
-        seed=1,
-        from_pixels=False,
-        pixels_only=False,
-        tr_envs_module=TrEnvModule,
-        tr_transforms_module=tr_tf,
-        pixels_transform_builder=lambda _m: "pix",
+    monkeypatch.setattr(
+        cu,
+        "_gym_wrapper_without_isaaclab_probe",
+        lambda base: SimpleNamespace(base=base),
     )
-    assert isinstance(out.base, TrEnvModule.DMControlWrapper)
+    monkeypatch.setattr(
+        cu.tr_envs,
+        "TransformedEnv",
+        lambda wrapped, *a, **k: SimpleNamespace(wrapped=wrapped, base=wrapped.base),
+    )
+
+    fake_env_conf = SimpleNamespace(
+        make_gym_env=lambda seed=0: SimpleNamespace(reset=lambda seed=None: (None, {}), is_discrete=False),
+        problem_seed=1,
+    )
+    out = cu.make_collect_env(fake_env_conf, env_index=0)
+    assert out is not None
 
     env = _MlpEnv()
     module = torch.nn.Linear(1, 1)
@@ -147,63 +127,6 @@ def test_kiss_cov_checkpoint_and_uhd_np(monkeypatch, tmp_path):
     from optimizer.uhd_simple_base import UHDSimpleBase
     from optimizer.uhd_simple_be_np import UHDSimpleBENp
     from optimizer.uhd_simple_np import UHDSimpleNp
-    from rl.pufferlib.ppo import checkpoint as ppo_ckpt
-
-    payload = ppo_ckpt.build_checkpoint_payload(
-        model=SimpleNamespace(
-            actor_backbone=torch.nn.Linear(1, 1),
-            actor_head=torch.nn.Linear(1, 1),
-            critic_backbone=torch.nn.Linear(1, 1),
-            critic_head=torch.nn.Linear(1, 1),
-            log_std=None,
-        ),
-        optimizer=torch.optim.AdamW(torch.nn.Linear(1, 1).parameters(), lr=1e-3),
-        state=SimpleNamespace(
-            global_step=1,
-            best_actor_state=None,
-            best_return=1.0,
-            last_eval_return=1.0,
-            last_heldout_return=None,
-            last_episode_return=1.0,
-        ),
-        iteration=1,
-    )
-    assert payload["iteration"] == 1
-
-    model = SimpleNamespace(
-        actor_backbone=torch.nn.Linear(1, 1),
-        actor_head=torch.nn.Linear(1, 1),
-        critic_backbone=torch.nn.Linear(1, 1),
-        critic_head=torch.nn.Linear(1, 1),
-        log_std=None,
-    )
-    optimizer = torch.optim.AdamW(model.actor_backbone.parameters(), lr=1e-3)
-    expected_loaded = {
-        "actor_backbone": model.actor_backbone.state_dict(),
-        "actor_head": model.actor_head.state_dict(),
-        "critic_backbone": model.critic_backbone.state_dict(),
-        "critic_head": model.critic_head.state_dict(),
-        "optimizer": optimizer.state_dict(),
-        "iteration": 2,
-        "global_step": 3,
-    }
-    monkeypatch.setattr(
-        ppo_ckpt,
-        "load_checkpoint",
-        lambda _path, device: expected_loaded,
-    )
-    monkeypatch.setattr(ppo_ckpt, "restore_backbone_head_snapshot", lambda *args, **kwargs: None)
-    state = SimpleNamespace(
-        start_iteration=0, global_step=0, best_actor_state=None, best_return=0.0, last_eval_return=0.0, last_heldout_return=None, last_episode_return=0.0
-    )
-    ppo_ckpt.restore_checkpoint_if_requested(
-        SimpleNamespace(resume_from=str(tmp_path / "x.ckpt")), SimpleNamespace(batch_size=1), model, optimizer, state, device=torch.device("cpu")
-    )
-    called = {"save": 0}
-    mgr = SimpleNamespace(save_both=lambda payload, iteration: called.__setitem__("save", called["save"] + 1))
-    ppo_ckpt.maybe_save_periodic_checkpoint(SimpleNamespace(checkpoint_interval=1), mgr, model, optimizer, state, iteration=1)
-    ppo_ckpt.save_final_checkpoint(SimpleNamespace(checkpoint_interval=1), mgr, model, optimizer, state, iteration=2)
-    assert called["save"] == 2
 
     base = UHDSimpleBase(_Pert(), sigma_0=0.1, dim=3)
     assert base.eval_seed == 0

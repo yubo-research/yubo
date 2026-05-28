@@ -18,7 +18,9 @@ def test_modal_hyperscalees_pixi_base_image_uses_cacheable_layers() -> None:
     source = inspect.getsource(base.mk_hyperscalees_pixi_base_image)
     assert "add_local_dir" not in source
     assert "micromamba" not in source
-    assert source.index("_pixi_install_env_command(ISAACLAB_PIXI_ENV)") < source.index("_pixi_install_env_command(HYPERSCALEES_PIXI_ENV)")
+    assert "debian_slim" in source
+    assert f"_pixi_install_env_command({base.ISAACLAB_PIXI_ENV})" not in source
+    assert source.index("_pixi_install_env_command(HYPERSCALEES_PIXI_ENV)") >= 0
     assert base.PIXI_MANIFEST_PATH.endswith("/pixi.toml")
     assert base.PIXI_LOCK_PATH.endswith("/pixi.lock")
 
@@ -33,6 +35,20 @@ def test_modal_hyperscalees_pixi_base_image_uses_cacheable_layers() -> None:
     setup_command = _decoded_modal_build_command(base._pixi_task_command(base.HYPERSCALEES_PIXI_ENV, "setup"))
     assert "pixi run" in setup_command
     assert "--locked -e hyperscalees setup" in setup_command
+
+    check_command = _decoded_modal_build_command(base._hyperscalees_check_command())
+    assert "LD_LIBRARY_PATH" in check_command
+    assert "/opt/yubo-pixi/.pixi/envs/hyperscalees/lib" in check_command
+    assert "EpistemicNearestNeighbors" in check_command
+    assert "pixi run" not in check_command
+
+    bootstrap = base.isaaclab_bootstrap_command()
+    bootstrap_install = _decoded_modal_build_command(bootstrap.split("; ")[0])
+    assert "pixi install" in bootstrap_install
+    assert "-e isaaclab" in bootstrap_install
+    bootstrap_setup = _decoded_modal_build_command(bootstrap.split("; ")[1])
+    assert "pixi run" in bootstrap_setup
+    assert "-e isaaclab install" in bootstrap_setup
 
 
 def test_nvidia_vulkan_icd_script_prefers_real_icd() -> None:

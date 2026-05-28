@@ -78,6 +78,58 @@ def _anneal_lr(
         param_group["lr"] = lr_now
 
 
+def _empty_ppo_update_stats() -> dict[str, list[float]]:
+    return {
+        "approx_kls": [],
+        "clipfracs": [],
+        "ess_values": [],
+        "skipped_updates": [],
+        "loss_objective": [],
+        "loss_critic": [],
+        "loss_entropy": [],
+        "grad_norm": [],
+    }
+
+
+def _append_optional_loss_stats(loss_td, update_stats: dict[str, list[float]]) -> None:
+    if "clip_fraction" in loss_td.keys():
+        update_stats["clipfracs"].append(float(loss_td["clip_fraction"]))
+    if "kl_approx" in loss_td.keys():
+        update_stats["approx_kls"].append(float(loss_td["kl_approx"]))
+    if "ESS" in loss_td.keys():
+        update_stats["ess_values"].append(float(loss_td["ESS"]))
+
+
+def _run_ppo_minibatch_update(
+    config: PPOConfig,
+    training: _TrainingSetup,
+    mb,
+    update_stats: dict[str, list[float]],
+) -> None:
+    loss_td = training.loss_module(mb)
+    loss_objective = loss_td["loss_objective"]
+    loss_critic = loss_td["loss_critic"]
+    loss_entropy = loss_td["loss_entropy"]
+    loss = loss_objective + loss_critic + loss_entropy
+    training.optimizer.zero_grad(set_to_none=True)
+    if not bool(torch.isfinite(loss).all()):
+        update_stats["skipped_updates"].append(1.0)
+        return
+    loss.backward()
+    grad_norm = torch.nn.utils.clip_grad_norm_(training.train_params, config.optim.max_grad_norm)
+    if not bool(torch.isfinite(grad_norm).all()):
+        training.optimizer.zero_grad(set_to_none=True)
+        update_stats["skipped_updates"].append(1.0)
+        return
+    training.optimizer.step()
+    update_stats["skipped_updates"].append(0.0)
+    update_stats["loss_objective"].append(float(loss_objective.detach()))
+    update_stats["loss_critic"].append(float(loss_critic.detach()))
+    update_stats["loss_entropy"].append(float(loss_entropy.detach()))
+    update_stats["grad_norm"].append(float(grad_norm.detach()))
+    _append_optional_loss_stats(loss_td, update_stats)
+
+
 def _ppo_update(
     config: PPOConfig,
     training: _TrainingSetup,
@@ -98,60 +150,17 @@ def _ppo_update(
         raise ValueError("optim.minibatch_size must be > 0.")
     if minibatch_size > batch_size:
         raise ValueError("optim.minibatch_size too large for batch_size.")
-    clipfracs: list[float] = []
-    approx_kls: list[float] = []
-    ess_values: list[float] = []
-    skipped_updates: list[float] = []
-    loss_objective_values: list[float] = []
-    loss_critic_values: list[float] = []
-    loss_entropy_values: list[float] = []
-    grad_norm_values: list[float] = []
+    update_stats = _empty_ppo_update_stats()
     for _ in range(int(config.optim.num_epochs)):
         indices = torch.randperm(batch_size, device=device)
         for start in range(0, batch_size, minibatch_size):
             mb_idx = indices[start : start + minibatch_size]
-            mb = flat[mb_idx]
-            loss_td = training.loss_module(mb)
-            loss_objective = loss_td["loss_objective"]
-            loss_critic = loss_td["loss_critic"]
-            loss_entropy = loss_td["loss_entropy"]
-            loss = loss_objective + loss_critic + loss_entropy
-            training.optimizer.zero_grad(set_to_none=True)
-            if not bool(torch.isfinite(loss).all()):
-                skipped_updates.append(1.0)
-                continue
-            loss.backward()
-            grad_norm = torch.nn.utils.clip_grad_norm_(training.train_params, config.optim.max_grad_norm)
-            if not bool(torch.isfinite(grad_norm).all()):
-                training.optimizer.zero_grad(set_to_none=True)
-                skipped_updates.append(1.0)
-                continue
-            training.optimizer.step()
-            skipped_updates.append(0.0)
-            loss_objective_values.append(float(loss_objective.detach()))
-            loss_critic_values.append(float(loss_critic.detach()))
-            loss_entropy_values.append(float(loss_entropy.detach()))
-            grad_norm_values.append(float(grad_norm.detach()))
-            if "clip_fraction" in loss_td.keys():
-                clipfracs.append(float(loss_td["clip_fraction"]))
-            if "kl_approx" in loss_td.keys():
-                approx_kls.append(float(loss_td["kl_approx"]))
-            if "ESS" in loss_td.keys():
-                ess_values.append(float(loss_td["ESS"]))
-        mean_kl = ppo_metrics.finite_mean(approx_kls)
+            _run_ppo_minibatch_update(config, training, flat[mb_idx], update_stats)
+        mean_kl = ppo_metrics.finite_mean(update_stats["approx_kls"])
         if config.loss.target_kl is not None and mean_kl is not None and (mean_kl > float(config.loss.target_kl)):
             break
-    return {
-        "approx_kls": approx_kls,
-        "clipfracs": clipfracs,
-        "ess_values": ess_values,
-        "nonfinite_gae_fractions": [nonfinite_gae_fraction],
-        "skipped_updates": skipped_updates,
-        "loss_objective": loss_objective_values,
-        "loss_critic": loss_critic_values,
-        "loss_entropy": loss_entropy_values,
-        "grad_norm": grad_norm_values,
-    }
+    update_stats["nonfinite_gae_fractions"] = [nonfinite_gae_fraction]
+    return update_stats
 
 
 def _replace_nonfinite_rewards(batch) -> None:

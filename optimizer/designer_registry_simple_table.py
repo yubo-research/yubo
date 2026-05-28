@@ -76,7 +76,6 @@ _SIMPLE_BUILDERS = {
     "turbo-1": partial(_b._build_turbo_ref, kind="turbo-1"),
     "turbo-1-iso": partial(_b._build_turbo_ref, kind="turbo-1-iso"),
     "turbo-0": partial(_b._build_turbo_ref, kind="turbo-0"),
-    "turbo-enn-p": partial(_b._build_turbo_enn, kind="turbo-enn-p"),
     "turbo-enn-p-hnsw": partial(_b._build_turbo_enn, kind="turbo-enn-p-hnsw"),
     "turbo_py-enn-p": partial(_b._build_turbo_enn_py, kind="turbo_py-enn-p"),
     "turbo_py-enn-fit-ucb": partial(_b._build_turbo_enn_py, kind="turbo_py-enn-fit-ucb"),

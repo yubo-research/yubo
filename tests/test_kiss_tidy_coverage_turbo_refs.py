@@ -5,6 +5,8 @@ from types import SimpleNamespace
 import numpy as np
 import torch
 
+from tests.kiss_turbo_gp_helper import make_fake_gp
+
 
 def test_kiss_tidy_d_turbo_refs(monkeypatch):
     import turbo_m_ref.turbo_1_ask_tell_core as atc
@@ -38,21 +40,7 @@ def test_kiss_tidy_d_turbo_refs(monkeypatch):
         batch_size=1,
     )
 
-    def _gp_fwd(x):
-        import gpytorch.distributions as gd
-        from gpytorch.lazy import lazify
-
-        n = int(x.shape[0])
-        m = torch.zeros(n, dtype=x.dtype, device=x.device)
-        c = torch.eye(n, dtype=x.dtype, device=x.device) * 0.1 + torch.eye(n, dtype=x.dtype, device=x.device) * 1e-4
-        return gd.MultivariateNormal(m, lazify(c))
-
-    gp = SimpleNamespace(
-        covar_module=SimpleNamespace(base_kernel=SimpleNamespace(lengthscale=torch.ones(1, 2, dtype=torch.float64))),
-        likelihood=SimpleNamespace(__call__=lambda mv: mv),
-    )
-    gp.to = lambda dtype=None, device=None: gp
-    gp.__call__ = _gp_fwd
+    gp = make_fake_gp()
     monkeypatch.setattr(
         atc,
         "train_gp_model",

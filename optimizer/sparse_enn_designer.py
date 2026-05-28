@@ -4,9 +4,33 @@ import math
 from typing import Optional
 
 from enn.turbo.config.trust_region import TurboTRConfig
-from enn.turbo.turbo_trust_region import TurboTrustRegion
+from enn.turbo.python_fallback.turbo_trust_region import TurboTrustRegion
 
 from optimizer.turbo_enn_designer import TurboENNDesigner
+
+
+class _SparseOptimizerWithTrustRegion:
+    """Expose sparse trust-region state while delegating ENN work to ennbo's Rust optimizer."""
+
+    __slots__ = ("_inner", "_tr_state")
+
+    def __init__(self, inner, tr_state: SparseEvidenceTrustRegion) -> None:
+        self._inner = inner
+        self._tr_state = tr_state
+
+    def ask(self, num_arms: int):
+        return self._inner.ask(num_arms)
+
+    def tell(self, x, y, y_var=None):
+        if y_var is None:
+            return self._inner.tell(x, y)
+        return self._inner.tell(x, y, y_var=y_var)
+
+    def telemetry(self):
+        return self._inner.telemetry()
+
+    def __getattr__(self, name: str):
+        return getattr(self._inner, name)
 
 
 class SparseEvidenceTrustRegion(TurboTrustRegion):
@@ -111,21 +135,16 @@ class SparseENNDesigner(TurboENNDesigner):
             use_y_var=use_y_var,
             num_candidates=num_candidates,
             candidate_rv=candidate_rv,
-            use_python=True,
         )
 
     def _init_optimizer(self, data, num_arms):
         super()._init_optimizer(data, num_arms)
-        if self._turbo is None or not hasattr(self._turbo, "_tr_state"):
-            raise RuntimeError("SparseENNDesigner requires the Python ENN optimizer backend")
-        old_tr = self._turbo._tr_state
-        config = getattr(old_tr, "config", TurboTRConfig())
-        incumbent_selector = getattr(old_tr, "incumbent_selector", None)
-        self._turbo._tr_state = SparseEvidenceTrustRegion(
-            config,
+        tr_state = SparseEvidenceTrustRegion(
+            TurboTRConfig(),
             self._policy.num_params(),
             num_pert=self._sparse_num_pert,
             clock_scale=self._clock_scale,
             min_failures=self._min_failures,
-            incumbent_selector=incumbent_selector,
         )
+        tr_state.validate_request(num_arms)
+        self._turbo = _SparseOptimizerWithTrustRegion(self._turbo, tr_state)

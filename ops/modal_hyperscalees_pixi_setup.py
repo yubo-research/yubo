@@ -21,6 +21,7 @@ from ops.modal_hyperscalees_pixi_base_image import (
     PIXI_BIN,
     PIXI_HOME,
     PIXI_MANIFEST_PATH,
+    isaaclab_bootstrap_command,
 )
 from ops.modal_hyperscalees_pixi_image import mk_image
 from ops.modal_nvidia_vulkan import nvidia_vulkan_icd_script
@@ -57,6 +58,12 @@ def run_hyperscalees_command(command: str, env_name: str = HYPERSCALEES_PIXI_ENV
     return "ok"
 
 
+@app.function(image=image, timeout=_TIMEOUT_SECONDS)
+def run_hyperscalees_command_cpu(command: str, env_name: str = HYPERSCALEES_PIXI_ENV, *, quiet: bool = True) -> str:
+    _run_command(command, env_name, quiet=quiet)
+    return "ok"
+
+
 @app.function(image=image, gpu=_GPU, timeout=_TIMEOUT_SECONDS)
 def run_hyperscalees_command_export(
     command: str,
@@ -69,7 +76,20 @@ def run_hyperscalees_command_export(
     return collect_artifacts(artifact_globs, log_prefix=_LOG_PREFIX)
 
 
+@app.function(image=image, timeout=_TIMEOUT_SECONDS)
+def run_hyperscalees_command_export_cpu(
+    command: str,
+    artifact_globs: list[str],
+    env_name: str = HYPERSCALEES_PIXI_ENV,
+    *,
+    quiet: bool = True,
+) -> list[tuple[str, bytes]]:
+    _run_command(command, env_name, quiet=quiet)
+    return collect_artifacts(artifact_globs, log_prefix=_LOG_PREFIX)
+
+
 def _run_command(command: str, env_name: str, *, quiet: bool) -> None:
+    command = _with_pixi_env_bootstrap(command, env_name)
     logged_command(
         ["bash", "-lc", _runtime_command_script(command, env_name)],
         log_prefix=_LOG_PREFIX,
@@ -79,7 +99,6 @@ def _run_command(command: str, env_name: str, *, quiet: bool) -> None:
 
 
 def _shell_preamble(*, debug: bool) -> str:
-    # -x is the main source of wrapper spam; keep it behind a flag.
     return "set -euxo pipefail" if debug else "set -euo pipefail"
 
 
@@ -88,11 +107,17 @@ def _runtime_command_script(command: str, env_name: str) -> str:
         [
             f"export PIXI_HOME={shlex.quote(PIXI_HOME)}",
             _env_prefix_export(env_name, "YUBO_PIXI_PREFIX"),
-            "export LD_LIBRARY_PATH=${YUBO_PIXI_PREFIX}/lib:${LD_LIBRARY_PATH:-}",
+            "export LD_LIBRARY_PATH=${YUBO_PIXI_PREFIX}/lib:/usr/lib/x86_64-linux-gnu:${LD_LIBRARY_PATH:-}",
             nvidia_vulkan_icd_script(),
             command,
         ]
     )
+
+
+def _with_pixi_env_bootstrap(command: str, env_name: str) -> str:
+    if env_name != ISAACLAB_PIXI_ENV:
+        return command
+    return f"{isaaclab_bootstrap_command()}; {command}"
 
 
 def _pixi_run(env_name: str, command: str) -> str:
@@ -153,10 +178,7 @@ def _experiment_command(env_name: str, mode: str, config_path: str) -> str:
 
 
 def _pytest_command(env_name: str, args: str) -> str:
-    return "cd /root; " + _pixi_run(
-        env_name,
-        f"python -m pytest {args}",
-    )
+    return "cd /root; " + _pixi_run(env_name, f"python -m pytest {args}")
 
 
 @app.local_entrypoint()
@@ -202,10 +224,18 @@ def main(
     artifact_globs = parse_export_globs(export_glob, export_videos=export_videos)
     if artifact_globs:
         print(f"[modal-hyperscalees-pixi] export_globs={artifact_globs!r}", flush=True)
-        artifacts = run_hyperscalees_command_export.remote(command, artifact_globs, pixi_env, quiet=quiet)
+        runner = _remote_runner(pytest=pytest, with_export=True)
+        artifacts = runner.remote(command, artifact_globs, pixi_env, quiet=quiet)
         write_artifacts(artifacts, export_dir=export_dir, log_prefix=_LOG_PREFIX)
     else:
-        run_hyperscalees_command.remote(command, pixi_env, quiet=quiet)
+        runner = _remote_runner(pytest=pytest, with_export=False)
+        runner.remote(command, pixi_env, quiet=quiet)
+
+
+def _remote_runner(*, pytest: bool, with_export: bool):
+    if pytest:
+        return run_hyperscalees_command_export_cpu if with_export else run_hyperscalees_command_cpu
+    return run_hyperscalees_command_export if with_export else run_hyperscalees_command
 
 
 def _check_pixi_env(env_name: str) -> None:

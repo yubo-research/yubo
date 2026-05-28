@@ -4,7 +4,7 @@ import base64
 import shlex
 from pathlib import Path
 
-PIXI_BASE_IMAGE = "nvcr.io/nvidia/isaac-sim:6.0.0-dev2"
+# Pixi owns Python + CUDA toolkit (12.8) in the hyperscalees env. Modal hosts the driver.
 PYTHON_VERSION = "3.12"
 PIXI_HOME = "/opt/pixi"
 PIXI_BIN = "/usr/local/bin/pixi"
@@ -13,6 +13,17 @@ PIXI_MANIFEST_PATH = f"{PIXI_WORKSPACE_DIR}/pixi.toml"
 PIXI_LOCK_PATH = f"{PIXI_WORKSPACE_DIR}/pixi.lock"
 HYPERSCALEES_PIXI_ENV = "hyperscalees"
 ISAACLAB_PIXI_ENV = "isaaclab"
+HYPERSCALEES_ENV_PREFIX = f"{PIXI_WORKSPACE_DIR}/.pixi/envs/{HYPERSCALEES_PIXI_ENV}"
+HYPERSCALEES_LD_LIBRARY_PATH = f"{HYPERSCALEES_ENV_PREFIX}/lib:/usr/lib/x86_64-linux-gnu"
+
+_HYPERSCALEES_CHECK_PYTHON = (
+    "import numpy, numba; "
+    "assert tuple(int(x) for x in numpy.__version__.split('.')[:2]) >= (2, 3), numpy.__version__; "
+    "import faiss, torch, vllm, hyperscalees, LassoBench; "
+    "from pyvecch.input_transforms import Identity; "
+    "from enn.enn.enn_class import EpistemicNearestNeighbors; "
+    'print("hyperscalees ok", numpy.__version__, numba.__version__, Identity.__name__, EpistemicNearestNeighbors.__name__)'
+)
 
 
 def install_pixi_command() -> str:
@@ -24,67 +35,97 @@ def install_pixi_command() -> str:
     )
 
 
+# GUI/X11/Vulkan runtime libs needed by mujoco, dm-control, glfw rendering.
+_APT_PACKAGES = (
+    "bash",
+    "build-essential",
+    "ca-certificates",
+    "curl",
+    "git",
+    "git-lfs",
+    "patchelf",
+    "tar",
+    "libopenblas-dev",
+    "libopenblas0-pthread",
+    "libegl1",
+    "libgl1",
+    "libgl1-mesa-dev",
+    "libglu1-mesa",
+    "libvulkan1",
+    "vulkan-tools",
+    "libglib2.0-0",
+    "libsm6",
+    "libice6",
+    "libxext6",
+    "libxrender1",
+    "libx11-6",
+)
+
+
 def mk_hyperscalees_pixi_base_image(modal, project_root: Path):
-    image = (
-        modal.Image.from_registry(PIXI_BASE_IMAGE, add_python=PYTHON_VERSION)
+    """Build the cached Pixi env image (hyperscalees only).
+
+    Layers (each is a cache point):
+      1. base OS + apt + pixi binary       (changes rarely)
+      2. pixi.toml + pixi.lock             (changes on dep edits)
+      3. pixi install + setup + check      (the expensive solve/build)
+
+    IsaacLab is not baked; use ``isaaclab_bootstrap_command()`` at runtime.
+    """
+    return (
+        modal.Image.debian_slim(python_version=PYTHON_VERSION)
         .entrypoint([])
-        .apt_install(
-            "bash",
-            "build-essential",
-            "bzip2",
-            "ca-certificates",
-            "curl",
-            "git",
-            "libasound2t64",
-            "libdbus-1-3",
-            "libegl1",
-            "libfontconfig1",
-            "libglib2.0-0",
-            "libgl1",
-            "libgl1-mesa-dev",
-            "libglu1-mesa",
-            "libice6",
-            "libnss3",
-            "libsm6",
-            "libvulkan1",
-            "libx11-6",
-            "libx11-dev",
-            "libxcursor1",
-            "libxcursor-dev",
-            "libxext6",
-            "libxfixes3",
-            "libxi6",
-            "libxi-dev",
-            "libxinerama1",
-            "libxinerama-dev",
-            "libxrandr2",
-            "libxrandr-dev",
-            "libxrender1",
-            "libxt6",
-            "tar",
-            "vulkan-tools",
-        )
-        .env(
-            {
-                "NVIDIA_DRIVER_CAPABILITIES": "all",
-                "OMNI_KIT_ACCEPT_EULA": "YES",
-                "PIXI_HOME": PIXI_HOME,
-            }
-        )
+        .apt_install(*_APT_PACKAGES)
+        .env({"NVIDIA_DRIVER_CAPABILITIES": "all", "PIXI_HOME": PIXI_HOME})
         .run_commands(install_pixi_command())
         .pip_install("modal", "grpclib")  # Required for Modal worker stability.
         .run_commands(f"mkdir -p {shlex.quote(PIXI_WORKSPACE_DIR)}")
         .add_local_file(str(project_root / "pixi.toml"), remote_path=PIXI_MANIFEST_PATH, copy=True)
         .add_local_file(str(project_root / "pixi.lock"), remote_path=PIXI_LOCK_PATH, copy=True)
-        .run_commands(_pixi_info_command())
-        .run_commands(_pixi_install_env_command(ISAACLAB_PIXI_ENV))
-        .run_commands(_pixi_task_command(ISAACLAB_PIXI_ENV, "install"))
-        .run_commands(_pixi_task_command(ISAACLAB_PIXI_ENV, "check"))
-        .run_commands(_pixi_install_env_command(HYPERSCALEES_PIXI_ENV))
-        .run_commands(_pixi_task_command(HYPERSCALEES_PIXI_ENV, "setup"))
-        .run_commands(_pixi_task_command(HYPERSCALEES_PIXI_ENV, "check"))
+        .run_commands(
+            _pixi_install_env_command(HYPERSCALEES_PIXI_ENV),
+            _pixi_task_command(HYPERSCALEES_PIXI_ENV, "setup"),
+            _hyperscalees_patch_enn_openblas_command(),
+            _hyperscalees_check_command(),
+        )
     )
-    return image
+
+
+def isaaclab_bootstrap_command() -> str:
+    """One-shot IsaacLab env install (not cached in the Modal image)."""
+    return "; ".join(
+        (
+            _pixi_install_env_command(ISAACLAB_PIXI_ENV),
+            _pixi_task_command(ISAACLAB_PIXI_ENV, "install"),
+            _pixi_task_command(ISAACLAB_PIXI_ENV, "check"),
+        )
+    )
+
+
+def _hyperscalees_openblas_env_exports() -> str:
+    """Ensure libopenblas is visible for ennbo (patchelf adds DT_NEEDED at build time)."""
+    return (
+        f"export LD_LIBRARY_PATH={shlex.quote(HYPERSCALEES_LD_LIBRARY_PATH)}:${{LD_LIBRARY_PATH:-}} && "
+        'echo "OPENBLAS_PROBE: LD_LIBRARY_PATH=${LD_LIBRARY_PATH} (no LD_PRELOAD)" >&2'
+    )
+
+
+def _hyperscalees_patch_enn_openblas_command() -> str:
+    """Link ennbo's prebuilt wheel against libopenblas (avoids pixi $ escaping)."""
+    python_bin = f"{HYPERSCALEES_ENV_PREFIX}/bin/python"
+    script = (
+        "import glob, os, subprocess, enn; "
+        "so = glob.glob(os.path.join(os.path.dirname(enn.__file__), 'enn_rust*.so'))[0]; "
+        "subprocess.run(['patchelf', '--add-needed', 'libopenblas.so.0', so], check=True); "
+        "print('patched', so)"
+    )
+    return _bash(f"{shlex.quote(python_bin)} -c {shlex.quote(script)}")
+
+
+def _hyperscalees_check_command() -> str:
+    """Verify ENN/OpenBLAS using the env python directly."""
+    python_bin = f"{HYPERSCALEES_ENV_PREFIX}/bin/python"
+    return _bash(f"{_hyperscalees_openblas_env_exports()} && {shlex.quote(python_bin)} -c {shlex.quote(_HYPERSCALEES_CHECK_PYTHON)}")
 
 
 def _pixi_info_command() -> str:
@@ -96,7 +137,8 @@ def _pixi_install_env_command(env_name: str) -> str:
 
 
 def _pixi_task_command(env_name: str, task_name: str) -> str:
-    return _pixi_workspace_command(f"run --manifest-path {shlex.quote(PIXI_MANIFEST_PATH)} --locked -e {shlex.quote(env_name)} {shlex.quote(task_name)}")
+    pixi_args = f"run --manifest-path {shlex.quote(PIXI_MANIFEST_PATH)} --locked -e {shlex.quote(env_name)} {shlex.quote(task_name)}"
+    return _pixi_workspace_command(pixi_args)
 
 
 def _pixi_workspace_command(command: str) -> str:

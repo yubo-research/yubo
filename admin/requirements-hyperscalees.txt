@@ -1,10 +1,12 @@
 # Core JAX & Numerical stack (pinned for HyperscaleES upstream compatibility)
 jax[cuda12]==0.8.1
 setuptools>=77.0.3,<81.0.0
-numpy>=2.2,<2.3
+numpy>=2.3,<2.4
 scipy>=1.17,<1.18
-numba==0.61.2
-llvmlite==0.44.0
+numba==0.62.1
+llvmlite==0.45.1
+pytest==8.3.4
+pytest-testmon==2.2.0
 protobuf>=6.31.1,<7
 
 # Yubo runtime core

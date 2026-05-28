@@ -28,13 +28,13 @@ def test_kiss_tidy_e_torchrl_sac_sampling_vector(monkeypatch, tmp_path):
     monkeypatch.setattr("rl.core.runtime.select_device", lambda d: torch.device("cpu"))
     from rl.torchrl.sac import sac_trainer_phase_a as pha
     from rl.torchrl.sac import sac_trainer_phase_b_impl as phb
-    from rl.torchrl.sac.config import SACConfig
+    from rl.torchrl.sac.config import SACCollectorConfig, SACConfig, SACOptimConfig, SACReplayBufferConfig
     from rl.torchrl.sac.sac_setup_build import build_env_setup, build_modules, build_training
     from rl.torchrl.sac.sac_setup_types import _TrainState
 
     assert callable(train_sac)
     monkeypatch.setattr(
-        "rl.torchrl.sac.sac_setup_build.build_continuous_gym_env_setup",
+        "rl.core.env_setup.build_env_setup",
         lambda **kwargs: SimpleNamespace(
             env_conf=SimpleNamespace(
                 from_pixels=False,
@@ -51,8 +51,15 @@ def test_kiss_tidy_e_torchrl_sac_sampling_vector(monkeypatch, tmp_path):
             obs_width=None,
         ),
     )
-    monkeypatch.setattr("rl.torchrl.sac.sac_setup_build.torchrl_common.obs_scale_from_env", lambda env_conf: (None, None))
-    sc = SACConfig(env_tag="pend", exp_dir=str(tmp_path), device="cpu", replay_size=64, batch_size=4, total_timesteps=1)
+    monkeypatch.setattr("rl.core.runtime.obs_scale_from_env", lambda env_conf: (None, None))
+    sc = SACConfig(
+        env_tag="pend",
+        exp_dir=str(tmp_path),
+        device="cpu",
+        policy_tag="mlp-16-8",
+        collector=SACCollectorConfig(total_frames=1),
+        replay_buffer=SACReplayBufferConfig(size=64, batch_size=4),
+    )
     env = build_env_setup(sc)
     mods = build_modules(sc, env, device=torch.device("cpu"))
     tr = build_training(sc, mods)
@@ -113,13 +120,10 @@ def test_kiss_tidy_e_torchrl_sac_sampling_vector(monkeypatch, tmp_path):
         env_tag="pend",
         exp_dir=str(tmp_path),
         device="cpu",
-        replay_size=128,
-        batch_size=4,
-        learning_starts=0,
-        update_every=1,
-        updates_per_step=1,
-        learner_update_chunk_size=1,
-        total_timesteps=4,
+        policy_tag="mlp-16-8",
+        collector=SACCollectorConfig(total_frames=4, init_random_frames=0),
+        replay_buffer=SACReplayBufferConfig(size=128, batch_size=4),
+        optim=SACOptimConfig(update_every=1, optim_steps_per_batch=1, learner_update_chunk_size=1),
     )
     out = phb.process_sac_batch(td, sc2, mods, tr, rt, env, {"loss_actor": 0.0, "loss_critic": 0.0, "loss_alpha": 0.0}, 0)
     assert len(out) == 3

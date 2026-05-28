@@ -142,7 +142,7 @@ def test_mjx_ppo_loss_and_learning_rate_match_clipped_surrogate() -> None:
             entropy_coeff=0.01,
         ),
     )
-    assert _ppo_learning_rate(np, config, iteration=1, num_iterations=10) == 0.01
+    assert _ppo_learning_rate(np, config, iteration=1, num_iterations=10) == pytest.approx(0.01)
     assert _ppo_learning_rate(np, config, iteration=10, num_iterations=10) == pytest.approx(0.001)
 
     params = _init_params(

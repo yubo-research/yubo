@@ -172,6 +172,8 @@ def test_kiss_tidy_b_ops_cli_batches_uhd(monkeypatch, tmp_path):
             return tl
         if name == "ops.modal_uhd":
             return SimpleNamespace(run=lambda *a, **k: "modal-log")
+        if name == "ops.exp_uhd_run":
+            return erun
         raise AssertionError(name)
 
     monkeypatch.setattr("common.im.im", _fake_im)
