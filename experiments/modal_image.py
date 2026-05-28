@@ -95,13 +95,13 @@ def mk_image(tag: str = "default"):
     image = image.run_commands(
         # ndarray pulls cblas symbols; ensure final cdylib keeps DT_NEEDED on libopenblas.
         ". $HOME/.cargo/env && "
+        "export CARGO_BUILD_RUSTC_WRAPPER= && "
         "export RUSTFLAGS='-C link-arg=-Wl,--no-as-needed -C link-arg=-lopenblas' && "
         "cd /root/enn/rust/crates/enn-py && maturin build --release",
         "pip install $(find /root/enn/rust -path '*/wheels/*manylinux*.whl' | head -1) && pip install -e /root/enn",
     )
     image = image.run_commands(
-        "python -c \"from enn.enn.enn_fit import enn_fit; print('enn import OK')\"",
-        f"echo 'IMAGE_TAG={tag}' > /root/image_tag.txt",
+        "python -c \"from optimizer.uhd_enn_fit_helpers import fit_enn_params; print('enn import OK')\"",
     )
 
     for d in [

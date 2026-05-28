@@ -1,0 +1,140 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{url}
+\usepackage{hyperref}
+\usepackage{parskip}
+
+\title{Researcher guide: \texttt{ops/} CLIs, batches, Modal, and \texttt{ennbo}}
+\author{Yubo repository}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{Repository layout and Python path}
+Run CLIs from the repository root, and set the Python path once per shell:
+\begin{verbatim}
+export PYTHONPATH=${PWD}
+\end{verbatim}
+Typical invocations use \texttt{./ops/\dots.py} (shebang scripts); subprocesses assume this layout.
+
+\section{Modal (platform)}
+Modal (\url{https://modal.com}) runs containerized Python on cloud GPUs. This repo uses it in several ways:
+\begin{itemize}
+  \item \textbf{Single UHD jobs:} \texttt{ops/exp\_uhd.py modal} packages selected directories, optionally builds the sibling \texttt{enn} tree inside the image, and runs one experiment; logs stream to the local terminal.
+  \item \textbf{UHD batch workers:} \texttt{ops/uhd\_batch.py modal} and \texttt{batch} deploy or call a Modal app (\texttt{yubo\_uhd\_batch}) that runs \texttt{ops/exp\_uhd.py local} per job; results land in Modal Dicts and are merged with \texttt{collect}.
+  \item \textbf{Experiment batches:} \texttt{ops/modal\_batches.py} wraps \texttt{modal deploy/run} for \texttt{experiments/modal\_batches\_impl.py} with a \texttt{MODAL\_TAG} environment variable so multiple logical deployments coexist.
+  \item \textbf{Timing sweep:} \texttt{ops/single\_run\_time.py} targets \texttt{experiments/modal\_timing\_sweep.py}.
+  \item \textbf{Synthetic sine benchmarks:} \texttt{ops/synthetic\_sine\_benchmark\_batches.py} targets \texttt{experiments/modal\_synthetic\_sine\_benchmark\_batches\_impl.py}.
+\end{itemize}
+Install the Modal Python SDK (\texttt{pip install modal}), authenticate per Modal docs, and ensure the \texttt{modal} CLI is on your \texttt{PATH}.
+
+\section{The \texttt{ennbo} library and local \texttt{enn} code}
+\textbf{\texttt{ennbo}} is the PyPI-installable name used in \texttt{admin/install.sh} (\texttt{pip install ennbo --no-deps}) for epistemic nearest-neighbors (ENN) surrogate functionality used in optimizers and analysis (e.g.\ \texttt{enn.enn.enn\_class}, \texttt{enn\_fit}, benchmarks in \texttt{analysis/fitting\_time/}).
+
+The Modal image for full UHD runs (\texttt{ops/modal\_uhd\_runner\_impl.py}) also copies a sibling checkout \texttt{../enn} into the container and builds the Rust extension with \texttt{maturin}, then installs it editable. For heavy ENN/Turbo work, keep local \texttt{enn} and Python \texttt{ennbo} installs aligned with project pins.
+
+\section{UHD configuration TOML and \texttt{ops/exp\_uhd.py}}
+Ultra-high-dimensional (UHD) experiments are driven by a TOML file with an \texttt{[uhd]} table. Keys are validated and parsed in \texttt{ops/exp\_uhd\_parse.py} (required vs optional keys, optimizer-specific blocks, ENN/Bayesian exploration sections).
+
+\paragraph{Local single run.}
+\begin{verbatim}
+./ops/exp_uhd.py local path/to/config.toml
+\end{verbatim}
+
+\paragraph{Modal single run.}
+\begin{verbatim}
+./ops/exp_uhd.py modal path/to/config.toml \
+  [--log-file run.log] [--gpu A100]
+\end{verbatim}
+GPU names follow Modal's device strings (e.g.\ \texttt{T4}, \texttt{A10}, \texttt{A100}, \texttt{H100}).
+
+\texttt{ops/exp\_uhd\_full.py} is a variant that uses eager imports instead of the lazy \texttt{common.im} pattern; behavior is otherwise the same for \texttt{local}/\texttt{modal}.
+
+\section{\texttt{ops/uhd\_batch.py}: replicated UHD runs (local or Modal)}
+This tool repeats the same UHD configuration for multiple random seeds, writing traces under \texttt{results/uhd/} by default (hashed per config; see \texttt{ops/uhd\_batch\_core.py}).
+
+\paragraph{Local (threads + subprocesses).}
+\begin{verbatim}
+./ops/uhd_batch.py local config.toml --num-reps N \
+  [--workers W] [--results-dir DIR]
+\end{verbatim}
+Each replication runs \texttt{ops/exp\_uhd.py local} in a subprocess; stdout is parsed for \texttt{EVAL:} lines to build \texttt{traces/*.jsonl}.
+
+\paragraph{Modal (one config, many reps).}
+Deploy the app once (see Modal dashboard or project docs), then:
+\begin{verbatim}
+./ops/uhd_batch.py modal config.toml --num-reps N \
+  [--results-dir DIR]
+\end{verbatim}
+Use \texttt{collect}, \texttt{status}, and \texttt{cleanup} subcommands to pull results from Modal Dicts (\texttt{uhd\_batch\_results}, \texttt{uhd\_batch\_submitted}) and reset state when needed.
+
+\paragraph{Modal (many configs from a prep function).}
+\begin{verbatim}
+./ops/uhd_batch.py batch module.path.prep_fn \
+  [--results-dir DIR]
+\end{verbatim}
+The prep callable must accept \texttt{results\_dir} and return a \textbf{list of pairs} \texttt{(cfg\_dict, num\_reps)} where \texttt{cfg\_dict} holds \texttt{[uhd]} fields suitable for \texttt{exp\_uhd}. Example: \texttt{experiments.uhd\_batch\_preps.prep\_uhd\_batch\_tlunar}. This is \emph{not} the same return type as \texttt{experiments.batch\_preps.prep\_*} (see below).
+
+\section{\texttt{prep\_*} batches: two pipelines}
+\subsection{General experiments: \texttt{ops/batches.py}}
+\begin{verbatim}
+./ops/batches.py BATCH_TAG [--max-parallel P] \
+  [--dry-run] [--results-dir results]
+\end{verbatim}
+\texttt{BATCH\_TAG} names a function in \texttt{experiments.batch\_preps}: either \texttt{prep\_foo} or \texttt{foo} (the code prepends \texttt{prep\_} if missing). Each \texttt{prep\_*(\textit{results\_dir})} returns a list of \texttt{ExperimentConfig} objects. The runner normalizes them to dicts and, unless \texttt{--dry-run}, spawns local processes that call \texttt{experiments.experiment\_sampler.sampler} with \texttt{scan\_local}. This is the main \textbf{local multiprocessing} workflow for paper-style batches.
+
+\subsection{UHD Modal batch preps}
+For \texttt{uhd\_batch.py batch}, add new builders alongside \texttt{experiments/uhd\_batch\_preps.py}: return \texttt{list[tuple[dict, int]]}.
+
+\subsection{Timing sweep on Modal: \texttt{ops/single\_run\_time.py}}
+\begin{itemize}
+  \item \texttt{deploy} --- deploy \texttt{experiments/modal\_timing\_sweep.py}.
+  \item \texttt{submit BATCH\_TAG --prep experiments.batch\_preps.prep\_\dots} --- loads prep, requires each \texttt{ExperimentConfig} to have \texttt{num\_reps == 1}, submits to Modal.
+  \item \texttt{progress --prep \dots} --- counts completed local trace files for the same prep output (no Modal).
+  \item \texttt{collect} / \texttt{stop} --- fetch results or stop the app and run cleanup.
+\end{itemize}
+
+\section{\texttt{ops/modal\_batches.py}}
+Thin wrapper around \texttt{modal} CLI for \texttt{experiments/modal\_batches\_impl.py}: \texttt{deploy TAG}, \texttt{submit TAG BATCH\_TAG}, \texttt{submit-force}, \texttt{collect TAG}, \texttt{status TAG}, \texttt{stop TAG}, \texttt{clean-up TAG}. Sets \texttt{MODAL\_TAG} for isolated app names (\texttt{yubo\_\$TAG}).
+
+\section{\texttt{ops/synthetic\_sine\_benchmark\_batches.py}}
+Deploy/submit/collect/stop for synthetic surrogate benchmarking on Modal, plus helpers to write and aggregate JSON artifacts. Uses per-tag Modal Dict names and \texttt{MODAL\_TAG}; see script \texttt{--help}.
+
+\section{\texttt{ops/catalog.py}}
+Read-only introspection: \texttt{designers}, \texttt{policies}, \texttt{environments}, \texttt{uhd} (optimizer names for \texttt{optimizer=} in UHD TOML). Use to discover valid tags before editing configs.
+
+\section{\texttt{ops/data.py}}
+Inspect and manage UHD batch result trees under a \texttt{results-dir}: \texttt{ls}, \texttt{cat} (config and trace JSONL), \texttt{rm} (delete experiment subdirs by hash).
+
+\section{\texttt{ops/experiment.py}}
+Forwards all arguments to \texttt{experiments.experiment} Click CLI (broader experiment utilities). Run with \texttt{./ops/experiment.py \dots}.
+
+\section{\texttt{ops/fit\_mnist.py}}
+Small MNIST training demo with timeout; options \texttt{--epochs}, \texttt{--batch-size}, \texttt{--lr}, \texttt{--timeout}. Uses \texttt{problems/mnist\_classifier.py}.
+
+\section{\texttt{ops/about\_env.py}}
+Legacy two-argument script: \texttt{python ops/about\_env.py ENV\_TAG POLICY\_TAG} prints approximate noise level, mean absolute return, and parameter count for quick env sanity checks.
+
+\section{Summary table}
+\begin{center}
+\begin{tabular}{ll}
+\hline
+Script & Role \\
+\hline
+\texttt{exp\_uhd.py} / \texttt{exp\_uhd\_full.py} & Single UHD run from TOML (local / Modal) \\
+\texttt{uhd\_batch.py} & Many UHD reps; Modal \texttt{batch} from \texttt{(dict, reps)} preps \\
+\texttt{batches.py} & Local pool of \texttt{ExperimentConfig} from \texttt{prep\_*} \\
+\texttt{single\_run\_time.py} & Modal timing sweep + prep progress \\
+\texttt{modal\_batches.py} & Modal wrapper for \texttt{modal\_batches\_impl} \\
+\texttt{synthetic\_sine\_benchmark\_batches.py} & Modal synthetic sine surrogate batches \\
+\texttt{catalog.py} & List designers, policies, envs, UHD optimizers \\
+\texttt{data.py} & List/cat/rm UHD batch results on disk \\
+\texttt{experiment.py} & Forward to \texttt{experiments.experiment} CLI \\
+\texttt{fit\_mnist.py} & MNIST smoke / timing \\
+\texttt{about\_env.py} & Quick env/policy stats \\
+\hline
+\end{tabular}
+\end{center}
+
+\end{document}

@@ -7,7 +7,7 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 import experiments.modal_batches_impl as mb
-from experiments.modal_batches_impl import batches, clean_up, status
+from experiments.modal_batches_impl import batches, clean_up, status, stop
 
 
 class _FakeDict(dict):
@@ -139,7 +139,7 @@ def test_stop_delegates_to_clean_up(monkeypatch, capsys):
     deleted = []
     monkeypatch.setattr(mb.modal.Dict, "delete", lambda name: deleted.append(name))
 
-    mb.stop("missing_app")
+    stop("missing_app")
 
     captured = capsys.readouterr()
     assert "batches_dict_missing_app" in deleted

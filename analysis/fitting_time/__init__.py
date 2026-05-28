@@ -15,12 +15,26 @@ __all__ = [
     "SURROGATE_BENCHMARK_KEYS",
     "SURROGATE_BENCHMARK_ROWS",
     "SyntheticSineSurrogateBenchmark",
+    "EnnFitIndTimingResult",
+    "EnnFullOptTimingResult",
+    "EnnQueryTimingResult",
+    "EnnIncrementalIndexDriver",
+    "EnnIncrementalTimingResult",
+    "benchmark_enn_fit_ind_timing",
+    "benchmark_enn_full_optimization_proposal_timing",
+    "benchmark_enn_incremental_add_timing",
+    "benchmark_enn_query_timing",
+    "benchmark_enn_fit_timing",
     "benchmark_synthetic_sine_surrogates",
     "draw_benchmark_synthetic_xy",
+    "EnnFitTimingResult",
+    "enn_fit_quality_ns",
+    "enn_incremental_checkpoint_ns",
     "env_action_coords_to_surrogate_unit_x",
     "normalize_benchmark_function_name",
     "fit_dngo",
     "fit_enn",
+    "fit_enn_hnsw",
     "fit_exact_gp",
     "fit_smac_rf",
     "fit_svgp_default",
@@ -53,8 +67,47 @@ def __getattr__(name: str):
 
         return SyntheticBenchJob
     if name in (
+        "EnnFitTimingResult",
+        "benchmark_enn_fit_timing",
+        "enn_fit_quality_ns",
+    ):
+        from analysis.fitting_time import fitting_time_enn_fit as _fit
+
+        return getattr(_fit, name)
+    if name in (
+        "EnnFitIndTimingResult",
+        "benchmark_enn_fit_ind_timing",
+    ):
+        from analysis.fitting_time import fitting_time_enn_fit_ind as _fit_ind
+
+        return getattr(_fit_ind, name)
+    if name in (
+        "EnnFullOptTimingResult",
+        "benchmark_enn_full_optimization_proposal_timing",
+    ):
+        from analysis.fitting_time import fitting_time_enn_full_opt as _full
+
+        return getattr(_full, name)
+    if name in (
+        "EnnQueryTimingResult",
+        "benchmark_enn_query_timing",
+    ):
+        from analysis.fitting_time import fitting_time_enn_query as _query
+
+        return getattr(_query, name)
+    if name in (
+        "EnnIncrementalIndexDriver",
+        "EnnIncrementalTimingResult",
+        "benchmark_enn_incremental_add_timing",
+        "enn_incremental_checkpoint_ns",
+    ):
+        from analysis.fitting_time import fitting_time_enn_incremental as _inc
+
+        return getattr(_inc, name)
+    if name in (
         "fit_dngo",
         "fit_enn",
+        "fit_enn_hnsw",
         "fit_exact_gp",
         "fit_smac_rf",
         "fit_svgp_default",

@@ -38,11 +38,20 @@ def example_two_targets_n12_d2() -> list[SyntheticBenchJob]:
 
 def job_fit_quality() -> list[SyntheticBenchJob]:
     jobs = []
-    for n in [1, 3, 10, 30, 100, 300, 1000, 3000, 10000] + [
-        30000,
-        100000,
-        300000,
-        1000000,
+    for n in [
+        1,
+        3,
+        10,
+        30,
+        100,
+        300,
+        1000,
+        3000,
+        # 10000,
+        # 30000,
+        # 100000,
+        # 300000,
+        # 1000000,
     ]:
         for d in [10]:
             for fn in ["sphere", "ackley", "rosenbrock", "booth"]:

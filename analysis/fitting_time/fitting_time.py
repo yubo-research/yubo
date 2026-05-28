@@ -16,6 +16,7 @@ from .fitting_time_gp import (
 __all__ = [
     "fit_dngo",
     "fit_enn",
+    "fit_enn_hnsw",
     "fit_exact_gp",
     "fit_smac_rf",
     "fit_svgp_default",
@@ -31,6 +32,14 @@ _SYNTHETIC_OBS_VAR = 0.1**2
 _ENN_POSTERIOR_CHUNK = 65_536
 
 
+def enn_fit_k_and_num_fit_samples(n_obs: int) -> tuple[int, int]:
+    n = int(n_obs)
+    k_cap = max(1, n - 1)
+    k_eff = min(25, k_cap)
+    nfs = int(min(max(1, min(10, n)), n))
+    return k_eff, nfs
+
+
 def fit_enn(
     train_x: np.ndarray,
     train_y: np.ndarray,
@@ -40,31 +49,43 @@ def fit_enn(
     num_fit_samples: int | None = None,
     num_fit_candidates: int = 100,
     rng: np.random.Generator | None = None,
+    index_driver=None,
 ) -> tuple[float, np.ndarray, np.ndarray]:
     from enn.enn.enn_class import EpistemicNearestNeighbors
-    from enn.enn.enn_fit import enn_fit
     from enn.enn.enn_params import PosteriorFlags
+    from enn.turbo.config.enn_index_driver import ENNIndexDriver
+
+    from optimizer.uhd_enn_fit_helpers import fit_enn_params
 
     train_yvar = np.full_like(train_y, _SYNTHETIC_OBS_VAR)
+    driver = ENNIndexDriver.FLAT if index_driver is None else index_driver
     n_obs = train_x.shape[0]
-    k_cap = max(1, n_obs - 1)
+    k_default, nfs_default = enn_fit_k_and_num_fit_samples(n_obs)
     if k is None:
-        k_eff = min(25, k_cap)
+        k_eff = k_default
     else:
+        k_cap = max(1, n_obs - 1)
         k_eff = min(max(1, int(k)), k_cap)
-    nfs_default = min(10, n_obs)
     nfs = num_fit_samples if num_fit_samples is not None else nfs_default
     nfs = int(min(max(1, nfs), n_obs))
     gen = rng if rng is not None else np.random.default_rng(0)
 
     t_0 = time.perf_counter()
-    enn_model = EpistemicNearestNeighbors(train_x, train_y, train_yvar)
-    enn_params = enn_fit(
+    enn_model = EpistemicNearestNeighbors(
+        train_x,
+        train_y,
+        train_yvar,
+        index_driver=driver,
+    )
+    enn_params = fit_enn_params(
         enn_model,
+        train_x,
+        train_y,
         k=k_eff,
         num_fit_candidates=int(num_fit_candidates),
         num_fit_samples=nfs,
         rng=gen,
+        yvar=train_yvar,
     )
     elapsed = time.perf_counter() - t_0
 
@@ -93,6 +114,23 @@ def fit_enn(
     # (same ``0.1^2`` as :func:`draw_benchmark_synthetic_xy` and SMAC RF scoring).
     pred_var = se**2 + _SYNTHETIC_OBS_VAR
     return elapsed, y_hat, pred_var
+
+
+def fit_enn_hnsw(
+    train_x: np.ndarray,
+    train_y: np.ndarray,
+    x_test: np.ndarray,
+    **kwargs,
+) -> tuple[float, np.ndarray, np.ndarray]:
+    from enn.turbo.config.enn_index_driver import ENNIndexDriver
+
+    return fit_enn(
+        train_x,
+        train_y,
+        x_test,
+        index_driver=ENNIndexDriver.HNSW,
+        **kwargs,
+    )
 
 
 def fit_smac_rf(train_x: np.ndarray, train_y: np.ndarray, x_test: np.ndarray) -> tuple[float, np.ndarray, np.ndarray]:

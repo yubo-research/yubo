@@ -260,6 +260,22 @@ def _infer_rl_model_from_actor_mlp(
     }
 
 
+def _infer_rl_model_from_actor_mlp(
+    hidden_sizes: tuple[int, ...],
+) -> dict[str, dict[str, Any]]:
+    return {
+        "ppo": {
+            "backbone_name": "mlp",
+            "backbone_hidden_sizes": hidden_sizes,
+            "backbone_activation": "silu",
+            "backbone_layer_norm": True,
+            "actor_head_hidden_sizes": (),
+            "head_activation": "silu",
+            "log_std_init": 0.0,
+        },
+    }
+
+
 def _infer_rl_model_from_atari_cnn() -> dict[str, dict[str, Any]]:
     return {
         "ppo": {

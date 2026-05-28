@@ -3,12 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from analysis.fitting_time.evaluate import (
-    SURROGATE_BENCHMARK_KEYS,
-    BMResult,
-    MuSe,
-    SyntheticSineSurrogateBenchmark,
-)
+from analysis.fitting_time.evaluate import SyntheticSineSurrogateBenchmark
 from experiments.synthetic_sine_benchmark_payload import (
     META_KEY,
     load_synthetic_sine_benchmark_json_dir,
@@ -23,34 +18,19 @@ from experiments.synthetic_sine_benchmark_payload import (
     wide_surrogate_benchmark_row_to_long_records,
     write_synthetic_sine_benchmark_json,
 )
-
-
-def _br(
-    fit_s: float,
-    nrmse: float,
-    ll: float,
-    *,
-    se_f: float = 0.0,
-    se_n: float = 0.0,
-    se_l: float = 0.0,
-) -> BMResult:
-    return BMResult(MuSe(fit_s, se_f), MuSe(nrmse, se_n), MuSe(ll, se_l))
-
-
-def _bench(**kwargs: BMResult) -> SyntheticSineSurrogateBenchmark:
-    return SyntheticSineSurrogateBenchmark(results={k: kwargs[k] for k in SURROGATE_BENCHMARK_KEYS})
+from tests.synthetic_sine_benchmark_helpers import bench_result, make_surrogate_benchmark
 
 
 def test_synthetic_sine_benchmark_payload_round_trip():
     nan = float("nan")
-    r = _bench(
-        enn=_br(0.1, 0.2, -1.0),
-        smac_rf=_br(nan, nan, nan),
-        dngo=_br(0.3, 0.4, -2.0),
-        exact_gp=_br(0.5, 0.6, -3.0),
-        svgp_default=_br(0.7, 0.8, -4.0),
-        svgp_linear=_br(0.9, 1.0, -5.0),
-        vecchia=_br(1.1, 1.2, -6.0),
+    r = make_surrogate_benchmark(
+        enn=bench_result(0.1, 0.2, -1.0),
+        smac_rf=bench_result(nan, nan, nan),
+        dngo=bench_result(0.3, 0.4, -2.0),
+        exact_gp=bench_result(0.5, 0.6, -3.0),
+        svgp_default=bench_result(0.7, 0.8, -4.0),
+        svgp_linear=bench_result(0.9, 1.0, -5.0),
+        vecchia=bench_result(1.1, 1.2, -6.0),
     )
     payload = synthetic_sine_benchmark_result_to_payload(r, n=10, d=3, function_name="sphere", problem_seed=7)
     r2, meta = synthetic_sine_benchmark_from_payload(payload)
@@ -116,9 +96,9 @@ def test_wide_surrogate_benchmark_row_to_comparison_records_and_caption():
         "vecchia_log_likelihood_se": 0.0,
     }
     recs = wide_surrogate_benchmark_row_to_comparison_records(row)
-    assert len(recs) == 7
+    assert len(recs) == 8
     assert recs[0]["Surrogate"] == "ENN" and recs[0]["Fit (s) μ"] == 0.1
-    assert math.isnan(recs[1]["Fit (s) μ"])
+    assert math.isnan(recs[2]["Fit (s) μ"])
     cap = synthetic_surrogate_benchmark_row_caption(row)
     assert "N=1000" in cap and "D=30" in cap and "ackley" in cap and "x.json" in cap
 
@@ -175,7 +155,7 @@ def test_wide_surrogate_benchmark_row_to_long_records():
         "vecchia_log_likelihood_se": 0.09,
     }
     recs = wide_surrogate_benchmark_row_to_long_records(row)
-    assert len(recs) == 7
+    assert len(recs) == 8
     assert recs[0]["surrogate"] == "enn"
     assert recs[0]["fit_seconds_mu"] == 0.1
     assert recs[0]["surrogate_label"] == "ENN"
@@ -185,18 +165,18 @@ def test_wide_surrogate_benchmark_row_to_long_records():
 
 def test_load_synthetic_sine_benchmark_json_dir(tmp_path: Path, capsys):
     nan = float("nan")
-    r_a = _bench(
-        enn=_br(0.1, 0.2, -1.0),
-        smac_rf=_br(nan, nan, nan),
-        dngo=_br(0.3, 0.4, -2.0),
-        exact_gp=_br(0.5, 0.6, -3.0),
-        svgp_default=_br(0.7, 0.8, -4.0),
-        svgp_linear=_br(0.9, 1.0, -5.0),
-        vecchia=_br(1.0, 1.1, -6.0),
+    r_a = make_surrogate_benchmark(
+        enn=bench_result(0.1, 0.2, -1.0),
+        smac_rf=bench_result(nan, nan, nan),
+        dngo=bench_result(0.3, 0.4, -2.0),
+        exact_gp=bench_result(0.5, 0.6, -3.0),
+        svgp_default=bench_result(0.7, 0.8, -4.0),
+        svgp_linear=bench_result(0.9, 1.0, -5.0),
+        vecchia=bench_result(1.0, 1.1, -6.0),
     )
-    z = _br(0.0, 0.0, 0.0)
-    r_b = _bench(
-        enn=_br(2.0, 0.0, 0.0),
+    z = bench_result(0.0, 0.0, 0.0)
+    r_b = make_surrogate_benchmark(
+        enn=bench_result(2.0, 0.0, 0.0),
         smac_rf=z,
         dngo=z,
         exact_gp=z,
@@ -230,14 +210,14 @@ def test_load_synthetic_sine_benchmark_json_dir(tmp_path: Path, capsys):
 
 def test_load_synthetic_sine_benchmark_json_dir_long(tmp_path: Path):
     nan = float("nan")
-    r = _bench(
-        enn=_br(0.1, 0.2, -1.0, se_f=0.01, se_n=0.02, se_l=0.03),
-        smac_rf=_br(nan, nan, nan),
-        dngo=_br(0.3, 0.4, -2.0),
-        exact_gp=_br(0.5, 0.6, -3.0),
-        svgp_default=_br(0.7, 0.8, -4.0),
-        svgp_linear=_br(0.9, 1.0, -5.0),
-        vecchia=_br(1.1, 1.2, -6.0),
+    r = make_surrogate_benchmark(
+        enn=bench_result(0.1, 0.2, -1.0, se_f=0.01, se_n=0.02, se_l=0.03),
+        smac_rf=bench_result(nan, nan, nan),
+        dngo=bench_result(0.3, 0.4, -2.0),
+        exact_gp=bench_result(0.5, 0.6, -3.0),
+        svgp_default=bench_result(0.7, 0.8, -4.0),
+        svgp_linear=bench_result(0.9, 1.0, -5.0),
+        vecchia=bench_result(1.1, 1.2, -6.0),
     )
     sub = tmp_path / "exp"
     sub.mkdir()
@@ -248,7 +228,7 @@ def test_load_synthetic_sine_benchmark_json_dir_long(tmp_path: Path):
 
     df = load_synthetic_sine_benchmark_json_dir_long(sub, verbose=False)
 
-    assert len(df) == 7
+    assert len(df) == 8
     assert list(df.columns) == [
         "file",
         "N",
@@ -273,14 +253,14 @@ def test_load_synthetic_sine_benchmark_json_dir_long(tmp_path: Path):
 
 def test_synthetic_sine_benchmark_json_file_round_trip(tmp_path: Path):
     inf = float("inf")
-    r = _bench(
-        enn=_br(1.0, 0.1, 0.0),
-        smac_rf=_br(inf, 0.0, -1.0),
-        dngo=_br(1.0, 0.1, 0.0),
-        exact_gp=_br(1.0, 0.1, 0.0),
-        svgp_default=_br(1.0, 0.1, 0.0),
-        svgp_linear=_br(1.0, 0.1, 0.0),
-        vecchia=_br(1.0, 0.1, 0.0),
+    r = make_surrogate_benchmark(
+        enn=bench_result(1.0, 0.1, 0.0),
+        smac_rf=bench_result(inf, 0.0, -1.0),
+        dngo=bench_result(1.0, 0.1, 0.0),
+        exact_gp=bench_result(1.0, 0.1, 0.0),
+        svgp_default=bench_result(1.0, 0.1, 0.0),
+        svgp_linear=bench_result(1.0, 0.1, 0.0),
+        vecchia=bench_result(1.0, 0.1, 0.0),
     )
     p = synthetic_sine_benchmark_result_to_payload(r, n=5, d=2, function_name="sine", problem_seed=0)
     path = tmp_path / "x.json"
@@ -296,14 +276,14 @@ def test_synthetic_sine_benchmark_json_load_strips_unknown_keys():
     """Extra keys (forward compatibility) are ignored when building the dataclass."""
     from dataclasses import asdict
 
-    z = _bench(
-        enn=_br(0.0, 0.0, 0.0),
-        smac_rf=_br(0.0, 0.0, 0.0),
-        dngo=_br(0.0, 0.0, 0.0),
-        exact_gp=_br(0.0, 0.0, 0.0),
-        svgp_default=_br(0.0, 0.0, 0.0),
-        svgp_linear=_br(0.0, 0.0, 0.0),
-        vecchia=_br(0.0, 0.0, 0.0),
+    z = make_surrogate_benchmark(
+        enn=bench_result(0.0, 0.0, 0.0),
+        smac_rf=bench_result(0.0, 0.0, 0.0),
+        dngo=bench_result(0.0, 0.0, 0.0),
+        exact_gp=bench_result(0.0, 0.0, 0.0),
+        svgp_default=bench_result(0.0, 0.0, 0.0),
+        svgp_linear=bench_result(0.0, 0.0, 0.0),
+        vecchia=bench_result(0.0, 0.0, 0.0),
     )
     d = asdict(z)
     d[META_KEY] = {"N": 1, "D": 1, "function_name": None, "problem_seed": 0}

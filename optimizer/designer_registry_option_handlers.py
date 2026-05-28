@@ -153,7 +153,7 @@ def _d_turbo_enn_p(ctx: _SimpleContext, opts: dict):
     _reject_unknown_opts(
         "turbo-enn-p",
         opts,
-        {"idx"} | _TURBO_OPTION_KEYS | _EGGROLL_TURBO_OPTION_KEYS,
+        {"idx"} | _EGGROLL_TURBO_OPTION_KEYS,
     )
     return _turbo_enn(
         ctx,

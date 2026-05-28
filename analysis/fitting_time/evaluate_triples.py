@@ -16,18 +16,26 @@ def _benchmark_numpy_surrogate_triples(
     x_test_np: np.ndarray,
     y_test: torch.Tensor,
     fit_enn,
+    fit_enn_hnsw,
     fit_smac_rf,
     fit_dngo,
     *,
     b_fast_only: bool = False,
-) -> tuple[
-    tuple[float, float, float],
-    tuple[float, float, float],
-    tuple[float, float, float],
-]:
+) -> dict[str, tuple[float, float, float]]:
     dt_enn, yh_enn, var_enn = fit_enn(train_x, train_y, x_test_np)
     nrmse_enn = normalized_rmse(y_test, yh_enn)
     ll_enn = predictive_gaussian_log_likelihood(y_test, yh_enn, var_enn)
+    dt_enn_hnsw, yh_enn_hnsw, var_enn_hnsw = fit_enn_hnsw(
+        train_x,
+        train_y,
+        x_test_np,
+    )
+    nrmse_enn_hnsw = normalized_rmse(y_test, yh_enn_hnsw)
+    ll_enn_hnsw = predictive_gaussian_log_likelihood(
+        y_test,
+        yh_enn_hnsw,
+        var_enn_hnsw,
+    )
     try:
         dt_smac, yh_smac, var_smac = fit_smac_rf(train_x, train_y.reshape(-1), x_test_np)
         nrmse_smac = normalized_rmse(y_test, yh_smac)
@@ -40,11 +48,12 @@ def _benchmark_numpy_surrogate_triples(
         dt_dngo, yh_dngo, var_dngo = fit_dngo(train_x, train_y, x_test_np)
         nrmse_dngo = normalized_rmse(y_test, yh_dngo)
         ll_dngo = predictive_gaussian_log_likelihood(y_test, yh_dngo, var_dngo)
-    return (
-        (dt_enn, nrmse_enn, ll_enn),
-        (dt_smac, nrmse_smac, ll_smac),
-        (dt_dngo, nrmse_dngo, ll_dngo),
-    )
+    return {
+        "enn": (dt_enn, nrmse_enn, ll_enn),
+        "enn_hnsw": (dt_enn_hnsw, nrmse_enn_hnsw, ll_enn_hnsw),
+        "smac_rf": (dt_smac, nrmse_smac, ll_smac),
+        "dngo": (dt_dngo, nrmse_dngo, ll_dngo),
+    }
 
 
 def _benchmark_torch_gp_triples(
@@ -58,15 +67,15 @@ def _benchmark_torch_gp_triples(
     fit_vecchia,
     *,
     b_fast_only: bool = False,
-) -> tuple[
-    tuple[float, float, float],
-    tuple[float, float, float],
-    tuple[float, float, float],
-    tuple[float, float, float],
-]:
+) -> dict[str, tuple[float, float, float]]:
     if b_fast_only:
         nan3 = (math.nan, math.nan, math.nan)
-        return (nan3, nan3, nan3, nan3)
+        return {
+            "exact_gp": nan3,
+            "svgp_default": nan3,
+            "svgp_linear": nan3,
+            "vecchia": nan3,
+        }
     dt_gp, yh_gp, var_gp = fit_exact_gp(train_x_t, train_y_t, x_test_t)
     nrmse_gp = normalized_rmse(y_test, yh_gp)
     ll_gp = predictive_gaussian_log_likelihood(y_test, yh_gp, var_gp)
@@ -79,12 +88,12 @@ def _benchmark_torch_gp_triples(
     dt_vc, yh_vc, var_vc = fit_vecchia(train_x_t, train_y_t, x_test_t)
     nrmse_vc = normalized_rmse(y_test, yh_vc)
     ll_vc = predictive_gaussian_log_likelihood(y_test, yh_vc, var_vc)
-    return (
-        (dt_gp, nrmse_gp, ll_gp),
-        (dt_svgp_d, nrmse_svgp_d, ll_svgp_d),
-        (dt_svgp_l, nrmse_svgp_l, ll_svgp_l),
-        (dt_vc, nrmse_vc, ll_vc),
-    )
+    return {
+        "exact_gp": (dt_gp, nrmse_gp, ll_gp),
+        "svgp_default": (dt_svgp_d, nrmse_svgp_d, ll_svgp_d),
+        "svgp_linear": (dt_svgp_l, nrmse_svgp_l, ll_svgp_l),
+        "vecchia": (dt_vc, nrmse_vc, ll_vc),
+    }
 
 
 def _surrogate_metric_triples_from_tensors(
@@ -94,6 +103,7 @@ def _surrogate_metric_triples_from_tensors(
     y_test: torch.Tensor,
     *,
     fit_enn,
+    fit_enn_hnsw,
     fit_smac_rf,
     fit_dngo,
     fit_exact_gp,
@@ -109,16 +119,13 @@ def _surrogate_metric_triples_from_tensors(
     train_x = x_surr.detach().cpu().numpy().astype(np.float64)
     train_y = y.detach().cpu().numpy().astype(np.float64)
     x_test_np = x_test_surr.detach().cpu().numpy().astype(np.float64)
-    (
-        (dt_enn, nrmse_enn, ll_enn),
-        (dt_smac, nrmse_smac, ll_smac),
-        (dt_dngo, nrmse_dngo, ll_dngo),
-    ) = _benchmark_numpy_surrogate_triples(
+    rows = _benchmark_numpy_surrogate_triples(
         train_x,
         train_y,
         x_test_np,
         y_test,
         fit_enn,
+        fit_enn_hnsw,
         fit_smac_rf,
         fit_dngo,
         b_fast_only=b_fast_only,
@@ -126,31 +133,20 @@ def _surrogate_metric_triples_from_tensors(
     train_x_t = x_surr.to(dtype=torch.float64)
     train_y_t = y.to(dtype=torch.float64)
     x_test_t = x_test_surr.to(dtype=torch.float64)
-    (
-        (dt_gp, nrmse_gp, ll_gp),
-        (dt_svgp_d, nrmse_svgp_d, ll_svgp_d),
-        (dt_svgp_l, nrmse_svgp_l, ll_svgp_l),
-        (dt_vc, nrmse_vc, ll_vc),
-    ) = _benchmark_torch_gp_triples(
-        train_x_t,
-        train_y_t,
-        x_test_t,
-        y_test,
-        fit_exact_gp,
-        fit_svgp_default,
-        fit_svgp_linear,
-        fit_vecchia,
-        b_fast_only=b_fast_only,
+    rows.update(
+        _benchmark_torch_gp_triples(
+            train_x_t,
+            train_y_t,
+            x_test_t,
+            y_test,
+            fit_exact_gp,
+            fit_svgp_default,
+            fit_svgp_linear,
+            fit_vecchia,
+            b_fast_only=b_fast_only,
+        ),
     )
-    return {
-        "enn": (dt_enn, nrmse_enn, ll_enn),
-        "smac_rf": (dt_smac, nrmse_smac, ll_smac),
-        "dngo": (dt_dngo, nrmse_dngo, ll_dngo),
-        "exact_gp": (dt_gp, nrmse_gp, ll_gp),
-        "svgp_default": (dt_svgp_d, nrmse_svgp_d, ll_svgp_d),
-        "svgp_linear": (dt_svgp_l, nrmse_svgp_l, ll_svgp_l),
-        "vecchia": (dt_vc, nrmse_vc, ll_vc),
-    }
+    return rows
 
 
 def aggregate_surrogate_replicates(rows: list[dict[str, tuple[float, float, float]]]):
@@ -185,6 +181,7 @@ def benchmark_single_surrogate(
     from .fitting_time import (
         fit_dngo,
         fit_enn,
+        fit_enn_hnsw,
         fit_exact_gp,
         fit_smac_rf,
         fit_svgp_default,
@@ -198,13 +195,15 @@ def benchmark_single_surrogate(
     x_surr = env_action_coords_to_surrogate_unit_x(x)
     x_test_surr = env_action_coords_to_surrogate_unit_x(x_test)
 
-    if surrogate_key in ("enn", "smac_rf", "dngo"):
+    if surrogate_key in ("enn", "enn_hnsw", "smac_rf", "dngo"):
         train_x = x_surr.detach().cpu().numpy().astype(np.float64)
         train_y = y.detach().cpu().numpy().astype(np.float64)
         x_test_np = x_test_surr.detach().cpu().numpy().astype(np.float64)
 
         if surrogate_key == "enn":
             dt, yh, var = fit_enn(train_x, train_y, x_test_np)
+        elif surrogate_key == "enn_hnsw":
+            dt, yh, var = fit_enn_hnsw(train_x, train_y, x_test_np)
         elif surrogate_key == "smac_rf":
             try:
                 dt, yh, var = fit_smac_rf(train_x, train_y.reshape(-1), x_test_np)

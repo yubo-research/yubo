@@ -6,6 +6,7 @@ from tensordict import TensorDict
 from rl.core.pixel_transform import (
     AtariObservationTransform,
     PixelsToObservation,
+    apply_pixel_observation_spec,
     ensure_atari_obs_format,
 )
 
@@ -58,6 +59,19 @@ def test_pixels_to_observation_transform_observation_spec():
     assert ("next", "observation") in out.keys(True, True)
     assert out["observation"].shape == (3, 84, 84)
     assert out[("next", "observation")].shape == (3, 84, 84)
+
+    bare = Composite(
+        other=UnboundedContinuous(shape=(1,), dtype=torch.float32),
+        device="cpu",
+    )
+    unchanged = apply_pixel_observation_spec(
+        bare,
+        channels=3,
+        size=84,
+        keys_contain_fn=lambda _s: False,
+    )
+    assert "observation" not in unchanged.keys(True, True)
+    assert ("next", "observation") not in unchanged.keys(True, True)
 
 
 def test_pixels_to_observation_resize():

@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import numpy as np
 from enn.enn.enn_class import EpistemicNearestNeighbors
-from enn.enn.enn_fit import enn_fit
 from enn.enn.enn_params import PosteriorFlags
 from enn.turbo.config.enn_index_driver import ENNIndexDriver
 
 from embedding.behavioral_embedder import BehavioralEmbedder
 
 from .step_size_adapter import StepSizeAdapter
+from .uhd_enn_fit_helpers import fit_enn_params
 
 
 class UHDSimpleBENp:
@@ -153,8 +153,10 @@ class UHDSimpleBENp:
             scale_x=False,
             index_driver=ENNIndexDriver.FLAT,
         )
-        self._enn_params = enn_fit(
+        self._enn_params = fit_enn_params(
             self._enn_model,
+            x,
+            y_normed,
             k=int(self._enn_k),
             num_fit_candidates=200,
             num_fit_samples=200,

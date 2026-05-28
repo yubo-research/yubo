@@ -172,14 +172,12 @@ class TurboENNDesigner:
                 trust_region=trust_region,
                 candidates=candidates,
                 num_init=num_init,
-                trailing_obs=self._num_keep,
                 acq_type=acq_type,
             )
         if self._turbo_mode == "turbo-zero":
             return factory.turbo_zero_config(
                 num_candidates=num_candidates,
                 num_init=num_init,
-                trailing_obs=self._num_keep,
                 trust_region=trust_region,
                 candidate_rv=candidate_rv,
             )
@@ -190,7 +188,6 @@ class TurboENNDesigner:
             return factory.turbo_one_config(
                 num_candidates=num_candidates,
                 num_init=num_init,
-                trailing_obs=self._num_keep,
                 trust_region=trust_region,
                 candidate_rv=candidate_rv,
             )
@@ -198,7 +195,6 @@ class TurboENNDesigner:
             return factory.lhd_only_config(
                 num_candidates=num_candidates,
                 num_init=num_init,
-                trailing_obs=self._num_keep,
                 trust_region=trust_region,
                 candidate_rv=candidate_rv,
             )
