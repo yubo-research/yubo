@@ -78,6 +78,17 @@ def _actor_critic_mlp_factory(
     return factory
 
 
+def _actor_mlp_factory(
+    hidden_sizes: tuple[int, ...],
+) -> Callable[[EnvironmentRuntimeProtocol], Policy]:
+    def factory(env_runtime: EnvironmentRuntimeProtocol) -> Policy:
+        from policies.actor_mlp_policy import ActorMLPPolicyFactory
+
+        return ActorMLPPolicyFactory(hidden_sizes)(env_runtime)
+
+    return factory
+
+
 def _gaussian_backbone_factory(
     variant: str,
 ) -> Callable[[EnvironmentRuntimeProtocol], Policy]:
@@ -233,6 +244,22 @@ def _infer_rl_model_from_actor_critic_mlp(
     return model
 
 
+def _infer_rl_model_from_actor_mlp(
+    hidden_sizes: tuple[int, ...],
+) -> dict[str, dict[str, Any]]:
+    return {
+        "ppo": {
+            "backbone_name": "mlp",
+            "backbone_hidden_sizes": hidden_sizes,
+            "backbone_activation": "silu",
+            "backbone_layer_norm": True,
+            "actor_head_hidden_sizes": (),
+            "head_activation": "silu",
+            "log_std_init": 0.0,
+        },
+    }
+
+
 def _infer_rl_model_from_atari_cnn() -> dict[str, dict[str, Any]]:
     return {
         "ppo": {
@@ -309,6 +336,14 @@ POLICY_PRESETS: dict[str, PolicyPreset] = {
     "actor-critic-mlp-32-32": PolicyPreset(
         factory=_actor_critic_mlp_factory((32, 32)),
         rl_model=_infer_rl_model_from_actor_critic_mlp((32, 32)),
+    ),
+    "actor-mlp-16-8": PolicyPreset(
+        factory=_actor_mlp_factory((16, 8)),
+        rl_model=_infer_rl_model_from_actor_mlp((16, 8)),
+    ),
+    "actor-mlp-32-32": PolicyPreset(
+        factory=_actor_mlp_factory((32, 32)),
+        rl_model=_infer_rl_model_from_actor_mlp((32, 32)),
     ),
     "gauss-rl-gauss-tanh": PolicyPreset(factory=_gaussian_backbone_factory("rl-gauss-tanh")),
     "gauss-rl-gauss-small": PolicyPreset(factory=_gaussian_backbone_factory("rl-gauss-small")),

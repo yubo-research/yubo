@@ -56,6 +56,25 @@ def test_d_turbo_enn_fit_ucb_nfs_and_k():
     assert d._num_fit_samples == 50
 
 
+def test_turbo_enn_p_accepts_index_driver_option():
+    from optimizer.designer_registry import _DESIGNER_OPTION_SPECS, _d_turbo_enn_p
+
+    ctx = _make_ctx()
+    d = _d_turbo_enn_p(ctx, {"idx": "hnsw"})
+
+    assert d._index_driver == "hnsw"
+    assert any(spec.name == "idx" for spec in _DESIGNER_OPTION_SPECS["turbo-enn-p"])
+
+
+def test_turbo_enn_fit_ucb_accepts_exact_index_alias():
+    from optimizer.designer_registry import _d_turbo_enn_fit_ucb
+
+    ctx = _make_ctx()
+    d = _d_turbo_enn_fit_ucb(ctx, {"idx": "exact"})
+
+    assert d._index_driver == "flat"
+
+
 def test_d_turbo_enn_fit_ucb_rejects_unknown_option():
     from optimizer.designer_registry import _d_turbo_enn_fit_ucb
 

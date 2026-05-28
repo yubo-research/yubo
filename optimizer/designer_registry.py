@@ -6,7 +6,7 @@ from .designer_errors import NoSuchDesignerError
 from .designer_registry_builders import _build_turbo_enn, _build_turbo_enn_py, _no_opts
 from .designer_registry_context import _SimpleContext
 from .designer_registry_defs import _DESIGNER_DEFS, _DESIGNER_OPTION_SPECS
-from .designer_registry_option_handlers import _build_turbo_enn_f, _d_turbo_enn_fit_ucb
+from .designer_registry_option_handlers import _build_turbo_enn_f, _d_turbo_enn_fit_ucb, _d_turbo_enn_p
 from .designer_registry_simple_table import _SIMPLE_BUILDERS, _SIMPLE_DISPATCH
 from .designer_types import DesignerDef
 
@@ -31,8 +31,8 @@ def _d_turbo_enn_py_simple(ctx, opts: dict, *, kind: str):
 
 
 _TURBO_OPTION_DISPATCH = {
-    "turbo-enn": partial(_d_turbo_enn_simple, kind="turbo-enn"),
-    "turbo-enn-p": partial(_d_turbo_enn_simple, kind="turbo-enn-p"),
+    "turbo-enn": _d_turbo_enn_p,
+    "turbo-enn-p": _d_turbo_enn_p,
     "turbo_py-enn-p": partial(_d_turbo_enn_py_simple, kind="turbo_py-enn-p"),
     "turbo_py-enn-fit-ucb": partial(_d_turbo_enn_py_simple, kind="turbo_py-enn-fit-ucb"),
     "turbo-zero": partial(_d_turbo_enn_simple, kind="turbo-zero"),
@@ -60,4 +60,5 @@ __all__ = [
     "_build_turbo_enn",
     "_build_turbo_enn_f",
     "_d_turbo_enn_fit_ucb",
+    "_d_turbo_enn_p",
 ]

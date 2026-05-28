@@ -8,6 +8,7 @@ build: safe to import in tests without ``mk_image()`` cost.
 from __future__ import annotations
 
 import json
+import math
 import re
 from dataclasses import asdict
 from pathlib import Path
@@ -33,8 +34,16 @@ def _legacy_flat_payload_to_bench(
 ) -> SyntheticSineSurrogateBenchmark:
     results: dict[str, BMResult] = {}
     for prefix in SURROGATE_BENCHMARK_KEYS:
+        fit_key = f"{prefix}_fit_seconds"
+        if fit_key not in d:
+            results[prefix] = BMResult(
+                MuSe(math.nan, math.nan),
+                MuSe(math.nan, math.nan),
+                MuSe(math.nan, math.nan),
+            )
+            continue
         results[prefix] = BMResult(
-            MuSe(float(d[f"{prefix}_fit_seconds"]), 0.0),
+            MuSe(float(d[fit_key]), 0.0),
             MuSe(float(d[f"{prefix}_normalized_rmse"]), 0.0),
             MuSe(float(d[f"{prefix}_log_likelihood"]), 0.0),
         )
@@ -46,6 +55,13 @@ def _bench_from_nested_results(obj: Any) -> SyntheticSineSurrogateBenchmark:
         raise TypeError("results must be a dict")
     results: dict[str, BMResult] = {}
     for prefix in SURROGATE_BENCHMARK_KEYS:
+        if prefix not in obj:
+            results[prefix] = BMResult(
+                MuSe(math.nan, math.nan),
+                MuSe(math.nan, math.nan),
+                MuSe(math.nan, math.nan),
+            )
+            continue
         block = obj[prefix]
         results[prefix] = BMResult(
             fit_seconds=MuSe(float(block["fit_seconds"]["mu"]), float(block["fit_seconds"]["se"])),

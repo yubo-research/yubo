@@ -45,6 +45,29 @@ def _require_str_in(opts: dict, key: str, allowed: set[str], *, example: str) ->
     return v
 
 
+_IDX_ALLOWED = frozenset({"flat", "hnsw", "exact"})
+
+
+def _reject_unknown_opts(name: str, opts: dict, allowed: set[str]):
+    unknown = set(opts) - allowed
+    if unknown:
+        u = ", ".join(sorted(unknown))
+        raise NoSuchDesignerError(f"Designer '{name}' does not support option(s): {u}.")
+
+
+def _index_driver_from_opts(opts: dict, *, example: str) -> str | None:
+    if "idx" not in opts:
+        return None
+    v = opts["idx"]
+    if not isinstance(v, str):
+        raise NoSuchDesignerError(f"Designer option 'idx' must be a string. Example: '{example}'.")
+    if v not in _IDX_ALLOWED:
+        raise NoSuchDesignerError("Designer option 'idx' must be one of: flat, hnsw, exact.")
+    if v == "exact":
+        return "flat"
+    return v
+
+
 def _turbo_ref(ctx: _SimpleContext, *, ard: bool, surrogate_type: str = "original"):
     TuRBORefDesigner = _load_symbol("optimizer.turbo_ref_designer", "TuRBORefDesigner")
     return TuRBORefDesigner(
@@ -71,11 +94,19 @@ def _build_policy_ctor(ctx: _SimpleContext, module: str, name: str, **kwargs):
 
 
 def _build_ppo(ctx: _SimpleContext):
-    """On-policy PPO as a Designer (see optimizer/ppo_designer.py). Requires env_conf + actor-critic policy."""
-    PPODesigner = _load_symbol("optimizer.ppo_designer", "PPODesigner")
+    """On-policy actor-critic PPO as a Designer. Requires env_conf + actor-critic policy."""
+    PPODesigner = _load_symbol("optimizer.ppo_designer", "PPOACDesigner")
     if ctx.env_conf is None:
         raise NoSuchDesignerError("Designer 'ppo' requires env_conf (use a Gym-style env_tag so the Optimizer has an environment runtime).")
     return PPODesigner(ctx.policy, ctx.env_conf)
+
+
+def _build_ppo_pg(ctx: _SimpleContext):
+    """On-policy actor-only PPO as a Designer. Requires env_conf + actor policy."""
+    PPOPGDesigner = _load_symbol("optimizer.ppo_pg_designer", "PPOPGDesigner")
+    if ctx.env_conf is None:
+        raise NoSuchDesignerError("Designer 'ppo-pg' requires env_conf (use a Gym-style env_tag so the Optimizer has an environment runtime).")
+    return PPOPGDesigner(ctx.policy, ctx.env_conf)
 
 
 def _build_maximin(ctx: _SimpleContext, *, toroidal: bool):
@@ -121,6 +152,17 @@ def _build_turbo_enn(ctx: _SimpleContext, kind: str):
             num_fit_samples=None,
             num_fit_candidates=None,
             acq_type="pareto",
+        )
+    if kind == "turbo-enn-p-hnsw":
+        return _turbo_enn(
+            ctx,
+            turbo_mode="turbo-enn",
+            k=10,
+            num_keep=ctx.num_keep_val,
+            num_fit_samples=None,
+            num_fit_candidates=None,
+            acq_type="pareto",
+            index_driver="hnsw",
         )
     if kind == "turbo-zero":
         return _turbo_enn(ctx, turbo_mode="turbo-zero", num_fit_samples=None, num_fit_candidates=None)

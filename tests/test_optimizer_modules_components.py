@@ -380,13 +380,31 @@ def test_turbo_e_n_n_designer_init():
 
 def test_ppo_designer_registered_under_opt_name_ppo():
     from optimizer.designers import Designers
-    from optimizer.ppo_designer import PPODesigner
+    from optimizer.ppo_designer import PPOACDesigner, PPODesigner
     from problems.problem import build_problem
 
     problem = build_problem("pend", "actor-critic-mlp-16-8", problem_seed=0, noise_seed_0=0)
     policy = problem.build_policy()
     designer = Designers(policy, num_arms=1, env_conf=problem.env).create("ppo")
     assert isinstance(designer, PPODesigner)
+    assert isinstance(designer, PPOACDesigner)
+
+
+def test_ppo_designers_registered_under_split_names():
+    from optimizer.designers import Designers
+    from optimizer.ppo_designer import PPOACDesigner
+    from optimizer.ppo_pg_designer import PPOPGDesigner
+    from problems.problem import build_problem
+
+    ac_problem = build_problem("pend", "actor-critic-mlp-16-8", problem_seed=0, noise_seed_0=0)
+    ac_policy = ac_problem.build_policy()
+    ac_designer = Designers(ac_policy, num_arms=1, env_conf=ac_problem.env).create("ppo-ac")
+    assert isinstance(ac_designer, PPOACDesigner)
+
+    pg_problem = build_problem("pend", "actor-mlp-16-8", problem_seed=0, noise_seed_0=0)
+    pg_policy = pg_problem.build_policy()
+    pg_designer = Designers(pg_policy, num_arms=1, env_conf=pg_problem.env).create("ppo-pg")
+    assert isinstance(pg_designer, PPOPGDesigner)
 
 
 def test_m_t_s_designer_init():

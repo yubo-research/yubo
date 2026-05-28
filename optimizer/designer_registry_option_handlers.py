@@ -1,9 +1,11 @@
 from .designer_errors import NoSuchDesignerError
 from .designer_registry_builders import (
     _build_bt_acq,
+    _index_driver_from_opts,
     _load_symbol,
     _mtv,
     _optional_int,
+    _reject_unknown_opts,
     _require_int,
     _require_str_in,
 )
@@ -15,6 +17,7 @@ from .designer_registry_context import _SimpleContext
 _TURBO_OPTION_KEYS = {
     "acq_type",
     "candidate_rv",
+    "idx",
     "k",
     "num_candidates",
     "num_fit_candidates",
@@ -51,6 +54,9 @@ def _turbo_enn(
     if conflicts:
         raise NoSuchDesignerError(f"Designer '{designer_name}' got duplicate option(s): {', '.join(sorted(conflicts))}.")
     kw.update(opts)
+    index_driver = kw.pop("idx", None)
+    if index_driver is not None:
+        kw["index_driver"] = _index_driver_from_opts({"idx": index_driver}, example=f"{designer_name}/idx=hnsw")
     eggroll_opts = {k: kw.pop(k) for k in list(kw) if k in _EGGROLL_TURBO_OPTION_KEYS}
     if eggroll_opts:
         if ctx.env_conf is None:
@@ -122,6 +128,11 @@ def _d_sts_sweep(ctx: _SimpleContext, opts: dict):
 
 def _d_turbo_enn_sweep(ctx: _SimpleContext, opts: dict):
     opts = dict(opts)
+    _reject_unknown_opts(
+        "turbo-enn-sweep",
+        opts,
+        {"k", "idx"} | _TURBO_OPTION_KEYS | _EGGROLL_TURBO_OPTION_KEYS,
+    )
     k = _require_int(opts, "k", example="turbo-enn-sweep/k=10")
     opts.pop("k", None)
     return _turbo_enn(
@@ -137,8 +148,33 @@ def _d_turbo_enn_sweep(ctx: _SimpleContext, opts: dict):
     )
 
 
+def _d_turbo_enn_p(ctx: _SimpleContext, opts: dict):
+    opts = dict(opts)
+    _reject_unknown_opts(
+        "turbo-enn-p",
+        opts,
+        {"idx"} | _TURBO_OPTION_KEYS | _EGGROLL_TURBO_OPTION_KEYS,
+    )
+    return _turbo_enn(
+        ctx,
+        opts=opts,
+        designer_name="turbo-enn-p",
+        turbo_mode="turbo-enn",
+        k=10,
+        num_keep=ctx.num_keep_val,
+        num_fit_samples=None,
+        num_fit_candidates=None,
+        acq_type="pareto",
+    )
+
+
 def _d_turbo_enn_fit(ctx: _SimpleContext, opts: dict):
     opts = dict(opts)
+    _reject_unknown_opts(
+        "turbo-enn-fit",
+        opts,
+        {"acq_type", "idx"} | _TURBO_OPTION_KEYS | _EGGROLL_TURBO_OPTION_KEYS,
+    )
     acq_type = _require_str_in(
         opts,
         "acq_type",
@@ -183,6 +219,11 @@ def _build_turbo_enn_f(ctx: _SimpleContext, *, acq_type: str, opts: dict | None 
 
 def _d_morbo_enn_fit(ctx: _SimpleContext, opts: dict):
     opts = dict(opts)
+    _reject_unknown_opts(
+        "morbo-enn-fit",
+        opts,
+        {"acq_type", "idx"} | _TURBO_OPTION_KEYS | _EGGROLL_TURBO_OPTION_KEYS,
+    )
     acq_type = _require_str_in(
         opts,
         "acq_type",
@@ -227,7 +268,7 @@ def _d_turbo_enn_fit_ucb(ctx: _SimpleContext, opts: dict):
         "param_scale",
         "seed_offset",
     }
-    allowed = {"nfs", "k"} | eggroll_allowed
+    allowed = {"nfs", "k", "idx"} | eggroll_allowed
     unknown = set(opts) - allowed
     if unknown:
         u = ", ".join(sorted(unknown))
