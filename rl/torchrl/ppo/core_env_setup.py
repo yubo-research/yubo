@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import dataclasses
+
+import common.env_preprocessing as env_pre
 from problems.env_conf import get_env_conf
 from rl.core import env_contract, env_setup, runtime
 
@@ -19,6 +22,7 @@ def build_env_setup(config: PPOConfig) -> _EnvSetup:
         get_env_conf_fn=get_env_conf,
     )
     env_conf = resolved.env_conf
+    env_pre.attach_env_preprocessing(env_conf, _gym_preprocessing_config(config))
     env_conf.ensure_spaces()
     io_contract = env_contract.resolve_env_io_contract(env_conf, default_image_size=84)
     obs_dim = 64 if io_contract.observation.mode == "pixels" else int(io_contract.observation.vector_dim or 1)
@@ -51,7 +55,11 @@ def _build_seeded_eval_env_conf(config: PPOConfig, *, problem_seed: int, noise_s
         pixels_only=bool(getattr(config, "pixels_only", True)),
         get_env_conf_fn=get_env_conf,
     )
-    return resolved.env_conf
+    return env_pre.attach_env_preprocessing(resolved.env_conf, _gym_preprocessing_config(config))
+
+
+def _gym_preprocessing_config(config: PPOConfig):
+    return dataclasses.replace(config.env, normalize_reward=False)
 
 
 def _build_eval_env_conf(config: PPOConfig, env: _EnvSetup, *, from_pixels: bool):
@@ -82,6 +90,8 @@ def _make_video_context(config: PPOConfig, env: _EnvSetup, *, from_pixels: bool)
             device=d,
             obs_contract=env.io_contract.observation,
             is_discrete=bool(getattr(env, "is_discrete", False)),
+            action_low=env.action_low,
+            action_high=env.action_high,
         ),
         capture_actor_state=actor_eval.capture_actor_snapshot,
         with_actor_state=actor_eval.use_actor_snapshot,

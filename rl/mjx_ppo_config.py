@@ -4,7 +4,9 @@ import dataclasses
 
 from rl.core.grouped_config import dataclass_field_names, parse_dataclass_section
 from rl.mjx_ppo_config_sections import (
+    MJXPPOCheckpointConfig,
     MJXPPOCollectorConfig,
+    MJXPPOEvalConfig,
     MJXPPOLossConfig,
     MJXPPOOptimConfig,
 )
@@ -15,6 +17,8 @@ class MJXPPOSections:
     collector: MJXPPOCollectorConfig = dataclasses.field(default_factory=MJXPPOCollectorConfig)
     optim: MJXPPOOptimConfig = dataclasses.field(default_factory=MJXPPOOptimConfig)
     loss: MJXPPOLossConfig = dataclasses.field(default_factory=MJXPPOLossConfig)
+    eval: MJXPPOEvalConfig = dataclasses.field(default_factory=MJXPPOEvalConfig)
+    checkpoint: MJXPPOCheckpointConfig = dataclasses.field(default_factory=MJXPPOCheckpointConfig)
 
 
 @dataclasses.dataclass
@@ -28,7 +32,7 @@ class MJXPPOConfig:
 
     @classmethod
     def from_dict(cls, raw: dict) -> "MJXPPOConfig":
-        grouped = {"collector", "optim", "loss"}
+        grouped = {"collector", "optim", "loss", "eval", "checkpoint"}
         root_fields = dataclass_field_names(cls) - {"sections"}
         unknown = sorted(set(raw) - root_fields - grouped)
         if unknown:
@@ -38,6 +42,8 @@ class MJXPPOConfig:
             collector=parse_dataclass_section(raw, "collector", MJXPPOCollectorConfig, label="MJX PPO"),
             optim=parse_dataclass_section(raw, "optim", MJXPPOOptimConfig, label="MJX PPO"),
             loss=parse_dataclass_section(raw, "loss", MJXPPOLossConfig, label="MJX PPO"),
+            eval=parse_dataclass_section(raw, "eval", MJXPPOEvalConfig, label="MJX PPO"),
+            checkpoint=parse_dataclass_section(raw, "checkpoint", MJXPPOCheckpointConfig, label="MJX PPO"),
         )
         return cls(**data)
 
@@ -55,3 +61,11 @@ class MJXPPOConfig:
     @property
     def loss(self) -> MJXPPOLossConfig:
         return self.sections.loss
+
+    @property
+    def eval(self) -> MJXPPOEvalConfig:
+        return self.sections.eval
+
+    @property
+    def checkpoint(self) -> MJXPPOCheckpointConfig:
+        return self.sections.checkpoint

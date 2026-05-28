@@ -8,6 +8,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torchrl.envs as tr_envs
 import torchrl.modules as tr_modules
+import torchrl.modules.distributions as tr_dists
 
 from analysis.data_io import write_config
 from rl import backbone, checkpointing
@@ -19,7 +20,7 @@ from rl.torchrl.collect_utils import uses_native_isaaclab_collect_env
 from . import models
 from .config import PPOConfig
 from .core_collect_env import _make_collect_env, _make_collect_env_factory
-from .core_types import _EnvSetup, _Modules, _TanhNormal, _TrainingSetup
+from .core_types import _EnvSetup, _Modules, _TrainingSetup
 from .core_utils import _unique_param_list
 
 
@@ -72,8 +73,7 @@ def build_modules(config: PPOConfig, env: _EnvSetup, *, device: torch.device) ->
         actor = tr_modules.ProbabilisticActor(
             actor_module,
             in_keys=["loc", "scale"],
-            distribution_class=_TanhNormal,
-            distribution_kwargs={"low": env.action_low, "high": env.action_high},
+            distribution_class=tr_dists.IndependentNormal,
             return_log_prob=True,
         )
     actor.to(device)
@@ -140,7 +140,7 @@ def build_training(
         modules.critic,
         extra_params=[modules.log_std] if modules.log_std is not None else None,
     )
-    optimizer = optim.AdamW(train_params, lr=config.optim.lr, eps=1e-05, weight_decay=0.0)
+    optimizer = optim.Adam(train_params, lr=config.optim.lr, eps=1e-05)
     exp_dir = Path(config.exp_dir)
     exp_dir.mkdir(parents=True, exist_ok=True)
     write_config(str(exp_dir), config.to_dict())

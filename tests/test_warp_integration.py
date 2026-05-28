@@ -11,6 +11,8 @@ def test_warp_adapter_materialization():
         import mujoco_warp  # noqa: F401
     except ImportError:
         pytest.skip("mujoco_warp not available")
+    if not hasattr(wp, "tid"):
+        pytest.skip("warp build missing wp.tid(); incompatible with mujoco_warp")
 
     env_tag = "warp:gymnasium:Ant-v4"
     spec = get_environment_spec(env_tag)

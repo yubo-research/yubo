@@ -71,8 +71,19 @@ class MujocoPlaygroundAdapter:
         )
         obs = _policy_obs(out_state.obs, self._jax, self._jnp)
         reward = self._jnp.asarray(next_state.reward, dtype=self._jnp.float32)
-        done = done_bool.astype(self._jnp.float32)
-        return obs, out_state, reward, done, next_state.metrics
+        terminated = self._jnp.asarray(getattr(next_state, "terminated", next_state.done), dtype=self._jnp.float32)
+        truncated = self._jnp.asarray(
+            getattr(next_state, "truncated", self._jnp.zeros_like(next_state.done)),
+            dtype=self._jnp.float32,
+        )
+        return core.JaxStepResult(
+            obs=obs,
+            state=out_state,
+            reward=reward,
+            terminated=terminated,
+            truncated=truncated,
+            info=next_state.metrics,
+        )
 
     def clip_action(self, action):
         return core._clip_box_action(self.action_space, self._jnp, action)

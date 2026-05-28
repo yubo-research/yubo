@@ -93,6 +93,30 @@ def test_logger_facade_functions(tmp_path: Path):
     rl_logger.log_run_footer(1.0, 2, 0.2, algo_name="ppo")
 
 
+def test_logger_rl_iter_record(tmp_path: Path):
+    metrics_path = tmp_path / "rl_iter.jsonl"
+    record = {
+        "iter": 1,
+        "step": 32,
+        "elapsed": 0.25,
+        "fps": 128.0,
+        "ret_rollout": 2.5,
+        "ret_eval": None,
+        "ret_best": 2.5,
+        "rew": 0.1,
+        "done_frac": 0.0,
+        "kl": 0.001,
+    }
+
+    line = rl_logger.format_rl_iter_record(record)
+    assert line == "ITER: iter = 1 step = 32 elapsed = 0.25s fps = 128 ret_rollout = 2.5 ret_best = 2.5 rew = 0.1 done_frac = 0 kl = 0.001"
+
+    rl_logger.log_rl_iter(record, metrics_path=metrics_path)
+    parsed = json.loads(metrics_path.read_text(encoding="utf-8").strip())
+    assert parsed["ret_rollout"] == 2.5
+    assert "ret_eval" not in parsed
+
+
 def test_shared_gaussian_actor_factory_and_variant_validation():
     backbone, head = get_gaussian_actor_spec("rl-gauss-tanh")
     assert backbone.name == "mlp"
@@ -209,3 +233,28 @@ def test_torchrl_profiler_run_with_profiler(monkeypatch, tmp_path: Path):
         start_iteration=0,
     )
     assert calls == [(1, 1), (2, 2)]
+
+
+def test_mjx_runtime_eval_and_train_loop_helpers_are_addressable():
+    import rl.mjx_eval as mjx_eval
+    import rl.mjx_runtime as mjx_runtime
+    import rl.mjx_train_loop as mjx_train_loop
+
+    runtime = mjx_runtime.MJXRuntime(
+        jax="jax",
+        jnp="jnp",
+        optax="optax",
+        adapter="adapter",
+        obs_dim=3,
+        act_dim=2,
+        low=-1.0,
+        high=1.0,
+    )
+
+    assert runtime.obs_dim == 3
+    assert callable(mjx_runtime.require_mjx_stack)
+    assert callable(mjx_runtime.make_mjx_runtime)
+    assert callable(mjx_eval.make_mjx_eval_step)
+    assert callable(mjx_train_loop.run_mjx_training_loop)
+    assert mjx_train_loop._last_rollout_return({"ep_ret": float("nan"), "rollout_return": 4.0}) == 4.0
+    assert mjx_train_loop._is_finite(1.0)

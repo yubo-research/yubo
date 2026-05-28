@@ -19,6 +19,7 @@ from rl.torchrl.ppo.config import (
     PPOCheckpointConfig,
     PPOCollectorConfig,
     PPOConfig,
+    PPOEnvConfig,
     PPOEvalConfig,
     PPOLossConfig,
     PPOOptimConfig,
@@ -114,6 +115,25 @@ def test_ppo_config_uses_grouped_public_sections():
     assert cfg.collector.frames_per_batch // cfg.optim.minibatch_size == 4
 
 
+def test_ppo_config_uses_grouped_env_preprocessing_section():
+    cfg = PPOConfig.from_dict(
+        {
+            "env_tag": "cheetah",
+            "policy_tag": "mlp-32-16",
+            "env": {
+                "normalize_observation": True,
+                "normalize_reward": True,
+                "reward_normalize_gamma": 0.95,
+            },
+        }
+    )
+    dumped = cfg.to_dict()
+    assert isinstance(cfg.env, PPOEnvConfig)
+    assert dumped["env"]["normalize_observation"] is True
+    assert dumped["env"]["normalize_reward"] is True
+    assert dumped["env"]["reward_normalize_gamma"] == 0.95
+
+
 def test_grouped_config_section_parser_validates_section_shape():
     assert "num_envs" in dataclass_field_names(SACCollectorConfig)
     assert parse_dataclass_section({"collector": {"num_envs": 3}}, "collector", SACCollectorConfig, label="SAC").num_envs == 3
@@ -132,6 +152,7 @@ def test_grouped_config_section_defaults_are_explicit():
     assert SACTargetNetUpdaterConfig().tau == 0.005
     assert SACEvalConfig().interval_steps == 10000
     assert SACCheckpointConfig().resume_from is None
+    assert PPOEnvConfig().normalize_observation is False
     assert PPOCollectorConfig().frames_per_batch == 2048
     assert PPOOptimConfig().minibatch_size == 64
     assert PPOLossConfig().clip_epsilon == 0.2

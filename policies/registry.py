@@ -110,6 +110,7 @@ def _cnn_mlp_factory(
 
 _EGGROLL_AC_MLP_RE = re.compile(r"^eggroll-ac-mlp-(?P<hidden>\d+)x(?P<layers>\d+)-(?P<activation>relu|silu|pqn|tanh)$")
 _EGGROLL_MARL_MLP_RE = re.compile(r"^eggroll-marl-mlp-(?P<hidden>\d+)x(?P<layers>\d+)-(?P<activation>relu|silu|pqn|tanh)$")
+_ACTOR_CRITIC_MLP_RE = re.compile(r"^actor-critic-mlp-(?P<sizes>\d+(?:-\d+)*)(?:-(?P<activation>relu|silu|tanh))?$")
 _EGGROLL_EXTERNAL_POLICY_SPECS = {
     "eggroll-linear-bf16-large": (512, 1, "silu"),
     "lobs5-360m-lora-r4": (128, 2, "silu"),
@@ -154,6 +155,18 @@ def _dynamic_policy_preset(policy_tag: str) -> PolicyPreset | None:
         from policies.nanoegg_policy import NanoEggPretrainPolicyFactory
 
         return PolicyPreset(factory=NanoEggPretrainPolicyFactory(policy_tag))
+
+    ac_match = _ACTOR_CRITIC_MLP_RE.match(policy_tag)
+    if ac_match is not None:
+        hidden_sizes = tuple(int(v) for v in str(ac_match.group("sizes")).split("-"))
+        activation = str(ac_match.group("activation") or "silu")
+        return PolicyPreset(
+            factory=_actor_critic_mlp_factory(hidden_sizes),
+            rl_model=_infer_rl_model_from_actor_critic_mlp(
+                hidden_sizes,
+                activation=activation,
+            ),
+        )
 
     match = _EGGROLL_AC_MLP_RE.match(policy_tag)
     if match is None:
@@ -211,8 +224,13 @@ def _infer_rl_model_from_mlp(
 
 def _infer_rl_model_from_actor_critic_mlp(
     hidden_sizes: tuple[int, ...],
+    *,
+    activation: str = "silu",
 ) -> dict[str, dict[str, Any]]:
-    return _infer_rl_model_from_mlp_like(hidden_sizes, ppo_log_std_init=0.0)
+    model = _infer_rl_model_from_mlp_like(hidden_sizes, ppo_log_std_init=0.0)
+    model["ppo"]["backbone_activation"] = str(activation)
+    model["ppo"]["head_activation"] = str(activation)
+    return model
 
 
 def _infer_rl_model_from_atari_cnn() -> dict[str, dict[str, Any]]:

@@ -20,9 +20,9 @@ def _time_env_matrix(value: Any, *, num_envs: int, dtype: torch.dtype) -> torch.
         return tensor.reshape(1, 1)
     if tensor.ndim == 1:
         return tensor.reshape(-1, 1)
-    if int(num_envs) > 1 and tensor.shape[0] == int(num_envs) and tensor.shape[-1] != int(num_envs):
+    if tensor.shape[0] == int(num_envs) and tensor.shape[1] != int(num_envs):
         tensor = tensor.transpose(0, 1)
-    return tensor.reshape(-1, tensor.shape[-1])
+    return tensor.reshape(-1, int(num_envs))
 
 
 def update_onpolicy_rollout_metrics(state: Any, batch: Any, *, num_envs: int) -> dict[str, float | None]:

@@ -19,7 +19,21 @@ class GymnaxAdapter:
         return self.env.reset(key, self.env_params)
 
     def step(self, key, state, action):
-        return self.env.step(key, state, action, self.env_params)
+        from gymnax.environments import spaces
+
+        # Robust action handling: squeeze if environment is discrete or action is 1-element
+        if isinstance(self.action_space, spaces.Discrete) or (hasattr(action, "shape") and action.shape == (1,)):
+            action = self._jnp.squeeze(action).astype(self._jnp.int32)
+
+        obs, next_state, reward, done, info = self.env.step(key, state, action, self.env_params)
+        return core.JaxStepResult(
+            obs=obs,
+            state=next_state,
+            reward=reward.astype(self._jnp.float32),
+            terminated=done.astype(self._jnp.float32),
+            truncated=self._jnp.zeros_like(done, dtype=self._jnp.float32),
+            info=info,
+        )
 
     def clip_action(self, action):
         return core._clip_box_action(self.action_space, self._jnp, action)
@@ -44,8 +58,17 @@ class GymnaxLikeAdapter:
 
     def step(self, key, state, action):
         if self.env_params is None:
-            return self.env.step(key, state, action)
-        return self.env.step(key, state, action, self.env_params)
+            obs, next_state, reward, done, info = self.env.step(key, state, action)
+        else:
+            obs, next_state, reward, done, info = self.env.step(key, state, action, self.env_params)
+        return core.JaxStepResult(
+            obs=obs,
+            state=next_state,
+            reward=reward,
+            terminated=done.astype(self._jnp.float32),
+            truncated=self._jnp.zeros_like(done, dtype=self._jnp.float32),
+            info=info,
+        )
 
     def clip_action(self, action):
         return core._clip_box_action(self.action_space, self._jnp, action)

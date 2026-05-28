@@ -2,6 +2,16 @@ from __future__ import annotations
 
 import dataclasses
 
+from rl.mjx_sac_config_extra import MJXSACCheckpointConfig, MJXSACEvalConfig
+
+__all__ = [
+    "MJXSACCheckpointConfig",
+    "MJXSACCollectorConfig",
+    "MJXSACEvalConfig",
+    "MJXSACLossConfig",
+    "MJXSACOptimConfig",
+]
+
 
 @dataclasses.dataclass
 class MJXSACCollectorConfig:

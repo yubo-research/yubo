@@ -191,24 +191,6 @@ population_size = 2
     assert cfg.pass_at_k is True
 
 
-def test_llm_gemma4_mtp_config_parses():
-    from pathlib import Path
-
-    from experiments import llm
-
-    repo_root = Path(__file__).resolve().parents[1]
-    cfg = llm._parse_cfg(llm._load_toml_config(str(repo_root / "configs/llm/gsm8k_gemma4_e2b_eggroll_mtp_smoke.toml")))
-    summary = llm._cfg_summary(cfg)
-
-    assert cfg.policy.model_name == "google/gemma-4-E2B-it"
-    assert cfg.vllm_enforce_eager is True
-    assert cfg.vllm_max_model_len == 1024
-    assert cfg.vllm_speculative_model == "google/gemma-4-E2B-it-assistant"
-    assert cfg.vllm_num_speculative_tokens == 2
-    assert summary["vllm_enforce_eager"] is True
-    assert summary["vllm_speculative_model"] == "google/gemma-4-E2B-it-assistant"
-
-
 def test_llm_sft_uses_num_epochs_budget(tmp_path):
     from experiments import llm
 

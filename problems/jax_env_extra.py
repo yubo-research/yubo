@@ -58,15 +58,16 @@ class JumanjiAdapter:
 
     def step(self, _key, state, action):
         next_state, timestep = self.env.step(state, action)
-        done = timestep.last()
-        result = (
-            core._flat_obs(timestep.observation, self._jax, self._jnp),
-            next_state,
-            timestep.reward,
-            done,
-            {},
+        terminated = timestep.last().astype(self._jnp.float32)
+        truncated = self._jnp.zeros_like(terminated)
+        return core.JaxStepResult(
+            obs=core._flat_obs(timestep.observation, self._jax, self._jnp),
+            state=next_state,
+            reward=timestep.reward,
+            terminated=terminated,
+            truncated=truncated,
+            info={},
         )
-        return result
 
     def clip_action(self, action):
         return core._clip_box_action(self.action_space, self._jnp, action)

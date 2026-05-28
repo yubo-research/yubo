@@ -20,7 +20,7 @@ class GymnasiumWarpAdapter:
     def __init__(self, env_name: str, num_envs: int = 1) -> None:
         import gymnasium as gym
 
-        from problems.mjx_env import _action_bounds, _obs_dim, parse_gymnasium_env_id
+        from problems.mjx_env import _action_bounds, parse_gymnasium_env_id
 
         wp.init()
         self.env_id = parse_gymnasium_env_id(env_name)
@@ -29,13 +29,13 @@ class GymnasiumWarpAdapter:
         # Loader: Use gymnasium just for the MjModel
         tmp_env = gym.make(self.env_id)
         self.model = tmp_env.unwrapped.model
+        obs_shape = tuple(int(dim) for dim in tmp_env.observation_space.shape)
         tmp_env.close()
 
         # Warp model resides on the GPU (shared across all worlds)
         self.warp_model = mujoco_warp.put_model(self.model)
 
         # Spaces
-        obs_shape = (_obs_dim(self.model),)
         low, high = _action_bounds(self.model, np)
         self.observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=obs_shape, dtype=np.float32)
         self.action_space = gym.spaces.Box(low=low, high=high, shape=low.shape, dtype=np.float32)

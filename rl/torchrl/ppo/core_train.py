@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 import time
 from pathlib import Path
 from typing import Any
@@ -10,7 +9,7 @@ import torch
 import torch.optim as optim
 
 from rl import checkpointing
-from rl.core import episode_rollout, ppo_eval, ppo_metrics
+from rl.core import episode_rollout, ppo_eval, ppo_metrics, ppo_reward_norm
 from rl.core.profiler import run_with_profiler
 from rl.core.rollout_metrics import update_onpolicy_rollout_metrics
 from rl.eval_noise import build_eval_plan
@@ -21,8 +20,6 @@ from .config import PPOConfig
 from .core_env_setup import _build_eval_env_conf
 from .core_types import _EnvSetup, _Modules, _TrainingSetup, _TrainState
 from .core_utils import _is_due, _resolve_observation_contract_for_env
-
-_LOGGER = logging.getLogger(__name__)
 
 
 def _resume_if_requested(
@@ -54,6 +51,9 @@ def _resume_if_requested(
     state.best_actor_state = loaded.get("best_actor_state")
     state.last_eval_return = float(loaded.get("last_eval_return", state.last_eval_return))
     state.last_heldout_return = loaded.get("last_heldout_return", state.last_heldout_return)
+    state.reward_return = loaded.get("reward_return")
+    state.reward_var = loaded.get("reward_var")
+    state.reward_count = float(loaded.get("reward_count", state.reward_count))
     if "rng_torch" in loaded:
         torch.set_rng_state(loaded["rng_torch"])
     if "rng_numpy" in loaded:
@@ -78,9 +78,17 @@ def _anneal_lr(
         param_group["lr"] = lr_now
 
 
-def _ppo_update(config: PPOConfig, training: _TrainingSetup, *, batch, device: torch.device) -> dict[str, list[float]]:
+def _ppo_update(
+    config: PPOConfig,
+    training: _TrainingSetup,
+    state: _TrainState,
+    *,
+    batch,
+    device: torch.device,
+) -> dict[str, list[float]]:
     batch = batch.to(device)
     _replace_nonfinite_rewards(batch)
+    ppo_reward_norm.normalize_rewards_for_training(config, state, batch, device=device)
     training.gae(batch)
     nonfinite_gae_fraction = _replace_nonfinite_gae_targets(batch)
     flat = batch.reshape(-1)
@@ -130,7 +138,7 @@ def _ppo_update(config: PPOConfig, training: _TrainingSetup, *, batch, device: t
                 approx_kls.append(float(loss_td["kl_approx"]))
             if "ESS" in loss_td.keys():
                 ess_values.append(float(loss_td["ESS"]))
-        mean_kl = _finite_mean(approx_kls)
+        mean_kl = ppo_metrics.finite_mean(approx_kls)
         if config.loss.target_kl is not None and mean_kl is not None and (mean_kl > float(config.loss.target_kl)):
             break
     return {
@@ -179,65 +187,6 @@ def _replace_nonfinite_gae_targets(batch) -> float:
     return float(np.mean(nonfinite_fractions)) if nonfinite_fractions else 0.0
 
 
-def _finite_mean(values: list[float]) -> float | None:
-    if not values:
-        return None
-    array = np.asarray(values, dtype=np.float64)
-    finite = array[np.isfinite(array)]
-    return float(finite.mean()) if int(finite.size) else None
-
-
-def _algo_metrics(
-    *,
-    approx_kls: list[float],
-    clipfracs: list[float],
-) -> dict[str, float | None]:
-    return {
-        "kl": _finite_mean(approx_kls),
-        "clipfrac": _finite_mean(clipfracs),
-    }
-
-
-def _update_record_diagnostics(
-    record: dict,
-    *,
-    rollout_metrics: dict[str, float | None],
-    update_stats: dict[str, list[float]],
-) -> None:
-    record["nonfinite_reward_fraction"] = rollout_metrics.get("nonfinite_reward_fraction")
-    record["nonfinite_gae_fraction"] = _finite_mean(update_stats.get("nonfinite_gae_fractions", []))
-    record["skipped_update_fraction"] = _finite_mean(update_stats.get("skipped_updates", []))
-    record["ess"] = _finite_mean(update_stats.get("ess_values", []))
-    record["loss_objective"] = _finite_mean(update_stats.get("loss_objective", []))
-    record["loss_critic"] = _finite_mean(update_stats.get("loss_critic", []))
-    record["loss_entropy"] = _finite_mean(update_stats.get("loss_entropy", []))
-    record["grad_norm"] = _finite_mean(update_stats.get("grad_norm", []))
-
-
-def _log_record_diagnostics(record: dict, *, iteration: int) -> None:
-    nonfinite_reward = float(record.get("nonfinite_reward_fraction") or 0.0)
-    nonfinite_gae = float(record.get("nonfinite_gae_fraction") or 0.0)
-    skipped_update = float(record.get("skipped_update_fraction") or 0.0)
-    ess = record.get("ess")
-    if nonfinite_reward > 0.0 or skipped_update > 0.0:
-        _LOGGER.warning(
-            "ppo diagnostics iteration=%s nonfinite_reward_fraction=%.4g nonfinite_gae_fraction=%.4g skipped_update_fraction=%.4g ess=%s",
-            int(iteration),
-            nonfinite_reward,
-            nonfinite_gae,
-            skipped_update,
-            "-" if ess is None else f"{float(ess):.4g}",
-        )
-        return
-    if nonfinite_gae > 0.0:
-        _LOGGER.debug(
-            "ppo diagnostics iteration=%s nonfinite_gae_fraction=%.4g ess=%s",
-            int(iteration),
-            nonfinite_gae,
-            "-" if ess is None else f"{float(ess):.4g}",
-        )
-
-
 def _update_best_from_eval_return(state: _TrainState, modules: _Modules, eval_return: float | None) -> None:
     if eval_return is None or not np.isfinite(float(eval_return)):
         return
@@ -268,6 +217,8 @@ def _evaluate_actor(
         device=device,
         obs_contract=obs_contract,
         is_discrete=bool(getattr(env, "is_discrete", False)),
+        action_low=env.action_low,
+        action_high=env.action_high,
     )
     traj, _ = episode_rollout.collect_denoised_trajectory(
         eval_env,
@@ -299,7 +250,7 @@ def _maybe_eval_and_log(
     }
     do_eval = _is_due(int(iteration), int(config.eval.interval))
     do_log = _is_due(int(iteration), int(config.log_interval))
-    algo_metrics = _algo_metrics(
+    algo_metrics = ppo_metrics.build_algo_metrics(
         approx_kls=update_stats.get("approx_kls", []),
         clipfracs=update_stats.get("clipfracs", []),
     )
@@ -326,12 +277,12 @@ def _maybe_eval_and_log(
                 started_at=float(start_time),
                 now=float(start_time + elapsed),
             )
-            _update_record_diagnostics(
+            ppo_metrics.update_record_diagnostics(
                 record,
                 rollout_metrics=rollout_metrics,
                 update_stats=update_stats,
             )
-            _log_record_diagnostics(record, iteration=iteration)
+            ppo_metrics.log_record_diagnostics(record, iteration=iteration)
             logger.append_metrics(training.metrics_path, record)
             logger.log_progress_iteration(
                 iteration,
@@ -364,6 +315,8 @@ def _maybe_eval_and_log(
             device=device,
             obs_contract=obs_contract,
             is_discrete=bool(getattr(env, "is_discrete", False)),
+            action_low=getattr(env, "action_low", None),
+            action_high=getattr(env, "action_high", None),
         )
         state.last_heldout_return = ppo_eval.evaluate_heldout_with_best_actor(
             best_actor_state=state.best_actor_state,
@@ -390,12 +343,12 @@ def _maybe_eval_and_log(
         started_at=float(start_time),
         now=float(start_time + elapsed),
     )
-    _update_record_diagnostics(
+    ppo_metrics.update_record_diagnostics(
         record,
         rollout_metrics=rollout_metrics,
         update_stats=update_stats,
     )
-    _log_record_diagnostics(record, iteration=iteration)
+    ppo_metrics.log_record_diagnostics(record, iteration=iteration)
     from rl import logger
 
     logger.append_metrics(training.metrics_path, record)
@@ -435,7 +388,13 @@ def _run_training_loop(
             iteration=iteration,
             num_iterations=training.num_iterations,
         )
-        update_stats = _ppo_update(config, training, batch=batch, device=device)
+        update_stats = _ppo_update(
+            config,
+            training,
+            state,
+            batch=batch,
+            device=device,
+        )
         _maybe_eval_and_log(
             config,
             env,

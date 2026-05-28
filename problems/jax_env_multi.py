@@ -99,11 +99,14 @@ class JaxMARLAdapter:
         if done is None:
             done_values = [self._jnp.asarray(dones[agent]) for agent in self.agents]
             done = self._jnp.all(self._jnp.stack(done_values))
+        terminated = done.astype(self._jnp.float32)
+        truncated = self._jnp.zeros_like(terminated)
         result = (
             core._flat_obs(self._ordered_obs(obs), self._jax, self._jnp),
             next_state,
             reward,
-            done,
+            terminated,
+            truncated,
             infos,
         )
         return result

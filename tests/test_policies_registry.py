@@ -169,6 +169,16 @@ def test_infer_rl_model_from_actor_critic_mlp():
     assert result["ppo"]["log_std_init"] == 0.0
 
 
+def test_dynamic_actor_critic_mlp_policy_tag_allows_activation():
+    from policies.registry import get_policy_preset
+
+    preset = get_policy_preset("actor-critic-mlp-256-256-tanh")
+    assert preset.rl_model["ppo"]["backbone_hidden_sizes"] == (256, 256)
+    assert preset.rl_model["ppo"]["backbone_activation"] == "tanh"
+    assert preset.rl_model["ppo"]["head_activation"] == "tanh"
+    assert preset.rl_model["ppo"]["backbone_layer_norm"] is True
+
+
 def test_policy_presets_coverage():
     from policies.registry import POLICY_PRESETS
 

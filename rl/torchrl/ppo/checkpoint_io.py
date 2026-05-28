@@ -7,6 +7,12 @@ from rl.core import actor_state
 
 def build_checkpoint_payload(training_setup: Any, modules: Any, train_state: Any, *, iteration: int) -> dict[str, Any]:
     actor_snapshot = actor_state.capture_ppo_actor_snapshot(modules.actor_backbone, modules.actor_head, log_std=modules.log_std)
+    extra_payload = {
+        "obs_scaler": modules.obs_scaler.state_dict(),
+        "reward_return": getattr(train_state, "reward_return", None),
+        "reward_var": getattr(train_state, "reward_var", None),
+        "reward_count": float(getattr(train_state, "reward_count", 0.0)),
+    }
     return actor_state.build_ppo_checkpoint_payload(
         iteration=iteration,
         global_step=int(iteration * training_setup.frames_per_batch),
@@ -18,7 +24,7 @@ def build_checkpoint_payload(training_setup: Any, modules: Any, train_state: Any
         best_return=float(train_state.best_return),
         last_eval_return=float(train_state.last_eval_return),
         last_heldout_return=train_state.last_heldout_return,
-        extra_payload={"obs_scaler": modules.obs_scaler.state_dict()},
+        extra_payload=extra_payload,
     )
 
 

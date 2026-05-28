@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from problems.jax_env_core import _gymnax_box_from_shape, _stable_scale
+from problems import jax_env_core as core
 
 
 class PaperObjectiveAdapter:
@@ -21,9 +21,9 @@ class PaperObjectiveAdapter:
         self._obs_dim = int(obs_dim)
         self._action_dim = int(action_dim)
         self._reward_scale = float(reward_scale)
-        self._tag_scale = _stable_scale(self.env_name)
-        self.observation_space = _gymnax_box_from_shape(spaces, jnp, (self._obs_dim,), low=-1.0, high=1.0)
-        self.action_space = _gymnax_box_from_shape(spaces, jnp, (self._action_dim,), low=-1.0, high=1.0)
+        self._tag_scale = core._stable_scale(self.env_name)
+        self.observation_space = core._gymnax_box_from_shape(spaces, jnp, (self._obs_dim,), low=-1.0, high=1.0)
+        self.action_space = core._gymnax_box_from_shape(spaces, jnp, (self._action_dim,), low=-1.0, high=1.0)
 
     @classmethod
     def _resolve_spec(cls, env_name: str) -> tuple[int, int, float]:
@@ -51,9 +51,16 @@ class PaperObjectiveAdapter:
         alignment = self._jnp.mean(action * target)
         reward = self._reward_scale * (alignment - mse)
         next_state = {"t": state["t"] + self._jnp.array(1, dtype=self._jnp.int32)}
-        done = self._jnp.array(True)
-        result = (self._obs(), next_state, reward.astype(self._jnp.float32), done, {})
-        return result
+        terminated = self._jnp.array(True, dtype=self._jnp.float32)
+        truncated = self._jnp.array(False, dtype=self._jnp.float32)
+        return core.JaxStepResult(
+            obs=self._obs(),
+            state=next_state,
+            reward=reward.astype(self._jnp.float32),
+            terminated=terminated,
+            truncated=truncated,
+            info={},
+        )
 
     def clip_action(self, action):
         action = self._jnp.ravel(self._jnp.asarray(action, dtype=self._jnp.float32))

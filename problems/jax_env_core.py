@@ -3,6 +3,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, NamedTuple
 
+from problems.jax_step_result import JaxStepResult
+
+__all__ = [
+    "JaxEnvSpaces",
+    "JaxStepResult",
+]
+
 JAX_ENV_PREFIXES = (
     "gymnax:",
     "gymnasium:",
@@ -68,6 +75,12 @@ def _stable_scale(text: str) -> float:
 
 
 def _space_bounds(space: Any, jnp) -> tuple[Any, Any]:
+    from gymnax.environments import spaces
+
+    discrete_cls = getattr(spaces, "Discrete", None)
+    if discrete_cls is not None and isinstance(space, discrete_cls):
+        return jnp.array(0.0, dtype=jnp.float32), jnp.array(float(space.n) - 1.0, dtype=jnp.float32)
+
     low = space.low if isinstance(space.low, jnp.ndarray) else space.low * jnp.ones(space.shape, dtype=space.dtype)
     high = space.high if isinstance(space.high, jnp.ndarray) else space.high * jnp.ones(space.shape, dtype=space.dtype)
     return jnp.asarray(low, dtype=jnp.float32), jnp.asarray(high, dtype=jnp.float32)
@@ -206,12 +219,14 @@ def _normalize_obs(obs: Any, rms: _RunningMeanStd, jnp, epsilon: float = 1e-8) -
 
 
 class _RewardRunningMeanStd(NamedTuple):
+    mean: Any
     var: Any
     count: Any
 
 
 def _init_reward_rms(jnp) -> _RewardRunningMeanStd:
     return _RewardRunningMeanStd(
+        mean=jnp.zeros((), dtype=jnp.float32),
         var=jnp.ones((), dtype=jnp.float32),
         count=jnp.array(1e-4, dtype=jnp.float32),
     )
@@ -219,17 +234,20 @@ def _init_reward_rms(jnp) -> _RewardRunningMeanStd:
 
 def _update_reward_rms(rms: _RewardRunningMeanStd, batch_rewards: Any, jnp) -> _RewardRunningMeanStd:
     # batch_rewards is [num_envs]
+    batch_mean = jnp.mean(batch_rewards)
     batch_var = jnp.var(batch_rewards)
     batch_count = batch_rewards.shape[0]
+
+    delta = batch_mean - rms.mean
     tot_count = rms.count + batch_count
 
-    # Simplified variance update for scalar rewards
+    new_mean = rms.mean + delta * (batch_count / tot_count)
     m_a = rms.var * rms.count
     m_b = batch_var * batch_count
-    # Note: For rewards, we typically only care about scaling by std, so we skip mean subtraction
-    new_var = (m_a + m_b) / tot_count
+    m2 = m_a + m_b + jnp.square(delta) * rms.count * (batch_count / tot_count)
+    new_var = m2 / tot_count
 
-    return _RewardRunningMeanStd(new_var, tot_count)
+    return _RewardRunningMeanStd(new_mean, new_var, tot_count)
 
 
 def _normalize_reward(reward: Any, rms: _RewardRunningMeanStd, jnp, epsilon: float = 1e-8) -> Any:

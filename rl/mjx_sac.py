@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import time
-from pathlib import Path
 from typing import Any, NamedTuple
 
 import numpy as np
@@ -11,56 +9,35 @@ from problems.jax_env_core import (
     _init_rms,
     _normalize_obs,
     _normalize_reward,
-    _RewardRunningMeanStd,
-    _RunningMeanStd,
     _update_reward_rms,
     _update_rms,
 )
 from rl import registry
-from rl.mjx_ppo import (
-    _init_layer,
-    _linear,
-    _make_runtime,
-    _normal_log_prob,
-    _policy,
-    _Runtime,
-)
+from rl.mjx_ppo import _init_layer, _linear, _normal_log_prob, _policy
+from rl.mjx_runtime import MJXRuntime as _Runtime
+from rl.mjx_runtime import make_mjx_runtime as _make_runtime
 from rl.mjx_sac_config import MJXSACConfig
-
-
-class _Replay(NamedTuple):
-    obs: Any
-    action: Any
-    reward: Any
-    done: Any
-    next_obs: Any
-    ptr: Any
-    size: Any
-
-
-class _TrainState(NamedTuple):
-    actor: dict[str, Any]
-    critic1: dict[str, Any]
-    critic2: dict[str, Any]
-    target1: dict[str, Any]
-    target2: dict[str, Any]
-    actor_opt: Any
-    critic_opt: Any
-    alpha_opt: Any
-    log_alpha: Any
-    obs_rms: _RunningMeanStd
-    reward_rms: _RewardRunningMeanStd
-    discounted_return: Any
-    obs: Any
-    env_state: Any
-    replay: _Replay
-    key: Any
+from rl.mjx_sac_loop import (
+    make_sac_eval_step,
+    make_sac_result,
+    sac_eval_args,
+    sac_iter_record,
+)
+from rl.mjx_sac_state import _AgentState, _checkpoint_fn, _Replay, _TrainState
+from rl.mjx_train_loop import run_mjx_training_loop
 
 
 class MJXSACResult(NamedTuple):
     best_return: float
     last_rollout_return: float
     num_steps: int
+
+
+def _tanh_normal_log_prob(jnp, raw_action, mean, std):
+    action = jnp.tanh(raw_action)
+    squash_correction = jnp.log(1.0 - action * action + 1e-6)
+    log_prob = _normal_log_prob(jnp, raw_action, mean, std)
+    return log_prob - jnp.sum(squash_correction, axis=-1)
 
 
 def _init_q(jax, jnp, key, obs_dim: int, act_dim: int, hidden: int):
@@ -89,10 +66,14 @@ def _init_actor(jax, jnp, key, obs_dim: int, act_dim: int, hidden: int):
     }
 
 
-def _sample_action(jax, jnp, actor, obs, key):
+def _sample_action(jax, jnp, actor, obs, key, low, high):
     mean, std = _policy(actor, jnp, obs)
     raw = mean + std * jax.random.normal(key, mean.shape)
-    return jnp.tanh(raw), _normal_log_prob(jnp, raw, mean, std)
+    action = jnp.tanh(raw)
+    scale = 0.5 * (high - low)
+    action = low + (action + 1.0) * scale
+    log_prob = _tanh_normal_log_prob(jnp, raw, mean, std) - jnp.sum(jnp.log(scale), axis=-1)
+    return action, log_prob
 
 
 def _init_replay(jnp, capacity: int, obs_dim: int, act_dim: int):
@@ -100,7 +81,8 @@ def _init_replay(jnp, capacity: int, obs_dim: int, act_dim: int):
         obs=jnp.zeros((capacity, obs_dim), dtype=jnp.float32),
         action=jnp.zeros((capacity, act_dim), dtype=jnp.float32),
         reward=jnp.zeros((capacity,), dtype=jnp.float32),
-        done=jnp.zeros((capacity,), dtype=jnp.float32),
+        terminated=jnp.zeros((capacity,), dtype=jnp.float32),
+        truncated=jnp.zeros((capacity,), dtype=jnp.float32),
         next_obs=jnp.zeros((capacity, obs_dim), dtype=jnp.float32),
         ptr=jnp.array(0, dtype=jnp.int32),
         size=jnp.array(0, dtype=jnp.int32),
@@ -114,7 +96,8 @@ def _insert_replay(jnp, replay: _Replay, data: dict[str, Any], capacity: int) ->
         obs=replay.obs.at[idx].set(data["obs"]),
         action=replay.action.at[idx].set(data["action"]),
         reward=replay.reward.at[idx].set(data["reward"]),
-        done=replay.done.at[idx].set(data["done"]),
+        terminated=replay.terminated.at[idx].set(data["terminated"]),
+        truncated=replay.truncated.at[idx].set(data["truncated"]),
         next_obs=replay.next_obs.at[idx].set(data["next_obs"]),
         ptr=(replay.ptr + count) % int(capacity),
         size=jnp.minimum(replay.size + count, int(capacity)),
@@ -133,28 +116,58 @@ def _make_train_step(config: MJXSACConfig, runtime: _Runtime, optimizers):
 
     def rollout(state: _TrainState):
         def step(carry, _):
-            obs_t, env_state_t, key_t, rms_t, r_rms_t, disc_ret_t = carry
+            (
+                obs_t,
+                env_state_t,
+                key_t,
+                rms_t,
+                r_rms_t,
+                disc_ret_t,
+                running_return_t,
+                running_length_t,
+            ) = carry
             key_t, act_key, env_key = jax.random.split(key_t, 3)
 
-            # Normalize observation before policy/actor
-            norm_obs = _normalize_obs(obs_t, rms_t, jnp)
-            action, _log_prob = _sample_action(jax, jnp, state.actor, norm_obs, act_key)
+            # Use the RMS from the start of the rollout for consistency
+            norm_obs = _normalize_obs(obs_t, state.obs_rms, jnp)
+            action, _log_prob = _sample_action(jax, jnp, state.actor, norm_obs, act_key, runtime.low, runtime.high)
 
-            keys = jax.random.split(env_key, num_envs)
-            next_obs, next_env_state, reward, done, _info = jax.vmap(runtime.adapter.step)(keys, env_state_t, action)
+            step_out = jax.vmap(runtime.adapter.step)(jax.random.split(env_key, num_envs), env_state_t, action)
+            next_obs = step_out.obs
+            next_env_state = step_out.state
+            reward = step_out.reward
+            terminated = step_out.terminated
+            truncated = step_out.truncated
 
             # Update Discounted Return (Standard way to normalize rewards)
-            disc_ret_t = reward + config.loss.gamma * disc_ret_t * (1.0 - done)
+            done = jnp.logical_or(terminated.astype(bool), truncated.astype(bool)).astype(jnp.float32)
+            disc_ret_t = reward + config.loss.gamma * disc_ret_t
 
             # Update RMS statistics
             rms_t = _update_rms(rms_t, next_obs, jnp)
             r_rms_t = _update_reward_rms(r_rms_t, disc_ret_t, jnp)
+            disc_ret_t = disc_ret_t * (1.0 - done)
+
+            # Episodic stats
+            new_running_return = running_return_t + reward
+            new_running_length = running_length_t + 1
+
+            # Record stats of finished episodes
+            ep_return = new_running_return * done
+            ep_length = new_running_length.astype(jnp.float32) * done
+
+            # Reset finished envs
+            next_running_return = jnp.where(done.astype(bool), 0.0, new_running_return)
+            next_running_length = jnp.where(done.astype(bool), 0, new_running_length)
 
             transition = {
                 "obs": obs_t,
                 "action": action,
                 "reward": reward,
-                "done": done,
+                "terminated": terminated,
+                "truncated": truncated,
+                "ep_return": ep_return,
+                "ep_length": ep_length,
                 "next_obs": next_obs,
             }
             return (
@@ -164,6 +177,8 @@ def _make_train_step(config: MJXSACConfig, runtime: _Runtime, optimizers):
                 rms_t,
                 r_rms_t,
                 disc_ret_t,
+                next_running_return,
+                next_running_length,
             ), transition
 
         return jax.lax.scan(
@@ -175,6 +190,8 @@ def _make_train_step(config: MJXSACConfig, runtime: _Runtime, optimizers):
                 state.obs_rms,
                 state.reward_rms,
                 state.discounted_return,
+                state.running_return,
+                state.running_length,
             ),
             None,
             length=num_steps,
@@ -186,7 +203,8 @@ def _make_train_step(config: MJXSACConfig, runtime: _Runtime, optimizers):
             "obs": replay.obs[idx],
             "action": replay.action[idx],
             "reward": replay.reward[idx],
-            "done": replay.done[idx],
+            "terminated": replay.terminated[idx],
+            "truncated": replay.truncated[idx],
             "next_obs": replay.next_obs[idx],
         }
 
@@ -207,27 +225,28 @@ def _make_train_step(config: MJXSACConfig, runtime: _Runtime, optimizers):
         next_obs = _normalize_obs(batch["next_obs"], obs_rms, jnp)
         reward = _normalize_reward(batch["reward"], reward_rms, jnp)
 
-        next_action, next_log_prob = _sample_action(jax, jnp, actor, next_obs, key)
+        next_action, next_log_prob = _sample_action(jax, jnp, actor, next_obs, key, runtime.low, runtime.high)
         target_q = jnp.minimum(
             _q_value(target1, jnp, next_obs, next_action),
             _q_value(target2, jnp, next_obs, next_action),
         )
         alpha = jnp.exp(log_alpha)
-        y = reward + config.loss.gamma * (1.0 - batch["done"]) * (target_q - alpha * next_log_prob)
+        done = jnp.logical_or(batch["terminated"].astype(bool), batch["truncated"].astype(bool)).astype(jnp.float32)
+        y = reward + config.loss.gamma * (1.0 - done) * (target_q - alpha * next_log_prob)
         q1 = _q_value(critic1, jnp, obs, batch["action"])
         q2 = _q_value(critic2, jnp, obs, batch["action"])
         return jnp.mean((q1 - y) ** 2 + (q2 - y) ** 2)
 
     def actor_loss(actor, critic1, critic2, log_alpha, rms, batch, key):
         obs = _normalize_obs(batch["obs"], rms, jnp)
-        action, log_prob = _sample_action(jax, jnp, actor, obs, key)
+        action, log_prob = _sample_action(jax, jnp, actor, obs, key, runtime.low, runtime.high)
         q = jnp.minimum(_q_value(critic1, jnp, obs, action), _q_value(critic2, jnp, obs, action))
         alpha = jnp.exp(log_alpha)
         return jnp.mean(alpha * log_prob - q)
 
     def alpha_loss(actor, log_alpha, rms, batch, key):
         obs = _normalize_obs(batch["obs"], rms, jnp)
-        _action, log_prob = _sample_action(jax, jnp, actor, obs, key)
+        _action, log_prob = _sample_action(jax, jnp, actor, obs, key, runtime.low, runtime.high)
         return -jnp.mean(log_alpha * jax.lax.stop_gradient(log_prob + target_entropy))
 
     def soft_update(params, target):
@@ -289,7 +308,19 @@ def _make_train_step(config: MJXSACConfig, runtime: _Runtime, optimizers):
         )
 
     def train_step(state: _TrainState):
-        (obs, env_state, key, obs_rms, reward_rms, discounted_return), data = rollout(state)
+        (
+            (
+                obs,
+                env_state,
+                key,
+                obs_rms,
+                reward_rms,
+                discounted_return,
+                running_return,
+                running_length,
+            ),
+            data,
+        ) = rollout(state)
         flat = {name: value.reshape((-1,) + value.shape[2:]) for name, value in data.items()}
         replay = _insert_replay(jnp, state.replay, flat, replay_size)
         state = state._replace(
@@ -298,14 +329,20 @@ def _make_train_step(config: MJXSACConfig, runtime: _Runtime, optimizers):
             obs_rms=obs_rms,
             reward_rms=reward_rms,
             discounted_return=discounted_return,
+            running_return=running_return,
+            running_length=running_length,
             replay=replay,
             key=key,
         )
         state, losses = jax.lax.scan(update_once, state, None, length=updates_per_iter)
+        done_flags = jnp.logical_or(data["terminated"].astype(bool), data["truncated"].astype(bool)).astype(jnp.float32)
+        done_count = jnp.sum(done_flags)
         metrics = {
             "rollout_return": jnp.mean(jnp.sum(data["reward"], axis=0)),
             "rollout_reward": jnp.mean(data["reward"]),
-            "done_fraction": jnp.mean(data["done"]),
+            "ep_ret": jnp.where(done_count > 0.0, jnp.sum(data["ep_return"]) / done_count, jnp.nan),
+            "ep_len": jnp.where(done_count > 0.0, jnp.sum(data["ep_length"]) / done_count, jnp.nan),
+            "done_fraction": jnp.mean(done_flags),
             "loss_actor": jnp.mean(losses[0]),
             "loss_critic": jnp.mean(losses[1]),
             "loss_alpha": jnp.mean(losses[2]),
@@ -351,6 +388,8 @@ def _init_state(config: MJXSACConfig, runtime: _Runtime):
         discounted_return=discounted_return,
         obs=obs,
         env_state=env_state,
+        running_return=jnp.zeros((int(config.collector.num_envs),), dtype=jnp.float32),
+        running_length=jnp.zeros((int(config.collector.num_envs),), dtype=jnp.int32),
         replay=replay,
         key=key,
     )
@@ -360,85 +399,37 @@ def _init_state(config: MJXSACConfig, runtime: _Runtime):
 def train_mjx_sac(config: MJXSACConfig) -> MJXSACResult:
     runtime = _make_runtime(config)
     state, optimizers = _init_state(config, runtime)
-    train_step = _make_train_step(config, runtime, optimizers)
-    frames_per_iter = int(config.collector.num_envs) * int(config.collector.num_steps)
-    iterations = int(config.collector.total_frames) // frames_per_iter
-    exp_dir = Path(config.exp_dir) / f"seed_{int(config.seed)}"
-    metrics_path = exp_dir / "metrics.jsonl"
-    exp_dir.mkdir(parents=True, exist_ok=True)
-    from rl import logger
 
-    start = time.time()
-    best_return = float("-inf")
-    last_rollout_return = float("nan")
-    print(
-        f"[rl/sac/mjx] env_tag={config.env_tag} seed={config.seed} obs_dim={runtime.obs_dim} act_dim={runtime.act_dim} num_envs={config.collector.num_envs} num_steps={config.collector.num_steps} iters={iterations}",
-        flush=True,
-    )
-    logger.log_run_header_basic(
+    def _full_state_restore(full_state, restored_agent):
+        if not isinstance(restored_agent, _AgentState):
+            return restored_agent
+        return full_state._replace(
+            actor=restored_agent.actor,
+            critic1=restored_agent.critic1,
+            critic2=restored_agent.critic2,
+            target1=restored_agent.target1,
+            target2=restored_agent.target2,
+            actor_opt=restored_agent.actor_opt,
+            critic_opt=restored_agent.critic_opt,
+            alpha_opt=restored_agent.alpha_opt,
+            log_alpha=restored_agent.log_alpha,
+            obs_rms=restored_agent.obs_rms,
+            reward_rms=restored_agent.reward_rms,
+        )
+
+    return run_mjx_training_loop(
+        config=config,
+        runtime=runtime,
+        state=state,
+        train_step=_make_train_step(config, runtime, optimizers),
+        eval_step=make_sac_eval_step(config, runtime),
+        result_fn=make_sac_result(MJXSACResult),
+        eval_args_fn=sac_eval_args,
+        record_fn=sac_iter_record,
+        checkpoint_fn=_checkpoint_fn,
+        restore_fn=_full_state_restore,
         algo_name="sac",
-        env_tag=config.env_tag,
-        seed=int(config.seed),
-        backbone_name="jax-mlp",
-        from_pixels=False,
-        obs_dim=runtime.obs_dim,
-        act_dim=runtime.act_dim,
-        frames_per_batch=frames_per_iter,
-        num_iterations=iterations,
-        device_type=str(runtime.jax.default_backend()),
-        config_obj=config,
-        eval_label="rollout",
-    )
-    for iteration in range(1, iterations + 1):
-        state, metrics = train_step(state)
-        values = {name: float(value) for name, value in runtime.jax.device_get(metrics).items()}
-        last_rollout_return = values["rollout_return"]
-        best_return = max(best_return, last_rollout_return)
-        if iteration % int(config.log_interval) == 0 or iteration == iterations:
-            elapsed = time.time() - start
-            step = iteration * frames_per_iter
-            logger.append_metrics(
-                metrics_path,
-                {
-                    "step": step,
-                    "eval_return": None,
-                    "rollout_return": last_rollout_return,
-                    "rollout_reward": values["rollout_reward"],
-                    "done_fraction": values["done_fraction"],
-                    "best_return": best_return,
-                    "loss_actor": values["loss_actor"],
-                    "loss_critic": values["loss_critic"],
-                    "loss_alpha": values["loss_alpha"],
-                    "alpha_value": values["alpha_value"],
-                    "time_seconds": elapsed,
-                },
-            )
-            logger.log_eval_iteration(
-                0,
-                0,
-                frames_per_iter,
-                eval_return=last_rollout_return,
-                best_return=best_return,
-                algo_metrics={
-                    "actor": values["loss_actor"],
-                    "critic": values["loss_critic"],
-                    "alpha": values["alpha_value"],
-                },
-                algo_name="sac",
-                elapsed=elapsed,
-                step_override=step,
-            )
-    logger.log_run_footer(
-        best_return,
-        iterations * frames_per_iter,
-        time.time() - start,
-        algo_name="sac",
-        step_label="steps",
-    )
-    return MJXSACResult(
-        best_return=best_return,
-        last_rollout_return=last_rollout_return,
-        num_steps=iterations * frames_per_iter,
+        prefix="MJX_SAC: ",
     )
 
 

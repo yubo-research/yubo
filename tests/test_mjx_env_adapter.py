@@ -87,7 +87,10 @@ def test_mjx_adapter_rejects_unverified_gymnasium_semantics(monkeypatch) -> None
 
 
 def test_halfcheetah_spec_matches_gymnasium_v5_defaults() -> None:
-    from problems.gymnasium_mujoco_specs import resolve_gymnasium_mujoco_spec
+    from problems.gymnasium_mujoco_specs import (
+        GymnasiumMujocoSpec,
+        resolve_gymnasium_mujoco_spec,
+    )
 
     env = SimpleNamespace(
         spec=SimpleNamespace(id="HalfCheetah-v5"),
@@ -101,6 +104,7 @@ def test_halfcheetah_spec_matches_gymnasium_v5_defaults() -> None:
     spec = resolve_gymnasium_mujoco_spec(env)
 
     assert spec is not None
+    assert isinstance(spec, GymnasiumMujocoSpec)
     assert spec.bindings["obs_qpos_start"] == 1
     assert spec.bindings["forward_reward_weight"] == 1.0
     assert spec.bindings["ctrl_cost_weight"] == 0.1
@@ -268,13 +272,14 @@ def test_gymnasium_mjx_adapter_uses_specs_frame_skip_and_time_limit(
     adapter = GymnasiumMJXAdapter("gymnasium:HalfCheetah-v5", jax=fake_jax, jnp=np)
     obs, state = adapter.reset("reset-key")
     action = adapter.clip_action(np.asarray([4.0], dtype=np.float32))
-    next_obs, next_state, reward, done, info = adapter.step("step-key", state, action)
+    next_obs, next_state, reward, terminated, truncated, info = adapter.step("step-key", state, action)
 
     np.testing.assert_array_equal(obs, np.asarray([0.0, 0.0], dtype=np.float32))
     np.testing.assert_array_equal(action, np.asarray([2.0], dtype=np.float32))
     np.testing.assert_array_equal(next_obs, np.asarray([0.0, 0.0], dtype=np.float32))
     assert next_state.steps == np.asarray(0, dtype=np.int32)
-    assert done == pytest.approx(1.0)
+    assert terminated == pytest.approx(0.0)
+    assert truncated == pytest.approx(1.0)
     assert reward == pytest.approx(9.6)
     assert info["x_velocity"] == pytest.approx(10.0)
 
@@ -355,7 +360,7 @@ def test_mujoco_playground_adapter_passes_valid_impl(monkeypatch) -> None:
     adapter = playground.MujocoPlaygroundAdapter("mujoco_playground:G1JoystickRoughTerrain", jax=fake_jax, jnp=np)
     obs, state = adapter.reset("reset-key")
     action = adapter.clip_action(np.asarray([2.0, -3.0], dtype=np.float32))
-    next_obs, next_state, reward, done, metrics = adapter.step("step-key", state, action)
+    next_obs, next_state, reward, terminated, truncated, metrics = adapter.step("step-key", state, action)
 
     assert calls == [("G1JoystickRoughTerrain", {"impl": "jax"})]
     assert adapter.observation_space.shape == (3,)
@@ -365,5 +370,6 @@ def test_mujoco_playground_adapter_passes_valid_impl(monkeypatch) -> None:
     np.testing.assert_array_equal(next_obs, np.asarray([1.0, 2.0, 3.0], dtype=np.float32))
     assert next_state is not state
     assert reward == pytest.approx(7.0)
-    assert done == pytest.approx(1.0)
+    assert terminated == pytest.approx(1.0)
+    assert truncated == pytest.approx(0.0)
     assert metrics["metric"] == pytest.approx(1.0)

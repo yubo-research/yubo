@@ -12,6 +12,7 @@ from rl.core.torchrl_runtime_dtos import TorchRLRuntime, TorchRLRuntimeRequest
 from rl.core.torchrl_runtime_request import make_torchrl_runtime_request
 
 from .config_collector import PPOCollectorConfig, PPOLossConfig, PPOOptimConfig
+from .config_env import PPOEnvConfig
 from .config_run import PPOCheckpointConfig, PPOEvalConfig, PPOProfileConfig
 
 
@@ -27,6 +28,7 @@ class PPOConfig:
     from_pixels: bool = False
     pixels_only: bool = True
     log_interval: int = 1
+    env: PPOEnvConfig = dataclasses.field(default_factory=PPOEnvConfig)
     collector: PPOCollectorConfig = dataclasses.field(default_factory=PPOCollectorConfig)
     optim: PPOOptimConfig = dataclasses.field(default_factory=PPOOptimConfig)
     loss: PPOLossConfig = dataclasses.field(default_factory=PPOLossConfig)
@@ -41,13 +43,22 @@ class PPOConfig:
     def from_dict(cls, raw: dict) -> "PPOConfig":
         reject_model_config_keys(raw, algo="ppo")
         apply_ppo_env_model_defaults(raw)
-        sections = {"collector", "optim", "loss", "eval", "checkpoint", "profile"}
+        sections = {
+            "env",
+            "collector",
+            "optim",
+            "loss",
+            "eval",
+            "checkpoint",
+            "profile",
+        }
         root_fields = dataclass_field_names(cls) - sections
         unknown = sorted(set(raw) - root_fields - sections)
         if unknown:
             raise ValueError(f"Unknown PPO config fields: {', '.join(unknown)}. Use grouped PPO tables.")
         data = {key: raw[key] for key in root_fields if key in raw}
         data.update(
+            env=parse_dataclass_section(raw, "env", PPOEnvConfig, label="PPO"),
             collector=parse_dataclass_section(raw, "collector", PPOCollectorConfig, label="PPO"),
             optim=parse_dataclass_section(raw, "optim", PPOOptimConfig, label="PPO"),
             loss=parse_dataclass_section(raw, "loss", PPOLossConfig, label="PPO"),

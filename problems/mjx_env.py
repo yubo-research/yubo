@@ -98,8 +98,14 @@ class GymnasiumMJXAdapter:
         )
         out_state = self._where_state(done_bool, reset_state, keep_state)
         obs = self._jnp.where(done_bool, reset_obs, next_obs)
-        done = done_bool.astype(self._jnp.float32)
-        return obs, out_state, reward, done, info
+        return core.JaxStepResult(
+            obs=obs,
+            state=out_state,
+            reward=reward,
+            terminated=terminated.astype(self._jnp.float32),
+            truncated=truncated.astype(self._jnp.float32),
+            info=info,
+        )
 
     def clip_action(self, action):
         return core._clip_box_action(self.action_space, self._jnp, action)

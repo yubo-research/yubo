@@ -46,7 +46,8 @@ def build_jitted_fns(designer, cfg: JittedFnConfig):
             )
             action = action_selector.select_action(policy_dist, action_key)
             action = cfg.env_adapter.clip_action(action)
-            next_obs, next_state, reward, next_done, _info = cfg.env_adapter.step(env_key, state_t, action)
+            next_obs, next_state, reward, terminated, truncated, _info = cfg.env_adapter.step(env_key, state_t, action)
+            next_done = jnp.logical_or(terminated.astype(bool), truncated.astype(bool))
             transition = (
                 obs_t,
                 state_t,

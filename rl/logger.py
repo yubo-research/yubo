@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import dataclasses
 import logging
+import math
+import sys
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -22,8 +24,11 @@ __all__ = [
     "SAC_METRICS",
     "append_metrics",
     "configure_logging",
+    "format_rl_iter_record",
     "log_eval_iteration",
     "log_progress_iteration",
+    "log_rl_iter",
+    "log_rl_status",
     "log_run_footer",
     "log_run_header",
     "log_run_header_basic",
@@ -32,6 +37,31 @@ __all__ = [
 
 
 _LOG_FORMAT = "%(levelname)s %(name)s: %(message)s"
+_ITER_LOGGER_NAME = "rl.iter"
+_ITER_FIELD_ORDER = (
+    "iter",
+    "step",
+    "elapsed",
+    "fps",
+    "ret_rollout",
+    "ep_ret",
+    "ep_len",
+    "ret_eval",
+    "ret_heldout",
+    "ret_best",
+    "rew",
+    "done_frac",
+    "kl",
+    "clipfrac",
+    "loss",
+    "loss_pi",
+    "loss_v",
+    "entropy",
+    "actor",
+    "critic",
+    "alpha",
+    "alpha_loss",
+)
 
 
 def configure_logging(level: int | str = logging.INFO) -> None:
@@ -48,6 +78,61 @@ def configure_logging(level: int | str = logging.INFO) -> None:
 
 def append_metrics(path: Path, record: dict[str, Any]) -> None:
     append_jsonl(path, record)
+
+
+def _iter_logger() -> logging.Logger:
+    log = logging.getLogger(_ITER_LOGGER_NAME)
+    if not any(handler.get_name() == "yubo.rl.iter" for handler in log.handlers):
+        handler = logging.StreamHandler(sys.stdout)
+        handler.set_name("yubo.rl.iter")
+        handler.setFormatter(logging.Formatter("%(message)s"))
+        log.addHandler(handler)
+    log.setLevel(logging.INFO)
+    log.propagate = False
+    return log
+
+
+def _is_missing(value: Any) -> bool:
+    if value is None:
+        return True
+    return isinstance(value, float) and math.isnan(value)
+
+
+def _clean_record(record: dict[str, Any]) -> dict[str, Any]:
+    return {str(key): value for key, value in record.items() if not _is_missing(value)}
+
+
+def _format_iter_value(key: str, value: Any) -> str:
+    if isinstance(value, bool):
+        return str(value)
+    if isinstance(value, int):
+        return str(value)
+    if isinstance(value, float):
+        if key in {"elapsed", "iter_dt", "compile_dt"}:
+            return f"{value:.2f}s"
+        if key == "fps":
+            return f"{value:.0f}"
+        return f"{value:.6g}"
+    return str(value)
+
+
+def format_rl_iter_record(record: dict[str, Any]) -> str:
+    clean = _clean_record(record)
+    ordered_keys = [key for key in _ITER_FIELD_ORDER if key in clean]
+    ordered_keys.extend(key for key in clean if key not in _ITER_FIELD_ORDER)
+    parts = [f"{key} = {_format_iter_value(key, clean[key])}" for key in ordered_keys]
+    return "ITER: " + " ".join(parts)
+
+
+def log_rl_iter(record: dict[str, Any], *, metrics_path: Path | None = None) -> None:
+    clean = _clean_record(record)
+    if metrics_path is not None:
+        append_metrics(metrics_path, clean)
+    _iter_logger().info(format_rl_iter_record(clean))
+
+
+def log_rl_status(message: str) -> None:
+    _iter_logger().info(str(message))
 
 
 def log_run_header(
