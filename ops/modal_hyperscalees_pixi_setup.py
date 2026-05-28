@@ -52,8 +52,8 @@ _ROOT_UHD_KEYS = {"env_tag", "num_rounds", "optimizer", "perturb"}
 
 
 @app.function(image=image, gpu=_GPU, timeout=_TIMEOUT_SECONDS)
-def run_hyperscalees_command(command: str, env_name: str = HYPERSCALEES_PIXI_ENV) -> str:
-    _run_command(command, env_name)
+def run_hyperscalees_command(command: str, env_name: str = HYPERSCALEES_PIXI_ENV, *, quiet: bool = True) -> str:
+    _run_command(command, env_name, quiet=quiet)
     return "ok"
 
 
@@ -62,17 +62,25 @@ def run_hyperscalees_command_export(
     command: str,
     artifact_globs: list[str],
     env_name: str = HYPERSCALEES_PIXI_ENV,
+    *,
+    quiet: bool = True,
 ) -> list[tuple[str, bytes]]:
-    _run_command(command, env_name)
+    _run_command(command, env_name, quiet=quiet)
     return collect_artifacts(artifact_globs, log_prefix=_LOG_PREFIX)
 
 
-def _run_command(command: str, env_name: str) -> None:
+def _run_command(command: str, env_name: str, *, quiet: bool) -> None:
     logged_command(
         ["bash", "-lc", _runtime_command_script(command, env_name)],
         log_prefix=_LOG_PREFIX,
         extra_env={"PIXI_HOME": PIXI_HOME},
+        quiet=quiet,
     )
+
+
+def _shell_preamble(*, debug: bool) -> str:
+    # -x is the main source of wrapper spam; keep it behind a flag.
+    return "set -euxo pipefail" if debug else "set -euo pipefail"
 
 
 def _runtime_command_script(command: str, env_name: str) -> str:
@@ -97,7 +105,7 @@ def _env_prefix_export(env_name: str, var_name: str) -> str:
 
 
 def _preflight_command() -> str:
-    return "set -euxo pipefail; nvidia-smi; " + _pixi_run(
+    return "nvidia-smi; " + _pixi_run(
         HYPERSCALEES_PIXI_ENV,
         "python -c "
         + shlex.quote("import sys, torch, vllm; print(sys.version); print('torch', torch.__version__, torch.version.cuda); print('vllm', vllm.__version__)"),
@@ -105,7 +113,7 @@ def _preflight_command() -> str:
 
 
 def _vllm_probe_command() -> str:
-    return "set -euxo pipefail; nvidia-smi; " + _pixi_run(
+    return "nvidia-smi; " + _pixi_run(
         HYPERSCALEES_PIXI_ENV,
         "python -c "
         + shlex.quote(
@@ -123,7 +131,7 @@ def _vllm_probe_command() -> str:
 
 
 def _isaaclab_preflight_command() -> str:
-    return "set -euxo pipefail; nvidia-smi || true; " + _pixi_run(
+    return "nvidia-smi || true; " + _pixi_run(
         ISAACLAB_PIXI_ENV,
         "python -c "
         + shlex.quote(
@@ -138,14 +146,14 @@ def _isaaclab_preflight_command() -> str:
 
 def _experiment_command(env_name: str, mode: str, config_path: str) -> str:
     runner = _config_runner(config_path, mode)
-    return "set -euxo pipefail; cd /root; " + _pixi_run(
+    return "cd /root; " + _pixi_run(
         env_name,
         runner,
     )
 
 
 def _pytest_command(env_name: str, args: str) -> str:
-    return "set -euxo pipefail; cd /root; " + _pixi_run(
+    return "cd /root; " + _pixi_run(
         env_name,
         f"python -m pytest {args}",
     )
@@ -159,6 +167,8 @@ def main(
     pytest_args: str = "-sv tests -rs",
     pixi_env: str = _AUTO_PIXI_ENV,
     experiment_mode: str = "local",
+    quiet: bool = True,
+    debug_shell: bool = False,
     export_videos: bool = False,
     export_glob: str = "",
     export_dir: str = "artifacts/modal_hyperscalees_pixi",
@@ -166,18 +176,18 @@ def main(
     config = config.strip()
     if config:
         pixi_env = _resolve_pixi_env(pixi_env, config)
-        command = _experiment_command(pixi_env, experiment_mode, config)
+        command = _shell_preamble(debug=debug_shell) + "; " + _experiment_command(pixi_env, experiment_mode, config)
     elif pytest:
         pixi_env = _resolve_pixi_env(pixi_env, "")
-        command = _pytest_command(pixi_env, pytest_args)
+        command = _shell_preamble(debug=debug_shell) + "; " + _pytest_command(pixi_env, pytest_args)
     elif command.strip() == "preflight":
-        command = _preflight_command()
+        command = _shell_preamble(debug=debug_shell) + "; " + _preflight_command()
         pixi_env = HYPERSCALEES_PIXI_ENV
     elif command.strip() == "vllm-probe":
-        command = _vllm_probe_command()
+        command = _shell_preamble(debug=debug_shell) + "; " + _vllm_probe_command()
         pixi_env = HYPERSCALEES_PIXI_ENV
     elif command.strip() == "isaaclab-preflight":
-        command = _isaaclab_preflight_command()
+        command = _shell_preamble(debug=debug_shell) + "; " + _isaaclab_preflight_command()
         pixi_env = ISAACLAB_PIXI_ENV
     else:
         pixi_env = _resolve_pixi_env(pixi_env, "")
@@ -192,10 +202,10 @@ def main(
     artifact_globs = parse_export_globs(export_glob, export_videos=export_videos)
     if artifact_globs:
         print(f"[modal-hyperscalees-pixi] export_globs={artifact_globs!r}", flush=True)
-        artifacts = run_hyperscalees_command_export.remote(command, artifact_globs, pixi_env)
+        artifacts = run_hyperscalees_command_export.remote(command, artifact_globs, pixi_env, quiet=quiet)
         write_artifacts(artifacts, export_dir=export_dir, log_prefix=_LOG_PREFIX)
     else:
-        run_hyperscalees_command.remote(command, pixi_env)
+        run_hyperscalees_command.remote(command, pixi_env, quiet=quiet)
 
 
 def _check_pixi_env(env_name: str) -> None:

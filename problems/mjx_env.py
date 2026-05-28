@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from typing import Any, NamedTuple
+from typing import Any, NamedTuple, TypeAlias
+
+from jaxtyping import Array, Float, PRNGKeyArray
 
 from problems import jax_env_core as core
 from problems.gymnasium_mujoco_specs import resolve_gymnasium_mujoco_spec
@@ -27,6 +29,11 @@ class GymnasiumMJXState(NamedTuple):
     steps: Any
 
 
+Obs: TypeAlias = Any
+State: TypeAlias = Any
+Action: TypeAlias = Any
+
+
 def _load_gymnasium_env_spec(env_id: str):
     import gymnasium as gym
 
@@ -35,12 +42,13 @@ def _load_gymnasium_env_spec(env_id: str):
         model = getattr(env.unwrapped, "model", None)
         if model is None:
             raise TypeError(f"Gymnasium env {env_id!r} does not expose an unwrapped MuJoCo model.")
-        spec = resolve_gymnasium_mujoco_spec(env.unwrapped)
+        spec = resolve_gymnasium_mujoco_spec(env)
         if spec is None:
             raise ValueError(f"Gymnasium MJX adapter has no verified MuJoCo semantics for {env_id!r}. Add a spec before routing this env through MJX.")
         return model, spec
-    finally:
+    except Exception:
         env.close()
+        raise
 
 
 def _action_bounds(model, jnp):
@@ -71,23 +79,25 @@ class GymnasiumMJXAdapter:
         self.observation_space = core._gymnax_box_from_shape(spaces, jnp, obs_shape)
         self.action_space = spaces.Box(low=low, high=high, shape=low.shape, dtype=jnp.float32)
 
-    def reset(self, key):
+    def reset(self, key: PRNGKeyArray) -> tuple[Obs, GymnasiumMJXState]:
         data = self._reset_data(key)
         return self.spec.obs(data, self.model, self._jnp), GymnasiumMJXState(
             data=data,
             steps=self._jnp.asarray(0, dtype=self._jnp.int32),
         )
 
-    def step(self, key, state, action):
+    def step(self, key: PRNGKeyArray, state: GymnasiumMJXState, action: Action) -> core.JaxStepResult:
         step_key, reset_key = self._jax.random.split(key)
         del step_key
         action = self.clip_action(action)
         next_data = self._step_data(state.data, action)
-        next_obs = self.spec.obs(next_data, self.model, self._jnp)
-        reward, info = self.spec.reward_info(state.data, next_data, action, self.model, self._jnp)
+        next_obs, reward, terminated, gym_truncated, info = self.spec.step_semantics(state.data, next_data, action, self.model, self._jnp)
         next_steps = state.steps + self._jnp.asarray(1, dtype=self._jnp.int32)
-        terminated = self.spec.terminated(next_data, self._jnp)
-        truncated = next_steps >= self._jnp.asarray(int(self.spec.max_episode_steps), dtype=self._jnp.int32)
+        time_limit_truncated = next_steps >= self._jnp.asarray(
+            int(self.spec.max_episode_steps),
+            dtype=self._jnp.int32,
+        )
+        truncated = self._jnp.logical_or(gym_truncated, time_limit_truncated)
         done_bool = self._jnp.logical_or(terminated, truncated)
         reset_data = self._reset_data(reset_key)
         reset_obs = self.spec.obs(reset_data, self.model, self._jnp)
@@ -107,8 +117,14 @@ class GymnasiumMJXAdapter:
             info=info,
         )
 
-    def clip_action(self, action):
+    def clip_action(self, action: Float[Array, "..."]) -> Float[Array, "..."]:
         return core._clip_box_action(self.action_space, self._jnp, action)
+
+    def close(self) -> None:
+        close = getattr(getattr(self, "spec", None), "oracle", None)
+        close_fn = getattr(close, "close", None)
+        if callable(close_fn):
+            close_fn()
 
     def _reset_data(self, key):
         data = self._mjx.make_data(self.mjx_model)

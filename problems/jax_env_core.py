@@ -165,10 +165,7 @@ def _make_gymnax_like_spaces(env: Any, params: Any, *, jax, jnp):
     from gymnax.environments import spaces
 
     key = jax.random.key(0)
-    try:
-        obs, _state = env.reset(key, params)
-    except TypeError:
-        obs, _state = env.reset(key)
+    obs, _state = env.reset(key, params) if params is not None else env.reset(key)
     observation_space = _space_from_sample(obs, spaces, jax, jnp)
     if hasattr(env, "action_spec"):
         action_space = _spec_to_space(_action_spec(env), spaces, jnp)

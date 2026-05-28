@@ -1,6 +1,14 @@
 from __future__ import annotations
 
+from typing import Any, TypeAlias
+
+from jaxtyping import Array, Float, PRNGKeyArray
+
 from problems import jax_env_core as core
+
+Obs: TypeAlias = Any
+State: TypeAlias = Any
+Action: TypeAlias = Any
 
 
 def _mjx_impl() -> str:
@@ -54,11 +62,11 @@ class MujocoPlaygroundAdapter:
         )
         self.action_space = _action_space(env, spaces, jnp)
 
-    def reset(self, key):
+    def reset(self, key: PRNGKeyArray) -> tuple[Obs, State]:
         state = self.env.reset(key)
         return _policy_obs(state.obs, self._jax, self._jnp), state
 
-    def step(self, _key, state, action):
+    def step(self, _key: PRNGKeyArray, state: State, action: Action) -> core.JaxStepResult:
         _step_key, reset_key = self._jax.random.split(_key)
         action = self.clip_action(action)
         next_state = self.env.step(state, action)
@@ -85,5 +93,5 @@ class MujocoPlaygroundAdapter:
             info=next_state.metrics,
         )
 
-    def clip_action(self, action):
+    def clip_action(self, action: Float[Array, "..."]) -> Float[Array, "..."]:
         return core._clip_box_action(self.action_space, self._jnp, action)

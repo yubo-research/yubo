@@ -3,7 +3,61 @@ from __future__ import annotations
 import sys
 from types import ModuleType, SimpleNamespace
 
+import numpy as np
 import pytest
+
+
+def _fake_halfcheetah_env(*, model=None, max_episode_steps=1000, frame_skip=5):
+    if model is None:
+        model = SimpleNamespace(nq=2, nv=1)
+    data = SimpleNamespace(
+        qpos=np.asarray([0.0, 0.0], dtype=np.float64),
+        qvel=np.asarray([0.0], dtype=np.float64),
+    )
+    unwrapped = SimpleNamespace(
+        model=model,
+        data=data,
+        spec=SimpleNamespace(id="HalfCheetah-v5", max_episode_steps=max_episode_steps),
+        _reset_noise_scale=0.1,
+        frame_skip=frame_skip,
+        dt=0.05,
+    )
+    unwrapped._get_obs = lambda: np.concatenate([np.ravel(unwrapped.data.qpos[1:]), np.ravel(unwrapped.data.qvel)])
+
+    def _get_rew(x_velocity, action):
+        ctrl_cost = np.float32(0.1) * np.sum(np.asarray(action, dtype=np.float32) ** 2)
+        reward_forward = np.asarray(x_velocity)
+        return reward_forward - ctrl_cost, {
+            "reward_forward": reward_forward,
+            "reward_ctrl": -ctrl_cost,
+        }
+
+    unwrapped._get_rew = _get_rew
+
+    def do_simulation(_action, _frame_skip):
+        return None
+
+    def step(action):
+        x_position_before = unwrapped.data.qpos[0]
+        unwrapped.do_simulation(action, unwrapped.frame_skip)
+        x_position_after = unwrapped.data.qpos[0]
+        x_velocity = (x_position_after - x_position_before) / unwrapped.dt
+        observation = unwrapped._get_obs()
+        reward, reward_info = unwrapped._get_rew(x_velocity, action)
+        info = {
+            "x_position": x_position_after,
+            "x_velocity": x_velocity,
+            **reward_info,
+        }
+        return observation, reward, False, False, info
+
+    unwrapped.do_simulation = do_simulation
+    unwrapped.step = step
+    return SimpleNamespace(
+        unwrapped=unwrapped,
+        observation_space=SimpleNamespace(shape=(max(int(model.nq) - 1, 0) + int(model.nv),)),
+        close=lambda: None,
+    )
 
 
 def test_gymnasium_tag_parse_and_registry_surface() -> None:
@@ -44,18 +98,8 @@ def test_jax_env_factory_routes_gymnasium_to_mjx(monkeypatch) -> None:
 def test_mjx_adapter_loads_verified_gymnasium_model(monkeypatch) -> None:
     import problems.mjx_env as mjx_env
 
-    closed = []
-    model = SimpleNamespace()
-    unwrapped = SimpleNamespace(
-        model=model,
-        spec=SimpleNamespace(id="HalfCheetah-v5", max_episode_steps=1000),
-        _exclude_current_positions_from_observation=True,
-        _forward_reward_weight=1.0,
-        _ctrl_cost_weight=0.1,
-        _reset_noise_scale=0.1,
-        frame_skip=5,
-    )
-    env = SimpleNamespace(unwrapped=unwrapped, close=lambda: closed.append(True))
+    model = SimpleNamespace(nq=2, nv=1)
+    env = _fake_halfcheetah_env(model=model)
 
     gymnasium = ModuleType("gymnasium")
     gymnasium.make = lambda _env_id: env
@@ -65,7 +109,7 @@ def test_mjx_adapter_loads_verified_gymnasium_model(monkeypatch) -> None:
     assert loaded_model is model
     assert spec.env_id == "HalfCheetah-v5"
     assert spec.frame_skip == 5
-    assert closed == [True]
+    assert spec.bindings["semantics_owner"] == "gymnasium"
 
 
 def test_mjx_adapter_rejects_unverified_gymnasium_semantics(monkeypatch) -> None:
@@ -92,70 +136,58 @@ def test_halfcheetah_spec_matches_gymnasium_v5_defaults() -> None:
         resolve_gymnasium_mujoco_spec,
     )
 
-    env = SimpleNamespace(
-        spec=SimpleNamespace(id="HalfCheetah-v5"),
-        _exclude_current_positions_from_observation=True,
-        _forward_reward_weight=1.0,
-        _ctrl_cost_weight=0.1,
-        _reset_noise_scale=0.1,
-        frame_skip=5,
-    )
+    env = _fake_halfcheetah_env()
 
     spec = resolve_gymnasium_mujoco_spec(env)
 
     assert spec is not None
     assert isinstance(spec, GymnasiumMujocoSpec)
-    assert spec.bindings["obs_qpos_start"] == 1
-    assert spec.bindings["forward_reward_weight"] == 1.0
-    assert spec.bindings["ctrl_cost_weight"] == 0.1
+    assert spec.bindings["semantics_owner"] == "gymnasium"
+    assert spec.bindings["obs_owner"].endswith("._get_obs")
+    assert spec.bindings["reward_owner"].endswith("._get_rew")
     assert spec.reset_noise_scale == 0.1
     assert spec.frame_skip == 5
 
 
-def test_halfcheetah_mjx_reward_uses_gymnasium_formula() -> None:
-    import numpy as np
-
+def test_halfcheetah_mjx_reward_delegates_to_gymnasium_oracle() -> None:
     from problems.gymnasium_mujoco_specs import (
         resolve_gymnasium_mujoco_spec,
         supported_gymnasium_mujoco_specs,
     )
 
-    env = SimpleNamespace(
-        spec=SimpleNamespace(id="HalfCheetah-v5"),
-        _exclude_current_positions_from_observation=True,
-        _forward_reward_weight=1.0,
-        _ctrl_cost_weight=0.1,
-        _reset_noise_scale=0.1,
-        frame_skip=5,
-    )
+    env = _fake_halfcheetah_env()
+    calls = []
+
+    def fake_get_rew(x_velocity, action):
+        calls.append((float(x_velocity), np.asarray(action, dtype=np.float32).copy()))
+        return np.asarray(123.0, dtype=np.float32), {
+            "reward_forward": np.asarray(124.0, dtype=np.float32),
+            "reward_ctrl": np.asarray(-1.0, dtype=np.float32),
+        }
+
+    env.unwrapped._get_rew = fake_get_rew
     spec = resolve_gymnasium_mujoco_spec(env)
-    state = SimpleNamespace(qpos=np.array([1.0], dtype=np.float32), time=np.float32(0.0))
-    next_state = SimpleNamespace(qpos=np.array([1.5], dtype=np.float32), time=np.float32(0.05))
+    state = SimpleNamespace(qpos=np.array([1.0], dtype=np.float32))
+    next_state = SimpleNamespace(qpos=np.array([1.5], dtype=np.float32))
     action = np.array([1.0, -2.0], dtype=np.float32)
 
     reward, info = spec.reward_info(state, next_state, action, SimpleNamespace(), np)
 
-    assert reward == pytest.approx(9.5)
+    assert reward == pytest.approx(123.0)
     assert info["x_position"] == pytest.approx(1.5)
     assert info["x_velocity"] == pytest.approx(10.0)
-    assert info["reward_forward"] == pytest.approx(10.0)
-    assert info["reward_ctrl"] == pytest.approx(-0.5)
+    assert info["reward_forward"] == pytest.approx(124.0)
+    assert info["reward_ctrl"] == pytest.approx(-1.0)
+    assert len(calls) == 1
+    assert calls[0][0] == pytest.approx(10.0)
+    np.testing.assert_array_equal(calls[0][1], action)
     assert supported_gymnasium_mujoco_specs() == ("HalfCheetah-v5",)
 
 
 def test_gymnasium_mujoco_spec_wrapper_methods() -> None:
-    import numpy as np
-
     from problems.gymnasium_mujoco_specs import resolve_gymnasium_mujoco_spec
 
-    env = SimpleNamespace(
-        spec=SimpleNamespace(id="HalfCheetah-v5"),
-        _exclude_current_positions_from_observation=False,
-        _forward_reward_weight=1.0,
-        _ctrl_cost_weight=0.1,
-        _reset_noise_scale=0.1,
-        frame_skip=5,
-    )
+    env = _fake_halfcheetah_env()
     spec = resolve_gymnasium_mujoco_spec(env)
     model = SimpleNamespace(nq=2, nv=1)
     data = SimpleNamespace(
@@ -163,10 +195,10 @@ def test_gymnasium_mujoco_spec_wrapper_methods() -> None:
         qvel=np.asarray([3.0], dtype=np.float32),
     )
 
-    assert spec.obs_dim(model) == 3
+    assert spec.obs_dim(model) == 2
     np.testing.assert_array_equal(
         spec.obs(data, model, np),
-        np.asarray([1.0, 2.0, 3.0], dtype=np.float32),
+        np.asarray([2.0, 3.0], dtype=np.float32),
     )
     assert spec.terminated(data, np) == np.asarray(False, dtype=bool)
 
@@ -227,17 +259,9 @@ def test_gymnasium_mjx_adapter_uses_specs_frame_skip_and_time_limit(
         actuator_ctrlrange=np.asarray([[-2.0, 2.0]], dtype=np.float32),
         actuator_ctrllimited=np.asarray([True]),
     )
-    unwrapped = SimpleNamespace(
-        model=model,
-        spec=SimpleNamespace(id="HalfCheetah-v5", max_episode_steps=1),
-        _exclude_current_positions_from_observation=True,
-        _forward_reward_weight=1.0,
-        _ctrl_cost_weight=0.1,
-        _reset_noise_scale=0.1,
-        frame_skip=5,
-    )
+    env = _fake_halfcheetah_env(model=model, max_episode_steps=1, frame_skip=5)
     gymnasium = ModuleType("gymnasium")
-    gymnasium.make = lambda _env_id: SimpleNamespace(unwrapped=unwrapped, close=lambda: None)
+    gymnasium.make = lambda _env_id: env
     spaces_mod = ModuleType("gymnax.environments.spaces")
     spaces_mod.Box = lambda *, low, high, shape, dtype: SimpleNamespace(low=low, high=high, shape=shape, dtype=dtype)
     environments_mod = ModuleType("gymnax.environments")

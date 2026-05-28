@@ -15,15 +15,17 @@ def logged_command(
     cwd: str = "/root",
     log_prefix: str,
     extra_env: dict[str, str] | None = None,
+    quiet: bool = False,
 ) -> int:
     printable = " ".join(shlex.quote(part) for part in cmd)
-    print(f"[{log_prefix}] $ {printable}", flush=True)
     env = os.environ.copy()
     env["NVIDIA_DRIVER_CAPABILITIES"] = "all"
     env["OMNI_KIT_ACCEPT_EULA"] = "YES"
     env["PYTHONUNBUFFERED"] = "1"
     if extra_env:
         env.update(extra_env)
+    if not quiet:
+        print(f"[{log_prefix}] $ {printable}", flush=True)
     proc = subprocess.Popen(
         cmd,
         cwd=cwd,
@@ -37,7 +39,10 @@ def logged_command(
         for line in proc.stdout:
             print(line, end="", flush=True)
     return_code = proc.wait()
-    print(f"[{log_prefix}] exit={return_code} cmd={printable}", flush=True)
+    if not quiet:
+        print(f"[{log_prefix}] exit={return_code} cmd={printable}", flush=True)
+    else:
+        print(f"[{log_prefix}] exit={return_code}", flush=True)
     if return_code != 0:
         raise RuntimeError(f"command failed with exit code {return_code}: {printable}")
     return return_code
