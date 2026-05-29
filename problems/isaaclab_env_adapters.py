@@ -112,6 +112,57 @@ def _copy_launcher_kwargs(launcher_kwargs: dict[str, Any] | None) -> dict[str, A
     return {} if launcher_kwargs is None else dict(launcher_kwargs)
 
 
+def _nvidia_visible_devices_disabled() -> bool:
+    visible = os.environ.get("NVIDIA_VISIBLE_DEVICES")
+    if visible is None:
+        return False
+    return visible.strip().lower() in {"", "none", "void"}
+
+
+def _torch_cuda_usable() -> bool:
+    try:
+        import torch
+    except ImportError:
+        return False
+    if not torch.cuda.is_available() or torch.cuda.device_count() < 1:
+        return False
+    try:
+        torch.zeros(1, device="cuda:0")
+        return True
+    except Exception:
+        return False
+
+
+def resolve_isaaclab_sim_device(requested: str | None = None) -> str:
+    """Pick Isaac Lab simulation device (must match PhysX/Warp tensor placement)."""
+    override = os.environ.get("YUBO_ISAACLAB_DEVICE", "").strip()
+    if override:
+        return str(override)
+
+    mode = "auto" if requested in (None, "", "auto") else str(requested).strip().lower()
+    if mode == "cpu":
+        return "cpu"
+    if mode in {"cuda", "gpu"}:
+        if _torch_cuda_usable() and not _nvidia_visible_devices_disabled():
+            return "cuda:0"
+        print(
+            "ISAACLAB_WARN: cuda requested for Isaac Lab simulation but no usable CUDA GPU was found; using cpu",
+            flush=True,
+        )
+        return "cpu"
+    if mode.startswith("cuda:"):
+        if _torch_cuda_usable() and not _nvidia_visible_devices_disabled():
+            return mode
+        print(
+            f"ISAACLAB_WARN: {mode!r} requested for Isaac Lab simulation but no usable CUDA GPU was found; using cpu",
+            flush=True,
+        )
+        return "cpu"
+    if _torch_cuda_usable() and not _nvidia_visible_devices_disabled():
+        return "cuda:0"
+    return "cpu"
+
+
 def isaaclab_default_launcher_kwargs() -> dict[str, Any]:
     return {"kit_args": ISAACLAB_DEFAULT_KIT_ARGS}
 
@@ -216,9 +267,10 @@ def list_isaaclab_tasks(*, keyword: str | None = None, headless: bool = True) ->
 def _parse_env_cfg(task_id: str, *, num_envs: int, device: str | None):
     from isaaclab_tasks.utils import parse_env_cfg
 
-    kwargs: dict[str, Any] = {"num_envs": int(num_envs)}
-    if device is not None:
-        kwargs["device"] = str(device)
+    kwargs: dict[str, Any] = {
+        "num_envs": int(num_envs),
+        "device": resolve_isaaclab_sim_device(device),
+    }
     try:
         return parse_env_cfg(task_id, **kwargs)
     except TypeError:
@@ -284,7 +336,12 @@ def resolve_isaaclab_env_spaces(env_tag: str, *, launcher_kwargs: dict[str, Any]
         if launcher_kwargs is not None:
             get_isaaclab_session(launcher_kwargs=launcher_kwargs)
         return cached
-    env = make_isaaclab_env(env_tag, num_envs=1, launcher_kwargs=launcher_kwargs)
+    env = make_isaaclab_env(
+        env_tag,
+        num_envs=1,
+        launcher_kwargs=launcher_kwargs,
+        device=resolve_isaaclab_sim_device(None),
+    )
     try:
         spaces = (env.observation_space, env.action_space)
         _SPACE_CACHE[str(env_tag)] = spaces

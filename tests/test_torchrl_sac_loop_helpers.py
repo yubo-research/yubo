@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib
+import json
 import time
 from types import SimpleNamespace
 
@@ -300,8 +301,8 @@ def test_evaluate_heldout_if_enabled_restores_actor_state_on_exception():
 def test_evaluate_if_due_updates_state_and_writes_metrics(monkeypatch):
     appended_records = []
     monkeypatch.setattr(
-        "rl.logger.append_metrics",
-        lambda path, payload: appended_records.append((path, payload)),
+        "rl.logger.log_rl_iter",
+        lambda payload, metrics_path=None: appended_records.append((metrics_path, payload)),
     )
 
     config = _sac_loop_config(**{"eval.interval_steps": 5, "eval.seed_base": 123})
@@ -378,7 +379,9 @@ def test_evaluate_if_due_updates_state_and_writes_metrics(monkeypatch):
     assert len(appended_records) == 2
 
 
-def test_log_and_checkpoint_helpers(capsys):
+def test_log_and_checkpoint_helpers(tmp_path):
+    from rl.logger import format_rl_iter_record
+
     config = _sac_loop_config(
         log_interval_steps=4,
         **{
@@ -386,7 +389,14 @@ def test_log_and_checkpoint_helpers(capsys):
             "checkpoint.interval_steps": 5,
         },
     )
-    train_state = SimpleNamespace(last_eval_return=3.2, last_heldout_return=None, best_return=3.2)
+    metrics_path = tmp_path / "metrics.jsonl"
+    train_state = SimpleNamespace(
+        last_eval_return=3.2,
+        last_heldout_return=None,
+        best_return=3.2,
+        _last_log_mark=0,
+    )
+    training_setup = SimpleNamespace(metrics_path=metrics_path)
     torchrl_sac_loop.log_if_due(
         config,
         train_state,
@@ -394,9 +404,14 @@ def test_log_and_checkpoint_helpers(capsys):
         start_time=time.time() - 1.0,
         latest_losses={"loss_actor": 1.0, "loss_critic": 2.0, "loss_alpha": 3.0},
         total_updates=9,
+        training_setup=training_setup,
     )
-    captured = capsys.readouterr()
-    assert captured.out.strip()
+    rows = [line for line in metrics_path.read_text().splitlines() if line.strip()]
+    assert len(rows) == 1
+    record = json.loads(rows[0])
+    assert record["actor"] == 1.0
+    assert record["ret_eval"] == 3.2
+    assert "ITER:" in format_rl_iter_record(record)
 
     calls = []
     training_setup = SimpleNamespace(checkpoint_manager=SimpleNamespace(save_both=lambda payload, iteration: calls.append((payload, iteration))))

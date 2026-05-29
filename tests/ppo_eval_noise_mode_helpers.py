@@ -71,5 +71,6 @@ def run_ppo_eval_noise_mode_twice(monkeypatch, tmp_path, *, eval_noise_mode: str
             clipfracs=[],
             device=torch.device("cpu"),
             start_time=t0,
+            iter_dt=0.01,
         )
     return eval_seeds, heldout_noise_indices

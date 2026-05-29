@@ -115,6 +115,8 @@ def test_kiss_tidy_e_torchrl_sac_sampling_vector(monkeypatch, tmp_path):
         latest_losses={"loss_actor": 0.0, "loss_critic": 0.0, "loss_alpha": 0.0},
         total_updates=0,
         evaluate_for_best=lambda *a, **k: 0.0,
+        iter_dt=1e-3,
+        n_frames=2,
     )
     sc2 = SACConfig(
         env_tag="pend",

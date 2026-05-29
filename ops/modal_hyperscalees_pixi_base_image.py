@@ -91,15 +91,36 @@ def mk_hyperscalees_pixi_base_image(modal, project_root: Path):
     )
 
 
-def isaaclab_bootstrap_command() -> str:
-    """One-shot IsaacLab env install (not cached in the Modal image)."""
-    return " && ".join(
+_ISAACLAB_BOOTSTRAP_MARKER = f"{PIXI_WORKSPACE_DIR}/.isaaclab_bootstrap_ok"
+_ISAACLAB_READY_PY = (
+    "import importlib.util; "
+    "mods=('isaacsim','isaaclab','isaaclab_tasks'); "
+    "missing=[m for m in mods if importlib.util.find_spec(m) is None]; "
+    "raise SystemExit(0 if not missing else 1)"
+)
+
+
+def isaaclab_bootstrap_command(*, force: bool = False) -> str:
+    """Install IsaacLab pixi env once per warm container; skip if already ready.
+
+    IsaacLab is not baked into the Modal image (keeps image builds fast). The marker
+    under ``PIXI_WORKSPACE_DIR`` plus an import probe avoid re-running the heavy
+    ``install`` task on every ``modal run`` in the same container.
+    """
+    verify = _pixi_run_command(ISAACLAB_PIXI_ENV, "python -c " + shlex.quote(_ISAACLAB_READY_PY))
+    marker = shlex.quote(_ISAACLAB_BOOTSTRAP_MARKER)
+    install_chain = " && ".join(
         (
             _pixi_install_env_command(ISAACLAB_PIXI_ENV),
             _pixi_task_command(ISAACLAB_PIXI_ENV, "install"),
             _pixi_task_command(ISAACLAB_PIXI_ENV, "check"),
+            f"touch {marker}",
         )
     )
+    if force:
+        return install_chain
+    skip = 'echo "[isaaclab] bootstrap: already installed, skipping" >&2'
+    return f"if test -f {marker} && {verify}; then {skip}; else {install_chain}; fi"
 
 
 def _hyperscalees_openblas_env_exports() -> str:
@@ -138,6 +159,11 @@ def _pixi_install_env_command(env_name: str) -> str:
 
 def _pixi_task_command(env_name: str, task_name: str) -> str:
     pixi_args = f"run --manifest-path {shlex.quote(PIXI_MANIFEST_PATH)} --locked -e {shlex.quote(env_name)} {shlex.quote(task_name)}"
+    return _pixi_workspace_command(pixi_args)
+
+
+def _pixi_run_command(env_name: str, command: str) -> str:
+    pixi_args = f"run --manifest-path {shlex.quote(PIXI_MANIFEST_PATH)} --locked -e {shlex.quote(env_name)} {command}"
     return _pixi_workspace_command(pixi_args)
 
 

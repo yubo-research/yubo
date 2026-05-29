@@ -121,6 +121,6 @@ modal run ops/modal_hyperscalees_pixi_setup.py --pixi-env isaaclab --command 'py
 ## Notes
 
 - Do not mount `.pixi/`.
-- IsaacLab is bootstrapped on demand for `isaaclab` configs / `--command isaaclab-preflight`.
+- IsaacLab is bootstrapped on demand for `isaaclab` configs / `--command isaaclab-preflight` (skipped when `/opt/yubo-pixi/.isaaclab_bootstrap_ok` exists in a warm container).
 - Do not switch Isaac/Torch to CUDA 13; the stack uses CUDA 12.8 wheels.
 - `admin/setup-hyperscalees.sh` is the micromamba equivalent for bare-metal Linux GPUs.

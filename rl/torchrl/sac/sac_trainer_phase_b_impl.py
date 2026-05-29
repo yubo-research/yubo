@@ -138,6 +138,9 @@ def run_sac_eval_log_checkpoint(
     latest_losses,
     total_updates,
     evaluate_for_best,
+    *,
+    iter_dt: float = 1e-9,
+    n_frames: int = 1,
 ):
     torchrl_sac_loop = _im("rl.torchrl.sac.loop")
     torchrl_sac_actor_eval = _im("rl.torchrl.sac.actor_eval")
@@ -179,7 +182,7 @@ def run_sac_eval_log_checkpoint(
             evaluate_for_best=evaluate_for_best,
         )
 
-    torchrl_sac_loop.evaluate_if_due(
+    torchrl_sac_loop.eval_and_log_if_due(
         config,
         env,
         modules,
@@ -193,14 +196,8 @@ def run_sac_eval_log_checkpoint(
         evaluate_actor=evaluate_actor,
         capture_actor_state=torchrl_sac_actor_eval.capture_sac_actor_snapshot,
         evaluate_heldout=_eval_heldout,
-    )
-    torchrl_sac_loop.log_if_due(
-        config,
-        state,
-        step=step,
-        start_time=start_time,
-        latest_losses=latest_losses,
-        total_updates=total_updates,
+        iter_dt=float(iter_dt),
+        n_frames=int(n_frames),
     )
     torchrl_sac_loop.checkpoint_if_due(
         config,

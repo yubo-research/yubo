@@ -18,7 +18,6 @@ from rl.mjx_ppo_loop import (
     _AgentState,
     _checkpoint_fn,
     _eval_args,
-    _ppo_iter_record,
     _result,
     _TrainState,
 )
@@ -419,7 +418,6 @@ def train_mjx_ppo(config: MJXPPOConfig) -> MJXPPOResult:
         eval_step=_make_eval_step(config, runtime),
         result_fn=_result,
         eval_args_fn=_eval_args,
-        record_fn=_ppo_iter_record,
         checkpoint_fn=_checkpoint_fn,
         restore_fn=_full_state_restore,
         algo_name="ppo",

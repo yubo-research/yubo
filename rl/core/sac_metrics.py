@@ -4,35 +4,27 @@ from typing import Any
 
 import numpy as np
 
-from rl.core.progress import steps_per_second
+from rl.iter_record import EvalRecordInputs
 
 
-def build_eval_metric_record(
-    *,
-    step: int,
-    eval_return: float,
-    heldout_return: float | None,
-    best_return: float,
-    loss_actor: float,
-    loss_critic: float,
-    loss_alpha: float,
-    total_updates: int,
-    started_at: float,
-    now: float,
-) -> dict[str, Any]:
-    elapsed = float(now - float(started_at))
-    return {
-        "step": int(step),
-        "eval_return": float(eval_return),
-        "heldout_return": heldout_return,
-        "best_return": float(best_return),
-        "loss_actor": float(loss_actor),
-        "loss_critic": float(loss_critic),
-        "loss_alpha": float(loss_alpha),
-        "total_updates": int(total_updates),
-        "time_seconds": elapsed,
-        "steps_per_second": float(steps_per_second(int(step), float(started_at), now=float(now))),
-    }
+def build_eval_metric_record(ctx: EvalRecordInputs) -> dict[str, Any]:
+    from rl.iter_record import IterInputs
+    from rl.torchrl_metrics import build_sac_iter_record
+
+    step = int(ctx.timing["step"])
+    elapsed = float(ctx.timing["now"]) - float(ctx.started_at)
+    frames = int(ctx.timing.get("frames_per_iter") or 1)
+    dt = float(ctx.timing.get("iter_dt") or max(elapsed / max(1, step), 1e-9))
+    return build_sac_iter_record(
+        IterInputs(
+            iteration=int(step) // max(1, frames),
+            step=step,
+            frames_per_iter=frames,
+            elapsed=elapsed,
+            iter_dt=dt,
+            metrics=dict(ctx.metrics),
+        )
+    )
 
 
 def normalize_returns_for_log(*, eval_return: float, heldout_return: float | None, best_return: float) -> tuple[float | None, float | None, float]:

@@ -6,7 +6,7 @@ from typing import Any
 
 import numpy as np
 
-from rl.core.progress import steps_per_second
+from rl.iter_record import EvalRecordInputs
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -70,34 +70,40 @@ def log_record_diagnostics(record: dict, *, iteration: int) -> None:
         )
 
 
-def build_eval_record(
+def build_eval_record(ctx: EvalRecordInputs) -> dict[str, Any]:
+    from rl.iter_record import IterInputs
+    from rl.torchrl_metrics import build_ppo_iter_record
+
+    iteration = int(ctx.timing["iteration"])
+    global_step = int(ctx.timing["global_step"])
+    t_now = float(time.time()) if ctx.timing.get("now") is None else float(ctx.timing["now"])
+    elapsed = float(t_now - float(ctx.started_at))
+    frames = int(ctx.timing.get("frames_per_iter") or max(1, global_step // max(1, iteration)))
+    dt = float(ctx.timing.get("iter_dt") or max(elapsed / max(1, iteration), 1e-9))
+    return build_ppo_iter_record(
+        IterInputs(
+            iteration=iteration,
+            step=global_step,
+            frames_per_iter=frames,
+            elapsed=elapsed,
+            iter_dt=dt,
+            metrics=dict(ctx.metrics),
+        )
+    )
+
+
+def enrich_ppo_iter_record(
+    record: dict[str, Any],
     *,
-    iteration: int,
-    global_step: int,
-    eval_return: float | None,
-    heldout_return: float | None,
-    best_return: float | None,
-    approx_kl: float | None,
-    clipfrac: float | None,
-    started_at: float,
-    rollout_reward: float | None = None,
-    rollout_return: float | None = None,
-    rollout_length: float | None = None,
-    now: float | None = None,
-) -> dict[str, Any]:
-    t_now = float(time.time()) if now is None else float(now)
-    elapsed = float(t_now - float(started_at))
-    return {
-        "iteration": int(iteration),
-        "global_step": int(global_step),
-        "eval_return": eval_return,
-        "heldout_return": heldout_return,
-        "best_return": best_return,
-        "rollout_reward": rollout_reward,
-        "rollout_return": rollout_return,
-        "rollout_length": rollout_length,
-        "approx_kl": approx_kl,
-        "clipfrac": clipfrac,
-        "time_seconds": elapsed,
-        "steps_per_second": float(steps_per_second(int(global_step), float(started_at), now=t_now)),
-    }
+    rollout_metrics: dict[str, float | None],
+    update_stats: dict[str, list[float]],
+) -> None:
+    update_record_diagnostics(record, rollout_metrics=rollout_metrics, update_stats=update_stats)
+    for src, dst in (
+        ("loss_objective", "loss_pi"),
+        ("loss_critic", "loss_v"),
+        ("loss_entropy", "entropy"),
+    ):
+        value = record.get(src)
+        if value is not None:
+            record[dst] = float(value)

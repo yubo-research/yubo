@@ -17,12 +17,7 @@ from rl.mjx_ppo import _init_layer, _linear, _normal_log_prob, _policy
 from rl.mjx_runtime import MJXRuntime as _Runtime
 from rl.mjx_runtime import make_mjx_runtime as _make_runtime
 from rl.mjx_sac_config import MJXSACConfig
-from rl.mjx_sac_loop import (
-    make_sac_eval_step,
-    make_sac_result,
-    sac_eval_args,
-    sac_iter_record,
-)
+from rl.mjx_sac_loop import make_sac_eval_step, make_sac_result, sac_eval_args
 from rl.mjx_sac_state import _AgentState, _checkpoint_fn, _Replay, _TrainState
 from rl.mjx_train_loop import run_mjx_training_loop
 
@@ -425,7 +420,6 @@ def train_mjx_sac(config: MJXSACConfig) -> MJXSACResult:
         eval_step=make_sac_eval_step(config, runtime),
         result_fn=make_sac_result(MJXSACResult),
         eval_args_fn=sac_eval_args,
-        record_fn=sac_iter_record,
         checkpoint_fn=_checkpoint_fn,
         restore_fn=_full_state_restore,
         algo_name="sac",

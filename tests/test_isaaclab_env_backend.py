@@ -252,6 +252,8 @@ def test_make_isaaclab_env_and_resolve_isaaclab_env_spaces(monkeypatch):
         lambda **_kwargs: IsaacLabSession(app=None, gym=fake_gym),
     )
     monkeypatch.setattr(mod, "_parse_env_cfg", lambda task_id, **kwargs: {"task_id": task_id, **kwargs})
+    monkeypatch.setattr(mod, "_torch_cuda_usable", lambda: True)
+    monkeypatch.setattr(mod, "_nvidia_visible_devices_disabled", lambda: False)
 
     env = make_isaaclab_env(
         "isaaclab:Isaac-Cartpole-v0",
@@ -288,6 +290,8 @@ def test_make_raw_isaaclab_env_returns_unadapted_env(monkeypatch):
         "get_isaaclab_session",
         lambda **_kwargs: IsaacLabSession(app=None, gym=fake_gym),
     )
+    monkeypatch.setattr(mod, "_torch_cuda_usable", lambda: True)
+    monkeypatch.setattr(mod, "_nvidia_visible_devices_disabled", lambda: False)
     monkeypatch.setattr(
         mod,
         "_parse_env_cfg",

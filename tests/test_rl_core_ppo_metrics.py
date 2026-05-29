@@ -2,6 +2,7 @@ import logging
 
 from rl.core import ppo_metrics
 from rl.core.ppo_metrics import build_eval_record
+from rl.iter_record import EvalRecordInputs
 
 
 def test_finite_mean_ignores_nonfinite_values():
@@ -47,8 +48,6 @@ def test_update_and_log_record_diagnostics(caplog):
     old_propagate = logger.propagate
     old_level = logger.level
     try:
-        # In some environments the logging setup prevents propagation to root
-        # (where caplog installs its handler). Attach caplog's handler directly.
         logger.addHandler(caplog.handler)
         logger.setLevel(logging.WARNING)
         logger.propagate = True
@@ -64,41 +63,45 @@ def test_update_and_log_record_diagnostics(caplog):
 
 def test_build_eval_record_fields_and_sps():
     record = build_eval_record(
-        iteration=3,
-        global_step=120,
-        eval_return=11.0,
-        heldout_return=9.5,
-        best_return=12.0,
-        approx_kl=0.02,
-        clipfrac=0.15,
-        started_at=10.0,
-        now=15.0,
+        EvalRecordInputs(
+            started_at=10.0,
+            timing={"iteration": 3, "global_step": 120, "now": 15.0, "iter_dt": 0.5, "frames_per_iter": 40},
+            metrics={
+                "ret_eval": 11.0,
+                "ret_heldout": 9.5,
+                "ret_best": 12.0,
+                "kl": 0.02,
+                "clipfrac": 0.15,
+            },
+        )
     )
-    assert record["iteration"] == 3
-    assert record["global_step"] == 120
-    assert record["eval_return"] == 11.0
-    assert record["heldout_return"] == 9.5
-    assert record["best_return"] == 12.0
-    assert record["approx_kl"] == 0.02
+    assert record["iter"] == 3
+    assert record["step"] == 120
+    assert record["ret_eval"] == 11.0
+    assert record["ret_heldout"] == 9.5
+    assert record["ret_best"] == 12.0
+    assert record["kl"] == 0.02
     assert record["clipfrac"] == 0.15
-    assert record["time_seconds"] == 5.0
-    assert record["steps_per_second"] == 24.0
+    assert record["elapsed"] == 5.0
+    assert record["fps"] == 80.0
 
 
 def test_build_eval_record_preserves_none_values():
     record = build_eval_record(
-        iteration=1,
-        global_step=0,
-        eval_return=None,
-        heldout_return=None,
-        best_return=None,
-        approx_kl=None,
-        clipfrac=None,
-        started_at=20.0,
-        now=20.0,
+        EvalRecordInputs(
+            started_at=20.0,
+            timing={"iteration": 1, "global_step": 0, "now": 20.0, "iter_dt": 1.0, "frames_per_iter": 1},
+            metrics={
+                "ret_eval": None,
+                "ret_heldout": None,
+                "ret_best": None,
+                "kl": None,
+                "clipfrac": None,
+            },
+        )
     )
-    assert record["eval_return"] is None
-    assert record["heldout_return"] is None
-    assert record["best_return"] is None
-    assert record["approx_kl"] is None
-    assert record["clipfrac"] is None
+    assert "ret_eval" not in record
+    assert "ret_heldout" not in record
+    assert "ret_best" not in record
+    assert "kl" not in record
+    assert "clipfrac" not in record

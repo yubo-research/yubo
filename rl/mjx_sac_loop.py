@@ -37,22 +37,19 @@ def sac_iter_record(
     iter_dt: float,
     metrics: dict[str, float],
     ret_best: float,
+    ret_eval: float | None = None,
+    eval_dt: float | None = None,
 ) -> dict[str, float | int]:
-    step = int(iteration) * int(frames_per_iter)
-    return {
-        "iter": int(iteration),
-        "step": step,
-        "elapsed": float(elapsed),
-        "fps": step / elapsed if elapsed > 0 else float("nan"),
-        "ret_rollout": metrics["rollout_return"],
-        "ep_ret": metrics["ep_ret"],
-        "ep_len": metrics["ep_len"],
-        "ret_best": float(ret_best),
-        "rew": metrics["rollout_reward"],
-        "done_frac": metrics["done_fraction"],
-        "actor": metrics["loss_actor"],
-        "critic": metrics["loss_critic"],
-        "alpha": metrics["alpha_value"],
-        "alpha_loss": metrics["loss_alpha"],
-        "iter_dt": float(iter_dt),
-    }
+    from rl.mjx_metrics import build_iter_record
+
+    return build_iter_record(
+        algo_name="sac",
+        iteration=iteration,
+        frames_per_iter=frames_per_iter,
+        elapsed=elapsed,
+        iter_dt=iter_dt,
+        metrics=metrics,
+        ret_best=ret_best,
+        ret_eval=ret_eval,
+        eval_dt=eval_dt,
+    )

@@ -2,12 +2,19 @@ from ops.modal_nvidia_vulkan import nvidia_vulkan_icd_script
 
 
 def _decoded_modal_build_command(command: str) -> str:
+    payloads = _decoded_modal_build_payloads(command)
+    assert payloads
+    return payloads[0]
+
+
+def _decoded_modal_build_payloads(command: str) -> list[str]:
     import base64
     import re
 
-    match = re.search(r"printf %s '?(?P<payload>[A-Za-z0-9+/=]+)'? \| base64 -d", command)
-    assert match is not None
-    return base64.b64decode(match.group("payload")).decode("utf-8")
+    payloads = [
+        base64.b64decode(match.group("payload")).decode("utf-8") for match in re.finditer(r"printf %s '?(?P<payload>[A-Za-z0-9+/=]+)'? \| base64 -d", command)
+    ]
+    return payloads
 
 
 def test_modal_hyperscalees_pixi_base_image_uses_cacheable_layers() -> None:
@@ -43,12 +50,15 @@ def test_modal_hyperscalees_pixi_base_image_uses_cacheable_layers() -> None:
     assert "pixi run" not in check_command
 
     bootstrap = base.isaaclab_bootstrap_command()
-    bootstrap_install = _decoded_modal_build_command(bootstrap.split("; ")[0])
-    assert "pixi install" in bootstrap_install
-    assert "-e isaaclab" in bootstrap_install
-    bootstrap_setup = _decoded_modal_build_command(bootstrap.split("; ")[1])
-    assert "pixi run" in bootstrap_setup
-    assert "-e isaaclab install" in bootstrap_setup
+    assert "already installed, skipping" in bootstrap
+    assert ".isaaclab_bootstrap_ok" in bootstrap
+    bootstrap_payload = "\n".join(_decoded_modal_build_payloads(bootstrap))
+    assert "pixi install" in bootstrap_payload
+    assert "-e isaaclab install" in bootstrap_payload
+
+    force_payload = "\n".join(_decoded_modal_build_payloads(base.isaaclab_bootstrap_command(force=True)))
+    assert "pixi install" in force_payload
+    assert "-e isaaclab" in force_payload
 
 
 def test_nvidia_vulkan_icd_script_prefers_real_icd() -> None:

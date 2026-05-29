@@ -14,6 +14,8 @@ policy_tag = "eggroll-ac-mlp-256x3-pqn"
 population = 2048
 num_epochs = 512
 num_reps = 1
+# Simulation device is resolved separately (see resolve_isaaclab_sim_device).
+# Use cpu here if Modal/container has no GPU; cuda when a real GPU is attached.
 runtime_device = "cuda"
 local_workers = 1
 b_trace = true

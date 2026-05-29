@@ -42,6 +42,8 @@ _ITER_FIELD_ORDER = (
     "iter",
     "step",
     "elapsed",
+    "iter_dt",
+    "eval_dt",
     "fps",
     "ret_rollout",
     "ep_ret",

@@ -110,10 +110,13 @@ def train_ppo(config: PPOConfig) -> TrainResult:
         runtime=runtime,
         remaining_iterations=remaining_iterations,
     )
+    from analysis.data_io import mark_done, write_summary_json
     from rl import logger
 
     logger.log_run_header("ppo", config, env, training, runtime)
+    logger.log_rl_status(f"metrics={training.metrics_path} checkpoints={training.exp_dir / 'checkpoints'}")
     train_start = time.time()
+    stop_reason = "completed"
     try:
         _run_training_loop(
             config,
@@ -127,6 +130,8 @@ def train_ppo(config: PPOConfig) -> TrainResult:
     finally:
         collector.shutdown()
     total_time = time.time() - train_start
+    write_summary_json(str(training.metrics_path), total_time, stop_reason)
+    mark_done(str(training.metrics_path))
     logger.log_run_footer(state.best_return, training.num_iterations, total_time, algo_name="ppo")
     save_final_checkpoint(config=config, training_setup=training, modules=modules, train_state=state)
     video.render_policy_videos_rl(config, env, modules, training, state, ctx, device=runtime.device)

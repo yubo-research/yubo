@@ -155,6 +155,9 @@ def _run_sac_eval_log_checkpoint(
     latest_losses,
     total_updates,
     evaluate_for_best,
+    *,
+    iter_dt: float = 1e-9,
+    n_frames: int = 1,
 ):
     def _eval_heldout(cfg, env_setup, local_modules, local_state, *, device, heldout_i_noise=99999):
         return deps.torchrl_sac_loop.evaluate_heldout_if_enabled(
@@ -171,7 +174,7 @@ def _run_sac_eval_log_checkpoint(
             evaluate_for_best=evaluate_for_best,
         )
 
-    deps.torchrl_sac_loop.evaluate_if_due(
+    deps.torchrl_sac_loop.eval_and_log_if_due(
         config,
         env,
         modules,
@@ -185,14 +188,8 @@ def _run_sac_eval_log_checkpoint(
         evaluate_actor=_evaluate_actor,
         capture_actor_state=deps.torchrl_sac_actor_eval.capture_sac_actor_snapshot,
         evaluate_heldout=_eval_heldout,
-    )
-    deps.torchrl_sac_loop.log_if_due(
-        config,
-        state,
-        step=step,
-        start_time=start_time,
-        latest_losses=latest_losses,
-        total_updates=total_updates,
+        iter_dt=float(iter_dt),
+        n_frames=int(n_frames),
     )
     deps.torchrl_sac_loop.checkpoint_if_due(
         config,
@@ -246,6 +243,7 @@ def train_sac(config: SACConfig) -> TrainResult:
         from rl import logger
 
         logger.log_run_header("sac", config, env, training, runtime)
+        logger.log_rl_status(f"metrics={training.metrics_path} checkpoints={training.exp_dir / 'checkpoints'}")
         total_frames = int(config.collector.total_frames) - state.start_step
         if total_frames <= 0:
             total_frames = 1
@@ -254,44 +252,57 @@ def train_sac(config: SACConfig) -> TrainResult:
         if hasattr(collector, "shutdown"):
             pass
         start_time = time.time()
-        latest_losses = {
-            "loss_actor": float("nan"),
-            "loss_critic": float("nan"),
-            "loss_alpha": float("nan"),
-        }
-        total_updates = 0
-        step = state.start_step
-        for batch in collector:
-            updates_before_batch = int(total_updates)
-            latest_losses, total_updates, n_frames = _process_sac_batch(
-                batch,
-                config,
-                modules,
-                training,
-                runtime,
-                env,
-                latest_losses,
-                total_updates,
-            )
-            if int(total_updates) > updates_before_batch:
-                _sync_collector_policy_if_needed(collector, runtime)
-            step += n_frames
-            if step >= int(config.collector.total_frames):
-                step = int(config.collector.total_frames)
-                _run_sac_eval_log_checkpoint(
-                    config,
-                    env,
-                    modules,
-                    training,
-                    state,
-                    step,
-                    runtime,
-                    start_time,
-                    latest_losses,
-                    total_updates,
-                    deps.episode_rollout.evaluate_for_best,
-                )
-                break
+        latest_losses, total_updates, step = _run_sac_collector_loop(
+            collector,
+            config,
+            env,
+            modules,
+            training,
+            state,
+            runtime,
+            start_time,
+        )
+        return _finish_sac_train(
+            config,
+            env,
+            modules,
+            training,
+            state,
+            runtime,
+            start_time,
+            logger,
+            latest_losses,
+            step,
+        )
+
+
+def _run_sac_collector_loop(collector, config, env, modules, training, state, runtime, start_time):
+    latest_losses = {
+        "loss_actor": float("nan"),
+        "loss_critic": float("nan"),
+        "loss_alpha": float("nan"),
+    }
+    total_updates = 0
+    step = state.start_step
+    for batch in collector:
+        iter_start = time.time()
+        updates_before_batch = int(total_updates)
+        latest_losses, total_updates, n_frames = _process_sac_batch(
+            batch,
+            config,
+            modules,
+            training,
+            runtime,
+            env,
+            latest_losses,
+            total_updates,
+        )
+        if int(total_updates) > updates_before_batch:
+            _sync_collector_policy_if_needed(collector, runtime)
+        step += n_frames
+        iter_dt = time.time() - iter_start
+        if step >= int(config.collector.total_frames):
+            step = int(config.collector.total_frames)
             _run_sac_eval_log_checkpoint(
                 config,
                 env,
@@ -304,40 +315,66 @@ def train_sac(config: SACConfig) -> TrainResult:
                 latest_losses,
                 total_updates,
                 deps.episode_rollout.evaluate_for_best,
+                iter_dt=iter_dt,
+                n_frames=n_frames,
             )
-        try:
-            collector.shutdown()
-        except Exception:
-            pass
-        total_time = time.time() - start_time
-        logger.log_run_footer(
-            state.best_return,
-            int(config.collector.total_frames),
-            total_time,
-            algo_name="sac",
-            step_label="steps",
-        )
-        deps.torchrl_sac_loop.save_final_checkpoint_if_enabled(
+            break
+        _run_sac_eval_log_checkpoint(
             config,
+            env,
             modules,
             training,
             state,
-            build_checkpoint_payload=_phase_a_attr("checkpoint_payload"),
+            step,
+            runtime,
+            start_time,
+            latest_losses,
+            total_updates,
+            deps.episode_rollout.evaluate_for_best,
+            iter_dt=iter_dt,
+            n_frames=n_frames,
         )
-        if deps.video.get_video_settings(config).enable:
-            ctx = deps.video.RLVideoContext(
-                build_eval_env_conf=lambda ps, ns: _build_env_runtime(config.env_tag, problem_seed=ps, noise_seed_0=ns),
-                make_eval_policy=lambda m, d: _build_eval_policy(m, env, d),
-                capture_actor_state=deps.torchrl_sac_actor_eval.capture_sac_actor_snapshot,
-                with_actor_state=deps.torchrl_sac_actor_eval.use_sac_actor_snapshot,
-            )
-            deps.video.render_policy_videos_rl(config, env, modules, training, state, ctx, device=runtime.device)
-        return TrainResult(
-            best_return=float(state.best_return),
-            last_eval_return=float(state.last_eval_return),
-            last_heldout_return=state.last_heldout_return,
-            num_steps=int(config.collector.total_frames),
+    try:
+        collector.shutdown()
+    except Exception:
+        pass
+    return latest_losses, total_updates, step
+
+
+def _finish_sac_train(config, env, modules, training, state, runtime, start_time, logger, latest_losses, step):
+    total_time = time.time() - start_time
+    from analysis.data_io import mark_done, write_summary_json
+
+    write_summary_json(str(training.metrics_path), total_time, "completed")
+    mark_done(str(training.metrics_path))
+    logger.log_run_footer(
+        state.best_return,
+        int(config.collector.total_frames),
+        total_time,
+        algo_name="sac",
+        step_label="steps",
+    )
+    deps.torchrl_sac_loop.save_final_checkpoint_if_enabled(
+        config,
+        modules,
+        training,
+        state,
+        build_checkpoint_payload=_phase_a_attr("checkpoint_payload"),
+    )
+    if deps.video.get_video_settings(config).enable:
+        ctx = deps.video.RLVideoContext(
+            build_eval_env_conf=lambda ps, ns: _build_env_runtime(config.env_tag, problem_seed=ps, noise_seed_0=ns),
+            make_eval_policy=lambda m, d: _build_eval_policy(m, env, d),
+            capture_actor_state=deps.torchrl_sac_actor_eval.capture_sac_actor_snapshot,
+            with_actor_state=deps.torchrl_sac_actor_eval.use_sac_actor_snapshot,
         )
+        deps.video.render_policy_videos_rl(config, env, modules, training, state, ctx, device=runtime.device)
+    return TrainResult(
+        best_return=float(state.best_return),
+        last_eval_return=float(state.last_eval_return),
+        last_heldout_return=state.last_heldout_return,
+        num_steps=int(config.collector.total_frames),
+    )
 
 
 def register():

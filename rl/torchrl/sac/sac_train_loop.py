@@ -28,6 +28,7 @@ def train_sac(config):
         state = _resume_if_requested(config, modules, training, device=runtime.device)
 
         t.rl_logger.log_run_header("sac", config, env, training, runtime)
+        t.rl_logger.log_rl_status(f"metrics={training.metrics_path} checkpoints={training.exp_dir / 'checkpoints'}")
         start_time, total_updates, latest_losses = _run_sac_training_loop(
             config,
             env,

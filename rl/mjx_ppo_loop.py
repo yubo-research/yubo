@@ -43,26 +43,30 @@ def _checkpoint_fn(state: _TrainState) -> _AgentState:
     )
 
 
-def _ppo_iter_record(iteration, frames_per_iter, elapsed, iter_dt, metrics, ret_best):
-    return {
-        "iter": iteration,
-        "step": iteration * frames_per_iter,
-        "elapsed": elapsed,
-        "iter_dt": iter_dt,
-        "fps": frames_per_iter / iter_dt,
-        "ret_rollout": metrics["rollout_return"],
-        "ep_ret": metrics["ep_ret"],
-        "ep_len": metrics["ep_len"],
-        "ret_best": ret_best,
-        "rew": metrics["rollout_reward"],
-        "loss": metrics["loss"],
-        "loss_pi": metrics["loss_objective"],
-        "loss_v": metrics["loss_critic"],
-        "entropy": metrics["entropy"],
-        "kl": metrics["approx_kl"],
-        "clipfrac": metrics["clipfrac"],
-        "done_frac": metrics["done_fraction"],
-    }
+def _ppo_iter_record(
+    iteration,
+    frames_per_iter,
+    elapsed,
+    iter_dt,
+    metrics,
+    ret_best,
+    *,
+    ret_eval=None,
+    eval_dt=None,
+):
+    from rl.mjx_metrics import build_iter_record
+
+    return build_iter_record(
+        algo_name="ppo",
+        iteration=iteration,
+        frames_per_iter=frames_per_iter,
+        elapsed=elapsed,
+        iter_dt=iter_dt,
+        metrics=metrics,
+        ret_best=ret_best,
+        ret_eval=ret_eval,
+        eval_dt=eval_dt,
+    )
 
 
 def _eval_args(state):

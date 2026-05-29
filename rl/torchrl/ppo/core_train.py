@@ -13,6 +13,7 @@ from rl.core import episode_rollout, ppo_eval, ppo_metrics, ppo_reward_norm
 from rl.core.profiler import run_with_profiler
 from rl.core.rollout_metrics import update_onpolicy_rollout_metrics
 from rl.eval_noise import build_eval_plan
+from rl.iter_record import IterInputs
 
 from . import actor_eval
 from .checkpoint_io import save_periodic_checkpoint
@@ -246,6 +247,7 @@ def _maybe_eval_and_log(
     state: _TrainState,
     *,
     iteration: int,
+    iter_dt: float = 0.0,
     update_stats: dict[str, list[float]] | None = None,
     approx_kls: list[float] | None = None,
     clipfracs: list[float] | None = None,
@@ -263,46 +265,34 @@ def _maybe_eval_and_log(
         approx_kls=update_stats.get("approx_kls", []),
         clipfracs=update_stats.get("clipfracs", []),
     )
+    from rl import logger
+    from rl.torchrl_metrics import build_ppo_iter_record
+
     rollout_metrics = rollout_metrics or {}
     rollout_return = rollout_metrics.get("rollout_return")
     if not do_eval:
         _update_best_from_eval_return(state, modules, rollout_return)
         if do_log:
-            from rl import logger
-
             elapsed = time.time() - start_time
-            global_step = iteration * training.frames_per_batch
-            record = ppo_metrics.build_eval_record(
-                iteration=int(iteration),
-                global_step=int(global_step),
-                eval_return=rollout_return,
-                heldout_return=None,
-                best_return=float(state.best_return),
-                approx_kl=algo_metrics["kl"],
-                clipfrac=algo_metrics["clipfrac"],
-                rollout_reward=rollout_metrics.get("rollout_reward"),
-                rollout_return=rollout_return,
-                rollout_length=rollout_metrics.get("rollout_length"),
-                started_at=float(start_time),
-                now=float(start_time + elapsed),
+            record = build_ppo_iter_record(
+                _ppo_iter_inputs(
+                    iteration,
+                    training,
+                    elapsed,
+                    iter_dt,
+                    algo_metrics,
+                    rollout_metrics,
+                    state,
+                    rollout_return=rollout_return,
+                )
             )
-            ppo_metrics.update_record_diagnostics(
+            ppo_metrics.enrich_ppo_iter_record(
                 record,
                 rollout_metrics=rollout_metrics,
                 update_stats=update_stats,
             )
             ppo_metrics.log_record_diagnostics(record, iteration=iteration)
-            logger.append_metrics(training.metrics_path, record)
-            logger.log_progress_iteration(
-                iteration,
-                training.num_iterations,
-                training.frames_per_batch,
-                elapsed,
-                algo_metrics=algo_metrics,
-                algo_name="ppo",
-                eval_return=rollout_return,
-                best_return=float(state.best_return),
-            )
+            logger.log_rl_iter(record, metrics_path=training.metrics_path)
         return
     plan = build_eval_plan(
         current=iteration,
@@ -311,7 +301,9 @@ def _maybe_eval_and_log(
         eval_seed_base=config.eval.seed_base,
         eval_noise_mode=config.eval.noise_mode,
     )
+    eval_start = time.time()
     state.last_eval_return = _evaluate_actor(config, env, modules, device=device, eval_seed=plan.eval_seed)
+    eval_dt = time.time() - eval_start
     _update_best_from_eval_return(state, modules, state.last_eval_return)
     state.last_heldout_return = None
     if config.eval.num_denoise_passive is not None and state.best_actor_state is not None:
@@ -337,44 +329,61 @@ def _maybe_eval_and_log(
             eval_policy=best_eval_policy,
         )
     elapsed = time.time() - start_time
-    global_step = iteration * training.frames_per_batch
-    record = ppo_metrics.build_eval_record(
-        iteration=int(iteration),
-        global_step=int(global_step),
-        eval_return=float(state.last_eval_return),
-        heldout_return=state.last_heldout_return,
-        best_return=float(state.best_return),
-        approx_kl=algo_metrics["kl"],
-        clipfrac=algo_metrics["clipfrac"],
-        rollout_reward=rollout_metrics.get("rollout_reward"),
-        rollout_return=rollout_metrics.get("rollout_return"),
-        rollout_length=rollout_metrics.get("rollout_length"),
-        started_at=float(start_time),
-        now=float(start_time + elapsed),
-    )
-    ppo_metrics.update_record_diagnostics(
-        record,
-        rollout_metrics=rollout_metrics,
-        update_stats=update_stats,
-    )
-    ppo_metrics.log_record_diagnostics(record, iteration=iteration)
-    from rl import logger
-
-    logger.append_metrics(training.metrics_path, record)
-    if do_log:
-        from rl import logger
-
-        logger.log_eval_iteration(
-            iteration,
-            training.num_iterations,
-            training.frames_per_batch,
-            eval_return=state.last_eval_return,
-            heldout_return=state.last_heldout_return,
-            best_return=state.best_return,
-            algo_metrics=algo_metrics,
-            algo_name="ppo",
-            elapsed=elapsed,
+    if do_log or do_eval:
+        record = build_ppo_iter_record(
+            _ppo_iter_inputs(
+                iteration,
+                training,
+                elapsed,
+                iter_dt,
+                algo_metrics,
+                rollout_metrics,
+                state,
+                eval_return=float(state.last_eval_return),
+                eval_dt=float(eval_dt),
+            )
         )
+        ppo_metrics.enrich_ppo_iter_record(
+            record,
+            rollout_metrics=rollout_metrics,
+            update_stats=update_stats,
+        )
+        ppo_metrics.log_record_diagnostics(record, iteration=iteration)
+        logger.log_rl_iter(record, metrics_path=training.metrics_path)
+
+
+def _ppo_iter_inputs(
+    iteration: int,
+    training: _TrainingSetup,
+    elapsed: float,
+    iter_dt: float,
+    algo_metrics: dict[str, float | None],
+    rollout_metrics: dict[str, float | None],
+    state: _TrainState,
+    *,
+    rollout_return: float | None = None,
+    eval_return: float | None = None,
+    eval_dt: float | None = None,
+) -> IterInputs:
+    frames = int(training.frames_per_batch)
+    return IterInputs(
+        iteration=int(iteration),
+        step=int(iteration) * frames,
+        frames_per_iter=frames,
+        elapsed=float(elapsed),
+        iter_dt=float(iter_dt),
+        metrics={
+            "kl": algo_metrics["kl"],
+            "clipfrac": algo_metrics["clipfrac"],
+            "rew": rollout_metrics.get("rollout_reward"),
+            "ret_rollout": rollout_return if rollout_return is not None else rollout_metrics.get("rollout_return"),
+            "ep_len": rollout_metrics.get("rollout_length"),
+            "ret_best": float(state.best_return),
+            "ret_eval": eval_return,
+            "ret_heldout": state.last_heldout_return,
+            "eval_dt": eval_dt,
+        },
+    )
 
 
 def _run_training_loop(
@@ -390,6 +399,7 @@ def _run_training_loop(
     start_time = time.time()
 
     def run_iteration(iteration: int, batch):
+        iter_start = time.time()
         rollout_metrics = update_onpolicy_rollout_metrics(state, batch, num_envs=int(config.collector.num_envs))
         _anneal_lr(
             config,
@@ -411,6 +421,7 @@ def _run_training_loop(
             training,
             state,
             iteration=iteration,
+            iter_dt=time.time() - iter_start,
             update_stats=update_stats,
             rollout_metrics=rollout_metrics,
             device=device,

@@ -44,6 +44,7 @@ def _run_sac_training_loop(
     total_updates = 0
     step = state.start_step
     for batch in collector:
+        iter_start = time.time()
         updates_before_batch = int(total_updates)
         latest_losses, total_updates, n_frames = _process_sac_batch(
             batch,
@@ -58,6 +59,7 @@ def _run_sac_training_loop(
         if int(total_updates) > updates_before_batch:
             t.phase_b.sync_collector_policy_if_needed(collector, runtime)
         step += n_frames
+        iter_dt = time.time() - iter_start
         if step >= int(config.collector.total_frames):
             step = int(config.collector.total_frames)
             _run_sac_eval_log_checkpoint(
@@ -72,6 +74,8 @@ def _run_sac_training_loop(
                 latest_losses,
                 total_updates,
                 t.episode_rollout.evaluate_for_best,
+                iter_dt=iter_dt,
+                n_frames=n_frames,
             )
             break
         _run_sac_eval_log_checkpoint(
@@ -86,6 +90,8 @@ def _run_sac_training_loop(
             latest_losses,
             total_updates,
             t.episode_rollout.evaluate_for_best,
+            iter_dt=iter_dt,
+            n_frames=n_frames,
         )
     try:
         collector.shutdown()
@@ -97,7 +103,11 @@ def _run_sac_training_loop(
 def _finalize_sac_run(config, env, modules, training, state, runtime, start_time, t, *, _checkpoint_payload):
     import time
 
+    from analysis.data_io import mark_done, write_summary_json
+
     total_time = time.time() - start_time
+    write_summary_json(str(training.metrics_path), total_time, "completed")
+    mark_done(str(training.metrics_path))
     t.rl_logger.log_run_footer(
         state.best_return,
         int(config.collector.total_frames),

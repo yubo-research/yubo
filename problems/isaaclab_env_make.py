@@ -18,6 +18,7 @@ def make_raw_isaaclab_env(
     **kwargs,
 ):
     task_id = adapters.parse_isaaclab_task_id(env_tag)
+    device = adapters.resolve_isaaclab_sim_device(device)
     if launcher_kwargs is None and render_mode == "rgb_array":
         launcher_kwargs = adapters.isaaclab_video_launcher_kwargs()
     session = adapters.get_isaaclab_session(headless=headless, launcher_kwargs=launcher_kwargs)

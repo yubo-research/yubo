@@ -80,7 +80,12 @@ class IsaacLabScore:
         self._env_runtime = env_runtime
         self._policy = policy
         self._episodes = max(1, int(episodes))
-        self._device = None if device in (None, "auto", "") else str(device)
+        if device in (None, "auto", ""):
+            self._device = None
+        else:
+            from problems.isaaclab_env_adapters import resolve_isaaclab_sim_device
+
+            self._device = resolve_isaaclab_sim_device(str(device))
         self._steps_per_episode = None if steps_per_episode is None else int(steps_per_episode)
         self._vectorize = bool(vectorize)
         self._env = None
