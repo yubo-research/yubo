@@ -28,7 +28,7 @@ def test_modal_hyperscalees_pixi_base_image_uses_cacheable_layers() -> None:
     assert "micromamba" not in source
     assert "debian_slim" in source
     assert "_isaaclab_install_commands()" in source
-    assert f"_pixi_install_env_command({base.ISAACLAB_PIXI_ENV})" in isaac_source
+    assert "_pixi_install_env_command(ISAACLAB_PIXI_ENV)" in isaac_source
     assert source.index("_pixi_install_env_command(HYPERSCALEES_PIXI_ENV)") >= 0
     assert base.PIXI_MANIFEST_PATH.endswith("/pixi.toml")
     assert base.PIXI_LOCK_PATH.endswith("/pixi.lock")

@@ -4,7 +4,6 @@ from types import SimpleNamespace
 
 import jax
 import jax.numpy as jnp
-import pytest
 from isaaclab_score_fakes import FakeIsaacEnv, make_fake_runtime, make_fake_vector_runtime
 
 
@@ -132,13 +131,17 @@ def test_eggroll_external_scoring_skipped_when_jax_sim():
 
 
 def test_eggroll_policy_factory_uses_jax_for_isaac_jax_sim():
-    from policies.eggroll_policy import EggRollActorCriticMLPPolicyFactory, EggRollActorCriticMLPSpec
+    from policies.eggroll_policy import (
+        EggRollActorCriticMLPPolicy,
+        EggRollActorCriticMLPPolicyFactory,
+        EggRollActorCriticMLPSpec,
+    )
 
     runtime = make_fake_runtime()
     runtime.eggroll_jax_sim = True
     factory = EggRollActorCriticMLPPolicyFactory(EggRollActorCriticMLPSpec(hidden_dim=4, layers=2))
-    with pytest.raises(ImportError, match="HyperscaleES"):
-        factory(runtime)
+    policy = factory(runtime)
+    assert isinstance(policy, EggRollActorCriticMLPPolicy)
 
 
 def test_validate_eggroll_jax_allows_isaaclab():

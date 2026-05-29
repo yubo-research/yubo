@@ -147,7 +147,15 @@ def _hyperscalees_patch_enn_openblas_command() -> str:
 
 
 def _hyperscalees_check_command() -> str:
-    return _bash(f"{_hyperscalees_openblas_env_exports()} && {_pixi_task_command(HYPERSCALEES_PIXI_ENV, 'check')}")
+    return _bash(f"{_hyperscalees_openblas_env_exports()} && {_pixi_task_shell(HYPERSCALEES_PIXI_ENV, 'check')}")
+
+
+def _pixi_task_shell(env_name: str, task_name: str) -> str:
+    return (
+        f"cd {shlex.quote(PIXI_WORKSPACE_DIR)} && "
+        f"{shlex.quote(PIXI_BIN)} run --manifest-path {shlex.quote(PIXI_MANIFEST_PATH)} "
+        f"--locked -e {shlex.quote(env_name)} {shlex.quote(task_name)}"
+    )
 
 
 def _pixi_info_command() -> str:
@@ -159,8 +167,7 @@ def _pixi_install_env_command(env_name: str) -> str:
 
 
 def _pixi_task_command(env_name: str, task_name: str) -> str:
-    pixi_args = f"run --manifest-path {shlex.quote(PIXI_MANIFEST_PATH)} --locked -e {shlex.quote(env_name)} {shlex.quote(task_name)}"
-    return _pixi_workspace_command(pixi_args)
+    return _bash(_pixi_task_shell(env_name, task_name))
 
 
 def _pixi_run_command(env_name: str, command: str) -> str:
