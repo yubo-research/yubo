@@ -23,10 +23,12 @@ def test_modal_hyperscalees_pixi_base_image_uses_cacheable_layers() -> None:
     import ops.modal_hyperscalees_pixi_base_image as base
 
     source = inspect.getsource(base.mk_hyperscalees_pixi_base_image)
+    isaac_source = inspect.getsource(base._isaaclab_install_commands)
     assert "add_local_dir" not in source
     assert "micromamba" not in source
     assert "debian_slim" in source
-    assert f"_pixi_install_env_command({base.ISAACLAB_PIXI_ENV})" not in source
+    assert "_isaaclab_install_commands()" in source
+    assert f"_pixi_install_env_command({base.ISAACLAB_PIXI_ENV})" in isaac_source
     assert source.index("_pixi_install_env_command(HYPERSCALEES_PIXI_ENV)") >= 0
     assert base.PIXI_MANIFEST_PATH.endswith("/pixi.toml")
     assert base.PIXI_LOCK_PATH.endswith("/pixi.lock")
@@ -111,3 +113,27 @@ def test_modal_hyperscalees_pixi_setup_exposes_isaac_preflight() -> None:
     assert "YUBO_PIXI_PREFIX" in command_script
     assert "echo mujoco_playground:CheetahRun" in command_script
     assert "micromamba" not in command_script
+
+
+def test_resolve_pixi_env_isaac_jax_sim_uses_hyperscalees() -> None:
+    pytest = __import__("pytest")
+    try:
+        import ops.modal_hyperscalees_pixi_setup as setup
+    except ImportError as exc:
+        if exc.name == "modal":
+            pytest.skip("modal package is not installed")
+        raise
+
+    assert setup._resolve_pixi_env("auto", "configs/bo/isaaclab/g1_flat_eggroll_jax_smoke.toml") == setup.HYPERSCALEES_PIXI_ENV
+    assert setup._resolve_pixi_env("auto", "configs/bo/isaaclab/g1_flat_eggroll_dev.toml") == setup.ISAACLAB_PIXI_ENV
+    prefix = setup._isaaclab_runtime_prefix("configs/bo/isaaclab/g1_flat_eggroll_jax_smoke.toml")
+    assert "PYTHONPATH=" in prefix
+    assert "/src/IsaacLab/source/isaaclab" in prefix
+    exp_cmd = setup._experiment_command(
+        setup.HYPERSCALEES_PIXI_ENV,
+        "local",
+        "configs/bo/isaaclab/g1_flat_eggroll_jax_smoke.toml",
+    )
+    assert "env PYTHONPATH=" in exp_cmd
+    assert "/src/IsaacLab/source/isaaclab" in exp_cmd
+    assert setup._isaaclab_runtime_prefix("configs/bo/isaaclab/g1_flat_eggroll_dev.toml") == ""

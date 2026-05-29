@@ -148,7 +148,7 @@ def run_mjx_training_loop(
                 ret_eval=eval_return,
                 eval_dt=eval_dt,
             )
-            logger.log_rl_iter(record, metrics_path=metrics_path)
+            logger.log_rl_iter(record, metrics_path=metrics_path, algo_name=algo_name)
 
         if config.checkpoint.interval and iteration % int(config.checkpoint.interval) == 0:
             save_items = checkpoint_fn(state) if checkpoint_fn else state

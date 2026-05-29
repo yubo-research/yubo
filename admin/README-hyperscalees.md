@@ -25,19 +25,21 @@ modal run ops/modal_hyperscalees_pixi_setup.py --command isaaclab-preflight
 ```text
 1. debian_slim + apt + pixi binary        # rarely changes
 2. pixi.toml + pixi.lock (copied in)       # changes on dep edits
-3. pixi install + setup + patchelf + check # the expensive solve/build
-4. repo mount at /root                     # remounts without rebuild
+3. hyperscalees install + setup + check    # BO / RL / pytest (most configs)
+4. isaaclab install + check + marker      # Isaac Sim + IsaacLab (large; cached)
+5. repo mount at /root                     # remounts without rebuild
 ```
 
-The cached image carries OS packages, Pixi, `pixi.toml`, `pixi.lock`, and the
-**hyperscalees** Pixi env. Changing `pixi.toml`, `pixi.lock`, or setup tasks
-rebuilds layer 3. Source/config edits remount the repo without rebuilding Pixi.
+The cached image carries OS packages, Pixi, `pixi.toml`, `pixi.lock`, the
+**hyperscalees** env (layer 3), and the **isaaclab** env including Isaac Sim
+(layer 4). Changing `pixi.toml`, `pixi.lock`, or setup tasks rebuilds layers 3–4.
+Source/config edits remount the repo without rebuilding Pixi.
 
 `pixi run setup` installs vLLM, ennbo, VecchiaBO, LassoBench, mujoco_playground,
 and pins numpy/numba/llvmlite last (so vLLM cannot leave numpy < 2.3).
 
-IsaacLab configs resolve to the `isaaclab` Pixi env, installed on first use at
-runtime (not baked into the image).
+IsaacLab configs resolve to the `isaaclab` Pixi env. The first `modal run` after
+a dep change rebuilds layer 4 once (large download); later runs use the cached image.
 
 ## Run
 
@@ -92,6 +94,12 @@ modal run -d ops/modal_hyperscalees_pixi_setup.py --pytest
 IsaacLab configs run in the `isaaclab` Pixi env. Everything else runs in
 `hyperscalees`.
 
+EggRoll on Isaac Lab defaults to the external (Torch) scorer in the `isaaclab` Pixi
+env. Enable JAX rollouts with `optimizer.name = "eggroll/jax_sim=true"` (see
+`configs/bo/isaaclab/g1_flat_eggroll_jax_smoke.toml`): Modal runs the experiment
+in `hyperscalees` (JAX + HyperscaleES) with the baked `isaaclab` Pixi env on
+`PYTHONPATH` (site-packages plus `/opt/yubo-pixi/src/IsaacLab/source/*`).
+
 ## Data
 
 TinyStories nanochat configs require:
@@ -121,6 +129,6 @@ modal run ops/modal_hyperscalees_pixi_setup.py --pixi-env isaaclab --command 'py
 ## Notes
 
 - Do not mount `.pixi/`.
-- IsaacLab is bootstrapped on demand for `isaaclab` configs / `--command isaaclab-preflight` (skipped when `/opt/yubo-pixi/.isaaclab_bootstrap_ok` exists in a warm container).
+- IsaacLab is baked in the Modal image (layer 4). Runtime bootstrap is a no-op when the marker exists.
 - Do not switch Isaac/Torch to CUDA 13; the stack uses CUDA 12.8 wheels.
 - `admin/setup-hyperscalees.sh` is the micromamba equivalent for bare-metal Linux GPUs.

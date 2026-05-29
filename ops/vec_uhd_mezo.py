@@ -7,6 +7,7 @@ from dataclasses import dataclass
 import numpy as np
 
 from ops.uhd_config import UHDConfig
+from ops.vec_uhd_be import be_pick_mezo_seed
 from ops.vec_uhd_common import (
     _format_source_best_suffix,
     _format_y,
@@ -257,6 +258,12 @@ def _select_mezo_be_seed(
     noises = [_noise(objective, cfg, s, x=x) for s in seeds]
     x_plus = np.stack([x + float(cfg.sigma) * n for n in noises])
     x_minus = np.stack([x - float(cfg.sigma) * n for n in noises])
+    sim_best = be_pick_mezo_seed(objective, x_plus, x_minus, seeds, sigma=float(cfg.sigma))
+    if sim_best is not None:
+        return seeds[sim_best], (
+            objective.embed(x_plus[sim_best]),
+            objective.embed(x_minus[sim_best]),
+        )
     z_plus = objective.embed_many(x_plus)
     z_minus = objective.embed_many(x_minus)
     mu_plus, se_plus = predict_enn(state["model"], state["params"], z_plus)

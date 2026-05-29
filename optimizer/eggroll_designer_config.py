@@ -33,6 +33,7 @@ class _EggRollDesignerConfig:
     basis_max_leaves: int | None = 32
     sub_dataset_size: int | None = None
     hf_home: str | None = None
+    jax_sim: bool = False
 
 
 __all__ = ["_EggRollDesignerConfig"]

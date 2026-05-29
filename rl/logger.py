@@ -11,12 +11,14 @@ from typing import Any
 from common.console import (
     PPO_METRICS,
     SAC_METRICS,
+    print_iter_record,
     print_iteration_log,
     print_iteration_simple,
     print_run_footer,
     print_run_header,
     register_algo_metrics,
 )
+from common.console_core import _print_line
 from rl.checkpointing import append_jsonl
 
 __all__ = [
@@ -25,9 +27,11 @@ __all__ = [
     "append_metrics",
     "configure_logging",
     "format_rl_iter_record",
+    "infer_algo_name",
     "log_eval_iteration",
     "log_progress_iteration",
     "log_rl_iter",
+    "print_rl_iter_record",
     "log_rl_status",
     "log_run_footer",
     "log_run_header",
@@ -126,15 +130,39 @@ def format_rl_iter_record(record: dict[str, Any]) -> str:
     return "ITER: " + " ".join(parts)
 
 
-def log_rl_iter(record: dict[str, Any], *, metrics_path: Path | None = None) -> None:
+def infer_algo_name(record: dict[str, Any]) -> str:
+    if "kl" in record or "clipfrac" in record or "loss_pi" in record:
+        return "ppo"
+    if "actor" in record or "critic" in record or "alpha_loss" in record:
+        return "sac"
+    return "ppo"
+
+
+def print_rl_iter_record(
+    record: dict[str, Any],
+    *,
+    algo_name: str | None = None,
+    prefix: str = "",
+) -> None:
+    """Print one RL iteration as an aligned table row (standard console)."""
+    print_iter_record(record, algo_name=algo_name or infer_algo_name(record), prefix=prefix)
+
+
+def log_rl_iter(
+    record: dict[str, Any],
+    *,
+    metrics_path: Path | None = None,
+    algo_name: str | None = None,
+    prefix: str = "",
+) -> None:
     clean = _clean_record(record)
     if metrics_path is not None:
         append_metrics(metrics_path, clean)
-    _iter_logger().info(format_rl_iter_record(clean))
+    print_rl_iter_record(clean, algo_name=algo_name, prefix=prefix)
 
 
 def log_rl_status(message: str) -> None:
-    _iter_logger().info(str(message))
+    _print_line(str(message))
 
 
 def log_run_header(

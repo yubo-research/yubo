@@ -67,8 +67,8 @@ def test_mjx_sac_iter_record_uses_per_iter_fps() -> None:
     assert record["alpha"] == 0.4
 
 
-def test_mjx_iter_record_formats_like_bo_iter_line() -> None:
-    from rl.logger import format_rl_iter_record
+def test_mjx_iter_record_logs_as_table_row(capsys, tmp_path) -> None:
+    from rl.logger import log_rl_iter
 
     record = build_iter_record(
         algo_name="ppo",
@@ -79,8 +79,8 @@ def test_mjx_iter_record_formats_like_bo_iter_line() -> None:
         metrics=_ppo_metrics(),
         ret_best=1.0,
     )
-    line = format_rl_iter_record(record)
-    assert line.startswith("ITER:")
-    assert "iter = 1" in line
-    assert "fps = 64" in line
-    assert "kl = 0.4" in line
+    log_rl_iter(record, metrics_path=tmp_path / "m.jsonl", algo_name="ppo")
+    out = capsys.readouterr().out
+    assert "ITER:" not in out
+    assert "    1" in out
+    assert "0.50s" in out

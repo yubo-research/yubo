@@ -1,0 +1,29 @@
+# Smoke: Isaac Lab G1 with JAX EggRoll (host callbacks). Requires Isaac + HyperscaleES.
+# modal run ops/modal_hyperscalees_pixi_setup.py --config configs/bo/isaaclab/g1_flat_eggroll_jax_smoke.toml
+
+[experiment]
+exp_dir = "runs/isaaclab/g1_flat_eggroll_jax_smoke"
+env_tag = "isaaclab:Isaac-Velocity-Flat-G1-v0"
+policy_tag = "eggroll-ac-mlp-64x2-pqn"
+population = 32
+num_epochs = 2
+num_reps = 1
+runtime_device = "cuda"
+local_workers = 1
+b_trace = true
+video_enable = false
+max_total_seconds = 1800
+
+[optimizer]
+name = "eggroll/jax_sim=true"
+
+[optimizer.params]
+noiser = "eggroll"
+sigma = 0.05
+rank = 2
+lr = 0.01
+optax = "adam"
+batch_size = 8
+num_envs = 1
+steps = 32
+use_batched_update = true

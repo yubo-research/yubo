@@ -6,6 +6,7 @@ from dataclasses import dataclass
 import numpy as np
 
 from ops.uhd_config import UHDConfig
+from ops.vec_uhd_be import be_pick_candidate
 from ops.vec_uhd_common import (
     _format_source_best_suffix,
     _format_y,
@@ -298,6 +299,10 @@ def _select_bszo_be_base(
     k = int(cfg.bszo_k)
     bases = [int(base) + j * k for j in range(int(cfg.be.num_candidates))]
     candidates = np.stack([x + float(epsilon) * _noise(objective, cfg, b, x=x) for b in bases])
+    sim_pick = be_pick_candidate(objective, candidates, seed=int(base))
+    if sim_pick is not None:
+        best, _, _ = sim_pick
+        return bases[best], int(base) + int(cfg.be.num_candidates) * k
     embeddings = objective.embed_many(candidates)
     mu_pred, se_pred = predict_enn(state["model"], state["params"], embeddings)
     mu_real = state["y_mean"] + state["y_std"] * mu_pred

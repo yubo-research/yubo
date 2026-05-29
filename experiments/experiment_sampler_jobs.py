@@ -8,6 +8,7 @@ from common.experiment_seeds import (
 from experiments import experiment_sampler_shim as shim
 from experiments.experiment_sampler_dispatch import scan_local
 from experiments.experiment_sampler_types import ExperimentConfig, RunConfig
+from problems.eggroll_jax_flags import eggroll_jax_sim_enabled
 
 
 def mk_replicates(config: ExperimentConfig) -> list[RunConfig]:
@@ -32,6 +33,10 @@ def mk_replicates(config: ExperimentConfig) -> list[RunConfig]:
                 noise_seed_0=noise_seed_0_from_problem_seed(problem_seed),
                 isaaclab_video=bool(config.video_enable and config.video_num_video_episodes > 0),
             )
+            if eggroll_jax_sim_enabled(config.opt_name):
+                setattr(problem.env, "eggroll_jax_sim", True)
+                setattr(problem.env, "eggroll_population", int(config.num_arms))
+                setattr(problem.env, "runtime_device", str(config.runtime_device))
             run_configs.append(
                 RunConfig(
                     trace_fn=trace_fn,

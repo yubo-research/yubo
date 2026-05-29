@@ -14,6 +14,7 @@ def build_ppo_iter_record(inputs: IterInputs) -> dict[str, Any]:
         iter_dt=inputs.iter_dt,
     )
     record["step"] = int(inputs.step)
+    record["frames_per_iter"] = int(inputs.frames_per_iter)
     merge_metric_fields(record, inputs.metrics)
     return record
 
@@ -28,5 +29,6 @@ def build_sac_iter_record(inputs: IterInputs) -> dict[str, Any]:
         iter_dt=inputs.iter_dt,
     )
     record["step"] = int(inputs.step)
+    record["frames_per_iter"] = int(inputs.frames_per_iter)
     merge_metric_fields(record, inputs.metrics)
     return record

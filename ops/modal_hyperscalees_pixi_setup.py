@@ -17,7 +17,9 @@ from ops.modal_command_helpers import (
 )
 from ops.modal_hyperscalees_pixi_base_image import (
     HYPERSCALEES_PIXI_ENV,
+    ISAACLAB_ENV_PREFIX,
     ISAACLAB_PIXI_ENV,
+    ISAACLAB_SOURCE_PYTHONPATH,
     PIXI_BIN,
     PIXI_HOME,
     PIXI_MANIFEST_PATH,
@@ -169,12 +171,30 @@ def _isaaclab_preflight_command() -> str:
     )
 
 
+def _isaaclab_pythonpath_value() -> str:
+    parts = (f"{ISAACLAB_ENV_PREFIX}/lib/python3.12/site-packages", *ISAACLAB_SOURCE_PYTHONPATH)
+    return ":".join(parts)
+
+
+def _isaaclab_pythonpath_export() -> str:
+    return f'export PYTHONPATH="{_isaaclab_pythonpath_value()}:${{PYTHONPATH:-}}"'
+
+
+def _isaaclab_library_path_export() -> str:
+    return f'export LD_LIBRARY_PATH="{ISAACLAB_ENV_PREFIX}/lib:${{LD_LIBRARY_PATH:-}}"'
+
+
 def _experiment_command(env_name: str, mode: str, config_path: str) -> str:
     runner = _config_runner(config_path, mode)
-    return "cd /root; " + _pixi_run(
-        env_name,
-        runner,
-    )
+    if _isaaclab_eggroll_jax_sim(config_path):
+        path = _isaaclab_pythonpath_value()
+        return (
+            "cd /root; "
+            + f'env PYTHONPATH="{path}:${{PYTHONPATH:-}}" '
+            + f'LD_LIBRARY_PATH="{ISAACLAB_ENV_PREFIX}/lib:${{LD_LIBRARY_PATH:-}}" '
+            + _pixi_run(env_name, runner)
+        )
+    return "cd /root; " + _pixi_run(env_name, runner)
 
 
 def _pytest_command(env_name: str, args: str) -> str:
@@ -198,7 +218,7 @@ def main(
     config = config.strip()
     if config:
         pixi_env = _resolve_pixi_env(pixi_env, config)
-        command = _shell_preamble(debug=debug_shell) + "; " + _experiment_command(pixi_env, experiment_mode, config)
+        command = _shell_preamble(debug=debug_shell) + "; " + _isaaclab_runtime_prefix(config) + _experiment_command(pixi_env, experiment_mode, config)
     elif pytest:
         pixi_env = _resolve_pixi_env(pixi_env, "")
         command = _shell_preamble(debug=debug_shell) + "; " + _pytest_command(pixi_env, pytest_args)
@@ -247,7 +267,7 @@ def _check_pixi_env(env_name: str) -> None:
 def _resolve_pixi_env(env_name: str, config_path: str) -> str:
     if env_name != _AUTO_PIXI_ENV:
         return env_name
-    if _is_isaaclab_config(config_path):
+    if _is_isaaclab_config(config_path) and not _isaaclab_eggroll_jax_sim(config_path):
         return ISAACLAB_PIXI_ENV
     return HYPERSCALEES_PIXI_ENV
 
@@ -255,6 +275,50 @@ def _resolve_pixi_env(env_name: str, config_path: str) -> str:
 def _is_isaaclab_config(config_path: str) -> bool:
     parts = config_path.replace("\\", "/").split("/")
     return "isaaclab" in parts
+
+
+def _format_optimizer_param_value(value: object) -> str:
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if value is None:
+        return "none"
+    return str(value)
+
+
+def _config_opt_name(config_path: str) -> str:
+    with (_REPO_ROOT / config_path).open("rb") as f:
+        data = tomllib.load(f)
+    section = data.get("experiment")
+    if section is None:
+        section = {key: value for key, value in data.items() if str(key).lower() != "optimizer"}
+    if "opt_name" in section:
+        return str(section["opt_name"])
+    raw_optimizer = data.get("optimizer")
+    if not isinstance(raw_optimizer, dict) or "name" not in raw_optimizer:
+        return ""
+    name = str(raw_optimizer["name"]).strip()
+    params = raw_optimizer.get("params", {})
+    if not isinstance(params, dict) or not params:
+        return name
+    parts = [name]
+    for key, value in params.items():
+        parts.append(f"{key}={_format_optimizer_param_value(value)}")
+    return "/".join(parts)
+
+
+def _isaaclab_eggroll_jax_sim(config_path: str) -> bool:
+    if not _is_isaaclab_config(config_path):
+        return False
+    from problems.eggroll_jax_flags import eggroll_jax_sim_enabled
+
+    return eggroll_jax_sim_enabled(_config_opt_name(config_path))
+
+
+def _isaaclab_runtime_prefix(config_path: str) -> str:
+    if not _isaaclab_eggroll_jax_sim(config_path):
+        return ""
+    parts = [isaaclab_bootstrap_command(), _isaaclab_pythonpath_export(), _isaaclab_library_path_export()]
+    return "; ".join(parts) + "; "
 
 
 def _config_runner(config_path: str, mode: str) -> str:

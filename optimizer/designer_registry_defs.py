@@ -345,6 +345,13 @@ _DESIGNER_DEFS: list[DesignerDef] = [
                 example_suffix="batch_size=4",
             ),
             DesignerOptionSpec(
+                name="jax_sim",
+                required=False,
+                value_type="bool",
+                description="Use JAX EggRoll rollouts for Isaac Lab env tags (host callbacks).",
+                example_suffix="jax_sim=true",
+            ),
+            DesignerOptionSpec(
                 name="suppress_noiser_stdout",
                 required=False,
                 value_type="bool",

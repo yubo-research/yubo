@@ -14,6 +14,15 @@ PIXI_LOCK_PATH = f"{PIXI_WORKSPACE_DIR}/pixi.lock"
 HYPERSCALEES_PIXI_ENV = "hyperscalees"
 ISAACLAB_PIXI_ENV = "isaaclab"
 HYPERSCALEES_ENV_PREFIX = f"{PIXI_WORKSPACE_DIR}/.pixi/envs/{HYPERSCALEES_PIXI_ENV}"
+ISAACLAB_ENV_PREFIX = f"{PIXI_WORKSPACE_DIR}/.pixi/envs/{ISAACLAB_PIXI_ENV}"
+ISAACLAB_SOURCE_DIR = f"{PIXI_WORKSPACE_DIR}/src/IsaacLab"
+ISAACLAB_SOURCE_PYTHONPATH = (
+    f"{ISAACLAB_SOURCE_DIR}/source/isaaclab",
+    f"{ISAACLAB_SOURCE_DIR}/source/isaaclab_assets",
+    f"{ISAACLAB_SOURCE_DIR}/source/isaaclab_tasks",
+    f"{ISAACLAB_SOURCE_DIR}/source/isaaclab_newton",
+    f"{ISAACLAB_SOURCE_DIR}/source/isaaclab_physx",
+)
 HYPERSCALEES_LD_LIBRARY_PATH = f"{HYPERSCALEES_ENV_PREFIX}/lib:/usr/lib/x86_64-linux-gnu"
 
 _HYPERSCALEES_CHECK_PYTHON = (
@@ -62,15 +71,25 @@ _APT_PACKAGES = (
 )
 
 
+def _isaaclab_install_commands() -> tuple[str, ...]:
+    return (
+        _pixi_install_env_command(ISAACLAB_PIXI_ENV),
+        _pixi_task_command(ISAACLAB_PIXI_ENV, "install"),
+        _pixi_task_command(ISAACLAB_PIXI_ENV, "check"),
+        _isaaclab_bootstrap_marker_command(),
+    )
+
+
 def mk_hyperscalees_pixi_base_image(modal, project_root: Path):
-    """Build the cached Pixi env image (hyperscalees only).
+    """Build the cached Pixi env image (hyperscalees + IsaacLab).
 
     Layers (each is a cache point):
       1. base OS + apt + pixi binary       (changes rarely)
       2. pixi.toml + pixi.lock             (changes on dep edits)
-      3. pixi install + setup + check      (the expensive solve/build)
+      3. hyperscalees install + setup + check
+      4. isaaclab install + check + marker
 
-    IsaacLab is not baked; use ``isaaclab_bootstrap_command()`` at runtime.
+    Runtime ``isaaclab_bootstrap_command()`` is a no-op when layer 4 is present.
     """
     return (
         modal.Image.debian_slim(python_version=PYTHON_VERSION)
@@ -87,6 +106,7 @@ def mk_hyperscalees_pixi_base_image(modal, project_root: Path):
             _pixi_task_command(HYPERSCALEES_PIXI_ENV, "setup"),
             _hyperscalees_patch_enn_openblas_command(),
             _hyperscalees_check_command(),
+            *_isaaclab_install_commands(),
         )
     )
 
@@ -100,23 +120,15 @@ _ISAACLAB_READY_PY = (
 )
 
 
-def isaaclab_bootstrap_command(*, force: bool = False) -> str:
-    """Install IsaacLab pixi env once per warm container; skip if already ready.
+def _isaaclab_bootstrap_marker_command() -> str:
+    return _bash(f"touch {shlex.quote(_ISAACLAB_BOOTSTRAP_MARKER)}")
 
-    IsaacLab is not baked into the Modal image (keeps image builds fast). The marker
-    under ``PIXI_WORKSPACE_DIR`` plus an import probe avoid re-running the heavy
-    ``install`` task on every ``modal run`` in the same container.
-    """
+
+def isaaclab_bootstrap_command(*, force: bool = False) -> str:
+    """Skip IsaacLab install when the image or a warm container is already ready."""
     verify = _pixi_run_command(ISAACLAB_PIXI_ENV, "python -c " + shlex.quote(_ISAACLAB_READY_PY))
     marker = shlex.quote(_ISAACLAB_BOOTSTRAP_MARKER)
-    install_chain = " && ".join(
-        (
-            _pixi_install_env_command(ISAACLAB_PIXI_ENV),
-            _pixi_task_command(ISAACLAB_PIXI_ENV, "install"),
-            _pixi_task_command(ISAACLAB_PIXI_ENV, "check"),
-            f"touch {marker}",
-        )
-    )
+    install_chain = " && ".join(_isaaclab_install_commands())
     if force:
         return install_chain
     skip = 'echo "[isaaclab] bootstrap: already installed, skipping" >&2'

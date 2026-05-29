@@ -379,9 +379,7 @@ def test_evaluate_if_due_updates_state_and_writes_metrics(monkeypatch):
     assert len(appended_records) == 2
 
 
-def test_log_and_checkpoint_helpers(tmp_path):
-    from rl.logger import format_rl_iter_record
-
+def test_log_and_checkpoint_helpers(tmp_path, capsys):
     config = _sac_loop_config(
         log_interval_steps=4,
         **{
@@ -411,7 +409,10 @@ def test_log_and_checkpoint_helpers(tmp_path):
     record = json.loads(rows[0])
     assert record["actor"] == 1.0
     assert record["ret_eval"] == 3.2
-    assert "ITER:" in format_rl_iter_record(record)
+    out = capsys.readouterr().out
+    assert "ITER:" not in out
+    assert "        6" in out
+    assert "3.2" in out
 
     calls = []
     training_setup = SimpleNamespace(checkpoint_manager=SimpleNamespace(save_both=lambda payload, iteration: calls.append((payload, iteration))))

@@ -4,6 +4,8 @@ import copy
 from dataclasses import dataclass
 from typing import Any
 
+import numpy as np
+
 
 def _require_hyperscalees():
     try:
@@ -47,6 +49,44 @@ class EggRollActorCriticMLPSpec:
         return self.activation
 
 
+def _eggroll_policy_spaces(env_runtime: Any, *, jax, jnp) -> tuple[Any, Any]:
+    from gymnax.environments import spaces
+
+    from problems import jax_env_core as core
+    from problems.isaaclab_env_adapters import is_isaaclab_env_tag
+    from problems.jax_env_core import supports_jax_objective_tag
+
+    env_name = str(getattr(env_runtime, "env_name", ""))
+    if is_isaaclab_env_tag(env_name) and bool(getattr(env_runtime, "eggroll_jax_sim", False)):
+        obs_gym = getattr(env_runtime, "state_space", None)
+        act_gym = getattr(env_runtime, "action_space", None)
+        if obs_gym is None or act_gym is None:
+            raise ValueError("Isaac Lab JAX EggRoll requires resolved observation/action spaces.")
+        obs_shape = (int(np.prod(getattr(obs_gym, "shape", (0,)))),)
+        act_shape = tuple(int(v) for v in getattr(act_gym, "shape", ()))
+        low = np.ravel(np.asarray(getattr(act_gym, "low", -1.0), dtype=np.float32))
+        high = np.ravel(np.asarray(getattr(act_gym, "high", 1.0), dtype=np.float32))
+        if low.size != int(np.prod(act_shape) or low.size):
+            low = np.full(act_shape, -1.0, dtype=np.float32)
+            high = np.full(act_shape, 1.0, dtype=np.float32)
+        return (
+            core._gymnax_box_from_shape(spaces, jnp, obs_shape),
+            spaces.Box(
+                low=jnp.asarray(low, dtype=jnp.float32),
+                high=jnp.asarray(high, dtype=jnp.float32),
+                shape=act_shape,
+                dtype=jnp.float32,
+            ),
+        )
+    if not supports_jax_objective_tag(env_name):
+        raise ValueError(f"EggRoll policies require a supported JAX objective env tag (got env_name={env_name!r}).")
+    obs_space = getattr(env_runtime, "state_space", None)
+    act_space = getattr(env_runtime, "action_space", None)
+    if obs_space is None or act_space is None:
+        raise ValueError("EggRoll policy construction requires resolved observation/action spaces.")
+    return obs_space, act_space
+
+
 class EggRollActorCriticMLPPolicy:
     """HyperscaleES ActorCriticMLP policy metadata for the EggRoll designer.
 
@@ -57,22 +97,11 @@ class EggRollActorCriticMLPPolicy:
     def __init__(self, env_runtime: Any, spec: EggRollActorCriticMLPSpec) -> None:
         jax, jnp, actor_critic_mlp = _require_hyperscalees()
         env_name = str(getattr(env_runtime, "env_name", ""))
-        from problems.jax_env_core import supports_jax_objective_tag
-
-        if not supports_jax_objective_tag(env_name):
-            raise ValueError(f"EggRoll policies require a supported JAX objective env tag (got env_name={env_name!r}).")
-
         self.problem_seed = getattr(env_runtime, "problem_seed", None)
         self.env_name = env_name
         self.spec = spec
         self.model_cls = actor_critic_mlp
-
-        obs_space = getattr(env_runtime, "state_space", None)
-        act_space = getattr(env_runtime, "action_space", None)
-        if obs_space is None or act_space is None:
-            raise ValueError("EggRoll policy construction requires resolved Gymnax observation/action spaces.")
-        self.obs_space = obs_space
-        self.act_space = act_space
+        self.obs_space, self.act_space = _eggroll_policy_spaces(env_runtime, jax=jax, jnp=jnp)
 
         seed = 0 if self.problem_seed is None else int(self.problem_seed) & 0xFFFFFFFF
         key = jax.random.key(seed)
@@ -80,8 +109,8 @@ class EggRollActorCriticMLPPolicy:
         init = actor_critic_mlp.rand_init(
             key,
             n_embd=int(spec.hidden_dim),
-            obs_space=obs_space,
-            act_space=act_space,
+            obs_space=self.obs_space,
+            act_space=self.act_space,
             n_layers=int(spec.layers),
             use_bias=bool(spec.use_bias),
             activation=str(spec.hyperscalees_activation),
@@ -120,7 +149,8 @@ class EggRollActorCriticMLPPolicyFactory:
         from problems.isaaclab_env_adapters import is_isaaclab_env_tag
 
         env_name = str(getattr(env_runtime, "env_name", ""))
-        if is_isaaclab_env_tag(env_name) or env_name.startswith("dm_control/"):
+        use_torch_mlp = env_name.startswith("dm_control/") or (is_isaaclab_env_tag(env_name) and not bool(getattr(env_runtime, "eggroll_jax_sim", False)))
+        if use_torch_mlp:
             from policies.mlp_policy import MLPPolicyFactory
 
             hidden_sizes = tuple(int(self._spec.hidden_dim) for _ in range(int(self._spec.layers)))

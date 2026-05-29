@@ -21,6 +21,7 @@ def build_iter_record(
     record: dict[str, Any] = {
         "iter": int(iteration),
         "step": step,
+        "frames_per_iter": int(frames_per_iter),
         "elapsed": float(elapsed),
         "iter_dt": float(iter_dt),
         "fps": fps,

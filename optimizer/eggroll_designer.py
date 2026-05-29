@@ -153,7 +153,7 @@ class EggRollDesigner:
         if bool(getattr(policy, "is_nanoegg_pretrain_policy", False)):
             self._init_nanoegg(policy, cfg)
             return
-        if _should_use_external_scoring(env_conf):
+        if _should_use_external_scoring(env_conf, cfg):
             from optimizer.eggroll_external import init_external
 
             init_external(self, policy, env_conf, cfg)
@@ -172,7 +172,8 @@ class EggRollDesigner:
         seed_state = _seed_state(stack.jax, policy, int(cfg.seed_offset))
         self._state.train_key = seed_state.train_key
         self._state.eval_key = seed_state.eval_key
-        env_adapter = self._make_env_adapter(env_name)
+        setattr(env_conf, "eggroll_eval_envs", int(cfg.num_envs))
+        env_adapter = self._make_env_adapter(env_name, env_conf)
         noiser_bundle = self._init_jax_noiser(stack, cfg)
         es_tree_key = stack.simple_es_tree_key(self._state.params, seed_state.es_key, policy.scan_map)
         self._evaluate_population, self._evaluate_policy, self._update_params = jit_helpers.build_jitted_fns(
@@ -220,10 +221,10 @@ class EggRollDesigner:
             int(cfg.rank),
         )
 
-    def _make_env_adapter(self, env_name: str):
+    def _make_env_adapter(self, env_name: str, env_conf: Any):
         from problems.jax_env_factory import make_jax_env_adapter
 
-        return make_jax_env_adapter(env_name, jax=self._jax, jnp=self._jnp)
+        return make_jax_env_adapter(env_name, jax=self._jax, jnp=self._jnp, env_runtime=env_conf)
 
     def _init_jax_noiser(self, stack: _EggRollStack, cfg: _EggRollDesignerConfig) -> _NoiserBundle:
         if cfg.noiser not in stack.all_noisers:
@@ -352,8 +353,10 @@ class EggRollDesigner:
             objective.close()
 
 
-def _should_use_external_scoring(env_conf) -> bool:
+def _should_use_external_scoring(env_conf, cfg: _EggRollDesignerConfig) -> bool:
     if env_conf is None:
+        return False
+    if bool(cfg.jax_sim):
         return False
     from problems.isaaclab_env_adapters import is_isaaclab_env_tag
 
