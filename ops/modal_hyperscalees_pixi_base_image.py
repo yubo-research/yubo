@@ -25,15 +25,6 @@ ISAACLAB_SOURCE_PYTHONPATH = (
 )
 HYPERSCALEES_LD_LIBRARY_PATH = f"{HYPERSCALEES_ENV_PREFIX}/lib:/usr/lib/x86_64-linux-gnu"
 
-_HYPERSCALEES_CHECK_PYTHON = (
-    "import numpy, numba; "
-    "assert tuple(int(x) for x in numpy.__version__.split('.')[:2]) >= (2, 3), numpy.__version__; "
-    "import faiss, torch, vllm, hyperscalees, LassoBench; "
-    "from pyvecch.input_transforms import Identity; "
-    "from enn.enn.enn_class import EpistemicNearestNeighbors; "
-    'print("hyperscalees ok", numpy.__version__, numba.__version__, Identity.__name__, EpistemicNearestNeighbors.__name__)'
-)
-
 
 def install_pixi_command() -> str:
     return (
@@ -156,9 +147,7 @@ def _hyperscalees_patch_enn_openblas_command() -> str:
 
 
 def _hyperscalees_check_command() -> str:
-    """Verify ENN/OpenBLAS using the env python directly."""
-    python_bin = f"{HYPERSCALEES_ENV_PREFIX}/bin/python"
-    return _bash(f"{_hyperscalees_openblas_env_exports()} && {shlex.quote(python_bin)} -c {shlex.quote(_HYPERSCALEES_CHECK_PYTHON)}")
+    return _bash(f"{_hyperscalees_openblas_env_exports()} && {_pixi_task_command(HYPERSCALEES_PIXI_ENV, 'check')}")
 
 
 def _pixi_info_command() -> str:

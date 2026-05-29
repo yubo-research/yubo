@@ -94,11 +94,30 @@ class KinetixAdapter(GymnaxLikeAdapter):
                 if isinstance(made, tuple) and len(made) == 2:
                     return made
                 return made, core._default_env_params(made)
-        try:
-            from kinetix.environment.env import make_kinetix_env_from_name
-        except ImportError:
-            from kinetix.environment import make_kinetix_env_from_name
-        made = make_kinetix_env_from_name(raw_name)
-        if isinstance(made, tuple) and len(made) == 2:
-            return made
-        return made, core._default_env_params(made)
+
+        from kinetix.environment.env import make_kinetix_env
+        from kinetix.environment.env_state import EnvParams, StaticEnvParams
+        from kinetix.environment.spaces import ActionType, ObservationType
+        from kinetix.environment.ued.ued import make_reset_fn_list_of_levels
+        from kinetix.environment.utils import static_env_params_from_size
+
+        level_id = str(raw_name).strip()
+        if not level_id:
+            raise ValueError("Kinetix env tag requires a level id after 'kinetix:', e.g. 'kinetix:l/hard_pinball'.")
+
+        size, _, level_tail = level_id.partition("/")
+        if size in {"s", "m", "l"} and level_tail:
+            static_env_params = static_env_params_from_size(size)
+        else:
+            static_env_params = StaticEnvParams()
+
+        env_params = EnvParams()
+        reset_fn = make_reset_fn_list_of_levels([level_id], static_env_params)
+        env = make_kinetix_env(
+            action_type=ActionType.CONTINUOUS,
+            observation_type=ObservationType.SYMBOLIC_FLAT,
+            reset_fn=reset_fn,
+            env_params=env_params,
+            static_env_params=static_env_params,
+        )
+        return env, env_params

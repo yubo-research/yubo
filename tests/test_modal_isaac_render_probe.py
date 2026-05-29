@@ -48,8 +48,8 @@ def test_modal_hyperscalees_pixi_base_image_uses_cacheable_layers() -> None:
     check_command = _decoded_modal_build_command(base._hyperscalees_check_command())
     assert "LD_LIBRARY_PATH" in check_command
     assert "/opt/yubo-pixi/.pixi/envs/hyperscalees/lib" in check_command
-    assert "EpistemicNearestNeighbors" in check_command
-    assert "pixi run" not in check_command
+    assert "pixi run" in check_command
+    assert "--locked -e hyperscalees check" in check_command
 
     bootstrap = base.isaaclab_bootstrap_command()
     assert "already installed, skipping" in bootstrap

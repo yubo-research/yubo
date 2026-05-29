@@ -101,7 +101,7 @@ pyDOE = ">=0.3.8"
 sparse-ho = { url = "https://github.com/QB3/sparse-ho/archive/master.zip" }
 craftax = "*"
 jaxmarl = "*"
-kinetix = "*"
+kinetix-env = "==3.0.0"
 navix = "*"
 hyperscalees = { git = "https://github.com/ESHyperscale/HyperscaleES.git", rev = "b77f7d6f91238fd575313e946b9cad21e0a74b32" }
 tiktoken = "*"
@@ -112,13 +112,13 @@ pytest-testmon = "==2.2.0"
 
 [feature.hyperscalees.tasks]
 install-vllm = "python -m pip install --disable-pip-version-check --only-binary=:all: vllm==0.17.0"
-install-nodeps = "python -m pip install --disable-pip-version-check ennbo[with-deps]==0.3.7 && python -m pip install --disable-pip-version-check --no-deps joblib threadpoolctl absl-py==2.4.0 chex==0.1.91 dm-env==1.6 esquilax==2.1.0 etils==1.14.0 flask==3.1.3 flask-cors==6.0.2 flax==0.12.7 huggingface-hub==0.36.2 jaxopt==0.8.5 ml-collections==1.1.0 'mujoco>=3.8.1,<3.9' mujoco-mjx==3.8.0 optax==0.2.8 orbax-checkpoint==0.11.39 pillow==12.2.0 tensorboardx==2.6.5 trimesh==4.12.2 jumanji==1.1.1 warp-lang==1.13.0 mujoco-warp==3.8.0.3 imageio==2.37.3 networkx==3.6.1 pygame==2.6.1 rlax==0.1.8 seaborn==0.13.2"
+install-nodeps = "python -m pip install --disable-pip-version-check ennbo[with-deps]==0.3.7 && python -m pip install --disable-pip-version-check --no-deps joblib threadpoolctl absl-py==2.4.0 chex==0.1.91 dm-env==1.6 esquilax==2.1.0 jax-tqdm==0.4.0 etils==1.14.0 flask==3.1.3 flask-cors==6.0.2 flax==0.12.7 huggingface-hub==0.36.2 jaxopt==0.8.5 ml-collections==1.1.0 'mujoco>=3.8.1,<3.9' mujoco-mjx==3.8.0 optax==0.2.8 orbax-checkpoint==0.11.39 pillow==12.2.0 tensorboardx==2.6.5 trimesh==4.12.2 jumanji==1.1.1 warp-lang==1.13.0 mujoco-warp==3.8.0.3 imageio==2.37.3 networkx==3.6.1 pygame==2.6.1 rlax==0.1.8 seaborn==0.13.2"
 install-lassobench = "python -m pip install --disable-pip-version-check --no-deps 'LassoBench @ git+https://github.com/ksehic/LassoBench.git'"
 install-vecchiabo = 'env_prefix="$(python -c "import sys; print(sys.prefix)")" && LDFLAGS="-L${env_prefix}/lib" LIBRARY_PATH="${env_prefix}/lib" CPATH="$(python -c "import pybind11; print(pybind11.get_include())")" python -m pip install --disable-pip-version-check --no-build-isolation --no-deps "git+https://github.com/feji3769/VecchiaBO.git#subdirectory=code"'
 install-mujoco-playground = "python -m pip install --disable-pip-version-check --no-deps mediapy git+https://github.com/google-deepmind/mujoco_playground.git && python -c 'from mujoco_playground._src import mjx_env; mjx_env.ensure_menagerie_exists()'"
 pin-runtime = "python -m pip install --disable-pip-version-check --force-reinstall --no-deps 'numpy>=2.3,<2.4' numba==0.62.1 llvmlite==0.45.1"
 setup = { depends-on = ["install-vllm", "install-nodeps", "install-lassobench", "install-vecchiabo", "install-mujoco-playground", "pin-runtime"] }
-check = "python -c 'import numpy, numba; assert tuple(int(x) for x in numpy.__version__.split(\".\")[:2]) >= (2, 3), numpy.__version__; import faiss, torch, vllm, hyperscalees, LassoBench; from pyvecch.input_transforms import Identity; from enn.enn.enn_class import EpistemicNearestNeighbors; print(\"hyperscalees ok\", numpy.__version__, numba.__version__, Identity.__name__, EpistemicNearestNeighbors.__name__)'"
+check = "python -c 'import numpy, numba; assert tuple(int(x) for x in numpy.__version__.split(\".\")[:2]) >= (2, 3), numpy.__version__; import faiss, torch, vllm, hyperscalees, LassoBench, kinetix.environment; from pyvecch.input_transforms import Identity; from enn.enn.enn_class import EpistemicNearestNeighbors; print(\"hyperscalees ok\", numpy.__version__, numba.__version__, Identity.__name__, EpistemicNearestNeighbors.__name__)'"
 
 [feature.isaaclab.dependencies]
 python = "3.12.*"
