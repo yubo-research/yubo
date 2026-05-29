@@ -93,7 +93,7 @@ def mk_hyperscalees_pixi_base_image(modal, project_root: Path):
 
 def isaaclab_bootstrap_command() -> str:
     """One-shot IsaacLab env install (not cached in the Modal image)."""
-    return "; ".join(
+    return " && ".join(
         (
             _pixi_install_env_command(ISAACLAB_PIXI_ENV),
             _pixi_task_command(ISAACLAB_PIXI_ENV, "install"),
