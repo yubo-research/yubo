@@ -34,13 +34,29 @@ class VLLMActorConfig:
 
 
 def set_vllm_env_defaults() -> None:
-    # Unset VLLM_PLUGINS means "load all discovered plugins"; the remote
-    # torchrl plugin currently registers a broken Qwen3 override.
-    os.environ.setdefault("VLLM_PLUGINS", "")
+    # vLLM treats VLLM_PLUGINS="" as an explicit allow-list containing only
+    # the empty string, which disables every entry-point plugin (including
+    # vllm-metal). Linux CUDA uses built-in platform plugins; Mac needs the
+    # metal OOT plugin. An empty allow-list also blocks the broken torchrl
+    # general plugin on Linux.
+    if os.uname().sysname == "Darwin":
+        os.environ.setdefault("VLLM_PLUGINS", "metal")
+        os.environ.setdefault("VLLM_METAL_MEMORY_FRACTION", "auto")
+        os.environ.setdefault("VLLM_MLX_DEVICE", "gpu")
+    elif "VLLM_PLUGINS" not in os.environ:
+        os.environ["VLLM_PLUGINS"] = ""
     os.environ.setdefault("VLLM_ENABLE_V1_MULTIPROCESSING", "0")
     os.environ.setdefault("VLLM_FUSED_MOE_CHUNK_SIZE", str(16 * 2048))
     os.environ.setdefault("PYTORCH_ALLOC_CONF", "expandable_segments:True")
     os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
+
+
+def _distributed_executor_backend() -> str:
+    if os.environ.get("VLLM_DISTRIBUTED_EXECUTOR_BACKEND"):
+        return os.environ["VLLM_DISTRIBUTED_EXECUTOR_BACKEND"]
+    if os.uname().sysname == "Darwin":
+        return "uni"
+    return "ray"
 
 
 def get_llm_kwargs(cfg: VLLMActorConfig) -> dict[str, Any]:
@@ -49,7 +65,7 @@ def get_llm_kwargs(cfg: VLLMActorConfig) -> dict[str, Any]:
     kwargs = {
         "model": cfg.model_name,
         "tensor_parallel_size": int(cfg.tensor_parallel_size),
-        "distributed_executor_backend": "ray",
+        "distributed_executor_backend": _distributed_executor_backend(),
         "worker_extension_cls": "llm.vllm_worker.WorkerExtension",
         "dtype": "auto",
         "enable_prefix_caching": False,
@@ -92,6 +108,8 @@ def _max_num_seqs(cfg: VLLMActorConfig) -> int:
 def _gpu_memory_utilization(cfg: VLLMActorConfig) -> float:
     if cfg.vllm_gpu_memory_utilization is not None:
         return max(0.01, min(0.99, float(cfg.vllm_gpu_memory_utilization)))
+    if os.uname().sysname == "Darwin":
+        return 0.55
     return 0.85
 
 

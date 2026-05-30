@@ -31,6 +31,13 @@ class EnginePoolConfig:
     vllm_num_speculative_tokens: int | None = None
 
 
+def vllm_placement_bundles(ray: Any, tensor_parallel_size: int) -> list[dict[str, float | int]]:
+    size = max(1, int(tensor_parallel_size))
+    if float(ray.cluster_resources().get("GPU", 0)) > 0:
+        return [{"GPU": 1, "CPU": 2} for _ in range(size)]
+    return [{"CPU": 2} for _ in range(size)]
+
+
 class VLLMEnginePool:
     def __init__(
         self,
@@ -59,7 +66,7 @@ class VLLMEnginePool:
         actors = []
         try:
             for _ in range(int(cfg.num_engines)):
-                bundles = [{"GPU": 1, "CPU": 2} for _ in range(int(cfg.tensor_parallel_size))]
+                bundles = vllm_placement_bundles(ray, int(cfg.tensor_parallel_size))
                 pg = placement_group(bundles, lifetime="detached", strategy="STRICT_PACK")
                 ray.get(pg.ready())
                 placement_groups.append(pg)
@@ -284,6 +291,11 @@ def ray_env_vars() -> dict[str, str]:
         "HF_HOME",
         "HF_HUB_CACHE",
         "PRIME_API_KEY",
+        "VLLM_PLUGINS",
+        "VLLM_METAL_MEMORY_FRACTION",
+        "VLLM_MLX_DEVICE",
+        "VLLM_DISTRIBUTED_EXECUTOR_BACKEND",
+        "VLLM_WORKER_MULTIPROC_METHOD",
         "THM_SANDBOX_BACKEND",
         "THM_DOCKER_RUNTIME",
         "THM_DOCKER_MEMORY",
@@ -381,4 +393,5 @@ __all__ = [
     "ray_runtime_env",
     "sampling_kwargs",
     "transport_info_by_tensor_rank",
+    "vllm_placement_bundles",
 ]

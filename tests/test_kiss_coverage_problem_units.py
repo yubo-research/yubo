@@ -3,6 +3,7 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 import numpy as np
+import pytest
 import torch
 from kiss_problem_atari_ale import _ALE
 from kiss_problem_dm_fake import _FakeDM
@@ -62,6 +63,7 @@ def test_kiss_cov_problem_atari_env(monkeypatch):
 
 
 def test_kiss_cov_problem_dm_control_and_pixel_policies(monkeypatch):
+    pytest.importorskip("dm_control")
     import problems.dm_control_env as dm_env
     from problems.pixel_policies import (
         AtariAgent57LitePolicy,
@@ -105,6 +107,7 @@ def test_kiss_cov_problem_dm_control_and_pixel_policies(monkeypatch):
 
 
 def test_kiss_cov_problem_dm_control_direct_units():
+    pytest.importorskip("dm_control")
     from problems.dm_control_env import BoxSpace, DictSpace, _PixelObsWrapper
 
     box = BoxSpace(low=np.array([-1.0, -1.0]), high=np.array([1.0, 1.0]))

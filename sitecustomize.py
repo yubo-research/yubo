@@ -37,3 +37,19 @@ try:
         LinearOperator.inv_matmul = LinearOperator.solve
 except Exception:
     pass
+
+
+import sys
+
+if sys.platform == "darwin":
+    import os
+
+    os.environ.setdefault("KMP_DUPLICATE_LIB_OK", "TRUE")
+    os.environ.setdefault("OMP_NUM_THREADS", "1")
+    # ENN must initialize before Python faiss or VecchiaBO + botorch segfault on Mac.
+    try:
+        from enn.enn.enn_class import EpistemicNearestNeighbors  # noqa: F401
+    except ImportError:
+        pass
+    else:
+        import faiss  # noqa: F401

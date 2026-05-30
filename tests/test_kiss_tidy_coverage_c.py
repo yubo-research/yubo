@@ -5,15 +5,13 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 import numpy as np
+import pytest
 
 import optimizer.optimizer_mo
 import optimizer.uhd_enn_fit_helpers
 import optimizer.uhd_enn_imputer_predict
 import optimizer.uhd_enn_imputer_tell
 import optimizer.uhd_loop_support
-import problems.dm_control_env_core
-import problems.dm_control_pixel_wrapper
-import problems.dm_control_spaces
 import problems.env_conf_backends
 import problems.env_conf_bindings
 import problems.env_conf_parse
@@ -65,6 +63,11 @@ def test_kiss_tidy_uhd_loop_support(capsys):
 
 
 def test_kiss_tidy_dm_control_core_pixel_spaces_env_conf(monkeypatch):
+    pytest.importorskip("dm_control")
+    import problems.dm_control_env_core
+    import problems.dm_control_pixel_wrapper
+    import problems.dm_control_spaces
+
     _ = (
         problems.dm_control_env_core,
         problems.dm_control_pixel_wrapper,

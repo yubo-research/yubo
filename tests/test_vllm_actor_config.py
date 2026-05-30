@@ -1,3 +1,5 @@
+import os
+
 import pytest
 
 from llm.vllm_actor_config import VLLMActorConfig, get_llm_kwargs
@@ -18,7 +20,8 @@ def test_vllm_actor_kwargs_use_conservative_sequence_defaults():
     )
 
     assert kwargs["max_num_seqs"] == 8
-    assert kwargs["gpu_memory_utilization"] == 0.85
+    expected_gpu_mem = 0.55 if os.uname().sysname == "Darwin" else 0.85
+    assert kwargs["gpu_memory_utilization"] == expected_gpu_mem
     assert kwargs["max_num_batched_tokens"] == 2048
 
 

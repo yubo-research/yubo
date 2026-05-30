@@ -336,7 +336,7 @@ def test_gymnasium_mjx_adapter_uses_specs_frame_skip_and_time_limit(
     gymnax_mod.environments = environments_mod
     mujoco_mod = ModuleType("mujoco")
     mujoco_mod.mjx = SimpleNamespace(
-        put_model=lambda model: model,
+        put_model=lambda model, **kwargs: model,
         make_data=lambda _model: make_fake_data(),
         forward=lambda _model, data: data,
         step=lambda _model, data: data.replace(
@@ -344,6 +344,7 @@ def test_gymnasium_mjx_adapter_uses_specs_frame_skip_and_time_limit(
             time=data.time + np.float32(0.01),
         ),
     )
+    fake_cpu_device = SimpleNamespace()
     fake_jax = SimpleNamespace(
         random=SimpleNamespace(
             split=lambda _key: ("left", "right"),
@@ -352,6 +353,7 @@ def test_gymnasium_mjx_adapter_uses_specs_frame_skip_and_time_limit(
         ),
         lax=SimpleNamespace(scan=fake_scan),
         tree_util=SimpleNamespace(tree_map=fake_tree_map),
+        devices=lambda backend: [] if backend == "cuda" else [fake_cpu_device],
     )
     monkeypatch.setitem(sys.modules, "gymnasium", gymnasium)
     monkeypatch.setitem(sys.modules, "gymnax", gymnax_mod)

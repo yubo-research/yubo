@@ -179,7 +179,8 @@ def test_lora_subspace_codec_searches_b_matrices_only():
     assert torch.any(decoded["layer.lora_B.default.weight"] != 0.0)
 
 
-def test_vllm_nll_scoring_build_nll_calls_score_nll_responses_nll_sampling_kwargs_nll_scoring_item_target_text():
+def test_vllm_nll_scoring_build_nll_calls_score_nll_responses_nll_sampling_kwargs_nll_scoring_item_target_text(monkeypatch):
+    monkeypatch.setattr("llm.vllm_nll_scoring.nll_use_prefix_decode", lambda: False)
     from llm.sample_batch import SampleBatch
     from llm.vllm_nll_scoring import (
         build_nll_calls,
@@ -200,12 +201,13 @@ def test_vllm_nll_scoring_build_nll_calls_score_nll_responses_nll_sampling_kwarg
     )
     item = nll_scoring_item(tokenizer=tokenizer, prompt="Q:", target_text=" A")
     raw = SimpleNamespace(
+        prompt_token_ids=[81, 58, 32, 65],
         prompt_logprobs=[
             None,
             None,
             {ord(" "): SimpleNamespace(logprob=-0.5)},
             {ord("A"): -1.5},
-        ]
+        ],
     )
     responses = [SampleBatch(request_id="r", samples=[], raw=raw)]
 
@@ -219,10 +221,11 @@ def test_vllm_nll_scoring_build_nll_calls_score_nll_responses_nll_sampling_kwarg
     assert target_text(task, "A") == " A"
     assert fitnesses == [-1.0]
     assert info["mean_nll"] == 1.0
-    assert "NLL:" in logs[0]
+    assert "NLL(prompt)" in logs[0]
 
 
-def test_text_objective_generate_nll_fitnesses_text_score_mode(tmp_path):
+def test_text_objective_generate_nll_fitnesses_text_score_mode(tmp_path, monkeypatch):
+    monkeypatch.setattr("llm.vllm_nll_scoring.nll_use_prefix_decode", lambda: False)
     from problems.text_obj_objective import _generate_fitnesses, _text_score_mode
 
     tokenizer = SimpleNamespace(encode=_char_encode)
@@ -233,12 +236,13 @@ def test_text_objective_generate_nll_fitnesses_text_score_mode(tmp_path):
         _eval_count=0,
     )
     raw = SimpleNamespace(
+        prompt_token_ids=[81, 58, 32, 65],
         prompt_logprobs=[
             None,
             None,
             {ord(" "): -0.25},
             {ord("A"): -0.75},
-        ]
+        ],
     )
     runtime = SimpleNamespace(
         pool=SimpleNamespace(sample=lambda calls: _sample_batches(raw)),
@@ -252,8 +256,46 @@ def test_text_objective_generate_nll_fitnesses_text_score_mode(tmp_path):
     assert "mean_nll=0.5000" in logs[0]
 
 
+def test_vllm_nll_scoring_prefix_decode_uses_sample_logprobs(monkeypatch):
+    monkeypatch.setattr("llm.vllm_nll_scoring.nll_use_prefix_decode", lambda: True)
+    from llm.sample_batch import SampleBatch
+    from llm.vllm_nll_scoring import build_nll_calls, score_nll_responses
+
+    tokenizer = SimpleNamespace(encode=_char_encode, decode=_char_decode)
+    task = SimpleNamespace(target_text=_target_text)
+    calls, items = build_nll_calls(
+        tokenizer=tokenizer,
+        prompts=["Q:"],
+        answers=["A"],
+        task_obj=task,
+        lora_request_specs=None,
+        seed=3,
+    )
+    assert len(calls) == 2
+    assert calls[0].prompt == "Q:"
+    assert calls[0].sampling["logprobs"] == 1
+    assert calls[0].sampling["allowed_token_ids"] == [ord(" ")]
+    assert calls[1].sampling["allowed_token_ids"] == [ord("A")]
+    assert "prompt_logprobs" not in calls[0].sampling
+
+    def _raw(token_id: int):
+        return SimpleNamespace(outputs=[SimpleNamespace(logprobs=[{token_id: SimpleNamespace(logprob=-0.5)}])])
+
+    responses = [
+        SampleBatch(request_id="0", samples=[], raw=_raw(ord(" "))),
+        SampleBatch(request_id="1", samples=[], raw=_raw(ord("A"))),
+    ]
+    fitnesses, info, logs = score_nll_responses(responses, items)
+    assert fitnesses == [-0.5]
+    assert "NLL(prefix)" in logs[0]
+
+
 def _char_encode(text: str, add_special_tokens: bool = False):
     return [ord(char) for char in text]
+
+
+def _char_decode(token_ids, skip_special_tokens: bool = False):
+    return "".join(chr(int(token_id)) for token_id in token_ids)
 
 
 def _target_text(answer):
@@ -264,3 +306,43 @@ def _sample_batches(*raws):
     from llm.sample_batch import SampleBatch
 
     return [SampleBatch(request_id=str(index), samples=[], raw=raw) for index, raw in enumerate(raws)]
+
+
+def test_vllm_nll_scoring_chat_template_uses_assistant_turn(monkeypatch):
+    monkeypatch.setattr("llm.vllm_nll_scoring.nll_use_prefix_decode", lambda: False)
+    from transformers import AutoTokenizer
+
+    from llm.tasks_math import MathTask, MathTaskConfig
+    from llm.vllm_nll_scoring import build_nll_calls, nll_scoring_item, nll_scoring_item_chat
+
+    tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen3-1.7B", trust_remote_code=True)
+    task = MathTask(MathTaskConfig(batch_size=1, dataset_name="gsm8k", seed=0, tokenizer=tokenizer, apply_chat_template=True))
+    prompts, answers = task.get_batch()
+    user_contents = task.nll_user_contents(prompts, answers)
+    item = nll_scoring_item_chat(
+        tokenizer=tokenizer,
+        prompt=prompts[0],
+        target_text=task.target_text(answers[0]),
+        user_content=user_contents[0],
+    )
+    append_item = nll_scoring_item(
+        tokenizer=tokenizer,
+        prompt=prompts[0],
+        target_text=task.target_text(answers[0]),
+    )
+    assert item.target_start == append_item.target_start
+    assert len(item.target_token_ids) > len(append_item.target_token_ids)
+    assert item.full_prompt != append_item.full_prompt
+
+    task_with_contents = MathTask(MathTaskConfig(batch_size=1, dataset_name="gsm8k", seed=0, tokenizer=tokenizer, apply_chat_template=True))
+    prompts2, answers2 = task_with_contents.get_batch()
+    calls, items = build_nll_calls(
+        tokenizer=tokenizer,
+        prompts=prompts2,
+        answers=answers2,
+        task_obj=task_with_contents,
+        lora_request_specs=None,
+        seed=0,
+    )
+    assert calls[0].prompt == items[0].full_prompt
+    assert calls[0].prompt != prompts2[0] + task_with_contents.target_text(answers2[0])

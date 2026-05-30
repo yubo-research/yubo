@@ -14,6 +14,7 @@ from llm.engine_pool import (
     collective_results_ok,
     ray_runtime_env,
     transport_info_by_tensor_rank,
+    vllm_placement_bundles,
 )
 from llm.es import (
     summarize_fitness,
@@ -247,7 +248,7 @@ def launch_engines(ray: Any, *, cfg: LLMConfig, args: EggrollArgs) -> tuple[list
     actors = []
     try:
         for _ in range(args.num_engines):
-            bundles = [{"GPU": 1, "CPU": 2} for _ in range(args.tensor_parallel_size)]
+            bundles = vllm_placement_bundles(ray, args.tensor_parallel_size)
             pg = placement_group(bundles, lifetime="detached", strategy="STRICT_PACK")
             ray.get(pg.ready())
             placement_groups.append(pg)

@@ -48,7 +48,17 @@ class MathTask(BatchScoringTaskMixin):
             raise ValueError(f"get_batch requires a train dataset, got {self.dataset_name!r}.")
         indices = np.arange(self.idx, self.idx + self.batch_size) % len(self.dataset)
         self.idx += self.batch_size
-        return self._format_examples([self.dataset[int(i)] for i in indices])
+        examples = [self.dataset[int(i)] for i in indices]
+        self._last_examples = examples
+        return self._format_examples(examples)
+
+    def nll_user_contents(self, prompts: list[str], answers: list[Any]) -> list[str]:
+        if not self.apply_chat_template:
+            raise ValueError("nll_user_contents requires apply_chat_template=True.")
+        examples = getattr(self, "_last_examples", None)
+        if examples is None or len(examples) != len(prompts):
+            raise RuntimeError("MathTask.nll_user_contents requires a fresh get_batch() call for this prompt batch.")
+        return [f"{example['problem']}\n{_math_instruction(self.answer_format)}" for example in examples]
 
     def get_eval_batch(self) -> tuple[list[str], list[str]]:
         if self.is_train:

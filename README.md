@@ -1,50 +1,52 @@
 
-
 # Installation
 
-## Installation on MacOS
+## macOS (Apple Silicon)
+
+Use Pixi — see **[admin/README-mac-emps.md](admin/README-mac-emps.md)**.
 
 ```bash
-./admin/install-macos.sh
+pixi install -e hyperscalees
+pixi run -e hyperscalees bootstrap-mac   # extras + verify (first time ~1–2 min)
+pixi run -e hyperscalees pytest -sv tests -rs
 ```
 
-Apologies for the complexity of installation. We're blending lots of algorithms and test environments, much of which is research-quality code, some of which may be unmaintained.
+Isaac Sim is Modal/Linux only (`pixi install -e isaaclab` on GPU machines).
 
+## Linux
 
-## Installation on Linux
+Modal / GPU: see **[admin/README-hyperscalees.md](admin/README-hyperscalees.md)**.
+
+Bare-metal:
 
 ```bash
-./admin/install.sh
+bash admin/setup-hyperscalees.sh
 ```
 
 ## Setup
+
 ```bash
 pre-commit install
 ```
-
 
 ## Verification
 
 ```bash
 pre-commit run
-pytest -sv tests
+pixi run -e hyperscalees pytest -sv tests -rs   # macOS
+# or: pytest -sv tests                          # after setup-hyperscalees.sh on Linux
 ```
 
-If your code crashes or hangs, try this [hack](https://discuss.pytorch.org/t/ran-into-this-issue-while-executing/101460):
-```
-export KMP_DUPLICATE_LIB_OK=TRUE
-export OMP_NUM_THREADS=1
-```
-I don't recommend this, however, as it may slow things down.
+On macOS, `KMP_DUPLICATE_LIB_OK` and faiss import order are handled via Pixi activation and `sitecustomize.py`.
 
 ---
 
 ## Examples
 
-From the repository root (with `PYTHONPATH` set to the repo so imports resolve):
+From the repository root (Pixi sets `PYTHONPATH` on Mac; elsewhere use `PYTHONPATH=.`):
 
 ```bash
-./ops/experiment.py local configs/demo/turbo_enn.toml
-./ops/experiment.py local configs/demo/ppo.toml
-./ops/exp_uhd.py local configs/demo/mezo.toml
+pixi run -e hyperscalees python ops/experiment.py local configs/demo/turbo_enn.toml
+pixi run -e hyperscalees python ops/experiment.py local configs/demo/ppo.toml
+pixi run -e hyperscalees python ops/exp_uhd.py local configs/demo/mezo.toml
 ```

@@ -66,6 +66,17 @@ def _action_bounds(model, jnp):
     return low.astype(jnp.float32), high.astype(jnp.float32)
 
 
+def _resolve_mjx_device(jax):
+    """MJX supports CUDA or CPU JAX backends only (not Apple MPS)."""
+    try:
+        cuda_devices = jax.devices("cuda")
+    except (RuntimeError, AttributeError):
+        cuda_devices = []
+    if cuda_devices:
+        return cuda_devices[0]
+    return jax.devices("cpu")[0]
+
+
 class GymnasiumMJXAdapter:
     """MJX execution backend for Gymnasium MuJoCo registry envs."""
 
@@ -79,7 +90,8 @@ class GymnasiumMJXAdapter:
         self.fast = is_gymnasium_fast_env_tag(env_name)
         self.env_id = parse_gymnasium_env_id(env_name)
         self.model, self.spec = _load_gymnasium_env_spec(self.env_id, fast=self.fast)
-        self.mjx_model = mjx.put_model(self.model)
+        mjx_device = _resolve_mjx_device(jax)
+        self.mjx_model = mjx.put_model(self.model, device=mjx_device)
         obs_shape = (self.spec.obs_dim(self.model),)
         low, high = _action_bounds(self.model, jnp)
         self.observation_space = core._gymnax_box_from_shape(spaces, jnp, obs_shape)
