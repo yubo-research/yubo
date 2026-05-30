@@ -29,6 +29,8 @@ num_rounds = 1
             str(repo_root / "ops" / "exp_uhd.py"),
             "local",
             str(cfg),
+            "--results-dir",
+            str(tmp_path / "results"),
         ],
         cwd=str(repo_root),
         env=env,
