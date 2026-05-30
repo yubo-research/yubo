@@ -1,11 +1,32 @@
 from __future__ import annotations
 
+import math
+
 from analysis.fitting_time.evaluate import (
     SURROGATE_BENCHMARK_KEYS,
     BMResult,
     MuSe,
     SyntheticSineSurrogateBenchmark,
 )
+
+
+def _float_equal(left: float, right: float) -> bool:
+    if math.isnan(left) and math.isnan(right):
+        return True
+    return left == right
+
+
+def assert_surrogate_benchmark_equal(
+    left: SyntheticSineSurrogateBenchmark,
+    right: SyntheticSineSurrogateBenchmark,
+) -> None:
+    assert left.results.keys() == right.results.keys()
+    for key in left.results:
+        for field in ("fit_seconds", "normalized_rmse", "log_likelihood"):
+            a = getattr(left.results[key], field)
+            b = getattr(right.results[key], field)
+            assert _float_equal(a.mu, b.mu), (key, field, "mu", a.mu, b.mu)
+            assert _float_equal(a.se, b.se), (key, field, "se", a.se, b.se)
 
 
 def bench_result(
