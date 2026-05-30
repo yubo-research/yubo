@@ -164,14 +164,15 @@ jax = "==0.8.1"
 
 [feature.hyperscalees.tasks]
 install-vllm = "python -m pip install --disable-pip-version-check --only-binary=:all: vllm==0.17.0"
-install-nodeps = "bash -c 'mkdir -p src && ([ -d src/enn ] || git clone https://github.com/yubo-research/enn.git src/enn) && cd src/enn && export LDFLAGS=\"-L$CONDA_PREFIX/lib\" && export CPPFLAGS=\"-I$CONDA_PREFIX/include\" && export LIBRARY_PATH=\"$CONDA_PREFIX/lib\" && export DYLD_FALLBACK_LIBRARY_PATH=\"$CONDA_PREFIX/lib\" && maturin develop --release && cd ../.. && python -m pip install --disable-pip-version-check --no-deps tensordict==0.11.0 torchrl==0.11.0 pyvers==0.2.2 joblib threadpoolctl'"
+install-nodeps-linux = "python -m pip install --disable-pip-version-check ennbo[with-deps]==0.3.7 && python -m pip install --disable-pip-version-check --no-deps joblib threadpoolctl"
+install-nodeps-darwin = "bash -c 'mkdir -p src && ([ -d src/enn ] || git clone https://github.com/yubo-research/enn.git src/enn) && cd src/enn && export LDFLAGS=\"-L$CONDA_PREFIX/lib\" && export CPPFLAGS=\"-I$CONDA_PREFIX/include\" && export LIBRARY_PATH=\"$CONDA_PREFIX/lib\" && export DYLD_FALLBACK_LIBRARY_PATH=\"$CONDA_PREFIX/lib\" && maturin develop --release && cd ../.. && python -m pip install --disable-pip-version-check --no-deps tensordict==0.11.0 torchrl==0.11.0 pyvers==0.2.2 joblib threadpoolctl'"
 install-lassobench = "python -m pip install --disable-pip-version-check --no-deps 'LassoBench @ git+https://github.com/ksehic/LassoBench.git'"
 install-vecchiabo = 'env_prefix="$(python -c "import sys; print(sys.prefix)")" && LDFLAGS="-L${env_prefix}/lib" LIBRARY_PATH="${env_prefix}/lib" CPATH="$(python -c "import pybind11; print(pybind11.get_include())")" python -m pip install --disable-pip-version-check --no-build-isolation --no-deps "git+https://github.com/feji3769/VecchiaBO.git#subdirectory=code"'
 install-mujoco-playground = "python -m pip install --disable-pip-version-check --no-deps mediapy git+https://github.com/google-deepmind/mujoco_playground.git && python -c 'from mujoco_playground._src import mjx_env; mjx_env.ensure_menagerie_exists()'"
 pin-runtime = "python -m pip install --disable-pip-version-check --force-reinstall --no-deps 'numpy>=2.3,<2.4' numba==0.62.1 llvmlite==0.45.1"
 
-setup-linux = { depends-on = ["install-vllm", "install-nodeps", "install-lassobench", "install-vecchiabo", "install-mujoco-playground", "pin-runtime"] }
-setup-darwin = { depends-on = ["install-nodeps", "install-lassobench", "install-vecchiabo", "install-mujoco-playground", "pin-runtime"] }
+setup-linux = { depends-on = ["install-vllm", "install-nodeps-linux", "install-lassobench", "install-vecchiabo", "install-mujoco-playground", "pin-runtime"] }
+setup-darwin = { depends-on = ["install-nodeps-darwin", "install-lassobench", "install-vecchiabo", "install-mujoco-playground", "pin-runtime"] }
 setup = "bash -lc 'if [ \"$(uname -s)\" = Darwin ]; then pixi run -e hyperscalees setup-darwin; else pixi run -e hyperscalees setup-linux; fi'"
 
 check = "python -c \"import faiss, jax, flax, optax, hyperscalees, LassoBench, gymnasium, torch; from pyvecch.input_transforms import Identity; from enn.enn.enn_class import EpistemicNearestNeighbors; import sys; vllm=__import__('vllm') if sys.platform.startswith('linux') else None; print('hyperscalees ok', jax.__version__, jax.devices(), Identity.__name__, EpistemicNearestNeighbors.__name__)\""
@@ -182,5 +183,34 @@ check-isaac = "python -c 'import importlib.util, gymnasium, tensordict, torchrl;
 test = "pytest"
 kiss = "kiss check"
 
+[feature.isaaclab.dependencies]
+python = "3.12.*"
+pip = "*"
+git = "*"
+git-lfs = "*"
+
+[feature.isaaclab.pypi-options]
+extra-index-urls = ["https://pypi.nvidia.com"]
+index-strategy = "unsafe-best-match"
+
+[feature.isaaclab.target.linux-64.pypi-dependencies]
+warp-lang = "==1.12.0"
+click = "*"
+antlr4-python3-runtime = "==4.9.3"
+gymnasium = "==1.2.1"
+h5py = "*"
+hydra-core = "*"
+imageio = "==2.37.2"
+imageio-ffmpeg = "*"
+omegaconf = "*"
+torchaudio = "==2.10.0"
+torchrl = "==0.11.0"
+tensordict = "==0.11.0"
+
+[feature.isaaclab.tasks]
+install = "bash -lc 'set -euo pipefail; py=\"${CONDA_PREFIX}/bin/python\"; \"${py}\" -m ensurepip --upgrade; \"${py}\" -m pip install --disable-pip-version-check --upgrade \"pip>=25.1\" \"attrs>=25.3.0\"; \"${py}\" -m pip install --disable-pip-version-check --extra-index-url https://pypi.nvidia.com \"isaacsim[all,extscache]==6.0.0.0\"; mkdir -p /opt/yubo-pixi/src; if [ -d /opt/yubo-pixi/src/IsaacLab/.git ]; then git -C /opt/yubo-pixi/src/IsaacLab fetch --tags origin; else git clone https://github.com/isaac-sim/IsaacLab.git /opt/yubo-pixi/src/IsaacLab; fi; git -C /opt/yubo-pixi/src/IsaacLab checkout -q v3.0.0-beta; cd /opt/yubo-pixi/src/IsaacLab; ./isaaclab.sh --install assets,tasks,newton; \"${py}\" -m pip install --disable-pip-version-check --index-url https://download.pytorch.org/whl/cu128 torchaudio==2.10.0'"
+check = "python -c 'import importlib.util, gymnasium, tensordict, torchrl; mods=(\"isaacsim\", \"isaaclab\", \"isaaclab_assets\", \"isaaclab_newton\", \"isaaclab_physx\", \"isaaclab_tasks\"); missing=[m for m in mods if importlib.util.find_spec(m) is None]; assert not missing, missing; import isaaclab_tasks; from isaaclab_tasks.utils import parse_env_cfg; gymnasium.spec(\"Isaac-Velocity-Flat-G1-v0\"); parse_env_cfg(\"Isaac-Velocity-Flat-G1-v0\", num_envs=1, device=\"cpu\"); print(\"isaaclab ok\", torchrl.__version__, tensordict.__version__)'"
+
 [environments]
 hyperscalees = { features = ["hyperscalees"], no-default-feature = true }
+isaaclab = { features = ["isaaclab"], no-default-feature = true }
