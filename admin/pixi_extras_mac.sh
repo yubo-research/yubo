@@ -25,7 +25,9 @@ for arg in "$@"; do
 done
 
 ROOT="${PIXI_PROJECT_ROOT:-.}"
+ENN_PATCH_ID="${ENN_PATCH_ID:-failure_tolerance_dim_v1}"
 MARKER_BO="${CONDA_PREFIX}/.yubo_mac_extras_ready"
+MARKER_PATCH="${CONDA_PREFIX}/.yubo_mac_extras_patch"
 MARKER_LLM="${CONDA_PREFIX}/.yubo_mac_llm_ready"
 PY="${CONDA_PREFIX}/bin/python"
 PIP=( "${PY}" -m pip install --disable-pip-version-check )
@@ -69,7 +71,8 @@ _install_ennbo() {
   local ennbo_ref="${ENNBO_REF:-edb2e72}"
   local tmp
   tmp="$(mktemp -d)"
-  trap 'rm -rf "$tmp"' RETURN
+  # shellcheck disable=SC2064
+  trap "rm -rf '${tmp}'" RETURN
 
   echo "=== ennbo source build (${ennbo_ref}) into ${CONDA_PREFIX} ==="
   git clone --filter=blob:none --depth 1 "${ennbo_git}" "${tmp}/enn"
@@ -81,6 +84,8 @@ _install_ennbo() {
   if grep -q 'auditwheel = "repair"' "${tmp}/enn/pyproject.toml"; then
     sed -i '' 's/auditwheel = "repair"/auditwheel = "skip"/' "${tmp}/enn/pyproject.toml"
   fi
+
+  "${PY}" "${ROOT}/admin/patch_enn_failure_tolerance_dim.py" "${tmp}/enn"
 
   export FAISS_LIB_DIR="${hb}"
   export LIBRARY_PATH="${hb}:${CONDA_PREFIX}/lib"
@@ -108,7 +113,8 @@ _install_vllm_metal() {
   local vllm_metal_ref="v0.2.0-20260528-103004"
   local tmp
   tmp="$(mktemp -d)"
-  trap 'rm -rf "$tmp"' RETURN
+  # shellcheck disable=SC2064
+  trap "rm -rf '${tmp}'" RETURN
 
   echo "=== vllm-metal Mac install into ${CONDA_PREFIX} ==="
 
@@ -151,12 +157,16 @@ PY
 }
 
 _run_bo_extras() {
-  if [[ -f "${MARKER_BO}" ]]; then
+  if [[ -f "${MARKER_BO}" ]] && [[ -f "${MARKER_PATCH}" ]] && [[ "$(cat "${MARKER_PATCH}")" == "${ENN_PATCH_ID}" ]]; then
     if "${PY}" -c 'from enn.enn.enn_fitter import ENNStatefulFitter; import LassoBench' 2>/dev/null; then
       return 0
     fi
     echo "=== repairing Mac BO extras (stale marker) ==="
-    rm -f "${MARKER_BO}"
+    rm -f "${MARKER_BO}" "${MARKER_PATCH}"
+  elif [[ -f "${MARKER_BO}" ]]; then
+    echo "=== rebuilding ennbo (patch ${ENN_PATCH_ID}) ==="
+    rm -rf "${CONDA_PREFIX}/lib/python3."*/site-packages/enn" "${CONDA_PREFIX}/lib/python3."*/site-packages/enn-"*.dist-info 2>/dev/null || true
+    rm -f "${MARKER_BO}" "${MARKER_PATCH}"
   fi
   echo "=== Mac BO/JAX extras (one-time) ==="
 
@@ -172,6 +182,7 @@ _run_bo_extras() {
 
   _pin_runtime
   _repair_faiss
+  echo "${ENN_PATCH_ID}" > "${MARKER_PATCH}"
   touch "${MARKER_BO}"
 }
 

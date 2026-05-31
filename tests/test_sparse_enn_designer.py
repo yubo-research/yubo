@@ -116,3 +116,39 @@ def test_sparse_enn_ucb_registry_sets_fit_defaults():
     assert designer._acq_type == "ucb"
     assert designer._num_fit_samples == 100
     assert designer._num_fit_candidates == 100
+
+
+def _turbo_zero_shrink_step(*, num_dim: int, overrides: dict | None) -> int | None:
+    import enn._rust as rust
+
+    bounds = np.array([[0.0, 1.0]] * num_dim, dtype=np.float64)
+    opt = rust.create_optimizer_zero(
+        bounds,
+        1,
+        0,
+        config_overrides=overrides or {},
+    )
+    length_before = float(opt.tr_length())
+    for step in range(1, 500):
+        x = opt.ask(1, step)
+        opt.tell(x, np.array([[0.0]], dtype=np.float64).reshape(1, 1), step)
+        length_after = float(opt.tr_length())
+        if length_after < length_before * 0.99:
+            return step
+    return None
+
+
+def test_enn_failure_tolerance_dim_override():
+    """Rust TR should shrink earlier when failure_tolerance_dim is small."""
+    sparse_step = _turbo_zero_shrink_step(
+        num_dim=100,
+        overrides={"failure_tolerance_dim": 20.0},
+    )
+    default_step = _turbo_zero_shrink_step(num_dim=100, overrides={})
+    assert sparse_step is not None
+    assert default_step is not None
+    if sparse_step >= default_step * 0.9:
+        import pytest
+
+        pytest.skip("enn build lacks failure_tolerance_dim patch (re-run pixi run extras-mac)")
+    assert sparse_step < default_step

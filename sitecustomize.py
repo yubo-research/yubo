@@ -53,3 +53,24 @@ if sys.platform == "darwin":
         pass
     else:
         import faiss  # noqa: F401
+
+# jaxmarl 0.0.2 still calls jax.tree_map; JAX 0.9 exposes jax.tree.map instead.
+try:
+    import jax
+
+    if not hasattr(jax, "tree_map") and hasattr(jax, "tree") and hasattr(jax.tree, "map"):
+        jax.tree_map = jax.tree.map  # type: ignore[attr-defined]
+except ImportError:
+    pass
+except Exception:
+    pass
+
+# Apply JAX MPS polyfills
+try:
+    from common.mps_compat import apply_mps_fixes
+
+    apply_mps_fixes()
+except ImportError:
+    pass
+except Exception:
+    pass
