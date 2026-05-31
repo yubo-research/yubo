@@ -438,7 +438,7 @@ def test_mujoco_playground_adapter_passes_valid_impl(monkeypatch) -> None:
             split=lambda key: ((key, "step"), (key, "reset")),
         ),
         lax=SimpleNamespace(
-            cond=lambda pred, true_fn, false_fn, operand: (true_fn(operand) if pred else false_fn(operand)),
+            cond=lambda pred, true_fn, false_fn, operand: true_fn(operand) if pred else false_fn(operand),
         ),
         tree_util=SimpleNamespace(tree_leaves=lambda value: [value]),
     )

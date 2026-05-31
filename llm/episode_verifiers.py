@@ -124,11 +124,27 @@ def _turn_from_message(message: Any, *, default_role: str) -> Turn:
     role = _field(source, "role", _field(message, "role", default_role))
     content = _content_text(source)
     name = _field(source, "name", _field(message, "name", None))
+    data = _turn_data_from_message(source, message)
     return Turn(
         kind=str(role or default_role),
         text=content,
         name=None if name is None else str(name),
+        data=data,
     )
+
+
+def _turn_data_from_message(source: Any, message: Any) -> dict[str, Any]:
+    data: dict[str, Any] = {}
+    for key in ("reasoning_content", "tool_calls", "finish_reason", "is_truncated", "tool_call_id"):
+        value = _field(source, key, _field(message, key, None))
+        if value is not None:
+            data[key] = value
+    extra = _field(source, "data", _field(message, "data", None))
+    if isinstance(extra, dict):
+        for key, value in extra.items():
+            if value is not None and key not in data:
+                data[key] = value
+    return data
 
 
 def _content_text(message: Any) -> str:

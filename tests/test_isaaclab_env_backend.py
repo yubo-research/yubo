@@ -154,7 +154,7 @@ def test_isaaclab_video_build_problem_reaches_space_resolution(monkeypatch):
     monkeypatch.setattr(
         mod,
         "get_isaaclab_session",
-        lambda **kwargs: (calls.append(kwargs) or IsaacLabSession(app=None, gym=fake_gym)),
+        lambda **kwargs: calls.append(kwargs) or IsaacLabSession(app=None, gym=fake_gym),
     )
     monkeypatch.setattr(
         mod,

@@ -57,6 +57,15 @@ class EggRollJAXVectorObjective:
     def decode_params(self, x):
         return self._runtime.codec.decode_absolute(x)
 
+    def copy_vector(self, x):
+        return self._runtime.copy_vector(x)
+
+    def stack_vectors(self, xs):
+        return self._runtime.stack_vectors(xs)
+
+    def zeros_vector(self, dim: int):
+        return self._runtime.zeros_vector(dim)
+
     def make_policy(self, x: np.ndarray):
         return self._runtime.make_policy(x, attr_name="_eggroll_uhd_x")
 

@@ -54,10 +54,10 @@ class EggRollRuntimeEmbedder:
 
     def embed_many(self, x_batch: np.ndarray) -> np.ndarray:
         self._ensure_built()
-        x_batch = np.asarray(x_batch, dtype=np.float64)
+        x_batch = self._runtime.to_vector_batch(x_batch)
         assert self._embed_batch_jit is not None
-        z = self._embed_batch_jit(self._runtime.jnp.asarray(x_batch, dtype=self._runtime.jnp.float32))
+        z = self._embed_batch_jit(x_batch)
         return np.asarray(self._runtime.jax.block_until_ready(z), dtype=np.float64)
 
     def embed(self, x: np.ndarray) -> np.ndarray:
-        return self.embed_many(np.asarray([x], dtype=np.float64))[0]
+        return self.embed_many(self._runtime.stack_vectors((x,)))[0]

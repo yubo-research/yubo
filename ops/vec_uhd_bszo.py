@@ -6,6 +6,7 @@ from dataclasses import dataclass
 import numpy as np
 
 from ops.uhd_config import UHDConfig
+from ops.vec_uhd_arrays import copy_vector, stack_vectors
 from ops.vec_uhd_be import be_pick_candidate
 from ops.vec_uhd_common import (
     _format_source_best_suffix,
@@ -29,9 +30,9 @@ from problems.uhd_obj_types import UHDVectorObjective
 
 @dataclass
 class _BSZOState:
-    x: np.ndarray
-    best_x: np.ndarray
-    best_x_real: np.ndarray
+    x: object
+    best_x: object
+    best_x_real: object
     y_best: float | None
     y_best_real: float | None
     y_best_pred: float | None
@@ -56,7 +57,6 @@ def _run_bszo(objective: UHDVectorObjective, cfg: UHDConfig) -> None:
     for step in range(int(cfg.num_rounds)):
         epsilon = float(adapter.sigma)
         y_best_before = state.y_best
-        mu0, z_base = _bszo_eval_base(objective, state, use_be=use_be, imputer=imputer)
         perturb_base = _bszo_perturb_base(objective, cfg, state, use_be=use_be, epsilon=epsilon)
         kf = _KalmanFilter(
             int(cfg.bszo_k),
@@ -65,18 +65,22 @@ def _run_bszo(objective: UHDVectorObjective, cfg: UHDConfig) -> None:
             float(cfg.bszo_alpha),
         )
         kf.init_step()
-        noises = _bszo_eval_directions(
-            objective,
-            cfg,
-            state,
-            kf,
-            perturb_base,
-            mu0,
-            z_base,
-            epsilon,
-            use_be=use_be,
-            imputer=imputer,
-        )
+        if imputer is None and hasattr(objective, "evaluate_many_common_seed"):
+            noises = _bszo_eval_batch(objective, cfg, state, kf, perturb_base, epsilon, use_be=use_be)
+        else:
+            mu0, z_base = _bszo_eval_base(objective, state, use_be=use_be, imputer=imputer)
+            noises = _bszo_eval_directions(
+                objective,
+                cfg,
+                state,
+                kf,
+                perturb_base,
+                mu0,
+                z_base,
+                epsilon,
+                use_be=use_be,
+                imputer=imputer,
+            )
         kf.adaptive_step()
         _bszo_apply_update(cfg, state, kf, noises)
         improved = y_best_before is not None and state.y_best is not None and float(state.y_best) > float(y_best_before)
@@ -109,8 +113,8 @@ def _new_bszo_state(objective: UHDVectorObjective) -> _BSZOState:
     x = objective.x0
     return _BSZOState(
         x=x,
-        best_x=x.copy(),
-        best_x_real=x.copy(),
+        best_x=copy_vector(objective, x),
+        best_x_real=copy_vector(objective, x),
         y_best=None,
         y_best_real=None,
         y_best_pred=None,
@@ -142,11 +146,48 @@ def _bszo_eval_base(
     state.last_imputed = False
     state.num_imputed_step = 0
     z_base = objective.embed(state.x) if use_be or imputer is not None else None
-    _track_bszo_best(state, state.x, float(mu0))
+    _track_bszo_best(objective, state, state.x, float(mu0))
     if imputer is not None:
         assert z_base is not None
         imputer.tell_base(z_base=np.asarray(z_base, dtype=np.float64), mu0=float(mu0))
     return float(mu0), z_base
+
+
+def _bszo_eval_batch(
+    objective: UHDVectorObjective,
+    cfg: UHDConfig,
+    state: _BSZOState,
+    kf,
+    perturb_base: int,
+    epsilon: float,
+    *,
+    use_be: bool,
+) -> list[np.ndarray]:
+    noises = [_noise(objective, cfg, int(perturb_base) + j, x=state.x) for j in range(int(cfg.bszo_k))]
+    candidates = stack_vectors(objective, [state.x, *(state.x + float(epsilon) * noise for noise in noises)])
+    means, ses = objective.evaluate_many_common_seed(candidates, seed=state.eval_seed)
+    embeddings = objective.embed_many(candidates) if use_be else None
+
+    state.last_imputed = False
+    state.num_imputed_step = 0
+    mu0 = float(means[0])
+    state.last_mu, state.last_se = mu0, float(ses[0])
+    _track_bszo_best(objective, state, state.x, mu0)
+
+    for j, noise in enumerate(noises):
+        mu = float(means[j + 1])
+        state.last_mu, state.last_se = mu, float(ses[j + 1])
+        x_eval = candidates[j + 1]
+        _track_bszo_best(objective, state, x_eval, mu)
+        y_i = (mu - mu0) / float(epsilon)
+        if use_be:
+            assert embeddings is not None
+            _record_be(state.be_state, embeddings[j + 1], y_i)
+        kf.Y[j] = y_i
+        kf.update_coord(j, y_i)
+        kf.last_d_idx = j
+        kf.last_y = y_i
+    return noises
 
 
 def _bszo_perturb_base(
@@ -225,7 +266,7 @@ def _bszo_eval_direction(
     state.last_imputed = imputed
     state.num_imputed_step += int(imputed)
     state.last_mu, state.last_se = float(mu), float(se)
-    _track_bszo_best(state, x_eval, float(mu))
+    _track_bszo_best(objective, state, x_eval, float(mu))
     y_i = (float(mu) - float(mu0)) / float(epsilon)
     if use_be and not imputed:
         _record_be(state.be_state, z_eval, y_i)
@@ -276,9 +317,9 @@ def _bszo_eval_or_impute(
     return False, float(mu), float(se)
 
 
-def _track_bszo_best(state: _BSZOState, x_eval: np.ndarray, mu: float) -> None:
-    _track_legacy_best(state, x_eval, float(mu))
-    _track_source_best(state, x_eval, float(mu), imputed=state.last_imputed)
+def _track_bszo_best(objective: UHDVectorObjective, state: _BSZOState, x_eval: np.ndarray, mu: float) -> None:
+    _track_legacy_best(objective, state, x_eval, float(mu))
+    _track_source_best(objective, state, x_eval, float(mu), imputed=state.last_imputed)
 
 
 def _bszo_apply_update(cfg: UHDConfig, state: _BSZOState, kf, noises: list[np.ndarray]) -> None:
@@ -298,7 +339,10 @@ def _select_bszo_be_base(
 ) -> tuple[int, int]:
     k = int(cfg.bszo_k)
     bases = [int(base) + j * k for j in range(int(cfg.be.num_candidates))]
-    candidates = np.stack([x + float(epsilon) * _noise(objective, cfg, b, x=x) for b in bases])
+    candidates = stack_vectors(
+        objective,
+        [x + float(epsilon) * _noise(objective, cfg, b, x=x) for b in bases],
+    )
     sim_pick = be_pick_candidate(objective, candidates, seed=int(base))
     if sim_pick is not None:
         best, _, _ = sim_pick

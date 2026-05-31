@@ -33,7 +33,8 @@ class EggRollRuntimeEvaluator:
                 key_t, action_key, env_key = jax.random.split(key_t, 3)
                 policy_dist = model_cls.forward(noiser, None, None, frozen_params, params, es_tree_key, None, obs_t)
                 action = rt.action_selector.select_action(policy_dist, action_key)
-                next_obs, next_state, reward, next_done, _info = env_adapter.step(env_key, state_t, env_adapter.clip_action(action))
+                next_obs, next_state, reward, terminated, truncated, _info = env_adapter.step(env_key, state_t, env_adapter.clip_action(action))
+                next_done = jnp.logical_or(terminated.astype(bool), truncated.astype(bool))
                 transition = (
                     obs_t,
                     state_t,
@@ -87,19 +88,19 @@ class EggRollRuntimeEvaluator:
         return keys.reshape((int(num_candidates), self._runtime.num_envs))
 
     def evaluate(self, x: np.ndarray, *, seed: int) -> tuple[float, float]:
-        means, ses = self.evaluate_many(np.asarray([x], dtype=np.float64), seed=int(seed))
+        means, ses = self.evaluate_many(self._runtime.stack_vectors((x,)), seed=int(seed))
         return float(means[0]), float(ses[0])
 
     def evaluate_many(self, x_batch: np.ndarray, *, seed: int) -> tuple[np.ndarray, np.ndarray]:
-        x_batch = np.asarray(x_batch, dtype=np.float64)
+        x_batch = self._runtime.to_vector_batch(x_batch)
         return self.evaluate_many_with_keys(x_batch, self.keys_for_seed(int(seed), int(x_batch.shape[0])))
 
     def evaluate_many_with_keys(self, x_batch: np.ndarray, keys_batch) -> tuple[np.ndarray, np.ndarray]:
         rt = self._runtime
-        x_batch = np.asarray(x_batch, dtype=np.float64)
+        x_batch = rt.to_vector_batch(x_batch)
         if x_batch.ndim != 2 or x_batch.shape[1] != rt.dim:
             raise ValueError(f"x_batch must have shape (n, {rt.dim}), got {x_batch.shape}.")
-        means, ses = self._evaluate_batch_jit(rt.jnp.asarray(x_batch, dtype=rt.jnp.float32), keys_batch)
+        means, ses = self._evaluate_batch_jit(x_batch, keys_batch)
         means = np.asarray(rt.jax.block_until_ready(means), dtype=np.float64)
         ses = np.asarray(rt.jax.block_until_ready(ses), dtype=np.float64)
         return means, ses

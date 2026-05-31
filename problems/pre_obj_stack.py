@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import pickle
+import time
 import warnings
 from dataclasses import dataclass
+from importlib.resources import files
 from typing import Any
 
 from problems.pre_obj_specs import HyperscaleESPretrainSpec
@@ -50,6 +52,32 @@ def _require_stack() -> _HyperscaleESStack:
 
 def _log(message: str) -> None:
     print(f"UHD-HyperscaleES: {message}", flush=True)
+
+
+def _new_legacy_tokenizer(stack: _HyperscaleESStack):
+    try:
+        return stack.legacy_tokenizer_cls()
+    except FileNotFoundError as exc:
+        from hyperscalees.models.llm.tokenizer import RWKV_TOKENIZER
+
+        vocab = files("pyrwkv_tokenizer").joinpath("rwkv_vocab_v20230424.txt")
+        if not vocab.is_file():
+            raise FileNotFoundError(
+                "HyperscaleES omitted rwkv_vocab_v20230424.txt from its installed package and the pyrwkv-tokenizer fallback is unavailable."
+            ) from exc
+        _log("using pyrwkv-tokenizer vocab fallback for upstream legacy tokenizer")
+        tokenizer = stack.legacy_tokenizer_cls.__new__(stack.legacy_tokenizer_cls)
+        tokenizer.tok = RWKV_TOKENIZER(str(vocab))
+        return tokenizer
+
+
+def _place_model_params(stack: _HyperscaleESStack, full_params):
+    target = stack.jax.devices()[0]
+    t0 = time.perf_counter()
+    params = stack.jax.device_put(full_params.params, target)
+    params = stack.jax.block_until_ready(params)
+    _log(f"model params ready device={target} dt={time.perf_counter() - t0:.2f}s")
+    return full_params._replace(params=params)
 
 
 def _load_hyperscalees_model(get_model, spec: HyperscaleESPretrainSpec):

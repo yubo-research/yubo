@@ -23,6 +23,7 @@ class NanoEggPretrainVectorObjective:
         self.cfg = cfg
         self.spec = resolve_nanoegg_pretrain_spec(cfg.env_tag, cfg.policy_tag)
         self._objective = build_nanoegg_uhd_objective(cfg=cfg, spec=self.spec)
+        self._vectorize = bool(getattr(self._objective, "_vectorize", False))
         self._embed_indices: np.ndarray | None = None
 
     @property
@@ -59,6 +60,13 @@ class NanoEggPretrainVectorObjective:
             mus, ses = evaluate_many(np.asarray(x_batch, dtype=np.float64), seed=int(seed))
             return np.asarray(mus, dtype=np.float64), np.asarray(ses, dtype=np.float64)
         return evaluate_many_serial(self.evaluate, x_batch, seed=seed)
+
+    def evaluate_many_common_seed(self, x_batch: np.ndarray, *, seed: int) -> tuple[np.ndarray, np.ndarray]:
+        evaluate_many = getattr(self._objective, "evaluate_many_common_seed", None)
+        if callable(evaluate_many):
+            mus, ses = evaluate_many(np.asarray(x_batch, dtype=np.float64), seed=int(seed))
+            return np.asarray(mus, dtype=np.float64), np.asarray(ses, dtype=np.float64)
+        return self.evaluate_many(x_batch, seed=seed)
 
     def configure_embedding(self, num_probes: int) -> None:
         configure_embedding = getattr(self._objective, "configure_embedding", None)

@@ -63,7 +63,7 @@ def test_kiss_bridge_modal_batches_batches_all_branches(monkeypatch, capsys):
     Fn = type(
         "Fn",
         (),
-        {"spawn": lambda self: (spawn_count.__setitem__("count", spawn_count["count"] + 1) or None)},
+        {"spawn": lambda self: spawn_count.__setitem__("count", spawn_count["count"] + 1) or None},
     )
     Func = type("Func", (), {"lookup": staticmethod(lambda *_a, **_k: Fn())})
     monkeypatch.setattr(

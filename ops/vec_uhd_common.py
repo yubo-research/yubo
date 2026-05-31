@@ -5,6 +5,7 @@ from typing import Any
 import numpy as np
 
 from ops.uhd_config import UHDConfig
+from ops.vec_uhd_arrays import copy_vector
 from optimizer.step_size_adapter import StepSizeAdapter
 
 
@@ -30,7 +31,7 @@ def _sample_sigmas(
     return np.exp(rng.uniform(lo, hi, size=int(n))).astype(np.float64)
 
 
-def _noise(objective: Any, cfg: UHDConfig, seed: int, *, x: np.ndarray | None = None) -> np.ndarray:
+def _noise(objective: Any, cfg: UHDConfig, seed: int, *, x: Any | None = None) -> Any:
     if cfg.perturb_backend == "eggroll":
         if x is None:
             raise ValueError("EggRoll noiser perturbations require the current flat vector x.")
@@ -59,14 +60,14 @@ def _record_be(state: dict, z: np.ndarray | None, y: float) -> None:
     state["phase_since_fit"] += 1
 
 
-def _track_legacy_best(state: Any, x_eval: np.ndarray, mu: float) -> None:
+def _track_legacy_best(objective: Any, state: Any, x_eval: Any, mu: float) -> None:
     if state.y_best is not None and float(mu) <= float(state.y_best):
         return
     state.y_best = float(mu)
-    state.best_x = x_eval.copy()
+    state.best_x = copy_vector(objective, x_eval)
 
 
-def _track_source_best(state: Any, x_eval: np.ndarray, mu: float, *, imputed: bool) -> None:
+def _track_source_best(objective: Any, state: Any, x_eval: Any, mu: float, *, imputed: bool) -> None:
     if imputed:
         if state.y_best_pred is None or float(mu) > float(state.y_best_pred):
             state.y_best_pred = float(mu)
@@ -74,7 +75,7 @@ def _track_source_best(state: Any, x_eval: np.ndarray, mu: float, *, imputed: bo
     if state.y_best_real is not None and float(mu) <= float(state.y_best_real):
         return
     state.y_best_real = float(mu)
-    state.best_x_real = x_eval.copy()
+    state.best_x_real = copy_vector(objective, x_eval)
 
 
 def _format_source_best_suffix(state: Any, enabled: bool) -> str:

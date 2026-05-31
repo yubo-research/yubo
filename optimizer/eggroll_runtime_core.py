@@ -69,6 +69,7 @@ class EggRollParamCodec:
         self.offsets = tuple(np.cumsum((0,) + self.sizes[:-1]).astype(np.int64).tolist())
         self.dim = int(sum(self.sizes))
         self.x0 = self.flatten(params_init)
+        self.x0_device = self.flatten_device(params_init)
 
     def flatten(self, params) -> np.ndarray:
         leaves, _treedef = self._jax.tree_util.tree_flatten(params)
@@ -76,6 +77,13 @@ class EggRollParamCodec:
         if not flat:
             return np.empty((0,), dtype=np.float64)
         return np.concatenate(flat, axis=0)
+
+    def flatten_device(self, params):
+        leaves, _treedef = self._jax.tree_util.tree_flatten(params)
+        flat = [self._jnp.reshape(leaf, (-1,)).astype(self._jnp.float32) for leaf in leaves]
+        if not flat:
+            return self._jnp.empty((0,), dtype=self._jnp.float32)
+        return self._jnp.concatenate(flat, axis=0)
 
     def decode_absolute(self, x):
         leaves = []

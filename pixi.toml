@@ -64,7 +64,7 @@ LD_LIBRARY_PATH = "$CONDA_PREFIX/lib:/usr/lib/x86_64-linux-gnu${LD_LIBRARY_PATH:
 [feature.hyperscalees.target.osx-arm64.activation.env]
 HF_HOME = "${HOME}/.cache/yubo/hyperscalees"
 HF_HUB_CACHE = "${HOME}/.cache/yubo/hyperscalees"
-JAX_PLATFORMS = "cpu"
+JAX_PLATFORMS = "mps,cpu"
 KMP_DUPLICATE_LIB_OK = "TRUE"
 DYLD_LIBRARY_PATH = "$CONDA_PREFIX/lib${DYLD_LIBRARY_PATH:+:$DYLD_LIBRARY_PATH}"
 PYTHONPATH = "${PIXI_PROJECT_ROOT}${PYTHONPATH:+:${PYTHONPATH}}"
@@ -82,11 +82,13 @@ pyrwkv-tokenizer = "*"
 hydra-core = "*"
 fire = "*"
 jupyter = "*"
+rich = "==15.0.0"
 reasoning-gym = "*"
 math-verify = { version = "==0.9.0", extras = ["antlr4_9_3"] }
 antlr4-python3-runtime = "==4.9.3"
 verifiers = { git = "https://github.com/PrimeIntellect-ai/verifiers.git" }
 gsm8k = { git = "https://github.com/PrimeIntellect-ai/verifiers.git", subdirectory = "environments/gsm8k" }
+renderers = "*"
 peft = "==0.18.0"
 transformers = "==4.57.1"
 accelerate = "==1.11.0"

@@ -34,6 +34,7 @@ class JaxMARLAdapter:
     }
 
     def __init__(self, env_name: str, *, jax, jnp) -> None:
+        _apply_jaxmarl_compat(jax)
         import jaxmarl
         from gymnax.environments import spaces
 
@@ -127,3 +128,9 @@ class JaxMARLAdapter:
         for idx, (agent, size) in enumerate(zip(self.agents, self._action_sizes, strict=True)):
             out[agent] = self._jnp.clip(action[idx], 0, int(size) - 1)
         return out
+
+
+def _apply_jaxmarl_compat(jax) -> None:
+    # jaxmarl 0.0.2 still calls jax.tree_map; JAX 0.9 exposes jax.tree.map instead.
+    if not hasattr(jax, "tree_map") and hasattr(jax, "tree") and hasattr(jax.tree, "map"):
+        jax.tree_map = jax.tree.map

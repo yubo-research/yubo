@@ -69,6 +69,31 @@ def test_subspace_codec_zero_decode_returns_base_params_and_respects_lora_map():
     np.testing.assert_allclose(np.asarray(decoded["full"]), np.ones((8,), dtype=np.float32))
 
 
+def test_subspace_codec_device_decode_matches_host_decode():
+    jax = pytest.importorskip("jax")
+    jnp = pytest.importorskip("jax.numpy")
+    from problems.pre_obj import _SubspaceParamCodec
+
+    params = {"lora": jnp.ones((8,), dtype=jnp.float32)}
+    codec = _SubspaceParamCodec(
+        jax,
+        jnp,
+        params,
+        es_map={"lora": 1},
+        dim=4,
+        delta_scale=0.5,
+        seed=0,
+        lora_only=True,
+        basis_max_leaves=None,
+    )
+    x = np.asarray([0.0, 1.0, -2.0, 3.0], dtype=np.float64)
+
+    host = codec.decode(x)
+    device = jax.jit(codec.decode_device)(jnp.asarray(x, dtype=jnp.float32))
+
+    np.testing.assert_allclose(np.asarray(device["lora"]), np.asarray(host["lora"]))
+
+
 def test_resolve_hyperscalees_pretrain_spec_supports_all_upstream_task_families():
     from problems.pre_obj import (
         resolve_hyperscalees_pretrain_spec,

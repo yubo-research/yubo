@@ -10,13 +10,12 @@ from problems.pre_obj_specs import (
     HyperscaleESPretrainSpec,
     resolve_hyperscalees_pretrain_spec,
 )
-from problems.pre_obj_stack import _load_hyperscalees_model, _log, _require_stack
+from problems.pre_obj_stack import _load_hyperscalees_model, _log, _new_legacy_tokenizer, _place_model_params, _require_stack
 from problems.pre_obj_subspace import _SubspaceParamCodec
-from problems.pre_obj_validate import _build_validate, _ValidateContext
+from problems.pre_obj_validate import _build_validate_coeff_batch, _ValidateContext
 from problems.pre_obj_vector_helpers import (
     configure_embedding_indices,
     embed_many_with_indices,
-    evaluate_many_serial,
     sample_vector_noise,
 )
 
@@ -31,6 +30,7 @@ class HyperscaleESLLMVectorObjective:
         self.jax = stack.jax
         self.jnp = stack.jnp
         self._eval_count = 0
+        self._vectorize = True
 
         if cfg.pretrain_rwkv_type is not None:
             self.spec = HyperscaleESPretrainSpec(
@@ -50,6 +50,7 @@ class HyperscaleESLLMVectorObjective:
         t0 = time.perf_counter()
         rwkv, full_params, tokenizer = _load_hyperscalees_model(stack.get_model, self.spec)
         _log(f"model loaded dt={time.perf_counter() - t0:.2f}s")
+        full_params = _place_model_params(stack, full_params)
         config, params, scan_map, es_map = full_params
         seed = (0 if cfg.problem_seed is None else int(cfg.problem_seed)) + int(cfg.seed_offset)
         key = stack.jax.random.key(seed & 0xFFFFFFFF)
@@ -57,7 +58,7 @@ class HyperscaleESLLMVectorObjective:
         t0 = time.perf_counter()
         base_evo_keys = stack.simple_es_tree_key(params, stack.jax.random.fold_in(key, 1), scan_map)
         _log(f"ES key tree ready dt={time.perf_counter() - t0:.2f}s")
-        legacy_tokenizer = stack.legacy_tokenizer_cls() if self.spec.model_choice.startswith("7") else tokenizer
+        legacy_tokenizer = _new_legacy_tokenizer(stack) if self.spec.model_choice.startswith("7") else tokenizer
 
         t0 = time.perf_counter()
         self._codec = _SubspaceParamCodec(
@@ -87,7 +88,7 @@ class HyperscaleESLLMVectorObjective:
         self._num_validation_samples = int(args.parallel_validations) * int(args.validation_iterations)
         _log(f"building validation task={args.task} parallel_validations={args.parallel_validations} validation_iterations={args.validation_iterations}")
         t0 = time.perf_counter()
-        self._validate = _build_validate(
+        self._validate_many = _build_validate_coeff_batch(
             _ValidateContext(
                 stack=stack,
                 model=rwkv,
@@ -99,8 +100,7 @@ class HyperscaleESLLMVectorObjective:
                 legacy_tokenizer=legacy_tokenizer,
                 args=args,
             ),
-            temperature=0.0,
-            use_validation_set=True,
+            self._codec,
             noiser_cls=stack.noiser_cls,
             sigma=0.0,
         )
@@ -127,24 +127,30 @@ class HyperscaleESLLMVectorObjective:
         return SimpleNamespace(_hyperscalees_pretrain_x=np.asarray(x, dtype=np.float64).copy())
 
     def evaluate(self, x: np.ndarray, *, seed: int) -> tuple[float, float]:
-        x_arr = np.asarray(x, dtype=np.float64)
-        trace_eval = self._eval_count < 5
-        if trace_eval:
-            _log(f"eval start eval={self._eval_count} seed={int(seed)} active_coeffs={int(np.count_nonzero(x_arr))}")
-        t0 = time.perf_counter()
-        params = self._codec.decode(x_arr)
-        score = float(self._validate(params, int(seed)))
-        if trace_eval:
-            _log(f"eval done eval={self._eval_count} dt={time.perf_counter() - t0:.2f}s score={score:.6f}")
-        self._eval_count += 1
-        if 0.0 <= score <= 1.0 and self._num_validation_samples > 0:
-            se = float((score * (1.0 - score) / self._num_validation_samples) ** 0.5)
-        else:
-            se = 0.0
-        return score, se
+        means, ses = self.evaluate_many_common_seed(np.asarray([x], dtype=np.float64), seed=seed)
+        return float(means[0]), float(ses[0])
 
     def evaluate_many(self, x_batch: np.ndarray, *, seed: int) -> tuple[np.ndarray, np.ndarray]:
-        return evaluate_many_serial(self.evaluate, x_batch, seed=seed)
+        return self.evaluate_many_common_seed(x_batch, seed=seed)
+
+    def evaluate_many_common_seed(self, x_batch: np.ndarray, *, seed: int) -> tuple[np.ndarray, np.ndarray]:
+        x_arr = np.asarray(x_batch, dtype=np.float64)
+        if x_arr.ndim != 2 or x_arr.shape[1] != self.dim:
+            raise ValueError(f"x_batch must have shape (n, {self.dim}), got {x_arr.shape}.")
+        trace_eval = self._eval_count < 5
+        if trace_eval:
+            active = [int(v) for v in np.count_nonzero(x_arr, axis=1)]
+            _log(f"eval batch start eval={self._eval_count} candidates={len(x_arr)} seed={int(seed)} active_coeffs={active}")
+        t0 = time.perf_counter()
+        scores = np.asarray(self.jax.device_get(self._validate_many(x_arr, int(seed))), dtype=np.float64)
+        if trace_eval:
+            _log(f"eval batch done eval={self._eval_count} dt={time.perf_counter() - t0:.2f}s scores={scores.tolist()}")
+        self._eval_count += len(x_arr)
+        ses = np.zeros_like(scores)
+        valid = (0.0 <= scores) & (scores <= 1.0)
+        if self._num_validation_samples > 0:
+            ses[valid] = np.sqrt(scores[valid] * (1.0 - scores[valid]) / self._num_validation_samples)
+        return scores, ses
 
     def configure_embedding(self, num_probes: int) -> None:
         self._embed_indices = configure_embedding_indices(self.dim, num_probes)

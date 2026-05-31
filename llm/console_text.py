@@ -12,11 +12,40 @@ def classify_console_line(line: str) -> str:
     stripped = line.strip()
     if not stripped:
         return "diagnostics"
-    if stripped.startswith(("PROMPT:", "REWARD:", "TRAJECTORY:", "Model:", "Tool [", ">>>")):
+    stripped = _strip_channel_prefix(stripped)
+    if stripped.startswith(
+        (
+            "CASE:",
+            "SUMMARY:",
+            "PROMPT:",
+            "REWARD:",
+            "STATUS:",
+            "METRICS:",
+            "TRACE:",
+            "TRAJECTORY:",
+            "Model:",
+            "Tool [",
+            "TOOL [",
+            "ASSISTANT:",
+            "ASSISTANT_",
+            "SYSTEM:",
+            "USER:",
+            "TOOL_",
+            ">>>",
+        )
+    ):
         return "inference"
     if stripped.startswith(_TRAIN_PREFIXES):
         return "train"
     return "diagnostics"
+
+
+def _strip_channel_prefix(line: str) -> str:
+    lowered = line.lower()
+    for prefix in ("train |", "model |", "diag |", "diagnostics |", "inference |"):
+        if lowered.startswith(prefix):
+            return line.split("|", 1)[1].lstrip()
+    return line
 
 
 def clean_text(text: str) -> str:

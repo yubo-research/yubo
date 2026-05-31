@@ -69,7 +69,15 @@ class TextObjective:
         adapter_path = _materialize_adapter_cached(self, np.asarray(x, dtype=np.float64), x_hash=x_hash)
 
         try:
-            fitnesses, logs = _generate_fitnesses(self, runtime, prompts, answers, adapter_path, int(seed), x_hash=x_hash)
+            fitnesses, logs = _generate_fitnesses(
+                self,
+                runtime,
+                prompts,
+                answers,
+                adapter_path,
+                int(seed),
+                x_hash=x_hash,
+            )
             self.last_logs = logs
         finally:
             with self._lock:
@@ -80,7 +88,9 @@ class TextObjective:
         values = np.asarray(fitnesses, dtype=np.float64)
         if values.size == 0:
             return 0.0, 0.0
-        return float(np.mean(values)), _standard_error(values)
+        mu = float(np.mean(values))
+        se = _standard_error(values)
+        return mu, se
 
     def evaluate_many(self, x_batch: np.ndarray, *, seed: int) -> tuple[np.ndarray, np.ndarray]:
         import concurrent.futures

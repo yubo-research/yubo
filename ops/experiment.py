@@ -7,8 +7,6 @@ from pathlib import Path
 
 import click
 
-import common.mps_compat  # noqa: F401
-
 
 def _ensure_repo_root_on_path() -> Path:
     # When running as `./experiment/experiment.py`, sys.path[0] is this directory,

@@ -31,8 +31,8 @@ class EggrollVLLMActor:
         cfg = config if config is not None else VLLMActorConfig.from_kwargs(**kwargs)
         set_vllm_env_defaults()
 
-        self.llm = external_import("v", "llm").LLM(**get_llm_kwargs(cfg))
         self.rank = 0
+        self.llm = external_import("v", "llm").LLM(**get_llm_kwargs(cfg))
         self.adapter_root = Path(os.getenv("YUBO_LORA_POPULATION_PATH", "/dev/shm/yubo_llm_lora_population"))
         self.peft_state_dict = None
         self.peft_shapes_dict = None
@@ -278,12 +278,12 @@ class AsyncTextVLLMActor(EggrollVLLMActor):
         from vllm.engine.arg_utils import AsyncEngineArgs
         from vllm.engine.async_llm_engine import AsyncLLMEngine
 
+        self.rank = 0
         # Async engine does not support Ray distributed backend natively without specific args,
         # but the collective_rpc extension bridges this gap.
         engine_args = AsyncEngineArgs(**get_llm_kwargs(cfg))
         self.llm = AsyncLLMEngine.from_engine_args(engine_args)
 
-        self.rank = 0
         self.adapter_root = Path(os.getenv("YUBO_LORA_POPULATION_PATH", "/dev/shm/yubo_llm_lora_population"))
         self.peft_state_dict = None
         self.peft_shapes_dict = None

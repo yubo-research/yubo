@@ -132,3 +132,55 @@ def _build_validate(
         return total_score / (parallel_validations * int(ctx.args.validation_iterations))
 
     return validate
+
+
+def _build_validate_coeff_batch(validate_ctx: _ValidateContext, codec, *, noiser_cls, sigma: float = 0.0):
+    jax = validate_ctx.stack.jax
+    jnp = validate_ctx.stack.jnp
+    frozen_noiser_params, noiser_params = noiser_cls.init_noiser(validate_ctx.params_example, float(sigma), 0.0)
+    task = validate_ctx.stack.validation_tasks[validate_ctx.args.task](
+        validate_ctx.tokenizer,
+        validate_ctx.legacy_tokenizer,
+        int(validate_ctx.args.generation_length),
+    )
+    generate_thread = _build_generate_thread(
+        _GenerateThreadContext(
+            stack=validate_ctx.stack,
+            model=validate_ctx.model,
+            noiser=noiser_cls,
+            frozen_noiser_params=frozen_noiser_params,
+            config=validate_ctx.config,
+            base_evo_keys=validate_ctx.base_evo_keys,
+            master_gen_key=validate_ctx.master_gen_key,
+            temperature=0.0,
+        )
+    )
+    generate_prompt_batch = jax.vmap(generate_thread, in_axes=(None, None, 0, 0, None))
+    parallel_validations = int(validate_ctx.args.parallel_validations)
+
+    @jax.jit
+    def generate_coeff_batch(params, coeff_batch, prompts, indices, epoch):
+        def generate_coeff(coeffs):
+            candidate_params = codec.decode_device(coeffs, params=params)
+            return generate_prompt_batch(noiser_params, candidate_params, prompts, indices, epoch)
+
+        # Keep one decoded 2.9B tree live at a time while removing Python dispatch
+        # and host-side subspace decoding from the candidate loop.
+        return jax.lax.map(generate_coeff, coeff_batch)
+
+    def validate_many(coeff_batch, epoch: int):
+        coeff_batch = jnp.asarray(coeff_batch, dtype=jnp.float32)
+        if coeff_batch.ndim != 2 or coeff_batch.shape[1] != codec.dim:
+            raise ValueError(f"coeff_batch must have shape (n, {codec.dim}), got {coeff_batch.shape}.")
+        total_scores = jnp.zeros((coeff_batch.shape[0],), dtype=jnp.float32)
+        cpu = jax.local_devices(backend="cpu")[0]
+        for i in range(int(validate_ctx.args.validation_iterations)):
+            indices = jnp.arange(parallel_validations) + (i * parallel_validations)
+            prompts = task.get_input(indices)
+            output_batch = generate_coeff_batch(validate_ctx.params_example, coeff_batch, prompts, indices, int(epoch))
+            output_batch = jax.device_put(jax.block_until_ready(output_batch), cpu)
+            score_rows = [task.get_batch_fitness(jax.device_put(indices, cpu), candidate_outputs) for candidate_outputs in output_batch]
+            total_scores += jnp.asarray([jnp.sum(row) for row in score_rows])
+        return total_scores / (parallel_validations * int(validate_ctx.args.validation_iterations))
+
+    return validate_many

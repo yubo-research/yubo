@@ -58,6 +58,15 @@ class _NanoEggSubspaceCodec:
         self._basis_leaf = rng.choice(valid, size=self.dim, replace=True, p=probs).astype(np.int64)
         self._basis_index = np.asarray([rng.integers(sizes[leaf]) for leaf in self._basis_leaf], dtype=np.int64)
         self._basis_sign = rng.choice(np.asarray([-1.0, 1.0], dtype=np.float32), size=self.dim).astype(np.float32)
+        self._basis_leaf_positions = tuple(
+            (
+                int(leaf_idx),
+                self._jnp.asarray(np.flatnonzero(self._basis_leaf == leaf_idx), dtype=self._jnp.int32),
+            )
+            for leaf_idx in np.unique(self._basis_leaf)
+        )
+        self._basis_index_device = self._jnp.asarray(self._basis_index, dtype=self._jnp.int32)
+        self._basis_sign_device = self._jnp.asarray(self._basis_sign, dtype=self._jnp.float32)
         self._base_noise_seed = int(seed)
         self.x0 = np.zeros((self.dim,), dtype=np.float64)
 
@@ -83,6 +92,20 @@ class _NanoEggSubspaceCodec:
             ).astype(self._jnp.int32)
             updated = self._jnp.clip(flat.astype(self._jnp.int32).at[idx].add(values), -_MAX_INT8, _MAX_INT8).astype(leaf.dtype)
             leaves[int(leaf_idx)] = updated.reshape(leaf.shape)
+        return self._jax.tree_util.tree_unflatten(self._treedef, leaves)
+
+    def decode_device(self, x, params=None):
+        coeffs = self._jnp.asarray(x, dtype=self._jnp.float32).reshape(-1)
+        if coeffs.shape[0] != self.dim:
+            raise ValueError(f"x must have shape ({self.dim},), got {coeffs.shape}.")
+        leaves = list(self._leaves if params is None else self._jax.tree_util.tree_leaves(params))
+        for leaf_idx, positions in self._basis_leaf_positions:
+            leaf = leaves[leaf_idx]
+            flat = self._jnp.reshape(leaf, (-1,))
+            idx = self._basis_index_device[positions]
+            values = self._jnp.rint(coeffs[positions] * self._basis_sign_device[positions] * self.delta_scale).astype(self._jnp.int32)
+            updated = self._jnp.clip(flat.astype(self._jnp.int32).at[idx].add(values), -_MAX_INT8, _MAX_INT8).astype(leaf.dtype)
+            leaves[leaf_idx] = updated.reshape(leaf.shape)
         return self._jax.tree_util.tree_unflatten(self._treedef, leaves)
 
     def sample_eggroll_direction(

@@ -1,15 +1,19 @@
 from __future__ import annotations
 
 import io
+import subprocess
 import sys
+import threading
 from contextlib import redirect_stderr, redirect_stdout
+from pathlib import Path
 from typing import Any
 
 import click
 
 from common.im import im
+from llm.console_dashboard import run_console_dashboard
 from llm.console_observer import SplitConsoleObserver
-from llm.line_tee import LineRoutingTee, MultiStreamTee
+from llm.line_tee import MultiStreamTee
 
 
 def run_parsed_uhd_local(
@@ -18,6 +22,10 @@ def run_parsed_uhd_local(
     cfg: dict[str, Any] | None = None,
     results_dir: str = "results/uhd",
     workers: int = 1,
+    config_toml: str | None = None,
+    overrides: tuple[str, ...] = (),
+    dashboard: bool = False,
+    child_process: bool = False,
 ) -> None:
     if getattr(parsed, "num_reps", 1) > 1:
         batch_cfg = dict(cfg or {})
@@ -28,12 +36,29 @@ def run_parsed_uhd_local(
         im("ops.uhd_batch")._batch_local(batch_cfg, parsed.num_reps, results_dir, workers)
         return
     if getattr(parsed, "num_reps", 1) == 1:
-        _run_and_save_single_rep(parsed, cfg=cfg, results_dir=results_dir)
+        _run_and_save_single_rep(
+            parsed,
+            cfg=cfg,
+            results_dir=results_dir,
+            config_toml=config_toml,
+            overrides=overrides,
+            dashboard=dashboard,
+            child_process=child_process,
+        )
         return
     _run_parsed_uhd_direct(parsed)
 
 
-def _run_and_save_single_rep(parsed, *, cfg: dict[str, Any] | None, results_dir: str) -> None:
+def _run_and_save_single_rep(
+    parsed,
+    *,
+    cfg: dict[str, Any] | None,
+    results_dir: str,
+    config_toml: str | None = None,
+    overrides: tuple[str, ...] = (),
+    dashboard: bool = False,
+    child_process: bool = False,
+) -> None:
     batch_core = im("ops.uhd_batch_core")
 
     batch_cfg = dict(cfg or {})
@@ -41,6 +66,13 @@ def _run_and_save_single_rep(parsed, *, cfg: dict[str, Any] | None, results_dir:
     total_timesteps = getattr(parsed, "total_timesteps", None)
     if total_timesteps is not None:
         batch_cfg["total_timesteps"] = total_timesteps
+
+    use_dashboard = _use_dashboard_console(
+        dashboard=dashboard,
+        stream=sys.stdout,
+        child_process=child_process,
+        env_tag=getattr(parsed, "env_tag", None),
+    )
 
     exp_dir = batch_core._experiment_dir(results_dir, batch_cfg)
     batch_core._write_config(exp_dir, batch_cfg)
@@ -53,11 +85,14 @@ def _run_and_save_single_rep(parsed, *, cfg: dict[str, Any] | None, results_dir:
     _, problem_seed, noise_seed_0, tp = jobs[0]
 
     buf = io.StringIO()
-    if sys.stdout.isatty():
-        observer = SplitConsoleObserver(stream=sys.stdout, log_dir=exp_dir)
-        tee = _run_capture_stream(sys.stdout, buf, observer.route_line)
-        with observer, redirect_stdout(tee), redirect_stderr(sys.stderr):
-            _run_parsed_uhd_direct(parsed)
+    if use_dashboard:
+        _run_and_save_single_rep_dashboard(
+            results_dir=results_dir,
+            exp_dir=exp_dir,
+            buf=buf,
+            config_toml=config_toml,
+            overrides=overrides,
+        )
     else:
         tee = MultiStreamTee(sys.stdout, buf)
         with redirect_stdout(tee), redirect_stderr(sys.stderr):
@@ -73,39 +108,101 @@ def _run_and_save_single_rep(parsed, *, cfg: dict[str, Any] | None, results_dir:
     click.echo(f"Single-rep run saved to {exp_dir}")
 
 
-def _run_capture_stream(proxy_stream, raw_stream, route_line):
-    class _Capture:
-        def __init__(self):
-            self._router = LineRoutingTee(proxy_stream, route_line, echo=True)
+def _use_dashboard_console(
+    *,
+    dashboard: bool,
+    stream,
+    child_process: bool,
+    env_tag: str | None = None,
+) -> bool:
+    if child_process:
+        return False
+    if not dashboard:
+        return False
+    if not str(env_tag or "").startswith("llm:"):
+        raise click.ClickException("The UHD dashboard is only available for llm:* envs.")
+    return bool(hasattr(stream, "isatty") and stream.isatty())
 
-        def write(self, data):
-            raw_stream.write(data)
-            raw_stream.flush()
-            self._router.write(data)
 
-        def flush(self):
-            self._router.flush()
-            raw_stream.flush()
+def _run_and_save_single_rep_dashboard(
+    *,
+    results_dir: str,
+    exp_dir,
+    buf: io.StringIO,
+    config_toml: str | None,
+    overrides: tuple[str, ...],
+) -> None:
+    observer = SplitConsoleObserver(stream=None, log_dir=exp_dir, enable_tui=False)
+    done = threading.Event()
+    exc: list[BaseException] = []
 
-        def fileno(self):
-            return proxy_stream.fileno()
+    cmd = _child_run_command(config_toml, overrides=overrides, results_dir=results_dir)
+    proc = subprocess.Popen(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        bufsize=1,
+    )
 
-        def isatty(self):
-            return proxy_stream.isatty()
+    def _pump(stream, route):
+        try:
+            if stream is None:
+                return
+            for line in iter(stream.readline, ""):
+                clean = line.rstrip("\n")
+                buf.write(line)
+                route(clean)
+        except BaseException as err:  # noqa: BLE001
+            exc.append(err)
 
-        def writable(self):
-            method = getattr(proxy_stream, "writable", None)
-            return bool(method()) if method is not None else True
+    with observer:
+        stdout_thread = threading.Thread(target=_pump, args=(proc.stdout, observer.route_line), daemon=True)
+        stderr_thread = threading.Thread(target=_pump, args=(proc.stderr, observer.append_diagnostics), daemon=True)
+        stdout_thread.start()
+        stderr_thread.start()
 
-        @property
-        def encoding(self):
-            return getattr(proxy_stream, "encoding", None)
+        def _wait() -> None:
+            rc = proc.wait()
+            if rc != 0 and not exc:
+                exc.append(click.ClickException(f"UHD child process exited with status {rc}"))
+            done.set()
 
-        @property
-        def errors(self):
-            return getattr(proxy_stream, "errors", None)
+        waiter = threading.Thread(target=_wait, daemon=True)
+        waiter.start()
+        try:
+            run_console_dashboard(observer, title="UHD Console", done_event=done)
+        finally:
+            done.set()
+            stdout_thread.join(timeout=1)
+            stderr_thread.join(timeout=1)
+            waiter.join(timeout=1)
+    if exc:
+        raise exc[0]
 
-    return _Capture()
+
+def _child_run_command(
+    config_toml: str | None,
+    *,
+    overrides: tuple[str, ...],
+    results_dir: str,
+) -> list[str]:
+    if not config_toml:
+        raise click.ClickException("Internal error: dashboard launch requires config_toml")
+    config_toml = str(Path(config_toml).resolve())
+    cmd = [
+        sys.executable,
+        str(Path(__file__).resolve().with_name("exp_uhd.py")),
+        "local",
+        config_toml,
+        "--results-dir",
+        results_dir,
+        "--child-process",
+    ]
+    if overrides:
+        for override in overrides:
+            cmd.extend(["--opt", override])
+    return cmd
 
 
 def _run_parsed_uhd_direct(parsed) -> None:

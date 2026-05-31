@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import time
 
+from llm.console_render import format_signal_log
 from llm.episode_runtime import Episode, RuntimeConfig
 from llm.episode_types import Case, Signal, Turn
 
@@ -17,20 +18,7 @@ def failure_signal(case: Case, *, status: str, error: BaseException | str, rewar
 
 
 def signal_log(case: Case, signal: Signal) -> str:
-    chunks = [
-        f"PROMPT: {case.prompt}",
-        f"REWARD: {float(signal.reward)}",
-        f"STATUS: {signal.status}",
-        "TRAJECTORY:",
-    ]
-    for turn in signal.turns:
-        prefix = turn.kind.upper()
-        if turn.name:
-            prefix += f" [{turn.name}]"
-        chunks.append(f"{prefix}: {turn.text}")
-    if signal.error:
-        chunks.append(f"ERROR: {signal.error}")
-    return "\n".join(chunks)
+    return format_signal_log(case, signal)
 
 
 def summarize_signals(signals: list[Signal]) -> dict[str, float]:

@@ -9,8 +9,9 @@ from optimizer.eggroll_runtime_core import _DEFAULT_STACK_ERROR
 
 
 class EggRollNoiseSampler:
-    def __init__(self, codec) -> None:
-        self._codec = codec
+    def __init__(self, runtime) -> None:
+        self._runtime = runtime
+        self._codec = runtime.codec
 
     def sample(
         self,
@@ -18,46 +19,49 @@ class EggRollNoiseSampler:
         seed: int,
         num_dim_target: float | None = None,
         num_module_target: float | None = None,
-    ) -> np.ndarray:
-        rng = np.random.default_rng(int(seed))
+    ):
+        key = self._runtime.jax.random.key(int(seed) & 0xFFFFFFFF)
         if num_module_target is not None:
-            return self._sample_module_noise(rng, float(num_module_target))
+            return self._sample_module_noise(key, float(num_module_target))
         if num_dim_target is not None:
-            return self._sample_dim_noise(rng, float(num_dim_target))
-        return rng.standard_normal(self._codec.dim).astype(np.float64)
+            return self._sample_dim_noise(key, float(num_dim_target))
+        return self._runtime.jax.random.normal(key, (self._codec.dim,), dtype=self._runtime.jnp.float32)
 
-    def _sample_dim_noise(self, rng: np.random.Generator, target: float) -> np.ndarray:
+    def _sample_dim_noise(self, key, target: float):
         if target <= 0:
             raise ValueError("dim perturb target must be > 0.")
         if 0 < target < 1:
-            return self._sample_dim_fraction(rng, target)
+            return self._sample_dim_fraction(key, target)
         k = min(max(int(target), 1), self._codec.dim)
-        idx = rng.choice(self._codec.dim, size=k, replace=False)
-        noise = np.zeros(self._codec.dim, dtype=np.float64)
-        noise[idx] = rng.standard_normal(k)
-        return noise
+        idx_key, value_key = self._runtime.jax.random.split(key)
+        idx = self._runtime.jax.random.choice(idx_key, self._codec.dim, shape=(k,), replace=False)
+        values = self._runtime.jax.random.normal(value_key, (k,), dtype=self._runtime.jnp.float32)
+        return self._runtime.jnp.zeros((self._codec.dim,), dtype=self._runtime.jnp.float32).at[idx].set(values)
 
-    def _sample_module_noise(self, rng: np.random.Generator, target: float) -> np.ndarray:
+    def _sample_module_noise(self, key, target: float):
         if target <= 0:
             raise ValueError("module perturb target must be > 0.")
-        mask = self._module_mask(rng, target)
-        noise = np.zeros(self._codec.dim, dtype=np.float64)
+        mask_key, noise_key = self._runtime.jax.random.split(key)
+        mask_seed = int(np.asarray(self._runtime.jax.random.randint(mask_key, (), 0, 2**31 - 1)))
+        mask = self._module_mask(mask_seed, target)
+        full_noise = self._runtime.jax.random.normal(noise_key, (self._codec.dim,), dtype=self._runtime.jnp.float32)
+        flat_mask = np.zeros(self._codec.dim, dtype=bool)
         for selected, start, size in zip(mask, self._codec.offsets, self._codec.sizes, strict=True):
-            if not selected:
-                continue
-            end = int(start) + int(size)
-            noise[int(start) : end] = rng.standard_normal(int(size))
-        return noise
+            if selected:
+                flat_mask[int(start) : int(start) + int(size)] = True
+        return self._runtime.jnp.where(self._runtime.jnp.asarray(flat_mask), full_noise, 0.0)
 
-    def _sample_dim_fraction(self, rng: np.random.Generator, target: float) -> np.ndarray:
-        mask = rng.random(self._codec.dim) < target
-        if not np.any(mask):
-            mask[int(rng.integers(self._codec.dim))] = True
-        noise = rng.standard_normal(self._codec.dim).astype(np.float64)
-        noise[~mask] = 0.0
-        return noise
+    def _sample_dim_fraction(self, key, target: float):
+        mask_key, value_key, fallback_key = self._runtime.jax.random.split(key, 3)
+        mask = self._runtime.jax.random.uniform(mask_key, (self._codec.dim,)) < float(target)
+        fallback_idx = self._runtime.jax.random.randint(fallback_key, (), 0, self._codec.dim)
+        fallback = self._runtime.jnp.arange(self._codec.dim) == fallback_idx
+        mask = self._runtime.jnp.where(self._runtime.jnp.any(mask), mask, fallback)
+        noise = self._runtime.jax.random.normal(value_key, (self._codec.dim,), dtype=self._runtime.jnp.float32)
+        return self._runtime.jnp.where(mask, noise, 0.0)
 
-    def _module_mask(self, rng: np.random.Generator, target: float) -> np.ndarray:
+    def _module_mask(self, seed: int, target: float) -> np.ndarray:
+        rng = np.random.default_rng(int(seed))
         num_leaves = len(self._codec.sizes)
         if 0 < target < 1:
             mask = rng.random(num_leaves) < target
@@ -109,12 +113,12 @@ class EggRollNoiserMaterializer:
             use_batched_update=True,
         )
 
-    def sample(self, x: np.ndarray, *, seed: int) -> np.ndarray:
+    def sample(self, x: np.ndarray, *, seed: int):
         rt = self._runtime
         if rt.vector_mode != "absolute":
             raise ValueError("EggRoll noiser perturbations require EggRollJAXRuntime vector_mode='absolute'.")
-        x_arr = np.asarray(x, dtype=np.float64)
-        params = rt.decode_vector_params(rt.jnp.asarray(x_arr, dtype=rt.jnp.float32))
+        x_arr = rt.to_vector(x)
+        params = rt.decode_vector_params(x_arr)
         iterinfo = (
             rt.jnp.asarray(0, dtype=rt.jnp.int32),
             rt.jnp.asarray(2 * int(seed), dtype=rt.jnp.int32),
@@ -125,8 +129,8 @@ class EggRollNoiserMaterializer:
             rt.es_tree_key,
             rt.policy.es_map,
         )
-        noised_x = rt.codec.flatten(noised)
-        return np.asarray(noised_x - x_arr, dtype=np.float64)
+        noised_x = rt.codec.flatten_device(noised)
+        return noised_x - x_arr
 
     def _materialize_leaf(self, param, key, map_class, iterinfo):
         map_id = int(np.asarray(map_class))

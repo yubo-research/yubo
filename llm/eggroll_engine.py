@@ -12,7 +12,6 @@ import numpy as np
 from llm.config import LLMConfig
 from llm.engine_pool import (
     collective_results_ok,
-    ray_runtime_env,
     transport_info_by_tensor_rank,
     vllm_placement_bundles,
 )
@@ -276,7 +275,7 @@ def launch_engines(ray: Any, *, cfg: LLMConfig, args: EggrollArgs) -> tuple[list
                 num_gpus=0,
                 scheduling_strategy=strategy,
                 max_concurrency=1,
-                runtime_env=ray_runtime_env(),
+                runtime_env=None,
             )(EggrollVLLMActor).remote(
                 model_name=cfg.policy.model_name,
                 tensor_parallel_size=args.tensor_parallel_size,

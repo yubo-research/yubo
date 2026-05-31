@@ -6,6 +6,7 @@ from dataclasses import dataclass
 import numpy as np
 
 from ops.uhd_config import UHDConfig
+from ops.vec_uhd_arrays import copy_vector, stack_vectors
 from ops.vec_uhd_be import be_pick_candidate
 from ops.vec_uhd_common import (
     _format_source_best_suffix,
@@ -30,9 +31,9 @@ from problems.uhd_obj_types import UHDVectorObjective
 
 @dataclass
 class _SimpleState:
-    x: np.ndarray
-    best_x: np.ndarray
-    best_x_real: np.ndarray
+    x: object
+    best_x: object
+    best_x_real: object
     y_best: float | None
     y_best_real: float | None
     y_best_pred: float | None
@@ -54,9 +55,16 @@ def _run_simple(objective: UHDVectorObjective, cfg: UHDConfig) -> None:
 
     for i in range(int(cfg.num_rounds)):
         _ensure_simple_real_base(objective, state, imputer)
-        x_candidate, z_current, sigma, seed, did_eval = _simple_propose_candidate(objective, cfg, state, adapter, use_be=use_be, imputer=imputer)
+        x_candidate, z_current, sigma, seed, did_eval = _simple_propose_candidate(
+            objective,
+            cfg,
+            state,
+            adapter,
+            use_be=use_be,
+            imputer=imputer,
+        )
         _simple_evaluate_round(objective, state, imputer, x_candidate, z_current, sigma, seed, did_eval, use_be=use_be)
-        _simple_accept_round(state, adapter, x_candidate, z_current, use_be=use_be, cfg=cfg)
+        _simple_accept_round(objective, state, adapter, x_candidate, z_current, use_be=use_be, cfg=cfg)
         if _simple_stop_or_log(i, cfg, state, adapter, imputer):
             break
 
@@ -89,7 +97,10 @@ def _simple_propose_candidate(
     base = state.next_seed
     sigmas = _sample_sigmas(adapter, cfg.be.sigma_range, seed=base, n=cfg.be.num_candidates)
     seeds = [base + j for j in range(int(cfg.be.num_candidates))]
-    candidates = np.stack([state.x + float(sigmas[j]) * _noise(objective, cfg, seeds[j], x=state.x) for j in range(len(seeds))])
+    candidates = stack_vectors(
+        objective,
+        [state.x + float(sigmas[j]) * _noise(objective, cfg, seeds[j], x=state.x) for j in range(len(seeds))],
+    )
     sim_pick = be_pick_candidate(objective, candidates, seed=base)
     if sim_pick is not None:
         best, state.last_mu, state.last_se = sim_pick
@@ -116,12 +127,21 @@ def _simple_evaluate_round(
     use_be: bool,
 ) -> None:
     if not did_eval:
-        state.last_imputed, state.last_mu, state.last_se = _simple_eval_or_impute(objective, state, imputer, x_candidate, z_current, sigma, seed)
+        state.last_imputed, state.last_mu, state.last_se = _simple_eval_or_impute(
+            objective,
+            state,
+            imputer,
+            x_candidate,
+            z_current,
+            sigma,
+            seed,
+        )
     if use_be and not state.last_imputed:
         _record_be(state.be_state, z_current, state.last_mu)
 
 
 def _simple_accept_round(
+    objective: UHDVectorObjective,
     state: _SimpleState,
     adapter: StepSizeAdapter,
     x_candidate: np.ndarray,
@@ -132,13 +152,13 @@ def _simple_accept_round(
 ) -> None:
     accepted = state.y_best is None or float(state.last_mu) > float(state.y_best)
     if accepted:
-        state.x = x_candidate.copy()
+        state.x = copy_vector(objective, x_candidate)
         state.current_z = None if z_current is None else np.asarray(z_current, dtype=np.float64)
         state.current_mu_real = None if state.last_imputed else float(state.last_mu)
     adapter.update(accepted=accepted)
     if use_be:
         fit_if_due(state.be_state, cfg)
-    _track_simple_best(state, x_candidate)
+    _track_simple_best(objective, state, x_candidate)
 
 
 def _simple_stop_or_log(
@@ -168,8 +188,8 @@ def _new_simple_state(objective: UHDVectorObjective) -> _SimpleState:
     x = objective.x0
     return _SimpleState(
         x=x,
-        best_x=x.copy(),
-        best_x_real=x.copy(),
+        best_x=copy_vector(objective, x),
+        best_x_real=copy_vector(objective, x),
         y_best=None,
         y_best_real=None,
         y_best_pred=None,
@@ -196,8 +216,8 @@ def _ensure_simple_real_base(
         return
     mu0, _se0 = objective.evaluate(state.x, seed=state.next_seed)
     state.current_mu_real = float(mu0)
-    _track_legacy_best(state, state.x, float(mu0))
-    _track_source_best(state, state.x, float(mu0), imputed=False)
+    _track_legacy_best(objective, state, state.x, float(mu0))
+    _track_source_best(objective, state, state.x, float(mu0), imputed=False)
     imputer.tell_base(z_base=np.asarray(state.current_z, dtype=np.float64), mu0=float(mu0))
 
 
@@ -242,6 +262,6 @@ def _simple_eval_or_impute(
     return False, float(mu), float(se)
 
 
-def _track_simple_best(state: _SimpleState, x_eval: np.ndarray) -> None:
-    _track_legacy_best(state, x_eval, float(state.last_mu))
-    _track_source_best(state, x_eval, float(state.last_mu), imputed=state.last_imputed)
+def _track_simple_best(objective: UHDVectorObjective, state: _SimpleState, x_eval: np.ndarray) -> None:
+    _track_legacy_best(objective, state, x_eval, float(state.last_mu))
+    _track_source_best(objective, state, x_eval, float(state.last_mu), imputed=state.last_imputed)

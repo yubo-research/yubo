@@ -26,7 +26,20 @@ class FakeState(dict):
 
 
 class FakeAssistantMessage:
-    def __init__(self, content, role="assistant", tool_calls=None):
+    def __init__(
+        self,
+        content,
+        role="assistant",
+        tool_calls=None,
+        reasoning_content=None,
+        finish_reason=None,
+        is_truncated=None,
+        tool_call_id=None,
+    ):
         self.content = content
         self.role = role
         self.tool_calls = tool_calls
+        self.reasoning_content = reasoning_content
+        self.finish_reason = finish_reason
+        self.is_truncated = is_truncated
+        self.tool_call_id = tool_call_id

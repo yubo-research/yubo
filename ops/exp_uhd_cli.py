@@ -51,11 +51,24 @@ cli = _cli
     multiple=True,
     help="Override config key: --opt key=value (e.g. --opt total_timesteps=1000).",
 )
+@click.option(
+    "--dashboard",
+    is_flag=True,
+    help="Use the LLM dashboard. Only valid for llm:* envs.",
+)
+@click.option(
+    "--child-process",
+    is_flag=True,
+    hidden=True,
+    help="Internal flag used by the dashboard parent process to run the experiment in a clean child process.",
+)
 def _local(
     config_toml: str,
     workers: int = 1,
     results_dir: str = "results/uhd",
     overrides: tuple[str, ...] = (),
+    dashboard: bool = False,
+    child_process: bool = False,
 ) -> None:
     tomllib = _im("tomllib")
     p = _im("ops.exp_uhd_parse")
@@ -68,7 +81,16 @@ def _local(
         raise click.ClickException(str(e)) from e
 
     parsed = p._parse_cfg(cfg)
-    _run_mod().run_parsed_uhd_local(parsed, cfg=cfg, results_dir=results_dir, workers=workers)
+    _run_mod().run_parsed_uhd_local(
+        parsed,
+        cfg=cfg,
+        results_dir=results_dir,
+        workers=workers,
+        config_toml=config_toml,
+        overrides=tuple(overrides),
+        dashboard=bool(dashboard),
+        child_process=bool(child_process),
+    )
 
 
 def _run_parsed(*args, **kwargs):

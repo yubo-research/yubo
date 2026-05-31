@@ -7,7 +7,7 @@ from typing import Any
 
 import numpy as np
 
-from problems.pre_obj_stack import _log, _require_stack
+from problems.pre_obj_stack import _log, _new_legacy_tokenizer, _place_model_params, _require_stack
 from problems.pre_obj_subspace import _SubspaceParamCodec
 from problems.pre_obj_validate import _build_validate, _ValidateContext
 from problems.uhd_obj_types import UHDVectorObjectiveMixin
@@ -65,9 +65,11 @@ class RWKVDistillObjective(UHDVectorObjectiveMixin):
         )
         _log(f"teacher/student models ready dt={time.perf_counter() - t0:.2f}s")
         teacher_model, teacher_full, teacher_tokenizer = teacher
+        teacher_full = _place_model_params(stack, teacher_full)
         teacher_config, teacher_params, teacher_scan_map, teacher_es_map = teacher_full
 
         student_model, student_full, student_tokenizer = student
+        student_full = _place_model_params(stack, student_full)
         student_config, student_params, student_scan_map, student_es_map = student_full
 
         seed = int(getattr(cfg, "problem_seed", 0) or 0) + int(getattr(cfg, "seed_offset", 0) or 0)
@@ -82,7 +84,7 @@ class RWKVDistillObjective(UHDVectorObjectiveMixin):
                 base_evo_keys=stack.simple_es_tree_key(teacher_params, stack.jax.random.fold_in(key, 1), teacher_scan_map),
                 master_gen_key=stack.jax.random.fold_in(key, 2),
                 tokenizer=teacher_tokenizer,
-                legacy_tokenizer=stack.legacy_tokenizer_cls(),
+                legacy_tokenizer=_new_legacy_tokenizer(stack),
                 args=SimpleNamespace(
                     task="gsm8k",
                     generation_length=self.spec.generation_length,

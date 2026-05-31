@@ -61,17 +61,38 @@ class EggRollJAXRuntime:
     def vector_mode(self) -> str:
         return self._vector_mode
 
+    def to_vector(self, x):
+        return self.jnp.asarray(x, dtype=self.jnp.float32)
+
+    def to_vector_batch(self, x_batch):
+        x = self.jnp.asarray(x_batch, dtype=self.jnp.float32)
+        if x.ndim != 2 or x.shape[1] != self.dim:
+            raise ValueError(f"x_batch must have shape (n, {self.dim}), got {x.shape}.")
+        return x
+
+    def copy_vector(self, x):
+        return self.jnp.array(x, dtype=self.jnp.float32, copy=True)
+
+    def stack_vectors(self, xs):
+        return self.jnp.stack([self.to_vector(x) for x in xs], axis=0)
+
+    def zeros_vector(self, dim: int):
+        return self.jnp.zeros((int(dim),), dtype=self.jnp.float32)
+
+    def vector_to_numpy(self, x) -> np.ndarray:
+        return np.asarray(self.jax.device_get(x), dtype=np.float64)
+
     def decode_vector_params(self, x):
+        x = self.to_vector(x)
         if self._vector_mode == "offset":
             return self.codec.decode_offset(x, scale=self._param_scale)
         return self.codec.decode_absolute(x)
 
     def make_policy(self, x: np.ndarray, *, attr_name: str | None = None):
-        x_arr = np.asarray(x, dtype=np.float64)
-        x_j = self.jnp.asarray(x_arr, dtype=self.jnp.float32)
+        x_j = self.to_vector(x)
         policy = self.policy.with_params(self.decode_vector_params(x_j))
         if attr_name is not None:
-            setattr(policy, attr_name, x_arr)
+            setattr(policy, attr_name, self.vector_to_numpy(x_j))
         return policy
 
     def next_eval_keys(self, num_candidates: int):
@@ -128,7 +149,7 @@ class EggRollJAXRuntime:
     def _init_seeds_and_codec(self, policy, cfg: EggRollRuntimeConfig) -> None:
         self.codec = EggRollParamCodec(self.jax, self.jnp, policy.params)
         self.dim = self.codec.dim
-        self.x0 = self.codec.x0.copy()
+        self.x0 = self.copy_vector(self.codec.x0_device)
         seed = (0 if getattr(policy, "problem_seed", None) is None else int(policy.problem_seed)) + int(cfg.seed_offset)
         key = self.jax.random.key(seed & 0xFFFFFFFF)
         es_key = self.jax.random.fold_in(key, int(cfg.es_key_fold))
@@ -139,7 +160,7 @@ class EggRollJAXRuntime:
     def _init_helpers(self, cfg: EggRollRuntimeConfig) -> None:
         self._evaluator = EggRollRuntimeEvaluator(self)
         self._embedder = EggRollRuntimeEmbedder(self)
-        self._noise_sampler = EggRollNoiseSampler(self.codec)
+        self._noise_sampler = EggRollNoiseSampler(self)
         self._noiser_materializers: dict[tuple[str, int, int, bool], EggRollNoiserMaterializer] = {}
         if int(cfg.embed_num_probes) > 0:
             self.configure_embedding(int(cfg.embed_num_probes))

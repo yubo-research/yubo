@@ -6,6 +6,10 @@ This file is imported automatically by Python when the repo root is on
 
 from __future__ import annotations
 
+import importlib.abc
+import importlib.machinery
+import sys
+
 try:
     import numpy as np
 except ImportError:
@@ -19,58 +23,65 @@ if np is not None:
         np.Inf = np.inf
 
 
-try:
-    from gpytorch.lazy.lazy_evaluated_kernel_tensor import LazyEvaluatedKernelTensor
-
-    if not hasattr(LazyEvaluatedKernelTensor, "add_diag") and hasattr(LazyEvaluatedKernelTensor, "add_diagonal"):
-        LazyEvaluatedKernelTensor.add_diag = LazyEvaluatedKernelTensor.add_diagonal
-except Exception:
-    pass
+def _patch_gpytorch_lazy(module) -> None:
+    lazy_tensor = getattr(module, "LazyEvaluatedKernelTensor", None)
+    if lazy_tensor is not None and not hasattr(lazy_tensor, "add_diag") and hasattr(lazy_tensor, "add_diagonal"):
+        lazy_tensor.add_diag = lazy_tensor.add_diagonal
 
 
-try:
-    from linear_operator.operators._linear_operator import LinearOperator
+def _patch_linear_operator(module) -> None:
+    linear_operator = getattr(module, "LinearOperator", None)
+    if linear_operator is None:
+        return
+    if not hasattr(linear_operator, "evaluate") and hasattr(linear_operator, "to_dense"):
+        linear_operator.evaluate = linear_operator.to_dense
+    if not hasattr(linear_operator, "inv_matmul") and hasattr(linear_operator, "solve"):
+        linear_operator.inv_matmul = linear_operator.solve
 
-    if not hasattr(LinearOperator, "evaluate") and hasattr(LinearOperator, "to_dense"):
-        LinearOperator.evaluate = LinearOperator.to_dense
-    if not hasattr(LinearOperator, "inv_matmul") and hasattr(LinearOperator, "solve"):
-        LinearOperator.inv_matmul = LinearOperator.solve
-except Exception:
-    pass
+
+class _PatchLoader(importlib.abc.Loader):
+    def __init__(self, loader, patch):
+        self._loader = loader
+        self._patch = patch
+
+    def create_module(self, spec):
+        create_module = getattr(self._loader, "create_module", None)
+        if create_module is None:
+            return None
+        return create_module(spec)
+
+    def exec_module(self, module) -> None:
+        self._loader.exec_module(module)
+        try:
+            self._patch(module)
+        except Exception:
+            pass
 
 
-import sys
+class _PatchFinder(importlib.abc.MetaPathFinder):
+    def __init__(self, fullname: str, patch) -> None:
+        self.fullname = fullname
+        self.patch = patch
 
-if sys.platform == "darwin":
-    import os
+    def find_spec(self, fullname, path=None, target=None):
+        if fullname != self.fullname:
+            return None
+        spec = importlib.machinery.PathFinder.find_spec(fullname, path)
+        if spec is not None and spec.loader is not None:
+            spec.loader = _PatchLoader(spec.loader, self.patch)
+        return spec
 
-    os.environ.setdefault("KMP_DUPLICATE_LIB_OK", "TRUE")
-    os.environ.setdefault("OMP_NUM_THREADS", "1")
-    # ENN must initialize before Python faiss or VecchiaBO + botorch segfault on Mac.
-    try:
-        from enn.enn.enn_class import EpistemicNearestNeighbors  # noqa: F401
-    except ImportError:
-        pass
-    else:
-        import faiss  # noqa: F401
 
-# jaxmarl 0.0.2 still calls jax.tree_map; JAX 0.9 exposes jax.tree.map instead.
-try:
-    import jax
+def _patch_when_imported(fullname: str, patch) -> None:
+    module = sys.modules.get(fullname)
+    if module is not None:
+        try:
+            patch(module)
+        except Exception:
+            pass
+        return
+    sys.meta_path.insert(0, _PatchFinder(fullname, patch))
 
-    if not hasattr(jax, "tree_map") and hasattr(jax, "tree") and hasattr(jax.tree, "map"):
-        jax.tree_map = jax.tree.map  # type: ignore[attr-defined]
-except ImportError:
-    pass
-except Exception:
-    pass
 
-# Apply JAX MPS polyfills
-try:
-    from common.mps_compat import apply_mps_fixes
-
-    apply_mps_fixes()
-except ImportError:
-    pass
-except Exception:
-    pass
+_patch_when_imported("gpytorch.lazy.lazy_evaluated_kernel_tensor", _patch_gpytorch_lazy)
+_patch_when_imported("linear_operator.operators._linear_operator", _patch_linear_operator)

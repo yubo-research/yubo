@@ -7,7 +7,6 @@ from typing import Any
 import numpy as np
 
 from ops.uhd_config import UHDConfig
-from problems import pre_obj_vector_helpers as vector_helpers
 from problems.nanoegg_subspace import _NanoEggSubspaceCodec
 
 _DEFAULT_TOKENS_PER_EVAL = 100
@@ -309,7 +308,8 @@ class NanoEggUHDObjective:
         self.num_envs = int(cfg.num_envs)
         self._tokens = _load_objective_bytes(cfg, spec, tokens_per_eval=self.tokens_per_eval)
         self._embed_indices: np.ndarray | None = None
-        self._score_jit = self.jax.jit(lambda params, tokens: _score_sequence(self.jax, self.jnp, params, tokens))
+        self._score_many_jit = self.jax.jit(self._score_many)
+        self._vectorize = True
         print(
             f"NANOEGG: objective ready env={spec.env_tag} policy={spec.policy_tag} dim={self.dim} "
             f"tokens={self._tokens.size} tokens_per_eval={self.tokens_per_eval} num_envs={self.num_envs}",
@@ -333,17 +333,31 @@ class NanoEggUHDObjective:
         return NanoEggPolicySnapshot(x=x_arr, params=self._decode(x_arr))
 
     def evaluate(self, x: np.ndarray, *, seed: int) -> tuple[float, float]:
-        params = self._decode(x)
-        scores = []
-        for i in range(int(self.num_envs)):
-            tokens = self.jnp.asarray(self._segment(int(seed) + i), dtype=self.jnp.uint8)
-            scores.append(float(self._score_jit(params, tokens)))
-        values = np.asarray(scores, dtype=np.float64)
-        se = 0.0 if values.size <= 1 else float(np.std(values, ddof=0) / np.sqrt(values.size))
-        return float(np.mean(values)), se
+        means, ses = self.evaluate_many_common_seed(np.asarray([x], dtype=np.float64), seed=seed)
+        return float(means[0]), float(ses[0])
 
     def evaluate_many(self, x_batch: np.ndarray, *, seed: int) -> tuple[np.ndarray, np.ndarray]:
-        return vector_helpers.evaluate_many_serial(self.evaluate, x_batch, seed=seed)
+        return self.evaluate_many_common_seed(x_batch, seed=seed)
+
+    def evaluate_many_common_seed(self, x_batch: np.ndarray, *, seed: int) -> tuple[np.ndarray, np.ndarray]:
+        rows = np.asarray(x_batch, dtype=np.float32)
+        if rows.ndim != 2 or rows.shape[1] != self.dim:
+            raise ValueError(f"x_batch must have shape (n, {self.dim}), got {rows.shape}.")
+        tokens = self.jnp.asarray(
+            np.stack([self._segment(int(seed) + i) for i in range(int(self.num_envs))]),
+            dtype=self.jnp.uint8,
+        )
+        values = np.asarray(self.jax.block_until_ready(self._score_many_jit(self._codec._params, rows, tokens)), dtype=np.float64)
+        means = np.mean(values, axis=1)
+        ses = np.zeros_like(means) if self.num_envs <= 1 else np.std(values, axis=1, ddof=0) / np.sqrt(self.num_envs)
+        return means, ses
+
+    def _score_many(self, params, coeff_batch, tokens):
+        def score_coeff(coeffs):
+            decoded = self._codec.decode_device(coeffs, params=params)
+            return self.jax.vmap(lambda segment: _score_sequence(self.jax, self.jnp, decoded, segment))(tokens)
+
+        return self.jax.lax.map(score_coeff, coeff_batch)
 
     def configure_embedding(self, num_probes: int) -> None:
         rng = np.random.default_rng(123)

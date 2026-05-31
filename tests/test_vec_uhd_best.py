@@ -12,12 +12,12 @@ def test_mezo_tracks_legacy_real_and_predicted_bests_separately():
     real_x = np.asarray([1.0, 0.0])
     state.last_mu = 1.0
     state.last_imputed = False
-    _track_mezo_best(state, real_x)
+    _track_mezo_best(objective, state, real_x)
 
     pred_x = np.asarray([2.0, 0.0])
     state.last_mu = 2.0
     state.last_imputed = True
-    _track_mezo_best(state, pred_x)
+    _track_mezo_best(objective, state, pred_x)
 
     assert state.y_best == 2.0
     assert state.y_best_real == 1.0
@@ -34,11 +34,11 @@ def test_bszo_tracks_real_best_after_predicted_best():
 
     pred_x = np.asarray([2.0, 0.0])
     state.last_imputed = True
-    _track_bszo_best(state, pred_x, 2.0)
+    _track_bszo_best(objective, state, pred_x, 2.0)
 
     real_x = np.asarray([1.0, 0.0])
     state.last_imputed = False
-    _track_bszo_best(state, real_x, 1.0)
+    _track_bszo_best(objective, state, real_x, 1.0)
 
     assert state.y_best == 2.0
     assert state.y_best_real == 1.0
@@ -54,7 +54,7 @@ def test_best_source_suffix_only_when_enabled():
     objective = _Objective(dim=1)
     state = _new_mezo_state(objective)
     state.last_mu = 1.0
-    _track_mezo_best(state, np.asarray([1.0]))
+    _track_mezo_best(objective, state, np.asarray([1.0]))
 
     assert _format_source_best_suffix(state, False) == ""
     assert _format_source_best_suffix(state, True) == " y_best_real = 1.0000 y_best_pred = N/A"
@@ -128,6 +128,49 @@ def test_simple_minus_impute_runs_with_point_imputer():
     assert objective.policies
 
 
+def test_bszo_batches_base_and_directions_when_objective_supports_common_seed_batch():
+    from ops.exp_uhd import _parse_cfg
+    from ops.vec_uhd_bszo import _run_bszo
+
+    cfg = _parse_cfg(
+        {
+            "env_tag": "f:sphere-2d",
+            "num_rounds": 1,
+            "optimizer": "bszo",
+            "bszo_k": 2,
+        }
+    )
+    objective = _BatchObjective(dim=2)
+
+    _run_bszo(objective, cfg)
+
+    assert objective.batch_seeds == [0]
+    assert len(objective.batches) == 1
+    assert objective.batches[0].shape == (3, 2)
+    assert objective.evals == []
+
+
+def test_mezo_batches_positive_and_negative_pair_when_objective_supports_common_seed_batch():
+    from ops.exp_uhd import _parse_cfg
+    from ops.vec_uhd_mezo import _run_mezo
+
+    cfg = _parse_cfg(
+        {
+            "env_tag": "f:sphere-2d",
+            "num_rounds": 2,
+            "optimizer": "mezo",
+        }
+    )
+    objective = _BatchObjective(dim=2)
+
+    _run_mezo(objective, cfg)
+
+    assert objective.batch_seeds == [0]
+    assert len(objective.batches) == 1
+    assert objective.batches[0].shape == (2, 2)
+    assert objective.evals == []
+
+
 class _Objective:
     def __init__(self, dim: int) -> None:
         self.dim = int(dim)
@@ -182,3 +225,16 @@ class _Objective:
     def make_policy(self, x: np.ndarray) -> np.ndarray:
         self.policies.append(np.asarray(x, dtype=np.float64).copy())
         return np.asarray(x, dtype=np.float64)
+
+
+class _BatchObjective(_Objective):
+    def __init__(self, dim: int) -> None:
+        super().__init__(dim)
+        self.batches = []
+        self.batch_seeds = []
+
+    def evaluate_many_common_seed(self, x_batch: np.ndarray, *, seed: int) -> tuple[np.ndarray, np.ndarray]:
+        rows = np.asarray(x_batch, dtype=np.float64)
+        self.batches.append(rows.copy())
+        self.batch_seeds.append(int(seed))
+        return -np.linalg.norm(rows, axis=1), np.zeros(rows.shape[0], dtype=np.float64)

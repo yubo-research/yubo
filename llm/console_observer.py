@@ -15,6 +15,7 @@ from typing import Any, TextIO
 from llm.console_log_files import ConsoleLogFiles
 from llm.console_logging import ConsoleLoggingContext
 from llm.console_pane import PaneState
+from llm.console_render import format_step_block
 from llm.console_tee import tee_stdout_to_exp
 from llm.console_text import (
     channel_for_step,
@@ -244,20 +245,17 @@ async def _on_step(observer: SplitConsoleObserver, turn_idx: int, step_data: dic
     role = str(step_data.get("role", ""))
     if role == "assistant":
         observer.append_inference(
-            f"[turn {turn_idx}] assistant",
+            "\n".join(format_step_block(turn_idx, step_data)),
             kind="assistant",
             payload={"turn_idx": turn_idx, **step_data},
         )
-        observer.append_inference(str(step_data.get("content", "")), record=False)
         return
     if role == "tool":
-        name = str(step_data.get("name", "tool"))
         observer.append_inference(
-            f"[turn {turn_idx}] tool[{name}]",
+            "\n".join(format_step_block(turn_idx, step_data)),
             kind="tool",
             payload={"turn_idx": turn_idx, **step_data},
         )
-        observer.append_inference(str(step_data.get("output", step_data.get("content", ""))), record=False)
         return
     content = str(step_data.get("content", step_data.get("output", "")))
     observer.append_train(

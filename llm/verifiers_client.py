@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import time
 import uuid
 from types import SimpleNamespace
@@ -28,6 +29,7 @@ class ChatAdapter:
         self.apply_chat_template = bool(apply_chat_template)
         self.env = env
         self.chat = self
+        self._renderer: Any | None = None
 
     @property
     def completions(self):
@@ -38,12 +40,13 @@ class ChatAdapter:
         prompt = self._truncate_prompt_to_context(prompt)
         sampling = dict(self.sampling_params_kwargs)
         sampling.update({key: value for key, value in kwargs.items() if value is not None})
+        self._add_renderer_stop_tokens(sampling)
         response = await self._sample(SampleCall(prompt=prompt, sampling=sampling))
         if not response.samples:
             raise RuntimeError("Sampler returned no completions.")
 
         best_sample = response.samples[0]
-        assistant_message = text_to_assistant_message(best_sample.text, self.env)
+        assistant_message = self._assistant_message_from_sample(best_sample)
         choice = SimpleNamespace(message=assistant_message, finish_reason=best_sample.finish_reason)
         usage = SimpleNamespace(
             prompt_tokens=response.usage.prompt_tokens,
@@ -66,7 +69,8 @@ class ChatAdapter:
             return str(env_prompt)
         if self.apply_chat_template and self.tokenizer is not None:
             normalized = [message_to_dict(message) for message in messages]
-            return self.tokenizer.apply_chat_template(normalized, tokenize=False, add_generation_prompt=True)
+            token_ids = self._get_renderer().render_ids(normalized, add_generation_prompt=True)
+            return decode_token_ids(self.tokenizer, token_ids)
         prompt = ""
         for message in messages:
             role = str(message.get("role", "user")).title()
@@ -90,6 +94,40 @@ class ChatAdapter:
             return prompt
         token_ids = token_ids[-max_input_tokens:]
         return self.tokenizer.decode(token_ids, skip_special_tokens=False)
+
+    def _add_renderer_stop_tokens(self, sampling: dict[str, Any]) -> None:
+        if not self._uses_renderer() or "stop_token_ids" in sampling:
+            return
+        stop_token_ids = self._get_renderer().get_stop_token_ids()
+        if stop_token_ids:
+            sampling["stop_token_ids"] = [int(token_id) for token_id in stop_token_ids]
+
+    def _assistant_message_from_sample(self, sample: Any) -> Any:
+        if not self._uses_renderer() or not getattr(sample, "token_ids", None):
+            return text_to_assistant_message(sample.text, self.env)
+        try:
+            parsed = self._get_renderer().parse_response(list(sample.token_ids))
+        except Exception:
+            return text_to_assistant_message(sample.text, self.env)
+
+        if getattr(parsed, "tool_calls", None):
+            return assistant_message_from_parsed_response(parsed, sample.text)
+        assistant_message = text_to_assistant_message(str(getattr(parsed, "content", sample.text)), self.env)
+        reasoning_content = getattr(parsed, "reasoning_content", None)
+        if reasoning_content is not None:
+            try:
+                assistant_message.reasoning_content = str(reasoning_content)
+            except Exception:
+                pass
+        return assistant_message
+
+    def _get_renderer(self) -> Any:
+        if self._renderer is None:
+            self._renderer = create_message_renderer(self.tokenizer)
+        return self._renderer
+
+    def _uses_renderer(self) -> bool:
+        return self.apply_chat_template and self.tokenizer is not None
 
     async def _sample(self, call: SampleCall) -> Any:
         sample_fn = getattr(self.sampler, "sample", None)
@@ -230,6 +268,64 @@ def message_to_dict(message: Any) -> dict[str, Any]:
             if value is not None:
                 out[key] = value
     return out
+
+
+def create_message_renderer(tokenizer: Any) -> Any:
+    from renderers import create_renderer
+
+    return create_renderer(tokenizer)
+
+
+def decode_token_ids(tokenizer: Any, token_ids: list[int]) -> str:
+    try:
+        return tokenizer.decode(token_ids, skip_special_tokens=False)
+    except TypeError:
+        return tokenizer.decode(token_ids)
+
+
+def assistant_message_from_parsed_response(parsed: Any, fallback_text: str) -> Any:
+    from verifiers.types import AssistantMessage
+
+    content = getattr(parsed, "content", None)
+    kwargs: dict[str, Any] = {"content": str(fallback_text if content is None else content)}
+    reasoning_content = getattr(parsed, "reasoning_content", None)
+    if reasoning_content is not None:
+        kwargs["reasoning_content"] = str(reasoning_content)
+    tool_calls = parsed_tool_calls(getattr(parsed, "tool_calls", None))
+    if tool_calls:
+        kwargs["tool_calls"] = tool_calls
+
+    try:
+        return AssistantMessage(**kwargs)
+    except TypeError:
+        kwargs.pop("reasoning_content", None)
+        try:
+            return AssistantMessage(**kwargs)
+        except TypeError:
+            if tool_calls:
+                return AssistantMessage(kwargs["content"], tool_calls=tool_calls)
+            return AssistantMessage(kwargs["content"])
+
+
+def parsed_tool_calls(raw_tool_calls: Any) -> list[Any]:
+    if not raw_tool_calls:
+        return []
+
+    from verifiers.types import ToolCall
+
+    tool_calls = []
+    for raw_call in raw_tool_calls:
+        call = message_to_dict(raw_call)
+        function = call.get("function") or {}
+        if not isinstance(function, dict):
+            function = message_to_dict(function)
+        name = call.get("name") or function.get("name") or ""
+        arguments = call.get("arguments", function.get("arguments", {}))
+        if not isinstance(arguments, str):
+            arguments = json.dumps(arguments, sort_keys=True)
+        tool_id = str(call.get("id") or call.get("tool_call_id") or f"call_{uuid.uuid4().hex}")
+        tool_calls.append(ToolCall(id=tool_id, name=str(name), arguments=arguments))
+    return tool_calls
 
 
 __all__ = [

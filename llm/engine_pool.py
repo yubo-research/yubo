@@ -97,7 +97,7 @@ class VLLMEnginePool:
                     num_gpus=0,
                     scheduling_strategy=strategy,
                     max_concurrency=concurrency,
-                    runtime_env=ray_runtime_env(),
+                    runtime_env=None,
                 )(actor_cls).remote(
                     model_name=str(cfg.model_name),
                     tensor_parallel_size=int(cfg.tensor_parallel_size),
@@ -268,21 +268,26 @@ class VLLMEnginePool:
 def ensure_ray(ray: Any) -> None:
     if ray.is_initialized():
         return
-    runtime_env = ray_runtime_env()
+    _apply_ray_env_vars()
     try:
         ray.init(
             address="auto",
             include_dashboard=False,
             ignore_reinit_error=True,
-            runtime_env=runtime_env,
+            runtime_env=None,
         )
     except Exception:
-        ray.init(include_dashboard=False, ignore_reinit_error=True, runtime_env=runtime_env)
+        ray.init(include_dashboard=False, ignore_reinit_error=True, runtime_env=None)
 
 
 def ray_runtime_env() -> dict[str, dict[str, str]] | None:
     env_vars = ray_env_vars()
     return {"env_vars": env_vars} if env_vars else None
+
+
+def _apply_ray_env_vars() -> None:
+    for key, value in ray_env_vars().items():
+        os.environ.setdefault(key, value)
 
 
 def ray_env_vars() -> dict[str, str]:

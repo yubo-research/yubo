@@ -17,7 +17,7 @@ def be_pick_candidate(
 ) -> tuple[int, float, float] | None:
     if not be_sim_batch_enabled(objective):
         return None
-    means, ses = objective.evaluate_many(np.asarray(candidates, dtype=np.float64), seed=int(seed))
+    means, ses = objective.evaluate_many(candidates, seed=int(seed))
     best = int(np.argmax(means))
     return best, float(means[best]), float(ses[best])
 
@@ -36,11 +36,9 @@ def be_pick_mezo_seed(
     n = len(seeds)
     if n == 0:
         return None
-    plus = np.asarray(x_plus, dtype=np.float64)
-    minus = np.asarray(x_minus, dtype=np.float64)
     base = int(seeds[0])
-    mu_plus, se_plus = objective.evaluate_many(plus, seed=base)
-    mu_minus, se_minus = objective.evaluate_many(minus, seed=base + n)
+    mu_plus, se_plus = objective.evaluate_many(x_plus, seed=base)
+    mu_minus, se_minus = objective.evaluate_many(x_minus, seed=base + n)
     two_sigma = 2.0 * float(sigma)
     grad = (mu_plus - mu_minus) / two_sigma
     se_grad = np.sqrt(se_plus**2 + se_minus**2) / two_sigma

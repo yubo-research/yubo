@@ -6,8 +6,9 @@
 [uhd]
 env_tag = "pretrain:hyperscalees:gsm8k-7w3b"
 policy_tag = "hyperscalees-rwkv-7w3b-lora-r1"
-total_timesteps = 819200
+# total_timesteps = 819200
 num_reps = 1
+num_rounds = 1e4
 optimizer = "bszo"
 lr = 0.001
 sigma = 0.001
