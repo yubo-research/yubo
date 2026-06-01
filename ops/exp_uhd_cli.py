@@ -35,33 +35,38 @@ def _cli():
 cli = _cli
 
 
+def _local_options(fn):
+    fn = click.option("--workers", type=int, default=1, help="Parallel workers when [uhd].num_reps > 1.")(fn)
+    fn = click.option(
+        "--results-dir",
+        type=str,
+        default="results/uhd",
+        help="Results directory when [uhd].num_reps > 1.",
+    )(fn)
+    fn = click.option(
+        "-o",
+        "--opt",
+        "overrides",
+        multiple=True,
+        help="Override config key: --opt key=value (e.g. --opt total_timesteps=1000).",
+    )(fn)
+    fn = click.option(
+        "--dashboard",
+        is_flag=True,
+        help="Use the LLM dashboard. Only valid for llm:* envs.",
+    )(fn)
+    fn = click.option(
+        "--child-process",
+        is_flag=True,
+        hidden=True,
+        help="Internal flag used by the dashboard parent process to run the experiment in a clean child process.",
+    )(fn)
+    return fn
+
+
 @_cli.command(name="local", help="Run locally (single process) from a config TOML.")
 @click.argument("config_toml", type=click.Path(exists=True, dir_okay=False, path_type=str))
-@click.option("--workers", type=int, default=1, help="Parallel workers when [uhd].num_reps > 1.")
-@click.option(
-    "--results-dir",
-    type=str,
-    default="results/uhd",
-    help="Results directory when [uhd].num_reps > 1.",
-)
-@click.option(
-    "-o",
-    "--opt",
-    "overrides",
-    multiple=True,
-    help="Override config key: --opt key=value (e.g. --opt total_timesteps=1000).",
-)
-@click.option(
-    "--dashboard",
-    is_flag=True,
-    help="Use the LLM dashboard. Only valid for llm:* envs.",
-)
-@click.option(
-    "--child-process",
-    is_flag=True,
-    hidden=True,
-    help="Internal flag used by the dashboard parent process to run the experiment in a clean child process.",
-)
+@_local_options
 def _local(
     config_toml: str,
     workers: int = 1,

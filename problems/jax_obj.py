@@ -4,6 +4,22 @@ import numpy as np
 
 from optimizer.eggroll_runtime import EggRollJAXRuntime
 
+_RUNTIME_ATTRS = frozenset(
+    {
+        "dim",
+        "x0",
+        "steps_per_episode",
+        "num_envs",
+        "copy_vector",
+        "stack_vectors",
+        "zeros_vector",
+        "embed",
+        "embed_many",
+        "sample_noise",
+        "sample_eggroll_noiser_noise",
+    }
+)
+
 
 class EggRollJAXVectorObjective:
     """Functional flat-vector objective for EggRoll/HyperscaleES policies."""
@@ -35,36 +51,16 @@ class EggRollJAXVectorObjective:
             option_label="EggRoll JAX option",
         )
 
-    @property
-    def dim(self) -> int:
-        return self._runtime.dim
-
-    @property
-    def x0(self) -> np.ndarray:
-        return self._runtime.x0
-
-    @property
-    def steps_per_episode(self) -> int:
-        return self._runtime.steps_per_episode
-
-    @property
-    def num_envs(self) -> int:
-        return self._runtime.num_envs
+    def __getattr__(self, name: str):
+        if name in _RUNTIME_ATTRS:
+            return getattr(self._runtime, name)
+        raise AttributeError(name)
 
     def flatten_params(self, params) -> np.ndarray:
         return self._runtime.codec.flatten(params)
 
     def decode_params(self, x):
         return self._runtime.codec.decode_absolute(x)
-
-    def copy_vector(self, x):
-        return self._runtime.copy_vector(x)
-
-    def stack_vectors(self, xs):
-        return self._runtime.stack_vectors(xs)
-
-    def zeros_vector(self, dim: int):
-        return self._runtime.zeros_vector(dim)
 
     def make_policy(self, x: np.ndarray):
         return self._runtime.make_policy(x, attr_name="_eggroll_uhd_x")
@@ -77,41 +73,3 @@ class EggRollJAXVectorObjective:
 
     def configure_embedding(self, num_probes: int) -> None:
         self._runtime.configure_embedding(num_probes)
-
-    def embed_many(self, x_batch: np.ndarray) -> np.ndarray:
-        return self._runtime.embed_many(x_batch)
-
-    def embed(self, x: np.ndarray) -> np.ndarray:
-        return self._runtime.embed(x)
-
-    def sample_noise(
-        self,
-        *,
-        seed: int,
-        num_dim_target: float | None = None,
-        num_module_target: float | None = None,
-    ) -> np.ndarray:
-        return self._runtime.sample_noise(
-            seed=seed,
-            num_dim_target=num_dim_target,
-            num_module_target=num_module_target,
-        )
-
-    def sample_eggroll_noiser_noise(
-        self,
-        x: np.ndarray,
-        *,
-        seed: int,
-        noiser_name: str = "eggroll",
-        rank: int = 1,
-        group_size: int = 0,
-        freeze_nonlora: bool = False,
-    ) -> np.ndarray:
-        return self._runtime.sample_eggroll_noiser_noise(
-            x,
-            seed=seed,
-            noiser_name=noiser_name,
-            rank=rank,
-            group_size=group_size,
-            freeze_nonlora=freeze_nonlora,
-        )

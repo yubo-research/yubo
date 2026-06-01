@@ -7,9 +7,9 @@
 [experiment]
 exp_dir = "_tmp/bo/gymnasium/cheetah/sparse_enn_mlp1024_600"
 env_tag = "cheetah"
-policy_tag = "mlp-1024-600"
+policy_tag = "mlp-16-16"
 num_arms = 1
-num_rounds = 64
+num_rounds = 1e4
 num_reps = 1
 num_denoise = 1
 num_denoise_passive = 1

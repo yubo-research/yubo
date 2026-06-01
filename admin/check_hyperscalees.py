@@ -42,15 +42,13 @@ def _hint_missing(name: str, *, mac: bool) -> str:
 def _check_core() -> None:
     mac = sys.platform == "darwin"
     try:
-        if mac:
-            import faiss  # noqa: F401 — after enn on Mac (see sitecustomize.py)
-            from enn.enn.enn_class import EpistemicNearestNeighbors
-        else:
-            import faiss  # noqa: F401
-            from enn.enn.enn_class import EpistemicNearestNeighbors
+        import faiss  # noqa: F401
+        from enn.enn.enn_class import EpistemicNearestNeighbors
 
         import hyperscalees  # noqa: F401
-        import kinetix.environment  # noqa: F401
+
+        if not mac:
+            import kinetix.environment  # noqa: F401
         import LassoBench  # noqa: F401
         import torch
         from pyvecch.input_transforms import Identity

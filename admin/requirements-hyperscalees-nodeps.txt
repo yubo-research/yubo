@@ -2,7 +2,7 @@
 # pulling in newer JAX versions that conflict with the pinned jax[cuda12]==0.8.1
 
 # ENN/FAISS stack (NumPy 2.x compatible)
-ennbo[with-deps]==0.3.7
+ennbo==0.3.10
 joblib
 threadpoolctl
 

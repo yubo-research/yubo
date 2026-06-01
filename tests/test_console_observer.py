@@ -150,7 +150,7 @@ def test_console_observer_does_not_own_terminal_input(tmp_path):
 
 
 def test_dashboard_reads_rollout_records_from_inference_log(tmp_path):
-    from llm.console_dashboard import _headline_status, _trace_records, _transcript_text
+    from llm.console_dashboard_render import headline_status, trace_records, transcript_text
 
     session_dir = tmp_path / "console" / "session"
     session_dir.mkdir(parents=True)
@@ -173,8 +173,8 @@ def test_dashboard_reads_rollout_records_from_inference_log(tmp_path):
         encoding="utf-8",
     )
 
-    records = _trace_records(session_dir)
+    records = trace_records(session_dir)
     assert len(records) == 1
     assert records[0].title == "gsm8k:0"
-    assert "The answer is \\boxed{4}." in _transcript_text(records[0]).plain
-    assert _headline_status(session_dir) == "reward=1.0000 status=ok"
+    assert "The answer is \\boxed{4}." in transcript_text(records[0]).plain
+    assert headline_status(session_dir) == "reward=1.0000 status=ok"

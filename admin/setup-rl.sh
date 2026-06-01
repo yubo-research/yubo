@@ -77,7 +77,7 @@ ENV_LIB="${CONDA_PREFIX}/lib" \
   CPATH="$(python -c 'import pybind11; print(pybind11.get_include())')" \
   python -m pip install --no-build-isolation "git+https://github.com/feji3769/VecchiaBO.git#subdirectory=code"
 python -m pip install "LassoBench @ git+https://github.com/ksehic/LassoBench.git" --no-deps
-python -m pip install ennbo --no-deps
+python -m pip install ennbo==0.3.10 --no-deps
 
 echo "[setup-rl] done"
 echo "activate with: micromamba activate ${ENV_NAME}"

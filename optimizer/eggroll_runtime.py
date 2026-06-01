@@ -18,6 +18,21 @@ from optimizer.eggroll_runtime_noise import (
     EggRollNoiserMaterializer,
     EggRollNoiseSampler,
 )
+from optimizer.eggroll_runtime_vector import EggRollRuntimeVectorOps
+
+_VECTOR_ATTRS = frozenset(
+    {
+        "to_vector",
+        "to_vector_batch",
+        "copy_vector",
+        "stack_vectors",
+        "zeros_vector",
+        "vector_to_numpy",
+        "decode_vector_params",
+    }
+)
+_EVAL_ATTRS = frozenset({"next_eval_keys", "evaluate", "evaluate_many", "evaluate_many_with_keys", "evaluate_values_with_keys"})
+_EMBED_ATTRS = frozenset({"embed_many", "embed"})
 
 
 @dataclass(frozen=True)
@@ -54,70 +69,34 @@ class EggRollJAXRuntime:
         cfg = config if config is not None else EggRollRuntimeConfig.from_kwargs(**kwargs)
         _validate_policy_env(policy, env_conf, cfg)
         self._assign_core(policy, env_conf, cfg)
+        self._vectors = EggRollRuntimeVectorOps(self)
         self._init_seeds_and_codec(policy, cfg)
         self._init_helpers(cfg)
+
+    def __getattr__(self, name: str):
+        if name in _VECTOR_ATTRS:
+            return getattr(self._vectors, name)
+        if name in _EVAL_ATTRS:
+            return getattr(self._evaluator, name)
+        if name in _EMBED_ATTRS:
+            return getattr(self._embedder, name)
+        if name == "sample_eggroll_noiser_noise":
+            return self._sample_eggroll_noiser_noise
+        raise AttributeError(name)
 
     @property
     def vector_mode(self) -> str:
         return self._vector_mode
 
-    def to_vector(self, x):
-        return self.jnp.asarray(x, dtype=self.jnp.float32)
-
-    def to_vector_batch(self, x_batch):
-        x = self.jnp.asarray(x_batch, dtype=self.jnp.float32)
-        if x.ndim != 2 or x.shape[1] != self.dim:
-            raise ValueError(f"x_batch must have shape (n, {self.dim}), got {x.shape}.")
-        return x
-
-    def copy_vector(self, x):
-        return self.jnp.array(x, dtype=self.jnp.float32, copy=True)
-
-    def stack_vectors(self, xs):
-        return self.jnp.stack([self.to_vector(x) for x in xs], axis=0)
-
-    def zeros_vector(self, dim: int):
-        return self.jnp.zeros((int(dim),), dtype=self.jnp.float32)
-
-    def vector_to_numpy(self, x) -> np.ndarray:
-        return np.asarray(self.jax.device_get(x), dtype=np.float64)
-
-    def decode_vector_params(self, x):
-        x = self.to_vector(x)
-        if self._vector_mode == "offset":
-            return self.codec.decode_offset(x, scale=self._param_scale)
-        return self.codec.decode_absolute(x)
-
     def make_policy(self, x: np.ndarray, *, attr_name: str | None = None):
-        x_j = self.to_vector(x)
-        policy = self.policy.with_params(self.decode_vector_params(x_j))
+        x_j = self._vectors.to_vector(x)
+        policy = self.policy.with_params(self._vectors.decode_vector_params(x_j))
         if attr_name is not None:
-            setattr(policy, attr_name, self.vector_to_numpy(x_j))
+            setattr(policy, attr_name, self._vectors.vector_to_numpy(x_j))
         return policy
-
-    def next_eval_keys(self, num_candidates: int):
-        return self._evaluator.next_eval_keys(int(num_candidates))
-
-    def evaluate(self, x: np.ndarray, *, seed: int) -> tuple[float, float]:
-        return self._evaluator.evaluate(x, seed=int(seed))
-
-    def evaluate_many(self, x_batch: np.ndarray, *, seed: int) -> tuple[np.ndarray, np.ndarray]:
-        return self._evaluator.evaluate_many(x_batch, seed=int(seed))
-
-    def evaluate_many_with_keys(self, x_batch: np.ndarray, keys_batch) -> tuple[np.ndarray, np.ndarray]:
-        return self._evaluator.evaluate_many_with_keys(x_batch, keys_batch)
-
-    def evaluate_values_with_keys(self, x_batch: np.ndarray, keys_batch) -> np.ndarray:
-        return self._evaluator.evaluate_values_with_keys(x_batch, keys_batch)
 
     def configure_embedding(self, num_probes: int) -> None:
         self._embedder.configure(int(num_probes))
-
-    def embed_many(self, x_batch: np.ndarray) -> np.ndarray:
-        return self._embedder.embed_many(x_batch)
-
-    def embed(self, x: np.ndarray) -> np.ndarray:
-        return self._embedder.embed(x)
 
     def sample_noise(
         self,
@@ -131,6 +110,29 @@ class EggRollJAXRuntime:
             num_dim_target=num_dim_target,
             num_module_target=num_module_target,
         )
+
+    def _sample_eggroll_noiser_noise(
+        self,
+        x: np.ndarray,
+        *,
+        seed: int,
+        noiser_name: str = "eggroll",
+        rank: int = 1,
+        group_size: int = 0,
+        freeze_nonlora: bool = False,
+    ) -> np.ndarray:
+        key = (str(noiser_name), int(rank), int(group_size), bool(freeze_nonlora))
+        materializer = self._noiser_materializers.get(key)
+        if materializer is None:
+            materializer = EggRollNoiserMaterializer(
+                self,
+                noiser_name=key[0],
+                rank=key[1],
+                group_size=key[2],
+                freeze_nonlora=key[3],
+            )
+            self._noiser_materializers[key] = materializer
+        return materializer.sample(x, seed=int(seed))
 
     def _assign_core(self, policy, env_conf, cfg: EggRollRuntimeConfig) -> None:
         env_name = str(getattr(env_conf, "env_name", ""))
@@ -149,7 +151,7 @@ class EggRollJAXRuntime:
     def _init_seeds_and_codec(self, policy, cfg: EggRollRuntimeConfig) -> None:
         self.codec = EggRollParamCodec(self.jax, self.jnp, policy.params)
         self.dim = self.codec.dim
-        self.x0 = self.copy_vector(self.codec.x0_device)
+        self.x0 = self._vectors.copy_vector(self.codec.x0_device)
         seed = (0 if getattr(policy, "problem_seed", None) is None else int(policy.problem_seed)) + int(cfg.seed_offset)
         key = self.jax.random.key(seed & 0xFFFFFFFF)
         es_key = self.jax.random.fold_in(key, int(cfg.es_key_fold))
@@ -164,33 +166,6 @@ class EggRollJAXRuntime:
         self._noiser_materializers: dict[tuple[str, int, int, bool], EggRollNoiserMaterializer] = {}
         if int(cfg.embed_num_probes) > 0:
             self.configure_embedding(int(cfg.embed_num_probes))
-
-
-def sample_eggroll_noiser_noise(
-    self,
-    x: np.ndarray,
-    *,
-    seed: int,
-    noiser_name: str = "eggroll",
-    rank: int = 1,
-    group_size: int = 0,
-    freeze_nonlora: bool = False,
-) -> np.ndarray:
-    key = (str(noiser_name), int(rank), int(group_size), bool(freeze_nonlora))
-    materializer = self._noiser_materializers.get(key)
-    if materializer is None:
-        materializer = EggRollNoiserMaterializer(
-            self,
-            noiser_name=key[0],
-            rank=key[1],
-            group_size=key[2],
-            freeze_nonlora=key[3],
-        )
-        self._noiser_materializers[key] = materializer
-    return materializer.sample(x, seed=int(seed))
-
-
-EggRollJAXRuntime.sample_eggroll_noiser_noise = sample_eggroll_noiser_noise
 
 
 def _deterministic(cfg: EggRollRuntimeConfig) -> bool:
@@ -239,6 +214,7 @@ __all__ = [
     "EggRollRuntimeConfig",
     "EggRollRuntimeEmbedder",
     "EggRollRuntimeEvaluator",
+    "EggRollRuntimeVectorOps",
     "IdentityNoiser",
     "as_bool",
     "require_eggroll_jax_stack",

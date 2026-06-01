@@ -11,6 +11,7 @@ python = "3.12.*"
 pip = "*"
 git = "*"
 git-lfs = "*"
+maturin = "*"
 setuptools = ">=77.0.3,<81.0.0"
 numpy = ">=2.3,<2.4"
 scipy = ">=1.17,<1.18"
@@ -51,10 +52,10 @@ rust = "*"
 
 [feature.hyperscalees.activation.env]
 XLA_PYTHON_CLIENT_PREALLOCATE = "false"
+HF_HOME = "${HOME}/.cache/yubo/hyperscalees"
+HF_HUB_CACHE = "${HOME}/.cache/yubo/hyperscalees"
 
 [feature.hyperscalees.target.linux-64.activation.env]
-HF_HOME = "/root/.cache/yubo/hyperscalees"
-HF_HUB_CACHE = "/root/.cache/yubo/hyperscalees"
 CUDA_HOME = "$CONDA_PREFIX"
 CUDACXX = "$CONDA_PREFIX/bin/nvcc"
 TORCH_CUDA_ARCH_LIST = "8.9"
@@ -62,12 +63,15 @@ TORCH_CUDA_ARCH_LIST = "8.9"
 LD_LIBRARY_PATH = "$CONDA_PREFIX/lib:/usr/lib/x86_64-linux-gnu${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 
 [feature.hyperscalees.target.osx-arm64.activation.env]
-HF_HOME = "${HOME}/.cache/yubo/hyperscalees"
-HF_HUB_CACHE = "${HOME}/.cache/yubo/hyperscalees"
 JAX_PLATFORMS = "mps,cpu"
 KMP_DUPLICATE_LIB_OK = "TRUE"
 DYLD_LIBRARY_PATH = "$CONDA_PREFIX/lib${DYLD_LIBRARY_PATH:+:$DYLD_LIBRARY_PATH}"
 PYTHONPATH = "${PIXI_PROJECT_ROOT}${PYTHONPATH:+:${PYTHONPATH}}"
+
+[feature.hyperscalees.pypi-options]
+extra-index-urls = ["https://pypi.nvidia.com"]
+no-build-isolation = ["pyvecch"]
+index-strategy = "unsafe-best-match"
 
 [feature.hyperscalees.pypi-dependencies]
 click = "*"
@@ -117,22 +121,58 @@ sparse-ho = { url = "https://github.com/QB3/sparse-ho/archive/master.zip" }
 libsvmdata = "*"
 craftax = "*"
 jaxmarl = "*"
-kinetix-env = "==3.0.0"
 navix = "*"
-hyperscalees = { git = "https://github.com/ESHyperscale/HyperscaleES.git", rev = "b77f7d6f91238fd575313e946b9cad21e0a74b32" }
 tiktoken = "*"
 rustbpe = "*"
 kernels = "*"
 pytest = "==8.3.4"
 pytest-testmon = "==2.2.0"
+hyperscalees = { git = "https://github.com/ESHyperscale/HyperscaleES.git", rev = "b77f7d6f91238fd575313e946b9cad21e0a74b32" }
+modal = "==1.3.0.post1"
+torchvision = ">=0.16.0"
+absl-py = "==2.4.0"
+chex = ">=0.1.91"
+dm-env = "==1.6"
+esquilax = "==2.1.0"
+jax-tqdm = "==0.4.0"
+etils = "==1.14.0"
+flask = "==3.1.3"
+flask-cors = "==6.0.2"
+flax = ">=0.8.0"
+jaxopt = ">=0.8.0"
+ml-collections = "==1.1.0"
+mujoco-mjx = "==3.8.0"
+optax = ">=0.2.0"
+orbax-checkpoint = ">=0.11.0"
+tensorboardx = "==2.6.5"
+trimesh = "==4.12.2"
+jumanji = "==1.1.1"
+warp-lang = "==1.13.0"
+mujoco-warp = "==3.8.0.3"
+imageio = "==2.37.3"
+imageio-ffmpeg = "*"
+networkx = "==3.6.1"
+pygame = "==2.6.1"
+rlax = ">=0.1.0"
+seaborn = "==0.13.2"
+brax = "==0.14.2"
+omegaconf = "*"
 
-[feature.hyperscalees.pypi-options]
-no-build-isolation = ["pyvecch"]
-index-strategy = "unsafe-best-match"
+[feature.hyperscalees.target.linux-64.pypi-dependencies]
+jax = { version = "==0.8.1", extras = ["cuda12"] }
+kinetix-env = "==3.0.0"
+grpclib = ">=0.4.7,<0.5"
+ray = "==2.51.1"
+torchrl = "==0.11.0"
+tensordict = "==0.11.0"
+dm-control = ">=1.0.41"
+mediapy = "*"
+playground = { git = "https://github.com/google-deepmind/mujoco_playground.git" }
+pyvecch = { git = "https://github.com/feji3769/VecchiaBO.git", subdirectory = "code" }
 
 [feature.hyperscalees.target.osx-arm64.pypi-dependencies]
-jax = "==0.9.0"
-applejax = "==0.9.7"
+jax = "==0.10.0"
+jax-mps = "==0.10.1"
 torch = "==2.11.0"
 ray = "==2.51.1"
 modal = "==1.3.0.post1"
@@ -169,25 +209,20 @@ mediapy = "*"
 playground = { git = "https://github.com/google-deepmind/mujoco_playground.git" }
 pyvecch = { git = "https://github.com/feji3769/VecchiaBO.git", subdirectory = "code" }
 
-[feature.hyperscalees.target.linux-64.pypi-dependencies]
-jax = { version = "==0.8.1", extras = ["cuda12"] }
-ray = "==2.51.1"
-modal = "==1.3.0.post1"
-grpclib = ">=0.4.7,<0.5"
-torchrl = "==0.11.0"
-tensordict = "==0.11.0"
-dm-control = ">=1.0.41"
-mediapy = "*"
-playground = { git = "https://github.com/google-deepmind/mujoco_playground.git" }
-pyvecch = { git = "https://github.com/feji3769/VecchiaBO.git", subdirectory = "code" }
-
 [feature.hyperscalees.tasks]
 install-vllm = "python -m pip install --disable-pip-version-check --only-binary=:all: vllm==0.17.0"
-install-nodeps = "python -m pip install --disable-pip-version-check ennbo[with-deps]==0.3.7 && python -m pip install --disable-pip-version-check --no-deps joblib threadpoolctl absl-py==2.4.0 chex==0.1.91 dm-env==1.6 esquilax==2.1.0 jax-tqdm==0.4.0 etils==1.14.0 flask==3.1.3 flask-cors==6.0.2 flax==0.12.7 huggingface-hub==0.36.2 jaxopt==0.8.5 ml-collections==1.1.0 'mujoco>=3.8.1,<3.9' mujoco-mjx==3.8.0 optax==0.2.8 orbax-checkpoint==0.11.39 pillow==12.2.0 tensorboardx==2.6.5 trimesh==4.12.2 jumanji==1.1.1 warp-lang==1.13.0 mujoco-warp==3.8.0.3 imageio==2.37.3 networkx==3.6.1 pygame==2.6.1 rlax==0.1.8 seaborn==0.13.2"
+install-nodeps-linux = "python -m pip install --disable-pip-version-check --no-deps ennbo==0.3.10 && python -m pip install --disable-pip-version-check --no-deps joblib threadpoolctl"
+install-nodeps-darwin = "bash admin/install_ennbo_mac.sh && python -m pip install --disable-pip-version-check --no-deps tensordict==0.11.0 torchrl==0.11.0 pyvers==0.2.2 joblib threadpoolctl"
 install-lassobench = "python -c \"import importlib.util, sys; sys.exit(0 if importlib.util.find_spec('LassoBench') else 1)\" || python -m pip install --disable-pip-version-check --no-deps 'LassoBench @ git+https://github.com/ksehic/LassoBench.git'"
+install-vecchiabo = 'env_prefix="$(python -c "import sys; print(sys.prefix)")" && LDFLAGS="-L${env_prefix}/lib" LIBRARY_PATH="${env_prefix}/lib" CPATH="$(python -c "import pybind11; print(pybind11.get_include())")" python -m pip install --disable-pip-version-check --no-build-isolation --no-deps "git+https://github.com/feji3769/VecchiaBO.git#subdirectory=code"'
+install-mujoco-playground = "python -m pip install --disable-pip-version-check --no-deps mediapy git+https://github.com/google-deepmind/mujoco_playground.git && python -c 'from mujoco_playground._src import mjx_env; mjx_env.ensure_menagerie_exists()'"
 pin-runtime = "python -m pip install --disable-pip-version-check --force-reinstall --no-deps 'numpy>=2.3,<2.4' numba==0.62.1 llvmlite==0.45.1"
-setup = { depends-on = ["install-vllm", "install-nodeps", "install-lassobench", "pin-runtime"] }
+setup-linux = { depends-on = ["install-vllm", "install-nodeps-linux", "install-lassobench", "install-vecchiabo", "install-mujoco-playground", "pin-runtime"] }
+setup-darwin = { depends-on = ["install-nodeps-darwin", "install-lassobench", "install-vecchiabo", "install-mujoco-playground", "pin-runtime"] }
+setup = "bash -lc 'if [ \"$(uname -s)\" = Darwin ]; then pixi run -e hyperscalees setup-darwin; else pixi run -e hyperscalees setup-linux; fi'"
 check = "python admin/check_hyperscalees.py"
+test = "pytest"
+kiss = "kiss check"
 
 [feature.hyperscalees.target.osx-arm64.tasks]
 extras-mac = "bash admin/pixi_extras_mac.sh"

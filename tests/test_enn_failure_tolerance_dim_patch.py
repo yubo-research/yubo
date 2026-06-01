@@ -1,4 +1,4 @@
-"""Coverage for ennbo source patch used by admin/pixi_extras_mac.sh."""
+"""Coverage for ennbo source patch used by admin/install_ennbo_mac.sh."""
 
 from __future__ import annotations
 

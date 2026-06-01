@@ -24,10 +24,16 @@ run_agent() {
   pixi run -e hyperscalees pytest -q
 }
 
+run_publish() {
+  run_quick
+  kiss check
+  pixi run -e hyperscalees pytest -q --no-testmon
+}
+
 case "${gate}" in
   quick) run_quick ;;
   agent) run_agent ;;
-  publish) run_agent ;;
+  publish) run_publish ;;
   *)
     echo "unknown gate: ${gate} (expected quick, agent, or publish)" >&2
     exit 2
