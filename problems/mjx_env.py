@@ -67,14 +67,29 @@ def _action_bounds(model, jnp):
 
 
 def _resolve_mjx_device(jax):
-    """MJX supports CUDA or CPU JAX backends only (not Apple MPS)."""
     try:
-        cuda_devices = jax.devices("cuda")
-    except (RuntimeError, AttributeError):
-        cuda_devices = []
-    if cuda_devices:
-        return cuda_devices[0]
-    return jax.devices("cpu")[0]
+        return jax.devices()[0]
+    except TypeError:
+        try:
+            cuda_devices = jax.devices("cuda")
+        except (RuntimeError, AttributeError):
+            cuda_devices = []
+        if cuda_devices:
+            return cuda_devices[0]
+        return jax.devices("cpu")[0]
+
+
+def _mjx_kwargs_for_device(mjx, device):
+    if _mjx_device_is_mps(device):
+        # MJX's JAX implementation can run on Apple MPS, but the automatic
+        # implementation resolver in some MuJoCo builds does not classify the
+        # MPS platform. Pin the implementation explicitly for that backend.
+        return {"device": device, "impl": mjx.Impl.JAX}
+    return {}
+
+
+def _mjx_device_is_mps(device) -> bool:
+    return str(getattr(device, "platform", "")).lower() == "mps"
 
 
 class GymnasiumMJXAdapter:
@@ -87,11 +102,13 @@ class GymnasiumMJXAdapter:
         self._jax = jax
         self._jnp = jnp
         self._mjx = mjx
+        self._mjx_device = _resolve_mjx_device(jax)
+        self._mjx_kwargs = _mjx_kwargs_for_device(mjx, self._mjx_device)
         self.fast = is_gymnasium_fast_env_tag(env_name)
         self.env_id = parse_gymnasium_env_id(env_name)
-        self.model, self.spec = _load_gymnasium_env_spec(self.env_id, fast=self.fast)
-        mjx_device = _resolve_mjx_device(jax)
-        self.mjx_model = mjx.put_model(self.model, device=mjx_device)
+        spec_fast = self.fast or _mjx_device_is_mps(self._mjx_device)
+        self.model, self.spec = _load_gymnasium_env_spec(self.env_id, fast=spec_fast)
+        self.mjx_model = mjx.put_model(self.model, **self._mjx_kwargs)
         obs_shape = (self.spec.obs_dim(self.model),)
         low, high = _action_bounds(self.model, jnp)
         self.observation_space = core._gymnax_box_from_shape(spaces, jnp, obs_shape)
@@ -145,7 +162,7 @@ class GymnasiumMJXAdapter:
             close_fn()
 
     def _reset_data(self, key):
-        data = self._mjx.make_data(self.mjx_model)
+        data = self._mjx.make_data(self.mjx_model, **self._mjx_kwargs)
         qpos_noise, qvel_noise = self._reset_noise(key)
         data = data.replace(
             qpos=self._jnp.asarray(self.model.qpos0, dtype=self._jnp.float32) + qpos_noise,

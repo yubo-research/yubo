@@ -14,7 +14,7 @@ for arg in "$@"; do
     -h | --help)
       echo "usage: pixi_extras_mac.sh [--llm]" >&2
       echo "  default: BO/JAX extras (ennbo, LassoBench, menagerie)" >&2
-      echo "  --llm:   also build vllm-metal (~5–15 min, needs cargo)" >&2
+      echo "  --llm:   also build vLLM + vllm-metal from source (needs cargo)" >&2
       exit 0
       ;;
     *)
@@ -33,8 +33,45 @@ PY="${CONDA_PREFIX}/bin/python"
 PIP=( "${PY}" -m pip install --disable-pip-version-check )
 export PATH="${CONDA_PREFIX}/bin:${PATH}"
 
+_log() {
+  printf '[%s] %s\n' "$(date '+%H:%M:%S')" "$*" >&2
+}
+
+_run_with_heartbeat() {
+  local label="$1"
+  shift
+  local interval="${YUBO_MAC_BUILD_HEARTBEAT_SECONDS:-30}"
+  local start now elapsed pid status
+
+  _log "start: ${label}"
+  "$@" &
+  pid="$!"
+  start="$(date +%s)"
+  while kill -0 "${pid}" 2>/dev/null; do
+    sleep "${interval}"
+    if kill -0 "${pid}" 2>/dev/null; then
+      now="$(date +%s)"
+      elapsed=$((now - start))
+      _log "still running: ${label} (${elapsed}s elapsed, pid ${pid})"
+    fi
+  done
+  if wait "${pid}"; then
+    status=0
+  else
+    status="$?"
+  fi
+  now="$(date +%s)"
+  elapsed=$((now - start))
+  if [[ "${status}" -ne 0 ]]; then
+    _log "failed: ${label} (${elapsed}s, exit ${status})"
+    return "${status}"
+  fi
+  _log "done: ${label} (${elapsed}s)"
+}
+
 _pin_runtime() {
-  "${PIP[@]}" --force-reinstall --no-deps 'numpy>=2.3,<2.4' numba==0.62.1 llvmlite==0.45.1
+  _run_with_heartbeat "pin runtime packages" \
+    "${PIP[@]}" --force-reinstall --no-deps 'numpy>=2.3,<2.4' numba==0.62.1 llvmlite==0.45.1
 }
 
 _repair_faiss() {
@@ -45,7 +82,7 @@ _repair_faiss() {
   if [[ "${faiss_cpu_ver}" == "1.10.0" ]]; then
     return 0
   fi
-  echo "=== removing pip faiss-cpu ${faiss_cpu_ver} (conda faiss 1.10 required) ==="
+  _log "removing pip faiss-cpu ${faiss_cpu_ver} (conda faiss 1.10 required)"
   "${PIP[@]}" uninstall -y faiss-cpu faiss 2>/dev/null || true
   if [[ -f "${ROOT}/pixi.toml" ]]; then
     (cd "${ROOT}" && pixi reinstall -e hyperscalees faiss faiss-cpu libfaiss)
@@ -67,15 +104,16 @@ _install_vllm_metal() {
 
   local vllm_v="0.21.0"
   local vllm_metal_ref="v0.2.0-20260528-103004"
-  local tmp
+  local start_dir tmp
+  start_dir="$(pwd)"
   tmp="$(mktemp -d)"
-  # shellcheck disable=SC2064
-  trap "rm -rf '${tmp}'" RETURN
+  trap 'cd "${start_dir}" && rm -rf "${tmp}"' RETURN
 
-  echo "=== vllm-metal Mac install into ${CONDA_PREFIX} ==="
+  _log "vllm-metal Mac install into ${CONDA_PREFIX}"
+  _log "temporary build directory: ${tmp}"
 
-  echo "=== MLX + HF stack (Mac LLM lane) ==="
-  "${PIP[@]}" \
+  _run_with_heartbeat "install MLX + HF stack" \
+    "${PIP[@]}" \
     'mlx>=0.31.0,<0.32.0' \
     'mlx-lm>=0.31.3' \
     'mlx-vlm>=0.4.0,<0.5.0' \
@@ -86,30 +124,37 @@ _install_vllm_metal() {
     'maturin>=1.4,<2.0' \
     ninja
 
-  echo "=== vLLM ${vllm_v} (build from source) ==="
+  _log "vLLM ${vllm_v}: download source tarball"
   cd "${tmp}"
-  curl -fsSL -o "vllm-${vllm_v}.tar.gz" \
+  curl -fL --progress-bar -o "vllm-${vllm_v}.tar.gz" \
     "https://github.com/vllm-project/vllm/releases/download/v${vllm_v}/vllm-${vllm_v}.tar.gz"
+  _log "vLLM ${vllm_v}: unpack source"
   tar xf "vllm-${vllm_v}.tar.gz"
   cd "vllm-${vllm_v}"
-  "${PIP[@]}" -r requirements/cpu.txt --extra-index-url https://download.pytorch.org/whl/cpu
-  CXXFLAGS="-Wno-parentheses" "${PIP[@]}" .
+  _run_with_heartbeat "install vLLM CPU build requirements" \
+    "${PIP[@]}" -r requirements/cpu.txt --extra-index-url https://download.pytorch.org/whl/cpu
+  _run_with_heartbeat "build and install vLLM ${vllm_v} from source" \
+    env CXXFLAGS="-Wno-parentheses" "${PIP[@]}" .
   cd "${tmp}"
 
-  echo "=== vllm-metal ${vllm_metal_ref} (build from source, py3.13) ==="
-  curl -fsSL -o vllm-metal.tar.gz \
+  _log "vllm-metal ${vllm_metal_ref}: download source tarball"
+  curl -fL --progress-bar -o vllm-metal.tar.gz \
     "https://github.com/vllm-project/vllm-metal/archive/refs/tags/${vllm_metal_ref}.tar.gz"
+  _log "vllm-metal ${vllm_metal_ref}: unpack source"
   tar xf vllm-metal.tar.gz
   cd "vllm-metal-${vllm_metal_ref#v}"
-  "${PIP[@]}" .
+  _run_with_heartbeat "build and install vllm-metal ${vllm_metal_ref}" \
+    "${PIP[@]}" .
 
-  echo "=== verify ==="
+  _log "verify vLLM + vllm-metal imports"
   "${PY}" - <<'PY'
 import vllm
-import vllm_metal  # noqa: F401 — registers jax_plugins-style entry point for vLLM
+import vllm_metal  # noqa: F401
 
 print("vllm-metal ok", vllm.__version__)
 PY
+
+  cd "${start_dir}"
 }
 
 _run_bo_extras() {
@@ -117,14 +162,14 @@ _run_bo_extras() {
     if "${PY}" -c 'import faiss; from enn.enn.enn_fitter import ENNStatefulFitter; from enn.enn.enn_class import EpistemicNearestNeighbors; import LassoBench' 2>/dev/null; then
       return 0
     fi
-    echo "=== repairing Mac BO extras (stale marker) ==="
+    _log "repairing Mac BO extras (stale marker)"
     rm -f "${MARKER_BO}" "${MARKER_PATCH}"
   elif [[ -f "${MARKER_BO}" ]]; then
-    echo "=== rebuilding ennbo (${ENN_PATCH_ID}) ==="
+    _log "rebuilding ennbo (${ENN_PATCH_ID})"
     rm -rf "${CONDA_PREFIX}/lib/python3."*/site-packages/enn" "${CONDA_PREFIX}/lib/python3."*/site-packages/enn-"*.dist-info 2>/dev/null || true
     rm -f "${MARKER_BO}" "${MARKER_PATCH}"
   fi
-  echo "=== Mac BO/JAX extras (one-time) ==="
+  _log "Mac BO/JAX extras (one-time)"
 
   bash "${ROOT}/admin/install_ennbo_mac.sh"
 
@@ -145,10 +190,13 @@ _run_llm_extras() {
     return 0
   fi
   if "${PY}" -c 'import vllm, vllm_metal' 2>/dev/null; then
+    _log "Mac LLM imports already work; finishing post-install checks"
+    _pin_runtime
+    _repair_faiss
     touch "${MARKER_LLM}"
     return 0
   fi
-  echo "=== Mac LLM extras (vllm-metal, one-time) ==="
+  _log "Mac LLM extras (vllm-metal, one-time)"
   _install_vllm_metal
   _pin_runtime
   _repair_faiss

@@ -358,7 +358,6 @@ def _should_use_external_scoring(env_conf, cfg: _EggRollDesignerConfig) -> bool:
         return False
     if bool(cfg.jax_sim):
         return False
-    from problems.isaaclab_env_adapters import is_isaaclab_env_tag
+    from optimizer.eggroll_external import supports_external_scoring_env
 
-    env_name = str(getattr(env_conf, "env_name", ""))
-    return is_isaaclab_env_tag(env_name) or env_name.startswith("dm_control/")
+    return supports_external_scoring_env(env_conf)

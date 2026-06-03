@@ -6,6 +6,14 @@
 pixi run setup && pixi run check && pixi run test
 ```
 
+On macOS, real `llm:*` UHD configs need the opt-in Metal LLM runtime:
+```bash
+pixi run llm-mac && pixi run check-mac-llm
+```
+
+That path builds vLLM and `vllm-metal` from source for Apple Silicon. The default
+`setup`/`check` path stays focused on the base hyperscalees BO/JAX environment.
+
 ### Remote (Modal)
 ```bash
 modal run ops/modal_hyperscalees_pixi_setup.py --command preflight

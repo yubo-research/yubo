@@ -47,13 +47,19 @@ class _AdamMax:
         return np.asarray(x, dtype=np.float64) + float(lr) * m_hat / (np.sqrt(v_hat) + 1e-8)
 
 
-def init_external(designer, policy, env_conf, cfg) -> None:
+def supports_external_scoring_env(env_conf) -> bool:
     from problems.isaaclab_env_adapters import is_isaaclab_env_tag
+
+    env_name = str(getattr(env_conf, "env_name", ""))
+    return is_isaaclab_env_tag(env_name) or env_name.startswith("dm_control/") or getattr(env_conf, "gym_conf", None) is not None
+
+
+def init_external(designer, policy, env_conf, cfg) -> None:
     from problems.isaaclab_score import IsaacLabScore, active_vector_slots
 
     env_name = str(getattr(env_conf, "env_name", ""))
-    if not (is_isaaclab_env_tag(env_name) or env_name.startswith("dm_control/")):
-        raise NoSuchDesignerError(f"Designer 'eggroll' external scoring only supports isaaclab: and dm_control/ envs, got {env_name!r}.")
+    if not supports_external_scoring_env(env_conf):
+        raise NoSuchDesignerError(f"Designer 'eggroll' external scoring only supports isaaclab:, dm_control/, and Gymnasium envs, got {env_name!r}.")
     objective = IsaacLabScore(env_conf, policy, episodes=int(cfg.num_envs), steps_per_episode=int(cfg.steps))
     designer._is_external = True
     designer._policy = policy

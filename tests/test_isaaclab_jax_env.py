@@ -4,7 +4,18 @@ from types import SimpleNamespace
 
 import jax
 import jax.numpy as jnp
+import pytest
 from isaaclab_score_fakes import FakeIsaacEnv, make_fake_runtime, make_fake_vector_runtime
+
+
+def _jax_default_backend_is_mps() -> bool:
+    return str(jax.default_backend()).lower() == "mps"
+
+
+requires_jax_callback_non_mps = pytest.mark.skipif(
+    _jax_default_backend_is_mps(),
+    reason="JAX pure_callback is not supported on Apple MPS backend.",
+)
 
 
 def test_eggroll_jax_sim_enabled_parses_opt_name():
@@ -15,6 +26,7 @@ def test_eggroll_jax_sim_enabled_parses_opt_name():
     assert eggroll_jax_sim_enabled("turbo-enn") is False
 
 
+@requires_jax_callback_non_mps
 def test_isaaclab_jax_adapter_reset_and_step(monkeypatch):
     from problems.isaaclab_jax_env import IsaacLabJaxAdapter
 
@@ -42,6 +54,7 @@ def test_isaaclab_jax_adapter_reset_and_step(monkeypatch):
         adapter.close()
 
 
+@requires_jax_callback_non_mps
 def test_isaaclab_jax_adapter_reset_and_step_under_scan(monkeypatch):
     from problems.isaaclab_jax_env import IsaacLabJaxAdapter
 
@@ -74,6 +87,7 @@ def test_isaaclab_jax_adapter_reset_and_step_under_scan(monkeypatch):
         adapter.close()
 
 
+@requires_jax_callback_non_mps
 def test_isaaclab_jax_adapter_reset_and_step_under_vmap(monkeypatch):
     from problems.isaaclab_jax_env import IsaacLabJaxAdapter
 
@@ -150,6 +164,7 @@ def test_validate_eggroll_jax_allows_isaaclab():
     validate_eggroll_jax_objective_env("isaaclab:Fake-v0", ValueError)
 
 
+@requires_jax_callback_non_mps
 def test_isaaclab_jax_vector_adapter_reset_and_step_batch(monkeypatch):
     from problems.isaaclab_jax_vector_env import IsaacLabJaxVectorAdapter
 

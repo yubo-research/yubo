@@ -8,6 +8,18 @@ import numpy as np
 from optimizer.eggroll_runtime_core import _DEFAULT_STACK_ERROR
 
 
+def sample_leaf_mask(rng: np.random.Generator, *, num_leaves: int, target: float) -> np.ndarray:
+    if 0 < target < 1:
+        mask = rng.random(int(num_leaves)) < target
+        if not np.any(mask):
+            mask[int(rng.integers(int(num_leaves)))] = True
+        return mask
+    k = min(max(int(target), 1), int(num_leaves))
+    mask = np.zeros(int(num_leaves), dtype=bool)
+    mask[rng.choice(int(num_leaves), size=k, replace=False)] = True
+    return mask
+
+
 class EggRollNoiseSampler:
     def __init__(self, runtime) -> None:
         self._runtime = runtime
@@ -22,7 +34,7 @@ class EggRollNoiseSampler:
     ):
         key = self._runtime.jax.random.key(int(seed) & 0xFFFFFFFF)
         if num_module_target is not None:
-            return self._sample_module_noise(key, float(num_module_target))
+            return self._sample_leaf_noise(key, float(num_module_target))
         if num_dim_target is not None:
             return self._sample_dim_noise(key, float(num_dim_target))
         return self._runtime.jax.random.normal(key, (self._codec.dim,), dtype=self._runtime.jnp.float32)
@@ -38,12 +50,12 @@ class EggRollNoiseSampler:
         values = self._runtime.jax.random.normal(value_key, (k,), dtype=self._runtime.jnp.float32)
         return self._runtime.jnp.zeros((self._codec.dim,), dtype=self._runtime.jnp.float32).at[idx].set(values)
 
-    def _sample_module_noise(self, key, target: float):
+    def _sample_leaf_noise(self, key, target: float):
         if target <= 0:
             raise ValueError("module perturb target must be > 0.")
         mask_key, noise_key = self._runtime.jax.random.split(key)
         mask_seed = int(np.asarray(self._runtime.jax.random.randint(mask_key, (), 0, 2**31 - 1)))
-        mask = self._module_mask(mask_seed, target)
+        mask = self._leaf_mask(mask_seed, target)
         full_noise = self._runtime.jax.random.normal(noise_key, (self._codec.dim,), dtype=self._runtime.jnp.float32)
         flat_mask = np.zeros(self._codec.dim, dtype=bool)
         for selected, start, size in zip(mask, self._codec.offsets, self._codec.sizes, strict=True):
@@ -60,18 +72,8 @@ class EggRollNoiseSampler:
         noise = self._runtime.jax.random.normal(value_key, (self._codec.dim,), dtype=self._runtime.jnp.float32)
         return self._runtime.jnp.where(mask, noise, 0.0)
 
-    def _module_mask(self, seed: int, target: float) -> np.ndarray:
-        rng = np.random.default_rng(int(seed))
-        num_leaves = len(self._codec.sizes)
-        if 0 < target < 1:
-            mask = rng.random(num_leaves) < target
-            if not np.any(mask):
-                mask[int(rng.integers(num_leaves))] = True
-            return mask
-        k = min(max(int(target), 1), num_leaves)
-        mask = np.zeros(num_leaves, dtype=bool)
-        mask[rng.choice(num_leaves, size=k, replace=False)] = True
-        return mask
+    def _leaf_mask(self, seed: int, target: float) -> np.ndarray:
+        return sample_leaf_mask(np.random.default_rng(int(seed)), num_leaves=len(self._codec.sizes), target=float(target))
 
 
 class EggRollNoiserMaterializer:

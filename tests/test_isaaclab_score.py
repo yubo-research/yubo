@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 import numpy as np
 import pytest
 from gymnasium import spaces
@@ -34,14 +36,16 @@ def test_isaaclab_score_evaluates_flat_policy_batch():
 
 def test_isaaclab_score_uses_vector_env_for_batches():
     from policies.mlp_policy import MLPPolicyFactory
-    from problems.isaaclab_score import IsaacLabScore
+    from problems.isaaclab_score import IsaacLabScore, active_vector_slots
 
     runtime = make_fake_vector_runtime()
     policy = MLPPolicyFactory((4,))(runtime)
     score = IsaacLabScore(runtime, policy, episodes=2)
     try:
+        assert active_vector_slots(score) is None
         means, ses = score.evaluate_many(np.stack([score.x0, score.x0]), seed=11)
         assert runtime.vector_slots == [4]
+        assert active_vector_slots(score) == 4
         assert means.shape == (2,)
         assert ses.shape == (2,)
         assert score.last_num_steps == 12
@@ -80,6 +84,72 @@ def _clone_reference_actions(score, xs, candidate_idx, obs, active, zero_action)
         policy = score._make_loaded_policy(xs[cand_idx])
         raw[slots] = np.asarray(policy(obs[slots]), dtype=np.float32).reshape((int(slots.size), *tuple(zero_action.shape)))
     return raw
+
+
+def test_eggroll_isaac_codec_and_noise_direct_paths():
+    from optimizer.eggroll_runtime_noise import sample_leaf_mask
+    from problems.isaaclab_eggroll import EggRollIsaacCodec, EggRollIsaacNoise
+
+    loaded = []
+    params = [
+        SimpleNamespace(numel=lambda: 2, shape=(2,)),
+        SimpleNamespace(numel=lambda: 3, shape=(3,)),
+    ]
+    policy = SimpleNamespace(
+        get_params=lambda: np.zeros(5, dtype=np.float64),
+        set_params=lambda x: loaded.append(np.asarray(x, dtype=np.float64)),
+        clone=lambda: None,
+        num_params=lambda: 5,
+        parameters=lambda: params,
+    )
+    codec = EggRollIsaacCodec(policy)
+    assert codec.sizes == (2, 3)
+    np.testing.assert_allclose(codec.initial(policy), np.zeros(5))
+    codec.load(policy, np.asarray([2.0, -2.0, 0.5, 0.25, -0.25]))
+    np.testing.assert_allclose(loaded[-1], np.asarray([1.0, -1.0, 0.5, 0.25, -0.25]))
+
+    noise = EggRollIsaacNoise(codec)
+    assert noise.sample(seed=1).shape == (5,)
+    assert np.count_nonzero(noise.sample(seed=1, num_dim_target=2)) == 2
+    assert np.count_nonzero(noise.sample(seed=1, num_dim_target=1e-12)) == 1
+    assert np.count_nonzero(noise.sample(seed=1, num_module_target=1)) in {2, 3}
+    assert np.count_nonzero(sample_leaf_mask(np.random.default_rng(0), num_leaves=4, target=2)) == 2
+    assert np.count_nonzero(sample_leaf_mask(np.random.default_rng(0), num_leaves=4, target=1e-12)) == 1
+
+    with pytest.raises(TypeError):
+        EggRollIsaacCodec(SimpleNamespace(get_params=lambda: np.zeros(1)))
+    with pytest.raises(ValueError, match="Candidate"):
+        codec.load(policy, np.zeros(4))
+    with pytest.raises(ValueError, match="dim perturb"):
+        noise.sample(seed=1, num_dim_target=0)
+    with pytest.raises(ValueError, match="module perturb"):
+        noise.sample(seed=1, num_module_target=0)
+
+
+def test_eggroll_isaac_rank_noise_direct_paths():
+    from problems.isaaclab_eggroll import EggRollIsaacCodec, sample_rank_noise
+
+    params = [
+        SimpleNamespace(numel=lambda: 4, shape=(2, 2)),
+        SimpleNamespace(numel=lambda: 3, shape=(3,)),
+    ]
+    policy = SimpleNamespace(
+        get_params=lambda: np.zeros(7, dtype=np.float64),
+        set_params=lambda _x: None,
+        clone=lambda: None,
+        num_params=lambda: 7,
+        parameters=lambda: params,
+    )
+    codec = EggRollIsaacCodec(policy)
+    dense = sample_rank_noise(codec, seed=4, rank=2, group_size=0, freeze_nonlora=False)
+    frozen = sample_rank_noise(codec, seed=4, rank=2, group_size=0, freeze_nonlora=True)
+
+    assert dense.shape == (7,)
+    np.testing.assert_allclose(dense[:4], frozen[:4])
+    assert np.any(np.abs(dense[4:]) > 0.0)
+    assert np.allclose(frozen[4:], 0.0)
+    with pytest.raises(ValueError, match="rank"):
+        sample_rank_noise(codec, seed=4, rank=0, group_size=0, freeze_nonlora=False)
 
 
 def test_isaaclab_vector_eval_prefers_functional_policy_path():
@@ -280,6 +350,24 @@ def test_eggroll_external_designer_iterates_without_jax_env_adapter():
 def test_eggroll_external_designer_supports_dm_control():
     designer, result = _run_external_eggroll_once(make_fake_dm_control_runtime())
     try:
+        assert len(result.data) == 1
+        assert np.isfinite(float(result.data[0].trajectory.rreturn))
+    finally:
+        designer.stop()
+
+
+def test_eggroll_external_designer_supports_gymnasium_linear_policy():
+    from optimizer.eggroll_designer import EggRollDesigner
+    from problems.linear_policy import LinearPolicy
+
+    runtime = make_fake_runtime()
+    runtime.env_name = "HalfCheetah-v5"
+    runtime.env_tag = "cheetah"
+    runtime.gym_conf.state_space = runtime.state_space
+    policy = LinearPolicy(runtime)
+    designer = EggRollDesigner(policy, runtime, sigma=0.01, lr=0.01, num_envs=1, steps=3, batch_size=2, rank=1)
+    try:
+        result = designer.iterate([], 2)
         assert len(result.data) == 1
         assert np.isfinite(float(result.data[0].trajectory.rreturn))
     finally:

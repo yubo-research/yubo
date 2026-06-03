@@ -20,9 +20,26 @@ def _fixed_action(action_space) -> np.ndarray:
     return np.linspace(-0.75, 0.75, action_space.shape[0], dtype=np.float32)
 
 
+def _mjx_kwargs(mjx):
+    import jax
+
+    device = jax.devices()[0]
+    kwargs = {"device": device}
+    if str(getattr(device, "platform", "")).lower() == "mps":
+        kwargs["impl"] = mjx.Impl.JAX
+    return kwargs
+
+
+def _fast_spec_on_mps() -> bool:
+    import jax
+
+    return str(jax.default_backend()).lower() == "mps"
+
+
 def _mjx_data_from_gymnasium(unwrapped, *, jnp, mjx, qpos, qvel, time, ctrl):
-    mjx_model = mjx.put_model(unwrapped.model)
-    data = mjx.make_data(mjx_model)
+    kwargs = _mjx_kwargs(mjx)
+    mjx_model = mjx.put_model(unwrapped.model, **kwargs)
+    data = mjx.make_data(mjx_model, **kwargs)
     data = data.replace(
         qpos=jnp.asarray(qpos, dtype=jnp.float32),
         qvel=jnp.asarray(qvel, dtype=jnp.float32),
@@ -50,7 +67,7 @@ def test_halfcheetah_v5_semantic_values_match_after_adapter_float32_normalizatio
 
     with _gym_env("HalfCheetah-v5") as env:
         unwrapped = env.unwrapped
-        spec = resolve_gymnasium_mujoco_spec(env)
+        spec = resolve_gymnasium_mujoco_spec(env, fast=_fast_spec_on_mps())
         assert spec is not None
 
         obs0, _info0 = env.reset(seed=0)
@@ -139,7 +156,7 @@ def test_halfcheetah_v5_default_runtime_is_not_bitwise_gymnasium_parity() -> Non
 
     with _gym_env("HalfCheetah-v5") as env:
         unwrapped = env.unwrapped
-        spec = resolve_gymnasium_mujoco_spec(env)
+        spec = resolve_gymnasium_mujoco_spec(env, fast=_fast_spec_on_mps())
         assert spec is not None
 
         gym_obs0, _info0 = env.reset(seed=0)
