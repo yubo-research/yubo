@@ -1,0 +1,35 @@
+# HalfCheetah-v5 EggRoll run with the repo's static linear policy.
+#
+# The env_tag "cheetah" is the local Gymnasium alias for HalfCheetah-v5.
+#
+# Local:
+#   ./ops/experiment.py local configs/bo/gymnasium/cheetah/halfcheetah_v5_linear_eggroll.toml
+#
+# Modal:
+#   modal run ops/modal_hyperscalees_pixi_setup.py --config configs/bo/gymnasium/cheetah/halfcheetah_v5_linear_eggroll.toml
+
+[experiment]
+exp_dir = "runs/bo/gymnasium/cheetah/halfcheetah_v5_linear_eggroll"
+env_tag = "cheetah"
+policy_tag = "linear"
+population = 8
+num_epochs = 200
+num_reps = 1
+runtime_device = "cpu"
+local_workers = 1
+b_trace = true
+video_enable = false
+max_total_seconds = 7200
+
+[optimizer]
+name = "eggroll"
+
+[optimizer.params]
+noiser = "eggroll"
+sigma = 0.05
+rank = 1
+lr = 0.01
+optax = "adam"
+batch_size = 8
+num_envs = 1
+steps = 1000

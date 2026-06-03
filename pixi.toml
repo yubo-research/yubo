@@ -226,8 +226,8 @@ install-mujoco-playground = "python -m pip install --disable-pip-version-check -
 pin-runtime = "python -m pip install --disable-pip-version-check --force-reinstall --no-deps 'numpy>=2.3,<2.4' numba==0.62.1 llvmlite==0.45.1"
 setup-linux = { depends-on = ["install-vllm", "install-nodeps-linux", "install-lassobench", "install-vecchiabo", "install-mujoco-playground", "pin-runtime"] }
 setup-darwin = { depends-on = ["install-nodeps-darwin", "install-lassobench", "install-vecchiabo", "install-mujoco-playground", "pin-runtime"] }
-setup = "bash -lc 'if [ \"$(uname -s)\" = Darwin ]; then pixi run -e hyperscalees setup-darwin; else pixi run -e hyperscalees setup-linux; fi'"
-check = "python admin/check_hyperscalees.py"
+setup = "bash -lc 'if [ \"$(uname -s)\" = Darwin ]; then pixi run -e hyperscalees setup-darwin && pixi run -e hyperscalees llm-mac; else pixi run -e hyperscalees setup-linux; fi'"
+check = "bash -lc 'if [ \"$(uname -s)\" = Darwin ]; then pixi run -e hyperscalees check-mac-llm; else python admin/check_hyperscalees.py; fi'"
 test = "pytest"
 kiss = "kiss check"
 
@@ -237,7 +237,7 @@ llm-mac = "bash admin/pixi_extras_mac.sh --llm"
 menagerie = "python -c 'from mujoco_playground._src import mjx_env; mjx_env.ensure_menagerie_exists()'"
 check-mac = "JAX_PLATFORMS=mps python admin/check_hyperscalees.py"
 check-mac-llm = "JAX_PLATFORMS=mps python admin/check_hyperscalees.py --require-llm"
-bootstrap-mac = { depends-on = ["extras-mac", "check-mac"], cmd = "echo mac bootstrap ok" }
+bootstrap-mac = { depends-on = ["extras-mac", "llm-mac", "check-mac-llm"], cmd = "echo mac bootstrap ok" }
 
 [feature.isaaclab.dependencies]
 python = "3.12.*"

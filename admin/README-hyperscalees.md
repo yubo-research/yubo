@@ -3,18 +3,13 @@
 ### Local
 `curl -fsSL https://pixi.sh/install.sh | bash`
 ```bash
-pixi run setup && pixi run check && pixi run test
+pixi run -e hyperscalees setup && pixi run -e hyperscalees check && pixi run -e hyperscalees test
 ```
 
-On macOS, real `llm:*` UHD configs need the opt-in Metal LLM runtime:
-```bash
-pixi run llm-mac && pixi run check-mac-llm
-```
+On macOS, `setup` also prepares the Metal LLM runtime used by real `llm:*` UHD
+configs. That path may build vLLM and `vllm-metal` from source for Apple Silicon.
 
-That path builds vLLM and `vllm-metal` from source for Apple Silicon. The default
-`setup`/`check` path stays focused on the base hyperscalees BO/JAX environment.
-
-### Remote (Modal)
+### Modal
 ```bash
 modal run ops/modal_hyperscalees_pixi_setup.py --command preflight
 modal run ops/modal_hyperscalees_pixi_setup.py --config <config.toml>
