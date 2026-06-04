@@ -30,21 +30,6 @@ pre-commit run
 pytest -sv tests
 ```
 
-## Jujutsu checks
-
-After creating a Jujutsu workspace, install the repo-local alias once:
-
-```bash
-admin/jj_install_aliases.sh
-```
-
-Then run gates through jj:
-
-```bash
-jj check              # agent gate (default): quick + kiss + pytest (testmon subset)
-jj check quick        # ruff, temp-code scan, missing-files only
-jj check publish      # quick + kiss + full pytest (--no-testmon); run before push
-```
 
 If your code crashes or hangs, try this [hack](https://discuss.pytorch.org/t/ran-into-this-issue-while-executing/101460):
 ```
