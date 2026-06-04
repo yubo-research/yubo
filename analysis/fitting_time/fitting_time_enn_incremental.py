@@ -159,7 +159,7 @@ def benchmark_enn_incremental_add_timing(
         t_0 = time.perf_counter()
         for i in range(x_seg.shape[0]):
             enn_model.add(x_seg[i : i + 1], y_seg[i : i + 1], yvar_row)
-        enn_model.sync_index()
+        enn_model.ensure_index_sync()
         add_seconds.append(time.perf_counter() - t_0)
         prev_n = n_target
         log_likelihood.append(

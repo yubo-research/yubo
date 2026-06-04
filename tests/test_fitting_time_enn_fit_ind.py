@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from types import SimpleNamespace
-
 import numpy as np
 import pytest
 
@@ -9,6 +7,35 @@ pytest.importorskip("enn")
 
 from analysis.fitting_time import EnnFitIndTimingResult, benchmark_enn_fit_ind_timing
 from analysis.fitting_time.fitting_time_enn_incremental import EnnIncrementalIndexDriver
+
+
+def _fake_train_rows_at(indices):
+    idx = list(indices)
+    return (
+        np.zeros((len(idx), 2), dtype=np.float64),
+        np.zeros((len(idx), 1), dtype=np.float64),
+        None,
+    )
+
+
+class _FakeEnnFitModel:
+    def __init__(self, *, n_rows: int = 0, on_sync=None):
+        self._n_rows = int(n_rows)
+        self._on_sync = on_sync
+        self.add_count = 0
+
+    def __len__(self):
+        return self._n_rows
+
+    def ensure_index_sync(self):
+        if self._on_sync is not None:
+            self._on_sync()
+
+    def train_rows_at(self, indices):
+        return _fake_train_rows_at(indices)
+
+    def add(self, *_args, **_kwargs):
+        self.add_count += 1
 
 
 def test_benchmark_enn_fit_ind_timing_importable_from_package():
@@ -20,19 +47,8 @@ def test_benchmark_enn_fit_ind_passes_hyperparams_to_enn_fit(monkeypatch):
 
     captured: list[dict] = []
 
-    class _FakeModel:
-        train_x = np.zeros((0, 2), dtype=np.float64)
-        train_y = np.zeros((0, 1), dtype=np.float64)
-        train_yvar = None
-
-        def sync_index(self):
-            pass
-
-        def add(self, *_args, **_kwargs):
-            pass
-
     def ctor(*_args, **_kwargs):
-        return _FakeModel()
+        return _FakeEnnFitModel()
 
     def fit_enn_params_capture(_model, _x, _y, *, k, num_fit_candidates, num_fit_samples, rng, **kwargs):
         captured.append(
@@ -84,13 +100,6 @@ def test_benchmark_enn_fit_ind_passes_hyperparams_to_enn_fit(monkeypatch):
 def test_add_segment_fits_with_probability(monkeypatch):
     import analysis.fitting_time.fitting_time_enn_fit_ind as fit_ind_mod
 
-    class _FakeModel:
-        def __init__(self):
-            self.add_count = 0
-
-        def add(self, *_args, **_kwargs):
-            self.add_count += 1
-
     class _FakeRng:
         def __init__(self, values):
             self._values = iter(values)
@@ -111,7 +120,7 @@ def test_add_segment_fits_with_probability(monkeypatch):
         raising=False,
     )
 
-    model = _FakeModel()
+    model = _FakeEnnFitModel()
     params, fit_total = fit_ind_mod._add_segment_with_per_point_fit(
         model,
         x_seg=np.zeros((3, 2), dtype=np.float64),
@@ -138,7 +147,7 @@ def test_timed_fit_syncs_index_before_timer(monkeypatch):
         calls.append(kwargs["params_warm_start"])
         return "timed-params"
 
-    def sync_index():
+    def _mark_synced():
         nonlocal synced
         synced = True
 
@@ -148,12 +157,7 @@ def test_timed_fit_syncs_index_before_timer(monkeypatch):
     monkeypatch.setattr(fit_ind_mod.time, "perf_counter", lambda: next(tick))
 
     params, elapsed = fit_ind_mod._enn_fit_timed_after_add(
-        SimpleNamespace(
-            sync_index=sync_index,
-            train_x=np.zeros((1, 2), dtype=np.float64),
-            train_y=np.zeros((1, 1), dtype=np.float64),
-            train_yvar=None,
-        ),
+        _FakeEnnFitModel(n_rows=1, on_sync=_mark_synced),
         current_n=30,
         rng=np.random.default_rng(0),
         params_warm_start="previous-params",

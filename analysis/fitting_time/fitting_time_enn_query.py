@@ -91,7 +91,7 @@ def benchmark_enn_query_timing(
             index_driver=driver,
         )
         params = _checkpoint_enn_params(n_obs)
-        enn_model.sync_index()
+        enn_model.ensure_index_sync()
         t_0 = time.perf_counter()
         enn_model.posterior(x_query, params=params, flags=flags)
         elapsed = time.perf_counter() - t_0

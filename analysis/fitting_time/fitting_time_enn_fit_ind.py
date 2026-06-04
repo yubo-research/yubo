@@ -31,22 +31,28 @@ class EnnFitIndTimingResult:
     index_driver: EnnIncrementalIndexDriver
 
 
+def _all_train_rows(enn_model) -> tuple[np.ndarray, np.ndarray, np.ndarray | None]:
+    n = len(enn_model)
+    return enn_model.train_rows_at(list(range(n)))
+
+
 def _enn_fit_timed_after_add(enn_model, *, current_n: int, rng, params_warm_start):
     from optimizer.uhd_enn_fit_helpers import fit_enn_params
 
     k_eff, nfs = enn_fit_k_and_num_fit_samples(int(current_n))
-    enn_model.sync_index()
+    enn_model.ensure_index_sync()
+    train_x, train_y, train_yvar = _all_train_rows(enn_model)
     t_0 = time.perf_counter()
     params = fit_enn_params(
         enn_model,
-        enn_model.train_x,
-        enn_model.train_y,
+        train_x,
+        train_y,
         k=k_eff,
         num_fit_candidates=_FIT_IND_NUM_FIT_CANDIDATES,
         num_fit_samples=nfs,
         rng=rng,
         params_warm_start=params_warm_start,
-        yvar=enn_model.train_yvar,
+        yvar=train_yvar,
     )
     return params, time.perf_counter() - t_0
 

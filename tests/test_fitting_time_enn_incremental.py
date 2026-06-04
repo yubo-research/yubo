@@ -78,13 +78,13 @@ def test_benchmark_enn_incremental_add_timing_syncs_before_stopping_timer(monkey
     def add(*_args, **_kwargs):
         calls.append("add")
 
-    def sync_index():
+    def ensure_index_sync():
         calls.append("sync")
 
     def ctor(*_args, **_kwargs):
         from types import SimpleNamespace
 
-        return SimpleNamespace(add=add, sync_index=sync_index)
+        return SimpleNamespace(add=add, ensure_index_sync=ensure_index_sync)
 
     tick = iter([10.0, 11.5, 20.0, 23.0])
 
