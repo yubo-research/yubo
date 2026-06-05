@@ -45,7 +45,7 @@ def _require_str_in(opts: dict, key: str, allowed: set[str], *, example: str) ->
     return v
 
 
-_IDX_ALLOWED = frozenset({"flat", "hnsw", "exact"})
+_IDX_ALLOWED = frozenset({"flat", "hnsw", "hnsw_disk", "exact"})
 
 
 def _reject_unknown_opts(name: str, opts: dict, allowed: set[str]):
@@ -62,7 +62,7 @@ def _index_driver_from_opts(opts: dict, *, example: str) -> str | None:
     if not isinstance(v, str):
         raise NoSuchDesignerError(f"Designer option 'idx' must be a string. Example: '{example}'.")
     if v not in _IDX_ALLOWED:
-        raise NoSuchDesignerError("Designer option 'idx' must be one of: flat, hnsw.")
+        raise NoSuchDesignerError("Designer option 'idx' must be one of: flat, hnsw, hnsw_disk.")
     if v == "exact":
         return "flat"
     return v

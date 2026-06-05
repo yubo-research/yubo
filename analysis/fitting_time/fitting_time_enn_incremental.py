@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import tempfile
 import time
+from contextlib import contextmanager
 from dataclasses import dataclass
 from enum import Enum
-from typing import Sequence
+from typing import Iterator, Sequence
 
 import numpy as np
 
@@ -32,20 +34,47 @@ ENN_INCREMENTAL_CHECKPOINT_NS: tuple[int, ...] = (
     30000,
     100000,
     300000,
-    1000000,
+    1_000_000,
 )
 
 
 class EnnIncrementalIndexDriver(Enum):
     FLAT = "flat"
     HNSW = "hnsw"
+    HNSW_DISK = "hnsw_disk"
 
     def to_enn_index_driver(self):
         from enn.turbo.config.enn_index_driver import ENNIndexDriver
 
         if self is EnnIncrementalIndexDriver.HNSW:
             return ENNIndexDriver.HNSW
+        if self is EnnIncrementalIndexDriver.HNSW_DISK:
+            return ENNIndexDriver.HNSW_DISK
         return ENNIndexDriver.FLAT
+
+
+@contextmanager
+def enn_disk_work_dir(index_driver: EnnIncrementalIndexDriver) -> Iterator[str | None]:
+    """Yield a temp directory for disk-backed ENN; ``None`` for in-memory drivers."""
+    if index_driver is not EnnIncrementalIndexDriver.HNSW_DISK:
+        yield None
+        return
+    with tempfile.TemporaryDirectory(prefix="yubo_enn_hnsw_disk_") as work_dir:
+        yield work_dir
+
+
+def epistemic_nn_driver_kwargs(
+    index_driver: EnnIncrementalIndexDriver,
+    *,
+    work_dir: str | None,
+) -> dict:
+    kwargs: dict = {"index_driver": index_driver.to_enn_index_driver()}
+    if index_driver is EnnIncrementalIndexDriver.HNSW_DISK:
+        if work_dir is None:
+            raise ValueError("work_dir is required when index_driver is hnsw_disk")
+        kwargs["work_dir"] = work_dir
+        kwargs["enn_storage"] = "disk"
+    return kwargs
 
 
 @dataclass(frozen=True)
@@ -135,43 +164,44 @@ def benchmark_enn_incremental_add_timing(
         if int(n_chk) <= prev_n:
             raise ValueError(f"checkpoints must be strictly increasing, got {ckpts}")
 
-    driver = index_driver.to_enn_index_driver()
-    enn_model = EpistemicNearestNeighbors(
-        np.zeros((0, d), dtype=np.float64),
-        np.zeros((0, 1), dtype=np.float64),
-        index_driver=driver,
-    )
     yvar_row = np.array([[float(_SYNTHETIC_OBS_VAR)]], dtype=np.float64)
 
     ns: list[int] = []
     add_seconds: list[float] = []
     log_likelihood: list[float] = []
 
-    for n_chk in ckpts:
-        n_target = int(n_chk)
-        x_seg, y_seg = _train_xy_unit_cube_segment(
-            D=d,
-            function_name=target,
-            problem_seed=seed,
-            n_train=n_target,
-            start_row=prev_n,
+    with enn_disk_work_dir(index_driver) as work_dir:
+        enn_model = EpistemicNearestNeighbors(
+            np.zeros((0, d), dtype=np.float64),
+            np.zeros((0, 1), dtype=np.float64),
+            **epistemic_nn_driver_kwargs(index_driver, work_dir=work_dir),
         )
-        t_0 = time.perf_counter()
-        for i in range(x_seg.shape[0]):
-            enn_model.add(x_seg[i : i + 1], y_seg[i : i + 1], yvar_row)
-        enn_model.ensure_index_sync()
-        add_seconds.append(time.perf_counter() - t_0)
-        prev_n = n_target
-        log_likelihood.append(
-            enn_test_log_likelihood(
-                enn_model,
+
+        for n_chk in ckpts:
+            n_target = int(n_chk)
+            x_seg, y_seg = _train_xy_unit_cube_segment(
                 D=d,
                 function_name=target,
                 problem_seed=seed,
-                n_obs=n_target,
+                n_train=n_target,
+                start_row=prev_n,
             )
-        )
-        ns.append(n_target)
+            t_0 = time.perf_counter()
+            for i in range(x_seg.shape[0]):
+                enn_model.add(x_seg[i : i + 1], y_seg[i : i + 1], yvar_row)
+            enn_model.ensure_index_sync()
+            add_seconds.append(time.perf_counter() - t_0)
+            prev_n = n_target
+            log_likelihood.append(
+                enn_test_log_likelihood(
+                    enn_model,
+                    D=d,
+                    function_name=target,
+                    problem_seed=seed,
+                    n_obs=n_target,
+                )
+            )
+            ns.append(n_target)
 
     return EnnIncrementalTimingResult(
         n=tuple(ns),
