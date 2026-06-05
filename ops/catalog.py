@@ -8,8 +8,9 @@ import tomllib
 
 def _add_repo_root_to_syspath():
     repo_root = Path(__file__).resolve().parents[1]
-    if str(repo_root) not in sys.path:
-        sys.path.insert(0, str(repo_root))
+    repo_root_str = str(repo_root)
+    sys.path = [path for path in sys.path if path != repo_root_str]
+    sys.path.insert(0, repo_root_str)
 
 
 class _CatalogPolicy:

@@ -107,7 +107,7 @@ _install_vllm_metal() {
   local start_dir tmp
   start_dir="$(pwd)"
   tmp="$(mktemp -d)"
-  trap 'cd "${start_dir}" && rm -rf "${tmp}"' RETURN
+  trap 'cd "${start_dir}" && rm -rf "${tmp}"; trap - RETURN' RETURN
 
   _log "vllm-metal Mac install into ${CONDA_PREFIX}"
   _log "temporary build directory: ${tmp}"
