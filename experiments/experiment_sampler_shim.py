@@ -3,11 +3,15 @@
 from __future__ import annotations
 
 import sys
+from importlib import import_module
 from typing import Any
 
 
 def _m() -> Any:
-    return sys.modules["experiments.experiment_sampler"]
+    module = sys.modules.get("experiments.experiment_sampler")
+    if module is None:
+        module = import_module("experiments.experiment_sampler")
+    return module
 
 
 def data_is_done(*args: Any, **kwargs: Any) -> Any:

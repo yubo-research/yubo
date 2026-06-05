@@ -21,6 +21,27 @@ def _runner():
     return CliRunner()
 
 
+def test_experiment_sampler_shim_lazy_imports_missing_sampler(monkeypatch):
+    import experiments.experiment_sampler_shim as sh
+
+    original = sys.modules.pop("experiments.experiment_sampler", None)
+    fake_sampler = SimpleNamespace(torch=object())
+    calls = []
+
+    def fake_import_module(name):
+        calls.append(name)
+        return fake_sampler
+
+    monkeypatch.setattr(sh, "import_module", fake_import_module)
+    try:
+        assert sh._m() is fake_sampler
+    finally:
+        if original is not None:
+            sys.modules["experiments.experiment_sampler"] = original
+
+    assert calls == ["experiments.experiment_sampler"]
+
+
 def test_kiss_tidy_b_batch_preps_and_timing(tmp_path):
     from experiments.batch_preps_rl_sweeps import prep_sweep_k_bw, prep_sweep_p_bw
     from experiments.batch_preps_timing import prep_timing_sweep

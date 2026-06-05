@@ -12,14 +12,12 @@
 exp_dir = "runs/bo/gymnasium/cheetah/halfcheetah_v5_linear_eggroll"
 env_tag = "cheetah"
 policy_tag = "linear"
-population = 8
-num_epochs = 200
-num_reps = 1
+population = 2
+num_epochs = 1e4
+num_reps = 10
 runtime_device = "cpu"
-local_workers = 1
+local_workers = 10
 b_trace = true
-video_enable = false
-max_total_seconds = 7200
 
 [optimizer]
 name = "eggroll"
@@ -28,8 +26,8 @@ name = "eggroll"
 noiser = "eggroll"
 sigma = 0.05
 rank = 1
-lr = 0.01
-optax = "adam"
-batch_size = 8
+lr = 0.001
+optax = "adamw"
+batch_size = 2
 num_envs = 1
-steps = 1000
+steps = 750
