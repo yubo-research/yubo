@@ -447,6 +447,7 @@ def test_run_bszo_wiring(monkeypatch):
         problem_seed=42,
         noise_seed_0=7,
         lr=1e-4,
+        sigma=0.001,
         num_dim_target=None,
         num_module_target=None,
         log_interval=1,

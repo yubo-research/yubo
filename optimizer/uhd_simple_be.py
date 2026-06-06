@@ -222,6 +222,9 @@ class UHDMeZOBE:
     def positive_phase(self) -> bool:
         return self._mezo.positive_phase
 
+    def skip_negative(self) -> None:
+        self._mezo.skip_negative()
+
     def ask(self) -> None:
         run_mezo_be_ask(self, embed_unselected=lambda: _embed_module(self._module, self._embedder))
 

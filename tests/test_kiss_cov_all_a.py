@@ -268,6 +268,7 @@ def test_cov_exp_uhd_UHDConfig_local_modal_cmd(monkeypatch, tmp_path):
         problem_seed=None,
         noise_seed_0=None,
         lr=0.001,
+        sigma=0.001,
         num_dim_target=None,
         num_module_target=None,
         log_interval=10,

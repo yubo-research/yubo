@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from ops.uhd_config import BEConfig
 from ops.uhd_setup_monolith_bszo import _run_bszo_iterations, run_bszo_loop
-from ops.uhd_setup_monolith_make_loop import _make_simple_loop_for_np_policy, make_loop
+from ops.uhd_setup_monolith_make_loop import make_loop
 from ops.uhd_setup_monolith_opt import (
     _gym_embed_bounds,
     _make_perturbator,
@@ -107,7 +107,6 @@ __all__ = [
     "_load_wrap_mlp_env",
     "_make_accuracy_fn",
     "_make_perturbator",
-    "_make_simple_loop_for_np_policy",
     "_make_simple_optimizer",
     "_make_torch_env",
     "_maybe_attach_enn",

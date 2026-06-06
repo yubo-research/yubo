@@ -68,7 +68,7 @@ def run_bszo_loop(
         accuracy_fn = None
         evaluate_fn = make_bszo_gym_evaluate_fn(env_runtime, module, noise_seed_0_arg=noise_seed_0)
 
-    print(f"BSZO: num_params = {dim}, k = {bszo_k}, epsilon = {bszo_epsilon}, lr = {lr}")
+    print(f"UHD: num_params = {dim}, optimizer = bszo, k = {bszo_k}, epsilon = {bszo_epsilon}, lr = {lr}")
     _run_bszo_iterations(
         bszo,
         evaluate_fn=evaluate_fn,

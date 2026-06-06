@@ -24,6 +24,10 @@ class UHDSimpleBase:
         self._se_prev = 0.0
 
     @property
+    def perturbator(self) -> GaussianPerturbator:
+        return self._perturbator
+
+    @property
     def eval_seed(self) -> int:
         return self._eval_seed
 

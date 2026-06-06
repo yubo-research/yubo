@@ -1,8 +1,31 @@
-"""Logging and early-reject helpers for :class:`UHDLoop`."""
+"""Logging and early-reject helpers for :class:`UHDDriver`."""
 
 from __future__ import annotations
 
 import torch
+
+
+def format_uhd_eval_line(
+    *,
+    i_iter: int,
+    proposal_dt: float,
+    eval_dt: float,
+    sigma: float,
+    mu: float,
+    se: float,
+    y_best_str: str,
+    acc: float | None = None,
+    mean_param: float | None = None,
+    std_param: float | None = None,
+) -> str:
+    line = (
+        f"EVAL: i_iter = {i_iter} proposal_dt = {proposal_dt:.6f} eval_dt = {eval_dt:.6f} sigma = {sigma:.6f} mu = {mu:.4f} se = {se:.4f} y_best = {y_best_str}"
+    )
+    if mean_param is not None and std_param is not None:
+        line += f" mean_param = {mean_param:.6f} std_param = {std_param:.4f}"
+    if acc is not None:
+        line += f" test_acc = {acc:.4f}"
+    return line
 
 
 class UHDLoopSupportMixin:
@@ -53,15 +76,18 @@ class UHDLoopSupportMixin:
         mean_param: float | None,
         std_param: float | None,
     ) -> str:
-        line = (
-            f"EVAL: i_iter = {i_iter} proposal_dt = {proposal_dt:.6f} eval_dt = {eval_dt:.6f} "
-            f"sigma = {self._uhd.sigma:.6f} mu = {mu:.4f} se = {se:.4f} y_best = {y_best_str}"
+        return format_uhd_eval_line(
+            i_iter=i_iter,
+            proposal_dt=proposal_dt,
+            eval_dt=eval_dt,
+            sigma=self._uhd.sigma,
+            mu=mu,
+            se=se,
+            y_best_str=y_best_str,
+            acc=acc,
+            mean_param=mean_param,
+            std_param=std_param,
         )
-        if mean_param is not None and std_param is not None:
-            line += f" mean_param = {mean_param:.6f} std_param = {std_param:.4f}"
-        if acc is not None:
-            line += f" test_acc = {acc:.4f}"
-        return line
 
     def _print_log_block(
         self,
@@ -147,3 +173,6 @@ class UHDLoopSupportMixin:
             self._early_reject_mu_plus_ema = float(mu_plus)
             return
         self._early_reject_mu_plus_ema = b * float(self._early_reject_mu_plus_ema) + (1.0 - b) * float(mu_plus)
+
+
+UHDDriverSupportMixin = UHDLoopSupportMixin

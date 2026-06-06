@@ -139,10 +139,15 @@ def run(
     target_accuracy: float | None = None,
     early_reject=None,
     enn: dict[str, object] | None = None,
+    optimizer: str = "mezo",
+    sigma: float = 0.001,
+    be=None,
 ):
     modal = im("modal")
     EarlyRejectConfig = im("ops.uhd_config").EarlyRejectConfig
     make_loop = im("ops.uhd_setup_make_loop").make_loop
+    if optimizer != "mezo":
+        raise ValueError(f"Modal UHD supports optimizer='mezo' only; got {optimizer!r}. Use local CLI for simple, simple_be, mezo_be, or bszo.")
 
     app = modal.App(name="yubo-uhd")
 
@@ -189,12 +194,16 @@ def run(
             quantile=early_reject_quantile,
             window=early_reject_window,
         )
+        from ops.uhd_setup_simple_common import _default_be_config
+
+        be_cfg = be if be is not None else _default_be_config()
         loop = make_loop(
             env_tag,
             num_rounds,
             policy_tag=policy_tag,
             problem_seed=problem_seed,
             noise_seed_0=noise_seed_0,
+            optimizer=optimizer,
             lr=lr,
             sigma=sigma,
             num_dim_target=ndt,
@@ -203,6 +212,7 @@ def run(
             accuracy_interval=accuracy_interval,
             target_accuracy=target_accuracy,
             early_reject=er_cfg,
+            be=be_cfg,
             enn={
                 "enn_minus_impute": enn_minus_impute,
                 "enn_d": enn_d,
@@ -249,7 +259,7 @@ def run(
                 env_tag,
                 num_rounds,
                 lr,
-                0.001,
+                float(sigma),
                 (ndt, nmt),
                 str(policy_tag),
                 None if problem_seed is None else int(problem_seed),

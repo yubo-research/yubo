@@ -11,6 +11,7 @@ _OPTIONAL_TOML_KEYS = (
     "problem_seed",
     "noise_seed_0",
     "lr",
+    "sigma",
     "perturb",
     "log_interval",
     "accuracy_interval",
@@ -221,6 +222,7 @@ def _parse_cfg(cfg: dict[str, Any]) -> UHDConfig:
     if noise_seed_0 is not None:
         noise_seed_0 = int(noise_seed_0)
     lr = float(cfg.get("lr", 0.001))
+    sigma = float(cfg.get("sigma", 0.001))
     perturb = str(cfg.get("perturb", "dim:0.5"))
     log_interval = int(cfg.get("log_interval", 1))
     accuracy_interval = int(cfg.get("accuracy_interval", 1000))
@@ -245,6 +247,7 @@ def _parse_cfg(cfg: dict[str, Any]) -> UHDConfig:
         problem_seed=problem_seed,
         noise_seed_0=noise_seed_0,
         lr=lr,
+        sigma=sigma,
         num_dim_target=ndt,
         num_module_target=nmt,
         log_interval=log_interval,

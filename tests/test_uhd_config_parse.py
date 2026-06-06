@@ -251,6 +251,7 @@ def test_parse_cfg_minimal_config():
     assert result.problem_seed is None
     assert result.noise_seed_0 is None
     assert result.lr == 0.001
+    assert result.sigma == 0.001
     assert result.num_dim_target == 0.5
     assert result.num_module_target is None
     assert result.optimizer == "mezo"

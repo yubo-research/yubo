@@ -99,8 +99,11 @@ def test_kiss_bridge_exp_uhd_modal_cmd(monkeypatch, tmp_path):
         "_parse_cfg",
         lambda c: SimpleNamespace(
             env_tag="pend",
+            policy_tag="linear",
             num_rounds=1,
+            optimizer="mezo",
             lr=0.01,
+            sigma=0.001,
             num_dim_target=None,
             num_module_target=None,
             problem_seed=0,
@@ -110,6 +113,7 @@ def test_kiss_bridge_exp_uhd_modal_cmd(monkeypatch, tmp_path):
             target_accuracy=None,
             early_reject=None,
             enn=None,
+            be=None,
         ),
     )
     monkeypatch.setattr(modal_uhd, "run", lambda *a, **k: "ok")

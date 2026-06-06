@@ -69,16 +69,20 @@ def test_kiss_tidy_b_ops_cli_batches_uhd(monkeypatch, tmp_path):
         "accuracy_interval = 1000\n"
     )
 
-    with patch("optimizer.uhd_loop.UHDLoop", lambda *a, **k: SimpleNamespace(run=lambda: None)):
+    def _dummy_loop(*_a, **_k):
+        return SimpleNamespace(run=lambda: None)
+
+    with patch("ops.uhd_setup_make_loop.make_loop", _dummy_loop):
         erun.run_local_from_toml(str(tom))
 
-    with patch("optimizer.uhd_loop.UHDLoop", lambda *a, **k: SimpleNamespace(run=lambda: None)):
+    with patch("ops.uhd_setup_make_loop.make_loop", _dummy_loop):
         erun.run_parsed_uhd_local(
             SimpleNamespace(
                 optimizer="mezo",
                 env_tag="mnist",
                 num_rounds=1,
                 lr=0.01,
+                sigma=0.001,
                 num_dim_target=2,
                 num_module_target=1,
                 policy_tag="pure-function",
@@ -90,18 +94,21 @@ def test_kiss_tidy_b_ops_cli_batches_uhd(monkeypatch, tmp_path):
                 target_accuracy=None,
                 early_reject=None,
                 enn=None,
+                be=None,
             )
         )
 
-    monkeypatch.setattr("ops.uhd_setup_simple_gym.run_simple_loop", lambda *a, **k: None)
     monkeypatch.setattr("ops.uhd_setup_bszo.run_bszo_loop", lambda *a, **k: None)
-    with patch("optimizer.uhd_loop.UHDLoop", lambda *a, **k: SimpleNamespace(run=lambda: None)):
+    with patch("ops.uhd_setup_make_loop.make_loop", _dummy_loop):
         erun.run_parsed_uhd_local(
             SimpleNamespace(
                 optimizer="simple",
                 env_tag="mnist",
                 num_rounds=1,
+                sigma=0.001,
+                lr=0.001,
                 num_dim_target=2,
+                num_module_target=None,
                 policy_tag="pure-function",
                 problem_seed=0,
                 noise_seed_0=0,
@@ -109,6 +116,8 @@ def test_kiss_tidy_b_ops_cli_batches_uhd(monkeypatch, tmp_path):
                 log_interval=1,
                 accuracy_interval=1000,
                 target_accuracy=None,
+                early_reject=None,
+                enn=None,
                 be=None,
             )
         )
@@ -157,16 +166,25 @@ def test_kiss_tidy_b_ops_cli_batches_uhd(monkeypatch, tmp_path):
                     env_tag="mnist",
                     num_rounds=1,
                     lr=0.01,
+                    sigma=0.001,
+                    optimizer="mezo",
                     num_dim_target=2,
                     num_module_target=1,
                     policy_tag="pure-function",
                     problem_seed=0,
                     noise_seed_0=0,
+                    batch_size=4,
                     log_interval=1,
                     accuracy_interval=1000,
                     target_accuracy=None,
                     early_reject=None,
                     enn=None,
+                    be=None,
+                    bszo_k=2,
+                    bszo_epsilon=1e-4,
+                    bszo_sigma_p_sq=1.0,
+                    bszo_sigma_e_sq=1.0,
+                    bszo_alpha=0.1,
                 ),
             )
         if name == "tomllib":

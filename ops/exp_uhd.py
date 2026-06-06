@@ -32,8 +32,7 @@ _EXP_UHD_CLI_EXPORTS = frozenset(
 _EXP_UHD_RUN_EXPORTS = frozenset(
     {
         "_run_bszo",
-        "_run_simple",
-        "_run_mezo",
+        "_run_unified",
         "_run_parsed",
     }
 )

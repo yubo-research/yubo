@@ -13,6 +13,7 @@ class UHDConfig:
     problem_seed: int | None
     noise_seed_0: int | None
     lr: float
+    sigma: float
     num_dim_target: float | None
     num_module_target: float | None
     log_interval: int

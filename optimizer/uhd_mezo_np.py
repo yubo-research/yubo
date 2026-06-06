@@ -109,6 +109,19 @@ class UHDMeZONp:
         self._seed += 1
         self._positive_phase = True
 
+    @property
+    def step_seed(self) -> int:
+        return self._step_seed
+
+    @property
+    def step_sigma(self) -> float:
+        return self._sigma
+
+    def skip_negative(self) -> None:
+        from .uhd_mezo_phase_util import skip_mezo_negative_pair
+
+        skip_mezo_negative_pair(self)
+
 
 class UHDMeZOBENp:
     def __init__(
@@ -168,6 +181,9 @@ class UHDMeZOBENp:
     @property
     def positive_phase(self) -> bool:
         return self._mezo.positive_phase
+
+    def skip_negative(self) -> None:
+        self._mezo.skip_negative()
 
     def ask(self) -> None:
         run_mezo_be_ask(

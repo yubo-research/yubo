@@ -21,7 +21,7 @@ def test_kiss_tidy_b_uhd_setups(monkeypatch):
     assert callable(make_bszo_mnist_evaluate_fn) and callable(make_bszo_gym_evaluate_fn)
     assert callable(make_uhd_mnist_torch_evaluate_fn)
 
-    with patch("optimizer.uhd_loop.UHDLoop", lambda *a, **k: SimpleNamespace(run=lambda: None)):
+    with patch("ops.uhd_setup_monolith_make_loop.UHDDriver", lambda *a, **k: SimpleNamespace(run=lambda: None)):
         um.make_loop(
             "mnist",
             1,
