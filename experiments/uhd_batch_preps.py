@@ -19,6 +19,7 @@ def prep_uhd_batch_tlunar(
     for opt in optimizers:
         cfg: dict[str, Any] = {
             "env_tag": "tlunar:fn",
+            "policy_tag": "turbo-lunar",
             "num_rounds": 1000,
             "problem_seed": 0,
             "noise_seed_0": 0,

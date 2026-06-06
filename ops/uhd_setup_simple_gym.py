@@ -2,6 +2,6 @@ from __future__ import annotations
 
 
 def run_simple_loop(*args, **kwargs):
-    from common.im import im
+    from ops.uhd_setup import run_simple_loop as _run_simple_loop
 
-    return im("ops.uhd_setup_simple_gym_impl").run_simple_loop(*args, **kwargs)
+    return _run_simple_loop(*args, **kwargs)

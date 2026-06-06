@@ -241,7 +241,7 @@ def test_kiss_cov_exp_uhd_cli_and_local(monkeypatch, tmp_path):
     )
     exp_uhd.cli.callback()
     toml_file = tmp_path / "test.toml"
-    toml_file.write_text('[uhd]\nenv_tag = "f:sphere-2d"\nnum_rounds = 1\n')
+    toml_file.write_text('[uhd]\nenv_tag = "f:sphere-2d"\npolicy_tag = "pure-function"\nnum_rounds = 1\n')
     exp_uhd.local.callback(str(toml_file))
     assert called["run"] == 1
 

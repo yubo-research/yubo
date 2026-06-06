@@ -4,6 +4,8 @@ from typing import Any
 
 import click
 
+from common.im import im
+
 
 def run_parsed_uhd_local(parsed) -> None:
     if parsed.optimizer == "bszo":
@@ -14,8 +16,20 @@ def run_parsed_uhd_local(parsed) -> None:
         _run_mezo(parsed)
 
 
+def run_local_from_toml(config_toml: str) -> None:
+    tomllib = im("tomllib")
+    p = im("ops.exp_uhd_parse")
+    try:
+        cfg = p._load_toml_config(config_toml)
+        p._validate_required(cfg)
+    except (OSError, tomllib.TOMLDecodeError, TypeError, ValueError) as e:
+        raise click.ClickException(str(e)) from e
+    parsed = p._parse_cfg(cfg)
+    run_parsed_uhd_local(parsed)
+
+
 def _run_bszo(parsed) -> None:
-    from ops.uhd_setup_bszo import run_bszo_loop
+    run_bszo_loop = im("ops.uhd_setup_bszo").run_bszo_loop
 
     policy_tag = getattr(parsed, "policy_tag", None)
     run_bszo_loop(
@@ -38,7 +52,7 @@ def _run_bszo(parsed) -> None:
 
 
 def _run_simple(parsed) -> None:
-    from ops.uhd_setup_simple_gym import run_simple_loop
+    run_simple_loop = im("ops.uhd_setup_simple_gym").run_simple_loop
 
     policy_tag = getattr(parsed, "policy_tag", None)
     run_simple_loop(
@@ -59,7 +73,7 @@ def _run_simple(parsed) -> None:
 
 
 def _run_mezo(parsed) -> None:
-    from ops.uhd_setup_make_loop import make_loop
+    make_loop = im("ops.uhd_setup_make_loop").make_loop
 
     policy_tag = getattr(parsed, "policy_tag", None)
     loop = make_loop(

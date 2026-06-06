@@ -6,9 +6,8 @@ import tomllib
 from common.mapping_keys import coerce_mapping_keys, normalize_toml_key
 from ops.uhd_config import BEConfig, EarlyRejectConfig, ENNConfig, UHDConfig
 
-_REQUIRED_TOML_KEYS = ("env_tag", "num_rounds")
+_REQUIRED_TOML_KEYS = ("env_tag", "num_rounds", "policy_tag")
 _OPTIONAL_TOML_KEYS = (
-    "policy_tag",
     "problem_seed",
     "noise_seed_0",
     "lr",
@@ -213,9 +212,7 @@ def _parse_enn_fields(cfg: dict[str, Any]) -> ENNConfig:
 
 def _parse_cfg(cfg: dict[str, Any]) -> UHDConfig:
     env_tag = str(cfg["env_tag"])
-    policy_tag = cfg.get("policy_tag", None)
-    if policy_tag is not None:
-        policy_tag = str(policy_tag)
+    policy_tag = str(cfg["policy_tag"])
     num_rounds = int(cfg["num_rounds"])
     problem_seed = cfg.get("problem_seed", None)
     if problem_seed is not None:

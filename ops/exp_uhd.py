@@ -26,6 +26,11 @@ _EXP_UHD_CLI_EXPORTS = frozenset(
         "modal_cmd",
         "_cli",
         "_local",
+    }
+)
+
+_EXP_UHD_RUN_EXPORTS = frozenset(
+    {
         "_run_bszo",
         "_run_simple",
         "_run_mezo",
@@ -40,6 +45,11 @@ def __getattr__(name: str):
         return getattr(p, name)
     if name in _EXP_UHD_CLI_EXPORTS:
         return getattr(im("ops.exp_uhd_cli"), name)
+    if name in _EXP_UHD_RUN_EXPORTS:
+        run_mod = im("ops.exp_uhd_run")
+        if name == "_run_parsed":
+            return run_mod.run_parsed_uhd_local
+        return getattr(run_mod, name)
     msg = f"module {__name__!r} has no attribute {name!r}"
     raise AttributeError(msg)
 

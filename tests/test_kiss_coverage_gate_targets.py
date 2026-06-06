@@ -262,7 +262,7 @@ def test_kiss_cov_enn_imputer_and_cli_callbacks(monkeypatch, tmp_path):
 
     monkeypatch.setattr("ops.modal_uhd.run", lambda *args, **kwargs: "ok")
     toml = tmp_path / "cfg.toml"
-    toml.write_text('[uhd]\nenv_tag="f:sphere-2d"\nnum_rounds=1\n')
+    toml.write_text('[uhd]\nenv_tag="f:sphere-2d"\npolicy_tag="pure-function"\nnum_rounds=1\n')
     exp_uhd.modal_cmd(str(toml), (), None, "A100")
 
     monkeypatch.setattr(modal_batches.modal, "Function", SimpleNamespace(lookup=lambda *_args, **_kwargs: _Lookup()))

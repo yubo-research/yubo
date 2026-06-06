@@ -383,6 +383,7 @@ def test_cov_modal_run_run_uhd(monkeypatch):
         0.001,
         None,
         None,
+        policy_tag="pure-function",
         gpu="T4",
     )
     assert result == "result"

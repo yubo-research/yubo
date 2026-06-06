@@ -2,6 +2,6 @@ from __future__ import annotations
 
 
 def make_loop(*args, **kwargs):
-    from common.im import im
+    from ops.uhd_setup_monolith_make_loop import make_loop as _make_loop
 
-    return im("ops.uhd_setup_make_loop_impl").make_loop(*args, **kwargs)
+    return _make_loop(*args, **kwargs)

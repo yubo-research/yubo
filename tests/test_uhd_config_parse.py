@@ -8,6 +8,7 @@ import ops.exp_uhd_parse as _exp_uhd_parse
 
 _parse_be_fields = _exp_uhd_parse._parse_be_fields
 _parse_cfg = _exp_uhd_parse._parse_cfg
+_validate_required = _exp_uhd_parse._validate_required
 _parse_early_reject_fields = _exp_uhd_parse._parse_early_reject_fields
 _parse_enn_fields = _exp_uhd_parse._parse_enn_fields
 _parse_perturb = _exp_uhd_parse._parse_perturb
@@ -228,14 +229,24 @@ def test_parse_perturb_invalid_value():
         _parse_perturb("invalid")
 
 
-def test_parse_cfg_minimal_config():
+def test_validate_required_raises_without_policy_tag():
     cfg = {
         "env_tag": "mnist",
         "num_rounds": 100,
     }
+    with pytest.raises(ValueError, match="policy_tag"):
+        _validate_required(cfg)
+
+
+def test_parse_cfg_minimal_config():
+    cfg = {
+        "env_tag": "mnist",
+        "policy_tag": "pure-function",
+        "num_rounds": 100,
+    }
     result = _parse_cfg(cfg)
     assert result.env_tag == "mnist"
-    assert result.policy_tag is None
+    assert result.policy_tag == "pure-function"
     assert result.num_rounds == 100
     assert result.problem_seed is None
     assert result.noise_seed_0 is None
@@ -289,6 +300,7 @@ def test_parse_cfg_full_config():
 def test_parse_cfg_none_seeds_stay_none():
     cfg = {
         "env_tag": "mnist",
+        "policy_tag": "pure-function",
         "num_rounds": 100,
         "problem_seed": None,
         "noise_seed_0": None,
@@ -301,6 +313,7 @@ def test_parse_cfg_none_seeds_stay_none():
 def test_parse_cfg_optional_target_accuracy_none():
     cfg = {
         "env_tag": "mnist",
+        "policy_tag": "pure-function",
         "num_rounds": 100,
         "target_accuracy": None,
     }

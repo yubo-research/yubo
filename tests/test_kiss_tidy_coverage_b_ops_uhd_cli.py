@@ -63,11 +63,14 @@ def test_kiss_tidy_b_ops_cli_batches_uhd(monkeypatch, tmp_path):
 
     tom = tmp_path / "u.toml"
     tom.write_text(
-        '[uhd]\nenv_tag = "mnist"\nnum_rounds = 1\noptimizer = "mezo"\n'
-        'lr = 0.01\nnum_dim_target = 2\nnum_module_target = 1\npolicy_tag = "pure-function"\n'
+        '[uhd]\nenv_tag = "mnist"\npolicy_tag = "pure-function"\nnum_rounds = 1\noptimizer = "mezo"\n'
+        'lr = 0.01\nperturb = "dim:2"\n'
         "problem_seed = 0\nnoise_seed_0 = 0\nbatch_size = 4\nlog_interval = 1\n"
         "accuracy_interval = 1000\n"
     )
+
+    with patch("optimizer.uhd_loop.UHDLoop", lambda *a, **k: SimpleNamespace(run=lambda: None)):
+        erun.run_local_from_toml(str(tom))
 
     with patch("optimizer.uhd_loop.UHDLoop", lambda *a, **k: SimpleNamespace(run=lambda: None)):
         erun.run_parsed_uhd_local(
@@ -172,9 +175,12 @@ def test_kiss_tidy_b_ops_cli_batches_uhd(monkeypatch, tmp_path):
             return tl
         if name == "ops.modal_uhd":
             return SimpleNamespace(run=lambda *a, **k: "modal-log")
+        if name == "ops.exp_uhd_run":
+            return erun
         raise AssertionError(name)
 
     monkeypatch.setattr("common.im.im", _fake_im)
+    monkeypatch.setattr(ecli, "im", _fake_im)
     assert r.invoke(ecli.cli, ["modal", str(tom)]).exit_code == 0
     assert "ok" in erun.uhd_config_toml_to_modal_log(
         str(tom),
@@ -185,7 +191,7 @@ def test_kiss_tidy_b_ops_cli_batches_uhd(monkeypatch, tmp_path):
     )
 
     monkeypatch.setattr("ops.modal_uhd_runner_impl.run", lambda *a, **k: "MR")
-    assert run("mnist", 1, 0.01, 2, 1, gpu="cpu", problem_seed=0, noise_seed_0=0) == "MR"
+    assert run("mnist", 1, 0.01, 2, 1, policy_tag="pure-function", gpu="cpu", problem_seed=0, noise_seed_0=0) == "MR"
     assert callable(modal_uhd_runner_impl_run)
 
     monkeypatch.setattr("ops.modal_uhd.run", lambda *a, **k: "full-ok")

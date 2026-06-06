@@ -75,7 +75,7 @@ def test_coerce_mapping_keys_non_dict_raises():
 
 
 def test_validate_required_all_required_present():
-    cfg = {"env_tag": "mnist", "num_rounds": 100}
+    cfg = {"env_tag": "mnist", "policy_tag": "pure-function", "num_rounds": 100}
     _validate_required(cfg)
 
 
@@ -134,7 +134,7 @@ def test_load_toml_config_missing_file_raises(tmp_path):
 
 def test_load_toml_config_er_keys_survive_toml_load(tmp_path):
     cfg_file = tmp_path / "config.toml"
-    cfg_file.write_text('[uhd]\nenv_tag = "mnist"\nnum_rounds = 10\ner_tau = 0.1\ner_mode = "ema"\ner-ema-beta = 0.9\n')
+    cfg_file.write_text('[uhd]\nenv_tag = "mnist"\npolicy_tag = "pure-function"\nnum_rounds = 10\ner_tau = 0.1\ner_mode = "ema"\ner-ema-beta = 0.9\n')
     raw = _load_toml_config(str(cfg_file))
     parsed = _parse_cfg(raw)
     assert parsed.early_reject.tau == 0.1
@@ -175,7 +175,7 @@ def test_default_constants_enn_defaults_types():
 
 
 def test_default_constants_required_keys():
-    assert _REQUIRED_TOML_KEYS == ("env_tag", "num_rounds")
+    assert _REQUIRED_TOML_KEYS == ("env_tag", "num_rounds", "policy_tag")
 
 
 def test_default_constants_all_toml_keys_completeness():

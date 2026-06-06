@@ -12,7 +12,7 @@ def run_bszo_loop(
     num_steps: int,
     lr: float = 0.001,
     *,
-    policy_tag: str | None = None,
+    policy_tag: str,
     problem_seed: int | None = None,
     noise_seed_0: int | None = None,
     batch_size: int = 4096,
@@ -25,14 +25,10 @@ def run_bszo_loop(
     bszo_sigma_e_sq: float = 1.0,
     bszo_alpha: float = 0.1,
 ) -> None:
+    import ops.uhd_setup_monolith_support as sup
     from common.seed_all import seed_all
     from optimizer.lr_scheduler import ConstantLR
     from optimizer.uhd_bszo import UHDBSZO
-
-    if policy_tag is None:
-        policy_tag = "pure-function"
-
-    import ops.uhd_setup_monolith_support as sup
 
     build_problem = sup._load_build_problem()
     problem = build_problem(env_tag, policy_tag, problem_seed=problem_seed, noise_seed_0=noise_seed_0)

@@ -44,7 +44,7 @@ def run_simple_loop(
     sigma: float = 0.001,
     optimizer: str = "simple",
     *,
-    policy_tag: str | None = None,
+    policy_tag: str,
     num_dim_target: float | None = None,
     problem_seed: int | None = None,
     noise_seed_0: int | None = None,
@@ -57,9 +57,6 @@ def run_simple_loop(
 ) -> None:
     import ops.uhd_setup_monolith_support as sup
     from common.seed_all import seed_all
-
-    if policy_tag is None:
-        policy_tag = "pure-function"
 
     build_problem = sup._load_build_problem()
     problem = build_problem(env_tag, policy_tag, problem_seed=problem_seed, noise_seed_0=noise_seed_0)

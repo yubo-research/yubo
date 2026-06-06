@@ -130,6 +130,7 @@ def run(
     ndt,
     nmt,
     *,
+    policy_tag,
     gpu="A100",
     problem_seed: int | None = None,
     noise_seed_0: int | None = None,
@@ -151,8 +152,8 @@ def run(
         num_rounds,
         lr,
         sigma,
-        ndt,
-        nmt,
+        perturb,
+        policy_tag,
         problem_seed,
         noise_seed_0,
         log_interval,
@@ -179,6 +180,7 @@ def run(
         enn_embedder,
         enn_gather_t,
     ):
+        ndt, nmt = perturb
         er_cfg = EarlyRejectConfig(
             tau=early_reject_tau,
             mode=early_reject_mode,
@@ -190,6 +192,7 @@ def run(
         loop = make_loop(
             env_tag,
             num_rounds,
+            policy_tag=policy_tag,
             problem_seed=problem_seed,
             noise_seed_0=noise_seed_0,
             lr=lr,
@@ -247,8 +250,8 @@ def run(
                 num_rounds,
                 lr,
                 0.001,
-                ndt,
-                nmt,
+                (ndt, nmt),
+                str(policy_tag),
                 None if problem_seed is None else int(problem_seed),
                 None if noise_seed_0 is None else int(noise_seed_0),
                 int(log_interval),

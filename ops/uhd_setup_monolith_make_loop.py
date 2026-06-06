@@ -115,7 +115,7 @@ def make_loop(
     num_dim_target=None,
     num_module_target=None,
     *,
-    policy_tag: str | None = None,
+    policy_tag: str,
     problem_seed: int | None = None,
     noise_seed_0: int | None = None,
     batch_size: int = 4096,
@@ -127,9 +127,6 @@ def make_loop(
     early_reject: EarlyRejectConfig | None = None,
 ):
     from common.seed_all import seed_all
-
-    if policy_tag is None:
-        policy_tag = "pure-function"
 
     build_problem = _load_build_problem()
     problem = build_problem(env_tag, policy_tag, problem_seed=problem_seed, noise_seed_0=noise_seed_0)

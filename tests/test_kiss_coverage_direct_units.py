@@ -15,7 +15,7 @@ def test_kiss_cov_direct_exp_uhd_modal_and_runner_main(monkeypatch, tmp_path):
 
     monkeypatch.setattr("ops.modal_uhd.run", lambda *args, **kwargs: "ok")
     toml = tmp_path / "cfg.toml"
-    toml.write_text('[uhd]\nenv_tag="f:sphere-2d"\nnum_rounds=1\n')
+    toml.write_text('[uhd]\nenv_tag="f:sphere-2d"\npolicy_tag="pure-function"\nnum_rounds=1\n')
     modal_cmd(str(toml), (), None, "A100")
 
     cfg_path = tmp_path / "rl.toml"
@@ -193,7 +193,7 @@ def test_kiss_cov_direct_eval_config_and_uhd_setup(monkeypatch):
         "ops.uhd_setup._run_simple_gym",
         lambda *args, **kwargs: called.__setitem__("simple", called["simple"] + 1),
     )
-    run_simple_loop("x", 1)
+    run_simple_loop("x", 1, policy_tag="pure-function")
 
     fake_env_runtime_bszo = SimpleNamespace(
         problem_seed=1,
@@ -225,7 +225,7 @@ def test_kiss_cov_direct_eval_config_and_uhd_setup(monkeypatch):
         lambda *args, **kwargs: SimpleNamespace(k=1, ask=lambda: None, tell=lambda mu, se: None, eval_seed=0, y_best=None),
     )
     monkeypatch.setattr("optimizer.lr_scheduler.ConstantLR", lambda lr: lr)
-    run_bszo_loop("x", 1)
+    run_bszo_loop("x", 1, policy_tag="pure-function")
     assert called["simple"] >= 1
     assert called["bszo"] >= 1
 
