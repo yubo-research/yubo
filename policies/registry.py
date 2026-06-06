@@ -254,6 +254,8 @@ def _parse_sizes_suffix(prefix: str, tag: str) -> tuple[int, ...] | None:
     for segment in suffix.split("-"):
         if not segment.isdigit() or int(segment) < 1:
             return None
+        if len(segment) > 1 and segment[0] == "0":
+            return None
         sizes.append(int(segment))
     return tuple(sizes)
 

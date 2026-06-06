@@ -180,6 +180,23 @@ def test_get_policy_preset_dynamic_mlp_unregistered_size():
     assert isinstance(policy, MLPPolicy)
 
 
+@pytest.mark.parametrize(
+    "prefix,bad_tag,good_tag,expected_sizes",
+    [
+        ("mlp-", "mlp-032-016", "mlp-32-16", (32, 16)),
+        ("mlp-", "mlp-007-16", "mlp-7-16", (7, 16)),
+        ("mlp-", "mlp-16-08", "mlp-16-8", (16, 8)),
+        ("actor-mlp-", "actor-mlp-08-16", "actor-mlp-8-16", (8, 16)),
+        ("actor-critic-mlp-", "actor-critic-mlp-032-032", "actor-critic-mlp-32-32", (32, 32)),
+    ],
+)
+def test_parse_sizes_suffix_rejects_leading_zero_segments(prefix, bad_tag, good_tag, expected_sizes):
+    from policies.registry import _parse_sizes_suffix
+
+    assert _parse_sizes_suffix(prefix, bad_tag) is None
+    assert _parse_sizes_suffix(prefix, good_tag) == expected_sizes
+
+
 def test_get_policy_preset_dynamic_malformed_tags():
     from policies.registry import get_policy_preset
 
@@ -188,6 +205,15 @@ def test_get_policy_preset_dynamic_malformed_tags():
 
     with pytest.raises(KeyError, match="Unknown policy tag"):
         get_policy_preset("mlp-0-16")
+
+    with pytest.raises(KeyError, match="Unknown policy tag"):
+        get_policy_preset("mlp-032-016")
+
+    with pytest.raises(KeyError, match="Unknown policy tag"):
+        get_policy_preset("mlp-007-16")
+
+    with pytest.raises(KeyError, match="Unknown policy tag"):
+        get_policy_preset("actor-mlp-08-16")
 
 
 def test_get_policy_preset_static_mlp_regression():
