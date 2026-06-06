@@ -82,7 +82,7 @@ def _make_np_uhd_optimizer(
         seed_all(int(env_runtime.problem_seed) + 27)
 
     param_clip = (-1.0, 1.0)
-    from ops.uhd_setup_simple_common import _default_be_config
+    from ops.uhd_setup_simple_common import _be_enn_kwargs, _default_be_config
 
     cfg = be if be is not None else _default_be_config()
     if optimizer == "simple":
@@ -95,10 +95,8 @@ def _make_np_uhd_optimizer(
             embedder,
             sigma_0=sigma,
             param_clip=param_clip,
-            num_candidates=cfg.num_candidates,
-            warmup=cfg.warmup,
-            fit_interval=cfg.fit_interval,
-            enn_k=cfg.enn_k,
+            adapt_sigma=cfg.adapt_sigma,
+            **_be_enn_kwargs(cfg),
         )
     if optimizer == "mezo":
         return UHDMeZONp(np_policy, sigma=sigma, lr=lr, param_clip=param_clip)
@@ -111,10 +109,7 @@ def _make_np_uhd_optimizer(
             sigma=sigma,
             lr=lr,
             param_clip=param_clip,
-            num_candidates=cfg.num_candidates,
-            warmup=cfg.warmup,
-            fit_interval=cfg.fit_interval,
-            enn_k=cfg.enn_k,
+            **_be_enn_kwargs(cfg),
         )
     raise ValueError(f"Unknown optimizer for numpy policy: {optimizer}")
 
@@ -337,4 +332,10 @@ def make_loop(
     return loop
 
 
-__all__ = ["_make_driver_for_np_policy", "_make_np_uhd_optimizer", "_make_uhd_optimizer", "_make_uhd_perturbator", "make_loop"]
+__all__ = [
+    "_make_driver_for_np_policy",
+    "_make_np_uhd_optimizer",
+    "_make_uhd_optimizer",
+    "_make_uhd_perturbator",
+    "make_loop",
+]

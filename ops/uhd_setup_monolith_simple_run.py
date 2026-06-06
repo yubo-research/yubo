@@ -181,6 +181,7 @@ def _run_simple_gym_np(
     be: BEConfig | None = None,
 ) -> None:
     from embedding.behavioral_embedder import BehavioralEmbedder
+    from ops.uhd_setup_simple_common import _be_enn_kwargs
     from optimizer.uhd_mezo_np import UHDMeZOBENp, UHDMeZONp
     from optimizer.uhd_simple_be_np import UHDSimpleBENp
     from optimizer.uhd_simple_np import UHDSimpleNp
@@ -200,10 +201,8 @@ def _run_simple_gym_np(
                 embedder,
                 sigma_0=sigma,
                 param_clip=param_clip,
-                num_candidates=cfg.num_candidates,
-                warmup=cfg.warmup,
-                fit_interval=cfg.fit_interval,
-                enn_k=cfg.enn_k,
+                adapt_sigma=cfg.adapt_sigma,
+                **_be_enn_kwargs(cfg),
             )
         else:
             uhd = UHDMeZOBENp(
@@ -212,10 +211,7 @@ def _run_simple_gym_np(
                 sigma=sigma,
                 lr=0.001,
                 param_clip=param_clip,
-                num_candidates=cfg.num_candidates,
-                warmup=cfg.warmup,
-                fit_interval=cfg.fit_interval,
-                enn_k=cfg.enn_k,
+                **_be_enn_kwargs(cfg),
             )
     elif optimizer == "mezo":
         uhd = UHDMeZONp(policy, sigma=sigma, lr=0.001, param_clip=param_clip)

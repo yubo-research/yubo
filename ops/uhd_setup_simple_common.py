@@ -18,6 +18,18 @@ def _default_be_config() -> BEConfig:
     )
 
 
+def _be_enn_kwargs(cfg: BEConfig) -> dict:
+    return {
+        "num_candidates": cfg.num_candidates,
+        "warmup": cfg.warmup,
+        "fit_interval": cfg.fit_interval,
+        "enn_k": cfg.enn_k,
+        "num_fit_candidates": cfg.num_fit_candidates,
+        "num_fit_samples": cfg.num_fit_samples,
+        "enn_index_driver": cfg.enn_index_driver,
+    }
+
+
 def _make_simple_optimizer(
     module,
     perturbator,
@@ -50,10 +62,7 @@ def _make_simple_optimizer(
                 embedder,
                 sigma=sigma,
                 lr=lr,
-                num_candidates=cfg.num_candidates,
-                warmup=cfg.warmup,
-                fit_interval=cfg.fit_interval,
-                enn_k=cfg.enn_k,
+                **_be_enn_kwargs(cfg),
             )
 
         from optimizer.uhd_simple_be import UHDSimpleBE
@@ -64,11 +73,9 @@ def _make_simple_optimizer(
             dim=dim,
             module=embed_module,
             embedder=embedder,
-            num_candidates=cfg.num_candidates,
-            warmup=cfg.warmup,
-            fit_interval=cfg.fit_interval,
-            enn_k=cfg.enn_k,
             sigma_range=cfg.sigma_range,
+            adapt_sigma=cfg.adapt_sigma,
+            **_be_enn_kwargs(cfg),
         )
     from optimizer.uhd_simple import UHDSimple
 

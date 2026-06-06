@@ -9,18 +9,31 @@ class StepSizeAdapter:
         sigma_min: float = 1e-8,
         sigma_max: float = 1e8,
         success_tolerance: int = 3,
+        restart_on_floor: bool = True,
     ):
-        self._sigma = max(sigma_min, min(sigma_max, sigma_0))
+        self._sigma_init = max(sigma_min, min(sigma_max, sigma_0))
+        self._sigma = self._sigma_init
         self._sigma_min = sigma_min
         self._sigma_max = sigma_max
         self._success_tolerance = success_tolerance
         self._failure_tolerance = max(10, 5 * success_tolerance)
+        self._restart_on_floor = restart_on_floor
         self._success_count = 0
         self._failure_count = 0
 
     @property
     def sigma(self) -> float:
         return self._sigma
+
+    @property
+    def sigma_init(self) -> float:
+        return self._sigma_init
+
+    def restart(self) -> None:
+        """Reset σ and counters to initial values (TuRBO trust-region restart)."""
+        self._sigma = self._sigma_init
+        self._success_count = 0
+        self._failure_count = 0
 
     def update(self, *, accepted: bool) -> None:
         if accepted:
@@ -34,6 +47,10 @@ class StepSizeAdapter:
             self._sigma = min(2.0 * self._sigma, self._sigma_max)
             self._success_count = 0
         elif self._failure_count >= self._failure_tolerance:
-            self._sigma /= 2.0
-            self._sigma = max(self._sigma, self._sigma_min)
             self._failure_count = 0
+            self._sigma *= 0.5
+            if self._sigma < self._sigma_min:
+                if self._restart_on_floor:
+                    self.restart()
+                else:
+                    self._sigma = self._sigma_min

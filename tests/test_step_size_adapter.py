@@ -43,10 +43,20 @@ def test_shrink_after_failure_tolerance():
 
 
 def test_shrink_floored_at_sigma_min():
-    adapter = StepSizeAdapter(sigma_0=1e-5, dim=100, sigma_min=1e-5)
+    adapter = StepSizeAdapter(sigma_0=1e-5, dim=100, sigma_min=1e-5, restart_on_floor=False)
     for _ in range(15):
         adapter.update(accepted=False)
     assert adapter.sigma == 1e-5
+
+
+def test_restart_on_floor_resets_to_sigma_init():
+    adapter = StepSizeAdapter(sigma_0=0.01, dim=100, sigma_min=0.005, success_tolerance=3)
+    for _ in range(15):
+        adapter.update(accepted=False)
+    assert adapter.sigma == 0.005
+    for _ in range(15):
+        adapter.update(accepted=False)
+    assert adapter.sigma == 0.01
 
 
 @pytest.mark.parametrize(

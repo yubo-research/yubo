@@ -221,8 +221,8 @@ def test_kiss_cov_checkpoint_and_uhd_np(monkeypatch, tmp_path):
     assert simple.mu_avg == 1.0
     assert simple.se_avg == 0.1
 
-    monkeypatch.setattr("optimizer.uhd_simple_be_np.EpistemicNearestNeighbors", lambda *args, **kwargs: _ENN())
-    monkeypatch.setattr("optimizer.uhd_simple_be_np.fit_enn_params", lambda *args, **kwargs: object())
+    monkeypatch.setattr("optimizer.uhd_be_enn.EpistemicNearestNeighbors", lambda *args, **kwargs: _ENN())
+    monkeypatch.setattr("optimizer.uhd_be_enn.enn_fit", lambda *args, **kwargs: object())
     be = UHDSimpleBENp(p, _Embed(), sigma_0=0.1, warmup=1, fit_interval=1, num_candidates=2)
     be.ask()
     be.tell(1.0, 0.1)

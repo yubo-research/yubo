@@ -21,6 +21,10 @@ class BEConfig:
     fit_interval: int
     enn_k: int
     sigma_range: tuple[float, float] | None
+    adapt_sigma: bool = True
+    num_fit_candidates: int = 1
+    num_fit_samples: int = 10
+    enn_index_driver: str = "flat"
 
 
 @dataclass(frozen=True)

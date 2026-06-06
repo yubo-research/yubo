@@ -7,7 +7,7 @@ import numpy as np
 from embedding.behavioral_embedder import BehavioralEmbedder
 
 from .uhd_mezo_be_ask_shared import run_mezo_be_ask
-from .uhd_simple_be import _fit_enn, _predict_enn
+from .uhd_simple_be import _make_be_enn, _predict_enn, _tell_be_enn
 
 
 class UHDMeZONp:
@@ -137,6 +137,9 @@ class UHDMeZOBENp:
         warmup: int = 20,
         fit_interval: int = 10,
         enn_k: int = 25,
+        num_fit_candidates: int = 1,
+        num_fit_samples: int = 10,
+        enn_index_driver: str = "flat",
     ):
         self._mezo = UHDMeZONp(policy, sigma=sigma, lr=lr, beta=beta, param_clip=param_clip)
         self._policy = policy
@@ -152,11 +155,14 @@ class UHDMeZOBENp:
 
         self._zs: list[np.ndarray] = []
         self._ys: list[float] = []
+        self._be_enn = _make_be_enn(
+            enn_k=enn_k,
+            num_fit_candidates=num_fit_candidates,
+            num_fit_samples=num_fit_samples,
+            index_driver=enn_index_driver,
+        )
         self._enn_model: object | None = None
         self._enn_params: object | None = None
-        self._y_mean = 0.0
-        self._y_std = 1.0
-        self._num_new_since_fit = 0
 
     @property
     def eval_seed(self) -> int:
@@ -196,10 +202,9 @@ class UHDMeZOBENp:
         z = self._z_plus if is_positive else self._z_minus
         self._zs.append(np.asarray(z, dtype=np.float64))
         self._ys.append(float(mu))
-        self._num_new_since_fit += 1
         self._mezo.tell(mu, se)
         if not is_positive:
-            self._maybe_fit()
+            _tell_be_enn(self, z, mu)
 
     def _select_seed(self) -> tuple[int, np.ndarray, np.ndarray]:
         base = self._mezo.eval_seed
@@ -230,16 +235,3 @@ class UHDMeZOBENp:
         ucb = np.abs(g) + seg
         best = int(np.argmax(ucb))
         return base + best, z_plus_list[best], z_minus_list[best]
-
-    def _maybe_fit(self) -> None:
-        if len(self._zs) < self._warmup:
-            return
-        if self._enn_params is not None and self._num_new_since_fit < self._fit_interval:
-            return
-        (
-            self._enn_model,
-            self._enn_params,
-            self._y_mean,
-            self._y_std,
-        ) = _fit_enn(self._zs, self._ys, self._enn_k)
-        self._num_new_since_fit = 0

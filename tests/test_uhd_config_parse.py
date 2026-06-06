@@ -78,7 +78,16 @@ def test_parse_be_fields_all_defaults():
     assert result.warmup == 20
     assert result.fit_interval == 10
     assert result.enn_k == 25
+    assert result.num_fit_candidates == 1
+    assert result.num_fit_samples == 10
+    assert result.enn_index_driver == "flat"
     assert result.sigma_range is None
+    assert result.adapt_sigma is True
+
+
+def test_parse_be_fields_adapt_sigma_false():
+    result = _parse_be_fields({"be_adapt_sigma": False})
+    assert result.adapt_sigma is False
 
 
 def test_parse_be_fields_custom_values():
@@ -88,6 +97,9 @@ def test_parse_be_fields_custom_values():
         "be_warmup": 50,
         "be_fit_interval": 25,
         "be_enn_k": 50,
+        "be_num_fit_candidates": 2,
+        "be_num_fit_samples": 20,
+        "be_enn_index_driver": "hnsw",
         "be_sigma_range": [1e-5, 1e-1],
     }
     result = _parse_be_fields(cfg)
@@ -96,6 +108,9 @@ def test_parse_be_fields_custom_values():
     assert result.warmup == 50
     assert result.fit_interval == 25
     assert result.enn_k == 50
+    assert result.num_fit_candidates == 2
+    assert result.num_fit_samples == 20
+    assert result.enn_index_driver == "hnsw"
     assert result.sigma_range == (1e-5, 1e-1)
 
 

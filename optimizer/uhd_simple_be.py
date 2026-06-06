@@ -1,15 +1,12 @@
 from __future__ import annotations
 
 import numpy as np
-from enn.enn.enn_class import EpistemicNearestNeighbors
-from enn.enn.enn_params import PosteriorFlags
-from enn.turbo.config.enn_index_driver import ENNIndexDriver
 from torch import nn
 
 from embedding.behavioral_embedder import BehavioralEmbedder
 
 from .gaussian_perturbator import GaussianPerturbator
-from .uhd_enn_fit_helpers import fit_enn_params
+from .uhd_be_enn import IncrementalBEEnn
 from .uhd_mezo_be_ask_shared import run_mezo_be_ask
 from .uhd_simple_base import UHDSimpleBase
 
@@ -24,52 +21,32 @@ def _embed_module(module: nn.Module, embedder: BehavioralEmbedder) -> np.ndarray
 
 
 def _predict_enn(enn_model, enn_params, x_cand: np.ndarray):
+    from enn.enn.enn_params import PosteriorFlags
+
     post = enn_model.posterior(x_cand, params=enn_params, flags=PosteriorFlags(observation_noise=False))
     return np.asarray(post.mu).reshape(-1), np.asarray(post.se).reshape(-1)
 
 
-def _maybe_fit_enn(obj) -> None:
-    if len(obj._zs) < obj._warmup:
-        return
-    if obj._enn_params is not None and obj._num_new_since_fit < obj._fit_interval:
-        return
-    (
-        obj._enn_model,
-        obj._enn_params,
-        obj._y_mean,
-        obj._y_std,
-    ) = _fit_enn(
-        obj._zs,
-        obj._ys,
-        obj._enn_k,
-    )
-    obj._num_new_since_fit = 0
-
-
-def _fit_enn(zs, ys, enn_k):
-    x = np.array(zs, dtype=np.float64)
-    y = np.array(ys, dtype=np.float64)
-    y_mean = float(y.mean())
-    y_std = float(y.std()) if float(y.std()) > 0 else 1.0
-    y_normed = (y - y_mean) / y_std
-
-    model = EpistemicNearestNeighbors(
-        x,
-        y_normed[:, None],
-        None,
-        scale_x=False,
-        index_driver=ENNIndexDriver.FLAT,
-    )
-    params = fit_enn_params(
-        model,
-        x,
-        y_normed,
+def _make_be_enn(
+    *,
+    enn_k: int,
+    num_fit_candidates: int = 1,
+    num_fit_samples: int = 10,
+    index_driver: str = "flat",
+) -> IncrementalBEEnn:
+    return IncrementalBEEnn(
         k=int(enn_k),
-        num_fit_candidates=200,
-        num_fit_samples=200,
+        num_fit_candidates=num_fit_candidates,
+        num_fit_samples=num_fit_samples,
+        index_driver=index_driver,
         rng=np.random.default_rng(0),
     )
-    return model, params, y_mean, y_std
+
+
+def _tell_be_enn(obj, z: np.ndarray, y: float) -> None:
+    obj._be_enn.add_obs(z, y)
+    obj._enn_model = obj._be_enn.model
+    obj._enn_params = obj._be_enn.params
 
 
 class UHDSimpleBE(UHDSimpleBase):
@@ -85,30 +62,38 @@ class UHDSimpleBE(UHDSimpleBase):
         warmup: int = 20,
         fit_interval: int = 10,
         enn_k: int = 25,
+        num_fit_candidates: int = 1,
+        num_fit_samples: int = 10,
+        enn_index_driver: str = "flat",
         sigma_range: tuple[float, float] | None = None,
+        adapt_sigma: bool = True,
     ):
-        super().__init__(perturbator, sigma_0, dim, sigma_range=sigma_range)
+        super().__init__(perturbator, sigma_0, dim, sigma_range=sigma_range, adapt_sigma=adapt_sigma)
         self._module = module
         self._embedder = embedder
         self._num_candidates = num_candidates
         self._warmup = warmup
-        self._fit_interval = fit_interval
+        self._fit_interval = fit_interval  # ignored; kept for API compat
         self._enn_k = enn_k
 
         self._next_seed = 0
 
         self._zs: list[np.ndarray] = []
         self._ys: list[float] = []
+        self._be_enn = _make_be_enn(
+            enn_k=enn_k,
+            num_fit_candidates=num_fit_candidates,
+            num_fit_samples=num_fit_samples,
+            index_driver=enn_index_driver,
+        )
         self._enn_model: object | None = None
         self._enn_params: object | None = None
-        self._y_mean = 0.0
-        self._y_std = 1.0
-        self._num_new_since_fit = 0
 
     def ask(self) -> None:
         if self._enn_params is not None and len(self._zs) >= self._warmup:
             self._eval_seed, self._z_current = self._select_seed()
-            self._next_seed += self._num_candidates
+            # Resume the sequential seed stream after the chosen candidate (do not skip the whole batch).
+            self._next_seed = self._eval_seed + 1
         else:
             self._eval_seed = self._next_seed
             self._next_seed += 1
@@ -121,10 +106,9 @@ class UHDSimpleBE(UHDSimpleBase):
 
         self._zs.append(self._z_current)
         self._ys.append(mu)
-        self._num_new_since_fit += 1
+        _tell_be_enn(self, self._z_current, mu)
 
         self._accept_or_reject(mu)
-        self._maybe_fit()
 
     def _select_seed(self) -> tuple[int, np.ndarray]:
         base = self._next_seed
@@ -142,15 +126,12 @@ class UHDSimpleBE(UHDSimpleBase):
             self._module.train()
 
         x_cand = np.array(zs, dtype=np.float64)
-        mu_std, se_std = _predict_enn(self._enn_model, self._enn_params, x_cand)
-        ucb = (self._y_mean + self._y_std * mu_std) + abs(self._y_std) * se_std
+        mu_pred, se_pred = _predict_enn(self._enn_model, self._enn_params, x_cand)
+        ucb = mu_pred + se_pred
         best = int(np.argmax(ucb))
 
         self._perturbator.perturb(base + best, float(sigmas[best]))
         return base + best, zs[best]
-
-    def _maybe_fit(self) -> None:
-        _maybe_fit_enn(self)
 
 
 class UHDMeZOBE:
@@ -168,6 +149,9 @@ class UHDMeZOBE:
         warmup: int = 20,
         fit_interval: int = 10,
         enn_k: int = 25,
+        num_fit_candidates: int = 1,
+        num_fit_samples: int = 10,
+        enn_index_driver: str = "flat",
     ):
         from .lr_scheduler import ConstantLR
         from .uhd_mezo import UHDMeZO
@@ -192,11 +176,14 @@ class UHDMeZOBE:
 
         self._zs: list[np.ndarray] = []
         self._ys: list[float] = []
+        self._be_enn = _make_be_enn(
+            enn_k=enn_k,
+            num_fit_candidates=num_fit_candidates,
+            num_fit_samples=num_fit_samples,
+            index_driver=enn_index_driver,
+        )
         self._enn_model: object | None = None
         self._enn_params: object | None = None
-        self._y_mean = 0.0
-        self._y_std = 1.0
-        self._num_new_since_fit = 0
 
     @property
     def eval_seed(self) -> int:
@@ -233,10 +220,9 @@ class UHDMeZOBE:
         z = self._z_plus if is_positive else self._z_minus
         self._zs.append(z)
         self._ys.append(mu)
-        self._num_new_since_fit += 1
         self._mezo.tell(mu, se)
         if not is_positive:
-            self._maybe_fit()
+            _tell_be_enn(self, z, mu)
 
     def _select_seed(self) -> tuple[int, np.ndarray, np.ndarray]:
         base = self._mezo.eval_seed
@@ -272,6 +258,3 @@ class UHDMeZOBE:
         best = int(np.argmax(ucb))
 
         return base + best, z_plus_list[best], z_minus_list[best]
-
-    def _maybe_fit(self) -> None:
-        _maybe_fit_enn(self)

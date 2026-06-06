@@ -7,7 +7,7 @@ from embedding.behavioral_embedder import BehavioralEmbedder
 
 from .gaussian_perturbator import GaussianPerturbator
 from .uhd_bszo import UHDBSZO
-from .uhd_simple_be import _embed_module, _maybe_fit_enn, _predict_enn
+from .uhd_simple_be import _embed_module, _make_be_enn, _predict_enn, _tell_be_enn
 
 
 class UHDBSZOBE:
@@ -28,6 +28,9 @@ class UHDBSZOBE:
         warmup: int = 20,
         fit_interval: int = 10,
         enn_k: int = 25,
+        num_fit_candidates: int = 1,
+        num_fit_samples: int = 10,
+        enn_index_driver: str = "flat",
     ):
         from .lr_scheduler import ConstantLR
 
@@ -53,11 +56,14 @@ class UHDBSZOBE:
 
         self._zs: list[np.ndarray] = []
         self._ys: list[float] = []
+        self._be_enn = _make_be_enn(
+            enn_k=enn_k,
+            num_fit_candidates=num_fit_candidates,
+            num_fit_samples=num_fit_samples,
+            index_driver=enn_index_driver,
+        )
         self._enn_model: object | None = None
         self._enn_params: object | None = None
-        self._y_mean = 0.0
-        self._y_std = 1.0
-        self._num_new_since_fit = 0
 
     @property
     def eval_seed(self) -> int:
@@ -107,12 +113,9 @@ class UHDBSZOBE:
             y_i = (mu - self._bszo.baseline_mu) / self._bszo.epsilon
             self._zs.append(self._current_embed)
             self._ys.append(y_i)
-            self._num_new_since_fit += 1
+            _tell_be_enn(self, self._current_embed, y_i)
 
         self._bszo.tell(mu, se)
-
-        if phase_before >= 1 and self._bszo.phase == 0:
-            self._maybe_fit()
 
     def _select_seeds(self) -> None:
         base = self._next_perturb_base
@@ -136,14 +139,8 @@ class UHDBSZOBE:
 
         x_cand = np.array(embeds, dtype=np.float64)
         mu_pred, se_pred = _predict_enn(self._enn_model, self._enn_params, x_cand)
-
-        mu_real = self._y_mean + self._y_std * mu_pred
-        se_real = abs(self._y_std) * se_pred
-        ucb = np.abs(mu_real) + se_real
+        ucb = np.abs(mu_pred) + se_pred
         best = int(np.argmax(ucb))
 
         self._bszo.set_perturb_base(base + best * k)
         self._next_perturb_base = base + n_cand * k
-
-    def _maybe_fit(self) -> None:
-        _maybe_fit_enn(self)
