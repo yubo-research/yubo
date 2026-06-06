@@ -59,6 +59,9 @@ def policies():
 
     for tag in list_policy_tags():
         click.echo(tag)
+    click.echo("mlp-<h1>-<h2>-...")
+    click.echo("actor-mlp-<h1>-<h2>-...")
+    click.echo("actor-critic-mlp-<h1>-<h2>-...")
 
 
 @_cli.command()

@@ -140,3 +140,68 @@ def test_policy_presets_coverage():
 
     for tag, preset in POLICY_PRESETS.items():
         assert callable(preset.factory), f"Factory for {tag} not callable"
+
+
+def test_get_policy_preset_dynamic_actor_mlp():
+    from policies.actor_mlp_policy import ActorMLPPolicy
+    from policies.registry import get_policy_preset
+
+    preset_32_16 = get_policy_preset("actor-mlp-32-16")
+    preset_32_32 = get_policy_preset("actor-mlp-32-32")
+
+    env_runtime = SimpleNamespace(
+        problem_seed=0,
+        env_name="test",
+        state_space=SimpleNamespace(shape=(4,)),
+        action_space=SimpleNamespace(shape=(2,)),
+        gym_conf=SimpleNamespace(state_space=SimpleNamespace(shape=(4,))),
+    )
+    policy_32_16 = preset_32_16.factory(env_runtime)
+    policy_32_32 = preset_32_32.factory(env_runtime)
+
+    assert isinstance(policy_32_16, ActorMLPPolicy)
+    assert isinstance(policy_32_32, ActorMLPPolicy)
+    assert policy_32_16.num_params() != policy_32_32.num_params()
+
+
+def test_get_policy_preset_dynamic_mlp_unregistered_size():
+    from policies.mlp_policy import MLPPolicy
+    from policies.registry import get_policy_preset
+
+    preset = get_policy_preset("mlp-7-3")
+    env_runtime = SimpleNamespace(
+        problem_seed=0,
+        env_name="test",
+        state_space=SimpleNamespace(shape=(4,)),
+        action_space=SimpleNamespace(shape=(2,)),
+        gym_conf=SimpleNamespace(state_space=SimpleNamespace(shape=(4,))),
+    )
+    policy = preset.factory(env_runtime)
+    assert isinstance(policy, MLPPolicy)
+
+
+def test_get_policy_preset_dynamic_malformed_tags():
+    from policies.registry import get_policy_preset
+
+    with pytest.raises(KeyError, match="Unknown policy tag"):
+        get_policy_preset("actor-mlp-")
+
+    with pytest.raises(KeyError, match="Unknown policy tag"):
+        get_policy_preset("mlp-0-16")
+
+
+def test_get_policy_preset_static_mlp_regression():
+    from policies.registry import get_policy_preset
+
+    preset = get_policy_preset("mlp-32-16")
+    assert preset.rl_model is not None
+    assert preset.rl_model["ppo"]["backbone_hidden_sizes"] == (32, 16)
+
+
+def test_build_problem_dynamic_actor_mlp_cheetah():
+    from problems.problem import build_problem
+
+    problem = build_problem("cheetah", "actor-mlp-32-16", problem_seed=0, noise_seed_0=0)
+    policy = problem.build_policy()
+    assert hasattr(policy, "get_action_and_value")
+    assert hasattr(policy, "last_log_probs")
