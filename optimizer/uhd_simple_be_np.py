@@ -5,7 +5,8 @@ import numpy as np
 from embedding.behavioral_embedder import BehavioralEmbedder
 
 from .step_size_adapter import StepSizeAdapter
-from .uhd_simple_be import _make_be_enn, _predict_enn, _tell_be_enn
+from .uhd_be_enn import be_enn_selection_ready, ucb_from_incremental
+from .uhd_simple_be import _be_accept_or_reject, _make_be_enn, _tell_be_enn
 
 
 class UHDSimpleBENp:
@@ -52,11 +53,13 @@ class UHDSimpleBENp:
             enn_k=enn_k,
             num_fit_candidates=num_fit_candidates,
             num_fit_samples=num_fit_samples,
+            fit_interval=fit_interval,
             index_driver=enn_index_driver,
         )
         self._enn_model: object | None = None
         self._enn_params: object | None = None
         self._z_current: np.ndarray | None = None
+        self._enn_selected_last_ask = False
 
     @property
     def eval_seed(self) -> int:
@@ -87,10 +90,17 @@ class UHDSimpleBENp:
         return x
 
     def ask(self) -> None:
-        if self._enn_params is not None and len(self._zs) >= self._warmup:
+        if be_enn_selection_ready(
+            obs_count=len(self._zs),
+            warmup=self._warmup,
+            enn_k=self._enn_k,
+            has_params=self._enn_params is not None,
+        ):
+            self._enn_selected_last_ask = True
             self._eval_seed, self._x_candidate, self._z_current = self._select_seed()
             self._next_seed = self._eval_seed + 1
         else:
+            self._enn_selected_last_ask = False
             self._eval_seed = self._next_seed
             self._next_seed += 1
             self._x_candidate = self._clip(self._x + self._adapter.sigma * self._noise(self._eval_seed))
@@ -105,15 +115,20 @@ class UHDSimpleBENp:
         self._ys.append(mu)
         _tell_be_enn(self, self._z_current, mu)
 
-        if self._y_best is None or mu > self._y_best:
-            self._y_best = mu
-            if self._adapt_sigma:
-                self._adapter.update(accepted=True)
+        def on_accept() -> None:
             self._x = self._x_candidate.copy()
-        else:
-            if self._adapt_sigma:
-                self._adapter.update(accepted=False)
             self._policy.set_params(self._x)
+
+        def on_reject() -> None:
+            self._policy.set_params(self._x)
+
+        _be_accept_or_reject(
+            self,
+            mu,
+            enn_selected=self._enn_selected_last_ask,
+            on_accept=on_accept,
+            on_reject=on_reject,
+        )
 
     def _select_seed(self) -> tuple[int, np.ndarray, np.ndarray]:
         base = self._next_seed
@@ -126,7 +141,6 @@ class UHDSimpleBENp:
             embeddings.append(z_c)
 
         z_cand = np.array(embeddings, dtype=np.float64)
-        mu_pred, se_pred = _predict_enn(self._enn_model, self._enn_params, z_cand)
-        ucb = mu_pred + se_pred
+        ucb = ucb_from_incremental(self._be_enn, z_cand)
         best = int(np.argmax(ucb))
         return base + best, candidates[best], embeddings[best]

@@ -6,8 +6,9 @@ from torch import nn
 from embedding.behavioral_embedder import BehavioralEmbedder
 
 from .gaussian_perturbator import GaussianPerturbator
+from .uhd_be_enn import be_enn_selection_ready, ucb_from_incremental
 from .uhd_bszo import UHDBSZO
-from .uhd_simple_be import _embed_module, _make_be_enn, _predict_enn, _tell_be_enn
+from .uhd_simple_be import _embed_module, _make_be_enn, _tell_be_enn
 
 
 class UHDBSZOBE:
@@ -60,6 +61,7 @@ class UHDBSZOBE:
             enn_k=enn_k,
             num_fit_candidates=num_fit_candidates,
             num_fit_samples=num_fit_samples,
+            fit_interval=fit_interval,
             index_driver=enn_index_driver,
         )
         self._enn_model: object | None = None
@@ -95,7 +97,12 @@ class UHDBSZOBE:
 
     def ask(self) -> None:
         if self._bszo.phase == 0:
-            if self._enn_params is not None and len(self._zs) >= self._warmup:
+            if be_enn_selection_ready(
+                obs_count=len(self._zs),
+                warmup=self._warmup,
+                enn_k=self._enn_k,
+                has_params=self._enn_params is not None,
+            ):
                 self._select_seeds()
             else:
                 self._bszo.set_perturb_base(self._next_perturb_base)
@@ -138,9 +145,8 @@ class UHDBSZOBE:
             self._module.train()
 
         x_cand = np.array(embeds, dtype=np.float64)
-        mu_pred, se_pred = _predict_enn(self._enn_model, self._enn_params, x_cand)
-        ucb = np.abs(mu_pred) + se_pred
-        best = int(np.argmax(ucb))
+        ucb = ucb_from_incremental(self._be_enn, x_cand)
+        best = int(np.argmax(np.abs(ucb)))
 
         self._bszo.set_perturb_base(base + best * k)
         self._next_perturb_base = base + n_cand * k

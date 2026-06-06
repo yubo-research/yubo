@@ -152,6 +152,52 @@ def test_adapt_sigma_false_keeps_sigma_on_reject():
     assert uhd.sigma == sigma_after_accept
 
 
+def test_enn_reject_does_not_halve_sigma():
+    _, uhd = _make_uhd_be(warmup=2, num_candidates=3, sigma_0=0.5)
+    for i in range(2):
+        uhd.ask()
+        uhd.tell(float(i), 0.0)
+    uhd.ask()
+    uhd.tell(1.0, 0.0)
+    sigma_after_accept = uhd.sigma
+
+    for _ in range(25):
+        uhd.ask()
+        uhd.tell(0.0, 0.0)
+
+    assert uhd.sigma == sigma_after_accept
+
+
+def test_sequential_reject_still_adapts_sigma():
+    _, uhd = _make_uhd_be(warmup=100, sigma_0=0.5)
+    uhd.ask()
+    uhd.tell(10.0, 0.0)
+    sigma_after_accept = uhd.sigma
+
+    for _ in range(20):
+        uhd.ask()
+        uhd.tell(0.0, 0.0)
+
+    assert uhd.sigma < sigma_after_accept
+
+
+def test_select_seed_ignores_sigma_range():
+    _, uhd = _make_uhd_be(warmup=1, sigma_range=(1e-4, 1e-1), num_candidates=20, sigma_0=0.05)
+    uhd.ask()
+    uhd.tell(1.0, 0.0)
+
+    called = []
+    orig = uhd._sample_sigmas
+
+    def track(*args, **kwargs):
+        called.append(True)
+        return orig(*args, **kwargs)
+
+    uhd._sample_sigmas = track
+    uhd.ask()
+    assert called == []
+
+
 def test_runs_many_steps_with_sigma_range():
     module, uhd = _make_uhd_be(warmup=5, num_candidates=3, fit_interval=2, sigma_range=(1e-5, 1e-1))
     for _ in range(20):

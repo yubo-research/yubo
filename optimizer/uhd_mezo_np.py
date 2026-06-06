@@ -159,6 +159,7 @@ class UHDMeZOBENp:
             enn_k=enn_k,
             num_fit_candidates=num_fit_candidates,
             num_fit_samples=num_fit_samples,
+            fit_interval=fit_interval,
             index_driver=enn_index_driver,
         )
         self._enn_model: object | None = None

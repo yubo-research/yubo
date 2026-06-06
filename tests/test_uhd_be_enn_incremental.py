@@ -7,6 +7,7 @@ from enn.turbo.config.enn_index_driver import ENNIndexDriver
 
 from optimizer.uhd_be_enn import (
     IncrementalBEEnn,
+    be_enn_selection_ready,
     fit_enn_batch_raw_reference,
     fit_enn_batch_reference,
     parse_be_enn_index_driver,
@@ -61,6 +62,41 @@ def test_incremental_reuses_same_model_instance():
         model_ids.append(id(reg.model))
     assert len(set(model_ids)) == 1
     assert reg.obs_count == 8
+    assert len(reg.model) == 8
+
+
+def test_incremental_raw_posterior_finite_vs_batch_reference():
+    rng = np.random.default_rng(5)
+    d = 4
+    enn_k = 3
+    zs, ys = _synthetic_stream(rng, 10, d)
+    reg = IncrementalBEEnn(
+        k=enn_k,
+        num_fit_candidates=1,
+        num_fit_samples=10,
+        fit_interval=1,
+        batch_fit_candidates=200,
+        batch_fit_samples=200,
+        rng=np.random.default_rng(0),
+    )
+    for z, y in zip(zs, ys, strict=True):
+        reg.add_obs(z, y)
+    model, params = fit_enn_batch_raw_reference(
+        zs,
+        ys,
+        enn_k,
+        num_fit_candidates=200,
+        num_fit_samples=200,
+    )
+    x_cand = rng.standard_normal((3, d))
+    ucb_inc = ucb_from_incremental(reg, x_cand)
+    from enn.enn.enn_params import PosteriorFlags
+
+    post = model.posterior(x_cand, params=params, flags=PosteriorFlags(observation_noise=False))
+    ucb_ref = np.asarray(post.mu).reshape(-1) + np.asarray(post.se).reshape(-1)
+    assert ucb_inc.shape == ucb_ref.shape
+    assert np.all(np.isfinite(ucb_inc))
+    assert np.all(np.isfinite(ucb_ref))
 
 
 def test_incremental_final_posterior_finite_on_candidates():
@@ -112,6 +148,36 @@ def test_batch_normalized_reference_and_ucb_helper():
     ucb = ucb_from_batch_posterior(model, params, x_cand, y_mean, y_std)
     assert ucb.shape == (2,)
     assert np.all(np.isfinite(ucb))
+
+
+def test_be_enn_selection_ready_respects_warmup_only():
+    assert be_enn_selection_ready(obs_count=9, warmup=10, enn_k=15, has_params=True) is False
+    assert be_enn_selection_ready(obs_count=10, warmup=10, enn_k=15, has_params=True) is True
+
+
+def test_effective_k_caps_to_obs_count():
+    reg = IncrementalBEEnn(k=15, rng=np.random.default_rng(0))
+    reg.add_obs(np.zeros(3), 1.0)
+    assert reg._effective_k() == 1
+    for i in range(2, 12):
+        reg.add_obs(np.ones(3) * i, float(i))
+    assert reg._effective_k() == min(15, reg.obs_count - 1)
+
+
+def test_fitter_y_std_matches_model_after_adds():
+    import pytest
+
+    rng = np.random.default_rng(9)
+    d = 3
+    reg = IncrementalBEEnn(k=3, rng=rng)
+    ys = []
+    for i in range(6):
+        y = float(100 * i + rng.standard_normal())
+        ys.append(y)
+        reg.add_obs(rng.standard_normal(d), y)
+    model_y = np.array([reg.model.train_rows_at([j])[1][0, 0] for j in range(reg.obs_count)])
+    fitter_std = float(reg._fitter.y_std()[0])
+    assert fitter_std == pytest.approx(float(model_y.std()), rel=1e-12)
 
 
 def test_create_empty_factory():

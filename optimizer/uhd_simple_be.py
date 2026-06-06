@@ -6,7 +6,7 @@ from torch import nn
 from embedding.behavioral_embedder import BehavioralEmbedder
 
 from .gaussian_perturbator import GaussianPerturbator
-from .uhd_be_enn import IncrementalBEEnn
+from .uhd_be_enn import IncrementalBEEnn, be_enn_selection_ready, ucb_from_incremental
 from .uhd_mezo_be_ask_shared import run_mezo_be_ask
 from .uhd_simple_base import UHDSimpleBase
 
@@ -32,14 +32,25 @@ def _make_be_enn(
     enn_k: int,
     num_fit_candidates: int = 1,
     num_fit_samples: int = 10,
+    fit_interval: int = 10,
     index_driver: str = "flat",
 ) -> IncrementalBEEnn:
     return IncrementalBEEnn(
         k=int(enn_k),
         num_fit_candidates=num_fit_candidates,
         num_fit_samples=num_fit_samples,
+        fit_interval=fit_interval,
         index_driver=index_driver,
         rng=np.random.default_rng(0),
+    )
+
+
+def _be_enn_selection_ready(*, obs_count: int, warmup: int, enn_k: int, has_params: bool) -> bool:
+    return be_enn_selection_ready(
+        obs_count=obs_count,
+        warmup=warmup,
+        enn_k=enn_k,
+        has_params=has_params,
     )
 
 
@@ -47,6 +58,26 @@ def _tell_be_enn(obj, z: np.ndarray, y: float) -> None:
     obj._be_enn.add_obs(z, y)
     obj._enn_model = obj._be_enn.model
     obj._enn_params = obj._be_enn.params
+
+
+def _be_accept_or_reject(
+    obj,
+    mu: float,
+    *,
+    enn_selected: bool,
+    on_accept,
+    on_reject,
+) -> None:
+    """BE accept/reject: an ENN prescreen reject is not an ES \"sigma too large\" failure."""
+    if obj._y_best is None or mu > obj._y_best:
+        obj._y_best = mu
+        if obj._adapt_sigma:
+            obj._adapter.update(accepted=True)
+        on_accept()
+        return
+    if obj._adapt_sigma and not enn_selected:
+        obj._adapter.update(accepted=False)
+    on_reject()
 
 
 class UHDSimpleBE(UHDSimpleBase):
@@ -73,7 +104,7 @@ class UHDSimpleBE(UHDSimpleBase):
         self._embedder = embedder
         self._num_candidates = num_candidates
         self._warmup = warmup
-        self._fit_interval = fit_interval  # ignored; kept for API compat
+        self._fit_interval = fit_interval
         self._enn_k = enn_k
 
         self._next_seed = 0
@@ -84,17 +115,26 @@ class UHDSimpleBE(UHDSimpleBase):
             enn_k=enn_k,
             num_fit_candidates=num_fit_candidates,
             num_fit_samples=num_fit_samples,
+            fit_interval=fit_interval,
             index_driver=enn_index_driver,
         )
         self._enn_model: object | None = None
         self._enn_params: object | None = None
+        self._enn_selected_last_ask = False
 
     def ask(self) -> None:
-        if self._enn_params is not None and len(self._zs) >= self._warmup:
+        if _be_enn_selection_ready(
+            obs_count=len(self._zs),
+            warmup=self._warmup,
+            enn_k=self._enn_k,
+            has_params=self._enn_params is not None,
+        ):
+            self._enn_selected_last_ask = True
             self._eval_seed, self._z_current = self._select_seed()
             # Resume the sequential seed stream after the chosen candidate (do not skip the whole batch).
             self._next_seed = self._eval_seed + 1
         else:
+            self._enn_selected_last_ask = False
             self._eval_seed = self._next_seed
             self._next_seed += 1
             self._perturbator.perturb(self._eval_seed, self._adapter.sigma)
@@ -108,17 +148,24 @@ class UHDSimpleBE(UHDSimpleBase):
         self._ys.append(mu)
         _tell_be_enn(self, self._z_current, mu)
 
-        self._accept_or_reject(mu)
+        _be_accept_or_reject(
+            self,
+            mu,
+            enn_selected=self._enn_selected_last_ask,
+            on_accept=self._perturbator.accept,
+            on_reject=self._perturbator.unperturb,
+        )
 
     def _select_seed(self) -> tuple[int, np.ndarray]:
         base = self._next_seed
         was_training = self._module.training
         self._module.eval()
 
-        sigmas = self._sample_sigmas(base, self._num_candidates)
+        # ENN is sigma-blind; score candidates at the current adapter sigma only.
+        sigma = float(self._adapter.sigma)
         zs = []
         for i in range(self._num_candidates):
-            self._perturbator.perturb(base + i, float(sigmas[i]))
+            self._perturbator.perturb(base + i, sigma)
             zs.append(self._embedder.embed(self._module).cpu().numpy().astype(np.float64))
             self._perturbator.unperturb()
 
@@ -126,11 +173,10 @@ class UHDSimpleBE(UHDSimpleBase):
             self._module.train()
 
         x_cand = np.array(zs, dtype=np.float64)
-        mu_pred, se_pred = _predict_enn(self._enn_model, self._enn_params, x_cand)
-        ucb = mu_pred + se_pred
+        ucb = ucb_from_incremental(self._be_enn, x_cand)
         best = int(np.argmax(ucb))
 
-        self._perturbator.perturb(base + best, float(sigmas[best]))
+        self._perturbator.perturb(base + best, sigma)
         return base + best, zs[best]
 
 
@@ -180,6 +226,7 @@ class UHDMeZOBE:
             enn_k=enn_k,
             num_fit_candidates=num_fit_candidates,
             num_fit_samples=num_fit_samples,
+            fit_interval=fit_interval,
             index_driver=enn_index_driver,
         )
         self._enn_model: object | None = None
