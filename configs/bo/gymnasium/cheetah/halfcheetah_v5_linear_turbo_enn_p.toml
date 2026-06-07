@@ -1,0 +1,27 @@
+# HalfCheetah-v5 Turbo-ENN Pareto run with the repo's static linear policy.
+#
+# Equivalent experiment shape to halfcheetah_v5_linear_eggroll.toml, translated
+# from EggRoll fields to generic BO fields:
+#   population -> num_arms
+#   num_epochs -> num_rounds
+#
+# Local:
+#   ./ops/experiment.py local configs/bo/gymnasium/cheetah/halfcheetah_v5_linear_turbo_enn_p.toml
+#
+# Modal:
+#   modal run ops/modal_hyperscalees_pixi_setup.py --config configs/bo/gymnasium/cheetah/halfcheetah_v5_linear_turbo_enn_p.toml
+
+[experiment]
+exp_dir = "runs/bo/gymnasium/cheetah/halfcheetah_v5_linear_turbo_enn_p"
+env_tag = "cheetah"
+policy_tag = "linear"
+num_arms = 2
+num_rounds = 1e4
+num_reps = 10
+num_denoise_passive = 1
+runtime_device = "cpu"
+local_workers = 10
+b_trace = true
+
+[optimizer]
+name = "turbo-enn-p"
