@@ -72,34 +72,10 @@ def mk_image(tag: str = "default"):
     project_root = Path(__file__).resolve().parents[1]
     enn_root = project_root.parents[0] / "enn"
 
-    # Patterns to exclude when copying enn (build artifacts, caches, git)
-    enn_ignore = [
-        ".git",
-        "_kpop",
-        "_malvin",
-        "target",
-        "**/debug",
-        "**/release",
-        "**/__pycache__",
-        ".pytest_cache",
-        ".ruff_cache",
-        "*.egg-info",
-        ".mypy_cache",
-        ".venv",
-        "**/*.whl",
-    ]
+    from ops.modal_enn_image import add_enn_to_image
 
     # Add the full enn project and build the Rust extension
-    # copy=True required because we run build commands after adding local files
-    image = image.add_local_dir(str(enn_root), remote_path="/root/enn", ignore=enn_ignore, copy=True)
-    image = image.run_commands(
-        # ndarray pulls cblas symbols; ensure final cdylib keeps DT_NEEDED on libopenblas.
-        ". $HOME/.cargo/env && "
-        "export CARGO_BUILD_RUSTC_WRAPPER= && "
-        "export RUSTFLAGS='-C link-arg=-Wl,--no-as-needed -C link-arg=-lopenblas' && "
-        "cd /root/enn/rust/crates/enn-py && maturin build --release",
-        "pip install $(find /root/enn/rust -path '*/wheels/*manylinux*.whl' | head -1) && pip install -e /root/enn",
-    )
+    image = add_enn_to_image(image, enn_root)
     image = image.run_commands(
         "python -c \"from enn.enn.enn_class import EpistemicNearestNeighbors; print('enn import OK')\"",
     )

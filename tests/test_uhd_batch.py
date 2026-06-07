@@ -317,23 +317,75 @@ def test_local_cmd(tmp_path):
     assert mock_bl.call_args[0][1] == 3
 
 
-def test_modal_cmd(tmp_path):
+def test_deploy_cmd():
     from click.testing import CliRunner
 
-    from ops.uhd_batch import cli, modal_cmd  # noqa: F811
+    from ops.uhd_batch import cli, deploy_cmd  # noqa: F811
 
-    assert modal_cmd is not None
+    assert deploy_cmd is not None
+    with patch("ops.uhd_batch_cli._deploy_uhd_batch_app") as mock_deploy:
+        result = CliRunner().invoke(cli, ["deploy"])
+
+    assert result.exit_code == 0, result.output
+    mock_deploy.assert_called_once()
+
+
+def test_submit_cmd_config(tmp_path):
+    from click.testing import CliRunner
+
+    from ops.uhd_batch import cli, submit_cmd  # noqa: F811
+
+    assert submit_cmd is not None
     toml_path = tmp_path / "test.toml"
     toml_path.write_text('[uhd]\nenv_tag = "mnist"\nnum_rounds = 10\n')
 
-    with patch("ops.uhd_batch_cli._batch_modal") as mock_bm:
-        result = CliRunner().invoke(cli, ["modal", str(toml_path), "--num-reps", "5"])
+    with (
+        patch("ops.uhd_batch_cli._ensure_uhd_batch_app"),
+        patch("ops.uhd_batch_cli._batch_modal") as mock_bm,
+    ):
+        result = CliRunner().invoke(
+            cli,
+            [
+                "submit",
+                "--config",
+                str(toml_path),
+                "--num-reps",
+                "5",
+            ],
+        )
 
     assert result.exit_code == 0, result.output
     mock_bm.assert_called_once()
     cfg = mock_bm.call_args[0][0]
     assert cfg["env_tag"] == "mnist"
     assert mock_bm.call_args[0][1] == 5
+
+
+def test_submit_cmd_prep(tmp_path):
+    from click.testing import CliRunner
+
+    from ops.uhd_batch import cli, submit_cmd  # noqa: F811
+
+    assert submit_cmd is not None
+
+    with (
+        patch("ops.uhd_batch_cli._ensure_uhd_batch_app"),
+        patch("ops.uhd_batch_cli._batch_modal") as mock_batch,
+    ):
+        result = CliRunner().invoke(
+            cli,
+            [
+                "submit",
+                "--prep",
+                "experiments.uhd_batch_preps.prep_uhd_batch_cheetah",
+                "--results-dir",
+                str(tmp_path),
+            ],
+        )
+
+    assert result.exit_code == 0, result.output
+    assert mock_batch.call_count == 7
+    assert "Submit complete: 7 configs" in result.output
 
 
 def test_collect_cmd():
@@ -367,44 +419,19 @@ def test_status_cmd():
         result = CliRunner().invoke(cli, ["status"])
 
     assert result.exit_code == 0, result.output
+    assert "app = yubo_uhd_batch" in result.output
     assert "results_available = 7" in result.output
     assert "submitted = 12" in result.output
 
 
-def test_cleanup_cmd():
+def test_stop_cmd():
     from click.testing import CliRunner
 
-    from ops.uhd_batch import cleanup_cmd, cli  # noqa: F811
+    from ops.uhd_batch import cli, stop_cmd  # noqa: F811
 
-    assert cleanup_cmd is not None
-    with patch("modal.Dict.delete") as mock_del:
-        result = CliRunner().invoke(cli, ["cleanup"])
-
-    assert result.exit_code == 0, result.output
-    assert mock_del.call_count == 2
-    deleted = {c.args[0] for c in mock_del.call_args_list}
-    assert deleted == {"uhd_batch_results", "uhd_batch_submitted"}
-    assert "Deleted dict: uhd_batch_results" in result.output
-
-
-def test_batch_cmd(tmp_path):
-    from click.testing import CliRunner
-
-    from ops.uhd_batch import batch_cmd, cli  # noqa: F811
-
-    assert batch_cmd is not None
-
-    with patch("ops.uhd_batch_cli._batch_modal") as mock_batch:
-        result = CliRunner().invoke(
-            cli,
-            [
-                "batch",
-                "experiments.uhd_batch_preps.prep_uhd_batch_tlunar",
-                "--results-dir",
-                str(tmp_path),
-            ],
-        )
+    assert stop_cmd is not None
+    with patch("ops.uhd_batch_cli._stop_uhd_batch") as mock_stop:
+        result = CliRunner().invoke(cli, ["stop"])
 
     assert result.exit_code == 0, result.output
-    assert mock_batch.call_count == 4
-    assert "Batch complete: 4 configs" in result.output
+    mock_stop.assert_called_once()

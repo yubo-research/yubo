@@ -22,3 +22,7 @@ class _ENN:
     def posterior(self, x, params=None, flags=None):
         _ = params, flags
         return _Posterior(len(x))
+
+    def train_rows_at(self, idx):
+        n = len(idx)
+        return np.zeros((n, 1)), np.zeros(n), np.ones(n)

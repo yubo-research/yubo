@@ -85,6 +85,16 @@ def test_success_resets_failure_count():
     assert adapter.sigma == 0.1  # no shrink yet
 
 
+def test_clear_failure_streak_preserves_sigma():
+    adapter = StepSizeAdapter(sigma_0=0.1, dim=100)
+    for _ in range(8):
+        adapter.update(accepted=False)
+    adapter.clear_failure_streak()
+    for _ in range(14):
+        adapter.update(accepted=False)
+    assert adapter.sigma == 0.1
+
+
 def test_failure_resets_success_count():
     adapter = StepSizeAdapter(sigma_0=0.1, dim=10, success_tolerance=3)
     adapter.update(accepted=True)  # success 1

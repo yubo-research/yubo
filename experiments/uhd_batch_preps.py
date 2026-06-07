@@ -1,54 +1,49 @@
 from typing import Any
 
 
-def prep_uhd_batch_tlunar(
+def prep_uhd_batch_cheetah(
     results_dir: str = "results/uhd",
-    num_reps: int = 30,
+    num_reps: int = 10,
 ) -> list[tuple[dict[str, Any], int]]:
     _ = results_dir
 
-    optimizers = [
-        "simple",
-        "simple_be",
-        "mezo",
-        "mezo_be",
-    ]
+    common: dict[str, Any] = {
+        "env_tag": "cheetah",
+        "policy_tag": "mlp-32-16",
+        "num_rounds": 10000,
+        "problem_seed": 0,
+        "noise_seed_0": 0,
+        "perturb": "dense",
+        "log_interval": 1,
+        "sigma": 0.1,
+    }
 
+    be_common: dict[str, Any] = {
+        "be_num_probes": 10,
+        "be_num_candidates": 10,
+        "be_warmup": 10,
+        "be_fit_interval": 1,
+        "be_enn_k": 15,
+    }
+
+    drivers = ["flat", "hnsw", "hnsw_disk"]
     configs: list[tuple[dict[str, Any], int]] = []
 
-    for opt in optimizers:
-        cfg: dict[str, Any] = {
-            "env_tag": "tlunar:fn",
-            "policy_tag": "turbo-lunar",
-            "num_rounds": 1000,
-            "problem_seed": 0,
-            "noise_seed_0": 0,
-            "optimizer": opt,
-            "perturb": "dense",
-            "log_interval": 1,
-            "accuracy_interval": 100,
-            "batch_size": 4096,
-        }
+    configs.append(({**common, "optimizer": "simple"}, num_reps))
 
-        if opt == "simple":
-            cfg["lr"] = 0.001
-        elif opt == "simple_be":
-            cfg["lr"] = 0.001
-            cfg["be_num_probes"] = 10
-            cfg["be_num_candidates"] = 10
-            cfg["be_warmup"] = 20
-            cfg["be_fit_interval"] = 10
-            cfg["be_enn_k"] = 25
-        elif opt == "mezo":
-            cfg["lr"] = 0.001
-        elif opt == "mezo_be":
-            cfg["lr"] = 0.001
-            cfg["be_num_probes"] = 10
-            cfg["be_num_candidates"] = 10
-            cfg["be_warmup"] = 20
-            cfg["be_fit_interval"] = 10
-            cfg["be_enn_k"] = 25
-
-        configs.append((cfg, num_reps))
+    for be_enn_index_driver in drivers:
+        for be_acquisition in ["ucb", "mu"]:
+            configs.append(
+                (
+                    {
+                        **common,
+                        "optimizer": "simple_be",
+                        **be_common,
+                        "be_enn_index_driver": be_enn_index_driver,
+                        "be_acquisition": be_acquisition,
+                    },
+                    num_reps,
+                )
+            )
 
     return configs

@@ -23,7 +23,7 @@ from ops.modal_cli_common import (
 from ops.modal_uhd import run
 from ops.modal_uhd_runner_impl import run as modal_uhd_runner_impl_run
 from ops.uhd_batch_cli import collect_cmd
-from ops.uhd_batch_cli import modal_cmd as uhd_batch_modal_cmd
+from ops.uhd_batch_cli import submit_cmd as uhd_batch_submit_cmd
 
 
 def _runner():
@@ -209,7 +209,20 @@ def test_kiss_tidy_b_ops_cli_batches_uhd(monkeypatch, tmp_path):
     )
 
     monkeypatch.setattr("ops.modal_uhd_runner_impl.run", lambda *a, **k: "MR")
-    assert run("mnist", 1, 0.01, 2, 1, policy_tag="pure-function", gpu="cpu", problem_seed=0, noise_seed_0=0) == "MR"
+    assert (
+        run(
+            "mnist",
+            1,
+            0.01,
+            2,
+            1,
+            policy_tag="pure-function",
+            gpu="cpu",
+            problem_seed=0,
+            noise_seed_0=0,
+        )
+        == "MR"
+    )
     assert callable(modal_uhd_runner_impl_run)
 
     monkeypatch.setattr("ops.modal_uhd.run", lambda *a, **k: "full-ok")
@@ -224,7 +237,7 @@ def test_kiss_tidy_b_ops_cli_batches_uhd(monkeypatch, tmp_path):
     monkeypatch.setattr("ops.uhd_batch_cli._collect", lambda *a, **k: None)
     t2 = tmp_path / "b.toml"
     t2.write_text('[uhd]\nenv_tag = "mnist"\nnum_rounds = 1\n')
-    assert r.invoke(ubc.cli, ["modal", str(t2), "--num-reps", "1"]).exit_code == 0
-    assert callable(uhd_batch_modal_cmd)
+    assert r.invoke(ubc.cli, ["submit", "--config", str(t2), "--num-reps", "1"]).exit_code == 0
+    assert callable(uhd_batch_submit_cmd)
     assert callable(collect_cmd)
     assert r.invoke(ubc.cli, ["collect"]).exit_code == 0

@@ -152,20 +152,18 @@ def test_adapt_sigma_false_keeps_sigma_on_reject():
     assert uhd.sigma == sigma_after_accept
 
 
-def test_enn_reject_does_not_halve_sigma():
-    _, uhd = _make_uhd_be(warmup=2, num_candidates=3, sigma_0=0.5)
+def test_enn_reject_can_halve_sigma_after_tolerance():
+    _, uhd = _make_uhd_be(warmup=2, num_candidates=3, sigma_0=0.5, fit_interval=10)
     for i in range(2):
         uhd.ask()
         uhd.tell(float(i), 0.0)
     uhd.ask()
     uhd.tell(1.0, 0.0)
-    sigma_after_accept = uhd.sigma
-
-    for _ in range(25):
+    sigma0 = uhd.sigma
+    for _ in range(20):
         uhd.ask()
         uhd.tell(0.0, 0.0)
-
-    assert uhd.sigma == sigma_after_accept
+    assert uhd.sigma < sigma0
 
 
 def test_sequential_reject_still_adapts_sigma():

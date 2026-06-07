@@ -5,7 +5,7 @@ import numpy as np
 from embedding.behavioral_embedder import BehavioralEmbedder
 
 from .step_size_adapter import StepSizeAdapter
-from .uhd_be_enn import be_enn_selection_ready, ucb_from_incremental
+from .uhd_be_enn import acquisition_from_incremental, be_enn_selection_ready
 from .uhd_simple_be import _be_accept_or_reject, _make_be_enn, _tell_be_enn
 
 
@@ -27,6 +27,7 @@ class UHDSimpleBENp:
         num_fit_samples: int = 10,
         enn_index_driver: str = "flat",
         adapt_sigma: bool = True,
+        acquisition: str = "ucb",
     ):
         self._policy = policy
         self._embedder = embedder
@@ -39,6 +40,7 @@ class UHDSimpleBENp:
         self._fit_interval = fit_interval
         self._enn_k = enn_k
         self._adapt_sigma = adapt_sigma
+        self._acquisition = acquisition
 
         self._next_seed = 0
         self._eval_seed = 0
@@ -141,6 +143,6 @@ class UHDSimpleBENp:
             embeddings.append(z_c)
 
         z_cand = np.array(embeddings, dtype=np.float64)
-        ucb = ucb_from_incremental(self._be_enn, z_cand)
-        best = int(np.argmax(ucb))
+        scores = acquisition_from_incremental(self._be_enn, z_cand, acquisition=self._acquisition)
+        best = int(np.argmax(scores))
         return base + best, candidates[best], embeddings[best]

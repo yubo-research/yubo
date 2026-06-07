@@ -7,9 +7,11 @@ from enn.turbo.config.enn_index_driver import ENNIndexDriver
 
 from optimizer.uhd_be_enn import (
     IncrementalBEEnn,
+    acquisition_from_incremental,
     be_enn_selection_ready,
     fit_enn_batch_raw_reference,
     fit_enn_batch_reference,
+    parse_be_acquisition,
     parse_be_enn_index_driver,
     ucb_from_batch_posterior,
     ucb_from_incremental,
@@ -25,6 +27,22 @@ def _synthetic_stream(rng: np.random.Generator, n: int, d: int):
         zs.append(z)
         ys.append(y)
     return zs, ys
+
+
+def test_incremental_hnsw_disk_add_obs():
+    rng = np.random.default_rng(0)
+    d = 5
+    reg = IncrementalBEEnn(
+        k=3,
+        num_fit_candidates=1,
+        num_fit_samples=10,
+        index_driver="hnsw_disk",
+        rng=rng,
+    )
+    reg.add_obs(rng.standard_normal(d), 1.5)
+    assert reg.obs_count == 1
+    assert reg.model is not None
+    assert reg.params is not None
 
 
 def test_incremental_add_obs_builds_model_and_params():
@@ -137,6 +155,34 @@ def test_parse_be_enn_index_driver_invalid():
 
     with pytest.raises(ValueError, match="Unknown be_enn_index_driver"):
         parse_be_enn_index_driver("bogus")
+
+
+def test_acquisition_from_incremental_mu_vs_ucb():
+    rng = np.random.default_rng(7)
+    d = 5
+    zs, ys = _synthetic_stream(rng, 15, d)
+    reg = IncrementalBEEnn(k=3, rng=np.random.default_rng(0))
+    for z, y in zip(zs, ys, strict=True):
+        reg.add_obs(z, y)
+    x_cand = rng.standard_normal((4, d))
+    mu, se = reg.predict(x_cand)
+    mu_scores = acquisition_from_incremental(reg, x_cand, acquisition="mu")
+    ucb_scores = acquisition_from_incremental(reg, x_cand, acquisition="ucb")
+    assert np.allclose(mu_scores, mu)
+    assert np.allclose(ucb_scores, mu + se)
+
+
+def test_parse_be_acquisition_values():
+    assert parse_be_acquisition("ucb") == "ucb"
+    assert parse_be_acquisition("UCB") == "ucb"
+    assert parse_be_acquisition(" mu ") == "mu"
+
+
+def test_parse_be_acquisition_invalid():
+    import pytest
+
+    with pytest.raises(ValueError, match="Unknown be_acquisition"):
+        parse_be_acquisition("bogus")
 
 
 def test_batch_normalized_reference_and_ucb_helper():

@@ -6,7 +6,11 @@ from torch import nn
 from embedding.behavioral_embedder import BehavioralEmbedder
 
 from .gaussian_perturbator import GaussianPerturbator
-from .uhd_be_enn import IncrementalBEEnn, be_enn_selection_ready, ucb_from_incremental
+from .uhd_be_enn import (
+    IncrementalBEEnn,
+    acquisition_from_incremental,
+    be_enn_selection_ready,
+)
 from .uhd_mezo_be_ask_shared import run_mezo_be_ask
 from .uhd_simple_base import UHDSimpleBase
 
@@ -68,14 +72,15 @@ def _be_accept_or_reject(
     on_accept,
     on_reject,
 ) -> None:
-    """BE accept/reject: an ENN prescreen reject is not an ES \"sigma too large\" failure."""
+    """BE accept/reject; ENN heavy refit clears failure streak (see _tell_be_enn)."""
+    del enn_selected
     if obj._y_best is None or mu > obj._y_best:
         obj._y_best = mu
         if obj._adapt_sigma:
             obj._adapter.update(accepted=True)
         on_accept()
         return
-    if obj._adapt_sigma and not enn_selected:
+    if obj._adapt_sigma:
         obj._adapter.update(accepted=False)
     on_reject()
 
@@ -98,6 +103,7 @@ class UHDSimpleBE(UHDSimpleBase):
         enn_index_driver: str = "flat",
         sigma_range: tuple[float, float] | None = None,
         adapt_sigma: bool = True,
+        acquisition: str = "ucb",
     ):
         super().__init__(perturbator, sigma_0, dim, sigma_range=sigma_range, adapt_sigma=adapt_sigma)
         self._module = module
@@ -106,6 +112,7 @@ class UHDSimpleBE(UHDSimpleBase):
         self._warmup = warmup
         self._fit_interval = fit_interval
         self._enn_k = enn_k
+        self._acquisition = acquisition
 
         self._next_seed = 0
 
@@ -173,8 +180,8 @@ class UHDSimpleBE(UHDSimpleBase):
             self._module.train()
 
         x_cand = np.array(zs, dtype=np.float64)
-        ucb = ucb_from_incremental(self._be_enn, x_cand)
-        best = int(np.argmax(ucb))
+        scores = acquisition_from_incremental(self._be_enn, x_cand, acquisition=self._acquisition)
+        best = int(np.argmax(scores))
 
         self._perturbator.perturb(base + best, sigma)
         return base + best, zs[best]
@@ -198,6 +205,7 @@ class UHDMeZOBE:
         num_fit_candidates: int = 1,
         num_fit_samples: int = 10,
         enn_index_driver: str = "flat",
+        acquisition: str = "ucb",
     ):
         from .lr_scheduler import ConstantLR
         from .uhd_mezo import UHDMeZO
@@ -215,6 +223,7 @@ class UHDMeZOBE:
         self._warmup = warmup
         self._fit_interval = fit_interval
         self._enn_k = enn_k
+        self._acquisition = acquisition
 
         self._selected = False
         self._z_plus: np.ndarray | None = None

@@ -7,14 +7,32 @@ from pathlib import Path
 import modal
 
 from common.im import im
+from ops.modal_enn_image import add_enn_to_image, enn_project_root
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
-_PROJECT_DIRS = ("ops", "optimizer", "problems", "common", "sampling", "embedding")
-_ENN_ROOT = _PROJECT_ROOT.parents[0] / "enn"
+_PROJECT_DIRS = (
+    "ops",
+    "optimizer",
+    "problems",
+    "common",
+    "sampling",
+    "embedding",
+    "policies",
+    "rl",
+)
+_ENN_ROOT = enn_project_root(_PROJECT_ROOT)
 
 _image = (
     modal.Image.debian_slim(python_version="3.11.9")
-    .apt_install("swig", "curl", "build-essential", "libopenblas-dev", "patchelf")
+    .apt_install(
+        "swig",
+        "curl",
+        "build-essential",
+        "libopenblas-dev",
+        "patchelf",
+        "cmake",
+        "ninja-build",
+    )
     .run_commands(
         "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y",
         'echo "export PATH=$HOME/.cargo/bin:$PATH" >> ~/.bashrc',
@@ -34,14 +52,8 @@ _image = (
     .env({"PYTHONPATH": "/root"})
 )
 for _d in _PROJECT_DIRS:
-    _image = _image.add_local_dir(str(_PROJECT_ROOT / _d), remote_path=f"/root/{_d}")
-_image = _image.add_local_dir(str(_ENN_ROOT), remote_path="/root/enn")
-_image = _image.run_commands(
-    ". $HOME/.cargo/env && "
-    "export RUSTFLAGS='-C link-arg=-Wl,--no-as-needed -C link-arg=-lopenblas' && "
-    "cd /root/enn/rust/crates/enn-py && maturin build --release",
-    "pip install $(find /root/enn/rust -path '*/wheels/*.whl' | head -1) && pip install -e /root/enn",
-)
+    _image = _image.add_local_dir(str(_PROJECT_ROOT / _d), remote_path=f"/root/{_d}", copy=True)
+_image = add_enn_to_image(_image, _ENN_ROOT)
 
 
 class _Tee:

@@ -1,65 +1,60 @@
 import tempfile
 
 
-def test_prep_uhd_batch_tlunar():
-    from experiments.uhd_batch_preps import prep_uhd_batch_tlunar
+def test_uhd_batch_cheetah():
+    from experiments.uhd_batch_preps import prep_uhd_batch_cheetah
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        configs = prep_uhd_batch_tlunar(tmpdir, num_reps=5)
+        configs = prep_uhd_batch_cheetah(tmpdir, num_reps=5)
         assert isinstance(configs, list)
-        assert len(configs) == 4  # simple, simple_be, mezo, mezo_be
+        assert len(configs) == 7  # simple + 3 drivers × 2 acquisitions
 
         for cfg, num_reps in configs:
             assert isinstance(cfg, dict)
             assert num_reps == 5
-            assert cfg["env_tag"] == "tlunar:fn"
-            assert cfg["policy_tag"] == "turbo-lunar"
-            assert cfg["num_rounds"] == 1000
-            assert cfg["optimizer"] in ["simple", "simple_be", "mezo", "mezo_be"]
+            assert cfg["env_tag"] == "cheetah"
+            assert cfg["policy_tag"] == "mlp-32-16"
+            assert cfg["num_rounds"] == 10000
+            assert cfg["optimizer"] in ["simple", "simple_be"]
 
 
-def test_prep_uhd_batch_tlunar_default_reps():
-    from experiments.uhd_batch_preps import prep_uhd_batch_tlunar
-
-    with tempfile.TemporaryDirectory() as tmpdir:
-        configs = prep_uhd_batch_tlunar(tmpdir)
-        assert all(num_reps == 30 for _, num_reps in configs)
-
-
-def test_prep_uhd_batch_tlunar_simple_be_params():
-    from experiments.uhd_batch_preps import prep_uhd_batch_tlunar
+def test_prep_uhd_batch_cheetah_default_reps():
+    from experiments.uhd_batch_preps import prep_uhd_batch_cheetah
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        configs = prep_uhd_batch_tlunar(tmpdir)
-
-        # Find simple_be config
-        simple_be_cfg = None
-        for cfg, _ in configs:
-            if cfg["optimizer"] == "simple_be":
-                simple_be_cfg = cfg
-                break
-
-        assert simple_be_cfg is not None
-        assert simple_be_cfg["be_num_probes"] == 10
-        assert simple_be_cfg["be_num_candidates"] == 10
-        assert simple_be_cfg["be_warmup"] == 20
-        assert simple_be_cfg["be_fit_interval"] == 10
-        assert simple_be_cfg["be_enn_k"] == 25
+        configs = prep_uhd_batch_cheetah(tmpdir)
+        assert all(num_reps == 10 for _, num_reps in configs)
 
 
-def test_prep_uhd_batch_tlunar_mezo_params():
-    from experiments.uhd_batch_preps import prep_uhd_batch_tlunar
+def test_prep_uhd_batch_cheetah_simple_be_params():
+    from experiments.uhd_batch_preps import prep_uhd_batch_cheetah
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        configs = prep_uhd_batch_tlunar(tmpdir)
+        configs = prep_uhd_batch_cheetah(tmpdir)
 
-        # Find mezo config
-        mezo_cfg = None
-        for cfg, _ in configs:
-            if cfg["optimizer"] == "mezo":
-                mezo_cfg = cfg
-                break
+        be_cfgs = [cfg for cfg, _ in configs if cfg["optimizer"] == "simple_be"]
+        assert len(be_cfgs) == 6
+        assert {cfg["be_enn_index_driver"] for cfg in be_cfgs} == {
+            "flat",
+            "hnsw",
+            "hnsw_disk",
+        }
+        assert {cfg["be_acquisition"] for cfg in be_cfgs} == {"ucb", "mu"}
 
-        assert mezo_cfg is not None
-        assert mezo_cfg["lr"] == 0.001
-        assert mezo_cfg["batch_size"] == 4096
+        for cfg in be_cfgs:
+            assert cfg["be_num_probes"] == 10
+            assert cfg["be_num_candidates"] == 10
+            assert cfg["be_warmup"] == 10
+            assert cfg["be_fit_interval"] == 1
+            assert cfg["be_enn_k"] == 15
+
+
+def test_prep_uhd_batch_cheetah_simple_has_no_be_keys():
+    from experiments.uhd_batch_preps import prep_uhd_batch_cheetah
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        configs = prep_uhd_batch_cheetah(tmpdir)
+
+        simple_cfg = next(cfg for cfg, _ in configs if cfg["optimizer"] == "simple")
+        assert not any(k.startswith("be_") for k in simple_cfg)
+        assert simple_cfg["sigma"] == 0.1

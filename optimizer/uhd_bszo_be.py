@@ -6,7 +6,7 @@ from torch import nn
 from embedding.behavioral_embedder import BehavioralEmbedder
 
 from .gaussian_perturbator import GaussianPerturbator
-from .uhd_be_enn import be_enn_selection_ready, ucb_from_incremental
+from .uhd_be_enn import acquisition_from_incremental, be_enn_selection_ready
 from .uhd_bszo import UHDBSZO
 from .uhd_simple_be import _embed_module, _make_be_enn, _tell_be_enn
 
@@ -51,6 +51,7 @@ class UHDBSZOBE:
         self._warmup = warmup
         self._fit_interval = fit_interval
         self._enn_k = enn_k
+        self._acquisition = "ucb"
 
         self._next_perturb_base = 0
         self._current_embed: np.ndarray | None = None
@@ -145,8 +146,8 @@ class UHDBSZOBE:
             self._module.train()
 
         x_cand = np.array(embeds, dtype=np.float64)
-        ucb = ucb_from_incremental(self._be_enn, x_cand)
-        best = int(np.argmax(np.abs(ucb)))
+        scores = acquisition_from_incremental(self._be_enn, x_cand, acquisition=self._acquisition)
+        best = int(np.argmax(np.abs(scores)))
 
         self._bszo.set_perturb_base(base + best * k)
         self._next_perturb_base = base + n_cand * k

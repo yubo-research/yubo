@@ -5,6 +5,7 @@ import tomllib
 
 from common.mapping_keys import coerce_mapping_keys, normalize_toml_key
 from ops.uhd_config import BEConfig, EarlyRejectConfig, ENNConfig, UHDConfig
+from optimizer.uhd_be_enn import parse_be_acquisition
 
 _REQUIRED_TOML_KEYS = ("env_tag", "num_rounds", "policy_tag")
 _OPTIONAL_TOML_KEYS = (
@@ -29,6 +30,7 @@ _OPTIONAL_TOML_KEYS = (
     "be_enn_index_driver",
     "be_sigma_range",
     "be_adapt_sigma",
+    "be_acquisition",
     # ENN minus imputation (prototype)
     "enn_minus_impute",
     "enn_d",
@@ -98,6 +100,7 @@ _BE_DEFAULTS: dict[str, object] = {
     "be_enn_index_driver": "flat",
     "be_sigma_range": None,
     "be_adapt_sigma": True,
+    "be_acquisition": "ucb",
 }
 
 
@@ -180,6 +183,7 @@ def _parse_be_fields(cfg: dict[str, Any]) -> BEConfig:
     sigma_range_raw = cfg.get("be_sigma_range", _BE_DEFAULTS["be_sigma_range"])
     sigma_range = tuple(float(v) for v in sigma_range_raw) if sigma_range_raw is not None else None
     adapt_sigma = bool(cfg.get("be_adapt_sigma", _BE_DEFAULTS["be_adapt_sigma"]))
+    acquisition = parse_be_acquisition(str(cfg.get("be_acquisition", _BE_DEFAULTS["be_acquisition"])))
     return BEConfig(
         num_probes=num_probes,
         num_candidates=num_candidates,
@@ -191,6 +195,7 @@ def _parse_be_fields(cfg: dict[str, Any]) -> BEConfig:
         enn_index_driver=enn_index_driver,
         sigma_range=sigma_range,
         adapt_sigma=adapt_sigma,
+        acquisition=acquisition,
     )
 
 

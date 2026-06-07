@@ -83,6 +83,12 @@ def test_parse_be_fields_all_defaults():
     assert result.enn_index_driver == "flat"
     assert result.sigma_range is None
     assert result.adapt_sigma is True
+    assert result.acquisition == "ucb"
+
+
+def test_parse_be_fields_acquisition_mu():
+    result = _parse_be_fields({"be_acquisition": "mu"})
+    assert result.acquisition == "mu"
 
 
 def test_parse_be_fields_adapt_sigma_false():

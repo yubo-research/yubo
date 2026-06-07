@@ -27,6 +27,7 @@ def _be_enn_kwargs(cfg: BEConfig) -> dict:
         "num_fit_candidates": cfg.num_fit_candidates,
         "num_fit_samples": cfg.num_fit_samples,
         "enn_index_driver": cfg.enn_index_driver,
+        "acquisition": cfg.acquisition,
     }
 
 

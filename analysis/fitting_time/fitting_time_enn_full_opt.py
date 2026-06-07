@@ -19,7 +19,7 @@ from common.seed_all import seed_all
 from optimizer.optimizer import Optimizer
 from problems.problem import build_problem
 
-FULL_OPT_MAX_N = 100_000
+FULL_OPT_MAX_N = 1_000_000
 FULL_OPT_NUM_ROUNDS = FULL_OPT_MAX_N
 FULL_OPT_CHECKPOINT_NS: tuple[int, ...] = tuple(n for n in ENN_INCREMENTAL_CHECKPOINT_NS if n <= FULL_OPT_MAX_N)
 FULL_OPT_NUM_ARMS = 1

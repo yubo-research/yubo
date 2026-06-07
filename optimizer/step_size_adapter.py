@@ -6,8 +6,8 @@ class StepSizeAdapter:
         dim: int,
         *,
         sigma_0: float = _SIGMA_DEFAULT,
-        sigma_min: float = 1e-8,
-        sigma_max: float = 1e8,
+        sigma_min: float = 1e-5,
+        sigma_max: float = 10,
         success_tolerance: int = 3,
         restart_on_floor: bool = True,
     ):
@@ -33,6 +33,10 @@ class StepSizeAdapter:
         """Reset σ and counters to initial values (TuRBO trust-region restart)."""
         self._sigma = self._sigma_init
         self._success_count = 0
+        self._failure_count = 0
+
+    def clear_failure_streak(self) -> None:
+        """Clear reject streak without changing σ (e.g. after ENN refit)."""
         self._failure_count = 0
 
     def update(self, *, accepted: bool) -> None:

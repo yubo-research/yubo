@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import tempfile
+
 import numpy as np
 from enn.enn.enn_class import EpistemicNearestNeighbors
 from enn.enn.enn_fit import enn_fit
@@ -51,11 +53,17 @@ class IncrementalBEEnn:
         self._batch_fit_samples = int(batch_fit_samples)
         self._index_driver = index_driver
         self._rng = rng if rng is not None else np.random.default_rng(0)
+        self._disk_work_dir: tempfile.TemporaryDirectory | None = None
         self._model: EpistemicNearestNeighbors | None = None
         self._fitter: ENNStatefulFitter | None = None
         self._params = None
         self._embed_dim: int | None = None
         self._num_since_heavy_fit = 0
+        self._last_fit_was_heavy = False
+
+    @property
+    def last_fit_was_heavy(self) -> bool:
+        return self._last_fit_was_heavy
 
     @classmethod
     def create_empty(
@@ -82,6 +90,15 @@ class IncrementalBEEnn:
         reg._init_empty_model(int(embed_dim))
         return reg
 
+    def _enn_model_kwargs(self) -> dict:
+        kwargs: dict = {"index_driver": self._index_driver}
+        if self._index_driver is ENNIndexDriver.HNSW_DISK:
+            if self._disk_work_dir is None:
+                self._disk_work_dir = tempfile.TemporaryDirectory(prefix="yubo_enn_hnsw_disk_")
+            kwargs["enn_storage"] = "disk"
+            kwargs["work_dir"] = self._disk_work_dir.name
+        return kwargs
+
     def _init_empty_model(self, embed_dim: int) -> None:
         self._embed_dim = int(embed_dim)
         self._model = EpistemicNearestNeighbors(
@@ -89,7 +106,7 @@ class IncrementalBEEnn:
             np.empty((0, 1), dtype=np.float64),
             None,
             scale_x=False,
-            index_driver=self._index_driver,
+            **self._enn_model_kwargs(),
         )
         self._fitter = ENNStatefulFitter(
             k=self._k,
@@ -131,6 +148,7 @@ class IncrementalBEEnn:
         self._num_since_heavy_fit += 1
 
         heavy = self._params is None or self._num_since_heavy_fit >= self._fit_interval
+        self._last_fit_was_heavy = heavy
         if heavy:
             num_fit_candidates = self._batch_fit_candidates
             num_fit_samples = self._batch_fit_samples
@@ -235,9 +253,24 @@ def ucb_from_batch_posterior(model, params, x_cand, y_mean, y_std):
     return (y_mean + y_std * mu_std) + abs(y_std) * se_std
 
 
-def ucb_from_incremental(reg: IncrementalBEEnn, x_cand: np.ndarray) -> np.ndarray:
+def parse_be_acquisition(name: str) -> str:
+    key = str(name).strip().lower()
+    if key == "ucb":
+        return "ucb"
+    if key == "mu":
+        return "mu"
+    raise ValueError(f"Unknown be_acquisition: {name!r} (expected 'ucb' or 'mu')")
+
+
+def acquisition_from_incremental(reg: IncrementalBEEnn, x_cand: np.ndarray, *, acquisition: str = "ucb") -> np.ndarray:
     mu, se = reg.predict(x_cand)
+    if acquisition == "mu":
+        return mu
     return mu + se
+
+
+def ucb_from_incremental(reg: IncrementalBEEnn, x_cand: np.ndarray) -> np.ndarray:
+    return acquisition_from_incremental(reg, x_cand, acquisition="ucb")
 
 
 def be_enn_selection_ready(*, obs_count: int, warmup: int, enn_k: int, has_params: bool) -> bool:

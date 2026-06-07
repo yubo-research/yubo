@@ -25,6 +25,7 @@ class BEConfig:
     num_fit_candidates: int = 1
     num_fit_samples: int = 10
     enn_index_driver: str = "flat"
+    acquisition: str = "ucb"
 
 
 @dataclass(frozen=True)
