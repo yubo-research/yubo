@@ -11,7 +11,6 @@ from typing import Any
 import click
 
 from common.im import im
-from llm.console_dashboard import run_console_dashboard
 from llm.console_observer import SplitConsoleObserver
 from llm.line_tee import MultiStreamTee
 
@@ -171,6 +170,8 @@ def _run_and_save_single_rep_dashboard(
         waiter = threading.Thread(target=_wait, daemon=True)
         waiter.start()
         try:
+            from llm.console_dashboard import run_console_dashboard
+
             run_console_dashboard(observer, title="UHD Console", done_event=done)
         finally:
             done.set()

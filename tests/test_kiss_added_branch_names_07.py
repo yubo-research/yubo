@@ -221,15 +221,17 @@ def test_added_branch_names_llm_console_types() -> None:
 def test_added_branch_names_llm_eggroll_engine() -> None:
     if False:
         (
+            EggrollArgs,
             broadcast_weights,
+            eggroll_engine,
             init_worker_groups,
             launch_engines,
+            llm,
             maybe_save_checkpoint,
             run_eval,
             setup_lora_generation,
             shutdown_engines,
             train_loop,
-            engine,
         )
     assert True
 

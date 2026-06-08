@@ -318,6 +318,66 @@ def submit_missing(
     print(f"submitted {count} ENN batch jobs")
 
 
+def _collect_non_dict_payload_dest(exp: str, payload, outp: Path):
+    if exp == "fit_method":
+        if len(payload) != 8:
+            raise ValueError(f"bad fit Modal payload len={len(payload)}")
+        rp, d, fm, n, pseed, ri, nr, idrv = payload
+        dest = _fit_batches.fit_result_json_dest(
+            outp,
+            d=d,
+            function_name=fm,
+            n=int(n),
+            problem_seed=pseed,
+            rep_index=ri,
+            num_reps=nr,
+            index_driver=idrv,
+            normalize_function_name=normalize_benchmark_function_name,
+        )
+    elif exp == "fit_ind":
+        if len(payload) != 7:
+            raise ValueError(f"bad fit_ind Modal payload len={len(payload)} key={payload!r}")
+        rp, d, fm, pseed, ri, nr, idrv = payload
+        dest = _fit_ind_batches.fit_ind_result_json_dest(
+            outp,
+            d=d,
+            function_name=fm,
+            problem_seed=pseed,
+            rep_index=ri,
+            num_reps=nr,
+            index_driver=idrv,
+            normalize_function_name=normalize_benchmark_function_name,
+        )
+    elif exp == "query":
+        if len(payload) != 7:
+            raise ValueError(f"bad query Modal payload len={len(payload)} key={payload!r}")
+        rp, d, fm, pseed, ri, nr, idrv = payload
+        dest = _query_batches.query_result_json_dest(
+            outp,
+            d=d,
+            function_name=fm,
+            problem_seed=pseed,
+            rep_index=ri,
+            num_reps=nr,
+            index_driver=idrv,
+            normalize_function_name=normalize_benchmark_function_name,
+        )
+    else:
+        if len(payload) != 7:
+            raise ValueError(f"bad add Modal payload len={len(payload)} key={payload!r}")
+        rp, d, fm, pseed, ri, nr, idrv = payload
+        dest = result_json_dest(
+            outp,
+            d=d,
+            function_name=fm,
+            problem_seed=pseed,
+            rep_index=ri,
+            num_reps=nr,
+            index_driver=idrv,
+        )
+    return rp, dest
+
+
 def collect(tag: str, output_dir: str | Path):
     exp = experiment_type_from_tag(tag)
     results = results_dict(tag)
@@ -331,62 +391,7 @@ def collect(tag: str, output_dir: str | Path):
             print(f"wrote {dest.resolve()}")
             keys_out.append(key)
             continue
-        if exp == "fit_method":
-            if len(payload) != 8:
-                raise ValueError(f"bad fit Modal payload len={len(payload)} key={key!r}")
-            rp, d, fm, n, pseed, ri, nr, idrv = payload
-            dest = _fit_batches.fit_result_json_dest(
-                outp,
-                d=d,
-                function_name=fm,
-                n=int(n),
-                problem_seed=pseed,
-                rep_index=ri,
-                num_reps=nr,
-                index_driver=idrv,
-                normalize_function_name=normalize_benchmark_function_name,
-            )
-        elif exp == "fit_ind":
-            if len(payload) != 7:
-                raise ValueError(f"bad fit_ind Modal payload len={len(payload)} key={key!r}")
-            rp, d, fm, pseed, ri, nr, idrv = payload
-            dest = _fit_ind_batches.fit_ind_result_json_dest(
-                outp,
-                d=d,
-                function_name=fm,
-                problem_seed=pseed,
-                rep_index=ri,
-                num_reps=nr,
-                index_driver=idrv,
-                normalize_function_name=normalize_benchmark_function_name,
-            )
-        elif exp == "query":
-            if len(payload) != 7:
-                raise ValueError(f"bad query Modal payload len={len(payload)} key={key!r}")
-            rp, d, fm, pseed, ri, nr, idrv = payload
-            dest = _query_batches.query_result_json_dest(
-                outp,
-                d=d,
-                function_name=fm,
-                problem_seed=pseed,
-                rep_index=ri,
-                num_reps=nr,
-                index_driver=idrv,
-                normalize_function_name=normalize_benchmark_function_name,
-            )
-        else:
-            if len(payload) != 7:
-                raise ValueError(f"bad add Modal payload len={len(payload)} key={key!r}")
-            rp, d, fm, pseed, ri, nr, idrv = payload
-            dest = result_json_dest(
-                outp,
-                d=d,
-                function_name=fm,
-                problem_seed=pseed,
-                rep_index=ri,
-                num_reps=nr,
-                index_driver=idrv,
-            )
+        rp, dest = _collect_non_dict_payload_dest(exp, payload, outp)
         write_json(dest, rp)
         print(f"wrote {dest.resolve()}")
         keys_out.append(key)

@@ -2,10 +2,9 @@ from __future__ import annotations
 
 from typing import Any, NamedTuple, TypeAlias
 
-from jaxtyping import Array, Float, PRNGKeyArray
-
 from problems import jax_env_core as core
 from problems.gymnasium_mujoco_specs import resolve_gymnasium_mujoco_spec
+from problems.jaxtyping_compat import Array, Float, PRNGKeyArray
 
 GYMNASIUM_ENV_PREFIX = "gymnasium:"
 GYMNASIUM_FAST_ENV_PREFIX = "gymnasium_fast:"

@@ -93,22 +93,30 @@ class SMACRFSurrogate:
                 raise ValueError(f"bounds must have length {d}, got {lower.shape[0]}")
 
         cs = _build_config_space(lower, upper)
-        self._model = RandomForest(
-            configspace=cs,
-            n_trees=self.cfg.n_trees,
-            max_samples=self.cfg.max_samples,
-            ratio_features=self.cfg.ratio_features,
-            min_samples_split=self.cfg.min_samples_split,
-            min_samples_leaf=self.cfg.min_samples_leaf,
-            max_depth=self.cfg.max_depth,
-            min_impurity_decrease=self.cfg.min_impurity_decrease,
-            max_leaf_nodes=self.cfg.max_leaf_nodes,
-            bootstrapping=self.cfg.bootstrapping,
-            log_y=self.cfg.log_y,
-            instance_features=None,
-            pca_components=self.cfg.pca_components,
-            seed=self.cfg.seed,
-        )
+        rf_kwargs: dict[str, Any] = {
+            "configspace": cs,
+            "n_trees": self.cfg.n_trees,
+            "ratio_features": self.cfg.ratio_features,
+            "min_samples_split": self.cfg.min_samples_split,
+            "min_samples_leaf": self.cfg.min_samples_leaf,
+            "max_depth": self.cfg.max_depth,
+            "bootstrapping": self.cfg.bootstrapping,
+            "log_y": self.cfg.log_y,
+            "instance_features": None,
+            "pca_components": self.cfg.pca_components,
+            "seed": self.cfg.seed,
+        }
+        if self.cfg.max_samples is not None:
+            rf_kwargs["n_points_per_tree"] = self.cfg.max_samples
+        rf_sig = RandomForest.__init__.__code__.co_varnames
+        if "eps_purity" in rf_sig:
+            rf_kwargs["eps_purity"] = self.cfg.min_impurity_decrease
+            rf_kwargs["max_nodes"] = self.cfg.max_leaf_nodes
+        else:
+            rf_kwargs["min_impurity_decrease"] = self.cfg.min_impurity_decrease
+            rf_kwargs["max_leaf_nodes"] = self.cfg.max_leaf_nodes
+            rf_kwargs["max_samples"] = self.cfg.max_samples
+        self._model = RandomForest(**rf_kwargs)
         self._model.train(x, y)
         return {"meta": getattr(self._model, "meta", {})}
 

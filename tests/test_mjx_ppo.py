@@ -330,17 +330,10 @@ def test_train_mjx_ppo_orchestrates_with_mock_runtime(monkeypatch, tmp_path) -> 
 
     monkeypatch.setattr(mjx_ppo, "_make_runtime", lambda _cfg: runtime)
     monkeypatch.setattr(
-        mjx_train_loop.ocp,
-        "CheckpointManager",
-        lambda *_args, **_kwargs: FakeCheckpointManager(),
+        mjx_train_loop,
+        "_checkpoint_manager",
+        lambda _ckpt_dir: FakeCheckpointManager(),
     )
-    monkeypatch.setattr(mjx_train_loop.ocp, "AsyncCheckpointer", lambda *_args, **_kwargs: object())
-    monkeypatch.setattr(
-        mjx_train_loop.ocp,
-        "PyTreeCheckpointHandler",
-        lambda *_args, **_kwargs: object(),
-    )
-    monkeypatch.setattr(mjx_train_loop.ocp, "CheckpointManagerOptions", lambda **_kwargs: object())
     monkeypatch.setattr(
         mjx_ppo,
         "_init_train_state",

@@ -3,6 +3,9 @@ from __future__ import annotations
 from contextlib import contextmanager
 
 import numpy as np
+import pytest
+
+pytest.importorskip("jax")
 
 
 @contextmanager

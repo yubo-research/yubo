@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from typing import Any, TypeAlias
 
-from jaxtyping import Array, Float, PRNGKeyArray
-
 from problems import jax_env_core as core
+from problems.jaxtyping_compat import Array, Float, PRNGKeyArray
 
 Obs: TypeAlias = Any
 State: TypeAlias = Any

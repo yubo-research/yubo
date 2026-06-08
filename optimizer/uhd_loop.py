@@ -105,6 +105,14 @@ class UHDLoop(UHDLoopSupportMixin):
         self._early_reject_num_pos_seen = 0
         self._early_reject_mu_plus_window = []
 
+    def _maybe_early_reject_positive(self, mu_plus: float) -> bool:
+        self._update_early_reject_state(mu_plus=mu_plus)
+        if not self._should_early_reject(mu_plus=mu_plus):
+            return False
+        self._early_reject_skips += 1
+        self._uhd.skip_negative()
+        return True
+
     def run(self) -> None:
         num_params = sum(p.numel() for p in self._module.parameters())
         print(f"UHD: num_params = {num_params}")
@@ -127,13 +135,7 @@ class UHDLoop(UHDLoopSupportMixin):
             self._uhd.tell(mu, se)
             if phase_is_pos and self._enn_seed_selector is not None:
                 self._enn_seed_selector.tell_mu_plus(mu_plus=float(mu))
-            early_rejected = False
-            if phase_is_pos:
-                self._update_early_reject_state(mu_plus=float(mu))
-                if self._should_early_reject(mu_plus=float(mu)):
-                    self._early_reject_skips += 1
-                    self._uhd.skip_negative()
-                    early_rejected = True
+            early_rejected = phase_is_pos and self._maybe_early_reject_positive(float(mu))
             if self._enn_minus_imputer is not None and not phase_is_pos:
                 self._enn_minus_imputer.update_base_after_step(
                     step_scale=self._uhd.last_step_scale,

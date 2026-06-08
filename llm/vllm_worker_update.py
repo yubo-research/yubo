@@ -160,6 +160,31 @@ def _sync_cuda(torch) -> None:
         torch.cuda.synchronize()
 
 
+def _apply_subspace_via_groups(groups, vllm_params, noise, scale) -> None:
+    for name, g_info in groups.items():
+        param = vllm_params.get(name)
+        if param is None:
+            continue
+        updates = noise[g_info["subspace_indices"]]
+        updates.mul_(g_info["signs"])
+        if scale != 1.0:
+            updates.mul_(scale)
+        param.data.view(-1).index_add_(0, g_info["param_indices"], updates)
+
+
+def _apply_subspace_fallback(template, vllm_params, noise, search_dim) -> None:
+    for i in range(search_dim):
+        delta = noise[i].item() * template.basis_sign[i]
+        if abs(delta) < 1e-15:
+            continue
+        param_meta = template.parameters[template.basis_leaf[i]]
+        param = vllm_params.get(param_meta.name)
+        if param is None:
+            continue
+        flat_idx = template.basis_index[i]
+        param.data.view(-1)[flat_idx].add_(delta)
+
+
 def apply_subspace_perturbation(
     worker: Any,
     template: Any | None,
@@ -190,33 +215,33 @@ def apply_subspace_perturbation(
 
     groups = getattr(worker, "_universal_update_groups", None)
     if groups is not None:
-        for name, g_info in groups.items():
-            param = vllm_params.get(name)
-            if param is None:
-                continue
-            # Vectorized update: avoids .item() and sequential .add_ calls
-            updates = noise[g_info["subspace_indices"]]
-            updates.mul_(g_info["signs"])
-            if scale != 1.0:
-                updates.mul_(scale)
-            param.data.view(-1).index_add_(0, g_info["param_indices"], updates)
+        _apply_subspace_via_groups(groups, vllm_params, noise, scale)
         return True
 
-    # Fallback slow path (triggers thousands of host-device syncs)
-    for i in range(search_dim):
-        delta = noise[i].item() * template.basis_sign[i]
-        if abs(delta) < 1e-15:
-            continue
-
-        param_meta = template.parameters[template.basis_leaf[i]]
-        param = vllm_params.get(param_meta.name)
-        if param is None:
-            continue
-
-        flat_idx = template.basis_index[i]
-        param.data.view(-1)[flat_idx].add_(delta)
-
+    _apply_subspace_fallback(template, vllm_params, noise, search_dim)
     return True
+
+
+def _accumulate_universal_es_grad(z_grad, normalized_fitnesses, num_pop_pairs, args, template, device, torch, es_step):
+    from llm.universal_subspace import universal_subspace_seed
+
+    search_dim = int(template.search_dim)
+    pop_step = int(es_step) // int(args.steps_per_adapter)
+    for pop_pair_idx in range(num_pop_pairs):
+        diff = normalized_fitnesses[pop_pair_idx * 2] - normalized_fitnesses[pop_pair_idx * 2 + 1]
+        if abs(diff) < 1e-8:
+            continue
+        seed = universal_subspace_seed(
+            base_seed=int(args.base_seed),
+            num_pop_pairs=num_pop_pairs,
+            search_dim=search_dim,
+            pop_step=pop_step,
+            pop_pair_idx=pop_pair_idx,
+        )
+        g = torch.Generator(device=str(device))
+        g.manual_seed(seed)
+        noise = torch.randn((search_dim,), device=device, generator=g)
+        z_grad.add_(noise, alpha=diff)
 
 
 def apply_universal_es_update(
@@ -229,8 +254,6 @@ def apply_universal_es_update(
     """Applies a global coordinate-based subspace update to all model parameters."""
     import torch
 
-    from llm.universal_subspace import universal_subspace_seed
-
     if getattr(worker, "gpu_rank", 0) != 0:
         return False
 
@@ -241,32 +264,11 @@ def apply_universal_es_update(
 
     device = worker.device
     num_pop_pairs = int(args.population_size) // 2
-    pop_step = int(es_step) // int(args.steps_per_adapter)
 
     # 1. Reconstruct the update in subspace (size search_dim)
     search_dim = int(template.search_dim)
     z_grad = torch.zeros((search_dim,), device=device, dtype=torch.float32)
-
-    # ES summation in subspace
-    for pop_pair_idx in range(num_pop_pairs):
-        diff = normalized_fitnesses[pop_pair_idx * 2] - normalized_fitnesses[pop_pair_idx * 2 + 1]
-        if abs(diff) < 1e-8:
-            continue
-
-        # Sample subspace noise for this population pair
-        # (Mirroring the RNG logic from optimizer side)
-        seed = universal_subspace_seed(
-            base_seed=int(args.base_seed),
-            num_pop_pairs=num_pop_pairs,
-            search_dim=search_dim,
-            pop_step=pop_step,
-            pop_pair_idx=pop_pair_idx,
-        )
-        g = torch.Generator(device=str(device))
-        g.manual_seed(seed)
-        noise = torch.randn((search_dim,), device=device, generator=g)
-
-        z_grad.add_(noise, alpha=diff)
+    _accumulate_universal_es_grad(z_grad, normalized_fitnesses, num_pop_pairs, args, template, device, torch, es_step)
 
     # 2. Scale gradient
     scale = float(args.learning_rate) / (int(args.population_size) * float(args.sigma) + 1e-8)

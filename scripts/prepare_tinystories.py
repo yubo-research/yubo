@@ -7,11 +7,12 @@ import os
 
 import numpy as np
 import requests
-import tiktoken
 from tqdm import tqdm
 
 
 def download_and_tokenize():
+    import tiktoken
+
     # 1. Setup paths
     data_dir = "data"
     os.makedirs(data_dir, exist_ok=True)

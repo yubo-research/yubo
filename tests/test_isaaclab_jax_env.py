@@ -2,10 +2,11 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-import jax
-import jax.numpy as jnp
 import pytest
-from isaaclab_score_fakes import FakeIsaacEnv, make_fake_runtime, make_fake_vector_runtime
+
+jax = pytest.importorskip("jax")
+jnp = pytest.importorskip("jax.numpy")
+from isaaclab_score_fakes import FakeIsaacEnv, make_fake_runtime, make_fake_vector_runtime  # noqa: E402
 
 
 def _jax_default_backend_is_mps() -> bool:

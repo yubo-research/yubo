@@ -43,9 +43,8 @@ def _check_core() -> None:
     mac = sys.platform == "darwin"
     try:
         import faiss  # noqa: F401
-        from enn.enn.enn_class import EpistemicNearestNeighbors
-
         import hyperscalees  # noqa: F401
+        from enn.enn.enn_class import EpistemicNearestNeighbors
 
         if not mac:
             import kinetix.environment  # noqa: F401

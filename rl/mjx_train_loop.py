@@ -4,13 +4,14 @@ import time
 from pathlib import Path
 
 import numpy as np
-import orbax.checkpoint as ocp
 
 from analysis.data_io import mark_done, write_config, write_summary_json
 from rl.mjx_metrics import build_iter_record
 
 
 def _checkpoint_manager(ckpt_dir: Path):
+    import orbax.checkpoint as ocp
+
     return ocp.CheckpointManager(
         ckpt_dir.absolute(),
         ocp.AsyncCheckpointer(ocp.PyTreeCheckpointHandler()),

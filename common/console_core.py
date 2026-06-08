@@ -153,16 +153,17 @@ def _is_displayable_config_value(value: Any) -> bool:
     return False
 
 
+def _drop_disabled_prefixed_keys(values: dict[str, Any], enable_key: str, prefix: str) -> None:
+    if not bool(values.get(enable_key, False)):
+        for key in list(values):
+            if str(key).startswith(prefix):
+                values.pop(key, None)
+
+
 def _collect_header_config_items(config: Any, training: Any, runtime: Any) -> list[tuple[str, Any]]:
     values = _config_to_mapping(config)
-    if not bool(values.get("video_enable", False)):
-        for key in list(values):
-            if str(key).startswith("video_"):
-                values.pop(key, None)
-    if not bool(values.get("profile_enable", False)):
-        for key in list(values):
-            if str(key).startswith("profile_"):
-                values.pop(key, None)
+    _drop_disabled_prefixed_keys(values, "video_enable", "video_")
+    _drop_disabled_prefixed_keys(values, "profile_enable", "profile_")
     if values.get("resume_from") in {None, "", False}:
         values.pop("resume_from", None)
     excluded = {

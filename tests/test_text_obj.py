@@ -309,6 +309,7 @@ def _sample_batches(*raws):
 
 
 def test_vllm_nll_scoring_chat_template_uses_assistant_turn(monkeypatch):
+    pytest.importorskip("datasets")
     monkeypatch.setattr("llm.vllm_nll_scoring.nll_use_prefix_decode", lambda: False)
     from transformers import AutoTokenizer
 

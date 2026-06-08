@@ -62,6 +62,31 @@ class EggrollArgs:
     vllm_num_speculative_tokens: int | None = None
 
 
+def _maybe_refresh_engine_paths(ray, args, es_step, engine_paths, engines, engine_pop_indices):
+    if args.pretrain_lora_only and (es_step % args.steps_per_adapter == 0 or engine_paths is None):
+        return ray.get([engines[i].generate_local_adapters.remote(engine_pop_indices[i], es_step, args) for i in range(args.num_engines)])
+    return engine_paths
+
+
+def _apply_es_update(ray, args, engines, normalized, template, es_step):
+    if args.pretrain_lora_only:
+        ray.get(
+            engines[0].collective_rpc.remote(
+                "apply_lora_es_update",
+                args=(normalized, template.base_shapes, es_step, args),
+            )
+        )
+        return
+    ray.get(
+        engines[0].apply_universal_update.remote(
+            normalized,
+            None,
+            es_step,
+            args,
+        )
+    )
+
+
 def train_loop(
     ray: Any,
     *,
@@ -87,8 +112,7 @@ def train_loop(
 
     for es_step in range(args.num_iterations):
         iter_start = time.time()
-        if args.pretrain_lora_only and (es_step % args.steps_per_adapter == 0 or engine_paths is None):
-            engine_paths = ray.get([engines[i].generate_local_adapters.remote(engine_pop_indices[i], es_step, args) for i in range(args.num_engines)])
+        engine_paths = _maybe_refresh_engine_paths(ray, args, es_step, engine_paths, engines, engine_pop_indices)
 
         eval_info = run_eval(
             ray,
@@ -100,15 +124,15 @@ def train_loop(
         )
         prompts, answers = task.get_batch()
 
-        # Decide specs for generation
-        if args.pretrain_lora_only:
-            specs_per_engine = [_engine_lora_specs(engine_pop_indices[i], engine_paths[i], es_step, len(prompts)) for i in range(args.num_engines)]
-            current_prompts = [_engine_prompts(prompts, engine_paths[i]) for i in range(args.num_engines)]
-        else:
-            # Universal mode: use random coordinate perturbations instead of LoRA
-            # We pass None for specs, and let the worker generate noise based on the template
-            specs_per_engine = [None] * args.num_engines
-            current_prompts = [prompts] * args.num_engines
+        specs_per_engine, current_prompts = _prepare_generation_inputs(
+            args,
+            prompts,
+            engine_pop_indices,
+            engine_paths,
+            es_step,
+            args.num_engines,
+            len(prompts),
+        )
 
         results = ray.get(
             [
@@ -138,22 +162,7 @@ def train_loop(
         last_summary = summary
         normalized = summary.normalized.astype(float).tolist()
 
-        if args.pretrain_lora_only:
-            ray.get(
-                engines[0].collective_rpc.remote(
-                    "apply_lora_es_update",
-                    args=(normalized, template.base_shapes, es_step, args),
-                )
-            )
-        else:
-            ray.get(
-                engines[0].apply_universal_update.remote(
-                    normalized,
-                    None,
-                    es_step,
-                    args,
-                )
-            )
+        _apply_es_update(ray, args, engines, normalized, template, es_step)
 
         if args.num_engines > 1:
             broadcast_weights(ray, engines)
@@ -401,3 +410,19 @@ def _engine_lora_specs(pop_indices: list[int], adapter_paths: list[str], es_step
         spec = (f"adapter_{pop_idx}", int(pop_idx) + 1 + int(es_step) * 10000, path)
         specs.extend([spec] * int(num_prompts))
     return specs
+
+
+def _prepare_generation_inputs(
+    args,
+    prompts,
+    engine_pop_indices,
+    engine_paths,
+    es_step,
+    num_engines,
+    num_prompts,
+):
+    if args.pretrain_lora_only:
+        specs_per_engine = [_engine_lora_specs(engine_pop_indices[i], engine_paths[i], es_step, num_prompts) for i in range(num_engines)]
+        current_prompts = [_engine_prompts(prompts, engine_paths[i]) for i in range(num_engines)]
+        return specs_per_engine, current_prompts
+    return [None] * num_engines, [prompts] * num_engines

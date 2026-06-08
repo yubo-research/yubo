@@ -13,8 +13,6 @@ import os
 import pickle
 from functools import lru_cache
 
-import rustbpe
-import tiktoken
 from tokenizers import Regex, decoders, pre_tokenizers
 from tokenizers import Tokenizer as HFTokenizer
 from tokenizers.models import BPE
@@ -211,6 +209,9 @@ class RustBPETokenizer:
 
     @classmethod
     def train_from_iterator(cls, text_iterator, vocab_size):
+        import rustbpe
+        import tiktoken
+
         tokenizer = rustbpe.Tokenizer()
         vocab_size_no_special = vocab_size - len(SPECIAL_TOKENS)
         assert vocab_size_no_special >= 256
@@ -235,6 +236,8 @@ class RustBPETokenizer:
 
     @classmethod
     def from_pretrained(cls, tiktoken_name):
+        import tiktoken
+
         return cls(tiktoken.get_encoding(tiktoken_name), "<|endoftext|>")
 
     def get_vocab_size(self):
@@ -254,27 +257,15 @@ class RustBPETokenizer:
         return self.bos_token_id
 
     def encode(self, text, prepend=None, append=None, num_threads=8):
-        if prepend is not None:
-            prepend_id = prepend if isinstance(prepend, int) else self.encode_special(prepend)
-        if append is not None:
-            append_id = append if isinstance(append, int) else self.encode_special(append)
+        prepend_id = _encode_special_token(self, prepend) if prepend is not None else None
+        append_id = _encode_special_token(self, append) if append is not None else None
 
         if isinstance(text, str):
             ids = self.enc.encode_ordinary(text)
-            if prepend is not None:
-                ids.insert(0, prepend_id)
-            if append is not None:
-                ids.append(append_id)
-            return ids
+            return _insert_special_tokens(ids, prepend_id, append_id)
         if isinstance(text, list):
             ids = self.enc.encode_ordinary_batch(text, num_threads=num_threads)
-            if prepend is not None:
-                for ids_row in ids:
-                    ids_row.insert(0, prepend_id)
-            if append is not None:
-                for ids_row in ids:
-                    ids_row.append(append_id)
-            return ids
+            return _insert_special_tokens(ids, prepend_id, append_id)
         raise ValueError(f"Invalid input type: {type(text)}")
 
     def __call__(self, *args, **kwargs):
@@ -310,6 +301,26 @@ class RustBPETokenizer:
         ids, _ = self.render_conversation(conversation)
         ids.append(self.encode_special("<|assistant_start|>"))
         return ids
+
+
+def _encode_special_token(tokenizer, token):
+    return token if isinstance(token, int) else tokenizer.encode_special(token)
+
+
+def _insert_special_tokens(ids, prepend_id, append_id):
+    if prepend_id is not None:
+        if isinstance(ids[0], list):
+            for ids_row in ids:
+                ids_row.insert(0, prepend_id)
+        else:
+            ids.insert(0, prepend_id)
+    if append_id is not None:
+        if isinstance(ids[0], list):
+            for ids_row in ids:
+                ids_row.append(append_id)
+        else:
+            ids.append(append_id)
+    return ids
 
 
 def get_tokenizer():

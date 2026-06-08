@@ -1,8 +1,9 @@
 import pytest
 import torch
-import warp as wp
 
-from problems.environment_spec import get_environment_spec, materialize_env
+wp = pytest.importorskip("warp")
+
+from problems.environment_spec import get_environment_spec, materialize_env  # noqa: E402
 
 
 def test_warp_adapter_materialization():

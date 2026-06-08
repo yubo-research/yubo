@@ -7,8 +7,6 @@ import threading
 import numpy as np
 import torch
 
-# These are imported to ensure the modules are integrated into the graph (KISS check)
-import scripts.prepare_tinystories  # noqa: F401
 import third_party.nanochat.core_eval  # noqa: F401
 from ops.uhd_config import UHDConfig
 from problems.nanochat_lora import _NanochatSubspaceCodec
