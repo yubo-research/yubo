@@ -1,0 +1,41 @@
+# HalfCheetah-v5 SAC Expert Reproduction (Benchmarked via HF/Minari).
+# Uses the high-throughput JAX/MJX backend.
+#
+# Run:
+#   ./ops/rl.py local configs/rl/mjx/sac_mjx_halfcheetah_expert_repro.toml
+
+[rl]
+algo = "mjx_sac"
+
+[rl.mjx_sac]
+exp_dir = "runs/rl/mjx/sac_mjx_halfcheetah_expert_repro"
+env_tag = "gymnasium:HalfCheetah-v5"
+seed = 0
+# Standard SAC hidden size [256, 256]
+hidden_size = 256
+log_interval = 10
+
+[rl.mjx_sac.collector]
+total_frames = 1000000
+# High throughput JAX parallelization
+num_envs = 1024
+num_steps = 1
+replay_size = 1000000
+batch_size = 1024
+updates_per_iter = 1
+
+[rl.mjx_sac.optim]
+lr_actor = 3e-4
+lr_critic = 3e-4
+lr_alpha = 3e-4
+
+[rl.mjx_sac.loss]
+gamma = 0.99
+tau = 0.005
+alpha_init = 1.0
+# Heuristic: -dim(A) = -6.0 for Cheetah
+target_entropy = -6.0
+
+[rl.run]
+num_reps = 1
+workers = 1

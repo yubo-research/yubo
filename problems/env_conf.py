@@ -1,11 +1,13 @@
 import copy
 
+from policies.mlp_policy import MLPPolicyFactory
 from problems.env_conf_bindings import (
     get_atari_dm_bindings,
     register_atari_dm_bindings_loader,
 )
 from problems.env_conf_constants import (
     _ATARI_DEFAULT_MAX_STEPS,
+    _DEFAULT_MAX_STEPS,
     _DM_CONTROL_DEFAULT_MAX_STEPS,
 )
 from problems.env_conf_parse import parse_tag_options
@@ -17,6 +19,10 @@ from problems.env_conf_presets import (
 from problems.env_conf_rl import resolve_rl_model_defaults
 from problems.env_conf_types import EnvConf, GymConf
 from problems.environment_spec import needs_atari_dm_bindings
+from problems.isaaclab_env_adapters import (
+    DEFAULT_ISAACLAB_MAX_STEPS,
+    is_isaaclab_env_tag,
+)
 from problems.linear_policy import LinearPolicy
 from problems.pure_function_policy import PureFunctionPolicy
 
@@ -85,6 +91,24 @@ def get_env_conf(
             pixels_only=True,
             max_steps=_ATARI_DEFAULT_MAX_STEPS,
         )
+    elif is_isaaclab_env_tag(tag):
+        ec = _get_high_perf_env_conf(
+            tag,
+            DEFAULT_ISAACLAB_MAX_STEPS,
+            problem_seed,
+            noise_level,
+            noise_seed_0,
+            frozen_noise,
+        )
+    elif str(tag).startswith("warp:"):
+        ec = _get_high_perf_env_conf(
+            tag,
+            _DEFAULT_MAX_STEPS,
+            problem_seed,
+            noise_level,
+            noise_seed_0,
+            frozen_noise,
+        )
     else:
         ec = EnvConf(
             tag,
@@ -98,13 +122,56 @@ def get_env_conf(
     ec.noise_seed_0 = noise_seed_0
     ec.frozen_noise = frozen_noise
     ec.env_tag = tag
+    _apply_atari_preprocess(ec, atari_preprocess)
+    return ec
+
+
+def _get_high_perf_env_conf(tag, max_steps, problem_seed, noise_level, noise_seed_0, frozen_noise):
+    return EnvConf(
+        tag,
+        policy_class=MLPPolicyFactory((64, 64)),
+        gym_conf=GymConf(
+            max_steps=max_steps,
+            num_frames_skip=1,
+            transform_state=False,
+        ),
+        max_steps=max_steps,
+        problem_seed=problem_seed,
+        noise_level=noise_level,
+        noise_seed_0=noise_seed_0,
+        frozen_noise=frozen_noise,
+        rl_model={
+            "ppo": {
+                "backbone_name": "mlp",
+                "backbone_hidden_sizes": (64, 64),
+                "backbone_activation": "silu",
+                "backbone_layer_norm": True,
+                "actor_head_hidden_sizes": (),
+                "critic_head_hidden_sizes": (),
+                "head_activation": "silu",
+                "share_backbone": True,
+                "log_std_init": -0.5,
+            },
+            "sac": {
+                "backbone_name": "mlp",
+                "backbone_hidden_sizes": (64, 64),
+                "backbone_activation": "silu",
+                "backbone_layer_norm": True,
+                "actor_head_hidden_sizes": (),
+                "critic_head_hidden_sizes": (),
+                "head_activation": "silu",
+            },
+        },
+    )
+
+
+def _apply_atari_preprocess(ec, atari_preprocess):
     if atari_preprocess is not None:
         if not isinstance(atari_preprocess, dict):
             raise TypeError("atari_preprocess must be a dict when provided.")
         if not str(ec.env_name).startswith("ALE/"):
             raise ValueError("atari_preprocess is only valid for Atari envs (ALE/*).")
         ec.atari_preprocess = copy.deepcopy(atari_preprocess)
-    return ec
 
 
 def default_policy(env_conf):

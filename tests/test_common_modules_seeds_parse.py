@@ -18,15 +18,17 @@ class TestExperimentSeeds:
         assert global_seed_for_run(18) == 45
         assert global_seed_for_run(42) == 69
 
-    def test_rl_seed_util_alignment(self):
-        from common.experiment_seeds import problem_seed_from_rep_index
-        from rl.core.env_conf import resolve_problem_seed
+    def test_rl_seed_alignment(self):
+        from common.experiment_seeds import (
+            problem_seed_from_rep_index,
+            resolve_problem_seed,
+        )
 
         for rl_seed, bo_i_rep in [(0, 0), (1, 1), (2, 2)]:
             assert resolve_problem_seed(seed=rl_seed, problem_seed=None) == problem_seed_from_rep_index(bo_i_rep)
 
     def test_resolve_noise_seed_0(self):
-        from rl.core.env_conf import resolve_noise_seed_0
+        from common.experiment_seeds import resolve_noise_seed_0
 
         assert resolve_noise_seed_0(problem_seed=18, noise_seed_0=None) == 180
         assert resolve_noise_seed_0(problem_seed=18, noise_seed_0=42) == 42

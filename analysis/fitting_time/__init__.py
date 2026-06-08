@@ -2,23 +2,7 @@
 
 from __future__ import annotations
 
-from .fitting_time_enn_fit import (
-    EnnFitTimingResult,
-    benchmark_enn_fit_timing,
-    enn_fit_quality_ns,
-)
-from .fitting_time_enn_fit_ind import (
-    EnnFitIndTimingResult,
-    benchmark_enn_fit_ind_timing,
-)
-from .fitting_time_enn_full_opt import (
-    EnnFullOptTimingResult,
-    benchmark_enn_full_optimization_proposal_timing,
-)
-from .fitting_time_enn_query import (
-    EnnQueryTimingResult,
-    benchmark_enn_query_timing,
-)
+import importlib
 
 __all__ = [
     "BMResult",
@@ -63,65 +47,51 @@ __all__ = [
 ]
 
 
+_LAZY_MODULE_BY_NAME = {
+    "DNGOConfig": "analysis.fitting_time.dngo",
+    "DNGOSurrogate": "analysis.fitting_time.dngo",
+    "SMACRFConfig": "analysis.fitting_time.smac_rf",
+    "SMACRFSurrogate": "analysis.fitting_time.smac_rf",
+    "SyntheticBenchJob": "analysis.fitting_time.batch_jobs",
+    "EnnFitTimingResult": "analysis.fitting_time.fitting_time_enn_fit",
+    "benchmark_enn_fit_timing": "analysis.fitting_time.fitting_time_enn_fit",
+    "enn_fit_quality_ns": "analysis.fitting_time.fitting_time_enn_fit",
+    "EnnFitIndTimingResult": "analysis.fitting_time.fitting_time_enn_fit_ind",
+    "benchmark_enn_fit_ind_timing": "analysis.fitting_time.fitting_time_enn_fit_ind",
+    "EnnFullOptTimingResult": "analysis.fitting_time.fitting_time_enn_full_opt",
+    "benchmark_enn_full_optimization_proposal_timing": "analysis.fitting_time.fitting_time_enn_full_opt",
+    "EnnQueryTimingResult": "analysis.fitting_time.fitting_time_enn_query",
+    "benchmark_enn_query_timing": "analysis.fitting_time.fitting_time_enn_query",
+    "EnnIncrementalIndexDriver": "analysis.fitting_time.fitting_time_enn_incremental",
+    "EnnIncrementalTimingResult": "analysis.fitting_time.fitting_time_enn_incremental",
+    "benchmark_enn_incremental_add_timing": "analysis.fitting_time.fitting_time_enn_incremental",
+    "enn_incremental_checkpoint_ns": "analysis.fitting_time.fitting_time_enn_incremental",
+    "fit_dngo": "analysis.fitting_time.fitting_time",
+    "fit_enn": "analysis.fitting_time.fitting_time",
+    "fit_enn_hnsw": "analysis.fitting_time.fitting_time",
+    "fit_exact_gp": "analysis.fitting_time.fitting_time",
+    "fit_smac_rf": "analysis.fitting_time.fitting_time",
+    "fit_svgp_default": "analysis.fitting_time.fitting_time",
+    "fit_svgp_linear": "analysis.fitting_time.fitting_time",
+    "fit_vecchia": "analysis.fitting_time.fitting_time",
+    "BMResult": "analysis.fitting_time.evaluate",
+    "MuSe": "analysis.fitting_time.evaluate",
+    "SYNTHETIC_BENCHMARK_N_TEST": "analysis.fitting_time.evaluate",
+    "SYNTHETIC_BENCHMARK_SINE_FUNCTION_NAME": "analysis.fitting_time.evaluate",
+    "SURROGATE_BENCHMARK_KEYS": "analysis.fitting_time.evaluate",
+    "SURROGATE_BENCHMARK_ROWS": "analysis.fitting_time.evaluate",
+    "SyntheticSineSurrogateBenchmark": "analysis.fitting_time.evaluate",
+    "benchmark_synthetic_sine_surrogates": "analysis.fitting_time.evaluate",
+    "draw_benchmark_synthetic_xy": "analysis.fitting_time.evaluate",
+    "env_action_coords_to_surrogate_unit_x": "analysis.fitting_time.evaluate",
+    "normalize_benchmark_function_name": "analysis.fitting_time.evaluate",
+    "normalized_rmse": "analysis.fitting_time.evaluate",
+    "predictive_gaussian_log_likelihood": "analysis.fitting_time.evaluate",
+}
+
+
 def __getattr__(name: str):
-    if name == "DNGOConfig":
-        from analysis.fitting_time.dngo import DNGOConfig
-
-        return DNGOConfig
-    if name == "DNGOSurrogate":
-        from analysis.fitting_time.dngo import DNGOSurrogate
-
-        return DNGOSurrogate
-    if name == "SMACRFConfig":
-        from analysis.fitting_time.smac_rf import SMACRFConfig
-
-        return SMACRFConfig
-    if name == "SMACRFSurrogate":
-        from analysis.fitting_time.smac_rf import SMACRFSurrogate
-
-        return SMACRFSurrogate
-    if name == "SyntheticBenchJob":
-        from analysis.fitting_time.batch_jobs import SyntheticBenchJob
-
-        return SyntheticBenchJob
-    if name in (
-        "EnnIncrementalIndexDriver",
-        "EnnIncrementalTimingResult",
-        "benchmark_enn_incremental_add_timing",
-        "enn_incremental_checkpoint_ns",
-    ):
-        from analysis.fitting_time import fitting_time_enn_incremental as _inc
-
-        return getattr(_inc, name)
-    if name in (
-        "fit_dngo",
-        "fit_enn",
-        "fit_enn_hnsw",
-        "fit_exact_gp",
-        "fit_smac_rf",
-        "fit_svgp_default",
-        "fit_svgp_linear",
-        "fit_vecchia",
-    ):
-        from analysis.fitting_time import fitting_time as _ft
-
-        return getattr(_ft, name)
-    if name in (
-        "BMResult",
-        "MuSe",
-        "SYNTHETIC_BENCHMARK_N_TEST",
-        "SYNTHETIC_BENCHMARK_SINE_FUNCTION_NAME",
-        "SURROGATE_BENCHMARK_KEYS",
-        "SURROGATE_BENCHMARK_ROWS",
-        "SyntheticSineSurrogateBenchmark",
-        "benchmark_synthetic_sine_surrogates",
-        "draw_benchmark_synthetic_xy",
-        "env_action_coords_to_surrogate_unit_x",
-        "normalize_benchmark_function_name",
-        "normalized_rmse",
-        "predictive_gaussian_log_likelihood",
-    ):
-        from analysis.fitting_time import evaluate as _ev
-
-        return getattr(_ev, name)
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    module_name = _LAZY_MODULE_BY_NAME.get(name)
+    if module_name is None:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    return getattr(importlib.import_module(module_name), name)

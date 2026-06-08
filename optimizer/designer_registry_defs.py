@@ -1,5 +1,6 @@
 from functools import partial
 
+from .designer_registry_extra_builders import _build_eggroll, _build_sparse_enn
 from .designer_registry_option_handlers import (
     _build_turbo_enn_f,
     _d_morbo_enn_fit,
@@ -15,6 +16,15 @@ from .designer_registry_option_handlers import (
     _d_turbo_enn_sweep,
 )
 from .designer_types import DesignerDef, DesignerOptionSpec
+
+_IDX_OPTION_SPEC = DesignerOptionSpec(
+    name="idx",
+    required=False,
+    value_type="str",
+    description="ENN index driver: flat (default), hnsw, or exact.",
+    example_suffix="idx=hnsw",
+    allowed_values=("flat", "hnsw", "exact"),
+)
 
 _DESIGNER_DEFS: list[DesignerDef] = [
     DesignerDef(
@@ -93,15 +103,13 @@ _DESIGNER_DEFS: list[DesignerDef] = [
                 description="Ensemble size for TuRBO-ENN sweep.",
                 example_suffix="k=10",
             ),
-            DesignerOptionSpec(
-                name="idx",
-                required=False,
-                value_type="str",
-                description="ENN index driver: flat (default) or hnsw.",
-                example_suffix="idx=hnsw",
-                allowed_values=("flat", "hnsw", "exact"),
-            ),
+            _IDX_OPTION_SPEC,
         ),
+    ),
+    DesignerDef(
+        name="turbo-enn-p",
+        builder=_d_turbo_enn_p,
+        option_specs=(_IDX_OPTION_SPEC,),
     ),
     DesignerDef(
         name="turbo-enn-fit",
@@ -115,14 +123,7 @@ _DESIGNER_DEFS: list[DesignerDef] = [
                 example_suffix="acq_type=ucb",
                 allowed_values=("pareto", "thompson", "ucb"),
             ),
-            DesignerOptionSpec(
-                name="idx",
-                required=False,
-                value_type="str",
-                description="ENN index driver: flat (default) or hnsw.",
-                example_suffix="idx=hnsw",
-                allowed_values=("flat", "hnsw", "exact"),
-            ),
+            _IDX_OPTION_SPEC,
         ),
     ),
     DesignerDef(
@@ -137,14 +138,7 @@ _DESIGNER_DEFS: list[DesignerDef] = [
                 example_suffix="acq_type=ucb",
                 allowed_values=("pareto", "thompson", "ucb"),
             ),
-            DesignerOptionSpec(
-                name="idx",
-                required=False,
-                value_type="str",
-                description="ENN index driver: flat (default) or hnsw.",
-                example_suffix="idx=hnsw",
-                allowed_values=("flat", "hnsw", "exact"),
-            ),
+            _IDX_OPTION_SPEC,
         ),
     ),
     DesignerDef(
@@ -157,20 +151,6 @@ _DESIGNER_DEFS: list[DesignerDef] = [
                 value_type="int",
                 description="Number of accept/reject steps.",
                 example_suffix="num_acc_rej=10",
-            ),
-        ),
-    ),
-    DesignerDef(
-        name="turbo-enn-p",
-        builder=_d_turbo_enn_p,
-        option_specs=(
-            DesignerOptionSpec(
-                name="idx",
-                required=False,
-                value_type="str",
-                description="ENN index driver: flat (default) or hnsw.",
-                example_suffix="idx=hnsw",
-                allowed_values=("flat", "hnsw", "exact"),
             ),
         ),
     ),
@@ -192,14 +172,7 @@ _DESIGNER_DEFS: list[DesignerDef] = [
                 description="ENN ensemble size k (default 10).",
                 example_suffix="k=20",
             ),
-            DesignerOptionSpec(
-                name="idx",
-                required=False,
-                value_type="str",
-                description="ENN index driver: flat (default) or hnsw.",
-                example_suffix="idx=hnsw",
-                allowed_values=("flat", "hnsw", "exact"),
-            ),
+            _IDX_OPTION_SPEC,
         ),
     ),
     DesignerDef(
@@ -211,6 +184,181 @@ _DESIGNER_DEFS: list[DesignerDef] = [
         name="turbo-enn-f-p",
         builder=partial(_build_turbo_enn_f, acq_type="pareto"),
         option_specs=(),
+    ),
+    DesignerDef(
+        name="sparse-enn",
+        builder=_build_sparse_enn,
+        option_specs=(
+            DesignerOptionSpec(
+                name="clock_scale",
+                required=False,
+                value_type="float",
+                description="Multiplier on the expected sparse proposal support for the failure clock.",
+                example_suffix="clock_scale=3.0",
+            ),
+            DesignerOptionSpec(
+                name="min_failures",
+                required=False,
+                value_type="float",
+                description="Lower bound on the batch-level failure tolerance.",
+                example_suffix="min_failures=4",
+            ),
+            DesignerOptionSpec(
+                name="num_pert",
+                required=False,
+                value_type="int",
+                description="Target number of perturbed coordinates in sparse proposals.",
+                example_suffix="num_pert=20",
+            ),
+            DesignerOptionSpec(
+                name="k",
+                required=False,
+                value_type="int",
+                description="ENN neighborhood or ensemble-size parameter.",
+                example_suffix="k=10",
+            ),
+            DesignerOptionSpec(
+                name="num_init",
+                required=False,
+                value_type="int",
+                description="Number of initialization points.",
+                example_suffix="num_init=20",
+            ),
+            DesignerOptionSpec(
+                name="num_candidates",
+                required=False,
+                value_type="int",
+                description="Number of trust-region candidates.",
+                example_suffix="num_candidates=1000",
+            ),
+            DesignerOptionSpec(
+                name="num_fit_samples",
+                required=False,
+                value_type="int",
+                description="Number of ENN fit samples.",
+                example_suffix="num_fit_samples=100",
+            ),
+            DesignerOptionSpec(
+                name="num_fit_candidates",
+                required=False,
+                value_type="int",
+                description="Number of ENN fit candidates.",
+                example_suffix="num_fit_candidates=100",
+            ),
+            DesignerOptionSpec(
+                name="acq_type",
+                required=False,
+                value_type="str",
+                description="Acquisition type.",
+                example_suffix="acq_type=ucb",
+                allowed_values=("pareto", "thompson", "ucb"),
+            ),
+            DesignerOptionSpec(
+                name="candidate_rv",
+                required=False,
+                value_type="str",
+                description="Random source for candidate values.",
+                example_suffix="candidate_rv=uniform",
+                allowed_values=("sobol", "uniform", "gpu_uniform"),
+            ),
+        ),
+    ),
+    DesignerDef(
+        name="eggroll",
+        builder=_build_eggroll,
+        option_specs=(
+            DesignerOptionSpec(
+                name="noiser",
+                required=False,
+                value_type="str",
+                description="HyperscaleES noiser name.",
+                example_suffix="noiser=eggroll",
+            ),
+            DesignerOptionSpec(
+                name="sigma",
+                required=False,
+                value_type="float",
+                description="Initial noiser sigma.",
+                example_suffix="sigma=0.05",
+            ),
+            DesignerOptionSpec(
+                name="sigma_decay",
+                required=False,
+                value_type="float",
+                description="Per-generation multiplicative sigma decay.",
+                example_suffix="sigma_decay=0.999",
+            ),
+            DesignerOptionSpec(
+                name="lr",
+                required=False,
+                value_type="float",
+                description="Initial optimizer learning rate.",
+                example_suffix="lr=0.02",
+            ),
+            DesignerOptionSpec(
+                name="lr_decay",
+                required=False,
+                value_type="float",
+                description="Per-update multiplicative learning-rate decay.",
+                example_suffix="lr_decay=0.9995",
+            ),
+            DesignerOptionSpec(
+                name="rank",
+                required=False,
+                value_type="int",
+                description="Low-rank EggRoll perturbation rank.",
+                example_suffix="rank=8",
+            ),
+            DesignerOptionSpec(
+                name="rank_transform",
+                required=False,
+                value_type="bool",
+                description="Rank-transform population scores before HyperscaleES fitness normalization.",
+                example_suffix="rank_transform=false",
+            ),
+            DesignerOptionSpec(
+                name="deterministic_policy",
+                required=False,
+                value_type="bool",
+                description="Use distribution modes/means for policy actions instead of sampling.",
+                example_suffix="deterministic_policy=false",
+            ),
+            DesignerOptionSpec(
+                name="steps",
+                required=False,
+                value_type="int",
+                description="Rollout horizon per sampled policy.",
+                example_suffix="steps=200",
+            ),
+            DesignerOptionSpec(
+                name="num_envs",
+                required=False,
+                value_type="int",
+                description="Held-out center-policy evaluation episodes per generation.",
+                example_suffix="num_envs=8",
+            ),
+            DesignerOptionSpec(
+                name="batch_size",
+                required=False,
+                value_type="int",
+                description="External scorer candidate batch size.",
+                example_suffix="batch_size=4",
+            ),
+            DesignerOptionSpec(
+                name="jax_sim",
+                required=False,
+                value_type="bool",
+                description="Use JAX EggRoll rollouts for Isaac Lab env tags (host callbacks).",
+                example_suffix="jax_sim=true",
+            ),
+            DesignerOptionSpec(
+                name="suppress_noiser_stdout",
+                required=False,
+                value_type="bool",
+                description="Suppress noisy upstream HyperscaleES tracing prints.",
+                example_suffix="suppress_noiser_stdout=true",
+            ),
+        ),
     ),
 ]
 

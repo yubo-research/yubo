@@ -6,7 +6,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-_HASH_EXCLUDE = frozenset({"problem_seed", "noise_seed_0"})
+_HASH_EXCLUDE = frozenset({"problem_seed", "noise_seed_0", "num_reps"})
 _DEFAULT_RESULTS = "results/uhd"
 _APP_NAME = "yubo_uhd_batch"
 
@@ -65,12 +65,13 @@ def _parse_eval_lines(log_text: str) -> list[dict]:
                 i += 3
             else:
                 i += 1
-        if "i_iter" in d and "mu" in d:
+        iter_key = "i_iter" if "i_iter" in d else "step" if "step" in d else None
+        if iter_key is not None and "mu" in d:
             dt_prop = float(d["proposal_dt"]) if "proposal_dt" in d else 0.0
             dt_eval = float(d["eval_dt"]) if "eval_dt" in d else 0.0
             records.append(
                 {
-                    "i_iter": int(d["i_iter"]),
+                    "i_iter": int(d[iter_key]),
                     "rreturn": float(d["mu"]),
                     "dt_prop": dt_prop,
                     "dt_eval": dt_eval,
@@ -83,16 +84,25 @@ def _run_subprocess(cfg: dict) -> tuple[str, int]:
     """Run exp_uhd.py local with a temp TOML. Returns (stdout, returncode)."""
     fd, tmp = tempfile.mkstemp(suffix=".toml")
     try:
+        cfg = {k: v for k, v in cfg.items() if k != "num_reps"}
         with os.fdopen(fd, "w") as f:
             f.write(_dict_to_toml(cfg))
-        result = subprocess.run(
-            [sys.executable, "-u", "ops/exp_uhd.py", "local", tmp],
-            capture_output=True,
+        proc = subprocess.Popen(
+            [sys.executable, "-u", "-m", "ops.exp_uhd", "local", tmp],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             text=True,
         )
-        if result.returncode != 0:
-            print(f"SUBPROCESS ERROR:\n{result.stderr}", file=sys.stderr)
-        return result.stdout, result.returncode
+        stdout_lines: list[str] = []
+        assert proc.stdout is not None
+        for line in proc.stdout:
+            stdout_lines.append(line)
+            print(line, end="", flush=True)
+        stderr = proc.stderr.read() if proc.stderr is not None else ""
+        rc = proc.wait()
+        if rc != 0:
+            print(f"SUBPROCESS ERROR:\n{stderr}", file=sys.stderr)
+        return "".join(stdout_lines), rc
     finally:
         os.unlink(tmp)
 
@@ -121,3 +131,13 @@ def _load_toml(path: str) -> dict:
         data = tomllib.load(f)
     section = data.get("uhd", data)
     return {k.replace("-", "_"): v for k, v in section.items()}
+
+
+def _resolve_num_reps(cfg: dict, cli_num_reps: int | None) -> int:
+    import click
+
+    value = cfg.get("num_reps", 1) if cli_num_reps is None else cli_num_reps
+    num_reps = int(value)
+    if num_reps < 1:
+        raise click.BadParameter("num_reps must be >= 1")
+    return num_reps

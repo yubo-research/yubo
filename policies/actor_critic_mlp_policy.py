@@ -5,7 +5,13 @@ from torch.distributions import Normal
 from policies.env_utils import get_obs_act_dims
 from policies.policy_mixin import PolicyParamsMixin
 from rl.actor_critic import gaussian_policy_normal_from_obs
-from rl.backbone import BackboneSpec, HeadSpec, build_backbone, build_mlp_head, init_linear_layers
+from rl.backbone import (
+    BackboneSpec,
+    HeadSpec,
+    build_backbone,
+    build_mlp_head,
+    init_linear_layers,
+)
 from rl.math_utils import tanh_gaussian_action_log_prob_entropy
 
 

@@ -3,6 +3,10 @@ import time
 
 import numpy as np
 from ConfigSpace import ConfigurationSpace, Float
+
+if not hasattr(np, "NaN"):
+    np.NaN = np.nan
+
 from smac import HyperparameterOptimizationFacade, Scenario
 from smac.runhistory.dataclasses import TrialValue
 

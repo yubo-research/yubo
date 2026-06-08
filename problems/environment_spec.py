@@ -12,6 +12,15 @@ import gymnasium as gym
 
 from problems import env_conf_bindings
 from problems.env_conf_parse import parse_tag_options
+from problems.isaaclab_env_adapters import (
+    DEFAULT_ISAACLAB_MAX_STEPS,
+    is_isaaclab_env_tag,
+    make_isaaclab_env,
+    resolve_isaaclab_env_spaces,
+)
+from problems.jax_env_core import (
+    JAX_OBJECTIVE_PREFIXES,
+)
 
 
 def _get_atari_dm_bindings():
@@ -29,6 +38,8 @@ _DEFAULT_MAX_STEPS = 99999
 def needs_atari_dm_bindings(env_tag: str) -> bool:
     """Return True if this env tag requires Atari/DM bindings to be registered."""
     tag, _, _ = parse_tag_options(str(env_tag), None)
+    if tag.startswith(JAX_OBJECTIVE_PREFIXES):
+        return False
     if tag.startswith(("dm:", "dm_control/", "atari:", "ALE/")):
         return True
     if tag in _dm_control_env_specs or tag in _atari_env_specs:
@@ -100,54 +111,67 @@ class EnvironmentRuntime:
         return self.spec.kwargs or {}
 
     def _make(self, **kwargs):
-        spec = self.spec
-        env_name = spec.env_name
+        env_name = self.spec.env_name
 
-        if env_name[:2] == "f:":
-            _ns: dict = {}
-            exec("import problems.pure_functions as pf", _ns)  # noqa: S102
-            env = _ns["pf"].make(env_name, problem_seed=self.problem_seed, distort=True)
-        elif env_name[:2] == "g:":
-            _ns: dict = {}
-            exec("import problems.pure_functions as pf", _ns)  # noqa: S102
-            env = _ns["pf"].make(env_name, problem_seed=self.problem_seed, distort=False)
-        elif env_name.startswith("dm_control/"):
-            make_dm_control_env = _get_atari_dm_bindings().make_dm_control_env
-            env = make_dm_control_env(
-                env_name,
-                from_pixels=spec.from_pixels,
-                pixels_only=spec.pixels_only,
-                **kwargs,
-            )
-        elif env_name.startswith("ALE/"):
-            bindings = _get_atari_dm_bindings()
-            make_preprocess_options = bindings.make_atari_preprocess_options
-            make_atari_env = bindings.make_atari_env
-            render_mode = kwargs.get("render_mode")
-            max_steps = spec.max_steps
-            if max_steps is None:
-                raise ValueError("EnvironmentSpec.max_steps must be set for ALE environments.")
-            preprocess = kwargs.pop("preprocess", None)
-            if preprocess is None:
-                default_preprocess = make_preprocess_options()
-                preprocess_kwargs = asdict(default_preprocess) if is_dataclass(default_preprocess) else dict(vars(default_preprocess))
-                if isinstance(spec.atari_preprocess, dict):
-                    preprocess_kwargs.update(spec.atari_preprocess)
-                preprocess = make_preprocess_options(**preprocess_kwargs)
-            env = make_atari_env(
-                env_name,
-                render_mode=render_mode,
-                max_episode_steps=int(max_steps),
-                preprocess=preprocess,
-            )
-        elif spec.gym_conf is not None:
-            env = gym.make(env_name, **(kwargs | spec.kwargs))
-        else:
-            _ns: dict = {}
-            exec("import problems.other as other", _ns)  # noqa: S102
-            env = _ns["other"].make(env_name, problem_seed=self.problem_seed)
+        if env_name.startswith("warp:"):
+            return self._make_warp_env(env_name)
+        if env_name[:2] in ("f:", "g:"):
+            return self._make_pure_func_env(env_name)
+        if env_name.startswith("dm_control/"):
+            return self._make_dm_control_env(**kwargs)
+        if env_name.startswith("ALE/"):
+            return self._make_atari_env(**kwargs)
+        if (unsupported_msg := _unsupported_make_message(env_name)) is not None:
+            raise RuntimeError(unsupported_msg)
+        if is_isaaclab_env_tag(env_name):
+            return make_isaaclab_env(env_name, seed=self.problem_seed, **(kwargs | self.spec.kwargs))
+        if self.spec.gym_conf is not None:
+            return gym.make(env_name, **(kwargs | self.spec.kwargs))
 
-        return env
+        _ns: dict = {}
+        exec("import problems.other as other", _ns)  # noqa: S102
+        return _ns["other"].make(env_name, problem_seed=self.problem_seed)
+
+    def _make_warp_env(self, env_name: str):
+        from problems.unified_mj_env import UnifiedMJXWarpAdapter
+
+        return UnifiedMJXWarpAdapter(env_name[5:], backend="warp")
+
+    def _make_pure_func_env(self, env_name: str):
+        _ns: dict = {}
+        exec("import problems.pure_functions as pf", _ns)  # noqa: S102
+        return _ns["pf"].make(env_name, problem_seed=self.problem_seed, distort=env_name[:2] == "f:")
+
+    def _make_dm_control_env(self, **kwargs):
+        make_dm_control_env = _get_atari_dm_bindings().make_dm_control_env
+        return make_dm_control_env(
+            self.spec.env_name,
+            from_pixels=self.spec.from_pixels,
+            pixels_only=self.spec.pixels_only,
+            **kwargs,
+        )
+
+    def _make_atari_env(self, **kwargs):
+        bindings = _get_atari_dm_bindings()
+        make_preprocess_options = bindings.make_atari_preprocess_options
+        make_atari_env = bindings.make_atari_env
+        render_mode = kwargs.get("render_mode")
+        max_steps = self.spec.max_steps
+        if max_steps is None:
+            raise ValueError("EnvironmentSpec.max_steps must be set for ALE environments.")
+        preprocess = kwargs.pop("preprocess", None)
+        if preprocess is None:
+            default_preprocess = make_preprocess_options()
+            preprocess_kwargs = asdict(default_preprocess) if is_dataclass(default_preprocess) else dict(vars(default_preprocess))
+            if isinstance(self.spec.atari_preprocess, dict):
+                preprocess_kwargs.update(self.spec.atari_preprocess)
+            preprocess = make_preprocess_options(**preprocess_kwargs)
+        return make_atari_env(
+            self.spec.env_name,
+            render_mode=render_mode,
+            max_episode_steps=int(max_steps),
+            preprocess=preprocess,
+        )
 
     def make(self, **kwargs):
         if self.spec.gym_conf:
@@ -168,6 +192,26 @@ class EnvironmentRuntime:
         if self.state_space is not None and self.action_space is not None:
             return
         spec = self.spec
+        if spec.env_name.startswith(JAX_OBJECTIVE_PREFIXES):
+            try:
+                from problems.jax_env_factory import resolve_jax_env_spaces
+            except ImportError as exc:
+                raise ImportError(
+                    "JAX env tags require the separate HyperscaleES environment. "
+                    "Run admin/setup-hyperscalees.sh first, then use the plain python CLI from that environment."
+                ) from exc
+            spaces = resolve_jax_env_spaces(spec.env_name)
+            self.state_space = spaces.observation_space
+            self.action_space = spaces.action_space
+            return
+        if is_isaaclab_env_tag(spec.env_name):
+            self.state_space, self.action_space = resolve_isaaclab_env_spaces(
+                spec.env_name,
+                launcher_kwargs=self.kwargs.get("launcher_kwargs"),
+            )
+            if spec.gym_conf is not None:
+                spec.gym_conf.state_space = self.state_space
+            return
         if spec.gym_conf is not None and spec.gym_conf.state_space is not None and self.action_space is not None:
             self.state_space = spec.gym_conf.state_space
             return
@@ -177,6 +221,20 @@ class EnvironmentRuntime:
             spec.gym_conf.state_space = self.state_space
         self.action_space = env.action_space
         env.close()
+
+
+def _is_pretrain_uhd_objective(env_name: str) -> bool:
+    from problems.pre_obj import is_hyperscalees_pretrain_env, is_nanoegg_pretrain_env
+
+    return is_hyperscalees_pretrain_env(env_name) or is_nanoegg_pretrain_env(env_name)
+
+
+def _unsupported_make_message(env_name: str) -> str | None:
+    if _is_pretrain_uhd_objective(env_name):
+        return "Pretraining UHD objective tags are evaluated by ops.exp_uhd, not by env.make()."
+    if env_name.startswith(JAX_OBJECTIVE_PREFIXES):
+        return "JAX environments are evaluated by JAX-backed designers, not by env.make()."
+    return None
 
 
 def _gym_spec(
@@ -203,6 +261,20 @@ def get_environment_spec(env_tag: str) -> EnvironmentSpec:
         return copy.deepcopy(_dm_control_env_specs[tag])
     if tag in _atari_env_specs:
         return copy.deepcopy(_atari_env_specs[tag])
+
+    if tag.startswith(JAX_OBJECTIVE_PREFIXES) or tag.startswith("warp:"):
+        return EnvironmentSpec(tag, max_steps=_DEFAULT_MAX_STEPS)
+
+    if is_isaaclab_env_tag(tag):
+        return EnvironmentSpec(
+            tag,
+            gym_conf=GymConf(
+                max_steps=DEFAULT_ISAACLAB_MAX_STEPS,
+                num_frames_skip=1,
+                transform_state=False,
+            ),
+            max_steps=DEFAULT_ISAACLAB_MAX_STEPS,
+        )
 
     pix_only = True
     if tag.startswith("dm:") or tag.startswith("dm_control/"):

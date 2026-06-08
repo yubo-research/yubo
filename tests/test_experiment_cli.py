@@ -76,6 +76,12 @@ def test_load_experiment_config_toml_experiment_table(tmp_path):
         num_reps = 5
         b_trace = false
         max_total_seconds = 30.5
+        video_enable = true
+        video_num_episodes = 1
+        video_num_video_episodes = 1
+        video_episode_selection = "first"
+        video_seed_base = 17
+        video_prefix = "smoke"
         runtime_device = "cpu"
         local_workers = 4
         policy_tag = "pure-function"
@@ -90,6 +96,12 @@ def test_load_experiment_config_toml_experiment_table(tmp_path):
     assert cfg.num_reps == 5
     assert cfg.b_trace is False
     assert cfg.max_total_seconds == 30.5
+    assert cfg.video_enable is True
+    assert cfg.video_num_episodes == 1
+    assert cfg.video_num_video_episodes == 1
+    assert cfg.video_episode_selection == "first"
+    assert cfg.video_seed_base == 17
+    assert cfg.video_prefix == "smoke"
     assert cfg.runtime_device == "cpu"
     assert cfg.local_workers == 4
 
@@ -307,6 +319,32 @@ def test_load_experiment_config_toml_optimizer_table(tmp_path):
     )
     cfg = load_experiment_config(config_toml_path=str(toml_path))
     assert cfg.opt_name == "turbo-enn-fit/acq_type=ucb/num_candidates=64"
+
+
+def test_load_experiment_config_eggroll_uses_upstream_schema(tmp_path):
+    toml_path = _write_toml(
+        tmp_path,
+        """
+        [experiment]
+        exp_dir = "_tmp/eggroll"
+        env_tag = "gymnax:CartPole-v1"
+        policy_tag = "eggroll-ac-mlp-8x1-pqn"
+        population = 4
+        num_epochs = 3
+        num_reps = 1
+
+        [optimizer]
+        name = "eggroll"
+
+        [optimizer.params]
+        noiser = "eggroll"
+        steps = 10
+        """,
+    )
+    cfg = load_experiment_config(config_toml_path=str(toml_path))
+    assert cfg.env_tag == "gymnax:CartPole-v1"
+    assert cfg.policy_tag == "eggroll-ac-mlp-8x1-pqn"
+    assert cfg.opt_name == "eggroll/noiser=eggroll/steps=10"
 
 
 def test_load_experiment_config_toml_optimizer_unknown_key_raises(tmp_path):

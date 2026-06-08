@@ -20,6 +20,7 @@ def test_ppo_eval_noise_mode_advances_eval_and_heldout(monkeypatch, tmp_path, ev
 
 def test_ppo_eval_noise_mode_invalid_rejected_before_env_build(monkeypatch):
     from rl.torchrl.ppo import core as ppo_core
+    from rl.torchrl.ppo.config import PPOEvalConfig
 
     monkeypatch.setattr(
         ppo_core,
@@ -27,4 +28,4 @@ def test_ppo_eval_noise_mode_invalid_rejected_before_env_build(monkeypatch):
         lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("env build should not run")),
     )
     with pytest.raises(ValueError, match="eval_noise_mode must be one of"):
-        ppo_core.train_ppo(ppo_core.PPOConfig(eval_noise_mode="invalid-mode"))
+        ppo_core.train_ppo(ppo_core.PPOConfig(eval=PPOEvalConfig(noise_mode="invalid-mode")))

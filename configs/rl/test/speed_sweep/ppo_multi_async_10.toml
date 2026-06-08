@@ -1,0 +1,49 @@
+# Plain PPO baseline from "Revisiting Proximal Policy Optimization" / PPO(ours).
+# This is intentionally not PPO+: no bounded-policy correction, no max entropy, no off-policy critic.
+
+[rl]
+algo = "ppo"
+
+[rl.ppo]
+exp_dir = "_tmp/rl_speed_sweep/ppo_multi_async_10"
+env_tag = "cheetah"
+policy_tag = "actor-critic-mlp-256-256-tanh"
+seed = 0
+device = "auto"
+log_interval = 1
+
+[rl.ppo.env]
+normalize_observation = true
+normalize_reward = true
+reward_normalize_gamma = 0.99
+
+[rl.ppo.collector]
+total_frames = 50000
+frames_per_batch = 5000
+num_envs = 10
+backend = "multi_async"
+single_env_backend = "serial"
+workers = 10
+
+[rl.ppo.optim]
+lr = 3e-4
+anneal_lr = true
+minibatch_size = 250
+num_epochs = 10
+max_grad_norm = 0.5
+
+[rl.ppo.loss]
+gamma = 0.99
+gae_lambda = 0.95
+normalize_advantage = true
+clip_epsilon = 0.2
+clip_value_loss = true
+entropy_coeff = 0.0
+critic_coeff = 0.5
+
+[rl.ppo.eval]
+interval = 0
+
+[rl.run]
+num_reps = 1
+workers = 1

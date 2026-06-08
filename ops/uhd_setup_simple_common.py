@@ -7,6 +7,17 @@ from optimizer.gaussian_perturbator import GaussianPerturbator
 from optimizer.sparse_gaussian_perturbator import SparseGaussianPerturbator
 
 
+def _default_be_config() -> BEConfig:
+    return BEConfig(
+        num_probes=10,
+        num_candidates=10,
+        warmup=20,
+        fit_interval=10,
+        enn_k=25,
+        sigma_range=None,
+    )
+
+
 def _make_simple_optimizer(
     module,
     perturbator,
@@ -18,7 +29,7 @@ def _make_simple_optimizer(
     embed_bounds=None,
     be: BEConfig | None = None,
 ):
-    cfg = be if be is not None else BEConfig()
+    cfg = be if be is not None else _default_be_config()
     if optimizer in {"simple_be", "mezo_be"}:
         from embedding.behavioral_embedder import BehavioralEmbedder
 

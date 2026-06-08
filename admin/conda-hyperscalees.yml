@@ -1,0 +1,25 @@
+channels:
+  - conda-forge
+  - pkgs/main
+dependencies:
+  - python=3.12
+  - pip
+  - git
+  - git-lfs
+  - c-compiler
+  - cxx-compiler
+  - swig
+  - numpy>=2.3,<2.4
+  - numba==0.62.1
+  - llvmlite==0.45.1
+  - scipy>=1.17,<1.18
+  - h5py
+  - scikit-learn
+  - matplotlib
+  - pandas
+  - nomkl
+  - libblas=*=*openblas
+  - openblas
+  - libfaiss=1.10.0=cpu_openblas*
+  - faiss=1.10.0=cpu_openblas_py312*
+  - faiss-cpu=1.10.0

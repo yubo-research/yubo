@@ -8,6 +8,7 @@ from .sac_trainer_phase_b_impl import (
     normalize_actions_for_replay,
     process_sac_batch,
     run_sac_eval_log_checkpoint,
+    sync_collector_policy_if_needed,
     update_step,
 )
 
@@ -17,5 +18,6 @@ __all__ = [
     "normalize_actions_for_replay",
     "process_sac_batch",
     "run_sac_eval_log_checkpoint",
+    "sync_collector_policy_if_needed",
     "update_step",
 ]

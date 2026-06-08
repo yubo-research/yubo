@@ -17,7 +17,8 @@ def test_config_hash_excludes_seeds():
     h1 = _config_hash(base)
     h2 = _config_hash({**base, "problem_seed": 42})
     h3 = _config_hash({**base, "noise_seed_0": 420})
-    assert h1 == h2 == h3
+    h4 = _config_hash({**base, "num_reps": 30})
+    assert h1 == h2 == h3 == h4
 
 
 def test_config_hash_differs_on_content():
@@ -66,6 +67,31 @@ def test_dict_to_toml_bool():
     assert parsed["flag"] is True
 
 
+def test_run_subprocess_strips_num_reps(monkeypatch):
+    import io
+
+    import tomllib
+
+    from ops.uhd_batch import _run_subprocess
+
+    captured = {}
+
+    class FakePopen:
+        def __init__(self, cmd, *, stdout, stderr, text):
+            tmp_path = cmd[-1]
+            with open(tmp_path, "rb") as f:
+                captured.update(tomllib.load(f)["uhd"])
+            self.stdout = io.StringIO("")
+            self.stderr = io.StringIO("")
+
+        def wait(self):
+            return 0
+
+    monkeypatch.setattr("subprocess.Popen", FakePopen)
+    _run_subprocess({"env_tag": "x", "num_rounds": 1, "num_reps": 30})
+    assert "num_reps" not in captured
+
+
 def test_parse_eval_lines_basic():
     from ops.uhd_batch import _parse_eval_lines
 
@@ -84,6 +110,14 @@ def test_parse_eval_lines_basic():
     assert records[1]["rreturn"] == pytest.approx(-2.3024)
     assert records[1]["dt_prop"] == pytest.approx(1.5e-5)
     assert records[1]["dt_eval"] == pytest.approx(2.5e-5)
+
+
+def test_parse_eval_lines_step_logs():
+    from ops.uhd_batch import _parse_eval_lines
+
+    log = "EVAL: step = 7 mu = 0.4200 se = 0.0100 y_best = 0.5000\n"
+    records = _parse_eval_lines(log)
+    assert records == [{"i_iter": 7, "rreturn": 0.42, "dt_prop": 0.0, "dt_eval": 0.0}]
 
 
 def test_parse_eval_lines_empty():
@@ -189,6 +223,23 @@ def test_load_toml(tmp_path):
     cfg = _load_toml(str(toml_path))
     assert cfg["env_tag"] == "mnist"
     assert cfg["num_rounds"] == 100
+
+
+def test_resolve_num_reps_prefers_cli_override():
+    from ops.uhd_batch import _resolve_num_reps
+
+    assert _resolve_num_reps({"num_reps": 30}, None) == 30
+    assert _resolve_num_reps({"num_reps": 30}, 5) == 5
+    assert _resolve_num_reps({}, None) == 1
+
+
+def test_resolve_num_reps_rejects_non_positive():
+    from click import BadParameter
+
+    from ops.uhd_batch import _resolve_num_reps
+
+    with pytest.raises(BadParameter):
+        _resolve_num_reps({"num_reps": 0}, None)
 
 
 def test_experiment_dir_deterministic(tmp_path):
@@ -317,6 +368,21 @@ def test_local_cmd(tmp_path):
     assert mock_bl.call_args[0][1] == 3
 
 
+def test_local_cmd_uses_config_num_reps(tmp_path):
+    from click.testing import CliRunner
+
+    from ops.uhd_batch import cli
+
+    toml_path = tmp_path / "test.toml"
+    toml_path.write_text('[uhd]\nenv_tag = "mnist"\nnum_rounds = 10\nnum_reps = 7\n')
+
+    with patch("ops.uhd_batch._batch_local") as mock_bl:
+        result = CliRunner().invoke(cli, ["local", str(toml_path)])
+
+    assert result.exit_code == 0, result.output
+    assert mock_bl.call_args[0][1] == 7
+
+
 def test_modal_cmd(tmp_path):
     from click.testing import CliRunner
 
@@ -334,6 +400,21 @@ def test_modal_cmd(tmp_path):
     cfg = mock_bm.call_args[0][0]
     assert cfg["env_tag"] == "mnist"
     assert mock_bm.call_args[0][1] == 5
+
+
+def test_modal_cmd_uses_config_num_reps(tmp_path):
+    from click.testing import CliRunner
+
+    from ops.uhd_batch import cli
+
+    toml_path = tmp_path / "test.toml"
+    toml_path.write_text('[uhd]\nenv_tag = "mnist"\nnum_rounds = 10\nnum_reps = 9\n')
+
+    with patch("ops.uhd_batch._batch_modal") as mock_bm:
+        result = CliRunner().invoke(cli, ["modal", str(toml_path)])
+
+    assert result.exit_code == 0, result.output
+    assert mock_bm.call_args[0][1] == 9
 
 
 def test_collect_cmd():

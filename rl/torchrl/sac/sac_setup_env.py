@@ -6,7 +6,7 @@ import numpy as np
 import torch.nn as nn
 import torchrl.modules as tr_modules
 
-from rl.core import runtime as torchrl_common
+from rl.core import runtime
 
 
 @dataclasses.dataclass(frozen=True)
@@ -26,7 +26,7 @@ class _EnvSetup:
 class _Modules:
     actor_backbone: nn.Module
     actor_head: nn.Module
-    obs_scaler: torchrl_common.ObsScaler
+    obs_scaler: runtime.ObsScaler
     actor: tr_modules.ProbabilisticActor
     actor_model: nn.Module
     q1: nn.Module

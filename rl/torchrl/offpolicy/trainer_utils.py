@@ -40,6 +40,33 @@ def normalize_actions_for_replay(flat: TensorDict, *, action_low: np.ndarray, ac
     return flat.set("action", action_norm)
 
 
+def extend_replay_with_transitions(replay: Any, flat: TensorDict) -> None:
+    extend = getattr(replay, "extend", None)
+    if callable(extend):
+        extend(flat.clone())
+        return
+    n_frames = int(flat.shape[0]) if flat.ndim > 0 else 1
+    for i in range(n_frames):
+        replay.add(flat[i].clone())
+
+
+def store_offpolicy_batch(batch: TensorDict, *, training: Any, env_setup: Any) -> int:
+    flat = flatten_batch_to_transitions(batch)
+    flat = normalize_actions_for_replay(flat, action_low=env_setup.action_low, action_high=env_setup.action_high)
+    n_frames = int(flat.shape[0]) if flat.ndim > 0 else 1
+    extend_replay_with_transitions(training.replay, flat)
+    return int(n_frames)
+
+
+def num_offpolicy_updates_for_batch(n_frames: int, config: Any) -> int:
+    n_update_cycles = max(0, int(n_frames) // int(config.optim.update_every))
+    return int(n_update_cycles * int(config.optim.optim_steps_per_batch))
+
+
+def replay_ready_for_updates(replay: Any, config: Any) -> bool:
+    return int(replay.write_count) >= int(config.collector.init_random_frames)
+
+
 def process_offpolicy_batch(
     batch: TensorDict,
     *,
@@ -51,14 +78,10 @@ def process_offpolicy_batch(
     total_updates: int,
     update_step_fn: Callable[[torch.device, int], dict[str, float]],
 ) -> tuple[dict[str, float], int, int]:
-    flat = flatten_batch_to_transitions(batch)
-    flat = normalize_actions_for_replay(flat, action_low=env_setup.action_low, action_high=env_setup.action_high)
-    n_frames = int(flat.shape[0]) if flat.ndim > 0 else 1
-    for i in range(n_frames):
-        training.replay.add(flat[i].clone())
-    n_update_cycles = max(0, n_frames // int(config.update_every))
-    for _ in range(n_update_cycles * int(config.updates_per_step)):
-        if training.replay.write_count >= int(config.learning_starts):
-            latest_losses = update_step_fn(runtime_device, int(config.batch_size))
-            total_updates += 1
+    n_frames = store_offpolicy_batch(batch, training=training, env_setup=env_setup)
+    if not replay_ready_for_updates(training.replay, config):
+        return (latest_losses, total_updates, n_frames)
+    for _ in range(num_offpolicy_updates_for_batch(n_frames, config)):
+        latest_losses = update_step_fn(runtime_device, int(config.replay_buffer.batch_size))
+        total_updates += 1
     return (latest_losses, total_updates, n_frames)

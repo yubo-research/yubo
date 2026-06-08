@@ -15,8 +15,8 @@ from analysis.data_io import write_config
 from problems.env_conf import get_env_conf
 from rl.backbone import BackboneSpec, HeadSpec, build_backbone, build_mlp_head
 from rl.checkpointing import CheckpointManager
-from rl.core import runtime as torchrl_common
-from rl.core.env_setup import build_continuous_gym_env_setup
+from rl.config_model_defaults import resolve_sac_model_settings
+from rl.core import env_setup, runtime
 
 from .config import SACConfig
 from .sac_setup_models import _ActorNet, _QNet, _QNetPixel
@@ -24,7 +24,7 @@ from .sac_setup_types import _EnvSetup, _Modules, _TrainingSetup
 
 
 def build_env_setup(config: SACConfig) -> _EnvSetup:
-    shared = build_continuous_gym_env_setup(
+    shared = env_setup.build_env_setup(
         env_tag=str(config.env_tag),
         seed=int(config.seed),
         problem_seed=config.problem_seed,
@@ -32,7 +32,8 @@ def build_env_setup(config: SACConfig) -> _EnvSetup:
         from_pixels=bool(getattr(config, "from_pixels", False)),
         pixels_only=bool(getattr(config, "pixels_only", True)),
         get_env_conf_fn=get_env_conf,
-        obs_scale_from_env_fn=torchrl_common.obs_scale_from_env,
+        include_continuous_info=True,
+        obs_scale_from_env_fn=runtime.obs_scale_from_env,
     )
     env_conf = shared.env_conf
     from_pixels = getattr(env_conf, "from_pixels", False)
@@ -60,20 +61,21 @@ def build_env_setup(config: SACConfig) -> _EnvSetup:
 
 
 def _build_specs(config: SACConfig, *, from_pixels: bool) -> tuple[BackboneSpec, HeadSpec, HeadSpec]:
-    backbone_name = "nature_cnn" if from_pixels else config.backbone_name
+    model = resolve_sac_model_settings(config)
+    backbone_name = "nature_cnn" if from_pixels else model.backbone_name
     actor_backbone_spec = BackboneSpec(
         name=backbone_name,
-        hidden_sizes=tuple(config.backbone_hidden_sizes),
-        activation=config.backbone_activation,
-        layer_norm=bool(config.backbone_layer_norm),
+        hidden_sizes=tuple(model.backbone_hidden_sizes),
+        activation=model.backbone_activation,
+        layer_norm=bool(model.backbone_layer_norm),
     )
     actor_head_spec = HeadSpec(
-        hidden_sizes=tuple(config.actor_head_hidden_sizes),
-        activation=config.head_activation,
+        hidden_sizes=tuple(model.actor_head_hidden_sizes),
+        activation=model.head_activation,
     )
     critic_head_spec = HeadSpec(
-        hidden_sizes=tuple(config.critic_head_hidden_sizes),
-        activation=config.head_activation,
+        hidden_sizes=tuple(model.critic_head_hidden_sizes),
+        activation=model.head_activation,
     )
     return (actor_backbone_spec, actor_head_spec, critic_head_spec)
 
@@ -123,7 +125,7 @@ def _build_q_pair(
 
 
 def build_modules(config: SACConfig, env: _EnvSetup, *, device: torch.device) -> _Modules:
-    obs_scaler = torchrl_common.ObsScaler(env.obs_lb, env.obs_width)
+    obs_scaler = runtime.ObsScaler(env.obs_lb, env.obs_width)
     from_pixels = bool(getattr(env.env_conf, "from_pixels", False))
     actor_backbone_spec, actor_head_spec, critic_head_spec = _build_specs(config, from_pixels=from_pixels)
     actor_backbone, actor_head, actor_net, actor = _build_actor(env, obs_scaler, actor_backbone_spec, actor_head_spec)
@@ -141,17 +143,11 @@ def build_modules(config: SACConfig, env: _EnvSetup, *, device: torch.device) ->
         p.requires_grad_(False)
     log_alpha = nn.Parameter(
         torch.tensor(
-            np.log(float(max(config.alpha_init, 1e-08))),
+            np.log(float(max(config.loss.alpha_init, 1e-08))),
             dtype=torch.float32,
             device=device,
         )
     )
-    actor_param_count = sum((p.numel() for p in actor_backbone.parameters())) + sum((p.numel() for p in actor_head.parameters()))
-    if config.theta_dim is not None:
-        assert actor_param_count == int(config.theta_dim), (
-            actor_param_count,
-            config.theta_dim,
-        )
     return _Modules(
         actor_backbone=actor_backbone,
         actor_head=actor_head,
@@ -167,16 +163,19 @@ def build_modules(config: SACConfig, env: _EnvSetup, *, device: torch.device) ->
 
 
 def build_training(config: SACConfig, modules: _Modules) -> _TrainingSetup:
+    replay_prefetch = int(config.replay_buffer.prefetch) if config.replay_buffer.prefetch is not None and int(config.replay_buffer.prefetch) > 0 else None
     replay = tr_data.TensorDictReplayBuffer(
-        storage=tr_data.LazyTensorStorage(int(config.replay_size)),
-        batch_size=int(config.batch_size),
+        storage=tr_data.LazyTensorStorage(int(config.replay_buffer.size)),
+        batch_size=int(config.replay_buffer.batch_size),
+        pin_memory=bool(config.replay_buffer.pin_memory),
+        prefetch=replay_prefetch,
     )
     actor_params = list(modules.actor_backbone.parameters()) + list(modules.actor_head.parameters())
     critic_params = list(modules.q1.parameters()) + list(modules.q2.parameters())
     alpha_params = [modules.log_alpha]
-    actor_optimizer = torch.optim.AdamW(actor_params, lr=float(config.learning_rate_actor), weight_decay=0.0)
-    critic_optimizer = torch.optim.AdamW(critic_params, lr=float(config.learning_rate_critic), weight_decay=0.0)
-    alpha_optimizer = torch.optim.AdamW(alpha_params, lr=float(config.learning_rate_alpha), weight_decay=0.0)
+    actor_optimizer = torch.optim.AdamW(actor_params, lr=float(config.optim.actor_lr), weight_decay=0.0)
+    critic_optimizer = torch.optim.AdamW(critic_params, lr=float(config.optim.qvalue_lr), weight_decay=0.0)
+    alpha_optimizer = torch.optim.AdamW(alpha_params, lr=float(config.optim.alpha_lr), weight_decay=0.0)
     exp_dir = Path(config.exp_dir)
     exp_dir.mkdir(parents=True, exist_ok=True)
     write_config(str(exp_dir), config.to_dict())
@@ -211,7 +210,7 @@ def sac_update_shared(
         sac_update_step,
     )
 
-    target_entropy = float(config.target_entropy) if config.target_entropy is not None else -float(act.shape[-1])
+    target_entropy = float(config.loss.target_entropy) if config.loss.target_entropy is not None else -float(act.shape[-1])
     return sac_update_step(
         modules=SACUpdateModules(
             actor=modules.actor_model,
@@ -228,8 +227,8 @@ def sac_update_shared(
         ),
         batch=SACUpdateBatch(obs=obs, act=act, rew=rew, nxt=nxt, done=done),
         hyper=SACUpdateHyperParams(
-            gamma=float(config.gamma),
-            tau=float(config.tau),
+            gamma=float(config.loss.gamma),
+            tau=float(config.target_net_updater.tau),
             target_entropy=target_entropy,
         ),
     )

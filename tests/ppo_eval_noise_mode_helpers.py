@@ -11,6 +11,7 @@ def run_ppo_eval_noise_mode_twice(monkeypatch, tmp_path, *, eval_noise_mode: str
     from rl.torchrl.ppo import core as ppo_core
     from rl.torchrl.ppo import core_train as ppo_core_train
     from rl.torchrl.ppo import deps as op_deps
+    from rl.torchrl.ppo.config import PPOEvalConfig
 
     eval_seeds: list[int] = []
     heldout_noise_indices: list[int] = []
@@ -42,10 +43,12 @@ def run_ppo_eval_noise_mode_twice(monkeypatch, tmp_path, *, eval_noise_mode: str
     )
 
     config = ppo_core.PPOConfig(
-        eval_interval=1,
-        eval_seed_base=100,
-        eval_noise_mode=eval_noise_mode,
-        num_denoise_passive=3,
+        eval=PPOEvalConfig(
+            interval=1,
+            seed_base=100,
+            noise_mode=eval_noise_mode,
+            num_denoise_passive=3,
+        ),
     )
     env_setup = SimpleNamespace(problem_seed=7, noise_seed_0=70)
     modules = SimpleNamespace(actor_backbone=object(), actor_head=object(), obs_scaler=object())
@@ -68,5 +71,6 @@ def run_ppo_eval_noise_mode_twice(monkeypatch, tmp_path, *, eval_noise_mode: str
             clipfracs=[],
             device=torch.device("cpu"),
             start_time=t0,
+            iter_dt=0.01,
         )
     return eval_seeds, heldout_noise_indices

@@ -18,9 +18,9 @@ def _make_simple_loop_for_np_policy(
     be: object | None = None,
 ):
     seed_all = _imod("common.seed_all", "seed_all")
-    BEConfig = _imod("ops.uhd_config", "BEConfig")
     BehavioralEmbedder = _imod("embedding.behavioral_embedder", "BehavioralEmbedder")
     common = importlib.import_module("ops.uhd_setup_simple_common")
+    _default_be_config = getattr(common, "_default_be_config")
     _gym_embed_bounds = getattr(common, "_gym_embed_bounds")
     _run_simple_iterations = getattr(common, "_run_simple_iterations")
     UHDMeZOBENp = _imod("optimizer.uhd_mezo_np", "UHDMeZOBENp")
@@ -40,7 +40,7 @@ def _make_simple_loop_for_np_policy(
         uhd = UHDSimpleNp(np_policy, sigma_0=sigma, param_clip=param_clip)
     elif optimizer == "simple_be":
         num_state = env_conf.gym_conf.state_space.shape[0]
-        cfg = be if be is not None else BEConfig()
+        cfg = be if be is not None else _default_be_config()
         embedder = BehavioralEmbedder(_gym_embed_bounds(num_state), num_probes=cfg.num_probes, seed=0)
         uhd = UHDSimpleBENp(
             np_policy,
@@ -56,7 +56,7 @@ def _make_simple_loop_for_np_policy(
         uhd = UHDMeZONp(np_policy, sigma=sigma, lr=lr, param_clip=param_clip)
     elif optimizer == "mezo_be":
         num_state = env_conf.gym_conf.state_space.shape[0]
-        cfg = be if be is not None else BEConfig()
+        cfg = be if be is not None else _default_be_config()
         embedder = BehavioralEmbedder(_gym_embed_bounds(num_state), num_probes=cfg.num_probes, seed=0)
         uhd = UHDMeZOBENp(
             np_policy,

@@ -1,0 +1,41 @@
+# QA smoke for the UHD LLM rollout path.
+#
+# Exercises:
+# - VLLMEnginePool -> Ray actor -> AsyncTextVLLMActor.sample/generate_and_score_async
+# - explicit TaskMode.ROLLOUT dispatch for VerifiersTask
+# - VLLMChatAdapter -> verifiers rollout/client path
+#
+# Run:
+# micromamba run -n yubo-hyperscalees ./ops/exp_uhd.py local configs/uhd/text/qa_gsm8k_verifiers_async.toml
+
+[uhd]
+env_tag = "llm:verifiers:gsm8k"
+policy_tag = "qwen3-1p7b-lora-r1"
+
+optimizer = "mezo"
+num_rounds = 50
+num_reps = 1
+problem_seed = 0
+noise_seed_0 = 0
+
+lr = 0.0003
+sigma = 0.001
+perturb = "dim:0.10"
+
+use_async = true
+num_engines = 1
+tensor_parallel_size = 1
+
+max_tokens = 128
+temperature = 0.0
+samples_per_prompt = 1
+prompt_batch_size = 1
+batch_size = 1
+pass_at_k = false
+sub_dataset_size = 8
+
+text_search_dim = 16
+text_delta_scale = 0.25
+text_basis_max_tensors = 4
+
+log_interval = 1

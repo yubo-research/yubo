@@ -1,0 +1,37 @@
+# Final Ambitious UHD Configuration
+# Universal Full-Parameter Subspace Optimization for Theorem Proving
+# Model: Qwen-3 1.7B
+# Subspace: 4096-dim global coordinate random basis
+#
+# Run: ./ops/exp_uhd.py local configs/uhd/thm_lean4_full_parameter.toml
+
+[uhd]
+# --- Task & Model ---
+env_tag = "llm:thm:lean4:cat-searcher/minif2f-lean4"
+policy_tag = "qwen3-1p7b-lora-r1" # Base model selector
+optimizer = "mezo"
+
+# --- AMBITIOUS: Universal Subspace ---
+# Disables LoRA and uses global coordinate random basis for every model parameter.
+pretrain_lora_only = false
+text_search_dim = 4096
+text_delta_scale = 1.0
+
+# --- Hyperparameters ---
+num_rounds = 1000
+prompt_batch_size = 2
+lr = 0.0001
+sigma = 0.001
+
+# --- Smart Components ---
+pass_at_k = false
+
+# --- Resources ---
+tensor_parallel_size = 1
+num_engines = 1
+max_tokens = 512
+temperature = 0.0
+text_basis_max_tensors = 64
+
+# --- Evaluation & Logging ---
+log_interval = 1

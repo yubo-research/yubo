@@ -1,0 +1,24 @@
+# Run: ./ops/experiment.py local configs/bo/eggroll/paper/rl/jumanji_knapsack_eggroll.toml
+# Paper: Table 25, jumanji/Knapsack-v1 EGGROLL.
+
+[experiment]
+exp_dir = "runs/yubo_eggroll/paper/rl/jumanji_knapsack_eggroll"
+env_tag = "jumanji:Knapsack-v1"
+policy_tag = "eggroll-ac-mlp-256x3-pqn"
+population = 1024
+num_epochs = 2423
+num_reps = 10
+runtime_device = "cuda"
+local_workers = 1
+b_trace = true
+
+[optimizer]
+name = "eggroll"
+
+[optimizer.params]
+noiser = "eggroll"
+sigma = 0.05
+rank = 4
+lr = 0.1
+optax = "sgd"
+use_batched_update = true

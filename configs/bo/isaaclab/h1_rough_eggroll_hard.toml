@@ -1,0 +1,34 @@
+# Run on the CUDA remote:
+# ./ops/experiment.py local configs/bo/isaaclab/h1_rough_eggroll_hard.toml
+#
+# Hard Isaac Lab EggRoll run: humanoid velocity tracking on rough terrain.
+# If the installed Isaac Lab task registry does not include this task id, list
+# tasks with:
+# python -m problems.isaaclab_env_adapters --keyword H1
+
+[experiment]
+exp_dir = "runs/isaaclab/h1_rough_eggroll_hard"
+env_tag = "isaaclab:Isaac-Velocity-Rough-H1-v0"
+policy_tag = "eggroll-ac-mlp-256x3-pqn"
+population = 4
+num_epochs = 1e7
+num_reps = 1
+runtime_device = "cuda"
+local_workers = 1
+b_trace = true
+video_enable = false
+
+
+[optimizer]
+name = "eggroll"
+
+[optimizer.params]
+noiser = "eggroll"
+sigma = 0.05
+rank = 8
+lr = 0.01
+optax = "adam"
+batch_size = 1
+num_envs = 1024
+steps = 100
+use_batched_update = true

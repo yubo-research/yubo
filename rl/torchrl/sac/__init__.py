@@ -1,12 +1,34 @@
 """SAC (TorchRL) public API."""
 
-__all__ = ["SACConfig", "TrainResult", "register", "train_sac"]
+__all__ = [
+    "SACCheckpointConfig",
+    "SACCollectorConfig",
+    "SACConfig",
+    "SACEvalConfig",
+    "SACLossConfig",
+    "SACOptimConfig",
+    "SACReplayBufferConfig",
+    "SACTargetNetUpdaterConfig",
+    "TrainResult",
+    "register",
+    "train_sac",
+]
 
 
 def __getattr__(name: str):
     import importlib
 
-    if name in ("SACConfig", "TrainResult"):
+    if name in (
+        "SACCheckpointConfig",
+        "SACCollectorConfig",
+        "SACConfig",
+        "SACEvalConfig",
+        "SACLossConfig",
+        "SACOptimConfig",
+        "SACReplayBufferConfig",
+        "SACTargetNetUpdaterConfig",
+        "TrainResult",
+    ):
         m = importlib.import_module("rl.torchrl.sac.config")
         return getattr(m, name)
     if name in ("register", "train_sac"):

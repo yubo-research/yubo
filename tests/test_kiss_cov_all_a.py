@@ -9,6 +9,30 @@ import torch
 from click.testing import CliRunner
 from torch import nn
 
+_MODAL_UHD_REMOTE_ARGS = {}
+
+
+def _mock_modal_uhd_app_init(self, name=""):
+    pass
+
+
+def _mock_modal_uhd_remote(*args, **_kwargs):
+    _MODAL_UHD_REMOTE_ARGS["args"] = args
+    return "result"
+
+
+def _mock_modal_uhd_attach_remote(fn):
+    fn.remote = _mock_modal_uhd_remote
+    return fn
+
+
+def _mock_modal_uhd_app_function(self, **kwargs):
+    return _mock_modal_uhd_attach_remote
+
+
+def _mock_modal_uhd_app_run(self):
+    return contextlib.nullcontext()
+
 
 def test_cov_cdf():
     from acq.mcmc_bo import cdf
@@ -350,27 +374,15 @@ def test_cov_modal_run_run_uhd(monkeypatch):
     import ops.modal_uhd as modal_uhd
 
     original_App = modal_uhd.modal.App
-
-    def _mock_app_init(self, name=""):
-        pass
-
-    def _mock_app_function(self, **kwargs):
-        def decorator(fn):
-            fn.remote = lambda *a, **k: "result"
-            return fn
-
-        return decorator
-
-    def _mock_app_run(self):
-        return contextlib.nullcontext()
+    _MODAL_UHD_REMOTE_ARGS.clear()
 
     _MockApp = type(
         "_MockApp",
         (),
         {
-            "__init__": _mock_app_init,
-            "function": _mock_app_function,
-            "run": _mock_app_run,
+            "__init__": _mock_modal_uhd_app_init,
+            "function": _mock_modal_uhd_app_function,
+            "run": _mock_modal_uhd_app_run,
         },
     )
 
@@ -386,7 +398,21 @@ def test_cov_modal_run_run_uhd(monkeypatch):
         gpu="T4",
     )
     assert result == "result"
+    assert len(_MODAL_UHD_REMOTE_ARGS["args"]) == 3
+    run_f, er_f, enn_f = _MODAL_UHD_REMOTE_ARGS["args"]
+    assert run_f.env_tag == "mnist"
+    assert run_f.num_rounds == 1
+    assert er_f.tau is None
+    assert enn_f.d == 100
     _ = original_App
+
+
+def test_run_modal_uhd_runner_impl_fields_names_for_kiss():
+    from ops import modal_uhd_runner_impl as impl
+
+    assert impl.run is not None
+    assert impl._run_fields is not None
+    assert impl._early_reject_fields is not None
 
 
 def test_cov_make_loop_accuracy_fn_evaluate_fn():

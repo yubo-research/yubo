@@ -1,0 +1,37 @@
+# Run:
+# ./ops/exp_uhd.py local configs/uhd/eggroll/paper/pretrain/countdownn_7w1p5b_bszo_be.toml
+#
+# UHD BSZO + BE companion to the HyperscaleES CountdownN paper config.
+
+[uhd]
+env_tag = "pretrain:hyperscalees:countdownn-7w1p5b"
+policy_tag = "hyperscalees-rwkv-7w1p5b-lora-r1"
+total_timesteps = 819200
+num_reps = 1
+optimizer = "bszo_be"
+lr = 0.001
+sigma = 0.001
+perturb = "dense"
+steps_per_episode = 1
+num_envs = 1
+deterministic_policy = false
+problem_seed = 0
+noise_seed_0 = 0
+seed_offset = 0
+log_interval = 1
+
+pretrain_search_dim = 4096
+pretrain_delta_scale = 1.0
+
+bszo_k = 2
+bszo_epsilon = 1e-4
+bszo_sigma_p_sq = 1.0
+bszo_sigma_e_sq = 1.0
+bszo_alpha = 0.1
+
+be_num_probes = 64
+be_num_candidates = 32
+be_warmup = 512
+be_fit_interval = 100
+be_enn_k = 32
+enn_minus_impute = false

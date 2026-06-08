@@ -18,7 +18,11 @@ from experiments.synthetic_sine_benchmark_payload import (
     wide_surrogate_benchmark_row_to_long_records,
     write_synthetic_sine_benchmark_json,
 )
-from tests.synthetic_sine_benchmark_helpers import bench_result, make_surrogate_benchmark
+from tests.synthetic_sine_benchmark_helpers import (
+    assert_surrogate_benchmark_equal,
+    bench_result,
+    make_surrogate_benchmark,
+)
 
 
 def test_synthetic_sine_benchmark_payload_round_trip():
@@ -41,7 +45,7 @@ def test_synthetic_sine_benchmark_payload_round_trip():
         "problem_seed": 7,
         "num_reps": 1,
     }
-    assert r2 == r
+    assert_surrogate_benchmark_equal(r2, r)
     assert math.isnan(r2.results["smac_rf"].fit_seconds.mu)
 
 

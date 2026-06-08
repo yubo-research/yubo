@@ -1,6 +1,9 @@
+from types import SimpleNamespace
+
+import numpy as np
 import pytest
 
-from rl.core.env_contract import ObservationContract
+from rl.core.env_contract import ActionContract, EnvIOContract, ObservationContract
 from rl.torchrl.ppo import core as torchrl_on_policy_core
 from rl.torchrl.ppo import deps as op_deps
 from rl.torchrl.ppo.core import _TanhNormal as _CoreTanhNormal
@@ -22,6 +25,77 @@ def test_on_policy_core_tanhnormal_support_fget_direct_call():
     )
     support_value = torchrl_on_policy_core._TanhNormal.support.fget(dist)
     assert support_value is torchrl_on_policy_core.torch.distributions.constraints.real
+
+
+def test_continuous_ppo_actor_uses_unsquashed_independent_normal():
+    ppo = torchrl_on_policy_core
+    env = SimpleNamespace(
+        io_contract=EnvIOContract(
+            observation=ObservationContract(mode="vector", raw_shape=(3,), vector_dim=3),
+            action=ActionContract(
+                kind="continuous",
+                dim=2,
+                low=np.asarray([-2.0, -1.0], dtype=np.float32),
+                high=np.asarray([2.0, 1.0], dtype=np.float32),
+            ),
+        ),
+        obs_dim=3,
+        act_dim=2,
+        action_low=np.asarray([-2.0, -1.0], dtype=np.float32),
+        action_high=np.asarray([2.0, 1.0], dtype=np.float32),
+        obs_lb=None,
+        obs_width=None,
+        is_discrete=False,
+        env_conf=SimpleNamespace(env_name="fake"),
+    )
+    modules = ppo.build_modules(
+        ppo.PPOConfig(policy_tag="actor-critic-mlp-32-32"),
+        env,
+        device=ppo.torch.device("cpu"),
+    )
+
+    probabilistic = modules.actor.module[1]
+    assert probabilistic.distribution_class.__name__ == "IndependentNormal"
+    assert probabilistic.distribution_kwargs == {}
+
+
+def test_ppo_training_uses_adam_optimizer(tmp_path):
+    ppo = torchrl_on_policy_core
+    env = SimpleNamespace(
+        io_contract=EnvIOContract(
+            observation=ObservationContract(mode="vector", raw_shape=(3,), vector_dim=3),
+            action=ActionContract(
+                kind="continuous",
+                dim=2,
+                low=np.asarray([-2.0, -1.0], dtype=np.float32),
+                high=np.asarray([2.0, 1.0], dtype=np.float32),
+            ),
+        ),
+        obs_dim=3,
+        act_dim=2,
+        action_low=np.asarray([-2.0, -1.0], dtype=np.float32),
+        action_high=np.asarray([2.0, 1.0], dtype=np.float32),
+        obs_lb=None,
+        obs_width=None,
+        is_discrete=False,
+        env_conf=SimpleNamespace(env_name="fake"),
+    )
+    config = ppo.PPOConfig(
+        exp_dir=str(tmp_path),
+        policy_tag="actor-critic-mlp-32-32",
+    )
+    modules = ppo.build_modules(config, env, device=ppo.torch.device("cpu"))
+    runtime = op_deps.torchrl_runtime.TorchRLRuntime(
+        device=ppo.torch.device("cpu"),
+        collector_backend="multi_sync",
+        single_env_backend="n/a",
+        collector_workers=1,
+    )
+
+    training = ppo.build_training(config, env, modules, runtime=runtime)
+
+    assert isinstance(training.optimizer, ppo.torch.optim.Adam)
+    assert not isinstance(training.optimizer, ppo.torch.optim.AdamW)
 
 
 def test_discrete_actor_net_handles_unbatched_atari_obs():

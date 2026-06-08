@@ -5,11 +5,22 @@ import torch
 import torch.nn as nn
 from torch.distributions import Normal
 
-from rl.backbone import BackboneSpec, HeadSpec, build_backbone, build_mlp_head, init_linear_layers
+from rl.backbone import (
+    BackboneSpec,
+    HeadSpec,
+    build_backbone,
+    build_mlp_head,
+    init_linear_layers,
+)
 from rl.math_utils import tanh_gaussian_action_log_prob_entropy
 
 
-def gaussian_policy_normal_from_obs(actor_backbone: nn.Module, actor_head: nn.Module, log_std: nn.Parameter, obs: torch.Tensor) -> Normal:
+def gaussian_policy_normal_from_obs(
+    actor_backbone: nn.Module,
+    actor_head: nn.Module,
+    log_std: nn.Parameter,
+    obs: torch.Tensor,
+) -> Normal:
     feats = actor_backbone(obs)
     mean = actor_head(feats)
     log_std_e = log_std.expand_as(mean)

@@ -1,0 +1,33 @@
+# Run:
+# ./ops/exp_uhd.py local configs/uhd/eggroll/paper/rl/cartpole_v1_mezo.toml
+#
+# UHD MeZO same-noiser companion to:
+# configs/bo/eggroll/paper/rl/cartpole_v1_eggroll.toml
+#
+# This keeps the same Gymnax CartPole env, policy family, 500-step horizon, and
+# EggRoll rank-4 perturbation surface. UHD consumes one real policy evaluation
+# per iteration, so total_timesteps derives the number of evaluations.
+
+[uhd]
+env_tag = "gymnax:CartPole-v1"
+policy_tag = "eggroll-ac-mlp-256x3-pqn"
+total_timesteps = 500000000
+num_reps = 30
+optimizer = "mezo"
+lr = 0.1
+sigma = 0.2
+perturb = "eggroll"
+steps_per_episode = 500
+num_envs = 8
+deterministic_policy = false
+problem_seed = 0
+noise_seed_0 = 0
+seed_offset = 0
+log_interval = 100
+
+eggroll_noiser = "eggroll"
+eggroll_rank = 4
+eggroll_group_size = 0
+eggroll_freeze_nonlora = false
+
+enn_minus_impute = false

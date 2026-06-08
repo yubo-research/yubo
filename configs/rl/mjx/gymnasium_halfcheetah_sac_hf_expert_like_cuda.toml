@@ -1,0 +1,34 @@
+[rl]
+algo = "mjx_sac"
+
+[rl.mjx_sac]
+exp_dir = "runs/rl/mjx/gymnasium_halfcheetah_sac_hf_expert_like_cuda"
+env_tag = "gymnasium:HalfCheetah-v5"
+seed = 2
+hidden_size = 256
+log_interval = 10
+
+[rl.mjx_sac.collector]
+# Based on https://huggingface.co/farama-minari/HalfCheetah-v5-SAC-expert/raw/main/config.json.
+# HF learning_starts=10000 is not represented in the current MJX SAC trainer yet.
+total_frames = 3000000
+num_envs = 1024
+num_steps = 1
+replay_size = 1000000
+batch_size = 256
+updates_per_iter = 1
+
+[rl.mjx_sac.optim]
+lr_actor = 3e-4
+lr_critic = 3e-4
+lr_alpha = 3e-4
+
+[rl.mjx_sac.loss]
+gamma = 0.99
+tau = 0.005
+alpha_init = 0.2
+target_entropy = -6.0
+
+[rl.run]
+num_reps = 1
+workers = 1

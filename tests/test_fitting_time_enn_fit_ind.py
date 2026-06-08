@@ -25,11 +25,14 @@ def test_benchmark_enn_fit_ind_passes_hyperparams_to_enn_fit(monkeypatch):
         train_y = np.zeros((0, 1), dtype=np.float64)
         train_yvar = None
 
-        def sync_index(self):
+        def ensure_index_sync(self):
             pass
 
         def add(self, *_args, **_kwargs):
             pass
+
+        def train_rows_at(self, _indices):
+            return self.train_x, self.train_y, self.train_yvar
 
     def ctor(*_args, **_kwargs):
         return _FakeModel()
@@ -138,7 +141,7 @@ def test_timed_fit_syncs_index_before_timer(monkeypatch):
         calls.append(kwargs["params_warm_start"])
         return "timed-params"
 
-    def sync_index():
+    def ensure_index_sync():
         nonlocal synced
         synced = True
 
@@ -149,10 +152,12 @@ def test_timed_fit_syncs_index_before_timer(monkeypatch):
 
     params, elapsed = fit_ind_mod._enn_fit_timed_after_add(
         SimpleNamespace(
-            sync_index=sync_index,
-            train_x=np.zeros((1, 2), dtype=np.float64),
-            train_y=np.zeros((1, 1), dtype=np.float64),
-            train_yvar=None,
+            ensure_index_sync=ensure_index_sync,
+            train_rows_at=lambda _indices: (
+                np.zeros((1, 2), dtype=np.float64),
+                np.zeros((1, 1), dtype=np.float64),
+                None,
+            ),
         ),
         current_n=30,
         rng=np.random.default_rng(0),

@@ -1,0 +1,24 @@
+# Run: ./ops/experiment.py local configs/bo/eggroll/paper/rl/navix_doorkey_8x8_eggroll.toml
+# Paper: Table 30, navix/Navix-DoorKey-8x8-v0 EGGROLL.
+
+[experiment]
+exp_dir = "runs/yubo_eggroll/paper/rl/navix_doorkey_8x8_eggroll"
+env_tag = "navix:Navix-DoorKey-8x8-v0"
+policy_tag = "eggroll-ac-mlp-256x3-pqn"
+population = 1024
+num_epochs = 2423
+num_reps = 10
+runtime_device = "cuda"
+local_workers = 1
+b_trace = true
+
+[optimizer]
+name = "eggroll"
+
+[optimizer.params]
+noiser = "eggroll"
+sigma = 0.05
+rank = 1
+lr = 0.01
+optax = "adamw"
+use_batched_update = true

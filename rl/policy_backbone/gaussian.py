@@ -1,4 +1,3 @@
-import numpy as np
 import torch
 import torch.nn as nn
 
@@ -40,10 +39,6 @@ class GaussianActorBackbonePolicy(PolicyParamsMixin, nn.Module):
         )
         self._const_scale = 0.5
         self._cache_flat_params_init()
-
-    def _cache_flat_params_init(self):
-        with torch.inference_mode():
-            self._flat_params_init = np.concatenate([p.data.detach().cpu().numpy().reshape(-1) for p in self.parameters()])
 
     def _normalize(self, state):
         return normalize_running_state_array(state, self._normalizer)

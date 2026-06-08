@@ -19,8 +19,15 @@ def run_bszo_loop(
     bszo_alpha: float = 0.1,
 ) -> None:
     from common.seed_all import seed_all
-    from ops.uhd_setup_bszo_evaluate import make_bszo_gym_evaluate_fn, make_bszo_mnist_evaluate_fn
-    from ops.uhd_setup_util import _get_device, _make_accuracy_fn, _preload_mnist_train_to_device
+    from ops.uhd_setup_bszo_evaluate import (
+        make_bszo_gym_evaluate_fn,
+        make_bszo_mnist_evaluate_fn,
+    )
+    from ops.uhd_setup_util import (
+        _get_device,
+        _make_accuracy_fn,
+        _preload_mnist_train_to_device,
+    )
     from optimizer.gaussian_perturbator import GaussianPerturbator
     from optimizer.lr_scheduler import ConstantLR
     from optimizer.uhd_bszo import UHDBSZO

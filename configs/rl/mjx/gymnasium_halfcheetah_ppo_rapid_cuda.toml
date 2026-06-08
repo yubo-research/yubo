@@ -1,0 +1,41 @@
+[rl]
+algo = "mjx_ppo"
+
+[rl.mjx_ppo]
+exp_dir = "runs/rl/mjx/gymnasium_halfcheetah_ppo_rapid_cuda"
+env_tag = "gymnasium_fast:HalfCheetah-v5"
+seed = 0
+hidden_size = 256
+log_interval = 1
+
+[rl.mjx_ppo.collector]
+total_frames = 5000000
+num_envs = 2048
+num_steps = 32
+
+[rl.mjx_ppo.optim]
+lr = 3e-4
+anneal_lr = true
+minibatch_size = 16384
+num_epochs = 4
+max_grad_norm = 0.5
+
+[rl.mjx_ppo.loss]
+gamma = 0.99
+gae_lambda = 0.95
+normalize_advantage = true
+normalize_reward = true
+clip_epsilon = 0.2
+clip_value_loss = true
+entropy_coeff = 0.0
+critic_coeff = 0.5
+
+[rl.mjx_ppo.eval]
+interval = 0
+
+[rl.mjx_ppo.checkpoint]
+interval = 0
+
+[rl.run]
+num_reps = 1
+workers = 1

@@ -1,0 +1,31 @@
+# Run:
+# ./ops/exp_uhd.py local configs/uhd/eggroll/paper/pretrain/gsm8k_7w3b_mezo_be.toml
+#
+# UHD MeZO + BE companion to the HyperscaleES GSM8K paper config.
+
+[uhd]
+env_tag = "pretrain:hyperscalees:gsm8k-7w3b"
+policy_tag = "hyperscalees-rwkv-7w3b-lora-r1"
+total_timesteps = 819200
+num_reps = 1
+optimizer = "mezo_be"
+lr = 0.001
+sigma = 0.001
+perturb = "dense"
+steps_per_episode = 1
+num_envs = 1
+deterministic_policy = false
+problem_seed = 0
+noise_seed_0 = 0
+seed_offset = 0
+log_interval = 1
+
+pretrain_search_dim = 4096
+pretrain_delta_scale = 1.0
+
+be_num_probes = 64
+be_num_candidates = 32
+be_warmup = 512
+be_fit_interval = 100
+be_enn_k = 32
+enn_minus_impute = false

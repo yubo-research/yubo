@@ -1,0 +1,20 @@
+# Sparse-ENN HalfCheetah large-policy smoke config.
+#
+# Run:
+#   ./ops/experiment.py local configs/bo/gymnasium/cheetah/halfcheetah_sparse_enn.toml
+
+[experiment]
+exp_dir = "_tmp/bo/gymnasium/cheetah/sparse_enn_mlp1024_600"
+env_tag = "cheetah"
+policy_tag = "linear"
+num_arms = 2
+num_rounds = 1e4
+num_reps = 1
+num_denoise = 1
+num_denoise_passive = 1
+b_trace = true
+runtime_device = "cpu"
+local_workers = 1
+
+[optimizer]
+name = "turbo-enn-fit-ucb"

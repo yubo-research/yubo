@@ -151,6 +151,9 @@ def test_enn_config_default_creation():
     assert cfg.select_interval == 1
     assert cfg.embedder == "direction"
     assert cfg.gather_t == 64
+    assert cfg.err_ema_beta == 0.95
+    assert cfg.max_abs_err_ema == 0.25
+    assert cfg.min_calib_points == 10
 
 
 def test_enn_config_custom_values():
@@ -169,6 +172,9 @@ def test_enn_config_custom_values():
         select_interval=10,
         embedder="probes",
         gather_t=128,
+        err_ema_beta=0.9,
+        max_abs_err_ema=0.75,
+        min_calib_points=3,
     )
     assert cfg.minus_impute is True
     assert cfg.d == 200
@@ -184,6 +190,9 @@ def test_enn_config_custom_values():
     assert cfg.select_interval == 10
     assert cfg.embedder == "probes"
     assert cfg.gather_t == 128
+    assert cfg.err_ema_beta == 0.9
+    assert cfg.max_abs_err_ema == 0.75
+    assert cfg.min_calib_points == 3
 
 
 def test_enn_config_frozen_dataclass():
@@ -259,6 +268,8 @@ def test_uhd_config_full_creation():
     assert cfg.env_tag == "mnist"
     assert cfg.policy_tag is None
     assert cfg.num_rounds == 1000
+    assert cfg.num_reps == 1
+    assert cfg.total_timesteps is None
     assert cfg.problem_seed == 42
     assert cfg.noise_seed_0 == 123
     assert cfg.lr == 0.001

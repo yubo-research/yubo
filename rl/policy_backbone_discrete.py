@@ -5,7 +5,7 @@ from rl.policy_backbone.discrete import (
 )
 
 __all__ = [
-    "DiscreteActorPolicySpec",
     "DiscreteActorBackbonePolicy",
     "DiscreteActorBackbonePolicyFactory",
+    "DiscreteActorPolicySpec",
 ]

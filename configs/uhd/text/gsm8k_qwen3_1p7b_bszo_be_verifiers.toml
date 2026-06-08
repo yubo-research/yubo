@@ -1,0 +1,61 @@
+# Run:
+# ./ops/exp_uhd.py local configs/uhd/text/gsm8k_qwen3_1p7b_bszo_be_verifiers.toml
+
+[uhd]
+env_tag = "llm:verifiers:gsm8k"
+policy_tag = "qwen3-1p7b-lora-r1"
+num_rounds = 400
+num_reps = 1
+use_async = true
+
+# --- Optimizer: BSZO + Behavioral Embeddings ---
+optimizer = "bszo_be"
+lr = 0.0003
+sigma = 0.001
+perturb = "dim:0.35"
+
+# BSZO Hyperparameters
+bszo_k = 8
+bszo_epsilon = 0.0005
+bszo_sigma_p_sq = 1.0
+bszo_sigma_e_sq = 0.25
+bszo_alpha = 0.12
+
+# Subspace Configuration
+text_search_dim = 512
+text_delta_scale = 0.5
+text_basis_max_tensors = 64
+
+# Inference / ReAct Loop Settings
+max_tokens = 768
+temperature = 0.0
+samples_per_prompt = 1
+prompt_batch_size = 4
+pass_at_k = false
+
+# Compute Resources
+tensor_parallel_size = 1
+num_engines = 1
+sub_dataset_size = 2048
+
+# --- Behavioral Embeddings (BE) ---
+be_num_probes = 64
+be_num_candidates = 12
+be_warmup = 40
+be_fit_interval = 10
+be_enn_k = 25
+be_sigma_range = [0.00015, 0.0015]
+
+# --- ENN Imputation (Predicting the Negative Phase) ---
+enn_minus_impute = true
+enn_d = 128
+enn_s = 4
+enn_jl_seed = 123
+enn_k = 25
+enn_fit_interval = 25
+enn_warmup_real_obs = 120
+enn_refresh_interval = 25
+enn_se_threshold = 0.2
+enn_target = "mu_minus"
+
+log_interval = 1

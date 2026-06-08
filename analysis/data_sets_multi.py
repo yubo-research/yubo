@@ -51,6 +51,24 @@ def _load_and_validate_trace(trace_path, data_locator, problem_name, opt_name, r
     return trace
 
 
+def _store_trace_cell(traces, i_problem, i_opt, trace, _init_traces, _report_bad, problem_name, opt_name):
+    if traces is None:
+        traces = _init_traces(trace)
+        if traces is None:
+            _report_bad(problem_name, opt_name, "Empty trace (B)")
+            return traces, False
+    if trace.shape[0] > traces.shape[2]:
+        traces_new = _init_traces(trace)
+        traces_new[:, :, : traces.shape[2], :] = traces
+        traces = traces_new
+    if trace.shape != traces[i_problem, i_opt, ...].shape:
+        _report_bad(problem_name, opt_name, f"Wrong shape {trace.shape}")
+        return traces, False
+    trace = _ensure_float_trace(trace)
+    traces[i_problem, i_opt, : trace.shape[0], : trace.shape[1]] = trace
+    return traces, True
+
+
 def load_multiple_traces(data_locator):
     import numpy.ma as npma
 
@@ -93,19 +111,9 @@ def load_multiple_traces(data_locator):
                 continue
             if requested_num_reps is not None:
                 trace = trace[:requested_num_reps, :]
-            if traces is None:
-                traces = _init_traces(trace)
-                if traces is None:
-                    _report_bad(problem_name, opt_name, "Empty trace (B)")
-                    continue
-            if trace.shape[0] > traces.shape[2]:
-                traces_new = _init_traces(trace)
-                traces_new[:, :, : traces.shape[2], :] = traces
-                traces = traces_new
-            if trace.shape != traces[i_problem, i_opt, ...].shape:
-                _report_bad(problem_name, opt_name, f"Wrong shape {trace.shape}")
-            trace = _ensure_float_trace(trace)
-            traces[i_problem, i_opt, : trace.shape[0], : trace.shape[1]] = trace
+            traces, _ok = _store_trace_cell(traces, i_problem, i_opt, trace, _init_traces, _report_bad, problem_name, opt_name)
+            if not _ok and traces is None:
+                continue
 
     if traces is None:
         traces = np.array([], dtype=float).reshape((len(problems), len(opt_names), 0, 0))

@@ -8,8 +8,9 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from rl import logger as rl_logger
-from rl.core.progress import is_due
+from rl import logger
+from rl.core.progress import due_mark, is_due
+from rl.iter_record import IterInputs
 
 
 def as_float32_observation(observation: np.ndarray) -> np.ndarray:
@@ -33,7 +34,7 @@ def select_training_action(
         raise RuntimeError(
             f"Expected float32 observation from env pipeline, got {obs_np.dtype}. Ensure observations are normalized to float32 before policy calls."
         )
-    if step < int(config.learning_starts):
+    if step < int(config.collector.init_random_frames):
         action_env = train_env.action_space.sample()
         action_norm = unscale_action_from_env(action_env, env_setup.action_low, env_setup.action_high)
         return (action_env, action_norm)
@@ -82,10 +83,14 @@ def run_updates_if_due(
     total_updates: int,
     update_step: Any,
 ) -> tuple[dict[str, float], int]:
-    if step < int(config.learning_starts) or step % int(config.update_every) != 0:
+    if step < int(config.collector.init_random_frames) or step % int(config.optim.update_every) != 0:
         return (latest_losses, total_updates)
-    for _ in range(int(config.updates_per_step)):
-        latest_losses = update_step(training_setup, device=device, batch_size=int(config.batch_size))
+    for _ in range(int(config.optim.optim_steps_per_batch)):
+        latest_losses = update_step(
+            training_setup,
+            device=device,
+            batch_size=int(config.replay_buffer.batch_size),
+        )
         total_updates += 1
     return (latest_losses, total_updates)
 
@@ -141,7 +146,7 @@ def evaluate_heldout_if_enabled(
         raise TypeError("evaluate_heldout_if_enabled requires build_env_runtime or get_env_conf")
     return sac_eval.evaluate_heldout_with_best_actor(
         best_actor_state=train_state.best_actor_state,
-        num_denoise_passive=config.num_denoise_passive,
+        num_denoise_passive=config.eval.num_denoise_passive,
         heldout_i_noise=int(heldout_i_noise),
         with_actor_state=lambda snapshot: temporary_actor_state(
             modules,
@@ -152,6 +157,122 @@ def evaluate_heldout_if_enabled(
         evaluate_for_best=evaluate_for_best,
         eval_env_conf=env_conf,
         eval_policy=best_eval_policy,
+    )
+
+
+def eval_and_log_if_due(
+    config: Any,
+    env_setup: Any,
+    modules: Any,
+    training_setup: Any,
+    train_state: Any,
+    *,
+    step: int,
+    device: torch.device,
+    start_time: float,
+    latest_losses: dict[str, float],
+    total_updates: int,
+    evaluate_actor: Any,
+    capture_actor_state: Any,
+    evaluate_heldout: Any,
+    iter_dt: float,
+    n_frames: int,
+    log_on_interval: bool = True,
+) -> None:
+    from rl.eval_noise import build_eval_plan
+    from rl.torchrl_metrics import build_sac_iter_record
+
+    did_eval = False
+    eval_dt = None
+    eval_mark = _advance_due_mark(train_state, "_last_eval_mark", step, config.eval.interval_steps)
+    if eval_mark is not None:
+        eval_interval = int(config.eval.interval_steps)
+        run_problem_seed = int(getattr(env_setup, "problem_seed", config.seed))
+        plan = build_eval_plan(
+            current=int(eval_mark * eval_interval),
+            interval=eval_interval,
+            seed=run_problem_seed,
+            eval_seed_base=config.eval.seed_base,
+            eval_noise_mode=config.eval.noise_mode,
+        )
+        eval_start = time.time()
+        train_state.last_eval_return = evaluate_actor(
+            config,
+            env_setup,
+            modules,
+            device=device,
+            eval_seed=plan.eval_seed,
+        )
+        sac_eval = __import__("rl.core.sac_eval", fromlist=["update_best_actor_if_improved"])
+        train_state.best_return, train_state.best_actor_state, _ = sac_eval.update_best_actor_if_improved(
+            eval_return=float(train_state.last_eval_return),
+            best_return=float(train_state.best_return),
+            best_actor_state=train_state.best_actor_state,
+            capture_actor_state=lambda: capture_actor_state(modules),
+        )
+        train_state.last_heldout_return = evaluate_heldout(
+            config,
+            env_setup,
+            modules,
+            train_state,
+            device=device,
+            heldout_i_noise=plan.heldout_i_noise,
+        )
+        eval_dt = time.time() - eval_start
+        did_eval = True
+
+    log_due = False
+    if log_on_interval:
+        log_mark = _advance_due_mark(train_state, "_last_log_mark", step, config.log_interval_steps)
+        log_due = log_mark is not None
+    if not (did_eval or log_due):
+        return
+
+    elapsed = time.time() - start_time
+    record = build_sac_iter_record(
+        _sac_iter_inputs(
+            step,
+            max(1, int(n_frames)),
+            elapsed,
+            iter_dt,
+            latest_losses,
+            train_state,
+            total_updates,
+            eval_dt=eval_dt,
+        )
+    )
+    logger.log_rl_iter(record, metrics_path=training_setup.metrics_path)
+
+
+def _sac_iter_inputs(
+    step: int,
+    frames_per_iter: int,
+    elapsed: float,
+    iter_dt: float,
+    latest_losses: dict[str, float],
+    train_state: Any,
+    total_updates: int,
+    *,
+    eval_dt: float | None = None,
+) -> IterInputs:
+    frames = int(frames_per_iter)
+    step_i = int(step)
+    return IterInputs(
+        iteration=step_i // max(1, frames),
+        step=step_i,
+        frames_per_iter=frames,
+        elapsed=float(elapsed),
+        iter_dt=float(iter_dt),
+        metrics={
+            "actor": float(latest_losses["loss_actor"]),
+            "critic": float(latest_losses["loss_critic"]),
+            "alpha": float(latest_losses["loss_alpha"]),
+            "ret_best": float(train_state.best_return),
+            "ret_eval": float(train_state.last_eval_return),
+            "ret_heldout": getattr(train_state, "last_heldout_return", None),
+            "eval_dt": eval_dt,
+            "total_updates": int(total_updates),
+        },
     )
 
 
@@ -170,50 +291,27 @@ def evaluate_if_due(
     evaluate_actor: Any,
     capture_actor_state: Any,
     evaluate_heldout: Any,
+    iter_dt: float = 1e-9,
+    n_frames: int = 1,
 ) -> None:
-    if not is_due(step, config.eval_interval_steps):
-        return
-    from rl.eval_noise import build_eval_plan
-
-    run_problem_seed = int(getattr(env_setup, "problem_seed", config.seed))
-    plan = build_eval_plan(
-        current=step,
-        interval=int(config.eval_interval_steps),
-        seed=run_problem_seed,
-        eval_seed_base=config.eval_seed_base,
-        eval_noise_mode=getattr(config, "eval_noise_mode", None),
-    )
-    train_state.last_eval_return = evaluate_actor(config, env_setup, modules, device=device, eval_seed=plan.eval_seed)
-    sac_eval = __import__("rl.core.sac_eval", fromlist=["update_best_actor_if_improved"])
-    train_state.best_return, train_state.best_actor_state, _ = sac_eval.update_best_actor_if_improved(
-        eval_return=float(train_state.last_eval_return),
-        best_return=float(train_state.best_return),
-        best_actor_state=train_state.best_actor_state,
-        capture_actor_state=lambda: capture_actor_state(modules),
-    )
-    train_state.last_heldout_return = evaluate_heldout(
+    eval_and_log_if_due(
         config,
         env_setup,
         modules,
+        training_setup,
         train_state,
+        step=step,
         device=device,
-        heldout_i_noise=plan.heldout_i_noise,
+        start_time=start_time,
+        latest_losses=latest_losses,
+        total_updates=total_updates,
+        evaluate_actor=evaluate_actor,
+        capture_actor_state=capture_actor_state,
+        evaluate_heldout=evaluate_heldout,
+        iter_dt=iter_dt,
+        n_frames=n_frames,
+        log_on_interval=False,
     )
-    now = float(time.time())
-    sac_metrics = __import__("rl.core.sac_metrics", fromlist=["build_eval_metric_record"])
-    record = sac_metrics.build_eval_metric_record(
-        step=int(step),
-        eval_return=float(train_state.last_eval_return),
-        heldout_return=train_state.last_heldout_return,
-        best_return=float(train_state.best_return),
-        loss_actor=float(latest_losses["loss_actor"]),
-        loss_critic=float(latest_losses["loss_critic"]),
-        loss_alpha=float(latest_losses["loss_alpha"]),
-        total_updates=int(total_updates),
-        started_at=float(start_time),
-        now=now,
-    )
-    rl_logger.append_metrics(training_setup.metrics_path, record)
 
 
 def log_if_due(
@@ -224,24 +322,30 @@ def log_if_due(
     start_time: float,
     latest_losses: dict[str, float],
     total_updates: int,
+    iter_dt: float = 1e-9,
+    n_frames: int = 1,
+    training_setup: Any | None = None,
 ) -> None:
-    if not is_due(step, config.log_interval_steps):
+    from rl.torchrl_metrics import build_sac_iter_record
+
+    if training_setup is None:
         return
-    now = float(time.time())
-    sac_metrics = __import__("rl.core.sac_metrics", fromlist=["build_log_eval_iteration_kwargs"])
-    kwargs = sac_metrics.build_log_eval_iteration_kwargs(
-        step=int(step),
-        frames_per_batch=1,
-        started_at=float(start_time),
-        now=now,
-        eval_return=float(train_state.last_eval_return),
-        heldout_return=train_state.last_heldout_return,
-        best_return=float(train_state.best_return),
-        loss_actor=float(latest_losses["loss_actor"]),
-        loss_critic=float(latest_losses["loss_critic"]),
-        loss_alpha=float(latest_losses["loss_alpha"]),
+    log_mark = _advance_due_mark(train_state, "_last_log_mark", step, config.log_interval_steps)
+    if log_mark is None:
+        return
+    elapsed = time.time() - start_time
+    record = build_sac_iter_record(
+        _sac_iter_inputs(
+            step,
+            max(1, int(n_frames)),
+            elapsed,
+            iter_dt,
+            latest_losses,
+            train_state,
+            total_updates,
+        )
     )
-    rl_logger.log_eval_iteration(**kwargs)
+    logger.log_rl_iter(record, metrics_path=training_setup.metrics_path)
 
 
 def checkpoint_if_due(
@@ -253,10 +357,18 @@ def checkpoint_if_due(
     step: int,
     build_checkpoint_payload: Any,
 ) -> None:
-    if not is_due(step, config.checkpoint_interval_steps):
+    if _advance_due_mark(train_state, "_last_checkpoint_mark", step, config.checkpoint.interval_steps) is None:
         return
     payload = build_checkpoint_payload(modules, training_setup, train_state, step=step)
     training_setup.checkpoint_manager.save_both(payload, iteration=step)
+
+
+def _advance_due_mark(train_state: Any, attr: str, step: int, interval: int | None) -> int | None:
+    mark = due_mark(int(step), interval, int(getattr(train_state, attr, 0)))
+    if mark is None:
+        return None
+    setattr(train_state, attr, int(mark))
+    return int(mark)
 
 
 def save_final_checkpoint_if_enabled(
@@ -267,7 +379,7 @@ def save_final_checkpoint_if_enabled(
     *,
     build_checkpoint_payload: Any,
 ) -> None:
-    if not is_due(int(config.total_timesteps), config.checkpoint_interval_steps):
+    if not is_due(int(config.collector.total_frames), config.checkpoint.interval_steps):
         return
-    payload = build_checkpoint_payload(modules, training_setup, train_state, step=int(config.total_timesteps))
-    training_setup.checkpoint_manager.save_both(payload, iteration=int(config.total_timesteps))
+    payload = build_checkpoint_payload(modules, training_setup, train_state, step=int(config.collector.total_frames))
+    training_setup.checkpoint_manager.save_both(payload, iteration=int(config.collector.total_frames))

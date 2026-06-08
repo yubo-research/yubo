@@ -8,11 +8,12 @@ from pathlib import Path
 import click
 
 
-def _ensure_repo_root_on_path() -> None:
+def _ensure_repo_root_on_path() -> Path:
     # When running as `./experiment/experiment.py`, sys.path[0] is this directory,
     # so we need to add the repository root to import `experiments.*`.
     repo_root = Path(__file__).resolve().parents[1]
     sys.path.insert(0, str(repo_root))
+    return repo_root
 
 
 def _forward_to_experiments_cli(extra_args: list[str]) -> None:

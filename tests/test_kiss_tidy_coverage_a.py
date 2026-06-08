@@ -18,9 +18,16 @@ from analysis.fitting_time.benchmark_table_fmt import (
     pm_plus_minus_column,
 )
 from analysis.fitting_time.evaluate import benchmark_single_surrogate_with_data
-from analysis.fitting_time.evaluate_metrics import SURROGATE_BENCHMARK_KEYS, BMResult, MuSe
+from analysis.fitting_time.evaluate_metrics import (
+    SURROGATE_BENCHMARK_KEYS,
+    BMResult,
+    MuSe,
+)
 from analysis.fitting_time.evaluate_table import print_synthetic_benchmark_table
-from analysis.fitting_time.evaluate_triples import aggregate_surrogate_replicates, benchmark_single_surrogate
+from analysis.fitting_time.evaluate_triples import (
+    aggregate_surrogate_replicates,
+    benchmark_single_surrogate,
+)
 from analysis.plot_by_func_core import (
     add_group_label,
     add_group_labels,
@@ -34,7 +41,10 @@ from analysis.plot_by_func_core import (
     plot_func_subplot,
     safe_plot_func,
 )
-from analysis.plotting_2_combined import plot_rl_combined_comparison, plot_rl_combined_comparison_from_data
+from analysis.plotting_2_combined import (
+    plot_rl_combined_comparison,
+    plot_rl_combined_comparison_from_data,
+)
 from analysis.plotting_2_util import display_opt_name
 from analysis.plotting_trace_types import RLTracesWithCumDtProp
 from common.im import im
@@ -95,7 +105,11 @@ def test_aggregate_and_benchmark_single_surrogate(monkeypatch):
 
     def _enn(tx, ty, xte):
         n = int(xte.shape[0])
-        return (0.0, torch.zeros(n, dtype=torch.float64), torch.ones(n, dtype=torch.float64))
+        return (
+            0.0,
+            torch.zeros(n, dtype=torch.float64),
+            torch.ones(n, dtype=torch.float64),
+        )
 
     monkeypatch.setattr(ft, "fit_enn", _enn)
     x = torch.zeros(5, 2, dtype=torch.float64)

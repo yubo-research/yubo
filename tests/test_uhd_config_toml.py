@@ -34,6 +34,43 @@ def test_mapping_keys_module_coerce_mapping_keys():
     assert out["num_arms"] == 1
 
 
+def _capture_batch_local(monkeypatch):
+    called = {}
+
+    def fake_batch_local(cfg, num_reps, results_dir, workers):
+        called.update(cfg=cfg, num_reps=num_reps, results_dir=results_dir, workers=workers)
+
+    monkeypatch.setattr("ops.uhd_batch._batch_local", fake_batch_local)
+    return called
+
+
+def _write_cartpole_budget_config(tmp_path):
+    cfg_file = tmp_path / "cfg.toml"
+    cfg_file.write_text(
+        """
+[uhd]
+env_tag = "gymnax:CartPole-v1"
+policy_tag = "eggroll-ac-mlp-8x1-pqn"
+total_timesteps = 8000
+num_reps = 2
+steps_per_episode = 500
+num_envs = 8
+""".lstrip()
+    )
+    return cfg_file
+
+
+def _invoke_cartpole_local(monkeypatch, tmp_path, extra_args):
+    from click.testing import CliRunner
+
+    from ops.exp_uhd import cli
+
+    called = _capture_batch_local(monkeypatch)
+    cfg_file = _write_cartpole_budget_config(tmp_path)
+    result = CliRunner().invoke(cli, ["local", str(cfg_file), *extra_args])
+    return result, called
+
+
 def test_normalize_key_no_hyphen():
     assert _normalize_key("env_tag") == "env_tag"
 
@@ -84,6 +121,7 @@ def test_validate_required_missing_required_raises():
     with pytest.raises(ValueError) as exc_info:
         _validate_required(cfg)
     assert "num_rounds" in str(exc_info.value)
+    assert "total_timesteps" in str(exc_info.value)
 
 
 def test_validate_required_missing_multiple_required_raises():
@@ -91,7 +129,11 @@ def test_validate_required_missing_multiple_required_raises():
     with pytest.raises(ValueError) as exc_info:
         _validate_required(cfg)
     assert "env_tag" in str(exc_info.value)
-    assert "num_rounds" in str(exc_info.value)
+
+
+def test_validate_required_accepts_total_timesteps_budget():
+    cfg = {"env_tag": "gymnax:CartPole-v1", "total_timesteps": 100}
+    _validate_required(cfg)
 
 
 def _assert_mnist_rounds_toml(tmp_path, body: str):
@@ -172,10 +214,13 @@ def test_default_constants_enn_defaults_types():
     assert isinstance(_ENN_DEFAULTS["enn_select_interval"], int)
     assert isinstance(_ENN_DEFAULTS["enn_embedder"], str)
     assert isinstance(_ENN_DEFAULTS["enn_gather_t"], int)
+    assert isinstance(_ENN_DEFAULTS["enn_err_ema_beta"], float)
+    assert isinstance(_ENN_DEFAULTS["enn_max_abs_err_ema"], float)
+    assert isinstance(_ENN_DEFAULTS["enn_min_calib_points"], int)
 
 
 def test_default_constants_required_keys():
-    assert _REQUIRED_TOML_KEYS == ("env_tag", "num_rounds")
+    assert _REQUIRED_TOML_KEYS == ("env_tag",)
 
 
 def test_default_constants_all_toml_keys_completeness():
@@ -188,3 +233,56 @@ def test_default_constants_all_toml_keys_completeness():
 def test_default_constants_er_default_keys_in_allowlist():
     for key in _ER_DEFAULTS:
         assert key in _ALL_TOML_KEYS, key
+
+
+def test_exp_uhd_local_uses_config_num_reps(monkeypatch, tmp_path):
+    from click.testing import CliRunner
+
+    from ops.exp_uhd import cli
+
+    called = {}
+
+    def fake_batch_local(cfg, num_reps, results_dir, workers):
+        called.update(cfg=cfg, num_reps=num_reps, results_dir=results_dir, workers=workers)
+
+    monkeypatch.setattr("ops.uhd_batch._batch_local", fake_batch_local)
+    cfg_file = tmp_path / "cfg.toml"
+    cfg_file.write_text('[uhd]\nenv_tag = "f:sphere-2d"\nnum_rounds = 1\nnum_reps = 30\n')
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "local",
+            str(cfg_file),
+            "--workers",
+            "2",
+            "--results-dir",
+            str(tmp_path / "out"),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert called["num_reps"] == 30
+    assert called["workers"] == 2
+
+
+def test_exp_uhd_local_batches_total_timesteps_budget(monkeypatch, tmp_path):
+    result, called = _invoke_cartpole_local(monkeypatch, tmp_path, [])
+
+    assert result.exit_code == 0, result.output
+    assert called["num_reps"] == 2
+    assert called["cfg"]["total_timesteps"] == 8000
+    assert called["cfg"]["num_rounds"] == 2
+
+
+def test_exp_uhd_local_applies_cli_overrides(monkeypatch, tmp_path):
+    result, called = _invoke_cartpole_local(
+        monkeypatch,
+        tmp_path,
+        ["--opt", "total_timesteps=4000", "--opt", "num_reps=3"],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert called["num_reps"] == 3
+    assert called["cfg"]["total_timesteps"] == 4000
+    assert called["cfg"]["num_rounds"] == 1

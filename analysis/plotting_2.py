@@ -45,6 +45,7 @@ plot_rl_experiment = _rl.plot_rl_experiment
 plot_rl_experiment_vs_time = _rl.plot_rl_experiment_vs_time
 plot_rl_experiment_vs_time_auto = _rl.plot_rl_experiment_vs_time_auto
 
+
 # Re-export for backward compatibility
 _noise_label = noise_label
 _speedup_x_label = speedup_x_label

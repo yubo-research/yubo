@@ -1,4 +1,4 @@
-"""SMAC3 random forest surrogate (Hutter et al.; packaged ``smac`` + ``pyrfr``).
+"""SMAC3 random forest surrogate (Hutter et al.; packaged ``smac``).
 
 Wraps :class:`smac.model.random_forest.RandomForest` for plain numeric design matrices
 ``(N, d)``: builds a :class:`ConfigSpace.ConfigurationSpace` with one
@@ -6,7 +6,7 @@ Wraps :class:`smac.model.random_forest.RandomForest` for plain numeric design ma
 for sequential model-based optimization (including inactive-value imputation hooks for
 conditional spaces—unused when all parameters are independent floats).
 
-Requires the ``smac``, ``ConfigSpace``, and ``pyrfr`` packages (``pip install smac``).
+Requires the ``smac`` and ``ConfigSpace`` packages (``pip install smac``).
 """
 
 from __future__ import annotations
@@ -16,6 +16,10 @@ from typing import Any, Literal
 
 import numpy as np
 from ConfigSpace import ConfigurationSpace, UniformFloatHyperparameter
+
+if not hasattr(np, "NaN"):
+    np.NaN = np.nan
+
 from smac.model.random_forest import RandomForest
 
 __all__ = ["SMACRFConfig", "SMACRFSurrogate"]
@@ -41,13 +45,13 @@ class SMACRFConfig:
     """Hyperparameters passed through to :class:`smac.model.random_forest.RandomForest`."""
 
     n_trees: int = 10
-    n_points_per_tree: int = -1
+    max_samples: int | float | None = None
     ratio_features: float = 5.0 / 6.0
     min_samples_split: int = 3
     min_samples_leaf: int = 3
     max_depth: int = 2**20
-    eps_purity: float = 1e-8
-    max_nodes: int = 2**20
+    min_impurity_decrease: float = 1e-8
+    max_leaf_nodes: int = 2**20
     bootstrapping: bool = True
     log_y: bool = False
     seed: int = 0
@@ -89,24 +93,32 @@ class SMACRFSurrogate:
                 raise ValueError(f"bounds must have length {d}, got {lower.shape[0]}")
 
         cs = _build_config_space(lower, upper)
-        self._model = RandomForest(
-            configspace=cs,
-            n_trees=self.cfg.n_trees,
-            n_points_per_tree=self.cfg.n_points_per_tree,
-            ratio_features=self.cfg.ratio_features,
-            min_samples_split=self.cfg.min_samples_split,
-            min_samples_leaf=self.cfg.min_samples_leaf,
-            max_depth=self.cfg.max_depth,
-            eps_purity=self.cfg.eps_purity,
-            max_nodes=self.cfg.max_nodes,
-            bootstrapping=self.cfg.bootstrapping,
-            log_y=self.cfg.log_y,
-            instance_features=None,
-            pca_components=self.cfg.pca_components,
-            seed=self.cfg.seed,
-        )
+        rf_kwargs: dict[str, Any] = {
+            "configspace": cs,
+            "n_trees": self.cfg.n_trees,
+            "ratio_features": self.cfg.ratio_features,
+            "min_samples_split": self.cfg.min_samples_split,
+            "min_samples_leaf": self.cfg.min_samples_leaf,
+            "max_depth": self.cfg.max_depth,
+            "bootstrapping": self.cfg.bootstrapping,
+            "log_y": self.cfg.log_y,
+            "instance_features": None,
+            "pca_components": self.cfg.pca_components,
+            "seed": self.cfg.seed,
+        }
+        if self.cfg.max_samples is not None:
+            rf_kwargs["n_points_per_tree"] = self.cfg.max_samples
+        rf_sig = RandomForest.__init__.__code__.co_varnames
+        if "eps_purity" in rf_sig:
+            rf_kwargs["eps_purity"] = self.cfg.min_impurity_decrease
+            rf_kwargs["max_nodes"] = self.cfg.max_leaf_nodes
+        else:
+            rf_kwargs["min_impurity_decrease"] = self.cfg.min_impurity_decrease
+            rf_kwargs["max_leaf_nodes"] = self.cfg.max_leaf_nodes
+            rf_kwargs["max_samples"] = self.cfg.max_samples
+        self._model = RandomForest(**rf_kwargs)
         self._model.train(x, y)
-        return {"meta": self._model.meta}
+        return {"meta": getattr(self._model, "meta", {})}
 
     def predict(self, x_test: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         if self._model is None or self._dim is None:

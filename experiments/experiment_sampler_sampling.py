@@ -12,8 +12,14 @@ from experiments.experiment_sampler_types import RunConfig, _load_attr, _SampleR
 
 
 @contextmanager
-def _temporary_default_device(runtime_device: str):
+def _temporary_default_device(runtime_device: str, *, env_name: str | None = None):
     torch = shim.torch_module()
+    if env_name is not None:
+        from problems.isaaclab_env_adapters import is_isaaclab_env_tag
+
+        if is_isaaclab_env_tag(str(env_name)):
+            yield
+            return
     if str(runtime_device).strip().lower() != "cuda" or not torch.cuda.is_available():
         yield
         return
@@ -99,7 +105,7 @@ def _render_sample_video(
 ):
     from pathlib import Path
 
-    render_policy_videos_bo = _load_attr(("common", "video"), "render_policy_videos_bo")
+    render_policy_videos_bo = _load_attr(("video", "bo_policy"), "render_policy_videos_bo")
 
     video_dir = Path(run_config.trace_fn).parent / "videos"
     seed_base = int(video_seed_base) if video_seed_base is not None else int(env_conf.problem_seed)
@@ -141,7 +147,10 @@ def sample_1(run_config: RunConfig):
 
     shim.seed_all(global_seed_for_run(env_runtime.problem_seed))
 
-    with _temporary_default_device(getattr(rc, "runtime_device", "auto")):
+    with _temporary_default_device(
+        getattr(rc, "runtime_device", "auto"),
+        env_name=getattr(env_runtime, "env_name", None),
+    ):
         policy = build_policy()
 
         collector_log = BOConsoleCollector() if getattr(rc, "bo_console", True) else Collector()

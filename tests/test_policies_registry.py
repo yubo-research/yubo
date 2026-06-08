@@ -43,6 +43,28 @@ def test_get_policy_preset_invalid_tag():
         get_policy_preset("nonexistent-policy-xyz")
 
 
+def test_get_policy_preset_pretrain_external_tags():
+    from policies.registry import get_policy_preset, list_policy_tags
+
+    for tag in ("hyperscalees-rwkv-7w3b-lora-r1", "nanoegg:int8:6l:256d"):
+        preset = get_policy_preset(tag)
+        assert preset is not None
+        assert callable(preset.factory)
+        assert tag in list_policy_tags()
+
+
+def test_nanoegg_policy_tag_builds_nanoegg_policy_without_env_spaces():
+    from problems.problem import build_problem
+
+    problem = build_problem("pretrain:nanoegg:synthetic", "nanoegg:int8:1l:8d", problem_seed=0)
+    policy = problem.build_policy()
+
+    assert policy.is_nanoegg_pretrain_policy is True
+    assert policy.env_name == "pretrain:nanoegg:synthetic"
+    assert policy.policy_tag == "nanoegg:int8:1l:8d"
+    assert policy.num_params() == 4096
+
+
 def test_list_policy_tags_returns_sorted():
     from policies.registry import list_policy_tags
 
@@ -103,6 +125,25 @@ def test_mlp_factory():
     assert hasattr(policy, "num_params")
 
 
+def test_cnn_mlp_factory():
+    from policies.registry import _cnn_mlp_factory
+
+    factory = _cnn_mlp_factory((32, 16), cnn_latent_dim=64)
+    assert callable(factory)
+
+    env_runtime = SimpleNamespace(
+        problem_seed=0,
+        env_name="dm_control/cheetah-run-v0",
+        state_space=SimpleNamespace(shape=(84, 84, 3)),
+        action_space=SimpleNamespace(shape=(6,)),
+        gym_conf=None,
+    )
+    policy = factory(env_runtime)
+    assert policy is not None
+    assert hasattr(policy, "num_params")
+    assert policy.num_params() > 0
+
+
 def test_infer_rl_model_from_mlp():
     from policies.registry import _infer_rl_model_from_mlp
 
@@ -128,12 +169,23 @@ def test_infer_rl_model_from_actor_critic_mlp():
     assert result["ppo"]["log_std_init"] == 0.0
 
 
+def test_dynamic_actor_critic_mlp_policy_tag_allows_activation():
+    from policies.registry import get_policy_preset
+
+    preset = get_policy_preset("actor-critic-mlp-256-256-tanh")
+    assert preset.rl_model["ppo"]["backbone_hidden_sizes"] == (256, 256)
+    assert preset.rl_model["ppo"]["backbone_activation"] == "tanh"
+    assert preset.rl_model["ppo"]["head_activation"] == "tanh"
+    assert preset.rl_model["ppo"]["backbone_layer_norm"] is True
+
+
 def test_policy_presets_coverage():
     from policies.registry import POLICY_PRESETS
 
     assert "linear" in POLICY_PRESETS
     assert "pure-function" in POLICY_PRESETS
     assert "mlp-16-8" in POLICY_PRESETS
+    assert "cnn-mlp-1024-600" in POLICY_PRESETS
     assert "bipedal-heuristic" in POLICY_PRESETS
     assert "turbo-lunar" in POLICY_PRESETS
     assert "actor-critic-mlp-16-8" in POLICY_PRESETS

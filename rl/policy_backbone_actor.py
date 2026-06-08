@@ -4,4 +4,4 @@ from rl.policy_backbone.continuous import (
     ActorPolicySpec,
 )
 
-__all__ = ["ActorPolicySpec", "ActorBackbonePolicy", "ActorBackbonePolicyFactory"]
+__all__ = ["ActorBackbonePolicy", "ActorBackbonePolicyFactory", "ActorPolicySpec"]

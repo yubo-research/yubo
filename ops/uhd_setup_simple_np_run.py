@@ -17,9 +17,9 @@ def _run_simple_gym_np(
     num_denoise,
     be: object | None = None,
 ):
-    BEConfig = _imod("ops.uhd_config", "BEConfig")
     BehavioralEmbedder = _imod("embedding.behavioral_embedder", "BehavioralEmbedder")
     common = importlib.import_module("ops.uhd_setup_simple_common")
+    _default_be_config = getattr(common, "_default_be_config")
     _gym_embed_bounds = getattr(common, "_gym_embed_bounds")
     _run_simple_iterations = getattr(common, "_run_simple_iterations")
     UHDMeZOBENp = _imod("optimizer.uhd_mezo_np", "UHDMeZOBENp")
@@ -32,7 +32,7 @@ def _run_simple_gym_np(
     dim = policy.num_params()
     param_clip = (-1.0, 1.0)
 
-    cfg = be if be is not None else BEConfig()
+    cfg = be if be is not None else _default_be_config()
     if optimizer in {"simple_be", "mezo_be"}:
         num_state = env_conf.gym_conf.state_space.shape[0]
         embedder = BehavioralEmbedder(_gym_embed_bounds(num_state), num_probes=cfg.num_probes, seed=0)

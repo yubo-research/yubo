@@ -3,31 +3,34 @@ from rl.core.sac_metrics import (
     build_log_eval_iteration_kwargs,
     normalize_returns_for_log,
 )
+from rl.iter_record import EvalRecordInputs
 
 
 def test_build_eval_metric_record_fields():
     record = build_eval_metric_record(
-        step=20,
-        eval_return=3.5,
-        heldout_return=2.0,
-        best_return=4.0,
-        loss_actor=1.1,
-        loss_critic=2.2,
-        loss_alpha=3.3,
-        total_updates=7,
-        started_at=10.0,
-        now=14.0,
+        EvalRecordInputs(
+            started_at=10.0,
+            timing={"step": 20, "now": 14.0, "frames_per_iter": 1, "iter_dt": None},
+            metrics={
+                "actor": 1.1,
+                "critic": 2.2,
+                "alpha": 3.3,
+                "ret_best": 4.0,
+                "ret_eval": 3.5,
+                "ret_heldout": 2.0,
+                "total_updates": 7,
+            },
+        )
     )
     assert record["step"] == 20
-    assert record["eval_return"] == 3.5
-    assert record["heldout_return"] == 2.0
-    assert record["best_return"] == 4.0
-    assert record["loss_actor"] == 1.1
-    assert record["loss_critic"] == 2.2
-    assert record["loss_alpha"] == 3.3
+    assert record["ret_eval"] == 3.5
+    assert record["ret_heldout"] == 2.0
+    assert record["ret_best"] == 4.0
+    assert record["actor"] == 1.1
+    assert record["critic"] == 2.2
+    assert record["alpha"] == 3.3
     assert record["total_updates"] == 7
-    assert record["time_seconds"] == 4.0
-    assert record["steps_per_second"] == 5.0
+    assert record["elapsed"] == 4.0
 
 
 def test_normalize_returns_for_log_handles_non_finite():

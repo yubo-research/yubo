@@ -7,6 +7,7 @@ from botorch.fit import fit_gpytorch_mll
 from botorch.models import SingleTaskGP
 from botorch.models.approximate_gp import SingleTaskVariationalGP
 from botorch.models.transforms.input import Warp
+from botorch.models.transforms.outcome import OutcomeTransform
 from botorch.optim.closures.core import ForwardBackwardClosure
 from botorch.optim.fit import fit_gpytorch_mll_scipy, fit_gpytorch_mll_torch
 from botorch.optim.utils import get_parameters
@@ -19,7 +20,6 @@ from gpytorch.mlls import (
 )
 from gpytorch.priors.torch_priors import LogNormalPrior, NormalPrior
 from torch import Tensor
-from torch.nn import Module
 
 import common.all_bounds as all_bounds
 from acq.sal_transform import SALTransform
@@ -38,14 +38,14 @@ class _FitGpResult(NamedTuple):
     X: Tensor
 
 
-class _EmptyTransform(Module):
+class _EmptyTransform(OutcomeTransform):
     def __init__(self):
         super().__init__()
 
-    def forward(self, Y, Yvar=None):
+    def forward(self, Y, Yvar=None, X=None):
         return Y, Yvar
 
-    def untransform(self, Y, Yvar=None):
+    def untransform(self, Y, Yvar=None, X=None):
         return Y, Yvar
 
     def untransform_posterior(self, posterior):
@@ -80,6 +80,22 @@ def standardize_torch(Y):
 #     return y
 
 
+def _apply_model_spec_token(s, model_types, model_type, input_warping, output_warping, model_spec):
+    if s in model_types:
+        assert model_type is None, (model_type, model_spec)
+        return s, input_warping, output_warping
+    if s == "wi":
+        assert input_warping is None, (input_warping, model_spec)
+        return model_type, True, output_warping
+    if s == "wos":
+        assert output_warping is None, (output_warping, model_spec)
+        return model_type, input_warping, "sal"
+    if s == "woy":
+        assert output_warping is None, (output_warping, model_spec)
+        return model_type, input_warping, "y"
+    assert False, ("Unknown option", s)
+
+
 def _parse_spec(model_spec, num_obs):
     _SPARSE_MIN_OBS = 10
     model_type = None
@@ -90,20 +106,7 @@ def _parse_spec(model_spec, num_obs):
 
     if model_spec is not None:
         for s in model_spec.split("+"):
-            if s in model_types:
-                assert model_type is None, (model_type, model_spec)
-                model_type = s
-            elif s == "wi":
-                assert input_warping is None, (input_warping, model_spec)
-                input_warping = True
-            elif s == "wos":
-                assert output_warping is None, (output_warping, model_spec)
-                output_warping = "sal"
-            elif s == "woy":
-                assert output_warping is None, (output_warping, model_spec)
-                output_warping = "y"
-            else:
-                assert False, ("Unknown option", s)
+            model_type, input_warping, output_warping = _apply_model_spec_token(s, model_types, model_type, input_warping, output_warping, model_spec)
 
     if model_type is None:
         model_type = "gp"
@@ -137,10 +140,7 @@ def get_closure(mll, outcome_warp):
 
     return ForwardBackwardClosure(
         forward=_closure_warping,
-        backward=Tensor.backward,
         parameters=get_parameters(mll, requires_grad=True),
-        reducer=Tensor.sum,
-        context_manager=None,
     )
 
 

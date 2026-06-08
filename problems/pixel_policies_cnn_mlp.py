@@ -7,7 +7,20 @@ import torch
 import torch.nn as nn
 
 from policies.policy_mixin import PolicyParamsMixin
-from problems.pixel_policies_encoders import init_linear_and_conv, nature_cnn_encoder, obs_space_from_env_conf
+from problems.pixel_policies_encoders import (
+    init_linear_and_conv,
+    nature_cnn_encoder,
+    obs_space_from_env_conf,
+)
+
+
+def _to_float_pixels(x: torch.Tensor) -> torch.Tensor:
+    if not torch.is_floating_point(x):
+        return x.to(dtype=torch.float32).div(255.0)
+    x = x.to(dtype=torch.float32)
+    if x.numel() > 0 and float(x.detach().amax().cpu()) > 1.0:
+        return x.div(255.0)
+    return x
 
 
 class CNNMLPPolicyFactory:
@@ -56,12 +69,14 @@ class CNNMLPPolicy(PolicyParamsMixin, nn.Module):
         init_linear_and_conv(self, gain=0.5)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = _to_float_pixels(x)
         if x.shape[-1] == 3:
             x = x.permute(*range(x.dim() - 3), -1, -3, -2)
         feats = self.encoder(x)
         return self.head(feats)
 
     def __call__(self, state):
+        # state may be uint8 [0,255] or float [0,1].
         state = torch.as_tensor(state, dtype=torch.float32)
         if state.dim() == 3:
             state = state.unsqueeze(0)

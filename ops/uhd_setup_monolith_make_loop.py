@@ -12,6 +12,7 @@ from ops.uhd_setup_monolith_support import (
     _parse_enn_cfg,
     _preload_mnist_train_to_device,
 )
+from ops.uhd_setup_simple_common import _default_be_config
 from optimizer.uhd_loop import UHDLoop
 
 
@@ -47,7 +48,7 @@ def _make_simple_loop_for_np_policy(
         uhd = UHDSimpleNp(np_policy, sigma_0=sigma, param_clip=param_clip)
     elif optimizer == "simple_be":
         num_state = env_runtime.gym_conf.state_space.shape[0]
-        cfg = be if be is not None else BEConfig()
+        cfg = be if be is not None else _default_be_config()
         embedder = BehavioralEmbedder(_gym_embed_bounds(num_state), num_probes=cfg.num_probes, seed=0)
         uhd = UHDSimpleBENp(
             np_policy,
@@ -63,7 +64,7 @@ def _make_simple_loop_for_np_policy(
         uhd = UHDMeZONp(np_policy, sigma=sigma, lr=lr, param_clip=param_clip)
     elif optimizer == "mezo_be":
         num_state = env_runtime.gym_conf.state_space.shape[0]
-        cfg = be if be is not None else BEConfig()
+        cfg = be if be is not None else _default_be_config()
         embedder = BehavioralEmbedder(_gym_embed_bounds(num_state), num_probes=cfg.num_probes, seed=0)
         uhd = UHDMeZOBENp(
             np_policy,

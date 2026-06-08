@@ -2,7 +2,10 @@
 
 import numpy as np
 import pytest
-from ret_eval_monotonicity_fixtures import MockDesignerWithoutRreturnEst, MockDesignerWithRreturnEst
+from ret_eval_monotonicity_fixtures import (
+    MockDesignerWithoutRreturnEst,
+    MockDesignerWithRreturnEst,
+)
 
 from common.collector import Collector
 from optimizer.optimizer import Optimizer

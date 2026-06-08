@@ -7,8 +7,6 @@ build: safe to import in tests without ``mk_image()`` cost.
 
 from __future__ import annotations
 
-import modal
-
 from analysis.fitting_time.evaluate import benchmark_synthetic_sine_surrogates
 from experiments.synthetic_sine_benchmark_payload_core import (
     META_KEY,
@@ -25,6 +23,7 @@ from experiments.synthetic_sine_benchmark_payload_jobs import (
 )
 from experiments.synthetic_sine_benchmark_payload_remote import (
     build_synthetic_sine_benchmark_remote_payload,
+    modal,
     run_synthetic_sine_benchmark_modal_to_disk,
 )
 from experiments.synthetic_sine_benchmark_payload_tables import (

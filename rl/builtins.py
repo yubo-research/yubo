@@ -1,20 +1,14 @@
-def _register_lazy_once(name: str, module_path: str, *, backend: str | None = None) -> None:
+def _register_lazy_once(name: str, module_path: str) -> None:
     from rl.registry import register_algo_lazy
 
     try:
-        register_algo_lazy(name, module_path, backend=backend)
+        register_algo_lazy(name, module_path)
     except ValueError:
         pass
 
 
 def register_all() -> None:
-    from rl.registry import register_algo_backend
-
+    _register_lazy_once("mjx_ppo", "rl.mjx_ppo")
+    _register_lazy_once("mjx_sac", "rl.mjx_sac")
     _register_lazy_once("ppo", "rl.torchrl.ppo.core")
-    _register_lazy_once("ppo", "rl.pufferlib.ppo.engine", backend="pufferlib")
     _register_lazy_once("sac", "rl.torchrl.sac")
-    _register_lazy_once("sac", "rl.pufferlib.sac.engine", backend="pufferlib")
-    register_algo_backend("ppo", "torchrl", "ppo")
-    register_algo_backend("ppo", "pufferlib", "ppo")
-    register_algo_backend("sac", "torchrl", "sac")
-    register_algo_backend("sac", "pufferlib", "sac")

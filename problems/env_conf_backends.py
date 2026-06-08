@@ -113,8 +113,12 @@ def load_atari_dm_bindings() -> AtariDMBindings:
 
 def register_with_env_conf() -> None:
     from problems.env_conf import register_atari_dm_bindings_loader
+    from problems.environment_spec import (
+        register_atari_dm_bindings_loader as register_environment_spec_bindings_loader,
+    )
 
     register_atari_dm_bindings_loader(load_atari_dm_bindings)
+    register_environment_spec_bindings_loader(load_atari_dm_bindings)
 
 
 def maybe_register_atari_dm_backends(env_tag: str) -> None:

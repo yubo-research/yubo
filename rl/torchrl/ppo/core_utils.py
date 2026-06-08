@@ -3,7 +3,7 @@ from __future__ import annotations
 import torch
 import torch.nn as nn
 
-import rl.core.env_contract as torchrl_env_contract
+from rl.core import env_contract
 
 from .config import PPOConfig
 from .core_types import _EnvSetup
@@ -41,14 +41,14 @@ def _is_atari_env(env_conf) -> bool:
     return getattr(env_conf, "env_name", "").startswith("ALE/")
 
 
-def _resolve_observation_contract_for_env(config: PPOConfig, env: _EnvSetup | object) -> torchrl_env_contract.ObservationContract:
+def _resolve_observation_contract_for_env(config: PPOConfig, env: _EnvSetup | object) -> env_contract.ObservationContract:
     io_contract = getattr(env, "io_contract", None)
     observation = getattr(io_contract, "observation", None)
     if observation is not None:
         return observation
     env_conf = getattr(env, "env_conf", None)
     if env_conf is not None:
-        return torchrl_env_contract.resolve_observation_contract(env_conf, default_image_size=84)
+        return env_contract.resolve_observation_contract(env_conf, default_image_size=84)
     if bool(getattr(config, "from_pixels", False)):
-        return torchrl_env_contract.ObservationContract(mode="pixels", raw_shape=(), model_channels=3, image_size=84)
-    return torchrl_env_contract.ObservationContract(mode="vector", raw_shape=(), vector_dim=1)
+        return env_contract.ObservationContract(mode="pixels", raw_shape=(), model_channels=3, image_size=84)
+    return env_contract.ObservationContract(mode="vector", raw_shape=(), vector_dim=1)

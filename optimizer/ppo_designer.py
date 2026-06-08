@@ -23,6 +23,7 @@ from optimizer.trajectories import collect_trajectory
 __all__ = [
     "PPOACDesigner",
     "PPOConfig",
+    "PPODesigner",
     "PPOPGDesigner",
     "PPOPGConfig",
     "compute_episode_return_advantages",
@@ -81,9 +82,8 @@ class PPOACDesigner(Designer):
             trajectories.append(traj)
         dt_rollout = time.time() - t_rollout_start
 
-        merged_traj = merge_trajectories(trajectories)
-
         cfg = self._config
+        merged_traj = merge_trajectories(trajectories)
         advantages, returns = compute_gae(
             merged_traj.rewards,
             merged_traj.values,
@@ -113,3 +113,6 @@ class PPOACDesigner(Designer):
 
         clear_policy_ppo_cache(policy)
         return [policy]
+
+
+PPODesigner = PPOACDesigner

@@ -43,6 +43,15 @@ def speedup_x_label(cum_dt_prop_final_by_opt: dict[str, float] | None, problem: 
     return f"{x}x speedup"
 
 
+def _consolidated_legend_label(li: str, renames: dict[str, str] | None) -> str | None:
+    if not li or li.startswith("_"):
+        return None
+    base = li.split(" (", 1)[0]
+    if renames is not None:
+        base = renames.get(base, base)
+    return "turbo-enn" if base.startswith("turbo-enn") else base
+
+
 def consolidate_bottom_legend(
     fig,
     axs,
@@ -57,17 +66,8 @@ def consolidate_bottom_legend(
     for ax in axs:
         handles_ax, labels_ax = ax.get_legend_handles_labels()
         for hi, li in zip(handles_ax, labels_ax, strict=False):
-            if not li or li.startswith("_"):
-                continue
-
-            base = li.split(" (", 1)[0]
-            if renames is not None:
-                base = renames.get(base, base)
-            if base.startswith("turbo-enn"):
-                li2 = "turbo-enn"
-            else:
-                li2 = base
-            if li2 in seen:
+            li2 = _consolidated_legend_label(li, renames)
+            if li2 is None or li2 in seen:
                 continue
             seen.add(li2)
             handles.append(hi)

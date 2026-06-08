@@ -11,6 +11,7 @@ from rl.core.actor_state import (
     restore_backbone_head_snapshot,
     use_backbone_head_snapshot,
 )
+from rl.core.continuous_actions import unscale_action_tensor_from_env
 from rl.core.env_contract import ObservationContract
 from rl.core.pixel_transform import ensure_pixel_obs_format
 
@@ -29,6 +30,8 @@ class ActorEvalPolicy:
         device: torch.device,
         obs_contract: ObservationContract,
         is_discrete: bool = False,
+        action_low: np.ndarray | None = None,
+        action_high: np.ndarray | None = None,
     ):
         self._actor_backbone = actor_backbone
         self._actor_head = actor_head
@@ -36,6 +39,8 @@ class ActorEvalPolicy:
         self._device = device
         self._obs_contract = obs_contract
         self._is_discrete = bool(is_discrete)
+        self._action_low = None if action_low is None else torch.as_tensor(action_low, device=device, dtype=torch.float32)
+        self._action_high = None if action_high is None else torch.as_tensor(action_high, device=device, dtype=torch.float32)
 
     def __call__(self, state: np.ndarray) -> np.ndarray:
         if self._obs_contract.mode == "pixels":
@@ -57,8 +62,15 @@ class ActorEvalPolicy:
             head_out = self._actor_head(features)
             if self._is_discrete:
                 action = head_out.argmax(dim=-1).float()
+            elif self._action_low is not None and self._action_high is not None:
+                action = unscale_action_tensor_from_env(
+                    head_out,
+                    self._action_low,
+                    self._action_high,
+                    clip=True,
+                )
             else:
-                action = torch.tanh(head_out)
+                action = head_out.clamp(-1.0, 1.0)
         return action.squeeze(0).detach().cpu().numpy()
 
 

@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 
-import importlib
-
 import click
 
-from ops.exp_uhd_run import run_parsed_uhd_local, uhd_config_toml_to_modal_log
+from common.im import im
 
 
 @click.group()
@@ -18,8 +16,8 @@ cli = _cli
 @_cli.command(name="local", help="Run locally (single process) from a config TOML.")
 @click.argument("config_toml", type=click.Path(exists=True, dir_okay=False, path_type=str))
 def _local(config_toml: str) -> None:
-    tomllib = importlib.import_module("tomllib")
-    p = importlib.import_module("ops.exp_uhd_parse")
+    tomllib = im("tomllib")
+    p = im("ops.exp_uhd_parse")
     try:
         cfg = p._load_toml_config(config_toml)
         p._validate_required(cfg)
@@ -27,7 +25,7 @@ def _local(config_toml: str) -> None:
         raise click.ClickException(str(e)) from e
 
     parsed = p._parse_cfg(cfg)
-    run_parsed_uhd_local(parsed)
+    im("ops.exp_uhd_run").run_parsed_uhd_local(parsed)
 
 
 local = _local
@@ -46,10 +44,10 @@ local = _local
 )
 @click.option("--gpu", type=str, default="A100", help="Modal GPU type (e.g. T4, A10, A100, H100).")
 def modal_cmd(config_toml: str, log_file: str | None, gpu: str) -> None:
-    tomllib = importlib.import_module("tomllib")
-    p = importlib.import_module("ops.exp_uhd_parse")
-    modal_run = importlib.import_module("ops.modal_uhd").run
-    log_text = uhd_config_toml_to_modal_log(
+    tomllib = im("tomllib")
+    p = im("ops.exp_uhd_parse")
+    modal_run = im("ops.modal_uhd").run
+    log_text = im("ops.exp_uhd_run").uhd_config_toml_to_modal_log(
         config_toml,
         gpu,
         exp_uhd_parse=p,

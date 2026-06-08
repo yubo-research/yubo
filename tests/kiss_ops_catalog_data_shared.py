@@ -3,6 +3,21 @@ import json
 from click.testing import CliRunner
 
 
+def run_kiss_data_locator_optimizers(tmp_path):
+    from analysis.data_locator import DataLocator
+
+    results_dir = tmp_path / "results"
+    exp_dir = results_dir / "exp_a"
+    exp_dir.mkdir(parents=True)
+    (exp_dir / "config.json").write_text(json.dumps({"opt_name": "random", "env_tag": "f:ackley-2d"}))
+    dl = DataLocator(
+        results_path=str(results_dir),
+        exp_dir="",
+        opt_names=["random", "sobol"],
+    )
+    assert dl.optimizers() == ["random"]
+
+
 def run_kiss_ops_catalog_and_data_cli(tmp_path):
     import ops.catalog as catalog
     import ops.data as data_cli

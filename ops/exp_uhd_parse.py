@@ -4,10 +4,14 @@ import click
 import tomllib
 
 from common.mapping_keys import coerce_mapping_keys, normalize_toml_key
+from ops.config_overrides import parse_override_value
+from ops.config_overrides import parse_overrides as _parse_overrides_raw
 from ops.uhd_config import BEConfig, EarlyRejectConfig, ENNConfig, UHDConfig
 
-_REQUIRED_TOML_KEYS = ("env_tag", "num_rounds")
+_REQUIRED_TOML_KEYS = ("env_tag",)
+_ALLOWED_OPTIMIZERS = {"simple", "simple_be", "mezo", "mezo_be", "bszo", "bszo_be"}
 _OPTIONAL_TOML_KEYS = (
+    "num_rounds",
     "policy_tag",
     "problem_seed",
     "noise_seed_0",
@@ -40,6 +44,9 @@ _OPTIONAL_TOML_KEYS = (
     "enn_select_interval",
     "enn_embedder",
     "enn_gather_t",
+    "enn_err_ema_beta",
+    "enn_max_abs_err_ema",
+    "enn_min_calib_points",
     "batch_size",
     # Early-reject
     "er_tau",
@@ -54,6 +61,61 @@ _OPTIONAL_TOML_KEYS = (
     "bszo_sigma_p_sq",
     "bszo_sigma_e_sq",
     "bszo_alpha",
+    # UHD Vector/Gym settings
+    "steps_per_episode",
+    "num_envs",
+    "deterministic_policy",
+    "total_timesteps",
+    "sigma",
+    "seed_offset",
+    "num_reps",
+    # Pretrain settings
+    "pretrain_search_dim",
+    "pretrain_delta_scale",
+    "pretrain_generation_length",
+    "pretrain_rwkv_type",
+    "pretrain_lora_only",
+    "pretrain_basis_max_leaves",
+    "max_tokens",
+    "temperature",
+    "samples_per_prompt",
+    "prompt_batch_size",
+    "pass_at_k",
+    "num_gpus",
+    "num_engines",
+    "tensor_parallel_size",
+    "sub_dataset_size",
+    "hf_home",
+    # Text settings
+    "text_search_dim",
+    "text_delta_scale",
+    "text_basis_max_tensors",
+    "text_score_mode",
+    # Other settings
+    "bf8_storage",
+    "perturb_backend",
+    "eggroll_noiser",
+    "eggroll_rank",
+    "eggroll_group_size",
+    "eggroll_freeze_nonlora",
+    "use_async",
+    "vllm_enforce_eager",
+    "vllm_max_model_len",
+    "vllm_gpu_memory_utilization",
+    "vllm_max_num_seqs",
+    "vllm_max_num_batched_tokens",
+    "vllm_speculative_method",
+    "vllm_speculative_model",
+    "vllm_num_speculative_tokens",
+    # Distillation settings
+    "distill_teacher_model_choice",
+    "distill_student_model_choice",
+    "distill_dtype",
+    "distill_generation_length",
+    "distill_search_dim",
+    "distill_delta_scale",
+    "distill_lora_only",
+    "distill_basis_max_leaves",
 )
 _ALL_TOML_KEYS = set(_REQUIRED_TOML_KEYS + _OPTIONAL_TOML_KEYS)
 
@@ -72,6 +134,9 @@ _ENN_DEFAULTS: dict[str, object] = {
     "enn_select_interval": 1,
     "enn_embedder": "direction",
     "enn_gather_t": 64,
+    "enn_err_ema_beta": 0.95,
+    "enn_max_abs_err_ema": 0.25,
+    "enn_min_calib_points": 10,
 }
 
 _ER_DEFAULTS: dict[str, object] = {
@@ -113,22 +178,45 @@ def _load_toml_config(path: str) -> dict[str, Any]:
     return _coerce_mapping_keys(section, source=f"TOML '{path}'")
 
 
+def _parse_override_value(raw: str) -> Any:
+    return parse_override_value(raw)
+
+
+def _parse_overrides(override_strings: tuple[str, ...]) -> dict[str, Any]:
+    return _parse_overrides_raw(
+        override_strings,
+        valid_keys=_ALL_TOML_KEYS,
+        normalize_key=_normalize_key,
+    )
+
+
 def _validate_required(cfg: dict[str, Any]) -> None:
     missing = [k for k in _REQUIRED_TOML_KEYS if k not in cfg]
+    if "num_rounds" not in cfg and "total_timesteps" not in cfg:
+        missing.extend(["num_rounds", "total_timesteps"])
     if missing:
-        raise ValueError(f"Missing required fields: {missing}. Required: {sorted(_REQUIRED_TOML_KEYS)}")
+        raise ValueError(f"Missing required fields: {missing}. Required: {sorted(_REQUIRED_TOML_KEYS)} and one of ['num_rounds', 'total_timesteps']")
+
+
+def _parse_perturb_spec(perturb: str) -> tuple[str, float | None, float | None]:
+    """Parse --perturb flag into (backend, num_dim_target, num_module_target)."""
+    if perturb == "eggroll":
+        return "eggroll", None, None
+    backend = "flat"
+    if perturb == "dense":
+        return backend, None, None
+    if perturb.startswith("dim:"):
+        return backend, float(perturb[4:]), None
+    if perturb.startswith("mod:"):
+        return backend, None, float(perturb[4:])
+    msg = f"Invalid --perturb value: {perturb!r}. Use 'dense', 'eggroll', 'dim:<n>', or 'mod:<n>'."
+    raise click.BadParameter(msg)
 
 
 def _parse_perturb(perturb: str) -> tuple[float | None, float | None]:
     """Parse --perturb flag into (num_dim_target, num_module_target)."""
-    if perturb == "dense":
-        return None, None
-    if perturb.startswith("dim:"):
-        return float(perturb[4:]), None
-    if perturb.startswith("mod:"):
-        return None, float(perturb[4:])
-    msg = f"Invalid --perturb value: {perturb!r}. Use 'dense', 'dim:<n>', or 'mod:<n>'."
-    raise click.BadParameter(msg)
+    _, ndt, nmt = _parse_perturb_spec(perturb)
+    return ndt, nmt
 
 
 def _parse_early_reject_fields(cfg: dict[str, Any]) -> EarlyRejectConfig:
@@ -193,6 +281,9 @@ def _parse_enn_fields(cfg: dict[str, Any]) -> ENNConfig:
     select_interval = int(cfg.get("enn_select_interval", _ENN_DEFAULTS["enn_select_interval"]))
     embedder = str(cfg.get("enn_embedder", _ENN_DEFAULTS["enn_embedder"]))
     gather_t = int(cfg.get("enn_gather_t", _ENN_DEFAULTS["enn_gather_t"]))
+    err_ema_beta = float(cfg.get("enn_err_ema_beta", _ENN_DEFAULTS["enn_err_ema_beta"]))
+    max_abs_err_ema = float(cfg.get("enn_max_abs_err_ema", _ENN_DEFAULTS["enn_max_abs_err_ema"]))
+    min_calib_points = int(cfg.get("enn_min_calib_points", _ENN_DEFAULTS["enn_min_calib_points"]))
     return ENNConfig(
         minus_impute=minus_impute,
         d=d,
@@ -208,7 +299,56 @@ def _parse_enn_fields(cfg: dict[str, Any]) -> ENNConfig:
         select_interval=select_interval,
         embedder=embedder,
         gather_t=gather_t,
+        err_ema_beta=err_ema_beta,
+        max_abs_err_ema=max_abs_err_ema,
+        min_calib_points=min_calib_points,
     )
+
+
+def _parse_budget_fields(cfg: dict[str, Any]) -> tuple[int, int | None]:
+    from problems.uhd_obj import supports_uhd_vector_objective
+
+    num_rounds = cfg.get("num_rounds")
+    total_timesteps = cfg.get("total_timesteps")
+
+    if num_rounds is not None:
+        num_rounds = int(num_rounds)
+    if total_timesteps is not None:
+        total_timesteps = int(total_timesteps)
+
+    if total_timesteps is not None and num_rounds is None:
+        env_tag = str(cfg.get("env_tag", ""))
+        if not supports_uhd_vector_objective(env_tag):
+            raise ValueError(f"UHD vector objective (e.g. gymnax:...) required for 'total_timesteps'. Got {env_tag!r}")
+
+        num_envs = int(cfg.get("num_envs", 1))
+        steps_per_episode = int(cfg.get("steps_per_episode", 200))
+        optimizer = _validate_optimizer(str(cfg.get("optimizer", "mezo")))
+
+        if optimizer in ("bszo", "bszo_be"):
+            k = int(cfg.get("bszo_k", 2))
+            denom = num_envs * steps_per_episode * (k + 1)
+        else:
+            denom = num_envs * steps_per_episode
+
+        if total_timesteps % denom != 0:
+            raise ValueError(
+                f"total_timesteps must be divisible by the derived per-round budget ({denom}) to avoid truncation; got total_timesteps={total_timesteps}."
+            )
+        num_rounds = total_timesteps // denom
+
+    if num_rounds is None:
+        # Should be caught by _validate_required, but for type safety:
+        return 0, total_timesteps
+
+    return num_rounds, total_timesteps
+
+
+def _validate_optimizer(name: str) -> str:
+    optimizer = str(name)
+    if optimizer not in _ALLOWED_OPTIMIZERS:
+        raise ValueError(f"Unsupported UHD optimizer {optimizer!r}. Valid optimizers: {sorted(_ALLOWED_OPTIMIZERS)}")
+    return optimizer
 
 
 def _parse_cfg(cfg: dict[str, Any]) -> UHDConfig:
@@ -216,13 +356,16 @@ def _parse_cfg(cfg: dict[str, Any]) -> UHDConfig:
     policy_tag = cfg.get("policy_tag", None)
     if policy_tag is not None:
         policy_tag = str(policy_tag)
-    num_rounds = int(cfg["num_rounds"])
+
+    num_rounds, total_timesteps = _parse_budget_fields(cfg)
+
     problem_seed = cfg.get("problem_seed", None)
     if problem_seed is not None:
         problem_seed = int(problem_seed)
     noise_seed_0 = cfg.get("noise_seed_0", None)
     if noise_seed_0 is not None:
         noise_seed_0 = int(noise_seed_0)
+
     lr = float(cfg.get("lr", 0.001))
     perturb = str(cfg.get("perturb", "dim:0.5"))
     log_interval = int(cfg.get("log_interval", 1))
@@ -230,37 +373,127 @@ def _parse_cfg(cfg: dict[str, Any]) -> UHDConfig:
     target_accuracy = cfg.get("target_accuracy", None)
     if target_accuracy is not None:
         target_accuracy = float(target_accuracy)
-    optimizer = str(cfg.get("optimizer", "mezo"))
+
+    optimizer = _validate_optimizer(str(cfg.get("optimizer", "mezo")))
     batch_size = int(cfg.get("batch_size", 4096))
+
     bszo_k = int(cfg.get("bszo_k", 2))
     bszo_epsilon = float(cfg.get("bszo_epsilon", 1e-4))
     bszo_sigma_p_sq = float(cfg.get("bszo_sigma_p_sq", 1.0))
     bszo_sigma_e_sq = float(cfg.get("bszo_sigma_e_sq", 1.0))
     bszo_alpha = float(cfg.get("bszo_alpha", 0.1))
+
     early_reject = _parse_early_reject_fields(cfg)
     be = _parse_be_fields(cfg)
     enn = _parse_enn_fields(cfg)
-    ndt, nmt = _parse_perturb(perturb)
-    return UHDConfig(
-        env_tag=env_tag,
-        policy_tag=policy_tag,
-        num_rounds=num_rounds,
-        problem_seed=problem_seed,
-        noise_seed_0=noise_seed_0,
-        lr=lr,
-        num_dim_target=ndt,
-        num_module_target=nmt,
-        log_interval=log_interval,
-        accuracy_interval=accuracy_interval,
-        target_accuracy=target_accuracy,
-        optimizer=optimizer,
-        batch_size=batch_size,
-        early_reject=early_reject,
-        be=be,
-        enn=enn,
-        bszo_k=bszo_k,
-        bszo_epsilon=bszo_epsilon,
-        bszo_sigma_p_sq=bszo_sigma_p_sq,
-        bszo_sigma_e_sq=bszo_sigma_e_sq,
-        bszo_alpha=bszo_alpha,
-    )
+
+    backend, ndt, nmt = _parse_perturb_spec(perturb)
+
+    # Base UHDConfig fields
+    config_dict = {
+        "env_tag": env_tag,
+        "policy_tag": policy_tag,
+        "num_rounds": num_rounds,
+        "problem_seed": problem_seed,
+        "noise_seed_0": noise_seed_0,
+        "lr": lr,
+        "num_dim_target": ndt,
+        "num_module_target": nmt,
+        "log_interval": log_interval,
+        "accuracy_interval": accuracy_interval,
+        "target_accuracy": target_accuracy,
+        "optimizer": optimizer,
+        "batch_size": batch_size,
+        "early_reject": early_reject,
+        "be": be,
+        "enn": enn,
+        "bszo_k": bszo_k,
+        "bszo_epsilon": bszo_epsilon,
+        "bszo_sigma_p_sq": bszo_sigma_p_sq,
+        "bszo_sigma_e_sq": bszo_sigma_e_sq,
+        "bszo_alpha": bszo_alpha,
+        "total_timesteps": total_timesteps,
+        "perturb_backend": backend,
+    }
+
+    # Add other fields if present in cfg
+    for key in (
+        "sigma",
+        "steps_per_episode",
+        "num_envs",
+        "deterministic_policy",
+        "seed_offset",
+        "num_reps",
+        "pretrain_search_dim",
+        "pretrain_delta_scale",
+        "pretrain_generation_length",
+        "pretrain_rwkv_type",
+        "pretrain_lora_only",
+        "pretrain_basis_max_leaves",
+        "max_tokens",
+        "temperature",
+        "samples_per_prompt",
+        "prompt_batch_size",
+        "pass_at_k",
+        "num_gpus",
+        "num_engines",
+        "tensor_parallel_size",
+        "sub_dataset_size",
+        "hf_home",
+        "text_search_dim",
+        "text_delta_scale",
+        "text_basis_max_tensors",
+        "text_score_mode",
+        "bf8_storage",
+        "pretrain_basis_max_leaves",
+        "eggroll_noiser",
+        "eggroll_rank",
+        "eggroll_group_size",
+        "eggroll_freeze_nonlora",
+        "use_async",
+        "vllm_enforce_eager",
+        "vllm_max_model_len",
+        "vllm_gpu_memory_utilization",
+        "vllm_max_num_seqs",
+        "vllm_max_num_batched_tokens",
+        "vllm_speculative_method",
+        "vllm_speculative_model",
+        "vllm_num_speculative_tokens",
+        "distill_teacher_model_choice",
+        "distill_student_model_choice",
+        "distill_dtype",
+        "distill_generation_length",
+        "distill_search_dim",
+        "distill_delta_scale",
+        "distill_lora_only",
+        "distill_basis_max_leaves",
+    ):
+        if key in cfg:
+            val = cfg[key]
+            if key == "pretrain_basis_max_leaves" and val == 0:
+                val = None
+            config_dict[key] = val
+
+    parsed = UHDConfig(**config_dict)
+    _validate_llm_sampling_config(parsed)
+    return parsed
+
+
+def _validate_llm_sampling_config(cfg: UHDConfig) -> None:
+    if not str(cfg.env_tag).startswith("llm:"):
+        return
+    text_score_mode = str(cfg.text_score_mode)
+    if text_score_mode not in {"generation", "nll"}:
+        raise ValueError("UHD text configs require text_score_mode='generation' or text_score_mode='nll'.")
+    if text_score_mode == "nll":
+        if int(cfg.samples_per_prompt) != 1 or bool(cfg.pass_at_k):
+            raise ValueError("UHD text NLL scoring requires samples_per_prompt=1 and pass_at_k=false.")
+        return
+    if int(cfg.samples_per_prompt) > 1 and float(cfg.temperature) <= 0.0:
+        raise ValueError(
+            "UHD text configs with samples_per_prompt > 1 require temperature > 0. "
+            "vLLM greedy decoding uses temperature=0 and only supports n=1. "
+            f"Got samples_per_prompt={cfg.samples_per_prompt}, temperature={cfg.temperature}."
+        )
+    if bool(cfg.pass_at_k) and int(cfg.samples_per_prompt) <= 1:
+        raise ValueError("UHD text configs with pass_at_k=true require samples_per_prompt > 1.")

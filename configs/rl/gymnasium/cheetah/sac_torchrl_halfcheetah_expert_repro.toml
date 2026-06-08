@@ -1,0 +1,56 @@
+# HalfCheetah-v5 SAC Expert Reproduction (Benchmarked via HF/Minari).
+# Uses the new Warp backend for high-throughput GPU simulation.
+#
+# Run:
+#   ./ops/rl.py local configs/rl/gymnasium/cheetah/sac_torchrl_halfcheetah_expert_repro.toml
+
+[rl]
+algo = "sac"
+
+[rl.sac]
+exp_dir = "runs/rl/gymnasium/cheetah/sac_torchrl_halfcheetah_expert_repro"
+# 'warp:' prefix automatically configures high-performance GPU simulation
+env_tag = "warp:gymnasium:HalfCheetah-v5"
+policy_tag = "mlp-256-256"
+device = "cuda"
+log_interval_steps = 10000
+
+[rl.sac.collector]
+total_frames = 1000000
+num_envs = 128
+# frames_per_batch = num_envs * num_steps_per_env (128 = 1 step per env)
+frames_per_batch = 128
+init_random_frames = 10000
+
+[rl.sac.replay_buffer]
+size = 1000000
+batch_size = 256
+
+[rl.sac.optim]
+actor_lr = 3e-4
+qvalue_lr = 3e-4
+alpha_lr = 3e-4
+update_every = 1
+
+[rl.sac.loss]
+gamma = 0.99
+alpha_init = 1.0
+target_entropy = -6.0
+
+[rl.sac.target_net_updater]
+tau = 0.005
+
+[rl.sac.eval]
+interval_steps = 50000
+seed_base = 1000
+
+[rl.sac.checkpoint]
+interval_steps = 100000
+
+[rl.run]
+num_reps = 1
+# Global workers set to 1 since we are running everything on one GPU
+workers = 1
+
+[rl.run.artifacts.video]
+enable = true
