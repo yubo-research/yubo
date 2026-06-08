@@ -1,0 +1,54 @@
+# HalfCheetah-v5 SAC Expert (TorchRL + MuJoCo Warp).
+# Optimized for high-throughput training on GPU via MuJoCo Warp.
+#
+# Run:
+#   ./ops/rl.py local configs/rl/warp/halfcheetah_sac_expert.toml
+
+[rl]
+algo = "sac"
+
+[rl.sac]
+exp_dir = "runs/rl/warp/halfcheetah_sac_expert"
+# `warp:` is a TorchRL/native-collector env tag, not a JAX/MJX env tag.
+env_tag = "warp:gymnasium:HalfCheetah-v5"
+policy_tag = "mlp-256-256"
+device = "cuda"
+log_interval_steps = 10000
+
+[rl.sac.collector]
+total_frames = 1000000
+num_envs = 1024
+frames_per_batch = 1024
+init_random_frames = 10000
+
+[rl.sac.replay_buffer]
+size = 1000000
+batch_size = 256
+
+[rl.sac.optim]
+actor_lr = 3e-4
+qvalue_lr = 3e-4
+alpha_lr = 3e-4
+update_every = 1
+
+[rl.sac.loss]
+gamma = 0.99
+alpha_init = 1.0
+target_entropy = -6.0
+
+[rl.sac.target_net_updater]
+tau = 0.005
+
+[rl.sac.eval]
+interval_steps = 50000
+seed_base = 1000
+
+[rl.sac.checkpoint]
+interval_steps = 100000
+
+[rl.run]
+num_reps = 1
+workers = 1
+
+[rl.run.artifacts.video]
+enable = true

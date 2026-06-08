@@ -27,7 +27,14 @@ def _prep_tlunar_sweep_rows(results_dir, exp_dir, opts, loop_rows):
 def _prep_bw_sweep_rows(results_dir, exp_dir, opts, loop_rows):
     cmds = []
     for opt in opts:
-        for num_arms, num_rounds, num_reps, num_denoise, num_denoise_passive, fn in loop_rows:
+        for (
+            num_arms,
+            num_rounds,
+            num_reps,
+            num_denoise,
+            num_denoise_passive,
+            fn,
+        ) in loop_rows:
             if num_arms == 1 and opt == "cma":
                 continue
             cmds.append(

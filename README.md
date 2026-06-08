@@ -1,5 +1,3 @@
-
-
 # Installation
 
 ## Installation on MacOS
@@ -29,6 +27,7 @@ pre-commit install
 pre-commit run
 pytest -sv tests
 ```
+
 
 If your code crashes or hangs, try this [hack](https://discuss.pytorch.org/t/ran-into-this-issue-while-executing/101460):
 ```

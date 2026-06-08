@@ -176,7 +176,6 @@ def benchmark_enn_incremental_add_timing(
             np.zeros((0, 1), dtype=np.float64),
             **epistemic_nn_driver_kwargs(index_driver, work_dir=work_dir),
         )
-
         for n_chk in ckpts:
             n_target = int(n_chk)
             x_seg, y_seg = _train_xy_unit_cube_segment(

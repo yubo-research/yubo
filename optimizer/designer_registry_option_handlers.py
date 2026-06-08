@@ -1,3 +1,4 @@
+from .designer_errors import NoSuchDesignerError
 from .designer_registry_builders import (
     _build_bt_acq,
     _index_driver_from_opts,
@@ -7,9 +8,62 @@ from .designer_registry_builders import (
     _reject_unknown_opts,
     _require_int,
     _require_str_in,
-    _turbo_enn,
+)
+from .designer_registry_builders import (
+    _turbo_enn as _base_turbo_enn,
 )
 from .designer_registry_context import _SimpleContext
+
+_TURBO_OPTION_KEYS = {
+    "acq_type",
+    "candidate_rv",
+    "idx",
+    "k",
+    "num_candidates",
+    "num_fit_candidates",
+    "num_fit_samples",
+    "num_init",
+    "num_keep",
+    "num_metrics",
+    "tr_type",
+    "use_python",
+    "use_y_var",
+}
+_EGGROLL_TURBO_OPTION_KEYS = {
+    "deterministic_policy",
+    "num_envs",
+    "param_scale",
+    "seed_offset",
+    "steps_per_episode",
+}
+
+
+def _turbo_enn(
+    ctx: _SimpleContext,
+    *,
+    opts: dict | None = None,
+    designer_name: str = "turbo-enn",
+    **kw,
+):
+    opts = dict(opts or {})
+    allowed = _TURBO_OPTION_KEYS | _EGGROLL_TURBO_OPTION_KEYS
+    unknown = set(opts) - allowed
+    if unknown:
+        raise NoSuchDesignerError(f"Designer '{designer_name}' does not support option(s): {', '.join(sorted(unknown))}.")
+    conflicts = set(opts) & set(kw)
+    if conflicts:
+        raise NoSuchDesignerError(f"Designer '{designer_name}' got duplicate option(s): {', '.join(sorted(conflicts))}.")
+    kw.update(opts)
+    index_driver = kw.pop("idx", None)
+    if index_driver is not None:
+        kw["index_driver"] = _index_driver_from_opts({"idx": index_driver}, example=f"{designer_name}/idx=hnsw")
+    eggroll_opts = {k: kw.pop(k) for k in list(kw) if k in _EGGROLL_TURBO_OPTION_KEYS}
+    if eggroll_opts:
+        if ctx.env_conf is None:
+            raise NoSuchDesignerError(f"Designer '{designer_name}' EggRoll options require env_conf.")
+        EggRollJAXVectorDesigner = _load_symbol("optimizer.eggroll_vector_designer", "EggRollJAXVectorDesigner")
+        return EggRollJAXVectorDesigner(ctx.policy, ctx.env_conf, **eggroll_opts, **kw)
+    return _base_turbo_enn(ctx, **kw)
 
 
 def _d_ts_sweep(ctx: _SimpleContext, opts: dict):
@@ -73,47 +127,65 @@ def _d_sts_sweep(ctx: _SimpleContext, opts: dict):
 
 
 def _d_turbo_enn_sweep(ctx: _SimpleContext, opts: dict):
-    _reject_unknown_opts("turbo-enn-sweep", opts, {"k", "idx"})
+    opts = dict(opts)
+    _reject_unknown_opts(
+        "turbo-enn-sweep",
+        opts,
+        {"k", "idx"} | _TURBO_OPTION_KEYS | _EGGROLL_TURBO_OPTION_KEYS,
+    )
     k = _require_int(opts, "k", example="turbo-enn-sweep/k=10")
-    index_driver = _index_driver_from_opts(opts, example="turbo-enn-sweep/k=10/idx=hnsw")
+    opts.pop("k", None)
     return _turbo_enn(
         ctx,
+        opts=opts,
+        designer_name="turbo-enn-sweep",
         turbo_mode="turbo-enn",
         k=k,
         num_keep=None,
         num_fit_samples=None,
         num_fit_candidates=None,
         acq_type="pareto",
-        index_driver=index_driver,
     )
 
 
 def _d_turbo_enn_p(ctx: _SimpleContext, opts: dict):
-    _reject_unknown_opts("turbo-enn-p", opts, {"idx"})
-    index_driver = _index_driver_from_opts(opts, example="turbo-enn-p/idx=hnsw")
+    opts = dict(opts)
+    _reject_unknown_opts(
+        "turbo-enn-p",
+        opts,
+        {"idx"} | _EGGROLL_TURBO_OPTION_KEYS,
+    )
     return _turbo_enn(
         ctx,
+        opts=opts,
+        designer_name="turbo-enn-p",
         turbo_mode="turbo-enn",
         k=10,
         num_keep=ctx.num_keep_val,
         num_fit_samples=None,
         num_fit_candidates=None,
         acq_type="pareto",
-        index_driver=index_driver,
     )
 
 
 def _d_turbo_enn_fit(ctx: _SimpleContext, opts: dict):
-    _reject_unknown_opts("turbo-enn-fit", opts, {"acq_type", "idx"})
+    opts = dict(opts)
+    _reject_unknown_opts(
+        "turbo-enn-fit",
+        opts,
+        {"acq_type", "idx"} | _TURBO_OPTION_KEYS | _EGGROLL_TURBO_OPTION_KEYS,
+    )
     acq_type = _require_str_in(
         opts,
         "acq_type",
         {"pareto", "thompson", "ucb"},
         example="turbo-enn-fit/acq_type=ucb",
     )
-    index_driver = _index_driver_from_opts(opts, example="turbo-enn-fit/acq_type=ucb/idx=hnsw")
+    opts.pop("acq_type", None)
     return _turbo_enn(
         ctx,
+        opts=opts,
+        designer_name="turbo-enn-fit",
         turbo_mode="turbo-enn",
         k=10,
         num_keep=ctx.num_keep_val,
@@ -121,19 +193,19 @@ def _d_turbo_enn_fit(ctx: _SimpleContext, opts: dict):
         num_fit_candidates=100,
         acq_type=acq_type,
         tr_type=None,
-        index_driver=index_driver,
     )
 
 
-def _build_turbo_enn_f(ctx: _SimpleContext, *, acq_type: str):
+def _build_turbo_enn_f(ctx: _SimpleContext, *, acq_type: str, opts: dict | None = None):
     """Factory for turbo-enn-f variants. acq_type: 'ucb' or 'pareto'."""
 
     def _num_candidates(num_dim, num_arms):
         return 100 * num_arms
 
-    TurboENNDesigner = _load_symbol("optimizer.turbo_enn_designer", "TurboENNDesigner")
-    return TurboENNDesigner(
-        ctx.policy,
+    return _turbo_enn(
+        ctx,
+        opts=opts,
+        designer_name="turbo-enn-f" if acq_type == "ucb" else "turbo-enn-f-p",
         turbo_mode="turbo-enn",
         k=10,
         num_keep=ctx.num_keep_val,
@@ -146,16 +218,23 @@ def _build_turbo_enn_f(ctx: _SimpleContext, *, acq_type: str):
 
 
 def _d_morbo_enn_fit(ctx: _SimpleContext, opts: dict):
-    _reject_unknown_opts("morbo-enn-fit", opts, {"acq_type", "idx"})
+    opts = dict(opts)
+    _reject_unknown_opts(
+        "morbo-enn-fit",
+        opts,
+        {"acq_type", "idx"} | _TURBO_OPTION_KEYS | _EGGROLL_TURBO_OPTION_KEYS,
+    )
     acq_type = _require_str_in(
         opts,
         "acq_type",
         {"pareto", "thompson", "ucb"},
         example="morbo-enn-fit/acq_type=ucb",
     )
-    index_driver = _index_driver_from_opts(opts, example="morbo-enn-fit/acq_type=ucb/idx=hnsw")
+    opts.pop("acq_type", None)
     return _turbo_enn(
         ctx,
+        opts=opts,
+        designer_name="morbo-enn-fit",
         turbo_mode="turbo-enn",
         k=10,
         num_keep=ctx.num_keep_val,
@@ -163,7 +242,6 @@ def _d_morbo_enn_fit(ctx: _SimpleContext, opts: dict):
         num_fit_candidates=100 * ctx.num_arms,
         acq_type=acq_type,
         tr_type="morbo",
-        index_driver=index_driver,
     )
 
 
@@ -182,17 +260,31 @@ def _d_sts_ar(ctx: _SimpleContext, opts: dict):
 
 
 def _d_turbo_enn_fit_ucb(ctx: _SimpleContext, opts: dict):
-    _reject_unknown_opts("turbo-enn-fit-ucb", opts, {"nfs", "k", "idx"})
+    opts = dict(opts)
+    eggroll_allowed = {
+        "steps_per_episode",
+        "num_envs",
+        "deterministic_policy",
+        "param_scale",
+        "seed_offset",
+    }
+    allowed = {"nfs", "k", "idx"} | eggroll_allowed
+    unknown = set(opts) - allowed
+    if unknown:
+        u = ", ".join(sorted(unknown))
+        raise NoSuchDesignerError(f"Designer 'turbo-enn-fit-ucb' does not support option(s): {u}. Use nfs and/or k. Example: 'turbo-enn-fit-ucb/nfs=100/k=10'.")
     nfs = _optional_int(opts, "nfs", default=100, example="turbo-enn-fit-ucb/nfs=50")
     k = _optional_int(opts, "k", default=10, example="turbo-enn-fit-ucb/k=20")
-    index_driver = _index_driver_from_opts(opts, example="turbo-enn-fit-ucb/idx=hnsw/nfs=100/k=10")
+    opts.pop("nfs", None)
+    opts.pop("k", None)
     return _turbo_enn(
         ctx,
+        opts=opts,
+        designer_name="turbo-enn-fit-ucb",
         turbo_mode="turbo-enn",
         k=k,
         num_keep=ctx.num_keep_val,
         num_fit_samples=nfs,
         num_fit_candidates=100,
         acq_type="ucb",
-        index_driver=index_driver,
     )

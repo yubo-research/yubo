@@ -1,13 +1,13 @@
 # BO config using timestep budget (no num_rounds).
 # Run:
-#   micromamba run -n yubo-rl python ops/experiment.py local \
+#   ./ops/experiment.py local \
 #     configs/bo/dm_control/quadruped/exp_quadruped_run_64x64_box_ucb_total_timesteps.toml
 
 [experiment]
 exp_dir = "_tmp/bo/dm_control/quadruped/box_ucb_total_timesteps"
 env_tag = "dm_control/quadruped-run-v0"
 policy_tag = "mlp-64-64"
-num_arms = 8
+num_arms = 1
 total_timesteps = 3000000
 num_reps = 10
 num_denoise = 1

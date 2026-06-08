@@ -8,7 +8,7 @@ import torch
 
 from rl.checkpointing import load_checkpoint
 
-from . import actor_eval as torchrl_sac_actor_eval
+from . import actor_eval
 from .config import SACConfig
 from .setup import _EnvSetup, _Modules, _TrainingSetup, _TrainState
 
@@ -60,12 +60,12 @@ def resume_if_requested(
     device: torch.device,
 ) -> _TrainState:
     state = _TrainState()
-    if not config.resume_from:
+    if not config.checkpoint.resume_from:
         return state
     _actor = importlib.import_module("rl.core.actor_state")
     restore_backbone_head_snapshot = getattr(_actor, "restore_backbone_head_snapshot")
     restore_rng_state_payload = getattr(_actor, "restore_rng_state_payload")
-    loaded = load_checkpoint(Path(config.resume_from), device=device)
+    loaded = load_checkpoint(Path(config.checkpoint.resume_from), device=device)
     if "actor_backbone" in loaded and "actor_head" in loaded:
         restore_backbone_head_snapshot(
             modules.actor_backbone,
@@ -96,7 +96,7 @@ def resume_if_requested(
 
 
 def build_eval_policy(modules: _Modules, env_setup: _EnvSetup, device: torch.device):
-    return torchrl_sac_actor_eval.SacActorEvalPolicy(
+    return actor_eval.SacActorEvalPolicy(
         modules.actor_backbone,
         modules.actor_head,
         modules.obs_scaler,
@@ -114,9 +114,17 @@ def evaluate_actor(
     device: torch.device,
     eval_seed: int,
 ) -> float:
-    collect_denoised_trajectory = getattr(importlib.import_module("rl.core.episode_rollout"), "collect_denoised_trajectory")
+    collect_denoised_trajectory = getattr(
+        importlib.import_module("rl.core.episode_rollout"),
+        "collect_denoised_trajectory",
+    )
 
     eval_env = env.env_conf
     eval_policy = build_eval_policy(modules, env, device)
-    traj, _ = collect_denoised_trajectory(eval_env, eval_policy, num_denoise=config.num_denoise, i_noise=int(eval_seed))
+    traj, _ = collect_denoised_trajectory(
+        eval_env,
+        eval_policy,
+        num_denoise=config.eval.num_denoise,
+        i_noise=int(eval_seed),
+    )
     return float(traj.rreturn)

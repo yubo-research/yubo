@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
 from typing import Any
 
 _HIDDEN_SIZE_KEYS = (
@@ -7,6 +8,41 @@ _HIDDEN_SIZE_KEYS = (
     "actor_head_hidden_sizes",
     "critic_head_hidden_sizes",
 )
+_MODEL_CONFIG_KEYS = {
+    "backbone_name",
+    "backbone_hidden_sizes",
+    "backbone_activation",
+    "backbone_layer_norm",
+    "actor_head_hidden_sizes",
+    "critic_head_hidden_sizes",
+    "head_activation",
+    "share_backbone",
+    "log_std_init",
+    "theta_dim",
+    "value_head_hidden_sizes",
+}
+_MODEL_DEFAULTS = {
+    "ppo": {
+        "backbone_name": "mlp",
+        "backbone_hidden_sizes": (64, 64),
+        "backbone_activation": "silu",
+        "backbone_layer_norm": True,
+        "actor_head_hidden_sizes": (),
+        "critic_head_hidden_sizes": (),
+        "head_activation": "silu",
+        "share_backbone": True,
+        "log_std_init": 0.0,
+    },
+    "sac": {
+        "backbone_name": "mlp",
+        "backbone_hidden_sizes": (256, 256),
+        "backbone_activation": "silu",
+        "backbone_layer_norm": False,
+        "actor_head_hidden_sizes": (),
+        "critic_head_hidden_sizes": (),
+        "head_activation": "silu",
+    },
+}
 
 
 def _as_tuple_ints(value: Any, *, key: str) -> tuple[int, ...]:
@@ -57,6 +93,41 @@ def _apply_env_model_defaults(
         if key in data and data[key] is not None:
             data[key] = _as_tuple_ints(data[key], key=key)
     return data
+
+
+def reject_model_config_keys(raw: dict[str, Any], *, algo: str) -> None:
+    present = sorted(k for k in raw if k in _MODEL_CONFIG_KEYS)
+    if present:
+        keys = ", ".join(present)
+        raise ValueError(f"{algo.upper()} config should use policy_tag for model architecture; remove explicit model keys: {keys}.")
+
+
+def _resolve_model_settings(config: Any, *, algo: str) -> SimpleNamespace:
+    _ns: dict = {}
+    exec("from problems.problem import resolve_rl_model_defaults", _ns)  # noqa: S102
+    resolve_rl_model_defaults = _ns["resolve_rl_model_defaults"]
+
+    algo_key = str(algo).strip().lower()
+    settings = dict(_MODEL_DEFAULTS[algo_key])
+    settings.update(
+        resolve_rl_model_defaults(
+            str(config.env_tag),
+            getattr(config, "policy_tag", None),
+            algo=algo_key,
+        )
+    )
+    for key in _HIDDEN_SIZE_KEYS:
+        if key in settings and settings[key] is not None:
+            settings[key] = _as_tuple_ints(settings[key], key=key)
+    return SimpleNamespace(**settings)
+
+
+def resolve_ppo_model_settings(config: Any) -> SimpleNamespace:
+    return _resolve_model_settings(config, algo="ppo")
+
+
+def resolve_sac_model_settings(config: Any) -> SimpleNamespace:
+    return _resolve_model_settings(config, algo="sac")
 
 
 def apply_ppo_env_model_defaults(raw: dict[str, Any]) -> dict[str, Any]:

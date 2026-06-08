@@ -65,6 +65,7 @@ def test_kiss_tidy_b_uhd_setups(monkeypatch):
         lambda **k: SimpleNamespace(rreturn=0.1),
     )
     monkeypatch.setattr(bszoc, "_run_bszo_iterations", lambda *a, **k: None)
+    bszoc.run_bszo_loop("mnist", 1, lr=0.01, problem_seed=0, noise_seed_0=0)
 
     def _fake_build_problem(env_tag, policy_tag, **kwargs):
         return SimpleNamespace(

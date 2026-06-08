@@ -3,6 +3,7 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 import numpy as np
+import pytest
 import torch
 from kiss_problem_atari_ale import _ALE
 from kiss_problem_dm_fake import _FakeDM
@@ -10,7 +11,10 @@ from kiss_problem_pixel_gym_env import make_boxed_gym_env_for_pixel_wrap
 
 
 def test_kiss_cov_problem_env_conf_backends_and_env_conf(monkeypatch):
-    from problems.env_conf import needs_atari_dm_bindings, register_atari_dm_bindings_loader
+    from problems.env_conf import (
+        needs_atari_dm_bindings,
+        register_atari_dm_bindings_loader,
+    )
     from problems.env_conf_backends import AtariDMBindings
 
     called = {"loader": 0}
@@ -25,7 +29,10 @@ def test_kiss_cov_problem_env_conf_backends_and_env_conf(monkeypatch):
     assert not needs_atari_dm_bindings("f:sphere-2d")
 
     b = AtariDMBindings(
-        resolve_dm_control_from_tag=lambda tag, use_pixels: ("dm_control/cartpole-swingup-v0", object),
+        resolve_dm_control_from_tag=lambda tag, use_pixels: (
+            "dm_control/cartpole-swingup-v0",
+            object,
+        ),
         resolve_atari_from_tag=lambda tag: ("ALE/Pong-v5", object),
         make_atari_preprocess_options=lambda **kwargs: kwargs,
         make_dm_control_env=lambda *args, **kwargs: None,
@@ -56,8 +63,13 @@ def test_kiss_cov_problem_atari_env(monkeypatch):
 
 
 def test_kiss_cov_problem_dm_control_and_pixel_policies(monkeypatch):
+    pytest.importorskip("dm_control")
     import problems.dm_control_env as dm_env
-    from problems.pixel_policies import AtariAgent57LitePolicy, AtariCNNPolicy, AtariGaussianPolicy
+    from problems.pixel_policies import (
+        AtariAgent57LitePolicy,
+        AtariCNNPolicy,
+        AtariGaussianPolicy,
+    )
 
     monkeypatch.setattr(dm_env.suite, "load", lambda *args, **kwargs: _FakeDM())
     env = dm_env.make("dm_control/cartpole-swingup-v0")
@@ -95,6 +107,7 @@ def test_kiss_cov_problem_dm_control_and_pixel_policies(monkeypatch):
 
 
 def test_kiss_cov_problem_dm_control_direct_units():
+    pytest.importorskip("dm_control")
     from problems.dm_control_env import BoxSpace, DictSpace, _PixelObsWrapper
 
     box = BoxSpace(low=np.array([-1.0, -1.0]), high=np.array([1.0, 1.0]))

@@ -1,0 +1,33 @@
+# Sparse-ENN DMControl Cheetah pixel-policy smoke config.
+#
+# Run:
+#   ./ops/experiment.py local \
+#     configs/bo/dm_control/cheetah/cheetah_run_pixels_sparse_enn_cnn.toml
+
+[experiment]
+exp_dir = "_tmp/bo/dm_control/cheetah/sparse_enn_cnn_mlp1024_600_pixels"
+env_tag = "dm:cheetah-run:pixels"
+policy_tag = "cnn-mlp-1024-600"
+num_arms = 1
+num_rounds = 32
+num_reps = 1
+num_denoise = 1
+num_denoise_passive = 1
+b_trace = true
+runtime_device = "cpu"
+local_workers = 1
+
+[optimizer]
+name = "sparse-enn"
+
+[optimizer.params]
+clock_scale = 3.0
+min_failures = 4.0
+num_pert = 20
+k = 10
+num_init = 16
+num_candidates = 4
+num_fit_samples = 8
+num_fit_candidates = 8
+acq_type = "ucb"
+candidate_rv = "uniform"

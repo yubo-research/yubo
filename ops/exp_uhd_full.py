@@ -16,7 +16,16 @@ cli = _cli
 @_cli.command(name="local", help="Run locally (single process) from a config TOML.")
 @click.argument("config_toml", type=click.Path(exists=True, dir_okay=False, path_type=str))
 def _local(config_toml: str) -> None:
-    im("ops.exp_uhd_run").run_local_from_toml(config_toml)
+    tomllib = im("tomllib")
+    p = im("ops.exp_uhd_parse")
+    try:
+        cfg = p._load_toml_config(config_toml)
+        p._validate_required(cfg)
+    except (OSError, tomllib.TOMLDecodeError, TypeError, ValueError) as e:
+        raise click.ClickException(str(e)) from e
+
+    parsed = p._parse_cfg(cfg)
+    im("ops.exp_uhd_run").run_parsed_uhd_local(parsed)
 
 
 local = _local

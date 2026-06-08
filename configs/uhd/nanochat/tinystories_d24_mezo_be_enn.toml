@@ -1,0 +1,43 @@
+# Run:
+# ./ops/exp_uhd.py local configs/uhd/nanochat/tinystories_d24_mezo_be_enn.toml
+#
+# UHD MeZO experiment with Behavioral Embedder (BE) and ENN Imputer.
+
+[uhd]
+env_tag = "nanochat:tinystories"
+policy_tag = "nanochat:d24"
+total_timesteps = 48000
+num_reps = 1
+
+# Optimizer: MeZO with Behavioral Embedder
+optimizer = "mezo_be"
+lr = 2e-4
+sigma = 0.002
+perturb = "eggroll"
+eggroll_rank = 1
+eggroll_noiser = "eggroll"
+
+# Behavioral Embedder (BE) setup
+be_num_probes = 10
+be_num_candidates = 12
+be_warmup = 20
+
+# Epistemic Nearest Neighbors (ENN) setup
+enn_minus_impute = true
+enn_fit_interval = 5
+enn_se_threshold = 0.5
+enn_num_candidates = 16
+enn_warmup_real_obs = 20
+
+# Subspace & Topology
+text_search_dim = 4096
+text_delta_scale = 1.0
+text_basis_max_tensors = 64
+max_tokens = 256
+
+steps_per_episode = 1
+num_envs = 8
+problem_seed = 42
+noise_seed_0 = 0
+seed_offset = 0
+log_interval = 1

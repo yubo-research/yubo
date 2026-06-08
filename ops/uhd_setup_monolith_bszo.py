@@ -1,5 +1,8 @@
 from ops.uhd_setup_bszo_core import _run_bszo_iterations
-from ops.uhd_setup_bszo_evaluate import make_bszo_gym_evaluate_fn, make_bszo_mnist_evaluate_fn
+from ops.uhd_setup_bszo_evaluate import (
+    make_bszo_gym_evaluate_fn,
+    make_bszo_mnist_evaluate_fn,
+)
 from ops.uhd_setup_monolith_support import (
     _make_accuracy_fn,
     _preload_mnist_train_to_device,

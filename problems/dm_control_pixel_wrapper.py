@@ -5,7 +5,12 @@ import warnings
 import numpy as np
 
 from problems.dm_control_env_core import PIXEL_HEIGHT, DMControlEnv
-from problems.dm_control_spaces import BoxSpace, DictSpace, is_gl_init_error, resize_pixels
+from problems.dm_control_spaces import (
+    BoxSpace,
+    DictSpace,
+    is_gl_init_error,
+    resize_pixels,
+)
 
 
 class PixelObsWrapper:

@@ -5,15 +5,13 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 import numpy as np
+import pytest
 
 import optimizer.optimizer_mo
 import optimizer.uhd_enn_fit_helpers
 import optimizer.uhd_enn_imputer_predict
 import optimizer.uhd_enn_imputer_tell
 import optimizer.uhd_loop_support
-import problems.dm_control_env_core
-import problems.dm_control_pixel_wrapper
-import problems.dm_control_spaces
 import problems.env_conf_backends
 import problems.env_conf_bindings
 import problems.env_conf_parse
@@ -36,7 +34,6 @@ from problems.reactor_policy_params import (
     set_timer_param,
 )
 from rl.math_utils import tanh_gaussian_action_log_prob_entropy
-from rl.pufferlib.offpolicy.backbone_name import resolve_backbone_name
 from tests.kiss_tidy_coverage_c_lib import run_reactor_policy_params
 from tests.kiss_tidy_coverage_c_mo_lib import run_optimizer_mo_and_fit
 from tests.kiss_tidy_coverage_c_support_lib import (
@@ -66,6 +63,11 @@ def test_kiss_tidy_uhd_loop_support(capsys):
 
 
 def test_kiss_tidy_dm_control_core_pixel_spaces_env_conf(monkeypatch):
+    pytest.importorskip("dm_control")
+    import problems.dm_control_env_core
+    import problems.dm_control_pixel_wrapper
+    import problems.dm_control_spaces
+
     _ = (
         problems.dm_control_env_core,
         problems.dm_control_pixel_wrapper,
@@ -156,7 +158,6 @@ def test_kiss_tidy_c_ppo_uhd_actor_smoke(monkeypatch):
     normalize_running_state_array(np.array([1.0, 2.0], dtype=np.float32), norm)
     dist = Normal(torch.zeros(1, 2), torch.ones(1, 2))
     tanh_gaussian_action_log_prob_entropy(dist)
-    assert resolve_backbone_name(SimpleNamespace(backbone_name="mlp"), SimpleNamespace(mode="vector")) == "mlp"
     env = SimpleNamespace(
         problem_seed=0,
         state_space=SimpleNamespace(shape=(3,)),

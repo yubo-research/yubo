@@ -44,3 +44,6 @@ class ENNConfig:
     select_interval: int
     embedder: str
     gather_t: int
+    err_ema_beta: float = 0.95
+    max_abs_err_ema: float = 0.25
+    min_calib_points: int = 10

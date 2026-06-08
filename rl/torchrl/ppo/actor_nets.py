@@ -7,7 +7,11 @@ import torch.nn as nn
 
 from rl.core.env_contract import ObservationContract
 
-from .ppo_nets_base import _BackboneHeadNet, _forward_backbone_features, _reshape_head_output
+from .ppo_nets_base import (
+    _BackboneHeadNet,
+    _forward_backbone_features,
+    _reshape_head_output,
+)
 
 
 class ActorNet(nn.Module):

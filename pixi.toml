@@ -1,0 +1,272 @@
+[workspace]
+name = "yubo-modal"
+channels = ["conda-forge", "nvidia"]
+platforms = ["linux-64", "osx-arm64"]
+
+[feature.hyperscalees.system-requirements]
+macos = "14.0"
+
+[feature.hyperscalees.dependencies]
+python = "3.12.*"
+pip = "*"
+git = "*"
+git-lfs = "*"
+maturin = "*"
+setuptools = ">=77.0.3,<81.0.0"
+numpy = ">=2.3,<2.4"
+scipy = ">=1.17,<1.18"
+h5py = "*"
+numba = "==0.62.1"
+llvmlite = "==0.45.1"
+protobuf = ">=6.31.1,<7"
+scikit-learn = "*"
+matplotlib = "*"
+pandas = "*"
+pybind11 = "==3.0.1"
+nomkl = "*"
+libblas = { version = "*", build = "*openblas" }
+openblas = "*"
+libfaiss = { version = "==1.10.0", build = "cpu_openblas*" }
+faiss = { version = "==1.10.0", build = "cpu_openblas_py312*" }
+faiss-cpu = "==1.10.0"
+
+[feature.hyperscalees.target.linux-64.dependencies]
+c-compiler = "*"
+cxx-compiler = "*"
+swig = "*"
+cuda-toolkit = "12.8.*"
+cuda-nvcc = "12.8.*"
+cuda-cudart-dev = "12.8.*"
+ninja = "*"
+cmake = "*"
+gxx_linux-64 = "*"
+
+[feature.hyperscalees.target.osx-arm64.dependencies]
+python = "3.13.*"
+faiss = { version = "==1.10.0", build = "cpu_openblas_py313*" }
+dm-control = ">=1.0.41"
+mujoco = ">=3.8.1,<3.9"
+fsspec = "<=2025.10.0"
+c-compiler = "*"
+cxx-compiler = "*"
+ninja = "*"
+cmake = "*"
+rust = "*"
+
+[feature.hyperscalees.activation.env]
+XLA_PYTHON_CLIENT_PREALLOCATE = "false"
+HF_HOME = "${HOME}/.cache/yubo/hyperscalees"
+HF_HUB_CACHE = "${HOME}/.cache/yubo/hyperscalees"
+
+[feature.hyperscalees.target.linux-64.activation.env]
+CUDA_HOME = "$CONDA_PREFIX"
+CUDACXX = "$CONDA_PREFIX/bin/nvcc"
+TORCH_CUDA_ARCH_LIST = "8.9"
+# ennbo's prebuilt Rust extension resolves cblas at load time (no DT_NEEDED on libopenblas).
+LD_LIBRARY_PATH = "$CONDA_PREFIX/lib:/usr/lib/x86_64-linux-gnu${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+
+[feature.hyperscalees.target.osx-arm64.activation.env]
+JAX_PLATFORMS = "mps,cpu"
+KMP_DUPLICATE_LIB_OK = "TRUE"
+OMP_NUM_THREADS = "1"
+MKL_NUM_THREADS = "1"
+OPENBLAS_NUM_THREADS = "1"
+VECLIB_MAXIMUM_THREADS = "1"
+DYLD_LIBRARY_PATH = "$CONDA_PREFIX/lib${DYLD_LIBRARY_PATH:+:$DYLD_LIBRARY_PATH}"
+PYTHONPATH = "${PIXI_PROJECT_ROOT}${PYTHONPATH:+:${PYTHONPATH}}"
+
+[feature.hyperscalees.pypi-options]
+extra-index-urls = ["https://pypi.nvidia.com"]
+no-build-isolation = ["pyvecch"]
+index-strategy = "unsafe-best-match"
+
+[feature.hyperscalees.pypi-dependencies]
+click = "*"
+gymnasium = { version = "==1.2.1", extras = ["box2d"] }
+tyro = "*"
+tqdm = "*"
+huggingface-hub = "==0.36.2"
+tokenizers = "*"
+einops = "*"
+importlib-resources = "*"
+pyrwkv-tokenizer = "*"
+hydra-core = "*"
+fire = "*"
+jupyter = "*"
+rich = "==15.0.0"
+reasoning-gym = "*"
+math-verify = { version = "==0.9.0", extras = ["antlr4_9_3"] }
+antlr4-python3-runtime = "==4.9.3"
+verifiers = { git = "https://github.com/PrimeIntellect-ai/verifiers.git" }
+gsm8k = { git = "https://github.com/PrimeIntellect-ai/verifiers.git", subdirectory = "environments/gsm8k" }
+renderers = "*"
+peft = "==0.18.0"
+transformers = "==4.57.1"
+accelerate = "==1.11.0"
+safetensors = "==0.6.2"
+datasets = "==4.4.1"
+pylatexenc = "==2.10"
+nest-asyncio = "*"
+wandb = "==0.23.0"
+weave = "==0.52.33"
+openai = "==2.24.0"
+openai-agents = "==0.10.5"
+pydantic = ">=2.12.2,<3"
+aiohttp = ">=3.13.3"
+jinja2 = ">=3.1.6"
+botorch = "==0.12.0"
+gpytorch = "==1.13"
+linear-operator = "==0.5.3"
+cma = "==4.0.0"
+celer = "*"
+optuna = "==4.0.0"
+smac = ">=2.4.0"
+mujoco = ">=3.8.1,<3.9"
+ax-platform = "*"
+pyDOE = ">=0.3.8"
+sparse-ho = { url = "https://github.com/QB3/sparse-ho/archive/master.zip" }
+libsvmdata = "*"
+craftax = "*"
+jaxmarl = "*"
+navix = "*"
+tiktoken = "*"
+rustbpe = "*"
+kernels = "*"
+pytest = "==8.3.4"
+pytest-testmon = "==2.2.0"
+hyperscalees = { git = "https://github.com/ESHyperscale/HyperscaleES.git", rev = "b77f7d6f91238fd575313e946b9cad21e0a74b32" }
+modal = "==1.3.0.post1"
+torchvision = ">=0.16.0"
+absl-py = "==2.4.0"
+chex = ">=0.1.91"
+dm-env = "==1.6"
+esquilax = "==2.1.0"
+jax-tqdm = "==0.4.0"
+etils = "==1.12.2"
+flask = "==3.1.3"
+flask-cors = "==6.0.2"
+flax = ">=0.8.0"
+jaxopt = ">=0.8.0"
+ml-collections = "==1.1.0"
+mujoco-mjx = "==3.8.0"
+optax = ">=0.2.0"
+orbax-checkpoint = ">=0.11.0"
+tensorboardx = "==2.6.5"
+trimesh = "==4.12.2"
+jumanji = "==1.1.1"
+warp-lang = "==1.13.0"
+mujoco-warp = "==3.8.0.3"
+imageio = "==2.37.3"
+imageio-ffmpeg = "*"
+networkx = "==3.6.1"
+pygame = "==2.6.1"
+rlax = ">=0.1.0"
+seaborn = "==0.13.2"
+brax = "==0.14.2"
+omegaconf = "*"
+
+[feature.hyperscalees.target.linux-64.pypi-dependencies]
+jax = { version = "==0.8.1", extras = ["cuda12"] }
+kinetix-env = "==3.0.0"
+grpclib = ">=0.4.7,<0.5"
+ray = "==2.51.1"
+torchrl = "==0.11.0"
+tensordict = "==0.11.0"
+dm-control = ">=1.0.41"
+mediapy = "*"
+playground = { git = "https://github.com/google-deepmind/mujoco_playground.git" }
+pyvecch = { git = "https://github.com/feji3769/VecchiaBO.git", subdirectory = "code" }
+
+[feature.hyperscalees.target.osx-arm64.pypi-dependencies]
+jax = "==0.10.0"
+jax-mps = "==0.10.1"
+torch = "==2.11.0"
+ray = "==2.51.1"
+modal = "==1.3.0.post1"
+grpclib = ">=0.4.7,<0.5"
+torchrl = "==0.11.0"
+tensordict = "==0.11.0"
+joblib = "*"
+threadpoolctl = "*"
+lxml = "*"
+absl-py = "==2.4.0"
+chex = "*"
+dm-env = "==1.6"
+esquilax = "*"
+jax-tqdm = "==0.4.0"
+etils = "==1.12.2"
+flask = "==3.1.3"
+flask-cors = "==6.0.2"
+flax = "*"
+jaxopt = "==0.8.5"
+ml-collections = "==1.1.0"
+mujoco-mjx = "==3.8.0"
+optax = "*"
+orbax-checkpoint = "*"
+pillow = "==12.2.0"
+tensorboardx = "==2.6.5"
+trimesh = "==4.12.2"
+jumanji = "==1.1.1"
+imageio = "==2.37.3"
+networkx = "==3.6.1"
+pygame = "==2.6.1"
+rlax = "==0.1.8"
+seaborn = "==0.13.2"
+mediapy = "*"
+playground = { git = "https://github.com/google-deepmind/mujoco_playground.git" }
+pyvecch = { git = "https://github.com/feji3769/VecchiaBO.git", subdirectory = "code" }
+
+[feature.hyperscalees.tasks]
+install-vllm = "python -m pip install --disable-pip-version-check --only-binary=:all: vllm==0.17.0"
+install-nodeps-linux = "python -m pip install --disable-pip-version-check --no-deps ennbo==0.3.10 && python -m pip install --disable-pip-version-check --no-deps joblib threadpoolctl"
+install-nodeps-darwin = "bash admin/install_ennbo_mac.sh && python -m pip install --disable-pip-version-check --no-deps tensordict==0.11.0 torchrl==0.11.0 pyvers==0.2.2 joblib threadpoolctl"
+install-lassobench = "python -c \"import importlib.util, sys; sys.exit(0 if importlib.util.find_spec('LassoBench') else 1)\" || python -m pip install --disable-pip-version-check --no-deps 'LassoBench @ git+https://github.com/ksehic/LassoBench.git'"
+install-vecchiabo = 'env_prefix="$(python -c "import sys; print(sys.prefix)")" && LDFLAGS="-L${env_prefix}/lib" LIBRARY_PATH="${env_prefix}/lib" CPATH="$(python -c "import pybind11; print(pybind11.get_include())")" python -m pip install --disable-pip-version-check --no-build-isolation --no-deps "git+https://github.com/feji3769/VecchiaBO.git#subdirectory=code"'
+install-mujoco-playground = "python -m pip install --disable-pip-version-check --no-deps mediapy git+https://github.com/google-deepmind/mujoco_playground.git && python -c 'from mujoco_playground._src import mjx_env; mjx_env.ensure_menagerie_exists()'"
+pin-runtime = "python -m pip install --disable-pip-version-check --force-reinstall --no-deps 'numpy>=2.3,<2.4' numba==0.62.1 llvmlite==0.45.1"
+setup-linux = { depends-on = ["install-vllm", "install-nodeps-linux", "install-lassobench", "install-vecchiabo", "install-mujoco-playground", "pin-runtime"] }
+setup-darwin = { depends-on = ["install-nodeps-darwin", "install-lassobench", "install-vecchiabo", "install-mujoco-playground", "pin-runtime"] }
+setup = "bash -lc 'if [ \"$(uname -s)\" = Darwin ]; then pixi run -e hyperscalees setup-darwin && pixi run -e hyperscalees llm-mac; else pixi run -e hyperscalees setup-linux; fi'"
+check = "bash -lc 'if [ \"$(uname -s)\" = Darwin ]; then pixi run -e hyperscalees check-mac-llm; else python admin/check_hyperscalees.py; fi'"
+test = "pytest"
+kiss = "kiss check"
+
+[feature.hyperscalees.target.osx-arm64.tasks]
+extras-mac = "bash admin/pixi_extras_mac.sh"
+llm-mac = "bash admin/pixi_extras_mac.sh --llm"
+menagerie = "python -c 'from mujoco_playground._src import mjx_env; mjx_env.ensure_menagerie_exists()'"
+check-mac = "JAX_PLATFORMS=mps python admin/check_hyperscalees.py"
+check-mac-llm = "JAX_PLATFORMS=mps python admin/check_hyperscalees.py --require-llm"
+bootstrap-mac = { depends-on = ["extras-mac", "llm-mac", "check-mac-llm"], cmd = "echo mac bootstrap ok" }
+
+[feature.isaaclab.dependencies]
+python = "3.12.*"
+pip = "*"
+git = "*"
+git-lfs = "*"
+
+[feature.isaaclab.pypi-options]
+extra-index-urls = ["https://pypi.nvidia.com"]
+index-strategy = "unsafe-best-match"
+
+[feature.isaaclab.target.linux-64.pypi-dependencies]
+warp-lang = "==1.12.0"
+click = "*"
+antlr4-python3-runtime = "==4.9.3"
+gymnasium = "==1.2.1"
+h5py = "*"
+hydra-core = "*"
+imageio = "==2.37.2"
+imageio-ffmpeg = "*"
+omegaconf = "*"
+torchaudio = "==2.10.0"
+torchrl = "==0.11.0"
+tensordict = "==0.11.0"
+
+[feature.isaaclab.tasks]
+install = "bash -lc 'set -euo pipefail; py=\"${CONDA_PREFIX}/bin/python\"; \"${py}\" -m ensurepip --upgrade; \"${py}\" -m pip install --disable-pip-version-check --upgrade \"pip>=25.1\" \"attrs>=25.3.0\"; \"${py}\" -m pip install --disable-pip-version-check --extra-index-url https://pypi.nvidia.com \"isaacsim[all,extscache]==6.0.0.0\"; mkdir -p /opt/yubo-pixi/src; if [ -d /opt/yubo-pixi/src/IsaacLab/.git ]; then git -C /opt/yubo-pixi/src/IsaacLab fetch --tags origin; else git clone https://github.com/isaac-sim/IsaacLab.git /opt/yubo-pixi/src/IsaacLab; fi; git -C /opt/yubo-pixi/src/IsaacLab checkout -q v3.0.0-beta; cd /opt/yubo-pixi/src/IsaacLab; ./isaaclab.sh --install assets,tasks,newton; \"${py}\" -m pip install --disable-pip-version-check --index-url https://download.pytorch.org/whl/cu128 torchaudio==2.10.0'"
+check = "python -c 'import importlib.util, gymnasium, tensordict, torchrl; mods=(\"isaacsim\", \"isaaclab\", \"isaaclab_assets\", \"isaaclab_newton\", \"isaaclab_physx\", \"isaaclab_tasks\"); missing=[m for m in mods if importlib.util.find_spec(m) is None]; assert not missing, missing; import isaaclab_tasks; from isaaclab_tasks.utils import parse_env_cfg; gymnasium.spec(\"Isaac-Velocity-Flat-G1-v0\"); parse_env_cfg(\"Isaac-Velocity-Flat-G1-v0\", num_envs=1, device=\"cpu\"); print(\"isaaclab ok\", torchrl.__version__, tensordict.__version__)'"
+
+[environments]
+hyperscalees = { features = ["hyperscalees"], no-default-feature = true }
+isaaclab = { features = ["isaaclab"], no-default-feature = true }

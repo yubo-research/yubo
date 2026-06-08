@@ -1,3 +1,4 @@
+import re
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Callable, Protocol
 
@@ -105,6 +106,102 @@ def _atari_cnn_factory(env_runtime: EnvironmentRuntimeProtocol) -> Policy:
     return AtariCNNPolicyFactory(hidden_sizes=(512,), cnn_latent_dim=512, variant="default")(env_runtime)
 
 
+def _cnn_mlp_factory(
+    hidden_sizes: tuple[int, ...],
+    *,
+    cnn_latent_dim: int = 256,
+) -> Callable[[EnvironmentRuntimeProtocol], Policy]:
+    def factory(env_runtime: EnvironmentRuntimeProtocol) -> Policy:
+        from problems.pixel_policies import CNNMLPPolicyFactory
+
+        return CNNMLPPolicyFactory(hidden_sizes, cnn_latent_dim=cnn_latent_dim)(env_runtime)
+
+    return factory
+
+
+_EGGROLL_AC_MLP_RE = re.compile(r"^eggroll-ac-mlp-(?P<hidden>\d+)x(?P<layers>\d+)-(?P<activation>relu|silu|pqn|tanh)$")
+_EGGROLL_MARL_MLP_RE = re.compile(r"^eggroll-marl-mlp-(?P<hidden>\d+)x(?P<layers>\d+)-(?P<activation>relu|silu|pqn|tanh)$")
+_ACTOR_CRITIC_MLP_RE = re.compile(r"^actor-critic-mlp-(?P<sizes>\d+(?:-\d+)*)(?:-(?P<activation>relu|silu|tanh))?$")
+_EGGROLL_EXTERNAL_POLICY_SPECS = {
+    "eggroll-linear-bf16-large": (512, 1, "silu"),
+    "lobs5-360m-lora-r4": (128, 2, "silu"),
+    "qwen3-1p7b-lora-r1": (128, 2, "silu"),
+    "qwen3-4b-base-lora-r1": (128, 2, "silu"),
+    "rwkv-7g7b-int8-lora-r1": (128, 2, "silu"),
+    "hyperscalees-rwkv-7w1p5b-lora-r1": (128, 2, "silu"),
+    "hyperscalees-rwkv-7w3b-lora-r1": (128, 2, "silu"),
+    "hyperscalees-rwkv-7g1p5b-lora-r1": (128, 2, "silu"),
+    "hyperscalees-rwkv-7g7b-lora-r1": (128, 2, "silu"),
+    "hyperscalees-rwkv-7g14b-lora-r1": (128, 2, "silu"),
+    "nanoegg:int8:6l:256d": (256, 1, "silu"),
+    "nanoegg-int8-6l-256d": (256, 1, "silu"),
+}
+
+
+def _eggroll_actor_critic_mlp_factory(
+    *,
+    hidden_dim: int,
+    layers: int,
+    activation: str,
+) -> Callable[[EnvironmentRuntimeProtocol], Policy]:
+    def factory(env_runtime: EnvironmentRuntimeProtocol) -> Policy:
+        from policies.eggroll_policy import (
+            EggRollActorCriticMLPPolicyFactory,
+            EggRollActorCriticMLPSpec,
+        )
+
+        return EggRollActorCriticMLPPolicyFactory(
+            EggRollActorCriticMLPSpec(
+                hidden_dim=int(hidden_dim),
+                layers=int(layers),
+                activation=str(activation),
+            )
+        )(env_runtime)
+
+    return factory
+
+
+def _dynamic_policy_preset(policy_tag: str) -> PolicyPreset | None:
+    if policy_tag.startswith("nanoegg:") or policy_tag.startswith("nanoegg-"):
+        from policies.nanoegg_policy import NanoEggPretrainPolicyFactory
+
+        return PolicyPreset(factory=NanoEggPretrainPolicyFactory(policy_tag))
+
+    ac_match = _ACTOR_CRITIC_MLP_RE.match(policy_tag)
+    if ac_match is not None:
+        hidden_sizes = tuple(int(v) for v in str(ac_match.group("sizes")).split("-"))
+        activation = str(ac_match.group("activation") or "silu")
+        return PolicyPreset(
+            factory=_actor_critic_mlp_factory(hidden_sizes),
+            rl_model=_infer_rl_model_from_actor_critic_mlp(
+                hidden_sizes,
+                activation=activation,
+            ),
+        )
+
+    match = _EGGROLL_AC_MLP_RE.match(policy_tag)
+    if match is None:
+        match = _EGGROLL_MARL_MLP_RE.match(policy_tag)
+    if match is None and policy_tag in _EGGROLL_EXTERNAL_POLICY_SPECS:
+        hidden_dim, layers, activation = _EGGROLL_EXTERNAL_POLICY_SPECS[policy_tag]
+        return PolicyPreset(
+            factory=_eggroll_actor_critic_mlp_factory(
+                hidden_dim=int(hidden_dim),
+                layers=int(layers),
+                activation=str(activation),
+            )
+        )
+    if match is None:
+        return None
+    return PolicyPreset(
+        factory=_eggroll_actor_critic_mlp_factory(
+            hidden_dim=int(match.group("hidden")),
+            layers=int(match.group("layers")),
+            activation=str(match.group("activation")),
+        )
+    )
+
+
 def _infer_rl_model_from_mlp_like(hidden_sizes: tuple[int, ...], *, ppo_log_std_init: float) -> dict[str, dict[str, Any]]:
     return {
         "ppo": {
@@ -138,8 +235,13 @@ def _infer_rl_model_from_mlp(
 
 def _infer_rl_model_from_actor_critic_mlp(
     hidden_sizes: tuple[int, ...],
+    *,
+    activation: str = "silu",
 ) -> dict[str, dict[str, Any]]:
-    return _infer_rl_model_from_mlp_like(hidden_sizes, ppo_log_std_init=0.0)
+    model = _infer_rl_model_from_mlp_like(hidden_sizes, ppo_log_std_init=0.0)
+    model["ppo"]["backbone_activation"] = str(activation)
+    model["ppo"]["head_activation"] = str(activation)
+    return model
 
 
 def _infer_rl_model_from_actor_mlp(
@@ -193,9 +295,17 @@ POLICY_PRESETS: dict[str, PolicyPreset] = {
         factory=_mlp_factory((64, 64)),
         rl_model=_infer_rl_model_from_mlp((64, 64)),
     ),
+    "isaaclab-random-mlp-64-64": PolicyPreset(
+        factory=_mlp_factory((64, 64)),
+        rl_model=_infer_rl_model_from_mlp((64, 64)),
+    ),
     "mlp-256-128": PolicyPreset(
         factory=_mlp_factory((256, 128)),
         rl_model=_infer_rl_model_from_mlp((256, 128)),
+    ),
+    "mlp-256-256": PolicyPreset(
+        factory=_mlp_factory((256, 256)),
+        rl_model=_infer_rl_model_from_mlp((256, 256)),
     ),
     "mlp-1024-512-256-128": PolicyPreset(
         factory=_mlp_factory((1024, 512, 256, 128)),
@@ -241,6 +351,9 @@ POLICY_PRESETS: dict[str, PolicyPreset] = {
         factory=_atari_cnn_factory,
         rl_model=_infer_rl_model_from_atari_cnn(),
     ),
+    "cnn-mlp-1024-600": PolicyPreset(
+        factory=_cnn_mlp_factory((1024, 600), cnn_latent_dim=512),
+    ),
 }
 
 
@@ -277,14 +390,25 @@ def get_policy_preset(policy_tag: str) -> PolicyPreset:
 
     Raises KeyError if the tag is not found.
     """
-    if policy_tag in POLICY_PRESETS:
-        return POLICY_PRESETS[policy_tag]
-    preset = _preset_from_pattern(policy_tag)
-    if preset is not None:
-        return preset
-    raise KeyError(f"Unknown policy tag '{policy_tag}'. Available: {list_policy_tags()}")
+    dynamic = _dynamic_policy_preset(policy_tag)
+    if dynamic is not None:
+        return dynamic
+    pattern = _preset_from_pattern(policy_tag)
+    if pattern is not None:
+        return pattern
+    if policy_tag not in POLICY_PRESETS:
+        raise KeyError(f"Unknown policy tag '{policy_tag}'. Available: {list_policy_tags()}")
+    return POLICY_PRESETS[policy_tag]
 
 
 def list_policy_tags() -> list[str]:
     """Return sorted list of available policy tags."""
-    return sorted(POLICY_PRESETS.keys())
+    tags = (
+        list(POLICY_PRESETS.keys())
+        + list(_EGGROLL_EXTERNAL_POLICY_SPECS)
+        + [
+            "eggroll-ac-mlp-{hidden}x{layers}-{relu|silu|pqn|tanh}",
+            "eggroll-marl-mlp-{hidden}x{layers}-{relu|silu|pqn|tanh}",
+        ]
+    )
+    return sorted(tags)

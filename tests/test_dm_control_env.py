@@ -1,3 +1,7 @@
+import pytest
+
+pytest.importorskip("dm_control")
+
 import numpy as np
 from _dm_control_dummies_env import _DummyDMEnv
 from _dm_control_dummies_env_nonames import _DummyDMEnvNoNames

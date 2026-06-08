@@ -92,7 +92,7 @@ def test_get_env_conf_gauss_uses_gaussian_actor_backbone():
         policy = default_policy(ec)
     except Exception as exc:
         text = str(exc).lower()
-        if "egl" in text or "opengl" in text or "mjr_makecontext" in text or "no module named 'dm_control'" in text:
+        if "egl" in text or "opengl" in text or "mjr_makecontext" in text or "no module named 'dm_control'" in text or "actuator_armature" in text:
             import pytest
 
             pytest.skip(f"dm_control OpenGL backend unavailable in test environment: {exc}")

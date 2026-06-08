@@ -10,6 +10,7 @@ from common.console_bo import (
 )
 from common.console_core import PPO_METRICS, SAC_METRICS, register_algo_metrics
 from common.console_rl import (
+    print_iter_record,
     print_iteration_log,
     print_iteration_simple,
     print_run_footer,
@@ -24,6 +25,7 @@ __all__ = [
     "SAC_METRICS",
     "TURBO_METRICS",
     "print_bo_footer",
+    "print_iter_record",
     "print_iteration_log",
     "print_iteration_simple",
     "print_run_footer",

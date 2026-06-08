@@ -4,11 +4,11 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from rl.torchrl.offpolicy import models as offpolicy_models
+from rl.torchrl.offpolicy import models
 
-_ActorNet = offpolicy_models.ActorNet
-_QNet = offpolicy_models.QNet
-_QNetPixel = offpolicy_models.QNetPixel
+_ActorNet = models.ActorNet
+_QNet = models.QNet
+_QNetPixel = models.QNetPixel
 
 
 class _ScaleActionToEnv(nn.Module):

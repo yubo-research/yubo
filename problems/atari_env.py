@@ -9,6 +9,8 @@ import numpy as np
 from ale_py import ALEInterface, roms
 from scipy.ndimage import zoom
 
+from common.env_tags import parse_atari_tag as _parse_atari_tag
+
 ATARI_FRAME_SIZE = 84
 ATARI_FRAME_STACK = 4
 ATARI_MAX_EPISODE_STEPS = 108000  # 30 min at 60fps, 4 frame skip -> ~27k steps
@@ -23,18 +25,6 @@ class AtariPreprocessOptions:
     repeat_action_probability: float = 0.0
     use_minimal_action_set: bool = True
     color_averaging: bool = False
-
-
-def _parse_atari_tag(tag: str) -> str:
-    """Parse atari:Pong or atari:Pong:agent57 -> ALE/Pong-v5."""
-    if tag.startswith("atari:"):
-        parts = tag.split(":", 1)[1].strip().split(":")
-        game = parts[0].split("-")[0]
-    elif tag.startswith("ALE/"):
-        return tag if "-v" in tag else f"{tag}-v5"
-    else:
-        raise ValueError(f"Expected atari:Game or ALE/Game-v5, got: {tag}")
-    return f"ALE/{game}-v5"
 
 
 def _to_rom_id(env_id: str) -> str:

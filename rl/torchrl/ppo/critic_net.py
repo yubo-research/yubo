@@ -2,7 +2,11 @@ from __future__ import annotations
 
 import torch
 
-from .ppo_nets_base import _BackboneHeadNet, _forward_backbone_features, _reshape_head_output
+from .ppo_nets_base import (
+    _BackboneHeadNet,
+    _forward_backbone_features,
+    _reshape_head_output,
+)
 
 
 class CriticNet(_BackboneHeadNet):

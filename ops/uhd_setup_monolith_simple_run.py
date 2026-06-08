@@ -15,6 +15,7 @@ from ops.uhd_setup_monolith_support import (
 )
 from ops.uhd_setup_simple_common import (
     _count_correct,
+    _default_be_config,
     _eval_full_train_acc,
     _run_simple_iterations,
     _should_log_simple,
@@ -191,7 +192,7 @@ def _run_simple_gym_np(
     dim = policy.num_params()
     param_clip = (-1.0, 1.0)
 
-    cfg = be if be is not None else BEConfig()
+    cfg = be if be is not None else _default_be_config()
     if optimizer in {"simple_be", "mezo_be"}:
         num_state = env_runtime.gym_conf.state_space.shape[0]
         embedder = BehavioralEmbedder(_gym_embed_bounds(num_state), num_probes=cfg.num_probes, seed=0)

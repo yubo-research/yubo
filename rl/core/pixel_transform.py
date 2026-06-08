@@ -1,8 +1,17 @@
 from __future__ import annotations
 
 import torch
-from torchrl.data import UnboundedContinuous
-from torchrl.envs.transforms import Transform
+
+try:
+    from torchrl.data import UnboundedContinuous
+    from torchrl.envs.transforms import Transform
+except ImportError:  # pragma: no cover - optional dependency in non-TorchRL envs.
+    UnboundedContinuous = None
+
+    class Transform:  # type: ignore[no-redef]
+        def __init__(self, *args, **kwargs) -> None:
+            pass
+
 
 _INT_IMAGE_DTYPES = (torch.uint8, torch.int8, torch.int16, torch.int32, torch.int64)
 
@@ -64,6 +73,8 @@ def ensure_atari_obs_format(obs: torch.Tensor, size: int = 84, *, scale_float_25
 
 
 def apply_pixel_observation_spec(spec, *, channels: int, size: int, keys_contain_fn) -> object:
+    if UnboundedContinuous is None:
+        raise ImportError("apply_pixel_observation_spec requires torchrl to be installed.")
     obs_spec = UnboundedContinuous(
         shape=torch.Size((channels, size, size)),
         device=spec.device,
@@ -75,6 +86,9 @@ def apply_pixel_observation_spec(spec, *, channels: int, size: int, keys_contain
     return spec
 
 
+# TODO: REMOVE TRANSFORM CLASSES. PixelsToObservation and AtariObservationTransform are now redundant
+# for the main collection paths, which use unified environment wrapping via EnvConf.make_gym_env().
+# These should be removed once evaluation pipelines are also updated.
 class PixelsToObservation(Transform):
     def __init__(self, size: int = 84):
         super().__init__(

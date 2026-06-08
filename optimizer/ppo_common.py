@@ -39,8 +39,8 @@ def _discounted_segment_return(rewards: np.ndarray, gamma: float) -> float:
     if gamma == 1.0:
         return float(np.sum(rewards))
     ep_return = 0.0
-    for r in reversed(rewards):
-        ep_return = float(r) + gamma * ep_return
+    for reward in reversed(rewards):
+        ep_return = float(reward) + gamma * ep_return
     return ep_return
 
 
@@ -86,14 +86,11 @@ def merge_trajectories(trajectories: list[Trajectory]) -> Trajectory:
     merged_log_probs = np.concatenate(all_log_probs, axis=0)
     dones_parts = []
     for traj in trajectories:
-        d = np.asarray(traj.dones, dtype=bool).copy()
-        d[-1] = True
-        dones_parts.append(d)
+        dones = np.asarray(traj.dones, dtype=bool).copy()
+        dones[-1] = True
+        dones_parts.append(dones)
     merged_dones = np.concatenate(dones_parts)
-    if all(has_values):
-        merged_values = np.concatenate(all_values, axis=0)
-    else:
-        merged_values = None
+    merged_values = np.concatenate(all_values, axis=0) if all(has_values) else None
 
     total_return = sum(float(traj.rreturn) for traj in trajectories)
     total_steps = sum(traj.num_steps for traj in trajectories)

@@ -9,5 +9,5 @@ ENV_LIB="${CONDA_PREFIX}/lib" LDFLAGS="-L${CONDA_PREFIX}/lib" LIBRARY_PATH="${CO
 
 pip install "LassoBench @ git+https://github.com/ksehic/LassoBench.git" --no-deps
 
-pip install ennbo --no-deps
+pip install ennbo==0.3.10 --no-deps
 cargo install kiss-ai

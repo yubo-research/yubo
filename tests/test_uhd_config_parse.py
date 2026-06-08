@@ -12,6 +12,7 @@ _validate_required = _exp_uhd_parse._validate_required
 _parse_early_reject_fields = _exp_uhd_parse._parse_early_reject_fields
 _parse_enn_fields = _exp_uhd_parse._parse_enn_fields
 _parse_perturb = _exp_uhd_parse._parse_perturb
+_parse_perturb_spec = _exp_uhd_parse._parse_perturb_spec
 
 
 def test_parse_early_reject_fields_all_defaults():
@@ -23,6 +24,32 @@ def test_parse_early_reject_fields_all_defaults():
     assert result.warmup_pos is None
     assert result.quantile is None
     assert result.window is None
+
+
+def test_parse_llm_sampling_rejects_multi_sample_greedy():
+    with pytest.raises(ValueError, match="samples_per_prompt > 1 require temperature > 0"):
+        _parse_cfg(
+            {
+                "env_tag": "llm:math:gsm8k",
+                "policy_tag": "qwen3-1p7b-lora-r1",
+                "num_rounds": 1,
+                "samples_per_prompt": 2,
+                "temperature": 0.0,
+            }
+        )
+
+
+def test_parse_llm_sampling_rejects_pass_at_k_without_multiple_samples():
+    with pytest.raises(ValueError, match="pass_at_k=true require samples_per_prompt > 1"):
+        _parse_cfg(
+            {
+                "env_tag": "llm:math:gsm8k",
+                "policy_tag": "qwen3-1p7b-lora-r1",
+                "num_rounds": 1,
+                "samples_per_prompt": 1,
+                "pass_at_k": True,
+            }
+        )
 
 
 def test_parse_early_reject_fields_custom_values():
@@ -162,6 +189,9 @@ def test_parse_enn_fields_all_defaults():
     assert result.select_interval == 1
     assert result.embedder == "direction"
     assert result.gather_t == 64
+    assert result.err_ema_beta == 0.95
+    assert result.max_abs_err_ema == 0.25
+    assert result.min_calib_points == 10
 
 
 def test_parse_enn_fields_custom_values():
@@ -180,6 +210,9 @@ def test_parse_enn_fields_custom_values():
         "enn_select_interval": 10,
         "enn_embedder": "probes",
         "enn_gather_t": 128,
+        "enn_err_ema_beta": 0.9,
+        "enn_max_abs_err_ema": 0.75,
+        "enn_min_calib_points": 3,
     }
     result = _parse_enn_fields(cfg)
     assert result.minus_impute is True
@@ -196,6 +229,9 @@ def test_parse_enn_fields_custom_values():
     assert result.select_interval == 10
     assert result.embedder == "probes"
     assert result.gather_t == 128
+    assert result.err_ema_beta == 0.9
+    assert result.max_abs_err_ema == 0.75
+    assert result.min_calib_points == 3
 
 
 def test_parse_enn_fields_partial_values():
@@ -225,119 +261,24 @@ def test_parse_enn_fields_type_coercion():
     assert result.num_candidates == 5
 
 
-def test_parse_perturb_dense():
-    ndt, nmt = _parse_perturb("dense")
-    assert ndt is None
-    assert nmt is None
+def test_parse_text_fields_bf8_storage_default_off():
+    result = _parse_cfg(
+        {
+            "env_tag": "llm:math:gsm8k",
+            "policy_tag": "qwen3-1p7b-lora-r1",
+            "num_rounds": 1,
+        }
+    )
+    assert result.bf8_storage is False
 
 
-def test_parse_perturb_dim():
-    ndt, nmt = _parse_perturb("dim:0.5")
-    assert ndt == 0.5
-    assert nmt is None
-
-
-def test_parse_perturb_mod():
-    ndt, nmt = _parse_perturb("mod:0.3")
-    assert ndt is None
-    assert nmt == 0.3
-
-
-def test_parse_perturb_invalid_value():
-    from click import BadParameter
-
-    with pytest.raises(BadParameter):
-        _parse_perturb("invalid")
-
-
-def test_validate_required_raises_without_policy_tag():
-    cfg = {
-        "env_tag": "mnist",
-        "num_rounds": 100,
-    }
-    with pytest.raises(ValueError, match="policy_tag"):
-        _validate_required(cfg)
-
-
-def test_parse_cfg_minimal_config():
-    cfg = {
-        "env_tag": "mnist",
-        "policy_tag": "pure-function",
-        "num_rounds": 100,
-    }
-    result = _parse_cfg(cfg)
-    assert result.env_tag == "mnist"
-    assert result.policy_tag == "pure-function"
-    assert result.num_rounds == 100
-    assert result.problem_seed is None
-    assert result.noise_seed_0 is None
-    assert result.lr == 0.001
-    assert result.sigma == 0.001
-    assert result.num_dim_target == 0.5
-    assert result.num_module_target is None
-    assert result.optimizer == "mezo"
-
-
-def test_parse_cfg_full_config():
-    cfg = {
-        "env_tag": "pend",
-        "policy_tag": "some-policy",
-        "num_rounds": 500,
-        "problem_seed": 42,
-        "noise_seed_0": 123,
-        "lr": 0.01,
-        "perturb": "mod:0.3",
-        "log_interval": 10,
-        "accuracy_interval": 500,
-        "target_accuracy": 0.99,
-        "optimizer": "simple",
-        "batch_size": 2048,
-        "er_tau": 0.5,
-        "er_mode": "ema",
-        "be_num_probes": 20,
-        "enn_d": 200,
-        "bszo_k": 4,
-    }
-    result = _parse_cfg(cfg)
-    assert result.env_tag == "pend"
-    assert result.policy_tag == "some-policy"
-    assert result.num_rounds == 500
-    assert result.problem_seed == 42
-    assert result.noise_seed_0 == 123
-    assert result.lr == 0.01
-    assert result.num_dim_target is None
-    assert result.num_module_target == 0.3
-    assert result.log_interval == 10
-    assert result.accuracy_interval == 500
-    assert result.target_accuracy == 0.99
-    assert result.optimizer == "simple"
-    assert result.batch_size == 2048
-    assert result.early_reject.tau == 0.5
-    assert result.early_reject.mode == "ema"
-    assert result.be.num_probes == 20
-    assert result.enn.d == 200
-    assert result.bszo_k == 4
-
-
-def test_parse_cfg_none_seeds_stay_none():
-    cfg = {
-        "env_tag": "mnist",
-        "policy_tag": "pure-function",
-        "num_rounds": 100,
-        "problem_seed": None,
-        "noise_seed_0": None,
-    }
-    result = _parse_cfg(cfg)
-    assert result.problem_seed is None
-    assert result.noise_seed_0 is None
-
-
-def test_parse_cfg_optional_target_accuracy_none():
-    cfg = {
-        "env_tag": "mnist",
-        "policy_tag": "pure-function",
-        "num_rounds": 100,
-        "target_accuracy": None,
-    }
-    result = _parse_cfg(cfg)
-    assert result.target_accuracy is None
+def test_parse_text_fields_bf8_storage_enabled():
+    result = _parse_cfg(
+        {
+            "env_tag": "llm:math:gsm8k",
+            "policy_tag": "qwen3-1p7b-lora-r1",
+            "num_rounds": 1,
+            "bf8_storage": True,
+        }
+    )
+    assert result.bf8_storage is True

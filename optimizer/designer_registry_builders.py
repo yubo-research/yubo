@@ -62,7 +62,7 @@ def _index_driver_from_opts(opts: dict, *, example: str) -> str | None:
     if not isinstance(v, str):
         raise NoSuchDesignerError(f"Designer option 'idx' must be a string. Example: '{example}'.")
     if v not in _IDX_ALLOWED:
-        raise NoSuchDesignerError("Designer option 'idx' must be one of: flat, hnsw, hnsw_disk.")
+        raise NoSuchDesignerError("Designer option 'idx' must be one of: flat, hnsw, exact.")
     if v == "exact":
         return "flat"
     return v
@@ -94,15 +94,16 @@ def _build_policy_ctor(ctx: _SimpleContext, module: str, name: str, **kwargs):
 
 
 def _build_ppo(ctx: _SimpleContext):
-    """On-policy PPO as a Designer (see optimizer/ppo_designer.py). Requires env_conf + actor-critic policy."""
-    PPOACDesigner = _load_symbol("optimizer.ppo_designer", "PPOACDesigner")
+    """On-policy actor-critic PPO as a Designer. Requires env_conf + actor-critic policy."""
+    PPODesigner = _load_symbol("optimizer.ppo_designer", "PPOACDesigner")
     if ctx.env_conf is None:
-        raise NoSuchDesignerError("Designer 'ppo-ac' requires env_conf (use a Gym-style env_tag so the Optimizer has an environment runtime).")
-    return PPOACDesigner(ctx.policy, ctx.env_conf)
+        raise NoSuchDesignerError("Designer 'ppo' requires env_conf (use a Gym-style env_tag so the Optimizer has an environment runtime).")
+    return PPODesigner(ctx.policy, ctx.env_conf)
 
 
 def _build_ppo_pg(ctx: _SimpleContext):
-    PPOPGDesigner = _load_symbol("optimizer.ppo_designer", "PPOPGDesigner")
+    """On-policy actor-only PPO as a Designer. Requires env_conf + actor policy."""
+    PPOPGDesigner = _load_symbol("optimizer.ppo_pg_designer", "PPOPGDesigner")
     if ctx.env_conf is None:
         raise NoSuchDesignerError("Designer 'ppo-pg' requires env_conf (use a Gym-style env_tag so the Optimizer has an environment runtime).")
     return PPOPGDesigner(ctx.policy, ctx.env_conf)

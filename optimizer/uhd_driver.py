@@ -122,13 +122,7 @@ class UHDDriver(UHDLoopSupportMixin):
             self._uhd.tell(mu, se)
             if phase_is_pos and self._enn_seed_selector is not None:
                 self._enn_seed_selector.tell_mu_plus(mu_plus=float(mu))
-            early_rejected = False
-            if phase_is_pos and self._can_early_reject():
-                self._update_early_reject_state(mu_plus=float(mu))
-                if self._should_early_reject(mu_plus=float(mu)):
-                    self._early_reject_skips += 1
-                    self._uhd.skip_negative()
-                    early_rejected = True
+            early_rejected = self._maybe_apply_early_reject(phase_is_pos=phase_is_pos, mu=float(mu))
             if self._enn_minus_imputer is not None and not phase_is_pos:
                 step_sigma = getattr(self._uhd, "step_sigma", self._uhd.sigma)
                 step_scale = getattr(self._uhd, "last_step_scale", 0.0)
@@ -159,6 +153,16 @@ class UHDDriver(UHDLoopSupportMixin):
         if self._print_summary:
             elapsed = time.perf_counter() - t0
             print(f"UHD: elapsed = {elapsed:.2f}s ({num_done} iterations)")
+
+    def _maybe_apply_early_reject(self, *, phase_is_pos: bool, mu: float) -> bool:
+        if not phase_is_pos or not self._can_early_reject():
+            return False
+        self._update_early_reject_state(mu_plus=mu)
+        if not self._should_early_reject(mu_plus=mu):
+            return False
+        self._early_reject_skips += 1
+        self._uhd.skip_negative()
+        return True
 
     def _maybe_select_seed(self) -> None:
         if not self._positive_phase():

@@ -1,6 +1,25 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
-from common.im import im
+import sys
+from pathlib import Path
+
+
+def _configure_stdio() -> None:
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if callable(reconfigure):
+            reconfigure(line_buffering=True)
+
+
+def _ensure_repo_root_on_path() -> None:
+    repo_root = Path(__file__).resolve().parents[1]
+    sys.path.insert(0, str(repo_root))
+
+
+_configure_stdio()
+_ensure_repo_root_on_path()
+
+from common.im import im  # noqa: E402
 
 _PARSE_EXPORTS = frozenset(
     {
@@ -11,11 +30,17 @@ _PARSE_EXPORTS = frozenset(
         "_OPTIONAL_TOML_KEYS",
         "_REQUIRED_TOML_KEYS",
         "_coerce_mapping_keys",
+        "_load_toml_config",
         "_normalize_key",
         "_parse_be_fields",
         "_parse_early_reject_fields",
         "_parse_enn_fields",
         "_parse_perturb",
+        "_parse_perturb_spec",
+        "_parse_override_value",
+        "_parse_overrides",
+        "_parse_cfg",
+        "_parse_budget_fields",
     }
 )
 

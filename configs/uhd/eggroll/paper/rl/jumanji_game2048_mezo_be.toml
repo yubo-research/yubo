@@ -1,0 +1,38 @@
+# Run:
+# ./ops/exp_uhd.py local configs/uhd/eggroll/paper/rl/jumanji_game2048_mezo_be.toml
+#
+# Behavior-embedding ENN MeZO companion to:
+# configs/bo/eggroll/paper/rl/jumanji_game2048_eggroll.toml
+#
+# Budget matches the Game2048 EggRoll paper config by real policy-evaluation
+# env steps:
+#   total_timesteps / (8 envs * 200 steps) = 312500 derived eval rounds
+#
+# This is the BE-ENN seed-selection variant, not ENN minus-imputation.
+
+[uhd]
+env_tag = "jumanji:Game2048-v1"
+policy_tag = "eggroll-ac-mlp-256x3-pqn"
+num_rounds = 100
+num_reps = 1
+optimizer = "mezo_be"
+lr = 0.1
+sigma = 0.5
+perturb = "eggroll"
+steps_per_episode = 200
+num_envs = 4096
+deterministic_policy = false
+problem_seed = 0
+noise_seed_0 = 0
+seed_offset = 0
+log_interval = 1
+
+# Behavior probes define policy-action embeddings over fixed Game2048 states.
+# The fitted ENN ranks candidate MeZO directions before real evaluation.
+be_num_probes = 128
+be_num_candidates = 64
+be_warmup = 1024
+be_fit_interval = 200
+be_enn_k = 64
+
+enn_minus_impute = false

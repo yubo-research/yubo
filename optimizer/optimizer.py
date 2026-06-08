@@ -1,5 +1,6 @@
 """Black-box optimizers; `env_conf` is an `EnvironmentRuntime` (or compatible)."""
 
+import inspect
 import sys
 import time
 
@@ -72,6 +73,11 @@ class Optimizer(OptimizerMultiObjectiveMixin):
 
     def _iterate(self, designer, num_arms):
         self._telemetry.reset()
+        custom_iterate_declared = inspect.getattr_static(designer, "iterate", None)
+        custom_iterate = getattr(designer, "iterate", None) if custom_iterate_declared is not None else None
+        if callable(custom_iterate):
+            return custom_iterate(self._data, num_arms, telemetry=self._telemetry)
+
         t_0 = time.time()
         policies = designer(self._data, num_arms, telemetry=self._telemetry)
         t_f = time.time()

@@ -22,8 +22,19 @@ def _create_optimizer_auto(bounds, config, rng):
 
 def _create_optimizer_py(bounds, config, rng):
     """Create optimizer forcing Python backend."""
-    m = _im("enn.turbo.optimizer")
+    m = _im("enn.turbo.python_fallback.optimizer")
     return m.create_optimizer(bounds=bounds, config=config, rng=rng)
+
+
+def _coerce_num_candidates(num_candidates):
+    if num_candidates is None or callable(num_candidates):
+        return num_candidates
+    if isinstance(num_candidates, bool):
+        raise ValueError("num_candidates must be an int or callable")
+    n = int(num_candidates)
+    if n <= 0:
+        raise ValueError(f"num_candidates must be positive, got {num_candidates}")
+    return n
 
 
 class TurboENNDesigner:
@@ -145,7 +156,7 @@ class TurboENNDesigner:
         RAASPDriver = raasp.RAASPDriver
         factory = _im("enn.turbo.config.factory")
 
-        num_candidates = self._num_candidates
+        num_candidates = _coerce_num_candidates(self._num_candidates)
         candidate_rv = self._parse_candidate_rv()
         trust_region = self._make_trust_region(num_metrics)
 
@@ -184,13 +195,14 @@ class TurboENNDesigner:
                 candidate_rv=candidate_rv,
             )
         if self._turbo_mode == "turbo-one":
-            acq_type = self._parse_acq_type()
+            self._parse_acq_type()
+            # TODO: enn.turbo.factory.turbo_one_config does not accept acq_type.
+            # Add a real factory path before relying on turbo-one-nds/ucb.
             return factory.turbo_one_config(
                 num_candidates=num_candidates,
                 num_init=num_init,
                 trust_region=trust_region,
                 candidate_rv=candidate_rv,
-                acq_type=acq_type,
             )
         if self._turbo_mode == "lhd-only":
             return factory.lhd_only_config(

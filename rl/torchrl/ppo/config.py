@@ -2,75 +2,88 @@ from __future__ import annotations
 
 import dataclasses
 
-from rl.config_model_defaults import apply_ppo_env_model_defaults
-from rl.core.torchrl_runtime import TorchRLRuntimeCapabilities, TorchRLRuntimeConfig
+from rl.config_model_defaults import (
+    apply_ppo_env_model_defaults,
+    reject_model_config_keys,
+)
+from rl.core.grouped_config import dataclass_field_names, parse_dataclass_section
+from rl.core.torchrl_runtime import TorchRLRuntimeCapabilities, resolve_torchrl_runtime
+from rl.core.torchrl_runtime_dtos import TorchRLRuntime, TorchRLRuntimeRequest
+from rl.core.torchrl_runtime_request import make_torchrl_runtime_request
+
+from .config_collector import PPOCollectorConfig, PPOLossConfig, PPOOptimConfig
+from .config_env import PPOEnvConfig
+from .config_run import PPOCheckpointConfig, PPOEvalConfig, PPOProfileConfig
 
 
 @dataclasses.dataclass
-class PPOConfig(TorchRLRuntimeConfig):
+class PPOConfig:
     exp_dir: str = "_tmp/ppo"
     env_tag: str = "pend"
+    policy_tag: str | None = None
     seed: int = 1
     problem_seed: int | None = None
     noise_seed_0: int | None = None
+    device: str = "auto"
     from_pixels: bool = False
     pixels_only: bool = True
-    total_timesteps: int = 1000000
-    learning_rate: float = 0.0003
-    num_envs: int = 1
-    num_steps: int = 2048
-    anneal_lr: bool = True
-    gamma: float = 0.99
-    gae_lambda: float = 0.95
-    num_minibatches: int = 32
-    update_epochs: int = 10
-    norm_adv: bool = True
-    clip_coef: float = 0.2
-    clip_vloss: bool = True
-    ent_coef: float = 0.0
-    vf_coef: float = 0.5
-    max_grad_norm: float = 0.5
-    target_kl: float | None = None
-    eval_interval: int = 1
-    num_denoise: int | None = None
-    num_denoise_passive: int | None = None
-    eval_seed_base: int | None = None
-    eval_noise_mode: str | None = None
-    backbone_name: str = "mlp"
-    backbone_hidden_sizes: tuple[int, ...] = (64, 64)
-    backbone_activation: str = "silu"
-    backbone_layer_norm: bool = True
-    actor_head_hidden_sizes: tuple[int, ...] = ()
-    critic_head_hidden_sizes: tuple[int, ...] = ()
-    head_activation: str = "silu"
-    share_backbone: bool = True
-    log_std_init: float = 0.0
-    theta_dim: int | None = None
     log_interval: int = 1
-    checkpoint_interval: int | None = None
-    resume_from: str | None = None
-    video_enable: bool = False
-    video_prefix: str = "policy"
-    video_num_episodes: int = 10
-    video_num_video_episodes: int = 3
-    video_episode_selection: str = "best"
-    video_seed_base: int | None = None
-    profile_enable: bool = False
-    profile_wait: int = 0
-    profile_warmup: int = 1
-    profile_active: int = 3
+    env: PPOEnvConfig = dataclasses.field(default_factory=PPOEnvConfig)
+    collector: PPOCollectorConfig = dataclasses.field(default_factory=PPOCollectorConfig)
+    optim: PPOOptimConfig = dataclasses.field(default_factory=PPOOptimConfig)
+    loss: PPOLossConfig = dataclasses.field(default_factory=PPOLossConfig)
+    eval: PPOEvalConfig = dataclasses.field(default_factory=PPOEvalConfig)
+    checkpoint: PPOCheckpointConfig = dataclasses.field(default_factory=PPOCheckpointConfig)
+    profile: PPOProfileConfig = dataclasses.field(default_factory=PPOProfileConfig)
 
     def to_dict(self) -> dict:
         return dataclasses.asdict(self)
 
     @classmethod
     def from_dict(cls, raw: dict) -> "PPOConfig":
-        d = apply_ppo_env_model_defaults(raw)
-        d.pop("policy_tag", None)
-        return cls(**d)
+        reject_model_config_keys(raw, algo="ppo")
+        apply_ppo_env_model_defaults(raw)
+        sections = {
+            "env",
+            "collector",
+            "optim",
+            "loss",
+            "eval",
+            "checkpoint",
+            "profile",
+        }
+        root_fields = dataclass_field_names(cls) - sections
+        unknown = sorted(set(raw) - root_fields - sections)
+        if unknown:
+            raise ValueError(f"Unknown PPO config fields: {', '.join(unknown)}. Use grouped PPO tables.")
+        data = {key: raw[key] for key in root_fields if key in raw}
+        data.update(
+            env=parse_dataclass_section(raw, "env", PPOEnvConfig, label="PPO"),
+            collector=parse_dataclass_section(raw, "collector", PPOCollectorConfig, label="PPO"),
+            optim=parse_dataclass_section(raw, "optim", PPOOptimConfig, label="PPO"),
+            loss=parse_dataclass_section(raw, "loss", PPOLossConfig, label="PPO"),
+            eval=parse_dataclass_section(raw, "eval", PPOEvalConfig, label="PPO"),
+            checkpoint=parse_dataclass_section(raw, "checkpoint", PPOCheckpointConfig, label="PPO"),
+            profile=parse_dataclass_section(raw, "profile", PPOProfileConfig, label="PPO"),
+        )
+        return cls(**data)
 
     def runtime_num_envs(self) -> int:
-        return int(self.num_envs)
+        return int(self.collector.num_envs)
+
+    def runtime_request(self) -> TorchRLRuntimeRequest:
+        return make_torchrl_runtime_request(
+            env_tag=self.env_tag,
+            device=self.device,
+            collector_backend=str(self.collector.backend),
+            single_env_backend=str(self.collector.single_env_backend),
+            num_envs=int(self.runtime_num_envs()),
+            collector_workers=self.collector.workers,
+        )
+
+    def resolve_runtime(self, *, capabilities: TorchRLRuntimeCapabilities | None = None) -> TorchRLRuntime:
+        resolved_capabilities = capabilities if capabilities is not None else TorchRLRuntimeCapabilities()
+        return resolve_torchrl_runtime(self.runtime_request(), capabilities=resolved_capabilities)
 
 
 _PPO_RUNTIME_CAPABILITIES = TorchRLRuntimeCapabilities(

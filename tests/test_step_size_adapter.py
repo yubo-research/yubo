@@ -103,3 +103,22 @@ def test_failure_resets_success_count():
     adapter.update(accepted=True)  # success 1 again
     adapter.update(accepted=True)  # success 2
     assert adapter.sigma == 0.1  # no expand yet
+
+
+def test_sigma_init_clamped_to_bounds():
+    adapter = StepSizeAdapter(sigma_0=100.0, dim=10, sigma_max=0.5, sigma_min=0.01)
+    assert adapter.sigma_init == 0.5
+    assert adapter.sigma == 0.5
+
+
+def test_restart_resets_sigma_and_counters():
+    adapter = StepSizeAdapter(sigma_0=0.1, dim=10, success_tolerance=3)
+    adapter.update(accepted=True)
+    adapter.update(accepted=True)
+    adapter.update(accepted=True)
+    assert adapter.sigma == 0.2
+    adapter.restart()
+    assert adapter.sigma == adapter.sigma_init == 0.1
+    adapter.update(accepted=True)
+    adapter.update(accepted=True)
+    assert adapter.sigma == 0.1

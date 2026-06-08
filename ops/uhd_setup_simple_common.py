@@ -7,17 +7,6 @@ from optimizer.gaussian_perturbator import GaussianPerturbator
 from optimizer.sparse_gaussian_perturbator import SparseGaussianPerturbator
 
 
-def _default_be_config() -> BEConfig:
-    return BEConfig(
-        num_probes=10,
-        num_candidates=10,
-        warmup=20,
-        fit_interval=10,
-        enn_k=25,
-        sigma_range=None,
-    )
-
-
 def _be_enn_kwargs(cfg: BEConfig) -> dict:
     return {
         "num_candidates": cfg.num_candidates,
@@ -29,6 +18,17 @@ def _be_enn_kwargs(cfg: BEConfig) -> dict:
         "enn_index_driver": cfg.enn_index_driver,
         "acquisition": cfg.acquisition,
     }
+
+
+def _default_be_config() -> BEConfig:
+    return BEConfig(
+        num_probes=10,
+        num_candidates=10,
+        warmup=20,
+        fit_interval=10,
+        enn_k=25,
+        sigma_range=None,
+    )
 
 
 def _make_simple_optimizer(

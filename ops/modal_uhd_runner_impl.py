@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import io
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 
-import modal
-
 from common.im import im
-from ops.modal_enn_image import add_enn_to_image, enn_project_root
+from ops.modal_enn_image import enn_project_root
+from ops.modal_uhd_runner_fields import EarlyRejectFields, RunFields
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
 _PROJECT_DIRS = (
@@ -22,38 +22,38 @@ _PROJECT_DIRS = (
 )
 _ENN_ROOT = enn_project_root(_PROJECT_ROOT)
 
-_image = (
-    modal.Image.debian_slim(python_version="3.11.9")
-    .apt_install(
-        "swig",
-        "curl",
-        "build-essential",
-        "libopenblas-dev",
-        "patchelf",
-        "cmake",
-        "ninja-build",
+
+def _build_image(modal):
+    image = (
+        modal.Image.debian_slim(python_version="3.11.9")
+        .apt_install("swig", "curl", "build-essential", "libopenblas-dev", "patchelf")
+        .run_commands(
+            "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y",
+            'echo "export PATH=$HOME/.cargo/bin:$PATH" >> ~/.bashrc',
+        )
+        .pip_install(
+            "torch==2.3.1",
+            "torchvision==0.18.1",
+            "numpy==1.26.4",
+            "gymnasium==1.2.0",
+            "gymnasium[mujoco]",
+            "gymnasium[box2d]",
+            "mujoco==3.3.3",
+            "scipy==1.15.3",
+            "click==8.3.1",
+            "maturin>=1.0",
+        )
+        .env({"PYTHONPATH": "/root"})
     )
-    .run_commands(
-        "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y",
-        'echo "export PATH=$HOME/.cargo/bin:$PATH" >> ~/.bashrc',
+    for project_dir in _PROJECT_DIRS:
+        image = image.add_local_dir(str(_PROJECT_ROOT / project_dir), remote_path=f"/root/{project_dir}")
+    image = image.add_local_dir(str(_ENN_ROOT), remote_path="/root/enn")
+    return image.run_commands(
+        ". $HOME/.cargo/env && "
+        "export RUSTFLAGS='-C link-arg=-Wl,--no-as-needed -C link-arg=-lopenblas' && "
+        "cd /root/enn/rust/crates/enn-py && maturin build --release",
+        "pip install $(find /root/enn/rust -path '*/wheels/*.whl' | head -1) && pip install -e /root/enn",
     )
-    .pip_install(
-        "torch==2.3.1",
-        "torchvision==0.18.1",
-        "numpy==1.26.4",
-        "gymnasium==1.2.0",
-        "gymnasium[mujoco]",
-        "gymnasium[box2d]",
-        "mujoco==3.3.3",
-        "scipy==1.15.3",
-        "click==8.3.1",
-        "maturin>=1.0",
-    )
-    .env({"PYTHONPATH": "/root"})
-)
-for _d in _PROJECT_DIRS:
-    _image = _image.add_local_dir(str(_PROJECT_ROOT / _d), remote_path=f"/root/{_d}", copy=True)
-_image = add_enn_to_image(_image, _ENN_ROOT)
 
 
 class _Tee:
@@ -69,40 +69,96 @@ class _Tee:
             s.flush()
 
 
+@dataclass(frozen=True)
 class _ENNFields:
-    def __init__(
-        self,
-        *,
-        minus_impute: bool,
-        d: int,
-        s: int,
-        jl_seed: int,
-        k: int,
-        fit_interval: int,
-        warmup_real_obs: int,
-        refresh_interval: int,
-        se_threshold: float,
-        target: str,
-        num_candidates: int,
-        select_interval: int,
-        embed_cfg: tuple[str, int],
-    ):
-        self.minus_impute = minus_impute
-        self.d = d
-        self.s = s
-        self.jl_seed = jl_seed
-        self.k = k
-        self.fit_interval = fit_interval
-        self.warmup_real_obs = warmup_real_obs
-        self.refresh_interval = refresh_interval
-        self.se_threshold = se_threshold
-        self.target = target
-        self.num_candidates = num_candidates
-        self.select_interval = select_interval
-        self.embedder, self.gather_t = embed_cfg
+    minus_impute: bool
+    d: int
+    s: int
+    jl_seed: int
+    k: int
+    fit_interval: int
+    warmup_real_obs: int
+    refresh_interval: int
+    se_threshold: float
+    target: str
+    num_candidates: int
+    select_interval: int
+    embed_cfg: tuple[str, int]
+    err_ema_beta: float = 0.95
+    max_abs_err_ema: float = 0.25
+    min_calib_points: int = 10
+
+    @property
+    def embedder(self) -> str:
+        return self.embed_cfg[0]
+
+    @property
+    def gather_t(self) -> int:
+        return self.embed_cfg[1]
+
+
+def _run_fields(
+    env_tag,
+    num_rounds,
+    policy_tag,
+    lr,
+    sigma,
+    ndt,
+    nmt,
+    problem_seed,
+    noise_seed_0,
+    log_interval,
+    accuracy_interval,
+    target_accuracy,
+) -> RunFields:
+    return RunFields(
+        env_tag=env_tag,
+        num_rounds=int(num_rounds),
+        policy_tag=policy_tag,
+        lr=float(lr),
+        sigma=float(sigma),
+        ndt=ndt,
+        nmt=nmt,
+        problem_seed=None if problem_seed is None else int(problem_seed),
+        noise_seed_0=None if noise_seed_0 is None else int(noise_seed_0),
+        log_interval=int(log_interval),
+        accuracy_interval=int(accuracy_interval),
+        target_accuracy=target_accuracy,
+    )
+
+
+def _early_reject_fields(er) -> EarlyRejectFields:
+    return EarlyRejectFields(
+        tau=er.tau,
+        mode=er.mode,
+        ema_beta=er.ema_beta,
+        warmup_pos=er.warmup_pos,
+        quantile=er.quantile,
+        window=er.window,
+    )
 
 
 def _parse_enn_fields(enn: dict[str, object] | None) -> _ENNFields:
+    if hasattr(enn, "__dataclass_fields__"):
+        enn = {
+            "enn_minus_impute": enn.minus_impute,
+            "enn_d": enn.d,
+            "enn_s": enn.s,
+            "enn_jl_seed": enn.jl_seed,
+            "enn_k": enn.k,
+            "enn_fit_interval": enn.fit_interval,
+            "enn_warmup_real_obs": enn.warmup_real_obs,
+            "enn_refresh_interval": enn.refresh_interval,
+            "enn_se_threshold": enn.se_threshold,
+            "enn_target": enn.target,
+            "enn_num_candidates": enn.num_candidates,
+            "enn_select_interval": enn.select_interval,
+            "enn_embedder": enn.embedder,
+            "enn_gather_t": enn.gather_t,
+            "enn_err_ema_beta": enn.err_ema_beta,
+            "enn_max_abs_err_ema": enn.max_abs_err_ema,
+            "enn_min_calib_points": enn.min_calib_points,
+        }
     enn = {} if enn is None else dict(enn)
     enn_minus_impute = bool(enn.get("enn_minus_impute", False))
     enn_d = int(enn.get("enn_d", 100))
@@ -118,6 +174,9 @@ def _parse_enn_fields(enn: dict[str, object] | None) -> _ENNFields:
     enn_select_interval = int(enn.get("enn_select_interval", 1))
     enn_embedder = str(enn.get("enn_embedder", "direction"))
     enn_gather_t = int(enn.get("enn_gather_t", 64))
+    enn_err_ema_beta = float(enn.get("enn_err_ema_beta", 0.95))
+    enn_max_abs_err_ema = float(enn.get("enn_max_abs_err_ema", 0.25))
+    enn_min_calib_points = int(enn.get("enn_min_calib_points", 10))
     return _ENNFields(
         minus_impute=enn_minus_impute,
         d=enn_d,
@@ -132,6 +191,9 @@ def _parse_enn_fields(enn: dict[str, object] | None) -> _ENNFields:
         num_candidates=enn_num_candidates,
         select_interval=enn_select_interval,
         embed_cfg=(enn_embedder, enn_gather_t),
+        err_ema_beta=enn_err_ema_beta,
+        max_abs_err_ema=enn_max_abs_err_ema,
+        min_calib_points=enn_min_calib_points,
     )
 
 
@@ -142,8 +204,9 @@ def run(
     ndt,
     nmt,
     *,
-    policy_tag,
+    policy_tag: str | None = None,
     gpu="A100",
+    sigma: float = 0.001,
     problem_seed: int | None = None,
     noise_seed_0: int | None = None,
     log_interval: int = 10,
@@ -152,7 +215,6 @@ def run(
     early_reject=None,
     enn: dict[str, object] | None = None,
     optimizer: str = "mezo",
-    sigma: float = 0.001,
     be=None,
 ):
     modal = im("modal")
@@ -162,84 +224,54 @@ def run(
         raise ValueError(f"Modal UHD supports optimizer='mezo' only; got {optimizer!r}. Use local CLI for simple, simple_be, mezo_be, or bszo.")
 
     app = modal.App(name="yubo-uhd")
+    image = _build_image(modal)
 
-    @app.function(image=_image, timeout=2 * 60 * 60, gpu=gpu, serialized=True)
-    def _run_uhd(
-        env_tag,
-        num_rounds,
-        lr,
-        sigma,
-        perturb,
-        policy_tag,
-        problem_seed,
-        noise_seed_0,
-        log_interval,
-        accuracy_interval,
-        target_accuracy,
-        early_reject_tau,
-        early_reject_mode,
-        early_reject_ema_beta,
-        early_reject_warmup_pos,
-        early_reject_quantile,
-        early_reject_window,
-        enn_minus_impute,
-        enn_d,
-        enn_s,
-        enn_jl_seed,
-        enn_k,
-        enn_fit_interval,
-        enn_warmup_real_obs,
-        enn_refresh_interval,
-        enn_se_threshold,
-        enn_target,
-        enn_num_candidates,
-        enn_select_interval,
-        enn_embedder,
-        enn_gather_t,
-    ):
-        ndt, nmt = perturb
+    @app.function(image=image, timeout=2 * 60 * 60, gpu=gpu, serialized=True)
+    def _run_uhd(run_f, er_f, enn_f):
         er_cfg = EarlyRejectConfig(
-            tau=early_reject_tau,
-            mode=early_reject_mode,
-            ema_beta=early_reject_ema_beta,
-            warmup_pos=early_reject_warmup_pos,
-            quantile=early_reject_quantile,
-            window=early_reject_window,
+            tau=er_f.tau,
+            mode=er_f.mode,
+            ema_beta=er_f.ema_beta,
+            warmup_pos=er_f.warmup_pos,
+            quantile=er_f.quantile,
+            window=er_f.window,
         )
         from ops.uhd_setup_simple_common import _default_be_config
 
         be_cfg = be if be is not None else _default_be_config()
         loop = make_loop(
-            env_tag,
-            num_rounds,
-            policy_tag=policy_tag,
-            problem_seed=problem_seed,
-            noise_seed_0=noise_seed_0,
-            optimizer=optimizer,
-            lr=lr,
-            sigma=sigma,
-            num_dim_target=ndt,
-            num_module_target=nmt,
-            log_interval=log_interval,
-            accuracy_interval=accuracy_interval,
-            target_accuracy=target_accuracy,
+            run_f.env_tag,
+            run_f.num_rounds,
+            policy_tag=run_f.policy_tag,
+            problem_seed=run_f.problem_seed,
+            noise_seed_0=run_f.noise_seed_0,
+            lr=run_f.lr,
+            sigma=run_f.sigma,
+            num_dim_target=run_f.ndt,
+            num_module_target=run_f.nmt,
+            log_interval=run_f.log_interval,
+            accuracy_interval=run_f.accuracy_interval,
+            target_accuracy=run_f.target_accuracy,
             early_reject=er_cfg,
             be=be_cfg,
             enn={
-                "enn_minus_impute": enn_minus_impute,
-                "enn_d": enn_d,
-                "enn_s": enn_s,
-                "enn_jl_seed": enn_jl_seed,
-                "enn_k": enn_k,
-                "enn_fit_interval": enn_fit_interval,
-                "enn_warmup_real_obs": enn_warmup_real_obs,
-                "enn_refresh_interval": enn_refresh_interval,
-                "enn_se_threshold": enn_se_threshold,
-                "enn_target": enn_target,
-                "enn_num_candidates": enn_num_candidates,
-                "enn_select_interval": enn_select_interval,
-                "enn_embedder": enn_embedder,
-                "enn_gather_t": enn_gather_t,
+                "enn_minus_impute": enn_f.minus_impute,
+                "enn_d": enn_f.d,
+                "enn_s": enn_f.s,
+                "enn_jl_seed": enn_f.jl_seed,
+                "enn_k": enn_f.k,
+                "enn_fit_interval": enn_f.fit_interval,
+                "enn_warmup_real_obs": enn_f.warmup_real_obs,
+                "enn_refresh_interval": enn_f.refresh_interval,
+                "enn_se_threshold": enn_f.se_threshold,
+                "enn_target": enn_f.target,
+                "enn_num_candidates": enn_f.num_candidates,
+                "enn_select_interval": enn_f.select_interval,
+                "enn_embedder": enn_f.embedder,
+                "enn_gather_t": enn_f.gather_t,
+                "enn_err_ema_beta": enn_f.err_ema_beta,
+                "enn_max_abs_err_ema": enn_f.max_abs_err_ema,
+                "enn_min_calib_points": enn_f.min_calib_points,
             },
         )
         buf = io.StringIO()
@@ -268,35 +300,20 @@ def run(
     with modal.enable_output():
         with app.run():
             return _run_uhd.remote(
-                env_tag,
-                num_rounds,
-                lr,
-                float(sigma),
-                (ndt, nmt),
-                str(policy_tag),
-                None if problem_seed is None else int(problem_seed),
-                None if noise_seed_0 is None else int(noise_seed_0),
-                int(log_interval),
-                int(accuracy_interval),
-                target_accuracy,
-                er.tau,
-                er.mode,
-                er.ema_beta,
-                er.warmup_pos,
-                er.quantile,
-                er.window,
-                bool(enn_f.minus_impute),
-                int(enn_f.d),
-                int(enn_f.s),
-                int(enn_f.jl_seed),
-                int(enn_f.k),
-                int(enn_f.fit_interval),
-                int(enn_f.warmup_real_obs),
-                int(enn_f.refresh_interval),
-                float(enn_f.se_threshold),
-                str(enn_f.target),
-                int(enn_f.num_candidates),
-                int(enn_f.select_interval),
-                str(enn_f.embedder),
-                int(enn_f.gather_t),
+                _run_fields(
+                    env_tag,
+                    num_rounds,
+                    policy_tag,
+                    lr,
+                    sigma,
+                    ndt,
+                    nmt,
+                    problem_seed,
+                    noise_seed_0,
+                    log_interval,
+                    accuracy_interval,
+                    target_accuracy,
+                ),
+                _early_reject_fields(er),
+                enn_f,
             )

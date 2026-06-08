@@ -1,0 +1,39 @@
+[rl]
+algo = "mjx_ppo"
+
+[rl.mjx_ppo]
+exp_dir = "runs/rl/mjx/ppo_halfcheetah_paper_baseline"
+env_tag = "gymnasium_fast:HalfCheetah-v5"
+seed = 0
+hidden_size = 256
+log_interval = 10
+
+[rl.mjx_ppo.collector]
+total_frames = 1000000
+# To match the 5000 frames_per_batch from the paper baseline
+num_envs = 50
+num_steps = 100
+
+[rl.mjx_ppo.optim]
+lr = 3e-4
+anneal_lr = true
+minibatch_size = 250
+num_epochs = 10
+max_grad_norm = 0.5
+
+[rl.mjx_ppo.loss]
+gamma = 0.99
+gae_lambda = 0.95
+normalize_advantage = true
+normalize_reward = true
+clip_epsilon = 0.2
+clip_value_loss = true
+entropy_coeff = 0.0
+critic_coeff = 0.5
+
+[rl.mjx_ppo.eval]
+interval = 0
+
+[rl.run]
+num_reps = 1
+workers = 1

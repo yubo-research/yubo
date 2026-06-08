@@ -12,7 +12,11 @@ from ops.uhd_setup_monolith_support import (
     _parse_enn_cfg,
     _preload_mnist_train_to_device,
 )
-from ops.uhd_setup_simple_common import _gym_embed_bounds, _make_simple_optimizer
+from ops.uhd_setup_simple_common import (
+    _default_be_config,
+    _gym_embed_bounds,
+    _make_simple_optimizer,
+)
 from optimizer.gaussian_perturbator import GaussianPerturbator
 from optimizer.lr_scheduler import ConstantLR
 from optimizer.sparse_gaussian_perturbator import SparseGaussianPerturbator
@@ -82,7 +86,7 @@ def _make_np_uhd_optimizer(
         seed_all(int(env_runtime.problem_seed) + 27)
 
     param_clip = (-1.0, 1.0)
-    from ops.uhd_setup_simple_common import _be_enn_kwargs, _default_be_config
+    from ops.uhd_setup_simple_common import _be_enn_kwargs
 
     cfg = be if be is not None else _default_be_config()
     if optimizer == "simple":
@@ -138,7 +142,7 @@ def _make_driver_for_np_policy(
         be=be,
     )
 
-    def evaluate_fn(eval_seed: int):
+    def evaluate_fn(eval_seed):
         return _evaluate_gym_with_denoise(
             env_runtime,
             np_policy,

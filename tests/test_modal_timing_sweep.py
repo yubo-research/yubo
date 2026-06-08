@@ -3,11 +3,21 @@
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from modal_timing_sweep_test_support import FakeResultsDict, make_func_spawn, make_func_spawn_map
+from modal_timing_sweep_test_support import (
+    FakeResultsDict,
+    make_func_spawn,
+    make_func_spawn_map,
+)
 
 import experiments.modal_timing_sweep as mts
 from experiments.experiment_sampler import TIMING_SWEEP_MAX_CUMULATIVE_PROPOSAL_SECONDS
-from experiments.modal_timing_sweep import clean_up, collect, prep_timing_sweep, run_timing_sweep, status
+from experiments.modal_timing_sweep import (
+    clean_up,
+    collect,
+    prep_timing_sweep,
+    run_timing_sweep,
+    status,
+)
 
 
 def test_prep_timing_sweep():
@@ -72,7 +82,11 @@ def test_timing_sweep_resubmitter(monkeypatch):
 
     spawned = []
 
-    monkeypatch.setattr(mts.modal.Function, "from_name", lambda app_name, name: make_func_spawn_map(spawned))
+    monkeypatch.setattr(
+        mts.modal.Function,
+        "from_name",
+        lambda app_name, name: make_func_spawn_map(spawned),
+    )
 
     run_config = SimpleNamespace(trace_fn="t1")
     mts.timing_sweep_resubmitter.get_raw_f()([("k1", run_config, False)])

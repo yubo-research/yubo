@@ -1,6 +1,6 @@
 """Tests for PPO config types. Uses shallow imports to keep dependency depth low."""
 
-from rl.torchrl.ppo.config import PPOConfig, TrainResult
+from rl.torchrl.ppo.config import PPOCollectorConfig, PPOConfig, TrainResult
 
 
 def test_train_result_dataclass_fields():
@@ -17,11 +17,13 @@ def test_train_result_dataclass_fields():
 
 
 def test_ppo_config_runtime_num_envs_helper():
-    cfg = PPOConfig(num_envs=7)
+    cfg = PPOConfig(collector=PPOCollectorConfig(num_envs=7))
     assert cfg.runtime_num_envs() == 7
     assert PPOConfig.runtime_num_envs(cfg) == 7
 
 
 def test_ppo_config_from_dict_uses_env_defaults():
+    from rl.config_model_defaults import resolve_ppo_model_settings
+
     cfg = PPOConfig.from_dict({"env_tag": "cheetah", "policy_tag": "mlp-32-16"})
-    assert cfg.backbone_hidden_sizes == (64, 64)
+    assert resolve_ppo_model_settings(cfg).backbone_hidden_sizes == (64, 64)

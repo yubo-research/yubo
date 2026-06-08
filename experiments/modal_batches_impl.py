@@ -8,7 +8,10 @@ from analysis.data_io import data_is_done
 from experiments.batches_impl import prep_d_argss
 from experiments.experiment_sampler import mk_replicates, post_process, sample_1
 from experiments.modal_image import mk_image
-from experiments.modal_result_collect import gen_jobs_from_configs, iter_modal_results_for_collect
+from experiments.modal_result_collect import (
+    gen_jobs_from_configs,
+    iter_modal_results_for_collect,
+)
 
 _TAG = os.environ.get("MODAL_TAG")
 if not _TAG:

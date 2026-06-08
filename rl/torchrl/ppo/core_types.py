@@ -21,7 +21,7 @@ class _TrainingSetup:
     loss_module: Any
     gae: Any
     train_params: list[torch.nn.Parameter]
-    optimizer: optim.AdamW
+    optimizer: optim.Optimizer
     exp_dir: Any
     metrics_path: Any
     checkpoint_manager: Any
@@ -34,6 +34,9 @@ class _TrainState:
     best_actor_state: dict | None = None
     last_eval_return: float = float("nan")
     last_heldout_return: float | None = None
+    reward_return: torch.Tensor | None = None
+    reward_var: torch.Tensor | None = None
+    reward_count: float = 1e-4
 
 
 def _tanh_normal_base():

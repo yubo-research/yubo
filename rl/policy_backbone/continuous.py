@@ -7,7 +7,7 @@ import torch.nn as nn
 
 from rl.backbone import BackboneSpec, HeadSpec, build_backbone, build_mlp_head
 
-from .common import _ensure_env_spaces, _init_linear, _obs_space_from_env_conf
+from .common import ensure_env_spaces, init_linear, obs_space_from_env_conf
 
 
 @dataclass
@@ -21,15 +21,15 @@ class ActorPolicySpec:
 class ActorBackbonePolicy(nn.Module):
     def __init__(self, env_conf, spec: ActorPolicySpec):
         super().__init__()
-        _ensure_env_spaces(env_conf)
-        obs_dim = int(_obs_space_from_env_conf(env_conf).shape[0])
+        ensure_env_spaces(env_conf)
+        obs_dim = int(obs_space_from_env_conf(env_conf).shape[0])
         act_dim = int(env_conf.action_space.shape[0])
         self._action_squash = bool(spec.action_squash)
         self._const_scale = float(spec.param_scale)
         self.backbone, feat_dim = build_backbone(spec.backbone, obs_dim)
         self.head = build_mlp_head(spec.head, feat_dim, act_dim)
-        _init_linear(self.backbone)
-        _init_linear(self.head)
+        init_linear(self.backbone)
+        init_linear(self.head)
         self._cache_flat_params_init()
 
     def _cache_flat_params_init(self):

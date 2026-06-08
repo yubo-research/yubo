@@ -8,14 +8,12 @@ __all__ = ["collect_trajectory"]
 
 
 def _resolve_max_episode_steps(env_conf: Any) -> int:
-    """Inlined from common.video to avoid pulling common.video into optimizer transitive deps."""
     if getattr(env_conf, "gym_conf", None) is not None:
         return int(env_conf.gym_conf.max_steps)
     return int(getattr(env_conf, "max_steps", 99999))
 
 
 def _scale_action_to_space(action: np.ndarray | int, action_space: Any) -> np.ndarray | int:
-    """Inlined from common.video to avoid pulling common.video into optimizer transitive deps."""
     if not hasattr(action_space, "low"):
         if hasattr(action_space, "n"):
             if isinstance(action, (int, float, np.integer)):
@@ -24,7 +22,11 @@ def _scale_action_to_space(action: np.ndarray | int, action_space: Any) -> np.nd
             return int(arr.item()) if arr.size == 1 else int(arr[0])
         return action
     action = np.asarray(action, dtype=np.float64)
-    return action_space.low + (action_space.high - action_space.low) * (1 + action) / 2
+    low = np.asarray(action_space.low, dtype=np.float64)
+    high = np.asarray(action_space.high, dtype=np.float64)
+    if not np.all(np.isfinite(low)) or not np.all(np.isfinite(high)):
+        return np.clip(action, -1.0, 1.0).astype(np.float32)
+    return low + (high - low) * (1 + action) / 2
 
 
 def _unpack_step_result(step_out: Any) -> tuple[Any, Any, bool, bool, Any]:

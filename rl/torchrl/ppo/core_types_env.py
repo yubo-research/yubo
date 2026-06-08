@@ -7,13 +7,13 @@ import numpy as np
 import tensordict.nn as td_nn
 import torch.nn as nn
 
-import rl.core.env_contract as torchrl_env_contract
+from rl.core import env_contract
 
 
 @dataclasses.dataclass(frozen=True)
 class _EnvSetup:
     env_conf: object
-    io_contract: torchrl_env_contract.EnvIOContract
+    io_contract: env_contract.EnvIOContract
     problem_seed: int
     noise_seed_0: int
     obs_dim: int

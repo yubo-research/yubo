@@ -45,6 +45,27 @@ def test_actor_eval_policy_returns_numpy_action():
     assert action.shape == (2,)
 
 
+def test_actor_eval_policy_clips_raw_mean_to_normalized_action_bounds():
+    actor_backbone = nn.Identity()
+    actor_head = nn.Linear(3, 2)
+    with torch.no_grad():
+        actor_head.weight.zero_()
+        actor_head.bias.copy_(torch.tensor([3.0, -3.0]))
+    policy = ActorEvalPolicy(
+        actor_backbone,
+        actor_head,
+        nn.Identity(),
+        device=torch.device("cpu"),
+        obs_contract=ObservationContract(mode="vector", raw_shape=(3,), vector_dim=3),
+        action_low=np.asarray([-2.0, -1.0], dtype=np.float32),
+        action_high=np.asarray([2.0, 3.0], dtype=np.float32),
+    )
+
+    action = policy(np.zeros(3, dtype=np.float32))
+
+    np.testing.assert_allclose(action, np.asarray([1.0, -1.0], dtype=np.float32))
+
+
 def test_capture_restore_actor_snapshot_roundtrip():
     modules = _make_actor_modules()
     snapshot = capture_actor_snapshot(modules)

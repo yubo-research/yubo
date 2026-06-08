@@ -1,4 +1,5 @@
 import copy
+from types import SimpleNamespace
 from typing import Any
 
 from policies.mlp_policy import MLPPolicyFactory
@@ -9,10 +10,36 @@ from problems.env_conf_presets import (
     _dm_control_env_confs,
     _gym_env_confs,
 )
+from problems.isaaclab_env_adapters import is_isaaclab_env_tag
+
+_ISAACLAB_RL_MODEL = {
+    "ppo": {
+        "backbone_name": "mlp",
+        "backbone_hidden_sizes": (64, 64),
+        "backbone_activation": "silu",
+        "backbone_layer_norm": True,
+        "actor_head_hidden_sizes": (),
+        "critic_head_hidden_sizes": (),
+        "head_activation": "silu",
+        "share_backbone": True,
+        "log_std_init": -0.5,
+    },
+    "sac": {
+        "backbone_name": "mlp",
+        "backbone_hidden_sizes": (64, 64),
+        "backbone_activation": "silu",
+        "backbone_layer_norm": True,
+        "actor_head_hidden_sizes": (),
+        "critic_head_hidden_sizes": (),
+        "head_activation": "silu",
+    },
+}
 
 
 def _normalize_rl_env_key(env_tag: str) -> str:
     tag, _frozen_noise, _from_pixels = parse_tag_options(str(env_tag), None)
+    if is_isaaclab_env_tag(tag):
+        return tag
     if tag.startswith("dm:"):
         env_name, _policy_class = get_atari_dm_bindings().resolve_dm_control_from_tag(tag, False)
         return str(env_name)
@@ -23,6 +50,8 @@ def _normalize_rl_env_key(env_tag: str) -> str:
 
 
 def _find_rl_env_conf(env_key: str):
+    if is_isaaclab_env_tag(env_key):
+        return SimpleNamespace(rl_model=copy.deepcopy(_ISAACLAB_RL_MODEL), policy_class=None)
     registries = (_gym_env_confs, _dm_control_env_confs, _atari_env_confs)
     for registry in registries:
         direct = registry.get(env_key)

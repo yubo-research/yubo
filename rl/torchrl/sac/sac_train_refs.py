@@ -13,7 +13,7 @@ def _sac_training_refs() -> SimpleNamespace:
     r.seed_all = rl_helpers.seed_all
     r.video = rl_helpers.video
     r.get_env_conf = m("problems.env_conf").get_env_conf
-    r.seed_util = m("rl.core.env_conf")
+    r.experiment_seeds = m("common.experiment_seeds")
     r.torchrl_common = m("rl.core.runtime")
     r.torchrl_sac_actor_eval = m("rl.torchrl.sac.actor_eval")
     r.torchrl_sac_loop = m("rl.torchrl.sac.loop")

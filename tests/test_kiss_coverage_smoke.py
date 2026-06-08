@@ -37,7 +37,11 @@ def test_kiss_coverage_smac_rf_fit():
     y = (x[:, 0] ** 2).ravel()
     m = SMACRFSurrogate(SMACRFConfig(n_trees=6, seed=9))
     info = m.fit(x, y)
-    assert info["meta"]["n_trees"] == 6
+    # Support both SMAC 1.x (n_trees) and 2.x (n_estimators) metadata if present
+    meta = info.get("meta", {})
+    n_trees = meta.get("n_trees") or meta.get("n_estimators")
+    if n_trees is not None:
+        assert n_trees == 6
     mean, var = m.predict(x[:3])
     assert mean.shape == (3,) and var.shape == (3,)
 

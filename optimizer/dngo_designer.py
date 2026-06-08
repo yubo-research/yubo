@@ -32,7 +32,12 @@ def _finite_normal_params(mean_np: np.ndarray, var_np: np.ndarray, train_Y: torc
     mean_np = np.clip(mean_np, -clip_abs, clip_abs)
     if not np.isfinite(std_np).all():
         _logger.warning("DNGO posterior std had non-finite values; imputing train_Y spread")
-    std_np = np.nan_to_num(std_np, nan=max(y_spread, 1e-9), posinf=max(y_spread, 1e-9), neginf=max(y_spread, 1e-9))
+    std_np = np.nan_to_num(
+        std_np,
+        nan=max(y_spread, 1e-9),
+        posinf=max(y_spread, 1e-9),
+        neginf=max(y_spread, 1e-9),
+    )
     std_np = np.maximum(std_np, 1e-9)
     return mean_np, std_np
 
@@ -114,6 +119,23 @@ class DNGODesigner:
         self._num_mc_samples = num_mc_samples
         self._init_sobol = init_sobol
 
+    def _score_candidates(self, model: DNGOModel, X: torch.Tensor) -> torch.Tensor:
+        sampler = IIDNormalSampler(sample_shape=torch.Size([self._num_mc_samples]))
+        try:
+            acq_fn = qLogNoisyExpectedImprovement(
+                model=model,
+                X_baseline=model._train_X,
+                sampler=sampler,
+                prune_baseline=False,
+            )
+            with torch.no_grad():
+                return acq_fn(X)
+        except Exception as e:
+            _logger.warning("DNGO qLogNEI failed (%s), falling back to posterior mean ranking", e)
+            with torch.no_grad():
+                posterior = model.posterior(X)
+                return posterior.distribution.mean.squeeze(-1).sum(dim=-1)
+
     def __call__(self, data, num_arms, *, telemetry=None):
         dtype = torch.double
         device = torch.device("cpu")
@@ -143,24 +165,13 @@ class DNGODesigner:
 
         t0 = time.perf_counter()
 
-        model = DNGOModel(dngo, X, Y)
-
-        sampler = IIDNormalSampler(sample_shape=torch.Size([self._num_mc_samples]))
-
-        acq_fn = qLogNoisyExpectedImprovement(
-            model=model,
-            X_baseline=X,
-            sampler=sampler,
-            cache_root=False,
-        )
-
         num_dim = X.shape[-1]
         X_cand = torch.rand(self._num_candidates, num_arms, num_dim, dtype=dtype, device=device)
 
-        with torch.no_grad():
-            acq_values = acq_fn(X_cand)
+        model = DNGOModel(dngo, X, Y)
+        acq_values = self._score_candidates(model, X_cand)
 
-        best_idx = acq_values.argmax()
+        best_idx = int(acq_values.argmax().item())
         X_best = X_cand[best_idx]
 
         dt_select = time.perf_counter() - t0

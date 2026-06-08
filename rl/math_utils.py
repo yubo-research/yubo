@@ -8,7 +8,10 @@ def atanh(x: torch.Tensor, eps: float = 1e-06) -> torch.Tensor:
     return 0.5 * (torch.log1p(x) - torch.log1p(-x))
 
 
-def tanh_gaussian_action_log_prob_entropy(dist: Normal, action: torch.Tensor | None = None) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+def tanh_gaussian_action_log_prob_entropy(
+    dist: Normal,
+    action: torch.Tensor | None = None,
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     if action is None:
         u = dist.rsample()
         action = torch.tanh(u)

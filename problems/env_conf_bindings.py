@@ -5,8 +5,9 @@ _ATARI_DM_BINDINGS_LOADER: Callable[[], Any] | None = None
 
 
 def register_atari_dm_bindings_loader(loader: Callable[[], Any]) -> None:
-    global _ATARI_DM_BINDINGS_LOADER
+    global _ATARI_DM_BINDINGS_LOADER, _ATARI_DM_BINDINGS
     _ATARI_DM_BINDINGS_LOADER = loader
+    _ATARI_DM_BINDINGS = None
 
 
 def get_atari_dm_bindings():

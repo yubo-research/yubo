@@ -2,9 +2,17 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
-import modal
+try:
+    import modal
+except ModuleNotFoundError:
+
+    def _modal_unavailable():
+        raise ModuleNotFoundError("modal")
+
+    modal = SimpleNamespace(enable_output=_modal_unavailable)
 
 from analysis.fitting_time.evaluate import normalize_benchmark_function_name
 from experiments.synthetic_sine_benchmark_payload_core import (

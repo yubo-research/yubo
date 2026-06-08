@@ -169,6 +169,11 @@ class MLPPolicy(PolicyParamsMixin, nn.Module):
         self._h = self.rnn(x, self._h)
         return self.head(self._h)
 
+    def forward_tensor(self, state):
+        if self.in_norm is not None:
+            state = self.in_norm(state)
+        return self.forward(state)
+
     def reset_state(self):
         if self._rnn_hidden_size is None:
             return
@@ -183,11 +188,9 @@ class MLPPolicy(PolicyParamsMixin, nn.Module):
         # Get device from model parameters to ensure tensor is on same device
         device = next(self.parameters()).device
         state = torch.as_tensor(state, dtype=torch.float32, device=device)
-        if self.in_norm is not None:
-            state = self.in_norm(state)
 
         with torch.inference_mode():
-            action = self.forward(state)
+            action = self.forward_tensor(state)
             if self._use_prev_action:
                 self._prev_action = action.detach()
         return action.detach().cpu().numpy()

@@ -1,0 +1,14 @@
+# Demonstrates the 'Specialized Agentic Loop'
+# routes: Actor -> task.generate_and_score_async (multi-turn ReAct)
+
+[uhd]
+env_tag = "llm:verifiers:gsm8k"
+policy_tag = "qwen3-1p7b-lora-r1"
+num_rounds = 10
+optimizer = "mezo"
+use_async = true      # Enables the AsyncLLMEngine and the task-owned agent loop
+num_engines = 1
+max_tokens = 512
+prompt_batch_size = 2
+samples_per_prompt = 1
+log_interval = 1

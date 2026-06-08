@@ -1,39 +1,35 @@
 import pytest
 
 from rl import builtins, runner
-from rl.registry import get_algo
 
 
-def test_extract_algo_cfg_with_backend_uses_algo_table():
+def test_extract_algo_cfg_uses_algo_table():
     builtins.register_all()
     cfg = {
         "rl": {
-            "algo": "ppo",
-            "backend": "pufferlib",
-            "ppo": {"exp_dir": "_tmp/test"},
+            "algo": "sac",
+            "sac": {"exp_dir": "_tmp/test"},
         }
     }
-    algo_name, backend, algo_cfg = runner._extract_algo_cfg(cfg)
-    assert algo_name == "ppo"
-    assert backend == "pufferlib"
+    algo_name, algo_cfg = runner._extract_algo_cfg(cfg)
+    assert algo_name == "sac"
     assert algo_cfg["exp_dir"] == "_tmp/test"
-    assert get_algo(algo_name, backend=backend).name == "ppo"
 
 
-def test_extract_algo_cfg_with_backend_ignores_legacy_impl_table():
+def test_extract_algo_cfg_rejects_backend():
     builtins.register_all()
     cfg = {
         "rl": {
-            "algo": "ppo",
-            "backend": "pufferlib",
-            "ppo_puffer": {"exp_dir": "_tmp/test_fallback"},
+            "algo": "sac",
+            "backend": "torchrl",
+            "sac": {"exp_dir": "_tmp/test"},
         }
     }
-    _, _, algo_cfg = runner._extract_algo_cfg(cfg)
-    assert algo_cfg == {}
+    with pytest.raises(ValueError, match=r"\[rl\]\.backend is no longer supported"):
+        runner._extract_algo_cfg(cfg)
 
 
-def test_extract_algo_cfg_unknown_backend_raises():
+def test_extract_algo_cfg_rejects_any_backend():
     builtins.register_all()
     cfg = {
         "rl": {
@@ -42,7 +38,7 @@ def test_extract_algo_cfg_unknown_backend_raises():
             "ppo": {},
         }
     }
-    with pytest.raises(ValueError, match="Unknown backend"):
+    with pytest.raises(ValueError, match=r"\[rl\]\.backend is no longer supported"):
         runner._extract_algo_cfg(cfg)
 
 
@@ -63,3 +59,60 @@ def test_extract_run_cfg_rejects_non_positive_num_reps():
     cfg = {"rl": {"run": {"num_reps": 0}}}
     with pytest.raises(ValueError, match=r"\[rl.run\]\.num_reps must be >= 1"):
         runner._extract_run_cfg(cfg)
+
+
+def test_extract_video_cfg_maps_artifact_video_to_algorithm_keys():
+    cfg = {
+        "rl": {
+            "run": {
+                "artifacts": {
+                    "video": {
+                        "enable": True,
+                        "num_episodes": 4,
+                        "prefix": "policy",
+                    }
+                },
+            }
+        }
+    }
+    assert runner._extract_video_cfg(cfg) == {
+        "video_enable": True,
+        "video_num_episodes": 4,
+        "video_prefix": "policy",
+    }
+
+
+def test_extract_video_cfg_rejects_non_table():
+    cfg = {"rl": {"run": {"artifacts": {"video": True}}}}
+    with pytest.raises(ValueError, match=r"\[rl.run.artifacts.video\] must be a table"):
+        runner._extract_video_cfg(cfg)
+
+
+def test_run_from_cfg_attaches_video_artifact_settings(monkeypatch):
+    captured = {}
+
+    class _Config:
+        @classmethod
+        def from_dict(cls, raw):
+            captured["raw"] = dict(raw)
+            return type("_Cfg", (), {})()
+
+    monkeypatch.setattr(
+        "rl.registry.get_algo",
+        lambda _algo_name: type(
+            "_Algo",
+            (),
+            {"config_cls": _Config, "train_fn": staticmethod(lambda cfg: cfg)},
+        )(),
+    )
+    cfg = {
+        "rl": {
+            "algo": "sac",
+            "sac": {"env_tag": "cheetah"},
+            "run": {"artifacts": {"video": {"enable": True, "num_video_episodes": 2}}},
+        }
+    }
+    result = runner._run_from_cfg(cfg)
+    assert captured["raw"] == {"env_tag": "cheetah"}
+    assert result._video_settings.enable is True
+    assert result._video_settings.num_video_episodes == 2

@@ -3,12 +3,14 @@ import sys
 from pathlib import Path
 
 import click
+import tomllib
 
 
 def _add_repo_root_to_syspath():
     repo_root = Path(__file__).resolve().parents[1]
-    if str(repo_root) not in sys.path:
-        sys.path.insert(0, str(repo_root))
+    repo_root_str = str(repo_root)
+    sys.path = [path for path in sys.path if path != repo_root_str]
+    sys.path.insert(0, repo_root_str)
 
 
 class _CatalogPolicy:
@@ -84,11 +86,64 @@ def environments():
         click.echo(name)
 
 
+@_cli.command(name="jax-envs")
+def jax_envs():
+    """List first-class JAX env-family tags known to the runtime."""
+    _add_repo_root_to_syspath()
+    from problems.jax_env_core import supported_jax_env_tags
+
+    for tag in supported_jax_env_tags():
+        click.echo(tag)
+
+
+@_cli.command(name="llm-envs")
+def llm_envs():
+    """List first-class LLM env tags."""
+    _add_repo_root_to_syspath()
+    from llm.registry import supported_llm_env_tags
+
+    for tag in supported_llm_env_tags():
+        click.echo(tag)
+
+
+@_cli.command(name="pretrain-envs")
+def pretrain_envs():
+    """List first-class pretraining env tags."""
+    _add_repo_root_to_syspath()
+    from problems.pre_obj import (
+        supported_hyperscalees_pretrain_env_tags,
+        supported_nanoegg_pretrain_examples,
+    )
+
+    for tag in supported_hyperscalees_pretrain_env_tags():
+        click.echo(tag)
+    for env_tag, policy_tag in supported_nanoegg_pretrain_examples():
+        click.echo(f"{env_tag} policy={policy_tag}")
+
+
 @_cli.command()
 def uhd():
     """List all UHD optimizers (for use with optimizer= in [uhd] config)."""
     for name in ("simple", "simple_be", "mezo", "mezo_be", "bszo"):
         click.echo(name)
+
+
+@_cli.command(name="rl-algos")
+def rl_algos():
+    """List supported RL algorithms."""
+    for name in ("ppo", "sac"):
+        click.echo(name)
+
+
+@_cli.command(name="rl-configs")
+def rl_configs():
+    """List supported RL config files."""
+    root = Path(__file__).resolve().parents[1]
+    for path in sorted((root / "configs" / "rl").rglob("*.toml")):
+        with path.open("rb") as f:
+            data = tomllib.load(f)
+        if "rl" in data:
+            click.echo(path.relative_to(root).as_posix())
 
 
 if __name__ == "__main__":

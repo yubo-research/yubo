@@ -11,4 +11,4 @@ def test_sac_eval_noise_mode_invalid_rejected_before_env_build(monkeypatch):
         lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("env build should not run")),
     )
     with pytest.raises(ValueError, match="eval_noise_mode must be one of"):
-        sac.train_sac(cfg_mod.SACConfig(eval_noise_mode="invalid-mode"))
+        sac.train_sac(cfg_mod.SACConfig(eval=cfg_mod.SACEvalConfig(noise_mode="invalid-mode")))

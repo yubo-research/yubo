@@ -1,0 +1,62 @@
+# Run:
+# ./ops/exp_uhd.py local configs/uhd/text/gsm8k_qwen3_1p7b_mezo_be_nll.toml
+
+[uhd]
+env_tag = "llm:math:gsm8k"
+policy_tag = "qwen3-1p7b-lora-r1"
+num_rounds = 800
+num_reps = 1
+
+optimizer = "mezo_be"
+lr = 0.0002
+sigma = 0.0008
+perturb = "dim:0.35"
+
+text_score_mode = "nll"
+text_search_dim = 512
+text_delta_scale = 0.5
+text_basis_max_tensors = 64
+
+max_tokens = 768
+temperature = 0.0
+samples_per_prompt = 1
+prompt_batch_size = 8
+pass_at_k = false
+
+tensor_parallel_size = 1
+num_engines = 1
+vllm_enforce_eager = true
+vllm_max_model_len = 1024
+vllm_max_num_seqs = 8
+vllm_max_num_batched_tokens = 1024
+sub_dataset_size = 2048
+problem_seed = 0
+noise_seed_0 = 0
+seed_offset = 0
+
+be_num_probes = 64
+be_num_candidates = 12
+be_warmup = 20
+be_fit_interval = 5
+be_enn_k = 25
+be_sigma_range = [0.00015, 0.0015]
+
+enn_minus_impute = true
+enn_d = 128
+enn_s = 4
+enn_jl_seed = 123
+enn_k = 25
+enn_fit_interval = 10
+enn_warmup_real_obs = 40
+enn_refresh_interval = 10
+enn_se_threshold = 0.2
+enn_target = "mu_minus"
+enn_num_candidates = 3
+enn_select_interval = 1
+enn_embedder = "direction"
+enn_gather_t = 64
+enn_err_ema_beta = 0.95
+enn_max_abs_err_ema = 0.2
+enn_min_calib_points = 6
+
+log_interval = 1

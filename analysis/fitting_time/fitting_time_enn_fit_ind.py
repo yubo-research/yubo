@@ -43,7 +43,7 @@ def _enn_fit_timed_after_add(enn_model, *, current_n: int, rng, params_warm_star
 
     k_eff, nfs = enn_fit_k_and_num_fit_samples(int(current_n))
     enn_model.ensure_index_sync()
-    train_x, train_y, train_yvar = _all_train_rows(enn_model)
+    train_x, train_y, train_yvar = enn_model.train_rows_at(list(range(int(current_n))))
     t_0 = time.perf_counter()
     params = fit_enn_params(
         enn_model,
