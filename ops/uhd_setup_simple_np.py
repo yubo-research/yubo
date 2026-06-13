@@ -23,6 +23,7 @@ def _make_simple_loop_for_np_policy(
     _default_be_config = getattr(common, "_default_be_config")
     _gym_embed_bounds = getattr(common, "_gym_embed_bounds")
     _run_simple_iterations = getattr(common, "_run_simple_iterations")
+    _be_enn_kwargs = getattr(common, "_be_enn_kwargs")
     UHDMeZOBENp = _imod("optimizer.uhd_mezo_np", "UHDMeZOBENp")
     UHDMeZONp = _imod("optimizer.uhd_mezo_np", "UHDMeZONp")
     UHDSimpleBENp = _imod("optimizer.uhd_simple_be_np", "UHDSimpleBENp")
@@ -47,10 +48,8 @@ def _make_simple_loop_for_np_policy(
             embedder,
             sigma_0=sigma,
             param_clip=param_clip,
-            num_candidates=cfg.num_candidates,
-            warmup=cfg.warmup,
-            fit_interval=cfg.fit_interval,
-            enn_k=cfg.enn_k,
+            adapt_sigma=cfg.adapt_sigma,
+            **_be_enn_kwargs(cfg),
         )
     elif optimizer == "mezo":
         uhd = UHDMeZONp(np_policy, sigma=sigma, lr=lr, param_clip=param_clip)
@@ -64,10 +63,7 @@ def _make_simple_loop_for_np_policy(
             sigma=sigma,
             lr=lr,
             param_clip=param_clip,
-            num_candidates=cfg.num_candidates,
-            warmup=cfg.warmup,
-            fit_interval=cfg.fit_interval,
-            enn_k=cfg.enn_k,
+            **_be_enn_kwargs(cfg),
         )
     else:
         raise ValueError(f"Unknown optimizer for numpy policy: {optimizer}")

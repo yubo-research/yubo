@@ -55,6 +55,7 @@ def test_kiss_tidy_b_batch_preps_and_timing(tmp_path):
 
 def test_kiss_tidy_b_dispatch_post_mk_shim_sample_util(monkeypatch, tmp_path):
     import experiments.experiment_sampler_jobs as jobs
+    import experiments.experiment_sampler_shim as ess
     from experiments.experiment_sampler_dispatch import post_process
     from experiments.experiment_sampler_jobs import mk_replicates
     from experiments.experiment_sampler_sampling import sample_1
@@ -62,7 +63,6 @@ def test_kiss_tidy_b_dispatch_post_mk_shim_sample_util(monkeypatch, tmp_path):
         build_problem,
         data_is_done,
         data_writer,
-        seed_all,
     )
     from experiments.experiment_sampler_shim import (
         ensure_parent as shim_ensure_parent,
@@ -90,6 +90,9 @@ def test_kiss_tidy_b_dispatch_post_mk_shim_sample_util(monkeypatch, tmp_path):
         finally:
             f.close()
 
+    def _shim_seed_all(*_a, **_k):
+        logs.append("seed")
+
     fake_m = SimpleNamespace(
         data_is_done=lambda *a, **k: False,
         data_writer=_dw,
@@ -100,12 +103,12 @@ def test_kiss_tidy_b_dispatch_post_mk_shim_sample_util(monkeypatch, tmp_path):
             policy_tag="pure-function",
         ),
         mk_replicates=lambda *a, **k: [],
-        post_process=post_process,
-        sample_1=lambda *a, **k: None,
-        seed_all=lambda *a, **k: logs.append("seed"),
         torch=torch,
         mp=__import__("multiprocessing"),
     )
+    setattr(fake_m, "post_process", post_process)
+    setattr(fake_m, "sample_1", lambda *a, **k: None)
+    setattr(fake_m, "seed_all", _shim_seed_all)
     monkeypatch.setitem(sys.modules, "experiments.experiment_sampler", fake_m)
     assert data_is_done("x") is False
     with data_writer(str(tmp_path / "z.txt")) as wf:
@@ -115,11 +118,9 @@ def test_kiss_tidy_b_dispatch_post_mk_shim_sample_util(monkeypatch, tmp_path):
     shim_mk_replicates(object())
     shim_post_process([], [], str(tmp_path / "trace"))
     shim_sample_1(object())
-    seed_all(0)
-    import experiments.experiment_sampler_shim as sh
 
-    assert sh.torch_module() is torch
-    sh.mp_module()
+    assert ess.torch_module() is torch
+    ess.mp_module()
 
     cfg = jobs.prep_args_1(str(tmp_path), "exp", "f:sphere-2d", "random", 1, 1, 1, num_denoise=1)
     rcs = mk_replicates(cfg)

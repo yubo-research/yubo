@@ -43,10 +43,9 @@ class UHDMeZO:
         self._seed = int(seed)
 
     def skip_negative(self) -> None:
-        if self._positive_phase:
-            raise RuntimeError("skip_negative is only valid after the positive phase")
-        self._positive_phase = True
-        self._seed += 1
+        from .uhd_mezo_phase_util import skip_mezo_negative_pair
+
+        skip_mezo_negative_pair(self)
 
     @property
     def positive_phase(self) -> bool:

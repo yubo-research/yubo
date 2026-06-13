@@ -146,7 +146,7 @@ def test_iter_fit_jobs_skips_complete(monkeypatch, tmp_path: Path):
     ]
 
 
-def test_iter_fit_jobs_index_driver_all_yields_flat_and_hnsw(monkeypatch, tmp_path: Path):
+def test_iter_fit_jobs_index_driver_all_yields_flat_hnsw_and_hnsw_disk(monkeypatch, tmp_path: Path):
     import experiments.modal_enn_incremental_batches_impl as impl
 
     monkeypatch.setattr(
@@ -159,8 +159,8 @@ def test_iter_fit_jobs_index_driver_all_yields_flat_and_hnsw(monkeypatch, tmp_pa
     )
     jobs = list(impl._iter_fit_jobs(tmp_path, "all", 1, 2, 17))
     drivers = {job[1][6] for job in jobs}
-    assert drivers == {"flat", "hnsw"}
-    assert len(jobs) == 2
+    assert drivers == {"flat", "hnsw", "hnsw_disk"}
+    assert len(jobs) == 3
 
 
 def test_iter_fit_jobs_resubmits_when_json_incomplete(monkeypatch, tmp_path: Path):

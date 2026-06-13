@@ -6,7 +6,14 @@ from optimizer.gaussian_perturbator import GaussianPerturbator
 from optimizer.uhd_simple_be import UHDSimpleBE
 
 
-def _make_uhd_be(sigma_0=1.0, warmup=5, num_candidates=3, fit_interval=1, sigma_range=None):
+def _make_uhd_be(
+    sigma_0=1.0,
+    warmup=5,
+    num_candidates=3,
+    fit_interval=1,
+    sigma_range=None,
+    adapt_sigma=True,
+):
     module = nn.Linear(3, 2, bias=True)
     dim = sum(p.numel() for p in module.parameters())
     gp = GaussianPerturbator(module)
@@ -23,6 +30,7 @@ def _make_uhd_be(sigma_0=1.0, warmup=5, num_candidates=3, fit_interval=1, sigma_
         warmup=warmup,
         fit_interval=fit_interval,
         sigma_range=sigma_range,
+        adapt_sigma=adapt_sigma,
     )
     return module, uhd
 
@@ -89,7 +97,7 @@ def test_warmup_seeds_sequential():
     assert seeds == [0, 1, 2, 3, 4]
 
 
-def test_after_warmup_seeds_advance_by_num_candidates():
+def test_after_warmup_seed_in_candidate_batch_and_stream_continues():
     num_candidates = 3
     warmup = 3
     _, uhd = _make_uhd_be(warmup=warmup, num_candidates=num_candidates)
@@ -100,8 +108,11 @@ def test_after_warmup_seeds_advance_by_num_candidates():
 
     uhd.ask()
     seed_after_warmup = uhd.eval_seed
-    assert seed_after_warmup >= warmup
-    assert seed_after_warmup < warmup + num_candidates
+    assert warmup <= seed_after_warmup < warmup + num_candidates
+
+    uhd.tell(1.0, 0.0)
+    uhd.ask()
+    assert uhd.eval_seed == seed_after_warmup + 1
 
 
 def test_runs_many_steps():
@@ -128,6 +139,61 @@ def test_sample_sigmas_none_uses_adapter():
     _, uhd = _make_uhd_be(sigma_0=0.5, num_candidates=5)
     sigmas = uhd._sample_sigmas(base_seed=0, n=5)
     assert np.allclose(sigmas, 0.5)
+
+
+def test_adapt_sigma_false_keeps_sigma_on_reject():
+    _, uhd = _make_uhd_be(sigma_0=0.5, adapt_sigma=False)
+    uhd.ask()
+    uhd.tell(10.0, 0.0)
+    sigma_after_accept = uhd.sigma
+
+    uhd.ask()
+    uhd.tell(5.0, 0.0)
+    assert uhd.sigma == sigma_after_accept
+
+
+def test_enn_reject_can_halve_sigma_after_tolerance():
+    _, uhd = _make_uhd_be(warmup=2, num_candidates=3, sigma_0=0.5, fit_interval=10)
+    for i in range(2):
+        uhd.ask()
+        uhd.tell(float(i), 0.0)
+    uhd.ask()
+    uhd.tell(1.0, 0.0)
+    sigma0 = uhd.sigma
+    for _ in range(20):
+        uhd.ask()
+        uhd.tell(0.0, 0.0)
+    assert uhd.sigma < sigma0
+
+
+def test_sequential_reject_still_adapts_sigma():
+    _, uhd = _make_uhd_be(warmup=100, sigma_0=0.5)
+    uhd.ask()
+    uhd.tell(10.0, 0.0)
+    sigma_after_accept = uhd.sigma
+
+    for _ in range(20):
+        uhd.ask()
+        uhd.tell(0.0, 0.0)
+
+    assert uhd.sigma < sigma_after_accept
+
+
+def test_select_seed_ignores_sigma_range():
+    _, uhd = _make_uhd_be(warmup=1, sigma_range=(1e-4, 1e-1), num_candidates=20, sigma_0=0.05)
+    uhd.ask()
+    uhd.tell(1.0, 0.0)
+
+    called = []
+    orig = uhd._sample_sigmas
+
+    def track(*args, **kwargs):
+        called.append(True)
+        return orig(*args, **kwargs)
+
+    uhd._sample_sigmas = track
+    uhd.ask()
+    assert called == []
 
 
 def test_runs_many_steps_with_sigma_range():

@@ -8,27 +8,27 @@ from ops.uhd_config_types import BEConfig, EarlyRejectConfig, ENNConfig
 @dataclass(frozen=True)
 class UHDConfig:
     env_tag: str
-    policy_tag: str | None
     num_rounds: int
-    problem_seed: int | None
-    noise_seed_0: int | None
-    lr: float
-    num_dim_target: float | None
-    num_module_target: float | None
-    log_interval: int
-    accuracy_interval: int
-    target_accuracy: float | None
-    optimizer: str
-    batch_size: int
-    early_reject: EarlyRejectConfig
-    be: BEConfig
-    enn: ENNConfig
-    bszo_k: int
-    bszo_epsilon: float
-    bszo_sigma_p_sq: float
-    bszo_sigma_e_sq: float
-    bszo_alpha: float
+    problem_seed: int | None = None
+    noise_seed_0: int | None = None
+    lr: float = 0.001
     sigma: float = 0.001
+    num_dim_target: float | None = None
+    num_module_target: float | None = None
+    log_interval: int = 1
+    accuracy_interval: int = 1000
+    target_accuracy: float | None = None
+    optimizer: str = "mezo"
+    batch_size: int = 4096
+    early_reject: EarlyRejectConfig = EarlyRejectConfig(None, None, None, None, None, None)
+    be: BEConfig = BEConfig(10, 10, 20, 10, 25, None)
+    enn: ENNConfig = ENNConfig(False, 100, 4, 123, 25, 50, 200, 50, 0.25, "mu_minus", 1, 1, "direction", 64)
+    bszo_k: int = 2
+    bszo_epsilon: float = 1e-4
+    bszo_sigma_p_sq: float = 1.0
+    bszo_sigma_e_sq: float = 1.0
+    bszo_alpha: float = 0.1
+    policy_tag: str | None = None
     steps_per_episode: int = 200
     num_envs: int = 1
     deterministic_policy: bool = False

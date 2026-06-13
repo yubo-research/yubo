@@ -12,8 +12,10 @@ from .evaluate_metrics import normalize_benchmark_function_name
 from .fitting_time import _SYNTHETIC_OBS_VAR, enn_fit_k_and_num_fit_samples
 from .fitting_time_enn_incremental import (
     EnnIncrementalIndexDriver,
+    enn_disk_work_dir,
     enn_incremental_checkpoint_ns,
     enn_test_log_likelihood,
+    epistemic_nn_driver_kwargs,
 )
 from .fitting_time_enn_incremental_draw import _train_xy_unit_cube_segment
 
@@ -29,6 +31,11 @@ class EnnFitIndTimingResult:
     d: int
     problem_seed: int
     index_driver: EnnIncrementalIndexDriver
+
+
+def _all_train_rows(enn_model) -> tuple[np.ndarray, np.ndarray, np.ndarray | None]:
+    n = len(enn_model)
+    return enn_model.train_rows_at(list(range(n)))
 
 
 def _enn_fit_timed_after_add(enn_model, *, current_n: int, rng, params_warm_start):
@@ -107,12 +114,6 @@ def benchmark_enn_fit_ind_timing(
         if int(n_chk) <= prev_n:
             raise ValueError(f"checkpoints must be strictly increasing, got {ckpts}")
 
-    driver = index_driver.to_enn_index_driver()
-    enn_model = EpistemicNearestNeighbors(
-        np.zeros((0, d), dtype=np.float64),
-        np.zeros((0, 1), dtype=np.float64),
-        index_driver=driver,
-    )
     yvar_row = np.array([[float(_SYNTHETIC_OBS_VAR)]], dtype=np.float64)
     rng = np.random.default_rng(seed)
 
@@ -121,36 +122,43 @@ def benchmark_enn_fit_ind_timing(
     log_likelihood: list[float] = []
     params_warm_start = None
 
-    for n_chk in ckpts:
-        n_target = int(n_chk)
-        x_seg, y_seg = _train_xy_unit_cube_segment(
-            D=d,
-            function_name=target,
-            problem_seed=seed,
-            n_train=n_target,
-            start_row=prev_n,
+    with enn_disk_work_dir(index_driver) as work_dir:
+        enn_model = EpistemicNearestNeighbors(
+            np.zeros((0, d), dtype=np.float64),
+            np.zeros((0, 1), dtype=np.float64),
+            **epistemic_nn_driver_kwargs(index_driver, work_dir=work_dir),
         )
-        params_warm_start, seg_fit_seconds = _add_segment_with_per_point_fit(
-            enn_model,
-            x_seg=x_seg,
-            y_seg=y_seg,
-            yvar_row=yvar_row,
-            start_n=prev_n,
-            rng=rng,
-            params_warm_start=params_warm_start,
-        )
-        fit_seconds.append(seg_fit_seconds)
-        prev_n = n_target
-        log_likelihood.append(
-            enn_test_log_likelihood(
-                enn_model,
+
+        for n_chk in ckpts:
+            n_target = int(n_chk)
+            x_seg, y_seg = _train_xy_unit_cube_segment(
                 D=d,
                 function_name=target,
                 problem_seed=seed,
-                n_obs=n_target,
+                n_train=n_target,
+                start_row=prev_n,
             )
-        )
-        ns.append(n_target)
+            params_warm_start, seg_fit_seconds = _add_segment_with_per_point_fit(
+                enn_model,
+                x_seg=x_seg,
+                y_seg=y_seg,
+                yvar_row=yvar_row,
+                start_n=prev_n,
+                rng=rng,
+                params_warm_start=params_warm_start,
+            )
+            fit_seconds.append(seg_fit_seconds)
+            prev_n = n_target
+            log_likelihood.append(
+                enn_test_log_likelihood(
+                    enn_model,
+                    D=d,
+                    function_name=target,
+                    problem_seed=seed,
+                    n_obs=n_target,
+                )
+            )
+            ns.append(n_target)
 
     return EnnFitIndTimingResult(
         n=tuple(ns),

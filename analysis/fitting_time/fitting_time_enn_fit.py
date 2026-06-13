@@ -15,7 +15,9 @@ from .evaluate_metrics import normalize_benchmark_function_name
 from .fitting_time import _SYNTHETIC_OBS_VAR, enn_fit_k_and_num_fit_samples
 from .fitting_time_enn_incremental import (
     EnnIncrementalIndexDriver,
+    enn_disk_work_dir,
     enn_test_log_likelihood,
+    epistemic_nn_driver_kwargs,
 )
 from .fitting_time_enn_incremental_draw import _train_xy_unit_cube_segment
 
@@ -66,35 +68,35 @@ def benchmark_enn_fit_timing(
         start_row=0,
     )
     train_yvar = np.full_like(train_y, _SYNTHETIC_OBS_VAR)
-    driver = index_driver.to_enn_index_driver()
     k_eff, nfs = enn_fit_k_and_num_fit_samples(n_obs)
     gen = np.random.default_rng(draw_seed)
 
-    enn_model = EpistemicNearestNeighbors(
-        train_x,
-        train_y,
-        train_yvar,
-        index_driver=driver,
-    )
-    t_0 = time.perf_counter()
-    fit_enn_params(
-        enn_model,
-        train_x,
-        train_y,
-        k=k_eff,
-        num_fit_candidates=100,
-        num_fit_samples=nfs,
-        rng=gen,
-        yvar=train_yvar,
-    )
-    fit_seconds = time.perf_counter() - t_0
-    log_likelihood = enn_test_log_likelihood(
-        enn_model,
-        D=d,
-        function_name=target,
-        problem_seed=draw_seed,
-        n_obs=n_obs,
-    )
+    with enn_disk_work_dir(index_driver) as work_dir:
+        enn_model = EpistemicNearestNeighbors(
+            train_x,
+            train_y,
+            train_yvar,
+            **epistemic_nn_driver_kwargs(index_driver, work_dir=work_dir),
+        )
+        t_0 = time.perf_counter()
+        fit_enn_params(
+            enn_model,
+            train_x,
+            train_y,
+            k=k_eff,
+            num_fit_candidates=100,
+            num_fit_samples=nfs,
+            rng=gen,
+            yvar=train_yvar,
+        )
+        fit_seconds = time.perf_counter() - t_0
+        log_likelihood = enn_test_log_likelihood(
+            enn_model,
+            D=d,
+            function_name=target,
+            problem_seed=draw_seed,
+            n_obs=n_obs,
+        )
 
     return EnnFitTimingResult(
         n=n_obs,

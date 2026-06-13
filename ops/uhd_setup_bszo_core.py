@@ -113,7 +113,17 @@ def _run_bszo_iterations(
         y_str = f"{y_best:.4f}" if y_best is not None else "N/A"
         if accuracy_fn is not None and (acc is None or step == num_steps - 1 or (accuracy_interval > 0 and step % accuracy_interval == 0)):
             acc = accuracy_fn()
-        line = f"EVAL: step = {step} mu = {mu:.4f} se = {se:.4f} y_best = {y_str}"
+        from optimizer.uhd_loop_support import format_uhd_eval_line
+
+        line = format_uhd_eval_line(
+            i_iter=step,
+            proposal_dt=0.0,
+            eval_dt=0.0,
+            sigma=bszo.epsilon,
+            mu=mu,
+            se=se,
+            y_best_str=y_str,
+        )
         if acc is not None:
             line += f" test_acc = {acc:.4f}"
         print(line)

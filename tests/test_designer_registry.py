@@ -99,6 +99,14 @@ def test_d_turbo_enn_p_idx_hnsw():
     assert d._index_driver == "hnsw"
 
 
+def test_d_turbo_enn_p_idx_hnsw_disk():
+    from optimizer.designer_registry import _d_turbo_enn_p
+
+    ctx = _make_ctx()
+    d = _d_turbo_enn_p(ctx, {"idx": "hnsw_disk"})
+    assert d._index_driver == "hnsw_disk"
+
+
 def test_d_turbo_enn_p_rejects_unknown_option():
     from optimizer.designer_registry import _d_turbo_enn_p
 
@@ -144,6 +152,21 @@ def test_turbo_make_config_index_driver_hnsw():
     designer = TurboENNDesigner(policy, turbo_mode="turbo-enn", k=3, index_driver="hnsw")
     cfg = designer._make_config(num_init=5, num_metrics=None)
     assert cfg.surrogate.index_driver is ENNIndexDriver.HNSW
+
+
+def test_turbo_make_config_index_driver_hnsw_disk():
+    from enn.turbo.config.enn_index_driver import ENNIndexDriver
+
+    from optimizer.turbo_enn_designer import TurboENNDesigner
+    from problems.env_conf import default_policy, get_env_conf
+
+    env_conf = get_env_conf("f:sphere-2d", problem_seed=0, noise_seed_0=0)
+    policy = default_policy(env_conf)
+    designer = TurboENNDesigner(policy, turbo_mode="turbo-enn", k=3, index_driver="hnsw_disk")
+    cfg = designer._make_config(num_init=5, num_metrics=None)
+    assert cfg.surrogate.index_driver is ENNIndexDriver.HNSW_DISK
+    assert cfg.surrogate.enn_storage == "disk"
+    assert cfg.surrogate.work_dir is not None
 
 
 @pytest.mark.parametrize("turbo_mode", ["turbo-one", "turbo-zero", "turbo-enn", "lhd-only"])

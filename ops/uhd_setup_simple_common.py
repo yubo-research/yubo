@@ -7,6 +7,19 @@ from optimizer.gaussian_perturbator import GaussianPerturbator
 from optimizer.sparse_gaussian_perturbator import SparseGaussianPerturbator
 
 
+def _be_enn_kwargs(cfg: BEConfig) -> dict:
+    return {
+        "num_candidates": cfg.num_candidates,
+        "warmup": cfg.warmup,
+        "fit_interval": cfg.fit_interval,
+        "enn_k": cfg.enn_k,
+        "num_fit_candidates": cfg.num_fit_candidates,
+        "num_fit_samples": cfg.num_fit_samples,
+        "enn_index_driver": cfg.enn_index_driver,
+        "acquisition": cfg.acquisition,
+    }
+
+
 def _default_be_config() -> BEConfig:
     return BEConfig(
         num_probes=10,
@@ -25,6 +38,7 @@ def _make_simple_optimizer(
     optimizer: str,
     sigma: float,
     dim: int,
+    lr: float = 0.001,
     embed_module=None,
     embed_bounds=None,
     be: BEConfig | None = None,
@@ -48,10 +62,8 @@ def _make_simple_optimizer(
                 embed_module,
                 embedder,
                 sigma=sigma,
-                num_candidates=cfg.num_candidates,
-                warmup=cfg.warmup,
-                fit_interval=cfg.fit_interval,
-                enn_k=cfg.enn_k,
+                lr=lr,
+                **_be_enn_kwargs(cfg),
             )
 
         from optimizer.uhd_simple_be import UHDSimpleBE
@@ -62,11 +74,9 @@ def _make_simple_optimizer(
             dim=dim,
             module=embed_module,
             embedder=embedder,
-            num_candidates=cfg.num_candidates,
-            warmup=cfg.warmup,
-            fit_interval=cfg.fit_interval,
-            enn_k=cfg.enn_k,
             sigma_range=cfg.sigma_range,
+            adapt_sigma=cfg.adapt_sigma,
+            **_be_enn_kwargs(cfg),
         )
     from optimizer.uhd_simple import UHDSimple
 

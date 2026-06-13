@@ -349,6 +349,9 @@ def _run_dm_pixel_and_env_conf_paths(monkeypatch, dce):
     maybe_register_atari_dm_backends("dm:cheetah-run")
     register_atari_dm_bindings_loader(lambda: SimpleNamespace())
     assert get_atari_dm_bindings() is not None
+    import problems.env_conf_bindings as _bindings_mod
+
+    _bindings_mod._ATARI_DM_BINDINGS = None
     register_with_env_conf()
     _t, fn, fp = parse_tag_options("a:b:fn:pixels", None)
     assert fn and fp

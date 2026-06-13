@@ -192,3 +192,94 @@ def test_policy_presets_coverage():
 
     for tag, preset in POLICY_PRESETS.items():
         assert callable(preset.factory), f"Factory for {tag} not callable"
+
+
+def test_get_policy_preset_dynamic_actor_mlp():
+    from policies.actor_mlp_policy import ActorMLPPolicy
+    from policies.registry import get_policy_preset
+
+    preset_32_16 = get_policy_preset("actor-mlp-32-16")
+    preset_32_32 = get_policy_preset("actor-mlp-32-32")
+
+    env_runtime = SimpleNamespace(
+        problem_seed=0,
+        env_name="test",
+        state_space=SimpleNamespace(shape=(4,)),
+        action_space=SimpleNamespace(shape=(2,)),
+        gym_conf=SimpleNamespace(state_space=SimpleNamespace(shape=(4,))),
+    )
+    policy_32_16 = preset_32_16.factory(env_runtime)
+    policy_32_32 = preset_32_32.factory(env_runtime)
+
+    assert isinstance(policy_32_16, ActorMLPPolicy)
+    assert isinstance(policy_32_32, ActorMLPPolicy)
+    assert policy_32_16.num_params() != policy_32_32.num_params()
+
+
+def test_get_policy_preset_dynamic_mlp_unregistered_size():
+    from policies.mlp_policy import MLPPolicy
+    from policies.registry import get_policy_preset
+
+    preset = get_policy_preset("mlp-7-3")
+    env_runtime = SimpleNamespace(
+        problem_seed=0,
+        env_name="test",
+        state_space=SimpleNamespace(shape=(4,)),
+        action_space=SimpleNamespace(shape=(2,)),
+        gym_conf=SimpleNamespace(state_space=SimpleNamespace(shape=(4,))),
+    )
+    policy = preset.factory(env_runtime)
+    assert isinstance(policy, MLPPolicy)
+
+
+@pytest.mark.parametrize(
+    "prefix,bad_tag,good_tag,expected_sizes",
+    [
+        ("mlp-", "mlp-032-016", "mlp-32-16", (32, 16)),
+        ("mlp-", "mlp-007-16", "mlp-7-16", (7, 16)),
+        ("mlp-", "mlp-16-08", "mlp-16-8", (16, 8)),
+        ("actor-mlp-", "actor-mlp-08-16", "actor-mlp-8-16", (8, 16)),
+        ("actor-critic-mlp-", "actor-critic-mlp-032-032", "actor-critic-mlp-32-32", (32, 32)),
+    ],
+)
+def test_parse_sizes_suffix_rejects_leading_zero_segments(prefix, bad_tag, good_tag, expected_sizes):
+    from policies.registry import _parse_sizes_suffix
+
+    assert _parse_sizes_suffix(prefix, bad_tag) is None
+    assert _parse_sizes_suffix(prefix, good_tag) == expected_sizes
+
+
+def test_get_policy_preset_dynamic_malformed_tags():
+    from policies.registry import get_policy_preset
+
+    with pytest.raises(KeyError, match="Unknown policy tag"):
+        get_policy_preset("actor-mlp-")
+
+    with pytest.raises(KeyError, match="Unknown policy tag"):
+        get_policy_preset("mlp-0-16")
+
+    with pytest.raises(KeyError, match="Unknown policy tag"):
+        get_policy_preset("mlp-032-016")
+
+    with pytest.raises(KeyError, match="Unknown policy tag"):
+        get_policy_preset("mlp-007-16")
+
+    with pytest.raises(KeyError, match="Unknown policy tag"):
+        get_policy_preset("actor-mlp-08-16")
+
+
+def test_get_policy_preset_static_mlp_regression():
+    from policies.registry import get_policy_preset
+
+    preset = get_policy_preset("mlp-32-16")
+    assert preset.rl_model is not None
+    assert preset.rl_model["ppo"]["backbone_hidden_sizes"] == (32, 16)
+
+
+def test_build_problem_dynamic_actor_mlp_cheetah():
+    from problems.problem import build_problem
+
+    problem = build_problem("cheetah", "actor-mlp-32-16", problem_seed=0, noise_seed_0=0)
+    policy = problem.build_policy()
+    assert hasattr(policy, "get_action_and_value")
+    assert hasattr(policy, "last_log_probs")

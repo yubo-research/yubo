@@ -4,9 +4,9 @@ import torch
 from torch.utils.data import DataLoader
 
 from optimizer.sparse_gaussian_perturbator import SparseGaussianPerturbator
+from optimizer.uhd_driver import UHDDriver
 from optimizer.uhd_enn_imputer import ENNImputerConfig, ENNMinusImputer
 from optimizer.uhd_enn_seed_selector import ENNMuPlusSeedSelector, ENNSeedSelectConfig
-from optimizer.uhd_loop import UHDLoop
 
 
 def _action_dim(space):
@@ -17,7 +17,7 @@ def _action_dim(space):
     raise ValueError(f"Cannot get action dim from {type(space).__name__}: {space}")
 
 
-def _maybe_attach_enn(loop: UHDLoop, *, module, env, enabled: bool, cfg: ENNImputerConfig) -> None:
+def _maybe_attach_enn(loop: UHDDriver, *, module, env, enabled: bool, cfg: ENNImputerConfig) -> None:
     if not enabled:
         return
     if not hasattr(env, "torch_env"):

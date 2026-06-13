@@ -378,7 +378,9 @@ def test_weight_decay_shrinks_params():
 
 def test_run_bszo_iterations_loop():
     """Test the loop runner directly with a synthetic evaluate_fn."""
-    from ops.uhd_setup_bszo import _run_bszo_iterations
+    from common.im import im
+
+    _run_bszo_iterations = im("ops.uhd_setup_bszo")._run_bszo_iterations
 
     torch.manual_seed(0)
     module = nn.Linear(3, 1, bias=False)
@@ -407,8 +409,10 @@ def test_run_bszo_iterations_loop():
 
 def test_run_bszo_wiring(monkeypatch):
     """Verify _run_bszo passes all BSZO config fields to run_bszo_loop."""
-    import ops.exp_uhd as exp_uhd
+    from common.im import im
     from ops.uhd_config import BEConfig, EarlyRejectConfig, ENNConfig, UHDConfig
+
+    _run_bszo = im("ops.exp_uhd_run")._run_bszo
 
     captured = {}
 
@@ -438,11 +442,12 @@ def test_run_bszo_wiring(monkeypatch):
     )
     cfg = UHDConfig(
         env_tag="mnist",
-        policy_tag=None,
+        policy_tag="pure-function",
         num_rounds=5,
         problem_seed=42,
         noise_seed_0=7,
         lr=1e-4,
+        sigma=0.001,
         num_dim_target=None,
         num_module_target=None,
         log_interval=1,
@@ -460,11 +465,11 @@ def test_run_bszo_wiring(monkeypatch):
         bszo_alpha=0.2,
     )
 
-    exp_uhd._run_bszo(cfg)
+    _run_bszo(cfg)
 
     assert captured["args"] == ("mnist", 5)
     kw = captured["kwargs"]
-    assert kw["policy_tag"] is None
+    assert kw["policy_tag"] == "pure-function"
     assert kw["lr"] == 1e-4
     assert kw["problem_seed"] == 42
     assert kw["noise_seed_0"] == 7

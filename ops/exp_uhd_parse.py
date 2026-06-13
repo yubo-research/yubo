@@ -6,7 +6,9 @@ import tomllib
 from common.mapping_keys import coerce_mapping_keys, normalize_toml_key
 from ops.config_overrides import parse_override_value
 from ops.config_overrides import parse_overrides as _parse_overrides_raw
+from ops.exp_uhd_parse_extras import apply_optional_cfg_fields, validate_llm_sampling_config
 from ops.uhd_config import BEConfig, EarlyRejectConfig, ENNConfig, UHDConfig
+from optimizer.uhd_be_enn import parse_be_acquisition
 
 _REQUIRED_TOML_KEYS = ("env_tag",)
 _ALLOWED_OPTIMIZERS = {"simple", "simple_be", "mezo", "mezo_be", "bszo", "bszo_be"}
@@ -16,6 +18,7 @@ _OPTIONAL_TOML_KEYS = (
     "problem_seed",
     "noise_seed_0",
     "lr",
+    "sigma",
     "perturb",
     "log_interval",
     "accuracy_interval",
@@ -28,7 +31,12 @@ _OPTIONAL_TOML_KEYS = (
     "be_warmup",
     "be_fit_interval",
     "be_enn_k",
+    "be_num_fit_candidates",
+    "be_num_fit_samples",
+    "be_enn_index_driver",
     "be_sigma_range",
+    "be_adapt_sigma",
+    "be_acquisition",
     # ENN minus imputation (prototype)
     "enn_minus_impute",
     "enn_d",
@@ -154,7 +162,12 @@ _BE_DEFAULTS: dict[str, object] = {
     "be_warmup": 20,
     "be_fit_interval": 10,
     "be_enn_k": 25,
+    "be_num_fit_candidates": 1,
+    "be_num_fit_samples": 10,
+    "be_enn_index_driver": "flat",
     "be_sigma_range": None,
+    "be_adapt_sigma": True,
+    "be_acquisition": "ucb",
 }
 
 
@@ -254,15 +267,25 @@ def _parse_be_fields(cfg: dict[str, Any]) -> BEConfig:
     warmup = int(cfg.get("be_warmup", _BE_DEFAULTS["be_warmup"]))
     fit_interval = int(cfg.get("be_fit_interval", _BE_DEFAULTS["be_fit_interval"]))
     enn_k = int(cfg.get("be_enn_k", _BE_DEFAULTS["be_enn_k"]))
+    num_fit_candidates = int(cfg.get("be_num_fit_candidates", _BE_DEFAULTS["be_num_fit_candidates"]))
+    num_fit_samples = int(cfg.get("be_num_fit_samples", _BE_DEFAULTS["be_num_fit_samples"]))
+    enn_index_driver = str(cfg.get("be_enn_index_driver", _BE_DEFAULTS["be_enn_index_driver"]))
     sigma_range_raw = cfg.get("be_sigma_range", _BE_DEFAULTS["be_sigma_range"])
     sigma_range = tuple(float(v) for v in sigma_range_raw) if sigma_range_raw is not None else None
+    adapt_sigma = bool(cfg.get("be_adapt_sigma", _BE_DEFAULTS["be_adapt_sigma"]))
+    acquisition = parse_be_acquisition(str(cfg.get("be_acquisition", _BE_DEFAULTS["be_acquisition"])))
     return BEConfig(
         num_probes=num_probes,
         num_candidates=num_candidates,
         warmup=warmup,
         fit_interval=fit_interval,
         enn_k=enn_k,
+        num_fit_candidates=num_fit_candidates,
+        num_fit_samples=num_fit_samples,
+        enn_index_driver=enn_index_driver,
         sigma_range=sigma_range,
+        adapt_sigma=adapt_sigma,
+        acquisition=acquisition,
     )
 
 
@@ -367,6 +390,7 @@ def _parse_cfg(cfg: dict[str, Any]) -> UHDConfig:
         noise_seed_0 = int(noise_seed_0)
 
     lr = float(cfg.get("lr", 0.001))
+    sigma = float(cfg.get("sigma", 0.001))
     perturb = str(cfg.get("perturb", "dim:0.5"))
     log_interval = int(cfg.get("log_interval", 1))
     accuracy_interval = int(cfg.get("accuracy_interval", 1000))
@@ -397,6 +421,7 @@ def _parse_cfg(cfg: dict[str, Any]) -> UHDConfig:
         "problem_seed": problem_seed,
         "noise_seed_0": noise_seed_0,
         "lr": lr,
+        "sigma": sigma,
         "num_dim_target": ndt,
         "num_module_target": nmt,
         "log_interval": log_interval,
@@ -416,84 +441,8 @@ def _parse_cfg(cfg: dict[str, Any]) -> UHDConfig:
         "perturb_backend": backend,
     }
 
-    # Add other fields if present in cfg
-    for key in (
-        "sigma",
-        "steps_per_episode",
-        "num_envs",
-        "deterministic_policy",
-        "seed_offset",
-        "num_reps",
-        "pretrain_search_dim",
-        "pretrain_delta_scale",
-        "pretrain_generation_length",
-        "pretrain_rwkv_type",
-        "pretrain_lora_only",
-        "pretrain_basis_max_leaves",
-        "max_tokens",
-        "temperature",
-        "samples_per_prompt",
-        "prompt_batch_size",
-        "pass_at_k",
-        "num_gpus",
-        "num_engines",
-        "tensor_parallel_size",
-        "sub_dataset_size",
-        "hf_home",
-        "text_search_dim",
-        "text_delta_scale",
-        "text_basis_max_tensors",
-        "text_score_mode",
-        "bf8_storage",
-        "pretrain_basis_max_leaves",
-        "eggroll_noiser",
-        "eggroll_rank",
-        "eggroll_group_size",
-        "eggroll_freeze_nonlora",
-        "use_async",
-        "vllm_enforce_eager",
-        "vllm_max_model_len",
-        "vllm_gpu_memory_utilization",
-        "vllm_max_num_seqs",
-        "vllm_max_num_batched_tokens",
-        "vllm_speculative_method",
-        "vllm_speculative_model",
-        "vllm_num_speculative_tokens",
-        "distill_teacher_model_choice",
-        "distill_student_model_choice",
-        "distill_dtype",
-        "distill_generation_length",
-        "distill_search_dim",
-        "distill_delta_scale",
-        "distill_lora_only",
-        "distill_basis_max_leaves",
-    ):
-        if key in cfg:
-            val = cfg[key]
-            if key == "pretrain_basis_max_leaves" and val == 0:
-                val = None
-            config_dict[key] = val
+    apply_optional_cfg_fields(config_dict, cfg)
 
     parsed = UHDConfig(**config_dict)
-    _validate_llm_sampling_config(parsed)
+    validate_llm_sampling_config(parsed)
     return parsed
-
-
-def _validate_llm_sampling_config(cfg: UHDConfig) -> None:
-    if not str(cfg.env_tag).startswith("llm:"):
-        return
-    text_score_mode = str(cfg.text_score_mode)
-    if text_score_mode not in {"generation", "nll"}:
-        raise ValueError("UHD text configs require text_score_mode='generation' or text_score_mode='nll'.")
-    if text_score_mode == "nll":
-        if int(cfg.samples_per_prompt) != 1 or bool(cfg.pass_at_k):
-            raise ValueError("UHD text NLL scoring requires samples_per_prompt=1 and pass_at_k=false.")
-        return
-    if int(cfg.samples_per_prompt) > 1 and float(cfg.temperature) <= 0.0:
-        raise ValueError(
-            "UHD text configs with samples_per_prompt > 1 require temperature > 0. "
-            "vLLM greedy decoding uses temperature=0 and only supports n=1. "
-            f"Got samples_per_prompt={cfg.samples_per_prompt}, temperature={cfg.temperature}."
-        )
-    if bool(cfg.pass_at_k) and int(cfg.samples_per_prompt) <= 1:
-        raise ValueError("UHD text configs with pass_at_k=true require samples_per_prompt > 1.")

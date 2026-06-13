@@ -19,7 +19,9 @@ from analysis.fitting_time.fitting_time_enn_incremental import EnnIncrementalInd
 
 
 def test_benchmark_enn_full_optimization_importable_from_package():
-    from analysis.fitting_time import benchmark_enn_full_optimization_proposal_timing as exported
+    from analysis.fitting_time import (
+        benchmark_enn_full_optimization_proposal_timing as exported,
+    )
 
     assert exported is benchmark_enn_full_optimization_proposal_timing
 
@@ -34,6 +36,7 @@ def test_enn_full_opt_checkpoint_ns_caps_at_1m():
 def test_opt_name_for_index_driver():
     assert opt_name_for_index_driver(EnnIncrementalIndexDriver.FLAT) == "turbo-enn-fit-ucb"
     assert opt_name_for_index_driver(EnnIncrementalIndexDriver.HNSW) == "turbo-enn-fit-ucb/idx=hnsw"
+    assert opt_name_for_index_driver(EnnIncrementalIndexDriver.HNSW_DISK) == "turbo-enn-fit-ucb/idx=hnsw_disk"
 
 
 def test_benchmark_rejects_problem_seed_inconsistent_with_rep_index():
@@ -128,23 +131,26 @@ def test_collect_full_opt_snapshots_from_optimizer():
         def __init__(self):
             self._i_iter = 0
             self._cum_dt_proposing = 0.0
+            self.y_best = None
             self.stopped = False
 
         def iterate(self):
             self._i_iter += 1
             self._cum_dt_proposing += float(self._i_iter) * 0.1
+            self.y_best = float(self._i_iter)
 
         def stop(self):
             self.stopped = True
 
     opt = _FakeOpt()
-    ns, elapsed, stop_reason = collect_full_opt_snapshots_from_optimizer(
+    ns, elapsed, y_best, stop_reason = collect_full_opt_snapshots_from_optimizer(
         opt,
         checkpoints=(1, 3),
         max_iterations=5,
     )
     assert ns == (1, 3)
     assert elapsed == pytest.approx((0.1, 0.6))
+    assert y_best == pytest.approx((1.0, 3.0))
     assert stop_reason == "completed"
     assert opt.stopped
 
@@ -165,6 +171,7 @@ def test_benchmark_enn_full_opt_ackley_3d_smoke(index_driver):
     assert isinstance(result, EnnFullOptTimingResult)
     assert result.n == (1, 3)
     assert len(result.proposal_elapsed_seconds) == 2
+    assert len(result.y_best_so_far) == 2
     assert result.env_tag == "f:ackley-3d"
     assert result.opt_name == opt_name_for_index_driver(index_driver)
     assert all(t >= 0.0 for t in result.proposal_elapsed_seconds)

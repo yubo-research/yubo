@@ -67,7 +67,6 @@ def benchmark_enn_query_timing(
     if int(x_query.shape[0]) != n_query:
         raise ValueError(f"requested {n_query} query points but only drew {x_query.shape[0]}")
 
-    driver = index_driver.to_enn_index_driver()
     yvar_scalar = float(_SYNTHETIC_OBS_VAR)
     flags = PosteriorFlags(observation_noise=False)
 
@@ -88,7 +87,7 @@ def benchmark_enn_query_timing(
             train_x,
             train_y,
             np.full_like(train_y, yvar_scalar),
-            index_driver=driver,
+            index_driver=index_driver.to_enn_index_driver(),
         )
         params = _checkpoint_enn_params(n_obs)
         enn_model.ensure_index_sync()

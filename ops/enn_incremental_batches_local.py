@@ -20,7 +20,7 @@ def register_local_commands(
             click.Argument(["rep_index"], type=int),
             click.Argument(
                 ["index_driver"],
-                type=click.Choice(["flat", "hnsw"], case_sensitive=False),
+                type=click.Choice(["flat", "hnsw", "hnsw_disk"], case_sensitive=False),
             ),
             click.Option(("-d", "--d", "d_dims"), type=int, default=10, show_default=True),
             click.Option(
@@ -134,7 +134,7 @@ def register_local_commands(
             click.Argument(["rep_index"], type=int),
             click.Argument(
                 ["index_driver"],
-                type=click.Choice(["flat", "hnsw"], case_sensitive=False),
+                type=click.Choice(["flat", "hnsw", "hnsw_disk"], case_sensitive=False),
             ),
             click.Option(("-d", "--d", "d_dims"), type=int, default=10, show_default=True),
             click.Option(
@@ -248,7 +248,7 @@ def register_local_commands(
             click.Argument(["rep_index"], type=int),
             click.Argument(
                 ["index_driver"],
-                type=click.Choice(["flat", "hnsw"], case_sensitive=False),
+                type=click.Choice(["flat", "hnsw", "hnsw_disk"], case_sensitive=False),
             ),
             click.Option(("-d", "--d", "d_dims"), type=int, default=10, show_default=True),
             click.Option(
@@ -371,7 +371,7 @@ def register_local_commands(
             click.Argument(["rep_index"], type=int),
             click.Argument(
                 ["index_driver"],
-                type=click.Choice(["flat", "hnsw"], case_sensitive=False),
+                type=click.Choice(["flat", "hnsw", "hnsw_disk"], case_sensitive=False),
             ),
             click.Option(
                 ("--num-reps", "num_reps"),

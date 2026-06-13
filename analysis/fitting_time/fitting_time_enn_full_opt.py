@@ -27,6 +27,7 @@ FULL_OPT_NUM_DENOISE = 1
 FULL_OPT_POLICY_TAG = "pure-function"
 _OPT_NAME_FLAT = "turbo-enn-fit-ucb"
 _OPT_NAME_HNSW = "turbo-enn-fit-ucb/idx=hnsw"
+_OPT_NAME_HNSW_DISK = "turbo-enn-fit-ucb/idx=hnsw_disk"
 
 
 def enn_full_opt_checkpoint_ns() -> tuple[int, ...]:
@@ -37,6 +38,7 @@ def enn_full_opt_checkpoint_ns() -> tuple[int, ...]:
 class EnnFullOptTimingResult:
     n: tuple[int, ...]
     proposal_elapsed_seconds: tuple[float, ...]
+    y_best_so_far: tuple[float, ...]
     env_tag: str
     opt_name: str
     index_driver: EnnIncrementalIndexDriver
@@ -49,6 +51,8 @@ class EnnFullOptTimingResult:
 def opt_name_for_index_driver(index_driver: EnnIncrementalIndexDriver) -> str:
     if index_driver == EnnIncrementalIndexDriver.HNSW:
         return _OPT_NAME_HNSW
+    if index_driver == EnnIncrementalIndexDriver.HNSW_DISK:
+        return _OPT_NAME_HNSW_DISK
     return _OPT_NAME_FLAT
 
 
@@ -146,11 +150,18 @@ def _snapshots_from_iter_counts(
     next_idx: int,
     ns: list[int],
     elapsed: list[float],
+    y_best_so_far: list[float] | None = None,
+    *,
+    y_best: float | None = None,
 ) -> int:
     idx = next_idx
     while idx < len(ckpts) and i_iter == int(ckpts[idx]):
         ns.append(int(ckpts[idx]))
         elapsed.append(float(cum_dt_proposing))
+        if y_best_so_far is not None:
+            if y_best is None:
+                raise ValueError(f"y_best is unset at checkpoint N={ckpts[idx]}")
+            y_best_so_far.append(float(y_best))
         idx += 1
     return idx
 
@@ -188,6 +199,7 @@ def benchmark_enn_full_optimization_proposal_timing(
 
     ns: list[int] = []
     proposal_elapsed: list[float] = []
+    y_best_so_far: list[float] = []
     next_idx = 0
     stop_reason = "completed"
     opt = None
@@ -227,6 +239,8 @@ def benchmark_enn_full_optimization_proposal_timing(
                 next_idx,
                 ns,
                 proposal_elapsed,
+                y_best_so_far,
+                y_best=None if opt.y_best is None else float(opt.y_best),
             )
             if next_idx >= len(ckpts):
                 break
@@ -243,6 +257,7 @@ def benchmark_enn_full_optimization_proposal_timing(
     return EnnFullOptTimingResult(
         n=tuple(ns),
         proposal_elapsed_seconds=tuple(proposal_elapsed),
+        y_best_so_far=tuple(y_best_so_far),
         env_tag=str(env_tag),
         opt_name=opt_name,
         index_driver=index_driver,
@@ -258,7 +273,7 @@ def collect_full_opt_snapshots_from_optimizer(
     *,
     checkpoints: Sequence[int],
     max_iterations: int,
-) -> tuple[tuple[int, ...], tuple[float, ...], str]:
+) -> tuple[tuple[int, ...], tuple[float, ...], tuple[float, ...], str]:
     ckpts = tuple(int(n) for n in checkpoints)
     _validate_full_opt_checkpoints(ckpts)
     _wall_clock_stop_requested[0] = False
@@ -268,11 +283,13 @@ def collect_full_opt_snapshots_from_optimizer(
 
     ns: list[int] = []
     proposal_elapsed: list[float] = []
+    y_best_so_far: list[float] = []
     next_idx = 0
     stop_reason = "completed"
 
     for _ in range(nr):
         opt.iterate()
+        y_best = getattr(opt, "y_best", None)
         next_idx = _snapshots_from_iter_counts(
             int(opt._i_iter),
             float(opt._cum_dt_proposing),
@@ -280,6 +297,8 @@ def collect_full_opt_snapshots_from_optimizer(
             next_idx,
             ns,
             proposal_elapsed,
+            y_best_so_far,
+            y_best=None if y_best is None else float(y_best),
         )
         if next_idx >= len(ckpts):
             break
@@ -295,4 +314,4 @@ def collect_full_opt_snapshots_from_optimizer(
         num_rounds=nr,
     )
 
-    return tuple(ns), tuple(proposal_elapsed), stop_reason
+    return tuple(ns), tuple(proposal_elapsed), tuple(y_best_so_far), stop_reason

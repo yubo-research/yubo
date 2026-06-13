@@ -128,7 +128,7 @@ def deploy(exp_type: str, tag: str):
         click.Option(["--output-dir"], default="results/enn_incremental", show_default=True),
         click.Option(
             ["--index-driver"],
-            type=click.Choice(["flat", "hnsw", "all"], case_sensitive=False),
+            type=click.Choice(["flat", "hnsw", "hnsw_disk", "all"], case_sensitive=False),
             default="all",
             show_default=True,
         ),
@@ -178,7 +178,7 @@ def submit(
         click.Option(["--output-dir"], default="results/enn_incremental", show_default=True),
         click.Option(
             ["--index-driver"],
-            type=click.Choice(["flat", "hnsw", "all"], case_sensitive=False),
+            type=click.Choice(["flat", "hnsw", "hnsw_disk", "all"], case_sensitive=False),
             default="all",
             show_default=True,
         ),

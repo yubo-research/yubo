@@ -62,6 +62,7 @@ def full_opt_result_to_payload(
     return {
         "N": list(result.n),
         "proposal_elapsed_seconds": list(result.proposal_elapsed_seconds),
+        "y_best_so_far": list(result.y_best_so_far),
         "_meta": {
             "env_tag": result.env_tag,
             "opt_name": result.opt_name,

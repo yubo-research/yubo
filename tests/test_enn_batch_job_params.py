@@ -6,13 +6,20 @@ import pytest
 
 from analysis.fitting_time.fitting_time_enn_incremental import (
     ENN_INCREMENTAL_CHECKPOINT_NS,
+    EnnIncrementalIndexDriver,
     enn_incremental_checkpoint_ns,
 )
 from experiments.enn_batch_job_params import (
     ENN_BATCH_BENCHMARK_FUNCTIONS,
     enn_batch_checkpoint_ns,
     enn_batch_shared_params,
+    normalize_index_driver,
 )
+
+
+def test_normalize_index_driver_hnsw_disk():
+    assert normalize_index_driver("hnsw_disk") is EnnIncrementalIndexDriver.HNSW_DISK
+    assert normalize_index_driver("HNSW-Disk") is EnnIncrementalIndexDriver.HNSW_DISK
 
 
 def test_enn_batch_checkpoint_ns_matches_incremental_source():

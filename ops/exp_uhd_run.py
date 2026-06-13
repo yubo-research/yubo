@@ -219,7 +219,19 @@ def _run_parsed_uhd_direct(parsed) -> None:
     elif parsed.optimizer in {"simple", "simple_be", "mezo_be"}:
         _run_simple(parsed)
     else:
-        _run_mezo(parsed)
+        _run_unified(parsed)
+
+
+def run_local_from_toml(config_toml: str) -> None:
+    tomllib = im("tomllib")
+    p = im("ops.exp_uhd_parse")
+    try:
+        cfg = p._load_toml_config(config_toml)
+        p._validate_required(cfg)
+    except (OSError, tomllib.TOMLDecodeError, TypeError, ValueError) as e:
+        raise click.ClickException(str(e)) from e
+    parsed = p._parse_cfg(cfg)
+    run_parsed_uhd_local(parsed)
 
 
 def _register_runtime_backends(env_tag: str) -> None:
@@ -273,6 +285,10 @@ def _run_vec_uhd(parsed) -> None:
     im("ops.vec_uhd").run_uhd_vector_loop(parsed)
 
 
+def _run_unified(parsed) -> None:
+    _run_mezo(parsed)
+
+
 def _run_mezo(parsed) -> None:
     policy_tag = getattr(parsed, "policy_tag", None)
     loop = im("ops.uhd_setup_make_loop").make_loop(
@@ -282,6 +298,7 @@ def _run_mezo(parsed) -> None:
         problem_seed=parsed.problem_seed,
         noise_seed_0=parsed.noise_seed_0,
         batch_size=parsed.batch_size,
+        optimizer=parsed.optimizer,
         lr=parsed.lr,
         sigma=getattr(parsed, "sigma", 0.001),
         num_dim_target=parsed.num_dim_target,
@@ -291,25 +308,25 @@ def _run_mezo(parsed) -> None:
         target_accuracy=parsed.target_accuracy,
         early_reject=parsed.early_reject,
         enn=parsed.enn,
+        be=parsed.be,
     )
     loop.run()
 
 
 def uhd_config_toml_to_modal_log(
     config_toml: str,
-    gpu: str,
+    gpu: str = "A100",
     *,
-    exp_uhd_parse: Any,
-    tomllib: Any,
-    modal_run: Any,
+    exp_uhd_parse=None,
+    tomllib=None,
+    modal_run=None,
 ) -> str:
-    try:
-        cfg = exp_uhd_parse._load_toml_config(config_toml)
-        exp_uhd_parse._validate_required(cfg)
-    except (OSError, tomllib.TOMLDecodeError, TypeError, ValueError) as e:
-        raise click.ClickException(str(e)) from e
-    parsed = exp_uhd_parse._parse_cfg(cfg)
-    policy_tag = getattr(parsed, "policy_tag", None)
+    p = exp_uhd_parse if exp_uhd_parse is not None else im("ops.exp_uhd_parse")
+    if modal_run is None:
+        modal_run = im("ops.modal_uhd_runner_impl").run
+    cfg = p._load_toml_config(config_toml)
+    p._validate_required(cfg)
+    parsed = p._parse_cfg(cfg)
     return modal_run(
         parsed.env_tag,
         parsed.num_rounds,
@@ -318,7 +335,6 @@ def uhd_config_toml_to_modal_log(
         parsed.num_module_target,
         sigma=getattr(parsed, "sigma", 0.001),
         gpu=gpu,
-        policy_tag=policy_tag,
         problem_seed=parsed.problem_seed,
         noise_seed_0=parsed.noise_seed_0,
         log_interval=parsed.log_interval,
@@ -326,4 +342,7 @@ def uhd_config_toml_to_modal_log(
         target_accuracy=parsed.target_accuracy,
         early_reject=parsed.early_reject,
         enn=parsed.enn,
+        policy_tag=parsed.policy_tag,
+        optimizer=parsed.optimizer,
+        be=parsed.be,
     )

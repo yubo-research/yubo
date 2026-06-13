@@ -357,6 +357,34 @@ POLICY_PRESETS: dict[str, PolicyPreset] = {
 }
 
 
+def _parse_sizes_suffix(prefix: str, tag: str) -> tuple[int, ...] | None:
+    if not tag.startswith(prefix):
+        return None
+    suffix = tag[len(prefix) :]
+    if not suffix:
+        return None
+    sizes: list[int] = []
+    for segment in suffix.split("-"):
+        if not segment.isdigit() or int(segment) < 1:
+            return None
+        if len(segment) > 1 and segment[0] == "0":
+            return None
+        sizes.append(int(segment))
+    return tuple(sizes)
+
+
+def _preset_from_pattern(tag: str) -> PolicyPreset | None:
+    for prefix, factory_fn, infer_fn in (
+        ("actor-critic-mlp-", _actor_critic_mlp_factory, _infer_rl_model_from_actor_critic_mlp),
+        ("actor-mlp-", _actor_mlp_factory, _infer_rl_model_from_actor_mlp),
+        ("mlp-", _mlp_factory, _infer_rl_model_from_mlp),
+    ):
+        sizes = _parse_sizes_suffix(prefix, tag)
+        if sizes is not None:
+            return PolicyPreset(factory=factory_fn(sizes), rl_model=infer_fn(sizes))
+    return None
+
+
 def get_policy_preset(policy_tag: str) -> PolicyPreset:
     """Get a policy preset by tag.
 
@@ -365,6 +393,9 @@ def get_policy_preset(policy_tag: str) -> PolicyPreset:
     dynamic = _dynamic_policy_preset(policy_tag)
     if dynamic is not None:
         return dynamic
+    pattern = _preset_from_pattern(policy_tag)
+    if pattern is not None:
+        return pattern
     if policy_tag not in POLICY_PRESETS:
         raise KeyError(f"Unknown policy tag '{policy_tag}'. Available: {list_policy_tags()}")
     return POLICY_PRESETS[policy_tag]

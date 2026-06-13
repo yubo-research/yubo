@@ -45,7 +45,7 @@ def _require_str_in(opts: dict, key: str, allowed: set[str], *, example: str) ->
     return v
 
 
-_IDX_ALLOWED = frozenset({"flat", "hnsw", "exact"})
+_IDX_ALLOWED = frozenset({"flat", "hnsw", "hnsw_disk", "exact"})
 
 
 def _reject_unknown_opts(name: str, opts: dict, allowed: set[str]):

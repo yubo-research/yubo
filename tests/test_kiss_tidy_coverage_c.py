@@ -148,6 +148,7 @@ def test_kiss_tidy_c_ppo_uhd_actor_smoke(monkeypatch):
         _enn_params=None,
         _zs=[],
         _warmup=0,
+        _enn_k=25,
         _selected=False,
         _z_plus=None,
         _z_minus=None,

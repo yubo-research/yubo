@@ -12,13 +12,116 @@ from ops.uhd_setup_monolith_support import (
     _parse_enn_cfg,
     _preload_mnist_train_to_device,
 )
-from ops.uhd_setup_simple_common import _default_be_config
-from optimizer.uhd_loop import UHDLoop
+from ops.uhd_setup_simple_common import (
+    _default_be_config,
+    _gym_embed_bounds,
+    _make_simple_optimizer,
+)
+from optimizer.gaussian_perturbator import GaussianPerturbator
+from optimizer.lr_scheduler import ConstantLR
+from optimizer.sparse_gaussian_perturbator import SparseGaussianPerturbator
+from optimizer.submodule_perturbator import SubmodulePerturbator
+from optimizer.uhd_driver import UHDDriver
+from optimizer.uhd_mezo import UHDMeZO
 
 
-def _make_simple_loop_for_np_policy(
+def _make_uhd_perturbator(module, *, num_dim_target, num_module_target):
+    if num_module_target is not None:
+        return SubmodulePerturbator(module, num_module_target=num_module_target)
+    if num_dim_target is not None:
+        return SparseGaussianPerturbator(module, num_dim_target=num_dim_target)
+    return GaussianPerturbator(module)
+
+
+def _make_uhd_optimizer(
+    optimizer: str,
+    module,
+    perturbator,
+    *,
+    dim: int,
+    lr: float,
+    sigma: float,
+    embed_module=None,
+    embed_bounds=None,
+    be: BEConfig | None = None,
+):
+    if optimizer == "mezo":
+        return UHDMeZO(
+            perturbator,
+            dim,
+            lr_scheduler=ConstantLR(lr),
+            sigma=sigma,
+        )
+    if optimizer in {"simple", "simple_be", "mezo_be"}:
+        return _make_simple_optimizer(
+            module,
+            perturbator,
+            optimizer=optimizer,
+            sigma=sigma,
+            dim=dim,
+            lr=lr,
+            embed_module=embed_module,
+            embed_bounds=embed_bounds,
+            be=be,
+        )
+    raise ValueError(f"Unknown UHD optimizer: {optimizer!r}")
+
+
+def _make_np_uhd_optimizer(
+    np_policy,
+    env_runtime,
+    *,
+    optimizer: str,
+    sigma: float,
+    lr: float,
+    be: BEConfig | None = None,
+):
+    from common.seed_all import seed_all
+    from embedding.behavioral_embedder import BehavioralEmbedder
+    from optimizer.uhd_mezo_np import UHDMeZOBENp, UHDMeZONp
+    from optimizer.uhd_simple_be_np import UHDSimpleBENp
+    from optimizer.uhd_simple_np import UHDSimpleNp
+
+    if env_runtime.problem_seed is not None:
+        seed_all(int(env_runtime.problem_seed) + 27)
+
+    param_clip = (-1.0, 1.0)
+    from ops.uhd_setup_simple_common import _be_enn_kwargs
+
+    cfg = be if be is not None else _default_be_config()
+    if optimizer == "simple":
+        return UHDSimpleNp(np_policy, sigma_0=sigma, param_clip=param_clip)
+    if optimizer == "simple_be":
+        num_state = env_runtime.gym_conf.state_space.shape[0]
+        embedder = BehavioralEmbedder(_gym_embed_bounds(num_state), num_probes=cfg.num_probes, seed=0)
+        return UHDSimpleBENp(
+            np_policy,
+            embedder,
+            sigma_0=sigma,
+            param_clip=param_clip,
+            adapt_sigma=cfg.adapt_sigma,
+            **_be_enn_kwargs(cfg),
+        )
+    if optimizer == "mezo":
+        return UHDMeZONp(np_policy, sigma=sigma, lr=lr, param_clip=param_clip)
+    if optimizer == "mezo_be":
+        num_state = env_runtime.gym_conf.state_space.shape[0]
+        embedder = BehavioralEmbedder(_gym_embed_bounds(num_state), num_probes=cfg.num_probes, seed=0)
+        return UHDMeZOBENp(
+            np_policy,
+            embedder,
+            sigma=sigma,
+            lr=lr,
+            param_clip=param_clip,
+            **_be_enn_kwargs(cfg),
+        )
+    raise ValueError(f"Unknown optimizer for numpy policy: {optimizer}")
+
+
+def _make_driver_for_np_policy(
     env_runtime,
     np_policy,
+    *,
     optimizer: str,
     num_rounds: int,
     sigma: float,
@@ -27,85 +130,47 @@ def _make_simple_loop_for_np_policy(
     target_accuracy: float | None,
     num_denoise: int | None = None,
     be: BEConfig | None = None,
-):
-    from common.seed_all import seed_all
-    from embedding.behavioral_embedder import BehavioralEmbedder
-    from ops.uhd_setup_monolith_opt import _gym_embed_bounds
-    from ops.uhd_setup_monolith_simple_run import _run_simple_iterations
-    from optimizer.uhd_mezo_np import UHDMeZOBENp, UHDMeZONp
-    from optimizer.uhd_simple_be_np import UHDSimpleBENp
-    from optimizer.uhd_simple_np import UHDSimpleNp
-
-    if env_runtime.problem_seed is not None:
-        seed_all(int(env_runtime.problem_seed) + 27)
-
-    dim = np_policy.num_params()
+) -> UHDDriver:
     noise_seed_0 = env_runtime.noise_seed_0 or 0
     frozen = bool(getattr(env_runtime, "frozen_noise", False))
+    uhd = _make_np_uhd_optimizer(
+        np_policy,
+        env_runtime,
+        optimizer=optimizer,
+        sigma=sigma,
+        lr=lr,
+        be=be,
+    )
 
-    param_clip = (-1.0, 1.0)
-    if optimizer == "simple":
-        uhd = UHDSimpleNp(np_policy, sigma_0=sigma, param_clip=param_clip)
-    elif optimizer == "simple_be":
-        num_state = env_runtime.gym_conf.state_space.shape[0]
-        cfg = be if be is not None else _default_be_config()
-        embedder = BehavioralEmbedder(_gym_embed_bounds(num_state), num_probes=cfg.num_probes, seed=0)
-        uhd = UHDSimpleBENp(
-            np_policy,
-            embedder,
-            sigma_0=sigma,
-            param_clip=param_clip,
-            num_candidates=cfg.num_candidates,
-            warmup=cfg.warmup,
-            fit_interval=cfg.fit_interval,
-            enn_k=cfg.enn_k,
-        )
-    elif optimizer == "mezo":
-        uhd = UHDMeZONp(np_policy, sigma=sigma, lr=lr, param_clip=param_clip)
-    elif optimizer == "mezo_be":
-        num_state = env_runtime.gym_conf.state_space.shape[0]
-        cfg = be if be is not None else _default_be_config()
-        embedder = BehavioralEmbedder(_gym_embed_bounds(num_state), num_probes=cfg.num_probes, seed=0)
-        uhd = UHDMeZOBENp(
-            np_policy,
-            embedder,
-            sigma=sigma,
-            lr=lr,
-            param_clip=param_clip,
-            num_candidates=cfg.num_candidates,
-            warmup=cfg.warmup,
-            fit_interval=cfg.fit_interval,
-            enn_k=cfg.enn_k,
-        )
-    else:
-        raise ValueError(f"Unknown optimizer for numpy policy: {optimizer}")
-
-    def evaluate_fn():
+    def evaluate_fn(eval_seed):
         return _evaluate_gym_with_denoise(
             env_runtime,
             np_policy,
-            eval_seed=uhd.eval_seed,
+            eval_seed=eval_seed,
             noise_seed_0=noise_seed_0,
             frozen=frozen,
             num_denoise=num_denoise,
         )
 
-    print(f"UHD-Np: num_params = {dim}, optimizer = {optimizer}")
-    _run_simple_iterations(
+    class _NpModule:
+        def parameters(self):
+            return []
+
+    class _NpPerturbator:
+        pass
+
+    return UHDDriver(
+        _NpModule(),
         uhd,
-        evaluate_fn=evaluate_fn,
-        accuracy_fn=None,
-        num_rounds=num_rounds,
+        _NpPerturbator(),
+        evaluate_fn,
+        optimizer=optimizer,
+        num_iterations=num_rounds,
         log_interval=log_interval,
         accuracy_interval=0,
         target_accuracy=target_accuracy,
+        print_summary=True,
     )
-
-    class _DummyLoop:
-        def run(self):
-            pass
-
-    return _DummyLoop()
 
 
 def make_loop(
@@ -116,7 +181,8 @@ def make_loop(
     num_dim_target=None,
     num_module_target=None,
     *,
-    policy_tag: str | None = None,
+    optimizer: str = "mezo",
+    policy_tag: str,
     problem_seed: int | None = None,
     noise_seed_0: int | None = None,
     batch_size: int = 4096,
@@ -126,11 +192,9 @@ def make_loop(
     num_denoise: int | None = None,
     enn: dict[str, object] | None = None,
     early_reject: EarlyRejectConfig | None = None,
+    be: BEConfig | None = None,
 ):
     from common.seed_all import seed_all
-
-    if policy_tag is None:
-        policy_tag = "pure-function"
 
     build_problem = _load_build_problem()
     problem = build_problem(env_tag, policy_tag, problem_seed=problem_seed, noise_seed_0=noise_seed_0)
@@ -163,6 +227,8 @@ def make_loop(
         )
 
         accuracy_fn = _make_accuracy_fn(module, device)
+        embed_module = module
+        embed_bounds = None
     else:
         env.close()
 
@@ -179,24 +245,17 @@ def make_loop(
 
         np_policy = _try_make_np_policy(problem)
         if np_policy is not None:
-            return _make_simple_loop_for_np_policy(
+            return _make_driver_for_np_policy(
                 env_runtime,
                 np_policy,
-                optimizer="mezo",
+                optimizer=optimizer,
                 num_rounds=num_rounds,
                 sigma=sigma,
                 lr=lr,
                 log_interval=log_interval,
                 target_accuracy=target_accuracy,
                 num_denoise=num_denoise,
-                be=BEConfig(
-                    num_probes=10,
-                    num_candidates=10,
-                    warmup=20,
-                    fit_interval=10,
-                    enn_k=25,
-                    sigma_range=None,
-                ),
+                be=be,
             )
 
         policy = problem.build_policy()
@@ -221,17 +280,31 @@ def make_loop(
             )
 
         accuracy_fn = None
+        embed_module = getattr(module, "model", module)
+        embed_bounds = _gym_embed_bounds(num_state)
 
     acc_fn = accuracy_fn if hasattr(env, "torch_env") else None
-    loop = UHDLoop(
+    dim = sum(p.numel() for p in module.parameters())
+    perturbator = _make_uhd_perturbator(module, num_dim_target=num_dim_target, num_module_target=num_module_target)
+    uhd = _make_uhd_optimizer(
+        optimizer,
         module,
-        _evaluate_fn,
-        num_iterations=num_rounds,
+        perturbator,
+        dim=dim,
         lr=lr,
         sigma=sigma,
+        embed_module=embed_module,
+        embed_bounds=embed_bounds,
+        be=be,
+    )
+    loop = UHDDriver(
+        module,
+        uhd,
+        perturbator,
+        _evaluate_fn,
+        optimizer=optimizer,
+        num_iterations=num_rounds,
         accuracy_fn=acc_fn,
-        num_dim_target=num_dim_target,
-        num_module_target=num_module_target,
         log_interval=log_interval,
         accuracy_interval=accuracy_interval,
         target_accuracy=target_accuracy,
@@ -263,4 +336,10 @@ def make_loop(
     return loop
 
 
-__all__ = ["_make_simple_loop_for_np_policy", "make_loop"]
+__all__ = [
+    "_make_driver_for_np_policy",
+    "_make_np_uhd_optimizer",
+    "_make_uhd_optimizer",
+    "_make_uhd_perturbator",
+    "make_loop",
+]

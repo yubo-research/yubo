@@ -1,4 +1,5 @@
 import logging
+import tempfile
 
 
 def _im(name: str):
@@ -74,6 +75,7 @@ class TurboENNDesigner:
         self._num_metrics = num_metrics
         self._use_python = use_python
         self._index_driver = index_driver
+        self._enn_disk_work_dir = None
 
         self._turbo = None
         self._num_arms = None
@@ -113,7 +115,20 @@ class TurboENNDesigner:
             return ENNIndexDriver.FLAT
         if v == "hnsw":
             return ENNIndexDriver.HNSW
+        if v in ("hnsw_disk", "hnswdisk"):
+            return ENNIndexDriver.HNSW_DISK
         raise ValueError(f"Invalid index_driver: {self._index_driver}")
+
+    def _enn_surrogate_disk_kwargs(self, index_driver):
+        ENNIndexDriver = _im("enn.turbo.config.enn_index_driver").ENNIndexDriver
+        if index_driver is not ENNIndexDriver.HNSW_DISK:
+            return {}
+        if self._enn_disk_work_dir is None:
+            self._enn_disk_work_dir = tempfile.TemporaryDirectory(prefix="yubo_enn_hnsw_disk_")
+        return {
+            "enn_storage": "disk",
+            "work_dir": self._enn_disk_work_dir.name,
+        }
 
     def _make_trust_region(self, num_metrics: int | None):
         tr = _im("enn.turbo.config.trust_region")
@@ -147,13 +162,15 @@ class TurboENNDesigner:
 
         if self._turbo_mode == "turbo-enn":
             acq_type = self._parse_acq_type()
+            index_driver = self._resolve_index_driver()
             enn = ENNSurrogateConfig(
                 k=self._k,
                 fit=ENNFitConfig(
                     num_fit_samples=self._num_fit_samples,
                     num_fit_candidates=self._num_fit_candidates,
                 ),
-                index_driver=self._resolve_index_driver(),
+                index_driver=index_driver,
+                **self._enn_surrogate_disk_kwargs(index_driver),
             )
             if num_candidates is None:
                 candidates = CandidateGenConfig(candidate_rv=candidate_rv, raasp_driver=RAASPDriver.FAST)

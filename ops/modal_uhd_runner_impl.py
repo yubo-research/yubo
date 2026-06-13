@@ -6,11 +6,21 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from common.im import im
+from ops.modal_enn_image import enn_project_root
 from ops.modal_uhd_runner_fields import EarlyRejectFields, RunFields
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
-_PROJECT_DIRS = ("ops", "optimizer", "problems", "common", "sampling", "embedding")
-_ENN_ROOT = _PROJECT_ROOT.parents[0] / "enn"
+_PROJECT_DIRS = (
+    "ops",
+    "optimizer",
+    "problems",
+    "common",
+    "sampling",
+    "embedding",
+    "policies",
+    "rl",
+)
+_ENN_ROOT = enn_project_root(_PROJECT_ROOT)
 
 
 def _build_image(modal):
@@ -194,9 +204,9 @@ def run(
     ndt,
     nmt,
     *,
+    policy_tag: str | None = None,
     gpu="A100",
     sigma: float = 0.001,
-    policy_tag: str | None = None,
     problem_seed: int | None = None,
     noise_seed_0: int | None = None,
     log_interval: int = 10,
@@ -204,10 +214,14 @@ def run(
     target_accuracy: float | None = None,
     early_reject=None,
     enn: dict[str, object] | None = None,
+    optimizer: str = "mezo",
+    be=None,
 ):
     modal = im("modal")
     EarlyRejectConfig = im("ops.uhd_config").EarlyRejectConfig
     make_loop = im("ops.uhd_setup_make_loop").make_loop
+    if optimizer != "mezo":
+        raise ValueError(f"Modal UHD supports optimizer='mezo' only; got {optimizer!r}. Use local CLI for simple, simple_be, mezo_be, or bszo.")
 
     app = modal.App(name="yubo-uhd")
     image = _build_image(modal)
@@ -222,6 +236,9 @@ def run(
             quantile=er_f.quantile,
             window=er_f.window,
         )
+        from ops.uhd_setup_simple_common import _default_be_config
+
+        be_cfg = be if be is not None else _default_be_config()
         loop = make_loop(
             run_f.env_tag,
             run_f.num_rounds,
@@ -236,6 +253,7 @@ def run(
             accuracy_interval=run_f.accuracy_interval,
             target_accuracy=run_f.target_accuracy,
             early_reject=er_cfg,
+            be=be_cfg,
             enn={
                 "enn_minus_impute": enn_f.minus_impute,
                 "enn_d": enn_f.d,

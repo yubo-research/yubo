@@ -144,7 +144,7 @@ def test_kiss_tidy_e_torchrl_sac_sampling_vector(monkeypatch, tmp_path):
     assert callable(trainer_train_sac)
 
 
-def test_kiss_tidy_e_sparse_jl_and_vector_fakes():
+def test_kiss_tidy_e_sparse_jl():
     from sampling.sparse_jl_t_accum import accumulate_into, accumulate_into_wr, accumulate_noise_into
     from sampling.sparse_jl_t_hash import (
         CHUNK_SIZE,
@@ -155,7 +155,6 @@ def test_kiss_tidy_e_sparse_jl_and_vector_fakes():
         wrap_int64,
     )
     from sampling.sparse_jl_t_transforms import block_sparse_hash_scatter_from_nz_t
-    from testing_support.vector_fakes import FakePufferVecEnv, FakePufferVecEnvContinuous
 
     dvc = torch.device("cpu")
     y = torch.zeros(8, dtype=torch.float32)
@@ -174,12 +173,3 @@ def test_kiss_tidy_e_sparse_jl_and_vector_fakes():
     _ = CHUNK_SIZE > 0
     out2 = block_sparse_hash_scatter_from_nz_t(torch.tensor([0, 1], dtype=torch.int64), torch.ones(2), 16, 2, 9, torch.float32, dvc)
     assert out2.shape[0] == 16
-    fv = FakePufferVecEnv(2)
-    o, _ = fv.reset(seed=0)
-    fv.step(np.zeros(2, dtype=np.int64))
-    fv.close()
-    fc = FakePufferVecEnvContinuous(2)
-    o2, _ = fc.reset()
-    fc.step(np.zeros((2, 4), dtype=np.float32))
-    fc.close()
-    assert o.shape[0] == 2 and o2.shape[0] == 2

@@ -12,7 +12,9 @@ from analysis.fitting_time import (
 from analysis.fitting_time.fitting_time_enn_incremental import (
     ENN_INCREMENTAL_CHECKPOINT_NS,
     EnnIncrementalIndexDriver,
+    enn_disk_work_dir,
     enn_test_log_likelihood,
+    epistemic_nn_driver_kwargs,
 )
 from analysis.fitting_time.fitting_time_enn_incremental_draw import (
     _train_xy_unit_cube_segment,
@@ -150,4 +152,38 @@ def test_benchmark_enn_incremental_hnsw_driver():
         index_driver=EnnIncrementalIndexDriver.HNSW,
     )
     assert result.index_driver is EnnIncrementalIndexDriver.HNSW
+    assert result.n == (1, 3)
+
+
+def test_epistemic_nn_driver_kwargs_flat_has_no_disk_fields():
+    kwargs = epistemic_nn_driver_kwargs(EnnIncrementalIndexDriver.FLAT, work_dir=None)
+    assert "work_dir" not in kwargs
+    assert "enn_storage" not in kwargs
+
+
+def test_epistemic_nn_driver_kwargs_disk_requires_work_dir():
+    with pytest.raises(ValueError, match="work_dir"):
+        epistemic_nn_driver_kwargs(EnnIncrementalIndexDriver.HNSW_DISK, work_dir=None)
+
+
+def test_epistemic_nn_driver_kwargs_disk_sets_storage():
+    kwargs = epistemic_nn_driver_kwargs(EnnIncrementalIndexDriver.HNSW_DISK, work_dir="/tmp/x")
+    assert kwargs["work_dir"] == "/tmp/x"
+    assert kwargs["enn_storage"] == "disk"
+
+
+def test_enn_disk_work_dir_none_for_in_memory_driver():
+    with enn_disk_work_dir(EnnIncrementalIndexDriver.HNSW) as work_dir:
+        assert work_dir is None
+
+
+def test_benchmark_enn_incremental_hnsw_disk_driver():
+    result = benchmark_enn_incremental_add_timing(
+        D=2,
+        function_name="sphere",
+        problem_seed=2,
+        checkpoints=(1, 3),
+        index_driver=EnnIncrementalIndexDriver.HNSW_DISK,
+    )
+    assert result.index_driver is EnnIncrementalIndexDriver.HNSW_DISK
     assert result.n == (1, 3)

@@ -43,10 +43,20 @@ def test_shrink_after_failure_tolerance():
 
 
 def test_shrink_floored_at_sigma_min():
-    adapter = StepSizeAdapter(sigma_0=1e-5, dim=100, sigma_min=1e-5)
+    adapter = StepSizeAdapter(sigma_0=1e-5, dim=100, sigma_min=1e-5, restart_on_floor=False)
     for _ in range(15):
         adapter.update(accepted=False)
     assert adapter.sigma == 1e-5
+
+
+def test_restart_on_floor_resets_to_sigma_init():
+    adapter = StepSizeAdapter(sigma_0=0.01, dim=100, sigma_min=0.005, success_tolerance=3)
+    for _ in range(15):
+        adapter.update(accepted=False)
+    assert adapter.sigma == 0.005
+    for _ in range(15):
+        adapter.update(accepted=False)
+    assert adapter.sigma == 0.01
 
 
 @pytest.mark.parametrize(
@@ -75,6 +85,16 @@ def test_success_resets_failure_count():
     assert adapter.sigma == 0.1  # no shrink yet
 
 
+def test_clear_failure_streak_preserves_sigma():
+    adapter = StepSizeAdapter(sigma_0=0.1, dim=100)
+    for _ in range(8):
+        adapter.update(accepted=False)
+    adapter.clear_failure_streak()
+    for _ in range(14):
+        adapter.update(accepted=False)
+    assert adapter.sigma == 0.1
+
+
 def test_failure_resets_success_count():
     adapter = StepSizeAdapter(sigma_0=0.1, dim=10, success_tolerance=3)
     adapter.update(accepted=True)  # success 1
@@ -83,3 +103,22 @@ def test_failure_resets_success_count():
     adapter.update(accepted=True)  # success 1 again
     adapter.update(accepted=True)  # success 2
     assert adapter.sigma == 0.1  # no expand yet
+
+
+def test_sigma_init_clamped_to_bounds():
+    adapter = StepSizeAdapter(sigma_0=100.0, dim=10, sigma_max=0.5, sigma_min=0.01)
+    assert adapter.sigma_init == 0.5
+    assert adapter.sigma == 0.5
+
+
+def test_restart_resets_sigma_and_counters():
+    adapter = StepSizeAdapter(sigma_0=0.1, dim=10, success_tolerance=3)
+    adapter.update(accepted=True)
+    adapter.update(accepted=True)
+    adapter.update(accepted=True)
+    assert adapter.sigma == 0.2
+    adapter.restart()
+    assert adapter.sigma == adapter.sigma_init == 0.1
+    adapter.update(accepted=True)
+    adapter.update(accepted=True)
+    assert adapter.sigma == 0.1

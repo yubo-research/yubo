@@ -15,7 +15,7 @@ def test_kiss_cov_direct_exp_uhd_modal_and_runner_main(monkeypatch, tmp_path):
 
     monkeypatch.setattr("ops.modal_uhd.run", lambda *args, **kwargs: "ok")
     toml = tmp_path / "cfg.toml"
-    toml.write_text('[uhd]\nenv_tag="f:sphere-2d"\nnum_rounds=1\n')
+    toml.write_text('[uhd]\nenv_tag="f:sphere-2d"\npolicy_tag="pure-function"\nnum_rounds=1\n')
     modal_cmd(str(toml), (), None, "A100")
 
     cfg_path = tmp_path / "rl.toml"

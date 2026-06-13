@@ -26,7 +26,9 @@ from experiments.modal_enn_full_opt_batches import (
     iter_full_opt_jobs,
 )
 from experiments.modal_enn_full_opt_batches_json import full_opt_meta_matches
-from experiments.modal_enn_incremental_batch_worker import dispatch_enn_incremental_batch_worker
+from experiments.modal_enn_incremental_batch_worker import (
+    dispatch_enn_incremental_batch_worker,
+)
 from experiments.modal_enn_incremental_batches_common import (
     collect,
     dict_names_for_tag,
@@ -61,7 +63,10 @@ from experiments.modal_enn_incremental_batches_impl import (
 from experiments.modal_enn_incremental_batches_impl import (
     enn_incremental_batch_deleter,
 )
-from experiments.modal_enn_incremental_batches_json import add_meta_matches, result_json_complete
+from experiments.modal_enn_incremental_batches_json import (
+    add_meta_matches,
+    result_json_complete,
+)
 from experiments.modal_enn_query_batches import (
     iter_query_jobs,
     query_job_key,
@@ -119,7 +124,10 @@ def test_kiss_tidy_experiments_modal_batch_and_common(monkeypatch, tmp_path):
     assert "a" not in d and "b" in d
 
     assert get_app_name("tag") == "yubo-enn-incremental-tag"
-    assert dict_names_for_tag("t") == ("enn_incremental_results_t", "enn_incremental_submitted_t")
+    assert dict_names_for_tag("t") == (
+        "enn_incremental_results_t",
+        "enn_incremental_submitted_t",
+    )
     assert experiment_type_from_tag("add_method-x") == "add_method"
     assert env_tag_slug("f:sphere-2d") == "f_sphere-2d"
 
@@ -137,7 +145,14 @@ def test_kiss_tidy_experiments_modal_batch_and_common(monkeypatch, tmp_path):
     submitted_dict("t")
     assert list(iter_index_drivers("flat")) == [EnnIncrementalIndexDriver.FLAT]
 
-    k = job_key(d=2, function_name="sphere", problem_seed=0, rep_index=0, num_reps=1, index_driver="flat")
+    k = job_key(
+        d=2,
+        function_name="sphere",
+        problem_seed=0,
+        rep_index=0,
+        num_reps=1,
+        index_driver="flat",
+    )
     assert "sphere" in k
     dest = tmp_path / "out.json"
     write_json(dest, {"ok": True})
@@ -309,6 +324,7 @@ def test_kiss_tidy_experiments_modal_job_keys_and_json(monkeypatch, tmp_path):
     result = EnnFullOptTimingResult(
         n=(1,),
         proposal_elapsed_seconds=(0.1,),
+        y_best_so_far=(0.5,),
         env_tag="f:sphere-2d",
         opt_name="turbo-enn-fit-ucb",
         index_driver=EnnIncrementalIndexDriver.FLAT,

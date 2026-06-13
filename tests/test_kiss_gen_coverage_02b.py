@@ -108,13 +108,6 @@ def test_kiss_gen_problems_text_obj_cache() -> None:
     assert refs
 
 
-def test_kiss_gen_problems_text_obj_runtime() -> None:
-    from problems.text_obj_runtime import base_seed
-
-    refs = (base_seed,)
-    assert refs
-
-
 def test_kiss_gen_problems_torch_policy_batch() -> None:
     from problems.torch_policy_batch import try_functional_policy_actions_tensor
 

@@ -14,14 +14,20 @@ class UHDSimpleBase:
         dim: int,
         *,
         sigma_range: tuple[float, float] | None = None,
+        adapt_sigma: bool = True,
     ):
         self._perturbator = perturbator
         self._adapter = StepSizeAdapter(sigma_0=sigma_0, dim=dim)
         self._sigma_range = sigma_range
+        self._adapt_sigma = adapt_sigma
         self._eval_seed = 0
         self._y_best: float | None = None
         self._mu_prev = 0.0
         self._se_prev = 0.0
+
+    @property
+    def perturbator(self) -> GaussianPerturbator:
+        return self._perturbator
 
     @property
     def eval_seed(self) -> int:
@@ -46,10 +52,12 @@ class UHDSimpleBase:
     def _accept_or_reject(self, mu: float) -> None:
         if self._y_best is None or mu > self._y_best:
             self._y_best = mu
-            self._adapter.update(accepted=True)
+            if self._adapt_sigma:
+                self._adapter.update(accepted=True)
             self._perturbator.accept()
         else:
-            self._adapter.update(accepted=False)
+            if self._adapt_sigma:
+                self._adapter.update(accepted=False)
             self._perturbator.unperturb()
 
     def _sample_sigmas(self, base_seed: int, n: int) -> np.ndarray:

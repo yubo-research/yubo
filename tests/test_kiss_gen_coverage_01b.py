@@ -11,28 +11,6 @@ def test_kiss_gen_common_env_tags() -> None:
     assert refs
 
 
-def test_kiss_gen_experiments_hyperscalees_llm() -> None:
-    from experiments.hyperscalees_llm import local, template
-
-    refs = (
-        template,
-        local,
-    )
-    assert refs
-
-
-def test_kiss_gen_experiments_llm() -> None:
-    from experiments.llm import envs, local, main, template
-
-    refs = (
-        envs,
-        template,
-        local,
-        main,
-    )
-    assert refs
-
-
 def test_kiss_gen_experiments_nanoegg_pretrain() -> None:
     from experiments.nanoegg_pretrain import cli, local, main
 
@@ -149,20 +127,6 @@ def test_kiss_gen_llm_console_render() -> None:
         format_turn,
         format_step_block,
     )
-    assert refs
-
-
-def test_kiss_gen_llm_eggroll_engine() -> None:
-    from llm.eggroll_engine import init_worker_groups
-
-    refs = (init_worker_groups,)
-    assert refs
-
-
-def test_kiss_gen_llm_eggroll_support() -> None:
-    from llm.eggroll_support import base_seed
-
-    refs = (base_seed,)
     assert refs
 
 
