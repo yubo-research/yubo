@@ -2,7 +2,7 @@ from click.testing import CliRunner
 
 
 def test_hyperscalees_llm_dry_run_does_not_write_metadata(tmp_path):
-    from experiments.hyperscalees_llm import cli
+    from experiments.hyperscalees_llm import cli, local
 
     exp_dir = tmp_path / "runs" / "dry_run"
     config = tmp_path / "config.toml"
@@ -31,6 +31,7 @@ track = false
     assert result.exit_code == 0, result.output
     assert "DRY_RUN: true" in result.output
     assert not exp_dir.exists()
+    assert callable(local)
 
 
 def test_hyperscalees_llm_lists_all_dynamic_bandit_tasks():
@@ -44,9 +45,41 @@ def test_hyperscalees_llm_lists_all_dynamic_bandit_tasks():
     assert "zebra_puzzles\n" in result.output
 
 
+def test_hyperscalees_llm_template_direct_calls_cover_branches():
+    from click.testing import CliRunner
+
+    from experiments.hyperscalees_llm import template
+
+    runner = CliRunner()
+
+    ok = runner.invoke(
+        template,
+        ["--task", "fastzero", "--model-choice", "7w1.5B", "--noiser", "gaussian"],
+    )
+    assert ok.exit_code == 0
+    assert "runs/yubo_hyperscalees/llm_bandits/fastzero_7w1p5b_gaussian" in ok.output
+
+    bad_script = runner.invoke(
+        template,
+        ["--task", "fastzero", "--script", "not_a_real_script"],
+    )
+    assert bad_script.exit_code != 0
+    assert "Unknown HyperscaleES script" in bad_script.output
+
+    bad_task = runner.invoke(template, ["--task", "not_a_real_task"])
+    assert bad_task.exit_code != 0
+    assert "Unsupported HyperscaleES LLM bandit task" in bad_task.output
+
+    with runner.isolation():
+        template(
+            ["--task", "basic_arithmetic", "--exp-dir", "runs/custom"],
+            standalone_mode=False,
+        )
+
+
 def test_hyperscalees_llm_template_roundtrips_for_dynamic_bandit_task(tmp_path):
     from experiments import hyperscalees_llm
-    from experiments.hyperscalees_llm import cli
+    from experiments.hyperscalees_llm import cli, template
 
     result = CliRunner().invoke(
         cli,
@@ -72,6 +105,7 @@ def test_hyperscalees_llm_template_roundtrips_for_dynamic_bandit_task(tmp_path):
     assert "basic_arithmetic" in cmd
     assert "--model-choice" in cmd
     assert "7w1.5B" in cmd
+    assert callable(template)
 
 
 def test_ops_hyperscalees_llm_forwards_to_experiments_cli():
