@@ -8,6 +8,7 @@ import numpy as np
 
 from optimizer.datum import Datum
 from optimizer.designer_errors import NoSuchDesignerError
+from optimizer.eggroll_designer_config import configure_adapt_sigma
 from optimizer.eggroll_designer_nanoegg import (
     _check_population,
     update_best_and_telemetry,
@@ -66,8 +67,7 @@ def init_external(designer, policy, env_conf, cfg) -> None:
     designer._objective = objective
     designer._active_vector_slots = active_vector_slots
     designer._state.x = objective.x0
-    designer._sigma = float(cfg.sigma)
-    designer._sigma_decay = _as_unit_decay(cfg.sigma_decay, name="sigma_decay")
+    configure_adapt_sigma(designer, cfg, dim=objective.dim)
     designer._lr = float(cfg.lr)
     designer._lr_decay = _as_unit_decay(cfg.lr_decay, name="lr_decay")
     designer._rank_transform = _as_bool(cfg.rank_transform, name="rank_transform")

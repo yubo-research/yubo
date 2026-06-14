@@ -134,6 +134,10 @@ def _evaluate_updated_policy(designer, state, population: int):
 
 
 def update_best_and_telemetry(designer, state, datum: Datum, prop_dt: float, telemetry) -> None:
+    if getattr(designer, "_adapt_sigma", False):
+        prev = float("-inf") if state.best_datum is None else state.best_datum.trajectory.get_decision_rreturn()
+        cur = datum.trajectory.get_decision_rreturn()
+        designer._adapter.update(accepted=cur > prev)
     if state.best_datum is None or datum.trajectory.get_decision_rreturn() > state.best_datum.trajectory.get_decision_rreturn():
         state.best_datum = datum
     if telemetry is not None:

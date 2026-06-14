@@ -8,7 +8,7 @@ import optimizer.eggroll_designer_iter as jax_iter_helpers
 import optimizer.eggroll_designer_jit as jit_helpers
 import optimizer.eggroll_designer_nanoegg as nanoegg_helpers
 from optimizer.designer_errors import NoSuchDesignerError
-from optimizer.eggroll_designer_config import _EggRollDesignerConfig
+from optimizer.eggroll_designer_config import _EggRollDesignerConfig, configure_adapt_sigma
 from optimizer.eggroll_designer_types import (
     EggRollState,
     _NoiserBundle,
@@ -201,8 +201,7 @@ class EggRollDesigner:
         self._jnp = stack.jnp
         self._steps_per_episode = int(cfg.steps)
         self._num_envs = int(cfg.num_envs)
-        self._sigma = float(cfg.sigma)
-        self._sigma_decay = _as_unit_decay(cfg.sigma_decay, name="sigma_decay")
+        configure_adapt_sigma(self, cfg, dim=policy.num_params())
         self._suppress_noiser_stdout = _as_bool(cfg.suppress_noiser_stdout, name="suppress_noiser_stdout")
         _attach_policy_runtime_metadata(
             policy,
@@ -277,8 +276,7 @@ class EggRollDesigner:
     def _assign_nanoegg_state(self, policy, cfg: _EggRollDesignerConfig) -> None:
         self._policy = policy
         self._is_nanoegg = True
-        self._sigma = float(cfg.sigma)
-        self._sigma_decay = _as_unit_decay(cfg.sigma_decay, name="sigma_decay")
+        configure_adapt_sigma(self, cfg, dim=int(cfg.search_dim))
         self._rank = int(cfg.rank)
         self._rank_transform = _as_bool(cfg.rank_transform, name="rank_transform")
         self._group_size = int(cfg.group_size)
@@ -332,6 +330,8 @@ class EggRollDesigner:
         return self._state.best_datum
 
     def _current_sigma(self) -> float:
+        if self._adapt_sigma:
+            return self._adapter.sigma
         return self._sigma * (self._sigma_decay**self._state.epoch)
 
     def _iterate_nanoegg(self, _data, num_arms: int, *, telemetry=None) -> IterateResult:

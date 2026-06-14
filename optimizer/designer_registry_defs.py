@@ -289,6 +289,13 @@ _DESIGNER_DEFS: list[DesignerDef] = [
                 example_suffix="sigma_decay=0.999",
             ),
             DesignerOptionSpec(
+                name="adapt_sigma",
+                required=False,
+                value_type="bool",
+                description="Adapt perturbation sigma via StepSizeAdapter (mutually exclusive with sigma_decay != 1.0).",
+                example_suffix="adapt_sigma=true",
+            ),
+            DesignerOptionSpec(
                 name="lr",
                 required=False,
                 value_type="float",

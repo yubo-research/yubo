@@ -2,6 +2,74 @@ import sys
 from types import SimpleNamespace
 
 import numpy as np
+import pytest
+
+
+def test_eggroll_adapt_sigma_mutually_exclusive_with_sigma_decay():
+    from optimizer.designer_errors import NoSuchDesignerError
+    from optimizer.eggroll_designer_config import _EggRollDesignerConfig, configure_adapt_sigma
+
+    cfg = _EggRollDesignerConfig(adapt_sigma=True, sigma_decay=0.99)
+    designer = SimpleNamespace()
+    with pytest.raises(NoSuchDesignerError, match="mutually exclusive"):
+        configure_adapt_sigma(designer, cfg, dim=4)
+
+
+def test_eggroll_current_sigma_adapts_after_successes():
+    from optimizer.eggroll_designer import EggRollDesigner
+    from optimizer.eggroll_designer_config import _EggRollDesignerConfig, configure_adapt_sigma
+
+    designer = EggRollDesigner.__new__(EggRollDesigner)
+    designer._state = SimpleNamespace(epoch=0)
+    configure_adapt_sigma(designer, _EggRollDesignerConfig(sigma=0.1, adapt_sigma=True), dim=10)
+    assert designer._current_sigma() == pytest.approx(0.1)
+    for _ in range(3):
+        designer._adapter.update(accepted=True)
+    assert designer._current_sigma() == pytest.approx(0.2)
+
+
+def test_eggroll_current_sigma_fixed_with_decay_when_adapt_sigma_false():
+    from optimizer.eggroll_designer import EggRollDesigner
+    from optimizer.eggroll_designer_config import _EggRollDesignerConfig, configure_adapt_sigma
+
+    designer = EggRollDesigner.__new__(EggRollDesigner)
+    designer._state = SimpleNamespace(epoch=2)
+    configure_adapt_sigma(designer, _EggRollDesignerConfig(sigma=0.1, sigma_decay=0.5, adapt_sigma=False), dim=10)
+    assert designer._current_sigma() == pytest.approx(0.1 * 0.5**2)
+
+
+def test_eggroll_designer_config_parses_adapt_sigma():
+    from optimizer.eggroll_designer import _designer_config
+
+    cfg = _designer_config({"adapt_sigma": True, "sigma": 0.2})
+    assert cfg.adapt_sigma is True
+    assert cfg.sigma == pytest.approx(0.2)
+
+
+def test_eggroll_update_best_and_telemetry_adapts_sigma_on_improvement():
+    from optimizer.datum import Datum
+    from optimizer.eggroll_designer_config import _EggRollDesignerConfig, configure_adapt_sigma
+    from optimizer.eggroll_designer_nanoegg import update_best_and_telemetry
+    from optimizer.trajectory import Trajectory
+
+    designer = SimpleNamespace()
+    configure_adapt_sigma(designer, _EggRollDesignerConfig(sigma=0.1, adapt_sigma=True), dim=10)
+    state = SimpleNamespace(best_datum=None, epoch=0)
+
+    def _datum(rreturn: float) -> Datum:
+        return Datum(
+            designer,
+            SimpleNamespace(),
+            None,
+            Trajectory(rreturn=rreturn, states=np.empty((0,)), actions=np.empty((0,))),
+        )
+
+    update_best_and_telemetry(designer, state, _datum(1.0), 0.0, None)
+    assert designer._adapter.sigma == pytest.approx(0.1)
+    update_best_and_telemetry(designer, state, _datum(2.0), 0.0, None)
+    update_best_and_telemetry(designer, state, _datum(3.0), 0.0, None)
+    update_best_and_telemetry(designer, state, _datum(4.0), 0.0, None)
+    assert designer._adapter.sigma == pytest.approx(0.2)
 
 
 def test_eggroll_solver_accepts_muon_when_optax_exposes_it():
