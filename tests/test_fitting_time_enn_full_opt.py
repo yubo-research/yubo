@@ -37,6 +37,7 @@ def test_opt_name_for_index_driver():
     assert opt_name_for_index_driver(EnnIncrementalIndexDriver.FLAT) == "turbo-enn-fit-ucb"
     assert opt_name_for_index_driver(EnnIncrementalIndexDriver.HNSW) == "turbo-enn-fit-ucb/idx=hnsw"
     assert opt_name_for_index_driver(EnnIncrementalIndexDriver.HNSW_DISK) == "turbo-enn-fit-ucb/idx=hnsw_disk"
+    assert opt_name_for_index_driver(EnnIncrementalIndexDriver.BPANN_DISK) == "turbo-enn-fit-ucb/idx=bpann_disk"
 
 
 def test_benchmark_rejects_problem_seed_inconsistent_with_rep_index():

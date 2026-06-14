@@ -5,7 +5,6 @@ import torch
 from analysis.data_io import data_is_done, data_writer
 from common.seed_all import seed_all
 from experiments.experiment_sampler_dispatch import (
-    _scan_local_parallel,
     extract_trace_fns,
     post_process,
     post_process_stdout,
@@ -50,7 +49,6 @@ __all__ = [
     "ExperimentConfig",
     "RunConfig",
     "_SampleResult",
-    "_scan_local_parallel",
     "count_local_trace_jobs",
     "extract_trace_fns",
     "mk_replicates",

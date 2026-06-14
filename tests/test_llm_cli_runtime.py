@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import pytest
 from click.testing import CliRunner
 
 
@@ -82,7 +83,22 @@ population_size = 2
     assert callable(local)
 
 
-def test_eggroll_support_base_seed_prefers_noise_seed_over_problem_seed():
+@pytest.mark.parametrize(
+    ("extra_cfg", "expected"),
+    [
+        ({"noise_seed_0": 7, "problem_seed": 3, "seed_offset": 2}, 9),
+        ({"problem_seed": 3, "seed_offset": 1}, 4),
+        ({"noise_seed_0": 0, "problem_seed": 9, "seed_offset": 1}, 1),
+        ({"seed_offset": 5}, 5),
+    ],
+    ids=[
+        "prefers_noise_seed",
+        "falls_back_to_problem_seed",
+        "zero_noise_seed_explicit",
+        "defaults_to_zero",
+    ],
+)
+def test_eggroll_support_base_seed(extra_cfg, expected):
     from experiments import llm as llm_exp
     from llm.eggroll_support import base_seed
 
@@ -92,67 +108,11 @@ def test_eggroll_support_base_seed_prefers_noise_seed_over_problem_seed():
             "policy_tag": "qwen3-1p7b-lora-r1",
             "optimizer": "eggroll",
             "num_rounds": 1,
-            "noise_seed_0": 7,
-            "problem_seed": 3,
-            "seed_offset": 2,
+            **extra_cfg,
         }
     )
 
-    assert base_seed(cfg) == 9
-
-
-def test_eggroll_support_base_seed_falls_back_to_problem_seed():
-    from experiments import llm as llm_exp
-    from llm.eggroll_support import base_seed
-
-    cfg = llm_exp._parse_cfg(
-        {
-            "env_tag": "llm:math:gsm8k",
-            "policy_tag": "qwen3-1p7b-lora-r1",
-            "optimizer": "eggroll",
-            "num_rounds": 1,
-            "problem_seed": 3,
-            "seed_offset": 1,
-        }
-    )
-
-    assert base_seed(cfg) == 4
-
-
-def test_eggroll_support_base_seed_treats_zero_noise_seed_as_explicit():
-    from experiments import llm as llm_exp
-    from llm.eggroll_support import base_seed
-
-    cfg = llm_exp._parse_cfg(
-        {
-            "env_tag": "llm:math:gsm8k",
-            "policy_tag": "qwen3-1p7b-lora-r1",
-            "optimizer": "eggroll",
-            "num_rounds": 1,
-            "noise_seed_0": 0,
-            "problem_seed": 9,
-            "seed_offset": 1,
-        }
-    )
-
-    assert base_seed(cfg) == 1
-
-
-def test_eggroll_support_base_seed_defaults_to_zero():
-    from experiments import llm as llm_exp
-    from llm.eggroll_support import base_seed
-
-    cfg = llm_exp._parse_cfg(
-        {
-            "env_tag": "llm:math:gsm8k",
-            "policy_tag": "qwen3-1p7b-lora-r1",
-            "optimizer": "eggroll",
-            "num_rounds": 1,
-            "seed_offset": 5,
-        }
-    )
-
-    assert base_seed(cfg) == 5
+    assert base_seed(cfg) == expected
 
 
 def test_init_worker_groups_sets_engine_ranks_after_collective_init():

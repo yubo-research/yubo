@@ -47,3 +47,26 @@ def prep_uhd_batch_cheetah(
             )
 
     return configs
+
+
+def prep_uhd_batch_cheetah_simple(
+    results_dir: str = "results/uhd",
+    num_reps: int = 10,
+) -> list[tuple[dict[str, Any], int]]:
+    _ = results_dir
+
+    common: dict[str, Any] = {
+        "env_tag": "cheetah:fn",
+        "num_rounds": 1000,
+        "problem_seed": 0,
+        "noise_seed_0": 0,
+        "perturb": "dense",
+        "log_interval": 1,
+        "sigma": 0.1,
+        "optimizer": "simple",
+    }
+
+    configs: list[tuple[dict[str, Any], int]] = []
+    for policy_tag in ("linear", "mlp-32-16"):
+        configs.append(({**common, "policy_tag": policy_tag}, num_reps))
+    return configs

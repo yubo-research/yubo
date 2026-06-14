@@ -7,7 +7,6 @@ import threading
 import numpy as np
 import torch
 
-import third_party.nanochat.core_eval  # noqa: F401
 from ops.uhd_config import UHDConfig
 from problems.nanochat_lora import _NanochatSubspaceCodec
 from problems.uhd_obj_types import UHDVectorObjectiveMixin

@@ -125,11 +125,6 @@ def _evaluate_population(designer, state, population: int) -> _ExternalPopulatio
     scores: list[float] = []
     total_steps = 0
     pending: list[np.ndarray] = []
-    next_log_at = max(16, int(designer._external_batch_size))
-    _log(
-        designer,
-        f"iter={state.epoch} evaluating population={population} dim={state.x.size}",
-    )
     for pair_idx in range(population // 2):
         direction = _sample_direction(designer, state, pair_idx)
         directions.append(direction)
@@ -137,18 +132,8 @@ def _evaluate_population(designer, state, population: int) -> _ExternalPopulatio
         pending.append(state.x + sigma * direction)
         pending.append(state.x - sigma * direction)
         if len(pending) >= int(designer._external_batch_size):
-            next_log_at, total_steps = _flush(
-                designer,
-                state,
-                pending,
-                scores,
-                population,
-                next_log_at,
-                total_steps,
-                t0,
-            )
-    next_log_at, total_steps = _flush(designer, state, pending, scores, population, next_log_at, total_steps, t0)
-    _ = next_log_at
+            total_steps = _flush(designer, state, pending, scores, population, total_steps)
+    total_steps = _flush(designer, state, pending, scores, population, total_steps)
     return _ExternalPopulation(
         directions=directions,
         scores=scores,
@@ -163,17 +148,11 @@ def _flush(
     pending: list[np.ndarray],
     scores: list[float],
     population: int,
-    next_log_at: int,
     total_steps: int,
-    t0: float,
-):
+) -> int:
     if not pending:
-        return next_log_at, total_steps
+        return total_steps
     start = len(scores)
-    _log(
-        designer,
-        f"iter={state.epoch} scoring candidates {start + 1}-{start + len(pending)}/{population}",
-    )
     mus, _ses = designer._objective.evaluate_many(
         np.asarray(pending, dtype=np.float64),
         seed=int(state.epoch * population) + start,
@@ -181,15 +160,7 @@ def _flush(
     scores.extend(float(v) for v in np.asarray(mus, dtype=np.float64).reshape(-1))
     total_steps += int(getattr(designer._objective, "last_num_steps", 0))
     pending.clear()
-    done = len(scores)
-    if done >= next_log_at or done == population:
-        _log(
-            designer,
-            f"iter={state.epoch} evaluated={done}/{population} elapsed={time.time() - t0:.1f}s",
-        )
-        while next_log_at <= done:
-            next_log_at += max(16, int(designer._external_batch_size))
-    return next_log_at, total_steps
+    return total_steps
 
 
 def _apply_update(
@@ -284,7 +255,3 @@ def _standardize_scores(designer, raw_scores: np.ndarray) -> np.ndarray:
     else:
         scores = scores - float(np.mean(scores))
     return scores / float(np.sqrt(np.var(scores) + 1e-5))
-
-
-def _log(designer, message: str) -> None:
-    print(f"EGGROLL: {message}", flush=True)

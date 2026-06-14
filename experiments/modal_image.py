@@ -85,6 +85,7 @@ def mk_image(tag: str = "default"):
         "analysis",
         "common",
         "experiments",
+        "llm",
         "model",
         "ops",
         "optimizer",

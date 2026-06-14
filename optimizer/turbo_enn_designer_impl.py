@@ -117,14 +117,17 @@ class TurboENNDesigner:
             return ENNIndexDriver.HNSW
         if v in ("hnsw_disk", "hnswdisk"):
             return ENNIndexDriver.HNSW_DISK
+        if v in ("bpann_disk", "bpanndisk"):
+            return ENNIndexDriver.BPANN_DISK
         raise ValueError(f"Invalid index_driver: {self._index_driver}")
 
     def _enn_surrogate_disk_kwargs(self, index_driver):
         ENNIndexDriver = _im("enn.turbo.config.enn_index_driver").ENNIndexDriver
-        if index_driver is not ENNIndexDriver.HNSW_DISK:
+        if index_driver not in (ENNIndexDriver.HNSW_DISK, ENNIndexDriver.BPANN_DISK):
             return {}
         if self._enn_disk_work_dir is None:
-            self._enn_disk_work_dir = tempfile.TemporaryDirectory(prefix="yubo_enn_hnsw_disk_")
+            prefix = "yubo_enn_hnsw_disk_" if index_driver is ENNIndexDriver.HNSW_DISK else "yubo_enn_bpann_disk_"
+            self._enn_disk_work_dir = tempfile.TemporaryDirectory(prefix=prefix)
         return {
             "enn_storage": "disk",
             "work_dir": self._enn_disk_work_dir.name,

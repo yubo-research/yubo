@@ -108,25 +108,6 @@ def _sample_and_post_process(run_config: RunConfig):
     return run_config.trace_fn
 
 
-def _scan_local_parallel(run_configs: list[RunConfig], *, max_workers: int) -> None:
-    ctx = shim.mp_module().get_context()
-    pool = ctx.Pool(processes=int(max_workers), initializer=_limit_worker_threads)
-    try:
-        for _ in pool.imap_unordered(_sample_and_post_process, run_configs):
-            pass
-    except KeyboardInterrupt:
-        pool.terminate()
-        pool.join()
-        raise
-    except Exception:
-        pool.terminate()
-        pool.join()
-        raise
-    else:
-        pool.close()
-        pool.join()
-
-
 def _run_config_env_name(run_config: RunConfig) -> str:
     env_runtime = getattr(run_config, "env_conf", None)
     problem = getattr(run_config, "problem", None)
@@ -148,23 +129,16 @@ def scan_local(
         print("TIME_LOCAL: 0.00")
         return
     workers = max(1, int(local_workers))
-    max_workers = min(workers, len(run_configs))
     runtime_device = _resolve_runtime_device(
         requested=getattr(run_configs[0], "runtime_device", "auto"),
         env_tag=env_tag if env_tag is not None else _run_config_env_name(run_configs[0]),
-        local_workers=max_workers,
+        local_workers=workers,
     )
     for run_config in run_configs:
         run_config.runtime_device = runtime_device
-    print(f"RUNTIME: device={runtime_device} workers={max_workers}")
+    print(f"RUNTIME: device={runtime_device} workers={workers} serial=1")
 
     t_0 = time.time()
-    if max_workers > 1 and max_total_seconds is None:
-        _scan_local_parallel(run_configs, max_workers=max_workers)
-        t_f = time.time()
-        print(f"TIME_LOCAL: {t_f - t_0:.2f}")
-        return
-
     deadline = None if max_total_seconds is None else t_0 + max_total_seconds
     for run_config in run_configs:
         if deadline is not None and time.time() >= deadline:

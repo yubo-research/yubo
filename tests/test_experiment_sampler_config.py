@@ -326,3 +326,18 @@ def test_experiment_config_from_dict_total_timesteps_only():
     config = ExperimentConfig.from_dict(d)
     assert config.total_timesteps == 123456
     assert config.num_rounds is None
+
+
+def test_experiment_config_to_dir_name_distinguishes_policy_tag():
+    common = dict(
+        exp_dir="/results/exp_cheetah_policy_optimizer",
+        env_tag="cheetah:fn",
+        opt_name="random",
+        num_arms=10,
+        num_rounds=1000,
+        num_reps=10,
+        num_denoise=1,
+    )
+    linear = ExperimentConfig(**common, policy_tag="linear")
+    mlp = ExperimentConfig(**common, policy_tag="mlp-32-16")
+    assert linear.to_dir_name() != mlp.to_dir_name()

@@ -28,6 +28,7 @@ FULL_OPT_POLICY_TAG = "pure-function"
 _OPT_NAME_FLAT = "turbo-enn-fit-ucb"
 _OPT_NAME_HNSW = "turbo-enn-fit-ucb/idx=hnsw"
 _OPT_NAME_HNSW_DISK = "turbo-enn-fit-ucb/idx=hnsw_disk"
+_OPT_NAME_BPANN_DISK = "turbo-enn-fit-ucb/idx=bpann_disk"
 
 
 def enn_full_opt_checkpoint_ns() -> tuple[int, ...]:
@@ -53,6 +54,8 @@ def opt_name_for_index_driver(index_driver: EnnIncrementalIndexDriver) -> str:
         return _OPT_NAME_HNSW
     if index_driver == EnnIncrementalIndexDriver.HNSW_DISK:
         return _OPT_NAME_HNSW_DISK
+    if index_driver == EnnIncrementalIndexDriver.BPANN_DISK:
+        return _OPT_NAME_BPANN_DISK
     return _OPT_NAME_FLAT
 
 

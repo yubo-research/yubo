@@ -56,6 +56,7 @@ class ExperimentConfig:
         budget_val = self.num_rounds if self.num_rounds is not None else self.total_timesteps
         config_str = (
             f"env={self.env_tag}--opt_name={self.opt_name}"
+            f"--policy_tag={self.policy_tag}"
             f"--num_arms={self.num_arms}--{budget_key}={budget_val}"
             f"--num_reps={self.num_reps}--num_denoise={self.num_denoise}"
             f"--max_proposal_seconds={self.max_proposal_seconds}"

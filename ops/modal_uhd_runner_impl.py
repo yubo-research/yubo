@@ -19,6 +19,7 @@ _PROJECT_DIRS = (
     "embedding",
     "policies",
     "rl",
+    "llm",
 )
 _ENN_ROOT = enn_project_root(_PROJECT_ROOT)
 

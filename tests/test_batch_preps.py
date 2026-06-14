@@ -131,6 +131,64 @@ def test_prep_human():
         _assert_policy_tag_present(cmds)
 
 
+def test_prep_cheetah_policy_optimizer():
+    from experiments.batch_preps_rl_sweeps import EGGROLL_OPT
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        cmds = _bp.prep_cheetah_policy_optimizer(tmpdir)
+        assert len(cmds) == 6
+        assert {c.policy_tag for c in cmds} == {"linear", "mlp-32-16"}
+        assert {c.opt_name for c in cmds} == {
+            "random",
+            "turbo-enn-fit-ucb",
+            EGGROLL_OPT,
+        }
+        assert all(c.env_tag == "cheetah:fn" for c in cmds)
+        assert all(c.num_arms == 10 and c.num_rounds == 1000 and c.num_reps == 10 for c in cmds)
+        assert all(c.num_denoise == 1 for c in cmds)
+        assert all(c.num_denoise_passive is None for c in cmds)
+        assert all("exp_cheetah_policy_optimizer" in c.exp_dir for c in cmds)
+
+
+def test_prep_cheetah_eggroll_s01():
+    from experiments.batch_preps_rl_sweeps import EGGROLL_OPT_S01
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        cmds = _bp.prep_cheetah_eggroll_s01(tmpdir)
+        assert len(cmds) == 2
+        assert {c.policy_tag for c in cmds} == {"linear", "mlp-32-16"}
+        assert all(c.opt_name == EGGROLL_OPT_S01 for c in cmds)
+        assert "sigma=0.1" in EGGROLL_OPT_S01
+        assert all(c.env_tag == "cheetah:fn" for c in cmds)
+        assert all(c.num_arms == 10 and c.num_rounds == 1000 and c.num_reps == 10 for c in cmds)
+        assert all(c.num_denoise == 1 for c in cmds)
+        assert all(c.num_denoise_passive is None for c in cmds)
+        assert all("exp_cheetah_eggroll_s01" in c.exp_dir for c in cmds)
+        assert cmds[0].to_dir_name() != cmds[1].to_dir_name()
+
+
+def test_prep_cheetah_eggroll_s02():
+    from experiments.batch_preps_rl_sweeps import EGGROLL_OPT_S02
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        cmds = _bp.prep_cheetah_eggroll_s02(tmpdir)
+        assert len(cmds) == 2
+        assert all(c.opt_name == EGGROLL_OPT_S02 for c in cmds)
+        assert "sigma=0.2" in EGGROLL_OPT_S02
+        assert all("exp_cheetah_eggroll_s02" in c.exp_dir for c in cmds)
+
+
+def test_prep_cheetah_eggroll_s03():
+    from experiments.batch_preps_rl_sweeps import EGGROLL_OPT_S03
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        cmds = _bp.prep_cheetah_eggroll_s03(tmpdir)
+        assert len(cmds) == 2
+        assert all(c.opt_name == EGGROLL_OPT_S03 for c in cmds)
+        assert "sigma=0.3" in EGGROLL_OPT_S03
+        assert all("exp_cheetah_eggroll_s03" in c.exp_dir for c in cmds)
+
+
 def test_prep_run_others():
     with tempfile.TemporaryDirectory() as tmpdir:
         cmds = _bp.prep_run_others(tmpdir)

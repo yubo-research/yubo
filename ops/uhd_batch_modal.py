@@ -44,6 +44,7 @@ if _HAS_MODAL:
         "embedding",
         "policies",
         "rl",
+        "llm",
     )
     _ENN_ROOT = enn_project_root(_PROJECT_ROOT)
     _batch_image = (

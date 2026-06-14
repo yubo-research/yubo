@@ -5,32 +5,30 @@ import types
 import pytest
 
 
-def test_text_obj_runtime_base_seed_prefers_noise_seed():
+@pytest.mark.parametrize(
+    ("noise_seed_0", "problem_seed", "seed_offset", "expected"),
+    [
+        (7, 3, 2, 9),
+        (None, 3, 1, 4),
+        (0, 9, 1, 1),
+        (None, None, 5, 5),
+    ],
+    ids=[
+        "prefers_noise_seed",
+        "falls_back_to_problem_seed",
+        "zero_noise_seed_explicit",
+        "defaults_to_zero",
+    ],
+)
+def test_text_obj_runtime_base_seed(noise_seed_0, problem_seed, seed_offset, expected):
     from problems.text_obj_runtime import base_seed
 
-    cfg = types.SimpleNamespace(noise_seed_0=7, problem_seed=3, seed_offset=2)
-    assert base_seed(cfg) == 9
-
-
-def test_text_obj_runtime_base_seed_falls_back_to_problem_seed():
-    from problems.text_obj_runtime import base_seed
-
-    cfg = types.SimpleNamespace(noise_seed_0=None, problem_seed=3, seed_offset=1)
-    assert base_seed(cfg) == 4
-
-
-def test_text_obj_runtime_base_seed_treats_zero_noise_seed_as_explicit():
-    from problems.text_obj_runtime import base_seed
-
-    cfg = types.SimpleNamespace(noise_seed_0=0, problem_seed=9, seed_offset=1)
-    assert base_seed(cfg) == 1
-
-
-def test_text_obj_runtime_base_seed_defaults_to_zero():
-    from problems.text_obj_runtime import base_seed
-
-    cfg = types.SimpleNamespace(noise_seed_0=None, problem_seed=None, seed_offset=5)
-    assert base_seed(cfg) == 5
+    cfg = types.SimpleNamespace(
+        noise_seed_0=noise_seed_0,
+        problem_seed=problem_seed,
+        seed_offset=seed_offset,
+    )
+    assert base_seed(cfg) == expected
 
 
 def test_text_obj_runtime_require_runtime_lists_missing_modules(monkeypatch):

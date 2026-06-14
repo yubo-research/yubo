@@ -22,6 +22,11 @@ def test_normalize_index_driver_hnsw_disk():
     assert normalize_index_driver("HNSW-Disk") is EnnIncrementalIndexDriver.HNSW_DISK
 
 
+def test_normalize_index_driver_bpann_disk():
+    assert normalize_index_driver("bpann_disk") is EnnIncrementalIndexDriver.BPANN_DISK
+    assert normalize_index_driver("BPANN-Disk") is EnnIncrementalIndexDriver.BPANN_DISK
+
+
 def test_enn_batch_checkpoint_ns_matches_incremental_source():
     assert enn_batch_checkpoint_ns() == enn_incremental_checkpoint_ns()
     assert enn_batch_checkpoint_ns() == ENN_INCREMENTAL_CHECKPOINT_NS

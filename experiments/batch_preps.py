@@ -9,6 +9,22 @@ _EXPORTS: dict[str, tuple[str, str]] = {
     ),
     "prep_ant": ("experiments.batch_preps_rl_sweeps", "prep_ant"),
     "prep_bw": ("experiments.batch_preps_rebuttal", "prep_bw"),
+    "prep_cheetah_policy_optimizer": (
+        "experiments.batch_preps_rl_sweeps",
+        "prep_cheetah_policy_optimizer",
+    ),
+    "prep_cheetah_eggroll_s01": (
+        "experiments.batch_preps_rl_sweeps",
+        "prep_cheetah_eggroll_s01",
+    ),
+    "prep_cheetah_eggroll_s02": (
+        "experiments.batch_preps_rl_sweeps",
+        "prep_cheetah_eggroll_s02",
+    ),
+    "prep_cheetah_eggroll_s03": (
+        "experiments.batch_preps_rl_sweeps",
+        "prep_cheetah_eggroll_s03",
+    ),
     "prep_cum_time_dim": ("experiments.batch_preps_bench", "prep_cum_time_dim"),
     "prep_cum_time_obs": ("experiments.batch_preps_bench", "prep_cum_time_obs"),
     "prep_dna": ("experiments.batch_preps_rebuttal", "prep_dna"),

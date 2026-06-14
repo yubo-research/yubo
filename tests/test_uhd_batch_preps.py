@@ -58,3 +58,38 @@ def test_prep_uhd_batch_cheetah_simple_has_no_be_keys():
         simple_cfg = next(cfg for cfg, _ in configs if cfg["optimizer"] == "simple")
         assert not any(k.startswith("be_") for k in simple_cfg)
         assert simple_cfg["sigma"] == 0.1
+
+
+def test_prep_uhd_batch_cheetah_simple():
+    from experiments.uhd_batch_preps import prep_uhd_batch_cheetah_simple
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        configs = prep_uhd_batch_cheetah_simple(tmpdir, num_reps=5)
+        assert len(configs) == 2
+        assert {cfg["policy_tag"] for cfg, _ in configs} == {"linear", "mlp-32-16"}
+        for cfg, num_reps in configs:
+            assert num_reps == 5
+            assert cfg["env_tag"] == "cheetah:fn"
+            assert cfg["num_rounds"] == 1000
+            assert cfg["optimizer"] == "simple"
+            assert cfg["perturb"] == "dense"
+            assert cfg["sigma"] == 0.1
+            assert not any(k.startswith("be_") for k in cfg)
+
+
+def test_prep_uhd_batch_cheetah_simple_parses():
+    from experiments.uhd_batch_preps import prep_uhd_batch_cheetah_simple
+    from ops.exp_uhd_parse import _parse_cfg
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        configs = prep_uhd_batch_cheetah_simple(tmpdir)
+        for cfg, _ in configs:
+            parsed = _parse_cfg(cfg)
+            assert parsed.env_tag == "cheetah:fn"
+            assert parsed.optimizer == "simple"
+
+
+def test_cheetah_fn_is_not_uhd_vector_objective():
+    from problems.uhd_obj import supports_uhd_vector_objective
+
+    assert supports_uhd_vector_objective("cheetah:fn") is False

@@ -1,6 +1,84 @@
 from experiments.batch_preps_core import prep_args_1
 
 
+def _eggroll_opt(sigma: float) -> str:
+    return f"eggroll/noiser=eggroll/sigma={sigma}/rank=1/lr=0.01/optax=adamw/batch_size=10/num_envs=1/steps=1000"
+
+
+EGGROLL_OPT = _eggroll_opt(0.05)
+EGGROLL_OPT_S01 = _eggroll_opt(0.1)
+EGGROLL_OPT_S02 = _eggroll_opt(0.2)
+EGGROLL_OPT_S03 = _eggroll_opt(0.3)
+
+
+def _prep_cheetah_eggroll_at_sigma(results_dir, *, exp_dir: str, opt: str):
+    configs = []
+    for policy_tag in ("linear", "mlp-32-16"):
+        configs.append(
+            prep_args_1(
+                results_dir,
+                exp_dir=exp_dir,
+                problem="cheetah:fn",
+                opt=opt,
+                num_arms=10,
+                num_replications=10,
+                num_rounds=1000,
+                policy_tag=policy_tag,
+                num_denoise=1,
+                num_denoise_passive=None,
+            )
+        )
+    return configs
+
+
+def prep_cheetah_eggroll_s01(results_dir):
+    return _prep_cheetah_eggroll_at_sigma(
+        results_dir,
+        exp_dir="exp_cheetah_eggroll_s01",
+        opt=EGGROLL_OPT_S01,
+    )
+
+
+def prep_cheetah_eggroll_s02(results_dir):
+    return _prep_cheetah_eggroll_at_sigma(
+        results_dir,
+        exp_dir="exp_cheetah_eggroll_s02",
+        opt=EGGROLL_OPT_S02,
+    )
+
+
+def prep_cheetah_eggroll_s03(results_dir):
+    return _prep_cheetah_eggroll_at_sigma(
+        results_dir,
+        exp_dir="exp_cheetah_eggroll_s03",
+        opt=EGGROLL_OPT_S03,
+    )
+
+
+def prep_cheetah_policy_optimizer(results_dir):
+    exp_dir = "exp_cheetah_policy_optimizer"
+    policies = ["linear", "mlp-32-16"]
+    opts = ["random", "turbo-enn-fit-ucb", EGGROLL_OPT]
+    configs = []
+    for policy_tag in policies:
+        for opt in opts:
+            configs.append(
+                prep_args_1(
+                    results_dir,
+                    exp_dir=exp_dir,
+                    problem="cheetah:fn",
+                    opt=opt,
+                    num_arms=10,
+                    num_replications=10,
+                    num_rounds=1000,
+                    policy_tag=policy_tag,
+                    num_denoise=1,
+                    num_denoise_passive=None,
+                )
+            )
+    return configs
+
+
 def _prep_tlunar_sweep_rows(results_dir, exp_dir, opts, loop_rows):
     cmds = []
     for opt in opts:

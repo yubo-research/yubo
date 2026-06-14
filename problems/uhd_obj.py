@@ -7,15 +7,18 @@ from problems.uhd_obj_types import BuiltUHDVectorObjective
 def supports_uhd_vector_objective(env_tag: str) -> bool:
     from problems.isaaclab_env_adapters import is_isaaclab_env_tag
     from problems.jax_env_core import supports_jax_objective_tag
-    from problems.nanochat_obj import is_nanochat_env
-    from problems.pre_obj import is_hyperscalees_pretrain_env, is_nanoegg_pretrain_env
-    from problems.text_obj import is_text_env
+    from problems.pre_obj_specs import (
+        is_hyperscalees_pretrain_env,
+        is_nanoegg_pretrain_env,
+    )
+    from problems.text_obj_specs import is_text_env
 
+    tag = str(env_tag)
     return (
-        str(env_tag).startswith("rwkv:distill:")
+        tag.startswith("rwkv:distill:")
         or supports_jax_objective_tag(env_tag)
         or is_isaaclab_env_tag(env_tag)
-        or is_nanochat_env(env_tag)
+        or tag.startswith("nanochat:")
         or is_hyperscalees_pretrain_env(env_tag)
         or is_nanoegg_pretrain_env(env_tag)
         or is_text_env(env_tag)
