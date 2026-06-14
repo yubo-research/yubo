@@ -41,6 +41,10 @@ UHD_BATCH_LABEL_ORDER: tuple[str, ...] = (
 )
 
 BO_UHD_POLICIES: tuple[str, ...] = ("linear", "mlp-32-16")
+CHEETAH_POLICY_NUM_PARAMS: dict[str, int] = {
+    "linear": 103,
+    "mlp-32-16": 1240,
+}
 BO_UHD_METHOD_ORDER: tuple[str, ...] = (
     "random",
     "turbo-enn-fit-ucb",
@@ -411,9 +415,10 @@ def plot_cheetah_bo_uhd_comparison(
         axes = [axes]
 
     for ax, policy in zip(axes, policies, strict=True):
+        num_params = CHEETAH_POLICY_NUM_PARAMS[policy]
         ready = ready_by_policy[policy]
         if not ready:
-            ax.set_title(f"{policy}\n(no data)")
+            ax.set_title(f"{policy}\nnum_params = {num_params}\n(no data)")
             continue
 
         curves = {exp["label"]: summarize_curve(exp["traces"]) for exp in ready}
@@ -430,7 +435,7 @@ def plot_cheetah_bo_uhd_comparison(
             )
 
         missing_methods = [m for m in method_order if m not in curves]
-        subtitle = policy
+        subtitle = f"{policy}\nnum_params = {num_params}"
         if missing_methods:
             subtitle += f"\n(missing: {', '.join(missing_methods)})"
         ax.set_title(subtitle)
@@ -440,10 +445,8 @@ def plot_cheetah_bo_uhd_comparison(
 
     axes[0].set_ylabel("Best return so far")
     fig.suptitle(
-        r"HalfCheetah-v5 frozen noise ($\texttt{cheetah:fn}$)"
-        "\n"
-        r"BO: random / turbo-enn-fit-ucb / eggroll ($\sigma$=0.05–0.3) $\cdot$ UHD: simple",
-        y=1.06,
+        r"HalfCheetah-v5 ($\texttt{cheetah:fn}$)" "\n" r"num_arms = 10",
+        y=1.05,
     )
     fig.tight_layout()
     return fig, final_best_summary(all_experiments)
