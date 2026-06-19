@@ -6,7 +6,6 @@ import tempfile
 
 import numpy as np
 from enn.enn.enn_class import EpistemicNearestNeighbors
-from enn.enn.enn_fit import enn_fit
 from enn.enn.enn_fitter import ENNStatefulFitter
 from enn.enn.enn_params import PosteriorFlags
 from enn.turbo.config.enn_index_driver import ENNIndexDriver
@@ -157,14 +156,18 @@ class IncrementalBEEnn:
             num_fit_candidates = self._num_fit_candidates
             num_fit_samples = self._num_fit_samples
 
-        self._params = enn_fit(
+        _idx = list(range(len(self._model)))
+        _x_all, _y_all, _yvar = self._model.train_rows_at(_idx)
+        self._params = fit_enn_params(
             self._model,
+            _x_all,
+            _y_all,
             k=self._effective_k(),
             num_fit_candidates=num_fit_candidates,
             num_fit_samples=num_fit_samples,
             rng=self._rng,
+            yvar=_yvar,
             params_warm_start=self._params,
-            incremental=None,
         )
         self._resync_fitter_after_fit()
 
