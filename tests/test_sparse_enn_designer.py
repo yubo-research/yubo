@@ -150,5 +150,5 @@ def test_enn_failure_tolerance_dim_override():
     if sparse_step >= default_step * 0.9:
         import pytest
 
-        pytest.skip("enn build lacks failure_tolerance_dim patch (re-run pixi run extras-mac)")
+        pytest.skip("enn build lacks failure_tolerance_dim patch (re-run pixi run extras-mac in the active Pixi env)")
     assert sparse_step < default_step

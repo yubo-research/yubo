@@ -1,5 +1,5 @@
 # Run on Modal:
-# modal run ops/modal_hyperscalees_pixi_setup.py --config configs/bo/dm_control/quadruped/quadruped_run_eggroll_aggressive_short.toml
+# modal run ops/modal_pixi_setup.py --config configs/bo/dm_control/quadruped/quadruped_run_eggroll_aggressive_short.toml
 #
 # Aggressive-short EggRoll run for dm_control/quadruped.
 # This uses the external flat-policy scorer, not the JAX env adapter path.

@@ -4,16 +4,19 @@ import base64
 import shlex
 from pathlib import Path
 
-# Pixi owns Python + CUDA toolkit (12.8) in the hyperscalees env. Modal hosts the driver.
+# Pixi owns Python + CUDA toolkit (12.8) in the primary Pixi env. Modal hosts the driver.
 PYTHON_VERSION = "3.12"
 PIXI_HOME = "/opt/pixi"
 PIXI_BIN = "/usr/local/bin/pixi"
 PIXI_WORKSPACE_DIR = "/opt/yubo-pixi"
 PIXI_MANIFEST_PATH = f"{PIXI_WORKSPACE_DIR}/pixi.toml"
 PIXI_LOCK_PATH = f"{PIXI_WORKSPACE_DIR}/pixi.lock"
-HYPERSCALEES_PIXI_ENV = "hyperscalees"
+PIXI_ADMIN_DIR = f"{PIXI_WORKSPACE_DIR}/admin"
+PIXI_CHECK_PATH = f"{PIXI_ADMIN_DIR}/check_pixi_env.py"
+ENN_PATCH_PATH = f"{PIXI_ADMIN_DIR}/patch_enn_failure_tolerance_dim.py"
+PRIMARY_PIXI_ENV = "yubo"
 ISAACLAB_PIXI_ENV = "isaaclab"
-HYPERSCALEES_ENV_PREFIX = f"{PIXI_WORKSPACE_DIR}/.pixi/envs/{HYPERSCALEES_PIXI_ENV}"
+PRIMARY_ENV_PREFIX = f"{PIXI_WORKSPACE_DIR}/.pixi/envs/{PRIMARY_PIXI_ENV}"
 ISAACLAB_ENV_PREFIX = f"{PIXI_WORKSPACE_DIR}/.pixi/envs/{ISAACLAB_PIXI_ENV}"
 ISAACLAB_SOURCE_DIR = f"{PIXI_WORKSPACE_DIR}/src/IsaacLab"
 ISAACLAB_SOURCE_PYTHONPATH = (
@@ -23,7 +26,7 @@ ISAACLAB_SOURCE_PYTHONPATH = (
     f"{ISAACLAB_SOURCE_DIR}/source/isaaclab_newton",
     f"{ISAACLAB_SOURCE_DIR}/source/isaaclab_physx",
 )
-HYPERSCALEES_LD_LIBRARY_PATH = f"{HYPERSCALEES_ENV_PREFIX}/lib:/usr/lib/x86_64-linux-gnu"
+PRIMARY_LD_LIBRARY_PATH = f"{PRIMARY_ENV_PREFIX}/lib:/usr/lib/x86_64-linux-gnu"
 
 
 def install_pixi_command() -> str:
@@ -65,20 +68,20 @@ _APT_PACKAGES = (
 def _isaaclab_install_commands() -> tuple[str, ...]:
     return (
         _pixi_install_env_command(ISAACLAB_PIXI_ENV),
-        _pixi_task_command(ISAACLAB_PIXI_ENV, "install"),
+        _pixi_task_command(ISAACLAB_PIXI_ENV, "setup"),
         _pixi_task_command(ISAACLAB_PIXI_ENV, "check"),
         _isaaclab_bootstrap_marker_command(),
     )
 
 
-def mk_hyperscalees_pixi_base_image(modal, project_root: Path):
-    """Build the cached Pixi env image (hyperscalees + IsaacLab).
+def mk_pixi_base_image(modal, project_root: Path):
+    """Build the cached Pixi env image (primary Pixi env + IsaacLab).
 
     Layers (each is a cache point):
       1. base OS + apt + pixi binary       (changes rarely)
       2. pixi.toml + pixi.lock             (changes on dep edits)
-      3. hyperscalees install + setup + check
-      4. isaaclab install + check + marker
+      3. primary env install + setup + check
+      4. isaaclab install + setup + check + marker
 
     Runtime ``isaaclab_bootstrap_command()`` is a no-op when layer 4 is present.
     """
@@ -89,14 +92,15 @@ def mk_hyperscalees_pixi_base_image(modal, project_root: Path):
         .env({"NVIDIA_DRIVER_CAPABILITIES": "all", "PIXI_HOME": PIXI_HOME})
         .run_commands(install_pixi_command())
         .pip_install("modal", "grpclib")  # Required for Modal worker stability.
-        .run_commands(f"mkdir -p {shlex.quote(PIXI_WORKSPACE_DIR)}")
+        .run_commands(f"mkdir -p {shlex.quote(PIXI_WORKSPACE_DIR)} {shlex.quote(PIXI_ADMIN_DIR)}")
         .add_local_file(str(project_root / "pixi.toml"), remote_path=PIXI_MANIFEST_PATH, copy=True)
         .add_local_file(str(project_root / "pixi.lock"), remote_path=PIXI_LOCK_PATH, copy=True)
+        .add_local_file(str(project_root / "admin" / "check_pixi_env.py"), remote_path=PIXI_CHECK_PATH, copy=True)
+        .add_local_file(str(project_root / "admin" / "patch_enn_failure_tolerance_dim.py"), remote_path=ENN_PATCH_PATH, copy=True)
         .run_commands(
-            _pixi_install_env_command(HYPERSCALEES_PIXI_ENV),
-            _pixi_task_command(HYPERSCALEES_PIXI_ENV, "setup"),
-            _hyperscalees_patch_enn_openblas_command(),
-            _hyperscalees_check_command(),
+            _pixi_install_env_command(PRIMARY_PIXI_ENV),
+            _pixi_task_command(PRIMARY_PIXI_ENV, "setup"),
+            _primary_check_command(),
             *_isaaclab_install_commands(),
         )
     )
@@ -126,28 +130,16 @@ def isaaclab_bootstrap_command(*, force: bool = False) -> str:
     return f"if test -f {marker} && {verify}; then {skip}; else {install_chain}; fi"
 
 
-def _hyperscalees_openblas_env_exports() -> str:
+def _primary_openblas_env_exports() -> str:
     """Ensure libopenblas is visible for ennbo (patchelf adds DT_NEEDED at build time)."""
     return (
-        f"export LD_LIBRARY_PATH={shlex.quote(HYPERSCALEES_LD_LIBRARY_PATH)}:${{LD_LIBRARY_PATH:-}} && "
+        f"export LD_LIBRARY_PATH={shlex.quote(PRIMARY_LD_LIBRARY_PATH)}:${{LD_LIBRARY_PATH:-}} && "
         'echo "OPENBLAS_PROBE: LD_LIBRARY_PATH=${LD_LIBRARY_PATH} (no LD_PRELOAD)" >&2'
     )
 
 
-def _hyperscalees_patch_enn_openblas_command() -> str:
-    """Link ennbo's prebuilt wheel against libopenblas (avoids pixi $ escaping)."""
-    python_bin = f"{HYPERSCALEES_ENV_PREFIX}/bin/python"
-    script = (
-        "import glob, os, subprocess, enn; "
-        "so = glob.glob(os.path.join(os.path.dirname(enn.__file__), 'enn_rust*.so'))[0]; "
-        "subprocess.run(['patchelf', '--add-needed', 'libopenblas.so.0', so], check=True); "
-        "print('patched', so)"
-    )
-    return _bash(f"{shlex.quote(python_bin)} -c {shlex.quote(script)}")
-
-
-def _hyperscalees_check_command() -> str:
-    return _bash(f"{_hyperscalees_openblas_env_exports()} && {_pixi_task_shell(HYPERSCALEES_PIXI_ENV, 'check')}")
+def _primary_check_command() -> str:
+    return _bash(f"{_primary_openblas_env_exports()} && {_pixi_task_shell(PRIMARY_PIXI_ENV, 'check')}")
 
 
 def _pixi_task_shell(env_name: str, task_name: str) -> str:

@@ -1,7 +1,7 @@
 # BO-style PPO designer run for the Unitree G1 flat velocity task.
 #
 # Run on Modal:
-# modal run ops/modal_hyperscalees_pixi_setup.py --config configs/bo/isaaclab/g1_flat_ppo_dev.toml
+# modal run ops/modal_pixi_setup.py --config configs/bo/isaaclab/g1_flat_ppo_dev.toml
 #
 # This uses optimizer.name="ppo" inside the BO experiment runner. It is not the
 # separate TorchRL PPO trainer config format under configs/rl/.

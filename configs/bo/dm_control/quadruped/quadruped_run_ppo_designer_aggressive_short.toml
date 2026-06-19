@@ -1,7 +1,7 @@
 # BO-style PPO designer run for DM Control quadruped.
 #
 # Run on Modal:
-# modal run ops/modal_hyperscalees_pixi_setup.py --config configs/bo/dm_control/quadruped/quadruped_run_ppo_designer_aggressive_short.toml
+# modal run ops/modal_pixi_setup.py --config configs/bo/dm_control/quadruped/quadruped_run_ppo_designer_aggressive_short.toml
 #
 # This uses optimizer.name="ppo" inside the BO experiment runner. It is not the
 # separate RL trainer config format under configs/rl/.

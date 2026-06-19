@@ -103,7 +103,7 @@ def _import_isaac_app_launcher():
         from isaaclab.app import AppLauncher
     except Exception as exc:
         raise ImportError(
-            "Isaac Lab is not importable. Run admin/setup-hyperscalees.sh on the CUDA remote, then use an env_tag like 'isaaclab:Isaac-Cartpole-v0'."
+            "Isaac Lab is not importable. Run the Pixi setup task on the CUDA remote, then use an env_tag like 'isaaclab:Isaac-Cartpole-v0'."
         ) from exc
     return AppLauncher
 

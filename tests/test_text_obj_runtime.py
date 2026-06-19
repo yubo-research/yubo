@@ -5,32 +5,31 @@ import types
 import pytest
 
 
-def test_text_obj_runtime_base_seed_prefers_noise_seed():
+def _text_runtime_base_seed(noise_seed_0: int | None, problem_seed: int | None, seed_offset: int) -> int:
     from problems.text_obj_runtime import base_seed
 
-    cfg = types.SimpleNamespace(noise_seed_0=7, problem_seed=3, seed_offset=2)
-    assert base_seed(cfg) == 9
+    cfg = types.SimpleNamespace(
+        noise_seed_0=noise_seed_0,
+        problem_seed=problem_seed,
+        seed_offset=seed_offset,
+    )
+    return base_seed(cfg)
+
+
+def test_text_obj_runtime_base_seed_prefers_noise_seed():
+    assert _text_runtime_base_seed(noise_seed_0=7, problem_seed=3, seed_offset=2) == 9
 
 
 def test_text_obj_runtime_base_seed_falls_back_to_problem_seed():
-    from problems.text_obj_runtime import base_seed
-
-    cfg = types.SimpleNamespace(noise_seed_0=None, problem_seed=3, seed_offset=1)
-    assert base_seed(cfg) == 4
+    assert _text_runtime_base_seed(noise_seed_0=None, problem_seed=3, seed_offset=1) == 4
 
 
 def test_text_obj_runtime_base_seed_treats_zero_noise_seed_as_explicit():
-    from problems.text_obj_runtime import base_seed
-
-    cfg = types.SimpleNamespace(noise_seed_0=0, problem_seed=9, seed_offset=1)
-    assert base_seed(cfg) == 1
+    assert _text_runtime_base_seed(noise_seed_0=0, problem_seed=9, seed_offset=1) == 1
 
 
 def test_text_obj_runtime_base_seed_defaults_to_zero():
-    from problems.text_obj_runtime import base_seed
-
-    cfg = types.SimpleNamespace(noise_seed_0=None, problem_seed=None, seed_offset=5)
-    assert base_seed(cfg) == 5
+    assert _text_runtime_base_seed(noise_seed_0=None, problem_seed=None, seed_offset=5) == 5
 
 
 def test_text_obj_runtime_require_runtime_lists_missing_modules(monkeypatch):

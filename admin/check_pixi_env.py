@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify hyperscalees env imports (no install side effects)."""
+"""Verify Pixi env imports (no install side effects)."""
 
 from __future__ import annotations
 
@@ -33,10 +33,14 @@ def _check_numpy_numba() -> None:
     print("numpy", np.__version__, "numba", numba.__version__)
 
 
-def _hint_missing(name: str, *, mac: bool) -> str:
-    if mac:
-        return f"Missing {name}. Run: pixi run -e hyperscalees extras-mac"
-    return f"Missing {name}. Run: pixi run -e hyperscalees setup"
+def _hint_missing(name: str) -> str:
+    return f"Missing {name}. {_pixi_task_hint('setup')}"
+
+
+def _pixi_task_hint(task: str) -> str:
+    env_name = os.environ.get("PIXI_ENVIRONMENT_NAME")
+    env_arg = f"-e {env_name} " if env_name else "-e <env> "
+    return f"Run: pixi run {env_arg}{task}"
 
 
 def _check_core() -> None:
@@ -52,7 +56,7 @@ def _check_core() -> None:
         import torch
         from pyvecch.input_transforms import Identity
     except ImportError as exc:
-        raise SystemExit(f"{exc}\n{_hint_missing('BO extras', mac=mac)}") from exc
+        raise SystemExit(f"{exc}\n{_hint_missing('BO extras')}") from exc
 
     print(
         "core ok",
@@ -79,7 +83,7 @@ def _check_mac(*, jax_platform: str, require_llm: bool) -> None:
             import vllm
             import vllm_metal  # noqa: F401
         except ImportError as exc:
-            raise SystemExit(f"{exc}\nRun: pixi run -e hyperscalees llm-mac") from exc
+            raise SystemExit(f"{exc}\n{_pixi_task_hint('llm-mac')}") from exc
 
         print("mac llm ok", "vllm", vllm.__version__)
 
@@ -99,7 +103,7 @@ def main() -> None:
         _check_mac(jax_platform=args.jax_platform, require_llm=args.require_llm)
     else:
         _check_linux()
-    print("hyperscalees check passed")
+    print("pixi env check passed")
 
 
 if __name__ == "__main__":

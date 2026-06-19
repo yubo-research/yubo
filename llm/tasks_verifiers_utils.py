@@ -23,7 +23,7 @@ def require_verifiers_runtime() -> None:
         raise RuntimeError(
             "Prime Intellect verifiers runtime is not installed correctly. "
             f"Missing package(s): {', '.join(missing)}. "
-            "Run `admin/setup-hyperscalees.sh` for the yubo-hyperscalees env."
+            "Run the Pixi setup task for the selected env."
         )
 
     problems = _dependency_problems("openai-agents", only={"openai"})
@@ -35,7 +35,7 @@ def require_verifiers_runtime() -> None:
         problems.extend(_dependency_problems("vllm", only={"openai"}))
     if problems:
         raise RuntimeError(
-            "Prime Intellect verifiers runtime dependency mismatch: " + "; ".join(problems) + ". Fix the yubo-hyperscalees env with "
+            "Prime Intellect verifiers runtime dependency mismatch: " + "; ".join(problems) + ". Fix the selected Pixi env with "
             "`python -m pip install 'openai==2.24.0' 'openai-agents==0.10.5'`."
         )
 
@@ -59,7 +59,7 @@ def get_environment(env_id: str, dataset_size: int | None, env_cache: dict) -> A
         if "micromamba" in str(exc) or "git" in str(exc):
             raise RuntimeError(
                 f"Failed to load verifiers environment {env_id!r}. "
-                "Run admin/setup-hyperscalees.sh on the remote, or install "
+                "Run the Pixi setup task on the remote, or install "
                 "`verifiers @ git+https://github.com/PrimeIntellect-ai/verifiers.git`."
             ) from exc
         raise

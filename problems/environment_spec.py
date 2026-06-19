@@ -197,8 +197,7 @@ class EnvironmentRuntime:
                 from problems.jax_env_factory import resolve_jax_env_spaces
             except ImportError as exc:
                 raise ImportError(
-                    "JAX env tags require the separate HyperscaleES environment. "
-                    "Run admin/setup-hyperscalees.sh first, then use the plain python CLI from that environment."
+                    "JAX env tags require the separate HyperscaleES environment. Run the Pixi setup task first, then use that Pixi environment."
                 ) from exc
             spaces = resolve_jax_env_spaces(spec.env_name)
             self.state_space = spaces.observation_space

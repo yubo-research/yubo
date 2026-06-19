@@ -221,8 +221,8 @@ def test_kiss_gen_policies_eggroll_policy() -> None:
     assert refs
 
 
-def test_kiss_gen_admin_check_hyperscalees() -> None:
-    from admin.check_hyperscalees import main
+def test_kiss_gen_admin_check_pixi_env() -> None:
+    from admin.check_pixi_env import main
 
     refs = (main,)
     assert refs

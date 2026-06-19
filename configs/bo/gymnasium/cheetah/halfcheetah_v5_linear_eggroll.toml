@@ -6,7 +6,7 @@
 #   ./ops/experiment.py local configs/bo/gymnasium/cheetah/halfcheetah_v5_linear_eggroll.toml
 #
 # Modal:
-#   modal run ops/modal_hyperscalees_pixi_setup.py --config configs/bo/gymnasium/cheetah/halfcheetah_v5_linear_eggroll.toml
+#   modal run ops/modal_pixi_setup.py --config configs/bo/gymnasium/cheetah/halfcheetah_v5_linear_eggroll.toml
 
 [experiment]
 exp_dir = "runs/bo/gymnasium/cheetah/halfcheetah_v5_linear_eggroll"

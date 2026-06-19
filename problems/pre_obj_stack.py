@@ -10,8 +10,7 @@ from typing import Any
 from problems.pre_obj_specs import HyperscaleESPretrainSpec
 
 _STACK_ERROR = (
-    "Real HyperscaleES pretraining UHD requires the separate HyperscaleES environment. "
-    "Run admin/setup-hyperscalees.sh first, then use the plain python CLI from that environment."
+    "Real HyperscaleES pretraining UHD requires the separate HyperscaleES environment. Run the Pixi setup task first, then use that Pixi environment."
 )
 
 

@@ -15,18 +15,18 @@ from ops.modal_command_helpers import (
     parse_export_globs,
     write_artifacts,
 )
-from ops.modal_hyperscalees_pixi_base_image import (
-    HYPERSCALEES_PIXI_ENV,
+from ops.modal_nvidia_vulkan import nvidia_vulkan_icd_script
+from ops.modal_pixi_base_image import (
     ISAACLAB_ENV_PREFIX,
     ISAACLAB_PIXI_ENV,
     ISAACLAB_SOURCE_PYTHONPATH,
     PIXI_BIN,
     PIXI_HOME,
     PIXI_MANIFEST_PATH,
+    PRIMARY_PIXI_ENV,
     isaaclab_bootstrap_command,
 )
-from ops.modal_hyperscalees_pixi_image import mk_image
-from ops.modal_nvidia_vulkan import nvidia_vulkan_icd_script
+from ops.modal_pixi_image import mk_image
 
 
 def _project_root() -> Path:
@@ -41,13 +41,13 @@ def _project_root() -> Path:
     return Path(__file__).resolve().parents[1]
 
 
-app = modal.App(name="yubo-hyperscalees-pixi")
+app = modal.App(name="yubo-pixi")
 image = mk_image(modal)
 
 _TIMEOUT_SECONDS = 24 * 60 * 60
 _GPU = os.environ.get("GPU_TYPE", "L40S")
-_LOG_PREFIX = "modal-hyperscalees-pixi"
-_VALID_PIXI_ENVS = {HYPERSCALEES_PIXI_ENV, ISAACLAB_PIXI_ENV}
+_LOG_PREFIX = "modal-pixi"
+_VALID_PIXI_ENVS = {PRIMARY_PIXI_ENV, ISAACLAB_PIXI_ENV}
 _AUTO_PIXI_ENV = "auto"
 _REPO_ROOT = _project_root()
 _ROOT_EXPERIMENT_KEYS = {"opt_name"}
@@ -55,22 +55,22 @@ _ROOT_UHD_KEYS = {"env_tag", "num_rounds", "optimizer", "perturb"}
 
 
 @app.function(image=image, gpu=_GPU, timeout=_TIMEOUT_SECONDS)
-def run_hyperscalees_command(command: str, env_name: str = HYPERSCALEES_PIXI_ENV, *, quiet: bool = True) -> str:
+def run_pixi_command(command: str, env_name: str = PRIMARY_PIXI_ENV, *, quiet: bool = True) -> str:
     _run_command(command, env_name, quiet=quiet)
     return "ok"
 
 
 @app.function(image=image, timeout=_TIMEOUT_SECONDS)
-def run_hyperscalees_command_cpu(command: str, env_name: str = HYPERSCALEES_PIXI_ENV, *, quiet: bool = True) -> str:
+def run_pixi_command_cpu(command: str, env_name: str = PRIMARY_PIXI_ENV, *, quiet: bool = True) -> str:
     _run_command(command, env_name, quiet=quiet)
     return "ok"
 
 
 @app.function(image=image, gpu=_GPU, timeout=_TIMEOUT_SECONDS)
-def run_hyperscalees_command_export(
+def run_pixi_command_export(
     command: str,
     artifact_globs: list[str],
-    env_name: str = HYPERSCALEES_PIXI_ENV,
+    env_name: str = PRIMARY_PIXI_ENV,
     *,
     quiet: bool = True,
 ) -> list[tuple[str, bytes]]:
@@ -79,10 +79,10 @@ def run_hyperscalees_command_export(
 
 
 @app.function(image=image, timeout=_TIMEOUT_SECONDS)
-def run_hyperscalees_command_export_cpu(
+def run_pixi_command_export_cpu(
     command: str,
     artifact_globs: list[str],
-    env_name: str = HYPERSCALEES_PIXI_ENV,
+    env_name: str = PRIMARY_PIXI_ENV,
     *,
     quiet: bool = True,
 ) -> list[tuple[str, bytes]]:
@@ -131,44 +131,8 @@ def _env_prefix_export(env_name: str, var_name: str) -> str:
     return f'export {var_name}="$({_pixi_run(env_name, "python -c " + shlex.quote(script))})"'
 
 
-def _preflight_command() -> str:
-    return "nvidia-smi; " + _pixi_run(
-        HYPERSCALEES_PIXI_ENV,
-        "python -c "
-        + shlex.quote("import sys, torch, vllm; print(sys.version); print('torch', torch.__version__, torch.version.cuda); print('vllm', vllm.__version__)"),
-    )
-
-
-def _vllm_probe_command() -> str:
-    return "nvidia-smi; " + _pixi_run(
-        HYPERSCALEES_PIXI_ENV,
-        "python -c "
-        + shlex.quote(
-            "import inspect, vllm; "
-            "from llm.vllm_actor_config import sampling_params; "
-            "print('vllm', vllm.__version__); "
-            "print('SamplingParams', inspect.signature(vllm.SamplingParams)); "
-            "print('LLM.generate', inspect.signature(vllm.LLM.generate)); "
-            "sp = sampling_params({'temperature': 0.0, 'max_tokens': 1}); "
-            "print(type(sp)); "
-            "print('has logprobs arg', 'logprobs' in str(inspect.signature(vllm.SamplingParams))); "
-            "print('sampling params repr', sp)"
-        ),
-    )
-
-
-def _isaaclab_preflight_command() -> str:
-    return "nvidia-smi || true; " + _pixi_run(
-        ISAACLAB_PIXI_ENV,
-        "python -c "
-        + shlex.quote(
-            "from problems.isaaclab_env_adapters import isaaclab_default_launcher_kwargs; "
-            "import importlib.util; "
-            "mods = ['problems.isaaclab_env_adapters', 'isaacsim']; "
-            "print({name: importlib.util.find_spec(name) is not None for name in mods}); "
-            "print(isaaclab_default_launcher_kwargs())"
-        ),
-    )
+def _setup_complete_command() -> str:
+    return "echo modal pixi setup ok"
 
 
 def _isaaclab_pythonpath_value() -> str:
@@ -197,23 +161,26 @@ def _experiment_command(env_name: str, mode: str, config_path: str) -> str:
     return "cd /root; " + _pixi_run(env_name, runner)
 
 
-def _pytest_command(env_name: str, args: str) -> str:
-    return "cd /root; " + _pixi_run(env_name, f"python -m pytest {args}")
+def _pytest_command(env_name: str, args: str, *, jax_platforms: str = "cuda,cpu") -> str:
+    env_prefix = f"env JAX_PLATFORMS={shlex.quote(jax_platforms)} " if jax_platforms else ""
+    return "cd /root; " + _pixi_run(env_name, f"{env_prefix}python -m pytest {args}")
 
 
 @app.local_entrypoint()
 def main(
-    command: str = "preflight",
+    command: str = "",
     config: str = "",
     pytest: bool = False,
     pytest_args: str = "-sv tests -rs",
+    pytest_cpu: bool = False,
+    jax_platforms: str = "",
     pixi_env: str = _AUTO_PIXI_ENV,
     experiment_mode: str = "local",
     quiet: bool = True,
     debug_shell: bool = False,
     export_videos: bool = False,
     export_glob: str = "",
-    export_dir: str = "artifacts/modal_hyperscalees_pixi",
+    export_dir: str = "artifacts/modal_pixi",
 ) -> None:
     config = config.strip()
     if config:
@@ -221,41 +188,52 @@ def main(
         command = _shell_preamble(debug=debug_shell) + "; " + _isaaclab_runtime_prefix(config) + _experiment_command(pixi_env, experiment_mode, config)
     elif pytest:
         pixi_env = _resolve_pixi_env(pixi_env, "")
-        command = _shell_preamble(debug=debug_shell) + "; " + _pytest_command(pixi_env, pytest_args)
-    elif command.strip() == "preflight":
-        command = _shell_preamble(debug=debug_shell) + "; " + _preflight_command()
-        pixi_env = HYPERSCALEES_PIXI_ENV
-    elif command.strip() == "vllm-probe":
-        command = _shell_preamble(debug=debug_shell) + "; " + _vllm_probe_command()
-        pixi_env = HYPERSCALEES_PIXI_ENV
-    elif command.strip() == "isaaclab-preflight":
-        command = _shell_preamble(debug=debug_shell) + "; " + _isaaclab_preflight_command()
-        pixi_env = ISAACLAB_PIXI_ENV
+        command = (
+            _shell_preamble(debug=debug_shell)
+            + "; "
+            + _pytest_command(
+                pixi_env,
+                pytest_args,
+                jax_platforms=_resolve_pytest_jax_platforms(pytest_cpu=pytest_cpu, jax_platforms=jax_platforms),
+            )
+        )
+    elif command.strip():
+        pixi_env = _resolve_pixi_env(pixi_env, "")
+        command = _shell_preamble(debug=debug_shell) + "; " + command.strip()
     else:
         pixi_env = _resolve_pixi_env(pixi_env, "")
+        command = _shell_preamble(debug=debug_shell) + "; " + _setup_complete_command()
     _check_pixi_env(pixi_env)
-    print(f"[modal-hyperscalees-pixi] gpu={_GPU!r}", flush=True)
-    print(f"[modal-hyperscalees-pixi] pixi_env={pixi_env!r}", flush=True)
+    print(f"[modal-pixi] gpu={_GPU!r}", flush=True)
+    print(f"[modal-pixi] pixi_env={pixi_env!r}", flush=True)
     if config:
-        print(f"[modal-hyperscalees-pixi] config={config!r}", flush=True)
+        print(f"[modal-pixi] config={config!r}", flush=True)
     if pytest:
-        print(f"[modal-hyperscalees-pixi] pytest_args={pytest_args!r}", flush=True)
-    print(f"[modal-hyperscalees-pixi] command={command!r}", flush=True)
+        print(f"[modal-pixi] pytest_args={pytest_args!r}", flush=True)
+        print(f"[modal-pixi] pytest_cpu={pytest_cpu!r}", flush=True)
+    print(f"[modal-pixi] command={command!r}", flush=True)
     artifact_globs = parse_export_globs(export_glob, export_videos=export_videos)
     if artifact_globs:
-        print(f"[modal-hyperscalees-pixi] export_globs={artifact_globs!r}", flush=True)
-        runner = _remote_runner(pytest=pytest, with_export=True)
+        print(f"[modal-pixi] export_globs={artifact_globs!r}", flush=True)
+        runner = _remote_runner(pytest=pytest, with_export=True, pytest_cpu=pytest_cpu)
         artifacts = runner.remote(command, artifact_globs, pixi_env, quiet=quiet)
         write_artifacts(artifacts, export_dir=export_dir, log_prefix=_LOG_PREFIX)
     else:
-        runner = _remote_runner(pytest=pytest, with_export=False)
+        runner = _remote_runner(pytest=pytest, with_export=False, pytest_cpu=pytest_cpu)
         runner.remote(command, pixi_env, quiet=quiet)
 
 
-def _remote_runner(*, pytest: bool, with_export: bool):
-    if pytest:
-        return run_hyperscalees_command_export_cpu if with_export else run_hyperscalees_command_cpu
-    return run_hyperscalees_command_export if with_export else run_hyperscalees_command
+def _remote_runner(*, pytest: bool, with_export: bool, pytest_cpu: bool = False):
+    if pytest and pytest_cpu:
+        return run_pixi_command_export_cpu if with_export else run_pixi_command_cpu
+    return run_pixi_command_export if with_export else run_pixi_command
+
+
+def _resolve_pytest_jax_platforms(*, pytest_cpu: bool, jax_platforms: str) -> str:
+    requested = jax_platforms.strip()
+    if requested:
+        return requested
+    return "cpu" if pytest_cpu else "cuda,cpu"
 
 
 def _check_pixi_env(env_name: str) -> None:
@@ -269,7 +247,7 @@ def _resolve_pixi_env(env_name: str, config_path: str) -> str:
         return env_name
     if _is_isaaclab_config(config_path) and not _isaaclab_eggroll_jax_sim(config_path):
         return ISAACLAB_PIXI_ENV
-    return HYPERSCALEES_PIXI_ENV
+    return PRIMARY_PIXI_ENV
 
 
 def _is_isaaclab_config(config_path: str) -> bool:

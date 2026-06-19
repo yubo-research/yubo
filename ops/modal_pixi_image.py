@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from ops.modal_hyperscalees_pixi_base_image import mk_hyperscalees_pixi_base_image
+from ops.modal_pixi_base_image import mk_pixi_base_image
 
 _REPO_MOUNT_IGNORE = (
     ".cache",
@@ -47,7 +47,7 @@ _MODAL_ENV = {
 
 def mk_image(modal):
     project_root = Path(__file__).resolve().parents[1]
-    image = mk_hyperscalees_pixi_base_image(modal, project_root).env(_MODAL_ENV)
+    image = mk_pixi_base_image(modal, project_root).env(_MODAL_ENV)
     return _add_repo_mount(image, project_root)
 
 

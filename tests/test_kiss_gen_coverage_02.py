@@ -44,15 +44,15 @@ def test_kiss_gen_ops_modal_command_helpers() -> None:
     assert refs
 
 
-def test_kiss_gen_ops_modal_hyperscalees_pixi_base_image() -> None:
-    from ops.modal_hyperscalees_pixi_base_image import install_pixi_command
+def test_kiss_gen_ops_modal_pixi_base_image() -> None:
+    from ops.modal_pixi_base_image import install_pixi_command
 
     refs = (install_pixi_command,)
     assert refs
 
 
-def test_kiss_gen_ops_modal_hyperscalees_pixi_image() -> None:
-    from ops.modal_hyperscalees_pixi_image import mk_image
+def test_kiss_gen_ops_modal_pixi_image() -> None:
+    from ops.modal_pixi_image import mk_image
 
     refs = (mk_image,)
     assert refs

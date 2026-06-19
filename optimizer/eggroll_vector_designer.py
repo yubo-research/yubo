@@ -56,8 +56,7 @@ class EggRollJAXVectorDesigner(TurboENNDesigner):
             error_cls=NoSuchDesignerError,
             option_label="EggRoll Turbo-ENN option",
             stack_error_message=(
-                "EggRoll Turbo-ENN requires the separate HyperscaleES environment plus ENN. "
-                "Run admin/setup-hyperscalees.sh first, then use the plain python CLI from that environment."
+                "EggRoll Turbo-ENN requires the separate HyperscaleES environment plus ENN. Run the Pixi setup task first, then use that Pixi environment."
             ),
         )
 

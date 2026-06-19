@@ -41,7 +41,7 @@ def _require_jax():
         import jax
         import jax.numpy as jnp
     except ImportError as exc:
-        raise ImportError("NanoEgg UHD requires JAX. Run admin/setup-hyperscalees.sh first, then use ./ops/exp_uhd.py from that environment.") from exc
+        raise ImportError("NanoEgg UHD requires JAX. Run pixi run -e <env> setup first, then use ./ops/exp_uhd.py from that environment.") from exc
     return jax, jnp
 
 

@@ -14,8 +14,7 @@ def _require_hyperscalees():
         from hyperscalees.models.rl import ActorCriticMLP
     except ImportError as exc:
         raise ImportError(
-            "EggRoll policy tags require the separate HyperscaleES environment. "
-            "Run admin/setup-hyperscalees.sh first, then use the plain python CLI from that environment."
+            "EggRoll policy tags require the separate HyperscaleES environment. Run the Pixi setup task first, then use that Pixi environment."
         ) from exc
     return jax, jnp, ActorCriticMLP
 

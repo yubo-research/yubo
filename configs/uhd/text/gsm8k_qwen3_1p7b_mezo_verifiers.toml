@@ -2,7 +2,7 @@
 # ./ops/exp_uhd.py local configs/uhd/text/gsm8k_qwen3_1p7b_mezo_verifiers.toml
 #
 # GSM8K through Prime Intellect verifiers. Requires the `gsm8k` verifiers
-# environment package installed by admin/setup-hyperscalees.sh.
+# environment package installed by the Pixi setup task.
 
 [uhd]
 env_tag = "llm:verifiers:gsm8k"

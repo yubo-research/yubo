@@ -6,7 +6,7 @@
 # - VLLMChatAdapter -> verifiers rollout/client path
 #
 # Run:
-# micromamba run -n yubo-hyperscalees ./ops/exp_uhd.py local configs/uhd/text/qa_gsm8k_verifiers_async.toml
+# pixi run -e <env> ./ops/exp_uhd.py local configs/uhd/text/qa_gsm8k_verifiers_async.toml
 
 [uhd]
 env_tag = "llm:verifiers:gsm8k"

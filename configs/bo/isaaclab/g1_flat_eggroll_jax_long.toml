@@ -1,5 +1,5 @@
 # Longer Isaac Lab G1 run: JAX EggRoll (batched sim, 32 parallel env slots).
-# modal run ops/modal_hyperscalees_pixi_setup.py --config configs/bo/isaaclab/g1_flat_eggroll_jax_long.toml
+# modal run ops/modal_pixi_setup.py --config configs/bo/isaaclab/g1_flat_eggroll_jax_long.toml
 
 [experiment]
 exp_dir = "runs/isaaclab/g1_flat_eggroll_jax_long"

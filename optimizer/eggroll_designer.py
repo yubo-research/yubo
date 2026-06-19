@@ -29,8 +29,7 @@ def _require_stack():
         from hyperscalees.noiser import all_noisers
     except ImportError as exc:
         raise ImportError(
-            "EggRollDesigner requires the separate HyperscaleES environment. "
-            "Run admin/setup-hyperscalees.sh first, then use the plain python CLI from that environment."
+            "EggRollDesigner requires the separate HyperscaleES environment. Run the Pixi setup task first, then use that Pixi environment."
         ) from exc
     return _EggRollStack(
         jax=jax,
@@ -119,7 +118,7 @@ def _load_nanoegg_optax():
     try:
         import optax as optax_mod
     except ImportError as exc:
-        raise ImportError("NanoEgg EggRoll requires optax. Run admin/setup-hyperscalees.sh first.") from exc
+        raise ImportError("NanoEgg EggRoll requires optax. Run the Pixi setup task first.") from exc
     return optax_mod
 
 

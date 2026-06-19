@@ -1,7 +1,7 @@
 # Native TorchRL IsaacLab PPO batched-env longer run.
 #
 # Modal:
-#   modal run ops/modal_hyperscalees_pixi_setup.py --config configs/rl/isaaclab/g1_flat_ppo_batched_long.toml
+#   modal run ops/modal_pixi_setup.py --config configs/rl/isaaclab/g1_flat_ppo_batched_long.toml
 #
 # For isaaclab:* envs the runtime uses one native TorchRL IsaacLabWrapper
 # collector. num_envs is IsaacLab's internal vectorized env count.

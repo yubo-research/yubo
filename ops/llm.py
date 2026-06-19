@@ -8,11 +8,7 @@ from pathlib import Path
 import click
 
 if sys.version_info < (3, 11):
-    sys.stderr.write(
-        "ops/llm.py requires Python >= 3.11. "
-        "Run it from the yubo-hyperscalees env, for example: "
-        "micromamba run -n yubo-hyperscalees ./ops/llm.py local <config>\n"
-    )
+    sys.stderr.write("ops/llm.py requires Python >= 3.11. Run it from the selected Pixi env, for example: pixi run -e <env> ./ops/llm.py local <config>\n")
     raise SystemExit(1)
 
 

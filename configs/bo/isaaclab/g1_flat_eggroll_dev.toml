@@ -1,8 +1,8 @@
 # Run on Modal after confirming the task exists:
-# modal run ops/modal_hyperscalees_pixi_setup.py --config configs/bo/isaaclab/g1_flat_eggroll_dev.toml
+# modal run ops/modal_pixi_setup.py --config configs/bo/isaaclab/g1_flat_eggroll_dev.toml
 #
 # List installed G1 tasks in the Modal isaaclab Pixi env with:
-# modal run ops/modal_hyperscalees_pixi_setup.py --pixi-env isaaclab --command 'python -m problems.isaaclab_env_adapters --keyword G1'
+# modal run ops/modal_pixi_setup.py --pixi-env isaaclab --command 'python -m problems.isaaclab_env_adapters --keyword G1'
 #
 # Development-scale Unitree G1 EggRoll run. Use the documented flat G1 task
 # first; switch to a rough G1 task only after the task lister confirms it.

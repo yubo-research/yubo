@@ -1,5 +1,5 @@
 # Run on Modal:
-# modal run ops/modal_hyperscalees_pixi_setup.py --config configs/bo/isaaclab/g1_flat_eggroll_video.toml
+# modal run ops/modal_pixi_setup.py --config configs/bo/isaaclab/g1_flat_eggroll_video.toml
 #
 # Video-enabled sibling of g1_flat_eggroll_dev.toml.
 # The training/evaluation pressure is intentionally the same:

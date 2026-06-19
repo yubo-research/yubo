@@ -7,7 +7,7 @@ from typing import Any
 
 _RUNTIME_ERROR = (
     "Real UHD text runs require the CUDA text runtime: ray, vllm, transformers, "
-    "torch, peft, accelerate, and safetensors. Run admin/setup-hyperscalees.sh on "
+    "torch, peft, accelerate, and safetensors. Run the Pixi setup task on "
     "the CUDA machine, then launch with ./ops/exp_uhd.py from that environment."
 )
 

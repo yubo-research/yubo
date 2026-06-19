@@ -1,5 +1,5 @@
 # Smoke: Isaac Lab G1 with JAX EggRoll (host callbacks). Requires Isaac + HyperscaleES.
-# modal run ops/modal_hyperscalees_pixi_setup.py --config configs/bo/isaaclab/g1_flat_eggroll_jax_smoke.toml
+# modal run ops/modal_pixi_setup.py --config configs/bo/isaaclab/g1_flat_eggroll_jax_smoke.toml
 
 [experiment]
 exp_dir = "runs/isaaclab/g1_flat_eggroll_jax_smoke"

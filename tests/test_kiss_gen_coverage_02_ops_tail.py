@@ -4,20 +4,20 @@
 from __future__ import annotations
 
 
-def test_kiss_gen_ops_modal_hyperscalees_pixi_setup() -> None:
-    from ops.modal_hyperscalees_pixi_setup import (
+def test_kiss_gen_ops_modal_pixi_setup() -> None:
+    from ops.modal_pixi_setup import (
         main,
-        run_hyperscalees_command,
-        run_hyperscalees_command_cpu,
-        run_hyperscalees_command_export,
-        run_hyperscalees_command_export_cpu,
+        run_pixi_command,
+        run_pixi_command_cpu,
+        run_pixi_command_export,
+        run_pixi_command_export_cpu,
     )
 
     refs = (
-        run_hyperscalees_command,
-        run_hyperscalees_command_cpu,
-        run_hyperscalees_command_export,
-        run_hyperscalees_command_export_cpu,
+        run_pixi_command,
+        run_pixi_command_cpu,
+        run_pixi_command_export,
+        run_pixi_command_export_cpu,
         main,
     )
     assert refs
