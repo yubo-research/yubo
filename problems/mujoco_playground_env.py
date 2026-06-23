@@ -4,6 +4,7 @@ from typing import Any, TypeAlias
 
 from problems import jax_env_core as core
 from problems.jaxtyping_compat import Array, Float, PRNGKeyArray
+from problems.mujoco_gl import normalize_mujoco_gl_for_platform
 
 Obs: TypeAlias = Any
 State: TypeAlias = Any
@@ -11,6 +12,7 @@ Action: TypeAlias = Any
 
 
 def _mjx_impl() -> str:
+    normalize_mujoco_gl_for_platform()
     try:
         import mujoco_warp  # noqa: F401
         import warp
@@ -46,6 +48,8 @@ class MujocoPlaygroundAdapter:
         raw_name = env_name.split(":", 1)[1]
 
         from gymnax.environments import spaces
+
+        normalize_mujoco_gl_for_platform()
         from mujoco_playground import registry
 
         self._jax = jax

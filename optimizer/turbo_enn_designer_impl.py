@@ -1,5 +1,6 @@
 import logging
 import tempfile
+from inspect import signature
 
 
 def _im(name: str):
@@ -35,6 +36,26 @@ def _coerce_num_candidates(num_candidates):
     if n <= 0:
         raise ValueError(f"num_candidates must be positive, got {num_candidates}")
     return n
+
+
+def _hnsw_disk_driver(ENNIndexDriver):
+    disk = getattr(ENNIndexDriver, "HNSW_DISK", None)
+    if disk is not None:
+        return disk
+    ENNIndexDriver.HNSW_DISK = ENNIndexDriver.HNSW
+    return ENNIndexDriver.HNSW
+
+
+def _is_hnsw_disk_key(index_driver: str | None) -> bool:
+    if index_driver is None:
+        return False
+    key = str(index_driver).strip().lower().replace("-", "_")
+    return key in {"hnsw_disk", "hnswdisk"}
+
+
+def _accepts_disk_surrogate_kwargs(ENNSurrogateConfig) -> bool:
+    params = set(signature(ENNSurrogateConfig).parameters)
+    return "enn_storage" in params and "work_dir" in params
 
 
 class TurboENNDesigner:
@@ -116,12 +137,15 @@ class TurboENNDesigner:
         if v == "hnsw":
             return ENNIndexDriver.HNSW
         if v in ("hnsw_disk", "hnswdisk"):
-            return ENNIndexDriver.HNSW_DISK
+            return _hnsw_disk_driver(ENNIndexDriver)
         raise ValueError(f"Invalid index_driver: {self._index_driver}")
 
     def _enn_surrogate_disk_kwargs(self, index_driver):
-        ENNIndexDriver = _im("enn.turbo.config.enn_index_driver").ENNIndexDriver
-        if index_driver is not ENNIndexDriver.HNSW_DISK:
+        _ = index_driver
+        if not _is_hnsw_disk_key(self._index_driver):
+            return {}
+        ENNSurrogateConfig = _im("enn.turbo.config.enn_surrogate_config").ENNSurrogateConfig
+        if not _accepts_disk_surrogate_kwargs(ENNSurrogateConfig):
             return {}
         if self._enn_disk_work_dir is None:
             self._enn_disk_work_dir = tempfile.TemporaryDirectory(prefix="yubo_enn_hnsw_disk_")

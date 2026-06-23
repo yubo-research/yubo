@@ -9,6 +9,9 @@ from problems.environment_spec import get_environment_spec, materialize_env  # n
 def test_warp_adapter_materialization():
     # Only run if mujoco_warp is available (mocking for kiss check if needed)
     try:
+        from problems.mujoco_gl import normalize_mujoco_gl_for_platform
+
+        normalize_mujoco_gl_for_platform()
         import mujoco_warp  # noqa: F401
     except ImportError:
         pytest.skip("mujoco_warp not available")

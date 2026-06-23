@@ -3,18 +3,41 @@
 from __future__ import annotations
 
 import tempfile
+from inspect import signature
 
 import numpy as np
 from enn.enn.enn_class import EpistemicNearestNeighbors
 from enn.enn.enn_fit import enn_fit
-from enn.enn.enn_fitter import ENNStatefulFitter
 from enn.enn.enn_params import PosteriorFlags
 from enn.turbo.config.enn_index_driver import ENNIndexDriver
 
-from .uhd_enn_fit_helpers import fit_enn_params
+from .uhd_enn_fit_helpers import enn_train_rows, fit_enn_params
 
 _BATCH_FIT_CANDIDATES = 200
 _BATCH_FIT_SAMPLES = 200
+if not hasattr(ENNIndexDriver, "HNSW_DISK"):
+    ENNIndexDriver.HNSW_DISK = ENNIndexDriver.HNSW
+_ENN_MODEL_PARAMS = set(signature(EpistemicNearestNeighbors).parameters)
+
+
+def _train_rows_at_compat(model: EpistemicNearestNeighbors, idx: list[int]):
+    train_yvar = model.train_yvar
+    yvar = None if train_yvar is None else np.asarray(train_yvar)[idx]
+    return np.asarray(model.train_x)[idx], np.asarray(model.train_y)[idx], yvar
+
+
+if not hasattr(EpistemicNearestNeighbors, "train_rows_at"):
+    EpistemicNearestNeighbors.train_rows_at = _train_rows_at_compat
+
+
+class _YStdTracker:
+    def __init__(self, y: np.ndarray | None = None) -> None:
+        self._y = np.empty((0, 1), dtype=np.float64) if y is None else np.asarray(y, dtype=np.float64)
+
+    def y_std(self) -> np.ndarray:
+        if self._y.size == 0:
+            return np.ones((1,), dtype=np.float64)
+        return np.asarray(self._y.std(axis=0), dtype=np.float64)
 
 
 def parse_be_enn_index_driver(name: str) -> ENNIndexDriver:
@@ -55,7 +78,7 @@ class IncrementalBEEnn:
         self._rng = rng if rng is not None else np.random.default_rng(0)
         self._disk_work_dir: tempfile.TemporaryDirectory | None = None
         self._model: EpistemicNearestNeighbors | None = None
-        self._fitter: ENNStatefulFitter | None = None
+        self._fitter: _YStdTracker | None = None
         self._params = None
         self._embed_dim: int | None = None
         self._num_since_heavy_fit = 0
@@ -92,7 +115,7 @@ class IncrementalBEEnn:
 
     def _enn_model_kwargs(self) -> dict:
         kwargs: dict = {"index_driver": self._index_driver}
-        if self._index_driver is ENNIndexDriver.HNSW_DISK:
+        if self._index_driver is ENNIndexDriver.HNSW_DISK and "enn_storage" in _ENN_MODEL_PARAMS:
             if self._disk_work_dir is None:
                 self._disk_work_dir = tempfile.TemporaryDirectory(prefix="yubo_enn_hnsw_disk_")
             kwargs["enn_storage"] = "disk"
@@ -108,11 +131,7 @@ class IncrementalBEEnn:
             scale_x=False,
             **self._enn_model_kwargs(),
         )
-        self._fitter = ENNStatefulFitter(
-            k=self._k,
-            rng=self._rng,
-            infer_aleatoric_variance_scale=True,
-        )
+        self._fitter = _YStdTracker()
 
     @property
     def model(self) -> EpistemicNearestNeighbors | None:
@@ -164,22 +183,13 @@ class IncrementalBEEnn:
             num_fit_samples=num_fit_samples,
             rng=self._rng,
             params_warm_start=self._params,
-            incremental=None,
         )
         self._resync_fitter_after_fit()
 
     def _resync_fitter_after_fit(self) -> None:
         assert self._model is not None
-        self._fitter = ENNStatefulFitter(
-            k=self._k,
-            rng=self._rng,
-            infer_aleatoric_variance_scale=True,
-        )
-        if len(self._model) == 0:
-            return
-        idx = list(range(len(self._model)))
-        x_all, y_all, yvar = self._model.train_rows_at(idx)
-        self._fitter.tell(x_all, y_all, yvar)
+        _, train_y, _ = enn_train_rows(self._model)
+        self._fitter = _YStdTracker(train_y)
 
     def predict(self, x_cand: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         if self._model is None or self._params is None:

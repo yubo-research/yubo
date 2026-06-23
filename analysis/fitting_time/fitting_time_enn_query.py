@@ -13,7 +13,10 @@ from .fitting_time import _SYNTHETIC_OBS_VAR
 from .fitting_time_enn_incremental import (
     EnnIncrementalIndexDriver,
     _checkpoint_enn_params,
+    enn_disk_work_dir,
     enn_incremental_checkpoint_ns,
+    make_epistemic_nn,
+    sync_enn_index,
 )
 from .fitting_time_enn_incremental_draw import (
     _train_xy_unit_cube_segment,
@@ -44,7 +47,6 @@ def benchmark_enn_query_timing(
     checkpoints: Sequence[int] | None = None,
     num_query_points: int = ENN_QUERY_NUM_POINTS,
 ) -> EnnQueryTimingResult:
-    from enn.enn.enn_class import EpistemicNearestNeighbors
     from enn.enn.enn_params import PosteriorFlags
 
     target = normalize_benchmark_function_name(function_name)
@@ -74,29 +76,31 @@ def benchmark_enn_query_timing(
     query_seconds: list[float] = []
     query_seconds_per_point: list[float] = []
 
-    for n_chk in ckpts:
-        n_obs = int(n_chk)
-        train_x, train_y = _train_xy_unit_cube_segment(
-            D=d,
-            function_name=target,
-            problem_seed=seed,
-            n_train=n_obs,
-            start_row=0,
-        )
-        enn_model = EpistemicNearestNeighbors(
-            train_x,
-            train_y,
-            np.full_like(train_y, yvar_scalar),
-            index_driver=index_driver.to_enn_index_driver(),
-        )
-        params = _checkpoint_enn_params(n_obs)
-        enn_model.ensure_index_sync()
-        t_0 = time.perf_counter()
-        enn_model.posterior(x_query, params=params, flags=flags)
-        elapsed = time.perf_counter() - t_0
-        ns.append(n_obs)
-        query_seconds.append(float(elapsed))
-        query_seconds_per_point.append(float(elapsed) / float(n_query))
+    with enn_disk_work_dir(index_driver) as work_dir:
+        for n_chk in ckpts:
+            n_obs = int(n_chk)
+            train_x, train_y = _train_xy_unit_cube_segment(
+                D=d,
+                function_name=target,
+                problem_seed=seed,
+                n_train=n_obs,
+                start_row=0,
+            )
+            enn_model = make_epistemic_nn(
+                train_x,
+                train_y,
+                np.full_like(train_y, yvar_scalar),
+                index_driver,
+                work_dir=work_dir,
+            )
+            params = _checkpoint_enn_params(n_obs)
+            sync_enn_index(enn_model)
+            t_0 = time.perf_counter()
+            enn_model.posterior(x_query, params=params, flags=flags)
+            elapsed = time.perf_counter() - t_0
+            ns.append(n_obs)
+            query_seconds.append(float(elapsed))
+            query_seconds_per_point.append(float(elapsed) / float(n_query))
 
     return EnnQueryTimingResult(
         n=tuple(ns),

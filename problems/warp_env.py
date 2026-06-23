@@ -2,16 +2,24 @@ from __future__ import annotations
 
 from typing import Any, NamedTuple
 
-import mujoco_warp
 import numpy as np
 import warp as wp
+
+from problems.mujoco_gl import normalize_mujoco_gl_for_platform
+
+
+def _load_mujoco_warp():
+    normalize_mujoco_gl_for_platform()
+    import mujoco_warp
+
+    return mujoco_warp
 
 
 class WarpState(NamedTuple):
     obs: wp.array
     reward: wp.array
     done: wp.array
-    data: mujoco_warp.Data
+    data: Any
 
 
 class GymnasiumWarpAdapter:
@@ -22,11 +30,14 @@ class GymnasiumWarpAdapter:
 
         from problems.mjx_env import _action_bounds, parse_gymnasium_env_id
 
+        mujoco_warp = _load_mujoco_warp()
         wp.init()
         self.env_id = parse_gymnasium_env_id(env_name)
         self.num_envs = int(num_envs)
+        self._mujoco_warp = mujoco_warp
 
         # Loader: Use gymnasium just for the MjModel
+        normalize_mujoco_gl_for_platform()
         tmp_env = gym.make(self.env_id)
         self.model = tmp_env.unwrapped.model
         obs_shape = tuple(int(dim) for dim in tmp_env.observation_space.shape)
@@ -40,14 +51,16 @@ class GymnasiumWarpAdapter:
         self.observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=obs_shape, dtype=np.float32)
         self.action_space = gym.spaces.Box(low=low, high=high, shape=low.shape, dtype=np.float32)
 
-    def reset(self, seed: int | None = None) -> tuple[wp.array, mujoco_warp.Data]:
+    def reset(self, seed: int | None = None) -> tuple[wp.array, Any]:
         # CORRECT USAGE: Pass the MuJoCo model (self.model), not the warp_model
+        mujoco_warp = self._mujoco_warp
         data = mujoco_warp.make_data(self.model, nworld=self.num_envs)
         mujoco_warp.reset_data(self.warp_model, data)
         # In-place reset (we'd add noise kernels here for full implementation)
         return self._get_obs(data), data
 
-    def step(self, data: mujoco_warp.Data, action: Any) -> WarpState:
+    def step(self, data: Any, action: Any) -> WarpState:
+        mujoco_warp = self._mujoco_warp
         # Action handling with zero-copy if possible
         if not isinstance(action, wp.array):
             # Ensure action is a Warp array on the same device as the state
@@ -67,7 +80,7 @@ class GymnasiumWarpAdapter:
 
         return WarpState(obs=obs, reward=reward, done=done, data=data)
 
-    def _get_obs(self, data: mujoco_warp.Data) -> wp.array:
+    def _get_obs(self, data: Any) -> wp.array:
         import torch
 
         qpos = wp.to_torch(data.qpos)
@@ -87,7 +100,7 @@ class GymnasiumWarpAdapter:
         self._current_obs_t = obs_t
         return wp.from_torch(obs_t)
 
-    def _get_reward(self, data: mujoco_warp.Data) -> wp.array:
+    def _get_reward(self, data: Any) -> wp.array:
         # Simplified reward: just forward velocity (qvel[0]) for testing
         qvel = wp.to_torch(data.qvel)
         reward_t = qvel[:, 0:1].contiguous().float()

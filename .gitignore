@@ -1,6 +1,7 @@
 target/
 ops/
 **/__pycache__/
+**/.ipynb_checkpoints/**
 **/*.py[cod]
 **/*.rs.bk
 .malvin/logs/

@@ -2,6 +2,7 @@ import math
 from dataclasses import dataclass
 
 import numpy as np
+import pytest
 import torch
 from botorch.generation import MaxPosteriorSampling
 from botorch.test_functions import Ackley
@@ -10,6 +11,9 @@ from gpytorch.constraints import Interval
 from gpytorch.kernels import MaternKernel, ScaleKernel
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.means import ZeroMean
+
+pytest.importorskip("pyvecch")
+
 from pyvecch.input_transforms import Identity
 from pyvecch.models import RFVecchia
 from pyvecch.nbrs import ExactOracle

@@ -91,6 +91,27 @@ def build_modules(config: PPOConfig, env: _EnvSetup, *, device: torch.device) ->
     )
 
 
+def _build_single_backend_collect_env(
+    config: PPOConfig,
+    env_conf,
+    runtime: torchrl_runtime.TorchRLRuntime,
+):
+    if uses_native_isaaclab_collect_env(env_conf):
+        return _make_collect_env(
+            env_conf,
+            env_index=0,
+            num_envs=int(config.collector.num_envs),
+            device=runtime.device,
+        )
+    num_envs = int(config.collector.num_envs)
+    if num_envs == 1:
+        return _make_collect_env(env_conf, env_index=0, num_envs=1, device=runtime.device)
+    env_factory = _make_collect_env_factory(env_conf, num_envs)
+    if runtime.single_env_backend == "parallel":
+        return tr_envs.ParallelEnv(num_envs, env_factory, serial_for_single=True)
+    return tr_envs.SerialEnv(num_envs, env_factory, serial_for_single=True)
+
+
 def build_training(
     config: PPOConfig,
     env: _EnvSetup,
@@ -107,19 +128,7 @@ def build_training(
     env_conf = env.env_conf
     vec_env = None
     if runtime.collector_backend == "single":
-        if uses_native_isaaclab_collect_env(env_conf):
-            vec_env = _make_collect_env(
-                env_conf,
-                env_index=0,
-                num_envs=int(config.collector.num_envs),
-                device=runtime.device,
-            )
-        else:
-            env_factory = _make_collect_env_factory(env_conf, int(config.collector.num_envs))
-            if runtime.single_env_backend == "parallel":
-                vec_env = tr_envs.ParallelEnv(int(config.collector.num_envs), env_factory, serial_for_single=True)
-            else:
-                vec_env = tr_envs.SerialEnv(int(config.collector.num_envs), env_factory, serial_for_single=True)
+        vec_env = _build_single_backend_collect_env(config, env_conf, runtime)
     loss_module = tr_objectives.ClipPPOLoss(
         modules.actor,
         modules.critic,

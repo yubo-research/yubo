@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
+from inspect import Parameter, signature
 
 import numpy as np
 from enn.enn.enn_class import EpistemicNearestNeighbors
@@ -43,6 +44,18 @@ def enn_fit_quality_ns() -> tuple[int, ...]:
     return tuple(seen)
 
 
+def _epistemic_nn_kwargs(
+    index_driver: EnnIncrementalIndexDriver,
+    *,
+    work_dir: str | None,
+) -> dict:
+    kwargs = epistemic_nn_driver_kwargs(index_driver, work_dir=work_dir)
+    params = signature(EpistemicNearestNeighbors).parameters
+    if any(p.kind is Parameter.VAR_KEYWORD for p in params.values()):
+        return kwargs
+    return {name: value for name, value in kwargs.items() if name in params}
+
+
 def benchmark_enn_fit_timing(
     *,
     D: int,
@@ -76,7 +89,7 @@ def benchmark_enn_fit_timing(
             train_x,
             train_y,
             train_yvar,
-            **epistemic_nn_driver_kwargs(index_driver, work_dir=work_dir),
+            **_epistemic_nn_kwargs(index_driver, work_dir=work_dir),
         )
         t_0 = time.perf_counter()
         fit_enn_params(

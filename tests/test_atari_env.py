@@ -5,16 +5,25 @@ from __future__ import annotations
 import pytest
 
 try:
-    import ale_py  # noqa: F401
+    from ale_py import roms
 
     HAS_ALE = True
 except ImportError:
     HAS_ALE = False
 
 
+def _has_pong_rom() -> bool:
+    if not HAS_ALE:
+        return False
+    try:
+        return roms.get_rom_path("pong") is not None
+    except OSError:
+        return False
+
+
 @pytest.mark.skipif(
-    not HAS_ALE,
-    reason="ale-py not installed; pip install gymnasium[accept-rom-license]",
+    not _has_pong_rom(),
+    reason="ale-py Pong ROM not installed; pip install gymnasium[accept-rom-license]",
 )
 def test_atari_env_conf_and_trajectory():
     import numpy as np

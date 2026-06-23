@@ -1,6 +1,7 @@
 from functools import partial
 
-from .designer_registry_extra_builders import _build_eggroll, _build_sparse_enn
+from .designer_registry_extra_builders import _build_eggroll
+from .designer_registry_mars import MARS_DESIGNER_DEFS
 from .designer_registry_option_handlers import (
     _build_turbo_enn_f,
     _d_morbo_enn_fit,
@@ -186,84 +187,6 @@ _DESIGNER_DEFS: list[DesignerDef] = [
         option_specs=(),
     ),
     DesignerDef(
-        name="sparse-enn",
-        builder=_build_sparse_enn,
-        option_specs=(
-            DesignerOptionSpec(
-                name="clock_scale",
-                required=False,
-                value_type="float",
-                description="Multiplier on the expected sparse proposal support for the failure clock.",
-                example_suffix="clock_scale=3.0",
-            ),
-            DesignerOptionSpec(
-                name="min_failures",
-                required=False,
-                value_type="float",
-                description="Lower bound on the batch-level failure tolerance.",
-                example_suffix="min_failures=4",
-            ),
-            DesignerOptionSpec(
-                name="num_pert",
-                required=False,
-                value_type="int",
-                description="Target number of perturbed coordinates in sparse proposals.",
-                example_suffix="num_pert=20",
-            ),
-            DesignerOptionSpec(
-                name="k",
-                required=False,
-                value_type="int",
-                description="ENN neighborhood or ensemble-size parameter.",
-                example_suffix="k=10",
-            ),
-            DesignerOptionSpec(
-                name="num_init",
-                required=False,
-                value_type="int",
-                description="Number of initialization points.",
-                example_suffix="num_init=20",
-            ),
-            DesignerOptionSpec(
-                name="num_candidates",
-                required=False,
-                value_type="int",
-                description="Number of trust-region candidates.",
-                example_suffix="num_candidates=1000",
-            ),
-            DesignerOptionSpec(
-                name="num_fit_samples",
-                required=False,
-                value_type="int",
-                description="Number of ENN fit samples.",
-                example_suffix="num_fit_samples=100",
-            ),
-            DesignerOptionSpec(
-                name="num_fit_candidates",
-                required=False,
-                value_type="int",
-                description="Number of ENN fit candidates.",
-                example_suffix="num_fit_candidates=100",
-            ),
-            DesignerOptionSpec(
-                name="acq_type",
-                required=False,
-                value_type="str",
-                description="Acquisition type.",
-                example_suffix="acq_type=ucb",
-                allowed_values=("pareto", "thompson", "ucb"),
-            ),
-            DesignerOptionSpec(
-                name="candidate_rv",
-                required=False,
-                value_type="str",
-                description="Random source for candidate values.",
-                example_suffix="candidate_rv=uniform",
-                allowed_values=("sobol", "uniform", "gpu_uniform"),
-            ),
-        ),
-    ),
-    DesignerDef(
         name="eggroll",
         builder=_build_eggroll,
         option_specs=(
@@ -360,6 +283,6 @@ _DESIGNER_DEFS: list[DesignerDef] = [
             ),
         ),
     ),
-]
+] + MARS_DESIGNER_DEFS
 
 _DESIGNER_OPTION_SPECS: dict[str, list[DesignerOptionSpec]] = {d.name: list(d.option_specs) for d in _DESIGNER_DEFS if d.option_specs}

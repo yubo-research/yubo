@@ -2,8 +2,6 @@
 
 from pathlib import Path
 
-import matplotlib.pyplot as plt
-
 DEFAULT_SYNTH_10D_ENV_TAGS = (
     "f:sphere-10d",
     "f:ackley-10d",
@@ -18,8 +16,14 @@ def _panel_label_text(letter: str) -> str:
     return f"({letter})"
 
 
+def _pyplot():
+    import matplotlib.pyplot as plt
+
+    return plt
+
+
 def _scaled_fontsize(scale: float, *, minimum: float = 8.0) -> float:
-    base = float(plt.rcParams.get("font.size", 12.0))
+    base = float(_pyplot().rcParams.get("font.size", 12.0))
     return max(minimum, base * scale)
 
 

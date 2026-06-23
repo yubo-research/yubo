@@ -21,6 +21,7 @@ from problems.isaaclab_env_adapters import (
 from problems.jax_env_core import (
     JAX_OBJECTIVE_PREFIXES,
 )
+from problems.mujoco_gl import normalize_mujoco_gl_for_platform
 
 
 def _get_atari_dm_bindings():
@@ -126,6 +127,7 @@ class EnvironmentRuntime:
         if is_isaaclab_env_tag(env_name):
             return make_isaaclab_env(env_name, seed=self.problem_seed, **(kwargs | self.spec.kwargs))
         if self.spec.gym_conf is not None:
+            normalize_mujoco_gl_for_platform()
             return gym.make(env_name, **(kwargs | self.spec.kwargs))
 
         _ns: dict = {}

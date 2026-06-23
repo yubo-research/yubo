@@ -7,6 +7,7 @@ import time
 from contextlib import contextmanager
 from dataclasses import dataclass
 from enum import Enum
+from inspect import signature
 from typing import Iterator, Sequence
 
 import numpy as np
@@ -49,7 +50,7 @@ class EnnIncrementalIndexDriver(Enum):
         if self is EnnIncrementalIndexDriver.HNSW:
             return ENNIndexDriver.HNSW
         if self is EnnIncrementalIndexDriver.HNSW_DISK:
-            return ENNIndexDriver.HNSW_DISK
+            return getattr(ENNIndexDriver, "HNSW_DISK", ENNIndexDriver.HNSW)
         return ENNIndexDriver.FLAT
 
 
@@ -75,6 +76,28 @@ def epistemic_nn_driver_kwargs(
         kwargs["work_dir"] = work_dir
         kwargs["enn_storage"] = "disk"
     return kwargs
+
+
+def make_epistemic_nn(
+    train_x: np.ndarray,
+    train_y: np.ndarray,
+    train_yvar: np.ndarray | None,
+    index_driver: EnnIncrementalIndexDriver,
+    *,
+    work_dir: str | None,
+):
+    from enn.enn.enn_class import EpistemicNearestNeighbors
+
+    kwargs = epistemic_nn_driver_kwargs(index_driver, work_dir=work_dir)
+    accepted = set(signature(EpistemicNearestNeighbors).parameters)
+    filtered = {name: value for name, value in kwargs.items() if name in accepted}
+    return EpistemicNearestNeighbors(train_x, train_y, train_yvar, **filtered)
+
+
+def sync_enn_index(enn_model) -> None:
+    sync = getattr(enn_model, "ensure_index_sync", None)
+    if callable(sync):
+        sync()
 
 
 @dataclass(frozen=True)
@@ -151,8 +174,6 @@ def benchmark_enn_incremental_add_timing(
     index_driver: EnnIncrementalIndexDriver = EnnIncrementalIndexDriver.FLAT,
     checkpoints: Sequence[int] | None = None,
 ) -> EnnIncrementalTimingResult:
-    from enn.enn.enn_class import EpistemicNearestNeighbors
-
     target = normalize_benchmark_function_name(function_name)
     d = int(D)
     seed = int(problem_seed)
@@ -171,11 +192,15 @@ def benchmark_enn_incremental_add_timing(
     log_likelihood: list[float] = []
 
     with enn_disk_work_dir(index_driver) as work_dir:
-        enn_model = EpistemicNearestNeighbors(
-            np.zeros((0, d), dtype=np.float64),
-            np.zeros((0, 1), dtype=np.float64),
-            **epistemic_nn_driver_kwargs(index_driver, work_dir=work_dir),
-        )
+        enn_model = None
+        if index_driver is not EnnIncrementalIndexDriver.HNSW_DISK:
+            enn_model = make_epistemic_nn(
+                np.zeros((0, d), dtype=np.float64),
+                np.zeros((0, 1), dtype=np.float64),
+                np.zeros((0, 1), dtype=np.float64),
+                index_driver,
+                work_dir=work_dir,
+            )
         for n_chk in ckpts:
             n_target = int(n_chk)
             x_seg, y_seg = _train_xy_unit_cube_segment(
@@ -186,9 +211,19 @@ def benchmark_enn_incremental_add_timing(
                 start_row=prev_n,
             )
             t_0 = time.perf_counter()
-            for i in range(x_seg.shape[0]):
+            start_i = 0
+            if enn_model is None:
+                enn_model = make_epistemic_nn(
+                    x_seg[:1],
+                    y_seg[:1],
+                    yvar_row,
+                    index_driver,
+                    work_dir=work_dir,
+                )
+                start_i = 1
+            for i in range(start_i, x_seg.shape[0]):
                 enn_model.add(x_seg[i : i + 1], y_seg[i : i + 1], yvar_row)
-            enn_model.ensure_index_sync()
+            sync_enn_index(enn_model)
             add_seconds.append(time.perf_counter() - t_0)
             prev_n = n_target
             log_likelihood.append(

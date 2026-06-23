@@ -6,6 +6,8 @@ from typing import Any
 
 import numpy as np
 
+from problems.mujoco_gl import normalize_mujoco_gl_for_platform
+
 
 def _callback_or_direct(jnp, result_shape, callback, *args):
     if getattr(jnp, "__name__", "") == "numpy":
@@ -248,6 +250,7 @@ class _HalfCheetahGymnasiumOracle:
         self._env.close()
 
     def _set_state(self, qpos, qvel) -> None:
+        normalize_mujoco_gl_for_platform()
         import mujoco
 
         self._unwrapped.data.qpos[:] = np.asarray(qpos, dtype=np.float64)
@@ -325,6 +328,7 @@ def resolve_gymnasium_mujoco_spec(env, *, fast: bool = False):
         if root_env is None:
             import gymnasium as gym
 
+            normalize_mujoco_gl_for_platform()
             root_env = gym.make(env_id)
         return _bind_halfcheetah(root_env, fast=fast)
     return None

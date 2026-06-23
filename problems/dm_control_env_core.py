@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import os
 import sys
+from types import SimpleNamespace
 from typing import Tuple
 
 import numpy as np
-from dm_control import suite
 
 from problems.dm_control_spaces import flatten_obs, spec_to_space
+
+suite = SimpleNamespace(load=None)
 
 
 def configure_headless_render_backend(render_mode: str | None) -> None:
@@ -149,8 +151,9 @@ class DMControlEnv:
         return max(0, best_cam)
 
     def _load_env(self, seed: int | None):
+        loaded_suite = _load_suite()
         task_kwargs = {"random": seed} if seed is not None else None
-        return suite.load(self._domain, self._task, task_kwargs=task_kwargs)
+        return loaded_suite.load(self._domain, self._task, task_kwargs=task_kwargs)
 
     def reset(self, *, seed: int | None = None, options: dict | None = None):
         _ = options
@@ -185,3 +188,11 @@ class DMControlEnv:
             self._env.close()
         except Exception:
             return
+
+
+def _load_suite():
+    if getattr(suite, "load", None) is None:
+        from dm_control import suite as loaded_suite
+
+        suite.load = loaded_suite.load
+    return suite

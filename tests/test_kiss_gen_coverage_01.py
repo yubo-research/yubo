@@ -106,25 +106,6 @@ def test_kiss_gen_optimizer_eggroll_runtime_vector() -> None:
     assert refs
 
 
-def test_kiss_gen_optimizer_sparse_enn_designer() -> None:
-    from optimizer.sparse_enn_designer import SparseEvidenceTrustRegion, _SparseOptimizerWithTrustRegion
-
-    failure_tolerance_dim = SparseEvidenceTrustRegion.failure_tolerance_dim
-    ask = _SparseOptimizerWithTrustRegion.ask
-    tell = _SparseOptimizerWithTrustRegion.tell
-    if False:
-        (
-            _SparseOptimizerWithTrustRegion,
-            __init__,
-        )
-    refs = (
-        failure_tolerance_dim,
-        ask,
-        tell,
-    )
-    assert refs
-
-
 def test_kiss_gen_optimizer_sparse_gaussian_perturbator() -> None:
     from optimizer.sparse_gaussian_perturbator import SparseGaussianPerturbator
 

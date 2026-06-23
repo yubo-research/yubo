@@ -39,6 +39,17 @@ def _fast_spec_on_mps() -> bool:
     return str(jax.default_backend()).lower() == "mps"
 
 
+def _require_mjx():
+    try:
+        from problems.mujoco_gl import normalize_mujoco_gl_for_platform
+
+        normalize_mujoco_gl_for_platform()
+        from mujoco import mjx
+    except (AttributeError, ImportError) as exc:
+        pytest.skip(f"mujoco.mjx unavailable: {exc}")
+    return mjx
+
+
 def _mjx_data_from_gymnasium(unwrapped, *, jnp, mjx, qpos, qvel, time, ctrl):
     kwargs = _mjx_kwargs(mjx)
     mjx_model = mjx.put_model(unwrapped.model, **kwargs)
@@ -64,7 +75,8 @@ def _mjx_rollout_from_data(*, jax, jnp, mjx, mjx_model, data, action, frame_skip
 
 def test_halfcheetah_v5_semantic_values_match_after_adapter_float32_normalization() -> None:
     import jax.numpy as jnp
-    from mujoco import mjx
+
+    mjx = _require_mjx()
 
     from problems.gymnasium_mujoco_specs import resolve_gymnasium_mujoco_spec
 
@@ -153,7 +165,8 @@ def test_halfcheetah_v5_semantic_values_match_after_adapter_float32_normalizatio
 def test_halfcheetah_v5_default_runtime_is_not_bitwise_gymnasium_parity() -> None:
     import jax
     import jax.numpy as jnp
-    from mujoco import mjx
+
+    mjx = _require_mjx()
 
     from problems.gymnasium_mujoco_specs import resolve_gymnasium_mujoco_spec
 
@@ -210,6 +223,7 @@ def test_gymnasium_mjx_adapter_jit_step_uses_gymnasium_oracle_callbacks() -> Non
 
     from problems.mjx_env import GymnasiumMJXAdapter
 
+    _require_mjx()
     adapter = GymnasiumMJXAdapter("gymnasium:HalfCheetah-v5", jax=jax, jnp=jnp)
     try:
         _obs, state = adapter.reset(jax.random.key(0))

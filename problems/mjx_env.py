@@ -5,6 +5,7 @@ from typing import Any, NamedTuple, TypeAlias
 from problems import jax_env_core as core
 from problems.gymnasium_mujoco_specs import resolve_gymnasium_mujoco_spec
 from problems.jaxtyping_compat import Array, Float, PRNGKeyArray
+from problems.mujoco_gl import normalize_mujoco_gl_for_platform
 
 GYMNASIUM_ENV_PREFIX = "gymnasium:"
 GYMNASIUM_FAST_ENV_PREFIX = "gymnasium_fast:"
@@ -41,6 +42,7 @@ Action: TypeAlias = Any
 def _load_gymnasium_env_spec(env_id: str, *, fast: bool = False):
     import gymnasium as gym
 
+    normalize_mujoco_gl_for_platform()
     env = gym.make(env_id)
     try:
         model = getattr(env.unwrapped, "model", None)
@@ -96,6 +98,8 @@ class GymnasiumMJXAdapter:
 
     def __init__(self, env_name: str, *, jax, jnp) -> None:
         from gymnax.environments import spaces
+
+        normalize_mujoco_gl_for_platform()
         from mujoco import mjx
 
         self._jax = jax

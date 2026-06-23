@@ -15,6 +15,7 @@ from problems.isaaclab_env_adapters import (
     resolve_isaaclab_env_spaces,
 )
 from problems.mlp_torch_env import wrap_mlp_env
+from problems.mujoco_gl import normalize_mujoco_gl_for_platform
 from problems.noise_maker import NoiseMaker
 
 
@@ -100,6 +101,7 @@ class EnvConf:
         elif is_isaaclab_env_tag(self.env_name):
             env = make_isaaclab_env(self.env_name, seed=self.problem_seed, **(kwargs | self.kwargs))
         elif self.gym_conf is not None:
+            normalize_mujoco_gl_for_platform()
             env = gym.make(self.env_name, **(kwargs | self.kwargs))
         else:
             env = other.make(self.env_name, problem_seed=self.problem_seed)
