@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from common.recording import RecordingConfig
 from experiments import experiment_sampler_sampling
 from experiments.experiment_sampler import (
     ExperimentConfig,
@@ -20,7 +21,7 @@ from experiments.experiment_sampler import (
 from tests.mock_experiment_problem import make_mock_problem_for_sampler
 
 
-def test_render_sample_video_uses_video_package(monkeypatch, tmp_path):
+def test_record_sample_rollouts_uses_video_package(monkeypatch, tmp_path):
     calls = []
 
     def fake_render_policy_videos_bo(*args, **kwargs):
@@ -35,21 +36,24 @@ def test_render_sample_video_uses_video_package(monkeypatch, tmp_path):
     env_conf = SimpleNamespace(problem_seed=123)
     run_config = SimpleNamespace(trace_fn=str(Path(tmp_path) / "trace.txt"))
 
-    experiment_sampler_sampling._render_sample_video(
+    experiment_sampler_sampling._record_sample_rollouts(
         opt,
         run_config,
         env_conf,
-        video_prefix="bo",
-        video_num_episodes=4,
-        video_num_video_episodes=2,
-        video_episode_selection="best",
-        video_seed_base=None,
+        RecordingConfig(
+            enabled=True,
+            episodes=4,
+            keep=2,
+            select="best",
+            seed=None,
+            prefix="bo",
+        ),
     )
 
     assert calls
     args, kwargs = calls[0]
     assert args == (env_conf, cloned_policy)
-    assert kwargs["video_dir"] == Path(tmp_path) / "videos"
+    assert kwargs["video_dir"] == Path(tmp_path) / "recordings"
     assert kwargs["seed_base"] == 123
     best_policy.clone.assert_called_once_with()
 

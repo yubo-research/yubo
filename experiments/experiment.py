@@ -22,12 +22,6 @@ _OPTIONAL_KEYS = (
     "max_proposal_seconds",
     "max_total_seconds",
     "b_trace",
-    "video_enable",
-    "video_num_episodes",
-    "video_num_video_episodes",
-    "video_episode_selection",
-    "video_seed_base",
-    "video_prefix",
     "runtime_device",
     "initial_policy_checkpoint",
     "local_workers",
@@ -37,6 +31,7 @@ _ALL_EXPERIMENT_KEYS = set(_BASE_REQUIRED_KEYS + _BUDGET_KEYS + _OPTIONAL_KEYS) 
     "num_epochs",
 }
 _OPTIMIZER_KEYS = {"name", "params"}
+_CORE_TOP_LEVEL_KEYS = frozenset({"experiment", "optimizer"})
 
 
 def _normalize_key(key: str) -> str:
@@ -110,14 +105,26 @@ def _apply_eggroll_experiment_fields(cfg: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
-def _load_toml_config(path: str) -> dict[str, Any]:
+def _supported_config_sections(experiment_config_cls: Any) -> frozenset[str]:
+    sections_fn = getattr(experiment_config_cls, "supported_config_sections", None)
+    if sections_fn is None:
+        return frozenset()
+    return frozenset(_normalize_key(str(section)) for section in sections_fn())
+
+
+def _load_toml_config(path: str, *, config_sections: frozenset[str] = frozenset()) -> dict[str, Any]:
     with open(path, "rb") as f:
         data = tomllib.load(f)
 
+    non_experiment_sections = _CORE_TOP_LEVEL_KEYS | config_sections
     section = data.get("experiment")
     if section is None:
-        section = {key: value for key, value in data.items() if _normalize_key(str(key)) != "optimizer"}
+        section = {key: value for key, value in data.items() if _normalize_key(str(key)) not in non_experiment_sections}
     cfg = _coerce_mapping_keys(section, source=f"TOML '{path}'")
+    for key, value in data.items():
+        norm_key = _normalize_key(str(key))
+        if norm_key in config_sections:
+            cfg[norm_key] = value
 
     raw_optimizer = data.get("optimizer")
     if raw_optimizer is not None:
@@ -163,7 +170,10 @@ def _parse_overrides(override_strings: tuple[str, ...]) -> dict[str, Any]:
 def load_experiment_config(*, config_toml_path: str, overrides: dict[str, Any] | None = None):
     from experiments.experiment_sampler import ExperimentConfig
 
-    cfg = _load_toml_config(config_toml_path)
+    cfg = _load_toml_config(
+        config_toml_path,
+        config_sections=_supported_config_sections(ExperimentConfig),
+    )
     if overrides:
         cfg = {**cfg, **overrides}
     cfg = _apply_eggroll_experiment_fields(cfg)

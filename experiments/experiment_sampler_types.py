@@ -1,10 +1,11 @@
 import hashlib
 import importlib
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from typing import Any, NamedTuple, Optional
 
 from analysis.data_io import TraceRecord
 from common.collector import Collector
+from common.recording import RECORDING_SECTION, RecordingConfig
 
 # Cumulative proposal-time budget for Modal timing sweep (``Optimizer._cum_dt_proposing``).
 TIMING_SWEEP_MAX_CUMULATIVE_PROPOSAL_SECONDS = 5 * 60 * 60
@@ -46,17 +47,16 @@ class ExperimentConfig:
     max_proposal_seconds: Optional[float] = None
     max_total_seconds: Optional[float] = None
     b_trace: bool = True
-    video_enable: bool = False
     scale: Optional[str] = None  # "auto" | "low" | "medium" | "high" | "huge" for dim-based scaling
-    video_num_episodes: int = 8
-    video_num_video_episodes: int = 3
-    video_episode_selection: str = "best"
-    video_seed_base: Optional[int] = None
-    video_prefix: str = "bo"
+    recording: RecordingConfig = field(default_factory=RecordingConfig)
     runtime_device: str = "auto"
     initial_policy_checkpoint: Optional[str] = None
     local_workers: int = 1
     policy_tag: Optional[str] = None
+
+    @classmethod
+    def supported_config_sections(cls) -> frozenset[str]:
+        return frozenset({RECORDING_SECTION})
 
     def to_dir_name(self) -> str:
         budget_key = "num_rounds" if self.num_rounds is not None else "total_timesteps"
@@ -66,7 +66,7 @@ class ExperimentConfig:
             f"--num_arms={self.num_arms}--{budget_key}={budget_val}"
             f"--num_reps={self.num_reps}--num_denoise={self.num_denoise}"
             f"--max_proposal_seconds={self.max_proposal_seconds}"
-            f"--video_enable={self.video_enable}"
+            f"--recording={self.recording}"
             f"--initial_policy_checkpoint={self.initial_policy_checkpoint}"
         )
         short_hash = hashlib.md5(config_str.encode()).hexdigest()[:8]
@@ -103,6 +103,7 @@ class ExperimentConfig:
         local_workers = int(d.get("local_workers", 1))
         if local_workers < 1:
             raise ValueError(f"local_workers must be >= 1 (got: {local_workers})")
+        recording = RecordingConfig.from_raw(d.get("recording"), source="recording")
         num_rounds = None if d.get("num_rounds") in (None, "None") else int(d["num_rounds"])
         total_timesteps = None if d.get("total_timesteps") in (None, "None") else int(d["total_timesteps"])
         if num_rounds is None and total_timesteps is None:
@@ -139,12 +140,7 @@ class ExperimentConfig:
             max_proposal_seconds=max_prop,
             max_total_seconds=max_total,
             b_trace=true_false(d.get("b_trace", True)),
-            video_enable=true_false(d.get("video_enable", False)),
-            video_num_episodes=int(d.get("video_num_episodes", 8)),
-            video_num_video_episodes=int(d.get("video_num_video_episodes", 3)),
-            video_episode_selection=str(d.get("video_episode_selection", "best")).lower(),
-            video_seed_base=None if d.get("video_seed_base") in (None, "None") else int(d["video_seed_base"]),
-            video_prefix=str(d.get("video_prefix", "bo")),
+            recording=recording,
             runtime_device=runtime_device,
             initial_policy_checkpoint=initial_policy_checkpoint,
             local_workers=local_workers,
@@ -165,12 +161,7 @@ class RunConfig:
     total_timesteps: Optional[int] = None
     bo_console: bool = True
     deadline: Optional[float] = None
-    video_enable: bool = False
-    video_num_episodes: int = 8
-    video_num_video_episodes: int = 3
-    video_episode_selection: str = "best"
-    video_seed_base: Optional[int] = None
-    video_prefix: str = "bo"
+    recording: RecordingConfig = field(default_factory=RecordingConfig)
     runtime_device: str = "auto"
     initial_policy_checkpoint: Optional[str] = None
     problem: Any | None = None

@@ -6,6 +6,7 @@ from dataclasses import dataclass
 import pytest
 from click.testing import CliRunner
 
+from common.recording import RecordingConfig
 from experiments.experiment import cli, load_experiment_config
 
 
@@ -29,6 +30,7 @@ class _StubExperimentConfig:
     max_proposal_seconds: float | None = None
     max_total_seconds: float | None = None
     b_trace: bool = True
+    recording: RecordingConfig | None = None
     initial_policy_checkpoint: str | None = None
     policy_tag: str | None = None
 
@@ -77,16 +79,18 @@ def test_load_experiment_config_toml_experiment_table(tmp_path):
         num_reps = 5
         b_trace = false
         max_total_seconds = 30.5
-        video_enable = true
-        video_num_episodes = 1
-        video_num_video_episodes = 1
-        video_episode_selection = "first"
-        video_seed_base = 17
-        video_prefix = "smoke"
         runtime_device = "cpu"
         initial_policy_checkpoint = "runs/ppo/checkpoints/checkpoint_last.pt"
         local_workers = 4
         policy_tag = "pure-function"
+
+        [recording]
+        enabled = true
+        episodes = 1
+        keep = 1
+        select = "first"
+        seed = 17
+        prefix = "smoke"
         """,
     )
     cfg = load_experiment_config(config_toml_path=str(toml_path))
@@ -98,12 +102,14 @@ def test_load_experiment_config_toml_experiment_table(tmp_path):
     assert cfg.num_reps == 5
     assert cfg.b_trace is False
     assert cfg.max_total_seconds == 30.5
-    assert cfg.video_enable is True
-    assert cfg.video_num_episodes == 1
-    assert cfg.video_num_video_episodes == 1
-    assert cfg.video_episode_selection == "first"
-    assert cfg.video_seed_base == 17
-    assert cfg.video_prefix == "smoke"
+    assert cfg.recording == RecordingConfig(
+        enabled=True,
+        episodes=1,
+        keep=1,
+        select="first",
+        seed=17,
+        prefix="smoke",
+    )
     assert cfg.runtime_device == "cpu"
     assert cfg.initial_policy_checkpoint == "runs/ppo/checkpoints/checkpoint_last.pt"
     assert cfg.local_workers == 4
@@ -129,6 +135,7 @@ def test_load_experiment_config_toml_root_and_hyphen_keys(tmp_path):
     assert cfg.num_arms == 2
     assert cfg.num_rounds == 4
     assert cfg.num_reps == 1
+    assert cfg.recording == RecordingConfig()
 
 
 def test_load_experiment_config_total_timesteps_only(tmp_path):
@@ -162,6 +169,28 @@ def test_load_experiment_config_unknown_toml_key_raises(tmp_path):
         num_rounds = 6
         num_reps = 1
         not_a_real_key = 123
+        """,
+    )
+    with pytest.raises(ValueError, match="Unknown key"):
+        load_experiment_config(config_toml_path=str(toml_path))
+
+
+def test_load_experiment_config_recording_unknown_key_raises(tmp_path):
+    toml_path = _write_toml(
+        tmp_path,
+        """
+        [experiment]
+        exp_dir = "_tmp/exp"
+        env_tag = "f:sphere-2d"
+        opt_name = "random"
+        num_arms = 4
+        num_rounds = 6
+        num_reps = 1
+        policy_tag = "pure-function"
+
+        [recording]
+        enabled = true
+        bad_key = 1
         """,
     )
     with pytest.raises(ValueError, match="Unknown key"):

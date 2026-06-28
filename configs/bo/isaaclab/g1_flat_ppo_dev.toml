@@ -16,12 +16,14 @@ num_reps = 1
 runtime_device = "cuda"
 local_workers = 1
 b_trace = true
-video_enable = true
-video_num_episodes = 4
-video_num_video_episodes = 2
-video_episode_selection = "best"
-video_prefix = "g1-flat-ppo"
 max_total_seconds = 7200
+
+[recording]
+enabled = true
+episodes = 4
+keep = 2
+select = "best"
+prefix = "g1-flat-ppo"
 
 [optimizer]
 name = "ppo"
