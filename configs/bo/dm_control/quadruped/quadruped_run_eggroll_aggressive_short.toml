@@ -9,7 +9,7 @@
 exp_dir = "_tmp/bo/dm_control/quadruped/eggroll_aggressive_short"
 env_tag = "dm_control/quadruped-run-v0"
 policy_tag = "eggroll-ac-mlp-64x2-pqn"
-population = 16
+population = 2
 num_epochs = 120
 num_reps = 1
 runtime_device = "cpu"
@@ -22,10 +22,10 @@ name = "eggroll"
 
 [optimizer.params]
 noiser = "eggroll"
-sigma = 0.05
+sigma = 0.025
 rank = 1
 lr = 0.01
-optax = "adam"
+optax = "adamw"
 batch_size = 8
 num_envs = 1
-steps = 64
+steps = 1000

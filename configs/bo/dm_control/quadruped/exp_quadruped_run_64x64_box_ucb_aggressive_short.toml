@@ -2,14 +2,14 @@
 exp_dir = "_tmp/bo/dm_control/quadruped/box_ucb_aggressive_short"
 env_tag = "dm_control/quadruped-run-v0-small"
 policy_tag = "mlp-4-4"
-num_arms = 10
+num_arms = 1
 total_timesteps = 120000
 num_reps = 1
 num_denoise = 1
 num_denoise_passive = 1
 b_trace = true
 runtime_device = "cpu"
-local_workers = 4
+local_workers = 1
 
 [recording]
 enabled = true

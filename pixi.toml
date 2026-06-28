@@ -303,7 +303,6 @@ cmd = '''bash -c 'set -euo pipefail
 project="${PIXI_PROJECT_ROOT:-${PWD}}"
 env_name="${PIXI_ENVIRONMENT_NAME:?PIXI_ENVIRONMENT_NAME must be set}"
 state_dir="${project}/.pixi-state/${env_name}/{{ pixi.platform }}"
-marker="${state_dir}/ennbo-0.3.11-github-685e313-patched"
 mkdir -p "${state_dir}"
 cd "${project}"
 py="${CONDA_PREFIX}/bin/python"
@@ -314,14 +313,39 @@ export CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER="/usr/bin/gcc"
 export LIBRARY_PATH="${CONDA_PREFIX}/lib:/usr/lib/x86_64-linux-gnu${LIBRARY_PATH:+:${LIBRARY_PATH}}"
 export LD_LIBRARY_PATH="${CONDA_PREFIX}/lib:/usr/lib/x86_64-linux-gnu${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
 export CMAKE_LIBRARY_PATH="${CONDA_PREFIX}/lib:/usr/lib/x86_64-linux-gnu${CMAKE_LIBRARY_PATH:+:${CMAKE_LIBRARY_PATH}}"
-if [[ -f "${marker}" ]] && "${py}" - <<\PY
+tmp="$(mktemp -d)"
+trap "rm -rf \"${tmp}\"" EXIT
+enn_ref="${ENNBO_REF:-main}"
+git clone --filter=blob:none https://github.com/yubo-research/enn.git "${tmp}/enn"
+if ! git -C "${tmp}/enn" checkout -q "${enn_ref}" 2>/dev/null; then
+  git -C "${tmp}/enn" fetch --depth 1 origin "${enn_ref}"
+  git -C "${tmp}/enn" checkout -q FETCH_HEAD
+fi
+src="${tmp}/enn"
+resolved_ref="$(git -C "${src}" rev-parse HEAD)"
+source_version="$("${py}" - "${src}/pyproject.toml" <<\PY
+from pathlib import Path
+import re
+import sys
+
+text = Path(sys.argv[1]).read_text(encoding="utf-8")
+match = re.search(r"^version = \"([^\"]+)\"", text, re.M)
+version = match.group(1) if match else ""
+if not version:
+    raise SystemExit("could not read ennbo version from pyproject.toml")
+print(version)
+PY
+)"
+marker="${state_dir}/ennbo-${source_version}-github-${resolved_ref}-patched"
+if [[ -f "${marker}" ]] && "${py}" - "${source_version}" "${resolved_ref}" <<\PY
 import importlib.metadata as m
+import sys
 import joblib
 import threadpoolctl
 from enn.enn.enn_class import EpistemicNearestNeighbors
 
-assert m.version("ennbo") == "0.3.11", m.version("ennbo")
-print("ennbo ok", m.version("ennbo"), EpistemicNearestNeighbors.__name__, joblib.__version__, threadpoolctl.__version__)
+assert m.version("ennbo") == sys.argv[1], m.version("ennbo")
+print("ennbo ok", m.version("ennbo"), "source", sys.argv[2], EpistemicNearestNeighbors.__name__, joblib.__version__, threadpoolctl.__version__)
 PY
 then
   exit 0
@@ -331,36 +355,17 @@ if ! command -v cargo >/dev/null 2>&1; then
   echo "cargo is required to build ennbo from yubo-research/enn." >&2
   exit 1
 fi
-tmp="$(mktemp -d)"
-trap "rm -rf \"${tmp}\"" EXIT
-enn_ref="${ENNBO_REF:-685e31342197cb5925166d52b56513c5981efc7c}"
-git clone --filter=blob:none https://github.com/yubo-research/enn.git "${tmp}/enn"
-if ! git -C "${tmp}/enn" checkout -q "${enn_ref}" 2>/dev/null; then
-  git -C "${tmp}/enn" fetch --depth 1 origin "${enn_ref}"
-  git -C "${tmp}/enn" checkout -q FETCH_HEAD
-fi
-src="${tmp}/enn"
-"${py}" - "${src}/pyproject.toml" "${enn_ref}" <<\PY
-from pathlib import Path
-import re
-import sys
-
-text = Path(sys.argv[1]).read_text(encoding="utf-8")
-match = re.search(r"^version = \"([^\"]+)\"", text, re.M)
-version = match.group(1) if match else ""
-if version != "0.3.11":
-    raise SystemExit(f"expected ennbo 0.3.11 from yubo-research/enn {sys.argv[2]}, git has {version}")
-PY
 "${py}" admin/patch_enn_failure_tolerance_dim.py "${src}"
 "${py}" -m pip install --disable-pip-version-check --no-build-isolation --no-deps --force-reinstall "${src}"
-"${py}" - <<\PY
+"${py}" - "${source_version}" "${resolved_ref}" <<\PY
 import importlib.metadata as m
+import sys
 import joblib
 import threadpoolctl
 from enn.enn.enn_class import EpistemicNearestNeighbors
 
-assert m.version("ennbo") == "0.3.11", m.version("ennbo")
-print("ennbo ok", m.version("ennbo"), EpistemicNearestNeighbors.__name__, joblib.__version__, threadpoolctl.__version__)
+assert m.version("ennbo") == sys.argv[1], m.version("ennbo")
+print("ennbo ok", m.version("ennbo"), "source", sys.argv[2], EpistemicNearestNeighbors.__name__, joblib.__version__, threadpoolctl.__version__)
 PY
 touch "${marker}"
 '
@@ -430,17 +435,41 @@ cmd = '''bash -c 'set -euo pipefail
 project="${PIXI_PROJECT_ROOT:-${PWD}}"
 env_name="${PIXI_ENVIRONMENT_NAME:?PIXI_ENVIRONMENT_NAME must be set}"
 state_dir="${project}/.pixi-state/${env_name}/{{ pixi.platform }}"
-marker="${state_dir}/ennbo-0.3.11-github-685e313-patched"
 mkdir -p "${state_dir}"
 cd "${project}"
 py="${CONDA_PREFIX:?CONDA_PREFIX must be set}/bin/python"
-if [[ -f "${marker}" ]] && "${py}" - <<\PY
+tmp="$(mktemp -d)"
+trap "rm -rf \"${tmp}\"" EXIT
+enn_ref="${ENNBO_REF:-main}"
+git clone --filter=blob:none --depth 1 https://github.com/yubo-research/enn.git "${tmp}/enn"
+if ! git -C "${tmp}/enn" checkout -q "${enn_ref}" 2>/dev/null; then
+  git -C "${tmp}/enn" fetch --depth 1 origin "${enn_ref}"
+  git -C "${tmp}/enn" checkout -q FETCH_HEAD
+fi
+src="${tmp}/enn"
+resolved_ref="$(git -C "${src}" rev-parse HEAD)"
+source_version="$("${py}" - "${src}/pyproject.toml" <<\PY
+from pathlib import Path
+import re
+import sys
+
+text = Path(sys.argv[1]).read_text(encoding="utf-8")
+match = re.search(r"^version = \"([^\"]+)\"", text, re.M)
+version = match.group(1) if match else ""
+if not version:
+    raise SystemExit("could not read ennbo version from pyproject.toml")
+print(version)
+PY
+)"
+marker="${state_dir}/ennbo-${source_version}-github-${resolved_ref}-patched"
+if [[ -f "${marker}" ]] && "${py}" - "${source_version}" "${resolved_ref}" <<\PY
 import importlib.metadata as m
+import sys
 import faiss
 from enn.enn.enn_class import EpistemicNearestNeighbors
 
-assert m.version("ennbo") == "0.3.11", m.version("ennbo")
-print("ennbo ok", m.version("ennbo"), faiss.__version__, EpistemicNearestNeighbors.__name__)
+assert m.version("ennbo") == sys.argv[1], m.version("ennbo")
+print("ennbo ok", m.version("ennbo"), "source", sys.argv[2], faiss.__version__, EpistemicNearestNeighbors.__name__)
 PY
 then
   exit 0
@@ -456,26 +485,6 @@ fi
 brew list faiss >/dev/null 2>&1 || brew install faiss
 brew list libomp >/dev/null 2>&1 || brew install libomp
 "${py}" -m pip install --disable-pip-version-check -q maturin "delocate>=0.13"
-tmp="$(mktemp -d)"
-trap "rm -rf \"${tmp}\"" EXIT
-enn_ref="${ENNBO_REF:-685e31342197cb5925166d52b56513c5981efc7c}"
-git clone --filter=blob:none --depth 1 https://github.com/yubo-research/enn.git "${tmp}/enn"
-if ! git -C "${tmp}/enn" checkout -q "${enn_ref}" 2>/dev/null; then
-  git -C "${tmp}/enn" fetch --depth 1 origin "${enn_ref}"
-  git -C "${tmp}/enn" checkout -q FETCH_HEAD
-fi
-src="${tmp}/enn"
-"${py}" - "${src}/pyproject.toml" "${enn_ref}" <<\PY
-from pathlib import Path
-import re
-import sys
-
-text = Path(sys.argv[1]).read_text(encoding="utf-8")
-match = re.search(r"^version = \"([^\"]+)\"", text, re.M)
-version = match.group(1) if match else ""
-if version != "0.3.11":
-    raise SystemExit(f"expected ennbo 0.3.11 from yubo-research/enn {sys.argv[2]}, git has {version}")
-PY
 if grep -q "auditwheel = \"repair\"" "${src}/pyproject.toml"; then
   sed -i "" "s/auditwheel = \"repair\"/auditwheel = \"skip\"/" "${src}/pyproject.toml"
 fi
@@ -496,13 +505,14 @@ mkdir -p "${src}/dist/raw" "${src}/dist/repaired"
 "${py}" -m pip install --disable-pip-version-check --no-deps --force-reinstall "${src}/dist/repaired"/*"${py_tag}"*.whl
 "${py}" -m pip install --disable-pip-version-check --no-deps \
   tensordict==0.11.0 torchrl==0.11.0 pyvers==0.2.2 joblib threadpoolctl
-"${py}" - <<\PY
+"${py}" - "${source_version}" "${resolved_ref}" <<\PY
 import importlib.metadata as m
+import sys
 import faiss
 from enn.enn.enn_class import EpistemicNearestNeighbors
 
-assert m.version("ennbo") == "0.3.11", m.version("ennbo")
-print("ennbo ok", m.version("ennbo"), faiss.__version__, EpistemicNearestNeighbors.__name__)
+assert m.version("ennbo") == sys.argv[1], m.version("ennbo")
+print("ennbo ok", m.version("ennbo"), "source", sys.argv[2], faiss.__version__, EpistemicNearestNeighbors.__name__)
 PY
 touch "${marker}"
 '
