@@ -26,6 +26,11 @@ def mk_replicates(config: ExperimentConfig) -> list[RunConfig]:
             continue
         else:
             problem_seed = problem_seed_from_rep_index(i_rep)
+            initial_policy_checkpoint = _format_initial_policy_checkpoint(
+                config.initial_policy_checkpoint,
+                rep_index=i_rep,
+                problem_seed=problem_seed,
+            )
             problem = shim.build_problem(
                 config.env_tag,
                 config.policy_tag,
@@ -56,9 +61,26 @@ def mk_replicates(config: ExperimentConfig) -> list[RunConfig]:
                     video_seed_base=config.video_seed_base,
                     video_prefix=config.video_prefix,
                     runtime_device=config.runtime_device,
+                    initial_policy_checkpoint=initial_policy_checkpoint,
                 )
             )
     return run_configs
+
+
+def _format_initial_policy_checkpoint(
+    value: str | None,
+    *,
+    rep_index: int,
+    problem_seed: int,
+) -> str | None:
+    if value is None:
+        return None
+    return str(value).format(
+        rep=rep_index,
+        i_rep=rep_index,
+        rep_index=rep_index,
+        problem_seed=problem_seed,
+    )
 
 
 def count_local_trace_jobs(configs: list[ExperimentConfig]) -> tuple[int, int, int]:
@@ -104,6 +126,7 @@ def prep_args_1(
     num_denoise=None,
     num_denoise_passive=None,
     policy_tag="pure-function",
+    initial_policy_checkpoint=None,
 ) -> ExperimentConfig:
     assert noise is None, "NYI"
 
@@ -120,6 +143,7 @@ def prep_args_1(
         num_denoise=num_denoise,
         num_denoise_passive=num_denoise_passive,
         policy_tag=policy_tag,
+        initial_policy_checkpoint=initial_policy_checkpoint,
     )
 
 

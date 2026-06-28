@@ -166,6 +166,7 @@ def sample_1(run_config: RunConfig):
             opt_name=rc.opt_name,
             num_rounds=rc.num_rounds,
             total_timesteps=rc.total_timesteps,
+            initial_policy_checkpoint=rc.initial_policy_checkpoint,
         )
 
         max_iterations = int(rc.num_rounds) if rc.num_rounds is not None else sys.maxsize

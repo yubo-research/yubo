@@ -29,6 +29,7 @@ class _StubExperimentConfig:
     max_proposal_seconds: float | None = None
     max_total_seconds: float | None = None
     b_trace: bool = True
+    initial_policy_checkpoint: str | None = None
     policy_tag: str | None = None
 
     @classmethod
@@ -83,6 +84,7 @@ def test_load_experiment_config_toml_experiment_table(tmp_path):
         video_seed_base = 17
         video_prefix = "smoke"
         runtime_device = "cpu"
+        initial_policy_checkpoint = "runs/ppo/checkpoints/checkpoint_last.pt"
         local_workers = 4
         policy_tag = "pure-function"
         """,
@@ -103,6 +105,7 @@ def test_load_experiment_config_toml_experiment_table(tmp_path):
     assert cfg.video_seed_base == 17
     assert cfg.video_prefix == "smoke"
     assert cfg.runtime_device == "cpu"
+    assert cfg.initial_policy_checkpoint == "runs/ppo/checkpoints/checkpoint_last.pt"
     assert cfg.local_workers == 4
 
 

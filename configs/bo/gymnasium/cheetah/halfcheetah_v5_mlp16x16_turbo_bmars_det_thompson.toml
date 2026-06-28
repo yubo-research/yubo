@@ -1,0 +1,45 @@
+# HalfCheetah-v5 deterministic-basis Bayesian MARS Thompson run.
+#
+# This is the standalone version of the first-experiment deterministic BMARS
+# setting with the MLP-16-16 policy.
+#
+# Local:
+#   ./ops/experiment.py local configs/bo/gymnasium/cheetah/halfcheetah_v5_mlp16x16_turbo_bmars_det_thompson.toml
+#
+# Modal:
+#   modal run ops/modal_pixi_setup.py --config configs/bo/gymnasium/cheetah/halfcheetah_v5_mlp16x16_turbo_bmars_det_thompson.toml
+
+[experiment]
+exp_dir = "runs/bo/gymnasium/cheetah/halfcheetah_v5_mlp16x16_turbo_bmars_det_thompson"
+env_tag = "cheetah"
+policy_tag = "mlp-16-16"
+num_arms = 1
+num_rounds = 10000
+num_reps = 10
+runtime_device = "cpu"
+local_workers = 10
+b_trace = true
+
+[optimizer]
+name = "turbo-bmars-thompson"
+
+[optimizer.params]
+num_init = 16
+num_keep = 256
+num_candidates = 1024
+candidate_rv = "sobol"
+max_terms = 12
+interaction_order = 1
+num_bootstrap = 1
+active_rank = 4
+trailing_obs = 128
+feature_screen = 64
+knots_per_feature = 2
+ridge = 0.000001
+gcv_penalty = 2.0
+min_rss_improvement = 0.000000000001
+active_samples = 64
+prior_precision = 1.0
+min_noise_variance = 0.00000001
+include_noise_in_sigma = true
+basis_sampler = "deterministic"

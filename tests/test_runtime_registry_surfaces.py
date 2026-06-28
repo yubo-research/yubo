@@ -48,3 +48,4 @@ def test_llm_registry_examples_are_first_class() -> None:
 
     assert resolve_llm_env("llm:math:gsm8k").task_kind == "math"
     assert resolve_llm_policy("qwen3-1p7b-lora-r1").model_name == "Qwen/Qwen3-1.7B"
+    assert resolve_llm_policy("pythia-14m-lora-r1").model_name == "EleutherAI/pythia-14m"

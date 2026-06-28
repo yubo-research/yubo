@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from llm.architecture import DEFAULT_LORA_ROLES
 from llm.registry import LLMEnvSpec, LLMPolicySpec
 
 
@@ -51,6 +52,10 @@ class LLMConfig:
     reference_policy_tag: str | None
     env: LLMEnvSpec
     policy: LLMPolicySpec
+    llm_update_roles: tuple[str, ...] = DEFAULT_LORA_ROLES
+    llm_update_layer_band: str = "all"
+    llm_update_expert_policy: str = "all"
+    llm_update_max_targets: int | None = None
     pretrain_lora_only: bool = True
     pretrain_search_dim: int = 4096
     vllm_enforce_eager: bool = False

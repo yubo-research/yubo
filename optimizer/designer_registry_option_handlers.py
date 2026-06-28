@@ -268,7 +268,7 @@ def _d_turbo_enn_fit_ucb(ctx: _SimpleContext, opts: dict):
         "param_scale",
         "seed_offset",
     }
-    allowed = {"nfs", "k", "idx"} | eggroll_allowed
+    allowed = {"nfs", "k", "idx", "num_init"} | eggroll_allowed
     unknown = set(opts) - allowed
     if unknown:
         u = ", ".join(sorted(unknown))
@@ -288,3 +288,89 @@ def _d_turbo_enn_fit_ucb(ctx: _SimpleContext, opts: dict):
         num_fit_candidates=100,
         acq_type="ucb",
     )
+
+
+def _d_turbo_enn_varentropy_ucb(ctx: _SimpleContext, opts: dict):
+    ENNVarentropySurrogateConfig = _load_symbol("optimizer.enn_varentropy_config", "ENNVarentropySurrogateConfig")
+    TurboENNVarentropyDesigner = _load_symbol("optimizer.turbo_enn_varentropy_designer", "TurboENNVarentropyDesigner")
+    TurboENNVarentropyDesignerConfig = _load_symbol(
+        "optimizer.turbo_enn_varentropy_config",
+        "TurboENNVarentropyDesignerConfig",
+    )
+
+    opts = dict(opts)
+    allowed = {
+        "candidate_rv",
+        "idx",
+        "include_noise_in_sigma",
+        "k",
+        "normalize_varentropy",
+        "num_candidates",
+        "num_init",
+        "scale_x",
+        "varentropy_scale",
+        "variance_eps",
+    }
+    _reject_unknown_opts("turbo-enn-varentropy-ucb", opts, allowed)
+    index_driver = _index_driver_from_opts(opts, example="turbo-enn-varentropy-ucb/idx=flat") if "idx" in opts else "flat"
+    config = ENNVarentropySurrogateConfig(
+        k=_optional_int(opts, "k", default=10, example="turbo-enn-varentropy-ucb/k=10"),
+        index_driver=index_driver or "flat",
+        scale_x=_optional_bool(opts, "scale_x", default=False),
+        varentropy_scale=_optional_float(opts, "varentropy_scale", default=0.5),
+        variance_eps=_optional_float(opts, "variance_eps", default=1e-12),
+        normalize_varentropy=_optional_bool(opts, "normalize_varentropy", default=True),
+        include_noise_in_sigma=_optional_bool(opts, "include_noise_in_sigma", default=False),
+    )
+    return TurboENNVarentropyDesigner(
+        ctx.policy,
+        config=TurboENNVarentropyDesignerConfig(
+            enn=config,
+            acq_type="ucb",
+            num_init=_optional_int_or_none(opts, "num_init"),
+            num_candidates=_optional_int_or_none(opts, "num_candidates"),
+            candidate_rv=_optional_str_or_none(opts, "candidate_rv", {"sobol", "uniform", "gpu_uniform"}),
+        ),
+    )
+
+
+def _optional_int_or_none(opts: dict, key: str) -> int | None:
+    if key not in opts:
+        return None
+    value = opts[key]
+    if value is None:
+        return None
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise NoSuchDesignerError(f"Designer option '{key}' must be an int.")
+    return int(value)
+
+
+def _optional_float(opts: dict, key: str, *, default: float) -> float:
+    if key not in opts:
+        return default
+    value = opts[key]
+    if isinstance(value, bool) or not isinstance(value, int | float):
+        raise NoSuchDesignerError(f"Designer option '{key}' must be numeric.")
+    return float(value)
+
+
+def _optional_bool(opts: dict, key: str, *, default: bool) -> bool:
+    if key not in opts:
+        return default
+    value = opts[key]
+    if not isinstance(value, bool):
+        raise NoSuchDesignerError(f"Designer option '{key}' must be a bool.")
+    return bool(value)
+
+
+def _optional_str_or_none(opts: dict, key: str, allowed: set[str]) -> str | None:
+    if key not in opts:
+        return None
+    value = opts[key]
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        raise NoSuchDesignerError(f"Designer option '{key}' must be a string.")
+    if value not in allowed:
+        raise NoSuchDesignerError(f"Designer option '{key}' must be one of: {', '.join(sorted(allowed))}.")
+    return value

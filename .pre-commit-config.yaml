@@ -24,9 +24,9 @@ repos:
         language: pygrep
         types: [python]
 
-      - id: vcs-source-files
-        name: Check tracked source files and artifacts
-        entry: admin/vcs_source_files.sh
+      - id: missing-files
+        name: Check for untracked source files
+        entry: admin/missing_files.sh
         language: script
         pass_filenames: false
         always_run: true

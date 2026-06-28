@@ -99,6 +99,10 @@ _OPTIONAL_TOML_KEYS = (
     "text_delta_scale",
     "text_basis_max_tensors",
     "text_score_mode",
+    "llm_update_roles",
+    "llm_update_layer_band",
+    "llm_update_expert_policy",
+    "llm_update_max_targets",
     # Other settings
     "bf8_storage",
     "perturb_backend",

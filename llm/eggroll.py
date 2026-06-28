@@ -117,12 +117,23 @@ def run_eggroll(cfg: LLMConfig) -> dict[str, Any]:
     print(f"LLM_EGGROLL: model={cfg.policy.model_name} task={cfg.env.task_name} engines={args.num_engines} tp={args.tensor_parallel_size}")
 
     if args.pretrain_lora_only:
+        from llm.architecture import make_update_program
         from llm.lora import build_peft_lora_template
 
         template = build_peft_lora_template(
             model_name=cfg.policy.model_name,
             rank=args.lora_r,
             alpha=args.lora_alpha,
+            require_vllm_dense_update=True,
+            update_program=make_update_program(
+                roles=cfg.llm_update_roles,
+                layer_band=cfg.llm_update_layer_band,
+                expert_policy=cfg.llm_update_expert_policy,
+                rank=args.lora_r,
+                scale=args.sigma,
+                seed=args.base_seed,
+                max_targets=cfg.llm_update_max_targets,
+            ),
         )
     else:
         template = None  # Will build after launching engines

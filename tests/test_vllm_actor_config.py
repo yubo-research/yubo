@@ -100,6 +100,94 @@ def test_gemma4_lora_targets_discover_text_linear_children():
     assert "q_proj" in _lora_target_modules("Qwen/Qwen3-1.7B")
 
 
+def test_lora_targets_use_semantic_architecture_discovery_for_moe_and_ssm():
+    torch = pytest.importorskip("torch")
+    from llm.architecture import LLMUpdateProgram
+    from llm.lora import _lora_target_modules
+
+    model = torch.nn.Module()
+    model.layers = torch.nn.ModuleList([torch.nn.Module()])
+    block = model.layers[0]
+    block.mlp = torch.nn.Module()
+    block.mlp.gate = torch.nn.Linear(2, 2, bias=False)
+    block.mlp.experts = torch.nn.ModuleList([torch.nn.Module()])
+    block.mlp.experts[0].gate_proj = torch.nn.Linear(2, 4, bias=False)
+    block.mlp.experts[0].up_proj = torch.nn.Linear(2, 4, bias=False)
+    block.mlp.experts[0].down_proj = torch.nn.Linear(4, 2, bias=False)
+    block.mixer = torch.nn.Module()
+    block.mixer.in_proj = torch.nn.Linear(2, 4, bias=False)
+    block.mixer.dt_proj = torch.nn.Linear(2, 2, bias=False)
+    block.mixer.conv1d = torch.nn.Conv1d(2, 2, kernel_size=3, bias=False)
+    block.mixer.out_proj = torch.nn.Linear(4, 2, bias=False)
+
+    targets = _lora_target_modules("example/hybrid-moe", base_model=model)
+
+    assert "layers.0.mlp.gate" not in targets
+    assert "layers.0.mlp.experts.0.gate_proj" in targets
+    assert "layers.0.mlp.experts.0.down_proj" in targets
+    assert "layers.0.mixer.in_proj" in targets
+    assert "layers.0.mixer.dt_proj" in targets
+    assert "layers.0.mixer.out_proj" in targets
+    assert "layers.0.mixer.conv1d" not in targets
+
+    router_targets = _lora_target_modules(
+        "example/hybrid-moe",
+        base_model=model,
+        update_program=LLMUpdateProgram(roles=("moe_router",), expert_policy="router"),
+    )
+    assert router_targets == ["layers.0.mlp.gate"]
+
+
+def test_lora_targets_support_pythia_gpt_neox_names_without_direct_update_claim():
+    torch = pytest.importorskip("torch")
+    from llm.architecture import LLMUpdateProgram
+    from llm.lora import _lora_target_modules, validate_vllm_dense_update_support
+
+    model = torch.nn.Module()
+    model.gpt_neox = torch.nn.Module()
+    model.gpt_neox.layers = torch.nn.ModuleList([torch.nn.Module()])
+    block = model.gpt_neox.layers[0]
+    block.attention = torch.nn.Module()
+    block.attention.query_key_value = torch.nn.Linear(2, 6, bias=False)
+    block.attention.dense = torch.nn.Linear(2, 2, bias=False)
+    block.mlp = torch.nn.Module()
+    block.mlp.dense_h_to_4h = torch.nn.Linear(2, 8, bias=False)
+    block.mlp.dense_4h_to_h = torch.nn.Linear(8, 2, bias=False)
+
+    targets = _lora_target_modules(
+        "EleutherAI/pythia-14m",
+        base_model=model,
+        update_program=LLMUpdateProgram(roles=("attention_qkv", "attention_o", "mlp_down")),
+    )
+
+    assert targets == [
+        "gpt_neox.layers.0.attention.query_key_value",
+        "gpt_neox.layers.0.attention.dense",
+        "gpt_neox.layers.0.mlp.dense_4h_to_h",
+    ]
+    with pytest.raises(ValueError, match="fused-QKV"):
+        validate_vllm_dense_update_support({"base_model.model.gpt_neox.layers.0.attention.query_key_value.base_layer.weight": (6, 2)})
+
+
+def test_vllm_dense_update_support_rejects_router_and_ssm_targets():
+    from llm.lora import validate_vllm_dense_update_support
+
+    validate_vllm_dense_update_support(
+        {
+            "base_model.model.model.layers.0.self_attn.q_proj.base_layer.weight": (2, 2),
+            "base_model.model.model.layers.0.mlp.experts.0.down_proj.base_layer.weight": (2, 4),
+        }
+    )
+
+    with pytest.raises(ValueError, match="router-only, fused-QKV, SSM, RWKV"):
+        validate_vllm_dense_update_support(
+            {
+                "base_model.model.model.layers.0.mlp.gate.base_layer.weight": (2, 2),
+                "base_model.model.model.layers.0.mixer.in_proj.base_layer.weight": (4, 2),
+            }
+        )
+
+
 def test_gemma4_vllm_update_target_allows_wrapped_linear_names():
     from llm.lora import vllm_dense_update_target
 

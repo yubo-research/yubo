@@ -56,6 +56,14 @@ def test_d_turbo_enn_fit_ucb_nfs_and_k():
     assert d._num_fit_samples == 50
 
 
+def test_d_turbo_enn_fit_ucb_accepts_num_init():
+    from optimizer.designer_registry import _d_turbo_enn_fit_ucb
+
+    ctx = _make_ctx()
+    d = _d_turbo_enn_fit_ucb(ctx, {"num_init": 1})
+    assert d._num_init == 1
+
+
 def test_turbo_enn_p_accepts_index_driver_option():
     from optimizer.designer_registry import _DESIGNER_OPTION_SPECS, _d_turbo_enn_p
 
@@ -244,6 +252,41 @@ def test_turbo_bmars_registry_uses_stable_defaults_and_options():
     assert designer._bmars_config.mcmc_num_models == 4
 
 
+def test_turbo_mars_enn_registry_builds_hybrid_designer():
+    from optimizer.designer_registry import _DESIGNER_DISPATCH, _DESIGNER_OPTION_SPECS
+    from optimizer.turbo_mars_designer import TurboMarsENNDesigner
+
+    ctx = _make_ctx()
+    designer = _DESIGNER_DISPATCH["turbo-mars-enn-ucb"](
+        ctx,
+        {"max_terms": 8, "feature_screen": 4, "k": 3, "num_fit_samples": 2, "num_fit_candidates": 2},
+    )
+
+    assert isinstance(designer, TurboMarsENNDesigner)
+    assert designer._acq_type == "ucb"
+    assert designer._mars_enn_config.basis.max_terms == 8
+    assert designer._mars_enn_config.k == 3
+    assert any(spec.name == "k" for spec in _DESIGNER_OPTION_SPECS["turbo-mars-enn-ucb"])
+
+
+def test_turbo_enn_varentropy_registry_builds_ucb_designer():
+    from optimizer.designer_registry import _DESIGNER_DISPATCH, _DESIGNER_OPTION_SPECS
+    from optimizer.turbo_enn_varentropy_designer import TurboENNVarentropyDesigner
+
+    ctx = _make_ctx()
+    designer = _DESIGNER_DISPATCH["turbo-enn-varentropy-ucb"](
+        ctx,
+        {"idx": "flat", "k": 7, "varentropy_scale": 0.25, "num_candidates": 64},
+    )
+
+    assert isinstance(designer, TurboENNVarentropyDesigner)
+    assert designer._acq_type == "ucb"
+    assert designer._varentropy_config.index_driver == "flat"
+    assert designer._varentropy_config.k == 7
+    assert designer._varentropy_config.varentropy_scale == 0.25
+    assert any(spec.name == "varentropy_scale" for spec in _DESIGNER_OPTION_SPECS["turbo-enn-varentropy-ucb"])
+
+
 def test_turbo_mars_registry_rejects_unknown_and_bad_options():
     from optimizer.designer_registry_mars import _d_turbo_bmars, _d_turbo_mars
 
@@ -258,11 +301,14 @@ def test_turbo_mars_registry_rejects_unknown_and_bad_options():
 
 def test_turbo_mars_make_config_uses_custom_surrogate_configs():
     from optimizer.mars_config import BayesianMarsSurrogateConfig, MarsSurrogateConfig
+    from optimizer.mars_enn_config import MarsENNSurrogateConfig
     from optimizer.turbo_mars_designer import (
         TurboBayesianMARSDesigner,
         TurboBayesianMARSDesignerConfig,
         TurboMARSDesigner,
         TurboMARSDesignerConfig,
+        TurboMarsENNDesigner,
+        TurboMarsENNDesignerConfig,
     )
     from problems.env_conf import default_policy, get_env_conf
 
@@ -276,11 +322,17 @@ def test_turbo_mars_make_config_uses_custom_surrogate_configs():
         policy,
         config=TurboBayesianMARSDesignerConfig(bmars=BayesianMarsSurrogateConfig(), acq_type="ucb", num_candidates=16),
     )
+    mars_enn = TurboMarsENNDesigner(
+        policy,
+        config=TurboMarsENNDesignerConfig(mars_enn=MarsENNSurrogateConfig(), acq_type="ucb", num_candidates=16),
+    )
 
     mars_cfg = mars._make_config(num_init=4, num_metrics=None)
     bmars_cfg = bmars._make_config(num_init=4, num_metrics=None)
+    mars_enn_cfg = mars_enn._make_config(num_init=4, num_metrics=None)
 
     assert isinstance(mars_cfg.surrogate, MarsSurrogateConfig)
     assert isinstance(bmars_cfg.surrogate, BayesianMarsSurrogateConfig)
+    assert isinstance(mars_enn_cfg.surrogate, MarsENNSurrogateConfig)
     assert mars_cfg.candidates.resolve_num_candidates(num_dim=2, num_arms=1) == 16
     assert bmars._use_y_var is True

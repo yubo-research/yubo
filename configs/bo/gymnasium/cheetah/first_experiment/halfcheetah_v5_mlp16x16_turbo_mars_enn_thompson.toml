@@ -1,0 +1,39 @@
+# HalfCheetah-v5 MARS-feature ENN Thompson run.
+
+[experiment]
+exp_dir = "runs/bo/gymnasium/cheetah/first_experiment/halfcheetah_v5_mlp16x16_turbo_mars_enn_thompson"
+env_tag = "cheetah"
+policy_tag = "mlp-16-16"
+num_arms = 1
+num_rounds = 10000
+num_reps = 10
+runtime_device = "cpu"
+local_workers = 10
+b_trace = true
+
+[optimizer]
+name = "turbo-mars-enn-thompson"
+
+[optimizer.params]
+num_init = 16
+num_keep = 256
+num_candidates = 1024
+candidate_rv = "sobol"
+max_terms = 12
+interaction_order = 1
+num_bootstrap = 1
+active_rank = 4
+trailing_obs = 128
+feature_screen = 64
+knots_per_feature = 2
+ridge = 0.000001
+gcv_penalty = 2.0
+min_rss_improvement = 0.000000000001
+active_samples = 64
+k = 8
+num_fit_candidates = 32
+num_fit_samples = 32
+scale_x = true
+index_driver = "flat"
+include_noise_in_sigma = false
+infer_aleatoric_variance_scale = true

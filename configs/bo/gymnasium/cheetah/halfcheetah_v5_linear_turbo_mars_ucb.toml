@@ -1,0 +1,42 @@
+# HalfCheetah-v5 TuRBO-MARS UCB run with the repo's static linear policy.
+#
+# Equivalent experiment shape to halfcheetah_v5_linear_eggroll.toml, translated
+# from EggRoll fields to generic BO fields:
+#   population -> num_arms
+#   num_epochs -> num_rounds
+#
+# Local:
+#   ./ops/experiment.py local configs/bo/gymnasium/cheetah/halfcheetah_v5_linear_turbo_mars_ucb.toml
+#
+# Modal:
+#   modal run ops/modal_pixi_setup.py --config configs/bo/gymnasium/cheetah/halfcheetah_v5_linear_turbo_mars_ucb.toml
+
+[experiment]
+exp_dir = "runs/bo/gymnasium/cheetah/halfcheetah_v5_linear_turbo_mars_ucb"
+env_tag = "cheetah"
+policy_tag = "linear"
+num_arms = 2
+num_rounds = 10000
+num_reps = 10
+num_denoise_passive = 1
+runtime_device = "cpu"
+local_workers = 10
+b_trace = true
+
+[optimizer]
+name = "turbo-mars-ucb"
+
+[optimizer.params]
+num_init = 16
+num_keep = 256
+num_candidates = 4096
+candidate_rv = "sobol"
+max_terms = 64
+interaction_order = 2
+num_bootstrap = 8
+active_rank = 8
+trailing_obs = 256
+feature_screen = 512
+knots_per_feature = 3
+ridge = 0.000001
+active_samples = 256

@@ -109,9 +109,9 @@ def _score_columns(cols: np.ndarray, target: np.ndarray) -> np.ndarray:
     return np.abs(centered_cols.T @ centered_target) / np.maximum(denom, 1e-12)
 
 
-def _screen_features(x: np.ndarray, y: np.ndarray, max_features: int) -> np.ndarray:
+def _screen_features(x: np.ndarray, y: np.ndarray, max_features: int | None) -> np.ndarray:
     num_dim = int(x.shape[1])
-    if num_dim <= int(max_features):
+    if max_features is None or num_dim <= int(max_features):
         return np.arange(num_dim, dtype=np.int64)
     y0 = y - float(np.mean(y))
     x0 = x - np.mean(x, axis=0, keepdims=True)

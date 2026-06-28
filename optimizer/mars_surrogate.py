@@ -5,11 +5,11 @@ from typing import Any
 import numpy as np
 from enn.turbo.python_fallback.components import PosteriorResult, SurrogateResult
 
-from .bayesian_mars_fit import _FittedBayesianMarsModel, _fit_bayesian_mars
+from .bayesian_mars_fit import _fit_bayesian_mars, _FittedBayesianMarsModel
 from .bayesian_mars_mcmc import _fit_bayesian_mars_mcmc
-from .mars_basis import _HingeFactor, _MarsTerm, _build_main_basis, _coerce_scalar_y
+from .mars_basis import _build_main_basis, _coerce_scalar_y, _HingeFactor, _MarsTerm
 from .mars_config import BayesianMarsSurrogateConfig, ENNMarsGeometrySurrogateConfig, MarsSurrogateConfig
-from .mars_fit import _FittedMarsModel, _fit_single_mars
+from .mars_fit import _fit_single_mars, _FittedMarsModel
 from .mars_geometry import _LowRankFactor
 
 

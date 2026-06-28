@@ -15,6 +15,13 @@ from problems.uhd_obj_types import UHDVectorObjectiveMixin
 _log = logging.getLogger(__name__).info
 
 
+_NANOCHAT_POLICIES = {
+    "nanochat:tiny": {"n_layer": 4, "n_head": 4, "n_embd": 128, "synthetic_vocab_size": 8192},
+    "nanochat:d12": {"n_layer": 12, "n_head": 6, "n_embd": 768, "synthetic_vocab_size": 32768},
+    "nanochat:d24": {"n_layer": 24, "n_head": 6, "n_embd": 768, "synthetic_vocab_size": 32768},
+}
+
+
 class NanochatUHDVectorObjective(UHDVectorObjectiveMixin):
     """Bridge for nanochat GPT models as a UHD vector objective."""
 
@@ -26,23 +33,15 @@ class NanochatUHDVectorObjective(UHDVectorObjectiveMixin):
         self._eval_count = 0
         self._lock = threading.Lock()
 
-        # Config mapping
         policy_tag = str(cfg.policy_tag or "nanochat:d12")
-        n_layer = 12
-        if "d12" in policy_tag:
-            n_layer = 12
-        elif "d24" in policy_tag:
-            n_layer = 24
-
-        # Match vocab_size to tokenizer (TinyStories/gpt2 uses 50257)
-        vocab_size = 32768
-        if "tinystories" in str(cfg.env_tag):
-            vocab_size = 50257
+        policy = _resolve_nanochat_policy(policy_tag)
+        vocab_size = _nanochat_vocab_size(cfg, policy)
 
         gpt_cfg = GPTConfig(
-            n_layer=n_layer,
-            n_head=6,
-            n_embd=768,
+            n_layer=policy["n_layer"],
+            n_head=policy["n_head"],
+            n_kv_head=policy["n_head"],
+            n_embd=policy["n_embd"],
             sequence_len=int(getattr(cfg, "max_tokens", 256)),
             vocab_size=vocab_size,
         )
@@ -51,6 +50,7 @@ class NanochatUHDVectorObjective(UHDVectorObjectiveMixin):
         self.model = GPT(gpt_cfg).to(device)
         self.model.init_weights()
         self.model.eval()
+        self.num_model_params = int(sum(param.numel() for param in self.model.parameters()))
 
         self._codec = _NanochatSubspaceCodec(
             self.model,
@@ -74,7 +74,12 @@ class NanochatUHDVectorObjective(UHDVectorObjectiveMixin):
             # Fallback: assume each token is 1 byte for synthetic/simple testing
             self._token_bytes = torch.ones(gpt_cfg.vocab_size, dtype=torch.int64, device=device)
 
-        _log(f"NanochatUHD: layers={n_layer} dim={self.dim} dataset={dataset_name} real_data={self._has_real_data} params={self._codec.num_total_params:,}")
+        _log(
+            "NanochatUHD: "
+            f"policy={policy_tag} layers={gpt_cfg.n_layer} embd={gpt_cfg.n_embd} vocab={gpt_cfg.vocab_size} "
+            f"dim={self.dim} dataset={dataset_name} real_data={self._has_real_data} "
+            f"model_params={self.num_model_params:,} search_params={self._codec.num_total_params:,}"
+        )
 
         if not self._has_real_data and dataset_name != "synthetic":
             raise RuntimeError(f"Real dataset '{dataset_name}' requested but {self._bin_path} not found. Run scripts/prepare_tinystories.py first.")
@@ -211,3 +216,17 @@ class NanochatUHDVectorObjective(UHDVectorObjectiveMixin):
 
 def is_nanochat_env(env_tag: str) -> bool:
     return str(env_tag).startswith("nanochat:")
+
+
+def _resolve_nanochat_policy(policy_tag: str) -> dict[str, int]:
+    try:
+        return dict(_NANOCHAT_POLICIES[str(policy_tag)])
+    except KeyError as exc:
+        supported = ", ".join(sorted(_NANOCHAT_POLICIES))
+        raise KeyError(f"Unknown nanochat policy_tag {policy_tag!r}. Supported policies: {supported}") from exc
+
+
+def _nanochat_vocab_size(cfg: UHDConfig, policy: dict[str, int]) -> int:
+    if "tinystories" in str(cfg.env_tag):
+        return 50257
+    return int(policy["synthetic_vocab_size"])

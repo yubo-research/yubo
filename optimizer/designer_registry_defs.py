@@ -15,6 +15,7 @@ from .designer_registry_option_handlers import (
     _d_turbo_enn_fit_ucb,
     _d_turbo_enn_p,
     _d_turbo_enn_sweep,
+    _d_turbo_enn_varentropy_ucb,
 )
 from .designer_types import DesignerDef, DesignerOptionSpec
 
@@ -172,6 +173,56 @@ _DESIGNER_DEFS: list[DesignerDef] = [
                 value_type="int",
                 description="ENN ensemble size k (default 10).",
                 example_suffix="k=20",
+            ),
+            DesignerOptionSpec(
+                name="num_init",
+                required=False,
+                value_type="int",
+                description="Initial evaluations before TuRBO proposals.",
+                example_suffix="num_init=1",
+            ),
+            _IDX_OPTION_SPEC,
+        ),
+    ),
+    DesignerDef(
+        name="turbo-enn-varentropy-ucb",
+        builder=_d_turbo_enn_varentropy_ucb,
+        option_specs=(
+            DesignerOptionSpec(
+                name="k",
+                required=False,
+                value_type="int",
+                description="Number of ENN neighbors in the local evidence distribution.",
+                example_suffix="k=10",
+            ),
+            DesignerOptionSpec(
+                name="varentropy_scale",
+                required=False,
+                value_type="float",
+                description="Multiplier for normalized neighbor-weight varentropy in the ENN uncertainty scale.",
+                example_suffix="varentropy_scale=0.5",
+            ),
+            DesignerOptionSpec(
+                name="num_init",
+                required=False,
+                value_type="int",
+                description="Initial Latin-hypercube evaluations before TuRBO proposals.",
+                example_suffix="num_init=16",
+            ),
+            DesignerOptionSpec(
+                name="num_candidates",
+                required=False,
+                value_type="int",
+                description="Number of TuRBO candidates scored by UCB.",
+                example_suffix="num_candidates=2048",
+            ),
+            DesignerOptionSpec(
+                name="candidate_rv",
+                required=False,
+                value_type="str",
+                description="TuRBO candidate generator: sobol, uniform, or gpu_uniform.",
+                example_suffix="candidate_rv=sobol",
+                allowed_values=("sobol", "uniform", "gpu_uniform"),
             ),
             _IDX_OPTION_SPEC,
         ),

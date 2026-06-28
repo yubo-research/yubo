@@ -9,7 +9,8 @@ from .designer_errors import NoSuchDesignerError
 from .designer_registry_context import _SimpleContext
 from .designer_types import DesignerDef, DesignerOptionSpec
 from .mars_config import BayesianMarsSurrogateConfig, MarsSurrogateConfig
-from .turbo_mars_config import TurboBayesianMARSDesignerConfig, TurboMARSDesignerConfig, stable_bmars_config
+from .mars_enn_config import MarsENNSurrogateConfig
+from .turbo_mars_config import TurboBayesianMARSDesignerConfig, TurboMARSDesignerConfig, TurboMarsENNDesignerConfig, stable_bmars_config
 
 
 def _d_turbo_mars(ctx: _SimpleContext, opts: dict[str, Any], *, acq_type: str):
@@ -31,17 +32,49 @@ def _d_turbo_bmars(ctx: _SimpleContext, opts: dict[str, Any], *, acq_type: str):
     )
 
 
+def _d_turbo_mars_enn(ctx: _SimpleContext, opts: dict[str, Any], *, acq_type: str):
+    TurboMarsENNDesigner = _load_symbol("optimizer.turbo_mars_designer", "TurboMarsENNDesigner")
+    opts = dict(opts)
+    _reject_unknown("turbo-mars-enn", opts, _COMMON_KEYS | _MARS_KEYS | _MARS_ENN_KEYS)
+    mars_enn = _mars_enn_config(opts)
+    return TurboMarsENNDesigner(
+        ctx.policy,
+        config=TurboMarsENNDesignerConfig(mars_enn=mars_enn, acq_type=acq_type, **_turbo_kwargs(opts)),
+    )
+
+
 def _mars_config(opts: dict[str, Any]) -> MarsSurrogateConfig:
+    cfg = MarsSurrogateConfig()
     return MarsSurrogateConfig(
-        max_terms=_optional_int(opts, "max_terms", 64),
-        interaction_order=_optional_int(opts, "interaction_order", 2),
-        num_bootstrap=_optional_int(opts, "num_bootstrap", 8),
-        active_rank=_optional_int(opts, "active_rank", 8),
-        trailing_obs=_optional_int_or_none(opts, "trailing_obs", 256),
-        feature_screen=_optional_int(opts, "feature_screen", 512),
-        knots_per_feature=_optional_int(opts, "knots_per_feature", 3),
-        ridge=_optional_float(opts, "ridge", 1e-6),
-        active_samples=_optional_int(opts, "active_samples", 256),
+        max_terms=_optional_int(opts, "max_terms", cfg.max_terms),
+        interaction_order=_optional_int(opts, "interaction_order", cfg.interaction_order),
+        num_bootstrap=_optional_int(opts, "num_bootstrap", cfg.num_bootstrap),
+        active_rank=_optional_int(opts, "active_rank", cfg.active_rank),
+        trailing_obs=_optional_int_or_none(opts, "trailing_obs", cfg.trailing_obs),
+        feature_screen=_optional_int_or_none(opts, "feature_screen", cfg.feature_screen),
+        knots_per_feature=_optional_int_or_none(opts, "knots_per_feature", cfg.knots_per_feature),
+        ridge=_optional_float(opts, "ridge", cfg.ridge),
+        gcv_penalty=_optional_float(opts, "gcv_penalty", cfg.gcv_penalty),
+        min_rss_improvement=_optional_float(opts, "min_rss_improvement", cfg.min_rss_improvement),
+        active_samples=_optional_int(opts, "active_samples", cfg.active_samples),
+    )
+
+
+def _mars_enn_config(opts: dict[str, Any]) -> MarsENNSurrogateConfig:
+    cfg = MarsENNSurrogateConfig()
+    return MarsENNSurrogateConfig(
+        basis=_bmars_basis_config(opts, cfg.basis),
+        k=_optional_int(opts, "k", cfg.k),
+        num_fit_candidates=_optional_int(opts, "num_fit_candidates", cfg.num_fit_candidates),
+        num_fit_samples=_optional_int(opts, "num_fit_samples", cfg.num_fit_samples),
+        scale_x=_optional_bool(opts, "scale_x", cfg.scale_x),
+        index_driver=_optional_str(opts, "index_driver", cfg.index_driver, {"flat", "hnsw", "hnsw_disk"}),
+        include_noise_in_sigma=_optional_bool(opts, "include_noise_in_sigma", cfg.include_noise_in_sigma),
+        infer_aleatoric_variance_scale=_optional_bool(
+            opts,
+            "infer_aleatoric_variance_scale",
+            cfg.infer_aleatoric_variance_scale,
+        ),
     )
 
 
@@ -72,9 +105,11 @@ def _bmars_basis_config(opts: dict[str, Any], basis: MarsSurrogateConfig) -> Mar
         num_bootstrap=_optional_int(opts, "num_bootstrap", basis.num_bootstrap),
         active_rank=_optional_int(opts, "active_rank", basis.active_rank),
         trailing_obs=_optional_int_or_none(opts, "trailing_obs", basis.trailing_obs),
-        feature_screen=_optional_int(opts, "feature_screen", basis.feature_screen),
-        knots_per_feature=_optional_int(opts, "knots_per_feature", basis.knots_per_feature),
+        feature_screen=_optional_int_or_none(opts, "feature_screen", basis.feature_screen),
+        knots_per_feature=_optional_int_or_none(opts, "knots_per_feature", basis.knots_per_feature),
         ridge=_optional_float(opts, "ridge", basis.ridge),
+        gcv_penalty=_optional_float(opts, "gcv_penalty", basis.gcv_penalty),
+        min_rss_improvement=_optional_float(opts, "min_rss_improvement", basis.min_rss_improvement),
         active_samples=_optional_int(opts, "active_samples", basis.active_samples),
     )
 
@@ -157,9 +192,11 @@ _MARS_KEYS = {
     "active_rank",
     "active_samples",
     "feature_screen",
+    "gcv_penalty",
     "interaction_order",
     "knots_per_feature",
     "max_terms",
+    "min_rss_improvement",
     "num_bootstrap",
     "ridge",
     "trailing_obs",
@@ -176,6 +213,15 @@ _BMARS_KEYS = {
     "min_noise_variance",
     "prior_precision",
 }
+_MARS_ENN_KEYS = {
+    "include_noise_in_sigma",
+    "index_driver",
+    "infer_aleatoric_variance_scale",
+    "k",
+    "num_fit_candidates",
+    "num_fit_samples",
+    "scale_x",
+}
 
 _MARS_SPECS = tuple(
     _spec(name, value_type, example)
@@ -188,6 +234,9 @@ _MARS_SPECS = tuple(
         ("num_bootstrap", "int", "num_bootstrap=3"),
         ("trailing_obs", "int", "trailing_obs=32"),
         ("feature_screen", "int", "feature_screen=16"),
+        ("knots_per_feature", "int", "knots_per_feature=16"),
+        ("gcv_penalty", "float", "gcv_penalty=2.0"),
+        ("min_rss_improvement", "float", "min_rss_improvement=1e-10"),
         ("active_samples", "int", "active_samples=32"),
     )
 )
@@ -201,7 +250,20 @@ _BMARS_SPECS = _MARS_SPECS + tuple(
         ("mcmc_num_models", "int", "mcmc_num_models=8"),
     )
 )
+_MARS_ENN_SPECS = _MARS_SPECS + tuple(
+    _spec(name, value_type, example)
+    for name, value_type, example in (
+        ("k", "int", "k=10"),
+        ("num_fit_candidates", "int", "num_fit_candidates=200"),
+        ("num_fit_samples", "int", "num_fit_samples=200"),
+        ("scale_x", "bool", "scale_x=true"),
+        ("index_driver", "str", "index_driver=flat"),
+        ("include_noise_in_sigma", "bool", "include_noise_in_sigma=false"),
+    )
+)
 
-MARS_DESIGNER_DEFS = [DesignerDef(f"turbo-mars-{acq}", partial(_d_turbo_mars, acq_type=acq), _MARS_SPECS) for acq in ("ucb", "pareto", "thompson")] + [
-    DesignerDef(f"turbo-bmars-{acq}", partial(_d_turbo_bmars, acq_type=acq), _BMARS_SPECS) for acq in ("ucb", "pareto", "thompson")
-]
+MARS_DESIGNER_DEFS = (
+    [DesignerDef(f"turbo-mars-{acq}", partial(_d_turbo_mars, acq_type=acq), _MARS_SPECS) for acq in ("ucb", "pareto", "thompson")]
+    + [DesignerDef(f"turbo-bmars-{acq}", partial(_d_turbo_bmars, acq_type=acq), _BMARS_SPECS) for acq in ("ucb", "pareto", "thompson")]
+    + [DesignerDef(f"turbo-mars-enn-{acq}", partial(_d_turbo_mars_enn, acq_type=acq), _MARS_ENN_SPECS) for acq in ("ucb", "pareto", "thompson")]
+)

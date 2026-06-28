@@ -11,26 +11,20 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from llm.architecture import LLMUpdateProgram
+from llm.lora_targets import (
+    LORA_TARGET_MODULES,
+    _lora_target_modules,
+    select_lora_target_modules,
+    unsupported_vllm_dense_update_modules,
+    validate_vllm_dense_update_support,
+)
 from llm.runtime_messages import missing_runtime_message
 from llm.universal_subspace import (
     ParameterMetadata,
     UniversalSubspaceTemplate,
     build_universal_subspace_template,
     discover_vllm_parameters,
-)
-
-LORA_TARGET_MODULES = (
-    "q_proj",
-    "k_proj",
-    "v_proj",
-    "o_proj",
-    "gate_proj",
-    "up_proj",
-    "down_proj",
-)
-_GEMMA4_LANGUAGE_LORA_TARGETS = (
-    r".*language_model\.(model\.)?layers\.\d+\."
-    r"(self_attn\.(q_proj|k_proj|v_proj|o_proj)|mlp\.(gate_proj|up_proj|down_proj))(\.linear)?$"
 )
 
 
@@ -41,7 +35,14 @@ class LoraTemplate:
     config: dict[str, Any]
 
 
-def build_peft_lora_template(*, model_name: str, rank: int, alpha: int) -> LoraTemplate:
+def build_peft_lora_template(
+    *,
+    model_name: str,
+    rank: int,
+    alpha: int,
+    update_program: LLMUpdateProgram | None = None,
+    require_vllm_dense_update: bool = False,
+) -> LoraTemplate:
     missing = [module for module in ("accelerate", "peft", "torch", "transformers") if importlib.util.find_spec(module) is None]
     if missing:
         raise RuntimeError(_missing_runtime_message(missing))
@@ -59,7 +60,7 @@ def build_peft_lora_template(*, model_name: str, rank: int, alpha: int) -> LoraT
     lora_config = LoraConfig(
         r=int(rank),
         lora_alpha=int(alpha),
-        target_modules=_lora_target_modules(model_name, base_model=base_model),
+        target_modules=_lora_target_modules(model_name, base_model=base_model, update_program=update_program),
         lora_dropout=0.0,
         bias="none",
         task_type="CAUSAL_LM",
@@ -76,6 +77,8 @@ def build_peft_lora_template(*, model_name: str, rank: int, alpha: int) -> LoraT
         state_dict[name] = tensor
 
     base_shapes = {name: tuple(int(dim) for dim in param.shape) for name, param in peft_model.named_parameters() if name.endswith(".base_layer.weight")}
+    if require_vllm_dense_update:
+        validate_vllm_dense_update_support(base_shapes)
     return LoraTemplate(
         state_dict=state_dict,
         base_shapes=base_shapes,
@@ -337,44 +340,6 @@ def _vllm_param_name_candidates(target_name: str) -> tuple[str, ...]:
     return tuple(candidates)
 
 
-def _lora_target_modules(model_name: str, base_model: Any | None = None) -> list[str] | str:
-    if str(model_name).startswith("google/gemma-4-"):
-        if base_model is not None:
-            return _discover_gemma4_lora_targets(base_model)
-        return _GEMMA4_LANGUAGE_LORA_TARGETS
-    return list(LORA_TARGET_MODULES)
-
-
-def _discover_gemma4_lora_targets(base_model: Any) -> list[str]:
-    targets = [name for name, module in base_model.named_modules() if _is_linear_module(module) and _is_gemma4_text_lora_name(str(name))]
-    if not targets:
-        sample = [name for name, _module in list(base_model.named_modules())[:12]]
-        raise ValueError(f"No Gemma 4 text LoRA target modules discovered. Sample modules: {sample}")
-    return targets
-
-
-def _is_linear_module(module: Any) -> bool:
-    return module.__class__.__name__ == "Linear"
-
-
-def _is_gemma4_text_lora_name(name: str) -> bool:
-    if _is_gemma4_non_language_path(name):
-        return False
-    if not _is_lora_projection_leaf(name):
-        return False
-    return ".layers." in str(name)
-
-
-def _is_gemma4_non_language_path(name: str) -> bool:
-    parts = str(name).split(".")
-    return any(part in {"audio_tower", "vision_tower", "multi_modal_projector"} for part in parts)
-
-
-def _is_lora_projection_leaf(name: str) -> bool:
-    value = str(name)
-    return any(value.endswith(f".{target}") or value.endswith(f".{target}.linear") for target in LORA_TARGET_MODULES)
-
-
 def _append_unique(values: list[str], value: str) -> None:
     if value not in values:
         values.append(value)
@@ -408,5 +373,8 @@ __all__ = [
     "discover_vllm_parameters",
     "get_rng_noise",
     "materialize_lora_adapters",
+    "select_lora_target_modules",
+    "unsupported_vllm_dense_update_modules",
+    "validate_vllm_dense_update_support",
     "vllm_dense_update_target",
 ]

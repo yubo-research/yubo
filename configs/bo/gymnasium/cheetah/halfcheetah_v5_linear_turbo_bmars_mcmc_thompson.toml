@@ -1,0 +1,53 @@
+# HalfCheetah-v5 TuRBO Bayesian MARS run with MCMC basis sampling.
+#
+# Model meaning:
+#   1. Sample several plausible MARS basis structures.
+#   2. Run Bayesian linear regression inside each sampled basis.
+#   3. Select candidates with Thompson sampling from the mixture posterior.
+#
+# Local:
+#   ./ops/experiment.py local configs/bo/gymnasium/cheetah/halfcheetah_v5_linear_turbo_bmars_mcmc_thompson.toml
+#
+# Modal:
+#   modal run ops/modal_pixi_setup.py --config configs/bo/gymnasium/cheetah/halfcheetah_v5_linear_turbo_bmars_mcmc_thompson.toml
+
+[experiment]
+exp_dir = "runs/bo/gymnasium/cheetah/halfcheetah_v5_linear_turbo_bmars_mcmc_thompson"
+env_tag = "cheetah"
+policy_tag = "mlp-16-16"
+num_arms = 1
+num_rounds = 1e3
+num_reps = 10
+runtime_device = "cpu"
+local_workers = 10
+b_trace = true
+
+[optimizer]
+name = "turbo-bmars-thompson"
+
+[optimizer.params]
+num_init = 16
+num_keep = 8
+num_candidates = 256
+candidate_rv = "sobol"
+max_terms = 8
+interaction_order = 2
+num_bootstrap = 1
+active_rank = 6
+trailing_obs = 8
+feature_screen = 128
+knots_per_feature = 3
+ridge = 0.000001
+gcv_penalty = 2.0
+min_rss_improvement = 0.000000000001
+active_samples = 128
+prior_precision = 1.0
+min_noise_variance = 0.00000001
+include_noise_in_sigma = true
+basis_sampler = "mcmc"
+mcmc_steps = 32
+mcmc_burn_in = 16
+mcmc_thin = 4
+mcmc_num_models = 2
+mcmc_pool_size = 24
+mcmc_term_prior = 0.125

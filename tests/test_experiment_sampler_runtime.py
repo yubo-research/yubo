@@ -90,12 +90,14 @@ def test_sample_1(mock_torch, mock_seed_all, mock_optimizer_class):
         max_proposal_seconds=100.0,
         b_trace=True,
         trace_fn="/path/to/trace",
+        initial_policy_checkpoint="/tmp/checkpoint_last.pt",
     )
     result = sample_1(run_config)
 
     mock_seed_all.assert_called_once_with(42 + 27)
     mock_problem.build_policy.assert_called_once()
     mock_optimizer_class.assert_called_once()
+    assert mock_optimizer_class.call_args.kwargs["initial_policy_checkpoint"] == "/tmp/checkpoint_last.pt"
     mock_optimizer.collect_trace.assert_called_once_with(
         designer_name="ucb",
         max_iterations=2,

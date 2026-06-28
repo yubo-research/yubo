@@ -1,0 +1,41 @@
+# Synthetic Ackley-3d TuRBO-MARS UCB run.
+#
+# This is the cheapest full MARS config to use for smoke/perf checks before
+# moving the same optimizer settings to policy or RL objectives.
+#
+# Local:
+#   ./ops/experiment.py local configs/bo/synthetic/ackley_3d_turbo_mars_ucb.toml
+#
+# Modal:
+#   modal run ops/modal_pixi_setup.py --config configs/bo/synthetic/ackley_3d_turbo_mars_ucb.toml
+
+[experiment]
+exp_dir = "runs/bo/synthetic/ackley_3d_turbo_mars_ucb"
+env_tag = "f:ackley-3d"
+policy_tag = "pure-function"
+num_arms = 4
+num_rounds = 100
+num_reps = 5
+num_denoise = 1
+num_denoise_passive = 1
+runtime_device = "cpu"
+local_workers = 5
+b_trace = true
+
+[optimizer]
+name = "turbo-mars-ucb"
+
+[optimizer.params]
+num_init = 16
+num_keep = 128
+num_candidates = 2048
+candidate_rv = "sobol"
+max_terms = 32
+interaction_order = 2
+num_bootstrap = 4
+active_rank = 6
+trailing_obs = 128
+feature_screen = 64
+knots_per_feature = 5
+ridge = 0.000001
+active_samples = 128

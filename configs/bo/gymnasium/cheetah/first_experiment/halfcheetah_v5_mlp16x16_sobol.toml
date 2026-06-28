@@ -1,0 +1,15 @@
+# HalfCheetah-v5 Sobol baseline for the first MARS-family comparison.
+
+[experiment]
+exp_dir = "runs/bo/gymnasium/cheetah/first_experiment/halfcheetah_v5_mlp16x16_sobol"
+env_tag = "cheetah"
+policy_tag = "mlp-16-16"
+num_arms = 1
+num_rounds = 10000
+num_reps = 10
+runtime_device = "cpu"
+local_workers = 10
+b_trace = true
+
+[optimizer]
+name = "sobol"

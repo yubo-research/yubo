@@ -12,6 +12,7 @@ import tomllib
 
 from common.config_toml import parse_value
 from experiments.external_run_utils import abs_path, log_path
+from llm.architecture import coerce_update_roles, make_update_program
 from llm.config import LLMConfig
 from llm.console_observer import SplitConsoleObserver, tee_stdout_to_exp
 from llm.registry import (
@@ -64,6 +65,10 @@ _OPTIONAL_TOML_KEYS = (
     "sub_dataset_size",
     "kl_beta",
     "reference_policy_tag",
+    "llm_update_roles",
+    "llm_update_layer_band",
+    "llm_update_expert_policy",
+    "llm_update_max_targets",
     "pretrain_lora_only",
     "pretrain_search_dim",
     "vllm_enforce_eager",
@@ -162,6 +167,7 @@ def _parse_cfg(cfg: dict[str, Any]) -> LLMConfig:
 
     tensor_parallel_size = _optional_int(cfg, "tensor_parallel_size")
     vllm_options = _parse_vllm_options(cfg)
+    update_options = _parse_llm_update_options(cfg, rank=policy.lora_rank)
     return LLMConfig(
         env_tag=env_tag,
         policy_tag=policy_tag,
@@ -205,6 +211,7 @@ def _parse_cfg(cfg: dict[str, Any]) -> LLMConfig:
         sub_dataset_size=_optional_int(cfg, "sub_dataset_size"),
         kl_beta=_optional_float(cfg, "kl_beta"),
         reference_policy_tag=_optional_str(cfg, "reference_policy_tag"),
+        **update_options,
         pretrain_lora_only=bool(cfg.get("pretrain_lora_only", True)),
         pretrain_search_dim=int(cfg.get("pretrain_search_dim", 4096)),
         env=env,
@@ -267,6 +274,26 @@ def _parse_vllm_options(cfg: dict[str, Any]) -> dict[str, int | float | str | No
     }
 
 
+def _parse_llm_update_options(cfg: dict[str, Any], *, rank: int) -> dict[str, Any]:
+    roles = coerce_update_roles(cfg.get("llm_update_roles", None))
+    layer_band = str(cfg.get("llm_update_layer_band", "all"))
+    expert_policy = str(cfg.get("llm_update_expert_policy", "all"))
+    max_targets = _optional_int(cfg, "llm_update_max_targets")
+    make_update_program(
+        roles=roles,
+        layer_band=layer_band,
+        expert_policy=expert_policy,
+        rank=int(rank),
+        max_targets=max_targets,
+    )
+    return {
+        "llm_update_roles": roles,
+        "llm_update_layer_band": layer_band,
+        "llm_update_expert_policy": expert_policy,
+        "llm_update_max_targets": max_targets,
+    }
+
+
 def _cfg_summary(cfg: LLMConfig) -> dict[str, Any]:
     tensor_parallel_size = cfg.tensor_parallel_size or cfg.policy.tensor_parallel_size
     return {
@@ -285,6 +312,10 @@ def _cfg_summary(cfg: LLMConfig) -> dict[str, Any]:
         "prompt_batch_size": cfg.prompt_batch_size,
         "samples_per_prompt": cfg.samples_per_prompt,
         "pass_at_k": cfg.pass_at_k,
+        "llm_update_roles": cfg.llm_update_roles,
+        "llm_update_layer_band": cfg.llm_update_layer_band,
+        "llm_update_expert_policy": cfg.llm_update_expert_policy,
+        "llm_update_max_targets": cfg.llm_update_max_targets,
         "vllm_speculative_method": cfg.vllm_speculative_method,
         "vllm_speculative_model": cfg.vllm_speculative_model,
         "vllm_num_speculative_tokens": cfg.vllm_num_speculative_tokens,

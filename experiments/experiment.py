@@ -29,6 +29,7 @@ _OPTIONAL_KEYS = (
     "video_seed_base",
     "video_prefix",
     "runtime_device",
+    "initial_policy_checkpoint",
     "local_workers",
 )
 _ALL_EXPERIMENT_KEYS = set(_BASE_REQUIRED_KEYS + _BUDGET_KEYS + _OPTIONAL_KEYS) | {

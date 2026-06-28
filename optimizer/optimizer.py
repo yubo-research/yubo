@@ -13,6 +13,7 @@ from .opt_trajectories import collect_denoised_trajectory, evaluate_for_best
 from .optimizer_mo import OptimizerMultiObjectiveMixin
 from .optimizer_pareto import _pareto_mask_max, _pareto_mask_min
 from .optimizer_types import IterateResult, ReturnSummary, TraceEntry
+from .policy_checkpoint import apply_policy_checkpoint
 from .trajectories import collect_trajectory
 
 _INTERACTIVE_DEBUG = False
@@ -35,10 +36,13 @@ class Optimizer(OptimizerMultiObjectiveMixin):
         opt_name=None,
         num_rounds=None,
         total_timesteps=None,
+        initial_policy_checkpoint=None,
     ):
         self._collector = collector
         self._env_conf = env_conf
         self._policy_tag = policy_tag
+        if initial_policy_checkpoint is not None:
+            apply_policy_checkpoint(policy, initial_policy_checkpoint)
         self.best_policy = policy
         self._num_arms = num_arms
         self._num_denoise = num_denoise_measurement
@@ -47,6 +51,9 @@ class Optimizer(OptimizerMultiObjectiveMixin):
         self.r_best_est = -1e99
         self.y_best = None
         self.best_datum = None
+        self._pending_initial_policies = []
+        if initial_policy_checkpoint is not None:
+            self._pending_initial_policies.append(policy.clone())
 
         self._data = []
         self._i_iter = 0
@@ -65,6 +72,8 @@ class Optimizer(OptimizerMultiObjectiveMixin):
         if total_timesteps is not None:
             problem_parts.append(f"total_timesteps = {int(total_timesteps)}")
         problem_parts.append(f"num_arms = {num_arms}")
+        if initial_policy_checkpoint is not None:
+            problem_parts.append(f"initial_policy_checkpoint = {initial_policy_checkpoint}")
         self._collector(f"PROBLEM: {' '.join(problem_parts)}")
 
         self._ret_viz = -1e99
@@ -73,6 +82,11 @@ class Optimizer(OptimizerMultiObjectiveMixin):
 
     def _iterate(self, designer, num_arms):
         self._telemetry.reset()
+        if self._pending_initial_policies:
+            policies = self._pending_initial_policies[: int(num_arms)]
+            self._pending_initial_policies = self._pending_initial_policies[int(num_arms) :]
+            return self._evaluate_policies(designer, policies, dt_prop=0.0, dt_rollout_sim=0.0)
+
         custom_iterate_declared = inspect.getattr_static(designer, "iterate", None)
         custom_iterate = getattr(designer, "iterate", None) if custom_iterate_declared is not None else None
         if callable(custom_iterate):
@@ -85,6 +99,9 @@ class Optimizer(OptimizerMultiObjectiveMixin):
         dt_rollout_sim = self._telemetry.rollout_seconds()
         dt_prop = max(0.0, dt_designer - dt_rollout_sim)
 
+        return self._evaluate_policies(designer, policies, dt_prop=dt_prop, dt_rollout_sim=dt_rollout_sim)
+
+    def _evaluate_policies(self, designer, policies, *, dt_prop, dt_rollout_sim):
         data = []
         t_0 = time.time()
         for policy in policies:

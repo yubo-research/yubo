@@ -282,3 +282,22 @@ def test_parse_text_fields_bf8_storage_enabled():
         }
     )
     assert result.bf8_storage is True
+
+
+def test_parse_text_fields_semantic_update_program():
+    result = _parse_cfg(
+        {
+            "env_tag": "llm:math:gsm8k",
+            "policy_tag": "qwen3-1p7b-lora-r1",
+            "num_rounds": 1,
+            "llm_update_roles": ["attention_q", "mlp_down"],
+            "llm_update_layer_band": "middle",
+            "llm_update_expert_policy": "dense",
+            "llm_update_max_targets": "4",
+        }
+    )
+
+    assert result.llm_update_roles == ("attention_q", "mlp_down")
+    assert result.llm_update_layer_band == "middle"
+    assert result.llm_update_expert_policy == "dense"
+    assert result.llm_update_max_targets == 4

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from llm.architecture import coerce_update_roles, make_update_program
 from ops.uhd_config import UHDConfig
 
 _OPTIONAL_CFG_KEYS = (
@@ -30,6 +31,10 @@ _OPTIONAL_CFG_KEYS = (
     "text_delta_scale",
     "text_basis_max_tensors",
     "text_score_mode",
+    "llm_update_roles",
+    "llm_update_layer_band",
+    "llm_update_expert_policy",
+    "llm_update_max_targets",
     "bf8_storage",
     "eggroll_noiser",
     "eggroll_rank",
@@ -61,12 +66,22 @@ def apply_optional_cfg_fields(config_dict: dict[str, Any], cfg: dict[str, Any]) 
             val = cfg[key]
             if key == "pretrain_basis_max_leaves" and val == 0:
                 val = None
+            if key == "llm_update_roles":
+                val = coerce_update_roles(val)
+            if key == "llm_update_max_targets" and val is not None:
+                val = int(val)
             config_dict[key] = val
 
 
 def validate_llm_sampling_config(cfg: UHDConfig) -> None:
     if not str(cfg.env_tag).startswith("llm:"):
         return
+    make_update_program(
+        roles=cfg.llm_update_roles,
+        layer_band=cfg.llm_update_layer_band,
+        expert_policy=cfg.llm_update_expert_policy,
+        max_targets=cfg.llm_update_max_targets,
+    )
     text_score_mode = str(cfg.text_score_mode)
     if text_score_mode not in {"generation", "nll"}:
         raise ValueError("UHD text configs require text_score_mode='generation' or text_score_mode='nll'.")

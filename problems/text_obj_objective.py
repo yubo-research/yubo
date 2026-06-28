@@ -158,6 +158,7 @@ def _ensure_runtime(obj: TextObjective):
         require_verifiers_runtime()
     from transformers import AutoTokenizer
 
+    from llm.architecture import make_update_program
     from llm.console_observer import TerminalConsoleObserver, UnifiedConsoleManager
     from llm.engine_pool import sampling_kwargs
     from llm.lora import build_peft_lora_template
@@ -176,6 +177,15 @@ def _ensure_runtime(obj: TextObjective):
         model_name=obj.spec.policy.model_name,
         rank=int(obj.spec.policy.lora_rank),
         alpha=int(obj.spec.policy.lora_alpha),
+        update_program=make_update_program(
+            roles=obj.cfg.llm_update_roles,
+            layer_band=obj.cfg.llm_update_layer_band,
+            expert_policy=obj.cfg.llm_update_expert_policy,
+            rank=int(obj.spec.policy.lora_rank),
+            scale=float(obj.cfg.text_delta_scale),
+            seed=seed,
+            max_targets=obj.cfg.llm_update_max_targets,
+        ),
     )
     obj._codec = lora._LoraSubspaceCodec(
         template,

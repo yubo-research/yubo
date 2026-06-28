@@ -11,9 +11,11 @@ class MarsSurrogateConfig:
     num_bootstrap: int = 8
     active_rank: int = 8
     trailing_obs: int | None = 256
-    feature_screen: int = 512
-    knots_per_feature: int = 3
+    feature_screen: int | None = None
+    knots_per_feature: int | None = None
     ridge: float = 1e-6
+    gcv_penalty: float = 2.0
+    min_rss_improvement: float = 1e-12
     active_samples: int = 256
     lam_min: float = 1e-4
     lam_max: float = 1e4
@@ -28,10 +30,16 @@ class MarsSurrogateConfig:
         _check_at_least("active_rank", self.active_rank, 1)
         if self.trailing_obs is not None:
             _check_at_least("trailing_obs", self.trailing_obs, 1)
-        _check_at_least("feature_screen", self.feature_screen, 1)
-        _check_at_least("knots_per_feature", self.knots_per_feature, 1)
+        if self.feature_screen is not None:
+            _check_at_least("feature_screen", self.feature_screen, 1)
+        if self.knots_per_feature is not None:
+            _check_at_least("knots_per_feature", self.knots_per_feature, 1)
         if self.ridge < 0.0:
             raise ValueError("ridge must be non-negative")
+        if self.gcv_penalty < 0.0:
+            raise ValueError("gcv_penalty must be non-negative")
+        if self.min_rss_improvement < 0.0:
+            raise ValueError("min_rss_improvement must be non-negative")
         _check_at_least("active_samples", self.active_samples, 1)
 
 
@@ -45,7 +53,7 @@ class BayesianMarsSurrogateConfig:
     include_noise_in_sigma: bool = False
     basis_refresh_interval: int = 1
     posterior_jitter: float = 1e-10
-    basis_sampler: str = "deterministic"
+    basis_sampler: str = "mcmc"
     mcmc_steps: int = 128
     mcmc_burn_in: int = 32
     mcmc_thin: int = 4

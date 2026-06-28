@@ -1,0 +1,22 @@
+# HalfCheetah-v5 PPO-checkpoint warm start optimized with TuRBO-ENN fit-UCB.
+
+[experiment]
+exp_dir = "runs/bo/gymnasium/cheetah/ppo_checkpoint_turbo_enn_fit_ucb"
+env_tag = "cheetah"
+policy_tag = "sb3-ppo-mlp-64-64-tanh"
+num_arms = 1
+num_rounds = 10000
+num_reps = 10
+runtime_device = "cpu"
+local_workers = 1
+b_trace = true
+initial_policy_checkpoint = "_tmp/checkpoints/halfcheetah_v5_ppo/ppo.zip"
+
+[optimizer]
+name = "turbo-enn-fit-ucb"
+
+[optimizer.params]
+idx = "flat"
+k = 10
+nfs = 100
+num_init = 1

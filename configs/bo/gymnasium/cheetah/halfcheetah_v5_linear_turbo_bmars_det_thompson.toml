@@ -1,0 +1,47 @@
+# HalfCheetah-v5 TuRBO Bayesian MARS run with a deterministic MARS basis.
+#
+# Model meaning:
+#   1. Fit one pruned MARS basis to the observed policy scores.
+#   2. Run Bayesian linear regression on that fitted basis.
+#   3. Select candidates with Thompson sampling from the Bayesian posterior.
+#
+# Local:
+#   ./ops/experiment.py local configs/bo/gymnasium/cheetah/halfcheetah_v5_linear_turbo_bmars_det_thompson.toml
+#
+# Modal:
+#   modal run ops/modal_pixi_setup.py --config configs/bo/gymnasium/cheetah/halfcheetah_v5_linear_turbo_bmars_det_thompson.toml
+
+[experiment]
+exp_dir = "runs/bo/gymnasium/cheetah/halfcheetah_v5_linear_turbo_bmars_det_thompson"
+env_tag = "cheetah"
+policy_tag = "linear"
+num_arms = 1
+num_rounds = 1e5
+num_reps = 10
+runtime_device = "cpu"
+local_workers = 10
+b_trace = true
+
+[optimizer]
+name = "turbo-bmars-thompson"
+
+[optimizer.params]
+num_init = 16
+num_keep = 256
+num_candidates = 1024
+candidate_rv = "sobol"
+max_terms = 8
+interaction_order = 1
+num_bootstrap = 1
+active_rank = 4
+trailing_obs = 128
+feature_screen = 32
+knots_per_feature = 2
+ridge = 0.000001
+gcv_penalty = 2.0
+min_rss_improvement = 0.000000000001
+active_samples = 64
+prior_precision = 1.0
+min_noise_variance = 0.00000001
+include_noise_in_sigma = true
+basis_sampler = "deterministic"

@@ -1,0 +1,23 @@
+# HalfCheetah-v5 TuRBO-ENN UCB with varentropy-calibrated ENN uncertainty.
+
+[experiment]
+exp_dir = "runs/bo/gymnasium/cheetah/first_experiment/halfcheetah_v5_mlp16x16_turbo_enn_varentropy_ucb"
+env_tag = "cheetah"
+policy_tag = "mlp-16-16"
+num_arms = 1
+num_rounds = 10000
+num_reps = 10
+runtime_device = "cpu"
+local_workers = 10
+b_trace = true
+
+[optimizer]
+name = "turbo-enn-varentropy-ucb"
+
+[optimizer.params]
+idx = "flat"
+k = 10
+varentropy_scale = 0.5
+num_init = 16
+num_candidates = 16
+candidate_rv = "sobol"

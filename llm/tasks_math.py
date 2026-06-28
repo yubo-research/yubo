@@ -54,7 +54,7 @@ class MathTask(BatchScoringTaskMixin):
 
     def nll_user_contents(self, prompts: list[str], answers: list[Any]) -> list[str]:
         if not self.apply_chat_template:
-            raise ValueError("nll_user_contents requires apply_chat_template=True.")
+            return [None for _ in prompts]
         examples = getattr(self, "_last_examples", None)
         if examples is None or len(examples) != len(prompts):
             raise RuntimeError("MathTask.nll_user_contents requires a fresh get_batch() call for this prompt batch.")

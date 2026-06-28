@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 
+from llm.architecture import DEFAULT_LORA_ROLES
 from ops.uhd_config_types import BEConfig, EarlyRejectConfig, ENNConfig
 
 
@@ -55,6 +56,10 @@ class UHDConfig:
     text_delta_scale: float = 1.0
     text_basis_max_tensors: int | None = 32
     text_score_mode: str = "generation"
+    llm_update_roles: tuple[str, ...] = DEFAULT_LORA_ROLES
+    llm_update_layer_band: str = "all"
+    llm_update_expert_policy: str = "all"
+    llm_update_max_targets: int | None = None
     bf8_storage: bool = False
     perturb_backend: str = "flat"
     eggroll_noiser: str = "eggroll"

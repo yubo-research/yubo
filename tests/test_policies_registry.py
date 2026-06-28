@@ -179,6 +179,27 @@ def test_dynamic_actor_critic_mlp_policy_tag_allows_activation():
     assert preset.rl_model["ppo"]["backbone_layer_norm"] is True
 
 
+def test_sb3_ppo_mlp_policy_tag_builds_matching_actor():
+    from policies.actor_critic_mlp_policy import ActorCriticMLPPolicy
+    from policies.registry import get_policy_preset
+
+    preset = get_policy_preset("sb3-ppo-mlp-64-64-tanh")
+    env_runtime = SimpleNamespace(
+        problem_seed=0,
+        env_name="HalfCheetah-v5",
+        state_space=SimpleNamespace(shape=(17,)),
+        action_space=SimpleNamespace(shape=(6,)),
+        gym_conf=None,
+    )
+    policy = preset.factory(env_runtime)
+
+    assert isinstance(policy, ActorCriticMLPPolicy)
+    assert policy.actor_backbone[0].weight.shape == (64, 17)
+    assert policy.actor_backbone[2].weight.shape == (64, 64)
+    assert policy.actor_head.weight.shape == (6, 64)
+    assert preset.rl_model is None
+
+
 def test_policy_presets_coverage():
     from policies.registry import POLICY_PRESETS
 

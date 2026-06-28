@@ -15,8 +15,7 @@ from .fitting_time_enn_incremental import (
     enn_disk_work_dir,
     enn_incremental_checkpoint_ns,
     enn_test_log_likelihood,
-    make_epistemic_nn,
-    sync_enn_index,
+    epistemic_nn_driver_kwargs,
 )
 from .fitting_time_enn_incremental_draw import _train_xy_unit_cube_segment
 
@@ -34,12 +33,17 @@ class EnnFitIndTimingResult:
     index_driver: EnnIncrementalIndexDriver
 
 
+def _all_train_rows(enn_model) -> tuple[np.ndarray, np.ndarray, np.ndarray | None]:
+    n = len(enn_model)
+    return enn_model.train_rows_at(list(range(n)))
+
+
 def _enn_fit_timed_after_add(enn_model, *, current_n: int, rng, params_warm_start):
-    from optimizer.uhd_enn_fit_helpers import enn_train_rows, fit_enn_params
+    from optimizer.uhd_enn_fit_helpers import fit_enn_params
 
     k_eff, nfs = enn_fit_k_and_num_fit_samples(int(current_n))
-    sync_enn_index(enn_model)
-    train_x, train_y, train_yvar = enn_train_rows(enn_model, list(range(int(current_n))))
+    enn_model.ensure_index_sync()
+    train_x, train_y, train_yvar = enn_model.train_rows_at(list(range(int(current_n))))
     t_0 = time.perf_counter()
     params = fit_enn_params(
         enn_model,
@@ -60,24 +64,6 @@ def _fit_probability_after_add(current_n: int) -> float:
     return min(1.0, n_fit / (n_fit + float(current_n)))
 
 
-def _maybe_fit_after_current_point(
-    enn_model,
-    *,
-    current_n: int,
-    rng,
-    params_warm_start,
-) -> tuple[object, float]:
-    fit_p = _fit_probability_after_add(current_n)
-    if fit_p < 1.0 and float(rng.random()) >= fit_p:
-        return params_warm_start, 0.0
-    return _enn_fit_timed_after_add(
-        enn_model,
-        current_n=current_n,
-        rng=rng,
-        params_warm_start=params_warm_start,
-    )
-
-
 def _add_segment_with_per_point_fit(
     enn_model,
     *,
@@ -94,7 +80,10 @@ def _add_segment_with_per_point_fit(
     for i in range(n_rows):
         enn_model.add(x_seg[i : i + 1], y_seg[i : i + 1], yvar_row)
         current_n = int(start_n) + i + 1
-        params, dt = _maybe_fit_after_current_point(
+        fit_p = _fit_probability_after_add(current_n)
+        if fit_p < 1.0 and float(rng.random()) >= fit_p:
+            continue
+        params, dt = _enn_fit_timed_after_add(
             enn_model,
             current_n=current_n,
             rng=rng,
@@ -112,6 +101,8 @@ def benchmark_enn_fit_ind_timing(
     index_driver: EnnIncrementalIndexDriver = EnnIncrementalIndexDriver.FLAT,
     checkpoints: Sequence[int] | None = None,
 ) -> EnnFitIndTimingResult:
+    from enn.enn.enn_class import EpistemicNearestNeighbors
+
     target = normalize_benchmark_function_name(function_name)
     d = int(D)
     seed = int(problem_seed)
@@ -132,15 +123,11 @@ def benchmark_enn_fit_ind_timing(
     params_warm_start = None
 
     with enn_disk_work_dir(index_driver) as work_dir:
-        enn_model = None
-        if index_driver is not EnnIncrementalIndexDriver.HNSW_DISK:
-            enn_model = make_epistemic_nn(
-                np.zeros((0, d), dtype=np.float64),
-                np.zeros((0, 1), dtype=np.float64),
-                np.zeros((0, 1), dtype=np.float64),
-                index_driver,
-                work_dir=work_dir,
-            )
+        enn_model = EpistemicNearestNeighbors(
+            np.zeros((0, d), dtype=np.float64),
+            np.zeros((0, 1), dtype=np.float64),
+            **epistemic_nn_driver_kwargs(index_driver, work_dir=work_dir),
+        )
 
         for n_chk in ckpts:
             n_target = int(n_chk)
@@ -151,34 +138,15 @@ def benchmark_enn_fit_ind_timing(
                 n_train=n_target,
                 start_row=prev_n,
             )
-            seg_fit_seconds = 0.0
-            start_i = 0
-            if enn_model is None:
-                enn_model = make_epistemic_nn(
-                    x_seg[:1],
-                    y_seg[:1],
-                    yvar_row,
-                    index_driver,
-                    work_dir=work_dir,
-                )
-                params_warm_start, first_fit_seconds = _maybe_fit_after_current_point(
-                    enn_model,
-                    current_n=prev_n + 1,
-                    rng=rng,
-                    params_warm_start=params_warm_start,
-                )
-                seg_fit_seconds += first_fit_seconds
-                start_i = 1
-            params_warm_start, rest_fit_seconds = _add_segment_with_per_point_fit(
+            params_warm_start, seg_fit_seconds = _add_segment_with_per_point_fit(
                 enn_model,
-                x_seg=x_seg[start_i:],
-                y_seg=y_seg[start_i:],
+                x_seg=x_seg,
+                y_seg=y_seg,
                 yvar_row=yvar_row,
-                start_n=prev_n + start_i,
+                start_n=prev_n,
                 rng=rng,
                 params_warm_start=params_warm_start,
             )
-            seg_fit_seconds += rest_fit_seconds
             fit_seconds.append(seg_fit_seconds)
             prev_n = n_target
             log_likelihood.append(

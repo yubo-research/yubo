@@ -1,0 +1,30 @@
+[experiment]
+exp_dir = "runs/bo/synthetic/local_sample_efficiency/ackley10_bounded"
+env_tag = "f:ackley-10d"
+policy_tag = "pure-function"
+num_arms = 1
+num_rounds = 1000
+num_reps = 10
+num_denoise = 1
+num_denoise_passive = 1
+runtime_device = "cpu"
+local_workers = 10
+b_trace = true
+
+[optimizer]
+name = "turbo-mars-thompson"
+
+[optimizer.params]
+num_init = 16
+num_keep = 128
+num_candidates = 2048
+candidate_rv = "sobol"
+max_terms = 32
+interaction_order = 2
+num_bootstrap = 4
+active_rank = 6
+trailing_obs = 128
+feature_screen = 10
+knots_per_feature = 5
+ridge = 0.000001
+active_samples = 128

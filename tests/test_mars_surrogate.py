@@ -25,6 +25,8 @@ from optimizer.mars_basis import (
     _standardized_y_var,
 )
 from optimizer.mars_config import BayesianMarsSurrogateConfig, ENNMarsGeometrySurrogateConfig, MarsSurrogateConfig
+from optimizer.mars_enn_config import MarsENNSurrogateConfig
+from optimizer.mars_enn_surrogate import MarsENNSurrogate
 from optimizer.mars_fit import _fit_single_mars
 from optimizer.mars_geometry import _low_rank_factor_from_isotropic_spectrum
 from optimizer.mars_surrogate import BayesianMarsSurrogate, ENNMarsGeometrySurrogate, MarsSurrogate
@@ -116,6 +118,25 @@ def test_fit_single_mars_predicts_signal_and_active_features():
     assert set(model.active_features()).issubset(set(range(x.shape[1])))
     assert low_rank is not None
     assert low_rank.basis.shape[0] == x.shape[1]
+
+
+def test_fit_single_mars_uses_forward_pairs_and_observed_knot_pruning():
+    x = np.linspace(0.0, 1.0, 9, dtype=float).reshape(-1, 1)
+    y = np.maximum(x[:, 0] - 0.5, 0.0)
+    cfg = _small_mars_config(
+        max_terms=5,
+        interaction_order=1,
+        feature_screen=None,
+        knots_per_feature=None,
+        ridge=0.0,
+    )
+
+    model = _fit_single_mars(x, y, cfg)
+
+    assert len(model.terms) == 1
+    assert model.terms[0].factors[0].knot == 0.5
+    assert model.terms[0].factors[0].side == 1
+    np.testing.assert_allclose(model.predict(x), y, atol=1e-10)
 
 
 def test_mars_surrogate_fit_predicts_mu_and_bootstrap_sigma():
@@ -220,6 +241,31 @@ def test_bayesian_mars_surrogate_fit_predicts_posterior_and_samples():
     assert np.std(samples[:, 0, 0]) > 0.0
 
 
+def test_mars_enn_surrogate_uses_mars_features_and_enn_posterior():
+    rng, x, y = _linear_data(seed=7, n=32, d=4)
+    surrogate = MarsENNSurrogate(
+        MarsENNSurrogateConfig(
+            basis=_small_mars_config(max_terms=8, interaction_order=1, feature_screen=4, knots_per_feature=3),
+            k=3,
+            num_fit_candidates=2,
+            num_fit_samples=2,
+            scale_x=False,
+        )
+    )
+
+    surrogate.fit(x, y, rng=rng)
+    posterior = surrogate.predict(x[:5])
+    samples = surrogate.sample(x[:5], 4, rng)
+
+    assert surrogate._model is not None
+    assert surrogate._model.basis_model.terms
+    assert posterior.mu.shape == (5, 1)
+    assert posterior.sigma.shape == (5, 1)
+    assert samples.shape == (4, 5, 1)
+    assert np.all(np.isfinite(posterior.mu))
+    assert np.all(posterior.sigma >= 0.0)
+
+
 def test_bayesian_mars_mcmc_averages_basis_structures_and_post_burn_in_steps():
     rng = np.random.default_rng(33)
     x = rng.uniform(0.0, 1.0, size=(64, 5))
@@ -246,6 +292,35 @@ def test_bayesian_mars_mcmc_averages_basis_structures_and_post_burn_in_steps():
     assert 1 < len(surrogate._models) <= 8
     assert posterior.mu.shape == (6, 1)
     assert np.all(posterior.sigma >= 0.0)
+
+
+def test_bayesian_mars_mcmc_samples_structure_not_fixed_pool_subset():
+    rng = np.random.default_rng(44)
+    x = rng.uniform(0.0, 1.0, size=(64, 4))
+    y = (np.maximum(x[:, 0] - 0.5, 0.0) + 0.4 * np.maximum(x[:, 1] - 0.3, 0.0)).reshape(-1, 1)
+    cfg = BayesianMarsSurrogateConfig(
+        basis=_small_mars_config(
+            max_terms=8,
+            interaction_order=1,
+            feature_screen=None,
+            knots_per_feature=None,
+            active_samples=16,
+        ),
+        basis_sampler="mcmc",
+        mcmc_steps=20,
+        mcmc_burn_in=4,
+        mcmc_thin=1,
+        mcmc_num_models=6,
+        mcmc_pool_size=1,
+        mcmc_term_prior=0.4,
+        min_noise_variance=1e-6,
+    )
+
+    result = _fit_bayesian_mars_mcmc(x, y[:, 0], cfg, rng=np.random.default_rng(5))
+
+    assert len(result.models) > 1
+    assert max(len(model.basis_model.terms) for model in result.models) > 1
+    np.testing.assert_allclose(np.sum(result.weights), 1.0)
 
 
 def test_bayesian_mars_mcmc_helpers_score_and_propose_basis_states():

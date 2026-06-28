@@ -1,0 +1,22 @@
+[experiment]
+exp_dir = "runs/bo/synthetic/local_sample_efficiency/ackley10_bounded"
+env_tag = "f:ackley-10d"
+policy_tag = "pure-function"
+num_arms = 1
+num_rounds = 1000
+num_reps = 10
+num_denoise = 1
+num_denoise_passive = 1
+runtime_device = "cpu"
+local_workers = 10
+b_trace = true
+
+[optimizer]
+name = "turbo-enn-sweep"
+
+[optimizer.params]
+k = 10
+idx = "flat"
+num_init = 16
+num_candidates = 2048
+candidate_rv = "sobol"

@@ -20,19 +20,31 @@ class ActorCriticMLPPolicyFactory:
         self,
         hidden_sizes: tuple[int, ...],
         *,
+        activation: str = "silu",
+        layer_norm: bool = True,
         share_backbone: bool = True,
         log_std_init: float = 0.0,
+        squash_action: bool = True,
+        deterministic_call: bool = False,
     ):
         self._hidden_sizes = tuple(int(h) for h in hidden_sizes)
+        self._activation = str(activation)
+        self._layer_norm = bool(layer_norm)
         self._share_backbone = bool(share_backbone)
         self._log_std_init = float(log_std_init)
+        self._squash_action = bool(squash_action)
+        self._deterministic_call = bool(deterministic_call)
 
     def __call__(self, env_conf):
         return ActorCriticMLPPolicy(
             env_conf,
             self._hidden_sizes,
+            activation=self._activation,
+            layer_norm=self._layer_norm,
             share_backbone=self._share_backbone,
             log_std_init=self._log_std_init,
+            squash_action=self._squash_action,
+            deterministic_call=self._deterministic_call,
         )
 
 
@@ -51,8 +63,12 @@ class ActorCriticMLPPolicy(PolicyParamsMixin, nn.Module):
         env_conf,
         hidden_sizes: tuple[int, ...],
         *,
+        activation: str = "silu",
+        layer_norm: bool = True,
         share_backbone: bool = True,
         log_std_init: float = 0.0,
+        squash_action: bool = True,
+        deterministic_call: bool = False,
     ):
         super().__init__()
         self.problem_seed = env_conf.problem_seed
@@ -61,15 +77,17 @@ class ActorCriticMLPPolicy(PolicyParamsMixin, nn.Module):
         act_dim = int(act_dim)
         self._last_log_prob: torch.Tensor | None = None
         self._last_value: torch.Tensor | None = None
+        self._squash_action = bool(squash_action)
+        self._deterministic_call = bool(deterministic_call)
 
         backbone_spec = BackboneSpec(
             name="mlp",
             hidden_sizes=tuple(int(h) for h in hidden_sizes),
-            activation="silu",
-            layer_norm=True,
+            activation=str(activation),
+            layer_norm=bool(layer_norm),
         )
-        actor_head_spec = HeadSpec()
-        critic_head_spec = HeadSpec()
+        actor_head_spec = HeadSpec(activation=str(activation))
+        critic_head_spec = HeadSpec(activation=str(activation))
 
         if share_backbone:
             backbone, feat_dim = build_backbone(backbone_spec, obs_dim)
@@ -98,7 +116,9 @@ class ActorCriticMLPPolicy(PolicyParamsMixin, nn.Module):
 
     def forward(self, obs: torch.Tensor) -> torch.Tensor:
         dist = self._distribution(obs)
-        return torch.tanh(dist.mean)
+        if self._squash_action:
+            return torch.tanh(dist.mean)
+        return torch.clamp(dist.mean, -1.0, 1.0)
 
     def get_value(self, obs: torch.Tensor) -> torch.Tensor:
         feats = self.critic_backbone(obs)
@@ -106,7 +126,17 @@ class ActorCriticMLPPolicy(PolicyParamsMixin, nn.Module):
 
     def get_action_and_value(self, obs: torch.Tensor, action: torch.Tensor | None = None) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         dist = self._distribution(obs)
-        action, log_prob, entropy = tanh_gaussian_action_log_prob_entropy(dist, action)
+        if self._deterministic_call and action is None:
+            action = torch.tanh(dist.mean) if self._squash_action else torch.clamp(dist.mean, -1.0, 1.0)
+            entropy = dist.entropy().sum(-1)
+            log_prob = torch.zeros(action.shape[:-1], dtype=action.dtype, device=action.device)
+        elif self._squash_action:
+            action, log_prob, entropy = tanh_gaussian_action_log_prob_entropy(dist, action)
+        else:
+            if action is None:
+                action = torch.clamp(dist.rsample(), -1.0, 1.0)
+            log_prob = dist.log_prob(action).sum(-1)
+            entropy = dist.entropy().sum(-1)
         value = self.get_value(obs)
         self._last_log_prob = log_prob
         self._last_value = value

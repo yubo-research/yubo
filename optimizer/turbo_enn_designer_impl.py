@@ -303,7 +303,11 @@ class TurboENNDesigner:
         y_est = self._turbo.tell(x, y_obs, y_var=np.asarray(y_se_list) ** 2) if y_se_list else self._turbo.tell(x, y_obs)
         assert y_obs.shape == y_est.shape and y_obs.shape[0] == len(new_data)
         if y_est.shape[1] == 1:
-            self._update_best_estimate(new_data, y_est[:, 0])
+            self._update_best_estimate(new_data, self._estimate_new_data_for_best(new_data, x, y_est[:, 0]))
+
+    def _estimate_new_data_for_best(self, new_data, x, y_est_0):
+        del new_data, x
+        return y_est_0
 
     def _update_best_estimate(self, new_data, y_est_0):
         np = _im("numpy")
@@ -328,7 +332,7 @@ class TurboENNDesigner:
         x_new = self._turbo.ask(num_arms)
         if telemetry is not None:
             t = self._turbo.telemetry()
-            telemetry.set_dt_fit(t.dt_fit)
+            telemetry.set_dt_fit(float(getattr(t, "dt_tell", 0.0)) + float(t.dt_fit))
             telemetry.set_dt_select(t.dt_sel)
         return [self._make_policy(x) for x in x_new]
 

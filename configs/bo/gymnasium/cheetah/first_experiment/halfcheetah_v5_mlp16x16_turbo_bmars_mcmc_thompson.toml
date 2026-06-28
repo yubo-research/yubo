@@ -1,0 +1,42 @@
+# HalfCheetah-v5 MCMC-basis BMARS Thompson run.
+
+[experiment]
+exp_dir = "runs/bo/gymnasium/cheetah/first_experiment/halfcheetah_v5_mlp16x16_turbo_bmars_mcmc_thompson"
+env_tag = "cheetah"
+policy_tag = "mlp-16-16"
+num_arms = 1
+num_rounds = 10000
+num_reps = 10
+runtime_device = "cpu"
+local_workers = 10
+b_trace = true
+
+[optimizer]
+name = "turbo-bmars-thompson"
+
+[optimizer.params]
+num_init = 16
+num_keep = 64
+num_candidates = 512
+candidate_rv = "sobol"
+max_terms = 8
+interaction_order = 1
+num_bootstrap = 1
+active_rank = 4
+trailing_obs = 64
+feature_screen = 64
+knots_per_feature = 2
+ridge = 0.000001
+gcv_penalty = 2.0
+min_rss_improvement = 0.000000000001
+active_samples = 64
+prior_precision = 1.0
+min_noise_variance = 0.00000001
+include_noise_in_sigma = true
+basis_sampler = "mcmc"
+mcmc_steps = 32
+mcmc_burn_in = 16
+mcmc_thin = 4
+mcmc_num_models = 2
+mcmc_pool_size = 24
+mcmc_term_prior = 0.125

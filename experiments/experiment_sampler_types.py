@@ -26,6 +26,12 @@ def _load_attr(module_parts: tuple[str, ...], attr_name: str):
     return getattr(module, attr_name)
 
 
+def _optional_str(value) -> str | None:
+    if value in (None, "None", ""):
+        return None
+    return str(value)
+
+
 @dataclass
 class ExperimentConfig:
     exp_dir: str
@@ -48,6 +54,7 @@ class ExperimentConfig:
     video_seed_base: Optional[int] = None
     video_prefix: str = "bo"
     runtime_device: str = "auto"
+    initial_policy_checkpoint: Optional[str] = None
     local_workers: int = 1
     policy_tag: Optional[str] = None
 
@@ -60,6 +67,7 @@ class ExperimentConfig:
             f"--num_reps={self.num_reps}--num_denoise={self.num_denoise}"
             f"--max_proposal_seconds={self.max_proposal_seconds}"
             f"--video_enable={self.video_enable}"
+            f"--initial_policy_checkpoint={self.initial_policy_checkpoint}"
         )
         short_hash = hashlib.md5(config_str.encode()).hexdigest()[:8]
         return f"{self.exp_dir}/{short_hash}"
@@ -91,6 +99,7 @@ class ExperimentConfig:
         runtime_device = str(d.get("runtime_device", "auto")).strip().lower()
         if runtime_device not in {"auto", "cpu", "cuda"}:
             raise ValueError(f"runtime_device must be one of: auto, cpu, cuda (got: {runtime_device})")
+        initial_policy_checkpoint = _optional_str(d.get("initial_policy_checkpoint"))
         local_workers = int(d.get("local_workers", 1))
         if local_workers < 1:
             raise ValueError(f"local_workers must be >= 1 (got: {local_workers})")
@@ -137,6 +146,7 @@ class ExperimentConfig:
             video_seed_base=None if d.get("video_seed_base") in (None, "None") else int(d["video_seed_base"]),
             video_prefix=str(d.get("video_prefix", "bo")),
             runtime_device=runtime_device,
+            initial_policy_checkpoint=initial_policy_checkpoint,
             local_workers=local_workers,
             policy_tag=policy_tag,
         )
@@ -162,6 +172,7 @@ class RunConfig:
     video_seed_base: Optional[int] = None
     video_prefix: str = "bo"
     runtime_device: str = "auto"
+    initial_policy_checkpoint: Optional[str] = None
     problem: Any | None = None
     env_conf: Any | None = None
 

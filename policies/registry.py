@@ -69,11 +69,26 @@ def _mlp_factory(
 
 def _actor_critic_mlp_factory(
     hidden_sizes: tuple[int, ...],
+    *,
+    activation: str = "silu",
+    layer_norm: bool = True,
+    share_backbone: bool = True,
+    log_std_init: float = 0.0,
+    squash_action: bool = True,
+    deterministic_call: bool = False,
 ) -> Callable[[EnvironmentRuntimeProtocol], Policy]:
     def factory(env_runtime: EnvironmentRuntimeProtocol) -> Policy:
         from policies.actor_critic_mlp_policy import ActorCriticMLPPolicyFactory
 
-        return ActorCriticMLPPolicyFactory(hidden_sizes)(env_runtime)
+        return ActorCriticMLPPolicyFactory(
+            hidden_sizes,
+            activation=activation,
+            layer_norm=layer_norm,
+            share_backbone=share_backbone,
+            log_std_init=log_std_init,
+            squash_action=squash_action,
+            deterministic_call=deterministic_call,
+        )(env_runtime)
 
     return factory
 
@@ -122,6 +137,7 @@ def _cnn_mlp_factory(
 _EGGROLL_AC_MLP_RE = re.compile(r"^eggroll-ac-mlp-(?P<hidden>\d+)x(?P<layers>\d+)-(?P<activation>relu|silu|pqn|tanh)$")
 _EGGROLL_MARL_MLP_RE = re.compile(r"^eggroll-marl-mlp-(?P<hidden>\d+)x(?P<layers>\d+)-(?P<activation>relu|silu|pqn|tanh)$")
 _ACTOR_CRITIC_MLP_RE = re.compile(r"^actor-critic-mlp-(?P<sizes>\d+(?:-\d+)*)(?:-(?P<activation>relu|silu|tanh))?$")
+_SB3_PPO_MLP_RE = re.compile(r"^sb3-ppo-mlp-(?P<sizes>\d+(?:-\d+)*)-tanh$")
 _EGGROLL_EXTERNAL_POLICY_SPECS = {
     "eggroll-linear-bf16-large": (512, 1, "silu"),
     "lobs5-360m-lora-r4": (128, 2, "silu"),
@@ -172,11 +188,26 @@ def _dynamic_policy_preset(policy_tag: str) -> PolicyPreset | None:
         hidden_sizes = tuple(int(v) for v in str(ac_match.group("sizes")).split("-"))
         activation = str(ac_match.group("activation") or "silu")
         return PolicyPreset(
-            factory=_actor_critic_mlp_factory(hidden_sizes),
+            factory=_actor_critic_mlp_factory(hidden_sizes, activation=activation),
             rl_model=_infer_rl_model_from_actor_critic_mlp(
                 hidden_sizes,
                 activation=activation,
             ),
+        )
+    sb3_match = _SB3_PPO_MLP_RE.match(policy_tag)
+    if sb3_match is not None:
+        hidden_sizes = tuple(int(v) for v in str(sb3_match.group("sizes")).split("-"))
+        return PolicyPreset(
+            factory=_actor_critic_mlp_factory(
+                hidden_sizes,
+                activation="tanh",
+                layer_norm=False,
+                share_backbone=False,
+                log_std_init=0.0,
+                squash_action=False,
+                deterministic_call=True,
+            ),
+            rl_model=None,
         )
 
     match = _EGGROLL_AC_MLP_RE.match(policy_tag)
@@ -409,6 +440,7 @@ def list_policy_tags() -> list[str]:
         + [
             "eggroll-ac-mlp-{hidden}x{layers}-{relu|silu|pqn|tanh}",
             "eggroll-marl-mlp-{hidden}x{layers}-{relu|silu|pqn|tanh}",
+            "sb3-ppo-mlp-{sizes}-tanh",
         ]
     )
     return sorted(tags)

@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from .mars_config import BayesianMarsSurrogateConfig, MarsSurrogateConfig
+from .mars_enn_config import MarsENNSurrogateConfig
 
 
 @dataclass(frozen=True)
@@ -27,6 +28,17 @@ class TurboBayesianMARSDesignerConfig:
     tr_type: str | None = None
 
 
+@dataclass(frozen=True)
+class TurboMarsENNDesignerConfig:
+    mars_enn: MarsENNSurrogateConfig = field(default_factory=MarsENNSurrogateConfig)
+    acq_type: str = "ucb"
+    num_init: int | None = None
+    num_keep: int | None = None
+    num_candidates: int | None = None
+    candidate_rv: str | None = None
+    tr_type: str | None = None
+
+
 def stable_bmars_config() -> BayesianMarsSurrogateConfig:
     return BayesianMarsSurrogateConfig(
         basis=MarsSurrogateConfig(
@@ -35,8 +47,8 @@ def stable_bmars_config() -> BayesianMarsSurrogateConfig:
             num_bootstrap=1,
             active_rank=4,
             trailing_obs=32,
-            feature_screen=32,
-            knots_per_feature=3,
+            feature_screen=None,
+            knots_per_feature=None,
             active_samples=32,
         ),
         include_noise_in_sigma=True,

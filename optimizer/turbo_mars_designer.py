@@ -6,9 +6,10 @@ from typing import Any
 import numpy as np
 
 from .mars_config import BayesianMarsSurrogateConfig, MarsSurrogateConfig
+from .mars_enn_config import MarsENNSurrogateConfig
 from .mars_turbo_optimizer import create_mars_optimizer
 from .turbo_enn_designer import TurboENNDesigner
-from .turbo_mars_config import TurboBayesianMARSDesignerConfig, TurboMARSDesignerConfig
+from .turbo_mars_config import TurboBayesianMARSDesignerConfig, TurboMARSDesignerConfig, TurboMarsENNDesignerConfig
 
 _logger = logging.getLogger(__name__)
 
@@ -79,11 +80,42 @@ class TurboBayesianMARSDesigner(TurboENNDesigner):
         _tell_bmars_new_data(self, new_data)
 
 
+class TurboMarsENNDesigner(TurboENNDesigner):
+    def __init__(self, policy: Any, *, config: TurboMarsENNDesignerConfig) -> None:
+        self._mars_enn_config = config.mars_enn
+        super().__init__(
+            policy,
+            turbo_mode="turbo-enn",
+            k=1,
+            num_init=config.num_init,
+            num_keep=config.num_keep,
+            num_fit_samples=1,
+            num_fit_candidates=1,
+            acq_type=config.acq_type,
+            tr_type=config.tr_type,
+            use_y_var=False,
+            num_candidates=config.num_candidates,
+            candidate_rv=config.candidate_rv,
+            use_python=False,
+        )
+
+    def _make_config(self, num_init: int, num_metrics: int | None):
+        _check_scalar_metrics(num_metrics, "TurboMarsENNDesigner")
+        return _optimizer_config(
+            self,
+            num_init=num_init,
+            surrogate=self._mars_enn_config,
+        )
+
+    def _init_optimizer(self, data, num_arms):
+        _init_mars_optimizer(self, data, num_arms)
+
+
 def _optimizer_config(
     designer: TurboENNDesigner,
     *,
     num_init: int,
-    surrogate: MarsSurrogateConfig | BayesianMarsSurrogateConfig,
+    surrogate: MarsSurrogateConfig | BayesianMarsSurrogateConfig | MarsENNSurrogateConfig,
 ):
     from enn.turbo.config.candidate_gen_config import CandidateGenConfig
     from enn.turbo.config.init_config import InitConfig

@@ -129,5 +129,74 @@ def test_nanochat_objective_synthetic():
     assert se == 0.0
 
 
+def test_nanochat_tiny_policy_uses_million_scale_model():
+    cfg = UHDConfig(
+        env_tag="nanochat:synthetic",
+        policy_tag="nanochat:tiny",
+        num_rounds=1,
+        problem_seed=42,
+        noise_seed_0=0,
+        lr=1e-4,
+        num_dim_target=None,
+        num_module_target=None,
+        log_interval=1,
+        accuracy_interval=1,
+        target_accuracy=None,
+        optimizer="mezo",
+        batch_size=1,
+        early_reject=None,
+        be=None,
+        enn=None,
+        bszo_k=1,
+        bszo_epsilon=1e-4,
+        bszo_sigma_p_sq=1.0,
+        bszo_sigma_e_sq=1.0,
+        bszo_alpha=0.1,
+        text_search_dim=16,
+        num_envs=2,
+        max_tokens=16,
+    )
+
+    obj = NanochatUHDVectorObjective(cfg)
+
+    assert obj.model.config.n_layer == 4
+    assert obj.model.config.n_embd == 128
+    assert obj.model.config.vocab_size == 8192
+    assert 4_000_000 < obj.num_model_params < 6_000_000
+    assert 2_000_000 < obj._codec.num_total_params < obj.num_model_params
+
+
+def test_nanochat_unknown_policy_fails():
+    cfg = UHDConfig(
+        env_tag="nanochat:synthetic",
+        policy_tag="nanochat:unknown",
+        num_rounds=1,
+        problem_seed=42,
+        noise_seed_0=0,
+        lr=1e-4,
+        num_dim_target=None,
+        num_module_target=None,
+        log_interval=1,
+        accuracy_interval=1,
+        target_accuracy=None,
+        optimizer="mezo",
+        batch_size=1,
+        early_reject=None,
+        be=None,
+        enn=None,
+        bszo_k=1,
+        bszo_epsilon=1e-4,
+        bszo_sigma_p_sq=1.0,
+        bszo_sigma_e_sq=1.0,
+        bszo_alpha=0.1,
+        text_search_dim=16,
+        num_envs=2,
+        max_tokens=16,
+    )
+
+    with pytest.raises(KeyError, match="Unknown nanochat policy_tag"):
+        NanochatUHDVectorObjective(cfg)
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
