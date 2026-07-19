@@ -132,6 +132,10 @@ def test_init_tell_batch_lhd_plus_incumbents(monkeypatch):
     assert x.shape == (policy.num_params(),)
     assert len(configs) == 1
     assert configs[0]["num_init"] == tells[0]
+    from enn.turbo.config.candidate_rv import CandidateRV
+
+    assert configs[0]["candidate_rv"] is CandidateRV.RAASP
+    assert "num_candidates" not in configs[0]
     # num_init=4 → 2 LHD + min(3,2)=2 incumbents → 4
     assert tells[0] == 4
 
@@ -171,7 +175,9 @@ def test_empty_enn_init_progress_clears_after_external_tell():
     seed_ts = 5
     init_X = designer._build_init_X(seed_ts, num_init=4)
     assert init_X.shape[0] == 2  # LHD only when empty
-    cfg = turbo_zero_config(num_init=len(init_X))
+    from enn.turbo.config.candidate_rv import CandidateRV
+
+    cfg = turbo_zero_config(num_init=len(init_X), candidate_rv=CandidateRV.RAASP)
     opt = enn.create_optimizer(bounds=designer._bounds, config=cfg, rng=designer._rng)
     assert opt.init_progress == (0, len(init_X))
     y = designer._draw_values(init_X, seed_ts)
@@ -179,6 +185,86 @@ def test_empty_enn_init_progress_clears_after_external_tell():
     assert opt.init_progress is None
     x1 = opt.ask(1)
     assert np.asarray(x1).shape[0] == 1
+
+
+def test_inner_iter_tells_draw_argmax_of_candidate_pool(monkeypatch):
+    from optimizer import enn_ts_designer_impl as impl
+    from optimizer.enn_ts_designer import EnnTSDesigner
+
+    policy, data = _policy_and_data(n_obs=2)
+    designer = EnnTSDesigner(policy, num_ts_iters=1, num_init=4, k=2, num_fit_samples=4)
+    designer(data, num_arms=1)
+
+    asks = []
+    tells = []
+    pool = np.array([[0.0, 0.0], [0.5, 0.5], [0.9, -0.9]], dtype=np.float64)
+    # Draw scores will be set so index 1 wins.
+    draw_scores = {0: 0.1, 1: 9.0, 2: 2.0}
+
+    class FakeOpt:
+        def __init__(self):
+            self._told_init = False
+
+        def tell(self, x, y):
+            x = np.asarray(x, dtype=np.float64)
+            y = np.asarray(y, dtype=np.float64)
+            tells.append((x.copy(), y.copy()))
+            if not self._told_init:
+                self._told_init = True
+                return
+            assert x.shape[0] == 1
+
+        def ask(self, n):
+            asks.append(int(n))
+            assert n == pool.shape[0]
+            return pool.copy()
+
+    class FakeCandCfg:
+        def resolve_num_candidates(self, *, num_dim, num_arms):
+            return pool.shape[0]
+
+    real_im = impl._im
+    real_draw = designer._draw_values
+
+    def fake_draw(x, seed_ts):
+        x = np.asarray(x, dtype=np.float64)
+        if x.shape[0] == pool.shape[0] and np.allclose(x, pool):
+            return np.array([[draw_scores[i]] for i in range(pool.shape[0])], dtype=np.float64)
+        return real_draw(x, seed_ts)
+
+    def fake_im(name):
+        if name == "enn":
+            return type(
+                "enn",
+                (),
+                {"create_optimizer": staticmethod(lambda **kw: FakeOpt())},
+            )()
+        if name == "enn.turbo.config.factory":
+            return type(
+                "factory",
+                (),
+                {
+                    "turbo_zero_config": staticmethod(
+                        lambda **kw: type(
+                            "cfg",
+                            (),
+                            {"candidates": FakeCandCfg()},
+                        )()
+                    )
+                },
+            )()
+        return real_im(name)
+
+    monkeypatch.setattr(impl, "_im", fake_im)
+    monkeypatch.setattr(designer, "_draw_values", fake_draw)
+    x = designer._maximize_draw(seed_ts=7)
+    assert len(asks) == 1
+    assert asks[0] == pool.shape[0]
+    # last tell is the argmax of the pool (index 1)
+    x_told, y_told = tells[-1]
+    assert np.allclose(x_told, pool[1:2])
+    assert float(y_told.reshape(-1)[0]) == 9.0
+    assert np.allclose(x, pool[1])
 
 
 def test_fewer_obs_than_incumbent_half():

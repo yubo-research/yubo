@@ -20,18 +20,22 @@ class EnnTSDesigner:
         num_fit_samples: int = 100,
         num_fit_candidates: int = 100,
         num_init: int | None = None,
+        num_candidates: int | None = None,
         index_driver: str | None = None,
     ):
         if int(num_ts_iters) < 0:
             raise ValueError(f"num_ts_iters must be >= 0, got {num_ts_iters}")
         if num_init is not None and int(num_init) < 2:
             raise ValueError(f"num_init must be >= 2, got {num_init}")
+        if num_candidates is not None and int(num_candidates) < 1:
+            raise ValueError(f"num_candidates must be >= 1, got {num_candidates}")
         self._policy = policy
         self._num_ts_iters = int(num_ts_iters)
         self._k = int(k)
         self._num_fit_samples = int(num_fit_samples)
         self._num_fit_candidates = int(num_fit_candidates)
         self._num_init = None if num_init is None else int(num_init)
+        self._num_candidates = None if num_candidates is None else int(num_candidates)
         self._index_driver = index_driver
         self._enn_disk_work_dir = None
 
@@ -158,7 +162,14 @@ class EnnTSDesigner:
         assert num_init is not None and num_init >= 2
         init_X = self._build_init_X(seed_ts, num_init)
         init_y = self._draw_values(init_X, seed_ts)
-        cfg = factory.turbo_zero_config(num_init=len(init_X))
+        CandidateRV = _im("enn.turbo.config.candidate_rv").CandidateRV
+        zero_kw = {
+            "num_init": len(init_X),
+            "candidate_rv": CandidateRV.RAASP,
+        }
+        if self._num_candidates is not None:
+            zero_kw["num_candidates"] = self._num_candidates
+        cfg = factory.turbo_zero_config(**zero_kw)
         opt = enn.create_optimizer(bounds=self._bounds, config=cfg, rng=self._rng)
         opt.tell(init_X, init_y)
 
@@ -168,15 +179,24 @@ class EnnTSDesigner:
         best_val = float(best_y[best_i])
         best_point = best_x[best_i].copy()
 
-        for _ in range(self._num_ts_iters):
-            x_ask = opt.ask(1)
-            y_ask = self._draw_values(x_ask, seed_ts)
-            opt.tell(x_ask, y_ask)
-            y_flat = np.asarray(y_ask, dtype=np.float64).reshape(-1)
-            assert y_flat.size == 1
-            if float(y_flat[0]) > best_val:
-                best_val = float(y_flat[0])
-                best_point = np.asarray(x_ask, dtype=np.float64).reshape(-1).copy()
+        # ask(n_cand) with RandomAcquisition returns the full candidate pool
+        # (shuffled); we score the fixed ENN draw on that pool and tell the argmax.
+        if self._num_ts_iters > 0:
+            num_dim = int(self._bounds.shape[0])
+            n_cand = int(cfg.candidates.resolve_num_candidates(num_dim=num_dim, num_arms=1))
+            for _ in range(self._num_ts_iters):
+                x_cand = np.asarray(opt.ask(n_cand), dtype=np.float64)
+                y_cand = self._draw_values(x_cand, seed_ts)
+                scores = np.asarray(y_cand, dtype=np.float64).reshape(x_cand.shape[0], -1)[:, 0]
+                i = int(np.argmax(scores))
+                x_ask = x_cand[i : i + 1]
+                y_ask = np.asarray(y_cand[i : i + 1], dtype=np.float64)
+                if y_ask.ndim == 1:
+                    y_ask = y_ask.reshape(1, -1)
+                opt.tell(x_ask, y_ask)
+                if float(scores[i]) > best_val:
+                    best_val = float(scores[i])
+                    best_point = x_ask.reshape(-1).copy()
         return best_point
 
     def _make_policy(self, x):

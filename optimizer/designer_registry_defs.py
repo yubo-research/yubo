@@ -208,6 +208,13 @@ _DESIGNER_DEFS: list[DesignerDef] = [
                 description="Hybrid init size (LHD half + incumbent half); must be >= 2.",
                 example_suffix="num_init=4",
             ),
+            DesignerOptionSpec(
+                name="num_candidates",
+                required=False,
+                value_type="int",
+                description=("Inner TURBO-0 candidate pool size per iteration (default min(5000, 100*dim))."),
+                example_suffix="num_candidates=5000",
+            ),
             _IDX_OPTION_SPEC,
         ),
     ),

@@ -127,19 +127,32 @@ def test_d_enn_ts_defaults_and_required():
     assert d._k == 10
     assert d._num_fit_samples == 100
     assert d._num_init == 10  # ctx.init_yubo_default
+    assert d._num_candidates is None
     assert any(s.name == "num_ts_iters" for s in _DESIGNER_OPTION_SPECS["enn-ts"])
+    assert any(s.name == "num_candidates" for s in _DESIGNER_OPTION_SPECS["enn-ts"])
 
 
 def test_d_enn_ts_nfs_k_idx_and_num_init():
     from optimizer.designer_registry import _d_enn_ts
 
     ctx = _make_ctx()
-    d = _d_enn_ts(ctx, {"num_ts_iters": 8, "nfs": 50, "k": 7, "idx": "bpann_disk", "num_init": 4})
+    d = _d_enn_ts(
+        ctx,
+        {
+            "num_ts_iters": 8,
+            "nfs": 50,
+            "k": 7,
+            "idx": "bpann_disk",
+            "num_init": 4,
+            "num_candidates": 123,
+        },
+    )
     assert d._num_ts_iters == 8
     assert d._num_fit_samples == 50
     assert d._k == 7
     assert d._index_driver == "bpann_disk"
     assert d._num_init == 4
+    assert d._num_candidates == 123
 
 
 def test_d_enn_ts_rejects_unknown_and_small_num_init():
@@ -150,6 +163,8 @@ def test_d_enn_ts_rejects_unknown_and_small_num_init():
         _d_enn_ts(ctx, {"num_ts_iters": 4, "bogus": 1})
     with pytest.raises(NoSuchDesignerError, match="num_init"):
         _d_enn_ts(ctx, {"num_ts_iters": 4, "num_init": 1})
+    with pytest.raises(NoSuchDesignerError, match="num_candidates"):
+        _d_enn_ts(ctx, {"num_ts_iters": 4, "num_candidates": 0})
 
 
 def test_turbo_enn_p_dispatch_builds():

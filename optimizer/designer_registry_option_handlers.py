@@ -292,7 +292,7 @@ def _d_turbo_enn_fit_ucb(ctx: _SimpleContext, opts: dict):
 
 def _d_enn_ts(ctx: _SimpleContext, opts: dict):
     opts = dict(opts)
-    allowed = {"num_ts_iters", "nfs", "k", "idx", "num_init"}
+    allowed = {"num_ts_iters", "nfs", "k", "idx", "num_init", "num_candidates"}
     unknown = set(opts) - allowed
     if unknown:
         u = ", ".join(sorted(unknown))
@@ -300,6 +300,11 @@ def _d_enn_ts(ctx: _SimpleContext, opts: dict):
     num_ts_iters = _require_int(opts, "num_ts_iters", example="enn-ts/num_ts_iters=32")
     nfs = _optional_int(opts, "nfs", default=100, example="enn-ts/nfs=50")
     k = _optional_int(opts, "k", default=10, example="enn-ts/k=20")
+    num_candidates = None
+    if "num_candidates" in opts:
+        num_candidates = _require_int(opts, "num_candidates", example="enn-ts/num_candidates=5000")
+        if num_candidates < 1:
+            raise NoSuchDesignerError("Designer option 'num_candidates' must be >= 1. Example: 'enn-ts/num_candidates=5000'.")
     num_init = None
     if "num_init" in opts:
         num_init = _require_int(opts, "num_init", example="enn-ts/num_init=4")
@@ -318,5 +323,6 @@ def _d_enn_ts(ctx: _SimpleContext, opts: dict):
         num_fit_samples=nfs,
         num_fit_candidates=100,
         num_init=num_init,
+        num_candidates=num_candidates,
         index_driver=index_driver,
     )
