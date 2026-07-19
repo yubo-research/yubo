@@ -81,11 +81,11 @@ def test_fit_ind_worker_writes_result(monkeypatch):
     monkeypatch.setattr(worker_mod, "benchmark_enn_fit_ind_timing", fake_benchmark)
     monkeypatch.setattr(impl, "_results_dict", lambda _tag: store)
 
-    impl.enn_incremental_batch_worker.info.raw_f(("fit_ind-tag-x", 2, "sphere", 17, 3, 10, "hnsw"))
+    impl.enn_incremental_batch_worker.info.raw_f(("fit_ind-tag-x", 2, "sphere", 17, 3, 10, "bpann_disk"))
 
     data_seed = synthetic_benchmark_data_seed(function_name="sphere", problem_seed=17, rep_index=3)
-    assert captured["args"] == (2, "sphere", data_seed, EnnIncrementalIndexDriver.HNSW)
-    key = "enn_fit_ind_D2_sphere_pseed17_nrep10_rep3_hnsw"
+    assert captured["args"] == (2, "sphere", data_seed, EnnIncrementalIndexDriver.BPANN_DISK)
+    key = "enn_fit_ind_D2_sphere_pseed17_nrep10_rep3_bpann_disk"
     payload, d, fn, problem_seed, rep_index, num_reps, driver = store[key]
     assert payload["fit_seconds"] == [0.01]
     assert (d, fn, problem_seed, rep_index, num_reps, driver) == (
@@ -94,7 +94,7 @@ def test_fit_ind_worker_writes_result(monkeypatch):
         17,
         3,
         10,
-        "hnsw",
+        "bpann_disk",
     )
 
 

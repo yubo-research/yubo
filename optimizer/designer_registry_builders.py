@@ -45,7 +45,7 @@ def _require_str_in(opts: dict, key: str, allowed: set[str], *, example: str) ->
     return v
 
 
-_IDX_ALLOWED = frozenset({"flat", "hnsw", "hnsw_disk", "bpann_disk", "exact"})
+_IDX_ALLOWED = frozenset({"flat", "bpann_disk", "exact"})
 
 
 def _reject_unknown_opts(name: str, opts: dict, allowed: set[str]):
@@ -62,7 +62,7 @@ def _index_driver_from_opts(opts: dict, *, example: str) -> str | None:
     if not isinstance(v, str):
         raise NoSuchDesignerError(f"Designer option 'idx' must be a string. Example: '{example}'.")
     if v not in _IDX_ALLOWED:
-        raise NoSuchDesignerError("Designer option 'idx' must be one of: flat, hnsw, hnsw_disk, bpann_disk, exact.")
+        raise NoSuchDesignerError("Designer option 'idx' must be one of: flat, bpann_disk, exact.")
     if v == "exact":
         return "flat"
     return v
@@ -152,17 +152,6 @@ def _build_turbo_enn(ctx: _SimpleContext, kind: str):
             num_fit_samples=None,
             num_fit_candidates=None,
             acq_type="pareto",
-        )
-    if kind == "turbo-enn-p-hnsw":
-        return _turbo_enn(
-            ctx,
-            turbo_mode="turbo-enn",
-            k=10,
-            num_keep=ctx.num_keep_val,
-            num_fit_samples=None,
-            num_fit_candidates=None,
-            acq_type="pareto",
-            index_driver="hnsw",
         )
     if kind == "turbo-zero":
         return _turbo_enn(ctx, turbo_mode="turbo-zero", num_fit_samples=None, num_fit_candidates=None)

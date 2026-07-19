@@ -100,9 +100,9 @@ def test_wide_surrogate_benchmark_row_to_comparison_records_and_caption():
         "vecchia_log_likelihood_se": 0.0,
     }
     recs = wide_surrogate_benchmark_row_to_comparison_records(row)
-    assert len(recs) == 8
+    assert len(recs) == 7
     assert recs[0]["Surrogate"] == "ENN" and recs[0]["Fit (s) μ"] == 0.1
-    assert math.isnan(recs[2]["Fit (s) μ"])
+    assert math.isnan(recs[1]["Fit (s) μ"])
     cap = synthetic_surrogate_benchmark_row_caption(row)
     assert "N=1000" in cap and "D=30" in cap and "ackley" in cap and "x.json" in cap
 
@@ -159,7 +159,7 @@ def test_wide_surrogate_benchmark_row_to_long_records():
         "vecchia_log_likelihood_se": 0.09,
     }
     recs = wide_surrogate_benchmark_row_to_long_records(row)
-    assert len(recs) == 8
+    assert len(recs) == 7
     assert recs[0]["surrogate"] == "enn"
     assert recs[0]["fit_seconds_mu"] == 0.1
     assert recs[0]["surrogate_label"] == "ENN"
@@ -232,7 +232,7 @@ def test_load_synthetic_sine_benchmark_json_dir_long(tmp_path: Path):
 
     df = load_synthetic_sine_benchmark_json_dir_long(sub, verbose=False)
 
-    assert len(df) == 8
+    assert len(df) == 7
     assert list(df.columns) == [
         "file",
         "N",

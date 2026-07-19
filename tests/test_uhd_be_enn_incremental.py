@@ -29,14 +29,14 @@ def _synthetic_stream(rng: np.random.Generator, n: int, d: int):
     return zs, ys
 
 
-def test_incremental_hnsw_disk_add_obs():
+def test_incremental_bpann_disk_add_obs():
     rng = np.random.default_rng(0)
     d = 5
     reg = IncrementalBEEnn(
         k=3,
         num_fit_candidates=1,
         num_fit_samples=10,
-        index_driver="hnsw_disk",
+        index_driver="bpann_disk",
         rng=rng,
     )
     reg.add_obs(rng.standard_normal(d), 1.5)
@@ -146,8 +146,7 @@ def test_batch_raw_reference_produces_valid_posterior():
 
 def test_parse_be_enn_index_driver_values():
     assert parse_be_enn_index_driver("flat") == ENNIndexDriver.FLAT
-    assert parse_be_enn_index_driver("hnsw") == ENNIndexDriver.HNSW
-    assert parse_be_enn_index_driver("hnsw_disk") == ENNIndexDriver.HNSW_DISK
+    assert parse_be_enn_index_driver("bpann_disk") == ENNIndexDriver.BPANN_DISK
 
 
 def test_parse_be_enn_index_driver_invalid():

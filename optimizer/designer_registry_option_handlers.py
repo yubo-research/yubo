@@ -56,7 +56,7 @@ def _turbo_enn(
     kw.update(opts)
     index_driver = kw.pop("idx", None)
     if index_driver is not None:
-        kw["index_driver"] = _index_driver_from_opts({"idx": index_driver}, example=f"{designer_name}/idx=hnsw")
+        kw["index_driver"] = _index_driver_from_opts({"idx": index_driver}, example=f"{designer_name}/idx=bpann_disk")
     eggroll_opts = {k: kw.pop(k) for k in list(kw) if k in _EGGROLL_TURBO_OPTION_KEYS}
     if eggroll_opts:
         if ctx.env_conf is None:
@@ -287,4 +287,36 @@ def _d_turbo_enn_fit_ucb(ctx: _SimpleContext, opts: dict):
         num_fit_samples=nfs,
         num_fit_candidates=100,
         acq_type="ucb",
+    )
+
+
+def _d_enn_ts(ctx: _SimpleContext, opts: dict):
+    opts = dict(opts)
+    allowed = {"num_ts_iters", "nfs", "k", "idx", "num_init"}
+    unknown = set(opts) - allowed
+    if unknown:
+        u = ", ".join(sorted(unknown))
+        raise NoSuchDesignerError(f"Designer 'enn-ts' does not support option(s): {u}. Example: 'enn-ts/num_ts_iters=32/nfs=100/k=10'.")
+    num_ts_iters = _require_int(opts, "num_ts_iters", example="enn-ts/num_ts_iters=32")
+    nfs = _optional_int(opts, "nfs", default=100, example="enn-ts/nfs=50")
+    k = _optional_int(opts, "k", default=10, example="enn-ts/k=20")
+    num_init = None
+    if "num_init" in opts:
+        num_init = _require_int(opts, "num_init", example="enn-ts/num_init=4")
+        if num_init < 2:
+            raise NoSuchDesignerError("Designer option 'num_init' must be >= 2. Example: 'enn-ts/num_init=4'.")
+    else:
+        # Default from ctx when large enough; else leave None for first-call resolve.
+        if ctx.init_yubo_default is not None and int(ctx.init_yubo_default) >= 2:
+            num_init = int(ctx.init_yubo_default)
+    index_driver = _index_driver_from_opts(opts, example="enn-ts/idx=bpann_disk")
+    EnnTSDesigner = _load_symbol("optimizer.enn_ts_designer", "EnnTSDesigner")
+    return EnnTSDesigner(
+        ctx.policy,
+        num_ts_iters=num_ts_iters,
+        k=k,
+        num_fit_samples=nfs,
+        num_fit_candidates=100,
+        num_init=num_init,
+        index_driver=index_driver,
     )

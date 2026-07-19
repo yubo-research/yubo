@@ -132,7 +132,7 @@ def test_parse_be_fields_custom_values():
         "be_enn_k": 50,
         "be_num_fit_candidates": 2,
         "be_num_fit_samples": 20,
-        "be_enn_index_driver": "hnsw",
+        "be_enn_index_driver": "bpann_disk",
         "be_sigma_range": [1e-5, 1e-1],
     }
     result = _parse_be_fields(cfg)
@@ -143,7 +143,7 @@ def test_parse_be_fields_custom_values():
     assert result.enn_k == 50
     assert result.num_fit_candidates == 2
     assert result.num_fit_samples == 20
-    assert result.enn_index_driver == "hnsw"
+    assert result.enn_index_driver == "bpann_disk"
     assert result.sigma_range == (1e-5, 1e-1)
 
 

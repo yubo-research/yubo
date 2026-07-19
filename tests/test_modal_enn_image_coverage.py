@@ -46,6 +46,13 @@ def test_enn_project_root_resolves_sibling(tmp_path: Path):
     assert mei.enn_project_root(repo) == tmp_path / "enn"
 
 
+def test_enn_modal_ignore_excludes_local_work_dirs():
+    """Regression: local _enn* stress dirs are multi-GB and must not upload."""
+    ignore = set(ENN_MODAL_IGNORE)
+    for pattern in ("_enn", "_enn*", "dist", "results", "**/target", ".testmondata*"):
+        assert pattern in ignore, f"missing ignore pattern {pattern!r}"
+
+
 def test_add_enn_to_image_noop_when_missing(tmp_path: Path):
     image = _RecordingImage()
     out = add_enn_to_image(image, tmp_path / "no_such_enn")

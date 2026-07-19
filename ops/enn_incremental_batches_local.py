@@ -20,7 +20,7 @@ def register_local_commands(
             click.Argument(["rep_index"], type=int),
             click.Argument(
                 ["index_driver"],
-                type=click.Choice(["flat", "hnsw", "hnsw_disk"], case_sensitive=False),
+                type=click.Choice(["flat", "bpann_disk"], case_sensitive=False),
             ),
             click.Option(("-d", "--d", "d_dims"), type=int, default=10, show_default=True),
             click.Option(
@@ -71,7 +71,9 @@ def register_local_commands(
 
         ensure_repo_imports()
         from analysis.fitting_time.evaluate import synthetic_benchmark_data_seed
-        from analysis.fitting_time.evaluate_metrics import normalize_benchmark_function_name
+        from analysis.fitting_time.evaluate_metrics import (
+            normalize_benchmark_function_name,
+        )
         from analysis.fitting_time.fitting_time_enn_incremental import (
             EnnIncrementalIndexDriver,
             benchmark_enn_incremental_add_timing,
@@ -134,7 +136,7 @@ def register_local_commands(
             click.Argument(["rep_index"], type=int),
             click.Argument(
                 ["index_driver"],
-                type=click.Choice(["flat", "hnsw", "hnsw_disk"], case_sensitive=False),
+                type=click.Choice(["flat", "bpann_disk"], case_sensitive=False),
             ),
             click.Option(("-d", "--d", "d_dims"), type=int, default=10, show_default=True),
             click.Option(
@@ -181,9 +183,13 @@ def register_local_commands(
 
         ensure_repo_imports()
         from analysis.fitting_time.evaluate import synthetic_benchmark_data_seed
-        from analysis.fitting_time.evaluate_metrics import normalize_benchmark_function_name
+        from analysis.fitting_time.evaluate_metrics import (
+            normalize_benchmark_function_name,
+        )
         from analysis.fitting_time.fitting_time_enn_fit import benchmark_enn_fit_timing
-        from analysis.fitting_time.fitting_time_enn_incremental import EnnIncrementalIndexDriver
+        from analysis.fitting_time.fitting_time_enn_incremental import (
+            EnnIncrementalIndexDriver,
+        )
         from experiments import modal_enn_fit_batches as fit_batches
 
         fn = normalize_benchmark_function_name(function_name)
@@ -248,7 +254,7 @@ def register_local_commands(
             click.Argument(["rep_index"], type=int),
             click.Argument(
                 ["index_driver"],
-                type=click.Choice(["flat", "hnsw", "hnsw_disk"], case_sensitive=False),
+                type=click.Choice(["flat", "bpann_disk"], case_sensitive=False),
             ),
             click.Option(("-d", "--d", "d_dims"), type=int, default=10, show_default=True),
             click.Option(
@@ -299,9 +305,15 @@ def register_local_commands(
 
         ensure_repo_imports()
         from analysis.fitting_time.evaluate import synthetic_benchmark_data_seed
-        from analysis.fitting_time.evaluate_metrics import normalize_benchmark_function_name
-        from analysis.fitting_time.fitting_time_enn_fit_ind import benchmark_enn_fit_ind_timing
-        from analysis.fitting_time.fitting_time_enn_incremental import EnnIncrementalIndexDriver
+        from analysis.fitting_time.evaluate_metrics import (
+            normalize_benchmark_function_name,
+        )
+        from analysis.fitting_time.fitting_time_enn_fit_ind import (
+            benchmark_enn_fit_ind_timing,
+        )
+        from analysis.fitting_time.fitting_time_enn_incremental import (
+            EnnIncrementalIndexDriver,
+        )
         from experiments import modal_enn_fit_ind_batches as fit_ind_batches
         from experiments import modal_enn_fit_ind_batches_json as fit_ind_json
 
@@ -371,7 +383,7 @@ def register_local_commands(
             click.Argument(["rep_index"], type=int),
             click.Argument(
                 ["index_driver"],
-                type=click.Choice(["flat", "hnsw", "hnsw_disk"], case_sensitive=False),
+                type=click.Choice(["flat", "bpann_disk"], case_sensitive=False),
             ),
             click.Option(
                 ("--num-reps", "num_reps"),
@@ -423,7 +435,9 @@ def register_local_commands(
             opt_name_for_index_driver,
             resolve_full_opt_checkpoints,
         )
-        from analysis.fitting_time.fitting_time_enn_incremental import EnnIncrementalIndexDriver
+        from analysis.fitting_time.fitting_time_enn_incremental import (
+            EnnIncrementalIndexDriver,
+        )
         from common.experiment_seeds import problem_seed_from_rep_index
         from experiments import modal_enn_full_opt_batches as full_opt_batches
         from experiments import modal_enn_full_opt_batches_json as full_opt_json

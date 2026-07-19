@@ -18,11 +18,9 @@ _BATCH_FIT_SAMPLES = 200
 
 
 def parse_be_enn_index_driver(name: str) -> ENNIndexDriver:
-    key = str(name).strip().lower()
-    if key == "hnsw":
-        return ENNIndexDriver.HNSW
-    if key in {"hnsw_disk", "hnsw-disk"}:
-        return ENNIndexDriver.HNSW_DISK
+    key = str(name).strip().lower().replace("-", "_")
+    if key in {"bpann_disk", "bpanndisk"}:
+        return ENNIndexDriver.BPANN_DISK
     if key != "flat":
         raise ValueError(f"Unknown be_enn_index_driver: {name!r}")
     return ENNIndexDriver.FLAT
@@ -92,9 +90,9 @@ class IncrementalBEEnn:
 
     def _enn_model_kwargs(self) -> dict:
         kwargs: dict = {"index_driver": self._index_driver}
-        if self._index_driver is ENNIndexDriver.HNSW_DISK:
+        if self._index_driver is ENNIndexDriver.BPANN_DISK:
             if self._disk_work_dir is None:
-                self._disk_work_dir = tempfile.TemporaryDirectory(prefix="yubo_enn_hnsw_disk_")
+                self._disk_work_dir = tempfile.TemporaryDirectory(prefix="yubo_enn_bpann_disk_")
             kwargs["enn_storage"] = "disk"
             kwargs["work_dir"] = self._disk_work_dir.name
         return kwargs

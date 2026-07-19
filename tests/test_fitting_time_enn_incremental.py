@@ -143,15 +143,15 @@ def test_enn_test_log_likelihood_smoke(monkeypatch):
     assert np.isfinite(ll)
 
 
-def test_benchmark_enn_incremental_hnsw_driver():
+def test_benchmark_enn_incremental_flat_driver():
     result = benchmark_enn_incremental_add_timing(
         D=2,
         function_name="sphere",
         problem_seed=1,
         checkpoints=(1, 3),
-        index_driver=EnnIncrementalIndexDriver.HNSW,
+        index_driver=EnnIncrementalIndexDriver.FLAT,
     )
-    assert result.index_driver is EnnIncrementalIndexDriver.HNSW
+    assert result.index_driver is EnnIncrementalIndexDriver.FLAT
     assert result.n == (1, 3)
 
 
@@ -163,35 +163,23 @@ def test_epistemic_nn_driver_kwargs_flat_has_no_disk_fields():
 
 def test_epistemic_nn_driver_kwargs_disk_requires_work_dir():
     with pytest.raises(ValueError, match="work_dir"):
-        epistemic_nn_driver_kwargs(EnnIncrementalIndexDriver.HNSW_DISK, work_dir=None)
-    with pytest.raises(ValueError, match="work_dir"):
         epistemic_nn_driver_kwargs(EnnIncrementalIndexDriver.BPANN_DISK, work_dir=None)
 
 
 def test_epistemic_nn_driver_kwargs_disk_sets_storage():
-    kwargs = epistemic_nn_driver_kwargs(EnnIncrementalIndexDriver.HNSW_DISK, work_dir="/tmp/x")
-    assert kwargs["work_dir"] == "/tmp/x"
-    assert kwargs["enn_storage"] == "disk"
     kwargs = epistemic_nn_driver_kwargs(EnnIncrementalIndexDriver.BPANN_DISK, work_dir="/tmp/y")
     assert kwargs["work_dir"] == "/tmp/y"
     assert kwargs["enn_storage"] == "disk"
 
 
 def test_enn_disk_work_dir_none_for_in_memory_driver():
-    with enn_disk_work_dir(EnnIncrementalIndexDriver.HNSW) as work_dir:
+    with enn_disk_work_dir(EnnIncrementalIndexDriver.FLAT) as work_dir:
         assert work_dir is None
 
 
-def test_benchmark_enn_incremental_hnsw_disk_driver():
-    result = benchmark_enn_incremental_add_timing(
-        D=2,
-        function_name="sphere",
-        problem_seed=2,
-        checkpoints=(1, 3),
-        index_driver=EnnIncrementalIndexDriver.HNSW_DISK,
-    )
-    assert result.index_driver is EnnIncrementalIndexDriver.HNSW_DISK
-    assert result.n == (1, 3)
+def test_enn_disk_work_dir_allocates_for_bpann_disk():
+    with enn_disk_work_dir(EnnIncrementalIndexDriver.BPANN_DISK) as work_dir:
+        assert work_dir is not None
 
 
 def test_benchmark_enn_incremental_bpann_disk_driver():

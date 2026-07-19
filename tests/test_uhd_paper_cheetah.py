@@ -12,6 +12,8 @@ import pytest
 
 from analysis.data_io import TraceRecord
 from analysis.uhd_paper_cheetah import (
+    BO_UHD_POLICIES,
+    CHEETAH_POLICY_NUM_PARAMS,
     CheetahExperimentPaths,
     bo_coverage_report,
     final_best_summary,
@@ -40,8 +42,10 @@ def test_normalize_bo_label_eggroll_sigma():
     assert normalize_bo_label("turbo-enn-fit-ucb") == "turbo-enn-fit-ucb"
     opt05 = "eggroll/noiser=eggroll/sigma=0.05/rank=1/lr=0.01/optax=adamw/batch_size=10/num_envs=1/steps=1000"
     opt10 = "eggroll/noiser=eggroll/sigma=0.1/rank=1/lr=0.01/optax=adamw/batch_size=10/num_envs=1/steps=1000"
+    opt_adapt = "eggroll/noiser=eggroll/sigma=0.1/adapt_sigma=true/rank=1/lr=0.01/optax=adamw/batch_size=10/num_envs=1/steps=1000"
     assert normalize_bo_label(opt05) == "eggroll (sigma=0.05)"
     assert normalize_bo_label(opt10) == "eggroll (sigma=0.1)"
+    assert normalize_bo_label(opt_adapt) == "eggroll (adapt sigma=0.1)"
 
 
 def test_label_uhd_config():
@@ -61,6 +65,7 @@ def test_label_uhd_config():
     assert legend_label("eggroll (sigma=0.05)") == r"eggroll ($\sigma$=0.05)"
     assert legend_label("eggroll (sigma=0.1)") == r"eggroll ($\sigma$=0.1)"
     assert legend_label("eggroll (sigma=0.2)") == r"eggroll ($\sigma$=0.2)"
+    assert legend_label("eggroll (adapt sigma=0.1)") == r"eggroll (adapt $\sigma$=0.1)"
     assert legend_label("random") == "random"
 
 
@@ -102,6 +107,7 @@ def test_bo_coverage_report_includes_eggroll_sigma():
     assert "eggroll (sigma=0.1)" in methods
     assert "eggroll (sigma=0.2)" in methods
     assert "eggroll (sigma=0.3)" in methods
+    assert "eggroll (adapt sigma=0.1)" in methods
 
 
 def test_plot_cheetah_bo_uhd_comparison_runs_with_tex_legend():
@@ -148,7 +154,10 @@ def test_load_uhd_batch_and_simple_smoke(tmp_path: Path):
     assert paths.bo_eggroll_s01.name == "exp_cheetah_eggroll_s01"
     assert paths.bo_eggroll_s02.name == "exp_cheetah_eggroll_s02"
     assert paths.bo_eggroll_s03.name == "exp_cheetah_eggroll_s03"
-    assert len(paths.bo_extra_eggroll_dirs) == 3
+    assert paths.bo_eggroll_adapt.name == "exp_cheetah_eggroll_adapt"
+    assert len(paths.bo_extra_eggroll_dirs) == 4
+    assert BO_UHD_POLICIES == ("linear", "mlp-32-16", "mlp-128-64")
+    assert CHEETAH_POLICY_NUM_PARAMS["mlp-128-64"] == 10984
     _, batch_summary = load_uhd_batch_cheetah(paths.uhd)
     assert "label" in batch_summary.columns
     simple = load_uhd_cheetah_simple(paths.uhd)

@@ -104,8 +104,8 @@ def test_submit_cmd_prep(tmp_path):
         )
 
     assert result.exit_code == 0, result.output
-    assert mock_batch.call_count == 7
-    assert "Submit complete: 7 configs" in result.output
+    assert mock_batch.call_count == 5
+    assert "Submit complete: 5 configs" in result.output
 
 
 def test_modal_cmd_uses_config_num_reps(tmp_path):

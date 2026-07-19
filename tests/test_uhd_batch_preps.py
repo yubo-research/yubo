@@ -7,7 +7,7 @@ def test_uhd_batch_cheetah():
     with tempfile.TemporaryDirectory() as tmpdir:
         configs = prep_uhd_batch_cheetah(tmpdir, num_reps=5)
         assert isinstance(configs, list)
-        assert len(configs) == 7  # simple + 3 drivers × 2 acquisitions
+        assert len(configs) == 5  # simple + 2 drivers × 2 acquisitions
 
         for cfg, num_reps in configs:
             assert isinstance(cfg, dict)
@@ -33,11 +33,10 @@ def test_prep_uhd_batch_cheetah_simple_be_params():
         configs = prep_uhd_batch_cheetah(tmpdir)
 
         be_cfgs = [cfg for cfg, _ in configs if cfg["optimizer"] == "simple_be"]
-        assert len(be_cfgs) == 6
+        assert len(be_cfgs) == 4
         assert {cfg["be_enn_index_driver"] for cfg in be_cfgs} == {
             "flat",
-            "hnsw",
-            "hnsw_disk",
+            "bpann_disk",
         }
         assert {cfg["be_acquisition"] for cfg in be_cfgs} == {"ucb", "mu"}
 
@@ -61,16 +60,17 @@ def test_prep_uhd_batch_cheetah_simple_has_no_be_keys():
 
 
 def test_prep_uhd_batch_cheetah_simple():
+    from experiments.batch_preps_rl_sweeps import CHEETAH_BO_POLICY_ROUNDS
     from experiments.uhd_batch_preps import prep_uhd_batch_cheetah_simple
 
     with tempfile.TemporaryDirectory() as tmpdir:
         configs = prep_uhd_batch_cheetah_simple(tmpdir, num_reps=5)
-        assert len(configs) == 2
-        assert {cfg["policy_tag"] for cfg, _ in configs} == {"linear", "mlp-32-16"}
+        assert len(configs) == 3
+        assert {cfg["policy_tag"] for cfg, _ in configs} == set(CHEETAH_BO_POLICY_ROUNDS)
         for cfg, num_reps in configs:
             assert num_reps == 5
             assert cfg["env_tag"] == "cheetah:fn"
-            assert cfg["num_rounds"] == 1000
+            assert cfg["num_rounds"] == CHEETAH_BO_POLICY_ROUNDS[cfg["policy_tag"]]
             assert cfg["optimizer"] == "simple"
             assert cfg["perturb"] == "dense"
             assert cfg["sigma"] == 0.1

@@ -40,35 +40,24 @@ ENN_INCREMENTAL_CHECKPOINT_NS: tuple[int, ...] = (
 
 class EnnIncrementalIndexDriver(Enum):
     FLAT = "flat"
-    HNSW = "hnsw"
-    HNSW_DISK = "hnsw_disk"
     BPANN_DISK = "bpann_disk"
 
     def to_enn_index_driver(self):
         from enn.turbo.config.enn_index_driver import ENNIndexDriver
 
-        if self is EnnIncrementalIndexDriver.HNSW:
-            return ENNIndexDriver.HNSW
-        if self is EnnIncrementalIndexDriver.HNSW_DISK:
-            return ENNIndexDriver.HNSW_DISK
         if self is EnnIncrementalIndexDriver.BPANN_DISK:
             return ENNIndexDriver.BPANN_DISK
         return ENNIndexDriver.FLAT
 
 
 def _disk_work_dir_prefix(index_driver: EnnIncrementalIndexDriver) -> str:
-    if index_driver is EnnIncrementalIndexDriver.HNSW_DISK:
-        return "yubo_enn_hnsw_disk_"
     if index_driver is EnnIncrementalIndexDriver.BPANN_DISK:
         return "yubo_enn_bpann_disk_"
     raise ValueError(f"index_driver {index_driver.value!r} is not disk-backed")
 
 
 def _is_disk_backed(index_driver: EnnIncrementalIndexDriver) -> bool:
-    return index_driver in (
-        EnnIncrementalIndexDriver.HNSW_DISK,
-        EnnIncrementalIndexDriver.BPANN_DISK,
-    )
+    return index_driver is EnnIncrementalIndexDriver.BPANN_DISK
 
 
 @contextmanager

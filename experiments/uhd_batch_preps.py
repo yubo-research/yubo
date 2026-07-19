@@ -1,5 +1,7 @@
 from typing import Any
 
+from experiments.batch_preps_rl_sweeps import CHEETAH_BO_POLICY_ROUNDS
+
 
 def prep_uhd_batch_cheetah(
     results_dir: str = "results/uhd",
@@ -26,7 +28,7 @@ def prep_uhd_batch_cheetah(
         "be_enn_k": 15,
     }
 
-    drivers = ["flat", "hnsw", "hnsw_disk"]
+    drivers = ["flat", "bpann_disk"]
     configs: list[tuple[dict[str, Any], int]] = []
 
     configs.append(({**common, "optimizer": "simple"}, num_reps))
@@ -57,7 +59,6 @@ def prep_uhd_batch_cheetah_simple(
 
     common: dict[str, Any] = {
         "env_tag": "cheetah:fn",
-        "num_rounds": 1000,
         "problem_seed": 0,
         "noise_seed_0": 0,
         "perturb": "dense",
@@ -67,6 +68,6 @@ def prep_uhd_batch_cheetah_simple(
     }
 
     configs: list[tuple[dict[str, Any], int]] = []
-    for policy_tag in ("linear", "mlp-32-16"):
-        configs.append(({**common, "policy_tag": policy_tag}, num_reps))
+    for policy_tag, num_rounds in CHEETAH_BO_POLICY_ROUNDS.items():
+        configs.append(({**common, "policy_tag": policy_tag, "num_rounds": num_rounds}, num_reps))
     return configs

@@ -159,8 +159,8 @@ def test_iter_fit_jobs_index_driver_all_yields_all_drivers(monkeypatch, tmp_path
     )
     jobs = list(impl._iter_fit_jobs(tmp_path, "all", 1, 2, 17))
     drivers = {job[1][6] for job in jobs}
-    assert drivers == {"flat", "hnsw", "hnsw_disk", "bpann_disk"}
-    assert len(jobs) == 4
+    assert drivers == {"flat", "bpann_disk"}
+    assert len(jobs) == 2
 
 
 def test_iter_fit_jobs_resubmits_when_json_incomplete(monkeypatch, tmp_path: Path):
@@ -222,7 +222,7 @@ def test_fit_worker_writes_result_via_incremental_modal_fn(monkeypatch):
     monkeypatch.setattr(worker_mod, "benchmark_enn_fit_timing", fake_bm)
     monkeypatch.setattr(impl, "_results_dict", lambda _tag: store)
 
-    impl.enn_incremental_batch_worker.info.raw_f(("fit_method-tag-fit", 2, "sphere", 3, 17, 1, 10, "hnsw"))
+    impl.enn_incremental_batch_worker.info.raw_f(("fit_method-tag-fit", 2, "sphere", 3, 17, 1, 10, "bpann_disk"))
 
     ds = synthetic_benchmark_data_seed(function_name="sphere", problem_seed=17, rep_index=1)
     assert captured["kwargs"] == {
@@ -231,10 +231,10 @@ def test_fit_worker_writes_result_via_incremental_modal_fn(monkeypatch):
         "data_seed": ds,
         "problem_seed": 17,
         "n": 3,
-        "index_driver": EnnIncrementalIndexDriver.HNSW,
+        "index_driver": EnnIncrementalIndexDriver.BPANN_DISK,
     }
 
-    payload, d, fn, n, problem_seed, rep_index, num_reps, drv = store["enn_fit_D2_sphere_N3_pseed17_nrep10_rep1_hnsw"]
+    payload, d, fn, n, problem_seed, rep_index, num_reps, drv = store["enn_fit_D2_sphere_N3_pseed17_nrep10_rep1_bpann_disk"]
     assert (d, fn, int(n), problem_seed, rep_index, num_reps, drv) == (
         2,
         "sphere",
@@ -242,9 +242,9 @@ def test_fit_worker_writes_result_via_incremental_modal_fn(monkeypatch):
         17,
         1,
         10,
-        "hnsw",
+        "bpann_disk",
     )
-    assert payload["_meta"]["index_driver"] == "hnsw"
+    assert payload["_meta"]["index_driver"] == "bpann_disk"
     assert payload["_meta"]["data_seed"] == ds
     assert payload["N"] == 3
     assert payload["log_likelihood"] == -5.0
@@ -270,7 +270,7 @@ def test_worker_rejects_add_method_job_with_fit_method_tag():
     import experiments.modal_enn_incremental_batches_impl as impl
 
     with pytest.raises(ValueError, match="add_method job expected 7"):
-        impl.enn_incremental_batch_worker.info.raw_f(("add_method-t", 2, "sphere", 17, 0, 10, "flat", "hnsw"))
+        impl.enn_incremental_batch_worker.info.raw_f(("add_method-t", 2, "sphere", 17, 0, 10, "flat", "bpann_disk"))
 
 
 def test_worker_rejects_fit_method_job_with_wrong_len():

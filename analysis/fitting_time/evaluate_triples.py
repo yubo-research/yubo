@@ -16,7 +16,6 @@ def _benchmark_numpy_surrogate_triples(
     x_test_np: np.ndarray,
     y_test: torch.Tensor,
     fit_enn,
-    fit_enn_hnsw,
     fit_smac_rf,
     fit_dngo,
     *,
@@ -25,17 +24,6 @@ def _benchmark_numpy_surrogate_triples(
     dt_enn, yh_enn, var_enn = fit_enn(train_x, train_y, x_test_np)
     nrmse_enn = normalized_rmse(y_test, yh_enn)
     ll_enn = predictive_gaussian_log_likelihood(y_test, yh_enn, var_enn)
-    dt_enn_hnsw, yh_enn_hnsw, var_enn_hnsw = fit_enn_hnsw(
-        train_x,
-        train_y,
-        x_test_np,
-    )
-    nrmse_enn_hnsw = normalized_rmse(y_test, yh_enn_hnsw)
-    ll_enn_hnsw = predictive_gaussian_log_likelihood(
-        y_test,
-        yh_enn_hnsw,
-        var_enn_hnsw,
-    )
     try:
         dt_smac, yh_smac, var_smac = fit_smac_rf(train_x, train_y.reshape(-1), x_test_np)
         nrmse_smac = normalized_rmse(y_test, yh_smac)
@@ -50,7 +38,6 @@ def _benchmark_numpy_surrogate_triples(
         ll_dngo = predictive_gaussian_log_likelihood(y_test, yh_dngo, var_dngo)
     return {
         "enn": (dt_enn, nrmse_enn, ll_enn),
-        "enn_hnsw": (dt_enn_hnsw, nrmse_enn_hnsw, ll_enn_hnsw),
         "smac_rf": (dt_smac, nrmse_smac, ll_smac),
         "dngo": (dt_dngo, nrmse_dngo, ll_dngo),
     }
@@ -103,7 +90,6 @@ def _surrogate_metric_triples_from_tensors(
     y_test: torch.Tensor,
     *,
     fit_enn,
-    fit_enn_hnsw,
     fit_smac_rf,
     fit_dngo,
     fit_exact_gp,
@@ -125,7 +111,6 @@ def _surrogate_metric_triples_from_tensors(
         x_test_np,
         y_test,
         fit_enn,
-        fit_enn_hnsw,
         fit_smac_rf,
         fit_dngo,
         b_fast_only=b_fast_only,
@@ -181,7 +166,6 @@ def benchmark_single_surrogate(
     from .fitting_time import (
         fit_dngo,
         fit_enn,
-        fit_enn_hnsw,
         fit_exact_gp,
         fit_smac_rf,
         fit_svgp_default,
@@ -195,15 +179,13 @@ def benchmark_single_surrogate(
     x_surr = env_action_coords_to_surrogate_unit_x(x)
     x_test_surr = env_action_coords_to_surrogate_unit_x(x_test)
 
-    if surrogate_key in ("enn", "enn_hnsw", "smac_rf", "dngo"):
+    if surrogate_key in ("enn", "smac_rf", "dngo"):
         train_x = x_surr.detach().cpu().numpy().astype(np.float64)
         train_y = y.detach().cpu().numpy().astype(np.float64)
         x_test_np = x_test_surr.detach().cpu().numpy().astype(np.float64)
 
         if surrogate_key == "enn":
             dt, yh, var = fit_enn(train_x, train_y, x_test_np)
-        elif surrogate_key == "enn_hnsw":
-            dt, yh, var = fit_enn_hnsw(train_x, train_y, x_test_np)
         elif surrogate_key == "smac_rf":
             try:
                 dt, yh, var = fit_smac_rf(train_x, train_y.reshape(-1), x_test_np)

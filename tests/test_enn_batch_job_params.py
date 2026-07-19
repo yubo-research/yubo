@@ -17,11 +17,6 @@ from experiments.enn_batch_job_params import (
 )
 
 
-def test_normalize_index_driver_hnsw_disk():
-    assert normalize_index_driver("hnsw_disk") is EnnIncrementalIndexDriver.HNSW_DISK
-    assert normalize_index_driver("HNSW-Disk") is EnnIncrementalIndexDriver.HNSW_DISK
-
-
 def test_normalize_index_driver_bpann_disk():
     assert normalize_index_driver("bpann_disk") is EnnIncrementalIndexDriver.BPANN_DISK
     assert normalize_index_driver("BPANN-Disk") is EnnIncrementalIndexDriver.BPANN_DISK

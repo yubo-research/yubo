@@ -15,6 +15,8 @@ import pandas as pd
 from analysis.data_io import TraceRecord, data_is_done, read_trace_jsonl
 from analysis.uhd_paper_trace import best_so_far_array, sem_1d, summarize_curve
 from experiments.batch_preps_rl_sweeps import (
+    CHEETAH_BO_POLICIES,
+    prep_cheetah_eggroll_adapt,
     prep_cheetah_eggroll_s01,
     prep_cheetah_eggroll_s02,
     prep_cheetah_eggroll_s03,
@@ -28,10 +30,12 @@ from ops.uhd_batch_core import _config_hash, _experiment_dir
 
 CHEETAH_FN_ENV_TAG = "cheetah:fn"
 _EGGROLL_SIGMA_RE = re.compile(r"/sigma=([0-9.]+)/")
+_EGGROLL_ADAPT_SIGMA_RE = re.compile(r"/adapt_sigma=(?:true|True|1)(?:/|$)")
 _EXTRA_EGGROLL_PREPS = (
     prep_cheetah_eggroll_s01,
     prep_cheetah_eggroll_s02,
     prep_cheetah_eggroll_s03,
+    prep_cheetah_eggroll_adapt,
 )
 
 UHD_BATCH_LABEL_ORDER: tuple[str, ...] = (
@@ -40,10 +44,11 @@ UHD_BATCH_LABEL_ORDER: tuple[str, ...] = (
     "simple_be/flat/mu",
 )
 
-BO_UHD_POLICIES: tuple[str, ...] = ("linear", "mlp-32-16")
+BO_UHD_POLICIES: tuple[str, ...] = CHEETAH_BO_POLICIES
 CHEETAH_POLICY_NUM_PARAMS: dict[str, int] = {
     "linear": 103,
     "mlp-32-16": 1240,
+    "mlp-128-64": 10984,
 }
 BO_UHD_METHOD_ORDER: tuple[str, ...] = (
     "random",
@@ -52,6 +57,7 @@ BO_UHD_METHOD_ORDER: tuple[str, ...] = (
     "eggroll (sigma=0.1)",
     "eggroll (sigma=0.2)",
     "eggroll (sigma=0.3)",
+    "eggroll (adapt sigma=0.1)",
     "simple",
 )
 
@@ -86,13 +92,15 @@ BO_UHD_COLORS: dict[str, str] = {
     "eggroll (sigma=0.1)": "#bcbd22",
     "eggroll (sigma=0.2)": "#9467bd",
     "eggroll (sigma=0.3)": "#8c564b",
+    "eggroll (adapt sigma=0.1)": "#e377c2",
     "simple": "#1f77b4",
 }
 
-BO_UHD_LINESTYLES: dict[str, str] = {
+BO_UHD_LINESTYLES: dict[str, str | tuple[int, tuple[int, ...]]] = {
     "eggroll (sigma=0.1)": "--",
     "eggroll (sigma=0.2)": "-.",
     "eggroll (sigma=0.3)": ":",
+    "eggroll (adapt sigma=0.1)": (0, (3, 1, 1, 1)),
 }
 
 DEFAULT_LINEWIDTH = 1.8
@@ -104,6 +112,9 @@ LEGEND_LABELS: dict[str, str] = {}
 def legend_label(method: str) -> str:
     if method in LEGEND_LABELS:
         return LEGEND_LABELS[method]
+    m = re.fullmatch(r"eggroll \(adapt sigma=([0-9.]+)\)", method)
+    if m is not None:
+        return rf"eggroll (adapt $\sigma$={m.group(1)})"
     m = re.fullmatch(r"eggroll \(sigma=([0-9.]+)\)", method)
     if m is not None:
         return rf"eggroll ($\sigma$={m.group(1)})"
@@ -131,8 +142,17 @@ class CheetahExperimentPaths:
         return self.yubo_root / "results" / "exp_cheetah_eggroll_s03"
 
     @property
+    def bo_eggroll_adapt(self) -> Path:
+        return self.yubo_root / "results" / "exp_cheetah_eggroll_adapt"
+
+    @property
     def bo_extra_eggroll_dirs(self) -> tuple[Path, ...]:
-        return (self.bo_eggroll_s01, self.bo_eggroll_s02, self.bo_eggroll_s03)
+        return (
+            self.bo_eggroll_s01,
+            self.bo_eggroll_s02,
+            self.bo_eggroll_s03,
+            self.bo_eggroll_adapt,
+        )
 
     @property
     def uhd(self) -> Path:
@@ -154,8 +174,11 @@ def normalize_bo_label(opt_name: str) -> str:
     if opt_name == "turbo-enn-fit-ucb":
         return "turbo-enn-fit-ucb"
     if opt_name.startswith("eggroll"):
+        adapt = _EGGROLL_ADAPT_SIGMA_RE.search(opt_name) is not None
         m = _EGGROLL_SIGMA_RE.search(opt_name)
         if m is not None:
+            if adapt:
+                return f"eggroll (adapt sigma={m.group(1)})"
             return f"eggroll (sigma={m.group(1)})"
         return "eggroll"
     return opt_name
@@ -404,7 +427,7 @@ def plot_cheetah_bo_uhd_comparison(
     *,
     policies: Sequence[str] = BO_UHD_POLICIES,
     method_order: Sequence[str] = BO_UHD_METHOD_ORDER,
-    figsize: tuple[float, float] = (12.0, 4.5),
+    figsize: tuple[float, float] = (16.0, 4.5),
 ):
     ready_by_policy = {policy: [e for e in all_experiments if e.get("policy_tag") == policy and e["traces"]] for policy in policies}
     if not any(ready_by_policy.values()):

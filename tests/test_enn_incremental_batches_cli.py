@@ -195,7 +195,7 @@ def test_enn_incremental_batches_subprocess_commands(captured_modal, invoke_args
                 "add_method",
                 "t1",
                 "--index-driver",
-                "HNSW",
+                "BPANN_Disk",
                 "--d",
                 "7",
             ],
@@ -203,10 +203,28 @@ def test_enn_incremental_batches_subprocess_commands(captured_modal, invoke_args
             "submit",
             {
                 "output_dir": "results/enn_incremental",
-                "index_driver": "hnsw",
+                "index_driver": "bpann_disk",
                 "num_reps": 10,
                 "d_dims": 7,
                 "problem_seed": 17,
+            },
+        ),
+        (
+            [
+                "submit",
+                "full_optimization",
+                "t1",
+                "--index-driver",
+                "bpann_disk",
+            ],
+            "full_optimization-t1",
+            "submit",
+            {
+                "output_dir": "results/enn_incremental",
+                "index_driver": "bpann_disk",
+                "num_reps": 10,
+                "d_dims": 10,
+                "problem_seed": 18,
             },
         ),
         (

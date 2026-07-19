@@ -3,6 +3,7 @@ from functools import partial
 from .designer_registry_extra_builders import _build_eggroll, _build_sparse_enn
 from .designer_registry_option_handlers import (
     _build_turbo_enn_f,
+    _d_enn_ts,
     _d_morbo_enn_fit,
     _d_pss_sweep_kmcmc,
     _d_pss_sweep_num_mcmc,
@@ -21,9 +22,9 @@ _IDX_OPTION_SPEC = DesignerOptionSpec(
     name="idx",
     required=False,
     value_type="str",
-    description="ENN index driver: flat (default), hnsw, or exact.",
-    example_suffix="idx=hnsw",
-    allowed_values=("flat", "hnsw", "exact"),
+    description="ENN index driver: flat (default), bpann_disk, or exact.",
+    example_suffix="idx=bpann_disk",
+    allowed_values=("flat", "bpann_disk", "exact"),
 )
 
 _DESIGNER_DEFS: list[DesignerDef] = [
@@ -171,6 +172,41 @@ _DESIGNER_DEFS: list[DesignerDef] = [
                 value_type="int",
                 description="ENN ensemble size k (default 10).",
                 example_suffix="k=20",
+            ),
+            _IDX_OPTION_SPEC,
+        ),
+    ),
+    DesignerDef(
+        name="enn-ts",
+        builder=_d_enn_ts,
+        option_specs=(
+            DesignerOptionSpec(
+                name="num_ts_iters",
+                required=True,
+                value_type="int",
+                description="Inner TURBO-0 ask/eval/tell iterations per arm after hybrid init.",
+                example_suffix="num_ts_iters=32",
+            ),
+            DesignerOptionSpec(
+                name="nfs",
+                required=False,
+                value_type="int",
+                description="Number of fit samples for hyperparameter selection (default 100).",
+                example_suffix="nfs=50",
+            ),
+            DesignerOptionSpec(
+                name="k",
+                required=False,
+                value_type="int",
+                description="ENN ensemble size k (default 10).",
+                example_suffix="k=20",
+            ),
+            DesignerOptionSpec(
+                name="num_init",
+                required=False,
+                value_type="int",
+                description="Hybrid init size (LHD half + incumbent half); must be >= 2.",
+                example_suffix="num_init=4",
             ),
             _IDX_OPTION_SPEC,
         ),

@@ -8,16 +8,23 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     import modal
 
-# Keep upload/build context small: exclude caches, git, and rust/target (~GB).
+# Keep upload/build context small: exclude caches, git, rust/target, and local
+# stress/work dirs (_enn, _enn_bench, …) which can be many GB on disk.
 ENN_MODAL_IGNORE: list[str] = [
     ".git",
-    "_enn_data",
+    "_enn",
+    "_enn*",
     "_kpop",
     "_malvin",
+    ".malvin",
     "malvin_memories",
     ".malvin_memories",
     "target",
+    "**/target",
     "rust/target",
+    "dist",
+    "results",
+    "papers",
     "tests",
     "examples",
     "docs",
@@ -32,7 +39,12 @@ ENN_MODAL_IGNORE: list[str] = [
     "*.egg-info",
     ".mypy_cache",
     ".venv",
+    ".testmondata*",
     "**/*.whl",
+    "*.pdf",
+    "*.log",
+    "*.aux",
+    "*.out",
 ]
 
 ENN_MODAL_BUILD_COMMANDS: tuple[str, ...] = (

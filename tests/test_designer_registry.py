@@ -60,9 +60,9 @@ def test_turbo_enn_p_accepts_index_driver_option():
     from optimizer.designer_registry import _DESIGNER_OPTION_SPECS, _d_turbo_enn_p
 
     ctx = _make_ctx()
-    d = _d_turbo_enn_p(ctx, {"idx": "hnsw"})
+    d = _d_turbo_enn_p(ctx, {"idx": "bpann_disk"})
 
-    assert d._index_driver == "hnsw"
+    assert d._index_driver == "bpann_disk"
     assert any(spec.name == "idx" for spec in _DESIGNER_OPTION_SPECS["turbo-enn-p"])
 
 
@@ -91,22 +91,6 @@ def test_d_turbo_enn_p_defaults_flat():
     assert d._index_driver is None
 
 
-def test_d_turbo_enn_p_idx_hnsw():
-    from optimizer.designer_registry import _d_turbo_enn_p
-
-    ctx = _make_ctx()
-    d = _d_turbo_enn_p(ctx, {"idx": "hnsw"})
-    assert d._index_driver == "hnsw"
-
-
-def test_d_turbo_enn_p_idx_hnsw_disk():
-    from optimizer.designer_registry import _d_turbo_enn_p
-
-    ctx = _make_ctx()
-    d = _d_turbo_enn_p(ctx, {"idx": "hnsw_disk"})
-    assert d._index_driver == "hnsw_disk"
-
-
 def test_d_turbo_enn_p_idx_bpann_disk():
     from optimizer.designer_registry import _d_turbo_enn_p
 
@@ -123,21 +107,57 @@ def test_d_turbo_enn_p_rejects_unknown_option():
         _d_turbo_enn_p(ctx, {"k": 3})
 
 
-def test_d_turbo_enn_fit_ucb_idx_hnsw():
+def test_d_turbo_enn_fit_ucb_idx_bpann_disk():
     from optimizer.designer_registry import _d_turbo_enn_fit_ucb
 
     ctx = _make_ctx()
-    d = _d_turbo_enn_fit_ucb(ctx, {"idx": "hnsw", "k": 7})
-    assert d._index_driver == "hnsw"
+    d = _d_turbo_enn_fit_ucb(ctx, {"idx": "bpann_disk", "k": 7})
+    assert d._index_driver == "bpann_disk"
     assert d._k == 7
 
 
-def test_turbo_enn_p_hnsw_alias_builds():
+def test_d_enn_ts_defaults_and_required():
+    from optimizer.designer_registry import _DESIGNER_OPTION_SPECS, _d_enn_ts
+
+    ctx = _make_ctx()
+    with pytest.raises(NoSuchDesignerError, match="num_ts_iters"):
+        _d_enn_ts(ctx, {})
+    d = _d_enn_ts(ctx, {"num_ts_iters": 32})
+    assert d._num_ts_iters == 32
+    assert d._k == 10
+    assert d._num_fit_samples == 100
+    assert d._num_init == 10  # ctx.init_yubo_default
+    assert any(s.name == "num_ts_iters" for s in _DESIGNER_OPTION_SPECS["enn-ts"])
+
+
+def test_d_enn_ts_nfs_k_idx_and_num_init():
+    from optimizer.designer_registry import _d_enn_ts
+
+    ctx = _make_ctx()
+    d = _d_enn_ts(ctx, {"num_ts_iters": 8, "nfs": 50, "k": 7, "idx": "bpann_disk", "num_init": 4})
+    assert d._num_ts_iters == 8
+    assert d._num_fit_samples == 50
+    assert d._k == 7
+    assert d._index_driver == "bpann_disk"
+    assert d._num_init == 4
+
+
+def test_d_enn_ts_rejects_unknown_and_small_num_init():
+    from optimizer.designer_registry import _d_enn_ts
+
+    ctx = _make_ctx()
+    with pytest.raises(NoSuchDesignerError, match="does not support"):
+        _d_enn_ts(ctx, {"num_ts_iters": 4, "bogus": 1})
+    with pytest.raises(NoSuchDesignerError, match="num_init"):
+        _d_enn_ts(ctx, {"num_ts_iters": 4, "num_init": 1})
+
+
+def test_turbo_enn_p_dispatch_builds():
     from optimizer.designer_registry import _DESIGNER_DISPATCH
 
     ctx = _make_ctx()
-    d = _DESIGNER_DISPATCH["turbo-enn-p-hnsw"](ctx, {})
-    assert d._index_driver == "hnsw"
+    d = _DESIGNER_DISPATCH["turbo-enn-p"](ctx, {})
+    assert d._index_driver is None
 
 
 def test_build_turbo_enn_turbo_enn_p_kind():
@@ -149,7 +169,7 @@ def test_build_turbo_enn_turbo_enn_p_kind():
     assert d._turbo_mode == "turbo-enn"
 
 
-def test_turbo_make_config_index_driver_hnsw():
+def test_turbo_make_config_index_driver_flat():
     from enn.turbo.config.enn_index_driver import ENNIndexDriver
 
     from optimizer.turbo_enn_designer import TurboENNDesigner
@@ -157,24 +177,9 @@ def test_turbo_make_config_index_driver_hnsw():
 
     env_conf = get_env_conf("f:sphere-2d", problem_seed=0, noise_seed_0=0)
     policy = default_policy(env_conf)
-    designer = TurboENNDesigner(policy, turbo_mode="turbo-enn", k=3, index_driver="hnsw")
+    designer = TurboENNDesigner(policy, turbo_mode="turbo-enn", k=3, index_driver="flat")
     cfg = designer._make_config(num_init=5, num_metrics=None)
-    assert cfg.surrogate.index_driver is ENNIndexDriver.HNSW
-
-
-def test_turbo_make_config_index_driver_hnsw_disk():
-    from enn.turbo.config.enn_index_driver import ENNIndexDriver
-
-    from optimizer.turbo_enn_designer import TurboENNDesigner
-    from problems.env_conf import default_policy, get_env_conf
-
-    env_conf = get_env_conf("f:sphere-2d", problem_seed=0, noise_seed_0=0)
-    policy = default_policy(env_conf)
-    designer = TurboENNDesigner(policy, turbo_mode="turbo-enn", k=3, index_driver="hnsw_disk")
-    cfg = designer._make_config(num_init=5, num_metrics=None)
-    assert cfg.surrogate.index_driver is ENNIndexDriver.HNSW_DISK
-    assert cfg.surrogate.enn_storage == "disk"
-    assert cfg.surrogate.work_dir is not None
+    assert cfg.surrogate.index_driver is ENNIndexDriver.FLAT
 
 
 def test_turbo_make_config_index_driver_bpann_disk():

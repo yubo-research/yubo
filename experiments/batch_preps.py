@@ -25,6 +25,10 @@ _EXPORTS: dict[str, tuple[str, str]] = {
         "experiments.batch_preps_rl_sweeps",
         "prep_cheetah_eggroll_s03",
     ),
+    "prep_cheetah_eggroll_adapt": (
+        "experiments.batch_preps_rl_sweeps",
+        "prep_cheetah_eggroll_adapt",
+    ),
     "prep_cum_time_dim": ("experiments.batch_preps_bench", "prep_cum_time_dim"),
     "prep_cum_time_obs": ("experiments.batch_preps_bench", "prep_cum_time_obs"),
     "prep_dna": ("experiments.batch_preps_rebuttal", "prep_dna"),

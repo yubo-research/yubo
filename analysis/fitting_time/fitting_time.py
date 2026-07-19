@@ -16,7 +16,6 @@ from .fitting_time_gp import (
 __all__ = [
     "fit_dngo",
     "fit_enn",
-    "fit_enn_hnsw",
     "fit_exact_gp",
     "fit_smac_rf",
     "fit_svgp_default",
@@ -114,23 +113,6 @@ def fit_enn(
     # (same ``0.1^2`` as :func:`draw_benchmark_synthetic_xy` and SMAC RF scoring).
     pred_var = se**2 + _SYNTHETIC_OBS_VAR
     return elapsed, y_hat, pred_var
-
-
-def fit_enn_hnsw(
-    train_x: np.ndarray,
-    train_y: np.ndarray,
-    x_test: np.ndarray,
-    **kwargs,
-) -> tuple[float, np.ndarray, np.ndarray]:
-    from enn.turbo.config.enn_index_driver import ENNIndexDriver
-
-    return fit_enn(
-        train_x,
-        train_y,
-        x_test,
-        index_driver=ENNIndexDriver.HNSW,
-        **kwargs,
-    )
 
 
 def fit_smac_rf(train_x: np.ndarray, train_y: np.ndarray, x_test: np.ndarray) -> tuple[float, np.ndarray, np.ndarray]:

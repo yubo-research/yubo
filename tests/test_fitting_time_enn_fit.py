@@ -149,9 +149,9 @@ def test_benchmark_enn_fit_timing_perf_only_wraps_enn_fit(monkeypatch):
 
 @pytest.mark.parametrize(
     "driver",
-    (EnnIncrementalIndexDriver.FLAT, EnnIncrementalIndexDriver.HNSW),
+    (EnnIncrementalIndexDriver.FLAT, EnnIncrementalIndexDriver.BPANN_DISK),
 )
-def test_benchmark_enn_fit_flat_and_hnsw_n3(driver):
+def test_benchmark_enn_fit_flat_and_bpann_disk_n3(driver):
     res = benchmark_enn_fit_timing(
         D=2,
         function_name="sphere",

@@ -26,17 +26,15 @@ def test_benchmark_enn_full_optimization_importable_from_package():
     assert exported is benchmark_enn_full_optimization_proposal_timing
 
 
-def test_enn_full_opt_checkpoint_ns_caps_at_1m():
+def test_enn_full_opt_checkpoint_ns_caps_at_100k():
     ns = enn_full_opt_checkpoint_ns()
-    assert ns[-1] == 1_000_000
-    assert 300_000 in ns
-    assert FULL_OPT_NUM_ROUNDS == 1_000_000
+    assert ns[-1] == 100_000
+    assert 300_000 not in ns
+    assert FULL_OPT_NUM_ROUNDS == 100_000
 
 
 def test_opt_name_for_index_driver():
     assert opt_name_for_index_driver(EnnIncrementalIndexDriver.FLAT) == "turbo-enn-fit-ucb"
-    assert opt_name_for_index_driver(EnnIncrementalIndexDriver.HNSW) == "turbo-enn-fit-ucb/idx=hnsw"
-    assert opt_name_for_index_driver(EnnIncrementalIndexDriver.HNSW_DISK) == "turbo-enn-fit-ucb/idx=hnsw_disk"
     assert opt_name_for_index_driver(EnnIncrementalIndexDriver.BPANN_DISK) == "turbo-enn-fit-ucb/idx=bpann_disk"
 
 
@@ -158,7 +156,7 @@ def test_collect_full_opt_snapshots_from_optimizer():
 
 @pytest.mark.parametrize(
     "index_driver",
-    [EnnIncrementalIndexDriver.FLAT, EnnIncrementalIndexDriver.HNSW],
+    [EnnIncrementalIndexDriver.FLAT, EnnIncrementalIndexDriver.BPANN_DISK],
 )
 def test_benchmark_enn_full_opt_ackley_3d_smoke(index_driver):
     result = benchmark_enn_full_optimization_proposal_timing(

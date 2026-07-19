@@ -107,27 +107,14 @@ class TurboENNDesigner:
             raise ValueError(f"Invalid acq_type: {self._acq_type}") from exc
 
     def _resolve_index_driver(self):
-        ENNIndexDriver = _im("enn.turbo.config.enn_index_driver").ENNIndexDriver
-        if self._index_driver is None:
-            return ENNIndexDriver.FLAT
-        v = self._index_driver.lower()
-        if v in ("flat", "exact"):
-            return ENNIndexDriver.FLAT
-        if v == "hnsw":
-            return ENNIndexDriver.HNSW
-        if v in ("hnsw_disk", "hnswdisk"):
-            return ENNIndexDriver.HNSW_DISK
-        if v in ("bpann_disk", "bpanndisk"):
-            return ENNIndexDriver.BPANN_DISK
-        raise ValueError(f"Invalid index_driver: {self._index_driver}")
+        return _im("optimizer.enn_index_driver_util").resolve_enn_index_driver(self._index_driver)
 
     def _enn_surrogate_disk_kwargs(self, index_driver):
         ENNIndexDriver = _im("enn.turbo.config.enn_index_driver").ENNIndexDriver
-        if index_driver not in (ENNIndexDriver.HNSW_DISK, ENNIndexDriver.BPANN_DISK):
+        if index_driver is not ENNIndexDriver.BPANN_DISK:
             return {}
         if self._enn_disk_work_dir is None:
-            prefix = "yubo_enn_hnsw_disk_" if index_driver is ENNIndexDriver.HNSW_DISK else "yubo_enn_bpann_disk_"
-            self._enn_disk_work_dir = tempfile.TemporaryDirectory(prefix=prefix)
+            self._enn_disk_work_dir = tempfile.TemporaryDirectory(prefix="yubo_enn_bpann_disk_")
         return {
             "enn_storage": "disk",
             "work_dir": self._enn_disk_work_dir.name,

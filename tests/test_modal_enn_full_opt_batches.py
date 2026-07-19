@@ -50,15 +50,15 @@ def test_full_opt_result_json_complete_roundtrip(tmp_path: Path):
         problem_seed=19,
         rep_index=1,
         num_reps=10,
-        index_driver="hnsw",
+        index_driver="bpann_disk",
     )
     payload = {
         "N": [1, 3],
         "proposal_elapsed_seconds": [0.01, 0.02],
         "_meta": {
             "env_tag": "f:ackley-10d",
-            "opt_name": "turbo-enn-fit-ucb/idx=hnsw",
-            "index_driver": "hnsw",
+            "opt_name": "turbo-enn-fit-ucb/idx=bpann_disk",
+            "index_driver": "bpann_disk",
             "policy_tag": "pure-function",
             "problem_seed": 19,
             "rep_index": 1,
@@ -78,6 +78,6 @@ def test_full_opt_result_json_complete_roundtrip(tmp_path: Path):
         problem_seed=19,
         rep_index=1,
         num_reps=10,
-        index_driver="hnsw",
-        opt_name="turbo-enn-fit-ucb/idx=hnsw",
+        index_driver="bpann_disk",
+        opt_name="turbo-enn-fit-ucb/idx=bpann_disk",
     )

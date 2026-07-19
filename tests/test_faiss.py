@@ -1,5 +1,11 @@
+import pytest
+
+
 def test_faiss():
-    import faiss
+    try:
+        import faiss
+    except (ImportError, AttributeError) as exc:
+        pytest.skip(f"faiss unavailable: {exc}")
     import numpy as np
 
     train_x = np.random.uniform(size=(2, 5))

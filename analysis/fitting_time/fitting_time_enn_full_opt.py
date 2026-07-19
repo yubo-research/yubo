@@ -19,15 +19,13 @@ from common.seed_all import seed_all
 from optimizer.optimizer import Optimizer
 from problems.problem import build_problem
 
-FULL_OPT_MAX_N = 1_000_000
+FULL_OPT_MAX_N = 100_000
 FULL_OPT_NUM_ROUNDS = FULL_OPT_MAX_N
 FULL_OPT_CHECKPOINT_NS: tuple[int, ...] = tuple(n for n in ENN_INCREMENTAL_CHECKPOINT_NS if n <= FULL_OPT_MAX_N)
 FULL_OPT_NUM_ARMS = 1
 FULL_OPT_NUM_DENOISE = 1
 FULL_OPT_POLICY_TAG = "pure-function"
 _OPT_NAME_FLAT = "turbo-enn-fit-ucb"
-_OPT_NAME_HNSW = "turbo-enn-fit-ucb/idx=hnsw"
-_OPT_NAME_HNSW_DISK = "turbo-enn-fit-ucb/idx=hnsw_disk"
 _OPT_NAME_BPANN_DISK = "turbo-enn-fit-ucb/idx=bpann_disk"
 
 
@@ -50,10 +48,6 @@ class EnnFullOptTimingResult:
 
 
 def opt_name_for_index_driver(index_driver: EnnIncrementalIndexDriver) -> str:
-    if index_driver == EnnIncrementalIndexDriver.HNSW:
-        return _OPT_NAME_HNSW
-    if index_driver == EnnIncrementalIndexDriver.HNSW_DISK:
-        return _OPT_NAME_HNSW_DISK
     if index_driver == EnnIncrementalIndexDriver.BPANN_DISK:
         return _OPT_NAME_BPANN_DISK
     return _OPT_NAME_FLAT

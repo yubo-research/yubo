@@ -17,6 +17,7 @@ _EXP_TYPE = click.Choice(
     ["add_method", "fit_method", "fit_ind", "query", "full_optimization"],
     case_sensitive=False,
 )
+_SUBMIT_INDEX_DRIVER_CHOICES = ["flat", "bpann_disk", "all"]
 
 
 def _exp_type_argument() -> click.Argument:
@@ -128,7 +129,7 @@ def deploy(exp_type: str, tag: str):
         click.Option(["--output-dir"], default="results/enn_incremental", show_default=True),
         click.Option(
             ["--index-driver"],
-            type=click.Choice(["flat", "hnsw", "hnsw_disk", "all"], case_sensitive=False),
+            type=click.Choice(_SUBMIT_INDEX_DRIVER_CHOICES, case_sensitive=False),
             default="all",
             show_default=True,
         ),
@@ -178,7 +179,7 @@ def submit(
         click.Option(["--output-dir"], default="results/enn_incremental", show_default=True),
         click.Option(
             ["--index-driver"],
-            type=click.Choice(["flat", "hnsw", "hnsw_disk", "all"], case_sensitive=False),
+            type=click.Choice(_SUBMIT_INDEX_DRIVER_CHOICES, case_sensitive=False),
             default="all",
             show_default=True,
         ),

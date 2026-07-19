@@ -13,8 +13,7 @@ from ops.synthetic_sine_benchmark_batches import _resolve_surrogate_key, cli
     ("raw", "expected"),
     [
         ("enn", "enn"),
-        ("ENN+HNSW", "enn_hnsw"),
-        ("enn-hnsw", "enn_hnsw"),
+        ("ENN", "enn"),
         ("SMAC RF", "smac_rf"),
         ("smac", "smac_rf"),
         ("svgp_linear", "svgp_linear"),

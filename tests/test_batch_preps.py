@@ -132,39 +132,43 @@ def test_prep_human():
 
 
 def test_prep_cheetah_policy_optimizer():
-    from experiments.batch_preps_rl_sweeps import EGGROLL_OPT
+    from experiments.batch_preps_rl_sweeps import CHEETAH_BO_POLICY_ROUNDS, EGGROLL_OPT
 
     with tempfile.TemporaryDirectory() as tmpdir:
         cmds = _bp.prep_cheetah_policy_optimizer(tmpdir)
-        assert len(cmds) == 6
-        assert {c.policy_tag for c in cmds} == {"linear", "mlp-32-16"}
+        assert len(cmds) == 9
+        assert {c.policy_tag for c in cmds} == set(CHEETAH_BO_POLICY_ROUNDS)
         assert {c.opt_name for c in cmds} == {
             "random",
             "turbo-enn-fit-ucb",
             EGGROLL_OPT,
         }
         assert all(c.env_tag == "cheetah:fn" for c in cmds)
-        assert all(c.num_arms == 10 and c.num_rounds == 1000 and c.num_reps == 10 for c in cmds)
+        rounds_by_policy = {policy: next(c.num_rounds for c in cmds if c.policy_tag == policy) for policy in CHEETAH_BO_POLICY_ROUNDS}
+        assert rounds_by_policy == CHEETAH_BO_POLICY_ROUNDS
+        assert all(c.num_arms == 10 and c.num_reps == 10 for c in cmds)
         assert all(c.num_denoise == 1 for c in cmds)
         assert all(c.num_denoise_passive is None for c in cmds)
         assert all("exp_cheetah_policy_optimizer" in c.exp_dir for c in cmds)
 
 
 def test_prep_cheetah_eggroll_s01():
-    from experiments.batch_preps_rl_sweeps import EGGROLL_OPT_S01
+    from experiments.batch_preps_rl_sweeps import (
+        CHEETAH_BO_POLICY_ROUNDS,
+        EGGROLL_OPT_S01,
+    )
 
     with tempfile.TemporaryDirectory() as tmpdir:
         cmds = _bp.prep_cheetah_eggroll_s01(tmpdir)
-        assert len(cmds) == 2
-        assert {c.policy_tag for c in cmds} == {"linear", "mlp-32-16"}
+        assert len(cmds) == 3
+        assert {c.policy_tag for c in cmds} == set(CHEETAH_BO_POLICY_ROUNDS)
         assert all(c.opt_name == EGGROLL_OPT_S01 for c in cmds)
         assert "sigma=0.1" in EGGROLL_OPT_S01
         assert all(c.env_tag == "cheetah:fn" for c in cmds)
-        assert all(c.num_arms == 10 and c.num_rounds == 1000 and c.num_reps == 10 for c in cmds)
-        assert all(c.num_denoise == 1 for c in cmds)
-        assert all(c.num_denoise_passive is None for c in cmds)
+        assert all(c.num_arms == 10 and c.num_reps == 10 for c in cmds)
+        assert {(c.policy_tag, c.num_rounds) for c in cmds} == set(CHEETAH_BO_POLICY_ROUNDS.items())
         assert all("exp_cheetah_eggroll_s01" in c.exp_dir for c in cmds)
-        assert cmds[0].to_dir_name() != cmds[1].to_dir_name()
+        assert len({c.to_dir_name() for c in cmds}) == 3
 
 
 def test_prep_cheetah_eggroll_s02():
@@ -172,7 +176,7 @@ def test_prep_cheetah_eggroll_s02():
 
     with tempfile.TemporaryDirectory() as tmpdir:
         cmds = _bp.prep_cheetah_eggroll_s02(tmpdir)
-        assert len(cmds) == 2
+        assert len(cmds) == 3
         assert all(c.opt_name == EGGROLL_OPT_S02 for c in cmds)
         assert "sigma=0.2" in EGGROLL_OPT_S02
         assert all("exp_cheetah_eggroll_s02" in c.exp_dir for c in cmds)
@@ -183,10 +187,26 @@ def test_prep_cheetah_eggroll_s03():
 
     with tempfile.TemporaryDirectory() as tmpdir:
         cmds = _bp.prep_cheetah_eggroll_s03(tmpdir)
-        assert len(cmds) == 2
+        assert len(cmds) == 3
         assert all(c.opt_name == EGGROLL_OPT_S03 for c in cmds)
         assert "sigma=0.3" in EGGROLL_OPT_S03
         assert all("exp_cheetah_eggroll_s03" in c.exp_dir for c in cmds)
+
+
+def test_prep_cheetah_eggroll_adapt():
+    from experiments.batch_preps_rl_sweeps import (
+        CHEETAH_BO_POLICY_ROUNDS,
+        EGGROLL_OPT_ADAPT,
+    )
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        cmds = _bp.prep_cheetah_eggroll_adapt(tmpdir)
+        assert len(cmds) == 3
+        assert {c.policy_tag for c in cmds} == set(CHEETAH_BO_POLICY_ROUNDS)
+        assert all(c.opt_name == EGGROLL_OPT_ADAPT for c in cmds)
+        assert "sigma=0.1" in EGGROLL_OPT_ADAPT
+        assert "adapt_sigma=true" in EGGROLL_OPT_ADAPT
+        assert all("exp_cheetah_eggroll_adapt" in c.exp_dir for c in cmds)
 
 
 def test_prep_run_others():

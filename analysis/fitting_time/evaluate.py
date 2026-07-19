@@ -55,9 +55,9 @@ def benchmark_synthetic_sine_surrogates(
     num_reps: int = 1,
     b_fast_only: bool = False,
 ) -> SyntheticSineSurrogateBenchmark:
-    """Run ENN, ENN+HNSW, SMAC RF, DNGO, exact GP, two SVGP variants, and RF Vecchia on synthetic data in ``D`` dims.
+    """Run ENN, SMAC RF, DNGO, exact GP, two SVGP variants, and RF Vecchia on synthetic data in ``D`` dims.
 
-    If ``b_fast_only`` is true, only ENN, ENN+HNSW, and SMAC RF are fit; DNGO, exact GP,
+    If ``b_fast_only`` is true, only ENN and SMAC RF are fit; DNGO, exact GP,
     both SVGPs, and Vecchia are skipped and their metrics are set to ``nan`` (same as an
     unavailable surrogate row).
 
@@ -73,7 +73,7 @@ def benchmark_synthetic_sine_surrogates(
     Fitted surrogates always use ``(x+1)/2`` in ``[0,1]`` via
     :func:`env_action_coords_to_surrogate_unit_x` before each fit; metrics always use
     the original ``y`` / ``y_test`` from the env draw. When ``b_fast_only`` is true,
-    only ENN, ENN+HNSW, and SMAC RF are actually fit; other surrogates are skipped.
+    only ENN and SMAC RF are actually fit; other surrogates are skipped.
 
     **Replicates:** for ``num_reps`` > 1, the full benchmark is run ``num_reps`` times with
     a deterministic data seed derived from ``(problem_seed, function_name, rep_index)``.
@@ -92,7 +92,7 @@ def benchmark_synthetic_sine_surrogates(
 
     **LogLik** (nats): ``sum_i log N(y_test_i | y_hat_i, v_i)`` with **predictive**
     variance aligned to noisy ``y_test`` (``0.1^2`` observation noise in the draw).
-    ENN and ENN+HNSW use epistemic ``se_i^2`` plus ``0.1^2``. SMAC RF uses forest variance plus
+    ENN uses epistemic ``se_i^2`` plus ``0.1^2``. SMAC RF uses forest variance plus
     ``0.1^2``. DNGO uses BLR predictive variance (includes learned ``1/\\beta``).
     Exact GP and both SVGP variants use ``posterior(..., observation_noise=True)``.
     Vecchia uses ``pyvecch`` posterior variance on the original ``y`` scale.
@@ -107,7 +107,6 @@ def benchmark_synthetic_sine_surrogates(
     from analysis.fitting_time.fitting_time import (
         fit_dngo,
         fit_enn,
-        fit_enn_hnsw,
         fit_exact_gp,
         fit_smac_rf,
         fit_svgp_default,
@@ -130,7 +129,6 @@ def benchmark_synthetic_sine_surrogates(
                 x_test,
                 y_test,
                 fit_enn=fit_enn,
-                fit_enn_hnsw=fit_enn_hnsw,
                 fit_smac_rf=fit_smac_rf,
                 fit_dngo=fit_dngo,
                 fit_exact_gp=fit_exact_gp,

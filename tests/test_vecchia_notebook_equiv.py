@@ -2,6 +2,7 @@ import math
 from dataclasses import dataclass
 
 import numpy as np
+import pytest
 import torch
 from botorch.generation import MaxPosteriorSampling
 from botorch.test_functions import Ackley
@@ -10,12 +11,16 @@ from gpytorch.constraints import Interval
 from gpytorch.kernels import MaternKernel, ScaleKernel
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.means import ZeroMean
-from pyvecch.input_transforms import Identity
-from pyvecch.models import RFVecchia
-from pyvecch.nbrs import ExactOracle
-from pyvecch.prediction import IndependentRF
-from pyvecch.training import fit_model
 from torch.quasirandom import SobolEngine
+
+try:
+    from pyvecch.input_transforms import Identity
+    from pyvecch.models import RFVecchia
+    from pyvecch.nbrs import ExactOracle
+    from pyvecch.prediction import IndependentRF
+    from pyvecch.training import fit_model
+except (ImportError, AttributeError) as exc:
+    pytest.skip(f"pyvecch/faiss unavailable: {exc}", allow_module_level=True)
 
 
 @dataclass
