@@ -1,0 +1,11 @@
+# TuRBO-ENN Pareto on dm_control quadruped run.
+[experiment]
+exp_dir = "_tmp/uhd/quadruped"
+env_tag = "dm_control/quadruped-run-v0"
+policy_tag = "actor-mlp-32-32"
+opt_name = "turbo-enn-p"
+num_arms = 1
+num_rounds = 100000
+num_reps = 1
+num_denoise = 1
+runtime_device = "cpu"

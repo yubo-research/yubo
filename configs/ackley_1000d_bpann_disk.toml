@@ -1,0 +1,16 @@
+# TuRBO-ENN (fit-UCB, BPANN disk index) on distorted Ackley in D=1000.
+# Run from repo root:
+#   PYTHONPATH=. python -u ops/experiment.py local configs/ackley_1000d_bpann_disk.toml
+[experiment]
+exp_dir = "results/ackley_1000d_bpann_disk"
+env_tag = "f:ackley-1000d"
+policy_tag = "pure-function"
+num_arms = 1
+num_reps = 1
+num_rounds = 100000
+num_denoise = 1
+runtime_device = "cpu"
+
+[optimizer]
+name = "turbo-enn-fit-ucb"
+params = { idx = "bpann_disk" }
