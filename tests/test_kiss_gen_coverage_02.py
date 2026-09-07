@@ -25,13 +25,6 @@ def test_kiss_gen_ops_config_overrides() -> None:
     assert refs
 
 
-def test_kiss_gen_ops_isaaclab_viewport_capture_probe() -> None:
-    from ops.isaaclab_viewport_capture_probe import main
-
-    refs = (main,)
-    assert refs
-
-
 def test_kiss_gen_ops_modal_command_helpers() -> None:
     from ops.modal_command_helpers import collect_artifacts, logged_command, parse_export_globs, write_artifacts
 

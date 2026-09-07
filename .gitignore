@@ -1,7 +1,13 @@
 target/
 ops/
+.jj/
+.kiss/
 **/__pycache__/
+**/.ipynb_checkpoints/**
 **/*.py[cod]
+build/
+dist/
+*.egg-info/
 **/*.rs.bk
 .malvin/logs/
 .malvin_checks
@@ -9,3 +15,13 @@ ops/
 /log_2
 results/
 *.md~
+.coverage
+.testmondata
+.pixi-state/
+_tmp/
+_test_results/
+smac3_output/
+runs/
+data/mnist/
+data/olmoe_pretrain_cache/
+formalization/enn-lean/.melville/

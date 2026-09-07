@@ -1,49 +1,39 @@
-# Installation
+# Yubo
 
-## Installation on MacOS
+## Installation
 
-```bash
-./admin/install-macos.sh
-```
-
-Apologies for the complexity of installation. We're blending lots of algorithms and test environments, much of which is research-quality code, some of which may be unmaintained.
-
-
-## Installation on Linux
+Install Pixi, then create and check the default environment:
 
 ```bash
-./admin/install.sh
+curl -fsSL https://pixi.sh/install.sh | bash
+pixi install
+pixi run setup
+pixi run check
 ```
 
-## Setup
+The default Pixi environment installs this repository as an editable Python
+package and prepares the runtime pieces used by the project.
+
+IsaacLab uses a separate Linux/CUDA environment:
+
+```bash
+pixi install -e isaaclab
+pixi run -e isaaclab setup
+pixi run -e isaaclab check
+```
+
+## Development
+
 ```bash
 pre-commit install
-```
-
-
-## Verification
-
-```bash
 pre-commit run
-pytest -sv tests
+pixi run python -m pytest --no-testmon -sv tests -rs
 ```
-
-
-If your code crashes or hangs, try this [hack](https://discuss.pytorch.org/t/ran-into-this-issue-while-executing/101460):
-```
-export KMP_DUPLICATE_LIB_OK=TRUE
-export OMP_NUM_THREADS=1
-```
-I don't recommend this, however, as it may slow things down.
-
----
 
 ## Examples
 
-From the repository root (with `PYTHONPATH` set to the repo so imports resolve):
-
 ```bash
-./ops/experiment.py local configs/demo/turbo_enn.toml
-./ops/experiment.py local configs/demo/ppo.toml
-./ops/exp_uhd.py local configs/demo/mezo.toml
+pixi run ./ops/experiment.py local configs/demo/turbo_enn.toml
+pixi run ./ops/experiment.py local configs/demo/ppo.toml
+pixi run ./ops/exp_uhd.py local configs/demo/mezo.toml
 ```

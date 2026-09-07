@@ -23,18 +23,6 @@ def test_kiss_gen_ops_modal_hyperscalees_pixi_setup() -> None:
     assert refs
 
 
-def test_kiss_gen_ops_modal_isaac_render_probe() -> None:
-    from ops.modal_isaac_render_probe import main, run_official_nvidia_render_probe, run_official_render_probe, run_render_probe
-
-    refs = (
-        run_render_probe,
-        run_official_render_probe,
-        run_official_nvidia_render_probe,
-        main,
-    )
-    assert refs
-
-
 def test_kiss_gen_ops_rl() -> None:
     from ops.rl import main
 
