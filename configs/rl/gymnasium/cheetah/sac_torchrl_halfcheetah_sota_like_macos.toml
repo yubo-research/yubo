@@ -56,6 +56,3 @@ noise_mode = "frozen"
 
 [rl.sac.checkpoint]
 interval_steps = 100000
-
-[rl.run.artifacts.video]
-enable = true

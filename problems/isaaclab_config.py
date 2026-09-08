@@ -18,17 +18,6 @@ ISAACLAB_DEFAULT_KIT_ARGS = (
     "--/rtx-transient/resourcemanager/enableGeometryStreaming=false"
 )
 
-ISAACLAB_VIDEO_KIT_ARGS = (
-    ISAACLAB_DEFAULT_KIT_ARGS
-    + " "
-    + "--enable omni.kit.renderer.capture "
-    + "--enable omni.kit.viewport.pxr "
-    + "--enable omni.kit.viewport.window "
-    + "--enable omni.kit.viewport.utility "
-    + "--/renderer/enabled='pxr' "
-    + "--/renderer/active='pxr'"
-)
-
 
 def disable_command_debug_visualizers(cfg: Any) -> None:
     commands = getattr(cfg, "commands", None)

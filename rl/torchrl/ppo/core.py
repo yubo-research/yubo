@@ -17,7 +17,7 @@ from . import actor_eval, models
 from .checkpoint_io import save_final_checkpoint
 from .config import _PPO_RUNTIME_CAPABILITIES, PPOConfig, TrainResult
 from .core_build import _build_collector, build_modules, build_training
-from .core_env_setup import _make_video_context, build_env_setup
+from .core_env_setup import build_env_setup
 from .core_train import (
     _evaluate_actor,
     _maybe_eval_and_log,
@@ -93,9 +93,7 @@ def train_ppo(config: PPOConfig) -> TrainResult:
         backbone_info += f" hidden={list(model.backbone_hidden_sizes)} act={model.backbone_activation} ln={bool(model.backbone_layer_norm)}"
     _log_ppo_config(config, env, training, runtime, from_pixels, backbone_info)
     remaining_iterations = max(0, training.num_iterations - state.start_iteration)
-    video, ctx = _make_video_context(config, env, from_pixels=from_pixels)
     if remaining_iterations == 0:
-        video.render_policy_videos_rl(config, env, modules, training, state, ctx, device=runtime.device)
         return TrainResult(
             best_return=float(state.best_return),
             last_eval_return=float(state.last_eval_return),
@@ -134,7 +132,6 @@ def train_ppo(config: PPOConfig) -> TrainResult:
     mark_done(str(training.metrics_path))
     logger.log_run_footer(state.best_return, training.num_iterations, total_time, algo_name="ppo")
     save_final_checkpoint(config=config, training_setup=training, modules=modules, train_state=state)
-    video.render_policy_videos_rl(config, env, modules, training, state, ctx, device=runtime.device)
     return TrainResult(
         best_return=float(state.best_return),
         last_eval_return=float(state.last_eval_return),

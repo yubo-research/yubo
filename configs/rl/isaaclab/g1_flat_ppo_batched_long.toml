@@ -57,6 +57,3 @@ interval = 25
 [rl.run]
 num_reps = 1
 workers = 1
-
-[rl.run.artifacts.video]
-enable = false

@@ -31,7 +31,6 @@ def mk_replicates(config: ExperimentConfig) -> list[RunConfig]:
                 config.policy_tag,
                 problem_seed=problem_seed,
                 noise_seed_0=noise_seed_0_from_problem_seed(problem_seed),
-                isaaclab_video=bool(config.video_enable and config.video_num_video_episodes > 0),
             )
             if eggroll_jax_sim_enabled(config.opt_name):
                 setattr(problem.env, "eggroll_jax_sim", True)
@@ -49,12 +48,6 @@ def mk_replicates(config: ExperimentConfig) -> list[RunConfig]:
                     num_denoise_passive=config.num_denoise_passive,
                     max_proposal_seconds=config.max_proposal_seconds,
                     b_trace=config.b_trace,
-                    video_enable=config.video_enable,
-                    video_num_episodes=config.video_num_episodes,
-                    video_num_video_episodes=config.video_num_video_episodes,
-                    video_episode_selection=config.video_episode_selection,
-                    video_seed_base=config.video_seed_base,
-                    video_prefix=config.video_prefix,
                     runtime_device=config.runtime_device,
                 )
             )

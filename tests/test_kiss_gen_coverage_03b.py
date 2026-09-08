@@ -165,24 +165,3 @@ def test_kiss_gen_turbo_m_ref_turbo_1_core() -> None:
 
     refs = (CandidatesResult,)
     assert refs
-
-
-def test_kiss_gen_video_isaaclab() -> None:
-    from video.isaaclab import ensure_isaaclab_video_launcher, is_isaaclab_env_conf, render_isaaclab_video_episode
-
-    refs = (
-        is_isaaclab_env_conf,
-        ensure_isaaclab_video_launcher,
-        render_isaaclab_video_episode,
-    )
-    assert refs
-
-
-def test_kiss_gen_video_isaaclab_viewport() -> None:
-    from video.isaaclab_viewport import capture_isaaclab_viewport_frame, prepare_isaaclab_video_view
-
-    refs = (
-        prepare_isaaclab_video_view,
-        capture_isaaclab_viewport_frame,
-    )
-    assert refs

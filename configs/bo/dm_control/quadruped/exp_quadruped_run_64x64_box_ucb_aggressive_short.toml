@@ -8,7 +8,6 @@ num_reps = 1
 num_denoise = 1
 num_denoise_passive = 1
 b_trace = true
-video_enable = true
 runtime_device = "cpu"
 local_workers = 4
 

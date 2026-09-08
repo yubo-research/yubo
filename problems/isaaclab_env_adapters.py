@@ -5,15 +5,13 @@ import os
 import sys
 import tempfile
 from dataclasses import dataclass
-from importlib import import_module
 from typing import Any
 
-from problems.isaaclab_config import ISAACLAB_DEFAULT_KIT_ARGS, ISAACLAB_VIDEO_KIT_ARGS
+from problems.isaaclab_config import ISAACLAB_DEFAULT_KIT_ARGS
 from problems.isaaclab_gym_adapters import (
     IsaacLabGymEnvAdapter,
     IsaacLabVectorEnvAdapter,
 )
-from problems.isaaclab_replicator import patch_replicator_seed_without_graph
 
 ISAACLAB_ENV_PREFIX = "isaaclab:"
 DEFAULT_ISAACLAB_MAX_STEPS = 1000
@@ -40,8 +38,6 @@ class IsaacLabSession:
     gym: Any
     headless: bool = True
     launcher_kwargs: dict[str, Any] | None = None
-    render_available: bool = False
-    render_error: str | None = None
 
 
 _SESSION: IsaacLabSession | None = None
@@ -167,24 +163,6 @@ def isaaclab_default_launcher_kwargs() -> dict[str, Any]:
     return {"kit_args": ISAACLAB_DEFAULT_KIT_ARGS}
 
 
-def isaaclab_video_launcher_kwargs() -> dict[str, Any]:
-    return {"kit_args": ISAACLAB_VIDEO_KIT_ARGS, "video": True}
-
-
-def _render_probe() -> tuple[bool, str | None]:
-    try:
-        import_module("omni.kit.viewport.utility")
-    except Exception as exc:
-        return False, f"{type(exc).__name__}: {exc}"
-    return True, None
-
-
-def isaaclab_rendering_available() -> tuple[bool, str | None]:
-    if _SESSION is None:
-        return _render_probe()
-    return bool(_SESSION.render_available), _SESSION.render_error
-
-
 def _session_can_reuse(session: IsaacLabSession, *, headless: bool, launcher_kwargs: dict[str, Any]) -> tuple[bool, str | None]:
     if bool(session.headless) and not bool(headless):
         return (
@@ -229,25 +207,13 @@ def get_isaaclab_session(*, headless: bool = True, launcher_kwargs: dict[str, An
         import gymnasium as gym
         import isaaclab_tasks  # noqa: F401
 
-    render_available, render_error = _session_render_state(kit_args)
     _SESSION = IsaacLabSession(
         app=launcher.app,
         gym=gym,
         headless=bool(headless),
         launcher_kwargs=launcher_kwargs,
-        render_available=bool(render_available),
-        render_error=render_error,
     )
     return _SESSION
-
-
-def _session_render_state(kit_args: str) -> tuple[bool, str | None]:
-    if "omni.kit.viewport.utility" in kit_args:
-        return _render_probe()
-    if "omni.replicator.core" in kit_args:
-        patch_replicator_seed_without_graph()
-        return _render_probe()
-    return False, "omni.kit.viewport.utility not enabled"
 
 
 def list_isaaclab_tasks(*, keyword: str | None = None, headless: bool = True) -> list[str]:

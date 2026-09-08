@@ -3,8 +3,6 @@
 # ruff: noqa: F821
 from __future__ import annotations
 
-from unittest.mock import MagicMock
-
 from click.testing import CliRunner
 
 
@@ -64,25 +62,3 @@ def test_kiss_remaining_optimizer_eggroll_external_adammax():
         lr=0.01,
     )
     assert out.shape == (2,)
-
-
-def test_kiss_remaining_video_isaaclab_viewport_render_env():
-    from video.isaaclab import _ViewportRenderEnv
-
-    reset = _ViewportRenderEnv.reset
-    step = _ViewportRenderEnv.step
-    render = _ViewportRenderEnv.render
-    if False:
-        (
-            _ViewportRenderEnv,
-            __init__,
-            reset,
-            step,
-            render,
-        )
-    env = MagicMock()
-    raw = MagicMock()
-    wrapped = _ViewportRenderEnv(env, raw, __import__("pathlib").Path("/tmp"))
-    wrapped.reset()
-    wrapped.step(None)
-    assert callable(render)

@@ -29,7 +29,7 @@ if TYPE_CHECKING:
     import rl.torchrl.sac.actor_eval as torchrl_sac_actor_eval
     import rl.torchrl.sac.loop as torchrl_sac_loop
     from analysis.data_io import write_config
-    from common.rl_helpers import seed_all, video
+    from common.rl_helpers import seed_all
     from problems.problem import build_problem
 
     BackboneSpec = backbone.BackboneSpec
@@ -53,7 +53,6 @@ _EXPORTS: dict[str, tuple[str, str | None]] = {
     "registry": ("rl.registry", None),
     "write_config": ("analysis.data_io", "write_config"),
     "seed_all": ("common.rl_helpers", "seed_all"),
-    "video": ("common.rl_helpers", "video"),
     "build_problem": ("problems.problem", "build_problem"),
     "BackboneSpec": ("rl.backbone", "BackboneSpec"),
     "HeadSpec": ("rl.backbone", "HeadSpec"),
@@ -91,7 +90,6 @@ __all__ = [
     "build_backbone",
     "build_mlp_head",
     "experiment_seeds",
-    "video",
     "episode_rollout",
     "eval_noise",
     "registry",

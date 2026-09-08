@@ -6,7 +6,6 @@ import common.env_preprocessing as env_pre
 from problems.env_conf import get_env_conf
 from rl.core import env_contract, env_setup, runtime
 
-from . import actor_eval
 from .config import PPOConfig
 from .core_types import _EnvSetup
 
@@ -69,31 +68,3 @@ def _build_eval_env_conf(config: PPOConfig, env: _EnvSetup, *, from_pixels: bool
         noise_seed_0=int(env.noise_seed_0),
         from_pixels=from_pixels,
     )
-
-
-def _make_video_context(config: PPOConfig, env: _EnvSetup, *, from_pixels: bool):
-    import video.rl_render as video
-
-    ctx = video.RLVideoContext(
-        build_eval_env_conf=lambda ps, ns: (
-            _build_seeded_eval_env_conf(
-                config,
-                problem_seed=int(ps),
-                noise_seed_0=int(ns),
-                from_pixels=bool(from_pixels),
-            ).env_conf
-        ),
-        make_eval_policy=lambda m, d: actor_eval.ActorEvalPolicy(
-            m.actor_backbone,
-            m.actor_head,
-            m.obs_scaler,
-            device=d,
-            obs_contract=env.io_contract.observation,
-            is_discrete=bool(getattr(env, "is_discrete", False)),
-            action_low=env.action_low,
-            action_high=env.action_high,
-        ),
-        capture_actor_state=actor_eval.capture_actor_snapshot,
-        with_actor_state=actor_eval.use_actor_snapshot,
-    )
-    return (video, ctx)

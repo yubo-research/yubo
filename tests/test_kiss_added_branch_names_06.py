@@ -42,7 +42,6 @@ def test_added_branch_names_rl_torchrl_ppo_core_env_setup() -> None:
             torchrl,
             _build_seeded_eval_env_conf,
             _build_eval_env_conf,
-            _make_video_context,
         )
     assert True
 

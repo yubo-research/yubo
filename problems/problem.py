@@ -8,10 +8,6 @@ from problems.environment_spec import (
     materialize_env,
     parse_tag_options,
 )
-from problems.isaaclab_env_adapters import (
-    is_isaaclab_env_tag,
-    isaaclab_video_launcher_kwargs,
-)
 
 if TYPE_CHECKING:
     from policies.registry import PolicyPreset
@@ -133,7 +129,6 @@ def build_problem(
     frozen_noise: bool = True,
     from_pixels: bool | None = None,
     pixels_only: bool | None = None,
-    isaaclab_video: bool = False,
 ) -> Problem:
     """Build a Problem from env and policy tags.
 
@@ -147,9 +142,6 @@ def build_problem(
         frozen_noise: Whether noise seeds are frozen across rounds.
         from_pixels: Override spec's from_pixels setting for pixel observations.
         pixels_only: Override spec's pixels_only setting.
-        isaaclab_video: Launch IsaacLab with video-capable extensions before
-            the singleton SimulationApp is created.
-
     Returns:
         A Problem instance with lazy policy construction.
     """
@@ -162,10 +154,6 @@ def build_problem(
         spec.from_pixels = from_pixels
     if pixels_only is not None:
         spec.pixels_only = pixels_only
-    if isaaclab_video and is_isaaclab_env_tag(spec.env_name):
-        spec.kwargs = dict(spec.kwargs or {})
-        spec.kwargs["launcher_kwargs"] = isaaclab_video_launcher_kwargs()
-
     runtime = materialize_env(
         spec,
         problem_seed=problem_seed,

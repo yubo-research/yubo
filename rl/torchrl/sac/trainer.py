@@ -361,14 +361,6 @@ def _finish_sac_train(config, env, modules, training, state, runtime, start_time
         state,
         build_checkpoint_payload=_phase_a_attr("checkpoint_payload"),
     )
-    if deps.video.get_video_settings(config).enable:
-        ctx = deps.video.RLVideoContext(
-            build_eval_env_conf=lambda ps, ns: _build_env_runtime(config.env_tag, problem_seed=ps, noise_seed_0=ns),
-            make_eval_policy=lambda m, d: _build_eval_policy(m, env, d),
-            capture_actor_state=deps.torchrl_sac_actor_eval.capture_sac_actor_snapshot,
-            with_actor_state=deps.torchrl_sac_actor_eval.use_sac_actor_snapshot,
-        )
-        deps.video.render_policy_videos_rl(config, env, modules, training, state, ctx, device=runtime.device)
     return TrainResult(
         best_return=float(state.best_return),
         last_eval_return=float(state.last_eval_return),

@@ -16,7 +16,6 @@ num_reps = 1
 runtime_device = "cuda"
 local_workers = 1
 b_trace = true
-video_enable = false
 
 
 [optimizer]

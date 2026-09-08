@@ -51,6 +51,3 @@ interval_steps = 100000
 num_reps = 1
 # Global workers set to 1 since we are running everything on one GPU
 workers = 1
-
-[rl.run.artifacts.video]
-enable = true

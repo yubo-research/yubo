@@ -122,11 +122,3 @@ def _finalize_sac_run(config, env, modules, training, state, runtime, start_time
         state,
         build_checkpoint_payload=_checkpoint_payload,
     )
-    if t.video.get_video_settings(config).enable:
-        ctx = t.video.RLVideoContext(
-            build_eval_env_conf=lambda ps, ns: t.get_env_conf(config.env_tag, problem_seed=ps, noise_seed_0=ns),
-            make_eval_policy=lambda m, d: t.phase_a.build_eval_policy(m, env, d),
-            capture_actor_state=t.torchrl_sac_actor_eval.capture_sac_actor_snapshot,
-            with_actor_state=t.torchrl_sac_actor_eval.use_sac_actor_snapshot,
-        )
-        t.video.render_policy_videos_rl(config, env, modules, training, state, ctx, device=runtime.device)

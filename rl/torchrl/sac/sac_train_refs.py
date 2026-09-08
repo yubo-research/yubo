@@ -11,7 +11,6 @@ def _sac_training_refs() -> SimpleNamespace:
     r.eval_noise = m("rl.eval_noise")
     rl_helpers = m("common.rl_helpers")
     r.seed_all = rl_helpers.seed_all
-    r.video = rl_helpers.video
     r.get_env_conf = m("problems.env_conf").get_env_conf
     r.experiment_seeds = m("common.experiment_seeds")
     r.torchrl_common = m("rl.core.runtime")

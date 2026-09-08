@@ -40,13 +40,7 @@ class ExperimentConfig:
     max_proposal_seconds: Optional[float] = None
     max_total_seconds: Optional[float] = None
     b_trace: bool = True
-    video_enable: bool = False
     scale: Optional[str] = None  # "auto" | "low" | "medium" | "high" | "huge" for dim-based scaling
-    video_num_episodes: int = 8
-    video_num_video_episodes: int = 3
-    video_episode_selection: str = "best"
-    video_seed_base: Optional[int] = None
-    video_prefix: str = "bo"
     runtime_device: str = "auto"
     local_workers: int = 1
     policy_tag: Optional[str] = None
@@ -59,7 +53,6 @@ class ExperimentConfig:
             f"--num_arms={self.num_arms}--{budget_key}={budget_val}"
             f"--num_reps={self.num_reps}--num_denoise={self.num_denoise}"
             f"--max_proposal_seconds={self.max_proposal_seconds}"
-            f"--video_enable={self.video_enable}"
         )
         short_hash = hashlib.md5(config_str.encode()).hexdigest()[:8]
         return f"{self.exp_dir}/{short_hash}"
@@ -130,12 +123,6 @@ class ExperimentConfig:
             max_proposal_seconds=max_prop,
             max_total_seconds=max_total,
             b_trace=true_false(d.get("b_trace", True)),
-            video_enable=true_false(d.get("video_enable", False)),
-            video_num_episodes=int(d.get("video_num_episodes", 8)),
-            video_num_video_episodes=int(d.get("video_num_video_episodes", 3)),
-            video_episode_selection=str(d.get("video_episode_selection", "best")).lower(),
-            video_seed_base=None if d.get("video_seed_base") in (None, "None") else int(d["video_seed_base"]),
-            video_prefix=str(d.get("video_prefix", "bo")),
             runtime_device=runtime_device,
             local_workers=local_workers,
             policy_tag=policy_tag,
@@ -155,12 +142,6 @@ class RunConfig:
     total_timesteps: Optional[int] = None
     bo_console: bool = True
     deadline: Optional[float] = None
-    video_enable: bool = False
-    video_num_episodes: int = 8
-    video_num_video_episodes: int = 3
-    video_episode_selection: str = "best"
-    video_seed_base: Optional[int] = None
-    video_prefix: str = "bo"
     runtime_device: str = "auto"
     problem: Any | None = None
     env_conf: Any | None = None

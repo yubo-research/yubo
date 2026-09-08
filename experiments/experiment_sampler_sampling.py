@@ -93,34 +93,6 @@ def _collect_trace_records(
     return trace_records, collector_trace, stop_reason
 
 
-def _render_sample_video(
-    opt,
-    run_config,
-    env_conf,
-    video_prefix,
-    video_num_episodes,
-    video_num_video_episodes,
-    video_episode_selection,
-    video_seed_base,
-):
-    from pathlib import Path
-
-    render_policy_videos_bo = _load_attr(("video", "bo_policy"), "render_policy_videos_bo")
-
-    video_dir = Path(run_config.trace_fn).parent / "videos"
-    seed_base = int(video_seed_base) if video_seed_base is not None else int(env_conf.problem_seed)
-    render_policy_videos_bo(
-        env_conf,
-        opt.best_policy.clone(),
-        video_dir=video_dir,
-        video_prefix=str(video_prefix),
-        num_episodes=int(video_num_episodes),
-        num_video_episodes=int(video_num_video_episodes),
-        episode_selection=str(video_episode_selection),
-        seed_base=int(seed_base),
-    )
-
-
 def sample_1(run_config: RunConfig):
     import numpy as np
 
@@ -189,18 +161,6 @@ def sample_1(run_config: RunConfig):
             best = getattr(opt, "r_best_est", None)
             best_val = float(best) if best is not None and isinstance(best, (int, float)) else 0.0
             print_bo_footer(best_val, max(0.0, total_time))
-
-        if rc.video_enable and rc.video_num_video_episodes > 0 and opt.best_policy is not None:
-            _render_sample_video(
-                opt,
-                rc,
-                env_runtime,
-                rc.video_prefix,
-                rc.video_num_episodes,
-                rc.video_num_video_episodes,
-                rc.video_episode_selection,
-                rc.video_seed_base,
-            )
 
         return _SampleResult(
             collector_log=collector_log,

@@ -103,7 +103,6 @@ def test_added_branch_names_problems_isaaclab_env_adapters() -> None:
             IsaacLabVectorEnvAdapter,
             __init__,
             close,
-            isaaclab_rendering_available,
             num_envs,
             render,
             adapters,

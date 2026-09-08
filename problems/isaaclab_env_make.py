@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import Any
 
 from problems.isaaclab_config import disable_command_debug_visualizers
-from video.isaaclab_viewport import prepare_isaaclab_video_view
 
 
 def make_raw_isaaclab_env(
@@ -19,8 +18,6 @@ def make_raw_isaaclab_env(
 ):
     task_id = adapters.parse_isaaclab_task_id(env_tag)
     device = adapters.resolve_isaaclab_sim_device(device)
-    if launcher_kwargs is None and render_mode == "rgb_array":
-        launcher_kwargs = adapters.isaaclab_video_launcher_kwargs()
     session = adapters.get_isaaclab_session(headless=headless, launcher_kwargs=launcher_kwargs)
 
     make_kwargs = dict(kwargs)
@@ -39,6 +36,4 @@ def make_raw_isaaclab_env(
 
         disable_command_debug_visualizers(make_kwargs["cfg"])
         env = session.gym.make(task_id, **make_kwargs)
-        if render_mode == "rgb_array":
-            prepare_isaaclab_video_view(session.app, env)
     return env

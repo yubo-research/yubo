@@ -62,6 +62,3 @@ interval_steps = 200000
 [rl.run]
 num_reps = 10
 workers = 1
-
-[rl.run.artifacts.video]
-enable = true

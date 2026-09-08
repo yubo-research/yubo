@@ -162,7 +162,6 @@ def _drop_disabled_prefixed_keys(values: dict[str, Any], enable_key: str, prefix
 
 def _collect_header_config_items(config: Any, training: Any, runtime: Any) -> list[tuple[str, Any]]:
     values = _config_to_mapping(config)
-    _drop_disabled_prefixed_keys(values, "video_enable", "video_")
     _drop_disabled_prefixed_keys(values, "profile_enable", "profile_")
     if values.get("resume_from") in {None, "", False}:
         values.pop("resume_from", None)
