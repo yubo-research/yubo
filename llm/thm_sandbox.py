@@ -206,7 +206,7 @@ def _require_image_present(runtime: str, image: str) -> None:
     result = _run_checked([*shlex.split(runtime), "image", "inspect", image], timeout=30)
     if result.returncode != 0:
         raise RuntimeError(
-            f"Theorem proving image {image!r} is not available locally. Build it first with `./ops/build_thm_image.sh lean4`. {_subprocess_output(result)}"
+            f"Theorem proving image {image!r} is not available locally. Set THM_LEAN4_DOCKER_IMAGE to an offline-ready Lean 4 image. {_subprocess_output(result)}"
         )
 
 
@@ -238,7 +238,7 @@ def _require_lean4_image_offline_ready(runtime: str, image: str) -> None:
     )
     if result.returncode != 0:
         raise RuntimeError(
-            f"Lean4 theorem image {image!r} is not offline-ready. Rebuild it with `./ops/build_thm_image.sh lean4`. {_subprocess_output(result)}"
+            f"Lean4 theorem image {image!r} is not offline-ready. Set THM_LEAN4_DOCKER_IMAGE to an image with Mathlib and yubo-lean available offline. {_subprocess_output(result)}"
         )
 
 
